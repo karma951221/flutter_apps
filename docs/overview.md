@@ -1,8 +1,11 @@
-# 소셜 피드 앱 — 기획서 초안
+# 소셜 피드 앱 — 기획서
 
 > [문서 허브](README.md) · [아키텍처](architecture.md) · [개발환경](setup.md) · [테스트 가이드](testing/README.md)
 
-> 상태: **초안 v0.1** · 작성 2026-08-20 · 아직 확정 아님, 검토 후 수정 전제
+> 상태: **v0.2** · 작성 2026-08-20 · 갱신 2026-08-22
+>
+> v0.2에서 §6·§7을 자체 REST 백엔드 전제에서 **Supabase 테이블·RLS 기준으로 다시 썼다.**
+> 소프트 삭제 · 커서 페이지네이션 · 테이블 명명 규칙을 확정했다 (§9).
 
 ---
 
@@ -122,42 +125,72 @@ dart run build_runner watch --delete-conflicting-outputs
 | # | 이름 | 역할 |
 |---|------|------|
 | X1 | **app shell** | 라우팅 · 탭 네비게이션 · DI 조립 · 인증 게이트 · 스플래시 |
-| X2 | **api client** | dio 설정 · 토큰 인터셉터 · 401 재시도 · 에러 → Failure 매핑 |
-| X3 | **media** | 이미지 선택 · 압축 · presign 요청 · 업로드 · 진행률 |
+| X2 | **backend client** | Supabase 클라이언트 구성 · 세션 저장소 · 에러 → `Failure` 매핑 |
+| X3 | **media** | 이미지 선택 · 압축 · Storage 업로드 · 진행률 |
+
+F3와 F4는 데이터가 같은 테이블(`posts`)을 쓰지만 앱 코드에서는 분리한다.
+`features/post`가 게시물 CRUD와 게시물 카드 위젯을, `features/feed`가 목록 조회와
+탭·무한 스크롤을 소유한다. feed는 post의 `domain` 계층만 참조한다.
 | X4 | **design system** | 테마 · 색상 토큰 · 공통 위젯 (버튼, 아바타, 빈 상태, 에러 상태) |
 
 ---
 
 ## 6. Feature별 개발 항목
 
-각 항목은 **앱**과 **서버**로 나눠 적는다. 서버 API는 시그니처 수준이며 상세는 각 feature의 `implementation.md`에서 확정한다.
+각 항목은 **앱**과 **데이터·권한**으로 나눠 적는다. 백엔드는 별도 서버가 아니라
+**Supabase의 테이블 · RLS 정책 · Storage 버킷 · 필요할 때의 Postgres 함수**다. 앱은
+`supabase_flutter` SDK로 직접 접근하며, **권한 판단은 전부 DB의 RLS가 한다.** 앱이
+보내는 조건은 UX일 뿐 보안 경계가 아니다.
+
+실제 스키마의 단일 기준은 [`supabase/migrations/`](../supabase/migrations/)이고, 이
+문서는 의도를 적는다. feature별 상세 설계는 `docs/features/<name>/plan.md`에서 확정한다.
+
+> 자체 백엔드로 전환할 때 쓸 REST 시그니처 초안은 §9 「자체 백엔드 전환 메모」에 남겨뒀다.
+
+### 공통 규칙
+
+- **삭제는 전부 소프트 삭제**다. `deleted_at`을 채우고, **조회 정책(RLS)에
+  `deleted_at is null`을 넣어 DB가 강제한다.** 앱 쿼리마다 필터를 붙이는 방식은
+  언젠가 빠뜨린다. `delete` 권한은 GRANT하지 않는다
+- **목록은 전부 커서 페이지네이션**이다. `(created_at desc, id desc)` 복합 커서를 쓴다.
+  `range`/`OFFSET`은 스크롤 중 새 글이 올라오면 항목이 중복되거나 건너뛰어진다
+- 소프트 삭제 대상 테이블의 커서 인덱스는 `where deleted_at is null` **부분 인덱스**로 만든다
+- 조회 정책이 삭제행을 가리므로, 소프트 삭제 UPDATE에 `.select()`를 붙이면 RETURNING이
+  정책에 걸려 빈 결과가 된다. 삭제 API는 값을 반환하지 않는다
+
+---
 
 ### F1. auth — 인증
 
 **사용자 스토리**
 - 이메일과 비밀번호로 가입하고, 가입 시 닉네임을 정한다
 - 로그인하면 앱을 껐다 켜도 로그인 상태가 유지된다
-- 로그아웃하면 저장된 토큰이 지워진다
+- 로그아웃하면 저장된 세션이 지워진다
 
-**서버 개발**
-- `POST /auth/signup` — 이메일 중복 확인, 비밀번호 해싱(**bcrypt 또는 argon2, 평문 저장 절대 금지**), 프로필 동시 생성
-- `POST /auth/login` — 자격 검증 → access token + refresh token 발급
-- `POST /auth/refresh` — refresh token으로 access token 재발급, refresh 회전(rotation)
-- `POST /auth/logout` — refresh token 무효화
-- `GET /me` — 현재 사용자 정보
-- JWT 검증 미들웨어 (이후 모든 보호 API가 사용)
+**데이터·권한**
+- 계정(이메일 · 비밀번호 해시 · 세션 · refresh 토큰)은 **Supabase Auth(GoTrue)가
+  `auth.users`에서 관리한다.** 비밀번호 해싱 · JWT 발급 · refresh 회전은 GoTrue의
+  몫이므로 우리가 만들지 않는다. `users` · `refresh_tokens` 테이블을 직접 두지 않는 이유다
+- 가입 시 `auth.users`에 트리거 `on_auth_user_created`(security definer)가 붙어
+  `public.profiles` 행을 같은 트랜잭션에서 생성한다. 닉네임은 `signUp`의
+  `raw_user_meta_data`로 전달한다
+- 비밀번호 재설정은 **메일 링크가 아니라 6자리 코드**를 보낸다
+  (`supabase/templates/recovery.html` + `config.toml`의 recovery 템플릿).
+  앱이 `verifyOTP(type: recovery)`로 검증하므로 **딥링크 설정이 통째로 필요 없다**
 
 **앱 개발**
-- 로그인 / 회원가입 화면, 입력 검증 (이메일 형식, 비밀번호 최소 길이)
-- 토큰을 `flutter_secure_storage`에 저장 (SharedPreferences 금지)
-- 앱 시작 시 저장된 토큰으로 세션 복구 → 인증 게이트에서 분기
-- dio 인터셉터: access token 자동 첨부, **401 → refresh → 원요청 1회 재시도**
+- 로그인 / 회원가입 화면, 입력 검증 (이메일 형식, 비밀번호 최소 길이, 닉네임 길이)
+- 세션 저장소를 `flutter_secure_storage`로 교체 (SDK 기본값인 SharedPreferences 금지 — §4.3)
+- 앱 시작 시 저장된 세션 복구 → 라우터의 인증 게이트에서 분기
+- **토큰 첨부와 401 재시도는 SDK가 처리한다.** dio 인터셉터를 직접 만들지 않는다
 - `AuthRepository` 인터페이스로 격리 (v1.1의 구글 로그인 · OTP 대비)
 
 **주의**
-- **비밀번호 재설정이 MVP에 없다.** 비밀번호를 잊으면 계정 복구가 불가능하다. 의도된 제외이며 v1.1 최우선 항목이다 (SMTP + 도메인 필요)
 - 로그인 실패 시 "이메일이 없음"과 "비밀번호 틀림"을 **구분하지 않는다** (계정 존재 여부 노출 방지)
-- 리프레시 토큰 동시 요청 시 중복 갱신 방지 (뮤텍스 or 단일 비행 처리)
+- 트리거가 같은 트랜잭션에서 돌기 때문에 **닉네임 제약 위반이 가입 전체를 롤백시킨다.**
+  `23514`(check_violation) · `23505`(unique_violation)를 사용자 문구로 매핑한다
+- `enable_confirmations`는 꺼져 있다. 가입 즉시 세션이 발급된다. 운영 전 재검토
+- 배포용 SMTP는 미연결 상태다. 로컬은 Mailpit으로 동작한다
 
 ---
 
@@ -167,20 +200,27 @@ dart run build_runner watch --delete-conflicting-outputs
 - 내 닉네임 · 자기소개 · 프로필 사진을 수정한다
 - 다른 사람의 프로필과 그 사람이 쓴 글 목록을 본다
 
-**서버 개발**
-- `GET /users/:id` — 프로필 + 게시물 수 + (3단계) 팔로워·팔로잉 수 + 내가 팔로우 중인지
-- `PATCH /me/profile` — 닉네임 · 자기소개 · 아바타 URL
-- `GET /users/check-nickname?value=` — 중복 확인
-- `GET /users/:id/posts?cursor=` — 해당 사용자의 게시물
+**데이터·권한**
+- `profiles` — `id`(PK, `auth.users` FK, on delete cascade), `nickname`, `bio`,
+  `avatar_url`, `created_at`, `updated_at`
+- 닉네임은 **DB 유니크 제약 + `lower(nickname)` 유니크 인덱스**로 강제한다
+  (대소문자만 다른 중복 차단). 길이 CHECK 2~20자, bio 200자
+- RLS — 조회는 전체 공개, 수정은 본인만. INSERT 정책은 두지 않는다 (트리거 전담)
+- GRANT는 **컬럼 단위**로 준다: `grant update (nickname, bio, avatar_url)`.
+  `id` · `created_at`은 클라이언트가 건드릴 수 없다
+- 아바타는 Storage 버킷 `avatars`. 경로는 `{user_id}/...`로 두고 **본인 경로만 쓰기
+  가능하도록 Storage RLS를 건다**
+- 게시물 수 · (3단계) 팔로워 · 팔로잉 수 · `isFollowing`은 매번 클라이언트가 여러 번
+  조회하지 않도록 **뷰 또는 RPC 함수 하나로 묶어 내려준다**
 
 **앱 개발**
 - 내 프로필 화면 / 타인 프로필 화면 (같은 위젯, 소유 여부로 분기)
 - 프로필 편집 화면, 닉네임 중복 확인(디바운스)
 - 프로필 사진 선택 → 압축 → 업로드 (X3 재사용)
-- 프로필 내 게시물 그리드
+- 프로필 내 게시물 목록 (커서 페이지네이션)
 
 **주의**
-- 닉네임은 **DB 유니크 제약**으로 강제한다. 앱의 중복 확인은 UX일 뿐 경쟁 조건을 막지 못한다
+- 앱의 닉네임 중복 확인은 UX일 뿐 경쟁 조건을 막지 못한다. 최종 판정은 DB 제약이다
 
 ---
 
@@ -190,24 +230,29 @@ dart run build_runner watch --delete-conflicting-outputs
 - 글과 사진 여러 장을 함께 올린다. 사진 순서는 내가 정한 대로 유지된다
 - 내 글을 수정하거나 삭제한다
 
-**서버 개발**
-- `POST /uploads/presign` — 업로드용 임시 URL 발급 (개수 · content-type 검증)
-- `POST /posts` — 본문 + 이미지 목록(url, width, height, sort_order)
-- `GET /posts/:id`
-- `PATCH /posts/:id` — **작성자 본인만**
-- `DELETE /posts/:id` — **소프트 삭제** (`deleted_at`), 댓글·반응 보존
-- 권한 체크: 모든 수정/삭제에서 `author_id == 현재 사용자` 검증
+**데이터·권한**
+- `posts` — `id`, `author_id`, `content`, `created_at`, `updated_at`, `deleted_at`
+- `author_id`는 **`default auth.uid()`로 DB가 채운다.** 앱이 보내지 않으므로 위조할 수 없다.
+  INSERT 정책의 `with check ((select auth.uid()) = author_id)`가 이중으로 막는다
+- `content` CHECK **1~500자** (공백 trim 기준)
+- `post_images` — `id`, `post_id`(FK), `url`, `width`, `height`, `sort_order`.
+  게시물당 **최대 5장**
+- RLS — 조회 `deleted_at is null`, 작성/수정/삭제는 작성자 본인만.
+  `delete` 권한은 GRANT하지 않고 `deleted_at` UPDATE로만 삭제한다
+- Storage 버킷 `post-images`, 경로 `{user_id}/{post_id}/...`
 
 **앱 개발**
 - 작성 화면: 텍스트 입력 + 이미지 다중 선택 + 순서 변경(드래그) + 개별 삭제
 - 업로드 진행률 표시, 실패 시 재시도
 - 게시물 상세 화면, 이미지 캐러셀 (인디케이터)
-- 이미지 종횡비 처리 — **서버가 width/height를 저장하므로 앱은 로딩 전에 자리를 확보할 수 있다** (레이아웃 점프 방지)
+- 이미지 종횡비 처리 — **`width`/`height`를 저장하므로 앱은 로딩 전에 자리를 확보할 수
+  있다** (레이아웃 점프 방지)
 
 **주의**
-- 이미지 **최대 5장** (확정)
-- 업로드는 성공했는데 게시물 생성이 실패하면 **고아 이미지**가 남는다. MVP에서는 방치하고, 나중에 정리 작업으로 처리 (완벽한 트랜잭션은 과설계)
-- 본문 **최대 2000자** (확정)
+- 업로드는 성공했는데 게시물 생성이 실패하면 **고아 이미지**가 남는다. MVP에서는 방치하고
+  나중에 정리 작업으로 처리한다 (완벽한 트랜잭션은 과설계)
+- 앱 코드에서 **게시물 CRUD는 `features/post`, 목록 조회는 `features/feed`가 소유한다.**
+  게시물 카드 위젯은 `features/post/presentation/widget/`에 둔다
 
 ---
 
@@ -218,20 +263,20 @@ dart run build_runner watch --delete-conflicting-outputs
 - 탭을 바꿔 팔로우한 사람들의 글만 본다
 - 아래로 내리면 계속 불러오고, 당겨서 새로고침한다
 
-**서버 개발**
-- `GET /feed/public?cursor=&limit=` — 최신순
-- `GET /feed/following?cursor=&limit=` — 팔로우 대상만 (3단계)
-- 응답에 각 게시물의 반응 수 · 댓글 수 · **내 반응 상태**를 포함 (N+1 쿼리 방지)
-- 차단한 사용자의 게시물 제외 (F7 완료 후)
+**데이터·권한**
+- 전체 피드 — `posts`를 `created_at desc, id desc` 정렬, `deleted_at is null`
+- 커서 조건은 `created_at < c.created_at or (created_at = c.created_at and id < c.id)`.
+  앱은 커서를 **불투명 문자열**로만 다루고 해석은 data 계층에서 끝낸다
+- 팔로잉 피드 — `follows` 조인으로 팔로우 대상만 (3단계)
+- 반응 수 · 댓글 수 · **내 반응 상태**는 게시물마다 따로 조회하지 않는다.
+  **뷰 또는 RPC 함수로 한 번에 내려준다** (N+1 방지)
+- 차단한 사용자의 게시물 제외 (F7 완료 후) — **차단 필터는 공통 뷰/함수 안에 넣어
+  쿼리마다 다시 쓰지 않게 한다**
 
 **앱 개발**
 - 탭 2개 (전체 / 팔로잉)
 - 무한 스크롤 + 당겨서 새로고침
-- 게시물 카드 위젯 (F5·F6와 공유)
 - 빈 상태 / 로딩 / 에러 상태 UI
-
-**주의 — 커서 페이지네이션을 쓸 것**
-`OFFSET` 기반 페이지네이션은 스크롤 중 새 글이 올라오면 **항목이 중복되거나 건너뛰어진다.** `(created_at, id)` 복합 커서를 쓴다. 이건 나중에 고치기 어려우므로 처음부터 제대로 한다.
 
 ---
 
@@ -241,32 +286,33 @@ dart run build_runner watch --delete-conflicting-outputs
 - 게시물에 좋아요 또는 싫어요를 누른다. 다시 누르면 취소된다
 - 좋아요를 누른 상태에서 싫어요를 누르면 좋아요가 해제된다
 
-**서버 개발**
-- `PUT /posts/:id/reaction` — body `{type: "like"|"dislike"}`, upsert
-- `DELETE /posts/:id/reaction` — 취소
-- 유니크 제약 `(user_id, post_id)` — **한 사용자는 게시물당 반응 하나**
+**데이터·권한**
+- `post_reactions` — `user_id`, `post_id`, `type`(`like` | `dislike`), `created_at`.
+  **PK `(user_id, post_id)`** — 한 사용자는 게시물당 반응 하나
+- 좋아요 ↔ 싫어요 전환은 **upsert 하나로 처리한다** (삭제 후 삽입이 아니다)
+- RLS — 조회 전체 공개, 삽입·수정·삭제는 `user_id`가 본인일 때만.
+  `user_id`는 `default auth.uid()`
+- 반응은 소프트 삭제하지 않는다. 취소는 행 삭제다 (참조하는 자식이 없다)
 
 **앱 개발**
 - 좋아요 / 싫어요 버튼, 선택 상태 표시
 - **낙관적 업데이트** — 탭 즉시 UI 반영, 실패 시 롤백
 
 **주의 — 카운트 집계 방식**
-매 조회마다 `COUNT(*)`를 하면 게시물이 늘수록 느려진다. 두 가지 방법:
 
-- **(a) 실시간 COUNT + 인덱스** — 단순, 정확. **MVP는 이걸로 시작한다**
+- **(a) 실시간 `COUNT(*)` + 인덱스** — 단순, 정확. **MVP는 이걸로 시작한다**
 - **(b) `posts.like_count` 비정규화 컬럼 + 트리거** — 빠르지만 정합성 관리 필요
 
 성능 문제가 실제로 관측되기 전에 (b)로 가지 않는다. YAGNI.
 
 **싫어요 정책 (확정: 공개)**
 
-좋아요와 동일하게 **개수를 공개한다.** 다수가 특정 글에 몰릴 때 괴롭힘 수단이 될 수 있다는 위험은 인지한 상태의 선택이다.
+좋아요와 동일하게 **개수를 공개한다.** 다수가 특정 글에 몰릴 때 괴롭힘 수단이 될 수
+있다는 위험은 인지한 상태의 선택이다.
 
-다만 운영 중 문제가 관측되면 **서버 변경 없이 되돌릴 수 있게** 만든다:
-- API는 `dislikeCount`를 **항상** 응답에 포함한다
+다만 운영 중 문제가 관측되면 **백엔드 변경 없이 되돌릴 수 있게** 만든다:
+- 조회 응답은 `dislikeCount`를 **항상** 포함한다
 - **노출 여부는 앱이 판단한다** (원격 설정 또는 앱 업데이트로 전환)
-
-이렇게 해두면 정책 변경이 앱 쪽 조건문 하나로 끝난다.
 
 ---
 
@@ -277,38 +323,44 @@ dart run build_runner watch --delete-conflicting-outputs
 - 댓글에 답글을 단다 (답글의 답글은 없다)
 - 내 댓글을 삭제한다
 
-**서버 개발**
-- `POST /posts/:id/comments` — body `{content, parentId?}`
-- `GET /posts/:id/comments?cursor=` — 부모 댓글 + 자식 댓글 함께
-- `DELETE /comments/:id` — 소프트 삭제, **자식이 있으면 "삭제된 댓글입니다"로 표시**
-- `parent_id`가 이미 자식 댓글이면 **거부** (2단 초과 방지)
+**데이터·권한**
+- `post_comments` — `id`, `post_id`(FK), `author_id`, `parent_id`(FK, self, nullable),
+  `content`, `created_at`, `deleted_at`
+- **DB는 무한 depth를 담을 수 있게 두고, 1단 제한은 앱과 정책에서만 건다.** 나중에
+  다단계로 바꾸고 싶어져도 마이그레이션이 필요 없다
+- `parent_id`가 이미 자식 댓글이면 거부한다 — CHECK로는 표현할 수 없으므로
+  **트리거 또는 삽입용 RPC 함수**로 막는다 (앱 검증만으로는 우회된다)
+- 소프트 삭제. **자식이 있으면 목록에는 남기고 "삭제된 댓글입니다"로 표시한다** —
+  조회 정책에서 삭제행을 완전히 가리면 자식이 고아가 되므로, 댓글 조회는
+  `deleted_at is null or 자식이 있음` 조건을 쓰는 **전용 뷰**로 내려준다
+- 대댓글은 **부모 댓글 기준으로 오래된 순 정렬** (전체 최신순이면 대화 흐름이 깨진다)
 
 **앱 개발**
-- 댓글 목록 (부모 아래 자식 들여쓰기)
+- 댓글 목록 (부모 아래 자식 들여쓰기), 커서 페이지네이션
 - 입력창, 답글 모드 표시 ("○○님에게 답글")
 - 댓글 수 표시
-
-**주의**
-- **DB는 무한 depth를 담을 수 있게 설계하고, 제한은 앱과 API에서만 건다.** 나중에 다단계로 바꾸고 싶어져도 마이그레이션이 필요 없다
-- 대댓글은 **부모 댓글 기준으로 최신순 정렬** (전체 최신순이면 대화 흐름이 깨진다)
 
 ---
 
 ### F7. safety — 신고 · 차단
 
-> **이 feature는 선택이 아니다.** Apple App Store 심사 가이드라인 1.2는 사용자 생성 콘텐츠 앱에 신고 기능 · 차단 기능 · 신고 대응을 요구한다. 없으면 리젝된다. Google Play도 동일.
+> **이 feature는 선택이 아니다.** Apple App Store 심사 가이드라인 1.2는 사용자 생성
+> 콘텐츠 앱에 신고 기능 · 차단 기능 · 신고 대응을 요구한다. 없으면 리젝된다. Google Play도 동일.
 
 **사용자 스토리**
 - 부적절한 게시물이나 댓글을 신고한다
 - 특정 사용자를 차단하면 그 사람의 글과 댓글이 더 이상 보이지 않는다
 - 차단 목록에서 차단을 해제한다
 
-**서버 개발**
-- `POST /reports` — `{targetType: post|comment|user, targetId, reason}`
-- `PUT /users/:id/block` / `DELETE /users/:id/block`
-- `GET /me/blocks` — 차단 목록
-- **모든 조회 쿼리에 차단 필터 적용** — 피드, 댓글, 프로필, 검색
+**데이터·권한**
+- `reports` — `id`, `reporter_id`, `target_type`(`post` | `comment` | `user`),
+  `target_id`, `reason`, `status`, `created_at`.
+  **여기만 폴리모픽이다** — 신고는 처음부터 세 종류를 다 받으므로 FK를 포기할 이유가 있다
+- `blocks` — `blocker_id`, `blocked_id`, `created_at`, PK `(blocker_id, blocked_id)`
+- RLS — 신고는 삽입만 허용하고 **조회는 본인 것만**. 차단 목록도 본인 것만
 - 차단은 **양방향 숨김**: 내가 차단하면 상대도 내 글을 못 본다
+- **모든 조회 경로에 차단 필터가 걸려야 한다** (피드 · 댓글 · 프로필). 쿼리마다 붙이면
+  언젠가 빠뜨리므로 **공통 뷰 또는 RPC 함수 안에 넣어 강제한다**
 
 **앱 개발**
 - 게시물 · 댓글 · 프로필의 더보기 메뉴 → 신고 / 차단
@@ -316,8 +368,7 @@ dart run build_runner watch --delete-conflicting-outputs
 - 설정 화면의 차단 목록 관리
 
 **주의**
-- MVP에서 신고 처리 운영은 **DB 직접 조회**로 한다. 관리자 화면은 과설계
-- 차단 필터를 쿼리마다 빠뜨리기 쉽다. **공통 쿼리 헬퍼로 만들어 강제할 것**
+- MVP에서 신고 처리 운영은 **Studio에서 DB 직접 조회**로 한다. 관리자 화면은 과설계
 
 ---
 
@@ -328,30 +379,35 @@ dart run build_runner watch --delete-conflicting-outputs
 - 내 팔로워 / 팔로잉 목록을 본다
 - 서로 팔로우 중이면 "맞팔로우"로 표시된다
 
-**서버 개발**
-- `PUT /users/:id/follow` / `DELETE /users/:id/follow`
-- `GET /users/:id/followers?cursor=` / `GET /users/:id/followings?cursor=`
-- 자기 자신 팔로우 **거부**
-- 프로필 응답에 `isFollowing` · `isFollowedBy` 포함 → 맞팔 판정
-- `follows` 유니크 제약 `(follower_id, followee_id)`
+**데이터·권한**
+- `follows` — `follower_id`, `followee_id`, `created_at`, PK `(follower_id, followee_id)`
+- `follower_id`는 `default auth.uid()`, INSERT 정책으로 본인만 삽입 가능
+- **자기 자신 팔로우는 CHECK 제약으로 거부한다** (`follower_id <> followee_id`)
+- 프로필 조회 응답에 `isFollowing` · `isFollowedBy`를 포함해 맞팔을 판정한다
+- 팔로우 해제는 행 삭제다 (소프트 삭제하지 않는다)
 
 **앱 개발**
 - 팔로우 버튼 (상태 3가지: 팔로우 / 팔로잉 / 맞팔로우), 낙관적 업데이트
-- 팔로워 · 팔로잉 목록 화면
+- 팔로워 · 팔로잉 목록 화면 (커서 페이지네이션)
 - 완료 후 F4의 팔로잉 피드 활성화
 
 ---
 
 ## 7. 데이터 모델
 
+계정 정보는 Supabase Auth가 소유하므로 우리가 만드는 것은 `public` 스키마의 아래
+테이블뿐이다.
+
 ```
-users            id, email(unique), password_hash, created_at
-profiles         user_id(PK,FK), nickname(unique), bio, avatar_url, updated_at
-posts            id, author_id(FK), content, created_at, updated_at, deleted_at
+auth.users       (Supabase Auth 소유 — 이메일 · 비밀번호 해시 · 세션 · refresh 토큰)
+
+profiles         id(PK, FK auth.users), nickname(unique), bio, avatar_url,
+                 created_at, updated_at
+posts            id, author_id(FK profiles), content, created_at, updated_at, deleted_at
 post_images      id, post_id(FK), url, width, height, sort_order
-reactions        user_id(FK), post_id(FK), type(like|dislike), created_at
+post_reactions   user_id(FK), post_id(FK), type(like|dislike), created_at
                  PK(user_id, post_id)
-comments         id, post_id(FK), author_id(FK), parent_id(FK,null),
+post_comments    id, post_id(FK), author_id(FK), parent_id(FK, self, null),
                  content, created_at, deleted_at
 follows          follower_id(FK), followee_id(FK), created_at
                  PK(follower_id, followee_id)
@@ -359,21 +415,38 @@ blocks           blocker_id(FK), blocked_id(FK), created_at
                  PK(blocker_id, blocked_id)
 reports          id, reporter_id(FK), target_type, target_id, reason,
                  status, created_at
-refresh_tokens   id, user_id(FK), token_hash, expires_at, revoked_at
 ```
 
-**필수 인덱스**
-- `posts(created_at DESC, id DESC)` — 전체 피드 커서
-- `posts(author_id, created_at DESC)` — 프로필 게시물
-- `comments(post_id, parent_id, created_at)` — 댓글 조회
-- `reactions(post_id, type)` — 반응 집계
+### 명명 규칙
+
+**자식 테이블은 `부모테이블단수_자식` 으로 짓는다** — `post_images`, `post_reactions`,
+`post_comments`. 이렇게 하면 `comments` 같은 일반 명사가 전역 이름을 선점하지 않으므로,
+나중에 다른 엔티티에 댓글이 붙어도 `photo_comments`를 **추가**하면 끝이다. 기존 테이블은
+손대지 않는다.
+
+`feed_`처럼 화면 이름을 접두사로 쓰지 않는다. 같은 게시물이 피드 · 프로필 · 상세 화면에
+모두 나타나므로 엔티티 이름이 특정 화면에 묶이면 안 된다.
+
+폴리모픽(`target_type` + `target_id`)은 `reports`에만 쓴다. FK와 RLS를 포기하는 대가가
+있으므로, 두 번째 부모가 실제로 생기기 전에는 도입하지 않는다.
+
+### 필수 인덱스
+
+- `posts(created_at desc, id desc) where deleted_at is null` — 전체 피드 커서
+- `posts(author_id, created_at desc, id desc) where deleted_at is null` — 프로필 게시물
+- `post_comments(post_id, parent_id, created_at)` — 댓글 조회
+- `post_reactions(post_id, type)` — 반응 집계
 - `follows(follower_id)` / `follows(followee_id)` — 양방향 조회
 
-**설계 원칙**
-- 삭제는 전부 **소프트 삭제**. 댓글·반응의 참조 무결성이 깨지지 않는다
-- `users`와 `profiles`를 분리한다. 인증 정보(민감)와 공개 정보(자주 조회)의 수명주기가 다르다
-- 비밀번호는 **해시만 저장**. 로그에도 남기지 않는다
+### 설계 원칙
 
+- **삭제는 전부 소프트 삭제**이고, 조회 정책(RLS)이 `deleted_at is null`을 강제한다.
+  단, 자식이 달릴 수 있는 `post_comments`는 전용 뷰로 예외를 만든다 (F6)
+- 소유자 컬럼(`author_id` · `user_id` · `follower_id`)은 **`default auth.uid()`**로
+  DB가 채운다. 앱이 보내지 않으므로 위조 경로가 없다
+- GRANT는 **컬럼 단위**로 최소한만 준다. RLS(어떤 행)와 GRANT(어떤 테이블·컬럼)는
+  별개이며 **둘 다 있어야 한다**
+- 비밀번호는 Supabase Auth가 해시로만 보관한다. 우리 테이블에는 어떤 형태로도 두지 않는다
 ---
 
 ## 8. 개발 단계
@@ -401,10 +474,13 @@ refresh_tokens   id, user_id(FK), token_hash, expires_at, revoked_at
 | 프로젝트 위치 | `~/Desktop/socialapp` |
 | 싫어요 | **개수 공개** (전환 가능하게 설계 — F5) |
 | 이미지 | 게시물당 **최대 5장** |
-| 본문 | 최대 **2000자** |
-| 백엔드 | **Supabase** (개발은 로컬 Docker) |
+| 본문 | 최대 **500자** (DB CHECK 기준) |
+| 백엔드 | **Supabase** (개발은 로컬 Docker). 앱이 SDK로 직접 접근, 권한은 RLS |
 | 로컬 DB | **drift**, 2단계 이후 도입 |
 | 비밀번호 재설정 | 기능은 MVP에 포함, **배포용 SMTP 연결만 배포 시점으로 연기** |
+| 삭제 | **전부 소프트 삭제** (`deleted_at`), 조회 RLS가 강제 |
+| 목록 | **전부 커서 페이지네이션** (`created_at desc, id desc`) |
+| 테이블 명명 | 자식 테이블은 `부모테이블단수_자식` (`post_comments`). 화면 이름 접두사 금지 |
 
 프로젝트 생성 명령:
 
@@ -414,10 +490,49 @@ flutter create --org com.karma --project-name daylog .
 
 ### 남은 판단
 
-- **자체 백엔드 전환 시점** — MVP(3단계) 완주 후 검토. 그때를 대비해 X2 api client와 각 Repository를 인터페이스로 격리해둔다
+- **자체 백엔드 전환 시점** — MVP(3단계) 완주 후 검토. 그때를 대비해 각 Repository를
+  인터페이스로 격리하고, Supabase SDK 타입이 `data/` 밖으로 나가지 않게 막는다
+  ([아키텍처](architecture.md) 규칙 ①)
 - **아이콘 · 스플래시** — 0단계 이후 아무 때나
+- **원격 Supabase 프로젝트 · 배포 파이프라인** — 현재 전부 로컬 Docker 기준이다
+- **iOS 검증** — Xcode 미설치 상태 ([개발환경](setup.md) §4)
+
+### 자체 백엔드 전환 메모
+
+초기 기획서는 백엔드를 직접 만드는 전제로 REST 시그니처를 적어뒀다. 지금은 Supabase를
+쓰므로 §6은 테이블·RLS 기준으로 다시 썼고, 그때의 시그니처 초안만 여기 남긴다.
+**현재 앱에는 이런 엔드포인트가 없다.** 전환 시점에 출발점으로만 쓴다.
+
+```text
+auth      POST /auth/signup · /auth/login · /auth/refresh · /auth/logout · GET /me
+profile   GET /users/:id · PATCH /me/profile · GET /users/check-nickname
+          GET /users/:id/posts?cursor=
+post      POST /uploads/presign · POST /posts · GET /posts/:id
+          PATCH /posts/:id · DELETE /posts/:id
+feed      GET /feed/public?cursor=&limit= · GET /feed/following?cursor=&limit=
+reaction  PUT /posts/:id/reaction · DELETE /posts/:id/reaction
+comment   POST /posts/:id/comments · GET /posts/:id/comments?cursor=
+          DELETE /comments/:id
+safety    POST /reports · PUT|DELETE /users/:id/block · GET /me/blocks
+follow    PUT|DELETE /users/:id/follow
+          GET /users/:id/followers?cursor= · GET /users/:id/followings?cursor=
+```
+
+전환할 때 Supabase가 대신 해주던 것들을 직접 만들어야 한다: 비밀번호 해싱(bcrypt 또는
+argon2), JWT 발급·검증 미들웨어, refresh 토큰 회전과 무효화(`refresh_tokens` 테이블),
+그리고 **RLS로 표현하던 권한 규칙 전부를 애플리케이션 코드로 옮기는 일**. 마지막 항목이
+가장 크고, 빠뜨리기도 가장 쉽다.
 
 ## 10. 다음 할 일
 
-1. 0단계 착수 — `flutter create` · Supabase 로컬 Docker 기동 · 첫 SQL 마이그레이션
-2. F1(auth)부터 feature 문서 작성 — 구현 기록은 `docs/features/<name>/`에, 테스트 범위와 실행 방법은 `docs/testing/features/<name>.md`에 작성
+0단계와 F1(auth)은 완료했다. 진행 현황의 단일 기준은
+[아키텍처 §7·§8](architecture.md)이다.
+
+1. **스키마 정합성 맞추기** — `feed_posts` → `posts` rename, `deleted_at` 추가,
+   조회 RLS에 `deleted_at is null`, 커서용 부분 인덱스
+2. **앱 feature 분리** — 게시물 CRUD를 `features/post`로, `features/feed`는 목록 전용
+3. **커서 페이지네이션 전환** — `range`/offset 제거
+4. F2 profile 마무리 (아바타 업로드 · 타인 프로필), F3 post 이미지, F4 피드 작성자 표시
+
+feature마다 구현 기록은 `docs/features/<name>/`에, 테스트 범위와 실행 방법은
+`docs/testing/features/<name>.md`에 남긴다.
