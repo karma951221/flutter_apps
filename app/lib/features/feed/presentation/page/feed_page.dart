@@ -10,17 +10,25 @@ import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
-import '../../domain/entity/feed_post.dart';
+import '../../../post/domain/entity/post.dart';
+import '../../../post/presentation/cubit/post_cubit.dart';
+import '../../../post/presentation/widget/post_tile.dart';
 import '../cubit/feed_cubit.dart';
 import '../cubit/feed_state.dart';
-import '../widget/feed_post_tile.dart';
 
+/// 피드 목록 화면.
+///
+/// 목록은 [FeedCubit] 이, 게시물 변경은 [PostCubit] 이 소유한다. 변경 결과를
+/// 목록 상태에 반영해 전체 재조회 없이 화면을 맞춘다.
 class FeedPage extends StatelessWidget {
   const FeedPage({super.key});
 
   @override
-  Widget build(BuildContext context) => BlocProvider(
-    create: (_) => getIt<FeedCubit>()..load(),
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider(create: (_) => getIt<FeedCubit>()..load()),
+      BlocProvider(create: (_) => getIt<PostCubit>()),
+    ],
     child: const _FeedView(),
   );
 }
@@ -35,6 +43,7 @@ class _FeedView extends StatelessWidget {
       AuthAuthenticated(:final user) => user.id,
       _ => '',
     };
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('daylog'),
@@ -47,17 +56,14 @@ class _FeedView extends StatelessWidget {
           IconButton(
             tooltip: '로그아웃',
             icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthBloc>().add(
-              const AuthEvent.signOutRequested(),
-            ),
+            onPressed: () =>
+                context.read<AuthBloc>().add(const AuthEvent.signOutRequested()),
           ),
         ],
       ),
       body: BlocBuilder<FeedCubit, FeedState>(
         builder: (context, state) => switch (state.status) {
-          FeedStatus.loading => const Center(
-            child: CircularProgressIndicator(),
-          ),
+          FeedStatus.loading => const Center(child: CircularProgressIndicator()),
           FeedStatus.failure => _FeedError(
             message: state.failure?.message ?? '피드를 불러오지 못했습니다',
             onRetry: () => context.read<FeedCubit>().load(),
@@ -72,16 +78,17 @@ class _FeedView extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         tooltip: '새 게시물 작성',
-        onPressed: () => _openEditor(context, Routes.feedCompose),
+        onPressed: () => _compose(context),
         icon: const Icon(Icons.edit),
         label: const Text('작성'),
       ),
     );
   }
 
-  Future<void> _openEditor(BuildContext context, String path) async {
-    await context.push(path);
-    if (context.mounted) await context.read<FeedCubit>().refresh();
+  Future<void> _compose(BuildContext context) async {
+    final feed = context.read<FeedCubit>();
+    final created = await context.push<Post>(Routes.postCompose);
+    if (created != null) feed.prependPost(created);
   }
 }
 
@@ -93,7 +100,7 @@ class _FeedList extends StatelessWidget {
     required this.canLoadMore,
   });
 
-  final List<FeedPost> posts;
+  final List<Post> posts;
   final String currentUserId;
   final bool isLoadingMore;
   final bool canLoadMore;
@@ -107,11 +114,12 @@ class _FeedList extends StatelessWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           children: const [
             SizedBox(height: 180),
-            Center(child: Text('아직 작성된 피드가 없습니다.')),
+            Center(child: Text('아직 작성된 게시물이 없습니다.')),
           ],
         ),
       );
     }
+
     return RefreshIndicator(
       onRefresh: () => context.read<FeedCubit>().refresh(),
       child: NotificationListener<ScrollNotification>(
@@ -133,14 +141,14 @@ class _FeedList extends StatelessWidget {
                 child: Center(child: CircularProgressIndicator()),
               );
             }
+
             final post = posts[index];
-            return FeedPostTile(
+            final isMine = post.authorId == currentUserId;
+            return PostTile(
               post: post,
-              isMine: post.authorId == currentUserId,
-              onTap: post.authorId == currentUserId
-                  ? () => _openEditor(context, post)
-                  : () {},
-              onEdit: () => _openEditor(context, post),
+              isMine: isMine,
+              onTap: isMine ? () => _edit(context, post) : () {},
+              onEdit: () => _edit(context, post),
               onDelete: () => _confirmDelete(context, post),
             );
           },
@@ -149,12 +157,16 @@ class _FeedList extends StatelessWidget {
     );
   }
 
-  Future<void> _openEditor(BuildContext context, FeedPost post) async {
-    await context.push(Routes.feedEditPath(post.id), extra: post);
-    if (context.mounted) await context.read<FeedCubit>().refresh();
+  Future<void> _edit(BuildContext context, Post post) async {
+    final feed = context.read<FeedCubit>();
+    final updated = await context.push<Post>(
+      Routes.postEditPath(post.id),
+      extra: post,
+    );
+    if (updated != null) feed.replacePost(updated);
   }
 
-  Future<void> _confirmDelete(BuildContext context, FeedPost post) async {
+  Future<void> _confirmDelete(BuildContext context, Post post) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -174,14 +186,19 @@ class _FeedList extends StatelessWidget {
     );
     if (confirmed != true || !context.mounted) return;
 
-    final result = await context.read<FeedCubit>().delete(post.id);
+    final feed = context.read<FeedCubit>();
+    final result = await context.read<PostCubit>().delete(post.id);
     if (!context.mounted) return;
+
     result.when(
-      ok: (_) => AppSnackBar.show(
-        context,
-        message: '게시물을 삭제했습니다.',
-        type: AppSnackBarType.success,
-      ),
+      ok: (_) {
+        feed.removePost(post.id);
+        AppSnackBar.show(
+          context,
+          message: '게시물을 삭제했습니다.',
+          type: AppSnackBarType.success,
+        );
+      },
       err: (failure) => AppSnackBar.show(
         context,
         message: failure.message ?? '게시물을 삭제하지 못했습니다.',

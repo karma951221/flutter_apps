@@ -1,13 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/result/result.dart';
-import '../../domain/entity/feed_post.dart';
-import '../../domain/entity/feed_post_draft.dart';
-import '../../domain/entity/feed_post_update.dart';
+import '../../../post/domain/entity/post.dart';
 import '../../domain/usecase/feed_use_case.dart';
 import 'feed_state.dart';
 
+/// 피드 목록을 소유한다.
+///
+/// 게시물 변경은 post feature 가 수행하고, 그 결과만 여기로 반영한다
+/// ([prependPost] / [replacePost] / [removePost]). 변경마다 전체를 다시
+/// 불러오면 스크롤 위치와 읽던 자리가 사라진다.
 @injectable
 class FeedCubit extends Cubit<FeedState> {
   FeedCubit(this._useCase) : super(const FeedState());
@@ -19,12 +21,14 @@ class FeedCubit extends Cubit<FeedState> {
   Future<void> load() async {
     emit(const FeedState());
     final result = await _useCase.getFeedPosts(limit: _pageSize);
+    if (isClosed) return;
+
     emit(
       result.when(
-        ok: (posts) => FeedState(
+        ok: (page) => FeedState(
           status: FeedStatus.loaded,
-          posts: posts,
-          canLoadMore: posts.length == _pageSize,
+          posts: page.items,
+          nextCursor: page.nextCursor,
         ),
         err: (failure) =>
             FeedState(status: FeedStatus.failure, failure: failure),
@@ -45,69 +49,51 @@ class FeedCubit extends Cubit<FeedState> {
     emit(current.copyWith(isLoadingMore: true));
     final result = await _useCase.getFeedPosts(
       limit: _pageSize,
-      offset: current.posts.length,
+      cursor: current.nextCursor,
     );
+    if (isClosed) return;
+
     emit(
       result.when(
-        ok: (posts) => current.copyWith(
-          posts: [...current.posts, ...posts],
+        ok: (page) => current.copyWith(
+          posts: [...current.posts, ...page.items],
           isLoadingMore: false,
-          canLoadMore: posts.length == _pageSize,
+          nextCursor: page.nextCursor,
         ),
         err: (_) => current.copyWith(isLoadingMore: false),
       ),
     );
   }
 
-  Future<Result<FeedPost>> create(String content) async {
-    final result = await _useCase.createFeedPost(
-      FeedPostDraft(content: content),
-    );
+  /// 새로 작성된 게시물을 목록 맨 앞에 넣는다.
+  void prependPost(Post post) {
     final current = state;
-    if (current.status == FeedStatus.loaded) {
-      result.when(
-        ok: (post) => emit(current.copyWith(posts: [post, ...current.posts])),
-        err: (_) {},
-      );
-    }
-    return result;
+    if (current.status != FeedStatus.loaded) return;
+    emit(current.copyWith(posts: [post, ...current.posts]));
   }
 
-  Future<Result<FeedPost>> update(String postId, String content) async {
-    final result = await _useCase.updateFeedPost(
-      postId,
-      FeedPostUpdate(content: content),
-    );
+  /// 수정된 게시물을 목록에 반영한다.
+  void replacePost(Post post) {
     final current = state;
-    if (current.status == FeedStatus.loaded) {
-      result.when(
-        ok: (updated) => emit(
-          current.copyWith(
-            posts: [
-              for (final post in current.posts)
-                if (post.id == updated.id) updated else post,
-            ],
-          ),
-        ),
-        err: (_) {},
-      );
-    }
-    return result;
+    if (current.status != FeedStatus.loaded) return;
+    emit(
+      current.copyWith(
+        posts: [
+          for (final item in current.posts)
+            if (item.id == post.id) post else item,
+        ],
+      ),
+    );
   }
 
-  Future<Result<void>> delete(String postId) async {
-    final result = await _useCase.deleteFeedPost(postId);
+  /// 삭제된 게시물을 목록에서 뺀다.
+  void removePost(String postId) {
     final current = state;
-    if (current.status == FeedStatus.loaded) {
-      result.when(
-        ok: (_) => emit(
-          current.copyWith(
-            posts: current.posts.where((post) => post.id != postId).toList(),
-          ),
-        ),
-        err: (_) {},
-      );
-    }
-    return result;
+    if (current.status != FeedStatus.loaded) return;
+    emit(
+      current.copyWith(
+        posts: current.posts.where((post) => post.id != postId).toList(),
+      ),
+    );
   }
 }

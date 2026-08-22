@@ -33,6 +33,13 @@ import '../../features/feed/data/repository/feed_repository_impl.dart' as _i749;
 import '../../features/feed/domain/repository/feed_repository.dart' as _i898;
 import '../../features/feed/domain/usecase/feed_use_case.dart' as _i1009;
 import '../../features/feed/presentation/cubit/feed_cubit.dart' as _i58;
+import '../../features/post/data/datasource/post_data_source.dart' as _i487;
+import '../../features/post/data/datasource/supabase_post_data_source.dart'
+    as _i215;
+import '../../features/post/data/repository/post_repository_impl.dart' as _i238;
+import '../../features/post/domain/repository/post_repository.dart' as _i735;
+import '../../features/post/domain/usecase/post_use_case.dart' as _i944;
+import '../../features/post/presentation/cubit/post_cubit.dart' as _i1054;
 import '../../features/profile/data/datasource/profile_data_source.dart'
     as _i986;
 import '../../features/profile/data/datasource/supabase_profile_data_source.dart'
@@ -66,6 +73,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i692.AuthDataSource>(
       () => _i87.SupabaseAuthDataSource(gh<_i454.SupabaseClient>()),
     );
+    gh.lazySingleton<_i487.PostDataSource>(
+      () => _i215.SupabasePostDataSource(gh<_i454.SupabaseClient>()),
+    );
     gh.lazySingleton<_i898.FeedRepository>(
       () => _i749.FeedRepositoryImpl(gh<_i514.FeedDataSource>()),
     );
@@ -77,6 +87,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i364.ProfileRepository>(
       () => _i309.ProfileRepositoryImpl(gh<_i986.ProfileDataSource>()),
+    );
+    gh.lazySingleton<_i735.PostRepository>(
+      () => _i238.PostRepositoryImpl(gh<_i487.PostDataSource>()),
+    );
+    gh.lazySingleton<_i944.PostUseCase>(
+      () => _i944.DefaultPostUseCase(gh<_i735.PostRepository>()),
     );
     gh.lazySingleton<_i176.AuthUseCase>(
       () => _i176.DefaultAuthUseCase(gh<_i961.AuthRepository>()),
@@ -94,6 +110,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i58.FeedCubit>(() => _i58.FeedCubit(gh<_i1009.FeedUseCase>()));
     gh.lazySingleton<_i408.ProfileUseCase>(
       () => _i408.DefaultProfileUseCase(gh<_i364.ProfileRepository>()),
+    );
+    gh.factory<_i1054.PostCubit>(
+      () => _i1054.PostCubit(gh<_i944.PostUseCase>()),
     );
     gh.factory<_i36.ProfileCubit>(
       () => _i36.ProfileCubit(gh<_i408.ProfileUseCase>()),

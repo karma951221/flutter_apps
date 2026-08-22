@@ -1,16 +1,15 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/error/failure.dart';
+import '../../../../core/pagination/cursor_page.dart';
 import '../../../../core/result/result.dart';
-import '../../domain/entity/feed_post.dart';
-import '../../domain/entity/feed_post_draft.dart';
-import '../../domain/entity/feed_post_update.dart';
+import '../../../post/domain/entity/post.dart';
 import '../../domain/repository/feed_repository.dart';
+import '../cursor/feed_cursor.dart';
 import '../datasource/feed_data_source.dart';
 import '../mapper/feed_post_mapper.dart';
 import 'feed_repository_error_handler.dart';
 
-/// FeedDataSource를 domain Repository 계약으로 변환하는 구현체.
+/// FeedDataSource 를 domain Repository 계약으로 변환하는 구현체.
 @LazySingleton(as: FeedRepository)
 class FeedRepositoryImpl
     with FeedRepositoryErrorHandler
@@ -20,50 +19,23 @@ class FeedRepositoryImpl
   final FeedDataSource _dataSource;
 
   @override
-  Future<Result<List<FeedPost>>> getFeedPosts({
+  Future<Result<CursorPage<Post>>> getPosts({
     required int limit,
-    required int offset,
+    String? cursor,
   }) => guard(() async {
-    return (await _dataSource.getFeedPosts(
-      limit: limit,
-      offset: offset,
-    )).map((post) => post.toEntity()).toList();
+    // 한 개를 더 요청해서 다음 페이지 존재 여부를 알아낸다. 전체 개수를 세는
+    // COUNT 쿼리를 매번 돌리지 않아도 된다.
+    final rows = await _dataSource.getPosts(
+      limit: limit + 1,
+      cursor: FeedCursor.decode(cursor),
+    );
+
+    final hasMore = rows.length > limit;
+    final page = hasMore ? rows.take(limit).toList() : rows;
+
+    return CursorPage<Post>(
+      items: page.map((dto) => dto.toEntity()).toList(),
+      nextCursor: hasMore ? page.last.toCursor().encode() : null,
+    );
   });
-
-  @override
-  Future<Result<FeedPost>> getFeedPost(String postId) => guard(() async {
-    return (await _dataSource.getFeedPost(postId)).toEntity();
-  });
-
-  @override
-  Future<Result<FeedPost>> createFeedPost(FeedPostDraft draft) {
-    return guard(() async {
-      final post = await _dataSource.createFeedPost(draft);
-      return post?.toEntity() ?? _throwNotAuthenticated();
-    });
-  }
-
-  @override
-  Future<Result<FeedPost>> updateFeedPost(
-    String postId,
-    FeedPostUpdate update,
-  ) {
-    return guard(() async {
-      final post = await _dataSource.updateFeedPost(postId, update);
-      return post?.toEntity() ?? _throwNotAuthenticated();
-    });
-  }
-
-  @override
-  Future<Result<void>> deleteFeedPost(String postId) {
-    return guard(() async {
-      final deleted = await _dataSource.deleteFeedPost(postId);
-      if (deleted == null) _throwNotAuthenticated();
-    });
-  }
-
-  Never _throwNotAuthenticated() => throw const Failure.auth(
-    message: '로그인이 필요합니다',
-    code: 'not_authenticated',
-  );
 }

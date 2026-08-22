@@ -11,10 +11,10 @@ import '../../features/auth/presentation/page/password_reset_page.dart';
 import '../../features/auth/presentation/page/sign_in_page.dart';
 import '../../features/auth/presentation/page/sign_up_page.dart';
 import '../../features/auth/presentation/page/splash_page.dart';
-import '../../features/feed/domain/entity/feed_post.dart';
-import '../../features/feed/presentation/page/feed_editor_page.dart';
 import '../../features/feed/presentation/page/feed_page.dart';
-import '../../features/feed/presentation/cubit/feed_cubit.dart';
+import '../../features/post/domain/entity/post.dart';
+import '../../features/post/presentation/cubit/post_cubit.dart';
+import '../../features/post/presentation/page/post_editor_page.dart';
 import '../../features/profile/presentation/page/edit_profile_page.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
 import 'routes.dart';
@@ -55,17 +55,17 @@ GoRouter createRouter(AuthBloc authBloc) {
       ),
       GoRoute(path: Routes.home, builder: (_, _) => const FeedPage()),
       GoRoute(
-        path: Routes.feedCompose,
+        path: Routes.postCompose,
         builder: (_, _) => BlocProvider(
-          create: (_) => getIt<FeedCubit>(),
-          child: const FeedEditorPage(),
+          create: (_) => getIt<PostCubit>(),
+          child: const PostEditorPage(),
         ),
       ),
       GoRoute(
-        path: Routes.feedEdit,
+        path: Routes.postEdit,
         builder: (_, state) => BlocProvider(
-          create: (_) => getIt<FeedCubit>(),
-          child: FeedEditorPage(post: state.extra as FeedPost?),
+          create: (_) => getIt<PostCubit>(),
+          child: PostEditorPage(post: state.extra as Post?),
         ),
       ),
       GoRoute(path: Routes.profile, builder: (_, _) => const ProfilePage()),

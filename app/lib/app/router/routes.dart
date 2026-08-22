@@ -4,10 +4,10 @@ abstract final class Routes {
   static const signUp = '/sign-up';
   static const passwordReset = '/password-reset';
   static const home = '/';
-  static const feedCompose = '/feed/compose';
-  static const feedEdit = '/feed/:postId/edit';
+  static const postCompose = '/posts/new';
+  static const postEdit = '/posts/:postId/edit';
 
-  static String feedEditPath(String postId) => '/feed/$postId/edit';
+  static String postEditPath(String postId) => '/posts/$postId/edit';
   static const profile = '/profile';
   static const profileEdit = '/profile/edit';
 

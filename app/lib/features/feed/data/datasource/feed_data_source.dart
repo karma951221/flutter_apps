@@ -1,15 +1,11 @@
-import '../../domain/entity/feed_post_draft.dart';
-import '../../domain/entity/feed_post_update.dart';
+import '../cursor/feed_cursor.dart';
 import '../dto/feed_post_dto.dart';
 
 /// 피드 원격 데이터 원천의 계약.
 abstract interface class FeedDataSource {
-  Future<List<FeedPostDto>> getFeedPosts({
+  /// 최신순으로 [limit] 개까지 조회한다. [cursor] 가 null 이면 첫 페이지다.
+  Future<List<FeedPostDto>> getPosts({
     required int limit,
-    required int offset,
+    FeedCursor? cursor,
   });
-  Future<FeedPostDto> getFeedPost(String postId);
-  Future<FeedPostDto?> createFeedPost(FeedPostDraft draft);
-  Future<FeedPostDto?> updateFeedPost(String postId, FeedPostUpdate update);
-  Future<FeedPostDto?> deleteFeedPost(String postId);
 }

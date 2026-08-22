@@ -18,8 +18,9 @@ void main() {
 
     for (final file in modelFiles) {
       final source = file.readAsStringSync();
+      // CursorPage<T> 처럼 타입 매개변수를 가진 모델도 대상이다.
       final classMatch = RegExp(
-        r'(?:abstract\s+|sealed\s+)?class\s+(\w+)\s+with\s+_\$',
+        r'(?:abstract\s+|sealed\s+)?class\s+(\w+)(?:<[^>]+>)?\s+with\s+_\$',
       ).firstMatch(source);
       expect(
         classMatch,
