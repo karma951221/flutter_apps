@@ -12,6 +12,7 @@ app/lib/                         app/test/
 ├── features/
 │   ├── auth/             →      ├── features/auth/
 │   ├── feed/             →      ├── features/feed/
+│   ├── post/             →      ├── features/post/
 │   └── profile/          →      └── features/profile/
 └── …                     →      └── convention/  # 코드베이스 전체 규칙
 ```
@@ -25,7 +26,7 @@ app/lib/                         app/test/
 cd app
 flutter test                 # 전체 테스트
 flutter analyze              # 정적 분석
-flutter test test/features/feed
+flutter test test/features/post
 flutter test test/convention
 ```
 
@@ -40,6 +41,7 @@ flutter test test/convention
 ## Feature별 범위
 
 - [auth](features/auth.md)
-- [feed](features/feed.md)
 - [profile](features/profile.md)
+- [post](features/post.md)
+- [feed](features/feed.md)
 - [코드 컨벤션 검사](conventions.md)

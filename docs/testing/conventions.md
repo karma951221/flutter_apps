@@ -9,6 +9,7 @@
 - 단일 모델은 `const factory ClassName`을 사용하면 안 된다.
 - 여러 변형이 필요한 sealed union은 named `const factory ClassName.case(...)`를
   사용해야 한다.
+- `CursorPage<T>` 처럼 타입 매개변수를 가진 모델도 같은 규칙을 따른다.
 
 실행:
 

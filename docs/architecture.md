@@ -2,7 +2,7 @@
 
 > [문서 허브](README.md) · [기획](overview.md) · [개발환경](setup.md) · [테스트 가이드](testing/README.md)
 
-> 초안 v0.1 · 2026-08-20 · [overview.md](overview.md)의 기술 스택 결정을 전제로 함
+> v0.2 · 2026-08-20 작성 · 2026-08-22 갱신 · [overview.md](overview.md)의 기술 스택 결정을 전제로 함
 
 ---
 
@@ -76,6 +76,8 @@ lib/
 │   │   └── error_mapper.dart    # PostgrestException/AuthException → Failure
 │   ├── result/
 │   │   └── result.dart          # Result<T> (성공/실패)
+│   ├── pagination/
+│   │   └── cursor_page.dart     # CursorPage<T> — 커서는 불투명 문자열
 │   ├── media/                   # X3
 │   │   ├── image_picker_service.dart
 │   │   ├── image_compressor.dart        # 1080px / WebP / q80
@@ -137,7 +139,7 @@ lib/
 
 ## 3. 지켜야 할 규칙 6개
 
-나머지는 자유롭게 하되, 이 넷은 지킨다.
+나머지는 자유롭게 하되, 이 여섯은 지킨다.
 
 ### ① Supabase 타입은 `data/` 밖으로 나가지 않는다
 
@@ -202,7 +204,35 @@ SDK 타입은 datasource와 공용 data 인프라 안에서만 다룬다.
 
 ### ⑥ feature 간 참조는 최소로
 
-feature끼리 필요하면 **`domain` 계층만** 참조한다. 위젯을 공유해야 하면 소유자가 명확한 쪽에 두고 import한다 — 예: 게시물 카드는 feed·profile 둘 다 쓰지만 `features/post/presentation/widget/post_card.dart`에 둔다. 애매하면 `design_system/widget/`으로 올린다.
+feature끼리 필요하면 **`domain` 계층만** 참조한다. `data`끼리는 참조하지 않는다 — DTO가 필요하면 각자 만든다. 위젯을 공유해야 하면 소유자가 명확한 쪽에 두고 import한다. 애매하면 `design_system/widget/`으로 올린다.
+
+**post와 feed의 경계가 이 규칙의 기준 예시다.**
+
+| | 소유 |
+|---|---|
+| `features/post` | `Post` 엔티티, 작성·수정·삭제, 에디터 화면, `PostTile` 위젯 |
+| `features/feed` | 목록 조회, 커서 페이지네이션, 무한 스크롤, 피드 화면 |
+
+feed는 post의 `domain/entity/post.dart`를 그대로 쓴다. 같은 게시물을 두 벌로 표현하지 않기 위해서다. 반면 **DTO는 각자 갖는다** — 피드는 곧 작성자 프로필과 반응·댓글 수를 조인해 받게 되고, 게시물 단건 조회는 그렇지 않다. 지금 모양이 같다고 합치면 그때 되돌려야 한다.
+
+목록 상태는 feed가, 게시물 변경은 post가 소유한다. 화면은 변경 결과를 `FeedCubit.prependPost` / `replacePost` / `removePost`로 목록에 반영한다. 변경할 때마다 전체를 다시 읽으면 스크롤 위치가 사라진다.
+
+---
+
+## 3-1. 목록은 커서 페이지네이션으로 만든다
+
+`OFFSET`은 스크롤 도중 새 글이 올라오면 항목이 밀려서 중복되거나 건너뛰어진다.
+`(created_at desc, id desc)` 복합 커서를 쓴다.
+
+- domain과 presentation은 커서를 **불투명 문자열**로만 다룬다. 형식을 아는 곳은
+  `features/<feature>/data/cursor/`뿐이다
+- repository가 `limit + 1`개를 요청해 다음 페이지 존재 여부를 판단한다. 전체 개수를
+  세는 COUNT 쿼리가 필요 없다
+- 다음 커서는 **잘라낸 뒤 실제로 돌려주는 마지막 항목** 기준으로 만든다. 잘라낸
+  항목으로 만들면 한 건이 건너뛰어진다
+- `created_at`이 같은 항목이 여러 개일 수 있으므로 `id` tie-break를 반드시 넣는다
+
+DB 쪽 인덱스와 정렬 조건은 [스키마](schema.md)를 따른다.
 
 ---
 
@@ -280,8 +310,12 @@ dart run build_runner watch --delete-conflicting-outputs
 
 - [x] **F1 auth** — 회원가입 · 로그인 · 인증 상태 유지 · 비밀번호 재설정 · 로그아웃
       ([기록](features/auth/history.md))
-- [ ] F2 profile
-- [ ] F3 post
-- [ ] F4 feed (전체)
+- [ ] **F2 profile** — 내 프로필 조회·수정, 닉네임 중복 확인까지.
+      **아바타 업로드와 타인 프로필 화면이 남았다**
+- [ ] **F3 post** — 텍스트 게시물 CRUD 와 소프트 삭제까지.
+      **이미지(`post_images` · Storage · X3 media)가 남았다**
+- [ ] **F4 feed (전체)** — 커서 페이지네이션과 무한 스크롤까지.
+      **작성자 프로필 조인이 남았다** (현재 카드가 `author_id` 첫 글자를 보여준다)
 
 세부 구축 절차와 겪은 함정은 [setup.md](setup.md) 참조.
+스키마의 현재 모습은 [schema.md](schema.md)를 본다.
