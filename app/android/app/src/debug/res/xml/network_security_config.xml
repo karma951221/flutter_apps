@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  디버그 빌드 전용.
+  로컬 Supabase(http://10.0.2.2:54321)에 붙기 위해 평문 HTTP 를 허용한다.
+  Android 는 API 28 부터 평문 HTTP 를 기본 차단하므로 이 설정이 없으면
+  에뮬레이터에서만 연결이 안 되는 현상이 발생한다.
+
+  이 파일은 src/debug 에만 있으므로 릴리즈 빌드에는 포함되지 않는다.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

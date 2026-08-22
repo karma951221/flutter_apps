@@ -1,0 +1,156 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:injectable/injectable.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
+
+import '../dto/auth_user_dto.dart';
+import 'auth_data_source.dart';
+
+@LazySingleton(as: AuthDataSource)
+class SupabaseAuthDataSource implements AuthDataSource {
+  SupabaseAuthDataSource(this._client);
+
+  final supabase.SupabaseClient _client;
+
+  static const _profileColumns = 'id, nickname, bio, avatar_url';
+
+  @override
+  Stream<AuthUserDto?> authStateChanges() {
+    late final StreamController<AuthUserDto?> controller;
+    StreamSubscription<supabase.AuthState>? subscription;
+
+    Future<void> handle(supabase.AuthState event) async {
+      if (controller.isClosed) return;
+      debugPrint(
+        '[auth] event=${event.event} session=${event.session != null}',
+      );
+
+      // passwordRecovery 는 "코드 검증 성공"일 뿐 로그인이 아니다.
+      if (event.event == supabase.AuthChangeEvent.passwordRecovery) return;
+
+      final user = event.session?.user;
+      if (user == null) {
+        controller.add(null);
+        return;
+      }
+
+      try {
+        controller.add(await _loadUser(user));
+      } catch (error) {
+        // 프로필 조회 실패가 로그인 자체를 막아서는 안 된다.
+        debugPrint('[auth] 프로필 조회 실패, 최소 정보로 진행: $error');
+        controller.add(
+          AuthUserDto(id: user.id, email: user.email ?? '', nickname: ''),
+        );
+      }
+    }
+
+    controller = StreamController<AuthUserDto?>(
+      onListen: () async {
+        subscription = _client.auth.onAuthStateChange.listen(
+          handle,
+          onError: controller.addError,
+        );
+        // 구독 이전에 이미 복원된 세션이 있으면 그것도 흘려준다.
+        if (!controller.isClosed) controller.add(await currentUser());
+      },
+      onCancel: () async => subscription?.cancel(),
+    );
+
+    return controller.stream;
+  }
+
+  @override
+  Future<AuthUserDto?> currentUser() async {
+    final user = _client.auth.currentUser;
+    if (user == null) return null;
+    return _loadUser(user);
+  }
+
+  @override
+  Future<AuthUserDto> signUp({
+    required String email,
+    required String password,
+    required String nickname,
+  }) async {
+    final response = await _client.auth.signUp(
+      email: email.trim(),
+      password: password,
+      data: {'nickname': nickname.trim()},
+    );
+    final user = response.user;
+    if (user == null) {
+      throw const supabase.AuthException('가입에 실패했습니다', statusCode: '500');
+    }
+    return _loadUser(user);
+  }
+
+  @override
+  Future<AuthUserDto> signIn({
+    required String email,
+    required String password,
+  }) async {
+    final response = await _client.auth.signInWithPassword(
+      email: email.trim(),
+      password: password,
+    );
+    final user = response.user;
+    if (user == null) {
+      throw const supabase.AuthException('로그인에 실패했습니다', statusCode: '401');
+    }
+    return _loadUser(user);
+  }
+
+  @override
+  Future<void> signOut() => _client.auth.signOut();
+
+  @override
+  Future<bool> isNicknameAvailable(String nickname) async {
+    final row = await _client
+        .from('profiles')
+        .select('id')
+        .ilike('nickname', nickname.trim())
+        .maybeSingle();
+    return row == null;
+  }
+
+  @override
+  Future<void> sendPasswordResetCode(String email) =>
+      _client.auth.resetPasswordForEmail(email.trim());
+
+  @override
+  Future<void> verifyPasswordResetCode({
+    required String email,
+    required String code,
+  }) => _client.auth.verifyOTP(
+    type: supabase.OtpType.recovery,
+    email: email.trim(),
+    token: code.trim(),
+  );
+
+  @override
+  Future<void> updatePassword(String newPassword) async {
+    await _client.auth.updateUser(
+      supabase.UserAttributes(password: newPassword),
+    );
+    // 재설정용 임시 세션을 그대로 두고 홈으로 보내지 않는다.
+    await _client.auth.signOut();
+  }
+
+  Future<AuthUserDto> _loadUser(supabase.User user) async {
+    final row = await _client
+        .from('profiles')
+        .select(_profileColumns)
+        .eq('id', user.id)
+        .maybeSingle();
+
+    return AuthUserDto(
+      id: user.id,
+      email: user.email ?? '',
+      nickname: row?['nickname'] as String? ?? '',
+      bio: row?['bio'] as String?,
+      avatarUrl: row?['avatar_url'] as String?,
+    );
+  }
+}

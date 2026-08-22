@@ -1,0 +1,11 @@
+import '../../../../../core/result/result.dart';
+import '../../entity/profile.dart';
+import '../../repository/profile_repository.dart';
+
+class GetProfileScenario {
+  const GetProfileScenario(this._repository);
+
+  final ProfileRepository _repository;
+
+  Future<Result<Profile>> call(String userId) => _repository.getProfile(userId);
+}

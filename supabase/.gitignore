@@ -1,0 +1,6 @@
+# Supabase
+.branches
+.temp
+
+# 로컬 전용 비밀값
+.env
