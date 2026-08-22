@@ -23,7 +23,8 @@
 
 부차 목표: **백엔드의 인증·스키마·권한 모델을 직접 설계하고 검증하는 것**. 현재는
 로컬 Supabase와 SQL 마이그레이션·RLS를 사용한다. 실제 스키마와 권한의 단일 기준은
-[`supabase/migrations/`](../supabase/migrations/)이다.
+[스키마 문서](schema.md)이고, 거기에 도달하는 실행 이력이
+[`supabase/migrations/`](../supabase/migrations/)다.
 
 ## 3. MVP 범위
 
@@ -142,8 +143,9 @@ F3와 F4는 데이터가 같은 테이블(`posts`)을 쓰지만 앱 코드에서
 `supabase_flutter` SDK로 직접 접근하며, **권한 판단은 전부 DB의 RLS가 한다.** 앱이
 보내는 조건은 UX일 뿐 보안 경계가 아니다.
 
-실제 스키마의 단일 기준은 [`supabase/migrations/`](../supabase/migrations/)이고, 이
-문서는 의도를 적는다. feature별 상세 설계는 `docs/features/<name>/plan.md`에서 확정한다.
+이 문서는 **의도**를 적는다. 실제 테이블·정책·권한의 단일 기준은
+[스키마 문서](schema.md)다. feature별 상세 설계는 `docs/features/<name>/plan.md`에서
+확정한다.
 
 > 자체 백엔드로 전환할 때 쓸 REST 시그니처 초안은 §9 「자체 백엔드 전환 메모」에 남겨뒀다.
 

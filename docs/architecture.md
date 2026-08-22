@@ -13,6 +13,7 @@ socialapp/
 ├── docs/
 │   ├── README.md                # 문서 진입점
 │   ├── overview.md              # 기획서
+│   ├── schema.md                # ★ 테이블·RLS·GRANT의 단일 기준
 │   ├── architecture.md          # 이 문서
 │   ├── testing/                 # 테스트 실행·규칙·feature별 범위
 │   │   ├── README.md
@@ -27,8 +28,8 @@ socialapp/
 │
 ├── supabase/                    # supabase init 결과 (백엔드)
 │   ├── config.toml
-│   ├── migrations/              # ★ 스키마 변경의 단일 소스
-│   │   └── 20260820120000_init.sql
+│   ├── migrations/              # 스키마 변경 실행 이력
+│   │   └── 20260820145331_init_profiles.sql
 │   └── seed.sql                 # 로컬 개발용 더미 데이터
 │
 └── app/                         # Flutter 앱
@@ -39,7 +40,9 @@ socialapp/
 
 **앱과 백엔드를 형제 폴더로 분리한다.** 나중에 자체 백엔드로 전환할 때 `server/`가 하나 더 생기면 되고, 그때 앱 코드는 손대지 않는다.
 
-**`supabase/migrations/`가 스키마의 유일한 진실이다.** Studio UI에서 테이블을 직접 만들지 않는다. 반드시 `supabase migration new <name>`으로 SQL 파일을 만들어 커밋한다. 이걸 지키지 않으면 로컬과 운영 스키마가 갈라진다.
+**스키마의 단일 기준은 [스키마 문서](schema.md)다.** 테이블·정책·권한이 지금 어떤 모습이어야 하는지는 거기서 확인하고, `supabase/migrations/`는 그 상태에 도달하는 실행 이력으로 읽는다.
+
+Studio UI에서 테이블을 직접 만들지 않는다. 반드시 `supabase migration new <name>`으로 SQL 파일을 만들어 커밋하고, **같은 커밋에서 스키마 문서를 갱신한다.** 이걸 지키지 않으면 로컬과 운영 스키마가 갈라진다.
 
 ---
 
