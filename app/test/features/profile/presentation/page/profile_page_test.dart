@@ -15,6 +15,7 @@ import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_author.dart';
 import 'package:daylog/features/post/domain/usecase/post_use_case.dart';
 import 'package:daylog/features/post/presentation/cubit/post_cubit.dart';
+import 'package:daylog/features/reaction/domain/usecase/reaction_use_case.dart';
 import 'package:daylog/features/profile/domain/entity/profile.dart';
 import 'package:daylog/features/profile/domain/usecase/profile_use_case.dart';
 import 'package:daylog/features/profile/presentation/cubit/profile_cubit.dart';
@@ -27,6 +28,8 @@ import 'package:mocktail/mocktail.dart';
 class _MockProfileUseCase extends Mock implements ProfileUseCase {}
 
 class _MockFeedUseCase extends Mock implements FeedUseCase {}
+
+class _MockReactionUseCase extends Mock implements ReactionUseCase {}
 
 class _MockPostUseCase extends Mock implements PostUseCase {}
 
@@ -70,7 +73,7 @@ void main() {
 
     getIt
       ..registerFactory<ProfileCubit>(() => ProfileCubit(profileUseCase))
-      ..registerFactory<FeedCubit>(() => FeedCubit(feedUseCase))
+      ..registerFactory<FeedCubit>(() => FeedCubit(feedUseCase, _MockReactionUseCase()))
       ..registerFactory<PostCubit>(() => PostCubit(_MockPostUseCase()));
   });
 

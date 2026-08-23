@@ -36,6 +36,7 @@ import '../../features/comment/data/repository/comment_repository_impl.dart'
 import '../../features/comment/domain/repository/comment_repository.dart'
     as _i813;
 import '../../features/comment/domain/usecase/comment_use_case.dart' as _i1011;
+import '../../features/comment/presentation/cubit/comment_cubit.dart' as _i37;
 import '../../features/feed/data/datasource/feed_data_source.dart' as _i514;
 import '../../features/feed/data/datasource/supabase_feed_data_source.dart'
     as _i402;
@@ -162,7 +163,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i102.SignUpCubit>(
       () => _i102.SignUpCubit(gh<_i176.AuthUseCase>()),
     );
-    gh.factory<_i58.FeedCubit>(() => _i58.FeedCubit(gh<_i1009.FeedUseCase>()));
     gh.lazySingleton<_i408.ProfileUseCase>(
       () => _i408.DefaultProfileUseCase(gh<_i364.ProfileRepository>()),
     );
@@ -174,6 +174,16 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i650.ReactionUseCase>(
       () => _i650.DefaultReactionUseCase(gh<_i831.ReactionRepository>()),
+    );
+    gh.factory<_i58.FeedCubit>(
+      () =>
+          _i58.FeedCubit(gh<_i1009.FeedUseCase>(), gh<_i650.ReactionUseCase>()),
+    );
+    gh.factory<_i37.CommentCubit>(
+      () => _i37.CommentCubit(
+        gh<_i1011.CommentUseCase>(),
+        gh<_i650.ReactionUseCase>(),
+      ),
     );
     return this;
   }

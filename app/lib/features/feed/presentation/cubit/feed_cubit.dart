@@ -1,8 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../../../core/error/failure.dart';
+import '../../../../core/result/result.dart';
 import '../../../post/domain/entity/post.dart';
 import '../../../reaction/domain/entity/reaction_summary.dart';
+import '../../../reaction/domain/entity/reaction_target.dart';
+import '../../../reaction/domain/entity/reaction_type.dart';
+import '../../../reaction/domain/usecase/reaction_use_case.dart';
 import '../../domain/entity/feed_post.dart';
 import '../../domain/usecase/feed_use_case.dart';
 import 'feed_state.dart';
@@ -12,13 +17,19 @@ import 'feed_state.dart';
 /// 게시물 변경은 post feature 가 수행하고, 그 결과만 여기로 반영한다
 /// ([prependPost] / [replacePost] / [removePost]). 변경마다 전체를 다시
 /// 불러오면 스크롤 위치와 읽던 자리가 사라진다.
+///
+/// 감정표현만 예외로 여기서 직접 저장한다 ([toggleReaction]). 반응 전용
+/// Bloc 을 두지 않기 때문이다 — 반응 상태는 목록 항목 안에 살고, 낙관적
+/// 업데이트와 실패 복원은 목록을 소유한 쪽만 할 수 있다
+/// (docs/features/reaction/plan.md).
 @injectable
 class FeedCubit extends Cubit<FeedState> {
-  FeedCubit(this._useCase) : super(const FeedState());
+  FeedCubit(this._useCase, this._reactionUseCase) : super(const FeedState());
 
   static const _pageSize = 20;
 
   final FeedUseCase _useCase;
+  final ReactionUseCase _reactionUseCase;
   String? _authorId;
 
   Future<void> load() async {
@@ -136,6 +147,41 @@ class FeedCubit extends Cubit<FeedState> {
         ],
       ),
     );
+  }
+
+  /// 감정을 눌러 저장하고 목록에 반영한다.
+  ///
+  /// 탭 직후에 계산된 다음 상태를 먼저 그리고, 저장이 실패하면 이전 값으로
+  /// 되돌린다. 화면은 돌려받은 Result 로 실패만 알린다.
+  Future<Result<ReactionSummary>> toggleReaction(
+    String postId,
+    ReactionType tapped,
+  ) async {
+    final current = state;
+    if (current.status != FeedStatus.loaded) {
+      return const Err(Failure.validation(message: '목록을 먼저 읽어야 합니다'));
+    }
+
+    final index = current.items.indexWhere((item) => item.id == postId);
+    if (index < 0) {
+      return const Err(Failure.notFound(message: '게시물을 찾을 수 없습니다'));
+    }
+
+    final previous = current.items[index].reactions;
+    applyReaction(postId, previous.toggled(tapped));
+
+    final result = await _reactionUseCase.toggle(
+      target: ReactionTarget.post(postId),
+      tapped: tapped,
+      current: previous,
+    );
+    if (isClosed) return result;
+
+    result.when(
+      ok: (next) => applyReaction(postId, next),
+      err: (_) => applyReaction(postId, previous),
+    );
+    return result;
   }
 
   /// 댓글 수를 해당 항목에만 반영한다. 댓글 화면에서 돌아올 때 목록을 다시

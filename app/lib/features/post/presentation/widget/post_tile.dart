@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
+import '../../../../design_system/widget/app_count_action.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
+import '../../../reaction/domain/entity/reaction_summary.dart';
+import '../../../reaction/domain/entity/reaction_type.dart';
+import '../../../reaction/presentation/widget/reaction_bar.dart';
 import '../../domain/entity/post.dart';
 import '../../domain/entity/post_author.dart';
 
@@ -15,6 +19,10 @@ import '../../domain/entity/post_author.dart';
 /// [author] 를 옵션으로 두지 않는다. 값이 없을 때 보여줄 그럴듯한 대체 표시를
 /// 만들면 조인을 빠뜨린 화면이 조용히 넘어간다. 목록을 만드는 쪽이 작성자를
 /// 함께 가져오도록 타입으로 강제한다.
+///
+/// 반응·댓글 줄은 [onReaction] 이 있을 때만 그린다. 게시물만 보여주는 화면이
+/// 누를 수 없는 버튼을 그리지 않게 하기 위해서다. 감정 위젯은 reaction feature
+/// 가 소유하고 여기서 import 한다 (아키텍처 규칙 ⑥ — 소유자가 명확한 쪽에 둔다).
 class PostTile extends StatelessWidget {
   const PostTile({
     required this.post,
@@ -23,6 +31,10 @@ class PostTile extends StatelessWidget {
     required this.onTap,
     this.onEdit,
     this.onDelete,
+    this.reactions = const ReactionSummary(),
+    this.commentCount = 0,
+    this.onReaction,
+    this.onComment,
     super.key,
   });
 
@@ -32,6 +44,18 @@ class PostTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+
+  /// 감정 집계와 내 반응. 목록 뷰가 항목과 함께 내려준 값이다.
+  final ReactionSummary reactions;
+
+  /// 살아 있는 댓글과 답글의 합.
+  final int commentCount;
+
+  /// 감정을 눌렀을 때. null 이면 반응·댓글 줄을 그리지 않는다.
+  final ValueChanged<ReactionType>? onReaction;
+
+  /// 댓글 화면으로 가는 동작.
+  final VoidCallback? onComment;
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +135,20 @@ class PostTile extends StatelessWidget {
                       ),
                     ),
                   ),
+                ),
+              ],
+              if (onReaction != null) ...[
+                const SizedBox(height: AppSpacing.xs),
+                Row(
+                  children: [
+                    ReactionBar(summary: reactions, onTap: onReaction),
+                    AppCountAction(
+                      icon: Icons.mode_comment_outlined,
+                      count: commentCount,
+                      tooltip: '댓글',
+                      onPressed: onComment,
+                    ),
+                  ],
                 ),
               ],
             ],

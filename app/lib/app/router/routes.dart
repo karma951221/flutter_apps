@@ -6,8 +6,11 @@ abstract final class Routes {
   static const home = '/';
   static const postCompose = '/posts/new';
   static const postEdit = '/posts/:postId/edit';
+  static const postComments = '/posts/:postId/comments';
 
   static String postEditPath(String postId) => '/posts/$postId/edit';
+
+  static String postCommentsPath(String postId) => '/posts/$postId/comments';
   static const profile = '/profile';
   static const profileEdit = '/profile/edit';
   static const userProfile = '/users/:userId';

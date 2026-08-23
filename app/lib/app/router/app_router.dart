@@ -11,6 +11,7 @@ import '../../features/auth/presentation/page/password_reset_page.dart';
 import '../../features/auth/presentation/page/sign_in_page.dart';
 import '../../features/auth/presentation/page/sign_up_page.dart';
 import '../../features/auth/presentation/page/splash_page.dart';
+import '../../features/comment/presentation/page/post_comments_page.dart';
 import '../../features/feed/presentation/page/feed_page.dart';
 import '../../features/post/domain/entity/post.dart';
 import '../../features/post/presentation/cubit/post_cubit.dart';
@@ -66,6 +67,15 @@ GoRouter createRouter(AuthBloc authBloc) {
         builder: (_, state) => BlocProvider(
           create: (_) => getIt<PostCubit>(),
           child: PostEditorPage(post: state.extra as Post?),
+        ),
+      ),
+      GoRoute(
+        path: Routes.postComments,
+        builder: (_, state) => PostCommentsPage(
+          postId: state.pathParameters['postId']!,
+          // 화면을 나갈 때 돌려줄 최종 댓글 수의 출발점. 목록이 이미 아는 값을
+          // 넘기므로 상세를 열자마자 개수를 다시 조회하지 않는다.
+          initialCount: state.extra as int? ?? 0,
         ),
       ),
       GoRoute(path: Routes.profile, builder: (_, _) => const ProfilePage()),

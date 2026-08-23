@@ -2,8 +2,8 @@
 
 > [문서 허브](../../README.md) · [기획 F5](../../overview.md) · [스키마](../../schema.md) · [아키텍처](../../architecture.md)
 
-> 상태: **착수 전** · 작성 2026-08-23 · 이 문서는 화면이 아니라 **데이터·권한·usecase**를 확정한다.
-> 화면과 상태 전이는 구현 시점에 이 문서에 절을 더한다.
+> 상태: **완료** · 작성 2026-08-23 · 화면 절 추가 2026-08-24 ([구현 기록](history.md))
+> 진행 상태의 단일 기준은 [진행 현황](../../status.md)이다.
 
 ## 범위
 
@@ -200,36 +200,73 @@ features/reaction/
 `FeedCubit.applyReaction(postId, next)` · `CommentCubit.applyReaction(commentId, next)`.
 기존 `prependPost` / `replacePost` / `removePost`와 같은 결이다.
 
+## 화면
+
+전용 화면이 없다. 감정은 **다른 화면 안에 얹히는 줄**이고, 그 줄을 그리는 위젯만
+이 feature 가 소유한다.
+
+| 위젯 | 자리 | 하는 일 |
+|---|---|---|
+| `ReactionBar` | `features/reaction/presentation/widget/` | 감정 버튼 줄. 상태를 갖지 않고 누른 감정만 올려보낸다 |
+| `AppCountAction` | `design_system/widget/` | 아이콘 + 개수 버튼. 좋아요·싫어요·댓글이 같은 모양을 쓴다 |
+
+`ReactionBar` 가 보여줄 감정을 `types` 로 받는 이유는 이 계획의 노출 결정 그대로다
+— 응답은 모든 종류를 담고 **무엇을 그릴지는 화면이 고른다.** 싫어요를 내리려면
+기본값에서 빼면 되고 백엔드는 그대로다.
+
+위젯이 reaction 에 있고 `PostTile`(post) 과 `CommentTile`(comment) 이 import 한다.
+[아키텍처 규칙 ⑥](../../architecture.md)의 "위젯을 공유해야 하면 소유자가 명확한
+쪽에 두고 import 한다" 를 그대로 따른 것이다.
+
+### 상태 전이
+
+목록을 소유한 쪽이 저장까지 한다. `FeedCubit.toggleReaction` ·
+`CommentCubit.toggleReaction` 이 같은 세 단계를 밟는다.
+
+```text
+탭 → current.toggled(tapped) 를 즉시 목록에 반영
+   → ReactionUseCase.toggle(target, tapped, current)
+   → 성공: 돌려받은 요약으로 교체 (같은 값이다)
+     실패: 이전 요약으로 되돌리고 화면이 Snackbar 로 알린다
+```
+
+`FeedCubit` 이 `FeedUseCase` 와 `ReactionUseCase` 둘을 주입받는 것은
+[규칙 ③](../../architecture.md)과 어긋나지 않는다 — 규칙은 **feature 당 facade
+하나**이고, 반응은 다른 feature 다. 반응 전용 Cubit 을 만들면 같은 항목의 상태가
+두 곳에 생긴다.
+
 ## 다른 feature에 미치는 변경
 
 | 대상 | 변경 |
 |---|---|
 | `posts_with_author` | `reaction_counts` · `my_reaction` · `comment_count` 추가 |
-| `features/feed` | `FeedPost`에 `reactions` · `commentCount` 추가, DTO·mapper 갱신, `applyReaction` |
+| `features/feed` | `FeedPost`에 `reactions` · `commentCount` 추가, DTO·mapper 갱신, `applyReaction` · `toggleReaction` |
 | `features/comment` | `PostComment`가 `reactions`를 갖는다 ([F6](../comment/plan.md)) |
+| `features/post` | `PostTile` 에 반응·댓글 줄이 붙는다 (`onReaction` 이 있을 때만 그린다) |
+| `design_system` | `AppCountAction` 추가 |
 
 feed와 comment는 reaction의 **`domain` 계층만** 참조한다. DTO는 각자 갖는다.
 
 ## 완료 조건
 
-- [ ] 게시물·댓글에 좋아요와 싫어요를 남기고, 같은 것을 다시 눌러 취소한다
-- [ ] 좋아요 상태에서 싫어요를 누르면 좋아요가 해제되고 왕복은 한 번이다
-- [ ] 목록 조회 한 번으로 개수와 내 반응이 함께 온다 (항목당 추가 조회 없음)
-- [ ] 탭 즉시 화면이 바뀌고, 실패하면 이전 값으로 돌아간다
-- [ ] 감정 종류를 하나 더하는 데 필요한 변경이 CHECK 제약 두 곳과 앱의 표시 코드뿐이다
+- [x] 게시물·댓글에 좋아요와 싫어요를 남기고, 같은 것을 다시 눌러 취소한다
+- [x] 좋아요 상태에서 싫어요를 누르면 좋아요가 해제되고 왕복은 한 번이다
+- [x] 목록 조회 한 번으로 개수와 내 반응이 함께 온다 (항목당 추가 조회 없음)
+- [x] 탭 즉시 화면이 바뀌고, 실패하면 이전 값으로 돌아간다
+- [x] 감정 종류를 하나 더하는 데 필요한 변경이 CHECK 제약 두 곳과 앱의 표시 코드뿐이다
 
 ## 검증 항목 (로컬 Supabase)
 
-- [ ] **`upsert`가 동작한다** — `user_id`가 페이로드에 없고 `default auth.uid()`로만
+- [x] **`upsert`가 동작한다** — `user_id`가 페이로드에 없고 `default auth.uid()`로만
       채워지는 상태에서 `on conflict (user_id, post_id)`가 동작하는지 확인한다.
       GRANT 를 위와 같이 맞춰도 실패하면 대안은 `set_reaction` RPC 하나이고, 그때는
       권한 경계가 함수 본문으로 옮겨간다는 점을 스키마 문서에 적는다
-- [ ] `post_id`를 바꿔 삭제된 게시물로 반응을 옮기는 UPDATE 가 거부된다
-- [ ] 남의 `user_id`로 삽입·수정·삭제가 거부된다
-- [ ] 삭제된 게시물·댓글에 반응 삽입이 거부된다
-- [ ] `type`에 정의되지 않은 값을 넣으면 CHECK가 거부한다
-- [ ] 반응이 없는 대상의 `reaction_counts`가 `{}`이고 `my_reaction`이 `null`이다
-- [ ] 비로그인(anon) 조회에서 개수는 보이고 `my_reaction`은 `null`이다
+- [x] `post_id`를 바꿔 삭제된 게시물로 반응을 옮기는 UPDATE 가 거부된다
+- [x] 남의 `user_id`로 삽입·수정·삭제가 거부된다
+- [x] 삭제된 게시물·댓글에 반응 삽입이 거부된다
+- [x] `type`에 정의되지 않은 값을 넣으면 CHECK가 거부한다
+- [x] 반응이 없는 대상의 `reaction_counts`가 `{}`이고 `my_reaction`이 `null`이다
+- [x] 비로그인(anon) 조회에서 개수는 보이고 `my_reaction`은 `null`이다
 
 ## 범위 밖
 

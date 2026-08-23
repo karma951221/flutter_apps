@@ -32,6 +32,20 @@
 | `AddCommentScenario` | 답글 | `parentId` 를 그대로 넘긴다. 2단 제한의 최종 판정은 DB 트리거다. |
 | `DeleteCommentScenario` | 빈 id | 요청 자체를 막는다. |
 | `DeleteCommentScenario` | 저장소 결과 | `true`/`false` 를 그대로 돌려준다. |
+| `CommentCubit` | 첫 조회 / 실패 | 결과와 다음 커서를 담는다 / 실패 상태로 남는다. |
+| `CommentCubit` | 더 불러오기 | 직전 커서로 요청해 이어 붙인다. |
+| `CommentCubit` | 답글 펼치기 | **처음 펼칠 때 한 번만** 읽는다. 접었다 펴도 다시 읽지 않는다. |
+| `CommentCubit` | 댓글 작성 | 목록 끝에 붙고 `countDelta` 가 하나 는다 (오래된 순이라 새 것의 자리가 끝이다). |
+| `CommentCubit` | 답글 작성 | 부모의 `replyCount` 가 오르고 답글 목록이 함께 펼쳐진다. |
+| `CommentCubit` | 답글 없는 댓글 삭제 | 목록에서 빠진다. |
+| `CommentCubit` | 답글 있는 댓글 삭제 | 본문만 사라지고 자리는 남는다 — 서버 뷰의 판단을 앱이 미리 그린다. |
+| `CommentCubit` | 답글 삭제 | 부모의 `replyCount` 가 하나 준다. |
+| `CommentCubit` | 남의 댓글 삭제(`false`) | 목록을 건드리지 않는다. |
+| `PostCommentsPage` | 빈 목록 | 첫 댓글을 권하는 안내를 보여준다. |
+| `PostCommentsPage` | 삭제된 부모 | 본문 자리에 안내만 남고 답글 버튼을 그리지 않는다. |
+| `PostCommentsPage` | 답글 펼치기 | 버튼을 누르기 전에는 답글을 읽지 않는다. |
+| `PostCommentsPage` | 답글 버튼 | 입력줄이 답글 대상을 표시한다. |
+| `PostCommentsPage` | 등록 | 입력한 본문이 저장되고 목록 끝에 붙는다. |
 
 ## 로컬 Supabase 로만 확인되는 것
 

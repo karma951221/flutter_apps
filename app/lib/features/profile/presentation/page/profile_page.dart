@@ -10,11 +10,13 @@ import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../feed/domain/entity/feed_post.dart';
 import '../../../feed/presentation/cubit/feed_cubit.dart';
 import '../../../feed/presentation/cubit/feed_state.dart';
 import '../../../post/domain/entity/post.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../post/presentation/widget/post_tile.dart';
+import '../../../reaction/domain/entity/reaction_type.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
 
@@ -208,15 +210,48 @@ class _ProfilePostList extends StatelessWidget {
             post: post,
             author: item.author,
             isMine: isMine,
+            reactions: item.reactions,
+            commentCount: item.commentCount,
             // 이미 이 작성자의 프로필이므로 남의 글은 눌러도 갈 곳이 없다.
             onTap: isMine ? () => _edit(context, post) : () {},
             onEdit: isMine ? () => _edit(context, post) : null,
             onDelete: isMine ? () => _confirmDelete(context, post) : null,
+            onReaction: (type) => _react(context, post.id, type),
+            onComment: () => _openComments(context, item),
           );
         },
       ),
     },
   );
+
+  /// 감정과 댓글 연결은 피드 화면과 같다. 두 화면 모두 목록을 [FeedCubit] 이
+  /// 소유하므로 저장·복원도 같은 곳에서 한다.
+  Future<void> _react(
+    BuildContext context,
+    String postId,
+    ReactionType type,
+  ) async {
+    final result = await context.read<FeedCubit>().toggleReaction(postId, type);
+    if (!context.mounted) return;
+
+    result.when(
+      ok: (_) {},
+      err: (failure) => AppSnackBar.show(
+        context,
+        message: failure.message ?? '감정을 남기지 못했습니다.',
+        type: AppSnackBarType.error,
+      ),
+    );
+  }
+
+  Future<void> _openComments(BuildContext context, FeedPost item) async {
+    final feed = context.read<FeedCubit>();
+    final count = await context.push<int>(
+      Routes.postCommentsPath(item.id),
+      extra: item.commentCount,
+    );
+    if (count != null) feed.applyCommentCount(item.id, count);
+  }
 
   Future<void> _edit(BuildContext context, Post post) async {
     final feed = context.read<FeedCubit>();

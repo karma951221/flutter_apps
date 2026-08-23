@@ -18,6 +18,10 @@
 | `ToggleReactionScenario` | 같은 감정 재탭 | `clearReaction` 을 부르고 `mine` 이 null 인 상태를 돌려준다. |
 | `ToggleReactionScenario` | 전환 (좋아요 → 싫어요) | 삭제 없이 `setReaction` **한 번**이다. 왕복이 둘이면 중간 상태가 화면에 보인다. |
 | `ToggleReactionScenario` | 저장 실패 | `Err` 를 그대로 올린다. 화면이 이전 상태로 되돌리는 근거가 된다. |
+| `FeedCubit.toggleReaction` | 탭 | 눌린 즉시 목록에 반영하고, 성공하면 서버가 준 요약으로 남는다. |
+| `FeedCubit.toggleReaction` | 저장 실패 | 이전 값으로 되돌린다. |
+| `FeedCubit.toggleReaction` | 목록에 없는 id | 저장을 시도하지 않고 `Err` 다. |
+| `CommentCubit.toggleReaction` | 댓글 / 답글 | 각각 자기 목록에만 반영된다. 답글의 감정이 부모를 건드리지 않는다. |
 
 이 feature 의 재사용은 DB 구조가 아니라 `ReactionSummary.toggled()` 라는 **순수
 함수**에서 나온다. 게시물이든 댓글이든 같은 함수로 다음 상태를 계산하므로, 테스트도

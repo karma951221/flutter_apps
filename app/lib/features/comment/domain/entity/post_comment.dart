@@ -58,4 +58,46 @@ class PostComment with _$PostComment {
   bool get isDeleted => deletedAt != null;
 
   bool get isReply => parentId != null;
+
+  /// 감정만 교체한다. 낙관적 업데이트가 이 메서드를 쓴다.
+  PostComment withReactions(ReactionSummary next) => PostComment(
+    id: id,
+    postId: postId,
+    parentId: parentId,
+    author: author,
+    content: content,
+    createdAt: createdAt,
+    deletedAt: deletedAt,
+    replyCount: replyCount,
+    reactions: next,
+  );
+
+  /// 답글 수만 바꾼다. 답글을 달거나 지운 직후 부모를 다시 조회하지 않는다.
+  PostComment withReplyCount(int count) => PostComment(
+    id: id,
+    postId: postId,
+    parentId: parentId,
+    author: author,
+    content: content,
+    createdAt: createdAt,
+    deletedAt: deletedAt,
+    replyCount: count,
+    reactions: reactions,
+  );
+
+  /// 본문을 지우고 삭제 표시를 단다.
+  ///
+  /// 답글이 남은 부모는 목록에서 사라지지 않고 본문만 가려진다. 서버가 뷰에서
+  /// 하는 일과 같은 모양을 앱이 미리 그린다 — 삭제 직후 목록을 다시 읽지 않기
+  /// 위해서다. `copyWith` 로는 [content] 를 null 로 되돌릴 수 없다.
+  PostComment asDeleted(DateTime at) => PostComment(
+    id: id,
+    postId: postId,
+    parentId: parentId,
+    author: author,
+    createdAt: createdAt,
+    deletedAt: at,
+    replyCount: replyCount,
+    reactions: reactions,
+  );
 }

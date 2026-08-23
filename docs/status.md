@@ -12,7 +12,7 @@
 |------|------|------|
 | 0 | 프로젝트 · 로컬 Supabase · DI · design system | **완료** |
 | 1 | F1 auth · F2 profile · F3 post · F4 전체 피드 | **진행 중** |
-| 2 | F5 reaction · F6 comment · F7 safety | 대기 |
+| 2 | F5 reaction · F6 comment · F7 safety | **진행 중** |
 | 3 | F8 follow · F4 팔로잉 피드 | 대기 |
 | 4 | (v1.1) 재설정 SMTP · 구글 로그인 · OTP · 푸시 · 채팅 | 대기 |
 
@@ -47,12 +47,26 @@
       (`posts_with_author` 뷰). 팔로잉 피드는 3단계 범위다
       ([계획](features/feed/plan.md) · [기록](features/feed/history.md))
 
+## 2단계 — 진행 중
+
+- [x] **F5 reaction** — 게시물·댓글 공용 감정표현. 대상별 테이블 + `ReactionTarget` 으로
+      일반화, 집계는 목록 뷰의 `jsonb`, 낙관적 업데이트는 목록을 소유한 쪽이 한다
+      ([계획](features/reaction/plan.md) · [기록](features/reaction/history.md))
+- [x] **F6 comment** — 2단 댓글. 제한은 트리거, 조회는 `post_comments_visible`
+      (`security_invoker = off` 예외), 오래된 순 커서, 댓글 화면과 답글 지연 로딩
+      ([계획](features/comment/plan.md) · [기록](features/comment/history.md))
+- [ ] **F7 safety** — 신고 · 차단
+
 ## 다음 할 일
 
-1. 로컬 Supabase 통합 확인 — avatar와 post-images Storage RLS(타인 경로 쓰기 거부),
+1. UI 개편 — 로그인 화면, 홈 셸과 하단 내비게이션, 피드 조회·작성·수정,
+   설정(프로필 · 계정 설정)
+2. 로컬 Supabase 통합 확인 — avatar와 post-images Storage RLS(타인 경로 쓰기 거부),
    `created_at` 이 같은 게시물의 끊어 읽기,
    소프트 삭제한 글이 `posts_with_author` 에서 빠지는지
    ([feed 기록 · 검증](features/feed/history.md))
+3. F7 safety 착수 — **차단 필터를 `posts_with_author` 와 `post_comments_visible`
+   양쪽에 손으로 넣어야 한다** ([comment 기록](features/comment/history.md))
 
 ## 문서 규칙
 

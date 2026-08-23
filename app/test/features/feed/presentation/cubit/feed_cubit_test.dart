@@ -9,11 +9,15 @@ import 'package:daylog/features/feed/presentation/cubit/feed_state.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_author.dart';
 import 'package:daylog/features/reaction/domain/entity/reaction_summary.dart';
+import 'package:daylog/features/reaction/domain/entity/reaction_target.dart';
 import 'package:daylog/features/reaction/domain/entity/reaction_type.dart';
+import 'package:daylog/features/reaction/domain/usecase/reaction_use_case.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockFeedUseCase extends Mock implements FeedUseCase {}
+
+class _MockReactionUseCase extends Mock implements ReactionUseCase {}
 
 Post _post(String id, {String content = '', String authorId = 'author-id'}) =>
     Post(
@@ -32,8 +36,18 @@ FeedPost _item(String id, {String nickname = '카르마'}) =>
 
 void main() {
   late _MockFeedUseCase useCase;
+  late _MockReactionUseCase reactionUseCase;
 
-  setUp(() => useCase = _MockFeedUseCase());
+  setUpAll(() {
+    registerFallbackValue(const ReactionTarget.post('_'));
+    registerFallbackValue(ReactionType.like);
+    registerFallbackValue(const ReactionSummary());
+  });
+
+  setUp(() {
+    useCase = _MockFeedUseCase();
+    reactionUseCase = _MockReactionUseCase();
+  });
 
   blocTest<FeedCubit, FeedState>(
     '첫 조회 결과와 다음 커서를 상태에 담는다',
@@ -47,7 +61,7 @@ void main() {
         CursorPage<FeedPost>(items: [_item('1')], nextCursor: 'cursor-1'),
       ),
     ),
-    build: () => FeedCubit(useCase),
+    build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) => cubit.load(),
     verify: (cubit) {
       expect(cubit.state.status, FeedStatus.loaded);
@@ -66,7 +80,7 @@ void main() {
         cursor: any(named: 'cursor'),
       ),
     ).thenAnswer((_) async => const Err(Failure.network())),
-    build: () => FeedCubit(useCase),
+    build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) => cubit.load(),
     verify: (cubit) {
       expect(cubit.state.status, FeedStatus.failure);
@@ -98,7 +112,7 @@ void main() {
         ),
       );
     },
-    build: () => FeedCubit(useCase),
+    build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) async {
       await cubit.load();
       await cubit.loadMore();
@@ -127,7 +141,7 @@ void main() {
         cursor: any(named: 'cursor'),
       ),
     ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')]))),
-    build: () => FeedCubit(useCase),
+    build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) async {
       await cubit.load();
       await cubit.loadMore();
@@ -152,7 +166,7 @@ void main() {
         cursor: any(named: 'cursor'),
       ),
     ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')]))),
-    build: () => FeedCubit(useCase),
+    build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) async {
       await cubit.load();
       cubit.prependPost(_item('2', nickname: '이웃'));
@@ -184,7 +198,7 @@ void main() {
       (_) async =>
           Ok(CursorPage<FeedPost>(items: [_item('1', nickname: '카르마')])),
     ),
-    build: () => FeedCubit(useCase),
+    build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) async {
       await cubit.load();
       cubit.replacePost(_post('1', content: '고친 내용'));
@@ -203,7 +217,7 @@ void main() {
         cursor: any(named: 'cursor'),
       ),
     ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')]))),
-    build: () => FeedCubit(useCase),
+    build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) async {
       await cubit.load();
       cubit.replacePost(_post('없는-id', content: '무시된다'));
@@ -217,7 +231,7 @@ void main() {
 
   blocTest<FeedCubit, FeedState>(
     '목록을 읽기 전에는 반영 요청을 무시한다',
-    build: () => FeedCubit(useCase),
+    build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) => cubit.prependPost(_item('1')),
     expect: () => <FeedState>[],
   );
@@ -244,7 +258,7 @@ void main() {
         ),
       ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('2')])));
     },
-    build: () => FeedCubit(useCase),
+    build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) async {
       await cubit.loadForAuthor('author-id');
       await cubit.loadMore();
@@ -278,7 +292,7 @@ void main() {
         authorId: 'author-id',
       ),
     ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')]))),
-    build: () => FeedCubit(useCase),
+    build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) async {
       await cubit.loadForAuthor('author-id');
       await cubit.refresh();
@@ -303,7 +317,7 @@ void main() {
         authorId: any(named: 'authorId'),
       ),
     ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')]))),
-    build: () => FeedCubit(useCase),
+    build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) async {
       await cubit.loadForAuthor('author-id');
       await cubit.load();
@@ -332,7 +346,7 @@ void main() {
     ).thenAnswer(
       (_) async => Ok(CursorPage<FeedPost>(items: [_item('1'), _item('2')])),
     ),
-    build: () => FeedCubit(useCase),
+    build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) async {
       await cubit.load();
       cubit.applyReaction(
@@ -361,7 +375,7 @@ void main() {
     ).thenAnswer(
       (_) async => Ok(CursorPage<FeedPost>(items: [_item('1'), _item('2')])),
     ),
-    build: () => FeedCubit(useCase),
+    build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) async {
       await cubit.load();
       cubit.applyCommentCount('1', 3);
@@ -374,8 +388,100 @@ void main() {
 
   blocTest<FeedCubit, FeedState>(
     '목록을 읽기 전의 반응 반영은 무시한다',
-    build: () => FeedCubit(useCase),
+    build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) => cubit.applyReaction('1', const ReactionSummary()),
     expect: () => <FeedState>[],
+  );
+
+  blocTest<FeedCubit, FeedState>(
+    '감정은 눌린 즉시 반영되고 성공하면 서버가 준 값으로 남는다',
+    setUp: () {
+      when(
+        () => useCase.getFeedPosts(
+          limit: any(named: 'limit'),
+          cursor: any(named: 'cursor'),
+        ),
+      ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')])));
+      when(
+        () => reactionUseCase.toggle(
+          target: any(named: 'target'),
+          tapped: any(named: 'tapped'),
+          current: any(named: 'current'),
+        ),
+      ).thenAnswer(
+        (_) async => const Ok(
+          ReactionSummary(
+            counts: {ReactionType.like: 1},
+            mine: ReactionType.like,
+          ),
+        ),
+      );
+    },
+    build: () => FeedCubit(useCase, reactionUseCase),
+    act: (cubit) async {
+      await cubit.load();
+      await cubit.toggleReaction('1', ReactionType.like);
+    },
+    verify: (cubit) {
+      expect(cubit.state.items.single.reactions.mine, ReactionType.like);
+      verify(
+        () => reactionUseCase.toggle(
+          target: const ReactionTarget.post('1'),
+          tapped: ReactionType.like,
+          current: const ReactionSummary(),
+        ),
+      ).called(1);
+    },
+  );
+
+  blocTest<FeedCubit, FeedState>(
+    '감정 저장이 실패하면 이전 값으로 되돌린다',
+    setUp: () {
+      when(
+        () => useCase.getFeedPosts(
+          limit: any(named: 'limit'),
+          cursor: any(named: 'cursor'),
+        ),
+      ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')])));
+      when(
+        () => reactionUseCase.toggle(
+          target: any(named: 'target'),
+          tapped: any(named: 'tapped'),
+          current: any(named: 'current'),
+        ),
+      ).thenAnswer((_) async => const Err(Failure.network()));
+    },
+    build: () => FeedCubit(useCase, reactionUseCase),
+    act: (cubit) async {
+      await cubit.load();
+      await cubit.toggleReaction('1', ReactionType.like);
+    },
+    verify: (cubit) {
+      expect(cubit.state.items.single.reactions.mine, isNull);
+      expect(cubit.state.items.single.reactions.counts, isEmpty);
+    },
+  );
+
+  blocTest<FeedCubit, FeedState>(
+    '없는 게시물의 감정은 저장을 시도하지 않는다',
+    setUp: () => when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+      ),
+    ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')]))),
+    build: () => FeedCubit(useCase, reactionUseCase),
+    act: (cubit) async {
+      await cubit.load();
+      final result = await cubit.toggleReaction('9', ReactionType.like);
+      expect(result, isA<Err<ReactionSummary>>());
+    },
+    verify: (_) => verifyNever(
+      () => reactionUseCase.toggle(
+        target: any(named: 'target'),
+        tapped: any(named: 'tapped'),
+        current: any(named: 'current'),
+      ),
+    ),
   );
 }

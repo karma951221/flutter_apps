@@ -14,6 +14,7 @@ import '../../../post/domain/entity/post.dart';
 import '../../../post/domain/entity/post_author.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../post/presentation/widget/post_tile.dart';
+import '../../../reaction/domain/entity/reaction_type.dart';
 import '../../domain/entity/feed_post.dart';
 import '../cubit/feed_cubit.dart';
 import '../cubit/feed_state.dart';
@@ -167,11 +168,15 @@ class _FeedList extends StatelessWidget {
               post: post,
               author: item.author,
               isMine: isMine,
+              reactions: item.reactions,
+              commentCount: item.commentCount,
               onTap: isMine
                   ? () => _edit(context, post)
                   : () => context.push(Routes.userProfilePath(item.author.id)),
               onEdit: () => _edit(context, post),
               onDelete: () => _confirmDelete(context, post),
+              onReaction: (type) => _react(context, post.id, type),
+              onComment: () => _openComments(context, item),
             );
           },
         ),
@@ -186,6 +191,36 @@ class _FeedList extends StatelessWidget {
       extra: post,
     );
     if (updated != null) feed.replacePost(updated);
+  }
+
+  /// 감정은 목록이 저장하고 되돌린다. 화면은 실패만 알린다.
+  Future<void> _react(
+    BuildContext context,
+    String postId,
+    ReactionType type,
+  ) async {
+    final result = await context.read<FeedCubit>().toggleReaction(postId, type);
+    if (!context.mounted) return;
+
+    result.when(
+      ok: (_) {},
+      err: (failure) => AppSnackBar.show(
+        context,
+        message: failure.message ?? '감정을 남기지 못했습니다.',
+        type: AppSnackBarType.error,
+      ),
+    );
+  }
+
+  /// 댓글 화면은 나갈 때 최종 개수를 돌려준다. 목록을 다시 읽지 않고 그
+  /// 항목의 수만 고친다.
+  Future<void> _openComments(BuildContext context, FeedPost item) async {
+    final feed = context.read<FeedCubit>();
+    final count = await context.push<int>(
+      Routes.postCommentsPath(item.id),
+      extra: item.commentCount,
+    );
+    if (count != null) feed.applyCommentCount(item.id, count);
   }
 
   Future<void> _confirmDelete(BuildContext context, Post post) async {
