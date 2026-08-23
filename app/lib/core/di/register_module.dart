@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 /// 서드파티 인스턴스 등록.
 ///
@@ -15,4 +16,7 @@ abstract class RegisterModule {
   /// Supabase.initialize() 는 bootstrap 에서 이미 끝난 상태다.
   @lazySingleton
   SupabaseClient get supabaseClient => Supabase.instance.client;
+
+  @lazySingleton
+  Uuid get uuid => const Uuid();
 }

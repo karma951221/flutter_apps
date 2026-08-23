@@ -1,8 +1,7 @@
-import 'dart:math';
-
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/id/id_generator.dart';
 import '../../domain/entity/post_draft.dart';
 import '../../domain/entity/post_update.dart';
 import '../dto/post_dto.dart';
@@ -10,17 +9,16 @@ import 'post_data_source.dart';
 
 @LazySingleton(as: PostDataSource)
 class SupabasePostDataSource implements PostDataSource {
-  SupabasePostDataSource(this._client);
+  SupabasePostDataSource(this._client, this._ids);
 
   final SupabaseClient _client;
+  final IdGenerator _ids;
 
   static const _bucket = 'post-images';
 
   /// 공개 URL 에서 객체 경로를 잘라낼 기준. Storage 의 공개 URL 은
   /// `.../storage/v1/object/public/{bucket}/{path}` 모양이다.
   static const _publicUrlMarker = '/object/public/$_bucket/';
-
-  static final _random = Random.secure();
 
   static const _columns =
       'id, author_id, content, created_at, updated_at, '
@@ -69,7 +67,7 @@ class SupabasePostDataSource implements PostDataSource {
 
     // 폴더 이름은 게시물 id 일 필요가 없다 — Storage 정책이 보는 것은 첫 조각뿐이다.
     // 게시물 id 는 아직 없으므로 클라이언트에서 만든 UUID 를 쓴다.
-    final folder = '$userId/${_uuidV4()}';
+    final folder = '$userId/${_ids.newId()}';
     final uploaded = <String>[];
 
     try {
@@ -173,17 +171,5 @@ class SupabasePostDataSource implements PostDataSource {
     } catch (_) {
       // best-effort. 남은 객체는 게시물과 이어지지 않으므로 노출되지 않는다.
     }
-  }
-
-  /// 의존성을 늘리지 않기 위한 최소 UUID v4 생성기.
-  static String _uuidV4() {
-    final bytes = List<int>.generate(16, (_) => _random.nextInt(256));
-    bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
-    bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10xx
-    final hex = bytes
-        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-        .join();
-    return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-'
-        '${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
   }
 }
