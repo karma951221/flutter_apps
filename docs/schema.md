@@ -25,11 +25,15 @@ Studio UI에서 테이블을 직접 만들지 않는다. 이 문서와 실제 DB
 auth.users  (Supabase Auth 소유)
     │ 1:1  on delete cascade
     ▼
-profiles ──1:N──▶ posts
+profiles ──1:N──▶ posts ──1:N──▶ post_images
+                    │
+                    └──1:N──▶ post_images
 ```
 
-앞으로 추가될 테이블(`post_images` · `post_reactions` · `post_comments` · `follows` ·
-`blocks` · `reports`)의 계획은 [기획서 §7](overview.md)에 있다. 여기에는 **실제로
+읽기 전용 뷰 `posts_with_author`(§6)가 이 둘을 조인해 피드에 내려준다.
+
+앞으로 추가될 테이블(`post_reactions` · `post_comments` · `follows` · `blocks` ·
+`reports`)의 계획은 [기획서 §7](overview.md)에 있다. 여기에는 **실제로
 존재하는 것만** 적는다.
 
 ---
@@ -197,6 +201,19 @@ grant update (nickname, bio, avatar_url) on public.profiles to authenticated;
 
 `insert` · `delete` 권한은 주지 않는다.
 
+### Storage `avatars`
+
+프로필 사진은 공개 읽기 `avatars` 버킷에 저장한다(객체 최대 5 MiB). 경로는
+`{user_id}/{timestamp}.webp`이며, `storage.objects`의 INSERT·UPDATE·DELETE 정책은 첫
+경로 조각이 `(select auth.uid())::text`와 일치할 때만 허용한다. 따라서 앱이 경로를
+변조해 타인의 아바타를 쓰거나 덮어쓸 수 없다.
+
+```sql
+allowed_mime_types = array['image/webp', 'image/jpeg']
+```
+
+WebP 하나만 허용하지 않는 이유는 §7의 `post-images`와 같다.
+
 ---
 
 ## 5. `posts`
@@ -281,13 +298,70 @@ grant update (content) on public.posts to authenticated;
 `author_id`는 INSERT GRANT에서 빠져 있다. 앱이 보낼 수 없고 `default auth.uid()`로만
 채워진다. `deleted_at`도 빠져 있다 — 삭제는 아래 함수로만 한다. `delete` 권한은 주지 않는다.
 
+텍스트만 있는 게시물은 이 INSERT GRANT로 그대로 작성한다. **이미지가 있으면
+`create_post_with_images()`를 쓴다** — 두 테이블에 나눠 INSERT하면 원자성이 깨진다.
+
+### `create_post_with_images(content text, images jsonb) → uuid`
+
+게시물과 이미지 메타데이터를 **한 트랜잭션**에 만들고 새 게시물 id를 돌려준다.
+
+```sql
+create function public.create_post_with_images(content text, images jsonb)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  author       uuid := (select auth.uid());
+  new_post_id  uuid;
+begin
+  if author is null then
+    raise exception 'authentication required' using errcode = '42501';
+  end if;
+
+  insert into public.posts (author_id, content)
+  values (author, create_post_with_images.content)
+  returning id into new_post_id;
+
+  insert into public.post_images (post_id, url, width, height, sort_order)
+  select
+    new_post_id,
+    item ->> 'url',
+    (item ->> 'width')::integer,
+    (item ->> 'height')::integer,
+    (item ->> 'sort_order')::smallint
+  from jsonb_array_elements(
+    coalesce(create_post_with_images.images, '[]'::jsonb)
+  ) as item;
+
+  return new_post_id;
+end;
+$$;
+
+revoke execute on function public.create_post_with_images(text, jsonb) from public, anon;
+grant execute on function public.create_post_with_images(text, jsonb) to authenticated;
+```
+
+앱이 `posts`를 먼저 넣고 `post_images`를 뒤이어 넣으면, 중간에 실패했을 때 **이미지 없는
+유령 게시물**이 남고 재시도하면 게시물이 두 번 생긴다. 두 INSERT를 함수 하나에 넣어
+없앤다.
+
+`security definer`지만 새 권한을 열지 않는다. `author_id`를 `auth.uid()`로 고정하므로
+남의 이름으로 쓸 경로가 없고, 길이·장수 제약(`posts_content_length` ·
+`post_images_sort_order_range` · `(post_id, sort_order)` 유니크)은 테이블에서 그대로
+걸린다.
+
+**Storage 업로드는 이 트랜잭션 밖이다.** 앱은 이미지를 **먼저** 올리고 마지막에 이
+함수를 부른다. 함수가 실패하면 올려둔 객체는 앱이 best-effort로 지운다.
+
 ### `soft_delete_post(post_id uuid) → boolean`
 
 게시물을 삭제하는 **유일한 경로**다. 삭제된 행이 있으면 `true`, 없거나 남의 글이면
 `false`를 돌려준다.
 
 ```sql
-create function public.soft_delete_post(post_id uuid)
+create or replace function public.soft_delete_post(post_id uuid)
 returns boolean
 language plpgsql
 security definer
@@ -303,6 +377,12 @@ begin
      and deleted_at is null;
 
   get diagnostics affected = row_count;
+
+  if affected > 0 then
+    delete from public.post_images as pi
+     where pi.post_id = soft_delete_post.post_id;
+  end if;
+
   return affected > 0;
 end;
 $$;
@@ -318,9 +398,140 @@ grant execute on function public.soft_delete_post(uuid) to authenticated;
 `deleted_at is null` 조건은 이미 삭제된 글을 다시 삭제해도 `deleted_at`이 갱신되지 않게
 한다. 삭제 시각이 뒤로 밀리지 않는다.
 
+**이미지 행도 같은 함수에서 지운다.** `post_images`는 `posts`를 `on delete cascade`로
+참조하지만 소프트 삭제는 행을 지우지 않으므로 cascade가 돌지 않는다. 조회 정책이 가려줄
+뿐 행은 영원히 남는다. `security definer`라 `post_images`의 RLS가 이 DELETE를 막지 않는다.
+
+Storage 객체는 DB가 지울 수 없으므로 앱이 지운다. 삭제 **전에** 이미지 URL을 읽어두고
+(삭제 후에는 조회 정책이 가린다), RPC가 `true`를 주면 객체를 지운다. 게시물은 이미
+숨겨졌으므로 이 정리가 실패해도 삭제는 성공으로 본다.
+
 ---
 
-## 6. 알아둘 함정
+## 6. `posts_with_author` (뷰)
+
+피드 목록이 읽는 유일한 대상. 게시물에 작성자 프로필을 조인해 한 번에 내려준다.
+목록을 받은 뒤 작성자를 한 명씩 조회하면 페이지당 N번의 왕복이 더 생긴다(N+1).
+
+```sql
+create view public.posts_with_author
+with (security_invoker = on) as
+select
+  p.id,
+  p.author_id,
+  p.content,
+  p.created_at,
+  p.updated_at,
+  pr.nickname   as author_nickname,
+  pr.avatar_url as author_avatar_url
+from public.posts p
+join public.profiles pr on pr.id = p.author_id;
+```
+
+### `security_invoker = on` 은 선택 사항이 아니다
+
+**뷰는 기본적으로 소유자(`postgres`) 권한으로 실행된다.** 이 옵션을 빼면
+`posts_select_visible`(`deleted_at is null`)이 평가되지 않아 **삭제된 게시물이 이 뷰로
+그대로 새어 나온다.** §2의 "삭제행 숨김을 조회 정책이 강제한다"가 뷰 하나로 무너진다.
+
+`on` 이면 뷰를 **조회한 세션 사용자**의 권한으로 기반 테이블의 RLS 가 그대로 평가된다.
+뷰는 정책을 우회하는 통로가 아니라 조인에 붙인 이름일 뿐이다.
+
+**앞으로 이 스키마에 추가되는 모든 뷰에 같은 규칙을 적용한다.**
+
+### GRANT
+
+```sql
+grant select on public.posts_with_author to anon, authenticated;
+```
+
+**뷰는 기반 테이블의 GRANT 를 물려받지 않는다.** 따로 줘야 한다. 조회 전용이므로
+`insert` · `update` 권한은 주지 않는다 — 게시물 작성·수정은 `posts` 에 직접 한다.
+
+### 인덱스
+
+따로 만들지 않는다. 뷰는 저장된 질의라 §5의
+`posts_created_at_idx (created_at desc, id desc) where deleted_at is null` 를 그대로 탄다.
+플래너가 `posts` 를 인덱스 순으로 훑다가 `LIMIT` 만큼만 `profiles` 를 PK 로 붙이므로
+커서 페이지네이션의 비용은 조인 전과 같다.
+
+### 앞으로 여기에 붙는 것
+
+반응 수(F5) · 댓글 수(F6) · 내 반응 상태 · 차단 필터(F7)는 앱 쿼리가 아니라 **이 뷰
+안에** 넣는다. 화면마다 같은 필터를 다시 쓰면 언젠가 빠뜨린다.
+
+---
+
+## 7. `post_images`
+
+게시물에 붙는 공개 이미지 메타데이터다. 원본은 Storage `post-images` 버킷에 두고,
+이 테이블에는 공개 URL과 레이아웃을 미리 잡기 위한 치수만 둔다.
+
+```sql
+create table public.post_images (
+  id         uuid primary key default gen_random_uuid(),
+  post_id    uuid not null references public.posts (id) on delete cascade,
+  url        text not null,
+  width      integer not null check (width > 0),
+  height     integer not null check (height > 0),
+  sort_order smallint not null check (sort_order between 0 and 4),
+  unique (post_id, sort_order)
+);
+
+create index post_images_post_id_sort_order_idx
+  on public.post_images (post_id, sort_order);
+```
+
+게시물당 최대 5장은 `sort_order 0..4` 제약과 `(post_id, sort_order)` 유니크 제약으로
+DB도 강제한다. 작성자는 자기 게시물에 추가하는지를 RLS의 `exists(posts ...)`로 확인한다. 조회도
+살아 있는 게시물에 속한 행만 허용하므로 소프트 삭제된 게시물의 이미지는 SDK 조회에서
+보이지 않는다.
+
+```sql
+grant select on public.post_images to anon, authenticated;
+grant insert (post_id, url, width, height, sort_order) on public.post_images to authenticated;
+grant update (url, width, height, sort_order) on public.post_images to authenticated;
+```
+
+삽입은 `create_post_with_images()`(§5)가 하고, 소프트 삭제 때는 `soft_delete_post()`가
+같은 트랜잭션에서 이 테이블의 행을 지운다.
+
+### Storage `post-images`
+
+공개 읽기 버킷이며 객체 최대 5 MiB, MIME은 아래 둘만 허용한다.
+
+```sql
+allowed_mime_types = array['image/webp', 'image/jpeg']
+```
+
+WebP만 허용하면 iOS에서 업로드가 전부 실패한다. `flutter_image_compress`가 iOS에서는
+WebP를 **인코딩하지 못하기** 때문이다. 앱은 Android에서 WebP, 그 밖에서는 JPEG으로
+압축하고 실제 형식에 맞는 Content-Type과 확장자를 함께 보낸다.
+
+앱 경로는 `{user_id}/{uuid}/{순서}.{webp|jpg}`다. 가운데 조각은 **게시물 id가 아니라
+클라이언트가 만든 UUID**다 — 업로드가 게시물 생성보다 먼저이므로 그 시점에는 게시물
+id가 없다. 정책이 보는 것은 첫 조각뿐이라 문제되지 않는다.
+
+`storage.objects`의 INSERT·UPDATE·DELETE 정책은 첫 경로 조각이
+`(select auth.uid())::text`와 같을 때만 허용한다. 이 검증을 앱의 경로 생성에 맡기지
+않으므로, 다른 사용자의 prefix로 업로드하거나 남의 이미지를 지울 수 없다.
+
+```sql
+create policy "post_images_storage_delete_own"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'post-images'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+```
+
+DELETE 정책은 게시물 삭제 뒤 앱이 객체를 정리하기 위해 필요하다. 없으면 DB 행만
+사라지고 이미지는 공개 URL로 계속 열린다.
+
+`posts_with_author`는 `images` JSON 배열(URL·가로·세로·순서)을 함께 내려준다. 뷰는
+계속 `security_invoker = on`이므로 게시물과 이미지의 RLS가 조회자 권한으로 적용된다.
+
+## 8. 알아둘 함정
 
 ### 소프트 삭제를 UPDATE로 하면 42501로 거부된다
 
