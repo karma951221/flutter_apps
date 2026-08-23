@@ -51,6 +51,15 @@ import '../../features/profile/domain/repository/profile_repository.dart'
     as _i364;
 import '../../features/profile/domain/usecase/profile_use_case.dart' as _i408;
 import '../../features/profile/presentation/cubit/profile_cubit.dart' as _i36;
+import '../../features/reaction/data/datasource/reaction_data_source.dart'
+    as _i281;
+import '../../features/reaction/data/datasource/supabase_reaction_data_source.dart'
+    as _i549;
+import '../../features/reaction/data/repository/reaction_repository_impl.dart'
+    as _i1063;
+import '../../features/reaction/domain/repository/reaction_repository.dart'
+    as _i831;
+import '../../features/reaction/domain/usecase/reaction_use_case.dart' as _i650;
 import '../id/id_generator.dart' as _i1000;
 import '../media/image_picker_service.dart' as _i350;
 import '../media/image_storage.dart' as _i1040;
@@ -82,6 +91,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1040.ImageStorage>(
       () => _i571.SupabaseImageStorage(gh<_i454.SupabaseClient>()),
     );
+    gh.lazySingleton<_i281.ReactionDataSource>(
+      () => _i549.SupabaseReactionDataSource(gh<_i454.SupabaseClient>()),
+    );
     gh.lazySingleton<_i692.AuthDataSource>(
       () => _i87.SupabaseAuthDataSource(gh<_i454.SupabaseClient>()),
     );
@@ -109,6 +121,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i364.ProfileRepository>(
       () => _i309.ProfileRepositoryImpl(gh<_i986.ProfileDataSource>()),
+    );
+    gh.lazySingleton<_i831.ReactionRepository>(
+      () => _i1063.ReactionRepositoryImpl(gh<_i281.ReactionDataSource>()),
     );
     gh.lazySingleton<_i735.PostRepository>(
       () => _i238.PostRepositoryImpl(gh<_i487.PostDataSource>()),
@@ -138,6 +153,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i36.ProfileCubit>(
       () => _i36.ProfileCubit(gh<_i408.ProfileUseCase>()),
+    );
+    gh.lazySingleton<_i650.ReactionUseCase>(
+      () => _i650.DefaultReactionUseCase(gh<_i831.ReactionRepository>()),
     );
     return this;
   }

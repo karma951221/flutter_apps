@@ -13,7 +13,9 @@ app/lib/                         app/test/
 │   ├── auth/             →      ├── features/auth/
 │   ├── feed/             →      ├── features/feed/
 │   ├── post/             →      ├── features/post/
-│   └── profile/          →      └── features/profile/
+│   ├── profile/          →      ├── features/profile/
+│   ├── reaction/         →      ├── features/reaction/
+│   └── comment/          →      └── features/comment/
 └── …                     →      └── convention/  # 코드베이스 전체 규칙
 ```
 
@@ -56,5 +58,6 @@ feature 문서는 **대상 · 시나리오 · 기대 결과** 표 형식으로 �
 - [profile](features/profile.md)
 - [post](features/post.md)
 - [feed](features/feed.md)
+- [reaction](features/reaction.md)
 - [코드 컨벤션 검사](conventions.md)
 - [E2E 테스트 (Patrol)](e2e.md)

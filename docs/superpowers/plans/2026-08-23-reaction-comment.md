@@ -701,7 +701,7 @@ git commit -m "feat(db): 게시물·댓글 감정표현 테이블과 목록 뷰 
   - `class ReactionSummary` — `Map<ReactionType,int> counts`, `ReactionType? mine`, `int countOf(ReactionType)`, `bool isMine(ReactionType)`, `ReactionSummary toggled(ReactionType tapped)`, `static ReactionSummary fromRaw(Map<String,int> counts, String? mine)`
   - `abstract interface class ReactionUseCase` — `Future<Result<ReactionSummary>> toggle({required ReactionTarget target, required ReactionType tapped, required ReactionSummary current})`
 
-- [ ] **Step 1: 실패하는 테스트 작성 — `ReactionSummary.toggled`**
+- [x] **Step 1: 실패하는 테스트 작성 — `ReactionSummary.toggled`**
 
 `app/test/features/reaction/domain/entity/reaction_summary_test.dart`:
 
@@ -789,7 +789,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: 테스트가 실패하는지 확인**
+- [x] **Step 2: 테스트가 실패하는지 확인**
 
 ```bash
 cd app && flutter test test/features/reaction
@@ -797,7 +797,7 @@ cd app && flutter test test/features/reaction
 
 Expected: 컴파일 실패 (`reaction_summary.dart` 없음)
 
-- [ ] **Step 3: domain entity 구현**
+- [x] **Step 3: domain entity 구현**
 
 `app/lib/features/reaction/domain/entity/reaction_type.dart`:
 
@@ -915,7 +915,7 @@ class ReactionSummary with _$ReactionSummary {
 }
 ```
 
-- [ ] **Step 4: 코드 생성 후 테스트 통과 확인**
+- [x] **Step 4: 코드 생성 후 테스트 통과 확인**
 
 ```bash
 cd app && dart run build_runner build --delete-conflicting-outputs && flutter test test/features/reaction
@@ -923,7 +923,7 @@ cd app && dart run build_runner build --delete-conflicting-outputs && flutter te
 
 Expected: PASS
 
-- [ ] **Step 5: scenario 의 실패하는 테스트 작성**
+- [x] **Step 5: scenario 의 실패하는 테스트 작성**
 
 `app/test/features/reaction/domain/usecase/scenario/toggle_reaction_scenario_test.dart`:
 
@@ -1022,7 +1022,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 6: 테스트가 실패하는지 확인**
+- [x] **Step 6: 테스트가 실패하는지 확인**
 
 ```bash
 cd app && flutter test test/features/reaction/domain/usecase
@@ -1030,7 +1030,7 @@ cd app && flutter test test/features/reaction/domain/usecase
 
 Expected: 컴파일 실패
 
-- [ ] **Step 7: repository 계약 · scenario · facade 구현**
+- [x] **Step 7: repository 계약 · scenario · facade 구현**
 
 `app/lib/features/reaction/domain/repository/reaction_repository.dart`:
 
@@ -1128,7 +1128,7 @@ class DefaultReactionUseCase implements ReactionUseCase {
 }
 ```
 
-- [ ] **Step 8: data 계층 구현**
+- [x] **Step 8: data 계층 구현**
 
 `app/lib/features/reaction/data/datasource/reaction_data_source.dart`:
 
@@ -1272,7 +1272,7 @@ class ReactionRepositoryImpl
 }
 ```
 
-- [ ] **Step 9: 코드 생성 · 정적 분석 · 테스트**
+- [x] **Step 9: 코드 생성 · 정적 분석 · 테스트**
 
 ```bash
 cd app && dart run build_runner build --delete-conflicting-outputs && flutter analyze && flutter test
@@ -1280,13 +1280,13 @@ cd app && dart run build_runner build --delete-conflicting-outputs && flutter an
 
 Expected: analyze 무경고, 전체 테스트 PASS. `injection.config.dart` 에 `ReactionRepository` · `ReactionDataSource` · `ReactionUseCase` 등록이 생겼는지 확인한다 (직접 편집하지 않는다).
 
-- [ ] **Step 10: 테스트 문서 작성**
+- [x] **Step 10: 테스트 문서 작성**
 
 `docs/testing/features/reaction.md` 를 만든다. 다른 feature 문서와 같은 **대상 · 시나리오 · 기대 결과** 표 형식을 쓰고, 헤더 링크 줄은 `docs/testing/features/feed.md` 를 본뜬다. 위에서 만든 두 테스트 파일의 케이스를 표로 옮기고, 마지막에 "로컬 Supabase 로만 확인되는 것" 문단을 넣어 [reaction 계획서](../../features/reaction/plan.md)의 검증 항목을 가리킨다.
 
 `docs/testing/README.md` 의 "Feature별 범위" 목록에서 `post` 다음 줄에 항목을 하나 더한다 — 표시 문구는 `reaction`, 대상은 `features/reaction.md` 인 상대 Markdown 링크다.
 
-- [ ] **Step 11: 검사 후 커밋**
+- [x] **Step 11: 검사 후 커밋**
 
 ```bash
 cd app && flutter test && cd .. && git add app/lib/features/reaction app/test/features/reaction app/lib/core/di/injection.config.dart docs/testing/features/reaction.md docs/testing/README.md && git commit -m "feat(reaction): 게시물·댓글 공용 감정표현 usecase 를 만든다"
