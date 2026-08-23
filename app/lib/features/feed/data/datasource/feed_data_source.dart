@@ -7,5 +7,6 @@ abstract interface class FeedDataSource {
   Future<List<FeedPostDto>> getPosts({
     required int limit,
     FeedCursor? cursor,
+    String? authorId,
   });
 }

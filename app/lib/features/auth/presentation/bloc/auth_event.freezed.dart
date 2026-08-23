@@ -55,12 +55,13 @@ extension AuthEventPatterns on AuthEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AuthStarted value)?  started,TResult Function( AuthUserChanged value)?  userChanged,TResult Function( AuthSignOutRequested value)?  signOutRequested,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AuthStarted value)?  started,TResult Function( AuthUserChanged value)?  userChanged,TResult Function( AuthUserRefreshRequested value)?  userRefreshRequested,TResult Function( AuthSignOutRequested value)?  signOutRequested,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case AuthStarted() when started != null:
 return started(_that);case AuthUserChanged() when userChanged != null:
-return userChanged(_that);case AuthSignOutRequested() when signOutRequested != null:
+return userChanged(_that);case AuthUserRefreshRequested() when userRefreshRequested != null:
+return userRefreshRequested(_that);case AuthSignOutRequested() when signOutRequested != null:
 return signOutRequested(_that);case _:
   return orElse();
 
@@ -79,12 +80,13 @@ return signOutRequested(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AuthStarted value)  started,required TResult Function( AuthUserChanged value)  userChanged,required TResult Function( AuthSignOutRequested value)  signOutRequested,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AuthStarted value)  started,required TResult Function( AuthUserChanged value)  userChanged,required TResult Function( AuthUserRefreshRequested value)  userRefreshRequested,required TResult Function( AuthSignOutRequested value)  signOutRequested,}){
 final _that = this;
 switch (_that) {
 case AuthStarted():
 return started(_that);case AuthUserChanged():
-return userChanged(_that);case AuthSignOutRequested():
+return userChanged(_that);case AuthUserRefreshRequested():
+return userRefreshRequested(_that);case AuthSignOutRequested():
 return signOutRequested(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -99,12 +101,13 @@ return signOutRequested(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AuthStarted value)?  started,TResult? Function( AuthUserChanged value)?  userChanged,TResult? Function( AuthSignOutRequested value)?  signOutRequested,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AuthStarted value)?  started,TResult? Function( AuthUserChanged value)?  userChanged,TResult? Function( AuthUserRefreshRequested value)?  userRefreshRequested,TResult? Function( AuthSignOutRequested value)?  signOutRequested,}){
 final _that = this;
 switch (_that) {
 case AuthStarted() when started != null:
 return started(_that);case AuthUserChanged() when userChanged != null:
-return userChanged(_that);case AuthSignOutRequested() when signOutRequested != null:
+return userChanged(_that);case AuthUserRefreshRequested() when userRefreshRequested != null:
+return userRefreshRequested(_that);case AuthSignOutRequested() when signOutRequested != null:
 return signOutRequested(_that);case _:
   return null;
 
@@ -122,11 +125,12 @@ return signOutRequested(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  started,TResult Function( AppUser? user)?  userChanged,TResult Function()?  signOutRequested,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  started,TResult Function( AppUser? user)?  userChanged,TResult Function()?  userRefreshRequested,TResult Function()?  signOutRequested,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case AuthStarted() when started != null:
 return started();case AuthUserChanged() when userChanged != null:
-return userChanged(_that.user);case AuthSignOutRequested() when signOutRequested != null:
+return userChanged(_that.user);case AuthUserRefreshRequested() when userRefreshRequested != null:
+return userRefreshRequested();case AuthSignOutRequested() when signOutRequested != null:
 return signOutRequested();case _:
   return orElse();
 
@@ -145,11 +149,12 @@ return signOutRequested();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  started,required TResult Function( AppUser? user)  userChanged,required TResult Function()  signOutRequested,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  started,required TResult Function( AppUser? user)  userChanged,required TResult Function()  userRefreshRequested,required TResult Function()  signOutRequested,}) {final _that = this;
 switch (_that) {
 case AuthStarted():
 return started();case AuthUserChanged():
-return userChanged(_that.user);case AuthSignOutRequested():
+return userChanged(_that.user);case AuthUserRefreshRequested():
+return userRefreshRequested();case AuthSignOutRequested():
 return signOutRequested();}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -164,11 +169,12 @@ return signOutRequested();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  started,TResult? Function( AppUser? user)?  userChanged,TResult? Function()?  signOutRequested,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  started,TResult? Function( AppUser? user)?  userChanged,TResult? Function()?  userRefreshRequested,TResult? Function()?  signOutRequested,}) {final _that = this;
 switch (_that) {
 case AuthStarted() when started != null:
 return started();case AuthUserChanged() when userChanged != null:
-return userChanged(_that.user);case AuthSignOutRequested() when signOutRequested != null:
+return userChanged(_that.user);case AuthUserRefreshRequested() when userRefreshRequested != null:
+return userRefreshRequested();case AuthSignOutRequested() when signOutRequested != null:
 return signOutRequested();case _:
   return null;
 
@@ -286,6 +292,38 @@ $AppUserCopyWith<$Res>? get user {
   });
 }
 }
+
+/// @nodoc
+
+
+class AuthUserRefreshRequested implements AuthEvent {
+  const AuthUserRefreshRequested();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AuthUserRefreshRequested);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'AuthEvent.userRefreshRequested()';
+}
+
+
+}
+
+
+
 
 /// @nodoc
 

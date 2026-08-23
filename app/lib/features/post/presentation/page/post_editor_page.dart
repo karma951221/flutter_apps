@@ -5,7 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
+import '../../../../core/di/injection.dart';
+import '../../../../core/media/image_picker_service.dart';
 import '../../domain/entity/post.dart';
+import '../../domain/entity/post_image_draft.dart';
 import '../../domain/post_policy.dart';
 import '../cubit/post_cubit.dart';
 
@@ -25,6 +28,7 @@ class PostEditorPage extends StatefulWidget {
 class _PostEditorPageState extends State<PostEditorPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _content;
+  final List<PreparedImage> _images = [];
 
   bool get _isEditing => widget.post != null;
 
@@ -47,7 +51,20 @@ class _PostEditorPageState extends State<PostEditorPage> {
     final cubit = context.read<PostCubit>();
     final result = _isEditing
         ? await cubit.update(widget.post!.id, _content.text)
-        : await cubit.create(_content.text);
+        : await cubit.create(
+            _content.text,
+            images: _images
+                .map(
+                  (image) => PostImageDraft(
+                    bytes: image.bytes,
+                    width: image.width,
+                    height: image.height,
+                    contentType: image.contentType,
+                    extension: image.extension,
+                  ),
+                )
+                .toList(),
+          );
 
     if (!mounted) return;
     result.when(
@@ -67,6 +84,25 @@ class _PostEditorPageState extends State<PostEditorPage> {
     );
   }
 
+  Future<void> _pickImages() async {
+    final remaining = 5 - _images.length;
+    if (remaining <= 0) return;
+    try {
+      final picked = await getIt<ImagePickerService>().pickImages(
+        limit: remaining,
+      );
+      if (mounted) setState(() => _images.addAll(picked));
+    } catch (_) {
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: '이미지를 준비하지 못했습니다.',
+          type: AppSnackBarType.error,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isSubmitting = context.select(
@@ -84,6 +120,8 @@ class _PostEditorPageState extends State<PostEditorPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 TextFormField(
+                  // E2E 셀렉터.
+                  key: const Key('postEditor.content'),
                   controller: _content,
                   enabled: !isSubmitting,
                   maxLength: PostPolicy.maxContentLength,
@@ -101,6 +139,54 @@ class _PostEditorPageState extends State<PostEditorPage> {
                     return content.isEmpty ? '게시물 내용을 입력하세요.' : null;
                   },
                 ),
+                if (!_isEditing) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  OutlinedButton.icon(
+                    key: const Key('postEditor.addImages'),
+                    onPressed: isSubmitting ? null : _pickImages,
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: Text('사진 추가 (${_images.length}/5)'),
+                  ),
+                  if (_images.isNotEmpty)
+                    SizedBox(
+                      height: 96,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _images.length,
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(width: AppSpacing.sm),
+                        itemBuilder: (context, index) {
+                          final bytes = _images[index].bytes;
+                          return Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.memory(
+                                  bytes,
+                                  width: 96,
+                                  height: 96,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: IconButton(
+                                  tooltip: '사진 삭제',
+                                  onPressed: isSubmitting
+                                      ? null
+                                      : () => setState(
+                                          () => _images.removeAt(index),
+                                        ),
+                                  icon: const Icon(Icons.close),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                ],
                 const SizedBox(height: AppSpacing.md),
                 AppButton.primary(
                   label: _isEditing ? '수정 완료' : '게시하기',

@@ -70,6 +70,11 @@ GoRouter createRouter(AuthBloc authBloc) {
       ),
       GoRoute(path: Routes.profile, builder: (_, _) => const ProfilePage()),
       GoRoute(
+        path: Routes.userProfile,
+        builder: (_, state) =>
+            ProfilePage(userId: state.pathParameters['userId']!),
+      ),
+      GoRoute(
         path: Routes.profileEdit,
         builder: (_, _) => const EditProfilePage(),
       ),

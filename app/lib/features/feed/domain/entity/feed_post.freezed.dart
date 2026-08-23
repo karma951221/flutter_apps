@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'post_dto.dart';
+part of 'feed_post.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -11,42 +11,41 @@ part of 'post_dto.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
-mixin _$PostDto {
+mixin _$FeedPost {
 
- String get id; String get authorId; String get content; DateTime get createdAt; DateTime get updatedAt; List<PostImageDto> get images;
-/// Create a copy of PostDto
+ Post get post; PostAuthor get author;
+/// Create a copy of FeedPost
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$PostDtoCopyWith<PostDto> get copyWith => _$PostDtoCopyWithImpl<PostDto>(this as PostDto, _$identity);
+$FeedPostCopyWith<FeedPost> get copyWith => _$FeedPostCopyWithImpl<FeedPost>(this as FeedPost, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostDto&&(identical(other.id, id) || other.id == id)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.content, content) || other.content == content)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&const DeepCollectionEquality().equals(other.images, images));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FeedPost&&(identical(other.post, post) || other.post == post)&&(identical(other.author, author) || other.author == author));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
-int get hashCode => Object.hash(runtimeType,id,authorId,content,createdAt,updatedAt,const DeepCollectionEquality().hash(images));
+int get hashCode => Object.hash(runtimeType,post,author);
 
 @override
 String toString() {
-  return 'PostDto(id: $id, authorId: $authorId, content: $content, createdAt: $createdAt, updatedAt: $updatedAt, images: $images)';
+  return 'FeedPost(post: $post, author: $author)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $PostDtoCopyWith<$Res>  {
-  factory $PostDtoCopyWith(PostDto value, $Res Function(PostDto) _then) = _$PostDtoCopyWithImpl;
+abstract mixin class $FeedPostCopyWith<$Res>  {
+  factory $FeedPostCopyWith(FeedPost value, $Res Function(FeedPost) _then) = _$FeedPostCopyWithImpl;
 @useResult
 $Res call({
- String id, String authorId, String content, DateTime createdAt, DateTime updatedAt, List<PostImageDto> images
+ Post post, PostAuthor author
 });
 
 
@@ -54,32 +53,28 @@ $Res call({
 
 }
 /// @nodoc
-class _$PostDtoCopyWithImpl<$Res>
-    implements $PostDtoCopyWith<$Res> {
-  _$PostDtoCopyWithImpl(this._self, this._then);
+class _$FeedPostCopyWithImpl<$Res>
+    implements $FeedPostCopyWith<$Res> {
+  _$FeedPostCopyWithImpl(this._self, this._then);
 
-  final PostDto _self;
-  final $Res Function(PostDto) _then;
+  final FeedPost _self;
+  final $Res Function(FeedPost) _then;
 
-/// Create a copy of PostDto
+/// Create a copy of FeedPost
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? authorId = null,Object? content = null,Object? createdAt = null,Object? updatedAt = null,Object? images = null,}) {
-  return _then(PostDto(
-id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,authorId: null == authorId ? _self.authorId : authorId // ignore: cast_nullable_to_non_nullable
-as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
-as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,images: null == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
-as List<PostImageDto>,
+@pragma('vm:prefer-inline') @override $Res call({Object? post = null,Object? author = null,}) {
+  return _then(FeedPost(
+post: null == post ? _self.post : post // ignore: cast_nullable_to_non_nullable
+as Post,author: null == author ? _self.author : author // ignore: cast_nullable_to_non_nullable
+as PostAuthor,
   ));
 }
 
 }
 
 
-/// Adds pattern-matching-related methods to [PostDto].
-extension PostDtoPatterns on PostDto {
+/// Adds pattern-matching-related methods to [FeedPost].
+extension FeedPostPatterns on FeedPost {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:

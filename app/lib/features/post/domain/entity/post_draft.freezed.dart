@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PostDraft {
 
- String get content;
+ String get content; List<PostImageDraft> get images;
 /// Create a copy of PostDraft
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $PostDraftCopyWith<PostDraft> get copyWith => _$PostDraftCopyWithImpl<PostDraft>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostDraft&&(identical(other.content, content) || other.content == content));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostDraft&&(identical(other.content, content) || other.content == content)&&const DeepCollectionEquality().equals(other.images, images));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,content);
+int get hashCode => Object.hash(runtimeType,content,const DeepCollectionEquality().hash(images));
 
 @override
 String toString() {
-  return 'PostDraft(content: $content)';
+  return 'PostDraft(content: $content, images: $images)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $PostDraftCopyWith<$Res>  {
   factory $PostDraftCopyWith(PostDraft value, $Res Function(PostDraft) _then) = _$PostDraftCopyWithImpl;
 @useResult
 $Res call({
- String content
+ String content, List<PostImageDraft> images
 });
 
 
@@ -62,10 +62,11 @@ class _$PostDraftCopyWithImpl<$Res>
 
 /// Create a copy of PostDraft
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? content = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? content = null,Object? images = null,}) {
   return _then(PostDraft(
 content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
-as String,
+as String,images: null == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
+as List<PostImageDraft>,
   ));
 }
 

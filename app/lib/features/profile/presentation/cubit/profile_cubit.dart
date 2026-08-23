@@ -11,11 +11,13 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   final ProfileUseCase _useCase;
 
-  Future<void> load() async {
+  Future<void> load({String? userId}) async {
     if (state.isLoading) return;
     emit(state.copyWith(isLoading: true, failure: null));
 
-    final result = await _useCase.getMyProfile();
+    final result = userId == null
+        ? await _useCase.getMyProfile()
+        : await _useCase.getProfile(userId);
     emit(
       result.when(
         ok: (profile) =>

@@ -4,6 +4,7 @@ import '../../../../core/result/result.dart';
 import '../entity/app_user.dart';
 import '../repository/auth_repository.dart';
 import 'scenario/auth_state_changes_scenario.dart';
+import 'scenario/current_user_scenario.dart';
 import 'scenario/send_password_reset_code_scenario.dart';
 import 'scenario/sign_in_scenario.dart';
 import 'scenario/sign_out_scenario.dart';
@@ -17,6 +18,9 @@ import 'scenario/verify_password_reset_code_scenario.dart';
 /// 두어, 기능이 늘어도 presentation의 의존성 수가 증가하지 않게 한다.
 abstract interface class AuthUseCase {
   Stream<AppUser?> authStateChanges();
+
+  /// 지금 세션의 사용자를 저장소에서 다시 읽는다. 미인증이면 null.
+  Future<AppUser?> currentUser();
 
   Future<Result<AppUser>> signIn({
     required String email,
@@ -50,6 +54,9 @@ class DefaultAuthUseCase implements AuthUseCase {
   @override
   Stream<AppUser?> authStateChanges() =>
       AuthStateChangesScenario(_repository)();
+
+  @override
+  Future<AppUser?> currentUser() => CurrentUserScenario(_repository)();
 
   @override
   Future<Result<AppUser>> signIn({

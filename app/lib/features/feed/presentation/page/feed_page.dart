@@ -11,8 +11,10 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../post/domain/entity/post.dart';
+import '../../../post/domain/entity/post_author.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../post/presentation/widget/post_tile.dart';
+import '../../domain/entity/feed_post.dart';
 import '../cubit/feed_cubit.dart';
 import '../cubit/feed_state.dart';
 
@@ -39,9 +41,14 @@ class _FeedView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authState = context.watch<AuthBloc>().state;
-    final userId = switch (authState) {
-      AuthAuthenticated(:final user) => user.id,
-      _ => '',
+    // 방금 쓴 글을 목록에 넣을 때 쓸 작성자. 본인이므로 세션 값으로 충분하다.
+    final currentAuthor = switch (authState) {
+      AuthAuthenticated(:final user) => PostAuthor(
+        id: user.id,
+        nickname: user.nickname,
+        avatarUrl: user.avatarUrl,
+      ),
+      _ => null,
     };
 
     return Scaffold(
@@ -56,21 +63,24 @@ class _FeedView extends StatelessWidget {
           IconButton(
             tooltip: '로그아웃',
             icon: const Icon(Icons.logout),
-            onPressed: () =>
-                context.read<AuthBloc>().add(const AuthEvent.signOutRequested()),
+            onPressed: () => context.read<AuthBloc>().add(
+              const AuthEvent.signOutRequested(),
+            ),
           ),
         ],
       ),
       body: BlocBuilder<FeedCubit, FeedState>(
         builder: (context, state) => switch (state.status) {
-          FeedStatus.loading => const Center(child: CircularProgressIndicator()),
+          FeedStatus.loading => const Center(
+            child: CircularProgressIndicator(),
+          ),
           FeedStatus.failure => _FeedError(
             message: state.failure?.message ?? '피드를 불러오지 못했습니다',
             onRetry: () => context.read<FeedCubit>().load(),
           ),
           FeedStatus.loaded => _FeedList(
-            posts: state.posts,
-            currentUserId: userId,
+            items: state.items,
+            currentUserId: currentAuthor?.id ?? '',
             isLoadingMore: state.isLoadingMore,
             canLoadMore: state.canLoadMore,
           ),
@@ -78,36 +88,44 @@ class _FeedView extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         tooltip: '새 게시물 작성',
-        onPressed: () => _compose(context),
+        onPressed: () => _compose(context, currentAuthor),
         icon: const Icon(Icons.edit),
         label: const Text('작성'),
       ),
     );
   }
 
-  Future<void> _compose(BuildContext context) async {
+  Future<void> _compose(BuildContext context, PostAuthor? author) async {
     final feed = context.read<FeedCubit>();
     final created = await context.push<Post>(Routes.postCompose);
-    if (created != null) feed.prependPost(created);
+    if (created == null) return;
+
+    // 세션이 없는데 작성에 성공하는 경로는 없다. 그래도 작성자를 지어내지
+    // 않고 재조회로 물러선다 — 잘못된 이름이 목록에 남는 것보다 낫다.
+    if (author == null) {
+      await feed.refresh();
+      return;
+    }
+    feed.prependPost(FeedPost(post: created, author: author));
   }
 }
 
 class _FeedList extends StatelessWidget {
   const _FeedList({
-    required this.posts,
+    required this.items,
     required this.currentUserId,
     required this.isLoadingMore,
     required this.canLoadMore,
   });
 
-  final List<Post> posts;
+  final List<FeedPost> items;
   final String currentUserId;
   final bool isLoadingMore;
   final bool canLoadMore;
 
   @override
   Widget build(BuildContext context) {
-    if (posts.isEmpty) {
+    if (items.isEmpty) {
       return RefreshIndicator(
         onRefresh: () => context.read<FeedCubit>().refresh(),
         child: ListView(
@@ -133,21 +151,25 @@ class _FeedList extends StatelessWidget {
         },
         child: ListView.builder(
           padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: 96),
-          itemCount: posts.length + (isLoadingMore ? 1 : 0),
+          itemCount: items.length + (isLoadingMore ? 1 : 0),
           itemBuilder: (context, index) {
-            if (index == posts.length) {
+            if (index == items.length) {
               return const Padding(
                 padding: EdgeInsets.all(AppSpacing.md),
                 child: Center(child: CircularProgressIndicator()),
               );
             }
 
-            final post = posts[index];
+            final item = items[index];
+            final post = item.post;
             final isMine = post.authorId == currentUserId;
             return PostTile(
               post: post,
+              author: item.author,
               isMine: isMine,
-              onTap: isMine ? () => _edit(context, post) : () {},
+              onTap: isMine
+                  ? () => _edit(context, post)
+                  : () => context.push(Routes.userProfilePath(item.author.id)),
               onEdit: () => _edit(context, post),
               onDelete: () => _confirmDelete(context, post),
             );

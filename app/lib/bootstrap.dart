@@ -15,12 +15,27 @@ import 'core/network/secure_supabase_storage.dart';
 /// 2) DI 구성
 /// 3) 실행
 Future<void> bootstrap() async {
+  await initializeApp();
+  runApp(const DaylogApp());
+}
+
+/// runApp 직전까지의 준비 단계.
+///
+/// E2E 테스트는 자기 손으로 위젯을 pump 해야 하므로 [runApp] 을 부를 수 없다.
+/// 그래서 준비 단계만 여기로 떼어내 테스트와 공유한다.
+/// Supabase 는 프로세스당 한 번만 초기화할 수 있어서 [_supabaseReady] 로 막는다.
+Future<void> initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
     // TODO(0단계 이후): 크래시 리포팅 연결
   };
+
+  if (_supabaseReady) {
+    await configureDependencies();
+    return;
+  }
 
   await Supabase.initialize(
     url: AppConfig.supabaseUrl,
@@ -39,7 +54,9 @@ Future<void> bootstrap() async {
     ),
   );
 
-  await configureDependencies();
+  _supabaseReady = true;
 
-  runApp(const DaylogApp());
+  await configureDependencies();
 }
+
+bool _supabaseReady = false;

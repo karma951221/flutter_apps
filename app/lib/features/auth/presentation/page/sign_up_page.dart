@@ -72,7 +72,9 @@ class _SignUpViewState extends State<_SignUpView> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: AppSpacing.md),
+                    // key 는 E2E 셀렉터. 라벨 문구 변경에 테스트가 끌려가지 않게 한다.
                     AuthTextField(
+                      key: const Key('signUp.email'),
                       controller: _email,
                       label: '이메일',
                       enabled: !busy,
@@ -81,6 +83,7 @@ class _SignUpViewState extends State<_SignUpView> {
                       validator: Validators.email,
                     ),
                     AuthTextField(
+                      key: const Key('signUp.nickname'),
                       controller: _nickname,
                       label: '닉네임 (2~20자)',
                       enabled: !busy,
@@ -89,6 +92,7 @@ class _SignUpViewState extends State<_SignUpView> {
                       validator: Validators.nickname,
                     ),
                     AuthTextField(
+                      key: const Key('signUp.password'),
                       controller: _password,
                       label: '비밀번호 (8자 이상)',
                       enabled: !busy,
@@ -97,6 +101,7 @@ class _SignUpViewState extends State<_SignUpView> {
                       validator: Validators.password,
                     ),
                     AuthTextField(
+                      key: const Key('signUp.passwordConfirm'),
                       controller: _passwordConfirm,
                       label: '비밀번호 확인',
                       enabled: !busy,

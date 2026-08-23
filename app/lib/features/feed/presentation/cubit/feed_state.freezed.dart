@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$FeedState {
 
- FeedStatus get status; List<Post> get posts; bool get isLoadingMore; String? get nextCursor; Failure? get failure;
+ FeedStatus get status; List<FeedPost> get items; bool get isLoadingMore; String? get nextCursor; Failure? get failure;
 /// Create a copy of FeedState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $FeedStateCopyWith<FeedState> get copyWith => _$FeedStateCopyWithImpl<FeedState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FeedState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.posts, posts)&&(identical(other.isLoadingMore, isLoadingMore) || other.isLoadingMore == isLoadingMore)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.failure, failure) || other.failure == failure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FeedState&&(identical(other.status, status) || other.status == status)&&const DeepCollectionEquality().equals(other.items, items)&&(identical(other.isLoadingMore, isLoadingMore) || other.isLoadingMore == isLoadingMore)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.failure, failure) || other.failure == failure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(posts),isLoadingMore,nextCursor,failure);
+int get hashCode => Object.hash(runtimeType,status,const DeepCollectionEquality().hash(items),isLoadingMore,nextCursor,failure);
 
 @override
 String toString() {
-  return 'FeedState(status: $status, posts: $posts, isLoadingMore: $isLoadingMore, nextCursor: $nextCursor, failure: $failure)';
+  return 'FeedState(status: $status, items: $items, isLoadingMore: $isLoadingMore, nextCursor: $nextCursor, failure: $failure)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $FeedStateCopyWith<$Res>  {
   factory $FeedStateCopyWith(FeedState value, $Res Function(FeedState) _then) = _$FeedStateCopyWithImpl;
 @useResult
 $Res call({
- FeedStatus status, List<Post> posts, bool isLoadingMore, String? nextCursor, Failure? failure
+ FeedStatus status, List<FeedPost> items, bool isLoadingMore, String? nextCursor, Failure? failure
 });
 
 
@@ -62,11 +62,11 @@ class _$FeedStateCopyWithImpl<$Res>
 
 /// Create a copy of FeedState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? posts = null,Object? isLoadingMore = null,Object? nextCursor = freezed,Object? failure = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? items = null,Object? isLoadingMore = null,Object? nextCursor = freezed,Object? failure = freezed,}) {
   return _then(FeedState(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as FeedStatus,posts: null == posts ? _self.posts : posts // ignore: cast_nullable_to_non_nullable
-as List<Post>,isLoadingMore: null == isLoadingMore ? _self.isLoadingMore : isLoadingMore // ignore: cast_nullable_to_non_nullable
+as FeedStatus,items: null == items ? _self.items : items // ignore: cast_nullable_to_non_nullable
+as List<FeedPost>,isLoadingMore: null == isLoadingMore ? _self.isLoadingMore : isLoadingMore // ignore: cast_nullable_to_non_nullable
 as bool,nextCursor: freezed == nextCursor ? _self.nextCursor : nextCursor // ignore: cast_nullable_to_non_nullable
 as String?,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
 as Failure?,

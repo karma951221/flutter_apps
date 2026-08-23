@@ -75,6 +75,8 @@ class _SignInViewState extends State<_SignInView> {
                     children: [
                       const SizedBox(height: AppSpacing.xl),
                       AuthTextField(
+                        // E2E 셀렉터. 라벨 문구가 바뀌어도 테스트가 깨지지 않게 한다.
+                        key: const Key('signIn.email'),
                         controller: _email,
                         label: '이메일',
                         enabled: !busy,
@@ -84,6 +86,7 @@ class _SignInViewState extends State<_SignInView> {
                         validator: Validators.email,
                       ),
                       AuthTextField(
+                        key: const Key('signIn.password'),
                         controller: _password,
                         label: '비밀번호',
                         enabled: !busy,

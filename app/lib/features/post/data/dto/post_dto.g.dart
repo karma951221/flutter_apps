@@ -12,6 +12,11 @@ PostDto _$PostDtoFromJson(Map<String, dynamic> json) => PostDto(
   content: json['content'] as String,
   createdAt: DateTime.parse(json['created_at'] as String),
   updatedAt: DateTime.parse(json['updated_at'] as String),
+  images:
+      (json['post_images'] as List<dynamic>?)
+          ?.map((e) => PostImageDto.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      [],
 );
 
 Map<String, dynamic> _$PostDtoToJson(PostDto instance) => <String, dynamic>{
@@ -20,4 +25,5 @@ Map<String, dynamic> _$PostDtoToJson(PostDto instance) => <String, dynamic>{
   'content': instance.content,
   'created_at': instance.createdAt.toIso8601String(),
   'updated_at': instance.updatedAt.toIso8601String(),
+  'post_images': instance.images,
 };

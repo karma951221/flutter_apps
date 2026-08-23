@@ -2,7 +2,7 @@ import 'package:injectable/injectable.dart';
 
 import '../../../../core/pagination/cursor_page.dart';
 import '../../../../core/result/result.dart';
-import '../../../post/domain/entity/post.dart';
+import '../../domain/entity/feed_post.dart';
 import '../../domain/repository/feed_repository.dart';
 import '../cursor/feed_cursor.dart';
 import '../datasource/feed_data_source.dart';
@@ -19,21 +19,23 @@ class FeedRepositoryImpl
   final FeedDataSource _dataSource;
 
   @override
-  Future<Result<CursorPage<Post>>> getPosts({
+  Future<Result<CursorPage<FeedPost>>> getPosts({
     required int limit,
     String? cursor,
+    String? authorId,
   }) => guard(() async {
     // 한 개를 더 요청해서 다음 페이지 존재 여부를 알아낸다. 전체 개수를 세는
     // COUNT 쿼리를 매번 돌리지 않아도 된다.
     final rows = await _dataSource.getPosts(
       limit: limit + 1,
       cursor: FeedCursor.decode(cursor),
+      authorId: authorId,
     );
 
     final hasMore = rows.length > limit;
     final page = hasMore ? rows.take(limit).toList() : rows;
 
-    return CursorPage<Post>(
+    return CursorPage<FeedPost>(
       items: page.map((dto) => dto.toEntity()).toList(),
       nextCursor: hasMore ? page.last.toCursor().encode() : null,
     );

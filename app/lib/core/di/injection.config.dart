@@ -50,6 +50,8 @@ import '../../features/profile/domain/repository/profile_repository.dart'
     as _i364;
 import '../../features/profile/domain/usecase/profile_use_case.dart' as _i408;
 import '../../features/profile/presentation/cubit/profile_cubit.dart' as _i36;
+import '../media/image_picker_service.dart' as _i350;
+import '../media/image_uploader.dart' as _i861;
 import 'register_module.dart' as _i291;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -64,8 +66,14 @@ extension GetItInjectableX on _i174.GetIt {
       () => registerModule.secureStorage,
     );
     gh.lazySingleton<_i454.SupabaseClient>(() => registerModule.supabaseClient);
+    gh.lazySingleton<_i350.ImagePickerService>(
+      () => _i350.ImagePickerService(),
+    );
     gh.lazySingleton<_i514.FeedDataSource>(
       () => _i402.SupabaseFeedDataSource(gh<_i454.SupabaseClient>()),
+    );
+    gh.lazySingleton<_i861.ImageUploader>(
+      () => _i861.ImageUploader(gh<_i454.SupabaseClient>()),
     );
     gh.lazySingleton<_i986.ProfileDataSource>(
       () => _i787.SupabaseProfileDataSource(gh<_i454.SupabaseClient>()),

@@ -66,6 +66,20 @@ dev_dependencies:
   bloc_test: ^10.0.0
   mocktail: ^1.0.5
 
+  # E2E (patrol_test/). 실행 방법은 docs/testing/e2e.md 참고.
+  integration_test:
+    sdk: flutter
+  patrol: ^4.9.0
+
+# Patrol 이 네이티브 테스트 바이너리를 만들 때 참조하는 앱 식별자.
+# android.package_name 은 android/app/build.gradle.kts 의 applicationId 와 같아야 한다.
+patrol:
+  app_name: daylog
+  android:
+    package_name: com.karma.daylog
+  ios:
+    bundle_id: com.karma.daylog
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

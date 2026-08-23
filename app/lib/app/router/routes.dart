@@ -10,6 +10,9 @@ abstract final class Routes {
   static String postEditPath(String postId) => '/posts/$postId/edit';
   static const profile = '/profile';
   static const profileEdit = '/profile/edit';
+  static const userProfile = '/users/:userId';
+
+  static String userProfilePath(String userId) => '/users/$userId';
 
   /// 미인증 상태에서 접근할 수 있는 경로.
   static const publicRoutes = {signIn, signUp, passwordReset};

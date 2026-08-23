@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'post_image_dto.dart';
+
 part 'post_dto.freezed.dart';
 part 'post_dto.g.dart';
 
@@ -13,6 +15,7 @@ class PostDto with _$PostDto {
     required this.content,
     required this.createdAt,
     required this.updatedAt,
+    this.images = const [],
   });
 
   @override
@@ -28,6 +31,9 @@ class PostDto with _$PostDto {
   @override
   @JsonKey(name: 'updated_at')
   final DateTime updatedAt;
+  @override
+  @JsonKey(name: 'post_images', defaultValue: [])
+  final List<PostImageDto> images;
 
   factory PostDto.fromJson(Map<String, dynamic> json) =>
       _$PostDtoFromJson(json);

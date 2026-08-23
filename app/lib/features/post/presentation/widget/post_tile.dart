@@ -1,16 +1,24 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/theme/app_spacing.dart';
+import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
 import '../../domain/entity/post.dart';
+import '../../domain/entity/post_author.dart';
 
 /// 목록에서 게시물 하나를 보여준다.
 ///
 /// feed 와 profile 이 함께 쓰므로 소유자가 명확한 post 가 들고 있는다
 /// (아키텍처 규칙 ⑥).
+///
+/// [author] 를 옵션으로 두지 않는다. 값이 없을 때 보여줄 그럴듯한 대체 표시를
+/// 만들면 조인을 빠뜨린 화면이 조용히 넘어간다. 목록을 만드는 쪽이 작성자를
+/// 함께 가져오도록 타입으로 강제한다.
 class PostTile extends StatelessWidget {
   const PostTile({
     required this.post,
+    required this.author,
     required this.isMine,
     required this.onTap,
     this.onEdit,
@@ -19,6 +27,7 @@ class PostTile extends StatelessWidget {
   });
 
   final Post post;
+  final PostAuthor author;
   final bool isMine;
   final VoidCallback onTap;
   final VoidCallback? onEdit;
@@ -26,7 +35,12 @@ class PostTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final mutedStyle = theme.textTheme.bodySmall?.copyWith(
+      color: scheme.onSurfaceVariant,
+    );
+
     return Card(
       margin: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
@@ -34,22 +48,72 @@ class PostTile extends StatelessWidget {
       ),
       child: AppListTile(
         onTap: onTap,
-        leading: CircleAvatar(
-          child: Text(post.authorId.characters.first.toUpperCase()),
+        leading: AppAvatar(
+          nickname: author.nickname,
+          imageUrl: author.avatarUrl,
+          radius: 20,
         ),
-        title: Text(
-          post.content,
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodyLarge,
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(
+                author.nickname,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(_displayDate(post.updatedAt), style: mutedStyle),
+          ],
         ),
         subtitle: Padding(
-          padding: const EdgeInsets.only(top: AppSpacing.xs),
-          child: Text(
-            _displayDate(post.updatedAt),
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          padding: const EdgeInsets.only(
+            top: AppSpacing.xs,
+            bottom: AppSpacing.xs,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                post.content,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyLarge,
+              ),
+              if (post.images.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.sm),
+                SizedBox(
+                  height: 160,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: post.images.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(width: AppSpacing.sm),
+                    itemBuilder: (_, index) => ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      // 목록을 되감을 때마다 1080px 원본을 다시 받지 않도록
+                      // 디스크 캐시를 쓴다. 로딩·실패도 위젯 트리로 던지지 않고
+                      // 같은 크기의 자리를 지키는 상자로 대신한다.
+                      child: CachedNetworkImage(
+                        imageUrl: post.images[index].url,
+                        width: 160,
+                        height: 160,
+                        fit: BoxFit.cover,
+                        placeholder: (_, _) => _imagePlaceholder(scheme),
+                        errorWidget: (_, _, _) => _imagePlaceholder(
+                          scheme,
+                          child: Icon(
+                            Icons.broken_image_outlined,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
         trailing: isMine
@@ -66,6 +130,17 @@ class PostTile extends StatelessWidget {
               )
             : null,
       ),
+    );
+  }
+
+  /// 이미지가 아직 없거나 실패했을 때 같은 크기의 자리를 지키는 상자.
+  Widget _imagePlaceholder(ColorScheme scheme, {Widget? child}) {
+    return Container(
+      width: 160,
+      height: 160,
+      alignment: Alignment.center,
+      color: scheme.surfaceContainerHighest,
+      child: child,
     );
   }
 

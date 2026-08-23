@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../post/domain/entity/post.dart';
+import '../../domain/entity/feed_post.dart';
 import '../../domain/usecase/feed_use_case.dart';
 import 'feed_state.dart';
 
@@ -17,17 +18,31 @@ class FeedCubit extends Cubit<FeedState> {
   static const _pageSize = 20;
 
   final FeedUseCase _useCase;
+  String? _authorId;
 
   Future<void> load() async {
+    _authorId = null;
+    await _load();
+  }
+
+  Future<void> loadForAuthor(String authorId) async {
+    _authorId = authorId;
+    await _load();
+  }
+
+  Future<void> _load() async {
     emit(const FeedState());
-    final result = await _useCase.getFeedPosts(limit: _pageSize);
+    final result = await _useCase.getFeedPosts(
+      limit: _pageSize,
+      authorId: _authorId,
+    );
     if (isClosed) return;
 
     emit(
       result.when(
         ok: (page) => FeedState(
           status: FeedStatus.loaded,
-          posts: page.items,
+          items: page.items,
           nextCursor: page.nextCursor,
         ),
         err: (failure) =>
@@ -36,7 +51,7 @@ class FeedCubit extends Cubit<FeedState> {
     );
   }
 
-  Future<void> refresh() => load();
+  Future<void> refresh() => _load();
 
   Future<void> loadMore() async {
     final current = state;
@@ -50,13 +65,14 @@ class FeedCubit extends Cubit<FeedState> {
     final result = await _useCase.getFeedPosts(
       limit: _pageSize,
       cursor: current.nextCursor,
+      authorId: _authorId,
     );
     if (isClosed) return;
 
     emit(
       result.when(
         ok: (page) => current.copyWith(
-          posts: [...current.posts, ...page.items],
+          items: [...current.items, ...page.items],
           isLoadingMore: false,
           nextCursor: page.nextCursor,
         ),
@@ -66,21 +82,27 @@ class FeedCubit extends Cubit<FeedState> {
   }
 
   /// 새로 작성된 게시물을 목록 맨 앞에 넣는다.
-  void prependPost(Post post) {
+  ///
+  /// 작성자는 로그인한 본인이므로 화면이 세션에서 만들어 넘긴다. 이것 하나를
+  /// 위해 방금 쓴 글을 서버에서 다시 조회하지 않는다.
+  void prependPost(FeedPost item) {
     final current = state;
     if (current.status != FeedStatus.loaded) return;
-    emit(current.copyWith(posts: [post, ...current.posts]));
+    emit(current.copyWith(items: [item, ...current.items]));
   }
 
   /// 수정된 게시물을 목록에 반영한다.
+  ///
+  /// 작성자는 수정으로 바뀌지 않으므로 목록이 이미 들고 있던 값을 그대로 둔다.
+  /// 수정 화면이 작성자 프로필을 알 필요가 없다는 뜻이기도 하다.
   void replacePost(Post post) {
     final current = state;
     if (current.status != FeedStatus.loaded) return;
     emit(
       current.copyWith(
-        posts: [
-          for (final item in current.posts)
-            if (item.id == post.id) post else item,
+        items: [
+          for (final item in current.items)
+            if (item.id == post.id) item.withPost(post) else item,
         ],
       ),
     );
@@ -92,7 +114,7 @@ class FeedCubit extends Cubit<FeedState> {
     if (current.status != FeedStatus.loaded) return;
     emit(
       current.copyWith(
-        posts: current.posts.where((post) => post.id != postId).toList(),
+        items: current.items.where((item) => item.id != postId).toList(),
       ),
     );
   }

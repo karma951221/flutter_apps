@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'post_image_draft.dart';
+
 part 'post_draft.freezed.dart';
 
 /// 새 게시물 작성에 필요한 입력값.
@@ -8,8 +10,10 @@ part 'post_draft.freezed.dart';
 /// 앱이 보내지 않으므로 위조할 경로가 없다.
 @freezed
 class PostDraft with _$PostDraft {
-  const PostDraft({required this.content});
+  const PostDraft({required this.content, this.images = const []});
 
   @override
   final String content;
+  @override
+  final List<PostImageDraft> images;
 }
