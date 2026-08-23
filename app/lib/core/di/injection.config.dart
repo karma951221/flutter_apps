@@ -53,7 +53,8 @@ import '../../features/profile/domain/usecase/profile_use_case.dart' as _i408;
 import '../../features/profile/presentation/cubit/profile_cubit.dart' as _i36;
 import '../id/id_generator.dart' as _i1000;
 import '../media/image_picker_service.dart' as _i350;
-import '../media/image_uploader.dart' as _i861;
+import '../media/image_storage.dart' as _i1040;
+import '../media/supabase_image_storage.dart' as _i571;
 import 'register_module.dart' as _i291;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -78,32 +79,21 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i514.FeedDataSource>(
       () => _i402.SupabaseFeedDataSource(gh<_i454.SupabaseClient>()),
     );
-    gh.lazySingleton<_i861.ImageUploader>(
-      () => _i861.ImageUploader(gh<_i454.SupabaseClient>()),
+    gh.lazySingleton<_i1040.ImageStorage>(
+      () => _i571.SupabaseImageStorage(gh<_i454.SupabaseClient>()),
+    );
+    gh.lazySingleton<_i692.AuthDataSource>(
+      () => _i87.SupabaseAuthDataSource(gh<_i454.SupabaseClient>()),
     );
     gh.lazySingleton<_i487.PostDataSource>(
       () => _i215.SupabasePostDataSource(
         gh<_i454.SupabaseClient>(),
         gh<_i1000.IdGenerator>(),
+        gh<_i1040.ImageStorage>(),
       ),
-    );
-    gh.lazySingleton<_i735.PostRepository>(
-      () => _i238.PostRepositoryImpl(gh<_i487.PostDataSource>()),
-    );
-    gh.lazySingleton<_i986.ProfileDataSource>(
-      () => _i787.SupabaseProfileDataSource(gh<_i454.SupabaseClient>()),
-    );
-    gh.lazySingleton<_i692.AuthDataSource>(
-      () => _i87.SupabaseAuthDataSource(gh<_i454.SupabaseClient>()),
-    );
-    gh.lazySingleton<_i944.PostUseCase>(
-      () => _i944.DefaultPostUseCase(gh<_i735.PostRepository>()),
     );
     gh.lazySingleton<_i898.FeedRepository>(
       () => _i749.FeedRepositoryImpl(gh<_i514.FeedDataSource>()),
-    );
-    gh.factory<_i1054.PostCubit>(
-      () => _i1054.PostCubit(gh<_i944.PostUseCase>()),
     );
     gh.lazySingleton<_i961.AuthRepository>(
       () => _i971.SupabaseAuthRepository(gh<_i692.AuthDataSource>()),
@@ -111,8 +101,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1009.FeedUseCase>(
       () => _i1009.DefaultFeedUseCase(gh<_i898.FeedRepository>()),
     );
+    gh.lazySingleton<_i986.ProfileDataSource>(
+      () => _i787.SupabaseProfileDataSource(
+        gh<_i454.SupabaseClient>(),
+        gh<_i1040.ImageStorage>(),
+      ),
+    );
     gh.lazySingleton<_i364.ProfileRepository>(
       () => _i309.ProfileRepositoryImpl(gh<_i986.ProfileDataSource>()),
+    );
+    gh.lazySingleton<_i735.PostRepository>(
+      () => _i238.PostRepositoryImpl(gh<_i487.PostDataSource>()),
+    );
+    gh.lazySingleton<_i944.PostUseCase>(
+      () => _i944.DefaultPostUseCase(gh<_i735.PostRepository>()),
     );
     gh.lazySingleton<_i176.AuthUseCase>(
       () => _i176.DefaultAuthUseCase(gh<_i961.AuthRepository>()),
@@ -130,6 +132,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i58.FeedCubit>(() => _i58.FeedCubit(gh<_i1009.FeedUseCase>()));
     gh.lazySingleton<_i408.ProfileUseCase>(
       () => _i408.DefaultProfileUseCase(gh<_i364.ProfileRepository>()),
+    );
+    gh.factory<_i1054.PostCubit>(
+      () => _i1054.PostCubit(gh<_i944.PostUseCase>()),
     );
     gh.factory<_i36.ProfileCubit>(
       () => _i36.ProfileCubit(gh<_i408.ProfileUseCase>()),

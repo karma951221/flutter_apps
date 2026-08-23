@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/id/id_generator.dart';
+import '../../../../core/media/image_storage.dart';
 import '../../domain/entity/post_draft.dart';
 import '../../domain/entity/post_update.dart';
 import '../dto/post_dto.dart';
@@ -9,16 +10,13 @@ import 'post_data_source.dart';
 
 @LazySingleton(as: PostDataSource)
 class SupabasePostDataSource implements PostDataSource {
-  SupabasePostDataSource(this._client, this._ids);
+  SupabasePostDataSource(this._client, this._ids, this._images);
 
   final SupabaseClient _client;
   final IdGenerator _ids;
+  final ImageStorage _images;
 
   static const _bucket = 'post-images';
-
-  /// 공개 URL 에서 객체 경로를 잘라낼 기준. Storage 의 공개 URL 은
-  /// `.../storage/v1/object/public/{bucket}/{path}` 모양이다.
-  static const _publicUrlMarker = '/object/public/$_bucket/';
 
   static const _columns =
       'id, author_id, content, created_at, updated_at, '
@@ -39,8 +37,8 @@ class SupabasePostDataSource implements PostDataSource {
 
   @override
   Future<PostDto?> createPost(PostDraft draft) async {
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) return null;
+    // 경로에 쓸 사용자 id 는 저장소가 세션에서 읽는다. 여기서는 로그인 여부만 본다.
+    if (_client.auth.currentUser == null) return null;
 
     if (draft.images.isEmpty) {
       // author_id 는 보내지 않는다. DB 의 default auth.uid() 가 채운다.
@@ -52,7 +50,7 @@ class SupabasePostDataSource implements PostDataSource {
       return getPost(row['id'] as String);
     }
 
-    return getPost(await _createWithImages(draft, userId));
+    return getPost(await _createWithImages(draft));
   }
 
   /// 이미지를 먼저 올리고, 마지막에 게시물 행을 만든다.
@@ -62,27 +60,32 @@ class SupabasePostDataSource implements PostDataSource {
   /// `create_post_with_images` 한 번(= 트랜잭션 하나)으로 끝낸다.
   ///
   /// Storage 는 그 트랜잭션 밖이므로, 실패하면 올린 객체를 best-effort 로 지운다.
-  Future<String> _createWithImages(PostDraft draft, String userId) async {
-    final storage = _client.storage.from(_bucket);
-
-    // 폴더 이름은 게시물 id 일 필요가 없다 — Storage 정책이 보는 것은 첫 조각뿐이다.
-    // 게시물 id 는 아직 없으므로 클라이언트에서 만든 UUID 를 쓴다.
-    final folder = '$userId/${_ids.newId()}';
+  Future<String> _createWithImages(PostDraft draft) async {
+    // 폴더 이름은 게시물 id 일 필요가 없다 — Storage 정책이 보는 것은 첫 조각(사용자
+    // id)뿐이고, 그건 저장소가 붙인다. 게시물 id 는 아직 없으므로 클라이언트에서
+    // 만든 UUID 를 쓴다.
+    final folder = _ids.newId();
     final uploaded = <String>[];
 
     try {
       final images = <Map<String, dynamic>>[];
       for (var index = 0; index < draft.images.length; index++) {
         final image = draft.images[index];
-        final path = '$folder/$index.${image.extension}';
-        await storage.uploadBinary(
-          path,
-          image.bytes,
-          fileOptions: FileOptions(contentType: image.contentType),
+        final url = await _images.upload(
+          bucket: _bucket,
+          bytes: image.bytes,
+          contentType: image.contentType,
+          extension: image.extension,
+          folder: folder,
+          name: '$index',
         );
-        uploaded.add(path);
+        final path = ImageStorage.objectPathFromPublicUrl(
+          bucket: _bucket,
+          publicUrl: url,
+        );
+        if (path != null) uploaded.add(path);
         images.add({
-          'url': storage.getPublicUrl(path),
+          'url': url,
           'width': image.width,
           'height': image.height,
           'sort_order': index,
@@ -95,7 +98,7 @@ class SupabasePostDataSource implements PostDataSource {
       );
       return postId as String;
     } catch (_) {
-      await _removeObjects(uploaded);
+      await _images.removePaths(bucket: _bucket, paths: uploaded);
       rethrow;
     }
   }
@@ -132,7 +135,7 @@ class SupabasePostDataSource implements PostDataSource {
     if (deleted != true) return false;
 
     // 게시물은 이미 숨겨졌다. 객체 정리에 실패해도 삭제는 성공이다.
-    await _removeObjects(paths);
+    await _images.removePaths(bucket: _bucket, paths: paths);
     return true;
   }
 
@@ -144,32 +147,15 @@ class SupabasePostDataSource implements PostDataSource {
           .eq('post_id', postId);
       final paths = <String>[];
       for (final row in rows) {
-        final path = _objectPath(row['url'] as String);
+        final path = ImageStorage.objectPathFromPublicUrl(
+          bucket: _bucket,
+          publicUrl: row['url'] as String,
+        );
         if (path != null) paths.add(path);
       }
       return paths;
     } catch (_) {
       return const [];
-    }
-  }
-
-  /// 공개 URL → 버킷 안의 객체 경로. 모양이 다르면 null.
-  String? _objectPath(String url) {
-    final marker = url.indexOf(_publicUrlMarker);
-    if (marker < 0) return null;
-    var encoded = url.substring(marker + _publicUrlMarker.length);
-    final query = encoded.indexOf('?');
-    if (query >= 0) encoded = encoded.substring(0, query);
-    if (encoded.isEmpty) return null;
-    return Uri.decodeComponent(encoded);
-  }
-
-  Future<void> _removeObjects(List<String> paths) async {
-    if (paths.isEmpty) return;
-    try {
-      await _client.storage.from(_bucket).remove(paths);
-    } catch (_) {
-      // best-effort. 남은 객체는 게시물과 이어지지 않으므로 노출되지 않는다.
     }
   }
 }

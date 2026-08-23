@@ -82,7 +82,8 @@ lib/
 │   ├── media/                   # X3
 │   │   ├── image_picker_service.dart
 │   │   ├── image_compressor.dart        # 1080px / WebP / q80
-│   │   └── image_uploader.dart          # Supabase Storage 업로드
+│   │   ├── image_storage.dart           # 이미지 저장소 계약 (SDK 타입 없음)
+│   │   └── supabase_image_storage.dart  # 위 계약의 Supabase Storage 구현
 │   ├── storage/
 │   │   ├── secure_storage.dart
 │   │   └── app_preferences.dart

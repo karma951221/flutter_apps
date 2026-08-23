@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/media/image_picker_service.dart';
-import '../../../../core/media/image_uploader.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
@@ -11,12 +10,10 @@ import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
+import '../../domain/entity/avatar_image_draft.dart';
 import '../../domain/entity/profile_update.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
-
-/// 아바타 이미지를 담는 Storage 버킷.
-const _avatarBucket = 'avatars';
 
 class EditProfilePage extends StatelessWidget {
   const EditProfilePage({super.key});
@@ -47,7 +44,6 @@ class _EditProfileViewState extends State<_EditProfileView> {
   /// 떠났을 때 객체가 그대로 남는다.
   PreparedImage? _pendingAvatar;
 
-  bool _isUploadingAvatar = false;
   String? _initializedProfileId;
   bool _wasSaving = false;
 
@@ -67,61 +63,36 @@ class _EditProfileViewState extends State<_EditProfileView> {
     _avatarUrl = profile.avatarUrl;
   }
 
-  /// 저장 흐름. 업로드 → 프로필 갱신 → 정리 순서로 진행한다.
+  /// 저장을 요청한다.
   ///
-  /// 업로드가 프로필 갱신보다 앞서야 새 URL 을 같은 요청에 담을 수 있다.
-  /// 갱신이 실패하면 방금 올린 객체를, 성공하면 이전 객체를 치운다. 정리는
-  /// best-effort 라서 실패해도 저장 결과를 뒤집지 않는다.
+  /// 업로드 · 프로필 갱신 · 옛 이미지 정리의 순서와 보상 처리는 usecase 의
+  /// `UpdateAvatarScenario` 가 소유한다. 화면은 무엇을 저장할지만 넘긴다.
   Future<void> _save() async {
-    if (_isUploadingAvatar) return;
+    final cubit = context.read<ProfileCubit>();
+    if (cubit.state.isSaving) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final cubit = context.read<ProfileCubit>();
     final authBloc = context.read<AuthBloc>();
-    final uploader = getIt<ImageUploader>();
     final pending = _pendingAvatar;
-    final previousAvatarUrl = _avatarUrl;
-
-    var avatarUrl = previousAvatarUrl;
-    if (pending != null) {
-      setState(() => _isUploadingAvatar = true);
-      try {
-        avatarUrl = await uploader.upload(
-          bucket: _avatarBucket,
-          bytes: pending.bytes,
-          contentType: pending.contentType,
-          extension: pending.extension,
-        );
-      } catch (_) {
-        if (!mounted) return;
-        setState(() => _isUploadingAvatar = false);
-        AppSnackBar.show(
-          context,
-          message: '프로필 사진을 업로드하지 못했습니다.',
-          type: AppSnackBarType.error,
-        );
-        return;
-      }
-      if (!mounted) return;
-      setState(() => _isUploadingAvatar = false);
-    }
 
     await cubit.save(
       ProfileUpdate(
         nickname: _nicknameController.text,
         bio: _bioController.text,
-        avatarUrl: avatarUrl,
+        // 지금 쓰고 있는 URL 을 그대로 보낸다. 새 이미지가 있으면 usecase 가
+        // 업로드한 URL 로 바꾸고, 이 값이 정리 대상이 된다.
+        avatarUrl: _avatarUrl,
       ),
+      newAvatar: pending == null
+          ? null
+          : AvatarImageDraft(
+              bytes: pending.bytes,
+              contentType: pending.contentType,
+              extension: pending.extension,
+            ),
     );
 
-    final didFail = cubit.state.failure != null;
-    if (pending != null) {
-      await uploader.removeByPublicUrl(
-        bucket: _avatarBucket,
-        publicUrl: didFail ? avatarUrl : previousAvatarUrl,
-      );
-    }
-    if (didFail) return;
+    if (cubit.state.failure != null) return;
 
     // 로그인 때 만들어진 사용자 스냅샷을 새로 읽게 한다. 이게 없으면 방금
     // 바꾼 닉네임·사진이 다음에 쓰는 글에 옛 값으로 붙는다.
@@ -130,12 +101,12 @@ class _EditProfileViewState extends State<_EditProfileView> {
     if (!mounted) return;
     setState(() {
       _pendingAvatar = null;
-      _avatarUrl = avatarUrl;
+      _avatarUrl = cubit.state.profile?.avatarUrl ?? _avatarUrl;
     });
   }
 
   Future<void> _pickAvatar() async {
-    if (_isUploadingAvatar) return;
+    if (context.read<ProfileCubit>().state.isSaving) return;
     final picker = getIt<ImagePickerService>();
     final image = await picker.pickImage();
     if (image == null || !mounted) return;
@@ -188,7 +159,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
         if (state.profile == null) {
           return const SizedBox.shrink();
         }
-        final isBusy = state.isSaving || _isUploadingAvatar;
+        final isBusy = state.isSaving;
         return SafeArea(
           child: Form(
             key: _formKey,
