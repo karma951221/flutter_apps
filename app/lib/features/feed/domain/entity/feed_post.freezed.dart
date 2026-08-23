@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$FeedPost {
 
- Post get post; PostAuthor get author;
+ Post get post; PostAuthor get author; ReactionSummary get reactions; int get commentCount;
 /// Create a copy of FeedPost
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $FeedPostCopyWith<FeedPost> get copyWith => _$FeedPostCopyWithImpl<FeedPost>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FeedPost&&(identical(other.post, post) || other.post == post)&&(identical(other.author, author) || other.author == author));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FeedPost&&(identical(other.post, post) || other.post == post)&&(identical(other.author, author) || other.author == author)&&(identical(other.reactions, reactions) || other.reactions == reactions)&&(identical(other.commentCount, commentCount) || other.commentCount == commentCount));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,post,author);
+int get hashCode => Object.hash(runtimeType,post,author,reactions,commentCount);
 
 @override
 String toString() {
-  return 'FeedPost(post: $post, author: $author)';
+  return 'FeedPost(post: $post, author: $author, reactions: $reactions, commentCount: $commentCount)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $FeedPostCopyWith<$Res>  {
   factory $FeedPostCopyWith(FeedPost value, $Res Function(FeedPost) _then) = _$FeedPostCopyWithImpl;
 @useResult
 $Res call({
- Post post, PostAuthor author
+ Post post, PostAuthor author, ReactionSummary reactions, int commentCount
 });
 
 
@@ -62,11 +62,13 @@ class _$FeedPostCopyWithImpl<$Res>
 
 /// Create a copy of FeedPost
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? post = null,Object? author = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? post = null,Object? author = null,Object? reactions = null,Object? commentCount = null,}) {
   return _then(FeedPost(
 post: null == post ? _self.post : post // ignore: cast_nullable_to_non_nullable
 as Post,author: null == author ? _self.author : author // ignore: cast_nullable_to_non_nullable
-as PostAuthor,
+as PostAuthor,reactions: null == reactions ? _self.reactions : reactions // ignore: cast_nullable_to_non_nullable
+as ReactionSummary,commentCount: null == commentCount ? _self.commentCount : commentCount // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

@@ -2581,7 +2581,7 @@ cd app && flutter test && cd .. && git add app/lib/features/comment app/test/fea
 - Consumes: Task 2 가 `posts_with_author` 에 더한 `reaction_counts` · `my_reaction` · `comment_count`, Task 3 의 `ReactionSummary`(`fromRaw`)
 - Produces: `FeedPost.reactions` (`ReactionSummary`) · `FeedPost.commentCount` (`int`) · `FeedPost.withReactions(ReactionSummary)` · `FeedCubit.applyReaction(String postId, ReactionSummary next)`
 
-- [ ] **Step 1: 실패하는 테스트 추가 — mapper**
+- [x] **Step 1: 실패하는 테스트 추가 — mapper**
 
 `app/test/features/feed/data/mapper/feed_post_mapper_test.dart` 에 아래 두 케이스를 추가한다. 기존 케이스는 그대로 둔다.
 
@@ -2627,7 +2627,7 @@ cd app && flutter test && cd .. && git add app/lib/features/comment app/test/fea
 
 import 에 `package:daylog/features/reaction/domain/entity/reaction_type.dart` 를 추가한다.
 
-- [ ] **Step 2: 실패하는 테스트 추가 — cubit**
+- [x] **Step 2: 실패하는 테스트 추가 — cubit**
 
 `app/test/features/feed/presentation/cubit/feed_cubit_test.dart` 에 아래를 추가한다.
 
@@ -2672,7 +2672,7 @@ import 에 `package:daylog/features/reaction/domain/entity/reaction_type.dart` �
 
 import 에 `reaction_summary.dart` 와 `reaction_type.dart` 를 추가한다.
 
-- [ ] **Step 3: 실패 확인**
+- [x] **Step 3: 실패 확인**
 
 ```bash
 cd app && flutter test test/features/feed
@@ -2680,7 +2680,7 @@ cd app && flutter test test/features/feed
 
 Expected: 컴파일 실패
 
-- [ ] **Step 4: DTO 에 세 필드 추가**
+- [x] **Step 4: DTO 에 세 필드 추가**
 
 `feed_post_dto.dart` 의 생성자와 필드에 아래를 더한다. 기존 필드와 문서 주석은 그대로 둔다.
 
@@ -2710,7 +2710,7 @@ Expected: 컴파일 실패
 
 클래스 문서 주석의 "앞으로 반응 수 · 댓글 수 컬럼이 여기에만 더해진다" 문장을 "반응 수 · 댓글 수 컬럼이 여기에만 있다" 로 고친다.
 
-- [ ] **Step 5: datasource 의 조회 컬럼 추가**
+- [x] **Step 5: datasource 의 조회 컬럼 추가**
 
 `supabase_feed_data_source.dart` 의 `_columns` 를 바꾼다.
 
@@ -2721,7 +2721,7 @@ Expected: 컴파일 실패
       'reaction_counts, my_reaction, comment_count';
 ```
 
-- [ ] **Step 6: entity 에 두 필드와 갱신 메서드 추가**
+- [x] **Step 6: entity 에 두 필드와 갱신 메서드 추가**
 
 `feed_post.dart` 를 아래로 바꾼다. 기존 문서 주석은 유지하고 필드만 더한다.
 
@@ -2767,7 +2767,7 @@ Expected: 컴파일 실패
 
 import 에 `../../../reaction/domain/entity/reaction_summary.dart` 를 추가한다.
 
-- [ ] **Step 7: mapper 에 변환 추가**
+- [x] **Step 7: mapper 에 변환 추가**
 
 `feed_post_mapper.dart` 의 `toEntity()` 를 바꾼다.
 
@@ -2782,7 +2782,7 @@ import 에 `../../../reaction/domain/entity/reaction_summary.dart` 를 추가한
 
 import 에 `../../../reaction/domain/entity/reaction_summary.dart` 를 추가한다.
 
-- [ ] **Step 8: cubit 에 `applyReaction` 추가**
+- [x] **Step 8: cubit 에 `applyReaction` 추가**
 
 `feed_cubit.dart` 의 `removePost` 아래에 더한다.
 
@@ -2808,7 +2808,7 @@ import 에 `../../../reaction/domain/entity/reaction_summary.dart` 를 추가한
 
 import 에 `../../../reaction/domain/entity/reaction_summary.dart` 를 추가한다.
 
-- [ ] **Step 9: 코드 생성 · 정적 분석 · 전체 테스트**
+- [x] **Step 9: 코드 생성 · 정적 분석 · 전체 테스트**
 
 ```bash
 cd app && dart run build_runner build --delete-conflicting-outputs && flutter analyze && flutter test
@@ -2843,7 +2843,7 @@ Expected: analyze 무경고, 전체 PASS
 | 2 | F5 · F6 화면 작업 (게시물 상세 · 댓글 목록 · 반응 버튼) | — |
 | 3 | F7 safety 착수 — **차단 필터를 `posts_with_author` 와 `post_comments_visible` 양쪽에 넣어야 한다** | — |
 
-- [ ] **Step 11: 검사 후 커밋**
+- [x] **Step 11: 검사 후 커밋**
 
 ```bash
 cd app && flutter test && cd .. && git add app/lib/features/feed app/test/features/feed docs/testing/features/feed.md docs/status.md && git commit -m "feat(feed): 목록 항목에 반응 집계와 댓글 수를 싣는다"

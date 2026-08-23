@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$FeedPostDto {
 
- String get id; String get authorId; String get content; DateTime get createdAt; DateTime get updatedAt; String get authorNickname; String? get authorAvatarUrl; List<FeedPostImageDto> get images;
+ String get id; String get authorId; String get content; DateTime get createdAt; DateTime get updatedAt; String get authorNickname; String? get authorAvatarUrl; List<FeedPostImageDto> get images; Map<String, int> get reactionCounts; String? get myReaction; int get commentCount;
 /// Create a copy of FeedPostDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +26,16 @@ $FeedPostDtoCopyWith<FeedPostDto> get copyWith => _$FeedPostDtoCopyWithImpl<Feed
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FeedPostDto&&(identical(other.id, id) || other.id == id)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.content, content) || other.content == content)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.authorNickname, authorNickname) || other.authorNickname == authorNickname)&&(identical(other.authorAvatarUrl, authorAvatarUrl) || other.authorAvatarUrl == authorAvatarUrl)&&const DeepCollectionEquality().equals(other.images, images));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FeedPostDto&&(identical(other.id, id) || other.id == id)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.content, content) || other.content == content)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.authorNickname, authorNickname) || other.authorNickname == authorNickname)&&(identical(other.authorAvatarUrl, authorAvatarUrl) || other.authorAvatarUrl == authorAvatarUrl)&&const DeepCollectionEquality().equals(other.images, images)&&const DeepCollectionEquality().equals(other.reactionCounts, reactionCounts)&&(identical(other.myReaction, myReaction) || other.myReaction == myReaction)&&(identical(other.commentCount, commentCount) || other.commentCount == commentCount));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,authorId,content,createdAt,updatedAt,authorNickname,authorAvatarUrl,const DeepCollectionEquality().hash(images));
+int get hashCode => Object.hash(runtimeType,id,authorId,content,createdAt,updatedAt,authorNickname,authorAvatarUrl,const DeepCollectionEquality().hash(images),const DeepCollectionEquality().hash(reactionCounts),myReaction,commentCount);
 
 @override
 String toString() {
-  return 'FeedPostDto(id: $id, authorId: $authorId, content: $content, createdAt: $createdAt, updatedAt: $updatedAt, authorNickname: $authorNickname, authorAvatarUrl: $authorAvatarUrl, images: $images)';
+  return 'FeedPostDto(id: $id, authorId: $authorId, content: $content, createdAt: $createdAt, updatedAt: $updatedAt, authorNickname: $authorNickname, authorAvatarUrl: $authorAvatarUrl, images: $images, reactionCounts: $reactionCounts, myReaction: $myReaction, commentCount: $commentCount)';
 }
 
 
@@ -46,7 +46,7 @@ abstract mixin class $FeedPostDtoCopyWith<$Res>  {
   factory $FeedPostDtoCopyWith(FeedPostDto value, $Res Function(FeedPostDto) _then) = _$FeedPostDtoCopyWithImpl;
 @useResult
 $Res call({
- String id, String authorId, String content, DateTime createdAt, DateTime updatedAt, String authorNickname, String? authorAvatarUrl, List<FeedPostImageDto> images
+ String id, String authorId, String content, DateTime createdAt, DateTime updatedAt, String authorNickname, String? authorAvatarUrl, List<FeedPostImageDto> images, Map<String, int> reactionCounts, String? myReaction, int commentCount
 });
 
 
@@ -63,7 +63,7 @@ class _$FeedPostDtoCopyWithImpl<$Res>
 
 /// Create a copy of FeedPostDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? authorId = null,Object? content = null,Object? createdAt = null,Object? updatedAt = null,Object? authorNickname = null,Object? authorAvatarUrl = freezed,Object? images = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? authorId = null,Object? content = null,Object? createdAt = null,Object? updatedAt = null,Object? authorNickname = null,Object? authorAvatarUrl = freezed,Object? images = null,Object? reactionCounts = null,Object? myReaction = freezed,Object? commentCount = null,}) {
   return _then(FeedPostDto(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,authorId: null == authorId ? _self.authorId : authorId // ignore: cast_nullable_to_non_nullable
@@ -73,7 +73,10 @@ as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore
 as DateTime,authorNickname: null == authorNickname ? _self.authorNickname : authorNickname // ignore: cast_nullable_to_non_nullable
 as String,authorAvatarUrl: freezed == authorAvatarUrl ? _self.authorAvatarUrl : authorAvatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,images: null == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
-as List<FeedPostImageDto>,
+as List<FeedPostImageDto>,reactionCounts: null == reactionCounts ? _self.reactionCounts : reactionCounts // ignore: cast_nullable_to_non_nullable
+as Map<String, int>,myReaction: freezed == myReaction ? _self.myReaction : myReaction // ignore: cast_nullable_to_non_nullable
+as String?,commentCount: null == commentCount ? _self.commentCount : commentCount // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

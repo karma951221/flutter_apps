@@ -8,6 +8,8 @@ import 'package:daylog/features/feed/presentation/cubit/feed_cubit.dart';
 import 'package:daylog/features/feed/presentation/cubit/feed_state.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_author.dart';
+import 'package:daylog/features/reaction/domain/entity/reaction_summary.dart';
+import 'package:daylog/features/reaction/domain/entity/reaction_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -318,5 +320,62 @@ void main() {
         ),
       ).called(2);
     },
+  );
+
+  blocTest<FeedCubit, FeedState>(
+    '반응 결과를 해당 항목에만 반영한다',
+    setUp: () => when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+      ),
+    ).thenAnswer(
+      (_) async => Ok(CursorPage<FeedPost>(items: [_item('1'), _item('2')])),
+    ),
+    build: () => FeedCubit(useCase),
+    act: (cubit) async {
+      await cubit.load();
+      cubit.applyReaction(
+        '2',
+        const ReactionSummary(
+          counts: {ReactionType.like: 1},
+          mine: ReactionType.like,
+        ),
+      );
+    },
+    verify: (cubit) {
+      expect(cubit.state.items.first.reactions.mine, isNull);
+      expect(cubit.state.items.last.reactions.mine, ReactionType.like);
+      // 작성자는 반응으로 바뀌지 않는다.
+      expect(cubit.state.items.last.author.nickname, '카르마');
+    },
+  );
+
+  blocTest<FeedCubit, FeedState>(
+    '댓글 수를 해당 항목에만 반영한다',
+    setUp: () => when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+      ),
+    ).thenAnswer(
+      (_) async => Ok(CursorPage<FeedPost>(items: [_item('1'), _item('2')])),
+    ),
+    build: () => FeedCubit(useCase),
+    act: (cubit) async {
+      await cubit.load();
+      cubit.applyCommentCount('1', 3);
+    },
+    verify: (cubit) {
+      expect(cubit.state.items.first.commentCount, 3);
+      expect(cubit.state.items.last.commentCount, 0);
+    },
+  );
+
+  blocTest<FeedCubit, FeedState>(
+    '목록을 읽기 전의 반응 반영은 무시한다',
+    build: () => FeedCubit(useCase),
+    act: (cubit) => cubit.applyReaction('1', const ReactionSummary()),
+    expect: () => <FeedState>[],
   );
 }

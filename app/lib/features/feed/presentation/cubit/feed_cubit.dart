@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../post/domain/entity/post.dart';
+import '../../../reaction/domain/entity/reaction_summary.dart';
 import '../../domain/entity/feed_post.dart';
 import '../../domain/usecase/feed_use_case.dart';
 import 'feed_state.dart';
@@ -115,6 +116,47 @@ class FeedCubit extends Cubit<FeedState> {
     emit(
       current.copyWith(
         items: current.items.where((item) => item.id != postId).toList(),
+      ),
+    );
+  }
+
+  /// 반응 결과를 해당 항목에만 반영한다.
+  ///
+  /// 낙관적 업데이트의 두 방향이 모두 이 메서드를 쓴다 — 탭 직후에는 계산된
+  /// 다음 상태를, 실패하면 이전 상태를 넣는다. 목록 상태는 목록이 소유한다
+  /// (아키텍처 규칙 ⑥).
+  void applyReaction(String postId, ReactionSummary next) {
+    final current = state;
+    if (current.status != FeedStatus.loaded) return;
+    emit(
+      current.copyWith(
+        items: [
+          for (final item in current.items)
+            if (item.id == postId) item.withReactions(next) else item,
+        ],
+      ),
+    );
+  }
+
+  /// 댓글 수를 해당 항목에만 반영한다. 댓글 화면에서 돌아올 때 목록을 다시
+  /// 읽지 않기 위해서다.
+  void applyCommentCount(String postId, int count) {
+    final current = state;
+    if (current.status != FeedStatus.loaded) return;
+    emit(
+      current.copyWith(
+        items: [
+          for (final item in current.items)
+            if (item.id == postId)
+              FeedPost(
+                post: item.post,
+                author: item.author,
+                reactions: item.reactions,
+                commentCount: count,
+              )
+            else
+              item,
+        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:daylog/features/feed/data/dto/feed_post_dto.dart';
 import 'package:daylog/features/feed/data/mapper/feed_post_mapper.dart';
+import 'package:daylog/features/reaction/domain/entity/reaction_type.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final _dto = FeedPostDto(
@@ -70,5 +71,43 @@ void main() {
 
     expect(post.authorId, 'author-id');
     expect(post.content, '오늘의 기록');
+  });
+
+  test('뷰가 내려준 반응 집계와 댓글 수를 항목에 담는다', () {
+    final dto = FeedPostDto(
+      id: 'post-1',
+      authorId: 'author-1',
+      content: '기록',
+      createdAt: DateTime.utc(2026, 8, 23, 9),
+      updatedAt: DateTime.utc(2026, 8, 23, 9),
+      authorNickname: '카르마',
+      reactionCounts: const {'like': 4, 'dislike': 1},
+      myReaction: 'like',
+      commentCount: 7,
+    );
+
+    final item = dto.toEntity();
+
+    expect(item.reactions.countOf(ReactionType.like), 4);
+    expect(item.reactions.countOf(ReactionType.dislike), 1);
+    expect(item.reactions.mine, ReactionType.like);
+    expect(item.commentCount, 7);
+  });
+
+  test('반응이 없으면 빈 집계이고 내 반응은 없다', () {
+    final dto = FeedPostDto(
+      id: 'post-1',
+      authorId: 'author-1',
+      content: '기록',
+      createdAt: DateTime.utc(2026, 8, 23, 9),
+      updatedAt: DateTime.utc(2026, 8, 23, 9),
+      authorNickname: '카르마',
+    );
+
+    final item = dto.toEntity();
+
+    expect(item.reactions.counts, isEmpty);
+    expect(item.reactions.mine, isNull);
+    expect(item.commentCount, 0);
   });
 }

@@ -19,6 +19,13 @@ FeedPostDto _$FeedPostDtoFromJson(Map<String, dynamic> json) => FeedPostDto(
           ?.map((e) => FeedPostImageDto.fromJson(e as Map<String, dynamic>))
           .toList() ??
       [],
+  reactionCounts:
+      (json['reaction_counts'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, (e as num).toInt()),
+      ) ??
+      {},
+  myReaction: json['my_reaction'] as String?,
+  commentCount: (json['comment_count'] as num?)?.toInt() ?? 0,
 );
 
 Map<String, dynamic> _$FeedPostDtoToJson(FeedPostDto instance) =>
@@ -31,4 +38,7 @@ Map<String, dynamic> _$FeedPostDtoToJson(FeedPostDto instance) =>
       'author_nickname': instance.authorNickname,
       'author_avatar_url': instance.authorAvatarUrl,
       'images': instance.images,
+      'reaction_counts': instance.reactionCounts,
+      'my_reaction': instance.myReaction,
+      'comment_count': instance.commentCount,
     };

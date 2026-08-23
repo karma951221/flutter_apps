@@ -17,7 +17,8 @@ class SupabaseFeedDataSource implements FeedDataSource {
 
   static const _columns =
       'id, author_id, content, created_at, updated_at, '
-      'author_nickname, author_avatar_url, images';
+      'author_nickname, author_avatar_url, images, '
+      'reaction_counts, my_reaction, comment_count';
 
   @override
   Future<List<FeedPostDto>> getPosts({

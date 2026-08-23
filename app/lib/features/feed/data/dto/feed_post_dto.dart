@@ -8,8 +8,8 @@ part 'feed_post_dto.g.dart';
 /// 피드가 조회하는 `posts_with_author` 뷰 한 행의 전송 형식.
 ///
 /// post feature 의 `PostDto` 와 겹쳐 보이지만 소유자도 원천도 다르다. 이쪽은
-/// 게시물 테이블이 아니라 작성자를 조인한 뷰를 읽고, 앞으로 반응 수 · 댓글 수
-/// 컬럼이 여기에만 더해진다. 게시물 단건 조회는 그 값들이 필요 없다.
+/// 게시물 테이블이 아니라 작성자를 조인한 뷰를 읽고, 반응 수 · 댓글 수 컬럼이
+/// 여기에만 있다. 게시물 단건 조회는 그 값들이 필요 없다.
 /// feature 의 data 계층은 서로 참조하지 않는다 (아키텍처 규칙 ⑤·⑥).
 @freezed
 @JsonSerializable()
@@ -23,6 +23,9 @@ class FeedPostDto with _$FeedPostDto {
     required this.authorNickname,
     this.authorAvatarUrl,
     this.images = const [],
+    this.reactionCounts = const {},
+    this.myReaction,
+    this.commentCount = 0,
   });
 
   @override
@@ -52,6 +55,22 @@ class FeedPostDto with _$FeedPostDto {
   @override
   @JsonKey(defaultValue: [])
   final List<FeedPostImageDto> images;
+
+  /// 감정별 개수. 개수를 컬럼이 아니라 map 으로 받으므로 감정이 늘어도
+  /// DTO 를 고치지 않는다 — 뷰가 jsonb 로 내려준다.
+  @override
+  @JsonKey(name: 'reaction_counts', defaultValue: <String, int>{})
+  final Map<String, int> reactionCounts;
+
+  /// 내가 남긴 감정. 비로그인 조회이거나 남기지 않았으면 null 이다.
+  @override
+  @JsonKey(name: 'my_reaction')
+  final String? myReaction;
+
+  /// 살아 있는 댓글과 답글의 합.
+  @override
+  @JsonKey(name: 'comment_count', defaultValue: 0)
+  final int commentCount;
 
   factory FeedPostDto.fromJson(Map<String, dynamic> json) =>
       _$FeedPostDtoFromJson(json);

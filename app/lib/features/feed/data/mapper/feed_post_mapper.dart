@@ -1,6 +1,7 @@
 import '../../../post/domain/entity/post.dart';
 import '../../../post/domain/entity/post_author.dart';
 import '../../../post/domain/entity/post_image.dart';
+import '../../../reaction/domain/entity/reaction_summary.dart';
 import '../../domain/entity/feed_post.dart';
 import '../cursor/feed_cursor.dart';
 import '../dto/feed_post_dto.dart';
@@ -35,7 +36,12 @@ extension FeedPostDtoMapper on FeedPostDto {
     avatarUrl: authorAvatarUrl,
   );
 
-  FeedPost toEntity() => FeedPost(post: toPost(), author: toAuthor());
+  FeedPost toEntity() => FeedPost(
+    post: toPost(),
+    author: toAuthor(),
+    reactions: ReactionSummary.fromRaw(reactionCounts, myReaction),
+    commentCount: commentCount,
+  );
 
   /// 이 행을 마지막 항목으로 하는 다음 페이지 커서.
   FeedCursor toCursor() => FeedCursor(createdAt: createdAt, id: id);
