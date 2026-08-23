@@ -52,7 +52,7 @@ cd app && flutter test
 - Consumes: 기존 `public.posts` · `public.profiles` · `public.set_updated_at()`
 - Produces: 테이블 `public.post_comments`, 뷰 `public.post_comments_visible`(컬럼 `id, post_id, parent_id, author_id, content, created_at, deleted_at, author_nickname, author_avatar_url, reply_count`), 함수 `public.soft_delete_post_comment(comment_id uuid) → boolean`, 트리거 함수 `public.enforce_comment_depth()`
 
-- [ ] **Step 1: 마이그레이션 파일 작성**
+- [x] **Step 1: 마이그레이션 파일 작성**
 
 `supabase/migrations/20260823170000_add_post_comments.sql` 에 아래를 그대로 쓴다.
 
@@ -223,7 +223,7 @@ revoke execute on function public.soft_delete_post_comment(uuid) from public, an
 grant execute on function public.soft_delete_post_comment(uuid) to authenticated;
 ```
 
-- [ ] **Step 2: 마이그레이션 전체 재적용**
+- [x] **Step 2: 마이그레이션 전체 재적용**
 
 리포지터리 루트에서:
 
@@ -233,7 +233,7 @@ supabase db reset
 
 Expected: 오류 없이 모든 마이그레이션이 적용된다. 실패하면 SQL 을 고치고 다시 돌린다.
 
-- [ ] **Step 3: 스키마 동작을 psql 로 검증**
+- [x] **Step 3: 스키마 동작을 psql 로 검증**
 
 리포지터리 루트에서 아래를 실행한다. 각 블록의 기대 결과가 주석에 있다.
 
@@ -324,7 +324,7 @@ SQL
 Expected: `OK` notice 4건, 3)에서 `content_hidden = t` / `reply_count = 1`, 4)에서 `f`, 6)에서 `0`.
 검증이 끝나면 `supabase db reset` 으로 데이터를 되돌린다.
 
-- [ ] **Step 4: `docs/schema.md` 갱신**
+- [x] **Step 4: `docs/schema.md` 갱신**
 
 세 곳을 고친다.
 
@@ -336,7 +336,7 @@ Expected: `OK` notice 4건, 3)에서 `content_hidden = t` / `reply_count = 1`, 4
    - **조회 정책 안에서 `post_comments` 를 다시 참조하면 42P17 무한 재귀가 난다**는 것과, 그래서 가시성 예외를 뷰가 전담한다는 것
 3. **새 절 `post_comments_visible` (뷰)** 를 추가하고, `security_invoker = on` 규칙의 **첫 예외**임을 명시한다. §6 의 "앞으로 이 스키마에 추가되는 모든 뷰에 같은 규칙을 적용한다" 문장 바로 뒤에 예외를 가리키는 한 줄을 넣는다. 뷰가 RLS 를 우회하므로 손으로 진 부채 2건(살아 있는 게시물 조건 · F7 차단 필터)을 목록으로 적는다.
 
-- [ ] **Step 5: 문서 링크 검사**
+- [x] **Step 5: 문서 링크 검사**
 
 ```bash
 cd app && flutter test test/convention
@@ -344,7 +344,7 @@ cd app && flutter test test/convention
 
 Expected: PASS
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add supabase/migrations/20260823170000_add_post_comments.sql docs/schema.md
@@ -367,7 +367,7 @@ git commit -m "feat(db): 댓글 테이블과 2단 제한 트리거, 전용 조�
   - `posts_with_author` 에 컬럼 추가: `reaction_counts jsonb` · `my_reaction text` · `comment_count bigint`
   - `post_comments_visible` 에 컬럼 추가: `reaction_counts jsonb` · `my_reaction text`
 
-- [ ] **Step 1: 마이그레이션 파일 작성**
+- [x] **Step 1: 마이그레이션 파일 작성**
 
 `supabase/migrations/20260823180000_add_reactions.sql` 에 아래를 그대로 쓴다.
 
@@ -585,7 +585,7 @@ grant select on public.posts_with_author    to anon, authenticated;
 grant select on public.post_comments_visible to anon, authenticated;
 ```
 
-- [ ] **Step 2: 마이그레이션 전체 재적용**
+- [x] **Step 2: 마이그레이션 전체 재적용**
 
 ```bash
 supabase db reset
@@ -593,7 +593,7 @@ supabase db reset
 
 Expected: 오류 없이 적용. `create or replace view` 가 컬럼 타입 불일치로 실패하면 해당 뷰를 `drop view` 후 `create view` 로 바꾼다.
 
-- [ ] **Step 3: upsert 와 정책을 REST 로 검증**
+- [x] **Step 3: upsert 와 정책을 REST 로 검증**
 
 이 단계가 이 태스크의 핵심이다. **`psql` 이 아니라 PostgREST 를 거쳐야** GRANT 와 upsert 의 상호작용이 드러난다.
 
@@ -651,14 +651,14 @@ Expected: 순서대로 `201` · `201` · 집계 JSON · `204` · `400`.
 
 **2) 가 `403`/`42501` 이면** GRANT 를 고쳐도 통하지 않는 경우다. 그때는 이 태스크를 멈추고 컨트롤러에게 보고한다 — 대안(`set_reaction` RPC)은 스펙 변경이므로 사람이 결정한다.
 
-- [ ] **Step 4: `docs/schema.md` 갱신**
+- [x] **Step 4: `docs/schema.md` 갱신**
 
 - §1 관계도에 `post_reactions` · `comment_reactions` 를 넣고, "앞으로 추가될 테이블" 목록에서 뺀다
 - 새 절 `post_reactions` · `comment_reactions` 를 추가한다. DDL·RLS·GRANT 를 옮기고, **`update` 에 대상 id 컬럼이 들어가는 이유(PostgREST upsert)** 와 **UPDATE `with check` 를 INSERT 와 같은 강도로 맞춘 이유**를 반드시 적는다
 - §6 `posts_with_author` 절의 컬럼 목록과 "앞으로 여기에 붙는 것" 문단을 갱신한다 (반응 수·댓글 수·내 반응은 이제 **붙었다**. 남은 것은 F7 차단 필터뿐)
 - Task 1 이 만든 `post_comments_visible` 절에 `reaction_counts` · `my_reaction` 을 더한다
 
-- [ ] **Step 5: 검사**
+- [x] **Step 5: 검사**
 
 ```bash
 cd app && flutter test test/convention
@@ -666,7 +666,7 @@ cd app && flutter test test/convention
 
 Expected: PASS
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add supabase/migrations/20260823180000_add_reactions.sql docs/schema.md

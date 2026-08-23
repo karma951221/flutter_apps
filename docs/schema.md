@@ -26,15 +26,22 @@ auth.users  (Supabase Auth 소유)
     │ 1:1  on delete cascade
     ▼
 profiles ──1:N──▶ posts ──┬──1:N──▶ post_images
-                           │
-                           └──1:N──▶ post_comments ──1:N──▶ post_comments (parent_id, self)
+    │                      │
+    │                      ├──1:N──▶ post_comments ──1:N──▶ post_comments (parent_id, self)
+    │                      │                │
+    │                      │                └──1:N──▶ comment_reactions
+    │                      │
+    │                      └──1:N──▶ post_reactions
+    │                                       ▲
+    └───────────────1:N─────────────────────┘  (반응 두 테이블의 user_id)
 ```
 
-읽기 전용 뷰 `posts_with_author`(§6)가 앞의 둘을 조인해 피드에 내려주고,
-`post_comments_visible`(§9)이 `post_comments`와 `profiles`·`posts`를 조인해 댓글
-목록을 내려준다.
+읽기 전용 뷰 `posts_with_author`(§6)가 게시물·작성자·이미지·반응·댓글 수를 한 번에
+내려주고, `post_comments_visible`(§9)이 `post_comments`와 `profiles`·`posts`·
+`comment_reactions`를 조인해 댓글 목록을 내려준다. 반응 두 테이블(§10)은 직접
+조회하지 않고 **집계된 형태로만** 이 두 뷰를 통해 읽는다.
 
-앞으로 추가될 테이블(`post_reactions` · `follows` · `blocks` · `reports`)의 계획은
+앞으로 추가될 테이블(`follows` · `blocks` · `reports`)의 계획은
 [기획서 §7](overview.md)에 있다. 여기에는 **실제로 존재하는 것만** 적는다.
 
 ---
@@ -424,10 +431,38 @@ select
   p.created_at,
   p.updated_at,
   pr.nickname   as author_nickname,
-  pr.avatar_url as author_avatar_url
+  pr.avatar_url as author_avatar_url,
+  coalesce(images.items,    '[]'::jsonb) as images,
+  coalesce(reactions.counts, '{}'::jsonb) as reaction_counts,
+  mine.type                              as my_reaction,
+  coalesce(comments.total, 0)            as comment_count
 from public.posts p
-join public.profiles pr on pr.id = p.author_id;
+join public.profiles pr on pr.id = p.author_id
+left join lateral (...) images    on true   -- post_images 를 jsonb 배열로 (§7)
+left join lateral (...) reactions on true   -- post_reactions 를 type 별 개수로 (§10)
+left join lateral (...) mine      on true   -- 조회자의 post_reactions.type (§10)
+left join lateral (...) comments  on true;  -- 살아 있는 post_comments 개수 (§8)
 ```
+
+`...` 안의 실제 질의는
+[`20260823180000_add_reactions.sql`](../supabase/migrations/20260823180000_add_reactions.sql)에
+있다. 네 개 모두 `left join lateral` 인 이유는 같다 — 대상이 없을 때 게시물 행이
+사라지면 안 되고, 각 서브쿼리가 게시물 하나만 보고 끝나야 한다.
+
+### 집계 컬럼 셋은 N+1 을 없애기 위해 여기 있다
+
+| 컬럼 | 타입 | 값 |
+|---|---|---|
+| `reaction_counts` | `jsonb` | `{"like": 3, "dislike": 1}` · 없으면 `{}` |
+| `my_reaction` | `text` | 조회자가 남긴 감정 하나 · 없거나 비로그인이면 `null` |
+| `comment_count` | `bigint` | 살아 있는 댓글 + 답글 전부 |
+
+개수를 `like_count` · `dislike_count` 컬럼으로 박지 않고 `jsonb` 로 내리는 이유는,
+감정 종류를 하나 더할 때 **뷰를 고치지 않기 위해서다.** 앱은 모르는 키를 무시한다.
+
+`my_reaction` 은 `(select auth.uid())` 에 의존한다. `auth.uid()` 는 JWT 클레임을 읽는
+세션 GUC 기반이라 뷰의 실행 역할과 무관하게 **조회자 기준**으로 동작한다 — §9 가
+`security_invoker = off` 인데도 같은 컬럼을 내릴 수 있는 이유다.
 
 ### `security_invoker = on` 은 선택 사항이 아니다
 
@@ -459,8 +494,9 @@ grant select on public.posts_with_author to anon, authenticated;
 
 ### 앞으로 여기에 붙는 것
 
-반응 수(F5) · 댓글 수(F6) · 내 반응 상태 · 차단 필터(F7)는 앱 쿼리가 아니라 **이 뷰
-안에** 넣는다. 화면마다 같은 필터를 다시 쓰면 언젠가 빠뜨린다.
+반응 수(F5) · 내 반응 상태 · 댓글 수(F6)는 **붙었다.** 남은 것은 F7 차단 필터뿐이고,
+그것도 앱 쿼리가 아니라 이 뷰의 `where` 에 넣는다. 화면마다 같은 필터를 다시 쓰면
+언젠가 빠뜨린다.
 
 ---
 
@@ -726,7 +762,7 @@ grant execute on function public.soft_delete_post_comment(uuid) to authenticated
 ```
 
 `security definer`가 RLS를 우회하므로 함수 안의 `author_id = (select auth.uid())`가
-권한 경계 그 자체다. 클라이언트 UPDATE로는 애초에 불가능하다 — §10의 첫 항목 참고.
+권한 경계 그 자체다. 클라이언트 UPDATE로는 애초에 불가능하다 — §11의 첫 항목 참고.
 
 ---
 
@@ -751,10 +787,14 @@ select
     select count(*)
       from public.post_comments reply
      where reply.parent_id = c.id and reply.deleted_at is null
-  ) as reply_count
+  ) as reply_count,
+  coalesce(reactions.counts, '{}'::jsonb) as reaction_counts,
+  mine.type                               as my_reaction
 from public.post_comments c
 join public.profiles pr on pr.id = c.author_id
 join public.posts    p  on p.id = c.post_id and p.deleted_at is null
+left join lateral (...) reactions on true   -- comment_reactions 를 type 별 개수로 (§10)
+left join lateral (...) mine      on true   -- 조회자의 comment_reactions.type (§10)
 where c.deleted_at is null
    or (
      c.parent_id is null
@@ -786,6 +826,16 @@ is null`만 봄)이 먼저 걸려 "삭제됐지만 답글이 남은 부모"를 �
 - F7(차단) 필터가 붙을 자리도 이 뷰의 `where`다. 차단 관계가 생기면 여기에 조건을
   추가한다 — 앱 쿼리마다 필터를 반복하면 화면이 늘 때 빠뜨리기 쉽다.
 
+### 집계 컬럼
+
+`reaction_counts` · `my_reaction` 의 의미와 형태는 §6과 같고, 보는 테이블만
+`comment_reactions` 다. 댓글 목록 조회 한 번에 답글 수와 반응 요약이 함께 오므로
+항목당 추가 조회가 없다.
+
+삭제된 부모 댓글은 `content` 만 `null` 이 되고 `reply_count` · `reaction_counts` 는
+그대로 나온다. 반응을 남길 수 있는지는 §10의 INSERT 정책이 `deleted_at is null` 로
+막으므로, 앱이 삭제된 댓글에 반응 버튼을 그리지 않는 것은 UX 이고 경계는 DB 다.
+
 ### GRANT
 
 뷰는 기반 테이블의 GRANT를 물려받지 않는다. 조회 전용이므로 `insert` · `update`
@@ -794,7 +844,122 @@ is null`만 봄)이 먼저 걸려 "삭제됐지만 답글이 남은 부모"를 �
 
 ---
 
-## 10. 알아둘 함정
+## 10. `post_reactions` · `comment_reactions`
+
+게시물과 댓글에 남기는 감정이다. **대상별 테이블 두 개**이고 모양이 같다. 폴리모픽
+단일 테이블(`target_type` + `target_id`)을 쓰지 않는 이유는 FK·cascade 를 잃고 RLS 가
+`target_type` 분기투성이가 되기 때문이다 — 근거는
+[F5 계획](features/reaction/plan.md)에 있다.
+
+```sql
+create table public.post_reactions (
+  user_id    uuid        not null default auth.uid()
+                         references public.profiles (id) on delete cascade,
+  post_id    uuid        not null references public.posts (id) on delete cascade,
+  type       text        not null,
+  created_at timestamptz not null default now(),
+
+  primary key (user_id, post_id),
+  constraint post_reactions_type_valid check (type in ('like', 'dislike'))
+);
+
+create index post_reactions_post_id_type_idx
+  on public.post_reactions (post_id, type);
+```
+
+`comment_reactions` 는 `post_id` → `comment_id`(`references public.post_comments`)만
+바뀌고 나머지가 같다. 인덱스는 `(comment_id, type)`, CHECK 이름은
+`comment_reactions_type_valid` 다.
+
+- **PK `(user_id, 대상_id)`** 가 "대상당 감정 하나"를 강제한다. 좋아요 상태에서
+  싫어요를 누르면 좋아요가 해제된다는 규칙이 이 PK 위에서 성립한다.
+- **취소는 행 삭제**다. 반응에는 자식이 달리지 않으므로 소프트 삭제(§2)의 이유가 없다.
+  이 스키마에서 `delete` GRANT 를 주는 유일한 테이블 둘이다.
+- **`created_at` 은 정렬·표시에 쓰지 않는다.** 전환(upsert)에서 갱신되지 않는 것이
+  문제가 되지 않는 이유다.
+- 개수는 §6 · §9 의 뷰가 집계한다. 비정규화 카운트 컬럼은 성능 문제가 **관측된 뒤에**
+  한다.
+
+### RLS
+
+```sql
+-- 조회: 개수는 공개 정보다
+create policy "post_reactions_select_all"
+  on public.post_reactions for select to anon, authenticated using (true);
+
+-- 삽입: 본인 것만, 그리고 살아 있는 대상에만
+create policy "post_reactions_insert_own"
+  on public.post_reactions for insert to authenticated
+  with check (
+    (select auth.uid()) = user_id
+    and exists (select 1 from public.posts
+                 where posts.id = post_reactions.post_id
+                   and posts.deleted_at is null)
+  );
+
+-- 수정: with check 를 INSERT 와 같은 강도로 맞춘다 (아래 GRANT 참고)
+create policy "post_reactions_update_own"
+  on public.post_reactions for update to authenticated
+  using ((select auth.uid()) = user_id)
+  with check (
+    (select auth.uid()) = user_id
+    and exists (select 1 from public.posts
+                 where posts.id = post_reactions.post_id
+                   and posts.deleted_at is null)
+  );
+
+create policy "post_reactions_delete_own"
+  on public.post_reactions for delete to authenticated
+  using ((select auth.uid()) = user_id);
+```
+
+`comment_reactions` 의 `exists` 는 `post_comments` 를 보고 `deleted_at is null` 을
+확인한다. **삭제된 게시물·댓글에는 반응을 남길 수 없고, 그 판단은 앱이 아니라 DB 가
+한다.**
+
+정책 안에서 다른 테이블(`posts` · `post_comments`)을 참조하는 것은 §11의 42P17 과
+무관하다. 재귀로 판정되는 것은 **정책이 걸린 그 테이블 자신**을 다시 참조할 때다.
+
+### GRANT — `update` 에 대상 id 가 들어가는 이유
+
+```sql
+grant select                 on public.post_reactions to anon, authenticated;
+grant insert (post_id, type) on public.post_reactions to authenticated;
+grant update (post_id, type) on public.post_reactions to authenticated;
+grant delete                 on public.post_reactions to authenticated;
+```
+
+전환(좋아요 → 싫어요)은 **upsert 한 번**이다. 삭제 후 삽입은 왕복이 둘이고 중간 상태가
+보인다. 그런데 PostgREST 는 `on conflict ... do update set` 에 **페이로드의 모든 컬럼**을
+넣는다. `{post_id, type}` 을 보내면 실제로 실행되는 것은 이것이다.
+
+```sql
+set post_id = excluded.post_id, type = excluded.type
+```
+
+`type` 만 GRANT 하면 전환이 42501 로 막힌다. 그래서 `post_id` 에도 UPDATE 를 준다.
+
+**그 대가로 UPDATE 정책의 `with check` 를 INSERT 와 같은 강도로 맞춰야 한다.** 그러지
+않으면 `post_id` 를 바꿔 살아 있는 게시물의 반응을 **삭제된 게시물로 옮기는** 경로가
+열린다. 두 정책의 `with check` 가 글자 그대로 같은 이유다.
+
+`user_id` 는 INSERT 목록에 없다. `default auth.uid()` 로만 채워지므로 위조 경로가 없다.
+
+### 검증한 것 (로컬 Supabase · PostgREST 경유)
+
+`psql` 로는 GRANT 와 upsert 의 상호작용이 드러나지 않는다. REST 로 확인했다.
+
+| 요청 | 결과 |
+|---|---|
+| `Prefer: resolution=merge-duplicates` 로 첫 `like` | `201` |
+| 같은 방식으로 `dislike` 전환 | `200` (42501 아님) |
+| `posts_with_author` 조회 | `{"dislike": 1}` · `my_reaction: "dislike"` |
+| `delete ?post_id=eq.<id>` 로 취소 | `204` |
+| `type: "love"` 삽입 | `400` (check_violation) |
+
+---
+
+## 11. 알아둘 함정
 
 ### 소프트 삭제를 UPDATE로 하면 42501로 거부된다
 
