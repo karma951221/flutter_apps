@@ -28,6 +28,17 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Patrol E2E. 러너를 바꾸지 않으면 patrol test 가 Dart 테스트를 찾지 못한다.
+        testInstrumentationRunner = "pl.leancode.patrol.PatrolJUnitRunner"
+        // 테스트마다 앱 데이터를 지운다. 이전 테스트의 Supabase 세션이
+        // 다음 테스트로 새는 걸 막아준다.
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
+    }
+
+    // clearPackageData 는 orchestrator 가 있어야 동작한다.
+    testOptions {
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
     }
 
     buildTypes {
@@ -37,6 +48,11 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+}
+
+dependencies {
+    // 빌드가 멈추면 1.6.1 로 올린다.
+    androidTestUtil("androidx.test:orchestrator:1.5.1")
 }
 
 flutter {
