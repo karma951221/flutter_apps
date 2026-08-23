@@ -134,19 +134,14 @@ create trigger post_comments_enforce_depth
 
 alter table public.post_comments enable row level security;
 
--- 뷰의 가시성과 같은 규칙. 테이블 직접 조회 경로에도 같은 경계를 건다.
+-- 조회 정책은 전역 규칙 그대로 단순하게 둔다.
+-- ★ 여기서 post_comments 를 서브쿼리로 다시 참조하면 PostgreSQL 이 정책을 재귀로
+-- 판단해 42P17 로 거부한다 (조회뿐 아니라 insert ... returning 까지 죽는다).
+-- "삭제됐지만 답글이 남은 부모"를 되살리는 일은 아래 definer 뷰가 전담하므로
+-- 정책을 좁게 두어도 새는 곳이 없다. 테이블 경로가 뷰보다 좁은 것은 안전하다.
 create policy "post_comments_select_visible"
   on public.post_comments for select to anon, authenticated
-  using (
-    deleted_at is null
-    or (
-      parent_id is null
-      and exists (
-        select 1 from public.post_comments reply
-        where reply.parent_id = post_comments.id and reply.deleted_at is null
-      )
-    )
-  );
+  using (deleted_at is null);
 
 create policy "post_comments_insert_own"
   on public.post_comments for insert to authenticated
@@ -338,6 +333,7 @@ Expected: `OK` notice 4건, 3)에서 `content_hidden = t` / `reply_count = 1`, 4
    - `post_comments_root_idx` 가 부분 인덱스가 **아닌** 이유 (삭제된 부모를 조회가 읽는다)
    - `content` 가 SELECT GRANT 에서 빠진 이유와, 나머지 컬럼을 남긴 두 가지 이유
    - `enforce_comment_depth()` 가 `security definer` 여야 하는 이유 (content GRANT 가 없어 invoker 로는 부모를 못 읽는다)
+   - **조회 정책 안에서 `post_comments` 를 다시 참조하면 42P17 무한 재귀가 난다**는 것과, 그래서 가시성 예외를 뷰가 전담한다는 것
 3. **새 절 `post_comments_visible` (뷰)** 를 추가하고, `security_invoker = on` 규칙의 **첫 예외**임을 명시한다. §6 의 "앞으로 이 스키마에 추가되는 모든 뷰에 같은 규칙을 적용한다" 문장 바로 뒤에 예외를 가리키는 한 줄을 넣는다. 뷰가 RLS 를 우회하므로 손으로 진 부채 2건(살아 있는 게시물 조건 · F7 차단 필터)을 목록으로 적는다.
 
 - [ ] **Step 5: 문서 링크 검사**

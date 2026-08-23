@@ -163,16 +163,10 @@ grant select on public.post_comments_visible to anon, authenticated;
 ### RLS
 
 ```sql
--- 조회: 뷰의 가시성과 같은 규칙 (테이블 직접 조회 경로에도 같은 경계를 건다)
+-- 조회: 전역 규칙 그대로. 가시성 예외는 뷰가 전담한다
 create policy "post_comments_select_visible"
   on public.post_comments for select to authenticated, anon
-  using (
-    deleted_at is null
-    or (parent_id is null
-        and exists (select 1 from public.post_comments r
-                     where r.parent_id = post_comments.id
-                       and r.deleted_at is null))
-  );
+  using (deleted_at is null);
 
 -- 작성: 세션 사용자와 작성자가 일치할 때만
 create policy "post_comments_insert_own"
@@ -181,6 +175,25 @@ create policy "post_comments_insert_own"
 ```
 
 UPDATE · DELETE 정책은 두지 않는다. 수정 기능이 없고, 삭제는 아래 함수 전용이다.
+
+**조회 정책을 뷰와 똑같이 쓰면 안 된다.** `post_comments` 의 SELECT 정책 안에서
+`post_comments` 를 서브쿼리로 참조하면 PostgreSQL 이 정책을 재귀 평가로 판단하고
+거부한다.
+
+```text
+42P17: infinite recursion detected in policy for relation "post_comments"
+```
+
+조회뿐 아니라 `insert ... returning` 까지 막혀 작성 경로가 통째로 죽는다.
+
+정책을 단순하게 두어도 새는 곳이 없다. 테이블에 SELECT 를 남긴 이유는
+`insert ... returning` 과 `posts_with_author` 의 `comment_count` 둘뿐이고
+**둘 다 살아 있는 행만 본다.** "삭제됐지만 답글이 남은 부모"를 되살리는 일은
+`security_invoker = off` 인 뷰가 전담하기로 이미 정했다 — 뷰는 RLS 를 거치지
+않으므로 정책이 무엇이든 영향을 받지 않는다.
+
+결과적으로 테이블 경로는 뷰보다 **더 좁다**. 좁은 쪽으로 어긋나는 것은 유출이
+아니므로 안전하고, [스키마 문서](../../schema.md)의 전역 규칙과도 다시 일치한다.
 
 ### `soft_delete_post_comment(comment_id uuid) → boolean`
 
