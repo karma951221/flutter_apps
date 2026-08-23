@@ -3,7 +3,7 @@
 > [테스트 가이드](../README.md) · [아키텍처](../../architecture.md) · [계획](../../features/reaction/plan.md) · [스키마 §10](../../schema.md)
 
 감정을 남기고 취소하는 규칙만 담당한다. 개수 표시는 목록을 소유한 feature
-([feed](feed.md) · comment)가 맡는다.
+([feed](feed.md) · [comment](comment.md))가 맡는다.
 
 | 대상 | 시나리오 | 기대 결과 |
 |---|---|---|

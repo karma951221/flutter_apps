@@ -27,6 +27,15 @@ import '../../features/auth/presentation/cubit/password_reset_cubit.dart'
     as _i271;
 import '../../features/auth/presentation/cubit/sign_in_cubit.dart' as _i329;
 import '../../features/auth/presentation/cubit/sign_up_cubit.dart' as _i102;
+import '../../features/comment/data/datasource/comment_data_source.dart'
+    as _i896;
+import '../../features/comment/data/datasource/supabase_comment_data_source.dart'
+    as _i296;
+import '../../features/comment/data/repository/comment_repository_impl.dart'
+    as _i742;
+import '../../features/comment/domain/repository/comment_repository.dart'
+    as _i813;
+import '../../features/comment/domain/usecase/comment_use_case.dart' as _i1011;
 import '../../features/feed/data/datasource/feed_data_source.dart' as _i514;
 import '../../features/feed/data/datasource/supabase_feed_data_source.dart'
     as _i402;
@@ -88,11 +97,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i514.FeedDataSource>(
       () => _i402.SupabaseFeedDataSource(gh<_i454.SupabaseClient>()),
     );
+    gh.lazySingleton<_i896.CommentDataSource>(
+      () => _i296.SupabaseCommentDataSource(gh<_i454.SupabaseClient>()),
+    );
     gh.lazySingleton<_i1040.ImageStorage>(
       () => _i571.SupabaseImageStorage(gh<_i454.SupabaseClient>()),
     );
     gh.lazySingleton<_i281.ReactionDataSource>(
       () => _i549.SupabaseReactionDataSource(gh<_i454.SupabaseClient>()),
+    );
+    gh.lazySingleton<_i813.CommentRepository>(
+      () => _i742.CommentRepositoryImpl(gh<_i896.CommentDataSource>()),
     );
     gh.lazySingleton<_i692.AuthDataSource>(
       () => _i87.SupabaseAuthDataSource(gh<_i454.SupabaseClient>()),
@@ -103,6 +118,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1000.IdGenerator>(),
         gh<_i1040.ImageStorage>(),
       ),
+    );
+    gh.lazySingleton<_i1011.CommentUseCase>(
+      () => _i1011.DefaultCommentUseCase(gh<_i813.CommentRepository>()),
     );
     gh.lazySingleton<_i898.FeedRepository>(
       () => _i749.FeedRepositoryImpl(gh<_i514.FeedDataSource>()),

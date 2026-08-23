@@ -59,5 +59,6 @@ feature 문서는 **대상 · 시나리오 · 기대 결과** 표 형식으로 �
 - [post](features/post.md)
 - [feed](features/feed.md)
 - [reaction](features/reaction.md)
+- [comment](features/comment.md)
 - [코드 컨벤션 검사](conventions.md)
 - [E2E 테스트 (Patrol)](e2e.md)

@@ -1330,7 +1330,7 @@ cd app && flutter test && cd .. && git add app/lib/features/reaction app/test/fe
   - `class PostComment` — `id, postId, parentId, author, content, createdAt, deletedAt, replyCount, reactions`, `bool get isDeleted`, `bool get isReply`
   - `abstract interface class CommentUseCase` — `getComments` · `getReplies` · `addComment` · `deleteComment`
 
-- [ ] **Step 1: 커서의 실패하는 테스트 작성**
+- [x] **Step 1: 커서의 실패하는 테스트 작성**
 
 `app/test/features/comment/data/cursor/comment_cursor_test.dart`:
 
@@ -1365,7 +1365,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 ```bash
 cd app && flutter test test/features/comment
@@ -1373,7 +1373,7 @@ cd app && flutter test test/features/comment
 
 Expected: 컴파일 실패
 
-- [ ] **Step 3: 커서 구현**
+- [x] **Step 3: 커서 구현**
 
 `app/lib/features/comment/data/cursor/comment_cursor.dart` 는 `app/lib/features/feed/data/cursor/feed_cursor.dart` 와 **같은 구조**다. 클래스 이름을 `CommentCursor` 로 바꾸고, 문서 주석을 아래로 교체한다. 나머지(`_separator` · `encode` · `decode` · `==` · `hashCode` · `toString`)는 `FeedCursor` 와 동일하게 쓴다. 실패 메시지는 `'잘못된 댓글 커서입니다'` 로 한다.
 
@@ -1388,7 +1388,7 @@ Expected: 컴파일 실패
 /// 해석하지 않고 그대로 되돌려준다.
 ```
 
-- [ ] **Step 4: 테스트 통과 확인**
+- [x] **Step 4: 테스트 통과 확인**
 
 ```bash
 cd app && flutter test test/features/comment/data/cursor
@@ -1396,7 +1396,7 @@ cd app && flutter test test/features/comment/data/cursor
 
 Expected: PASS
 
-- [ ] **Step 5: entity · policy 구현**
+- [x] **Step 5: entity · policy 구현**
 
 `app/lib/features/comment/domain/comment_policy.dart`:
 
@@ -1480,7 +1480,7 @@ class PostComment with _$PostComment {
 }
 ```
 
-- [ ] **Step 6: DTO · mapper 의 실패하는 테스트 작성**
+- [x] **Step 6: DTO · mapper 의 실패하는 테스트 작성**
 
 `app/test/features/comment/data/mapper/post_comment_mapper_test.dart`:
 
@@ -1565,7 +1565,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 7: 실패 확인**
+- [x] **Step 7: 실패 확인**
 
 ```bash
 cd app && flutter test test/features/comment/data/mapper
@@ -1573,7 +1573,7 @@ cd app && flutter test test/features/comment/data/mapper
 
 Expected: 컴파일 실패
 
-- [ ] **Step 8: DTO · mapper 구현**
+- [x] **Step 8: DTO · mapper 구현**
 
 `app/lib/features/comment/data/dto/post_comment_dto.dart`:
 
@@ -1688,7 +1688,7 @@ extension PostCommentDtoMapper on PostCommentDto {
 }
 ```
 
-- [ ] **Step 9: 코드 생성 후 테스트 통과 확인**
+- [x] **Step 9: 코드 생성 후 테스트 통과 확인**
 
 ```bash
 cd app && dart run build_runner build --delete-conflicting-outputs && flutter test test/features/comment
@@ -1696,7 +1696,7 @@ cd app && dart run build_runner build --delete-conflicting-outputs && flutter te
 
 Expected: PASS
 
-- [ ] **Step 10: repository 의 실패하는 테스트 작성**
+- [x] **Step 10: repository 의 실패하는 테스트 작성**
 
 `app/test/features/comment/data/repository/comment_repository_impl_test.dart`:
 
@@ -1832,7 +1832,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 11: 실패 확인**
+- [x] **Step 11: 실패 확인**
 
 ```bash
 cd app && flutter test test/features/comment/data/repository
@@ -1840,7 +1840,7 @@ cd app && flutter test test/features/comment/data/repository
 
 Expected: 컴파일 실패
 
-- [ ] **Step 12: datasource · repository 구현**
+- [x] **Step 12: datasource · repository 구현**
 
 `app/lib/features/comment/data/datasource/comment_data_source.dart`:
 
@@ -2153,7 +2153,7 @@ abstract interface class CommentRepository {
 }
 ```
 
-- [ ] **Step 13: 코드 생성 후 테스트 통과 확인**
+- [x] **Step 13: 코드 생성 후 테스트 통과 확인**
 
 ```bash
 cd app && dart run build_runner build --delete-conflicting-outputs && flutter test test/features/comment
@@ -2161,7 +2161,7 @@ cd app && dart run build_runner build --delete-conflicting-outputs && flutter te
 
 Expected: PASS
 
-- [ ] **Step 14: scenario 의 실패하는 테스트 작성**
+- [x] **Step 14: scenario 의 실패하는 테스트 작성**
 
 `app/test/features/comment/domain/usecase/scenario/comment_scenarios_test.dart`:
 
@@ -2335,7 +2335,7 @@ void main() {
 }
 ```
 
-- [ ] **Step 15: 실패 확인**
+- [x] **Step 15: 실패 확인**
 
 ```bash
 cd app && flutter test test/features/comment/domain
@@ -2343,7 +2343,7 @@ cd app && flutter test test/features/comment/domain
 
 Expected: 컴파일 실패
 
-- [ ] **Step 16: scenario 4개와 facade 구현**
+- [x] **Step 16: scenario 4개와 facade 구현**
 
 `get_comments_scenario.dart`:
 
@@ -2542,7 +2542,7 @@ class DefaultCommentUseCase implements CommentUseCase {
 }
 ```
 
-- [ ] **Step 17: 코드 생성 · 정적 분석 · 전체 테스트**
+- [x] **Step 17: 코드 생성 · 정적 분석 · 전체 테스트**
 
 ```bash
 cd app && dart run build_runner build --delete-conflicting-outputs && flutter analyze && flutter test
@@ -2550,13 +2550,13 @@ cd app && dart run build_runner build --delete-conflicting-outputs && flutter an
 
 Expected: analyze 무경고, 전체 PASS
 
-- [ ] **Step 18: 테스트 문서 작성**
+- [x] **Step 18: 테스트 문서 작성**
 
 `docs/testing/features/comment.md` 를 만든다. 형식은 `docs/testing/features/feed.md` 와 같은 **대상 · 시나리오 · 기대 결과** 표다. 위 네 테스트 파일의 케이스를 옮기고, 마지막에 "로컬 Supabase 로만 확인되는 것" 문단으로 [comment 계획서](../../features/comment/plan.md)의 검증 항목(2단 제한 트리거 · 삭제 본문 차단 · asc 커서 경계)을 가리킨다.
 
 `docs/testing/README.md` 의 "Feature별 범위" 목록에 항목을 하나 더한다 — 표시 문구는 `comment`, 대상은 `features/comment.md` 인 상대 Markdown 링크다.
 
-- [ ] **Step 19: 커밋**
+- [x] **Step 19: 커밋**
 
 ```bash
 cd app && flutter test && cd .. && git add app/lib/features/comment app/test/features/comment app/lib/core/di/injection.config.dart docs/testing/features/comment.md docs/testing/README.md && git commit -m "feat(comment): 2단 댓글의 조회·작성·삭제 usecase 를 만든다"
