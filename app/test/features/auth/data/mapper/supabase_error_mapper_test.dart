@@ -80,6 +80,23 @@ void main() {
       expect(failure, isA<ValidationFailure>());
       expect((failure as ValidationFailure).message, contains('이미 사용'));
     });
+
+    // 20260822120000 마이그레이션이 feed_posts → posts 로 rename 하면서 제약
+    // 이름도 posts_content_length 로 바뀌었다. 매퍼가 옛 이름을 보고 있으면
+    // 500자 초과 저장에서 사용자 문구 대신 DB 원문이 그대로 올라간다.
+    test('게시물 길이 제약을 사용자 문구로 옮긴다', () {
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(
+          message:
+              'new row for relation "posts" violates check constraint '
+              '"posts_content_length"',
+          code: '23514',
+        ),
+      );
+      expect(failure, isA<ValidationFailure>());
+      expect((failure as ValidationFailure).field, 'content');
+      expect(failure.message, contains('500자'));
+    });
   });
 
   group('PostgrestException 변환', () {

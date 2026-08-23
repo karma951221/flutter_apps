@@ -1,18 +1,23 @@
 # F3 post — 테스트 범위
 
-> [테스트 가이드](../README.md) · [아키텍처](../../architecture.md) · [스키마](../../schema.md)
+> [테스트 가이드](../README.md) · [아키텍처](../../architecture.md) · [기획 F3](../../overview.md)
 
-게시물 자체의 작성·수정·삭제를 담당한다. 목록 조회는 [feed](feed.md)가 맡는다.
-
-| 계층 | 검증 대상 |
-|---|---|
-| data/mapper | `PostDto` → `Post` 필드 보존, snake_case 컬럼명 매핑 |
-| data/repository | 미인증(`null`)을 인증 실패로, 삭제 실패(`false`)를 `notFound`로 변환 |
-| domain/scenario | 본문 정규화와 길이 검증, 빈 식별자 차단, 저장소 위임 |
-| presentation/cubit | 제출 상태 전이, 중복 제출 차단, usecase 위임 |
-
-본문 길이 검증은 `PostPolicy.maxContentLength`를 기준으로 한다. 이 값은
-[스키마](../../schema.md)의 `posts_content_length` CHECK 와 같아야 한다.
+| 대상 | 시나리오 | 기대 결과 |
+|---|---|---|
+| `PostMapper` | `PostDto` 변환 | snake_case 컬럼을 읽어 domain `Post`로 손실 없이 변환된다. |
+| `PostMapper` | `post_images` 조인 결과 | 스네이크 케이스(`sort_order`)를 읽어 받은 순서 그대로 `PostImage`로 옮긴다. |
+| `PostMapper` | 이미지 없는 게시물 | `post_images` 키가 없으면 null 이 아니라 빈 목록이 된다. |
+| `PostRepositoryImpl` | 작성 성공 | 작성 결과 DTO가 domain `Post`로 변환되어 `Ok`로 반환된다. |
+| `PostRepositoryImpl` | 미인증(사용자 null) | 작성·삭제 모두 인증 실패 `Failure`를 담은 `Err`로 반환된다. |
+| `PostRepositoryImpl` | 소프트 삭제 | 성공은 `Ok`, 대상 없음(또는 남의 글)은 `notFound`로 반환된다. |
+| `CreatePostScenario` | 본문 정규화 | 앞뒤 공백을 제거한 본문으로 저장을 요청하고, 공백뿐인 본문은 저장하지 않는다. |
+| `CreatePostScenario` | 길이 검증 | DB CHECK 제약과 같은 기준(500자)에서 막고, 최대 길이는 허용한다. |
+| CRUD scenario | 단건 조회 · 삭제 | 식별자를 저장소에 위임하고, 빈 식별자는 저장소를 호출하지 않는다. |
+| CRUD scenario | 수정 | 공백을 제거한 본문으로 요청하고, 빈 본문으로는 수정하지 않는다. |
+| `PostCubit` | 제출 상태 | 작성 중 제출 상태를 켜고 끝나면 되돌린다. 제출 중 재요청은 usecase를 호출하지 않는다. |
+| `PostCubit` | 실패 / 수정·삭제 | 실패는 상태에 남긴다. 수정과 삭제는 usecase에 위임한다. |
+| `PostCubit` | 이미지 첨부 작성 | 최대 5개의 압축 완료 이미지가 `PostDraft`에 보존되어 작성 usecase에 전달된다. |
+| 로컬 Supabase | 이미지 RLS·Storage RLS | 본인만 `{user_id}/{post_id}/...`에 업로드하고 해당 게시물의 메타데이터를 추가할 수 있다. |
 
 실행:
 
@@ -21,5 +26,5 @@ cd app
 flutter test test/features/post
 ```
 
-`SupabasePostDataSource`의 fluent query 와 `soft_delete_post` RPC 는 mock 대신 로컬
-Supabase 통합 테스트로 검증한다.
+`soft_delete_post()` RPC와 RLS(작성자 본인만 수정·삭제)는 로컬 Supabase 통합
+테스트로 추가 검증한다 ([스키마 §5](../../schema.md)).

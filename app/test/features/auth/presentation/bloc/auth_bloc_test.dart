@@ -69,6 +69,34 @@ void main() {
   );
 
   blocTest<AuthBloc, AuthState>(
+    '갱신 요청을 받으면 사용자를 다시 읽어 authenticated 를 다시 낸다',
+    // 프로필을 고쳐도 로그인 때의 스냅샷이 그대로면 방금 쓴 글에 옛 닉네임이 붙는다.
+    build: () {
+      when(useCase.currentUser).thenAnswer(
+        (_) async => const AppUser(id: 'u1', email: 'a@b.com', nickname: '바뀐이름'),
+      );
+      return AuthBloc(useCase);
+    },
+    act: (bloc) => bloc.add(const AuthEvent.userRefreshRequested()),
+    expect: () => [
+      const AuthState.authenticated(
+        AppUser(id: 'u1', email: 'a@b.com', nickname: '바뀐이름'),
+      ),
+    ],
+  );
+
+  blocTest<AuthBloc, AuthState>(
+    '갱신이 실패해도 상태를 바꾸지 않는다',
+    // 갱신 실패로 로그인 상태를 잃게 만들 이유는 없다.
+    build: () {
+      when(useCase.currentUser).thenThrow(Exception('network'));
+      return AuthBloc(useCase);
+    },
+    act: (bloc) => bloc.add(const AuthEvent.userRefreshRequested()),
+    expect: () => <AuthState>[],
+  );
+
+  blocTest<AuthBloc, AuthState>(
     '로그아웃하면 저장소를 호출하고 unauthenticated 가 된다',
     build: () {
       when(useCase.signOut).thenAnswer((_) async => const Ok(null));
