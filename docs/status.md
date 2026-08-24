@@ -57,10 +57,24 @@
       ([계획](features/comment/plan.md) · [기록](features/comment/history.md))
 - [ ] **F7 safety** — 신고 · 차단
 
+## UI — 2026-08-24
+
+- [x] 인증 화면 개편 — 공통 뼈대(`AuthScaffold` · `AuthHeader`), 비밀번호 토글,
+      제출 중 잠금 ([기록](features/auth/history.md))
+- [x] 홈 셸과 하단 내비게이션(홈 · 프로필 · 설정) — 탭 본문은 `IndexedStack` 으로
+      살려 둔다 ([아키텍처 3-2](architecture.md))
+- [x] 피드 조회 화면 — 빈 상태·실패 안내, 목록 끝 꼬리표 ([기록](features/feed/history.md))
+- [x] 게시물 작성·수정 화면 — 글자 수, 사진 최대 장수, 나가기 확인
+      ([기록](features/post/history.md))
+- [x] 설정 — 프로필 편집 진입 · 계정 설정(비밀번호 변경) · 로그아웃
+      ([계획](features/settings/plan.md))
+- [ ] **회원 탈퇴** — 안내만 있고 구현하지 않았다. 데이터 정리 정책이 먼저다
+      ([범위 밖](features/settings/plan.md))
+
 ## 다음 할 일
 
-1. UI 개편 — 로그인 화면, 홈 셸과 하단 내비게이션, 피드 조회·작성·수정,
-   설정(프로필 · 계정 설정)
+1. 회원 탈퇴 정책 확정 후 구현 — Supabase Auth 사용자 삭제와 게시물·댓글·반응·
+   Storage 객체 정리 범위를 함께 정한다
 2. 로컬 Supabase 통합 확인 — avatar와 post-images Storage RLS(타인 경로 쓰기 거부),
    `created_at` 이 같은 게시물의 끊어 읽기,
    소프트 삭제한 글이 `posts_with_author` 에서 빠지는지
