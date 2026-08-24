@@ -70,6 +70,8 @@ import '../../features/reaction/data/repository/reaction_repository_impl.dart'
 import '../../features/reaction/domain/repository/reaction_repository.dart'
     as _i831;
 import '../../features/reaction/domain/usecase/reaction_use_case.dart' as _i650;
+import '../../features/settings/presentation/cubit/change_password_cubit.dart'
+    as _i903;
 import '../id/id_generator.dart' as _i1000;
 import '../media/image_picker_service.dart' as _i350;
 import '../media/image_storage.dart' as _i1040;
@@ -162,6 +164,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i102.SignUpCubit>(
       () => _i102.SignUpCubit(gh<_i176.AuthUseCase>()),
+    );
+    gh.factory<_i903.ChangePasswordCubit>(
+      () => _i903.ChangePasswordCubit(gh<_i176.AuthUseCase>()),
     );
     gh.lazySingleton<_i408.ProfileUseCase>(
       () => _i408.DefaultProfileUseCase(gh<_i364.ProfileRepository>()),
