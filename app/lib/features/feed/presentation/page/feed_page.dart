@@ -8,7 +8,6 @@ import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
-import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../post/domain/entity/post.dart';
 import '../../../post/domain/entity/post_author.dart';
@@ -18,11 +17,17 @@ import '../../../reaction/domain/entity/reaction_type.dart';
 import '../../domain/entity/feed_post.dart';
 import '../cubit/feed_cubit.dart';
 import '../cubit/feed_state.dart';
+import '../widget/feed_list_footer.dart';
+import '../widget/feed_placeholder.dart';
 
 /// 피드 목록 화면.
 ///
 /// 목록은 [FeedCubit] 이, 게시물 변경은 [PostCubit] 이 소유한다. 변경 결과를
 /// 목록 상태에 반영해 전체 재조회 없이 화면을 맞춘다.
+///
+/// 하단 내비게이션 셸의 탭 본문으로도 쓰이므로 화면 밖으로 나가는 동작(로그아웃
+/// 등)을 AppBar 에 두지 않는다. 새로고침도 당겨서 새로고침 하나로 모았다 —
+/// 같은 일을 하는 입구가 둘이면 AppBar 만 붐빈다.
 class FeedPage extends StatelessWidget {
   const FeedPage({super.key});
 
@@ -53,37 +58,25 @@ class _FeedView extends StatelessWidget {
     };
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('daylog'),
-        actions: [
-          IconButton(
-            tooltip: '새로고침',
-            icon: const Icon(Icons.refresh),
-            onPressed: () => context.read<FeedCubit>().refresh(),
-          ),
-          IconButton(
-            tooltip: '로그아웃',
-            icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthBloc>().add(
-              const AuthEvent.signOutRequested(),
-            ),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('daylog')),
       body: BlocBuilder<FeedCubit, FeedState>(
         builder: (context, state) => switch (state.status) {
-          FeedStatus.loading => const Center(
-            child: CircularProgressIndicator(),
-          ),
-          FeedStatus.failure => _FeedError(
-            message: state.failure?.message ?? '피드를 불러오지 못했습니다',
-            onRetry: () => context.read<FeedCubit>().load(),
+          FeedStatus.loading => const Center(child: CircularProgressIndicator()),
+          FeedStatus.failure => Center(
+            child: FeedPlaceholder(
+              icon: Icons.cloud_off_outlined,
+              message: state.failure?.message ?? '피드를 불러오지 못했습니다',
+              description: '연결을 확인하고 다시 시도해 주세요.',
+              actionLabel: '다시 시도',
+              onAction: () => context.read<FeedCubit>().load(),
+            ),
           ),
           FeedStatus.loaded => _FeedList(
             items: state.items,
             currentUserId: currentAuthor?.id ?? '',
             isLoadingMore: state.isLoadingMore,
             canLoadMore: state.canLoadMore,
+            onCompose: () => _compose(context, currentAuthor),
           ),
         },
       ),
@@ -117,27 +110,21 @@ class _FeedList extends StatelessWidget {
     required this.currentUserId,
     required this.isLoadingMore,
     required this.canLoadMore,
+    required this.onCompose,
   });
+
+  /// 목록 맨 아래가 확장 FAB 에 가리지 않도록 두는 여백.
+  static const _fabClearance = AppSpacing.xl * 3;
 
   final List<FeedPost> items;
   final String currentUserId;
   final bool isLoadingMore;
   final bool canLoadMore;
+  final VoidCallback onCompose;
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) {
-      return RefreshIndicator(
-        onRefresh: () => context.read<FeedCubit>().refresh(),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: 180),
-            Center(child: Text('아직 작성된 게시물이 없습니다.')),
-          ],
-        ),
-      );
-    }
+    if (items.isEmpty) return _empty(context);
 
     return RefreshIndicator(
       onRefresh: () => context.read<FeedCubit>().refresh(),
@@ -151,13 +138,18 @@ class _FeedList extends StatelessWidget {
           return false;
         },
         child: ListView.builder(
-          padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: 96),
-          itemCount: items.length + (isLoadingMore ? 1 : 0),
+          padding: const EdgeInsets.only(
+            top: AppSpacing.sm,
+            bottom: _fabClearance,
+          ),
+          // 마지막 한 칸은 항상 꼬리표 자리다. 더 읽는 중인지 끝까지 읽었는지를
+          // 그 자리에서 구분해 알린다.
+          itemCount: items.length + 1,
           itemBuilder: (context, index) {
             if (index == items.length) {
-              return const Padding(
-                padding: EdgeInsets.all(AppSpacing.md),
-                child: Center(child: CircularProgressIndicator()),
+              return FeedListFooter(
+                isLoadingMore: isLoadingMore,
+                canLoadMore: canLoadMore,
               );
             }
 
@@ -183,6 +175,29 @@ class _FeedList extends StatelessWidget {
       ),
     );
   }
+
+  /// 비어 있는 화면에서도 당겨서 새로고침이 되어야 하므로 안내를 스크롤 뷰
+  /// 안에 넣는다. 화면 높이만큼 최소 높이를 줘서 가운데에 놓는다.
+  Widget _empty(BuildContext context) => RefreshIndicator(
+    onRefresh: () => context.read<FeedCubit>().refresh(),
+    child: LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+          child: Center(
+            child: FeedPlaceholder(
+              icon: Icons.edit_note_outlined,
+              message: '아직 게시물이 없습니다',
+              description: '첫 게시물을 남겨보세요.',
+              actionLabel: '첫 게시물 쓰기',
+              onAction: onCompose,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 
   Future<void> _edit(BuildContext context, Post post) async {
     final feed = context.read<FeedCubit>();
@@ -263,27 +278,4 @@ class _FeedList extends StatelessWidget {
       ),
     );
   }
-}
-
-class _FeedError extends StatelessWidget {
-  const _FeedError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: AppSpacing.md),
-          AppButton.secondary(label: '다시 시도', onPressed: onRetry),
-        ],
-      ),
-    ),
-  );
 }

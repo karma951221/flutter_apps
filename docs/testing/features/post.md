@@ -18,6 +18,13 @@
 | `PostCubit` | 실패 / 수정·삭제 | 실패는 상태에 남긴다. 수정과 삭제는 usecase에 위임한다. |
 | `PostCubit` | 이미지 첨부 작성 | 최대 5개의 압축 완료 이미지가 `PostDraft`에 보존되어 작성 usecase에 전달된다. |
 | 로컬 Supabase | 이미지 RLS·Storage RLS | 본인만 `{user_id}/{post_id}/...`에 업로드하고 해당 게시물의 메타데이터를 추가할 수 있다. |
+| `PostEditorPage` | 작성 / 수정 | 제목과 버튼 라벨이 구분된다 ("새 게시물·올리기" / "게시물 수정·저장"). |
+| `PostEditorPage` | 수정 화면 | 사진 첨부를 그리지 않는다 — 수정은 본문만 바꾼다. |
+| `PostEditorPage` | 글자 수 | `PostPolicy.maxContentLength` 를 기준으로 센다. 화면이 숫자를 다시 적지 않는다. |
+| `PostEditorPage` | 사진 추가 버튼 | 최대 장수를 라벨에 적는다 (`PostPolicy.maxImageCount`). |
+| `PostEditorPage` | 빈 본문 | 저장을 시도하지 않는다. |
+| `PostEditorPage` | 쓰던 내용을 두고 나가기 | 한 번 묻는다. 아무것도 쓰지 않았으면 묻지 않는다. |
+| `PostEditorPage` | 저장 성공 | 결과 게시물을 들고 목록으로 돌아간다.
 
 실행:
 

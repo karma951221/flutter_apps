@@ -10,6 +10,7 @@ import '../../../reaction/domain/entity/reaction_type.dart';
 import '../../../reaction/presentation/widget/reaction_bar.dart';
 import '../../domain/entity/post.dart';
 import '../../domain/entity/post_author.dart';
+import '../../domain/entity/post_image.dart';
 
 /// 목록에서 게시물 하나를 보여준다.
 ///
@@ -107,35 +108,7 @@ class PostTile extends StatelessWidget {
               ),
               if (post.images.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.sm),
-                SizedBox(
-                  height: 160,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: post.images.length,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(width: AppSpacing.sm),
-                    itemBuilder: (_, index) => ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      // 목록을 되감을 때마다 1080px 원본을 다시 받지 않도록
-                      // 디스크 캐시를 쓴다. 로딩·실패도 위젯 트리로 던지지 않고
-                      // 같은 크기의 자리를 지키는 상자로 대신한다.
-                      child: CachedNetworkImage(
-                        imageUrl: post.images[index].url,
-                        width: 160,
-                        height: 160,
-                        fit: BoxFit.cover,
-                        placeholder: (_, _) => _imagePlaceholder(scheme),
-                        errorWidget: (_, _, _) => _imagePlaceholder(
-                          scheme,
-                          child: Icon(
-                            Icons.broken_image_outlined,
-                            color: scheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                _PostImages(images: post.images),
               ],
               if (onReaction != null) ...[
                 const SizedBox(height: AppSpacing.xs),
@@ -171,17 +144,6 @@ class PostTile extends StatelessWidget {
     );
   }
 
-  /// 이미지가 아직 없거나 실패했을 때 같은 크기의 자리를 지키는 상자.
-  Widget _imagePlaceholder(ColorScheme scheme, {Widget? child}) {
-    return Container(
-      width: 160,
-      height: 160,
-      alignment: Alignment.center,
-      color: scheme.surfaceContainerHighest,
-      child: child,
-    );
-  }
-
   String _displayDate(DateTime value) {
     final date = value.toLocal();
     final month = date.month.toString().padLeft(2, '0');
@@ -193,3 +155,79 @@ class PostTile extends StatelessWidget {
 }
 
 enum _PostAction { edit, delete }
+
+/// 게시물에 붙은 사진.
+///
+/// 한 장일 때는 가로를 채우고 **원본 비율을 지킨다**. 목록에서 사진 한 장짜리
+/// 게시물이 대부분인데, 고정 정사각형으로 잘라 보여주면 세로 사진이 크게 상한다.
+/// 여러 장일 때는 카드 높이를 예측 가능하게 두는 쪽이 중요해서 정사각 썸네일
+/// 가로 스크롤을 유지한다.
+class _PostImages extends StatelessWidget {
+  const _PostImages({required this.images});
+
+  static const _thumbnailSize = 160.0;
+
+  /// 한 장짜리가 카드를 다 잡아먹지 않도록 두는 상한.
+  static const _maxSingleHeight = 320.0;
+
+  final List<PostImage> images;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    if (images.length == 1) {
+      final image = images.single;
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: _maxSingleHeight),
+          child: AspectRatio(
+            // 치수를 목록 조회가 함께 내려주므로 이미지를 받기 전에 자리를
+            // 잡을 수 있다. 나중에 크기가 바뀌며 목록이 튀지 않는다.
+            aspectRatio: image.width / image.height,
+            child: _image(image.url, scheme, fit: BoxFit.cover),
+          ),
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: _thumbnailSize,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: images.length,
+        separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
+        itemBuilder: (_, index) => ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: SizedBox(
+            width: _thumbnailSize,
+            height: _thumbnailSize,
+            child: _image(images[index].url, scheme),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 목록을 되감을 때마다 1080px 원본을 다시 받지 않도록 디스크 캐시를 쓴다.
+  /// 로딩·실패도 위젯 트리로 던지지 않고 같은 자리를 지키는 상자로 대신한다.
+  Widget _image(String url, ColorScheme scheme, {BoxFit fit = BoxFit.cover}) =>
+      CachedNetworkImage(
+        imageUrl: url,
+        fit: fit,
+        placeholder: (_, _) => _placeholder(scheme),
+        errorWidget: (_, _, _) => _placeholder(
+          scheme,
+          child: Icon(
+            Icons.broken_image_outlined,
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+      );
+
+  Widget _placeholder(ColorScheme scheme, {Widget? child}) => ColoredBox(
+    color: scheme.surfaceContainerHighest,
+    child: Center(child: child),
+  );
+}
