@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'post_image.dart';
+
 part 'post.freezed.dart';
 
 /// 사용자가 작성한 게시물.
@@ -14,6 +16,7 @@ class Post with _$Post {
     required this.content,
     required this.createdAt,
     required this.updatedAt,
+    this.images = const [],
   });
 
   @override
@@ -26,4 +29,6 @@ class Post with _$Post {
   final DateTime createdAt;
   @override
   final DateTime updatedAt;
+  @override
+  final List<PostImage> images;
 }

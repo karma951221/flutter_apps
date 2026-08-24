@@ -17,6 +17,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc(this._useCase) : super(const AuthState.unknown()) {
     on<AuthStarted>(_onStarted);
     on<AuthUserChanged>(_onUserChanged);
+    on<AuthUserRefreshRequested>(_onUserRefreshRequested);
     on<AuthSignOutRequested>(_onSignOutRequested);
   }
 
@@ -44,6 +45,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           ? const AuthState.unauthenticated()
           : AuthState.authenticated(event.user!),
     );
+  }
+
+  /// 프로필 수정 등으로 사용자 정보가 바뀐 뒤 스냅샷을 새로 고친다.
+  ///
+  /// 조회에 실패하거나 사용자가 없으면 아무것도 하지 않는다. 갱신이 안 됐다고
+  /// 로그인 상태를 잃게 만들 이유는 없다.
+  Future<void> _onUserRefreshRequested(
+    AuthUserRefreshRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      final user = await _useCase.currentUser();
+      if (user != null) emit(AuthState.authenticated(user));
+    } catch (e) {
+      debugPrint('[auth] 사용자 갱신 실패: $e');
+    }
   }
 
   Future<void> _onSignOutRequested(

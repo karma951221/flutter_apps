@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/media/image_picker_service.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
+import '../../domain/entity/avatar_image_draft.dart';
 import '../../domain/entity/profile_update.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
@@ -32,7 +36,14 @@ class _EditProfileViewState extends State<_EditProfileView> {
   final _formKey = GlobalKey<FormState>();
   final _nicknameController = TextEditingController();
   final _bioController = TextEditingController();
-  final _avatarUrlController = TextEditingController();
+  String? _avatarUrl;
+
+  /// 고르기만 하고 아직 올리지 않은 이미지.
+  ///
+  /// 저장할 때 비로소 업로드한다. 고르는 즉시 올리면 저장하지 않고 화면을
+  /// 떠났을 때 객체가 그대로 남는다.
+  PreparedImage? _pendingAvatar;
+
   String? _initializedProfileId;
   bool _wasSaving = false;
 
@@ -40,7 +51,6 @@ class _EditProfileViewState extends State<_EditProfileView> {
   void dispose() {
     _nicknameController.dispose();
     _bioController.dispose();
-    _avatarUrlController.dispose();
     super.dispose();
   }
 
@@ -50,18 +60,69 @@ class _EditProfileViewState extends State<_EditProfileView> {
     _initializedProfileId = profile.id;
     _nicknameController.text = profile.nickname;
     _bioController.text = profile.bio ?? '';
-    _avatarUrlController.text = profile.avatarUrl ?? '';
+    _avatarUrl = profile.avatarUrl;
   }
 
-  void _save() {
+  /// 저장을 요청한다.
+  ///
+  /// 업로드 · 프로필 갱신 · 옛 이미지 정리의 순서와 보상 처리는 usecase 의
+  /// `UpdateAvatarScenario` 가 소유한다. 화면은 무엇을 저장할지만 넘긴다.
+  Future<void> _save() async {
+    final cubit = context.read<ProfileCubit>();
+    if (cubit.state.isSaving) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    context.read<ProfileCubit>().save(
+
+    final authBloc = context.read<AuthBloc>();
+    final pending = _pendingAvatar;
+
+    await cubit.save(
       ProfileUpdate(
         nickname: _nicknameController.text,
         bio: _bioController.text,
-        avatarUrl: _avatarUrlController.text,
+        // 지금 쓰고 있는 URL 을 그대로 보낸다. 새 이미지가 있으면 usecase 가
+        // 업로드한 URL 로 바꾸고, 이 값이 정리 대상이 된다.
+        avatarUrl: _avatarUrl,
       ),
+      newAvatar: pending == null
+          ? null
+          : AvatarImageDraft(
+              bytes: pending.bytes,
+              contentType: pending.contentType,
+              extension: pending.extension,
+            ),
     );
+
+    if (cubit.state.failure != null) return;
+
+    // 로그인 때 만들어진 사용자 스냅샷을 새로 읽게 한다. 이게 없으면 방금
+    // 바꾼 닉네임·사진이 다음에 쓰는 글에 옛 값으로 붙는다.
+    authBloc.add(const AuthEvent.userRefreshRequested());
+
+    if (!mounted) return;
+    setState(() {
+      _pendingAvatar = null;
+      _avatarUrl = cubit.state.profile?.avatarUrl ?? _avatarUrl;
+    });
+  }
+
+  Future<void> _pickAvatar() async {
+    if (context.read<ProfileCubit>().state.isSaving) return;
+    final picker = getIt<ImagePickerService>();
+    final image = await picker.pickImage();
+    if (image == null || !mounted) return;
+
+    try {
+      final prepared = await picker.prepare(image);
+      if (!mounted) return;
+      setState(() => _pendingAvatar = prepared);
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackBar.show(
+        context,
+        message: '프로필 사진을 불러오지 못했습니다.',
+        type: AppSnackBarType.error,
+      );
+    }
   }
 
   @override
@@ -98,6 +159,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
         if (state.profile == null) {
           return const SizedBox.shrink();
         }
+        final isBusy = state.isSaving;
         return SafeArea(
           child: Form(
             key: _formKey,
@@ -107,8 +169,16 @@ class _EditProfileViewState extends State<_EditProfileView> {
                 Center(
                   child: AppAvatar(
                     nickname: _nicknameController.text,
-                    imageUrl: _avatarUrlController.text,
+                    imageUrl: _avatarUrl,
+                    imageBytes: _pendingAvatar?.bytes,
                     radius: 48,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Center(
+                  child: AppButton.secondary(
+                    label: '사진 선택',
+                    onPressed: isBusy ? null : _pickAvatar,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
@@ -126,17 +196,11 @@ class _EditProfileViewState extends State<_EditProfileView> {
                   minLines: 3,
                   maxLines: 5,
                 ),
-                const SizedBox(height: AppSpacing.md),
-                TextFormField(
-                  controller: _avatarUrlController,
-                  decoration: const InputDecoration(labelText: '프로필 사진 URL'),
-                  keyboardType: TextInputType.url,
-                ),
                 const SizedBox(height: AppSpacing.lg),
                 AppButton.primary(
                   label: '저장',
-                  onPressed: _save,
-                  isLoading: state.isSaving,
+                  onPressed: isBusy ? null : _save,
+                  isLoading: isBusy,
                 ),
               ],
             ),

@@ -7,91 +7,298 @@ import '../../../../core/di/injection.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_button.dart';
-import '../../../../design_system/widget/app_list_tile.dart';
+import '../../../../design_system/widget/app_snack_bar.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../feed/domain/entity/feed_post.dart';
+import '../../../feed/presentation/cubit/feed_cubit.dart';
+import '../../../feed/presentation/cubit/feed_state.dart';
+import '../../../post/domain/entity/post.dart';
+import '../../../post/presentation/cubit/post_cubit.dart';
+import '../../../post/presentation/widget/post_tile.dart';
+import '../../../reaction/domain/entity/reaction_type.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
 
+/// Own and other-user profile screen. [userId] is omitted for the session user.
+///
+/// 게시물 목록은 [FeedCubit] 이, 게시물 변경은 [PostCubit] 이 소유한다. 피드
+/// 화면과 같은 구성이라 본인 프로필에서도 같은 수정·삭제 흐름을 쓴다.
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+  const ProfilePage({this.userId, super.key});
+
+  final String? userId;
 
   @override
-  Widget build(BuildContext context) => BlocProvider(
-    create: (_) => getIt<ProfileCubit>()..load(),
-    child: const _ProfileView(),
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider(create: (_) => getIt<ProfileCubit>()..load(userId: userId)),
+      BlocProvider(create: (_) => getIt<FeedCubit>()),
+      BlocProvider(create: (_) => getIt<PostCubit>()),
+    ],
+    child: _ProfileView(requestedUserId: userId),
   );
 }
 
 class _ProfileView extends StatelessWidget {
-  const _ProfileView();
+  const _ProfileView({this.requestedUserId});
+
+  final String? requestedUserId;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('프로필')),
-      body: BlocBuilder<ProfileCubit, ProfileState>(
-        builder: (context, state) {
-          if (state.isLoading && state.profile == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (state.failure != null && state.profile == null) {
-            return _ProfileLoadError(
-              message: state.failure?.message ?? '프로필을 불러오지 못했습니다',
-              onRetry: context.read<ProfileCubit>().load,
+    final isMine = switch (context.watch<AuthBloc>().state) {
+      AuthAuthenticated(:final user) =>
+        requestedUserId == null || user.id == requestedUserId,
+      _ => false,
+    };
+    return BlocListener<ProfileCubit, ProfileState>(
+      listenWhen: (previous, current) =>
+          previous.profile?.id != current.profile?.id &&
+          current.profile != null,
+      listener: (context, state) =>
+          context.read<FeedCubit>().loadForAuthor(state.profile!.id),
+      child: Scaffold(
+        appBar: AppBar(title: Text(isMine ? '프로필' : '사용자 프로필')),
+        body: BlocBuilder<ProfileCubit, ProfileState>(
+          builder: (context, state) {
+            if (state.isLoading && state.profile == null) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state.failure != null && state.profile == null) {
+              return _ProfileLoadError(
+                message: state.failure?.message ?? '프로필을 불러오지 못했습니다',
+                onRetry: () =>
+                    context.read<ProfileCubit>().load(userId: requestedUserId),
+              );
+            }
+            final profile = state.profile;
+            if (profile == null) return const SizedBox.shrink();
+            return RefreshIndicator(
+              onRefresh: () async {
+                final feed = context.read<FeedCubit>();
+                await context.read<ProfileCubit>().load(
+                  userId: requestedUserId,
+                );
+                await feed.refresh();
+              },
+              child: NotificationListener<ScrollNotification>(
+                // 다음 페이지 요청은 스크롤 알림으로만 낸다. 목록을 만드는
+                // 도중에 부르면 build 중 상태 변경이 되어 프레임이 깨진다.
+                onNotification: (notification) {
+                  final feed = context.read<FeedCubit>();
+                  final feedState = feed.state;
+                  if (notification.metrics.extentAfter < 240 &&
+                      !feedState.isLoadingMore &&
+                      feedState.canLoadMore) {
+                    feed.loadMore();
+                  }
+                  return false;
+                },
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.lg,
+                        ),
+                        child: Column(
+                          children: [
+                            AppAvatar(
+                              nickname: profile.nickname,
+                              imageUrl: profile.avatarUrl,
+                              radius: 52,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            Text(
+                              profile.nickname,
+                              style: Theme.of(context).textTheme.headlineSmall,
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.lg,
+                              ),
+                              child: Text(
+                                profile.bio?.isNotEmpty == true
+                                    ? profile.bio!
+                                    : '소개를 작성해보세요.',
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            if (isMine) ...[
+                              const SizedBox(height: AppSpacing.md),
+                              AppButton.secondary(
+                                label: '프로필 편집',
+                                onPressed: () async {
+                                  await context.push(Routes.profileEdit);
+                                  if (context.mounted) {
+                                    context.read<ProfileCubit>().load();
+                                  }
+                                },
+                              ),
+                            ],
+                            const SizedBox(height: AppSpacing.lg),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
+                        child: Text('게시물'),
+                      ),
+                    ),
+                    _ProfilePostList(isMine: isMine),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// 프로필 주인이 쓴 게시물 목록.
+///
+/// [isMine] 이면 피드와 같은 수정·삭제 흐름을 붙인다. 다른 사람의 프로필은
+/// 조회 전용이다 — 이미 그 작성자의 화면이라 작성자로 다시 이동할 곳이 없다.
+class _ProfilePostList extends StatelessWidget {
+  const _ProfilePostList({required this.isMine});
+  final bool isMine;
+
+  @override
+  Widget build(BuildContext context) => BlocBuilder<FeedCubit, FeedState>(
+    builder: (context, state) => switch (state.status) {
+      FeedStatus.loading => const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.all(AppSpacing.lg),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ),
+      FeedStatus.failure => SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: AppButton.secondary(
+            label: '게시물을 다시 불러오기',
+            onPressed: () => context.read<FeedCubit>().refresh(),
+          ),
+        ),
+      ),
+      FeedStatus.loaded when state.items.isEmpty => const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.all(AppSpacing.xl),
+          child: Center(child: Text('아직 게시물이 없습니다')),
+        ),
+      ),
+      FeedStatus.loaded => SliverList.builder(
+        itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == state.items.length) {
+            return const Padding(
+              padding: EdgeInsets.all(AppSpacing.md),
+              child: Center(child: CircularProgressIndicator()),
             );
           }
-          final profile = state.profile;
-          if (profile == null) return const SizedBox.shrink();
-
-          return RefreshIndicator(
-            onRefresh: context.read<ProfileCubit>().load,
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-              children: [
-                Center(
-                  child: AppAvatar(
-                    nickname: profile.nickname,
-                    imageUrl: profile.avatarUrl,
-                    radius: 52,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Center(
-                  child: Text(
-                    profile.nickname,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.lg,
-                  ),
-                  child: Text(
-                    profile.bio?.isNotEmpty == true
-                        ? profile.bio!
-                        : '소개를 작성해보세요.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: profile.bio?.isNotEmpty == true
-                          ? null
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                AppListTile(
-                  leading: const Icon(Icons.edit_outlined),
-                  title: const Text('프로필 편집'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () async {
-                    await context.push(Routes.profileEdit);
-                    if (context.mounted) context.read<ProfileCubit>().load();
-                  },
-                ),
-              ],
-            ),
+          final item = state.items[index];
+          final post = item.post;
+          return PostTile(
+            post: post,
+            author: item.author,
+            isMine: isMine,
+            reactions: item.reactions,
+            commentCount: item.commentCount,
+            // 이미 이 작성자의 프로필이므로 남의 글은 눌러도 갈 곳이 없다.
+            onTap: isMine ? () => _edit(context, post) : () {},
+            onEdit: isMine ? () => _edit(context, post) : null,
+            onDelete: isMine ? () => _confirmDelete(context, post) : null,
+            onReaction: (type) => _react(context, post.id, type),
+            onComment: () => _openComments(context, item),
           );
         },
+      ),
+    },
+  );
+
+  /// 감정과 댓글 연결은 피드 화면과 같다. 두 화면 모두 목록을 [FeedCubit] 이
+  /// 소유하므로 저장·복원도 같은 곳에서 한다.
+  Future<void> _react(
+    BuildContext context,
+    String postId,
+    ReactionType type,
+  ) async {
+    final result = await context.read<FeedCubit>().toggleReaction(postId, type);
+    if (!context.mounted) return;
+
+    result.when(
+      ok: (_) {},
+      err: (failure) => AppSnackBar.show(
+        context,
+        message: failure.message ?? '감정을 남기지 못했습니다.',
+        type: AppSnackBarType.error,
+      ),
+    );
+  }
+
+  Future<void> _openComments(BuildContext context, FeedPost item) async {
+    final feed = context.read<FeedCubit>();
+    final count = await context.push<int>(
+      Routes.postCommentsPath(item.id),
+      extra: item.commentCount,
+    );
+    if (count != null) feed.applyCommentCount(item.id, count);
+  }
+
+  Future<void> _edit(BuildContext context, Post post) async {
+    final feed = context.read<FeedCubit>();
+    final updated = await context.push<Post>(
+      Routes.postEditPath(post.id),
+      extra: post,
+    );
+    if (updated != null) feed.replacePost(updated);
+  }
+
+  Future<void> _confirmDelete(BuildContext context, Post post) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('게시물을 삭제할까요?'),
+        content: const Text('삭제한 게시물은 되돌릴 수 없습니다.'),
+        actions: [
+          AppButton.text(
+            label: '취소',
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+          ),
+          AppButton.text(
+            label: '삭제',
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final feed = context.read<FeedCubit>();
+    final result = await context.read<PostCubit>().delete(post.id);
+    if (!context.mounted) return;
+
+    result.when(
+      ok: (_) {
+        feed.removePost(post.id);
+        AppSnackBar.show(
+          context,
+          message: '게시물을 삭제했습니다.',
+          type: AppSnackBarType.success,
+        );
+      },
+      err: (failure) => AppSnackBar.show(
+        context,
+        message: failure.message ?? '게시물을 삭제하지 못했습니다.',
+        type: AppSnackBarType.error,
       ),
     );
   }
@@ -99,7 +306,6 @@ class _ProfileView extends StatelessWidget {
 
 class _ProfileLoadError extends StatelessWidget {
   const _ProfileLoadError({required this.message, required this.onRetry});
-
   final String message;
   final VoidCallback onRetry;
 

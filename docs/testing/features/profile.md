@@ -11,6 +11,19 @@
 | `ProfileRepositoryImpl.getMyProfile` | 현재 로그인 사용자가 없음 | `not_authenticated` 인증 오류를 담은 `Err`가 반환된다. |
 | `ProfileRepositoryImpl.updateMyProfile` | 수정 성공 | `ProfileUpdate`가 datasource에 그대로 전달되고, 반환 DTO는 `Profile`로 변환된다. |
 | `ProfileRepositoryImpl.isNicknameAvailable` | 닉네임 중복 | datasource의 사용 가능 여부가 변경 없이 `Ok<bool>`로 반환된다. |
+| `ProfileCubit.load` | userId 없음 / 있음 | `getMyProfile` 로 내 프로필을, `getProfile(userId)` 로 해당 사용자의 프로필을 읽는다. 서로를 대신 호출하지 않는다. |
+| `ProfileCubit.load` | 조회 실패 (본인 · 타인) | 로딩을 끄고 `failure` 만 남긴다. 프로필은 null 로 둔다. |
+| `ProfileCubit.save` | 수정 성공 | `ProfileUpdate` 가 usecase 에 그대로 전달되고 결과 프로필이 상태에 담긴다. |
+| `ProfilePage` | 내 프로필 | 편집 버튼이 보이고, 내 id 로 게시물을 읽는다. |
+| `ProfilePage` | `/users/:id` | 타인 화면에는 편집 버튼이 없고 해당 작성자의 게시물만 커서로 읽는다. 내 프로필은 조회하지 않는다. |
+| `ProfilePage` | 프로필 조회 실패 | 다시 시도 버튼을 보여주고, 주인을 모르므로 게시물은 읽지 않는다. |
+| `UpdateAvatarScenario` | 새 이미지와 함께 저장 성공 | 업로드한 URL 로 프로필을 갱신하고, 이전 아바타 객체를 지운다. |
+| `UpdateAvatarScenario` | 프로필 갱신 실패 | 방금 올린 객체를 되돌려 지우고, 이전 아바타는 그대로 둔다. |
+| `UpdateAvatarScenario` | 업로드 실패 | 프로필을 건드리지 않고 사진 업로드 실패 문구로 `Err` 를 낸다. |
+| `UpdateAvatarScenario` | 새 이미지 없음 | 저장소의 이미지 호출이 한 번도 일어나지 않는다. |
+| `ImageStorage.objectPathFromPublicUrl` (`test/core/media/`) | 아바타 공개 URL · 쿼리 · 퍼센트 인코딩 · 다른 버킷 | 자기 버킷의 객체 경로만 뽑아내고, 그 밖의 URL 은 null 이라 삭제를 시도하지 않는다. |
+| Storage RLS (통합) | 다른 사용자 UUID prefix로 `avatars` 업로드 | 403으로 거부된다. |
+| Storage RLS (통합) | 자기 UUID prefix로 WebP 업로드 | 허용되고 공개 URL이 프로필에 저장된다. |
 
 실행:
 
@@ -20,4 +33,6 @@ flutter test test/features/profile
 ```
 
 `SupabaseProfileDataSource`의 fluent query 조립과 RLS는 SupabaseClient mock 대신 로컬
-Supabase 통합 테스트로 검증한다.
+Supabase 통합 테스트로 검증한다. 아바타 업로드·삭제도 같은 이유로 datasource가 아니라
+`UpdateAvatarScenario`(순서·보상)와 `ImageStorage.objectPathFromPublicUrl`(경로 도출)
+두 곳에서 단위 검증한다.

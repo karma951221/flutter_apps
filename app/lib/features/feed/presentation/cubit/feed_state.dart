@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../../core/error/failure.dart';
-import '../../../post/domain/entity/post.dart';
+import '../../domain/entity/feed_post.dart';
 
 part 'feed_state.freezed.dart';
 
@@ -10,7 +10,7 @@ part 'feed_state.freezed.dart';
 class FeedState with _$FeedState {
   const FeedState({
     this.status = FeedStatus.loading,
-    this.posts = const [],
+    this.items = const [],
     this.isLoadingMore = false,
     this.nextCursor,
     this.failure,
@@ -18,8 +18,10 @@ class FeedState with _$FeedState {
 
   @override
   final FeedStatus status;
+
+  /// 게시물과 작성자를 함께 담은 목록. 화면이 작성자를 따로 조회하지 않는다.
   @override
-  final List<Post> posts;
+  final List<FeedPost> items;
   @override
   final bool isLoadingMore;
 

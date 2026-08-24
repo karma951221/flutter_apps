@@ -35,10 +35,7 @@ class FeedCursor {
       }
       return FeedCursor(createdAt: DateTime.parse(parts[0]), id: parts[1]);
     } on FormatException {
-      throw const Failure.validation(
-        message: '잘못된 피드 커서입니다',
-        field: 'cursor',
-      );
+      throw const Failure.validation(message: '잘못된 피드 커서입니다', field: 'cursor');
     }
   }
 

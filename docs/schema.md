@@ -25,12 +25,24 @@ Studio UI에서 테이블을 직접 만들지 않는다. 이 문서와 실제 DB
 auth.users  (Supabase Auth 소유)
     │ 1:1  on delete cascade
     ▼
-profiles ──1:N──▶ posts
+profiles ──1:N──▶ posts ──┬──1:N──▶ post_images
+    │                      │
+    │                      ├──1:N──▶ post_comments ──1:N──▶ post_comments (parent_id, self)
+    │                      │                │
+    │                      │                └──1:N──▶ comment_reactions
+    │                      │
+    │                      └──1:N──▶ post_reactions
+    │                                       ▲
+    └───────────────1:N─────────────────────┘  (반응 두 테이블의 user_id)
 ```
 
-앞으로 추가될 테이블(`post_images` · `post_reactions` · `post_comments` · `follows` ·
-`blocks` · `reports`)의 계획은 [기획서 §7](overview.md)에 있다. 여기에는 **실제로
-존재하는 것만** 적는다.
+읽기 전용 뷰 `posts_with_author`(§6)가 게시물·작성자·이미지·반응·댓글 수를 한 번에
+내려주고, `post_comments_visible`(§9)이 `post_comments`와 `profiles`·`posts`·
+`comment_reactions`를 조인해 댓글 목록을 내려준다. 반응 두 테이블(§10)은 직접
+조회하지 않고 **집계된 형태로만** 이 두 뷰를 통해 읽는다.
+
+앞으로 추가될 테이블(`follows` · `blocks` · `reports`)의 계획은
+[기획서 §7](overview.md)에 있다. 여기에는 **실제로 존재하는 것만** 적는다.
 
 ---
 
@@ -197,6 +209,19 @@ grant update (nickname, bio, avatar_url) on public.profiles to authenticated;
 
 `insert` · `delete` 권한은 주지 않는다.
 
+### Storage `avatars`
+
+프로필 사진은 공개 읽기 `avatars` 버킷에 저장한다(객체 최대 5 MiB). 경로는
+`{user_id}/{timestamp}.webp`이며, `storage.objects`의 INSERT·UPDATE·DELETE 정책은 첫
+경로 조각이 `(select auth.uid())::text`와 일치할 때만 허용한다. 따라서 앱이 경로를
+변조해 타인의 아바타를 쓰거나 덮어쓸 수 없다.
+
+```sql
+allowed_mime_types = array['image/webp', 'image/jpeg']
+```
+
+WebP 하나만 허용하지 않는 이유는 §7의 `post-images`와 같다.
+
 ---
 
 ## 5. `posts`
@@ -281,13 +306,70 @@ grant update (content) on public.posts to authenticated;
 `author_id`는 INSERT GRANT에서 빠져 있다. 앱이 보낼 수 없고 `default auth.uid()`로만
 채워진다. `deleted_at`도 빠져 있다 — 삭제는 아래 함수로만 한다. `delete` 권한은 주지 않는다.
 
+텍스트만 있는 게시물은 이 INSERT GRANT로 그대로 작성한다. **이미지가 있으면
+`create_post_with_images()`를 쓴다** — 두 테이블에 나눠 INSERT하면 원자성이 깨진다.
+
+### `create_post_with_images(content text, images jsonb) → uuid`
+
+게시물과 이미지 메타데이터를 **한 트랜잭션**에 만들고 새 게시물 id를 돌려준다.
+
+```sql
+create function public.create_post_with_images(content text, images jsonb)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  author       uuid := (select auth.uid());
+  new_post_id  uuid;
+begin
+  if author is null then
+    raise exception 'authentication required' using errcode = '42501';
+  end if;
+
+  insert into public.posts (author_id, content)
+  values (author, create_post_with_images.content)
+  returning id into new_post_id;
+
+  insert into public.post_images (post_id, url, width, height, sort_order)
+  select
+    new_post_id,
+    item ->> 'url',
+    (item ->> 'width')::integer,
+    (item ->> 'height')::integer,
+    (item ->> 'sort_order')::smallint
+  from jsonb_array_elements(
+    coalesce(create_post_with_images.images, '[]'::jsonb)
+  ) as item;
+
+  return new_post_id;
+end;
+$$;
+
+revoke execute on function public.create_post_with_images(text, jsonb) from public, anon;
+grant execute on function public.create_post_with_images(text, jsonb) to authenticated;
+```
+
+앱이 `posts`를 먼저 넣고 `post_images`를 뒤이어 넣으면, 중간에 실패했을 때 **이미지 없는
+유령 게시물**이 남고 재시도하면 게시물이 두 번 생긴다. 두 INSERT를 함수 하나에 넣어
+없앤다.
+
+`security definer`지만 새 권한을 열지 않는다. `author_id`를 `auth.uid()`로 고정하므로
+남의 이름으로 쓸 경로가 없고, 길이·장수 제약(`posts_content_length` ·
+`post_images_sort_order_range` · `(post_id, sort_order)` 유니크)은 테이블에서 그대로
+걸린다.
+
+**Storage 업로드는 이 트랜잭션 밖이다.** 앱은 이미지를 **먼저** 올리고 마지막에 이
+함수를 부른다. 함수가 실패하면 올려둔 객체는 앱이 best-effort로 지운다.
+
 ### `soft_delete_post(post_id uuid) → boolean`
 
 게시물을 삭제하는 **유일한 경로**다. 삭제된 행이 있으면 `true`, 없거나 남의 글이면
 `false`를 돌려준다.
 
 ```sql
-create function public.soft_delete_post(post_id uuid)
+create or replace function public.soft_delete_post(post_id uuid)
 returns boolean
 language plpgsql
 security definer
@@ -303,6 +385,12 @@ begin
      and deleted_at is null;
 
   get diagnostics affected = row_count;
+
+  if affected > 0 then
+    delete from public.post_images as pi
+     where pi.post_id = soft_delete_post.post_id;
+  end if;
+
   return affected > 0;
 end;
 $$;
@@ -318,9 +406,560 @@ grant execute on function public.soft_delete_post(uuid) to authenticated;
 `deleted_at is null` 조건은 이미 삭제된 글을 다시 삭제해도 `deleted_at`이 갱신되지 않게
 한다. 삭제 시각이 뒤로 밀리지 않는다.
 
+**이미지 행도 같은 함수에서 지운다.** `post_images`는 `posts`를 `on delete cascade`로
+참조하지만 소프트 삭제는 행을 지우지 않으므로 cascade가 돌지 않는다. 조회 정책이 가려줄
+뿐 행은 영원히 남는다. `security definer`라 `post_images`의 RLS가 이 DELETE를 막지 않는다.
+
+Storage 객체는 DB가 지울 수 없으므로 앱이 지운다. 삭제 **전에** 이미지 URL을 읽어두고
+(삭제 후에는 조회 정책이 가린다), RPC가 `true`를 주면 객체를 지운다. 게시물은 이미
+숨겨졌으므로 이 정리가 실패해도 삭제는 성공으로 본다.
+
 ---
 
-## 6. 알아둘 함정
+## 6. `posts_with_author` (뷰)
+
+피드 목록이 읽는 유일한 대상. 게시물에 작성자 프로필을 조인해 한 번에 내려준다.
+목록을 받은 뒤 작성자를 한 명씩 조회하면 페이지당 N번의 왕복이 더 생긴다(N+1).
+
+```sql
+create view public.posts_with_author
+with (security_invoker = on) as
+select
+  p.id,
+  p.author_id,
+  p.content,
+  p.created_at,
+  p.updated_at,
+  pr.nickname   as author_nickname,
+  pr.avatar_url as author_avatar_url,
+  coalesce(images.items,    '[]'::jsonb) as images,
+  coalesce(reactions.counts, '{}'::jsonb) as reaction_counts,
+  mine.type                              as my_reaction,
+  coalesce(comments.total, 0)            as comment_count
+from public.posts p
+join public.profiles pr on pr.id = p.author_id
+left join lateral (...) images    on true   -- post_images 를 jsonb 배열로 (§7)
+left join lateral (...) reactions on true   -- post_reactions 를 type 별 개수로 (§10)
+left join lateral (...) mine      on true   -- 조회자의 post_reactions.type (§10)
+left join lateral (...) comments  on true;  -- 살아 있는 post_comments 개수 (§8)
+```
+
+`...` 안의 실제 질의는
+[`20260823180000_add_reactions.sql`](../supabase/migrations/20260823180000_add_reactions.sql)에
+있다. 네 개 모두 `left join lateral` 인 이유는 같다 — 대상이 없을 때 게시물 행이
+사라지면 안 되고, 각 서브쿼리가 게시물 하나만 보고 끝나야 한다.
+
+### 집계 컬럼 셋은 N+1 을 없애기 위해 여기 있다
+
+| 컬럼 | 타입 | 값 |
+|---|---|---|
+| `reaction_counts` | `jsonb` | `{"like": 3, "dislike": 1}` · 없으면 `{}` |
+| `my_reaction` | `text` | 조회자가 남긴 감정 하나 · 없거나 비로그인이면 `null` |
+| `comment_count` | `bigint` | 살아 있는 댓글 + 답글 전부 |
+
+개수를 `like_count` · `dislike_count` 컬럼으로 박지 않고 `jsonb` 로 내리는 이유는,
+감정 종류를 하나 더할 때 **뷰를 고치지 않기 위해서다.** 앱은 모르는 키를 무시한다.
+
+`my_reaction` 은 `(select auth.uid())` 에 의존한다. `auth.uid()` 는 JWT 클레임을 읽는
+세션 GUC 기반이라 뷰의 실행 역할과 무관하게 **조회자 기준**으로 동작한다 — §9 가
+`security_invoker = off` 인데도 같은 컬럼을 내릴 수 있는 이유다.
+
+### `security_invoker = on` 은 선택 사항이 아니다
+
+**뷰는 기본적으로 소유자(`postgres`) 권한으로 실행된다.** 이 옵션을 빼면
+`posts_select_visible`(`deleted_at is null`)이 평가되지 않아 **삭제된 게시물이 이 뷰로
+그대로 새어 나온다.** §2의 "삭제행 숨김을 조회 정책이 강제한다"가 뷰 하나로 무너진다.
+
+`on` 이면 뷰를 **조회한 세션 사용자**의 권한으로 기반 테이블의 RLS 가 그대로 평가된다.
+뷰는 정책을 우회하는 통로가 아니라 조인에 붙인 이름일 뿐이다.
+
+**앞으로 이 스키마에 추가되는 모든 뷰에 같은 규칙을 적용한다.** 첫 예외는
+`post_comments_visible`(§9)이다 — 예외로 둔 이유는 해당 절에 있다.
+
+### GRANT
+
+```sql
+grant select on public.posts_with_author to anon, authenticated;
+```
+
+**뷰는 기반 테이블의 GRANT 를 물려받지 않는다.** 따로 줘야 한다. 조회 전용이므로
+`insert` · `update` 권한은 주지 않는다 — 게시물 작성·수정은 `posts` 에 직접 한다.
+
+### 인덱스
+
+따로 만들지 않는다. 뷰는 저장된 질의라 §5의
+`posts_created_at_idx (created_at desc, id desc) where deleted_at is null` 를 그대로 탄다.
+플래너가 `posts` 를 인덱스 순으로 훑다가 `LIMIT` 만큼만 `profiles` 를 PK 로 붙이므로
+커서 페이지네이션의 비용은 조인 전과 같다.
+
+### 앞으로 여기에 붙는 것
+
+반응 수(F5) · 내 반응 상태 · 댓글 수(F6)는 **붙었다.** 남은 것은 F7 차단 필터뿐이고,
+그것도 앱 쿼리가 아니라 이 뷰의 `where` 에 넣는다. 화면마다 같은 필터를 다시 쓰면
+언젠가 빠뜨린다.
+
+---
+
+## 7. `post_images`
+
+게시물에 붙는 공개 이미지 메타데이터다. 원본은 Storage `post-images` 버킷에 두고,
+이 테이블에는 공개 URL과 레이아웃을 미리 잡기 위한 치수만 둔다.
+
+```sql
+create table public.post_images (
+  id         uuid primary key default gen_random_uuid(),
+  post_id    uuid not null references public.posts (id) on delete cascade,
+  url        text not null,
+  width      integer not null check (width > 0),
+  height     integer not null check (height > 0),
+  sort_order smallint not null check (sort_order between 0 and 4),
+  unique (post_id, sort_order)
+);
+
+create index post_images_post_id_sort_order_idx
+  on public.post_images (post_id, sort_order);
+```
+
+게시물당 최대 5장은 `sort_order 0..4` 제약과 `(post_id, sort_order)` 유니크 제약으로
+DB도 강제한다. 작성자는 자기 게시물에 추가하는지를 RLS의 `exists(posts ...)`로 확인한다. 조회도
+살아 있는 게시물에 속한 행만 허용하므로 소프트 삭제된 게시물의 이미지는 SDK 조회에서
+보이지 않는다.
+
+```sql
+grant select on public.post_images to anon, authenticated;
+grant insert (post_id, url, width, height, sort_order) on public.post_images to authenticated;
+grant update (url, width, height, sort_order) on public.post_images to authenticated;
+```
+
+삽입은 `create_post_with_images()`(§5)가 하고, 소프트 삭제 때는 `soft_delete_post()`가
+같은 트랜잭션에서 이 테이블의 행을 지운다.
+
+### Storage `post-images`
+
+공개 읽기 버킷이며 객체 최대 5 MiB, MIME은 아래 둘만 허용한다.
+
+```sql
+allowed_mime_types = array['image/webp', 'image/jpeg']
+```
+
+WebP만 허용하면 iOS에서 업로드가 전부 실패한다. `flutter_image_compress`가 iOS에서는
+WebP를 **인코딩하지 못하기** 때문이다. 앱은 Android에서 WebP, 그 밖에서는 JPEG으로
+압축하고 실제 형식에 맞는 Content-Type과 확장자를 함께 보낸다.
+
+앱 경로는 `{user_id}/{uuid}/{순서}.{webp|jpg}`다. 가운데 조각은 **게시물 id가 아니라
+클라이언트가 만든 UUID**다 — 업로드가 게시물 생성보다 먼저이므로 그 시점에는 게시물
+id가 없다. 정책이 보는 것은 첫 조각뿐이라 문제되지 않는다.
+
+`storage.objects`의 INSERT·UPDATE·DELETE 정책은 첫 경로 조각이
+`(select auth.uid())::text`와 같을 때만 허용한다. 이 검증을 앱의 경로 생성에 맡기지
+않으므로, 다른 사용자의 prefix로 업로드하거나 남의 이미지를 지울 수 없다.
+
+```sql
+create policy "post_images_storage_delete_own"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'post-images'
+    and (storage.foldername(name))[1] = (select auth.uid())::text
+  );
+```
+
+DELETE 정책은 게시물 삭제 뒤 앱이 객체를 정리하기 위해 필요하다. 없으면 DB 행만
+사라지고 이미지는 공개 URL로 계속 열린다.
+
+`posts_with_author`는 `images` JSON 배열(URL·가로·세로·순서)을 함께 내려준다. 뷰는
+계속 `security_invoker = on`이므로 게시물과 이미지의 RLS가 조회자 권한으로 적용된다.
+
+---
+
+## 8. `post_comments`
+
+게시물에 달리는 댓글과 답글. **depth는 2단 고정**이다 — 답글에는 답글을 달 수 없다.
+설계 근거는 [F6 계획](features/comment/plan.md)에 있다.
+
+```sql
+create table public.post_comments (
+  id         uuid        primary key default gen_random_uuid(),
+  post_id    uuid        not null references public.posts (id) on delete cascade,
+  parent_id  uuid        references public.post_comments (id) on delete cascade,
+  author_id  uuid        not null default auth.uid()
+                         references public.profiles (id) on delete cascade,
+  content    text        not null,
+  created_at timestamptz not null default now(),
+  deleted_at timestamptz,
+
+  constraint post_comments_content_length check (
+    char_length(btrim(content)) between 1 and 300
+  )
+);
+```
+
+`parent_id`가 `null`이면 부모(최상위) 댓글, 아니면 답글이다. 수정 기능은 없으므로
+`updated_at` 컬럼도 두지 않는다.
+
+### 인덱스
+
+```sql
+-- 부모 댓글 커서. 조회 방향이 오래된 순이라 asc 다.
+-- deleted_at 부분 조건을 일부러 넣지 않는다 — 삭제된 부모도 살아 있는 답글이
+-- 있으면 목록에 나와야 하므로 조회가 삭제행을 읽는다.
+create index post_comments_root_idx
+  on public.post_comments (post_id, created_at, id)
+  where parent_id is null;
+
+-- 답글 커서. 답글은 삭제되면 항상 숨기므로 부분 인덱스를 그대로 쓴다.
+-- reply_count 서브쿼리와 "살아 있는 답글이 있는가" 검사도 이 인덱스를 탄다.
+create index post_comments_reply_idx
+  on public.post_comments (parent_id, created_at, id)
+  where parent_id is not null and deleted_at is null;
+```
+
+`post_comments_root_idx`는 §2의 "목록 인덱스는 부분 인덱스로 만든다"의 **예외**다.
+`where deleted_at is null`을 넣지 않은 이유는 `post_comments_visible`(§9)이 "삭제됐지만
+살아 있는 답글이 남은 부모"를 계속 보여줘야 하기 때문이다. 뷰의 조회가 삭제된 부모
+행까지 읽어야 하므로, 인덱스를 삭제행 제외로 좁히면 그 조회가 인덱스를 타지 못한다.
+
+### `enforce_comment_depth()`
+
+depth 2 제한과 부모 무결성(같은 게시물, 삭제되지 않은 부모)을 검사하는 트리거
+함수다. CHECK 제약으로는 다른 행을 참조할 수 없어 표현할 수 없다.
+
+```sql
+create function public.enforce_comment_depth()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  parent_post_id   uuid;
+  parent_parent_id uuid;
+  parent_deleted   timestamptz;
+begin
+  if new.parent_id is null then
+    return new;
+  end if;
+
+  select post_id, parent_id, deleted_at
+    into parent_post_id, parent_parent_id, parent_deleted
+    from public.post_comments
+   where id = new.parent_id;
+
+  if not found then
+    raise exception '부모 댓글이 없습니다' using errcode = '23503';
+  end if;
+  if parent_parent_id is not null then
+    raise exception '답글에는 답글을 달 수 없습니다' using errcode = '23514';
+  end if;
+  if parent_post_id <> new.post_id then
+    raise exception '부모 댓글이 다른 게시물의 댓글입니다' using errcode = '23514';
+  end if;
+  if parent_deleted is not null then
+    raise exception '삭제된 댓글에는 답글을 달 수 없습니다' using errcode = '23514';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger post_comments_enforce_depth
+  before insert on public.post_comments
+  for each row execute function public.enforce_comment_depth();
+```
+
+`security definer`인 이유: `authenticated`에게 `content` SELECT 권한을 주지 않으므로
+(아래 GRANT 참고), `invoker`로 두면 트리거가 부모 행 자체를 읽지 못해 삽입이 막힌다.
+함수 소유자(테이블 소유자) 권한으로 실행돼야 부모 행을 읽을 수 있다.
+
+### RLS
+
+```sql
+alter table public.post_comments enable row level security;
+
+-- 조회 정책은 전역 규칙 그대로 단순하게 둔다.
+-- ★ 여기서 post_comments 를 서브쿼리로 다시 참조하면 PostgreSQL 이 정책을 재귀로
+-- 판단해 42P17 로 거부한다 (조회뿐 아니라 insert ... returning 까지 죽는다).
+-- "삭제됐지만 답글이 남은 부모"를 되살리는 일은 아래 definer 뷰가 전담하므로
+-- 정책을 좁게 두어도 새는 곳이 없다. 테이블 경로가 뷰보다 좁은 것은 안전하다.
+create policy "post_comments_select_visible"
+  on public.post_comments for select to anon, authenticated
+  using (deleted_at is null);
+
+create policy "post_comments_insert_own"
+  on public.post_comments for insert to authenticated
+  with check ((select auth.uid()) = author_id);
+```
+
+UPDATE · DELETE 정책은 두지 않는다. 수정 기능이 없고 삭제는 아래 함수 전용이다.
+
+**정책 안에서 같은 테이블을 서브쿼리로 참조하면 안 된다.** 처음 시도한 정책은
+"삭제됐지만 살아 있는 답글이 있는 부모는 보인다"를 `post_comments` 자신을 향한
+`exists` 서브쿼리로 표현했는데, PostgreSQL이 이를 재귀로 판단해 아래 오류로
+거부했다.
+
+```text
+42P17: infinite recursion detected in policy for relation "post_comments"
+```
+
+데이터의 depth(2단)와 무관하게 **구조적으로 항상 발생**한다 — 정책 평가 중 서브쿼리가
+같은 테이블을 다시 스캔하면 그 스캔에도 같은 정책이 다시 걸리고, 그 정책의
+서브쿼리에도 다시 걸리는 식으로 쿼리 재작성이 끝나지 않는다. 조회뿐 아니라
+`insert ... returning`처럼 SELECT 정책이 함께 평가되는 모든 경로가 같이 막힌다.
+
+그래서 이 정책은 "삭제되지 않은 행만" 이라는 좁은 규칙만 갖는다. "삭제됐지만 답글이
+남은 부모를 되살리는" 일은 `post_comments_visible`(§9)이 전담한다 — 그 뷰는
+`security_invoker = off`라 이 정책을 아예 거치지 않으므로 재귀 문제가 생기지 않는다.
+테이블 직접 조회 경로가 뷰보다 좁아지는 것은 정보가 새는 방향이 아니라 안전한
+방향이다.
+
+### GRANT
+
+```sql
+grant select (id, post_id, parent_id, author_id, created_at, deleted_at)
+  on public.post_comments to anon, authenticated;
+grant insert (post_id, parent_id, content)
+  on public.post_comments to authenticated;
+```
+
+`content`는 SELECT GRANT에서 빠진다. 본문에 닿는 유일한 경로가
+`post_comments_visible`(§9)이고, 그 뷰가 삭제행의 본문을 `null`로 지운다. 컬럼
+GRANT에서 빼면 테이블을 직접 조회해도 삭제 여부와 무관하게 본문 자체를 읽을 수
+없다.
+
+나머지 컬럼을 SELECT GRANT에 남기는 이유는 둘이다.
+
+1. `insert ... returning id, created_at`이 동작해야 한다 (왕복 한 번으로 작성).
+2. `posts_with_author`(`security_invoker = on`)에 댓글 수를 붙일 때, 그 서브쿼리가
+   `post_id` · `deleted_at`을 조회자 권한으로 읽어야 한다.
+
+### `soft_delete_post_comment(comment_id uuid) → boolean`
+
+댓글을 삭제하는 유일한 경로다. 본인 댓글이고 아직 삭제되지 않았을 때만 `deleted_at`을
+채우고 `true`를 돌려준다.
+
+```sql
+create function public.soft_delete_post_comment(comment_id uuid)
+returns boolean
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  affected integer;
+begin
+  update public.post_comments
+     set deleted_at = now()
+   where id = comment_id
+     and author_id = (select auth.uid())
+     and deleted_at is null;
+
+  get diagnostics affected = row_count;
+  return affected > 0;
+end;
+$$;
+
+revoke execute on function public.soft_delete_post_comment(uuid) from public, anon;
+grant execute on function public.soft_delete_post_comment(uuid) to authenticated;
+```
+
+`security definer`가 RLS를 우회하므로 함수 안의 `author_id = (select auth.uid())`가
+권한 경계 그 자체다. 클라이언트 UPDATE로는 애초에 불가능하다 — §11의 첫 항목 참고.
+
+---
+
+## 9. `post_comments_visible` (뷰)
+
+댓글 목록이 읽는 유일한 대상. 작성자 프로필을 조인하고, 삭제된 부모 댓글을 답글이
+살아 있으면 계속 보여주며, 답글 수를 함께 내려준다.
+
+```sql
+create view public.post_comments_visible as
+select
+  c.id,
+  c.post_id,
+  c.parent_id,
+  c.author_id,
+  case when c.deleted_at is null then c.content end as content,
+  c.created_at,
+  c.deleted_at,
+  pr.nickname   as author_nickname,
+  pr.avatar_url as author_avatar_url,
+  (
+    select count(*)
+      from public.post_comments reply
+     where reply.parent_id = c.id and reply.deleted_at is null
+  ) as reply_count,
+  coalesce(reactions.counts, '{}'::jsonb) as reaction_counts,
+  mine.type                               as my_reaction
+from public.post_comments c
+join public.profiles pr on pr.id = c.author_id
+join public.posts    p  on p.id = c.post_id and p.deleted_at is null
+left join lateral (...) reactions on true   -- comment_reactions 를 type 별 개수로 (§10)
+left join lateral (...) mine      on true   -- 조회자의 comment_reactions.type (§10)
+where c.deleted_at is null
+   or (
+     c.parent_id is null
+     and exists (
+       select 1 from public.post_comments reply
+       where reply.parent_id = c.id and reply.deleted_at is null
+     )
+   );
+
+grant select on public.post_comments_visible to anon, authenticated;
+```
+
+### `security_invoker = off`(기본값)가 이 스키마의 첫 예외다
+
+§6에서 "앞으로 추가되는 모든 뷰에 `security_invoker = on`을 적용한다"고 했지만, 이
+뷰만 기본값(off)을 그대로 둔다. `on`으로 두면 `post_comments_select_visible`(§8, `deleted_at
+is null`만 봄)이 먼저 걸려 "삭제됐지만 답글이 남은 부모"를 되살릴 방법이 없고,
+그렇다고 그 정책을 넓히면(§8에서 시도했다가 42P17로 실패한 것처럼) 삭제된 본문이
+테이블 직접 조회로 샐 위험이 생긴다. 뷰를 소유자 권한으로 두고 뷰 정의 자체에서
+가시성을 계산하는 쪽이, 재귀 없이 두 요구(부모는 살리고 본문은 가림)를 동시에
+만족하는 유일한 방법이었다.
+
+뷰가 RLS를 우회하므로, RLS가 대신 해주던 것을 뷰 정의 안에 직접 손으로 적어야 한다.
+이 두 가지가 그 부채다.
+
+- `join public.posts p on p.id = c.post_id and p.deleted_at is null` — 게시물이
+  소프트 삭제되면 그 댓글도 함께 가려야 한다. `posts_select_visible` 정책이 해주던
+  일을 여기서는 join 조건으로 직접 쓴다.
+- F7(차단) 필터가 붙을 자리도 이 뷰의 `where`다. 차단 관계가 생기면 여기에 조건을
+  추가한다 — 앱 쿼리마다 필터를 반복하면 화면이 늘 때 빠뜨리기 쉽다.
+
+### 집계 컬럼
+
+`reaction_counts` · `my_reaction` 의 의미와 형태는 §6과 같고, 보는 테이블만
+`comment_reactions` 다. 댓글 목록 조회 한 번에 답글 수와 반응 요약이 함께 오므로
+항목당 추가 조회가 없다.
+
+삭제된 부모 댓글은 `content` 만 `null` 이 되고 `reply_count` · `reaction_counts` 는
+그대로 나온다. 반응을 남길 수 있는지는 §10의 INSERT 정책이 `deleted_at is null` 로
+막으므로, 앱이 삭제된 댓글에 반응 버튼을 그리지 않는 것은 UX 이고 경계는 DB 다.
+
+### GRANT
+
+뷰는 기반 테이블의 GRANT를 물려받지 않는다. 조회 전용이므로 `insert` · `update`
+권한은 주지 않는다 — 댓글 작성은 `post_comments`에, 삭제는 `soft_delete_post_comment()`에
+직접 한다.
+
+---
+
+## 10. `post_reactions` · `comment_reactions`
+
+게시물과 댓글에 남기는 감정이다. **대상별 테이블 두 개**이고 모양이 같다. 폴리모픽
+단일 테이블(`target_type` + `target_id`)을 쓰지 않는 이유는 FK·cascade 를 잃고 RLS 가
+`target_type` 분기투성이가 되기 때문이다 — 근거는
+[F5 계획](features/reaction/plan.md)에 있다.
+
+```sql
+create table public.post_reactions (
+  user_id    uuid        not null default auth.uid()
+                         references public.profiles (id) on delete cascade,
+  post_id    uuid        not null references public.posts (id) on delete cascade,
+  type       text        not null,
+  created_at timestamptz not null default now(),
+
+  primary key (user_id, post_id),
+  constraint post_reactions_type_valid check (type in ('like', 'dislike'))
+);
+
+create index post_reactions_post_id_type_idx
+  on public.post_reactions (post_id, type);
+```
+
+`comment_reactions` 는 `post_id` → `comment_id`(`references public.post_comments`)만
+바뀌고 나머지가 같다. 인덱스는 `(comment_id, type)`, CHECK 이름은
+`comment_reactions_type_valid` 다.
+
+- **PK `(user_id, 대상_id)`** 가 "대상당 감정 하나"를 강제한다. 좋아요 상태에서
+  싫어요를 누르면 좋아요가 해제된다는 규칙이 이 PK 위에서 성립한다.
+- **취소는 행 삭제**다. 반응에는 자식이 달리지 않으므로 소프트 삭제(§2)의 이유가 없다.
+  이 스키마에서 `delete` GRANT 를 주는 유일한 테이블 둘이다.
+- **`created_at` 은 정렬·표시에 쓰지 않는다.** 전환(upsert)에서 갱신되지 않는 것이
+  문제가 되지 않는 이유다.
+- 개수는 §6 · §9 의 뷰가 집계한다. 비정규화 카운트 컬럼은 성능 문제가 **관측된 뒤에**
+  한다.
+
+### RLS
+
+```sql
+-- 조회: 개수는 공개 정보다
+create policy "post_reactions_select_all"
+  on public.post_reactions for select to anon, authenticated using (true);
+
+-- 삽입: 본인 것만, 그리고 살아 있는 대상에만
+create policy "post_reactions_insert_own"
+  on public.post_reactions for insert to authenticated
+  with check (
+    (select auth.uid()) = user_id
+    and exists (select 1 from public.posts
+                 where posts.id = post_reactions.post_id
+                   and posts.deleted_at is null)
+  );
+
+-- 수정: with check 를 INSERT 와 같은 강도로 맞춘다 (아래 GRANT 참고)
+create policy "post_reactions_update_own"
+  on public.post_reactions for update to authenticated
+  using ((select auth.uid()) = user_id)
+  with check (
+    (select auth.uid()) = user_id
+    and exists (select 1 from public.posts
+                 where posts.id = post_reactions.post_id
+                   and posts.deleted_at is null)
+  );
+
+create policy "post_reactions_delete_own"
+  on public.post_reactions for delete to authenticated
+  using ((select auth.uid()) = user_id);
+```
+
+`comment_reactions` 의 `exists` 는 `post_comments` 를 보고 `deleted_at is null` 을
+확인한다. **삭제된 게시물·댓글에는 반응을 남길 수 없고, 그 판단은 앱이 아니라 DB 가
+한다.**
+
+정책 안에서 다른 테이블(`posts` · `post_comments`)을 참조하는 것은 §11의 42P17 과
+무관하다. 재귀로 판정되는 것은 **정책이 걸린 그 테이블 자신**을 다시 참조할 때다.
+
+### GRANT — `update` 에 대상 id 가 들어가는 이유
+
+```sql
+grant select                 on public.post_reactions to anon, authenticated;
+grant insert (post_id, type) on public.post_reactions to authenticated;
+grant update (post_id, type) on public.post_reactions to authenticated;
+grant delete                 on public.post_reactions to authenticated;
+```
+
+전환(좋아요 → 싫어요)은 **upsert 한 번**이다. 삭제 후 삽입은 왕복이 둘이고 중간 상태가
+보인다. 그런데 PostgREST 는 `on conflict ... do update set` 에 **페이로드의 모든 컬럼**을
+넣는다. `{post_id, type}` 을 보내면 실제로 실행되는 것은 이것이다.
+
+```sql
+set post_id = excluded.post_id, type = excluded.type
+```
+
+`type` 만 GRANT 하면 전환이 42501 로 막힌다. 그래서 `post_id` 에도 UPDATE 를 준다.
+
+**그 대가로 UPDATE 정책의 `with check` 를 INSERT 와 같은 강도로 맞춰야 한다.** 그러지
+않으면 `post_id` 를 바꿔 살아 있는 게시물의 반응을 **삭제된 게시물로 옮기는** 경로가
+열린다. 두 정책의 `with check` 가 글자 그대로 같은 이유다.
+
+`user_id` 는 INSERT 목록에 없다. `default auth.uid()` 로만 채워지므로 위조 경로가 없다.
+
+### 검증한 것 (로컬 Supabase · PostgREST 경유)
+
+`psql` 로는 GRANT 와 upsert 의 상호작용이 드러나지 않는다. REST 로 확인했다.
+
+| 요청 | 결과 |
+|---|---|
+| `Prefer: resolution=merge-duplicates` 로 첫 `like` | `201` |
+| 같은 방식으로 `dislike` 전환 | `200` (42501 아님) |
+| `posts_with_author` 조회 | `{"dislike": 1}` · `my_reaction: "dislike"` |
+| `delete ?post_id=eq.<id>` 로 취소 | `204` |
+| `type: "love"` 삽입 | `400` (check_violation) |
+
+---
+
+## 11. 알아둘 함정
 
 ### 소프트 삭제를 UPDATE로 하면 42501로 거부된다
 
@@ -339,7 +978,7 @@ grant execute on function public.soft_delete_post(uuid) to authenticated;
 작성자에게는 자기 삭제 글이 피드에 계속 보이므로 "DB가 강제한다"는 성질을 잃는다.
 
 이 제약은 앞으로 소프트 삭제를 쓰는 모든 테이블에 똑같이 적용된다. `post_comments`도
-전용 함수가 필요하다.
+전용 함수 `soft_delete_post_comment()`(§8)가 필요했다.
 
 ### `alter table ... rename`은 딸린 객체 이름을 바꾸지 않는다
 
@@ -347,3 +986,35 @@ grant execute on function public.soft_delete_post(uuid) to authenticated;
 `alter table ... rename constraint` · `alter trigger ... rename to` ·
 `alter policy ... rename to`로 직접 맞춘다.
 ([20260822120000](../supabase/migrations/20260822120000_rename_posts_and_soft_delete.sql) 참고)
+
+### RLS 정책 안에서 정책이 걸린 테이블을 서브쿼리로 다시 참조하면 42P17이 난다
+
+`post_comments`의 조회 정책을 처음 설계할 때 "삭제됐지만 답글이 남은 부모는 보인다"를
+`post_comments` 자신을 향한 `exists` 서브쿼리로 넣었더니, 데이터양·depth와 무관하게
+매번 아래 오류로 거부됐다.
+
+```text
+42P17: infinite recursion detected in policy for relation "post_comments"
+```
+
+정책이 걸린 테이블을 정책 표현식 안에서 다시 스캔하면, 그 스캔에도 같은 정책이 다시
+걸리고 그 정책의 서브쿼리에도 또 걸리는 식으로 쿼리 재작성이 끝나지 않는다. `select`
+뿐 아니라 `insert ... returning`처럼 SELECT 정책이 함께 평가되는 모든 경로가 같이
+막힌다. 해법은 정책을 좁게 유지하고(§8 `post_comments_select_visible`은 `deleted_at
+is null`만 본다), 예외적인 가시성 규칙은 RLS를 우회하는 `security_invoker = off` 뷰
+쪽으로 넘기는 것이다 — 자세한 내용과 근거는 §8·§9에 있다.
+
+### `security_invoker = on`이 아닌 뷰, 부분 인덱스가 아닌 목록 인덱스도 있다
+
+§6은 "앞으로 추가되는 모든 뷰에 `security_invoker = on`을 적용한다"고 했고, §2는
+"목록 인덱스는 부분 인덱스로 만든다"고 했다. `post_comments`(§8) · `post_comments_visible`(§9)가
+이 두 규칙에 각각 첫 예외를 만든다.
+
+- `post_comments_visible`은 `security_invoker = off`(기본값)다. 삭제된 부모를 답글이
+  살아 있을 때 되살리는 일과, RLS 자기참조로 인한 42P17을 동시에 피하는 유일한
+  방법이 뷰를 소유자 권한으로 두는 것이었다.
+- `post_comments_root_idx`는 `deleted_at is null` 조건이 없는 전체 인덱스다. 위와
+  같은 이유로, 삭제된 부모 행도 조회가 읽어야 하기 때문이다.
+
+두 예외 모두 일반 규칙을 어기는 것이 아니라, "왜 이 테이블만 다른가"를 §8·§9에 각각
+근거와 함께 적어 두었다. 새 테이블에 이 규칙들을 복사할 때는 이 두 예외를 먼저 확인한다.

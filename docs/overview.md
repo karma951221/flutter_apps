@@ -1,6 +1,6 @@
 # 소셜 피드 앱 — 기획서
 
-> [문서 허브](README.md) · [아키텍처](architecture.md) · [개발환경](setup.md) · [테스트 가이드](testing/README.md)
+> [문서 허브](README.md) · [진행 현황](status.md) · [아키텍처](architecture.md) · [개발환경](setup.md) · [테스트 가이드](testing/README.md)
 
 > 상태: **v0.2** · 작성 2026-08-20 · 갱신 2026-08-22
 >
@@ -128,11 +128,11 @@ dart run build_runner watch --delete-conflicting-outputs
 | X1 | **app shell** | 라우팅 · 탭 네비게이션 · DI 조립 · 인증 게이트 · 스플래시 |
 | X2 | **backend client** | Supabase 클라이언트 구성 · 세션 저장소 · 에러 → `Failure` 매핑 |
 | X3 | **media** | 이미지 선택 · 압축 · Storage 업로드 · 진행률 |
+| X4 | **design system** | 테마 · 색상 토큰 · 공통 위젯 (버튼, 아바타, 빈 상태, 에러 상태) |
 
 F3와 F4는 데이터가 같은 테이블(`posts`)을 쓰지만 앱 코드에서는 분리한다.
 `features/post`가 게시물 CRUD와 게시물 카드 위젯을, `features/feed`가 목록 조회와
 탭·무한 스크롤을 소유한다. feed는 post의 `domain` 계층만 참조한다.
-| X4 | **design system** | 테마 · 색상 토큰 · 공통 위젯 (버튼, 아바타, 빈 상태, 에러 상태) |
 
 ---
 
@@ -525,16 +525,11 @@ argon2), JWT 발급·검증 미들웨어, refresh 토큰 회전과 무효화(`re
 그리고 **RLS로 표현하던 권한 규칙 전부를 애플리케이션 코드로 옮기는 일**. 마지막 항목이
 가장 크고, 빠뜨리기도 가장 쉽다.
 
-## 10. 다음 할 일
+## 10. 진행 현황과 다음 할 일
 
-0단계와 F1(auth)은 완료했다. 진행 현황의 단일 기준은
-[아키텍처 §7·§8](architecture.md)이다.
+이 문서에는 진행 상태를 적지 않는다. 단계별 체크리스트와 다음 할 일은
+**[진행 현황](status.md)이 단일 기준**이다.
 
-1. **스키마 정합성 맞추기** — `feed_posts` → `posts` rename, `deleted_at` 추가,
-   조회 RLS에 `deleted_at is null`, 커서용 부분 인덱스
-2. **앱 feature 분리** — 게시물 CRUD를 `features/post`로, `features/feed`는 목록 전용
-3. **커서 페이지네이션 전환** — `range`/offset 제거
-4. F2 profile 마무리 (아바타 업로드 · 타인 프로필), F3 post 이미지, F4 피드 작성자 표시
-
-feature마다 구현 기록은 `docs/features/<name>/`에, 테스트 범위와 실행 방법은
+feature마다 화면·상태·완료 조건은 `docs/features/<name>/plan.md`에 착수 전에 쓰고,
+구현 기록은 같은 폴더의 `history.md`에, 테스트 범위와 실행 방법은
 `docs/testing/features/<name>.md`에 남긴다.

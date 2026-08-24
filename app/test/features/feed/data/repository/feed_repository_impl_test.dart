@@ -8,12 +8,13 @@ import 'package:mocktail/mocktail.dart';
 
 class _MockFeedDataSource extends Mock implements FeedDataSource {}
 
-FeedPostDto _dto(int index) => FeedPostDto(
+FeedPostDto _dto(int index, {String nickname = '카르마'}) => FeedPostDto(
   id: 'post-$index',
   authorId: 'author-id',
   content: '기록 $index',
   createdAt: DateTime.utc(2026, 8, 22, 9).subtract(Duration(minutes: index)),
   updatedAt: DateTime.utc(2026, 8, 22, 9),
+  authorNickname: nickname,
 );
 
 void main() {
@@ -48,6 +49,24 @@ void main() {
     // 커서는 마지막으로 **돌려준** 항목 기준이어야 한다. 잘라낸 항목 기준이면
     // 다음 페이지에서 한 건이 건너뛰어진다.
     expect(FeedCursor.decode(page.nextCursor)!.id, 'post-1');
+  });
+
+  test('항목마다 작성자가 함께 온다', () async {
+    when(
+      () => dataSource.getPosts(limit: any(named: 'limit')),
+    ).thenAnswer(
+      (_) async => [_dto(0, nickname: '카르마'), _dto(1, nickname: '이웃')],
+    );
+
+    final page = ((await repository.getPosts(limit: 20)) as Ok).value;
+
+    expect(
+      page.items.map((item) => item.author.nickname),
+      ['카르마', '이웃'],
+    );
+    // 목록을 받은 뒤 작성자를 다시 조회하는 경로가 없어야 한다 (N+1 방지).
+    verify(() => dataSource.getPosts(limit: 21, cursor: null)).called(1);
+    verifyNoMoreInteractions(dataSource);
   });
 
   test('요청한 개수 이하로 오면 마지막 페이지다', () async {

@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../../../core/result/result.dart';
+import '../../domain/entity/avatar_image_draft.dart';
 import '../../domain/entity/profile.dart';
 import '../../domain/entity/profile_update.dart';
 import '../../domain/repository/profile_repository.dart';
@@ -46,6 +47,14 @@ class ProfileRepositoryImpl
   Future<Result<bool>> isNicknameAvailable(String nickname) => guard(() async {
     return _dataSource.isNicknameAvailable(nickname);
   });
+
+  @override
+  Future<Result<String>> uploadAvatar(AvatarImageDraft image) =>
+      guard(() => _dataSource.uploadAvatar(image));
+
+  @override
+  Future<void> removeAvatar(String? publicUrl) =>
+      _dataSource.removeAvatar(publicUrl);
 
   Never _throwNotAuthenticated() => throw const Failure.auth(
     message: '로그인이 필요합니다',

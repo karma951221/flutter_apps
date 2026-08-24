@@ -11,16 +11,27 @@ class SupabaseFeedDataSource implements FeedDataSource {
 
   final SupabaseClient _client;
 
-  static const _columns = 'id, author_id, content, created_at, updated_at';
+  /// 작성자를 조인해 내려주는 뷰. posts 를 직접 읽지 않는 이유는
+  /// docs/schema.md 의 `posts_with_author` 항목에 있다.
+  static const _source = 'posts_with_author';
+
+  static const _columns =
+      'id, author_id, content, created_at, updated_at, '
+      'author_nickname, author_avatar_url, images, '
+      'reaction_counts, my_reaction, comment_count';
 
   @override
   Future<List<FeedPostDto>> getPosts({
     required int limit,
     FeedCursor? cursor,
+    String? authorId,
   }) async {
     // deleted_at 필터를 여기에 쓰지 않는다. 조회 RLS(posts_select_visible)가
-    // 삭제행을 가리므로 앱이 빠뜨릴 수 없다. docs/schema.md §2 참고.
-    var query = _client.from('posts').select(_columns);
+    // 삭제행을 가리므로 앱이 빠뜨릴 수 없다. 뷰는 security_invoker = on 이라
+    // 그 정책을 그대로 물려받는다. docs/schema.md §2·§6 참고.
+    var query = _client.from(_source).select(_columns);
+
+    if (authorId != null) query = query.eq('author_id', authorId);
 
     if (cursor != null) {
       final createdAt = cursor.createdAt.toUtc().toIso8601String();

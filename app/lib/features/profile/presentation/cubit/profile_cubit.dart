@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../domain/entity/avatar_image_draft.dart';
 import '../../domain/entity/profile_update.dart';
 import '../../domain/usecase/profile_use_case.dart';
 import 'profile_state.dart';
@@ -11,11 +12,13 @@ class ProfileCubit extends Cubit<ProfileState> {
 
   final ProfileUseCase _useCase;
 
-  Future<void> load() async {
+  Future<void> load({String? userId}) async {
     if (state.isLoading) return;
     emit(state.copyWith(isLoading: true, failure: null));
 
-    final result = await _useCase.getMyProfile();
+    final result = userId == null
+        ? await _useCase.getMyProfile()
+        : await _useCase.getProfile(userId);
     emit(
       result.when(
         ok: (profile) =>
@@ -25,11 +28,15 @@ class ProfileCubit extends Cubit<ProfileState> {
     );
   }
 
-  Future<void> save(ProfileUpdate update) async {
+  /// 프로필을 저장한다.
+  ///
+  /// [newAvatar] 가 있으면 업로드·정리까지 usecase 한 번으로 끝난다. 화면은
+  /// 순서를 알지 않는다.
+  Future<void> save(ProfileUpdate update, {AvatarImageDraft? newAvatar}) async {
     if (state.isSaving) return;
     emit(state.copyWith(isSaving: true, failure: null));
 
-    final result = await _useCase.updateMyProfile(update);
+    final result = await _useCase.updateMyProfile(update, newAvatar: newAvatar);
     emit(
       result.when(
         ok: (profile) =>

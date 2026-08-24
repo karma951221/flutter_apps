@@ -5,6 +5,7 @@ import '../../../../core/error/failure.dart';
 import '../../../../core/result/result.dart';
 import '../../domain/entity/post.dart';
 import '../../domain/entity/post_draft.dart';
+import '../../domain/entity/post_image_draft.dart';
 import '../../domain/entity/post_update.dart';
 import '../../domain/usecase/post_use_case.dart';
 import 'post_state.dart';
@@ -19,8 +20,12 @@ class PostCubit extends Cubit<PostState> {
 
   final PostUseCase _useCase;
 
-  Future<Result<Post>> create(String content) =>
-      _submit(() => _useCase.createPost(PostDraft(content: content)));
+  Future<Result<Post>> create(
+    String content, {
+    List<PostImageDraft> images = const [],
+  }) => _submit(
+    () => _useCase.createPost(PostDraft(content: content, images: images)),
+  );
 
   Future<Result<Post>> update(String postId, String content) =>
       _submit(() => _useCase.updatePost(postId, PostUpdate(content: content)));

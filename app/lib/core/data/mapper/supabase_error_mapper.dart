@@ -96,7 +96,7 @@ abstract final class SupabaseErrorMapper {
         field: 'bio',
       );
     }
-    if (raw.contains('feed_posts_content_length')) {
+    if (raw.contains('posts_content_length')) {
       return const Failure.validation(
         message: '게시물은 1자 이상 500자 이하여야 합니다',
         field: 'content',

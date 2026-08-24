@@ -1,6 +1,6 @@
 # 프로젝트 구조
 
-> [문서 허브](README.md) · [기획](overview.md) · [개발환경](setup.md) · [테스트 가이드](testing/README.md)
+> [문서 허브](README.md) · [기획](overview.md) · [진행 현황](status.md) · [개발환경](setup.md) · [테스트 가이드](testing/README.md)
 
 > v0.2 · 2026-08-20 작성 · 2026-08-22 갱신 · [overview.md](overview.md)의 기술 스택 결정을 전제로 함
 
@@ -12,9 +12,11 @@
 socialapp/
 ├── docs/
 │   ├── README.md                # 문서 진입점
-│   ├── overview.md              # 기획서
+│   ├── overview.md              # 기획서 (목표·범위·결정과 근거)
+│   ├── status.md                # ★ 진행 현황의 단일 기준 (자주 갱신)
 │   ├── schema.md                # ★ 테이블·RLS·GRANT의 단일 기준
 │   ├── architecture.md          # 이 문서
+│   ├── setup.md                 # 개발환경
 │   ├── testing/                 # 테스트 실행·규칙·feature별 범위
 │   │   ├── README.md
 │   │   ├── conventions.md
@@ -22,9 +24,8 @@ socialapp/
 │   │       └── <feature>.md
 │   └── features/
 │       └── <feature>/
-│           ├── plan.md
-│           ├── implementation.md
-│           └── history.md
+│           ├── plan.md          # 사전 — 화면·상태·완료 조건 (feature 착수 시 작성)
+│           └── history.md       # 사후 — 설계 판단·버그·검증 기록
 │
 ├── supabase/                    # supabase init 결과 (백엔드)
 │   ├── config.toml
@@ -81,7 +82,8 @@ lib/
 │   ├── media/                   # X3
 │   │   ├── image_picker_service.dart
 │   │   ├── image_compressor.dart        # 1080px / WebP / q80
-│   │   └── image_uploader.dart          # Supabase Storage 업로드
+│   │   ├── image_storage.dart           # 이미지 저장소 계약 (SDK 타입 없음)
+│   │   └── supabase_image_storage.dart  # 위 계약의 Supabase Storage 구현
 │   ├── storage/
 │   │   ├── secure_storage.dart
 │   │   └── app_preferences.dart
@@ -210,12 +212,40 @@ feature끼리 필요하면 **`domain` 계층만** 참조한다. `data`끼리는 
 
 | | 소유 |
 |---|---|
-| `features/post` | `Post` 엔티티, 작성·수정·삭제, 에디터 화면, `PostTile` 위젯 |
-| `features/feed` | 목록 조회, 커서 페이지네이션, 무한 스크롤, 피드 화면 |
+| `features/post` | `Post` · `PostAuthor` 엔티티, 작성·수정·삭제, 에디터 화면, `PostTile` 위젯 |
+| `features/feed` | 목록 조회, 커서 페이지네이션, 무한 스크롤, 피드 화면, `FeedPost` 엔티티 |
 
-feed는 post의 `domain/entity/post.dart`를 그대로 쓴다. 같은 게시물을 두 벌로 표현하지 않기 위해서다. 반면 **DTO는 각자 갖는다** — 피드는 곧 작성자 프로필과 반응·댓글 수를 조인해 받게 되고, 게시물 단건 조회는 그렇지 않다. 지금 모양이 같다고 합치면 그때 되돌려야 한다.
+feed는 post의 `domain/entity/post.dart`를 그대로 쓴다. 같은 게시물을 두 벌로 표현하지 않기 위해서다. 목록 항목은 `FeedPost = Post + PostAuthor`로 **감싸고**, `Post`에 작성자 필드를 더하지 않는다 — 작성자 프로필이 필요 없는 에디터 화면까지 그 값을 채워야 하기 때문이다.
+
+**DTO는 각자 갖는다.** 피드는 작성자를 조인한 뷰(`posts_with_author`)를 읽고 앞으로 반응·댓글 수 컬럼이 여기에만 더해지지만, 게시물 단건 조회는 그렇지 않다. 지금 모양이 비슷하다고 합치면 그때 되돌려야 한다.
 
 목록 상태는 feed가, 게시물 변경은 post가 소유한다. 화면은 변경 결과를 `FeedCubit.prependPost` / `replacePost` / `removePost`로 목록에 반영한다. 변경할 때마다 전체를 다시 읽으면 스크롤 위치가 사라진다.
+
+---
+
+## 3-2. 홈은 셸이고, 그 위에 화면을 얹는다
+
+로그인 뒤의 기본 화면(`/`)은 하단 내비게이션을 가진 **셸**이다(`features/home`).
+탭은 셋이고 각 탭 본문은 해당 feature 가 소유한 화면을 그대로 쓴다.
+
+| 탭 | 본문 | 소유 |
+|---|---|---|
+| 홈 | `FeedPage` | `features/feed` |
+| 프로필 | `ProfilePage`(세션 사용자) | `features/profile` |
+| 설정 | `SettingsPage` | `features/settings` |
+
+- **탭 본문은 `IndexedStack` 으로 살려 둔다.** 탭을 오갈 때 피드의 스크롤 위치와
+  커서로 읽어 둔 페이지를 잃지 않기 위해서다. 탭마다 화면을 다시 만들면 목록이
+  매번 첫 페이지로 돌아간다.
+- **탭 안에서 더 깊이 들어가는 화면은 셸 위에 push 한다** — 게시물 작성·수정,
+  댓글, 프로필 편집, 계정 설정. 탭마다 독립된 내비게이션 스택을 두지 않는다.
+- go_router 의 `StatefulShellRoute` 를 쓰지 않는다. 탭이 셋뿐이라 얻는 것보다
+  구조가 늘어난다. **탭별 딥링크가 필요해지면 그때 셸 라우트로 옮긴다.**
+- 화면 밖으로 나가는 동작(로그아웃)은 목록 화면의 AppBar 가 아니라 설정 탭에 둔다.
+
+경로 상수는 `app/lib/app/router/routes.dart` 한 곳에만 적는다. 인증 게이트(리다이렉트)는
+`app_router.dart` 의 `redirect` 하나가 전담한다 — 화면이 각자 "로그인했나?"를 묻지
+않는다.
 
 ---
 
@@ -291,31 +321,8 @@ dart run build_runner watch --delete-conflicting-outputs
 
 ---
 
-## 7. 0단계 — 완료
+## 7. 진행 현황
 
-- [x] Docker Desktop · Supabase CLI 확인
-- [x] `flutter create --org com.karma --project-name daylog app`
-- [x] 의존성 추가 (§6)
-- [x] `supabase init` → `supabase start` → 전 서비스 기동
-- [x] 첫 마이그레이션 `20260820145331_init_profiles.sql` — profiles + 트리거 + RLS + GRANT
-- [x] `bootstrap.dart` — Supabase 초기화, 세션을 Keychain 에 저장
-- [x] `injection.dart` — get_it + injectable, 코드 생성 확인
-- [x] `design_system/theme` 뼈대
-- [x] **앱 → 로컬 Supabase 왕복 호출 성공** (Android 에뮬레이터)
-- [x] REST 부정 테스트 — 타인 프로필 수정 차단, 닉네임 제약 동작 확인
-
-**미완**: iOS 빌드 (Xcode 미설치 — [setup.md](setup.md) §4)
-
-## 8. 1단계 진행
-
-- [x] **F1 auth** — 회원가입 · 로그인 · 인증 상태 유지 · 비밀번호 재설정 · 로그아웃
-      ([기록](features/auth/history.md))
-- [ ] **F2 profile** — 내 프로필 조회·수정, 닉네임 중복 확인까지.
-      **아바타 업로드와 타인 프로필 화면이 남았다**
-- [ ] **F3 post** — 텍스트 게시물 CRUD 와 소프트 삭제까지.
-      **이미지(`post_images` · Storage · X3 media)가 남았다**
-- [ ] **F4 feed (전체)** — 커서 페이지네이션과 무한 스크롤까지.
-      **작성자 프로필 조인이 남았다** (현재 카드가 `author_id` 첫 글자를 보여준다)
-
-세부 구축 절차와 겪은 함정은 [setup.md](setup.md) 참조.
-스키마의 현재 모습은 [schema.md](schema.md)를 본다.
+이 문서는 구조와 규칙만 다룬다. 단계별 체크리스트와 다음 할 일은
+**[진행 현황](status.md)이 단일 기준**이다. 세부 구축 절차와 겪은 함정은
+[setup.md](setup.md) 참조. 스키마의 현재 모습은 [schema.md](schema.md)를 본다.
