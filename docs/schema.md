@@ -44,7 +44,13 @@ profiles ──1:N──▶ posts ──┬──1:N──▶ post_images
 `reports`(§12)는 폴리모픽이라 관계도에 선이 없다. `reporter_id`만 `profiles`를
 참조한다.
 
-앞으로 추가될 테이블(`blocks` · `follows`)의 계획은
+`blocks`(§13)도 폴리모픽은 아니지만 관계도에 선을 넣지 않았다 — `blocker_id`·
+`blocked_id` 둘 다 `profiles`를 참조하는 자기 참조 관계라서 화살표로 그리면
+`posts`와의 1:N과 헷갈린다. 대신 `posts_select_visible`·`post_comments_select_visible`
+정책과 `post_comments_visible`(§9) 뷰가 모두 `is_blocked_with()`(§3) 하나를 불러
+차단 관계를 반영한다.
+
+앞으로 추가될 테이블(`follows`)의 계획은
 [기획서 §7](overview.md)에 있다. 여기에는 **실제로 존재하는 것만** 적는다.
 
 ---
@@ -190,6 +196,48 @@ no-op 이다 — 멱등이라 재시도에 안전하다.
 검증(로컬 · PostgREST): anon 401 · 본인 204 · 게시물/댓글/반응 cascade 확인 ·
 같은 이메일 재가입 성공.
 
+### `is_blocked_with(other_id uuid) → boolean`
+
+"나와 `other_id` 사이에 차단이 있는가"의 **유일한 정의**다. `blocks`(§13)를 직접
+읽는 조건문은 이 함수 하나뿐이어야 한다 — `posts_select_visible`·
+`post_comments_select_visible`(§5·§8) 정책, `post_comments_visible`(§9) 뷰,
+`enforce_comment_depth()`(§8) 트리거가 모두 이 함수만 부른다. 정의가 네 곳에
+흩어지면 언젠가 어긋난다.
+
+```sql
+create function public.is_blocked_with(other_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+      from public.blocks b
+     where (b.blocker_id = (select auth.uid()) and b.blocked_id = other_id)
+        or (b.blocker_id = other_id and b.blocked_id = (select auth.uid()))
+  );
+$$;
+```
+
+**`security definer`가 없으면 기능 자체가 성립하지 않는다** — `delete_account()`
+같은 방어적 선택이 아니다. `blocks_select_own` 정책(§13)은 `blocker_id =
+auth.uid()`인 행만 보여준다: 내가 **건** 차단이다. "상대가 나를 차단했는가"는
+내 권한으로는 읽을 수 없는 행을 봐야 하므로, `invoker`로 두면 이 조건은 항상
+`false`가 되어 판정이 반쪽만 동작한다.
+
+`stable`이라 한 질의 안에서 같은 인자에 대해 한 번만 평가된다. `auth.uid()`는
+세션 GUC 기반이라 `definer` 함수 안에서도 **조회자 기준**으로 동작한다 —
+`my_reaction`(§6)과 같은 근거다.
+
+비로그인(`auth.uid()`가 `null`)이면 두 `or` 갈래 모두 `false`라 `exists`가
+`false`를 돌려준다 — 비로그인 조회는 차단 필터의 영향을 받지 않는다.
+
+돌려주는 값이 `boolean` 하나라 "누가 누구를 차단했는지"는 새지 않는다. "나와 이
+사람 사이에 차단이 있다"는 사실만 알 수 있고, 그것도 상대의 글이 사라지는
+것으로 어차피 드러난다.
+
 ---
 
 ## 4. `profiles`
@@ -314,13 +362,15 @@ create index posts_author_id_created_at_idx
 ```sql
 alter table public.posts enable row level security;
 
--- 조회: 삭제되지 않은 게시물은 공개다.
--- 앱이 필터를 빠뜨릴 수 없도록 삭제행 숨김을 여기서 강제한다.
+-- 조회: 삭제되지 않았고, 서로 차단 관계가 아닌 게시물만 공개다.
+-- 앱이 필터를 빠뜨릴 수 없도록 삭제행 숨김·차단 필터를 여기서 강제한다.
+-- is_blocked_with(author_id)(§3)가 비로그인이면 항상 false 를 돌려주므로
+-- 이 조건은 로그인한 조회자에게만 적용된다.
 create policy "posts_select_visible"
   on public.posts
   for select
   to authenticated, anon
-  using (deleted_at is null);
+  using (deleted_at is null and not public.is_blocked_with(author_id));
 
 -- 작성: 세션 사용자와 작성자가 항상 일치해야 한다
 create policy "posts_insert_own"
@@ -539,9 +589,11 @@ grant select on public.posts_with_author to anon, authenticated;
 
 ### 앞으로 여기에 붙는 것
 
-반응 수(F5) · 내 반응 상태 · 댓글 수(F6)는 **붙었다.** 남은 것은 F7 차단 필터뿐이고,
-그것도 앱 쿼리가 아니라 이 뷰의 `where` 에 넣는다. 화면마다 같은 필터를 다시 쓰면
-언젠가 빠뜨린다.
+반응 수(F5) · 내 반응 상태 · 댓글 수(F6) · F7 차단 필터까지 **모두 붙었다.** 차단
+필터는 이 뷰의 `where`가 아니라 `posts_select_visible`(§5) 정책에 넣었다 — 이
+뷰가 `security_invoker = on`이라 정책을 그대로 물려받으므로, 정책 하나만 고치면
+이 뷰·`posts` 직접 조회·`comment_count` 서브쿼리가 한꺼번에 덮인다. 뷰 정의
+자체는 그대로다.
 
 ---
 
@@ -665,8 +717,9 @@ create index post_comments_reply_idx
 
 ### `enforce_comment_depth()`
 
-depth 2 제한과 부모 무결성(같은 게시물, 삭제되지 않은 부모)을 검사하는 트리거
-함수다. CHECK 제약으로는 다른 행을 참조할 수 없어 표현할 수 없다.
+depth 2 제한과 부모 무결성(같은 게시물, 삭제되지 않은 부모), 그리고 F7 차단(게시물
+작성자를 차단했거나 차단당했으면 댓글 삽입 거부)을 검사하는 트리거 함수다. CHECK
+제약으로는 다른 행을 참조할 수 없어 표현할 수 없다.
 
 ```sql
 create function public.enforce_comment_depth()
@@ -676,10 +729,20 @@ security definer
 set search_path = ''
 as $$
 declare
+  post_author_id   uuid;
   parent_post_id   uuid;
   parent_parent_id uuid;
   parent_deleted   timestamptz;
 begin
+  select author_id into post_author_id
+    from public.posts
+   where id = new.post_id;
+
+  if post_author_id is not null and public.is_blocked_with(post_author_id) then
+    raise exception '차단한 사용자의 게시물에는 댓글을 달 수 없습니다'
+      using errcode = '42501';
+  end if;
+
   if new.parent_id is null then
     return new;
   end if;
@@ -715,6 +778,18 @@ create trigger post_comments_enforce_depth
 (아래 GRANT 참고), `invoker`로 두면 트리거가 부모 행 자체를 읽지 못해 삽입이 막힌다.
 함수 소유자(테이블 소유자) 권한으로 실행돼야 부모 행을 읽을 수 있다.
 
+**차단 검사가 정책(`with check`)이 아니라 이 트리거에 있는 이유.** 정책 안에서
+게시물 작성자를 찾으려면 `posts`를 서브쿼리로 읽어야 하는데, 그 조회는
+`posts_select_visible`(§5)에 넣은 차단 필터에 먼저 걸려 행 자체가 사라진다.
+그러면 작성자가 `null`로 조회되고 `is_blocked_with(null)`이 `false`가 되어
+**삽입이 도리어 허용된다.** `enforce_comment_depth()`는 이미 `security definer`라
+RLS를 우회하므로 이 함정이 없다 — 새 트리거를 만들지 않고 기존 트리거에 검사를
+하나 얹은 이유이기도 하다.
+
+차단 검사가 `new.parent_id is null` 이른 반환보다 **앞**에 있는 이유: 최상위
+댓글도 게시물 작성자 차단을 봐야 한다. depth·부모 검사 네 가지는 답글에만
+해당하므로 그 뒤에 그대로 남아 있다 — 하나도 잃지 않았다.
+
 ### RLS
 
 ```sql
@@ -727,7 +802,7 @@ alter table public.post_comments enable row level security;
 -- 정책을 좁게 두어도 새는 곳이 없다. 테이블 경로가 뷰보다 좁은 것은 안전하다.
 create policy "post_comments_select_visible"
   on public.post_comments for select to anon, authenticated
-  using (deleted_at is null);
+  using (deleted_at is null and not public.is_blocked_with(author_id));
 
 create policy "post_comments_insert_own"
   on public.post_comments for insert to authenticated
@@ -847,6 +922,7 @@ select
     select count(*)
       from public.post_comments reply
      where reply.parent_id = c.id and reply.deleted_at is null
+       and not public.is_blocked_with(reply.author_id)
   ) as reply_count,
   coalesce(reactions.counts, '{}'::jsonb) as reaction_counts,
   mine.type                               as my_reaction
@@ -855,14 +931,18 @@ join public.profiles pr on pr.id = c.author_id
 join public.posts    p  on p.id = c.post_id and p.deleted_at is null
 left join lateral (...) reactions on true   -- comment_reactions 를 type 별 개수로 (§10)
 left join lateral (...) mine      on true   -- 조회자의 comment_reactions.type (§10)
-where c.deleted_at is null
-   or (
-     c.parent_id is null
-     and exists (
-       select 1 from public.post_comments reply
-       where reply.parent_id = c.id and reply.deleted_at is null
-     )
-   );
+where not public.is_blocked_with(c.author_id)
+  and (
+    c.deleted_at is null
+    or (
+      c.parent_id is null
+      and exists (
+        select 1 from public.post_comments reply
+        where reply.parent_id = c.id and reply.deleted_at is null
+          and not public.is_blocked_with(reply.author_id)
+      )
+    )
+  );
 
 grant select on public.post_comments_visible to anon, authenticated;
 ```
@@ -883,8 +963,12 @@ is null`만 봄)이 먼저 걸려 "삭제됐지만 답글이 남은 부모"를 �
 - `join public.posts p on p.id = c.post_id and p.deleted_at is null` — 게시물이
   소프트 삭제되면 그 댓글도 함께 가려야 한다. `posts_select_visible` 정책이 해주던
   일을 여기서는 join 조건으로 직접 쓴다.
-- F7(차단) 필터가 붙을 자리도 이 뷰의 `where`다. 차단 관계가 생기면 여기에 조건을
-  추가한다 — 앱 쿼리마다 필터를 반복하면 화면이 늘 때 빠뜨리기 쉽다.
+- F7(차단) 필터도 **여기 손으로 적었다.** `is_blocked_with()`(§3)를 세 곳에 건다 —
+  본문 `where`, `reply_count` 서브쿼리, "살아 있는 답글이 있는가" `exists`. 셋 중
+  하나라도 빠지면 개수와 목록이 어긋난다: 답글 3개로 표시되는데 펼치면 1개가
+  나오는 식이다. `post_comments_select_visible`(§8) 정책에 같은 필터를 넣어도 이
+  뷰는 `security_invoker = off`라 그 정책을 거치지 않으므로, 뷰에도 반드시 직접
+  써야 한다.
 
 ### 집계 컬럼
 
@@ -1266,3 +1350,104 @@ grant insert (target_type, target_id, reason, detail)
 그대로 따르는 사례다.
 
 `anon`에는 아무 권한도 주지 않는다. 신고는 로그인한 사용자만 한다.
+
+---
+
+## 13. `blocks` · `blocked_users`(뷰)
+
+F7 차단. 설계 근거는 [계획](features/safety/plan-block.md)에 있다. 신고와 달리 이
+테이블 자체는 새 관심사를 더하지 않는다 — 어렵고 위험한 부분은 이미 동작하던
+`posts`·`post_comments`의 조회 정책과 `post_comments_visible`(§9) 뷰를 §5·§8·§9에서
+재정의한 것이다. 이 절은 그 판정의 근거가 되는 테이블과, 차단 목록 화면이 읽는
+뷰만 담는다.
+
+```sql
+create table public.blocks (
+  blocker_id uuid        not null default auth.uid()
+                         references public.profiles (id) on delete cascade,
+  blocked_id uuid        not null
+                         references public.profiles (id) on delete cascade,
+  created_at timestamptz not null default now(),
+
+  constraint blocks_not_self check (blocker_id <> blocked_id),
+  primary key (blocker_id, blocked_id)
+);
+
+-- "누가 나를 차단했는가" 방향. PK 가 반대 방향만 덮으므로 따로 필요하다.
+create index blocks_blocked_idx on public.blocks (blocked_id);
+```
+
+복합 PK `(blocker_id, blocked_id)`가 중복 차단을 막고 "내가 차단한 사람들" 조회를
+덮는다 — 별도 `unique` 제약이 필요 없다. `is_blocked_with()`(§3)의 양방향 판정이
+반대 방향도 읽으므로 `blocks_blocked_idx`가 없으면 모든 게시물 조회가 `blocks`
+전체 스캔을 탄다.
+
+자기 차단은 `blocks_not_self` CHECK 하나로 막는다 — 컬럼 둘만 보면 판정되므로
+트리거가 필요 없다. 차단 해제는 행 삭제다. 차단에는 자식이 달리지 않으므로
+소프트 삭제의 이유가 없다 — `post_reactions`(§10)와 같은 판단이다.
+
+### RLS
+
+```sql
+alter table public.blocks enable row level security;
+
+create policy "blocks_select_own" on public.blocks for select to authenticated
+  using ((select auth.uid()) = blocker_id);
+create policy "blocks_insert_own" on public.blocks for insert to authenticated
+  with check ((select auth.uid()) = blocker_id);
+create policy "blocks_delete_own" on public.blocks for delete to authenticated
+  using ((select auth.uid()) = blocker_id);
+```
+
+조회 정책이 **내가 건** 차단만 보여준다 — "상대가 나를 차단했는가"는 이 정책으로는
+알 수 없다. 그래서 `is_blocked_with()`가 `security definer`여야 한다(§3). UPDATE
+정책·권한은 없다. 차단은 수정되지 않고 걸거나 푸는 것뿐이다.
+
+### GRANT
+
+```sql
+grant select, delete on public.blocks to authenticated;
+grant insert (blocked_id) on public.blocks to authenticated;
+```
+
+`blocker_id`에 INSERT를 주지 않는 것이 위조를 막는 방법이다 — `default auth.uid()`가
+채운다. `reports`(§12)와 같은 규칙이다. `anon`에는 아무 권한도 주지 않는다.
+
+### `blocked_users`(뷰)
+
+차단 목록 화면이 읽는 유일한 대상이다.
+
+```sql
+create view public.blocked_users
+with (security_invoker = on) as
+select
+  b.blocked_id  as id,
+  b.created_at,
+  pr.nickname,
+  pr.avatar_url
+from public.blocks b
+join public.profiles pr on pr.id = b.blocked_id;
+
+grant select on public.blocked_users to authenticated;
+```
+
+`security_invoker = on`이라 `blocks_select_own` 정책이 그대로 걸린다 — 뷰에
+`where`를 쓰지 않아도 **내가 건 차단만** 나온다. §6의 기본 규칙이고,
+`post_comments_visible`(§9) 같은 예외를 만들 이유가 없다. `profiles`는 필터를
+걸지 않는다 — 차단 목록 화면이 차단한 사용자의 닉네임·아바타를 보여줘야 하고,
+프로필까지 가리면 내가 누구를 차단했는지 나도 볼 수 없다.
+
+목록은 커서를 쓰지 않는다. 차단 목록이 수백 개가 되는 사용자는 이 앱의 대상이
+아니다.
+
+### 검증한 것 (로컬 Supabase · psql, `auth.uid()`를 `set request.jwt.claims`로 대체)
+
+| 확인 | SQLSTATE |
+|---|---|
+| 자기 차단 삽입 | `23514` (`blocks_not_self`) |
+| 같은 사람 중복 차단 삽입 | `23505` (`blocks_pkey`) |
+| A가 B를 차단한 뒤 A로 조회 | B의 게시물이 목록에서 사라짐 |
+| A가 B를 차단한 뒤 B로 조회 | A의 게시물도 사라짐(양방향) |
+| B가 차단한 A의 게시물에 댓글 삽입 | `42501`, "차단한 사용자의 게시물에는 댓글을 달 수 없습니다" |
+| 비로그인(`anon`, `auth.uid()` null) 조회 | 차단 관계와 무관하게 둘 다 보임 |
+| 차단 해제(행 삭제) 후 재조회 | 양쪽 모두 다시 보임 |
