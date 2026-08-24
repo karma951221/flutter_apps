@@ -59,67 +59,71 @@ class _ReportSheetViewState extends State<_ReportSheetView> {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: SafeArea(
         top: false,
         child: BlocBuilder<ReportCubit, ReportState>(
           builder: (context, state) => AbsorbPointer(
             absorbing: state.isSubmitting,
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('신고', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: AppSpacing.sm),
-                  if (state.failure != null) ...[
-                    Text(
-                      state.failure?.message ?? '신고를 접수하지 못했습니다',
-                      style: TextStyle(color: theme.colorScheme.error),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('신고', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: AppSpacing.sm),
+                    if (state.failure != null) ...[
+                      Text(
+                        state.failure?.message ?? '신고를 접수하지 못했습니다',
+                        style: TextStyle(color: theme.colorScheme.error),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                    ],
+                    RadioGroup<ReportReason>(
+                      groupValue: state.reason,
+                      onChanged: (value) {
+                        if (value != null) {
+                          context.read<ReportCubit>().selectReason(value);
+                        }
+                      },
+                      child: Column(
+                        children: [
+                          for (final reason in ReportReason.values)
+                            RadioListTile<ReportReason>(
+                              value: reason,
+                              title: Text(reason.label),
+                            ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
+                    TextField(
+                      controller: _detailController,
+                      maxLength: ReportPolicy.maxDetailLength,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: '상세 설명 (선택)',
+                        hintText: '무엇이 문제인지 적어주세요',
+                      ),
+                      onChanged: context.read<ReportCubit>().changeDetail,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    SizedBox(
+                      width: double.infinity,
+                      child: AppButton.primary(
+                        label: '신고하기',
+                        isLoading: state.isSubmitting,
+                        onPressed: state.canSubmit
+                            ? () => _submit(context)
+                            : null,
+                      ),
+                    ),
                   ],
-                  RadioGroup<ReportReason>(
-                    groupValue: state.reason,
-                    onChanged: (value) {
-                      if (value != null) {
-                        context.read<ReportCubit>().selectReason(value);
-                      }
-                    },
-                    child: Column(
-                      children: [
-                        for (final reason in ReportReason.values)
-                          RadioListTile<ReportReason>(
-                            value: reason,
-                            title: Text(reason.label),
-                          ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  TextField(
-                    controller: _detailController,
-                    maxLength: ReportPolicy.maxDetailLength,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: '상세 설명 (선택)',
-                      hintText: '무엇이 문제인지 적어주세요',
-                    ),
-                    onChanged: context.read<ReportCubit>().changeDetail,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  SizedBox(
-                    width: double.infinity,
-                    child: AppButton.primary(
-                      label: '신고하기',
-                      isLoading: state.isSubmitting,
-                      onPressed: state.canSubmit
-                          ? () => _submit(context)
-                          : null,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

@@ -40,12 +40,7 @@ Future<void> _pump(
 
 void main() {
   testWidgets('내 글에는 수정 · 삭제가 뜨고 신고가 없다', (tester) async {
-    await _pump(
-      tester,
-      isMine: true,
-      onEdit: () {},
-      onDelete: () {},
-    );
+    await _pump(tester, isMine: true, onEdit: () {}, onDelete: () {});
 
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
@@ -68,11 +63,7 @@ void main() {
 
   testWidgets('신고를 고르면 onReport 가 불린다', (tester) async {
     var reported = false;
-    await _pump(
-      tester,
-      isMine: false,
-      onReport: () => reported = true,
-    );
+    await _pump(tester, isMine: false, onReport: () => reported = true);
 
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
@@ -106,5 +97,25 @@ void main() {
     expect(find.text('신고'), findsNothing);
     expect(find.text('수정'), findsOneWidget);
     expect(find.text('삭제'), findsOneWidget);
+  });
+
+  testWidgets('남의 글이면 onEdit · onDelete 가 있어도 수정 · 삭제는 뜨지 않는다', (tester) async {
+    // isMine 과 콜백이 어긋난 호출부(버그 있는 콜러)를 가정한 회귀 테스트.
+    // 수정 · 삭제가 뜨는지 여부는 콜백의 유무가 아니라 isMine 이 최종적으로
+    // 판정해야 한다 — 신고 항목의 방어와 같은 방향이다.
+    await _pump(
+      tester,
+      isMine: false,
+      onEdit: () {},
+      onDelete: () {},
+      onReport: () {},
+    );
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    expect(find.text('수정'), findsNothing);
+    expect(find.text('삭제'), findsNothing);
+    expect(find.text('신고'), findsOneWidget);
   });
 }

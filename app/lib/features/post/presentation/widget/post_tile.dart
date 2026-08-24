@@ -142,22 +142,16 @@ class PostTile extends StatelessWidget {
             _PostAction.report => onReport?.call(),
           },
           items: [
-            if (onEdit != null)
-              const AppOverflowMenuItem(
-                value: _PostAction.edit,
-                label: '수정',
-              ),
-            if (onDelete != null)
+            if (isMine && onEdit != null)
+              const AppOverflowMenuItem(value: _PostAction.edit, label: '수정'),
+            if (isMine && onDelete != null)
               const AppOverflowMenuItem(
                 value: _PostAction.delete,
                 label: '삭제',
                 isDestructive: true,
               ),
             if (!isMine && onReport != null)
-              const AppOverflowMenuItem(
-                value: _PostAction.report,
-                label: '신고',
-              ),
+              const AppOverflowMenuItem(value: _PostAction.report, label: '신고'),
           ],
         ),
       ),

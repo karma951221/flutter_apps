@@ -3,13 +3,13 @@ import 'package:daylog/core/error/failure.dart';
 import 'package:daylog/core/result/result.dart';
 import 'package:daylog/features/safety/domain/entity/report_reason.dart';
 import 'package:daylog/features/safety/domain/entity/report_target.dart';
-import 'package:daylog/features/safety/domain/usecase/report_use_case.dart';
+import 'package:daylog/features/safety/domain/usecase/safety_use_case.dart';
 import 'package:daylog/features/safety/presentation/cubit/report_cubit.dart';
 import 'package:daylog/features/safety/presentation/cubit/report_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockReportUseCase extends Mock implements ReportUseCase {}
+class _MockReportUseCase extends Mock implements SafetyUseCase {}
 
 void main() {
   late _MockReportUseCase useCase;
@@ -29,9 +29,7 @@ void main() {
     '사유를 고르면 상태에 반영된다',
     build: () => ReportCubit(useCase),
     act: (cubit) => cubit.selectReason(ReportReason.abuse),
-    expect: () => [
-      const ReportState(reason: ReportReason.abuse),
-    ],
+    expect: () => [const ReportState(reason: ReportReason.abuse)],
   );
 
   blocTest<ReportCubit, ReportState>(

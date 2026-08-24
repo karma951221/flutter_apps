@@ -21,8 +21,9 @@
 `ReportSheet.show`는 접수 여부를 `Future<bool>`로 돌려준다. 시트 자신의
 `BuildContext`로 `AppSnackBar.show`를 부르면, 시트가 닫히는 순간 그 context도
 함께 사라져 스낵바가 뜨지 않거나 예외가 난다. 그래서 시트는 `Navigator.pop(true)`로
-성공만 알리고, 스낵바는 호출부(`post_tile` · `comment_tile` · `profile_page`가
-각각 속한 화면)가 자신의 context로 띄운다. 계획서는 "성공하면 시트를 닫고
+성공만 알리고, 스낵바는 실제 호출부인 `feed_page` · `profile_page` · `post_comments_page`가
+자신의 context로 띄운다 (`post_tile` · `comment_tile`은 콜백을 올려보내는 위젯일 뿐
+스낵바를 직접 띄우지 않는다). 계획서는 "성공하면 시트를 닫고
 `AppSnackBar.show`"라고만 적어 이 책임 분리를 명시하지 않았다.
 
 ### `security definer`의 근거 문구를 바로잡았다

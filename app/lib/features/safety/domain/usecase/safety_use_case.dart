@@ -6,8 +6,8 @@ import '../entity/report_target.dart';
 import '../repository/report_repository.dart';
 import 'scenario/submit_report_scenario.dart';
 
-/// 신고 feature 의 presentation 진입점.
-abstract interface class ReportUseCase {
+/// safety feature 의 presentation 진입점.
+abstract interface class SafetyUseCase {
   Future<Result<void>> submit(
     ReportTarget target, {
     required ReportReason reason,
@@ -15,9 +15,9 @@ abstract interface class ReportUseCase {
   });
 }
 
-@LazySingleton(as: ReportUseCase)
-class DefaultReportUseCase implements ReportUseCase {
-  DefaultReportUseCase(this._repository);
+@LazySingleton(as: SafetyUseCase)
+class DefaultSafetyUseCase implements SafetyUseCase {
+  DefaultSafetyUseCase(this._repository);
 
   final ReportRepository _repository;
 
@@ -26,7 +26,6 @@ class DefaultReportUseCase implements ReportUseCase {
     ReportTarget target, {
     required ReportReason reason,
     String? detail,
-  }) => SubmitReportScenario(
-    _repository,
-  )(target, reason: reason, detail: detail);
+  }) =>
+      SubmitReportScenario(_repository)(target, reason: reason, detail: detail);
 }

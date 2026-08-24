@@ -47,6 +47,9 @@
 | `PostCommentsPage` | 답글 버튼 | 입력줄이 답글 대상을 표시한다. |
 | `PostCommentsPage` | 등록 | 입력한 본문이 저장되고 목록 끝에 붙는다. |
 
+`CommentTile`의 메뉴가 `isMine`에 따라 삭제/신고 중 옳은 항목만 보여주는지는 신고
+진입점 테스트라 [safety 테스트 문서](safety.md)의 "진입점" 절에 있다.
+
 ## 로컬 Supabase 로만 확인되는 것
 
 이 feature 에서 가장 위험한 것들은 mock 으로 드러나지 않는다.

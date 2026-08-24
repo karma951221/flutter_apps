@@ -28,6 +28,7 @@ Studio 직접 조회로 한다 ([기획 F7](../../overview.md)).
 | 중복 신고 | **1인 1회**, `unique (reporter_id, target_type, target_id)` | 대상별 신고자 수가 곧 신고 건수가 되어 운영 집계가 단순해진다 |
 | 자기 신고 | **UI에서 가리고 트리거로도 막는다** | UI는 UX, 경계는 서버다. 다른 feature(댓글 길이·2단 제한)와 같은 원칙 |
 | 신고 취소 | **없음** | `update` · `delete` 권한을 아예 주지 않는다. 필요해지면 정책과 GRANT를 더하는 마이그레이션 하나다 |
+| 신고 *건수* 제한 | **없음** | `reports_once`는 같은 대상 재신고만 막는다. 한 사용자가 피드의 모든 게시물을 각각 한 번씩 신고하는 것은 막지 않는다. 운영이 Studio 직접 조회라 신고 대량 발생 자체가 눈에 띄고, 폴리모픽 대상 셋을 넘나드는 속도 제한은 스키마가 한 단계 더 복잡해진다. 남용이 실제로 보이면 시간창 기반 제한을 별도 마이그레이션으로 더한다 |
 | 신고 후 화면 | **Snackbar만.** 목록은 그대로 | 대상을 숨기는 것은 차단의 일이다. 신고에 숨김을 겸하게 하면 두 기능의 경계가 섞인다 |
 
 ## 데이터 · 권한
@@ -164,7 +165,7 @@ features/safety/
 │   ├── report_policy.dart            detail 최대 500자 · trim · 빈 값은 null
 │   ├── repository/report_repository.dart
 │   └── usecase/
-│       ├── report_use_case.dart      ← presentation이 주입받는 facade
+│       ├── safety_use_case.dart      ← presentation이 주입받는 facade
 │       └── scenario/submit_report_scenario.dart
 └── data/
     ├── datasource/{report_data_source,supabase_report_data_source}.dart
@@ -177,7 +178,7 @@ features/safety/
 | 신고 | `Future<Result<void>> submitReport(ReportTarget target, {required ReportReason reason, String? detail})` |
 
 **쓰기 전용 feature다.** `select`는 본인 것만 열려 있지만 화면이 쓰지 않으므로 DTO도
-커서도 목록 조회도 없다. 시나리오가 하나뿐이어도 facade(`ReportUseCase`)를 두는 것은
+커서도 목록 조회도 없다. 시나리오가 하나뿐이어도 facade(`SafetyUseCase`)를 두는 것은
 다른 feature와 같은 모양을 유지하기 위해서다 — 차단이 붙으면 여기에 시나리오가 는다.
 
 `ReportTarget`은 [`ReactionTarget`](../reaction/plan.md)과 같은 축이다. 대상이 늘면
@@ -230,6 +231,7 @@ features/safety/
 | `features/post` | `PostTile`이 남의 글에도 메뉴를 그린다. `onReport` 콜백 추가 |
 | `features/comment` | `CommentTile`의 삭제 아이콘 → 메뉴. `onReport` 콜백 추가 |
 | `features/profile` | 타인 프로필 AppBar에 메뉴 추가 |
+| `features/feed` | `feed_page`가 safety를 import하고 `_report` 메서드를 갖는다. `PostTile`에 넘기던 `onEdit`·`onDelete`가 `isMine` 게이트를 탄다 |
 | `core/data/mapper` | `SupabaseErrorMapper`에 신고 관련 문구 · 제약 등록 |
 | [스키마 문서](../../schema.md) | `reports` 테이블 · 트리거 · 정책 절 추가 |
 
@@ -243,7 +245,8 @@ features/safety/
 - [x] 내 게시물 · 내 댓글에는 신고 메뉴가 보이지 않는다 (`post_tile` · `comment_tile`
       위젯 테스트로 확인)
 - [x] 내 게시물 · 내 댓글 · 내 프로필 신고 삽입이 DB에서 거부된다 (로컬 Supabase 확인 —
-      `400` · 트리거 문구 / `23514`)
+      게시물 · 댓글은 `400` · 트리거 문구(`P0001`), 프로필은 `400` · `23514`
+      (`reports_not_self_user`))
 - [x] 같은 대상을 두 번 신고하면 "이미 신고한 항목입니다"가 뜬다 (로컬 Supabase 확인 —
       `23505` → `ReportRepositoryImpl`이 같은 문구로 변환)
 - [x] 삭제된 게시물 · 댓글을 대상으로 한 신고 삽입이 거부된다 (로컬 Supabase 확인 —

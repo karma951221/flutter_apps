@@ -77,7 +77,7 @@ void main() {
         detail: any(named: 'detail'),
       ),
     ).thenThrow(
-      PostgrestException(message: '내 게시물은 신고할 수 없습니다', code: '23514'),
+      PostgrestException(message: '내 게시물은 신고할 수 없습니다', code: 'P0001'),
     );
 
     final result = await repository.submitReport(

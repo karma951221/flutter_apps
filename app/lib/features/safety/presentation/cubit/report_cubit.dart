@@ -4,7 +4,7 @@ import 'package:injectable/injectable.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/entity/report_reason.dart';
 import '../../domain/entity/report_target.dart';
-import '../../domain/usecase/report_use_case.dart';
+import '../../domain/usecase/safety_use_case.dart';
 import 'report_state.dart';
 
 /// 신고 시트의 입력·제출을 소유한다.
@@ -15,7 +15,7 @@ import 'report_state.dart';
 class ReportCubit extends Cubit<ReportState> {
   ReportCubit(this._useCase) : super(const ReportState());
 
-  final ReportUseCase _useCase;
+  final SafetyUseCase _useCase;
 
   void selectReason(ReportReason reason) {
     emit(state.copyWith(reason: reason, failure: null));

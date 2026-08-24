@@ -17,7 +17,7 @@
 | `SubmitReportScenario` | 저장소의 `Err` | 그대로 돌려준다. |
 | `ReportRepositoryImpl` | 정상 제출 | `Ok(null)`을 돌려준다. |
 | `ReportRepositoryImpl` | `reports_once`(23505) | `ValidationFailure('이미 신고한 항목입니다')`로 변환된다. |
-| `ReportRepositoryImpl` | 내 게시물 신고 트리거 문구(23514) | 같은 문구의 `ValidationFailure`로 변환된다. |
+| `ReportRepositoryImpl` | 내 게시물 신고 트리거 문구(P0001) | 같은 문구의 `ValidationFailure`로 변환된다. |
 | `ReportCubit` | 사유 선택 | 상태에 반영된다. |
 | `ReportCubit` | 사유를 고르지 않음 | `canSubmit`이 `false`다. |
 | `ReportSheet` | 열림 | 사유 5개가 모두 보인다. |
@@ -25,6 +25,27 @@
 | `ReportSheet` | 상세 설명 입력칸 | 처음부터(사유와 무관하게) 보인다. |
 | `ReportSheet` | 제출 성공 | 시트가 닫히고 `show()`가 `true`를 돌려준다. |
 | `ReportSheet` | 제출 실패 | 시트가 열려 있고 `Failure.message`가 보인다. |
+| `ReportSheet` | 작은 화면 + 키보드로 뜬 bottom inset | `SingleChildScrollView`로 스크롤되어 제출 버튼까지 닿고 누를 수 있다. |
+
+## 진입점(entry point) — `post_tile` · `post_comments_page` · `profile_page`
+
+신고 시트 자체가 아니라 시트를 여는 세 진입점이 `isMine`에 따라 올바른 메뉴 항목을
+그리는지를 각 feature의 위젯 테스트로 확인한다. 시트가 있는 이 문서가 자연스러운
+기준이다 — 구현은 `features/post` · `features/comment` · `features/profile`에 있지만
+검증 대상은 신고 진입점이라서다.
+
+| 대상 | 시나리오 | 기대 결과 |
+|---|---|---|
+| `PostTile` | 내 글 | 수정 · 삭제가 뜨고 신고는 없다. |
+| `PostTile` | 남의 글 | 신고가 뜨고 수정 · 삭제는 없다. |
+| `PostTile` | 신고 선택 | `onReport`가 불린다. |
+| `PostTile` | 콜백이 모두 `null` | 메뉴 자체가 그려지지 않는다. |
+| `PostTile` | 내 글 + `onReport`도 있음 | `isMine`이 최종 판정이라 신고는 뜨지 않는다 (회귀). |
+| `PostTile` | 남의 글 + `onEdit`·`onDelete`도 있음 | `isMine`이 최종 판정이라 수정 · 삭제는 뜨지 않는다 (회귀). |
+| `PostCommentsPage` | 남의 댓글 메뉴 | 신고가 있다. |
+| `PostCommentsPage` | 내 댓글 메뉴 | 삭제가 있고 신고는 없다. |
+| `ProfilePage` | 타인 프로필 AppBar | 신고 메뉴가 있다. |
+| `ProfilePage` | 내 프로필 AppBar | 메뉴가 없다. |
 
 ## 로컬 Supabase로만 확인되는 것 — Step 1 (권한 경계)
 

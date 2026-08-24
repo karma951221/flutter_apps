@@ -76,7 +76,7 @@ import '../../features/safety/data/datasource/supabase_report_data_source.dart'
 import '../../features/safety/data/repository/report_repository_impl.dart'
     as _i1002;
 import '../../features/safety/domain/repository/report_repository.dart' as _i29;
-import '../../features/safety/domain/usecase/report_use_case.dart' as _i185;
+import '../../features/safety/domain/usecase/safety_use_case.dart' as _i762;
 import '../../features/safety/presentation/cubit/report_cubit.dart' as _i347;
 import '../../features/settings/presentation/cubit/change_password_cubit.dart'
     as _i903;
@@ -153,17 +153,11 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1040.ImageStorage>(),
       ),
     );
-    gh.lazySingleton<_i185.ReportUseCase>(
-      () => _i185.DefaultReportUseCase(gh<_i29.ReportRepository>()),
-    );
     gh.lazySingleton<_i364.ProfileRepository>(
       () => _i309.ProfileRepositoryImpl(gh<_i986.ProfileDataSource>()),
     );
     gh.lazySingleton<_i831.ReactionRepository>(
       () => _i1063.ReactionRepositoryImpl(gh<_i281.ReactionDataSource>()),
-    );
-    gh.factory<_i347.ReportCubit>(
-      () => _i347.ReportCubit(gh<_i185.ReportUseCase>()),
     );
     gh.lazySingleton<_i961.AuthRepository>(
       () => _i971.SupabaseAuthRepository(
@@ -173,6 +167,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i735.PostRepository>(
       () => _i238.PostRepositoryImpl(gh<_i487.PostDataSource>()),
+    );
+    gh.lazySingleton<_i762.SafetyUseCase>(
+      () => _i762.DefaultSafetyUseCase(gh<_i29.ReportRepository>()),
     );
     gh.lazySingleton<_i944.PostUseCase>(
       () => _i944.DefaultPostUseCase(gh<_i735.PostRepository>()),
@@ -207,6 +204,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i650.ReactionUseCase>(
       () => _i650.DefaultReactionUseCase(gh<_i831.ReactionRepository>()),
+    );
+    gh.factory<_i347.ReportCubit>(
+      () => _i347.ReportCubit(gh<_i762.SafetyUseCase>()),
     );
     gh.factory<_i58.FeedCubit>(
       () =>
