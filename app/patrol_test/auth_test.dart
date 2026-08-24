@@ -16,7 +16,12 @@ void main() {
     final account = await signUpNewAccount($);
     expect($('daylog'), findsOneWidget);
 
-    await $(Icons.logout).tap();
+    // 로그아웃은 설정 탭에 있다. 하단 내비게이션 → 설정 → 확인 다이얼로그.
+    await $('설정').tap();
+    await $.waitUntilVisible($('로그아웃'), timeout: kWait);
+    await $('로그아웃').tap();
+    await $.waitUntilVisible($('로그아웃할까요?'), timeout: kWait);
+    await $(TextButton).containing('로그아웃').tap();
     await $.waitUntilVisible($(const Key('signIn.email')), timeout: kWait);
 
     await signIn($, account.email);

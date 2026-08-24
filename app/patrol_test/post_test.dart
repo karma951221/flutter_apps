@@ -22,7 +22,7 @@ void main() {
       timeout: kWait,
     );
     await $(const Key('postEditor.content')).enterText(content);
-    await $('게시하기').tap();
+    await $('올리기').tap();
 
     await $.waitUntilVisible($(content), timeout: kWait);
 
