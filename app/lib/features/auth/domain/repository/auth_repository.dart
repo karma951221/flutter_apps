@@ -26,6 +26,9 @@ abstract interface class AuthRepository {
 
   Future<Result<void>> signOut();
 
+  /// 계정과 계정에 딸린 모든 것을 지운다. 성공하면 세션도 함께 사라진다.
+  Future<Result<void>> deleteAccount();
+
   /// 닉네임 사용 가능 여부. 가입 전 확인용.
   ///
   /// 이건 UX 용이다. 최종 보장은 DB 의 unique 제약이 한다.

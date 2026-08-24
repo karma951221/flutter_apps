@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
+import '../../../../core/di/injection.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
+import '../../../../design_system/widget/app_snack_bar.dart';
+import '../cubit/delete_account_cubit.dart';
+import '../cubit/delete_account_state.dart';
 
 /// 계정 설정 화면.
 ///
@@ -13,47 +18,87 @@ class AccountSettingsPage extends StatelessWidget {
   const AccountSettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('계정 설정')),
-    body: SafeArea(
-      child: ListView(
-        children: [
-          AppListTile(
-            leading: const Icon(Icons.lock_outline),
-            title: const Text('비밀번호 변경'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(Routes.changePassword),
+  Widget build(BuildContext context) => BlocProvider(
+    create: (_) => getIt<DeleteAccountCubit>(),
+    child: const _AccountSettingsView(),
+  );
+}
+
+class _AccountSettingsView extends StatelessWidget {
+  const _AccountSettingsView();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return BlocListener<DeleteAccountCubit, DeleteAccountState>(
+      // 성공은 듣지 않는다 — 세션이 사라지면 라우터가 로그인 화면으로 보낸다.
+      listener: (context, state) {
+        if (state case DeleteAccountFailure(:final failure)) {
+          AppSnackBar.show(
+            context,
+            message: failure.message ?? '탈퇴하지 못했습니다. 다시 시도해 주세요.',
+            type: AppSnackBarType.error,
+          );
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('계정 설정')),
+        body: SafeArea(
+          child: ListView(
+            children: [
+              AppListTile(
+                leading: const Icon(Icons.lock_outline),
+                title: const Text('비밀번호 변경'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push(Routes.changePassword),
+              ),
+              AppListTile(
+                leading: Icon(Icons.person_remove_outlined, color: scheme.error),
+                title: Text('회원 탈퇴', style: TextStyle(color: scheme.error)),
+                subtitle: const Text('계정과 모든 기록이 즉시 삭제됩니다'),
+                onTap: () => _confirmDelete(context),
+              ),
+            ],
           ),
-          AppListTile(
-            leading: const Icon(Icons.person_remove_outlined),
-            title: const Text('회원 탈퇴'),
-            subtitle: const Text('준비 중'),
-            onTap: () => _showNotReady(context),
+        ),
+      ),
+    );
+  }
+
+  /// 되돌릴 수 없는 동작이라 무엇이 지워지는지 먼저 보여주고 확인을 받는다.
+  ///
+  /// 실수로 누르는 것을 막는 장치는 확인 문구 하나로 충분하다고 봤다 —
+  /// 비밀번호 재입력은 이 화면까지 오는 데 이미 세션이 필요하므로 검증 가치가
+  /// 없고, 성가심만 더한다.
+  Future<void> _confirmDelete(BuildContext context) async {
+    final cubit = context.read<DeleteAccountCubit>();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('정말 탈퇴할까요?'),
+        content: const Text(
+          '계정과 함께 아래가 모두 삭제되며 되돌릴 수 없습니다.\n\n'
+          '· 프로필과 프로필 사진\n'
+          '· 작성한 게시물과 사진\n'
+          '· 남긴 댓글과 감정표현',
+        ),
+        actions: [
+          AppButton.text(
+            label: '취소',
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+          ),
+          AppButton.text(
+            label: '탈퇴',
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
           ),
         ],
       ),
-    ),
-  );
-
-  /// 회원 탈퇴는 아직 안내만 한다.
-  ///
-  /// 항목을 아예 감추지 않는 이유는, 탈퇴 경로가 없다고 오해한 사용자가 계정을
-  /// 방치하는 것보다 "준비 중"을 보는 편이 낫기 때문이다. 되돌릴 수 없는 동작이라
-  /// 정책이 정해지기 전에는 어떤 삭제 코드도 두지 않는다.
-  //
-  // TODO(F7): 회원 탈퇴 — Supabase Auth 사용자 삭제 RPC 와 데이터 정리 정책이
-  // 정해진 뒤 구현한다
-  Future<void> _showNotReady(BuildContext context) => showDialog<void>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('준비 중입니다'),
-      content: const Text('회원 탈퇴는 아직 제공하지 않습니다. 다음 업데이트에서 추가할 예정입니다.'),
-      actions: [
-        AppButton.text(
-          label: '확인',
-          onPressed: () => Navigator.of(dialogContext).pop(),
-        ),
-      ],
-    ),
-  );
+    );
+    if (confirmed != true) return;
+    await cubit.submit();
+  }
 }

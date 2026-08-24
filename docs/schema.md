@@ -145,6 +145,48 @@ create trigger on_auth_user_created
 동작은 올바르지만 사용자에게는 날것의 DB 오류가 가므로, 앱이 `23514`(check_violation)와
 `23505`(unique_violation)를 사용자 문구로 매핑한다.
 
+### `delete_account()`
+
+회원 탈퇴의 유일한 경로다. `security definer` 가 `auth.users` 를 지우고, FK 의
+`on delete cascade` 사슬이 나머지를 정리한다.
+
+```sql
+create function public.delete_account()
+returns void
+language plpgsql security definer set search_path = ''
+as $$
+declare
+  uid uuid := (select auth.uid());
+begin
+  if uid is null then
+    raise exception 'authentication required' using errcode = '42501';
+  end if;
+  delete from auth.users where id = uid;
+end;
+$$;
+
+revoke execute on function public.delete_account() from public, anon;
+grant execute on function public.delete_account() to authenticated;
+```
+
+지워지는 범위: `auth.users` → `profiles` → `posts` → `post_images` ·
+`post_comments` · `post_reactions`, 그리고 남의 게시물에 단 내 댓글·반응
+(`author_id`/`user_id` 가 `profiles` 를 cascade 로 참조한다).
+
+**Storage 는 이 함수가 지우지 않는다.** `storage.objects` 를 SQL 로 직접 지우는
+것은 Storage 확장의 보호 트리거가 42501 로 막는다
+("Direct deletion from storage tables is not allowed. Use the Storage API instead.").
+그래서 `soft_delete_post` 와 같은 분담을 쓴다 — **앱이 탈퇴 전에 자기 경로의
+객체를 Storage API 로 best-effort 삭제**하고(자기 경로 DELETE 정책은 이미 있다),
+실패해도 탈퇴는 성공으로 본다. 순서가 중요하다: 계정을 먼저 지우면 세션이
+사라져 Storage 삭제 정책을 통과할 수 없다.
+
+이미 지워진 계정의 (아직 만료 전인) 토큰으로 다시 부르면 0행 삭제로 끝나는
+no-op 이다 — 멱등이라 재시도에 안전하다.
+
+검증(로컬 · PostgREST): anon 401 · 본인 204 · 게시물/댓글/반응 cascade 확인 ·
+같은 이메일 재가입 성공.
+
 ---
 
 ## 4. `profiles`

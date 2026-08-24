@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 
 import '../../../../core/data/mapper/supabase_error_mapper.dart';
+import '../../../../core/media/image_storage.dart';
 import '../../../../core/result/result.dart';
 import '../../domain/entity/app_user.dart';
 import '../../domain/repository/auth_repository.dart';
@@ -9,9 +10,13 @@ import '../mapper/auth_user_mapper.dart';
 
 @LazySingleton(as: AuthRepository)
 class SupabaseAuthRepository implements AuthRepository {
-  SupabaseAuthRepository(this._dataSource);
+  SupabaseAuthRepository(this._dataSource, this._imageStorage);
 
   final AuthDataSource _dataSource;
+
+  /// 탈퇴 때 내 Storage 객체를 치우는 데만 쓴다. 버킷 이름이 domain 으로
+  /// 새지 않도록 여기(데이터 계층)서 조합한다.
+  final ImageStorage _imageStorage;
 
   // ---------------------------------------------------------------- 상태
 
@@ -56,6 +61,16 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<Result<void>> signOut() => _guard(_dataSource.signOut);
+
+  @override
+  Future<Result<void>> deleteAccount() => _guard(() async {
+    // 순서가 중요하다. 계정을 먼저 지우면 세션이 사라져 Storage 삭제 정책을
+    // 통과할 수 없다. 정리는 best-effort 라 실패해도 탈퇴를 막지 않는다 —
+    // DB 함수가 storage.objects 를 지울 수 없는 이유는 마이그레이션 주석에 있다.
+    await _imageStorage.removeAllForCurrentUser(bucket: 'avatars');
+    await _imageStorage.removeAllForCurrentUser(bucket: 'post-images');
+    await _dataSource.deleteAccount();
+  });
 
   @override
   Future<Result<bool>> isNicknameAvailable(String nickname) => _guard(() async {

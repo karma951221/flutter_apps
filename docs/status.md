@@ -68,14 +68,12 @@
       ([기록](features/post/history.md))
 - [x] 설정 — 프로필 편집 진입 · 계정 설정(비밀번호 변경) · 로그아웃
       ([계획](features/settings/plan.md))
-- [ ] **회원 탈퇴** — 안내만 있고 구현하지 않았다. 데이터 정리 정책이 먼저다
-      ([범위 밖](features/settings/plan.md))
+- [x] **회원 탈퇴** — `delete_account()` cascade + 앱의 Storage best-effort 정리
+      ([계획](features/settings/plan.md) · [스키마 §3](schema.md))
 
 ## 다음 할 일
 
-1. 회원 탈퇴 정책 확정 후 구현 — Supabase Auth 사용자 삭제와 게시물·댓글·반응·
-   Storage 객체 정리 범위를 함께 정한다
-2. 로컬 Supabase 통합 확인 — avatar와 post-images Storage RLS(타인 경로 쓰기 거부),
+1. 로컬 Supabase 통합 확인 — avatar와 post-images Storage RLS(타인 경로 쓰기 거부),
    `created_at` 이 같은 게시물의 끊어 읽기,
    소프트 삭제한 글이 `posts_with_author` 에서 빠지는지
    ([feed 기록 · 검증](features/feed/history.md))

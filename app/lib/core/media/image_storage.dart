@@ -46,6 +46,13 @@ abstract interface class ImageStorage {
     required List<String> paths,
   });
 
+  /// 버킷에서 **로그인한 사용자의 경로 전체**를 지운다. best-effort 다.
+  ///
+  /// 회원 탈퇴가 쓴다. DB 의 delete_account() 는 storage.objects 를 지울 수
+  /// 없으므로(Storage 확장의 보호 트리거) 객체 정리는 앱의 몫이고, 실패해도
+  /// 탈퇴 흐름을 막지 않는다.
+  Future<void> removeAllForCurrentUser({required String bucket});
+
   /// 공개 URL 에서 버킷 안의 객체 경로를 뽑는다.
   ///
   /// 다른 버킷이나 외부 URL 이면 null 을 준다. 우리가 올린 적 없는 이미지를

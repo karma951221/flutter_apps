@@ -72,6 +72,8 @@ import '../../features/reaction/domain/repository/reaction_repository.dart'
 import '../../features/reaction/domain/usecase/reaction_use_case.dart' as _i650;
 import '../../features/settings/presentation/cubit/change_password_cubit.dart'
     as _i903;
+import '../../features/settings/presentation/cubit/delete_account_cubit.dart'
+    as _i77;
 import '../id/id_generator.dart' as _i1000;
 import '../media/image_picker_service.dart' as _i350;
 import '../media/image_storage.dart' as _i1040;
@@ -128,9 +130,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i898.FeedRepository>(
       () => _i749.FeedRepositoryImpl(gh<_i514.FeedDataSource>()),
     );
-    gh.lazySingleton<_i961.AuthRepository>(
-      () => _i971.SupabaseAuthRepository(gh<_i692.AuthDataSource>()),
-    );
     gh.lazySingleton<_i1009.FeedUseCase>(
       () => _i1009.DefaultFeedUseCase(gh<_i898.FeedRepository>()),
     );
@@ -145,6 +144,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i831.ReactionRepository>(
       () => _i1063.ReactionRepositoryImpl(gh<_i281.ReactionDataSource>()),
+    );
+    gh.lazySingleton<_i961.AuthRepository>(
+      () => _i971.SupabaseAuthRepository(
+        gh<_i692.AuthDataSource>(),
+        gh<_i1040.ImageStorage>(),
+      ),
     );
     gh.lazySingleton<_i735.PostRepository>(
       () => _i238.PostRepositoryImpl(gh<_i487.PostDataSource>()),
@@ -167,6 +172,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i903.ChangePasswordCubit>(
       () => _i903.ChangePasswordCubit(gh<_i176.AuthUseCase>()),
+    );
+    gh.factory<_i77.DeleteAccountCubit>(
+      () => _i77.DeleteAccountCubit(gh<_i176.AuthUseCase>()),
     );
     gh.lazySingleton<_i408.ProfileUseCase>(
       () => _i408.DefaultProfileUseCase(gh<_i364.ProfileRepository>()),

@@ -5,6 +5,7 @@ import '../entity/app_user.dart';
 import '../repository/auth_repository.dart';
 import 'scenario/auth_state_changes_scenario.dart';
 import 'scenario/current_user_scenario.dart';
+import 'scenario/delete_account_scenario.dart';
 import 'scenario/send_password_reset_code_scenario.dart';
 import 'scenario/sign_in_scenario.dart';
 import 'scenario/sign_out_scenario.dart';
@@ -34,6 +35,9 @@ abstract interface class AuthUseCase {
   });
 
   Future<Result<void>> signOut();
+
+  /// 계정과 계정에 딸린 모든 것을 지운다. 성공하면 세션도 함께 사라진다.
+  Future<Result<void>> deleteAccount();
 
   Future<Result<void>> sendPasswordResetCode(String email);
 
@@ -77,6 +81,9 @@ class DefaultAuthUseCase implements AuthUseCase {
 
   @override
   Future<Result<void>> signOut() => SignOutScenario(_repository)();
+
+  @override
+  Future<Result<void>> deleteAccount() => DeleteAccountScenario(_repository)();
 
   @override
   Future<Result<void>> sendPasswordResetCode(String email) =>
