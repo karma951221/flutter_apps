@@ -42,6 +42,18 @@ GRANT가 바뀌어도 트리거가 계속 옳게 동작한다는 방어적 설�
 이미 적용된 마이그레이션 파일은 손대지 않는다는 규칙이라, 그 주석이 옛 근거를
 그대로 담고 있다는 점을 스키마 문서에 남겼다.
 
+## 2026-08-25 — facade 이름을 `ReportUseCase`에서 `SafetyUseCase`로 바꿨다
+
+검수에서 아키텍처 규칙 ③(presentation은 feature별 facade 하나만 주입받고,
+그 facade는 feature 이름을 따른다)과 어긋난다는 지적이 나왔다. 폴더 이름은
+`safety`인데 facade는 `ReportUseCase`였다 — 차단(blocking)이 이 폴더에
+이어 붙으면 `ReportUseCase.block()`처럼 읽혀 혼동을 준다. `ReportUseCase` →
+`SafetyUseCase`, `DefaultReportUseCase` → `DefaultSafetyUseCase`로 이름과
+파일(`report_use_case.dart` → `safety_use_case.dart`)을 바꿨다.
+`ReportRepository` · `ReportDataSource` · `ReportTarget` · `ReportReason` ·
+`ReportPolicy` · `ReportState` · `ReportCubit` · `ReportSheet`는 신고
+고유의 이름이라 그대로 뒀다 — 차단이 붙으면 그 옆에 형제로 늘어날 이름들이다.
+
 ## 검증
 
 [테스트 문서](../../testing/features/safety.md)에 단위 · 위젯 테스트 범위가 있다.
