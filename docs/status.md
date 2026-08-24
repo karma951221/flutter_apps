@@ -55,7 +55,11 @@
 - [x] **F6 comment** — 2단 댓글. 제한은 트리거, 조회는 `post_comments_visible`
       (`security_invoker = off` 예외), 오래된 순 커서, 댓글 화면과 답글 지연 로딩
       ([계획](features/comment/plan.md) · [기록](features/comment/history.md))
-- [ ] **F7 safety** — 신고 · 차단
+- [x] **F7 safety (신고)** — 폴리모픽 `reports` 한 테이블, FK 대신 대상 검증 트리거,
+      게시물·댓글·프로필 세 진입점과 사유 시트
+      ([계획](features/safety/plan.md) · [기록](features/safety/history.md))
+- [ ] **F7 safety (차단)** — `posts_with_author` · `post_comments_visible` 두 뷰에
+      양방향 차단 필터. 조회 경로를 건드리므로 신고와 커밋을 나눴다
 
 ## UI — 2026-08-24
 
