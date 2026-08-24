@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
+import '../../../../design_system/widget/app_overflow_menu.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
 import '../../../reaction/presentation/widget/reaction_bar.dart';
 import '../../domain/entity/post_comment.dart';
@@ -14,6 +15,9 @@ import '../../domain/entity/post_comment.dart';
 /// 삭제된 댓글([PostComment.isDeleted])은 본문 자리에 안내만 남기고 감정·답글
 /// 버튼을 그리지 않는다. 본문이 없는 것은 앱의 판단이 아니라 뷰가 내려준
 /// 사실이다 — 답글이 남아 있어서 자리만 지키고 있는 부모다.
+///
+/// 우측 상단 메뉴도 같은 이유로 삭제된 댓글에는 그리지 않는다. 살아 있는
+/// 댓글이면 내 댓글은 삭제를, 남의 댓글은 신고를 보여준다.
 class CommentTile extends StatelessWidget {
   const CommentTile({
     required this.comment,
@@ -22,6 +26,7 @@ class CommentTile extends StatelessWidget {
     this.isReply = false,
     this.onReply,
     this.onDelete,
+    this.onReport,
     this.onToggleReplies,
     this.isExpanded = false,
     super.key,
@@ -33,6 +38,7 @@ class CommentTile extends StatelessWidget {
   final ValueChanged<ReactionType> onReaction;
   final VoidCallback? onReply;
   final VoidCallback? onDelete;
+  final VoidCallback? onReport;
   final VoidCallback? onToggleReplies;
   final bool isExpanded;
 
@@ -77,12 +83,26 @@ class CommentTile extends StatelessWidget {
                     const SizedBox(width: AppSpacing.sm),
                     Text(_displayDate(comment.createdAt), style: mutedStyle),
                     const Spacer(),
-                    if (isMine && !comment.isDeleted)
-                      IconButton(
-                        tooltip: '댓글 삭제',
-                        visualDensity: VisualDensity.compact,
-                        icon: const Icon(Icons.delete_outline, size: 18),
-                        onPressed: onDelete,
+                    if (!comment.isDeleted)
+                      AppOverflowMenu<_CommentAction>(
+                        tooltip: '댓글 메뉴',
+                        onSelected: (action) => switch (action) {
+                          _CommentAction.delete => onDelete?.call(),
+                          _CommentAction.report => onReport?.call(),
+                        },
+                        items: [
+                          if (isMine && onDelete != null)
+                            const AppOverflowMenuItem(
+                              value: _CommentAction.delete,
+                              label: '삭제',
+                              isDestructive: true,
+                            ),
+                          if (!isMine && onReport != null)
+                            const AppOverflowMenuItem(
+                              value: _CommentAction.report,
+                              label: '신고',
+                            ),
+                        ],
                       ),
                   ],
                 ),
@@ -159,3 +179,5 @@ class CommentTile extends StatelessWidget {
     return '$month.$day $hour:$minute';
   }
 }
+
+enum _CommentAction { delete, report }

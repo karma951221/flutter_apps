@@ -14,6 +14,8 @@ import '../../../post/domain/entity/post_author.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../post/presentation/widget/post_tile.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
+import '../../../safety/domain/entity/report_target.dart';
+import '../../../safety/presentation/widget/report_sheet.dart';
 import '../../domain/entity/feed_post.dart';
 import '../cubit/feed_cubit.dart';
 import '../cubit/feed_state.dart';
@@ -165,8 +167,11 @@ class _FeedList extends StatelessWidget {
               onTap: isMine
                   ? () => _edit(context, post)
                   : () => context.push(Routes.userProfilePath(item.author.id)),
-              onEdit: () => _edit(context, post),
-              onDelete: () => _confirmDelete(context, post),
+              onEdit: isMine ? () => _edit(context, post) : null,
+              onDelete: isMine ? () => _confirmDelete(context, post) : null,
+              onReport: isMine
+                  ? null
+                  : () => _report(context, ReportTarget.post(post.id)),
               onReaction: (type) => _react(context, post.id, type),
               onComment: () => _openComments(context, item),
             );
@@ -236,6 +241,18 @@ class _FeedList extends StatelessWidget {
       extra: item.commentCount,
     );
     if (count != null) feed.applyCommentCount(item.id, count);
+  }
+
+  Future<void> _report(BuildContext context, ReportTarget target) async {
+    final filed = await ReportSheet.show(context, target);
+    if (!context.mounted) return;
+    if (filed) {
+      AppSnackBar.show(
+        context,
+        message: '신고가 접수되었습니다',
+        type: AppSnackBarType.success,
+      );
+    }
   }
 
   Future<void> _confirmDelete(BuildContext context, Post post) async {

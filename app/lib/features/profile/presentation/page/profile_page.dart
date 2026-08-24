@@ -7,6 +7,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_button.dart';
+import '../../../../design_system/widget/app_overflow_menu.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -17,6 +18,8 @@ import '../../../post/domain/entity/post.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../post/presentation/widget/post_tile.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
+import '../../../safety/domain/entity/report_target.dart';
+import '../../../safety/presentation/widget/report_sheet.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
 
@@ -52,6 +55,10 @@ class _ProfileView extends StatelessWidget {
         requestedUserId == null || user.id == requestedUserId,
       _ => false,
     };
+    // AppBar 의 신고 메뉴는 실제로 화면에 로드된 프로필의 id 를 써야 한다
+    // (라우트 파라미터는 신뢰 경계 밖이다). body 의 BlocBuilder 와 별개로
+    // watch 해도 body 의 로딩·오류 표시 흐름은 그대로다.
+    final loadedProfile = context.watch<ProfileCubit>().state.profile;
     return MultiBlocListener(
       listeners: [
         BlocListener<ProfileCubit, ProfileState>(
@@ -81,7 +88,27 @@ class _ProfileView extends StatelessWidget {
         ),
       ],
       child: Scaffold(
-        appBar: AppBar(title: Text(isMine ? '프로필' : '사용자 프로필')),
+        appBar: AppBar(
+          title: Text(isMine ? '프로필' : '사용자 프로필'),
+          actions: [
+            if (!isMine && loadedProfile != null)
+              AppOverflowMenu<_ProfileAction>(
+                tooltip: '프로필 메뉴',
+                onSelected: (action) => switch (action) {
+                  _ProfileAction.report => _report(
+                    context,
+                    ReportTarget.user(loadedProfile.id),
+                  ),
+                },
+                items: const [
+                  AppOverflowMenuItem(
+                    value: _ProfileAction.report,
+                    label: '신고',
+                  ),
+                ],
+              ),
+          ],
+        ),
         body: BlocBuilder<ProfileCubit, ProfileState>(
           builder: (context, state) {
             if (state.isLoading && state.profile == null) {
@@ -185,6 +212,26 @@ class _ProfileView extends StatelessWidget {
   }
 }
 
+enum _ProfileAction { report }
+
+/// 게시물·사용자 신고 시트를 열고, 접수됐을 때만 스낵바를 띄운다.
+///
+/// 시트의 `BuildContext` 는 닫히면서 함께 사라지므로 스낵바는 호출한 화면의
+/// context 로 띄운다. [_ProfileView] 의 AppBar 신고와 [_ProfilePostList] 의
+/// 게시물 신고가 이 파일 안에서 같이 쓴다 — 다른 화면(피드)과는 공유하지
+/// 않는다.
+Future<void> _report(BuildContext context, ReportTarget target) async {
+  final filed = await ReportSheet.show(context, target);
+  if (!context.mounted) return;
+  if (filed) {
+    AppSnackBar.show(
+      context,
+      message: '신고가 접수되었습니다',
+      type: AppSnackBarType.success,
+    );
+  }
+}
+
 /// 프로필 주인이 쓴 게시물 목록.
 ///
 /// [isMine] 이면 피드와 같은 수정·삭제 흐름을 붙인다. 다른 사람의 프로필은
@@ -238,6 +285,9 @@ class _ProfilePostList extends StatelessWidget {
             onTap: isMine ? () => _edit(context, post) : () {},
             onEdit: isMine ? () => _edit(context, post) : null,
             onDelete: isMine ? () => _confirmDelete(context, post) : null,
+            onReport: isMine
+                ? null
+                : () => _report(context, ReportTarget.post(post.id)),
             onReaction: (type) => _react(context, post.id, type),
             onComment: () => _openComments(context, item),
           );

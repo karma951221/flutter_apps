@@ -9,6 +9,8 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../post/domain/entity/post_author.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
+import '../../../safety/domain/entity/report_target.dart';
+import '../../../safety/presentation/widget/report_sheet.dart';
 import '../../domain/comment_policy.dart';
 import '../../domain/entity/post_comment.dart';
 import '../cubit/comment_cubit.dart';
@@ -182,6 +184,7 @@ class _CommentList extends StatelessWidget {
                   // 삭제된 부모에는 답글을 달 수 없다. 최종 판정은 트리거다.
                   onReply: comment.isDeleted ? null : () => onReply(comment),
                   onDelete: () => _confirmDelete(context, comment),
+                  onReport: () => _report(context, comment),
                   onToggleReplies: () =>
                       context.read<CommentCubit>().toggleReplies(comment.id),
                 ),
@@ -193,6 +196,7 @@ class _CommentList extends StatelessWidget {
                       isMine: reply.author.id == currentUserId,
                       onReaction: (type) => _react(context, reply, type),
                       onDelete: () => _confirmDelete(context, reply),
+                      onReport: () => _report(context, reply),
                     ),
                   if (state.isLoadingReplies(comment.id))
                     const Padding(
@@ -238,6 +242,21 @@ class _CommentList extends StatelessWidget {
         type: AppSnackBarType.error,
       ),
     );
+  }
+
+  Future<void> _report(BuildContext context, PostComment comment) async {
+    final filed = await ReportSheet.show(
+      context,
+      ReportTarget.comment(comment.id),
+    );
+    if (!context.mounted) return;
+    if (filed) {
+      AppSnackBar.show(
+        context,
+        message: '신고가 접수되었습니다',
+        type: AppSnackBarType.success,
+      );
+    }
   }
 
   Future<void> _confirmDelete(BuildContext context, PostComment comment) async {
