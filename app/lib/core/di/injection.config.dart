@@ -70,6 +70,13 @@ import '../../features/reaction/data/repository/reaction_repository_impl.dart'
 import '../../features/reaction/domain/repository/reaction_repository.dart'
     as _i831;
 import '../../features/reaction/domain/usecase/reaction_use_case.dart' as _i650;
+import '../../features/safety/data/datasource/report_data_source.dart' as _i249;
+import '../../features/safety/data/datasource/supabase_report_data_source.dart'
+    as _i294;
+import '../../features/safety/data/repository/report_repository_impl.dart'
+    as _i1002;
+import '../../features/safety/domain/repository/report_repository.dart' as _i29;
+import '../../features/safety/domain/usecase/report_use_case.dart' as _i185;
 import '../../features/settings/presentation/cubit/change_password_cubit.dart'
     as _i903;
 import '../../features/settings/presentation/cubit/delete_account_cubit.dart'
@@ -99,6 +106,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1000.IdGenerator>(
       () => _i1000.IdGenerator(gh<_i706.Uuid>()),
     );
+    gh.lazySingleton<_i249.ReportDataSource>(
+      () => _i294.SupabaseReportDataSource(gh<_i454.SupabaseClient>()),
+    );
     gh.lazySingleton<_i514.FeedDataSource>(
       () => _i402.SupabaseFeedDataSource(gh<_i454.SupabaseClient>()),
     );
@@ -127,6 +137,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i1011.CommentUseCase>(
       () => _i1011.DefaultCommentUseCase(gh<_i813.CommentRepository>()),
     );
+    gh.lazySingleton<_i29.ReportRepository>(
+      () => _i1002.ReportRepositoryImpl(gh<_i249.ReportDataSource>()),
+    );
     gh.lazySingleton<_i898.FeedRepository>(
       () => _i749.FeedRepositoryImpl(gh<_i514.FeedDataSource>()),
     );
@@ -138,6 +151,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i454.SupabaseClient>(),
         gh<_i1040.ImageStorage>(),
       ),
+    );
+    gh.lazySingleton<_i185.ReportUseCase>(
+      () => _i185.DefaultReportUseCase(gh<_i29.ReportRepository>()),
     );
     gh.lazySingleton<_i364.ProfileRepository>(
       () => _i309.ProfileRepositoryImpl(gh<_i986.ProfileDataSource>()),

@@ -88,6 +88,13 @@ abstract final class SupabaseErrorMapper {
     '부모 댓글이 없습니다',
   ];
 
+  /// `enforce_report_target()` 이 던지는 문구들. 트리거의 raise 문과 같아야 한다.
+  static const _reportTargetMessages = [
+    '신고할 대상이 없습니다',
+    '내 게시물은 신고할 수 없습니다',
+    '내 댓글은 신고할 수 없습니다',
+  ];
+
   static Failure? _constraintFrom(String raw) {
     if (raw.contains('profiles_nickname_length')) {
       return const Failure.validation(
@@ -124,10 +131,22 @@ abstract final class SupabaseErrorMapper {
         raw.contains('comment_reactions_type_valid')) {
       return const Failure.validation(message: '지원하지 않는 감정입니다');
     }
-    // enforce_comment_depth() 는 사용자에게 그대로 보여줄 수 있는 한국어 문구로
-    // 예외를 던진다. 23514 의 기본 문구("입력값이 조건을 만족하지 않습니다")로
-    // 덮으면 무엇이 잘못됐는지가 사라진다.
-    for (final message in _commentDepthMessages) {
+    if (raw.contains('reports_once')) {
+      return const Failure.validation(message: '이미 신고한 항목입니다');
+    }
+    if (raw.contains('reports_detail_length')) {
+      return const Failure.validation(
+        message: '상세 설명은 500자 이하여야 합니다',
+        field: 'detail',
+      );
+    }
+    if (raw.contains('reports_not_self_user')) {
+      return const Failure.validation(message: '자기 자신은 신고할 수 없습니다');
+    }
+    // enforce_comment_depth() 와 enforce_report_target() 은 사용자에게 그대로
+    // 보여줄 수 있는 한국어 문구로 예외를 던진다. 23514 의 기본 문구("입력값이
+    // 조건을 만족하지 않습니다")로 덮으면 무엇이 잘못됐는지가 사라진다.
+    for (final message in [..._commentDepthMessages, ..._reportTargetMessages]) {
       if (raw.contains(message)) return Failure.validation(message: message);
     }
     return null;
