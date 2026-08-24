@@ -12,12 +12,15 @@ import '../../features/auth/presentation/page/sign_in_page.dart';
 import '../../features/auth/presentation/page/sign_up_page.dart';
 import '../../features/auth/presentation/page/splash_page.dart';
 import '../../features/comment/presentation/page/post_comments_page.dart';
-import '../../features/feed/presentation/page/feed_page.dart';
+import '../../features/home/presentation/page/home_shell_page.dart';
 import '../../features/post/domain/entity/post.dart';
 import '../../features/post/presentation/cubit/post_cubit.dart';
 import '../../features/post/presentation/page/post_editor_page.dart';
 import '../../features/profile/presentation/page/edit_profile_page.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
+import '../../features/settings/presentation/page/account_settings_page.dart';
+import '../../features/settings/presentation/page/change_password_page.dart';
+import '../../features/settings/presentation/page/settings_page.dart';
 import 'routes.dart';
 
 /// 인증 게이트.
@@ -54,7 +57,9 @@ GoRouter createRouter(AuthBloc authBloc) {
         path: Routes.passwordReset,
         builder: (_, _) => const PasswordResetPage(),
       ),
-      GoRoute(path: Routes.home, builder: (_, _) => const FeedPage()),
+      // 홈은 셸이다. 피드·프로필·설정은 탭으로 살아 있고, 그 위에 얹히는
+      // 화면(작성 · 편집 · 댓글)은 아래의 독립 라우트로 push 된다.
+      GoRoute(path: Routes.home, builder: (_, _) => const HomeShellPage()),
       GoRoute(
         path: Routes.postCompose,
         builder: (_, _) => BlocProvider(
@@ -79,6 +84,15 @@ GoRouter createRouter(AuthBloc authBloc) {
         ),
       ),
       GoRoute(path: Routes.profile, builder: (_, _) => const ProfilePage()),
+      GoRoute(path: Routes.settings, builder: (_, _) => const SettingsPage()),
+      GoRoute(
+        path: Routes.accountSettings,
+        builder: (_, _) => const AccountSettingsPage(),
+      ),
+      GoRoute(
+        path: Routes.changePassword,
+        builder: (_, _) => const ChangePasswordPage(),
+      ),
       GoRoute(
         path: Routes.userProfile,
         builder: (_, state) =>

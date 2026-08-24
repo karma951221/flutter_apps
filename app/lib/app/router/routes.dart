@@ -13,6 +13,9 @@ abstract final class Routes {
   static String postCommentsPath(String postId) => '/posts/$postId/comments';
   static const profile = '/profile';
   static const profileEdit = '/profile/edit';
+  static const settings = '/settings';
+  static const accountSettings = '/settings/account';
+  static const changePassword = '/settings/account/password';
   static const userProfile = '/users/:userId';
 
   static String userProfilePath(String userId) => '/users/$userId';
