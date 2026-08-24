@@ -2,7 +2,7 @@
 
 > [문서 허브](../../README.md) · [기획 F7](../../overview.md) · [스키마](../../schema.md) · [아키텍처](../../architecture.md)
 
-> 상태: **착수** · 작성 2026-08-24
+> 상태: **완료 (신고)** · 작성 2026-08-24 · 검증 2026-08-25 ([구현 기록](history.md))
 > 진행 상태의 단일 기준은 [진행 현황](../../status.md)이다.
 
 ## 범위
@@ -102,9 +102,12 @@ create index reports_status_created_at_idx
 | `comment` | `post_comments`에 있고 `deleted_at is null`. `author_id`가 신고자면 거부 |
 | `user` | `profiles`에 존재. 자기 자신은 `reports_not_self_user`가 이미 막았다 |
 
-**`security definer`에 `set search_path = ''`가 필요하다.** `post_comments`는 `content`
-컬럼에 SELECT를 주지 않으므로([F6 계획](../comment/plan.md)) invoker로 두면 트리거가
-대상 행을 읽지 못한다. `handle_new_user()`와 같은 형태이고, 모든 객체를 스키마까지 적는다.
+**`security definer`에 `set search_path = ''`가 필요하다.** 트리거가 읽는 컬럼은
+`author_id`와 `deleted_at` 뿐이라 실제로는 `post_comments`의 컬럼 GRANT와
+`post_comments_select_visible` 정책만으로도 invoker 권한으로 읽힌다 — "`content`를
+못 읽어서"는 아니다. `security definer`는 미래에 컬럼 GRANT가 바뀌어도 이 트리거가
+계속 옳게 동작하게 하는 방어적 설계로 둔다. `handle_new_user()`와 같은 형태이고,
+모든 객체를 스키마까지 적는다. 자세한 경위는 [구현 기록](history.md)에 있다.
 
 거부 문구는 `enforce_comment_depth()`처럼 **사용자에게 그대로 보여줄 한국어**로 던진다.
 
@@ -235,12 +238,21 @@ features/safety/
 
 ## 완료 조건
 
-- [ ] 남의 게시물 · 댓글 · 프로필에서 신고 시트를 열고 접수한다
-- [ ] 내 게시물 · 내 댓글에는 신고 메뉴가 보이지 않는다
-- [ ] 내 게시물 · 내 댓글 · 내 프로필 신고 삽입이 DB에서 거부된다
-- [ ] 같은 대상을 두 번 신고하면 "이미 신고한 항목입니다"가 뜬다
-- [ ] 삭제된 게시물 · 댓글을 대상으로 한 신고 삽입이 거부된다
-- [ ] 존재하지 않는 `target_id`로 보낸 신고가 거부된다
-- [ ] 상세 설명을 비우면 `detail`이 `null`로 저장되고, 공백만 넣어도 `null`이거나 거부된다
-- [ ] `reporter_id` · `status`를 페이로드에 실어도 위조되지 않는다
-- [ ] 남의 신고는 조회되지 않는다
+- [x] 남의 게시물 · 댓글 · 프로필에서 신고 시트를 열고 접수한다 (위젯 테스트로 확인 —
+      `ReportSheet` 제출 성공 경로)
+- [x] 내 게시물 · 내 댓글에는 신고 메뉴가 보이지 않는다 (`post_tile` · `comment_tile`
+      위젯 테스트로 확인)
+- [x] 내 게시물 · 내 댓글 · 내 프로필 신고 삽입이 DB에서 거부된다 (로컬 Supabase 확인 —
+      `400` · 트리거 문구 / `23514`)
+- [x] 같은 대상을 두 번 신고하면 "이미 신고한 항목입니다"가 뜬다 (로컬 Supabase 확인 —
+      `23505` → `ReportRepositoryImpl`이 같은 문구로 변환)
+- [x] 삭제된 게시물 · 댓글을 대상으로 한 신고 삽입이 거부된다 (로컬 Supabase 확인 —
+      삭제된 게시물로 확인. 댓글도 트리거가 같은 조건절을 쓴다)
+- [x] 존재하지 않는 `target_id`로 보낸 신고가 거부된다 (로컬 Supabase 확인 —
+      `신고할 대상이 없습니다`)
+- [x] 상세 설명을 비우면 `detail`이 `null`로 저장되고, 공백만 넣어도 `null`이거나
+      거부된다 (앱 경로는 `ReportPolicy.normalizeDetail`이 `null`로 정규화 —
+      단위 테스트. REST로 빈 문자열을 직접 보내면 `23514`로 거부 — 로컬 Supabase 확인)
+- [x] `reporter_id` · `status`를 페이로드에 실어도 위조되지 않는다 (로컬 Supabase 확인 —
+      둘 다 `42501`, 컬럼 GRANT가 없어서 막힌다)
+- [x] 남의 신고는 조회되지 않는다 (로컬 Supabase 확인 — B의 select 결과에 A의 신고 없음)

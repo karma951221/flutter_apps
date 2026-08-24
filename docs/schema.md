@@ -1200,11 +1200,18 @@ create trigger reports_enforce_target
   for each row execute function public.enforce_report_target();
 ```
 
-**`security definer`에 `set search_path = ''`가 필요하다.** `post_comments`는 `content`
-컬럼에 SELECT를 주지 않으므로(§8 GRANT) `invoker`로 두면 트리거가 대상 행 자체를
-읽지 못해 삽입이 막힌다. `enforce_comment_depth()`(§8) · `handle_new_user()`(§3)와 같은
-형태이고, `search_path = ''`는 definer 함수의 필수 안전장치라 모든 객체를 스키마까지
-적는다.
+**`security definer`에 `set search_path = ''`가 필요하다.** 트리거가 읽는 컬럼은
+`author_id`와 `deleted_at` 뿐이고, 둘 다 `post_comments`의 컬럼 GRANT(§8)와
+`post_comments_select_visible` 정책(§8, `deleted_at is null`) 아래 살아 있는 댓글에
+대해서는 `invoker` 권한으로도 읽힌다 — "`content`를 SELECT로 주지 않아서"는 이
+함수를 definer로 둔 이유가 아니다. 대신 미래에 컬럼 GRANT가 바뀌어도 이 트리거가
+계속 옳게 동작하도록 하는 방어적 설계로 definer를 둔다. `enforce_comment_depth()`(§8) ·
+`handle_new_user()`(§3)와 같은 형태이고, `search_path = ''`는 definer 함수의 필수
+안전장치라 모든 객체를 스키마까지 적는다.
+
+적용된 마이그레이션(`20260824140000_add_reports.sql`)의 주석은 "`content` 컬럼에
+SELECT를 주지 않으므로"라는 옛 근거를 그대로 담고 있다 — 이미 적용된 마이그레이션은
+고치지 않는다는 규칙이라 주석만 남고 이 문서가 바로잡은 근거를 대신 따른다.
 
 트리거가 하는 검사는 대상 종류별로 다르다.
 
