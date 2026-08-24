@@ -71,6 +71,16 @@
 - [x] **회원 탈퇴** — `delete_account()` cascade + 앱의 Storage best-effort 정리
       ([계획](features/settings/plan.md) · [스키마 §3](schema.md))
 
+## 검수 — 2026-08-24
+
+만든 기능 전체를 로컬 Supabase 로 훑고 결함 3건을 고쳤다
+([검수 기록](testing/audit-2026-08-24.md)).
+
+- [x] 권한 경계 · 경계값 · 커서 · 소프트 삭제 전파 · 탈퇴 cascade 확인
+- [x] `flutter build apk --debug` 성공
+- [x] 고침: 삭제된 게시물에 댓글 삽입 허용 · 트리거 문구 유실 · 프로필 탭 갱신 누락
+- [ ] Patrol E2E 실행 (에뮬레이터 필요)
+
 ## 다음 할 일
 
 1. 로컬 Supabase 통합 확인 — avatar와 post-images Storage RLS(타인 경로 쓰기 거부),

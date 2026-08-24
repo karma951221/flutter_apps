@@ -728,10 +728,25 @@ create policy "post_comments_select_visible"
 
 create policy "post_comments_insert_own"
   on public.post_comments for insert to authenticated
-  with check ((select auth.uid()) = author_id);
+  with check (
+    (select auth.uid()) = author_id
+    and exists (
+      select 1 from public.posts
+      where posts.id = post_comments.post_id
+        and posts.deleted_at is null
+    )
+  );
 ```
 
 UPDATE · DELETE 정책은 두지 않는다. 수정 기능이 없고 삭제는 아래 함수 전용이다.
+
+`exists (posts …)` 는 **삭제된 게시물에 댓글이 달리는 것**을 막는다. 처음에는
+작성자만 확인했는데, 그러면 소프트 삭제된 게시물에 삽입이 201 로 성공했다.
+유출은 아니다 — §9 의 뷰가 살아 있는 게시물만 조인하므로 그 댓글은 어디에도
+보이지 않는다. 문제는 **쓰기가 조용히 성공하는 것**이다: 앱이 낙관적으로 목록에
+붙이고, 새로고침하면 사라진다. 사용자에게는 댓글이 증발한 것으로 보인다.
+`post_reactions_insert_own`(§10)은 처음부터 같은 검사를 하고 있었으므로 두 경로의
+강도를 맞춘 것이다. 서브쿼리가 **다른 테이블**을 보므로 §11 의 42P17 과는 무관하다.
 
 **정책 안에서 같은 테이블을 서브쿼리로 참조하면 안 된다.** 처음 시도한 정책은
 "삭제됐지만 살아 있는 답글이 있는 부모는 보인다"를 `post_comments` 자신을 향한

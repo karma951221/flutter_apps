@@ -58,6 +58,7 @@
   조회는 `content` GRANT 가 없어 42501)
 - `created_at` 이 같은 댓글이 여럿일 때 asc 커서에 중복·누락이 없는지
 - `insert ... returning id, created_at` 이 컬럼 단위 GRANT 와 충돌하지 않는지
+- **삭제된 게시물에 댓글·답글 삽입이 거부되는지** (403 — 정책이 막는다)
 
 실행:
 

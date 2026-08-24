@@ -52,12 +52,34 @@ class _ProfileView extends StatelessWidget {
         requestedUserId == null || user.id == requestedUserId,
       _ => false,
     };
-    return BlocListener<ProfileCubit, ProfileState>(
-      listenWhen: (previous, current) =>
-          previous.profile?.id != current.profile?.id &&
-          current.profile != null,
-      listener: (context, state) =>
-          context.read<FeedCubit>().loadForAuthor(state.profile!.id),
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ProfileCubit, ProfileState>(
+          listenWhen: (previous, current) =>
+              previous.profile?.id != current.profile?.id &&
+              current.profile != null,
+          listener: (context, state) =>
+              context.read<FeedCubit>().loadForAuthor(state.profile!.id),
+        ),
+        // 하단 내비게이션 셸이 이 화면을 살려 두므로, 설정에서 프로필을 고치고
+        // 탭으로 돌아오면 옛 값이 그대로 남는다. 세션 스냅샷이 바뀌는 것을
+        // 신호로 삼아 내 프로필만 다시 읽는다 — 편집 화면이 저장 직후
+        // userRefreshRequested 를 보낸다.
+        BlocListener<AuthBloc, AuthState>(
+          listenWhen: (previous, current) => switch ((previous, current)) {
+            (AuthAuthenticated(user: final before), AuthAuthenticated(
+              user: final after,
+            )) =>
+              before.id == after.id &&
+                  (before.nickname != after.nickname ||
+                      before.avatarUrl != after.avatarUrl),
+            _ => false,
+          },
+          listener: (context, _) {
+            if (isMine) context.read<ProfileCubit>().load(userId: null);
+          },
+        ),
+      ],
       child: Scaffold(
         appBar: AppBar(title: Text(isMine ? '프로필' : '사용자 프로필')),
         body: BlocBuilder<ProfileCubit, ProfileState>(

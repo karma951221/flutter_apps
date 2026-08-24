@@ -63,5 +63,6 @@ feature 문서는 **대상 · 시나리오 · 기대 결과** 표 형식으로 �
 - [reaction](features/reaction.md)
 - [comment](features/comment.md)
 - [settings](features/settings.md)
+- [검수 기록 (2026-08-24)](audit-2026-08-24.md)
 - [코드 컨벤션 검사](conventions.md)
 - [E2E 테스트 (Patrol)](e2e.md)

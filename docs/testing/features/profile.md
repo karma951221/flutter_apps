@@ -24,6 +24,8 @@
 | `ImageStorage.objectPathFromPublicUrl` (`test/core/media/`) | 아바타 공개 URL · 쿼리 · 퍼센트 인코딩 · 다른 버킷 | 자기 버킷의 객체 경로만 뽑아내고, 그 밖의 URL 은 null 이라 삭제를 시도하지 않는다. |
 | Storage RLS (통합) | 다른 사용자 UUID prefix로 `avatars` 업로드 | 403으로 거부된다. |
 | Storage RLS (통합) | 자기 UUID prefix로 WebP 업로드 | 허용되고 공개 URL이 프로필에 저장된다. |
+| `ProfilePage` | 설정에서 프로필 수정 후 | 세션 스냅샷이 바뀌면 내 프로필을 다시 읽는다 — 셸이 화면을 살려 두므로 옛 값이 남으면 안 된다. |
+| `ProfilePage` | 타인 프로필 | 내 세션이 바뀌어도 다시 읽지 않는다.
 
 실행:
 

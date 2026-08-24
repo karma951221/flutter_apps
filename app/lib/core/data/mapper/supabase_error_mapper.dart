@@ -70,11 +70,23 @@ abstract final class SupabaseErrorMapper {
       '23505' => const Failure.validation(message: '이미 사용 중인 값입니다'),
       '23514' => const Failure.validation(message: '입력값이 조건을 만족하지 않습니다'),
       '23503' => const Failure.validation(message: '참조 대상이 존재하지 않습니다'),
-      '42501' => const Failure.forbidden(message: '권한이 없습니다'),
+      // 삭제된 게시물에 댓글·반응을 남기려 할 때도 여기로 온다. RLS 가 거부한
+      // 것이라 원인을 세분화할 방법이 없어 한 문장으로 안내한다.
+      '42501' => const Failure.forbidden(
+        message: '권한이 없거나 삭제된 대상입니다',
+      ),
       'PGRST116' => const Failure.notFound(message: '대상을 찾을 수 없습니다'),
       _ => Failure.server(message: e.message, code: e.code),
     };
   }
+
+  /// `enforce_comment_depth()` 가 던지는 문구들. 트리거의 raise 문과 같아야 한다.
+  static const _commentDepthMessages = [
+    '답글에는 답글을 달 수 없습니다',
+    '삭제된 댓글에는 답글을 달 수 없습니다',
+    '부모 댓글이 다른 게시물의 댓글입니다',
+    '부모 댓글이 없습니다',
+  ];
 
   static Failure? _constraintFrom(String raw) {
     if (raw.contains('profiles_nickname_length')) {
@@ -101,6 +113,22 @@ abstract final class SupabaseErrorMapper {
         message: '게시물은 1자 이상 500자 이하여야 합니다',
         field: 'content',
       );
+    }
+    if (raw.contains('post_comments_content_length')) {
+      return const Failure.validation(
+        message: '댓글은 1자 이상 300자 이하여야 합니다',
+        field: 'content',
+      );
+    }
+    if (raw.contains('post_reactions_type_valid') ||
+        raw.contains('comment_reactions_type_valid')) {
+      return const Failure.validation(message: '지원하지 않는 감정입니다');
+    }
+    // enforce_comment_depth() 는 사용자에게 그대로 보여줄 수 있는 한국어 문구로
+    // 예외를 던진다. 23514 의 기본 문구("입력값이 조건을 만족하지 않습니다")로
+    // 덮으면 무엇이 잘못됐는지가 사라진다.
+    for (final message in _commentDepthMessages) {
+      if (raw.contains(message)) return Failure.validation(message: message);
     }
     return null;
   }

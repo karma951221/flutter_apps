@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:daylog/core/di/injection.dart';
 import 'package:daylog/core/error/failure.dart';
@@ -168,5 +170,73 @@ void main() {
         authorId: any(named: 'authorId'),
       ),
     );
+  });
+
+  testWidgets('설정에서 프로필을 고치면 프로필 탭이 다시 읽는다', (tester) async {
+    // 하단 내비게이션 셸이 이 화면을 살려 두므로, 세션 스냅샷이 바뀌면 다시
+    // 읽지 않는 한 옛 닉네임이 그대로 남는다.
+    final authStates = StreamController<AuthState>.broadcast();
+    addTearDown(authStates.close);
+    whenListen(
+      authBloc,
+      authStates.stream,
+      initialState: const AuthState.authenticated(_me),
+    );
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+    when(
+      profileUseCase.getMyProfile,
+    ).thenAnswer((_) async => Ok(_profile('me', '카르마')));
+
+    await pumpPage(tester);
+    verify(profileUseCase.getMyProfile).called(1);
+
+    authStates.add(
+      const AuthState.authenticated(
+        AppUser(id: 'me', email: 'me@example.test', nickname: '바뀐이름'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    verify(profileUseCase.getMyProfile).called(1);
+  });
+
+  testWidgets('남의 프로필은 내 세션이 바뀌어도 다시 읽지 않는다', (tester) async {
+    final authStates = StreamController<AuthState>.broadcast();
+    addTearDown(authStates.close);
+    whenListen(
+      authBloc,
+      authStates.stream,
+      initialState: const AuthState.authenticated(_me),
+    );
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+    when(
+      () => profileUseCase.getProfile(any()),
+    ).thenAnswer((_) async => Ok(_profile('other', '이웃')));
+
+    await pumpPage(tester, userId: 'other');
+    clearInteractions(profileUseCase);
+
+    authStates.add(
+      const AuthState.authenticated(
+        AppUser(id: 'me', email: 'me@example.test', nickname: '바뀐이름'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    verifyNever(profileUseCase.getMyProfile);
   });
 }

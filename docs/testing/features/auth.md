@@ -22,6 +22,10 @@
 | `SignInPage` | 정상 입력 | 입력값을 그대로 cubit 에 넘긴다. |
 | `SignInPage` | 제출 중 | 버튼이 로딩으로 바뀌고 회원가입·재설정 진입도 막힌다. |
 | `SignInPage` | 실패 | 입력 아래에 실패 문구가 남는다. |
+| `SupabaseErrorMapper` | 댓글 300자 제약 | 사용자 문구로 번역된다. |
+| `SupabaseErrorMapper` | 2단 제한 트리거 문구 | 트리거가 던진 한국어를 그대로 전달한다 — 기본 문구로 덮지 않는다. |
+| `SupabaseErrorMapper` | 42501 | "권한이 없거나 삭제된 대상입니다" 로 안내한다. |
+| `SupabaseErrorMapper` | 정의되지 않은 감정 코드 | 감정 관련 안내로 바꾼다.
 
 실행:
 
