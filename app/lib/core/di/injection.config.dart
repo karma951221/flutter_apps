@@ -77,6 +77,7 @@ import '../../features/safety/data/repository/report_repository_impl.dart'
     as _i1002;
 import '../../features/safety/domain/repository/report_repository.dart' as _i29;
 import '../../features/safety/domain/usecase/report_use_case.dart' as _i185;
+import '../../features/safety/presentation/cubit/report_cubit.dart' as _i347;
 import '../../features/settings/presentation/cubit/change_password_cubit.dart'
     as _i903;
 import '../../features/settings/presentation/cubit/delete_account_cubit.dart'
@@ -160,6 +161,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i831.ReactionRepository>(
       () => _i1063.ReactionRepositoryImpl(gh<_i281.ReactionDataSource>()),
+    );
+    gh.factory<_i347.ReportCubit>(
+      () => _i347.ReportCubit(gh<_i185.ReportUseCase>()),
     );
     gh.lazySingleton<_i961.AuthRepository>(
       () => _i971.SupabaseAuthRepository(
