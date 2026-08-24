@@ -41,7 +41,10 @@ profiles ──1:N──▶ posts ──┬──1:N──▶ post_images
 `comment_reactions`를 조인해 댓글 목록을 내려준다. 반응 두 테이블(§10)은 직접
 조회하지 않고 **집계된 형태로만** 이 두 뷰를 통해 읽는다.
 
-앞으로 추가될 테이블(`follows` · `blocks` · `reports`)의 계획은
+`reports`(§12)는 폴리모픽이라 관계도에 선이 없다. `reporter_id`만 `profiles`를
+참조한다.
+
+앞으로 추가될 테이블(`blocks` · `follows`)의 계획은
 [기획서 §7](overview.md)에 있다. 여기에는 **실제로 존재하는 것만** 적는다.
 
 ---
@@ -1075,3 +1078,177 @@ is null`만 본다), 예외적인 가시성 규칙은 RLS를 우회하는 `secur
 
 두 예외 모두 일반 규칙을 어기는 것이 아니라, "왜 이 테이블만 다른가"를 §8·§9에 각각
 근거와 함께 적어 두었다. 새 테이블에 이 규칙들을 복사할 때는 이 두 예외를 먼저 확인한다.
+
+---
+
+## 12. `reports`
+
+F7 신고. **게시물 · 댓글 · 사용자** 세 종류를 한 테이블로 받는 폴리모픽 테이블이다.
+설계 근거는 [F7 계획](features/safety/plan.md)에 있다.
+
+```sql
+create table public.reports (
+  id          uuid        primary key default gen_random_uuid(),
+  reporter_id uuid        not null default auth.uid()
+                          references public.profiles (id) on delete cascade,
+  target_type text        not null,
+  target_id   uuid        not null,
+  reason      text        not null,
+  detail      text,
+  status      text        not null default 'pending',
+  created_at  timestamptz not null default now(),
+
+  constraint reports_target_type_valid check (
+    target_type in ('post', 'comment', 'user')
+  ),
+  constraint reports_reason_valid check (
+    reason in ('spam', 'abuse', 'sexual', 'violence', 'other')
+  ),
+  constraint reports_status_valid check (
+    status in ('pending', 'resolved', 'rejected')
+  ),
+  -- 빈 문자열이 저장되는 상태를 없앤다. null 이거나, 공백을 걷어내고 1자 이상이다.
+  constraint reports_detail_length check (
+    detail is null or char_length(btrim(detail)) between 1 and 500
+  ),
+  -- 컬럼 둘만 보면 판정되는 유일한 자기 신고. 나머지는 트리거가 본다.
+  constraint reports_not_self_user check (
+    not (target_type = 'user' and reporter_id = target_id)
+  ),
+  -- 1인 1회. 대상별 신고자 수가 곧 신고 건수가 된다.
+  constraint reports_once unique (reporter_id, target_type, target_id)
+);
+```
+
+**`target_type` + `target_id`, FK 없음.** `post_reactions` · `comment_reactions`(§10)와
+달리 대상별로 테이블을 나누지 않는다. 신고는 처음부터 세 종류를 다 받으므로 폴리모픽이
+값을 한다 — FK를 포기하는 대가는 아래 트리거가 메운다.
+
+### 제약 6개의 의미
+
+| 제약 | 의미 |
+|---|---|
+| `reports_target_type_valid` | 대상은 `post` · `comment` · `user` 셋뿐이다 |
+| `reports_reason_valid` | 사유는 고정 목록 5개(`spam` · `abuse` · `sexual` · `violence` · `other`)뿐이다 |
+| `reports_status_valid` | 상태는 `pending` · `resolved` · `rejected` 셋뿐이다. '검토 중'을 두지 않는 이유는 운영이 Studio 직접 조회라 누가 언제 옮길지가 없어서다 |
+| `reports_detail_length` | `detail`은 `null`이거나, 공백을 걷어내고 1자 이상 500자 이하다. `''`과 `null`이 섞이면 `where detail is not null`이 빈 행까지 끌고 오므로, 저장 가능한 "빈 상태"를 하나로 줄인다 |
+| `reports_not_self_user` | `target_type = 'user'`이고 대상이 자기 자신이면 거부한다. 컬럼 두 개만 보면 판정되는 유일한 자기 신고라 CHECK로 막는다. 게시물·댓글은 작성자를 알려면 다른 테이블을 읽어야 하므로 아래 트리거가 맡는다 |
+| `reports_once` | `(reporter_id, target_type, target_id)` 유니크. 1인 1회이므로 대상별 신고자 수가 곧 신고 건수가 된다 |
+
+### 인덱스 — 운영 조회용이다
+
+```sql
+create index reports_target_idx on public.reports (target_type, target_id);
+create index reports_status_created_at_idx
+  on public.reports (status, created_at desc);
+```
+
+앱에는 신고 목록 화면이 없다. 두 인덱스는 Studio에서 "이 게시물이 몇 번 신고됐나"와
+"미처리 신고를 오래된 순으로"를 보기 위한 것이다. `reports_once`의 인덱스가 신고자
+기준 조회를 덮으므로 따로 만들지 않는다.
+
+### `enforce_report_target()`
+
+폴리모픽이라 FK가 없다. FK가 해주던 일(존재하는 대상인가)과 정책이 못 하는 일(내 것이
+아닌가)을 BEFORE INSERT 트리거가 함께 본다.
+
+```sql
+create function public.enforce_report_target()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  target_author uuid;
+begin
+  if new.target_type = 'post' then
+    select author_id into target_author
+      from public.posts
+     where id = new.target_id and deleted_at is null;
+    if not found then
+      raise exception '신고할 대상이 없습니다';
+    end if;
+    if target_author = new.reporter_id then
+      raise exception '내 게시물은 신고할 수 없습니다';
+    end if;
+
+  elsif new.target_type = 'comment' then
+    select author_id into target_author
+      from public.post_comments
+     where id = new.target_id and deleted_at is null;
+    if not found then
+      raise exception '신고할 대상이 없습니다';
+    end if;
+    if target_author = new.reporter_id then
+      raise exception '내 댓글은 신고할 수 없습니다';
+    end if;
+
+  elsif new.target_type = 'user' then
+    perform 1 from public.profiles where id = new.target_id;
+    if not found then
+      raise exception '신고할 대상이 없습니다';
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger reports_enforce_target
+  before insert on public.reports
+  for each row execute function public.enforce_report_target();
+```
+
+**`security definer`에 `set search_path = ''`가 필요하다.** `post_comments`는 `content`
+컬럼에 SELECT를 주지 않으므로(§8 GRANT) `invoker`로 두면 트리거가 대상 행 자체를
+읽지 못해 삽입이 막힌다. `enforce_comment_depth()`(§8) · `handle_new_user()`(§3)와 같은
+형태이고, `search_path = ''`는 definer 함수의 필수 안전장치라 모든 객체를 스키마까지
+적는다.
+
+트리거가 하는 검사는 대상 종류별로 다르다.
+
+| `target_type` | 검사 |
+|---|---|
+| `post` | `posts`에 있고 `deleted_at is null`인가. `author_id`가 신고자면 거부한다 |
+| `comment` | `post_comments`에 있고 `deleted_at is null`인가. `author_id`가 신고자면 거부한다 |
+| `user` | `profiles`에 존재하는가. 자기 자신 여부는 `reports_not_self_user`가 이미 막았다 |
+
+거부 문구는 `enforce_comment_depth()`(§8)처럼 사용자에게 그대로 보여줄 한국어로
+던진다: `신고할 대상이 없습니다` · `내 게시물은 신고할 수 없습니다` ·
+`내 댓글은 신고할 수 없습니다`. 앱이 이 문구들을 화면 메시지로 그대로 매핑하므로
+문구 자체가 인터페이스다.
+
+### RLS
+
+```sql
+alter table public.reports enable row level security;
+
+-- 조회: 본인 신고만. 남이 무엇을 신고했는지는 누구도 볼 수 없다.
+create policy "reports_select_own"
+  on public.reports for select to authenticated
+  using ((select auth.uid()) = reporter_id);
+
+-- 삽입: 본인 것만.
+create policy "reports_insert_own"
+  on public.reports for insert to authenticated
+  with check ((select auth.uid()) = reporter_id);
+```
+
+UPDATE · DELETE 정책은 두지 않는다. 신고는 취소되지 않고, `status` 변경은
+`service_role`(Studio)의 일이다.
+
+### GRANT
+
+```sql
+grant select on public.reports to authenticated;
+grant insert (target_type, target_id, reason, detail)
+  on public.reports to authenticated;
+```
+
+`reporter_id`와 `status`에 INSERT를 **주지 않는 것**이 위조를 막는 방법이다.
+`reporter_id`는 `default auth.uid()`가 채우고 `status`는 항상 `pending`으로
+시작한다 — §2의 "GRANT는 컬럼 단위로 최소한만 준다"와 "소유자 컬럼은 DB가 채운다"를
+그대로 따르는 사례다.
+
+`anon`에는 아무 권한도 주지 않는다. 신고는 로그인한 사용자만 한다.
