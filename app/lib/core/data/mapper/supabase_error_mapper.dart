@@ -95,6 +95,9 @@ abstract final class SupabaseErrorMapper {
     '내 댓글은 신고할 수 없습니다',
   ];
 
+  /// `enforce_comment_depth()` 가 차단 때 던지는 문구.
+  static const _blockMessages = ['차단한 사용자의 게시물에는 댓글을 달 수 없습니다'];
+
   static Failure? _constraintFrom(String raw) {
     if (raw.contains('profiles_nickname_length')) {
       return const Failure.validation(
@@ -143,10 +146,23 @@ abstract final class SupabaseErrorMapper {
     if (raw.contains('reports_not_self_user')) {
       return const Failure.validation(message: '자기 자신은 신고할 수 없습니다');
     }
+    if (raw.contains('blocks_not_self')) {
+      return const Failure.validation(message: '자기 자신은 차단할 수 없습니다');
+    }
+    // 이미 차단한 사용자를 다시 차단하려 할 때 복합 PK(blocker_id, blocked_id)
+    // 위반으로 온다. 이 문구가 사용자에게 보일 일은 거의 없다 — UI 가 이미
+    // '차단 해제' 메뉴를 그리고 있을 것이기 때문이다. 그래도 등록해 둔다.
+    if (raw.contains('blocks_pkey')) {
+      return const Failure.validation(message: '이미 차단한 사용자입니다');
+    }
     // enforce_comment_depth() 와 enforce_report_target() 은 사용자에게 그대로
     // 보여줄 수 있는 한국어 문구로 예외를 던진다. 23514 의 기본 문구("입력값이
     // 조건을 만족하지 않습니다")로 덮으면 무엇이 잘못됐는지가 사라진다.
-    for (final message in [..._commentDepthMessages, ..._reportTargetMessages]) {
+    for (final message in [
+      ..._commentDepthMessages,
+      ..._reportTargetMessages,
+      ..._blockMessages,
+    ]) {
       if (raw.contains(message)) return Failure.validation(message: message);
     }
     return null;

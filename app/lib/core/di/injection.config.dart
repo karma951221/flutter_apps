@@ -70,11 +70,17 @@ import '../../features/reaction/data/repository/reaction_repository_impl.dart'
 import '../../features/reaction/domain/repository/reaction_repository.dart'
     as _i831;
 import '../../features/reaction/domain/usecase/reaction_use_case.dart' as _i650;
+import '../../features/safety/data/datasource/block_data_source.dart' as _i452;
 import '../../features/safety/data/datasource/report_data_source.dart' as _i249;
+import '../../features/safety/data/datasource/supabase_block_data_source.dart'
+    as _i880;
 import '../../features/safety/data/datasource/supabase_report_data_source.dart'
     as _i294;
+import '../../features/safety/data/repository/block_repository_impl.dart'
+    as _i659;
 import '../../features/safety/data/repository/report_repository_impl.dart'
     as _i1002;
+import '../../features/safety/domain/repository/block_repository.dart' as _i892;
 import '../../features/safety/domain/repository/report_repository.dart' as _i29;
 import '../../features/safety/domain/usecase/safety_use_case.dart' as _i762;
 import '../../features/safety/presentation/cubit/report_cubit.dart' as _i347;
@@ -122,11 +128,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i281.ReactionDataSource>(
       () => _i549.SupabaseReactionDataSource(gh<_i454.SupabaseClient>()),
     );
+    gh.lazySingleton<_i452.BlockDataSource>(
+      () => _i880.SupabaseBlockDataSource(gh<_i454.SupabaseClient>()),
+    );
     gh.lazySingleton<_i813.CommentRepository>(
       () => _i742.CommentRepositoryImpl(gh<_i896.CommentDataSource>()),
     );
     gh.lazySingleton<_i692.AuthDataSource>(
       () => _i87.SupabaseAuthDataSource(gh<_i454.SupabaseClient>()),
+    );
+    gh.lazySingleton<_i892.BlockRepository>(
+      () => _i659.BlockRepositoryImpl(gh<_i452.BlockDataSource>()),
     );
     gh.lazySingleton<_i487.PostDataSource>(
       () => _i215.SupabasePostDataSource(
@@ -168,11 +180,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i735.PostRepository>(
       () => _i238.PostRepositoryImpl(gh<_i487.PostDataSource>()),
     );
-    gh.lazySingleton<_i762.SafetyUseCase>(
-      () => _i762.DefaultSafetyUseCase(gh<_i29.ReportRepository>()),
-    );
     gh.lazySingleton<_i944.PostUseCase>(
       () => _i944.DefaultPostUseCase(gh<_i735.PostRepository>()),
+    );
+    gh.lazySingleton<_i762.SafetyUseCase>(
+      () => _i762.DefaultSafetyUseCase(
+        gh<_i29.ReportRepository>(),
+        gh<_i892.BlockRepository>(),
+      ),
     );
     gh.lazySingleton<_i176.AuthUseCase>(
       () => _i176.DefaultAuthUseCase(gh<_i961.AuthRepository>()),

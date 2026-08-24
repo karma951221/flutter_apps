@@ -48,6 +48,50 @@ void main() {
     });
   });
 
+  group('차단(blocks) 제약 변환', () {
+    test('blocks_not_self 제약을 안내로 바꾼다', () {
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(
+          message:
+              'new row for relation "blocks" violates check constraint '
+              '"blocks_not_self"',
+          code: '23514',
+        ),
+      );
+
+      expect(failure, isA<ValidationFailure>());
+      expect((failure as ValidationFailure).message, '자기 자신은 차단할 수 없습니다');
+    });
+
+    test('blocks_pkey 중복 차단을 안내로 바꾼다', () {
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(
+          message:
+              'duplicate key value violates unique constraint "blocks_pkey"',
+          code: '23505',
+        ),
+      );
+
+      expect(failure, isA<ValidationFailure>());
+      expect((failure as ValidationFailure).message, '이미 차단한 사용자입니다');
+    });
+
+    test('enforce_comment_depth() 의 차단 트리거 문구를 그대로 전달한다', () {
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(
+          message: '차단한 사용자의 게시물에는 댓글을 달 수 없습니다',
+          code: '42501',
+        ),
+      );
+
+      expect(failure, isA<ValidationFailure>());
+      expect(
+        (failure as ValidationFailure).message,
+        '차단한 사용자의 게시물에는 댓글을 달 수 없습니다',
+      );
+    });
+  });
+
   group('enforce_report_target() 트리거 문구', () {
     test('대상 없음 문구를 그대로 전달한다', () {
       final failure = SupabaseErrorMapper.map(
