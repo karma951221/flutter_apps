@@ -153,7 +153,7 @@ class PostTile extends StatelessWidget {
                 label: '삭제',
                 isDestructive: true,
               ),
-            if (onReport != null)
+            if (!isMine && onReport != null)
               const AppOverflowMenuItem(
                 value: _PostAction.report,
                 label: '신고',

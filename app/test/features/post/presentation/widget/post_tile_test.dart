@@ -87,4 +87,24 @@ void main() {
 
     expect(find.byIcon(Icons.more_vert), findsNothing);
   });
+
+  testWidgets('내 글이면 onReport 가 있어도 신고는 뜨지 않는다', (tester) async {
+    // isMine 과 onReport 가 어긋난 호출부(버그 있는 콜러)를 가정한 회귀
+    // 테스트. 신고 항목이 뜨는지 여부는 콜백의 유무가 아니라 isMine 이
+    // 최종적으로 판정해야 한다 — CommentTile 과 같은 방어 규칙이다.
+    await _pump(
+      tester,
+      isMine: true,
+      onEdit: () {},
+      onDelete: () {},
+      onReport: () {},
+    );
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    expect(find.text('신고'), findsNothing);
+    expect(find.text('수정'), findsOneWidget);
+    expect(find.text('삭제'), findsOneWidget);
+  });
 }
