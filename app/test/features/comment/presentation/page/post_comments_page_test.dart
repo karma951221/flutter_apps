@@ -109,6 +109,38 @@ void main() {
     expect(find.widgetWithText(TextButton, '답글'), findsNothing);
   });
 
+  testWidgets('남의 댓글 메뉴에는 신고가 있다', (tester) async {
+    stubComments([_comment('1')]);
+
+    await pumpPage(tester);
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    expect(find.text('신고'), findsOneWidget);
+    expect(find.text('삭제'), findsNothing);
+  });
+
+  testWidgets('내 댓글 메뉴에는 삭제가 있고 신고가 없다', (tester) async {
+    stubComments([
+      _comment('1', author: const PostAuthor(id: 'me', nickname: '카르마')),
+    ]);
+
+    await pumpPage(tester);
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    expect(find.text('삭제'), findsOneWidget);
+    expect(find.text('신고'), findsNothing);
+  });
+
+  testWidgets('삭제된 댓글에는 메뉴가 없다', (tester) async {
+    stubComments([_comment('1', deleted: true)]);
+
+    await pumpPage(tester);
+
+    expect(find.byIcon(Icons.more_vert), findsNothing);
+  });
+
   testWidgets('답글이 있는 댓글은 펼치기 버튼을 보여주고 눌러야 읽는다', (tester) async {
     stubComments([_comment('1', replyCount: 2)]);
     when(

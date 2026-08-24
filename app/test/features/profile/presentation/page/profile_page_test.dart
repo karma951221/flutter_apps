@@ -154,6 +154,42 @@ void main() {
     ).called(1);
   });
 
+  testWidgets('타인 프로필 AppBar 에는 신고 메뉴가 있다', (tester) async {
+    when(
+      () => profileUseCase.getProfile('other'),
+    ).thenAnswer((_) async => Ok(_profile('other', '이웃')));
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+
+    await pumpPage(tester, userId: 'other');
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    expect(find.text('신고'), findsOneWidget);
+  });
+
+  testWidgets('내 프로필 AppBar 에는 메뉴가 없다', (tester) async {
+    when(
+      profileUseCase.getMyProfile,
+    ).thenAnswer((_) async => Ok(_profile('me', '카르마')));
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+
+    await pumpPage(tester);
+
+    expect(find.byIcon(Icons.more_vert), findsNothing);
+  });
+
   testWidgets('프로필 조회에 실패하면 다시 시도할 수 있다', (tester) async {
     when(
       profileUseCase.getMyProfile,
