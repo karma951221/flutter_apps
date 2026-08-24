@@ -872,20 +872,23 @@ feat(safety): 게시물·댓글·프로필에 신고 진입점을 붙인다
 - [ ] **Step 3: `docs/testing/README.md`**
 
 트리 그림(12~20행)에 `safety/` 를 더하고, 아래 feature 목록(59~65행)에
-`- [safety](features/safety.md)` 를 더한다.
+safety 항목을 더한다 — 기존 줄들과 같은 형식(`features/safety.md` 를 가리키는 상대 링크)이다.
 
 - [ ] **Step 4: `docs/status.md`**
 
 2단계의 `- [ ] **F7 safety** — 신고 · 차단` 줄을 고친다. **신고만 완료됐고 차단은
 남았다**는 것이 드러나야 한다. 예:
 
-```markdown
-- [x] **F7 safety (신고)** — 폴리모픽 `reports` · 대상 검증 트리거 · 게시물·댓글·프로필
-      진입점 ([계획](features/safety/plan.md) · [기록](features/safety/history.md))
-- [ ] **F7 safety (차단)** — 조회 뷰 두 곳에 양방향 필터
-```
+두 줄로 나눈다. 완료된 줄은 `[x] **F7 safety (신고)**` 로 시작해 폴리모픽 `reports` ·
+대상 검증 트리거 · 게시물·댓글·프로필 진입점을 한 줄로 요약하고, 같은 줄 끝에 계획과
+기록으로 가는 상대 링크를 단다 — 2단계의 다른 항목(F5 · F6)이 쓰는 형식 그대로다.
+남은 줄은 `[ ] **F7 safety (차단)** — 조회 뷰 두 곳에 양방향 필터` 다.
 
 진행 상태는 **이 문서에만** 적는다.
+
+**주의:** 문서 링크 검사(`app/test/convention/documentation_links_test.dart`)는 코드
+펜스 안의 링크도 검사한다. 예시를 적을 때 실제로 존재하지 않는 경로를 링크 문법으로
+쓰면 검사가 깨진다.
 
 - [ ] **Step 5: `docs/features/safety/history.md`**
 
