@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
-import '../../../../design_system/widget/app_button.dart';
+import '../../../../design_system/widget/app_confirm_dialog.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../cubit/delete_account_cubit.dart';
@@ -73,32 +73,17 @@ class _AccountSettingsView extends StatelessWidget {
   /// 없고, 성가심만 더한다.
   Future<void> _confirmDelete(BuildContext context) async {
     final cubit = context.read<DeleteAccountCubit>();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('정말 탈퇴할까요?'),
-        content: const Text(
+    final confirmed = await AppConfirmDialog.show(
+      context,
+      title: '정말 탈퇴할까요?',
+      content:
           '계정과 함께 아래가 모두 삭제되며 되돌릴 수 없습니다.\n\n'
           '· 프로필과 프로필 사진\n'
           '· 작성한 게시물과 사진\n'
           '· 남긴 댓글과 감정표현',
-        ),
-        actions: [
-          AppButton.text(
-            label: '취소',
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-          ),
-          AppButton.text(
-            label: '탈퇴',
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(dialogContext).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-          ),
-        ],
-      ),
+      confirmLabel: '탈퇴',
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     await cubit.submit();
   }
 }

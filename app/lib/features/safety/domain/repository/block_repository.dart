@@ -19,5 +19,5 @@ abstract interface class BlockRepository {
   ///
   /// 양방향 판정(상대가 나를 차단했는가)이 아니다 — 프로필 메뉴가 '차단'과
   /// '차단 해제' 중 무엇을 그릴지만 정하면 되므로 내가 건 차단만 본다.
-  Future<Result<bool>> isBlocked(String userId);
+  Future<Result<bool>> isBlockedByMe(String userId);
 }

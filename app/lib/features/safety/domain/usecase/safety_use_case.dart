@@ -8,7 +8,7 @@ import '../repository/block_repository.dart';
 import '../repository/report_repository.dart';
 import 'scenario/block_user_scenario.dart';
 import 'scenario/get_blocked_users_scenario.dart';
-import 'scenario/is_blocked_scenario.dart';
+import 'scenario/is_blocked_by_me_scenario.dart';
 import 'scenario/submit_report_scenario.dart';
 import 'scenario/unblock_user_scenario.dart';
 
@@ -30,7 +30,7 @@ abstract interface class SafetyUseCase {
   Future<Result<List<BlockedUser>>> getBlockedUsers();
 
   /// 내가 이 사용자를 차단했는지 확인한다.
-  Future<Result<bool>> isBlocked(String userId);
+  Future<Result<bool>> isBlockedByMe(String userId);
 }
 
 @LazySingleton(as: SafetyUseCase)
@@ -62,6 +62,6 @@ class DefaultSafetyUseCase implements SafetyUseCase {
       GetBlockedUsersScenario(_blockRepository)();
 
   @override
-  Future<Result<bool>> isBlocked(String userId) =>
-      IsBlockedScenario(_blockRepository)(userId);
+  Future<Result<bool>> isBlockedByMe(String userId) =>
+      IsBlockedByMeScenario(_blockRepository)(userId);
 }

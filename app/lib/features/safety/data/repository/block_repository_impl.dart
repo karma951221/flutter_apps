@@ -30,6 +30,6 @@ class BlockRepositoryImpl
   });
 
   @override
-  Future<Result<bool>> isBlocked(String userId) =>
-      guard(() => _dataSource.isBlocked(userId));
+  Future<Result<bool>> isBlockedByMe(String userId) =>
+      guard(() => _dataSource.isBlockedByMe(userId));
 }

@@ -11,5 +11,5 @@ abstract interface class BlockDataSource {
   Future<List<BlockedUserDto>> getBlockedUsers();
 
   /// 내가 이 사용자를 차단했는지 여부.
-  Future<bool> isBlocked(String userId);
+  Future<bool> isBlockedByMe(String userId);
 }

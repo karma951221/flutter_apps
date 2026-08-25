@@ -22,6 +22,8 @@ import 'package:daylog/features/profile/domain/entity/profile.dart';
 import 'package:daylog/features/profile/domain/usecase/profile_use_case.dart';
 import 'package:daylog/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:daylog/features/profile/presentation/page/profile_page.dart';
+import 'package:daylog/features/safety/domain/usecase/safety_use_case.dart';
+import 'package:daylog/features/safety/presentation/cubit/block_action_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -34,6 +36,8 @@ class _MockFeedUseCase extends Mock implements FeedUseCase {}
 class _MockReactionUseCase extends Mock implements ReactionUseCase {}
 
 class _MockPostUseCase extends Mock implements PostUseCase {}
+
+class _MockSafetyUseCase extends Mock implements SafetyUseCase {}
 
 class _MockAuthBloc extends MockBloc<AuthEvent, AuthState>
     implements AuthBloc {}
@@ -76,7 +80,10 @@ void main() {
     getIt
       ..registerFactory<ProfileCubit>(() => ProfileCubit(profileUseCase))
       ..registerFactory<FeedCubit>(() => FeedCubit(feedUseCase, _MockReactionUseCase()))
-      ..registerFactory<PostCubit>(() => PostCubit(_MockPostUseCase()));
+      ..registerFactory<PostCubit>(() => PostCubit(_MockPostUseCase()))
+      ..registerFactory<BlockActionCubit>(
+        () => BlockActionCubit(_MockSafetyUseCase()),
+      );
   });
 
   tearDown(getIt.reset);

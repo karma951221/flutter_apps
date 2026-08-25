@@ -32,6 +32,17 @@ class FeedCubit extends Cubit<FeedState> {
   final ReactionUseCase _reactionUseCase;
   String? _authorId;
 
+  /// 이번 조회(`_load()`) 동안 걷어낸 작성자 id 들.
+  ///
+  /// `loadMore()`는 요청을 보낸 뒤에 응답이 돌아오므로, 그 사이에 차단이
+  /// 걸리면 두 군데서 새어 들어올 수 있다 — (a) 진행 중이던 다른 mutator가
+  /// 반영한 값이 `loadMore`가 들고 있던 스냅샷에 덮여 사라지는 것, (b) 요청을
+  /// 이미 보낸 뒤라 응답 페이지 자체에 그 작성자의 글이 그대로 담겨 오는
+  /// 것. `removeAuthor`가 여기 id를 쌓아 두고, `loadMore`가 최신 `state`에
+  /// 병합하면서 들어오는 페이지도 이 집합으로 한 번 더 거른다. 새로
+  /// `_load()`를 하면 서버가 이미 걸러 주므로 비운다.
+  final _hiddenAuthorIds = <String>{};
+
   Future<void> load() async {
     _authorId = null;
     await _load();
@@ -43,6 +54,9 @@ class FeedCubit extends Cubit<FeedState> {
   }
 
   Future<void> _load() async {
+    // 새로 불러오는 순간부터는 서버(양방향 차단 필터)가 이미 걸러 주므로,
+    // 지난 조회 동안 쌓인 걷어냄 목록은 의미가 없다.
+    _hiddenAuthorIds.clear();
     emit(const FeedState());
     final result = await _useCase.getFeedPosts(
       limit: _pageSize,
@@ -81,14 +95,25 @@ class FeedCubit extends Cubit<FeedState> {
     );
     if (isClosed) return;
 
+    // 요청이 날아가 있는 동안 다른 mutator(예: removeAuthor)가 state를 바꿨을
+    // 수 있다. current(요청 전 스냅샷)가 아니라 지금의 state 위에 병합해야
+    // 그 변경을 덮어쓰지 않는다. 요청 자체는 차단 전에 나갔을 수 있으므로
+    // 응답 페이지에도 이미 걷어낸 작성자의 글이 그대로 담겨 올 수 있다 —
+    // 들어오는 페이지도 같은 집합으로 거른다.
+    final latest = state;
     emit(
       result.when(
-        ok: (page) => current.copyWith(
-          items: [...current.items, ...page.items],
+        ok: (page) => latest.copyWith(
+          items: [
+            ...latest.items,
+            ...page.items.where(
+              (item) => !_hiddenAuthorIds.contains(item.author.id),
+            ),
+          ],
           isLoadingMore: false,
           nextCursor: page.nextCursor,
         ),
-        err: (_) => current.copyWith(isLoadingMore: false),
+        err: (_) => latest.copyWith(isLoadingMore: false),
       ),
     );
   }
@@ -137,6 +162,7 @@ class FeedCubit extends Cubit<FeedState> {
   /// 글을 가려주므로(양방향 차단 필터), 여기서는 이미 그려진 항목만 걷어내면
   /// 된다.
   void removeAuthor(String authorId) {
+    _hiddenAuthorIds.add(authorId);
     final current = state;
     if (current.status != FeedStatus.loaded) return;
     emit(

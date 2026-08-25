@@ -7,6 +7,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_button.dart';
+import '../../../../design_system/widget/app_confirm_dialog.dart';
 import '../../../../design_system/widget/app_overflow_menu.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -19,7 +20,7 @@ import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../post/presentation/widget/post_tile.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
 import '../../../safety/domain/entity/report_target.dart';
-import '../../../safety/domain/usecase/safety_use_case.dart';
+import '../../../safety/presentation/cubit/block_action_cubit.dart';
 import '../../../safety/presentation/widget/report_sheet.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
@@ -39,6 +40,7 @@ class ProfilePage extends StatelessWidget {
       BlocProvider(create: (_) => getIt<ProfileCubit>()..load(userId: userId)),
       BlocProvider(create: (_) => getIt<FeedCubit>()),
       BlocProvider(create: (_) => getIt<PostCubit>()),
+      BlocProvider(create: (_) => getIt<BlockActionCubit>()),
     ],
     child: _ProfileView(requestedUserId: userId),
   );
@@ -342,50 +344,37 @@ class _ProfilePostList extends StatelessWidget {
   /// 확인을 받는다 (`account_settings_page` 의 탈퇴 확인과 같은 모양).
   /// 성공하면 이 작성자의 프로필 게시물 목록을 다시 읽는다 — 이제 비어야
   /// 한다. 상대가 나를 차단했는지 여부는 절대 드러내지 않는다.
+  ///
+  /// 실제 차단 호출은 [BlockActionCubit] 이 한다 — 화면은 확인 다이얼로그와
+  /// 성공 후 목록 반영(`refresh`), 스낵바만 소유한다.
   Future<void> _block(BuildContext context, String authorId) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('이 사용자를 차단할까요?'),
-        content: const Text(
-          '차단하면 이 사용자의 게시물과 댓글이 더 이상 보이지 않습니다.',
-        ),
-        actions: [
-          AppButton.text(
-            label: '취소',
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-          ),
-          AppButton.text(
-            label: '차단',
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(dialogContext).colorScheme.error,
-            ),
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-          ),
-        ],
-      ),
+    final confirmed = await AppConfirmDialog.show(
+      context,
+      title: '이 사용자를 차단할까요?',
+      content: '차단하면 이 사용자의 게시물과 댓글이 더 이상 보이지 않습니다.',
+      confirmLabel: '차단',
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
 
     final feed = context.read<FeedCubit>();
-    final result = await getIt<SafetyUseCase>().blockUser(authorId);
+    final blockAction = context.read<BlockActionCubit>();
+    final succeeded = await blockAction.block(authorId);
     if (!context.mounted) return;
 
-    result.when(
-      ok: (_) {
-        feed.refresh();
-        AppSnackBar.show(
-          context,
-          message: '차단했습니다.',
-          type: AppSnackBarType.success,
-        );
-      },
-      err: (failure) => AppSnackBar.show(
+    if (succeeded) {
+      feed.refresh();
+      AppSnackBar.show(
         context,
-        message: failure.message ?? '차단하지 못했습니다.',
+        message: '차단했습니다.',
+        type: AppSnackBarType.success,
+      );
+    } else {
+      AppSnackBar.show(
+        context,
+        message: blockAction.state.failure?.message ?? '차단하지 못했습니다.',
         type: AppSnackBarType.error,
-      ),
-    );
+      );
+    }
   }
 
   Future<void> _confirmDelete(BuildContext context, Post post) async {

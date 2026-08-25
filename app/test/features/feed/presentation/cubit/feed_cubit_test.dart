@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:daylog/core/error/failure.dart';
 import 'package:daylog/core/pagination/cursor_page.dart';
@@ -278,6 +280,138 @@ void main() {
     build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) => cubit.removeAuthor('author-id'),
     expect: () => <FeedState>[],
+  );
+
+  test(
+    '더 불러오는 중에 차단하면 그 사이 응답이 와도 다시 나타나지 않는다 '
+    '(stale snapshot 병합 버그)',
+    () async {
+      // loadMore 는 요청을 보내기 '전'의 state 를 캡처해 두었다가 응답이
+      // 오면 그 캡처 위에 이어붙이는 방식이었다. removeAuthor 가 그 요청이
+      // 떠 있는 동안 실행되면, 캡처된 스냅샷에는 아직 차단된 작성자의 글이
+      // 남아 있어 응답을 이어붙일 때 되살아났다 — 이 테스트는 그 스냅샷이
+      // 아니라 최신 state 위에 병합해야 통과한다.
+      final loadMoreCompleter = Completer<Result<CursorPage<FeedPost>>>();
+
+      when(
+        () => useCase.getFeedPosts(limit: any(named: 'limit'), cursor: null),
+      ).thenAnswer(
+        (_) async => Ok(
+          CursorPage<FeedPost>(
+            items: [
+              FeedPost(
+                post: _post('1', authorId: 'blocked-author'),
+                author: _author(id: 'blocked-author', nickname: '카르마'),
+              ),
+              FeedPost(
+                post: _post('2', authorId: 'other-author'),
+                author: _author(id: 'other-author', nickname: '이웃'),
+              ),
+            ],
+            nextCursor: 'cursor-1',
+          ),
+        ),
+      );
+      when(
+        () => useCase.getFeedPosts(
+          limit: any(named: 'limit'),
+          cursor: 'cursor-1',
+        ),
+      ).thenAnswer((_) => loadMoreCompleter.future);
+
+      final cubit = FeedCubit(useCase, reactionUseCase);
+      await cubit.load();
+      expect(cubit.state.items.map((item) => item.id), ['1', '2']);
+
+      // loadMore 요청을 띄운 채로 둔다 — 아직 완료하지 않는다.
+      final loadMoreFuture = cubit.loadMore();
+
+      // 요청이 떠 있는 동안 차단이 들어온다. 이 mutator 는 지금의 state 에서
+      // 곧바로 blocked-author 항목을 걷어낸다.
+      cubit.removeAuthor('blocked-author');
+      expect(cubit.state.items.map((item) => item.id), ['2']);
+
+      // 이제 loadMore 응답이 도착한다. 이 응답 페이지 자체에는 차단된
+      // 작성자가 없다 — 순수하게 stale snapshot 병합 문제만 검증한다.
+      loadMoreCompleter.complete(
+        Ok(
+          CursorPage<FeedPost>(
+            items: [
+              FeedPost(
+                post: _post('3', authorId: 'other-author'),
+                author: _author(id: 'other-author', nickname: '이웃'),
+              ),
+            ],
+          ),
+        ),
+      );
+      await loadMoreFuture;
+
+      expect(cubit.state.items.map((item) => item.id), ['2', '3']);
+    },
+  );
+
+  test(
+    '더 불러오는 중에 차단하면 응답 페이지에 실린 차단된 작성자의 글도 걸러낸다 '
+    '(요청이 차단보다 먼저 나간 경우)',
+    () async {
+      // loadMore 의 요청은 차단이 걸리기 전에 이미 서버로 나갔을 수 있다 —
+      // 그러면 서버가 아직 필터링하지 못한 그 작성자의 글이 응답 페이지 자체에
+      // 그대로 담겨 온다. state 를 최신으로 병합하는 것만으로는 이 경우를
+      // 막지 못한다 — 들어오는 페이지도 걷어낸 작성자 집합으로 걸러야 한다.
+      final loadMoreCompleter = Completer<Result<CursorPage<FeedPost>>>();
+
+      when(
+        () => useCase.getFeedPosts(limit: any(named: 'limit'), cursor: null),
+      ).thenAnswer(
+        (_) async => Ok(
+          CursorPage<FeedPost>(
+            items: [
+              FeedPost(
+                post: _post('1', authorId: 'blocked-author'),
+                author: _author(id: 'blocked-author', nickname: '카르마'),
+              ),
+            ],
+            nextCursor: 'cursor-1',
+          ),
+        ),
+      );
+      when(
+        () => useCase.getFeedPosts(
+          limit: any(named: 'limit'),
+          cursor: 'cursor-1',
+        ),
+      ).thenAnswer((_) => loadMoreCompleter.future);
+
+      final cubit = FeedCubit(useCase, reactionUseCase);
+      await cubit.load();
+
+      final loadMoreFuture = cubit.loadMore();
+      cubit.removeAuthor('blocked-author');
+      expect(cubit.state.items, isEmpty);
+
+      // 응답 페이지 자체에 차단된 작성자의 글이 하나 더 실려 온다 — 요청이
+      // 차단보다 먼저 나갔다는 뜻이다.
+      loadMoreCompleter.complete(
+        Ok(
+          CursorPage<FeedPost>(
+            items: [
+              FeedPost(
+                post: _post('2', authorId: 'blocked-author'),
+                author: _author(id: 'blocked-author', nickname: '카르마'),
+              ),
+              FeedPost(
+                post: _post('3', authorId: 'other-author'),
+                author: _author(id: 'other-author', nickname: '이웃'),
+              ),
+            ],
+          ),
+        ),
+      );
+      await loadMoreFuture;
+
+      expect(cubit.state.items.map((item) => item.id), ['3']);
+    },
   );
 
   blocTest<FeedCubit, FeedState>(

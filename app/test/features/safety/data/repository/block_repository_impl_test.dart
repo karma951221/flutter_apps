@@ -119,11 +119,11 @@ void main() {
     });
   });
 
-  group('isBlocked', () {
+  group('isBlockedByMe', () {
     test('data source 의 결과를 그대로 전달한다', () async {
-      when(() => dataSource.isBlocked('user-1')).thenAnswer((_) async => true);
+      when(() => dataSource.isBlockedByMe('user-1')).thenAnswer((_) async => true);
 
-      final result = await repository.isBlocked('user-1');
+      final result = await repository.isBlockedByMe('user-1');
 
       expect(result, isA<Ok<bool>>());
       expect((result as Ok<bool>).value, isTrue);
