@@ -227,9 +227,12 @@ auth.uid()`인 행만 보여준다: 내가 **건** 차단이다. "상대가 나�
 내 권한으로는 읽을 수 없는 행을 봐야 하므로, `invoker`로 두면 이 조건은 항상
 `false`가 되어 판정이 반쪽만 동작한다.
 
-`stable`이라 한 질의 안에서 같은 인자에 대해 한 번만 평가된다. `auth.uid()`는
-세션 GUC 기반이라 `definer` 함수 안에서도 **조회자 기준**으로 동작한다 —
-`my_reaction`(§6)과 같은 근거다.
+`stable`은 **같은 문장(statement) 안에서 결과가 바뀌지 않는다**는 보장일 뿐,
+같은 인자에 대해 한 번만 평가되는 메모이제이션을 약속하지 않는다 — 실제로는
+`posts_select_visible`·`post_comments_select_visible` 정책과
+`post_comments_visible` 뷰 모두에서 **행마다 다시 평가된다**(2026-08-25 Task 5
+검증에서 실제 REST 호출로 확인). `auth.uid()`는 세션 GUC 기반이라 `definer`
+함수 안에서도 **조회자 기준**으로 동작한다 — `my_reaction`(§6)과 같은 근거다.
 
 비로그인(`auth.uid()`가 `null`)이면 두 `or` 갈래 모두 `false`라 `exists`가
 `false`를 돌려준다 — 비로그인 조회는 차단 필터의 영향을 받지 않는다.
@@ -1060,6 +1063,18 @@ create policy "post_reactions_delete_own"
 `comment_reactions` 의 `exists` 는 `post_comments` 를 보고 `deleted_at is null` 을
 확인한다. **삭제된 게시물·댓글에는 반응을 남길 수 없고, 그 판단은 앱이 아니라 DB 가
 한다.**
+
+**F7 차단(§13)의 부작용:** 이 `exists` 서브쿼리는 `posts`·`post_comments` 를 그대로
+조회하므로 `posts_select_visible`·`post_comments_select_visible` 정책(§5·§8, 둘 다
+`is_blocked_with()`를 건다)의 적용을 그대로 받는다. 그 결과 **차단 관계에서는
+감정표현 삽입도 함께 막힌다** — [차단 계획](features/safety/plan-block.md)은
+"상호작용 차단은 댓글 삽입까지만, 감정표현은 막지 않는다"고 결정했지만, 실제로는
+차단된 대상의 글이 `exists`에 아예 잡히지 않아 반응 삽입이 `42501`로 거부된다.
+2026-08-25 Task 5 검증에서 REST로 확인했다(B가 차단한 A의 게시물에 좋아요 삽입 →
+`403`, `new row violates row-level security policy for table "post_reactions"`).
+사용자가 볼 수 있는 문제는 아니다 — 애초에 보이지 않는 글에는 반응할 UI 자체가
+없다. 다만 스펙보다 DB 가 더 엄격해진 것이라 다음에 이 자리를 보는 사람이 버그로
+오인하지 않도록 남긴다.
 
 정책 안에서 다른 테이블(`posts` · `post_comments`)을 참조하는 것은 §11의 42P17 과
 무관하다. 재귀로 판정되는 것은 **정책이 걸린 그 테이블 자신**을 다시 참조할 때다.
