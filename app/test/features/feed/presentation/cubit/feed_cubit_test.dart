@@ -237,6 +237,50 @@ void main() {
   );
 
   blocTest<FeedCubit, FeedState>(
+    '차단한 작성자의 게시물만 목록에서 걷어낸다',
+    setUp: () => when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+      ),
+    ).thenAnswer(
+      (_) async => Ok(
+        CursorPage<FeedPost>(
+          items: [
+            FeedPost(
+              post: _post('1', authorId: 'blocked-author'),
+              author: _author(id: 'blocked-author', nickname: '카르마'),
+            ),
+            FeedPost(
+              post: _post('2', authorId: 'other-author'),
+              author: _author(id: 'other-author', nickname: '이웃'),
+            ),
+            FeedPost(
+              post: _post('3', authorId: 'blocked-author'),
+              author: _author(id: 'blocked-author', nickname: '카르마'),
+            ),
+          ],
+        ),
+      ),
+    ),
+    build: () => FeedCubit(useCase, reactionUseCase),
+    act: (cubit) async {
+      await cubit.load();
+      cubit.removeAuthor('blocked-author');
+    },
+    verify: (cubit) {
+      expect(cubit.state.items.map((item) => item.id), ['2']);
+    },
+  );
+
+  blocTest<FeedCubit, FeedState>(
+    '목록을 읽기 전의 차단 반영은 무시한다',
+    build: () => FeedCubit(useCase, reactionUseCase),
+    act: (cubit) => cubit.removeAuthor('author-id'),
+    expect: () => <FeedState>[],
+  );
+
+  blocTest<FeedCubit, FeedState>(
     '작성자 필터 조회는 첫 페이지도 다음 페이지도 그 작성자로 요청한다',
     setUp: () {
       when(

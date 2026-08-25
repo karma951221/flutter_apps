@@ -19,6 +19,7 @@ import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../post/presentation/widget/post_tile.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
 import '../../../safety/domain/entity/report_target.dart';
+import '../../../safety/domain/usecase/safety_use_case.dart';
 import '../../../safety/presentation/widget/report_sheet.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
@@ -288,6 +289,9 @@ class _ProfilePostList extends StatelessWidget {
             onReport: isMine
                 ? null
                 : () => _report(context, ReportTarget.post(post.id)),
+            onBlock: isMine
+                ? null
+                : () => _block(context, item.author.id),
             onReaction: (type) => _react(context, post.id, type),
             onComment: () => _openComments(context, item),
           );
@@ -332,6 +336,56 @@ class _ProfilePostList extends StatelessWidget {
       extra: post,
     );
     if (updated != null) feed.replacePost(updated);
+  }
+
+  /// 차단은 되돌릴 수 없이 상대의 글을 통째로 지운다 — 삭제와 같은 무게로
+  /// 확인을 받는다 (`account_settings_page` 의 탈퇴 확인과 같은 모양).
+  /// 성공하면 이 작성자의 프로필 게시물 목록을 다시 읽는다 — 이제 비어야
+  /// 한다. 상대가 나를 차단했는지 여부는 절대 드러내지 않는다.
+  Future<void> _block(BuildContext context, String authorId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('이 사용자를 차단할까요?'),
+        content: const Text(
+          '차단하면 이 사용자의 게시물과 댓글이 더 이상 보이지 않습니다.',
+        ),
+        actions: [
+          AppButton.text(
+            label: '취소',
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+          ),
+          AppButton.text(
+            label: '차단',
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final feed = context.read<FeedCubit>();
+    final result = await getIt<SafetyUseCase>().blockUser(authorId);
+    if (!context.mounted) return;
+
+    result.when(
+      ok: (_) {
+        feed.refresh();
+        AppSnackBar.show(
+          context,
+          message: '차단했습니다.',
+          type: AppSnackBarType.success,
+        );
+      },
+      err: (failure) => AppSnackBar.show(
+        context,
+        message: failure.message ?? '차단하지 못했습니다.',
+        type: AppSnackBarType.error,
+      ),
+    );
   }
 
   Future<void> _confirmDelete(BuildContext context, Post post) async {

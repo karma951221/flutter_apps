@@ -21,6 +21,7 @@ Future<void> _pump(
   VoidCallback? onEdit,
   VoidCallback? onDelete,
   VoidCallback? onReport,
+  VoidCallback? onBlock,
 }) => tester.pumpWidget(
   MaterialApp(
     theme: AppTheme.light(),
@@ -33,6 +34,7 @@ Future<void> _pump(
         onEdit: onEdit,
         onDelete: onDelete,
         onReport: onReport,
+        onBlock: onBlock,
       ),
     ),
   ),
@@ -50,13 +52,14 @@ void main() {
     expect(find.text('신고'), findsNothing);
   });
 
-  testWidgets('남의 글에는 신고가 뜨고 수정 · 삭제가 없다', (tester) async {
-    await _pump(tester, isMine: false, onReport: () {});
+  testWidgets('남의 글에는 신고 · 차단이 뜨고 수정 · 삭제가 없다', (tester) async {
+    await _pump(tester, isMine: false, onReport: () {}, onBlock: () {});
 
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
 
     expect(find.text('신고'), findsOneWidget);
+    expect(find.text('이 사용자 차단'), findsOneWidget);
     expect(find.text('수정'), findsNothing);
     expect(find.text('삭제'), findsNothing);
   });
@@ -79,22 +82,24 @@ void main() {
     expect(find.byIcon(Icons.more_vert), findsNothing);
   });
 
-  testWidgets('내 글이면 onReport 가 있어도 신고는 뜨지 않는다', (tester) async {
-    // isMine 과 onReport 가 어긋난 호출부(버그 있는 콜러)를 가정한 회귀
-    // 테스트. 신고 항목이 뜨는지 여부는 콜백의 유무가 아니라 isMine 이
-    // 최종적으로 판정해야 한다 — CommentTile 과 같은 방어 규칙이다.
+  testWidgets('내 글이면 onReport · onBlock 이 있어도 신고 · 차단은 뜨지 않는다', (tester) async {
+    // isMine 과 onReport/onBlock 이 어긋난 호출부(버그 있는 콜러)를 가정한
+    // 회귀 테스트. 신고·차단 항목이 뜨는지 여부는 콜백의 유무가 아니라
+    // isMine 이 최종적으로 판정해야 한다 — CommentTile 과 같은 방어 규칙이다.
     await _pump(
       tester,
       isMine: true,
       onEdit: () {},
       onDelete: () {},
       onReport: () {},
+      onBlock: () {},
     );
 
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
 
     expect(find.text('신고'), findsNothing);
+    expect(find.text('이 사용자 차단'), findsNothing);
     expect(find.text('수정'), findsOneWidget);
     expect(find.text('삭제'), findsOneWidget);
   });
@@ -109,6 +114,7 @@ void main() {
       onEdit: () {},
       onDelete: () {},
       onReport: () {},
+      onBlock: () {},
     );
 
     await tester.tap(find.byIcon(Icons.more_vert));
@@ -117,5 +123,18 @@ void main() {
     expect(find.text('수정'), findsNothing);
     expect(find.text('삭제'), findsNothing);
     expect(find.text('신고'), findsOneWidget);
+    expect(find.text('이 사용자 차단'), findsOneWidget);
+  });
+
+  testWidgets('차단을 고르면 onBlock 이 불린다', (tester) async {
+    var blocked = false;
+    await _pump(tester, isMine: false, onBlock: () => blocked = true);
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('이 사용자 차단'));
+    await tester.pumpAndSettle();
+
+    expect(blocked, isTrue);
   });
 }

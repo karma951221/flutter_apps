@@ -27,7 +27,7 @@ import '../../domain/entity/post_image.dart';
 /// 가 소유하고 여기서 import 한다 (아키텍처 규칙 ⑥ — 소유자가 명확한 쪽에 둔다).
 ///
 /// 우측 상단 메뉴는 내 글일 때만 그리는 것이 아니다 — 내 글은 수정·삭제를,
-/// 남의 글은 신고를 보여준다. 콜백이 모두 null 이면 [AppOverflowMenu] 가
+/// 남의 글은 신고·차단을 보여준다. 콜백이 모두 null 이면 [AppOverflowMenu] 가
 /// 스스로 아무것도 그리지 않는다.
 class PostTile extends StatelessWidget {
   const PostTile({
@@ -38,6 +38,7 @@ class PostTile extends StatelessWidget {
     this.onEdit,
     this.onDelete,
     this.onReport,
+    this.onBlock,
     this.reactions = const ReactionSummary(),
     this.commentCount = 0,
     this.onReaction,
@@ -52,6 +53,10 @@ class PostTile extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onReport;
+
+  /// 이 게시물의 작성자를 차단하는 동작. 남의 글에만 뜨는 것은 신고 항목과
+  /// 같은 방어([!isMine])를 받는다.
+  final VoidCallback? onBlock;
 
   /// 감정 집계와 내 반응. 목록 뷰가 항목과 함께 내려준 값이다.
   final ReactionSummary reactions;
@@ -140,6 +145,7 @@ class PostTile extends StatelessWidget {
             _PostAction.edit => onEdit?.call(),
             _PostAction.delete => onDelete?.call(),
             _PostAction.report => onReport?.call(),
+            _PostAction.block => onBlock?.call(),
           },
           items: [
             if (isMine && onEdit != null)
@@ -152,6 +158,12 @@ class PostTile extends StatelessWidget {
               ),
             if (!isMine && onReport != null)
               const AppOverflowMenuItem(value: _PostAction.report, label: '신고'),
+            if (!isMine && onBlock != null)
+              const AppOverflowMenuItem(
+                value: _PostAction.block,
+                label: '이 사용자 차단',
+                isDestructive: true,
+              ),
           ],
         ),
       ),
@@ -168,7 +180,7 @@ class PostTile extends StatelessWidget {
   }
 }
 
-enum _PostAction { edit, delete, report }
+enum _PostAction { edit, delete, report, block }
 
 /// 게시물에 붙은 사진.
 ///

@@ -131,6 +131,23 @@ class FeedCubit extends Cubit<FeedState> {
     );
   }
 
+  /// 차단한 작성자의 게시물을 모두 목록에서 뺀다.
+  ///
+  /// 다시 읽지 않는다 — 재조회는 스크롤 위치를 지운다. 서버가 이미 그 작성자의
+  /// 글을 가려주므로(양방향 차단 필터), 여기서는 이미 그려진 항목만 걷어내면
+  /// 된다.
+  void removeAuthor(String authorId) {
+    final current = state;
+    if (current.status != FeedStatus.loaded) return;
+    emit(
+      current.copyWith(
+        items: current.items
+            .where((item) => item.author.id != authorId)
+            .toList(),
+      ),
+    );
+  }
+
   /// 반응 결과를 해당 항목에만 반영한다.
   ///
   /// 낙관적 업데이트의 두 방향이 모두 이 메서드를 쓴다 — 탭 직후에는 계산된
