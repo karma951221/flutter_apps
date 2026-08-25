@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BlockActionState {
 
- bool get isBlocking; Failure? get failure;
+ bool get isBlocking; bool? get isBlocked; bool get isLoadingStatus; Failure? get failure;
 /// Create a copy of BlockActionState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $BlockActionStateCopyWith<BlockActionState> get copyWith => _$BlockActionStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BlockActionState&&(identical(other.isBlocking, isBlocking) || other.isBlocking == isBlocking)&&(identical(other.failure, failure) || other.failure == failure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BlockActionState&&(identical(other.isBlocking, isBlocking) || other.isBlocking == isBlocking)&&(identical(other.isBlocked, isBlocked) || other.isBlocked == isBlocked)&&(identical(other.isLoadingStatus, isLoadingStatus) || other.isLoadingStatus == isLoadingStatus)&&(identical(other.failure, failure) || other.failure == failure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,isBlocking,failure);
+int get hashCode => Object.hash(runtimeType,isBlocking,isBlocked,isLoadingStatus,failure);
 
 @override
 String toString() {
-  return 'BlockActionState(isBlocking: $isBlocking, failure: $failure)';
+  return 'BlockActionState(isBlocking: $isBlocking, isBlocked: $isBlocked, isLoadingStatus: $isLoadingStatus, failure: $failure)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $BlockActionStateCopyWith<$Res>  {
   factory $BlockActionStateCopyWith(BlockActionState value, $Res Function(BlockActionState) _then) = _$BlockActionStateCopyWithImpl;
 @useResult
 $Res call({
- bool isBlocking, Failure? failure
+ bool isBlocking, bool isLoadingStatus, bool? isBlocked, Failure? failure
 });
 
 
@@ -62,10 +62,12 @@ class _$BlockActionStateCopyWithImpl<$Res>
 
 /// Create a copy of BlockActionState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? isBlocking = null,Object? failure = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? isBlocking = null,Object? isLoadingStatus = null,Object? isBlocked = freezed,Object? failure = freezed,}) {
   return _then(BlockActionState(
 isBlocking: null == isBlocking ? _self.isBlocking : isBlocking // ignore: cast_nullable_to_non_nullable
-as bool,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
+as bool,isLoadingStatus: null == isLoadingStatus ? _self.isLoadingStatus : isLoadingStatus // ignore: cast_nullable_to_non_nullable
+as bool,isBlocked: freezed == isBlocked ? _self.isBlocked : isBlocked // ignore: cast_nullable_to_non_nullable
+as bool?,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
 as Failure?,
   ));
 }

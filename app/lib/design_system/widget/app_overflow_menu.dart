@@ -17,12 +17,14 @@ class AppOverflowMenu<T> extends StatelessWidget {
     required this.items,
     required this.onSelected,
     this.tooltip = '더보기',
+    this.enabled = true,
     super.key,
   });
 
   final List<AppOverflowMenuItem<T>> items;
   final ValueChanged<T> onSelected;
   final String tooltip;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +38,7 @@ class AppOverflowMenu<T> extends StatelessWidget {
       tooltip: tooltip,
       icon: const Icon(Icons.more_vert),
       style: IconButton.styleFrom(visualDensity: VisualDensity.compact),
-      onSelected: onSelected,
+      onSelected: enabled ? onSelected : null,
       itemBuilder: (_) => [
         for (final item in items)
           PopupMenuItem(

@@ -65,11 +65,16 @@ FeedPost _item(String id, String authorId, String nickname) => FeedPost(
 void main() {
   late _MockProfileUseCase profileUseCase;
   late _MockFeedUseCase feedUseCase;
+  late _MockSafetyUseCase safetyUseCase;
   late _MockAuthBloc authBloc;
 
   setUp(() {
     profileUseCase = _MockProfileUseCase();
     feedUseCase = _MockFeedUseCase();
+    safetyUseCase = _MockSafetyUseCase();
+    when(
+      () => safetyUseCase.isBlockedByMe(any()),
+    ).thenAnswer((_) async => const Ok(false));
     authBloc = _MockAuthBloc();
     whenListen(
       authBloc,
@@ -79,10 +84,12 @@ void main() {
 
     getIt
       ..registerFactory<ProfileCubit>(() => ProfileCubit(profileUseCase))
-      ..registerFactory<FeedCubit>(() => FeedCubit(feedUseCase, _MockReactionUseCase()))
+      ..registerFactory<FeedCubit>(
+        () => FeedCubit(feedUseCase, _MockReactionUseCase()),
+      )
       ..registerFactory<PostCubit>(() => PostCubit(_MockPostUseCase()))
       ..registerFactory<BlockActionCubit>(
-        () => BlockActionCubit(_MockSafetyUseCase()),
+        () => BlockActionCubit(safetyUseCase),
       );
   });
 
@@ -172,11 +179,63 @@ void main() {
         authorId: any(named: 'authorId'),
       ),
     ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+    when(
+      () => safetyUseCase.isBlockedByMe('other'),
+    ).thenAnswer((_) async => const Ok(false));
 
     await pumpPage(tester, userId: 'other');
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
 
+    expect(find.text('신고'), findsOneWidget);
+    expect(find.text('차단'), findsOneWidget);
+    expect(find.text('차단 해제'), findsNothing);
+  });
+
+  testWidgets('이미 차단한 타인 프로필은 차단 해제만 보인다', (tester) async {
+    when(
+      () => profileUseCase.getProfile('other'),
+    ).thenAnswer((_) async => Ok(_profile('other', '이웃')));
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+    when(
+      () => safetyUseCase.isBlockedByMe('other'),
+    ).thenAnswer((_) async => const Ok(true));
+
+    await pumpPage(tester, userId: 'other');
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    expect(find.text('차단'), findsNothing);
+    expect(find.text('차단 해제'), findsOneWidget);
+  });
+
+  testWidgets('차단 상태 조회에 실패하면 차단 메뉴를 숨긴다', (tester) async {
+    when(
+      () => profileUseCase.getProfile('other'),
+    ).thenAnswer((_) async => Ok(_profile('other', '이웃')));
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+    when(
+      () => safetyUseCase.isBlockedByMe('other'),
+    ).thenAnswer((_) async => const Err(Failure.network()));
+
+    await pumpPage(tester, userId: 'other');
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    expect(find.text('차단'), findsNothing);
+    expect(find.text('차단 해제'), findsNothing);
     expect(find.text('신고'), findsOneWidget);
   });
 
@@ -195,6 +254,80 @@ void main() {
     await pumpPage(tester);
 
     expect(find.byIcon(Icons.more_vert), findsNothing);
+  });
+
+  testWidgets('차단은 확인 뒤 실행하고 프로필 게시물을 다시 읽는다', (tester) async {
+    when(
+      () => profileUseCase.getProfile('other'),
+    ).thenAnswer((_) async => Ok(_profile('other', '이웃')));
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+    when(
+      () => safetyUseCase.isBlockedByMe('other'),
+    ).thenAnswer((_) async => const Ok(false));
+    when(
+      () => safetyUseCase.blockUser('other'),
+    ).thenAnswer((_) async => const Ok(null));
+
+    await pumpPage(tester, userId: 'other');
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('차단'));
+    await tester.pumpAndSettle();
+
+    verifyNever(() => safetyUseCase.blockUser(any()));
+    await tester.tap(find.text('차단'));
+    await tester.pumpAndSettle();
+
+    verify(() => safetyUseCase.blockUser('other')).called(1);
+    verify(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: null,
+        authorId: 'other',
+      ),
+    ).called(2);
+  });
+
+  testWidgets('차단 해제 뒤 프로필 게시물을 다시 읽는다', (tester) async {
+    when(
+      () => profileUseCase.getProfile('other'),
+    ).thenAnswer((_) async => Ok(_profile('other', '이웃')));
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+    when(
+      () => safetyUseCase.isBlockedByMe('other'),
+    ).thenAnswer((_) async => const Ok(true));
+    when(
+      () => safetyUseCase.unblockUser('other'),
+    ).thenAnswer((_) async => const Ok(null));
+
+    await pumpPage(tester, userId: 'other');
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('차단 해제'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('차단 해제'));
+    await tester.pumpAndSettle();
+
+    verify(() => safetyUseCase.unblockUser('other')).called(1);
+    verify(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: null,
+        authorId: 'other',
+      ),
+    ).called(2);
   });
 
   testWidgets('프로필 조회에 실패하면 다시 시도할 수 있다', (tester) async {

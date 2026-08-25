@@ -2,8 +2,7 @@
 
 > [문서 허브](../../README.md) · [기획 F7](../../overview.md) · [스키마](../../schema.md) · [아키텍처](../../architecture.md) · [신고 계획](plan.md)
 
-> 상태: **완료 (DB·백엔드).** 프로필 AppBar 메뉴(차단/차단 해제) 진입점은 별도
-> workstream과의 생성 파일 충돌로 Task 3b로 미뤄졌다 — [구현 기록](history.md) 참고 ·
+> 상태: **완료.** ·
 > 작성 2026-08-25 · 검증 2026-08-25
 > 진행 상태의 단일 기준은 [진행 현황](../../status.md)이다.
 
@@ -254,7 +253,7 @@ features/safety/
 
 | 화면 | 변경 |
 |---|---|
-| `profile_page` | AppBar 메뉴에 차단 / 차단 해제 추가 (신고 옆). `ProfileState` 에 `isBlockedByMe` 추가 |
+| `profile_page` | AppBar 메뉴에 차단 / 차단 해제 추가 (신고 옆). `BlockActionCubit`이 내가 건 차단 상태를 소유 |
 | `post_tile` | 남의 글 메뉴에 '이 사용자 차단' 추가 |
 | `feed_page` · 프로필 목록 | 차단 성공 시 그 작성자의 항목을 목록에서 걷어낸다 |
 | `settings_page` | '차단한 사용자' 행 추가 → `/settings/blocked` |
@@ -299,7 +298,7 @@ Task 5(2026-08-25)에서 사용자 A·B 의 실제 JWT로 REST(PostgREST)에 직
 - [x] `blocker_id` 를 위조한 삽입이 거부된다 (`403`, `42501`, INSERT GRANT 없음)
 - [x] 남의 차단 목록은 조회되지 않는다 (B가 `blocks` 조회 → `[]`, `blocks_select_own`)
 - [x] 차단 해제하면 양쪽 모두 다시 보인다 (delete 후 양쪽 JWT 재조회로 확인, `comment_count` 도 3으로 복구)
-- [x] 차단한 사용자의 프로필은 여전히 열리고 메뉴가 '차단 해제'로 바뀐다 (DB: 차단 상태에서도 `profiles` 행이 그대로 조회됨 — 화면의 메뉴 전환 자체는 Task 3b로 미뤄짐, [구현 기록](history.md))
+- [x] 차단한 사용자의 프로필은 여전히 열리고 메뉴가 '차단 해제'로 바뀐다 (DB: 차단 상태에서도 `profiles` 행이 그대로 조회됨, 화면은 `BlockActionCubit.isBlocked`로 메뉴를 전환)
 - [x] 비로그인 조회가 차단 필터의 영향을 받지 않는다 (anon 키로 A·B 게시물 동시 조회 → 둘 다 보임, 차단이 걸린 상태에서 확인)
 
 ## F8(팔로우) 이 다시 도출하지 않도록 남기는 결정 (2026-08-25 전체 브랜치 검토)

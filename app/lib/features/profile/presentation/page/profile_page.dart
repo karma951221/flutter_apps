@@ -21,6 +21,7 @@ import '../../../post/presentation/widget/post_tile.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
 import '../../../safety/domain/entity/report_target.dart';
 import '../../../safety/presentation/cubit/block_action_cubit.dart';
+import '../../../safety/presentation/cubit/block_action_state.dart';
 import '../../../safety/presentation/widget/report_sheet.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
@@ -68,8 +69,13 @@ class _ProfileView extends StatelessWidget {
           listenWhen: (previous, current) =>
               previous.profile?.id != current.profile?.id &&
               current.profile != null,
-          listener: (context, state) =>
-              context.read<FeedCubit>().loadForAuthor(state.profile!.id),
+          listener: (context, state) {
+            final profile = state.profile!;
+            context.read<FeedCubit>().loadForAuthor(profile.id);
+            if (!isMine) {
+              context.read<BlockActionCubit>().loadStatus(profile.id);
+            }
+          },
         ),
         // 하단 내비게이션 셸이 이 화면을 살려 두므로, 설정에서 프로필을 고치고
         // 탭으로 돌아오면 옛 값이 그대로 남는다. 세션 스냅샷이 바뀌는 것을
@@ -95,20 +101,47 @@ class _ProfileView extends StatelessWidget {
           title: Text(isMine ? '프로필' : '사용자 프로필'),
           actions: [
             if (!isMine && loadedProfile != null)
-              AppOverflowMenu<_ProfileAction>(
-                tooltip: '프로필 메뉴',
-                onSelected: (action) => switch (action) {
-                  _ProfileAction.report => _report(
-                    context,
-                    ReportTarget.user(loadedProfile.id),
-                  ),
-                },
-                items: const [
-                  AppOverflowMenuItem(
-                    value: _ProfileAction.report,
-                    label: '신고',
-                  ),
-                ],
+              BlocBuilder<BlockActionCubit, BlockActionState>(
+                builder: (context, blockState) =>
+                    AppOverflowMenu<_ProfileAction>(
+                      tooltip: '프로필 메뉴',
+                      enabled: !blockState.isBlocking,
+                      onSelected: (action) => switch (action) {
+                        _ProfileAction.block => _blockProfile(
+                          context,
+                          loadedProfile.id,
+                        ),
+                        _ProfileAction.unblock => _unblockProfile(
+                          context,
+                          loadedProfile.id,
+                        ),
+                        _ProfileAction.report => _report(
+                          context,
+                          ReportTarget.user(loadedProfile.id),
+                        ),
+                      },
+                      items: [
+                        // 조회 실패 또는 조회 전에는 메뉴를 숨긴다. 이미 차단한
+                        // 사용자에게 '차단'을 권하는 것보다 잘못된 동작을 막는다.
+                        if (!blockState.isLoadingStatus &&
+                            blockState.isBlocked == false)
+                          const AppOverflowMenuItem(
+                            value: _ProfileAction.block,
+                            label: '차단',
+                            isDestructive: true,
+                          ),
+                        if (!blockState.isLoadingStatus &&
+                            blockState.isBlocked == true)
+                          const AppOverflowMenuItem(
+                            value: _ProfileAction.unblock,
+                            label: '차단 해제',
+                          ),
+                        const AppOverflowMenuItem(
+                          value: _ProfileAction.report,
+                          label: '신고',
+                        ),
+                      ],
+                    ),
               ),
           ],
         ),
@@ -215,7 +248,61 @@ class _ProfileView extends StatelessWidget {
   }
 }
 
-enum _ProfileAction { report }
+enum _ProfileAction { block, unblock, report }
+
+Future<void> _blockProfile(BuildContext context, String userId) async {
+  final confirmed = await AppConfirmDialog.show(
+    context,
+    title: '이 사용자를 차단할까요?',
+    content: '차단하면 이 사용자의 게시물과 댓글이 더 이상 보이지 않습니다.',
+    confirmLabel: '차단',
+  );
+  if (!confirmed || !context.mounted) return;
+
+  final feed = context.read<FeedCubit>();
+  final action = context.read<BlockActionCubit>();
+  final succeeded = await action.block(userId);
+  if (!context.mounted) return;
+
+  if (succeeded) {
+    await feed.refresh();
+    if (!context.mounted) return;
+  }
+  AppSnackBar.show(
+    context,
+    message: succeeded
+        ? '차단했습니다.'
+        : action.state.failure?.message ?? '차단하지 못했습니다.',
+    type: succeeded ? AppSnackBarType.success : AppSnackBarType.error,
+  );
+}
+
+Future<void> _unblockProfile(BuildContext context, String userId) async {
+  final confirmed = await AppConfirmDialog.show(
+    context,
+    title: '이 사용자의 차단을 해제할까요?',
+    content: '해제하면 이 사용자의 게시물과 댓글이 다시 보일 수 있습니다.',
+    confirmLabel: '차단 해제',
+  );
+  if (!confirmed || !context.mounted) return;
+
+  final feed = context.read<FeedCubit>();
+  final action = context.read<BlockActionCubit>();
+  final succeeded = await action.unblock(userId);
+  if (!context.mounted) return;
+
+  if (succeeded) {
+    await feed.refresh();
+    if (!context.mounted) return;
+  }
+  AppSnackBar.show(
+    context,
+    message: succeeded
+        ? '차단을 해제했습니다.'
+        : action.state.failure?.message ?? '차단을 해제하지 못했습니다.',
+    type: succeeded ? AppSnackBarType.success : AppSnackBarType.error,
+  );
+}
 
 /// 게시물·사용자 신고 시트를 열고, 접수됐을 때만 스낵바를 띄운다.
 ///

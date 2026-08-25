@@ -61,8 +61,8 @@
 - [x] **F7 safety (차단)** — `blocks` 테이블 + `is_blocked_with()` 판정 함수로
       `posts` · `post_comments` 조회 정책과 `post_comments_visible` 뷰를 양방향으로
       막는다. 사용자 A · B 의 실제 JWT로 12개 완료 조건을 REST 로 확인했다.
-      **프로필 AppBar 의 차단/차단 해제 메뉴(Task 3b)는 다른 workstream의 생성 파일
-      충돌로 아직 남아 있다** — 게시물 메뉴의 차단 진입점과 차단 목록 화면은 완료
+      프로필 AppBar의 차단/차단 해제 메뉴까지 완료했다 — 게시물 메뉴의 차단 진입점과
+      차단 목록 화면을 포함한다
       ([계획](features/safety/plan-block.md) · [기록](features/safety/history.md) ·
       [테스트](testing/features/safety.md))
 
@@ -96,9 +96,6 @@
    `created_at` 이 같은 게시물의 끊어 읽기,
    소프트 삭제한 글이 `posts_with_author` 에서 빠지는지
    ([feed 기록 · 검증](features/feed/history.md))
-2. F7 safety (차단) Task 3b — 프로필 AppBar 메뉴에 차단/차단 해제 항목을 붙인다.
-   `profile_cubit`/`profile_state`/`edit_profile_page`를 만지는 다른 workstream이
-   먼저 커밋된 뒤에 진행한다 ([기록](features/safety/history.md))
 
 ## 문서 규칙
 

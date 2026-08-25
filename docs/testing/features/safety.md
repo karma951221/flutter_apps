@@ -103,6 +103,9 @@ flutter test test/features/safety
 | `BlockedUsersPage` | 조회 실패 | 오류와 다시 시도 버튼을 보여준다. |
 | `BlockedUsersPage` | 차단 해제 성공 | 그 행이 목록에서 사라지고 성공 스낵바가 뜬다. |
 | `BlockedUsersPage` | 차단 해제 실패 | 행이 그대로 남고 오류 스낵바가 뜬다. |
+| `BlockActionCubit` | 상태 조회 성공 · 실패 | 내가 건 차단 여부를 담고, 실패 시 메뉴가 판단하지 못하도록 `null`과 `failure`를 담는다. |
+| `BlockActionCubit` | 차단 · 차단 해제 성공 | `isBlocked`가 각각 `true` · `false`로 전환된다. |
+| `BlockActionCubit` | 동작 실패 | 기존 차단 상태를 유지하고 `failure`를 전달한다. |
 
 ### 진입점(entry point) — `post_tile`
 
@@ -116,9 +119,14 @@ Task 3a에서 게시물 메뉴에 붙인 차단 진입점이다. 신고 진입�
 | `PostTile` | 내 글 + `onBlock`도 있음 | `isMine`이 최종 판정이라 '이 사용자 차단'은 뜨지 않는다 (회귀). |
 | `PostTile` | 차단 선택 | `onBlock`이 불린다. |
 
-프로필 화면 AppBar의 차단/차단 해제 메뉴(Task 3b)는 아직 구현되지 않았다 —
-[구현 기록](../../features/safety/history.md) 참고. `profile_page`의 게시물 목록에
-붙은 `PostTile`의 차단 진입점(위 표와 같은 컴포넌트)은 이미 동작한다.
+### 진입점(entry point) — `profile_page`
+
+| 대상 | 시나리오 | 기대 결과 |
+|---|---|---|
+| `ProfilePage` | 타인 프로필 AppBar + 차단 상태 | '차단' 또는 '차단 해제' 중 하나와 신고가 보인다. |
+| `ProfilePage` | 내 프로필 AppBar | 차단 관련 메뉴가 없다. |
+| `ProfilePage` | 상태 조회 실패 | 차단 관련 메뉴를 숨기고 신고는 남긴다. |
+| `ProfilePage` | 차단 · 차단 해제 선택 | 확인 뒤 실행하고 성공하면 프로필 게시물 목록을 다시 읽는다. |
 
 ## 로컬 Supabase로만 확인되는 것 — 차단 (2026-08-25, Task 5)
 
@@ -138,7 +146,7 @@ Task 3a에서 게시물 메뉴에 붙인 차단 진입점이다. 신고 진입�
 | 8 | `blocker_id` 위조가 거부된다 | B의 JWT로 `{"blocker_id":"<A의 id>","blocked_id":"<B의 id>"}` 삽입 | `403`, `{"code":"42501","message":"permission denied for table blocks"}` (INSERT GRANT가 `blocked_id`컬럼에만 있다) |
 | 9 | 남의 차단 목록은 조회되지 않는다 | B의 JWT로 `blocks` 테이블 전체 select | `[]` (`blocks_select_own`이 `blocker_id = auth.uid()`만 보여준다 — A가 건 차단 행은 B에게 보이지 않는다) |
 | 10 | 차단 해제하면 양쪽 모두 다시 보인다 | A가 `DELETE /blocks?blocked_id=eq.B`로 해제 → 양쪽 JWT로 서로의 게시물 재조회, `comment_count` 재조회, 되살아난 부모 댓글 재조회 | 양쪽 게시물 모두 다시 보임, `comment_count` 3으로 복구, 부모 댓글이 `content:null, reply_count:1`로 다시 보임 |
-| 11 | 차단한 사용자의 프로필은 여전히 열린다 | 차단 상태에서 A의 JWT로 `profiles?id=eq.B` 조회 | `[{"id":..., "nickname":"user_..."}]` — 정상 조회. (AppBar 메뉴가 '차단 해제'로 바뀌는 화면 쪽은 Task 3b로 미뤄져 아직 없다) |
+| 11 | 차단한 사용자의 프로필은 여전히 열린다 | 차단 상태에서 A의 JWT로 `profiles?id=eq.B` 조회 | `[{"id":..., "nickname":"user_..."}]` — 정상 조회. AppBar 메뉴 전환은 위젯 테스트로 확인한다. |
 | 12 | 비로그인 조회가 차단 필터의 영향을 받지 않는다 | 차단이 걸린 상태에서 `apikey`만 쓰고 `Authorization` 없이 (anon) A·B의 게시물을 함께 조회 | 둘 다 보임 |
 | 참고 | 감정표현 삽입도 차단의 영향을 받는다(스펙 대비 DB가 더 엄격, [스키마 §10](../../schema.md) 참고) | B의 JWT로 차단된 A의 게시물에 `post_reactions` 삽입 | `403`, `new row violates row-level security policy for table "post_reactions"` |
 

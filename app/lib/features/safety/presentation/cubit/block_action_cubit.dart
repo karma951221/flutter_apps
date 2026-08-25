@@ -21,6 +21,28 @@ class BlockActionCubit extends Cubit<BlockActionState> {
 
   final SafetyUseCase _useCase;
 
+  /// 내가 이 사용자를 차단했는지만 읽는다. 상대가 나를 차단했는지는 이
+  /// 화면에서 알 필요도, 드러낼 이유도 없다.
+  Future<void> loadStatus(String userId) async {
+    emit(state.copyWith(isLoadingStatus: true, failure: null));
+    final result = await _useCase.isBlockedByMe(userId);
+    if (isClosed) return;
+
+    result.when(
+      ok: (isBlocked) =>
+          emit(state.copyWith(isLoadingStatus: false, isBlocked: isBlocked)),
+      // 실패하면 상태를 알 수 없으므로 null로 되돌린다. 화면은 차단 관련
+      // 항목을 숨겨, 틀린 동작을 권하는 것보다 안전하게 처리한다.
+      err: (failure) => emit(
+        state.copyWith(
+          isLoadingStatus: false,
+          isBlocked: null,
+          failure: failure,
+        ),
+      ),
+    );
+  }
+
   /// 사용자를 차단한다. 성공하면 `true`, 실패하면 `false` 를 돌려준다.
   Future<bool> block(String userId) async {
     emit(state.copyWith(isBlocking: true, failure: null));
@@ -33,7 +55,35 @@ class BlockActionCubit extends Cubit<BlockActionState> {
       ok: (_) => succeeded = true,
       err: (failure) => nextFailure = failure,
     );
-    emit(state.copyWith(isBlocking: false, failure: nextFailure));
+    emit(
+      state.copyWith(
+        isBlocking: false,
+        isBlocked: succeeded ? true : state.isBlocked,
+        failure: nextFailure,
+      ),
+    );
+    return succeeded;
+  }
+
+  /// 사용자의 차단을 해제한다. 성공하면 `true`, 실패하면 `false` 를 돌려준다.
+  Future<bool> unblock(String userId) async {
+    emit(state.copyWith(isBlocking: true, failure: null));
+    final result = await _useCase.unblockUser(userId);
+    if (isClosed) return false;
+
+    Failure? nextFailure;
+    var succeeded = false;
+    result.when(
+      ok: (_) => succeeded = true,
+      err: (failure) => nextFailure = failure,
+    );
+    emit(
+      state.copyWith(
+        isBlocking: false,
+        isBlocked: succeeded ? false : state.isBlocked,
+        failure: nextFailure,
+      ),
+    );
     return succeeded;
   }
 }
