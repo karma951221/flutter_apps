@@ -15,6 +15,7 @@ abstract final class Routes {
   static const profileEdit = '/profile/edit';
   static const settings = '/settings';
   static const accountSettings = '/settings/account';
+  static const blockedUsers = '/settings/blocked';
   static const changePassword = '/settings/account/password';
   static const userProfile = '/users/:userId';
 

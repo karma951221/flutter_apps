@@ -18,6 +18,7 @@ import '../../features/post/presentation/cubit/post_cubit.dart';
 import '../../features/post/presentation/page/post_editor_page.dart';
 import '../../features/profile/presentation/page/edit_profile_page.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
+import '../../features/safety/presentation/page/blocked_users_page.dart';
 import '../../features/settings/presentation/page/account_settings_page.dart';
 import '../../features/settings/presentation/page/change_password_page.dart';
 import '../../features/settings/presentation/page/settings_page.dart';
@@ -92,6 +93,10 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: Routes.changePassword,
         builder: (_, _) => const ChangePasswordPage(),
+      ),
+      GoRoute(
+        path: Routes.blockedUsers,
+        builder: (_, _) => const BlockedUsersPage(),
       ),
       GoRoute(
         path: Routes.userProfile,

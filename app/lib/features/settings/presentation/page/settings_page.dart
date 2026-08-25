@@ -48,6 +48,12 @@ class SettingsPage extends StatelessWidget {
               onTap: () => context.push(Routes.accountSettings),
             ),
             AppListTile(
+              leading: const Icon(Icons.block_outlined),
+              title: const Text('차단한 사용자'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(Routes.blockedUsers),
+            ),
+            AppListTile(
               leading: const Icon(Icons.logout),
               title: const Text('로그아웃'),
               onTap: () => _confirmSignOut(context),

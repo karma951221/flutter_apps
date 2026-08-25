@@ -46,13 +46,16 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('설정 목록은 프로필 편집 · 계정 설정 · 로그아웃 세 항목을 보여준다', (tester) async {
+  testWidgets('설정 목록은 프로필 편집 · 계정 설정 · 차단한 사용자 · 로그아웃 네 항목을 보여준다', (
+    tester,
+  ) async {
     await pumpPage(tester);
 
     expect(find.text('설정'), findsOneWidget);
-    expect(find.byType(AppListTile), findsNWidgets(3));
+    expect(find.byType(AppListTile), findsNWidgets(4));
     expect(find.text('프로필 편집'), findsOneWidget);
     expect(find.text('계정 설정'), findsOneWidget);
+    expect(find.text('차단한 사용자'), findsOneWidget);
     expect(find.text('로그아웃'), findsOneWidget);
   });
 
@@ -95,6 +98,6 @@ void main() {
     await pumpPage(tester);
 
     expect(find.text('카르마'), findsNothing);
-    expect(find.byType(AppListTile), findsNWidgets(3));
+    expect(find.byType(AppListTile), findsNWidgets(4));
   });
 }
