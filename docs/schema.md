@@ -180,7 +180,10 @@ grant execute on function public.delete_account() to authenticated;
 
 지워지는 범위: `auth.users` → `profiles` → `posts` → `post_images` ·
 `post_comments` · `post_reactions`, 그리고 남의 게시물에 단 내 댓글·반응
-(`author_id`/`user_id` 가 `profiles` 를 cascade 로 참조한다).
+(`author_id`/`user_id` 가 `profiles` 를 cascade 로 참조한다). `blocks`(§13)도
+여기 포함된다 — `blocker_id`·`blocked_id` 둘 다 `profiles` 를 `on delete
+cascade` 로 참조하므로, 탈퇴한 계정이 걸었던 차단과 그 계정을 향해 걸렸던
+차단이 양방향 모두 함께 지워진다.
 
 **Storage 는 이 함수가 지우지 않는다.** `storage.objects` 를 SQL 로 직접 지우는
 것은 Storage 확장의 보호 트리거가 42501 로 막는다
@@ -240,6 +243,24 @@ auth.uid()`인 행만 보여준다: 내가 **건** 차단이다. "상대가 나�
 돌려주는 값이 `boolean` 하나라 "누가 누구를 차단했는지"는 새지 않는다. "나와 이
 사람 사이에 차단이 있다"는 사실만 알 수 있고, 그것도 상대의 글이 사라지는
 것으로 어차피 드러난다.
+
+### GRANT — `anon`이 반드시 `execute`를 유지해야 한다
+
+```sql
+grant execute on function public.is_blocked_with(uuid) to anon, authenticated;
+```
+
+(`20260825130000_neutral_block_message.sql`에서 추가.) 이 스키마의 다른 모든 RPC
+함수는 `revoke execute on function ... from public, anon; grant execute on
+function ... to authenticated` 짝을 명시적으로 쓴다(`delete_account()` 위 참고).
+`is_blocked_with()`는 오늘까지 그 짝이 없었다 — PUBLIC 기본 권한으로 `anon`도
+이미 실행할 수 있었을 뿐이다. 이 함수를 "강화"하려고 다른 함수들과 같은 패턴을
+따라 `anon`의 실행 권한을 걷어내면, `posts_select_visible` ·
+`post_comments_select_visible` 정책과 `post_comments_visible` 뷰가 **모든**
+게시물·댓글 조회에서 이 함수를 부르므로 비로그인 피드가 통째로 `42501`로
+죽는다. 그래서 `revoke`는 넣지 않고 `grant ... to anon, authenticated`만
+명시적으로 남겼다 — 다음 사람이 "명시적이지 않다"는 이유로 `anon`을 걷어내지
+않도록 `comment on function`에도 같은 경고를 남겼다.
 
 ---
 
@@ -562,6 +583,13 @@ left join lateral (...) comments  on true;  -- 살아 있는 post_comments 개�
 세션 GUC 기반이라 뷰의 실행 역할과 무관하게 **조회자 기준**으로 동작한다 — §9 가
 `security_invoker = off` 인데도 같은 컬럼을 내릴 수 있는 이유다.
 
+`comment_count` 의 lateral 은 `post_comments_select_visible` 정책이 걸린
+`post_comments` 를 스캔하므로, 훑는 댓글 행마다 그 정책의 `is_blocked_with()`
+호출이 함께 실행된다. `is_blocked_with()` 가 `security definer` 이고
+`search_path` 를 비워 SQL 인라이너 대상에서 제외되므로(§3), 이것은 상수
+접기가 아니라 댓글 수만큼의 진짜 함수 호출이다 — N+1 을 없앤 이 집계 컬럼이,
+차단 필터 자체는 행 단위 비용을 그대로 지불한다는 뜻이다.
+
 ### `security_invoker = on` 은 선택 사항이 아니다
 
 **뷰는 기본적으로 소유자(`postgres`) 권한으로 실행된다.** 이 옵션을 빼면
@@ -724,6 +752,17 @@ depth 2 제한과 부모 무결성(같은 게시물, 삭제되지 않은 부모)
 작성자를 차단했거나 차단당했으면 댓글 삽입 거부)을 검사하는 트리거 함수다. CHECK
 제약으로는 다른 행을 참조할 수 없어 표현할 수 없다.
 
+차단 거부 문구는 `이 게시물에는 댓글을 달 수 없습니다`로, 방향을 밝히지 않는다.
+최초 구현(`20260825120000_add_blocks.sql`)은 `차단한 사용자의 게시물에는 댓글을
+달 수 없습니다`를 던졌는데, 이 예외를 실제로 보는 쪽은 차단"한" 사람이 아니라
+차단"당한" 사람이다 — 차단당한 B가 A의 게시물 화면을 이미 연 상태에서 A가 B를
+차단하고 B가 댓글을 등록하면 이 트리거에 걸린다. B는 아무도 차단하지 않았으므로
+"차단한 사용자"는 B에게 거짓이고, 동시에 차단이 존재한다는 사실과 그 방향까지
+차단당한 당사자에게 드러낸다 — 계획서의 "차단 사실 노출: 알리지 않는다"([계획
+서](features/safety/plan-block.md))를 정면으로 어긴다. 적용된 마이그레이션은
+고치지 않으므로 `20260825130000_neutral_block_message.sql`이 `create or
+replace function`으로 문구만 바꿨다 — 나머지 네 검사는 그대로다.
+
 ```sql
 create function public.enforce_comment_depth()
 returns trigger
@@ -742,7 +781,7 @@ begin
    where id = new.post_id;
 
   if post_author_id is not null and public.is_blocked_with(post_author_id) then
-    raise exception '차단한 사용자의 게시물에는 댓글을 달 수 없습니다'
+    raise exception '이 게시물에는 댓글을 달 수 없습니다'
       using errcode = '42501';
   end if;
 
@@ -959,6 +998,18 @@ is null`만 봄)이 먼저 걸려 "삭제됐지만 답글이 남은 부모"를 �
 테이블 직접 조회로 샐 위험이 생긴다. 뷰를 소유자 권한으로 두고 뷰 정의 자체에서
 가시성을 계산하는 쪽이, 재귀 없이 두 요구(부모는 살리고 본문은 가림)를 동시에
 만족하는 유일한 방법이었다.
+
+F7(`20260825120000_add_blocks.sql`)이 이 뷰를 `create or replace view` 로 다시
+정의하면서 `with (security_invoker = ...)` 절을 쓰지 않았다. `create or
+replace view` 는 명시하지 않은 reloption 을 리셋하므로 이 뷰는 그 순간
+기본값(`off`)으로 되돌아갔다 — 마침 이 뷰가 원하는 값과 같았을 뿐인
+우연이다. 형제인 `posts_with_author`(§6)는 같은 F7 커밋에서 함께 `create or
+replace` 됐는데, 그쪽은 `security_invoker = on` 이 필요해서 매번 재정의할 때
+`with (security_invoker = on)` 을 다시 명시한다 — 이 뷰가 `on` 을 쓰지 않는
+것은 실수로 빠뜨린 게 아니라, 원하는 값이 기본값과 우연히 같아서 생략해도
+결과가 맞았을 뿐이라는 뜻이다. 다음에 이 뷰를 `create or replace` 할 사람은
+`off` 를 원한다는 것을 알고 생략하는 것이지, 아무것도 안 써도 된다는 뜻이
+아니다.
 
 뷰가 RLS를 우회하므로, RLS가 대신 해주던 것을 뷰 정의 안에 직접 손으로 적어야 한다.
 이 두 가지가 그 부채다.
@@ -1463,6 +1514,6 @@ grant select on public.blocked_users to authenticated;
 | 같은 사람 중복 차단 삽입 | `23505` (`blocks_pkey`) |
 | A가 B를 차단한 뒤 A로 조회 | B의 게시물이 목록에서 사라짐 |
 | A가 B를 차단한 뒤 B로 조회 | A의 게시물도 사라짐(양방향) |
-| B가 차단한 A의 게시물에 댓글 삽입 | `42501`, "차단한 사용자의 게시물에는 댓글을 달 수 없습니다" |
+| B가 차단한 A의 게시물에 댓글 삽입 | `42501`, "이 게시물에는 댓글을 달 수 없습니다"(`20260825130000_neutral_block_message.sql`로 방향 중립 문구로 교체됨 — 원래 문구는 차단당한 쪽에 방향을 드러냈다) |
 | 비로그인(`anon`, `auth.uid()` null) 조회 | 차단 관계와 무관하게 둘 다 보임 |
 | 차단 해제(행 삭제) 후 재조회 | 양쪽 모두 다시 보임 |

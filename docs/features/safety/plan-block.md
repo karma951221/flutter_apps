@@ -141,13 +141,23 @@ alter policy "post_comments_select_visible" on public.post_comments
 새 트리거를 만들지 않고 여기에 검사를 하나 더한다.
 
 ```text
-차단한 사용자의 게시물에는 댓글을 달 수 없습니다
+이 게시물에는 댓글을 달 수 없습니다
 ```
 
 **정책(`with check`)으로 하지 않는 이유가 있다.** 정책 안에서 게시물 작성자를 찾으려면
 `posts` 를 서브쿼리로 읽어야 하는데, 그 조회에 방금 넣은 차단 필터가 걸려 행이 사라진다.
 그러면 `is_blocked_with(null)` 이 `false` 가 되어 **삽입이 도리어 허용된다.** definer
 트리거는 정책을 우회하므로 이 함정이 없다.
+
+**문구는 방향을 밝히지 않는다.** 최초 구현은 `차단한 사용자의 게시물에는 댓글을
+달 수 없습니다`를 썼는데, 이 예외를 실제로 보는 사람은 차단"한" 쪽이 아니라
+차단"당한" 쪽이다 — B가 A의 게시물 화면을 이미 열어 둔 상태에서 A가 B를 차단하고,
+B가 등록을 누르는 시점에 이 트리거가 걸린다. B는 아무도 차단하지 않았으므로
+"차단한 사용자"는 B에게 거짓이고, 동시에 위 표의 "차단 사실 노출: 알리지
+않는다"를 정면으로 어긴다 — 감정표현 경로가 일반 `42501`로 아무것도 드러내지
+않는 것과 달리, 댓글 경로만 트리거가 직접 지어낸 문구로 방향까지 새고 있었다.
+`20260825130000_neutral_block_message.sql`이 문구를 위 방향 중립 문장으로 바꿨다
+(적용된 마이그레이션은 고치지 않으므로 `create or replace function`으로).
 
 `SupabaseErrorMapper._reportTargetMessages` 옆에 차단 문구 목록을 더한다.
 
@@ -212,12 +222,16 @@ features/safety/
 │           ├── block_user_scenario.dart
 │           ├── unblock_user_scenario.dart
 │           ├── get_blocked_users_scenario.dart
-│           └── is_blocked_scenario.dart
-└── data/
-    ├── dto/blocked_user_dto.dart
-    ├── datasource/{block_data_source,supabase_block_data_source}.dart
-    ├── mapper/blocked_user_mapper.dart
-    └── repository/{block_repository_impl,block_repository_error_handler}.dart
+│           └── is_blocked_by_me_scenario.dart
+├── data/
+│   ├── dto/blocked_user_dto.dart
+│   ├── datasource/{block_data_source,supabase_block_data_source}.dart
+│   ├── mapper/blocked_user_mapper.dart
+│   └── repository/{block_repository_impl,block_repository_error_handler}.dart
+└── presentation/
+    └── cubit/block_action_cubit.dart      ← feed_page · profile_page 의 차단
+                                              호출을 소유(2026-08-25 전체 브랜치
+                                              검토, ReportCubit 과 같은 자리)
 ```
 
 **`ReportRepository` 를 재사용하지 않고 `BlockRepository` 를 새로 둔다.** 저장소는
@@ -230,9 +244,9 @@ features/safety/
 | 차단 | `Future<Result<void>> blockUser(String userId)` |
 | 해제 | `Future<Result<void>> unblockUser(String userId)` |
 | 목록 | `Future<Result<List<BlockedUser>>> getBlockedUsers()` |
-| 상태 확인 | `Future<Result<bool>> isBlocked(String userId)` |
+| 상태 확인 | `Future<Result<bool>> isBlockedByMe(String userId)` |
 
-`isBlocked` 는 `is_blocked_with()` 를 부르지 않는다. **내가 건 차단만** 알면 되므로
+`isBlockedByMe` 는 `is_blocked_with()` 를 부르지 않는다. **내가 건 차단만** 알면 되므로
 `blocks` 를 직접 읽는다 — 프로필 메뉴가 '차단'과 '차단 해제' 중 무엇을 그릴지 정하는
 용도다. 상대가 나를 차단한 경우에는 애초에 그 프로필의 게시물이 비어 있다.
 
@@ -240,7 +254,7 @@ features/safety/
 
 | 화면 | 변경 |
 |---|---|
-| `profile_page` | AppBar 메뉴에 차단 / 차단 해제 추가 (신고 옆). `ProfileState` 에 `isBlocked` 추가 |
+| `profile_page` | AppBar 메뉴에 차단 / 차단 해제 추가 (신고 옆). `ProfileState` 에 `isBlockedByMe` 추가 |
 | `post_tile` | 남의 글 메뉴에 '이 사용자 차단' 추가 |
 | `feed_page` · 프로필 목록 | 차단 성공 시 그 작성자의 항목을 목록에서 걷어낸다 |
 | `settings_page` | '차단한 사용자' 행 추가 → `/settings/blocked` |
@@ -249,10 +263,25 @@ features/safety/
 새 라우트는 `/settings/blocked` 하나다.
 
 차단 확인 다이얼로그는 `account_settings_page` 의 탈퇴 확인과 같은 모양을 쓴다 —
-`AlertDialog` 에 destructive 색 확인 버튼.
+`AlertDialog` 에 destructive 색 확인 버튼. 이 모양이 `feed_page` · `profile_page`
+(차단, 완전히 동일한 코드) · `account_settings_page`(탈퇴) 세 곳에 반복되길래
+`design_system/widget/app_confirm_dialog.dart`(`AppConfirmDialog.show`)로
+승격했다(2026-08-25 전체 브랜치 검토, CLAUDE.md 규칙 4의 "반복 사용" 기준).
 
-`BlockedUsersPage` 는 로딩·빈 상태·오류를 `design_system` 의 공통 상태 위젯으로 그린다.
-빈 상태 문구는 "차단한 사용자가 없습니다".
+차단 호출 자체(`getIt<SafetyUseCase>().blockUser(...)`)는 위젯이 직접 부르지
+않는다 — `BlockActionCubit`이 부른다(2026-08-25 전체 브랜치 검토, 아키텍처
+규칙 ③). 화면은 확인 다이얼로그를 띄우고, `BlockActionCubit.block()`을 부르고,
+성공하면 자신의 목록(`FeedCubit.removeAuthor` / `refresh()`)을 갱신하고
+스낵바를 띄우는 것까지만 한다 — `ReportCubit`/`ReportSheet`가 신고에서 하는
+역할과 같다.
+
+`BlockedUsersPage` 는 로딩·빈 상태·오류를 화면 안에 직접 만든 위젯(`_BlockedUsersError`
+등)으로 그린다 — 애초에 이 문구가 가리키던 "공통 상태 위젯"은 `design_system/widget/`에
+존재한 적이 없다. 화면 하나뿐인 채로 새로 만들면 CLAUDE.md 규칙 4의 승격 기준
+("반복 사용되거나 새 화면에도 공통으로 쓸 모양일 때만 승격한다")을 만족하지
+못한다 — 로딩·빈·오류 표시를 쓰는 다른 화면(`feed_page`의 `FeedPlaceholder` 등)이
+이미 각자 다른 모양을 쓰고 있어서, 이번에 하나 더 지어 봐야 공통화되는 것이
+없다. 빈 상태 문구는 "차단한 사용자가 없습니다".
 
 ## 완료 조건
 
@@ -264,7 +293,7 @@ Task 5(2026-08-25)에서 사용자 A·B 의 실제 JWT로 REST(PostgREST)에 직
 - [x] **B의 피드에서도 A의 게시물이 사라진다** (양방향) (B의 JWT로 A의 게시물 조회 → `[]`)
 - [x] 차단된 사용자의 댓글이 댓글 목록에서 사라지고 `comment_count` 에서도 빠진다 (`comment_count` 3→1, 실제 목록도 1건으로 일치)
 - [x] 차단된 사용자의 답글만 남은 부모 댓글은 되살아나지 않는다 (차단 전 `reply_count:1`로 되살아나던 부모가 차단 후 목록에서 완전히 사라짐)
-- [x] B가 A의 게시물에 댓글을 다는 삽입이 DB에서 거부된다 (`403`, "차단한 사용자의 게시물에는 댓글을 달 수 없습니다")
+- [x] B가 A의 게시물에 댓글을 다는 삽입이 DB에서 거부된다 (`403`, "이 게시물에는 댓글을 달 수 없습니다" — 최종 검토에서 방향 중립 문구로 교체, 아래 검증 참고)
 - [x] 자기 자신 차단이 DB에서 거부된다 (`400`, `23514 blocks_not_self`)
 - [x] 같은 사람을 두 번 차단하는 삽입이 거부된다 (`409`, `23505 blocks_pkey`)
 - [x] `blocker_id` 를 위조한 삽입이 거부된다 (`403`, `42501`, INSERT GRANT 없음)
@@ -272,3 +301,44 @@ Task 5(2026-08-25)에서 사용자 A·B 의 실제 JWT로 REST(PostgREST)에 직
 - [x] 차단 해제하면 양쪽 모두 다시 보인다 (delete 후 양쪽 JWT 재조회로 확인, `comment_count` 도 3으로 복구)
 - [x] 차단한 사용자의 프로필은 여전히 열리고 메뉴가 '차단 해제'로 바뀐다 (DB: 차단 상태에서도 `profiles` 행이 그대로 조회됨 — 화면의 메뉴 전환 자체는 Task 3b로 미뤄짐, [구현 기록](history.md))
 - [x] 비로그인 조회가 차단 필터의 영향을 받지 않는다 (anon 키로 A·B 게시물 동시 조회 → 둘 다 보임, 차단이 걸린 상태에서 확인)
+
+## F8(팔로우) 이 다시 도출하지 않도록 남기는 결정 (2026-08-25 전체 브랜치 검토)
+
+F8이 착수될 때 이 feature를 다시 읽지 않고 같은 함정을 다시 밟지 않도록, 세
+가지를 여기 기록해 둔다.
+
+### 차단이 팔로우 엣지에 하는 일 — 오늘은 아무것도 하지 않는다(의도적 보류)
+
+오늘 `blocks`에는 `follows`를 건드리는 트리거가 없다. F8이 그대로 붙으면
+A가 B를 차단해도 B는 여전히 A의 팔로워 목록에 남고, 팔로워 수에도 잡힌다.
+대부분의 서비스는 차단 시 양방향 팔로우 엣지를 지운다 — **이 결정을 F8
+착수 시점까지 미룬다**는 것을 지금 명시적으로 결정해 둔다. 미루는 이유는
+두 가지다.
+
+1. F8이 아직 설계되지 않아 `follows`의 실제 모양(단방향 PK인지, 소프트
+   삭제를 쓰는지)을 모른다 — 지금 정하면 틀린 가정 위에 정하는 것이다.
+2. 만약 차단이 팔로우 엣지를 지우기로 하면, `blocks`에 `after insert`
+   트리거를 다는 것이 된다. 이 feature의 "차단 해제는 행 삭제, 차단에는
+   **자식이 달리지 않는다**"(위 결정표, `post_reactions`와 같은 판단 근거)라는
+   전제가 그 순간 깨진다 — `blocks`가 `follows`에 부수 효과를 갖는 부모가
+   되기 때문이다. F8이 이 트레이드오프를 명시적으로 인지하고 결정해야 한다.
+
+### 팔로우 목록 조회 경로는 차단 필터를 자동으로 물려받지 않는다
+
+오늘 차단이 가리는 모든 것(`posts` · `post_comments`)은 정책이 걸린 테이블을
+거친다. F8의 팔로워/팔로잉 목록은 `follows` → `profiles`로 조인하는데,
+`profiles`는 **의도적으로** 조회 정책을 걸지 않는다(위 결정표 "`profiles`
+필터: 걸지 않는다" — 차단 목록 화면이 차단한 사용자의 닉네임을 보여줘야
+해서다). 즉 `posts_select_visible`처럼 아래 테이블에 필터를 얹는 방식이
+여기서는 통하지 않는다 — `follows` 쪽에 손으로 `is_blocked_with()`를 걸어야
+한다. `post_comments_visible`(§9)이 이미 지고 있는 것과 같은 부채이고, F8이
+이걸 잊으면 차단한 상대가 서로의 팔로워 목록에 계속 나타난다.
+
+### 일반화된 규칙: DB 쪽 차단 거부는 방향을 밝히지 않는다
+
+이번 검토에서 고친 [댓글 삽입 거부 문구](history.md#2026-08-25-같은-전체-브랜치-검토-차단-사실-노출-문구를-방향-중립으로-고쳤다)가
+보여준 함정이 F8에도 그대로 있다. F8이 팔로우 삽입에 차단 검사를 건다면
+(차단한/차단당한 상대를 팔로우할 수 없게 막는 경우), 그 거부 메시지는 반드시
+방향 중립이어야 한다 — 거부를 실제로 보는 쪽이 항상 차단을 "건" 쪽이라고
+가정하면 안 된다. "당신이 차단한 사용자입니다" 류의 문구는 이 feature의
+중심 결정("차단 사실 노출: 알리지 않는다")을 다시 어긴다.

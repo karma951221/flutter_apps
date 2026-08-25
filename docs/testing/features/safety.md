@@ -89,15 +89,15 @@ flutter test test/features/safety
 | `BlockRepositoryImpl.unblockUser` | 정상 해제 | `Ok(null)`을 돌려준다. |
 | `BlockRepositoryImpl.getBlockedUsers` | 목록 조회 | DTO 목록을 domain `BlockedUser` 목록으로 변환한다. |
 | `BlockRepositoryImpl.getBlockedUsers` | 예외 | `SupabaseErrorMapper`로 변환된다. |
-| `BlockRepositoryImpl.isBlocked` | 조회 | data source의 결과를 그대로 전달한다. |
+| `BlockRepositoryImpl.isBlockedByMe` | 조회 | data source의 결과를 그대로 전달한다. |
 | `BlockUserScenario` | 정상 | `repository.blockUser`를 그대로 호출한다. |
 | `BlockUserScenario` | 저장소의 `Err` | 그대로 돌려준다. |
 | `UnblockUserScenario` | 정상 | `repository.unblockUser`를 그대로 호출한다. |
 | `UnblockUserScenario` | 저장소의 `Err` | 그대로 돌려준다. |
 | `GetBlockedUsersScenario` | 정상 | `repository.getBlockedUsers`의 결과를 그대로 돌려준다. |
 | `GetBlockedUsersScenario` | 저장소의 `Err` | 그대로 돌려준다. |
-| `IsBlockedScenario` | 정상 | `repository.isBlocked`의 결과를 그대로 돌려준다. |
-| `IsBlockedScenario` | 저장소의 `Err` | 그대로 돌려준다. |
+| `IsBlockedByMeScenario` | 정상 | `repository.isBlockedByMe`의 결과를 그대로 돌려준다. |
+| `IsBlockedByMeScenario` | 저장소의 `Err` | 그대로 돌려준다. |
 | `BlockedUsersPage` | 빈 목록 | "차단한 사용자가 없습니다" 안내를 보여준다. |
 | `BlockedUsersPage` | 정상 목록 | 각 행에 닉네임과 '차단 해제' 버튼이 함께 보인다. |
 | `BlockedUsersPage` | 조회 실패 | 오류와 다시 시도 버튼을 보여준다. |
@@ -132,7 +132,7 @@ Task 3a에서 게시물 메뉴에 붙인 차단 진입점이다. 신고 진입�
 | 2 | **B의 피드에서도 A의 게시물이 사라진다(양방향)** | **B의 JWT**로 A의 게시물을 `posts_with_author`에서 조회 | `[]` |
 | 3 | 차단된 사용자의 댓글이 목록에서 사라지고 `comment_count`에서도 빠진다 | A의 게시물에 B가 댓글 2개·A가 1개 작성 → 차단 전 `comment_count:3` → 차단 후 A의 JWT로 재조회 | `comment_count:1`, 실제 `post_comments_visible` 목록도 A의 댓글 1건만 반환 — 개수와 목록 일치 |
 | 4 | 답글만 남은 부모 댓글은 되살아나지 않는다 | A가 부모 댓글 작성 → B가 답글 작성 → A가 부모를 소프트 삭제(`soft_delete_post_comment`) → 차단 전 목록엔 부모가 `content:null, reply_count:1`로 되살아남 → A가 B를 차단한 뒤 재조회 | 부모 행이 목록에서 완전히 사라짐(빈 배열 아님, 해당 부모 id 자체가 없음) |
-| 5 | B가 A의 게시물에 댓글을 다는 삽입이 거부된다 | B의 JWT로 A의 게시물에 `post_comments` 삽입 | `403`, `{"code":"42501","message":"차단한 사용자의 게시물에는 댓글을 달 수 없습니다"}` |
+| 5 | B가 A의 게시물에 댓글을 다는 삽입이 거부된다 | B의 JWT로 A의 게시물에 `post_comments` 삽입 | `403`, `{"code":"42501","message":"이 게시물에는 댓글을 달 수 없습니다"}` (원래 문구 `차단한 사용자의 게시물에는 댓글을 달 수 없습니다`는 이 예외를 실제로 보는 B에게 방향이 거꾸로였고 차단 사실까지 드러냈다 — 최종 검토에서 `20260825130000_neutral_block_message.sql`로 방향 중립 문구로 교체) |
 | 6 | 자기 자신 차단이 거부된다 | A의 JWT로 `blocked_id=A자신` 삽입 | `400`, `{"code":"23514", message: blocks_not_self 위반}` |
 | 7 | 같은 사람 중복 차단이 거부된다 | A가 B를 이미 차단한 상태에서 다시 삽입 | `409`, `{"code":"23505", message: blocks_pkey 위반}` |
 | 8 | `blocker_id` 위조가 거부된다 | B의 JWT로 `{"blocker_id":"<A의 id>","blocked_id":"<B의 id>"}` 삽입 | `403`, `{"code":"42501","message":"permission denied for table blocks"}` (INSERT GRANT가 `blocked_id`컬럼에만 있다) |
