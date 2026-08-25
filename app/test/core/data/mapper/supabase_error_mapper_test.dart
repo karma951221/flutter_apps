@@ -79,7 +79,7 @@ void main() {
     test('enforce_comment_depth() 의 차단 트리거 문구를 그대로 전달한다', () {
       final failure = SupabaseErrorMapper.map(
         PostgrestException(
-          message: '차단한 사용자의 게시물에는 댓글을 달 수 없습니다',
+          message: '이 게시물에는 댓글을 달 수 없습니다',
           code: '42501',
         ),
       );
@@ -87,7 +87,7 @@ void main() {
       expect(failure, isA<ValidationFailure>());
       expect(
         (failure as ValidationFailure).message,
-        '차단한 사용자의 게시물에는 댓글을 달 수 없습니다',
+        '이 게시물에는 댓글을 달 수 없습니다',
       );
     });
   });

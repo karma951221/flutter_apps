@@ -96,7 +96,14 @@ abstract final class SupabaseErrorMapper {
   ];
 
   /// `enforce_comment_depth()` 가 차단 때 던지는 문구.
-  static const _blockMessages = ['차단한 사용자의 게시물에는 댓글을 달 수 없습니다'];
+  ///
+  /// 방향 중립이어야 한다 — 이 예외는 차단"한" 쪽이 아니라 차단"당한" 쪽이
+  /// 본다(B가 A의 게시물 화면을 이미 열어 둔 상태에서 A가 차단하고, B가 댓글을
+  /// 등록하는 시점). "차단한 사용자"라는 문구는 B에게는 거짓이고, 동시에 차단
+  /// 사실과 방향을 드러낸다 — 계획서의 "차단 사실 노출: 알리지 않는다"를
+  /// 정면으로 어긴다. `20260825130000_neutral_block_message.sql` 이 트리거
+  /// 문구를 이걸로 바꿨다.
+  static const _blockMessages = ['이 게시물에는 댓글을 달 수 없습니다'];
 
   static Failure? _constraintFrom(String raw) {
     if (raw.contains('profiles_nickname_length')) {
