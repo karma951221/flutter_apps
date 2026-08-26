@@ -12,6 +12,12 @@ import '../theme/app_spacing.dart';
 /// [items] 가 비어 있으면 아무것도 그리지 않는다 — 호출부가 "이 사용자에게는
 /// 수정 권한이 없다" 같은 경우를 매번 조건문으로 감싸지 않고, 빈 리스트를
 /// 넘기는 것만으로 메뉴를 숨길 수 있게 하기 위해서다.
+///
+/// [enabled] 가 `false` 면 `PopupMenuButton` 자체를 비활성화해 메뉴가 아예
+/// 열리지 않는다 — `onSelected` 만 `null` 로 두면 메뉴는 열리고 항목도 눌리는
+/// 것처럼 보이는데 아무 반응이 없는 "죽은 메뉴"가 된다. 프로필 AppBar가 차단
+/// 호출이 진행 중인 동안 메뉴를 잠글 때 쓴다(`profile_page`의
+/// `BlockActionState.isBlocking`).
 class AppOverflowMenu<T> extends StatelessWidget {
   const AppOverflowMenu({
     required this.items,
@@ -38,7 +44,8 @@ class AppOverflowMenu<T> extends StatelessWidget {
       tooltip: tooltip,
       icon: const Icon(Icons.more_vert),
       style: IconButton.styleFrom(visualDensity: VisualDensity.compact),
-      onSelected: enabled ? onSelected : null,
+      enabled: enabled,
+      onSelected: onSelected,
       itemBuilder: (_) => [
         for (final item in items)
           PopupMenuItem(

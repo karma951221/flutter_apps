@@ -294,6 +294,72 @@ void main() {
     ).called(2);
   });
 
+  testWidgets('AppBar 에서 차단 확인 다이얼로그를 취소하면 차단하지 않는다', (tester) async {
+    when(
+      () => profileUseCase.getProfile('other'),
+    ).thenAnswer((_) async => Ok(_profile('other', '이웃')));
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+    when(
+      () => safetyUseCase.isBlockedByMe('other'),
+    ).thenAnswer((_) async => const Ok(false));
+
+    await pumpPage(tester, userId: 'other');
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('차단'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('이 사용자를 차단할까요?'), findsOneWidget);
+
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+
+    verifyNever(() => safetyUseCase.blockUser(any()));
+    expect(find.text('이 사용자를 차단할까요?'), findsNothing);
+  });
+
+  testWidgets('AppBar 에서 차단에 성공하면 메뉴를 다시 열었을 때 차단 해제만 보인다', (
+    tester,
+  ) async {
+    when(
+      () => profileUseCase.getProfile('other'),
+    ).thenAnswer((_) async => Ok(_profile('other', '이웃')));
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+    when(
+      () => safetyUseCase.isBlockedByMe('other'),
+    ).thenAnswer((_) async => const Ok(false));
+    when(
+      () => safetyUseCase.blockUser('other'),
+    ).thenAnswer((_) async => const Ok(null));
+
+    await pumpPage(tester, userId: 'other');
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('차단'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('차단'));
+    await tester.pumpAndSettle();
+
+    // 메뉴를 다시 연다.
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    expect(find.text('차단'), findsNothing);
+    expect(find.text('차단 해제'), findsOneWidget);
+  });
+
   testWidgets('차단 해제 뒤 프로필 게시물을 다시 읽는다', (tester) async {
     when(
       () => profileUseCase.getProfile('other'),
@@ -315,8 +381,7 @@ void main() {
     await pumpPage(tester, userId: 'other');
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('차단 해제'));
-    await tester.pumpAndSettle();
+    // 해제는 확인 없이 바로 실행된다 — 한 번만 누른다.
     await tester.tap(find.text('차단 해제'));
     await tester.pumpAndSettle();
 

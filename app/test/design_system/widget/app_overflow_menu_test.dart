@@ -67,6 +67,27 @@ void main() {
     expect(selected, 'delete');
   });
 
+  testWidgets('enabled 가 false 면 탭해도 메뉴가 열리지 않는다', (tester) async {
+    await tester.pumpWidget(
+      wrap(
+        AppOverflowMenu<String>(
+          enabled: false,
+          items: const [
+            AppOverflowMenuItem(value: 'edit', label: '수정'),
+            AppOverflowMenuItem(value: 'delete', label: '삭제'),
+          ],
+          onSelected: (_) {},
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    expect(find.text('수정'), findsNothing);
+    expect(find.text('삭제'), findsNothing);
+  });
+
   testWidgets('destructive 항목은 error 색으로 그린다', (tester) async {
     await tester.pumpWidget(
       wrap(

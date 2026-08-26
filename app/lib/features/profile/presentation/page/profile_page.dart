@@ -107,7 +107,7 @@ class _ProfileView extends StatelessWidget {
                       tooltip: '프로필 메뉴',
                       enabled: !blockState.isBlocking,
                       onSelected: (action) => switch (action) {
-                        _ProfileAction.block => _blockProfile(
+                        _ProfileAction.block => _confirmAndBlock(
                           context,
                           loadedProfile.id,
                         ),
@@ -250,7 +250,12 @@ class _ProfileView extends StatelessWidget {
 
 enum _ProfileAction { block, unblock, report }
 
-Future<void> _blockProfile(BuildContext context, String userId) async {
+/// 프로필 AppBar 메뉴와 게시물 목록(다른 사용자 글) 메뉴 두 진입점이 같은
+/// 확인 다이얼로그 · 차단 호출 · 목록 새로고침 · 스낵바 흐름을 쓴다. 원래는
+/// 두 곳에 같은 코드가 복제돼 있었고, 새로고침을 기다리는지(await) 여부도
+/// 미묘하게 달랐다 — 이 헬퍼 하나로 합쳐 두 진입점의 동작을 일치시킨다
+/// (2026-08-26 리뷰 반영).
+Future<void> _confirmAndBlock(BuildContext context, String userId) async {
   final confirmed = await AppConfirmDialog.show(
     context,
     title: '이 사용자를 차단할까요?',
@@ -277,15 +282,10 @@ Future<void> _blockProfile(BuildContext context, String userId) async {
   );
 }
 
+/// 차단 해제는 확인 없이 바로 실행한다 — 되돌리기 쉬운 동작이라는 스펙
+/// 결정(`docs/features/safety/plan-block.md` "확인 절차")을 따른다. 목록
+/// 화면(`blocked_users_page`)의 즉시 해제와 이 화면의 동작을 일치시킨다.
 Future<void> _unblockProfile(BuildContext context, String userId) async {
-  final confirmed = await AppConfirmDialog.show(
-    context,
-    title: '이 사용자의 차단을 해제할까요?',
-    content: '해제하면 이 사용자의 게시물과 댓글이 다시 보일 수 있습니다.',
-    confirmLabel: '차단 해제',
-  );
-  if (!confirmed || !context.mounted) return;
-
   final feed = context.read<FeedCubit>();
   final action = context.read<BlockActionCubit>();
   final succeeded = await action.unblock(userId);
@@ -432,37 +432,10 @@ class _ProfilePostList extends StatelessWidget {
   /// 성공하면 이 작성자의 프로필 게시물 목록을 다시 읽는다 — 이제 비어야
   /// 한다. 상대가 나를 차단했는지 여부는 절대 드러내지 않는다.
   ///
-  /// 실제 차단 호출은 [BlockActionCubit] 이 한다 — 화면은 확인 다이얼로그와
-  /// 성공 후 목록 반영(`refresh`), 스낵바만 소유한다.
-  Future<void> _block(BuildContext context, String authorId) async {
-    final confirmed = await AppConfirmDialog.show(
-      context,
-      title: '이 사용자를 차단할까요?',
-      content: '차단하면 이 사용자의 게시물과 댓글이 더 이상 보이지 않습니다.',
-      confirmLabel: '차단',
-    );
-    if (!confirmed || !context.mounted) return;
-
-    final feed = context.read<FeedCubit>();
-    final blockAction = context.read<BlockActionCubit>();
-    final succeeded = await blockAction.block(authorId);
-    if (!context.mounted) return;
-
-    if (succeeded) {
-      feed.refresh();
-      AppSnackBar.show(
-        context,
-        message: '차단했습니다.',
-        type: AppSnackBarType.success,
-      );
-    } else {
-      AppSnackBar.show(
-        context,
-        message: blockAction.state.failure?.message ?? '차단하지 못했습니다.',
-        type: AppSnackBarType.error,
-      );
-    }
-  }
+  /// 실제 흐름은 [_ProfileView] 의 AppBar 차단과 같은 [_confirmAndBlock] 을
+  /// 그대로 쓴다 — 예전에는 이 파일에 같은 코드가 두 번 있었다.
+  Future<void> _block(BuildContext context, String authorId) =>
+      _confirmAndBlock(context, authorId);
 
   Future<void> _confirmDelete(BuildContext context, Post post) async {
     final confirmed = await showDialog<bool>(
