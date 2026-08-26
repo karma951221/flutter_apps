@@ -1,0 +1,21 @@
+{
+  "@@locale": "ja",
+
+  "commonCancel": "キャンセル",
+
+  "settingsTitle": "設定",
+  "settingsProfileEdit": "プロフィール編集",
+  "settingsAccount": "アカウント設定",
+  "settingsTheme": "画面テーマ",
+  "settingsLanguage": "言語",
+  "settingsBlockedUsers": "ブロックしたユーザー",
+  "settingsSignOut": "ログアウト",
+  "settingsSignOutConfirmTitle": "ログアウトしますか？",
+  "settingsSignOutConfirmMessage": "再び利用するにはログインが必要です。",
+
+  "themeModeSystem": "システム設定",
+  "themeModeLight": "ライト",
+  "themeModeDark": "ダーク",
+
+  "languageSystem": "システム設定"
+}

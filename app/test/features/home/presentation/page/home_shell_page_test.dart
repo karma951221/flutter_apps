@@ -13,13 +13,16 @@ import 'package:daylog/features/feed/presentation/cubit/feed_cubit.dart';
 import 'package:daylog/features/home/presentation/page/home_shell_page.dart';
 import 'package:daylog/features/post/domain/usecase/post_use_case.dart';
 import 'package:daylog/features/post/presentation/cubit/post_cubit.dart';
+import 'package:daylog/features/preferences/domain/entity/app_language.dart';
+import 'package:daylog/features/preferences/domain/entity/app_theme_mode.dart';
+import 'package:daylog/features/preferences/domain/usecase/preferences_use_case.dart';
+import 'package:daylog/features/preferences/presentation/cubit/language_cubit.dart';
+import 'package:daylog/features/preferences/presentation/cubit/theme_cubit.dart';
 import 'package:daylog/features/profile/domain/entity/profile.dart';
 import 'package:daylog/features/profile/domain/usecase/profile_use_case.dart';
 import 'package:daylog/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:daylog/features/reaction/domain/usecase/reaction_use_case.dart';
-import 'package:daylog/features/theme/domain/entity/app_theme_mode.dart';
-import 'package:daylog/features/theme/domain/usecase/theme_use_case.dart';
-import 'package:daylog/features/theme/presentation/cubit/theme_cubit.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -36,7 +39,7 @@ class _MockReactionUseCase extends Mock implements ReactionUseCase {}
 class _MockAuthBloc extends MockBloc<AuthEvent, AuthState>
     implements AuthBloc {}
 
-class _MockThemeUseCase extends Mock implements ThemeUseCase {}
+class _MockPreferencesUseCase extends Mock implements PreferencesUseCase {}
 
 const _me = AppUser(id: 'me', email: 'me@example.test', nickname: '카르마');
 
@@ -45,6 +48,7 @@ void main() {
   late _MockProfileUseCase profileUseCase;
   late _MockAuthBloc authBloc;
   late ThemeCubit themeCubit;
+  late LanguageCubit languageCubit;
 
   setUp(() {
     feedUseCase = _MockFeedUseCase();
@@ -81,10 +85,13 @@ void main() {
       ..registerFactory<PostCubit>(() => PostCubit(_MockPostUseCase()))
       ..registerFactory<ProfileCubit>(() => ProfileCubit(profileUseCase));
 
-    final themeUseCase = _MockThemeUseCase();
-    when(themeUseCase.loadThemeMode).thenReturn(AppThemeMode.system);
-    themeCubit = ThemeCubit(themeUseCase);
+    final preferencesUseCase = _MockPreferencesUseCase();
+    when(preferencesUseCase.loadThemeMode).thenReturn(AppThemeMode.system);
+    when(preferencesUseCase.loadLanguage).thenReturn(AppLanguage.system);
+    themeCubit = ThemeCubit(preferencesUseCase);
     addTearDown(themeCubit.close);
+    languageCubit = LanguageCubit(preferencesUseCase);
+    addTearDown(languageCubit.close);
   });
 
   tearDown(getIt.reset);
@@ -93,11 +100,16 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
+        // 한국어 단언을 유지하려면 하니스가 ko 로 고정돼야 한다 (계획서).
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: MultiBlocProvider(
           providers: [
             BlocProvider<AuthBloc>.value(value: authBloc),
             // 실제 앱에서는 앱 루트가 제공한다. 설정 탭이 이걸 읽는다.
             BlocProvider<ThemeCubit>.value(value: themeCubit),
+            BlocProvider<LanguageCubit>.value(value: languageCubit),
           ],
           child: const HomeShellPage(),
         ),

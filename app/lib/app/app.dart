@@ -6,8 +6,11 @@ import '../core/di/injection.dart';
 import '../design_system/theme/app_theme.dart';
 import '../features/auth/presentation/bloc/auth_bloc.dart';
 import '../features/auth/presentation/bloc/auth_event.dart';
-import '../features/theme/domain/entity/app_theme_mode.dart';
-import '../features/theme/presentation/cubit/theme_cubit.dart';
+import '../features/preferences/domain/entity/app_language.dart';
+import '../features/preferences/domain/entity/app_theme_mode.dart';
+import '../features/preferences/presentation/cubit/language_cubit.dart';
+import '../features/preferences/presentation/cubit/theme_cubit.dart';
+import '../l10n/app_localizations.dart';
 import 'router/app_router.dart';
 
 class DaylogApp extends StatefulWidget {
@@ -20,6 +23,7 @@ class DaylogApp extends StatefulWidget {
 class _DaylogAppState extends State<DaylogApp> {
   late final AuthBloc _authBloc;
   late final ThemeCubit _themeCubit;
+  late final LanguageCubit _languageCubit;
   late final GoRouter _router;
 
   @override
@@ -30,11 +34,14 @@ class _DaylogAppState extends State<DaylogApp> {
     // ThemeCubit 도 앱 수명 전체를 산다. 소비자가 MaterialApp.themeMode 라
     // 라우터·탭보다 위에 있어야 한다.
     _themeCubit = getIt<ThemeCubit>();
+    // LanguageCubit 도 같은 이유다 — 소비자가 MaterialApp.locale 이다.
+    _languageCubit = getIt<LanguageCubit>();
     _router = createRouter(_authBloc);
   }
 
   @override
   void dispose() {
+    _languageCubit.close();
     _themeCubit.close();
     _authBloc.close();
     super.dispose();
@@ -46,17 +53,39 @@ class _DaylogAppState extends State<DaylogApp> {
       providers: [
         BlocProvider.value(value: _authBloc),
         BlocProvider.value(value: _themeCubit),
+        BlocProvider.value(value: _languageCubit),
       ],
       child: BlocBuilder<ThemeCubit, AppThemeMode>(
-        builder: (context, mode) => MaterialApp.router(
-          title: 'daylog',
-          theme: AppTheme.light(),
-          darkTheme: AppTheme.dark(),
-          themeMode: mode.themeMode,
-          debugShowCheckedModeBanner: false,
-          routerConfig: _router,
+        builder: (context, mode) => BlocBuilder<LanguageCubit, AppLanguage>(
+          builder: (context, language) => MaterialApp.router(
+            title: 'daylog',
+            theme: AppTheme.light(),
+            darkTheme: AppTheme.dark(),
+            themeMode: mode.themeMode,
+            // null 이면 Flutter 가 기기 locale 협상을 한다 (= 시스템 설정).
+            locale: language.locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            localeResolutionCallback: resolveAppLocale,
+            debugShowCheckedModeBanner: false,
+            routerConfig: _router,
+          ),
         ),
       ),
     );
   }
+}
+
+/// 기기 언어를 지원 언어 중 하나로 옮긴다.
+///
+/// 기본 협상은 매칭이 없으면 `supportedLocales` 의 첫 항목(= ko)으로 떨어진다.
+/// 지원하지 않는 언어를 쓰는 기기에는 한국어보다 **영어**가 낫다는 결정이라
+/// 여기서 직접 fallback 을 고른다 (계획서).
+Locale resolveAppLocale(Locale? deviceLocale, Iterable<Locale> supported) {
+  if (deviceLocale != null) {
+    for (final locale in supported) {
+      if (locale.languageCode == deviceLocale.languageCode) return locale;
+    }
+  }
+  return const Locale('en');
 }

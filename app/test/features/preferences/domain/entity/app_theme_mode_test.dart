@@ -1,4 +1,4 @@
-import 'package:daylog/features/theme/domain/entity/app_theme_mode.dart';
+import 'package:daylog/features/preferences/domain/entity/app_theme_mode.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -20,10 +20,11 @@ void main() {
     });
   });
 
-  test('code 는 저장 형식과 같고 label 은 화면에 그대로 쓰인다', () {
+  test('code 는 저장 형식과 같다', () {
+    // 표시 이름은 domain 이 갖지 않는다 — ARB 에서 오므로 presentation 확장
+    // AppThemeModeX.label(context) 의 몫이다.
     expect(AppThemeMode.system.code, 'system');
-    expect(AppThemeMode.system.label, '시스템 설정');
-    expect(AppThemeMode.light.label, '라이트');
-    expect(AppThemeMode.dark.label, '다크');
+    expect(AppThemeMode.light.code, 'light');
+    expect(AppThemeMode.dark.code, 'dark');
   });
 }

@@ -12,8 +12,11 @@ import '../../../auth/domain/entity/app_user.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
-import '../../../theme/domain/entity/app_theme_mode.dart';
-import '../../../theme/presentation/cubit/theme_cubit.dart';
+import '../../../preferences/domain/entity/app_language.dart';
+import '../../../preferences/domain/entity/app_theme_mode.dart';
+import '../../../preferences/presentation/cubit/language_cubit.dart';
+import '../../../preferences/presentation/cubit/theme_cubit.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// 설정 화면.
 ///
@@ -25,13 +28,14 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final user = switch (context.watch<AuthBloc>().state) {
       AuthAuthenticated(:final user) => user,
       _ => null,
     };
 
     return Scaffold(
-      appBar: AppBar(title: const Text('설정')),
+      appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: SafeArea(
         child: ListView(
           children: [
@@ -39,32 +43,41 @@ class SettingsPage extends StatelessWidget {
             const Divider(height: 1),
             AppListTile(
               leading: const Icon(Icons.person_outline),
-              title: const Text('프로필 편집'),
+              title: Text(l10n.settingsProfileEdit),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push(Routes.profileEdit),
             ),
             AppListTile(
               leading: const Icon(Icons.manage_accounts_outlined),
-              title: const Text('계정 설정'),
+              title: Text(l10n.settingsAccount),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push(Routes.accountSettings),
             ),
             AppListTile(
               leading: const Icon(Icons.brightness_6_outlined),
-              title: const Text('화면 테마'),
-              subtitle: Text(context.watch<ThemeCubit>().state.label),
+              title: Text(l10n.settingsTheme),
+              subtitle: Text(context.watch<ThemeCubit>().state.label(context)),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _selectThemeMode(context),
             ),
             AppListTile(
+              leading: const Icon(Icons.language_outlined),
+              title: Text(l10n.settingsLanguage),
+              subtitle: Text(
+                context.watch<LanguageCubit>().state.label(context),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _selectLanguage(context),
+            ),
+            AppListTile(
               leading: const Icon(Icons.block_outlined),
-              title: const Text('차단한 사용자'),
+              title: Text(l10n.settingsBlockedUsers),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => context.push(Routes.blockedUsers),
             ),
             AppListTile(
               leading: const Icon(Icons.logout),
-              title: const Text('로그아웃'),
+              title: Text(l10n.settingsSignOut),
               onTap: () => _confirmSignOut(context),
             ),
           ],
@@ -83,7 +96,7 @@ class SettingsPage extends StatelessWidget {
     final selected = await showDialog<AppThemeMode>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('화면 테마'),
+        title: Text(AppLocalizations.of(dialogContext).settingsTheme),
         content: RadioGroup<AppThemeMode>(
           groupValue: cubit.state,
           onChanged: (value) => Navigator.of(dialogContext).pop(value),
@@ -93,7 +106,7 @@ class SettingsPage extends StatelessWidget {
               for (final mode in AppThemeMode.values)
                 RadioListTile<AppThemeMode>(
                   value: mode,
-                  title: Text(mode.label),
+                  title: Text(mode.label(dialogContext)),
                 ),
             ],
           ),
@@ -102,6 +115,36 @@ class SettingsPage extends StatelessWidget {
     );
     if (selected == null) return;
     await cubit.setMode(selected);
+  }
+
+  /// 앱 언어를 고른다. 테마 다이얼로그와 같은 패턴이다 — 고르는 즉시 적용되고
+  /// 닫히며, 취소 버튼 없이 바깥 탭이 취소다.
+  ///
+  /// 언어 이름은 각 언어의 자기 표기로 고정이다 (`AppLanguageX.label`).
+  Future<void> _selectLanguage(BuildContext context) async {
+    final cubit = context.read<LanguageCubit>();
+    final selected = await showDialog<AppLanguage>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(AppLocalizations.of(dialogContext).settingsLanguage),
+        content: RadioGroup<AppLanguage>(
+          groupValue: cubit.state,
+          onChanged: (value) => Navigator.of(dialogContext).pop(value),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final language in AppLanguage.values)
+                RadioListTile<AppLanguage>(
+                  value: language,
+                  title: Text(language.label(dialogContext)),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (selected == null) return;
+    await cubit.setLanguage(selected);
   }
 
   /// 로그아웃은 되돌릴 수 없으니 한 번 묻는다.
@@ -113,15 +156,19 @@ class SettingsPage extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('로그아웃할까요?'),
-        content: const Text('다시 사용하려면 로그인해야 합니다.'),
+        title: Text(
+          AppLocalizations.of(dialogContext).settingsSignOutConfirmTitle,
+        ),
+        content: Text(
+          AppLocalizations.of(dialogContext).settingsSignOutConfirmMessage,
+        ),
         actions: [
           AppButton.text(
-            label: '취소',
+            label: AppLocalizations.of(dialogContext).commonCancel,
             onPressed: () => Navigator.of(dialogContext).pop(false),
           ),
           AppButton.text(
-            label: '로그아웃',
+            label: AppLocalizations.of(dialogContext).settingsSignOut,
             onPressed: () => Navigator.of(dialogContext).pop(true),
           ),
         ],

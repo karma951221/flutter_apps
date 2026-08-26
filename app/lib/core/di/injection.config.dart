@@ -52,6 +52,27 @@ import '../../features/post/data/repository/post_repository_impl.dart' as _i238;
 import '../../features/post/domain/repository/post_repository.dart' as _i735;
 import '../../features/post/domain/usecase/post_use_case.dart' as _i944;
 import '../../features/post/presentation/cubit/post_cubit.dart' as _i1054;
+import '../../features/preferences/data/datasource/language_data_source.dart'
+    as _i699;
+import '../../features/preferences/data/datasource/preferences_language_data_source.dart'
+    as _i279;
+import '../../features/preferences/data/datasource/preferences_theme_data_source.dart'
+    as _i184;
+import '../../features/preferences/data/datasource/theme_data_source.dart'
+    as _i315;
+import '../../features/preferences/data/repository/language_repository_impl.dart'
+    as _i738;
+import '../../features/preferences/data/repository/theme_repository_impl.dart'
+    as _i514;
+import '../../features/preferences/domain/repository/language_repository.dart'
+    as _i353;
+import '../../features/preferences/domain/repository/theme_repository.dart'
+    as _i979;
+import '../../features/preferences/domain/usecase/preferences_use_case.dart'
+    as _i414;
+import '../../features/preferences/presentation/cubit/language_cubit.dart'
+    as _i214;
+import '../../features/preferences/presentation/cubit/theme_cubit.dart' as _i81;
 import '../../features/profile/data/datasource/profile_data_source.dart'
     as _i986;
 import '../../features/profile/data/datasource/supabase_profile_data_source.dart'
@@ -93,14 +114,6 @@ import '../../features/settings/presentation/cubit/change_password_cubit.dart'
     as _i903;
 import '../../features/settings/presentation/cubit/delete_account_cubit.dart'
     as _i77;
-import '../../features/theme/data/datasource/preferences_theme_data_source.dart'
-    as _i282;
-import '../../features/theme/data/datasource/theme_data_source.dart' as _i213;
-import '../../features/theme/data/repository/theme_repository_impl.dart'
-    as _i740;
-import '../../features/theme/domain/repository/theme_repository.dart' as _i937;
-import '../../features/theme/domain/usecase/theme_use_case.dart' as _i853;
-import '../../features/theme/presentation/cubit/theme_cubit.dart' as _i5;
 import '../id/id_generator.dart' as _i1000;
 import '../media/image_picker_service.dart' as _i350;
 import '../media/image_storage.dart' as _i1040;
@@ -127,11 +140,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i350.ImagePickerService>(
       () => _i350.ImagePickerService(),
     );
+    gh.lazySingleton<_i315.ThemeDataSource>(
+      () => _i184.PreferencesThemeDataSource(gh<_i460.SharedPreferences>()),
+    );
+    gh.lazySingleton<_i979.ThemeRepository>(
+      () => _i514.ThemeRepositoryImpl(gh<_i315.ThemeDataSource>()),
+    );
+    gh.lazySingleton<_i699.LanguageDataSource>(
+      () => _i279.PreferencesLanguageDataSource(gh<_i460.SharedPreferences>()),
+    );
     gh.lazySingleton<_i1000.IdGenerator>(
       () => _i1000.IdGenerator(gh<_i706.Uuid>()),
     );
-    gh.lazySingleton<_i213.ThemeDataSource>(
-      () => _i282.PreferencesThemeDataSource(gh<_i460.SharedPreferences>()),
+    gh.lazySingleton<_i353.LanguageRepository>(
+      () => _i738.LanguageRepositoryImpl(gh<_i699.LanguageDataSource>()),
     );
     gh.lazySingleton<_i249.ReportDataSource>(
       () => _i294.SupabaseReportDataSource(gh<_i454.SupabaseClient>()),
@@ -148,14 +170,23 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i281.ReactionDataSource>(
       () => _i549.SupabaseReactionDataSource(gh<_i454.SupabaseClient>()),
     );
+    gh.lazySingleton<_i414.PreferencesUseCase>(
+      () => _i414.DefaultPreferencesUseCase(
+        gh<_i979.ThemeRepository>(),
+        gh<_i353.LanguageRepository>(),
+      ),
+    );
     gh.lazySingleton<_i452.BlockDataSource>(
       () => _i880.SupabaseBlockDataSource(gh<_i454.SupabaseClient>()),
     );
+    gh.factory<_i214.LanguageCubit>(
+      () => _i214.LanguageCubit(gh<_i414.PreferencesUseCase>()),
+    );
+    gh.factory<_i81.ThemeCubit>(
+      () => _i81.ThemeCubit(gh<_i414.PreferencesUseCase>()),
+    );
     gh.lazySingleton<_i813.CommentRepository>(
       () => _i742.CommentRepositoryImpl(gh<_i896.CommentDataSource>()),
-    );
-    gh.lazySingleton<_i937.ThemeRepository>(
-      () => _i740.ThemeRepositoryImpl(gh<_i213.ThemeDataSource>()),
     );
     gh.lazySingleton<_i692.AuthDataSource>(
       () => _i87.SupabaseAuthDataSource(gh<_i454.SupabaseClient>()),
@@ -200,9 +231,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1040.ImageStorage>(),
       ),
     );
-    gh.lazySingleton<_i853.ThemeUseCase>(
-      () => _i853.DefaultThemeUseCase(gh<_i937.ThemeRepository>()),
-    );
     gh.lazySingleton<_i735.PostRepository>(
       () => _i238.PostRepositoryImpl(gh<_i487.PostDataSource>()),
     );
@@ -246,7 +274,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i650.ReactionUseCase>(
       () => _i650.DefaultReactionUseCase(gh<_i831.ReactionRepository>()),
     );
-    gh.factory<_i5.ThemeCubit>(() => _i5.ThemeCubit(gh<_i853.ThemeUseCase>()));
     gh.factory<_i26.BlockActionCubit>(
       () => _i26.BlockActionCubit(gh<_i762.SafetyUseCase>()),
     );

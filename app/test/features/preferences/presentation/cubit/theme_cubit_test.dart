@@ -1,20 +1,20 @@
-import 'package:daylog/features/theme/domain/entity/app_theme_mode.dart';
-import 'package:daylog/features/theme/domain/usecase/theme_use_case.dart';
-import 'package:daylog/features/theme/presentation/cubit/theme_cubit.dart';
+import 'package:daylog/features/preferences/domain/entity/app_theme_mode.dart';
+import 'package:daylog/features/preferences/domain/usecase/preferences_use_case.dart';
+import 'package:daylog/features/preferences/presentation/cubit/theme_cubit.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockThemeUseCase extends Mock implements ThemeUseCase {}
+class _MockPreferencesUseCase extends Mock implements PreferencesUseCase {}
 
 void main() {
-  late _MockThemeUseCase useCase;
+  late _MockPreferencesUseCase useCase;
 
   setUpAll(() {
     registerFallbackValue(AppThemeMode.system);
   });
 
   setUp(() {
-    useCase = _MockThemeUseCase();
+    useCase = _MockPreferencesUseCase();
     when(() => useCase.saveThemeMode(any())).thenAnswer((_) async {});
   });
 

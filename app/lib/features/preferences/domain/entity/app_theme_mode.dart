@@ -3,18 +3,18 @@
 /// Flutter 의 `ThemeMode` 를 쓰지 않는다 — domain 이 material 에 묶이면 규칙 ⑤
 /// 가 깨진다. `ThemeMode` 로의 매핑은 presentation 이 갖는다.
 ///
-/// [code] 는 기기에 저장되는 문자열이다. `ReactionType.code` 와 같은 방식이다.
+/// 표시 이름도 여기에 두지 않는다. 다국어 이후 라벨은 ARB 에서 오므로
+/// presentation 확장 `AppThemeModeX.label(context)` 이 갖는다. domain 은 저장
+/// 형식인 [code] 만 안다.
 enum AppThemeMode {
-  system('system', '시스템 설정'),
-  light('light', '라이트'),
-  dark('dark', '다크');
+  system('system'),
+  light('light'),
+  dark('dark');
 
-  const AppThemeMode(this.code, this.label);
+  const AppThemeMode(this.code);
 
+  /// 기기에 저장되는 문자열. `ReactionType.code` 와 같은 방식이다.
   final String code;
-
-  /// 설정 화면이 그대로 쓰는 표시 이름.
-  final String label;
 
   /// 모르는 코드와 없는 값은 [AppThemeMode.system] 이다.
   ///

@@ -1,0 +1,63 @@
+{
+  "@@locale": "ko",
+
+  "commonCancel": "취소",
+  "@commonCancel": {
+    "description": "다이얼로그의 취소 버튼"
+  },
+
+  "settingsTitle": "설정",
+  "@settingsTitle": {
+    "description": "설정 화면 AppBar 제목"
+  },
+  "settingsProfileEdit": "프로필 편집",
+  "@settingsProfileEdit": {
+    "description": "설정 목록 — 프로필 편집 화면으로 가는 행"
+  },
+  "settingsAccount": "계정 설정",
+  "@settingsAccount": {
+    "description": "설정 목록 — 계정 설정 화면으로 가는 행"
+  },
+  "settingsTheme": "화면 테마",
+  "@settingsTheme": {
+    "description": "설정 목록의 화면 테마 행이자 선택 다이얼로그 제목"
+  },
+  "settingsLanguage": "언어",
+  "@settingsLanguage": {
+    "description": "설정 목록의 언어 행이자 선택 다이얼로그 제목"
+  },
+  "settingsBlockedUsers": "차단한 사용자",
+  "@settingsBlockedUsers": {
+    "description": "설정 목록 — 차단 목록 화면으로 가는 행"
+  },
+  "settingsSignOut": "로그아웃",
+  "@settingsSignOut": {
+    "description": "설정 목록의 로그아웃 행이자 확인 다이얼로그의 실행 버튼"
+  },
+  "settingsSignOutConfirmTitle": "로그아웃할까요?",
+  "@settingsSignOutConfirmTitle": {
+    "description": "로그아웃 확인 다이얼로그 제목"
+  },
+  "settingsSignOutConfirmMessage": "다시 사용하려면 로그인해야 합니다.",
+  "@settingsSignOutConfirmMessage": {
+    "description": "로그아웃 확인 다이얼로그 본문"
+  },
+
+  "themeModeSystem": "시스템 설정",
+  "@themeModeSystem": {
+    "description": "화면 테마 — 기기 설정을 따른다"
+  },
+  "themeModeLight": "라이트",
+  "@themeModeLight": {
+    "description": "화면 테마 — 밝은 테마"
+  },
+  "themeModeDark": "다크",
+  "@themeModeDark": {
+    "description": "화면 테마 — 어두운 테마"
+  },
+
+  "languageSystem": "시스템 설정",
+  "@languageSystem": {
+    "description": "앱 언어 — 기기 언어를 따른다. 다른 언어 이름은 자기 표기로 고정이라 번역하지 않는다"
+  }
+}

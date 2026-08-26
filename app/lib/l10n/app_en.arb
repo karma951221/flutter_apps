@@ -1,0 +1,21 @@
+{
+  "@@locale": "en",
+
+  "commonCancel": "Cancel",
+
+  "settingsTitle": "Settings",
+  "settingsProfileEdit": "Edit profile",
+  "settingsAccount": "Account settings",
+  "settingsTheme": "Appearance",
+  "settingsLanguage": "Language",
+  "settingsBlockedUsers": "Blocked users",
+  "settingsSignOut": "Sign out",
+  "settingsSignOutConfirmTitle": "Sign out?",
+  "settingsSignOutConfirmMessage": "You will need to sign in again to use the app.",
+
+  "themeModeSystem": "System setting",
+  "themeModeLight": "Light",
+  "themeModeDark": "Dark",
+
+  "languageSystem": "System setting"
+}

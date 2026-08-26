@@ -5,10 +5,13 @@ import 'package:daylog/features/auth/domain/entity/app_user.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_event.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_state.dart';
+import 'package:daylog/features/preferences/domain/entity/app_language.dart';
+import 'package:daylog/features/preferences/domain/entity/app_theme_mode.dart';
+import 'package:daylog/features/preferences/domain/usecase/preferences_use_case.dart';
+import 'package:daylog/features/preferences/presentation/cubit/language_cubit.dart';
+import 'package:daylog/features/preferences/presentation/cubit/theme_cubit.dart';
 import 'package:daylog/features/settings/presentation/page/settings_page.dart';
-import 'package:daylog/features/theme/domain/entity/app_theme_mode.dart';
-import 'package:daylog/features/theme/domain/usecase/theme_use_case.dart';
-import 'package:daylog/features/theme/presentation/cubit/theme_cubit.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,7 +20,7 @@ import 'package:mocktail/mocktail.dart';
 class _MockAuthBloc extends MockBloc<AuthEvent, AuthState>
     implements AuthBloc {}
 
-class _MockThemeUseCase extends Mock implements ThemeUseCase {}
+class _MockPreferencesUseCase extends Mock implements PreferencesUseCase {}
 
 const _me = AppUser(
   id: 'me',
@@ -28,11 +31,13 @@ const _me = AppUser(
 
 void main() {
   late _MockAuthBloc authBloc;
-  late _MockThemeUseCase themeUseCase;
+  late _MockPreferencesUseCase preferencesUseCase;
   late ThemeCubit themeCubit;
+  late LanguageCubit languageCubit;
 
   setUpAll(() {
     registerFallbackValue(AppThemeMode.system);
+    registerFallbackValue(AppLanguage.system);
   });
 
   setUp(() {
@@ -42,21 +47,35 @@ void main() {
       const Stream<AuthState>.empty(),
       initialState: const AuthState.authenticated(_me),
     );
-    themeUseCase = _MockThemeUseCase();
-    when(themeUseCase.loadThemeMode).thenReturn(AppThemeMode.system);
-    when(() => themeUseCase.saveThemeMode(any())).thenAnswer((_) async {});
-    themeCubit = ThemeCubit(themeUseCase);
+    preferencesUseCase = _MockPreferencesUseCase();
+    when(preferencesUseCase.loadThemeMode).thenReturn(AppThemeMode.system);
+    when(
+      () => preferencesUseCase.saveThemeMode(any()),
+    ).thenAnswer((_) async {});
+    when(preferencesUseCase.loadLanguage).thenReturn(AppLanguage.system);
+    when(() => preferencesUseCase.saveLanguage(any())).thenAnswer((_) async {});
+    themeCubit = ThemeCubit(preferencesUseCase);
     addTearDown(themeCubit.close);
+    languageCubit = LanguageCubit(preferencesUseCase);
+    addTearDown(languageCubit.close);
   });
 
-  Future<void> pumpPage(WidgetTester tester) async {
+  Future<void> pumpPage(
+    WidgetTester tester, {
+    Locale locale = const Locale('ko'),
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
+        // ko 가 ARB template 언어라 원문이 곧 기대값이다 (계획서).
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: MultiBlocProvider(
           providers: [
             BlocProvider<AuthBloc>.value(value: authBloc),
             BlocProvider<ThemeCubit>.value(value: themeCubit),
+            BlocProvider<LanguageCubit>.value(value: languageCubit),
           ],
           child: const SettingsPage(),
         ),
@@ -65,23 +84,42 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('설정 목록은 프로필 편집 · 계정 설정 · 화면 테마 · 차단한 사용자 · 로그아웃 다섯 항목을 보여준다', (
-    tester,
-  ) async {
+  testWidgets(
+    '설정 목록은 프로필 편집 · 계정 설정 · 화면 테마 · 언어 · 차단한 사용자 · 로그아웃 여섯 항목을 보여준다',
+    (tester) async {
+      await pumpPage(tester);
+
+      expect(find.text('설정'), findsOneWidget);
+      expect(find.byType(AppListTile), findsNWidgets(6));
+      expect(find.text('프로필 편집'), findsOneWidget);
+      expect(find.text('계정 설정'), findsOneWidget);
+      expect(find.text('화면 테마'), findsOneWidget);
+      expect(find.text('언어'), findsOneWidget);
+      expect(find.text('차단한 사용자'), findsOneWidget);
+      expect(find.text('로그아웃'), findsOneWidget);
+    },
+  );
+
+  testWidgets('언어 행은 화면 테마 바로 아래다', (tester) async {
     await pumpPage(tester);
 
-    expect(find.text('설정'), findsOneWidget);
-    expect(find.byType(AppListTile), findsNWidgets(5));
-    expect(find.text('프로필 편집'), findsOneWidget);
-    expect(find.text('계정 설정'), findsOneWidget);
-    expect(find.text('화면 테마'), findsOneWidget);
-    expect(find.text('차단한 사용자'), findsOneWidget);
-    expect(find.text('로그아웃'), findsOneWidget);
+    final tiles = tester.widgetList<AppListTile>(find.byType(AppListTile));
+    final titles = tiles.map((tile) => (tile.title as Text).data).toList();
+    expect(titles.indexOf('언어'), titles.indexOf('화면 테마') + 1);
+  });
+
+  testWidgets('en 으로 뜨면 설정 화면이 영어다', (tester) async {
+    // 세 언어 × 전 화면 매트릭스 대신 대표 화면 스모크만 둔다 (계획서).
+    await pumpPage(tester, locale: const Locale('en'));
+
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Language'), findsOneWidget);
+    expect(find.text('Sign out'), findsOneWidget);
   });
 
   testWidgets('화면 테마 행은 현재 모드를 subtitle 로 보여준다', (tester) async {
-    when(themeUseCase.loadThemeMode).thenReturn(AppThemeMode.dark);
-    themeCubit = ThemeCubit(themeUseCase);
+    when(preferencesUseCase.loadThemeMode).thenReturn(AppThemeMode.dark);
+    themeCubit = ThemeCubit(preferencesUseCase);
     addTearDown(themeCubit.close);
 
     await pumpPage(tester);
@@ -96,7 +134,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(RadioListTile<AppThemeMode>), findsNWidgets(3));
-    expect(find.text('시스템 설정'), findsNWidgets(2)); // 행의 subtitle + 다이얼로그
+    // 테마·언어 두 행의 subtitle + 다이얼로그의 선택지.
+    expect(find.text('시스템 설정'), findsNWidgets(3));
     expect(find.text('라이트'), findsOneWidget);
     expect(find.text('다크'), findsOneWidget);
 
@@ -104,7 +143,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(themeCubit.state, AppThemeMode.dark);
-    verify(() => themeUseCase.saveThemeMode(AppThemeMode.dark)).called(1);
+    verify(() => preferencesUseCase.saveThemeMode(AppThemeMode.dark)).called(1);
     // 고르면 다이얼로그가 닫히고 행의 subtitle 이 새 값을 보여준다.
     expect(find.byType(AlertDialog), findsNothing);
     expect(find.text('다크'), findsOneWidget);
@@ -122,7 +161,67 @@ void main() {
 
     expect(find.byType(AlertDialog), findsNothing);
     expect(themeCubit.state, AppThemeMode.system);
-    verifyNever(() => themeUseCase.saveThemeMode(any()));
+    verifyNever(() => preferencesUseCase.saveThemeMode(any()));
+  });
+
+  testWidgets('언어 행은 현재 언어를 subtitle 로 보여준다', (tester) async {
+    when(preferencesUseCase.loadLanguage).thenReturn(AppLanguage.japanese);
+    languageCubit = LanguageCubit(preferencesUseCase);
+    addTearDown(languageCubit.close);
+
+    await pumpPage(tester);
+
+    expect(find.text('日本語'), findsOneWidget);
+  });
+
+  testWidgets('언어를 탭하면 네 가지 선택지가 나오고, 고르면 즉시 적용되고 닫힌다', (tester) async {
+    await pumpPage(tester);
+
+    await tester.tap(find.text('언어'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(RadioListTile<AppLanguage>), findsNWidgets(4));
+    // 언어 이름은 자기 표기로 고정이다 — 현재 언어를 따르는 건 '시스템 설정'뿐.
+    expect(find.text('한국어'), findsOneWidget);
+    expect(find.text('English'), findsOneWidget);
+    expect(find.text('日本語'), findsOneWidget);
+
+    await tester.tap(find.text('English'));
+    await tester.pumpAndSettle();
+
+    expect(languageCubit.state, AppLanguage.english);
+    verify(
+      () => preferencesUseCase.saveLanguage(AppLanguage.english),
+    ).called(1);
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.text('English'), findsOneWidget);
+  });
+
+  testWidgets('언어 다이얼로그를 그냥 닫으면 언어가 그대로다', (tester) async {
+    await pumpPage(tester);
+
+    await tester.tap(find.text('언어'));
+    await tester.pumpAndSettle();
+
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(languageCubit.state, AppLanguage.system);
+    verifyNever(() => preferencesUseCase.saveLanguage(any()));
+  });
+
+  testWidgets('언어 이름은 화면 언어가 영어여도 자기 표기 그대로다', (tester) async {
+    await pumpPage(tester, locale: const Locale('en'));
+
+    await tester.tap(find.text('Language'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('한국어'), findsOneWidget);
+    expect(find.text('English'), findsOneWidget);
+    expect(find.text('日本語'), findsOneWidget);
+    // '시스템 설정'만 현재 언어를 따른다.
+    expect(find.text('System setting'), findsNWidgets(3));
   });
 
   testWidgets('상단 요약은 세션의 닉네임과 이메일을 그대로 보여준다', (tester) async {
@@ -164,6 +263,6 @@ void main() {
     await pumpPage(tester);
 
     expect(find.text('카르마'), findsNothing);
-    expect(find.byType(AppListTile), findsNWidgets(5));
+    expect(find.byType(AppListTile), findsNWidgets(6));
   });
 }

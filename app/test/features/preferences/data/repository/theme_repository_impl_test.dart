@@ -1,6 +1,6 @@
-import 'package:daylog/features/theme/data/datasource/preferences_theme_data_source.dart';
-import 'package:daylog/features/theme/data/repository/theme_repository_impl.dart';
-import 'package:daylog/features/theme/domain/entity/app_theme_mode.dart';
+import 'package:daylog/features/preferences/data/datasource/preferences_theme_data_source.dart';
+import 'package:daylog/features/preferences/data/repository/theme_repository_impl.dart';
+import 'package:daylog/features/preferences/domain/entity/app_theme_mode.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
