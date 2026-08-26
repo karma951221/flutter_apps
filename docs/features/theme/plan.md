@@ -2,7 +2,7 @@
 
 > [문서 허브](../../README.md) · [아키텍처](../../architecture.md) · [설정 계획](../settings/plan.md)
 
-> 상태: **착수** · 작성 2026-08-26
+> 상태: **완료** · 작성 2026-08-26 · 구현 2026-08-26 ([구현 기록](history.md))
 > 진행 상태의 단일 기준은 [진행 현황](../../status.md)이다.
 
 ## 범위
@@ -43,7 +43,7 @@ features/theme/
 │   ├── datasource/{theme_data_source,preferences_theme_data_source}.dart
 │   └── repository/theme_repository_impl.dart
 └── presentation/
-    └── cubit/{theme_cubit,theme_state}.dart
+    └── cubit/theme_cubit.dart              상태 클래스 없음 — Cubit<AppThemeMode>
 ```
 
 | 동작 | 시그니처 |
@@ -56,8 +56,10 @@ features/theme/
 발생하지 않는 경로다.
 
 `SharedPreferences` 인스턴스는 `core/di/register_module.dart` 에 `@module` +
-`@preResolve` 로 등록한다. `configureDependencies()` 가 이미 async 라 부트스트랩
-변경이 없다.
+`@preResolve` 로 등록한다. `@preResolve` 는 생성된 `init` 의 반환을 `Future` 로
+바꾸므로 `configureDependencies()` 안에서 `await getIt.init()` 이 필요하다 —
+호출부 세 곳이 이미 전부 await 하고 있어 외부 동작은 그대로다
+([구현 기록](history.md)).
 
 ### `ThemeCubit`
 
@@ -97,9 +99,9 @@ material 타입을 아는 곳은 presentation 뿐이다.
 
 ## 완료 조건
 
-- [ ] 설정 → 화면 테마에서 시스템 · 라이트 · 다크를 고를 수 있다
-- [ ] 선택이 즉시 전체 화면에 적용된다
-- [ ] 앱을 재시작해도 선택이 유지된다
-- [ ] 저장값이 없으면(첫 실행·업데이트 직후) 시스템을 따른다
-- [ ] 시스템 모드에서 OS 다크 전환이 앱에 반영된다
-- [ ] 첫 프레임부터 저장된 테마로 뜬다 (라이트 깜빡임 없음)
+- [x] 설정 → 화면 테마에서 시스템 · 라이트 · 다크를 고를 수 있다
+- [x] 선택이 즉시 전체 화면에 적용된다
+- [x] 앱을 재시작해도 선택이 유지된다
+- [x] 저장값이 없으면(첫 실행·업데이트 직후) 시스템을 따른다
+- [x] 시스템 모드에서 OS 다크 전환이 앱에 반영된다
+- [x] 첫 프레임부터 저장된 테마로 뜬다 (라이트 깜빡임 없음)

@@ -79,6 +79,9 @@
       ([계획](features/settings/plan.md))
 - [x] **회원 탈퇴** — `delete_account()` cascade + 앱의 Storage best-effort 정리
       ([계획](features/settings/plan.md) · [스키마 §3](schema.md))
+- [x] **다크모드** — 시스템·라이트·다크 3상태, `shared_preferences` 저장,
+      `ThemeCubit` 전역 제공, 설정 → 화면 테마
+      ([계획](features/theme/plan.md) · [기록](features/theme/history.md))
 
 ## 검수 — 2026-08-24
 
