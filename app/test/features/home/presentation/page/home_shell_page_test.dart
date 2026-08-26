@@ -17,6 +17,9 @@ import 'package:daylog/features/profile/domain/entity/profile.dart';
 import 'package:daylog/features/profile/domain/usecase/profile_use_case.dart';
 import 'package:daylog/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:daylog/features/reaction/domain/usecase/reaction_use_case.dart';
+import 'package:daylog/features/theme/domain/entity/app_theme_mode.dart';
+import 'package:daylog/features/theme/domain/usecase/theme_use_case.dart';
+import 'package:daylog/features/theme/presentation/cubit/theme_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,12 +36,15 @@ class _MockReactionUseCase extends Mock implements ReactionUseCase {}
 class _MockAuthBloc extends MockBloc<AuthEvent, AuthState>
     implements AuthBloc {}
 
+class _MockThemeUseCase extends Mock implements ThemeUseCase {}
+
 const _me = AppUser(id: 'me', email: 'me@example.test', nickname: '카르마');
 
 void main() {
   late _MockFeedUseCase feedUseCase;
   late _MockProfileUseCase profileUseCase;
   late _MockAuthBloc authBloc;
+  late ThemeCubit themeCubit;
 
   setUp(() {
     feedUseCase = _MockFeedUseCase();
@@ -74,6 +80,11 @@ void main() {
       )
       ..registerFactory<PostCubit>(() => PostCubit(_MockPostUseCase()))
       ..registerFactory<ProfileCubit>(() => ProfileCubit(profileUseCase));
+
+    final themeUseCase = _MockThemeUseCase();
+    when(themeUseCase.loadThemeMode).thenReturn(AppThemeMode.system);
+    themeCubit = ThemeCubit(themeUseCase);
+    addTearDown(themeCubit.close);
   });
 
   tearDown(getIt.reset);
@@ -82,8 +93,12 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
-        home: BlocProvider<AuthBloc>.value(
-          value: authBloc,
+        home: MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthBloc>.value(value: authBloc),
+            // 실제 앱에서는 앱 루트가 제공한다. 설정 탭이 이걸 읽는다.
+            BlocProvider<ThemeCubit>.value(value: themeCubit),
+          ],
           child: const HomeShellPage(),
         ),
       ),

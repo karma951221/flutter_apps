@@ -12,6 +12,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
+import 'package:shared_preferences/shared_preferences.dart' as _i460;
 import 'package:supabase_flutter/supabase_flutter.dart' as _i454;
 import 'package:uuid/uuid.dart' as _i706;
 
@@ -92,6 +93,14 @@ import '../../features/settings/presentation/cubit/change_password_cubit.dart'
     as _i903;
 import '../../features/settings/presentation/cubit/delete_account_cubit.dart'
     as _i77;
+import '../../features/theme/data/datasource/preferences_theme_data_source.dart'
+    as _i282;
+import '../../features/theme/data/datasource/theme_data_source.dart' as _i213;
+import '../../features/theme/data/repository/theme_repository_impl.dart'
+    as _i740;
+import '../../features/theme/domain/repository/theme_repository.dart' as _i937;
+import '../../features/theme/domain/usecase/theme_use_case.dart' as _i853;
+import '../../features/theme/presentation/cubit/theme_cubit.dart' as _i5;
 import '../id/id_generator.dart' as _i1000;
 import '../media/image_picker_service.dart' as _i350;
 import '../media/image_storage.dart' as _i1040;
@@ -100,12 +109,16 @@ import 'register_module.dart' as _i291;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
-  _i174.GetIt init({
+  Future<_i174.GetIt> init({
     String? environment,
     _i526.EnvironmentFilter? environmentFilter,
-  }) {
+  }) async {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final registerModule = _$RegisterModule();
+    await gh.factoryAsync<_i460.SharedPreferences>(
+      () => registerModule.sharedPreferences,
+      preResolve: true,
+    );
     gh.lazySingleton<_i558.FlutterSecureStorage>(
       () => registerModule.secureStorage,
     );
@@ -116,6 +129,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i1000.IdGenerator>(
       () => _i1000.IdGenerator(gh<_i706.Uuid>()),
+    );
+    gh.lazySingleton<_i213.ThemeDataSource>(
+      () => _i282.PreferencesThemeDataSource(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i249.ReportDataSource>(
       () => _i294.SupabaseReportDataSource(gh<_i454.SupabaseClient>()),
@@ -137,6 +153,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i813.CommentRepository>(
       () => _i742.CommentRepositoryImpl(gh<_i896.CommentDataSource>()),
+    );
+    gh.lazySingleton<_i937.ThemeRepository>(
+      () => _i740.ThemeRepositoryImpl(gh<_i213.ThemeDataSource>()),
     );
     gh.lazySingleton<_i692.AuthDataSource>(
       () => _i87.SupabaseAuthDataSource(gh<_i454.SupabaseClient>()),
@@ -181,6 +200,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1040.ImageStorage>(),
       ),
     );
+    gh.lazySingleton<_i853.ThemeUseCase>(
+      () => _i853.DefaultThemeUseCase(gh<_i937.ThemeRepository>()),
+    );
     gh.lazySingleton<_i735.PostRepository>(
       () => _i238.PostRepositoryImpl(gh<_i487.PostDataSource>()),
     );
@@ -224,6 +246,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i650.ReactionUseCase>(
       () => _i650.DefaultReactionUseCase(gh<_i831.ReactionRepository>()),
     );
+    gh.factory<_i5.ThemeCubit>(() => _i5.ThemeCubit(gh<_i853.ThemeUseCase>()));
     gh.factory<_i26.BlockActionCubit>(
       () => _i26.BlockActionCubit(gh<_i762.SafetyUseCase>()),
     );

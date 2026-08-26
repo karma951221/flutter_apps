@@ -12,6 +12,8 @@ import '../../../auth/domain/entity/app_user.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../theme/domain/entity/app_theme_mode.dart';
+import '../../../theme/presentation/cubit/theme_cubit.dart';
 
 /// 설정 화면.
 ///
@@ -48,6 +50,13 @@ class SettingsPage extends StatelessWidget {
               onTap: () => context.push(Routes.accountSettings),
             ),
             AppListTile(
+              leading: const Icon(Icons.brightness_6_outlined),
+              title: const Text('화면 테마'),
+              subtitle: Text(context.watch<ThemeCubit>().state.label),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _selectThemeMode(context),
+            ),
+            AppListTile(
               leading: const Icon(Icons.block_outlined),
               title: const Text('차단한 사용자'),
               trailing: const Icon(Icons.chevron_right),
@@ -62,6 +71,37 @@ class SettingsPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// 화면 테마를 고른다. 고르는 즉시 적용되고 다이얼로그가 닫힌다.
+  ///
+  /// 취소 버튼을 두지 않는다 — 바깥을 탭해 닫으면 아무것도 바뀌지 않는다.
+  /// 테마 상태의 주인은 앱 루트의 [ThemeCubit] 이므로 여기서 새로 만들지 않고
+  /// 읽어 쓰기만 한다 (규칙 ⑥).
+  Future<void> _selectThemeMode(BuildContext context) async {
+    final cubit = context.read<ThemeCubit>();
+    final selected = await showDialog<AppThemeMode>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('화면 테마'),
+        content: RadioGroup<AppThemeMode>(
+          groupValue: cubit.state,
+          onChanged: (value) => Navigator.of(dialogContext).pop(value),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final mode in AppThemeMode.values)
+                RadioListTile<AppThemeMode>(
+                  value: mode,
+                  title: Text(mode.label),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (selected == null) return;
+    await cubit.setMode(selected);
   }
 
   /// 로그아웃은 되돌릴 수 없으니 한 번 묻는다.

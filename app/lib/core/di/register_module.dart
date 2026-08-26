@@ -1,5 +1,6 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -19,4 +20,11 @@ abstract class RegisterModule {
 
   @lazySingleton
   Uuid get uuid => const Uuid();
+
+  /// DI 준비 중에 미리 받아 둔다(`@preResolve`). 인스턴스가 손에 있으면 값 읽기가
+  /// 동기라, 첫 프레임부터 저장된 테마로 뜬다 — 라이트로 떴다가 다크로 바뀌는
+  /// 깜빡임이 없다.
+  @preResolve
+  Future<SharedPreferences> get sharedPreferences =>
+      SharedPreferences.getInstance();
 }
