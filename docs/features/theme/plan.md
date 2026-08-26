@@ -30,6 +30,7 @@
 | 첫 프레임 | **깜빡임 없음** — DI 가 `SharedPreferences` 를 `@preResolve` 로 미리 들고, cubit 이 생성자에서 동기로 읽는다 | `SharedPreferences` 는 `getInstance()` 이후 메모리 캐시라 읽기가 동기다. cubit 초기 상태가 곧 저장값이므로 "라이트로 떴다가 다크로 바뀌는" 프레임이 없다 |
 | 저장 실패 | **무시하고 상태만 바꾼다** | 화면 전환은 즉시 일어나야 한다. 저장이 실패하면 다음 실행에 이전 값으로 뜰 뿐이고, 그것을 오류로 알리는 것이 사용자에게 더 성가시다 |
 | UI 형태 | 설정 행 '화면 테마' + **선택 다이얼로그**(라디오 3개) | 행의 subtitle 이 현재 값을 보여주고, 탭하면 다이얼로그에서 고른다. 고르는 즉시 적용되고 닫힌다. 신고 시트의 `RadioGroup` 패턴을 따른다 |
+| 이름 범위 | **`features/theme` 유지** — `preferences` 로 넓히지 않는다 (사용자 확정 2026-08-26) | 로컬 설정의 공용 계층은 이 feature 가 아니라 DI 에 범용으로 등록된 `SharedPreferences` 자체다. 다른 설정이 와도 자기 feature 에서 그걸 주입받으면 되고, 잡화점 `PreferencesRepository` 는 safety 가 `ReportRepository` · `BlockRepository` 를 나눠 피한 안티패턴이다. safety 폴더가 `report` 가 아니었던 것은 차단이 **기획서에 명시된** 미래였기 때문 — 지금은 다음 로컬 설정이 기획에 없다. **개명 기준**: 두 번째 로컬 설정이 기획에 실리는 시점에 `features/preferences` 로 옮기고(저장소는 관심사별 유지, facade 만 통합) 그때 이 행을 갱신한다 |
 
 ## 구조
 
