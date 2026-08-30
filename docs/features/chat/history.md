@@ -159,3 +159,16 @@ F7 이 차단 상대 프로필에서 팔로우 버튼을 숨기던 것과 같은
   넷(`chat_room_list_page.dart` · `create_room_page.dart` · `chat_explore_page.dart` ·
   `profile_page.dart`)은 전부 `ChatRoomPageArgs` 를 넘기므로 지금은 문제가 없지만,
   미래에 딥링크 등 인자 없이 방 id 만으로 진입하는 경로가 추가되면 이 갭이 드러난다.
+- **상대가 탈퇴한 direct 방은 이름 없는 타일로 남는다.** `chat_participants.
+  user_id` 가 `profiles(id)` 를 `on delete cascade` 로 참조해, 상대 계정이
+  지워지면 상대의 참여자 행 자체가 사라진다. `my_chat_rooms` 의 partner
+  lateral 이 짝을 못 찾아 `partner_id`·`partner_nickname`·`partner_avatar_url`
+  이 전부 null 이 되고, 목록 타일은 아바타 자리에 '?' 만 뜨고 방 이름이 빈다.
+  그 방을 고치는 화면은 없다 — 나가기로 정리하는 것만 남는다.
+- **운영자가 soft-delete 한 direct 방에서 상대가 나가 있으면 전송이 '없는
+  방입니다' 로 실패한다.** `enforce_direct_message()` 의 카톡식 자동 재등장은
+  상대의 `left_at` 을 되돌리는 UPDATE 인데, 이 UPDATE 가 다시 지나는
+  `enforce_room_capacity()` 가 `deleted_at` 채워진 방을 "없는 방"으로 보고
+  `23503` 을 던진다(`add_chat.sql`). 상대가 나가지 않은 상태라면 이 UPDATE
+  자체가 안 돌아 드러나지 않는 조합이다. 운영자 삭제 방을 되살리는 화면은
+  없다(계획서 범위 밖) — `deleted_at` 을 되돌리는 것은 수동 운영 경로뿐이다.
