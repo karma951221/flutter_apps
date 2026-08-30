@@ -1595,19 +1595,32 @@ security definer 함수) 하나로 모았다.
 create table public.chat_rooms (
   id           uuid        primary key default gen_random_uuid(),
   type         text        not null default 'open',
-  title        text        not null,
+  title        text,
   description  text,
   created_by   uuid        default auth.uid()
                            references public.profiles (id) on delete set null,
   member_limit int         not null default 100,
+  direct_key   text,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz not null default now(),
   deleted_at   timestamptz,
 
   constraint chat_rooms_type_valid  check (type in ('open', 'direct')),
-  constraint chat_rooms_title_len   check (char_length(btrim(title)) between 1 and 30),
+  constraint chat_rooms_direct_key_unique unique (direct_key),
+  constraint chat_rooms_title_len   check (
+       (type = 'open'   and title is not null
+                        and char_length(btrim(title)) between 1 and 30)
+    or (type = 'direct' and title is null)
+  ),
   constraint chat_rooms_desc_len    check (description is null or char_length(description) <= 200),
-  constraint chat_rooms_limit_range check (member_limit between 2 and 500)
+  constraint chat_rooms_limit_range check (
+       (type = 'open'   and member_limit between 2 and 500)
+    or (type = 'direct' and member_limit = 2)
+  ),
+  constraint chat_rooms_direct_key_shape check (
+       (type = 'open'   and direct_key is null)
+    or (type = 'direct' and direct_key is not null)
+  )
 );
 
 create table public.chat_participants (
@@ -1648,8 +1661,17 @@ create table public.chat_messages (
 );
 ```
 
-`type` 은 `'open'` 만 쓴다. `'direct'` 는 DM 을 붙일 때 마이그레이션 하나로 끝내려고
-자리만 잡아 둔 것이고, INSERT 정책이 `type = 'open'` 을 강제하므로 지금은 만들 수 없다.
+`type` 은 `'open'`(그룹) · `'direct'`(1:1 DM) 둘이다. F9-DM(설계 근거
+[계획](features/chat/plan-dm.md))부터 `'direct'` 가 실제로 쓰인다. **DM 방이 생기는
+경로는 `open_direct_room()` 하나뿐이다** — `chat_rooms` 의 INSERT 정책은 여전히
+`type = 'open'` 만 허용하므로 앱이 직접 `insert` 로 direct 방을 만들 수 없다.
+
+`title` · `member_limit` · `direct_key` 세 제약을 전부 `type` 별로 갈랐다. open 은
+제목 필수·1~30자·정원 2~500·`direct_key` null, direct 는 제목 null·정원 정확히
+2·`direct_key` not null. **`direct_key` 는 컬럼 unique 제약이다** — 부분 인덱스가
+아닌 이유는 `open_direct_room()` 의 `on conflict (direct_key)` 가 성립하려면 유니크
+"제약"이 있어야 하기 때문이다. open 방은 `direct_key` 가 null 이고 null 끼리는
+충돌하지 않으므로 open 방끼리는 이 제약의 영향을 받지 않는다.
 
 **`chat_messages.image_path` 는 URL 이 아니라 객체 경로다.** `chat-images` 가 비공개
 버킷이라 공개 URL 이 존재하지 않는다 — 앱은 경로를 저장하고 화면에 띄울 때 서명
@@ -1695,9 +1717,15 @@ security definer 함수에 가둔다.
 
 | 대상 | select | insert | update |
 |---|---|---|---|
-| `chat_rooms` | `type = 'open' and deleted_at is null` (anon 포함) | `type = 'open'` · 로그인 | 없음 |
+| `chat_rooms` | `deleted_at is null and (type = 'open' or (type = 'direct' and is_room_member(id)))` (anon 포함) | `type = 'open'` · 로그인 | 없음 |
 | `chat_participants` | `is_room_member(room_id)` **or** `user_id = auth.uid()` | 본인 행 · 살아 있는 공개방 | `user_id = auth.uid()` |
 | `chat_messages` | `deleted_at is null and is_room_member(room_id) and not is_blocked_with(sender_id)` | `sender_id = auth.uid()` · `type in ('text','image')` · `is_room_member` | 없음 (함수로만) |
+
+`chat_rooms` 의 select 정책은 `chat_rooms_select_open` 에서 `chat_rooms_select_visible`
+로 이름과 조건이 바뀌었다(F9-DM). direct 분기는 `is_room_member(id)` 로 판정하므로
+멤버가 아니면 존재 자체가 보이지 않는다 — `open_chat_rooms` 뷰는 이미
+`type = 'open'` 으로 좁혀져 있어 손대지 않았고, DM 은 탐색에 노출되지 않는다. `anon`
+은 direct 분기가 항상 false 라 기존과 동일하게 동작한다.
 
 참여자 select 에 `user_id = auth.uid()` 를 or 로 붙인 이유: 나간 뒤에는
 `is_room_member` 가 false 라 **자기 행조차 못 읽는다.** 그러면 앱이 "처음 들어가는
@@ -1731,22 +1759,73 @@ PK 가 위조를 막는다 — 남의 id 를 쓰면 충돌한다.
 가려 `UPDATE ... RETURNING` 이 `42501` 로 막히는 함정(§11)을 게시물·댓글과 같은
 방식으로 피한다.
 
+### `open_direct_room(partner_id uuid) → uuid` (F9-DM)
+
+**DM 방이 생기는 경로는 이 함수 하나뿐이다.** security definer 인 이유:
+방 + 참여자 2행이 원자적이어야 하고, 상대 참여자 행은 클라이언트 INSERT 정책
+(`user_id = auth.uid()`)으로 넣을 수 없다. `chat_rooms` 의 INSERT 정책은 이 함수
+도입 후에도 계속 `type = 'open'` 만 허용한다.
+
+1. 비로그인이면 `42501`. `partner_id = caller` 면 `23514`
+   (`자기 자신과는 대화할 수 없습니다`)
+2. 상대 프로필이 없거나 `is_blocked_with(partner_id)` 면 **같은 문구**
+   `대화를 시작할 수 없습니다`(`42501`) — 상대가 없는 것과 차단을 구분해 노출하지
+   않는다
+3. `direct_key := least(caller, partner_id) || ':' || greatest(caller, partner_id)`.
+   `insert into chat_rooms (...) values ('direct', null, 2, key) on conflict
+   (direct_key) do nothing returning id` — 행이 안 생기면(동시 호출에서 진 쪽)
+   `direct_key` 로 이미 만들어진 방을 다시 select 한다. **동시성은 유니크 제약이
+   판정**하고 함수는 진 쪽을 구제할 뿐이다
+4. 참여자 upsert. **내 행**은 `on conflict (room_id, user_id) do update set
+   left_at = null` — 없으면 만들고 나갔던 방이면 되돌린다. **상대 행**은
+   `do nothing` — 없을 때만 만들고 상대의 나가기 상태는 건드리지 않는다. 자동
+   재등장은 상대가 실제로 메시지를 보냈을 때(`enforce_direct_message()`) 일어난다
+5. 같은 두 사람이 몇 번을 불러도, 어느 쪽이 부르든 같은 방 id 를 돌려준다(멱등)
+
+`revoke execute ... from public, anon` + `grant execute ... to authenticated` —
+`soft_delete_chat_message()` 와 같은 짝.
+
+### `enforce_direct_message()` (트리거, `chat_messages` before insert, F9-DM)
+
+direct 방의 메시지 전송에서만 동작한다(open 방과 시스템 메시지는 이른 반환).
+수신 숨김은 기존 select 정책(`not is_blocked_with(sender_id)`)이 이미 하므로, 이
+트리거는 **전송 자체를 거부**한다 — 1:1 에서 전송만 허용하면 허공에 말하는
+상황이 되기 때문이다. 상대와 차단 관계면 `42501`, 문구는 `enforce_comment_depth()`
+전례대로 방향 중립인 `메시지를 보낼 수 없습니다`.
+
+차단이 아니면 **카톡식 자동 재등장**을 한다 — 상대의 `left_at` 이 채워져 있으면
+`null` 로 되돌린다. 이 UPDATE 는 `enforce_room_capacity()` · `emit_membership_
+system_message()` 두 트리거를 다시 지나지만, 정원 검사는 2인 방에서 항상
+통과하고 시스템 메시지는 아래 direct 억제 분기에 걸려 나오지 않는다.
+
 ### 트리거 셋
 
 - `enforce_room_capacity()` — 참여자 insert 와 **재입장 update** 에서 `member_limit` 검사
 - `emit_membership_system_message()` — 입장 · 퇴장 · 재입장에 `type='system'` 메시지 삽입.
   문구가 아니라 `system_event` 키(`'join'` · `'leave'`)를 저장하고 `content` 에는 그
   시점의 닉네임을 스냅샷으로 남긴다. **문장은 앱의 ARB 가 만든다** — DB 에 한국어를
-  넣으면 다국어 이행에 갚을 빚이 하나 더 생긴다
+  넣으면 다국어 이행에 갚을 빚이 하나 더 생긴다. **direct 방이면 이른 반환한다
+  (F9-DM)** — 1:1 에서 입퇴장 문구는 어색하고, "나갔습니다"는 나가기 사실을
+  상대에게 노출한다
 - `verify_chat_image_path()` — `image_path` 가 `{room_id}/{sender_id}/{객체}` 인지 검증.
   Storage 정책은 업로드만 막으므로 메시지 행이 가리키는 곳까지 같은 규칙으로 묶으려면
   여기서 봐야 한다 (`verify_post_image_urls` 와 같은 이유)
+- `enforce_direct_message()` — direct 방 전용, 위 절 참고 (F9-DM)
 
 ### 뷰 둘
 
 `my_chat_rooms` 는 `security_invoker = on` 이다. 내가 멤버인 방만 다루므로 호출자의
 RLS 로 충분하고, 안읽음 수(`created_at > last_read_at and sender_id is distinct from
 auth.uid()`)에서 차단한 상대의 메시지가 자동으로 빠진다.
+
+**F9-DM 에서 끝에 `partner_id` · `partner_nickname` · `partner_avatar_url` 세 컬럼을
+더했다** (direct 가 아니면 전부 null). 상대는 `chat_participants` 를 `room_id` 로
+자기 자신이 아닌 행을 찾는 lateral join 으로 구하고(`r.type = 'direct'` 일 때만
+평가), 그 `user_id` 로 `profiles` 를 조인해 닉네임·아바타를 붙인다. 상대 참여자
+행은 내가 멤버인 방이므로 `is_room_member` 정책으로 읽히고, **상대가 나간 뒤에도
+표시가 유지된다** — 지우는 것은 참여자 행이 아니라 `left_at` 뿐이기 때문이다.
+`create or replace view` 는 명시하지 않은 reloption 을 리셋하므로, 이 변경에서도
+`with (security_invoker = on)` 을 다시 명시해야 한다(§9 의 함정).
 
 **`open_chat_rooms` 는 `security_invoker = off` 다 — 이 스키마의 두 번째 예외다.**
 탐색 화면은 아직 참여하지 않은 사람이 보는데, 참여자 수를 세려면
