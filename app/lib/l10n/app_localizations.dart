@@ -1162,6 +1162,12 @@ abstract class AppLocalizations {
   /// **'프로필 편집'**
   String get profileEditAction;
 
+  /// 남의 프로필에서 1:1 대화를 여는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'메시지'**
+  String get profileMessageButton;
+
   /// 프로필 안 게시물 목록 제목
   ///
   /// In ko, this message translates to:

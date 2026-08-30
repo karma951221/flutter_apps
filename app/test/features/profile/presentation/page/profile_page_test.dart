@@ -5,8 +5,11 @@ import 'package:daylog/core/di/injection.dart';
 import 'package:daylog/core/error/failure.dart';
 import 'package:daylog/core/error/failure_code.dart';
 import 'package:daylog/core/pagination/cursor_page.dart';
+import 'package:daylog/app/router/routes.dart';
 import 'package:daylog/core/result/result.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
+import 'package:daylog/features/chat/domain/usecase/chat_use_case.dart';
+import 'package:daylog/features/chat/presentation/page/chat_room_page.dart';
 import 'package:daylog/features/auth/domain/entity/app_user.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_event.dart';
@@ -33,6 +36,7 @@ import 'package:daylog/features/safety/presentation/cubit/block_action_cubit.dar
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockProfileUseCase extends Mock implements ProfileUseCase {}
@@ -46,6 +50,8 @@ class _MockPostUseCase extends Mock implements PostUseCase {}
 class _MockSafetyUseCase extends Mock implements SafetyUseCase {}
 
 class _MockFollowUseCase extends Mock implements FollowUseCase {}
+
+class _MockChatUseCase extends Mock implements ChatUseCase {}
 
 class _MockAuthBloc extends MockBloc<AuthEvent, AuthState>
     implements AuthBloc {}
@@ -86,6 +92,7 @@ void main() {
   late _MockFeedUseCase feedUseCase;
   late _MockSafetyUseCase safetyUseCase;
   late _MockFollowUseCase followUseCase;
+  late _MockChatUseCase chatUseCase;
   late _MockAuthBloc authBloc;
 
   setUp(() {
@@ -93,6 +100,7 @@ void main() {
     feedUseCase = _MockFeedUseCase();
     safetyUseCase = _MockSafetyUseCase();
     followUseCase = _MockFollowUseCase();
+    chatUseCase = _MockChatUseCase();
     when(
       () => safetyUseCase.isBlockedByMe(any()),
     ).thenAnswer((_) async => const Ok(false));
@@ -112,7 +120,9 @@ void main() {
       ..registerFactory<BlockActionCubit>(() => BlockActionCubit(safetyUseCase))
       ..registerFactory<FollowActionCubit>(
         () => FollowActionCubit(followUseCase),
-      );
+      )
+      // 메시지 버튼이 누를 때 직접 꺼내 쓴다.
+      ..registerSingleton<ChatUseCase>(chatUseCase);
   });
 
   tearDown(getIt.reset);
@@ -681,6 +691,150 @@ void main() {
       await pumpOther(tester, profile: _profile('other', '이웃'));
 
       expect(find.text('팔로우'), findsNothing);
+    });
+  });
+
+  group('메시지', () {
+    /// 버튼을 누르면 방으로 push 하므로 라우터가 필요하다. 방 화면이 실제로
+    /// 받은 [ChatRoomPageArgs] 와 방 id 를 돌려준다.
+    Future<({ChatRoomPageArgs? Function() args, String? Function() roomId})>
+    pumpWithRouter(WidgetTester tester, {String userId = 'other'}) async {
+      when(
+        () => feedUseCase.getFeedPosts(
+          limit: any(named: 'limit'),
+          cursor: any(named: 'cursor'),
+          authorId: any(named: 'authorId'),
+          source: any(named: 'source'),
+        ),
+      ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+      when(
+        () => profileUseCase.getProfile(any()),
+      ).thenAnswer((_) async => Ok(_profile('other', '이웃')));
+      when(
+        profileUseCase.getMyProfile,
+      ).thenAnswer((_) async => Ok(_profile('me', '카르마')));
+
+      ChatRoomPageArgs? args;
+      String? roomId;
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: Routes.home,
+            builder: (_, _) => BlocProvider<AuthBloc>.value(
+              value: authBloc,
+              child: ProfilePage(userId: userId == 'me' ? null : userId),
+            ),
+          ),
+          GoRoute(
+            path: Routes.chatRoom,
+            builder: (_, state) {
+              args = state.extra as ChatRoomPageArgs?;
+              roomId = state.pathParameters['roomId'];
+              return const Scaffold(body: Text('방 화면'));
+            },
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp.router(
+          theme: AppTheme.light(),
+          locale: const Locale('ko'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          routerConfig: router,
+        ),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      return (args: () => args, roomId: () => roomId);
+    }
+
+    testWidgets('타인 프로필에는 팔로우 옆에 메시지 버튼이 있다', (tester) async {
+      await pumpWithRouter(tester);
+
+      expect(find.text('메시지'), findsOneWidget);
+      expect(find.text('팔로우'), findsOneWidget);
+    });
+
+    testWidgets('내 프로필에는 메시지 버튼이 없다', (tester) async {
+      await pumpWithRouter(tester, userId: 'me');
+
+      expect(find.text('메시지'), findsNothing);
+    });
+
+    testWidgets('차단한 상대에게는 메시지 버튼을 그리지 않는다', (tester) async {
+      // 대화 시작도 어차피 거부된다. 거부 문구로 관계를 설명하게 되면 차단
+      // 사실이 새는 자리가 된다.
+      when(
+        () => safetyUseCase.isBlockedByMe(any()),
+      ).thenAnswer((_) async => const Ok(true));
+
+      await pumpWithRouter(tester);
+
+      expect(find.text('메시지'), findsNothing);
+    });
+
+    testWidgets('메시지를 누르면 열린 방으로 상대 닉네임과 함께 들어간다', (tester) async {
+      when(
+        () => chatUseCase.openDirectRoom('other'),
+      ).thenAnswer((_) async => const Ok('dm-1'));
+
+      final captured = await pumpWithRouter(tester);
+      await tester.tap(find.text('메시지'));
+      await tester.pumpAndSettle();
+
+      verify(() => chatUseCase.openDirectRoom('other')).called(1);
+      expect(captured.roomId(), 'dm-1');
+      expect(captured.args()?.title, '이웃');
+      expect(captured.args()?.isDirect, isTrue);
+      expect(find.text('방 화면'), findsOneWidget);
+    });
+
+    testWidgets('여는 동안 다시 눌러도 한 번만 요청한다', (tester) async {
+      final completer = Completer<Result<String>>();
+      when(
+        () => chatUseCase.openDirectRoom('other'),
+      ).thenAnswer((_) => completer.future);
+
+      await pumpWithRouter(tester);
+      await tester.tap(find.text('메시지'));
+      await tester.pump();
+      // 아직 응답 전이다 — 두 번째 탭은 버튼이 막는다.
+      await tester.tap(find.text('메시지'));
+      await tester.pump();
+
+      verify(() => chatUseCase.openDirectRoom('other')).called(1);
+
+      completer.complete(const Ok('dm-1'));
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('시작할 수 없으면 지역화된 문구로 알리고 화면에 남는다', (tester) async {
+      when(() => chatUseCase.openDirectRoom('other')).thenAnswer(
+        (_) async => const Err(
+          Failure.forbidden(
+            message: '거부',
+            failureCode: FailureCode.directChatNotAllowed,
+          ),
+        ),
+      );
+
+      final captured = await pumpWithRouter(tester);
+      await tester.tap(find.text('메시지'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('대화를 시작할 수 없습니다'), findsOneWidget);
+      expect(captured.roomId(), isNull);
+      // 실패해도 버튼은 다시 누를 수 있어야 한다.
+      expect(
+        tester.widget<OutlinedButton>(
+          find.widgetWithText(OutlinedButton, '메시지'),
+        ).onPressed,
+        isNotNull,
+      );
     });
   });
 }

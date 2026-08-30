@@ -105,7 +105,7 @@ GoRouter createRouter(AuthBloc authBloc) {
         path: Routes.chatRoom,
         builder: (_, state) => ChatRoomPage(
           roomId: state.pathParameters['roomId']!,
-          title: state.extra as String?,
+          args: state.extra as ChatRoomPageArgs?,
         ),
       ),
       GoRoute(

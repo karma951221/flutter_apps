@@ -13,6 +13,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../domain/chat_policy.dart';
 import '../cubit/create_room_cubit.dart';
+import 'chat_room_page.dart';
 
 /// 방 만들기.
 ///
@@ -77,7 +78,10 @@ class _CreateRoomViewState extends State<_CreateRoomView> {
             // 딥링크로 이 화면에 바로 들어왔으면 되돌아갈 자리가 없다.
             // 그대로 pop 하면 go_router 가 던진다.
             if (router.canPop()) router.pop(true);
-            router.push(Routes.chatRoomPath(room.id), extra: room.title);
+            router.push(
+              Routes.chatRoomPath(room.id),
+              extra: ChatRoomPageArgs(title: room.title),
+            );
           case CreateRoomFailure(:final failure):
             AppSnackBar.show(
               context,

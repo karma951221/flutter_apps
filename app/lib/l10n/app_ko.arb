@@ -756,6 +756,10 @@
   "@profileEditAction": {
     "description": "내 프로필의 편집 진입 버튼"
   },
+  "profileMessageButton": "메시지",
+  "@profileMessageButton": {
+    "description": "남의 프로필에서 1:1 대화를 여는 버튼"
+  },
   "profilePostsTitle": "게시물",
   "@profilePostsTitle": {
     "description": "프로필 안 게시물 목록 제목"

@@ -177,6 +177,7 @@
   "profileLoadFailed": "プロフィールを読み込めませんでした",
   "profileBioEmpty": "自己紹介を書いてみましょう。",
   "profileEditAction": "プロフィール編集",
+  "profileMessageButton": "メッセージ",
   "profilePostsTitle": "投稿",
   "profilePostsReload": "投稿を再読み込み",
   "profilePostsEmpty": "まだ投稿がありません",

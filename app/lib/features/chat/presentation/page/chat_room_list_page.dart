@@ -11,6 +11,7 @@ import '../../domain/entity/chat_room_summary.dart';
 import '../cubit/chat_room_list_cubit.dart';
 import '../cubit/chat_room_list_state.dart';
 import '../widget/chat_room_tile.dart';
+import 'chat_room_page.dart';
 
 /// 채팅 탭. 내가 참여 중인 방 목록.
 ///
@@ -112,10 +113,14 @@ class _ChatRoomListView extends StatelessWidget {
   Future<void> _openRoom(BuildContext context, ChatRoomSummary room) async {
     final cubit = context.read<ChatRoomListCubit>();
     final roomId = room.id;
-    // 제목을 함께 넘긴다. 없으면 AppBar 가 방 이름 대신 '채팅' 으로 뜬다.
+    // 보일 이름과 direct 여부를 함께 넘긴다. 이름이 없으면 AppBar 가 방 이름
+    // 대신 '채팅' 으로 뜨고, direct 여부를 모르면 참여자 메뉴가 남는다.
     final left = await context.push<bool>(
       Routes.chatRoomPath(roomId),
-      extra: room.title,
+      extra: ChatRoomPageArgs(
+        title: room.displayTitle,
+        isDirect: room.isDirect,
+      ),
     );
     if (left == true) {
       cubit.removeRoom(roomId);

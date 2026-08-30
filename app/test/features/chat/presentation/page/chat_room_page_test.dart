@@ -105,7 +105,10 @@ void main() {
     ).thenAnswer((_) async => Ok(CursorPage(items: messages)));
   }
 
-  Future<void> pumpRoom(WidgetTester tester) async {
+  Future<void> pumpRoom(
+    WidgetTester tester, {
+    ChatRoomPageArgs args = const ChatRoomPageArgs(title: '테스트 방'),
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
@@ -115,7 +118,7 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         home: BlocProvider<AuthBloc>.value(
           value: authBloc,
-          child: const ChatRoomPage(roomId: _roomId, title: '테스트 방'),
+          child: ChatRoomPage(roomId: _roomId, args: args),
         ),
       ),
     );
@@ -202,6 +205,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('참여자'), findsOneWidget);
+    expect(find.text('방 나가기'), findsOneWidget);
+  });
+
+  testWidgets('direct 방 메뉴에는 참여자가 없고 나가기만 남는다', (tester) async {
+    stubMessages([]);
+
+    await pumpRoom(
+      tester,
+      args: const ChatRoomPageArgs(title: '상대', isDirect: true),
+    );
+    // AppBar 제목은 상대 닉네임이다 — 방 이름이 없다.
+    expect(find.text('상대'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('방 메뉴'));
+    await tester.pumpAndSettle();
+
+    // 둘뿐인 방이라 참여자 목록이 알려줄 것이 없다.
+    expect(find.text('참여자'), findsNothing);
     expect(find.text('방 나가기'), findsOneWidget);
   });
 

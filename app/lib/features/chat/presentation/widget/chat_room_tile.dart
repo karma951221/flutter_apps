@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/extension/date_time_format.dart';
 import '../../../../design_system/theme/app_spacing.dart';
+import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entity/chat_message.dart';
@@ -11,6 +12,9 @@ import '../../domain/entity/chat_room_summary.dart';
 ///
 /// 마지막 메시지 미리보기는 서버가 문장으로 주지 않는다 — 시스템 메시지는
 /// 키와 행위자 닉네임만 오므로 문장을 여기서 만든다.
+///
+/// direct 방은 방 이름이 없다. 대신 상대 프로필(닉네임·아바타)로 그린다 —
+/// 안읽음 배지와 미리보기는 open 방과 같은 코드를 쓴다.
 class ChatRoomTile extends StatelessWidget {
   const ChatRoomTile({required this.room, required this.onTap, super.key});
 
@@ -22,33 +26,43 @@ class ChatRoomTile extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context);
+    final displayTitle = room.displayTitle ?? '';
 
     return AppListTile(
       onTap: onTap,
-      leading: CircleAvatar(
-        backgroundColor: scheme.secondaryContainer,
-        child: Icon(Icons.forum_outlined, color: scheme.onSecondaryContainer),
-      ),
+      leading: room.isDirect
+          ? AppAvatar(
+              nickname: displayTitle,
+              imageUrl: room.partnerAvatarUrl,
+              radius: 20,
+            )
+          : CircleAvatar(
+              backgroundColor: scheme.secondaryContainer,
+              child: Icon(
+                Icons.forum_outlined,
+                color: scheme.onSecondaryContainer,
+              ),
+            ),
       title: Row(
         children: [
           Expanded(
             child: Text(
-              // TODO(task-4): direct 방 표시는 Task 4 가 담당한다. 여기서는
-              // ChatRoomSummary.title 이 String? 로 바뀐 것만 기계적으로
-              // null-safe 하게 통과시킨다.
-              room.title ?? '',
+              displayTitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.titleSmall,
             ),
           ),
-          const SizedBox(width: AppSpacing.sm),
-          Text(
-            l10n.chatMemberCount(room.memberCount),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: scheme.onSurfaceVariant,
+          // direct 방은 늘 둘이라 인원 수가 알려줄 것이 없다.
+          if (!room.isDirect) ...[
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              l10n.chatMemberCount(room.memberCount),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             ),
-          ),
+          ],
         ],
       ),
       subtitle: Text(

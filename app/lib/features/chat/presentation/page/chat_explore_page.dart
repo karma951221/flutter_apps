@@ -14,6 +14,7 @@ import '../../domain/entity/chat_room.dart';
 import '../cubit/chat_explore_cubit.dart';
 import '../cubit/chat_explore_state.dart';
 import '../widget/join_room_sheet.dart';
+import 'chat_room_page.dart';
 
 /// 공개방 탐색.
 ///
@@ -120,7 +121,10 @@ class _ChatExploreViewState extends State<_ChatExploreView> {
     if (!joined || !context.mounted) return;
 
     _joinedAny = true;
-    await context.push(Routes.chatRoomPath(room.id), extra: room.title);
+    await context.push(
+      Routes.chatRoomPath(room.id),
+      extra: ChatRoomPageArgs(title: room.title),
+    );
   }
 }
 

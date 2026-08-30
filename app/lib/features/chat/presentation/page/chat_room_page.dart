@@ -23,31 +23,51 @@ import '../bloc/chat_room_event.dart';
 import '../bloc/chat_room_state.dart';
 import '../widget/chat_message_bubble.dart';
 
+/// chatRoom 라우트의 extra. 목록·탐색·프로필 어디서 왔는지에 따라 제목과
+/// direct 여부를 미리 안다 — 방 화면이 방 행을 다시 읽지 않기 위해서다.
+class ChatRoomPageArgs {
+  const ChatRoomPageArgs({this.title, this.isDirect = false});
+
+  final String? title;
+  final bool isDirect;
+}
+
 /// 한 방의 대화 화면.
 ///
 /// 나갈 때 "방에서 나갔는가"를 돌려준다 — 목록 화면이 그 값으로 줄을 지울지
 /// 안읽음만 0 으로 만들지 정한다.
 class ChatRoomPage extends StatelessWidget {
-  const ChatRoomPage({required this.roomId, this.title, super.key});
+  const ChatRoomPage({required this.roomId, this.args, super.key});
 
   final String roomId;
 
-  /// 목록에서 들어왔으면 제목을 이미 안다. 없으면 AppBar 가 잠시 비어 있다가
-  /// 채워지는 대신 기본 문구를 쓴다.
-  final String? title;
+  /// 들어온 자리가 알려준 것. 없으면 AppBar 가 기본 문구를 쓰고 open 방으로
+  /// 다룬다.
+  final ChatRoomPageArgs? args;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (_) => getIt<ChatRoomBloc>()..add(ChatRoomEvent.started(roomId)),
-    child: _ChatRoomView(roomId: roomId, title: title),
+    child: _ChatRoomView(
+      roomId: roomId,
+      title: args?.title,
+      isDirect: args?.isDirect ?? false,
+    ),
   );
 }
 
 class _ChatRoomView extends StatefulWidget {
-  const _ChatRoomView({required this.roomId, this.title});
+  const _ChatRoomView({
+    required this.roomId,
+    this.title,
+    this.isDirect = false,
+  });
 
   final String roomId;
   final String? title;
+
+  /// direct 방은 둘뿐이라 참여자 목록이 알려줄 것이 없다 — 메뉴에서 뺀다.
+  final bool isDirect;
 
   @override
   State<_ChatRoomView> createState() => _ChatRoomViewState();
@@ -107,11 +127,13 @@ class _ChatRoomViewState extends State<_ChatRoomView> {
                 _RoomAction.leave => _confirmLeave(context),
               },
               items: [
-                AppOverflowMenuItem(
-                  value: _RoomAction.participants,
-                  label: l10n.chatMenuParticipants,
-                  icon: Icons.people_outline,
-                ),
+                // direct 방은 나와 상대뿐이라 참여자 목록이 보탤 것이 없다.
+                if (!widget.isDirect)
+                  AppOverflowMenuItem(
+                    value: _RoomAction.participants,
+                    label: l10n.chatMenuParticipants,
+                    icon: Icons.people_outline,
+                  ),
                 AppOverflowMenuItem(
                   value: _RoomAction.leave,
                   label: l10n.chatMenuLeave,

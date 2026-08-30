@@ -177,6 +177,7 @@
   "profileLoadFailed": "Couldn't load the profile",
   "profileBioEmpty": "Add a bio.",
   "profileEditAction": "Edit profile",
+  "profileMessageButton": "Message",
   "profilePostsTitle": "Posts",
   "profilePostsReload": "Reload posts",
   "profilePostsEmpty": "No posts yet",

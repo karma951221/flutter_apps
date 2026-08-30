@@ -558,6 +558,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profileEditAction => 'プロフィール編集';
 
   @override
+  String get profileMessageButton => 'メッセージ';
+
+  @override
   String get profilePostsTitle => '投稿';
 
   @override

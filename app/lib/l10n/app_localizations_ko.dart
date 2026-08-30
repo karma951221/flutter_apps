@@ -558,6 +558,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get profileEditAction => '프로필 편집';
 
   @override
+  String get profileMessageButton => '메시지';
+
+  @override
   String get profilePostsTitle => '게시물';
 
   @override

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/l10n/failure_localizations.dart';
+import '../../../../core/result/result.dart';
 import '../../../../design_system/theme/app_radius.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
@@ -16,6 +17,8 @@ import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../chat/domain/usecase/chat_use_case.dart';
+import '../../../chat/presentation/page/chat_room_page.dart';
 import '../../../feed/presentation/cubit/feed_cubit.dart';
 import '../../../follow/presentation/cubit/follow_action_cubit.dart';
 import '../../../follow/presentation/cubit/follow_action_state.dart';
@@ -256,7 +259,11 @@ class _ProfileView extends StatelessWidget {
                               userId: profile.id,
                               followingCount: profile.followingCount,
                             ),
-                            if (!isMine) _FollowButton(userId: profile.id),
+                            if (!isMine)
+                              _ProfileActions(
+                                userId: profile.id,
+                                nickname: profile.nickname,
+                              ),
                             if (isMine) ...[
                               const SizedBox(height: AppSpacing.md),
                               AppButton.secondary(
@@ -370,6 +377,40 @@ class _FollowStat extends StatelessWidget {
   }
 }
 
+/// 남의 프로필에서 할 수 있는 것 — 팔로우와 1:1 대화.
+///
+/// 차단한 사이에는 둘 다 그리지 않는다. 팔로우도 대화 시작도 어차피 거부되고,
+/// 거부 문구로 관계를 설명하게 되면 차단 사실이 새는 자리가 된다.
+class _ProfileActions extends StatelessWidget {
+  const _ProfileActions({required this.userId, required this.nickname});
+
+  final String userId;
+  final String nickname;
+
+  @override
+  Widget build(BuildContext context) =>
+      BlocBuilder<BlockActionCubit, BlockActionState>(
+        builder: (context, blockState) {
+          if (blockState.isBlocked != false) return const SizedBox.shrink();
+
+          // 버튼의 공통 스타일이 가로를 꽉 채우므로(AppTheme 의
+          // `Size.fromHeight`) 폭은 [Expanded] 로 반씩 나눈다.
+          return Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.md),
+            child: Row(
+              children: [
+                Expanded(child: _FollowButton(userId: userId)),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: _MessageButton(userId: userId, nickname: nickname),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+}
+
 /// 팔로우 버튼. 상태 셋(팔로우 · 팔로잉 · 맞팔로우)을 라벨과 종류로 나눈다.
 ///
 /// 새 공용 위젯을 만들지 않는다 — [AppButton] 의 기존 인자로 해결된다
@@ -382,32 +423,18 @@ class _FollowButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return BlocBuilder<BlockActionCubit, BlockActionState>(
-      builder: (context, blockState) {
-        // 차단한 사이에는 팔로우가 어차피 거부된다. 누를 수 있는 버튼을
-        // 그리지 않는 편이 낫다 — 거부 문구로 관계를 설명하게 되면
-        // 차단 사실이 새는 자리가 된다.
-        if (blockState.isBlocked != false) return const SizedBox.shrink();
+    return BlocBuilder<FollowActionCubit, FollowActionState>(
+      builder: (context, state) {
+        final label = state.isMutual
+            ? l10n.followMutualAction
+            : state.isFollowing
+            ? l10n.followFollowingAction
+            : l10n.followAction;
+        final onPressed = state.isSubmitting ? null : () => _toggle(context);
 
-        return BlocBuilder<FollowActionCubit, FollowActionState>(
-          builder: (context, state) {
-            final label = state.isMutual
-                ? l10n.followMutualAction
-                : state.isFollowing
-                ? l10n.followFollowingAction
-                : l10n.followAction;
-            final onPressed = state.isSubmitting
-                ? null
-                : () => _toggle(context);
-
-            return Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.md),
-              child: state.isFollowing
-                  ? AppButton.secondary(label: label, onPressed: onPressed)
-                  : AppButton.primary(label: label, onPressed: onPressed),
-            );
-          },
-        );
+        return state.isFollowing
+            ? AppButton.secondary(label: label, onPressed: onPressed)
+            : AppButton.primary(label: label, onPressed: onPressed);
       },
     );
   }
@@ -426,6 +453,57 @@ class _FollowButton extends StatelessWidget {
           (wasFollowing ? l10n.followUnfollowFailed : l10n.followFailed),
       type: AppSnackBarType.error,
     );
+  }
+}
+
+/// 1:1 대화 진입점.
+///
+/// 방을 새로 만드는지 이미 있는 방을 여는지는 RPC 가 정한다 — 화면은 돌아온
+/// 방 id 로 이동만 하고, 상대 닉네임을 제목으로 함께 넘겨 방 화면이 방 행을
+/// 다시 읽지 않게 한다.
+class _MessageButton extends StatefulWidget {
+  const _MessageButton({required this.userId, required this.nickname});
+
+  final String userId;
+  final String nickname;
+
+  @override
+  State<_MessageButton> createState() => _MessageButtonState();
+}
+
+class _MessageButtonState extends State<_MessageButton> {
+  /// 연타 방지. RPC 는 같은 방을 돌려주지만 그대로 두면 방 화면이 두 번
+  /// 쌓인다.
+  bool _opening = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppButton.secondary(
+      label: l10n.profileMessageButton,
+      onPressed: _opening ? null : _open,
+    );
+  }
+
+  Future<void> _open() async {
+    setState(() => _opening = true);
+    final result = await getIt<ChatUseCase>().openDirectRoom(widget.userId);
+    if (!mounted) return;
+    setState(() => _opening = false);
+
+    switch (result) {
+      case Ok(value: final roomId):
+        context.push(
+          Routes.chatRoomPath(roomId),
+          extra: ChatRoomPageArgs(title: widget.nickname, isDirect: true),
+        );
+      case Err(:final failure):
+        AppSnackBar.show(
+          context,
+          message: failure.localizedMessage(context),
+          type: AppSnackBarType.error,
+        );
+    }
   }
 }
 
