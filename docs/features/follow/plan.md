@@ -2,7 +2,7 @@
 
 > [문서 허브](../../README.md) · [기획 F8](../../overview.md) · [스키마](../../schema.md) · [아키텍처](../../architecture.md) · [차단 계획](../safety/plan-block.md) · [피드 계획](../feed/plan.md)
 
-> 상태: **착수** · 작성 2026-08-30
+> 상태: **완료** · 작성 2026-08-30 · 검증 2026-08-30
 > 진행 상태의 단일 기준은 [진행 현황](../../status.md)이다.
 
 ## 범위
@@ -49,13 +49,17 @@ create table public.follows (
 );
 
 -- "누가 나를 팔로우하는가" 방향. PK 가 반대 방향만 덮는다.
-create index follows_followee_idx on public.follows (followee_id, created_at desc);
+create index follows_followee_idx
+  on public.follows (followee_id, created_at desc, follower_id desc);
+create index follows_follower_idx
+  on public.follows (follower_id, created_at desc, followee_id desc);
 ```
 
-복합 PK가 중복 팔로우를 막고 "내가 팔로우한 사람들"(팔로잉 목록 · 팔로잉 피드)
-조회를 덮는다. 팔로워 목록과 팔로워 수는 반대 방향이라 `follows_followee_idx`가
-필요하다 — `blocks_blocked_idx`와 같은 이유다. 목록이 최신순 커서를 쓰므로
-인덱스에 `created_at desc`를 함께 넣는다.
+복합 PK가 중복 팔로우를 막는다. 조회는 인덱스 둘이 나눠 받는다 — 팔로워 방향은
+`follows_followee_idx`가(`blocks_blocked_idx`와 같은 이유), 팔로잉 방향은
+`follows_follower_idx`가 받는다. PK 의 `(follower_id, followee_id)` 순서로는
+목록의 `created_at desc` 커서가 인덱스를 타지 못하므로 두 인덱스 모두 정렬 키를
+함께 들고 있다.
 
 ### RLS · GRANT
 
@@ -217,16 +221,16 @@ features/follow/
 
 ## 완료 조건
 
-- [ ] 남의 프로필에서 팔로우 · 해제가 되고 버튼이 3상태로 바뀐다
-- [ ] 팔로워 · 팔로잉 수가 프로필에 보이고 눌러서 목록으로 들어간다
-- [ ] 목록이 커서로 이어 읽힌다 (경계에서 중복 · 누락이 없다)
-- [ ] 피드 '팔로잉' 탭이 팔로우한 사람의 글만 보여준다
-- [ ] 자기 자신은 팔로우할 수 없다 (CHECK)
-- [ ] `follower_id` 를 위조한 삽입이 거부된다 (GRANT · 정책)
-- [ ] 남의 팔로우 행을 지울 수 없다 (`follows_delete_own`)
-- [ ] 차단하면 양방향 팔로우 행이 사라지고, 차단 상태에서는 팔로우가 거부된다
-- [ ] 거부 문구가 방향을 밝히지 않는다
-- [ ] 차단한 상대는 제3자의 팔로워 · 팔로잉 목록에도 보이지 않는다
+- [x] 남의 프로필에서 팔로우 · 해제가 되고 버튼이 3상태로 바뀐다
+- [x] 팔로워 · 팔로잉 수가 프로필에 보이고 눌러서 목록으로 들어간다
+- [x] 목록이 커서로 이어 읽힌다 (경계에서 중복 · 누락이 없다)
+- [x] 피드 '팔로잉' 탭이 팔로우한 사람의 글만 보여준다
+- [x] 자기 자신은 팔로우할 수 없다 (CHECK, `23514`)
+- [x] `follower_id` 를 위조한 삽입이 거부된다 (GRANT · 정책, `42501`)
+- [x] 남의 팔로우 행을 지울 수 없다 (`follows_delete_own`, 0행 삭제)
+- [x] 차단하면 양방향 팔로우 행이 사라지고, 차단 상태에서는 팔로우가 거부된다
+- [x] 거부 문구가 방향을 밝히지 않는다 (`FailureCode.followBlocked`)
+- [x] 차단한 상대는 제3자의 팔로워 · 팔로잉 목록에도 보이지 않는다
 
 ## 테스트
 

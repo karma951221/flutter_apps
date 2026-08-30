@@ -1785,3 +1785,110 @@ room_id 여야 정책이 `is_room_member` 로 판정할 수 있다. `post-images
 
 `supabase/tests/chat_rls_check.py` 52건, `supabase/tests/chat_realtime_check.py` 4건이
 모두 통과한다(2026-08-28). 항목은 [테스트 문서](testing/features/chat.md)에 있다.
+
+## 15. `follows` · 팔로우 뷰 넷
+
+F8 팔로우. 설계 근거는 [계획](features/follow/plan.md)에 있다. 단방향 엣지 하나로
+팔로우 · 맞팔 · 목록 · 팔로잉 피드를 모두 만든다
+(`20260830090000_add_follows.sql`).
+
+```sql
+create table public.follows (
+  follower_id uuid        not null default auth.uid()
+                          references public.profiles (id) on delete cascade,
+  followee_id uuid        not null
+                          references public.profiles (id) on delete cascade,
+  created_at  timestamptz not null default now(),
+
+  constraint follows_not_self check (follower_id <> followee_id),
+  primary key (follower_id, followee_id)
+);
+
+create index follows_followee_idx
+  on public.follows (followee_id, created_at desc, follower_id desc);
+create index follows_follower_idx
+  on public.follows (follower_id, created_at desc, followee_id desc);
+```
+
+복합 PK가 중복 팔로우를 막는다. 맞팔은 반대 방향 행이 하나 더 있는 것일 뿐이라
+상태를 따로 저장하지 않는다. 해제는 행 삭제다 — 팔로우에는 자식이 달리지 않으므로
+`blocks`(§13) · `post_reactions`(§10)와 같은 판단이다. 인덱스가 둘인 이유는 목록이
+방향마다 `created_at desc` 커서를 타기 때문이다. PK 만으로는 팔로워 방향(누가 나를
+팔로우하는가)이 전체 스캔이 된다.
+
+### RLS · GRANT
+
+```sql
+create policy "follows_select_all" on public.follows for select
+  to anon, authenticated using (true);
+
+create policy "follows_insert_own" on public.follows for insert to authenticated
+  with check (
+    (select auth.uid()) = follower_id
+    and not public.is_blocked_with(followee_id)
+  );
+
+create policy "follows_delete_own" on public.follows for delete to authenticated
+  using ((select auth.uid()) = follower_id);
+
+grant select on public.follows to anon, authenticated;
+grant insert (followee_id) on public.follows to authenticated;
+grant delete on public.follows to authenticated;
+```
+
+**조회가 전체 공개인 것이 `blocks`(§13)와 갈리는 지점이다.** 남의 프로필에서도
+팔로워 수와 목록이 보여야 하는데, 본인 행만 열면 수 · 목록 · 맞팔 판정이 전부
+`security definer` 함수를 타야 한다. `follower_id` 에 INSERT 를 주지 않는 것이
+위조를 막는 방법인 것은 신고 · 차단과 같다. UPDATE 정책 · 권한은 없다.
+
+INSERT 의 `with check` 가 차단 검사를 함께 한다. `is_blocked_with()`(§3)는
+**양방향**이라 어느 쪽이 차단했든 같은 결과가 나온다 — 그래서 앱의 거부 문구는
+방향을 밝히지 않는다(`FailureCode.followBlocked`).
+
+### `blocks` 에 붙은 트리거 — 차단이 팔로우 엣지를 지운다
+
+```sql
+create trigger blocks_drop_follows
+  after insert on public.blocks
+  for each row execute function public.drop_follows_on_block();
+```
+
+`drop_follows_on_block()` 은 `security definer` 다. 차단당한 쪽이 건 팔로우 행은
+`follows_delete_own` 으로는 지울 수 없기 때문이다.
+
+**이 트리거로 §13의 전제가 하나 깨진다** — "차단에는 자식이 달리지 않는다"가
+더 이상 참이 아니고, `blocks` 가 `follows` 에 부수 효과를 갖는 부모가 됐다. 그럼에도
+지우는 쪽을 고른 이유는 지우지 않으면 차단한 상대가 팔로워 **수**에는 남고
+목록에서만 사라져 둘이 어긋나기 때문이다. 차단을 해제해도 팔로우는 되살아나지
+않는다.
+
+### 뷰 넷
+
+| 뷰 | 읽는 곳 | 내용 |
+|---|---|---|
+| `profile_details` | 프로필 화면 | `profiles` + `follower_count` · `following_count` · `is_following` · `is_followed_by` |
+| `user_followers` | 팔로워 목록 | `user_id`(팔로우당하는 쪽) 기준. 상대 프로필과 `created_at` |
+| `user_followings` | 팔로잉 목록 | `user_id`(팔로우하는 쪽) 기준 |
+| `following_posts_with_author` | 팔로잉 피드 | `posts_with_author`(§6)를 내 `follows` 로 좁힌 것 |
+
+넷 다 `security_invoker = on` 이다. `profiles` 에는 조회 정책이 없고(§1, 차단 목록이
+차단한 사용자의 닉네임을 보여줘야 해서 의도적으로 두지 않았다) `follows` 는 전체
+공개라 그것으로 충분하다.
+
+**목록 뷰 둘에만 차단 필터를 손으로 적는다** (`where not is_blocked_with(...)`).
+`posts`(§5)처럼 아래 테이블의 정책에 얹는 방식이 여기서는 통하지 않는다 —
+`profiles` 에 정책이 없기 때문이다. `post_comments_visible`(§9)이 지고 있는 것과 같은
+부채다. 트리거가 있어도 필터를 함께 두는 이유는, 트리거가 차단 시점의 엣지만 지우고
+**제3자의 목록**에서 만나는 경우는 덮지 못하기 때문이다.
+
+수 둘은 필터를 타지 않는다. 내가 차단한 사람이 남의 팔로워 수에서 빠지면 조회자마다
+수가 달라진다.
+
+`following_posts_with_author` 는 감싸는 뷰라 삭제 · 차단 필터를 다시 쓰지 않는다 —
+`posts_with_author` 가 `security_invoker = on` 이라 `posts_select_visible` 을 그대로
+물려받는다. 비로그인은 `auth.uid()` 가 null 이라 0행이 나온다.
+
+### 검증한 것 (로컬 Supabase · 실제 JWT + REST)
+
+`supabase/tests/follow_rls_check.py` 28건이 모두 통과한다(2026-08-30). 항목은
+[테스트 문서](testing/features/follow.md)에 있다.

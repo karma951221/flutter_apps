@@ -13,7 +13,7 @@
 | 0 | 프로젝트 · 로컬 Supabase · DI · design system | **완료** |
 | 1 | F1 auth · F2 profile · F3 post · F4 전체 피드 | **완료** |
 | 2 | F5 reaction · F6 comment · F7 safety | **완료** |
-| 3 | F8 follow · F4 팔로잉 피드 | 대기 — **다음 차례** |
+| 3 | F8 follow · F4 팔로잉 피드 | **완료** |
 | 3.5 | F9 chat (오픈 채팅) | **완료** |
 | 4 | (v1.1) 재설정 SMTP · 구글 로그인 · OTP · 푸시 · 채팅 | 대기 |
 
@@ -191,6 +191,26 @@ feed · post · profile 을 외부 리뷰(`codex-review.md`)로 훑고 지적 5�
       아니었다(자리맞춤만 공유). 다크 대비 관찰은 테마가 거꾸로였다
       (`like` 는 라이트 3.28 이 미달이고 다크 5.38 은 통과)
 
+## 3단계 — 완료
+
+- [x] **F8 follow** — 단방향 `follows` 엣지 하나로 팔로우 · 맞팔 · 목록을 만든다.
+      복합 PK 가 중복을, CHECK 가 자기 팔로우를 막고, `follower_id` 는
+      `default auth.uid()` + INSERT GRANT 없음으로 위조를 막는다.
+      조회는 전체 공개다 — 남의 프로필에서도 수와 목록이 보여야 한다
+      ([계획](features/follow/plan.md) · [기록](features/follow/history.md) ·
+      [테스트](testing/features/follow.md) · [스키마 §15](schema.md))
+- [x] **차단 × 팔로우** — F7 이 F8 시점까지 미뤄 둔 결정을 닫았다. `blocks` 의
+      `after insert` 트리거가 양방향 엣지를 지우고, 차단 상태의 팔로우는 INSERT
+      정책이 거부한다. 거부 문구는 방향 중립이다. 대가("차단에는 자식이 달리지
+      않는다"는 전제가 깨진다)를 마이그레이션 · 스키마 · 기록에 적었다
+- [x] **F4 팔로잉 피드** — 피드에 탭 둘(전체 · 팔로잉). 새 화면이 아니라 같은
+      목록의 두 번째 소스다 — `following_posts_with_author` 뷰가
+      `posts_with_author` 를 감싸므로 커서 · 컬럼 · 정렬이 그대로고 앱은
+      `FeedSource` 로 읽는 대상만 바꾼다
+- [x] 프로필에 팔로워 · 팔로잉 수와 팔로우 버튼(3상태, 낙관적 갱신).
+      수와 관계는 `profile_details` 뷰가 프로필과 함께 한 번에 내려준다
+- [x] 권한 경계 28건을 실제 JWT + REST 로 확인 (`supabase/tests/follow_rls_check.py`)
+
 ## 3.5단계 — F9 채팅 (완료)
 
 - [x] **F9 chat (오픈 채팅)** — 공개방 개설 · 탐색 · 입장(방별 닉네임) · 실시간
@@ -206,7 +226,7 @@ feed · post · profile 을 외부 리뷰(`codex-review.md`)로 훑고 지적 5�
 
 ## 다음 할 일
 
-우선순위 순이다. 1은 이미 만든 것을 마무리하는 일이고, 2부터가 새 기능이다.
+MVP 범위(0~3.5단계)는 모두 닫혔다. 남은 것은 품질 하나와 v1.1 이다.
 
 ### 1. E2E 잔여 1건
 
@@ -224,20 +244,13 @@ auth 쪽 8개는 `await` 뒤에 가드 없이 `emit` 한다. 다만 이 테스�
 실패 문구가 뜬 **뒤에** 죽으므로 확인된 원인은 아니다. 재현에는 로컬 Supabase
 와 에뮬레이터가 둘 다 필요하다.
 
-### 2. 3단계 — F8 follow · F4 팔로잉 피드
+### 2. F8 이 남긴 것
 
-아직 계획서가 없다. 착수할 때 `docs/features/follow/plan.md` 를 먼저 쓴다
-(이 문서 맨 아래 "문서 규칙"). 기획 의도는 [기획서](overview.md) 에 있다.
-설계 시 참고할 것:
-
-- 팔로우 관계는 `blocks` 와 같은 자기참조 방향 테이블 꼴이 된다.
-  차단이 `is_blocked_with()` 판정 함수 하나로 `posts` · `post_comments` 정책을
-  양방향으로 막은 방식을 그대로 참고할 수 있다 ([스키마](schema.md))
-- 팔로잉 피드는 새 화면이 아니라 기존 `features/feed` 의 두 번째 소스다.
-  커서 계약(`feed/data/cursor/`)과 `posts_with_author` 뷰를 재사용하고,
-  차단 필터가 이미 정책 쪽에 있으므로 앱은 조건만 바꾸면 된다
-- 프로필 화면에 팔로우 버튼과 팔로워/팔로잉 수가 붙는다.
-  게시물 액션은 `PostTileActions` 로 이미 한 벌이므로 거기에 얹는다
+- **팔로우 알림**은 4단계 푸시와 함께 간다. 비공개 계정 · 팔로우 요청 승인,
+  추천 팔로우는 v1 범위 밖이다 ([계획](features/follow/plan.md))
+- 탭을 옮기면 피드를 다시 읽는다(스크롤 위치 초기화). `FeedCubit` 하나를 탭 둘이
+  공유하기로 한 대가이고, 문제가 되면 탭별 cubit 으로 나누는 것이 정공법이다
+  ([기록](features/follow/history.md))
 
 ### 3. 그 밖에 남은 것
 

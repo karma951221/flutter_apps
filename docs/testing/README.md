@@ -80,6 +80,7 @@ feature 문서는 **대상 · 시나리오 · 기대 결과** 표 형식으로 �
 - [reaction](features/reaction.md)
 - [comment](features/comment.md)
 - [safety](features/safety.md)
+- [follow](features/follow.md)
 - [chat](features/chat.md)
 - [settings](features/settings.md)
 - [preferences](features/preferences.md)
