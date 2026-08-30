@@ -8,6 +8,7 @@ import 'package:daylog/features/safety/domain/entity/report_target.dart';
 import 'package:daylog/features/safety/domain/usecase/safety_use_case.dart';
 import 'package:daylog/features/safety/presentation/cubit/report_cubit.dart';
 import 'package:daylog/features/safety/presentation/widget/report_sheet.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -36,6 +37,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: Builder(
             builder: (context) => TextButton(
@@ -56,8 +60,14 @@ void main() {
   testWidgets('사유 5개가 모두 보인다', (tester) async {
     await pumpAndOpen(tester);
 
-    for (final reason in ReportReason.values) {
-      expect(find.text(reason.label), findsOneWidget);
+    for (final label in const [
+      '스팸 또는 광고',
+      '욕설 또는 혐오 표현',
+      '음란물 또는 선정적인 내용',
+      '폭력 또는 위협',
+      '기타',
+    ]) {
+      expect(find.text(label), findsOneWidget);
     }
   });
 
@@ -88,6 +98,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: Builder(
             builder: (context) => TextButton(
@@ -103,7 +116,7 @@ void main() {
     await tester.tap(find.text('신고'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text(ReportReason.spam.label));
+    await tester.tap(find.text('스팸 또는 광고'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.widgetWithText(AppButton, '신고하기'));
@@ -132,7 +145,7 @@ void main() {
 
     await pumpAndOpen(tester);
 
-    await tester.tap(find.text(ReportReason.spam.label));
+    await tester.tap(find.text('스팸 또는 광고'));
     await tester.pumpAndSettle();
 
     // 스크롤하지 않으면 버튼이 화면 밖(오버플로 영역)에 있어 hit-test가
@@ -159,7 +172,7 @@ void main() {
 
     await pumpAndOpen(tester);
 
-    await tester.tap(find.text(ReportReason.spam.label));
+    await tester.tap(find.text('스팸 또는 광고'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.widgetWithText(AppButton, '신고하기'));

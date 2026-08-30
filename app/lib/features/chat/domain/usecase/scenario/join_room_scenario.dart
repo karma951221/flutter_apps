@@ -1,4 +1,5 @@
 import '../../../../../core/error/failure.dart';
+import '../../../../../core/error/failure_code.dart';
 import '../../../../../core/result/result.dart';
 import '../../chat_policy.dart';
 import '../../repository/chat_repository.dart';
@@ -24,6 +25,7 @@ class JoinRoomScenario {
           Failure.validation(
             message: '방에서 쓸 이름은 ${ChatPolicy.nicknameMinLength}자 이상이어야 합니다',
             field: 'nickname',
+            failureCode: FailureCode.roomNicknameTooShort,
           ),
         ),
       );
@@ -34,6 +36,7 @@ class JoinRoomScenario {
           Failure.validation(
             message: '방에서 쓸 이름은 ${ChatPolicy.nicknameMaxLength}자 이하여야 합니다',
             field: 'nickname',
+            failureCode: FailureCode.roomNicknameTooLong,
           ),
         ),
       );

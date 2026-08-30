@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_confirm_dialog.dart';
 import '../../../../design_system/widget/app_placeholder.dart';
@@ -72,7 +73,9 @@ class _FeedView extends StatelessWidget {
           FeedStatus.failure => Center(
             child: AppPlaceholder(
               icon: Icons.cloud_off_outlined,
-              message: state.failure?.message ?? l10n.feedLoadFailed,
+              message:
+                  state.failure?.localizedMessage(context) ??
+                  l10n.feedLoadFailed,
               description: l10n.feedLoadFailedDescription,
               actionLabel: l10n.commonRetry,
               onAction: () => context.read<FeedCubit>().load(),
@@ -250,7 +253,9 @@ class _FeedList extends StatelessWidget {
     } else {
       AppSnackBar.show(
         context,
-        message: blockAction.state.failure?.message ?? l10n.safetyBlockFailed,
+        message:
+            blockAction.state.failure?.localizedMessage(context) ??
+            l10n.safetyBlockFailed,
         type: AppSnackBarType.error,
       );
     }

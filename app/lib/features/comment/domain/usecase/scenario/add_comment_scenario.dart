@@ -1,4 +1,5 @@
 import '../../../../../core/error/failure.dart';
+import '../../../../../core/error/failure_code.dart';
 import '../../../../../core/result/result.dart';
 import '../../../../post/domain/entity/post_author.dart';
 import '../../comment_policy.dart';
@@ -26,7 +27,11 @@ class AddCommentScenario {
     if (trimmed.isEmpty) {
       return Future.value(
         const Err(
-          Failure.validation(message: '댓글 내용을 입력해 주세요', field: 'content'),
+          Failure.validation(
+            message: '댓글 내용을 입력해 주세요',
+            field: 'content',
+            failureCode: FailureCode.commentContentRequired,
+          ),
         ),
       );
     }
@@ -36,6 +41,7 @@ class AddCommentScenario {
           Failure.validation(
             message: '댓글은 ${CommentPolicy.maxContentLength}자까지 쓸 수 있습니다',
             field: 'content',
+            failureCode: FailureCode.commentTooLong,
           ),
         ),
       );

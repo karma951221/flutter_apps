@@ -27,12 +27,15 @@ void main() {
 
   tearDown(getIt.reset);
 
-  Future<void> pumpPage(WidgetTester tester) async {
+  Future<void> pumpPage(
+    WidgetTester tester, {
+    Locale locale = const Locale('ko'),
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
         // ko 가 ARB template 언어라 원문이 곧 기대값이다 (계획서).
-        locale: const Locale('ko'),
+        locale: locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: const SignInPage(),
@@ -62,6 +65,16 @@ void main() {
     );
     // 이메일·비밀번호 두 칸 모두 자기 자리에서 오류를 말한다.
     expect(find.textContaining('이메일'), findsWidgets);
+  });
+
+  testWidgets('영어 화면의 폼 검증 오류도 영어로 보인다', (tester) async {
+    await pumpPage(tester, locale: const Locale('en'));
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+    await tester.pump();
+
+    expect(find.text('Enter your email'), findsOneWidget);
+    expect(find.text('Enter your password'), findsOneWidget);
   });
 
   testWidgets('입력을 채우면 그대로 cubit 에 넘긴다', (tester) async {

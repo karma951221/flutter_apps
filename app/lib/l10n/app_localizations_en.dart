@@ -543,4 +543,418 @@ class AppLocalizationsEn extends AppLocalizations {
   String chatMemberLimitValue(int count) {
     return 'Limit: $count';
   }
+
+  @override
+  String get commonSave => 'Save';
+
+  @override
+  String get profileTitle => 'Profile';
+
+  @override
+  String get profileUserTitle => 'User profile';
+
+  @override
+  String get profileMenuTooltip => 'Profile menu';
+
+  @override
+  String get profileMenuUnblock => 'Unblock';
+
+  @override
+  String get profileLoadFailed => 'Couldn\'t load the profile';
+
+  @override
+  String get profileBioEmpty => 'Add a bio.';
+
+  @override
+  String get profileEditAction => 'Edit profile';
+
+  @override
+  String get profilePostsTitle => 'Posts';
+
+  @override
+  String get profilePostsReload => 'Reload posts';
+
+  @override
+  String get profilePostsEmpty => 'No posts yet';
+
+  @override
+  String get profileNicknameChecking => 'Checking…';
+
+  @override
+  String get profileNicknameAvailable => 'This nickname is available';
+
+  @override
+  String get profileNicknameTaken => 'This nickname is already in use';
+
+  @override
+  String get profileNicknameLabel => 'Nickname';
+
+  @override
+  String get profileAvatarPickFailed => 'Couldn\'t load the profile photo.';
+
+  @override
+  String get profileEditTitle => 'Edit profile';
+
+  @override
+  String get profileSaveFailed => 'Couldn\'t save the profile';
+
+  @override
+  String get profileSaveSucceeded => 'Profile saved';
+
+  @override
+  String get profileChoosePhoto => 'Choose photo';
+
+  @override
+  String get profileBioLabel => 'Bio';
+
+  @override
+  String get safetyUnblockAction => 'Unblock';
+
+  @override
+  String get safetyUnblockSucceeded => 'User unblocked.';
+
+  @override
+  String get safetyUnblockFailed => 'Couldn\'t unblock the user.';
+
+  @override
+  String get safetyReportTitle => 'Report';
+
+  @override
+  String get safetyReportFailed => 'Couldn\'t submit the report';
+
+  @override
+  String get safetyReportDetailLabel => 'Details (optional)';
+
+  @override
+  String get safetyReportDetailHint => 'Tell us what is wrong';
+
+  @override
+  String get safetyReportAction => 'Submit report';
+
+  @override
+  String get safetyReportReasonSpam => 'Spam or advertising';
+
+  @override
+  String get safetyReportReasonAbuse => 'Abuse or hate speech';
+
+  @override
+  String get safetyReportReasonSexual => 'Sexual content';
+
+  @override
+  String get safetyReportReasonViolence => 'Violence or threats';
+
+  @override
+  String get safetyReportReasonOther => 'Other';
+
+  @override
+  String get safetyBlockedUsersTitle => 'Blocked users';
+
+  @override
+  String get safetyBlockedUsersLoadFailed => 'Couldn\'t load blocked users';
+
+  @override
+  String get safetyBlockedUsersEmpty => 'You haven\'t blocked anyone';
+
+  @override
+  String get accountSettingsTitle => 'Account settings';
+
+  @override
+  String get accountPasswordChange => 'Change password';
+
+  @override
+  String get accountDelete => 'Delete account';
+
+  @override
+  String get accountDeleteSubtitle =>
+      'Your account and all activity will be deleted immediately';
+
+  @override
+  String get accountDeleteFailed => 'Couldn\'t delete the account. Try again.';
+
+  @override
+  String get accountDeleteConfirmTitle => 'Delete your account?';
+
+  @override
+  String get accountDeleteConfirmMessage =>
+      'The following will be permanently deleted with your account:\n\n• Profile and profile photo\n• Posts and photos\n• Comments and reactions';
+
+  @override
+  String get accountDeleteConfirmAction => 'Delete account';
+
+  @override
+  String get passwordChangeTitle => 'Change password';
+
+  @override
+  String get passwordChangeSucceeded => 'Password changed';
+
+  @override
+  String get passwordChangeFailed => 'Couldn\'t change the password';
+
+  @override
+  String get passwordChangeNewLabel => 'New password';
+
+  @override
+  String get passwordChangeConfirmLabel => 'Confirm new password';
+
+  @override
+  String get passwordChangeAction => 'Change';
+
+  @override
+  String get validationEmailRequired => 'Enter your email';
+
+  @override
+  String get validationEmailInvalid => 'Enter a valid email address';
+
+  @override
+  String get validationPasswordRequired => 'Enter your password';
+
+  @override
+  String get validationPasswordTooShort =>
+      'Password must be at least 8 characters';
+
+  @override
+  String get validationPasswordConfirmationRequired =>
+      'Enter your password again';
+
+  @override
+  String get validationPasswordMismatch => 'Passwords don\'t match';
+
+  @override
+  String get validationNicknameRequired => 'Enter a nickname';
+
+  @override
+  String get validationNicknameTooShort =>
+      'Nickname must be at least 2 characters';
+
+  @override
+  String get validationNicknameTooLong =>
+      'Nickname must be 20 characters or fewer';
+
+  @override
+  String get validationOtpRequired => 'Enter the code';
+
+  @override
+  String get validationOtpInvalid => 'Enter the 6-digit code';
+
+  @override
+  String get failureNetwork => 'Can\'t connect to the network';
+
+  @override
+  String get failureAuth => 'Authentication failed';
+
+  @override
+  String get failureForbidden => 'You don\'t have permission';
+
+  @override
+  String get failureNotFound => 'Couldn\'t find the requested item';
+
+  @override
+  String get failureValidation => 'Check your input';
+
+  @override
+  String get failureServer => 'A server error occurred';
+
+  @override
+  String get failureUnknown => 'An unknown error occurred';
+
+  @override
+  String get failureInvalidCredentials => 'Email or password is incorrect';
+
+  @override
+  String get failureSignInFailed => 'Couldn\'t sign in';
+
+  @override
+  String get failureSignUpFailed => 'Couldn\'t create the account';
+
+  @override
+  String get failureEmailAlreadyRegistered =>
+      'This email is already registered';
+
+  @override
+  String get failureWeakPassword => 'Choose a stronger password';
+
+  @override
+  String get failureSamePassword =>
+      'Enter a password different from your current one';
+
+  @override
+  String get failureOtpExpired => 'The code has expired. Request a new one';
+
+  @override
+  String get failureRateLimited => 'Too many requests. Try again later';
+
+  @override
+  String get failureDuplicateValue => 'This value is already in use';
+
+  @override
+  String get failureConstraintViolation =>
+      'The input doesn\'t meet the requirements';
+
+  @override
+  String get failureReferencedTargetMissing =>
+      'The referenced item doesn\'t exist';
+
+  @override
+  String get failureForbiddenOrDeleted =>
+      'You don\'t have permission or the item was deleted';
+
+  @override
+  String get failureNicknameLength => 'Nickname must be 2–20 characters';
+
+  @override
+  String get failureBioTooLong => 'Bio must be 200 characters or fewer';
+
+  @override
+  String get failurePostContentLength => 'Post must be 1–500 characters';
+
+  @override
+  String get failureCommentContentLength => 'Comment must be 1–300 characters';
+
+  @override
+  String get failureUnsupportedReaction => 'This reaction isn\'t supported';
+
+  @override
+  String get failureReportAlreadySubmitted =>
+      'You\'ve already reported this item';
+
+  @override
+  String get failureReportDetailTooLong =>
+      'Details must be 500 characters or fewer';
+
+  @override
+  String get failureReportSelfNotAllowed => 'You can\'t report yourself';
+
+  @override
+  String get failureBlockSelfNotAllowed => 'You can\'t block yourself';
+
+  @override
+  String get failureBlockAlreadyExists => 'This user is already blocked';
+
+  @override
+  String get failureNestedReplyNotAllowed => 'You can\'t reply to a reply';
+
+  @override
+  String get failureReplyToDeletedCommentNotAllowed =>
+      'You can\'t reply to a deleted comment';
+
+  @override
+  String get failureReplyParentPostMismatch =>
+      'The parent comment belongs to another post';
+
+  @override
+  String get failureReplyParentMissing => 'The parent comment doesn\'t exist';
+
+  @override
+  String get failureReportTargetMissing => 'The item to report doesn\'t exist';
+
+  @override
+  String get failureReportOwnPostNotAllowed =>
+      'You can\'t report your own post';
+
+  @override
+  String get failureReportOwnCommentNotAllowed =>
+      'You can\'t report your own comment';
+
+  @override
+  String get failureCommentNotAllowed =>
+      'Comments aren\'t available for this post';
+
+  @override
+  String get failureAuthenticationRequired => 'You need to sign in';
+
+  @override
+  String get failureOperationInProgress => 'This action is already in progress';
+
+  @override
+  String get failureCommentsRangeInvalid => 'Invalid comment range';
+
+  @override
+  String get failureCommentCursorInvalid => 'Invalid comment cursor';
+
+  @override
+  String get failureCommentContentRequired => 'Enter a comment';
+
+  @override
+  String get failureCommentTooLong => 'Comment must be 300 characters or fewer';
+
+  @override
+  String get failureCommentDeleteTargetMissing =>
+      'Couldn\'t find the comment to delete';
+
+  @override
+  String get failureRoomTitleRequired => 'Enter a room name';
+
+  @override
+  String get failureRoomTitleTooLong =>
+      'Room name must be 30 characters or fewer';
+
+  @override
+  String get failureRoomDescriptionTooLong =>
+      'Description must be 200 characters or fewer';
+
+  @override
+  String get failureRoomMemberLimitInvalid =>
+      'Room limit must be between 2 and 500 members';
+
+  @override
+  String get failureRoomNicknameTooShort =>
+      'Name in room must be at least 2 characters';
+
+  @override
+  String get failureRoomNicknameTooLong =>
+      'Name in room must be 20 characters or fewer';
+
+  @override
+  String get failureMessageContentRequired => 'Enter a message';
+
+  @override
+  String get failureMessageTooLong =>
+      'Message must be 1,000 characters or fewer';
+
+  @override
+  String get failureFeedRangeInvalid => 'Invalid feed range';
+
+  @override
+  String get failureFeedCursorInvalid => 'Invalid feed cursor';
+
+  @override
+  String get failureFeedNotLoaded => 'Load the list first';
+
+  @override
+  String get failurePostNotFound => 'Couldn\'t find the post';
+
+  @override
+  String get failureMessageCursorInvalid => 'Invalid message cursor';
+
+  @override
+  String get failureRoomCursorInvalid => 'Invalid room cursor';
+
+  @override
+  String get failurePostIdRequired => 'Post ID is required';
+
+  @override
+  String get failurePostContentRequired => 'Enter post content';
+
+  @override
+  String get failurePostTooLong => 'Post must be 500 characters or fewer';
+
+  @override
+  String get failurePostImageLimit => 'You can attach up to 5 photos';
+
+  @override
+  String get failureAvatarUploadFailed => 'Couldn\'t upload the profile photo.';
+
+  @override
+  String get failureInvalidData => 'Received invalid data';
+
+  @override
+  String get reactionLike => 'Like';
+
+  @override
+  String get reactionDislike => 'Dislike';
+
+  @override
+  String avatarSemanticsLabel(String nickname) {
+    return '$nickname\'s profile photo';
+  }
 }

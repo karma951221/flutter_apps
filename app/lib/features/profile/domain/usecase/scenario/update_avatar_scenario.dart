@@ -1,4 +1,5 @@
 import '../../../../../core/error/failure.dart';
+import '../../../../../core/error/failure_code.dart';
 import '../../../../../core/result/result.dart';
 import '../../entity/avatar_image_draft.dart';
 import '../../entity/profile.dart';
@@ -43,9 +44,9 @@ class UpdateAvatarScenario {
     }
     final previousAvatarUrl = update.avatarUrl;
 
-    final result = await UpdateMyProfileScenario(
-      _repository,
-    )(update.copyWith(avatarUrl: newAvatarUrl));
+    final result = await UpdateMyProfileScenario(_repository)(
+      update.copyWith(avatarUrl: newAvatarUrl),
+    );
 
     // 정리는 best-effort 다. 실패해도 저장 결과를 뒤집지 않는다.
     switch (result) {
@@ -61,5 +62,6 @@ class UpdateAvatarScenario {
   /// 일이 "다시 시도" 하나뿐이라, 저장소 오류 문구를 그대로 보여줄 이유가 없다.
   static const _uploadFailure = Failure.unknown(
     message: '프로필 사진을 업로드하지 못했습니다.',
+    failureCode: FailureCode.avatarUploadFailed,
   );
 }

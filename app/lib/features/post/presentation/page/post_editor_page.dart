@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../core/media/image_picker_service.dart';
 import '../../../../design_system/theme/app_radius.dart';
 import '../../../../design_system/theme/app_spacing.dart';
@@ -97,7 +98,7 @@ class _PostEditorPageState extends State<PostEditorPage> {
       },
       err: (failure) => AppSnackBar.show(
         context,
-        message: failure.message ?? l10n.postSaveFailed,
+        message: failure.localizedMessage(context),
         type: AppSnackBarType.error,
       ),
     );

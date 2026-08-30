@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/error/failure_code.dart';
 import '../../../../core/result/result.dart';
 import '../../domain/entity/post.dart';
 import '../../domain/entity/post_draft.dart';
@@ -35,7 +36,12 @@ class PostCubit extends Cubit<PostState> {
 
   Future<Result<T>> _submit<T>(Future<Result<T>> Function() action) async {
     if (state.isSubmitting) {
-      return const Err(Failure.validation(message: '이미 처리 중입니다'));
+      return const Err(
+        Failure.validation(
+          message: '이미 처리 중입니다',
+          failureCode: FailureCode.operationInProgress,
+        ),
+      );
     }
 
     emit(const PostState(isSubmitting: true));

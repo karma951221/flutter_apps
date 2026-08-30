@@ -1,5 +1,6 @@
 import 'package:daylog/core/data/mapper/supabase_error_mapper.dart';
 import 'package:daylog/core/error/failure.dart';
+import 'package:daylog/core/error/failure_code.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -16,6 +17,7 @@ void main() {
 
       expect(failure, isA<ValidationFailure>());
       expect((failure as ValidationFailure).message, '이미 신고한 항목입니다');
+      expect(failure.failureCode, FailureCode.reportAlreadySubmitted);
     });
 
     test('reports_detail_length 제약을 사용자 문구로 옮긴다', () {
@@ -83,6 +85,7 @@ void main() {
 
       expect(failure, isA<ValidationFailure>());
       expect((failure as ValidationFailure).message, '이 게시물에는 댓글을 달 수 없습니다');
+      expect(failure.failureCode, FailureCode.commentNotAllowed);
     });
   });
 

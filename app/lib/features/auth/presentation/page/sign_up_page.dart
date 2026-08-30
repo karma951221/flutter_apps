@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/l10n/validation_localizations.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
@@ -93,7 +94,8 @@ class _SignUpViewState extends State<_SignUpView> {
                   enabled: !busy,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
-                  validator: Validators.email,
+                  validator: (value) =>
+                      Validators.email(value)?.localized(context),
                   onSubmitted: _nicknameFocus.requestFocus,
                 ),
                 AuthTextField(
@@ -104,7 +106,8 @@ class _SignUpViewState extends State<_SignUpView> {
                   enabled: !busy,
                   textInputAction: TextInputAction.next,
                   maxLength: Validators.nicknameMaxLength,
-                  validator: Validators.nickname,
+                  validator: (value) =>
+                      Validators.nickname(value)?.localized(context),
                   onSubmitted: _passwordFocus.requestFocus,
                 ),
                 AuthTextField(
@@ -115,7 +118,8 @@ class _SignUpViewState extends State<_SignUpView> {
                   enabled: !busy,
                   obscureText: true,
                   textInputAction: TextInputAction.next,
-                  validator: Validators.password,
+                  validator: (value) =>
+                      Validators.password(value)?.localized(context),
                   onSubmitted: _passwordConfirmFocus.requestFocus,
                 ),
                 AuthTextField(
@@ -126,8 +130,10 @@ class _SignUpViewState extends State<_SignUpView> {
                   enabled: !busy,
                   obscureText: true,
                   textInputAction: TextInputAction.done,
-                  validator: (v) =>
-                      Validators.passwordConfirm(v, _password.text),
+                  validator: (v) => Validators.passwordConfirm(
+                    v,
+                    _password.text,
+                  )?.localized(context),
                   onSubmitted: _submit,
                 ),
                 if (state is SubmitFailure) FailureText(state.failure),

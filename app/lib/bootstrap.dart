@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app/app.dart';
@@ -26,6 +27,7 @@ Future<void> bootstrap() async {
 /// Supabase 는 프로세스당 한 번만 초기화할 수 있어서 [_supabaseReady] 로 막는다.
 Future<void> initializeApp() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting();
 
   FlutterError.onError = (details) {
     FlutterError.presentError(details);

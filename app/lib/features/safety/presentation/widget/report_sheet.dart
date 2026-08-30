@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entity/report_reason.dart';
 import '../../domain/entity/report_target.dart';
 import '../../domain/report_policy.dart';
 import '../cubit/report_cubit.dart';
 import '../cubit/report_state.dart';
+import '../report_reason_localizations.dart';
 
 /// 신고 바텀시트.
 ///
@@ -57,6 +60,7 @@ class _ReportSheetViewState extends State<_ReportSheetView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Padding(
       padding: EdgeInsets.only(
@@ -74,11 +78,15 @@ class _ReportSheetViewState extends State<_ReportSheetView> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('신고', style: theme.textTheme.titleMedium),
+                    Text(
+                      l10n.safetyReportTitle,
+                      style: theme.textTheme.titleMedium,
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     if (state.failure != null) ...[
                       Text(
-                        state.failure?.message ?? '신고를 접수하지 못했습니다',
+                        state.failure?.localizedMessage(context) ??
+                            l10n.safetyReportFailed,
                         style: TextStyle(color: theme.colorScheme.error),
                       ),
                       const SizedBox(height: AppSpacing.sm),
@@ -95,7 +103,7 @@ class _ReportSheetViewState extends State<_ReportSheetView> {
                           for (final reason in ReportReason.values)
                             RadioListTile<ReportReason>(
                               value: reason,
-                              title: Text(reason.label),
+                              title: Text(reason.localized(l10n)),
                             ),
                         ],
                       ),
@@ -105,9 +113,9 @@ class _ReportSheetViewState extends State<_ReportSheetView> {
                       controller: _detailController,
                       maxLength: ReportPolicy.maxDetailLength,
                       maxLines: 3,
-                      decoration: const InputDecoration(
-                        labelText: '상세 설명 (선택)',
-                        hintText: '무엇이 문제인지 적어주세요',
+                      decoration: InputDecoration(
+                        labelText: l10n.safetyReportDetailLabel,
+                        hintText: l10n.safetyReportDetailHint,
                       ),
                       onChanged: context.read<ReportCubit>().changeDetail,
                     ),
@@ -115,7 +123,7 @@ class _ReportSheetViewState extends State<_ReportSheetView> {
                     SizedBox(
                       width: double.infinity,
                       child: AppButton.primary(
-                        label: '신고하기',
+                        label: l10n.safetyReportAction,
                         isLoading: state.isSubmitting,
                         onPressed: state.canSubmit
                             ? () => _submit(context)

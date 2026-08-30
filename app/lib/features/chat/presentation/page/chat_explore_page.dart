@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/extension/date_time_format.dart';
+import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
 import '../../../../design_system/widget/app_placeholder.dart';
@@ -83,9 +84,11 @@ class _ChatExploreViewState extends State<_ChatExploreView> {
                     child: AppPlaceholder(
                       icon: Icons.cloud_off_outlined,
                       message:
-                          state.failure?.message ?? l10n.chatExploreLoadFailed,
+                          state.failure?.localizedMessage(context) ??
+                          l10n.chatExploreLoadFailed,
                       actionLabel: l10n.commonRetry,
-                      onAction: () => context.read<ChatExploreCubit>().refresh(),
+                      onAction: () =>
+                          context.read<ChatExploreCubit>().refresh(),
                     ),
                   ),
                   ChatExploreStatus.loaded when state.items.isEmpty => Center(
@@ -160,7 +163,11 @@ class _RoomList extends StatelessWidget {
                 color: Theme.of(context).colorScheme.onSecondaryContainer,
               ),
             ),
-            title: Text(room.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+            title: Text(
+              room.title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             subtitle: Text(
               room.description?.isNotEmpty == true
                   ? room.description!
@@ -178,7 +185,7 @@ class _RoomList extends StatelessWidget {
                 ),
                 if (room.lastMessageAt != null)
                   Text(
-                    room.lastMessageAt!.displayShortDateTime,
+                    room.lastMessageAt!.displayShortDateTime(l10n.localeName),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),

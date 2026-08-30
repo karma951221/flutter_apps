@@ -1,4 +1,5 @@
 import '../../../../../../core/error/failure.dart';
+import '../../../../../../core/error/failure_code.dart';
 import '../../../../../../core/result/result.dart';
 import '../../entity/app_user.dart';
 import '../../repository/auth_repository.dart';
@@ -19,7 +20,11 @@ class SignUpScenario {
     final taken = available.when(ok: (value) => !value, err: (_) => false);
     if (taken) {
       return const Err(
-        Failure.validation(message: '이미 사용 중인 닉네임입니다', field: 'nickname'),
+        Failure.validation(
+          message: '이미 사용 중인 닉네임입니다',
+          field: 'nickname',
+          failureCode: FailureCode.nicknameTaken,
+        ),
       );
     }
 

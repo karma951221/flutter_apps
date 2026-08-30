@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/l10n/failure_localizations.dart';
+import '../../../../core/l10n/validation_localizations.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/widget/auth_text_field.dart';
 import '../cubit/change_password_cubit.dart';
 import '../cubit/change_password_state.dart';
@@ -54,70 +57,74 @@ class _ChangePasswordViewState extends State<_ChangePasswordView> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('비밀번호 변경')),
-    body: BlocConsumer<ChangePasswordCubit, ChangePasswordState>(
-      listener: (context, state) {
-        switch (state) {
-          case ChangePasswordSuccess():
-            AppSnackBar.show(
-              context,
-              message: '비밀번호를 변경했습니다',
-              type: AppSnackBarType.success,
-            );
-            Navigator.of(context).pop();
-          case ChangePasswordFailure(:final failure):
-            AppSnackBar.show(
-              context,
-              message: failure.message ?? '비밀번호를 변경하지 못했습니다',
-              type: AppSnackBarType.error,
-            );
-          case ChangePasswordIdle():
-          case ChangePasswordInProgress():
-            break;
-        }
-      },
-      builder: (context, state) {
-        final isBusy = state is ChangePasswordInProgress;
-        return SafeArea(
-          child: Form(
-            key: _formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: ListView(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              children: [
-                AuthTextField(
-                  controller: _passwordController,
-                  label: '새 비밀번호',
-                  obscureText: true,
-                  enabled: !isBusy,
-                  textInputAction: TextInputAction.next,
-                  autofillHints: const [AutofillHints.newPassword],
-                  validator: Validators.password,
-                ),
-                AuthTextField(
-                  controller: _confirmController,
-                  label: '새 비밀번호 확인',
-                  obscureText: true,
-                  enabled: !isBusy,
-                  textInputAction: TextInputAction.done,
-                  autofillHints: const [AutofillHints.newPassword],
-                  validator: (value) => Validators.passwordConfirm(
-                    value,
-                    _passwordController.text,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.passwordChangeTitle)),
+      body: BlocConsumer<ChangePasswordCubit, ChangePasswordState>(
+        listener: (context, state) {
+          switch (state) {
+            case ChangePasswordSuccess():
+              AppSnackBar.show(
+                context,
+                message: l10n.passwordChangeSucceeded,
+                type: AppSnackBarType.success,
+              );
+              Navigator.of(context).pop();
+            case ChangePasswordFailure(:final failure):
+              AppSnackBar.show(
+                context,
+                message: failure.localizedMessage(context),
+                type: AppSnackBarType.error,
+              );
+            case ChangePasswordIdle():
+            case ChangePasswordInProgress():
+              break;
+          }
+        },
+        builder: (context, state) {
+          final isBusy = state is ChangePasswordInProgress;
+          return SafeArea(
+            child: Form(
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: ListView(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                children: [
+                  AuthTextField(
+                    controller: _passwordController,
+                    label: l10n.passwordChangeNewLabel,
+                    obscureText: true,
+                    enabled: !isBusy,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.newPassword],
+                    validator: (value) =>
+                        Validators.password(value)?.localized(context),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                AppButton.primary(
-                  label: '변경',
-                  onPressed: isBusy ? null : _submit,
-                  isLoading: isBusy,
-                ),
-              ],
+                  AuthTextField(
+                    controller: _confirmController,
+                    label: l10n.passwordChangeConfirmLabel,
+                    obscureText: true,
+                    enabled: !isBusy,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.newPassword],
+                    validator: (value) => Validators.passwordConfirm(
+                      value,
+                      _passwordController.text,
+                    )?.localized(context),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppButton.primary(
+                    label: l10n.passwordChangeAction,
+                    onPressed: isBusy ? null : _submit,
+                    isLoading: isBusy,
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    ),
-  );
+          );
+        },
+      ),
+    );
+  }
 }

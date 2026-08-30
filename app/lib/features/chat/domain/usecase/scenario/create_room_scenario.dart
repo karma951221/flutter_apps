@@ -1,4 +1,5 @@
 import '../../../../../core/error/failure.dart';
+import '../../../../../core/error/failure_code.dart';
 import '../../../../../core/result/result.dart';
 import '../../chat_policy.dart';
 import '../../entity/chat_room.dart';
@@ -22,7 +23,13 @@ class CreateRoomScenario {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isEmpty) {
       return Future.value(
-        const Err(Failure.validation(message: '방 이름을 입력하세요', field: 'title')),
+        const Err(
+          Failure.validation(
+            message: '방 이름을 입력하세요',
+            field: 'title',
+            failureCode: FailureCode.roomTitleRequired,
+          ),
+        ),
       );
     }
     if (trimmedTitle.length > ChatPolicy.roomTitleMaxLength) {
@@ -31,6 +38,7 @@ class CreateRoomScenario {
           Failure.validation(
             message: '방 이름은 ${ChatPolicy.roomTitleMaxLength}자 이하여야 합니다',
             field: 'title',
+            failureCode: FailureCode.roomTitleTooLong,
           ),
         ),
       );
@@ -50,6 +58,7 @@ class CreateRoomScenario {
           Failure.validation(
             message: '소개는 ${ChatPolicy.roomDescriptionMaxLength}자 이하여야 합니다',
             field: 'description',
+            failureCode: FailureCode.roomDescriptionTooLong,
           ),
         ),
       );
@@ -64,6 +73,7 @@ class CreateRoomScenario {
                 '정원은 ${ChatPolicy.memberLimitMin}명 이상 '
                 '${ChatPolicy.memberLimitMax}명 이하여야 합니다',
             field: 'memberLimit',
+            failureCode: FailureCode.roomMemberLimitInvalid,
           ),
         ),
       );

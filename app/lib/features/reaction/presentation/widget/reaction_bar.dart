@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/widget/app_count_action.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entity/reaction_summary.dart';
 import '../../domain/entity/reaction_type.dart';
 
@@ -33,7 +34,7 @@ class ReactionBar extends StatelessWidget {
         AppCountAction(
           icon: _iconOf(type, isActive: summary.isMine(type)),
           count: summary.countOf(type),
-          tooltip: _tooltipOf(type),
+          tooltip: _tooltipOf(type, AppLocalizations.of(context)),
           isActive: summary.isMine(type),
           onPressed: onTap == null ? null : () => onTap!(type),
         ),
@@ -42,16 +43,14 @@ class ReactionBar extends StatelessWidget {
 
   IconData _iconOf(ReactionType type, {required bool isActive}) =>
       switch (type) {
-        ReactionType.like => isActive
-            ? Icons.thumb_up
-            : Icons.thumb_up_outlined,
-        ReactionType.dislike => isActive
-            ? Icons.thumb_down
-            : Icons.thumb_down_outlined,
+        ReactionType.like =>
+          isActive ? Icons.thumb_up : Icons.thumb_up_outlined,
+        ReactionType.dislike =>
+          isActive ? Icons.thumb_down : Icons.thumb_down_outlined,
       };
 
-  String _tooltipOf(ReactionType type) => switch (type) {
-    ReactionType.like => '좋아요',
-    ReactionType.dislike => '싫어요',
+  String _tooltipOf(ReactionType type, AppLocalizations l10n) => switch (type) {
+    ReactionType.like => l10n.reactionLike,
+    ReactionType.dislike => l10n.reactionDislike,
   };
 }

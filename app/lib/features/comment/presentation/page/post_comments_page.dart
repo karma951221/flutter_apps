@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_confirm_dialog.dart';
@@ -98,7 +99,9 @@ class _CommentViewState extends State<_CommentView> {
                   ),
                   CommentStatus.failure => Center(
                     child: AppPlaceholder(
-                      message: state.failure?.message ?? l10n.commentLoadFailed,
+                      message:
+                          state.failure?.localizedMessage(context) ??
+                          l10n.commentLoadFailed,
                       actionLabel: l10n.commonRetry,
                       onAction: () => context.read<CommentCubit>().refresh(),
                     ),
@@ -239,7 +242,6 @@ class _CommentList extends StatelessWidget {
     PostComment comment,
     ReactionType type,
   ) async {
-    final l10n = AppLocalizations.of(context);
     final result = await context.read<CommentCubit>().toggleReaction(
       comment,
       type,
@@ -250,7 +252,7 @@ class _CommentList extends StatelessWidget {
       ok: (_) {},
       err: (failure) => AppSnackBar.show(
         context,
-        message: failure.message ?? l10n.reactionSaveFailed,
+        message: failure.localizedMessage(context),
         type: AppSnackBarType.error,
       ),
     );
@@ -295,7 +297,7 @@ class _CommentList extends StatelessWidget {
       ),
       err: (failure) => AppSnackBar.show(
         context,
-        message: failure.message ?? l10n.commentDeleteFailed,
+        message: failure.localizedMessage(context),
         type: AppSnackBarType.error,
       ),
     );
@@ -426,10 +428,9 @@ class _CommentComposer extends StatelessWidget {
       },
       err: (failure) => AppSnackBar.show(
         context,
-        message: failure.message ?? l10n.commentCreateFailed,
+        message: failure.localizedMessage(context),
         type: AppSnackBarType.error,
       ),
     );
   }
 }
-

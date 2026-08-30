@@ -532,4 +532,394 @@ class AppLocalizationsKo extends AppLocalizations {
   String chatMemberLimitValue(int count) {
     return '정원 $count명';
   }
+
+  @override
+  String get commonSave => '저장';
+
+  @override
+  String get profileTitle => '프로필';
+
+  @override
+  String get profileUserTitle => '사용자 프로필';
+
+  @override
+  String get profileMenuTooltip => '프로필 메뉴';
+
+  @override
+  String get profileMenuUnblock => '차단 해제';
+
+  @override
+  String get profileLoadFailed => '프로필을 불러오지 못했습니다';
+
+  @override
+  String get profileBioEmpty => '소개를 작성해보세요.';
+
+  @override
+  String get profileEditAction => '프로필 편집';
+
+  @override
+  String get profilePostsTitle => '게시물';
+
+  @override
+  String get profilePostsReload => '게시물을 다시 불러오기';
+
+  @override
+  String get profilePostsEmpty => '아직 게시물이 없습니다';
+
+  @override
+  String get profileNicknameChecking => '확인 중…';
+
+  @override
+  String get profileNicknameAvailable => '사용할 수 있는 닉네임입니다';
+
+  @override
+  String get profileNicknameTaken => '이미 사용 중인 닉네임입니다';
+
+  @override
+  String get profileNicknameLabel => '닉네임';
+
+  @override
+  String get profileAvatarPickFailed => '프로필 사진을 불러오지 못했습니다.';
+
+  @override
+  String get profileEditTitle => '프로필 편집';
+
+  @override
+  String get profileSaveFailed => '프로필을 저장하지 못했습니다';
+
+  @override
+  String get profileSaveSucceeded => '프로필을 저장했습니다';
+
+  @override
+  String get profileChoosePhoto => '사진 선택';
+
+  @override
+  String get profileBioLabel => '자기소개';
+
+  @override
+  String get safetyUnblockAction => '차단 해제';
+
+  @override
+  String get safetyUnblockSucceeded => '차단을 해제했습니다.';
+
+  @override
+  String get safetyUnblockFailed => '차단을 해제하지 못했습니다.';
+
+  @override
+  String get safetyReportTitle => '신고';
+
+  @override
+  String get safetyReportFailed => '신고를 접수하지 못했습니다';
+
+  @override
+  String get safetyReportDetailLabel => '상세 설명 (선택)';
+
+  @override
+  String get safetyReportDetailHint => '무엇이 문제인지 적어주세요';
+
+  @override
+  String get safetyReportAction => '신고하기';
+
+  @override
+  String get safetyReportReasonSpam => '스팸 또는 광고';
+
+  @override
+  String get safetyReportReasonAbuse => '욕설 또는 혐오 표현';
+
+  @override
+  String get safetyReportReasonSexual => '음란물 또는 선정적인 내용';
+
+  @override
+  String get safetyReportReasonViolence => '폭력 또는 위협';
+
+  @override
+  String get safetyReportReasonOther => '기타';
+
+  @override
+  String get safetyBlockedUsersTitle => '차단한 사용자';
+
+  @override
+  String get safetyBlockedUsersLoadFailed => '차단 목록을 불러오지 못했습니다';
+
+  @override
+  String get safetyBlockedUsersEmpty => '차단한 사용자가 없습니다';
+
+  @override
+  String get accountSettingsTitle => '계정 설정';
+
+  @override
+  String get accountPasswordChange => '비밀번호 변경';
+
+  @override
+  String get accountDelete => '회원 탈퇴';
+
+  @override
+  String get accountDeleteSubtitle => '계정과 모든 기록이 즉시 삭제됩니다';
+
+  @override
+  String get accountDeleteFailed => '탈퇴하지 못했습니다. 다시 시도해 주세요.';
+
+  @override
+  String get accountDeleteConfirmTitle => '정말 탈퇴할까요?';
+
+  @override
+  String get accountDeleteConfirmMessage =>
+      '계정과 함께 아래가 모두 삭제되며 되돌릴 수 없습니다.\n\n· 프로필과 프로필 사진\n· 작성한 게시물과 사진\n· 남긴 댓글과 감정표현';
+
+  @override
+  String get accountDeleteConfirmAction => '탈퇴';
+
+  @override
+  String get passwordChangeTitle => '비밀번호 변경';
+
+  @override
+  String get passwordChangeSucceeded => '비밀번호를 변경했습니다';
+
+  @override
+  String get passwordChangeFailed => '비밀번호를 변경하지 못했습니다';
+
+  @override
+  String get passwordChangeNewLabel => '새 비밀번호';
+
+  @override
+  String get passwordChangeConfirmLabel => '새 비밀번호 확인';
+
+  @override
+  String get passwordChangeAction => '변경';
+
+  @override
+  String get validationEmailRequired => '이메일을 입력하세요';
+
+  @override
+  String get validationEmailInvalid => '이메일 형식이 올바르지 않습니다';
+
+  @override
+  String get validationPasswordRequired => '비밀번호를 입력하세요';
+
+  @override
+  String get validationPasswordTooShort => '비밀번호는 8자 이상이어야 합니다';
+
+  @override
+  String get validationPasswordConfirmationRequired => '비밀번호를 한 번 더 입력하세요';
+
+  @override
+  String get validationPasswordMismatch => '비밀번호가 일치하지 않습니다';
+
+  @override
+  String get validationNicknameRequired => '닉네임을 입력하세요';
+
+  @override
+  String get validationNicknameTooShort => '닉네임은 2자 이상이어야 합니다';
+
+  @override
+  String get validationNicknameTooLong => '닉네임은 20자 이하여야 합니다';
+
+  @override
+  String get validationOtpRequired => '코드를 입력하세요';
+
+  @override
+  String get validationOtpInvalid => '6자리 숫자를 입력하세요';
+
+  @override
+  String get failureNetwork => '네트워크에 연결할 수 없습니다';
+
+  @override
+  String get failureAuth => '인증에 실패했습니다';
+
+  @override
+  String get failureForbidden => '권한이 없습니다';
+
+  @override
+  String get failureNotFound => '대상을 찾을 수 없습니다';
+
+  @override
+  String get failureValidation => '입력값을 확인하세요';
+
+  @override
+  String get failureServer => '서버 오류가 발생했습니다';
+
+  @override
+  String get failureUnknown => '알 수 없는 오류가 발생했습니다';
+
+  @override
+  String get failureInvalidCredentials => '이메일 또는 비밀번호가 올바르지 않습니다';
+
+  @override
+  String get failureSignInFailed => '로그인에 실패했습니다';
+
+  @override
+  String get failureSignUpFailed => '가입에 실패했습니다';
+
+  @override
+  String get failureEmailAlreadyRegistered => '이미 가입된 이메일입니다';
+
+  @override
+  String get failureWeakPassword => '비밀번호가 너무 단순합니다';
+
+  @override
+  String get failureSamePassword => '이전과 다른 비밀번호를 입력하세요';
+
+  @override
+  String get failureOtpExpired => '코드가 만료되었습니다. 다시 요청하세요';
+
+  @override
+  String get failureRateLimited => '요청이 너무 잦습니다. 잠시 후 다시 시도하세요';
+
+  @override
+  String get failureDuplicateValue => '이미 사용 중인 값입니다';
+
+  @override
+  String get failureConstraintViolation => '입력값이 조건을 만족하지 않습니다';
+
+  @override
+  String get failureReferencedTargetMissing => '참조 대상이 존재하지 않습니다';
+
+  @override
+  String get failureForbiddenOrDeleted => '권한이 없거나 삭제된 대상입니다';
+
+  @override
+  String get failureNicknameLength => '닉네임은 2자 이상 20자 이하여야 합니다';
+
+  @override
+  String get failureBioTooLong => '자기소개는 200자 이하여야 합니다';
+
+  @override
+  String get failurePostContentLength => '게시물은 1자 이상 500자 이하여야 합니다';
+
+  @override
+  String get failureCommentContentLength => '댓글은 1자 이상 300자 이하여야 합니다';
+
+  @override
+  String get failureUnsupportedReaction => '지원하지 않는 감정입니다';
+
+  @override
+  String get failureReportAlreadySubmitted => '이미 신고한 항목입니다';
+
+  @override
+  String get failureReportDetailTooLong => '상세 설명은 500자 이하여야 합니다';
+
+  @override
+  String get failureReportSelfNotAllowed => '자기 자신은 신고할 수 없습니다';
+
+  @override
+  String get failureBlockSelfNotAllowed => '자기 자신은 차단할 수 없습니다';
+
+  @override
+  String get failureBlockAlreadyExists => '이미 차단한 사용자입니다';
+
+  @override
+  String get failureNestedReplyNotAllowed => '답글에는 답글을 달 수 없습니다';
+
+  @override
+  String get failureReplyToDeletedCommentNotAllowed => '삭제된 댓글에는 답글을 달 수 없습니다';
+
+  @override
+  String get failureReplyParentPostMismatch => '부모 댓글이 다른 게시물의 댓글입니다';
+
+  @override
+  String get failureReplyParentMissing => '부모 댓글이 없습니다';
+
+  @override
+  String get failureReportTargetMissing => '신고할 대상이 없습니다';
+
+  @override
+  String get failureReportOwnPostNotAllowed => '내 게시물은 신고할 수 없습니다';
+
+  @override
+  String get failureReportOwnCommentNotAllowed => '내 댓글은 신고할 수 없습니다';
+
+  @override
+  String get failureCommentNotAllowed => '이 게시물에는 댓글을 달 수 없습니다';
+
+  @override
+  String get failureAuthenticationRequired => '로그인이 필요합니다';
+
+  @override
+  String get failureOperationInProgress => '이미 처리 중입니다';
+
+  @override
+  String get failureCommentsRangeInvalid => '올바른 댓글 조회 범위가 아닙니다';
+
+  @override
+  String get failureCommentCursorInvalid => '잘못된 댓글 커서입니다';
+
+  @override
+  String get failureCommentContentRequired => '댓글 내용을 입력해 주세요';
+
+  @override
+  String get failureCommentTooLong => '댓글은 300자까지 쓸 수 있습니다';
+
+  @override
+  String get failureCommentDeleteTargetMissing => '삭제할 댓글을 찾을 수 없습니다';
+
+  @override
+  String get failureRoomTitleRequired => '방 이름을 입력하세요';
+
+  @override
+  String get failureRoomTitleTooLong => '방 이름은 30자 이하여야 합니다';
+
+  @override
+  String get failureRoomDescriptionTooLong => '소개는 200자 이하여야 합니다';
+
+  @override
+  String get failureRoomMemberLimitInvalid => '정원은 2명 이상 500명 이하여야 합니다';
+
+  @override
+  String get failureRoomNicknameTooShort => '방에서 쓸 이름은 2자 이상이어야 합니다';
+
+  @override
+  String get failureRoomNicknameTooLong => '방에서 쓸 이름은 20자 이하여야 합니다';
+
+  @override
+  String get failureMessageContentRequired => '보낼 내용을 입력하세요';
+
+  @override
+  String get failureMessageTooLong => '메시지는 1000자 이하여야 합니다';
+
+  @override
+  String get failureFeedRangeInvalid => '올바른 피드 조회 범위가 아닙니다';
+
+  @override
+  String get failureFeedCursorInvalid => '잘못된 피드 커서입니다';
+
+  @override
+  String get failureFeedNotLoaded => '목록을 먼저 읽어야 합니다';
+
+  @override
+  String get failurePostNotFound => '게시물을 찾을 수 없습니다';
+
+  @override
+  String get failureMessageCursorInvalid => '잘못된 메시지 커서입니다';
+
+  @override
+  String get failureRoomCursorInvalid => '잘못된 방 커서입니다';
+
+  @override
+  String get failurePostIdRequired => '게시물 식별자가 필요합니다';
+
+  @override
+  String get failurePostContentRequired => '게시물 내용을 입력하세요';
+
+  @override
+  String get failurePostTooLong => '게시물은 500자 이하여야 합니다';
+
+  @override
+  String get failurePostImageLimit => '사진은 5장까지 첨부할 수 있습니다';
+
+  @override
+  String get failureAvatarUploadFailed => '프로필 사진을 업로드하지 못했습니다.';
+
+  @override
+  String get failureInvalidData => '올바르지 않은 데이터를 받았습니다';
+
+  @override
+  String get reactionLike => '좋아요';
+
+  @override
+  String get reactionDislike => '싫어요';
+
+  @override
+  String avatarSemanticsLabel(String nickname) {
+    return '$nickname 프로필 사진';
+  }
 }

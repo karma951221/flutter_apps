@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 
 import '../../../../core/data/repository/repository_error_handler.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/error/failure_code.dart';
 import '../../../../core/result/result.dart';
 import '../../domain/entity/avatar_image_draft.dart';
 import '../../domain/entity/profile.dart';
@@ -59,5 +60,6 @@ class ProfileRepositoryImpl
   Never _throwNotAuthenticated() => throw const Failure.auth(
     message: '로그인이 필요합니다',
     code: 'not_authenticated',
+    failureCode: FailureCode.authenticationRequired,
   );
 }

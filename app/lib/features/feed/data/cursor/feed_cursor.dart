@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/error/failure_code.dart';
 
 /// 피드 커서. `(created_at, id)` 복합 커서를 불투명 문자열로 감싼다.
 ///
@@ -35,7 +36,11 @@ class FeedCursor {
       }
       return FeedCursor(createdAt: DateTime.parse(parts[0]), id: parts[1]);
     } on FormatException {
-      throw const Failure.validation(message: '잘못된 피드 커서입니다', field: 'cursor');
+      throw const Failure.validation(
+        message: '잘못된 피드 커서입니다',
+        field: 'cursor',
+        failureCode: FailureCode.feedCursorInvalid,
+      );
     }
   }
 

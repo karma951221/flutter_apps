@@ -532,4 +532,394 @@ class AppLocalizationsJa extends AppLocalizations {
   String chatMemberLimitValue(int count) {
     return '定員 $count人';
   }
+
+  @override
+  String get commonSave => '保存';
+
+  @override
+  String get profileTitle => 'プロフィール';
+
+  @override
+  String get profileUserTitle => 'ユーザープロフィール';
+
+  @override
+  String get profileMenuTooltip => 'プロフィールメニュー';
+
+  @override
+  String get profileMenuUnblock => 'ブロック解除';
+
+  @override
+  String get profileLoadFailed => 'プロフィールを読み込めませんでした';
+
+  @override
+  String get profileBioEmpty => '自己紹介を書いてみましょう。';
+
+  @override
+  String get profileEditAction => 'プロフィール編集';
+
+  @override
+  String get profilePostsTitle => '投稿';
+
+  @override
+  String get profilePostsReload => '投稿を再読み込み';
+
+  @override
+  String get profilePostsEmpty => 'まだ投稿がありません';
+
+  @override
+  String get profileNicknameChecking => '確認中…';
+
+  @override
+  String get profileNicknameAvailable => 'このニックネームは使用できます';
+
+  @override
+  String get profileNicknameTaken => 'このニックネームはすでに使用されています';
+
+  @override
+  String get profileNicknameLabel => 'ニックネーム';
+
+  @override
+  String get profileAvatarPickFailed => 'プロフィール写真を読み込めませんでした。';
+
+  @override
+  String get profileEditTitle => 'プロフィール編集';
+
+  @override
+  String get profileSaveFailed => 'プロフィールを保存できませんでした';
+
+  @override
+  String get profileSaveSucceeded => 'プロフィールを保存しました';
+
+  @override
+  String get profileChoosePhoto => '写真を選択';
+
+  @override
+  String get profileBioLabel => '自己紹介';
+
+  @override
+  String get safetyUnblockAction => 'ブロック解除';
+
+  @override
+  String get safetyUnblockSucceeded => 'ブロックを解除しました。';
+
+  @override
+  String get safetyUnblockFailed => 'ブロックを解除できませんでした。';
+
+  @override
+  String get safetyReportTitle => '報告';
+
+  @override
+  String get safetyReportFailed => '報告を送信できませんでした';
+
+  @override
+  String get safetyReportDetailLabel => '詳細（任意）';
+
+  @override
+  String get safetyReportDetailHint => '問題の内容を入力してください';
+
+  @override
+  String get safetyReportAction => '報告する';
+
+  @override
+  String get safetyReportReasonSpam => 'スパムまたは広告';
+
+  @override
+  String get safetyReportReasonAbuse => '暴言またはヘイトスピーチ';
+
+  @override
+  String get safetyReportReasonSexual => '性的なコンテンツ';
+
+  @override
+  String get safetyReportReasonViolence => '暴力または脅迫';
+
+  @override
+  String get safetyReportReasonOther => 'その他';
+
+  @override
+  String get safetyBlockedUsersTitle => 'ブロックしたユーザー';
+
+  @override
+  String get safetyBlockedUsersLoadFailed => 'ブロック一覧を読み込めませんでした';
+
+  @override
+  String get safetyBlockedUsersEmpty => 'ブロックしたユーザーはいません';
+
+  @override
+  String get accountSettingsTitle => 'アカウント設定';
+
+  @override
+  String get accountPasswordChange => 'パスワード変更';
+
+  @override
+  String get accountDelete => 'アカウント削除';
+
+  @override
+  String get accountDeleteSubtitle => 'アカウントとすべての記録がすぐに削除されます';
+
+  @override
+  String get accountDeleteFailed => 'アカウントを削除できませんでした。もう一度お試しください。';
+
+  @override
+  String get accountDeleteConfirmTitle => 'アカウントを削除しますか？';
+
+  @override
+  String get accountDeleteConfirmMessage =>
+      'アカウントとともに以下がすべて削除され、元に戻せません。\n\n・プロフィールとプロフィール写真\n・投稿と写真\n・コメントとリアクション';
+
+  @override
+  String get accountDeleteConfirmAction => '削除';
+
+  @override
+  String get passwordChangeTitle => 'パスワード変更';
+
+  @override
+  String get passwordChangeSucceeded => 'パスワードを変更しました';
+
+  @override
+  String get passwordChangeFailed => 'パスワードを変更できませんでした';
+
+  @override
+  String get passwordChangeNewLabel => '新しいパスワード';
+
+  @override
+  String get passwordChangeConfirmLabel => '新しいパスワード（確認）';
+
+  @override
+  String get passwordChangeAction => '変更';
+
+  @override
+  String get validationEmailRequired => 'メールアドレスを入力してください';
+
+  @override
+  String get validationEmailInvalid => '正しいメールアドレスを入力してください';
+
+  @override
+  String get validationPasswordRequired => 'パスワードを入力してください';
+
+  @override
+  String get validationPasswordTooShort => 'パスワードは8文字以上で入力してください';
+
+  @override
+  String get validationPasswordConfirmationRequired => 'パスワードをもう一度入力してください';
+
+  @override
+  String get validationPasswordMismatch => 'パスワードが一致しません';
+
+  @override
+  String get validationNicknameRequired => 'ニックネームを入力してください';
+
+  @override
+  String get validationNicknameTooShort => 'ニックネームは2文字以上で入力してください';
+
+  @override
+  String get validationNicknameTooLong => 'ニックネームは20文字以内で入力してください';
+
+  @override
+  String get validationOtpRequired => 'コードを入力してください';
+
+  @override
+  String get validationOtpInvalid => '6桁の数字を入力してください';
+
+  @override
+  String get failureNetwork => 'ネットワークに接続できません';
+
+  @override
+  String get failureAuth => '認証に失敗しました';
+
+  @override
+  String get failureForbidden => '権限がありません';
+
+  @override
+  String get failureNotFound => '対象が見つかりません';
+
+  @override
+  String get failureValidation => '入力内容を確認してください';
+
+  @override
+  String get failureServer => 'サーバーエラーが発生しました';
+
+  @override
+  String get failureUnknown => '不明なエラーが発生しました';
+
+  @override
+  String get failureInvalidCredentials => 'メールアドレスまたはパスワードが正しくありません';
+
+  @override
+  String get failureSignInFailed => 'ログインできませんでした';
+
+  @override
+  String get failureSignUpFailed => 'アカウントを作成できませんでした';
+
+  @override
+  String get failureEmailAlreadyRegistered => 'このメールアドレスはすでに登録されています';
+
+  @override
+  String get failureWeakPassword => 'より強いパスワードを設定してください';
+
+  @override
+  String get failureSamePassword => '現在と異なるパスワードを入力してください';
+
+  @override
+  String get failureOtpExpired => 'コードの有効期限が切れました。再度リクエストしてください';
+
+  @override
+  String get failureRateLimited => 'リクエストが多すぎます。しばらくしてからお試しください';
+
+  @override
+  String get failureDuplicateValue => 'この値はすでに使用されています';
+
+  @override
+  String get failureConstraintViolation => '入力内容が条件を満たしていません';
+
+  @override
+  String get failureReferencedTargetMissing => '参照先が存在しません';
+
+  @override
+  String get failureForbiddenOrDeleted => '権限がないか、対象が削除されています';
+
+  @override
+  String get failureNicknameLength => 'ニックネームは2〜20文字で入力してください';
+
+  @override
+  String get failureBioTooLong => '自己紹介は200文字以内で入力してください';
+
+  @override
+  String get failurePostContentLength => '投稿は1〜500文字で入力してください';
+
+  @override
+  String get failureCommentContentLength => 'コメントは1〜300文字で入力してください';
+
+  @override
+  String get failureUnsupportedReaction => '対応していないリアクションです';
+
+  @override
+  String get failureReportAlreadySubmitted => 'この項目はすでに報告済みです';
+
+  @override
+  String get failureReportDetailTooLong => '詳細は500文字以内で入力してください';
+
+  @override
+  String get failureReportSelfNotAllowed => '自分自身を報告することはできません';
+
+  @override
+  String get failureBlockSelfNotAllowed => '自分自身をブロックすることはできません';
+
+  @override
+  String get failureBlockAlreadyExists => 'このユーザーはすでにブロックされています';
+
+  @override
+  String get failureNestedReplyNotAllowed => '返信に返信することはできません';
+
+  @override
+  String get failureReplyToDeletedCommentNotAllowed => '削除されたコメントには返信できません';
+
+  @override
+  String get failureReplyParentPostMismatch => '親コメントは別の投稿に属しています';
+
+  @override
+  String get failureReplyParentMissing => '親コメントが存在しません';
+
+  @override
+  String get failureReportTargetMissing => '報告する対象が存在しません';
+
+  @override
+  String get failureReportOwnPostNotAllowed => '自分の投稿を報告することはできません';
+
+  @override
+  String get failureReportOwnCommentNotAllowed => '自分のコメントを報告することはできません';
+
+  @override
+  String get failureCommentNotAllowed => 'この投稿にはコメントできません';
+
+  @override
+  String get failureAuthenticationRequired => 'ログインが必要です';
+
+  @override
+  String get failureOperationInProgress => 'すでに処理中です';
+
+  @override
+  String get failureCommentsRangeInvalid => 'コメントの取得範囲が正しくありません';
+
+  @override
+  String get failureCommentCursorInvalid => 'コメントカーソルが正しくありません';
+
+  @override
+  String get failureCommentContentRequired => 'コメントを入力してください';
+
+  @override
+  String get failureCommentTooLong => 'コメントは300文字以内で入力してください';
+
+  @override
+  String get failureCommentDeleteTargetMissing => '削除するコメントが見つかりません';
+
+  @override
+  String get failureRoomTitleRequired => 'ルーム名を入力してください';
+
+  @override
+  String get failureRoomTitleTooLong => 'ルーム名は30文字以内で入力してください';
+
+  @override
+  String get failureRoomDescriptionTooLong => '紹介は200文字以内で入力してください';
+
+  @override
+  String get failureRoomMemberLimitInvalid => '定員は2〜500人で設定してください';
+
+  @override
+  String get failureRoomNicknameTooShort => 'ルームでの名前は2文字以上で入力してください';
+
+  @override
+  String get failureRoomNicknameTooLong => 'ルームでの名前は20文字以内で入力してください';
+
+  @override
+  String get failureMessageContentRequired => 'メッセージを入力してください';
+
+  @override
+  String get failureMessageTooLong => 'メッセージは1000文字以内で入力してください';
+
+  @override
+  String get failureFeedRangeInvalid => 'フィードの取得範囲が正しくありません';
+
+  @override
+  String get failureFeedCursorInvalid => 'フィードカーソルが正しくありません';
+
+  @override
+  String get failureFeedNotLoaded => '先に一覧を読み込んでください';
+
+  @override
+  String get failurePostNotFound => '投稿が見つかりません';
+
+  @override
+  String get failureMessageCursorInvalid => 'メッセージカーソルが正しくありません';
+
+  @override
+  String get failureRoomCursorInvalid => 'ルームカーソルが正しくありません';
+
+  @override
+  String get failurePostIdRequired => '投稿IDが必要です';
+
+  @override
+  String get failurePostContentRequired => '投稿内容を入力してください';
+
+  @override
+  String get failurePostTooLong => '投稿は500文字以内で入力してください';
+
+  @override
+  String get failurePostImageLimit => '写真は5枚まで添付できます';
+
+  @override
+  String get failureAvatarUploadFailed => 'プロフィール写真をアップロードできませんでした。';
+
+  @override
+  String get failureInvalidData => '正しくないデータを受信しました';
+
+  @override
+  String get reactionLike => 'いいね';
+
+  @override
+  String get reactionDislike => 'よくないね';
+
+  @override
+  String avatarSemanticsLabel(String nickname) {
+    return '$nicknameさんのプロフィール写真';
+  }
 }

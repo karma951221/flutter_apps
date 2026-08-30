@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Failure {
 
- String? get message;
+ String? get message; FailureCode? get failureCode;
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $FailureCopyWith<Failure> get copyWith => _$FailureCopyWithImpl<Failure>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Failure&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Failure&&(identical(other.message, message) || other.message == message)&&(identical(other.failureCode, failureCode) || other.failureCode == failureCode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message);
+int get hashCode => Object.hash(runtimeType,message,failureCode);
 
 @override
 String toString() {
-  return 'Failure(message: $message)';
+  return 'Failure(message: $message, failureCode: $failureCode)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $FailureCopyWith<$Res>  {
   factory $FailureCopyWith(Failure value, $Res Function(Failure) _then) = _$FailureCopyWithImpl;
 @useResult
 $Res call({
- String? message
+ String? message, FailureCode? failureCode
 });
 
 
@@ -62,10 +62,11 @@ class _$FailureCopyWithImpl<$Res>
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? message = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? message = freezed,Object? failureCode = freezed,}) {
   return _then(_self.copyWith(
 message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,failureCode: freezed == failureCode ? _self.failureCode : failureCode // ignore: cast_nullable_to_non_nullable
+as FailureCode?,
   ));
 }
 
@@ -165,16 +166,16 @@ return unknown(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String? message)?  network,TResult Function( String? message,  String? code)?  auth,TResult Function( String? message)?  forbidden,TResult Function( String? message)?  notFound,TResult Function( String? message,  String? field)?  validation,TResult Function( String? message,  String? code)?  server,TResult Function( String? message)?  unknown,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String? message,  FailureCode? failureCode)?  network,TResult Function( String? message,  String? code,  FailureCode? failureCode)?  auth,TResult Function( String? message,  FailureCode? failureCode)?  forbidden,TResult Function( String? message,  FailureCode? failureCode)?  notFound,TResult Function( String? message,  String? field,  FailureCode? failureCode)?  validation,TResult Function( String? message,  String? code,  FailureCode? failureCode)?  server,TResult Function( String? message,  FailureCode? failureCode)?  unknown,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case NetworkFailure() when network != null:
-return network(_that.message);case AuthFailure() when auth != null:
-return auth(_that.message,_that.code);case ForbiddenFailure() when forbidden != null:
-return forbidden(_that.message);case NotFoundFailure() when notFound != null:
-return notFound(_that.message);case ValidationFailure() when validation != null:
-return validation(_that.message,_that.field);case ServerFailure() when server != null:
-return server(_that.message,_that.code);case UnknownFailure() when unknown != null:
-return unknown(_that.message);case _:
+return network(_that.message,_that.failureCode);case AuthFailure() when auth != null:
+return auth(_that.message,_that.code,_that.failureCode);case ForbiddenFailure() when forbidden != null:
+return forbidden(_that.message,_that.failureCode);case NotFoundFailure() when notFound != null:
+return notFound(_that.message,_that.failureCode);case ValidationFailure() when validation != null:
+return validation(_that.message,_that.field,_that.failureCode);case ServerFailure() when server != null:
+return server(_that.message,_that.code,_that.failureCode);case UnknownFailure() when unknown != null:
+return unknown(_that.message,_that.failureCode);case _:
   return orElse();
 
 }
@@ -192,16 +193,16 @@ return unknown(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String? message)  network,required TResult Function( String? message,  String? code)  auth,required TResult Function( String? message)  forbidden,required TResult Function( String? message)  notFound,required TResult Function( String? message,  String? field)  validation,required TResult Function( String? message,  String? code)  server,required TResult Function( String? message)  unknown,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String? message,  FailureCode? failureCode)  network,required TResult Function( String? message,  String? code,  FailureCode? failureCode)  auth,required TResult Function( String? message,  FailureCode? failureCode)  forbidden,required TResult Function( String? message,  FailureCode? failureCode)  notFound,required TResult Function( String? message,  String? field,  FailureCode? failureCode)  validation,required TResult Function( String? message,  String? code,  FailureCode? failureCode)  server,required TResult Function( String? message,  FailureCode? failureCode)  unknown,}) {final _that = this;
 switch (_that) {
 case NetworkFailure():
-return network(_that.message);case AuthFailure():
-return auth(_that.message,_that.code);case ForbiddenFailure():
-return forbidden(_that.message);case NotFoundFailure():
-return notFound(_that.message);case ValidationFailure():
-return validation(_that.message,_that.field);case ServerFailure():
-return server(_that.message,_that.code);case UnknownFailure():
-return unknown(_that.message);}
+return network(_that.message,_that.failureCode);case AuthFailure():
+return auth(_that.message,_that.code,_that.failureCode);case ForbiddenFailure():
+return forbidden(_that.message,_that.failureCode);case NotFoundFailure():
+return notFound(_that.message,_that.failureCode);case ValidationFailure():
+return validation(_that.message,_that.field,_that.failureCode);case ServerFailure():
+return server(_that.message,_that.code,_that.failureCode);case UnknownFailure():
+return unknown(_that.message,_that.failureCode);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -215,16 +216,16 @@ return unknown(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String? message)?  network,TResult? Function( String? message,  String? code)?  auth,TResult? Function( String? message)?  forbidden,TResult? Function( String? message)?  notFound,TResult? Function( String? message,  String? field)?  validation,TResult? Function( String? message,  String? code)?  server,TResult? Function( String? message)?  unknown,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String? message,  FailureCode? failureCode)?  network,TResult? Function( String? message,  String? code,  FailureCode? failureCode)?  auth,TResult? Function( String? message,  FailureCode? failureCode)?  forbidden,TResult? Function( String? message,  FailureCode? failureCode)?  notFound,TResult? Function( String? message,  String? field,  FailureCode? failureCode)?  validation,TResult? Function( String? message,  String? code,  FailureCode? failureCode)?  server,TResult? Function( String? message,  FailureCode? failureCode)?  unknown,}) {final _that = this;
 switch (_that) {
 case NetworkFailure() when network != null:
-return network(_that.message);case AuthFailure() when auth != null:
-return auth(_that.message,_that.code);case ForbiddenFailure() when forbidden != null:
-return forbidden(_that.message);case NotFoundFailure() when notFound != null:
-return notFound(_that.message);case ValidationFailure() when validation != null:
-return validation(_that.message,_that.field);case ServerFailure() when server != null:
-return server(_that.message,_that.code);case UnknownFailure() when unknown != null:
-return unknown(_that.message);case _:
+return network(_that.message,_that.failureCode);case AuthFailure() when auth != null:
+return auth(_that.message,_that.code,_that.failureCode);case ForbiddenFailure() when forbidden != null:
+return forbidden(_that.message,_that.failureCode);case NotFoundFailure() when notFound != null:
+return notFound(_that.message,_that.failureCode);case ValidationFailure() when validation != null:
+return validation(_that.message,_that.field,_that.failureCode);case ServerFailure() when server != null:
+return server(_that.message,_that.code,_that.failureCode);case UnknownFailure() when unknown != null:
+return unknown(_that.message,_that.failureCode);case _:
   return null;
 
 }
@@ -236,10 +237,11 @@ return unknown(_that.message);case _:
 
 
 class NetworkFailure implements Failure {
-  const NetworkFailure({this.message});
+  const NetworkFailure({this.message, this.failureCode});
   
 
 @override final  String? message;
+@override final  FailureCode? failureCode;
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
@@ -251,16 +253,16 @@ $NetworkFailureCopyWith<NetworkFailure> get copyWith => _$NetworkFailureCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkFailure&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NetworkFailure&&(identical(other.message, message) || other.message == message)&&(identical(other.failureCode, failureCode) || other.failureCode == failureCode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message);
+int get hashCode => Object.hash(runtimeType,message,failureCode);
 
 @override
 String toString() {
-  return 'Failure.network(message: $message)';
+  return 'Failure.network(message: $message, failureCode: $failureCode)';
 }
 
 
@@ -271,7 +273,7 @@ abstract mixin class $NetworkFailureCopyWith<$Res> implements $FailureCopyWith<$
   factory $NetworkFailureCopyWith(NetworkFailure value, $Res Function(NetworkFailure) _then) = _$NetworkFailureCopyWithImpl;
 @override @useResult
 $Res call({
- String? message
+ String? message, FailureCode? failureCode
 });
 
 
@@ -288,10 +290,11 @@ class _$NetworkFailureCopyWithImpl<$Res>
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? message = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? message = freezed,Object? failureCode = freezed,}) {
   return _then(NetworkFailure(
 message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,failureCode: freezed == failureCode ? _self.failureCode : failureCode // ignore: cast_nullable_to_non_nullable
+as FailureCode?,
   ));
 }
 
@@ -302,11 +305,12 @@ as String?,
 
 
 class AuthFailure implements Failure {
-  const AuthFailure({this.message, this.code});
+  const AuthFailure({this.message, this.code, this.failureCode});
   
 
 @override final  String? message;
  final  String? code;
+@override final  FailureCode? failureCode;
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
@@ -318,16 +322,16 @@ $AuthFailureCopyWith<AuthFailure> get copyWith => _$AuthFailureCopyWithImpl<Auth
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AuthFailure&&(identical(other.message, message) || other.message == message)&&(identical(other.code, code) || other.code == code));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AuthFailure&&(identical(other.message, message) || other.message == message)&&(identical(other.code, code) || other.code == code)&&(identical(other.failureCode, failureCode) || other.failureCode == failureCode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message,code);
+int get hashCode => Object.hash(runtimeType,message,code,failureCode);
 
 @override
 String toString() {
-  return 'Failure.auth(message: $message, code: $code)';
+  return 'Failure.auth(message: $message, code: $code, failureCode: $failureCode)';
 }
 
 
@@ -338,7 +342,7 @@ abstract mixin class $AuthFailureCopyWith<$Res> implements $FailureCopyWith<$Res
   factory $AuthFailureCopyWith(AuthFailure value, $Res Function(AuthFailure) _then) = _$AuthFailureCopyWithImpl;
 @override @useResult
 $Res call({
- String? message, String? code
+ String? message, String? code, FailureCode? failureCode
 });
 
 
@@ -355,11 +359,12 @@ class _$AuthFailureCopyWithImpl<$Res>
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? message = freezed,Object? code = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? message = freezed,Object? code = freezed,Object? failureCode = freezed,}) {
   return _then(AuthFailure(
 message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String?,code: freezed == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,failureCode: freezed == failureCode ? _self.failureCode : failureCode // ignore: cast_nullable_to_non_nullable
+as FailureCode?,
   ));
 }
 
@@ -370,10 +375,11 @@ as String?,
 
 
 class ForbiddenFailure implements Failure {
-  const ForbiddenFailure({this.message});
+  const ForbiddenFailure({this.message, this.failureCode});
   
 
 @override final  String? message;
+@override final  FailureCode? failureCode;
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
@@ -385,16 +391,16 @@ $ForbiddenFailureCopyWith<ForbiddenFailure> get copyWith => _$ForbiddenFailureCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ForbiddenFailure&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ForbiddenFailure&&(identical(other.message, message) || other.message == message)&&(identical(other.failureCode, failureCode) || other.failureCode == failureCode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message);
+int get hashCode => Object.hash(runtimeType,message,failureCode);
 
 @override
 String toString() {
-  return 'Failure.forbidden(message: $message)';
+  return 'Failure.forbidden(message: $message, failureCode: $failureCode)';
 }
 
 
@@ -405,7 +411,7 @@ abstract mixin class $ForbiddenFailureCopyWith<$Res> implements $FailureCopyWith
   factory $ForbiddenFailureCopyWith(ForbiddenFailure value, $Res Function(ForbiddenFailure) _then) = _$ForbiddenFailureCopyWithImpl;
 @override @useResult
 $Res call({
- String? message
+ String? message, FailureCode? failureCode
 });
 
 
@@ -422,10 +428,11 @@ class _$ForbiddenFailureCopyWithImpl<$Res>
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? message = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? message = freezed,Object? failureCode = freezed,}) {
   return _then(ForbiddenFailure(
 message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,failureCode: freezed == failureCode ? _self.failureCode : failureCode // ignore: cast_nullable_to_non_nullable
+as FailureCode?,
   ));
 }
 
@@ -436,10 +443,11 @@ as String?,
 
 
 class NotFoundFailure implements Failure {
-  const NotFoundFailure({this.message});
+  const NotFoundFailure({this.message, this.failureCode});
   
 
 @override final  String? message;
+@override final  FailureCode? failureCode;
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
@@ -451,16 +459,16 @@ $NotFoundFailureCopyWith<NotFoundFailure> get copyWith => _$NotFoundFailureCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NotFoundFailure&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NotFoundFailure&&(identical(other.message, message) || other.message == message)&&(identical(other.failureCode, failureCode) || other.failureCode == failureCode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message);
+int get hashCode => Object.hash(runtimeType,message,failureCode);
 
 @override
 String toString() {
-  return 'Failure.notFound(message: $message)';
+  return 'Failure.notFound(message: $message, failureCode: $failureCode)';
 }
 
 
@@ -471,7 +479,7 @@ abstract mixin class $NotFoundFailureCopyWith<$Res> implements $FailureCopyWith<
   factory $NotFoundFailureCopyWith(NotFoundFailure value, $Res Function(NotFoundFailure) _then) = _$NotFoundFailureCopyWithImpl;
 @override @useResult
 $Res call({
- String? message
+ String? message, FailureCode? failureCode
 });
 
 
@@ -488,10 +496,11 @@ class _$NotFoundFailureCopyWithImpl<$Res>
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? message = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? message = freezed,Object? failureCode = freezed,}) {
   return _then(NotFoundFailure(
 message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,failureCode: freezed == failureCode ? _self.failureCode : failureCode // ignore: cast_nullable_to_non_nullable
+as FailureCode?,
   ));
 }
 
@@ -502,11 +511,12 @@ as String?,
 
 
 class ValidationFailure implements Failure {
-  const ValidationFailure({this.message, this.field});
+  const ValidationFailure({this.message, this.field, this.failureCode});
   
 
 @override final  String? message;
  final  String? field;
+@override final  FailureCode? failureCode;
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
@@ -518,16 +528,16 @@ $ValidationFailureCopyWith<ValidationFailure> get copyWith => _$ValidationFailur
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ValidationFailure&&(identical(other.message, message) || other.message == message)&&(identical(other.field, field) || other.field == field));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ValidationFailure&&(identical(other.message, message) || other.message == message)&&(identical(other.field, field) || other.field == field)&&(identical(other.failureCode, failureCode) || other.failureCode == failureCode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message,field);
+int get hashCode => Object.hash(runtimeType,message,field,failureCode);
 
 @override
 String toString() {
-  return 'Failure.validation(message: $message, field: $field)';
+  return 'Failure.validation(message: $message, field: $field, failureCode: $failureCode)';
 }
 
 
@@ -538,7 +548,7 @@ abstract mixin class $ValidationFailureCopyWith<$Res> implements $FailureCopyWit
   factory $ValidationFailureCopyWith(ValidationFailure value, $Res Function(ValidationFailure) _then) = _$ValidationFailureCopyWithImpl;
 @override @useResult
 $Res call({
- String? message, String? field
+ String? message, String? field, FailureCode? failureCode
 });
 
 
@@ -555,11 +565,12 @@ class _$ValidationFailureCopyWithImpl<$Res>
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? message = freezed,Object? field = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? message = freezed,Object? field = freezed,Object? failureCode = freezed,}) {
   return _then(ValidationFailure(
 message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String?,field: freezed == field ? _self.field : field // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,failureCode: freezed == failureCode ? _self.failureCode : failureCode // ignore: cast_nullable_to_non_nullable
+as FailureCode?,
   ));
 }
 
@@ -570,11 +581,12 @@ as String?,
 
 
 class ServerFailure implements Failure {
-  const ServerFailure({this.message, this.code});
+  const ServerFailure({this.message, this.code, this.failureCode});
   
 
 @override final  String? message;
  final  String? code;
+@override final  FailureCode? failureCode;
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
@@ -586,16 +598,16 @@ $ServerFailureCopyWith<ServerFailure> get copyWith => _$ServerFailureCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerFailure&&(identical(other.message, message) || other.message == message)&&(identical(other.code, code) || other.code == code));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ServerFailure&&(identical(other.message, message) || other.message == message)&&(identical(other.code, code) || other.code == code)&&(identical(other.failureCode, failureCode) || other.failureCode == failureCode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message,code);
+int get hashCode => Object.hash(runtimeType,message,code,failureCode);
 
 @override
 String toString() {
-  return 'Failure.server(message: $message, code: $code)';
+  return 'Failure.server(message: $message, code: $code, failureCode: $failureCode)';
 }
 
 
@@ -606,7 +618,7 @@ abstract mixin class $ServerFailureCopyWith<$Res> implements $FailureCopyWith<$R
   factory $ServerFailureCopyWith(ServerFailure value, $Res Function(ServerFailure) _then) = _$ServerFailureCopyWithImpl;
 @override @useResult
 $Res call({
- String? message, String? code
+ String? message, String? code, FailureCode? failureCode
 });
 
 
@@ -623,11 +635,12 @@ class _$ServerFailureCopyWithImpl<$Res>
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? message = freezed,Object? code = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? message = freezed,Object? code = freezed,Object? failureCode = freezed,}) {
   return _then(ServerFailure(
 message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
 as String?,code: freezed == code ? _self.code : code // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,failureCode: freezed == failureCode ? _self.failureCode : failureCode // ignore: cast_nullable_to_non_nullable
+as FailureCode?,
   ));
 }
 
@@ -638,10 +651,11 @@ as String?,
 
 
 class UnknownFailure implements Failure {
-  const UnknownFailure({this.message});
+  const UnknownFailure({this.message, this.failureCode});
   
 
 @override final  String? message;
+@override final  FailureCode? failureCode;
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
@@ -653,16 +667,16 @@ $UnknownFailureCopyWith<UnknownFailure> get copyWith => _$UnknownFailureCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UnknownFailure&&(identical(other.message, message) || other.message == message));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UnknownFailure&&(identical(other.message, message) || other.message == message)&&(identical(other.failureCode, failureCode) || other.failureCode == failureCode));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,message);
+int get hashCode => Object.hash(runtimeType,message,failureCode);
 
 @override
 String toString() {
-  return 'Failure.unknown(message: $message)';
+  return 'Failure.unknown(message: $message, failureCode: $failureCode)';
 }
 
 
@@ -673,7 +687,7 @@ abstract mixin class $UnknownFailureCopyWith<$Res> implements $FailureCopyWith<$
   factory $UnknownFailureCopyWith(UnknownFailure value, $Res Function(UnknownFailure) _then) = _$UnknownFailureCopyWithImpl;
 @override @useResult
 $Res call({
- String? message
+ String? message, FailureCode? failureCode
 });
 
 
@@ -690,10 +704,11 @@ class _$UnknownFailureCopyWithImpl<$Res>
 
 /// Create a copy of Failure
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? message = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? message = freezed,Object? failureCode = freezed,}) {
   return _then(UnknownFailure(
 message: freezed == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,failureCode: freezed == failureCode ? _self.failureCode : failureCode // ignore: cast_nullable_to_non_nullable
+as FailureCode?,
   ));
 }
 

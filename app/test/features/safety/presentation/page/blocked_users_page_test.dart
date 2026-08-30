@@ -53,9 +53,7 @@ void main() {
   }
 
   testWidgets('차단한 사용자가 없으면 안내 문구를 보여준다', (tester) async {
-    when(
-      () => useCase.getBlockedUsers(),
-    ).thenAnswer((_) async => const Ok([]));
+    when(() => useCase.getBlockedUsers()).thenAnswer((_) async => const Ok([]));
 
     await pumpPage(tester);
 
@@ -104,9 +102,7 @@ void main() {
   });
 
   testWidgets('차단 해제가 실패하면 행이 그대로 남고 오류 스낵바가 뜬다', (tester) async {
-    when(
-      () => useCase.getBlockedUsers(),
-    ).thenAnswer((_) async => Ok([userA]));
+    when(() => useCase.getBlockedUsers()).thenAnswer((_) async => Ok([userA]));
     when(
       () => useCase.unblockUser(any()),
     ).thenAnswer((_) async => const Err(Failure.network()));

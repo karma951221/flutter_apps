@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
@@ -80,7 +81,7 @@ class _CreateRoomViewState extends State<_CreateRoomView> {
           case CreateRoomFailure(:final failure):
             AppSnackBar.show(
               context,
-              message: failure.message ?? l10n.chatCreateFailed,
+              message: failure.localizedMessage(context),
               type: AppSnackBarType.error,
             );
           case CreateRoomIdle() || CreateRoomInProgress():

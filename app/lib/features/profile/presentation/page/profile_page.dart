@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_button.dart';
@@ -11,6 +12,7 @@ import '../../../../design_system/widget/app_confirm_dialog.dart';
 import '../../../../design_system/widget/app_overflow_menu.dart';
 import '../../../../design_system/widget/app_placeholder.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../feed/presentation/cubit/feed_cubit.dart';
@@ -52,6 +54,7 @@ class _ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isMine = switch (context.watch<AuthBloc>().state) {
       AuthAuthenticated(:final user) =>
         requestedUserId == null || user.id == requestedUserId,
@@ -97,13 +100,13 @@ class _ProfileView extends StatelessWidget {
       ],
       child: Scaffold(
         appBar: AppBar(
-          title: Text(isMine ? '프로필' : '사용자 프로필'),
+          title: Text(isMine ? l10n.profileTitle : l10n.profileUserTitle),
           actions: [
             if (!isMine && loadedProfile != null)
               BlocBuilder<BlockActionCubit, BlockActionState>(
                 builder: (context, blockState) =>
                     AppOverflowMenu<_ProfileAction>(
-                      tooltip: '프로필 메뉴',
+                      tooltip: l10n.profileMenuTooltip,
                       enabled: !blockState.isBlocking,
                       onSelected: (action) => switch (action) {
                         _ProfileAction.block => _confirmAndBlock(
@@ -124,20 +127,20 @@ class _ProfileView extends StatelessWidget {
                         // 사용자에게 '차단'을 권하는 것보다 잘못된 동작을 막는다.
                         if (!blockState.isLoadingStatus &&
                             blockState.isBlocked == false)
-                          const AppOverflowMenuItem(
+                          AppOverflowMenuItem(
                             value: _ProfileAction.block,
-                            label: '차단',
+                            label: l10n.safetyBlockConfirmAction,
                             isDestructive: true,
                           ),
                         if (!blockState.isLoadingStatus &&
                             blockState.isBlocked == true)
-                          const AppOverflowMenuItem(
+                          AppOverflowMenuItem(
                             value: _ProfileAction.unblock,
-                            label: '차단 해제',
+                            label: l10n.profileMenuUnblock,
                           ),
-                        const AppOverflowMenuItem(
+                        AppOverflowMenuItem(
                           value: _ProfileAction.report,
-                          label: '신고',
+                          label: l10n.safetyReportTitle,
                         ),
                       ],
                     ),
@@ -152,8 +155,10 @@ class _ProfileView extends StatelessWidget {
             if (state.failure != null && state.profile == null) {
               return Center(
                 child: AppPlaceholder(
-                  message: state.failure?.message ?? '프로필을 불러오지 못했습니다',
-                  actionLabel: '다시 시도',
+                  message:
+                      state.failure?.localizedMessage(context) ??
+                      l10n.profileLoadFailed,
+                  actionLabel: l10n.commonRetry,
                   onAction: () => context.read<ProfileCubit>().load(
                     userId: requestedUserId,
                   ),
@@ -210,14 +215,14 @@ class _ProfileView extends StatelessWidget {
                               child: Text(
                                 profile.bio?.isNotEmpty == true
                                     ? profile.bio!
-                                    : '소개를 작성해보세요.',
+                                    : l10n.profileBioEmpty,
                                 textAlign: TextAlign.center,
                               ),
                             ),
                             if (isMine) ...[
                               const SizedBox(height: AppSpacing.md),
                               AppButton.secondary(
-                                label: '프로필 편집',
+                                label: l10n.profileEditAction,
                                 onPressed: () async {
                                   await context.push(Routes.profileEdit);
                                   if (context.mounted) {
@@ -231,12 +236,12 @@ class _ProfileView extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SliverToBoxAdapter(
+                    SliverToBoxAdapter(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: AppSpacing.md,
                         ),
-                        child: Text('게시물'),
+                        child: Text(l10n.profilePostsTitle),
                       ),
                     ),
                     _ProfilePostList(isMine: isMine),
@@ -259,11 +264,12 @@ enum _ProfileAction { block, unblock, report }
 /// 미묘하게 달랐다 — 이 헬퍼 하나로 합쳐 두 진입점의 동작을 일치시킨다
 /// (2026-08-26 리뷰 반영).
 Future<void> _confirmAndBlock(BuildContext context, String userId) async {
+  final l10n = AppLocalizations.of(context);
   final confirmed = await AppConfirmDialog.show(
     context,
-    title: '이 사용자를 차단할까요?',
-    content: '차단하면 이 사용자의 게시물과 댓글이 더 이상 보이지 않습니다.',
-    confirmLabel: '차단',
+    title: l10n.safetyBlockConfirmTitle,
+    content: l10n.safetyBlockConfirmMessage,
+    confirmLabel: l10n.safetyBlockConfirmAction,
   );
   if (!confirmed || !context.mounted) return;
 
@@ -279,8 +285,9 @@ Future<void> _confirmAndBlock(BuildContext context, String userId) async {
   AppSnackBar.show(
     context,
     message: succeeded
-        ? '차단했습니다.'
-        : action.state.failure?.message ?? '차단하지 못했습니다.',
+        ? l10n.safetyBlockSucceeded
+        : action.state.failure?.localizedMessage(context) ??
+              l10n.safetyBlockFailed,
     type: succeeded ? AppSnackBarType.success : AppSnackBarType.error,
   );
 }
@@ -289,6 +296,7 @@ Future<void> _confirmAndBlock(BuildContext context, String userId) async {
 /// 결정(`docs/features/safety/plan-block.md` "확인 절차")을 따른다. 목록
 /// 화면(`blocked_users_page`)의 즉시 해제와 이 화면의 동작을 일치시킨다.
 Future<void> _unblockProfile(BuildContext context, String userId) async {
+  final l10n = AppLocalizations.of(context);
   final feed = context.read<FeedCubit>();
   final action = context.read<BlockActionCubit>();
   final succeeded = await action.unblock(userId);
@@ -301,8 +309,9 @@ Future<void> _unblockProfile(BuildContext context, String userId) async {
   AppSnackBar.show(
     context,
     message: succeeded
-        ? '차단을 해제했습니다.'
-        : action.state.failure?.message ?? '차단을 해제하지 못했습니다.',
+        ? l10n.safetyUnblockSucceeded
+        : action.state.failure?.localizedMessage(context) ??
+              l10n.safetyUnblockFailed,
     type: succeeded ? AppSnackBarType.success : AppSnackBarType.error,
   );
 }
@@ -316,68 +325,72 @@ class _ProfilePostList extends StatelessWidget {
   final bool isMine;
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<FeedCubit, FeedState>(
-    builder: (context, state) => switch (state.status) {
-      FeedStatus.loading => const SliverToBoxAdapter(
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.lg),
-          child: Center(child: CircularProgressIndicator()),
-        ),
-      ),
-      FeedStatus.failure => SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: AppButton.secondary(
-            label: '게시물을 다시 불러오기',
-            onPressed: () => context.read<FeedCubit>().refresh(),
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return BlocBuilder<FeedCubit, FeedState>(
+      builder: (context, state) => switch (state.status) {
+        FeedStatus.loading => const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.all(AppSpacing.lg),
+            child: Center(child: CircularProgressIndicator()),
           ),
         ),
-      ),
-      FeedStatus.loaded when state.items.isEmpty => const SliverToBoxAdapter(
-        child: Padding(
-          padding: EdgeInsets.all(AppSpacing.xl),
-          child: Center(child: Text('아직 게시물이 없습니다')),
+        FeedStatus.failure => SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: AppButton.secondary(
+              label: l10n.profilePostsReload,
+              onPressed: () => context.read<FeedCubit>().refresh(),
+            ),
+          ),
         ),
-      ),
-      FeedStatus.loaded => SliverList.builder(
-        itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index == state.items.length) {
-            return const Padding(
-              padding: EdgeInsets.all(AppSpacing.md),
-              child: Center(child: CircularProgressIndicator()),
+        FeedStatus.loaded when state.items.isEmpty => SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: Center(child: Text(l10n.profilePostsEmpty)),
+          ),
+        ),
+        FeedStatus.loaded => SliverList.builder(
+          itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
+          itemBuilder: (context, index) {
+            if (index == state.items.length) {
+              return const Padding(
+                padding: EdgeInsets.all(AppSpacing.md),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            final item = state.items[index];
+            final post = item.post;
+            return PostTile(
+              post: post,
+              author: item.author,
+              isMine: isMine,
+              reactions: item.reactions,
+              commentCount: item.commentCount,
+              // 이미 이 작성자의 프로필이므로 남의 글은 눌러도 갈 곳이 없다.
+              onTap: isMine ? () => PostTileActions.edit(context, post) : () {},
+              onEdit: isMine ? () => PostTileActions.edit(context, post) : null,
+              onDelete: isMine
+                  ? () => PostTileActions.confirmDelete(context, post)
+                  : null,
+              onReport: isMine
+                  ? null
+                  : () => PostTileActions.report(
+                      context,
+                      ReportTarget.post(post.id),
+                    ),
+              // 차단만 화면이 직접 잇는다. 성공 뒤 이 작성자의 목록을 통째로 다시
+              // 읽는 것은 프로필 화면에만 맞는 반영이다 (피드는 항목만 걷어낸다).
+              onBlock: isMine
+                  ? null
+                  : () => _confirmAndBlock(context, item.author.id),
+              onReaction: (type) =>
+                  PostTileActions.react(context, post.id, type),
+              onComment: () => PostTileActions.openComments(context, item),
             );
-          }
-          final item = state.items[index];
-          final post = item.post;
-          return PostTile(
-            post: post,
-            author: item.author,
-            isMine: isMine,
-            reactions: item.reactions,
-            commentCount: item.commentCount,
-            // 이미 이 작성자의 프로필이므로 남의 글은 눌러도 갈 곳이 없다.
-            onTap: isMine ? () => PostTileActions.edit(context, post) : () {},
-            onEdit: isMine ? () => PostTileActions.edit(context, post) : null,
-            onDelete: isMine
-                ? () => PostTileActions.confirmDelete(context, post)
-                : null,
-            onReport: isMine
-                ? null
-                : () => PostTileActions.report(
-                    context,
-                    ReportTarget.post(post.id),
-                  ),
-            // 차단만 화면이 직접 잇는다. 성공 뒤 이 작성자의 목록을 통째로 다시
-            // 읽는 것은 프로필 화면에만 맞는 반영이다 (피드는 항목만 걷어낸다).
-            onBlock: isMine
-                ? null
-                : () => _confirmAndBlock(context, item.author.id),
-            onReaction: (type) => PostTileActions.react(context, post.id, type),
-            onComment: () => PostTileActions.openComments(context, item),
-          );
-        },
-      ),
-    },
-  );
+          },
+        ),
+      },
+    );
+  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/error/failure_code.dart';
 import '../../../../core/result/result.dart';
 import '../../../post/domain/entity/post_author.dart';
 import '../../../reaction/domain/entity/reaction_summary.dart';
@@ -92,7 +93,9 @@ class CommentCubit extends Cubit<CommentState> {
     }
 
     emit(
-      current.copyWith(expandedParentIds: {...current.expandedParentIds, parentId}),
+      current.copyWith(
+        expandedParentIds: {...current.expandedParentIds, parentId},
+      ),
     );
     if (current.replies.containsKey(parentId)) return;
 
@@ -107,9 +110,7 @@ class CommentCubit extends Cubit<CommentState> {
 
   Future<void> _fetchReplies(String parentId, {required String? cursor}) async {
     emit(
-      state.copyWith(
-        loadingParentIds: {...state.loadingParentIds, parentId},
-      ),
+      state.copyWith(loadingParentIds: {...state.loadingParentIds, parentId}),
     );
 
     final result = await _useCase.getReplies(
@@ -147,7 +148,12 @@ class CommentCubit extends Cubit<CommentState> {
     String? parentId,
   }) async {
     if (state.isSubmitting) {
-      return const Err(Failure.validation(message: '이미 처리 중입니다'));
+      return const Err(
+        Failure.validation(
+          message: '이미 처리 중입니다',
+          failureCode: FailureCode.operationInProgress,
+        ),
+      );
     }
 
     emit(state.copyWith(isSubmitting: true));
@@ -204,7 +210,12 @@ class CommentCubit extends Cubit<CommentState> {
   /// 앱이 미리 그려서 삭제 직후 재조회를 없앤다.
   Future<Result<bool>> delete(PostComment comment) async {
     if (state.isSubmitting) {
-      return const Err(Failure.validation(message: '이미 처리 중입니다'));
+      return const Err(
+        Failure.validation(
+          message: '이미 처리 중입니다',
+          failureCode: FailureCode.operationInProgress,
+        ),
+      );
     }
 
     emit(state.copyWith(isSubmitting: true));

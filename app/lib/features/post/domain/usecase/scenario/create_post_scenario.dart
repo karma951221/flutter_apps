@@ -1,4 +1,5 @@
 import '../../../../../core/error/failure.dart';
+import '../../../../../core/error/failure_code.dart';
 import '../../../../../core/result/result.dart';
 import '../../entity/post.dart';
 import '../../entity/post_draft.dart';
@@ -16,7 +17,11 @@ class CreatePostScenario {
     if (content.isEmpty) {
       return Future.value(
         const Err(
-          Failure.validation(message: '게시물 내용을 입력하세요', field: 'content'),
+          Failure.validation(
+            message: '게시물 내용을 입력하세요',
+            field: 'content',
+            failureCode: FailureCode.postContentRequired,
+          ),
         ),
       );
     }
@@ -26,6 +31,7 @@ class CreatePostScenario {
           Failure.validation(
             message: '게시물은 ${PostPolicy.maxContentLength}자 이하여야 합니다',
             field: 'content',
+            failureCode: FailureCode.postTooLong,
           ),
         ),
       );
@@ -37,6 +43,7 @@ class CreatePostScenario {
           Failure.validation(
             message: '사진은 ${PostPolicy.maxImageCount}장까지 첨부할 수 있습니다',
             field: 'images',
+            failureCode: FailureCode.postImageLimit,
           ),
         ),
       );

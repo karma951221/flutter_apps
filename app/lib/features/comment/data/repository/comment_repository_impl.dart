@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 
 import '../../../../core/data/repository/repository_error_handler.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/error/failure_code.dart';
 import '../../../../core/pagination/cursor_page.dart';
 import '../../../../core/result/result.dart';
 import '../../../post/domain/entity/post_author.dart';
@@ -73,7 +74,10 @@ class CommentRepositoryImpl
       content: content,
     );
     if (created == null) {
-      throw const Failure.auth(message: '로그인이 필요합니다');
+      throw const Failure.auth(
+        message: '로그인이 필요합니다',
+        failureCode: FailureCode.authenticationRequired,
+      );
     }
 
     // 서버가 정하는 값은 id 와 시각뿐이다. 본문과 작성자는 호출부가 이미 알고
@@ -92,7 +96,10 @@ class CommentRepositoryImpl
   Future<Result<bool>> deleteComment(String commentId) => guard(() async {
     final deleted = await _dataSource.deleteComment(commentId);
     if (deleted == null) {
-      throw const Failure.auth(message: '로그인이 필요합니다');
+      throw const Failure.auth(
+        message: '로그인이 필요합니다',
+        failureCode: FailureCode.authenticationRequired,
+      );
     }
     return deleted;
   });

@@ -10,6 +10,7 @@ import 'package:daylog/features/profile/domain/entity/profile.dart';
 import 'package:daylog/features/profile/domain/usecase/profile_use_case.dart';
 import 'package:daylog/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:daylog/features/profile/presentation/page/edit_profile_page.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -52,6 +53,9 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: BlocProvider<AuthBloc>.value(
           value: authBloc,
           child: const EditProfilePage(),

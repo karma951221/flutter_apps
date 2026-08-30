@@ -40,7 +40,9 @@ class ChatMessageBubble extends StatelessWidget {
     final scheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context);
 
-    final background = isMine ? scheme.primaryContainer : scheme.surfaceContainerHighest;
+    final background = isMine
+        ? scheme.primaryContainer
+        : scheme.surfaceContainerHighest;
     final foreground = isMine ? scheme.onPrimaryContainer : scheme.onSurface;
 
     return Padding(
@@ -138,7 +140,9 @@ class _Meta extends StatelessWidget {
     final label = switch (message.delivery) {
       ChatMessageDelivery.pending => l10n.chatSending,
       ChatMessageDelivery.failed => l10n.chatSendFailedShort,
-      ChatMessageDelivery.sent => message.createdAt.displayTimeOnly,
+      ChatMessageDelivery.sent => message.createdAt.displayTimeOnly(
+        l10n.localeName,
+      ),
     };
 
     return Padding(
@@ -209,8 +213,7 @@ class _BubbleImageState extends State<_BubbleImage> {
         imageUrl: url,
         width: 220,
         fit: BoxFit.cover,
-        placeholder: (_, _) =>
-            const SizedBox(width: 220, height: 160),
+        placeholder: (_, _) => const SizedBox(width: 220, height: 160),
         errorWidget: (_, _, _) => Text(l10n.chatImageLoadFailed),
       ),
     );

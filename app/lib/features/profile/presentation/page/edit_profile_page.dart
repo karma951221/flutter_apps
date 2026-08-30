@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/l10n/failure_localizations.dart';
+import '../../../../core/l10n/validation_localizations.dart';
 import '../../../../core/media/image_picker_service.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../domain/entity/avatar_image_draft.dart';
@@ -115,23 +118,24 @@ class _EditProfileViewState extends State<_EditProfileView> {
     NicknameCheck check,
   ) {
     final colors = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final (message, color, icon) = switch (check) {
       NicknameCheckIdle() => (null, null, null),
-      NicknameCheckChecking() => ('확인 중…', null, null),
+      NicknameCheckChecking() => (l10n.profileNicknameChecking, null, null),
       NicknameCheckAvailable() => (
-        '사용할 수 있는 닉네임입니다',
+        l10n.profileNicknameAvailable,
         colors.primary,
         Icon(Icons.check_circle_outline, color: colors.primary),
       ),
       NicknameCheckTaken() => (
-        '이미 사용 중인 닉네임입니다',
+        l10n.profileNicknameTaken,
         colors.error,
         Icon(Icons.error_outline, color: colors.error),
       ),
     };
 
     return InputDecoration(
-      labelText: '닉네임',
+      labelText: l10n.profileNicknameLabel,
       helperText: message,
       helperStyle: color == null ? null : TextStyle(color: color),
       suffixIcon: switch (check) {
@@ -162,95 +166,108 @@ class _EditProfileViewState extends State<_EditProfileView> {
       if (!mounted) return;
       AppSnackBar.show(
         context,
-        message: '프로필 사진을 불러오지 못했습니다.',
+        message: AppLocalizations.of(context).profileAvatarPickFailed,
         type: AppSnackBarType.error,
       );
     }
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('프로필 편집')),
-    body: BlocConsumer<ProfileCubit, ProfileState>(
-      listenWhen: (previous, current) =>
-          previous.profile != current.profile ||
-          previous.isSaving != current.isSaving,
-      listener: (context, state) {
-        _populate(state);
-        final didFinishSaving = _wasSaving && !state.isSaving;
-        _wasSaving = state.isSaving;
-        if (didFinishSaving && state.failure != null) {
-          AppSnackBar.show(
-            context,
-            message: state.failure?.message ?? '프로필을 저장하지 못했습니다',
-            type: AppSnackBarType.error,
-          );
-        }
-        if (didFinishSaving && state.failure == null && state.profile != null) {
-          AppSnackBar.show(
-            context,
-            message: '프로필을 저장했습니다',
-            type: AppSnackBarType.success,
-          );
-        }
-      },
-      builder: (context, state) {
-        _populate(state);
-        if (state.isLoading && state.profile == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (state.profile == null) {
-          return const SizedBox.shrink();
-        }
-        final isBusy = state.isSaving;
-        return SafeArea(
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              children: [
-                Center(
-                  child: AppAvatar(
-                    nickname: _nicknameController.text,
-                    imageUrl: _avatarUrl,
-                    imageBytes: _pendingAvatar?.bytes,
-                    radius: 48,
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.profileEditTitle)),
+      body: BlocConsumer<ProfileCubit, ProfileState>(
+        listenWhen: (previous, current) =>
+            previous.profile != current.profile ||
+            previous.isSaving != current.isSaving,
+        listener: (context, state) {
+          _populate(state);
+          final didFinishSaving = _wasSaving && !state.isSaving;
+          _wasSaving = state.isSaving;
+          if (didFinishSaving && state.failure != null) {
+            AppSnackBar.show(
+              context,
+              message:
+                  state.failure?.localizedMessage(context) ??
+                  l10n.profileSaveFailed,
+              type: AppSnackBarType.error,
+            );
+          }
+          if (didFinishSaving &&
+              state.failure == null &&
+              state.profile != null) {
+            AppSnackBar.show(
+              context,
+              message: l10n.profileSaveSucceeded,
+              type: AppSnackBarType.success,
+            );
+          }
+        },
+        builder: (context, state) {
+          _populate(state);
+          if (state.isLoading && state.profile == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (state.profile == null) {
+            return const SizedBox.shrink();
+          }
+          final isBusy = state.isSaving;
+          return SafeArea(
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                children: [
+                  Center(
+                    child: AppAvatar(
+                      nickname: _nicknameController.text,
+                      imageUrl: _avatarUrl,
+                      imageBytes: _pendingAvatar?.bytes,
+                      radius: 48,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Center(
-                  child: AppButton.secondary(
-                    label: '사진 선택',
-                    onPressed: isBusy ? null : _pickAvatar,
+                  const SizedBox(height: AppSpacing.sm),
+                  Center(
+                    child: AppButton.secondary(
+                      label: l10n.profileChoosePhoto,
+                      onPressed: isBusy ? null : _pickAvatar,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                TextFormField(
-                  controller: _nicknameController,
-                  decoration: _nicknameDecoration(context, state.nicknameCheck),
-                  textInputAction: TextInputAction.next,
-                  validator: Validators.nickname,
-                  onChanged: context.read<ProfileCubit>().checkNickname,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                TextFormField(
-                  controller: _bioController,
-                  decoration: const InputDecoration(labelText: '자기소개'),
-                  maxLength: Validators.bioMaxLength,
-                  minLines: 3,
-                  maxLines: 5,
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                AppButton.primary(
-                  label: '저장',
-                  onPressed: isBusy ? null : _save,
-                  isLoading: isBusy,
-                ),
-              ],
+                  const SizedBox(height: AppSpacing.xl),
+                  TextFormField(
+                    controller: _nicknameController,
+                    decoration: _nicknameDecoration(
+                      context,
+                      state.nicknameCheck,
+                    ),
+                    textInputAction: TextInputAction.next,
+                    validator: (value) =>
+                        Validators.nickname(value)?.localized(context),
+                    onChanged: context.read<ProfileCubit>().checkNickname,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  TextFormField(
+                    controller: _bioController,
+                    decoration: InputDecoration(
+                      labelText: l10n.profileBioLabel,
+                    ),
+                    maxLength: Validators.bioMaxLength,
+                    minLines: 3,
+                    maxLines: 5,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  AppButton.primary(
+                    label: l10n.commonSave,
+                    onPressed: isBusy ? null : _save,
+                    isLoading: isBusy,
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    ),
-  );
+          );
+        },
+      ),
+    );
+  }
 }

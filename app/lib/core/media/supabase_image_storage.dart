@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../data/mapper/supabase_error_mapper.dart';
 import '../error/failure.dart';
+import '../error/failure_code.dart';
 import 'image_storage.dart';
 
 /// [ImageStorage] 의 Supabase Storage 구현.
@@ -32,6 +33,7 @@ class SupabaseImageStorage implements ImageStorage {
       throw const Failure.auth(
         message: '로그인이 필요합니다',
         code: 'not_authenticated',
+        failureCode: FailureCode.authenticationRequired,
       );
     }
 
@@ -67,6 +69,7 @@ class SupabaseImageStorage implements ImageStorage {
       throw const Failure.auth(
         message: '로그인이 필요합니다',
         code: 'not_authenticated',
+        failureCode: FailureCode.authenticationRequired,
       );
     }
 

@@ -1,4 +1,5 @@
 import '../../../../../core/error/failure.dart';
+import '../../../../../core/error/failure_code.dart';
 import '../../../../../core/result/result.dart';
 import '../../repository/comment_repository.dart';
 
@@ -12,7 +13,12 @@ class DeleteCommentScenario {
   Future<Result<bool>> call(String commentId) {
     if (commentId.trim().isEmpty) {
       return Future.value(
-        const Err(Failure.validation(message: '삭제할 댓글을 찾을 수 없습니다')),
+        const Err(
+          Failure.validation(
+            message: '삭제할 댓글을 찾을 수 없습니다',
+            failureCode: FailureCode.commentDeleteTargetMissing,
+          ),
+        ),
       );
     }
     return _repository.deleteComment(commentId);

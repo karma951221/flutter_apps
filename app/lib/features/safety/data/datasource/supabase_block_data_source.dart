@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/error/failure_code.dart';
 import '../dto/blocked_user_dto.dart';
 import 'block_data_source.dart';
 
@@ -14,7 +15,10 @@ class SupabaseBlockDataSource implements BlockDataSource {
   @override
   Future<void> blockUser(String userId) async {
     if (_client.auth.currentUser == null) {
-      throw const Failure.auth(message: '로그인이 필요합니다');
+      throw const Failure.auth(
+        message: '로그인이 필요합니다',
+        failureCode: FailureCode.authenticationRequired,
+      );
     }
 
     // blocker_id 는 보내지 않는다. GRANT 에 없어서 보내면 42501 로 막히고,
@@ -25,7 +29,10 @@ class SupabaseBlockDataSource implements BlockDataSource {
   @override
   Future<void> unblockUser(String userId) async {
     if (_client.auth.currentUser == null) {
-      throw const Failure.auth(message: '로그인이 필요합니다');
+      throw const Failure.auth(
+        message: '로그인이 필요합니다',
+        failureCode: FailureCode.authenticationRequired,
+      );
     }
 
     // blocker_id 조건은 걸지 않는다 — blocks_delete_own 정책이 내가 건 차단만

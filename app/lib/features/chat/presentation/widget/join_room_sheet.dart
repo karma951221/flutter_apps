@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -73,7 +74,7 @@ class _JoinRoomSheetState extends State<JoinRoomSheet> {
       ok: (_) => Navigator.of(context).pop(true),
       err: (failure) => setState(() {
         _submitting = false;
-        _error = failure.message ?? AppLocalizations.of(context).chatJoinFailed;
+        _error = failure.localizedMessage(context);
       }),
     );
   }
@@ -94,7 +95,10 @@ class _JoinRoomSheetState extends State<JoinRoomSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(l10n.chatJoinTitle, style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            l10n.chatJoinTitle,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             l10n.chatJoinDescription,

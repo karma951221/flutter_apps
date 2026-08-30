@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
+import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/widget/app_confirm_dialog.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -55,7 +56,6 @@ abstract final class PostTileActions {
     String postId,
     ReactionType type,
   ) async {
-    final l10n = AppLocalizations.of(context);
     final result = await context.read<FeedCubit>().toggleReaction(postId, type);
     if (!context.mounted) return;
 
@@ -63,7 +63,7 @@ abstract final class PostTileActions {
       ok: (_) {},
       err: (failure) => AppSnackBar.show(
         context,
-        message: failure.message ?? l10n.reactionSaveFailed,
+        message: failure.localizedMessage(context),
         type: AppSnackBarType.error,
       ),
     );
@@ -116,7 +116,7 @@ abstract final class PostTileActions {
       },
       err: (failure) => AppSnackBar.show(
         context,
-        message: failure.message ?? l10n.postDeleteFailed,
+        message: failure.localizedMessage(context),
         type: AppSnackBarType.error,
       ),
     );

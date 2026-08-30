@@ -84,7 +84,10 @@ class CommentTile extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
-                    Text(comment.createdAt.displayShortDateTime, style: mutedStyle),
+                    Text(
+                      comment.createdAt.displayShortDateTime(l10n.localeName),
+                      style: mutedStyle,
+                    ),
                     const Spacer(),
                     if (!comment.isDeleted)
                       AppOverflowMenu<_CommentAction>(
@@ -177,7 +180,6 @@ class CommentTile extends StatelessWidget {
       ),
     );
   }
-
 }
 
 enum _CommentAction { delete, report }

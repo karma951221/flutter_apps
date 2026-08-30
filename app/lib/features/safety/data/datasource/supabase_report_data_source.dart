@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/error/failure_code.dart';
 import '../../domain/entity/report_reason.dart';
 import '../../domain/entity/report_target.dart';
 import '../mapper/report_target_mapper.dart';
@@ -20,7 +21,10 @@ class SupabaseReportDataSource implements ReportDataSource {
     String? detail,
   }) async {
     if (_client.auth.currentUser == null) {
-      throw const Failure.auth(message: '로그인이 필요합니다');
+      throw const Failure.auth(
+        message: '로그인이 필요합니다',
+        failureCode: FailureCode.authenticationRequired,
+      );
     }
 
     final payload = ReportTargetMapper.toPayload(target);

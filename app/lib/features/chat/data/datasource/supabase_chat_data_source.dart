@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/data/like_pattern.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/error/failure_code.dart';
 import '../../../../core/media/image_storage.dart';
 import '../../domain/entity/chat_image_draft.dart';
 import '../cursor/message_cursor.dart';
@@ -115,7 +116,10 @@ class SupabaseChatDataSource implements ChatDataSource {
   }) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
-      throw const Failure.auth(message: '로그인이 필요합니다');
+      throw const Failure.auth(
+        message: '로그인이 필요합니다',
+        failureCode: FailureCode.authenticationRequired,
+      );
     }
 
     // upsert 를 쓰지 않는다. PostgREST 의 upsert 는 보내는 **모든 컬럼**에
@@ -156,7 +160,10 @@ class SupabaseChatDataSource implements ChatDataSource {
   Future<void> leaveRoom(String roomId) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
-      throw const Failure.auth(message: '로그인이 필요합니다');
+      throw const Failure.auth(
+        message: '로그인이 필요합니다',
+        failureCode: FailureCode.authenticationRequired,
+      );
     }
     await _client
         .from('chat_participants')
@@ -178,10 +185,7 @@ class SupabaseChatDataSource implements ChatDataSource {
   }
 
   @override
-  Future<void> markRead({
-    required String roomId,
-    required DateTime at,
-  }) async {
+  Future<void> markRead({required String roomId, required DateTime at}) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return;
 
@@ -245,7 +249,10 @@ class SupabaseChatDataSource implements ChatDataSource {
   }) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
-      throw const Failure.auth(message: '로그인이 필요합니다');
+      throw const Failure.auth(
+        message: '로그인이 필요합니다',
+        failureCode: FailureCode.authenticationRequired,
+      );
     }
 
     // 경로의 첫 조각이 room_id 다. 읽기 권한이 방 단위라 Storage 정책이

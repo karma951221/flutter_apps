@@ -1,4 +1,5 @@
 import '../../../../../core/error/failure.dart';
+import '../../../../../core/error/failure_code.dart';
 import '../../../../../core/result/result.dart';
 import '../../entity/post.dart';
 import '../../entity/post_update.dart';
@@ -13,7 +14,12 @@ class UpdatePostScenario {
   Future<Result<Post>> call(String postId, PostUpdate update) {
     if (postId.trim().isEmpty) {
       return Future.value(
-        const Err(Failure.validation(message: '게시물 식별자가 필요합니다')),
+        const Err(
+          Failure.validation(
+            message: '게시물 식별자가 필요합니다',
+            failureCode: FailureCode.postIdRequired,
+          ),
+        ),
       );
     }
 
@@ -21,7 +27,11 @@ class UpdatePostScenario {
     if (content.isEmpty) {
       return Future.value(
         const Err(
-          Failure.validation(message: '게시물 내용을 입력하세요', field: 'content'),
+          Failure.validation(
+            message: '게시물 내용을 입력하세요',
+            field: 'content',
+            failureCode: FailureCode.postContentRequired,
+          ),
         ),
       );
     }
@@ -31,6 +41,7 @@ class UpdatePostScenario {
           Failure.validation(
             message: '게시물은 ${PostPolicy.maxContentLength}자 이하여야 합니다',
             field: 'content',
+            failureCode: FailureCode.postTooLong,
           ),
         ),
       );

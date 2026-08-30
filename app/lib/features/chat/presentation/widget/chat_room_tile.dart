@@ -62,7 +62,7 @@ class ChatRoomTile extends StatelessWidget {
         children: [
           if (room.lastMessageAt != null)
             Text(
-              room.lastMessageAt!.displayShortDateTime,
+              room.lastMessageAt!.displayShortDateTime(l10n.localeName),
               style: theme.textTheme.labelSmall?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),

@@ -1113,6 +1113,780 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'정원 {count}명'**
   String chatMemberLimitValue(int count);
+
+  /// No description provided for @commonSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get commonSave;
+
+  /// No description provided for @profileTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필'**
+  String get profileTitle;
+
+  /// No description provided for @profileUserTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'사용자 프로필'**
+  String get profileUserTitle;
+
+  /// No description provided for @profileMenuTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필 메뉴'**
+  String get profileMenuTooltip;
+
+  /// No description provided for @profileMenuUnblock.
+  ///
+  /// In ko, this message translates to:
+  /// **'차단 해제'**
+  String get profileMenuUnblock;
+
+  /// No description provided for @profileLoadFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필을 불러오지 못했습니다'**
+  String get profileLoadFailed;
+
+  /// No description provided for @profileBioEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'소개를 작성해보세요.'**
+  String get profileBioEmpty;
+
+  /// No description provided for @profileEditAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필 편집'**
+  String get profileEditAction;
+
+  /// No description provided for @profilePostsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시물'**
+  String get profilePostsTitle;
+
+  /// No description provided for @profilePostsReload.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시물을 다시 불러오기'**
+  String get profilePostsReload;
+
+  /// No description provided for @profilePostsEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 게시물이 없습니다'**
+  String get profilePostsEmpty;
+
+  /// No description provided for @profileNicknameChecking.
+  ///
+  /// In ko, this message translates to:
+  /// **'확인 중…'**
+  String get profileNicknameChecking;
+
+  /// No description provided for @profileNicknameAvailable.
+  ///
+  /// In ko, this message translates to:
+  /// **'사용할 수 있는 닉네임입니다'**
+  String get profileNicknameAvailable;
+
+  /// No description provided for @profileNicknameTaken.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 사용 중인 닉네임입니다'**
+  String get profileNicknameTaken;
+
+  /// No description provided for @profileNicknameLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'닉네임'**
+  String get profileNicknameLabel;
+
+  /// No description provided for @profileAvatarPickFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필 사진을 불러오지 못했습니다.'**
+  String get profileAvatarPickFailed;
+
+  /// No description provided for @profileEditTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필 편집'**
+  String get profileEditTitle;
+
+  /// No description provided for @profileSaveFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필을 저장하지 못했습니다'**
+  String get profileSaveFailed;
+
+  /// No description provided for @profileSaveSucceeded.
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필을 저장했습니다'**
+  String get profileSaveSucceeded;
+
+  /// No description provided for @profileChoosePhoto.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 선택'**
+  String get profileChoosePhoto;
+
+  /// No description provided for @profileBioLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'자기소개'**
+  String get profileBioLabel;
+
+  /// No description provided for @safetyUnblockAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'차단 해제'**
+  String get safetyUnblockAction;
+
+  /// No description provided for @safetyUnblockSucceeded.
+  ///
+  /// In ko, this message translates to:
+  /// **'차단을 해제했습니다.'**
+  String get safetyUnblockSucceeded;
+
+  /// No description provided for @safetyUnblockFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'차단을 해제하지 못했습니다.'**
+  String get safetyUnblockFailed;
+
+  /// No description provided for @safetyReportTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'신고'**
+  String get safetyReportTitle;
+
+  /// No description provided for @safetyReportFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'신고를 접수하지 못했습니다'**
+  String get safetyReportFailed;
+
+  /// No description provided for @safetyReportDetailLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'상세 설명 (선택)'**
+  String get safetyReportDetailLabel;
+
+  /// No description provided for @safetyReportDetailHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'무엇이 문제인지 적어주세요'**
+  String get safetyReportDetailHint;
+
+  /// No description provided for @safetyReportAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'신고하기'**
+  String get safetyReportAction;
+
+  /// No description provided for @safetyReportReasonSpam.
+  ///
+  /// In ko, this message translates to:
+  /// **'스팸 또는 광고'**
+  String get safetyReportReasonSpam;
+
+  /// No description provided for @safetyReportReasonAbuse.
+  ///
+  /// In ko, this message translates to:
+  /// **'욕설 또는 혐오 표현'**
+  String get safetyReportReasonAbuse;
+
+  /// No description provided for @safetyReportReasonSexual.
+  ///
+  /// In ko, this message translates to:
+  /// **'음란물 또는 선정적인 내용'**
+  String get safetyReportReasonSexual;
+
+  /// No description provided for @safetyReportReasonViolence.
+  ///
+  /// In ko, this message translates to:
+  /// **'폭력 또는 위협'**
+  String get safetyReportReasonViolence;
+
+  /// No description provided for @safetyReportReasonOther.
+  ///
+  /// In ko, this message translates to:
+  /// **'기타'**
+  String get safetyReportReasonOther;
+
+  /// No description provided for @safetyBlockedUsersTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'차단한 사용자'**
+  String get safetyBlockedUsersTitle;
+
+  /// No description provided for @safetyBlockedUsersLoadFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'차단 목록을 불러오지 못했습니다'**
+  String get safetyBlockedUsersLoadFailed;
+
+  /// No description provided for @safetyBlockedUsersEmpty.
+  ///
+  /// In ko, this message translates to:
+  /// **'차단한 사용자가 없습니다'**
+  String get safetyBlockedUsersEmpty;
+
+  /// No description provided for @accountSettingsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'계정 설정'**
+  String get accountSettingsTitle;
+
+  /// No description provided for @accountPasswordChange.
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호 변경'**
+  String get accountPasswordChange;
+
+  /// No description provided for @accountDelete.
+  ///
+  /// In ko, this message translates to:
+  /// **'회원 탈퇴'**
+  String get accountDelete;
+
+  /// No description provided for @accountDeleteSubtitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'계정과 모든 기록이 즉시 삭제됩니다'**
+  String get accountDeleteSubtitle;
+
+  /// No description provided for @accountDeleteFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'탈퇴하지 못했습니다. 다시 시도해 주세요.'**
+  String get accountDeleteFailed;
+
+  /// No description provided for @accountDeleteConfirmTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'정말 탈퇴할까요?'**
+  String get accountDeleteConfirmTitle;
+
+  /// No description provided for @accountDeleteConfirmMessage.
+  ///
+  /// In ko, this message translates to:
+  /// **'계정과 함께 아래가 모두 삭제되며 되돌릴 수 없습니다.\n\n· 프로필과 프로필 사진\n· 작성한 게시물과 사진\n· 남긴 댓글과 감정표현'**
+  String get accountDeleteConfirmMessage;
+
+  /// No description provided for @accountDeleteConfirmAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'탈퇴'**
+  String get accountDeleteConfirmAction;
+
+  /// No description provided for @passwordChangeTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호 변경'**
+  String get passwordChangeTitle;
+
+  /// No description provided for @passwordChangeSucceeded.
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호를 변경했습니다'**
+  String get passwordChangeSucceeded;
+
+  /// No description provided for @passwordChangeFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호를 변경하지 못했습니다'**
+  String get passwordChangeFailed;
+
+  /// No description provided for @passwordChangeNewLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 비밀번호'**
+  String get passwordChangeNewLabel;
+
+  /// No description provided for @passwordChangeConfirmLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 비밀번호 확인'**
+  String get passwordChangeConfirmLabel;
+
+  /// No description provided for @passwordChangeAction.
+  ///
+  /// In ko, this message translates to:
+  /// **'변경'**
+  String get passwordChangeAction;
+
+  /// No description provided for @validationEmailRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'이메일을 입력하세요'**
+  String get validationEmailRequired;
+
+  /// No description provided for @validationEmailInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'이메일 형식이 올바르지 않습니다'**
+  String get validationEmailInvalid;
+
+  /// No description provided for @validationPasswordRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호를 입력하세요'**
+  String get validationPasswordRequired;
+
+  /// No description provided for @validationPasswordTooShort.
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호는 8자 이상이어야 합니다'**
+  String get validationPasswordTooShort;
+
+  /// No description provided for @validationPasswordConfirmationRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호를 한 번 더 입력하세요'**
+  String get validationPasswordConfirmationRequired;
+
+  /// No description provided for @validationPasswordMismatch.
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호가 일치하지 않습니다'**
+  String get validationPasswordMismatch;
+
+  /// No description provided for @validationNicknameRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'닉네임을 입력하세요'**
+  String get validationNicknameRequired;
+
+  /// No description provided for @validationNicknameTooShort.
+  ///
+  /// In ko, this message translates to:
+  /// **'닉네임은 2자 이상이어야 합니다'**
+  String get validationNicknameTooShort;
+
+  /// No description provided for @validationNicknameTooLong.
+  ///
+  /// In ko, this message translates to:
+  /// **'닉네임은 20자 이하여야 합니다'**
+  String get validationNicknameTooLong;
+
+  /// No description provided for @validationOtpRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'코드를 입력하세요'**
+  String get validationOtpRequired;
+
+  /// No description provided for @validationOtpInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'6자리 숫자를 입력하세요'**
+  String get validationOtpInvalid;
+
+  /// No description provided for @failureNetwork.
+  ///
+  /// In ko, this message translates to:
+  /// **'네트워크에 연결할 수 없습니다'**
+  String get failureNetwork;
+
+  /// No description provided for @failureAuth.
+  ///
+  /// In ko, this message translates to:
+  /// **'인증에 실패했습니다'**
+  String get failureAuth;
+
+  /// No description provided for @failureForbidden.
+  ///
+  /// In ko, this message translates to:
+  /// **'권한이 없습니다'**
+  String get failureForbidden;
+
+  /// No description provided for @failureNotFound.
+  ///
+  /// In ko, this message translates to:
+  /// **'대상을 찾을 수 없습니다'**
+  String get failureNotFound;
+
+  /// No description provided for @failureValidation.
+  ///
+  /// In ko, this message translates to:
+  /// **'입력값을 확인하세요'**
+  String get failureValidation;
+
+  /// No description provided for @failureServer.
+  ///
+  /// In ko, this message translates to:
+  /// **'서버 오류가 발생했습니다'**
+  String get failureServer;
+
+  /// No description provided for @failureUnknown.
+  ///
+  /// In ko, this message translates to:
+  /// **'알 수 없는 오류가 발생했습니다'**
+  String get failureUnknown;
+
+  /// No description provided for @failureInvalidCredentials.
+  ///
+  /// In ko, this message translates to:
+  /// **'이메일 또는 비밀번호가 올바르지 않습니다'**
+  String get failureInvalidCredentials;
+
+  /// No description provided for @failureSignInFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그인에 실패했습니다'**
+  String get failureSignInFailed;
+
+  /// No description provided for @failureSignUpFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'가입에 실패했습니다'**
+  String get failureSignUpFailed;
+
+  /// No description provided for @failureEmailAlreadyRegistered.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 가입된 이메일입니다'**
+  String get failureEmailAlreadyRegistered;
+
+  /// No description provided for @failureWeakPassword.
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호가 너무 단순합니다'**
+  String get failureWeakPassword;
+
+  /// No description provided for @failureSamePassword.
+  ///
+  /// In ko, this message translates to:
+  /// **'이전과 다른 비밀번호를 입력하세요'**
+  String get failureSamePassword;
+
+  /// No description provided for @failureOtpExpired.
+  ///
+  /// In ko, this message translates to:
+  /// **'코드가 만료되었습니다. 다시 요청하세요'**
+  String get failureOtpExpired;
+
+  /// No description provided for @failureRateLimited.
+  ///
+  /// In ko, this message translates to:
+  /// **'요청이 너무 잦습니다. 잠시 후 다시 시도하세요'**
+  String get failureRateLimited;
+
+  /// No description provided for @failureDuplicateValue.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 사용 중인 값입니다'**
+  String get failureDuplicateValue;
+
+  /// No description provided for @failureConstraintViolation.
+  ///
+  /// In ko, this message translates to:
+  /// **'입력값이 조건을 만족하지 않습니다'**
+  String get failureConstraintViolation;
+
+  /// No description provided for @failureReferencedTargetMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'참조 대상이 존재하지 않습니다'**
+  String get failureReferencedTargetMissing;
+
+  /// No description provided for @failureForbiddenOrDeleted.
+  ///
+  /// In ko, this message translates to:
+  /// **'권한이 없거나 삭제된 대상입니다'**
+  String get failureForbiddenOrDeleted;
+
+  /// No description provided for @failureNicknameLength.
+  ///
+  /// In ko, this message translates to:
+  /// **'닉네임은 2자 이상 20자 이하여야 합니다'**
+  String get failureNicknameLength;
+
+  /// No description provided for @failureBioTooLong.
+  ///
+  /// In ko, this message translates to:
+  /// **'자기소개는 200자 이하여야 합니다'**
+  String get failureBioTooLong;
+
+  /// No description provided for @failurePostContentLength.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시물은 1자 이상 500자 이하여야 합니다'**
+  String get failurePostContentLength;
+
+  /// No description provided for @failureCommentContentLength.
+  ///
+  /// In ko, this message translates to:
+  /// **'댓글은 1자 이상 300자 이하여야 합니다'**
+  String get failureCommentContentLength;
+
+  /// No description provided for @failureUnsupportedReaction.
+  ///
+  /// In ko, this message translates to:
+  /// **'지원하지 않는 감정입니다'**
+  String get failureUnsupportedReaction;
+
+  /// No description provided for @failureReportAlreadySubmitted.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 신고한 항목입니다'**
+  String get failureReportAlreadySubmitted;
+
+  /// No description provided for @failureReportDetailTooLong.
+  ///
+  /// In ko, this message translates to:
+  /// **'상세 설명은 500자 이하여야 합니다'**
+  String get failureReportDetailTooLong;
+
+  /// No description provided for @failureReportSelfNotAllowed.
+  ///
+  /// In ko, this message translates to:
+  /// **'자기 자신은 신고할 수 없습니다'**
+  String get failureReportSelfNotAllowed;
+
+  /// No description provided for @failureBlockSelfNotAllowed.
+  ///
+  /// In ko, this message translates to:
+  /// **'자기 자신은 차단할 수 없습니다'**
+  String get failureBlockSelfNotAllowed;
+
+  /// No description provided for @failureBlockAlreadyExists.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 차단한 사용자입니다'**
+  String get failureBlockAlreadyExists;
+
+  /// No description provided for @failureNestedReplyNotAllowed.
+  ///
+  /// In ko, this message translates to:
+  /// **'답글에는 답글을 달 수 없습니다'**
+  String get failureNestedReplyNotAllowed;
+
+  /// No description provided for @failureReplyToDeletedCommentNotAllowed.
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제된 댓글에는 답글을 달 수 없습니다'**
+  String get failureReplyToDeletedCommentNotAllowed;
+
+  /// No description provided for @failureReplyParentPostMismatch.
+  ///
+  /// In ko, this message translates to:
+  /// **'부모 댓글이 다른 게시물의 댓글입니다'**
+  String get failureReplyParentPostMismatch;
+
+  /// No description provided for @failureReplyParentMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'부모 댓글이 없습니다'**
+  String get failureReplyParentMissing;
+
+  /// No description provided for @failureReportTargetMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'신고할 대상이 없습니다'**
+  String get failureReportTargetMissing;
+
+  /// No description provided for @failureReportOwnPostNotAllowed.
+  ///
+  /// In ko, this message translates to:
+  /// **'내 게시물은 신고할 수 없습니다'**
+  String get failureReportOwnPostNotAllowed;
+
+  /// No description provided for @failureReportOwnCommentNotAllowed.
+  ///
+  /// In ko, this message translates to:
+  /// **'내 댓글은 신고할 수 없습니다'**
+  String get failureReportOwnCommentNotAllowed;
+
+  /// No description provided for @failureCommentNotAllowed.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 게시물에는 댓글을 달 수 없습니다'**
+  String get failureCommentNotAllowed;
+
+  /// No description provided for @failureAuthenticationRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그인이 필요합니다'**
+  String get failureAuthenticationRequired;
+
+  /// No description provided for @failureOperationInProgress.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 처리 중입니다'**
+  String get failureOperationInProgress;
+
+  /// No description provided for @failureCommentsRangeInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'올바른 댓글 조회 범위가 아닙니다'**
+  String get failureCommentsRangeInvalid;
+
+  /// No description provided for @failureCommentCursorInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'잘못된 댓글 커서입니다'**
+  String get failureCommentCursorInvalid;
+
+  /// No description provided for @failureCommentContentRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'댓글 내용을 입력해 주세요'**
+  String get failureCommentContentRequired;
+
+  /// No description provided for @failureCommentTooLong.
+  ///
+  /// In ko, this message translates to:
+  /// **'댓글은 300자까지 쓸 수 있습니다'**
+  String get failureCommentTooLong;
+
+  /// No description provided for @failureCommentDeleteTargetMissing.
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제할 댓글을 찾을 수 없습니다'**
+  String get failureCommentDeleteTargetMissing;
+
+  /// No description provided for @failureRoomTitleRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'방 이름을 입력하세요'**
+  String get failureRoomTitleRequired;
+
+  /// No description provided for @failureRoomTitleTooLong.
+  ///
+  /// In ko, this message translates to:
+  /// **'방 이름은 30자 이하여야 합니다'**
+  String get failureRoomTitleTooLong;
+
+  /// No description provided for @failureRoomDescriptionTooLong.
+  ///
+  /// In ko, this message translates to:
+  /// **'소개는 200자 이하여야 합니다'**
+  String get failureRoomDescriptionTooLong;
+
+  /// No description provided for @failureRoomMemberLimitInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'정원은 2명 이상 500명 이하여야 합니다'**
+  String get failureRoomMemberLimitInvalid;
+
+  /// No description provided for @failureRoomNicknameTooShort.
+  ///
+  /// In ko, this message translates to:
+  /// **'방에서 쓸 이름은 2자 이상이어야 합니다'**
+  String get failureRoomNicknameTooShort;
+
+  /// No description provided for @failureRoomNicknameTooLong.
+  ///
+  /// In ko, this message translates to:
+  /// **'방에서 쓸 이름은 20자 이하여야 합니다'**
+  String get failureRoomNicknameTooLong;
+
+  /// No description provided for @failureMessageContentRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'보낼 내용을 입력하세요'**
+  String get failureMessageContentRequired;
+
+  /// No description provided for @failureMessageTooLong.
+  ///
+  /// In ko, this message translates to:
+  /// **'메시지는 1000자 이하여야 합니다'**
+  String get failureMessageTooLong;
+
+  /// No description provided for @failureFeedRangeInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'올바른 피드 조회 범위가 아닙니다'**
+  String get failureFeedRangeInvalid;
+
+  /// No description provided for @failureFeedCursorInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'잘못된 피드 커서입니다'**
+  String get failureFeedCursorInvalid;
+
+  /// No description provided for @failureFeedNotLoaded.
+  ///
+  /// In ko, this message translates to:
+  /// **'목록을 먼저 읽어야 합니다'**
+  String get failureFeedNotLoaded;
+
+  /// No description provided for @failurePostNotFound.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시물을 찾을 수 없습니다'**
+  String get failurePostNotFound;
+
+  /// No description provided for @failureMessageCursorInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'잘못된 메시지 커서입니다'**
+  String get failureMessageCursorInvalid;
+
+  /// No description provided for @failureRoomCursorInvalid.
+  ///
+  /// In ko, this message translates to:
+  /// **'잘못된 방 커서입니다'**
+  String get failureRoomCursorInvalid;
+
+  /// No description provided for @failurePostIdRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시물 식별자가 필요합니다'**
+  String get failurePostIdRequired;
+
+  /// No description provided for @failurePostContentRequired.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시물 내용을 입력하세요'**
+  String get failurePostContentRequired;
+
+  /// No description provided for @failurePostTooLong.
+  ///
+  /// In ko, this message translates to:
+  /// **'게시물은 500자 이하여야 합니다'**
+  String get failurePostTooLong;
+
+  /// No description provided for @failurePostImageLimit.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진은 5장까지 첨부할 수 있습니다'**
+  String get failurePostImageLimit;
+
+  /// No description provided for @failureAvatarUploadFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필 사진을 업로드하지 못했습니다.'**
+  String get failureAvatarUploadFailed;
+
+  /// No description provided for @failureInvalidData.
+  ///
+  /// In ko, this message translates to:
+  /// **'올바르지 않은 데이터를 받았습니다'**
+  String get failureInvalidData;
+
+  /// No description provided for @reactionLike.
+  ///
+  /// In ko, this message translates to:
+  /// **'좋아요'**
+  String get reactionLike;
+
+  /// No description provided for @reactionDislike.
+  ///
+  /// In ko, this message translates to:
+  /// **'싫어요'**
+  String get reactionDislike;
+
+  /// No description provided for @avatarSemanticsLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'{nickname} 프로필 사진'**
+  String avatarSemanticsLabel(String nickname);
 }
 
 class _AppLocalizationsDelegate

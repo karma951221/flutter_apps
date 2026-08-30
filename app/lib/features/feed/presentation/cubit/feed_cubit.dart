@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/error/failure_code.dart';
 import '../../../../core/result/result.dart';
 import '../../../post/domain/entity/post.dart';
 import '../../../reaction/domain/entity/reaction_summary.dart';
@@ -202,12 +203,22 @@ class FeedCubit extends Cubit<FeedState> {
   ) async {
     final current = state;
     if (current.status != FeedStatus.loaded) {
-      return const Err(Failure.validation(message: '목록을 먼저 읽어야 합니다'));
+      return const Err(
+        Failure.validation(
+          message: '목록을 먼저 읽어야 합니다',
+          failureCode: FailureCode.feedNotLoaded,
+        ),
+      );
     }
 
     final index = current.items.indexWhere((item) => item.id == postId);
     if (index < 0) {
-      return const Err(Failure.notFound(message: '게시물을 찾을 수 없습니다'));
+      return const Err(
+        Failure.notFound(
+          message: '게시물을 찾을 수 없습니다',
+          failureCode: FailureCode.postNotFound,
+        ),
+      );
     }
 
     final previous = current.items[index].reactions;

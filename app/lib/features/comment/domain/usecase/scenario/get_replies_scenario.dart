@@ -1,4 +1,5 @@
 import '../../../../../core/error/failure.dart';
+import '../../../../../core/error/failure_code.dart';
 import '../../../../../core/pagination/cursor_page.dart';
 import '../../../../../core/result/result.dart';
 import '../../comment_policy.dart';
@@ -19,13 +20,22 @@ class GetRepliesScenario {
   }) {
     if (limit < 1 || limit > CommentPolicy.maxPageSize) {
       return Future.value(
-        const Err(Failure.validation(message: '올바른 댓글 조회 범위가 아닙니다')),
+        const Err(
+          Failure.validation(
+            message: '올바른 댓글 조회 범위가 아닙니다',
+            failureCode: FailureCode.commentsRangeInvalid,
+          ),
+        ),
       );
     }
     if (cursor != null && cursor.trim().isEmpty) {
       return Future.value(
         const Err(
-          Failure.validation(message: '잘못된 댓글 커서입니다', field: 'cursor'),
+          Failure.validation(
+            message: '잘못된 댓글 커서입니다',
+            field: 'cursor',
+            failureCode: FailureCode.commentCursorInvalid,
+          ),
         ),
       );
     }

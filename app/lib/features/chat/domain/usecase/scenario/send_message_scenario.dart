@@ -1,4 +1,5 @@
 import '../../../../../core/error/failure.dart';
+import '../../../../../core/error/failure_code.dart';
 import '../../../../../core/result/result.dart';
 import '../../chat_policy.dart';
 import '../../repository/chat_repository.dart';
@@ -21,7 +22,13 @@ class SendMessageScenario {
     final trimmed = content.trim();
     if (trimmed.isEmpty) {
       return Future.value(
-        const Err(Failure.validation(message: '보낼 내용을 입력하세요', field: 'content')),
+        const Err(
+          Failure.validation(
+            message: '보낼 내용을 입력하세요',
+            field: 'content',
+            failureCode: FailureCode.messageContentRequired,
+          ),
+        ),
       );
     }
     if (trimmed.length > ChatPolicy.messageMaxLength) {
@@ -30,6 +37,7 @@ class SendMessageScenario {
           Failure.validation(
             message: '메시지는 ${ChatPolicy.messageMaxLength}자 이하여야 합니다',
             field: 'content',
+            failureCode: FailureCode.messageTooLong,
           ),
         ),
       );

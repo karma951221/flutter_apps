@@ -117,6 +117,14 @@ void main() {
     expect(find.text('Sign out'), findsOneWidget);
   });
 
+  testWidgets('ja 로 뜨면 설정 화면이 일본어다', (tester) async {
+    await pumpPage(tester, locale: const Locale('ja'));
+
+    expect(find.text('設定'), findsOneWidget);
+    expect(find.text('言語'), findsOneWidget);
+    expect(find.text('ログアウト'), findsOneWidget);
+  });
+
   testWidgets('화면 테마 행은 현재 모드를 subtitle 로 보여준다', (tester) async {
     when(preferencesUseCase.loadThemeMode).thenReturn(AppThemeMode.dark);
     themeCubit = ThemeCubit(preferencesUseCase);

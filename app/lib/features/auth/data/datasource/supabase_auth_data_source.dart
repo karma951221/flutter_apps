@@ -5,6 +5,8 @@ import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import '../../../../core/data/nickname_match.dart';
+import '../../../../core/error/failure.dart';
+import '../../../../core/error/failure_code.dart';
 import '../dto/auth_user_dto.dart';
 import 'auth_data_source.dart';
 
@@ -82,7 +84,11 @@ class SupabaseAuthDataSource implements AuthDataSource {
     );
     final user = response.user;
     if (user == null) {
-      throw const supabase.AuthException('가입에 실패했습니다', statusCode: '500');
+      throw const Failure.server(
+        message: '가입에 실패했습니다',
+        code: 'empty_user',
+        failureCode: FailureCode.signUpFailed,
+      );
     }
     return _loadUser(user);
   }
@@ -98,7 +104,11 @@ class SupabaseAuthDataSource implements AuthDataSource {
     );
     final user = response.user;
     if (user == null) {
-      throw const supabase.AuthException('로그인에 실패했습니다', statusCode: '401');
+      throw const Failure.auth(
+        message: '로그인에 실패했습니다',
+        code: 'empty_user',
+        failureCode: FailureCode.signInFailed,
+      );
     }
     return _loadUser(user);
   }

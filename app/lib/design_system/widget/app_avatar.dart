@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
+
 /// 사용자 아바타의 공통 표현.
 class AppAvatar extends StatelessWidget {
   const AppAvatar({
@@ -41,7 +43,7 @@ class AppAvatar extends StatelessWidget {
 
     return Semantics(
       image: true,
-      label: '$nickname 프로필 사진',
+      label: AppLocalizations.of(context).avatarSemanticsLabel(nickname),
       child: CircleAvatar(
         radius: radius,
         foregroundImage: foregroundImage,

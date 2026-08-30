@@ -1,3 +1,18 @@
+/// 화면에 표시할 문구와 분리된 입력 검증 결과.
+enum ValidationError {
+  emailRequired,
+  emailInvalid,
+  passwordRequired,
+  passwordTooShort,
+  passwordConfirmationRequired,
+  passwordMismatch,
+  nicknameRequired,
+  nicknameTooShort,
+  nicknameTooLong,
+  otpRequired,
+  otpInvalid,
+}
+
 /// 입력 검증 규칙.
 ///
 /// DB 제약(profiles_nickname_length 등)과 값을 일치시킨다.
@@ -10,45 +25,49 @@ abstract final class Validators {
 
   static final _emailRegExp = RegExp(r'^[\w.+-]+@[\w-]+\.[\w.-]+$');
 
-  /// 반환값이 null 이면 통과, 아니면 오류 메시지.
-  static String? email(String? value) {
+  /// 반환값이 null 이면 통과, 아니면 locale 독립 오류 코드.
+  static ValidationError? email(String? value) {
     final v = value?.trim() ?? '';
-    if (v.isEmpty) return '이메일을 입력하세요';
-    if (!_emailRegExp.hasMatch(v)) return '이메일 형식이 올바르지 않습니다';
+    if (v.isEmpty) return ValidationError.emailRequired;
+    if (!_emailRegExp.hasMatch(v)) return ValidationError.emailInvalid;
     return null;
   }
 
-  static String? password(String? value) {
+  static ValidationError? password(String? value) {
     final v = value ?? '';
-    if (v.isEmpty) return '비밀번호를 입력하세요';
+    if (v.isEmpty) return ValidationError.passwordRequired;
     if (v.length < passwordMinLength) {
-      return '비밀번호는 $passwordMinLength자 이상이어야 합니다';
+      return ValidationError.passwordTooShort;
     }
     return null;
   }
 
-  static String? passwordConfirm(String? value, String password) {
-    if ((value ?? '').isEmpty) return '비밀번호를 한 번 더 입력하세요';
-    if (value != password) return '비밀번호가 일치하지 않습니다';
+  static ValidationError? passwordConfirm(String? value, String password) {
+    if ((value ?? '').isEmpty) {
+      return ValidationError.passwordConfirmationRequired;
+    }
+    if (value != password) return ValidationError.passwordMismatch;
     return null;
   }
 
-  static String? nickname(String? value) {
+  static ValidationError? nickname(String? value) {
     final v = value?.trim() ?? '';
-    if (v.isEmpty) return '닉네임을 입력하세요';
+    if (v.isEmpty) return ValidationError.nicknameRequired;
     if (v.length < nicknameMinLength) {
-      return '닉네임은 $nicknameMinLength자 이상이어야 합니다';
+      return ValidationError.nicknameTooShort;
     }
     if (v.length > nicknameMaxLength) {
-      return '닉네임은 $nicknameMaxLength자 이하여야 합니다';
+      return ValidationError.nicknameTooLong;
     }
     return null;
   }
 
-  static String? otpCode(String? value) {
+  static ValidationError? otpCode(String? value) {
     final v = value?.trim() ?? '';
-    if (v.isEmpty) return '코드를 입력하세요';
-    if (v.length != 6 || int.tryParse(v) == null) return '6자리 숫자를 입력하세요';
+    if (v.isEmpty) return ValidationError.otpRequired;
+    if (v.length != 6 || int.tryParse(v) == null) {
+      return ValidationError.otpInvalid;
+    }
     return null;
   }
 }

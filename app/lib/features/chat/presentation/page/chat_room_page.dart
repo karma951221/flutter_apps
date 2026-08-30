@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../core/media/image_picker_service.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_confirm_dialog.dart';
@@ -37,8 +38,7 @@ class ChatRoomPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-    create: (_) =>
-        getIt<ChatRoomBloc>()..add(ChatRoomEvent.started(roomId)),
+    create: (_) => getIt<ChatRoomBloc>()..add(ChatRoomEvent.started(roomId)),
     child: _ChatRoomView(roomId: roomId, title: title),
   );
 }
@@ -128,7 +128,9 @@ class _ChatRoomViewState extends State<_ChatRoomView> {
               current.actionFailure != null,
           listener: (context, state) => AppSnackBar.show(
             context,
-            message: state.actionFailure?.message ?? l10n.chatSendFailed,
+            message:
+                state.actionFailure?.localizedMessage(context) ??
+                l10n.chatSendFailed,
             type: AppSnackBarType.error,
           ),
           builder: (context, state) => switch (state.status) {
@@ -138,7 +140,9 @@ class _ChatRoomViewState extends State<_ChatRoomView> {
             ChatRoomStatus.failure => Center(
               child: AppPlaceholder(
                 icon: Icons.cloud_off_outlined,
-                message: state.failure?.message ?? l10n.chatRoomLoadFailed,
+                message:
+                    state.failure?.localizedMessage(context) ??
+                    l10n.chatRoomLoadFailed,
                 actionLabel: l10n.commonRetry,
                 onAction: () => context.read<ChatRoomBloc>().add(
                   ChatRoomEvent.started(widget.roomId),
@@ -161,11 +165,7 @@ class _ChatRoomViewState extends State<_ChatRoomView> {
     );
   }
 
-  Widget _messageList(
-    BuildContext context,
-    ChatRoomState state,
-    String myId,
-  ) {
+  Widget _messageList(BuildContext context, ChatRoomState state, String myId) {
     final l10n = AppLocalizations.of(context);
     if (state.messages.isEmpty) {
       return Center(child: AppPlaceholder(message: l10n.chatRoomEmptyMessage));
@@ -374,7 +374,7 @@ class _ChatRoomViewState extends State<_ChatRoomView> {
       },
       err: (failure) => AppSnackBar.show(
         context,
-        message: failure.message ?? l10n.chatLeaveFailed,
+        message: failure.localizedMessage(context),
         type: AppSnackBarType.error,
       ),
     );

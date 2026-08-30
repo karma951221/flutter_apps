@@ -2,6 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/error/failure_code.dart';
 import '../../domain/entity/reaction_target.dart';
 import '../../domain/entity/reaction_type.dart';
 import 'reaction_data_source.dart';
@@ -34,7 +35,10 @@ class SupabaseReactionDataSource implements ReactionDataSource {
   @override
   Future<void> setReaction(ReactionTarget target, ReactionType type) async {
     if (_client.auth.currentUser == null) {
-      throw const Failure.auth(message: '로그인이 필요합니다');
+      throw const Failure.auth(
+        message: '로그인이 필요합니다',
+        failureCode: FailureCode.authenticationRequired,
+      );
     }
 
     final mapping = _mapping(target);
@@ -43,19 +47,20 @@ class SupabaseReactionDataSource implements ReactionDataSource {
     // 중간 상태가 화면에 보인다. user_id 는 페이로드에 넣지 않는다 —
     // DB 의 default auth.uid() 가 채우므로 위조 경로가 없다. 충돌 대상에는
     // 이름으로만 지정한다.
-    await _client
-        .from(mapping.table)
-        .upsert({
-          mapping.column: mapping.id,
-          'type': type.code,
-        }, onConflict: 'user_id,${mapping.column}');
+    await _client.from(mapping.table).upsert({
+      mapping.column: mapping.id,
+      'type': type.code,
+    }, onConflict: 'user_id,${mapping.column}');
   }
 
   @override
   Future<void> clearReaction(ReactionTarget target) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
-      throw const Failure.auth(message: '로그인이 필요합니다');
+      throw const Failure.auth(
+        message: '로그인이 필요합니다',
+        failureCode: FailureCode.authenticationRequired,
+      );
     }
 
     final mapping = _mapping(target);

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/l10n/validation_localizations.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
@@ -91,7 +92,8 @@ class _SignInViewState extends State<_SignInView> {
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     autofillHints: const [AutofillHints.email],
-                    validator: Validators.email,
+                    validator: (value) =>
+                        Validators.email(value)?.localized(context),
                     onSubmitted: _passwordFocus.requestFocus,
                   ),
                   AuthTextField(
@@ -103,7 +105,8 @@ class _SignInViewState extends State<_SignInView> {
                     obscureText: true,
                     textInputAction: TextInputAction.done,
                     autofillHints: const [AutofillHints.password],
-                    validator: Validators.password,
+                    validator: (value) =>
+                        Validators.password(value)?.localized(context),
                     onSubmitted: _submit,
                   ),
                   if (state is SubmitFailure) FailureText(state.failure),

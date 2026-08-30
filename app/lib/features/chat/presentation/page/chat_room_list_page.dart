@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
+import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_placeholder.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -52,31 +53,36 @@ class _ChatRoomListView extends StatelessWidget {
           ChatRoomListStatus.failure => Center(
             child: AppPlaceholder(
               icon: Icons.cloud_off_outlined,
-              message: state.failure?.message ?? l10n.chatLoadFailed,
+              message:
+                  state.failure?.localizedMessage(context) ??
+                  l10n.chatLoadFailed,
               actionLabel: l10n.commonRetry,
               onAction: () => context.read<ChatRoomListCubit>().load(),
             ),
           ),
-          ChatRoomListStatus.loaded when state.items.isEmpty => RefreshIndicator(
-            onRefresh: () => context.read<ChatRoomListCubit>().load(),
-            child: LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                  child: Center(
-                    child: AppPlaceholder(
-                      icon: Icons.forum_outlined,
-                      message: l10n.chatEmptyMessage,
-                      description: l10n.chatEmptyDescription,
-                      actionLabel: l10n.chatEmptyAction,
-                      onAction: () => _explore(context),
+          ChatRoomListStatus.loaded when state.items.isEmpty =>
+            RefreshIndicator(
+              onRefresh: () => context.read<ChatRoomListCubit>().load(),
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
+                    ),
+                    child: Center(
+                      child: AppPlaceholder(
+                        icon: Icons.forum_outlined,
+                        message: l10n.chatEmptyMessage,
+                        description: l10n.chatEmptyDescription,
+                        actionLabel: l10n.chatEmptyAction,
+                        onAction: () => _explore(context),
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
           ChatRoomListStatus.loaded => RefreshIndicator(
             onRefresh: () => context.read<ChatRoomListCubit>().load(),
             child: ListView.builder(

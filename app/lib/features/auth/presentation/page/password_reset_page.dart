@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
+import '../../../../core/l10n/validation_localizations.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
@@ -97,7 +98,7 @@ class _RequestCodeStepState extends State<_RequestCodeStep> {
             enabled: !busy,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
-            validator: Validators.email,
+            validator: (value) => Validators.email(value)?.localized(context),
             onSubmitted: _submit,
           ),
           FailureText(widget.state.failure),
@@ -162,7 +163,7 @@ class _VerifyCodeStepState extends State<_VerifyCodeStep> {
             keyboardType: TextInputType.number,
             textInputAction: TextInputAction.done,
             maxLength: 6,
-            validator: Validators.otpCode,
+            validator: (value) => Validators.otpCode(value)?.localized(context),
             onSubmitted: _submit,
           ),
           FailureText(widget.state.failure),
@@ -235,7 +236,8 @@ class _NewPasswordStepState extends State<_NewPasswordStep> {
             enabled: !busy,
             obscureText: true,
             textInputAction: TextInputAction.next,
-            validator: Validators.password,
+            validator: (value) =>
+                Validators.password(value)?.localized(context),
             onSubmitted: _passwordConfirmFocus.requestFocus,
           ),
           AuthTextField(
@@ -246,7 +248,10 @@ class _NewPasswordStepState extends State<_NewPasswordStep> {
             enabled: !busy,
             obscureText: true,
             textInputAction: TextInputAction.done,
-            validator: (v) => Validators.passwordConfirm(v, _password.text),
+            validator: (v) => Validators.passwordConfirm(
+              v,
+              _password.text,
+            )?.localized(context),
             onSubmitted: _submit,
           ),
           FailureText(widget.state.failure),

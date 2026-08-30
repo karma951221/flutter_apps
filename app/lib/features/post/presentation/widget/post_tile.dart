@@ -105,7 +105,10 @@ class PostTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            Text(post.updatedAt.displayDateTime, style: mutedStyle),
+            Text(
+              post.updatedAt.displayDateTime(l10n.localeName),
+              style: mutedStyle,
+            ),
           ],
         ),
         subtitle: Padding(
@@ -179,7 +182,6 @@ class PostTile extends StatelessWidget {
       ),
     );
   }
-
 }
 
 enum _PostAction { edit, delete, report, block }
