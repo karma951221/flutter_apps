@@ -100,21 +100,6 @@ class ChatRoomSummary with _$ChatRoomSummary {
   String? get displayTitle => isDirect ? partnerNickname : title;
 
   /// 안읽음만 0 으로 되돌린다. 방을 읽고 나왔을 때 목록을 다시 읽지 않는다.
-  ChatRoomSummary asRead() => ChatRoomSummary(
-    id: id,
-    title: title,
-    myNickname: myNickname,
-    lastReadAt: DateTime.now(),
-    type: type,
-    partnerId: partnerId,
-    partnerNickname: partnerNickname,
-    partnerAvatarUrl: partnerAvatarUrl,
-    description: description,
-    memberCount: memberCount,
-    unreadCount: 0,
-    lastMessageAt: lastMessageAt,
-    lastMessageType: lastMessageType,
-    lastMessageContent: lastMessageContent,
-    lastMessageSystemEvent: lastMessageSystemEvent,
-  );
+  ChatRoomSummary asRead() =>
+      copyWith(lastReadAt: DateTime.now(), unreadCount: 0);
 }

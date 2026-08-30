@@ -302,6 +302,13 @@ check("DM 방은 탐색 목록(open_chat_rooms)에 없다 (비참여자 기준)"
 st, open_a = call("GET", f"/rest/v1/open_chat_rooms?id=eq.{dm_room_id}&select=id", A)
 check("DM 방은 당사자 기준으로도 탐색 목록에 없다", open_a == [], str(open_a))
 
+# 4-1. 비로그인(anon) 은 open_direct_room 을 부를 수도, chat_rooms 로 DM 방을
+# 직접 조회할 수도 없다.
+st, body = call("POST", "/rest/v1/rpc/open_direct_room", ANON, {"partner_id": b_id})
+check("비로그인은 open_direct_room 을 호출할 수 없다", st >= 400, f"{st} {str(body)[:80]}")
+st, anon_rooms = call("GET", f"/rest/v1/chat_rooms?id=eq.{dm_room_id}&select=id", ANON)
+check("비로그인은 DM 방을 chat_rooms 로 조회할 수 없다", anon_rooms == [], str(anon_rooms))
+
 # 5. 메시지 송수신 경계 — 참여자만 보내고 읽는다.
 st, _ = call("POST", "/rest/v1/chat_messages", A,
              {"room_id": dm_room_id, "type": "text", "content": "안녕 DM"})
@@ -332,6 +339,20 @@ check("A 가 메시지를 보내면 B 의 my_chat_rooms 에 방이 자동으로 
 st, all_msgs2 = call("GET", f"/rest/v1/chat_messages?room_id=eq.{dm_room_id}&select=type", A)
 check("자동 재등장 과정에서도 시스템 메시지는 생기지 않는다",
       st == 200 and all(m["type"] != "system" for m in all_msgs2), str(all_msgs2))
+
+# 7-1. open_direct_room 재호출만으로는 나간 상대가 되돌아오지 않는다 —
+# 자동 재등장은 메시지 전송(enforce_direct_message)에서만 일어난다. A·C 의
+# 새 DM 으로 확인한다(B 는 위에서 이미 메시지로 재등장시켜 상태가 섞인다).
+st, dm_ac = call("POST", "/rest/v1/rpc/open_direct_room", A, {"partner_id": c_id})
+check("A 가 C 와 새 DM 방을 연다", st == 200 and isinstance(dm_ac, str), f"{st} {dm_ac}")
+st, _ = call("PATCH", f"/rest/v1/chat_participants?room_id=eq.{dm_ac}&user_id=eq.{c_id}", C,
+             {"left_at": "now()"})
+check("C 가 A·C DM 방을 나간다", st in (200, 204), f"{st}")
+st, dm_ac_again = call("POST", "/rest/v1/rpc/open_direct_room", A, {"partner_id": c_id})
+check("A 가 다시 open_direct_room 을 불러도 같은 방 id", st == 200 and dm_ac_again == dm_ac, f"{st} {dm_ac_again}")
+st, rooms_c = call("GET", "/rest/v1/my_chat_rooms?select=id", C)
+check("open_direct_room 재호출만으로는 나간 C 의 목록에 방이 되돌아오지 않는다",
+      all(r["id"] != dm_ac for r in rooms_c), str(rooms_c))
 
 # 8. my_chat_rooms 의 DM 행 모양.
 st, mine = call("GET", f"/rest/v1/my_chat_rooms?id=eq.{dm_room_id}&select=*", A)

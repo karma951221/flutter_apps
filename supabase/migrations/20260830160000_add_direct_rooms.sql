@@ -78,6 +78,20 @@ begin
   select nickname into caller_nickname
     from public.profiles where id = caller;
 
+  -- profiles_nickname_length 는 btrim 을 하지 않아 공백만 채운 닉네임(" a")도
+  -- REST 로 만들 수 있다. 그대로 스냅샷하면 chat_participants_nickname_len
+  -- (btrim 기준)에 걸려 DM 이 영구히 막히므로, 여기서 btrim 하고 그 결과가
+  -- 2자 미만이면 handle_new_user() 와 같은 방식의 대체 닉네임을 쓴다.
+  caller_nickname := btrim(caller_nickname);
+  if char_length(caller_nickname) < 2 then
+    caller_nickname := 'user_' || substr(replace(caller::text, '-', ''), 1, 8);
+  end if;
+
+  partner_nickname := btrim(partner_nickname);
+  if char_length(partner_nickname) < 2 then
+    partner_nickname := 'user_' || substr(replace(partner_id::text, '-', ''), 1, 8);
+  end if;
+
   key := least(caller, partner_id)::text || ':' || greatest(caller, partner_id)::text;
 
   -- 동시 호출은 unique(direct_key) 가 판정한다. 진 쪽은 do nothing 으로
@@ -269,9 +283,11 @@ left join lateral (
 left join lateral (
   select cp.user_id
     from public.chat_participants cp
-   where cp.room_id = r.id and cp.user_id <> (select auth.uid())
+   where cp.room_id = r.id
+     and cp.user_id <> (select auth.uid())
+     and r.type = 'direct'
    limit 1
-) partner on r.type = 'direct'
+) partner on true
 left join public.profiles partner_profile on partner_profile.id = partner.user_id
 where p.user_id = (select auth.uid())
   and p.left_at is null;

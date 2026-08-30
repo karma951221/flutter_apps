@@ -136,6 +136,21 @@ void main() {
     expect(find.text('상대'), findsOneWidget);
   });
 
+  testWidgets('direct 방에서는 받은 메시지에 발신자 닉네임이 뜨지 않는다', (tester) async {
+    stubMessages([_message('m1')]);
+
+    await pumpRoom(
+      tester,
+      args: const ChatRoomPageArgs(title: '지우', isDirect: true),
+    );
+
+    // AppBar 제목(상대 닉네임)이 유일한 이름 소스다 — 말풍선 위에는
+    // chat_participants.nickname 스냅샷('상대')이 다시 뜨지 않는다.
+    expect(find.text('지우'), findsOneWidget);
+    expect(find.text('안녕'), findsOneWidget);
+    expect(find.text('상대'), findsNothing);
+  });
+
   testWidgets('시스템 메시지는 DB 의 키로 문장을 만들어 보여준다', (tester) async {
     stubMessages([
       _message(

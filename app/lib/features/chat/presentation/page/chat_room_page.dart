@@ -218,10 +218,14 @@ class _ChatRoomViewState extends State<_ChatRoomView> {
         return ChatMessageBubble(
           message: message,
           isMine: isMine,
+          // direct 방은 상대가 하나뿐이고 AppBar 제목이 유일한 이름 소스다 —
+          // chat_participants.nickname 스냅샷을 말풍선에 다시 노출하지 않는다
+          // (docs/features/chat/plan-dm.md "정체성").
           showSender:
-              previous == null ||
-              previous.senderId != message.senderId ||
-              previous.isSystem,
+              !widget.isDirect &&
+              (previous == null ||
+                  previous.senderId != message.senderId ||
+                  previous.isSystem),
           onRetry: message.isFailed
               ? () => context.read<ChatRoomBloc>().add(
                   ChatRoomEvent.retryRequested(message.id),
