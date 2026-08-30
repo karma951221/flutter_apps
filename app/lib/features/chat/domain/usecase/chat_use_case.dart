@@ -13,6 +13,7 @@ import '../repository/chat_repository.dart';
 import 'scenario/create_room_scenario.dart';
 import 'scenario/join_room_scenario.dart';
 import 'scenario/mark_read_scenario.dart';
+import 'scenario/open_direct_room_scenario.dart';
 import 'scenario/send_image_message_scenario.dart';
 import 'scenario/send_message_scenario.dart';
 
@@ -38,6 +39,9 @@ abstract interface class ChatUseCase {
   });
 
   Future<Result<void>> leaveRoom(String roomId);
+
+  /// 상대와의 DM 방을 연다. 이미 있으면 그 방 id, 없으면 새로 만든다.
+  Future<Result<String>> openDirectRoom(String partnerId);
 
   Future<Result<List<ChatParticipant>>> getParticipants(String roomId);
 
@@ -113,6 +117,10 @@ class DefaultChatUseCase implements ChatUseCase {
 
   @override
   Future<Result<void>> leaveRoom(String roomId) => _repository.leaveRoom(roomId);
+
+  @override
+  Future<Result<String>> openDirectRoom(String partnerId) =>
+      OpenDirectRoomScenario(_repository)(partnerId);
 
   @override
   Future<Result<List<ChatParticipant>>> getParticipants(String roomId) =>

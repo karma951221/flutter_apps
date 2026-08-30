@@ -12,9 +12,13 @@ part 'chat_room_summary_dto.g.dart';
 class ChatRoomSummaryDto with _$ChatRoomSummaryDto {
   const ChatRoomSummaryDto({
     required this.id,
-    required this.title,
     required this.myNickname,
     required this.lastReadAt,
+    this.title,
+    this.type = 'open',
+    this.partnerId,
+    this.partnerNickname,
+    this.partnerAvatarUrl,
     this.description,
     this.memberCount = 0,
     this.unreadCount = 0,
@@ -26,14 +30,28 @@ class ChatRoomSummaryDto with _$ChatRoomSummaryDto {
 
   @override
   final String id;
+
+  /// open 방의 제목. direct 방은 null.
   @override
-  final String title;
+  final String? title;
   @override
   @JsonKey(name: 'my_nickname')
   final String myNickname;
   @override
   @JsonKey(name: 'last_read_at')
   final DateTime lastReadAt;
+  @override
+  @JsonKey(name: 'type', defaultValue: 'open')
+  final String type;
+  @override
+  @JsonKey(name: 'partner_id')
+  final String? partnerId;
+  @override
+  @JsonKey(name: 'partner_nickname')
+  final String? partnerNickname;
+  @override
+  @JsonKey(name: 'partner_avatar_url')
+  final String? partnerAvatarUrl;
   @override
   final String? description;
   @override

@@ -92,6 +92,10 @@ extension on FailureCode {
     FailureCode.avatarUploadFailed => l10n.failureAvatarUploadFailed,
     FailureCode.roomFull => l10n.failureRoomFull,
     FailureCode.roomNotFound => l10n.failureRoomNotFound,
+    FailureCode.directChatNotAllowed => l10n.failureDirectChatNotAllowed,
+    FailureCode.directChatSelfNotAllowed =>
+      l10n.failureDirectChatSelfNotAllowed,
+    FailureCode.chatSendNotAllowed => l10n.failureChatSendNotAllowed,
     FailureCode.reportOwnMessageNotAllowed =>
       l10n.failureReportOwnMessageNotAllowed,
     FailureCode.followUserIdRequired => l10n.failureFollowUserIdRequired,

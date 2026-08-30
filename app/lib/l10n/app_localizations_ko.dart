@@ -990,5 +990,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get failureRoomNotFound => '없는 방입니다';
 
   @override
+  String get failureDirectChatNotAllowed => '대화를 시작할 수 없습니다';
+
+  @override
+  String get failureDirectChatSelfNotAllowed => '자기 자신과는 대화할 수 없습니다';
+
+  @override
+  String get failureChatSendNotAllowed => '메시지를 보낼 수 없습니다';
+
+  @override
   String get failureReportOwnMessageNotAllowed => '내 메시지는 신고할 수 없습니다';
 }

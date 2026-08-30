@@ -990,5 +990,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get failureRoomNotFound => 'このルームは存在しません';
 
   @override
+  String get failureDirectChatNotAllowed => '現在この会話を開始できません';
+
+  @override
+  String get failureDirectChatSelfNotAllowed => '自分自身とは会話できません';
+
+  @override
+  String get failureChatSendNotAllowed => '現在メッセージを送信できません';
+
+  @override
   String get failureReportOwnMessageNotAllowed => '自分のメッセージは報告できません';
 }

@@ -37,6 +37,9 @@ abstract interface class ChatRepository {
 
   Future<Result<void>> leaveRoom(String roomId);
 
+  /// 상대와의 DM 방을 연다. 이미 있으면 그 방 id, 없으면 새로 만든다.
+  Future<Result<String>> openDirectRoom(String partnerId);
+
   /// 나간 사람까지 포함해서 돌려준다. 방에 남은 메시지에 이름을 붙여야 한다.
   Future<Result<List<ChatParticipant>>> getParticipants(String roomId);
 

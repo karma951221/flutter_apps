@@ -29,6 +29,9 @@ abstract interface class ChatDataSource {
 
   Future<void> leaveRoom(String roomId);
 
+  /// RPC `open_direct_room`. 이미 있으면 그 방 id, 없으면 새로 만든 방 id.
+  Future<String> openDirectRoom(String partnerId);
+
   Future<List<ChatParticipantDto>> getParticipants(String roomId);
 
   Future<List<ChatMessageDto>> getMessages({

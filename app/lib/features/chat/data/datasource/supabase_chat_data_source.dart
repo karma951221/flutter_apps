@@ -173,6 +173,15 @@ class SupabaseChatDataSource implements ChatDataSource {
   }
 
   @override
+  Future<String> openDirectRoom(String partnerId) async {
+    final roomId = await _client.rpc<dynamic>(
+      'open_direct_room',
+      params: {'partner_id': partnerId},
+    );
+    return roomId as String;
+  }
+
+  @override
   Future<List<ChatParticipantDto>> getParticipants(String roomId) async {
     // 나간 사람도 가져온다. 방에 남은 그 사람의 메시지에 이름을 붙여야 한다.
     final rows = await _client

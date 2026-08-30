@@ -142,6 +142,9 @@ abstract final class SupabaseErrorMapper {
   /// 계속 누르게 된다.
   static const _roomCapacityMessages = {
     '정원이 가득 찬 방입니다': FailureCode.roomFull,
+    '대화를 시작할 수 없습니다': FailureCode.directChatNotAllowed,
+    '자기 자신과는 대화할 수 없습니다': FailureCode.directChatSelfNotAllowed,
+    '메시지를 보낼 수 없습니다': FailureCode.chatSendNotAllowed,
     '없는 방입니다': FailureCode.roomNotFound,
   };
 

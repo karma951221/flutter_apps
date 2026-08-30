@@ -1882,7 +1882,7 @@ abstract class AppLocalizations {
   /// **'싫어요'**
   String get reactionDislike;
 
-  /// No description provided for @avatarSemanticsLabel.
+  /// 아바타의 스크린리더 라벨
   ///
   /// In ko, this message translates to:
   /// **'{nickname} 프로필 사진'**
@@ -2019,6 +2019,24 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'없는 방입니다'**
   String get failureRoomNotFound;
+
+  /// DB 트리거 — 차단 관계 등으로 DM 방 개설이 거부됐다
+  ///
+  /// In ko, this message translates to:
+  /// **'대화를 시작할 수 없습니다'**
+  String get failureDirectChatNotAllowed;
+
+  /// DB 트리거 — open_direct_room 의 partner_id 가 본인이다
+  ///
+  /// In ko, this message translates to:
+  /// **'자기 자신과는 대화할 수 없습니다'**
+  String get failureDirectChatSelfNotAllowed;
+
+  /// DB 트리거 — 차단 관계 등으로 메시지 전송이 거부됐다
+  ///
+  /// In ko, this message translates to:
+  /// **'메시지를 보낼 수 없습니다'**
+  String get failureChatSendNotAllowed;
 
   /// DB 트리거 — 내 채팅 메시지는 신고할 수 없다
   ///

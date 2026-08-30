@@ -1333,6 +1333,18 @@
   "@failureRoomNotFound": {
     "description": "DB 트리거 — 입장하려는 방이 없다"
   },
+  "failureDirectChatNotAllowed": "대화를 시작할 수 없습니다",
+  "@failureDirectChatNotAllowed": {
+    "description": "DB 트리거 — 차단 관계 등으로 DM 방 개설이 거부됐다"
+  },
+  "failureDirectChatSelfNotAllowed": "자기 자신과는 대화할 수 없습니다",
+  "@failureDirectChatSelfNotAllowed": {
+    "description": "DB 트리거 — open_direct_room 의 partner_id 가 본인이다"
+  },
+  "failureChatSendNotAllowed": "메시지를 보낼 수 없습니다",
+  "@failureChatSendNotAllowed": {
+    "description": "DB 트리거 — 차단 관계 등으로 메시지 전송이 거부됐다"
+  },
   "failureReportOwnMessageNotAllowed": "내 메시지는 신고할 수 없습니다",
   "@failureReportOwnMessageNotAllowed": {
     "description": "DB 트리거 — 내 채팅 메시지는 신고할 수 없다"

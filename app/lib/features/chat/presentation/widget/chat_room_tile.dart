@@ -33,7 +33,10 @@ class ChatRoomTile extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              room.title,
+              // TODO(task-4): direct 방 표시는 Task 4 가 담당한다. 여기서는
+              // ChatRoomSummary.title 이 String? 로 바뀐 것만 기계적으로
+              // null-safe 하게 통과시킨다.
+              room.title ?? '',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.titleSmall,

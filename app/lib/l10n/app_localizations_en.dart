@@ -1044,6 +1044,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get failureRoomNotFound => 'This room doesn\'t exist';
 
   @override
+  String get failureDirectChatNotAllowed =>
+      'You can\'t start this conversation right now';
+
+  @override
+  String get failureDirectChatSelfNotAllowed =>
+      'You can\'t start a conversation with yourself';
+
+  @override
+  String get failureChatSendNotAllowed =>
+      'You can\'t send this message right now';
+
+  @override
   String get failureReportOwnMessageNotAllowed =>
       'You can\'t report your own message';
 }

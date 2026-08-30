@@ -79,6 +79,10 @@ class ChatRepositoryImpl with RepositoryErrorHandler implements ChatRepository {
       guard(() => _dataSource.leaveRoom(roomId));
 
   @override
+  Future<Result<String>> openDirectRoom(String partnerId) =>
+      guard(() => _dataSource.openDirectRoom(partnerId));
+
+  @override
   Future<Result<List<ChatParticipant>>> getParticipants(String roomId) =>
       guard(() async {
         final rows = await _dataSource.getParticipants(roomId);

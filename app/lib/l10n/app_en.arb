@@ -320,5 +320,8 @@
   "failureFollowBlocked": "You can't follow this account right now",
   "failureRoomFull": "This room is full",
   "failureRoomNotFound": "This room doesn't exist",
+  "failureDirectChatNotAllowed": "You can't start this conversation right now",
+  "failureDirectChatSelfNotAllowed": "You can't start a conversation with yourself",
+  "failureChatSendNotAllowed": "You can't send this message right now",
   "failureReportOwnMessageNotAllowed": "You can't report your own message"
 }

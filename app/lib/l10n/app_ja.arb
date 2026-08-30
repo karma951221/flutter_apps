@@ -320,5 +320,8 @@
   "failureFollowBlocked": "現在このアカウントはフォローできません",
   "failureRoomFull": "このルームは満員です",
   "failureRoomNotFound": "このルームは存在しません",
+  "failureDirectChatNotAllowed": "現在この会話を開始できません",
+  "failureDirectChatSelfNotAllowed": "自分自身とは会話できません",
+  "failureChatSendNotAllowed": "現在メッセージを送信できません",
   "failureReportOwnMessageNotAllowed": "自分のメッセージは報告できません"
 }
