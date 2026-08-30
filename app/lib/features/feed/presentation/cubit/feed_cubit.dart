@@ -46,6 +46,19 @@ class FeedCubit extends Cubit<FeedState> {
   /// `_load()`를 하면 서버가 이미 걸러 주므로 비운다.
   final _hiddenAuthorIds = <String>{};
 
+  /// 지금 화면이 기다리고 있는 조회의 세대 번호.
+  ///
+  /// 소스(전체 · 팔로잉 · 작성자)는 요청을 보낼 때 읽히지만, 응답은 그보다
+  /// 늦게 온다. 그 사이에 탭을 옮기면 앞 소스의 응답이 새 탭의 목록으로
+  /// 그대로 들어앉는다 — `isClosed` 는 cubit 이 살아 있는 동안의 이 엇갈림을
+  /// 막지 못한다. `_load()` 가 이 번호를 올리고, 요청을 띄우는 쪽은 보내기
+  /// 전에 번호를 잡아 두었다가 응답 시점에 달라졌으면 버린다.
+  ///
+  /// `loadMore` 가 띄운 요청이 돌아오기 전에 `_load()` 가 끼어드는 경우도 같은
+  /// 검사로 걷힌다 — 그때는 `isLoadingMore` 가 이미 초기화돼 있어 다음 페이지
+  /// 요청이 겹쳐 나갈 수 있는 자리이기도 하다.
+  int _generation = 0;
+
   Future<void> load() async {
     _authorId = null;
     _source = FeedSource.all;
@@ -69,6 +82,7 @@ class FeedCubit extends Cubit<FeedState> {
   }
 
   Future<void> _load() async {
+    final generation = ++_generation;
     // 새로 불러오는 순간부터는 서버(양방향 차단 필터)가 이미 걸러 주므로,
     // 지난 조회 동안 쌓인 걷어냄 목록은 의미가 없다.
     _hiddenAuthorIds.clear();
@@ -78,7 +92,7 @@ class FeedCubit extends Cubit<FeedState> {
       authorId: _authorId,
       source: _source,
     );
-    if (isClosed) return;
+    if (isClosed || generation != _generation) return;
 
     emit(
       result.when(
@@ -103,6 +117,7 @@ class FeedCubit extends Cubit<FeedState> {
       return;
     }
 
+    final generation = _generation;
     emit(current.copyWith(isLoadingMore: true));
     final result = await _useCase.getFeedPosts(
       limit: _pageSize,
@@ -110,7 +125,9 @@ class FeedCubit extends Cubit<FeedState> {
       authorId: _authorId,
       source: _source,
     );
-    if (isClosed) return;
+    // 세대가 바뀌었다면 이 페이지는 지난 소스의 것이다. 최신 state 에 붙이면
+    // 새 탭의 목록에 남의 소스 항목이 이어지고 커서까지 그쪽 것으로 덮인다.
+    if (isClosed || generation != _generation) return;
 
     // 요청이 날아가 있는 동안 다른 mutator(예: removeAuthor)가 state를 바꿨을
     // 수 있다. current(요청 전 스냅샷)가 아니라 지금의 state 위에 병합해야
@@ -139,7 +156,14 @@ class FeedCubit extends Cubit<FeedState> {
   ///
   /// 작성자는 로그인한 본인이므로 화면이 세션에서 만들어 넘긴다. 이것 하나를
   /// 위해 방금 쓴 글을 서버에서 다시 조회하지 않는다.
+  ///
+  /// 팔로잉 소스에서는 넣지 않는다. `following_posts_with_author` 는 follows
+  /// 를 조인하고 `follows_not_self` 가 자기 팔로우를 막으므로, 내 글은 이
+  /// 목록에 절대 들어올 수 없다 — 넣어 두면 맨 위에 보였다가 새로고침 한 번에
+  /// 사라져 글이 날아간 것처럼 보인다. 화면이 소스를 다시 판단하게 하지 않고
+  /// 목록을 소유한 여기서 막는다.
   void prependPost(FeedPost item) {
+    if (_source == FeedSource.following) return;
     final current = state;
     if (current.status != FeedStatus.loaded) return;
     emit(current.copyWith(items: [item, ...current.items]));

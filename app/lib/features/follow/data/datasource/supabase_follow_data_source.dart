@@ -52,14 +52,18 @@ class SupabaseFollowDataSource implements FollowDataSource {
     _requireSignedIn();
 
     // follower_id 조건은 걸지 않는다 — follows_delete_own 정책이 내가 건
-    // 팔로우만 지우도록 이미 좁혀 준다. 지울 행이 없으면 .single() 이
-    // PGRST116 을 던지고 mapper 가 notFound 로 바꾼다 (unblockUser 와 같다).
-    await _client
-        .from('follows')
-        .delete()
-        .eq('followee_id', userId)
-        .select()
-        .single();
+    // 팔로우만 지우도록 이미 좁혀 준다.
+    //
+    // unblockUser() 와 달리 .select().single() 을 붙이지 않는다. 거기서는
+    // 0행 삭제가 곧 "차단한 적이 없는 대상"이라 notFound 로 올릴 수 있다 —
+    // blocks 행은 내가 지우지 않는 한 사라지지 않기 때문이다. follows 행은
+    // 다르다. blocks_drop_follows 트리거가 상대의 차단만으로도 내 행을
+    // 지우고, 다른 기기에서 이미 해제했을 수도 있다. 즉 화면에 '팔로잉'이
+    // 떠 있어도 행은 이미 없을 수 있다. 그때 notFound 를 올리면
+    // FollowActionCubit 이 눌리기 전 값(=팔로잉)으로 되돌려, 팔로우하지 않은
+    // 상태인데 버튼만 '팔로잉'으로 남는다. 해제는 멱등이어야 한다 — 0행
+    // 삭제도 "이제 팔로우하지 않는다"는 같은 결과다.
+    await _client.from('follows').delete().eq('followee_id', userId);
   }
 
   @override
@@ -67,12 +71,8 @@ class SupabaseFollowDataSource implements FollowDataSource {
     required String userId,
     required int limit,
     FollowCursor? cursor,
-  }) => _page(
-    view: _followersView,
-    userId: userId,
-    limit: limit,
-    cursor: cursor,
-  );
+  }) =>
+      _page(view: _followersView, userId: userId, limit: limit, cursor: cursor);
 
   @override
   Future<List<FollowUserDto>> getFollowings({

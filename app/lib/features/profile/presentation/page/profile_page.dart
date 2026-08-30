@@ -70,6 +70,9 @@ class _ProfileView extends StatelessWidget {
     final loadedProfile = context.watch<ProfileCubit>().state.profile;
     return MultiBlocListener(
       listeners: [
+        // 보고 있는 사람이 바뀌었을 때만 할 일 — 그 사람의 글을 읽고 차단
+        // 여부를 묻는다. 당겨서 새로고침은 같은 id 를 다시 읽는 것이라 여기
+        // 걸리지 않고, 목록은 새로고침이 feed.refresh() 로 따로 챙긴다.
         BlocListener<ProfileCubit, ProfileState>(
           listenWhen: (previous, current) =>
               previous.profile?.id != current.profile?.id &&
@@ -77,15 +80,34 @@ class _ProfileView extends StatelessWidget {
           listener: (context, state) {
             final profile = state.profile!;
             context.read<FeedCubit>().loadForAuthor(profile.id);
-            // 관계와 팔로워 수는 프로필 응답에 함께 왔다. 버튼이 다시 묻지
-            // 않고 그 값에서 시작한다 (docs/features/follow/plan.md).
-            context.read<FollowActionCubit>().seed(
-              relation: profile.relation,
-              followerCount: profile.followerCount,
-            );
             if (!isMine) {
               context.read<BlockActionCubit>().loadStatus(profile.id);
             }
+          },
+        ),
+        // 팔로우 버튼은 프로필 응답이 바뀔 때마다 다시 심는다.
+        //
+        // 관계와 팔로워 수는 프로필 조회가 함께 내려주므로 버튼이 따로 묻지
+        // 않는다 (docs/features/follow/plan.md). 그래서 id 가 바뀔 때만
+        // 심으면, 같은 사람을 다시 읽는 당겨서 새로고침에서는 값이 갱신되지
+        // 않는다 — 그 사이 남이 팔로우해 팔로워가 늘거나 관계가 뒤집혔어도
+        // 버튼과 팔로워 수만 옛 값으로 남고, 그 상태로 누르면 이미 있는 행을
+        // 다시 넣으려다 실패한다. 프로필 값이 바뀌면(그 안에 관계·팔로워 수가
+        // 들어 있다) 다시 심는 것이 맞다.
+        BlocListener<ProfileCubit, ProfileState>(
+          listenWhen: (previous, current) =>
+              current.profile != null && previous.profile != current.profile,
+          listener: (context, state) {
+            final profile = state.profile!;
+            final followCubit = context.read<FollowActionCubit>();
+            // 낙관적 업데이트가 아직 떠 있으면 심지 않는다. 누른 직후의 값을
+            // 서버가 아직 모르는 응답으로 덮으면 버튼이 되돌아갔다가 다시
+            // 바뀐다.
+            if (followCubit.state.isSubmitting) return;
+            followCubit.seed(
+              relation: profile.relation,
+              followerCount: profile.followerCount,
+            );
           },
         ),
         // 하단 내비게이션 셸이 이 화면을 살려 두므로, 설정에서 프로필을 고치고
@@ -234,8 +256,7 @@ class _ProfileView extends StatelessWidget {
                               userId: profile.id,
                               followingCount: profile.followingCount,
                             ),
-                            if (!isMine)
-                              _FollowButton(userId: profile.id),
+                            if (!isMine) _FollowButton(userId: profile.id),
                             if (isMine) ...[
                               const SizedBox(height: AppSpacing.md),
                               AppButton.secondary(

@@ -25,9 +25,7 @@ class FollowActionCubit extends Cubit<FollowActionState> {
 
   /// 프로필 조회 결과를 초기 상태로 심는다.
   void seed({required FollowRelation relation, required int followerCount}) {
-    emit(
-      FollowActionState(relation: relation, followerCount: followerCount),
-    );
+    emit(FollowActionState(relation: relation, followerCount: followerCount));
   }
 
   /// 팔로우 상태를 뒤집는다. 성공하면 `true`.
@@ -45,8 +43,10 @@ class FollowActionCubit extends Cubit<FollowActionState> {
           isFollowing: willFollow,
           isFollowedBy: before.relation.isFollowedBy,
         ),
-        followerCount: (before.followerCount + (willFollow ? 1 : -1))
-            .clamp(0, 1 << 31),
+        followerCount: (before.followerCount + (willFollow ? 1 : -1)).clamp(
+          0,
+          1 << 31,
+        ),
         isSubmitting: true,
         failure: null,
       ),

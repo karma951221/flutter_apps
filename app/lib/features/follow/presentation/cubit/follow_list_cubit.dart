@@ -22,6 +22,12 @@ class FollowListCubit extends Cubit<FollowListState> {
   String? _userId;
   FollowDirection _direction = FollowDirection.followers;
 
+  /// 지금 화면이 기다리고 있는 조회의 세대 번호.
+  ///
+  /// [load] 가 값을 올리고, 요청을 띄우는 쪽은 보내기 전에 잡아 두었다가
+  /// 응답 시점에 달라졌으면 버린다 — [FeedCubit] 과 같은 장치다.
+  int _generation = 0;
+
   Future<void> load({
     required String userId,
     required FollowDirection direction,
@@ -29,9 +35,10 @@ class FollowListCubit extends Cubit<FollowListState> {
     _userId = userId;
     _direction = direction;
 
+    final generation = ++_generation;
     emit(const FollowListState());
     final result = await _fetch();
-    if (isClosed) return;
+    if (isClosed || generation != _generation) return;
 
     emit(
       result.when(
@@ -60,11 +67,17 @@ class FollowListCubit extends Cubit<FollowListState> {
       return;
     }
 
+    final generation = _generation;
     emit(current.copyWith(isLoadingMore: true));
     final result = await _fetch(cursor: current.nextCursor);
-    if (isClosed) return;
+    // 요청이 날아가 있는 동안 refresh 가 목록을 갈아치웠다면, 이 페이지는
+    // 사라진 목록의 뒷부분이다. 지금 목록에 이어 붙이면 그 사이에 있던 사람이
+    // 통째로 빠지고 nextCursor 도 옛 경계로 되돌아간다 — 병합이 아니라
+    // 버려야 하는 응답이다. 새 목록의 다음 페이지는 사용자가 다시 바닥에
+    // 닿을 때 새 커서로 읽는다.
+    if (isClosed || generation != _generation) return;
 
-    // 요청이 날아가 있는 동안 refresh 가 목록을 갈아치웠을 수 있다. 요청 전
+    // 세대가 같아도 다른 mutator 가 state 를 바꿨을 수 있으므로 요청 전
     // 스냅샷이 아니라 지금의 state 위에 붙인다 — FeedCubit 과 같은 이유다.
     final latest = state;
     emit(

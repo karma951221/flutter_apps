@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:daylog/core/error/failure.dart';
 import 'package:daylog/core/pagination/cursor_page.dart';
@@ -126,6 +128,50 @@ void main() {
 
     expect(cubit.state.items.map((u) => u.id), ['a', 'b']);
     expect(cubit.state.canLoadMore, isFalse);
+  });
+
+  test('새로고침이 끼어들면 뒤늦게 온 다음 페이지는 버린다', () async {
+    // loadMore 요청이 떠 있는 동안 당겨서 새로고침이 목록을 갈아치우면, 그
+    // 응답은 사라진 목록의 뒷부분이다. 지금 목록에 이어 붙이면 그 사이에
+    // 있던 사람이 통째로 빠지고 nextCursor 도 옛 경계로 되돌아간다.
+    final loadMoreCompleter = Completer<Result<CursorPage<FollowUser>>>();
+    var firstPageCount = 0;
+
+    when(
+      () => useCase.getFollowers(userId: 'u1', limit: 20, cursor: null),
+    ).thenAnswer((_) async {
+      firstPageCount += 1;
+      // 두 번째 첫 페이지가 새로고침 결과다 — 새로 팔로우한 사람이 맨
+      // 앞에 붙으면서 경계가 한 칸 밀린다.
+      return firstPageCount == 1
+          ? Ok(CursorPage<FollowUser>(items: [_user('a')], nextCursor: 'c1'))
+          : Ok(
+              CursorPage<FollowUser>(
+                items: [_user('새사람'), _user('a')],
+                nextCursor: 'c2',
+              ),
+            );
+    });
+    when(
+      () => useCase.getFollowers(userId: 'u1', limit: 20, cursor: 'c1'),
+    ).thenAnswer((_) => loadMoreCompleter.future);
+
+    final cubit = FollowListCubit(useCase);
+    addTearDown(cubit.close);
+
+    await cubit.load(userId: 'u1', direction: FollowDirection.followers);
+    final loadMoreFuture = cubit.loadMore();
+    await cubit.refresh();
+    expect(cubit.state.items.map((u) => u.id), ['새사람', 'a']);
+
+    loadMoreCompleter.complete(
+      Ok(CursorPage<FollowUser>(items: [_user('b')], nextCursor: 'c1-다음')),
+    );
+    await loadMoreFuture;
+
+    expect(cubit.state.items.map((u) => u.id), ['새사람', 'a']);
+    expect(cubit.state.nextCursor, 'c2');
+    expect(cubit.state.isLoadingMore, isFalse);
   });
 
   test('다음 커서가 없으면 더 읽지 않는다', () async {

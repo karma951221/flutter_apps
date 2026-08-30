@@ -3,9 +3,14 @@
 > [테스트 가이드](../README.md) · [계획](../../features/follow/plan.md) · [진행 현황](../../status.md)
 
 ```bash
-cd app
-flutter test test/features/follow
-python3 supabase/tests/follow_rls_check.py   # 프로젝트 루트에서, supabase start 후
+cd app && flutter test test/features/follow
+```
+
+권한 경계와 동시성은 프로젝트 루트에서, `supabase start` 후에 돌린다.
+
+```bash
+python3 supabase/tests/follow_rls_check.py
+python3 supabase/tests/follow_block_race_check.py
 ```
 
 ## 단위 · 위젯
@@ -37,6 +42,13 @@ python3 supabase/tests/follow_rls_check.py   # 프로젝트 루트에서, supaba
 | `ProfilePage` | 차단한 상대 | 팔로우 버튼을 그리지 않는다 |
 | `FeedPage` | 탭 | 전체 · 팔로잉 두 탭을 보여주고, 옮기면 팔로잉 소스로 다시 읽는다 |
 | `FeedCubit` | 소스 | 팔로잉을 본 뒤에도 프로필 목록은 전체 소스로 읽는다 |
+| `FeedCubit` | **탭 전환 경합** | 앞 소스의 늦은 첫 페이지·다음 페이지 응답을 버린다 |
+| `FeedCubit` | 팔로잉 탭 작성 | 내 글은 팔로잉 목록에 넣지 않는다 (자기 팔로우가 없으므로 새로고침하면 사라진다) |
+| `FeedPage` | 팔로잉 탭 실패 | '다시 시도'가 전체가 아니라 팔로잉을 다시 읽는다 |
+| `FollowListCubit` | **새로고침 경합** | 뒤늦게 온 다음 페이지를 붙이지 않고 버린다 |
+| `ProfilePage` | 같은 프로필 재조회 | 팔로워 수와 버튼이 새 값으로 갱신된다 |
+| 시나리오 | 빈 사용자 식별자 | 팔로우·해제도 저장소를 부르지 않는다 |
+| `SupabaseFollowDataSource` | 지울 행이 없는 해제 | 성공으로 둔다 — 트리거가 상대의 차단만으로도 행을 지운다 |
 
 ## 권한 경계 (`supabase/tests/follow_rls_check.py`)
 
@@ -53,6 +65,17 @@ python3 supabase/tests/follow_rls_check.py   # 프로젝트 루트에서, supaba
   팔로우가 거부된다. 차단한 상대는 제3자의 목록에서도 가려지지만 같은 목록이
   다른 사람 눈에는 그대로다. 팔로워 수는 차단과 무관하게 같다
 - 탈퇴하면 그 사람의 팔로우 행이 cascade 로 사라진다
+
+## 동시성 (`supabase/tests/follow_block_race_check.py`)
+
+psql 세션 둘로 트랜잭션을 겹친다. REST 로는 재현되지 않는 결함이다.
+
+- 팔로우가 열려 있는 중에 차단해도 엣지가 남지 않는다
+- 차단이 열려 있는 중에 건 팔로우는 방향 중립 문구로 거부된다
+- 거부된 뒤에도 엣지가 남지 않는다
+- 차단이 없으면 팔로우는 그대로 된다
+
+락과 가드를 빼면 4건이 모두 실패한다 — 검사가 공허하지 않음을 그렇게 확인했다.
 
 ## 알아둘 것
 

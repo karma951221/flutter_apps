@@ -620,6 +620,38 @@ void main() {
       expect(find.text('지금은 팔로우할 수 없습니다'), findsOneWidget);
     });
 
+    testWidgets('같은 프로필을 다시 읽으면 팔로워 수와 버튼이 갱신된다', (tester) async {
+      // seed 가 id 변경에만 걸려 있어, 당겨서 새로고침으로 새 값을 받아도
+      // 팔로잉 수만 갱신되고 팔로워 수·버튼은 옛 값에 멈춰 있었다. 그 상태로
+      // 누르면 이미 있는 행을 다시 넣으려다 실패한다 (2026-08-30 리뷰).
+      await pumpOther(
+        tester,
+        profile: _profile('other', '이웃', followerCount: 10),
+      );
+      expect(find.text('10'), findsOneWidget);
+      expect(find.text('팔로우'), findsOneWidget);
+
+      when(() => profileUseCase.getProfile(any())).thenAnswer(
+        (_) async => Ok(
+          _profile(
+            'other',
+            '이웃',
+            followerCount: 11,
+            relation: const FollowRelation(isFollowing: true),
+          ),
+        ),
+      );
+      await tester.fling(
+        find.byType(CustomScrollView),
+        const Offset(0, 400),
+        1000,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('11'), findsOneWidget);
+      expect(find.text('팔로잉'), findsNWidgets(2));
+      expect(find.text('팔로우'), findsNothing);
+    });
     testWidgets('내 프로필에는 팔로우 버튼이 없다', (tester) async {
       when(
         () => feedUseCase.getFeedPosts(

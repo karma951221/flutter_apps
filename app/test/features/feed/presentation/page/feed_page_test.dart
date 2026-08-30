@@ -241,4 +241,61 @@ void main() {
     ).called(1);
     expect(find.text('팔로우한 사람이 없습니다'), findsOneWidget);
   });
+
+  testWidgets('팔로잉 탭에서 실패하면 다시 시도도 팔로잉을 읽는다', (tester) async {
+    // load() 를 부르면 _source 가 전체로 되돌아가, 탭은 팔로잉인데 전체 피드가
+    // 그려지고 이후 무한스크롤까지 전체 커서를 따라간다 (2026-08-30 리뷰).
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+
+    await pumpPage(tester);
+
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer((_) async => const Err(Failure.network(message: '연결 실패')));
+    await tester.tap(find.text('팔로잉'));
+    await tester.pumpAndSettle();
+    expect(find.text('다시 시도'), findsOneWidget);
+
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+    // 최초 진입의 전체 피드 조회까지 세지 않도록, 재시도 직전에 기록을 비운다.
+    clearInteractions(feedUseCase);
+    await tester.tap(find.text('다시 시도'));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: null,
+        authorId: null,
+        source: FeedSource.following,
+      ),
+    ).called(1);
+    verifyNever(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: FeedSource.all,
+      ),
+    );
+  });
 }

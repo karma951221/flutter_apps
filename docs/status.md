@@ -106,8 +106,9 @@
 
 검증한 것(2026-08-30):
 
-- 세 ARB 가 **298개 키 집합으로 동일**하다. en·ja 에 한국어가 남은 값도,
-  ko 와 글자까지 같은 값도 없다
+- 세 ARB 의 **키 집합이 서로 같다.** en·ja 에 한국어가 남은 값도, ko 와 글자까지
+  같은 값도 없다 (개수는 feature 마다 늘어나므로 적지 않는다 —
+  `test/convention/` 이 대신 지킨다)
 - 사용자에게 보이는 문자열 중 하드코딩된 한국어는 없다. `lib/` 의 문자열
   리터럴을 훑으면 ARB · DB 매칭 키 · `Failure.message` 진단 fallback ·
   언어 자기표기(`한국어`)만 남는다
@@ -210,6 +211,12 @@ feed · post · profile 을 외부 리뷰(`codex-review.md`)로 훑고 지적 5�
 - [x] 프로필에 팔로워 · 팔로잉 수와 팔로우 버튼(3상태, 낙관적 갱신).
       수와 관계는 `profile_details` 뷰가 프로필과 함께 한 번에 내려준다
 - [x] 권한 경계 28건을 실제 JWT + REST 로 확인 (`supabase/tests/follow_rls_check.py`)
+- [x] **검수 — 2026-08-30.** 서브에이전트 넷(다국어 정합성 · 번역 품질 ·
+      F8 데이터 · F8 앱)으로 훑고 결함을 고쳤다. 앱 P1 둘(탭 전환 시 소스 간
+      응답 교차, 팔로우 버튼이 한 번만 심어짐)과 DB P2 둘(팔로우 × 차단
+      동시성, 뷰 컬럼 동결)이 실질 결함이었다
+      ([기록](features/follow/history.md) · `20260830150000_harden_follows.sql`)
+- [x] 동시성 4건을 psql 세션 둘로 확인 (`supabase/tests/follow_block_race_check.py`)
 
 ## 3.5단계 — F9 채팅 (완료)
 

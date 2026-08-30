@@ -12,9 +12,7 @@ import '../mapper/feed_post_mapper.dart';
 
 /// FeedDataSource 를 domain Repository 계약으로 변환하는 구현체.
 @LazySingleton(as: FeedRepository)
-class FeedRepositoryImpl
-    with RepositoryErrorHandler
-    implements FeedRepository {
+class FeedRepositoryImpl with RepositoryErrorHandler implements FeedRepository {
   FeedRepositoryImpl(this._dataSource);
 
   final FeedDataSource _dataSource;

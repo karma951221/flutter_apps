@@ -732,6 +732,141 @@ void main() {
     ).called(1);
   });
 
+  test('탭을 옮기면 앞 소스의 늦은 첫 페이지 응답은 버린다', () async {
+    // 전체 탭의 첫 조회가 떠 있는 동안 팔로잉 탭으로 옮기면, 팔로잉 응답이
+    // 먼저 그려진 뒤에 전체 응답이 뒤늦게 도착한다. 소스는 요청을 보낼 때만
+    // 읽히므로, 응답 시점에 세대를 보지 않으면 팔로잉 탭에 전체 피드가
+    // 그대로 들어앉는다 (isClosed 는 cubit 이 살아 있으니 걸리지 않는다).
+    final allCompleter = Completer<Result<CursorPage<FeedPost>>>();
+
+    when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: null,
+        authorId: null,
+        source: FeedSource.all,
+      ),
+    ).thenAnswer((_) => allCompleter.future);
+    when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: null,
+        authorId: null,
+        source: FeedSource.following,
+      ),
+    ).thenAnswer(
+      (_) async =>
+          Ok(CursorPage<FeedPost>(items: [_item('팔로잉-1', nickname: '이웃')])),
+    );
+
+    final cubit = FeedCubit(useCase, reactionUseCase);
+    addTearDown(cubit.close);
+
+    // 전체 탭의 조회를 띄운 채로 팔로잉 탭으로 옮긴다.
+    final allFuture = cubit.load();
+    await cubit.loadFollowing();
+    expect(cubit.state.items.map((item) => item.id), ['팔로잉-1']);
+
+    // 뒤늦게 전체 응답이 도착한다.
+    allCompleter.complete(
+      Ok(CursorPage<FeedPost>(items: [_item('전체-1')], nextCursor: 'all-1')),
+    );
+    await allFuture;
+
+    expect(cubit.state.items.map((item) => item.id), ['팔로잉-1']);
+    expect(cubit.state.nextCursor, isNull);
+  });
+
+  test('탭을 옮기면 앞 소스의 늦은 다음 페이지 응답도 버린다', () async {
+    // 더 나쁜 쪽이다. loadMore 의 응답은 '최신 state 위에 병합'되므로, 탭을
+    // 옮긴 뒤 도착하면 팔로잉 목록 뒤에 전체 피드가 이어 붙고 nextCursor 까지
+    // 전체 피드의 것으로 덮인다 — 팔로잉 탭이 끝없는 전체 피드가 된다.
+    // 게다가 _load 가 비운 걷어냄 목록 때문에 방금 차단한 작성자의 글도 그
+    // 페이지를 타고 되살아난다.
+    final loadMoreCompleter = Completer<Result<CursorPage<FeedPost>>>();
+
+    when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: null,
+        authorId: null,
+        source: FeedSource.all,
+      ),
+    ).thenAnswer(
+      (_) async =>
+          Ok(CursorPage<FeedPost>(items: [_item('전체-1')], nextCursor: 'all-1')),
+    );
+    when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: 'all-1',
+        authorId: null,
+        source: FeedSource.all,
+      ),
+    ).thenAnswer((_) => loadMoreCompleter.future);
+    when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: null,
+        authorId: null,
+        source: FeedSource.following,
+      ),
+    ).thenAnswer(
+      (_) async => Ok(
+        CursorPage<FeedPost>(
+          items: [_item('팔로잉-1', nickname: '이웃')],
+          nextCursor: 'following-1',
+        ),
+      ),
+    );
+
+    final cubit = FeedCubit(useCase, reactionUseCase);
+    addTearDown(cubit.close);
+
+    await cubit.load();
+    final loadMoreFuture = cubit.loadMore();
+    await cubit.loadFollowing();
+
+    loadMoreCompleter.complete(
+      Ok(CursorPage<FeedPost>(items: [_item('전체-2')], nextCursor: 'all-2')),
+    );
+    await loadMoreFuture;
+
+    expect(cubit.state.items.map((item) => item.id), ['팔로잉-1']);
+    expect(cubit.state.nextCursor, 'following-1');
+    expect(cubit.state.isLoadingMore, isFalse);
+  });
+
+  test('팔로잉 탭에서 쓴 글은 목록에 넣지 않는다', () async {
+    // following_posts_with_author 는 follows 를 조인하고 follows_not_self 가
+    // 자기 팔로우를 막는다 — 내 글은 이 목록에 들어올 수 없다. 넣어 두면
+    // 맨 위에 보였다가 새로고침 한 번에 사라져 글이 날아간 것처럼 보인다.
+    when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer(
+      (_) async =>
+          Ok(CursorPage<FeedPost>(items: [_item('팔로잉-1', nickname: '이웃')])),
+    );
+
+    final cubit = FeedCubit(useCase, reactionUseCase);
+    addTearDown(cubit.close);
+
+    await cubit.loadFollowing();
+    cubit.prependPost(_item('방금-쓴-글'));
+
+    expect(cubit.state.items.map((item) => item.id), ['팔로잉-1']);
+
+    // 전체 탭으로 돌아오면 다시 넣는다.
+    await cubit.load();
+    cubit.prependPost(_item('방금-쓴-글'));
+    expect(cubit.state.items.map((item) => item.id), ['방금-쓴-글', '팔로잉-1']);
+  });
+
   test('프로필 목록은 팔로잉 탭을 본 뒤에도 전체 소스로 읽는다', () async {
     when(
       () => useCase.getFeedPosts(

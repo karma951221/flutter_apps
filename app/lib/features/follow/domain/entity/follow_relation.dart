@@ -14,10 +14,7 @@ class FollowRelation with _$FollowRelation {
   @override
   final bool isFollowedBy;
 
-  const FollowRelation({
-    this.isFollowing = false,
-    this.isFollowedBy = false,
-  });
+  const FollowRelation({this.isFollowing = false, this.isFollowedBy = false});
 
   /// 서로 팔로우 중이다.
   bool get isMutual => isFollowing && isFollowedBy;

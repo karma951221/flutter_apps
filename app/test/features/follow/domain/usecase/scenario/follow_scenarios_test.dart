@@ -1,4 +1,5 @@
 import 'package:daylog/core/error/failure.dart';
+import 'package:daylog/core/error/failure_code.dart';
 import 'package:daylog/core/pagination/cursor_page.dart';
 import 'package:daylog/core/result/result.dart';
 import 'package:daylog/features/follow/domain/entity/follow_user.dart';
@@ -118,5 +119,28 @@ void main() {
     );
 
     expect((result as Err).failure, isA<ValidationFailure>());
+  });
+
+  test('빈 사용자 식별자로는 팔로우·해제를 시도하지 않는다', () async {
+    // 그대로 내려보내면 eq('followee_id','') 가 22P02 로 튕기고, 코드가 없는
+    // Failure.server 라 PostgREST 의 영어 문구가 화면에 그대로 나간다
+    // (2026-08-30 리뷰). 목록 조회는 이미 막고 있었는데 여기만 뚫려 있었다.
+    for (final id in ['', '   ']) {
+      final followed = await FollowUserScenario(repository)(id);
+      final unfollowed = await UnfollowUserScenario(repository)(id);
+
+      expect(
+        (followed as Err).failure,
+        isA<ValidationFailure>().having(
+          (f) => f.failureCode,
+          'failureCode',
+          FailureCode.followUserIdRequired,
+        ),
+      );
+      expect((unfollowed as Err).failure, isA<ValidationFailure>());
+    }
+
+    verifyNever(() => repository.followUser(any()));
+    verifyNever(() => repository.unfollowUser(any()));
   });
 }

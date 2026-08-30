@@ -125,7 +125,10 @@ class _FeedViewState extends State<_FeedView>
                   l10n.feedLoadFailed,
               description: l10n.feedLoadFailedDescription,
               actionLabel: l10n.commonRetry,
-              onAction: () => context.read<FeedCubit>().load(),
+              // load() 가 아니라 refresh() 다 — load() 는 소스를 전체로
+              // 되돌리므로, 팔로잉 탭에서 실패한 뒤 다시 시도를 누르면 탭은
+              // 팔로잉인 채로 전체 피드가 그려진다.
+              onAction: () => context.read<FeedCubit>().refresh(),
             ),
           ),
           FeedStatus.loaded => _FeedList(

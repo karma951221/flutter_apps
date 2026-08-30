@@ -1888,7 +1888,36 @@ create trigger blocks_drop_follows
 `posts_with_author` 가 `security_invoker = on` 이라 `posts_select_visible` 을 그대로
 물려받는다. 비로그인은 `auth.uid()` 가 null 이라 0행이 나온다.
 
+### 검수에서 굳힌 것 (`20260830150000_harden_follows.sql`)
+
+- **팔로우 × 차단 동시성.** 정책의 `is_blocked_with()` 검사와 `blocks` 트리거는
+  둘 다 "상대가 이미 커밋했다"를 전제한다. 두 트랜잭션이 겹치면 전제가 깨져
+  엣지가 살아남고, `blocks` PK 때문에 재차단으로도 복구되지 않았다.
+  `follow_pair_lock()` advisory 락을 양쪽 경로가 잡고, `follows` 에
+  `follows_guard_block` BEFORE INSERT 가드를 더해 닫았다
+- **`following_posts_with_author` 의 `select p.*`.** Postgres 가 뷰 생성 시점의
+  컬럼으로 동결하므로 `posts_with_author` 에 컬럼이 늘어도 따라가지 않는다.
+  앱은 두 뷰에 같은 컬럼 문자열을 쓰기 때문에, 그 시점에 팔로잉 피드만 400 이
+  된다. 컬럼을 명시해 **두 뷰를 함께 고쳐야 한다는 사실이 드러나게** 했다 —
+  `posts_with_author` 컬럼을 바꾸면 이 뷰도 `create or replace` 한다
+
+### 알려진 한계 (고치지 않았다)
+
+- **팔로잉 피드가 페이지마다 팔로이 전체 글을 펼친 뒤 정렬한다.** 감싸는 뷰라
+  `posts_created_at_idx` 의 정렬을 못 쓴다. 팔로이 506명 · 후보 1,010건에서
+  0.6ms → 11.5ms (19배). 고치려면 "먼저 자르고 나중에 붙이는" RPC 로 조회
+  경로를 바꿔야 해서 앱 커서 계약까지 번진다
+- **목록 뷰의 차단 필터는 화면 필터이지 보안 통제가 아니다** — `follows` 직접
+  조회 + `profiles` 임베드로 우회된다 ([계획](features/follow/plan.md))
+- **커서의 `or(...)` 형태가 인덱스 조건이 아니라 필터로 떨어진다.** 팔로워
+  5,001명 · 3,000번째 커서에서 3,001행을 버린다(행 비교 문법이면 0행).
+  PostgREST 에 행 비교가 없어 앱 코드로는 못 고치고, 같은 형태가 피드에도 있다
+- **`profile_details` 는 단일 프로필 전용이다.** 행마다 서브쿼리 넷을 돌리므로
+  목록 조회에 쓰지 않는다
+
 ### 검증한 것 (로컬 Supabase · 실제 JWT + REST)
 
-`supabase/tests/follow_rls_check.py` 28건이 모두 통과한다(2026-08-30). 항목은
+`supabase/tests/follow_rls_check.py` 28건과
+`supabase/tests/follow_block_race_check.py` 4건이 모두 통과한다(2026-08-30).
+뒤쪽은 psql 세션 둘로 트랜잭션을 겹쳐 위 동시성 결함을 재현·확인한다. 항목은
 [테스트 문서](testing/features/follow.md)에 있다.

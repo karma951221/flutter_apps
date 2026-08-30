@@ -47,16 +47,20 @@ class DefaultFollowUseCase implements FollowUseCase {
     required String userId,
     int limit = 20,
     String? cursor,
-  }) => GetFollowersScenario(
-    _repository,
-  )(userId: userId, limit: limit, cursor: cursor);
+  }) => GetFollowersScenario(_repository)(
+    userId: userId,
+    limit: limit,
+    cursor: cursor,
+  );
 
   @override
   Future<Result<CursorPage<FollowUser>>> getFollowings({
     required String userId,
     int limit = 20,
     String? cursor,
-  }) => GetFollowingsScenario(
-    _repository,
-  )(userId: userId, limit: limit, cursor: cursor);
+  }) => GetFollowingsScenario(_repository)(
+    userId: userId,
+    limit: limit,
+    cursor: cursor,
+  );
 }
