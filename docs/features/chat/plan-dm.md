@@ -122,18 +122,48 @@ features/chat/
 
 ## 완료 조건
 
-- [ ] 타인 프로필에서 DM 을 열고, 같은 상대와 다시 열면 같은 방이다 (동시 호출 포함)
-- [ ] 두 기기에서 메시지가 재조회 없이 실시간으로 오간다 (기존 경로)
-- [ ] DM 방이 탐색 화면과 비참여자 REST 조회에 노출되지 않는다
-- [ ] 목록·방 화면이 상대 프로필 닉네임·아바타로 표시된다
-- [ ] 나간 DM 방은 목록에서 사라지고, 상대가 메시지를 보내면 다시 나타나며
-      이전 히스토리가 보인다
-- [ ] DM 방에는 입퇴장 시스템 메시지가 생기지 않는다
-- [ ] 차단 관계면 시작·전송이 서버에서 거부되고(방향 중립 문구), 수신은 숨는다
-- [ ] 자기 자신과의 DM 이 거부된다
-- [ ] 새 문자열에 하드코딩된 한국어가 없다
-- [ ] `flutter analyze` 무결 · `flutter test` 전체 통과 ·
-      `chat_rls_check.py` DM 경계 통과
+- [x] 타인 프로필에서 DM 을 열고, 같은 상대와 다시 열면 같은 방이다 (동시 호출 포함) —
+      `chat_rls_check.py` 로 순차 재호출(같은 쪽·상대 쪽 모두)이 같은 방 id 를 주는
+      것을 확인했다. **진짜 동시(같은 순간) 호출은 별도 프로세스로 재현하지
+      않았다** — `insert ... on conflict (direct_key) do nothing` 뒤 select 하는
+      패턴은 postgres 트랜잭션이 원자적으로 판정하는 구조라 follow/block 처럼 앱
+      레벨 경쟁이 아니어서, `follow_block_race_check.py` 같은 별도 동시성 스크립트를
+      두지 않았다
+- [ ] 두 기기에서 메시지가 재조회 없이 실시간으로 오간다 (기존 경로) — DM 전용 실시간
+      스크립트는 없다. `chat_realtime_check.py`(F9, 4/4)가 확인한 Postgres Changes
+      구독·RLS 재평가 메커니즘은 방 `type` 을 분기하지 않으므로 DM 방에도 그대로
+      적용되지만, DM 메시지로 실제 왕복을 재현한 적은 없어 체크하지 않는다. 두 기기
+      E2E 가 없으면 확인할 수 없는 항목이다
+- [x] DM 방이 탐색 화면과 비참여자 REST 조회에 노출되지 않는다 — `chat_rls_check.py`
+      (`open_chat_rooms` 비참여자·당사자 기준 모두 빈 목록, 비참여자의 `chat_rooms`
+      직접 조회도 빈 목록)
+- [x] 목록·방 화면이 상대 프로필 닉네임·아바타로 표시된다 — 위젯 테스트
+      (`ChatRoomListPage`·`ChatRoomPage`) + `chat_rls_check.py` 의 `my_chat_rooms`
+      DM 행 검증(`partner_nickname` 등)
+- [x] 나간 DM 방은 목록에서 사라지고, 상대가 메시지를 보내면 다시 나타나며
+      이전 히스토리가 보인다 — `chat_rls_check.py` 가 사라짐·재등장은 직접 확인한다.
+      "이전 히스토리가 보인다"는 부분은 새로 만든 검증이 아니라 F9 의 기존 메커니즘을
+      그대로 물려받은 것이다 — `is_room_member()` 는 현재 `left_at` 만 보고 과거
+      시각을 따지지 않으므로, 재입장하면 나가기 전 메시지도 다시 보인다(오픈 채팅에서
+      이미 확인된 동작)
+- [x] DM 방에는 입퇴장 시스템 메시지가 생기지 않는다 — `chat_rls_check.py`
+      ("DM 방에는 시스템 메시지가 없다", "자동 재등장 과정에서도 시스템 메시지는
+      생기지 않는다")
+- [x] 차단 관계면 시작·전송이 서버에서 거부되고(방향 중립 문구), 수신은 숨는다 —
+      `chat_rls_check.py` (차단 후 A·B 양방향 전송 거부, `open_direct_room` 거부,
+      차단 후 상대 메시지가 조회에서 사라짐, 차단 해제 후 복구)
+- [x] 자기 자신과의 DM 이 거부된다 — `chat_rls_check.py` (`23514`,
+      `FailureCode.directChatSelfNotAllowed` 로 매핑)
+- [x] 새 문자열에 하드코딩된 한국어가 없다 — DM 이 추가한 ARB 키
+      (`profileMessageButton` · `failureDirectChatNotAllowed` ·
+      `failureDirectChatSelfNotAllowed` · `failureChatSendNotAllowed` 등) 를
+      직접 확인했다. en·ja 는 한국어 원문을 직역하지 않고 저장소 어투로 새로
+      썼다(`history.md` 참고). 세 ARB 의 키 집합 일치를 자동으로 지키는 컨벤션
+      테스트는 아직 없다 — `test/convention/arb_description_convention_test.dart`
+      는 ko 템플릿의 `@key` description 유무만 검사한다
+- [x] `flutter analyze` 무결 · `flutter test` 전체 통과 ·
+      `chat_rls_check.py` DM 경계 통과 — 2026-08-30 기준 analyze 무결,
+      test 582/582, `chat_rls_check.py` 78/78(F9 52 + DM 26)
 
 ## 테스트
 

@@ -1,6 +1,8 @@
-# chat 테스트 (F9 오픈 채팅)
+# chat 테스트 (F9 오픈 채팅 · F9-DM)
 
-> [테스트 가이드](../README.md) · [계획](../../features/chat/plan.md) · [기록](../../features/chat/history.md) · [스키마 §14](../../schema.md)
+> [테스트 가이드](../README.md) · [계획](../../features/chat/plan.md) ·
+> [DM 계획](../../features/chat/plan-dm.md) · [기록](../../features/chat/history.md) ·
+> [스키마 §14](../../schema.md)
 
 ```bash
 cd app
@@ -52,6 +54,27 @@ flutter test test/features/chat
 | `CreateRoomPage` | 개설 실패 | Snackbar 로 알리고 화면에 남는다. 입장은 시도하지 않는다. |
 | `HomeShellPage` | 탭 · 배지 | 탭이 넷이 되고, 안읽음이 있으면 채팅 탭에 배지가 붙는다(셸이 그린다). |
 
+## 단위 · 위젯 — DM (F9-DM)
+
+```bash
+cd app
+flutter test test/features/chat
+flutter test test/features/profile
+```
+
+| 대상 | 시나리오 | 기대 결과 |
+|---|---|---|
+| `OpenDirectRoomScenario` | 성공 | 저장소가 돌려준 방 id 를 그대로 전달한다 (`app/test/features/chat/domain/usecase/scenario/open_direct_room_scenario_test.dart`). |
+| `OpenDirectRoomScenario` | 실패 | 저장소 실패(`Failure`)를 그대로 전달한다 — 차단·자기 자신 등 서버 판정을 앱이 다시 해석하지 않는다. |
+| `ChatRoomListPage` | DM 줄 열기 | 상대 닉네임과 `isDirect: true` 를 방 화면에 넘긴다. |
+| `ChatRoomListPage` | open 줄 열기 | 제목만 넘기고 `isDirect: false` — DM 과 open 이 같은 콜백에서 갈리는지 확인한다. |
+| `ChatRoomTile`(위 페이지 테스트로 덮음) | direct 표시 | 상대 아바타·닉네임으로 그리고, **인원 수 텍스트를 그리지 않는다**(direct 는 항상 2 명이라 알려줄 정보가 없다). |
+| `ChatRoomPage` | direct 방 메뉴 | 참여자 항목이 없고 나가기만 남는다 — 방 화면이 `ChatRoomPageArgs.isDirect` 를 받아 분기한다. |
+| `ProfilePage` | 메시지 버튼 노출 | 타인 프로필에는 팔로우 옆에 메시지 버튼이 있고, 내 프로필에는 없다. |
+| `ProfilePage` | 차단 상대 | 메시지 버튼을 아예 그리지 않는다 — 팔로우 버튼과 같은 `BlockActionCubit` 상태로 `_ProfileActions` 가 함께 게이팅한다. |
+| `ProfilePage` | 메시지 버튼 탭 | `openDirectRoom` 을 호출해 성공하면 상대 닉네임과 함께 방으로 이동하고, 연타해도 한 번만 호출한다(진행 중 잠금). |
+| `ProfilePage` | 메시지 버튼 실패 | 스낵바로 실패를 알리고 화면에 남는다. |
+
 ## 로컬 Supabase 로만 확인되는 것
 
 단위 테스트는 스트림을 직접 밀어넣으므로 **publication 이 빠져도 통과한다.** 권한
@@ -59,11 +82,11 @@ flutter test test/features/chat
 
 ```bash
 supabase start
-python3 supabase/tests/chat_rls_check.py       # 52건
+python3 supabase/tests/chat_rls_check.py       # 78건 (F9 52 + DM 26)
 python3 supabase/tests/chat_realtime_check.py  # 4건 (websockets 필요)
 ```
 
-### 권한 경계 (`chat_rls_check.py`, 2026-08-28 52/52 통과)
+### 권한 경계 (`chat_rls_check.py`, 2026-08-30 78/78 통과)
 
 | 묶음 | 확인한 것 |
 |---|---|
@@ -79,6 +102,12 @@ python3 supabase/tests/chat_realtime_check.py  # 4건 (websockets 필요)
 | 입장 경로 | 참여자 행의 `room_id` 는 고칠 수 없다 · **upsert 는 권한 부족으로 막힌다** (앱은 읽고 나서 insert/update 를 고른다) |
 | 뷰 | `my_chat_rooms` 의 방·참여자 수·내 닉네임 · 안읽음 계산과 0 복귀 · `open_chat_rooms` 를 비참여자와 **anon 이** 읽음 · 비참여자는 참여자 신원 못 봄 |
 | 탐색 뷰 누출 | `security_invoker = off` 인 `open_chat_rooms` 를 발판으로 **참여자·메시지를 임베딩해도 비어 있다**(임베딩은 대상 테이블 RLS 를 따른다) · 뷰가 내보내는 컬럼은 집계 수까지뿐 |
+| DM 개설(`open_direct_room`) | A 가 B 와 방을 연다 · **같은 상대로 재호출해도 같은 방 id** · **상대가 열어도 같은 방 id**(중복 방 없음) · 자기 자신과의 DM 거부(`23514`) · 존재하지 않는 상대 거부 + **문구가 중립적** |
+| DM 노출 | 비참여자는 `chat_rooms` 로 DM 방을 조회할 수 없다 · **`open_chat_rooms` 에 DM 이 없다**(비참여자 기준·당사자 기준 모두) |
+| DM 송수신 | 참여자 전송 · 비참여자 전송 거부 · 비참여자 조회 불가 · **DM 방에는 시스템 메시지가 없다** |
+| DM 나가기·자동 재등장 | 나가면 `my_chat_rooms` 에서 사라진다 · **상대가 메시지를 보내면 자동으로 다시 나타난다**(시스템 메시지 없이) |
+| `my_chat_rooms` DM 컬럼 | `type='direct'` · `title` 없음 · **상대 닉네임**을 준다 |
+| DM 차단 | 차단 후 **양방향** 전송 거부 · `open_direct_room` 도 거부 · 차단 후 상대가 보낸 기존 메시지가 조회에서 사라짐 · 차단 해제 후 전송 복구 |
 
 ### 실시간 (`chat_realtime_check.py`, 2026-08-28 4/4 통과)
 

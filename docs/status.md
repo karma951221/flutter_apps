@@ -15,6 +15,7 @@
 | 2 | F5 reaction · F6 comment · F7 safety | **완료** |
 | 3 | F8 follow · F4 팔로잉 피드 | **완료** |
 | 3.5 | F9 chat (오픈 채팅) | **완료** |
+| 3.6 | F9-DM (1:1 채팅) | **완료** |
 | 4 | (v1.1) 재설정 SMTP · 구글 로그인 · OTP · 푸시 · 채팅 | 대기 |
 
 ## 0단계 — 완료
@@ -231,11 +232,21 @@ feed · post · profile 을 외부 리뷰(`codex-review.md`)로 훑고 지적 5�
 - [x] `reports` 에 `chat_message` 대상 추가 — 테이블을 새로 만들지 않았다
 - [x] Patrol E2E 1건 — 방 개설 → 전송 → **실시간 확정**까지 에뮬레이터에서 통과
 
-## 3.6단계 — F9-DM (진행 중)
+## 3.6단계 — F9-DM (완료)
 
-- [ ] **F9-DM (1:1 채팅)** — F9 가 자리만 남긴 `type='direct'` 를 채운다.
+- [x] **F9-DM (1:1 채팅)** — F9 가 자리만 남긴 `type='direct'` 를 채운다.
       새 테이블 없이 `direct_key` + RPC + 트리거 분기로 얹고, 화면은 기존
-      채팅 화면의 direct 분기다 ([계획](features/chat/plan-dm.md))
+      채팅 화면의 direct 분기다. 타인 프로필에서 DM 시작, 목록·방 화면의 상대
+      프로필 표시, 나가기 + 자동 재등장, 차단 연동(시작·전송 거부·수신 숨김)까지
+      확인했다 ([계획](features/chat/plan-dm.md) · [기록](features/chat/history.md) ·
+      [테스트](testing/features/chat.md))
+- [x] 권한 경계 78건(F9 52 + DM 26)을 실제 JWT + REST 로 확인
+      (`supabase/tests/chat_rls_check.py`)
+- [x] `flutter analyze` 무결 · `flutter test` 582건 전체 통과
+
+두 기기 간 DM 실시간 왕복은 별도로 재현하지 않았다 — 메커니즘(Postgres Changes +
+RLS 재평가)은 F9 의 기존 검증이 이미 확인했고 방 `type` 을 분기하지 않는다
+([완료 조건](features/chat/plan-dm.md) 참고).
 
 참고: "내 주변 유저 익명 채팅방" 아이디어는 위험성 우려로 **보류**했다
 (2026-08-30). DM 을 먼저 만들고 재검토한다.

@@ -1,6 +1,7 @@
-# chat — 구현 기록 (F9 오픈 채팅)
+# chat — 구현 기록 (F9 오픈 채팅 · F9-DM)
 
-> [계획](plan.md) · [테스트](../../testing/features/chat.md) · [스키마 §14](../../schema.md)
+> [계획](plan.md) · [DM 계획](plan-dm.md) · [테스트](../../testing/features/chat.md) ·
+> [스키마 §14](../../schema.md)
 
 구현 2026-08-28. 계획과 달라진 것과 그 이유만 적는다.
 
@@ -111,3 +112,50 @@ PostgreSQL"`)다. 스키마 문제로 한참 헤맸는데 원인은 검사 쪽�
   않아 노출되지는 않고 저장 공간만 차지한다. 방을 가로질러 훑는 것은 비싸서 v1 에서는
   두었다.
 - 계획의 "열린 문제"(악성 방을 닫을 사람이 없다)는 그대로 남아 있다.
+
+## F9-DM (1:1 채팅) — 계획과 달라진 것
+
+구현 2026-08-30. 스펙은 [DM 계획](plan-dm.md). 스키마·RLS·RPC·트리거는 계획대로
+붙었고([스키마 §14](../../schema.md) DM 절 참고), 화면 쪽에서 계획서가 정하지 않은
+것 셋을 구현 중에 확정했다.
+
+### en·ja 실패 문구는 저장소 어투를 따랐다 (계획서 문구 그대로 옮기지 않았다)
+
+계획서는 트리거 문구로 한국어 원문(`대화를 시작할 수 없습니다` · `메시지를 보낼 수
+없습니다`)만 적어 두었다. en·ja ARB 는 그 한국어를 직역하지 않고, 저장소의 기존
+실패 문구들과 같은 자연스러운 어투로 새로 썼다(예: en
+`"You can't start this conversation right now"`, ja
+`"現在この会話を開始できません"`) — 다른 `FailureCode` 문구들이 전부 이런
+모양이라 DM 문구만 직역투로 튀는 것을 피했다.
+
+### DM 타일은 인원 수를 표시하지 않는다
+
+`ChatRoomTile` 이 direct 방이면 `l10n.chatMemberCount(...)` 렌더를 건너뛴다 — 정원이
+`chat_rooms_limit_range` 로 항상 2로 고정되어 있어 인원 수가 알려줄 정보가 없다.
+open 방과 같은 자리에 그 텍스트를 채우면 "2/2"만 반복해서 보여주는 잡음이 된다.
+
+### 차단 상대 프로필에서는 메시지 버튼도 통째로 숨긴다
+
+F7 이 차단 상대 프로필에서 팔로우 버튼을 숨기던 것과 같은 근거다 —
+`open_direct_room()` 이 차단 관계면 42501 로 거부하므로 버튼을 눌러도 실패
+스낵바만 뜬다. 눌러서 실패를 확인시키는 대신 아예 안 보이게 하는 쪽을 택했다.
+기존에 팔로우 버튼 하나만 감싸던 위젯을 `_ProfileActions` 로 승격해 팔로우·메시지
+버튼 둘을 같은 `BlockActionCubit` 상태로 함께 게이팅한다
+(`app/lib/features/profile/presentation/page/profile_page.dart`).
+
+### self-DM 거부 문구가 FailureCode 로 매핑됐다
+
+트리거의 `자기 자신과는 대화할 수 없습니다`는 `FailureCode.directChatSelfNotAllowed`
+로 매핑된다(`supabase_error_mapper.dart`). 다른 DM 실패 문구와 달리 방향 중립이
+아니라 원인을 그대로 밝히는데, 컨벤션 테스트가 `FailureCode` 전 항목에 로컬라이즈된
+문구를 요구해 새 코드를 그대로 추가했다 — 자기 자신과의 대화 시도는 차단처럼 상대에게
+노출될 정보가 없으므로 문구를 흐릴 이유가 없었다.
+
+## F9-DM 이 남긴 것 (알려진 잠재 갭)
+
+- **`ChatRoomPageArgs` 없이 direct 방에 진입하는 경로가 생기면 참여자 메뉴가
+  다시 보인다.** direct 여부는 방 행이 아니라 화면 전환 인자로 전달된다 — 방 화면이
+  `isDirect` 를 모르면 open 방과 같은 참여자 메뉴를 그대로 그린다. 현재 진입 경로
+  넷(`chat_room_list_page.dart` · `create_room_page.dart` · `chat_explore_page.dart` ·
+  `profile_page.dart`)은 전부 `ChatRoomPageArgs` 를 넘기므로 지금은 문제가 없지만,
+  미래에 딥링크 등 인자 없이 방 id 만으로 진입하는 경로가 추가되면 이 갭이 드러난다.
