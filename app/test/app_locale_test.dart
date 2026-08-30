@@ -27,7 +27,7 @@ class _Shell extends StatelessWidget {
         locale: language.locale,
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        localeResolutionCallback: resolveAppLocale,
+        localeListResolutionCallback: resolveAppLocale,
         home: Builder(
           builder: (context) =>
               Text(AppLocalizations.of(context).settingsTitle),
@@ -93,26 +93,42 @@ void main() {
 
     test('지원하는 기기 언어는 그대로 쓴다', () {
       expect(
-        resolveAppLocale(const Locale('ja'), supported),
+        resolveAppLocale(const [Locale('ja')], supported),
         const Locale('ja'),
       );
       expect(
-        resolveAppLocale(const Locale('ko', 'KR'), supported),
+        resolveAppLocale(const [Locale('ko', 'KR')], supported),
         const Locale('ko'),
       );
     });
 
     test('지원하지 않는 기기 언어는 영어로 떨어진다', () {
-      // 기본 협상은 supportedLocales 의 첫 항목(= ko)으로 떨어진다. 프랑스어
-      // 기기에 한국어를 보여주느니 영어가 낫다.
+      // 프랑스어 기기에 한국어를 보여주느니 영어가 낫다는 결정이다.
       expect(
-        resolveAppLocale(const Locale('fr'), supported),
+        resolveAppLocale(const [Locale('fr')], supported),
         const Locale('en'),
       );
     });
 
-    test('기기 언어를 모르면 영어로 떨어진다', () {
+    test('기기가 알려준 2순위 언어도 본다', () {
+      // 대만·홍콩에서 흔한 구성이다. 1순위만 보면 지원하는 일본어를 두고
+      // 영어로 떨어진다 (2026-08-30 리뷰).
+      expect(
+        resolveAppLocale(const [Locale('zh', 'TW'), Locale('ja')], supported),
+        const Locale('ja'),
+      );
+    });
+
+    test('선호 목록의 순서를 따른다', () {
+      expect(
+        resolveAppLocale(const [Locale('ja'), Locale('ko')], supported),
+        const Locale('ja'),
+      );
+    });
+
+    test('기기 언어를 모르거나 목록이 비면 영어로 떨어진다', () {
       expect(resolveAppLocale(null, supported), const Locale('en'));
+      expect(resolveAppLocale(const [], supported), const Locale('en'));
     });
   });
 }

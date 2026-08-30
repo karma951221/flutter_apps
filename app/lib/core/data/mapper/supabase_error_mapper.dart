@@ -123,6 +123,26 @@ abstract final class SupabaseErrorMapper {
     '신고할 대상이 없습니다': FailureCode.reportTargetMissing,
     '내 게시물은 신고할 수 없습니다': FailureCode.reportOwnPostNotAllowed,
     '내 댓글은 신고할 수 없습니다': FailureCode.reportOwnCommentNotAllowed,
+    '내 메시지는 신고할 수 없습니다': FailureCode.reportOwnMessageNotAllowed,
+  };
+
+  /// `follows_guard_block()` 이 던지는 문구.
+  ///
+  /// 방향 중립이어야 한다 — 이 거부를 보는 쪽이 차단을 건 쪽이라고 가정할 수
+  /// 없다. 데이터 원본이 42501 을 코드로 바꾸는 경로와 같은 결과를 낸다
+  /// (`supabase_follow_data_source.followUser`).
+  static const _followGuardMessages = {
+    '지금은 팔로우할 수 없습니다': FailureCode.followBlocked,
+  };
+
+  /// `enforce_room_capacity()` 가 던지는 문구들. 트리거의 raise 문과 같아야 한다.
+  ///
+  /// 없으면 23514 · 23503 의 기본 문구로 덮여 "입력값이 조건을 만족하지
+  /// 않습니다" 가 뜬다 — 방이 꽉 찼다는 사실이 사라져 사용자가 같은 버튼을
+  /// 계속 누르게 된다.
+  static const _roomCapacityMessages = {
+    '정원이 가득 찬 방입니다': FailureCode.roomFull,
+    '없는 방입니다': FailureCode.roomNotFound,
   };
 
   /// `enforce_comment_depth()` 가 차단 때 던지는 문구.
@@ -222,6 +242,8 @@ abstract final class SupabaseErrorMapper {
       ..._commentDepthMessages,
       ..._reportTargetMessages,
       ..._blockMessages,
+      ..._roomCapacityMessages,
+      ..._followGuardMessages,
     }.entries) {
       if (raw.contains(entry.key)) {
         return Failure.validation(message: entry.key, failureCode: entry.value);

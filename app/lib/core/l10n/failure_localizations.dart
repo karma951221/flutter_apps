@@ -90,6 +90,10 @@ extension on FailureCode {
     FailureCode.postTooLong => l10n.failurePostTooLong,
     FailureCode.postImageLimit => l10n.failurePostImageLimit,
     FailureCode.avatarUploadFailed => l10n.failureAvatarUploadFailed,
+    FailureCode.roomFull => l10n.failureRoomFull,
+    FailureCode.roomNotFound => l10n.failureRoomNotFound,
+    FailureCode.reportOwnMessageNotAllowed =>
+      l10n.failureReportOwnMessageNotAllowed,
     FailureCode.followUserIdRequired => l10n.failureFollowUserIdRequired,
     FailureCode.followRangeInvalid => l10n.failureFollowRangeInvalid,
     FailureCode.followCursorInvalid => l10n.failureFollowCursorInvalid,

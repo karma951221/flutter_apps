@@ -54,7 +54,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authPasswordConfirmLabel => 'パスワード確認';
 
   @override
-  String get authSignUpSubmit => '登録する';
+  String get authSignUpSubmit => '登録';
 
   @override
   String get authPasswordResetTitle => 'パスワード再設定';
@@ -63,7 +63,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authPasswordResetDescription => '登録したメールアドレスに6桁のコードをお送りします。';
 
   @override
-  String get authPasswordResetSendCode => 'コードを受け取る';
+  String get authPasswordResetSendCode => 'コードを送信';
 
   @override
   String get authPasswordResetCodeTitle => 'コード入力';
@@ -122,7 +122,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get feedComposeTooltip => '新しい投稿を作成';
 
   @override
-  String get feedComposeLabel => '作成';
+  String get feedComposeLabel => '投稿';
 
   @override
   String get feedEmptyMessage => 'まだ投稿がありません';
@@ -137,7 +137,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get feedEndOfList => 'すべて確認しました';
 
   @override
-  String get postEditTitle => '投稿の修正';
+  String get postEditTitle => '投稿を編集';
 
   @override
   String get postCreateTitle => '新しい投稿';
@@ -155,13 +155,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postSaveButton => '保存';
 
   @override
-  String get postSubmitButton => '投稿する';
+  String get postSubmitButton => '投稿';
 
   @override
   String get postCreated => '投稿を作成しました。';
 
   @override
-  String get postUpdated => '投稿を修正しました。';
+  String get postUpdated => '投稿を編集しました。';
 
   @override
   String get postSaveFailed => '投稿を保存できませんでした。';
@@ -170,7 +170,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postImagePrepareFailed => '画像を準備できませんでした。';
 
   @override
-  String get postDiscardEditTitle => '修正を取り消しますか？';
+  String get postDiscardEditTitle => '編集を取り消しますか？';
 
   @override
   String get postDiscardCreateTitle => '作成中の内容を破棄しますか？';
@@ -182,7 +182,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postDiscardKeepWriting => '書き続ける';
 
   @override
-  String get postDiscardLeave => '退出する';
+  String get postDiscardLeave => '破棄';
 
   @override
   String postImageLimitReached(int count) {
@@ -204,7 +204,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postMenuTooltip => '投稿メニュー';
 
   @override
-  String get postMenuEdit => '修正';
+  String get postMenuEdit => '編集';
 
   @override
   String get postMenuReport => '報告';
@@ -273,7 +273,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String commentReplyingTo(String nickname) {
-    return '$nickname さんへの返信';
+    return '$nicknameさんへの返信';
   }
 
   @override
@@ -325,7 +325,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsAccount => 'アカウント設定';
 
   @override
-  String get settingsTheme => '画面テーマ';
+  String get settingsTheme => 'テーマ';
 
   @override
   String get settingsLanguage => '言語';
@@ -343,7 +343,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsSignOutConfirmMessage => '再び利用するにはログインが必要です。';
 
   @override
-  String get themeModeSystem => 'システム設定';
+  String get themeModeSystem => 'システムに合わせる';
 
   @override
   String get themeModeLight => 'ライト';
@@ -352,7 +352,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get themeModeDark => 'ダーク';
 
   @override
-  String get languageSystem => 'システム設定';
+  String get languageSystem => 'システムに合わせる';
 
   @override
   String get homeTabFeed => 'ホーム';
@@ -433,7 +433,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get chatRoomTitleLabel => 'ルーム名';
 
   @override
-  String get chatRoomDescriptionLabel => '紹介（任意）';
+  String get chatRoomDescriptionLabel => '説明（任意）';
 
   @override
   String get chatNicknameLabel => 'ルームでの名前';
@@ -515,12 +515,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String chatSystemJoined(String nickname) {
-    return '$nickname さんが入室しました';
+    return '$nicknameさんが入室しました';
   }
 
   @override
   String chatSystemLeft(String nickname) {
-    return '$nickname さんが退室しました';
+    return '$nicknameさんが退室しました';
   }
 
   @override
@@ -618,7 +618,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get safetyReportDetailHint => '問題の内容を入力してください';
 
   @override
-  String get safetyReportAction => '報告する';
+  String get safetyReportAction => '報告を送信';
 
   @override
   String get safetyReportReasonSpam => 'スパムまたは広告';
@@ -667,7 +667,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'アカウントとともに以下がすべて削除され、元に戻せません。\n\n・プロフィールとプロフィール写真\n・投稿と写真\n・コメントとリアクション';
 
   @override
-  String get accountDeleteConfirmAction => '削除';
+  String get accountDeleteConfirmAction => 'アカウントを削除';
 
   @override
   String get passwordChangeTitle => 'パスワード変更';
@@ -682,7 +682,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get passwordChangeNewLabel => '新しいパスワード';
 
   @override
-  String get passwordChangeConfirmLabel => '新しいパスワード（確認）';
+  String get passwordChangeConfirmLabel => '新しいパスワード確認';
 
   @override
   String get passwordChangeAction => '変更';
@@ -859,7 +859,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get failureRoomTitleTooLong => 'ルーム名は30文字以内で入力してください';
 
   @override
-  String get failureRoomDescriptionTooLong => '紹介は200文字以内で入力してください';
+  String get failureRoomDescriptionTooLong => '説明は200文字以内で入力してください';
 
   @override
   String get failureRoomMemberLimitInvalid => '定員は2〜500人で設定してください';
@@ -972,7 +972,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get followListLoadFailed => 'リストを読み込めませんでした';
 
   @override
-  String get failureFollowUserIdRequired => 'ユーザーの指定が必要です';
+  String get failureFollowUserIdRequired => 'ユーザーIDが必要です';
 
   @override
   String get failureFollowRangeInvalid => 'フォロー一覧の取得範囲が正しくありません';
@@ -982,4 +982,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get failureFollowBlocked => '現在このアカウントはフォローできません';
+
+  @override
+  String get failureRoomFull => 'このルームは満員です';
+
+  @override
+  String get failureRoomNotFound => 'このルームは存在しません';
+
+  @override
+  String get failureReportOwnMessageNotAllowed => '自分のメッセージは報告できません';
 }

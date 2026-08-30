@@ -66,7 +66,7 @@ class _DaylogAppState extends State<DaylogApp> {
             locale: language.locale,
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            localeResolutionCallback: resolveAppLocale,
+            localeListResolutionCallback: resolveAppLocale,
             debugShowCheckedModeBanner: false,
             routerConfig: _router,
           ),
@@ -76,15 +76,22 @@ class _DaylogAppState extends State<DaylogApp> {
   }
 }
 
-/// 기기 언어를 지원 언어 중 하나로 옮긴다.
+/// 기기의 **선호 언어 목록**을 지원 언어 중 하나로 옮긴다.
 ///
-/// 기본 협상은 매칭이 없으면 `supportedLocales` 의 첫 항목(= ko)으로 떨어진다.
 /// 지원하지 않는 언어를 쓰는 기기에는 한국어보다 **영어**가 낫다는 결정이라
-/// 여기서 직접 fallback 을 고른다 (계획서).
-Locale resolveAppLocale(Locale? deviceLocale, Iterable<Locale> supported) {
-  if (deviceLocale != null) {
+/// 기본 협상에 맡기지 않고 fallback 을 직접 고른다 (계획서).
+///
+/// 목록 전체를 순서대로 본다. 하나만 받는 `localeResolutionCallback` 으로
+/// 두면 기기가 알려준 2순위 이하가 통째로 버려진다 — 기기 언어가
+/// `[中文(繁體), 日本語]` 인 사용자는 일본어를 쓸 수 있는데도 영어로
+/// 떨어졌다 (2026-08-30 리뷰).
+Locale resolveAppLocale(
+  List<Locale>? deviceLocales,
+  Iterable<Locale> supported,
+) {
+  for (final device in deviceLocales ?? const <Locale>[]) {
     for (final locale in supported) {
-      if (locale.languageCode == deviceLocale.languageCode) return locale;
+      if (locale.languageCode == device.languageCode) return locale;
     }
   }
   return const Locale('en');

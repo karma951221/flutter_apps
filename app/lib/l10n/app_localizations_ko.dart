@@ -70,7 +70,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String authPasswordResetCodeDescription(String email) {
-    return '$email 으로 보낸 6자리 코드를 입력하세요.';
+    return '$email 주소로 보낸 6자리 코드를 입력하세요.';
   }
 
   @override
@@ -295,7 +295,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get commentCreateFailed => '댓글을 남기지 못했습니다.';
 
   @override
-  String get reactionSaveFailed => '감정을 남기지 못했습니다.';
+  String get reactionSaveFailed => '감정표현을 남기지 못했습니다.';
 
   @override
   String get safetyReportSubmitted => '신고가 접수되었습니다';
@@ -552,7 +552,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get profileLoadFailed => '프로필을 불러오지 못했습니다';
 
   @override
-  String get profileBioEmpty => '소개를 작성해보세요.';
+  String get profileBioEmpty => '자기소개를 작성해보세요';
 
   @override
   String get profileEditAction => '프로필 편집';
@@ -790,7 +790,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get failureCommentContentLength => '댓글은 1자 이상 300자 이하여야 합니다';
 
   @override
-  String get failureUnsupportedReaction => '지원하지 않는 감정입니다';
+  String get failureUnsupportedReaction => '지원하지 않는 감정표현입니다';
 
   @override
   String get failureReportAlreadySubmitted => '이미 신고한 항목입니다';
@@ -982,4 +982,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get failureFollowBlocked => '지금은 팔로우할 수 없습니다';
+
+  @override
+  String get failureRoomFull => '정원이 가득 찬 방입니다';
+
+  @override
+  String get failureRoomNotFound => '없는 방입니다';
+
+  @override
+  String get failureReportOwnMessageNotAllowed => '내 메시지는 신고할 수 없습니다';
 }

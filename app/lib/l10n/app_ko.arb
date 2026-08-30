@@ -80,7 +80,7 @@
   "@authPasswordResetCodeTitle": {
     "description": "비밀번호 재설정 2단계 헤더 제목"
   },
-  "authPasswordResetCodeDescription": "{email} 으로 보낸 6자리 코드를 입력하세요.",
+  "authPasswordResetCodeDescription": "{email} 주소로 보낸 6자리 코드를 입력하세요.",
   "@authPasswordResetCodeDescription": {
     "description": "비밀번호 재설정 2단계 헤더 설명",
     "placeholders": {
@@ -396,7 +396,7 @@
   "@commentCreateFailed": {
     "description": "댓글 작성 실패 스낵바"
   },
-  "reactionSaveFailed": "감정을 남기지 못했습니다.",
+  "reactionSaveFailed": "감정표현을 남기지 못했습니다.",
   "@reactionSaveFailed": {
     "description": "감정 토글 실패 스낵바 (피드·댓글 공용)"
   },
@@ -725,135 +725,520 @@
     }
   },
   "commonSave": "저장",
+  "@commonSave": {
+    "description": "저장 버튼 (프로필·게시물이 함께 쓴다)"
+  },
   "profileTitle": "프로필",
+  "@profileTitle": {
+    "description": "내 프로필 화면 제목"
+  },
   "profileUserTitle": "사용자 프로필",
+  "@profileUserTitle": {
+    "description": "타인 프로필 화면 제목"
+  },
   "profileMenuTooltip": "프로필 메뉴",
+  "@profileMenuTooltip": {
+    "description": "프로필 AppBar 더보기 메뉴 툴팁"
+  },
   "profileMenuUnblock": "차단 해제",
+  "@profileMenuUnblock": {
+    "description": "프로필 메뉴의 차단 해제 항목"
+  },
   "profileLoadFailed": "프로필을 불러오지 못했습니다",
-  "profileBioEmpty": "소개를 작성해보세요.",
+  "@profileLoadFailed": {
+    "description": "프로필 조회 실패"
+  },
+  "profileBioEmpty": "자기소개를 작성해보세요",
+  "@profileBioEmpty": {
+    "description": "자기소개가 비었을 때 자리 문구"
+  },
   "profileEditAction": "프로필 편집",
+  "@profileEditAction": {
+    "description": "내 프로필의 편집 진입 버튼"
+  },
   "profilePostsTitle": "게시물",
+  "@profilePostsTitle": {
+    "description": "프로필 안 게시물 목록 제목"
+  },
   "profilePostsReload": "게시물을 다시 불러오기",
+  "@profilePostsReload": {
+    "description": "프로필 게시물 목록 다시 읽기"
+  },
   "profilePostsEmpty": "아직 게시물이 없습니다",
+  "@profilePostsEmpty": {
+    "description": "프로필에 게시물이 없을 때"
+  },
   "profileNicknameChecking": "확인 중…",
+  "@profileNicknameChecking": {
+    "description": "닉네임 중복을 확인하는 중"
+  },
   "profileNicknameAvailable": "사용할 수 있는 닉네임입니다",
+  "@profileNicknameAvailable": {
+    "description": "닉네임 사전 확인 — 쓸 수 있다"
+  },
   "profileNicknameTaken": "이미 사용 중인 닉네임입니다",
+  "@profileNicknameTaken": {
+    "description": "닉네임 사전 확인 — 이미 쓰이고 있다"
+  },
   "profileNicknameLabel": "닉네임",
+  "@profileNicknameLabel": {
+    "description": "프로필 편집의 닉네임 입력 라벨"
+  },
   "profileAvatarPickFailed": "프로필 사진을 불러오지 못했습니다.",
+  "@profileAvatarPickFailed": {
+    "description": "프로필 사진 선택 실패"
+  },
   "profileEditTitle": "프로필 편집",
+  "@profileEditTitle": {
+    "description": "프로필 편집 화면 제목"
+  },
   "profileSaveFailed": "프로필을 저장하지 못했습니다",
+  "@profileSaveFailed": {
+    "description": "프로필 저장 실패"
+  },
   "profileSaveSucceeded": "프로필을 저장했습니다",
+  "@profileSaveSucceeded": {
+    "description": "프로필 저장 성공"
+  },
   "profileChoosePhoto": "사진 선택",
+  "@profileChoosePhoto": {
+    "description": "프로필 사진 고르기 버튼"
+  },
   "profileBioLabel": "자기소개",
+  "@profileBioLabel": {
+    "description": "프로필 편집의 자기소개 입력 라벨"
+  },
   "safetyUnblockAction": "차단 해제",
+  "@safetyUnblockAction": {
+    "description": "차단 해제 버튼"
+  },
   "safetyUnblockSucceeded": "차단을 해제했습니다.",
+  "@safetyUnblockSucceeded": {
+    "description": "차단 해제 성공"
+  },
   "safetyUnblockFailed": "차단을 해제하지 못했습니다.",
+  "@safetyUnblockFailed": {
+    "description": "차단 해제 실패"
+  },
   "safetyReportTitle": "신고",
+  "@safetyReportTitle": {
+    "description": "신고 시트 제목"
+  },
   "safetyReportFailed": "신고를 접수하지 못했습니다",
+  "@safetyReportFailed": {
+    "description": "신고 전송 실패"
+  },
   "safetyReportDetailLabel": "상세 설명 (선택)",
+  "@safetyReportDetailLabel": {
+    "description": "신고 상세 설명 입력 라벨"
+  },
   "safetyReportDetailHint": "무엇이 문제인지 적어주세요",
+  "@safetyReportDetailHint": {
+    "description": "신고 상세 설명 입력 힌트"
+  },
   "safetyReportAction": "신고하기",
+  "@safetyReportAction": {
+    "description": "신고 시트의 제출 버튼"
+  },
   "safetyReportReasonSpam": "스팸 또는 광고",
+  "@safetyReportReasonSpam": {
+    "description": "신고 사유 — 스팸"
+  },
   "safetyReportReasonAbuse": "욕설 또는 혐오 표현",
+  "@safetyReportReasonAbuse": {
+    "description": "신고 사유 — 욕설·괴롭힘"
+  },
   "safetyReportReasonSexual": "음란물 또는 선정적인 내용",
+  "@safetyReportReasonSexual": {
+    "description": "신고 사유 — 성적 콘텐츠"
+  },
   "safetyReportReasonViolence": "폭력 또는 위협",
+  "@safetyReportReasonViolence": {
+    "description": "신고 사유 — 폭력"
+  },
   "safetyReportReasonOther": "기타",
+  "@safetyReportReasonOther": {
+    "description": "신고 사유 — 기타"
+  },
   "safetyBlockedUsersTitle": "차단한 사용자",
+  "@safetyBlockedUsersTitle": {
+    "description": "차단 목록 화면 제목"
+  },
   "safetyBlockedUsersLoadFailed": "차단 목록을 불러오지 못했습니다",
+  "@safetyBlockedUsersLoadFailed": {
+    "description": "차단 목록 조회 실패"
+  },
   "safetyBlockedUsersEmpty": "차단한 사용자가 없습니다",
+  "@safetyBlockedUsersEmpty": {
+    "description": "차단한 사용자가 없을 때"
+  },
   "accountSettingsTitle": "계정 설정",
+  "@accountSettingsTitle": {
+    "description": "계정 설정 화면 제목"
+  },
   "accountPasswordChange": "비밀번호 변경",
+  "@accountPasswordChange": {
+    "description": "계정 설정의 비밀번호 변경 행"
+  },
   "accountDelete": "회원 탈퇴",
+  "@accountDelete": {
+    "description": "계정 설정의 회원 탈퇴 행"
+  },
   "accountDeleteSubtitle": "계정과 모든 기록이 즉시 삭제됩니다",
+  "@accountDeleteSubtitle": {
+    "description": "회원 탈퇴 행의 보조 설명"
+  },
   "accountDeleteFailed": "탈퇴하지 못했습니다. 다시 시도해 주세요.",
+  "@accountDeleteFailed": {
+    "description": "회원 탈퇴 실패"
+  },
   "accountDeleteConfirmTitle": "정말 탈퇴할까요?",
+  "@accountDeleteConfirmTitle": {
+    "description": "회원 탈퇴 확인 다이얼로그 제목"
+  },
   "accountDeleteConfirmMessage": "계정과 함께 아래가 모두 삭제되며 되돌릴 수 없습니다.\n\n· 프로필과 프로필 사진\n· 작성한 게시물과 사진\n· 남긴 댓글과 감정표현",
+  "@accountDeleteConfirmMessage": {
+    "description": "회원 탈퇴 확인 다이얼로그 본문 — 사라지는 것을 알린다"
+  },
   "accountDeleteConfirmAction": "탈퇴",
+  "@accountDeleteConfirmAction": {
+    "description": "회원 탈퇴 확인 버튼 (되돌릴 수 없다)"
+  },
   "passwordChangeTitle": "비밀번호 변경",
+  "@passwordChangeTitle": {
+    "description": "비밀번호 변경 화면 제목"
+  },
   "passwordChangeSucceeded": "비밀번호를 변경했습니다",
+  "@passwordChangeSucceeded": {
+    "description": "비밀번호 변경 성공"
+  },
   "passwordChangeFailed": "비밀번호를 변경하지 못했습니다",
+  "@passwordChangeFailed": {
+    "description": "비밀번호 변경 실패"
+  },
   "passwordChangeNewLabel": "새 비밀번호",
+  "@passwordChangeNewLabel": {
+    "description": "새 비밀번호 입력 라벨"
+  },
   "passwordChangeConfirmLabel": "새 비밀번호 확인",
+  "@passwordChangeConfirmLabel": {
+    "description": "새 비밀번호 확인 입력 라벨"
+  },
   "passwordChangeAction": "변경",
+  "@passwordChangeAction": {
+    "description": "비밀번호 변경 제출 버튼"
+  },
   "validationEmailRequired": "이메일을 입력하세요",
+  "@validationEmailRequired": {
+    "description": "입력 검증 — 이메일이 비었다"
+  },
   "validationEmailInvalid": "이메일 형식이 올바르지 않습니다",
+  "@validationEmailInvalid": {
+    "description": "입력 검증 — 이메일 형식이 아니다"
+  },
   "validationPasswordRequired": "비밀번호를 입력하세요",
+  "@validationPasswordRequired": {
+    "description": "입력 검증 — 비밀번호가 비었다"
+  },
   "validationPasswordTooShort": "비밀번호는 8자 이상이어야 합니다",
+  "@validationPasswordTooShort": {
+    "description": "입력 검증 — 비밀번호가 8자 미만이다"
+  },
   "validationPasswordConfirmationRequired": "비밀번호를 한 번 더 입력하세요",
+  "@validationPasswordConfirmationRequired": {
+    "description": "입력 검증 — 비밀번호 확인이 비었다"
+  },
   "validationPasswordMismatch": "비밀번호가 일치하지 않습니다",
+  "@validationPasswordMismatch": {
+    "description": "입력 검증 — 비밀번호와 확인이 다르다"
+  },
   "validationNicknameRequired": "닉네임을 입력하세요",
+  "@validationNicknameRequired": {
+    "description": "입력 검증 — 닉네임이 비었다"
+  },
   "validationNicknameTooShort": "닉네임은 2자 이상이어야 합니다",
+  "@validationNicknameTooShort": {
+    "description": "입력 검증 — 닉네임이 2자 미만이다"
+  },
   "validationNicknameTooLong": "닉네임은 20자 이하여야 합니다",
+  "@validationNicknameTooLong": {
+    "description": "입력 검증 — 닉네임이 20자를 넘는다"
+  },
   "validationOtpRequired": "코드를 입력하세요",
+  "@validationOtpRequired": {
+    "description": "입력 검증 — 인증 코드가 비었다"
+  },
   "validationOtpInvalid": "6자리 숫자를 입력하세요",
+  "@validationOtpInvalid": {
+    "description": "입력 검증 — 인증 코드가 6자리 숫자가 아니다"
+  },
   "failureNetwork": "네트워크에 연결할 수 없습니다",
+  "@failureNetwork": {
+    "description": "실패 기본 문구 — 네트워크 (FailureCode 없는 NetworkFailure 포함)"
+  },
   "failureAuth": "인증에 실패했습니다",
+  "@failureAuth": {
+    "description": "실패 기본 문구 — 인증"
+  },
   "failureForbidden": "권한이 없습니다",
+  "@failureForbidden": {
+    "description": "실패 기본 문구 — 권한 없음"
+  },
   "failureNotFound": "대상을 찾을 수 없습니다",
+  "@failureNotFound": {
+    "description": "실패 기본 문구 — 대상 없음"
+  },
   "failureValidation": "입력값을 확인하세요",
+  "@failureValidation": {
+    "description": "실패 기본 문구 — 입력값"
+  },
   "failureServer": "서버 오류가 발생했습니다",
+  "@failureServer": {
+    "description": "실패 기본 문구 — 서버"
+  },
   "failureUnknown": "알 수 없는 오류가 발생했습니다",
+  "@failureUnknown": {
+    "description": "실패 기본 문구 — 분류되지 않음"
+  },
   "failureInvalidCredentials": "이메일 또는 비밀번호가 올바르지 않습니다",
+  "@failureInvalidCredentials": {
+    "description": "로그인 — 이메일 또는 비밀번호가 틀렸다"
+  },
   "failureSignInFailed": "로그인에 실패했습니다",
+  "@failureSignInFailed": {
+    "description": "로그인 — 응답에 사용자가 없다"
+  },
   "failureSignUpFailed": "가입에 실패했습니다",
+  "@failureSignUpFailed": {
+    "description": "가입 — 응답에 사용자가 없다"
+  },
   "failureEmailAlreadyRegistered": "이미 가입된 이메일입니다",
+  "@failureEmailAlreadyRegistered": {
+    "description": "가입 — 이미 가입된 이메일이다"
+  },
   "failureWeakPassword": "비밀번호가 너무 단순합니다",
+  "@failureWeakPassword": {
+    "description": "가입·변경 — 비밀번호가 너무 단순하다"
+  },
   "failureSamePassword": "이전과 다른 비밀번호를 입력하세요",
+  "@failureSamePassword": {
+    "description": "비밀번호 변경 — 이전과 같은 비밀번호다"
+  },
   "failureOtpExpired": "코드가 만료되었습니다. 다시 요청하세요",
+  "@failureOtpExpired": {
+    "description": "재설정 — 인증 코드가 만료됐다"
+  },
   "failureRateLimited": "요청이 너무 잦습니다. 잠시 후 다시 시도하세요",
+  "@failureRateLimited": {
+    "description": "요청이 너무 잦다 (Supabase 429)"
+  },
   "failureDuplicateValue": "이미 사용 중인 값입니다",
+  "@failureDuplicateValue": {
+    "description": "DB 유니크 제약 위반 (23505)"
+  },
   "failureConstraintViolation": "입력값이 조건을 만족하지 않습니다",
+  "@failureConstraintViolation": {
+    "description": "DB CHECK 제약 위반 (23514)"
+  },
   "failureReferencedTargetMissing": "참조 대상이 존재하지 않습니다",
+  "@failureReferencedTargetMissing": {
+    "description": "DB 외래키 위반 — 참조 대상이 없다 (23503)"
+  },
   "failureForbiddenOrDeleted": "권한이 없거나 삭제된 대상입니다",
+  "@failureForbiddenOrDeleted": {
+    "description": "RLS 거부 또는 삭제된 대상 (42501)"
+  },
   "failureNicknameLength": "닉네임은 2자 이상 20자 이하여야 합니다",
+  "@failureNicknameLength": {
+    "description": "DB — 닉네임 길이 제약"
+  },
   "failureBioTooLong": "자기소개는 200자 이하여야 합니다",
+  "@failureBioTooLong": {
+    "description": "DB — 자기소개 길이 제약"
+  },
   "failurePostContentLength": "게시물은 1자 이상 500자 이하여야 합니다",
+  "@failurePostContentLength": {
+    "description": "DB — 게시물 길이 제약"
+  },
   "failureCommentContentLength": "댓글은 1자 이상 300자 이하여야 합니다",
-  "failureUnsupportedReaction": "지원하지 않는 감정입니다",
+  "@failureCommentContentLength": {
+    "description": "DB — 댓글 길이 제약"
+  },
+  "failureUnsupportedReaction": "지원하지 않는 감정표현입니다",
+  "@failureUnsupportedReaction": {
+    "description": "DB — 지원하지 않는 감정표현 종류"
+  },
   "failureReportAlreadySubmitted": "이미 신고한 항목입니다",
+  "@failureReportAlreadySubmitted": {
+    "description": "DB — 같은 대상을 이미 신고했다"
+  },
   "failureReportDetailTooLong": "상세 설명은 500자 이하여야 합니다",
+  "@failureReportDetailTooLong": {
+    "description": "DB — 신고 상세 설명 길이 제약"
+  },
   "failureReportSelfNotAllowed": "자기 자신은 신고할 수 없습니다",
+  "@failureReportSelfNotAllowed": {
+    "description": "DB — 자기 자신은 신고할 수 없다"
+  },
   "failureBlockSelfNotAllowed": "자기 자신은 차단할 수 없습니다",
+  "@failureBlockSelfNotAllowed": {
+    "description": "DB — 자기 자신은 차단할 수 없다"
+  },
   "failureBlockAlreadyExists": "이미 차단한 사용자입니다",
+  "@failureBlockAlreadyExists": {
+    "description": "DB — 이미 차단한 사용자다"
+  },
   "failureNestedReplyNotAllowed": "답글에는 답글을 달 수 없습니다",
+  "@failureNestedReplyNotAllowed": {
+    "description": "DB 트리거 — 답글에는 답글을 달 수 없다 (2단 제한)"
+  },
   "failureReplyToDeletedCommentNotAllowed": "삭제된 댓글에는 답글을 달 수 없습니다",
+  "@failureReplyToDeletedCommentNotAllowed": {
+    "description": "DB 트리거 — 삭제된 댓글에는 답글을 달 수 없다"
+  },
   "failureReplyParentPostMismatch": "부모 댓글이 다른 게시물의 댓글입니다",
+  "@failureReplyParentPostMismatch": {
+    "description": "DB 트리거 — 부모 댓글이 다른 게시물의 것이다"
+  },
   "failureReplyParentMissing": "부모 댓글이 없습니다",
+  "@failureReplyParentMissing": {
+    "description": "DB 트리거 — 부모 댓글이 없다"
+  },
   "failureReportTargetMissing": "신고할 대상이 없습니다",
+  "@failureReportTargetMissing": {
+    "description": "DB 트리거 — 신고 대상이 존재하지 않는다"
+  },
   "failureReportOwnPostNotAllowed": "내 게시물은 신고할 수 없습니다",
+  "@failureReportOwnPostNotAllowed": {
+    "description": "DB 트리거 — 내 게시물은 신고할 수 없다"
+  },
   "failureReportOwnCommentNotAllowed": "내 댓글은 신고할 수 없습니다",
+  "@failureReportOwnCommentNotAllowed": {
+    "description": "DB 트리거 — 내 댓글은 신고할 수 없다"
+  },
   "failureCommentNotAllowed": "이 게시물에는 댓글을 달 수 없습니다",
+  "@failureCommentNotAllowed": {
+    "description": "DB 트리거 — 이 게시물에는 댓글을 달 수 없다. 차단 사실을 밝히지 않으려고 방향 중립이다"
+  },
   "failureAuthenticationRequired": "로그인이 필요합니다",
+  "@failureAuthenticationRequired": {
+    "description": "로그인이 필요한 동작을 비로그인으로 시도했다"
+  },
   "failureOperationInProgress": "이미 처리 중입니다",
+  "@failureOperationInProgress": {
+    "description": "같은 동작이 이미 진행 중이다 (연타 방어)"
+  },
   "failureCommentsRangeInvalid": "올바른 댓글 조회 범위가 아닙니다",
+  "@failureCommentsRangeInvalid": {
+    "description": "댓글 조회 개수가 허용 범위 밖이다"
+  },
   "failureCommentCursorInvalid": "잘못된 댓글 커서입니다",
+  "@failureCommentCursorInvalid": {
+    "description": "댓글 커서를 해석할 수 없다"
+  },
   "failureCommentContentRequired": "댓글 내용을 입력해 주세요",
+  "@failureCommentContentRequired": {
+    "description": "댓글 내용이 비었다"
+  },
   "failureCommentTooLong": "댓글은 300자까지 쓸 수 있습니다",
+  "@failureCommentTooLong": {
+    "description": "댓글이 최대 길이를 넘는다"
+  },
   "failureCommentDeleteTargetMissing": "삭제할 댓글을 찾을 수 없습니다",
+  "@failureCommentDeleteTargetMissing": {
+    "description": "삭제할 댓글을 찾을 수 없다"
+  },
   "failureRoomTitleRequired": "방 이름을 입력하세요",
+  "@failureRoomTitleRequired": {
+    "description": "채팅방 이름이 비었다"
+  },
   "failureRoomTitleTooLong": "방 이름은 30자 이하여야 합니다",
+  "@failureRoomTitleTooLong": {
+    "description": "채팅방 이름이 최대 길이를 넘는다"
+  },
   "failureRoomDescriptionTooLong": "소개는 200자 이하여야 합니다",
+  "@failureRoomDescriptionTooLong": {
+    "description": "채팅방 설명이 최대 길이를 넘는다"
+  },
   "failureRoomMemberLimitInvalid": "정원은 2명 이상 500명 이하여야 합니다",
+  "@failureRoomMemberLimitInvalid": {
+    "description": "채팅방 정원이 허용 범위 밖이다"
+  },
   "failureRoomNicknameTooShort": "방에서 쓸 이름은 2자 이상이어야 합니다",
+  "@failureRoomNicknameTooShort": {
+    "description": "방에서 쓸 이름이 너무 짧다"
+  },
   "failureRoomNicknameTooLong": "방에서 쓸 이름은 20자 이하여야 합니다",
+  "@failureRoomNicknameTooLong": {
+    "description": "방에서 쓸 이름이 너무 길다"
+  },
   "failureMessageContentRequired": "보낼 내용을 입력하세요",
+  "@failureMessageContentRequired": {
+    "description": "보낼 메시지가 비었다"
+  },
   "failureMessageTooLong": "메시지는 1000자 이하여야 합니다",
+  "@failureMessageTooLong": {
+    "description": "메시지가 최대 길이를 넘는다"
+  },
   "failureFeedRangeInvalid": "올바른 피드 조회 범위가 아닙니다",
+  "@failureFeedRangeInvalid": {
+    "description": "피드 조회 개수가 허용 범위 밖이다"
+  },
   "failureFeedCursorInvalid": "잘못된 피드 커서입니다",
+  "@failureFeedCursorInvalid": {
+    "description": "피드 커서를 해석할 수 없다"
+  },
   "failureFeedNotLoaded": "목록을 먼저 읽어야 합니다",
+  "@failureFeedNotLoaded": {
+    "description": "목록을 읽기 전에 목록 동작을 시도했다"
+  },
   "failurePostNotFound": "게시물을 찾을 수 없습니다",
+  "@failurePostNotFound": {
+    "description": "목록에서 그 게시물을 찾을 수 없다"
+  },
   "failureMessageCursorInvalid": "잘못된 메시지 커서입니다",
+  "@failureMessageCursorInvalid": {
+    "description": "메시지 커서를 해석할 수 없다"
+  },
   "failureRoomCursorInvalid": "잘못된 방 커서입니다",
+  "@failureRoomCursorInvalid": {
+    "description": "채팅방 커서를 해석할 수 없다"
+  },
   "failurePostIdRequired": "게시물 식별자가 필요합니다",
+  "@failurePostIdRequired": {
+    "description": "게시물 식별자가 필요하다"
+  },
   "failurePostContentRequired": "게시물 내용을 입력하세요",
+  "@failurePostContentRequired": {
+    "description": "게시물 내용이 비었다"
+  },
   "failurePostTooLong": "게시물은 500자 이하여야 합니다",
+  "@failurePostTooLong": {
+    "description": "게시물이 최대 길이를 넘는다"
+  },
   "failurePostImageLimit": "사진은 5장까지 첨부할 수 있습니다",
+  "@failurePostImageLimit": {
+    "description": "사진 첨부 최대 장수를 넘었다"
+  },
   "failureAvatarUploadFailed": "프로필 사진을 업로드하지 못했습니다.",
+  "@failureAvatarUploadFailed": {
+    "description": "프로필 사진 업로드에 실패했다"
+  },
   "failureInvalidData": "올바르지 않은 데이터를 받았습니다",
+  "@failureInvalidData": {
+    "description": "응답을 해석할 수 없다"
+  },
   "reactionLike": "좋아요",
+  "@reactionLike": {
+    "description": "감정표현 — 좋아요"
+  },
   "reactionDislike": "싫어요",
+  "@reactionDislike": {
+    "description": "감정표현 — 싫어요"
+  },
   "avatarSemanticsLabel": "{nickname} 프로필 사진",
   "@avatarSemanticsLabel": {
+    "description": "아바타의 스크린리더 라벨",
     "placeholders": {
       "nickname": {
         "type": "String"
@@ -939,5 +1324,17 @@
   "failureFollowBlocked": "지금은 팔로우할 수 없습니다",
   "@failureFollowBlocked": {
     "description": "차단 관계라 팔로우가 거부됐다. 방향을 밝히지 않는다"
+  },
+  "failureRoomFull": "정원이 가득 찬 방입니다",
+  "@failureRoomFull": {
+    "description": "DB 트리거 — 채팅방 정원이 찼다"
+  },
+  "failureRoomNotFound": "없는 방입니다",
+  "@failureRoomNotFound": {
+    "description": "DB 트리거 — 입장하려는 방이 없다"
+  },
+  "failureReportOwnMessageNotAllowed": "내 메시지는 신고할 수 없습니다",
+  "@failureReportOwnMessageNotAllowed": {
+    "description": "DB 트리거 — 내 채팅 메시지는 신고할 수 없다"
   }
 }

@@ -23,7 +23,12 @@ class ThemeCubit extends Cubit<AppThemeMode> {
   Future<void> setMode(AppThemeMode mode) async {
     if (state == mode) return;
     emit(mode);
-    await _useCase.saveThemeMode(mode);
+    try {
+      await _useCase.saveThemeMode(mode);
+    } on Exception {
+      // 주석의 근거대로 삼킨다. 화면은 이미 바뀌었고, 저장 실패를 오류로
+      // 알리는 편이 더 성가시다 (2026-08-30 리뷰: 주석만 있고 코드가 없었다).
+    }
   }
 }
 

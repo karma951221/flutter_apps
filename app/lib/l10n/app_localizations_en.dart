@@ -188,11 +188,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postDiscardKeepWriting => 'Keep writing';
 
   @override
-  String get postDiscardLeave => 'Leave';
+  String get postDiscardLeave => 'Discard';
 
   @override
   String postImageLimitReached(int count) {
-    return 'You can add up to $count photos';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'You can add up to $count photos',
+      one: 'You can add up to 1 photo',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -259,7 +265,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String commentShowReplies(int count) {
-    return 'Show $count replies';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Show $count replies',
+      one: 'Show 1 reply',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -352,7 +364,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'You will need to sign in again to use the app.';
 
   @override
-  String get themeModeSystem => 'System setting';
+  String get themeModeSystem => 'System default';
 
   @override
   String get themeModeLight => 'Light';
@@ -361,7 +373,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeModeDark => 'Dark';
 
   @override
-  String get languageSystem => 'System setting';
+  String get languageSystem => 'System default';
 
   @override
   String get homeTabFeed => 'Home';
@@ -455,7 +467,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatCreateFailed => 'Couldn\'t create the room';
 
   @override
-  String get chatRoomEmptyMessage => 'Say something first';
+  String get chatRoomEmptyMessage => 'Send the first message';
 
   @override
   String get chatRoomLoadFailed => 'Couldn\'t load the conversation';
@@ -536,7 +548,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String chatMemberCount(int count) {
-    return '$count members';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count members',
+      one: '1 member',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -978,7 +996,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get followFollowingAction => 'Following';
 
   @override
-  String get followMutualAction => 'Friends';
+  String get followMutualAction => 'Mutual';
 
   @override
   String get followFailed => 'Couldn\'t follow';
@@ -1008,7 +1026,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get followListLoadFailed => 'Couldn\'t load the list';
 
   @override
-  String get failureFollowUserIdRequired => 'A user is required';
+  String get failureFollowUserIdRequired => 'User ID is required';
 
   @override
   String get failureFollowRangeInvalid => 'Invalid follow list range';
@@ -1018,4 +1036,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get failureFollowBlocked => 'You can\'t follow this account right now';
+
+  @override
+  String get failureRoomFull => 'This room is full';
+
+  @override
+  String get failureRoomNotFound => 'This room doesn\'t exist';
+
+  @override
+  String get failureReportOwnMessageNotAllowed =>
+      'You can\'t report your own message';
 }

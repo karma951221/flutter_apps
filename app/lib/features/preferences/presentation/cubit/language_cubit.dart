@@ -23,7 +23,12 @@ class LanguageCubit extends Cubit<AppLanguage> {
   Future<void> setLanguage(AppLanguage language) async {
     if (state == language) return;
     emit(language);
-    await _useCase.saveLanguage(language);
+    try {
+      await _useCase.saveLanguage(language);
+    } on Exception {
+      // 주석의 근거대로 삼킨다. 화면은 이미 바뀌었고, 저장 실패를 오류로
+      // 알리는 편이 더 성가시다 (2026-08-30 리뷰: 주석만 있고 코드가 없었다).
+    }
   }
 }
 

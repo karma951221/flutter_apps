@@ -228,8 +228,8 @@ void main() {
     expect(find.text('한국어'), findsOneWidget);
     expect(find.text('English'), findsOneWidget);
     expect(find.text('日本語'), findsOneWidget);
-    // '시스템 설정'만 현재 언어를 따른다.
-    expect(find.text('System setting'), findsNWidgets(3));
+    // '시스템'만 현재 언어를 따른다.
+    expect(find.text('System default'), findsNWidgets(3));
   });
 
   testWidgets('상단 요약은 세션의 닉네임과 이메일을 그대로 보여준다', (tester) async {
