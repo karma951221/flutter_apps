@@ -65,42 +65,46 @@ lib/
 │   └── app_bloc_observer.dart   # bloc 전역 로깅
 │
 ├── core/                        # 교차 관심사 (feature에 속하지 않는 것)
+│   ├── config/app_config.dart   # 환경값
 │   ├── di/
 │   │   ├── injection.dart       # get_it + injectable 설정
 │   │   ├── injection.config.dart        # 생성됨
 │   │   └── register_module.dart # 서드파티 인스턴스 등록 (@module)
 │   ├── network/
-│   │   ├── supabase_client_provider.dart
 │   │   └── secure_supabase_storage.dart # 세션을 secure storage에 저장
-│   ├── error/
-│   │   ├── failure.dart         # freezed sealed — 앱 전체의 에러 타입
-│   │   └── error_mapper.dart    # PostgrestException/AuthException → Failure
-│   ├── result/
-│   │   └── result.dart          # Result<T> (성공/실패)
-│   ├── pagination/
-│   │   └── cursor_page.dart     # CursorPage<T> — 커서는 불투명 문자열
+│   ├── data/                    # 공용 data 인프라 (SDK 타입이 여기서 끝난다)
+│   │   ├── mapper/supabase_error_mapper.dart  # Supabase 예외 → Failure
+│   │   ├── repository/repository_error_handler.dart  # guard: 예외 → Result (규칙 ④)
+│   │   └── nickname_match.dart  # 닉네임 중복 확인의 매칭 규칙
+│   ├── error/failure.dart       # freezed sealed — 앱 전체의 에러 타입
+│   ├── result/result.dart       # Result<T> (성공/실패)
+│   ├── pagination/cursor_page.dart  # CursorPage<T> — 커서는 불투명 문자열
+│   ├── id/id_generator.dart     # 앱이 먼저 알아야 하는 uuid (Storage 경로용)
+│   ├── validation/validators.dart   # 입력 검증 (DB 제약과 값을 맞춘다)
 │   ├── media/                   # X3
-│   │   ├── image_picker_service.dart
-│   │   ├── image_compressor.dart        # 1080px / WebP / q80
-│   │   ├── image_storage.dart           # 이미지 저장소 계약 (SDK 타입 없음)
-│   │   └── supabase_image_storage.dart  # 위 계약의 Supabase Storage 구현
-│   ├── storage/
-│   │   ├── secure_storage.dart
-│   │   └── app_preferences.dart
-│   └── extension/
+│   │   ├── image_picker_service.dart     # 선택 + 압축 (1080px / q80,
+│   │   │                                 #  Android WebP · 그 밖 JPEG)
+│   │   ├── image_storage.dart            # 이미지 저장소 계약 (SDK 타입 없음)
+│   │   └── supabase_image_storage.dart   # 위 계약의 Supabase Storage 구현
+│   └── extension/date_time_format.dart   # 목록의 날짜 표기
+│
+├── l10n/                        # gen-l10n 산출물 (ARB + AppLocalizations, 생성됨)
 │
 ├── design_system/               # X4
 │   ├── theme/
 │   │   ├── app_theme.dart
 │   │   ├── app_colors.dart
-│   │   ├── app_typography.dart
-│   │   └── app_spacing.dart
+│   │   ├── app_spacing.dart
+│   │   └── app_radius.dart
 │   └── widget/
 │       ├── app_button.dart
 │       ├── app_avatar.dart
-│       ├── empty_view.dart
-│       ├── error_view.dart
-│       └── loading_view.dart
+│       ├── app_list_tile.dart
+│       ├── app_snack_bar.dart
+│       ├── app_placeholder.dart     # 빈 상태·오류 안내
+│       ├── app_confirm_dialog.dart  # 되돌리기 어려운 동작의 확인
+│       ├── app_overflow_menu.dart   # 더보기 메뉴
+│       └── app_count_action.dart    # 아이콘 + 개수 버튼
 │
 └── features/
     ├── auth/
@@ -131,6 +135,7 @@ lib/
     ├── reaction/
     ├── comment/
     ├── follow/
+    ├── chat/
     └── safety/
 ```
 
@@ -206,7 +211,21 @@ SDK 타입은 datasource와 공용 data 인프라 안에서만 다룬다.
 
 ### ⑥ feature 간 참조는 최소로
 
-feature끼리 필요하면 **`domain` 계층만** 참조한다. `data`끼리는 참조하지 않는다 — DTO가 필요하면 각자 만든다. 위젯을 공유해야 하면 소유자가 명확한 쪽에 두고 import한다. 애매하면 `design_system/widget/`으로 올린다.
+기준은 **계층별로 다르다.**
+
+| 계층 | 다른 feature 를 참조해도 되나 |
+|---|---|
+| `domain` | **된다.** feed 가 post 의 `Post` 엔티티를 그대로 쓰는 식 |
+| `presentation` | **된다 — 읽어 쓰기만.** 소유자가 명확한 위젯(`PostTile`)과 전역 cubit(`ThemeCubit` · `LanguageCubit`)을 import 한다. 남의 상태를 대신 소유하지는 않는다 |
+| `data` | **안 된다.** DTO 가 필요하면 각자 만든다. 공용이 필요하면 `core/data/` 로 올린다 |
+
+위젯을 공유해야 하면 소유자가 명확한 쪽에 두고 import한다. 애매하면
+`design_system/widget/`으로 올린다.
+
+`presentation` 을 막지 않는 이유: 설정 화면이 `ThemeCubit` 을, 프로필 화면이
+`FeedCubit` 과 `PostTile` 을 쓰는 것이 이 앱의 기본 구성이다. "domain 만"으로
+적어 두면 규칙이 코드와 어긋나고, 어긋난 규칙은 판단 기준이 되지 못한다
+(2026-08-27 리뷰에서 문구를 실제 기준으로 고쳤다).
 
 **post와 feed의 경계가 이 규칙의 기준 예시다.**
 
@@ -226,11 +245,12 @@ feed는 post의 `domain/entity/post.dart`를 그대로 쓴다. 같은 게시물�
 ## 3-2. 홈은 셸이고, 그 위에 화면을 얹는다
 
 로그인 뒤의 기본 화면(`/`)은 하단 내비게이션을 가진 **셸**이다(`features/home`).
-탭은 셋이고 각 탭 본문은 해당 feature 가 소유한 화면을 그대로 쓴다.
+탭은 넷이고 각 탭 본문은 해당 feature 가 소유한 화면을 그대로 쓴다.
 
 | 탭 | 본문 | 소유 |
 |---|---|---|
 | 홈 | `FeedPage` | `features/feed` |
+| 채팅 | `ChatRoomListPage` | `features/chat` |
 | 프로필 | `ProfilePage`(세션 사용자) | `features/profile` |
 | 설정 | `SettingsPage` | `features/settings` |
 
@@ -239,8 +259,11 @@ feed는 post의 `domain/entity/post.dart`를 그대로 쓴다. 같은 게시물�
   매번 첫 페이지로 돌아간다.
 - **탭 안에서 더 깊이 들어가는 화면은 셸 위에 push 한다** — 게시물 작성·수정,
   댓글, 프로필 편집, 계정 설정. 탭마다 독립된 내비게이션 스택을 두지 않는다.
-- go_router 의 `StatefulShellRoute` 를 쓰지 않는다. 탭이 셋뿐이라 얻는 것보다
+- go_router 의 `StatefulShellRoute` 를 쓰지 않는다. 탭이 넷뿐이라 얻는 것보다
   구조가 늘어난다. **탭별 딥링크가 필요해지면 그때 셸 라우트로 옮긴다.**
+- **탭 배지가 필요한 상태는 셸이 소유한다.** 채팅의 안읽음 합계가 그렇다 —
+  탭 본문이 자기 cubit 을 만들면 그 화면에 있을 때만 숫자를 알게 된다.
+  셸이 `ChatRoomListCubit` 을 만들어 내려주고 목록 화면은 읽어 쓰기만 한다.
 - 화면 밖으로 나가는 동작(로그아웃)은 목록 화면의 AppBar 가 아니라 설정 탭에 둔다.
 
 경로 상수는 `app/lib/app/router/routes.dart` 한 곳에만 적는다. 인증 게이트(리다이렉트)는

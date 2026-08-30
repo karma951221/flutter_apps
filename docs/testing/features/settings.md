@@ -6,10 +6,11 @@ presentation 만 있는 feature 라 테스트도 화면과 cubit 뿐이다.
 
 | 대상 | 시나리오 | 기대 결과 |
 |---|---|---|
-| `SettingsPage` | 목록 | 프로필 편집 · 계정 설정 · 로그아웃 세 항목을 보여준다. |
+| `SettingsPage` | 목록 | 프로필 편집 · 계정 설정 · 화면 테마 · 언어 · 차단한 사용자 · 로그아웃 여섯 항목을 보여준다. |
+| `SettingsPage` | 화면 테마 · 언어 | 다른 feature 가 소유한 상태를 읽어 쓰기만 한다. 표는 [preferences](preferences.md) 에 있다. |
 | `SettingsPage` | 상단 요약 | 세션의 닉네임과 이메일을 그대로 보여준다. |
 | `SettingsPage` | 세션 없음 | 요약을 그리지 않고 목록만 남는다. |
-| `SettingsPage` | 로그아웃 | 확인 다이얼로그를 거쳐야 `signOutRequested` 가 나간다. 취소하면 아무 일도 없다. |
+| `SettingsPage` | 로그아웃 | 확인 다이얼로그(`AppConfirmDialog`, destructive 아님)를 거쳐야 `signOutRequested` 가 나간다. 취소하면 아무 일도 없다. |
 | `AccountSettingsPage` | 회원 탈퇴 | 지워질 것을 나열한 확인을 거쳐야 실행된다. 다이얼로그를 띄우거나 취소한 것만으로는 아무것도 지우지 않는다. |
 | `AccountSettingsPage` | 탈퇴 실패 | Snackbar 로 알리고 화면에 남는다. |
 | `DeleteAccountCubit` | 성공 | 진행 중 상태로 남는다 — 세션이 사라져 화면째로 없어지므로 되돌리지 않는다. |

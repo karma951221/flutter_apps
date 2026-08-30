@@ -26,6 +26,8 @@
 | `DefaultFeedUseCase` | 시나리오 위임 | 개수·커서·작성자가 시나리오를 거쳐 저장소까지 그대로 전달된다. |
 | `FeedCubit` | 첫 조회 / 실패 | 결과와 다음 커서를 상태에 담는다 / 실패 상태로 남긴다. |
 | `FeedCubit` | 더 불러오기 | 직전 커서로 요청해 이어 붙이고, 마지막 페이지에서는 요청하지 않는다. 이어 붙인 항목도 자기 작성자를 들고 온다. |
+| `PostTileActions` | 피드 · 프로필 공용 | 수정 · 댓글 이동 · 감정 · 신고 · 삭제 다섯 흐름을 두 화면이 같은 코드로 쓴다. 두 화면의 위젯 테스트가 각각 이 경로를 지난다. |
+| `PostTileActions.confirmDelete` | 삭제 확인 | `AppConfirmDialog`(destructive)를 거쳐야 삭제하고, 성공하면 `removePost` + 스낵바로 이어진다. |
 | `FeedCubit` | 목록 반영 (prepend/replace/remove) | 작성·수정·삭제 결과를 재조회 없이 반영하고, 목록을 읽기 전의 반영 요청은 무시한다. |
 | `FeedCubit` | 수정 시 작성자 유지 | 게시물 내용만 바뀌고 작성자 표시는 그대로다. 수정 화면은 작성자를 알 필요가 없다. |
 | `FeedCubit` | 없는 id 반영 | 목록이 변하지 않는다. |

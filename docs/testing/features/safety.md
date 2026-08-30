@@ -13,7 +13,7 @@
 | `ReportPolicy.normalizeDetail` | 빈 문자열 · 공백만 | `null`이 된다. |
 | `ReportPolicy.normalizeDetail` | 앞뒤 공백이 있는 문자열 | 다듬어져 저장된다. |
 | `ReportPolicy.normalizeDetail` | 최대 길이(500자) 문자열 | 그대로 유지된다. |
-| `ReportTargetMapper.toPayload` | `post` · `comment` · `user` 세 변형 | 각각 `target_type` 문자열과 `target_id`로 매핑된다. |
+| `ReportTargetMapper.toPayload` | `post` · `comment` · `user` · `chat_message` 네 변형 | 각각 `target_type` 문자열과 `target_id`로 매핑된다. `chat_message` 는 F9 에서 더해졌다([chat 테스트](chat.md)). |
 | `SubmitReportScenario` | 앞뒤 공백이 있는 `detail` | 다듬어 저장소에 넘긴다. |
 | `SubmitReportScenario` | 공백뿐인 `detail` | `null`로 정규화해 넘긴다. |
 | `SubmitReportScenario` | 저장소의 `Err` | 그대로 돌려준다. |

@@ -17,14 +17,27 @@ app/lib/                         app/test/
 │   ├── reaction/         →      ├── features/reaction/
 │   ├── comment/          →      ├── features/comment/
 │   ├── safety/           →      ├── features/safety/
-│   ├── theme/            →      ├── features/theme/
+│   ├── chat/             →      ├── features/chat/
+│   ├── preferences/      →      ├── features/preferences/
 │   ├── home/             →      ├── features/home/
 │   └── settings/         →      └── features/settings/
 └── …                     →      └── convention/  # 코드베이스 전체 규칙
 ```
 
-공통·교차 관심사 검사는 `test/core/`, `test/convention/`에 둔다. 특정 feature의
-테스트를 공통 디렉터리에 두지 않는다.
+공통·교차 관심사 검사는 `test/core/`, `test/design_system/`, `test/convention/`에
+둔다. 특정 feature의 테스트를 공통 디렉터리에 두지 않는다.
+
+feature 표에 들어가지 않는 공용 검사는 아래에 있다. 여기 있는 것을 바꾸면 여러
+화면이 한꺼번에 영향을 받으므로, feature 문서가 아니라 이 표를 갱신한다.
+
+| 파일 | 검증 |
+|---|---|
+| `core/data/nickname_match_test.dart` | 닉네임 매칭 — LIKE 메타문자 이스케이프, `lower()` 기준 비교 ([근거](audit-2026-08-27.md)) |
+| `core/extension/date_time_format_test.dart` | 목록 날짜 표기 두 종류(연도 포함·생략)와 로컬 시각 변환 |
+| `design_system/widget/app_confirm_dialog_test.dart` | 취소 라벨이 언어를 따른다 · destructive 색 · 확인/취소/바깥 탭 결과 |
+| `design_system/widget/app_placeholder_test.dart` | 아이콘·설명·행동 버튼이 있을 때만 그린다 |
+| `design_system/widget/app_overflow_menu_test.dart` | 빈 항목이면 안 그린다 · destructive 색 · 비활성 |
+| `design_system/theme/app_theme_contrast_test.dart` | 두 테마의 `colorScheme` 파생색이 WCAG AA(4.5:1)를 넘는다 |
 
 ## 실행
 
@@ -65,8 +78,10 @@ feature 문서는 **대상 · 시나리오 · 기대 결과** 표 형식으로 �
 - [reaction](features/reaction.md)
 - [comment](features/comment.md)
 - [safety](features/safety.md)
+- [chat](features/chat.md)
 - [settings](features/settings.md)
-- [theme](features/theme.md)
+- [preferences](features/preferences.md)
 - [검수 기록 (2026-08-24)](audit-2026-08-24.md)
+- [검수 기록 (2026-08-27)](audit-2026-08-27.md)
 - [코드 컨벤션 검사](conventions.md)
 - [E2E 테스트 (Patrol)](e2e.md)

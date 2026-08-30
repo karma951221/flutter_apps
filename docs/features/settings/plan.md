@@ -2,7 +2,8 @@
 
 > [문서 허브](../../README.md) · [기획](../../overview.md) · [아키텍처](../../architecture.md) · [테스트](../../testing/features/settings.md)
 
-> 상태: **완료** · 작성 2026-08-24 · 진행 상태의 단일 기준은 [진행 현황](../../status.md)이다.
+> 상태: **완료** · 작성 2026-08-24 · 갱신 2026-08-27
+> 진행 상태의 단일 기준은 [진행 현황](../../status.md)이다.
 
 ## 범위
 
@@ -29,8 +30,8 @@
 
 | 경로 | 화면 | 내용 |
 |---|---|---|
-| `/settings` | `SettingsPage` | 세션 요약(아바타·닉네임·이메일) + 프로필 편집 · 계정 설정 · 로그아웃 |
-| `/settings/account` | `AccountSettingsPage` | 비밀번호 변경 · 회원 탈퇴(준비 중) |
+| `/settings` | `SettingsPage` | 세션 요약(아바타·닉네임·이메일) + 프로필 편집 · 계정 설정 · 화면 테마 · 언어 · 차단한 사용자 · 로그아웃 |
+| `/settings/account` | `AccountSettingsPage` | 비밀번호 변경 · 회원 탈퇴 |
 | `/settings/account/password` | `ChangePasswordPage` | 새 비밀번호 · 확인 두 칸 |
 
 `SettingsPage` 는 하단 내비게이션의 세 번째 탭 본문이기도 하다. 셸 구조는
@@ -53,8 +54,21 @@
 - [x] 회원 탈퇴가 계정·프로필·게시물·댓글·반응을 지우고, 같은 이메일로 재가입할 수 있다
 - [x] 탈퇴는 지워질 것을 보여주는 확인을 거쳐야 실행된다
 
+## 이 화면이 빌려 쓰는 것
+
+설정 탭은 행을 늘리되 계층은 늘리지 않는다. 아래 셋은 **다른 feature 가 소유한
+상태·화면**이고 설정은 진입점만 갖는다 (규칙 ⑥).
+
+| 행 | 소유 | 문서 |
+|---|---|---|
+| 화면 테마 | `features/preferences` 의 `ThemeCubit` | [다크모드 계획](../preferences/plan-theme.md) |
+| 언어 | `features/preferences` 의 `LanguageCubit` | [언어 계획](../preferences/plan-language.md) |
+| 차단한 사용자 | `features/safety` 의 `BlockedUsersPage` (`/settings/blocked`) | [차단 계획](../safety/plan-block.md) |
+
 ## 범위 밖
 
 - 탈퇴 유예 기간 · 탈퇴 사유 수집 — 필요해지면 `DeleteAccountScenario` 에 흐름을 더한다
-- 알림 설정 · 테마 전환 · 언어 — 각각 저장할 곳(로컬 or 서버)을 먼저 정해야 한다
-- 차단 목록 관리 — F7 이 생긴 뒤 이 화면에 붙인다
+- 알림 설정 — 저장할 곳(로컬 or 서버)을 먼저 정해야 한다
+
+> ~~테마 전환 · 언어~~ 와 ~~차단 목록 관리~~ 는 이 목록에 있었지만 전부
+> 구현됐다. 위의 "이 화면이 빌려 쓰는 것" 표로 옮겼다 (2026-08-27 갱신).

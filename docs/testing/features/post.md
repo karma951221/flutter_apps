@@ -12,12 +12,15 @@
 | `PostRepositoryImpl` | 소프트 삭제 | 성공은 `Ok`, 대상 없음(또는 남의 글)은 `notFound`로 반환된다. |
 | `CreatePostScenario` | 본문 정규화 | 앞뒤 공백을 제거한 본문으로 저장을 요청하고, 공백뿐인 본문은 저장하지 않는다. |
 | `CreatePostScenario` | 길이 검증 | DB CHECK 제약과 같은 기준(500자)에서 막고, 최대 길이는 허용한다. |
+| `CreatePostScenario` | 첨부 보존 | 본문을 정규화해도 첨부 이미지 목록과 각 메타데이터가 그대로 저장소에 전달된다. |
+| `CreatePostScenario` | 장수 검증 | `PostPolicy.maxImageCount`까지 허용하고, 넘으면 저장하지 않는다. |
 | CRUD scenario | 단건 조회 · 삭제 | 식별자를 저장소에 위임하고, 빈 식별자는 저장소를 호출하지 않는다. |
 | CRUD scenario | 수정 | 공백을 제거한 본문으로 요청하고, 빈 본문으로는 수정하지 않는다. |
 | `PostCubit` | 제출 상태 | 작성 중 제출 상태를 켜고 끝나면 되돌린다. 제출 중 재요청은 usecase를 호출하지 않는다. |
 | `PostCubit` | 실패 / 수정·삭제 | 실패는 상태에 남긴다. 수정과 삭제는 usecase에 위임한다. |
 | `PostCubit` | 이미지 첨부 작성 | 최대 5개의 압축 완료 이미지가 `PostDraft`에 보존되어 작성 usecase에 전달된다. |
-| 로컬 Supabase | 이미지 RLS·Storage RLS | 본인만 `{user_id}/{post_id}/...`에 업로드하고 해당 게시물의 메타데이터를 추가할 수 있다. |
+| 로컬 Supabase | 이미지 RLS·Storage RLS | 본인만 `{user_id}/{uuid}/...`에 업로드하고 해당 게시물의 메타데이터를 추가할 수 있다. |
+| 로컬 Supabase | `create_post_with_images` 직접 호출 | 본인 경로의 `post-images` URL만 통과한다. 남의 경로·다른 버킷·외부 URL·객체 없는 폴더 경로는 거부한다. |
 | `PostEditorPage` | 작성 / 수정 | 제목과 버튼 라벨이 구분된다 ("새 게시물·올리기" / "게시물 수정·저장"). |
 | `PostEditorPage` | 수정 화면 | 사진 첨부를 그리지 않는다 — 수정은 본문만 바꾼다. |
 | `PostEditorPage` | 글자 수 | `PostPolicy.maxContentLength` 를 기준으로 센다. 화면이 숫자를 다시 적지 않는다. |

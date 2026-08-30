@@ -19,7 +19,7 @@ Studio 직접 조회로 한다 ([기획 F7](../../overview.md)).
 
 | 항목 | 결정 | 근거 |
 |---|---|---|
-| 대상 | **게시물 · 댓글 · 사용자** 셋 | 기획 그대로. 신고는 처음부터 세 종류를 다 받으므로 폴리모픽이 값을 한다 |
+| 대상 | **게시물 · 댓글 · 사용자** 셋 | 기획 그대로. 신고는 처음부터 세 종류를 다 받으므로 폴리모픽이 값을 한다. **2026-08-28 에 `chat_message` 가 넷째로 붙었다** — 테이블을 새로 만들지 않고 CHECK 한 줄과 트리거 분기 하나로 끝났다([F9 계획](../chat/plan.md)). 폴리모픽이 값을 한 첫 사례다 |
 | 폴리모픽 | `target_type` + `target_id`, **FK 없음** | [기획 §7](../../overview.md)이 정한 유일한 예외 지점이다. FK를 포기하는 대가를 트리거가 메운다 |
 | 사유 | **고정 목록 5개** (`spam` · `abuse` · `sexual` · `violence` · `other`) | 심사 가이드라인이 기대하는 범주를 덮으면서 시트가 한 화면에 들어간다. 운영이 Studio 조회라 집계 가능한 형태가 중요하다 |
 | 상세 설명 | **선택 입력** `detail`, 항상 노출 | 사유만으로는 맥락이 안 남는다. '기타'일 때만 펼치면 스팸을 고른 사람이 설명을 못 남긴다 |
@@ -52,7 +52,7 @@ create table public.reports (
   created_at  timestamptz not null default now(),
 
   constraint reports_target_type_valid check (
-    target_type in ('post', 'comment', 'user')
+    target_type in ('post', 'comment', 'user', 'chat_message')  -- chat_message 는 F9 에서 추가
   ),
   constraint reports_reason_valid check (
     reason in ('spam', 'abuse', 'sexual', 'violence', 'other')
@@ -170,7 +170,7 @@ features/safety/
 └── data/
     ├── datasource/{report_data_source,supabase_report_data_source}.dart
     ├── mapper/report_target_mapper.dart   ← target_type 문자열을 아는 유일한 곳
-    └── repository/{report_repository_impl,report_repository_error_handler}.dart
+    └── repository/report_repository_impl.dart   # guard 는 core 의 RepositoryErrorHandler
 ```
 
 | 동작 | 시그니처 |

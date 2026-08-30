@@ -329,8 +329,10 @@ grant update (nickname, bio, avatar_url) on public.profiles to authenticated;
 ### Storage `avatars`
 
 프로필 사진은 공개 읽기 `avatars` 버킷에 저장한다(객체 최대 5 MiB). 경로는
-`{user_id}/{timestamp}.webp`이며, `storage.objects`의 INSERT·UPDATE·DELETE 정책은 첫
-경로 조각이 `(select auth.uid())::text`와 일치할 때만 허용한다. 따라서 앱이 경로를
+`{user_id}/{timestamp}.{webp|jpg}`이며, `storage.objects`의 INSERT·UPDATE·DELETE
+정책은 첫 경로 조각이 `(select auth.uid())::text`와 일치할 때만 허용한다.
+확장자가 둘인 이유는 아래 MIME 과 같다 — Android 는 WebP, 그 밖은 JPEG 으로
+압축하고 실제 형식에 맞는 Content-Type 과 확장자를 함께 보낸다. 따라서 앱이 경로를
 변조해 타인의 아바타를 쓰거나 덮어쓸 수 없다.
 
 ```sql
@@ -433,19 +435,52 @@ grant update (content) on public.posts to authenticated;
 게시물과 이미지 메타데이터를 **한 트랜잭션**에 만들고 새 게시물 id를 돌려준다.
 
 ```sql
-create function public.create_post_with_images(content text, images jsonb)
+create or replace function public.create_post_with_images(content text, images jsonb)
 returns uuid
 language plpgsql
 security definer
 set search_path = ''
 as $$
 declare
-  author       uuid := (select auth.uid());
-  new_post_id  uuid;
+  marker      constant text := '/object/public/post-images/';
+  author      uuid := (select auth.uid());
+  new_post_id uuid;
+  image_item  jsonb;
+  image_url   text;
+  object_path text;
 begin
   if author is null then
     raise exception 'authentication required' using errcode = '42501';
   end if;
+
+  -- 행을 만들기 전에 모든 url 을 본다. 하나라도 어긋나면 게시물 자체를 만들지 않는다.
+  for image_item in
+    select value
+      from jsonb_array_elements(
+        coalesce(create_post_with_images.images, '[]'::jsonb)
+      )
+  loop
+    image_url := image_item ->> 'url';
+    if image_url is null then
+      raise exception 'image url required' using errcode = '22023';
+    end if;
+
+    object_path := split_part(split_part(image_url, marker, 2), '?', 1);
+    if object_path = '' then
+      raise exception 'image url must point to the post-images bucket'
+        using errcode = '42501';
+    end if;
+
+    if split_part(object_path, '/', 1) <> author::text then
+      raise exception 'image url must belong to the caller'
+        using errcode = '42501';
+    end if;
+
+    if split_part(object_path, '/', 2) = '' then
+      raise exception 'image url must point to an object'
+        using errcode = '42501';
+    end if;
+  end loop;
 
   insert into public.posts (author_id, content)
   values (author, create_post_with_images.content)
@@ -478,6 +513,12 @@ grant execute on function public.create_post_with_images(text, jsonb) to authent
 남의 이름으로 쓸 경로가 없고, 길이·장수 제약(`posts_content_length` ·
 `post_images_sort_order_range` · `(post_id, sort_order)` 유니크)은 테이블에서 그대로
 걸린다.
+
+**`url`도 이 함수가 검증한다.** Storage 정책은 업로드만 막으므로(첫 경로 조각 =
+`auth.uid()`), 메타데이터가 가리키는 곳까지 같은 규칙으로 묶으려면 함수가 직접 봐야 한다.
+검증하지 않으면 RPC를 직접 부르는 것만으로 남의 공개 이미지나 외부 URL을 자기 게시물에
+붙일 수 있다. 통과 조건은 셋이다 — `post-images` 버킷의 공개 URL일 것, 첫 경로 조각이
+호출자의 id일 것, 그 뒤에 객체 이름이 있을 것.
 
 **Storage 업로드는 이 트랜잭션 밖이다.** 앱은 이미지를 **먼저** 올리고 마지막에 이
 함수를 부른다. 함수가 실패하면 올려둔 객체는 앱이 best-effort로 지운다.
@@ -681,6 +722,7 @@ id가 없다. 정책이 보는 것은 첫 조각뿐이라 문제되지 않는다
 `storage.objects`의 INSERT·UPDATE·DELETE 정책은 첫 경로 조각이
 `(select auth.uid())::text`와 같을 때만 허용한다. 이 검증을 앱의 경로 생성에 맡기지
 않으므로, 다른 사용자의 prefix로 업로드하거나 남의 이미지를 지울 수 없다.
+메타데이터 쪽 같은 경계는 `create_post_with_images()`(§5)가 `url`을 검사해 지킨다.
 
 ```sql
 create policy "post_images_storage_delete_own"
@@ -837,14 +879,20 @@ RLS를 우회하므로 이 함정이 없다 — 새 트리거를 만들지 않�
 ```sql
 alter table public.post_comments enable row level security;
 
--- 조회 정책은 전역 규칙 그대로 단순하게 둔다.
 -- ★ 여기서 post_comments 를 서브쿼리로 다시 참조하면 PostgreSQL 이 정책을 재귀로
 -- 판단해 42P17 로 거부한다 (조회뿐 아니라 insert ... returning 까지 죽는다).
--- "삭제됐지만 답글이 남은 부모"를 되살리는 일은 아래 definer 뷰가 전담하므로
--- 정책을 좁게 두어도 새는 곳이 없다. 테이블 경로가 뷰보다 좁은 것은 안전하다.
+-- "삭제됐지만 답글이 남은 부모"를 되살리는 일은 아래 definer 뷰가 전담한다.
+-- posts 는 다른 테이블이라 참조해도 재귀가 아니다 — 아래 insert 정책과 같다.
 create policy "post_comments_select_visible"
   on public.post_comments for select to anon, authenticated
-  using (deleted_at is null and not public.is_blocked_with(author_id));
+  using (
+    deleted_at is null
+    and not public.is_blocked_with(author_id)
+    and exists (
+      select 1 from public.posts p
+       where p.id = post_comments.post_id and p.deleted_at is null
+    )
+  );
 
 create policy "post_comments_insert_own"
   on public.post_comments for insert to authenticated
@@ -860,7 +908,15 @@ create policy "post_comments_insert_own"
 
 UPDATE · DELETE 정책은 두지 않는다. 수정 기능이 없고 삭제는 아래 함수 전용이다.
 
-`exists (posts …)` 는 **삭제된 게시물에 댓글이 달리는 것**을 막는다. 처음에는
+조회 정책의 `exists (posts …)` 는 **소프트 삭제된 게시물의 댓글**을 테이블 경로에서도
+감춘다 (`20260827161417_hide_comments_of_deleted_post.sql`). 원래 정책은 부모의 생존을
+보지 않았고, 앱이 `post_comments_visible`(§9) 뷰로만 읽는 덕에 화면에는 드러나지
+않았을 뿐이었다 — 로그인한 사용자가 PostgREST 로 원본 테이블을 직접 조회하면 이미
+삭제된 게시물의 댓글이 그대로 읽혔다(2026-08-27 검증에서 실제 JWT 로 재현). 뷰는
+`security_invoker = off` 라 이 정책에 영향받지 않고, `insert ... returning` 경로도
+그대로 동작한다(같은 날 확인).
+
+INSERT 정책의 `exists (posts …)` 는 **삭제된 게시물에 댓글이 달리는 것**을 막는다. 처음에는
 작성자만 확인했는데, 그러면 소프트 삭제된 게시물에 삽입이 201 로 성공했다.
 유출은 아니다 — §9 의 뷰가 살아 있는 게시물만 조인하므로 그 댓글은 어디에도
 보이지 않는다. 문제는 **쓰기가 조용히 성공하는 것**이다: 앱이 낙관적으로 목록에
@@ -1210,9 +1266,13 @@ set post_id = excluded.post_id, type = excluded.type
 정책이 걸린 테이블을 정책 표현식 안에서 다시 스캔하면, 그 스캔에도 같은 정책이 다시
 걸리고 그 정책의 서브쿼리에도 또 걸리는 식으로 쿼리 재작성이 끝나지 않는다. `select`
 뿐 아니라 `insert ... returning`처럼 SELECT 정책이 함께 평가되는 모든 경로가 같이
-막힌다. 해법은 정책을 좁게 유지하고(§8 `post_comments_select_visible`은 `deleted_at
-is null`만 본다), 예외적인 가시성 규칙은 RLS를 우회하는 `security_invoker = off` 뷰
-쪽으로 넘기는 것이다 — 자세한 내용과 근거는 §8·§9에 있다.
+막힌다. 해법은 **자기 자신을 참조하지 않는 것**이고, 예외적인 가시성 규칙("삭제됐지만
+답글이 남은 부모는 보인다")은 RLS를 우회하는 `security_invoker = off` 뷰 쪽으로
+넘기는 것이다 — 자세한 내용과 근거는 §8·§9에 있다.
+
+**다른 테이블 참조는 재귀가 아니다.** `post_comments` 정책이 `posts`를 `exists`로
+보는 것은 안전하며, INSERT 정책이 처음부터 그렇게 하고 있었다. 조회 정책도
+2026-08-27에 같은 방식으로 부모 생존을 보게 했다(§8).
 
 ### `security_invoker = on`이 아닌 뷰, 부분 인덱스가 아닌 목록 인덱스도 있다
 
@@ -1249,7 +1309,7 @@ create table public.reports (
   created_at  timestamptz not null default now(),
 
   constraint reports_target_type_valid check (
-    target_type in ('post', 'comment', 'user')
+    target_type in ('post', 'comment', 'user', 'chat_message')
   ),
   constraint reports_reason_valid check (
     reason in ('spam', 'abuse', 'sexual', 'violence', 'other')
@@ -1517,3 +1577,211 @@ grant select on public.blocked_users to authenticated;
 | B가 차단한 A의 게시물에 댓글 삽입 | `42501`, "이 게시물에는 댓글을 달 수 없습니다"(`20260825130000_neutral_block_message.sql`로 방향 중립 문구로 교체됨 — 원래 문구는 차단당한 쪽에 방향을 드러냈다) |
 | 비로그인(`anon`, `auth.uid()` null) 조회 | 차단 관계와 무관하게 둘 다 보임 |
 | 차단 해제(행 삭제) 후 재조회 | 양쪽 모두 다시 보임 |
+
+---
+
+## 14. 채팅 — `chat_rooms` · `chat_participants` · `chat_messages`
+
+F9 오픈 채팅. 설계 근거는 [계획](features/chat/plan.md)에 있다.
+
+이 절에서 앞 절들과 다른 점은 **읽기 권한이 사람이 아니라 방에 붙는다**는 것이다.
+게시물·댓글은 "공개이되 차단한 사람의 것만 가린다"였지만, 메시지는 그 방의 참여자가
+아니면 존재 자체가 보이지 않는다. 그 판정을 `is_room_member()`(§3 과 같은 모양의
+security definer 함수) 하나로 모았다.
+
+### 테이블
+
+```sql
+create table public.chat_rooms (
+  id           uuid        primary key default gen_random_uuid(),
+  type         text        not null default 'open',
+  title        text        not null,
+  description  text,
+  created_by   uuid        default auth.uid()
+                           references public.profiles (id) on delete set null,
+  member_limit int         not null default 100,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now(),
+  deleted_at   timestamptz,
+
+  constraint chat_rooms_type_valid  check (type in ('open', 'direct')),
+  constraint chat_rooms_title_len   check (char_length(btrim(title)) between 1 and 30),
+  constraint chat_rooms_desc_len    check (description is null or char_length(description) <= 200),
+  constraint chat_rooms_limit_range check (member_limit between 2 and 500)
+);
+
+create table public.chat_participants (
+  room_id      uuid        not null references public.chat_rooms (id) on delete cascade,
+  user_id      uuid        not null default auth.uid()
+                           references public.profiles (id) on delete cascade,
+  nickname     text        not null,
+  joined_at    timestamptz not null default now(),
+  last_read_at timestamptz not null default now(),
+  left_at      timestamptz,
+
+  primary key (room_id, user_id),
+  constraint chat_participants_nickname_len check (char_length(btrim(nickname)) between 2 and 20)
+);
+
+create table public.chat_messages (
+  id           uuid        primary key default gen_random_uuid(),
+  room_id      uuid        not null references public.chat_rooms (id) on delete cascade,
+  sender_id    uuid        default auth.uid()
+                           references public.profiles (id) on delete cascade,
+  type         text        not null default 'text',
+  content      text,
+  image_path   text,
+  system_event text,
+  created_at   timestamptz not null default now(),
+  deleted_at   timestamptz,
+
+  constraint chat_messages_type_valid check (type in ('text', 'image', 'system')),
+  constraint chat_messages_shape check (
+       (type = 'text'   and sender_id is not null and content is not null
+                        and char_length(btrim(content)) between 1 and 1000
+                        and image_path is null and system_event is null)
+    or (type = 'image'  and sender_id is not null and image_path is not null
+                        and content is null and system_event is null)
+    or (type = 'system' and sender_id is null and system_event in ('join', 'leave')
+                        and content is not null and image_path is null)
+  )
+);
+```
+
+`type` 은 `'open'` 만 쓴다. `'direct'` 는 DM 을 붙일 때 마이그레이션 하나로 끝내려고
+자리만 잡아 둔 것이고, INSERT 정책이 `type = 'open'` 을 강제하므로 지금은 만들 수 없다.
+
+**`chat_messages.image_path` 는 URL 이 아니라 객체 경로다.** `chat-images` 가 비공개
+버킷이라 공개 URL 이 존재하지 않는다 — 앱은 경로를 저장하고 화면에 띄울 때 서명
+URL 을 만든다. `post_images.url`(진짜 공개 URL)과 이름을 구분한 이유가 이것이다.
+
+`chat_messages.sender_id` 의 `default auth.uid()` 는 필수다. INSERT GRANT 에서 빠져
+있어 앱이 값을 넣을 수 없으므로, 기본값이 없으면 `null` 로 들어가 삽입 정책
+(`sender_id = auth.uid()`)이 **언제나** 실패한다. 시스템 메시지를 만드는 트리거는
+`null` 을 명시해 이 기본값을 덮는다.
+
+`created_by` 는 `on delete set null` 이다 — 개설자가 탈퇴해도 방은 남는다. cascade 로
+두면 남은 사람들의 대화가 통째로 사라진다.
+
+**나가기는 행 삭제가 아니라 `left_at`** 이다. 참여자 행을 지우면 그 사람이 남긴
+메시지가 이름을 잃는다. 재입장은 `left_at` 을 `null` 로 되돌리는 upsert 다.
+
+### 인덱스
+
+```sql
+create index chat_messages_room_created_idx
+  on public.chat_messages (room_id, created_at desc, id desc)
+  where deleted_at is null;
+
+create index chat_participants_user_idx
+  on public.chat_participants (user_id) where left_at is null;
+
+create index chat_rooms_open_activity_idx
+  on public.chat_rooms (created_at desc, id desc)
+  where deleted_at is null and type = 'open';
+```
+
+### `is_room_member(room_id uuid) → boolean`
+
+정책 안에서 `chat_participants` 를 직접 서브쿼리하면 그 테이블 자신의 정책이 다시
+평가되어 무한 재귀(`42P17`)가 난다(§11). `is_blocked_with()` 와 같은 모양으로
+security definer 함수에 가둔다.
+
+**`EXECUTE` 를 회수하지 않는다.** `chat_rooms` 의 조회 정책이 `anon` 에게도 평가되고
+그 안에서 이 함수를 부르므로, `anon` 의 실행 권한을 뺏으면 조회 자체가 실패한다
+(§3 의 경고와 같은 함정).
+
+### RLS
+
+| 대상 | select | insert | update |
+|---|---|---|---|
+| `chat_rooms` | `type = 'open' and deleted_at is null` (anon 포함) | `type = 'open'` · 로그인 | 없음 |
+| `chat_participants` | `is_room_member(room_id)` **or** `user_id = auth.uid()` | 본인 행 · 살아 있는 공개방 | `user_id = auth.uid()` |
+| `chat_messages` | `deleted_at is null and is_room_member(room_id) and not is_blocked_with(sender_id)` | `sender_id = auth.uid()` · `type in ('text','image')` · `is_room_member` | 없음 (함수로만) |
+
+참여자 select 에 `user_id = auth.uid()` 를 or 로 붙인 이유: 나간 뒤에는
+`is_room_member` 가 false 라 **자기 행조차 못 읽는다.** 그러면 앱이 "처음 들어가는
+방"과 "다시 들어가는 방"을 구분할 수 없어 upsert 가 성립하지 않는다. update 정책이
+`is_room_member` 를 보지 않는 것도 같은 이유다 — 나간 사람이 다시 들어오려면 자기
+행을 고칠 수 있어야 한다.
+
+**차단은 select 정책의 `not is_blocked_with(sender_id)` 한 줄로 끝난다.** Postgres
+Changes 가 구독자마다 이 정책을 다시 평가하므로 히스토리에서도 실시간에서도 오지
+않는다. 시스템 메시지는 `sender_id` 가 null 이고 `is_blocked_with(null)` 이 false 라
+그대로 통과한다.
+
+### GRANT
+
+```sql
+grant insert (type, title, description, member_limit) on public.chat_rooms to authenticated;
+grant insert (room_id, nickname) on public.chat_participants to authenticated;
+grant update (nickname, last_read_at, left_at) on public.chat_participants to authenticated;
+grant insert (id, room_id, type, content, image_path) on public.chat_messages to authenticated;
+```
+
+`created_by` · `user_id` · `sender_id` 에 INSERT 를 주지 않는 것이 위조를 막는
+방법이다 — 전부 `default auth.uid()` 가 채운다. `reports` · `blocks` 와 같은 규칙이다.
+
+**`chat_messages.id` 에 INSERT 를 주는 것은 의도다.** 앱이 메시지 uuid 를 먼저 만들어
+낙관적 버블을 띄우고, 실시간으로 되돌아온 자기 메시지를 그 id 로 중복 제거한다.
+PK 가 위조를 막는다 — 남의 id 를 쓰면 충돌한다.
+
+`DELETE` 는 어디에도 주지 않는다. 메시지 소프트 삭제는
+`soft_delete_chat_message(message_id uuid) → boolean` 으로만 한다 — 조회 정책이 삭제행을
+가려 `UPDATE ... RETURNING` 이 `42501` 로 막히는 함정(§11)을 게시물·댓글과 같은
+방식으로 피한다.
+
+### 트리거 셋
+
+- `enforce_room_capacity()` — 참여자 insert 와 **재입장 update** 에서 `member_limit` 검사
+- `emit_membership_system_message()` — 입장 · 퇴장 · 재입장에 `type='system'` 메시지 삽입.
+  문구가 아니라 `system_event` 키(`'join'` · `'leave'`)를 저장하고 `content` 에는 그
+  시점의 닉네임을 스냅샷으로 남긴다. **문장은 앱의 ARB 가 만든다** — DB 에 한국어를
+  넣으면 다국어 이행에 갚을 빚이 하나 더 생긴다
+- `verify_chat_image_path()` — `image_path` 가 `{room_id}/{sender_id}/{객체}` 인지 검증.
+  Storage 정책은 업로드만 막으므로 메시지 행이 가리키는 곳까지 같은 규칙으로 묶으려면
+  여기서 봐야 한다 (`verify_post_image_urls` 와 같은 이유)
+
+### 뷰 둘
+
+`my_chat_rooms` 는 `security_invoker = on` 이다. 내가 멤버인 방만 다루므로 호출자의
+RLS 로 충분하고, 안읽음 수(`created_at > last_read_at and sender_id is distinct from
+auth.uid()`)에서 차단한 상대의 메시지가 자동으로 빠진다.
+
+**`open_chat_rooms` 는 `security_invoker = off` 다 — 이 스키마의 두 번째 예외다.**
+탐색 화면은 아직 참여하지 않은 사람이 보는데, 참여자 수를 세려면
+`chat_participants` 를 읽어야 하고 그 정책은 `is_room_member` 다. 호출자 권한으로는
+모든 방이 0명으로 보인다. 정책이 평가되지 않으므로 뷰의 `where` 로 직접 좁힌다
+(`deleted_at is null and type = 'open'`) — 이 줄이 빠지면 삭제된 방과 나중에 붙을
+DM 방까지 탐색에 노출된다. 내보내는 것은 집계 수 하나뿐이고 참여자 신원은 나가지
+않는다. 첫 예외는 `post_comments_visible`(§9)이고 그 절의 주의사항이 그대로 적용된다.
+
+### 실시간 발행
+
+```sql
+alter publication supabase_realtime add table public.chat_messages;
+```
+
+이 한 줄이 빠지면 구독이 **조용히 아무것도 받지 않는다.** 오류도 나지 않는다.
+
+### Storage `chat-images`
+
+**비공개** 버킷(5 MiB, `image/webp` · `image/jpeg`). 경로는
+`{room_id}/{user_id}/{message_id}.{webp|jpg}` 다 — 읽기 권한이 방 단위라 첫 조각이
+room_id 여야 정책이 `is_room_member` 로 판정할 수 있다. `post-images` 의
+`{user_id}/...` 와 순서가 다른 이유가 이것이다.
+
+- select: `is_room_member((storage.foldername(name))[1]::uuid)`
+- insert: 위 조건 **그리고** `(storage.foldername(name))[2] = auth.uid()::text`
+- update · delete: 정책 없음
+
+### 신고 대상 확장
+
+`reports_target_type_valid` 에 `'chat_message'` 를 더하고 `enforce_report_target()` 에
+분기 하나를 넣었다(§12). 테이블은 새로 만들지 않는다. 시스템 메시지(`sender_id` null)는
+신고 대상이 아니다.
+
+### 검증한 것 (로컬 Supabase · 실제 JWT + REST)
+
+`supabase/tests/chat_rls_check.py` 52건, `supabase/tests/chat_realtime_check.py` 4건이
+모두 통과한다(2026-08-28). 항목은 [테스트 문서](testing/features/chat.md)에 있다.

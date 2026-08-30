@@ -274,13 +274,15 @@ features/safety/
 스낵바를 띄우는 것까지만 한다 — `ReportCubit`/`ReportSheet`가 신고에서 하는
 역할과 같다.
 
-`BlockedUsersPage` 는 로딩·빈 상태·오류를 화면 안에 직접 만든 위젯(`_BlockedUsersError`
-등)으로 그린다 — 애초에 이 문구가 가리키던 "공통 상태 위젯"은 `design_system/widget/`에
-존재한 적이 없다. 화면 하나뿐인 채로 새로 만들면 CLAUDE.md 규칙 4의 승격 기준
-("반복 사용되거나 새 화면에도 공통으로 쓸 모양일 때만 승격한다")을 만족하지
-못한다 — 로딩·빈·오류 표시를 쓰는 다른 화면(`feed_page`의 `FeedPlaceholder` 등)이
-이미 각자 다른 모양을 쓰고 있어서, 이번에 하나 더 지어 봐야 공통화되는 것이
-없다. 빈 상태 문구는 "차단한 사용자가 없습니다".
+~~`BlockedUsersPage` 는 로딩·빈 상태·오류를 화면 안에 직접 만든 위젯으로 그린다~~
+→ **2026-08-27 갱신: `AppPlaceholder` 를 쓴다.**
+
+원래 근거는 "로딩·빈·오류를 쓰는 다른 화면들이 이미 각자 다른 모양을 쓰고 있어서
+하나 더 지어 봐야 공통화되는 것이 없다" 였다. 그 뒤로 같은 모양이 넷
+(`FeedPlaceholder` · `_ProfileLoadError` · `_BlockedUsersError` · `_CommentError`)
+이 됐고, 승격 기준("반복 사용되거나 새 화면에도 공통으로 쓸 모양")을 넘겼다.
+가장 완성도 높던 `FeedPlaceholder` 를 `design_system/widget/app_placeholder.dart`
+로 올리고 나머지 셋을 지웠다. 빈 상태 문구는 "차단한 사용자가 없습니다".
 
 ## 완료 조건
 
