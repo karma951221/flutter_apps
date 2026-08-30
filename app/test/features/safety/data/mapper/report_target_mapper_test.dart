@@ -27,5 +27,15 @@ void main() {
       expect(payload.type, 'user');
       expect(payload.id, 'user-1');
     });
+
+    test('chatMessage 는 target_type=chat_message 로 매핑된다', () {
+      // 대상이 넷째로 늘었는데 테이블은 그대로다 — 폴리모픽 설계가 값을 한
+      // 자리다 (F9).
+      final payload = ReportTargetMapper.toPayload(
+        const ReportTarget.chatMessage('msg-1'),
+      );
+      expect(payload.type, 'chat_message');
+      expect(payload.id, 'msg-1');
+    });
   });
 }

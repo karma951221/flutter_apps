@@ -12,4 +12,8 @@ sealed class ReportTarget with _$ReportTarget {
   const factory ReportTarget.post(String id) = ReportPostTarget;
   const factory ReportTarget.comment(String id) = ReportCommentTarget;
   const factory ReportTarget.user(String id) = ReportUserTarget;
+
+  /// 채팅 메시지. 방별 닉네임이어도 제재는 계정에 붙으므로 대상은 메시지이고,
+  /// 트리거가 그 메시지의 sender_id 를 찾아 자기 신고를 막는다 (F9).
+  const factory ReportTarget.chatMessage(String id) = ReportChatMessageTarget;
 }

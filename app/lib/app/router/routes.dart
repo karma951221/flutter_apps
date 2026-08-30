@@ -13,6 +13,12 @@ abstract final class Routes {
   static String postCommentsPath(String postId) => '/posts/$postId/comments';
   static const profile = '/profile';
   static const profileEdit = '/profile/edit';
+  static const chat = '/chat';
+  static const chatExplore = '/chat/explore';
+  static const chatCreate = '/chat/new';
+  static const chatRoom = '/chat/:roomId';
+
+  static String chatRoomPath(String roomId) => '/chat/$roomId';
   static const settings = '/settings';
   static const accountSettings = '/settings/account';
   static const blockedUsers = '/settings/blocked';

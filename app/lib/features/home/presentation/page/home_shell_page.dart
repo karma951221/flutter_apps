@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/di/injection.dart';
+import '../../../../l10n/app_localizations.dart';
+import '../../../chat/presentation/cubit/chat_room_list_cubit.dart';
+import '../../../chat/presentation/cubit/chat_room_list_state.dart';
+import '../../../chat/presentation/page/chat_room_list_page.dart';
 import '../../../feed/presentation/page/feed_page.dart';
 import '../../../profile/presentation/page/profile_page.dart';
 import '../../../settings/presentation/page/settings_page.dart';
@@ -10,9 +16,9 @@ import '../../../settings/presentation/page/settings_page.dart';
 /// 위치와 읽어둔 페이지를 잃지 않기 위해서**다. 탭마다 화면을 다시 만들면 커서
 /// 페이지네이션으로 쌓아 둔 목록이 매번 첫 페이지로 돌아간다.
 ///
-/// go_router 의 `StatefulShellRoute` 를 쓰지 않는다. 탭이 셋뿐이고 탭 안에서
-/// 더 깊이 들어가는 흐름(댓글 · 게시물 편집 · 프로필 편집)은 셸 **위에** 얹는
-/// 편이 단순하다. 탭별 딥링크가 필요해지면 그때 셸 라우트로 옮긴다.
+/// go_router 의 `StatefulShellRoute` 를 쓰지 않는다. 탭 안에서 더 깊이 들어가는
+/// 흐름(댓글 · 게시물 편집 · 프로필 편집 · 채팅방)은 셸 **위에** 얹는 편이
+/// 단순하다. 탭별 딥링크가 필요해지면 그때 셸 라우트로 옮긴다.
 class HomeShellPage extends StatefulWidget {
   const HomeShellPage({super.key});
 
@@ -23,48 +29,92 @@ class HomeShellPage extends StatefulWidget {
 class _HomeShellPageState extends State<HomeShellPage> {
   int _index = 0;
 
-  static const _tabs = <_HomeTab>[
-    _HomeTab(
-      label: '홈',
-      icon: Icons.home_outlined,
-      selectedIcon: Icons.home,
-      body: FeedPage(),
-    ),
-    _HomeTab(
-      label: '프로필',
-      icon: Icons.person_outline,
-      selectedIcon: Icons.person,
-      // userId 를 주지 않으면 세션 사용자의 프로필이다.
-      body: ProfilePage(),
-    ),
-    _HomeTab(
-      label: '설정',
-      icon: Icons.settings_outlined,
-      selectedIcon: Icons.settings,
-      body: SettingsPage(),
-    ),
-  ];
+  /// 채팅 탭 배지를 위해 셸이 방 목록 cubit 을 소유한다.
+  ///
+  /// 탭 본문(`ChatRoomListPage`)이 자기 cubit 을 만들면 배지가 그 화면 안에
+  /// 갇혀서 다른 탭에 있을 때 숫자를 알 수 없다. 그래서 여기서 만들어 아래로
+  /// 내려준다 — 목록 화면은 이 인스턴스를 **쓰기만** 한다.
+  late final ChatRoomListCubit _chatRooms;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: IndexedStack(
-      index: _index,
-      children: [for (final tab in _tabs) tab.body],
-    ),
-    bottomNavigationBar: NavigationBar(
-      selectedIndex: _index,
-      onDestinationSelected: (next) => setState(() => _index = next),
-      destinations: [
-        for (final tab in _tabs)
-          NavigationDestination(
-            icon: Icon(tab.icon),
-            selectedIcon: Icon(tab.selectedIcon),
-            label: tab.label,
-            tooltip: tab.label,
+  void initState() {
+    super.initState();
+    _chatRooms = getIt<ChatRoomListCubit>()..load();
+  }
+
+  @override
+  void dispose() {
+    _chatRooms.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final tabs = <_HomeTab>[
+      _HomeTab(
+        label: l10n.homeTabFeed,
+        icon: Icons.home_outlined,
+        selectedIcon: Icons.home,
+        body: const FeedPage(),
+      ),
+      _HomeTab(
+        label: l10n.homeTabChat,
+        icon: Icons.forum_outlined,
+        selectedIcon: Icons.forum,
+        body: const ChatRoomListPage(),
+      ),
+      _HomeTab(
+        label: l10n.homeTabProfile,
+        icon: Icons.person_outline,
+        selectedIcon: Icons.person,
+        // userId 를 주지 않으면 세션 사용자의 프로필이다.
+        body: const ProfilePage(),
+      ),
+      _HomeTab(
+        label: l10n.homeTabSettings,
+        icon: Icons.settings_outlined,
+        selectedIcon: Icons.settings,
+        body: const SettingsPage(),
+      ),
+    ];
+
+    return BlocProvider.value(
+      value: _chatRooms,
+      child: Scaffold(
+        body: IndexedStack(
+          index: _index,
+          children: [for (final tab in tabs) tab.body],
+        ),
+        bottomNavigationBar: BlocBuilder<ChatRoomListCubit, ChatRoomListState>(
+          builder: (context, chatState) => NavigationBar(
+            selectedIndex: _index,
+            onDestinationSelected: (next) => setState(() => _index = next),
+            destinations: [
+              for (final (index, tab) in tabs.indexed)
+                NavigationDestination(
+                  icon: _withBadge(
+                    Icon(tab.icon),
+                    // v1 의 배지는 방 목록을 다시 읽을 때 갱신된다. 방 밖에서의
+                    // 상시 갱신은 푸시 알림과 함께 4단계에서 다룬다.
+                    index == 1 ? chatState.totalUnread : 0,
+                  ),
+                  selectedIcon: _withBadge(
+                    Icon(tab.selectedIcon),
+                    index == 1 ? chatState.totalUnread : 0,
+                  ),
+                  label: tab.label,
+                  tooltip: tab.label,
+                ),
+            ],
           ),
-      ],
-    ),
-  );
+        ),
+      ),
+    );
+  }
+
+  Widget _withBadge(Widget icon, int count) =>
+      count > 0 ? Badge.count(count: count, child: icon) : icon;
 }
 
 class _HomeTab {

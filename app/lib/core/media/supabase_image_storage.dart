@@ -57,6 +57,54 @@ class SupabaseImageStorage implements ImageStorage {
   }
 
   @override
+  Future<String> uploadToPath({
+    required String bucket,
+    required String path,
+    required Uint8List bytes,
+    required String contentType,
+  }) async {
+    if (_client.auth.currentUser == null) {
+      throw const Failure.auth(
+        message: '로그인이 필요합니다',
+        code: 'not_authenticated',
+      );
+    }
+
+    try {
+      await _client.storage
+          .from(bucket)
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: FileOptions(contentType: contentType, upsert: false),
+          );
+    } on Failure {
+      rethrow;
+    } catch (error) {
+      throw SupabaseErrorMapper.map(error);
+    }
+    // 비공개 버킷이라 공개 URL 이 없다. 저장하는 값도 화면이 받는 값도 경로다.
+    return path;
+  }
+
+  @override
+  Future<String> signedUrl({
+    required String bucket,
+    required String path,
+    Duration expiresIn = const Duration(hours: 1),
+  }) async {
+    try {
+      return await _client.storage
+          .from(bucket)
+          .createSignedUrl(path, expiresIn.inSeconds);
+    } on Failure {
+      rethrow;
+    } catch (error) {
+      throw SupabaseErrorMapper.map(error);
+    }
+  }
+
+  @override
   Future<void> removeByPublicUrl({
     required String bucket,
     required String? publicUrl,

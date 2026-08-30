@@ -10,5 +10,6 @@ abstract final class ReportTargetMapper {
         ReportPostTarget(:final id) => (type: 'post', id: id),
         ReportCommentTarget(:final id) => (type: 'comment', id: id),
         ReportUserTarget(:final id) => (type: 'user', id: id),
+        ReportChatMessageTarget(:final id) => (type: 'chat_message', id: id),
       };
 }

@@ -86,13 +86,14 @@ extension ReportTargetPatterns on ReportTarget {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ReportPostTarget value)?  post,TResult Function( ReportCommentTarget value)?  comment,TResult Function( ReportUserTarget value)?  user,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ReportPostTarget value)?  post,TResult Function( ReportCommentTarget value)?  comment,TResult Function( ReportUserTarget value)?  user,TResult Function( ReportChatMessageTarget value)?  chatMessage,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ReportPostTarget() when post != null:
 return post(_that);case ReportCommentTarget() when comment != null:
 return comment(_that);case ReportUserTarget() when user != null:
-return user(_that);case _:
+return user(_that);case ReportChatMessageTarget() when chatMessage != null:
+return chatMessage(_that);case _:
   return orElse();
 
 }
@@ -110,13 +111,14 @@ return user(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ReportPostTarget value)  post,required TResult Function( ReportCommentTarget value)  comment,required TResult Function( ReportUserTarget value)  user,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ReportPostTarget value)  post,required TResult Function( ReportCommentTarget value)  comment,required TResult Function( ReportUserTarget value)  user,required TResult Function( ReportChatMessageTarget value)  chatMessage,}){
 final _that = this;
 switch (_that) {
 case ReportPostTarget():
 return post(_that);case ReportCommentTarget():
 return comment(_that);case ReportUserTarget():
-return user(_that);}
+return user(_that);case ReportChatMessageTarget():
+return chatMessage(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -130,13 +132,14 @@ return user(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ReportPostTarget value)?  post,TResult? Function( ReportCommentTarget value)?  comment,TResult? Function( ReportUserTarget value)?  user,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ReportPostTarget value)?  post,TResult? Function( ReportCommentTarget value)?  comment,TResult? Function( ReportUserTarget value)?  user,TResult? Function( ReportChatMessageTarget value)?  chatMessage,}){
 final _that = this;
 switch (_that) {
 case ReportPostTarget() when post != null:
 return post(_that);case ReportCommentTarget() when comment != null:
 return comment(_that);case ReportUserTarget() when user != null:
-return user(_that);case _:
+return user(_that);case ReportChatMessageTarget() when chatMessage != null:
+return chatMessage(_that);case _:
   return null;
 
 }
@@ -153,12 +156,13 @@ return user(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String id)?  post,TResult Function( String id)?  comment,TResult Function( String id)?  user,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String id)?  post,TResult Function( String id)?  comment,TResult Function( String id)?  user,TResult Function( String id)?  chatMessage,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ReportPostTarget() when post != null:
 return post(_that.id);case ReportCommentTarget() when comment != null:
 return comment(_that.id);case ReportUserTarget() when user != null:
-return user(_that.id);case _:
+return user(_that.id);case ReportChatMessageTarget() when chatMessage != null:
+return chatMessage(_that.id);case _:
   return orElse();
 
 }
@@ -176,12 +180,13 @@ return user(_that.id);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String id)  post,required TResult Function( String id)  comment,required TResult Function( String id)  user,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String id)  post,required TResult Function( String id)  comment,required TResult Function( String id)  user,required TResult Function( String id)  chatMessage,}) {final _that = this;
 switch (_that) {
 case ReportPostTarget():
 return post(_that.id);case ReportCommentTarget():
 return comment(_that.id);case ReportUserTarget():
-return user(_that.id);}
+return user(_that.id);case ReportChatMessageTarget():
+return chatMessage(_that.id);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -195,12 +200,13 @@ return user(_that.id);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String id)?  post,TResult? Function( String id)?  comment,TResult? Function( String id)?  user,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String id)?  post,TResult? Function( String id)?  comment,TResult? Function( String id)?  user,TResult? Function( String id)?  chatMessage,}) {final _that = this;
 switch (_that) {
 case ReportPostTarget() when post != null:
 return post(_that.id);case ReportCommentTarget() when comment != null:
 return comment(_that.id);case ReportUserTarget() when user != null:
-return user(_that.id);case _:
+return user(_that.id);case ReportChatMessageTarget() when chatMessage != null:
+return chatMessage(_that.id);case _:
   return null;
 
 }
@@ -398,6 +404,72 @@ class _$ReportUserTargetCopyWithImpl<$Res>
 /// with the given fields replaced by the non-null parameter values.
 @override @pragma('vm:prefer-inline') $Res call({Object? id = null,}) {
   return _then(ReportUserTarget(
+null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ReportChatMessageTarget implements ReportTarget {
+  const ReportChatMessageTarget(this.id);
+  
+
+@override final  String id;
+
+/// Create a copy of ReportTarget
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ReportChatMessageTargetCopyWith<ReportChatMessageTarget> get copyWith => _$ReportChatMessageTargetCopyWithImpl<ReportChatMessageTarget>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReportChatMessageTarget&&(identical(other.id, id) || other.id == id));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id);
+
+@override
+String toString() {
+  return 'ReportTarget.chatMessage(id: $id)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ReportChatMessageTargetCopyWith<$Res> implements $ReportTargetCopyWith<$Res> {
+  factory $ReportChatMessageTargetCopyWith(ReportChatMessageTarget value, $Res Function(ReportChatMessageTarget) _then) = _$ReportChatMessageTargetCopyWithImpl;
+@override @useResult
+$Res call({
+ String id
+});
+
+
+
+
+}
+/// @nodoc
+class _$ReportChatMessageTargetCopyWithImpl<$Res>
+    implements $ReportChatMessageTargetCopyWith<$Res> {
+  _$ReportChatMessageTargetCopyWithImpl(this._self, this._then);
+
+  final ReportChatMessageTarget _self;
+  final $Res Function(ReportChatMessageTarget) _then;
+
+/// Create a copy of ReportTarget
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,}) {
+  return _then(ReportChatMessageTarget(
 null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,
   ));
