@@ -84,10 +84,10 @@
       `ThemeCubit` 전역 제공, 설정 → 화면 테마
       ([계획](features/preferences/plan-theme.md) · [기록](features/preferences/history.md))
 
-## 다국어 — 진행 중
+## 다국어 — 완료
 
-`features/theme` 를 `features/preferences` 로 개명하고 gen-l10n 기반을 깔았다.
-화면 문자열 전면 추출이 남아 있다
+시스템 · 한국어 · 영어 · 일본어를 지원한다. 화면 문자열뿐 아니라 폼 검증,
+앱이 식별할 수 있는 오류와 날짜 표기까지 선택 언어를 따른다
 ([계획](features/preferences/plan-language.md) ·
 [기록](features/preferences/history.md) ·
 [테스트](testing/features/preferences.md)).
@@ -97,14 +97,25 @@
 - [x] `MaterialApp` 배선 — `locale`(시스템은 `null`) · delegates ·
       미지원 기기 언어는 `localeResolutionCallback` 이 영어로 떨어뜨린다
 - [x] 설정에 '언어' 행과 라디오 4개. 언어 이름은 각 언어의 자기 표기로 고정
-- [x] 화면 문자열 추출 — 설정 · 피드 · 게시물 · 댓글 · 인증(일부)
-- [ ] 화면 문자열 추출 — 프로필 · 안전(신고·차단) · 계정 설정 · 홈 셸의 남은 한국어
-- [ ] `FailureCode` — `Failure` 에 코드를 더하고 presentation 이 번역
-- [ ] `ValidationError` — `Validators` 가 문자열 대신 enum 을 돌려준다
-- [ ] DB 트리거 문구 → `FailureCode` 매핑 (마이그레이션 없이 mapper 에서)
-- [ ] 날짜 표기를 `intl` 의 `DateFormat` 으로 (지금은
-      `core/extension/date_time_format.dart` 한곳에 모아 둔 한국식 고정 형식)
-- [ ] en·ja 대표 화면 스모크 테스트
+- [x] 화면 문자열 전면 추출 — 인증 · 피드 · 게시물 · 댓글 · 채팅 · 프로필 · 안전 · 설정
+- [x] `FailureCode` — domain/data 는 locale 을 모르고 presentation 이 번역
+- [x] `ValidationError` — `Validators` 는 enum, 화면 경계에서 번역
+- [x] DB 트리거 문구 → `FailureCode` 매핑 (마이그레이션 없이 mapper 에서)
+- [x] 날짜 표기 — `intl DateFormat` + 현재 locale. 한국어 형식은 기존과 동일
+- [x] en·ja 설정 화면 스모크 · 영어 폼 오류 · 오류 3단계 fallback 테스트
+
+검증한 것(2026-08-30):
+
+- 세 ARB 가 **298개 키 집합으로 동일**하다. en·ja 에 한국어가 남은 값도,
+  ko 와 글자까지 같은 값도 없다
+- 사용자에게 보이는 문자열 중 하드코딩된 한국어는 없다. `lib/` 의 문자열
+  리터럴을 훑으면 ARB · DB 매칭 키 · `Failure.message` 진단 fallback ·
+  언어 자기표기(`한국어`)만 남는다
+- `Failure` 생성 지점 중 `failureCode` 가 없는 곳은 7곳이고 전부
+  **분류되지 않은 서버 오류**를 원문 그대로 올리는 fallback 경로다
+  (`supabase_error_mapper` 6 · `repository_error_handler` 1). 의도한 설계다
+- Patrol E2E 가 단언하는 한국어 문구는 전부 ARB 의 ko 값과 일치한다.
+  다국어 이행이 E2E 를 다시 깨뜨리지는 않았다
 
 ## 검수 — 2026-08-24
 
@@ -195,33 +206,25 @@ feed · post · profile 을 외부 리뷰(`codex-review.md`)로 훑고 지적 5�
 
 ## 다음 할 일
 
-우선순위 순이다. 1·2는 이미 만든 것을 마무리하는 일이고, 3부터가 새 기능이다.
+우선순위 순이다. 1은 이미 만든 것을 마무리하는 일이고, 2부터가 새 기능이다.
 
-### 1. 다국어 마무리 (남은 범위)
-
-화면 문자열 추출이 절반쯤 왔다. 남은 항목은 위 "다국어 — 진행 중" 절의
-체크박스가 기준이며, 손대는 순서는 이렇게 잡는 게 낫다.
-
-1. 남은 화면의 한국어 추출 — 프로필 · 안전(신고·차단) · 계정 설정 · 홈 셸.
-   방식은 이미 끝낸 설정 · 피드 · 게시물 · 댓글 화면과 같다
-   (`AppLocalizations.of(context)` + `app_ko.arb` 를 template 으로 3개 ARB 동시 갱신)
-2. `FailureCode` — `Failure` 에 코드를 더하고 presentation 이 번역한다.
-   지금은 data 계층이 한국어 문장을 만들어 올려서 화면이 번역할 여지가 없다
-3. `ValidationError` — `Validators` 가 문자열 대신 enum 을 돌려준다
-4. DB 트리거 문구 → `FailureCode` 매핑. 마이그레이션 없이
-   `core/data/mapper/supabase_error_mapper.dart` 에서 받는다
-5. 날짜 표기를 `intl` 의 `DateFormat` 으로.
-   지금은 `core/extension/date_time_format.dart` 한곳에 한국식 고정 형식이 모여 있다
-6. en · ja 대표 화면 스모크 테스트
-
-### 2. E2E 잔여 1건
+### 1. E2E 잔여 1건
 
 '잘못된 비밀번호' 테스트가 자기 단계·단언을 전부 통과하고도 프로세스가
 `_pendingExceptionDetails` 단언으로 죽는다. 본문이 끝난 뒤 로그인 실패 경로에서
 비동기 오류가 하나 더 올라오는 모양이고, 원인은 아직 못 짚었다
 ([검수 기록 §5](testing/audit-2026-08-27.md)).
 
-### 3. 3단계 — F8 follow · F4 팔로잉 피드
+**auth 전용이 아니다.** `chat_test` 도 방에서 뒤로 나가는 단계를 넣었더니
+본문이 끝난 뒤 같은 모양으로 죽어서, 그 단계를 빼고 실시간 왕복까지만 확인하도록
+줄여 둔 상태다 (`patrol_test/chat_test.dart` 주석). 화면 전환·해제 뒤에 남은
+비동기 작업이 공통 원인일 가능성이 높다. 후보를 하나 적어 둔다 — 21개
+cubit·bloc 중 `isClosed` 가드가 있는 것은 13개고, `SignInCubit` 을 비롯한
+auth 쪽 8개는 `await` 뒤에 가드 없이 `emit` 한다. 다만 이 테스트에서는
+실패 문구가 뜬 **뒤에** 죽으므로 확인된 원인은 아니다. 재현에는 로컬 Supabase
+와 에뮬레이터가 둘 다 필요하다.
+
+### 2. 3단계 — F8 follow · F4 팔로잉 피드
 
 아직 계획서가 없다. 착수할 때 `docs/features/follow/plan.md` 를 먼저 쓴다
 (이 문서 맨 아래 "문서 규칙"). 기획 의도는 [기획서](overview.md) 에 있다.
@@ -236,17 +239,18 @@ feed · post · profile 을 외부 리뷰(`codex-review.md`)로 훑고 지적 5�
 - 프로필 화면에 팔로우 버튼과 팔로워/팔로잉 수가 붙는다.
   게시물 액션은 `PostTileActions` 로 이미 한 벌이므로 거기에 얹는다
 
-### 4. 그 밖에 남은 것
+### 3. 그 밖에 남은 것
 
 - iOS 빌드 — Xcode 미설치라 한 번도 못 돌렸다 ([setup.md](setup.md) §4)
 - 4단계(v1.1) — 재설정 SMTP · 구글 로그인 · OTP · 푸시. 아직 대기다
 
 ## 인계 메모 — 2026-08-30
 
-`feat/f7-safety-account` 를 `main` 에 병합해 여기까지를 한 줄기로 만들었다.
+`feat/f7-safety-account` 를 `main` 에 병합해 여기까지를 한 줄기로 만들었고,
+이어서 다국어 마무리를 `main` 에 올렸다. 브랜치는 `main` 하나뿐이다.
 이 시점의 `main` 상태:
 
-- `flutter analyze` 무결함, `flutter test` 499건 통과
+- `flutter analyze` 무결함, `flutter test` 505건 통과
 - 마이그레이션은 `20260828101500_add_chat.sql` 까지 적용된 상태가 기준이다.
   받은 직후에는 프로젝트 루트에서 `supabase start` 후 `supabase db reset` 을 한 번 돌린다
 - 로컬 검증 스크립트는 `supabase/tests/` 에 있다 (채팅 권한 경계 · 실시간)

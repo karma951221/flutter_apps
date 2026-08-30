@@ -46,9 +46,14 @@ flutter test test/app_theme_mode_test.dart test/app_locale_test.dart
 | `SettingsPage` | 행 탭 | 다이얼로그에 라디오 4개. 고르면 즉시 적용되고 닫힌다 |
 | `SettingsPage` | 다이얼로그를 그냥 닫음 | 언어가 그대로다 |
 | `SettingsPage` | 언어 이름 표기 | 화면 언어가 영어여도 '한국어' · '日本語' 는 자기 표기 그대로다 |
-| `SettingsPage` | `en` 으로 뜸 | 설정 화면 문자열이 영어다 |
+| `SettingsPage` | `en` · `ja` 로 뜸 | 설정 화면 문자열이 각각 영어 · 일본어다 |
 | 앱 수준 (`test/app_locale_test.dart`) | cubit emit | `MaterialApp.locale` 이 따라 바뀐다. 시스템은 `null` |
 | 앱 수준 (`resolveAppLocale`) | 미지원 기기 언어 | 한국어가 아니라 **영어**로 떨어진다 |
+| `Validators` | 빈 값 · 형식 · 길이 · 일치 검증 | 문자열이 아닌 `ValidationError` 를 반환한다 |
+| 로그인 화면 | 영어 locale 에서 빈 폼 제출 | 필드 오류가 영어로 보인다 |
+| `FailureLocalizations` | code 있음 / raw만 있음 / 둘 다 없음 | 번역 / 원문 / 실패 종류별 공통 문구 |
+| `SupabaseErrorMapper` | 신고 · 차단 DB 제약/트리거 | 한국어 fallback과 `FailureCode` 를 함께 채운다 |
+| `DateTimeFormat` | ko · en · ja | 한국어 형식 보존, 영어·일본어 locale 형식 |
 
 ## 알아둘 것
 

@@ -33,7 +33,9 @@ feature 표에 들어가지 않는 공용 검사는 아래에 있다. 여기 있
 | 파일 | 검증 |
 |---|---|
 | `core/data/nickname_match_test.dart` | 닉네임 매칭 — LIKE 메타문자 이스케이프, `lower()` 기준 비교 ([근거](audit-2026-08-27.md)) |
-| `core/extension/date_time_format_test.dart` | 목록 날짜 표기 두 종류(연도 포함·생략)와 로컬 시각 변환 |
+| `core/data/mapper/supabase_error_mapper_test.dart` | DB 제약·트리거 문구 → 사용자 fallback + `FailureCode` 변환 |
+| `core/extension/date_time_format_test.dart` | 날짜 표기 세 종류(연도 포함·생략·시각), 로컬 시각 변환, ko·en·ja locale |
+| `core/l10n/failure_localizations_test.dart` | 오류 code 번역 · 미매핑 서버 원문 · 종류별 기본 문구 fallback |
 | `design_system/widget/app_confirm_dialog_test.dart` | 취소 라벨이 언어를 따른다 · destructive 색 · 확인/취소/바깥 탭 결과 |
 | `design_system/widget/app_placeholder_test.dart` | 아이콘·설명·행동 버튼이 있을 때만 그린다 |
 | `design_system/widget/app_overflow_menu_test.dart` | 빈 항목이면 안 그린다 · destructive 색 · 비활성 |

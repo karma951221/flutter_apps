@@ -60,3 +60,18 @@
 `AppThemeMode.label` 이 한국어 문자열을 들고 있었다. 다국어가 들어오면서 라벨은
 ARB 에서 와야 하므로 presentation 확장 `AppThemeModeX.label(context)` 로 옮겼다.
 domain 은 저장 형식인 `code` 만 안다 — `AppLanguage` 도 같은 모양이다.
+
+## 다국어 완료 — 2026-08-30
+
+- 남아 있던 프로필 · 안전 · 계정 설정 문자열과 감정 툴팁 · 아바타 접근성
+  라벨을 ARB 로 옮겼다. 세 ARB 는 298개 키 집합이 서로 같다.
+- `Failure` 에 `FailureCode?` 를 더했다. 앱이 식별한 오류는 선택 언어로,
+  코드 없는 서버 원문은 원문으로, 둘 다 없으면 실패 종류별 공통 문구로 보인다.
+  DB 트리거의 한국어 매칭 키와 마이그레이션은 바꾸지 않았다.
+- `Validators` 는 `ValidationError?` 를 반환하고 화면에서 번역한다. domain 과 core 는
+  `BuildContext` · `Locale` · `AppLocalizations` 를 모른다.
+- 날짜는 부팅 때 intl locale 데이터를 준비하고 `DateFormat` 으로 표시한다.
+  한국어의 `yyyy.MM.dd HH:mm` · `MM.dd HH:mm` 형식은 기존과 같고 영어·일본어는
+  locale 순서와 시각 표기를 따른다.
+- `flutter analyze` 와 전체 505개 테스트를 통과했다. en·ja 설정 화면, 영어 폼
+  오류, 오류 번역 3분기, 날짜 locale 회귀 테스트를 포함한다.
