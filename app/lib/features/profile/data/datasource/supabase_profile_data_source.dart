@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/data/nickname_match.dart';
 import '../../../../core/media/image_storage.dart';
 import '../../domain/entity/avatar_image_draft.dart';
 import '../../domain/entity/profile_update.dart';
@@ -56,12 +57,17 @@ class SupabaseProfileDataSource implements ProfileDataSource {
 
   @override
   Future<bool> isNicknameAvailable(String nickname) async {
-    final row = await _client
+    final candidate = nickname.trim();
+    // `ilike` 로 좁히고 최종 판정은 Dart 가 한다 — 이유는 [NicknameMatch].
+    final rows = await _client
         .from('profiles')
-        .select('id')
-        .ilike('nickname', nickname.trim())
-        .maybeSingle();
-    return row == null;
+        .select('nickname')
+        .ilike('nickname', NicknameMatch.escapeLikePattern(candidate))
+        .limit(NicknameMatch.candidateLimit);
+    return !rows.any(
+      (row) =>
+          NicknameMatch.isSameNickname(row['nickname'] as String, candidate),
+    );
   }
 
   @override

@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/extension/date_time_format.dart';
+import '../../../../design_system/theme/app_radius.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_count_action.dart';
@@ -12,6 +14,7 @@ import '../../../reaction/presentation/widget/reaction_bar.dart';
 import '../../domain/entity/post.dart';
 import '../../domain/entity/post_author.dart';
 import '../../domain/entity/post_image.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// 목록에서 게시물 하나를 보여준다.
 ///
@@ -74,6 +77,7 @@ class PostTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
     final mutedStyle = theme.textTheme.bodySmall?.copyWith(
       color: scheme.onSurfaceVariant,
     );
@@ -101,7 +105,7 @@ class PostTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            Text(_displayDate(post.updatedAt), style: mutedStyle),
+            Text(post.updatedAt.displayDateTime, style: mutedStyle),
           ],
         ),
         subtitle: Padding(
@@ -130,7 +134,7 @@ class PostTile extends StatelessWidget {
                     AppCountAction(
                       icon: Icons.mode_comment_outlined,
                       count: commentCount,
-                      tooltip: '댓글',
+                      tooltip: l10n.postCommentCountTooltip,
                       onPressed: onComment,
                     ),
                   ],
@@ -140,7 +144,7 @@ class PostTile extends StatelessWidget {
           ),
         ),
         trailing: AppOverflowMenu<_PostAction>(
-          tooltip: '게시물 메뉴',
+          tooltip: l10n.postMenuTooltip,
           onSelected: (action) => switch (action) {
             _PostAction.edit => onEdit?.call(),
             _PostAction.delete => onDelete?.call(),
@@ -149,19 +153,25 @@ class PostTile extends StatelessWidget {
           },
           items: [
             if (isMine && onEdit != null)
-              const AppOverflowMenuItem(value: _PostAction.edit, label: '수정'),
+              AppOverflowMenuItem(
+                value: _PostAction.edit,
+                label: l10n.postMenuEdit,
+              ),
             if (isMine && onDelete != null)
-              const AppOverflowMenuItem(
+              AppOverflowMenuItem(
                 value: _PostAction.delete,
-                label: '삭제',
+                label: l10n.commonDelete,
                 isDestructive: true,
               ),
             if (!isMine && onReport != null)
-              const AppOverflowMenuItem(value: _PostAction.report, label: '신고'),
+              AppOverflowMenuItem(
+                value: _PostAction.report,
+                label: l10n.postMenuReport,
+              ),
             if (!isMine && onBlock != null)
-              const AppOverflowMenuItem(
+              AppOverflowMenuItem(
                 value: _PostAction.block,
-                label: '이 사용자 차단',
+                label: l10n.postMenuBlockUser,
                 isDestructive: true,
               ),
           ],
@@ -170,14 +180,6 @@ class PostTile extends StatelessWidget {
     );
   }
 
-  String _displayDate(DateTime value) {
-    final date = value.toLocal();
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    final hour = date.hour.toString().padLeft(2, '0');
-    final minute = date.minute.toString().padLeft(2, '0');
-    return '${date.year}.$month.$day $hour:$minute';
-  }
 }
 
 enum _PostAction { edit, delete, report, block }
@@ -205,7 +207,7 @@ class _PostImages extends StatelessWidget {
     if (images.length == 1) {
       final image = images.single;
       return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppRadius.smAll,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: _maxSingleHeight),
           child: AspectRatio(
@@ -225,7 +227,7 @@ class _PostImages extends StatelessWidget {
         itemCount: images.length,
         separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
         itemBuilder: (_, index) => ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: AppRadius.smAll,
           child: SizedBox(
             width: _thumbnailSize,
             height: _thumbnailSize,

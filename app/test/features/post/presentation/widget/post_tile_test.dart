@@ -2,6 +2,7 @@ import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_author.dart';
 import 'package:daylog/features/post/presentation/widget/post_tile.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -25,6 +26,10 @@ Future<void> _pump(
 }) => tester.pumpWidget(
   MaterialApp(
     theme: AppTheme.light(),
+    // ko 가 ARB template 언어라 원문이 곧 기대값이다 (계획서).
+    locale: const Locale('ko'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(
       body: PostTile(
         post: _post(),

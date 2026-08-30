@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ProfileState {
 
- Profile? get profile; Failure? get failure; bool get isLoading; bool get isSaving;
+ Profile? get profile; Failure? get failure; bool get isLoading; bool get isSaving; NicknameCheck get nicknameCheck;
 /// Create a copy of ProfileState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ProfileStateCopyWith<ProfileState> get copyWith => _$ProfileStateCopyWithImpl<P
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileState&&(identical(other.profile, profile) || other.profile == profile)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileState&&(identical(other.profile, profile) || other.profile == profile)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isSaving, isSaving) || other.isSaving == isSaving)&&(identical(other.nicknameCheck, nicknameCheck) || other.nicknameCheck == nicknameCheck));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,profile,failure,isLoading,isSaving);
+int get hashCode => Object.hash(runtimeType,profile,failure,isLoading,isSaving,nicknameCheck);
 
 @override
 String toString() {
-  return 'ProfileState(profile: $profile, failure: $failure, isLoading: $isLoading, isSaving: $isSaving)';
+  return 'ProfileState(profile: $profile, failure: $failure, isLoading: $isLoading, isSaving: $isSaving, nicknameCheck: $nicknameCheck)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ProfileStateCopyWith<$Res>  {
   factory $ProfileStateCopyWith(ProfileState value, $Res Function(ProfileState) _then) = _$ProfileStateCopyWithImpl;
 @useResult
 $Res call({
- Profile? profile, Failure? failure, bool isLoading, bool isSaving
+ Profile? profile, Failure? failure, bool isLoading, bool isSaving, NicknameCheck nicknameCheck
 });
 
 
@@ -62,13 +62,14 @@ class _$ProfileStateCopyWithImpl<$Res>
 
 /// Create a copy of ProfileState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? profile = freezed,Object? failure = freezed,Object? isLoading = null,Object? isSaving = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? profile = freezed,Object? failure = freezed,Object? isLoading = null,Object? isSaving = null,Object? nicknameCheck = null,}) {
   return _then(ProfileState(
 profile: freezed == profile ? _self.profile : profile // ignore: cast_nullable_to_non_nullable
 as Profile?,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
 as Failure?,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,isSaving: null == isSaving ? _self.isSaving : isSaving // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,nicknameCheck: null == nicknameCheck ? _self.nicknameCheck : nicknameCheck // ignore: cast_nullable_to_non_nullable
+as NicknameCheck,
   ));
 }
 

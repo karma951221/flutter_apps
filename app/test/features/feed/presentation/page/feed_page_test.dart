@@ -19,6 +19,7 @@ import 'package:daylog/features/post/presentation/cubit/post_cubit.dart';
 import 'package:daylog/features/reaction/domain/usecase/reaction_use_case.dart';
 import 'package:daylog/features/safety/domain/usecase/safety_use_case.dart';
 import 'package:daylog/features/safety/presentation/cubit/block_action_cubit.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -79,7 +80,14 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
-        home: BlocProvider<AuthBloc>.value(value: authBloc, child: const FeedPage()),
+        // ko 가 ARB template 언어라 원문이 곧 기대값이다 (계획서).
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: BlocProvider<AuthBloc>.value(
+          value: authBloc,
+          child: const FeedPage(),
+        ),
       ),
     );
     await tester.pump();
@@ -94,45 +102,42 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets(
-    '차단 확인 → 차단 → 목록에서 제거 → 성공 스낵바까지 이어진다',
-    (tester) async {
-      when(
-        () => feedUseCase.getFeedPosts(
-          limit: any(named: 'limit'),
-          cursor: any(named: 'cursor'),
-          authorId: any(named: 'authorId'),
+  testWidgets('차단 확인 → 차단 → 목록에서 제거 → 성공 스낵바까지 이어진다', (tester) async {
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+      ),
+    ).thenAnswer(
+      (_) async => Ok(
+        CursorPage<FeedPost>(
+          items: [_item('1', 'other', '이웃'), _item('2', 'me', '카르마')],
         ),
-      ).thenAnswer(
-        (_) async => Ok(
-          CursorPage<FeedPost>(
-            items: [_item('1', 'other', '이웃'), _item('2', 'me', '카르마')],
-          ),
-        ),
-      );
-      when(
-        () => safetyUseCase.blockUser('other'),
-      ).thenAnswer((_) async => const Ok(null));
+      ),
+    );
+    when(
+      () => safetyUseCase.blockUser('other'),
+    ).thenAnswer((_) async => const Ok(null));
 
-      await pumpPage(tester);
-      expect(find.text('기록 1'), findsOneWidget);
+    await pumpPage(tester);
+    expect(find.text('기록 1'), findsOneWidget);
 
-      await openBlockMenu(tester);
+    await openBlockMenu(tester);
 
-      // 확인 다이얼로그가 뜨고, 아직 차단은 호출되지 않는다.
-      expect(find.text('이 사용자를 차단할까요?'), findsOneWidget);
-      verifyNever(() => safetyUseCase.blockUser(any()));
+    // 확인 다이얼로그가 뜨고, 아직 차단은 호출되지 않는다.
+    expect(find.text('이 사용자를 차단할까요?'), findsOneWidget);
+    verifyNever(() => safetyUseCase.blockUser(any()));
 
-      await tester.tap(find.text('차단'));
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('차단'));
+    await tester.pumpAndSettle();
 
-      verify(() => safetyUseCase.blockUser('other')).called(1);
-      // 차단한 작성자의 글이 목록에서 사라진다.
-      expect(find.text('기록 1'), findsNothing);
-      expect(find.text('기록 2'), findsOneWidget);
-      expect(find.text('차단했습니다.'), findsOneWidget);
-    },
-  );
+    verify(() => safetyUseCase.blockUser('other')).called(1);
+    // 차단한 작성자의 글이 목록에서 사라진다.
+    expect(find.text('기록 1'), findsNothing);
+    expect(find.text('기록 2'), findsOneWidget);
+    expect(find.text('차단했습니다.'), findsOneWidget);
+  });
 
   testWidgets('다이얼로그를 취소하면 차단하지 않는다', (tester) async {
     when(
@@ -159,9 +164,7 @@ void main() {
     expect(find.text('기록 1'), findsOneWidget);
   });
 
-  testWidgets('차단이 실패하면 목록은 그대로 두고 오류 스낵바를 보여준다', (
-    tester,
-  ) async {
+  testWidgets('차단이 실패하면 목록은 그대로 두고 오류 스낵바를 보여준다', (tester) async {
     when(
       () => feedUseCase.getFeedPosts(
         limit: any(named: 'limit'),

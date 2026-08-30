@@ -1,9 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:daylog/core/error/failure.dart';
 import 'package:daylog/core/result/result.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_draft.dart';
+import 'package:daylog/features/post/domain/entity/post_image_draft.dart';
 import 'package:daylog/features/post/domain/entity/post_update.dart';
+import 'package:daylog/features/post/domain/post_policy.dart';
 import 'package:daylog/features/post/domain/usecase/post_use_case.dart';
 import 'package:daylog/features/post/presentation/cubit/post_cubit.dart';
 import 'package:daylog/features/post/presentation/cubit/post_state.dart';
@@ -18,6 +22,14 @@ final _post = Post(
   content: '오늘의 기록',
   createdAt: DateTime.utc(2026, 8, 22, 9),
   updatedAt: DateTime.utc(2026, 8, 22, 9),
+);
+
+PostImageDraft _image(int seed) => PostImageDraft(
+  bytes: Uint8List.fromList([seed]),
+  width: 100 + seed,
+  height: 200 + seed,
+  contentType: 'image/webp',
+  extension: 'webp',
 );
 
 void main() {
@@ -37,10 +49,7 @@ void main() {
     ).thenAnswer((_) async => Ok(_post)),
     build: () => PostCubit(useCase),
     act: (cubit) => cubit.create('오늘의 기록'),
-    expect: () => [
-      const PostState(isSubmitting: true),
-      const PostState(),
-    ],
+    expect: () => [const PostState(isSubmitting: true), const PostState()],
   );
 
   blocTest<PostCubit, PostState>(
@@ -84,11 +93,28 @@ void main() {
     await cubit.update('post-id', '고친 내용');
     await cubit.delete('post-id');
 
-    final update = verify(
-      () => useCase.updatePost('post-id', captureAny()),
-    ).captured.single as PostUpdate;
+    final update =
+        verify(
+              () => useCase.updatePost('post-id', captureAny()),
+            ).captured.single
+            as PostUpdate;
     expect(update.content, '고친 내용');
     verify(() => useCase.deletePost('post-id')).called(1);
+    await cubit.close();
+  });
+
+  test('첨부한 이미지를 그대로 작성 usecase 에 넘긴다', () async {
+    when(() => useCase.createPost(any())).thenAnswer((_) async => Ok(_post));
+    final cubit = PostCubit(useCase);
+    final images = List.generate(PostPolicy.maxImageCount, _image);
+
+    await cubit.create('오늘의 기록', images: images);
+
+    final draft =
+        verify(() => useCase.createPost(captureAny())).captured.single
+            as PostDraft;
+    expect(draft.content, '오늘의 기록');
+    expect(draft.images, images);
     await cubit.close();
   });
 }

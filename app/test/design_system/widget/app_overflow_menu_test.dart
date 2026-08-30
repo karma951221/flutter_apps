@@ -2,22 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:daylog/design_system/widget/app_overflow_menu.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 
 void main() {
   Widget wrap(Widget child) {
     return MaterialApp(
+      locale: const Locale('ko'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: Center(child: child)),
     );
   }
 
   testWidgets('항목이 없으면 아무것도 그리지 않는다', (tester) async {
     await tester.pumpWidget(
-      wrap(
-        AppOverflowMenu<String>(
-          items: const [],
-          onSelected: (_) {},
-        ),
-      ),
+      wrap(AppOverflowMenu<String>(items: const [], onSelected: (_) {})),
     );
 
     expect(find.byIcon(Icons.more_vert), findsNothing);

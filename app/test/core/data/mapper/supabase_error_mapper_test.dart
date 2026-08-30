@@ -78,17 +78,11 @@ void main() {
 
     test('enforce_comment_depth() 의 차단 트리거 문구를 그대로 전달한다', () {
       final failure = SupabaseErrorMapper.map(
-        PostgrestException(
-          message: '이 게시물에는 댓글을 달 수 없습니다',
-          code: '42501',
-        ),
+        PostgrestException(message: '이 게시물에는 댓글을 달 수 없습니다', code: '42501'),
       );
 
       expect(failure, isA<ValidationFailure>());
-      expect(
-        (failure as ValidationFailure).message,
-        '이 게시물에는 댓글을 달 수 없습니다',
-      );
+      expect((failure as ValidationFailure).message, '이 게시물에는 댓글을 달 수 없습니다');
     });
   });
 
@@ -98,10 +92,7 @@ void main() {
         PostgrestException(message: '신고할 대상이 없습니다', code: '23514'),
       );
 
-      expect(
-        (failure as ValidationFailure).message,
-        '신고할 대상이 없습니다',
-      );
+      expect((failure as ValidationFailure).message, '신고할 대상이 없습니다');
     });
 
     test('내 게시물 신고 금지 문구를 그대로 전달한다', () {
@@ -109,10 +100,7 @@ void main() {
         PostgrestException(message: '내 게시물은 신고할 수 없습니다', code: '23514'),
       );
 
-      expect(
-        (failure as ValidationFailure).message,
-        '내 게시물은 신고할 수 없습니다',
-      );
+      expect((failure as ValidationFailure).message, '내 게시물은 신고할 수 없습니다');
     });
 
     test('내 댓글 신고 금지 문구를 그대로 전달한다', () {
@@ -120,10 +108,7 @@ void main() {
         PostgrestException(message: '내 댓글은 신고할 수 없습니다', code: '23514'),
       );
 
-      expect(
-        (failure as ValidationFailure).message,
-        '내 댓글은 신고할 수 없습니다',
-      );
+      expect((failure as ValidationFailure).message, '내 댓글은 신고할 수 없습니다');
     });
   });
 
@@ -147,10 +132,7 @@ void main() {
         PostgrestException(message: '답글에는 답글을 달 수 없습니다', code: '23514'),
       );
 
-      expect(
-        (failure as ValidationFailure).message,
-        '답글에는 답글을 달 수 없습니다',
-      );
+      expect((failure as ValidationFailure).message, '답글에는 답글을 달 수 없습니다');
     });
   });
 }

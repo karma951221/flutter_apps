@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../theme/app_spacing.dart';
 
 /// `PopupMenuButton<T>` 을 감싼 공통 "더보기" 메뉴.
@@ -22,14 +23,17 @@ class AppOverflowMenu<T> extends StatelessWidget {
   const AppOverflowMenu({
     required this.items,
     required this.onSelected,
-    this.tooltip = '더보기',
+    this.tooltip,
     this.enabled = true,
     super.key,
   });
 
   final List<AppOverflowMenuItem<T>> items;
   final ValueChanged<T> onSelected;
-  final String tooltip;
+
+  /// 없으면 현재 언어의 '더보기'를 쓴다. 한국어 기본값이 박혀 있으면 화면
+  /// 언어를 바꿔도 이 툴팁만 한국어로 남는다 (2026-08-27 리뷰).
+  final String? tooltip;
   final bool enabled;
 
   @override
@@ -41,7 +45,7 @@ class AppOverflowMenu<T> extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return PopupMenuButton<T>(
-      tooltip: tooltip,
+      tooltip: tooltip ?? AppLocalizations.of(context).commonMoreActions,
       icon: const Icon(Icons.more_vert),
       style: IconButton.styleFrom(visualDensity: VisualDensity.compact),
       enabled: enabled,
