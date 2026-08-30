@@ -3,12 +3,15 @@ import 'package:daylog/core/result/result.dart';
 import 'package:daylog/features/feed/domain/entity/feed_post.dart';
 import 'package:daylog/features/feed/domain/repository/feed_repository.dart';
 import 'package:daylog/features/feed/domain/usecase/feed_use_case.dart';
+import 'package:daylog/features/feed/domain/entity/feed_source.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockFeedRepository extends Mock implements FeedRepository {}
 
 void main() {
+  setUpAll(() => registerFallbackValue(FeedSource.all));
+
   late _MockFeedRepository repository;
 
   setUp(() {
@@ -18,6 +21,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
   });
@@ -32,6 +36,7 @@ void main() {
         limit: 10,
         cursor: 'cursor-token',
         authorId: 'author-id',
+        source: FeedSource.all,
       ),
     ).called(1);
   });
@@ -40,7 +45,12 @@ void main() {
     await DefaultFeedUseCase(repository).getFeedPosts();
 
     verify(
-      () => repository.getPosts(limit: 20, cursor: null, authorId: null),
+      () => repository.getPosts(
+        limit: 20,
+        cursor: null,
+        authorId: null,
+        source: FeedSource.all,
+      ),
     ).called(1);
   });
 }

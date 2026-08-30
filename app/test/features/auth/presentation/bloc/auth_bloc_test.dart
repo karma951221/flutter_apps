@@ -73,7 +73,8 @@ void main() {
     // 프로필을 고쳐도 로그인 때의 스냅샷이 그대로면 방금 쓴 글에 옛 닉네임이 붙는다.
     build: () {
       when(useCase.currentUser).thenAnswer(
-        (_) async => const AppUser(id: 'u1', email: 'a@b.com', nickname: '바뀐이름'),
+        (_) async =>
+            const AppUser(id: 'u1', email: 'a@b.com', nickname: '바뀐이름'),
       );
       return AuthBloc(useCase);
     },

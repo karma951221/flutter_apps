@@ -139,10 +139,7 @@ void main() {
         PostgrestException(message: '답글에는 답글을 달 수 없습니다', code: '23514'),
       );
 
-      expect(
-        (failure as ValidationFailure).message,
-        '답글에는 답글을 달 수 없습니다',
-      );
+      expect((failure as ValidationFailure).message, '답글에는 답글을 달 수 없습니다');
     });
 
     test('삭제된 대상에 쓰기를 막은 42501 을 안내로 바꾼다', () {

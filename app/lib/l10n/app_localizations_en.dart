@@ -957,4 +957,65 @@ class AppLocalizationsEn extends AppLocalizations {
   String avatarSemanticsLabel(String nickname) {
     return '$nickname\'s profile photo';
   }
+
+  @override
+  String get feedTabAll => 'All';
+
+  @override
+  String get feedTabFollowing => 'Following';
+
+  @override
+  String get feedFollowingEmptyMessage => 'You are not following anyone yet';
+
+  @override
+  String get feedFollowingEmptyDescription =>
+      'Follow someone and their posts will show up here.';
+
+  @override
+  String get followAction => 'Follow';
+
+  @override
+  String get followFollowingAction => 'Following';
+
+  @override
+  String get followMutualAction => 'Friends';
+
+  @override
+  String get followFailed => 'Couldn\'t follow';
+
+  @override
+  String get followUnfollowFailed => 'Couldn\'t unfollow';
+
+  @override
+  String get followFollowersLabel => 'Followers';
+
+  @override
+  String get followFollowingsLabel => 'Following';
+
+  @override
+  String get followFollowersTitle => 'Followers';
+
+  @override
+  String get followFollowingsTitle => 'Following';
+
+  @override
+  String get followFollowersEmpty => 'No followers yet';
+
+  @override
+  String get followFollowingsEmpty => 'Not following anyone yet';
+
+  @override
+  String get followListLoadFailed => 'Couldn\'t load the list';
+
+  @override
+  String get failureFollowUserIdRequired => 'A user is required';
+
+  @override
+  String get failureFollowRangeInvalid => 'Invalid follow list range';
+
+  @override
+  String get failureFollowCursorInvalid => 'Invalid follow list cursor';
+
+  @override
+  String get failureFollowBlocked => 'You can\'t follow this account right now';
 }

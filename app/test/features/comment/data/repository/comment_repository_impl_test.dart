@@ -55,7 +55,8 @@ void main() {
     ).thenAnswer((_) async => [_dto(0), _dto(1), _dto(2)]);
 
     final page =
-        ((await repository.getComments(postId: 'post-1', limit: 2)) as Ok).value;
+        ((await repository.getComments(postId: 'post-1', limit: 2)) as Ok)
+            .value;
 
     expect(page.items.length, 2);
     expect(page.hasMore, isTrue);

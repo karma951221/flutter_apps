@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Profile {
 
- String get id; String get nickname; String? get bio; String? get avatarUrl; DateTime get createdAt; DateTime get updatedAt;
+ String get id; String get nickname; String? get bio; String? get avatarUrl; DateTime get createdAt; DateTime get updatedAt; int get followerCount; int get followingCount; FollowRelation get relation;
 /// Create a copy of Profile
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ProfileCopyWith<Profile> get copyWith => _$ProfileCopyWithImpl<Profile>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Profile&&(identical(other.id, id) || other.id == id)&&(identical(other.nickname, nickname) || other.nickname == nickname)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Profile&&(identical(other.id, id) || other.id == id)&&(identical(other.nickname, nickname) || other.nickname == nickname)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.followerCount, followerCount) || other.followerCount == followerCount)&&(identical(other.followingCount, followingCount) || other.followingCount == followingCount)&&(identical(other.relation, relation) || other.relation == relation));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,nickname,bio,avatarUrl,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,nickname,bio,avatarUrl,createdAt,updatedAt,followerCount,followingCount,relation);
 
 @override
 String toString() {
-  return 'Profile(id: $id, nickname: $nickname, bio: $bio, avatarUrl: $avatarUrl, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Profile(id: $id, nickname: $nickname, bio: $bio, avatarUrl: $avatarUrl, createdAt: $createdAt, updatedAt: $updatedAt, followerCount: $followerCount, followingCount: $followingCount, relation: $relation)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ProfileCopyWith<$Res>  {
   factory $ProfileCopyWith(Profile value, $Res Function(Profile) _then) = _$ProfileCopyWithImpl;
 @useResult
 $Res call({
- String id, String nickname, String? bio, String? avatarUrl, DateTime createdAt, DateTime updatedAt
+ String id, String nickname, String? bio, String? avatarUrl, DateTime createdAt, DateTime updatedAt, int followerCount, int followingCount, FollowRelation relation
 });
 
 
@@ -62,7 +62,7 @@ class _$ProfileCopyWithImpl<$Res>
 
 /// Create a copy of Profile
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nickname = null,Object? bio = freezed,Object? avatarUrl = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nickname = null,Object? bio = freezed,Object? avatarUrl = freezed,Object? createdAt = null,Object? updatedAt = null,Object? followerCount = null,Object? followingCount = null,Object? relation = null,}) {
   return _then(Profile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,nickname: null == nickname ? _self.nickname : nickname // ignore: cast_nullable_to_non_nullable
@@ -70,7 +70,10 @@ as String,bio: freezed == bio ? _self.bio : bio // ignore: cast_nullable_to_non_
 as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,followerCount: null == followerCount ? _self.followerCount : followerCount // ignore: cast_nullable_to_non_nullable
+as int,followingCount: null == followingCount ? _self.followingCount : followingCount // ignore: cast_nullable_to_non_nullable
+as int,relation: null == relation ? _self.relation : relation // ignore: cast_nullable_to_non_nullable
+as FollowRelation,
   ));
 }
 

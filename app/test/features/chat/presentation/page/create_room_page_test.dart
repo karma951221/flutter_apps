@@ -68,7 +68,10 @@ void main() {
       // push 하기 때문이다.
       initialLocation: '/',
       routes: [
-        GoRoute(path: '/', builder: (_, _) => const Scaffold(body: Text('목록'))),
+        GoRoute(
+          path: '/',
+          builder: (_, _) => const Scaffold(body: Text('목록')),
+        ),
         GoRoute(
           path: '/chat/new',
           builder: (_, _) => BlocProvider<AuthBloc>.value(
@@ -78,8 +81,7 @@ void main() {
         ),
         GoRoute(
           path: '/chat/:roomId',
-          builder: (_, state) =>
-              Text('room:${state.pathParameters['roomId']}'),
+          builder: (_, state) => Text('room:${state.pathParameters['roomId']}'),
         ),
       ],
     );
@@ -113,17 +115,16 @@ void main() {
   testWidgets('방에서 쓸 이름의 기본값은 내 프로필 닉네임이다', (tester) async {
     await pumpPage(tester);
 
-    final fields = tester.widgetList<TextField>(find.byType(TextField)).toList();
+    final fields = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .toList();
     expect(fields.last.controller?.text, '카르마');
   });
 
   testWidgets('정원 기본값을 라벨에 보여준다', (tester) async {
     await pumpPage(tester);
 
-    expect(
-      find.text('정원 ${ChatPolicy.memberLimitDefault}명'),
-      findsOneWidget,
-    );
+    expect(find.text('정원 ${ChatPolicy.memberLimitDefault}명'), findsOneWidget);
   });
 
   testWidgets('만들기를 누르면 개설과 입장을 함께 요청한다', (tester) async {

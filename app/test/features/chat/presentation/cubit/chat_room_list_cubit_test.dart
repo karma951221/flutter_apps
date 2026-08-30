@@ -26,8 +26,9 @@ void main() {
   blocTest<ChatRoomListCubit, ChatRoomListState>(
     '조회에 성공하면 목록을 담는다',
     build: () {
-      when(useCase.getMyRooms)
-          .thenAnswer((_) async => Ok([_room('a'), _room('b')]));
+      when(
+        useCase.getMyRooms,
+      ).thenAnswer((_) async => Ok([_room('a'), _room('b')]));
       return ChatRoomListCubit(useCase);
     },
     act: (cubit) => cubit.load(),
@@ -40,8 +41,9 @@ void main() {
   blocTest<ChatRoomListCubit, ChatRoomListState>(
     '조회에 실패하면 failure 를 담는다',
     build: () {
-      when(useCase.getMyRooms)
-          .thenAnswer((_) async => const Err(Failure.network()));
+      when(
+        useCase.getMyRooms,
+      ).thenAnswer((_) async => const Err(Failure.network()));
       return ChatRoomListCubit(useCase);
     },
     act: (cubit) => cubit.load(),
@@ -100,8 +102,9 @@ void main() {
   blocTest<ChatRoomListCubit, ChatRoomListState>(
     '방에서 나오면 목록에서 걷어낸다',
     build: () {
-      when(useCase.getMyRooms)
-          .thenAnswer((_) async => Ok([_room('a'), _room('b')]));
+      when(
+        useCase.getMyRooms,
+      ).thenAnswer((_) async => Ok([_room('a'), _room('b')]));
       return ChatRoomListCubit(useCase);
     },
     act: (cubit) async {

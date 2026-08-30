@@ -12,6 +12,9 @@ import 'package:daylog/features/chat/domain/usecase/chat_use_case.dart';
 import 'package:daylog/features/chat/presentation/cubit/chat_room_list_cubit.dart';
 import 'package:daylog/features/feed/domain/entity/feed_post.dart';
 import 'package:daylog/features/feed/domain/usecase/feed_use_case.dart';
+import 'package:daylog/features/feed/domain/entity/feed_source.dart';
+import 'package:daylog/features/follow/domain/usecase/follow_use_case.dart';
+import 'package:daylog/features/follow/presentation/cubit/follow_action_cubit.dart';
 import 'package:daylog/features/feed/presentation/cubit/feed_cubit.dart';
 import 'package:daylog/features/home/presentation/page/home_shell_page.dart';
 import 'package:daylog/features/post/domain/usecase/post_use_case.dart';
@@ -33,6 +36,8 @@ import 'package:mocktail/mocktail.dart';
 
 class _MockFeedUseCase extends Mock implements FeedUseCase {}
 
+class _MockFollowUseCase extends Mock implements FollowUseCase {}
+
 class _MockPostUseCase extends Mock implements PostUseCase {}
 
 class _MockProfileUseCase extends Mock implements ProfileUseCase {}
@@ -49,6 +54,8 @@ class _MockChatUseCase extends Mock implements ChatUseCase {}
 const _me = AppUser(id: 'me', email: 'me@example.test', nickname: '카르마');
 
 void main() {
+  setUpAll(() => registerFallbackValue(FeedSource.all));
+
   late _MockFeedUseCase feedUseCase;
   late _MockProfileUseCase profileUseCase;
   late _MockAuthBloc authBloc;
@@ -61,8 +68,9 @@ void main() {
     profileUseCase = _MockProfileUseCase();
     authBloc = _MockAuthBloc();
     chatUseCase = _MockChatUseCase();
-    when(chatUseCase.getMyRooms)
-        .thenAnswer((_) async => const Ok(<ChatRoomSummary>[]));
+    when(
+      chatUseCase.getMyRooms,
+    ).thenAnswer((_) async => const Ok(<ChatRoomSummary>[]));
 
     whenListen(
       authBloc,
@@ -74,6 +82,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
     when(() => profileUseCase.getMyProfile()).thenAnswer(
@@ -93,8 +102,9 @@ void main() {
       )
       ..registerFactory<PostCubit>(() => PostCubit(_MockPostUseCase()))
       ..registerFactory<ProfileCubit>(() => ProfileCubit(profileUseCase))
-      ..registerFactory<ChatRoomListCubit>(
-        () => ChatRoomListCubit(chatUseCase),
+      ..registerFactory<ChatRoomListCubit>(() => ChatRoomListCubit(chatUseCase))
+      ..registerFactory<FollowActionCubit>(
+        () => FollowActionCubit(_MockFollowUseCase()),
       );
 
     final preferencesUseCase = _MockPreferencesUseCase();
@@ -185,6 +195,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).called(greaterThan(0));
 
@@ -199,6 +210,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     );
   });

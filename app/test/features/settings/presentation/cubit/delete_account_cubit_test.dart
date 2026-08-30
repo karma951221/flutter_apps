@@ -16,8 +16,9 @@ void main() {
 
   blocTest<DeleteAccountCubit, DeleteAccountState>(
     '성공하면 진행 중 상태로 남는다 — 화면째로 사라질 것이므로 되돌리지 않는다',
-    setUp: () =>
-        when(() => useCase.deleteAccount()).thenAnswer((_) async => const Ok(null)),
+    setUp: () => when(
+      () => useCase.deleteAccount(),
+    ).thenAnswer((_) async => const Ok(null)),
     build: () => DeleteAccountCubit(useCase),
     act: (cubit) => cubit.submit(),
     expect: () => const [DeleteAccountState.inProgress()],

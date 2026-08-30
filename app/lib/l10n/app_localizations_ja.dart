@@ -922,4 +922,64 @@ class AppLocalizationsJa extends AppLocalizations {
   String avatarSemanticsLabel(String nickname) {
     return '$nicknameさんのプロフィール写真';
   }
+
+  @override
+  String get feedTabAll => 'すべて';
+
+  @override
+  String get feedTabFollowing => 'フォロー中';
+
+  @override
+  String get feedFollowingEmptyMessage => 'フォロー中の人がいません';
+
+  @override
+  String get feedFollowingEmptyDescription => '気になる人をフォローすると、ここに投稿が集まります。';
+
+  @override
+  String get followAction => 'フォロー';
+
+  @override
+  String get followFollowingAction => 'フォロー中';
+
+  @override
+  String get followMutualAction => '相互フォロー';
+
+  @override
+  String get followFailed => 'フォローできませんでした';
+
+  @override
+  String get followUnfollowFailed => 'フォローを解除できませんでした';
+
+  @override
+  String get followFollowersLabel => 'フォロワー';
+
+  @override
+  String get followFollowingsLabel => 'フォロー中';
+
+  @override
+  String get followFollowersTitle => 'フォロワー';
+
+  @override
+  String get followFollowingsTitle => 'フォロー中';
+
+  @override
+  String get followFollowersEmpty => 'まだフォロワーがいません';
+
+  @override
+  String get followFollowingsEmpty => 'まだ誰もフォローしていません';
+
+  @override
+  String get followListLoadFailed => 'リストを読み込めませんでした';
+
+  @override
+  String get failureFollowUserIdRequired => 'ユーザーの指定が必要です';
+
+  @override
+  String get failureFollowRangeInvalid => 'フォロー一覧の取得範囲が正しくありません';
+
+  @override
+  String get failureFollowCursorInvalid => 'フォロー一覧のカーソルが正しくありません';
+
+  @override
+  String get failureFollowBlocked => '現在このアカウントはフォローできません';
 }

@@ -27,15 +27,16 @@ void main() {
       const ChangePasswordState.inProgress(),
       const ChangePasswordState.success(),
     ],
-    verify: (_) => verify(() => useCase.updatePassword('new-password')).called(1),
+    verify: (_) =>
+        verify(() => useCase.updatePassword('new-password')).called(1),
   );
 
   blocTest<ChangePasswordCubit, ChangePasswordState>(
     '변경에 실패하면 실패를 그대로 들고 있는다',
     build: () {
-      when(
-        () => useCase.updatePassword(any()),
-      ).thenAnswer((_) async => const Err(Failure.auth(message: '세션이 만료되었습니다')));
+      when(() => useCase.updatePassword(any())).thenAnswer(
+        (_) async => const Err(Failure.auth(message: '세션이 만료되었습니다')),
+      );
       return ChangePasswordCubit(useCase);
     },
     act: (c) => c.submit('new-password'),

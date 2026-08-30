@@ -1,3 +1,4 @@
+import '../../../follow/domain/entity/follow_relation.dart';
 import '../../domain/entity/profile.dart';
 import '../dto/profile_dto.dart';
 
@@ -10,5 +11,11 @@ extension ProfileDtoMapper on ProfileDto {
     avatarUrl: avatarUrl,
     createdAt: createdAt,
     updatedAt: updatedAt,
+    followerCount: followerCount,
+    followingCount: followingCount,
+    relation: FollowRelation(
+      isFollowing: isFollowing,
+      isFollowedBy: isFollowedBy,
+    ),
   );
 }

@@ -12,8 +12,10 @@ import 'package:mocktail/mocktail.dart';
 
 class _MockProfileRepository extends Mock implements ProfileRepository {}
 
-const _newUrl = 'https://x.supabase.co/storage/v1/object/public/avatars/u1/2.webp';
-const _oldUrl = 'https://x.supabase.co/storage/v1/object/public/avatars/u1/1.webp';
+const _newUrl =
+    'https://x.supabase.co/storage/v1/object/public/avatars/u1/2.webp';
+const _oldUrl =
+    'https://x.supabase.co/storage/v1/object/public/avatars/u1/1.webp';
 
 final _avatar = AvatarImageDraft(
   bytes: Uint8List.fromList([1, 2, 3]),
@@ -63,9 +65,10 @@ void main() {
       () => repository.updateMyProfile(any()),
     ).thenAnswer((_) async => Ok(_profile));
 
-    final result = await UpdateAvatarScenario(
-      repository,
-    )(_update, newAvatar: _avatar);
+    final result = await UpdateAvatarScenario(repository)(
+      _update,
+      newAvatar: _avatar,
+    );
 
     expect(result, isA<Ok<Profile>>());
     final sent =
@@ -86,9 +89,10 @@ void main() {
       () => repository.updateMyProfile(any()),
     ).thenAnswer((_) async => const Err(failure));
 
-    final result = await UpdateAvatarScenario(
-      repository,
-    )(_update, newAvatar: _avatar);
+    final result = await UpdateAvatarScenario(repository)(
+      _update,
+      newAvatar: _avatar,
+    );
 
     expect((result as Err<Profile>).failure, failure);
     // 보상: 새 객체만 지우고 이전 아바타는 그대로 둔다.
@@ -97,18 +101,16 @@ void main() {
   });
 
   test('업로드가 실패하면 프로필을 건드리지 않는다', () async {
-    when(() => repository.uploadAvatar(any())).thenAnswer(
-      (_) async => const Err(Failure.network(message: '오프라인')),
+    when(
+      () => repository.uploadAvatar(any()),
+    ).thenAnswer((_) async => const Err(Failure.network(message: '오프라인')));
+
+    final result = await UpdateAvatarScenario(repository)(
+      _update,
+      newAvatar: _avatar,
     );
 
-    final result = await UpdateAvatarScenario(
-      repository,
-    )(_update, newAvatar: _avatar);
-
-    expect(
-      (result as Err<Profile>).failure.message,
-      '프로필 사진을 업로드하지 못했습니다.',
-    );
+    expect((result as Err<Profile>).failure.message, '프로필 사진을 업로드하지 못했습니다.');
     verifyNever(() => repository.updateMyProfile(any()));
     verifyNever(() => repository.removeAvatar(any()));
   });

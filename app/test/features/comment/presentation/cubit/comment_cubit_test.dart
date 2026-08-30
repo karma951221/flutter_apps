@@ -357,7 +357,10 @@ void main() {
       );
     },
     verify: (cubit) {
-      expect(cubit.state.repliesOf('1').single.reactions.mine, ReactionType.dislike);
+      expect(
+        cubit.state.repliesOf('1').single.reactions.mine,
+        ReactionType.dislike,
+      );
       expect(cubit.state.items.single.reactions.mine, isNull);
     },
   );
@@ -372,8 +375,9 @@ void main() {
           cursor: null,
         ),
       ).thenAnswer(
-        (_) async =>
-            Ok(CursorPage<PostComment>(items: [_comment('1')], nextCursor: 'c1')),
+        (_) async => Ok(
+          CursorPage<PostComment>(items: [_comment('1')], nextCursor: 'c1'),
+        ),
       );
       when(
         () => useCase.getComments(
@@ -381,7 +385,9 @@ void main() {
           limit: any(named: 'limit'),
           cursor: 'c1',
         ),
-      ).thenAnswer((_) async => Ok(CursorPage<PostComment>(items: [_comment('2')])));
+      ).thenAnswer(
+        (_) async => Ok(CursorPage<PostComment>(items: [_comment('2')])),
+      );
     },
     build: () => CommentCubit(useCase, reactionUseCase),
     act: (cubit) async {

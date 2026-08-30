@@ -58,9 +58,11 @@ void main() {
       );
 
       expect(result, isA<Ok<Post>>());
-      final captured = verify(
-        () => repository.updatePost('post-id', captureAny()),
-      ).captured.single as PostUpdate;
+      final captured =
+          verify(
+                () => repository.updatePost('post-id', captureAny()),
+              ).captured.single
+              as PostUpdate;
       expect(captured.content, '고친 내용');
     });
 

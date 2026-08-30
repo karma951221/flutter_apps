@@ -46,8 +46,46 @@ class FeedPage extends StatelessWidget {
   );
 }
 
-class _FeedView extends StatelessWidget {
+class _FeedView extends StatefulWidget {
   const _FeedView();
+
+  @override
+  State<_FeedView> createState() => _FeedViewState();
+}
+
+/// 탭 둘(전체 · 팔로잉)을 하나의 [FeedCubit] 이 번갈아 채운다.
+///
+/// 탭마다 cubit 을 따로 두지 않는 이유: 게시물 작성·수정·삭제·차단의 결과를
+/// 목록에 반영하는 배선이 한 벌뿐이고, 두 벌이 되면 어느 쪽을 갱신할지
+/// 화면이 매번 정해야 한다. 대가는 탭을 옮길 때 다시 읽는 것이다 — 스크롤
+/// 위치가 초기화된다.
+class _FeedViewState extends State<_FeedView>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController = TabController(
+    length: 2,
+    vsync: this,
+  )..addListener(_onTabChanged);
+
+  @override
+  void dispose() {
+    _tabController
+      ..removeListener(_onTabChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    // 드래그 중에는 두 번 불린다. 애니메이션이 끝난 뒤 한 번만 읽는다.
+    if (_tabController.indexIsChanging) return;
+    final feed = context.read<FeedCubit>();
+    if (_tabController.index == 0) {
+      feed.load();
+    } else {
+      feed.loadFollowing();
+    }
+  }
+
+  bool get _isFollowingTab => _tabController.index == 1;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +102,16 @@ class _FeedView extends StatelessWidget {
     };
 
     return Scaffold(
-      appBar: AppBar(title: const Text('daylog')),
+      appBar: AppBar(
+        title: const Text('daylog'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: [
+            Tab(text: l10n.feedTabAll),
+            Tab(text: l10n.feedTabFollowing),
+          ],
+        ),
+      ),
       body: BlocBuilder<FeedCubit, FeedState>(
         builder: (context, state) => switch (state.status) {
           FeedStatus.loading => const Center(
@@ -86,6 +133,7 @@ class _FeedView extends StatelessWidget {
             currentUserId: currentAuthor?.id ?? '',
             isLoadingMore: state.isLoadingMore,
             canLoadMore: state.canLoadMore,
+            isFollowingTab: _isFollowingTab,
             onCompose: () => _compose(context, currentAuthor),
           ),
         },
@@ -120,6 +168,7 @@ class _FeedList extends StatelessWidget {
     required this.currentUserId,
     required this.isLoadingMore,
     required this.canLoadMore,
+    required this.isFollowingTab,
     required this.onCompose,
   });
 
@@ -130,6 +179,10 @@ class _FeedList extends StatelessWidget {
   final String currentUserId;
   final bool isLoadingMore;
   final bool canLoadMore;
+
+  /// 팔로잉 탭이면 비어 있음 안내가 달라진다 — 글이 없는 것이 아니라
+  /// 팔로우한 사람이 없는 것이다.
+  final bool isFollowingTab;
   final VoidCallback onCompose;
 
   @override
@@ -208,13 +261,19 @@ class _FeedList extends StatelessWidget {
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: constraints.maxHeight),
             child: Center(
-              child: AppPlaceholder(
-                icon: Icons.edit_note_outlined,
-                message: l10n.feedEmptyMessage,
-                description: l10n.feedEmptyDescription,
-                actionLabel: l10n.feedEmptyAction,
-                onAction: onCompose,
-              ),
+              child: isFollowingTab
+                  ? AppPlaceholder(
+                      icon: Icons.people_outline,
+                      message: l10n.feedFollowingEmptyMessage,
+                      description: l10n.feedFollowingEmptyDescription,
+                    )
+                  : AppPlaceholder(
+                      icon: Icons.edit_note_outlined,
+                      message: l10n.feedEmptyMessage,
+                      description: l10n.feedEmptyDescription,
+                      actionLabel: l10n.feedEmptyAction,
+                      onAction: onCompose,
+                    ),
             ),
           ),
         ),

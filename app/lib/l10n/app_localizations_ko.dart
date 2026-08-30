@@ -922,4 +922,64 @@ class AppLocalizationsKo extends AppLocalizations {
   String avatarSemanticsLabel(String nickname) {
     return '$nickname 프로필 사진';
   }
+
+  @override
+  String get feedTabAll => '전체';
+
+  @override
+  String get feedTabFollowing => '팔로잉';
+
+  @override
+  String get feedFollowingEmptyMessage => '팔로우한 사람이 없습니다';
+
+  @override
+  String get feedFollowingEmptyDescription => '마음에 드는 사람을 팔로우하면 여기에 글이 모입니다.';
+
+  @override
+  String get followAction => '팔로우';
+
+  @override
+  String get followFollowingAction => '팔로잉';
+
+  @override
+  String get followMutualAction => '맞팔로우';
+
+  @override
+  String get followFailed => '팔로우하지 못했습니다';
+
+  @override
+  String get followUnfollowFailed => '팔로우를 해제하지 못했습니다';
+
+  @override
+  String get followFollowersLabel => '팔로워';
+
+  @override
+  String get followFollowingsLabel => '팔로잉';
+
+  @override
+  String get followFollowersTitle => '팔로워';
+
+  @override
+  String get followFollowingsTitle => '팔로잉';
+
+  @override
+  String get followFollowersEmpty => '아직 팔로워가 없습니다';
+
+  @override
+  String get followFollowingsEmpty => '아직 팔로우한 사람이 없습니다';
+
+  @override
+  String get followListLoadFailed => '목록을 불러오지 못했습니다';
+
+  @override
+  String get failureFollowUserIdRequired => '사용자 식별자가 필요합니다';
+
+  @override
+  String get failureFollowRangeInvalid => '올바른 팔로우 조회 범위가 아닙니다';
+
+  @override
+  String get failureFollowCursorInvalid => '잘못된 팔로우 커서입니다';
+
+  @override
+  String get failureFollowBlocked => '지금은 팔로우할 수 없습니다';
 }

@@ -3,6 +3,7 @@ import '../../../../../core/error/failure_code.dart';
 import '../../../../../core/pagination/cursor_page.dart';
 import '../../../../../core/result/result.dart';
 import '../../entity/feed_post.dart';
+import '../../entity/feed_source.dart';
 import '../../repository/feed_repository.dart';
 
 class GetFeedPostsScenario {
@@ -17,6 +18,7 @@ class GetFeedPostsScenario {
     required int limit,
     String? cursor,
     String? authorId,
+    FeedSource source = FeedSource.all,
   }) {
     if (limit < 1 || limit > maxPageSize) {
       return Future.value(
@@ -43,6 +45,7 @@ class GetFeedPostsScenario {
       limit: limit,
       cursor: cursor,
       authorId: authorId,
+      source: source,
     );
   }
 }

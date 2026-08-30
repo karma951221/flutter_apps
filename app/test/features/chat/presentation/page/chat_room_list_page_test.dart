@@ -142,8 +142,9 @@ void main() {
   });
 
   testWidgets('조회에 실패하면 다시 시도 버튼을 보여준다', (tester) async {
-    when(useCase.getMyRooms)
-        .thenAnswer((_) async => const Err(Failure.network()));
+    when(
+      useCase.getMyRooms,
+    ).thenAnswer((_) async => const Err(Failure.network()));
 
     await pumpList(tester);
 

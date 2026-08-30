@@ -60,10 +60,10 @@ void main() {
   });
 
   test('fromRaw 는 뷰가 내려준 문자열을 엔티티로 옮긴다', () {
-    final summary = ReactionSummary.fromRaw(
-      const {'like': 4, 'dislike': 1},
-      'like',
-    );
+    final summary = ReactionSummary.fromRaw(const {
+      'like': 4,
+      'dislike': 1,
+    }, 'like');
 
     expect(summary.countOf(ReactionType.like), 4);
     expect(summary.countOf(ReactionType.dislike), 1);
@@ -72,7 +72,10 @@ void main() {
 
   test('앱이 모르는 감정 코드는 무시한다', () {
     // 감정을 DB 에 먼저 추가하고 앱을 나중에 배포해도 목록이 깨지지 않아야 한다.
-    final summary = ReactionSummary.fromRaw(const {'like': 2, 'love': 9}, 'love');
+    final summary = ReactionSummary.fromRaw(const {
+      'like': 2,
+      'love': 9,
+    }, 'love');
 
     expect(summary.countOf(ReactionType.like), 2);
     expect(summary.counts.length, 1);

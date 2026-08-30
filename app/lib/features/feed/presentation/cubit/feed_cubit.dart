@@ -10,6 +10,7 @@ import '../../../reaction/domain/entity/reaction_target.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
 import '../../../reaction/domain/usecase/reaction_use_case.dart';
 import '../../domain/entity/feed_post.dart';
+import '../../domain/entity/feed_source.dart';
 import '../../domain/usecase/feed_use_case.dart';
 import 'feed_state.dart';
 
@@ -32,6 +33,7 @@ class FeedCubit extends Cubit<FeedState> {
   final FeedUseCase _useCase;
   final ReactionUseCase _reactionUseCase;
   String? _authorId;
+  FeedSource _source = FeedSource.all;
 
   /// 이번 조회(`_load()`) 동안 걷어낸 작성자 id 들.
   ///
@@ -46,11 +48,23 @@ class FeedCubit extends Cubit<FeedState> {
 
   Future<void> load() async {
     _authorId = null;
+    _source = FeedSource.all;
+    await _load();
+  }
+
+  /// 팔로우한 사람들의 글만 읽는다. 화면·커서·항목 모양은 전체 피드와 같고
+  /// 읽는 뷰만 바뀐다 (docs/features/follow/plan.md).
+  Future<void> loadFollowing() async {
+    _authorId = null;
+    _source = FeedSource.following;
     await _load();
   }
 
   Future<void> loadForAuthor(String authorId) async {
     _authorId = authorId;
+    // 프로필의 목록은 언제나 전체 소스다 — 그 사람을 팔로우했는지와 무관하게
+    // 그 사람의 글을 보여주는 자리다.
+    _source = FeedSource.all;
     await _load();
   }
 
@@ -62,6 +76,7 @@ class FeedCubit extends Cubit<FeedState> {
     final result = await _useCase.getFeedPosts(
       limit: _pageSize,
       authorId: _authorId,
+      source: _source,
     );
     if (isClosed) return;
 
@@ -93,6 +108,7 @@ class FeedCubit extends Cubit<FeedState> {
       limit: _pageSize,
       cursor: current.nextCursor,
       authorId: _authorId,
+      source: _source,
     );
     if (isClosed) return;
 

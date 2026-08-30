@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:daylog/core/di/injection.dart';
 import 'package:daylog/core/error/failure.dart';
+import 'package:daylog/core/error/failure_code.dart';
 import 'package:daylog/core/pagination/cursor_page.dart';
 import 'package:daylog/core/result/result.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
@@ -12,7 +13,11 @@ import 'package:daylog/features/auth/presentation/bloc/auth_event.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_state.dart';
 import 'package:daylog/features/feed/domain/entity/feed_post.dart';
 import 'package:daylog/features/feed/domain/usecase/feed_use_case.dart';
+import 'package:daylog/features/feed/domain/entity/feed_source.dart';
 import 'package:daylog/features/feed/presentation/cubit/feed_cubit.dart';
+import 'package:daylog/features/follow/domain/entity/follow_relation.dart';
+import 'package:daylog/features/follow/domain/usecase/follow_use_case.dart';
+import 'package:daylog/features/follow/presentation/cubit/follow_action_cubit.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_author.dart';
 import 'package:daylog/features/post/domain/usecase/post_use_case.dart';
@@ -40,16 +45,27 @@ class _MockPostUseCase extends Mock implements PostUseCase {}
 
 class _MockSafetyUseCase extends Mock implements SafetyUseCase {}
 
+class _MockFollowUseCase extends Mock implements FollowUseCase {}
+
 class _MockAuthBloc extends MockBloc<AuthEvent, AuthState>
     implements AuthBloc {}
 
 const _me = AppUser(id: 'me', email: 'me@example.test', nickname: '카르마');
 
-Profile _profile(String id, String nickname) => Profile(
+Profile _profile(
+  String id,
+  String nickname, {
+  int followerCount = 0,
+  int followingCount = 0,
+  FollowRelation relation = const FollowRelation(),
+}) => Profile(
   id: id,
   nickname: nickname,
   createdAt: DateTime.utc(2026, 8, 22, 9),
   updatedAt: DateTime.utc(2026, 8, 22, 9),
+  followerCount: followerCount,
+  followingCount: followingCount,
+  relation: relation,
 );
 
 FeedPost _item(String id, String authorId, String nickname) => FeedPost(
@@ -64,15 +80,19 @@ FeedPost _item(String id, String authorId, String nickname) => FeedPost(
 );
 
 void main() {
+  setUpAll(() => registerFallbackValue(FeedSource.all));
+
   late _MockProfileUseCase profileUseCase;
   late _MockFeedUseCase feedUseCase;
   late _MockSafetyUseCase safetyUseCase;
+  late _MockFollowUseCase followUseCase;
   late _MockAuthBloc authBloc;
 
   setUp(() {
     profileUseCase = _MockProfileUseCase();
     feedUseCase = _MockFeedUseCase();
     safetyUseCase = _MockSafetyUseCase();
+    followUseCase = _MockFollowUseCase();
     when(
       () => safetyUseCase.isBlockedByMe(any()),
     ).thenAnswer((_) async => const Ok(false));
@@ -89,8 +109,9 @@ void main() {
         () => FeedCubit(feedUseCase, _MockReactionUseCase()),
       )
       ..registerFactory<PostCubit>(() => PostCubit(_MockPostUseCase()))
-      ..registerFactory<BlockActionCubit>(
-        () => BlockActionCubit(safetyUseCase),
+      ..registerFactory<BlockActionCubit>(() => BlockActionCubit(safetyUseCase))
+      ..registerFactory<FollowActionCubit>(
+        () => FollowActionCubit(followUseCase),
       );
   });
 
@@ -124,6 +145,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer(
       (_) async => Ok(CursorPage<FeedPost>(items: [_item('1', 'me', '카르마')])),
@@ -139,6 +161,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: null,
         authorId: 'me',
+        source: any(named: 'source'),
       ),
     ).called(1);
   });
@@ -152,6 +175,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer(
       (_) async => Ok(CursorPage<FeedPost>(items: [_item('2', 'other', '이웃')])),
@@ -169,6 +193,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: null,
         authorId: 'other',
+        source: any(named: 'source'),
       ),
     ).called(1);
   });
@@ -182,6 +207,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
     when(
@@ -206,6 +232,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
     when(
@@ -229,6 +256,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
     when(
@@ -253,6 +281,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
 
@@ -270,6 +299,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
     when(
@@ -295,6 +325,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: null,
         authorId: 'other',
+        source: any(named: 'source'),
       ),
     ).called(2);
   });
@@ -308,6 +339,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
     when(
@@ -338,6 +370,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
     when(
@@ -372,6 +405,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
     when(
@@ -394,6 +428,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: null,
         authorId: 'other',
+        source: any(named: 'source'),
       ),
     ).called(2);
   });
@@ -412,6 +447,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     );
   });
@@ -431,6 +467,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
     when(
@@ -464,6 +501,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
     when(
@@ -482,5 +520,135 @@ void main() {
     await tester.pump();
 
     verifyNever(profileUseCase.getMyProfile);
+  });
+
+  group('팔로우', () {
+    Future<void> pumpOther(
+      WidgetTester tester, {
+      required Profile profile,
+    }) async {
+      when(
+        () => feedUseCase.getFeedPosts(
+          limit: any(named: 'limit'),
+          cursor: any(named: 'cursor'),
+          authorId: any(named: 'authorId'),
+          source: any(named: 'source'),
+        ),
+      ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+      when(
+        () => profileUseCase.getProfile(any()),
+      ).thenAnswer((_) async => Ok(profile));
+
+      await pumpPage(tester, userId: profile.id);
+    }
+
+    testWidgets('남의 프로필은 팔로우 버튼과 수를 보여준다', (tester) async {
+      await pumpOther(
+        tester,
+        profile: _profile('other', '이웃', followerCount: 3, followingCount: 5),
+      );
+
+      expect(find.text('팔로우'), findsOneWidget);
+      expect(find.text('팔로워'), findsOneWidget);
+      expect(find.text('3'), findsOneWidget);
+      expect(find.text('5'), findsOneWidget);
+    });
+
+    testWidgets('이미 팔로우 중이면 라벨이 팔로잉이다', (tester) async {
+      await pumpOther(
+        tester,
+        profile: _profile(
+          'other',
+          '이웃',
+          relation: const FollowRelation(isFollowing: true),
+        ),
+      );
+
+      expect(find.text('팔로잉'), findsNWidgets(2)); // 버튼과 수 라벨
+      expect(find.text('팔로우'), findsNothing);
+    });
+
+    testWidgets('서로 팔로우 중이면 맞팔로우로 보인다', (tester) async {
+      await pumpOther(
+        tester,
+        profile: _profile(
+          'other',
+          '이웃',
+          relation: const FollowRelation(isFollowing: true, isFollowedBy: true),
+        ),
+      );
+
+      expect(find.text('맞팔로우'), findsOneWidget);
+    });
+
+    testWidgets('팔로우를 누르면 수가 먼저 늘고 usecase 를 부른다', (tester) async {
+      when(
+        () => followUseCase.followUser('other'),
+      ).thenAnswer((_) async => const Ok(null));
+      await pumpOther(
+        tester,
+        profile: _profile('other', '이웃', followerCount: 3),
+      );
+
+      await tester.tap(find.text('팔로우'));
+      await tester.pump();
+
+      expect(find.text('4'), findsOneWidget);
+      expect(find.text('팔로잉'), findsNWidgets(2));
+      verify(() => followUseCase.followUser('other')).called(1);
+    });
+
+    testWidgets('실패하면 수를 되돌리고 오류를 알린다', (tester) async {
+      when(() => followUseCase.followUser('other')).thenAnswer(
+        (_) async => const Err(
+          Failure.forbidden(
+            message: '거부',
+            failureCode: FailureCode.followBlocked,
+          ),
+        ),
+      );
+      await pumpOther(
+        tester,
+        profile: _profile('other', '이웃', followerCount: 3),
+      );
+
+      await tester.tap(find.text('팔로우'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('3'), findsOneWidget);
+      expect(find.text('지금은 팔로우할 수 없습니다'), findsOneWidget);
+    });
+
+    testWidgets('내 프로필에는 팔로우 버튼이 없다', (tester) async {
+      when(
+        () => feedUseCase.getFeedPosts(
+          limit: any(named: 'limit'),
+          cursor: any(named: 'cursor'),
+          authorId: any(named: 'authorId'),
+          source: any(named: 'source'),
+        ),
+      ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+      when(
+        profileUseCase.getMyProfile,
+      ).thenAnswer((_) async => Ok(_profile('me', '카르마', followerCount: 2)));
+
+      await pumpPage(tester);
+
+      expect(find.text('팔로우'), findsNothing);
+      // 수는 내 프로필에서도 보인다.
+      expect(find.text('팔로워'), findsOneWidget);
+      expect(find.text('2'), findsOneWidget);
+    });
+
+    testWidgets('차단한 상대에게는 팔로우 버튼을 그리지 않는다', (tester) async {
+      when(
+        () => safetyUseCase.isBlockedByMe(any()),
+      ).thenAnswer((_) async => const Ok(true));
+
+      await pumpOther(tester, profile: _profile('other', '이웃'));
+
+      expect(find.text('팔로우'), findsNothing);
+    });
   });
 }

@@ -115,13 +115,18 @@ void main() {
       final result = await repository.getBlockedUsers();
 
       expect(result, isA<Err<List<BlockedUser>>>());
-      expect((result as Err<List<BlockedUser>>).failure, isA<ForbiddenFailure>());
+      expect(
+        (result as Err<List<BlockedUser>>).failure,
+        isA<ForbiddenFailure>(),
+      );
     });
   });
 
   group('isBlockedByMe', () {
     test('data source 의 결과를 그대로 전달한다', () async {
-      when(() => dataSource.isBlockedByMe('user-1')).thenAnswer((_) async => true);
+      when(
+        () => dataSource.isBlockedByMe('user-1'),
+      ).thenAnswer((_) async => true);
 
       final result = await repository.isBlockedByMe('user-1');
 

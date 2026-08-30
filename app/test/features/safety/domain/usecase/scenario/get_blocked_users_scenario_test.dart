@@ -25,9 +25,7 @@ void main() {
         blockedAt: DateTime.utc(2026, 8, 25),
       ),
     ];
-    when(
-      repository.getBlockedUsers,
-    ).thenAnswer((_) async => Ok(users));
+    when(repository.getBlockedUsers).thenAnswer((_) async => Ok(users));
 
     final result = await scenario();
 

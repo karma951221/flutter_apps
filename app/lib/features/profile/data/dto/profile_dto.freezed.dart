@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ProfileDto {
 
- String get id; String get nickname; String? get bio; String? get avatarUrl; DateTime get createdAt; DateTime get updatedAt;
+ String get id; String get nickname; String? get bio; String? get avatarUrl; DateTime get createdAt; DateTime get updatedAt; int get followerCount; int get followingCount; bool get isFollowing; bool get isFollowedBy;
 /// Create a copy of ProfileDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ProfileDtoCopyWith<ProfileDto> get copyWith => _$ProfileDtoCopyWithImpl<Profile
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileDto&&(identical(other.id, id) || other.id == id)&&(identical(other.nickname, nickname) || other.nickname == nickname)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ProfileDto&&(identical(other.id, id) || other.id == id)&&(identical(other.nickname, nickname) || other.nickname == nickname)&&(identical(other.bio, bio) || other.bio == bio)&&(identical(other.avatarUrl, avatarUrl) || other.avatarUrl == avatarUrl)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.followerCount, followerCount) || other.followerCount == followerCount)&&(identical(other.followingCount, followingCount) || other.followingCount == followingCount)&&(identical(other.isFollowing, isFollowing) || other.isFollowing == isFollowing)&&(identical(other.isFollowedBy, isFollowedBy) || other.isFollowedBy == isFollowedBy));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,nickname,bio,avatarUrl,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,nickname,bio,avatarUrl,createdAt,updatedAt,followerCount,followingCount,isFollowing,isFollowedBy);
 
 @override
 String toString() {
-  return 'ProfileDto(id: $id, nickname: $nickname, bio: $bio, avatarUrl: $avatarUrl, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'ProfileDto(id: $id, nickname: $nickname, bio: $bio, avatarUrl: $avatarUrl, createdAt: $createdAt, updatedAt: $updatedAt, followerCount: $followerCount, followingCount: $followingCount, isFollowing: $isFollowing, isFollowedBy: $isFollowedBy)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ProfileDtoCopyWith<$Res>  {
   factory $ProfileDtoCopyWith(ProfileDto value, $Res Function(ProfileDto) _then) = _$ProfileDtoCopyWithImpl;
 @useResult
 $Res call({
- String id, String nickname, String? bio,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt
+ String id, String nickname, String? bio,@JsonKey(name: 'avatar_url') String? avatarUrl,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt,@JsonKey(name: 'follower_count') int followerCount,@JsonKey(name: 'following_count') int followingCount,@JsonKey(name: 'is_following') bool isFollowing,@JsonKey(name: 'is_followed_by') bool isFollowedBy
 });
 
 
@@ -62,7 +62,7 @@ class _$ProfileDtoCopyWithImpl<$Res>
 
 /// Create a copy of ProfileDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nickname = null,Object? bio = freezed,Object? avatarUrl = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? nickname = null,Object? bio = freezed,Object? avatarUrl = freezed,Object? createdAt = null,Object? updatedAt = null,Object? followerCount = null,Object? followingCount = null,Object? isFollowing = null,Object? isFollowedBy = null,}) {
   return _then(ProfileDto(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,nickname: null == nickname ? _self.nickname : nickname // ignore: cast_nullable_to_non_nullable
@@ -70,7 +70,11 @@ as String,bio: freezed == bio ? _self.bio : bio // ignore: cast_nullable_to_non_
 as String?,avatarUrl: freezed == avatarUrl ? _self.avatarUrl : avatarUrl // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,followerCount: null == followerCount ? _self.followerCount : followerCount // ignore: cast_nullable_to_non_nullable
+as int,followingCount: null == followingCount ? _self.followingCount : followingCount // ignore: cast_nullable_to_non_nullable
+as int,isFollowing: null == isFollowing ? _self.isFollowing : isFollowing // ignore: cast_nullable_to_non_nullable
+as bool,isFollowedBy: null == isFollowedBy ? _self.isFollowedBy : isFollowedBy // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

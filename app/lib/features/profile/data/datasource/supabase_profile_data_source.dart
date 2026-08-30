@@ -21,11 +21,18 @@ class SupabaseProfileDataSource implements ProfileDataSource {
   static const _profileColumns =
       'id, nickname, bio, avatar_url, created_at, updated_at';
 
+  /// 조회는 뷰를 탄다. 팔로우 수 둘과 관계 둘을 한 번에 받기 위해서다
+  /// (docs/features/follow/plan.md). 갱신은 여전히 테이블을 쓴다 — 뷰는
+  /// 읽기 전용이고, 갱신 응답에는 수가 필요 없다.
+  static const _detailColumns =
+      '$_profileColumns, follower_count, following_count, '
+      'is_following, is_followed_by';
+
   @override
   Future<ProfileDto> getProfile(String userId) async {
     final row = await _client
-        .from('profiles')
-        .select(_profileColumns)
+        .from('profile_details')
+        .select(_detailColumns)
         .eq('id', userId)
         .single();
     return ProfileDto.fromJson(row);

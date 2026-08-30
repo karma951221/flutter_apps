@@ -1887,6 +1887,126 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{nickname} 프로필 사진'**
   String avatarSemanticsLabel(String nickname);
+
+  /// 피드 전체 탭
+  ///
+  /// In ko, this message translates to:
+  /// **'전체'**
+  String get feedTabAll;
+
+  /// 피드 팔로잉 탭
+  ///
+  /// In ko, this message translates to:
+  /// **'팔로잉'**
+  String get feedTabFollowing;
+
+  /// 팔로잉 피드가 비었을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'팔로우한 사람이 없습니다'**
+  String get feedFollowingEmptyMessage;
+
+  /// 팔로잉 피드가 비었을 때 보조 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'마음에 드는 사람을 팔로우하면 여기에 글이 모입니다.'**
+  String get feedFollowingEmptyDescription;
+
+  /// 팔로우 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'팔로우'**
+  String get followAction;
+
+  /// 이미 팔로우한 상태의 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'팔로잉'**
+  String get followFollowingAction;
+
+  /// 서로 팔로우 중인 상태의 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'맞팔로우'**
+  String get followMutualAction;
+
+  /// 팔로우 실패
+  ///
+  /// In ko, this message translates to:
+  /// **'팔로우하지 못했습니다'**
+  String get followFailed;
+
+  /// 팔로우 해제 실패
+  ///
+  /// In ko, this message translates to:
+  /// **'팔로우를 해제하지 못했습니다'**
+  String get followUnfollowFailed;
+
+  /// 프로필의 팔로워 수 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'팔로워'**
+  String get followFollowersLabel;
+
+  /// 프로필의 팔로잉 수 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'팔로잉'**
+  String get followFollowingsLabel;
+
+  /// 팔로워 목록 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'팔로워'**
+  String get followFollowersTitle;
+
+  /// 팔로잉 목록 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'팔로잉'**
+  String get followFollowingsTitle;
+
+  /// 팔로워 목록이 비었을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 팔로워가 없습니다'**
+  String get followFollowersEmpty;
+
+  /// 팔로잉 목록이 비었을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 팔로우한 사람이 없습니다'**
+  String get followFollowingsEmpty;
+
+  /// 팔로우 목록 조회 실패
+  ///
+  /// In ko, this message translates to:
+  /// **'목록을 불러오지 못했습니다'**
+  String get followListLoadFailed;
+
+  /// 팔로우 조회에 사용자 id 가 없다
+  ///
+  /// In ko, this message translates to:
+  /// **'사용자 식별자가 필요합니다'**
+  String get failureFollowUserIdRequired;
+
+  /// 팔로우 목록 조회 범위 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'올바른 팔로우 조회 범위가 아닙니다'**
+  String get failureFollowRangeInvalid;
+
+  /// 팔로우 목록 커서 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'잘못된 팔로우 커서입니다'**
+  String get failureFollowCursorInvalid;
+
+  /// 차단 관계라 팔로우가 거부됐다. 방향을 밝히지 않는다
+  ///
+  /// In ko, this message translates to:
+  /// **'지금은 팔로우할 수 없습니다'**
+  String get failureFollowBlocked;
 }
 
 class _AppLocalizationsDelegate

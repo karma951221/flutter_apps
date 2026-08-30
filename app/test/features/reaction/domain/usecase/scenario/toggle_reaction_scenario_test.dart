@@ -75,7 +75,9 @@ void main() {
       ),
     );
 
-    verify(() => repository.setReaction(target, ReactionType.dislike)).called(1);
+    verify(
+      () => repository.setReaction(target, ReactionType.dislike),
+    ).called(1);
     verifyNever(() => repository.clearReaction(any()));
   });
 

@@ -1,12 +1,9 @@
 {
   "@@locale": "en",
-
   "commonCancel": "Cancel",
-
   "commonDelete": "Delete",
   "commonRetry": "Try again",
   "commonMoreActions": "More",
-
   "authSignInDescription": "Record your day and share it with your neighbors.",
   "authEmailLabel": "Email",
   "authPasswordLabel": "Password",
@@ -45,7 +42,6 @@
   "feedEmptyDescription": "Leave your first post.",
   "feedEmptyAction": "Write the first post",
   "feedEndOfList": "You're all caught up",
-
   "postEditTitle": "Edit post",
   "postCreateTitle": "New post",
   "postContentLabel": "Today's record",
@@ -74,7 +70,6 @@
   "postDeleteConfirmMessage": "A deleted post cannot be restored.",
   "postDeleteSucceeded": "Post deleted.",
   "postDeleteFailed": "Couldn't delete the post.",
-
   "commentTitle": "Comments",
   "commentLoadFailed": "Couldn't load the comments",
   "commentEmptyMessage": "Leave the first comment.",
@@ -97,16 +92,13 @@
   "commentSubmitTooltip": "Post",
   "commentSignInRequired": "You need to sign in.",
   "commentCreateFailed": "Couldn't post the comment.",
-
   "reactionSaveFailed": "Couldn't save your reaction.",
-
   "safetyReportSubmitted": "Your report has been submitted",
   "safetyBlockConfirmTitle": "Block this user?",
   "safetyBlockConfirmMessage": "Once blocked, this user's posts and comments no longer appear.",
   "safetyBlockConfirmAction": "Block",
   "safetyBlockSucceeded": "User blocked.",
   "safetyBlockFailed": "Couldn't block the user.",
-
   "settingsTitle": "Settings",
   "settingsProfileEdit": "Edit profile",
   "settingsAccount": "Account settings",
@@ -116,13 +108,10 @@
   "settingsSignOut": "Sign out",
   "settingsSignOutConfirmTitle": "Sign out?",
   "settingsSignOutConfirmMessage": "You will need to sign in again to use the app.",
-
   "themeModeSystem": "System setting",
   "themeModeLight": "Light",
   "themeModeDark": "Dark",
-
   "languageSystem": "System setting",
-
   "homeTabFeed": "Home",
   "homeTabChat": "Chat",
   "homeTabProfile": "Profile",
@@ -308,5 +297,25 @@
   "failureInvalidData": "Received invalid data",
   "reactionLike": "Like",
   "reactionDislike": "Dislike",
-  "avatarSemanticsLabel": "{nickname}'s profile photo"
+  "avatarSemanticsLabel": "{nickname}'s profile photo",
+  "feedTabAll": "All",
+  "feedTabFollowing": "Following",
+  "feedFollowingEmptyMessage": "You are not following anyone yet",
+  "feedFollowingEmptyDescription": "Follow someone and their posts will show up here.",
+  "followAction": "Follow",
+  "followFollowingAction": "Following",
+  "followMutualAction": "Friends",
+  "followFailed": "Couldn't follow",
+  "followUnfollowFailed": "Couldn't unfollow",
+  "followFollowersLabel": "Followers",
+  "followFollowingsLabel": "Following",
+  "followFollowersTitle": "Followers",
+  "followFollowingsTitle": "Following",
+  "followFollowersEmpty": "No followers yet",
+  "followFollowingsEmpty": "Not following anyone yet",
+  "followListLoadFailed": "Couldn't load the list",
+  "failureFollowUserIdRequired": "A user is required",
+  "failureFollowRangeInvalid": "Invalid follow list range",
+  "failureFollowCursorInvalid": "Invalid follow list cursor",
+  "failureFollowBlocked": "You can't follow this account right now"
 }

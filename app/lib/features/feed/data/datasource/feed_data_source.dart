@@ -1,3 +1,4 @@
+import '../../domain/entity/feed_source.dart';
 import '../cursor/feed_cursor.dart';
 import '../dto/feed_post_dto.dart';
 
@@ -8,5 +9,6 @@ abstract interface class FeedDataSource {
     required int limit,
     FeedCursor? cursor,
     String? authorId,
+    FeedSource source,
   });
 }

@@ -13,7 +13,11 @@ void main() {
   late _MockChatRepository repository;
   late CreateRoomScenario scenario;
 
-  final room = ChatRoom(id: 'r1', title: '방', createdAt: DateTime.utc(2026, 8, 28));
+  final room = ChatRoom(
+    id: 'r1',
+    title: '방',
+    createdAt: DateTime.utc(2026, 8, 28),
+  );
 
   setUp(() {
     repository = _MockChatRepository();
@@ -54,7 +58,10 @@ void main() {
 
   test('DB CHECK 제약과 같은 길이에서 막고, 최대 길이는 허용한다', () async {
     final tooLong = 'ㄱ' * (ChatPolicy.roomTitleMaxLength + 1);
-    expect(await scenario(title: tooLong, memberLimit: 10), isA<Err<ChatRoom>>());
+    expect(
+      await scenario(title: tooLong, memberLimit: 10),
+      isA<Err<ChatRoom>>(),
+    );
 
     final exact = 'ㄱ' * ChatPolicy.roomTitleMaxLength;
     expect(await scenario(title: exact, memberLimit: 10), isA<Ok<ChatRoom>>());
@@ -64,11 +71,8 @@ void main() {
     await scenario(title: '방', description: '   ', memberLimit: 10);
 
     verify(
-      () => repository.createRoom(
-        title: '방',
-        description: null,
-        memberLimit: 10,
-      ),
+      () =>
+          repository.createRoom(title: '방', description: null, memberLimit: 10),
     ).called(1);
   });
 
@@ -76,11 +80,8 @@ void main() {
     await scenario(title: '방', description: '  소개  ', memberLimit: 10);
 
     verify(
-      () => repository.createRoom(
-        title: '방',
-        description: '소개',
-        memberLimit: 10,
-      ),
+      () =>
+          repository.createRoom(title: '방', description: '소개', memberLimit: 10),
     ).called(1);
   });
 

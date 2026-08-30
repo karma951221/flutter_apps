@@ -34,9 +34,14 @@ void main() {
     final future = DateTime.now().add(const Duration(days: 1));
     await scenario(roomId: 'r1', at: future);
 
-    final captured = verify(
-      () => repository.markRead(roomId: 'r1', at: captureAny(named: 'at')),
-    ).captured.single as DateTime;
+    final captured =
+        verify(
+              () => repository.markRead(
+                roomId: 'r1',
+                at: captureAny(named: 'at'),
+              ),
+            ).captured.single
+            as DateTime;
     expect(captured.isBefore(future), isTrue);
   });
 }

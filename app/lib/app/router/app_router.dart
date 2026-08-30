@@ -19,6 +19,8 @@ import '../../features/home/presentation/page/home_shell_page.dart';
 import '../../features/post/domain/entity/post.dart';
 import '../../features/post/presentation/cubit/post_cubit.dart';
 import '../../features/post/presentation/page/post_editor_page.dart';
+import '../../features/follow/presentation/cubit/follow_list_state.dart';
+import '../../features/follow/presentation/page/follow_list_page.dart';
 import '../../features/profile/presentation/page/edit_profile_page.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
 import '../../features/safety/presentation/page/blocked_users_page.dart';
@@ -126,6 +128,20 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: Routes.profileEdit,
         builder: (_, _) => const EditProfilePage(),
+      ),
+      GoRoute(
+        path: Routes.userFollowers,
+        builder: (_, state) => FollowListPage(
+          userId: state.pathParameters['userId']!,
+          direction: FollowDirection.followers,
+        ),
+      ),
+      GoRoute(
+        path: Routes.userFollowings,
+        builder: (_, state) => FollowListPage(
+          userId: state.pathParameters['userId']!,
+          direction: FollowDirection.followings,
+        ),
       ),
     ],
   );

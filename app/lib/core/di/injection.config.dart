@@ -57,6 +57,18 @@ import '../../features/feed/data/repository/feed_repository_impl.dart' as _i749;
 import '../../features/feed/domain/repository/feed_repository.dart' as _i898;
 import '../../features/feed/domain/usecase/feed_use_case.dart' as _i1009;
 import '../../features/feed/presentation/cubit/feed_cubit.dart' as _i58;
+import '../../features/follow/data/datasource/follow_data_source.dart' as _i40;
+import '../../features/follow/data/datasource/supabase_follow_data_source.dart'
+    as _i161;
+import '../../features/follow/data/repository/follow_repository_impl.dart'
+    as _i257;
+import '../../features/follow/domain/repository/follow_repository.dart'
+    as _i903;
+import '../../features/follow/domain/usecase/follow_use_case.dart' as _i223;
+import '../../features/follow/presentation/cubit/follow_action_cubit.dart'
+    as _i843;
+import '../../features/follow/presentation/cubit/follow_list_cubit.dart'
+    as _i281;
 import '../../features/post/data/datasource/post_data_source.dart' as _i487;
 import '../../features/post/data/datasource/supabase_post_data_source.dart'
     as _i215;
@@ -212,6 +224,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i692.AuthDataSource>(
       () => _i87.SupabaseAuthDataSource(gh<_i454.SupabaseClient>()),
     );
+    gh.lazySingleton<_i40.FollowDataSource>(
+      () => _i161.SupabaseFollowDataSource(gh<_i454.SupabaseClient>()),
+    );
     gh.lazySingleton<_i892.BlockRepository>(
       () => _i659.BlockRepositoryImpl(gh<_i452.BlockDataSource>()),
     );
@@ -237,6 +252,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1000.IdGenerator>(),
       ),
     );
+    gh.lazySingleton<_i903.FollowRepository>(
+      () => _i257.FollowRepositoryImpl(gh<_i40.FollowDataSource>()),
+    );
     gh.lazySingleton<_i1009.FeedUseCase>(
       () => _i1009.DefaultFeedUseCase(gh<_i898.FeedRepository>()),
     );
@@ -248,6 +266,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i364.ProfileRepository>(
       () => _i309.ProfileRepositoryImpl(gh<_i986.ProfileDataSource>()),
+    );
+    gh.lazySingleton<_i223.FollowUseCase>(
+      () => _i223.DefaultFollowUseCase(gh<_i903.FollowRepository>()),
     );
     gh.lazySingleton<_i831.ReactionRepository>(
       () => _i1063.ReactionRepositoryImpl(gh<_i281.ReactionDataSource>()),
@@ -312,6 +333,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i650.ReactionUseCase>(
       () => _i650.DefaultReactionUseCase(gh<_i831.ReactionRepository>()),
+    );
+    gh.factory<_i843.FollowActionCubit>(
+      () => _i843.FollowActionCubit(gh<_i223.FollowUseCase>()),
+    );
+    gh.factory<_i281.FollowListCubit>(
+      () => _i281.FollowListCubit(gh<_i223.FollowUseCase>()),
     );
     gh.factory<_i26.BlockActionCubit>(
       () => _i26.BlockActionCubit(gh<_i762.SafetyUseCase>()),

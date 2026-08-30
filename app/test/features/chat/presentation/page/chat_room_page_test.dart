@@ -72,7 +72,10 @@ void main() {
       ]),
     );
     when(
-      () => useCase.markRead(roomId: any(named: 'roomId'), at: any(named: 'at')),
+      () => useCase.markRead(
+        roomId: any(named: 'roomId'),
+        at: any(named: 'at'),
+      ),
     ).thenAnswer((_) async => const Ok(null));
     when(
       () => useCase.sendMessage(
@@ -159,7 +162,10 @@ void main() {
     expect(find.text('반가워'), findsOneWidget);
     // 낙관적 버블이라 서버 응답을 기다리지 않는다.
     expect(find.text('보내는 중'), findsOneWidget);
-    expect(tester.widget<TextField>(find.byType(TextField)).controller?.text, '');
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller?.text,
+      '',
+    );
   });
 
   testWidgets('빈 입력은 보내지 않는다', (tester) async {
@@ -201,7 +207,9 @@ void main() {
 
   testWidgets('나가기는 확인을 거쳐야 실행된다', (tester) async {
     stubMessages([]);
-    when(() => useCase.leaveRoom(any())).thenAnswer((_) async => const Ok(null));
+    when(
+      () => useCase.leaveRoom(any()),
+    ).thenAnswer((_) async => const Ok(null));
 
     await pumpRoom(tester);
     await tester.tap(find.byTooltip('방 메뉴'));

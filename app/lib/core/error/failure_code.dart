@@ -62,5 +62,9 @@ enum FailureCode {
   postTooLong,
   postImageLimit,
   avatarUploadFailed,
+  followUserIdRequired,
+  followRangeInvalid,
+  followCursorInvalid,
+  followBlocked,
   invalidData,
 }

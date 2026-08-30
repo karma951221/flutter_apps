@@ -94,7 +94,9 @@ void main() {
         at: any(named: 'at'),
       ),
     ).thenAnswer((_) async => const Ok(null));
-    when(() => useCase.deleteMessage(any())).thenAnswer((_) async => const Ok(true));
+    when(
+      () => useCase.deleteMessage(any()),
+    ).thenAnswer((_) async => const Ok(true));
   });
 
   tearDown(() => incoming.close());
@@ -216,11 +218,7 @@ void main() {
       // 새 id 를 만들지 않는다 — 만들면 서버에 두 벌이 생긴다.
       verify(() => useCase.newMessageId()).called(1);
       verify(
-        () => useCase.sendMessage(
-          id: 'new-1',
-          roomId: _roomId,
-          content: '반가워',
-        ),
+        () => useCase.sendMessage(id: 'new-1', roomId: _roomId, content: '반가워'),
       ).called(2);
       expect(bloc.state.messages.first.delivery, ChatMessageDelivery.pending);
     },
@@ -284,7 +282,8 @@ void main() {
           cursor: null,
         ),
       ).thenAnswer(
-        (_) async => Ok(CursorPage(items: [_text('p1', minute: 9)], nextCursor: 'c1')),
+        (_) async =>
+            Ok(CursorPage(items: [_text('p1', minute: 9)], nextCursor: 'c1')),
       );
       when(
         () => useCase.getMessages(
@@ -292,7 +291,9 @@ void main() {
           limit: any(named: 'limit'),
           cursor: 'c1',
         ),
-      ).thenAnswer((_) async => Ok(CursorPage(items: [_text('p2', minute: 1)])));
+      ).thenAnswer(
+        (_) async => Ok(CursorPage(items: [_text('p2', minute: 1)])),
+      );
       return build();
     },
     act: (bloc) async {
@@ -322,8 +323,9 @@ void main() {
   blocTest<ChatRoomBloc, ChatRoomState>(
     '지운 것이 없으면 목록을 건드리지 않는다',
     build: () {
-      when(() => useCase.deleteMessage(any()))
-          .thenAnswer((_) async => const Ok(false));
+      when(
+        () => useCase.deleteMessage(any()),
+      ).thenAnswer((_) async => const Ok(false));
       return build();
     },
     act: (bloc) async {
@@ -348,9 +350,14 @@ void main() {
     },
     wait: const Duration(milliseconds: 20),
     verify: (_) {
-      final at = verify(
-        () => useCase.markRead(roomId: _roomId, at: captureAny(named: 'at')),
-      ).captured.last as DateTime;
+      final at =
+          verify(
+                () => useCase.markRead(
+                  roomId: _roomId,
+                  at: captureAny(named: 'at'),
+                ),
+              ).captured.last
+              as DateTime;
       expect(at, DateTime.utc(2026, 8, 28, 10, 0));
     },
   );

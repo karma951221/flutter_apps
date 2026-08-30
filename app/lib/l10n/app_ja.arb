@@ -1,12 +1,9 @@
 {
   "@@locale": "ja",
-
   "commonCancel": "キャンセル",
-
   "commonDelete": "削除",
   "commonRetry": "再試行",
   "commonMoreActions": "その他",
-
   "authSignInDescription": "今日一日を記録して、ご近所と分かち合いましょう。",
   "authEmailLabel": "メールアドレス",
   "authPasswordLabel": "パスワード",
@@ -45,7 +42,6 @@
   "feedEmptyDescription": "最初の投稿を残してみましょう。",
   "feedEmptyAction": "最初の投稿を書く",
   "feedEndOfList": "すべて確認しました",
-
   "postEditTitle": "投稿の修正",
   "postCreateTitle": "新しい投稿",
   "postContentLabel": "今日の記録",
@@ -74,7 +70,6 @@
   "postDeleteConfirmMessage": "削除した投稿は元に戻せません。",
   "postDeleteSucceeded": "投稿を削除しました。",
   "postDeleteFailed": "投稿を削除できませんでした。",
-
   "commentTitle": "コメント",
   "commentLoadFailed": "コメントを読み込めませんでした",
   "commentEmptyMessage": "最初のコメントを残してみましょう。",
@@ -97,16 +92,13 @@
   "commentSubmitTooltip": "送信",
   "commentSignInRequired": "ログインが必要です。",
   "commentCreateFailed": "コメントを投稿できませんでした。",
-
   "reactionSaveFailed": "リアクションを保存できませんでした。",
-
   "safetyReportSubmitted": "報告を受け付けました",
   "safetyBlockConfirmTitle": "このユーザーをブロックしますか？",
   "safetyBlockConfirmMessage": "ブロックすると、このユーザーの投稿とコメントは表示されなくなります。",
   "safetyBlockConfirmAction": "ブロック",
   "safetyBlockSucceeded": "ブロックしました。",
   "safetyBlockFailed": "ブロックできませんでした。",
-
   "settingsTitle": "設定",
   "settingsProfileEdit": "プロフィール編集",
   "settingsAccount": "アカウント設定",
@@ -116,13 +108,10 @@
   "settingsSignOut": "ログアウト",
   "settingsSignOutConfirmTitle": "ログアウトしますか？",
   "settingsSignOutConfirmMessage": "再び利用するにはログインが必要です。",
-
   "themeModeSystem": "システム設定",
   "themeModeLight": "ライト",
   "themeModeDark": "ダーク",
-
   "languageSystem": "システム設定",
-
   "homeTabFeed": "ホーム",
   "homeTabChat": "チャット",
   "homeTabProfile": "プロフィール",
@@ -308,5 +297,25 @@
   "failureInvalidData": "正しくないデータを受信しました",
   "reactionLike": "いいね",
   "reactionDislike": "よくないね",
-  "avatarSemanticsLabel": "{nickname}さんのプロフィール写真"
+  "avatarSemanticsLabel": "{nickname}さんのプロフィール写真",
+  "feedTabAll": "すべて",
+  "feedTabFollowing": "フォロー中",
+  "feedFollowingEmptyMessage": "フォロー中の人がいません",
+  "feedFollowingEmptyDescription": "気になる人をフォローすると、ここに投稿が集まります。",
+  "followAction": "フォロー",
+  "followFollowingAction": "フォロー中",
+  "followMutualAction": "相互フォロー",
+  "followFailed": "フォローできませんでした",
+  "followUnfollowFailed": "フォローを解除できませんでした",
+  "followFollowersLabel": "フォロワー",
+  "followFollowingsLabel": "フォロー中",
+  "followFollowersTitle": "フォロワー",
+  "followFollowingsTitle": "フォロー中",
+  "followFollowersEmpty": "まだフォロワーがいません",
+  "followFollowingsEmpty": "まだ誰もフォローしていません",
+  "followListLoadFailed": "リストを読み込めませんでした",
+  "failureFollowUserIdRequired": "ユーザーの指定が必要です",
+  "failureFollowRangeInvalid": "フォロー一覧の取得範囲が正しくありません",
+  "failureFollowCursorInvalid": "フォロー一覧のカーソルが正しくありません",
+  "failureFollowBlocked": "現在このアカウントはフォローできません"
 }

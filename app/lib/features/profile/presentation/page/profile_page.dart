@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/l10n/failure_localizations.dart';
+import '../../../../design_system/theme/app_radius.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_button.dart';
@@ -16,6 +17,8 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../feed/presentation/cubit/feed_cubit.dart';
+import '../../../follow/presentation/cubit/follow_action_cubit.dart';
+import '../../../follow/presentation/cubit/follow_action_state.dart';
 import '../../../feed/presentation/cubit/feed_state.dart';
 import '../../../feed/presentation/widget/post_tile_actions.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
@@ -42,6 +45,7 @@ class ProfilePage extends StatelessWidget {
       BlocProvider(create: (_) => getIt<FeedCubit>()),
       BlocProvider(create: (_) => getIt<PostCubit>()),
       BlocProvider(create: (_) => getIt<BlockActionCubit>()),
+      BlocProvider(create: (_) => getIt<FollowActionCubit>()),
     ],
     child: _ProfileView(requestedUserId: userId),
   );
@@ -73,6 +77,12 @@ class _ProfileView extends StatelessWidget {
           listener: (context, state) {
             final profile = state.profile!;
             context.read<FeedCubit>().loadForAuthor(profile.id);
+            // 관계와 팔로워 수는 프로필 응답에 함께 왔다. 버튼이 다시 묻지
+            // 않고 그 값에서 시작한다 (docs/features/follow/plan.md).
+            context.read<FollowActionCubit>().seed(
+              relation: profile.relation,
+              followerCount: profile.followerCount,
+            );
             if (!isMine) {
               context.read<BlockActionCubit>().loadStatus(profile.id);
             }
@@ -219,6 +229,13 @@ class _ProfileView extends StatelessWidget {
                                 textAlign: TextAlign.center,
                               ),
                             ),
+                            const SizedBox(height: AppSpacing.md),
+                            _FollowStats(
+                              userId: profile.id,
+                              followingCount: profile.followingCount,
+                            ),
+                            if (!isMine)
+                              _FollowButton(userId: profile.id),
                             if (isMine) ...[
                               const SizedBox(height: AppSpacing.md),
                               AppButton.secondary(
@@ -257,6 +274,139 @@ class _ProfileView extends StatelessWidget {
 }
 
 enum _ProfileAction { block, unblock, report }
+
+/// 팔로워 · 팔로잉 수. 눌러서 각 목록으로 들어간다.
+///
+/// 팔로워 수는 [FollowActionCubit] 이 든 값을 그린다 — 팔로우 버튼이 낙관적으로
+/// 움직일 때 수도 함께 움직여야 한다. 팔로잉 수는 내 동작으로 바뀌지 않으므로
+/// 프로필 조회값을 그대로 쓴다.
+class _FollowStats extends StatelessWidget {
+  const _FollowStats({required this.userId, required this.followingCount});
+
+  final String userId;
+  final int followingCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return BlocBuilder<FollowActionCubit, FollowActionState>(
+      builder: (context, state) => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _FollowStat(
+            label: l10n.followFollowersLabel,
+            count: state.followerCount,
+            onTap: () => context.push(Routes.userFollowersPath(userId)),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          _FollowStat(
+            label: l10n.followFollowingsLabel,
+            count: followingCount,
+            onTap: () => context.push(Routes.userFollowingsPath(userId)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FollowStat extends StatelessWidget {
+  const _FollowStat({
+    required this.label,
+    required this.count,
+    required this.onTap,
+  });
+
+  final String label;
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('$count', style: theme.textTheme.titleMedium),
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 팔로우 버튼. 상태 셋(팔로우 · 팔로잉 · 맞팔로우)을 라벨과 종류로 나눈다.
+///
+/// 새 공용 위젯을 만들지 않는다 — [AppButton] 의 기존 인자로 해결된다
+/// (UI 규칙 ④).
+class _FollowButton extends StatelessWidget {
+  const _FollowButton({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return BlocBuilder<BlockActionCubit, BlockActionState>(
+      builder: (context, blockState) {
+        // 차단한 사이에는 팔로우가 어차피 거부된다. 누를 수 있는 버튼을
+        // 그리지 않는 편이 낫다 — 거부 문구로 관계를 설명하게 되면
+        // 차단 사실이 새는 자리가 된다.
+        if (blockState.isBlocked != false) return const SizedBox.shrink();
+
+        return BlocBuilder<FollowActionCubit, FollowActionState>(
+          builder: (context, state) {
+            final label = state.isMutual
+                ? l10n.followMutualAction
+                : state.isFollowing
+                ? l10n.followFollowingAction
+                : l10n.followAction;
+            final onPressed = state.isSubmitting
+                ? null
+                : () => _toggle(context);
+
+            return Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.md),
+              child: state.isFollowing
+                  ? AppButton.secondary(label: label, onPressed: onPressed)
+                  : AppButton.primary(label: label, onPressed: onPressed),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _toggle(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final cubit = context.read<FollowActionCubit>();
+    final wasFollowing = cubit.state.isFollowing;
+    final succeeded = await cubit.toggle(userId);
+    if (!context.mounted || succeeded) return;
+
+    AppSnackBar.show(
+      context,
+      message:
+          cubit.state.failure?.localizedMessage(context) ??
+          (wasFollowing ? l10n.followUnfollowFailed : l10n.followFailed),
+      type: AppSnackBarType.error,
+    );
+  }
+}
 
 /// 프로필 AppBar 메뉴와 게시물 목록(다른 사용자 글) 메뉴 두 진입점이 같은
 /// 확인 다이얼로그 · 차단 호출 · 목록 새로고침 · 스낵바 흐름을 쓴다. 원래는

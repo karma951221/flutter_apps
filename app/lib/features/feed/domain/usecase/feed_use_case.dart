@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import '../../../../core/pagination/cursor_page.dart';
 import '../../../../core/result/result.dart';
 import '../entity/feed_post.dart';
+import '../entity/feed_source.dart';
 import '../repository/feed_repository.dart';
 import 'scenario/get_feed_posts_scenario.dart';
 
@@ -12,6 +13,7 @@ abstract interface class FeedUseCase {
     int limit,
     String? cursor,
     String? authorId,
+    FeedSource source,
   });
 }
 
@@ -26,9 +28,11 @@ class DefaultFeedUseCase implements FeedUseCase {
     int limit = 20,
     String? cursor,
     String? authorId,
+    FeedSource source = FeedSource.all,
   }) => GetFeedPostsScenario(_repository)(
     limit: limit,
     cursor: cursor,
     authorId: authorId,
+    source: source,
   );
 }

@@ -31,9 +31,10 @@ void main() {
 
   group('GetCommentsScenario', () {
     test('허용 범위를 넘는 limit 은 요청 자체를 막는다', () async {
-      final result = await GetCommentsScenario(
-        repository,
-      )(postId: 'post-1', limit: 51);
+      final result = await GetCommentsScenario(repository)(
+        postId: 'post-1',
+        limit: 51,
+      );
 
       expect(result, isA<Err<CursorPage<PostComment>>>());
       verifyNever(
@@ -45,9 +46,11 @@ void main() {
     });
 
     test('공백뿐인 커서도 요청 자체를 막는다', () async {
-      final result = await GetCommentsScenario(
-        repository,
-      )(postId: 'post-1', limit: 20, cursor: '   ');
+      final result = await GetCommentsScenario(repository)(
+        postId: 'post-1',
+        limit: 20,
+        cursor: '   ',
+      );
 
       expect(result, isA<Err<CursorPage<PostComment>>>());
       verifyNever(
@@ -66,11 +69,14 @@ void main() {
           limit: any(named: 'limit'),
           cursor: any(named: 'cursor'),
         ),
-      ).thenAnswer((_) async => Ok(CursorPage<PostComment>(items: [comment()])));
+      ).thenAnswer(
+        (_) async => Ok(CursorPage<PostComment>(items: [comment()])),
+      );
 
-      final result = await GetCommentsScenario(
-        repository,
-      )(postId: 'post-1', limit: 20);
+      final result = await GetCommentsScenario(repository)(
+        postId: 'post-1',
+        limit: 20,
+      );
 
       expect((result as Ok).value.items.single.id, 'comment-1');
     });
@@ -84,7 +90,9 @@ void main() {
           limit: any(named: 'limit'),
           cursor: any(named: 'cursor'),
         ),
-      ).thenAnswer((_) async => Ok(CursorPage<PostComment>(items: [comment()])));
+      ).thenAnswer(
+        (_) async => Ok(CursorPage<PostComment>(items: [comment()])),
+      );
 
       await GetRepliesScenario(repository)(parentId: 'comment-1', limit: 20);
 
@@ -98,9 +106,10 @@ void main() {
     });
 
     test('허용 범위를 넘는 limit 은 요청 자체를 막는다', () async {
-      final result = await GetRepliesScenario(
-        repository,
-      )(parentId: 'comment-1', limit: 0);
+      final result = await GetRepliesScenario(repository)(
+        parentId: 'comment-1',
+        limit: 0,
+      );
 
       expect(result, isA<Err<CursorPage<PostComment>>>());
       verifyNever(
@@ -123,9 +132,11 @@ void main() {
         ),
       ).thenAnswer((_) async => Ok(comment()));
 
-      await AddCommentScenario(
-        repository,
-      )(postId: 'post-1', content: '  댓글  ', author: author);
+      await AddCommentScenario(repository)(
+        postId: 'post-1',
+        content: '  댓글  ',
+        author: author,
+      );
 
       verify(
         () => repository.addComment(
@@ -165,9 +176,11 @@ void main() {
     });
 
     test('공백뿐인 본문은 저장하지 않는다', () async {
-      final result = await AddCommentScenario(
-        repository,
-      )(postId: 'post-1', content: '   ', author: author);
+      final result = await AddCommentScenario(repository)(
+        postId: 'post-1',
+        content: '   ',
+        author: author,
+      );
 
       expect(result, isA<Err<PostComment>>());
       verifyNever(
@@ -180,9 +193,11 @@ void main() {
     });
 
     test('300자를 넘으면 저장하지 않는다', () async {
-      final result = await AddCommentScenario(
-        repository,
-      )(postId: 'post-1', content: 'ㄱ' * 301, author: author);
+      final result = await AddCommentScenario(repository)(
+        postId: 'post-1',
+        content: 'ㄱ' * 301,
+        author: author,
+      );
 
       expect(result, isA<Err<PostComment>>());
       verifyNever(
@@ -204,9 +219,11 @@ void main() {
         ),
       ).thenAnswer((_) async => Ok(comment()));
 
-      final result = await AddCommentScenario(
-        repository,
-      )(postId: 'post-1', content: 'ㄱ' * 300, author: author);
+      final result = await AddCommentScenario(repository)(
+        postId: 'post-1',
+        content: 'ㄱ' * 300,
+        author: author,
+      );
 
       expect(result, isA<Ok<PostComment>>());
     });

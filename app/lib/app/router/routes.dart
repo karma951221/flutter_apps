@@ -24,8 +24,15 @@ abstract final class Routes {
   static const blockedUsers = '/settings/blocked';
   static const changePassword = '/settings/account/password';
   static const userProfile = '/users/:userId';
+  static const userFollowers = '/users/:userId/followers';
+  static const userFollowings = '/users/:userId/followings';
 
   static String userProfilePath(String userId) => '/users/$userId';
+
+  static String userFollowersPath(String userId) => '/users/$userId/followers';
+
+  static String userFollowingsPath(String userId) =>
+      '/users/$userId/followings';
 
   /// 미인증 상태에서 접근할 수 있는 경로.
   static const publicRoutes = {signIn, signUp, passwordReset};

@@ -25,9 +25,7 @@ void main() {
   test('앞뒤 공백을 제거한 닉네임으로 입장한다', () async {
     await scenario(roomId: 'r1', nickname: '  카르마  ');
 
-    verify(
-      () => repository.joinRoom(roomId: 'r1', nickname: '카르마'),
-    ).called(1);
+    verify(() => repository.joinRoom(roomId: 'r1', nickname: '카르마')).called(1);
   });
 
   test('DB 제약과 같은 최소 길이에서 막는다', () async {

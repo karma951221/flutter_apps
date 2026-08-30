@@ -10,6 +10,7 @@ import 'package:daylog/features/auth/presentation/bloc/auth_event.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_state.dart';
 import 'package:daylog/features/feed/domain/entity/feed_post.dart';
 import 'package:daylog/features/feed/domain/usecase/feed_use_case.dart';
+import 'package:daylog/features/feed/domain/entity/feed_source.dart';
 import 'package:daylog/features/feed/presentation/cubit/feed_cubit.dart';
 import 'package:daylog/features/feed/presentation/page/feed_page.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
@@ -50,6 +51,8 @@ FeedPost _item(String id, String authorId, String nickname) => FeedPost(
 );
 
 void main() {
+  setUpAll(() => registerFallbackValue(FeedSource.all));
+
   late _MockFeedUseCase feedUseCase;
   late _MockSafetyUseCase safetyUseCase;
   late _MockAuthBloc authBloc;
@@ -108,6 +111,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer(
       (_) async => Ok(
@@ -145,6 +149,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer(
       (_) async => Ok(CursorPage<FeedPost>(items: [_item('1', 'other', '이웃')])),
@@ -170,6 +175,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer(
       (_) async => Ok(CursorPage<FeedPost>(items: [_item('1', 'other', '이웃')])),
@@ -185,5 +191,54 @@ void main() {
 
     expect(find.text('기록 1'), findsOneWidget);
     expect(find.text('네트워크에 연결할 수 없습니다'), findsOneWidget);
+  });
+
+  testWidgets('피드는 전체·팔로잉 두 탭을 보여준다', (tester) async {
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+
+    await pumpPage(tester);
+
+    expect(find.text('전체'), findsOneWidget);
+    expect(find.text('팔로잉'), findsOneWidget);
+    verify(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: null,
+        authorId: null,
+        source: FeedSource.all,
+      ),
+    ).called(1);
+  });
+
+  testWidgets('팔로잉 탭으로 옮기면 팔로잉 소스로 다시 읽는다', (tester) async {
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+
+    await pumpPage(tester);
+    await tester.tap(find.text('팔로잉'));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: null,
+        authorId: null,
+        source: FeedSource.following,
+      ),
+    ).called(1);
+    expect(find.text('팔로우한 사람이 없습니다'), findsOneWidget);
   });
 }

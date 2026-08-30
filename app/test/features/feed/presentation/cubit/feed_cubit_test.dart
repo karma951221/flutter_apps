@@ -6,6 +6,7 @@ import 'package:daylog/core/pagination/cursor_page.dart';
 import 'package:daylog/core/result/result.dart';
 import 'package:daylog/features/feed/domain/entity/feed_post.dart';
 import 'package:daylog/features/feed/domain/usecase/feed_use_case.dart';
+import 'package:daylog/features/feed/domain/entity/feed_source.dart';
 import 'package:daylog/features/feed/presentation/cubit/feed_cubit.dart';
 import 'package:daylog/features/feed/presentation/cubit/feed_state.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
@@ -33,14 +34,17 @@ Post _post(String id, {String content = '', String authorId = 'author-id'}) =>
 PostAuthor _author({String id = 'author-id', String nickname = '카르마'}) =>
     PostAuthor(id: id, nickname: nickname);
 
-FeedPost _item(String id, {String nickname = '카르마'}) =>
-    FeedPost(post: _post(id), author: _author(nickname: nickname));
+FeedPost _item(String id, {String nickname = '카르마'}) => FeedPost(
+  post: _post(id),
+  author: _author(nickname: nickname),
+);
 
 void main() {
   late _MockFeedUseCase useCase;
   late _MockReactionUseCase reactionUseCase;
 
   setUpAll(() {
+    registerFallbackValue(FeedSource.all);
     registerFallbackValue(const ReactionTarget.post('_'));
     registerFallbackValue(ReactionType.like);
     registerFallbackValue(const ReactionSummary());
@@ -53,16 +57,18 @@ void main() {
 
   blocTest<FeedCubit, FeedState>(
     '첫 조회 결과와 다음 커서를 상태에 담는다',
-    setUp: () => when(
-      () => useCase.getFeedPosts(
-        limit: any(named: 'limit'),
-        cursor: any(named: 'cursor'),
-      ),
-    ).thenAnswer(
-      (_) async => Ok(
-        CursorPage<FeedPost>(items: [_item('1')], nextCursor: 'cursor-1'),
-      ),
-    ),
+    setUp: () =>
+        when(
+          () => useCase.getFeedPosts(
+            limit: any(named: 'limit'),
+            cursor: any(named: 'cursor'),
+            source: any(named: 'source'),
+          ),
+        ).thenAnswer(
+          (_) async => Ok(
+            CursorPage<FeedPost>(items: [_item('1')], nextCursor: 'cursor-1'),
+          ),
+        ),
     build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) => cubit.load(),
     verify: (cubit) {
@@ -80,6 +86,7 @@ void main() {
       () => useCase.getFeedPosts(
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => const Err(Failure.network())),
     build: () => FeedCubit(useCase, reactionUseCase),
@@ -94,7 +101,11 @@ void main() {
     '더 불러오면 직전 커서로 요청하고 결과를 이어 붙인다',
     setUp: () {
       when(
-        () => useCase.getFeedPosts(limit: any(named: 'limit'), cursor: null),
+        () => useCase.getFeedPosts(
+          limit: any(named: 'limit'),
+          cursor: null,
+          source: any(named: 'source'),
+        ),
       ).thenAnswer(
         (_) async => Ok(
           CursorPage<FeedPost>(items: [_item('1')], nextCursor: 'cursor-1'),
@@ -104,6 +115,7 @@ void main() {
         () => useCase.getFeedPosts(
           limit: any(named: 'limit'),
           cursor: 'cursor-1',
+          source: any(named: 'source'),
         ),
       ).thenAnswer(
         (_) async => Ok(
@@ -122,15 +134,18 @@ void main() {
     verify: (cubit) {
       expect(cubit.state.items.map((item) => item.id), ['1', '2']);
       // 이어 붙인 페이지도 자기 작성자를 들고 온다.
-      expect(
-        cubit.state.items.map((item) => item.author.nickname),
-        ['카르마', '이웃'],
-      );
+      expect(cubit.state.items.map((item) => item.author.nickname), [
+        '카르마',
+        '이웃',
+      ]);
       expect(cubit.state.nextCursor, 'cursor-2');
       expect(cubit.state.isLoadingMore, isFalse);
       verify(
-        () =>
-            useCase.getFeedPosts(limit: any(named: 'limit'), cursor: 'cursor-1'),
+        () => useCase.getFeedPosts(
+          limit: any(named: 'limit'),
+          cursor: 'cursor-1',
+          source: any(named: 'source'),
+        ),
       ).called(1);
     },
   );
@@ -141,6 +156,7 @@ void main() {
       () => useCase.getFeedPosts(
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')]))),
     build: () => FeedCubit(useCase, reactionUseCase),
@@ -155,6 +171,7 @@ void main() {
         () => useCase.getFeedPosts(
           limit: any(named: 'limit'),
           cursor: any(named: 'cursor'),
+          source: any(named: 'source'),
         ),
       ).called(1);
     },
@@ -166,6 +183,7 @@ void main() {
       () => useCase.getFeedPosts(
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')]))),
     build: () => FeedCubit(useCase, reactionUseCase),
@@ -182,6 +200,7 @@ void main() {
         () => useCase.getFeedPosts(
           limit: any(named: 'limit'),
           cursor: any(named: 'cursor'),
+          source: any(named: 'source'),
         ),
       ).called(1);
     },
@@ -191,15 +210,17 @@ void main() {
     '게시물을 수정해도 작성자는 그대로 둔다',
     // 수정 화면은 Post 만 돌려준다. 작성자를 거기서 다시 만들게 하면 그 화면이
     // 프로필까지 알아야 하고, 값이 비면 목록에서 이름이 사라진다.
-    setUp: () => when(
-      () => useCase.getFeedPosts(
-        limit: any(named: 'limit'),
-        cursor: any(named: 'cursor'),
-      ),
-    ).thenAnswer(
-      (_) async =>
-          Ok(CursorPage<FeedPost>(items: [_item('1', nickname: '카르마')])),
-    ),
+    setUp: () =>
+        when(
+          () => useCase.getFeedPosts(
+            limit: any(named: 'limit'),
+            cursor: any(named: 'cursor'),
+            source: any(named: 'source'),
+          ),
+        ).thenAnswer(
+          (_) async =>
+              Ok(CursorPage<FeedPost>(items: [_item('1', nickname: '카르마')])),
+        ),
     build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) async {
       await cubit.load();
@@ -217,6 +238,7 @@ void main() {
       () => useCase.getFeedPosts(
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')]))),
     build: () => FeedCubit(useCase, reactionUseCase),
@@ -240,31 +262,33 @@ void main() {
 
   blocTest<FeedCubit, FeedState>(
     '차단한 작성자의 게시물만 목록에서 걷어낸다',
-    setUp: () => when(
-      () => useCase.getFeedPosts(
-        limit: any(named: 'limit'),
-        cursor: any(named: 'cursor'),
-      ),
-    ).thenAnswer(
-      (_) async => Ok(
-        CursorPage<FeedPost>(
-          items: [
-            FeedPost(
-              post: _post('1', authorId: 'blocked-author'),
-              author: _author(id: 'blocked-author', nickname: '카르마'),
+    setUp: () =>
+        when(
+          () => useCase.getFeedPosts(
+            limit: any(named: 'limit'),
+            cursor: any(named: 'cursor'),
+            source: any(named: 'source'),
+          ),
+        ).thenAnswer(
+          (_) async => Ok(
+            CursorPage<FeedPost>(
+              items: [
+                FeedPost(
+                  post: _post('1', authorId: 'blocked-author'),
+                  author: _author(id: 'blocked-author', nickname: '카르마'),
+                ),
+                FeedPost(
+                  post: _post('2', authorId: 'other-author'),
+                  author: _author(id: 'other-author', nickname: '이웃'),
+                ),
+                FeedPost(
+                  post: _post('3', authorId: 'blocked-author'),
+                  author: _author(id: 'blocked-author', nickname: '카르마'),
+                ),
+              ],
             ),
-            FeedPost(
-              post: _post('2', authorId: 'other-author'),
-              author: _author(id: 'other-author', nickname: '이웃'),
-            ),
-            FeedPost(
-              post: _post('3', authorId: 'blocked-author'),
-              author: _author(id: 'blocked-author', nickname: '카르마'),
-            ),
-          ],
+          ),
         ),
-      ),
-    ),
     build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) async {
       await cubit.load();
@@ -282,137 +306,141 @@ void main() {
     expect: () => <FeedState>[],
   );
 
-  test(
-    '더 불러오는 중에 차단하면 그 사이 응답이 와도 다시 나타나지 않는다 '
-    '(stale snapshot 병합 버그)',
-    () async {
-      // loadMore 는 요청을 보내기 '전'의 state 를 캡처해 두었다가 응답이
-      // 오면 그 캡처 위에 이어붙이는 방식이었다. removeAuthor 가 그 요청이
-      // 떠 있는 동안 실행되면, 캡처된 스냅샷에는 아직 차단된 작성자의 글이
-      // 남아 있어 응답을 이어붙일 때 되살아났다 — 이 테스트는 그 스냅샷이
-      // 아니라 최신 state 위에 병합해야 통과한다.
-      final loadMoreCompleter = Completer<Result<CursorPage<FeedPost>>>();
+  test('더 불러오는 중에 차단하면 그 사이 응답이 와도 다시 나타나지 않는다 '
+      '(stale snapshot 병합 버그)', () async {
+    // loadMore 는 요청을 보내기 '전'의 state 를 캡처해 두었다가 응답이
+    // 오면 그 캡처 위에 이어붙이는 방식이었다. removeAuthor 가 그 요청이
+    // 떠 있는 동안 실행되면, 캡처된 스냅샷에는 아직 차단된 작성자의 글이
+    // 남아 있어 응답을 이어붙일 때 되살아났다 — 이 테스트는 그 스냅샷이
+    // 아니라 최신 state 위에 병합해야 통과한다.
+    final loadMoreCompleter = Completer<Result<CursorPage<FeedPost>>>();
 
-      when(
-        () => useCase.getFeedPosts(limit: any(named: 'limit'), cursor: null),
-      ).thenAnswer(
-        (_) async => Ok(
-          CursorPage<FeedPost>(
-            items: [
-              FeedPost(
-                post: _post('1', authorId: 'blocked-author'),
-                author: _author(id: 'blocked-author', nickname: '카르마'),
-              ),
-              FeedPost(
-                post: _post('2', authorId: 'other-author'),
-                author: _author(id: 'other-author', nickname: '이웃'),
-              ),
-            ],
-            nextCursor: 'cursor-1',
-          ),
+    when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: null,
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer(
+      (_) async => Ok(
+        CursorPage<FeedPost>(
+          items: [
+            FeedPost(
+              post: _post('1', authorId: 'blocked-author'),
+              author: _author(id: 'blocked-author', nickname: '카르마'),
+            ),
+            FeedPost(
+              post: _post('2', authorId: 'other-author'),
+              author: _author(id: 'other-author', nickname: '이웃'),
+            ),
+          ],
+          nextCursor: 'cursor-1',
         ),
-      );
-      when(
-        () => useCase.getFeedPosts(
-          limit: any(named: 'limit'),
-          cursor: 'cursor-1',
+      ),
+    );
+    when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: 'cursor-1',
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer((_) => loadMoreCompleter.future);
+
+    final cubit = FeedCubit(useCase, reactionUseCase);
+    await cubit.load();
+    expect(cubit.state.items.map((item) => item.id), ['1', '2']);
+
+    // loadMore 요청을 띄운 채로 둔다 — 아직 완료하지 않는다.
+    final loadMoreFuture = cubit.loadMore();
+
+    // 요청이 떠 있는 동안 차단이 들어온다. 이 mutator 는 지금의 state 에서
+    // 곧바로 blocked-author 항목을 걷어낸다.
+    cubit.removeAuthor('blocked-author');
+    expect(cubit.state.items.map((item) => item.id), ['2']);
+
+    // 이제 loadMore 응답이 도착한다. 이 응답 페이지 자체에는 차단된
+    // 작성자가 없다 — 순수하게 stale snapshot 병합 문제만 검증한다.
+    loadMoreCompleter.complete(
+      Ok(
+        CursorPage<FeedPost>(
+          items: [
+            FeedPost(
+              post: _post('3', authorId: 'other-author'),
+              author: _author(id: 'other-author', nickname: '이웃'),
+            ),
+          ],
         ),
-      ).thenAnswer((_) => loadMoreCompleter.future);
+      ),
+    );
+    await loadMoreFuture;
 
-      final cubit = FeedCubit(useCase, reactionUseCase);
-      await cubit.load();
-      expect(cubit.state.items.map((item) => item.id), ['1', '2']);
+    expect(cubit.state.items.map((item) => item.id), ['2', '3']);
+  });
 
-      // loadMore 요청을 띄운 채로 둔다 — 아직 완료하지 않는다.
-      final loadMoreFuture = cubit.loadMore();
+  test('더 불러오는 중에 차단하면 응답 페이지에 실린 차단된 작성자의 글도 걸러낸다 '
+      '(요청이 차단보다 먼저 나간 경우)', () async {
+    // loadMore 의 요청은 차단이 걸리기 전에 이미 서버로 나갔을 수 있다 —
+    // 그러면 서버가 아직 필터링하지 못한 그 작성자의 글이 응답 페이지 자체에
+    // 그대로 담겨 온다. state 를 최신으로 병합하는 것만으로는 이 경우를
+    // 막지 못한다 — 들어오는 페이지도 걷어낸 작성자 집합으로 걸러야 한다.
+    final loadMoreCompleter = Completer<Result<CursorPage<FeedPost>>>();
 
-      // 요청이 떠 있는 동안 차단이 들어온다. 이 mutator 는 지금의 state 에서
-      // 곧바로 blocked-author 항목을 걷어낸다.
-      cubit.removeAuthor('blocked-author');
-      expect(cubit.state.items.map((item) => item.id), ['2']);
-
-      // 이제 loadMore 응답이 도착한다. 이 응답 페이지 자체에는 차단된
-      // 작성자가 없다 — 순수하게 stale snapshot 병합 문제만 검증한다.
-      loadMoreCompleter.complete(
-        Ok(
-          CursorPage<FeedPost>(
-            items: [
-              FeedPost(
-                post: _post('3', authorId: 'other-author'),
-                author: _author(id: 'other-author', nickname: '이웃'),
-              ),
-            ],
-          ),
+    when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: null,
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer(
+      (_) async => Ok(
+        CursorPage<FeedPost>(
+          items: [
+            FeedPost(
+              post: _post('1', authorId: 'blocked-author'),
+              author: _author(id: 'blocked-author', nickname: '카르마'),
+            ),
+          ],
+          nextCursor: 'cursor-1',
         ),
-      );
-      await loadMoreFuture;
+      ),
+    );
+    when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: 'cursor-1',
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer((_) => loadMoreCompleter.future);
 
-      expect(cubit.state.items.map((item) => item.id), ['2', '3']);
-    },
-  );
+    final cubit = FeedCubit(useCase, reactionUseCase);
+    await cubit.load();
 
-  test(
-    '더 불러오는 중에 차단하면 응답 페이지에 실린 차단된 작성자의 글도 걸러낸다 '
-    '(요청이 차단보다 먼저 나간 경우)',
-    () async {
-      // loadMore 의 요청은 차단이 걸리기 전에 이미 서버로 나갔을 수 있다 —
-      // 그러면 서버가 아직 필터링하지 못한 그 작성자의 글이 응답 페이지 자체에
-      // 그대로 담겨 온다. state 를 최신으로 병합하는 것만으로는 이 경우를
-      // 막지 못한다 — 들어오는 페이지도 걷어낸 작성자 집합으로 걸러야 한다.
-      final loadMoreCompleter = Completer<Result<CursorPage<FeedPost>>>();
+    final loadMoreFuture = cubit.loadMore();
+    cubit.removeAuthor('blocked-author');
+    expect(cubit.state.items, isEmpty);
 
-      when(
-        () => useCase.getFeedPosts(limit: any(named: 'limit'), cursor: null),
-      ).thenAnswer(
-        (_) async => Ok(
-          CursorPage<FeedPost>(
-            items: [
-              FeedPost(
-                post: _post('1', authorId: 'blocked-author'),
-                author: _author(id: 'blocked-author', nickname: '카르마'),
-              ),
-            ],
-            nextCursor: 'cursor-1',
-          ),
+    // 응답 페이지 자체에 차단된 작성자의 글이 하나 더 실려 온다 — 요청이
+    // 차단보다 먼저 나갔다는 뜻이다.
+    loadMoreCompleter.complete(
+      Ok(
+        CursorPage<FeedPost>(
+          items: [
+            FeedPost(
+              post: _post('2', authorId: 'blocked-author'),
+              author: _author(id: 'blocked-author', nickname: '카르마'),
+            ),
+            FeedPost(
+              post: _post('3', authorId: 'other-author'),
+              author: _author(id: 'other-author', nickname: '이웃'),
+            ),
+          ],
         ),
-      );
-      when(
-        () => useCase.getFeedPosts(
-          limit: any(named: 'limit'),
-          cursor: 'cursor-1',
-        ),
-      ).thenAnswer((_) => loadMoreCompleter.future);
+      ),
+    );
+    await loadMoreFuture;
 
-      final cubit = FeedCubit(useCase, reactionUseCase);
-      await cubit.load();
-
-      final loadMoreFuture = cubit.loadMore();
-      cubit.removeAuthor('blocked-author');
-      expect(cubit.state.items, isEmpty);
-
-      // 응답 페이지 자체에 차단된 작성자의 글이 하나 더 실려 온다 — 요청이
-      // 차단보다 먼저 나갔다는 뜻이다.
-      loadMoreCompleter.complete(
-        Ok(
-          CursorPage<FeedPost>(
-            items: [
-              FeedPost(
-                post: _post('2', authorId: 'blocked-author'),
-                author: _author(id: 'blocked-author', nickname: '카르마'),
-              ),
-              FeedPost(
-                post: _post('3', authorId: 'other-author'),
-                author: _author(id: 'other-author', nickname: '이웃'),
-              ),
-            ],
-          ),
-        ),
-      );
-      await loadMoreFuture;
-
-      expect(cubit.state.items.map((item) => item.id), ['3']);
-    },
-  );
+    expect(cubit.state.items.map((item) => item.id), ['3']);
+  });
 
   blocTest<FeedCubit, FeedState>(
     '작성자 필터 조회는 첫 페이지도 다음 페이지도 그 작성자로 요청한다',
@@ -422,6 +450,7 @@ void main() {
           limit: any(named: 'limit'),
           cursor: null,
           authorId: 'author-id',
+          source: any(named: 'source'),
         ),
       ).thenAnswer(
         (_) async => Ok(
@@ -433,6 +462,7 @@ void main() {
           limit: any(named: 'limit'),
           cursor: 'cursor-1',
           authorId: 'author-id',
+          source: any(named: 'source'),
         ),
       ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('2')])));
     },
@@ -449,6 +479,7 @@ void main() {
           limit: any(named: 'limit'),
           cursor: 'cursor-1',
           authorId: 'author-id',
+          source: any(named: 'source'),
         ),
       ).called(1);
       verifyNever(
@@ -456,6 +487,7 @@ void main() {
           limit: any(named: 'limit'),
           cursor: any(named: 'cursor'),
           authorId: null,
+          source: any(named: 'source'),
         ),
       );
     },
@@ -468,6 +500,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: 'author-id',
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')]))),
     build: () => FeedCubit(useCase, reactionUseCase),
@@ -481,6 +514,7 @@ void main() {
           limit: any(named: 'limit'),
           cursor: null,
           authorId: 'author-id',
+          source: any(named: 'source'),
         ),
       ).called(2);
     },
@@ -493,6 +527,7 @@ void main() {
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
         authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')]))),
     build: () => FeedCubit(useCase, reactionUseCase),
@@ -509,6 +544,7 @@ void main() {
           limit: any(named: 'limit'),
           cursor: null,
           authorId: null,
+          source: any(named: 'source'),
         ),
       ).called(2);
     },
@@ -516,14 +552,17 @@ void main() {
 
   blocTest<FeedCubit, FeedState>(
     '반응 결과를 해당 항목에만 반영한다',
-    setUp: () => when(
-      () => useCase.getFeedPosts(
-        limit: any(named: 'limit'),
-        cursor: any(named: 'cursor'),
-      ),
-    ).thenAnswer(
-      (_) async => Ok(CursorPage<FeedPost>(items: [_item('1'), _item('2')])),
-    ),
+    setUp: () =>
+        when(
+          () => useCase.getFeedPosts(
+            limit: any(named: 'limit'),
+            cursor: any(named: 'cursor'),
+            source: any(named: 'source'),
+          ),
+        ).thenAnswer(
+          (_) async =>
+              Ok(CursorPage<FeedPost>(items: [_item('1'), _item('2')])),
+        ),
     build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) async {
       await cubit.load();
@@ -545,14 +584,17 @@ void main() {
 
   blocTest<FeedCubit, FeedState>(
     '댓글 수를 해당 항목에만 반영한다',
-    setUp: () => when(
-      () => useCase.getFeedPosts(
-        limit: any(named: 'limit'),
-        cursor: any(named: 'cursor'),
-      ),
-    ).thenAnswer(
-      (_) async => Ok(CursorPage<FeedPost>(items: [_item('1'), _item('2')])),
-    ),
+    setUp: () =>
+        when(
+          () => useCase.getFeedPosts(
+            limit: any(named: 'limit'),
+            cursor: any(named: 'cursor'),
+            source: any(named: 'source'),
+          ),
+        ).thenAnswer(
+          (_) async =>
+              Ok(CursorPage<FeedPost>(items: [_item('1'), _item('2')])),
+        ),
     build: () => FeedCubit(useCase, reactionUseCase),
     act: (cubit) async {
       await cubit.load();
@@ -578,6 +620,7 @@ void main() {
         () => useCase.getFeedPosts(
           limit: any(named: 'limit'),
           cursor: any(named: 'cursor'),
+          source: any(named: 'source'),
         ),
       ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')])));
       when(
@@ -619,6 +662,7 @@ void main() {
         () => useCase.getFeedPosts(
           limit: any(named: 'limit'),
           cursor: any(named: 'cursor'),
+          source: any(named: 'source'),
         ),
       ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')])));
       when(
@@ -646,6 +690,7 @@ void main() {
       () => useCase.getFeedPosts(
         limit: any(named: 'limit'),
         cursor: any(named: 'cursor'),
+        source: any(named: 'source'),
       ),
     ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: [_item('1')]))),
     build: () => FeedCubit(useCase, reactionUseCase),
@@ -662,4 +707,53 @@ void main() {
       ),
     ),
   );
+
+  test('팔로잉 탭은 팔로잉 소스로 읽는다', () async {
+    when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+    final cubit = FeedCubit(useCase, reactionUseCase);
+    addTearDown(cubit.close);
+
+    await cubit.loadFollowing();
+
+    verify(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: null,
+        authorId: null,
+        source: FeedSource.following,
+      ),
+    ).called(1);
+  });
+
+  test('프로필 목록은 팔로잉 탭을 본 뒤에도 전체 소스로 읽는다', () async {
+    when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+    final cubit = FeedCubit(useCase, reactionUseCase);
+    addTearDown(cubit.close);
+
+    await cubit.loadFollowing();
+    await cubit.loadForAuthor('author-1');
+
+    verify(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: null,
+        authorId: 'author-1',
+        source: FeedSource.all,
+      ),
+    ).called(1);
+  });
 }
