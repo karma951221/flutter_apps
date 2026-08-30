@@ -8,6 +8,7 @@ import 'package:daylog/features/auth/domain/usecase/auth_use_case.dart';
 import 'package:daylog/features/auth/presentation/widget/auth_text_field.dart';
 import 'package:daylog/features/settings/presentation/cubit/change_password_cubit.dart';
 import 'package:daylog/features/settings/presentation/page/change_password_page.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -33,6 +34,10 @@ void main() {
       MaterialApp(
         navigatorKey: navigatorKey,
         theme: AppTheme.light(),
+        // ko 가 ARB template 언어라 원문이 곧 기대값이다 (계획서).
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: const Scaffold(body: Center(child: Text('이전 화면'))),
       ),
     );
@@ -93,9 +98,9 @@ void main() {
   });
 
   testWidgets('실패하면 화면에 남고 오류를 Snackbar 로 알린다', (tester) async {
-    when(() => useCase.updatePassword(any())).thenAnswer(
-      (_) async => const Err(Failure.auth(message: '세션이 만료되었습니다')),
-    );
+    when(
+      () => useCase.updatePassword(any()),
+    ).thenAnswer((_) async => const Err(Failure.auth(message: '세션이 만료되었습니다')));
 
     await pumpPage(tester);
     await fill(tester, password: 'password123', confirm: 'password123');

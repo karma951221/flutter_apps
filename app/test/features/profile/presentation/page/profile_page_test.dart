@@ -22,6 +22,7 @@ import 'package:daylog/features/profile/domain/entity/profile.dart';
 import 'package:daylog/features/profile/domain/usecase/profile_use_case.dart';
 import 'package:daylog/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:daylog/features/profile/presentation/page/profile_page.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 import 'package:daylog/features/safety/domain/usecase/safety_use_case.dart';
 import 'package:daylog/features/safety/presentation/cubit/block_action_cubit.dart';
 import 'package:flutter/material.dart';
@@ -99,6 +100,10 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
+        // ko 가 ARB template 언어라 원문이 곧 기대값이다 (계획서).
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: BlocProvider<AuthBloc>.value(
           value: authBloc,
           child: ProfilePage(userId: userId),
@@ -324,9 +329,7 @@ void main() {
     expect(find.text('이 사용자를 차단할까요?'), findsNothing);
   });
 
-  testWidgets('AppBar 에서 차단에 성공하면 메뉴를 다시 열었을 때 차단 해제만 보인다', (
-    tester,
-  ) async {
+  testWidgets('AppBar 에서 차단에 성공하면 메뉴를 다시 열었을 때 차단 해제만 보인다', (tester) async {
     when(
       () => profileUseCase.getProfile('other'),
     ).thenAnswer((_) async => Ok(_profile('other', '이웃')));

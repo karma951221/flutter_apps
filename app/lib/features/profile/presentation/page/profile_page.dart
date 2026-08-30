@@ -9,20 +9,18 @@ import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_confirm_dialog.dart';
 import '../../../../design_system/widget/app_overflow_menu.dart';
+import '../../../../design_system/widget/app_placeholder.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
-import '../../../feed/domain/entity/feed_post.dart';
 import '../../../feed/presentation/cubit/feed_cubit.dart';
 import '../../../feed/presentation/cubit/feed_state.dart';
-import '../../../post/domain/entity/post.dart';
+import '../../../feed/presentation/widget/post_tile_actions.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../post/presentation/widget/post_tile.dart';
-import '../../../reaction/domain/entity/reaction_type.dart';
 import '../../../safety/domain/entity/report_target.dart';
 import '../../../safety/presentation/cubit/block_action_cubit.dart';
 import '../../../safety/presentation/cubit/block_action_state.dart';
-import '../../../safety/presentation/widget/report_sheet.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
 
@@ -83,9 +81,10 @@ class _ProfileView extends StatelessWidget {
         // userRefreshRequested 를 보낸다.
         BlocListener<AuthBloc, AuthState>(
           listenWhen: (previous, current) => switch ((previous, current)) {
-            (AuthAuthenticated(user: final before), AuthAuthenticated(
-              user: final after,
-            )) =>
+            (
+              AuthAuthenticated(user: final before),
+              AuthAuthenticated(user: final after),
+            ) =>
               before.id == after.id &&
                   (before.nickname != after.nickname ||
                       before.avatarUrl != after.avatarUrl),
@@ -115,7 +114,7 @@ class _ProfileView extends StatelessWidget {
                           context,
                           loadedProfile.id,
                         ),
-                        _ProfileAction.report => _report(
+                        _ProfileAction.report => PostTileActions.report(
                           context,
                           ReportTarget.user(loadedProfile.id),
                         ),
@@ -151,10 +150,14 @@ class _ProfileView extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
             if (state.failure != null && state.profile == null) {
-              return _ProfileLoadError(
-                message: state.failure?.message ?? '프로필을 불러오지 못했습니다',
-                onRetry: () =>
-                    context.read<ProfileCubit>().load(userId: requestedUserId),
+              return Center(
+                child: AppPlaceholder(
+                  message: state.failure?.message ?? '프로필을 불러오지 못했습니다',
+                  actionLabel: '다시 시도',
+                  onAction: () => context.read<ProfileCubit>().load(
+                    userId: requestedUserId,
+                  ),
+                ),
               );
             }
             final profile = state.profile;
@@ -304,24 +307,6 @@ Future<void> _unblockProfile(BuildContext context, String userId) async {
   );
 }
 
-/// 게시물·사용자 신고 시트를 열고, 접수됐을 때만 스낵바를 띄운다.
-///
-/// 시트의 `BuildContext` 는 닫히면서 함께 사라지므로 스낵바는 호출한 화면의
-/// context 로 띄운다. [_ProfileView] 의 AppBar 신고와 [_ProfilePostList] 의
-/// 게시물 신고가 이 파일 안에서 같이 쓴다 — 다른 화면(피드)과는 공유하지
-/// 않는다.
-Future<void> _report(BuildContext context, ReportTarget target) async {
-  final filed = await ReportSheet.show(context, target);
-  if (!context.mounted) return;
-  if (filed) {
-    AppSnackBar.show(
-      context,
-      message: '신고가 접수되었습니다',
-      type: AppSnackBarType.success,
-    );
-  }
-}
-
 /// 프로필 주인이 쓴 게시물 목록.
 ///
 /// [isMine] 이면 피드와 같은 수정·삭제 흐름을 붙인다. 다른 사람의 프로필은
@@ -372,130 +357,27 @@ class _ProfilePostList extends StatelessWidget {
             reactions: item.reactions,
             commentCount: item.commentCount,
             // 이미 이 작성자의 프로필이므로 남의 글은 눌러도 갈 곳이 없다.
-            onTap: isMine ? () => _edit(context, post) : () {},
-            onEdit: isMine ? () => _edit(context, post) : null,
-            onDelete: isMine ? () => _confirmDelete(context, post) : null,
+            onTap: isMine ? () => PostTileActions.edit(context, post) : () {},
+            onEdit: isMine ? () => PostTileActions.edit(context, post) : null,
+            onDelete: isMine
+                ? () => PostTileActions.confirmDelete(context, post)
+                : null,
             onReport: isMine
                 ? null
-                : () => _report(context, ReportTarget.post(post.id)),
+                : () => PostTileActions.report(
+                    context,
+                    ReportTarget.post(post.id),
+                  ),
+            // 차단만 화면이 직접 잇는다. 성공 뒤 이 작성자의 목록을 통째로 다시
+            // 읽는 것은 프로필 화면에만 맞는 반영이다 (피드는 항목만 걷어낸다).
             onBlock: isMine
                 ? null
-                : () => _block(context, item.author.id),
-            onReaction: (type) => _react(context, post.id, type),
-            onComment: () => _openComments(context, item),
+                : () => _confirmAndBlock(context, item.author.id),
+            onReaction: (type) => PostTileActions.react(context, post.id, type),
+            onComment: () => PostTileActions.openComments(context, item),
           );
         },
       ),
     },
-  );
-
-  /// 감정과 댓글 연결은 피드 화면과 같다. 두 화면 모두 목록을 [FeedCubit] 이
-  /// 소유하므로 저장·복원도 같은 곳에서 한다.
-  Future<void> _react(
-    BuildContext context,
-    String postId,
-    ReactionType type,
-  ) async {
-    final result = await context.read<FeedCubit>().toggleReaction(postId, type);
-    if (!context.mounted) return;
-
-    result.when(
-      ok: (_) {},
-      err: (failure) => AppSnackBar.show(
-        context,
-        message: failure.message ?? '감정을 남기지 못했습니다.',
-        type: AppSnackBarType.error,
-      ),
-    );
-  }
-
-  Future<void> _openComments(BuildContext context, FeedPost item) async {
-    final feed = context.read<FeedCubit>();
-    final count = await context.push<int>(
-      Routes.postCommentsPath(item.id),
-      extra: item.commentCount,
-    );
-    if (count != null) feed.applyCommentCount(item.id, count);
-  }
-
-  Future<void> _edit(BuildContext context, Post post) async {
-    final feed = context.read<FeedCubit>();
-    final updated = await context.push<Post>(
-      Routes.postEditPath(post.id),
-      extra: post,
-    );
-    if (updated != null) feed.replacePost(updated);
-  }
-
-  /// 차단은 되돌릴 수 없이 상대의 글을 통째로 지운다 — 삭제와 같은 무게로
-  /// 확인을 받는다 (`account_settings_page` 의 탈퇴 확인과 같은 모양).
-  /// 성공하면 이 작성자의 프로필 게시물 목록을 다시 읽는다 — 이제 비어야
-  /// 한다. 상대가 나를 차단했는지 여부는 절대 드러내지 않는다.
-  ///
-  /// 실제 흐름은 [_ProfileView] 의 AppBar 차단과 같은 [_confirmAndBlock] 을
-  /// 그대로 쓴다 — 예전에는 이 파일에 같은 코드가 두 번 있었다.
-  Future<void> _block(BuildContext context, String authorId) =>
-      _confirmAndBlock(context, authorId);
-
-  Future<void> _confirmDelete(BuildContext context, Post post) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('게시물을 삭제할까요?'),
-        content: const Text('삭제한 게시물은 되돌릴 수 없습니다.'),
-        actions: [
-          AppButton.text(
-            label: '취소',
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-          ),
-          AppButton.text(
-            label: '삭제',
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-
-    final feed = context.read<FeedCubit>();
-    final result = await context.read<PostCubit>().delete(post.id);
-    if (!context.mounted) return;
-
-    result.when(
-      ok: (_) {
-        feed.removePost(post.id);
-        AppSnackBar.show(
-          context,
-          message: '게시물을 삭제했습니다.',
-          type: AppSnackBarType.success,
-        );
-      },
-      err: (failure) => AppSnackBar.show(
-        context,
-        message: failure.message ?? '게시물을 삭제하지 못했습니다.',
-        type: AppSnackBarType.error,
-      ),
-    );
-  }
-}
-
-class _ProfileLoadError extends StatelessWidget {
-  const _ProfileLoadError({required this.message, required this.onRetry});
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: AppSpacing.md),
-          AppButton.secondary(label: '다시 시도', onPressed: onRetry),
-        ],
-      ),
-    ),
   );
 }

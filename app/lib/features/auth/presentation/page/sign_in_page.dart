@@ -13,6 +13,7 @@ import '../widget/auth_header.dart';
 import '../widget/auth_scaffold.dart';
 import '../widget/auth_text_field.dart';
 import '../widget/failure_text.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class SignInPage extends StatelessWidget {
   const SignInPage({super.key});
@@ -65,6 +66,7 @@ class _SignInViewState extends State<_SignInView> {
     return BlocBuilder<SignInCubit, SubmitState>(
       builder: (context, state) {
         final busy = state is SubmitInProgress;
+        final l10n = AppLocalizations.of(context);
         return AuthScaffold(
           child: AutofillGroup(
             child: Form(
@@ -75,16 +77,16 @@ class _SignInViewState extends State<_SignInView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const AuthHeader(
+                  AuthHeader(
                     showWordmark: true,
-                    description: '오늘 하루를 기록하고 이웃과 나눠보세요.',
+                    description: l10n.authSignInDescription,
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   AuthTextField(
                     // E2E 셀렉터. 라벨 문구가 바뀌어도 테스트가 깨지지 않게 한다.
                     key: const Key('signIn.email'),
                     controller: _email,
-                    label: '이메일',
+                    label: l10n.authEmailLabel,
                     enabled: !busy,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
@@ -96,7 +98,7 @@ class _SignInViewState extends State<_SignInView> {
                     key: const Key('signIn.password'),
                     controller: _password,
                     focusNode: _passwordFocus,
-                    label: '비밀번호',
+                    label: l10n.authPasswordLabel,
                     enabled: !busy,
                     obscureText: true,
                     textInputAction: TextInputAction.done,
@@ -106,20 +108,20 @@ class _SignInViewState extends State<_SignInView> {
                   ),
                   if (state is SubmitFailure) FailureText(state.failure),
                   AppButton.primary(
-                    label: '로그인',
+                    label: l10n.authSignIn,
                     onPressed: _submit,
                     isLoading: busy,
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   AppButton.text(
-                    label: '비밀번호를 잊으셨나요?',
+                    label: l10n.authForgotPassword,
                     onPressed: busy
                         ? null
                         : () => context.push(Routes.passwordReset),
                   ),
                   const Divider(height: AppSpacing.xl),
                   Text(
-                    '아직 계정이 없으신가요?',
+                    l10n.authNoAccountPrompt,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -127,7 +129,7 @@ class _SignInViewState extends State<_SignInView> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   AppButton.secondary(
-                    label: '회원가입',
+                    label: l10n.authSignUp,
                     onPressed: busy ? null : () => context.push(Routes.signUp),
                   ),
                 ],

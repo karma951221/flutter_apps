@@ -1,4 +1,5 @@
 import 'package:daylog/core/di/injection.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 import 'package:daylog/core/error/failure.dart';
 import 'package:daylog/core/result/result.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
@@ -40,7 +41,13 @@ void main() {
 
   Future<void> pumpPage(WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(theme: AppTheme.light(), home: const BlockedUsersPage()),
+      MaterialApp(
+        theme: AppTheme.light(),
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const BlockedUsersPage(),
+      ),
     );
     await tester.pump();
   }

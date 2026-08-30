@@ -1,8 +1,10 @@
 import 'package:daylog/app/app.dart';
 import 'package:daylog/bootstrap.dart';
 import 'package:daylog/core/di/injection.dart';
+import 'package:daylog/features/preferences/domain/entity/app_language.dart';
 import 'package:flutter/material.dart';
 import 'package:patrol/patrol.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// E2E 공통 준비 코드.
@@ -34,9 +36,28 @@ Future<void> launchApp(PatrolIntegrationTester $) async {
   await getIt.reset();
   await initializeApp();
   await _signOutQuietly();
+  await _pinKoreanLocale();
 
   await $.tester.pumpWidget(const DaylogApp());
   await $.waitUntilVisible($(const Key('signIn.email')), timeout: kWait);
+}
+
+/// 앱 언어를 한국어로 고정한다.
+///
+/// 기본값은 '시스템'이고 에뮬레이터는 보통 `en-US` 라, 그대로 두면 앱이 영어로
+/// 뜨고 아래 단언들(`'회원가입'` 등)이 전부 어긋난다. 실제로 2026-08-27 실행에서
+/// `tap '회원가입'` 이 실패했다.
+///
+/// 기기 locale 을 바꾸는 대신 저장값을 심는다 — 위젯 테스트 하니스가
+/// `locale: Locale('ko')` 를 고정하는 것과 같은 결정이고(ko 가 ARB template
+/// 언어라 원문이 곧 기대값이다), 기기 설정에 기대지 않아 어느 에뮬레이터에서도
+/// 같게 돈다.
+///
+/// `initializeApp()` 뒤에 불러야 한다. `SharedPreferences` 는 그때 DI 가
+/// `@preResolve` 로 준비하고, `LanguageCubit` 은 생성자에서 동기로 읽는다.
+Future<void> _pinKoreanLocale() async {
+  final preferences = await SharedPreferences.getInstance();
+  await preferences.setString('language', AppLanguage.korean.code);
 }
 
 /// 세션이 없을 때 signOut 은 예외를 던진다. 여기서는 정리 목적이라 무시한다.

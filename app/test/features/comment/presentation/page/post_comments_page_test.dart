@@ -11,6 +11,7 @@ import 'package:daylog/features/comment/domain/entity/post_comment.dart';
 import 'package:daylog/features/comment/domain/usecase/comment_use_case.dart';
 import 'package:daylog/features/comment/presentation/cubit/comment_cubit.dart';
 import 'package:daylog/features/comment/presentation/page/post_comments_page.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 import 'package:daylog/features/post/domain/entity/post_author.dart';
 import 'package:daylog/features/reaction/domain/usecase/reaction_use_case.dart';
 import 'package:flutter/material.dart';
@@ -81,6 +82,10 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
+        // ko 가 ARB template 언어라 원문이 곧 기대값이다 (계획서).
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: BlocProvider<AuthBloc>.value(
           value: authBloc,
           child: const PostCommentsPage(postId: 'post-1'),
@@ -122,7 +127,10 @@ void main() {
 
   testWidgets('내 댓글 메뉴에는 삭제가 있고 신고가 없다', (tester) async {
     stubComments([
-      _comment('1', author: const PostAuthor(id: 'me', nickname: '카르마')),
+      _comment(
+        '1',
+        author: const PostAuthor(id: 'me', nickname: '카르마'),
+      ),
     ]);
 
     await pumpPage(tester);
@@ -150,9 +158,8 @@ void main() {
         cursor: any(named: 'cursor'),
       ),
     ).thenAnswer(
-      (_) async => Ok(
-        CursorPage<PostComment>(items: [_comment('r1', parentId: '1')]),
-      ),
+      (_) async =>
+          Ok(CursorPage<PostComment>(items: [_comment('r1', parentId: '1')])),
     );
 
     await pumpPage(tester);

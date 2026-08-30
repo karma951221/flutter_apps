@@ -1,8 +1,13 @@
-# theme — 계획 (다크모드)
+# preferences — 계획 (다크모드)
 
 > [문서 허브](../../README.md) · [아키텍처](../../architecture.md) · [설정 계획](../settings/plan.md)
 
-> 상태: **완료** · 작성 2026-08-26 · 구현 2026-08-26 ([구현 기록](history.md))
+> 상태: **완료** · 작성 2026-08-26 · 구현 2026-08-26 · 개명 반영 2026-08-27
+> ([구현 기록](history.md))
+>
+> **이 문서는 `features/theme` 시절에 쓰였다.** 언어 설정이 들어오면서 아래
+> "이름 범위" 행이 예고한 대로 `features/preferences` 로 개명했다 — 경로와 타입
+> 이름은 [언어 계획](plan-language.md)의 구조 절이 현재 기준이다.
 > 진행 상태의 단일 기준은 [진행 현황](../../status.md)이다.
 
 ## 범위
@@ -22,7 +27,7 @@
 |---|---|---|
 | 선택지 | **3상태** — 시스템 · 라이트 · 다크 (사용자 확정 2026-08-26) | 2상태 스위치는 "OS 따라가기"를 없앤다. 기본값이 시스템이면 지금 동작이 그대로 유지되고, 밤에 OS 가 다크로 바뀌는 연동도 살아 있다 |
 | 기본값 | **시스템** | 저장된 값이 없으면 지금과 똑같이 동작한다. 업데이트가 기존 사용자의 화면을 바꾸지 않는다 |
-| feature 위치 | **`features/theme` 신설** | settings 는 의도적으로 presentation 만 갖는 feature 다 ([설정 계획](../settings/plan.md)). 테마는 저장소(domain·data)가 필요하므로 거기 끼우면 그 결정이 깨진다. 설정 화면은 auth·profile 을 쓰듯 theme 의 cubit 을 **쓰기만** 한다 (규칙 ⑥) |
+| feature 위치 | **`features/theme` 신설** (→ 2026-08-27 `features/preferences` 로 개명) | settings 는 의도적으로 presentation 만 갖는 feature 다 ([설정 계획](../settings/plan.md)). 테마는 저장소(domain·data)가 필요하므로 거기 끼우면 그 결정이 깨진다. 설정 화면은 auth·profile 을 쓰듯 theme 의 cubit 을 **쓰기만** 한다 (규칙 ⑥) |
 | 저장소 | **`shared_preferences`** | 이미 의존성에 있고(미사용) 기기 로컬 설정에 맞는 도구다. 테마는 민감정보가 아니므로 Keychain(`flutter_secure_storage`)을 쓸 이유가 없고, 서버(Supabase)에 두면 기기마다 다르게 쓰고 싶은 사용자를 막는다 |
 | 저장 형식 | 키 `theme_mode`, 값 `'system'` · `'light'` · `'dark'` | 문자열 코드는 `ReactionType.code` 와 같은 방식이다. 모르는 값이나 없는 값은 시스템으로 읽는다 — 값이 늘거나 저장이 깨져도 앱이 죽지 않는다 |
 | domain 타입 | **자체 enum `AppThemeMode`** (system·light·dark) | Flutter 의 `ThemeMode` 를 domain 에 두면 domain 이 material 에 묶인다. 매핑은 presentation 이 한다 — `ReportTarget` → `target_type` 매핑과 같은 결이다 |
@@ -30,22 +35,29 @@
 | 첫 프레임 | **깜빡임 없음** — DI 가 `SharedPreferences` 를 `@preResolve` 로 미리 들고, cubit 이 생성자에서 동기로 읽는다 | `SharedPreferences` 는 `getInstance()` 이후 메모리 캐시라 읽기가 동기다. cubit 초기 상태가 곧 저장값이므로 "라이트로 떴다가 다크로 바뀌는" 프레임이 없다 |
 | 저장 실패 | **무시하고 상태만 바꾼다** | 화면 전환은 즉시 일어나야 한다. 저장이 실패하면 다음 실행에 이전 값으로 뜰 뿐이고, 그것을 오류로 알리는 것이 사용자에게 더 성가시다 |
 | UI 형태 | 설정 행 '화면 테마' + **선택 다이얼로그**(라디오 3개) | 행의 subtitle 이 현재 값을 보여주고, 탭하면 다이얼로그에서 고른다. 고르는 즉시 적용되고 닫힌다. 신고 시트의 `RadioGroup` 패턴을 따른다 |
-| 이름 범위 | **`features/theme` 유지** — `preferences` 로 넓히지 않는다 (사용자 확정 2026-08-26) | 로컬 설정의 공용 계층은 이 feature 가 아니라 DI 에 범용으로 등록된 `SharedPreferences` 자체다. 다른 설정이 와도 자기 feature 에서 그걸 주입받으면 되고, 잡화점 `PreferencesRepository` 는 safety 가 `ReportRepository` · `BlockRepository` 를 나눠 피한 안티패턴이다. safety 폴더가 `report` 가 아니었던 것은 차단이 **기획서에 명시된** 미래였기 때문 — 지금은 다음 로컬 설정이 기획에 없다. **개명 기준**: 두 번째 로컬 설정이 기획에 실리는 시점에 `features/preferences` 로 옮기고(저장소는 관심사별 유지, facade 만 통합) 그때 이 행을 갱신한다 |
+| 이름 범위 | ~~**`features/theme` 유지**~~ → **`features/preferences` 로 개명함** (2026-08-27 갱신) | 원래 결정(2026-08-26 사용자 확정)은 "지금은 다음 로컬 설정이 기획에 없으니 `theme` 로 둔다"였고, **개명 기준**을 "두 번째 로컬 설정이 기획에 실리는 시점"으로 못박아 뒀다. 언어 설정([계획](plan-language.md))이 그 시점이라 개명했다 — 저장소는 관심사별(`ThemeRepository` · `LanguageRepository`)로 남기고 facade 만 `PreferencesUseCase` 로 합쳤으므로, 잡화점 저장소를 피한다는 원래 근거는 그대로 지켜진다 |
 
 ## 구조
 
+아래는 착수 당시의 모양이다. 개명 후 현재 구조는
+[언어 계획의 구조 절](plan-language.md)을 본다.
+
 ```
-features/theme/
+features/theme/                          ← 현재 features/preferences/
 ├── domain/
-│   ├── entity/app_theme_mode.dart       enum 3개 + code + label + fromCode
+│   ├── entity/app_theme_mode.dart       enum 3개 + code + fromCode
 │   ├── repository/theme_repository.dart
-│   └── usecase/theme_use_case.dart      ← facade (규칙 ③)
+│   └── usecase/theme_use_case.dart      ← 현재 preferences_use_case.dart (규칙 ③)
 ├── data/
 │   ├── datasource/{theme_data_source,preferences_theme_data_source}.dart
 │   └── repository/theme_repository_impl.dart
 └── presentation/
     └── cubit/theme_cubit.dart              상태 클래스 없음 — Cubit<AppThemeMode>
 ```
+
+표시 이름(`label`)은 이 계획에서는 `AppThemeMode` 가 갖고 있었지만, 다국어를
+넣으면서 domain 에서 걷어내 presentation 확장 `AppThemeModeX.label(context)` 로
+옮겼다. domain 은 저장 형식인 `code` 만 안다.
 
 | 동작 | 시그니처 |
 |---|---|
@@ -64,7 +76,7 @@ features/theme/
 
 ### `ThemeCubit`
 
-- `@injectable`. `ThemeUseCase` 하나만 주입 (규칙 ③). `BuildContext` 없음
+- `@injectable`. facade 하나만 주입 (규칙 ③) — 개명 후에는 `PreferencesUseCase` 다. `BuildContext` 없음
 - 초기 상태 = 생성자에서 `loadThemeMode()` 동기 호출
 - `setMode(AppThemeMode mode)` — 상태 emit 후 저장. 같은 값이면 아무것도 안 한다
 - 상태는 `AppThemeMode` 값 하나 — Freezed 를 씌울 필드가 없으므로 상태 클래스 없이

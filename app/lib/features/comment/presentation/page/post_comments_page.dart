@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
+import '../../../../design_system/widget/app_confirm_dialog.dart';
+import '../../../../design_system/widget/app_placeholder.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -16,6 +18,7 @@ import '../../domain/entity/post_comment.dart';
 import '../cubit/comment_cubit.dart';
 import '../cubit/comment_state.dart';
 import '../widget/comment_tile.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// 한 게시물의 댓글 화면.
 ///
@@ -63,6 +66,7 @@ class _CommentViewState extends State<_CommentView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final currentUser = switch (context.watch<AuthBloc>().state) {
       AuthAuthenticated(:final user) => user,
       _ => null,
@@ -83,7 +87,7 @@ class _CommentViewState extends State<_CommentView> {
         Navigator.of(context).pop(widget.initialCount + delta);
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('댓글')),
+        appBar: AppBar(title: Text(l10n.commentTitle)),
         body: Column(
           children: [
             Expanded(
@@ -92,9 +96,12 @@ class _CommentViewState extends State<_CommentView> {
                   CommentStatus.loading => const Center(
                     child: CircularProgressIndicator(),
                   ),
-                  CommentStatus.failure => _CommentError(
-                    message: state.failure?.message ?? '댓글을 불러오지 못했습니다',
-                    onRetry: () => context.read<CommentCubit>().refresh(),
+                  CommentStatus.failure => Center(
+                    child: AppPlaceholder(
+                      message: state.failure?.message ?? l10n.commentLoadFailed,
+                      actionLabel: l10n.commonRetry,
+                      onAction: () => context.read<CommentCubit>().refresh(),
+                    ),
                   ),
                   CommentStatus.loaded => _CommentList(
                     state: state,
@@ -142,9 +149,11 @@ class _CommentList extends StatelessWidget {
         onRefresh: () => context.read<CommentCubit>().refresh(),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
-          children: const [
-            SizedBox(height: 160),
-            Center(child: Text('첫 댓글을 남겨보세요.')),
+          children: [
+            const SizedBox(height: 160),
+            Center(
+              child: Text(AppLocalizations.of(context).commentEmptyMessage),
+            ),
           ],
         ),
       );
@@ -207,7 +216,9 @@ class _CommentList extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(left: AppSpacing.xl),
                       child: AppButton.text(
-                        label: '답글 더 보기',
+                        label: AppLocalizations.of(
+                          context,
+                        ).commentLoadMoreReplies,
                         onPressed: () => context
                             .read<CommentCubit>()
                             .loadMoreReplies(comment.id),
@@ -228,6 +239,7 @@ class _CommentList extends StatelessWidget {
     PostComment comment,
     ReactionType type,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final result = await context.read<CommentCubit>().toggleReaction(
       comment,
       type,
@@ -238,13 +250,14 @@ class _CommentList extends StatelessWidget {
       ok: (_) {},
       err: (failure) => AppSnackBar.show(
         context,
-        message: failure.message ?? '감정을 남기지 못했습니다.',
+        message: failure.message ?? l10n.reactionSaveFailed,
         type: AppSnackBarType.error,
       ),
     );
   }
 
   Future<void> _report(BuildContext context, PostComment comment) async {
+    final l10n = AppLocalizations.of(context);
     final filed = await ReportSheet.show(
       context,
       ReportTarget.comment(comment.id),
@@ -253,31 +266,21 @@ class _CommentList extends StatelessWidget {
     if (filed) {
       AppSnackBar.show(
         context,
-        message: '신고가 접수되었습니다',
+        message: l10n.safetyReportSubmitted,
         type: AppSnackBarType.success,
       );
     }
   }
 
   Future<void> _confirmDelete(BuildContext context, PostComment comment) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('댓글을 삭제할까요?'),
-        content: const Text('삭제한 댓글은 되돌릴 수 없습니다.'),
-        actions: [
-          AppButton.text(
-            label: '취소',
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-          ),
-          AppButton.text(
-            label: '삭제',
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-          ),
-        ],
-      ),
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await AppConfirmDialog.show(
+      context,
+      title: l10n.commentDeleteConfirmTitle,
+      content: l10n.commentDeleteConfirmMessage,
+      confirmLabel: l10n.commonDelete,
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
 
     final result = await context.read<CommentCubit>().delete(comment);
     if (!context.mounted) return;
@@ -285,12 +288,14 @@ class _CommentList extends StatelessWidget {
     result.when(
       ok: (deleted) => AppSnackBar.show(
         context,
-        message: deleted ? '댓글을 삭제했습니다.' : '삭제할 수 있는 댓글이 아닙니다.',
+        message: deleted
+            ? l10n.commentDeleteSucceeded
+            : l10n.commentDeleteNotAllowed,
         type: deleted ? AppSnackBarType.success : AppSnackBarType.error,
       ),
       err: (failure) => AppSnackBar.show(
         context,
-        message: failure.message ?? '댓글을 삭제하지 못했습니다.',
+        message: failure.message ?? l10n.commentDeleteFailed,
         type: AppSnackBarType.error,
       ),
     );
@@ -318,6 +323,7 @@ class _CommentComposer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     final target = replyTarget;
 
     return SafeArea(
@@ -337,12 +343,12 @@ class _CommentComposer extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      '${target.author.nickname} 님에게 답글',
+                      l10n.commentReplyingTo(target.author.nickname),
                       style: theme.textTheme.labelMedium,
                     ),
                   ),
                   IconButton(
-                    tooltip: '답글 취소',
+                    tooltip: l10n.commentReplyCancelTooltip,
                     visualDensity: VisualDensity.compact,
                     icon: const Icon(Icons.close, size: 18),
                     onPressed: onCancelReply,
@@ -364,14 +370,16 @@ class _CommentComposer extends StatelessWidget {
                       minLines: 1,
                       textInputAction: TextInputAction.newline,
                       decoration: InputDecoration(
-                        hintText: target == null ? '댓글 달기' : '답글 달기',
+                        hintText: target == null
+                            ? l10n.commentInputHint
+                            : l10n.commentReplyInputHint,
                         counterText: '',
                       ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   IconButton.filled(
-                    tooltip: '등록',
+                    tooltip: l10n.commentSubmitTooltip,
                     onPressed: state.isSubmitting
                         ? null
                         : () => _submit(context),
@@ -393,11 +401,12 @@ class _CommentComposer extends StatelessWidget {
   }
 
   Future<void> _submit(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final writer = author;
     if (writer == null) {
       AppSnackBar.show(
         context,
-        message: '로그인이 필요합니다.',
+        message: l10n.commentSignInRequired,
         type: AppSnackBarType.error,
       );
       return;
@@ -417,32 +426,10 @@ class _CommentComposer extends StatelessWidget {
       },
       err: (failure) => AppSnackBar.show(
         context,
-        message: failure.message ?? '댓글을 남기지 못했습니다.',
+        message: failure.message ?? l10n.commentCreateFailed,
         type: AppSnackBarType.error,
       ),
     );
   }
 }
 
-class _CommentError extends StatelessWidget {
-  const _CommentError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: AppSpacing.md),
-          AppButton.secondary(label: '다시 시도', onPressed: onRetry),
-        ],
-      ),
-    ),
-  );
-}

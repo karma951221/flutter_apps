@@ -12,6 +12,310 @@ class AppLocalizationsJa extends AppLocalizations {
   String get commonCancel => 'キャンセル';
 
   @override
+  String get commonDelete => '削除';
+
+  @override
+  String get commonRetry => '再試行';
+
+  @override
+  String get commonMoreActions => 'その他';
+
+  @override
+  String get authSignInDescription => '今日一日を記録して、ご近所と分かち合いましょう。';
+
+  @override
+  String get authEmailLabel => 'メールアドレス';
+
+  @override
+  String get authPasswordLabel => 'パスワード';
+
+  @override
+  String get authSignIn => 'ログイン';
+
+  @override
+  String get authForgotPassword => 'パスワードをお忘れですか？';
+
+  @override
+  String get authNoAccountPrompt => 'まだアカウントをお持ちではありませんか？';
+
+  @override
+  String get authSignUp => '新規登録';
+
+  @override
+  String get authSignUpDescription => 'メールアドレスとニックネームだけですぐに始められます。';
+
+  @override
+  String get authNicknameLabel => 'ニックネーム（2〜20文字）';
+
+  @override
+  String get authPasswordWithRuleLabel => 'パスワード（8文字以上）';
+
+  @override
+  String get authPasswordConfirmLabel => 'パスワード確認';
+
+  @override
+  String get authSignUpSubmit => '登録する';
+
+  @override
+  String get authPasswordResetTitle => 'パスワード再設定';
+
+  @override
+  String get authPasswordResetDescription => '登録したメールアドレスに6桁のコードをお送りします。';
+
+  @override
+  String get authPasswordResetSendCode => 'コードを受け取る';
+
+  @override
+  String get authPasswordResetCodeTitle => 'コード入力';
+
+  @override
+  String authPasswordResetCodeDescription(String email) {
+    return '$email に送信した6桁のコードを入力してください。';
+  }
+
+  @override
+  String get authPasswordResetCodeLabel => '認証コード';
+
+  @override
+  String get authPasswordResetVerify => '確認';
+
+  @override
+  String get authPasswordResetChangeEmail => 'メールアドレスを入力し直す';
+
+  @override
+  String get authNewPasswordTitle => '新しいパスワード';
+
+  @override
+  String get authNewPasswordDescription => 'これから使用するパスワードを入力してください。';
+
+  @override
+  String get authNewPasswordLabel => '新しいパスワード（8文字以上）';
+
+  @override
+  String get authNewPasswordConfirmLabel => '新しいパスワード確認';
+
+  @override
+  String get authPasswordChangeSubmit => 'パスワード変更';
+
+  @override
+  String get authPasswordChangedTitle => 'パスワードを変更しました。';
+
+  @override
+  String get authPasswordChangedDescription => '新しいパスワードでもう一度ログインしてください。';
+
+  @override
+  String get authGoToSignIn => 'ログインへ進む';
+
+  @override
+  String get authPasswordShow => 'パスワードを表示';
+
+  @override
+  String get authPasswordHide => 'パスワードを非表示';
+
+  @override
+  String get feedLoadFailed => 'フィードを読み込めませんでした';
+
+  @override
+  String get feedLoadFailedDescription => '接続を確認してもう一度お試しください。';
+
+  @override
+  String get feedComposeTooltip => '新しい投稿を作成';
+
+  @override
+  String get feedComposeLabel => '作成';
+
+  @override
+  String get feedEmptyMessage => 'まだ投稿がありません';
+
+  @override
+  String get feedEmptyDescription => '最初の投稿を残してみましょう。';
+
+  @override
+  String get feedEmptyAction => '最初の投稿を書く';
+
+  @override
+  String get feedEndOfList => 'すべて確認しました';
+
+  @override
+  String get postEditTitle => '投稿の修正';
+
+  @override
+  String get postCreateTitle => '新しい投稿';
+
+  @override
+  String get postContentLabel => '今日の記録';
+
+  @override
+  String get postContentHint => 'いま思い浮かんだことを残してみましょう。';
+
+  @override
+  String get postContentRequired => '投稿の内容を入力してください。';
+
+  @override
+  String get postSaveButton => '保存';
+
+  @override
+  String get postSubmitButton => '投稿する';
+
+  @override
+  String get postCreated => '投稿を作成しました。';
+
+  @override
+  String get postUpdated => '投稿を修正しました。';
+
+  @override
+  String get postSaveFailed => '投稿を保存できませんでした。';
+
+  @override
+  String get postImagePrepareFailed => '画像を準備できませんでした。';
+
+  @override
+  String get postDiscardEditTitle => '修正を取り消しますか？';
+
+  @override
+  String get postDiscardCreateTitle => '作成中の内容を破棄しますか？';
+
+  @override
+  String get postDiscardMessage => '入力した内容は保存されません。';
+
+  @override
+  String get postDiscardKeepWriting => '書き続ける';
+
+  @override
+  String get postDiscardLeave => '退出する';
+
+  @override
+  String postImageLimitReached(int count) {
+    return '写真は$count枚までアップロードできます';
+  }
+
+  @override
+  String postAddImages(int count, int max) {
+    return '写真を追加（$count/$max）';
+  }
+
+  @override
+  String get postRemoveImageTooltip => '写真を削除';
+
+  @override
+  String get postCommentCountTooltip => 'コメント';
+
+  @override
+  String get postMenuTooltip => '投稿メニュー';
+
+  @override
+  String get postMenuEdit => '修正';
+
+  @override
+  String get postMenuReport => '報告';
+
+  @override
+  String get postMenuBlockUser => 'このユーザーをブロック';
+
+  @override
+  String get postDeleteConfirmTitle => '投稿を削除しますか？';
+
+  @override
+  String get postDeleteConfirmMessage => '削除した投稿は元に戻せません。';
+
+  @override
+  String get postDeleteSucceeded => '投稿を削除しました。';
+
+  @override
+  String get postDeleteFailed => '投稿を削除できませんでした。';
+
+  @override
+  String get commentTitle => 'コメント';
+
+  @override
+  String get commentLoadFailed => 'コメントを読み込めませんでした';
+
+  @override
+  String get commentEmptyMessage => '最初のコメントを残してみましょう。';
+
+  @override
+  String get commentLoadMoreReplies => '返信をもっと見る';
+
+  @override
+  String get commentMenuTooltip => 'コメントメニュー';
+
+  @override
+  String get commentMenuReport => '報告';
+
+  @override
+  String get commentDeletedPlaceholder => '削除されたコメントです';
+
+  @override
+  String get commentReply => '返信';
+
+  @override
+  String get commentHideReplies => '返信を隠す';
+
+  @override
+  String commentShowReplies(int count) {
+    return '返信$count件を見る';
+  }
+
+  @override
+  String get commentDeleteConfirmTitle => 'コメントを削除しますか？';
+
+  @override
+  String get commentDeleteConfirmMessage => '削除したコメントは元に戻せません。';
+
+  @override
+  String get commentDeleteSucceeded => 'コメントを削除しました。';
+
+  @override
+  String get commentDeleteNotAllowed => '削除できるコメントではありません。';
+
+  @override
+  String get commentDeleteFailed => 'コメントを削除できませんでした。';
+
+  @override
+  String commentReplyingTo(String nickname) {
+    return '$nickname さんへの返信';
+  }
+
+  @override
+  String get commentReplyCancelTooltip => '返信を取り消す';
+
+  @override
+  String get commentInputHint => 'コメントする';
+
+  @override
+  String get commentReplyInputHint => '返信する';
+
+  @override
+  String get commentSubmitTooltip => '送信';
+
+  @override
+  String get commentSignInRequired => 'ログインが必要です。';
+
+  @override
+  String get commentCreateFailed => 'コメントを投稿できませんでした。';
+
+  @override
+  String get reactionSaveFailed => 'リアクションを保存できませんでした。';
+
+  @override
+  String get safetyReportSubmitted => '報告を受け付けました';
+
+  @override
+  String get safetyBlockConfirmTitle => 'このユーザーをブロックしますか？';
+
+  @override
+  String get safetyBlockConfirmMessage => 'ブロックすると、このユーザーの投稿とコメントは表示されなくなります。';
+
+  @override
+  String get safetyBlockConfirmAction => 'ブロック';
+
+  @override
+  String get safetyBlockSucceeded => 'ブロックしました。';
+
+  @override
+  String get safetyBlockFailed => 'ブロックできませんでした。';
+
+  @override
   String get settingsTitle => '設定';
 
   @override
@@ -49,4 +353,183 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get languageSystem => 'システム設定';
+
+  @override
+  String get homeTabFeed => 'ホーム';
+
+  @override
+  String get homeTabChat => 'チャット';
+
+  @override
+  String get homeTabProfile => 'プロフィール';
+
+  @override
+  String get homeTabSettings => '設定';
+
+  @override
+  String get chatTitle => 'チャット';
+
+  @override
+  String get chatLoadFailed => 'チャット一覧を読み込めませんでした';
+
+  @override
+  String get chatEmptyMessage => '参加中のルームがありません';
+
+  @override
+  String get chatEmptyDescription => '公開ルームを探して参加してみましょう。';
+
+  @override
+  String get chatEmptyAction => 'ルームを探す';
+
+  @override
+  String get chatExploreTooltip => 'ルームを探す';
+
+  @override
+  String get chatCreateRoomLabel => 'ルーム作成';
+
+  @override
+  String get chatNoMessagesYet => 'まだ会話がありません';
+
+  @override
+  String get chatLastMessageImage => '写真';
+
+  @override
+  String get chatExploreTitle => 'ルームを探す';
+
+  @override
+  String get chatSearchHint => 'ルーム名で検索';
+
+  @override
+  String get chatExploreEmptyMessage => '公開ルームがありません';
+
+  @override
+  String get chatExploreEmptyDescription => '最初のルームを作ってみましょう。';
+
+  @override
+  String get chatExploreNoResult => '検索結果がありません';
+
+  @override
+  String get chatExploreLoadFailed => 'ルーム一覧を読み込めませんでした';
+
+  @override
+  String get chatJoinTitle => 'このルームで使う名前';
+
+  @override
+  String get chatJoinDescription => 'ルームごとに違う名前を使えます。';
+
+  @override
+  String get chatJoinNicknameLabel => 'ルームでの名前';
+
+  @override
+  String get chatJoinAction => '参加';
+
+  @override
+  String get chatJoinFailed => '参加できませんでした';
+
+  @override
+  String get chatCreateTitle => 'ルーム作成';
+
+  @override
+  String get chatRoomTitleLabel => 'ルーム名';
+
+  @override
+  String get chatRoomDescriptionLabel => '紹介（任意）';
+
+  @override
+  String get chatNicknameLabel => 'ルームでの名前';
+
+  @override
+  String get chatCreateAction => '作成';
+
+  @override
+  String get chatCreateFailed => 'ルームを作成できませんでした';
+
+  @override
+  String get chatRoomEmptyMessage => '最初のメッセージを送ってみましょう';
+
+  @override
+  String get chatRoomLoadFailed => '会話を読み込めませんでした';
+
+  @override
+  String get chatComposerHint => 'メッセージを入力';
+
+  @override
+  String get chatSendTooltip => '送信';
+
+  @override
+  String get chatAttachTooltip => '写真を送る';
+
+  @override
+  String get chatRoomMenuTooltip => 'ルームメニュー';
+
+  @override
+  String get chatMenuParticipants => '参加者';
+
+  @override
+  String get chatMenuLeave => 'ルームを退出';
+
+  @override
+  String get chatParticipantsTitle => '参加者';
+
+  @override
+  String get chatLeaveConfirmTitle => 'ルームを退出しますか？';
+
+  @override
+  String get chatLeaveConfirmMessage => '一覧から消えます。送信したメッセージはルームに残ります。';
+
+  @override
+  String get chatLeaveConfirmAction => '退出';
+
+  @override
+  String get chatLeaveFailed => '退出できませんでした';
+
+  @override
+  String get chatMessageDelete => '削除';
+
+  @override
+  String get chatMessageReport => '報告';
+
+  @override
+  String get chatDeleteConfirmTitle => 'メッセージを削除しますか？';
+
+  @override
+  String get chatDeleteConfirmMessage => '削除したメッセージは元に戻せません。';
+
+  @override
+  String get chatSendFailed => 'メッセージを送信できませんでした';
+
+  @override
+  String get chatSendFailedShort => '送信失敗';
+
+  @override
+  String get chatSending => '送信中';
+
+  @override
+  String get chatRetry => '再送信';
+
+  @override
+  String get chatImageLoadFailed => '写真を読み込めませんでした';
+
+  @override
+  String get chatImagePrepareFailed => '写真を準備できませんでした。';
+
+  @override
+  String chatSystemJoined(String nickname) {
+    return '$nickname さんが入室しました';
+  }
+
+  @override
+  String chatSystemLeft(String nickname) {
+    return '$nickname さんが退室しました';
+  }
+
+  @override
+  String chatMemberCount(int count) {
+    return '$count人';
+  }
+
+  @override
+  String chatMemberLimitValue(int count) {
+    return '定員 $count人';
+  }
 }

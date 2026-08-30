@@ -1,4 +1,5 @@
 import 'package:daylog/core/di/injection.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 import 'package:daylog/core/error/failure.dart';
 import 'package:daylog/core/result/result.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
@@ -25,7 +26,14 @@ void main() {
 
   Future<void> pumpPage(WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(theme: AppTheme.light(), home: const AccountSettingsPage()),
+      MaterialApp(
+        theme: AppTheme.light(),
+        // ko 가 ARB template 언어라 원문이 곧 기대값이다 (계획서).
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const AccountSettingsPage(),
+      ),
     );
     await tester.pump();
   }

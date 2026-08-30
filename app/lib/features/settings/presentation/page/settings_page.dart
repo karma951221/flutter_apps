@@ -6,7 +6,7 @@ import '../../../../app/router/routes.dart';
 
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
-import '../../../../design_system/widget/app_button.dart';
+import '../../../../design_system/widget/app_confirm_dialog.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
 import '../../../auth/domain/entity/app_user.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -153,28 +153,16 @@ class SettingsPage extends StatelessWidget {
   /// 이 화면은 로그인 화면으로 직접 이동하지 않는다.
   Future<void> _confirmSignOut(BuildContext context) async {
     final authBloc = context.read<AuthBloc>();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(
-          AppLocalizations.of(dialogContext).settingsSignOutConfirmTitle,
-        ),
-        content: Text(
-          AppLocalizations.of(dialogContext).settingsSignOutConfirmMessage,
-        ),
-        actions: [
-          AppButton.text(
-            label: AppLocalizations.of(dialogContext).commonCancel,
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-          ),
-          AppButton.text(
-            label: AppLocalizations.of(dialogContext).settingsSignOut,
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-          ),
-        ],
-      ),
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await AppConfirmDialog.show(
+      context,
+      title: l10n.settingsSignOutConfirmTitle,
+      content: l10n.settingsSignOutConfirmMessage,
+      confirmLabel: l10n.settingsSignOut,
+      // 다시 로그인하면 그만이라 삭제·탈퇴와 같은 무게로 칠하지 않는다.
+      isDestructive: false,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     authBloc.add(const AuthEvent.signOutRequested());
   }
 }

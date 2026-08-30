@@ -6,6 +6,7 @@ import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
+import '../../../../design_system/widget/app_placeholder.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../domain/entity/blocked_user.dart';
 import '../cubit/blocked_users_cubit.dart';
@@ -37,9 +38,12 @@ class _BlockedUsersView extends StatelessWidget {
           BlockedUsersStatus.loading => const Center(
             child: CircularProgressIndicator(),
           ),
-          BlockedUsersStatus.failure => _BlockedUsersError(
-            message: state.failure?.message ?? '차단 목록을 불러오지 못했습니다',
-            onRetry: () => context.read<BlockedUsersCubit>().load(),
+          BlockedUsersStatus.failure => Center(
+            child: AppPlaceholder(
+              message: state.failure?.message ?? '차단 목록을 불러오지 못했습니다',
+              actionLabel: '다시 시도',
+              onAction: () => context.read<BlockedUsersCubit>().load(),
+            ),
           ),
           BlockedUsersStatus.loaded => _BlockedUsersList(items: state.items),
         },
@@ -96,25 +100,3 @@ class _BlockedUsersList extends StatelessWidget {
   }
 }
 
-class _BlockedUsersError extends StatelessWidget {
-  const _BlockedUsersError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: AppSpacing.md),
-          AppButton.secondary(label: '다시 시도', onPressed: onRetry),
-        ],
-      ),
-    ),
-  );
-}

@@ -12,6 +12,7 @@ import '../widget/auth_header.dart';
 import '../widget/auth_scaffold.dart';
 import '../widget/auth_text_field.dart';
 import '../widget/failure_text.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// 비밀번호 재설정.
 ///
@@ -77,21 +78,22 @@ class _RequestCodeStepState extends State<_RequestCodeStep> {
   @override
   Widget build(BuildContext context) {
     final busy = widget.state.isLoading;
+    final l10n = AppLocalizations.of(context);
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AuthHeader(
-            title: '비밀번호 재설정',
-            description: '가입한 이메일로 6자리 코드를 보내드립니다.',
+          AuthHeader(
+            title: l10n.authPasswordResetTitle,
+            description: l10n.authPasswordResetDescription,
           ),
           const SizedBox(height: AppSpacing.xl),
           AuthTextField(
             key: const Key('passwordReset.email'),
             controller: _email,
-            label: '이메일',
+            label: l10n.authEmailLabel,
             enabled: !busy,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.done,
@@ -99,7 +101,11 @@ class _RequestCodeStepState extends State<_RequestCodeStep> {
             onSubmitted: _submit,
           ),
           FailureText(widget.state.failure),
-          AppButton.primary(label: '코드 받기', onPressed: _submit, isLoading: busy),
+          AppButton.primary(
+            label: l10n.authPasswordResetSendCode,
+            onPressed: _submit,
+            isLoading: busy,
+          ),
         ],
       ),
     );
@@ -134,6 +140,7 @@ class _VerifyCodeStepState extends State<_VerifyCodeStep> {
   @override
   Widget build(BuildContext context) {
     final busy = widget.state.isLoading;
+    final l10n = AppLocalizations.of(context);
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -141,14 +148,16 @@ class _VerifyCodeStepState extends State<_VerifyCodeStep> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AuthHeader(
-            title: '코드 입력',
-            description: '${widget.state.email} 으로 보낸 6자리 코드를 입력하세요.',
+            title: l10n.authPasswordResetCodeTitle,
+            description: l10n.authPasswordResetCodeDescription(
+              widget.state.email,
+            ),
           ),
           const SizedBox(height: AppSpacing.xl),
           AuthTextField(
             key: const Key('passwordReset.code'),
             controller: _code,
-            label: '인증 코드',
+            label: l10n.authPasswordResetCodeLabel,
             enabled: !busy,
             keyboardType: TextInputType.number,
             textInputAction: TextInputAction.done,
@@ -157,10 +166,14 @@ class _VerifyCodeStepState extends State<_VerifyCodeStep> {
             onSubmitted: _submit,
           ),
           FailureText(widget.state.failure),
-          AppButton.primary(label: '확인', onPressed: _submit, isLoading: busy),
+          AppButton.primary(
+            label: l10n.authPasswordResetVerify,
+            onPressed: _submit,
+            isLoading: busy,
+          ),
           const SizedBox(height: AppSpacing.sm),
           AppButton.text(
-            label: '이메일 다시 입력',
+            label: l10n.authPasswordResetChangeEmail,
             onPressed: busy
                 ? null
                 : () => context.read<PasswordResetCubit>().backToEmail(),
@@ -203,21 +216,22 @@ class _NewPasswordStepState extends State<_NewPasswordStep> {
   @override
   Widget build(BuildContext context) {
     final busy = widget.state.isLoading;
+    final l10n = AppLocalizations.of(context);
     return Form(
       key: _formKey,
       autovalidateMode: AutovalidateMode.onUserInteraction,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AuthHeader(
-            title: '새 비밀번호',
-            description: '앞으로 사용할 비밀번호를 입력하세요.',
+          AuthHeader(
+            title: l10n.authNewPasswordTitle,
+            description: l10n.authNewPasswordDescription,
           ),
           const SizedBox(height: AppSpacing.xl),
           AuthTextField(
             key: const Key('passwordReset.password'),
             controller: _password,
-            label: '새 비밀번호 (8자 이상)',
+            label: l10n.authNewPasswordLabel,
             enabled: !busy,
             obscureText: true,
             textInputAction: TextInputAction.next,
@@ -228,7 +242,7 @@ class _NewPasswordStepState extends State<_NewPasswordStep> {
             key: const Key('passwordReset.passwordConfirm'),
             controller: _passwordConfirm,
             focusNode: _passwordConfirmFocus,
-            label: '새 비밀번호 확인',
+            label: l10n.authNewPasswordConfirmLabel,
             enabled: !busy,
             obscureText: true,
             textInputAction: TextInputAction.done,
@@ -237,7 +251,7 @@ class _NewPasswordStepState extends State<_NewPasswordStep> {
           ),
           FailureText(widget.state.failure),
           AppButton.primary(
-            label: '비밀번호 변경',
+            label: l10n.authPasswordChangeSubmit,
             onPressed: _submit,
             isLoading: busy,
           ),
@@ -257,6 +271,7 @@ class _DoneStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -267,20 +282,23 @@ class _DoneStep extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
-          '비밀번호가 변경되었습니다.',
+          l10n.authPasswordChangedTitle,
           textAlign: TextAlign.center,
           style: theme.textTheme.titleMedium,
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          '새 비밀번호로 다시 로그인하세요.',
+          l10n.authPasswordChangedDescription,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
-        AppButton.primary(label: '로그인하러 가기', onPressed: () => context.pop()),
+        AppButton.primary(
+          label: l10n.authGoToSignIn,
+          onPressed: () => context.pop(),
+        ),
       ],
     );
   }

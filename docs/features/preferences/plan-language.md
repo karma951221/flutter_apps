@@ -1,6 +1,6 @@
 # preferences — 계획 (다국어)
 
-> [문서 허브](../../README.md) · [아키텍처](../../architecture.md) · [테마 계획](../theme/plan.md) · [설정 계획](../settings/plan.md)
+> [문서 허브](../../README.md) · [아키텍처](../../architecture.md) · [테마 계획](plan-theme.md) · [설정 계획](../settings/plan.md)
 
 > 상태: **착수** · 작성 2026-08-26
 > 진행 상태의 단일 기준은 [진행 현황](../../status.md)이다.
@@ -27,7 +27,7 @@
 |---|---|---|
 | 선택지 | **4옵션** — 시스템 · 한국어 · 영어 · 일본어 (사용자 확정) | 테마의 3상태와 같은 구조. 기본값 시스템이면 기기 언어가 일본어인 사용자가 설치 직후 일본어로 만난다. 미지원 언어 기기는 영어 fallback |
 | 오류 범위 | **전부 이번에** (사용자 확정) | 화면은 영어인데 오류만 한국어로 뜨는 반쪽 상태를 만들지 않는다. 태스크를 나눠 순차 진행하되 한 번에 끝낸다 |
-| feature 개명 | **`features/theme` → `features/preferences`** | [테마 계획](../theme/plan.md)에 기록한 개명 기준("두 번째 로컬 설정이 기획에 실리는 시점")이 지금 발동한다. 저장소는 관심사별(`ThemeRepository` · `LanguageRepository`) 유지, facade 만 `PreferencesUseCase` 로 통합 (규칙 ③) |
+| feature 개명 | **`features/theme` → `features/preferences`** | [테마 계획](plan-theme.md)에 기록한 개명 기준("두 번째 로컬 설정이 기획에 실리는 시점")이 지금 발동한다. 저장소는 관심사별(`ThemeRepository` · `LanguageRepository`) 유지, facade 만 `PreferencesUseCase` 로 통합 (규칙 ③) |
 | i18n 도구 | **Flutter 표준 gen-l10n** (`flutter_localizations` + ARB) | 서드파티 없이 빌드에 통합되고, ARB 가 표준 포맷이라 번역 파일이 도구 독립적이다 |
 | ARB 기준 언어 | **한국어** (`app_ko.arb` 가 template) | 원문이 한국어다. 영어를 template 로 두면 ko→en→ko 이중 번역이 생긴다. 미번역 키는 gen-l10n 이 빌드에서 잡는다 |
 | 저장 형식 | 키 `language`, 값 `'system'` · `'ko'` · `'en'` · `'ja'` | `theme_mode` 와 같은 방식. 모르는 값·없는 값은 시스템 |
@@ -79,6 +79,11 @@ delegates 를 넣더라도 기본 locale 이 en 이면 단언이 전부 어긋�
   키 기반 단언으로 갈아타는 것은 이번 범위가 아니다
 - en·ja 는 대표 화면 스모크 테스트(설정 화면이 en 으로 뜬다 등)로만 덮는다.
   세 언어 × 전 화면 매트릭스는 만들지 않는다
+- **Patrol E2E 하니스도 같이 고정한다** (2026-08-27 추가). 위젯 테스트만 생각하고
+  넘어갔다가 실제 실행에서 깨졌다 — 기본값이 '시스템'이고 에뮬레이터는 `en-US` 라
+  앱이 영어로 뜨고 `$('회원가입').tap()` 이 실패했다. 기기 locale 을 바꾸는 대신
+  `launchApp()` 이 `SharedPreferences` 의 `language` 를 `ko` 로 심는다. 어느
+  에뮬레이터에서도 같게 돌아야 하기 때문이다 ([검수](../../testing/audit-2026-08-27.md))
 
 ## 완료 조건
 
@@ -90,5 +95,5 @@ delegates 를 넣더라도 기본 locale 이 en 이면 단언이 전부 어긋�
 - [ ] DB 트리거 거부(중복 신고 · 차단된 게시물 댓글 등)가 선택 언어로 뜬다
 - [ ] 매핑되지 않은 서버 오류는 원문 fallback 으로 뜬다 (죽지 않는다)
 - [ ] 날짜 표기가 언어를 따른다
-- [ ] `features/theme` 참조가 코드에 남아 있지 않다 (개명 완료)
-- [ ] 테마 기능이 개명 후에도 그대로 동작한다 (기존 테스트 통과)
+- [x] `features/theme` 참조가 코드에 남아 있지 않다 (개명 완료 — 문서는 2026-08-27 에 따라잡았다)
+- [x] 테마 기능이 개명 후에도 그대로 동작한다 (기존 테스트 통과)
