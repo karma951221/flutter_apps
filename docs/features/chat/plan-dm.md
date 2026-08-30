@@ -122,13 +122,15 @@ features/chat/
 
 ## 완료 조건
 
-- [x] 타인 프로필에서 DM 을 열고, 같은 상대와 다시 열면 같은 방이다 (동시 호출 포함) —
+- [x] 타인 프로필에서 DM 을 열고, 같은 상대와 다시 열면 같은 방이다 —
       `chat_rls_check.py` 로 순차 재호출(같은 쪽·상대 쪽 모두)이 같은 방 id 를 주는
-      것을 확인했다. **진짜 동시(같은 순간) 호출은 별도 프로세스로 재현하지
-      않았다** — `insert ... on conflict (direct_key) do nothing` 뒤 select 하는
-      패턴은 postgres 트랜잭션이 원자적으로 판정하는 구조라 follow/block 처럼 앱
-      레벨 경쟁이 아니어서, `follow_block_race_check.py` 같은 별도 동시성 스크립트를
-      두지 않았다
+      것을 확인했다
+- [ ] 위 항목의 동시(같은 순간) 호출 — 별도 프로세스로 실제 경쟁을 재현하지
+      않았다. `insert ... on conflict (direct_key) do nothing` 뒤 select 하는
+      패턴이 postgres 트랜잭션 차원에서 원자적으로 판정하는 구조라 follow/block
+      처럼 앱 레벨에서 판정을 두 단계로 나누는 경쟁이 아니라고 보고
+      `follow_block_race_check.py` 같은 별도 동시성 스크립트는 두지 않았지만,
+      이는 설계상 안전하다는 추론이지 재현으로 확인한 사실이 아니다
 - [ ] 두 기기에서 메시지가 재조회 없이 실시간으로 오간다 (기존 경로) — DM 전용 실시간
       스크립트는 없다. `chat_realtime_check.py`(F9, 4/4)가 확인한 Postgres Changes
       구독·RLS 재평가 메커니즘은 방 `type` 을 분기하지 않으므로 DM 방에도 그대로
