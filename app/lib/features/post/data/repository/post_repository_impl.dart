@@ -1,5 +1,6 @@
 import 'package:injectable/injectable.dart';
 
+import '../../../../core/data/repository/repository_error_handler.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/result/result.dart';
 import '../../domain/entity/post.dart';
@@ -8,12 +9,11 @@ import '../../domain/entity/post_update.dart';
 import '../../domain/repository/post_repository.dart';
 import '../datasource/post_data_source.dart';
 import '../mapper/post_mapper.dart';
-import 'post_repository_error_handler.dart';
 
 /// PostDataSource 를 domain Repository 계약으로 변환하는 구현체.
 @LazySingleton(as: PostRepository)
 class PostRepositoryImpl
-    with PostRepositoryErrorHandler
+    with RepositoryErrorHandler
     implements PostRepository {
   PostRepositoryImpl(this._dataSource);
 

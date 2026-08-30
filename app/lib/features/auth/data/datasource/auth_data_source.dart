@@ -20,4 +20,7 @@ abstract interface class AuthDataSource {
     required String code,
   });
   Future<void> updatePassword(String newPassword);
+
+  /// 계정을 지우고 로컬 세션을 정리한다.
+  Future<void> deleteAccount();
 }

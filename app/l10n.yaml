@@ -1,0 +1,8 @@
+# gen-l10n 설정. 기준 언어는 한국어다 — 원문이 한국어라 영어를 template 로 두면
+# ko→en→ko 이중 번역이 생긴다 (docs/features/preferences/plan-language.md).
+arb-dir: lib/l10n
+template-arb-file: app_ko.arb
+output-dir: lib/l10n
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+nullable-getter: false

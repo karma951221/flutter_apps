@@ -1,5 +1,6 @@
 import 'package:injectable/injectable.dart';
 
+import '../../../../core/data/repository/repository_error_handler.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/pagination/cursor_page.dart';
 import '../../../../core/result/result.dart';
@@ -10,11 +11,10 @@ import '../cursor/comment_cursor.dart';
 import '../datasource/comment_data_source.dart';
 import '../dto/post_comment_dto.dart';
 import '../mapper/post_comment_mapper.dart';
-import 'comment_repository_error_handler.dart';
 
 @LazySingleton(as: CommentRepository)
 class CommentRepositoryImpl
-    with CommentRepositoryErrorHandler
+    with RepositoryErrorHandler
     implements CommentRepository {
   CommentRepositoryImpl(this._dataSource);
 

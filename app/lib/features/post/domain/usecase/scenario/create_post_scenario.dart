@@ -31,6 +31,21 @@ class CreatePostScenario {
       );
     }
 
-    return _repository.createPost(PostDraft(content: content));
+    if (draft.images.length > PostPolicy.maxImageCount) {
+      return Future.value(
+        const Err(
+          Failure.validation(
+            message: '사진은 ${PostPolicy.maxImageCount}장까지 첨부할 수 있습니다',
+            field: 'images',
+          ),
+        ),
+      );
+    }
+
+    // 본문만 정규화하고 첨부는 받은 그대로 넘긴다. 여기서 draft 를 새로 만들면서
+    // images 를 빠뜨리면 datasource 가 텍스트 전용 경로를 타고 사진이 조용히 사라진다.
+    return _repository.createPost(
+      PostDraft(content: content, images: draft.images),
+    );
   }
 }

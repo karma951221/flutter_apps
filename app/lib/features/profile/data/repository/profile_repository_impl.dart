@@ -1,5 +1,6 @@
 import 'package:injectable/injectable.dart';
 
+import '../../../../core/data/repository/repository_error_handler.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/result/result.dart';
 import '../../domain/entity/avatar_image_draft.dart';
@@ -8,7 +9,6 @@ import '../../domain/entity/profile_update.dart';
 import '../../domain/repository/profile_repository.dart';
 import '../datasource/profile_data_source.dart';
 import '../mapper/profile_mapper.dart';
-import 'profile_repository_error_handler.dart';
 
 /// ProfileDataSource를 domain Repository 계약으로 변환하는 구현체.
 ///
@@ -16,7 +16,7 @@ import 'profile_repository_error_handler.dart';
 /// 않으므로 이름에도 구현 기술을 드러내지 않는다.
 @LazySingleton(as: ProfileRepository)
 class ProfileRepositoryImpl
-    with ProfileRepositoryErrorHandler
+    with RepositoryErrorHandler
     implements ProfileRepository {
   ProfileRepositoryImpl(this._dataSource);
 

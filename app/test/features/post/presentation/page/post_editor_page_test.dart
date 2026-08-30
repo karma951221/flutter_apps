@@ -7,6 +7,7 @@ import 'package:daylog/features/post/domain/post_policy.dart';
 import 'package:daylog/features/post/domain/usecase/post_use_case.dart';
 import 'package:daylog/features/post/presentation/cubit/post_cubit.dart';
 import 'package:daylog/features/post/presentation/page/post_editor_page.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -56,7 +57,14 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp.router(theme: AppTheme.light(), routerConfig: router),
+      MaterialApp.router(
+        theme: AppTheme.light(),
+        // ko 가 ARB template 언어라 원문이 곧 기대값이다 (계획서).
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: router,
+      ),
     );
     router.push('/editor');
     await tester.pumpAndSettle();

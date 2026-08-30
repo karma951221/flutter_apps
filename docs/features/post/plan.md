@@ -21,4 +21,4 @@
 
 - `post_images.post_id`는 `posts`를 참조하고 게시물 삭제 시 함께 삭제한다.
 - 이미지 메타데이터 조회는 살아 있는 게시물만, 쓰기는 해당 게시물 작성자만 가능하다.
-- Storage 경로는 `{user_id}/{post_id}/{sort_order}.webp`이며, Storage RLS도 첫 경로 조각이 로그인 사용자와 같을 때만 쓰기를 허용한다.
+- Storage 경로는 `{user_id}/{uuid}/{순서}.{webp|jpg}`다. 가운데 조각은 게시물 id가 아니라 클라이언트가 만든 UUID다 — 업로드가 게시물 생성보다 먼저라 그 시점에는 게시물 id가 없다. Storage RLS는 첫 경로 조각이 로그인 사용자와 같을 때만 쓰기를 허용하고, `create_post_with_images()`도 같은 기준으로 `url`을 검증한다.

@@ -1,16 +1,20 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/extension/date_time_format.dart';
+import '../../../../design_system/theme/app_radius.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_count_action.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
+import '../../../../design_system/widget/app_overflow_menu.dart';
 import '../../../reaction/domain/entity/reaction_summary.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
 import '../../../reaction/presentation/widget/reaction_bar.dart';
 import '../../domain/entity/post.dart';
 import '../../domain/entity/post_author.dart';
 import '../../domain/entity/post_image.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// 목록에서 게시물 하나를 보여준다.
 ///
@@ -24,6 +28,10 @@ import '../../domain/entity/post_image.dart';
 /// 반응·댓글 줄은 [onReaction] 이 있을 때만 그린다. 게시물만 보여주는 화면이
 /// 누를 수 없는 버튼을 그리지 않게 하기 위해서다. 감정 위젯은 reaction feature
 /// 가 소유하고 여기서 import 한다 (아키텍처 규칙 ⑥ — 소유자가 명확한 쪽에 둔다).
+///
+/// 우측 상단 메뉴는 내 글일 때만 그리는 것이 아니다 — 내 글은 수정·삭제를,
+/// 남의 글은 신고·차단을 보여준다. 콜백이 모두 null 이면 [AppOverflowMenu] 가
+/// 스스로 아무것도 그리지 않는다.
 class PostTile extends StatelessWidget {
   const PostTile({
     required this.post,
@@ -32,6 +40,8 @@ class PostTile extends StatelessWidget {
     required this.onTap,
     this.onEdit,
     this.onDelete,
+    this.onReport,
+    this.onBlock,
     this.reactions = const ReactionSummary(),
     this.commentCount = 0,
     this.onReaction,
@@ -45,6 +55,11 @@ class PostTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onReport;
+
+  /// 이 게시물의 작성자를 차단하는 동작. 남의 글에만 뜨는 것은 신고 항목과
+  /// 같은 방어([!isMine])를 받는다.
+  final VoidCallback? onBlock;
 
   /// 감정 집계와 내 반응. 목록 뷰가 항목과 함께 내려준 값이다.
   final ReactionSummary reactions;
@@ -62,6 +77,7 @@ class PostTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
     final mutedStyle = theme.textTheme.bodySmall?.copyWith(
       color: scheme.onSurfaceVariant,
     );
@@ -89,7 +105,7 @@ class PostTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            Text(_displayDate(post.updatedAt), style: mutedStyle),
+            Text(post.updatedAt.displayDateTime, style: mutedStyle),
           ],
         ),
         subtitle: Padding(
@@ -118,7 +134,7 @@ class PostTile extends StatelessWidget {
                     AppCountAction(
                       icon: Icons.mode_comment_outlined,
                       count: commentCount,
-                      tooltip: '댓글',
+                      tooltip: l10n.postCommentCountTooltip,
                       onPressed: onComment,
                     ),
                   ],
@@ -127,34 +143,46 @@ class PostTile extends StatelessWidget {
             ],
           ),
         ),
-        trailing: isMine
-            ? PopupMenuButton<_PostAction>(
-                tooltip: '게시물 메뉴',
-                onSelected: (action) => switch (action) {
-                  _PostAction.edit => onEdit?.call(),
-                  _PostAction.delete => onDelete?.call(),
-                },
-                itemBuilder: (_) => const [
-                  PopupMenuItem(value: _PostAction.edit, child: Text('수정')),
-                  PopupMenuItem(value: _PostAction.delete, child: Text('삭제')),
-                ],
-              )
-            : null,
+        trailing: AppOverflowMenu<_PostAction>(
+          tooltip: l10n.postMenuTooltip,
+          onSelected: (action) => switch (action) {
+            _PostAction.edit => onEdit?.call(),
+            _PostAction.delete => onDelete?.call(),
+            _PostAction.report => onReport?.call(),
+            _PostAction.block => onBlock?.call(),
+          },
+          items: [
+            if (isMine && onEdit != null)
+              AppOverflowMenuItem(
+                value: _PostAction.edit,
+                label: l10n.postMenuEdit,
+              ),
+            if (isMine && onDelete != null)
+              AppOverflowMenuItem(
+                value: _PostAction.delete,
+                label: l10n.commonDelete,
+                isDestructive: true,
+              ),
+            if (!isMine && onReport != null)
+              AppOverflowMenuItem(
+                value: _PostAction.report,
+                label: l10n.postMenuReport,
+              ),
+            if (!isMine && onBlock != null)
+              AppOverflowMenuItem(
+                value: _PostAction.block,
+                label: l10n.postMenuBlockUser,
+                isDestructive: true,
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  String _displayDate(DateTime value) {
-    final date = value.toLocal();
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    final hour = date.hour.toString().padLeft(2, '0');
-    final minute = date.minute.toString().padLeft(2, '0');
-    return '${date.year}.$month.$day $hour:$minute';
-  }
 }
 
-enum _PostAction { edit, delete }
+enum _PostAction { edit, delete, report, block }
 
 /// 게시물에 붙은 사진.
 ///
@@ -179,7 +207,7 @@ class _PostImages extends StatelessWidget {
     if (images.length == 1) {
       final image = images.single;
       return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: AppRadius.smAll,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxHeight: _maxSingleHeight),
           child: AspectRatio(
@@ -199,7 +227,7 @@ class _PostImages extends StatelessWidget {
         itemCount: images.length,
         separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
         itemBuilder: (_, index) => ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: AppRadius.smAll,
           child: SizedBox(
             width: _thumbnailSize,
             height: _thumbnailSize,

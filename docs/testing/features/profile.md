@@ -14,8 +14,14 @@
 | `ProfileCubit.load` | userId 없음 / 있음 | `getMyProfile` 로 내 프로필을, `getProfile(userId)` 로 해당 사용자의 프로필을 읽는다. 서로를 대신 호출하지 않는다. |
 | `ProfileCubit.load` | 조회 실패 (본인 · 타인) | 로딩을 끄고 `failure` 만 남긴다. 프로필은 null 로 둔다. |
 | `ProfileCubit.save` | 수정 성공 | `ProfileUpdate` 가 usecase 에 그대로 전달되고 결과 프로필이 상태에 담긴다. |
+| `ProfileCubit.checkNickname` | 디바운스 | 입력이 멎은 뒤 마지막 값 하나만 조회하고, 중간 값은 조회하지 않는다. |
+| `ProfileCubit.checkNickname` | 확인 결과 | 사용 가능은 `available`, 중복은 `taken` 으로 남긴다. |
+| `ProfileCubit.checkNickname` | 조회하지 않는 값 | 지금 쓰는 닉네임과 형식이 어긋난 값은 usecase 를 부르지 않는다. |
+| `ProfileCubit.checkNickname` | 확인 실패 | `idle` 로 되돌려 아무 안내도 하지 않는다 — 최종 판정은 DB 제약이다. |
+| `EditProfilePage` | 닉네임 사전 확인 | 입력을 바꾸면 사용 가능 / 이미 사용 중 문구를 저장 전에 보여주고, 현재 닉네임은 확인하지 않는다. |
 | `ProfilePage` | 내 프로필 | 편집 버튼이 보이고, 내 id 로 게시물을 읽는다. |
 | `ProfilePage` | `/users/:id` | 타인 화면에는 편집 버튼이 없고 해당 작성자의 게시물만 커서로 읽는다. 내 프로필은 조회하지 않는다. |
+| `ProfilePage` | 게시물 메뉴 동작 | 수정 · 삭제 · 신고 · 감정 · 댓글은 피드와 같은 `PostTileActions` 를 쓴다. 차단만 화면이 직접 잇는다 (성공 후 목록 전체 재조회). |
 | `ProfilePage` | 프로필 조회 실패 | 다시 시도 버튼을 보여주고, 주인을 모르므로 게시물은 읽지 않는다. |
 | `UpdateAvatarScenario` | 새 이미지와 함께 저장 성공 | 업로드한 URL 로 프로필을 갱신하고, 이전 아바타 객체를 지운다. |
 | `UpdateAvatarScenario` | 프로필 갱신 실패 | 방금 올린 객체를 되돌려 지우고, 이전 아바타는 그대로 둔다. |
@@ -24,6 +30,11 @@
 | `ImageStorage.objectPathFromPublicUrl` (`test/core/media/`) | 아바타 공개 URL · 쿼리 · 퍼센트 인코딩 · 다른 버킷 | 자기 버킷의 객체 경로만 뽑아내고, 그 밖의 URL 은 null 이라 삭제를 시도하지 않는다. |
 | Storage RLS (통합) | 다른 사용자 UUID prefix로 `avatars` 업로드 | 403으로 거부된다. |
 | Storage RLS (통합) | 자기 UUID prefix로 WebP 업로드 | 허용되고 공개 URL이 프로필에 저장된다. |
+| `ProfilePage` | 설정에서 프로필 수정 후 | 세션 스냅샷이 바뀌면 내 프로필을 다시 읽는다 — 셸이 화면을 살려 두므로 옛 값이 남으면 안 된다. |
+| `ProfilePage` | 타인 프로필 | 내 세션이 바뀌어도 다시 읽지 않는다.
+
+타인 프로필 AppBar의 신고 메뉴 유무는 신고 진입점 테스트라 [safety 테스트
+문서](safety.md)의 "진입점" 절에 있다.
 
 실행:
 

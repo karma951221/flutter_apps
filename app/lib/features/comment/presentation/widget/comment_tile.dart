@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/extension/date_time_format.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
+import '../../../../design_system/widget/app_overflow_menu.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
 import '../../../reaction/presentation/widget/reaction_bar.dart';
 import '../../domain/entity/post_comment.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// 댓글 또는 답글 하나.
 ///
@@ -14,6 +17,9 @@ import '../../domain/entity/post_comment.dart';
 /// 삭제된 댓글([PostComment.isDeleted])은 본문 자리에 안내만 남기고 감정·답글
 /// 버튼을 그리지 않는다. 본문이 없는 것은 앱의 판단이 아니라 뷰가 내려준
 /// 사실이다 — 답글이 남아 있어서 자리만 지키고 있는 부모다.
+///
+/// 우측 상단 메뉴도 같은 이유로 삭제된 댓글에는 그리지 않는다. 살아 있는
+/// 댓글이면 내 댓글은 삭제를, 남의 댓글은 신고를 보여준다.
 class CommentTile extends StatelessWidget {
   const CommentTile({
     required this.comment,
@@ -22,6 +28,7 @@ class CommentTile extends StatelessWidget {
     this.isReply = false,
     this.onReply,
     this.onDelete,
+    this.onReport,
     this.onToggleReplies,
     this.isExpanded = false,
     super.key,
@@ -33,6 +40,7 @@ class CommentTile extends StatelessWidget {
   final ValueChanged<ReactionType> onReaction;
   final VoidCallback? onReply;
   final VoidCallback? onDelete;
+  final VoidCallback? onReport;
   final VoidCallback? onToggleReplies;
   final bool isExpanded;
 
@@ -40,6 +48,7 @@ class CommentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
     final mutedStyle = theme.textTheme.bodySmall?.copyWith(
       color: scheme.onSurfaceVariant,
     );
@@ -75,21 +84,35 @@ class CommentTile extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
-                    Text(_displayDate(comment.createdAt), style: mutedStyle),
+                    Text(comment.createdAt.displayShortDateTime, style: mutedStyle),
                     const Spacer(),
-                    if (isMine && !comment.isDeleted)
-                      IconButton(
-                        tooltip: '댓글 삭제',
-                        visualDensity: VisualDensity.compact,
-                        icon: const Icon(Icons.delete_outline, size: 18),
-                        onPressed: onDelete,
+                    if (!comment.isDeleted)
+                      AppOverflowMenu<_CommentAction>(
+                        tooltip: l10n.commentMenuTooltip,
+                        onSelected: (action) => switch (action) {
+                          _CommentAction.delete => onDelete?.call(),
+                          _CommentAction.report => onReport?.call(),
+                        },
+                        items: [
+                          if (isMine && onDelete != null)
+                            AppOverflowMenuItem(
+                              value: _CommentAction.delete,
+                              label: l10n.commonDelete,
+                              isDestructive: true,
+                            ),
+                          if (!isMine && onReport != null)
+                            AppOverflowMenuItem(
+                              value: _CommentAction.report,
+                              label: l10n.commentMenuReport,
+                            ),
+                        ],
                       ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 if (comment.isDeleted)
                   Text(
-                    '삭제된 댓글입니다',
+                    l10n.commentDeletedPlaceholder,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                       fontStyle: FontStyle.italic,
@@ -118,7 +141,10 @@ class CommentTile extends StatelessWidget {
                             ),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: Text('답글', style: theme.textTheme.labelMedium),
+                          child: Text(
+                            l10n.commentReply,
+                            style: theme.textTheme.labelMedium,
+                          ),
                         ),
                     ],
                   ),
@@ -130,7 +156,9 @@ class CommentTile extends StatelessWidget {
                       size: 18,
                     ),
                     label: Text(
-                      isExpanded ? '답글 숨기기' : '답글 ${comment.replyCount}개 보기',
+                      isExpanded
+                          ? l10n.commentHideReplies
+                          : l10n.commentShowReplies(comment.replyCount),
                       style: theme.textTheme.labelMedium,
                     ),
                     style: TextButton.styleFrom(
@@ -150,12 +178,6 @@ class CommentTile extends StatelessWidget {
     );
   }
 
-  String _displayDate(DateTime value) {
-    final date = value.toLocal();
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    final hour = date.hour.toString().padLeft(2, '0');
-    final minute = date.minute.toString().padLeft(2, '0');
-    return '$month.$day $hour:$minute';
-  }
 }
+
+enum _CommentAction { delete, report }

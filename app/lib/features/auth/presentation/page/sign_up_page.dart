@@ -11,6 +11,7 @@ import '../widget/auth_header.dart';
 import '../widget/auth_scaffold.dart';
 import '../widget/auth_text_field.dart';
 import '../widget/failure_text.dart';
+import '../../../../l10n/app_localizations.dart';
 
 class SignUpPage extends StatelessWidget {
   const SignUpPage({super.key});
@@ -70,6 +71,7 @@ class _SignUpViewState extends State<_SignUpView> {
     return BlocBuilder<SignUpCubit, SubmitState>(
       builder: (context, state) {
         final busy = state is SubmitInProgress;
+        final l10n = AppLocalizations.of(context);
         return AuthScaffold(
           showAppBar: true,
           child: Form(
@@ -78,16 +80,16 @@ class _SignUpViewState extends State<_SignUpView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const AuthHeader(
-                  title: '회원가입',
-                  description: '이메일과 닉네임만 있으면 바로 시작할 수 있습니다.',
+                AuthHeader(
+                  title: l10n.authSignUp,
+                  description: l10n.authSignUpDescription,
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 // key 는 E2E 셀렉터. 라벨 문구 변경에 테스트가 끌려가지 않게 한다.
                 AuthTextField(
                   key: const Key('signUp.email'),
                   controller: _email,
-                  label: '이메일',
+                  label: l10n.authEmailLabel,
                   enabled: !busy,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
@@ -98,7 +100,7 @@ class _SignUpViewState extends State<_SignUpView> {
                   key: const Key('signUp.nickname'),
                   controller: _nickname,
                   focusNode: _nicknameFocus,
-                  label: '닉네임 (2~20자)',
+                  label: l10n.authNicknameLabel,
                   enabled: !busy,
                   textInputAction: TextInputAction.next,
                   maxLength: Validators.nicknameMaxLength,
@@ -109,7 +111,7 @@ class _SignUpViewState extends State<_SignUpView> {
                   key: const Key('signUp.password'),
                   controller: _password,
                   focusNode: _passwordFocus,
-                  label: '비밀번호 (8자 이상)',
+                  label: l10n.authPasswordWithRuleLabel,
                   enabled: !busy,
                   obscureText: true,
                   textInputAction: TextInputAction.next,
@@ -120,7 +122,7 @@ class _SignUpViewState extends State<_SignUpView> {
                   key: const Key('signUp.passwordConfirm'),
                   controller: _passwordConfirm,
                   focusNode: _passwordConfirmFocus,
-                  label: '비밀번호 확인',
+                  label: l10n.authPasswordConfirmLabel,
                   enabled: !busy,
                   obscureText: true,
                   textInputAction: TextInputAction.done,
@@ -130,7 +132,7 @@ class _SignUpViewState extends State<_SignUpView> {
                 ),
                 if (state is SubmitFailure) FailureText(state.failure),
                 AppButton.primary(
-                  label: '가입하기',
+                  label: l10n.authSignUpSubmit,
                   onPressed: _submit,
                   isLoading: busy,
                 ),

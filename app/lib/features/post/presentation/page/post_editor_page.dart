@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/media/image_picker_service.dart';
+import '../../../../design_system/theme/app_radius.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
@@ -11,6 +12,7 @@ import '../../domain/entity/post.dart';
 import '../../domain/entity/post_image_draft.dart';
 import '../../domain/post_policy.dart';
 import '../cubit/post_cubit.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// 게시물 작성·수정 화면.
 ///
@@ -64,6 +66,7 @@ class _PostEditorPageState extends State<PostEditorPage> {
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
 
+    final l10n = AppLocalizations.of(context);
     final cubit = context.read<PostCubit>();
     final result = _isEditing
         ? await cubit.update(widget.post!.id, _content.text)
@@ -87,14 +90,14 @@ class _PostEditorPageState extends State<PostEditorPage> {
       ok: (post) {
         AppSnackBar.show(
           context,
-          message: _isEditing ? '게시물을 수정했습니다.' : '게시물을 작성했습니다.',
+          message: _isEditing ? l10n.postUpdated : l10n.postCreated,
           type: AppSnackBarType.success,
         );
         context.pop(post);
       },
       err: (failure) => AppSnackBar.show(
         context,
-        message: failure.message ?? '게시물을 저장하지 못했습니다.',
+        message: failure.message ?? l10n.postSaveFailed,
         type: AppSnackBarType.error,
       ),
     );
@@ -112,7 +115,7 @@ class _PostEditorPageState extends State<PostEditorPage> {
       if (mounted) {
         AppSnackBar.show(
           context,
-          message: '이미지를 준비하지 못했습니다.',
+          message: AppLocalizations.of(context).postImagePrepareFailed,
           type: AppSnackBarType.error,
         );
       }
@@ -124,18 +127,21 @@ class _PostEditorPageState extends State<PostEditorPage> {
   /// 되돌릴 수 없는 손실이라 확인을 받는다. 아무것도 쓰지 않았으면 묻지 않는다 —
   /// 잘못 들어왔다가 나가는 흔한 경우까지 붙잡으면 성가시기만 하다.
   Future<bool> _confirmDiscard() async {
+    final l10n = AppLocalizations.of(context);
     final discard = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: Text(_isEditing ? '수정을 취소할까요?' : '작성 중인 내용을 버릴까요?'),
-        content: const Text('입력한 내용은 저장되지 않습니다.'),
+        title: Text(
+          _isEditing ? l10n.postDiscardEditTitle : l10n.postDiscardCreateTitle,
+        ),
+        content: Text(l10n.postDiscardMessage),
         actions: [
           AppButton.text(
-            label: '계속 쓰기',
+            label: l10n.postDiscardKeepWriting,
             onPressed: () => Navigator.of(dialogContext).pop(false),
           ),
           AppButton.text(
-            label: '나가기',
+            label: l10n.postDiscardLeave,
             onPressed: () => Navigator.of(dialogContext).pop(true),
           ),
         ],
@@ -146,6 +152,7 @@ class _PostEditorPageState extends State<PostEditorPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isSubmitting = context.select(
       (PostCubit cubit) => cubit.state.isSubmitting,
     );
@@ -159,7 +166,9 @@ class _PostEditorPageState extends State<PostEditorPage> {
         if (await _confirmDiscard() && mounted) router.pop();
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(_isEditing ? '게시물 수정' : '새 게시물')),
+        appBar: AppBar(
+          title: Text(_isEditing ? l10n.postEditTitle : l10n.postCreateTitle),
+        ),
         body: SafeArea(
           child: Form(
             key: _formKey,
@@ -175,7 +184,8 @@ class _PostEditorPageState extends State<PostEditorPage> {
                   // 글자 수는 아래에서 직접 그린다. 기본 카운터는 남은 글자가
                   // 얼마 없다는 사실을 색으로 알려주지 못한다.
                   buildCounter:
-                      (_, {
+                      (
+                        _, {
                         required currentLength,
                         required isFocused,
                         required maxLength,
@@ -184,14 +194,14 @@ class _PostEditorPageState extends State<PostEditorPage> {
                   maxLines: 10,
                   autofocus: true,
                   textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(
-                    labelText: '오늘의 기록',
-                    hintText: '지금 떠오르는 생각을 남겨보세요.',
+                  decoration: InputDecoration(
+                    labelText: l10n.postContentLabel,
+                    hintText: l10n.postContentHint,
                     alignLabelWithHint: true,
                   ),
                   validator: (value) {
                     final content = value?.trim() ?? '';
-                    return content.isEmpty ? '게시물 내용을 입력하세요.' : null;
+                    return content.isEmpty ? l10n.postContentRequired : null;
                   },
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -202,12 +212,15 @@ class _PostEditorPageState extends State<PostEditorPage> {
                     images: _images,
                     isSubmitting: isSubmitting,
                     onPick: _pickImages,
-                    onRemove: (index) => setState(() => _images.removeAt(index)),
+                    onRemove: (index) =>
+                        setState(() => _images.removeAt(index)),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.lg),
                 AppButton.primary(
-                  label: _isEditing ? '저장' : '올리기',
+                  label: _isEditing
+                      ? l10n.postSaveButton
+                      : l10n.postSubmitButton,
                   onPressed: _submit,
                   isLoading: isSubmitting,
                 ),
@@ -267,6 +280,7 @@ class _ImagePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isFull = images.length >= PostPolicy.maxImageCount;
 
     return Column(
@@ -279,8 +293,8 @@ class _ImagePicker extends StatelessWidget {
           icon: const Icon(Icons.photo_library_outlined),
           label: Text(
             isFull
-                ? '사진은 ${PostPolicy.maxImageCount}장까지 올릴 수 있습니다'
-                : '사진 추가 (${images.length}/${PostPolicy.maxImageCount})',
+                ? l10n.postImageLimitReached(PostPolicy.maxImageCount)
+                : l10n.postAddImages(images.length, PostPolicy.maxImageCount),
           ),
         ),
         if (images.isNotEmpty) ...[
@@ -294,7 +308,7 @@ class _ImagePicker extends StatelessWidget {
               itemBuilder: (context, index) => Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: AppRadius.smAll,
                     child: Image.memory(
                       images[index].bytes,
                       width: _thumbnailSize,
@@ -306,7 +320,7 @@ class _ImagePicker extends StatelessWidget {
                     top: 0,
                     right: 0,
                     child: IconButton(
-                      tooltip: '사진 삭제',
+                      tooltip: l10n.postRemoveImageTooltip,
                       visualDensity: VisualDensity.compact,
                       onPressed: isSubmitting ? null : () => onRemove(index),
                       icon: const Icon(Icons.close),

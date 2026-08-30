@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
+import '../../../../core/data/nickname_match.dart';
 import '../dto/auth_user_dto.dart';
 import 'auth_data_source.dart';
 
@@ -107,12 +108,17 @@ class SupabaseAuthDataSource implements AuthDataSource {
 
   @override
   Future<bool> isNicknameAvailable(String nickname) async {
-    final row = await _client
+    final candidate = nickname.trim();
+    // `ilike` 로 좁히고 최종 판정은 Dart 가 한다 — 이유는 [NicknameMatch].
+    final rows = await _client
         .from('profiles')
-        .select('id')
-        .ilike('nickname', nickname.trim())
-        .maybeSingle();
-    return row == null;
+        .select('nickname')
+        .ilike('nickname', NicknameMatch.escapeLikePattern(candidate))
+        .limit(NicknameMatch.candidateLimit);
+    return !rows.any(
+      (row) =>
+          NicknameMatch.isSameNickname(row['nickname'] as String, candidate),
+    );
   }
 
   @override
@@ -136,6 +142,15 @@ class SupabaseAuthDataSource implements AuthDataSource {
     );
     // 재설정용 임시 세션을 그대로 두고 홈으로 보내지 않는다.
     await _client.auth.signOut();
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    // 서버가 계정과 데이터를 한 트랜잭션에 지운다 (docs/schema.md 참고).
+    await _client.rpc<void>('delete_account');
+    // 사용자 행이 이미 없으므로 서버 로그아웃은 실패한다. 로컬 세션만 지운다 —
+    // 이 호출이 auth 상태 스트림을 깨워 라우터가 로그인 화면으로 보낸다.
+    await _client.auth.signOut(scope: supabase.SignOutScope.local);
   }
 
   Future<AuthUserDto> _loadUser(supabase.User user) async {

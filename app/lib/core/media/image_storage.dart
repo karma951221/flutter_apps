@@ -31,6 +31,33 @@ abstract interface class ImageStorage {
     String? name,
   });
 
+  /// 경로를 **호출부가 전부 정해서** 올리고, 올린 객체 경로를 그대로 돌려준다.
+  ///
+  /// [upload] 는 경로의 첫 조각을 언제나 사용자 id 로 만든다. 채팅 이미지는
+  /// 읽기 권한이 방 단위라 `{room_id}/{user_id}/...` 순서여야 Storage 정책이
+  /// `is_room_member` 로 판정할 수 있어서, 그 규칙에 맞지 않는다.
+  ///
+  /// 비공개 버킷을 위한 것이라 공개 URL 이 아니라 경로를 돌려준다. 화면에
+  /// 띄울 때는 [signedUrl] 로 한시적 URL 을 만든다.
+  ///
+  /// 실패하면 [Failure] 를 던진다.
+  Future<String> uploadToPath({
+    required String bucket,
+    required String path,
+    required Uint8List bytes,
+    required String contentType,
+  });
+
+  /// 비공개 버킷의 객체를 한시적으로 읽을 수 있는 URL 을 만든다.
+  ///
+  /// 서명은 Storage 의 조회 정책을 통과할 때만 발급된다 — 방을 나간 사람은
+  /// 새 URL 을 받지 못한다.
+  Future<String> signedUrl({
+    required String bucket,
+    required String path,
+    Duration expiresIn,
+  });
+
   /// 공개 URL 이 가리키는 객체를 지운다. 실패는 삼킨다.
   ///
   /// 교체된 옛 이미지나 저장에 실패한 새 이미지를 치우는 용도라, 여기서 난
@@ -45,6 +72,13 @@ abstract interface class ImageStorage {
     required String bucket,
     required List<String> paths,
   });
+
+  /// 버킷에서 **로그인한 사용자의 경로 전체**를 지운다. best-effort 다.
+  ///
+  /// 회원 탈퇴가 쓴다. DB 의 delete_account() 는 storage.objects 를 지울 수
+  /// 없으므로(Storage 확장의 보호 트리거) 객체 정리는 앱의 몫이고, 실패해도
+  /// 탈퇴 흐름을 막지 않는다.
+  Future<void> removeAllForCurrentUser({required String bucket});
 
   /// 공개 URL 에서 버킷 안의 객체 경로를 뽑는다.
   ///

@@ -1,5 +1,6 @@
 import 'package:injectable/injectable.dart';
 
+import '../../../../core/data/repository/repository_error_handler.dart';
 import '../../../../core/pagination/cursor_page.dart';
 import '../../../../core/result/result.dart';
 import '../../domain/entity/feed_post.dart';
@@ -7,12 +8,11 @@ import '../../domain/repository/feed_repository.dart';
 import '../cursor/feed_cursor.dart';
 import '../datasource/feed_data_source.dart';
 import '../mapper/feed_post_mapper.dart';
-import 'feed_repository_error_handler.dart';
 
 /// FeedDataSource 를 domain Repository 계약으로 변환하는 구현체.
 @LazySingleton(as: FeedRepository)
 class FeedRepositoryImpl
-    with FeedRepositoryErrorHandler
+    with RepositoryErrorHandler
     implements FeedRepository {
   FeedRepositoryImpl(this._dataSource);
 

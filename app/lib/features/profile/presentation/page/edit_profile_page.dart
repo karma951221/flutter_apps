@@ -12,6 +12,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../domain/entity/avatar_image_draft.dart';
 import '../../domain/entity/profile_update.dart';
+import '../cubit/nickname_check.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
 
@@ -105,6 +106,48 @@ class _EditProfileViewState extends State<_EditProfileView> {
     });
   }
 
+  /// 닉네임 입력창에 사전 확인 결과를 붙인다.
+  ///
+  /// 최종 판정은 DB 제약이다. 여기서 하는 말은 저장을 누르기 전에 알려주는
+  /// 안내이므로, 확인에 실패했을 때(= idle)는 아무것도 덧붙이지 않는다.
+  InputDecoration _nicknameDecoration(
+    BuildContext context,
+    NicknameCheck check,
+  ) {
+    final colors = Theme.of(context).colorScheme;
+    final (message, color, icon) = switch (check) {
+      NicknameCheckIdle() => (null, null, null),
+      NicknameCheckChecking() => ('확인 중…', null, null),
+      NicknameCheckAvailable() => (
+        '사용할 수 있는 닉네임입니다',
+        colors.primary,
+        Icon(Icons.check_circle_outline, color: colors.primary),
+      ),
+      NicknameCheckTaken() => (
+        '이미 사용 중인 닉네임입니다',
+        colors.error,
+        Icon(Icons.error_outline, color: colors.error),
+      ),
+    };
+
+    return InputDecoration(
+      labelText: '닉네임',
+      helperText: message,
+      helperStyle: color == null ? null : TextStyle(color: color),
+      suffixIcon: switch (check) {
+        NicknameCheckChecking() => const Padding(
+          padding: EdgeInsets.all(AppSpacing.md),
+          child: SizedBox(
+            width: AppSpacing.md,
+            height: AppSpacing.md,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        _ => icon,
+      },
+    );
+  }
+
   Future<void> _pickAvatar() async {
     if (context.read<ProfileCubit>().state.isSaving) return;
     final picker = getIt<ImagePickerService>();
@@ -184,9 +227,10 @@ class _EditProfileViewState extends State<_EditProfileView> {
                 const SizedBox(height: AppSpacing.xl),
                 TextFormField(
                   controller: _nicknameController,
-                  decoration: const InputDecoration(labelText: '닉네임'),
+                  decoration: _nicknameDecoration(context, state.nicknameCheck),
                   textInputAction: TextInputAction.next,
                   validator: Validators.nickname,
+                  onChanged: context.read<ProfileCubit>().checkNickname,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 TextFormField(

@@ -11,6 +11,9 @@ import '../../features/auth/presentation/page/password_reset_page.dart';
 import '../../features/auth/presentation/page/sign_in_page.dart';
 import '../../features/auth/presentation/page/sign_up_page.dart';
 import '../../features/auth/presentation/page/splash_page.dart';
+import '../../features/chat/presentation/page/chat_explore_page.dart';
+import '../../features/chat/presentation/page/chat_room_page.dart';
+import '../../features/chat/presentation/page/create_room_page.dart';
 import '../../features/comment/presentation/page/post_comments_page.dart';
 import '../../features/home/presentation/page/home_shell_page.dart';
 import '../../features/post/domain/entity/post.dart';
@@ -18,6 +21,7 @@ import '../../features/post/presentation/cubit/post_cubit.dart';
 import '../../features/post/presentation/page/post_editor_page.dart';
 import '../../features/profile/presentation/page/edit_profile_page.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
+import '../../features/safety/presentation/page/blocked_users_page.dart';
 import '../../features/settings/presentation/page/account_settings_page.dart';
 import '../../features/settings/presentation/page/change_password_page.dart';
 import '../../features/settings/presentation/page/settings_page.dart';
@@ -85,6 +89,23 @@ GoRouter createRouter(AuthBloc authBloc) {
       ),
       GoRoute(path: Routes.profile, builder: (_, _) => const ProfilePage()),
       GoRoute(path: Routes.settings, builder: (_, _) => const SettingsPage()),
+      // /chat/:roomId 보다 먼저 와야 한다. 뒤에 두면 'explore' 와 'new' 가
+      // roomId 로 잡힌다.
+      GoRoute(
+        path: Routes.chatExplore,
+        builder: (_, _) => const ChatExplorePage(),
+      ),
+      GoRoute(
+        path: Routes.chatCreate,
+        builder: (_, _) => const CreateRoomPage(),
+      ),
+      GoRoute(
+        path: Routes.chatRoom,
+        builder: (_, state) => ChatRoomPage(
+          roomId: state.pathParameters['roomId']!,
+          title: state.extra as String?,
+        ),
+      ),
       GoRoute(
         path: Routes.accountSettings,
         builder: (_, _) => const AccountSettingsPage(),
@@ -92,6 +113,10 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: Routes.changePassword,
         builder: (_, _) => const ChangePasswordPage(),
+      ),
+      GoRoute(
+        path: Routes.blockedUsers,
+        builder: (_, _) => const BlockedUsersPage(),
       ),
       GoRoute(
         path: Routes.userProfile,

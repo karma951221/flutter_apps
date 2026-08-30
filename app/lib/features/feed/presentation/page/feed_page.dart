@@ -5,7 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../design_system/theme/app_spacing.dart';
-import '../../../../design_system/widget/app_button.dart';
+import '../../../../design_system/widget/app_confirm_dialog.dart';
+import '../../../../design_system/widget/app_placeholder.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -13,12 +14,14 @@ import '../../../post/domain/entity/post.dart';
 import '../../../post/domain/entity/post_author.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../post/presentation/widget/post_tile.dart';
-import '../../../reaction/domain/entity/reaction_type.dart';
+import '../../../safety/domain/entity/report_target.dart';
+import '../../../safety/presentation/cubit/block_action_cubit.dart';
 import '../../domain/entity/feed_post.dart';
 import '../cubit/feed_cubit.dart';
 import '../cubit/feed_state.dart';
 import '../widget/feed_list_footer.dart';
-import '../widget/feed_placeholder.dart';
+import '../widget/post_tile_actions.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// 피드 목록 화면.
 ///
@@ -36,6 +39,7 @@ class FeedPage extends StatelessWidget {
     providers: [
       BlocProvider(create: (_) => getIt<FeedCubit>()..load()),
       BlocProvider(create: (_) => getIt<PostCubit>()),
+      BlocProvider(create: (_) => getIt<BlockActionCubit>()),
     ],
     child: const _FeedView(),
   );
@@ -46,6 +50,7 @@ class _FeedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final authState = context.watch<AuthBloc>().state;
     // 방금 쓴 글을 목록에 넣을 때 쓸 작성자. 본인이므로 세션 값으로 충분하다.
     final currentAuthor = switch (authState) {
@@ -61,13 +66,15 @@ class _FeedView extends StatelessWidget {
       appBar: AppBar(title: const Text('daylog')),
       body: BlocBuilder<FeedCubit, FeedState>(
         builder: (context, state) => switch (state.status) {
-          FeedStatus.loading => const Center(child: CircularProgressIndicator()),
+          FeedStatus.loading => const Center(
+            child: CircularProgressIndicator(),
+          ),
           FeedStatus.failure => Center(
-            child: FeedPlaceholder(
+            child: AppPlaceholder(
               icon: Icons.cloud_off_outlined,
-              message: state.failure?.message ?? '피드를 불러오지 못했습니다',
-              description: '연결을 확인하고 다시 시도해 주세요.',
-              actionLabel: '다시 시도',
+              message: state.failure?.message ?? l10n.feedLoadFailed,
+              description: l10n.feedLoadFailedDescription,
+              actionLabel: l10n.commonRetry,
               onAction: () => context.read<FeedCubit>().load(),
             ),
           ),
@@ -81,10 +88,10 @@ class _FeedView extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        tooltip: '새 게시물 작성',
+        tooltip: l10n.feedComposeTooltip,
         onPressed: () => _compose(context, currentAuthor),
         icon: const Icon(Icons.edit),
-        label: const Text('작성'),
+        label: Text(l10n.feedComposeLabel),
       ),
     );
   }
@@ -163,12 +170,22 @@ class _FeedList extends StatelessWidget {
               reactions: item.reactions,
               commentCount: item.commentCount,
               onTap: isMine
-                  ? () => _edit(context, post)
+                  ? () => PostTileActions.edit(context, post)
                   : () => context.push(Routes.userProfilePath(item.author.id)),
-              onEdit: () => _edit(context, post),
-              onDelete: () => _confirmDelete(context, post),
-              onReaction: (type) => _react(context, post.id, type),
-              onComment: () => _openComments(context, item),
+              onEdit: isMine ? () => PostTileActions.edit(context, post) : null,
+              onDelete: isMine
+                  ? () => PostTileActions.confirmDelete(context, post)
+                  : null,
+              onReport: isMine
+                  ? null
+                  : () => PostTileActions.report(
+                      context,
+                      ReportTarget.post(post.id),
+                    ),
+              onBlock: isMine ? null : () => _block(context, item.author.id),
+              onReaction: (type) =>
+                  PostTileActions.react(context, post.id, type),
+              onComment: () => PostTileActions.openComments(context, item),
             );
           },
         ),
@@ -178,104 +195,64 @@ class _FeedList extends StatelessWidget {
 
   /// 비어 있는 화면에서도 당겨서 새로고침이 되어야 하므로 안내를 스크롤 뷰
   /// 안에 넣는다. 화면 높이만큼 최소 높이를 줘서 가운데에 놓는다.
-  Widget _empty(BuildContext context) => RefreshIndicator(
-    onRefresh: () => context.read<FeedCubit>().refresh(),
-    child: LayoutBuilder(
-      builder: (context, constraints) => SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: constraints.maxHeight),
-          child: Center(
-            child: FeedPlaceholder(
-              icon: Icons.edit_note_outlined,
-              message: '아직 게시물이 없습니다',
-              description: '첫 게시물을 남겨보세요.',
-              actionLabel: '첫 게시물 쓰기',
-              onAction: onCompose,
+  Widget _empty(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return RefreshIndicator(
+      onRefresh: () => context.read<FeedCubit>().refresh(),
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: AppPlaceholder(
+                icon: Icons.edit_note_outlined,
+                message: l10n.feedEmptyMessage,
+                description: l10n.feedEmptyDescription,
+                actionLabel: l10n.feedEmptyAction,
+                onAction: onCompose,
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-
-  Future<void> _edit(BuildContext context, Post post) async {
-    final feed = context.read<FeedCubit>();
-    final updated = await context.push<Post>(
-      Routes.postEditPath(post.id),
-      extra: post,
     );
-    if (updated != null) feed.replacePost(updated);
   }
 
-  /// 감정은 목록이 저장하고 되돌린다. 화면은 실패만 알린다.
-  Future<void> _react(
-    BuildContext context,
-    String postId,
-    ReactionType type,
-  ) async {
-    final result = await context.read<FeedCubit>().toggleReaction(postId, type);
+  /// 차단은 되돌릴 수 없이 상대의 글을 통째로 지운다 — 삭제와 같은 무게로
+  /// 확인을 받는다 (`account_settings_page` 의 탈퇴 확인과 같은 모양).
+  /// 성공해도 상대가 나를 차단했는지 여부는 절대 드러내지 않는다.
+  ///
+  /// 실제 차단 호출은 [BlockActionCubit] 이 한다 — 화면은 확인 다이얼로그와
+  /// 성공 후 목록 반영(`removeAuthor`), 스낵바만 소유한다.
+  Future<void> _block(BuildContext context, String authorId) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await AppConfirmDialog.show(
+      context,
+      title: l10n.safetyBlockConfirmTitle,
+      content: l10n.safetyBlockConfirmMessage,
+      confirmLabel: l10n.safetyBlockConfirmAction,
+    );
+    if (!confirmed || !context.mounted) return;
+
+    final feed = context.read<FeedCubit>();
+    final blockAction = context.read<BlockActionCubit>();
+    final succeeded = await blockAction.block(authorId);
     if (!context.mounted) return;
 
-    result.when(
-      ok: (_) {},
-      err: (failure) => AppSnackBar.show(
+    if (succeeded) {
+      feed.removeAuthor(authorId);
+      AppSnackBar.show(
         context,
-        message: failure.message ?? '감정을 남기지 못했습니다.',
-        type: AppSnackBarType.error,
-      ),
-    );
-  }
-
-  /// 댓글 화면은 나갈 때 최종 개수를 돌려준다. 목록을 다시 읽지 않고 그
-  /// 항목의 수만 고친다.
-  Future<void> _openComments(BuildContext context, FeedPost item) async {
-    final feed = context.read<FeedCubit>();
-    final count = await context.push<int>(
-      Routes.postCommentsPath(item.id),
-      extra: item.commentCount,
-    );
-    if (count != null) feed.applyCommentCount(item.id, count);
-  }
-
-  Future<void> _confirmDelete(BuildContext context, Post post) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('게시물을 삭제할까요?'),
-        content: const Text('삭제한 게시물은 되돌릴 수 없습니다.'),
-        actions: [
-          AppButton.text(
-            label: '취소',
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-          ),
-          AppButton.text(
-            label: '삭제',
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-
-    final feed = context.read<FeedCubit>();
-    final result = await context.read<PostCubit>().delete(post.id);
-    if (!context.mounted) return;
-
-    result.when(
-      ok: (_) {
-        feed.removePost(post.id);
-        AppSnackBar.show(
-          context,
-          message: '게시물을 삭제했습니다.',
-          type: AppSnackBarType.success,
-        );
-      },
-      err: (failure) => AppSnackBar.show(
+        message: l10n.safetyBlockSucceeded,
+        type: AppSnackBarType.success,
+      );
+    } else {
+      AppSnackBar.show(
         context,
-        message: failure.message ?? '게시물을 삭제하지 못했습니다.',
+        message: blockAction.state.failure?.message ?? l10n.safetyBlockFailed,
         type: AppSnackBarType.error,
-      ),
-    );
+      );
+    }
   }
 }

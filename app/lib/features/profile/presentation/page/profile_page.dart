@@ -7,16 +7,20 @@ import '../../../../core/di/injection.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_button.dart';
+import '../../../../design_system/widget/app_confirm_dialog.dart';
+import '../../../../design_system/widget/app_overflow_menu.dart';
+import '../../../../design_system/widget/app_placeholder.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
-import '../../../feed/domain/entity/feed_post.dart';
 import '../../../feed/presentation/cubit/feed_cubit.dart';
 import '../../../feed/presentation/cubit/feed_state.dart';
-import '../../../post/domain/entity/post.dart';
+import '../../../feed/presentation/widget/post_tile_actions.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../post/presentation/widget/post_tile.dart';
-import '../../../reaction/domain/entity/reaction_type.dart';
+import '../../../safety/domain/entity/report_target.dart';
+import '../../../safety/presentation/cubit/block_action_cubit.dart';
+import '../../../safety/presentation/cubit/block_action_state.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
 
@@ -35,6 +39,7 @@ class ProfilePage extends StatelessWidget {
       BlocProvider(create: (_) => getIt<ProfileCubit>()..load(userId: userId)),
       BlocProvider(create: (_) => getIt<FeedCubit>()),
       BlocProvider(create: (_) => getIt<PostCubit>()),
+      BlocProvider(create: (_) => getIt<BlockActionCubit>()),
     ],
     child: _ProfileView(requestedUserId: userId),
   );
@@ -52,24 +57,107 @@ class _ProfileView extends StatelessWidget {
         requestedUserId == null || user.id == requestedUserId,
       _ => false,
     };
-    return BlocListener<ProfileCubit, ProfileState>(
-      listenWhen: (previous, current) =>
-          previous.profile?.id != current.profile?.id &&
-          current.profile != null,
-      listener: (context, state) =>
-          context.read<FeedCubit>().loadForAuthor(state.profile!.id),
+    // AppBar 의 신고 메뉴는 실제로 화면에 로드된 프로필의 id 를 써야 한다
+    // (라우트 파라미터는 신뢰 경계 밖이다). body 의 BlocBuilder 와 별개로
+    // watch 해도 body 의 로딩·오류 표시 흐름은 그대로다.
+    final loadedProfile = context.watch<ProfileCubit>().state.profile;
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ProfileCubit, ProfileState>(
+          listenWhen: (previous, current) =>
+              previous.profile?.id != current.profile?.id &&
+              current.profile != null,
+          listener: (context, state) {
+            final profile = state.profile!;
+            context.read<FeedCubit>().loadForAuthor(profile.id);
+            if (!isMine) {
+              context.read<BlockActionCubit>().loadStatus(profile.id);
+            }
+          },
+        ),
+        // 하단 내비게이션 셸이 이 화면을 살려 두므로, 설정에서 프로필을 고치고
+        // 탭으로 돌아오면 옛 값이 그대로 남는다. 세션 스냅샷이 바뀌는 것을
+        // 신호로 삼아 내 프로필만 다시 읽는다 — 편집 화면이 저장 직후
+        // userRefreshRequested 를 보낸다.
+        BlocListener<AuthBloc, AuthState>(
+          listenWhen: (previous, current) => switch ((previous, current)) {
+            (
+              AuthAuthenticated(user: final before),
+              AuthAuthenticated(user: final after),
+            ) =>
+              before.id == after.id &&
+                  (before.nickname != after.nickname ||
+                      before.avatarUrl != after.avatarUrl),
+            _ => false,
+          },
+          listener: (context, _) {
+            if (isMine) context.read<ProfileCubit>().load(userId: null);
+          },
+        ),
+      ],
       child: Scaffold(
-        appBar: AppBar(title: Text(isMine ? '프로필' : '사용자 프로필')),
+        appBar: AppBar(
+          title: Text(isMine ? '프로필' : '사용자 프로필'),
+          actions: [
+            if (!isMine && loadedProfile != null)
+              BlocBuilder<BlockActionCubit, BlockActionState>(
+                builder: (context, blockState) =>
+                    AppOverflowMenu<_ProfileAction>(
+                      tooltip: '프로필 메뉴',
+                      enabled: !blockState.isBlocking,
+                      onSelected: (action) => switch (action) {
+                        _ProfileAction.block => _confirmAndBlock(
+                          context,
+                          loadedProfile.id,
+                        ),
+                        _ProfileAction.unblock => _unblockProfile(
+                          context,
+                          loadedProfile.id,
+                        ),
+                        _ProfileAction.report => PostTileActions.report(
+                          context,
+                          ReportTarget.user(loadedProfile.id),
+                        ),
+                      },
+                      items: [
+                        // 조회 실패 또는 조회 전에는 메뉴를 숨긴다. 이미 차단한
+                        // 사용자에게 '차단'을 권하는 것보다 잘못된 동작을 막는다.
+                        if (!blockState.isLoadingStatus &&
+                            blockState.isBlocked == false)
+                          const AppOverflowMenuItem(
+                            value: _ProfileAction.block,
+                            label: '차단',
+                            isDestructive: true,
+                          ),
+                        if (!blockState.isLoadingStatus &&
+                            blockState.isBlocked == true)
+                          const AppOverflowMenuItem(
+                            value: _ProfileAction.unblock,
+                            label: '차단 해제',
+                          ),
+                        const AppOverflowMenuItem(
+                          value: _ProfileAction.report,
+                          label: '신고',
+                        ),
+                      ],
+                    ),
+              ),
+          ],
+        ),
         body: BlocBuilder<ProfileCubit, ProfileState>(
           builder: (context, state) {
             if (state.isLoading && state.profile == null) {
               return const Center(child: CircularProgressIndicator());
             }
             if (state.failure != null && state.profile == null) {
-              return _ProfileLoadError(
-                message: state.failure?.message ?? '프로필을 불러오지 못했습니다',
-                onRetry: () =>
-                    context.read<ProfileCubit>().load(userId: requestedUserId),
+              return Center(
+                child: AppPlaceholder(
+                  message: state.failure?.message ?? '프로필을 불러오지 못했습니다',
+                  actionLabel: '다시 시도',
+                  onAction: () => context.read<ProfileCubit>().load(
+                    userId: requestedUserId,
+                  ),
+                ),
               );
             }
             final profile = state.profile;
@@ -163,6 +251,62 @@ class _ProfileView extends StatelessWidget {
   }
 }
 
+enum _ProfileAction { block, unblock, report }
+
+/// 프로필 AppBar 메뉴와 게시물 목록(다른 사용자 글) 메뉴 두 진입점이 같은
+/// 확인 다이얼로그 · 차단 호출 · 목록 새로고침 · 스낵바 흐름을 쓴다. 원래는
+/// 두 곳에 같은 코드가 복제돼 있었고, 새로고침을 기다리는지(await) 여부도
+/// 미묘하게 달랐다 — 이 헬퍼 하나로 합쳐 두 진입점의 동작을 일치시킨다
+/// (2026-08-26 리뷰 반영).
+Future<void> _confirmAndBlock(BuildContext context, String userId) async {
+  final confirmed = await AppConfirmDialog.show(
+    context,
+    title: '이 사용자를 차단할까요?',
+    content: '차단하면 이 사용자의 게시물과 댓글이 더 이상 보이지 않습니다.',
+    confirmLabel: '차단',
+  );
+  if (!confirmed || !context.mounted) return;
+
+  final feed = context.read<FeedCubit>();
+  final action = context.read<BlockActionCubit>();
+  final succeeded = await action.block(userId);
+  if (!context.mounted) return;
+
+  if (succeeded) {
+    await feed.refresh();
+    if (!context.mounted) return;
+  }
+  AppSnackBar.show(
+    context,
+    message: succeeded
+        ? '차단했습니다.'
+        : action.state.failure?.message ?? '차단하지 못했습니다.',
+    type: succeeded ? AppSnackBarType.success : AppSnackBarType.error,
+  );
+}
+
+/// 차단 해제는 확인 없이 바로 실행한다 — 되돌리기 쉬운 동작이라는 스펙
+/// 결정(`docs/features/safety/plan-block.md` "확인 절차")을 따른다. 목록
+/// 화면(`blocked_users_page`)의 즉시 해제와 이 화면의 동작을 일치시킨다.
+Future<void> _unblockProfile(BuildContext context, String userId) async {
+  final feed = context.read<FeedCubit>();
+  final action = context.read<BlockActionCubit>();
+  final succeeded = await action.unblock(userId);
+  if (!context.mounted) return;
+
+  if (succeeded) {
+    await feed.refresh();
+    if (!context.mounted) return;
+  }
+  AppSnackBar.show(
+    context,
+    message: succeeded
+        ? '차단을 해제했습니다.'
+        : action.state.failure?.message ?? '차단을 해제하지 못했습니다.',
+    type: succeeded ? AppSnackBarType.success : AppSnackBarType.error,
+  );
+}
+
 /// 프로필 주인이 쓴 게시물 목록.
 ///
 /// [isMine] 이면 피드와 같은 수정·삭제 흐름을 붙인다. 다른 사람의 프로필은
@@ -213,114 +357,27 @@ class _ProfilePostList extends StatelessWidget {
             reactions: item.reactions,
             commentCount: item.commentCount,
             // 이미 이 작성자의 프로필이므로 남의 글은 눌러도 갈 곳이 없다.
-            onTap: isMine ? () => _edit(context, post) : () {},
-            onEdit: isMine ? () => _edit(context, post) : null,
-            onDelete: isMine ? () => _confirmDelete(context, post) : null,
-            onReaction: (type) => _react(context, post.id, type),
-            onComment: () => _openComments(context, item),
+            onTap: isMine ? () => PostTileActions.edit(context, post) : () {},
+            onEdit: isMine ? () => PostTileActions.edit(context, post) : null,
+            onDelete: isMine
+                ? () => PostTileActions.confirmDelete(context, post)
+                : null,
+            onReport: isMine
+                ? null
+                : () => PostTileActions.report(
+                    context,
+                    ReportTarget.post(post.id),
+                  ),
+            // 차단만 화면이 직접 잇는다. 성공 뒤 이 작성자의 목록을 통째로 다시
+            // 읽는 것은 프로필 화면에만 맞는 반영이다 (피드는 항목만 걷어낸다).
+            onBlock: isMine
+                ? null
+                : () => _confirmAndBlock(context, item.author.id),
+            onReaction: (type) => PostTileActions.react(context, post.id, type),
+            onComment: () => PostTileActions.openComments(context, item),
           );
         },
       ),
     },
-  );
-
-  /// 감정과 댓글 연결은 피드 화면과 같다. 두 화면 모두 목록을 [FeedCubit] 이
-  /// 소유하므로 저장·복원도 같은 곳에서 한다.
-  Future<void> _react(
-    BuildContext context,
-    String postId,
-    ReactionType type,
-  ) async {
-    final result = await context.read<FeedCubit>().toggleReaction(postId, type);
-    if (!context.mounted) return;
-
-    result.when(
-      ok: (_) {},
-      err: (failure) => AppSnackBar.show(
-        context,
-        message: failure.message ?? '감정을 남기지 못했습니다.',
-        type: AppSnackBarType.error,
-      ),
-    );
-  }
-
-  Future<void> _openComments(BuildContext context, FeedPost item) async {
-    final feed = context.read<FeedCubit>();
-    final count = await context.push<int>(
-      Routes.postCommentsPath(item.id),
-      extra: item.commentCount,
-    );
-    if (count != null) feed.applyCommentCount(item.id, count);
-  }
-
-  Future<void> _edit(BuildContext context, Post post) async {
-    final feed = context.read<FeedCubit>();
-    final updated = await context.push<Post>(
-      Routes.postEditPath(post.id),
-      extra: post,
-    );
-    if (updated != null) feed.replacePost(updated);
-  }
-
-  Future<void> _confirmDelete(BuildContext context, Post post) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('게시물을 삭제할까요?'),
-        content: const Text('삭제한 게시물은 되돌릴 수 없습니다.'),
-        actions: [
-          AppButton.text(
-            label: '취소',
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-          ),
-          AppButton.text(
-            label: '삭제',
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-
-    final feed = context.read<FeedCubit>();
-    final result = await context.read<PostCubit>().delete(post.id);
-    if (!context.mounted) return;
-
-    result.when(
-      ok: (_) {
-        feed.removePost(post.id);
-        AppSnackBar.show(
-          context,
-          message: '게시물을 삭제했습니다.',
-          type: AppSnackBarType.success,
-        );
-      },
-      err: (failure) => AppSnackBar.show(
-        context,
-        message: failure.message ?? '게시물을 삭제하지 못했습니다.',
-        type: AppSnackBarType.error,
-      ),
-    );
-  }
-}
-
-class _ProfileLoadError extends StatelessWidget {
-  const _ProfileLoadError({required this.message, required this.onRetry});
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(message, textAlign: TextAlign.center),
-          const SizedBox(height: AppSpacing.md),
-          AppButton.secondary(label: '다시 시도', onPressed: onRetry),
-        ],
-      ),
-    ),
   );
 }

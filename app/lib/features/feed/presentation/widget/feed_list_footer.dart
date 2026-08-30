@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/theme/app_spacing.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// 목록 맨 끝에 붙는 줄.
 ///
@@ -39,7 +40,7 @@ class FeedListFooter extends StatelessWidget {
       ),
       child: Center(
         child: Text(
-          '모두 확인했습니다',
+          AppLocalizations.of(context).feedEndOfList,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),

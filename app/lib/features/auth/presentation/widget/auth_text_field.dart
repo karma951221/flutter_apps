@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/theme/app_spacing.dart';
+import '../../../../l10n/app_localizations.dart';
 
 /// 인증 화면 공통 입력 필드.
 ///
@@ -75,7 +76,9 @@ class _AuthTextFieldState extends State<AuthTextField> {
   Widget _obscureToggle() {
     return IconButton(
       // 아이콘만 있는 버튼이라 tooltip 이 곧 스크린리더 라벨이 된다.
-      tooltip: _obscured ? '비밀번호 표시' : '비밀번호 숨기기',
+      tooltip: _obscured
+          ? AppLocalizations.of(context).authPasswordShow
+          : AppLocalizations.of(context).authPasswordHide,
       icon: Icon(
         _obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
       ),

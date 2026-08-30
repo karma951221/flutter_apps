@@ -116,4 +116,56 @@ void main() {
       isA<NetworkFailure>(),
     );
   });
+
+  group('댓글·감정 제약', () {
+    test('300자 제약 위반이 사용자 문구로 번역된다', () {
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(
+          message:
+              'new row for relation "post_comments" violates check constraint '
+              '"post_comments_content_length"',
+          code: '23514',
+        ),
+      );
+
+      expect(failure, isA<ValidationFailure>());
+      expect((failure as ValidationFailure).message, contains('300자'));
+    });
+
+    test('2단 제한 트리거의 문구를 그대로 전달한다', () {
+      // 트리거가 이미 사용자에게 보여줄 수 있는 한국어로 던진다. 기본 문구로
+      // 덮으면 무엇이 잘못됐는지가 사라진다.
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(message: '답글에는 답글을 달 수 없습니다', code: '23514'),
+      );
+
+      expect(
+        (failure as ValidationFailure).message,
+        '답글에는 답글을 달 수 없습니다',
+      );
+    });
+
+    test('삭제된 대상에 쓰기를 막은 42501 을 안내로 바꾼다', () {
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(
+          message: 'new row violates row-level security policy',
+          code: '42501',
+        ),
+      );
+
+      expect(failure, isA<ForbiddenFailure>());
+      expect((failure as ForbiddenFailure).message, contains('삭제된 대상'));
+    });
+
+    test('정의되지 않은 감정 코드를 안내로 바꾼다', () {
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(
+          message: 'violates check constraint "post_reactions_type_valid"',
+          code: '23514',
+        ),
+      );
+
+      expect((failure as ValidationFailure).message, contains('감정'));
+    });
+  });
 }

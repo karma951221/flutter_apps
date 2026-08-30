@@ -5,12 +5,12 @@ import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/auth/presentation/cubit/sign_in_cubit.dart';
 import 'package:daylog/features/auth/presentation/cubit/submit_state.dart';
 import 'package:daylog/features/auth/presentation/page/sign_in_page.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class _MockSignInCubit extends MockCubit<SubmitState>
-    implements SignInCubit {}
+class _MockSignInCubit extends MockCubit<SubmitState> implements SignInCubit {}
 
 void main() {
   late _MockSignInCubit cubit;
@@ -29,7 +29,14 @@ void main() {
 
   Future<void> pumpPage(WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(theme: AppTheme.light(), home: const SignInPage()),
+      MaterialApp(
+        theme: AppTheme.light(),
+        // ko 가 ARB template 언어라 원문이 곧 기대값이다 (계획서).
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const SignInPage(),
+      ),
     );
     await tester.pump();
   }
@@ -67,7 +74,10 @@ void main() {
 
     await pumpPage(tester);
 
-    await tester.enterText(find.byKey(const Key('signIn.email')), 'me@test.com');
+    await tester.enterText(
+      find.byKey(const Key('signIn.email')),
+      'me@test.com',
+    );
     await tester.enterText(
       find.byKey(const Key('signIn.password')),
       'password123',

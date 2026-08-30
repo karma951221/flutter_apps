@@ -47,3 +47,6 @@ app.*.map.json
 # Patrol
 **/test_bundle.dart
 .patrol.env
+
+# Kotlin 컴파일러 세션 (Gradle·Patrol 빌드가 만든다)
+/android/.kotlin/

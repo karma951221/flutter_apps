@@ -26,6 +26,22 @@ patrol doctor          # PATH 에 patrol 이 없으면 ~/.pub-cache/bin 을 추�
 cd app && flutter pub get
 ```
 
+**`patrol doctor` 가 통과해도 JDK 가 없으면 `patrol test` 가 죽는다.** `doctor` 는
+Java 를 보지 않는데, 실제 실행은 Gradle 을 거치므로 JDK 가 필요하다.
+
+```text
+Error: Failed to read Java version. Make sure you have Java installed and added to PATH
+```
+
+macOS 에 별도 JDK 가 없으면 Android Studio 의 번들 JBR 을 쓴다. `adb` 도 `doctor`
+기준을 맞추려면 `ANDROID_HOME` 이 있어야 한다 (2026-08-27 실행에서 둘 다 걸렸다).
+
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH:$HOME/.pub-cache/bin"
+```
+
 프로젝트 쪽 설정은 이미 커밋돼 있다.
 
 - `app/pubspec.yaml` — `patrol` 의존성과 `patrol:` 섹션(앱 식별자)
@@ -45,8 +61,18 @@ supabase start                      # 이미 떠 있으면 생략
 cd app
 patrol test                         # patrol_test/ 전체
 patrol test -t patrol_test/auth_test.dart
+patrol test -t patrol_test/chat_test.dart   # 실시간 왕복까지 태운다
 patrol develop -t patrol_test/post_test.dart   # Hot Restart 로 테스트를 짜면서 돌린다
 ```
+
+## 앱 언어는 하니스가 한국어로 고정한다
+
+다국어가 들어오면서 앱이 기기 언어를 따라간다. 에뮬레이터는 보통 `en-US` 라
+그대로 두면 앱이 영어로 뜨고, 한국어를 단언하는 E2E 가 전부 깨진다.
+
+`launchApp()` 이 `SharedPreferences` 의 `language` 를 `ko` 로 심어 이를 막는다.
+기기 locale 을 바꾸지 않는 이유는 어느 에뮬레이터에서도 같게 돌아야 해서다.
+en·ja 화면을 E2E 로 확인하고 싶으면 그 값을 바꾼다.
 
 기기를 고를 때는 `-d`:
 
@@ -61,13 +87,40 @@ patrol test -d emulator-5554
 
 ```text
 app/patrol_test/
-├── helpers/app_harness.dart   # 앱 부팅, 로그인/가입 헬퍼 — 검증 로직 없음
-├── auth_test.dart             # 가입 → 피드 → 로그아웃 → 로그인
-└── post_test.dart             # 작성 → 피드 반영 → 삭제
+├── helpers/app_harness.dart      # 앱 부팅, 로그인/가입 헬퍼 — 검증 로직 없음
+├── auth_test.dart                # 가입 → 피드 → 로그아웃 → 로그인
+├── sign_in_failure_test.dart     # 잘못된 비밀번호
+└── post_test.dart                # 작성 → 피드 반영 → 삭제
 ```
 
 테스트는 매 실행마다 새 계정을 만든다. 고정 계정을 쓰면 이전 실행이 남긴
 게시물 때문에 다음 실행이 흔들린다. 로컬 DB 가 지저분해지면 `supabase db reset`.
+
+### 알려진 실패 — '잘못된 비밀번호' 테스트
+
+`sign_in_failure` 성격의 테스트(`auth_test.dart` 의 두 번째)는 **자기 단계와
+단언을 전부 통과하고도** 프로세스가 아래 단언으로 죽는다.
+
+```text
+'_pendingExceptionDetails != null': A test overrode FlutterError.onError but
+either failed to return it to its original state, or had unexpected additional
+errors that it could not handle.
+```
+
+테스트 본문이 끝난 **뒤에** 로그인 실패 경로에서 비동기 오류가 하나 더 올라오는
+모양이다. 확인한 것:
+
+- 화면 동작 자체는 정상이다 — `FailureText` 가 뜨고 화면은 로그인에 남는다.
+- 파일을 나눠도 그대로다. Patrol 은 `patrol_test/` 전체를 **하나의 번들**로
+  묶으므로, 파일을 갈라도 프로세스마다 나머지 테스트를 건너뛰는 구조는 같다.
+- 나머지 두 테스트(`auth_test` 첫 번째 · `post_test`)는 통과한다.
+
+이 테스트는 **실패로 집계되지도 않는다.** 프로세스가 죽어 결과를 돌려주지 못하므로
+요약에는 `Successful: 2 / Failed: 0` 으로 나오고 종료 코드만 1 이다. CI 에 걸 때는
+숫자가 아니라 **종료 코드를 본다.**
+
+2026-08-27 검수에서 처음 E2E 를 돌려 보고 발견했다. 원인은 아직 못 짚었다
+([검수 기록](audit-2026-08-27.md)).
 
 ## 셀렉터 규칙
 

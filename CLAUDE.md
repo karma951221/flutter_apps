@@ -77,7 +77,16 @@ patrol develop -t patrol_test/post_test.dart   # Hot Restart 로 짜면서 실�
 - Snackbar: `AppSnackBar.show`
 - 목록 행: `AppListTile`
 - 아바타: `AppAvatar`
+- 빈 상태·오류 안내: `AppPlaceholder`
+- 확인 다이얼로그: `AppConfirmDialog.show` (되돌리기 어려운 동작. 로그아웃처럼
+  되돌리기 쉬운 것은 `isDestructive: false`)
+- 더보기 메뉴: `AppOverflowMenu` + `AppOverflowMenuItem`
+- 아이콘 + 개수 버튼: `AppCountAction`
 - 인증 입력: `AuthTextField` 및 `InputDecorationTheme`
+
+시각 토큰은 `design_system/theme/` 의 `AppColors` · `AppSpacing` · `AppRadius` 와
+`Theme.of(context)` 를 쓴다. `Colors.*` · 숫자 여백 · `BorderRadius.circular(n)` 을
+화면에 직접 적지 않는다.
 
 예외로 Flutter 기본 위젯을 직접 사용해야 한다면, 기존 공통 위젯으로 표현할 수 없는 이유가 있어야 하며 재사용 가능성을 함께 검토한다.
 
@@ -108,3 +117,15 @@ Freezed 모델은 아래 두 패턴만 사용한다.
    ```
 
 분기는 생성된 `when`/`map` 대신 Dart pattern matching `switch`를 우선 사용한다.
+
+## 로컬 Supabase 검증 스크립트
+
+RLS·실시간처럼 mock 으로 드러나지 않는 것은 `supabase/tests/` 의 스크립트가
+실제 JWT + REST/WebSocket 으로 확인한다. 스키마를 바꾸면 해당 스크립트도 함께
+갱신한다.
+
+```bash
+supabase start
+python3 supabase/tests/chat_rls_check.py       # 채팅 권한 경계
+python3 supabase/tests/chat_realtime_check.py  # 실시간 전달 (pip install websockets)
+```

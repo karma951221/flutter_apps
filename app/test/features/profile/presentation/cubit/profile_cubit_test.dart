@@ -4,6 +4,7 @@ import 'package:daylog/core/result/result.dart';
 import 'package:daylog/features/profile/domain/entity/profile.dart';
 import 'package:daylog/features/profile/domain/entity/profile_update.dart';
 import 'package:daylog/features/profile/domain/usecase/profile_use_case.dart';
+import 'package:daylog/features/profile/presentation/cubit/nickname_check.dart';
 import 'package:daylog/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:daylog/features/profile/presentation/cubit/profile_state.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -99,4 +100,84 @@ void main() {
       ).called(1);
     },
   );
+
+  group('닉네임 사전 확인', () {
+    // 디바운스가 지나 조회까지 끝나기를 기다린다.
+    Future<void> settle() => Future<void>.delayed(
+      ProfileCubit.nicknameCheckDebounce + const Duration(milliseconds: 100),
+    );
+
+    Future<ProfileCubit> loadedCubit() async {
+      when(useCase.getMyProfile).thenAnswer((_) async => Ok(_profile()));
+      final cubit = ProfileCubit(useCase);
+      await cubit.load();
+      return cubit;
+    }
+
+    test('입력이 멎은 뒤 한 번만 조회하고 사용 가능을 알린다', () async {
+      when(
+        () => useCase.isNicknameAvailable(any()),
+      ).thenAnswer((_) async => const Ok(true));
+      final cubit = await loadedCubit();
+
+      cubit.checkNickname('새이');
+      cubit.checkNickname('새이름');
+      expect(cubit.state.nicknameCheck, isA<NicknameCheckChecking>());
+      await settle();
+
+      expect(cubit.state.nicknameCheck, isA<NicknameCheckAvailable>());
+      verify(() => useCase.isNicknameAvailable('새이름')).called(1);
+      verifyNever(() => useCase.isNicknameAvailable('새이'));
+      await cubit.close();
+    });
+
+    test('이미 쓰는 닉네임이면 중복으로 알린다', () async {
+      when(
+        () => useCase.isNicknameAvailable(any()),
+      ).thenAnswer((_) async => const Ok(false));
+      final cubit = await loadedCubit();
+
+      cubit.checkNickname('  겹치는이름  ');
+      await settle();
+
+      expect(cubit.state.nicknameCheck, isA<NicknameCheckTaken>());
+      verify(() => useCase.isNicknameAvailable('겹치는이름')).called(1);
+      await cubit.close();
+    });
+
+    test('지금 쓰고 있는 닉네임은 조회하지 않는다', () async {
+      final cubit = await loadedCubit();
+
+      cubit.checkNickname('카르마');
+      await settle();
+
+      expect(cubit.state.nicknameCheck, isA<NicknameCheckIdle>());
+      verifyNever(() => useCase.isNicknameAvailable(any()));
+      await cubit.close();
+    });
+
+    test('형식이 어긋난 닉네임은 조회하지 않는다', () async {
+      final cubit = await loadedCubit();
+
+      cubit.checkNickname('짧');
+      await settle();
+
+      expect(cubit.state.nicknameCheck, isA<NicknameCheckIdle>());
+      verifyNever(() => useCase.isNicknameAvailable(any()));
+      await cubit.close();
+    });
+
+    test('확인에 실패하면 아무 말도 하지 않는다', () async {
+      when(
+        () => useCase.isNicknameAvailable(any()),
+      ).thenAnswer((_) async => const Err(Failure.network()));
+      final cubit = await loadedCubit();
+
+      cubit.checkNickname('새이름');
+      await settle();
+
+      expect(cubit.state.nicknameCheck, isA<NicknameCheckIdle>());
+      await cubit.close();
+    });
+  });
 }
