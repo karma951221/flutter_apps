@@ -273,6 +273,102 @@ check("탐색 뷰는 집계 수 말고 참여자 정보를 내보내지 않는�
       },
       str(sorted((columns or [{}])[0])))
 
+# --- DM (open_direct_room) ---------------------------------------------------
+# A·B·C 는 위에서 이미 만든 사용자를 재사용한다.
+
+# 1. 개설은 멱등이다 — 누가 부르든, 몇 번을 부르든 같은 방 id.
+st, dm_room_id = call("POST", "/rest/v1/rpc/open_direct_room", A, {"partner_id": b_id})
+check("A 가 B 와 DM 방을 연다", st == 200 and isinstance(dm_room_id, str), f"{st} {dm_room_id}")
+st, again = call("POST", "/rest/v1/rpc/open_direct_room", A, {"partner_id": b_id})
+check("같은 상대로 재호출해도 같은 방 id", st == 200 and again == dm_room_id, f"{st} {again}")
+st, from_b = call("POST", "/rest/v1/rpc/open_direct_room", B, {"partner_id": a_id})
+check("상대가 열어도 같은 방 id (중복 방 없음)", st == 200 and from_b == dm_room_id, f"{st} {from_b}")
+
+# 2. 자기 자신과의 DM 은 거부된다.
+st, body = call("POST", "/rest/v1/rpc/open_direct_room", A, {"partner_id": a_id})
+check("자기 자신과의 DM 은 거부된다", st >= 400, f"{st} {str(body)[:80]}")
+
+# 3. 존재하지 않는 상대 — 상대 없음과 차단을 구분하지 않는 중립 문구.
+st, body = call("POST", "/rest/v1/rpc/open_direct_room", A, {"partner_id": str(uuid.uuid4())})
+check("존재하지 않는 상대와의 DM 은 거부되고 문구가 중립적이다",
+      st >= 400 and "대화를 시작할 수 없습니다" in json.dumps(body, ensure_ascii=False),
+      f"{st} {str(body)[:80]}")
+
+# 4. 탐색 미노출 — 비참여자는 물론, 당사자에게도 open_chat_rooms 에 없다.
+st, rooms = call("GET", f"/rest/v1/chat_rooms?id=eq.{dm_room_id}&select=id", C)
+check("비참여자는 DM 방을 chat_rooms 로 조회할 수 없다", rooms == [], str(rooms))
+st, open_c = call("GET", f"/rest/v1/open_chat_rooms?id=eq.{dm_room_id}&select=id", C)
+check("DM 방은 탐색 목록(open_chat_rooms)에 없다 (비참여자 기준)", open_c == [], str(open_c))
+st, open_a = call("GET", f"/rest/v1/open_chat_rooms?id=eq.{dm_room_id}&select=id", A)
+check("DM 방은 당사자 기준으로도 탐색 목록에 없다", open_a == [], str(open_a))
+
+# 5. 메시지 송수신 경계 — 참여자만 보내고 읽는다.
+st, _ = call("POST", "/rest/v1/chat_messages", A,
+             {"room_id": dm_room_id, "type": "text", "content": "안녕 DM"})
+check("A 가 DM 방에 메시지를 보낸다", st == 201, f"{st}")
+st, body = call("POST", "/rest/v1/chat_messages", C,
+                {"room_id": dm_room_id, "type": "text", "content": "끼어들기"})
+check("비참여자는 DM 방에 메시지를 못 보낸다", st in (401, 403), f"{st}")
+st, msgs = call("GET", f"/rest/v1/chat_messages?room_id=eq.{dm_room_id}&select=id", C)
+check("비참여자는 DM 방 메시지를 조회할 수 없다", msgs == [], str(msgs))
+
+# 6. direct 방에는 입퇴장이 있어도 시스템 메시지가 생기지 않는다.
+st, all_msgs = call("GET", f"/rest/v1/chat_messages?room_id=eq.{dm_room_id}&select=type", A)
+check("DM 방에는 시스템 메시지가 없다",
+      st == 200 and all(m["type"] != "system" for m in all_msgs), str(all_msgs))
+
+# 7. 나가기 · 카톡식 자동 재등장.
+st, _ = call("PATCH", f"/rest/v1/chat_participants?room_id=eq.{dm_room_id}&user_id=eq.{b_id}", B,
+             {"left_at": "now()"})
+check("B 가 DM 방을 나간다(left_at 갱신, 기존 나가기와 동일 경로)", st in (200, 204), f"{st}")
+st, rooms_b = call("GET", "/rest/v1/my_chat_rooms?select=id", B)
+check("나간 뒤 B 의 my_chat_rooms 에서 DM 방이 사라진다",
+      all(r["id"] != dm_room_id for r in rooms_b), str(rooms_b))
+st, _ = call("POST", "/rest/v1/chat_messages", A,
+             {"room_id": dm_room_id, "type": "text", "content": "다시 왔어"})
+st, rooms_b2 = call("GET", "/rest/v1/my_chat_rooms?select=id", B)
+check("A 가 메시지를 보내면 B 의 my_chat_rooms 에 방이 자동으로 다시 나타난다",
+      any(r["id"] == dm_room_id for r in rooms_b2), str(rooms_b2))
+st, all_msgs2 = call("GET", f"/rest/v1/chat_messages?room_id=eq.{dm_room_id}&select=type", A)
+check("자동 재등장 과정에서도 시스템 메시지는 생기지 않는다",
+      st == 200 and all(m["type"] != "system" for m in all_msgs2), str(all_msgs2))
+
+# 8. my_chat_rooms 의 DM 행 모양.
+st, mine = call("GET", f"/rest/v1/my_chat_rooms?id=eq.{dm_room_id}&select=*", A)
+check("A 의 my_chat_rooms 에 DM 행이 있다", st == 200 and len(mine) == 1, f"{st} {mine}")
+dm_row = mine[0]
+check("my_chat_rooms 의 DM 행은 type=direct", dm_row["type"] == "direct", str(dm_row["type"]))
+check("my_chat_rooms 의 DM 행은 title 이 없다", dm_row["title"] is None, str(dm_row["title"]))
+check("my_chat_rooms 의 DM 행은 상대 닉네임을 준다",
+      dm_row["partner_nickname"] == f"B{suffix}", str(dm_row["partner_nickname"]))
+
+# 9. 차단 — 양방향 전송 거부, 히스토리 은닉, open_direct_room 거부, 해제 시 복구.
+st, before_block = call("GET", f"/rest/v1/chat_messages?room_id=eq.{dm_room_id}&select=id", B)
+st, _ = call("POST", "/rest/v1/blocks", A, {"blocked_id": b_id})
+check("A 가 B 를 차단한다", st == 201, f"{st}")
+
+st, body = call("POST", "/rest/v1/chat_messages", A,
+                {"room_id": dm_room_id, "type": "text", "content": "차단 후 A"})
+check("차단 후 A 의 DM 전송이 거부된다", st in (401, 403), f"{st} {str(body)[:80]}")
+
+st, body = call("POST", "/rest/v1/chat_messages", B,
+                {"room_id": dm_room_id, "type": "text", "content": "차단 후 B"})
+check("차단 후 B 의 DM 전송도 거부된다(양방향)",
+      st in (401, 403) and "메시지를 보낼 수 없습니다" in json.dumps(body, ensure_ascii=False),
+      f"{st} {str(body)[:80]}")
+
+st, body = call("POST", "/rest/v1/rpc/open_direct_room", B, {"partner_id": a_id})
+check("차단된 상대와는 open_direct_room 도 거부된다", st >= 400, f"{st} {str(body)[:80]}")
+
+st, after_block = call("GET", f"/rest/v1/chat_messages?room_id=eq.{dm_room_id}&select=id", B)
+check("차단 후 B 의 조회에서 A 가 보낸 기존 메시지가 사라진다",
+      len(before_block) > 0 and after_block == [], f"{len(before_block)} → {after_block}")
+
+st, _ = call("DELETE", f"/rest/v1/blocks?blocked_id=eq.{b_id}", A)
+st, body = call("POST", "/rest/v1/chat_messages", A,
+                {"room_id": dm_room_id, "type": "text", "content": "차단 해제 후"})
+check("차단 해제 후 A 의 전송이 복구된다", st == 201, f"{st} {str(body)[:80]}")
+
 print()
 failed = [r for r in results if not r[0]]
 print(f"{len(results) - len(failed)}/{len(results)} 통과")
