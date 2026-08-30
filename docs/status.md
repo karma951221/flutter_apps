@@ -260,13 +260,14 @@ auth 쪽 8개는 `await` 뒤에 가드 없이 `emit` 한다. 다만 이 테스�
 ## 인계 메모 — 2026-08-30
 
 `feat/f7-safety-account` 를 `main` 에 병합해 여기까지를 한 줄기로 만들었고,
-이어서 다국어 마무리를 `main` 에 올렸다. 브랜치는 `main` 하나뿐이다.
+이어서 다국어 마무리와 F8 팔로우를 `main` 에 올렸다. 브랜치는 `main` 하나뿐이다.
 이 시점의 `main` 상태:
 
-- `flutter analyze` 무결함, `flutter test` 505건 통과
-- 마이그레이션은 `20260828101500_add_chat.sql` 까지 적용된 상태가 기준이다.
+- `flutter analyze` 무결함, `flutter test` 548건 통과
+- 마이그레이션은 `20260830090000_add_follows.sql` 까지 적용된 상태가 기준이다.
   받은 직후에는 프로젝트 루트에서 `supabase start` 후 `supabase db reset` 을 한 번 돌린다
-- 로컬 검증 스크립트는 `supabase/tests/` 에 있다 (채팅 권한 경계 · 실시간)
+- 로컬 검증 스크립트는 `supabase/tests/` 에 있다 (채팅 권한 경계 · 실시간 ·
+  팔로우 권한 경계). 스키마를 바꾸면 함께 갱신한다
 - Patrol E2E 는 로컬 Supabase + 에뮬레이터가 둘 다 떠 있어야 한다
   ([E2E 가이드](testing/e2e.md))
 
