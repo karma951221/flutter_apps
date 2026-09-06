@@ -40,9 +40,9 @@
 | `FeedPage` | 팔로잉 탭 빈 상태 | "사람 둘러보기" 를 누르면 전체 탭으로 옮기고 전체 피드를 읽는다. |
 | `HomeShellPage` | 하단 내비게이션 | 홈 · 프로필 · 설정 세 곳을 보여주고, 탭을 옮기면 그 화면이 앞으로 나온다. |
 | `HomeShellPage` | 탭 왕복 | 목록을 다시 읽지 않는다 — `IndexedStack` 이 탭 본문을 살려 둔다.
-| `GuestFeedPage` | 목록 / 빈 상태 | 전체 피드를 읽기 전용으로 그리고(더보기 메뉴 없음), 비어 있으면 작성 버튼 없는 빈 안내를 보여준다. |
+| `GuestFeedPage` | 목록 / 빈 상태 | 전체 피드를 읽기 전용으로 그리고(더보기 메뉴 없음), 비어 있으면 작성 버튼 대신 "회원가입" 을 둬 가입 안내 시트로 잇는다. |
 | `GuestFeedPage` | 게시물 탭 | 가입 안내 시트가 뜨고 회원가입은 `/sign-up` 으로 push, 로그인은 `/sign-in` 으로 go 한다. |
-| 로컬 Supabase (`guest_read_check.py`) | anon 읽기·쓰기 | `posts_with_author`·`profiles` 는 200, 게시물·반응 쓰기는 거부된다. |
+| 로컬 Supabase (`guest_read_check.py`) | anon 읽기·쓰기 | 앱과 같은 컬럼 목록으로 `posts_with_author` 를 읽어 200 과 행 모양(`images` 는 목록, `my_reaction` 은 없음)을 보고, `profiles` 도 200 이며, 게시물·반응 쓰기는 401/403 이다. |
 
 커서 페이지네이션에서 가장 깨지기 쉬운 곳은 **경계**다. 다음 커서를 잘라낸 항목
 기준으로 만들면 한 건이 건너뛰어진다. `created_at` 이 같은 항목이 여러 개일 때
