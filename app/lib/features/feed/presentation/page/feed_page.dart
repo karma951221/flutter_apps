@@ -203,7 +203,7 @@ class _FeedList extends StatelessWidget {
       onRefresh: () => context.read<FeedCubit>().refresh(),
       child: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
-          if (notification.metrics.extentAfter < 240 &&
+          if (notification.metrics.extentAfter < FeedCubit.loadMoreExtent &&
               !isLoadingMore &&
               canLoadMore) {
             context.read<FeedCubit>().loadMore();

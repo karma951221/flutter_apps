@@ -218,7 +218,8 @@ class _ProfileView extends StatelessWidget {
                 onNotification: (notification) {
                   final feed = context.read<FeedCubit>();
                   final feedState = feed.state;
-                  if (notification.metrics.extentAfter < 240 &&
+                  if (notification.metrics.extentAfter <
+                          FeedCubit.loadMoreExtent &&
                       !feedState.isLoadingMore &&
                       feedState.canLoadMore) {
                     feed.loadMore();

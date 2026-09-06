@@ -19,7 +19,10 @@ void main() {
     expect(redirect(const AuthState.unauthenticated(), Routes.signIn), isNull);
     expect(redirect(const AuthState.unauthenticated(), Routes.signUp), isNull);
     expect(redirect(const AuthState.unauthenticated(), Routes.explore), isNull);
-    expect(redirect(const AuthState.unauthenticated(), Routes.home), Routes.signIn);
+    expect(
+      redirect(const AuthState.unauthenticated(), Routes.home),
+      Routes.signIn,
+    );
     expect(
       redirect(const AuthState.unauthenticated(), Routes.profileSetup),
       Routes.signIn,
@@ -34,10 +37,22 @@ void main() {
   });
 
   test('로그인·스플래시에서 인증되면 홈으로 가고, 보호 경로는 그대로 둔다', () {
-    expect(redirect(const AuthState.authenticated(_me), Routes.signIn), Routes.home);
-    expect(redirect(const AuthState.authenticated(_me), Routes.explore), Routes.home);
-    expect(redirect(const AuthState.authenticated(_me), Routes.splash), Routes.home);
+    expect(
+      redirect(const AuthState.authenticated(_me), Routes.signIn),
+      Routes.home,
+    );
+    expect(
+      redirect(const AuthState.authenticated(_me), Routes.explore),
+      Routes.home,
+    );
+    expect(
+      redirect(const AuthState.authenticated(_me), Routes.splash),
+      Routes.home,
+    );
     expect(redirect(const AuthState.authenticated(_me), Routes.home), isNull);
-    expect(redirect(const AuthState.authenticated(_me), Routes.profileSetup), isNull);
+    expect(
+      redirect(const AuthState.authenticated(_me), Routes.profileSetup),
+      isNull,
+    );
   });
 }

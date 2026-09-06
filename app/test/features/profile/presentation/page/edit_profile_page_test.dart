@@ -170,8 +170,9 @@ void main() {
   });
 
   testWidgets('프로필 꾸미기에서 조회가 실패해도 다시 시도와 나중에가 남는다', (tester) async {
-    when(useCase.getMyProfile)
-        .thenAnswer((_) async => const Err(Failure.network()));
+    when(
+      useCase.getMyProfile,
+    ).thenAnswer((_) async => const Err(Failure.network()));
     final router = await pumpSetup(tester);
     await tester.pumpAndSettle();
 
