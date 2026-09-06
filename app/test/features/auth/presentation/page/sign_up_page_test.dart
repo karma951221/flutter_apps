@@ -1,0 +1,125 @@
+import 'package:bloc_test/bloc_test.dart';
+import 'package:daylog/core/di/injection.dart';
+import 'package:daylog/design_system/theme/app_theme.dart';
+import 'package:daylog/features/auth/presentation/cubit/sign_up_cubit.dart';
+import 'package:daylog/features/auth/presentation/cubit/submit_state.dart';
+import 'package:daylog/features/auth/presentation/page/sign_up_page.dart';
+import 'package:daylog/l10n/app_localizations.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+class _MockSignUpCubit extends MockCubit<SubmitState> implements SignUpCubit {}
+
+void main() {
+  late _MockSignUpCubit cubit;
+
+  setUp(() {
+    cubit = _MockSignUpCubit();
+    whenListen(
+      cubit,
+      const Stream<SubmitState>.empty(),
+      initialState: const SubmitState.idle(),
+    );
+    getIt.registerFactory<SignUpCubit>(() => cubit);
+  });
+
+  tearDown(getIt.reset);
+
+  Future<void> pumpPage(WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const SignUpPage(),
+      ),
+    );
+    await tester.pump();
+  }
+
+  // key 는 AuthTextField 에 붙어 있으므로 그 안의 TextFormField 까지 내려간다.
+  String nicknameText(WidgetTester tester) => tester
+      .widget<TextFormField>(
+        find.descendant(
+          of: find.byKey(const Key('signUp.nickname')),
+          matching: find.byType(TextFormField),
+        ),
+      )
+      .controller!
+      .text;
+
+  testWidgets('가입 폼은 자동 완성 그룹 안에 있다', (tester) async {
+    await pumpPage(tester);
+    expect(find.byType(AutofillGroup), findsOneWidget);
+  });
+
+  testWidgets('이메일에서 벗어나면 로컬 파트를 닉네임 제안값으로 채운다', (tester) async {
+    await pumpPage(tester);
+
+    await tester.enterText(
+      find.byKey(const Key('signUp.email')),
+      'karma951221@example.test',
+    );
+    await tester.tap(find.byKey(const Key('signUp.nickname')));
+    await tester.pump();
+
+    expect(nicknameText(tester), 'karma951221');
+  });
+
+  testWidgets('사용자가 닉네임을 이미 적었으면 덮어쓰지 않는다', (tester) async {
+    await pumpPage(tester);
+
+    await tester.enterText(find.byKey(const Key('signUp.nickname')), '내이름');
+    await tester.enterText(
+      find.byKey(const Key('signUp.email')),
+      'karma951221@example.test',
+    );
+    await tester.tap(find.byKey(const Key('signUp.password')));
+    await tester.pump();
+
+    expect(nicknameText(tester), '내이름');
+  });
+
+  testWidgets('닉네임을 지운 뒤에는 다시 제안하지 않는다', (tester) async {
+    await pumpPage(tester);
+
+    await tester.enterText(find.byKey(const Key('signUp.nickname')), '내이름');
+    await tester.enterText(find.byKey(const Key('signUp.nickname')), '');
+    await tester.enterText(
+      find.byKey(const Key('signUp.email')),
+      'karma951221@example.test',
+    );
+    await tester.tap(find.byKey(const Key('signUp.password')));
+    await tester.pump();
+
+    expect(nicknameText(tester), '');
+  });
+
+  testWidgets('규칙에 맞지 않는 로컬 파트는 제안하지 않는다', (tester) async {
+    await pumpPage(tester);
+
+    // 1자 — 닉네임 최소 길이(2) 미만.
+    await tester.enterText(
+      find.byKey(const Key('signUp.email')),
+      'a@example.test',
+    );
+    await tester.tap(find.byKey(const Key('signUp.nickname')));
+    await tester.pump();
+
+    expect(nicknameText(tester), '');
+  });
+
+  testWidgets('제안값은 최대 길이로 잘라 넣는다', (tester) async {
+    await pumpPage(tester);
+
+    await tester.enterText(
+      find.byKey(const Key('signUp.email')),
+      'abcdefghijklmnopqrstuvwxyz@example.test',
+    );
+    await tester.tap(find.byKey(const Key('signUp.nickname')));
+    await tester.pump();
+
+    expect(nicknameText(tester), 'abcdefghijklmnopqrst');
+  });
+}

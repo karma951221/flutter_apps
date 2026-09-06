@@ -23,6 +23,8 @@
 | `SignInPage` | 정상 입력 | 입력값을 그대로 cubit 에 넘긴다. |
 | `SignInPage` | 제출 중 | 버튼이 로딩으로 바뀌고 회원가입·재설정 진입도 막힌다. |
 | `SignInPage` | 실패 | 입력 아래에 실패 문구가 남는다. |
+| `SignUpPage` | 자동 완성 | 폼이 `AutofillGroup` 안에 있다. |
+| `SignUpPage` | 닉네임 제안값 | 이메일에서 벗어나면 로컬 파트를 닉네임에 채운다. 사용자가 손댔거나(지운 것 포함) 규칙에 어긋나면 채우지 않고, 20자를 넘으면 잘라 넣는다. |
 | `SupabaseErrorMapper` | 댓글 300자 제약 | 사용자 문구로 번역된다. |
 | `SupabaseErrorMapper` | 2단 제한 트리거 문구 | 트리거가 던진 한국어를 그대로 전달한다 — 기본 문구로 덮지 않는다. |
 | `SupabaseErrorMapper` | 42501 | "권한이 없거나 삭제된 대상입니다" 로 안내한다. |

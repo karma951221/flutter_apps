@@ -21,6 +21,7 @@ class AuthTextField extends StatefulWidget {
     this.maxLength,
     this.focusNode,
     this.onSubmitted,
+    this.onChanged,
     super.key,
   });
 
@@ -37,6 +38,10 @@ class AuthTextField extends StatefulWidget {
 
   /// 키보드의 완료/다음 키를 눌렀을 때. 다음 필드로 옮기거나 폼을 제출한다.
   final VoidCallback? onSubmitted;
+
+  /// 사용자가 직접 입력할 때만 불린다. 컨트롤러 값을 코드로 바꿀 때는 불리지
+  /// 않으므로 "사용자가 손댔는가" 를 구분하는 데 쓴다.
+  final ValueChanged<String>? onChanged;
 
   @override
   State<AuthTextField> createState() => _AuthTextFieldState();
@@ -61,6 +66,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
         enabled: widget.enabled,
         autofillHints: widget.autofillHints,
         maxLength: widget.maxLength,
+        onChanged: widget.onChanged,
         onFieldSubmitted: widget.onSubmitted == null
             ? null
             : (_) => widget.onSubmitted!(),

@@ -37,6 +37,9 @@
 - 비밀번호: 최소 길이 검사
 - 닉네임: 길이 2~20자 (최종 판정은 DB CHECK · `lower(nickname)` 유니크 인덱스)
 - 제출 후에는 입력하는 대로 재검증 (`autovalidateMode: onUserInteraction`)
+- 닉네임 제안값: 이메일 칸을 벗어날 때 닉네임이 비어 있고 사용자가 손대지 않았으면
+  로컬 파트(`@` 앞)를 2~20자 규칙에 맞을 때만 채운다. 비밀번호 두 칸은
+  `AutofillHints.newPassword`, 이메일은 `AutofillHints.email`
 
 ## 흐름
 

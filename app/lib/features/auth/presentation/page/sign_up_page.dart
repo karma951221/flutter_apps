@@ -40,10 +40,23 @@ class _SignUpViewState extends State<_SignUpView> {
   final _password = TextEditingController();
   final _passwordConfirm = TextEditingController();
 
+  /// 이메일 칸을 벗어나는 순간을 잡아 닉네임 제안값을 넣는다.
+  final _emailFocus = FocusNode();
+
   /// 키보드의 '다음' 으로 필드를 순서대로 넘긴다.
   final _nicknameFocus = FocusNode();
   final _passwordFocus = FocusNode();
   final _passwordConfirmFocus = FocusNode();
+
+  /// 사용자가 닉네임 칸에 손댔는가. 손댔으면 제안값으로 덮어쓰지 않는다 —
+  /// 지운 것도 결정이다.
+  bool _nicknameEdited = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailFocus.addListener(_onEmailFocusChanged);
+  }
 
   @override
   void dispose() {
@@ -51,10 +64,32 @@ class _SignUpViewState extends State<_SignUpView> {
     _nickname.dispose();
     _password.dispose();
     _passwordConfirm.dispose();
+    _emailFocus
+      ..removeListener(_onEmailFocusChanged)
+      ..dispose();
     _nicknameFocus.dispose();
     _passwordFocus.dispose();
     _passwordConfirmFocus.dispose();
     super.dispose();
+  }
+
+  void _onEmailFocusChanged() {
+    if (!_emailFocus.hasFocus) _suggestNickname();
+  }
+
+  /// 이메일 로컬 파트를 닉네임 제안값으로 넣는다.
+  ///
+  /// 기본값은 추천으로 읽히므로 규칙(2~20자)에 맞을 때만 채우고, 사용자가
+  /// 닉네임 칸에 손댔거나 이미 값이 있으면 아무것도 하지 않는다
+  /// (ux-psychology-review.md 3번).
+  void _suggestNickname() {
+    if (_nicknameEdited || _nickname.text.isNotEmpty) return;
+    final local = _email.text.trim().split('@').first;
+    final candidate = local.length > Validators.nicknameMaxLength
+        ? local.substring(0, Validators.nicknameMaxLength)
+        : local;
+    if (Validators.nickname(candidate) != null) return;
+    _nickname.text = candidate;
   }
 
   void _submit() {
@@ -75,74 +110,81 @@ class _SignUpViewState extends State<_SignUpView> {
         final l10n = AppLocalizations.of(context);
         return AuthScaffold(
           showAppBar: true,
-          child: Form(
-            key: _formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                AuthHeader(
-                  title: l10n.authSignUp,
-                  description: l10n.authSignUpDescription,
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                // key 는 E2E 셀렉터. 라벨 문구 변경에 테스트가 끌려가지 않게 한다.
-                AuthTextField(
-                  key: const Key('signUp.email'),
-                  controller: _email,
-                  label: l10n.authEmailLabel,
-                  enabled: !busy,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  validator: (value) =>
-                      Validators.email(value)?.localized(context),
-                  onSubmitted: _nicknameFocus.requestFocus,
-                ),
-                AuthTextField(
-                  key: const Key('signUp.nickname'),
-                  controller: _nickname,
-                  focusNode: _nicknameFocus,
-                  label: l10n.authNicknameLabel,
-                  enabled: !busy,
-                  textInputAction: TextInputAction.next,
-                  maxLength: Validators.nicknameMaxLength,
-                  validator: (value) =>
-                      Validators.nickname(value)?.localized(context),
-                  onSubmitted: _passwordFocus.requestFocus,
-                ),
-                AuthTextField(
-                  key: const Key('signUp.password'),
-                  controller: _password,
-                  focusNode: _passwordFocus,
-                  label: l10n.authPasswordWithRuleLabel,
-                  enabled: !busy,
-                  obscureText: true,
-                  textInputAction: TextInputAction.next,
-                  validator: (value) =>
-                      Validators.password(value)?.localized(context),
-                  onSubmitted: _passwordConfirmFocus.requestFocus,
-                ),
-                AuthTextField(
-                  key: const Key('signUp.passwordConfirm'),
-                  controller: _passwordConfirm,
-                  focusNode: _passwordConfirmFocus,
-                  label: l10n.authPasswordConfirmLabel,
-                  enabled: !busy,
-                  obscureText: true,
-                  textInputAction: TextInputAction.done,
-                  validator: (v) => Validators.passwordConfirm(
-                    v,
-                    _password.text,
-                  )?.localized(context),
-                  onSubmitted: _submit,
-                ),
-                if (state is SubmitFailure) FailureText(state.failure),
-                AppButton.primary(
-                  label: l10n.authSignUpSubmit,
-                  onPressed: _submit,
-                  isLoading: busy,
-                ),
-              ],
+          child: AutofillGroup(
+            child: Form(
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AuthHeader(
+                    title: l10n.authSignUp,
+                    description: l10n.authSignUpDescription,
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  // key 는 E2E 셀렉터. 라벨 문구 변경에 테스트가 끌려가지 않게 한다.
+                  AuthTextField(
+                    key: const Key('signUp.email'),
+                    controller: _email,
+                    focusNode: _emailFocus,
+                    label: l10n.authEmailLabel,
+                    enabled: !busy,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.email],
+                    validator: (value) =>
+                        Validators.email(value)?.localized(context),
+                    onSubmitted: _nicknameFocus.requestFocus,
+                  ),
+                  AuthTextField(
+                    key: const Key('signUp.nickname'),
+                    controller: _nickname,
+                    focusNode: _nicknameFocus,
+                    label: l10n.authNicknameLabel,
+                    enabled: !busy,
+                    textInputAction: TextInputAction.next,
+                    maxLength: Validators.nicknameMaxLength,
+                    validator: (value) =>
+                        Validators.nickname(value)?.localized(context),
+                    onChanged: (_) => _nicknameEdited = true,
+                    onSubmitted: _passwordFocus.requestFocus,
+                  ),
+                  AuthTextField(
+                    key: const Key('signUp.password'),
+                    controller: _password,
+                    focusNode: _passwordFocus,
+                    label: l10n.authPasswordWithRuleLabel,
+                    enabled: !busy,
+                    obscureText: true,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.newPassword],
+                    validator: (value) =>
+                        Validators.password(value)?.localized(context),
+                    onSubmitted: _passwordConfirmFocus.requestFocus,
+                  ),
+                  AuthTextField(
+                    key: const Key('signUp.passwordConfirm'),
+                    controller: _passwordConfirm,
+                    focusNode: _passwordConfirmFocus,
+                    label: l10n.authPasswordConfirmLabel,
+                    enabled: !busy,
+                    obscureText: true,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.newPassword],
+                    validator: (v) => Validators.passwordConfirm(
+                      v,
+                      _password.text,
+                    )?.localized(context),
+                    onSubmitted: _submit,
+                  ),
+                  if (state is SubmitFailure) FailureText(state.failure),
+                  AppButton.primary(
+                    label: l10n.authSignUpSubmit,
+                    onPressed: _submit,
+                    isLoading: busy,
+                  ),
+                ],
+              ),
             ),
           ),
         );
