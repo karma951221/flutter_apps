@@ -220,7 +220,7 @@
   "accountDeleteFailed": "Couldn't delete the account. Try again.",
   "accountDeleteConfirmTitle": "Delete your account?",
   "accountDeleteConfirmMessage": "The following will be permanently deleted with your account:\n\n• Profile and profile photo\n• Posts and photos\n• Comments and reactions",
-  "accountDeleteConfirmMessageCounted": "The following will be permanently deleted with your account:\n\n• Profile and profile photo\n• {postCount} posts and their photos\n• {commentCount} comments and reactions",
+  "accountDeleteConfirmMessageCounted": "The following will be permanently deleted with your account:\n\n• Profile and profile photo\n• {postCount, plural, =1{1 post and its photos} other{{postCount} posts and their photos}}\n• {commentCount, plural, =1{1 comment and reactions} other{{commentCount} comments and reactions}}",
   "accountDeleteConfirmAction": "Delete account",
   "passwordChangeTitle": "Change password",
   "passwordChangeSucceeded": "Password changed",

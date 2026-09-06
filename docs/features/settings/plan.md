@@ -2,7 +2,7 @@
 
 > [문서 허브](../../README.md) · [기획](../../overview.md) · [아키텍처](../../architecture.md) · [테스트](../../testing/features/settings.md)
 
-> 상태: **완료** · 작성 2026-08-24 · 갱신 2026-08-27
+> 상태: **완료** · 작성 2026-08-24 · 갱신 2026-09-06
 > 진행 상태의 단일 기준은 [진행 현황](../../status.md)이다.
 
 ## 범위
@@ -60,8 +60,16 @@
 
 ## 이 feature 가 소유하는 data
 
-`AccountRepository.myContentSummary()` 하나. `posts` · `post_comments` 에
-`count` HEAD 요청 두 번(`author_id = 나`, `deleted_at is null`)이다. 새 테이블·뷰는 없다.
+`AccountRepository.myContentSummary()` 하나. `posts` 와 `post_comments_visible` 에
+`count` HEAD 요청 두 번(`author_id = 나`, `deleted_at is null`)을 함께 던진다.
+새 테이블·뷰는 없다.
+
+댓글을 `post_comments` 가 아니라 뷰로 세는 이유: 테이블 쪽 SELECT GRANT 는
+`content` 를 뺀 컬럼 목록이라([스키마 §8](../../schema.md)), `select` 파라미터가
+없는 count HEAD 요청이 `select=*` 로 평가돼 42501 로 거부된다.
+`post_comments_visible`(§9)은 뷰 전체에 `grant select` 가 걸려 있고 `author_id` ·
+`deleted_at` 을 그대로 내려준다. 뷰는 삭제된 게시물의 댓글과 차단 관계의 행을
+이미 제외하므로, 세는 값은 "지금 남에게 보이는 내 댓글" 이다.
 
 ## 이 화면이 빌려 쓰는 것
 

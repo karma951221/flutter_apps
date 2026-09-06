@@ -721,7 +721,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String accountDeleteConfirmMessageCounted(int postCount, int commentCount) {
-    return 'The following will be permanently deleted with your account:\n\n• Profile and profile photo\n• $postCount posts and their photos\n• $commentCount comments and reactions';
+    String _temp0 = intl.Intl.pluralLogic(
+      postCount,
+      locale: localeName,
+      other: '$postCount posts and their photos',
+      one: '1 post and its photos',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      commentCount,
+      locale: localeName,
+      other: '$commentCount comments and reactions',
+      one: '1 comment and reactions',
+    );
+    return 'The following will be permanently deleted with your account:\n\n• Profile and profile photo\n• $_temp0\n• $_temp1';
   }
 
   @override

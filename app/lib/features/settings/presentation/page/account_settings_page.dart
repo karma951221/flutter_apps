@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
+import '../../../../core/error/failure.dart';
 import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../core/result/result.dart';
 import '../../../../design_system/widget/app_confirm_dialog.dart';
@@ -28,8 +30,20 @@ class AccountSettingsPage extends StatelessWidget {
   );
 }
 
-class _AccountSettingsView extends StatelessWidget {
+class _AccountSettingsView extends StatefulWidget {
   const _AccountSettingsView();
+
+  @override
+  State<_AccountSettingsView> createState() => _AccountSettingsViewState();
+}
+
+class _AccountSettingsViewState extends State<_AccountSettingsView> {
+  /// 개수 조회 왕복이 끝나 확인 다이얼로그가 닫힐 때까지 켜 둔다.
+  ///
+  /// 탭과 다이얼로그 사이에 네트워크 왕복이 하나 있어서, 행을 그대로 두면
+  /// 아무 일도 일어나지 않는 것처럼 보이고 두 번 누르면 다이얼로그가 두 장
+  /// 쌓인다. 행을 비활성으로 바꿔 둘 다 막는다.
+  bool _openingConfirm = false;
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +82,8 @@ class _AccountSettingsView extends StatelessWidget {
                   style: TextStyle(color: scheme.error),
                 ),
                 subtitle: Text(l10n.accountDeleteSubtitle),
-                onTap: () => _confirmDelete(context),
+                enabled: !_openingConfirm,
+                onTap: _openingConfirm ? null : () => _confirmDelete(context),
               ),
             ],
           ),
@@ -86,25 +101,38 @@ class _AccountSettingsView extends StatelessWidget {
     final cubit = context.read<DeleteAccountCubit>();
     final l10n = AppLocalizations.of(context);
 
-    // 잃게 될 것을 이름과 숫자로 보여준다. 조회가 실패하면 종류만 적은 문구로
-    // 물러선다 — 개수를 못 읽었다고 탈퇴를 막을 이유는 없다.
-    final summary = await getIt<AccountUseCase>().myContentSummary();
-    if (!context.mounted) return;
-    final content = switch (summary) {
-      Ok(:final value) => l10n.accountDeleteConfirmMessageCounted(
-        value.postCount,
-        value.commentCount,
-      ),
-      Err() => l10n.accountDeleteConfirmMessage,
-    };
+    setState(() => _openingConfirm = true);
+    try {
+      // 잃게 될 것을 이름과 숫자로 보여준다. 조회가 실패하면 종류만 적은 문구로
+      // 물러선다 — 개수를 못 읽었다고 탈퇴를 막을 이유는 없다.
+      final summary = await getIt<AccountUseCase>().myContentSummary();
+      if (!context.mounted) return;
+      final String content;
+      switch (summary) {
+        case Ok(:final value):
+          content = l10n.accountDeleteConfirmMessageCounted(
+            value.postCount,
+            value.commentCount,
+          );
+        // 연결이 끊긴 것은 물러설 이유가 되지만, 권한·스키마 문제는 고쳐야 할
+        // 것이라 조용히 삼키지 않는다.
+        case Err(:final failure):
+          if (kDebugMode && failure is! NetworkFailure) {
+            debugPrint('account content summary failed: $failure');
+          }
+          content = l10n.accountDeleteConfirmMessage;
+      }
 
-    final confirmed = await AppConfirmDialog.show(
-      context,
-      title: l10n.accountDeleteConfirmTitle,
-      content: content,
-      confirmLabel: l10n.accountDeleteConfirmAction,
-    );
-    if (!confirmed) return;
-    await cubit.submit();
+      final confirmed = await AppConfirmDialog.show(
+        context,
+        title: l10n.accountDeleteConfirmTitle,
+        content: content,
+        confirmLabel: l10n.accountDeleteConfirmAction,
+      );
+      if (!confirmed) return;
+      await cubit.submit();
+    } finally {
+      if (mounted) setState(() => _openingConfirm = false);
+    }
   }
 }

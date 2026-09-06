@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:daylog/core/di/injection.dart';
 import 'package:daylog/l10n/app_localizations.dart';
 import 'package:daylog/core/error/failure.dart';
@@ -111,5 +113,26 @@ void main() {
     await tester.tap(find.widgetWithText(TextButton, '탈퇴'));
     await tester.pumpAndSettle();
     verify(() => useCase.deleteAccount()).called(1);
+  });
+
+  testWidgets('개수를 기다리는 동안 다시 눌러도 확인은 한 번만 열린다', (tester) async {
+    // 조회가 끝나기 전 상태를 붙잡아 둔다.
+    final pending = Completer<Result<AccountContentSummary>>();
+    when(accountUseCase.myContentSummary).thenAnswer((_) => pending.future);
+
+    await pumpPage(tester);
+    await tester.tap(find.text('회원 탈퇴'));
+    await tester.pump();
+    // 행이 잠겨 있으므로 두 번째 탭은 아무 일도 하지 않는다.
+    await tester.tap(find.text('회원 탈퇴'));
+    await tester.pump();
+
+    pending.complete(
+      const Ok(AccountContentSummary(postCount: 14, commentCount: 37)),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('정말 탈퇴할까요?'), findsOneWidget);
+    verify(accountUseCase.myContentSummary).called(1);
   });
 }
