@@ -122,4 +122,17 @@ void main() {
 
     expect(nicknameText(tester), 'abcdefghijklmnopqrst');
   });
+
+  testWidgets('형식이 어긋난 이메일에서는 제안하지 않는다', (tester) async {
+    await pumpPage(tester);
+
+    await tester.enterText(
+      find.byKey(const Key('signUp.email')),
+      'jo hn@example.test',
+    );
+    await tester.tap(find.byKey(const Key('signUp.nickname')));
+    await tester.pump();
+
+    expect(nicknameText(tester), '');
+  });
 }

@@ -79,11 +79,13 @@ class _SignUpViewState extends State<_SignUpView> {
 
   /// 이메일 로컬 파트를 닉네임 제안값으로 넣는다.
   ///
-  /// 기본값은 추천으로 읽히므로 규칙(2~20자)에 맞을 때만 채우고, 사용자가
-  /// 닉네임 칸에 손댔거나 이미 값이 있으면 아무것도 하지 않는다
-  /// (ux-psychology-review.md 3번).
+  /// 기본값은 추천으로 읽히므로 이메일 전체가 형식에 맞고 로컬 파트가
+  /// 규칙(2~20자)에도 맞을 때만 채운다. 사용자가 닉네임 칸에 손댔거나 이미
+  /// 값이 있으면 아무것도 하지 않는다
+  /// (저장소 루트 `ux-psychology-review.md` 3번 항목).
   void _suggestNickname() {
     if (_nicknameEdited || _nickname.text.isNotEmpty) return;
+    if (Validators.email(_email.text) != null) return;
     final local = _email.text.trim().split('@').first;
     final candidate = local.length > Validators.nicknameMaxLength
         ? local.substring(0, Validators.nicknameMaxLength)
