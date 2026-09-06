@@ -10,15 +10,16 @@
 앱을 쓰는 데 필요한 관리 동작을 한곳에 모은다. 프로필 편집으로 보내고, 계정 자체를
 다루는 동작(비밀번호 변경 · 회원 탈퇴)을 두고, 로그아웃한다.
 
-이 feature 에는 **presentation 만 있다.** 도메인 능력은 이미 auth 와 profile 이
-갖고 있고, 설정 화면은 그것들을 모아 보여주는 자리다. 새 usecase 를 만들지 않았다.
+이 feature 는 거의 **presentation 만 있다.** 도메인 능력은 이미 auth 와 profile 이
+갖고 있고, 설정 화면은 그것들을 모아 보여주는 자리다. 예외는 탈퇴 확인에 넣을
+게시물·댓글 개수 조회 하나뿐이다 (아래 "이 feature 가 소유하는 data").
 
 ## 확정한 결정과 근거
 
 | 항목 | 결정 | 근거 |
 |---|---|---|
 | feature 위치 | `features/settings` 를 새로 만든다 | 화면의 주인이 auth 도 profile 도 아니다. 두 곳 중 하나에 끼워 넣으면 그 feature 가 "설정 화면도 갖고 있는" 상태가 된다 |
-| 계층 | presentation 만 | 도메인 능력을 다시 만들지 않는다. `AuthUseCase.updatePassword` 를 그대로 쓴다 |
+| 계층 | presentation 위주 | 도메인 능력을 다시 만들지 않는다. `AuthUseCase.updatePassword` 를 그대로 쓴다. 탈퇴 확인의 개수 조회만 이 feature 가 domain·data 를 갖는다 |
 | 프로필 편집 | 설정에서 **보내기만** 한다 | 편집 화면과 상태는 profile feature 가 소유한다 ([규칙 ⑥](../../architecture.md)) |
 | 비밀번호 변경 | 지금 비밀번호를 **다시 묻지 않는다** | 로그인한 세션으로만 들어오는 화면이고 Supabase 의 교체가 세션을 근거로 동작한다. 세션 없이 바꾸는 경로는 auth 의 재설정(코드 검증)이 맡는다 |
 | 회원 탈퇴 | **즉시 삭제**, 유예 기간 없음 | 토이 프로젝트에 복구 창구(고객센터)가 없어 유예 기간이 의미를 갖지 못한다. 삭제 경로는 DB 함수 `delete_account()` 하나다 ([스키마 §3](../../schema.md)) |
@@ -45,6 +46,9 @@
   끝내고(서버 왕복 전에 막는다), 저장은 `AuthUseCase.updatePassword` 한 번이다.
 - 로그아웃은 확인 다이얼로그 뒤 `AuthEvent.signOutRequested` 를 보낸다. 로그인
   화면으로 되돌리는 일은 라우터의 redirect 가 한다 — 화면이 직접 이동하지 않는다.
+- 탈퇴 확인은 열기 전에 `AccountUseCase.myContentSummary` 로 내 게시물·댓글 개수를
+  읽어 본문에 넣는다. 조회에 실패하면 종류만 적은 문구로 물러선다. 개수는 정보이지
+  압박이 아니다 — 버튼 문구는 바꾸지 않는다
 
 ## 완료 조건
 
@@ -53,6 +57,11 @@
 - [x] 비밀번호를 바꾸고, 두 칸이 어긋나면 저장을 시도하지 않는다
 - [x] 회원 탈퇴가 계정·프로필·게시물·댓글·반응을 지우고, 같은 이메일로 재가입할 수 있다
 - [x] 탈퇴는 지워질 것을 보여주는 확인을 거쳐야 실행된다
+
+## 이 feature 가 소유하는 data
+
+`AccountRepository.myContentSummary()` 하나. `posts` · `post_comments` 에
+`count` HEAD 요청 두 번(`author_id = 나`, `deleted_at is null`)이다. 새 테이블·뷰는 없다.
 
 ## 이 화면이 빌려 쓰는 것
 

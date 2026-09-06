@@ -720,6 +720,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'The following will be permanently deleted with your account:\n\n• Profile and profile photo\n• Posts and photos\n• Comments and reactions';
 
   @override
+  String accountDeleteConfirmMessageCounted(int postCount, int commentCount) {
+    return 'The following will be permanently deleted with your account:\n\n• Profile and profile photo\n• $postCount posts and their photos\n• $commentCount comments and reactions';
+  }
+
+  @override
   String get accountDeleteConfirmAction => 'Delete account';
 
   @override

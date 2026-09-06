@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/l10n/failure_localizations.dart';
+import '../../../../core/result/result.dart';
 import '../../../../design_system/widget/app_confirm_dialog.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../domain/usecase/account_use_case.dart';
 import '../cubit/delete_account_cubit.dart';
 import '../cubit/delete_account_state.dart';
 
@@ -83,10 +85,23 @@ class _AccountSettingsView extends StatelessWidget {
   Future<void> _confirmDelete(BuildContext context) async {
     final cubit = context.read<DeleteAccountCubit>();
     final l10n = AppLocalizations.of(context);
+
+    // 잃게 될 것을 이름과 숫자로 보여준다. 조회가 실패하면 종류만 적은 문구로
+    // 물러선다 — 개수를 못 읽었다고 탈퇴를 막을 이유는 없다.
+    final summary = await getIt<AccountUseCase>().myContentSummary();
+    if (!context.mounted) return;
+    final content = switch (summary) {
+      Ok(:final value) => l10n.accountDeleteConfirmMessageCounted(
+        value.postCount,
+        value.commentCount,
+      ),
+      Err() => l10n.accountDeleteConfirmMessage,
+    };
+
     final confirmed = await AppConfirmDialog.show(
       context,
       title: l10n.accountDeleteConfirmTitle,
-      content: l10n.accountDeleteConfirmMessage,
+      content: content,
       confirmLabel: l10n.accountDeleteConfirmAction,
     );
     if (!confirmed) return;

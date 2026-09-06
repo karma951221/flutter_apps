@@ -690,6 +690,11 @@ class AppLocalizationsKo extends AppLocalizations {
       '계정과 함께 아래가 모두 삭제되며 되돌릴 수 없습니다.\n\n· 프로필과 프로필 사진\n· 작성한 게시물과 사진\n· 남긴 댓글과 감정표현';
 
   @override
+  String accountDeleteConfirmMessageCounted(int postCount, int commentCount) {
+    return '계정과 함께 아래가 모두 삭제되며 되돌릴 수 없습니다.\n\n· 프로필과 프로필 사진\n· 작성한 게시물 $postCount개와 사진\n· 남긴 댓글 $commentCount개와 감정표현';
+  }
+
+  @override
   String get accountDeleteConfirmAction => '탈퇴';
 
   @override

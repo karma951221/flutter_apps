@@ -1420,6 +1420,12 @@ abstract class AppLocalizations {
   /// **'계정과 함께 아래가 모두 삭제되며 되돌릴 수 없습니다.\n\n· 프로필과 프로필 사진\n· 작성한 게시물과 사진\n· 남긴 댓글과 감정표현'**
   String get accountDeleteConfirmMessage;
 
+  /// 탈퇴 확인 본문. 실제 게시물·댓글 개수를 넣은 판. 개수 조회에 실패하면 accountDeleteConfirmMessage 를 쓴다
+  ///
+  /// In ko, this message translates to:
+  /// **'계정과 함께 아래가 모두 삭제되며 되돌릴 수 없습니다.\n\n· 프로필과 프로필 사진\n· 작성한 게시물 {postCount}개와 사진\n· 남긴 댓글 {commentCount}개와 감정표현'**
+  String accountDeleteConfirmMessageCounted(int postCount, int commentCount);
+
   /// 회원 탈퇴 확인 버튼 (되돌릴 수 없다)
   ///
   /// In ko, this message translates to:

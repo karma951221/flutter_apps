@@ -690,6 +690,11 @@ class AppLocalizationsJa extends AppLocalizations {
       'アカウントとともに以下がすべて削除され、元に戻せません。\n\n・プロフィールとプロフィール写真\n・投稿と写真\n・コメントとリアクション';
 
   @override
+  String accountDeleteConfirmMessageCounted(int postCount, int commentCount) {
+    return 'アカウントとともに以下がすべて削除され、元に戻せません。\n\n・プロフィールとプロフィール写真\n・投稿 $postCount件と写真\n・コメント $commentCount件とリアクション';
+  }
+
+  @override
   String get accountDeleteConfirmAction => 'アカウントを削除';
 
   @override

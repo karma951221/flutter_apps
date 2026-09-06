@@ -2,7 +2,7 @@
 
 > [테스트 가이드](../README.md) · [아키텍처](../../architecture.md) · [계획](../../features/settings/plan.md)
 
-presentation 만 있는 feature 라 테스트도 화면과 cubit 뿐이다.
+탈퇴 확인의 개수 조회만 data 계층이 있다. 나머지는 화면과 cubit 뿐이다.
 
 | 대상 | 시나리오 | 기대 결과 |
 |---|---|---|
@@ -13,6 +13,8 @@ presentation 만 있는 feature 라 테스트도 화면과 cubit 뿐이다.
 | `SettingsPage` | 로그아웃 | 확인 다이얼로그(`AppConfirmDialog`, destructive 아님)를 거쳐야 `signOutRequested` 가 나간다. 취소하면 아무 일도 없다. |
 | `AccountSettingsPage` | 회원 탈퇴 | 지워질 것을 나열한 확인을 거쳐야 실행된다. 다이얼로그를 띄우거나 취소한 것만으로는 아무것도 지우지 않는다. |
 | `AccountSettingsPage` | 탈퇴 실패 | Snackbar 로 알리고 화면에 남는다. |
+| `AccountSettingsPage` | 탈퇴 확인 본문 | 게시물·댓글 개수를 넣어 보여준다. 조회가 실패하면 종류만 적은 문구로 탈퇴를 진행한다. |
+| `AccountRepositoryImpl` | 개수 조회 / 세션 없음 | 두 개수를 `AccountContentSummary` 로 담는다 / 인증 실패 `Failure` 를 낸다. |
 | `DeleteAccountCubit` | 성공 | 진행 중 상태로 남는다 — 세션이 사라져 화면째로 없어지므로 되돌리지 않는다. |
 | `DeleteAccountCubit` | 실패 / 중복 호출 | 실패 상태로 남는다 / 진행 중에는 다시 부르지 않는다. |
 | `ChangePasswordCubit` | 성공 | 진행 중 → 성공으로 전이하고 `AuthUseCase.updatePassword` 를 한 번 부른다. |

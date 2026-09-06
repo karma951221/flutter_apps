@@ -134,6 +134,15 @@ import '../../features/safety/presentation/cubit/block_action_cubit.dart'
 import '../../features/safety/presentation/cubit/blocked_users_cubit.dart'
     as _i50;
 import '../../features/safety/presentation/cubit/report_cubit.dart' as _i347;
+import '../../features/settings/data/datasource/account_data_source.dart'
+    as _i1004;
+import '../../features/settings/data/datasource/supabase_account_data_source.dart'
+    as _i589;
+import '../../features/settings/data/repository/account_repository_impl.dart'
+    as _i820;
+import '../../features/settings/domain/repository/account_repository.dart'
+    as _i13;
+import '../../features/settings/domain/usecase/account_use_case.dart' as _i727;
 import '../../features/settings/presentation/cubit/change_password_cubit.dart'
     as _i903;
 import '../../features/settings/presentation/cubit/delete_account_cubit.dart'
@@ -227,6 +236,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i40.FollowDataSource>(
       () => _i161.SupabaseFollowDataSource(gh<_i454.SupabaseClient>()),
     );
+    gh.lazySingleton<_i1004.AccountDataSource>(
+      () => _i589.SupabaseAccountDataSource(gh<_i454.SupabaseClient>()),
+    );
     gh.lazySingleton<_i892.BlockRepository>(
       () => _i659.BlockRepositoryImpl(gh<_i452.BlockDataSource>()),
     );
@@ -251,6 +263,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i477.ChatRepository>(),
         gh<_i1000.IdGenerator>(),
       ),
+    );
+    gh.lazySingleton<_i13.AccountRepository>(
+      () => _i820.AccountRepositoryImpl(gh<_i1004.AccountDataSource>()),
     );
     gh.lazySingleton<_i903.FollowRepository>(
       () => _i257.FollowRepositoryImpl(gh<_i40.FollowDataSource>()),
@@ -305,6 +320,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i176.AuthUseCase>(
       () => _i176.DefaultAuthUseCase(gh<_i961.AuthRepository>()),
+    );
+    gh.lazySingleton<_i727.AccountUseCase>(
+      () => _i727.DefaultAccountUseCase(gh<_i13.AccountRepository>()),
     );
     gh.factory<_i797.AuthBloc>(() => _i797.AuthBloc(gh<_i176.AuthUseCase>()));
     gh.factory<_i271.PasswordResetCubit>(

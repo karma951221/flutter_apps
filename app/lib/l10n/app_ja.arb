@@ -220,6 +220,7 @@
   "accountDeleteFailed": "アカウントを削除できませんでした。もう一度お試しください。",
   "accountDeleteConfirmTitle": "アカウントを削除しますか？",
   "accountDeleteConfirmMessage": "アカウントとともに以下がすべて削除され、元に戻せません。\n\n・プロフィールとプロフィール写真\n・投稿と写真\n・コメントとリアクション",
+  "accountDeleteConfirmMessageCounted": "アカウントとともに以下がすべて削除され、元に戻せません。\n\n・プロフィールとプロフィール写真\n・投稿 {postCount}件と写真\n・コメント {commentCount}件とリアクション",
   "accountDeleteConfirmAction": "アカウントを削除",
   "passwordChangeTitle": "パスワード変更",
   "passwordChangeSucceeded": "パスワードを変更しました",
