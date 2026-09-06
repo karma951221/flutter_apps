@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:daylog/app/router/routes.dart';
 import 'package:daylog/core/di/injection.dart';
+import 'package:daylog/core/error/failure.dart';
 import 'package:daylog/core/result/result.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/auth/domain/entity/app_user.dart';
@@ -166,6 +167,30 @@ void main() {
     verifyNever(
       () => useCase.updateMyProfile(any(), newAvatar: any(named: 'newAvatar')),
     );
+  });
+
+  testWidgets('프로필 꾸미기에서 조회가 실패해도 다시 시도와 나중에가 남는다', (tester) async {
+    when(useCase.getMyProfile)
+        .thenAnswer((_) async => const Err(Failure.network()));
+    final router = await pumpSetup(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('다시 시도'), findsOneWidget);
+    expect(find.text('나중에'), findsOneWidget);
+
+    await tester.tap(find.text('나중에'));
+    await tester.pumpAndSettle();
+    expect(router.state.matchedLocation, Routes.home);
+  });
+
+  testWidgets('프로필 꾸미기에서 시스템 뒤로가기는 앱을 닫지 않고 홈으로 간다', (tester) async {
+    final router = await pumpSetup(tester);
+    await tester.pumpAndSettle();
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(router.state.matchedLocation, Routes.home);
   });
 
   testWidgets('계속을 누르면 저장한 뒤 홈으로 간다', (tester) async {

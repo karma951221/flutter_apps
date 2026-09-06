@@ -11,6 +11,7 @@ import '../../../../core/validation/validators.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_button.dart';
+import '../../../../design_system/widget/app_placeholder.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -187,122 +188,157 @@ class _EditProfileViewState extends State<_EditProfileView> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.isSetup ? l10n.profileSetupTitle : l10n.profileEditTitle,
+    // setup 모드에는 뒤로 갈 곳이 없다. 안드로이드 시스템 뒤로가기를 그대로
+    // 두면 앱이 닫히므로, "나중에" 와 같은 곳(홈)으로 보낸다.
+    return PopScope(
+      canPop: !widget.isSetup,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) context.go(Routes.home);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            widget.isSetup ? l10n.profileSetupTitle : l10n.profileEditTitle,
+          ),
+          automaticallyImplyLeading: !widget.isSetup,
         ),
-        automaticallyImplyLeading: !widget.isSetup,
-      ),
-      body: BlocConsumer<ProfileCubit, ProfileState>(
-        listenWhen: (previous, current) =>
-            previous.profile != current.profile ||
-            previous.isSaving != current.isSaving,
-        listener: (context, state) {
-          _populate(state);
-          final didFinishSaving = _wasSaving && !state.isSaving;
-          _wasSaving = state.isSaving;
-          if (didFinishSaving && state.failure != null) {
-            AppSnackBar.show(
-              context,
-              message:
-                  state.failure?.localizedMessage(context) ??
-                  l10n.profileSaveFailed,
-              type: AppSnackBarType.error,
-            );
-          }
-          if (didFinishSaving &&
-              state.failure == null &&
-              state.profile != null) {
-            AppSnackBar.show(
-              context,
-              message: l10n.profileSaveSucceeded,
-              type: AppSnackBarType.success,
-            );
-            if (widget.isSetup) context.go(Routes.home);
-          }
-        },
-        builder: (context, state) {
-          _populate(state);
-          if (state.isLoading && state.profile == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (state.profile == null) {
-            return const SizedBox.shrink();
-          }
-          final isBusy = state.isSaving;
-          return SafeArea(
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                children: [
-                  if (widget.isSetup) ...[
-                    Text(
-                      l10n.profileSetupDescription,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+        body: BlocConsumer<ProfileCubit, ProfileState>(
+          listenWhen: (previous, current) =>
+              previous.profile != current.profile ||
+              previous.isSaving != current.isSaving,
+          listener: (context, state) {
+            _populate(state);
+            final didFinishSaving = _wasSaving && !state.isSaving;
+            _wasSaving = state.isSaving;
+            if (didFinishSaving && state.failure != null) {
+              AppSnackBar.show(
+                context,
+                message:
+                    state.failure?.localizedMessage(context) ??
+                    l10n.profileSaveFailed,
+                type: AppSnackBarType.error,
+              );
+            }
+            if (didFinishSaving &&
+                state.failure == null &&
+                state.profile != null) {
+              AppSnackBar.show(
+                context,
+                message: l10n.profileSaveSucceeded,
+                type: AppSnackBarType.success,
+              );
+              if (widget.isSetup) context.go(Routes.home);
+            }
+          },
+          builder: (context, state) {
+            _populate(state);
+            if (state.isLoading && state.profile == null) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state.profile == null) {
+              // setup 모드에는 뒤로가기가 없다. 조회가 실패했을 때 빈 화면을
+              // 그리면 가입 직후 아무 데도 갈 수 없는 막다른 길이 된다.
+              if (!widget.isSetup) return const SizedBox.shrink();
+              return SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AppPlaceholder(
+                        icon: Icons.cloud_off_outlined,
+                        message:
+                            state.failure?.localizedMessage(context) ??
+                            l10n.profileLoadFailed,
+                        actionLabel: l10n.commonRetry,
+                        onAction: () => context.read<ProfileCubit>().load(),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      AppButton.text(
+                        label: l10n.profileSetupSkip,
+                        onPressed: () => context.go(Routes.home),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            final isBusy = state.isSaving;
+            return SafeArea(
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  children: [
+                    if (widget.isSetup) ...[
+                      Text(
+                        l10n.profileSetupDescription,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+                    Center(
+                      child: AppAvatar(
+                        nickname: _nicknameController.text,
+                        imageUrl: _avatarUrl,
+                        imageBytes: _pendingAvatar?.bytes,
+                        radius: 48,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                  ],
-                  Center(
-                    child: AppAvatar(
-                      nickname: _nicknameController.text,
-                      imageUrl: _avatarUrl,
-                      imageBytes: _pendingAvatar?.bytes,
-                      radius: 48,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Center(
-                    child: AppButton.secondary(
-                      label: l10n.profileChoosePhoto,
-                      onPressed: isBusy ? null : _pickAvatar,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-                  TextFormField(
-                    controller: _nicknameController,
-                    decoration: _nicknameDecoration(
-                      context,
-                      state.nicknameCheck,
-                    ),
-                    textInputAction: TextInputAction.next,
-                    validator: (value) =>
-                        Validators.nickname(value)?.localized(context),
-                    onChanged: context.read<ProfileCubit>().checkNickname,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  TextFormField(
-                    controller: _bioController,
-                    decoration: InputDecoration(
-                      labelText: l10n.profileBioLabel,
-                    ),
-                    maxLength: Validators.bioMaxLength,
-                    minLines: 3,
-                    maxLines: 5,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  AppButton.primary(
-                    label: widget.isSetup
-                        ? l10n.profileSetupContinue
-                        : l10n.commonSave,
-                    onPressed: isBusy ? null : _save,
-                    isLoading: isBusy,
-                  ),
-                  if (widget.isSetup) ...[
                     const SizedBox(height: AppSpacing.sm),
-                    AppButton.text(
-                      label: l10n.profileSetupSkip,
-                      onPressed: isBusy ? null : () => context.go(Routes.home),
+                    Center(
+                      child: AppButton.secondary(
+                        label: l10n.profileChoosePhoto,
+                        onPressed: isBusy ? null : _pickAvatar,
+                      ),
                     ),
+                    const SizedBox(height: AppSpacing.xl),
+                    TextFormField(
+                      controller: _nicknameController,
+                      decoration: _nicknameDecoration(
+                        context,
+                        state.nicknameCheck,
+                      ),
+                      textInputAction: TextInputAction.next,
+                      validator: (value) =>
+                          Validators.nickname(value)?.localized(context),
+                      onChanged: context.read<ProfileCubit>().checkNickname,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    TextFormField(
+                      controller: _bioController,
+                      decoration: InputDecoration(
+                        labelText: l10n.profileBioLabel,
+                      ),
+                      maxLength: Validators.bioMaxLength,
+                      minLines: 3,
+                      maxLines: 5,
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    AppButton.primary(
+                      label: widget.isSetup
+                          ? l10n.profileSetupContinue
+                          : l10n.commonSave,
+                      onPressed: isBusy ? null : _save,
+                      isLoading: isBusy,
+                    ),
+                    if (widget.isSetup) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      AppButton.text(
+                        label: l10n.profileSetupSkip,
+                        onPressed: isBusy
+                            ? null
+                            : () => context.go(Routes.home),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
