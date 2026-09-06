@@ -303,6 +303,7 @@
   "feedTabFollowing": "フォロー中",
   "feedFollowingEmptyMessage": "フォロー中の人がいません",
   "feedFollowingEmptyDescription": "気になる人をフォローすると、ここに投稿が集まります。",
+  "feedFollowingEmptyAction": "みんなの投稿を見る",
   "followAction": "フォロー",
   "followFollowingAction": "フォロー中",
   "followMutualAction": "相互フォロー",

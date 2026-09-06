@@ -298,4 +298,39 @@ void main() {
       ),
     );
   });
+
+  testWidgets('팔로잉 탭이 비어 있으면 사람 둘러보기로 전체 탭에 보낸다', (tester) async {
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: FeedSource.all,
+      ),
+    ).thenAnswer(
+      (_) async => Ok(CursorPage<FeedPost>(items: [_item('1', 'other', '이웃')])),
+    );
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: FeedSource.following,
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+
+    await pumpPage(tester);
+    await tester.tap(find.text('팔로잉'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('팔로우한 사람이 없습니다'), findsOneWidget);
+    expect(find.text('사람 둘러보기'), findsOneWidget);
+
+    await tester.tap(find.text('사람 둘러보기'));
+    await tester.pumpAndSettle();
+
+    final tabBar = tester.widget<TabBar>(find.byType(TabBar));
+    expect(tabBar.controller!.index, 0);
+    expect(find.text('기록 1'), findsOneWidget);
+  });
 }

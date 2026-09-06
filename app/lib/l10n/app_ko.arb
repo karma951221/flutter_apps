@@ -1265,6 +1265,10 @@
   "@feedFollowingEmptyDescription": {
     "description": "팔로잉 피드가 비었을 때 보조 설명"
   },
+  "feedFollowingEmptyAction": "사람 둘러보기",
+  "@feedFollowingEmptyAction": {
+    "description": "팔로잉 탭이 비어 있을 때의 행동 버튼. 누르면 전체 탭으로 옮긴다"
+  },
   "followAction": "팔로우",
   "@followAction": {
     "description": "팔로우 버튼"

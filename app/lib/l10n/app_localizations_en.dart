@@ -993,6 +993,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Follow someone and their posts will show up here.';
 
   @override
+  String get feedFollowingEmptyAction => 'Browse everyone';
+
+  @override
   String get followAction => 'Follow';
 
   @override

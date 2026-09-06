@@ -37,6 +37,7 @@
 | `FeedCubit` | 작성자 필터 조회 (`loadForAuthor`) | 첫 페이지와 다음 페이지 모두 그 작성자로 요청한다. 새로고침해도 필터가 남는다. |
 | `FeedCubit` | 전체 피드 복귀 (`load`) | 작성자 필터를 지우고, 이후 새로고침도 필터 없이 요청한다. |
 | `SupabaseErrorMapper` | `posts_content_length` 위반 | 500자 초과 저장이 사용자 문구로 번역된다 (rename 이후 제약 이름 회귀). |
+| `FeedPage` | 팔로잉 탭 빈 상태 | "사람 둘러보기" 를 누르면 전체 탭으로 옮기고 전체 피드를 읽는다. |
 | `HomeShellPage` | 하단 내비게이션 | 홈 · 프로필 · 설정 세 곳을 보여주고, 탭을 옮기면 그 화면이 앞으로 나온다. |
 | `HomeShellPage` | 탭 왕복 | 목록을 다시 읽지 않는다 — `IndexedStack` 이 탭 본문을 살려 둔다.
 

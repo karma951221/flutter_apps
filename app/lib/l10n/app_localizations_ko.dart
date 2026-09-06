@@ -939,6 +939,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get feedFollowingEmptyDescription => '마음에 드는 사람을 팔로우하면 여기에 글이 모입니다.';
 
   @override
+  String get feedFollowingEmptyAction => '사람 둘러보기';
+
+  @override
   String get followAction => '팔로우';
 
   @override

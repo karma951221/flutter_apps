@@ -1918,6 +1918,12 @@ abstract class AppLocalizations {
   /// **'마음에 드는 사람을 팔로우하면 여기에 글이 모입니다.'**
   String get feedFollowingEmptyDescription;
 
+  /// 팔로잉 탭이 비어 있을 때의 행동 버튼. 누르면 전체 탭으로 옮긴다
+  ///
+  /// In ko, this message translates to:
+  /// **'사람 둘러보기'**
+  String get feedFollowingEmptyAction;
+
   /// 팔로우 버튼
   ///
   /// In ko, this message translates to:

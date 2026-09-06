@@ -303,6 +303,7 @@
   "feedTabFollowing": "Following",
   "feedFollowingEmptyMessage": "You are not following anyone yet",
   "feedFollowingEmptyDescription": "Follow someone and their posts will show up here.",
+  "feedFollowingEmptyAction": "Browse everyone",
   "followAction": "Follow",
   "followFollowingAction": "Following",
   "followMutualAction": "Mutual",

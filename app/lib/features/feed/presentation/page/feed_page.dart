@@ -138,6 +138,8 @@ class _FeedViewState extends State<_FeedView>
             canLoadMore: state.canLoadMore,
             isFollowingTab: _isFollowingTab,
             onCompose: () => _compose(context, currentAuthor),
+            // 탭을 옮기면 리스너가 load() 를 부른다 — 여기서 다시 읽지 않는다.
+            onBrowseAll: () => _tabController.animateTo(0),
           ),
         },
       ),
@@ -173,6 +175,7 @@ class _FeedList extends StatelessWidget {
     required this.canLoadMore,
     required this.isFollowingTab,
     required this.onCompose,
+    required this.onBrowseAll,
   });
 
   /// 목록 맨 아래가 확장 FAB 에 가리지 않도록 두는 여백.
@@ -187,6 +190,10 @@ class _FeedList extends StatelessWidget {
   /// 팔로우한 사람이 없는 것이다.
   final bool isFollowingTab;
   final VoidCallback onCompose;
+
+  /// 팔로잉 탭이 비어 있을 때 전체 탭으로 보내는 행동. 빈 화면이 막다른 길이
+  /// 되지 않게 한다 (ux-psychology-review.md 2번).
+  final VoidCallback onBrowseAll;
 
   @override
   Widget build(BuildContext context) {
@@ -269,6 +276,8 @@ class _FeedList extends StatelessWidget {
                       icon: Icons.people_outline,
                       message: l10n.feedFollowingEmptyMessage,
                       description: l10n.feedFollowingEmptyDescription,
+                      actionLabel: l10n.feedFollowingEmptyAction,
+                      onAction: onBrowseAll,
                     )
                   : AppPlaceholder(
                       icon: Icons.edit_note_outlined,

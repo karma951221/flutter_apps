@@ -939,6 +939,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get feedFollowingEmptyDescription => '気になる人をフォローすると、ここに投稿が集まります。';
 
   @override
+  String get feedFollowingEmptyAction => 'みんなの投稿を見る';
+
+  @override
   String get followAction => 'フォロー';
 
   @override
