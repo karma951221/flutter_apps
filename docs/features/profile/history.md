@@ -41,3 +41,22 @@ presentation 까지 올라와 [규칙 ①](../../architecture.md#-supabase-타�
 - `flutter analyze` 통과
 - `flutter test` 전체 통과 (아바타 흐름 이관 후 128개)
 - Storage와 RLS의 실제 거부/허용은 로컬 Supabase 재적용 후 통합 확인이 필요하다.
+
+## 2026-09-06 — UX 심리학 리뷰 반영 (완성도 카드 · 프로필 꾸미기)
+
+[리뷰](../../../ux-psychology-review.md) 1번·5번.
+
+- 내 프로필 헤더 아래 `ProfileCompletionCard`. 닉네임·사진·자기소개·첫 게시물·첫 팔로우
+  다섯 칸이고 닉네임은 가입 때 정했으므로 **항상 20% 에서 시작한다.** 근거 없는 칸은
+  채우지 않는다 — 전부 앱이 이미 아는 값(`Profile` · 프로필 화면의 `FeedCubit`)으로
+  판정한다. 다섯 개가 끝나면 사라진다. "첫 팔로우" 는 홈에서 하는 일이라 탭 동작이 없다
+- 알려진 열화: 카드가 첫 화면을 채워 내 게시물이 스크롤 아래로 밀린다(의도한 유도이지만
+  접힘형 변형이 후보). 목록을 다시 읽는 동안(`status == loading`) 카드가 잠깐 사라진다.
+  `BlocBuilder` 에 `buildWhen` 이 없다
+- 편집 화면에 `isSetup` 모드. 제목 "프로필 꾸미기", 안내 한 문장, "계속"(저장 후 홈),
+  "나중에"(저장 없이 홈). "나중에" 는 AppBar 가 아니라 "계속" 아래에 둔다 — 테마의
+  `TextButton` 최소 너비가 `Size.fromHeight` 라 AppBar 의 Row 안에서는 폭이 무한대가
+  된다. 뒤로가기는 없고 시스템 뒤로가기는 `PopScope` 로 홈에 보낸다. 조회에 실패하면
+  재시도와 "나중에" 가 남는다 — 리뷰에서 컨트롤 없는 빈 화면이 잡혀 더한 것이다
+
+검증: `flutter test test/features/profile` 62 통과.

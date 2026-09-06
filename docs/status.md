@@ -284,6 +284,24 @@ auth 쪽 8개는 `await` 뒤에 가드 없이 `emit` 한다. 다만 이 테스�
 - iOS 빌드 — Xcode 미설치라 한 번도 못 돌렸다 ([setup.md](setup.md) §4)
 - 4단계(v1.1) — 재설정 SMTP · 구글 로그인 · OTP · 푸시. 아직 대기다
 
+## UX 심리학 리뷰 반영 — 2026-09-06
+
+[리뷰](../ux-psychology-review.md) 의 8개 발견 중 7개를 반영했다 (8번은 1번이 대체).
+계획은 [2026-09-06-ux-psychology](superpowers/plans/2026-09-06-ux-psychology.md).
+브랜치 `feat/ux-psychology`.
+
+- [x] 팔로잉 빈 상태 "사람 둘러보기" (feed)
+- [x] 가입 폼 autofill 힌트 · 닉네임 제안값 (auth)
+- [x] 글자 수 카운터 50자 이내에서만 (post)
+- [x] 프로필 완성도 카드 20% 시작 (profile)
+- [x] 탈퇴 확인에 실제 개수 (settings — `AccountUseCase` 신설, 댓글은 `post_comments_visible` 로)
+- [x] 가입 직후 프로필 꾸미기 · "나중에" (`resolveAuthRedirect` + 편집 화면 setup 모드)
+- [x] 로그인 화면 "먼저 둘러보기" → 읽기 전용 게스트 피드 `/explore` (스키마 변경 없음)
+
+검증: `flutter analyze` 무결함, `flutter test` 615 통과,
+`python3 supabase/tests/guest_read_check.py` 5/5. Patrol E2E 는 돌리지 않았다 —
+`signUpNewAccount` 헬퍼가 "나중에" 를 누르도록 바꿨으니 다음 E2E 실행 때 확인한다.
+
 ## 인계 메모 — 2026-08-30
 
 `feat/f7-safety-account` 를 `main` 에 병합해 여기까지를 한 줄기로 만들었고,

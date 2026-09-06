@@ -168,3 +168,20 @@ Postgres 뷰는 기본적으로 **뷰 소유자**(`postgres`) 권한으로 실�
 
 `FeedCubit` 에는 `applyCommentCount` 가 더해졌다(F6). 댓글 화면에서 돌아올 때 목록을
 다시 읽지 않고 그 항목의 수만 고친다.
+
+## 2026-09-06 — UX 심리학 리뷰 반영 (팔로잉 빈 상태 · 게스트 둘러보기)
+
+[리뷰](../../../ux-psychology-review.md) 2번·4번.
+
+- 팔로잉 탭 빈 상태에 "사람 둘러보기" 를 붙였다. 콜백은 `TabController.animateTo(0)`
+  만 하고, 읽기는 기존 탭 리스너가 한다 — 같은 일을 하는 입구가 둘이면 안 된다
+- 로그인 화면의 "먼저 둘러보기" 로 들어오는 읽기 전용 `GuestFeedPage`(`/explore`, 공개
+  경로). 기본 진입은 여전히 로그인 화면이다 — 기획서의 "사용자 수는 목표가 아니다" 와
+  E2E·라우터 게이트를 그대로 두기 위해서다. 스키마 변경은 없다: `posts_with_author` 등은
+  이미 `anon` 에 열려 있었고, `my_reaction` 은 비로그인이면 null 이다. 게시물 탭·반응·댓글은
+  모두 가입 안내 시트로 보낸다. 작성자 프로필로 나가는 길은 없다 — `/users/:id` 는 보호
+  경로다
+- 남긴 것: 게스트 빈 상태는 스크롤 뷰가 아니라 당겨서 새로고침이 없다(전체 피드가 비었을
+  때만 닿는다). loading/failure/list 스캐폴딩이 `FeedPage` 와 중복이다
+
+검증: `flutter test` 615 통과, `python3 supabase/tests/guest_read_check.py` 5/5.

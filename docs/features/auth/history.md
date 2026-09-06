@@ -133,6 +133,22 @@ await for (final event in _client.auth.onAuthStateChange) {
 E2E 셀렉터(`signIn.email` 등)는 그대로 뒀다. 라벨 문구가 바뀌어도 Patrol 테스트가
 깨지지 않아야 한다.
 
+## 2026-09-06 — UX 심리학 리뷰 반영 (가입 폼 · 가입 직후 흐름)
+
+[리뷰](../../../ux-psychology-review.md) 3번·5번.
+
+- 가입 폼을 `AutofillGroup` 으로 감싸고 이메일 `AutofillHints.email`, 비밀번호 두 칸
+  `AutofillHints.newPassword`. 이메일 칸을 벗어나면 로컬 파트를 닉네임 제안값으로 넣는다 —
+  단 이메일이 형식에 맞고, 닉네임이 비어 있고, 사용자가 닉네임에 손대지 않았을 때만
+  (지운 것도 손댄 것이다). 리뷰에서 "형식이 어긋난 이메일(`jo hn@…`)의 로컬 파트가
+  공백째 들어간다" 가 잡혀 이메일 유효성 게이트를 더했다
+- 라우터 redirect 를 `resolveAuthRedirect()` 순수 함수로 뽑았다. 가입 화면에서 인증되면
+  홈이 아니라 `/profile/setup` 으로 간다 — 가입 화면에서 인증 상태가 되는 경로는 가입
+  성공뿐이라 위치가 곧 신호다. 이미 인증된 채 `/sign-up` 딥링크로 들어와도 같은 곳으로
+  가는데, 앱 안에서는 닿을 수 없는 경로라 그대로 뒀다
+- Patrol `signUpNewAccount` 는 "나중에" 를 눌러 프로필 꾸미기를 건너뛴다 (E2E 는 이번에
+  돌리지 않았다)
+
 ## 남은 것
 
 - **비밀번호 재설정 배포용 SMTP** — 로컬은 Mailpit 으로 동작. 운영에는 발송사(Resend 등) + 도메인 필요
