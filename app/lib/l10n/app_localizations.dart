@@ -166,6 +166,12 @@ abstract class AppLocalizations {
   /// **'회원가입'**
   String get authSignUp;
 
+  /// 로그인 화면 맨 아래. 가입 없이 전체 피드를 읽기 전용으로 본다
+  ///
+  /// In ko, this message translates to:
+  /// **'먼저 둘러보기'**
+  String get authBrowseFirst;
+
   /// 회원가입 화면 헤더 설명
   ///
   /// In ko, this message translates to:
@@ -351,6 +357,24 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'모두 확인했습니다'**
   String get feedEndOfList;
+
+  /// 비로그인 읽기 전용 피드의 AppBar 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'둘러보기'**
+  String get guestFeedTitle;
+
+  /// 게스트가 반응·댓글·게시물을 누를 때 뜨는 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'가입하면 반응과 댓글을 남길 수 있어요'**
+  String get guestPromptTitle;
+
+  /// 게스트 안내 시트의 한 줄 설명. 가입 버튼과 로그인 버튼이 아래에 온다
+  ///
+  /// In ko, this message translates to:
+  /// **'이메일과 닉네임만 있으면 됩니다.'**
+  String get guestPromptDescription;
 
   /// 게시물 편집 화면 AppBar 제목 (수정)
   ///

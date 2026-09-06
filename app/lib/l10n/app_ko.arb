@@ -44,6 +44,10 @@
   "@authSignUp": {
     "description": "회원가입 화면 제목이자 로그인 화면의 회원가입 버튼"
   },
+  "authBrowseFirst": "먼저 둘러보기",
+  "@authBrowseFirst": {
+    "description": "로그인 화면 맨 아래. 가입 없이 전체 피드를 읽기 전용으로 본다"
+  },
   "authSignUpDescription": "이메일과 닉네임만 있으면 바로 시작할 수 있습니다.",
   "@authSignUpDescription": {
     "description": "회원가입 화면 헤더 설명"
@@ -172,6 +176,18 @@
   "feedEndOfList": "모두 확인했습니다",
   "@feedEndOfList": {
     "description": "목록 끝 꼬리표"
+  },
+  "guestFeedTitle": "둘러보기",
+  "@guestFeedTitle": {
+    "description": "비로그인 읽기 전용 피드의 AppBar 제목"
+  },
+  "guestPromptTitle": "가입하면 반응과 댓글을 남길 수 있어요",
+  "@guestPromptTitle": {
+    "description": "게스트가 반응·댓글·게시물을 누를 때 뜨는 시트 제목"
+  },
+  "guestPromptDescription": "이메일과 닉네임만 있으면 됩니다.",
+  "@guestPromptDescription": {
+    "description": "게스트 안내 시트의 한 줄 설명. 가입 버튼과 로그인 버튼이 아래에 온다"
   },
   "postEditTitle": "게시물 수정",
   "@postEditTitle": {

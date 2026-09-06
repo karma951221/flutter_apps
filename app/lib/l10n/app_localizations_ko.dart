@@ -42,6 +42,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get authSignUp => '회원가입';
 
   @override
+  String get authBrowseFirst => '먼저 둘러보기';
+
+  @override
   String get authSignUpDescription => '이메일과 닉네임만 있으면 바로 시작할 수 있습니다.';
 
   @override
@@ -135,6 +138,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get feedEndOfList => '모두 확인했습니다';
+
+  @override
+  String get guestFeedTitle => '둘러보기';
+
+  @override
+  String get guestPromptTitle => '가입하면 반응과 댓글을 남길 수 있어요';
+
+  @override
+  String get guestPromptDescription => '이메일과 닉네임만 있으면 됩니다.';
 
   @override
   String get postEditTitle => '게시물 수정';

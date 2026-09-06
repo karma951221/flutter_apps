@@ -3,6 +3,9 @@ abstract final class Routes {
   static const signIn = '/sign-in';
   static const signUp = '/sign-up';
   static const passwordReset = '/password-reset';
+
+  /// 비로그인 읽기 전용 피드. 로그인 화면의 "먼저 둘러보기" 로 들어온다.
+  static const explore = '/explore';
   static const home = '/';
   static const postCompose = '/posts/new';
   static const postEdit = '/posts/:postId/edit';
@@ -38,5 +41,5 @@ abstract final class Routes {
       '/users/$userId/followings';
 
   /// 미인증 상태에서 접근할 수 있는 경로.
-  static const publicRoutes = {signIn, signUp, passwordReset};
+  static const publicRoutes = {signIn, signUp, passwordReset, explore};
 }

@@ -14,6 +14,7 @@ import '../../features/chat/presentation/page/chat_explore_page.dart';
 import '../../features/chat/presentation/page/chat_room_page.dart';
 import '../../features/chat/presentation/page/create_room_page.dart';
 import '../../features/comment/presentation/page/post_comments_page.dart';
+import '../../features/feed/presentation/page/guest_feed_page.dart';
 import '../../features/home/presentation/page/home_shell_page.dart';
 import '../../features/post/domain/entity/post.dart';
 import '../../features/post/presentation/cubit/post_cubit.dart';
@@ -50,6 +51,7 @@ GoRouter createRouter(AuthBloc authBloc) {
         path: Routes.passwordReset,
         builder: (_, _) => const PasswordResetPage(),
       ),
+      GoRoute(path: Routes.explore, builder: (_, _) => const GuestFeedPage()),
       // 홈은 셸이다. 피드·프로필·설정은 탭으로 살아 있고, 그 위에 얹히는
       // 화면(작성 · 편집 · 댓글)은 아래의 독립 라우트로 push 된다.
       GoRoute(path: Routes.home, builder: (_, _) => const HomeShellPage()),

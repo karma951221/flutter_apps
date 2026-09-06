@@ -43,6 +43,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSignUp => 'Sign up';
 
   @override
+  String get authBrowseFirst => 'Browse first';
+
+  @override
   String get authSignUpDescription =>
       'An email and a nickname are all you need to start.';
 
@@ -141,6 +144,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get feedEndOfList => 'You\'re all caught up';
+
+  @override
+  String get guestFeedTitle => 'Browse';
+
+  @override
+  String get guestPromptTitle => 'Sign up to react and comment';
+
+  @override
+  String get guestPromptDescription =>
+      'All you need is an email and a nickname.';
 
   @override
   String get postEditTitle => 'Edit post';

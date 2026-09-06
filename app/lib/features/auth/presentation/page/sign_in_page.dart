@@ -135,6 +135,11 @@ class _SignInViewState extends State<_SignInView> {
                     label: l10n.authSignUp,
                     onPressed: busy ? null : () => context.push(Routes.signUp),
                   ),
+                  const SizedBox(height: AppSpacing.sm),
+                  AppButton.text(
+                    label: l10n.authBrowseFirst,
+                    onPressed: busy ? null : () => context.push(Routes.explore),
+                  ),
                 ],
               ),
             ),

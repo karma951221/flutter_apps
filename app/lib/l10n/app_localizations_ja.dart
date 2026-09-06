@@ -42,6 +42,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get authSignUp => '新規登録';
 
   @override
+  String get authBrowseFirst => 'まず見てみる';
+
+  @override
   String get authSignUpDescription => 'メールアドレスとニックネームだけですぐに始められます。';
 
   @override
@@ -135,6 +138,15 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get feedEndOfList => 'すべて確認しました';
+
+  @override
+  String get guestFeedTitle => '見てみる';
+
+  @override
+  String get guestPromptTitle => '登録するとリアクションやコメントができます';
+
+  @override
+  String get guestPromptDescription => 'メールアドレスとニックネームだけで始められます。';
 
   @override
   String get postEditTitle => '投稿を編集';

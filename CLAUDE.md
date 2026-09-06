@@ -128,4 +128,5 @@ RLS·실시간처럼 mock 으로 드러나지 않는 것은 `supabase/tests/` �
 supabase start
 python3 supabase/tests/chat_rls_check.py       # 채팅 권한 경계
 python3 supabase/tests/chat_realtime_check.py  # 실시간 전달 (pip install websockets)
+python3 supabase/tests/guest_read_check.py     # 게스트 읽기 경계
 ```

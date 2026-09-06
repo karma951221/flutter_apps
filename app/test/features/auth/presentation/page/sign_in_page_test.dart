@@ -49,6 +49,7 @@ void main() {
 
     expect(find.text('daylog'), findsOneWidget);
     expect(find.text('오늘 하루를 기록하고 이웃과 나눠보세요.'), findsOneWidget);
+    expect(find.text('먼저 둘러보기'), findsOneWidget);
   });
 
   testWidgets('빈 폼은 제출하지 않고 필드별 오류를 보여준다', (tester) async {
