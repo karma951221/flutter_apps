@@ -65,13 +65,18 @@ class _GuestFeedView extends StatelessWidget {
             child: AppPlaceholder(
               icon: Icons.edit_note_outlined,
               message: l10n.feedEmptyMessage,
+              // 읽을 것이 없어도 막다른 길로 두지 않는다 — 게스트가 여기서
+              // 할 수 있는 유일한 일이 가입이다.
+              actionLabel: l10n.authSignUp,
+              onAction: () => _promptSignUp(context),
             ),
           ),
           FeedStatus.loaded => RefreshIndicator(
             onRefresh: () => context.read<FeedCubit>().refresh(),
             child: NotificationListener<ScrollNotification>(
               onNotification: (notification) {
-                if (notification.metrics.extentAfter < 240 &&
+                if (notification.metrics.extentAfter <
+                        FeedCubit.loadMoreExtent &&
                     !state.isLoadingMore &&
                     state.canLoadMore) {
                   context.read<FeedCubit>().loadMore();

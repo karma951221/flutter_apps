@@ -141,5 +141,11 @@ void main() {
 
     expect(find.text('아직 게시물이 없습니다'), findsOneWidget);
     expect(find.text('첫 게시물 쓰기'), findsNothing);
+
+    // 빈 화면도 막다른 길이 아니다 — 가입 안내로 이어진다.
+    await tester.tap(find.widgetWithText(OutlinedButton, '회원가입'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('가입하면 반응과 댓글을 남길 수 있어요'), findsOneWidget);
   });
 }
