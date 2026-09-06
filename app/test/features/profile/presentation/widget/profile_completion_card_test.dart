@@ -51,14 +51,15 @@ void main() {
       find.byType(LinearProgressIndicator),
     );
     expect(bar.value, closeTo(0.2, 0.001));
-    expect(find.text('닉네임 정하기'), findsOneWidget);
+    // 끝난 닉네임은 진행바가 말한다 — 줄로는 그리지 않는다.
+    expect(find.text('닉네임 정하기'), findsNothing);
     expect(find.text('프로필 사진 올리기'), findsOneWidget);
     expect(find.text('자기소개 쓰기'), findsOneWidget);
     expect(find.text('첫 게시물 남기기'), findsOneWidget);
     expect(find.text('마음에 드는 사람 팔로우하기'), findsOneWidget);
   });
 
-  testWidgets('끝난 항목은 체크로, 남은 항목은 빈 원으로 그린다', (tester) async {
+  testWidgets('끝난 항목은 목록에서 빠지고 남은 항목만 빈 원으로 남는다', (tester) async {
     await pumpCard(
       tester,
       profile: _profile(avatarUrl: 'https://x/a.webp', followingCount: 2),
@@ -66,8 +67,13 @@ void main() {
     );
 
     expect(find.text('프로필 완성 80%'), findsOneWidget);
-    expect(find.byIcon(Icons.check_circle), findsNWidgets(4));
+    expect(find.byIcon(Icons.check_circle), findsNothing);
     expect(find.byIcon(Icons.radio_button_unchecked), findsOneWidget);
+    expect(find.text('자기소개 쓰기'), findsOneWidget);
+    expect(find.text('닉네임 정하기'), findsNothing);
+    expect(find.text('프로필 사진 올리기'), findsNothing);
+    expect(find.text('첫 게시물 남기기'), findsNothing);
+    expect(find.text('마음에 드는 사람 팔로우하기'), findsNothing);
   });
 
   testWidgets('사진·자기소개는 프로필 편집으로, 첫 게시물은 작성으로 보낸다', (tester) async {
@@ -83,9 +89,8 @@ void main() {
     await tester.tap(find.text('프로필 사진 올리기'));
     await tester.tap(find.text('자기소개 쓰기'));
     await tester.tap(find.text('첫 게시물 남기기'));
-    // 팔로우 항목과 이미 끝난 닉네임 항목은 눌러도 아무 일도 없다.
+    // 팔로우는 이 화면에서 할 수 있는 일이 아니라 눌러도 아무 일도 없다.
     await tester.tap(find.text('마음에 드는 사람 팔로우하기'));
-    await tester.tap(find.text('닉네임 정하기'));
 
     expect(editTaps, 2);
     expect(writeTaps, 1);

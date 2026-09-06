@@ -832,9 +832,9 @@ void main() {
       expect(captured.roomId(), isNull);
       // 실패해도 버튼은 다시 누를 수 있어야 한다.
       expect(
-        tester.widget<OutlinedButton>(
-          find.widgetWithText(OutlinedButton, '메시지'),
-        ).onPressed,
+        tester
+            .widget<OutlinedButton>(find.widgetWithText(OutlinedButton, '메시지'))
+            .onPressed,
         isNotNull,
       );
     });
@@ -857,6 +857,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('프로필 완성 20%'), findsOneWidget);
+  });
+
+  testWidgets('내 게시물이 있으면 40% 로 오르고 첫 게시물 항목이 사라진다', (tester) async {
+    when(
+      profileUseCase.getMyProfile,
+    ).thenAnswer((_) async => Ok(_profile('me', '카르마')));
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer(
+      (_) async => Ok(CursorPage<FeedPost>(items: [_item('1', 'me', '카르마')])),
+    );
+
+    await pumpPage(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('프로필 완성 40%'), findsOneWidget);
+    expect(find.text('첫 게시물 남기기'), findsNothing);
   });
 
   testWidgets('타인 프로필에는 완성도 카드가 없다', (tester) async {

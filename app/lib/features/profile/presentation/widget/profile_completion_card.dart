@@ -13,6 +13,11 @@ import '../../domain/entity/profile.dart';
 /// ux-psychology-review.md 1번). 근거 없는 칸은 채우지 않는다: 다섯 항목
 /// 모두 앱이 이미 아는 값으로 판정한다.
 ///
+/// 목록에는 **남은 항목만** 그린다. 끝난 일은 진행바와 퍼센트가 이미 말하고
+/// 있으므로 줄을 하나 더 쓸 이유가 없고, 다섯 줄을 전부 세우면 정작 이 화면의
+/// 주인공인 내 게시물이 첫 화면에서 밀려난다. 남은 줄만 보이면 카드는
+/// 진행할수록 짧아지고, 목록은 "다음에 할 일" 하나로 읽힌다.
+///
 /// 다섯 항목이 전부 끝나면 아무것도 그리지 않는다.
 class ProfileCompletionCard extends StatelessWidget {
   const ProfileCompletionCard({
@@ -92,19 +97,17 @@ class ProfileCompletionCard extends StatelessWidget {
                   ],
                 ),
               ),
-              for (final step in steps)
+              for (final step in steps.where((step) => !step.isDone))
                 AppListTile(
                   leading: Icon(
-                    step.isDone
-                        ? Icons.check_circle
-                        : Icons.radio_button_unchecked,
-                    color: step.isDone ? scheme.primary : scheme.outline,
+                    Icons.radio_button_unchecked,
+                    color: scheme.outline,
                   ),
                   title: Text(step.label),
-                  trailing: step.isDone || step.onTap == null
+                  trailing: step.onTap == null
                       ? null
                       : const Icon(Icons.chevron_right),
-                  onTap: step.isDone ? null : step.onTap,
+                  onTap: step.onTap,
                 ),
             ],
           ),
@@ -115,7 +118,11 @@ class ProfileCompletionCard extends StatelessWidget {
 }
 
 class _CompletionStep {
-  const _CompletionStep({required this.label, required this.isDone, this.onTap});
+  const _CompletionStep({
+    required this.label,
+    required this.isDone,
+    this.onTap,
+  });
 
   final String label;
   final bool isDone;
