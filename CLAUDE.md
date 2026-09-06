@@ -129,4 +129,5 @@ supabase start
 python3 supabase/tests/chat_rls_check.py       # 채팅 권한 경계
 python3 supabase/tests/chat_realtime_check.py  # 실시간 전달 (pip install websockets)
 python3 supabase/tests/guest_read_check.py     # 게스트 읽기 경계
+python3 supabase/tests/account_summary_check.py  # 탈퇴 확인 개수 경계
 ```

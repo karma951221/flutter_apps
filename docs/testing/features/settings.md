@@ -38,8 +38,7 @@ flutter test test/features/settings
 [스키마 §3의 `delete_account()`](../../schema.md) 검증 항목을 따른다 — anon 거부,
 본인 204, 게시물·댓글·반응 정리, 같은 이메일 재가입.
 
-개수 조회의 두 count HEAD 요청도 여기에 속한다. 사용자 JWT 로
-`posts?author_id=eq.<uid>&deleted_at=is.null` 과 같은 조건의
-`post_comments_visible` 에 `Prefer: count=exact` HEAD 를 보내 둘 다 200 과
-`Content-Range` 를 받는지 본다. 같은 요청을 `post_comments` 에 보내면 403(42501)
-이라, 뷰를 쓰는 이유가 여기서 드러난다.
+개수 조회의 두 count HEAD 요청은 `supabase/tests/account_summary_check.py` 가
+자동으로 확인한다 — 게시물 2건·댓글 3건을 심고 `posts` 와 `post_comments_visible`
+의 `Content-Range` 가 `/2`·`/3` 인지 본다. 같은 요청을 `post_comments` 에 보내면
+403(42501) 이라는 것도 함께 고정해, 뷰를 쓰는 이유가 스크립트에 남는다.
