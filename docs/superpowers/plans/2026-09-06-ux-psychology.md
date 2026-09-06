@@ -2150,11 +2150,11 @@ git commit -m "feat(feed): 로그인 화면에서 먼저 둘러보기로 읽기 
 Run: `cd app && flutter analyze && flutter test && flutter test test/convention`
 Expected: 무결함, 전부 PASS.
 
-- [ ] **Step 2: history** — 각 feature `history.md` 끝에 절 하나. 내용은 "무엇을 · 왜(리뷰 번호) · 검증" 세 줄. status 에 절 하나:
+- [ ] **Step 2: history** — 각 feature `history.md` 끝에 절 하나. 내용은 "무엇을 · 왜(리뷰 번호) · 검증" 세 줄. status 에 절 하나 (아래 링크는 이 계획 파일 기준이라 `docs/status.md` 에 넣을 때는 `../ux-psychology-review.md` 로 바꾼다):
 ```
 ## UX 심리학 리뷰 반영 — 2026-09-06
 
-[리뷰](../ux-psychology-review.md) 의 8개 발견 중 7개를 반영했다 (8번은 1번이 대체).
+[리뷰](../../../ux-psychology-review.md) 의 8개 발견 중 7개를 반영했다 (8번은 1번이 대체).
 
 - [x] 팔로잉 빈 상태 "사람 둘러보기" (feed)
 - [x] 가입 폼 autofill 힌트 · 닉네임 제안값 (auth)
