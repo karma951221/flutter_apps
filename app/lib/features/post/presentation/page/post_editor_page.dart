@@ -191,7 +191,7 @@ class _PostEditorPageState extends State<PostEditorPage> {
                         required isFocused,
                         required maxLength,
                       }) => null,
-                  minLines: 6,
+                  minLines: 3,
                   maxLines: 10,
                   autofocus: true,
                   textCapitalization: TextCapitalization.sentences,
@@ -238,6 +238,13 @@ class _PostEditorPageState extends State<PostEditorPage> {
 class _ContentCounter extends StatelessWidget {
   const _ContentCounter({required this.length});
 
+  /// 이 값 이하로 남았을 때부터 카운터를 그린다.
+  ///
+  /// 처음부터 `0 / 500` 을 보여주면 500 이 기대 길이로 읽힌다 — 첫 숫자가
+  /// 기준이 된다 (ux-psychology-review.md 7번). 짧은 글이 정상인 피드에서는
+  /// 상한이 가까워졌을 때만 알리면 된다.
+  static const visibleThreshold = 50;
+
   /// 경고로 바뀌는 지점. 한 줄 정도 남았을 때부터 알린다.
   static const _warningThreshold = 20;
 
@@ -247,6 +254,7 @@ class _ContentCounter extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final remaining = PostPolicy.maxContentLength - length;
+    if (remaining > visibleThreshold) return const SizedBox.shrink();
     final isWarning = remaining <= _warningThreshold;
 
     return Align(

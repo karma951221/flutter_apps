@@ -80,13 +80,29 @@ void main() {
     expect(find.text('저장'), findsOneWidget);
   });
 
-  testWidgets('글자 수는 정책 상수를 기준으로 센다', (tester) async {
+  testWidgets('글자 수는 상한에 가까워지기 전에는 보이지 않는다', (tester) async {
     await pumpEditor(tester);
 
     await tester.enterText(find.byType(TextFormField), '오늘의 기록');
     await tester.pump();
 
-    expect(find.text('6 / ${PostPolicy.maxContentLength}'), findsOneWidget);
+    expect(
+      find.textContaining('/ ${PostPolicy.maxContentLength}'),
+      findsNothing,
+    );
+  });
+
+  testWidgets('남은 글자가 50자 이하가 되면 정책 상수를 기준으로 센다', (tester) async {
+    await pumpEditor(tester);
+
+    final nearLimit = 'ㄱ' * (PostPolicy.maxContentLength - 50);
+    await tester.enterText(find.byType(TextFormField), nearLimit);
+    await tester.pump();
+
+    expect(
+      find.text('${nearLimit.length} / ${PostPolicy.maxContentLength}'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('수정 화면은 사진 첨부를 보여주지 않는다', (tester) async {

@@ -23,7 +23,7 @@
 | 로컬 Supabase | `create_post_with_images` 직접 호출 | 본인 경로의 `post-images` URL만 통과한다. 남의 경로·다른 버킷·외부 URL·객체 없는 폴더 경로는 거부한다. |
 | `PostEditorPage` | 작성 / 수정 | 제목과 버튼 라벨이 구분된다 ("새 게시물·올리기" / "게시물 수정·저장"). |
 | `PostEditorPage` | 수정 화면 | 사진 첨부를 그리지 않는다 — 수정은 본문만 바꾼다. |
-| `PostEditorPage` | 글자 수 | `PostPolicy.maxContentLength` 를 기준으로 센다. 화면이 숫자를 다시 적지 않는다. |
+| `PostEditorPage` | 글자 수 | 남은 글자가 50자 이하일 때만 `PostPolicy.maxContentLength` 기준으로 보인다. 그 전에는 카운터를 그리지 않는다. |
 | `PostEditorPage` | 사진 추가 버튼 | 최대 장수를 라벨에 적는다 (`PostPolicy.maxImageCount`). |
 | `PostEditorPage` | 빈 본문 | 저장을 시도하지 않는다. |
 | `PostEditorPage` | 쓰던 내용을 두고 나가기 | 한 번 묻는다. 아무것도 쓰지 않았으면 묻지 않는다. |
