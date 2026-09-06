@@ -555,6 +555,26 @@ class AppLocalizationsKo extends AppLocalizations {
   String get profileBioEmpty => '자기소개를 작성해보세요';
 
   @override
+  String profileCompletionTitle(int percent) {
+    return '프로필 완성 $percent%';
+  }
+
+  @override
+  String get profileCompletionNickname => '닉네임 정하기';
+
+  @override
+  String get profileCompletionAvatar => '프로필 사진 올리기';
+
+  @override
+  String get profileCompletionBio => '자기소개 쓰기';
+
+  @override
+  String get profileCompletionFirstPost => '첫 게시물 남기기';
+
+  @override
+  String get profileCompletionFirstFollow => '마음에 드는 사람 팔로우하기';
+
+  @override
   String get profileEditAction => '프로필 편집';
 
   @override

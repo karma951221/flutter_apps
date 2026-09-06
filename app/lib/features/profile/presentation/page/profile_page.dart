@@ -24,6 +24,7 @@ import '../../../follow/presentation/cubit/follow_action_cubit.dart';
 import '../../../follow/presentation/cubit/follow_action_state.dart';
 import '../../../feed/presentation/cubit/feed_state.dart';
 import '../../../feed/presentation/widget/post_tile_actions.dart';
+import '../../../post/domain/entity/post.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../post/presentation/widget/post_tile.dart';
 import '../../../safety/domain/entity/report_target.dart';
@@ -31,6 +32,7 @@ import '../../../safety/presentation/cubit/block_action_cubit.dart';
 import '../../../safety/presentation/cubit/block_action_state.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
+import '../widget/profile_completion_card.dart';
 
 /// Own and other-user profile screen. [userId] is omitted for the session user.
 ///
@@ -281,6 +283,38 @@ class _ProfileView extends StatelessWidget {
                         ),
                       ),
                     ),
+                    // 내 프로필에만. 첫 게시물 여부는 목록을 소유한 FeedCubit 이
+                    // 알고, 목록을 읽는 중에는 깜빡임을 피하려 그리지 않는다.
+                    if (isMine)
+                      SliverToBoxAdapter(
+                        child: BlocBuilder<FeedCubit, FeedState>(
+                          builder: (context, feedState) =>
+                              feedState.status != FeedStatus.loaded
+                              ? const SizedBox.shrink()
+                              : Padding(
+                                  padding: const EdgeInsets.only(
+                                    bottom: AppSpacing.lg,
+                                  ),
+                                  child: ProfileCompletionCard(
+                                    profile: profile,
+                                    hasPost: feedState.items.isNotEmpty,
+                                    onEditProfile: () async {
+                                      await context.push(Routes.profileEdit);
+                                      if (context.mounted) {
+                                        context.read<ProfileCubit>().load();
+                                      }
+                                    },
+                                    onWritePost: () async {
+                                      final feed = context.read<FeedCubit>();
+                                      final created = await context.push<Post>(
+                                        Routes.postCompose,
+                                      );
+                                      if (created != null) await feed.refresh();
+                                    },
+                                  ),
+                                ),
+                        ),
+                      ),
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(

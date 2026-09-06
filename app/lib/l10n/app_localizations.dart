@@ -1156,6 +1156,42 @@ abstract class AppLocalizations {
   /// **'자기소개를 작성해보세요'**
   String get profileBioEmpty;
 
+  /// 내 프로필의 완성도 카드 제목. percent 는 0~100 정수
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필 완성 {percent}%'**
+  String profileCompletionTitle(int percent);
+
+  /// 완성도 카드 항목. 가입 때 이미 끝났으므로 항상 완료로 표시된다
+  ///
+  /// In ko, this message translates to:
+  /// **'닉네임 정하기'**
+  String get profileCompletionNickname;
+
+  /// 완성도 카드 항목. 누르면 프로필 편집으로 간다
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필 사진 올리기'**
+  String get profileCompletionAvatar;
+
+  /// 완성도 카드 항목. 누르면 프로필 편집으로 간다
+  ///
+  /// In ko, this message translates to:
+  /// **'자기소개 쓰기'**
+  String get profileCompletionBio;
+
+  /// 완성도 카드 항목. 누르면 게시물 작성으로 간다
+  ///
+  /// In ko, this message translates to:
+  /// **'첫 게시물 남기기'**
+  String get profileCompletionFirstPost;
+
+  /// 완성도 카드 항목. 홈 피드에서 하는 일이라 누를 수 없다
+  ///
+  /// In ko, this message translates to:
+  /// **'마음에 드는 사람 팔로우하기'**
+  String get profileCompletionFirstFollow;
+
   /// 내 프로필의 편집 진입 버튼
   ///
   /// In ko, this message translates to:

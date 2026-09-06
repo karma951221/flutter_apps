@@ -752,6 +752,35 @@
   "@profileBioEmpty": {
     "description": "자기소개가 비었을 때 자리 문구"
   },
+  "profileCompletionTitle": "프로필 완성 {percent}%",
+  "@profileCompletionTitle": {
+    "description": "내 프로필의 완성도 카드 제목. percent 는 0~100 정수",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "profileCompletionNickname": "닉네임 정하기",
+  "@profileCompletionNickname": {
+    "description": "완성도 카드 항목. 가입 때 이미 끝났으므로 항상 완료로 표시된다"
+  },
+  "profileCompletionAvatar": "프로필 사진 올리기",
+  "@profileCompletionAvatar": {
+    "description": "완성도 카드 항목. 누르면 프로필 편집으로 간다"
+  },
+  "profileCompletionBio": "자기소개 쓰기",
+  "@profileCompletionBio": {
+    "description": "완성도 카드 항목. 누르면 프로필 편집으로 간다"
+  },
+  "profileCompletionFirstPost": "첫 게시물 남기기",
+  "@profileCompletionFirstPost": {
+    "description": "완성도 카드 항목. 누르면 게시물 작성으로 간다"
+  },
+  "profileCompletionFirstFollow": "마음에 드는 사람 팔로우하기",
+  "@profileCompletionFirstFollow": {
+    "description": "완성도 카드 항목. 홈 피드에서 하는 일이라 누를 수 없다"
+  },
   "profileEditAction": "프로필 편집",
   "@profileEditAction": {
     "description": "내 프로필의 편집 진입 버튼"

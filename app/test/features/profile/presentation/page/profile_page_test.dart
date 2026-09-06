@@ -165,6 +165,8 @@ void main() {
 
     expect(find.text('프로필'), findsOneWidget);
     expect(find.text('프로필 편집'), findsOneWidget);
+    // 완성도 카드가 첫 화면을 채우므로 목록은 스크롤해야 보인다.
+    await tester.scrollUntilVisible(find.text('기록 1'), 200);
     expect(find.text('기록 1'), findsOneWidget);
     verify(
       () => feedUseCase.getFeedPosts(
@@ -836,5 +838,43 @@ void main() {
         isNotNull,
       );
     });
+  });
+
+  testWidgets('내 프로필은 완성도 카드를 20% 로 시작한다', (tester) async {
+    when(
+      profileUseCase.getMyProfile,
+    ).thenAnswer((_) async => Ok(_profile('me', '카르마')));
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+
+    await pumpPage(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('프로필 완성 20%'), findsOneWidget);
+  });
+
+  testWidgets('타인 프로필에는 완성도 카드가 없다', (tester) async {
+    when(
+      () => profileUseCase.getProfile('other'),
+    ).thenAnswer((_) async => Ok(_profile('other', '이웃')));
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer((_) async => const Ok(CursorPage<FeedPost>(items: [])));
+
+    await pumpPage(tester, userId: 'other');
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('프로필 완성'), findsNothing);
   });
 }

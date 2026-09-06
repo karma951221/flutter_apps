@@ -555,6 +555,26 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profileBioEmpty => '自己紹介を書いてみましょう。';
 
   @override
+  String profileCompletionTitle(int percent) {
+    return 'プロフィール完成度 $percent%';
+  }
+
+  @override
+  String get profileCompletionNickname => 'ニックネームを決める';
+
+  @override
+  String get profileCompletionAvatar => 'プロフィール写真を追加';
+
+  @override
+  String get profileCompletionBio => '自己紹介を書く';
+
+  @override
+  String get profileCompletionFirstPost => '最初の投稿を書く';
+
+  @override
+  String get profileCompletionFirstFollow => '気になる人をフォロー';
+
+  @override
   String get profileEditAction => 'プロフィール編集';
 
   @override

@@ -584,6 +584,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileBioEmpty => 'Add a bio.';
 
   @override
+  String profileCompletionTitle(int percent) {
+    return 'Profile $percent% complete';
+  }
+
+  @override
+  String get profileCompletionNickname => 'Pick a nickname';
+
+  @override
+  String get profileCompletionAvatar => 'Add a profile photo';
+
+  @override
+  String get profileCompletionBio => 'Write a bio';
+
+  @override
+  String get profileCompletionFirstPost => 'Write your first post';
+
+  @override
+  String get profileCompletionFirstFollow => 'Follow someone you like';
+
+  @override
   String get profileEditAction => 'Edit profile';
 
   @override
