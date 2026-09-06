@@ -1,4 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:daylog/app/router/routes.dart';
 import 'package:daylog/core/di/injection.dart';
 import 'package:daylog/core/result/result.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
@@ -7,6 +8,7 @@ import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_event.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_state.dart';
 import 'package:daylog/features/profile/domain/entity/profile.dart';
+import 'package:daylog/features/profile/domain/entity/profile_update.dart';
 import 'package:daylog/features/profile/domain/usecase/profile_use_case.dart';
 import 'package:daylog/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:daylog/features/profile/presentation/page/edit_profile_page.dart';
@@ -14,6 +16,7 @@ import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockProfileUseCase extends Mock implements ProfileUseCase {}
@@ -31,6 +34,8 @@ final _profile = Profile(
 );
 
 void main() {
+  setUpAll(() => registerFallbackValue(const ProfileUpdate(nickname: '')));
+
   late _MockProfileUseCase useCase;
   late _MockAuthBloc authBloc;
 
@@ -63,6 +68,36 @@ void main() {
       ),
     );
     await tester.pump();
+  }
+
+  /// setup 모드는 저장·건너뛰기 뒤 홈으로 `go` 하므로 라우터가 필요하다.
+  Future<GoRouter> pumpSetup(WidgetTester tester) async {
+    final router = GoRouter(
+      initialLocation: Routes.profileSetup,
+      routes: [
+        GoRoute(
+          path: Routes.home,
+          builder: (_, _) => const Scaffold(body: Text('홈')),
+        ),
+        GoRoute(
+          path: Routes.profileSetup,
+          builder: (_, _) => const EditProfilePage(isSetup: true),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.light(),
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: router,
+        builder: (context, child) =>
+            BlocProvider<AuthBloc>.value(value: authBloc, child: child!),
+      ),
+    );
+    await tester.pump();
+    return router;
   }
 
   /// 디바운스가 지나 조회 결과가 화면에 닿을 때까지 민다.
@@ -106,5 +141,46 @@ void main() {
     expect(find.text('사용할 수 있는 닉네임입니다'), findsNothing);
     expect(find.text('이미 사용 중인 닉네임입니다'), findsNothing);
     verifyNever(() => useCase.isNicknameAvailable(any()));
+  });
+
+  testWidgets('프로필 꾸미기 모드는 제목·안내·나중에·계속을 보여주고 뒤로가기가 없다', (tester) async {
+    await pumpSetup(tester);
+
+    expect(find.text('프로필 꾸미기'), findsOneWidget);
+    expect(find.textContaining('이웃에게 나를 알려보세요'), findsOneWidget);
+    expect(find.text('나중에'), findsOneWidget);
+    expect(find.text('계속'), findsOneWidget);
+    expect(find.text('저장'), findsNothing);
+    expect(find.byType(BackButton), findsNothing);
+    // 나중에는 계속 아래의 텍스트 버튼이다 (AppBar 가 아니다).
+    expect(find.widgetWithText(TextButton, '나중에'), findsOneWidget);
+  });
+
+  testWidgets('나중에를 누르면 저장 없이 홈으로 간다', (tester) async {
+    final router = await pumpSetup(tester);
+
+    await tester.tap(find.text('나중에'));
+    await tester.pumpAndSettle();
+
+    expect(router.state.matchedLocation, Routes.home);
+    verifyNever(
+      () => useCase.updateMyProfile(any(), newAvatar: any(named: 'newAvatar')),
+    );
+  });
+
+  testWidgets('계속을 누르면 저장한 뒤 홈으로 간다', (tester) async {
+    when(
+      () => useCase.updateMyProfile(any(), newAvatar: any(named: 'newAvatar')),
+    ).thenAnswer((_) async => Ok(_profile));
+    final router = await pumpSetup(tester);
+
+    await tester.enterText(find.byType(TextFormField).last, '오늘도 기록');
+    await tester.tap(find.text('계속'));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => useCase.updateMyProfile(any(), newAvatar: any(named: 'newAvatar')),
+    ).called(1);
+    expect(router.state.matchedLocation, Routes.home);
   });
 }

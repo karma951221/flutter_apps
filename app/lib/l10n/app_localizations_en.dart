@@ -637,6 +637,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileEditTitle => 'Edit profile';
 
   @override
+  String get profileSetupTitle => 'Set up your profile';
+
+  @override
+  String get profileSetupDescription =>
+      'A photo and a short bio help neighbors know you. You can change them later in Settings.';
+
+  @override
+  String get profileSetupSkip => 'Later';
+
+  @override
+  String get profileSetupContinue => 'Continue';
+
+  @override
   String get profileSaveFailed => 'Couldn\'t save the profile';
 
   @override

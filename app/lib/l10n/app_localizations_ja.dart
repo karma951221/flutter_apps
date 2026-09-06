@@ -608,6 +608,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get profileEditTitle => 'プロフィール編集';
 
   @override
+  String get profileSetupTitle => 'プロフィールを整える';
+
+  @override
+  String get profileSetupDescription =>
+      '写真とひとこと紹介で、ご近所に自分を知ってもらいましょう。あとで設定から変更できます。';
+
+  @override
+  String get profileSetupSkip => 'あとで';
+
+  @override
+  String get profileSetupContinue => '続ける';
+
+  @override
   String get profileSaveFailed => 'プロフィールを保存できませんでした';
 
   @override

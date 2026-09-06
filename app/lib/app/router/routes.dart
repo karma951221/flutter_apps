@@ -13,6 +13,9 @@ abstract final class Routes {
   static String postCommentsPath(String postId) => '/posts/$postId/comments';
   static const profile = '/profile';
   static const profileEdit = '/profile/edit';
+
+  /// 가입 직후 한 번 지나가는 프로필 꾸미기. 보호 경로다.
+  static const profileSetup = '/profile/setup';
   static const chat = '/chat';
   static const chatExplore = '/chat/explore';
   static const chatCreate = '/chat/new';

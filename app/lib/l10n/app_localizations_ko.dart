@@ -608,6 +608,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get profileEditTitle => '프로필 편집';
 
   @override
+  String get profileSetupTitle => '프로필 꾸미기';
+
+  @override
+  String get profileSetupDescription =>
+      '사진과 한 줄 소개로 이웃에게 나를 알려보세요. 나중에 설정에서 바꿀 수 있습니다.';
+
+  @override
+  String get profileSetupSkip => '나중에';
+
+  @override
+  String get profileSetupContinue => '계속';
+
+  @override
   String get profileSaveFailed => '프로필을 저장하지 못했습니다';
 
   @override

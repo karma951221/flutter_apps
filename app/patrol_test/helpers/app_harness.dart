@@ -69,7 +69,8 @@ Future<void> _signOutQuietly() async {
   }
 }
 
-/// 로그인 화면에서 시작해 새 계정을 만들고 피드까지 들어간다.
+/// 로그인 화면에서 시작해 새 계정을 만들고 프로필 꾸미기를 건너뛰고 피드까지
+/// 들어간다.
 ///
 /// 반환값은 만들어진 계정. 이어지는 로그인 검증에 쓴다.
 Future<({String email, String nickname})> signUpNewAccount(
@@ -88,6 +89,11 @@ Future<({String email, String nickname})> signUpNewAccount(
 
   // 라벨 '가입하기' 는 이 화면에서 버튼에만 있다.
   await $('가입하기').tap();
+
+  // 가입 직후에는 프로필 꾸미기가 한 번 뜬다. E2E 는 건너뛴다 — 프로필
+  // 편집 자체는 위젯 테스트가 본다.
+  await $.waitUntilVisible($('나중에'), timeout: kWait);
+  await $('나중에').tap();
   await waitForFeed($);
 
   return (email: email, nickname: nickname);

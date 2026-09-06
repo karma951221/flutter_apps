@@ -1258,6 +1258,30 @@ abstract class AppLocalizations {
   /// **'프로필 편집'**
   String get profileEditTitle;
 
+  /// 가입 직후 한 번 보이는 프로필 편집 화면의 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필 꾸미기'**
+  String get profileSetupTitle;
+
+  /// 프로필 꾸미기 화면 상단의 안내 한 문장
+  ///
+  /// In ko, this message translates to:
+  /// **'사진과 한 줄 소개로 이웃에게 나를 알려보세요. 나중에 설정에서 바꿀 수 있습니다.'**
+  String get profileSetupDescription;
+
+  /// 프로필 꾸미기를 건너뛰고 홈으로 가는 버튼. 저장 버튼 아래에 둔다
+  ///
+  /// In ko, this message translates to:
+  /// **'나중에'**
+  String get profileSetupSkip;
+
+  /// 프로필 꾸미기 화면의 저장 버튼. '가입'이 아니라 '계속' — 내가 만든 것을 들고 넘어간다는 뜻
+  ///
+  /// In ko, this message translates to:
+  /// **'계속'**
+  String get profileSetupContinue;
+
   /// 프로필 저장 실패
   ///
   /// In ko, this message translates to:

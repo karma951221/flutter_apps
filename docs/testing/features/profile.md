@@ -19,6 +19,7 @@
 | `ProfileCubit.checkNickname` | 조회하지 않는 값 | 지금 쓰는 닉네임과 형식이 어긋난 값은 usecase 를 부르지 않는다. |
 | `ProfileCubit.checkNickname` | 확인 실패 | `idle` 로 되돌려 아무 안내도 하지 않는다 — 최종 판정은 DB 제약이다. |
 | `EditProfilePage` | 닉네임 사전 확인 | 입력을 바꾸면 사용 가능 / 이미 사용 중 문구를 저장 전에 보여주고, 현재 닉네임은 확인하지 않는다. |
+| `EditProfilePage` | setup 모드 | 제목·안내·나중에·계속을 보여주고 뒤로가기가 없다. 나중에는 저장 없이, 계속은 저장 뒤 홈으로 간다. |
 | `ProfilePage` | 내 프로필 | 편집 버튼이 보이고, 내 id 로 게시물을 읽는다. |
 | `ProfilePage` | `/users/:id` | 타인 화면에는 편집 버튼이 없고 해당 작성자의 게시물만 커서로 읽는다. 내 프로필은 조회하지 않는다. |
 | `ProfilePage` | 게시물 메뉴 동작 | 수정 · 삭제 · 신고 · 감정 · 댓글은 피드와 같은 `PostTileActions` 를 쓴다. 차단만 화면이 직접 잇는다 (성공 후 목록 전체 재조회). |

@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/di/injection.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
-import '../../features/auth/presentation/bloc/auth_state.dart';
 import '../../features/auth/presentation/page/password_reset_page.dart';
 import '../../features/auth/presentation/page/sign_in_page.dart';
 import '../../features/auth/presentation/page/sign_up_page.dart';
@@ -27,6 +26,7 @@ import '../../features/safety/presentation/page/blocked_users_page.dart';
 import '../../features/settings/presentation/page/account_settings_page.dart';
 import '../../features/settings/presentation/page/change_password_page.dart';
 import '../../features/settings/presentation/page/settings_page.dart';
+import 'auth_redirect.dart';
 import 'routes.dart';
 
 /// 인증 게이트.
@@ -38,23 +38,10 @@ GoRouter createRouter(AuthBloc authBloc) {
     initialLocation: Routes.splash,
     refreshListenable: _BlocRefreshNotifier(authBloc.stream),
     debugLogDiagnostics: kDebugMode,
-    redirect: (context, state) {
-      final authState = authBloc.state;
-      final location = state.matchedLocation;
-      final isPublic = Routes.publicRoutes.contains(location);
-
-      return switch (authState) {
-        // 아직 세션을 읽는 중 — 스플래시에 머문다.
-        AuthUnknown() => location == Routes.splash ? null : Routes.splash,
-
-        // 미인증 — 공개 경로가 아니면 로그인으로.
-        AuthUnauthenticated() => isPublic ? null : Routes.signIn,
-
-        // 인증됨 — 로그인/가입/스플래시에 있으면 홈으로.
-        AuthAuthenticated() =>
-          (isPublic || location == Routes.splash) ? Routes.home : null,
-      };
-    },
+    redirect: (context, state) => resolveAuthRedirect(
+      authState: authBloc.state,
+      location: state.matchedLocation,
+    ),
     routes: [
       GoRoute(path: Routes.splash, builder: (_, _) => const SplashPage()),
       GoRoute(path: Routes.signIn, builder: (_, _) => const SignInPage()),
@@ -128,6 +115,10 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: Routes.profileEdit,
         builder: (_, _) => const EditProfilePage(),
+      ),
+      GoRoute(
+        path: Routes.profileSetup,
+        builder: (_, _) => const EditProfilePage(isSetup: true),
       ),
       GoRoute(
         path: Routes.userFollowers,

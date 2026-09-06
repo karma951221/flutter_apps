@@ -21,6 +21,11 @@
 화면은 직접 이동하지 않는다 — `AuthBloc` 상태 변화를 라우터 `redirect`가 반영한다
 ([구현 기록 · 설계 판단](history.md)).
 
+가입 성공은 홈이 아니라 **프로필 꾸미기**(`/profile/setup`, profile feature 의
+편집 화면 setup 모드)로 간다. 가입 화면에서 인증 상태가 되는 경로는 가입 성공뿐이라
+redirect 가 위치로 판단한다 (`app/router/auth_redirect.dart`). 로그인·스플래시에서
+인증되면 홈이다.
+
 ## 화면별 상태
 
 | 화면 | 상태 | UI |
@@ -48,7 +53,7 @@ flowchart TD
     S[앱 시작] --> R{저장된 세션?}
     R -- 있음 --> H[홈]
     R -- 없음 --> L[로그인]
-    L --> SU[회원가입] -->|성공 → AuthBloc| H
+    L --> SU[회원가입] -->|성공 → AuthBloc| PS[프로필 꾸미기] -->|저장 · 나중에| H
     L -->|성공 → AuthBloc| H
     L --> PR[재설정: 이메일 → 코드 → 새 비밀번호]
     PR -->|변경 성공 시 signOut| L

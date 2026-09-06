@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../core/l10n/validation_localizations.dart';
@@ -20,17 +22,26 @@ import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
 
 class EditProfilePage extends StatelessWidget {
-  const EditProfilePage({super.key});
+  const EditProfilePage({this.isSetup = false, super.key});
+
+  /// 가입 직후 한 번 지나가는 모드. 제목·버튼이 바뀌고, 저장하거나 건너뛰면
+  /// 홈으로 간다. 뒤로 갈 곳(가입 화면)은 redirect 가 이미 치웠으므로 뒤로가기를
+  /// 그리지 않는다. "나중에" 는 AppBar 가 아니라 "계속" 아래에 둔다 —
+  /// 테마의 `TextButton` 최소 너비가 `Size.fromHeight` 라 AppBar 의 Row 안에서는
+  /// 폭이 무한대가 된다.
+  final bool isSetup;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (_) => getIt<ProfileCubit>()..load(),
-    child: const _EditProfileView(),
+    child: _EditProfileView(isSetup: isSetup),
   );
 }
 
 class _EditProfileView extends StatefulWidget {
-  const _EditProfileView();
+  const _EditProfileView({required this.isSetup});
+
+  final bool isSetup;
 
   @override
   State<_EditProfileView> createState() => _EditProfileViewState();
@@ -175,8 +186,14 @@ class _EditProfileViewState extends State<_EditProfileView> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.profileEditTitle)),
+      appBar: AppBar(
+        title: Text(
+          widget.isSetup ? l10n.profileSetupTitle : l10n.profileEditTitle,
+        ),
+        automaticallyImplyLeading: !widget.isSetup,
+      ),
       body: BlocConsumer<ProfileCubit, ProfileState>(
         listenWhen: (previous, current) =>
             previous.profile != current.profile ||
@@ -202,6 +219,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
               message: l10n.profileSaveSucceeded,
               type: AppSnackBarType.success,
             );
+            if (widget.isSetup) context.go(Routes.home);
           }
         },
         builder: (context, state) {
@@ -219,6 +237,15 @@ class _EditProfileViewState extends State<_EditProfileView> {
               child: ListView(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 children: [
+                  if (widget.isSetup) ...[
+                    Text(
+                      l10n.profileSetupDescription,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
                   Center(
                     child: AppAvatar(
                       nickname: _nicknameController.text,
@@ -258,10 +285,19 @@ class _EditProfileViewState extends State<_EditProfileView> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   AppButton.primary(
-                    label: l10n.commonSave,
+                    label: widget.isSetup
+                        ? l10n.profileSetupContinue
+                        : l10n.commonSave,
                     onPressed: isBusy ? null : _save,
                     isLoading: isBusy,
                   ),
+                  if (widget.isSetup) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    AppButton.text(
+                      label: l10n.profileSetupSkip,
+                      onPressed: isBusy ? null : () => context.go(Routes.home),
+                    ),
+                  ],
                 ],
               ),
             ),
