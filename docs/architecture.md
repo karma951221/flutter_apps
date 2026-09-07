@@ -31,7 +31,11 @@ socialapp/
 │   ├── config.toml
 │   ├── migrations/              # 스키마 변경 실행 이력
 │   │   └── 20260820145331_init_profiles.sql
-│   └── seed.sql                 # 로컬 개발용 더미 데이터
+│   ├── seeds/                   # db reset 이 적재하는 seed (config.toml 의 sql_paths)
+│   │   └── market_candles.sql   # ★ 생성 파일 — 직접 수정 금지
+│   ├── scripts/                 # 데이터 수집 스크립트 (표준 라이브러리만)
+│   │   └── fetch_candles.py     # Binance 일봉 → seeds/market_candles.sql
+│   └── tests/                   # 로컬 Supabase 대상 권한·실시간 검증 스크립트
 │
 └── app/                         # Flutter 앱
     ├── pubspec.yaml
@@ -44,6 +48,10 @@ socialapp/
 **스키마의 단일 기준은 [스키마 문서](schema.md)다.** 테이블·정책·권한이 지금 어떤 모습이어야 하는지는 거기서 확인하고, `supabase/migrations/`는 그 상태에 도달하는 실행 이력으로 읽는다.
 
 Studio UI에서 테이블을 직접 만들지 않는다. 반드시 `supabase migration new <name>`으로 SQL 파일을 만들어 커밋하고, **같은 커밋에서 스키마 문서를 갱신한다.** 이걸 지키지 않으면 로컬과 운영 스키마가 갈라진다.
+
+`seeds/` 의 파일은 **스크립트가 만든 산출물이지 손으로 쓰는 데이터가 아니다.** 시세를
+고치려면 `scripts/fetch_candles.py` 를 다시 돌려 seed 를 덮어쓴다
+([개발환경 §5](setup.md)).
 
 ---
 
