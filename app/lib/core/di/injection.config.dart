@@ -147,6 +147,11 @@ import '../../features/settings/presentation/cubit/change_password_cubit.dart'
     as _i903;
 import '../../features/settings/presentation/cubit/delete_account_cubit.dart'
     as _i77;
+import '../../features/trade/data/datasource/supabase_trade_data_source.dart'
+    as _i386;
+import '../../features/trade/data/datasource/trade_data_source.dart' as _i740;
+import '../../features/trade/data/repository/trade_repository_impl.dart'
+    as _i632;
 import '../../features/trade/domain/repository/trade_repository.dart' as _i776;
 import '../../features/trade/domain/usecase/trade_use_case.dart' as _i903;
 import '../id/id_generator.dart' as _i1000;
@@ -178,9 +183,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i315.ThemeDataSource>(
       () => _i184.PreferencesThemeDataSource(gh<_i460.SharedPreferences>()),
     );
-    gh.lazySingleton<_i903.TradeUseCase>(
-      () => _i903.DefaultTradeUseCase(gh<_i776.TradeRepository>()),
-    );
     gh.lazySingleton<_i979.ThemeRepository>(
       () => _i514.ThemeRepositoryImpl(gh<_i315.ThemeDataSource>()),
     );
@@ -207,6 +209,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i281.ReactionDataSource>(
       () => _i549.SupabaseReactionDataSource(gh<_i454.SupabaseClient>()),
+    );
+    gh.lazySingleton<_i740.TradeDataSource>(
+      () => _i386.SupabaseTradeDataSource(gh<_i454.SupabaseClient>()),
     );
     gh.lazySingleton<_i47.ChatDataSource>(
       () => _i574.SupabaseChatDataSource(
@@ -243,6 +248,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i1004.AccountDataSource>(
       () => _i589.SupabaseAccountDataSource(gh<_i454.SupabaseClient>()),
+    );
+    gh.lazySingleton<_i776.TradeRepository>(
+      () => _i632.TradeRepositoryImpl(gh<_i740.TradeDataSource>()),
+    );
+    gh.lazySingleton<_i903.TradeUseCase>(
+      () => _i903.DefaultTradeUseCase(gh<_i776.TradeRepository>()),
     );
     gh.lazySingleton<_i892.BlockRepository>(
       () => _i659.BlockRepositoryImpl(gh<_i452.BlockDataSource>()),
