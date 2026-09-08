@@ -32,6 +32,23 @@ void main() {
     expect(TradeFormat.amount(9876.5, 'en'), '9,876.50');
   });
 
+  group('quantity', () {
+    test('소수 6자리까지 찍되 뒤의 0 은 떼어 낸다', () {
+      expect(TradeFormat.quantity(0.5), '0.5');
+      expect(TradeFormat.quantity(49.950049), '49.950049');
+      expect(TradeFormat.quantity(0.0999), '0.0999');
+    });
+
+    test('소수가 없으면 소수점도 붙이지 않는다', () {
+      expect(TradeFormat.quantity(0), '0');
+      expect(TradeFormat.quantity(10), '10');
+    });
+
+    test('금액과 달리 천 단위 구분은 넣지 않는다', () {
+      expect(TradeFormat.quantity(12345.5), '12345.5');
+    });
+  });
+
   test('dayRange 는 yyyy-MM-dd 두 개를 물결로 잇는다', () {
     expect(
       TradeFormat.dayRange(DateTime.utc(2021, 11), DateTime.utc(2022, 1, 29)),

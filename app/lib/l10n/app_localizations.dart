@@ -2295,6 +2295,132 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'아직 끝나지 않은 판입니다'**
   String get tradeResultNotReady;
+
+  /// 판 진행 화면 AppBar 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'모의투자'**
+  String get tradeSessionTitle;
+
+  /// 판 진행 화면 더보기 메뉴 — 보유분을 현재가로 팔고 판을 끝낸다
+  ///
+  /// In ko, this message translates to:
+  /// **'청산하고 끝내기'**
+  String get tradeFinishNow;
+
+  /// 청산하고 끝내기 확인 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 끝낼까요?'**
+  String get tradeFinishConfirmTitle;
+
+  /// 청산하고 끝내기 확인 다이얼로그 본문 — 되돌릴 수 없음을 알린다
+  ///
+  /// In ko, this message translates to:
+  /// **'보유 수량을 현재가로 모두 팔고 결과를 봅니다. 되돌릴 수 없습니다.'**
+  String get tradeFinishConfirmMessage;
+
+  /// 판 진행 화면 지표 — 아직 쓰지 않은 현금
+  ///
+  /// In ko, this message translates to:
+  /// **'현금'**
+  String get tradeCash;
+
+  /// 판 진행 화면 지표 — 지금 들고 있는 수량
+  ///
+  /// In ko, this message translates to:
+  /// **'보유 수량'**
+  String get tradeQuantity;
+
+  /// 판 진행 화면 지표 — 초기 자본 대비 지금까지의 수익률
+  ///
+  /// In ko, this message translates to:
+  /// **'현재 수익률'**
+  String get tradeCurrentReturn;
+
+  /// 판 진행 화면 — 현재 봉의 정규화 종가. 단위 없는 지수다
+  ///
+  /// In ko, this message translates to:
+  /// **'현재가'**
+  String get tradeCurrentPrice;
+
+  /// 판 진행 화면의 매수 버튼과 매수 주문 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'매수'**
+  String get tradeBuy;
+
+  /// 판 진행 화면의 매도 버튼과 매도 주문 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'매도'**
+  String get tradeSell;
+
+  /// 판 진행 화면 — 다음 봉으로 넘어가는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 날'**
+  String get tradeNextDay;
+
+  /// 매수 주문 시트 — 금액을 입력해 수량을 계산하는 방식
+  ///
+  /// In ko, this message translates to:
+  /// **'금액'**
+  String get tradeByAmount;
+
+  /// 매수 주문 시트 — 수량을 직접 입력하는 방식
+  ///
+  /// In ko, this message translates to:
+  /// **'수량'**
+  String get tradeByQuantity;
+
+  /// 매수 주문 시트 미리보기 — 이 주문으로 사게 될 수량
+  ///
+  /// In ko, this message translates to:
+  /// **'예상 수량'**
+  String get tradeExpectedQuantity;
+
+  /// 매도 주문 시트 미리보기 — 수수료를 뺀 뒤 받게 될 금액
+  ///
+  /// In ko, this message translates to:
+  /// **'예상 수령액'**
+  String get tradeExpectedProceeds;
+
+  /// 주문 시트 미리보기 — 이 주문에 붙는 수수료
+  ///
+  /// In ko, this message translates to:
+  /// **'수수료'**
+  String get tradeFee;
+
+  /// 매수 주문 시트 미리보기 — 주문이 체결된 뒤 남는 현금
+  ///
+  /// In ko, this message translates to:
+  /// **'주문 후 현금'**
+  String get tradeRemainingCash;
+
+  /// 매도 주문 시트 미리보기 — 주문이 체결된 뒤 남는 보유 수량
+  ///
+  /// In ko, this message translates to:
+  /// **'주문 후 보유 수량'**
+  String get tradeRemainingQuantity;
+
+  /// 주문 시트의 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'주문하기'**
+  String get tradeConfirmOrder;
+
+  /// 주문이 성공했을 때의 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'주문이 체결됐습니다'**
+  String get tradeOrderPlaced;
+
+  /// 주문 시트의 비율 프리셋 버튼 라벨 — 현금 또는 보유 수량의 몇 %인지
+  ///
+  /// In ko, this message translates to:
+  /// **'{pct}%'**
+  String tradeFractionLabel(int pct);
 }
 
 class _AppLocalizationsDelegate

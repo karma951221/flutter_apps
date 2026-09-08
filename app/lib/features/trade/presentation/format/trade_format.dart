@@ -29,6 +29,20 @@ abstract final class TradeFormat {
   static String amount(double value, String locale) =>
       NumberFormat('#,##0.00', locale).format(value);
 
+  /// 보유·주문 수량. 소수 6자리까지 찍고 뒤의 0 은 떼어 낸다.
+  ///
+  /// 수량의 정본은 소수 6자리 numeric 이라 `0.5` 를 `0.500000` 으로 보여줄
+  /// 이유가 없다. 금액([amount])과 달리 천 단위 구분도 넣지 않는다 — 수량은
+  /// 돈이 아니라 개수라서, 자릿점이 붙으면 오히려 금액처럼 읽힌다.
+  static String quantity(double value) {
+    final fixed = value.toStringAsFixed(6);
+    if (!fixed.contains('.')) return fixed;
+    final trimmed = fixed.replaceFirst(RegExp(r'0+$'), '');
+    return trimmed.endsWith('.')
+        ? trimmed.substring(0, trimmed.length - 1)
+        : trimmed;
+  }
+
   /// 판이 다룬 기간. `2021-11-01 ~ 2022-01-29`.
   ///
   /// 로컬 시간대로 옮기지 않는다. 여기 오는 값은 순간이 아니라 달력의

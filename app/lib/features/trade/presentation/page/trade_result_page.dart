@@ -13,6 +13,7 @@ import '../cubit/trade_session_cubit.dart';
 import '../cubit/trade_session_state.dart';
 import '../format/trade_format.dart';
 import '../widget/trade_candle_chart.dart';
+import '../widget/trade_metric_card.dart';
 
 /// 끝난 판의 결과.
 ///
@@ -135,30 +136,30 @@ class _MetricGrid extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
       child: Column(
         children: [
-          _MetricRow(
+          TradeMetricRow(
             children: [
-              _MetricCard(
+              TradeMetricCard(
                 label: l10n.tradeReturn,
                 value: TradeFormat.signedPct(result.returnPct),
                 valueStyle: theme.textTheme.headlineSmall?.copyWith(
                   color: _returnColor(result.returnPct),
                 ),
               ),
-              _MetricCard(
+              TradeMetricCard(
                 label: l10n.tradeBuyHold,
                 value: TradeFormat.signedPct(result.buyHoldReturnPct),
               ),
             ],
           ),
-          _MetricRow(
+          TradeMetricRow(
             children: [
-              _MetricCard(
+              TradeMetricCard(
                 label: l10n.tradeMaxDrawdown,
                 // 낙폭은 항상 0 이상으로 오지만 읽는 사람에겐 아래로 내려간
                 // 폭이다. 부호를 뒤집어 음수로 보여준다.
                 value: TradeFormat.signedPct(-result.maxDrawdownPct),
               ),
-              _MetricCard(
+              TradeMetricCard(
                 label: l10n.tradeCount,
                 value: l10n.tradeCountValue(result.tradeCount),
               ),
@@ -173,62 +174,5 @@ class _MetricGrid extends StatelessWidget {
     if (returnPct > 0) return AppColors.candleUp;
     if (returnPct < 0) return AppColors.candleDown;
     return null;
-  }
-}
-
-/// 지표 카드 두 장을 한 줄에 같은 너비 · 같은 높이로 놓는다.
-///
-/// 높이를 맞추는 이유는 글자 수가 달라 카드가 어긋나면 지표보다 배치가 먼저
-/// 눈에 들어오기 때문이다. `stretch` 만으로는 세로가 무한인 목록 안에서
-/// 높이를 정할 수 없어 [IntrinsicHeight] 가 함께 있어야 한다.
-class _MetricRow extends StatelessWidget {
-  const _MetricRow({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) => IntrinsicHeight(
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [for (final child in children) Expanded(child: child)],
-    ),
-  );
-}
-
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.label,
-    required this.value,
-    this.valueStyle,
-  });
-
-  final String label;
-  final String value;
-  final TextStyle? valueStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      margin: const EdgeInsets.all(AppSpacing.sm),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(value, style: valueStyle ?? theme.textTheme.titleLarge),
-          ],
-        ),
-      ),
-    );
   }
 }

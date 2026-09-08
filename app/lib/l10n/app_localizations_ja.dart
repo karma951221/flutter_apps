@@ -1139,4 +1139,69 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get tradeResultNotReady => 'まだ終わっていない回です';
+
+  @override
+  String get tradeSessionTitle => '模擬投資';
+
+  @override
+  String get tradeFinishNow => '清算して終了';
+
+  @override
+  String get tradeFinishConfirmTitle => '今すぐ終了しますか？';
+
+  @override
+  String get tradeFinishConfirmMessage => '保有数量を現在価格ですべて売却して結果を表示します。取り消せません。';
+
+  @override
+  String get tradeCash => '現金';
+
+  @override
+  String get tradeQuantity => '保有数量';
+
+  @override
+  String get tradeCurrentReturn => '現在の収益率';
+
+  @override
+  String get tradeCurrentPrice => '現在価格';
+
+  @override
+  String get tradeBuy => '買う';
+
+  @override
+  String get tradeSell => '売る';
+
+  @override
+  String get tradeNextDay => '次の日';
+
+  @override
+  String get tradeByAmount => '金額';
+
+  @override
+  String get tradeByQuantity => '数量';
+
+  @override
+  String get tradeExpectedQuantity => '予想数量';
+
+  @override
+  String get tradeExpectedProceeds => '予想受取額';
+
+  @override
+  String get tradeFee => '手数料';
+
+  @override
+  String get tradeRemainingCash => '注文後の現金';
+
+  @override
+  String get tradeRemainingQuantity => '注文後の保有数量';
+
+  @override
+  String get tradeConfirmOrder => '注文する';
+
+  @override
+  String get tradeOrderPlaced => '注文が約定しました';
+
+  @override
+  String tradeFractionLabel(int pct) {
+    return '$pct%';
+  }
 }

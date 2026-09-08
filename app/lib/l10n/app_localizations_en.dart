@@ -1213,4 +1213,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tradeResultNotReady => 'This round hasn\'t finished yet';
+
+  @override
+  String get tradeSessionTitle => 'Paper trading';
+
+  @override
+  String get tradeFinishNow => 'Close out and finish';
+
+  @override
+  String get tradeFinishConfirmTitle => 'Finish now?';
+
+  @override
+  String get tradeFinishConfirmMessage =>
+      'Your holdings are sold at the current price and the round ends. This can\'t be undone.';
+
+  @override
+  String get tradeCash => 'Cash';
+
+  @override
+  String get tradeQuantity => 'Holdings';
+
+  @override
+  String get tradeCurrentReturn => 'Current return';
+
+  @override
+  String get tradeCurrentPrice => 'Current price';
+
+  @override
+  String get tradeBuy => 'Buy';
+
+  @override
+  String get tradeSell => 'Sell';
+
+  @override
+  String get tradeNextDay => 'Next day';
+
+  @override
+  String get tradeByAmount => 'Amount';
+
+  @override
+  String get tradeByQuantity => 'Quantity';
+
+  @override
+  String get tradeExpectedQuantity => 'Estimated quantity';
+
+  @override
+  String get tradeExpectedProceeds => 'Estimated proceeds';
+
+  @override
+  String get tradeFee => 'Fee';
+
+  @override
+  String get tradeRemainingCash => 'Cash after order';
+
+  @override
+  String get tradeRemainingQuantity => 'Holdings after order';
+
+  @override
+  String get tradeConfirmOrder => 'Place order';
+
+  @override
+  String get tradeOrderPlaced => 'Order filled';
+
+  @override
+  String tradeFractionLabel(int pct) {
+    return '$pct%';
+  }
 }

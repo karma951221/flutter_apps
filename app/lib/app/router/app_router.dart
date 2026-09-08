@@ -28,6 +28,7 @@ import '../../features/settings/presentation/page/account_settings_page.dart';
 import '../../features/settings/presentation/page/change_password_page.dart';
 import '../../features/settings/presentation/page/settings_page.dart';
 import '../../features/trade/presentation/page/trade_result_page.dart';
+import '../../features/trade/presentation/page/trade_session_page.dart';
 import 'auth_redirect.dart';
 import 'routes.dart';
 
@@ -130,7 +131,14 @@ GoRouter createRouter(AuthBloc authBloc) {
           direction: FollowDirection.followers,
         ),
       ),
-      // 판 진행 화면(`/trade/:sessionId`)은 그 화면을 만드는 쪽에서 등록한다.
+      // `/trade/:sessionId` 와 `/trade/:sessionId/result` 는 세그먼트 수가
+      // 달라 서로를 가리지 않는다 — `result` 가 sessionId 로 잡히지 않는다는
+      // 뜻이다. 순서에 기대지 않지만, 그래도 두 라우트를 붙여 둔다.
+      GoRoute(
+        path: Routes.tradeSession,
+        builder: (_, state) =>
+            TradeSessionPage(sessionId: state.pathParameters['sessionId']!),
+      ),
       // 결과는 공유 링크가 가리키는 자리라 로그인 여부와 무관하게 열린다 —
       // 리다이렉트 예외는 resolveAuthRedirect 에 있다.
       GoRoute(

@@ -1552,5 +1552,94 @@
   "tradeResultNotReady": "아직 끝나지 않은 판입니다",
   "@tradeResultNotReady": {
     "description": "결과 화면을 열었는데 그 판이 아직 진행 중일 때의 안내"
+  },
+  "tradeSessionTitle": "모의투자",
+  "@tradeSessionTitle": {
+    "description": "판 진행 화면 AppBar 제목"
+  },
+  "tradeFinishNow": "청산하고 끝내기",
+  "@tradeFinishNow": {
+    "description": "판 진행 화면 더보기 메뉴 — 보유분을 현재가로 팔고 판을 끝낸다"
+  },
+  "tradeFinishConfirmTitle": "지금 끝낼까요?",
+  "@tradeFinishConfirmTitle": {
+    "description": "청산하고 끝내기 확인 다이얼로그 제목"
+  },
+  "tradeFinishConfirmMessage": "보유 수량을 현재가로 모두 팔고 결과를 봅니다. 되돌릴 수 없습니다.",
+  "@tradeFinishConfirmMessage": {
+    "description": "청산하고 끝내기 확인 다이얼로그 본문 — 되돌릴 수 없음을 알린다"
+  },
+  "tradeCash": "현금",
+  "@tradeCash": {
+    "description": "판 진행 화면 지표 — 아직 쓰지 않은 현금"
+  },
+  "tradeQuantity": "보유 수량",
+  "@tradeQuantity": {
+    "description": "판 진행 화면 지표 — 지금 들고 있는 수량"
+  },
+  "tradeCurrentReturn": "현재 수익률",
+  "@tradeCurrentReturn": {
+    "description": "판 진행 화면 지표 — 초기 자본 대비 지금까지의 수익률"
+  },
+  "tradeCurrentPrice": "현재가",
+  "@tradeCurrentPrice": {
+    "description": "판 진행 화면 — 현재 봉의 정규화 종가. 단위 없는 지수다"
+  },
+  "tradeBuy": "매수",
+  "@tradeBuy": {
+    "description": "판 진행 화면의 매수 버튼과 매수 주문 시트 제목"
+  },
+  "tradeSell": "매도",
+  "@tradeSell": {
+    "description": "판 진행 화면의 매도 버튼과 매도 주문 시트 제목"
+  },
+  "tradeNextDay": "다음 날",
+  "@tradeNextDay": {
+    "description": "판 진행 화면 — 다음 봉으로 넘어가는 버튼"
+  },
+  "tradeByAmount": "금액",
+  "@tradeByAmount": {
+    "description": "매수 주문 시트 — 금액을 입력해 수량을 계산하는 방식"
+  },
+  "tradeByQuantity": "수량",
+  "@tradeByQuantity": {
+    "description": "매수 주문 시트 — 수량을 직접 입력하는 방식"
+  },
+  "tradeExpectedQuantity": "예상 수량",
+  "@tradeExpectedQuantity": {
+    "description": "매수 주문 시트 미리보기 — 이 주문으로 사게 될 수량"
+  },
+  "tradeExpectedProceeds": "예상 수령액",
+  "@tradeExpectedProceeds": {
+    "description": "매도 주문 시트 미리보기 — 수수료를 뺀 뒤 받게 될 금액"
+  },
+  "tradeFee": "수수료",
+  "@tradeFee": {
+    "description": "주문 시트 미리보기 — 이 주문에 붙는 수수료"
+  },
+  "tradeRemainingCash": "주문 후 현금",
+  "@tradeRemainingCash": {
+    "description": "매수 주문 시트 미리보기 — 주문이 체결된 뒤 남는 현금"
+  },
+  "tradeRemainingQuantity": "주문 후 보유 수량",
+  "@tradeRemainingQuantity": {
+    "description": "매도 주문 시트 미리보기 — 주문이 체결된 뒤 남는 보유 수량"
+  },
+  "tradeConfirmOrder": "주문하기",
+  "@tradeConfirmOrder": {
+    "description": "주문 시트의 확인 버튼"
+  },
+  "tradeOrderPlaced": "주문이 체결됐습니다",
+  "@tradeOrderPlaced": {
+    "description": "주문이 성공했을 때의 스낵바"
+  },
+  "tradeFractionLabel": "{pct}%",
+  "@tradeFractionLabel": {
+    "description": "주문 시트의 비율 프리셋 버튼 라벨 — 현금 또는 보유 수량의 몇 %인지",
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
   }
 }

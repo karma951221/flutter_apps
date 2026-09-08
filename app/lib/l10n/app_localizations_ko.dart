@@ -1139,4 +1139,70 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get tradeResultNotReady => '아직 끝나지 않은 판입니다';
+
+  @override
+  String get tradeSessionTitle => '모의투자';
+
+  @override
+  String get tradeFinishNow => '청산하고 끝내기';
+
+  @override
+  String get tradeFinishConfirmTitle => '지금 끝낼까요?';
+
+  @override
+  String get tradeFinishConfirmMessage =>
+      '보유 수량을 현재가로 모두 팔고 결과를 봅니다. 되돌릴 수 없습니다.';
+
+  @override
+  String get tradeCash => '현금';
+
+  @override
+  String get tradeQuantity => '보유 수량';
+
+  @override
+  String get tradeCurrentReturn => '현재 수익률';
+
+  @override
+  String get tradeCurrentPrice => '현재가';
+
+  @override
+  String get tradeBuy => '매수';
+
+  @override
+  String get tradeSell => '매도';
+
+  @override
+  String get tradeNextDay => '다음 날';
+
+  @override
+  String get tradeByAmount => '금액';
+
+  @override
+  String get tradeByQuantity => '수량';
+
+  @override
+  String get tradeExpectedQuantity => '예상 수량';
+
+  @override
+  String get tradeExpectedProceeds => '예상 수령액';
+
+  @override
+  String get tradeFee => '수수료';
+
+  @override
+  String get tradeRemainingCash => '주문 후 현금';
+
+  @override
+  String get tradeRemainingQuantity => '주문 후 보유 수량';
+
+  @override
+  String get tradeConfirmOrder => '주문하기';
+
+  @override
+  String get tradeOrderPlaced => '주문이 체결됐습니다';
+
+  @override
+  String tradeFractionLabel(int pct) {
+    return '$pct%';
+  }
 }
