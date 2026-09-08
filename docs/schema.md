@@ -50,8 +50,9 @@ profiles ──1:N──▶ posts ──┬──1:N──▶ post_images
 정책과 `post_comments_visible`(§9) 뷰가 모두 `is_blocked_with()`(§3) 하나를 불러
 차단 관계를 반영한다.
 
-앞으로 추가될 테이블(`follows`)의 계획은
-[기획서 §7](overview.md)에 있다. 여기에는 **실제로 존재하는 것만** 적는다.
+`follows`(§15)와 채팅 테이블(§14)은 그림에 넣지 않았다 — 각 절의 설명으로 충분하다.
+`market_candles`(§16)는 사용자 데이터와 관계없는 독립 시세라 선 없이 둔다.
+아직 없는 테이블의 계획은 [기획서](overview.md)에 있고, 여기에는 **실제로 존재하는 것만** 적는다.
 
 ---
 
@@ -2000,3 +2001,48 @@ create trigger blocks_drop_follows
 `supabase/tests/follow_block_race_check.py` 4건이 모두 통과한다(2026-08-30).
 뒤쪽은 psql 세션 둘로 트랜잭션을 겹쳐 위 동시성 결함을 재현·확인한다. 항목은
 [테스트 문서](testing/features/follow.md)에 있다.
+
+---
+
+## 16. `market_candles`
+
+모의투자의 기준이 되는 Binance 일봉 원시 시세다. 사용자 데이터와 FK 관계가 없으며,
+복합 PK `(symbol, day)`가 종목별 하루 한 봉만 허용한다.
+
+```sql
+create table public.market_candles (
+  symbol text    not null,
+  day    date    not null,
+  open   numeric not null,
+  high   numeric not null,
+  low    numeric not null,
+  close  numeric not null,
+  volume numeric not null,
+  primary key (symbol, day),
+  constraint market_candles_ohlc check (
+    high >= greatest(open, close) and low <= least(open, close)
+  ),
+  constraint market_candles_volume check (volume >= 0)
+);
+
+alter table public.market_candles enable row level security;
+revoke all privileges on public.market_candles from anon, authenticated;
+grant select on public.market_candles to service_role;
+```
+
+`market_candles_ohlc`는 고가가 시가·종가보다 낮거나 저가가 시가·종가보다 높은 봉을
+거부하고, `market_candles_volume`은 음수 거래량을 거부한다. 제약 이름은 §2의
+`테이블_내용` 규칙을 따른다.
+
+### RLS · GRANT — 클라이언트 직접 조회 금지
+
+RLS는 켜지만 정책은 만들지 않고, `anon`·`authenticated`에는 어떤 GRANT도 주지
+않는다. Supabase의 기본 권한 처리로 붙을 수 있는 비조회 권한도 `revoke all`로
+명시적으로 회수한다. §2에서 설명했듯 RLS와 GRANT는 서로 다른 권한 경계다. 이
+테이블에서는 GRANT 없음이 누락이 아니라 **원가격과 실제 심볼을 숨기는 보안 요구**다. 후속
+`security definer` RPC만 필요한 값을 읽어 가공해 반환하며, 클라이언트가 테이블을
+직접 조회하면 `42501 permission denied`가 나야 한다. `service_role`의 직접 조회는
+seed 적재 결과 검증과 운영 작업에만 쓴다.
+
+seed는 `supabase/scripts/fetch_candles.py`가 Binance 일봉을 전체 재수집해
+`supabase/seeds/market_candles.sql`로 만든다. 생성 파일은 직접 수정하지 않는다.

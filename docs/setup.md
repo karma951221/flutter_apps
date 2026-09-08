@@ -77,6 +77,20 @@ dart run build_runner watch
 
 MVP는 Android로 개발해도 무방하다. 다만 **F1(auth) 완료 시점에는 iOS에서도 한 번 돌려보는 게 좋다** — Keychain 동작과 세션 유지가 플랫폼별로 다르게 실패할 수 있는 영역이다.
 
+## 5. 일봉 시세 seed 갱신
+
+모의투자용 Binance 일봉은 월 1회 수동으로 전체 재수집한다. 프로젝트 루트에서 아래
+명령을 실행하면 생성 seed를 덮어쓰고, 마이그레이션 뒤 로컬 DB에 다시 적재한다.
+
+```bash
+python3 supabase/scripts/fetch_candles.py
+supabase db reset
+```
+
+생성 파일 `supabase/seeds/market_candles.sql`은 커밋하되 직접 수정하지 않는다.
+부분 수집으로 확인할 때만 `--symbols BTC,ETH`를 쓰고, 별도 결과가 필요하면
+`--out <path>`를 함께 쓴다. 기본 실행은 지정된 20개 USDT 페어를 모두 갱신한다.
+
 ---
 
 ## 겪은 함정 (재발 방지)

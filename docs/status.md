@@ -18,6 +18,8 @@
 | 3.6 | F9-DM (1:1 채팅) | **완료** |
 | 4 | (v1.1) 재설정 SMTP · 구글 로그인 · OTP · 푸시 · 채팅 | 대기 |
 
+- [x] F10 trade — 1단계 시세 적재 완료
+
 ## 0단계 — 완료
 
 - [x] Docker Desktop · Supabase CLI 확인
