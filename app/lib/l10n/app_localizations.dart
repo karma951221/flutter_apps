@@ -400,6 +400,12 @@ abstract class AppLocalizations {
   /// **'지금 떠오르는 생각을 남겨보세요.'**
   String get postContentHint;
 
+  /// 작성 화면 — 판 결과 카드가 이 게시물에 붙는다는 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'판 결과가 함께 올라갑니다'**
+  String get postTradeAttached;
+
   /// 본문이 비었을 때 폼 검증 문구
   ///
   /// In ko, this message translates to:
@@ -2295,6 +2301,30 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'아직 끝나지 않은 판입니다'**
   String get tradeResultNotReady;
+
+  /// 결과 화면 — 내 판의 결과를 게시물로 올리러 가는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'공유하기'**
+  String get tradeShare;
+
+  /// 피드의 판 결과 카드 — 매매하지 않고 들고만 있었을 때의 수익률. pct 는 부호 포함 퍼센트
+  ///
+  /// In ko, this message translates to:
+  /// **'보유만 했을 때 {pct}'**
+  String tradeCardBuyHold(String pct);
+
+  /// 피드의 판 결과 카드 — 평가액 고점 대비 가장 크게 내려간 폭. pct 는 부호 포함 퍼센트
+  ///
+  /// In ko, this message translates to:
+  /// **'최대낙폭 {pct}'**
+  String tradeCardMaxDrawdown(String pct);
+
+  /// 피드의 판 결과 카드 — 그 판에서 체결한 주문 수
+  ///
+  /// In ko, this message translates to:
+  /// **'매매 {count}회'**
+  String tradeCardCount(int count);
 
   /// 판 진행 화면 AppBar 제목
   ///

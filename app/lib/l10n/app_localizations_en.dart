@@ -168,6 +168,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postContentHint => 'Write down what comes to mind.';
 
   @override
+  String get postTradeAttached => 'This round\'s result goes with the post';
+
+  @override
   String get postContentRequired => 'Enter the post content.';
 
   @override
@@ -1213,6 +1216,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tradeResultNotReady => 'This round hasn\'t finished yet';
+
+  @override
+  String get tradeShare => 'Share';
+
+  @override
+  String tradeCardBuyHold(String pct) {
+    return 'Buy and hold $pct';
+  }
+
+  @override
+  String tradeCardMaxDrawdown(String pct) {
+    return 'Max drawdown $pct';
+  }
+
+  @override
+  String tradeCardCount(int count) {
+    return '$count trades';
+  }
 
   @override
   String get tradeSessionTitle => 'Paper trading';

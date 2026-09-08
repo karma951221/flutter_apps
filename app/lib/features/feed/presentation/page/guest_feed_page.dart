@@ -103,6 +103,10 @@ class _GuestFeedView extends StatelessWidget {
                     onTap: () => _promptSignUp(context),
                     onReaction: (_) => _promptSignUp(context),
                     onComment: () => _promptSignUp(context),
+                    // 끝난 판의 결과는 게스트도 볼 수 있는 열린 화면이다
+                    // (`Routes.openRoutes`). 여기서 가입을 권할 이유가 없다.
+                    onTradeResultTap: (sessionId) =>
+                        context.push(Routes.tradeResultPath(sessionId)),
                   );
                 },
               ),

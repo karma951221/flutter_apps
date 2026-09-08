@@ -11,6 +11,8 @@ import '../../../../design_system/widget/app_overflow_menu.dart';
 import '../../../reaction/domain/entity/reaction_summary.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
 import '../../../reaction/presentation/widget/reaction_bar.dart';
+import '../../../trade/domain/entity/trade_result_summary.dart';
+import '../../../trade/presentation/widget/trade_result_card.dart';
 import '../../domain/entity/post.dart';
 import '../../domain/entity/post_author.dart';
 import '../../domain/entity/post_image.dart';
@@ -32,6 +34,12 @@ import '../../../../l10n/app_localizations.dart';
 /// 우측 상단 메뉴는 내 글일 때만 그리는 것이 아니다 — 내 글은 수정·삭제를,
 /// 남의 글은 신고·차단을 보여준다. 콜백이 모두 null 이면 [AppOverflowMenu] 가
 /// 스스로 아무것도 그리지 않는다.
+///
+/// 판 결과 카드([TradeResultCard])는 trade feature 가 소유하고 여기서 import
+/// 한다. **post → trade 는 아키텍처 규칙 ⑥ 이 허용하는 유일한 역방향 참조다** —
+/// 카드의 모양·색·표기는 모의투자 화면들과 한 몸이라 trade 쪽에 두는 것이 맞고,
+/// 그걸 목록에 놓을 수 있는 자리는 여기뿐이다. 반대 방향(trade → post)이나
+/// 이 밖의 역참조는 만들지 않는다.
 class PostTile extends StatelessWidget {
   const PostTile({
     required this.post,
@@ -46,6 +54,7 @@ class PostTile extends StatelessWidget {
     this.commentCount = 0,
     this.onReaction,
     this.onComment,
+    this.onTradeResultTap,
     super.key,
   });
 
@@ -72,6 +81,10 @@ class PostTile extends StatelessWidget {
 
   /// 댓글 화면으로 가는 동작.
   final VoidCallback? onComment;
+
+  /// 붙어 있는 판 결과를 눌렀을 때. 인자는 결과 화면으로 들어갈 판 id 다.
+  /// null 이면 카드는 그려지되 누를 수 없다.
+  final ValueChanged<String>? onTradeResultTap;
 
   @override
   Widget build(BuildContext context) {
@@ -125,6 +138,15 @@ class PostTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodyLarge,
               ),
+              if (post.tradeResult case final TradeResultSummary summary) ...[
+                const SizedBox(height: AppSpacing.sm),
+                TradeResultCard(
+                  summary: summary,
+                  onTap: onTradeResultTap == null
+                      ? null
+                      : () => onTradeResultTap!(summary.sessionId),
+                ),
+              ],
               if (post.images.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.sm),
                 _PostImages(images: post.images),

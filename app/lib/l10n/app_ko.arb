@@ -205,6 +205,10 @@
   "@postContentHint": {
     "description": "게시물 본문 입력 힌트"
   },
+  "postTradeAttached": "판 결과가 함께 올라갑니다",
+  "@postTradeAttached": {
+    "description": "작성 화면 — 판 결과 카드가 이 게시물에 붙는다는 안내"
+  },
   "postContentRequired": "게시물 내용을 입력하세요.",
   "@postContentRequired": {
     "description": "본문이 비었을 때 폼 검증 문구"
@@ -1552,6 +1556,37 @@
   "tradeResultNotReady": "아직 끝나지 않은 판입니다",
   "@tradeResultNotReady": {
     "description": "결과 화면을 열었는데 그 판이 아직 진행 중일 때의 안내"
+  },
+  "tradeShare": "공유하기",
+  "@tradeShare": {
+    "description": "결과 화면 — 내 판의 결과를 게시물로 올리러 가는 버튼"
+  },
+  "tradeCardBuyHold": "보유만 했을 때 {pct}",
+  "@tradeCardBuyHold": {
+    "description": "피드의 판 결과 카드 — 매매하지 않고 들고만 있었을 때의 수익률. pct 는 부호 포함 퍼센트",
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      }
+    }
+  },
+  "tradeCardMaxDrawdown": "최대낙폭 {pct}",
+  "@tradeCardMaxDrawdown": {
+    "description": "피드의 판 결과 카드 — 평가액 고점 대비 가장 크게 내려간 폭. pct 는 부호 포함 퍼센트",
+    "placeholders": {
+      "pct": {
+        "type": "String"
+      }
+    }
+  },
+  "tradeCardCount": "매매 {count}회",
+  "@tradeCardCount": {
+    "description": "피드의 판 결과 카드 — 그 판에서 체결한 주문 수",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "tradeSessionTitle": "모의투자",
   "@tradeSessionTitle": {

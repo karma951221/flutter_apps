@@ -161,6 +161,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get postContentHint => '지금 떠오르는 생각을 남겨보세요.';
 
   @override
+  String get postTradeAttached => '판 결과가 함께 올라갑니다';
+
+  @override
   String get postContentRequired => '게시물 내용을 입력하세요.';
 
   @override
@@ -1139,6 +1142,24 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get tradeResultNotReady => '아직 끝나지 않은 판입니다';
+
+  @override
+  String get tradeShare => '공유하기';
+
+  @override
+  String tradeCardBuyHold(String pct) {
+    return '보유만 했을 때 $pct';
+  }
+
+  @override
+  String tradeCardMaxDrawdown(String pct) {
+    return '최대낙폭 $pct';
+  }
+
+  @override
+  String tradeCardCount(int count) {
+    return '매매 $count회';
+  }
 
   @override
   String get tradeSessionTitle => '모의투자';

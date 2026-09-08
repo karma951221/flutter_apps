@@ -27,6 +27,7 @@ import '../../features/safety/presentation/page/blocked_users_page.dart';
 import '../../features/settings/presentation/page/account_settings_page.dart';
 import '../../features/settings/presentation/page/change_password_page.dart';
 import '../../features/settings/presentation/page/settings_page.dart';
+import '../../features/trade/domain/entity/trade_result_summary.dart';
 import '../../features/trade/presentation/page/trade_result_page.dart';
 import '../../features/trade/presentation/page/trade_session_page.dart';
 import 'auth_redirect.dart';
@@ -59,9 +60,13 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(path: Routes.home, builder: (_, _) => const HomeShellPage()),
       GoRoute(
         path: Routes.postCompose,
-        builder: (_, _) => BlocProvider(
+        // extra 는 결과 화면의 "공유하기"가 들려 보낸 판 결과다. 그냥 들어오면
+        // null 이고 평소의 작성 화면이 된다.
+        builder: (_, state) => BlocProvider(
           create: (_) => getIt<PostCubit>(),
-          child: const PostEditorPage(),
+          child: PostEditorPage(
+            tradeResult: state.extra as TradeResultSummary?,
+          ),
         ),
       ),
       GoRoute(

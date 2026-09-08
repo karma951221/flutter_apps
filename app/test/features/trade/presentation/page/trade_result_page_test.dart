@@ -1,7 +1,13 @@
+import 'package:daylog/app/router/routes.dart';
 import 'package:daylog/core/di/injection.dart';
 import 'package:daylog/core/error/failure.dart';
 import 'package:daylog/core/result/result.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
+import 'package:daylog/features/auth/domain/entity/app_user.dart';
+import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:daylog/features/auth/presentation/bloc/auth_event.dart';
+import 'package:daylog/features/auth/presentation/bloc/auth_state.dart';
+import 'package:daylog/features/trade/domain/entity/trade_result_summary.dart';
 import 'package:daylog/features/trade/domain/entity/trade_candle.dart';
 import 'package:daylog/features/trade/domain/entity/trade_order.dart';
 import 'package:daylog/features/trade/domain/entity/trade_result.dart';
@@ -14,17 +20,26 @@ import 'package:daylog/features/trade/presentation/page/trade_result_page.dart';
 import 'package:daylog/features/trade/presentation/widget/trade_candle_chart.dart';
 import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockTradeUseCase extends Mock implements TradeUseCase {}
 
+class _MockAuthBloc extends MockBloc<AuthEvent, AuthState>
+    implements AuthBloc {}
+
+const _me = AppUser(id: 'me', email: 'me@example.test', nickname: '카르마');
+
 TradeSession _finished({
   double returnPct = 12.34,
   double buyHoldReturnPct = 3,
+  String userId = 'me',
 }) => TradeSession(
   id: 's1',
-  userId: 'me',
+  userId: userId,
   step: TradeRules.tradeSteps,
   cash: 11234,
   quantity: 0,
@@ -65,26 +80,53 @@ TradeSession _running() => TradeSession(
 
 void main() {
   late _MockTradeUseCase useCase;
+  late _MockAuthBloc authBloc;
 
   setUp(() {
     useCase = _MockTradeUseCase();
+    authBloc = _MockAuthBloc();
+    whenListen(
+      authBloc,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.authenticated(_me),
+    );
     getIt.registerFactory<TradeSessionCubit>(() => TradeSessionCubit(useCase));
   });
 
   tearDown(getIt.reset);
 
-  Future<void> pumpResult(WidgetTester tester) async {
+  /// 결과 화면은 공유하기로 작성 화면을 push 한다. 그래서 라우터 위에서
+  /// 띄우고, 갈 곳을 하나 둔다.
+  Future<GoRouter> pumpResult(WidgetTester tester) async {
+    final router = GoRouter(
+      initialLocation: Routes.tradeResultPath('s1'),
+      routes: [
+        GoRoute(
+          path: Routes.tradeResult,
+          builder: (_, state) =>
+              TradeResultPage(sessionId: state.pathParameters['sessionId']!),
+        ),
+        GoRoute(
+          path: Routes.postCompose,
+          builder: (_, _) => const Scaffold(body: Center(child: Text('작성'))),
+        ),
+      ],
+    );
+
     await tester.pumpWidget(
-      MaterialApp(
+      MaterialApp.router(
         theme: AppTheme.light(),
         // ko 가 ARB template 언어라 원문이 곧 기대값이다.
         locale: const Locale('ko'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: const TradeResultPage(sessionId: 's1'),
+        routerConfig: router,
+        builder: (_, child) =>
+            BlocProvider<AuthBloc>.value(value: authBloc, child: child!),
       ),
     );
     await tester.pumpAndSettle();
+    return router;
   }
 
   testWidgets('끝난 판은 종목 · 기간과 지표 네 개를 보여준다', (tester) async {
@@ -161,5 +203,57 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('BTC · 2021-11-01 ~ 2022-01-29'), findsOneWidget);
+  });
+
+  testWidgets('내 판이면 공유하기로 작성 화면에 결과를 들려 보낸다', (tester) async {
+    when(
+      () => useCase.getSession(any()),
+    ).thenAnswer((_) async => Ok(_finished()));
+
+    final router = await pumpResult(tester);
+
+    expect(find.text('공유하기'), findsOneWidget);
+
+    await tester.tap(find.text('공유하기'));
+    await tester.pumpAndSettle();
+
+    expect(router.state.matchedLocation, Routes.postCompose);
+    final extra = router.state.extra! as TradeResultSummary;
+    expect(extra.sessionId, 's1');
+    expect(extra.symbol, 'BTCUSDT');
+    expect(extra.returnPct, 12.34);
+    expect(extra.buyHoldReturnPct, 3);
+    expect(extra.maxDrawdownPct, 8);
+    expect(extra.tradeCount, 4);
+    expect(extra.startDay, DateTime.utc(2021, 11));
+    expect(extra.endDay, DateTime.utc(2022, 1, 29));
+  });
+
+  testWidgets('남의 판에는 공유하기가 없다', (tester) async {
+    when(
+      () => useCase.getSession(any()),
+    ).thenAnswer((_) async => Ok(_finished(userId: 'other')));
+
+    await pumpResult(tester);
+
+    expect(find.text('+12.34%'), findsOneWidget);
+    expect(find.text('공유하기'), findsNothing);
+  });
+
+  testWidgets('게스트에게도 공유하기가 없다', (tester) async {
+    // 공유 링크를 타고 들어온 비로그인 사용자다. 결과는 보이되 올릴 수는 없다.
+    whenListen(
+      authBloc,
+      const Stream<AuthState>.empty(),
+      initialState: const AuthState.unauthenticated(),
+    );
+    when(
+      () => useCase.getSession(any()),
+    ).thenAnswer((_) async => Ok(_finished()));
+
+    await pumpResult(tester);
+
+    expect(find.text('+12.34%'), findsOneWidget);
+    expect(find.text('공유하기'), findsNothing);
   });
 }

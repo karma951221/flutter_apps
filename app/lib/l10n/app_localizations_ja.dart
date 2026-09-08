@@ -161,6 +161,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postContentHint => 'いま思い浮かんだことを残してみましょう。';
 
   @override
+  String get postTradeAttached => '回の結果も一緒に投稿されます';
+
+  @override
   String get postContentRequired => '投稿の内容を入力してください。';
 
   @override
@@ -1139,6 +1142,24 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get tradeResultNotReady => 'まだ終わっていない回です';
+
+  @override
+  String get tradeShare => '共有する';
+
+  @override
+  String tradeCardBuyHold(String pct) {
+    return '保有のみ $pct';
+  }
+
+  @override
+  String tradeCardMaxDrawdown(String pct) {
+    return '最大ドローダウン $pct';
+  }
+
+  @override
+  String tradeCardCount(int count) {
+    return '売買 $count回';
+  }
 
   @override
   String get tradeSessionTitle => '模擬投資';

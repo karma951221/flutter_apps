@@ -9,6 +9,8 @@ import '../../../../design_system/theme/app_radius.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
+import '../../../trade/domain/entity/trade_result_summary.dart';
+import '../../../trade/presentation/widget/trade_result_card.dart';
 import '../../domain/entity/post.dart';
 import '../../domain/entity/post_image_draft.dart';
 import '../../domain/post_policy.dart';
@@ -22,10 +24,18 @@ import '../../../../l10n/app_localizations.dart';
 ///
 /// 작성과 수정이 한 화면을 쓴다. 다른 것은 제목·버튼 라벨과 **사진 첨부 가능
 /// 여부**뿐이다 — 수정은 본문만 바꾼다(`update_post_scenario`).
+///
+/// [tradeResult] 는 결과 화면에서 "공유하기"로 들어왔을 때만 있다. 값이 있으면
+/// 본문 위에 결과 카드를 미리 보여주고 그 판 id 를 함께 올린다. 화면에서 뗄 수
+/// 없다 — 붙일지 말지는 들어오기 전에 이미 고른 것이고, 여기서 뗄 수 있게 하면
+/// 같은 결정을 두 번 묻는 셈이다.
 class PostEditorPage extends StatefulWidget {
-  const PostEditorPage({this.post, super.key});
+  const PostEditorPage({this.post, this.tradeResult, super.key});
 
   final Post? post;
+
+  /// 이 게시물에 붙일 끝난 판의 결과. 작성일 때만 쓴다.
+  final TradeResultSummary? tradeResult;
 
   @override
   State<PostEditorPage> createState() => _PostEditorPageState();
@@ -73,6 +83,7 @@ class _PostEditorPageState extends State<PostEditorPage> {
         ? await cubit.update(widget.post!.id, _content.text)
         : await cubit.create(
             _content.text,
+            tradeSessionId: widget.tradeResult?.sessionId,
             images: _images
                 .map(
                   (image) => PostImageDraft(
@@ -154,6 +165,7 @@ class _PostEditorPageState extends State<PostEditorPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
     final isSubmitting = context.select(
       (PostCubit cubit) => cubit.state.isSubmitting,
     );
@@ -176,6 +188,18 @@ class _PostEditorPageState extends State<PostEditorPage> {
             child: ListView(
               padding: const EdgeInsets.all(AppSpacing.md),
               children: [
+                if (widget.tradeResult case final TradeResultSummary summary
+                    when !_isEditing) ...[
+                  TradeResultCard(summary: summary),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    l10n.postTradeAttached,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
                 TextFormField(
                   // E2E 셀렉터.
                   key: const Key('postEditor.content'),

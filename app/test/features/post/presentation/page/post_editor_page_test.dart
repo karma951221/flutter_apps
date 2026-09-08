@@ -7,6 +7,8 @@ import 'package:daylog/features/post/domain/post_policy.dart';
 import 'package:daylog/features/post/domain/usecase/post_use_case.dart';
 import 'package:daylog/features/post/presentation/cubit/post_cubit.dart';
 import 'package:daylog/features/post/presentation/page/post_editor_page.dart';
+import 'package:daylog/features/trade/domain/entity/trade_result_summary.dart';
+import 'package:daylog/features/trade/presentation/widget/trade_result_card.dart';
 import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,6 +17,17 @@ import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockPostUseCase extends Mock implements PostUseCase {}
+
+TradeResultSummary _summary() => TradeResultSummary(
+  sessionId: 'session-1',
+  symbol: 'BTCUSDT',
+  startDay: DateTime.utc(2021, 11),
+  endDay: DateTime.utc(2022, 1, 29),
+  returnPct: 12.34,
+  buyHoldReturnPct: 3,
+  maxDrawdownPct: 8,
+  tradeCount: 4,
+);
 
 Post _post(String content) => Post(
   id: 'post-1',
@@ -36,7 +49,11 @@ void main() {
 
   /// 편집 화면은 go_router 의 `pop(결과)` 로 목록에 게시물을 돌려준다.
   /// 그래서 테스트도 라우터 위에서 띄우고, 돌아갈 화면을 하나 둔다.
-  Future<void> pumpEditor(WidgetTester tester, {Post? post}) async {
+  Future<void> pumpEditor(
+    WidgetTester tester, {
+    Post? post,
+    TradeResultSummary? tradeResult,
+  }) async {
     final router = GoRouter(
       initialLocation: '/',
       routes: [
@@ -48,7 +65,7 @@ void main() {
               path: 'editor',
               builder: (_, _) => BlocProvider(
                 create: (_) => PostCubit(useCase),
-                child: PostEditorPage(post: post),
+                child: PostEditorPage(post: post, tradeResult: tradeResult),
               ),
             ),
           ],
@@ -164,5 +181,59 @@ void main() {
     verify(() => useCase.createPost(any())).called(1);
     // 결과를 들고 목록으로 돌아간다.
     expect(find.text('목록'), findsOneWidget);
+  });
+
+  testWidgets('공유로 들어오면 결과 카드와 안내를 본문 위에 보여준다', (tester) async {
+    await pumpEditor(tester, tradeResult: _summary());
+
+    expect(find.byType(TradeResultCard), findsOneWidget);
+    expect(find.text('BTC · 2021-11-01 ~ 2022-01-29'), findsOneWidget);
+    expect(find.text('+12.34%'), findsOneWidget);
+    expect(find.text('판 결과가 함께 올라갑니다'), findsOneWidget);
+
+    // 미리보기다. 눌러서 어딘가로 가지 않는다.
+    final inkWell = tester.widget<InkWell>(
+      find.descendant(
+        of: find.byType(TradeResultCard),
+        matching: find.byType(InkWell),
+      ),
+    );
+    expect(inkWell.onTap, isNull);
+  });
+
+  testWidgets('그냥 들어온 작성 화면에는 결과 카드가 없다', (tester) async {
+    await pumpEditor(tester);
+
+    expect(find.byType(TradeResultCard), findsNothing);
+    expect(find.text('판 결과가 함께 올라갑니다'), findsNothing);
+  });
+
+  testWidgets('붙어 온 판 id 를 그대로 올린다', (tester) async {
+    when(
+      () => useCase.createPost(any()),
+    ).thenAnswer((_) async => Ok(_post('새 기록')));
+
+    await pumpEditor(tester, tradeResult: _summary());
+    await tester.enterText(find.byType(TextFormField), '오늘 판 결과');
+    await tester.tap(find.text('올리기'));
+    await tester.pumpAndSettle();
+
+    final draft =
+        verify(() => useCase.createPost(captureAny())).captured.single
+            as PostDraft;
+    expect(draft.content, '오늘 판 결과');
+    expect(draft.tradeSessionId, 'session-1');
+  });
+
+  testWidgets('판만 붙어 있고 아무것도 쓰지 않았으면 나갈 때 묻지 않는다', (tester) async {
+    // 카드는 입력이 아니다. 붙어 있다는 이유만으로 "버릴까요?"를 물으면
+    // 잘못 들어왔다 나가는 길이 막힌다.
+    await pumpEditor(tester, tradeResult: _summary());
+
+    final route = ModalRoute.of(tester.element(find.byType(PostEditorPage)))!;
+    route.navigator!.maybePop();
+    await tester.pumpAndSettle();
+
+    expect(find.text('작성 중인 내용을 버릴까요?'), findsNothing);
   });
 }

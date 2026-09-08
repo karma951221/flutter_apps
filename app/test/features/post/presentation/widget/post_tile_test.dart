@@ -2,18 +2,32 @@ import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_author.dart';
 import 'package:daylog/features/post/presentation/widget/post_tile.dart';
+import 'package:daylog/features/trade/domain/entity/trade_result_summary.dart';
+import 'package:daylog/features/trade/presentation/widget/trade_result_card.dart';
 import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _author = PostAuthor(id: 'author-1', nickname: '카르마');
 
-Post _post() => Post(
+Post _post({TradeResultSummary? tradeResult}) => Post(
   id: 'post-1',
   authorId: 'author-1',
   content: '오늘의 기록',
   createdAt: DateTime.utc(2026, 8, 23, 9),
   updatedAt: DateTime.utc(2026, 8, 23, 9),
+  tradeResult: tradeResult,
+);
+
+TradeResultSummary _summary() => TradeResultSummary(
+  sessionId: 'session-1',
+  symbol: 'BTCUSDT',
+  startDay: DateTime.utc(2021, 11),
+  endDay: DateTime.utc(2022, 1, 29),
+  returnPct: 12.34,
+  buyHoldReturnPct: 3,
+  maxDrawdownPct: 8,
+  tradeCount: 4,
 );
 
 Future<void> _pump(
@@ -23,6 +37,8 @@ Future<void> _pump(
   VoidCallback? onDelete,
   VoidCallback? onReport,
   VoidCallback? onBlock,
+  TradeResultSummary? tradeResult,
+  ValueChanged<String>? onTradeResultTap,
 }) => tester.pumpWidget(
   MaterialApp(
     theme: AppTheme.light(),
@@ -32,7 +48,7 @@ Future<void> _pump(
     supportedLocales: AppLocalizations.supportedLocales,
     home: Scaffold(
       body: PostTile(
-        post: _post(),
+        post: _post(tradeResult: tradeResult),
         author: _author,
         isMine: isMine,
         onTap: () {},
@@ -40,6 +56,7 @@ Future<void> _pump(
         onDelete: onDelete,
         onReport: onReport,
         onBlock: onBlock,
+        onTradeResultTap: onTradeResultTap,
       ),
     ),
   ),
@@ -141,5 +158,50 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(blocked, isTrue);
+  });
+
+  testWidgets('판 결과가 붙어 있으면 본문 아래에 카드를 그린다', (tester) async {
+    await _pump(tester, isMine: false, tradeResult: _summary());
+
+    expect(find.byType(TradeResultCard), findsOneWidget);
+    expect(find.text('BTC · 2021-11-01 ~ 2022-01-29'), findsOneWidget);
+    expect(find.text('+12.34%'), findsOneWidget);
+  });
+
+  testWidgets('판 결과가 없으면 카드를 그리지 않는다', (tester) async {
+    await _pump(tester, isMine: false);
+
+    expect(find.byType(TradeResultCard), findsNothing);
+  });
+
+  testWidgets('카드를 누르면 그 판 id 로 onTradeResultTap 이 불린다', (tester) async {
+    String? tapped;
+    await _pump(
+      tester,
+      isMine: false,
+      tradeResult: _summary(),
+      onTradeResultTap: (sessionId) => tapped = sessionId,
+    );
+
+    await tester.tap(find.byType(TradeResultCard));
+    await tester.pumpAndSettle();
+
+    expect(tapped, 'session-1');
+  });
+
+  testWidgets('onTradeResultTap 이 없으면 카드는 보이되 눌리지 않는다', (tester) async {
+    // 게시물 전체를 누르는 동작(onTap)이 카드 위에서도 그대로 살아 있으면
+    // 카드가 링크처럼 보이면서 엉뚱한 곳으로 간다. 콜백이 없으면 아무 일도
+    // 일어나지 않아야 한다.
+    await _pump(tester, isMine: false, tradeResult: _summary());
+
+    expect(find.byType(TradeResultCard), findsOneWidget);
+    final inkWell = tester.widget<InkWell>(
+      find.descendant(
+        of: find.byType(TradeResultCard),
+        matching: find.byType(InkWell),
+      ),
+    );
+    expect(inkWell.onTap, isNull);
   });
 }

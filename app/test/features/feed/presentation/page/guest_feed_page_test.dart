@@ -12,6 +12,8 @@ import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_author.dart';
 import 'package:daylog/features/post/domain/entity/post_image.dart';
 import 'package:daylog/features/reaction/domain/usecase/reaction_use_case.dart';
+import 'package:daylog/features/trade/domain/entity/trade_result_summary.dart';
+import 'package:daylog/features/trade/presentation/widget/trade_result_card.dart';
 import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,7 +24,11 @@ class _MockFeedUseCase extends Mock implements FeedUseCase {}
 
 class _MockReactionUseCase extends Mock implements ReactionUseCase {}
 
-FeedPost _item(String id, {List<PostImage> images = const []}) => FeedPost(
+FeedPost _item(
+  String id, {
+  List<PostImage> images = const [],
+  TradeResultSummary? tradeResult,
+}) => FeedPost(
   post: Post(
     id: id,
     authorId: 'other',
@@ -30,8 +36,20 @@ FeedPost _item(String id, {List<PostImage> images = const []}) => FeedPost(
     createdAt: DateTime.utc(2026, 9, 6, 9),
     updatedAt: DateTime.utc(2026, 9, 6, 9),
     images: images,
+    tradeResult: tradeResult,
   ),
   author: const PostAuthor(id: 'other', nickname: '이웃'),
+);
+
+TradeResultSummary _summary() => TradeResultSummary(
+  sessionId: 'session-1',
+  symbol: 'BTCUSDT',
+  startDay: DateTime.utc(2021, 11),
+  endDay: DateTime.utc(2022, 1, 29),
+  returnPct: 12.34,
+  buyHoldReturnPct: 3,
+  maxDrawdownPct: 8,
+  tradeCount: 4,
 );
 
 PostImage _image(int order) => PostImage(
@@ -78,6 +96,10 @@ void main() {
         GoRoute(
           path: Routes.signIn,
           builder: (_, _) => const Scaffold(body: Text('로그인 화면')),
+        ),
+        GoRoute(
+          path: Routes.tradeResult,
+          builder: (_, _) => const Scaffold(body: Text('판 결과 화면')),
         ),
       ],
     );
@@ -208,5 +230,35 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('가입하면 반응과 댓글을 남길 수 있어요'), findsOneWidget);
+  });
+
+  // 끝난 판의 결과는 게스트도 볼 수 있는 열린 화면이라, 카드가 보이고
+  // 눌러서 결과로 들어갈 수 있어야 한다 (가입 안내가 아니다).
+  testWidgets('판 결과가 붙은 게시물은 카드를 보여주고 결과 화면으로 간다', (tester) async {
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer(
+      (_) async => Ok(
+        CursorPage<FeedPost>(items: [_item('1', tradeResult: _summary())]),
+      ),
+    );
+
+    final router = await pumpPage(tester);
+
+    expect(find.byType(TradeResultCard), findsOneWidget);
+    expect(find.text('BTC · 2021-11-01 ~ 2022-01-29'), findsOneWidget);
+    expect(find.text('+12.34%'), findsOneWidget);
+    expect(find.text('보유만 했을 때 +3.00% · 최대낙폭 −8.00% · 매매 4회'), findsOneWidget);
+
+    await tester.tap(find.byType(TradeResultCard));
+    await tester.pumpAndSettle();
+
+    expect(router.state.matchedLocation, Routes.tradeResultPath('session-1'));
+    expect(find.text('판 결과 화면'), findsOneWidget);
   });
 }

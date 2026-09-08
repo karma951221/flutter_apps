@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/theme/app_colors.dart';
 import '../../../../design_system/theme/app_spacing.dart';
+import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_placeholder.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../domain/entity/trade_result.dart';
+import '../../domain/entity/trade_result_summary.dart';
 import '../../domain/entity/trade_session.dart';
 import '../cubit/trade_session_cubit.dart';
 import '../cubit/trade_session_state.dart';
@@ -106,6 +112,18 @@ class _ResultBody extends StatelessWidget {
             style: theme.textTheme.bodyLarge,
           ),
         ),
+        // 공유는 내 판에서만. 남의 결과나 게스트가 보는 화면에는 아예 그리지
+        // 않는다 — 눌러도 남의 판을 올릴 수 없다(RLS 가 막는다).
+        if (_isMine(context)) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: AppButton.primary(
+              label: l10n.tradeShare,
+              onPressed: () => _share(context),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
         // 판 전체를 한 화면에 놓고 본다. 어디서 사고 팔았는지가 결과 숫자보다
         // 더 많은 것을 말해 준다.
         TradeCandleChart(
@@ -114,6 +132,31 @@ class _ResultBody extends StatelessWidget {
           endIndex: result.endIndex,
         ),
       ],
+    );
+  }
+
+  bool _isMine(BuildContext context) =>
+      switch (context.watch<AuthBloc>().state) {
+        AuthAuthenticated(:final user) => user.id == session.userId,
+        _ => false,
+      };
+
+  /// 작성 화면으로 결과 요약을 들려 보낸다. 돌아온 뒤에 할 일은 없다 — 성공
+  /// 스낵바도, 목록 갱신도 작성 화면과 피드의 몫이다.
+  void _share(BuildContext context) {
+    final result = session.result!;
+    context.push(
+      Routes.postCompose,
+      extra: TradeResultSummary(
+        sessionId: session.id,
+        symbol: result.symbol,
+        startDay: result.startDay,
+        endDay: result.endDay,
+        returnPct: result.returnPct,
+        buyHoldReturnPct: result.buyHoldReturnPct,
+        maxDrawdownPct: result.maxDrawdownPct,
+        tradeCount: result.tradeCount,
+      ),
     );
   }
 }

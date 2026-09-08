@@ -668,6 +668,8 @@ class _ProfilePostList extends StatelessWidget {
               onReaction: (type) =>
                   PostTileActions.react(context, post.id, type),
               onComment: () => PostTileActions.openComments(context, item),
+              onTradeResultTap: (sessionId) =>
+                  context.push(Routes.tradeResultPath(sessionId)),
             );
           },
         ),
