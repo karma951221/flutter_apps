@@ -17,7 +17,7 @@
 | 3.5 | F9 chat (오픈 채팅) | **완료** |
 | 3.6 | F9-DM (1:1 채팅) | **완료** |
 | 4 | (v1.1) 재설정 SMTP · 구글 로그인 · OTP · 푸시 · 채팅 | 대기 |
-| 5 | F10 trade (모의투자) — 5.1 시세 · 5.2 스키마 완료, 5.3 앱 · 5.4 공유 진행 중 | **진행 중** |
+| 5 | F10 trade (모의투자) — 5.1 시세 · 5.2 스키마 · 5.3 앱 완료, 5.4 공유 진행 중 | **진행 중** |
 
 
 ## 0단계 — 완료
@@ -297,7 +297,10 @@ auth 쪽 8개는 `await` 뒤에 가드 없이 `emit` 한다. 다만 이 테스�
       `posts.trade_session_id` · 피드 뷰의 `trade_result`. `symbol` · `start_day` 는
       어떤 role 도 읽지 못한다. `trade_rls_check.py` 61건과 기존 스크립트 7개 전부 통과
       ([스키마 §17](schema.md))
-- [ ] **5.3 앱** — `features/trade` · 홈 탭 "투자" · 세션 · 결과 화면 · 차트
+- [x] **5.3 앱** — `features/trade` 3계층 · 홈 첫 탭 "투자" · 세션 · 결과 화면 ·
+      `CustomPainter` 차트 · 결과 화면은 게스트도 여는 열린 경로. `flutter analyze` 0 ·
+      `flutter test` 811 통과 · 에뮬레이터 13개 항목 통과
+      ([기록](features/trade/history.md) · [테스트](testing/features/trade.md))
 - [ ] **5.4 결과 공유** — 결과 카드 게시물 · 피드 카드 · 게스트 열람
 
 ## UX 심리학 리뷰 반영 — 2026-09-06

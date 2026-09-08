@@ -144,7 +144,8 @@ lib/
     ├── comment/
     ├── follow/
     ├── chat/
-    └── safety/
+    ├── safety/
+    └── trade/      (동일 구조 + domain/ledger/ 순수 계산 · presentation/format/ 표기)
 ```
 
 `test/`는 `lib/`의 구조를 그대로 미러링한다. 실제 매핑과 실행 명령은
@@ -253,10 +254,12 @@ feed는 post의 `domain/entity/post.dart`를 그대로 쓴다. 같은 게시물�
 ## 3-2. 홈은 셸이고, 그 위에 화면을 얹는다
 
 로그인 뒤의 기본 화면(`/`)은 하단 내비게이션을 가진 **셸**이다(`features/home`).
-탭은 넷이고 각 탭 본문은 해당 feature 가 소유한 화면을 그대로 쓴다.
+탭은 다섯이고 각 탭 본문은 해당 feature 가 소유한 화면을 그대로 쓴다. 첫 탭이
+투자인 이유는 [기획 v0.4](overview.md)에서 모의투자가 이 앱의 주인공이 됐기 때문이다.
 
 | 탭 | 본문 | 소유 |
 |---|---|---|
+| 투자 | `TradeHomePage` | `features/trade` |
 | 홈 | `FeedPage` | `features/feed` |
 | 채팅 | `ChatRoomListPage` | `features/chat` |
 | 프로필 | `ProfilePage`(세션 사용자) | `features/profile` |
@@ -267,7 +270,7 @@ feed는 post의 `domain/entity/post.dart`를 그대로 쓴다. 같은 게시물�
   매번 첫 페이지로 돌아간다.
 - **탭 안에서 더 깊이 들어가는 화면은 셸 위에 push 한다** — 게시물 작성·수정,
   댓글, 프로필 편집, 계정 설정. 탭마다 독립된 내비게이션 스택을 두지 않는다.
-- go_router 의 `StatefulShellRoute` 를 쓰지 않는다. 탭이 넷뿐이라 얻는 것보다
+- go_router 의 `StatefulShellRoute` 를 쓰지 않는다. 탭이 다섯뿐이라 얻는 것보다
   구조가 늘어난다. **탭별 딥링크가 필요해지면 그때 셸 라우트로 옮긴다.**
 - **탭 배지가 필요한 상태는 셸이 소유한다.** 채팅의 안읽음 합계가 그렇다 —
   탭 본문이 자기 cubit 을 만들면 그 화면에 있을 때만 숫자를 알게 된다.

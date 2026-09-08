@@ -35,8 +35,8 @@
 | `/settings/account` | `AccountSettingsPage` | 비밀번호 변경 · 회원 탈퇴 |
 | `/settings/account/password` | `ChangePasswordPage` | 새 비밀번호 · 확인 두 칸 |
 
-`SettingsPage` 는 하단 내비게이션의 **네 번째(마지막) 탭** 본문이기도 하다
-(홈 · 채팅 · 프로필 · 설정). 셸 구조는
+`SettingsPage` 는 하단 내비게이션의 **다섯 번째(마지막) 탭** 본문이기도 하다
+(투자 · 홈 · 채팅 · 프로필 · 설정). 셸 구조는
 [아키텍처의 내비게이션 절](../../architecture.md)에 있다.
 
 ### 상태
