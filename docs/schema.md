@@ -2361,6 +2361,42 @@ incomplete` · `invalid side`(22023). 사용자에게 보일 자리가 아니다
 `select ... for update` 로 세션을 먼저 잠근다. 잔고 검사와 갱신 사이가 벌어지면 같은
 현금을 두 번 쓸 수 있다.
 
-### 검증한 것 (로컬 Supabase)
+### 검증한 것 (로컬 Supabase · 실제 JWT + REST)
 
-(Task 3 의 `supabase/tests/trade_rls_check.py` 가 채운다.)
+`supabase/tests/trade_rls_check.py` 61건이 모두 통과한다. 사용자 둘과 게스트로
+아래를 확인한다.
+
+- **숨김 컬럼.** `trade_sessions?select=symbol` · `select=start_day` 는 **본인의
+  판에서도** `42501` 이다. 같은 요청에서 `select=id,step,cash` 는 200 · 1행이라
+  이것이 행이 아니라 **컬럼** 단위 경계임이 드러난다
+- **판 하나.** `start_trade_session` 은 id 만 돌려주고, 진행 중인 판이 있으면
+  두 번째 호출은 `진행 중인 판이 있습니다` 로 거부된다
+- **남의 진행 중 판.** `get_trade_session` · `place_trade_order` ·
+  `advance_trade_session` · `finish_trade_session` 넷 모두 `판을 찾을 수 없습니다`
+  하나로 거부된다 — 존재 여부가 드러나지 않는다. 게스트의 `get` 도 같다
+- **미래 봉.** step 0 에서 봉이 정확히 60개, step 59 에서 119개, 종료 후 120개다.
+  각 봉의 키는 `i,o,h,l,c` 뿐이라 `day` · `volume` · `symbol` 이 실릴 자리가 없고,
+  index 59 의 종가는 `100` 이다
+- **주문 거절.** 현금을 넘는 매수는 `잔고가 부족합니다`, 보유 0 에서의 매도는
+  `보유 수량이 부족합니다`, 수량 0 은 `수량은 0보다 커야 합니다` 다
+- **손계산 1건.** step 0 에서 10주 매수 → `cash = 8999` · `quantity = 10` ·
+  주문 `{step:0, buy, 10, price 100, fee 1}`. 60번 `advance` 로 자동 종료한 뒤
+  스크립트가 내려받은 정규화 봉만으로 `final_equity` · `return_pct` ·
+  `buy_hold_return_pct` · `max_drawdown_pct` · `trade_count` 를 다시 계산해
+  RPC 가 채운 값과 소수 2자리까지 일치한다
+- **`finish`.** step 3 에서 끝내면 step 은 3 그대로이고 `end_index` 가 62 다.
+  주문이 없으므로 `trade_count = 0` · `return_pct = 0` 이고,
+  `buy_hold_return_pct` 는 `close[62]/close[59]` 로 계산한 값과 같다
+- **끝난 판.** `place_trade_order` · `advance_trade_session` ·
+  `finish_trade_session` 셋 다 `이미 끝난 판입니다` 로 거부된다
+- **주문 조회.** 진행 중인 판의 `trade_orders` 는 남에게 0행, 끝난 뒤에는
+  게스트에게도 1행이다 (§11 의 `42P17` 이 아니다)
+- **결과 공개.** 게스트가 끝난 판을 열면 `result.symbol` 이 실제 종목이고
+  `start_day` · `end_day` 가 `YYYY-MM-DD` 다
+- **게시물 연결.** `create_post_with_images` 는 끝난 내 판을 붙여 게시물을 만들고,
+  기존 2-인자 호출 `{content, images}` 도 그대로 동작한다. 남의 끝난 판과 진행
+  중인 내 판은 둘 다 `끝난 판만 공유할 수 있습니다` 로 거부된다
+- **피드 뷰.** 게스트가 `posts_with_author` 에서 읽은 `trade_result` 에
+  `session_id` · `symbol` · `return_pct` 가 채워지고, 판이 없는 게시물은 `null`
+  이다. `following_posts_with_author` 도 같은 값을 넘긴다
+- **탈퇴 cascade.** 사용자를 지우면 `trade_sessions` 의 그 사람 행이 함께 사라진다
