@@ -17,8 +17,8 @@
 | 3.5 | F9 chat (오픈 채팅) | **완료** |
 | 3.6 | F9-DM (1:1 채팅) | **완료** |
 | 4 | (v1.1) 재설정 SMTP · 구글 로그인 · OTP · 푸시 · 채팅 | 대기 |
+| 5 | F10 trade (모의투자) — 5.1 시세 · 5.2 스키마 완료, 5.3 앱 · 5.4 공유 진행 중 | **진행 중** |
 
-- [x] F10 trade — 1단계 시세 적재 완료
 
 ## 0단계 — 완료
 
@@ -285,6 +285,20 @@ auth 쪽 8개는 `await` 뒤에 가드 없이 `emit` 한다. 다만 이 테스�
 
 - iOS 빌드 — Xcode 미설치라 한 번도 못 돌렸다 ([setup.md](setup.md) §4)
 - 4단계(v1.1) — 재설정 SMTP · 구글 로그인 · OTP · 푸시. 아직 대기다
+
+## 5단계 — F10 trade (모의투자) — 진행 중
+
+방향 전환(v0.4)에 따라 4단계보다 먼저 간다. 결정과 화면은 [계획](features/trade/plan.md),
+설계 판단은 [기록](features/trade/history.md), 테스트는 [테스트 문서](testing/features/trade.md).
+
+- [x] **5.1 시세 적재** — `fetch_candles.py` · `market_candles` · seed. 클라이언트 GRANT 없음
+      ([스키마 §16](schema.md))
+- [x] **5.2 스키마 · RPC · 권한** — `trade_sessions` · `trade_orders` · RPC 5개 ·
+      `posts.trade_session_id` · 피드 뷰의 `trade_result`. `symbol` · `start_day` 는
+      어떤 role 도 읽지 못한다. `trade_rls_check.py` 61건과 기존 스크립트 7개 전부 통과
+      ([스키마 §17](schema.md))
+- [ ] **5.3 앱** — `features/trade` · 홈 탭 "투자" · 세션 · 결과 화면 · 차트
+- [ ] **5.4 결과 공유** — 결과 카드 게시물 · 피드 카드 · 게스트 열람
 
 ## UX 심리학 리뷰 반영 — 2026-09-06
 

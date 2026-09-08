@@ -2363,8 +2363,8 @@ incomplete` · `invalid side`(22023). 사용자에게 보일 자리가 아니다
 
 ### 검증한 것 (로컬 Supabase · 실제 JWT + REST)
 
-`supabase/tests/trade_rls_check.py` 61건이 모두 통과한다. 사용자 둘과 게스트로
-아래를 확인한다.
+`supabase/tests/trade_rls_check.py` 61건이 모두 통과한다(2026-09-09). 사용자 둘과
+게스트로 아래를 확인한다. 항목은 [테스트 문서](testing/features/trade.md)에도 있다.
 
 - **숨김 컬럼.** `trade_sessions?select=symbol` · `select=start_day` 는 **본인의
   판에서도** `42501` 이다. 같은 요청에서 `select=id,step,cash` 는 200 · 1행이라
