@@ -154,6 +154,9 @@ import '../../features/trade/data/repository/trade_repository_impl.dart'
     as _i632;
 import '../../features/trade/domain/repository/trade_repository.dart' as _i776;
 import '../../features/trade/domain/usecase/trade_use_case.dart' as _i903;
+import '../../features/trade/presentation/cubit/trade_home_cubit.dart' as _i364;
+import '../../features/trade/presentation/cubit/trade_session_cubit.dart'
+    as _i371;
 import '../id/id_generator.dart' as _i1000;
 import '../media/image_picker_service.dart' as _i350;
 import '../media/image_storage.dart' as _i1040;
@@ -327,6 +330,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i944.PostUseCase>(
       () => _i944.DefaultPostUseCase(gh<_i735.PostRepository>()),
+    );
+    gh.factory<_i364.TradeHomeCubit>(
+      () => _i364.TradeHomeCubit(gh<_i903.TradeUseCase>()),
+    );
+    gh.factory<_i371.TradeSessionCubit>(
+      () => _i371.TradeSessionCubit(gh<_i903.TradeUseCase>()),
     );
     gh.lazySingleton<_i762.SafetyUseCase>(
       () => _i762.DefaultSafetyUseCase(
