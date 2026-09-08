@@ -161,7 +161,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get postContentHint => 'いま思い浮かんだことを残してみましょう。';
 
   @override
-  String get postTradeAttached => '回の結果も一緒に投稿されます';
+  String get postTradeAttached => 'この回の結果も一緒に投稿されます';
 
   @override
   String get postContentRequired => '投稿の内容を入力してください。';

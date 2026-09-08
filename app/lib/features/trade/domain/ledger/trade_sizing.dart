@@ -10,8 +10,11 @@ abstract final class TradeSizing {
   /// 이진 부동소수점 오차 때문에 그냥 곱해서 floor 하면 `0.29` 처럼 딱
   /// 떨어져야 할 값이 `0.289999...` 로 밀려 한 단위 아래로 잘릴 수 있다 —
   /// 아주 작은 보정값을 더해 그 오차를 흡수한다.
+  ///
+  /// `NaN`·`Infinity`(0 으로 나누기 등으로 생길 수 있다)는 유효한 수량이
+  /// 아니므로 0 으로 취급한다 — 그대로 두면 `.floor()` 가 예외를 던진다.
   static double floorQuantity(double q) {
-    if (q <= 0) return 0;
+    if (!q.isFinite || q <= 0) return 0;
     return ((q * 1e6) + 1e-6).floor() / 1e6;
   }
 

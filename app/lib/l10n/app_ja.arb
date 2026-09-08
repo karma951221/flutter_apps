@@ -50,7 +50,7 @@
   "postCreateTitle": "新しい投稿",
   "postContentLabel": "今日の記録",
   "postContentHint": "いま思い浮かんだことを残してみましょう。",
-  "postTradeAttached": "回の結果も一緒に投稿されます",
+  "postTradeAttached": "この回の結果も一緒に投稿されます",
   "postContentRequired": "投稿の内容を入力してください。",
   "postSaveButton": "保存",
   "postSubmitButton": "投稿",

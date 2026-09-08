@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../design_system/theme/app_colors.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../domain/entity/trade_result_summary.dart';
@@ -50,7 +49,7 @@ class TradeResultCard extends StatelessWidget {
               Text(
                 TradeFormat.signedPct(summary.returnPct),
                 style: theme.textTheme.headlineSmall?.copyWith(
-                  color: _returnColor(summary.returnPct),
+                  color: TradeFormat.returnColor(summary.returnPct),
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -73,13 +72,5 @@ class TradeResultCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  /// 0 은 색을 주지 않는다. 오르지도 내리지도 않은 것을 빨강이나 파랑으로
-  /// 칠하면 없는 방향을 말하는 셈이다 (결과 화면과 같은 규칙).
-  static Color? _returnColor(double returnPct) {
-    if (returnPct > 0) return AppColors.candleUp;
-    if (returnPct < 0) return AppColors.candleDown;
-    return null;
   }
 }

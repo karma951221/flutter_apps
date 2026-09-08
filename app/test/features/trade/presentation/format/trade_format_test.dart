@@ -1,3 +1,4 @@
+import 'package:daylog/design_system/theme/app_colors.dart';
 import 'package:daylog/features/trade/presentation/format/trade_format.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -66,6 +67,17 @@ void main() {
       expect(TradeFormat.symbolLabel('AAPL'), 'AAPL');
       // 통째로 USDT 인 심볼은 뗄 앞부분이 없다.
       expect(TradeFormat.symbolLabel('USDT'), 'USDT');
+    });
+  });
+
+  group('returnColor', () {
+    test('양수는 상승색, 음수는 하락색을 준다', () {
+      expect(TradeFormat.returnColor(12.3), AppColors.candleUp);
+      expect(TradeFormat.returnColor(-4.2), AppColors.candleDown);
+    });
+
+    test('0 은 방향이 없으므로 색을 주지 않는다', () {
+      expect(TradeFormat.returnColor(0), isNull);
     });
   });
 }

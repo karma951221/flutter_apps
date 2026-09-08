@@ -256,6 +256,37 @@ class TradeCandleChartPainter extends CustomPainter {
     max,
   ];
 
+  /// [ticks] 의 라벨. 간격(step)이 1 미만이면 [tick]을 정수로 반올림해
+  /// 표시할 자리수를 정한다.
+  ///
+  /// [yTicks]가 고르는 간격은 0.25·0.5 처럼 1보다 작을 수 있다 — 그때
+  /// `toStringAsFixed(0)` 으로 찍으면 "100 100 101 101" 처럼 서로 다른
+  /// 눈금이 같은 라벨로 겹친다. [ticks] 사이의 실제 간격에서 소수 자리수를
+  /// 거꾸로 구해 겹치지 않게 한다.
+  String yTickLabel(double tick, List<double> ticks) =>
+      tick.toStringAsFixed(_decimalsForTicks(ticks));
+
+  static int _decimalsForTicks(List<double> ticks) {
+    if (ticks.length < 2) return 0;
+    final sorted = [...ticks]..sort();
+    var step = double.infinity;
+    for (var i = 1; i < sorted.length; i++) {
+      final gap = sorted[i] - sorted[i - 1];
+      if (gap > 1e-9 && gap < step) step = gap;
+    }
+    if (!step.isFinite) return 0;
+
+    // step 이 정수로 딱 떨어질 때까지 10을 곱해 가며 필요한 소수 자리수를 센다
+    // (0.25 → 2, 0.5 → 1, 1 이상 → 0).
+    var decimals = 0;
+    var scaled = step;
+    while (decimals < 6 && (scaled - scaled.roundToDouble()).abs() > 1e-6) {
+      scaled *= 10;
+      decimals++;
+    }
+    return decimals;
+  }
+
   /// 봉 [index] 의 x 축 라벨. index 59 가 D0, 그 앞은 U+2212 로 뺀다.
   String labelForIndex(int index) {
     final offset = index - (warmupCount - 1);
@@ -291,12 +322,13 @@ class TradeCandleChartPainter extends CustomPainter {
       ..color = gridColor
       ..strokeWidth = 1;
 
-    for (final tick in yTicks()) {
+    final ticks = yTicks();
+    for (final tick in ticks) {
       final y = yForPrice(tick, size);
       if (y < plot.top || y > plot.bottom) continue;
       canvas.drawLine(Offset(plot.left, y), Offset(plot.right, y), line);
 
-      final label = _layoutLabel(tick.toStringAsFixed(0));
+      final label = _layoutLabel(yTickLabel(tick, ticks));
       label.paint(
         canvas,
         Offset(plot.right + AppSpacing.xs, y - label.height / 2),

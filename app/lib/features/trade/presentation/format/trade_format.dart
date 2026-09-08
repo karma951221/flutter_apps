@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../design_system/theme/app_colors.dart';
 import '../../domain/entity/trade_result.dart';
 
 /// 모의투자 화면의 숫자·날짜 표기.
@@ -56,6 +58,14 @@ abstract final class TradeFormat {
   /// entity 없이 심볼 문자열만 들고 있을 때를 위한 통로다.
   static String symbolLabel(String symbol) =>
       TradeResult.displaySymbolOf(symbol);
+
+  /// 수익률에 맞는 색. 양수는 `AppColors.candleUp`, 음수는
+  /// `AppColors.candleDown`, 0은 테마 기본색을 쓰도록 `null`.
+  static Color? returnColor(double pct) {
+    if (pct > 0) return AppColors.candleUp;
+    if (pct < 0) return AppColors.candleDown;
+    return null;
+  }
 
   static final _day = DateFormat('yyyy-MM-dd');
 }

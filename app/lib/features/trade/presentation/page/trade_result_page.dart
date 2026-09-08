@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/l10n/failure_localizations.dart';
-import '../../../../design_system/theme/app_colors.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_placeholder.dart';
@@ -185,7 +184,7 @@ class _MetricGrid extends StatelessWidget {
                 label: l10n.tradeReturn,
                 value: TradeFormat.signedPct(result.returnPct),
                 valueStyle: theme.textTheme.headlineSmall?.copyWith(
-                  color: _returnColor(result.returnPct),
+                  color: TradeFormat.returnColor(result.returnPct),
                 ),
               ),
               TradeMetricCard(
@@ -211,11 +210,5 @@ class _MetricGrid extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  static Color? _returnColor(double returnPct) {
-    if (returnPct > 0) return AppColors.candleUp;
-    if (returnPct < 0) return AppColors.candleDown;
-    return null;
   }
 }

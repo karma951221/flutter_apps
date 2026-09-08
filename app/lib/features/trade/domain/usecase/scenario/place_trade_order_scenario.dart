@@ -8,7 +8,7 @@ import '../../repository/trade_repository.dart';
 /// 주문을 낸다.
 ///
 /// 잔고 부족·보유 초과 여부는 서버가 최종 판단한다 — 여기서는 요청 형태만
-/// 본다(빈 판 id, 0 이하·NaN 수량).
+/// 본다(빈 판 id, 0 이하·NaN·Infinity 수량).
 class PlaceTradeOrderScenario {
   const PlaceTradeOrderScenario(this._repository);
 
@@ -29,7 +29,7 @@ class PlaceTradeOrderScenario {
         ),
       );
     }
-    if (quantity.isNaN || quantity <= 0) {
+    if (!quantity.isFinite || quantity <= 0) {
       return Future.value(
         const Err(
           Failure.validation(

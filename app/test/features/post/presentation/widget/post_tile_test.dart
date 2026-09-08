@@ -190,9 +190,10 @@ void main() {
   });
 
   testWidgets('onTradeResultTap 이 없으면 카드는 보이되 눌리지 않는다', (tester) async {
-    // 게시물 전체를 누르는 동작(onTap)이 카드 위에서도 그대로 살아 있으면
-    // 카드가 링크처럼 보이면서 엉뚱한 곳으로 간다. 콜백이 없으면 아무 일도
-    // 일어나지 않아야 한다.
+    // 카드 자신의 InkWell.onTap 은 콜백이 없으면 null 이어야 한다 — null 이면
+    // 탭이 카드에서 소비되지 않고 타일 전체의 onTap(게시물 상세로 이동)으로
+    // 그대로 넘어간다. 즉 여기서 확인하는 건 "카드가 자기 몫의 탭을 가로채지
+    // 않는다"이지, 탭이 아무 효과도 없다는 뜻이 아니다.
     await _pump(tester, isMine: false, tradeResult: _summary());
 
     expect(find.byType(TradeResultCard), findsOneWidget);

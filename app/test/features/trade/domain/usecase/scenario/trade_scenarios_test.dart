@@ -145,8 +145,14 @@ void main() {
       );
     });
 
-    test('0 이하이거나 NaN 인 수량은 저장소를 부르지 않는다', () async {
-      for (final quantity in [0.0, -1.0, double.nan]) {
+    test('0 이하이거나 NaN·Infinity 인 수량은 저장소를 부르지 않는다', () async {
+      for (final quantity in [
+        0.0,
+        -1.0,
+        double.nan,
+        double.infinity,
+        double.negativeInfinity,
+      ]) {
         final result = await PlaceTradeOrderScenario(repository)(
           sessionId: 's1',
           side: TradeSide.sell,

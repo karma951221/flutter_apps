@@ -21,6 +21,14 @@ void main() {
       // floor 하면 289999 로 한 단위 잘못 내려간다.
       expect(TradeSizing.floorQuantity(0.29), closeTo(0.29, 1e-9));
     });
+
+    test('NaN·Infinity 는 0으로 취급한다', () {
+      // 0으로 나누기 등으로 생길 수 있다 — 그대로 두면 .floor() 가 예외를
+      // 던진다.
+      expect(TradeSizing.floorQuantity(double.nan), 0);
+      expect(TradeSizing.floorQuantity(double.infinity), 0);
+      expect(TradeSizing.floorQuantity(double.negativeInfinity), 0);
+    });
   });
 
   group('TradeSizing.buyQuantity', () {

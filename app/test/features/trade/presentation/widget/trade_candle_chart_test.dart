@@ -191,6 +191,42 @@ void main() {
     test('보이는 봉이 없으면 빈 목록이다', () {
       expect(painterOf(candles: const []).yTicks(), isEmpty);
     });
+
+    test('간격이 1보다 작으면 소수 자리수를 늘려 라벨이 겹치지 않는다', () {
+      // low~high 폭이 1이면 yTicks() 가 0.25 간격을 고른다
+      // (99.75 · 100.0 · 100.25 · 100.5). 정수로 반올림하면
+      // "100 100 100 101" 로 서로 다른 눈금이 겹친다.
+      final painter = painterOf(
+        candles: const [
+          TradeCandle(
+            index: 59,
+            open: 100,
+            high: 100.6,
+            low: 99.6,
+            close: 100.2,
+          ),
+        ],
+      );
+      final ticks = painter.yTicks();
+
+      expect(ticks, hasLength(4));
+      final labels = ticks.map((t) => painter.yTickLabel(t, ticks)).toList();
+
+      expect(labels, ['99.75', '100.00', '100.25', '100.50']);
+      expect(labels.toSet(), hasLength(labels.length));
+    });
+
+    test('간격이 1 이상이면 정수로 찍는다', () {
+      final painter = painterOf(
+        candles: [candleAt(59, base: 100), candleAt(60, base: 140)],
+      );
+      final ticks = painter.yTicks();
+      final labels = ticks.map((t) => painter.yTickLabel(t, ticks)).toList();
+
+      for (final label in labels) {
+        expect(label.contains('.'), isFalse);
+      }
+    });
   });
 
   group('shouldRepaint', () {

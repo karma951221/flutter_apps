@@ -178,6 +178,10 @@ st, body = call("GET", "/rest/v1/trade_sessions?select=start_day", A)
 check("본인도 start_day 컬럼은 읽지 못한다 (42501)",
       st in (401, 403) and code_of(body) == "42501", f"{st} {code_of(body)}")
 
+st, body = call("GET", "/rest/v1/trade_sessions?select=*", A)
+check("본인도 * 로는 못 읽는다 — 숨김 컬럼이 섞여 컬럼 단위 GRANT 에 걸린다 (42501)",
+      st in (401, 403) and code_of(body) == "42501", f"{st} {code_of(body)}")
+
 st, rows = call("GET", f"/rest/v1/trade_sessions?select=id,step,cash&id=eq.{a_session}", A)
 check("GRANT 된 컬럼만 고르면 내 판이 보인다 (컬럼 단위 경계다)",
       st == 200 and len(rows or []) == 1, f"{st} {str(rows)[:60]}")

@@ -6,7 +6,6 @@ import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../core/result/result.dart';
-import '../../../../design_system/theme/app_colors.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_confirm_dialog.dart';
@@ -334,7 +333,7 @@ class _Metrics extends StatelessWidget {
                 label: l10n.tradeCurrentReturn,
                 value: TradeFormat.signedPct(returnPct),
                 valueStyle: theme.textTheme.titleLarge?.copyWith(
-                  color: _returnColor(returnPct),
+                  color: TradeFormat.returnColor(returnPct),
                 ),
               ),
             ],
@@ -342,13 +341,6 @@ class _Metrics extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  /// 상승 빨강 · 하락 파랑. 0 은 방향이 없으므로 본문 색 그대로 둔다.
-  static Color? _returnColor(double returnPct) {
-    if (returnPct > 0) return AppColors.candleUp;
-    if (returnPct < 0) return AppColors.candleDown;
-    return null;
   }
 }
 
