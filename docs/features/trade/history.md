@@ -104,3 +104,47 @@ x 라벨은 `D−59 · D0 · D+60` 뿐이다.
 무시. 5.3 과 무관한 기존 결함 하나를 봤다 — 가입 직후 셸 전환에서 `feed_page` 와
 `chat_room_list_page` 의 `FloatingActionButton.extended` 가 `heroTag` 없이 충돌
 단언을 낸다(한 번 재현).
+
+## 2026-09-09 — 5.4 결과 공유
+
+### 요약 엔티티는 trade 가, DTO 는 각자
+
+`TradeResultSummary` 는 `features/trade/domain` 에 두고 post 가 `Post.tradeResult` 로
+품는다(도메인 참조는 허용). 전송 형식은 post 와 feed 가 각각 `post_trade_result_dto` ·
+`feed_trade_result_dto` 를 갖는다 — 모양이 같아도 data 계층은 feature 를 넘지 않는다는
+규칙 ⑥ 때문이다. 대신 피드 뷰의 `trade_result` jsonb 와 게시물 단건 조회의 PostgREST
+임베드 별칭이 **같은 여덟 키** 를 만들도록 맞춰, 카드 위젯은 하나다
+([스키마 §5](../../schema.md)).
+
+### 세션 id 는 초안에 실린다
+
+`PostUseCase.createPost` 에 인자를 더하지 않고 `PostDraft.tradeSessionId` 로 넘긴다.
+use case 가 이미 초안 하나를 받고, 시나리오가 초안을 보존해야 하므로 값이 두 곳에
+생기는 것을 피했다. 세션이 붙은 초안은 이미지가 없어도 `create_post_with_images` RPC
+로 간다 — `trade_session_id` 는 insert GRANT 에 없어 직접 넣으면 `42501` 이다.
+
+### 공유 버튼은 서버가 준 `user_id` 로 판정
+
+결과 화면은 화면이 받은 요약이 아니라 RPC 상태의 `session.userId` 를 `AuthBloc` 의
+사용자와 비교한다. 위조한 요약으로 남의 판에 공유 버튼을 띄울 수 없다. 게스트는
+`AuthUnauthenticated` 라 버튼이 없고, `AuthBloc` 이 라우터 위에 있어 `/explore` 에서
+들어와도 예외가 없다.
+
+### 유일한 역방향 참조
+
+`PostTile` 과 게시물 작성 화면이 `trade/presentation/widget/trade_result_card.dart` 를
+import 한다. [아키텍처 규칙 ⑥](../../architecture.md)에 예외로 적었다.
+
+### 최종 리뷰 (2026-09-09)
+
+브랜치 전체를 다시 봤다. 코드 결함으로 남은 Critical · Important 는 없었고, 검토자가
+`psql` 로 세 판의 지표를 독립 재계산해 저장값과 일치함을 확인했다. 지적 중 고친 것:
+ja `postTradeAttached` 문구 · en `tradeCardCount` 복수형 · en "Buy & hold" 통일 ·
+`_returnColor` 네 곳 중복을 `TradeFormat.returnColor` 로 · `floorQuantity` 의 무한
+입력 가드 · y 눈금 라벨 소수 자리 · `select=*` 도 `42501` 임을 스크립트에 추가.
+결정으로 남긴 것: 끝난 판은 공유 여부와 무관하게 공개 — 이유와 좁히는 대안은
+[계획](plan.md)의 데이터 · 권한 절.
+
+미룬 것(동작에 영향 없음): `start_trade_session` 동시 호출 시 `23505` 원문 노출 ·
+수수료율 상수가 세 곳 · 주문 시트의 0/파싱 불가 입력 안내 · 차트 `Semantics` ·
+새로고침이 전체 스피너 · 공유 후 피드 미갱신(다음 새로고침에 보인다).

@@ -17,7 +17,7 @@
 | 3.5 | F9 chat (오픈 채팅) | **완료** |
 | 3.6 | F9-DM (1:1 채팅) | **완료** |
 | 4 | (v1.1) 재설정 SMTP · 구글 로그인 · OTP · 푸시 · 채팅 | 대기 |
-| 5 | F10 trade (모의투자) — 5.1 시세 · 5.2 스키마 · 5.3 앱 완료, 5.4 공유 진행 중 | **진행 중** |
+| 5 | F10 trade (모의투자) — 시세 · 스키마 · 앱 · 결과 공유 | **완료** |
 
 
 ## 0단계 — 완료
@@ -286,7 +286,7 @@ auth 쪽 8개는 `await` 뒤에 가드 없이 `emit` 한다. 다만 이 테스�
 - iOS 빌드 — Xcode 미설치라 한 번도 못 돌렸다 ([setup.md](setup.md) §4)
 - 4단계(v1.1) — 재설정 SMTP · 구글 로그인 · OTP · 푸시. 아직 대기다
 
-## 5단계 — F10 trade (모의투자) — 진행 중
+## 5단계 — F10 trade (모의투자) — 완료
 
 방향 전환(v0.4)에 따라 4단계보다 먼저 간다. 결정과 화면은 [계획](features/trade/plan.md),
 설계 판단은 [기록](features/trade/history.md), 테스트는 [테스트 문서](testing/features/trade.md).
@@ -301,7 +301,24 @@ auth 쪽 8개는 `await` 뒤에 가드 없이 `emit` 한다. 다만 이 테스�
       `CustomPainter` 차트 · 결과 화면은 게스트도 여는 열린 경로. `flutter analyze` 0 ·
       `flutter test` 811 통과 · 에뮬레이터 13개 항목 통과
       ([기록](features/trade/history.md) · [테스트](testing/features/trade.md))
-- [ ] **5.4 결과 공유** — 결과 카드 게시물 · 피드 카드 · 게스트 열람
+- [x] **5.4 결과 공유** — `TradeResultSummary` · `Post.tradeResult` · `create_post_with_images`
+      의 세션 인자 · 피드 뷰 `trade_result` · `TradeResultCard`(post → trade 의 유일한
+      역참조) · 결과 화면 공유하기(내 판만). 에뮬레이터에서 A 공유 → 피드 · 프로필 · 게스트
+      피드 카드 → B 의 반응 · 댓글 → 게스트 결과 열람 8개 항목 통과. 최종 리뷰 반영
+      ([기록](features/trade/history.md) · [테스트](testing/features/trade.md))
+
+검증(2026-09-09): `flutter analyze` 0 · `flutter test` 전체 통과 · `supabase db reset` 후
+`trade_rls_check.py` 62건과 기존 스크립트 7개 전부 통과.
+
+남은 것:
+
+- 공유한 직후 피드 · 프로필 목록은 당겨서 새로고침해야 새 글이 보인다 (작성 화면을
+  결과 화면에서 띄우므로 `FeedCubit` 이 결과를 받지 못한다)
+- 공유하기가 `TradeResultSummary` 를 `extra` 로 넘겨 go_router 가 codec 경고를 낸다 —
+  프로세스가 죽었다 복원되면 미리보기가 사라진다
+- 가입 직후 셸 전환에서 `FloatingActionButton.extended` 의 Hero 태그 충돌 단언(F10 과
+  무관한 기존 결함, `feed_page` · `chat_room_list_page`)
+- 판 종료 전환에서 앱바가 한 프레임 겹쳐 보인다 (pop 뒤 push 의 대가)
 
 ## UX 심리학 리뷰 반영 — 2026-09-06
 

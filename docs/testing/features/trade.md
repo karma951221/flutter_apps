@@ -38,6 +38,13 @@ python3 supabase/tests/trade_rls_check.py              # 판 권한 경계 · �
 | `TradeResultPage` | 지표 4개 · 판정 · 미종료 | 보유 대비 한 줄, 끝나지 않은 판은 안내 |
 | `HomeShellPage` | 탭 5개 | 투자가 첫 탭, 채팅 배지가 채팅 탭을 따라간다 |
 | `resolveAuthRedirect` | 열린 경로 | `/trade/:id/result` 는 게스트도 로그인 사용자도 리다이렉트 없이 연다 |
+| `TradeResultCard` | 값 · 탭 | 종목 · 기간 · 부호 있는 수익률 · 보유 대비 · 최대낙폭 · 매매 N회, `onTap` 이 있을 때만 눌린다 |
+| `PostTile` (post) | 카드 유무 | `tradeResult` 가 있으면 본문 아래 카드, 없으면 그대로. 탭이 세션 id 를 돌려준다 |
+| `PostEditorPage` (post) | 미리보기 | 결과 요약이 오면 카드와 안내를 보여주고 `create(tradeSessionId:)` 로 넘긴다 |
+| `PostDto` · `FeedPostDto` (post · feed) | `trade_result` | null / 채움 둘 다 파싱하고 매퍼가 `Post.tradeResult` 를 채운다 |
+| `SupabasePostDataSource` (post) | 경로 | 세션이 붙으면 이미지가 없어도 RPC, 아니면 직접 insert |
+| `TradeResultPage` | 공유하기 | 내 판이면 버튼이 보이고 요약을 `extra` 로 넘긴다. 남의 판 · 게스트는 없다 |
+| `GuestFeedPage` (feed) | 카드 | 게스트 피드에도 카드가 보인다 |
 
 ## 에뮬레이터 (2026-09-09)
 
@@ -47,12 +54,17 @@ python3 supabase/tests/trade_rls_check.py              # 판 권한 경계 · �
 세션 화면 스크린샷 16장 모두에 심볼 · 날짜 · 원가격 · 거래량이 없고, 결과 화면에만
 있다. 기록은 [history](../../features/trade/history.md).
 
+5.4 도 같은 방식으로 8개 항목을 돌렸다 — A 의 결과 화면 공유하기 → 미리보기 카드 →
+게시 → 피드 · 프로필의 카드 → 카드 탭으로 결과 열기 → B 로 로그인해 반응 · 댓글 →
+B 에게는 공유하기가 없다 → 게스트 피드에서 카드가 보이고 결과가 열린다 → 결과 없는
+글은 그대로다. 발견: 공유 직후 피드는 당겨서 새로고침해야 새 글이 보인다.
+
 ## 권한 경계 · 채점 (`supabase/tests/trade_rls_check.py`)
 
-실제 JWT + REST 로 61건을 확인한다. mock 으로는 드러나지 않는 것들이다.
+실제 JWT + REST 로 62건을 확인한다. mock 으로는 드러나지 않는 것들이다.
 
-- **숨김** — `trade_sessions` 를 `select=symbol` · `select=start_day` 로 읽으면 본인도
-  `42501`. 같은 요청에서 `id,step,cash` 는 읽힌다(컬럼 단위 GRANT 임을 확인)
+- **숨김** — `trade_sessions` 를 `select=symbol` · `select=start_day` · `select=*` 로
+  읽으면 본인도 `42501`. 같은 요청에서 `id,step,cash` 는 읽힌다(컬럼 단위 GRANT 임을 확인)
 - **한 판 규칙** — 진행 중인 판이 있으면 두 번째 `start_trade_session` 이 거부된다
 - **남의 판** — B 가 A 의 진행 중 판에 `get/place/advance/finish` → 전부
   `판을 찾을 수 없습니다`. 게스트의 `get` 도 거부. B 에게 A 의 `trade_orders` 는 0행

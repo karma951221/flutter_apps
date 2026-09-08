@@ -453,6 +453,14 @@ public.posts`)라 이 컬럼이 자동으로 포함되지만, INSERT · UPDATE G
 `create_post_with_images()`를 쓴다** — 두 테이블에 나눠 INSERT하면 원자성이 깨진다.
 **판을 붙일 때도** 같은 함수를 쓴다(이미지가 없어도).
 
+앱의 게시물 단건 조회는 이 컬럼을 PostgREST 임베드로 따라간다 —
+`trade_result:trade_sessions(session_id:id, symbol:revealed_symbol,
+start_day:revealed_start_day, end_day:revealed_end_day, return_pct,
+buy_hold_return_pct, max_drawdown_pct, trade_count)`. 별칭이 §6 뷰의
+`trade_result` jsonb 와 같은 여덟 키를 만들므로 단건 조회와 피드가 같은 모양의
+요약을 돌려주고, 카드 위젯은 하나로 충분하다. 임베드는 `security_invoker` 뷰와
+마찬가지로 §17 의 정책 · 컬럼 GRANT 를 그대로 탄다.
+
 ### `create_post_with_images(content text, images jsonb, trade_session_id uuid default null) → uuid`
 
 게시물과 이미지 메타데이터를 **한 트랜잭션**에 만들고 새 게시물 id를 돌려준다.
@@ -2363,7 +2371,7 @@ incomplete` · `invalid side`(22023). 사용자에게 보일 자리가 아니다
 
 ### 검증한 것 (로컬 Supabase · 실제 JWT + REST)
 
-`supabase/tests/trade_rls_check.py` 61건이 모두 통과한다(2026-09-09). 사용자 둘과
+`supabase/tests/trade_rls_check.py` 62건이 모두 통과한다(2026-09-09). 사용자 둘과
 게스트로 아래를 확인한다. 항목은 [테스트 문서](testing/features/trade.md)에도 있다.
 
 - **숨김 컬럼.** `trade_sessions?select=symbol` · `select=start_day` 는 **본인의

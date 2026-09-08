@@ -2,7 +2,7 @@
 
 > [문서 허브](../../README.md) · [기획 F10](../../overview.md) · [스키마 §17](../../schema.md) · [아키텍처](../../architecture.md) · [개발환경](../../setup.md) · [피드 계획](../feed/plan.md) · [게시물 계획](../post/plan.md) · [테스트](../../testing/features/trade.md)
 
-> 상태: **진행 중** · 작성 2026-09-08 · 설계 확정 2026-09-09
+> 상태: **완료** · 작성 2026-09-08 · 설계 확정 2026-09-09 · 검증 2026-09-09
 > 진행 상태의 단일 기준은 [진행 현황](../../status.md)이다.
 
 ## 범위
@@ -57,6 +57,14 @@ Binance 일봉 원시 시세. 사용자 데이터와 FK 관계가 없고 판이 
 - **`symbol` · `start_day` 는 어떤 role 도 select 할 수 없다.** 끝난 뒤에는
   `revealed_symbol` · `revealed_start_day`(index 59 의 day) · `revealed_end_day` 사본으로만
   읽는다. 조회 정책은 "내 판" 과 "끝난 판(누구나, 게스트 포함)" 둘이다.
+- **끝난 판은 공유 여부와 무관하게 공개다.** `trade_sessions_select_finished` 가
+  `finished_at is not null` 만 보므로 게시물에 붙이지 않은 판도 id 를 알면(또는
+  테이블을 훑으면) 읽힌다. 게스트의 결과 열람만이 목적이라면 `get_trade_session`
+  RPC 로 충분해 정책을 "게시물이 붙은 판" 으로 좁힐 수 있다 — 그래도 공개로 둔 것은
+  끝난 판의 값이 닉네임 없는 uuid 에만 묶인 데이터이고, 판이 쌓인 뒤의 리더보드가
+  같은 공개를 전제로 하기 때문이다(최종 리뷰 2026-09-09). 비공개 연습이 요구되면
+  정책에 `exists (select 1 from posts where trade_session_id = id and deleted_at is null)`
+  를 더한다.
 - `trade_orders` 는 체결 기록. 세션이 보이면 주문도 보인다.
 - 쓰기는 전부 RPC 다. 테이블에는 `insert/update/delete` GRANT 가 없다.
 
@@ -239,8 +247,9 @@ features/trade/
 
 ### 5.4 — 결과 공유
 
-- [ ] 결과 화면 → 공유하기 → 게시물 → 피드 카드 → 다른 계정에서 반응 · 댓글
-- [ ] 게스트 피드에서도 카드가 보이고, 탭하면 결과 화면이 열린다
+- [x] 결과 화면 → 공유하기 → 게시물 → 피드 카드 → 다른 계정에서 반응 · 댓글
+- [x] 게스트 피드에서도 카드가 보이고, 탭하면 결과 화면이 열린다
+- [x] 끝나지 않은 판 · 남의 판 id 로는 게시물을 만들 수 없다 (`trade_rls_check.py`)
 
 ## 테스트
 

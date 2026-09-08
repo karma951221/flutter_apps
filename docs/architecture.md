@@ -236,6 +236,12 @@ SDK 타입은 datasource와 공용 data 인프라 안에서만 다룬다.
 적어 두면 규칙이 코드와 어긋나고, 어긋난 규칙은 판단 기준이 되지 못한다
 (2026-08-27 리뷰에서 문구를 실제 기준으로 고쳤다).
 
+**허용된 역방향 참조는 하나뿐이다.** `features/post` 의 `PostTile` 과 게시물 작성
+화면이 `features/trade/presentation/widget/trade_result_card.dart` 를 import 해
+판 결과 카드를 그린다. trade → post 는 `domain` 만 참조하고, post → trade 는 이
+카드(와 그 입력인 `TradeResultSummary` 엔티티)로 제한한다 —
+[F10 계획](features/trade/plan.md).
+
 **post와 feed의 경계가 이 규칙의 기준 예시다.**
 
 | | 소유 |
