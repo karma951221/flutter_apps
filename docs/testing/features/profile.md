@@ -14,6 +14,7 @@
 | `ProfileCubit.load` | userId 없음 / 있음 | `getMyProfile` 로 내 프로필을, `getProfile(userId)` 로 해당 사용자의 프로필을 읽는다. 서로를 대신 호출하지 않는다. |
 | `ProfileCubit.load` | 조회 실패 (본인 · 타인) | 로딩을 끄고 `failure` 만 남긴다. 프로필은 null 로 둔다. |
 | `ProfileCubit.save` | 수정 성공 | `ProfileUpdate` 가 usecase 에 그대로 전달되고 결과 프로필이 상태에 담긴다. |
+| `ProfileCubit.load` · `save` | 요청 중 cubit 이 닫힘 | 늦게 도착한 결과로 emit 하지 않고 조용히 끝난다. 화면을 떠나도 예외가 나지 않는다. |
 | `ProfileCubit.checkNickname` | 디바운스 | 입력이 멎은 뒤 마지막 값 하나만 조회하고, 중간 값은 조회하지 않는다. |
 | `ProfileCubit.checkNickname` | 확인 결과 | 사용 가능은 `available`, 중복은 `taken` 으로 남긴다. |
 | `ProfileCubit.checkNickname` | 조회하지 않는 값 | 지금 쓰는 닉네임과 형식이 어긋난 값은 usecase 를 부르지 않는다. |
@@ -21,6 +22,8 @@
 | `EditProfilePage` | 닉네임 사전 확인 | 입력을 바꾸면 사용 가능 / 이미 사용 중 문구를 저장 전에 보여주고, 현재 닉네임은 확인하지 않는다. |
 | `EditProfilePage` | setup 모드 | 제목·안내·나중에·계속을 보여주고 뒤로가기가 없다. 나중에는 저장 없이, 계속은 저장 뒤 홈으로 간다. |
 | `EditProfilePage` | setup 모드 · 조회 실패 | 다시 시도와 나중에가 남는다. 빈 화면으로 갇히지 않는다. |
+| `EditProfilePage` | setup 모드 · 저장 중 시스템 뒤로가기 | 화면을 지킨다 (홈으로 가지 않는다). 저장이 끝나면 그때 홈으로 가고 예외가 없다. |
+| `EditProfilePage` | setup 모드 · 조회 중 시스템 뒤로가기 | 홈으로 가고, 뒤늦게 도착한 조회 결과는 아무 일도 하지 않는다. |
 | `ProfilePage` | 내 프로필 | 편집 버튼이 보이고, 내 id 로 게시물을 읽는다. |
 | `ProfilePage` | `/users/:id` | 타인 화면에는 편집 버튼이 없고 해당 작성자의 게시물만 커서로 읽는다. 내 프로필은 조회하지 않는다. |
 | `ProfilePage` | 게시물 메뉴 동작 | 수정 · 삭제 · 신고 · 감정 · 댓글은 피드와 같은 `PostTileActions` 를 쓴다. 차단만 화면이 직접 잇는다 (성공 후 목록 전체 재조회). |

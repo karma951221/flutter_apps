@@ -10,6 +10,7 @@ import 'package:daylog/features/feed/presentation/cubit/feed_cubit.dart';
 import 'package:daylog/features/feed/presentation/page/guest_feed_page.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_author.dart';
+import 'package:daylog/features/post/domain/entity/post_image.dart';
 import 'package:daylog/features/reaction/domain/usecase/reaction_use_case.dart';
 import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -21,15 +22,24 @@ class _MockFeedUseCase extends Mock implements FeedUseCase {}
 
 class _MockReactionUseCase extends Mock implements ReactionUseCase {}
 
-FeedPost _item(String id) => FeedPost(
+FeedPost _item(String id, {List<PostImage> images = const []}) => FeedPost(
   post: Post(
     id: id,
     authorId: 'other',
     content: '기록 $id',
     createdAt: DateTime.utc(2026, 9, 6, 9),
     updatedAt: DateTime.utc(2026, 9, 6, 9),
+    images: images,
   ),
   author: const PostAuthor(id: 'other', nickname: '이웃'),
+);
+
+PostImage _image(int order) => PostImage(
+  id: 'image-$order',
+  url: 'https://example.test/$order.jpg',
+  width: 1080,
+  height: 1080,
+  sortOrder: order,
 );
 
 void main() {
@@ -125,6 +135,57 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(router.state.matchedLocation, Routes.signIn);
+  });
+
+  // 사진 여러 장은 가로 목록으로 그려지고, 그 스크롤 알림이 세로 목록의
+  // listener 까지 올라간다. 사진을 옆으로 넘긴 것만으로 다음 페이지를 읽던
+  // 회귀(P2-2)를 막는다.
+  testWidgets('사진을 옆으로 끝까지 넘겨도 다음 페이지를 읽지 않는다', (tester) async {
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer(
+      (_) async => Ok(
+        CursorPage<FeedPost>(
+          items: [
+            // 첫 항목의 사진 줄은 화면보다 넓어 실제로 옆으로 스크롤된다.
+            _item('1', images: [for (var i = 0; i < 8; i++) _image(i)]),
+            // 세로 목록도 화면보다 충분히 길게 둔다 — 짧으면 세로 쪽이
+            // 이미 끝이라 무엇을 하든 다음 페이지를 읽는다.
+            for (var i = 2; i <= 10; i++) _item('$i'),
+          ],
+          // 다음 커서가 있어야 더 읽을 수 있는 상태가 된다 — 없으면 이
+          // 테스트는 고장 난 코드에서도 통과한다.
+          nextCursor: 'next',
+        ),
+      ),
+    );
+
+    await pumpPage(tester);
+
+    final strip = find
+        .byWidgetPredicate(
+          (widget) =>
+              widget is ListView && widget.scrollDirection == Axis.horizontal,
+        )
+        .first;
+    expect(strip, findsOneWidget);
+
+    await tester.drag(strip, const Offset(-2000, 0));
+    await tester.pump();
+
+    verify(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).called(1);
   });
 
   testWidgets('게시물이 없으면 빈 안내를 보여준다', (tester) async {

@@ -7,6 +7,7 @@ import '../../../../core/di/injection.dart';
 import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../core/l10n/validation_localizations.dart';
 import '../../../../core/media/image_picker_service.dart';
+import '../../../../core/validation/nickname_check.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
@@ -18,7 +19,6 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../domain/entity/avatar_image_draft.dart';
 import '../../domain/entity/profile_update.dart';
-import '../cubit/nickname_check.dart';
 import '../cubit/profile_cubit.dart';
 import '../cubit/profile_state.dart';
 
@@ -190,10 +190,16 @@ class _EditProfileViewState extends State<_EditProfileView> {
     final theme = Theme.of(context);
     // setup 모드에는 뒤로 갈 곳이 없다. 안드로이드 시스템 뒤로가기를 그대로
     // 두면 앱이 닫히므로, "나중에" 와 같은 곳(홈)으로 보낸다.
+    //
+    // 저장 중에는 그 이동마저 막는다. 화면을 떠나면 cubit 이 닫혀 저장 결과를
+    // 알려줄 수 없다. 이때는 "계속" 이 이미 로딩 상태라 저장 중임이 보이고,
+    // 끝나면 listener 가 홈으로 보낸다.
     return PopScope(
       canPop: !widget.isSetup,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) context.go(Routes.home);
+        if (didPop) return;
+        if (context.read<ProfileCubit>().state.isSaving) return;
+        context.go(Routes.home);
       },
       child: Scaffold(
         appBar: AppBar(

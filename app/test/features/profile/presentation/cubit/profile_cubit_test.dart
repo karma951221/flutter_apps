@@ -1,10 +1,12 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:daylog/core/error/failure.dart';
 import 'package:daylog/core/result/result.dart';
 import 'package:daylog/features/profile/domain/entity/profile.dart';
 import 'package:daylog/features/profile/domain/entity/profile_update.dart';
 import 'package:daylog/features/profile/domain/usecase/profile_use_case.dart';
-import 'package:daylog/features/profile/presentation/cubit/nickname_check.dart';
+import 'package:daylog/core/validation/nickname_check.dart';
 import 'package:daylog/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:daylog/features/profile/presentation/cubit/profile_state.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -101,10 +103,41 @@ void main() {
     },
   );
 
+  group('화면을 떠난 뒤 도착한 결과', () {
+    // 화면을 떠나면 BlocProvider 가 cubit 을 닫는다. 그때 진행 중이던 요청이
+    // 늦게 끝나 emit 하면 bloc 이 예외를 던진다.
+    test('조회 중 닫혀도 예외 없이 끝난다', () async {
+      final response = Completer<Result<Profile>>();
+      when(useCase.getMyProfile).thenAnswer((_) => response.future);
+      final cubit = ProfileCubit(useCase);
+
+      final loading = cubit.load();
+      await cubit.close();
+      response.complete(Ok(_profile()));
+
+      await expectLater(loading, completes);
+    });
+
+    test('저장 중 닫혀도 예외 없이 끝난다', () async {
+      final response = Completer<Result<Profile>>();
+      when(
+        () =>
+            useCase.updateMyProfile(any(), newAvatar: any(named: 'newAvatar')),
+      ).thenAnswer((_) => response.future);
+      final cubit = ProfileCubit(useCase);
+
+      final saving = cubit.save(const ProfileUpdate(nickname: '바뀐이름'));
+      await cubit.close();
+      response.complete(Ok(_profile(nickname: '바뀐이름')));
+
+      await expectLater(saving, completes);
+    });
+  });
+
   group('닉네임 사전 확인', () {
     // 디바운스가 지나 조회까지 끝나기를 기다린다.
     Future<void> settle() => Future<void>.delayed(
-      ProfileCubit.nicknameCheckDebounce + const Duration(milliseconds: 100),
+      nicknameCheckDebounce + const Duration(milliseconds: 100),
     );
 
     Future<ProfileCubit> loadedCubit() async {

@@ -1,8 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/validation/nickname_check.dart';
 import '../../domain/entity/profile.dart';
-import 'nickname_check.dart';
 
 part 'profile_state.freezed.dart';
 

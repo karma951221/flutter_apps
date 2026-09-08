@@ -21,6 +21,7 @@ import '../../domain/entity/feed_post.dart';
 import '../cubit/feed_cubit.dart';
 import '../cubit/feed_state.dart';
 import '../widget/feed_list_footer.dart';
+import '../widget/feed_load_more_listener.dart';
 import '../widget/post_tile_actions.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -201,14 +202,11 @@ class _FeedList extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: () => context.read<FeedCubit>().refresh(),
-      child: NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
-          if (notification.metrics.extentAfter < FeedCubit.loadMoreExtent &&
-              !isLoadingMore &&
-              canLoadMore) {
+      child: FeedLoadMoreListener(
+        onLoadMore: () {
+          if (!isLoadingMore && canLoadMore) {
             context.read<FeedCubit>().loadMore();
           }
-          return false;
         },
         child: ListView.builder(
           padding: const EdgeInsets.only(

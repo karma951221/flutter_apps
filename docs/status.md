@@ -305,6 +305,11 @@ auth 쪽 8개는 `await` 뒤에 가드 없이 `emit` 한다. 다만 이 테스�
 `signUpNewAccount` 헬퍼가 "나중에" 를 누르도록 바꿨으니 다음 E2E 실행 때 확인한다.
 
 - 최종 리뷰(2026-09-06) 후 반영: anon 읽기 검사가 앱과 같은 컬럼을 조회 · 탈퇴 개수 경계 스크립트 신설 · 완성도 카드는 남은 항목만 나열 · 게스트 빈 상태에 가입 진입
+- 전체 기획·UX 코드 리뷰(2026-09-06, [리뷰](../codex-review.md)) 4건 반영: 프로필
+  꾸미기 저장·조회 중 뒤로가기의 닫힌 cubit emit 차단 · `FeedLoadMoreListener` 로
+  가로 사진 스크롤이 다음 페이지를 당기지 않게 · 가입 화면 닉네임 디바운스 사전 확인
+  (`NicknameCheck` 를 `core/validation` 으로 공유) · `overview.md` v0.3 동기화.
+  `flutter test` 637 통과
 
 남은 것:
 

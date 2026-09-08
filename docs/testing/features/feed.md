@@ -42,6 +42,9 @@
 | `HomeShellPage` | 탭 왕복 | 목록을 다시 읽지 않는다 — `IndexedStack` 이 탭 본문을 살려 둔다.
 | `GuestFeedPage` | 목록 / 빈 상태 | 전체 피드를 읽기 전용으로 그리고(더보기 메뉴 없음), 비어 있으면 작성 버튼 대신 "회원가입" 을 둬 가입 안내 시트로 잇는다. |
 | `GuestFeedPage` | 게시물 탭 | 가입 안내 시트가 뜨고 회원가입은 `/sign-up` 으로 push, 로그인은 `/sign-in` 으로 go 한다. |
+| `FeedLoadMoreListener` | 세로 목록 끝 | 목록이 끝에서 `loadMoreExtent` 안으로 들어오면 다음 페이지를 요청한다. |
+| `FeedLoadMoreListener` | 가로 사진 줄 · 중첩 목록 | 안쪽 스크롤 뷰(가로 축 또는 depth > 0)의 알림은 무시한다. 사진을 옆으로 넘긴 것이 다음 페이지 요청이 되지 않는다. |
+| `GuestFeedPage` | 사진 가로 스크롤 회귀 | 사진 여러 장을 옆으로 끝까지 넘겨도 조회는 첫 페이지 한 번뿐이다 (세로 목록은 아직 끝이 아니다). |
 | 로컬 Supabase (`guest_read_check.py`) | anon 읽기·쓰기 | 앱과 같은 컬럼 목록으로 `posts_with_author` 를 읽어 200 과 행 모양(`images` 는 목록, `my_reaction` 은 없음)을 보고, `profiles` 도 200 이며, 게시물·반응 쓰기는 401/403 이다. |
 
 커서 페이지네이션에서 가장 깨지기 쉬운 곳은 **경계**다. 다음 커서를 잘라낸 항목

@@ -3,10 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/injection.dart';
 import '../../../../core/l10n/validation_localizations.dart';
+import '../../../../core/validation/nickname_check.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../cubit/sign_up_cubit.dart';
+import '../cubit/sign_up_state.dart';
 import '../cubit/submit_state.dart';
 import '../widget/auth_header.dart';
 import '../widget/auth_scaffold.dart';
@@ -92,6 +94,46 @@ class _SignUpViewState extends State<_SignUpView> {
         : local;
     if (Validators.nickname(candidate) != null) return;
     _nickname.text = candidate;
+    // 컨트롤러를 코드로 바꾸면 onChanged 가 불리지 않는다. 제안값도 사용자가
+    // 적은 값과 똑같이 확인해 주어야 가입을 눌러야만 중복을 아는 일이 없다.
+    context.read<SignUpCubit>().checkNickname(candidate);
+  }
+
+  /// 닉네임 사전 확인 결과를 필드에 붙일 (문구, 색, 아이콘) 으로 옮긴다.
+  ///
+  /// 확인에 실패했을 때(= idle)는 아무것도 덧붙이지 않는다 — 틀린 안내보다
+  /// 침묵이 낫다. 문구는 프로필 편집 화면과 같은 것을 쓴다.
+  (String?, Color?, Widget?) _nicknameHint(
+    BuildContext context,
+    NicknameCheck check,
+  ) {
+    final colors = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
+    return switch (check) {
+      NicknameCheckIdle() => (null, null, null),
+      NicknameCheckChecking() => (
+        l10n.profileNicknameChecking,
+        null,
+        const Padding(
+          padding: EdgeInsets.all(AppSpacing.md),
+          child: SizedBox(
+            width: AppSpacing.md,
+            height: AppSpacing.md,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      ),
+      NicknameCheckAvailable() => (
+        l10n.profileNicknameAvailable,
+        colors.primary,
+        Icon(Icons.check_circle_outline, color: colors.primary),
+      ),
+      NicknameCheckTaken() => (
+        l10n.profileNicknameTaken,
+        colors.error,
+        Icon(Icons.error_outline, color: colors.error),
+      ),
+    };
   }
 
   void _submit() {
@@ -106,10 +148,15 @@ class _SignUpViewState extends State<_SignUpView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<SignUpCubit, SubmitState>(
+    return BlocBuilder<SignUpCubit, SignUpState>(
       builder: (context, state) {
-        final busy = state is SubmitInProgress;
+        final submit = state.submit;
+        final busy = submit is SubmitInProgress;
         final l10n = AppLocalizations.of(context);
+        final (nicknameHint, nicknameColor, nicknameIcon) = _nicknameHint(
+          context,
+          state.nicknameCheck,
+        );
         return AuthScaffold(
           showAppBar: true,
           child: AutofillGroup(
@@ -146,9 +193,15 @@ class _SignUpViewState extends State<_SignUpView> {
                     enabled: !busy,
                     textInputAction: TextInputAction.next,
                     maxLength: Validators.nicknameMaxLength,
+                    helperText: nicknameHint,
+                    helperColor: nicknameColor,
+                    suffixIcon: nicknameIcon,
                     validator: (value) =>
                         Validators.nickname(value)?.localized(context),
-                    onChanged: (_) => _nicknameEdited = true,
+                    onChanged: (value) {
+                      _nicknameEdited = true;
+                      context.read<SignUpCubit>().checkNickname(value);
+                    },
                     onSubmitted: _passwordFocus.requestFocus,
                   ),
                   AuthTextField(
@@ -179,7 +232,7 @@ class _SignUpViewState extends State<_SignUpView> {
                     )?.localized(context),
                     onSubmitted: _submit,
                   ),
-                  if (state is SubmitFailure) FailureText(state.failure),
+                  if (submit is SubmitFailure) FailureText(submit.failure),
                   AppButton.primary(
                     label: l10n.authSignUpSubmit,
                     onPressed: _submit,

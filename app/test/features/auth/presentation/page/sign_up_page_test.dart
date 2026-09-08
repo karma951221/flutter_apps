@@ -1,14 +1,16 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:daylog/core/di/injection.dart';
+import 'package:daylog/core/validation/nickname_check.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/auth/presentation/cubit/sign_up_cubit.dart';
-import 'package:daylog/features/auth/presentation/cubit/submit_state.dart';
+import 'package:daylog/features/auth/presentation/cubit/sign_up_state.dart';
 import 'package:daylog/features/auth/presentation/page/sign_up_page.dart';
 import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
-class _MockSignUpCubit extends MockCubit<SubmitState> implements SignUpCubit {}
+class _MockSignUpCubit extends MockCubit<SignUpState> implements SignUpCubit {}
 
 void main() {
   late _MockSignUpCubit cubit;
@@ -17,13 +19,20 @@ void main() {
     cubit = _MockSignUpCubit();
     whenListen(
       cubit,
-      const Stream<SubmitState>.empty(),
-      initialState: const SubmitState.idle(),
+      const Stream<SignUpState>.empty(),
+      initialState: const SignUpState(),
     );
     getIt.registerFactory<SignUpCubit>(() => cubit);
   });
 
   tearDown(getIt.reset);
+
+  /// 사전 확인 결과가 이미 그려진 화면을 만든다.
+  void withNicknameCheck(NicknameCheck check) => whenListen(
+    cubit,
+    const Stream<SignUpState>.empty(),
+    initialState: SignUpState(nicknameCheck: check),
+  );
 
   Future<void> pumpPage(WidgetTester tester) async {
     await tester.pumpWidget(
@@ -134,5 +143,55 @@ void main() {
     await tester.pump();
 
     expect(nicknameText(tester), '');
+  });
+
+  testWidgets('닉네임을 입력하면 사전 확인을 요청한다', (tester) async {
+    await pumpPage(tester);
+
+    await tester.enterText(find.byKey(const Key('signUp.nickname')), '새이름');
+    await tester.pump();
+
+    verify(() => cubit.checkNickname('새이름')).called(1);
+  });
+
+  testWidgets('제안값도 그대로 사전 확인한다', (tester) async {
+    await pumpPage(tester);
+
+    await tester.enterText(
+      find.byKey(const Key('signUp.email')),
+      'karma951221@example.test',
+    );
+    await tester.tap(find.byKey(const Key('signUp.nickname')));
+    await tester.pump();
+
+    verify(() => cubit.checkNickname('karma951221')).called(1);
+  });
+
+  testWidgets('확인 중에는 입력칸에 진행 표시가 돈다', (tester) async {
+    withNicknameCheck(const NicknameCheck.checking());
+    await pumpPage(tester);
+
+    expect(find.text('확인 중…'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('signUp.nickname')),
+        matching: find.byType(CircularProgressIndicator),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('쓸 수 있는 닉네임은 가입을 누르기 전에 알려준다', (tester) async {
+    withNicknameCheck(const NicknameCheck.available());
+    await pumpPage(tester);
+
+    expect(find.text('사용할 수 있는 닉네임입니다'), findsOneWidget);
+  });
+
+  testWidgets('이미 쓰이는 닉네임도 가입을 누르기 전에 알려준다', (tester) async {
+    withNicknameCheck(const NicknameCheck.taken());
+    await pumpPage(tester);
+
+    expect(find.text('이미 사용 중인 닉네임입니다'), findsOneWidget);
   });
 }

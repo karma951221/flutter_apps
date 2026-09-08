@@ -35,13 +35,19 @@
 | `/settings/account` | `AccountSettingsPage` | 비밀번호 변경 · 회원 탈퇴 |
 | `/settings/account/password` | `ChangePasswordPage` | 새 비밀번호 · 확인 두 칸 |
 
-`SettingsPage` 는 하단 내비게이션의 세 번째 탭 본문이기도 하다. 셸 구조는
+`SettingsPage` 는 하단 내비게이션의 **네 번째(마지막) 탭** 본문이기도 하다
+(홈 · 채팅 · 프로필 · 설정). 셸 구조는
 [아키텍처의 내비게이션 절](../../architecture.md)에 있다.
 
 ### 상태
 
-- `SettingsPage` · `AccountSettingsPage` 는 상태를 갖지 않는다. 세션 요약은
-  `AuthBloc` 의 값을 그대로 읽는다.
+- `SettingsPage` 는 자기 상태를 갖지 않는다. 세션 요약은 `AuthBloc` 의 값을 그대로
+  읽고, 테마·언어 행은 앱 루트가 만든 `ThemeCubit` · `LanguageCubit` 을 읽어 쓴다
+  (여기서 새로 만들지 않는다).
+- `AccountSettingsPage` 는 `DeleteAccountCubit` 을 만들어 탈퇴 실행만 소유한다.
+  확인 다이얼로그와 그 앞의 개수 조회는 화면이 하고, cubit 이 불렸다는 것은 이미
+  확인을 거쳤다는 뜻이다. 성공은 듣지 않는다 — 세션이 사라지면 라우터가 로그인
+  화면으로 보낸다.
 - `ChangePasswordPage` 만 `ChangePasswordCubit` 을 갖는다. 길이·일치 검증은 화면에서
   끝내고(서버 왕복 전에 막는다), 저장은 `AuthUseCase.updatePassword` 한 번이다.
 - 로그아웃은 확인 다이얼로그 뒤 `AuthEvent.signOutRequested` 를 보낸다. 로그인

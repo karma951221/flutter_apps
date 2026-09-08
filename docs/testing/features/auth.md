@@ -10,11 +10,14 @@
 | `SupabaseErrorMapper` | DB 제약 위반 (`profiles_nickname_length` · `23505` 중복) | 날것의 DB 오류가 사용자 문구 `Failure`로 변환된다. |
 | `SignUpScenario` | 사용 중인 닉네임 | 가입을 시도하지 않고 실패를 반환한다. |
 | `SignUpScenario` | 닉네임 사전 확인 자체가 실패 | 가입을 막지 않고 진행한다 (최종 판정은 DB 제약). |
+| `CheckNicknameAvailabilityScenario` | 저장소 응답 | 사용 가능 여부도 확인 실패도 그대로 전달한다. |
 | `AuthBloc` | 인증 스트림 이벤트 | 초기 unknown → 사용자 수신 시 authenticated, null 수신 시 unauthenticated. |
 | `AuthBloc` | 스트림 오류 | 죽지 않고 unauthenticated로 떨어진다 (인증이 영구히 멈추지 않음). |
 | `AuthBloc` | 로그아웃 (성공·실패 모두) | 저장소를 호출하고 unauthenticated가 된다. |
 | `AuthBloc` | 사용자 갱신 요청 | 저장소에서 사용자를 다시 읽어 authenticated를 다시 낸다. 실패하면 상태를 바꾸지 않는다. |
 | `SignUpCubit` | 가입 제출 | 성공 시 success로 끝나고, 진행 중 재요청은 무시한다. |
+| `SignUpCubit` | 닉네임 사전 확인 | 입력이 멎은 뒤 마지막 값만 한 번 조회해 사용 가능/중복을 알린다. 형식이 어긋난 값은 조회하지 않는다. |
+| `SignUpCubit` | 확인 실패 · 가입 성공 · 화면 이탈 | 확인이 실패하면 아무 말도 하지 않고, 가입에 성공하면 안내를 지우며, 닫힌 뒤에는 조회도 emit 도 하지 않는다. |
 | `PasswordResetCubit` | 코드 발송 성공/실패 | 성공 시에만 코드 입력 단계로 넘어가고 이메일을 기억한다. |
 | `PasswordResetCubit` | 코드 오류 / 변경 성공 / 처음으로 | 틀린 코드는 단계 유지, 변경 성공은 done, "이메일 다시 입력"은 1단계 복귀 + 오류 초기화. |
 | `SignInPage` | 헤더 | 앱 이름과 한 줄 설명이 화면 위에 선다. 맨 아래에 "먼저 둘러보기" 가 있다. |
@@ -25,6 +28,8 @@
 | `SignInPage` | 실패 | 입력 아래에 실패 문구가 남는다. |
 | `SignUpPage` | 자동 완성 | 폼이 `AutofillGroup` 안에 있다. |
 | `SignUpPage` | 닉네임 제안값 | 이메일에서 벗어나면 로컬 파트를 닉네임에 채운다. 사용자가 손댔거나(지운 것 포함) 규칙에 어긋나거나 이메일 자체가 형식에 맞지 않으면 채우지 않고, 20자를 넘으면 잘라 넣는다. |
+| `SignUpPage` | 닉네임 사전 확인 요청 | 사용자가 직접 적은 값도, 이메일에서 채워진 제안값도 확인을 요청한다. |
+| `SignUpPage` | 사전 확인 결과 표시 | 확인 중에는 입력칸에 진행 표시가 돌고, 사용 가능·중복은 입력칸 아래 문구로 보인다. |
 | `resolveAuthRedirect` | 상태 × 위치 | unknown 은 스플래시, 미인증은 공개 경로만, 가입 화면에서 인증되면 프로필 꾸미기, 그 밖의 공개 경로에서 인증되면 홈. |
 | `SupabaseErrorMapper` | 댓글 300자 제약 | 사용자 문구로 번역된다. |
 | `SupabaseErrorMapper` | 2단 제한 트리거 문구 | 트리거가 던진 한국어를 그대로 전달한다 — 기본 문구로 덮지 않는다. |

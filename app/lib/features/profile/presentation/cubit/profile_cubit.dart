@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../../../core/validation/nickname_check.dart';
 import '../../../../core/validation/validators.dart';
 import '../../domain/entity/avatar_image_draft.dart';
 import '../../domain/entity/profile_update.dart';
 import '../../domain/usecase/profile_use_case.dart';
-import 'nickname_check.dart';
 import 'profile_state.dart';
 
 @injectable
@@ -15,9 +15,6 @@ class ProfileCubit extends Cubit<ProfileState> {
   ProfileCubit(this._useCase) : super(const ProfileState());
 
   final ProfileUseCase _useCase;
-
-  /// 입력이 멎기를 기다리는 시간. 글자마다 조회하면 대부분이 버려지는 요청이 된다.
-  static const nicknameCheckDebounce = Duration(milliseconds: 400);
 
   Timer? _nicknameDebounce;
 
@@ -31,6 +28,10 @@ class ProfileCubit extends Cubit<ProfileState> {
     final result = userId == null
         ? await _useCase.getMyProfile()
         : await _useCase.getProfile(userId);
+    // 조회 중에 화면을 떠나면 cubit 이 먼저 닫힌다. 늦게 온 결과로 emit 하면
+    // bloc 이 예외를 던지므로 여기서 접는다.
+    if (isClosed) return;
+
     emit(
       result.when(
         ok: (profile) =>
@@ -88,6 +89,9 @@ class ProfileCubit extends Cubit<ProfileState> {
     emit(state.copyWith(isSaving: true, failure: null));
 
     final result = await _useCase.updateMyProfile(update, newAvatar: newAvatar);
+    // 저장 도중 화면이 사라졌을 수 있다. 닫힌 뒤의 emit 은 예외가 된다.
+    if (isClosed) return;
+
     emit(
       result.when(
         ok: (profile) => state.copyWith(

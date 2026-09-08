@@ -4,6 +4,7 @@ import '../../../../core/result/result.dart';
 import '../entity/app_user.dart';
 import '../repository/auth_repository.dart';
 import 'scenario/auth_state_changes_scenario.dart';
+import 'scenario/check_nickname_availability_scenario.dart';
 import 'scenario/current_user_scenario.dart';
 import 'scenario/delete_account_scenario.dart';
 import 'scenario/send_password_reset_code_scenario.dart';
@@ -33,6 +34,9 @@ abstract interface class AuthUseCase {
     required String password,
     required String nickname,
   });
+
+  /// 가입 전 닉네임 사용 가능 여부. 안내용이며 최종 판정은 DB 제약이 한다.
+  Future<Result<bool>> isNicknameAvailable(String nickname);
 
   Future<Result<void>> signOut();
 
@@ -78,6 +82,10 @@ class DefaultAuthUseCase implements AuthUseCase {
     password: password,
     nickname: nickname,
   );
+
+  @override
+  Future<Result<bool>> isNicknameAvailable(String nickname) =>
+      CheckNicknameAvailabilityScenario(_repository)(nickname);
 
   @override
   Future<Result<void>> signOut() => SignOutScenario(_repository)();

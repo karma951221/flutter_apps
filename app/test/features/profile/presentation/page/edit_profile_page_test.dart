@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:daylog/app/router/routes.dart';
 import 'package:daylog/core/di/injection.dart';
 import 'package:daylog/core/error/failure.dart';
 import 'package:daylog/core/result/result.dart';
+import 'package:daylog/core/validation/nickname_check.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/auth/domain/entity/app_user.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';
@@ -104,7 +107,7 @@ void main() {
   /// 디바운스가 지나 조회 결과가 화면에 닿을 때까지 민다.
   Future<void> settle(WidgetTester tester) async {
     await tester.pump(
-      ProfileCubit.nicknameCheckDebounce + const Duration(milliseconds: 100),
+      nicknameCheckDebounce + const Duration(milliseconds: 100),
     );
     await tester.pump();
   }
@@ -208,5 +211,48 @@ void main() {
       () => useCase.updateMyProfile(any(), newAvatar: any(named: 'newAvatar')),
     ).called(1);
     expect(router.state.matchedLocation, Routes.home);
+  });
+
+  testWidgets('저장 중 시스템 뒤로가기는 화면을 지키고, 저장이 끝난 뒤 홈으로 간다', (tester) async {
+    final response = Completer<Result<Profile>>();
+    when(
+      () => useCase.updateMyProfile(any(), newAvatar: any(named: 'newAvatar')),
+    ).thenAnswer((_) => response.future);
+    final router = await pumpSetup(tester);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('계속'));
+    await tester.pump();
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+
+    // 저장 중에는 떠나지 않는다. 떠나면 결과를 알려줄 곳이 사라진다.
+    expect(find.text('홈'), findsNothing);
+    expect(router.state.matchedLocation, Routes.profileSetup);
+
+    response.complete(Ok(_profile));
+    await tester.pumpAndSettle();
+
+    expect(router.state.matchedLocation, Routes.home);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('조회 중 시스템 뒤로가기는 홈으로 가고, 늦게 온 결과는 아무 일도 하지 않는다', (tester) async {
+    final response = Completer<Result<Profile>>();
+    when(useCase.getMyProfile).thenAnswer((_) => response.future);
+    final router = await pumpSetup(tester);
+    await tester.pump();
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(router.state.matchedLocation, Routes.home);
+
+    // 화면이 닫힌 뒤 도착한 조회 결과가 예외가 되면 안 된다.
+    response.complete(Ok(_profile));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
   });
 }

@@ -1,124 +1,143 @@
-# feed · post · profile 코드 리뷰
+# 전체 기획 · UX 반영 코드 리뷰
 
-검토일: 2026-08-24
-범위: `app/lib/features/{feed,post,profile}`, 관련 Supabase migration · 테스트 · 기능 문서
+검토일: 2026-09-06
+
+기준: `main`의 `fcc2117..9471277` 변경과 현재 코드·기획 문서
+
+범위: 가입/온보딩, 게스트 피드, 프로필 완성도, 게시물 작성, 탈퇴 확인, 관련 테스트·문서
+
+별도 브랜치 `refactor/melos-packages-wanderer`는 현재 `main`에 합쳐지지 않은 설계 문서만
+있어 이번 코드 리뷰 범위에서 제외했다.
 
 ## 요약
 
-| # | 등급 | 결함 | 위치 | 상태 |
+| # | 등급 | 발견 | 대표 위치 | 상태 |
 |---|---|---|---|---|
-| 1 | P1 | 첨부 이미지가 작성 usecase에서 유실된다 | `create_post_scenario.dart:34` | 고침 |
-| 2 | P1 | 이미지 생성 RPC가 URL 소유권을 검증하지 않는다 | `20260823120803_harden_post_images.sql:45` | 고침 |
-| 3 | P2 | 닉네임 사전 중복 확인이 화면에 연결돼 있지 않다 | `edit_profile_page.dart:185` | 고침 |
-| 4 | P2 | Storage 경로 계약이 문서마다 다르다 | `docs/features/post/plan.md:24` | 고침 |
-| 5 | P2 | 이미지 첨부 회귀 테스트가 문서에만 있다 | `docs/testing/features/post.md:19` | 고침 |
+| 1 | P1 | 프로필 꾸미기 요청 중 뒤로가면 닫힌 Cubit이 응답을 emit한다 | `edit_profile_page.dart:193` | 고침 |
+| 2 | P2 | 사진 가로 스크롤도 피드 다음 페이지 요청을 일으킨다 | `guest_feed_page.dart:76` | 고침 |
+| 3 | P2 | 가입 닉네임의 디바운스 중복 확인이 계획에만 있다 | `docs/features/auth/plan.md:37` | 고침 |
+| 4 | P2 | 기획 단일 기준이 현재 제품·스키마와 여러 곳에서 충돌한다 | `docs/overview.md:44` | 고침 |
 
 위치는 리뷰 시점(수정 전)의 것이다. 조치 내용은 맨 아래에 있다.
 
-1번과 5번은 한 쌍이다. 검증할 테스트가 없어서 1번이 전체 테스트를 통과했다.
-
 ## 발견 사항
 
-### [P1] 1. 첨부 이미지가 작성 usecase에서 유실된다
+### [P1] 1. 프로필 꾸미기 요청 중 뒤로가면 닫힌 Cubit이 응답을 emit한다
 
-**위치** `app/lib/features/post/domain/usecase/scenario/create_post_scenario.dart:34`
+**위치** `app/lib/features/profile/presentation/page/edit_profile_page.dart:193-197`,
+`app/lib/features/profile/presentation/cubit/profile_cubit.dart:31-40,90-100`
 
-**현상** `CreatePostScenario`는 본문을 정규화한 뒤 `PostDraft(content: content)`를 새로
-만들어 repository에 넘긴다. 원래 draft의 `images`가 이 자리에서 빠진다.
+setup 모드의 `PopScope`는 거부된 모든 pop을 즉시 `context.go(Routes.home)`으로 바꾼다.
+따라서 첫 프로필 조회 중 시스템 뒤로가기를 누르거나, 저장 중 시스템 뒤로가기를 누르면
+`BlocProvider`가 `ProfileCubit`을 먼저 닫는다. 그러나 `load()`와 `save()`는 `await` 뒤에
+`isClosed` 확인 없이 `emit`한다. 응답이 도착하면 bloc 9.2가
+`StateError('Cannot emit new states after calling close')`를 던진다. 저장 요청은 화면을
+떠난 뒤에도 계속돼 성공 여부를 사용자에게 알릴 수도 없다.
 
-**영향** 작성 화면에서 사진을 고르고 `PostCubit.create`까지 정상으로 흘러도 datasource는
-빈 `images`를 받아 텍스트 전용 INSERT 경로를 탄다. 업로드도, `create_post_with_images`
-RPC도, 피드의 이미지 표시도 전혀 실행되지 않는다. 사용자에게는 사진이 조용히 사라진 것으로
-보인다.
+현재 시스템 뒤로가기 테스트는 `pumpAndSettle()`로 조회를 끝낸 다음 pop하므로 이 경계를
+검증하지 않는다.
 
-**수정** 정규화한 본문과 기존 이미지를 함께 넘긴다
-(`PostDraft(content: content, images: draft.images)`). 같은 자리에서
-`PostPolicy.maxImageCount`를 검증하고, 이미지가 보존되는 회귀 테스트를 5번과 함께 만든다.
+**제안** 저장 중에는 setup pop을 홈 이동으로 바꾸지 말고 막거나 확인을 받는다. 아울러
+`ProfileCubit.load/save`의 모든 비동기 경계 뒤에 `isClosed` 가드를 두고, `Completer`로
+요청을 보류한 상태에서 `handlePopRoute()` 후 응답을 완료하는 회귀 테스트를 추가한다.
 
-### [P1] 2. 이미지 생성 RPC가 URL 소유권을 검증하지 않는다
+### [P2] 2. 사진 가로 스크롤도 피드 다음 페이지 요청을 일으킨다
 
-**위치** `supabase/migrations/20260823120803_harden_post_images.sql:45-54`
+**위치** `app/lib/features/feed/presentation/page/guest_feed_page.dart:76-84`,
+`app/lib/features/feed/presentation/page/feed_page.dart:204-211`,
+`app/lib/features/profile/presentation/page/profile_page.dart:215-227`,
+`app/lib/features/post/presentation/widget/post_tile.dart:225-239`
 
-**현상** `create_post_with_images`는 `security definer`로 `post_images` 행을 만들면서
-전달받은 `url`을 그대로 저장한다. 호출자가 인증 사용자인지와 새 게시물의 작성자만 확인할 뿐,
-URL이 `post-images/{auth.uid()}/...`에 속하는지는 보지 않는다.
+세 화면의 `NotificationListener<ScrollNotification>`는 축이나 notification depth를 보지
+않고 `extentAfter < 240`만 검사한다. 여러 장의 사진은 `PostTile` 안에서 별도 가로
+`ListView`로 그려지고, 그 스크롤 알림도 바깥 listener까지 버블링한다. 사용자가 화면
+상단에서 사진 캐러셀의 끝으로 가로 스크롤하면 세로 목록 끝에 오지 않았는데도
+`FeedCubit.loadMore()`가 실행된다. 반복하면 읽지 않을 다음 페이지를 계속 당겨 올 수 있다.
 
-**영향** 앱 UI를 우회해 RPC를 직접 호출하면 다른 사용자의 공개 이미지 URL이나 임의의 외부
-URL을 자기 게시물의 이미지 메타데이터로 붙일 수 있다. `docs/schema.md` §7이 약속한
-사용자별 Storage 경로 경계가 Storage 정책에만 있고 DB 함수에는 없다.
+**제안** 세 listener가 세로 최상위 목록 알림만 처리하도록
+`notification.metrics.axis == Axis.vertical`과 적절한 `depth` 조건을 공통화한다. 다중
+이미지 게시물을 가로 드래그한 뒤 feed usecase 호출 수가 늘지 않는 위젯 테스트를 둔다.
 
-**수정** 함수 안에서 URL을 Storage 공개 URL 형식으로 파싱해 버킷과 첫 경로 조각이
-`auth.uid()`와 같은지 검증하고, 아니면 예외를 던진다. 직접 RPC 호출에 대한 허용/거부
-통합 테스트를 함께 둔다.
+### [P2] 3. 가입 닉네임의 디바운스 중복 확인이 계획에만 있다
 
-### [P2] 3. 닉네임 사전 중복 확인이 화면에 연결돼 있지 않다
+**위치** `docs/features/auth/plan.md:37`,
+`app/lib/features/auth/presentation/page/sign_up_page.dart:141-153`,
+`app/lib/features/auth/domain/usecase/scenario/sign_up_scenario.dart:18-31`
 
-**위치** `app/lib/features/profile/presentation/page/edit_profile_page.dart:185-191`
+auth 계획은 회원가입 닉네임 중복을 "디바운스 사전 확인 + 가입 시 DB 제약"으로
+정의한다. 실제 가입 화면은 길이 검증과 이메일 기반 제안만 하며, 중복 확인 상태나
+디바운스 호출이 없다. `isNicknameAvailable`은 제출 후 `SignUpScenario` 안에서 한 번
+호출되므로 사용자는 가입 버튼을 누른 뒤에야 중복을 알 수 있다. 테스트 범위도 scenario의
+제출 시 확인만 다루고 화면 계약은 검증하지 않는다.
 
-**현상** `ProfileUseCase.isNicknameAvailable`과 datasource·repository·scenario는 모두
-있지만 편집 화면도 cubit도 이를 부르지 않는다. 닉네임 `TextFormField`에 걸린 검증은
-`Validators.nickname`(형식)뿐이다.
+**제안** profile 편집의 `NicknameCheck` 패턴을 가입 화면에 연결해 확인 중/가능/중복을
+표시하거나, 제출 시 확인만 의도한 것이라면 plan에서 "디바운스" 약속을 제거해 구현과
+테스트 범위를 맞춘다.
 
-**영향** `docs/features/profile/plan.md:30`이 요구한 "디바운스 사전 확인 표시"가 없어
-사용자는 저장 버튼을 누를 때까지 중복 여부를 알 수 없다. 같은 문서 45번 줄은 이 항목을
-완료(`[x]`)로 적고 있어 문서도 실제와 어긋난다.
+### [P2] 4. 기획 단일 기준이 현재 제품·스키마와 여러 곳에서 충돌한다
 
-**수정** 닉네임 입력 변경을 디바운스해 현재 닉네임과 다른 값만 확인하고, 확인 중 · 사용 가능 ·
-중복 상태를 입력창에 표시한다. DB unique 제약이 최종 판정이라는 점은 그대로 둔다.
+**위치** `docs/overview.md:5,44-46,244-249,458-470`
 
-### [P2] 4. Storage 경로 계약이 문서마다 다르다
+문서 허브는 `overview.md`를 제품 목표·범위·결정 근거의 단일 기준으로 지정하지만,
+현재 문서는 8월 22일 v0.2 상태에 머물러 있다.
 
-**위치** `docs/features/post/plan.md:24`, `docs/testing/features/post.md:20`,
-`app/lib/features/post/data/datasource/supabase_post_data_source.dart:63-80`
+- 46줄은 1:1 채팅/DM과 다국어를 v1 범위 밖이라고 쓰지만 둘 다 현재 완료 상태다.
+- 244줄은 게시물 이미지 경로를 `{user_id}/{post_id}/...`로 정의하지만 구현과
+  `schema.md`의 계약은 `{user_id}/{uuid}/{순서}`다.
+- 247~249줄은 이미지 순서 드래그, 업로드 진행률/재시도, 게시물 상세·캐러셀을 앱 개발
+  범위로 적지만 현재 구현하지 않았고 `status.md`는 F3를 완료로 닫았다.
+- 464줄은 1:1 DM을 4단계 미래 범위로 두고, 바로 아래 설명도 아직 DM이 붙기 전처럼
+  서술한다. 현재는 3.6단계 완료다.
 
-**현상** 구현은 게시물 id와 무관한 UUID folder를 만들어
-`{user_id}/{folder}/{index}.{extension}`에 올린다. `docs/schema.md:594`는 이 설계를
-그대로 적고 이유("게시물 id가 아니다")까지 밝혀 놓았지만, F3 plan과 테스트 범위 문서는
-여전히 `{user_id}/{post_id}/{sort_order}.webp`를 요구한다.
+이 상태에서는 새 기획이나 리팩터링이 overview를 기준으로 삼을 때 이미 폐기된 Storage
+경로나 끝난 기능을 다시 설계하게 된다.
 
-**영향** 같은 계약을 말하는 문서가 세 벌인데 둘이 낡았다. 다음 사람이 어느 쪽을 기준으로
-읽느냐에 따라 2번의 수정 방향이 갈린다.
-
-**수정** 현재 folder 기반 설계를 정본으로 삼고 `docs/features/post/plan.md`와
-`docs/testing/features/post.md`를 `docs/schema.md` 문구에 맞춘다.
-
-### [P2] 5. 이미지 첨부 회귀 테스트가 문서에만 있다
-
-**위치** `docs/testing/features/post.md:19`, `app/test/features/post/`
-
-**현상** 테스트 범위 문서는 `PostCubit`이 최대 5개의 압축 완료 이미지를 `PostDraft`에
-보존한다고 명시하지만, cubit·scenario 테스트 어디에도 그 검증이 없다.
-
-**영향** 1번 결함이 99개 테스트를 모두 통과했다. 문서에 적힌 범위와 실제 범위가 벌어져
-있어 테스트 통과가 근거로 쓰이지 못한다.
-
-**수정** cubit 테스트는 `create(images: ...)`가 usecase에 같은 목록을 넘기는지,
-scenario 테스트는 정규화 뒤에도 이미지 목록과 각 메타데이터가 유지되는지, 경계 테스트는
-5장 허용 · 6장 거부를 검증한다.
+**제안** 현재 결정을 overview에 반영하고, 구현하지 않기로 한 F3 항목은 명시적인 범위
+밖/후속 항목으로 옮긴다. 진행 체크는 기존 규칙대로 `status.md`에만 남긴다. 함께 보이는
+작은 드리프트(`profile/plan.md`의 중복 문장과 프로필 로그아웃 표기,
+`settings/plan.md`의 세 번째 탭·무상태 표기)도 같은 정리에서 맞춘다.
 
 ## 확인 결과
 
-- `cd app && flutter test test/features/feed test/features/post test/features/profile` — 통과 (99 tests)
-- `cd app && flutter analyze` — 문제 없음
+- `cd app && flutter analyze` — 통과
+- `cd app && flutter test` — 통과 (616 tests)
+- `cd app && flutter test test/convention` — 통과 (4 tests)
+- `python3 supabase/tests/guest_read_check.py` — 통과 (6/6)
+- `python3 supabase/tests/account_summary_check.py` — 통과 (3/3)
 
-정적 분석과 단위 테스트는 통과한다. 다만 이미지 첨부의 입력 보존(1번)과 Storage · RPC
-소유 경계(2번)는 현재 테스트 범위 밖이라 통과가 아무것도 보증하지 않는다.
+정적 분석·단위 테스트와 새 Supabase 경계 검사는 모두 통과했다. 1번은 비동기 요청이
+끝나기 전에 화면을 닫는 수명 경계, 2번은 중첩 스크롤 알림이라 현재 테스트 범위 밖이다.
 
-## 조치
+## 조치 내용 — 2026-09-06
 
-다섯 건 모두 고쳤다. 진행 현황은 `docs/status.md` 의 "코드 리뷰 — 2026-08-24" 절에 적었다.
+1. **닫힌 Cubit emit** — `ProfileCubit.load/save` 가 `await` 뒤에 `isClosed` 를 확인한다.
+   setup 모드 `PopScope` 는 저장 중이면 홈으로 보내지 않고 pop 을 그대로 막는다
+   ("계속" 이 로딩 상태라 저장 중임이 보이고, 끝나면 listener 가 홈으로 보낸다).
+   `Completer` 로 응답을 보류한 채 `close()` / `handlePopRoute()` 후 완료하는 회귀
+   테스트 4건(cubit 2 · 화면 2). 수정 전에는 넷 다 `Cannot emit new states after
+   calling close` 로 실패했다.
+2. **가로 스크롤의 다음 페이지 요청** — `FeedLoadMoreListener`
+   (`features/feed/presentation/widget/`)가 `depth == 0 && axis == vertical` 인 알림만
+   본다. 세 화면이 인라인 listener 대신 이 위젯을 쓰고, `canLoadMore · isLoadingMore`
+   판단은 화면마다 상태를 읽는 시점이 달라 콜백 쪽에 남겼다. 위젯 테스트 3건과
+   게스트 피드 회귀 테스트(8장 사진 게시물을 가로로 끝까지 끌어도 `getFeedPosts` 1회).
+   수정 전에는 4회였다.
+3. **가입 닉네임 디바운스 확인** — 계획대로 구현했다. `NicknameCheck` 와 400ms 상수를
+   `core/validation/nickname_check.dart` 로 올려 auth · profile 이 공유한다.
+   `AuthUseCase.isNicknameAvailable` + `CheckNicknameAvailabilityScenario` 추가,
+   `SignUpCubit` 은 `SignUpState(submit, nicknameCheck)` 두 축을 갖는다(늦게 온 확인
+   결과가 제출 중 상태를 지우지 않게). `AuthTextField` 에 `helperText · helperColor ·
+   suffixIcon` 을 더해 확인 중/가능/중복을 표시하고, 이메일 제안값도 같이 확인한다.
+   문구는 프로필 편집의 l10n 키를 그대로 쓴다. E2E 셀렉터 `signUp.nickname` 유지.
+4. **기획 문서 드리프트** — `overview.md` 를 v0.3 으로 올렸다. 채팅(F9) · DM · 다국어를
+   범위 안으로, Storage 경로를 `{user_id}/{uuid}/{순서}` 로, F3 의 드래그 순서 ·
+   진행률/재시도 · 상세/캐러셀은 "범위 밖 / 후속" 으로 옮겼고 로드맵에 3.5 · 3.6 단계를
+   적었다. `profile/plan.md` 중복 문장과 로그아웃 표기, `settings/plan.md` 의 탭 순서와
+   `AccountSettingsPage` 상태 표기, `schema.md` 의 "앞으로 추가될 `follows`" 문장도 맞췄다.
 
-| # | 조치 |
-|---|---|
-| 1 | `CreatePostScenario` 가 정규화한 본문과 원래 `images` 를 함께 넘긴다. 같은 자리에서 `PostPolicy.maxImageCount` 를 검증한다 |
-| 2 | `20260824142714_verify_post_image_urls.sql` — `create_post_with_images()` 가 `url` 을 `post-images` 버킷·호출자 경로·객체 이름 세 조건으로 검증한다. `docs/schema.md` §5·§7 갱신 |
-| 3 | `NicknameCheck` union + `ProfileCubit.checkNickname` (400ms 디바운스, 늦은 응답 무시). 편집 화면이 확인 중 / 사용 가능 / 중복을 입력창에 표시한다 |
-| 4 | `docs/features/post/plan.md` · `docs/testing/features/post.md` 를 실제 경로(`{user_id}/{uuid}/{순서}`)와 `docs/schema.md` 문구에 맞췄다 |
-| 5 | scenario 테스트 2건(첨부 보존 · 장수 경계), cubit 테스트 1건(목록 전달), 편집 화면 위젯 테스트 3건을 추가하고 테스트 범위 문서를 실제와 맞췄다 |
+남긴 것: overview 에 F9 절이 없다(포인터만 둠), settings · preferences 의 F 번호,
+§4 의 drift 도입 언급은 결정이 필요해 손대지 않았다.
 
-검증:
+재확인: `flutter analyze` 무결함 · `flutter test` 637 통과 · `flutter test test/convention`
+4 통과.
 
-- `cd app && flutter test` — 통과 (272 tests, 리뷰 시점 대비 +13)
-- `cd app && flutter analyze` — 문제 없음
-- 2번 마이그레이션은 로컬 DB 에 적용해 여섯 경우(본인 경로 · 남의 경로 · 외부 URL ·
-  다른 버킷 · 폴더만 · 이미지 없음)를 직접 확인했다

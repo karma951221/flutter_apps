@@ -23,6 +23,7 @@ import '../../../feed/presentation/cubit/feed_cubit.dart';
 import '../../../follow/presentation/cubit/follow_action_cubit.dart';
 import '../../../follow/presentation/cubit/follow_action_state.dart';
 import '../../../feed/presentation/cubit/feed_state.dart';
+import '../../../feed/presentation/widget/feed_load_more_listener.dart';
 import '../../../feed/presentation/widget/post_tile_actions.dart';
 import '../../../post/domain/entity/post.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
@@ -212,19 +213,15 @@ class _ProfileView extends StatelessWidget {
                 );
                 await feed.refresh();
               },
-              child: NotificationListener<ScrollNotification>(
+              child: FeedLoadMoreListener(
                 // 다음 페이지 요청은 스크롤 알림으로만 낸다. 목록을 만드는
                 // 도중에 부르면 build 중 상태 변경이 되어 프레임이 깨진다.
-                onNotification: (notification) {
+                onLoadMore: () {
                   final feed = context.read<FeedCubit>();
                   final feedState = feed.state;
-                  if (notification.metrics.extentAfter <
-                          FeedCubit.loadMoreExtent &&
-                      !feedState.isLoadingMore &&
-                      feedState.canLoadMore) {
+                  if (!feedState.isLoadingMore && feedState.canLoadMore) {
                     feed.loadMore();
                   }
-                  return false;
                 },
                 child: CustomScrollView(
                   slivers: [
