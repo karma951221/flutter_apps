@@ -26,6 +26,11 @@ FeedPostDto _$FeedPostDtoFromJson(Map<String, dynamic> json) => FeedPostDto(
       {},
   myReaction: json['my_reaction'] as String?,
   commentCount: (json['comment_count'] as num?)?.toInt() ?? 0,
+  tradeResult: json['trade_result'] == null
+      ? null
+      : FeedTradeResultDto.fromJson(
+          json['trade_result'] as Map<String, dynamic>,
+        ),
 );
 
 Map<String, dynamic> _$FeedPostDtoToJson(FeedPostDto instance) =>
@@ -41,4 +46,5 @@ Map<String, dynamic> _$FeedPostDtoToJson(FeedPostDto instance) =>
       'reaction_counts': instance.reactionCounts,
       'my_reaction': instance.myReaction,
       'comment_count': instance.commentCount,
+      'trade_result': instance.tradeResult,
     };

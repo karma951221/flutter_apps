@@ -122,4 +122,20 @@ void main() {
     expect((result as Err<Post>).failure, isA<ValidationFailure>());
     verifyNever(() => repository.createPost(any()));
   });
+
+  test('본문을 정규화해도 공유할 판 id 는 그대로 전달한다', () async {
+    // draft 를 새로 만들면서 빠뜨리면 datasource 가 직접 insert 경로를 타고
+    // 판이 조용히 사라진다.
+    when(() => repository.createPost(any())).thenAnswer((_) async => Ok(_post));
+
+    await CreatePostScenario(repository)(
+      const PostDraft(content: '  오늘의 판  ', tradeSessionId: 'session-1'),
+    );
+
+    final captured =
+        verify(() => repository.createPost(captureAny())).captured.single
+            as PostDraft;
+    expect(captured.content, '오늘의 판');
+    expect(captured.tradeSessionId, 'session-1');
+  });
 }

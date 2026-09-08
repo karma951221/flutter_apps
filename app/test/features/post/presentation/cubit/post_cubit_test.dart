@@ -117,4 +117,30 @@ void main() {
     expect(draft.images, images);
     await cubit.close();
   });
+
+  test('공유할 판 id 를 draft 에 실어 usecase 로 넘긴다', () async {
+    when(() => useCase.createPost(any())).thenAnswer((_) async => Ok(_post));
+    final cubit = PostCubit(useCase);
+
+    await cubit.create('오늘의 판', tradeSessionId: 'session-1');
+
+    final draft =
+        verify(() => useCase.createPost(captureAny())).captured.single
+            as PostDraft;
+    expect(draft.tradeSessionId, 'session-1');
+    await cubit.close();
+  });
+
+  test('판을 붙이지 않으면 draft 의 판 id 는 null 이다', () async {
+    when(() => useCase.createPost(any())).thenAnswer((_) async => Ok(_post));
+    final cubit = PostCubit(useCase);
+
+    await cubit.create('오늘의 기록');
+
+    final draft =
+        verify(() => useCase.createPost(captureAny())).captured.single
+            as PostDraft;
+    expect(draft.tradeSessionId, isNull);
+    await cubit.close();
+  });
 }

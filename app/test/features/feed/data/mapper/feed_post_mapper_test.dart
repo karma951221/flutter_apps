@@ -110,4 +110,53 @@ void main() {
     expect(item.reactions.mine, isNull);
     expect(item.commentCount, 0);
   });
+
+  test('뷰의 trade_result jsonb 를 판 결과 요약으로 옮긴다', () {
+    final item = FeedPostDto.fromJson({
+      'id': 'post-id',
+      'author_id': 'author-id',
+      'content': '오늘의 판',
+      'created_at': '2026-09-08T09:00:00.000Z',
+      'updated_at': '2026-09-08T09:00:00.000Z',
+      'author_nickname': '카르마',
+      'trade_result': {
+        'session_id': 'session-1',
+        'symbol': 'ETHUSDT',
+        'start_day': '2024-02-01',
+        'end_day': '2024-05-30',
+        'return_pct': -5.1,
+        'buy_hold_return_pct': -2.0,
+        'max_drawdown_pct': 11.5,
+        'trade_count': 3,
+      },
+    }).toEntity();
+
+    final result = item.post.tradeResult!;
+    expect(result.sessionId, 'session-1');
+    expect(result.displaySymbol, 'ETH');
+    expect(result.startDay, DateTime(2024, 2, 1));
+    expect(result.endDay, DateTime(2024, 5, 30));
+    expect(result.returnPct, -5.1);
+    expect(result.buyHoldReturnPct, -2.0);
+    expect(result.maxDrawdownPct, 11.5);
+    expect(result.tradeCount, 3);
+    expect(result.beatBuyHold, isFalse);
+  });
+
+  test('판이 없는 게시물은 결과가 null 이다', () {
+    // 뷰의 lateral 이 0행이면 컬럼이 통째로 null 이다 (docs/schema.md §6).
+    final dto = FeedPostDto.fromJson({
+      'id': 'post-id',
+      'author_id': 'author-id',
+      'content': '오늘의 기록',
+      'created_at': '2026-09-08T09:00:00.000Z',
+      'updated_at': '2026-09-08T09:00:00.000Z',
+      'author_nickname': '카르마',
+      'trade_result': null,
+    });
+
+    expect(dto.tradeResult, isNull);
+    expect(dto.toEntity().post.tradeResult, isNull);
+    expect(_dto.toPost().tradeResult, isNull);
+  });
 }

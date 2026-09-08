@@ -2,9 +2,11 @@ import '../../../post/domain/entity/post.dart';
 import '../../../post/domain/entity/post_author.dart';
 import '../../../post/domain/entity/post_image.dart';
 import '../../../reaction/domain/entity/reaction_summary.dart';
+import '../../../trade/domain/entity/trade_result_summary.dart';
 import '../../domain/entity/feed_post.dart';
 import '../cursor/feed_cursor.dart';
 import '../dto/feed_post_dto.dart';
+import '../dto/feed_trade_result_dto.dart';
 
 /// data/domain 경계의 피드 항목 변환.
 ///
@@ -28,6 +30,7 @@ extension FeedPostDtoMapper on FeedPostDto {
           ),
         )
         .toList(),
+    tradeResult: tradeResult?.toEntity(),
   );
 
   PostAuthor toAuthor() => PostAuthor(
@@ -45,4 +48,17 @@ extension FeedPostDtoMapper on FeedPostDto {
 
   /// 이 행을 마지막 항목으로 하는 다음 페이지 커서.
   FeedCursor toCursor() => FeedCursor(createdAt: createdAt, id: id);
+}
+
+extension FeedTradeResultDtoMapper on FeedTradeResultDto {
+  TradeResultSummary toEntity() => TradeResultSummary(
+    sessionId: sessionId,
+    symbol: symbol,
+    startDay: startDay,
+    endDay: endDay,
+    returnPct: returnPct,
+    buyHoldReturnPct: buyHoldReturnPct,
+    maxDrawdownPct: maxDrawdownPct,
+    tradeCount: tradeCount,
+  );
 }

@@ -24,8 +24,15 @@ class PostCubit extends Cubit<PostState> {
   Future<Result<Post>> create(
     String content, {
     List<PostImageDraft> images = const [],
+    String? tradeSessionId,
   }) => _submit(
-    () => _useCase.createPost(PostDraft(content: content, images: images)),
+    () => _useCase.createPost(
+      PostDraft(
+        content: content,
+        images: images,
+        tradeSessionId: tradeSessionId,
+      ),
+    ),
   );
 
   Future<Result<Post>> update(String postId, String content) =>

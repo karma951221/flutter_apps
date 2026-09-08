@@ -17,6 +17,11 @@ PostDto _$PostDtoFromJson(Map<String, dynamic> json) => PostDto(
           ?.map((e) => PostImageDto.fromJson(e as Map<String, dynamic>))
           .toList() ??
       [],
+  tradeResult: json['trade_result'] == null
+      ? null
+      : PostTradeResultDto.fromJson(
+          json['trade_result'] as Map<String, dynamic>,
+        ),
 );
 
 Map<String, dynamic> _$PostDtoToJson(PostDto instance) => <String, dynamic>{
@@ -26,4 +31,5 @@ Map<String, dynamic> _$PostDtoToJson(PostDto instance) => <String, dynamic>{
   'created_at': instance.createdAt.toIso8601String(),
   'updated_at': instance.updatedAt.toIso8601String(),
   'post_images': instance.images,
+  'trade_result': instance.tradeResult,
 };

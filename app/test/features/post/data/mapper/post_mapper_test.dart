@@ -84,4 +84,53 @@ void main() {
     expect(dto.images, isEmpty);
     expect(dto.toEntity().images, isEmpty);
   });
+
+  test('임베드한 trade_result 를 판 결과 요약으로 옮긴다', () {
+    // 임베드 별칭이 피드 뷰의 jsonb 와 같은 키를 쓰므로 두 DTO 가 같은 JSON 을
+    // 읽는다. 키가 어긋나면 카드가 조용히 사라지는 자리라 JSON 으로 확인한다.
+    final post = PostDto.fromJson({
+      'id': 'post-id',
+      'author_id': 'author-id',
+      'content': '본문',
+      'created_at': '2026-09-08T09:00:00.000Z',
+      'updated_at': '2026-09-08T09:00:00.000Z',
+      'trade_result': {
+        'session_id': 'session-1',
+        'symbol': 'BTCUSDT',
+        'start_day': '2024-01-01',
+        'end_day': '2024-04-29',
+        'return_pct': 12.34,
+        'buy_hold_return_pct': 5.1,
+        'max_drawdown_pct': 8.2,
+        'trade_count': 7,
+      },
+    }).toEntity();
+
+    final result = post.tradeResult!;
+    expect(result.sessionId, 'session-1');
+    expect(result.symbol, 'BTCUSDT');
+    expect(result.displaySymbol, 'BTC');
+    expect(result.startDay, DateTime(2024, 1, 1));
+    expect(result.endDay, DateTime(2024, 4, 29));
+    expect(result.returnPct, 12.34);
+    expect(result.buyHoldReturnPct, 5.1);
+    expect(result.maxDrawdownPct, 8.2);
+    expect(result.tradeCount, 7);
+    expect(result.beatBuyHold, isTrue);
+  });
+
+  test('판을 붙이지 않은 게시물은 결과가 null 이다', () {
+    // 임베드는 붙은 판이 없으면 키 자체를 null 로 내린다.
+    final dto = PostDto.fromJson({
+      'id': 'post-id',
+      'author_id': 'author-id',
+      'content': '본문',
+      'created_at': '2026-09-08T09:00:00.000Z',
+      'updated_at': '2026-09-08T09:00:00.000Z',
+      'trade_result': null,
+    });
+
+    expect(dto.tradeResult, isNull);
+    expect(dto.toEntity().tradeResult, isNull);
+  });
 }

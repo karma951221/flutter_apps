@@ -22,7 +22,7 @@ SERVICE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwi
 COLUMNS = (
     "id,author_id,content,created_at,updated_at,"
     "author_nickname,author_avatar_url,images,"
-    "reaction_counts,my_reaction,comment_count"
+    "reaction_counts,my_reaction,comment_count,trade_result"
 )
 
 results = []

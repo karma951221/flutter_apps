@@ -10,10 +10,21 @@ part 'post_draft.freezed.dart';
 /// 앱이 보내지 않으므로 위조할 경로가 없다.
 @freezed
 class PostDraft with _$PostDraft {
-  const PostDraft({required this.content, this.images = const []});
+  const PostDraft({
+    required this.content,
+    this.images = const [],
+    this.tradeSessionId,
+  });
 
   @override
   final String content;
   @override
   final List<PostImageDraft> images;
+
+  /// 함께 공유할 끝난 판의 id. 붙이지 않으면 null 이다.
+  ///
+  /// 끝난 내 판인지는 DB 가 판정한다 — `create_post_with_images()` 가 어긋난
+  /// 판을 거부한다(docs/schema.md §5). 앱은 id 를 실어 나르기만 한다.
+  @override
+  final String? tradeSessionId;
 }

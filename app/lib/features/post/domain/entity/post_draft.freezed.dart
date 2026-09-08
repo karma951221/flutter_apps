@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PostDraft {
 
- String get content; List<PostImageDraft> get images;
+ String get content; List<PostImageDraft> get images; String? get tradeSessionId;
 /// Create a copy of PostDraft
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $PostDraftCopyWith<PostDraft> get copyWith => _$PostDraftCopyWithImpl<PostDraft>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostDraft&&(identical(other.content, content) || other.content == content)&&const DeepCollectionEquality().equals(other.images, images));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PostDraft&&(identical(other.content, content) || other.content == content)&&const DeepCollectionEquality().equals(other.images, images)&&(identical(other.tradeSessionId, tradeSessionId) || other.tradeSessionId == tradeSessionId));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,content,const DeepCollectionEquality().hash(images));
+int get hashCode => Object.hash(runtimeType,content,const DeepCollectionEquality().hash(images),tradeSessionId);
 
 @override
 String toString() {
-  return 'PostDraft(content: $content, images: $images)';
+  return 'PostDraft(content: $content, images: $images, tradeSessionId: $tradeSessionId)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $PostDraftCopyWith<$Res>  {
   factory $PostDraftCopyWith(PostDraft value, $Res Function(PostDraft) _then) = _$PostDraftCopyWithImpl;
 @useResult
 $Res call({
- String content, List<PostImageDraft> images
+ String content, List<PostImageDraft> images, String? tradeSessionId
 });
 
 
@@ -62,11 +62,12 @@ class _$PostDraftCopyWithImpl<$Res>
 
 /// Create a copy of PostDraft
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? content = null,Object? images = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? content = null,Object? images = null,Object? tradeSessionId = freezed,}) {
   return _then(PostDraft(
 content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
 as String,images: null == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
-as List<PostImageDraft>,
+as List<PostImageDraft>,tradeSessionId: freezed == tradeSessionId ? _self.tradeSessionId : tradeSessionId // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

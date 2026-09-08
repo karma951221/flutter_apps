@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'feed_post_image_dto.dart';
+import 'feed_trade_result_dto.dart';
 
 part 'feed_post_dto.freezed.dart';
 part 'feed_post_dto.g.dart';
@@ -26,6 +27,7 @@ class FeedPostDto with _$FeedPostDto {
     this.reactionCounts = const {},
     this.myReaction,
     this.commentCount = 0,
+    this.tradeResult,
   });
 
   @override
@@ -71,6 +73,11 @@ class FeedPostDto with _$FeedPostDto {
   @override
   @JsonKey(name: 'comment_count', defaultValue: 0)
   final int commentCount;
+
+  /// 게시물에 붙은 끝난 판의 결과 요약. 판이 없거나 아직 안 끝났으면 null 이다.
+  @override
+  @JsonKey(name: 'trade_result')
+  final FeedTradeResultDto? tradeResult;
 
   factory FeedPostDto.fromJson(Map<String, dynamic> json) =>
       _$FeedPostDtoFromJson(json);

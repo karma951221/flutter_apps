@@ -18,9 +18,16 @@ class SupabasePostDataSource implements PostDataSource {
 
   static const _bucket = 'post-images';
 
+  /// `trade_result` 는 임베드에 별칭을 붙여 피드 뷰의 jsonb 와 **같은 키**로
+  /// 받는다. 그래야 두 DTO 가 같은 JSON 을 읽고, 카드 위젯이 하나로 끝난다.
+  /// 판을 붙이지 않았으면 이 키가 통째로 null 이다.
   static const _columns =
       'id, author_id, content, created_at, updated_at, '
-      'post_images(id, url, width, height, sort_order)';
+      'post_images(id, url, width, height, sort_order), '
+      'trade_result:trade_sessions('
+      'session_id:id, symbol:revealed_symbol, '
+      'start_day:revealed_start_day, end_day:revealed_end_day, '
+      'return_pct, buy_hold_return_pct, max_drawdown_pct, trade_count)';
 
   @override
   Future<PostDto> getPost(String postId) async {
@@ -40,7 +47,9 @@ class SupabasePostDataSource implements PostDataSource {
     // 경로에 쓸 사용자 id 는 저장소가 세션에서 읽는다. 여기서는 로그인 여부만 본다.
     if (_client.auth.currentUser == null) return null;
 
-    if (draft.images.isEmpty) {
+    // 판을 붙일 때는 이미지가 없어도 RPC 로 간다. `trade_session_id` 에는 INSERT
+    // GRANT 가 없어서(docs/schema.md §5) 직접 insert 는 42501 로 막힌다.
+    if (draft.images.isEmpty && draft.tradeSessionId == null) {
       // author_id 는 보내지 않는다. DB 의 default auth.uid() 가 채운다.
       final row = await _client
           .from('posts')
@@ -50,7 +59,7 @@ class SupabasePostDataSource implements PostDataSource {
       return getPost(row['id'] as String);
     }
 
-    return getPost(await _createWithImages(draft));
+    return getPost(await _createViaRpc(draft));
   }
 
   /// 이미지를 먼저 올리고, 마지막에 게시물 행을 만든다.
@@ -60,7 +69,10 @@ class SupabasePostDataSource implements PostDataSource {
   /// `create_post_with_images` 한 번(= 트랜잭션 하나)으로 끝낸다.
   ///
   /// Storage 는 그 트랜잭션 밖이므로, 실패하면 올린 객체를 best-effort 로 지운다.
-  Future<String> _createWithImages(PostDraft draft) async {
+  ///
+  /// 판만 붙이고 이미지가 없는 게시물도 이 경로로 온다 — 그때 업로드 반복문은
+  /// 한 번도 돌지 않고 `images: []` 로 RPC 만 부른다.
+  Future<String> _createViaRpc(PostDraft draft) async {
     // 폴더 이름은 게시물 id 일 필요가 없다 — Storage 정책이 보는 것은 첫 조각(사용자
     // id)뿐이고, 그건 저장소가 붙인다. 게시물 id 는 아직 없으므로 클라이언트에서
     // 만든 UUID 를 쓴다.
@@ -92,9 +104,16 @@ class SupabasePostDataSource implements PostDataSource {
         });
       }
 
+      // 판이 없을 때는 인자를 아예 보내지 않는다. 함수의 default null 이 같은
+      // 결과를 내므로, 기존 작성 경로가 보내던 요청을 그대로 둔다.
       final postId = await _client.rpc(
         'create_post_with_images',
-        params: {'content': draft.content, 'images': images},
+        params: {
+          'content': draft.content,
+          'images': images,
+          if (draft.tradeSessionId != null)
+            'trade_session_id': draft.tradeSessionId,
+        },
       );
       return postId as String;
     } catch (_) {

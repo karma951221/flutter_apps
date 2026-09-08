@@ -22,7 +22,7 @@ class SupabaseFeedDataSource implements FeedDataSource {
   static const _columns =
       'id, author_id, content, created_at, updated_at, '
       'author_nickname, author_avatar_url, images, '
-      'reaction_counts, my_reaction, comment_count';
+      'reaction_counts, my_reaction, comment_count, trade_result';
 
   @override
   Future<List<FeedPostDto>> getPosts({

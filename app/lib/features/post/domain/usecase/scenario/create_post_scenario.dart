@@ -49,10 +49,15 @@ class CreatePostScenario {
       );
     }
 
-    // 본문만 정규화하고 첨부는 받은 그대로 넘긴다. 여기서 draft 를 새로 만들면서
-    // images 를 빠뜨리면 datasource 가 텍스트 전용 경로를 타고 사진이 조용히 사라진다.
+    // 본문만 정규화하고 첨부와 판은 받은 그대로 넘긴다. 여기서 draft 를 새로
+    // 만들면서 images 나 tradeSessionId 를 빠뜨리면 datasource 가 텍스트 전용
+    // 경로를 타고 사진과 판이 조용히 사라진다.
     return _repository.createPost(
-      PostDraft(content: content, images: draft.images),
+      PostDraft(
+        content: content,
+        images: draft.images,
+        tradeSessionId: draft.tradeSessionId,
+      ),
     );
   }
 }

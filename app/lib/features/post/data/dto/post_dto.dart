@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'post_image_dto.dart';
+import 'post_trade_result_dto.dart';
 
 part 'post_dto.freezed.dart';
 part 'post_dto.g.dart';
@@ -16,6 +17,7 @@ class PostDto with _$PostDto {
     required this.createdAt,
     required this.updatedAt,
     this.images = const [],
+    this.tradeResult,
   });
 
   @override
@@ -34,6 +36,11 @@ class PostDto with _$PostDto {
   @override
   @JsonKey(name: 'post_images', defaultValue: [])
   final List<PostImageDto> images;
+
+  /// 임베드한 끝난 판의 결과 요약. 판을 붙이지 않았으면 통째로 null 이다.
+  @override
+  @JsonKey(name: 'trade_result')
+  final PostTradeResultDto? tradeResult;
 
   factory PostDto.fromJson(Map<String, dynamic> json) =>
       _$PostDtoFromJson(json);

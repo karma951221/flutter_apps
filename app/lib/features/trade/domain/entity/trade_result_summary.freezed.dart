@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'post.dart';
+part of 'trade_result_summary.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -12,40 +12,40 @@ part of 'post.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
-mixin _$Post {
+mixin _$TradeResultSummary {
 
- String get id; String get authorId; String get content; DateTime get createdAt; DateTime get updatedAt; List<PostImage> get images; TradeResultSummary? get tradeResult;
-/// Create a copy of Post
+ String get sessionId; String get symbol; DateTime get startDay; DateTime get endDay; double get returnPct; double get buyHoldReturnPct; double get maxDrawdownPct; int get tradeCount;
+/// Create a copy of TradeResultSummary
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$PostCopyWith<Post> get copyWith => _$PostCopyWithImpl<Post>(this as Post, _$identity);
+$TradeResultSummaryCopyWith<TradeResultSummary> get copyWith => _$TradeResultSummaryCopyWithImpl<TradeResultSummary>(this as TradeResultSummary, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Post&&(identical(other.id, id) || other.id == id)&&(identical(other.authorId, authorId) || other.authorId == authorId)&&(identical(other.content, content) || other.content == content)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&const DeepCollectionEquality().equals(other.images, images)&&(identical(other.tradeResult, tradeResult) || other.tradeResult == tradeResult));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TradeResultSummary&&(identical(other.sessionId, sessionId) || other.sessionId == sessionId)&&(identical(other.symbol, symbol) || other.symbol == symbol)&&(identical(other.startDay, startDay) || other.startDay == startDay)&&(identical(other.endDay, endDay) || other.endDay == endDay)&&(identical(other.returnPct, returnPct) || other.returnPct == returnPct)&&(identical(other.buyHoldReturnPct, buyHoldReturnPct) || other.buyHoldReturnPct == buyHoldReturnPct)&&(identical(other.maxDrawdownPct, maxDrawdownPct) || other.maxDrawdownPct == maxDrawdownPct)&&(identical(other.tradeCount, tradeCount) || other.tradeCount == tradeCount));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,authorId,content,createdAt,updatedAt,const DeepCollectionEquality().hash(images),tradeResult);
+int get hashCode => Object.hash(runtimeType,sessionId,symbol,startDay,endDay,returnPct,buyHoldReturnPct,maxDrawdownPct,tradeCount);
 
 @override
 String toString() {
-  return 'Post(id: $id, authorId: $authorId, content: $content, createdAt: $createdAt, updatedAt: $updatedAt, images: $images, tradeResult: $tradeResult)';
+  return 'TradeResultSummary(sessionId: $sessionId, symbol: $symbol, startDay: $startDay, endDay: $endDay, returnPct: $returnPct, buyHoldReturnPct: $buyHoldReturnPct, maxDrawdownPct: $maxDrawdownPct, tradeCount: $tradeCount)';
 }
 
 
 }
 
 /// @nodoc
-abstract mixin class $PostCopyWith<$Res>  {
-  factory $PostCopyWith(Post value, $Res Function(Post) _then) = _$PostCopyWithImpl;
+abstract mixin class $TradeResultSummaryCopyWith<$Res>  {
+  factory $TradeResultSummaryCopyWith(TradeResultSummary value, $Res Function(TradeResultSummary) _then) = _$TradeResultSummaryCopyWithImpl;
 @useResult
 $Res call({
- String id, String authorId, String content, DateTime createdAt, DateTime updatedAt, List<PostImage> images, TradeResultSummary? tradeResult
+ String sessionId, String symbol, DateTime startDay, DateTime endDay, double returnPct, double buyHoldReturnPct, double maxDrawdownPct, int tradeCount
 });
 
 
@@ -53,33 +53,34 @@ $Res call({
 
 }
 /// @nodoc
-class _$PostCopyWithImpl<$Res>
-    implements $PostCopyWith<$Res> {
-  _$PostCopyWithImpl(this._self, this._then);
+class _$TradeResultSummaryCopyWithImpl<$Res>
+    implements $TradeResultSummaryCopyWith<$Res> {
+  _$TradeResultSummaryCopyWithImpl(this._self, this._then);
 
-  final Post _self;
-  final $Res Function(Post) _then;
+  final TradeResultSummary _self;
+  final $Res Function(TradeResultSummary) _then;
 
-/// Create a copy of Post
+/// Create a copy of TradeResultSummary
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? authorId = null,Object? content = null,Object? createdAt = null,Object? updatedAt = null,Object? images = null,Object? tradeResult = freezed,}) {
-  return _then(Post(
-id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
-as String,authorId: null == authorId ? _self.authorId : authorId // ignore: cast_nullable_to_non_nullable
-as String,content: null == content ? _self.content : content // ignore: cast_nullable_to_non_nullable
-as String,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,images: null == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
-as List<PostImage>,tradeResult: freezed == tradeResult ? _self.tradeResult : tradeResult // ignore: cast_nullable_to_non_nullable
-as TradeResultSummary?,
+@pragma('vm:prefer-inline') @override $Res call({Object? sessionId = null,Object? symbol = null,Object? startDay = null,Object? endDay = null,Object? returnPct = null,Object? buyHoldReturnPct = null,Object? maxDrawdownPct = null,Object? tradeCount = null,}) {
+  return _then(TradeResultSummary(
+sessionId: null == sessionId ? _self.sessionId : sessionId // ignore: cast_nullable_to_non_nullable
+as String,symbol: null == symbol ? _self.symbol : symbol // ignore: cast_nullable_to_non_nullable
+as String,startDay: null == startDay ? _self.startDay : startDay // ignore: cast_nullable_to_non_nullable
+as DateTime,endDay: null == endDay ? _self.endDay : endDay // ignore: cast_nullable_to_non_nullable
+as DateTime,returnPct: null == returnPct ? _self.returnPct : returnPct // ignore: cast_nullable_to_non_nullable
+as double,buyHoldReturnPct: null == buyHoldReturnPct ? _self.buyHoldReturnPct : buyHoldReturnPct // ignore: cast_nullable_to_non_nullable
+as double,maxDrawdownPct: null == maxDrawdownPct ? _self.maxDrawdownPct : maxDrawdownPct // ignore: cast_nullable_to_non_nullable
+as double,tradeCount: null == tradeCount ? _self.tradeCount : tradeCount // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
 }
 
 
-/// Adds pattern-matching-related methods to [Post].
-extension PostPatterns on Post {
+/// Adds pattern-matching-related methods to [TradeResultSummary].
+extension TradeResultSummaryPatterns on TradeResultSummary {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:
