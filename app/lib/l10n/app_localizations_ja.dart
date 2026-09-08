@@ -367,6 +367,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get languageSystem => 'システムに合わせる';
 
   @override
+  String get homeTabTrade => '投資';
+
+  @override
   String get homeTabFeed => 'ホーム';
 
   @override
@@ -1077,4 +1080,63 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get failureTradeSessionNotShareable => '終了したセッションのみ共有できます';
+
+  @override
+  String get tradeHomeTitle => '模擬投資';
+
+  @override
+  String get tradeStart => '新しい回を始める';
+
+  @override
+  String get tradeResume => '続きから';
+
+  @override
+  String tradeStepOf(int step, int total) {
+    return '$step / $total';
+  }
+
+  @override
+  String get tradeEquity => '評価額';
+
+  @override
+  String get tradePastSessions => 'これまでの回';
+
+  @override
+  String get tradeEmptyTitle => 'まだ遊んだ回がありません';
+
+  @override
+  String get tradeEmptyDescription => '過去のチャートを1日ずつ進めながら売買してみましょう';
+
+  @override
+  String get tradeResultTitle => '結果';
+
+  @override
+  String get tradeReturn => '収益率';
+
+  @override
+  String get tradeBuyHold => '保有し続けた場合';
+
+  @override
+  String get tradeMaxDrawdown => '最大ドローダウン';
+
+  @override
+  String get tradeCount => '売買回数';
+
+  @override
+  String tradeCountValue(int count) {
+    return '$count回';
+  }
+
+  @override
+  String tradeBeatBuyHold(String diff) {
+    return '保有より$diff良い結果です';
+  }
+
+  @override
+  String tradeLostToBuyHold(String diff) {
+    return '保有より$diff劣る結果です';
+  }
+
+  @override
+  String get tradeResultNotReady => 'まだ終わっていない回です';
 }

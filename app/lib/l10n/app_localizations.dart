@@ -796,6 +796,12 @@ abstract class AppLocalizations {
   /// **'시스템 설정'**
   String get languageSystem;
 
+  /// 홈 하단 탭 라벨 — 모의투자 탭
+  ///
+  /// In ko, this message translates to:
+  /// **'투자'**
+  String get homeTabTrade;
+
   /// 하단 탭 — 피드
   ///
   /// In ko, this message translates to:
@@ -2187,6 +2193,108 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'끝난 판만 공유할 수 있습니다'**
   String get failureTradeSessionNotShareable;
+
+  /// 모의투자 홈(투자 탭) AppBar 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'모의투자'**
+  String get tradeHomeTitle;
+
+  /// 모의투자 홈에서 새 판을 시작하는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'새 판 시작'**
+  String get tradeStart;
+
+  /// 진행 중인 판으로 돌아가는 카드의 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'이어하기'**
+  String get tradeResume;
+
+  /// 진행 중인 판의 진행도 — 현재 step 과 전체 step 수
+  ///
+  /// In ko, this message translates to:
+  /// **'{step} / {total}'**
+  String tradeStepOf(int step, int total);
+
+  /// 현금과 보유 수량을 현재가로 평가한 총 자산의 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'평가액'**
+  String get tradeEquity;
+
+  /// 모의투자 홈에서 끝난 판 목록의 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'지난 판'**
+  String get tradePastSessions;
+
+  /// 진행 중인 판도 지난 판도 없을 때의 빈 상태 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 해본 판이 없습니다'**
+  String get tradeEmptyTitle;
+
+  /// 모의투자 빈 상태에서 무엇을 하는 기능인지 알려주는 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'과거 시세를 하루씩 넘기며 매매해 보세요'**
+  String get tradeEmptyDescription;
+
+  /// 끝난 판의 결과 화면 AppBar 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'결과'**
+  String get tradeResultTitle;
+
+  /// 결과 화면 지표 — 초기 자본 대비 수익률
+  ///
+  /// In ko, this message translates to:
+  /// **'수익률'**
+  String get tradeReturn;
+
+  /// 결과 화면 지표 — 매매하지 않고 계속 들고만 있었을 때의 수익률
+  ///
+  /// In ko, this message translates to:
+  /// **'보유만 했을 때'**
+  String get tradeBuyHold;
+
+  /// 결과 화면 지표 — 평가액 고점 대비 가장 크게 내려간 폭
+  ///
+  /// In ko, this message translates to:
+  /// **'최대낙폭'**
+  String get tradeMaxDrawdown;
+
+  /// 결과 화면 지표 — 체결한 주문 수
+  ///
+  /// In ko, this message translates to:
+  /// **'매매 횟수'**
+  String get tradeCount;
+
+  /// 매매 횟수 지표의 값 표기
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}회'**
+  String tradeCountValue(int count);
+
+  /// 결과 판정 한 줄 — 보유만 했을 때보다 나은 경우. diff 는 부호 없는 퍼센트
+  ///
+  /// In ko, this message translates to:
+  /// **'보유보다 {diff} 나았습니다'**
+  String tradeBeatBuyHold(String diff);
+
+  /// 결과 판정 한 줄 — 보유만 했을 때보다 못한 경우. diff 는 부호 없는 퍼센트
+  ///
+  /// In ko, this message translates to:
+  /// **'보유보다 {diff} 못했습니다'**
+  String tradeLostToBuyHold(String diff);
+
+  /// 결과 화면을 열었는데 그 판이 아직 진행 중일 때의 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 끝나지 않은 판입니다'**
+  String get tradeResultNotReady;
 }
 
 class _AppLocalizationsDelegate

@@ -28,6 +28,10 @@ import 'package:daylog/features/profile/domain/entity/profile.dart';
 import 'package:daylog/features/profile/domain/usecase/profile_use_case.dart';
 import 'package:daylog/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:daylog/features/reaction/domain/usecase/reaction_use_case.dart';
+import 'package:daylog/features/trade/domain/entity/trade_session.dart';
+import 'package:daylog/features/trade/domain/entity/trade_session_summary.dart';
+import 'package:daylog/features/trade/domain/usecase/trade_use_case.dart';
+import 'package:daylog/features/trade/presentation/cubit/trade_home_cubit.dart';
 import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -51,6 +55,8 @@ class _MockPreferencesUseCase extends Mock implements PreferencesUseCase {}
 
 class _MockChatUseCase extends Mock implements ChatUseCase {}
 
+class _MockTradeUseCase extends Mock implements TradeUseCase {}
+
 const _me = AppUser(id: 'me', email: 'me@example.test', nickname: '카르마');
 
 void main() {
@@ -60,6 +66,7 @@ void main() {
   late _MockProfileUseCase profileUseCase;
   late _MockAuthBloc authBloc;
   late _MockChatUseCase chatUseCase;
+  late _MockTradeUseCase tradeUseCase;
   late ThemeCubit themeCubit;
   late LanguageCubit languageCubit;
 
@@ -71,6 +78,18 @@ void main() {
     when(
       chatUseCase.getMyRooms,
     ).thenAnswer((_) async => const Ok(<ChatRoomSummary>[]));
+    tradeUseCase = _MockTradeUseCase();
+    when(
+      tradeUseCase.getActiveSession,
+    ).thenAnswer((_) async => const Ok<TradeSession?>(null));
+    when(
+      () => tradeUseCase.getPastSessions(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+      ),
+    ).thenAnswer(
+      (_) async => const Ok(CursorPage<TradeSessionSummary>(items: [])),
+    );
 
     whenListen(
       authBloc,
@@ -105,7 +124,8 @@ void main() {
       ..registerFactory<ChatRoomListCubit>(() => ChatRoomListCubit(chatUseCase))
       ..registerFactory<FollowActionCubit>(
         () => FollowActionCubit(_MockFollowUseCase()),
-      );
+      )
+      ..registerFactory<TradeHomeCubit>(() => TradeHomeCubit(tradeUseCase));
 
     final preferencesUseCase = _MockPreferencesUseCase();
     when(preferencesUseCase.loadThemeMode).thenReturn(AppThemeMode.system);
@@ -140,17 +160,35 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('하단 내비게이션은 홈 · 채팅 · 프로필 · 설정 네 곳을 보여준다', (tester) async {
+  testWidgets('하단 내비게이션은 투자 · 홈 · 채팅 · 프로필 · 설정 다섯 곳을 순서대로 보여준다', (
+    tester,
+  ) async {
     await pumpShell(tester);
 
     expect(find.byType(NavigationBar), findsOneWidget);
-    expect(find.byType(NavigationDestination), findsNWidgets(4));
+    expect(find.byType(NavigationDestination), findsNWidgets(5));
+    expect(find.text('투자'), findsOneWidget);
     expect(find.text('홈'), findsOneWidget);
     expect(find.text('프로필'), findsOneWidget);
     // IndexedStack 이 고르지 않은 탭 본문을 offstage 로 두고 finder 는 그것을
     // 건너뛰므로, 지금 보이는 '채팅' 은 탭 라벨 하나뿐이다 ('설정' 과 같다).
     expect(find.text('채팅'), findsOneWidget);
     expect(find.text('설정'), findsOneWidget);
+
+    final labels = tester
+        .widgetList<NavigationDestination>(find.byType(NavigationDestination))
+        .map((destination) => destination.label)
+        .toList();
+    expect(labels, ['투자', '홈', '채팅', '프로필', '설정']);
+  });
+
+  testWidgets('처음 열면 투자 탭이 앞에 있다', (tester) async {
+    await pumpShell(tester);
+    await tester.pumpAndSettle();
+
+    // 모의투자 홈의 AppBar 제목이다. 탭 라벨('투자')과 다른 문구라 이 화면이
+    // 앞에 있다는 것만 가리킨다.
+    expect(find.text('모의투자'), findsOneWidget);
   });
 
   testWidgets('안읽음이 있으면 채팅 탭에 배지가 붙는다', (tester) async {
@@ -171,6 +209,24 @@ void main() {
 
     // 배지는 셸이 그린다 — 채팅 탭이 화면에 없을 때도 숫자를 알아야 한다.
     expect(find.widgetWithText(Badge, '3'), findsWidgets);
+
+    // 그리고 채팅 탭에만 붙는다. 탭 순서가 바뀌어도 옆 탭으로 옮겨가지 않는다.
+    final chatTab = find.ancestor(
+      of: find.text('채팅'),
+      matching: find.byType(NavigationDestination),
+    );
+    expect(
+      find.descendant(of: chatTab, matching: find.widgetWithText(Badge, '3')),
+      findsWidgets,
+    );
+    final tradeTab = find.ancestor(
+      of: find.text('투자'),
+      matching: find.byType(NavigationDestination),
+    );
+    expect(
+      find.descendant(of: tradeTab, matching: find.byType(Badge)),
+      findsNothing,
+    );
   });
 
   testWidgets('탭을 옮기면 그 화면이 앞으로 나온다', (tester) async {
@@ -186,7 +242,7 @@ void main() {
 
   testWidgets('탭을 오가도 목록을 다시 읽지 않는다', (tester) async {
     // IndexedStack 이 탭 본문을 살려 두므로 스크롤 위치와 읽어둔 페이지가 남는다.
-    // 셸이 네 탭을 한 번에 만들기 때문에 첫 조회는 피드 탭과 프로필 탭에서
+    // 셸이 다섯 탭을 한 번에 만들기 때문에 첫 조회는 피드 탭과 프로필 탭에서
     // 각각 한 번씩 일어난다. 여기서 확인하려는 것은 **그다음**이다.
     await pumpShell(tester);
     await tester.pumpAndSettle();

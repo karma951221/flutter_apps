@@ -9,6 +9,7 @@ import '../../../chat/presentation/page/chat_room_list_page.dart';
 import '../../../feed/presentation/page/feed_page.dart';
 import '../../../profile/presentation/page/profile_page.dart';
 import '../../../settings/presentation/page/settings_page.dart';
+import '../../../trade/presentation/page/trade_home_page.dart';
 
 /// 하단 내비게이션을 가진 홈 셸.
 ///
@@ -27,6 +28,7 @@ class HomeShellPage extends StatefulWidget {
 }
 
 class _HomeShellPageState extends State<HomeShellPage> {
+  /// 처음 보이는 탭. 0 은 모의투자다.
   int _index = 0;
 
   /// 채팅 탭 배지를 위해 셸이 방 목록 cubit 을 소유한다.
@@ -52,6 +54,14 @@ class _HomeShellPageState extends State<HomeShellPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final tabs = <_HomeTab>[
+      // 첫 탭이 모의투자다. 앱을 여는 이유가 여기 있고, 피드는 그 결과를
+      // 나누는 자리다.
+      _HomeTab(
+        label: l10n.homeTabTrade,
+        icon: Icons.candlestick_chart_outlined,
+        selectedIcon: Icons.candlestick_chart,
+        body: const TradeHomePage(),
+      ),
       _HomeTab(
         label: l10n.homeTabFeed,
         icon: Icons.home_outlined,
@@ -63,6 +73,7 @@ class _HomeShellPageState extends State<HomeShellPage> {
         icon: Icons.forum_outlined,
         selectedIcon: Icons.forum,
         body: const ChatRoomListPage(),
+        showsUnreadBadge: true,
       ),
       _HomeTab(
         label: l10n.homeTabProfile,
@@ -91,17 +102,20 @@ class _HomeShellPageState extends State<HomeShellPage> {
             selectedIndex: _index,
             onDestinationSelected: (next) => setState(() => _index = next),
             destinations: [
-              for (final (index, tab) in tabs.indexed)
+              for (final tab in tabs)
                 NavigationDestination(
+                  // v1 의 배지는 방 목록을 다시 읽을 때 갱신된다. 방 밖에서의
+                  // 상시 갱신은 푸시 알림과 함께 4단계에서 다룬다.
+                  //
+                  // 배지가 붙는 자리는 탭이 스스로 안다 — 탭 순서가 바뀌어도
+                  // 숫자가 엉뚱한 아이콘으로 옮겨가지 않는다.
                   icon: _withBadge(
                     Icon(tab.icon),
-                    // v1 의 배지는 방 목록을 다시 읽을 때 갱신된다. 방 밖에서의
-                    // 상시 갱신은 푸시 알림과 함께 4단계에서 다룬다.
-                    index == 1 ? chatState.totalUnread : 0,
+                    tab.showsUnreadBadge ? chatState.totalUnread : 0,
                   ),
                   selectedIcon: _withBadge(
                     Icon(tab.selectedIcon),
-                    index == 1 ? chatState.totalUnread : 0,
+                    tab.showsUnreadBadge ? chatState.totalUnread : 0,
                   ),
                   label: tab.label,
                   tooltip: tab.label,
@@ -123,10 +137,14 @@ class _HomeTab {
     required this.icon,
     required this.selectedIcon,
     required this.body,
+    this.showsUnreadBadge = false,
   });
 
   final String label;
   final IconData icon;
   final IconData selectedIcon;
   final Widget body;
+
+  /// 안읽음 개수를 아이콘에 얹을지. 지금은 채팅 탭 하나뿐이다.
+  final bool showsUnreadBadge;
 }

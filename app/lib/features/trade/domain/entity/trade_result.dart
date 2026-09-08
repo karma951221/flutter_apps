@@ -41,4 +41,22 @@ class TradeResult with _$TradeResult {
 
   /// 그냥 들고만 있었을 때(buy & hold)보다 나은 성과를 냈는지.
   bool get beatBuyHold => returnPct > buyHoldReturnPct;
+
+  /// 화면에 찍는 종목 이름. `BTCUSDT` → `BTC`.
+  ///
+  /// 시세 seed 가 전부 USDT 마켓이라 접미가 모든 심볼에 똑같이 붙는다. 매번
+  /// 같은 꼬리를 보여줘 봐야 구분에 보태는 게 없어 뗀다.
+  String get displaySymbol => displaySymbolOf(symbol);
+
+  /// [displaySymbol] 의 문자열 버전.
+  ///
+  /// 결과 entity 없이 심볼만 들고 표기해야 하는 자리(표기 헬퍼)가 규칙을
+  /// 따로 구현하지 않도록 여기 하나만 둔다.
+  static String displaySymbolOf(String symbol) {
+    const quote = 'USDT';
+    if (symbol.length > quote.length && symbol.endsWith(quote)) {
+      return symbol.substring(0, symbol.length - quote.length);
+    }
+    return symbol;
+  }
 }

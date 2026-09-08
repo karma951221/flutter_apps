@@ -40,6 +40,30 @@ abstract final class Routes {
   static String userFollowingsPath(String userId) =>
       '/users/$userId/followings';
 
+  /// 판 진행 화면. 라우트 등록은 화면을 만드는 쪽(F10 Task 9)이 한다.
+  static const tradeSession = '/trade/:sessionId';
+
+  /// 끝난 판의 결과. 공유 링크가 가리키는 자리라 로그인 여부와 무관하게 열린다.
+  static const tradeResult = '/trade/:sessionId/result';
+
+  static String tradeSessionPath(String sessionId) => '/trade/$sessionId';
+
+  static String tradeResultPath(String sessionId) => '/trade/$sessionId/result';
+
   /// 미인증 상태에서 접근할 수 있는 경로.
+  ///
+  /// 인증된 사용자는 여기 있으면 홈으로 돌아간다 — 로그인·가입·둘러보기는
+  /// 이미 로그인한 사람이 머물 자리가 아니기 때문이다.
   static const publicRoutes = {signIn, signUp, passwordReset, explore};
+
+  /// 로그인 여부와 무관하게 그대로 열리는 경로 패턴.
+  ///
+  /// [publicRoutes] 와 다르다. 공유된 결과 링크는 게스트에게도, 로그인
+  /// 사용자에게도 **같은 화면**이어야 해서 어느 쪽도 돌려보내지 않는다.
+  /// 경로에 id 가 들어가 상수 집합으로는 못 담으므로 패턴으로 둔다.
+  static final openRoutes = <RegExp>[RegExp(r'^/trade/[^/]+/result$')];
+
+  /// [location] 이 [openRoutes] 중 하나에 해당하는지.
+  static bool isOpenRoute(String location) =>
+      openRoutes.any((pattern) => pattern.hasMatch(location));
 }

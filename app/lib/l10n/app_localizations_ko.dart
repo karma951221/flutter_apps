@@ -367,6 +367,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get languageSystem => '시스템 설정';
 
   @override
+  String get homeTabTrade => '투자';
+
+  @override
   String get homeTabFeed => '홈';
 
   @override
@@ -1077,4 +1080,63 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get failureTradeSessionNotShareable => '끝난 판만 공유할 수 있습니다';
+
+  @override
+  String get tradeHomeTitle => '모의투자';
+
+  @override
+  String get tradeStart => '새 판 시작';
+
+  @override
+  String get tradeResume => '이어하기';
+
+  @override
+  String tradeStepOf(int step, int total) {
+    return '$step / $total';
+  }
+
+  @override
+  String get tradeEquity => '평가액';
+
+  @override
+  String get tradePastSessions => '지난 판';
+
+  @override
+  String get tradeEmptyTitle => '아직 해본 판이 없습니다';
+
+  @override
+  String get tradeEmptyDescription => '과거 시세를 하루씩 넘기며 매매해 보세요';
+
+  @override
+  String get tradeResultTitle => '결과';
+
+  @override
+  String get tradeReturn => '수익률';
+
+  @override
+  String get tradeBuyHold => '보유만 했을 때';
+
+  @override
+  String get tradeMaxDrawdown => '최대낙폭';
+
+  @override
+  String get tradeCount => '매매 횟수';
+
+  @override
+  String tradeCountValue(int count) {
+    return '$count회';
+  }
+
+  @override
+  String tradeBeatBuyHold(String diff) {
+    return '보유보다 $diff 나았습니다';
+  }
+
+  @override
+  String tradeLostToBuyHold(String diff) {
+    return '보유보다 $diff 못했습니다';
+  }
+
+  @override
+  String get tradeResultNotReady => '아직 끝나지 않은 판입니다';
 }

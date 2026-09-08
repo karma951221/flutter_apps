@@ -389,6 +389,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageSystem => 'System default';
 
   @override
+  String get homeTabTrade => 'Trade';
+
+  @override
   String get homeTabFeed => 'Home';
 
   @override
@@ -1150,4 +1153,64 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get failureTradeSessionNotShareable =>
       'Only finished sessions can be shared';
+
+  @override
+  String get tradeHomeTitle => 'Paper trading';
+
+  @override
+  String get tradeStart => 'Start a new round';
+
+  @override
+  String get tradeResume => 'Resume';
+
+  @override
+  String tradeStepOf(int step, int total) {
+    return '$step / $total';
+  }
+
+  @override
+  String get tradeEquity => 'Equity';
+
+  @override
+  String get tradePastSessions => 'Past rounds';
+
+  @override
+  String get tradeEmptyTitle => 'No rounds yet';
+
+  @override
+  String get tradeEmptyDescription =>
+      'Step through a real past chart one day at a time and trade it';
+
+  @override
+  String get tradeResultTitle => 'Result';
+
+  @override
+  String get tradeReturn => 'Return';
+
+  @override
+  String get tradeBuyHold => 'Buy & hold';
+
+  @override
+  String get tradeMaxDrawdown => 'Max drawdown';
+
+  @override
+  String get tradeCount => 'Trades';
+
+  @override
+  String tradeCountValue(int count) {
+    return '$count';
+  }
+
+  @override
+  String tradeBeatBuyHold(String diff) {
+    return '$diff better than buy & hold';
+  }
+
+  @override
+  String tradeLostToBuyHold(String diff) {
+    return '$diff worse than buy & hold';
+  }
+
+  @override
+  String get tradeResultNotReady => 'This round hasn\'t finished yet';
 }
