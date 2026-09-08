@@ -34,7 +34,13 @@ void main() {
   });
 
   test('JSON 왕복', () {
-    const dto = TradeOrderDto(step: 2, side: 'sell', quantity: 1, price: 99, fee: 0.1);
+    const dto = TradeOrderDto(
+      step: 2,
+      side: 'sell',
+      quantity: 1,
+      price: 99,
+      fee: 0.1,
+    );
 
     expect(TradeOrderDto.fromJson(dto.toJson()), dto);
   });

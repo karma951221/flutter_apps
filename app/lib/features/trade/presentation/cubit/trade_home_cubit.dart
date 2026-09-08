@@ -37,18 +37,15 @@ class TradeHomeCubit extends Cubit<TradeHomeState> {
     ).wait;
     if (isClosed || generation != _generation) return;
 
-    emit(
-      switch ((activeResult, pastResult)) {
-        (Err(:final failure), _) || (_, Err(:final failure)) =>
-          TradeHomeState.failure(failure),
-        (Ok(value: final active), Ok(value: final page)) =>
-          TradeHomeState.loaded(
-            active: active,
-            past: page.items,
-            nextCursor: page.nextCursor,
-          ),
-      },
-    );
+    emit(switch ((activeResult, pastResult)) {
+      (Err(:final failure), _) ||
+      (_, Err(:final failure)) => TradeHomeState.failure(failure),
+      (Ok(value: final active), Ok(value: final page)) => TradeHomeState.loaded(
+        active: active,
+        past: page.items,
+        nextCursor: page.nextCursor,
+      ),
+    });
   }
 
   Future<void> refresh() => load();
@@ -78,16 +75,14 @@ class TradeHomeCubit extends Cubit<TradeHomeState> {
     final latest = state;
     if (latest is! TradeHomeLoaded) return;
 
-    emit(
-      switch (result) {
-        Ok(value: final page) => latest.copyWith(
-          past: [...latest.past, ...page.items],
-          nextCursor: page.nextCursor,
-          isLoadingMore: false,
-        ),
-        Err() => latest.copyWith(isLoadingMore: false),
-      },
-    );
+    emit(switch (result) {
+      Ok(value: final page) => latest.copyWith(
+        past: [...latest.past, ...page.items],
+        nextCursor: page.nextCursor,
+        isLoadingMore: false,
+      ),
+      Err() => latest.copyWith(isLoadingMore: false),
+    });
   }
 
   /// 새 판을 시작하고 만들어진 판의 id 를 돌려준다.

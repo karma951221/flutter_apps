@@ -133,8 +133,10 @@ void main() {
         return TradeSessionCubit(useCase);
       },
       seed: () => TradeSessionState.loaded(session: _initial),
-      act: (cubit) async =>
-          firstResult = await cubit.placeOrder(side: TradeSide.buy, quantity: 10),
+      act: (cubit) async => firstResult = await cubit.placeOrder(
+        side: TradeSide.buy,
+        quantity: 10,
+      ),
       expect: () => [
         TradeSessionState.loaded(session: _initial, isSubmitting: true),
         TradeSessionState.loaded(session: _afterBuy),
@@ -156,9 +158,7 @@ void main() {
       build: () {
         stubPlaceOrder(
           const Err(
-            Failure.validation(
-              failureCode: FailureCode.tradeInsufficientCash,
-            ),
+            Failure.validation(failureCode: FailureCode.tradeInsufficientCash),
           ),
         );
         return TradeSessionCubit(useCase);
@@ -187,7 +187,10 @@ void main() {
       seed: () => TradeSessionState.loaded(session: _initial),
       act: (cubit) async {
         final first = cubit.placeOrder(side: TradeSide.buy, quantity: 10);
-        secondResult = await cubit.placeOrder(side: TradeSide.buy, quantity: 10);
+        secondResult = await cubit.placeOrder(
+          side: TradeSide.buy,
+          quantity: 10,
+        );
         firstResult = await first;
       },
       expect: () => [
@@ -236,8 +239,10 @@ void main() {
     blocTest<TradeSessionCubit, TradeSessionState>(
       '아직 판을 읽지 못했으면 주문하지 않는다',
       build: () => TradeSessionCubit(useCase),
-      act: (cubit) async =>
-          firstResult = await cubit.placeOrder(side: TradeSide.buy, quantity: 1),
+      act: (cubit) async => firstResult = await cubit.placeOrder(
+        side: TradeSide.buy,
+        quantity: 1,
+      ),
       expect: () => <TradeSessionState>[],
       verify: (_) {
         expect(
@@ -286,7 +291,10 @@ void main() {
       seed: () => TradeSessionState.loaded(session: _session(step: 59)),
       act: (cubit) async => result = await cubit.advance(),
       expect: () => [
-        TradeSessionState.loaded(session: _session(step: 59), isSubmitting: true),
+        TradeSessionState.loaded(
+          session: _session(step: 59),
+          isSubmitting: true,
+        ),
         TradeSessionState.loaded(session: _finished),
       ],
       verify: (_) =>
@@ -298,9 +306,7 @@ void main() {
       build: () {
         when(() => useCase.advance(any())).thenAnswer(
           (_) async => const Err(
-            Failure.validation(
-              failureCode: FailureCode.tradeSessionFinished,
-            ),
+            Failure.validation(failureCode: FailureCode.tradeSessionFinished),
           ),
         );
         return TradeSessionCubit(useCase);

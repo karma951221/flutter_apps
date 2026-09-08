@@ -58,8 +58,12 @@ extension TradeSessionDtoMapper on TradeSessionDto {
 }
 
 extension TradeSessionSummaryDtoMapper on TradeSessionSummaryDto {
-  TradeSessionSummary toEntity() =>
-      TradeSessionSummary(id: id, createdAt: createdAt, finishedAt: finishedAt, result: _result);
+  TradeSessionSummary toEntity() => TradeSessionSummary(
+    id: id,
+    createdAt: createdAt,
+    finishedAt: finishedAt,
+    result: _result,
+  );
 
   /// 테이블에는 `end_index` 컬럼이 없다 — `step` 으로 되짚는다
   /// (`min(59 + step, 119)`, `TradeRules.indexForStep` 과 같은 식이되 상한을
@@ -92,7 +96,10 @@ extension TradeSessionSummaryDtoMapper on TradeSessionSummaryDto {
       symbol: symbol,
       startDay: startDay,
       endDay: endDay,
-      endIndex: math.min(TradeRules.indexForStep(step), TradeRules.totalCandles - 1),
+      endIndex: math.min(
+        TradeRules.indexForStep(step),
+        TradeRules.totalCandles - 1,
+      ),
       finalEquity: equity,
       returnPct: returnPctValue,
       buyHoldReturnPct: buyHold,

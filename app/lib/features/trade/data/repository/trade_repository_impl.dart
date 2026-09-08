@@ -83,7 +83,10 @@ class TradeRepositoryImpl
     return CursorPage<TradeSessionSummary>(
       items: page.map((dto) => dto.toEntity()).toList(),
       nextCursor: hasMore
-          ? TradeCursor(createdAt: page.last.createdAt, id: page.last.id).encode()
+          ? TradeCursor(
+              createdAt: page.last.createdAt,
+              id: page.last.id,
+            ).encode()
           : null,
     );
   }

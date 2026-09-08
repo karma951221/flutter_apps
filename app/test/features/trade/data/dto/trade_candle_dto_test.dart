@@ -19,14 +19,26 @@ void main() {
   });
 
   test('정수로 온 숫자도 double 로 받는다', () {
-    final dto = TradeCandleDto.fromJson({'i': 0, 'o': 100, 'h': 100, 'l': 100, 'c': 100});
+    final dto = TradeCandleDto.fromJson({
+      'i': 0,
+      'o': 100,
+      'h': 100,
+      'l': 100,
+      'c': 100,
+    });
 
     expect(dto.open, isA<double>());
     expect(dto.open, 100.0);
   });
 
   test('JSON 왕복', () {
-    const dto = TradeCandleDto(index: 1, open: 1.1, high: 2.2, low: 0.5, close: 1.5);
+    const dto = TradeCandleDto(
+      index: 1,
+      open: 1.1,
+      high: 2.2,
+      low: 0.5,
+      close: 1.5,
+    );
 
     expect(TradeCandleDto.fromJson(dto.toJson()), dto);
   });

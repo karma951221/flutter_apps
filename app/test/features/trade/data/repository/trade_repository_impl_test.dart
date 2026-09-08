@@ -47,7 +47,9 @@ void main() {
 
       await repository.getPastSessions(limit: 20);
 
-      verify(() => dataSource.getPastSessions(limit: 21, cursor: null)).called(1);
+      verify(
+        () => dataSource.getPastSessions(limit: 21, cursor: null),
+      ).called(1);
     });
 
     test('요청한 개수보다 많이 오면 잘라내고 다음 커서를 만든다', () async {
@@ -81,7 +83,10 @@ void main() {
     });
 
     test('받은 커서를 해석해 데이터 원천에 넘긴다', () async {
-      final cursor = TradeCursor(createdAt: DateTime.utc(2026, 8, 30, 9), id: 'session-9');
+      final cursor = TradeCursor(
+        createdAt: DateTime.utc(2026, 8, 30, 9),
+        id: 'session-9',
+      );
       when(
         () => dataSource.getPastSessions(
           limit: any(named: 'limit'),
@@ -91,11 +96,16 @@ void main() {
 
       await repository.getPastSessions(limit: 20, cursor: cursor.encode());
 
-      verify(() => dataSource.getPastSessions(limit: 21, cursor: cursor)).called(1);
+      verify(
+        () => dataSource.getPastSessions(limit: 21, cursor: cursor),
+      ).called(1);
     });
 
     test('깨진 커서는 Err 로 돌려주고 데이터 원천을 부르지 않는다', () async {
-      final result = await repository.getPastSessions(limit: 20, cursor: 'not-a-cursor');
+      final result = await repository.getPastSessions(
+        limit: 20,
+        cursor: 'not-a-cursor',
+      );
 
       expect((result as Err).failure, isA<ValidationFailure>());
       verifyNever(
@@ -147,7 +157,11 @@ void main() {
       ),
     ).thenAnswer((_) async => _session);
 
-    final result = await repository.placeOrder(sessionId: 's1', side: TradeSide.buy, quantity: 1);
+    final result = await repository.placeOrder(
+      sessionId: 's1',
+      side: TradeSide.buy,
+      quantity: 1,
+    );
 
     expect((result as Ok).value.id, 's1');
   });

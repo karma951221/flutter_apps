@@ -92,7 +92,9 @@ void main() {
       ],
       verify: (_) {
         verify(() => useCase.getActiveSession()).called(1);
-        verify(() => useCase.getPastSessions(limit: 20, cursor: null)).called(1);
+        verify(
+          () => useCase.getPastSessions(limit: 20, cursor: null),
+        ).called(1);
       },
     );
 
@@ -155,8 +157,9 @@ void main() {
         const TradeHomeState.loading(),
         TradeHomeState.loaded(past: [_summary('p1')]),
       ],
-      verify: (_) =>
-          verify(() => useCase.getPastSessions(limit: 20, cursor: null)).called(1),
+      verify: (_) => verify(
+        () => useCase.getPastSessions(limit: 20, cursor: null),
+      ).called(1),
     );
   });
 
@@ -186,8 +189,9 @@ void main() {
         ),
         TradeHomeState.loaded(past: [_summary('p1'), _summary('p2')]),
       ],
-      verify: (_) =>
-          verify(() => useCase.getPastSessions(limit: 20, cursor: 'c1')).called(1),
+      verify: (_) => verify(
+        () => useCase.getPastSessions(limit: 20, cursor: 'c1'),
+      ).called(1),
     );
 
     blocTest<TradeHomeCubit, TradeHomeState>(
@@ -253,7 +257,10 @@ void main() {
           () => useCase.getActiveSession(),
         ).thenAnswer((_) async => const Ok<TradeSession?>(null));
         when(
-          () => useCase.getPastSessions(limit: any(named: 'limit'), cursor: 'c1'),
+          () => useCase.getPastSessions(
+            limit: any(named: 'limit'),
+            cursor: 'c1',
+          ),
         ).thenAnswer(
           (_) async =>
               Ok(CursorPage<TradeSessionSummary>(items: [_summary('p2')])),

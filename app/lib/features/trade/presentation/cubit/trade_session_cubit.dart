@@ -34,20 +34,21 @@ class TradeSessionCubit extends Cubit<TradeSessionState> {
     final result = await _useCase.getSession(sessionId);
     if (isClosed || generation != _generation) return;
 
-    emit(
-      switch (result) {
-        Ok(value: final session) => TradeSessionState.loaded(session: session),
-        Err(:final failure) => TradeSessionState.failure(failure),
-      },
-    );
+    emit(switch (result) {
+      Ok(value: final session) => TradeSessionState.loaded(session: session),
+      Err(:final failure) => TradeSessionState.failure(failure),
+    });
   }
 
   Future<Result<TradeSession>> placeOrder({
     required TradeSide side,
     required double quantity,
   }) => _submit(
-    (sessionId) =>
-        _useCase.placeOrder(sessionId: sessionId, side: side, quantity: quantity),
+    (sessionId) => _useCase.placeOrder(
+      sessionId: sessionId,
+      side: side,
+      quantity: quantity,
+    ),
   );
 
   /// 다음 봉으로 넘어간다.

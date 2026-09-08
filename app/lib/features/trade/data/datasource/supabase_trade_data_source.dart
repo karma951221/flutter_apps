@@ -60,7 +60,11 @@ class SupabaseTradeDataSource implements TradeDataSource {
     _requireSignedIn();
     final json = await _client.rpc(
       'place_trade_order',
-      params: {'session_id': sessionId, 'side': side.wire, 'quantity': quantity},
+      params: {
+        'session_id': sessionId,
+        'side': side.wire,
+        'quantity': quantity,
+      },
     );
     return TradeSessionDto.fromJson(json as Map<String, dynamic>);
   }

@@ -79,6 +79,5 @@ class DefaultTradeUseCase implements TradeUseCase {
   Future<Result<CursorPage<TradeSessionSummary>>> getPastSessions({
     int limit = 20,
     String? cursor,
-  }) =>
-      GetPastTradeSessionsScenario(_repository)(limit: limit, cursor: cursor);
+  }) => GetPastTradeSessionsScenario(_repository)(limit: limit, cursor: cursor);
 }
