@@ -103,5 +103,15 @@ extension on FailureCode {
     FailureCode.followCursorInvalid => l10n.failureFollowCursorInvalid,
     FailureCode.followBlocked => l10n.failureFollowBlocked,
     FailureCode.invalidData => l10n.failureInvalidData,
+    FailureCode.tradeSessionAlreadyActive =>
+      l10n.failureTradeSessionAlreadyActive,
+    FailureCode.tradeSessionNotFound => l10n.failureTradeSessionNotFound,
+    FailureCode.tradeSessionFinished => l10n.failureTradeSessionFinished,
+    FailureCode.tradeInsufficientCash => l10n.failureTradeInsufficientCash,
+    FailureCode.tradeInsufficientQuantity =>
+      l10n.failureTradeInsufficientQuantity,
+    FailureCode.tradeQuantityInvalid => l10n.failureTradeQuantityInvalid,
+    FailureCode.tradeSessionNotShareable =>
+      l10n.failureTradeSessionNotShareable,
   };
 }

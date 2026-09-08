@@ -73,4 +73,11 @@ enum FailureCode {
   followCursorInvalid,
   followBlocked,
   invalidData,
+  tradeSessionAlreadyActive,
+  tradeSessionNotFound,
+  tradeSessionFinished,
+  tradeInsufficientCash,
+  tradeInsufficientQuantity,
+  tradeQuantityInvalid,
+  tradeSessionNotShareable,
 }

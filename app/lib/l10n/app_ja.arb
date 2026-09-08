@@ -340,5 +340,12 @@
   "failureDirectChatNotAllowed": "現在この会話を開始できません",
   "failureDirectChatSelfNotAllowed": "自分自身とは会話できません",
   "failureChatSendNotAllowed": "現在メッセージを送信できません",
-  "failureReportOwnMessageNotAllowed": "自分のメッセージは報告できません"
+  "failureReportOwnMessageNotAllowed": "自分のメッセージは報告できません",
+  "failureTradeSessionAlreadyActive": "進行中のセッションがあります",
+  "failureTradeSessionNotFound": "セッションが見つかりません",
+  "failureTradeSessionFinished": "すでに終了したセッションです",
+  "failureTradeInsufficientCash": "残高が不足しています",
+  "failureTradeInsufficientQuantity": "保有数量が不足しています",
+  "failureTradeQuantityInvalid": "数量は0より大きくなければなりません",
+  "failureTradeSessionNotShareable": "終了したセッションのみ共有できます"
 }

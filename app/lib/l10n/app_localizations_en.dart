@@ -1127,4 +1127,27 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get failureReportOwnMessageNotAllowed =>
       'You can\'t report your own message';
+
+  @override
+  String get failureTradeSessionAlreadyActive =>
+      'You already have a session in progress';
+
+  @override
+  String get failureTradeSessionNotFound => 'Session not found';
+
+  @override
+  String get failureTradeSessionFinished => 'This session has already ended';
+
+  @override
+  String get failureTradeInsufficientCash => 'Insufficient cash balance';
+
+  @override
+  String get failureTradeInsufficientQuantity => 'Insufficient quantity held';
+
+  @override
+  String get failureTradeQuantityInvalid => 'Quantity must be greater than 0';
+
+  @override
+  String get failureTradeSessionNotShareable =>
+      'Only finished sessions can be shared';
 }

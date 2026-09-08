@@ -337,4 +337,87 @@ void main() {
       );
     });
   });
+
+  group('trade RPC 문구 변환', () {
+    // F10 마이그레이션이 아직 없어도 mapper 는 미리 문구를 알아야 한다 —
+    // trigger_message_mapping_test.dart 가 마이그레이션 착지 즉시 이 문구들을
+    // 요구한다.
+    test('진행 중인 판이 있으면 그 사실을 그대로 알린다', () {
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(message: '진행 중인 판이 있습니다', code: 'P0001'),
+      );
+
+      expect(failure, isA<ValidationFailure>());
+      expect(
+        (failure as ValidationFailure).failureCode,
+        FailureCode.tradeSessionAlreadyActive,
+      );
+    });
+
+    test('판을 찾을 수 없으면 남의 판인지 없는 id 인지 구분하지 않는다', () {
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(message: '판을 찾을 수 없습니다', code: 'P0001'),
+      );
+
+      expect(
+        (failure as ValidationFailure).failureCode,
+        FailureCode.tradeSessionNotFound,
+      );
+    });
+
+    test('이미 끝난 판에 매매를 시도하면 그 사실을 알린다', () {
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(message: '이미 끝난 판입니다', code: 'P0001'),
+      );
+
+      expect(
+        (failure as ValidationFailure).failureCode,
+        FailureCode.tradeSessionFinished,
+      );
+    });
+
+    test('잔고 부족 매수를 안내로 바꾼다', () {
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(message: '잔고가 부족합니다', code: 'P0001'),
+      );
+
+      expect(
+        (failure as ValidationFailure).failureCode,
+        FailureCode.tradeInsufficientCash,
+      );
+    });
+
+    test('보유 수량 초과 매도를 안내로 바꾼다', () {
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(message: '보유 수량이 부족합니다', code: 'P0001'),
+      );
+
+      expect(
+        (failure as ValidationFailure).failureCode,
+        FailureCode.tradeInsufficientQuantity,
+      );
+    });
+
+    test('0 이하 수량 주문을 안내로 바꾼다', () {
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(message: '수량은 0보다 커야 합니다', code: 'P0001'),
+      );
+
+      expect(
+        (failure as ValidationFailure).failureCode,
+        FailureCode.tradeQuantityInvalid,
+      );
+    });
+
+    test('진행 중인 판 공유 시도를 안내로 바꾼다', () {
+      final failure = SupabaseErrorMapper.map(
+        PostgrestException(message: '끝난 판만 공유할 수 있습니다', code: 'P0001'),
+      );
+
+      expect(
+        (failure as ValidationFailure).failureCode,
+        FailureCode.tradeSessionNotShareable,
+      );
+    });
+  });
 }

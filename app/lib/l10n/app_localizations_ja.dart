@@ -1056,4 +1056,25 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get failureReportOwnMessageNotAllowed => '自分のメッセージは報告できません';
+
+  @override
+  String get failureTradeSessionAlreadyActive => '進行中のセッションがあります';
+
+  @override
+  String get failureTradeSessionNotFound => 'セッションが見つかりません';
+
+  @override
+  String get failureTradeSessionFinished => 'すでに終了したセッションです';
+
+  @override
+  String get failureTradeInsufficientCash => '残高が不足しています';
+
+  @override
+  String get failureTradeInsufficientQuantity => '保有数量が不足しています';
+
+  @override
+  String get failureTradeQuantityInvalid => '数量は0より大きくなければなりません';
+
+  @override
+  String get failureTradeSessionNotShareable => '終了したセッションのみ共有できます';
 }

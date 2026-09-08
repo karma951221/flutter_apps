@@ -1429,5 +1429,33 @@
   "failureReportOwnMessageNotAllowed": "내 메시지는 신고할 수 없습니다",
   "@failureReportOwnMessageNotAllowed": {
     "description": "DB 트리거 — 내 채팅 메시지는 신고할 수 없다"
+  },
+  "failureTradeSessionAlreadyActive": "진행 중인 판이 있습니다",
+  "@failureTradeSessionAlreadyActive": {
+    "description": "trade RPC — 사용자당 진행 중인 판은 1개만 허용된다"
+  },
+  "failureTradeSessionNotFound": "판을 찾을 수 없습니다",
+  "@failureTradeSessionNotFound": {
+    "description": "trade RPC — 남의 진행 중 판이거나 없는 id. 존재 여부를 밝히지 않는다"
+  },
+  "failureTradeSessionFinished": "이미 끝난 판입니다",
+  "@failureTradeSessionFinished": {
+    "description": "trade RPC — 이미 종료된 판에 매매·advance 를 시도했다"
+  },
+  "failureTradeInsufficientCash": "잔고가 부족합니다",
+  "@failureTradeInsufficientCash": {
+    "description": "trade RPC — 매수에 필요한 현금이 부족하다"
+  },
+  "failureTradeInsufficientQuantity": "보유 수량이 부족합니다",
+  "@failureTradeInsufficientQuantity": {
+    "description": "trade RPC — 매도하려는 수량이 보유량을 초과한다"
+  },
+  "failureTradeQuantityInvalid": "수량은 0보다 커야 합니다",
+  "@failureTradeQuantityInvalid": {
+    "description": "trade RPC — 주문 수량이 0 이하다"
+  },
+  "failureTradeSessionNotShareable": "끝난 판만 공유할 수 있습니다",
+  "@failureTradeSessionNotShareable": {
+    "description": "trade RPC — 진행 중인 판은 피드에 공유할 수 없다"
   }
 }

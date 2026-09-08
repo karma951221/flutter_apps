@@ -135,6 +135,18 @@ abstract final class SupabaseErrorMapper {
     '지금은 팔로우할 수 없습니다': FailureCode.followBlocked,
   };
 
+  /// trade RPC(`start_trade_session` 등)가 던지는 문구. 함수의 raise 문과
+  /// 같아야 한다.
+  static const _tradeMessages = {
+    '진행 중인 판이 있습니다': FailureCode.tradeSessionAlreadyActive,
+    '판을 찾을 수 없습니다': FailureCode.tradeSessionNotFound,
+    '이미 끝난 판입니다': FailureCode.tradeSessionFinished,
+    '잔고가 부족합니다': FailureCode.tradeInsufficientCash,
+    '보유 수량이 부족합니다': FailureCode.tradeInsufficientQuantity,
+    '수량은 0보다 커야 합니다': FailureCode.tradeQuantityInvalid,
+    '끝난 판만 공유할 수 있습니다': FailureCode.tradeSessionNotShareable,
+  };
+
   /// `enforce_room_capacity()` 가 던지는 문구들. 트리거의 raise 문과 같아야 한다.
   ///
   /// 없으면 23514 · 23503 의 기본 문구로 덮여 "입력값이 조건을 만족하지
@@ -247,6 +259,7 @@ abstract final class SupabaseErrorMapper {
       ..._blockMessages,
       ..._roomCapacityMessages,
       ..._followGuardMessages,
+      ..._tradeMessages,
     }.entries) {
       if (raw.contains(entry.key)) {
         return Failure.validation(message: entry.key, failureCode: entry.value);

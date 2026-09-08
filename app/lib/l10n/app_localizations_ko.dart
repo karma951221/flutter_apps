@@ -1056,4 +1056,25 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get failureReportOwnMessageNotAllowed => '내 메시지는 신고할 수 없습니다';
+
+  @override
+  String get failureTradeSessionAlreadyActive => '진행 중인 판이 있습니다';
+
+  @override
+  String get failureTradeSessionNotFound => '판을 찾을 수 없습니다';
+
+  @override
+  String get failureTradeSessionFinished => '이미 끝난 판입니다';
+
+  @override
+  String get failureTradeInsufficientCash => '잔고가 부족합니다';
+
+  @override
+  String get failureTradeInsufficientQuantity => '보유 수량이 부족합니다';
+
+  @override
+  String get failureTradeQuantityInvalid => '수량은 0보다 커야 합니다';
+
+  @override
+  String get failureTradeSessionNotShareable => '끝난 판만 공유할 수 있습니다';
 }

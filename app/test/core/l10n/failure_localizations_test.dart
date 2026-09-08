@@ -47,4 +47,29 @@ void main() {
 
     expect(find.text("Can't connect to the network"), findsOneWidget);
   });
+
+  group('trade FailureCode 는 로케일별 문구로 번역된다', () {
+    const failure = Failure.validation(
+      message: '진행 중인 판이 있습니다',
+      failureCode: FailureCode.tradeSessionAlreadyActive,
+    );
+
+    testWidgets('ko', (tester) async {
+      await pumpFailure(tester, failure, locale: const Locale('ko'));
+      expect(find.text('진행 중인 판이 있습니다'), findsOneWidget);
+    });
+
+    testWidgets('en', (tester) async {
+      await pumpFailure(tester, failure, locale: const Locale('en'));
+      expect(
+        find.text('You already have a session in progress'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('ja', (tester) async {
+      await pumpFailure(tester, failure, locale: const Locale('ja'));
+      expect(find.text('進行中のセッションがあります'), findsOneWidget);
+    });
+  });
 }

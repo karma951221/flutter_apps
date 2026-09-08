@@ -2145,6 +2145,48 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'내 메시지는 신고할 수 없습니다'**
   String get failureReportOwnMessageNotAllowed;
+
+  /// trade RPC — 사용자당 진행 중인 판은 1개만 허용된다
+  ///
+  /// In ko, this message translates to:
+  /// **'진행 중인 판이 있습니다'**
+  String get failureTradeSessionAlreadyActive;
+
+  /// trade RPC — 남의 진행 중 판이거나 없는 id. 존재 여부를 밝히지 않는다
+  ///
+  /// In ko, this message translates to:
+  /// **'판을 찾을 수 없습니다'**
+  String get failureTradeSessionNotFound;
+
+  /// trade RPC — 이미 종료된 판에 매매·advance 를 시도했다
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 끝난 판입니다'**
+  String get failureTradeSessionFinished;
+
+  /// trade RPC — 매수에 필요한 현금이 부족하다
+  ///
+  /// In ko, this message translates to:
+  /// **'잔고가 부족합니다'**
+  String get failureTradeInsufficientCash;
+
+  /// trade RPC — 매도하려는 수량이 보유량을 초과한다
+  ///
+  /// In ko, this message translates to:
+  /// **'보유 수량이 부족합니다'**
+  String get failureTradeInsufficientQuantity;
+
+  /// trade RPC — 주문 수량이 0 이하다
+  ///
+  /// In ko, this message translates to:
+  /// **'수량은 0보다 커야 합니다'**
+  String get failureTradeQuantityInvalid;
+
+  /// trade RPC — 진행 중인 판은 피드에 공유할 수 없다
+  ///
+  /// In ko, this message translates to:
+  /// **'끝난 판만 공유할 수 있습니다'**
+  String get failureTradeSessionNotShareable;
 }
 
 class _AppLocalizationsDelegate

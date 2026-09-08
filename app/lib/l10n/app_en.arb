@@ -340,5 +340,12 @@
   "failureDirectChatNotAllowed": "You can't start this conversation right now",
   "failureDirectChatSelfNotAllowed": "You can't start a conversation with yourself",
   "failureChatSendNotAllowed": "You can't send this message right now",
-  "failureReportOwnMessageNotAllowed": "You can't report your own message"
+  "failureReportOwnMessageNotAllowed": "You can't report your own message",
+  "failureTradeSessionAlreadyActive": "You already have a session in progress",
+  "failureTradeSessionNotFound": "Session not found",
+  "failureTradeSessionFinished": "This session has already ended",
+  "failureTradeInsufficientCash": "Insufficient cash balance",
+  "failureTradeInsufficientQuantity": "Insufficient quantity held",
+  "failureTradeQuantityInvalid": "Quantity must be greater than 0",
+  "failureTradeSessionNotShareable": "Only finished sessions can be shared"
 }
