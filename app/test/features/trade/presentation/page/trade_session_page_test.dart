@@ -3,17 +3,21 @@ import 'dart:async';
 import 'package:daylog/app/router/routes.dart';
 import 'package:daylog/core/di/injection.dart';
 import 'package:daylog/core/error/failure.dart';
+import 'package:daylog/core/pagination/cursor_page.dart';
 import 'package:daylog/core/result/result.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/trade/domain/entity/trade_candle.dart';
 import 'package:daylog/features/trade/domain/entity/trade_session.dart';
+import 'package:daylog/features/trade/domain/entity/trade_session_summary.dart';
 import 'package:daylog/features/trade/domain/entity/trade_side.dart';
 import 'package:daylog/features/trade/domain/ledger/trade_cost.dart';
 import 'package:daylog/features/trade/domain/ledger/trade_sizing.dart';
 import 'package:daylog/features/trade/domain/trade_rules.dart';
 import 'package:daylog/features/trade/domain/usecase/trade_use_case.dart';
+import 'package:daylog/features/trade/presentation/cubit/trade_home_cubit.dart';
 import 'package:daylog/features/trade/presentation/cubit/trade_session_cubit.dart';
 import 'package:daylog/features/trade/presentation/format/trade_format.dart';
+import 'package:daylog/features/trade/presentation/page/trade_home_page.dart';
 import 'package:daylog/features/trade/presentation/page/trade_session_page.dart';
 import 'package:daylog/features/trade/presentation/widget/trade_candle_chart.dart';
 import 'package:daylog/features/trade/presentation/widget/trade_order_sheet.dart';
@@ -65,17 +69,32 @@ void main() {
 
   tearDown(getIt.reset);
 
-  /// 결과 화면은 이 태스크의 범위가 아니라 표시만 하는 라우트로 대신한다.
-  /// 마지막으로 들어간 경로를 돌려준다.
-  Future<String? Function()> pumpSession(WidgetTester tester) async {
+  /// 홈에서 판으로 들어간 상태를 만든다.
+  ///
+  /// 실제 앱에서 판 화면은 홈이 `push` 해서 열고, 홈은 그 push 가 끝나기를
+  /// 기다렸다가 목록을 다시 읽는다. 화면이 어떻게 빠져나가느냐가 그 기다림을
+  /// 끝내는지를 가르므로 테스트도 같은 모양으로 스택을 쌓는다.
+  ///
+  /// [fromHome] 이 false 면 판 화면이 스택의 바닥이다 — 링크로 곧장 열린 경우.
+  ///
+  /// 홈과 결과 화면은 이 태스크의 범위가 아니라 표시만 하는 라우트로 대신한다.
+  /// [visited] 는 마지막으로 들어간 결과 경로를 돌려준다.
+  Future<({GoRouter router, String? Function() visited})> pumpSession(
+    WidgetTester tester, {
+    bool fromHome = true,
+  }) async {
     // 기본 800×600 에서는 차트와 지표가 스크롤 밖으로 밀려 조회되지 않는다.
     await tester.binding.setSurfaceSize(const Size(600, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     String? visited;
     final router = GoRouter(
-      initialLocation: Routes.tradeSessionPath('s1'),
+      initialLocation: fromHome ? Routes.home : Routes.tradeSessionPath('s1'),
       routes: [
+        GoRoute(
+          path: Routes.home,
+          builder: (_, _) => const Scaffold(body: Text('홈 화면')),
+        ),
         GoRoute(
           path: Routes.tradeSession,
           builder: (_, state) =>
@@ -104,7 +123,14 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    return () => visited;
+    if (fromHome) {
+      // 이 future 는 판 화면을 나갈 때까지 끝나지 않는다. 기다리면 테스트가
+      // 그 자리에 선다.
+      unawaited(router.push(Routes.tradeSessionPath('s1')));
+      await tester.pumpAndSettle();
+    }
+
+    return (router: router, visited: () => visited);
   }
 
   testWidgets('지표 네 칸과 현재가를 보여준다', (tester) async {
@@ -320,7 +346,7 @@ void main() {
       () => useCase.finish(any()),
     ).thenAnswer((_) async => Ok(_session(quantity: 0, isFinished: true)));
 
-    final visited = await pumpSession(tester);
+    final harness = await pumpSession(tester);
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
     await tester.tap(find.text('청산하고 끝내기'));
@@ -331,19 +357,40 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => useCase.finish('s1')).called(1);
-    expect(visited(), '/trade/s1/result');
+    expect(harness.visited(), '/trade/s1/result');
   });
 
-  testWidgets('끝난 판이 오면 결과 화면으로 갈아탄다', (tester) async {
+  testWidgets('끝난 판이 오면 결과로 넘어가고 진행 화면은 스택에 남지 않는다', (tester) async {
     when(
       () => useCase.getSession(any()),
     ).thenAnswer((_) async => Ok(_session(isFinished: true)));
 
-    final visited = await pumpSession(tester);
+    final harness = await pumpSession(tester);
 
-    expect(visited(), '/trade/s1/result');
+    expect(harness.visited(), '/trade/s1/result');
+    expect(harness.router.state.matchedLocation, '/trade/s1/result');
     expect(find.text('결과 화면'), findsOneWidget);
-    // 갈아탄 자리라 매매 버튼이 살아 있는 화면은 남지 않는다.
+    expect(find.text('다음 날'), findsNothing);
+
+    // 결과에서 뒤로 나오면 곧장 홈이다 — 매매 버튼이 살아 있는 화면은 그
+    // 사이에 없다.
+    harness.router.pop();
+    await tester.pumpAndSettle();
+
+    expect(find.text('홈 화면'), findsOneWidget);
+    expect(find.text('다음 날'), findsNothing);
+  });
+
+  testWidgets('링크로 곧장 연 판이 끝나면 결과 화면으로 갈아탄다', (tester) async {
+    when(
+      () => useCase.getSession(any()),
+    ).thenAnswer((_) async => Ok(_session(isFinished: true)));
+
+    // 아래에 걷어 낼 화면도, 끝내 줄 push 도 없는 자리다.
+    final harness = await pumpSession(tester, fromHome: false);
+
+    expect(harness.visited(), '/trade/s1/result');
+    expect(find.text('결과 화면'), findsOneWidget);
     expect(find.text('다음 날'), findsNothing);
   });
 
@@ -363,5 +410,90 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('3 / 60'), findsOneWidget);
+  });
+
+  testWidgets('홈에서 들어간 판을 끝내고 나오면 홈이 다시 읽는다', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(600, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    getIt.registerFactory<TradeHomeCubit>(() => TradeHomeCubit(useCase));
+    when(
+      () => useCase.getActiveSession(),
+    ).thenAnswer((_) async => Ok<TradeSession?>(_session(quantity: 1)));
+    when(
+      () => useCase.getPastSessions(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+      ),
+    ).thenAnswer(
+      (_) async => const Ok(CursorPage<TradeSessionSummary>(items: [])),
+    );
+    when(
+      () => useCase.getSession(any()),
+    ).thenAnswer((_) async => Ok(_session(quantity: 1)));
+    when(
+      () => useCase.finish(any()),
+    ).thenAnswer((_) async => Ok(_session(quantity: 0, isFinished: true)));
+
+    // 진짜 홈 화면 위에 판을 올린다. 홈은 push 가 끝나기를 기다렸다가 목록을
+    // 다시 읽으므로, 판 화면이 나가는 방식이 홈의 새로고침을 좌우한다.
+    final router = GoRouter(
+      initialLocation: Routes.home,
+      routes: [
+        GoRoute(path: Routes.home, builder: (_, _) => const TradeHomePage()),
+        GoRoute(
+          path: Routes.tradeSession,
+          builder: (_, state) =>
+              TradeSessionPage(sessionId: state.pathParameters['sessionId']!),
+        ),
+        GoRoute(
+          path: Routes.tradeResult,
+          builder: (_, _) => const Scaffold(body: Text('결과 화면')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp.router(
+        theme: AppTheme.light(),
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: router,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    verify(() => useCase.getActiveSession()).called(1);
+
+    await tester.tap(find.text('이어하기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('다음 날'), findsOneWidget);
+
+    // 끝내고 나면 진행 중인 판은 더 이상 없다.
+    when(
+      () => useCase.getActiveSession(),
+    ).thenAnswer((_) async => const Ok<TradeSession?>(null));
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('청산하고 끝내기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, '청산하고 끝내기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('결과 화면'), findsOneWidget);
+    // 진행 화면이 pop 돼야 홈이 기다리던 push 가 끝나고 새로고침이 돈다.
+    verify(() => useCase.getActiveSession()).called(1);
+
+    // 그래서 결과에서 뒤로 나온 홈은 새 판을 시작할 수 있는 모습이다 —
+    // 끝난 판을 이어하기로 걸어 두지 않는다.
+    router.pop();
+    await tester.pumpAndSettle();
+
+    expect(find.text('새 판 시작'), findsOneWidget);
+    expect(find.text('이어하기'), findsNothing);
   });
 }

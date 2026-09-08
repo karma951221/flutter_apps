@@ -130,15 +130,26 @@ class _TradeSessionViewState extends State<_TradeSessionView> {
 
   /// 판이 끝나면 결과로 넘긴다.
   ///
-  /// `push` 가 아니라 `pushReplacement` 다 — 끝난 판의 진행 화면은 돌아갈 곳이
-  /// 아니다. 뒤로 눌렀을 때 매매 버튼이 살아 있는 화면이 다시 나오면 안 된다.
+  /// 진행 화면을 `pop` 으로 걷어 낸 뒤 결과를 `push` 한다. 끝난 판의 진행
+  /// 화면은 돌아갈 곳이 아니라 스택에 남기지 않는데, 그렇다고
+  /// `pushReplacement` 로 갈아치우면 홈이 기다리던 push 가 영영 끝나지 않는다
+  /// — go_router 는 갈아치운 imperative match 의 completer 를 완료하지 않고
+  /// 버린다. 그러면 판을 끝내고 홈으로 돌아와도 새로고침이 돌지 않아서,
+  /// 이어하기 카드가 끝난 판을 계속 가리키고 새 판 시작 버튼은 나오지 않는다.
   void _onStateChanged(BuildContext context, TradeSessionState state) {
     if (_leftForResult) return;
     if (state case TradeSessionLoaded(:final session) when session.isFinished) {
       _leftForResult = true;
-      GoRouter.of(
-        context,
-      ).pushReplacement(Routes.tradeResultPath(widget.sessionId));
+      final router = GoRouter.of(context);
+      final resultPath = Routes.tradeResultPath(widget.sessionId);
+      if (router.canPop()) {
+        router.pop();
+        router.push(resultPath);
+      } else {
+        // 이 화면이 스택의 바닥이면(링크로 곧장 열린 경우) 걷어 낼 것도,
+        // 끝내 줄 push 도 없다. 그때는 그대로 갈아탄다.
+        router.pushReplacement(resultPath);
+      }
     }
   }
 
