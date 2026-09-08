@@ -170,7 +170,11 @@ class _ResumeCard extends StatelessWidget {
             ),
           ],
         ),
-        onTap: () => _openSession(context, session.id),
+        onTap: () => _openSession(
+          GoRouter.of(context),
+          context.read<TradeHomeCubit>(),
+          session.id,
+        ),
       ),
     );
   }
@@ -196,15 +200,25 @@ class _StartButton extends StatelessWidget {
     );
   }
 
+  /// [TradeHomeCubit.start] 는 성공하면 **돌아오기 전에** 목록을 다시 읽고,
+  /// 그 시작이 loading 을 emit 한다. 그러면 loaded 트리가 통째로
+  /// `CircularProgressIndicator` 로 바뀌면서 이 버튼의 element 가 사라진다 —
+  /// 실제 앱에서는 그 사이에 프레임이 그려지므로 `context` 가 죽어 있다.
+  /// 이동에 필요한 것(router · cubit)을 await 전에 잡아 두고, 살아 있는지는
+  /// 화면이 아니라 cubit 으로 판단한다.
   Future<void> _start(BuildContext context) async {
+    final router = GoRouter.of(context);
     final cubit = context.read<TradeHomeCubit>();
     final result = await cubit.start();
-    if (!context.mounted) return;
+    if (cubit.isClosed) return;
 
     switch (result) {
       case Ok(value: final sessionId):
-        await _openSession(context, sessionId);
+        await _openSession(router, cubit, sessionId);
       case Err(:final failure):
+        // 실패는 loaded 를 유지하므로 버튼이 그대로 남지만, 사용자가 그 사이
+        // 탭을 떠났을 수 있어 확인하고 띄운다.
+        if (!context.mounted) return;
         AppSnackBar.show(
           context,
           message: failure.localizedMessage(context),
@@ -258,9 +272,16 @@ class _PastSessionRow extends StatelessWidget {
 ///
 /// 판 화면에서 매매하거나 판을 끝내고 나온다. 그때 이어하기 카드의 진행도와
 /// 지난 판 목록이 방금 한 일을 반영하지 않으면 홈이 옛 화면으로 남는다.
-Future<void> _openSession(BuildContext context, String sessionId) async {
-  final cubit = context.read<TradeHomeCubit>();
-  await context.push(Routes.tradeSessionPath(sessionId));
+///
+/// `BuildContext` 가 아니라 [router] 와 [cubit] 을 받는다 — 부르는 쪽이 이미
+/// await 를 지났을 수 있고, 그 사이 화면이 다시 그려졌으면 context 로는
+/// 아무것도 할 수 없기 때문이다.
+Future<void> _openSession(
+  GoRouter router,
+  TradeHomeCubit cubit,
+  String sessionId,
+) async {
+  await router.push(Routes.tradeSessionPath(sessionId));
   if (cubit.isClosed) return;
   await cubit.refresh();
 }

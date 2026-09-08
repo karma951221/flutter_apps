@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:daylog/app/router/routes.dart';
 import 'package:daylog/core/di/injection.dart';
 import 'package:daylog/core/error/failure.dart';
@@ -139,9 +141,18 @@ void main() {
 
     expect(visited(), '/trade/active-1');
 
-    // 돌아오면 홈이 옛 화면으로 남지 않는다.
-    stubLoad(active: _active(step: 4));
+    // 돌아오면 홈이 옛 화면으로 남지 않는다. 다시 읽는 조회를 열어 둔 채
+    // 프레임을 그려, 그 사이 화면이 loading 으로 바뀌어도 갱신이 끝까지
+    // 가는지 함께 본다.
+    final reload = Completer<Result<TradeSession?>>();
+    when(() => useCase.getActiveSession()).thenAnswer((_) => reload.future);
     tester.state<NavigatorState>(find.byType(Navigator).last).pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    reload.complete(Ok<TradeSession?>(_active(step: 4)));
     await tester.pumpAndSettle();
 
     expect(find.text('4 / 60'), findsOneWidget);
@@ -206,12 +217,26 @@ void main() {
     expect(find.text('새 판 시작'), findsOneWidget);
   });
 
-  testWidgets('시작에 성공하면 만들어진 판으로 들어간다', (tester) async {
+  testWidgets('시작에 성공하면 목록을 다시 읽는 사이 화면이 바뀌어도 판으로 들어간다', (tester) async {
     stubLoad();
     when(useCase.startSession).thenAnswer((_) async => const Ok('new-1'));
 
     final visited = await pumpHome(tester);
+
+    // start 는 성공하면 돌아오기 전에 목록을 다시 읽고, 그 조회가 loading 을
+    // emit 해 loaded 트리를 통째로 갈아치운다. 조회를 열어 둔 채 프레임을
+    // 그려서 실제 앱과 같은 상황(시작 버튼의 element 가 사라진 상태)을
+    // 만든다 — 이동이 여기서 끊기면 사용자는 새 판에 들어가지 못한다.
+    final reload = Completer<Result<TradeSession?>>();
+    when(() => useCase.getActiveSession()).thenAnswer((_) => reload.future);
+
     await tester.tap(find.text('새 판 시작'));
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('새 판 시작'), findsNothing);
+
+    reload.complete(const Ok<TradeSession?>(null));
     await tester.pumpAndSettle();
 
     expect(visited(), '/trade/new-1');
