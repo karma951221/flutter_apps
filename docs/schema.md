@@ -52,6 +52,10 @@ profiles ──1:N──▶ posts ──┬──1:N──▶ post_images
 
 `follows`(§15)와 채팅 테이블(§14)은 그림에 넣지 않았다 — 각 절의 설명으로 충분하다.
 `market_candles`(§16)는 사용자 데이터와 관계없는 독립 시세라 선 없이 둔다.
+`trade_sessions` · `trade_orders`(§17)는 `profiles`에서 1:N으로 내려가고
+(`trade_sessions` → `trade_orders`도 1:N), `posts.trade_session_id`가 끝난 판 하나를
+게시물에 붙인다 — 그림에 넣으면 선이 `posts`를 두 방향에서 지나가 읽기 어려워져
+§17의 설명으로 대신한다.
 아직 없는 테이블의 계획은 [기획서](overview.md)에 있고, 여기에는 **실제로 존재하는 것만** 적는다.
 
 ---
@@ -184,7 +188,11 @@ grant execute on function public.delete_account() to authenticated;
 (`author_id`/`user_id` 가 `profiles` 를 cascade 로 참조한다). `blocks`(§13)도
 여기 포함된다 — `blocker_id`·`blocked_id` 둘 다 `profiles` 를 `on delete
 cascade` 로 참조하므로, 탈퇴한 계정이 걸었던 차단과 그 계정을 향해 걸렸던
-차단이 양방향 모두 함께 지워진다.
+차단이 양방향 모두 함께 지워진다. `trade_sessions`(§17)도 같은 사슬을 탄다 —
+`profiles` → `trade_sessions` → `trade_orders` 가 모두 cascade 라 판과 주문이
+함께 사라지고, 그 판을 붙였던 게시물은 `posts.trade_session_id` 의 `on delete
+set null` 로 결과 카드만 잃는다(그 게시물도 같은 사람 것이면 `posts` cascade 로
+어차피 함께 지워진다).
 
 **Storage 는 이 함수가 지우지 않는다.** `storage.objects` 를 SQL 로 직접 지우는
 것은 Storage 확장의 보호 트리거가 42501 로 막는다
@@ -358,6 +366,9 @@ create table public.posts (
   updated_at timestamptz not null default now(),
   deleted_at timestamptz,
 
+  -- 게시물에 붙은 끝난 판(§17). 판이 지워져도 게시물은 남고 결과 카드만 사라진다.
+  trade_session_id uuid references public.trade_sessions (id) on delete set null,
+
   constraint posts_content_length check (
     char_length(btrim(content)) between 1 and 500
   )
@@ -382,6 +393,11 @@ create index posts_created_at_idx
 create index posts_author_id_created_at_idx
   on public.posts (author_id, created_at desc, id desc)
   where deleted_at is null;
+
+-- 판이 지워질 때 FK 의 on delete set null 이 훑는 자리
+create index posts_trade_session_idx
+  on public.posts (trade_session_id)
+  where trade_session_id is not null;
 ```
 
 ### RLS
@@ -428,15 +444,25 @@ grant update (content) on public.posts to authenticated;
 `author_id`는 INSERT GRANT에서 빠져 있다. 앱이 보낼 수 없고 `default auth.uid()`로만
 채워진다. `deleted_at`도 빠져 있다 — 삭제는 아래 함수로만 한다. `delete` 권한은 주지 않는다.
 
+`trade_session_id`도 마찬가지다. **SELECT GRANT는 테이블 단위**(`grant select on
+public.posts`)라 이 컬럼이 자동으로 포함되지만, INSERT · UPDATE GRANT는 컬럼을
+지정하므로 자동으로 **빠진다** — 이것이 의도다. 판을 붙이는 길은 아래
+`create_post_with_images()` 하나뿐이고, 이미 쓴 게시물의 판을 바꾸는 길은 없다.
+
 텍스트만 있는 게시물은 이 INSERT GRANT로 그대로 작성한다. **이미지가 있으면
 `create_post_with_images()`를 쓴다** — 두 테이블에 나눠 INSERT하면 원자성이 깨진다.
+**판을 붙일 때도** 같은 함수를 쓴다(이미지가 없어도).
 
-### `create_post_with_images(content text, images jsonb) → uuid`
+### `create_post_with_images(content text, images jsonb, trade_session_id uuid default null) → uuid`
 
 게시물과 이미지 메타데이터를 **한 트랜잭션**에 만들고 새 게시물 id를 돌려준다.
 
 ```sql
-create or replace function public.create_post_with_images(content text, images jsonb)
+create function public.create_post_with_images(
+  content text,
+  images jsonb,
+  trade_session_id uuid default null
+)
 returns uuid
 language plpgsql
 security definer
@@ -483,8 +509,19 @@ begin
     end if;
   end loop;
 
-  insert into public.posts (author_id, content)
-  values (author, create_post_with_images.content)
+  -- 끝난 내 판만 붙일 수 있다.
+  if create_post_with_images.trade_session_id is not null
+     and not exists (
+       select 1 from public.trade_sessions ts
+        where ts.id = create_post_with_images.trade_session_id
+          and ts.user_id = author
+          and ts.finished_at is not null
+     ) then
+    raise exception '끝난 판만 공유할 수 있습니다' using errcode = '42501';
+  end if;
+
+  insert into public.posts (author_id, content, trade_session_id)
+  values (author, create_post_with_images.content, create_post_with_images.trade_session_id)
   returning id into new_post_id;
 
   insert into public.post_images (post_id, url, width, height, sort_order)
@@ -502,9 +539,22 @@ begin
 end;
 $$;
 
-revoke execute on function public.create_post_with_images(text, jsonb) from public, anon;
-grant execute on function public.create_post_with_images(text, jsonb) to authenticated;
+revoke execute on function public.create_post_with_images(text, jsonb, uuid) from public, anon;
+grant execute on function public.create_post_with_images(text, jsonb, uuid) to authenticated;
 ```
+
+**세 번째 인자는 오버로드가 아니라 교체다.** `20260908171950_add_trade_sessions.sql`은
+기존 2-인자 함수를 `drop function public.create_post_with_images(text, jsonb)`으로
+지우고 3-인자로 다시 만든다. 둘을 함께 두면 PostgREST가 `{content, images}` 호출에서
+후보를 하나로 좁히지 못해 `300 Multiple Choices`로 실패한다 — 인자가 하나 늘어난
+줄 알았던 변경이 **기존 게시물 작성 경로를 통째로 깨는** 자리다. 기본값 덕분에
+`{content, images}` 호출은 그대로 동작한다(로컬 PostgREST로 확인).
+
+**판 검사도 이 함수가 한다.** `trade_session_id`가 null이 아니면 그 판이 **끝났고
+호출자의 것**이어야 한다. 진행 중인 판을 붙일 수 있으면 결과가 나오기 전에 종목이
+새고(§17), 남의 판을 붙이면 남의 성적이 내 이름으로 걸린다. 어긋나면 `42501`과
+함께 `끝난 판만 공유할 수 있습니다`를 던진다. 한 판을 여러 게시물에 붙이는 것은
+막지 않는다 — 유니크 제약을 두지 않았다.
 
 앱이 `posts`를 먼저 넣고 `post_images`를 뒤이어 넣으면, 중간에 실패했을 때 **이미지 없는
 유령 게시물**이 남고 재시도하면 게시물이 두 번 생긴다. 두 INSERT를 함수 하나에 넣어
@@ -596,19 +646,24 @@ select
   coalesce(images.items,    '[]'::jsonb) as images,
   coalesce(reactions.counts, '{}'::jsonb) as reaction_counts,
   mine.type                              as my_reaction,
-  coalesce(comments.total, 0)            as comment_count
+  coalesce(comments.total, 0)            as comment_count,
+  trade.result                           as trade_result
 from public.posts p
 join public.profiles pr on pr.id = p.author_id
 left join lateral (...) images    on true   -- post_images 를 jsonb 배열로 (§7)
 left join lateral (...) reactions on true   -- post_reactions 를 type 별 개수로 (§10)
 left join lateral (...) mine      on true   -- 조회자의 post_reactions.type (§10)
-left join lateral (...) comments  on true;  -- 살아 있는 post_comments 개수 (§8)
+left join lateral (...) comments  on true   -- 살아 있는 post_comments 개수 (§8)
+left join lateral (...) trade     on true;  -- 끝난 판의 결과 요약 (§17)
 ```
 
-`...` 안의 실제 질의는
-[`20260823180000_add_reactions.sql`](../supabase/migrations/20260823180000_add_reactions.sql)에
-있다. 네 개 모두 `left join lateral` 인 이유는 같다 — 대상이 없을 때 게시물 행이
-사라지면 안 되고, 각 서브쿼리가 게시물 하나만 보고 끝나야 한다.
+`...` 안의 실제 질의는 앞의 넷이
+[`20260823180000_add_reactions.sql`](../supabase/migrations/20260823180000_add_reactions.sql)에,
+`trade` 가
+[`20260908171950_add_trade_sessions.sql`](../supabase/migrations/20260908171950_add_trade_sessions.sql)에
+있다(뒤 파일이 뷰 전체를 다시 적는다 — `create or replace view` 는 컬럼을 뒤에
+덧붙이는 것만 허용한다). 다섯 개 모두 `left join lateral` 인 이유는 같다 — 대상이
+없을 때 게시물 행이 사라지면 안 되고, 각 서브쿼리가 게시물 하나만 보고 끝나야 한다.
 
 ### 집계 컬럼 셋은 N+1 을 없애기 위해 여기 있다
 
@@ -617,6 +672,21 @@ left join lateral (...) comments  on true;  -- 살아 있는 post_comments 개�
 | `reaction_counts` | `jsonb` | `{"like": 3, "dislike": 1}` · 없으면 `{}` |
 | `my_reaction` | `text` | 조회자가 남긴 감정 하나 · 없거나 비로그인이면 `null` |
 | `comment_count` | `bigint` | 살아 있는 댓글 + 답글 전부 |
+| `trade_result` | `jsonb` | 게시물에 붙은 **끝난** 판의 결과 요약 · 없으면 `null` |
+
+`trade_result` 의 키는 여덟이다 — `session_id` · `symbol` · `start_day` · `end_day` ·
+`return_pct` · `buy_hold_return_pct` · `max_drawdown_pct` · `trade_count`. 날짜 둘은
+`YYYY-MM-DD` 문자열, 수익률 셋은 소수 2자리 수, `trade_count` 는 정수다(정의는
+§17). `session_id` 는
+결과 화면으로 들어가는 링크다. `posts.trade_session_id` 가 null 이거나 그 판이 아직
+끝나지 않았으면 lateral 이 0행을 돌려줘 컬럼이 `null` 이 된다 — 피드는 결과 카드를
+그리지 않는다.
+
+이 뷰가 `security_invoker = on` 이므로 lateral 은 **조회자 권한으로**
+`trade_sessions` 를 읽는다. 게스트(`anon`)에게 결과가 보이는 것은 뷰가 특별해서가
+아니라 §17이 `trade_sessions_select_finished` 정책(끝난 행)과 컬럼 GRANT(`revealed_*`
+와 지표들)를 `anon` 에게 줬기 때문이다. 같은 이유로 `symbol` · `start_day` 는 이
+경로로도 나갈 수 없다 — 어떤 role 에도 GRANT 가 없다.
 
 개수를 `like_count` · `dislike_count` 컬럼으로 박지 않고 `jsonb` 로 내리는 이유는,
 감정 종류를 하나 더할 때 **뷰를 고치지 않기 위해서다.** 앱은 모르는 키를 무시한다.
@@ -652,6 +722,12 @@ grant select on public.posts_with_author to anon, authenticated;
 
 **뷰는 기반 테이블의 GRANT 를 물려받지 않는다.** 따로 줘야 한다. 조회 전용이므로
 `insert` · `update` 권한은 주지 않는다 — 게시물 작성·수정은 `posts` 에 직접 한다.
+GRANT 는 테이블 단위라 `trade_result` 같은 새 컬럼은 자동으로 포함된다.
+
+`trade_result` 를 더할 때 `following_posts_with_author`(§15)도 같은 마이그레이션에서
+함께 갱신했다. 그 뷰는 `20260830150000_harden_follows.sql` 이 컬럼을 손으로 적어
+동결해 뒀으므로(§15), 이 뷰에만 컬럼을 더하면 팔로잉 피드가 같은 `select=` 문자열에
+`400` 을 낸다 — 동결이 노린 것이 바로 그 실패다.
 
 ### 인덱스
 
@@ -2046,3 +2122,245 @@ seed 적재 결과 검증과 운영 작업에만 쓴다.
 
 seed는 `supabase/scripts/fetch_candles.py`가 Binance 일봉을 전체 재수집해
 `supabase/seeds/market_candles.sql`로 만든다. 생성 파일은 직접 수정하지 않는다.
+
+---
+
+## 17. `trade_sessions` · `trade_orders`
+
+모의투자 한 판(F10)과 그 안의 주문이다. 서버가 `market_candles`(§16)에서 종목과
+120봉 구간을 무작위로 뽑아 판을 열고, 판이 끝나기 전까지 **종목도 날짜도 클라이언트에
+내려가지 않는다.** 판이 끝나면 결과 스냅샷(`revealed_*` 셋과 `final_equity` + 지표 넷)이 공개된다.
+
+```sql
+create table public.trade_sessions (
+  id           uuid        primary key default gen_random_uuid(),
+  user_id      uuid        not null default auth.uid()
+                           references public.profiles (id) on delete cascade,
+  symbol       text        not null,          -- 숨김
+  start_day    date        not null,          -- 숨김. index 0 의 day
+  step         int         not null default 0 check (step between 0 and 60),
+  cash         numeric     not null default 10000 check (cash >= 0),
+  quantity     numeric     not null default 0 check (quantity >= 0),
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now(),
+  finished_at  timestamptz,
+  -- 결과 스냅샷. finished_at 이 채워질 때 함께 채워지고 그 전엔 전부 null
+  revealed_symbol      text,
+  revealed_start_day   date,                  -- 매매 시작 봉(index 59)의 day
+  revealed_end_day     date,                  -- 종료 봉의 day
+  final_equity         numeric,
+  return_pct           numeric,
+  buy_hold_return_pct  numeric,
+  max_drawdown_pct     numeric,
+  trade_count          int,
+  constraint trade_sessions_result_all_or_none check (
+    (finished_at is null) = (revealed_symbol is null)
+  )
+);
+
+create table public.trade_orders (
+  id          uuid        primary key default gen_random_uuid(),
+  session_id  uuid        not null references public.trade_sessions (id) on delete cascade,
+  step        int         not null check (step between 0 and 59),
+  side        text        not null check (side in ('buy', 'sell')),
+  quantity    numeric     not null check (quantity > 0),
+  price       numeric     not null check (price > 0),   -- 정규화 체결가
+  fee         numeric     not null check (fee >= 0),
+  created_at  timestamptz not null default now()
+);
+
+create trigger trade_sessions_set_updated_at
+  before update on public.trade_sessions
+  for each row execute function public.set_updated_at();
+```
+
+`trade_sessions_result_all_or_none`은 "끝났는데 결과가 없다" 와 "안 끝났는데 결과가
+있다" 를 둘 다 거부한다. 결과 컬럼 여덟 중 `revealed_symbol` 하나만 보는 것으로
+충분하다 — 채우는 경로가 `trade_settle()` 하나뿐이고 거기서 여덟을 한 UPDATE 로
+함께 쓴다.
+
+### 인덱스
+
+```sql
+-- 사용자당 진행 중인 판은 하나다
+create unique index trade_sessions_active_one_per_user
+  on public.trade_sessions (user_id) where finished_at is null;
+
+-- 내 판 목록 커서
+create index trade_sessions_user_idx
+  on public.trade_sessions (user_id, created_at desc, id desc);
+
+-- 재생·상태 JSON 이 읽는 순서 그대로
+create index trade_orders_session_idx on public.trade_orders (session_id, step, created_at);
+```
+
+**부분 유니크가 "진행 중인 판 하나" 규칙 자체다.** `start_trade_session()`도 같은
+조건을 먼저 보고 `진행 중인 판이 있습니다`를 던지지만, 그것은 사용자에게 이유를
+알려주기 위한 것이고 동시 호출을 막는 것은 인덱스다. §2의 "목록 인덱스는 부분
+인덱스로 만든다"와 같은 모양이되, 여기서는 조건이 `deleted_at is null`이 아니라
+`finished_at is null`이다.
+
+### RLS · GRANT
+
+```sql
+alter table public.trade_sessions enable row level security;
+alter table public.trade_orders enable row level security;
+revoke all privileges on public.trade_sessions from anon, authenticated;
+revoke all privileges on public.trade_orders from anon, authenticated;
+
+-- symbol · start_day 는 어떤 role 에도 주지 않는다. insert/update/delete 도 없다
+grant select (id, user_id, step, cash, quantity, created_at, updated_at, finished_at,
+              revealed_symbol, revealed_start_day, revealed_end_day,
+              final_equity, return_pct, buy_hold_return_pct, max_drawdown_pct, trade_count)
+  on public.trade_sessions to anon, authenticated;
+grant select on public.trade_orders to anon, authenticated;
+
+create policy "trade_sessions_select_own" on public.trade_sessions for select
+  to authenticated using ((select auth.uid()) = user_id);
+create policy "trade_sessions_select_finished" on public.trade_sessions for select
+  to anon, authenticated using (finished_at is not null);
+create policy "trade_orders_select_visible" on public.trade_orders for select
+  to anon, authenticated using (
+    exists (select 1 from public.trade_sessions s
+             where s.id = trade_orders.session_id
+               and (s.user_id = (select auth.uid()) or s.finished_at is not null))
+  );
+```
+
+#### `symbol` · `start_day` 가 GRANT 에서 빠진 이유
+
+§2의 두 규칙이 여기서 한 번에 쓰인다. **정책은 어떤 "행"을, GRANT 는 어떤 "컬럼"을
+막는다.** 진행 중인 판은 `trade_sessions_select_own` 으로 **내게는 보이는 행**이다 —
+보여야 한다. 잔고와 수량과 step 을 읽어야 화면을 그린다. 그러니 이 두 컬럼을 막는
+일을 정책은 할 수 없다. 컬럼 GRANT 만 할 수 있다.
+
+그래서 §2의 "GRANT 는 컬럼 단위로 최소한만 준다"가 여기서는 편의가 아니라 **게임
+규칙 그 자체**다. `symbol` · `start_day` 는 `anon` 에게도 `authenticated` 에게도 주지
+않는다. 끝나기 전에는 어떤 role 도, 어떤 경로로도(직접 조회 · 뷰 · `select=*`) 이 두
+컬럼을 읽을 수 없다. 끝나면 `revealed_symbol` · `revealed_start_day` ·
+`revealed_end_day` **사본**으로만 읽는다 — 원본 컬럼은 끝난 뒤에도 잠겨 있고, 사본은
+`trade_settle()`이 종료 시점에 한 번 쓴다.
+
+§16의 `market_candles`가 GRANT 자체를 주지 않아 원시 시세를 숨긴 것과 같은 방식을
+컬럼 단위로 좁힌 것이다. 정책 표현식으로는 표현할 수 없는 경계다.
+
+쓰기도 같은 방법으로 닫았다. `insert` · `update` · `delete` GRANT 가 어떤 role 에도
+없으므로 판의 상태를 바꾸는 길은 아래 RPC 5개뿐이다. `trade_orders`는 select 만
+테이블 단위로 준다 — 주문 행에는 숨길 컬럼이 없다(`price`는 이미 정규화값이다).
+
+`trade_orders_select_visible`이 `trade_sessions`를 `exists`로 보는 것은 §11의 42P17이
+아니다 — **다른 테이블** 참조라 정책 재귀가 생기지 않는다.
+
+### 정규화와 지표
+
+봉은 항상 정규화해서 내려간다. index 59 의 **원종가를 100** 으로 잡고 모든 봉의
+o/h/l/c 를 `round(x / close59 * 100, 2)` 로 바꾼다. 원가격 · 거래량은 어떤 형태로도
+나가지 않는다.
+
+```text
+WARMUP_CANDLES = 60      # index 0..59, 보기만
+TRADE_STEPS    = 60      # step 0..59 에서 매매, step 60 = 종료
+TOTAL_CANDLES  = 120     # index 0..119
+INITIAL_CASH   = 10000
+FEE_RATE       = 0.001   # 매수·매도 양쪽 0.1%
+```
+
+step `s` 의 현재 봉은 index `59 + s` 이고, 보이는 봉은 `0..59+s` 다. 체결가는 항상
+현재 봉의 정규화 종가다. 롱만 있고 수량은 소수 6자리(`round(q, 6)`)다.
+
+지표는 전부 소수 2자리(`round(..., 2)`)로 저장한다.
+
+| 컬럼 | 정의 |
+|---|---|
+| `final_equity` | `round(최종 현금, 2)` (청산 후 현금) |
+| `return_pct` | `(최종 현금(반올림 전) / 10000 − 1) × 100` |
+| `buy_hold_return_pct` | `((1−FEE)² × close[end] / close[59] − 1) × 100` (정규화 종가) |
+| `max_drawdown_pct` | step 0..end 평가액 곡선에서 `max((peak − equity) / peak) × 100`, peak 초기값 10000 |
+| `trade_count` | `trade_orders` 행 수 |
+
+각 step 의 평가액은 **그 step 의 주문을 모두 반영한 뒤** `cash + quantity ×
+close[59+s]` 이고, 종료 step 만 청산 후 현금이다. **종료 시 청산은 주문이 아니다** —
+`trade_orders` 에 남지 않고 `trade_count` 에도 세지 않는다. 한 step 안의 주문 순서는
+평가액에 영향을 주지 않는다(각 주문이 자기 `price` · `fee` 로 현금과 수량에 더해질
+뿐이라 교환법칙이 성립한다).
+
+### 내부 헬퍼 셋 — 클라이언트 `execute` 없음
+
+셋 다 `security definer set search_path = ''` 이고, `revoke execute ... from public,
+anon, authenticated` 로 **어떤 role 에도 실행 권한을 주지 않는다.** 아래 RPC 5개(역시
+definer)만 부른다. `market_candles`(GRANT 없음)를 읽고 숨김 컬럼을 만지므로 하나라도
+새어 나가면 종목이 드러난다.
+
+| 함수 | 하는 일 |
+|---|---|
+| `trade_normalized_candles(p_session_id uuid) → table (i int, day date, o, h, l, c numeric)` | 판의 `symbol` · `start_day` 로 `market_candles` 에서 `day between start_day and start_day + 119` 를 day 순으로 읽어 `i = row_number() − 1`, index 59 의 종가를 기준으로 정규화한다. 원가격 · 거래량은 반환하지 않는다 |
+| `trade_session_state(p_session_id uuid) → jsonb` | 아래 상태 JSON 을 만든다 |
+| `trade_settle(p_session_id uuid, p_end_index int) → void` | 보유분을 `close[p_end_index]` 로 청산하고, 주문을 재생해 평가액 곡선을 만들고, 지표를 계산해 결과 스냅샷을 채운다. **호출자가 이미 `for update` 로 잠근 세션에만 쓴다.** `step` 은 건드리지 않는다 |
+
+상태 JSON 의 모습이다. 숫자는 jsonb number 다(문자열 아님).
+
+```jsonc
+{
+  "id": "...", "user_id": "...", "step": 12, "cash": 4321.5, "quantity": 56.123456,
+  "finished": false,
+  "candles": [ { "i": 0, "o": 98.1, "h": 99.0, "l": 97.2, "c": 98.5 }, ... ],
+  "orders":  [ { "step": 3, "side": "buy", "quantity": 50, "price": 101.2, "fee": 5.06 }, ... ],
+  "result": null
+}
+```
+
+`candles` 는 진행 중이면 `i <= 59 + step` 만, 끝났으면 120개 전부다 — **미래 봉이
+새면 게임이 끝난다.** `orders` 는 `(step, created_at)` 순이고 `day` 는 어디에도 없다.
+`user_id` 는 GRANT 된 컬럼이라 넣는다 — 결과 화면이 "내 판인가"를 이것으로 판정한다.
+끝난 판의 `result` 는 이렇다.
+
+```jsonc
+{ "symbol": "...", "start_day": "YYYY-MM-DD",  // index 59 의 day
+  "end_day": "YYYY-MM-DD", "end_index": 119,   // 59 + step, 최대 119
+  "final_equity": 9913.58, "return_pct": -0.86,
+  "buy_hold_return_pct": -1.73, "max_drawdown_pct": 0.86, "trade_count": 2 }
+```
+
+### RPC 다섯
+
+전부 `security definer set search_path = ''` 다. **파라미터 이름이 곧 PostgREST 의
+JSON 키**라 `session_id` · `side` · `quantity` 를 그대로 쓰고, 본문에서는 지역 변수로
+옮기거나 `함수명.파라미터` 로 수식해 컬럼 이름과의 충돌을 피한다.
+
+| 함수 | 하는 일 · 검사 | `grant execute` |
+|---|---|---|
+| `start_trade_session() → uuid` | 종목(`having count(*) >= 120` 중 무작위)과 시작일(`min(day) + floor(random() × (max−min−119+1))`)을 뽑아 판을 만든다. 뽑은 창이 정확히 120봉인지 확인한다 | `authenticated` |
+| `get_trade_session(session_id uuid) → jsonb` | 내 판이거나 끝난 판이면 상태를 돌려준다 | **`anon`, `authenticated`** |
+| `place_trade_order(session_id uuid, side text, quantity numeric) → jsonb` | 세션을 `for update` 로 잠그고 현재 봉(`i = 59 + step`)의 정규화 종가로 체결한다. 수수료 0.1%. 주문을 남기고 상태를 돌려준다 | `authenticated` |
+| `advance_trade_session(session_id uuid) → jsonb` | `step := step + 1`. 60 이 되면 `trade_settle(id, 119)` 로 자동 종료한다 | `authenticated` |
+| `finish_trade_session(session_id uuid) → jsonb` | 지금 끝낸다 — `trade_settle(id, 59 + step)` | `authenticated` |
+
+`get_trade_session()` 만 `anon` 에게 열려 있다. 게스트가 게시물에 붙은 결과를 열어야
+하기 때문이다(§6 `trade_result` 의 `session_id`). 나머지 넷은 `revoke execute ... from
+public, anon` 뒤 `authenticated` 에게만 준다.
+
+던지는 문구는 앱의 `SupabaseErrorMapper` 와 1:1이다
+([`app/lib/core/data/mapper/supabase_error_mapper.dart`](../app/lib/core/data/mapper/supabase_error_mapper.dart)).
+`app/test/convention/trigger_message_mapping_test.dart` 가 마이그레이션의 한국어
+`raise` 문구가 모두 mapper 에 있는지 확인한다.
+
+| 문구 | 언제 |
+|---|---|
+| `진행 중인 판이 있습니다` | 이미 진행 중인 판이 있는데 `start_trade_session()` |
+| `판을 찾을 수 없습니다` | 없는 id · 남의 판. **존재 여부를 밝히지 않으려고 둘을 같은 문구로 묶었다** |
+| `이미 끝난 판입니다` | 끝난 판에 주문 · advance · finish |
+| `잔고가 부족합니다` | 매수 비용 + 수수료 > 현금 |
+| `보유 수량이 부족합니다` | 매도 수량 > 보유 |
+| `수량은 0보다 커야 합니다` | `round(quantity, 6) <= 0` |
+| `끝난 판만 공유할 수 있습니다` | `create_post_with_images()` 에 진행 중인 판 · 남의 판 (§5) |
+
+내부 오류는 영어다 — `authentication required`(42501) · `candle window
+incomplete` · `invalid side`(22023). 사용자에게 보일 자리가 아니다.
+
+`place_trade_order` · `advance_trade_session` · `finish_trade_session` 은 모두
+`select ... for update` 로 세션을 먼저 잠근다. 잔고 검사와 갱신 사이가 벌어지면 같은
+현금을 두 번 쓸 수 있다.
+
+### 검증한 것 (로컬 Supabase)
+
+(Task 3 의 `supabase/tests/trade_rls_check.py` 가 채운다.)
