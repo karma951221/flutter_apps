@@ -225,11 +225,72 @@ void main() {
   testWidgets('아무것도 입력하지 않으면 확인할 수 없다', (tester) async {
     await pumpSheet(tester, side: TradeSide.buy, session: _session());
 
+    expect(find.text('올바른 숫자를 입력해 주세요'), findsNothing);
+    expect(find.text('0보다 큰 값을 입력해 주세요'), findsNothing);
     expect(
       tester
           .widget<FilledButton>(find.widgetWithText(FilledButton, '주문하기'))
           .onPressed,
       isNull,
+    );
+  });
+
+  testWidgets('0을 입력하면 양수 안내와 함께 확인을 막는다', (tester) async {
+    await pumpSheet(tester, side: TradeSide.buy, session: _session());
+
+    await tester.enterText(find.byType(TextField), '0');
+    await tester.pumpAndSettle();
+
+    expect(find.text('0보다 큰 값을 입력해 주세요'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, '주문하기'))
+          .onPressed,
+      isNull,
+    );
+  });
+
+  testWidgets('숫자로 해석할 수 없는 입력은 이유를 적고 확인을 막는다', (tester) async {
+    await pumpSheet(tester, side: TradeSide.buy, session: _session());
+
+    await tester.enterText(find.byType(TextField), '1.2.3');
+    await tester.pumpAndSettle();
+
+    expect(find.text('올바른 숫자를 입력해 주세요'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, '주문하기'))
+          .onPressed,
+      isNull,
+    );
+  });
+
+  testWidgets('쉼표 소수점은 점으로 정규화해 주문 수량으로 계산한다', (tester) async {
+    final picked = await pumpSheet(
+      tester,
+      side: TradeSide.buy,
+      session: _session(),
+    );
+
+    await tester.enterText(find.byType(TextField), '10,5');
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller?.text,
+      '10.5',
+    );
+    expect(find.text('올바른 숫자를 입력해 주세요'), findsNothing);
+
+    await tester.tap(find.text('주문하기'));
+    await tester.pumpAndSettle();
+
+    expect(
+      picked(),
+      TradeSizing.quantityForAmount(
+        amount: 10.5,
+        price: 100,
+        feeRate: TradeRules.feeRate,
+      ),
     );
   });
 }

@@ -1220,6 +1220,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get tradeConfirmOrder => '주문하기';
 
   @override
+  String get tradeInvalidNumber => '올바른 숫자를 입력해 주세요';
+
+  @override
+  String get tradeQuantityMustBePositive => '0보다 큰 값을 입력해 주세요';
+
+  @override
   String get tradeOrderPlaced => '주문이 체결됐습니다';
 
   @override

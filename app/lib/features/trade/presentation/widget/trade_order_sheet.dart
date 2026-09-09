@@ -59,10 +59,14 @@ class _TradeOrderSheetState extends State<TradeOrderSheet> {
 
   double get _price => widget.session.currentClose;
 
+  String get _inputText => _controller.text.trim();
+
+  double? get _input => double.tryParse(_inputText);
+
   /// 입력·프리셋이 가리키는 주문 수량. 소수 6자리로 내림한 값이다.
   double get _quantity {
-    final input = double.tryParse(_controller.text.trim()) ?? 0;
-    if (input <= 0) return 0;
+    final input = _input;
+    if (input == null || !input.isFinite || input <= 0) return 0;
     if (_isBuy && _mode == _OrderInputMode.amount) {
       return TradeSizing.quantityForAmount(
         amount: input,
@@ -90,7 +94,14 @@ class _TradeOrderSheetState extends State<TradeOrderSheet> {
   /// 최종 판단은 서버가 한다. 여기서 막는 것은 확실히 거절당할 주문을 보내
   /// 사용자가 오류 스낵바로 알게 되는 일을 줄이기 위해서다.
   String? _warning(AppLocalizations l10n) {
-    if (_quantity <= 0) return null;
+    if (_inputText.isEmpty) return null;
+    final input = _input;
+    if (input == null || !input.isFinite) {
+      return l10n.tradeInvalidNumber;
+    }
+    if (input <= 0 || _quantity <= 0) {
+      return l10n.tradeQuantityMustBePositive;
+    }
     if (_isBuy && _cost.total > widget.session.cash + _epsilon) {
       return l10n.failureTradeInsufficientCash;
     }
@@ -215,9 +226,7 @@ class _TradeOrderSheetState extends State<TradeOrderSheet> {
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-                  ],
+                  inputFormatters: const [_DecimalSeparatorFormatter()],
                   decoration: const InputDecoration(hintText: '0'),
                   onChanged: (_) => setState(() {}),
                 ),
@@ -254,6 +263,20 @@ class _TradeOrderSheetState extends State<TradeOrderSheet> {
       ),
     );
   }
+}
+
+/// 키보드가 지역 설정에 따라 보내는 쉼표를 Dart 숫자 표기의 점으로 바꾼다.
+///
+/// 나머지 문자를 일부러 지우지는 않는다. `1.2.3` 같은 입력을 조용히 다른
+/// 숫자로 바꾸는 대신 검증 문구로 정확히 알려주기 위해서다.
+class _DecimalSeparatorFormatter extends TextInputFormatter {
+  const _DecimalSeparatorFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) => newValue.copyWith(text: newValue.text.replaceAll(',', '.'));
 }
 
 /// 주문을 넣기 전에 무슨 일이 일어날지 미리 적는다.

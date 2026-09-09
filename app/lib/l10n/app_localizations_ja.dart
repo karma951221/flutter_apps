@@ -1219,6 +1219,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tradeConfirmOrder => '注文する';
 
   @override
+  String get tradeInvalidNumber => '有効な数値を入力してください';
+
+  @override
+  String get tradeQuantityMustBePositive => '0より大きい値を入力してください';
+
+  @override
   String get tradeOrderPlaced => '注文が約定しました';
 
   @override

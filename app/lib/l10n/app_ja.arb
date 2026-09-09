@@ -390,6 +390,8 @@
   "tradeRemainingCash": "注文後の現金",
   "tradeRemainingQuantity": "注文後の保有数量",
   "tradeConfirmOrder": "注文する",
+  "tradeInvalidNumber": "有効な数値を入力してください",
+  "tradeQuantityMustBePositive": "0より大きい値を入力してください",
   "tradeOrderPlaced": "注文が約定しました",
   "tradeFractionLabel": "{pct}%"
 }

@@ -390,6 +390,8 @@
   "tradeRemainingCash": "Cash after order",
   "tradeRemainingQuantity": "Holdings after order",
   "tradeConfirmOrder": "Place order",
+  "tradeInvalidNumber": "Enter a valid number",
+  "tradeQuantityMustBePositive": "Enter a value greater than zero",
   "tradeOrderPlaced": "Order filled",
   "tradeFractionLabel": "{pct}%"
 }

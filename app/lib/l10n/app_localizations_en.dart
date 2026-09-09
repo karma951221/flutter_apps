@@ -1300,6 +1300,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tradeConfirmOrder => 'Place order';
 
   @override
+  String get tradeInvalidNumber => 'Enter a valid number';
+
+  @override
+  String get tradeQuantityMustBePositive => 'Enter a value greater than zero';
+
+  @override
   String get tradeOrderPlaced => 'Order filled';
 
   @override

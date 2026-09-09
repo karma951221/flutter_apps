@@ -2440,6 +2440,18 @@ abstract class AppLocalizations {
   /// **'주문하기'**
   String get tradeConfirmOrder;
 
+  /// 주문 시트 — 입력값을 하나의 유한한 숫자로 해석할 수 없을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'올바른 숫자를 입력해 주세요'**
+  String get tradeInvalidNumber;
+
+  /// 주문 시트 — 입력값이나 소수 6자리 내림 뒤 수량이 0 이하일 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'0보다 큰 값을 입력해 주세요'**
+  String get tradeQuantityMustBePositive;
+
   /// 주문이 성공했을 때의 스낵바
   ///
   /// In ko, this message translates to:
