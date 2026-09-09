@@ -47,6 +47,16 @@ class FeedPage extends StatelessWidget {
   );
 }
 
+/// 방금 쓴 글을 목록에 넣을 때 쓸 작성자. 본인이므로 세션 값으로 충분하다.
+PostAuthor? _currentAuthor(AuthState state) => switch (state) {
+  AuthAuthenticated(:final user) => PostAuthor(
+    id: user.id,
+    nickname: user.nickname,
+    avatarUrl: user.avatarUrl,
+  ),
+  _ => null,
+};
+
 class _FeedView extends StatefulWidget {
   const _FeedView();
 
@@ -66,6 +76,20 @@ class _FeedViewState extends State<_FeedView>
     length: 2,
     vsync: this,
   )..addListener(_onTabChanged);
+
+  @override
+  void initState() {
+    super.initState();
+    _watchCreatedPosts(_currentAuthor(context.read<AuthBloc>().state));
+  }
+
+  /// 다른 화면에서 띄운 작성 화면(예: 매매 결과의 공유하기)이 만든 글도 이
+  /// 목록에 바로 올라오게 한다. `_compose` 의 prependPost 는 그대로 둔다 —
+  /// `prependPost` 가 멱등이라 두 경로가 겹쳐도 한 번만 붙는다.
+  void _watchCreatedPosts(PostAuthor? author) {
+    if (author == null) return;
+    context.read<FeedCubit>().watchCreatedPosts(author);
+  }
 
   @override
   void dispose() {
@@ -91,64 +115,61 @@ class _FeedViewState extends State<_FeedView>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final authState = context.watch<AuthBloc>().state;
-    // 방금 쓴 글을 목록에 넣을 때 쓸 작성자. 본인이므로 세션 값으로 충분하다.
-    final currentAuthor = switch (authState) {
-      AuthAuthenticated(:final user) => PostAuthor(
-        id: user.id,
-        nickname: user.nickname,
-        avatarUrl: user.avatarUrl,
-      ),
-      _ => null,
-    };
+    final currentAuthor = _currentAuthor(context.watch<AuthBloc>().state);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('daylog'),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: [
-            Tab(text: l10n.feedTabAll),
-            Tab(text: l10n.feedTabFollowing),
-          ],
+    return BlocListener<AuthBloc, AuthState>(
+      // 로그인한 사람(또는 그 이름·사진)이 바뀌면 새 값으로 다시 듣는다.
+      listenWhen: (previous, current) =>
+          _currentAuthor(previous) != _currentAuthor(current),
+      listener: (context, state) => _watchCreatedPosts(_currentAuthor(state)),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('daylog'),
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: [
+              Tab(text: l10n.feedTabAll),
+              Tab(text: l10n.feedTabFollowing),
+            ],
+          ),
         ),
-      ),
-      body: BlocBuilder<FeedCubit, FeedState>(
-        builder: (context, state) => switch (state.status) {
-          FeedStatus.loading => const Center(
-            child: CircularProgressIndicator(),
-          ),
-          FeedStatus.failure => Center(
-            child: AppPlaceholder(
-              icon: Icons.cloud_off_outlined,
-              message:
-                  state.failure?.localizedMessage(context) ??
-                  l10n.feedLoadFailed,
-              description: l10n.feedLoadFailedDescription,
-              actionLabel: l10n.commonRetry,
-              // load() 가 아니라 refresh() 다 — load() 는 소스를 전체로
-              // 되돌리므로, 팔로잉 탭에서 실패한 뒤 다시 시도를 누르면 탭은
-              // 팔로잉인 채로 전체 피드가 그려진다.
-              onAction: () => context.read<FeedCubit>().refresh(),
+        body: BlocBuilder<FeedCubit, FeedState>(
+          builder: (context, state) => switch (state.status) {
+            FeedStatus.loading => const Center(
+              child: CircularProgressIndicator(),
             ),
-          ),
-          FeedStatus.loaded => _FeedList(
-            items: state.items,
-            currentUserId: currentAuthor?.id ?? '',
-            isLoadingMore: state.isLoadingMore,
-            canLoadMore: state.canLoadMore,
-            isFollowingTab: _isFollowingTab,
-            onCompose: () => _compose(context, currentAuthor),
-            // 탭을 옮기면 리스너가 load() 를 부른다 — 여기서 다시 읽지 않는다.
-            onBrowseAll: () => _tabController.animateTo(0),
-          ),
-        },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        tooltip: l10n.feedComposeTooltip,
-        onPressed: () => _compose(context, currentAuthor),
-        icon: const Icon(Icons.edit),
-        label: Text(l10n.feedComposeLabel),
+            FeedStatus.failure => Center(
+              child: AppPlaceholder(
+                icon: Icons.cloud_off_outlined,
+                message:
+                    state.failure?.localizedMessage(context) ??
+                    l10n.feedLoadFailed,
+                description: l10n.feedLoadFailedDescription,
+                actionLabel: l10n.commonRetry,
+                // load() 가 아니라 refresh() 다 — load() 는 소스를 전체로
+                // 되돌리므로, 팔로잉 탭에서 실패한 뒤 다시 시도를 누르면 탭은
+                // 팔로잉인 채로 전체 피드가 그려진다.
+                onAction: () => context.read<FeedCubit>().refresh(),
+              ),
+            ),
+            FeedStatus.loaded => _FeedList(
+              items: state.items,
+              currentUserId: currentAuthor?.id ?? '',
+              isLoadingMore: state.isLoadingMore,
+              canLoadMore: state.canLoadMore,
+              isFollowingTab: _isFollowingTab,
+              onCompose: () => _compose(context, currentAuthor),
+              // 탭을 옮기면 리스너가 load() 를 부른다 — 여기서 다시 읽지 않는다.
+              onBrowseAll: () => _tabController.animateTo(0),
+            ),
+          },
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          tooltip: l10n.feedComposeTooltip,
+          onPressed: () => _compose(context, currentAuthor),
+          icon: const Icon(Icons.edit),
+          label: Text(l10n.feedComposeLabel),
+        ),
       ),
     );
   }

@@ -289,9 +289,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i903.FollowRepository>(
       () => _i257.FollowRepositoryImpl(gh<_i40.FollowDataSource>()),
     );
-    gh.lazySingleton<_i1009.FeedUseCase>(
-      () => _i1009.DefaultFeedUseCase(gh<_i898.FeedRepository>()),
-    );
     gh.lazySingleton<_i986.ProfileDataSource>(
       () => _i787.SupabaseProfileDataSource(
         gh<_i454.SupabaseClient>(),
@@ -330,6 +327,7 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i944.PostUseCase>(
       () => _i944.DefaultPostUseCase(gh<_i735.PostRepository>()),
+      dispose: (i) => i.dispose(),
     );
     gh.factory<_i364.TradeHomeCubit>(
       () => _i364.TradeHomeCubit(gh<_i903.TradeUseCase>()),
@@ -373,6 +371,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i36.ProfileCubit>(
       () => _i36.ProfileCubit(gh<_i408.ProfileUseCase>()),
+    );
+    gh.lazySingleton<_i1009.FeedUseCase>(
+      () => _i1009.DefaultFeedUseCase(
+        gh<_i898.FeedRepository>(),
+        gh<_i944.PostUseCase>(),
+      ),
     );
     gh.lazySingleton<_i650.ReactionUseCase>(
       () => _i650.DefaultReactionUseCase(gh<_i831.ReactionRepository>()),

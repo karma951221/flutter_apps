@@ -17,6 +17,7 @@ import 'package:daylog/features/follow/domain/usecase/follow_use_case.dart';
 import 'package:daylog/features/follow/presentation/cubit/follow_action_cubit.dart';
 import 'package:daylog/features/feed/presentation/cubit/feed_cubit.dart';
 import 'package:daylog/features/home/presentation/page/home_shell_page.dart';
+import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/usecase/post_use_case.dart';
 import 'package:daylog/features/post/presentation/cubit/post_cubit.dart';
 import 'package:daylog/features/preferences/domain/entity/app_language.dart';
@@ -72,6 +73,9 @@ void main() {
 
   setUp(() {
     feedUseCase = _MockFeedUseCase();
+    when(
+      () => feedUseCase.createdPosts,
+    ).thenAnswer((_) => const Stream<Post>.empty());
     profileUseCase = _MockProfileUseCase();
     authBloc = _MockAuthBloc();
     chatUseCase = _MockChatUseCase();

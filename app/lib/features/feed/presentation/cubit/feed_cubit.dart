@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
@@ -5,6 +7,7 @@ import '../../../../core/error/failure.dart';
 import '../../../../core/error/failure_code.dart';
 import '../../../../core/result/result.dart';
 import '../../../post/domain/entity/post.dart';
+import '../../../post/domain/entity/post_author.dart';
 import '../../../reaction/domain/entity/reaction_summary.dart';
 import '../../../reaction/domain/entity/reaction_target.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
@@ -49,6 +52,9 @@ class FeedCubit extends Cubit<FeedState> {
   /// 병합하면서 들어오는 페이지도 이 집합으로 한 번 더 거른다. 새로
   /// `_load()`를 하면 서버가 이미 걸러 주므로 비운다.
   final _hiddenAuthorIds = <String>{};
+
+  /// 생성 이벤트 구독. 화면이 [watchCreatedPosts] 로 심고 [close] 에서 걷는다.
+  StreamSubscription<Post>? _createdPostsSubscription;
 
   /// 지금 화면이 기다리고 있는 조회의 세대 번호.
   ///
@@ -170,7 +176,28 @@ class FeedCubit extends Cubit<FeedState> {
     if (_source == FeedSource.following) return;
     final current = state;
     if (current.status != FeedStatus.loaded) return;
+    // 같은 글이 두 경로로 들어올 수 있다 — 작성 화면이 돌려준 값으로 넣는
+    // 기존 경로와 [watchCreatedPosts] 의 생성 이벤트. 두 번 붙이면 목록에
+    // 같은 글이 두 장 그려지므로 이미 있으면 넘긴다.
+    if (current.items.any((existing) => existing.id == item.id)) return;
     emit(current.copyWith(items: [item, ...current.items]));
+  }
+
+  /// 이 세션에서 새로 작성되는 게시물을 목록 맨 앞에 붙인다.
+  ///
+  /// 작성 화면을 목록이 아닌 곳(예: 매매 결과 화면)에서 띄우면 반환값이
+  /// 목록까지 오지 않는다. 그래도 홈 셸 안에 살아 있는 이 목록은 갱신돼야
+  /// 하므로 생성 사실을 직접 듣는다. [author] 는 로그인한 본인이다 — 화면이
+  /// 세션 값으로 만들어 넘긴다 ([prependPost] 와 같은 이유).
+  void watchCreatedPosts(PostAuthor author) {
+    _createdPostsSubscription?.cancel();
+    _createdPostsSubscription = _useCase.createdPosts.listen((post) {
+      // 남의 글은 이 경로로 오지 않지만, 와도 본인 이름표를 붙이지 않는다.
+      if (post.authorId != author.id) return;
+      // 남의 프로필 목록을 보고 있으면 내 글이 낄 자리가 아니다.
+      if (_authorId != null && _authorId != post.authorId) return;
+      prependPost(FeedPost(post: post, author: author));
+    });
   }
 
   /// 수정된 게시물을 목록에 반영한다.
@@ -303,5 +330,11 @@ class FeedCubit extends Cubit<FeedState> {
         ],
       ),
     );
+  }
+
+  @override
+  Future<void> close() async {
+    await _createdPostsSubscription?.cancel();
+    return super.close();
   }
 }

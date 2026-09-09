@@ -891,4 +891,121 @@ void main() {
       ),
     ).called(1);
   });
+
+  group('watchCreatedPosts', () {
+    late StreamController<Post> createdPosts;
+
+    void stubPage(List<FeedPost> items) => when(
+      () => useCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer((_) async => Ok(CursorPage<FeedPost>(items: items)));
+
+    setUp(() {
+      createdPosts = StreamController<Post>.broadcast();
+      when(() => useCase.createdPosts).thenAnswer((_) => createdPosts.stream);
+    });
+
+    tearDown(() => createdPosts.close());
+
+    /// 이벤트가 구독자에게 닿을 때까지 한 바퀴 돌린다.
+    Future<void> emitCreated(Post post) async {
+      createdPosts.add(post);
+      await Future<void>.delayed(Duration.zero);
+    }
+
+    test('생성 이벤트로 온 게시물이 목록 맨 앞에 붙는다', () async {
+      stubPage([_item('1')]);
+      final cubit = FeedCubit(useCase, reactionUseCase);
+      addTearDown(cubit.close);
+
+      await cubit.load();
+      cubit.watchCreatedPosts(_author(nickname: '카르마'));
+      await emitCreated(_post('2', content: '새 글'));
+
+      expect(cubit.state.items.map((item) => item.id), ['2', '1']);
+      expect(cubit.state.items.first.author.nickname, '카르마');
+    });
+
+    test('같은 게시물이 반환값과 이벤트로 두 번 와도 한 번만 붙는다', () async {
+      stubPage([_item('1')]);
+      final cubit = FeedCubit(useCase, reactionUseCase);
+      addTearDown(cubit.close);
+
+      await cubit.load();
+      cubit.watchCreatedPosts(_author());
+      final created = _post('2', content: '새 글');
+      // 작성 화면의 반환값으로 넣는 기존 경로.
+      cubit.prependPost(FeedPost(post: created, author: _author()));
+      await emitCreated(created);
+
+      expect(cubit.state.items.map((item) => item.id), ['2', '1']);
+    });
+
+    test('팔로잉 목록에는 내 글을 넣지 않는다', () async {
+      stubPage([_item('1')]);
+      final cubit = FeedCubit(useCase, reactionUseCase);
+      addTearDown(cubit.close);
+
+      await cubit.loadFollowing();
+      cubit.watchCreatedPosts(_author());
+      await emitCreated(_post('2'));
+
+      expect(cubit.state.items.map((item) => item.id), ['1']);
+    });
+
+    test('남의 프로필 목록을 보고 있으면 내 글을 넣지 않는다', () async {
+      stubPage([_item('1')]);
+      final cubit = FeedCubit(useCase, reactionUseCase);
+      addTearDown(cubit.close);
+
+      await cubit.loadForAuthor('other-author');
+      cubit.watchCreatedPosts(_author(id: 'author-id'));
+      await emitCreated(_post('2', authorId: 'author-id'));
+
+      expect(cubit.state.items.map((item) => item.id), ['1']);
+    });
+
+    test('작성자가 아닌 글은 무시한다', () async {
+      stubPage([_item('1')]);
+      final cubit = FeedCubit(useCase, reactionUseCase);
+      addTearDown(cubit.close);
+
+      await cubit.load();
+      cubit.watchCreatedPosts(_author(id: 'author-id'));
+      await emitCreated(_post('2', authorId: 'other-author'));
+
+      expect(cubit.state.items.map((item) => item.id), ['1']);
+    });
+
+    test('다시 부르면 앞선 구독은 걷힌다 — 한 이벤트가 두 번 붙지 않는다', () async {
+      stubPage([_item('1')]);
+      final cubit = FeedCubit(useCase, reactionUseCase);
+      addTearDown(cubit.close);
+
+      await cubit.load();
+      cubit
+        ..watchCreatedPosts(_author(nickname: '옛 이름'))
+        ..watchCreatedPosts(_author(nickname: '새 이름'));
+      await emitCreated(_post('2'));
+
+      expect(cubit.state.items.map((item) => item.id), ['2', '1']);
+      expect(cubit.state.items.first.author.nickname, '새 이름');
+    });
+
+    test('닫힌 뒤에 온 이벤트는 아무 일도 하지 않는다', () async {
+      stubPage([_item('1')]);
+      final cubit = FeedCubit(useCase, reactionUseCase);
+
+      await cubit.load();
+      cubit.watchCreatedPosts(_author());
+      await cubit.close();
+
+      await expectLater(emitCreated(_post('2')), completes);
+      expect(cubit.state.items.map((item) => item.id), ['1']);
+    });
+  });
 }

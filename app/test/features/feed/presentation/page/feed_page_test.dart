@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:daylog/core/di/injection.dart';
 import 'package:daylog/core/error/failure.dart';
@@ -54,11 +56,14 @@ void main() {
   setUpAll(() => registerFallbackValue(FeedSource.all));
 
   late _MockFeedUseCase feedUseCase;
+  late StreamController<Post> createdPosts;
   late _MockSafetyUseCase safetyUseCase;
   late _MockAuthBloc authBloc;
 
   setUp(() {
     feedUseCase = _MockFeedUseCase();
+    createdPosts = StreamController<Post>.broadcast();
+    when(() => feedUseCase.createdPosts).thenAnswer((_) => createdPosts.stream);
     safetyUseCase = _MockSafetyUseCase();
     authBloc = _MockAuthBloc();
     whenListen(
@@ -77,7 +82,10 @@ void main() {
       );
   });
 
-  tearDown(getIt.reset);
+  tearDown(() {
+    createdPosts.close();
+    return getIt.reset();
+  });
 
   Future<void> pumpPage(WidgetTester tester) async {
     await tester.pumpWidget(
@@ -332,5 +340,48 @@ void main() {
     final tabBar = tester.widget<TabBar>(find.byType(TabBar));
     expect(tabBar.controller!.index, 0);
     expect(find.text('기록 1'), findsOneWidget);
+  });
+
+  testWidgets('다른 화면에서 쓴 글이 생성 이벤트로 목록 맨 위에 붙는다', (tester) async {
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer(
+      (_) async => Ok(CursorPage<FeedPost>(items: [_item('1', 'me', '카르마')])),
+    );
+
+    await pumpPage(tester);
+    expect(find.text('기록 1'), findsOneWidget);
+    expect(find.text('기록 2'), findsNothing);
+
+    // 매매 결과 화면에서 띄운 작성 화면이 만든 글 — 이 화면은 반환값을 받지
+    // 못하고 생성 이벤트로만 안다.
+    createdPosts.add(
+      Post(
+        id: '2',
+        authorId: 'me',
+        content: '기록 2',
+        createdAt: DateTime.utc(2026, 9, 9, 9),
+        updatedAt: DateTime.utc(2026, 9, 9, 9),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('기록 2'), findsOneWidget);
+    final texts = tester.widgetList<Text>(find.byType(Text)).map((t) => t.data);
+    expect(texts, containsAllInOrder(<String>['기록 2', '기록 1']));
+    // 목록에 붙이려고 전체를 다시 읽지 않는다.
+    verify(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).called(1);
   });
 }

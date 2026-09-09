@@ -90,6 +90,7 @@ void main() {
 
   late _MockProfileUseCase profileUseCase;
   late _MockFeedUseCase feedUseCase;
+  late StreamController<Post> createdPosts;
   late _MockSafetyUseCase safetyUseCase;
   late _MockFollowUseCase followUseCase;
   late _MockChatUseCase chatUseCase;
@@ -98,6 +99,8 @@ void main() {
   setUp(() {
     profileUseCase = _MockProfileUseCase();
     feedUseCase = _MockFeedUseCase();
+    createdPosts = StreamController<Post>.broadcast();
+    when(() => feedUseCase.createdPosts).thenAnswer((_) => createdPosts.stream);
     safetyUseCase = _MockSafetyUseCase();
     followUseCase = _MockFollowUseCase();
     chatUseCase = _MockChatUseCase();
@@ -125,7 +128,10 @@ void main() {
       ..registerSingleton<ChatUseCase>(chatUseCase);
   });
 
-  tearDown(getIt.reset);
+  tearDown(() {
+    createdPosts.close();
+    return getIt.reset();
+  });
 
   Future<void> pumpPage(WidgetTester tester, {String? userId}) async {
     await tester.pumpWidget(
@@ -898,5 +904,83 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('프로필 완성'), findsNothing);
+  });
+
+  testWidgets('내 프로필은 다른 화면에서 쓴 글을 생성 이벤트로 받아 맨 위에 붙인다', (tester) async {
+    when(
+      profileUseCase.getMyProfile,
+    ).thenAnswer((_) async => Ok(_profile('me', '카르마')));
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer(
+      (_) async => Ok(CursorPage<FeedPost>(items: [_item('1', 'me', '카르마')])),
+    );
+
+    await pumpPage(tester);
+    await tester.pumpAndSettle();
+    expect(find.text('기록 2'), findsNothing);
+
+    createdPosts.add(
+      Post(
+        id: '2',
+        authorId: 'me',
+        content: '기록 2',
+        createdAt: DateTime.utc(2026, 9, 9, 9),
+        updatedAt: DateTime.utc(2026, 9, 9, 9),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 완성도 카드 아래가 목록이라 새 글은 화면 밖에 그려진다.
+    await tester.scrollUntilVisible(find.text('기록 2'), 200);
+    expect(find.text('기록 2'), findsOneWidget);
+    // 붙이려고 목록을 다시 읽지 않는다 — 프로필을 열 때 읽은 한 번뿐이다.
+    verify(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).called(1);
+  });
+
+  testWidgets('타인 프로필은 내 글의 생성 이벤트를 듣지 않는다', (tester) async {
+    when(
+      () => profileUseCase.getProfile('other'),
+    ).thenAnswer((_) async => Ok(_profile('other', '이웃')));
+    when(
+      () => feedUseCase.getFeedPosts(
+        limit: any(named: 'limit'),
+        cursor: any(named: 'cursor'),
+        authorId: any(named: 'authorId'),
+        source: any(named: 'source'),
+      ),
+    ).thenAnswer(
+      (_) async => Ok(CursorPage<FeedPost>(items: [_item('1', 'other', '이웃')])),
+    );
+
+    await pumpPage(tester, userId: 'other');
+    await tester.pumpAndSettle();
+
+    createdPosts.add(
+      Post(
+        id: '2',
+        authorId: 'me',
+        content: '기록 2',
+        createdAt: DateTime.utc(2026, 9, 9, 9),
+        updatedAt: DateTime.utc(2026, 9, 9, 9),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('기록 2'), findsNothing);
+    expect(find.text('기록 1'), findsOneWidget);
+    verifyNever(() => feedUseCase.createdPosts);
   });
 }

@@ -26,6 +26,7 @@ import '../../../feed/presentation/cubit/feed_state.dart';
 import '../../../feed/presentation/widget/feed_load_more_listener.dart';
 import '../../../feed/presentation/widget/post_tile_actions.dart';
 import '../../../post/domain/entity/post.dart';
+import '../../../post/domain/entity/post_author.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../post/presentation/widget/post_tile.dart';
 import '../../../safety/domain/entity/report_target.dart';
@@ -89,6 +90,29 @@ class _ProfileView extends StatelessWidget {
             if (!isMine) {
               context.read<BlockActionCubit>().loadStatus(profile.id);
             }
+          },
+        ),
+        // 다른 화면에서 띄운 작성 화면(예: 매매 결과의 공유하기)이 만든 글도
+        // 이 목록에 바로 올라오게 한다. 남의 프로필은 내 글이 낄 자리가
+        // 아니므로 듣지 않는다.
+        //
+        // id 가 아니라 프로필 값이 바뀔 때마다 다시 심는다 — 목록에 붙일 때
+        // 쓸 이름·사진을 여기서 넘기므로, 프로필을 고친 뒤에는 새 값으로
+        // 들어야 한다.
+        BlocListener<ProfileCubit, ProfileState>(
+          listenWhen: (previous, current) =>
+              isMine &&
+              current.profile != null &&
+              previous.profile != current.profile,
+          listener: (context, state) {
+            final profile = state.profile!;
+            context.read<FeedCubit>().watchCreatedPosts(
+              PostAuthor(
+                id: profile.id,
+                nickname: profile.nickname,
+                avatarUrl: profile.avatarUrl,
+              ),
+            );
           },
         ),
         // 팔로우 버튼은 프로필 응답이 바뀔 때마다 다시 심는다.
