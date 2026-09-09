@@ -2337,7 +2337,7 @@ JSON 키**라 `session_id` · `side` · `quantity` 를 그대로 쓰고, 본문�
 
 | 함수 | 하는 일 · 검사 | `grant execute` |
 |---|---|---|
-| `start_trade_session() → uuid` | 종목(`having count(*) >= 120` 중 무작위)과 시작일(`min(day) + floor(random() × (max−min−119+1))`)을 뽑아 판을 만든다. 뽑은 창이 정확히 120봉인지 확인한다 | `authenticated` |
+| `start_trade_session() → uuid` | 종목(`having count(*) >= 120` 중 무작위)과 시작일(`min(day) + floor(random() × (max−min−119+1))`)을 뽑아 판을 만든다. 뽑은 창이 정확히 120봉인지 확인하고, 동시 호출의 부분 유니크 충돌도 `진행 중인 판이 있습니다`로 정규화한다 | `authenticated` |
 | `get_trade_session(session_id uuid) → jsonb` | 내 판이거나 끝난 판이면 상태를 돌려준다 | **`anon`, `authenticated`** |
 | `place_trade_order(session_id uuid, side text, quantity numeric) → jsonb` | 세션을 `for update` 로 잠그고 현재 봉(`i = 59 + step`)의 정규화 종가로 체결한다. `NaN`·0 이하 수량은 먼저 거절한다. 수수료 0.1%. 주문을 남기고 상태를 돌려준다 | `authenticated` |
 | `advance_trade_session(session_id uuid) → jsonb` | `step := step + 1`. 60 이 되면 `trade_settle(id, 119)` 로 자동 종료한다 | `authenticated` |
@@ -2378,7 +2378,8 @@ incomplete` · `invalid side`(22023). 사용자에게 보일 자리가 아니다
   판에서도** `42501` 이다. 같은 요청에서 `select=id,step,cash` 는 200 · 1행이라
   이것이 행이 아니라 **컬럼** 단위 경계임이 드러난다
 - **판 하나.** `start_trade_session` 은 id 만 돌려주고, 진행 중인 판이 있으면
-  두 번째 호출은 `진행 중인 판이 있습니다` 로 거부된다
+  두 번째 호출은 `진행 중인 판이 있습니다` 로 거부된다. 동시 트랜잭션
+  둘을 겹쳐도 한 판만 남고 `23505` 원문은 나가지 않는다
 - **남의 진행 중 판.** `get_trade_session` · `place_trade_order` ·
   `advance_trade_session` · `finish_trade_session` 넷 모두 `판을 찾을 수 없습니다`
   하나로 거부된다 — 존재 여부가 드러나지 않는다. 게스트의 `get` 도 같다

@@ -11,6 +11,7 @@ cd app && flutter test test/features/trade
 ```bash
 python3 supabase/tests/market_candles_grant_check.py   # 시세 테이블 직접 조회 차단
 python3 supabase/tests/trade_rls_check.py              # 판 권한 경계 · 정규화 · 채점
+python3 supabase/tests/trade_start_race_check.py       # 동시 판 시작 오류 정규화
 ```
 
 ## 단위 · 위젯
@@ -66,6 +67,8 @@ B 에게는 공유하기가 없다 → 게스트 피드에서 카드가 보이�
 - **숨김** — `trade_sessions` 를 `select=symbol` · `select=start_day` · `select=*` 로
   읽으면 본인도 `42501`. 같은 요청에서 `id,step,cash` 는 읽힌다(컬럼 단위 GRANT 임을 확인)
 - **한 판 규칙** — 진행 중인 판이 있으면 두 번째 `start_trade_session` 이 거부된다
+- **동시 시작** — psql 트랜잭션 둘을 겹치면 한 판만 남고, 뒤의 호출은
+  `23505` 원문 대신 `진행 중인 판이 있습니다`로 거부된다
 - **남의 판** — B 가 A 의 진행 중 판에 `get/place/advance/finish` → 전부
   `판을 찾을 수 없습니다`. 게스트의 `get` 도 거부. B 에게 A 의 `trade_orders` 는 0행
 - **봉 공개 범위** — 진행 중 판의 `candles` 가 정확히 `60 + step` 개이고, 각 봉에
