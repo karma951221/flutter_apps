@@ -310,15 +310,30 @@ auth 쪽 8개는 `await` 뒤에 가드 없이 `emit` 한다. 다만 이 테스�
 검증(2026-09-09): `flutter analyze` 0 · `flutter test` 전체 통과 · `supabase db reset` 후
 `trade_rls_check.py` 62건과 기존 스크립트 7개 전부 통과.
 
+### 후속 4건 — 완료 (2026-09-09)
+
+- [x] **공유한 글이 목록에 바로 보인다** — `PostUseCase` 가 생성 이벤트를 broadcast 하고
+      `FeedCubit` 이 구독해 맨 위에 붙인다. `prependPost` 는 id 기준 멱등이라 기존
+      반환값 경로와 겹쳐도 한 번만 붙는다
+- [x] **판 종료 전환이 한 번이다** — `pushReplacement` 로 되돌리고 홈 새로고침을
+      `RouteObserver`(`didPopNext`)로 옮겼다. 앱바 겹침이 사라지고, 판을 끝내지 않고
+      뒤로 나와도 목록이 갱신된다
+- [x] **go_router `extra` codec 경고** — 공유하기가 `TradeResultSummary.toMap()` 으로
+      JSON 호환 Map 을 넘기고 라우터가 `fromMap` 으로 되돌린다
+- [x] **Hero 태그 충돌** — `feed_page` · `chat_room_list_page` 의 FAB 에 각각
+      `feed-compose` · `chat-create`
+
+검증: `flutter analyze` 0 · `flutter test` 864 통과 · 에뮬레이터 8항목 통과 —
+종료 전환을 20프레임(125ms 간격)으로 찍어 앱바가 한 번만 그려지는 것을 확인했고,
+공유한 글이 새로고침 없이 피드·프로필 맨 위에 있으며, Hero 충돌 단언과 공유하기의
+codec 경고가 로그에서 사라졌다.
+
 남은 것:
 
-- 공유한 직후 피드 · 프로필 목록은 당겨서 새로고침해야 새 글이 보인다 (작성 화면을
-  결과 화면에서 띄우므로 `FeedCubit` 이 결과를 받지 못한다)
-- 공유하기가 `TradeResultSummary` 를 `extra` 로 넘겨 go_router 가 codec 경고를 낸다 —
-  프로세스가 죽었다 복원되면 미리보기가 사라진다
-- 가입 직후 셸 전환에서 `FloatingActionButton.extended` 의 Hero 태그 충돌 단언(F10 과
-  무관한 기존 결함, `feed_page` · `chat_room_list_page`)
-- 판 종료 전환에서 앱바가 한 프레임 겹쳐 보인다 (pop 뒤 push 의 대가)
+- `extra` codec 경고가 **다른 두 경로에는 남아 있다** — 게시물 수정(`Post` 를 그대로
+  넘긴다)과 채팅방(`ChatRoomPageArgs`). 로그 경고이고 프로세스 복원 시 값이 버려지는
+  것이 대가다. 공유하기와 같은 방식(Map 왕복)으로 고칠 수 있지만 기존 feature 의
+  전달 형식을 바꾸는 일이라 따로 다룬다
 
 ## UX 심리학 리뷰 반영 — 2026-09-06
 

@@ -80,15 +80,20 @@
 잡지 못했다. 라우터와 cubit 을 `await` 전에 잡고 `cubit.isClosed` 로 가드했고,
 테스트는 `Completer` 로 재조회를 열어 둔 채 프레임을 펌프한다.
 
-### 판이 끝나면 `pushReplacement` 가 아니라 pop 뒤 push
+### 판이 끝나면 `pushReplacement`, 홈 새로고침은 RouteObserver 가 한다
 
-계획은 `pushReplacement` 였다. 그런데 go_router 는 교체된 imperative 라우트의
-`push` future 를 완료하지 않아, 홈이 `await router.push(...)` 뒤에 하는 `refresh()`
-가 영원히 돌지 않는다 — 끝난 판이 "이어하기" 로 남고 시작 버튼이 숨는다.
-`canPop()` 이면 `pop()` 후 `push(result)`, 링크로 곧장 연 판(스택 바닥)만
-`pushReplacement` 다. 결과 화면 뒤에 살아 있는 매매 화면이 남지 않는 성질은
-그대로다. 대가: pop 과 push 가 같은 프레임에 겹쳐 전환 순간에 앱바가 잠깐 둘로
-보인다 — 다듬을 후보.
+go_router 는 **교체된** imperative 라우트의 `push` future 를 완료하지 않는다.
+그래서 홈이 `await router.push(session)` 뒤에 `refresh()` 하는 구조에서
+`pushReplacement` 로 결과 화면에 넘어가면 새로고침이 영원히 돌지 않았다 — 끝난 판이
+"이어하기" 로 남고 시작 버튼이 숨었다. 처음에는 `canPop()` 이면 `pop()` 후
+`push(result)` 로 우회했는데, 두 전환이 같은 프레임에 겹쳐 앱바가 잠깐 둘로 보였다.
+
+지금은 **원인 쪽을 고쳤다.** 새로고침을 push future 에서 떼어 `RouteObserver` 로
+옮기고(`app/router/route_observer.dart`), 세션 화면은 언제나 `pushReplacement` 한다.
+홈은 얹은 화면으로 들어갈 때 플래그를 세우고 `didPopNext` 에서만 다시 읽는다 —
+탭 본문이라 셸 라우트를 구독하므로, 플래그가 남의 pop 을 걸러 준다. 전환은 한 번이고,
+세션 화면이 결과 뒤에 남지 않는 성질도 그대로다. 판을 끝내지 않고 뒤로 나와도
+같은 경로로 갱신된다.
 
 ### 차트는 슬롯 120개 고정
 
@@ -148,3 +153,30 @@ ja `postTradeAttached` 문구 · en `tradeCardCount` 복수형 · en "Buy & hold
 미룬 것(동작에 영향 없음): `start_trade_session` 동시 호출 시 `23505` 원문 노출 ·
 수수료율 상수가 세 곳 · 주문 시트의 0/파싱 불가 입력 안내 · 차트 `Semantics` ·
 새로고침이 전체 스피너 · 공유 후 피드 미갱신(다음 새로고침에 보인다).
+
+## 2026-09-09 — 후속 4건
+
+에뮬레이터 검증에서 나온 것과 리뷰가 남긴 것을 정리했다.
+
+### 공유한 글이 목록에 바로 보이게 — 생성 이벤트 스트림
+
+작성 화면을 **결과 화면에서** 띄우면 홈 셸 안의 `FeedCubit` 은 새 글을 모른다.
+반환값으로 목록에 넣는 기존 경로는 피드 화면이 직접 띄웠을 때만 동작한다.
+그래서 `PostUseCase` 가 만들어진 게시물을 broadcast 하고, `FeedUseCase` 가 그
+스트림을 그대로 다시 노출한다(presentation 은 자기 feature 의 facade 만 주입받는다 —
+규칙 ③). `FeedCubit.watchCreatedPosts(author)` 가 구독해 맨 위에 붙이고,
+`prependPost` 를 게시물 id 기준 **멱등** 으로 바꿔 두 경로가 겹쳐도 한 번만 붙는다.
+프로필은 내 프로필일 때만 구독하고, 닉네임·아바타를 바꾸면 새 값으로 다시 구독한다.
+
+### 공유하기의 `extra` 는 JSON 호환 Map
+
+go_router 는 `extra` 를 `json.encoder` 로 인코딩하지 못하면 경고를 내고, 프로세스가
+복원될 때 값을 버린다. `TradeResultSummary` 를 그대로 넘기는 대신 `toMap()` /
+`fromMap()` 을 두고 뷰의 여덟 키와 같은 모양으로 넘긴다. `fromMap` 은 모양이 어긋나면
+null 을 돌려주므로, 낡은 `extra` 로 화면이 깨지지 않는다.
+
+### FAB 의 `heroTag`
+
+`feed_page` 와 `chat_room_list_page` 의 `FloatingActionButton.extended` 가 홈 셸의
+`IndexedStack` 에 함께 살아 있어 라우트 전환마다 Hero 태그 충돌 단언이 났다(F10 과
+무관한 기존 결함). 각각 `feed-compose` · `chat-create` 를 준다.
