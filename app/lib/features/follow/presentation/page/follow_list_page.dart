@@ -6,11 +6,11 @@ import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/theme/app_spacing.dart';
+import '../../../../design_system/widget/app_list_footer.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
 import '../../../../design_system/widget/app_placeholder.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../feed/presentation/widget/feed_list_footer.dart';
 import '../../domain/entity/follow_user.dart';
 import '../cubit/follow_list_cubit.dart';
 import '../cubit/follow_list_state.dart';
@@ -152,7 +152,7 @@ class _FollowList extends StatelessWidget {
       itemCount: state.items.length + 1,
       itemBuilder: (context, index) {
         if (index == state.items.length) {
-          return FeedListFooter(
+          return AppListFooter(
             isLoadingMore: state.isLoadingMore,
             canLoadMore: state.canLoadMore,
           );

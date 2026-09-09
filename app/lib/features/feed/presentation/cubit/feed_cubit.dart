@@ -33,10 +33,6 @@ class FeedCubit extends Cubit<FeedState> {
 
   static const _pageSize = 20;
 
-  /// 목록 끝에서 이 거리(논리 픽셀) 안에 오면 다음 페이지를 읽는다.
-  /// 세 목록 화면(피드·프로필·게스트)이 같은 값을 써야 스크롤 감각이 같다.
-  static const loadMoreExtent = 240.0;
-
   final FeedUseCase _useCase;
   final ReactionUseCase _reactionUseCase;
   String? _authorId;

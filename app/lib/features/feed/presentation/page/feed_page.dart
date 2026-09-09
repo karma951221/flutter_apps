@@ -6,6 +6,8 @@ import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/theme/app_spacing.dart';
+import '../../../../design_system/widget/app_list_footer.dart';
+import '../../../../design_system/widget/app_load_more_listener.dart';
 import '../../../../design_system/widget/app_confirm_dialog.dart';
 import '../../../../design_system/widget/app_placeholder.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
@@ -20,8 +22,6 @@ import '../../../safety/presentation/cubit/block_action_cubit.dart';
 import '../../domain/entity/feed_post.dart';
 import '../cubit/feed_cubit.dart';
 import '../cubit/feed_state.dart';
-import '../widget/feed_list_footer.dart';
-import '../widget/feed_load_more_listener.dart';
 import '../widget/post_tile_actions.dart';
 import '../../../../l10n/app_localizations.dart';
 
@@ -226,7 +226,7 @@ class _FeedList extends StatelessWidget {
 
     return RefreshIndicator(
       onRefresh: () => context.read<FeedCubit>().refresh(),
-      child: FeedLoadMoreListener(
+      child: AppLoadMoreListener(
         onLoadMore: () {
           if (!isLoadingMore && canLoadMore) {
             context.read<FeedCubit>().loadMore();
@@ -242,7 +242,7 @@ class _FeedList extends StatelessWidget {
           itemCount: items.length + 1,
           itemBuilder: (context, index) {
             if (index == items.length) {
-              return FeedListFooter(
+              return AppListFooter(
                 isLoadingMore: isLoadingMore,
                 canLoadMore: canLoadMore,
               );

@@ -39,6 +39,8 @@ feature 표에 들어가지 않는 공용 검사는 아래에 있다. 여기 있
 | `design_system/widget/app_confirm_dialog_test.dart` | 취소 라벨이 언어를 따른다 · destructive 색 · 확인/취소/바깥 탭 결과 |
 | `design_system/widget/app_placeholder_test.dart` | 아이콘·설명·행동 버튼이 있을 때만 그린다 |
 | `design_system/widget/app_overflow_menu_test.dart` | 빈 항목이면 안 그린다 · destructive 색 · 비활성 |
+| `design_system/widget/app_load_more_listener_test.dart` | 최상위 세로 목록의 끝만 감지하고 가로·중첩 스크롤은 무시 |
+| `design_system/widget/app_list_footer_test.dart` | 추가 로딩·다음 페이지·목록 끝 세 상태 |
 | `design_system/theme/app_theme_contrast_test.dart` | 두 테마의 `colorScheme` 파생색이 WCAG AA(4.5:1)를 넘는다 |
 | `convention/arb_description_convention_test.dart` | gen-l10n 템플릿(`app_ko.arb`)의 모든 키가 `@key` description 을 가진다 |
 | `convention/trigger_message_mapping_test.dart` | 마이그레이션의 한국어 `raise` 문구를 `SupabaseErrorMapper` 가 모두 안다 |

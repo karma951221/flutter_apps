@@ -6,14 +6,14 @@ import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/theme/app_spacing.dart';
+import '../../../../design_system/widget/app_list_footer.dart';
+import '../../../../design_system/widget/app_load_more_listener.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_placeholder.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../post/presentation/widget/post_tile.dart';
 import '../cubit/feed_cubit.dart';
 import '../cubit/feed_state.dart';
-import '../widget/feed_list_footer.dart';
-import '../widget/feed_load_more_listener.dart';
 
 /// 비로그인 읽기 전용 피드.
 ///
@@ -74,7 +74,7 @@ class _GuestFeedView extends StatelessWidget {
           ),
           FeedStatus.loaded => RefreshIndicator(
             onRefresh: () => context.read<FeedCubit>().refresh(),
-            child: FeedLoadMoreListener(
+            child: AppLoadMoreListener(
               onLoadMore: () {
                 if (!state.isLoadingMore && state.canLoadMore) {
                   context.read<FeedCubit>().loadMore();
@@ -88,7 +88,7 @@ class _GuestFeedView extends StatelessWidget {
                 itemCount: state.items.length + 1,
                 itemBuilder: (context, index) {
                   if (index == state.items.length) {
-                    return FeedListFooter(
+                    return AppListFooter(
                       isLoadingMore: state.isLoadingMore,
                       canLoadMore: state.canLoadMore,
                     );

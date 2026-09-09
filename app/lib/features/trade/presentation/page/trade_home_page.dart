@@ -9,12 +9,12 @@ import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../core/result/result.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
+import '../../../../design_system/widget/app_list_footer.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
+import '../../../../design_system/widget/app_load_more_listener.dart';
 import '../../../../design_system/widget/app_placeholder.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../feed/presentation/widget/feed_list_footer.dart';
-import '../../../feed/presentation/widget/feed_load_more_listener.dart';
 import '../../domain/entity/trade_session.dart';
 import '../../domain/entity/trade_session_summary.dart';
 import '../../domain/ledger/trade_ledger.dart';
@@ -119,7 +119,7 @@ class _TradeHomeViewState extends State<_TradeHomeView> with RouteAware {
             ),
             TradeHomeLoaded() => RefreshIndicator(
               onRefresh: () => context.read<TradeHomeCubit>().refresh(),
-              child: FeedLoadMoreListener(
+              child: AppLoadMoreListener(
                 onLoadMore: () {
                   if (!state.isLoadingMore && state.canLoadMore) {
                     context.read<TradeHomeCubit>().loadMore();
@@ -181,7 +181,7 @@ class _TradeHomeList extends StatelessWidget {
           ),
           for (final summary in state.past)
             _PastSessionRow(summary: summary, onOpen: onOpen),
-          FeedListFooter(
+          AppListFooter(
             isLoadingMore: state.isLoadingMore,
             canLoadMore: state.canLoadMore,
           ),

@@ -1,9 +1,7 @@
-import 'package:daylog/features/feed/presentation/widget/feed_load_more_listener.dart';
+import 'package:daylog/design_system/widget/app_load_more_listener.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-/// 가로 목록 한 칸 · 세로 목록 한 칸의 크기. 화면(600x800)보다 큰 길이를
-/// 만들어 실제로 스크롤이 일어나게 한다.
 const _itemExtent = 200.0;
 
 void main() {
@@ -14,7 +12,7 @@ void main() {
   Future<void> pump(WidgetTester tester, Widget child) => tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
-        body: FeedLoadMoreListener(onLoadMore: () => calls++, child: child),
+        body: AppLoadMoreListener(onLoadMore: () => calls++, child: child),
       ),
     ),
   );
@@ -30,10 +28,8 @@ void main() {
     );
 
     expect(calls, 0);
-
     await tester.drag(find.byType(ListView), const Offset(0, -2000));
     await tester.pump();
-
     expect(calls, greaterThan(0));
   });
 
@@ -55,17 +51,15 @@ void main() {
       ),
     );
 
-    // 세로 목록은 첫 화면 그대로다. 사진만 오른쪽 끝까지 넘긴다.
     await tester.drag(
       find.byKey(const ValueKey('가로 0')),
       const Offset(-2000, 0),
     );
     await tester.pump();
-
     expect(calls, 0);
   });
 
-  testWidgets('중첩된 세로 목록(depth > 0)의 알림도 요청하지 않는다', (tester) async {
+  testWidgets('중첩된 세로 목록의 알림도 요청하지 않는다', (tester) async {
     await pump(
       tester,
       ListView(
@@ -79,7 +73,6 @@ void main() {
                   SizedBox(height: _itemExtent, child: Text('안쪽 $index')),
             ),
           ),
-          // 바깥 목록은 화면보다 길어 끝에서 멀리 있다.
           const SizedBox(height: 2000),
         ],
       ),
@@ -90,7 +83,6 @@ void main() {
       const Offset(0, -2000),
     );
     await tester.pump();
-
     expect(calls, 0);
   });
 }

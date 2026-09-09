@@ -333,6 +333,9 @@ codec 경고가 로그에서 사라졌다.
 - [x] **`NaN` 주문 오염 차단** — PostgREST 가 문자열 `"NaN"`을 `numeric`으로
       받아도 RPC 가 수량 오류로 거절한다. 거부 뒤 현금·보유·주문이
       변하지 않음을 실제 JWT + REST 로 확인했다
+- [x] **목록 페이지네이션 공용화** — trade·profile·follow 에서 feed 전용 이름의
+      위젯을 가져오던 경계를 끊고 `AppLoadMoreListener`·`AppListFooter`로
+      `design_system/widget` 에 승격했다
 
 남은 것:
 
