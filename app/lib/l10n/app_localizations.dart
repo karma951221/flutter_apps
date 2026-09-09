@@ -2374,6 +2374,22 @@ abstract class AppLocalizations {
   /// **'현재가'**
   String get tradeCurrentPrice;
 
+  /// 캔들 차트 스크린 리더 설명 — 공개 진행도와 마지막 봉의 현재가
+  ///
+  /// In ko, this message translates to:
+  /// **'총 {totalCount}개 봉 중 {visibleCount}개 공개, 현재가 {currentPrice}'**
+  String tradeChartSemantics(
+    int visibleCount,
+    int totalCount,
+    String currentPrice,
+  );
+
+  /// 캔들 차트 스크린 리더 설명 — 공개된 봉이 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 공개된 봉이 없습니다. 전체 {totalCount}개'**
+  String tradeChartEmptySemantics(int totalCount);
+
   /// 판 진행 화면의 매수 버튼과 매수 주문 시트 제목
   ///
   /// In ko, this message translates to:

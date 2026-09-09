@@ -379,6 +379,8 @@
   "tradeQuantity": "Holdings",
   "tradeCurrentReturn": "Current return",
   "tradeCurrentPrice": "Current price",
+  "tradeChartSemantics": "{visibleCount} of {totalCount} candles revealed, current price {currentPrice}",
+  "tradeChartEmptySemantics": "No candles revealed yet. {totalCount} total",
   "tradeBuy": "Buy",
   "tradeSell": "Sell",
   "tradeNextDay": "Next day",

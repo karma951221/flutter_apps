@@ -1187,6 +1187,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get tradeCurrentPrice => '현재가';
 
   @override
+  String tradeChartSemantics(
+    int visibleCount,
+    int totalCount,
+    String currentPrice,
+  ) {
+    return '총 $totalCount개 봉 중 $visibleCount개 공개, 현재가 $currentPrice';
+  }
+
+  @override
+  String tradeChartEmptySemantics(int totalCount) {
+    return '아직 공개된 봉이 없습니다. 전체 $totalCount개';
+  }
+
+  @override
   String get tradeBuy => '매수';
 
   @override

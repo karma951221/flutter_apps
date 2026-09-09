@@ -1186,6 +1186,20 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tradeCurrentPrice => '現在価格';
 
   @override
+  String tradeChartSemantics(
+    int visibleCount,
+    int totalCount,
+    String currentPrice,
+  ) {
+    return '全$totalCount本中$visibleCount本を表示、現在価格$currentPrice';
+  }
+
+  @override
+  String tradeChartEmptySemantics(int totalCount) {
+    return 'まだローソク足は表示されていません。全$totalCount本';
+  }
+
+  @override
   String get tradeBuy => '買う';
 
   @override

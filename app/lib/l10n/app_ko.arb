@@ -1620,6 +1620,30 @@
   "@tradeCurrentPrice": {
     "description": "판 진행 화면 — 현재 봉의 정규화 종가. 단위 없는 지수다"
   },
+  "tradeChartSemantics": "총 {totalCount}개 봉 중 {visibleCount}개 공개, 현재가 {currentPrice}",
+  "@tradeChartSemantics": {
+    "description": "캔들 차트 스크린 리더 설명 — 공개 진행도와 마지막 봉의 현재가",
+    "placeholders": {
+      "visibleCount": {
+        "type": "int"
+      },
+      "totalCount": {
+        "type": "int"
+      },
+      "currentPrice": {
+        "type": "String"
+      }
+    }
+  },
+  "tradeChartEmptySemantics": "아직 공개된 봉이 없습니다. 전체 {totalCount}개",
+  "@tradeChartEmptySemantics": {
+    "description": "캔들 차트 스크린 리더 설명 — 공개된 봉이 없을 때",
+    "placeholders": {
+      "totalCount": {
+        "type": "int"
+      }
+    }
+  },
   "tradeBuy": "매수",
   "@tradeBuy": {
     "description": "판 진행 화면의 매수 버튼과 매수 주문 시트 제목"

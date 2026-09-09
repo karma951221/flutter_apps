@@ -379,6 +379,8 @@
   "tradeQuantity": "保有数量",
   "tradeCurrentReturn": "現在の収益率",
   "tradeCurrentPrice": "現在価格",
+  "tradeChartSemantics": "全{totalCount}本中{visibleCount}本を表示、現在価格{currentPrice}",
+  "tradeChartEmptySemantics": "まだローソク足は表示されていません。全{totalCount}本",
   "tradeBuy": "買う",
   "tradeSell": "売る",
   "tradeNextDay": "次の日",

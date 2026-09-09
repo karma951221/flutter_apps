@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/theme/app_colors.dart';
 import '../../../../design_system/theme/app_spacing.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../../domain/entity/trade_candle.dart';
 import '../../domain/entity/trade_order.dart';
 import '../../domain/entity/trade_side.dart';
 import '../../domain/trade_rules.dart';
+import '../format/trade_format.dart';
 
 /// 판 하나를 통째로 보여주는 캔들 차트.
 ///
@@ -51,28 +53,43 @@ class TradeCandleChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final l10n = AppLocalizations.of(context);
+    final semanticsLabel = candles.isEmpty
+        ? l10n.tradeChartEmptySemantics(totalCandles)
+        : l10n.tradeChartSemantics(
+            candles.length,
+            totalCandles,
+            TradeFormat.amount(candles.last.close, l10n.localeName),
+          );
 
-    return SizedBox(
-      height: height,
-      width: double.infinity,
-      child: CustomPaint(
-        size: Size.infinite,
-        painter: TradeCandleChartPainter(
-          candles: candles,
-          orders: orders,
-          warmupCount: warmupCount,
-          totalCandles: totalCandles,
-          endIndex: endIndex,
-          upColor: AppColors.candleUp,
-          downColor: AppColors.candleDown,
-          warmupColor: scheme.surfaceContainerHighest,
-          gridColor: scheme.outlineVariant,
-          axisColor: scheme.outline,
-          labelStyle:
-              theme.textTheme.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ) ??
-              TextStyle(color: scheme.onSurfaceVariant),
+    return Semantics(
+      container: true,
+      image: true,
+      label: semanticsLabel,
+      child: ExcludeSemantics(
+        child: SizedBox(
+          height: height,
+          width: double.infinity,
+          child: CustomPaint(
+            size: Size.infinite,
+            painter: TradeCandleChartPainter(
+              candles: candles,
+              orders: orders,
+              warmupCount: warmupCount,
+              totalCandles: totalCandles,
+              endIndex: endIndex,
+              upColor: AppColors.candleUp,
+              downColor: AppColors.candleDown,
+              warmupColor: scheme.surfaceContainerHighest,
+              gridColor: scheme.outlineVariant,
+              axisColor: scheme.outline,
+              labelStyle:
+                  theme.textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ) ??
+                  TextStyle(color: scheme.onSurfaceVariant),
+            ),
+          ),
         ),
       ),
     );

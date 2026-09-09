@@ -1267,6 +1267,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tradeCurrentPrice => 'Current price';
 
   @override
+  String tradeChartSemantics(
+    int visibleCount,
+    int totalCount,
+    String currentPrice,
+  ) {
+    return '$visibleCount of $totalCount candles revealed, current price $currentPrice';
+  }
+
+  @override
+  String tradeChartEmptySemantics(int totalCount) {
+    return 'No candles revealed yet. $totalCount total';
+  }
+
+  @override
   String get tradeBuy => 'Buy';
 
   @override

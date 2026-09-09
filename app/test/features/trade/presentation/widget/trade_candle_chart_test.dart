@@ -7,6 +7,7 @@ import 'package:daylog/features/trade/domain/entity/trade_order.dart';
 import 'package:daylog/features/trade/domain/entity/trade_side.dart';
 import 'package:daylog/features/trade/domain/trade_rules.dart';
 import 'package:daylog/features/trade/presentation/widget/trade_candle_chart.dart';
+import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -258,6 +259,8 @@ void main() {
       MaterialApp(
         locale: const Locale('ko'),
         theme: AppTheme.light(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(body: child),
       ),
     );
@@ -267,6 +270,10 @@ void main() {
 
       expect(find.byType(TradeCandleChart), findsOneWidget);
       expect(tester.takeException(), isNull);
+      expect(
+        tester.getSemantics(find.byType(TradeCandleChart)).label,
+        '아직 공개된 봉이 없습니다. 전체 120개',
+      );
     });
 
     testWidgets('봉과 주문이 있으면 예외 없이 그린다', (tester) async {
@@ -298,6 +305,19 @@ void main() {
       );
 
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('스크린 리더에 공개 봉 수와 현재가를 한 문장으로 알린다', (tester) async {
+      await pump(
+        tester,
+        TradeCandleChart(
+          candles: [for (var i = 0; i < 12; i++) candleAt(i, base: 101.24)],
+        ),
+      );
+
+      final semantics = tester.getSemantics(find.byType(TradeCandleChart));
+      expect(semantics.label, '총 120개 봉 중 12개 공개, 현재가 103.24');
+      expect(semantics.flagsCollection.isImage, isTrue);
     });
   });
 }
