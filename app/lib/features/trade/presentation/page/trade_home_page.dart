@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/router/route_observer.dart';
 import '../../../../app/router/routes.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/l10n/failure_localizations.dart';
@@ -37,8 +38,65 @@ class TradeHomePage extends StatelessWidget {
   );
 }
 
-class _TradeHomeView extends StatelessWidget {
+/// 홈 위에 얹을 화면을 여는 방법. 상태를 가진 [_TradeHomeViewState] 만 안다.
+typedef _OpenRoute = void Function(GoRouter router, String location);
+
+class _TradeHomeView extends StatefulWidget {
   const _TradeHomeView();
+
+  @override
+  State<_TradeHomeView> createState() => _TradeHomeViewState();
+}
+
+/// 홈 위에 얹은 화면(판 · 결과)에서 돌아오면 목록을 다시 읽는다.
+///
+/// 판 화면에서 매매하거나 판을 끝내고 나온다. 그때 이어하기 카드의 진행도와
+/// 지난 판 목록이 방금 한 일을 반영하지 않으면 홈이 옛 화면으로 남는다.
+///
+/// 돌아온 것을 `push` 가 돌려주는 future 로 알지 않는다. 판이 끝나면 진행
+/// 화면은 결과 화면으로 **갈아치워지는데**(`pushReplacement`), go_router 는
+/// 갈아치운 imperative match 의 completer 를 완료하지 않고 버려서 그 future 가
+/// 영영 끝나지 않기 때문이다. 대신 내비게이터에게 직접 듣는다 —
+/// [appRouteObserver] 가 위의 화면이 걷히는 순간 [didPopNext] 를 부른다.
+class _TradeHomeViewState extends State<_TradeHomeView> with RouteAware {
+  /// 지금 홈 위에 얹혀 있는 화면에서 돌아오면 다시 읽어야 하는지.
+  ///
+  /// 구독하는 것은 홈 셸의 라우트다(이 화면은 탭 본문이다). 그래서 다른 탭이
+  /// 얹은 화면(작성 · 댓글 · 채팅방)이 걷혀도 [didPopNext] 가 온다 — 이
+  /// 플래그가 그중 "내가 연 화면"만 골라낸다.
+  bool _expectRefresh = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 라우트 밖에서 그려질 수도 있어(위젯 테스트) null 을 견딘다. 같은
+    // 라우트로 다시 부르는 것은 subscribe 가 알아서 무시한다.
+    final route = ModalRoute.of<void>(context);
+    if (route != null) appRouteObserver.subscribe(this, route);
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    if (!_expectRefresh) return;
+    _expectRefresh = false;
+    context.read<TradeHomeCubit>().refresh();
+  }
+
+  /// 홈 위에 화면을 얹는다.
+  ///
+  /// `await` 하지 않는다 — 돌아온 것은 [didPopNext] 로 안다. [router] 를
+  /// 인자로 받는 이유는 [_StartButton] 이 await 를 지난 뒤에, 즉 자기 context
+  /// 가 죽었을 수도 있는 자리에서 부르기 때문이다.
+  void _open(GoRouter router, String location) {
+    _expectRefresh = true;
+    router.push(location);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +125,7 @@ class _TradeHomeView extends StatelessWidget {
                     context.read<TradeHomeCubit>().loadMore();
                   }
                 },
-                child: _TradeHomeList(state: state),
+                child: _TradeHomeList(state: state, onOpen: _open),
               ),
             ),
           },
@@ -78,9 +136,10 @@ class _TradeHomeView extends StatelessWidget {
 }
 
 class _TradeHomeList extends StatelessWidget {
-  const _TradeHomeList({required this.state});
+  const _TradeHomeList({required this.state, required this.onOpen});
 
   final TradeHomeLoaded state;
+  final _OpenRoute onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +152,7 @@ class _TradeHomeList extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       children: [
-        if (active != null) _ResumeCard(session: active),
+        if (active != null) _ResumeCard(session: active, onOpen: onOpen),
         if (isEmpty) ...[
           SizedBox(height: MediaQuery.sizeOf(context).height * 0.1),
           AppPlaceholder(
@@ -105,7 +164,7 @@ class _TradeHomeList extends StatelessWidget {
         if (active == null)
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
-            child: _StartButton(isStarting: state.isStarting),
+            child: _StartButton(isStarting: state.isStarting, onOpen: onOpen),
           ),
         if (state.past.isNotEmpty) ...[
           Padding(
@@ -120,7 +179,8 @@ class _TradeHomeList extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ),
-          for (final summary in state.past) _PastSessionRow(summary: summary),
+          for (final summary in state.past)
+            _PastSessionRow(summary: summary, onOpen: onOpen),
           FeedListFooter(
             isLoadingMore: state.isLoadingMore,
             canLoadMore: state.canLoadMore,
@@ -133,9 +193,10 @@ class _TradeHomeList extends StatelessWidget {
 
 /// 진행 중인 판으로 돌아가는 카드.
 class _ResumeCard extends StatelessWidget {
-  const _ResumeCard({required this.session});
+  const _ResumeCard({required this.session, required this.onOpen});
 
   final TradeSession session;
+  final _OpenRoute onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -169,20 +230,18 @@ class _ResumeCard extends StatelessWidget {
             ),
           ],
         ),
-        onTap: () => _openSession(
-          GoRouter.of(context),
-          context.read<TradeHomeCubit>(),
-          session.id,
-        ),
+        onTap: () =>
+            onOpen(GoRouter.of(context), Routes.tradeSessionPath(session.id)),
       ),
     );
   }
 }
 
 class _StartButton extends StatelessWidget {
-  const _StartButton({required this.isStarting});
+  const _StartButton({required this.isStarting, required this.onOpen});
 
   final bool isStarting;
+  final _OpenRoute onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -203,8 +262,8 @@ class _StartButton extends StatelessWidget {
   /// 그 시작이 loading 을 emit 한다. 그러면 loaded 트리가 통째로
   /// `CircularProgressIndicator` 로 바뀌면서 이 버튼의 element 가 사라진다 —
   /// 실제 앱에서는 그 사이에 프레임이 그려지므로 `context` 가 죽어 있다.
-  /// 이동에 필요한 것(router · cubit)을 await 전에 잡아 두고, 살아 있는지는
-  /// 화면이 아니라 cubit 으로 판단한다.
+  /// 이동에 필요한 router 를 await 전에 잡아 두고, 살아 있는지는 화면이 아니라
+  /// cubit 으로 판단한다.
   Future<void> _start(BuildContext context) async {
     final router = GoRouter.of(context);
     final cubit = context.read<TradeHomeCubit>();
@@ -213,7 +272,7 @@ class _StartButton extends StatelessWidget {
 
     switch (result) {
       case Ok(value: final sessionId):
-        await _openSession(router, cubit, sessionId);
+        onOpen(router, Routes.tradeSessionPath(sessionId));
       case Err(:final failure):
         // 실패는 loaded 를 유지하므로 버튼이 그대로 남지만, 사용자가 그 사이
         // 탭을 떠났을 수 있어 확인하고 띄운다.
@@ -229,9 +288,10 @@ class _StartButton extends StatelessWidget {
 
 /// 끝난 판 한 줄. 종목 · 기간과 수익률만 보여주고 결과 화면으로 보낸다.
 class _PastSessionRow extends StatelessWidget {
-  const _PastSessionRow({required this.summary});
+  const _PastSessionRow({required this.summary, required this.onOpen});
 
   final TradeSessionSummary summary;
+  final _OpenRoute onOpen;
 
   @override
   Widget build(BuildContext context) {
@@ -255,25 +315,10 @@ class _PastSessionRow extends StatelessWidget {
                 color: TradeFormat.returnColor(result.returnPct),
               ),
             ),
-      onTap: () => context.push(Routes.tradeResultPath(summary.id)),
+      // 결과 화면에서 더 들어갈 수 있어(공유하기) 돌아오면 목록을 다시
+      // 읽는다 — 조회 한 번이면 되는 값싼 보험이다.
+      onTap: () =>
+          onOpen(GoRouter.of(context), Routes.tradeResultPath(summary.id)),
     );
   }
-}
-
-/// 판 화면으로 들어갔다가 돌아오면 홈을 다시 읽는다.
-///
-/// 판 화면에서 매매하거나 판을 끝내고 나온다. 그때 이어하기 카드의 진행도와
-/// 지난 판 목록이 방금 한 일을 반영하지 않으면 홈이 옛 화면으로 남는다.
-///
-/// `BuildContext` 가 아니라 [router] 와 [cubit] 을 받는다 — 부르는 쪽이 이미
-/// await 를 지났을 수 있고, 그 사이 화면이 다시 그려졌으면 context 로는
-/// 아무것도 할 수 없기 때문이다.
-Future<void> _openSession(
-  GoRouter router,
-  TradeHomeCubit cubit,
-  String sessionId,
-) async {
-  await router.push(Routes.tradeSessionPath(sessionId));
-  if (cubit.isClosed) return;
-  await cubit.refresh();
 }

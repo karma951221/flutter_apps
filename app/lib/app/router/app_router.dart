@@ -31,6 +31,7 @@ import '../../features/trade/domain/entity/trade_result_summary.dart';
 import '../../features/trade/presentation/page/trade_result_page.dart';
 import '../../features/trade/presentation/page/trade_session_page.dart';
 import 'auth_redirect.dart';
+import 'route_observer.dart';
 import 'routes.dart';
 
 /// 인증 게이트.
@@ -40,6 +41,8 @@ import 'routes.dart';
 GoRouter createRouter(AuthBloc authBloc) {
   return GoRouter(
     initialLocation: Routes.splash,
+    // 화면 위에 얹은 화면이 걷히는 순간을 듣는 곳(예: 모의투자 홈).
+    observers: [appRouteObserver],
     refreshListenable: _BlocRefreshNotifier(authBloc.stream),
     debugLogDiagnostics: kDebugMode,
     redirect: (context, state) => resolveAuthRedirect(

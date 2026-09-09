@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:daylog/app/router/route_observer.dart';
 import 'package:daylog/app/router/routes.dart';
 import 'package:daylog/core/di/injection.dart';
 import 'package:daylog/core/error/failure.dart';
@@ -71,9 +72,9 @@ void main() {
 
   /// 홈에서 판으로 들어간 상태를 만든다.
   ///
-  /// 실제 앱에서 판 화면은 홈이 `push` 해서 열고, 홈은 그 push 가 끝나기를
-  /// 기다렸다가 목록을 다시 읽는다. 화면이 어떻게 빠져나가느냐가 그 기다림을
-  /// 끝내는지를 가르므로 테스트도 같은 모양으로 스택을 쌓는다.
+  /// 실제 앱에서 판 화면은 홈이 `push` 해서 열고, 홈은 그 위가 걷히는 순간을
+  /// [appRouteObserver] 로 듣는다. 화면이 어떻게 빠져나가느냐가 스택의 모양을
+  /// 가르므로 테스트도 같은 모양으로 쌓고 같은 observer 를 단다.
   ///
   /// [fromHome] 이 false 면 판 화면이 스택의 바닥이다 — 링크로 곧장 열린 경우.
   ///
@@ -90,6 +91,7 @@ void main() {
     String? visited;
     final router = GoRouter(
       initialLocation: fromHome ? Routes.home : Routes.tradeSessionPath('s1'),
+      observers: [appRouteObserver],
       routes: [
         GoRoute(
           path: Routes.home,
@@ -124,8 +126,8 @@ void main() {
     await tester.pumpAndSettle();
 
     if (fromHome) {
-      // 이 future 는 판 화면을 나갈 때까지 끝나지 않는다. 기다리면 테스트가
-      // 그 자리에 선다.
+      // 판이 결과로 갈아치워지면 이 future 는 영영 끝나지 않는다. 기다리면
+      // 테스트가 그 자리에 선다.
       unawaited(router.push(Routes.tradeSessionPath('s1')));
       await tester.pumpAndSettle();
     }
@@ -386,12 +388,15 @@ void main() {
       () => useCase.getSession(any()),
     ).thenAnswer((_) async => Ok(_session(isFinished: true)));
 
-    // 아래에 걷어 낼 화면도, 끝내 줄 push 도 없는 자리다.
+    // 아래에 아무것도 없는 자리라 갈아탄 결과가 스택의 바닥이 된다.
     final harness = await pumpSession(tester, fromHome: false);
 
     expect(harness.visited(), '/trade/s1/result');
+    expect(harness.router.state.matchedLocation, '/trade/s1/result');
     expect(find.text('결과 화면'), findsOneWidget);
     expect(find.text('다음 날'), findsNothing);
+    // 갈아탔으므로 뒤로 나갈 곳도 없다.
+    expect(harness.router.canPop(), isFalse);
   });
 
   testWidgets('조회가 실패하면 다시 시도를 보여준다', (tester) async {
@@ -435,10 +440,12 @@ void main() {
       () => useCase.finish(any()),
     ).thenAnswer((_) async => Ok(_session(quantity: 0, isFinished: true)));
 
-    // 진짜 홈 화면 위에 판을 올린다. 홈은 push 가 끝나기를 기다렸다가 목록을
-    // 다시 읽으므로, 판 화면이 나가는 방식이 홈의 새로고침을 좌우한다.
+    // 진짜 홈 화면 위에 판을 올린다. 홈은 자기 위가 걷히는 순간을
+    // appRouteObserver 로 듣고 목록을 다시 읽으므로, 실제 앱과 같은 observer
+    // 를 단 라우터로 스택을 쌓는다.
     final router = GoRouter(
       initialLocation: Routes.home,
+      observers: [appRouteObserver],
       routes: [
         GoRoute(path: Routes.home, builder: (_, _) => const TradeHomePage()),
         GoRoute(
@@ -485,14 +492,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('결과 화면'), findsOneWidget);
-    // 진행 화면이 pop 돼야 홈이 기다리던 push 가 끝나고 새로고침이 돈다.
-    verify(() => useCase.getActiveSession()).called(1);
+    // 진행 화면은 결과로 갈아치워졌을 뿐이라 홈은 아직 가려져 있다 —
+    // 다시 읽는 것은 홈이 실제로 드러나는 순간이다.
+    verifyNever(() => useCase.getActiveSession());
 
-    // 그래서 결과에서 뒤로 나온 홈은 새 판을 시작할 수 있는 모습이다 —
-    // 끝난 판을 이어하기로 걸어 두지 않는다.
+    // 결과에서 뒤로 나오면 홈이 드러나고, 그때 다시 읽는다. 그래서 홈은 새
+    // 판을 시작할 수 있는 모습이다 — 끝난 판을 이어하기로 걸어 두지 않는다.
     router.pop();
     await tester.pumpAndSettle();
 
+    verify(() => useCase.getActiveSession()).called(1);
     expect(find.text('새 판 시작'), findsOneWidget);
     expect(find.text('이어하기'), findsNothing);
   });

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:daylog/app/router/route_observer.dart';
 import 'package:daylog/app/router/routes.dart';
 import 'package:daylog/core/di/injection.dart';
 import 'package:daylog/core/error/failure.dart';
@@ -80,9 +81,13 @@ void main() {
 
   /// 눌러서 넘어가는 곳(판 화면 · 결과 화면)은 이 태스크의 범위가 아니라
   /// 표시만 하는 라우트로 대신한다. 마지막으로 들어간 경로를 돌려준다.
+  ///
+  /// 홈이 "얹은 화면에서 돌아왔다"를 [appRouteObserver] 로 듣기 때문에
+  /// 테스트 라우터도 실제 앱과 같이 그 observer 를 단다.
   Future<String? Function()> pumpHome(WidgetTester tester) async {
     String? visited;
     final router = GoRouter(
+      observers: [appRouteObserver],
       routes: [
         GoRoute(path: Routes.home, builder: (_, _) => const TradeHomePage()),
         GoRoute(
@@ -141,9 +146,10 @@ void main() {
 
     expect(visited(), '/trade/active-1');
 
-    // 돌아오면 홈이 옛 화면으로 남지 않는다. 다시 읽는 조회를 열어 둔 채
-    // 프레임을 그려, 그 사이 화면이 loading 으로 바뀌어도 갱신이 끝까지
-    // 가는지 함께 본다.
+    // 돌아오면 홈이 옛 화면으로 남지 않는다 — push future 가 아니라
+    // RouteObserver 가 그 순간을 알린다. 다시 읽는 조회를 열어 둔 채 프레임을
+    // 그려, 그 사이 화면이 loading 으로 바뀌어도 갱신이 끝까지 가는지 함께
+    // 본다.
     final reload = Completer<Result<TradeSession?>>();
     when(() => useCase.getActiveSession()).thenAnswer((_) => reload.future);
     tester.state<NavigatorState>(find.byType(Navigator).last).pop();
