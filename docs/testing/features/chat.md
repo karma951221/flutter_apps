@@ -42,6 +42,8 @@ flutter test test/features/chat
 | `ChatRoomListPage` | 빈 상태 / 목록 / 배지 | 탐색으로 보내는 안내, 제목·참여자 수, 안읽음 배지를 보여준다. |
 | `ChatRoomListPage` | 미리보기 | 사진은 '사진', 시스템 메시지는 **키로 만든 문장**, 대화가 없으면 그렇게 적는다. |
 | `ChatRoomListPage` | 방 열기 | 제목을 함께 넘긴다 — 넘기지 않으면 방 화면 AppBar 가 방 이름 대신 '채팅' 으로 뜬다. |
+| `ChatRoomPageArgs` extra codec | Map 왕복 | 제목·direct 여부를 복원하고 키·타입이 어긋나면 `null`로 거부한다. |
+| 채팅방 라우터 | Map extra | `ChatRoomPage.args`로 복원하고 어긋난 Map은 `null`로 전달한다. |
 | `ChatRoomPage` | 방별 닉네임 | 프로필 닉네임이 아니라 그 방에서 쓰는 이름이 보인다. |
 | `ChatRoomPage` | 시스템 메시지 | DB 의 `'join'` 키 + 닉네임으로 "○○ 님이 들어왔습니다"를 만든다. |
 | `ChatRoomPage` | 전송 | 버블이 즉시 뜨고 입력칸이 비워진다. 공백뿐인 입력은 보내지 않는다. |

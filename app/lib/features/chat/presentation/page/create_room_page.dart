@@ -80,7 +80,7 @@ class _CreateRoomViewState extends State<_CreateRoomView> {
             if (router.canPop()) router.pop(true);
             router.push(
               Routes.chatRoomPath(room.id),
-              extra: ChatRoomPageArgs(title: room.title),
+              extra: ChatRoomPageArgs(title: room.title).toMap(),
             );
           case CreateRoomFailure(:final failure):
             AppSnackBar.show(

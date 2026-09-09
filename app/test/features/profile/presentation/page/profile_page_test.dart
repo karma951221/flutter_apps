@@ -736,7 +736,7 @@ void main() {
           GoRoute(
             path: Routes.chatRoom,
             builder: (_, state) {
-              args = state.extra as ChatRoomPageArgs?;
+              args = ChatRoomPageArgs.fromMap(state.extra);
               roomId = state.pathParameters['roomId'];
               return const Scaffold(body: Text('방 화면'));
             },

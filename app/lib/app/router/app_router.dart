@@ -78,7 +78,7 @@ GoRouter createRouter(AuthBloc authBloc) {
         path: Routes.postEdit,
         builder: (_, state) => BlocProvider(
           create: (_) => getIt<PostCubit>(),
-          child: PostEditorPage(post: state.extra as Post?),
+          child: PostEditorPage(post: Post.fromMap(state.extra)),
         ),
       ),
       GoRoute(
@@ -106,7 +106,7 @@ GoRouter createRouter(AuthBloc authBloc) {
         path: Routes.chatRoom,
         builder: (_, state) => ChatRoomPage(
           roomId: state.pathParameters['roomId']!,
-          args: state.extra as ChatRoomPageArgs?,
+          args: ChatRoomPageArgs.fromMap(state.extra),
         ),
       ),
       GoRoute(

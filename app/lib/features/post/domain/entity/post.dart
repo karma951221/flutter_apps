@@ -40,4 +40,59 @@ class Post with _$Post {
   /// `trade_session_id` 에는 UPDATE GRANT 가 없다).
   @override
   final TradeResultSummary? tradeResult;
+
+  /// go_router 상태 복원에 안전한 JSON 호환 표현.
+  Map<String, Object?> toMap() => {
+    'id': id,
+    'author_id': authorId,
+    'content': content,
+    'created_at': createdAt.toUtc().toIso8601String(),
+    'updated_at': updatedAt.toUtc().toIso8601String(),
+    'images': images.map((image) => image.toMap()).toList(),
+    'trade_result': tradeResult?.toMap(),
+  };
+
+  /// [toMap]과 모양이 다르면 일부만 복원하지 않고 null을 돌려준다.
+  static Post? fromMap(Object? raw) {
+    if (raw is! Map) return null;
+    final id = raw['id'];
+    final authorId = raw['author_id'];
+    final content = raw['content'];
+    final createdAt = raw['created_at'];
+    final updatedAt = raw['updated_at'];
+    final rawImages = raw['images'];
+    final rawTradeResult = raw['trade_result'];
+    if (id is! String ||
+        authorId is! String ||
+        content is! String ||
+        createdAt is! String ||
+        updatedAt is! String ||
+        rawImages is! List) {
+      return null;
+    }
+
+    final parsedCreatedAt = DateTime.tryParse(createdAt);
+    final parsedUpdatedAt = DateTime.tryParse(updatedAt);
+    if (parsedCreatedAt == null || parsedUpdatedAt == null) return null;
+
+    final parsedImages = <PostImage>[];
+    for (final rawImage in rawImages) {
+      final image = PostImage.fromMap(rawImage);
+      if (image == null) return null;
+      parsedImages.add(image);
+    }
+
+    final tradeResult = TradeResultSummary.fromMap(rawTradeResult);
+    if (rawTradeResult != null && tradeResult == null) return null;
+
+    return Post(
+      id: id,
+      authorId: authorId,
+      content: content,
+      createdAt: parsedCreatedAt,
+      updatedAt: parsedUpdatedAt,
+      images: parsedImages,
+      tradeResult: tradeResult,
+    );
+  }
 }

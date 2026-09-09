@@ -49,6 +49,16 @@ void main() {
   late _MockAuthBloc authBloc;
   late StreamController<ChatMessage> incoming;
 
+  test('ChatRoomPageArgs를 Map으로 왕복하고 어긋난 모양은 거부한다', () {
+    const args = ChatRoomPageArgs(title: '지우', isDirect: true);
+
+    final decoded = ChatRoomPageArgs.fromMap(args.toMap());
+    expect(decoded?.title, '지우');
+    expect(decoded?.isDirect, isTrue);
+    expect(ChatRoomPageArgs.fromMap({'title': '지우'}), isNull);
+    expect(ChatRoomPageArgs.fromMap({'title': 1, 'is_direct': true}), isNull);
+  });
+
   setUp(() {
     useCase = _MockChatUseCase();
     authBloc = _MockAuthBloc();

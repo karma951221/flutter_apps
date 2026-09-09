@@ -23,4 +23,35 @@ class PostImage with _$PostImage {
   final int height;
   @override
   final int sortOrder;
+
+  Map<String, Object?> toMap() => {
+    'id': id,
+    'url': url,
+    'width': width,
+    'height': height,
+    'sort_order': sortOrder,
+  };
+
+  static PostImage? fromMap(Object? raw) {
+    if (raw is! Map) return null;
+    final id = raw['id'];
+    final url = raw['url'];
+    final width = raw['width'];
+    final height = raw['height'];
+    final sortOrder = raw['sort_order'];
+    if (id is! String ||
+        url is! String ||
+        width is! int ||
+        height is! int ||
+        sortOrder is! int) {
+      return null;
+    }
+    return PostImage(
+      id: id,
+      url: url,
+      width: width,
+      height: height,
+      sortOrder: sortOrder,
+    );
+  }
 }

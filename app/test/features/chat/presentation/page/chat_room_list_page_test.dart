@@ -100,14 +100,11 @@ void main() {
     ChatRoomPageArgs? passed;
     final router = GoRouter(
       routes: [
-        GoRoute(
-          path: Routes.home,
-          builder: (_, _) => const ChatRoomListPage(),
-        ),
+        GoRoute(path: Routes.home, builder: (_, _) => const ChatRoomListPage()),
         GoRoute(
           path: Routes.chatRoom,
           builder: (_, state) {
-            passed = state.extra as ChatRoomPageArgs?;
+            passed = ChatRoomPageArgs.fromMap(state.extra);
             return const Scaffold(body: Text('방 화면'));
           },
         ),
@@ -122,10 +119,8 @@ void main() {
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         routerConfig: router,
-        builder: (_, child) => BlocProvider<ChatRoomListCubit>.value(
-          value: cubit,
-          child: child!,
-        ),
+        builder: (_, child) =>
+            BlocProvider<ChatRoomListCubit>.value(value: cubit, child: child!),
       ),
     );
     await tester.pumpAndSettle();

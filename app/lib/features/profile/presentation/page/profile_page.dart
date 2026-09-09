@@ -551,7 +551,10 @@ class _MessageButtonState extends State<_MessageButton> {
       case Ok(value: final roomId):
         context.push(
           Routes.chatRoomPath(roomId),
-          extra: ChatRoomPageArgs(title: widget.nickname, isDirect: true),
+          extra: ChatRoomPageArgs(
+            title: widget.nickname,
+            isDirect: true,
+          ).toMap(),
         );
       case Err(:final failure):
         AppSnackBar.show(

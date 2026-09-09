@@ -30,6 +30,16 @@ class ChatRoomPageArgs {
 
   final String? title;
   final bool isDirect;
+
+  Map<String, Object?> toMap() => {'title': title, 'is_direct': isDirect};
+
+  static ChatRoomPageArgs? fromMap(Object? raw) {
+    if (raw is! Map || !raw.containsKey('title')) return null;
+    final title = raw['title'];
+    final isDirect = raw['is_direct'];
+    if ((title != null && title is! String) || isDirect is! bool) return null;
+    return ChatRoomPageArgs(title: title as String?, isDirect: isDirect);
+  }
 }
 
 /// 한 방의 대화 화면.

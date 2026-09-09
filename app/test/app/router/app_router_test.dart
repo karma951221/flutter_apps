@@ -3,6 +3,14 @@ import 'package:daylog/app/router/routes.dart';
 import 'package:daylog/features/auth/domain/entity/app_user.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_state.dart';
+import 'package:daylog/features/chat/presentation/page/chat_room_page.dart';
+import 'package:daylog/features/post/domain/entity/post.dart';
+import 'package:daylog/features/post/domain/entity/post_image.dart';
+import 'package:daylog/features/post/presentation/cubit/post_cubit.dart';
+import 'package:daylog/features/post/presentation/page/post_editor_page.dart';
+import 'package:daylog/features/trade/domain/entity/trade_result_summary.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
@@ -37,6 +45,36 @@ void main() {
     return (matches.matches.last as RouteMatch).route.path;
   }
 
+  Future<Widget> buildMatchedRoute(
+    WidgetTester tester,
+    GoRouter router,
+    String location,
+    Object? extra,
+  ) async {
+    late Widget built;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            final matches = router.configuration.findMatch(
+              Uri.parse(location),
+              extra: extra,
+            );
+            final match = matches.matches.last;
+            final state = match.buildState(
+              router.configuration,
+              matches,
+              metadata: const {},
+            );
+            built = (match.route as GoRoute).builder!(context, state);
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+    return built;
+  }
+
   test('/trade/:sessionId 는 판 진행 화면 라우트로 간다', () {
     final router = buildRouter();
 
@@ -60,5 +98,89 @@ void main() {
           .pathParameters['sessionId'],
       'abc',
     );
+  });
+
+  testWidgets('게시물 수정 라우터가 중첩 Map을 PostEditorPage로 복원한다', (tester) async {
+    final router = buildRouter();
+    final post = Post(
+      id: 'post-1',
+      authorId: 'u1',
+      content: '기록',
+      createdAt: DateTime.utc(2026, 9, 9),
+      updatedAt: DateTime.utc(2026, 9, 9, 1),
+      images: const [
+        PostImage(
+          id: 'image-1',
+          url: 'https://example.test/1.jpg',
+          width: 10,
+          height: 20,
+          sortOrder: 0,
+        ),
+      ],
+      tradeResult: TradeResultSummary(
+        sessionId: 'session-1',
+        symbol: 'BTCUSDT',
+        startDay: DateTime(2026, 1, 1),
+        endDay: DateTime(2026, 3, 1),
+        returnPct: 1,
+        buyHoldReturnPct: 2,
+        maxDrawdownPct: 3,
+        tradeCount: 4,
+      ),
+    );
+
+    final built = await buildMatchedRoute(
+      tester,
+      router,
+      Routes.postEditPath(post.id),
+      post.toMap(),
+    );
+    final page = (built as BlocProvider<PostCubit>).child as PostEditorPage;
+
+    expect(page.post, post);
+  });
+
+  testWidgets('게시물 수정 라우터는 어긋난 Map을 null로 떨어뜨린다', (tester) async {
+    final router = buildRouter();
+
+    final built = await buildMatchedRoute(
+      tester,
+      router,
+      Routes.postEditPath('post-1'),
+      {'id': 'post-1'},
+    );
+    final page = (built as BlocProvider<PostCubit>).child as PostEditorPage;
+
+    expect(page.post, isNull);
+  });
+
+  testWidgets('채팅방 라우터가 Map을 ChatRoomPageArgs로 복원한다', (tester) async {
+    final router = buildRouter();
+    const args = ChatRoomPageArgs(title: '지우', isDirect: true);
+
+    final built = await buildMatchedRoute(
+      tester,
+      router,
+      Routes.chatRoomPath('room-1'),
+      args.toMap(),
+    );
+    final page = built as ChatRoomPage;
+
+    expect(page.roomId, 'room-1');
+    expect(page.args?.title, '지우');
+    expect(page.args?.isDirect, isTrue);
+  });
+
+  testWidgets('채팅방 라우터는 어긋난 Map을 null로 떨어뜨린다', (tester) async {
+    final router = buildRouter();
+
+    final built = await buildMatchedRoute(
+      tester,
+      router,
+      Routes.chatRoomPath('room-1'),
+      {'title': '지우'},
+    );
+
+    expect((built as ChatRoomPage).args, isNull);
   });
 }

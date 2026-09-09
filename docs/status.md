@@ -336,13 +336,11 @@ codec 경고가 로그에서 사라졌다.
 - [x] **목록 페이지네이션 공용화** — trade·profile·follow 에서 feed 전용 이름의
       위젯을 가져오던 경계를 끊고 `AppLoadMoreListener`·`AppListFooter`로
       `design_system/widget` 에 승격했다
+- [x] **나머지 go_router `extra` codec 경고** — 게시물 수정의 `Post`(이미지·판
+      요약 포함)와 채팅방의 `ChatRoomPageArgs`를 JSON 호환 Map으로 왕복한다.
+      중첩 모양이 어긋나면 화면을 깨뜨리지 않고 `null`로 떨어진다
 
-남은 것:
-
-- `extra` codec 경고가 **다른 두 경로에는 남아 있다** — 게시물 수정(`Post` 를 그대로
-  넘긴다)과 채팅방(`ChatRoomPageArgs`). 로그 경고이고 프로세스 복원 시 값이 버려지는
-  것이 대가다. 공유하기와 같은 방식(Map 왕복)으로 고칠 수 있지만 기존 feature 의
-  전달 형식을 바꾸는 일이라 따로 다룬다
+남은 것: 없음.
 
 ## UX 심리학 리뷰 반영 — 2026-09-06
 

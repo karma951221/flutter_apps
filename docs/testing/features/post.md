@@ -7,6 +7,7 @@
 | `PostMapper` | `PostDto` 변환 | snake_case 컬럼을 읽어 domain `Post`로 손실 없이 변환된다. |
 | `PostMapper` | `post_images` 조인 결과 | 스네이크 케이스(`sort_order`)를 읽어 받은 순서 그대로 `PostImage`로 옮긴다. |
 | `PostMapper` | 이미지 없는 게시물 | `post_images` 키가 없으면 null 이 아니라 빈 목록이 된다. |
+| `Post` extra codec | 이미지·판 요약 포함 Map 왕복 | 중첩 값까지 손실 없이 복원하고 어긋난 모양은 `null`로 거부한다. |
 | `PostRepositoryImpl` | 작성 성공 | 작성 결과 DTO가 domain `Post`로 변환되어 `Ok`로 반환된다. |
 | `PostRepositoryImpl` | 미인증(사용자 null) | 작성·삭제 모두 인증 실패 `Failure`를 담은 `Err`로 반환된다. |
 | `PostRepositoryImpl` | 소프트 삭제 | 성공은 `Ok`, 대상 없음(또는 남의 글)은 `notFound`로 반환된다. |
@@ -27,7 +28,8 @@
 | `PostEditorPage` | 사진 추가 버튼 | 최대 장수를 라벨에 적는다 (`PostPolicy.maxImageCount`). |
 | `PostEditorPage` | 빈 본문 | 저장을 시도하지 않는다. |
 | `PostEditorPage` | 쓰던 내용을 두고 나가기 | 한 번 묻는다. 아무것도 쓰지 않았으면 묻지 않는다. |
-| `PostEditorPage` | 저장 성공 | 결과 게시물을 들고 목록으로 돌아간다.
+| `PostEditorPage` | 저장 성공 | 결과 게시물을 들고 목록으로 돌아간다. |
+| 게시물 수정 라우터 | Map extra | `PostEditorPage.post`로 복원하고 어긋난 Map은 `null`로 전달한다. |
 
 `PostTile`의 메뉴가 `isMine`에 따라 수정·삭제/신고 중 옳은 항목만 보여주는지는 신고
 진입점 테스트라 [safety 테스트 문서](safety.md)의 "진입점" 절에 있다.

@@ -123,7 +123,7 @@ class _ChatExploreViewState extends State<_ChatExploreView> {
     _joinedAny = true;
     await context.push(
       Routes.chatRoomPath(room.id),
-      extra: ChatRoomPageArgs(title: room.title),
+      extra: ChatRoomPageArgs(title: room.title).toMap(),
     );
   }
 }

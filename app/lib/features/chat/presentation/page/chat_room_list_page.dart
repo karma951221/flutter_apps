@@ -123,7 +123,7 @@ class _ChatRoomListView extends StatelessWidget {
       extra: ChatRoomPageArgs(
         title: room.displayTitle,
         isDirect: room.isDirect,
-      ),
+      ).toMap(),
     );
     if (left == true) {
       cubit.removeRoom(roomId);

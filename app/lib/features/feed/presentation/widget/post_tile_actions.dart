@@ -34,7 +34,7 @@ abstract final class PostTileActions {
     final feed = context.read<FeedCubit>();
     final updated = await context.push<Post>(
       Routes.postEditPath(post.id),
-      extra: post,
+      extra: post.toMap(),
     );
     if (updated != null) feed.replacePost(updated);
   }
