@@ -244,6 +244,27 @@ void main() {
     expect(find.text('로그아웃'), findsOneWidget);
   });
 
+  testWidgets('피드와 채팅 FAB 은 서로 다른 heroTag 를 쓴다', (tester) async {
+    // IndexedStack 이 다섯 탭 본문을 모두 살려 두므로 화면에 보이지 않는
+    // 탭의 FAB 도 트리에 있다. 기본 태그(둘 다 null)로 겹치면 라우트
+    // 전환에서 "multiple heroes share the same tag" 단언이 난다.
+    await pumpShell(tester);
+    await tester.pumpAndSettle();
+
+    // IndexedStack 이 감춘 탭은 Offstage 아래에 있다 — 기본 finder 는 그것을
+    // 건너뛰므로 skipOffstage: false 로 살아 있는 FAB 을 모두 본다.
+    final tags = tester
+        .widgetList<FloatingActionButton>(
+          find.byType(FloatingActionButton, skipOffstage: false),
+        )
+        .map((fab) => fab.heroTag)
+        .toList();
+
+    expect(tags, hasLength(2));
+    expect(tags, everyElement(isNotNull));
+    expect(tags.toSet(), hasLength(2));
+  });
+
   testWidgets('탭을 오가도 목록을 다시 읽지 않는다', (tester) async {
     // IndexedStack 이 탭 본문을 살려 두므로 스크롤 위치와 읽어둔 페이지가 남는다.
     // 셸이 다섯 탭을 한 번에 만들기 때문에 첫 조회는 피드 탭과 프로필 탭에서

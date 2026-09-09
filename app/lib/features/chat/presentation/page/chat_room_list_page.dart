@@ -102,6 +102,9 @@ class _ChatRoomListView extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         key: const Key('chatList.create'),
+        // 홈 셸이 탭 본문을 IndexedStack 으로 동시에 살려 두므로, 피드 탭의
+        // FAB 과 기본 태그가 겹치면 라우트 전환에서 hero 충돌 단언이 난다.
+        heroTag: 'chat-create',
         onPressed: () => _create(context),
         icon: const Icon(Icons.add_comment_outlined),
         label: Text(l10n.chatCreateRoomLabel),

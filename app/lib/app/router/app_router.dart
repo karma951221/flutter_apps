@@ -61,11 +61,13 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(
         path: Routes.postCompose,
         // extra 는 결과 화면의 "공유하기"가 들려 보낸 판 결과다. 그냥 들어오면
-        // null 이고 평소의 작성 화면이 된다.
+        // null 이고 평소의 작성 화면이 된다. JSON 호환 Map 으로 오므로(go_router
+        // 의 codec 경고를 피하려고 TradeResultSummary 대신 Map 을 넘긴다)
+        // 여기서 되돌린다 — 형태가 아니면 fromMap 이 null 을 준다.
         builder: (_, state) => BlocProvider(
           create: (_) => getIt<PostCubit>(),
           child: PostEditorPage(
-            tradeResult: state.extra as TradeResultSummary?,
+            tradeResult: TradeResultSummary.fromMap(state.extra),
           ),
         ),
       ),

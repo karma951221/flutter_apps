@@ -108,7 +108,19 @@ void main() {
         ),
         GoRoute(
           path: Routes.postCompose,
-          builder: (_, _) => const Scaffold(body: Center(child: Text('작성'))),
+          // app_router.dart 의 실제 builder 와 같은 모양이다: extra 는
+          // TradeResultSummary 가 아니라 JSON 호환 Map 으로 오고, 여기서
+          // fromMap 으로 되돌려 미리보기를 그린다.
+          builder: (_, state) {
+            final summary = TradeResultSummary.fromMap(state.extra);
+            return Scaffold(
+              body: Center(
+                child: Text(
+                  summary == null ? '작성' : '작성 · ${summary.displaySymbol}',
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
@@ -218,15 +230,22 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(router.state.matchedLocation, Routes.postCompose);
-    final extra = router.state.extra! as TradeResultSummary;
-    expect(extra.sessionId, 's1');
-    expect(extra.symbol, 'BTCUSDT');
-    expect(extra.returnPct, 12.34);
-    expect(extra.buyHoldReturnPct, 3);
-    expect(extra.maxDrawdownPct, 8);
-    expect(extra.tradeCount, 4);
-    expect(extra.startDay, DateTime.utc(2021, 11));
-    expect(extra.endDay, DateTime.utc(2022, 1, 29));
+    // TradeResultSummary 자체가 아니라 JSON 호환 Map 이다 — go_router 가
+    // codec 없는 클래스를 extra 로 만나면 상태 복원 시도에서 경고를 낸다.
+    final extra = router.state.extra! as Map<String, Object?>;
+    expect(extra, {
+      'session_id': 's1',
+      'symbol': 'BTCUSDT',
+      'start_day': '2021-11-01',
+      'end_day': '2022-01-29',
+      'return_pct': 12.34,
+      'buy_hold_return_pct': 3.0,
+      'max_drawdown_pct': 8.0,
+      'trade_count': 4,
+    });
+    // 작성 화면의 라우터 builder 가 그 Map 을 도로 TradeResultSummary 로
+    // 풀어 미리보기를 그린다.
+    expect(find.text('작성 · BTC'), findsOneWidget);
   });
 
   testWidgets('남의 판에는 공유하기가 없다', (tester) async {

@@ -146,6 +146,8 @@ class _ResultBody extends StatelessWidget {
     final result = session.result!;
     context.push(
       Routes.postCompose,
+      // TradeResultSummary 자체가 아니라 JSON 호환 Map 을 넘긴다 — go_router 가
+      // extra 에 codec 없는 클래스를 만나면 상태 복원 시도에서 경고를 낸다.
       extra: TradeResultSummary(
         sessionId: session.id,
         symbol: result.symbol,
@@ -155,7 +157,7 @@ class _ResultBody extends StatelessWidget {
         buyHoldReturnPct: result.buyHoldReturnPct,
         maxDrawdownPct: result.maxDrawdownPct,
         tradeCount: result.tradeCount,
-      ),
+      ).toMap(),
     );
   }
 }
