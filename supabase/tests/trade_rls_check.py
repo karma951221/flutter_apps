@@ -234,6 +234,20 @@ st, body = rpc("place_trade_order", A,
 check("수량 0 은 거부된다",
       rejected(st, body, "수량은 0보다 커야 합니다"), f"{st} {message_of(body)}")
 
+# JSON 표준에는 NaN 숫자가 없지만 PostgREST 는 문자열 "NaN" 을 PostgreSQL
+# numeric 으로 변환한다. numeric NaN 은 0 이하 비교도 CHECK 도 통과하므로 RPC 가
+# 직접 막아야 판의 cash · quantity · fee 가 NaN 으로 오염되지 않는다.
+st, body = rpc("place_trade_order", A,
+               {"session_id": a_session, "side": "buy", "quantity": "NaN"})
+check("NaN 수량은 0과 같은 문구로 거부된다",
+      rejected(st, body, "수량은 0보다 커야 합니다"), f"{st} {message_of(body)}")
+
+st, state_after_nan = rpc("get_trade_session", A, {"session_id": a_session})
+check("NaN 거부 뒤 판 상태와 주문이 오염되지 않는다",
+      st == 200 and dec(state_after_nan["cash"]) == INITIAL_CASH
+      and dec(state_after_nan["quantity"]) == 0 and state_after_nan["orders"] == [],
+      f"{st} cash={state_after_nan.get('cash')} quantity={state_after_nan.get('quantity')}")
+
 # --- 손계산 1건: step 0 에서 10주 매수 ---------------------------------------
 st, state = rpc("place_trade_order", A,
                 {"session_id": a_session, "side": "buy", "quantity": 10})

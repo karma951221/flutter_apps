@@ -2339,7 +2339,7 @@ JSON 키**라 `session_id` · `side` · `quantity` 를 그대로 쓰고, 본문�
 |---|---|---|
 | `start_trade_session() → uuid` | 종목(`having count(*) >= 120` 중 무작위)과 시작일(`min(day) + floor(random() × (max−min−119+1))`)을 뽑아 판을 만든다. 뽑은 창이 정확히 120봉인지 확인한다 | `authenticated` |
 | `get_trade_session(session_id uuid) → jsonb` | 내 판이거나 끝난 판이면 상태를 돌려준다 | **`anon`, `authenticated`** |
-| `place_trade_order(session_id uuid, side text, quantity numeric) → jsonb` | 세션을 `for update` 로 잠그고 현재 봉(`i = 59 + step`)의 정규화 종가로 체결한다. 수수료 0.1%. 주문을 남기고 상태를 돌려준다 | `authenticated` |
+| `place_trade_order(session_id uuid, side text, quantity numeric) → jsonb` | 세션을 `for update` 로 잠그고 현재 봉(`i = 59 + step`)의 정규화 종가로 체결한다. `NaN`·0 이하 수량은 먼저 거절한다. 수수료 0.1%. 주문을 남기고 상태를 돌려준다 | `authenticated` |
 | `advance_trade_session(session_id uuid) → jsonb` | `step := step + 1`. 60 이 되면 `trade_settle(id, 119)` 로 자동 종료한다 | `authenticated` |
 | `finish_trade_session(session_id uuid) → jsonb` | 지금 끝낸다 — `trade_settle(id, 59 + step)` | `authenticated` |
 
@@ -2359,7 +2359,7 @@ public, anon` 뒤 `authenticated` 에게만 준다.
 | `이미 끝난 판입니다` | 끝난 판에 주문 · advance · finish |
 | `잔고가 부족합니다` | 매수 비용 + 수수료 > 현금 |
 | `보유 수량이 부족합니다` | 매도 수량 > 보유 |
-| `수량은 0보다 커야 합니다` | `round(quantity, 6) <= 0` |
+| `수량은 0보다 커야 합니다` | `quantity` 가 `null`·`NaN`이거나 `round(quantity, 6) <= 0` |
 | `끝난 판만 공유할 수 있습니다` | `create_post_with_images()` 에 진행 중인 판 · 남의 판 (§5) |
 
 내부 오류는 영어다 — `authentication required`(42501) · `candle window
@@ -2371,7 +2371,7 @@ incomplete` · `invalid side`(22023). 사용자에게 보일 자리가 아니다
 
 ### 검증한 것 (로컬 Supabase · 실제 JWT + REST)
 
-`supabase/tests/trade_rls_check.py` 62건이 모두 통과한다(2026-09-09). 사용자 둘과
+`supabase/tests/trade_rls_check.py` 64건이 모두 통과한다(2026-09-09). 사용자 둘과
 게스트로 아래를 확인한다. 항목은 [테스트 문서](testing/features/trade.md)에도 있다.
 
 - **숨김 컬럼.** `trade_sessions?select=symbol` · `select=start_day` 는 **본인의
@@ -2386,7 +2386,8 @@ incomplete` · `invalid side`(22023). 사용자에게 보일 자리가 아니다
   각 봉의 키는 `i,o,h,l,c` 뿐이라 `day` · `volume` · `symbol` 이 실릴 자리가 없고,
   index 59 의 종가는 `100` 이다
 - **주문 거절.** 현금을 넘는 매수는 `잔고가 부족합니다`, 보유 0 에서의 매도는
-  `보유 수량이 부족합니다`, 수량 0 은 `수량은 0보다 커야 합니다` 다
+  `보유 수량이 부족합니다`, 수량 0·`NaN`은 `수량은 0보다 커야 합니다` 다.
+  `NaN` 거부 뒤에도 현금·보유·주문이 바뀌지 않는다
 - **손계산 1건.** step 0 에서 10주 매수 → `cash = 8999` · `quantity = 10` ·
   주문 `{step:0, buy, 10, price 100, fee 1}`. 60번 `advance` 로 자동 종료한 뒤
   스크립트가 내려받은 정규화 봉만으로 `final_equity` · `return_pct` ·

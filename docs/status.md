@@ -307,8 +307,8 @@ auth 쪽 8개는 `await` 뒤에 가드 없이 `emit` 한다. 다만 이 테스�
       피드 카드 → B 의 반응 · 댓글 → 게스트 결과 열람 8개 항목 통과. 최종 리뷰 반영
       ([기록](features/trade/history.md) · [테스트](testing/features/trade.md))
 
-검증(2026-09-09): `flutter analyze` 0 · `flutter test` 전체 통과 · `supabase db reset` 후
-`trade_rls_check.py` 62건과 기존 스크립트 7개 전부 통과.
+검증(2026-09-09): `flutter analyze` 0 · `flutter test` 전체 통과 · pending 마이그레이션 적용 후
+`trade_rls_check.py` 64건과 기존 스크립트 7개 전부 통과.
 
 ### 후속 4건 — 완료 (2026-09-09)
 
@@ -327,6 +327,12 @@ auth 쪽 8개는 `await` 뒤에 가드 없이 `emit` 한다. 다만 이 테스�
 종료 전환을 20프레임(125ms 간격)으로 찍어 앱바가 한 번만 그려지는 것을 확인했고,
 공유한 글이 새로고침 없이 피드·프로필 맨 위에 있으며, Hero 충돌 단언과 공유하기의
 codec 경고가 로그에서 사라졌다.
+
+### 마무리 리뷰 후 결함 정리 — 진행 중 (2026-09-09)
+
+- [x] **`NaN` 주문 오염 차단** — PostgREST 가 문자열 `"NaN"`을 `numeric`으로
+      받아도 RPC 가 수량 오류로 거절한다. 거부 뒤 현금·보유·주문이
+      변하지 않음을 실제 JWT + REST 로 확인했다
 
 남은 것:
 
