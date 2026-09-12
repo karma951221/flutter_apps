@@ -19,9 +19,7 @@ import 'package:feature_follow/feature_follow.dart';
 import '../../features/profile/presentation/page/edit_profile_page.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
 import 'package:feature_safety/feature_safety.dart';
-import '../../features/settings/presentation/page/account_settings_page.dart';
-import '../../features/settings/presentation/page/change_password_page.dart';
-import '../../features/settings/presentation/page/settings_page.dart';
+import 'package:feature_settings/feature_settings.dart';
 import 'package:feature_trade/feature_trade.dart';
 import 'auth_redirect.dart';
 

@@ -36,6 +36,7 @@ dependencies:
   feature_preferences: any
   feature_reaction: any
   feature_safety: any
+  feature_settings: any
   feature_trade: any
   l10n: any
   flutter:

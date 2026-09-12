@@ -8,7 +8,7 @@ import '../../../chat/presentation/cubit/chat_room_list_state.dart';
 import '../../../chat/presentation/page/chat_room_list_page.dart';
 import '../../../feed/presentation/page/feed_page.dart';
 import '../../../profile/presentation/page/profile_page.dart';
-import '../../../settings/presentation/page/settings_page.dart';
+import 'package:feature_settings/feature_settings.dart';
 import 'package:feature_trade/feature_trade.dart';
 
 /// 하단 내비게이션을 가진 홈 셸.

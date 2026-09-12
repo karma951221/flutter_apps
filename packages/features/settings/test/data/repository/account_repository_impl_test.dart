@@ -1,7 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/features/settings/data/datasource/account_data_source.dart';
-import 'package:daylog/features/settings/data/repository/account_repository_impl.dart';
-import 'package:daylog/features/settings/domain/entity/account_content_summary.dart';
+import 'package:feature_settings/feature_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

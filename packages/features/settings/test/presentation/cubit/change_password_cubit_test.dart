@@ -1,8 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
 import 'package:feature_auth/feature_auth.dart';
-import 'package:daylog/features/settings/presentation/cubit/change_password_cubit.dart';
-import 'package:daylog/features/settings/presentation/cubit/change_password_state.dart';
+import 'package:feature_settings/feature_settings.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
