@@ -16,6 +16,7 @@ import 'package:feature_follow/feature_follow.dart' as _i324;
 import 'package:feature_preferences/feature_preferences.dart' as _i769;
 import 'package:feature_reaction/feature_reaction.dart' as _i766;
 import 'package:feature_safety/feature_safety.dart' as _i789;
+import 'package:feature_trade/feature_trade.dart' as _i849;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:supabase_flutter/supabase_flutter.dart' as _i454;
@@ -72,14 +73,6 @@ import '../features/settings/presentation/cubit/change_password_cubit.dart'
     as _i459;
 import '../features/settings/presentation/cubit/delete_account_cubit.dart'
     as _i966;
-import '../features/trade/data/datasource/supabase_trade_data_source.dart'
-    as _i1052;
-import '../features/trade/data/datasource/trade_data_source.dart' as _i345;
-import '../features/trade/data/repository/trade_repository_impl.dart' as _i488;
-import '../features/trade/domain/repository/trade_repository.dart' as _i289;
-import '../features/trade/domain/usecase/trade_use_case.dart' as _i835;
-import '../features/trade/presentation/cubit/trade_home_cubit.dart' as _i202;
-import '../features/trade/presentation/cubit/trade_session_cubit.dart' as _i135;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
@@ -94,6 +87,7 @@ extension GetItInjectableX on _i174.GetIt {
     await _i766.FeatureReactionPackageModule().init(gh);
     await _i324.FeatureFollowPackageModule().init(gh);
     await _i769.FeaturePreferencesPackageModule().init(gh);
+    await _i849.FeatureTradePackageModule().init(gh);
     gh.factory<_i459.ChangePasswordCubit>(
       () => _i459.ChangePasswordCubit(gh<_i277.AuthUseCase>()),
     );
@@ -122,9 +116,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.ImageStorage>(),
       ),
     );
-    gh.lazySingleton<_i345.TradeDataSource>(
-      () => _i1052.SupabaseTradeDataSource(gh<_i454.SupabaseClient>()),
-    );
     gh.lazySingleton<_i694.ChatDataSource>(
       () => _i971.SupabaseChatDataSource(
         gh<_i454.SupabaseClient>(),
@@ -146,12 +137,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i564.PostUseCase>(
       () => _i564.DefaultPostUseCase(gh<_i615.PostRepository>()),
       dispose: (i) => i.dispose(),
-    );
-    gh.lazySingleton<_i289.TradeRepository>(
-      () => _i488.TradeRepositoryImpl(gh<_i345.TradeDataSource>()),
-    );
-    gh.lazySingleton<_i835.TradeUseCase>(
-      () => _i835.DefaultTradeUseCase(gh<_i289.TradeRepository>()),
     );
     gh.lazySingleton<_i13.CommentUseCase>(
       () => _i13.DefaultCommentUseCase(gh<_i237.CommentRepository>()),
@@ -202,12 +187,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i482.FeedCubit>(
       () =>
           _i482.FeedCubit(gh<_i556.FeedUseCase>(), gh<_i766.ReactionUseCase>()),
-    );
-    gh.factory<_i202.TradeHomeCubit>(
-      () => _i202.TradeHomeCubit(gh<_i835.TradeUseCase>()),
-    );
-    gh.factory<_i135.TradeSessionCubit>(
-      () => _i135.TradeSessionCubit(gh<_i835.TradeUseCase>()),
     );
     gh.lazySingleton<_i141.AccountUseCase>(
       () => _i141.DefaultAccountUseCase(gh<_i186.AccountRepository>()),

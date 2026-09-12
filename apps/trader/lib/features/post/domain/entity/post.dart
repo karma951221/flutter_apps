@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../../trade/domain/entity/trade_result_summary.dart';
+import 'package:feature_trade/feature_trade.dart';
 import 'post_image.dart';
 
 part 'post.freezed.dart';

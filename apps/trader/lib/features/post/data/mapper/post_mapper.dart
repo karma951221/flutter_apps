@@ -1,4 +1,4 @@
-import '../../../trade/domain/entity/trade_result_summary.dart';
+import 'package:feature_trade/feature_trade.dart';
 import '../../domain/entity/post.dart';
 import '../../domain/entity/post_image.dart';
 import '../dto/post_dto.dart';

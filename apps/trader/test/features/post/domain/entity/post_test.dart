@@ -1,6 +1,6 @@
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_image.dart';
-import 'package:daylog/features/trade/domain/entity/trade_result_summary.dart';
+import 'package:feature_trade/feature_trade.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

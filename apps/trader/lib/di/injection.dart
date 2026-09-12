@@ -4,6 +4,7 @@ import 'package:feature_follow/feature_follow.dart';
 import 'package:feature_preferences/feature_preferences.dart';
 import 'package:feature_reaction/feature_reaction.dart';
 import 'package:feature_safety/feature_safety.dart';
+import 'package:feature_trade/feature_trade.dart';
 import 'package:injectable/injectable.dart';
 
 import 'injection.config.dart';
@@ -19,6 +20,7 @@ import 'injection.config.dart';
     ExternalModule(FeatureReactionPackageModule),
     ExternalModule(FeatureFollowPackageModule),
     ExternalModule(FeaturePreferencesPackageModule),
+    ExternalModule(FeatureTradePackageModule),
   ],
 )
 Future<void> configureDependencies() async {

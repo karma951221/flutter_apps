@@ -22,9 +22,7 @@ import 'package:feature_safety/feature_safety.dart';
 import '../../features/settings/presentation/page/account_settings_page.dart';
 import '../../features/settings/presentation/page/change_password_page.dart';
 import '../../features/settings/presentation/page/settings_page.dart';
-import '../../features/trade/domain/entity/trade_result_summary.dart';
-import '../../features/trade/presentation/page/trade_result_page.dart';
-import '../../features/trade/presentation/page/trade_session_page.dart';
+import 'package:feature_trade/feature_trade.dart';
 import 'auth_redirect.dart';
 
 /// 인증 게이트.

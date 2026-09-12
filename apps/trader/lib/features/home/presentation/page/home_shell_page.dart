@@ -9,7 +9,7 @@ import '../../../chat/presentation/page/chat_room_list_page.dart';
 import '../../../feed/presentation/page/feed_page.dart';
 import '../../../profile/presentation/page/profile_page.dart';
 import '../../../settings/presentation/page/settings_page.dart';
-import '../../../trade/presentation/page/trade_home_page.dart';
+import 'package:feature_trade/feature_trade.dart';
 
 /// 하단 내비게이션을 가진 홈 셸.
 ///
