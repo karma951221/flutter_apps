@@ -1,7 +1,6 @@
 import 'package:daylog/app/router/auth_redirect.dart';
 import 'package:core/core.dart';
-import 'package:daylog/features/auth/domain/entity/app_user.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_state.dart';
+import 'package:feature_auth/feature_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 const _me = AppUser(id: 'me', email: 'me@example.test', nickname: '카르마');

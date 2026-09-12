@@ -1,10 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
-import 'package:daylog/features/auth/domain/entity/app_user.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_event.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_state.dart';
+import 'package:feature_auth/feature_auth.dart';
 import 'package:daylog/features/chat/domain/chat_policy.dart';
 import 'package:daylog/features/chat/domain/entity/chat_room.dart';
 import 'package:daylog/features/chat/domain/usecase/chat_use_case.dart';

@@ -4,8 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/core.dart';
 import 'package:l10n/l10n.dart';
 import 'package:design_system/design_system.dart';
-import '../../../auth/presentation/bloc/auth_bloc.dart';
-import '../../../auth/presentation/bloc/auth_state.dart';
+import 'package:feature_auth/feature_auth.dart';
 import '../../domain/chat_policy.dart';
 import '../../domain/usecase/chat_use_case.dart';
 

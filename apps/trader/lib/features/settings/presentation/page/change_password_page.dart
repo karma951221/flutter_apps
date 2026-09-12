@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/core.dart';
 import 'package:l10n/l10n.dart';
 import 'package:design_system/design_system.dart';
-import '../../../auth/presentation/widget/auth_text_field.dart';
+import 'package:feature_auth/feature_auth.dart';
 import '../cubit/change_password_cubit.dart';
 import '../cubit/change_password_state.dart';
 

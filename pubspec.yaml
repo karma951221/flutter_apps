@@ -8,6 +8,7 @@ workspace:
   - apps/trader
   - packages/core
   - packages/design_system
+  - packages/features/auth
   - packages/l10n
 
 dev_dependencies:

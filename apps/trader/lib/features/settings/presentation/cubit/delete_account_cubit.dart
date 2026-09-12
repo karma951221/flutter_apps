@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../../auth/domain/usecase/auth_use_case.dart';
+import 'package:feature_auth/feature_auth.dart';
 import 'delete_account_state.dart';
 
 /// 회원 탈퇴를 실행한다.

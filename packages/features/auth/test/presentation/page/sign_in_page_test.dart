@@ -1,9 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
-import 'package:daylog/features/auth/presentation/cubit/sign_in_cubit.dart';
-import 'package:daylog/features/auth/presentation/cubit/submit_state.dart';
-import 'package:daylog/features/auth/presentation/page/sign_in_page.dart';
+import 'package:feature_auth/feature_auth.dart';
 import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

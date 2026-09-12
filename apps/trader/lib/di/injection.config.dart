@@ -11,22 +11,12 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 
 import 'package:core/core.dart' as _i494;
+import 'package:feature_auth/feature_auth.dart' as _i277;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 import 'package:supabase_flutter/supabase_flutter.dart' as _i454;
 
-import '../features/auth/data/datasource/auth_data_source.dart' as _i940;
-import '../features/auth/data/datasource/supabase_auth_data_source.dart'
-    as _i76;
-import '../features/auth/data/repository/supabase_auth_repository.dart'
-    as _i568;
-import '../features/auth/domain/repository/auth_repository.dart' as _i267;
-import '../features/auth/domain/usecase/auth_use_case.dart' as _i698;
-import '../features/auth/presentation/bloc/auth_bloc.dart' as _i59;
-import '../features/auth/presentation/cubit/password_reset_cubit.dart' as _i64;
-import '../features/auth/presentation/cubit/sign_in_cubit.dart' as _i149;
-import '../features/auth/presentation/cubit/sign_up_cubit.dart' as _i953;
 import '../features/chat/data/datasource/chat_data_source.dart' as _i694;
 import '../features/chat/data/datasource/supabase_chat_data_source.dart'
     as _i971;
@@ -151,11 +141,18 @@ extension GetItInjectableX on _i174.GetIt {
   }) async {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     await _i494.CorePackageModule().init(gh);
+    await _i277.FeatureAuthPackageModule().init(gh);
     gh.lazySingleton<_i376.ThemeDataSource>(
       () => _i158.PreferencesThemeDataSource(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i659.ThemeRepository>(
       () => _i767.ThemeRepositoryImpl(gh<_i376.ThemeDataSource>()),
+    );
+    gh.factory<_i459.ChangePasswordCubit>(
+      () => _i459.ChangePasswordCubit(gh<_i277.AuthUseCase>()),
+    );
+    gh.factory<_i966.DeleteAccountCubit>(
+      () => _i966.DeleteAccountCubit(gh<_i277.AuthUseCase>()),
     );
     gh.lazySingleton<_i683.LanguageDataSource>(
       () => _i783.PreferencesLanguageDataSource(gh<_i460.SharedPreferences>()),
@@ -224,9 +221,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i206.ChatRepository>(
       () => _i176.ChatRepositoryImpl(gh<_i694.ChatDataSource>()),
     );
-    gh.lazySingleton<_i940.AuthDataSource>(
-      () => _i76.SupabaseAuthDataSource(gh<_i454.SupabaseClient>()),
-    );
     gh.lazySingleton<_i682.FollowDataSource>(
       () => _i203.SupabaseFollowDataSource(gh<_i454.SupabaseClient>()),
     );
@@ -280,12 +274,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i506.FollowRepository>(
       () => _i709.FollowRepositoryImpl(gh<_i682.FollowDataSource>()),
     );
-    gh.lazySingleton<_i267.AuthRepository>(
-      () => _i568.SupabaseAuthRepository(
-        gh<_i940.AuthDataSource>(),
-        gh<_i494.ImageStorage>(),
-      ),
-    );
     gh.lazySingleton<_i90.FollowUseCase>(
       () => _i90.DefaultFollowUseCase(gh<_i506.FollowRepository>()),
     );
@@ -316,27 +304,8 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i609.BlockRepository>(),
       ),
     );
-    gh.lazySingleton<_i698.AuthUseCase>(
-      () => _i698.DefaultAuthUseCase(gh<_i267.AuthRepository>()),
-    );
     gh.lazySingleton<_i141.AccountUseCase>(
       () => _i141.DefaultAccountUseCase(gh<_i186.AccountRepository>()),
-    );
-    gh.factory<_i59.AuthBloc>(() => _i59.AuthBloc(gh<_i698.AuthUseCase>()));
-    gh.factory<_i64.PasswordResetCubit>(
-      () => _i64.PasswordResetCubit(gh<_i698.AuthUseCase>()),
-    );
-    gh.factory<_i149.SignInCubit>(
-      () => _i149.SignInCubit(gh<_i698.AuthUseCase>()),
-    );
-    gh.factory<_i953.SignUpCubit>(
-      () => _i953.SignUpCubit(gh<_i698.AuthUseCase>()),
-    );
-    gh.factory<_i459.ChangePasswordCubit>(
-      () => _i459.ChangePasswordCubit(gh<_i698.AuthUseCase>()),
-    );
-    gh.factory<_i966.DeleteAccountCubit>(
-      () => _i966.DeleteAccountCubit(gh<_i698.AuthUseCase>()),
     );
     gh.lazySingleton<_i387.ReactionUseCase>(
       () => _i387.DefaultReactionUseCase(gh<_i996.ReactionRepository>()),

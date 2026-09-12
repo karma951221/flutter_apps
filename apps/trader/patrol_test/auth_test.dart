@@ -1,4 +1,4 @@
-import 'package:daylog/features/auth/presentation/widget/failure_text.dart';
+import 'package:feature_auth/feature_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:patrol/patrol.dart';

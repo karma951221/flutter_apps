@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:core/core.dart';
 import 'package:l10n/l10n.dart';
 import 'package:design_system/design_system.dart';
-import 'package:daylog/features/auth/domain/usecase/auth_use_case.dart';
+import 'package:feature_auth/feature_auth.dart';
 import 'package:daylog/features/settings/domain/entity/account_content_summary.dart';
 import 'package:daylog/features/settings/domain/usecase/account_use_case.dart';
 import 'package:daylog/features/settings/presentation/cubit/delete_account_cubit.dart';

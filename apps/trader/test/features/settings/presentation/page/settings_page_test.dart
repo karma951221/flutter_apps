@@ -1,9 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:design_system/design_system.dart';
-import 'package:daylog/features/auth/domain/entity/app_user.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_event.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_state.dart';
+import 'package:feature_auth/feature_auth.dart';
 import 'package:daylog/features/preferences/domain/entity/app_language.dart';
 import 'package:daylog/features/preferences/domain/entity/app_theme_mode.dart';
 import 'package:daylog/features/preferences/domain/usecase/preferences_use_case.dart';

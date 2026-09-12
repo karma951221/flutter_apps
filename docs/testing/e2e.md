@@ -146,7 +146,7 @@ await $(const Key('signIn.email')).enterText(email);
 
 ### `pumpAndSettle` 은 스플래시에서 타임아웃한다
 
-[SplashPage](../../apps/trader/lib/features/auth/presentation/page/splash_page.dart) 의
+[SplashPage](../../packages/features/auth/lib/src/presentation/page/splash_page.dart) 의
 `CircularProgressIndicator` 는 끝나지 않는 애니메이션이다. settle 은 "대기 중인
 프레임이 없을 때"를 기다리므로 영원히 오지 않는다.
 

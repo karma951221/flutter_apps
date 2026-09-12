@@ -1,9 +1,6 @@
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
-import 'package:daylog/features/auth/domain/entity/app_user.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_event.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_state.dart';
+import 'package:feature_auth/feature_auth.dart';
 import 'package:daylog/features/trade/domain/entity/trade_result_summary.dart';
 import 'package:daylog/features/trade/domain/entity/trade_candle.dart';
 import 'package:daylog/features/trade/domain/entity/trade_order.dart';

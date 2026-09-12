@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../../auth/domain/usecase/auth_use_case.dart';
+import 'package:feature_auth/feature_auth.dart';
 import 'change_password_state.dart';
 
 /// 로그인한 사용자가 자기 비밀번호를 바꾼다.

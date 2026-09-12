@@ -1,8 +1,6 @@
 import 'package:daylog/app/router/app_router.dart';
 import 'package:core/core.dart';
-import 'package:daylog/features/auth/domain/entity/app_user.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_state.dart';
+import 'package:feature_auth/feature_auth.dart';
 import 'package:daylog/features/chat/presentation/page/chat_room_page.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_image.dart';

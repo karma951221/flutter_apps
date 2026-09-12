@@ -1,10 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
-import 'package:daylog/features/auth/domain/entity/app_user.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_event.dart';
-import 'package:daylog/features/auth/presentation/bloc/auth_state.dart';
+import 'package:feature_auth/feature_auth.dart';
 import 'package:daylog/features/comment/domain/entity/post_comment.dart';
 import 'package:daylog/features/comment/domain/usecase/comment_use_case.dart';
 import 'package:daylog/features/comment/presentation/cubit/comment_cubit.dart';

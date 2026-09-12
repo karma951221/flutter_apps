@@ -5,11 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:core/core.dart';
-import '../../features/auth/presentation/bloc/auth_bloc.dart';
-import '../../features/auth/presentation/page/password_reset_page.dart';
-import '../../features/auth/presentation/page/sign_in_page.dart';
-import '../../features/auth/presentation/page/sign_up_page.dart';
-import '../../features/auth/presentation/page/splash_page.dart';
+import 'package:feature_auth/feature_auth.dart';
 import '../../features/chat/presentation/page/chat_explore_page.dart';
 import '../../features/chat/presentation/page/chat_room_page.dart';
 import '../../features/chat/presentation/page/create_room_page.dart';

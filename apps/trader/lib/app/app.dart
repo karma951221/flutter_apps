@@ -4,8 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
-import '../features/auth/presentation/bloc/auth_bloc.dart';
-import '../features/auth/presentation/bloc/auth_event.dart';
+import 'package:feature_auth/feature_auth.dart';
 import '../features/preferences/domain/entity/app_language.dart';
 import '../features/preferences/domain/entity/app_theme_mode.dart';
 import '../features/preferences/presentation/cubit/language_cubit.dart';

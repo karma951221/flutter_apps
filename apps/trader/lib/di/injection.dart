@@ -1,4 +1,5 @@
 import 'package:core/core.dart';
+import 'package:feature_auth/feature_auth.dart';
 import 'package:injectable/injectable.dart';
 
 import 'injection.config.dart';
@@ -7,7 +8,10 @@ import 'injection.config.dart';
   initializerName: 'init',
   preferRelativeImports: true,
   asExtension: true,
-  externalPackageModulesBefore: [ExternalModule(CorePackageModule)],
+  externalPackageModulesBefore: [
+    ExternalModule(CorePackageModule),
+    ExternalModule(FeatureAuthPackageModule),
+  ],
 )
 Future<void> configureDependencies() async {
   // @preResolve 로 등록한 인스턴스(SharedPreferences)가 준비될 때까지 기다린다.

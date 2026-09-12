@@ -1,7 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/features/auth/domain/entity/app_user.dart';
-import 'package:daylog/features/auth/domain/repository/auth_repository.dart';
-import 'package:daylog/features/auth/domain/usecase/scenario/sign_up_scenario.dart';
+import 'package:feature_auth/feature_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

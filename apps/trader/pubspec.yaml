@@ -31,6 +31,7 @@ environment:
 dependencies:
   core: any
   design_system: any
+  feature_auth: any
   l10n: any
   flutter:
     sdk: flutter
