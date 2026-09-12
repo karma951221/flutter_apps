@@ -1,5 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/features/follow/data/cursor/follow_cursor.dart';
+import 'package:feature_follow/feature_follow.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

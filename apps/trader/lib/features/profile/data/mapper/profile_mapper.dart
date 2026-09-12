@@ -1,4 +1,4 @@
-import '../../../follow/domain/entity/follow_relation.dart';
+import 'package:feature_follow/feature_follow.dart';
 import '../../domain/entity/profile.dart';
 import '../dto/profile_dto.dart';
 

@@ -8,8 +8,7 @@ import 'package:daylog/features/chat/presentation/cubit/chat_room_list_cubit.dar
 import 'package:daylog/features/feed/domain/entity/feed_post.dart';
 import 'package:daylog/features/feed/domain/usecase/feed_use_case.dart';
 import 'package:daylog/features/feed/domain/entity/feed_source.dart';
-import 'package:daylog/features/follow/domain/usecase/follow_use_case.dart';
-import 'package:daylog/features/follow/presentation/cubit/follow_action_cubit.dart';
+import 'package:feature_follow/feature_follow.dart';
 import 'package:daylog/features/feed/presentation/cubit/feed_cubit.dart';
 import 'package:daylog/features/home/presentation/page/home_shell_page.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';

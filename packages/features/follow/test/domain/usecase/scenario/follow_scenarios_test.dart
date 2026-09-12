@@ -1,11 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/features/follow/domain/entity/follow_user.dart';
-import 'package:daylog/features/follow/domain/repository/follow_repository.dart';
-import 'package:daylog/features/follow/domain/usecase/scenario/follow_page_request.dart';
-import 'package:daylog/features/follow/domain/usecase/scenario/follow_user_scenario.dart';
-import 'package:daylog/features/follow/domain/usecase/scenario/get_followers_scenario.dart';
-import 'package:daylog/features/follow/domain/usecase/scenario/get_followings_scenario.dart';
-import 'package:daylog/features/follow/domain/usecase/scenario/unfollow_user_scenario.dart';
+import 'package:feature_follow/feature_follow.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

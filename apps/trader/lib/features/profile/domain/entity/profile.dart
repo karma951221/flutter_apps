@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../../follow/domain/entity/follow_relation.dart';
+import 'package:feature_follow/feature_follow.dart';
 
 part 'profile.freezed.dart';
 
