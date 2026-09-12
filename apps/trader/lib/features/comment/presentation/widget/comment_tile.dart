@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:core/core.dart';
-import '../../../../design_system/theme/app_spacing.dart';
-import '../../../../design_system/widget/app_avatar.dart';
-import '../../../../design_system/widget/app_overflow_menu.dart';
+import 'package:design_system/design_system.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
 import '../../../reaction/presentation/widget/reaction_bar.dart';
 import '../../domain/entity/post_comment.dart';

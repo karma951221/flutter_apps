@@ -1,7 +1,6 @@
 import 'package:core/core.dart';
 import 'package:l10n/l10n.dart';
-import 'package:daylog/design_system/theme/app_theme.dart';
-import 'package:daylog/design_system/widget/app_list_tile.dart';
+import 'package:design_system/design_system.dart';
 import 'package:daylog/features/safety/domain/entity/blocked_user.dart';
 import 'package:daylog/features/safety/domain/usecase/safety_use_case.dart';
 import 'package:daylog/features/safety/presentation/cubit/blocked_users_cubit.dart';

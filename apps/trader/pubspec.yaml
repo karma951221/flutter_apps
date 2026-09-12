@@ -30,6 +30,7 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   core: any
+  design_system: any
   l10n: any
   flutter:
     sdk: flutter

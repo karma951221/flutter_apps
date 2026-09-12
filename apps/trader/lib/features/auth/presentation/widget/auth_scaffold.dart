@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../../design_system/theme/app_spacing.dart';
+import 'package:design_system/design_system.dart';
 
 /// 인증 화면 공통 뼈대.
 ///

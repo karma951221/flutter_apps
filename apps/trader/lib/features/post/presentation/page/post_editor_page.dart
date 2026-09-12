@@ -4,10 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:core/core.dart';
 import 'package:l10n/l10n.dart';
-import '../../../../design_system/theme/app_radius.dart';
-import '../../../../design_system/theme/app_spacing.dart';
-import '../../../../design_system/widget/app_button.dart';
-import '../../../../design_system/widget/app_snack_bar.dart';
+import 'package:design_system/design_system.dart';
 import '../../../trade/domain/entity/trade_result_summary.dart';
 import '../../../trade/presentation/widget/trade_result_card.dart';
 import '../../domain/entity/post.dart';

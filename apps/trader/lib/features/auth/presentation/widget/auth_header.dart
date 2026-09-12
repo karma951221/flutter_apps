@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../design_system/theme/app_spacing.dart';
+import 'package:design_system/design_system.dart';
 
 /// 인증 화면 상단의 제목 영역.
 ///

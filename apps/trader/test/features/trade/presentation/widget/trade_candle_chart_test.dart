@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:daylog/design_system/theme/app_colors.dart';
-import 'package:daylog/design_system/theme/app_theme.dart';
+import 'package:design_system/design_system.dart';
 import 'package:daylog/features/trade/domain/entity/trade_candle.dart';
 import 'package:daylog/features/trade/domain/entity/trade_order.dart';
 import 'package:daylog/features/trade/domain/entity/trade_side.dart';

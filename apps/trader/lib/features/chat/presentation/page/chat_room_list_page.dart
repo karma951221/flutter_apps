@@ -4,8 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
 import 'package:l10n/l10n.dart';
-import '../../../../design_system/theme/app_spacing.dart';
-import '../../../../design_system/widget/app_placeholder.dart';
+import 'package:design_system/design_system.dart';
 import '../../domain/entity/chat_room_summary.dart';
 import '../cubit/chat_room_list_cubit.dart';
 import '../cubit/chat_room_list_state.dart';

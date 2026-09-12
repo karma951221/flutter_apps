@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../design_system/theme/app_colors.dart';
+import 'package:design_system/design_system.dart';
 import '../../domain/entity/trade_result.dart';
 
 /// 모의투자 화면의 숫자·날짜 표기.

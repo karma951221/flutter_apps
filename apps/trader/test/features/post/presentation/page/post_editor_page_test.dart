@@ -1,5 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/design_system/theme/app_theme.dart';
+import 'package:design_system/design_system.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_draft.dart';
 import 'package:daylog/features/post/domain/entity/post_update.dart';

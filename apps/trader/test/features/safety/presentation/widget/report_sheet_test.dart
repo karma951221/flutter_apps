@@ -1,6 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/design_system/theme/app_theme.dart';
-import 'package:daylog/design_system/widget/app_button.dart';
+import 'package:design_system/design_system.dart';
 import 'package:daylog/features/safety/domain/entity/report_reason.dart';
 import 'package:daylog/features/safety/domain/entity/report_target.dart';
 import 'package:daylog/features/safety/domain/usecase/safety_use_case.dart';

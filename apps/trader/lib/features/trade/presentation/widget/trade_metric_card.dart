@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../design_system/theme/app_spacing.dart';
+import 'package:design_system/design_system.dart';
 
 /// 모의투자 지표 한 칸. 라벨 위, 값 아래.
 ///

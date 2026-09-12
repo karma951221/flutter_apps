@@ -1,5 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/design_system/theme/app_theme.dart';
+import 'package:design_system/design_system.dart';
 import 'package:daylog/features/follow/domain/entity/follow_user.dart';
 import 'package:daylog/features/follow/domain/usecase/follow_use_case.dart';
 import 'package:daylog/features/follow/presentation/cubit/follow_list_cubit.dart';

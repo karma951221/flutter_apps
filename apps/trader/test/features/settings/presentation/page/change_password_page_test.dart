@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:core/core.dart';
-import 'package:daylog/design_system/theme/app_theme.dart';
+import 'package:design_system/design_system.dart';
 import 'package:daylog/features/auth/domain/usecase/auth_use_case.dart';
 import 'package:daylog/features/auth/presentation/widget/auth_text_field.dart';
 import 'package:daylog/features/settings/presentation/cubit/change_password_cubit.dart';

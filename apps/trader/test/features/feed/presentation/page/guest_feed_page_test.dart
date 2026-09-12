@@ -1,6 +1,6 @@
 import 'package:daylog/app/router/routes.dart';
 import 'package:core/core.dart';
-import 'package:daylog/design_system/theme/app_theme.dart';
+import 'package:design_system/design_system.dart';
 import 'package:daylog/features/feed/domain/entity/feed_post.dart';
 import 'package:daylog/features/feed/domain/entity/feed_source.dart';
 import 'package:daylog/features/feed/domain/usecase/feed_use_case.dart';

@@ -1,4 +1,4 @@
-import 'package:daylog/design_system/theme/app_theme.dart';
+import 'package:design_system/design_system.dart';
 import 'package:daylog/features/trade/domain/entity/trade_candle.dart';
 import 'package:daylog/features/trade/domain/entity/trade_session.dart';
 import 'package:daylog/features/trade/domain/entity/trade_side.dart';

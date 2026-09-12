@@ -1,4 +1,4 @@
-import 'package:daylog/design_system/theme/app_colors.dart';
+import 'package:design_system/design_system.dart';
 import 'package:daylog/features/trade/presentation/format/trade_format.dart';
 import 'package:flutter_test/flutter_test.dart';
 

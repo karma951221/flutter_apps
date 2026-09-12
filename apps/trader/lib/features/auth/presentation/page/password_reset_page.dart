@@ -4,8 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:core/core.dart';
 import 'package:l10n/l10n.dart';
-import '../../../../design_system/theme/app_spacing.dart';
-import '../../../../design_system/widget/app_button.dart';
+import 'package:design_system/design_system.dart';
 import '../cubit/password_reset_cubit.dart';
 import '../cubit/password_reset_state.dart';
 import '../widget/auth_header.dart';

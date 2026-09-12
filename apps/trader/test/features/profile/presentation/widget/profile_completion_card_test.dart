@@ -1,4 +1,4 @@
-import 'package:daylog/design_system/theme/app_theme.dart';
+import 'package:design_system/design_system.dart';
 import 'package:daylog/features/profile/domain/entity/profile.dart';
 import 'package:daylog/features/profile/presentation/widget/profile_completion_card.dart';
 import 'package:l10n/l10n.dart';

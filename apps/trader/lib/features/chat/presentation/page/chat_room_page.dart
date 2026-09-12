@@ -3,11 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:core/core.dart';
 import 'package:l10n/l10n.dart';
-import '../../../../design_system/theme/app_spacing.dart';
-import '../../../../design_system/widget/app_confirm_dialog.dart';
-import '../../../../design_system/widget/app_overflow_menu.dart';
-import '../../../../design_system/widget/app_placeholder.dart';
-import '../../../../design_system/widget/app_snack_bar.dart';
+import 'package:design_system/design_system.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../safety/domain/entity/report_target.dart';

@@ -1,6 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:daylog/design_system/theme/app_theme.dart';
-import 'package:daylog/design_system/widget/app_list_tile.dart';
+import 'package:design_system/design_system.dart';
 import 'package:daylog/features/auth/domain/entity/app_user.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_event.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../design_system/widget/app_count_action.dart';
+import 'package:design_system/design_system.dart';
 import 'package:l10n/l10n.dart';
 import '../../domain/entity/reaction_summary.dart';
 import '../../domain/entity/reaction_type.dart';

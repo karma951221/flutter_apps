@@ -1,4 +1,4 @@
-import 'package:daylog/design_system/theme/app_theme.dart';
+import 'package:design_system/design_system.dart';
 import 'package:daylog/features/preferences/domain/entity/app_theme_mode.dart';
 import 'package:daylog/features/preferences/domain/usecase/preferences_use_case.dart';
 import 'package:daylog/features/preferences/presentation/cubit/theme_cubit.dart';

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:core/core.dart';
 import 'package:l10n/l10n.dart';
-import '../../../../design_system/theme/app_spacing.dart';
+import 'package:design_system/design_system.dart';
 
 class FailureText extends StatelessWidget {
   const FailureText(this.failure, {super.key});

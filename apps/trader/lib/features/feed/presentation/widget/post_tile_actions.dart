@@ -4,8 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
 import 'package:l10n/l10n.dart';
-import '../../../../design_system/widget/app_confirm_dialog.dart';
-import '../../../../design_system/widget/app_snack_bar.dart';
+import 'package:design_system/design_system.dart';
 import '../../../post/domain/entity/post.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';

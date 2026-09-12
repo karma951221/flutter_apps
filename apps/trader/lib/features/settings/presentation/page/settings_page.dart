@@ -4,10 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
 
-import '../../../../design_system/theme/app_spacing.dart';
-import '../../../../design_system/widget/app_avatar.dart';
-import '../../../../design_system/widget/app_confirm_dialog.dart';
-import '../../../../design_system/widget/app_list_tile.dart';
+import 'package:design_system/design_system.dart';
 import '../../../auth/domain/entity/app_user.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';

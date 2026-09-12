@@ -1,5 +1,4 @@
-import 'package:daylog/design_system/theme/app_colors.dart';
-import 'package:daylog/design_system/theme/app_theme.dart';
+import 'package:design_system/design_system.dart';
 import 'package:daylog/features/trade/domain/entity/trade_result_summary.dart';
 import 'package:daylog/features/trade/presentation/widget/trade_result_card.dart';
 import 'package:l10n/l10n.dart';

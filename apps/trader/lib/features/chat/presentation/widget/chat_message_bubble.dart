@@ -2,8 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import 'package:core/core.dart';
-import '../../../../design_system/theme/app_radius.dart';
-import '../../../../design_system/theme/app_spacing.dart';
+import 'package:design_system/design_system.dart';
 import 'package:l10n/l10n.dart';
 import '../../domain/entity/chat_message.dart';
 import '../../domain/usecase/chat_use_case.dart';
