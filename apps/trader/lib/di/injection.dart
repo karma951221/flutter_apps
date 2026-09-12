@@ -1,5 +1,6 @@
 import 'package:core/core.dart';
 import 'package:feature_auth/feature_auth.dart';
+import 'package:feature_safety/feature_safety.dart';
 import 'package:injectable/injectable.dart';
 
 import 'injection.config.dart';
@@ -11,6 +12,7 @@ import 'injection.config.dart';
   externalPackageModulesBefore: [
     ExternalModule(CorePackageModule),
     ExternalModule(FeatureAuthPackageModule),
+    ExternalModule(FeatureSafetyPackageModule),
   ],
 )
 Future<void> configureDependencies() async {

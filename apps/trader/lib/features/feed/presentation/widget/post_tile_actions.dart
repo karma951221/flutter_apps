@@ -8,8 +8,7 @@ import 'package:design_system/design_system.dart';
 import '../../../post/domain/entity/post.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
-import '../../../safety/domain/entity/report_target.dart';
-import '../../../safety/presentation/widget/report_sheet.dart';
+import 'package:feature_safety/feature_safety.dart';
 import '../../domain/entity/feed_post.dart';
 import '../cubit/feed_cubit.dart';
 

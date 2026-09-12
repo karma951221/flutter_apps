@@ -19,7 +19,7 @@ import '../../features/follow/presentation/cubit/follow_list_state.dart';
 import '../../features/follow/presentation/page/follow_list_page.dart';
 import '../../features/profile/presentation/page/edit_profile_page.dart';
 import '../../features/profile/presentation/page/profile_page.dart';
-import '../../features/safety/presentation/page/blocked_users_page.dart';
+import 'package:feature_safety/feature_safety.dart';
 import '../../features/settings/presentation/page/account_settings_page.dart';
 import '../../features/settings/presentation/page/change_password_page.dart';
 import '../../features/settings/presentation/page/settings_page.dart';

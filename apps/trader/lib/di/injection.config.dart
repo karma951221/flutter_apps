@@ -12,6 +12,7 @@
 
 import 'package:core/core.dart' as _i494;
 import 'package:feature_auth/feature_auth.dart' as _i277;
+import 'package:feature_safety/feature_safety.dart' as _i789;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
@@ -96,22 +97,6 @@ import '../features/reaction/data/repository/reaction_repository_impl.dart'
 import '../features/reaction/domain/repository/reaction_repository.dart'
     as _i996;
 import '../features/reaction/domain/usecase/reaction_use_case.dart' as _i387;
-import '../features/safety/data/datasource/block_data_source.dart' as _i920;
-import '../features/safety/data/datasource/report_data_source.dart' as _i972;
-import '../features/safety/data/datasource/supabase_block_data_source.dart'
-    as _i247;
-import '../features/safety/data/datasource/supabase_report_data_source.dart'
-    as _i1067;
-import '../features/safety/data/repository/block_repository_impl.dart' as _i349;
-import '../features/safety/data/repository/report_repository_impl.dart'
-    as _i617;
-import '../features/safety/domain/repository/block_repository.dart' as _i609;
-import '../features/safety/domain/repository/report_repository.dart' as _i179;
-import '../features/safety/domain/usecase/safety_use_case.dart' as _i262;
-import '../features/safety/presentation/cubit/block_action_cubit.dart' as _i32;
-import '../features/safety/presentation/cubit/blocked_users_cubit.dart'
-    as _i177;
-import '../features/safety/presentation/cubit/report_cubit.dart' as _i925;
 import '../features/settings/data/datasource/account_data_source.dart' as _i249;
 import '../features/settings/data/datasource/supabase_account_data_source.dart'
     as _i139;
@@ -142,6 +127,7 @@ extension GetItInjectableX on _i174.GetIt {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     await _i494.CorePackageModule().init(gh);
     await _i277.FeatureAuthPackageModule().init(gh);
+    await _i789.FeatureSafetyPackageModule().init(gh);
     gh.lazySingleton<_i376.ThemeDataSource>(
       () => _i158.PreferencesThemeDataSource(gh<_i460.SharedPreferences>()),
     );
@@ -159,9 +145,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i857.LanguageRepository>(
       () => _i134.LanguageRepositoryImpl(gh<_i683.LanguageDataSource>()),
-    );
-    gh.lazySingleton<_i972.ReportDataSource>(
-      () => _i1067.SupabaseReportDataSource(gh<_i454.SupabaseClient>()),
     );
     gh.lazySingleton<_i247.FeedDataSource>(
       () => _i52.SupabaseFeedDataSource(gh<_i454.SupabaseClient>()),
@@ -203,9 +186,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i857.LanguageRepository>(),
       ),
     );
-    gh.lazySingleton<_i920.BlockDataSource>(
-      () => _i247.SupabaseBlockDataSource(gh<_i454.SupabaseClient>()),
-    );
     gh.factory<_i639.LanguageCubit>(
       () => _i639.LanguageCubit(gh<_i962.PreferencesUseCase>()),
     );
@@ -237,14 +217,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i835.TradeUseCase>(
       () => _i835.DefaultTradeUseCase(gh<_i289.TradeRepository>()),
     );
-    gh.lazySingleton<_i609.BlockRepository>(
-      () => _i349.BlockRepositoryImpl(gh<_i920.BlockDataSource>()),
-    );
     gh.lazySingleton<_i13.CommentUseCase>(
       () => _i13.DefaultCommentUseCase(gh<_i237.CommentRepository>()),
-    );
-    gh.lazySingleton<_i179.ReportRepository>(
-      () => _i617.ReportRepositoryImpl(gh<_i972.ReportDataSource>()),
     );
     gh.lazySingleton<_i522.FeedRepository>(
       () => _i264.FeedRepositoryImpl(gh<_i247.FeedDataSource>()),
@@ -298,12 +272,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i135.TradeSessionCubit>(
       () => _i135.TradeSessionCubit(gh<_i835.TradeUseCase>()),
     );
-    gh.lazySingleton<_i262.SafetyUseCase>(
-      () => _i262.DefaultSafetyUseCase(
-        gh<_i179.ReportRepository>(),
-        gh<_i609.BlockRepository>(),
-      ),
-    );
     gh.lazySingleton<_i141.AccountUseCase>(
       () => _i141.DefaultAccountUseCase(gh<_i186.AccountRepository>()),
     );
@@ -315,15 +283,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i818.FollowListCubit>(
       () => _i818.FollowListCubit(gh<_i90.FollowUseCase>()),
-    );
-    gh.factory<_i32.BlockActionCubit>(
-      () => _i32.BlockActionCubit(gh<_i262.SafetyUseCase>()),
-    );
-    gh.factory<_i177.BlockedUsersCubit>(
-      () => _i177.BlockedUsersCubit(gh<_i262.SafetyUseCase>()),
-    );
-    gh.factory<_i925.ReportCubit>(
-      () => _i925.ReportCubit(gh<_i262.SafetyUseCase>()),
     );
     gh.factory<_i482.FeedCubit>(
       () =>
