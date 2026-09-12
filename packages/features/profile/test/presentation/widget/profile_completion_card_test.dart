@@ -1,6 +1,5 @@
 import 'package:design_system/design_system.dart';
-import 'package:daylog/features/profile/domain/entity/profile.dart';
-import 'package:daylog/features/profile/presentation/widget/profile_completion_card.dart';
+import 'package:feature_profile/feature_profile.dart';
 import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

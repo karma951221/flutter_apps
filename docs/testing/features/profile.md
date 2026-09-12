@@ -1,6 +1,6 @@
 # F2 profile — 테스트 범위
 
-> [테스트 가이드](../README.md) · [아키텍처](../../architecture.md) · [프로필 화면](../../../apps/trader/lib/features/profile/presentation/page/profile_page.dart)
+> [테스트 가이드](../README.md) · [아키텍처](../../architecture.md) · [프로필 화면](../../../packages/features/profile/lib/src/presentation/page/profile_page.dart)
 
 | 대상 | 시나리오 | 기대 결과 |
 |---|---|---|

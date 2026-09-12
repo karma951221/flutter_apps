@@ -2,11 +2,7 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
-import 'package:daylog/features/profile/domain/entity/profile.dart';
-import 'package:daylog/features/profile/domain/entity/profile_update.dart';
-import 'package:daylog/features/profile/domain/usecase/profile_use_case.dart';
-import 'package:daylog/features/profile/presentation/cubit/profile_cubit.dart';
-import 'package:daylog/features/profile/presentation/cubit/profile_state.dart';
+import 'package:feature_profile/feature_profile.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

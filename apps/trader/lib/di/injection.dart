@@ -6,6 +6,7 @@ import 'package:feature_feed/feature_feed.dart';
 import 'package:feature_follow/feature_follow.dart';
 import 'package:feature_post/feature_post.dart';
 import 'package:feature_preferences/feature_preferences.dart';
+import 'package:feature_profile/feature_profile.dart';
 import 'package:feature_reaction/feature_reaction.dart';
 import 'package:feature_safety/feature_safety.dart';
 import 'package:feature_settings/feature_settings.dart';
@@ -31,6 +32,7 @@ import 'injection.config.dart';
     ExternalModule(FeaturePostPackageModule),
     ExternalModule(FeatureCommentPackageModule),
     ExternalModule(FeatureFeedPackageModule),
+    ExternalModule(FeatureProfilePackageModule),
   ],
 )
 Future<void> configureDependencies() async {

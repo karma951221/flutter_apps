@@ -1,5 +1,4 @@
-import 'package:daylog/features/profile/data/dto/profile_dto.dart';
-import 'package:daylog/features/profile/data/mapper/profile_mapper.dart';
+import 'package:feature_profile/feature_profile.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

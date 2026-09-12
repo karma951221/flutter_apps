@@ -1,11 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:core/core.dart';
-import 'package:daylog/features/profile/domain/entity/avatar_image_draft.dart';
-import 'package:daylog/features/profile/domain/entity/profile.dart';
-import 'package:daylog/features/profile/domain/entity/profile_update.dart';
-import 'package:daylog/features/profile/domain/repository/profile_repository.dart';
-import 'package:daylog/features/profile/domain/usecase/scenario/update_avatar_scenario.dart';
+import 'package:feature_profile/feature_profile.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

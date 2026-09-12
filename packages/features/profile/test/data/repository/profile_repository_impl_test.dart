@@ -1,8 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/features/profile/data/datasource/profile_data_source.dart';
-import 'package:daylog/features/profile/data/dto/profile_dto.dart';
-import 'package:daylog/features/profile/data/repository/profile_repository_impl.dart';
-import 'package:daylog/features/profile/domain/entity/profile_update.dart';
+import 'package:feature_profile/feature_profile.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

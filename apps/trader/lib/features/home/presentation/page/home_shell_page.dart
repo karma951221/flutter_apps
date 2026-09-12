@@ -5,7 +5,7 @@ import 'package:core/core.dart';
 import 'package:l10n/l10n.dart';
 import 'package:feature_chat/feature_chat.dart';
 import 'package:feature_feed/feature_feed.dart';
-import '../../../profile/presentation/page/profile_page.dart';
+import 'package:feature_profile/feature_profile.dart';
 import 'package:feature_settings/feature_settings.dart';
 import 'package:feature_trade/feature_trade.dart';
 

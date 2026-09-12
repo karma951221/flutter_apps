@@ -38,6 +38,7 @@ dependencies:
   feature_follow: any
   feature_post: any
   feature_preferences: any
+  feature_profile: any
   feature_reaction: any
   feature_safety: any
   feature_settings: any
