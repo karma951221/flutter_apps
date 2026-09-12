@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../entity/account_content_summary.dart';
 import '../repository/account_repository.dart';
 import 'scenario/get_my_content_summary_scenario.dart';

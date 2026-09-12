@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/error/failure.dart';
+import 'package:core/core.dart';
 import '../../domain/chat_policy.dart';
 import '../../domain/entity/chat_image_draft.dart';
 import '../../domain/entity/chat_message.dart';

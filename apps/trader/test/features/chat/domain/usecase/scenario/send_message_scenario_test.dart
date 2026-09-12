@@ -1,4 +1,4 @@
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/chat/domain/chat_policy.dart';
 import 'package:daylog/features/chat/domain/repository/chat_repository.dart';
 import 'package:daylog/features/chat/domain/usecase/scenario/send_message_scenario.dart';

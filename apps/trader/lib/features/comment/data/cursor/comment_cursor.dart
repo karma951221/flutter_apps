@@ -1,7 +1,6 @@
 import 'dart:convert';
 
-import '../../../../core/error/failure.dart';
-import '../../../../core/error/failure_code.dart';
+import 'package:core/core.dart';
 
 /// 댓글 커서. `(created_at, id)` 복합 커서를 불투명 문자열로 감싼다.
 ///

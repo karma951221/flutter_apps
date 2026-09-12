@@ -1,7 +1,6 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/pagination/cursor_page.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../../post/domain/entity/post_author.dart';
 import '../entity/post_comment.dart';
 import '../repository/comment_repository.dart';

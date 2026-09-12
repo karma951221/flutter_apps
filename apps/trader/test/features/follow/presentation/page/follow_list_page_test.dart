@@ -1,7 +1,4 @@
-import 'package:daylog/core/di/injection.dart';
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/pagination/cursor_page.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/follow/domain/entity/follow_user.dart';
 import 'package:daylog/features/follow/domain/usecase/follow_use_case.dart';

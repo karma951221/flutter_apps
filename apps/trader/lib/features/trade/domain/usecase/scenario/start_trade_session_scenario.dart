@@ -1,4 +1,4 @@
-import '../../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../repository/trade_repository.dart';
 
 /// 새 판을 시작한다.

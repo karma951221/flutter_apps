@@ -1,8 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../core/error/failure.dart';
-import '../../../../core/error/failure_code.dart';
+import 'package:core/core.dart';
 import '../cursor/follow_cursor.dart';
 import '../dto/follow_user_dto.dart';
 import 'follow_data_source.dart';

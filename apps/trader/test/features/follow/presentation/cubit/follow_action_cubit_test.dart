@@ -1,6 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/follow/domain/entity/follow_relation.dart';
 import 'package:daylog/features/follow/domain/usecase/follow_use_case.dart';
 import 'package:daylog/features/follow/presentation/cubit/follow_action_cubit.dart';

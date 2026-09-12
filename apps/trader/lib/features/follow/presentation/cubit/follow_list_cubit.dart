@@ -1,8 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/pagination/cursor_page.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../domain/entity/follow_user.dart';
 import '../../domain/usecase/follow_use_case.dart';
 import 'follow_list_state.dart';

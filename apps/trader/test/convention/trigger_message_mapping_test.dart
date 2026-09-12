@@ -62,7 +62,7 @@ void main() {
     // mapper 는 문구를 `static const` 맵(_commentDepthMessages ·
     // _reportTargetMessages · _blockMessages · _roomCapacityMessages)에 그대로
     // 담는다. 실행하지 않고 원문을 부분 문자열로 확인하는 것이 가장 튼튼하다.
-    final mapper = File('lib/core/data/mapper/supabase_error_mapper.dart');
+    final mapper = File('../../packages/core/lib/src/data/mapper/supabase_error_mapper.dart');
     final mapperSource = mapper.readAsStringSync();
 
     for (final entry in messages.entries) {

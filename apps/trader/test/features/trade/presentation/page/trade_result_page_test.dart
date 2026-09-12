@@ -1,7 +1,5 @@
 import 'package:daylog/app/router/routes.dart';
-import 'package:daylog/core/di/injection.dart';
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/auth/domain/entity/app_user.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';

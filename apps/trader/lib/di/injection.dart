@@ -1,14 +1,13 @@
-import 'package:get_it/get_it.dart';
+import 'package:core/core.dart';
 import 'package:injectable/injectable.dart';
 
 import 'injection.config.dart';
-
-final getIt = GetIt.instance;
 
 @InjectableInit(
   initializerName: 'init',
   preferRelativeImports: true,
   asExtension: true,
+  externalPackageModulesBefore: [ExternalModule(CorePackageModule)],
 )
 Future<void> configureDependencies() async {
   // @preResolve 로 등록한 인스턴스(SharedPreferences)가 준비될 때까지 기다린다.

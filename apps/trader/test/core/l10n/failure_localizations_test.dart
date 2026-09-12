@@ -1,5 +1,4 @@
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/error/failure_code.dart';
+import 'package:core/core.dart';
 import 'package:daylog/core/l10n/failure_localizations.dart';
 import 'package:daylog/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';

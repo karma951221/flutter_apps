@@ -1,9 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/pagination/cursor_page.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/feed/domain/entity/feed_post.dart';
 import 'package:daylog/features/feed/domain/usecase/feed_use_case.dart';
 import 'package:daylog/features/feed/domain/entity/feed_source.dart';

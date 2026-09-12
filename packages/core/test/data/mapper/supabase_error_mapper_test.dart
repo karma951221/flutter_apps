@@ -1,7 +1,5 @@
 import 'dart:io';
-import 'package:daylog/core/data/mapper/supabase_error_mapper.dart';
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/error/failure_code.dart';
+import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

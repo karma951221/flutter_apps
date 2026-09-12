@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/error/failure.dart';
+import 'package:core/core.dart';
 import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 

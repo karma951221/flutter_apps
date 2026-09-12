@@ -1,6 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/auth/domain/usecase/auth_use_case.dart';
 import 'package:daylog/features/auth/presentation/cubit/password_reset_cubit.dart';
 import 'package:daylog/features/auth/presentation/cubit/password_reset_state.dart';

@@ -1,4 +1,4 @@
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_draft.dart';

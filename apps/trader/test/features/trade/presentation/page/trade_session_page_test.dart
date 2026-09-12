@@ -2,10 +2,7 @@ import 'dart:async';
 
 import 'package:daylog/app/router/route_observer.dart';
 import 'package:daylog/app/router/routes.dart';
-import 'package:daylog/core/di/injection.dart';
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/pagination/cursor_page.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/trade/domain/entity/trade_candle.dart';
 import 'package:daylog/features/trade/domain/entity/trade_session.dart';

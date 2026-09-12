@@ -1,7 +1,4 @@
-import '../../../../../core/error/failure.dart';
-import '../../../../../core/error/failure_code.dart';
-import '../../../../../core/pagination/cursor_page.dart';
-import '../../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../entity/follow_user.dart';
 
 /// 팔로워 · 팔로잉 목록 요청의 공통 검증.

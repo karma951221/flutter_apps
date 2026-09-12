@@ -1,8 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../core/error/failure.dart';
-import '../../../../core/error/failure_code.dart';
+import 'package:core/core.dart';
 import '../../domain/entity/trade_side.dart';
 import '../cursor/trade_cursor.dart';
 import '../dto/trade_session_dto.dart';

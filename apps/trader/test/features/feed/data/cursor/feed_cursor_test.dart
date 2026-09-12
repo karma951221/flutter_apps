@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:daylog/core/error/failure.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/feed/data/cursor/feed_cursor.dart';
 import 'package:flutter_test/flutter_test.dart';
 

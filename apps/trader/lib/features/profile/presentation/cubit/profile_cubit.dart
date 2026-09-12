@@ -3,8 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/validation/nickname_check.dart';
-import '../../../../core/validation/validators.dart';
+import 'package:core/core.dart';
 import '../../domain/entity/avatar_image_draft.dart';
 import '../../domain/entity/profile_update.dart';
 import '../../domain/usecase/profile_use_case.dart';

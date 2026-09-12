@@ -1,4 +1,4 @@
-import '../../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../repository/chat_repository.dart';
 
 /// 상대와의 DM 방을 연다 (없으면 만든다).

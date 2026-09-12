@@ -1,7 +1,6 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/data/repository/repository_error_handler.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../domain/entity/reaction_target.dart';
 import '../../domain/entity/reaction_type.dart';
 import '../../domain/repository/reaction_repository.dart';

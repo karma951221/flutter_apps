@@ -1,4 +1,4 @@
-import '../../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../repository/chat_repository.dart';
 
 /// 읽음 시각을 갱신한다.

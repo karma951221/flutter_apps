@@ -1,8 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../core/data/nickname_match.dart';
-import '../../../../core/media/image_storage.dart';
+import 'package:core/core.dart';
 import '../../domain/entity/avatar_image_draft.dart';
 import '../../domain/entity/profile_update.dart';
 import '../dto/profile_dto.dart';

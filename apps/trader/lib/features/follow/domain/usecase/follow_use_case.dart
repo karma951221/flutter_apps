@@ -1,7 +1,6 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/pagination/cursor_page.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../entity/follow_user.dart';
 import '../repository/follow_repository.dart';
 import 'scenario/follow_user_scenario.dart';

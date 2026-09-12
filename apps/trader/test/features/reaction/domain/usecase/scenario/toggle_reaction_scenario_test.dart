@@ -1,5 +1,4 @@
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/reaction/domain/entity/reaction_summary.dart';
 import 'package:daylog/features/reaction/domain/entity/reaction_target.dart';
 import 'package:daylog/features/reaction/domain/entity/reaction_type.dart';

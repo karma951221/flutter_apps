@@ -1,4 +1,4 @@
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../entity/account_content_summary.dart';
 
 /// 계정 단위의 조회. 탈퇴처럼 계정 자체에 손대는 흐름이 쓴다.

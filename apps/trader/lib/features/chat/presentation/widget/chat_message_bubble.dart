@@ -1,8 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/di/injection.dart';
-import '../../../../core/extension/date_time_format.dart';
+import 'package:core/core.dart';
 import '../../../../design_system/theme/app_radius.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../l10n/app_localizations.dart';

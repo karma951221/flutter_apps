@@ -1,5 +1,4 @@
-import '../../../../core/pagination/cursor_page.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../entity/follow_user.dart';
 
 /// 팔로우 저장소.

@@ -1,8 +1,6 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/id/id_generator.dart';
-import '../../../../core/pagination/cursor_page.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../chat_policy.dart';
 import '../entity/chat_image_draft.dart';
 import '../entity/chat_message.dart';

@@ -1,6 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:daylog/core/di/injection.dart';
-import 'package:daylog/core/error/failure.dart';
+import 'package:core/core.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/auth/presentation/cubit/sign_in_cubit.dart';
 import 'package:daylog/features/auth/presentation/cubit/submit_state.dart';

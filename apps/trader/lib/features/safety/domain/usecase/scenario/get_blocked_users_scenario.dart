@@ -1,4 +1,4 @@
-import '../../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../entity/blocked_user.dart';
 import '../../repository/block_repository.dart';
 

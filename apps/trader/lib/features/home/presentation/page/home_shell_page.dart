@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/di/injection.dart';
+import 'package:core/core.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../chat/presentation/cubit/chat_room_list_cubit.dart';
 import '../../../chat/presentation/cubit/chat_room_list_state.dart';

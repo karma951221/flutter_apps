@@ -1,7 +1,4 @@
-import '../../../../../core/error/failure.dart';
-import '../../../../../core/error/failure_code.dart';
-import '../../../../../core/pagination/cursor_page.dart';
-import '../../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../comment_policy.dart';
 import '../../entity/post_comment.dart';
 import '../../repository/comment_repository.dart';

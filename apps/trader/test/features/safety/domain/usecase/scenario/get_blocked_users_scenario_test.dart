@@ -1,5 +1,4 @@
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/safety/domain/entity/blocked_user.dart';
 import 'package:daylog/features/safety/domain/repository/block_repository.dart';
 import 'package:daylog/features/safety/domain/usecase/scenario/get_blocked_users_scenario.dart';

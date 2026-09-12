@@ -1,4 +1,4 @@
-import '../../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../entity/chat_image_draft.dart';
 import '../../repository/chat_repository.dart';
 

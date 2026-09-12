@@ -1,5 +1,4 @@
-import 'package:daylog/core/pagination/cursor_page.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/comment/domain/entity/post_comment.dart';
 import 'package:daylog/features/comment/domain/repository/comment_repository.dart';
 import 'package:daylog/features/comment/domain/usecase/scenario/add_comment_scenario.dart';

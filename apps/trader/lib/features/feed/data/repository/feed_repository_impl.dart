@@ -1,8 +1,6 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/data/repository/repository_error_handler.dart';
-import '../../../../core/pagination/cursor_page.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../domain/entity/feed_post.dart';
 import '../../domain/entity/feed_source.dart';
 import '../../domain/repository/feed_repository.dart';

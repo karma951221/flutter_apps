@@ -1,7 +1,6 @@
 import 'dart:convert';
 
-import '../../../../core/error/failure.dart';
-import '../../../../core/error/failure_code.dart';
+import 'package:core/core.dart';
 
 /// 탐색 목록 커서. 공개방을 `(created_at, id)` 최신순으로 읽는다.
 ///

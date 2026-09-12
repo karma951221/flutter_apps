@@ -6,6 +6,7 @@ environment:
 
 workspace:
   - apps/trader
+  - packages/core
 
 dev_dependencies:
   melos: 6.3.3

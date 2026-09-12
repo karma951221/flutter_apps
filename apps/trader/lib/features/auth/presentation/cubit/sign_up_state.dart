@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../../../core/validation/nickname_check.dart';
+import 'package:core/core.dart';
 import 'submit_state.dart';
 
 part 'sign_up_state.freezed.dart';

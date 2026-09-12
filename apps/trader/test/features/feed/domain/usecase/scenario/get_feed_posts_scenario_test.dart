@@ -1,6 +1,4 @@
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/pagination/cursor_page.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/feed/domain/entity/feed_post.dart';
 import 'package:daylog/features/feed/domain/repository/feed_repository.dart';
 import 'package:daylog/features/feed/domain/usecase/scenario/get_feed_posts_scenario.dart';

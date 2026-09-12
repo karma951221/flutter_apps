@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../entity/avatar_image_draft.dart';
 import '../entity/profile.dart';
 import '../entity/profile_update.dart';

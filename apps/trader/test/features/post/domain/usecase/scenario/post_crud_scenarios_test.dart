@@ -1,5 +1,4 @@
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_update.dart';
 import 'package:daylog/features/post/domain/repository/post_repository.dart';

@@ -1,4 +1,4 @@
-import 'package:daylog/core/error/failure.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/comment/data/cursor/comment_cursor.dart';
 import 'package:flutter_test/flutter_test.dart';
 

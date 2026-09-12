@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_draft.dart';
 import 'package:daylog/features/post/domain/entity/post_image_draft.dart';

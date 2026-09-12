@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../entity/blocked_user.dart';
 import '../entity/report_reason.dart';
 import '../entity/report_target.dart';

@@ -1,4 +1,4 @@
-import '../../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../entity/account_content_summary.dart';
 import '../../repository/account_repository.dart';
 

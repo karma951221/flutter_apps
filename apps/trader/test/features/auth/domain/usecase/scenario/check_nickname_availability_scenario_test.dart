@@ -1,5 +1,4 @@
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/auth/domain/repository/auth_repository.dart';
 import 'package:daylog/features/auth/domain/usecase/scenario/check_nickname_availability_scenario.dart';
 import 'package:flutter_test/flutter_test.dart';

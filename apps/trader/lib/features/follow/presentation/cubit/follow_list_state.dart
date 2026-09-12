@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../../../core/error/failure.dart';
+import 'package:core/core.dart';
 import '../../domain/entity/follow_user.dart';
 
 part 'follow_list_state.freezed.dart';

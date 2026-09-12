@@ -1,5 +1,4 @@
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/chat/domain/repository/chat_repository.dart';
 import 'package:daylog/features/chat/domain/usecase/scenario/open_direct_room_scenario.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../entity/post.dart';
 import '../entity/post_draft.dart';
 import '../entity/post_update.dart';

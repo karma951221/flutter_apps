@@ -1,4 +1,4 @@
-import '../../../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../repository/auth_repository.dart';
 
 class SendPasswordResetCodeScenario {

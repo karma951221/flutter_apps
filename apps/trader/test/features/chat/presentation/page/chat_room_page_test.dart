@@ -1,9 +1,7 @@
 import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
-import 'package:daylog/core/di/injection.dart';
-import 'package:daylog/core/pagination/cursor_page.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/auth/domain/entity/app_user.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';

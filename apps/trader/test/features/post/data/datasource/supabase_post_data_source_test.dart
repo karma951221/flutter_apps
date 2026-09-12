@@ -1,5 +1,4 @@
-import 'package:daylog/core/id/id_generator.dart';
-import 'package:daylog/core/media/image_storage.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/post/data/datasource/supabase_post_data_source.dart';
 import 'package:daylog/features/post/domain/entity/post_draft.dart';
 import 'package:flutter_test/flutter_test.dart';

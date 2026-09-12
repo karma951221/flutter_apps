@@ -1,5 +1,4 @@
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/follow/data/cursor/follow_cursor.dart';
 import 'package:daylog/features/follow/data/datasource/follow_data_source.dart';
 import 'package:daylog/features/follow/data/dto/follow_user_dto.dart';

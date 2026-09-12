@@ -4,9 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
-import '../../../../core/data/nickname_match.dart';
-import '../../../../core/error/failure.dart';
-import '../../../../core/error/failure_code.dart';
+import 'package:core/core.dart';
 import '../dto/auth_user_dto.dart';
 import 'auth_data_source.dart';
 

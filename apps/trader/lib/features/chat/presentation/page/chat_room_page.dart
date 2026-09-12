@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/di/injection.dart';
+import 'package:core/core.dart';
 import '../../../../core/l10n/failure_localizations.dart';
-import '../../../../core/media/image_picker_service.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_confirm_dialog.dart';
 import '../../../../design_system/widget/app_overflow_menu.dart';

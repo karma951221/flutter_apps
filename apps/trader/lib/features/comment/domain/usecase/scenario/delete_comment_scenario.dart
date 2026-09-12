@@ -1,6 +1,4 @@
-import '../../../../../core/error/failure.dart';
-import '../../../../../core/error/failure_code.dart';
-import '../../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../repository/comment_repository.dart';
 
 /// 내 댓글 삭제. 권한 경계는 앱이 아니라 soft_delete_post_comment() 안의

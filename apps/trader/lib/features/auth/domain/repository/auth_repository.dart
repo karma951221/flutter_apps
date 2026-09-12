@@ -1,4 +1,4 @@
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../entity/app_user.dart';
 
 /// 인증 저장소.

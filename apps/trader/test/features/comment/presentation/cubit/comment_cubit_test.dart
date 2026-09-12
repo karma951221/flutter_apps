@@ -1,7 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/pagination/cursor_page.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/comment/domain/entity/post_comment.dart';
 import 'package:daylog/features/comment/domain/usecase/comment_use_case.dart';
 import 'package:daylog/features/comment/presentation/cubit/comment_cubit.dart';

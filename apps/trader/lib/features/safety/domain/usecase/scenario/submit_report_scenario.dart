@@ -1,4 +1,4 @@
-import '../../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../entity/report_reason.dart';
 import '../../entity/report_target.dart';
 import '../../report_policy.dart';

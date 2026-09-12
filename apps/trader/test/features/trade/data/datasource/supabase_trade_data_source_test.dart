@@ -1,4 +1,4 @@
-import 'package:daylog/core/error/failure.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/trade/data/datasource/supabase_trade_data_source.dart';
 import 'package:daylog/features/trade/domain/entity/trade_side.dart';
 import 'package:flutter_test/flutter_test.dart';

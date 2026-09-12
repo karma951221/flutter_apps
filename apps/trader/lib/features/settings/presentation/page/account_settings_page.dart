@@ -4,10 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
-import '../../../../core/di/injection.dart';
-import '../../../../core/error/failure.dart';
+import 'package:core/core.dart';
 import '../../../../core/l10n/failure_localizations.dart';
-import '../../../../core/result/result.dart';
 import '../../../../design_system/widget/app_confirm_dialog.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';

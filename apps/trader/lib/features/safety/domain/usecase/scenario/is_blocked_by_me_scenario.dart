@@ -1,4 +1,4 @@
-import '../../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../repository/block_repository.dart';
 
 /// 내가 이 사용자를 차단했는지 확인한다.

@@ -1,4 +1,4 @@
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/chat/domain/repository/chat_repository.dart';
 import 'package:daylog/features/chat/domain/usecase/scenario/mark_read_scenario.dart';
 import 'package:flutter_test/flutter_test.dart';

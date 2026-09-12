@@ -2348,7 +2348,7 @@ JSON 키**라 `session_id` · `side` · `quantity` 를 그대로 쓰고, 본문�
 public, anon` 뒤 `authenticated` 에게만 준다.
 
 던지는 문구는 앱의 `SupabaseErrorMapper` 와 1:1이다
-([`apps/trader/lib/core/data/mapper/supabase_error_mapper.dart`](../apps/trader/lib/core/data/mapper/supabase_error_mapper.dart)).
+([`packages/core/lib/src/data/mapper/supabase_error_mapper.dart`](../packages/core/lib/src/data/mapper/supabase_error_mapper.dart)).
 `app/test/convention/trigger_message_mapping_test.dart` 가 마이그레이션의 한국어
 `raise` 문구가 모두 mapper 에 있는지 확인한다.
 

@@ -3,8 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
-import '../../../../core/di/injection.dart';
-import '../../../../core/extension/date_time_format.dart';
+import 'package:core/core.dart';
 import '../../../../core/l10n/failure_localizations.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_list_tile.dart';

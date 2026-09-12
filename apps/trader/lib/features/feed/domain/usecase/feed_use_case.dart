@@ -1,7 +1,6 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/pagination/cursor_page.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../../post/domain/entity/post.dart';
 import '../../../post/domain/usecase/post_use_case.dart';
 import '../entity/feed_post.dart';

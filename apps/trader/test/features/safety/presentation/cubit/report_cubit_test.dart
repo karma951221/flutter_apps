@@ -1,6 +1,5 @@
 import 'package:bloc_test/bloc_test.dart';
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/safety/domain/entity/report_reason.dart';
 import 'package:daylog/features/safety/domain/entity/report_target.dart';
 import 'package:daylog/features/safety/domain/usecase/safety_use_case.dart';

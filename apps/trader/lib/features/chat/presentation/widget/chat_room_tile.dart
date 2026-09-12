@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/extension/date_time_format.dart';
+import 'package:core/core.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_list_tile.dart';

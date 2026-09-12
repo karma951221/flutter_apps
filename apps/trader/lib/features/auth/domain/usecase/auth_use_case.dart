@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../entity/app_user.dart';
 import '../repository/auth_repository.dart';
 import 'scenario/auth_state_changes_scenario.dart';

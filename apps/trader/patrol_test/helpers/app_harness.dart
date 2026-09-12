@@ -1,6 +1,6 @@
 import 'package:daylog/app/app.dart';
 import 'package:daylog/bootstrap.dart';
-import 'package:daylog/core/di/injection.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/preferences/domain/entity/app_language.dart';
 import 'package:flutter/material.dart';
 import 'package:patrol/patrol.dart';

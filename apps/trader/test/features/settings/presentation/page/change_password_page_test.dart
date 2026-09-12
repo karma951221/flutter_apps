@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:daylog/core/di/injection.dart';
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/auth/domain/usecase/auth_use_case.dart';
 import 'package:daylog/features/auth/presentation/widget/auth_text_field.dart';

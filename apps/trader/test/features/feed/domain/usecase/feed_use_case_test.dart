@@ -1,5 +1,4 @@
-import 'package:daylog/core/pagination/cursor_page.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/feed/domain/entity/feed_post.dart';
 import 'package:daylog/features/feed/domain/repository/feed_repository.dart';
 import 'package:daylog/features/feed/domain/usecase/feed_use_case.dart';

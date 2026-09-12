@@ -1,4 +1,4 @@
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../entity/reaction_target.dart';
 import '../entity/reaction_type.dart';
 

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:daylog/core/error/failure.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/follow/data/datasource/supabase_follow_data_source.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';

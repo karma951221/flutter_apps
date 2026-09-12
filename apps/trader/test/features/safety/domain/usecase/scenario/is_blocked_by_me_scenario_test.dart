@@ -1,5 +1,4 @@
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/safety/domain/repository/block_repository.dart';
 import 'package:daylog/features/safety/domain/usecase/scenario/is_blocked_by_me_scenario.dart';
 import 'package:flutter_test/flutter_test.dart';

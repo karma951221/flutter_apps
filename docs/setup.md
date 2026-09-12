@@ -52,7 +52,7 @@ cd ~/Desktop/socialapp/app
 flutter run -d emulator-5554
 ```
 
-Supabase 주소와 키는 `--dart-define` 없이도 로컬 기본값이 들어간다 ([app_config.dart](../apps/trader/lib/core/config/app_config.dart)). 원격 환경을 붙일 때만 주입한다:
+Supabase 주소와 키는 `--dart-define` 없이도 로컬 기본값이 들어간다 ([app_config.dart](../apps/trader/lib/config/app_config.dart)). 원격 환경을 붙일 때만 주입한다:
 
 ```bash
 flutter run --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_PUBLISHABLE_KEY=...
@@ -114,7 +114,7 @@ grant update (nickname, bio, avatar_url) on public.profiles to authenticated;
 
 ### Android 에뮬레이터는 127.0.0.1로 호스트를 못 본다
 
-`10.0.2.2`를 써야 한다. [app_config.dart](../apps/trader/lib/core/config/app_config.dart)에서 플랫폼별로 분기한다.
+`10.0.2.2`를 써야 한다. [app_config.dart](../apps/trader/lib/config/app_config.dart)에서 플랫폼별로 분기한다.
 
 ### Android는 평문 HTTP를 차단한다 (API 28+)
 

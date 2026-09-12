@@ -1,7 +1,5 @@
-import 'package:daylog/core/di/injection.dart';
+import 'package:core/core.dart';
 import 'package:daylog/l10n/app_localizations.dart';
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/design_system/widget/app_list_tile.dart';
 import 'package:daylog/features/safety/domain/entity/blocked_user.dart';

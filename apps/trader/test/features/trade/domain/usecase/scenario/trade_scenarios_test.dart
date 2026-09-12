@@ -1,7 +1,4 @@
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/error/failure_code.dart';
-import 'package:daylog/core/pagination/cursor_page.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/trade/domain/entity/trade_session.dart';
 import 'package:daylog/features/trade/domain/entity/trade_session_summary.dart';
 import 'package:daylog/features/trade/domain/entity/trade_side.dart';

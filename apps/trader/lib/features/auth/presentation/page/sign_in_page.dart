@@ -3,9 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
-import '../../../../core/di/injection.dart';
+import 'package:core/core.dart';
 import '../../../../core/l10n/validation_localizations.dart';
-import '../../../../core/validation/validators.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../cubit/sign_in_cubit.dart';

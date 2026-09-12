@@ -1,10 +1,6 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/data/repository/repository_error_handler.dart';
-import '../../../../core/error/failure.dart';
-import '../../../../core/error/failure_code.dart';
-import '../../../../core/pagination/cursor_page.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../../post/domain/entity/post_author.dart';
 import '../../domain/entity/post_comment.dart';
 import '../../domain/repository/comment_repository.dart';

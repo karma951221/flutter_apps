@@ -1,6 +1,4 @@
-import '../../../../../core/error/failure.dart';
-import '../../../../../core/error/failure_code.dart';
-import '../../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../entity/post.dart';
 import '../../repository/post_repository.dart';
 

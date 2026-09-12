@@ -1,9 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/error/failure.dart';
-import '../../../../core/error/failure_code.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../domain/entity/post.dart';
 import '../../domain/entity/post_draft.dart';
 import '../../domain/entity/post_image_draft.dart';

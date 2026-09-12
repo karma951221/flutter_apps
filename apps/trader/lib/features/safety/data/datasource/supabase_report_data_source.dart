@@ -1,8 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../core/error/failure.dart';
-import '../../../../core/error/failure_code.dart';
+import 'package:core/core.dart';
 import '../../domain/entity/report_reason.dart';
 import '../../domain/entity/report_target.dart';
 import '../mapper/report_target_mapper.dart';

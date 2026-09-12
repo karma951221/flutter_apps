@@ -1,9 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/error/failure.dart';
-import '../../../../core/error/failure_code.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../domain/entity/trade_session.dart';
 import '../../domain/entity/trade_side.dart';
 import '../../domain/usecase/trade_use_case.dart';

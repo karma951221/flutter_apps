@@ -1,5 +1,4 @@
-import '../../../../core/pagination/cursor_page.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../entity/chat_image_draft.dart';
 import '../entity/chat_message.dart';
 import '../entity/chat_participant.dart';

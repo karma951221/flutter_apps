@@ -1,8 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/error/failure.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../domain/chat_policy.dart';
 import '../../domain/entity/chat_room.dart';
 import '../../domain/usecase/chat_use_case.dart';

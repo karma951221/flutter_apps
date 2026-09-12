@@ -1,8 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../../core/id/id_generator.dart';
-import '../../../../core/media/image_storage.dart';
+import 'package:core/core.dart';
 import '../../domain/entity/post_draft.dart';
 import '../../domain/entity/post_update.dart';
 import '../dto/post_dto.dart';

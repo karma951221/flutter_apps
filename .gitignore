@@ -1,2 +1,5 @@
+.DS_Store
 .dart_tool/
+.flutter-plugins-dependencies
 build/
+coverage/

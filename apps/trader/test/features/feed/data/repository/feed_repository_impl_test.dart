@@ -1,4 +1,4 @@
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/feed/data/cursor/feed_cursor.dart';
 import 'package:daylog/features/feed/data/datasource/feed_data_source.dart';
 import 'package:daylog/features/feed/data/dto/feed_post_dto.dart';

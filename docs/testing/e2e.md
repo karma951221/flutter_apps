@@ -174,7 +174,7 @@ await $.waitUntilVisible($(const Key('signIn.email')));   // pumpAndSettle 대�
 ### 에뮬레이터는 `127.0.0.1` 로 호스트를 못 본다
 
 `10.0.2.2` 를 쓴다. 이미
-[app_config.dart](../../apps/trader/lib/core/config/app_config.dart) 가 분기한다.
+[app_config.dart](../../apps/trader/lib/config/app_config.dart) 가 분기한다.
 E2E 도 같은 경로를 타므로 별도 `--dart-define` 이 필요 없다.
 
 ### orchestrator 버전 때문에 빌드가 멈출 수 있다

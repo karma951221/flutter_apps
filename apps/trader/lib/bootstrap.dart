@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:core/core.dart';
 
 import 'app/app.dart';
-import 'core/config/app_config.dart';
-import 'core/di/injection.dart';
-import 'core/network/secure_supabase_storage.dart';
+import 'config/app_config.dart';
+import 'di/injection.dart';
 
 /// 앱 부팅.
 ///

@@ -1,4 +1,4 @@
-import 'package:daylog/core/error/failure.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/follow/data/cursor/follow_cursor.dart';
 import 'package:flutter_test/flutter_test.dart';
 

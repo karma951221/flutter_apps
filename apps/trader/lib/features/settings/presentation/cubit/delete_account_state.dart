@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../../../core/error/failure.dart';
+import 'package:core/core.dart';
 
 part 'delete_account_state.freezed.dart';
 

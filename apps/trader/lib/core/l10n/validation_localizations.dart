@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../../l10n/app_localizations.dart';
-import '../validation/validators.dart';
+import 'package:core/core.dart';
 
 extension ValidationErrorLocalizations on ValidationError {
   String localized(BuildContext context) {

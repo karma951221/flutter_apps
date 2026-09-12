@@ -1,7 +1,6 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/pagination/cursor_page.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../entity/trade_session.dart';
 import '../entity/trade_session_summary.dart';
 import '../entity/trade_side.dart';

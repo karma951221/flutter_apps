@@ -1,4 +1,4 @@
-import 'package:daylog/core/media/image_storage.dart';
+import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

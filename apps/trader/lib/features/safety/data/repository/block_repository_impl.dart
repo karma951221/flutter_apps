@@ -1,7 +1,6 @@
 import 'package:injectable/injectable.dart';
 
-import '../../../../core/data/repository/repository_error_handler.dart';
-import '../../../../core/result/result.dart';
+import 'package:core/core.dart';
 import '../../domain/entity/blocked_user.dart';
 import '../../domain/repository/block_repository.dart';
 import '../datasource/block_data_source.dart';

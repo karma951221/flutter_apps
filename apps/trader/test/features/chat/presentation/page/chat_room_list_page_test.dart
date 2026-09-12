@@ -1,6 +1,5 @@
 import 'package:daylog/app/router/routes.dart';
-import 'package:daylog/core/error/failure.dart';
-import 'package:daylog/core/result/result.dart';
+import 'package:core/core.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/design_system/widget/app_avatar.dart';
 import 'package:daylog/features/chat/domain/entity/chat_message.dart';

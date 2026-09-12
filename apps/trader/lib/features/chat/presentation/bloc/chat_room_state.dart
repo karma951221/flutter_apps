@@ -1,6 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
-import '../../../../core/error/failure.dart';
+import 'package:core/core.dart';
 import '../../domain/entity/chat_message.dart';
 
 part 'chat_room_state.freezed.dart';
