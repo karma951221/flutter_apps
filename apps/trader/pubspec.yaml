@@ -33,6 +33,7 @@ dependencies:
   design_system: any
   feature_auth: any
   feature_chat: any
+  feature_comment: any
   feature_follow: any
   feature_post: any
   feature_preferences: any

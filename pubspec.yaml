@@ -10,6 +10,7 @@ workspace:
   - packages/design_system
   - packages/features/auth
   - packages/features/chat
+  - packages/features/comment
   - packages/features/follow
   - packages/features/post
   - packages/features/preferences

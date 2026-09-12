@@ -1,5 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/features/comment/data/cursor/comment_cursor.dart';
+import 'package:feature_comment/feature_comment.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

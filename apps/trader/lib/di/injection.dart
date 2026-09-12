@@ -1,6 +1,7 @@
 import 'package:core/core.dart';
 import 'package:feature_auth/feature_auth.dart';
 import 'package:feature_chat/feature_chat.dart';
+import 'package:feature_comment/feature_comment.dart';
 import 'package:feature_follow/feature_follow.dart';
 import 'package:feature_post/feature_post.dart';
 import 'package:feature_preferences/feature_preferences.dart';
@@ -27,6 +28,7 @@ import 'injection.config.dart';
     ExternalModule(FeatureSettingsPackageModule),
     ExternalModule(FeatureChatPackageModule),
     ExternalModule(FeaturePostPackageModule),
+    ExternalModule(FeatureCommentPackageModule),
   ],
 )
 Future<void> configureDependencies() async {

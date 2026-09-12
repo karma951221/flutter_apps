@@ -1,10 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/features/comment/domain/entity/post_comment.dart';
-import 'package:daylog/features/comment/domain/repository/comment_repository.dart';
-import 'package:daylog/features/comment/domain/usecase/scenario/add_comment_scenario.dart';
-import 'package:daylog/features/comment/domain/usecase/scenario/delete_comment_scenario.dart';
-import 'package:daylog/features/comment/domain/usecase/scenario/get_comments_scenario.dart';
-import 'package:daylog/features/comment/domain/usecase/scenario/get_replies_scenario.dart';
+import 'package:feature_comment/feature_comment.dart';
 import 'package:feature_post/feature_post.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';

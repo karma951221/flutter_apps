@@ -1,9 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
-import 'package:daylog/features/comment/domain/entity/post_comment.dart';
-import 'package:daylog/features/comment/domain/usecase/comment_use_case.dart';
-import 'package:daylog/features/comment/presentation/cubit/comment_cubit.dart';
-import 'package:daylog/features/comment/presentation/cubit/comment_state.dart';
+import 'package:feature_comment/feature_comment.dart';
 import 'package:feature_post/feature_post.dart';
 import 'package:feature_reaction/feature_reaction.dart';
 import 'package:flutter_test/flutter_test.dart';

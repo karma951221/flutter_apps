@@ -1,5 +1,4 @@
-import 'package:daylog/features/comment/data/dto/post_comment_dto.dart';
-import 'package:daylog/features/comment/data/mapper/post_comment_mapper.dart';
+import 'package:feature_comment/feature_comment.dart';
 import 'package:feature_reaction/feature_reaction.dart';
 import 'package:flutter_test/flutter_test.dart';
 

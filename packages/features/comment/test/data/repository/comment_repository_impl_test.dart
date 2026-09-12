@@ -1,8 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/features/comment/data/cursor/comment_cursor.dart';
-import 'package:daylog/features/comment/data/datasource/comment_data_source.dart';
-import 'package:daylog/features/comment/data/dto/post_comment_dto.dart';
-import 'package:daylog/features/comment/data/repository/comment_repository_impl.dart';
+import 'package:feature_comment/feature_comment.dart';
 import 'package:feature_post/feature_post.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
