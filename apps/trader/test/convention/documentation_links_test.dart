@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('문서의 로컬 Markdown 링크는 존재하는 대상을 가리킨다', () {
-    final docsDirectory = Directory('../docs');
+    final docsDirectory = Directory('../../docs');
     final markdownFiles = docsDirectory
         .listSync(recursive: true)
         .whereType<File>()

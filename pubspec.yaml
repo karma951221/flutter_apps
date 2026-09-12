@@ -1,0 +1,11 @@
+name: socialapp_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.11.5
+
+workspace:
+  - apps/trader
+
+dev_dependencies:
+  melos: 6.3.3

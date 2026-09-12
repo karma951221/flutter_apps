@@ -1,0 +1,29 @@
+name: socialapp
+
+packages:
+  - apps/*
+  - packages/*
+  - packages/features/*
+
+scripts:
+  analyze:
+    exec: flutter analyze
+    description: Analyze every Flutter app and package.
+    packageFilters:
+      flutter: true
+  test:
+    exec: flutter test
+    description: Test every Flutter app and package that has tests.
+    packageFilters:
+      flutter: true
+      dirExists: test
+  gen:
+    exec: dart run build_runner build --delete-conflicting-outputs
+    description: Regenerate code in packages that use build_runner.
+    packageFilters:
+      dependsOn: build_runner
+  l10n:
+    exec: flutter gen-l10n
+    description: Regenerate AppLocalizations in the l10n package.
+    packageFilters:
+      scope: l10n

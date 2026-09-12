@@ -16,7 +16,7 @@ const _supersededMessages = {'차단한 사용자의 게시물에는 댓글을 �
 
 void main() {
   test('트리거가 던지는 한국어 문구는 모두 SupabaseErrorMapper 가 안다', () {
-    final migrationDirectory = Directory('../supabase/migrations');
+    final migrationDirectory = Directory('../../supabase/migrations');
     final migrations = migrationDirectory
         .listSync()
         .whereType<File>()

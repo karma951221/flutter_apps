@@ -146,7 +146,7 @@ await $(const Key('signIn.email')).enterText(email);
 
 ### `pumpAndSettle` 은 스플래시에서 타임아웃한다
 
-[SplashPage](../../app/lib/features/auth/presentation/page/splash_page.dart) 의
+[SplashPage](../../apps/trader/lib/features/auth/presentation/page/splash_page.dart) 의
 `CircularProgressIndicator` 는 끝나지 않는 애니메이션이다. settle 은 "대기 중인
 프레임이 없을 때"를 기다리므로 영원히 오지 않는다.
 
@@ -159,7 +159,7 @@ await $.waitUntilVisible($(const Key('signIn.email')));   // pumpAndSettle 대�
 
 `bootstrap()` 은 `runApp` 을 부른다. 테스트는 자기가 pump 해야 하므로
 준비 단계만 떼어낸 `initializeApp()` 을 쓴다
-([bootstrap.dart](../../app/lib/bootstrap.dart)).
+([bootstrap.dart](../../apps/trader/lib/bootstrap.dart)).
 
 `Supabase.initialize` 는 프로세스당 한 번만 가능하고, `configureDependencies()`
 는 두 번 부르면 GetIt 중복 등록으로 터진다. 그래서 헬퍼가 `getIt.reset()` 을
@@ -174,7 +174,7 @@ await $.waitUntilVisible($(const Key('signIn.email')));   // pumpAndSettle 대�
 ### 에뮬레이터는 `127.0.0.1` 로 호스트를 못 본다
 
 `10.0.2.2` 를 쓴다. 이미
-[app_config.dart](../../app/lib/core/config/app_config.dart) 가 분기한다.
+[app_config.dart](../../apps/trader/lib/core/config/app_config.dart) 가 분기한다.
 E2E 도 같은 경로를 타므로 별도 `--dart-define` 이 필요 없다.
 
 ### orchestrator 버전 때문에 빌드가 멈출 수 있다
