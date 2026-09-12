@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:daylog/design_system/widget/app_overflow_menu.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 
 void main() {
   Widget wrap(Widget child) {

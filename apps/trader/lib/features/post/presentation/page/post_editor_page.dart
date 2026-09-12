@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:core/core.dart';
-import '../../../../core/l10n/failure_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../../../../design_system/theme/app_radius.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
@@ -14,7 +14,6 @@ import '../../domain/entity/post.dart';
 import '../../domain/entity/post_image_draft.dart';
 import '../../domain/post_policy.dart';
 import '../cubit/post_cubit.dart';
-import '../../../../l10n/app_localizations.dart';
 
 /// 게시물 작성·수정 화면.
 ///

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:core/core.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/auth/domain/usecase/auth_use_case.dart';
 import 'package:daylog/features/settings/domain/entity/account_content_summary.dart';

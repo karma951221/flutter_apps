@@ -4,7 +4,7 @@ import 'package:daylog/features/post/domain/entity/post_author.dart';
 import 'package:daylog/features/post/presentation/widget/post_tile.dart';
 import 'package:daylog/features/trade/domain/entity/trade_result_summary.dart';
 import 'package:daylog/features/trade/presentation/widget/trade_result_card.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:core/core.dart';
-import '../../../../core/l10n/failure_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 
 class FailureText extends StatelessWidget {

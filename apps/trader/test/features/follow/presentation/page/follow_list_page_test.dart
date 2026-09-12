@@ -5,7 +5,7 @@ import 'package:daylog/features/follow/domain/usecase/follow_use_case.dart';
 import 'package:daylog/features/follow/presentation/cubit/follow_list_cubit.dart';
 import 'package:daylog/features/follow/presentation/cubit/follow_list_state.dart';
 import 'package:daylog/features/follow/presentation/page/follow_list_page.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';

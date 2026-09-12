@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/widget/app_count_action.dart';
-import '../../../../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../../domain/entity/reaction_summary.dart';
 import '../../domain/entity/reaction_type.dart';
 

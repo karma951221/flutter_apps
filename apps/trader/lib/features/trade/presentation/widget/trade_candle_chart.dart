@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../design_system/theme/app_colors.dart';
 import '../../../../design_system/theme/app_spacing.dart';
-import '../../../../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../../domain/entity/trade_candle.dart';
 import '../../domain/entity/trade_order.dart';
 import '../../domain/entity/trade_side.dart';

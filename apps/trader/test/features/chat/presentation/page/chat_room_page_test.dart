@@ -12,7 +12,7 @@ import 'package:daylog/features/chat/domain/entity/chat_participant.dart';
 import 'package:daylog/features/chat/domain/usecase/chat_use_case.dart';
 import 'package:daylog/features/chat/presentation/bloc/chat_room_bloc.dart';
 import 'package:daylog/features/chat/presentation/page/chat_room_page.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';

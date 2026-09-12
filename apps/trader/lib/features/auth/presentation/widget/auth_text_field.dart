@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../design_system/theme/app_spacing.dart';
-import '../../../../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 
 /// 인증 화면 공통 입력 필드.
 ///

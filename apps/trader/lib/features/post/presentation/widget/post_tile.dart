@@ -16,7 +16,7 @@ import '../../../trade/presentation/widget/trade_result_card.dart';
 import '../../domain/entity/post.dart';
 import '../../domain/entity/post_author.dart';
 import '../../domain/entity/post_image.dart';
-import '../../../../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 
 /// 목록에서 게시물 하나를 보여준다.
 ///

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../theme/app_spacing.dart';
 
 /// 페이지 목록의 맨 끝에 붙는 공통 상태 줄.

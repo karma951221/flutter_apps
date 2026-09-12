@@ -9,7 +9,7 @@ import 'package:daylog/features/chat/presentation/cubit/chat_room_list_cubit.dar
 import 'package:daylog/features/chat/presentation/page/chat_room_list_page.dart';
 import 'package:daylog/features/chat/presentation/page/chat_room_page.dart';
 import 'package:daylog/features/chat/presentation/widget/chat_room_tile.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../theme/app_spacing.dart';
 
 /// `PopupMenuButton<T>` 을 감싼 공통 "더보기" 메뉴.

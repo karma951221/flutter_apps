@@ -7,7 +7,7 @@ void main() {
   test('ARB 템플릿의 모든 키는 description 을 가진다', () {
     // gen-l10n 템플릿은 app_ko.arb 하나다. `@key` 메타데이터는 템플릿에만 두는
     // 것이 이 프로젝트의 규칙이라, app_en.arb·app_ja.arb 는 검사하지 않는다.
-    final template = File('lib/l10n/app_ko.arb');
+    final template = File('../../packages/l10n/lib/l10n/app_ko.arb');
     final arb = jsonDecode(template.readAsStringSync()) as Map<String, dynamic>;
 
     final messageKeys = arb.keys.where((key) => !key.startsWith('@')).toList();

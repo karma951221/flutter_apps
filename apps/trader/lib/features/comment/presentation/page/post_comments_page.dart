@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:core/core.dart';
-import '../../../../core/l10n/failure_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_confirm_dialog.dart';
@@ -19,7 +19,6 @@ import '../../domain/entity/post_comment.dart';
 import '../cubit/comment_cubit.dart';
 import '../cubit/comment_state.dart';
 import '../widget/comment_tile.dart';
-import '../../../../l10n/app_localizations.dart';
 
 /// 한 게시물의 댓글 화면.
 ///

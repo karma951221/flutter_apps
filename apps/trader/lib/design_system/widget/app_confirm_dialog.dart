@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'app_button.dart';
 
 /// 되돌리기 어려운 동작을 확인받는 공용 다이얼로그.

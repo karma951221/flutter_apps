@@ -6,7 +6,7 @@ import 'package:daylog/features/auth/domain/usecase/auth_use_case.dart';
 import 'package:daylog/features/auth/presentation/widget/auth_text_field.dart';
 import 'package:daylog/features/settings/presentation/cubit/change_password_cubit.dart';
 import 'package:daylog/features/settings/presentation/page/change_password_page.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';

@@ -3,10 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
-import '../../../../core/l10n/failure_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../../../../design_system/widget/app_confirm_dialog.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
-import '../../../../l10n/app_localizations.dart';
 import '../../../post/domain/entity/post.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';

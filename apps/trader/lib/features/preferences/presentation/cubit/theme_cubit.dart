@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../../../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../../domain/entity/app_theme_mode.dart';
 import '../../domain/usecase/preferences_use_case.dart';
 

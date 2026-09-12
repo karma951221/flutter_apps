@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:core/core.dart';
-import '../../../../core/l10n/validation_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../cubit/password_reset_cubit.dart';
@@ -12,7 +12,6 @@ import '../widget/auth_header.dart';
 import '../widget/auth_scaffold.dart';
 import '../widget/auth_text_field.dart';
 import '../widget/failure_text.dart';
-import '../../../../l10n/app_localizations.dart';
 
 /// 비밀번호 재설정.
 ///

@@ -1,7 +1,8 @@
 import 'package:flutter/widgets.dart';
 
-import '../../l10n/app_localizations.dart';
 import 'package:core/core.dart';
+
+import '../l10n/app_localizations.dart';
 
 /// Converts locale-independent failures into text at the presentation edge.
 extension FailureLocalizations on Failure {

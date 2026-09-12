@@ -10,7 +10,7 @@ import '../features/preferences/domain/entity/app_language.dart';
 import '../features/preferences/domain/entity/app_theme_mode.dart';
 import '../features/preferences/presentation/cubit/language_cubit.dart';
 import '../features/preferences/presentation/cubit/theme_cubit.dart';
-import '../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'router/app_router.dart';
 
 class DaylogApp extends StatefulWidget {

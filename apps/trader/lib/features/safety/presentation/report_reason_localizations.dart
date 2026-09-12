@@ -1,4 +1,4 @@
-import '../../../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../domain/entity/report_reason.dart';
 
 extension ReportReasonLocalizations on ReportReason {

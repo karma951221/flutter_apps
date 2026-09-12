@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_button.dart';
-import '../../../../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../../domain/entity/trade_session.dart';
 import '../../domain/entity/trade_side.dart';
 import '../../domain/ledger/trade_cost.dart';

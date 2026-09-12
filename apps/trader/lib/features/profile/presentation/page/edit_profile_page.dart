@@ -4,14 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
 import 'package:core/core.dart';
-import '../../../../core/l10n/failure_localizations.dart';
-import '../../../../core/l10n/validation_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_avatar.dart';
 import '../../../../design_system/widget/app_button.dart';
 import '../../../../design_system/widget/app_placeholder.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
-import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../domain/entity/avatar_image_draft.dart';

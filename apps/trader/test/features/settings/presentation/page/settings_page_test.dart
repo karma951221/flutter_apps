@@ -11,7 +11,7 @@ import 'package:daylog/features/preferences/domain/usecase/preferences_use_case.
 import 'package:daylog/features/preferences/presentation/cubit/language_cubit.dart';
 import 'package:daylog/features/preferences/presentation/cubit/theme_cubit.dart';
 import 'package:daylog/features/settings/presentation/page/settings_page.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';

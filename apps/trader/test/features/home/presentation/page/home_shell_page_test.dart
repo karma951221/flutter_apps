@@ -31,7 +31,7 @@ import 'package:daylog/features/trade/domain/entity/trade_session.dart';
 import 'package:daylog/features/trade/domain/entity/trade_session_summary.dart';
 import 'package:daylog/features/trade/domain/usecase/trade_use_case.dart';
 import 'package:daylog/features/trade/presentation/cubit/trade_home_cubit.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';

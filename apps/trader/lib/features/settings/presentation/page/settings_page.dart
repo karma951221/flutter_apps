@@ -16,7 +16,7 @@ import '../../../preferences/domain/entity/app_language.dart';
 import '../../../preferences/domain/entity/app_theme_mode.dart';
 import '../../../preferences/presentation/cubit/language_cubit.dart';
 import '../../../preferences/presentation/cubit/theme_cubit.dart';
-import '../../../../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 
 /// 설정 화면.
 ///

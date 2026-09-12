@@ -16,7 +16,7 @@ import 'package:daylog/features/trade/domain/usecase/trade_use_case.dart';
 import 'package:daylog/features/trade/presentation/cubit/trade_session_cubit.dart';
 import 'package:daylog/features/trade/presentation/page/trade_result_page.dart';
 import 'package:daylog/features/trade/presentation/widget/trade_candle_chart.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:bloc_test/bloc_test.dart';

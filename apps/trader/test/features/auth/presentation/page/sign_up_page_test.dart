@@ -4,7 +4,7 @@ import 'package:daylog/design_system/theme/app_theme.dart';
 import 'package:daylog/features/auth/presentation/cubit/sign_up_cubit.dart';
 import 'package:daylog/features/auth/presentation/cubit/sign_up_state.dart';
 import 'package:daylog/features/auth/presentation/page/sign_up_page.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';

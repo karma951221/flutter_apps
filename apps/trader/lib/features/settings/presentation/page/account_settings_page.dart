@@ -5,11 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/router/routes.dart';
 import 'package:core/core.dart';
-import '../../../../core/l10n/failure_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../../../../design_system/widget/app_confirm_dialog.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
 import '../../../../design_system/widget/app_snack_bar.dart';
-import '../../../../l10n/app_localizations.dart';
 import '../../domain/usecase/account_use_case.dart';
 import '../cubit/delete_account_cubit.dart';
 import '../cubit/delete_account_state.dart';

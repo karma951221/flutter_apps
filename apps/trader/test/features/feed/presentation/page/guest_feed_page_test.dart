@@ -12,7 +12,7 @@ import 'package:daylog/features/post/domain/entity/post_image.dart';
 import 'package:daylog/features/reaction/domain/usecase/reaction_use_case.dart';
 import 'package:daylog/features/trade/domain/entity/trade_result_summary.dart';
 import 'package:daylog/features/trade/presentation/widget/trade_result_card.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';

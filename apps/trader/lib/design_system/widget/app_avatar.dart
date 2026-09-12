@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-import '../../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 
 /// 사용자 아바타의 공통 표현.
 class AppAvatar extends StatelessWidget {

@@ -5,7 +5,7 @@ import 'package:daylog/features/trade/domain/entity/trade_side.dart';
 import 'package:daylog/features/trade/domain/ledger/trade_sizing.dart';
 import 'package:daylog/features/trade/domain/trade_rules.dart';
 import 'package:daylog/features/trade/presentation/widget/trade_order_sheet.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -26,7 +26,7 @@ import 'package:daylog/features/profile/domain/entity/profile.dart';
 import 'package:daylog/features/profile/domain/usecase/profile_use_case.dart';
 import 'package:daylog/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:daylog/features/profile/presentation/page/profile_page.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'package:daylog/features/safety/domain/usecase/safety_use_case.dart';
 import 'package:daylog/features/safety/presentation/cubit/block_action_cubit.dart';
 import 'package:flutter/material.dart';

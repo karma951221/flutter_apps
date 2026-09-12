@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../design_system/theme/app_radius.dart';
 import '../../../../design_system/theme/app_spacing.dart';
 import '../../../../design_system/widget/app_list_tile.dart';
-import '../../../../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import '../../domain/entity/profile.dart';
 
 /// 내 프로필 상단의 완성도 카드.

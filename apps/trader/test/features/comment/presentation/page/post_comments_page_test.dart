@@ -9,7 +9,7 @@ import 'package:daylog/features/comment/domain/entity/post_comment.dart';
 import 'package:daylog/features/comment/domain/usecase/comment_use_case.dart';
 import 'package:daylog/features/comment/presentation/cubit/comment_cubit.dart';
 import 'package:daylog/features/comment/presentation/page/post_comments_page.dart';
-import 'package:daylog/l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 import 'package:daylog/features/post/domain/entity/post_author.dart';
 import 'package:daylog/features/reaction/domain/usecase/reaction_use_case.dart';
 import 'package:flutter/material.dart';

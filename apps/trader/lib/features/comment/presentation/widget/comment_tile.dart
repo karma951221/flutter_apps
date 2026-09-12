@@ -7,7 +7,7 @@ import '../../../../design_system/widget/app_overflow_menu.dart';
 import '../../../reaction/domain/entity/reaction_type.dart';
 import '../../../reaction/presentation/widget/reaction_bar.dart';
 import '../../domain/entity/post_comment.dart';
-import '../../../../l10n/app_localizations.dart';
+import 'package:l10n/l10n.dart';
 
 /// 댓글 또는 답글 하나.
 ///
