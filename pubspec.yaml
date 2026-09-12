@@ -10,6 +10,7 @@ workspace:
   - packages/design_system
   - packages/features/auth
   - packages/features/follow
+  - packages/features/preferences
   - packages/features/reaction
   - packages/features/safety
   - packages/l10n

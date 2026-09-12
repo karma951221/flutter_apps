@@ -1,4 +1,4 @@
-import 'package:daylog/features/preferences/domain/entity/app_language.dart';
+import 'package:feature_preferences/feature_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

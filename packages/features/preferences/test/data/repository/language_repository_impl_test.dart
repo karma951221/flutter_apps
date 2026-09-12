@@ -1,6 +1,4 @@
-import 'package:daylog/features/preferences/data/datasource/preferences_language_data_source.dart';
-import 'package:daylog/features/preferences/data/repository/language_repository_impl.dart';
-import 'package:daylog/features/preferences/domain/entity/app_language.dart';
+import 'package:feature_preferences/feature_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

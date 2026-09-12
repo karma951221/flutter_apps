@@ -5,10 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:feature_auth/feature_auth.dart';
-import '../features/preferences/domain/entity/app_language.dart';
-import '../features/preferences/domain/entity/app_theme_mode.dart';
-import '../features/preferences/presentation/cubit/language_cubit.dart';
-import '../features/preferences/presentation/cubit/theme_cubit.dart';
+import 'package:feature_preferences/feature_preferences.dart';
 import 'package:l10n/l10n.dart';
 import 'router/app_router.dart';
 

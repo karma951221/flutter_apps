@@ -1,7 +1,7 @@
 import 'package:daylog/app/app.dart';
 import 'package:daylog/bootstrap.dart';
 import 'package:core/core.dart';
-import 'package:daylog/features/preferences/domain/entity/app_language.dart';
+import 'package:feature_preferences/feature_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:patrol/patrol.dart';
 import 'package:shared_preferences/shared_preferences.dart';

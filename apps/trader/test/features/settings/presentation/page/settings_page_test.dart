@@ -1,11 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:design_system/design_system.dart';
 import 'package:feature_auth/feature_auth.dart';
-import 'package:daylog/features/preferences/domain/entity/app_language.dart';
-import 'package:daylog/features/preferences/domain/entity/app_theme_mode.dart';
-import 'package:daylog/features/preferences/domain/usecase/preferences_use_case.dart';
-import 'package:daylog/features/preferences/presentation/cubit/language_cubit.dart';
-import 'package:daylog/features/preferences/presentation/cubit/theme_cubit.dart';
+import 'package:feature_preferences/feature_preferences.dart';
 import 'package:daylog/features/settings/presentation/page/settings_page.dart';
 import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';

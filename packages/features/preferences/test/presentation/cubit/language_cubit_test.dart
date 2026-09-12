@@ -1,6 +1,4 @@
-import 'package:daylog/features/preferences/domain/entity/app_language.dart';
-import 'package:daylog/features/preferences/domain/usecase/preferences_use_case.dart';
-import 'package:daylog/features/preferences/presentation/cubit/language_cubit.dart';
+import 'package:feature_preferences/feature_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';

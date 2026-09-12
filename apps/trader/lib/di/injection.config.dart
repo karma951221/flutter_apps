@@ -13,11 +13,11 @@
 import 'package:core/core.dart' as _i494;
 import 'package:feature_auth/feature_auth.dart' as _i277;
 import 'package:feature_follow/feature_follow.dart' as _i324;
+import 'package:feature_preferences/feature_preferences.dart' as _i769;
 import 'package:feature_reaction/feature_reaction.dart' as _i766;
 import 'package:feature_safety/feature_safety.dart' as _i789;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
-import 'package:shared_preferences/shared_preferences.dart' as _i460;
 import 'package:supabase_flutter/supabase_flutter.dart' as _i454;
 
 import '../features/chat/data/datasource/chat_data_source.dart' as _i694;
@@ -52,27 +52,6 @@ import '../features/post/data/repository/post_repository_impl.dart' as _i366;
 import '../features/post/domain/repository/post_repository.dart' as _i615;
 import '../features/post/domain/usecase/post_use_case.dart' as _i564;
 import '../features/post/presentation/cubit/post_cubit.dart' as _i182;
-import '../features/preferences/data/datasource/language_data_source.dart'
-    as _i683;
-import '../features/preferences/data/datasource/preferences_language_data_source.dart'
-    as _i783;
-import '../features/preferences/data/datasource/preferences_theme_data_source.dart'
-    as _i158;
-import '../features/preferences/data/datasource/theme_data_source.dart'
-    as _i376;
-import '../features/preferences/data/repository/language_repository_impl.dart'
-    as _i134;
-import '../features/preferences/data/repository/theme_repository_impl.dart'
-    as _i767;
-import '../features/preferences/domain/repository/language_repository.dart'
-    as _i857;
-import '../features/preferences/domain/repository/theme_repository.dart'
-    as _i659;
-import '../features/preferences/domain/usecase/preferences_use_case.dart'
-    as _i962;
-import '../features/preferences/presentation/cubit/language_cubit.dart'
-    as _i639;
-import '../features/preferences/presentation/cubit/theme_cubit.dart' as _i478;
 import '../features/profile/data/datasource/profile_data_source.dart' as _i654;
 import '../features/profile/data/datasource/supabase_profile_data_source.dart'
     as _i211;
@@ -114,23 +93,12 @@ extension GetItInjectableX on _i174.GetIt {
     await _i789.FeatureSafetyPackageModule().init(gh);
     await _i766.FeatureReactionPackageModule().init(gh);
     await _i324.FeatureFollowPackageModule().init(gh);
-    gh.lazySingleton<_i376.ThemeDataSource>(
-      () => _i158.PreferencesThemeDataSource(gh<_i460.SharedPreferences>()),
-    );
-    gh.lazySingleton<_i659.ThemeRepository>(
-      () => _i767.ThemeRepositoryImpl(gh<_i376.ThemeDataSource>()),
-    );
+    await _i769.FeaturePreferencesPackageModule().init(gh);
     gh.factory<_i459.ChangePasswordCubit>(
       () => _i459.ChangePasswordCubit(gh<_i277.AuthUseCase>()),
     );
     gh.factory<_i966.DeleteAccountCubit>(
       () => _i966.DeleteAccountCubit(gh<_i277.AuthUseCase>()),
-    );
-    gh.lazySingleton<_i683.LanguageDataSource>(
-      () => _i783.PreferencesLanguageDataSource(gh<_i460.SharedPreferences>()),
-    );
-    gh.lazySingleton<_i857.LanguageRepository>(
-      () => _i134.LanguageRepositoryImpl(gh<_i683.LanguageDataSource>()),
     );
     gh.lazySingleton<_i247.FeedDataSource>(
       () => _i52.SupabaseFeedDataSource(gh<_i454.SupabaseClient>()),
@@ -162,18 +130,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i454.SupabaseClient>(),
         gh<_i494.ImageStorage>(),
       ),
-    );
-    gh.lazySingleton<_i962.PreferencesUseCase>(
-      () => _i962.DefaultPreferencesUseCase(
-        gh<_i659.ThemeRepository>(),
-        gh<_i857.LanguageRepository>(),
-      ),
-    );
-    gh.factory<_i639.LanguageCubit>(
-      () => _i639.LanguageCubit(gh<_i962.PreferencesUseCase>()),
-    );
-    gh.factory<_i478.ThemeCubit>(
-      () => _i478.ThemeCubit(gh<_i962.PreferencesUseCase>()),
     );
     gh.lazySingleton<_i237.CommentRepository>(
       () => _i740.CommentRepositoryImpl(gh<_i920.CommentDataSource>()),

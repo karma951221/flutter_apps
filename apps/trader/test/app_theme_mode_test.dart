@@ -1,7 +1,5 @@
 import 'package:design_system/design_system.dart';
-import 'package:daylog/features/preferences/domain/entity/app_theme_mode.dart';
-import 'package:daylog/features/preferences/domain/usecase/preferences_use_case.dart';
-import 'package:daylog/features/preferences/presentation/cubit/theme_cubit.dart';
+import 'package:feature_preferences/feature_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';

@@ -33,6 +33,7 @@ dependencies:
   design_system: any
   feature_auth: any
   feature_follow: any
+  feature_preferences: any
   feature_reaction: any
   feature_safety: any
   l10n: any
