@@ -9,6 +9,7 @@ workspace:
   - packages/core
   - packages/design_system
   - packages/features/auth
+  - packages/features/chat
   - packages/features/follow
   - packages/features/preferences
   - packages/features/reaction

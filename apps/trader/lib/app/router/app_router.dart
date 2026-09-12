@@ -6,9 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:core/core.dart';
 import 'package:feature_auth/feature_auth.dart';
-import '../../features/chat/presentation/page/chat_explore_page.dart';
-import '../../features/chat/presentation/page/chat_room_page.dart';
-import '../../features/chat/presentation/page/create_room_page.dart';
+import 'package:feature_chat/feature_chat.dart';
 import '../../features/comment/presentation/page/post_comments_page.dart';
 import '../../features/feed/presentation/page/guest_feed_page.dart';
 import '../../features/home/presentation/page/home_shell_page.dart';

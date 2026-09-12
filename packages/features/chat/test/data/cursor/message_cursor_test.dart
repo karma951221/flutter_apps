@@ -1,5 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/features/chat/data/cursor/message_cursor.dart';
+import 'package:feature_chat/feature_chat.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

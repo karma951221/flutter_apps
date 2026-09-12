@@ -3,13 +3,7 @@ import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
-import 'package:daylog/features/chat/domain/entity/chat_image_draft.dart';
-import 'package:daylog/features/chat/domain/entity/chat_message.dart';
-import 'package:daylog/features/chat/domain/entity/chat_participant.dart';
-import 'package:daylog/features/chat/domain/usecase/chat_use_case.dart';
-import 'package:daylog/features/chat/presentation/bloc/chat_room_bloc.dart';
-import 'package:daylog/features/chat/presentation/bloc/chat_room_event.dart';
-import 'package:daylog/features/chat/presentation/bloc/chat_room_state.dart';
+import 'package:feature_chat/feature_chat.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

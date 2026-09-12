@@ -1,6 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/features/chat/domain/repository/chat_repository.dart';
-import 'package:daylog/features/chat/domain/usecase/scenario/open_direct_room_scenario.dart';
+import 'package:feature_chat/feature_chat.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

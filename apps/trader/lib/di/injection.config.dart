@@ -12,6 +12,7 @@
 
 import 'package:core/core.dart' as _i494;
 import 'package:feature_auth/feature_auth.dart' as _i277;
+import 'package:feature_chat/feature_chat.dart' as _i421;
 import 'package:feature_follow/feature_follow.dart' as _i324;
 import 'package:feature_preferences/feature_preferences.dart' as _i769;
 import 'package:feature_reaction/feature_reaction.dart' as _i766;
@@ -22,16 +23,6 @@ import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:supabase_flutter/supabase_flutter.dart' as _i454;
 
-import '../features/chat/data/datasource/chat_data_source.dart' as _i694;
-import '../features/chat/data/datasource/supabase_chat_data_source.dart'
-    as _i971;
-import '../features/chat/data/repository/chat_repository_impl.dart' as _i176;
-import '../features/chat/domain/repository/chat_repository.dart' as _i206;
-import '../features/chat/domain/usecase/chat_use_case.dart' as _i609;
-import '../features/chat/presentation/bloc/chat_room_bloc.dart' as _i611;
-import '../features/chat/presentation/cubit/chat_explore_cubit.dart' as _i405;
-import '../features/chat/presentation/cubit/chat_room_list_cubit.dart' as _i599;
-import '../features/chat/presentation/cubit/create_room_cubit.dart' as _i752;
 import '../features/comment/data/datasource/comment_data_source.dart' as _i920;
 import '../features/comment/data/datasource/supabase_comment_data_source.dart'
     as _i979;
@@ -78,6 +69,7 @@ extension GetItInjectableX on _i174.GetIt {
     await _i769.FeaturePreferencesPackageModule().init(gh);
     await _i849.FeatureTradePackageModule().init(gh);
     await _i427.FeatureSettingsPackageModule().init(gh);
+    await _i421.FeatureChatPackageModule().init(gh);
     gh.lazySingleton<_i247.FeedDataSource>(
       () => _i52.SupabaseFeedDataSource(gh<_i454.SupabaseClient>()),
     );
@@ -100,20 +92,11 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.ImageStorage>(),
       ),
     );
-    gh.lazySingleton<_i694.ChatDataSource>(
-      () => _i971.SupabaseChatDataSource(
-        gh<_i454.SupabaseClient>(),
-        gh<_i494.ImageStorage>(),
-      ),
-    );
     gh.lazySingleton<_i237.CommentRepository>(
       () => _i740.CommentRepositoryImpl(gh<_i920.CommentDataSource>()),
     );
     gh.lazySingleton<_i615.PostRepository>(
       () => _i366.PostRepositoryImpl(gh<_i349.PostDataSource>()),
-    );
-    gh.lazySingleton<_i206.ChatRepository>(
-      () => _i176.ChatRepositoryImpl(gh<_i694.ChatDataSource>()),
     );
     gh.lazySingleton<_i564.PostUseCase>(
       () => _i564.DefaultPostUseCase(gh<_i615.PostRepository>()),
@@ -138,29 +121,11 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i564.PostUseCase>(),
       ),
     );
-    gh.lazySingleton<_i609.ChatUseCase>(
-      () => _i609.DefaultChatUseCase(
-        gh<_i206.ChatRepository>(),
-        gh<_i494.IdGenerator>(),
-      ),
-    );
     gh.factory<_i630.CommentCubit>(
       () => _i630.CommentCubit(
         gh<_i13.CommentUseCase>(),
         gh<_i766.ReactionUseCase>(),
       ),
-    );
-    gh.factory<_i611.ChatRoomBloc>(
-      () => _i611.ChatRoomBloc(gh<_i609.ChatUseCase>()),
-    );
-    gh.factory<_i405.ChatExploreCubit>(
-      () => _i405.ChatExploreCubit(gh<_i609.ChatUseCase>()),
-    );
-    gh.factory<_i599.ChatRoomListCubit>(
-      () => _i599.ChatRoomListCubit(gh<_i609.ChatUseCase>()),
-    );
-    gh.factory<_i752.CreateRoomCubit>(
-      () => _i752.CreateRoomCubit(gh<_i609.ChatUseCase>()),
     );
     gh.factory<_i482.FeedCubit>(
       () =>

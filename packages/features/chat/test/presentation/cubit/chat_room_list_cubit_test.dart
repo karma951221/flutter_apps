@@ -1,9 +1,6 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
-import 'package:daylog/features/chat/domain/entity/chat_room_summary.dart';
-import 'package:daylog/features/chat/domain/usecase/chat_use_case.dart';
-import 'package:daylog/features/chat/presentation/cubit/chat_room_list_cubit.dart';
-import 'package:daylog/features/chat/presentation/cubit/chat_room_list_state.dart';
+import 'package:feature_chat/feature_chat.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

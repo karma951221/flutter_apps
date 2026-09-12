@@ -1,12 +1,6 @@
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
-import 'package:daylog/features/chat/domain/entity/chat_message.dart';
-import 'package:daylog/features/chat/domain/entity/chat_room_summary.dart';
-import 'package:daylog/features/chat/domain/usecase/chat_use_case.dart';
-import 'package:daylog/features/chat/presentation/cubit/chat_room_list_cubit.dart';
-import 'package:daylog/features/chat/presentation/page/chat_room_list_page.dart';
-import 'package:daylog/features/chat/presentation/page/chat_room_page.dart';
-import 'package:daylog/features/chat/presentation/widget/chat_room_tile.dart';
+import 'package:feature_chat/feature_chat.dart';
 import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

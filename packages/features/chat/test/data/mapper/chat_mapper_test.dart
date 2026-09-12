@@ -1,7 +1,4 @@
-import 'package:daylog/features/chat/data/dto/chat_room_summary_dto.dart';
-import 'package:daylog/features/chat/data/mapper/chat_mapper.dart';
-import 'package:daylog/features/chat/domain/entity/chat_message.dart';
-import 'package:daylog/features/chat/domain/entity/chat_room_summary.dart';
+import 'package:feature_chat/feature_chat.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

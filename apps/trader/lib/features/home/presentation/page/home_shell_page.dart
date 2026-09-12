@@ -3,9 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:core/core.dart';
 import 'package:l10n/l10n.dart';
-import '../../../chat/presentation/cubit/chat_room_list_cubit.dart';
-import '../../../chat/presentation/cubit/chat_room_list_state.dart';
-import '../../../chat/presentation/page/chat_room_list_page.dart';
+import 'package:feature_chat/feature_chat.dart';
 import '../../../feed/presentation/page/feed_page.dart';
 import '../../../profile/presentation/page/profile_page.dart';
 import 'package:feature_settings/feature_settings.dart';
