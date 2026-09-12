@@ -1,6 +1,6 @@
 import 'package:daylog/features/comment/data/dto/post_comment_dto.dart';
 import 'package:daylog/features/comment/data/mapper/post_comment_mapper.dart';
-import 'package:daylog/features/reaction/domain/entity/reaction_type.dart';
+import 'package:feature_reaction/feature_reaction.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

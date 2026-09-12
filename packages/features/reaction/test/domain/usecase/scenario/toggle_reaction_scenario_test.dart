@@ -1,9 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/features/reaction/domain/entity/reaction_summary.dart';
-import 'package:daylog/features/reaction/domain/entity/reaction_target.dart';
-import 'package:daylog/features/reaction/domain/entity/reaction_type.dart';
-import 'package:daylog/features/reaction/domain/repository/reaction_repository.dart';
-import 'package:daylog/features/reaction/domain/usecase/scenario/toggle_reaction_scenario.dart';
+import 'package:feature_reaction/feature_reaction.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

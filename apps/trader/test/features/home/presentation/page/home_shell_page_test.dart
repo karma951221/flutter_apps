@@ -23,7 +23,7 @@ import 'package:daylog/features/preferences/presentation/cubit/theme_cubit.dart'
 import 'package:daylog/features/profile/domain/entity/profile.dart';
 import 'package:daylog/features/profile/domain/usecase/profile_use_case.dart';
 import 'package:daylog/features/profile/presentation/cubit/profile_cubit.dart';
-import 'package:daylog/features/reaction/domain/usecase/reaction_use_case.dart';
+import 'package:feature_reaction/feature_reaction.dart';
 import 'package:daylog/features/trade/domain/entity/trade_session.dart';
 import 'package:daylog/features/trade/domain/entity/trade_session_summary.dart';
 import 'package:daylog/features/trade/domain/usecase/trade_use_case.dart';

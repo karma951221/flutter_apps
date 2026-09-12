@@ -1,7 +1,7 @@
 import '../../../post/domain/entity/post.dart';
 import '../../../post/domain/entity/post_author.dart';
 import '../../../post/domain/entity/post_image.dart';
-import '../../../reaction/domain/entity/reaction_summary.dart';
+import 'package:feature_reaction/feature_reaction.dart';
 import '../../../trade/domain/entity/trade_result_summary.dart';
 import '../../domain/entity/feed_post.dart';
 import '../cursor/feed_cursor.dart';

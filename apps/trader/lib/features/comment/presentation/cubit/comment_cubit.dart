@@ -3,10 +3,7 @@ import 'package:injectable/injectable.dart';
 
 import 'package:core/core.dart';
 import '../../../post/domain/entity/post_author.dart';
-import '../../../reaction/domain/entity/reaction_summary.dart';
-import '../../../reaction/domain/entity/reaction_target.dart';
-import '../../../reaction/domain/entity/reaction_type.dart';
-import '../../../reaction/domain/usecase/reaction_use_case.dart';
+import 'package:feature_reaction/feature_reaction.dart';
 import '../../domain/entity/post_comment.dart';
 import '../../domain/usecase/comment_use_case.dart';
 import 'comment_state.dart';

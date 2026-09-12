@@ -1,5 +1,5 @@
 import '../../../post/domain/entity/post_author.dart';
-import '../../../reaction/domain/entity/reaction_summary.dart';
+import 'package:feature_reaction/feature_reaction.dart';
 import '../../domain/entity/post_comment.dart';
 import '../cursor/comment_cursor.dart';
 import '../dto/post_comment_dto.dart';

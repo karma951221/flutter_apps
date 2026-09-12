@@ -7,7 +7,7 @@ import 'package:l10n/l10n.dart';
 import 'package:design_system/design_system.dart';
 import '../../../post/domain/entity/post.dart';
 import '../../../post/presentation/cubit/post_cubit.dart';
-import '../../../reaction/domain/entity/reaction_type.dart';
+import 'package:feature_reaction/feature_reaction.dart';
 import 'package:feature_safety/feature_safety.dart';
 import '../../domain/entity/feed_post.dart';
 import '../cubit/feed_cubit.dart';

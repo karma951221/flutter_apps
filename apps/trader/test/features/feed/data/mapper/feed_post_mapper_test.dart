@@ -1,6 +1,6 @@
 import 'package:daylog/features/feed/data/dto/feed_post_dto.dart';
 import 'package:daylog/features/feed/data/mapper/feed_post_mapper.dart';
-import 'package:daylog/features/reaction/domain/entity/reaction_type.dart';
+import 'package:feature_reaction/feature_reaction.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final _dto = FeedPostDto(

@@ -1,5 +1,4 @@
-import 'package:daylog/features/reaction/domain/entity/reaction_summary.dart';
-import 'package:daylog/features/reaction/domain/entity/reaction_type.dart';
+import 'package:feature_reaction/feature_reaction.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

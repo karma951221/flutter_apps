@@ -12,6 +12,7 @@
 
 import 'package:core/core.dart' as _i494;
 import 'package:feature_auth/feature_auth.dart' as _i277;
+import 'package:feature_reaction/feature_reaction.dart' as _i766;
 import 'package:feature_safety/feature_safety.dart' as _i789;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
@@ -88,15 +89,6 @@ import '../features/profile/data/repository/profile_repository_impl.dart'
 import '../features/profile/domain/repository/profile_repository.dart' as _i928;
 import '../features/profile/domain/usecase/profile_use_case.dart' as _i640;
 import '../features/profile/presentation/cubit/profile_cubit.dart' as _i300;
-import '../features/reaction/data/datasource/reaction_data_source.dart'
-    as _i128;
-import '../features/reaction/data/datasource/supabase_reaction_data_source.dart'
-    as _i480;
-import '../features/reaction/data/repository/reaction_repository_impl.dart'
-    as _i1043;
-import '../features/reaction/domain/repository/reaction_repository.dart'
-    as _i996;
-import '../features/reaction/domain/usecase/reaction_use_case.dart' as _i387;
 import '../features/settings/data/datasource/account_data_source.dart' as _i249;
 import '../features/settings/data/datasource/supabase_account_data_source.dart'
     as _i139;
@@ -128,6 +120,7 @@ extension GetItInjectableX on _i174.GetIt {
     await _i494.CorePackageModule().init(gh);
     await _i277.FeatureAuthPackageModule().init(gh);
     await _i789.FeatureSafetyPackageModule().init(gh);
+    await _i766.FeatureReactionPackageModule().init(gh);
     gh.lazySingleton<_i376.ThemeDataSource>(
       () => _i158.PreferencesThemeDataSource(gh<_i460.SharedPreferences>()),
     );
@@ -167,9 +160,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.IdGenerator>(),
         gh<_i494.ImageStorage>(),
       ),
-    );
-    gh.lazySingleton<_i128.ReactionDataSource>(
-      () => _i480.SupabaseReactionDataSource(gh<_i454.SupabaseClient>()),
     );
     gh.lazySingleton<_i345.TradeDataSource>(
       () => _i1052.SupabaseTradeDataSource(gh<_i454.SupabaseClient>()),
@@ -248,11 +238,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i506.FollowRepository>(
       () => _i709.FollowRepositoryImpl(gh<_i682.FollowDataSource>()),
     );
+    gh.factory<_i630.CommentCubit>(
+      () => _i630.CommentCubit(
+        gh<_i13.CommentUseCase>(),
+        gh<_i766.ReactionUseCase>(),
+      ),
+    );
     gh.lazySingleton<_i90.FollowUseCase>(
       () => _i90.DefaultFollowUseCase(gh<_i506.FollowRepository>()),
-    );
-    gh.lazySingleton<_i996.ReactionRepository>(
-      () => _i1043.ReactionRepositoryImpl(gh<_i128.ReactionDataSource>()),
     );
     gh.factory<_i611.ChatRoomBloc>(
       () => _i611.ChatRoomBloc(gh<_i609.ChatUseCase>()),
@@ -266,6 +259,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i752.CreateRoomCubit>(
       () => _i752.CreateRoomCubit(gh<_i609.ChatUseCase>()),
     );
+    gh.factory<_i482.FeedCubit>(
+      () =>
+          _i482.FeedCubit(gh<_i556.FeedUseCase>(), gh<_i766.ReactionUseCase>()),
+    );
     gh.factory<_i202.TradeHomeCubit>(
       () => _i202.TradeHomeCubit(gh<_i835.TradeUseCase>()),
     );
@@ -275,24 +272,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i141.AccountUseCase>(
       () => _i141.DefaultAccountUseCase(gh<_i186.AccountRepository>()),
     );
-    gh.lazySingleton<_i387.ReactionUseCase>(
-      () => _i387.DefaultReactionUseCase(gh<_i996.ReactionRepository>()),
-    );
     gh.factory<_i89.FollowActionCubit>(
       () => _i89.FollowActionCubit(gh<_i90.FollowUseCase>()),
     );
     gh.factory<_i818.FollowListCubit>(
       () => _i818.FollowListCubit(gh<_i90.FollowUseCase>()),
-    );
-    gh.factory<_i482.FeedCubit>(
-      () =>
-          _i482.FeedCubit(gh<_i556.FeedUseCase>(), gh<_i387.ReactionUseCase>()),
-    );
-    gh.factory<_i630.CommentCubit>(
-      () => _i630.CommentCubit(
-        gh<_i13.CommentUseCase>(),
-        gh<_i387.ReactionUseCase>(),
-      ),
     );
     return this;
   }

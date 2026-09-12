@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
-import '../../../reaction/domain/entity/reaction_summary.dart';
-import '../../../reaction/domain/entity/reaction_type.dart';
-import '../../../reaction/presentation/widget/reaction_bar.dart';
+import 'package:feature_reaction/feature_reaction.dart';
 import '../../../trade/domain/entity/trade_result_summary.dart';
 import '../../../trade/presentation/widget/trade_result_card.dart';
 import '../../domain/entity/post.dart';

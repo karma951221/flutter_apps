@@ -1,0 +1,11 @@
+export 'src/data/datasource/reaction_data_source.dart';
+export 'src/data/datasource/supabase_reaction_data_source.dart';
+export 'src/data/repository/reaction_repository_impl.dart';
+export 'src/di/feature_reaction.module.dart';
+export 'src/domain/entity/reaction_summary.dart';
+export 'src/domain/entity/reaction_target.dart';
+export 'src/domain/entity/reaction_type.dart';
+export 'src/domain/repository/reaction_repository.dart';
+export 'src/domain/usecase/reaction_use_case.dart';
+export 'src/domain/usecase/scenario/toggle_reaction_scenario.dart';
+export 'src/presentation/widget/reaction_bar.dart';

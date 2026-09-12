@@ -9,10 +9,7 @@ import 'package:daylog/features/feed/presentation/cubit/feed_cubit.dart';
 import 'package:daylog/features/feed/presentation/cubit/feed_state.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_author.dart';
-import 'package:daylog/features/reaction/domain/entity/reaction_summary.dart';
-import 'package:daylog/features/reaction/domain/entity/reaction_target.dart';
-import 'package:daylog/features/reaction/domain/entity/reaction_type.dart';
-import 'package:daylog/features/reaction/domain/usecase/reaction_use_case.dart';
+import 'package:feature_reaction/feature_reaction.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

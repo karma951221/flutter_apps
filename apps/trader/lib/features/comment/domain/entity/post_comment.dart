@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../post/domain/entity/post_author.dart';
-import '../../../reaction/domain/entity/reaction_summary.dart';
+import 'package:feature_reaction/feature_reaction.dart';
 
 part 'post_comment.freezed.dart';
 

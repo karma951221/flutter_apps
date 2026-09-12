@@ -8,7 +8,7 @@ import 'package:daylog/features/feed/presentation/page/guest_feed_page.dart';
 import 'package:daylog/features/post/domain/entity/post.dart';
 import 'package:daylog/features/post/domain/entity/post_author.dart';
 import 'package:daylog/features/post/domain/entity/post_image.dart';
-import 'package:daylog/features/reaction/domain/usecase/reaction_use_case.dart';
+import 'package:feature_reaction/feature_reaction.dart';
 import 'package:daylog/features/trade/domain/entity/trade_result_summary.dart';
 import 'package:daylog/features/trade/presentation/widget/trade_result_card.dart';
 import 'package:l10n/l10n.dart';
