@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:core/core.dart';
-import 'package:daylog/features/feed/data/cursor/feed_cursor.dart';
+import 'package:feature_feed/feature_feed.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

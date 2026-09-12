@@ -14,6 +14,7 @@ import 'package:core/core.dart' as _i494;
 import 'package:feature_auth/feature_auth.dart' as _i277;
 import 'package:feature_chat/feature_chat.dart' as _i421;
 import 'package:feature_comment/feature_comment.dart' as _i726;
+import 'package:feature_feed/feature_feed.dart' as _i1049;
 import 'package:feature_follow/feature_follow.dart' as _i324;
 import 'package:feature_post/feature_post.dart' as _i317;
 import 'package:feature_preferences/feature_preferences.dart' as _i769;
@@ -25,13 +26,6 @@ import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:supabase_flutter/supabase_flutter.dart' as _i454;
 
-import '../features/feed/data/datasource/feed_data_source.dart' as _i247;
-import '../features/feed/data/datasource/supabase_feed_data_source.dart'
-    as _i52;
-import '../features/feed/data/repository/feed_repository_impl.dart' as _i264;
-import '../features/feed/domain/repository/feed_repository.dart' as _i522;
-import '../features/feed/domain/usecase/feed_use_case.dart' as _i556;
-import '../features/feed/presentation/cubit/feed_cubit.dart' as _i482;
 import '../features/profile/data/datasource/profile_data_source.dart' as _i654;
 import '../features/profile/data/datasource/supabase_profile_data_source.dart'
     as _i211;
@@ -59,9 +53,7 @@ extension GetItInjectableX on _i174.GetIt {
     await _i421.FeatureChatPackageModule().init(gh);
     await _i317.FeaturePostPackageModule().init(gh);
     await _i726.FeatureCommentPackageModule().init(gh);
-    gh.lazySingleton<_i247.FeedDataSource>(
-      () => _i52.SupabaseFeedDataSource(gh<_i454.SupabaseClient>()),
-    );
+    await _i1049.FeatureFeedPackageModule().init(gh);
     gh.lazySingleton<_i654.ProfileDataSource>(
       () => _i211.SupabaseProfileDataSource(
         gh<_i454.SupabaseClient>(),
@@ -71,24 +63,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i928.ProfileRepository>(
       () => _i259.ProfileRepositoryImpl(gh<_i654.ProfileDataSource>()),
     );
-    gh.lazySingleton<_i522.FeedRepository>(
-      () => _i264.FeedRepositoryImpl(gh<_i247.FeedDataSource>()),
-    );
     gh.lazySingleton<_i640.ProfileUseCase>(
       () => _i640.DefaultProfileUseCase(gh<_i928.ProfileRepository>()),
     );
     gh.factory<_i300.ProfileCubit>(
       () => _i300.ProfileCubit(gh<_i640.ProfileUseCase>()),
-    );
-    gh.lazySingleton<_i556.FeedUseCase>(
-      () => _i556.DefaultFeedUseCase(
-        gh<_i522.FeedRepository>(),
-        gh<_i317.PostUseCase>(),
-      ),
-    );
-    gh.factory<_i482.FeedCubit>(
-      () =>
-          _i482.FeedCubit(gh<_i556.FeedUseCase>(), gh<_i766.ReactionUseCase>()),
     );
     return this;
   }

@@ -1,10 +1,6 @@
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
-import 'package:daylog/features/feed/domain/entity/feed_post.dart';
-import 'package:daylog/features/feed/domain/entity/feed_source.dart';
-import 'package:daylog/features/feed/domain/usecase/feed_use_case.dart';
-import 'package:daylog/features/feed/presentation/cubit/feed_cubit.dart';
-import 'package:daylog/features/feed/presentation/page/guest_feed_page.dart';
+import 'package:feature_feed/feature_feed.dart';
 import 'package:feature_post/feature_post.dart';
 import 'package:feature_reaction/feature_reaction.dart';
 import 'package:feature_trade/feature_trade.dart';

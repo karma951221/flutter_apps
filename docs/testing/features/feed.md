@@ -1,6 +1,6 @@
 # F4 feed — 테스트 범위
 
-> [테스트 가이드](../README.md) · [아키텍처](../../architecture.md) · [계획](../../features/feed/plan.md) · [구현 기록](../../features/feed/history.md) · [피드 화면](../../../apps/trader/lib/features/feed/presentation/page/feed_page.dart)
+> [테스트 가이드](../README.md) · [아키텍처](../../architecture.md) · [계획](../../features/feed/plan.md) · [구현 기록](../../features/feed/history.md) · [피드 화면](../../../packages/features/feed/lib/src/presentation/page/feed_page.dart)
 
 목록 조회만 담당한다. 게시물 변경은 [post](post.md)가, 감정 계산은
 [reaction](reaction.md)이, 댓글은 [comment](comment.md)가 맡는다. 여기서는 그

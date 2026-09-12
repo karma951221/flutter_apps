@@ -1,8 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/features/feed/domain/entity/feed_post.dart';
-import 'package:daylog/features/feed/domain/repository/feed_repository.dart';
-import 'package:daylog/features/feed/domain/usecase/feed_use_case.dart';
-import 'package:daylog/features/feed/domain/entity/feed_source.dart';
+import 'package:feature_feed/feature_feed.dart';
 import 'package:feature_post/feature_post.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';

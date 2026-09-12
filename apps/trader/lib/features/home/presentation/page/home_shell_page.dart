@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/core.dart';
 import 'package:l10n/l10n.dart';
 import 'package:feature_chat/feature_chat.dart';
-import '../../../feed/presentation/page/feed_page.dart';
+import 'package:feature_feed/feature_feed.dart';
 import '../../../profile/presentation/page/profile_page.dart';
 import 'package:feature_settings/feature_settings.dart';
 import 'package:feature_trade/feature_trade.dart';

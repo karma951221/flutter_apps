@@ -1,5 +1,4 @@
-import 'package:daylog/features/feed/data/dto/feed_post_dto.dart';
-import 'package:daylog/features/feed/data/mapper/feed_post_mapper.dart';
+import 'package:feature_feed/feature_feed.dart';
 import 'package:feature_reaction/feature_reaction.dart';
 import 'package:flutter_test/flutter_test.dart';
 

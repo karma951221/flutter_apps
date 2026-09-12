@@ -8,7 +8,7 @@ import 'package:core/core.dart';
 import 'package:feature_auth/feature_auth.dart';
 import 'package:feature_chat/feature_chat.dart';
 import 'package:feature_comment/feature_comment.dart';
-import '../../features/feed/presentation/page/guest_feed_page.dart';
+import 'package:feature_feed/feature_feed.dart';
 import '../../features/home/presentation/page/home_shell_page.dart';
 import 'package:feature_post/feature_post.dart';
 import 'package:feature_follow/feature_follow.dart';
