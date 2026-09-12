@@ -1,5 +1,5 @@
 import 'package:daylog/app/router/app_router.dart';
-import 'package:daylog/app/router/routes.dart';
+import 'package:core/core.dart';
 import 'package:daylog/features/auth/domain/entity/app_user.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:daylog/features/auth/presentation/bloc/auth_state.dart';

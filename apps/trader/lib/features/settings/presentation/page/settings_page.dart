@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../app/router/routes.dart';
+import 'package:core/core.dart';
 
 import 'package:design_system/design_system.dart';
 import '../../../auth/domain/entity/app_user.dart';

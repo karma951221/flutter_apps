@@ -12,6 +12,8 @@ export 'src/id/id_generator.dart';
 export 'src/media/image_picker_service.dart';
 export 'src/media/image_storage.dart';
 export 'src/media/supabase_image_storage.dart';
+export 'src/navigation/route_observer.dart';
+export 'src/navigation/routes.dart';
 export 'src/network/secure_supabase_storage.dart';
 export 'src/pagination/cursor_page.dart';
 export 'src/result/result.dart';

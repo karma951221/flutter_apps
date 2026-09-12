@@ -1,5 +1,5 @@
 import '../../features/auth/presentation/bloc/auth_state.dart';
-import 'routes.dart';
+import 'package:core/core.dart';
 
 /// 인증 상태와 현재 위치로 갈 곳을 정한다. null 이면 그대로 둔다.
 ///

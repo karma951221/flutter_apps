@@ -31,8 +31,6 @@ import '../../features/trade/domain/entity/trade_result_summary.dart';
 import '../../features/trade/presentation/page/trade_result_page.dart';
 import '../../features/trade/presentation/page/trade_session_page.dart';
 import 'auth_redirect.dart';
-import 'route_observer.dart';
-import 'routes.dart';
 
 /// 인증 게이트.
 ///

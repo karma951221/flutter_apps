@@ -1,4 +1,3 @@
-import 'package:daylog/app/router/routes.dart';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:daylog/features/auth/domain/entity/app_user.dart';
