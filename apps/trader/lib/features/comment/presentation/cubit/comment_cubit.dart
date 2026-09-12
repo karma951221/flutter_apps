@@ -2,7 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import 'package:core/core.dart';
-import '../../../post/domain/entity/post_author.dart';
+import 'package:feature_post/feature_post.dart';
 import 'package:feature_reaction/feature_reaction.dart';
 import '../../domain/entity/post_comment.dart';
 import '../../domain/usecase/comment_use_case.dart';

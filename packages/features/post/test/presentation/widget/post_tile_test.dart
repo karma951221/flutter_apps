@@ -1,7 +1,5 @@
 import 'package:design_system/design_system.dart';
-import 'package:daylog/features/post/domain/entity/post.dart';
-import 'package:daylog/features/post/domain/entity/post_author.dart';
-import 'package:daylog/features/post/presentation/widget/post_tile.dart';
+import 'package:feature_post/feature_post.dart';
 import 'package:feature_trade/feature_trade.dart';
 import 'package:l10n/l10n.dart';
 import 'package:flutter/material.dart';

@@ -1,4 +1,4 @@
-import '../../../post/domain/entity/post_author.dart';
+import 'package:feature_post/feature_post.dart';
 import 'package:feature_reaction/feature_reaction.dart';
 import '../../domain/entity/post_comment.dart';
 import '../cursor/comment_cursor.dart';

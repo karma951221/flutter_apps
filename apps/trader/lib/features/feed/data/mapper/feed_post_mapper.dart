@@ -1,6 +1,4 @@
-import '../../../post/domain/entity/post.dart';
-import '../../../post/domain/entity/post_author.dart';
-import '../../../post/domain/entity/post_image.dart';
+import 'package:feature_post/feature_post.dart';
 import 'package:feature_reaction/feature_reaction.dart';
 import 'package:feature_trade/feature_trade.dart';
 import '../../domain/entity/feed_post.dart';

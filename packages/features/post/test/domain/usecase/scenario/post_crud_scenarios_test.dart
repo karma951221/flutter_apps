@@ -1,10 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/features/post/domain/entity/post.dart';
-import 'package:daylog/features/post/domain/entity/post_update.dart';
-import 'package:daylog/features/post/domain/repository/post_repository.dart';
-import 'package:daylog/features/post/domain/usecase/scenario/delete_post_scenario.dart';
-import 'package:daylog/features/post/domain/usecase/scenario/get_post_scenario.dart';
-import 'package:daylog/features/post/domain/usecase/scenario/update_post_scenario.dart';
+import 'package:feature_post/feature_post.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

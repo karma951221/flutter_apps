@@ -1,5 +1,5 @@
 import 'package:core/core.dart';
-import '../../../post/domain/entity/post_author.dart';
+import 'package:feature_post/feature_post.dart';
 import '../entity/post_comment.dart';
 
 /// 댓글 저장소.

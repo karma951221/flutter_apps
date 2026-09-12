@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:core/core.dart';
 import 'package:l10n/l10n.dart';
 import 'package:design_system/design_system.dart';
-import '../../../post/presentation/widget/post_tile.dart';
+import 'package:feature_post/feature_post.dart';
 import '../cubit/feed_cubit.dart';
 import '../cubit/feed_state.dart';
 

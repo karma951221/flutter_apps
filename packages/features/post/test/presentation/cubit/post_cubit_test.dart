@@ -2,14 +2,7 @@ import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
-import 'package:daylog/features/post/domain/entity/post.dart';
-import 'package:daylog/features/post/domain/entity/post_draft.dart';
-import 'package:daylog/features/post/domain/entity/post_image_draft.dart';
-import 'package:daylog/features/post/domain/entity/post_update.dart';
-import 'package:daylog/features/post/domain/post_policy.dart';
-import 'package:daylog/features/post/domain/usecase/post_use_case.dart';
-import 'package:daylog/features/post/presentation/cubit/post_cubit.dart';
-import 'package:daylog/features/post/presentation/cubit/post_state.dart';
+import 'package:feature_post/feature_post.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

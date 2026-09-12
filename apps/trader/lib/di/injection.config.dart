@@ -14,6 +14,7 @@ import 'package:core/core.dart' as _i494;
 import 'package:feature_auth/feature_auth.dart' as _i277;
 import 'package:feature_chat/feature_chat.dart' as _i421;
 import 'package:feature_follow/feature_follow.dart' as _i324;
+import 'package:feature_post/feature_post.dart' as _i317;
 import 'package:feature_preferences/feature_preferences.dart' as _i769;
 import 'package:feature_reaction/feature_reaction.dart' as _i766;
 import 'package:feature_safety/feature_safety.dart' as _i789;
@@ -38,13 +39,6 @@ import '../features/feed/data/repository/feed_repository_impl.dart' as _i264;
 import '../features/feed/domain/repository/feed_repository.dart' as _i522;
 import '../features/feed/domain/usecase/feed_use_case.dart' as _i556;
 import '../features/feed/presentation/cubit/feed_cubit.dart' as _i482;
-import '../features/post/data/datasource/post_data_source.dart' as _i349;
-import '../features/post/data/datasource/supabase_post_data_source.dart'
-    as _i414;
-import '../features/post/data/repository/post_repository_impl.dart' as _i366;
-import '../features/post/domain/repository/post_repository.dart' as _i615;
-import '../features/post/domain/usecase/post_use_case.dart' as _i564;
-import '../features/post/presentation/cubit/post_cubit.dart' as _i182;
 import '../features/profile/data/datasource/profile_data_source.dart' as _i654;
 import '../features/profile/data/datasource/supabase_profile_data_source.dart'
     as _i211;
@@ -70,6 +64,7 @@ extension GetItInjectableX on _i174.GetIt {
     await _i849.FeatureTradePackageModule().init(gh);
     await _i427.FeatureSettingsPackageModule().init(gh);
     await _i421.FeatureChatPackageModule().init(gh);
+    await _i317.FeaturePostPackageModule().init(gh);
     gh.lazySingleton<_i247.FeedDataSource>(
       () => _i52.SupabaseFeedDataSource(gh<_i454.SupabaseClient>()),
     );
@@ -85,22 +80,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i928.ProfileRepository>(
       () => _i259.ProfileRepositoryImpl(gh<_i654.ProfileDataSource>()),
     );
-    gh.lazySingleton<_i349.PostDataSource>(
-      () => _i414.SupabasePostDataSource(
-        gh<_i454.SupabaseClient>(),
-        gh<_i494.IdGenerator>(),
-        gh<_i494.ImageStorage>(),
-      ),
-    );
     gh.lazySingleton<_i237.CommentRepository>(
       () => _i740.CommentRepositoryImpl(gh<_i920.CommentDataSource>()),
-    );
-    gh.lazySingleton<_i615.PostRepository>(
-      () => _i366.PostRepositoryImpl(gh<_i349.PostDataSource>()),
-    );
-    gh.lazySingleton<_i564.PostUseCase>(
-      () => _i564.DefaultPostUseCase(gh<_i615.PostRepository>()),
-      dispose: (i) => i.dispose(),
     );
     gh.lazySingleton<_i13.CommentUseCase>(
       () => _i13.DefaultCommentUseCase(gh<_i237.CommentRepository>()),
@@ -111,20 +92,19 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i640.ProfileUseCase>(
       () => _i640.DefaultProfileUseCase(gh<_i928.ProfileRepository>()),
     );
-    gh.factory<_i182.PostCubit>(() => _i182.PostCubit(gh<_i564.PostUseCase>()));
     gh.factory<_i300.ProfileCubit>(
       () => _i300.ProfileCubit(gh<_i640.ProfileUseCase>()),
-    );
-    gh.lazySingleton<_i556.FeedUseCase>(
-      () => _i556.DefaultFeedUseCase(
-        gh<_i522.FeedRepository>(),
-        gh<_i564.PostUseCase>(),
-      ),
     );
     gh.factory<_i630.CommentCubit>(
       () => _i630.CommentCubit(
         gh<_i13.CommentUseCase>(),
         gh<_i766.ReactionUseCase>(),
+      ),
+    );
+    gh.lazySingleton<_i556.FeedUseCase>(
+      () => _i556.DefaultFeedUseCase(
+        gh<_i522.FeedRepository>(),
+        gh<_i317.PostUseCase>(),
       ),
     );
     gh.factory<_i482.FeedCubit>(

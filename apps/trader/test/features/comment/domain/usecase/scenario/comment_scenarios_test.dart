@@ -5,7 +5,7 @@ import 'package:daylog/features/comment/domain/usecase/scenario/add_comment_scen
 import 'package:daylog/features/comment/domain/usecase/scenario/delete_comment_scenario.dart';
 import 'package:daylog/features/comment/domain/usecase/scenario/get_comments_scenario.dart';
 import 'package:daylog/features/comment/domain/usecase/scenario/get_replies_scenario.dart';
-import 'package:daylog/features/post/domain/entity/post_author.dart';
+import 'package:feature_post/feature_post.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

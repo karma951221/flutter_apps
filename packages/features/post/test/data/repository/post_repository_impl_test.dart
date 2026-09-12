@@ -1,8 +1,5 @@
 import 'package:core/core.dart';
-import 'package:daylog/features/post/data/datasource/post_data_source.dart';
-import 'package:daylog/features/post/data/dto/post_dto.dart';
-import 'package:daylog/features/post/data/repository/post_repository_impl.dart';
-import 'package:daylog/features/post/domain/entity/post_draft.dart';
+import 'package:feature_post/feature_post.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 

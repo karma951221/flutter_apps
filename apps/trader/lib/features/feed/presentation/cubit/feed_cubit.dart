@@ -4,8 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import 'package:core/core.dart';
-import '../../../post/domain/entity/post.dart';
-import '../../../post/domain/entity/post_author.dart';
+import 'package:feature_post/feature_post.dart';
 import 'package:feature_reaction/feature_reaction.dart';
 import '../../domain/entity/feed_post.dart';
 import '../../domain/entity/feed_source.dart';

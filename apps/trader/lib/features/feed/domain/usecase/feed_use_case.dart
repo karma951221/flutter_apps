@@ -1,8 +1,7 @@
 import 'package:injectable/injectable.dart';
 
 import 'package:core/core.dart';
-import '../../../post/domain/entity/post.dart';
-import '../../../post/domain/usecase/post_use_case.dart';
+import 'package:feature_post/feature_post.dart';
 import '../entity/feed_post.dart';
 import '../entity/feed_source.dart';
 import '../repository/feed_repository.dart';

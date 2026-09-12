@@ -5,7 +5,7 @@ import 'package:core/core.dart';
 import 'package:l10n/l10n.dart';
 import 'package:design_system/design_system.dart';
 import 'package:feature_auth/feature_auth.dart';
-import '../../../post/domain/entity/post_author.dart';
+import 'package:feature_post/feature_post.dart';
 import 'package:feature_reaction/feature_reaction.dart';
 import 'package:feature_safety/feature_safety.dart';
 import '../../domain/comment_policy.dart';
