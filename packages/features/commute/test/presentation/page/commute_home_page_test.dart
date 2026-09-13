@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:feature_commute/feature_commute.dart';
@@ -74,7 +76,10 @@ void main() {
   });
   tearDown(getIt.reset);
 
-  Future<void> pumpHome(WidgetTester tester) async {
+  Future<void> pumpHome(
+    WidgetTester tester, {
+    Future<void> Function()? onOpenSettings,
+  }) async {
     await tester.binding.setSurfaceSize(const Size(800, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
@@ -83,7 +88,7 @@ void main() {
         locale: const Locale('ko'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: CommuteHomePage(onOpenSettings: () {}),
+        home: CommuteHomePage(onOpenSettings: onOpenSettings ?? () async {}),
       ),
     );
     await tester.pumpAndSettle();
@@ -115,6 +120,23 @@ void main() {
 
     expect(find.text('집 기준 · 위치를 못 가져왔어요'), findsOneWidget);
     expect(find.text('현 위치 기준'), findsNothing);
+  });
+
+  testWidgets('설정 화면이 닫히면 다시 검색한다', (tester) async {
+    when(
+      () => useCase.searchCommute(any()),
+    ).thenAnswer((_) async => Ok(_result(const Origin.fallbackStation(_home))));
+    final settingsClosed = Completer<void>();
+
+    await pumpHome(tester, onOpenSettings: () => settingsClosed.future);
+    await tester.tap(find.byKey(const Key('commute-open-settings')));
+    await tester.pump();
+    verify(() => useCase.searchCommute(CommuteDirection.toWork)).called(1);
+
+    settingsClosed.complete();
+    await tester.pumpAndSettle();
+
+    verify(() => useCase.searchCommute(CommuteDirection.toWork)).called(1);
   });
 
   testWidgets('failure는 AppPlaceholder와 재시도를 보여준다', (tester) async {

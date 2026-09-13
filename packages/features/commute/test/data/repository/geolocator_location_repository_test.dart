@@ -82,6 +82,49 @@ void main() {
     verify(() => gateway.requestPermission()).called(1);
   });
 
+  test('같은 세션에서 한 번 거부하면 다시 요청하지 않는다', () async {
+    when(
+      () => gateway.isLocationServiceEnabled(),
+    ).thenAnswer((_) async => true);
+    when(
+      () => gateway.checkPermission(),
+    ).thenAnswer((_) async => LocationPermission.denied);
+    when(
+      () => gateway.requestPermission(),
+    ).thenAnswer((_) async => LocationPermission.denied);
+
+    await repository.currentLocation(timeout: _timeout);
+    final result = await repository.currentLocation(timeout: _timeout);
+
+    _expectFailure(result, FailureCode.locationPermissionDenied);
+    verify(() => gateway.requestPermission()).called(1);
+  });
+
+  test('거부한 뒤 설정에서 허용하면 다시 묻지 않고 위치를 반환한다', () async {
+    when(
+      () => gateway.isLocationServiceEnabled(),
+    ).thenAnswer((_) async => true);
+    when(
+      () => gateway.checkPermission(),
+    ).thenAnswer((_) async => LocationPermission.denied);
+    when(
+      () => gateway.requestPermission(),
+    ).thenAnswer((_) async => LocationPermission.denied);
+    await repository.currentLocation(timeout: _timeout);
+
+    when(
+      () => gateway.checkPermission(),
+    ).thenAnswer((_) async => LocationPermission.whileInUse);
+    when(
+      () => gateway.getCurrentPosition(timeout: _timeout),
+    ).thenAnswer((_) async => _position);
+
+    final result = await repository.currentLocation(timeout: _timeout);
+
+    expect(result, isA<Ok<GeoPoint>>());
+    verify(() => gateway.requestPermission()).called(1);
+  });
+
   test('영구 거부 상태는 다시 요청하지 않는다', () async {
     when(
       () => gateway.isLocationServiceEnabled(),

@@ -10,10 +10,14 @@ import '../widget/direction_toggle.dart';
 import '../widget/origin_banner.dart';
 import '../widget/transit_route_card.dart';
 
+/// 설정 화면을 여는 콜백은 설정이 닫힐 때 완료되는 Future를 돌려준다.
+/// 홈은 그때 다시 검색한다 — 역을 바꾸고 돌아왔는데 이전 결과가 남지 않도록.
+typedef OpenSettingsCallback = Future<void> Function();
+
 class CommuteHomePage extends StatelessWidget {
   const CommuteHomePage({required this.onOpenSettings, super.key});
 
-  final VoidCallback onOpenSettings;
+  final OpenSettingsCallback onOpenSettings;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
@@ -25,7 +29,13 @@ class CommuteHomePage extends StatelessWidget {
 class _CommuteHomeView extends StatelessWidget {
   const _CommuteHomeView({required this.onOpenSettings});
 
-  final VoidCallback onOpenSettings;
+  final OpenSettingsCallback onOpenSettings;
+
+  Future<void> _openSettings(BuildContext context) async {
+    final cubit = context.read<CommuteHomeCubit>();
+    await onOpenSettings();
+    if (!cubit.isClosed) await cubit.refresh();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +48,7 @@ class _CommuteHomeView extends StatelessWidget {
           IconButton(
             key: const Key('commute-open-settings'),
             tooltip: l10n.commuteOpenSettingsTooltip,
-            onPressed: onOpenSettings,
+            onPressed: () => _openSettings(context),
             icon: const Icon(Icons.settings_outlined),
           ),
         ],
@@ -85,7 +95,7 @@ class _CommuteHomeView extends StatelessWidget {
                         onAction:
                             failure.failureCode ==
                                 FailureCode.commuteNotConfigured
-                            ? onOpenSettings
+                            ? () => _openSettings(context)
                             : context.read<CommuteHomeCubit>().refresh,
                       ),
                     ),

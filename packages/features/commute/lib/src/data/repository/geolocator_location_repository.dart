@@ -10,9 +10,14 @@ import '../location/location_gateway.dart';
 
 @LazySingleton(as: LocationRepository)
 class GeolocatorLocationRepository implements LocationRepository {
-  const GeolocatorLocationRepository(this._gateway);
+  GeolocatorLocationRepository(this._gateway);
 
   final LocationGateway _gateway;
+
+  /// 이번 세션에서 사용자가 권한 요청을 거부했는지. Android는 첫 거부 뒤에도
+  /// `denied`를 돌려주므로, 기억해 두지 않으면 방향 토글·새로고침마다 시스템
+  /// 다이얼로그가 다시 뜬다. 거부는 정상 분기라 조용히 fallback으로 보낸다.
+  bool _requestDeclined = false;
 
   @override
   Future<Result<GeoPoint>> currentLocation({
@@ -26,8 +31,11 @@ class GeolocatorLocationRepository implements LocationRepository {
       }
 
       var permission = await _gateway.checkPermission();
-      if (permission == LocationPermission.denied) {
+      if (permission == LocationPermission.denied && !_requestDeclined) {
         permission = await _gateway.requestPermission();
+        _requestDeclined =
+            permission == LocationPermission.denied ||
+            permission == LocationPermission.deniedForever;
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
