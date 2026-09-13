@@ -1,3 +1,8 @@
+export 'src/data/location/location_gateway.dart';
+export 'src/data/repository/asset_station_repository.dart';
+export 'src/data/repository/fake_transit_route_repository.dart';
+export 'src/data/repository/geolocator_location_repository.dart';
+export 'src/data/repository/prefs_commute_settings_repository.dart';
 export 'src/di/feature_commute.module.dart';
 export 'src/domain/entity/commute_direction.dart';
 export 'src/domain/entity/commute_result.dart';
