@@ -1344,4 +1344,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String tradeFractionLabel(int pct) {
     return '$pct%';
   }
+
+  @override
+  String get commuteSettingsTitle => 'Commute settings';
+
+  @override
+  String get commuteSettingsDescription =>
+      'Choose stations near your home and workplace';
+
+  @override
+  String get commuteHomeStation => 'Home station';
+
+  @override
+  String get commuteWorkStation => 'Work station';
+
+  @override
+  String get commuteStationNotSet => 'Choose a station';
+
+  @override
+  String get commuteStationSearchTitle => 'Search stations';
+
+  @override
+  String get commuteStationSearchHint => 'Enter a station name';
+
+  @override
+  String get commuteStationSearchPrompt => 'Search by station name';
+
+  @override
+  String get commuteStationSearchEmpty => 'No stations found';
 }

@@ -400,5 +400,14 @@
   "tradeInvalidNumber": "Enter a valid number",
   "tradeQuantityMustBePositive": "Enter a value greater than zero",
   "tradeOrderPlaced": "Order filled",
-  "tradeFractionLabel": "{pct}%"
+  "tradeFractionLabel": "{pct}%",
+  "commuteSettingsTitle": "Commute settings",
+  "commuteSettingsDescription": "Choose stations near your home and workplace",
+  "commuteHomeStation": "Home station",
+  "commuteWorkStation": "Work station",
+  "commuteStationNotSet": "Choose a station",
+  "commuteStationSearchTitle": "Search stations",
+  "commuteStationSearchHint": "Enter a station name",
+  "commuteStationSearchPrompt": "Search by station name",
+  "commuteStationSearchEmpty": "No stations found"
 }

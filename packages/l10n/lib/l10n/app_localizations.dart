@@ -2509,6 +2509,60 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{pct}%'**
   String tradeFractionLabel(int pct);
+
+  /// 통근 앱 설정 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'통근 설정'**
+  String get commuteSettingsTitle;
+
+  /// 통근 앱 설정 화면에서 역 선택을 안내하는 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'집과 회사에서 가까운 역을 선택하세요'**
+  String get commuteSettingsDescription;
+
+  /// 통근 앱 설정 화면의 집 기준 역 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'집 역'**
+  String get commuteHomeStation;
+
+  /// 통근 앱 설정 화면의 회사 기준 역 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'회사 역'**
+  String get commuteWorkStation;
+
+  /// 통근 역이 아직 선택되지 않았을 때의 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'역을 선택해 주세요'**
+  String get commuteStationNotSet;
+
+  /// 통근 앱 역 검색 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'역 검색'**
+  String get commuteStationSearchTitle;
+
+  /// 통근 앱 역 검색 입력 필드의 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'역 이름을 입력하세요'**
+  String get commuteStationSearchHint;
+
+  /// 통근 앱 역 검색 전의 빈 상태 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'역 이름을 검색해 주세요'**
+  String get commuteStationSearchPrompt;
+
+  /// 통근 앱 역 검색 결과가 비었을 때의 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'검색 결과가 없습니다'**
+  String get commuteStationSearchEmpty;
 }
 
 class _AppLocalizationsDelegate

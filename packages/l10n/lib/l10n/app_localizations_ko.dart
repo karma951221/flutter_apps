@@ -1261,4 +1261,31 @@ class AppLocalizationsKo extends AppLocalizations {
   String tradeFractionLabel(int pct) {
     return '$pct%';
   }
+
+  @override
+  String get commuteSettingsTitle => '통근 설정';
+
+  @override
+  String get commuteSettingsDescription => '집과 회사에서 가까운 역을 선택하세요';
+
+  @override
+  String get commuteHomeStation => '집 역';
+
+  @override
+  String get commuteWorkStation => '회사 역';
+
+  @override
+  String get commuteStationNotSet => '역을 선택해 주세요';
+
+  @override
+  String get commuteStationSearchTitle => '역 검색';
+
+  @override
+  String get commuteStationSearchHint => '역 이름을 입력하세요';
+
+  @override
+  String get commuteStationSearchPrompt => '역 이름을 검색해 주세요';
+
+  @override
+  String get commuteStationSearchEmpty => '검색 결과가 없습니다';
 }

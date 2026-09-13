@@ -1260,4 +1260,31 @@ class AppLocalizationsJa extends AppLocalizations {
   String tradeFractionLabel(int pct) {
     return '$pct%';
   }
+
+  @override
+  String get commuteSettingsTitle => '通勤設定';
+
+  @override
+  String get commuteSettingsDescription => '自宅と職場の近くの駅を選択してください';
+
+  @override
+  String get commuteHomeStation => '自宅の駅';
+
+  @override
+  String get commuteWorkStation => '職場の駅';
+
+  @override
+  String get commuteStationNotSet => '駅を選択してください';
+
+  @override
+  String get commuteStationSearchTitle => '駅を検索';
+
+  @override
+  String get commuteStationSearchHint => '駅名を入力してください';
+
+  @override
+  String get commuteStationSearchPrompt => '駅名で検索してください';
+
+  @override
+  String get commuteStationSearchEmpty => '駅が見つかりません';
 }

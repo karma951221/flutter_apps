@@ -400,5 +400,14 @@
   "tradeInvalidNumber": "有効な数値を入力してください",
   "tradeQuantityMustBePositive": "0より大きい値を入力してください",
   "tradeOrderPlaced": "注文が約定しました",
-  "tradeFractionLabel": "{pct}%"
+  "tradeFractionLabel": "{pct}%",
+  "commuteSettingsTitle": "通勤設定",
+  "commuteSettingsDescription": "自宅と職場の近くの駅を選択してください",
+  "commuteHomeStation": "自宅の駅",
+  "commuteWorkStation": "職場の駅",
+  "commuteStationNotSet": "駅を選択してください",
+  "commuteStationSearchTitle": "駅を検索",
+  "commuteStationSearchHint": "駅名を入力してください",
+  "commuteStationSearchPrompt": "駅名で検索してください",
+  "commuteStationSearchEmpty": "駅が見つかりません"
 }
