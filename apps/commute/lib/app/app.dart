@@ -44,7 +44,8 @@ class _CommuteAppState extends State<CommuteApp> {
           );
         }
         return MaterialApp.router(
-          title: 'commute',
+          onGenerateTitle: (context) =>
+              AppLocalizations.of(context).commuteAppTitle,
           theme: AppTheme.light(),
           darkTheme: AppTheme.dark(),
           themeMode: ThemeMode.system,

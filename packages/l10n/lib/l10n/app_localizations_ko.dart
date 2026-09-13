@@ -1288,4 +1288,53 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get commuteStationSearchEmpty => '검색 결과가 없습니다';
+
+  @override
+  String get commuteAppTitle => '통근 시간';
+
+  @override
+  String get commuteDirectionToWork => '출근';
+
+  @override
+  String get commuteDirectionToHome => '퇴근';
+
+  @override
+  String get commuteCurrentLocationOrigin => '현 위치 기준';
+
+  @override
+  String get commuteHomeFallbackOrigin => '집 기준 · 위치를 못 가져왔어요';
+
+  @override
+  String get commuteWorkFallbackOrigin => '회사 기준 · 위치를 못 가져왔어요';
+
+  @override
+  String get commuteModeSubway => '지하철';
+
+  @override
+  String get commuteModeBus => '버스';
+
+  @override
+  String get commuteModeBest => '최적';
+
+  @override
+  String commuteDurationMinutes(int minutes) {
+    return '$minutes분';
+  }
+
+  @override
+  String commuteTransferCount(int count) {
+    return '환승 $count회';
+  }
+
+  @override
+  String get commuteSettingsRequiredTitle => '통근 역 설정이 필요해요';
+
+  @override
+  String get commuteSettingsRequiredDescription => '집과 회사 역을 먼저 선택해 주세요';
+
+  @override
+  String get commuteOpenSettings => '설정하기';
+
+  @override
+  String get commuteOpenSettingsTooltip => '통근 설정';
 }

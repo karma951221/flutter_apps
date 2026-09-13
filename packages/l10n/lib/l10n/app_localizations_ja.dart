@@ -1287,4 +1287,53 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get commuteStationSearchEmpty => '駅が見つかりません';
+
+  @override
+  String get commuteAppTitle => '通勤時間';
+
+  @override
+  String get commuteDirectionToWork => '出勤';
+
+  @override
+  String get commuteDirectionToHome => '帰宅';
+
+  @override
+  String get commuteCurrentLocationOrigin => '現在地から';
+
+  @override
+  String get commuteHomeFallbackOrigin => '自宅から · 位置情報を取得できませんでした';
+
+  @override
+  String get commuteWorkFallbackOrigin => '職場から · 位置情報を取得できませんでした';
+
+  @override
+  String get commuteModeSubway => '地下鉄';
+
+  @override
+  String get commuteModeBus => 'バス';
+
+  @override
+  String get commuteModeBest => '最適';
+
+  @override
+  String commuteDurationMinutes(int minutes) {
+    return '$minutes分';
+  }
+
+  @override
+  String commuteTransferCount(int count) {
+    return '乗換 $count回';
+  }
+
+  @override
+  String get commuteSettingsRequiredTitle => '通勤駅の設定が必要です';
+
+  @override
+  String get commuteSettingsRequiredDescription => '自宅と職場の駅を先に選択してください';
+
+  @override
+  String get commuteOpenSettings => '設定する';
+
+  @override
+  String get commuteOpenSettingsTooltip => '通勤設定';
 }

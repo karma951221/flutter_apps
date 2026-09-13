@@ -409,5 +409,20 @@
   "commuteStationSearchTitle": "Search stations",
   "commuteStationSearchHint": "Enter a station name",
   "commuteStationSearchPrompt": "Search by station name",
-  "commuteStationSearchEmpty": "No stations found"
+  "commuteStationSearchEmpty": "No stations found",
+  "commuteAppTitle": "Commute time",
+  "commuteDirectionToWork": "To work",
+  "commuteDirectionToHome": "To home",
+  "commuteCurrentLocationOrigin": "From your current location",
+  "commuteHomeFallbackOrigin": "From home · Location unavailable",
+  "commuteWorkFallbackOrigin": "From work · Location unavailable",
+  "commuteModeSubway": "Subway",
+  "commuteModeBus": "Bus",
+  "commuteModeBest": "Best",
+  "commuteDurationMinutes": "{minutes} min",
+  "commuteTransferCount": "{count} transfers",
+  "commuteSettingsRequiredTitle": "Set up your commute stations",
+  "commuteSettingsRequiredDescription": "Choose your home and work stations first",
+  "commuteOpenSettings": "Open settings",
+  "commuteOpenSettingsTooltip": "Commute settings"
 }

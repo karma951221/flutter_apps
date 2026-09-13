@@ -2563,6 +2563,96 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'검색 결과가 없습니다'**
   String get commuteStationSearchEmpty;
+
+  /// 통근 앱 이름과 홈 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'통근 시간'**
+  String get commuteAppTitle;
+
+  /// 통근 앱에서 집에서 회사로 가는 방향
+  ///
+  /// In ko, this message translates to:
+  /// **'출근'**
+  String get commuteDirectionToWork;
+
+  /// 통근 앱에서 회사에서 집으로 가는 방향
+  ///
+  /// In ko, this message translates to:
+  /// **'퇴근'**
+  String get commuteDirectionToHome;
+
+  /// 현재 GPS 위치를 경로 출발지로 썼다는 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'현 위치 기준'**
+  String get commuteCurrentLocationOrigin;
+
+  /// 출근 경로에서 GPS 대신 집 역을 썼다는 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'집 기준 · 위치를 못 가져왔어요'**
+  String get commuteHomeFallbackOrigin;
+
+  /// 퇴근 경로에서 GPS 대신 회사 역을 썼다는 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'회사 기준 · 위치를 못 가져왔어요'**
+  String get commuteWorkFallbackOrigin;
+
+  /// 통근 경로 카드의 지하철 모드 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'지하철'**
+  String get commuteModeSubway;
+
+  /// 통근 경로 카드의 버스 모드 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'버스'**
+  String get commuteModeBus;
+
+  /// 통근 경로 카드의 최적 조합 모드 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'최적'**
+  String get commuteModeBest;
+
+  /// 통근 경로의 총 소요 시간을 분 단위로 표시
+  ///
+  /// In ko, this message translates to:
+  /// **'{minutes}분'**
+  String commuteDurationMinutes(int minutes);
+
+  /// 통근 경로의 환승 횟수
+  ///
+  /// In ko, this message translates to:
+  /// **'환승 {count}회'**
+  String commuteTransferCount(int count);
+
+  /// 홈에서 집이나 회사 역이 비었을 때의 안내 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'통근 역 설정이 필요해요'**
+  String get commuteSettingsRequiredTitle;
+
+  /// 홈에서 통근 설정을 먼저 마치도록 안내하는 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'집과 회사 역을 먼저 선택해 주세요'**
+  String get commuteSettingsRequiredDescription;
+
+  /// 통근 설정 화면을 여는 행동 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'설정하기'**
+  String get commuteOpenSettings;
+
+  /// 통근 홈의 설정 아이콘 접근성 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'통근 설정'**
+  String get commuteOpenSettingsTooltip;
 }
 
 class _AppLocalizationsDelegate

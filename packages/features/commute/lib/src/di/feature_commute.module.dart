@@ -19,6 +19,7 @@ import '../domain/repository/location_repository.dart' as _i201;
 import '../domain/repository/station_repository.dart' as _i91;
 import '../domain/repository/transit_route_repository.dart' as _i947;
 import '../domain/usecase/commute_use_case.dart' as _i890;
+import '../presentation/cubit/commute_home_cubit.dart' as _i45;
 import '../presentation/cubit/commute_settings_cubit.dart' as _i720;
 import '../presentation/cubit/station_search_cubit.dart' as _i790;
 
@@ -49,6 +50,9 @@ class FeatureCommutePackageModule extends _i526.MicroPackageModule {
         gh<_i91.StationRepository>(),
         gh<_i828.CommuteSettingsRepository>(),
       ),
+    );
+    gh.factory<_i45.CommuteHomeCubit>(
+      () => _i45.CommuteHomeCubit(gh<_i890.CommuteUseCase>()),
     );
     gh.factory<_i720.CommuteSettingsCubit>(
       () => _i720.CommuteSettingsCubit(gh<_i890.CommuteUseCase>()),

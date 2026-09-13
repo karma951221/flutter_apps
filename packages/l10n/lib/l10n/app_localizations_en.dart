@@ -1372,4 +1372,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commuteStationSearchEmpty => 'No stations found';
+
+  @override
+  String get commuteAppTitle => 'Commute time';
+
+  @override
+  String get commuteDirectionToWork => 'To work';
+
+  @override
+  String get commuteDirectionToHome => 'To home';
+
+  @override
+  String get commuteCurrentLocationOrigin => 'From your current location';
+
+  @override
+  String get commuteHomeFallbackOrigin => 'From home · Location unavailable';
+
+  @override
+  String get commuteWorkFallbackOrigin => 'From work · Location unavailable';
+
+  @override
+  String get commuteModeSubway => 'Subway';
+
+  @override
+  String get commuteModeBus => 'Bus';
+
+  @override
+  String get commuteModeBest => 'Best';
+
+  @override
+  String commuteDurationMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String commuteTransferCount(int count) {
+    return '$count transfers';
+  }
+
+  @override
+  String get commuteSettingsRequiredTitle => 'Set up your commute stations';
+
+  @override
+  String get commuteSettingsRequiredDescription =>
+      'Choose your home and work stations first';
+
+  @override
+  String get commuteOpenSettings => 'Open settings';
+
+  @override
+  String get commuteOpenSettingsTooltip => 'Commute settings';
 }

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:feature_commute/feature_commute.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,9 +11,8 @@ GoRouter createRouter({required bool settingsComplete}) {
     routes: [
       GoRoute(
         path: CommutePaths.home,
-        builder: (_, _) => const Scaffold(
-          key: Key('commute-home-placeholder'),
-          body: Placeholder(),
+        builder: (context, _) => CommuteHomePage(
+          onOpenSettings: () => context.push(CommutePaths.settings),
         ),
       ),
       GoRoute(

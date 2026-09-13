@@ -1764,5 +1764,75 @@
   "commuteStationSearchEmpty": "검색 결과가 없습니다",
   "@commuteStationSearchEmpty": {
     "description": "통근 앱 역 검색 결과가 비었을 때의 안내"
+  },
+  "commuteAppTitle": "통근 시간",
+  "@commuteAppTitle": {
+    "description": "통근 앱 이름과 홈 화면 제목"
+  },
+  "commuteDirectionToWork": "출근",
+  "@commuteDirectionToWork": {
+    "description": "통근 앱에서 집에서 회사로 가는 방향"
+  },
+  "commuteDirectionToHome": "퇴근",
+  "@commuteDirectionToHome": {
+    "description": "통근 앱에서 회사에서 집으로 가는 방향"
+  },
+  "commuteCurrentLocationOrigin": "현 위치 기준",
+  "@commuteCurrentLocationOrigin": {
+    "description": "현재 GPS 위치를 경로 출발지로 썼다는 안내"
+  },
+  "commuteHomeFallbackOrigin": "집 기준 · 위치를 못 가져왔어요",
+  "@commuteHomeFallbackOrigin": {
+    "description": "출근 경로에서 GPS 대신 집 역을 썼다는 안내"
+  },
+  "commuteWorkFallbackOrigin": "회사 기준 · 위치를 못 가져왔어요",
+  "@commuteWorkFallbackOrigin": {
+    "description": "퇴근 경로에서 GPS 대신 회사 역을 썼다는 안내"
+  },
+  "commuteModeSubway": "지하철",
+  "@commuteModeSubway": {
+    "description": "통근 경로 카드의 지하철 모드 이름"
+  },
+  "commuteModeBus": "버스",
+  "@commuteModeBus": {
+    "description": "통근 경로 카드의 버스 모드 이름"
+  },
+  "commuteModeBest": "최적",
+  "@commuteModeBest": {
+    "description": "통근 경로 카드의 최적 조합 모드 이름"
+  },
+  "commuteDurationMinutes": "{minutes}분",
+  "@commuteDurationMinutes": {
+    "description": "통근 경로의 총 소요 시간을 분 단위로 표시",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "commuteTransferCount": "환승 {count}회",
+  "@commuteTransferCount": {
+    "description": "통근 경로의 환승 횟수",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "commuteSettingsRequiredTitle": "통근 역 설정이 필요해요",
+  "@commuteSettingsRequiredTitle": {
+    "description": "홈에서 집이나 회사 역이 비었을 때의 안내 제목"
+  },
+  "commuteSettingsRequiredDescription": "집과 회사 역을 먼저 선택해 주세요",
+  "@commuteSettingsRequiredDescription": {
+    "description": "홈에서 통근 설정을 먼저 마치도록 안내하는 설명"
+  },
+  "commuteOpenSettings": "설정하기",
+  "@commuteOpenSettings": {
+    "description": "통근 설정 화면을 여는 행동 버튼 라벨"
+  },
+  "commuteOpenSettingsTooltip": "통근 설정",
+  "@commuteOpenSettingsTooltip": {
+    "description": "통근 홈의 설정 아이콘 접근성 문구"
   }
 }
