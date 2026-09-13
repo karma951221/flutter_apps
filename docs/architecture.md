@@ -37,13 +37,33 @@ socialapp/
 │   │   └── fetch_candles.py     # Binance 일봉 → seeds/market_candles.sql
 │   └── tests/                   # 로컬 Supabase 대상 권한·실시간 검증 스크립트
 │
-└── app/                         # Flutter 앱
-    ├── pubspec.yaml
-    ├── lib/
-    └── test/
+├── pubspec.yaml                 # pub workspace 루트 (workspace: [...])
+├── melos.yaml                   # analyze · test · gen · l10n 일괄 실행
+├── apps/
+│   ├── trader/                  # 첫째 앱 daylog — main · bootstrap · app shell · router · DI 조립 · config · home · patrol_test
+│   └── commute/                 # 둘째 앱 통근 시간 — Supabase 없음. core · design_system · l10n · feature_commute 만 조립
+└── packages/
+    ├── core/                    # error · result · pagination · validation · data 인프라 · media · di
+    ├── design_system/           # theme + widget
+    ├── l10n/                    # ARB + AppLocalizations + failure/validation localizations
+    └── features/                # feature_<name> 패키지. lib/src/ 아래가 §2 의 3계층
+        ├── auth/ post/ feed/ comment/ follow/ reaction/
+        ├── profile/ chat/ safety/ settings/ preferences/ trade/
+        └── commute/             # 둘째 앱 전용. feature_* 를 참조하지 않는다
 ```
 
 **앱과 백엔드를 형제 폴더로 분리한다.** 나중에 자체 백엔드로 전환할 때 `server/`가 하나 더 생기면 되고, 그때 앱 코드는 손대지 않는다.
+
+**앱은 둘이다.** `apps/trader` 가 feature 12개를 조립하는 본 앱이고, `apps/commute` 는
+기반 패키지 셋(`core` · `design_system` · `l10n`)만으로 둘째 앱이 서는지 시험하는
+앱이다([계획](features/commute/plan.md)). 두 앱은 `pubspec.yaml` 의 `workspace:` 로
+패키지를 이름으로 resolve 하고, 실제 의존 관계는 [의존 그래프](dependencies.md)에 있다.
+
+`packages/features/commute` 는 **`Routes` 대신 콜백을 받는다** — 페이지가
+`onOpenSettings` · `onDone` 을 인자로 받고 경로는 `apps/commute` 의 라우터가 정한다.
+기존 feature 들이 `core` 의 `Routes` 로 `context.push` 하는 것과 다른 선택이고, 어느
+쪽으로 통일할지는 패키지 경계 리팩터링에서 결정한다
+([설계 §7](superpowers/specs/2026-09-13-commute-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것)).
 
 **스키마의 단일 기준은 [스키마 문서](schema.md)다.** 테이블·정책·권한이 지금 어떤 모습이어야 하는지는 거기서 확인하고, `supabase/migrations/`는 그 상태에 도달하는 실행 이력으로 읽는다.
 
@@ -59,6 +79,11 @@ Studio UI에서 테이블을 직접 만들지 않는다. 반드시 `supabase mig
 
 **feature-first + 3계층**을 쓴다. domain 안에는 presentation의 진입점을
 단순화하는 usecase facade를 둔다.
+
+> 아래 트리는 모노레포 전환(2026-09-12) 전의 단일 앱 배치다. 지금은 `app/` · `core/` ·
+> `design_system/` · `l10n/` 이 각각 `apps/trader/lib` · `packages/core` ·
+> `packages/design_system` · `packages/l10n` 으로, `features/<x>/` 가
+> `packages/features/<x>/lib/src/` 로 옮겨졌다(§1). 계층과 규칙은 그대로다.
 
 ```
 lib/
@@ -317,6 +342,10 @@ DB 쪽 인덱스와 정렬 조건은 [스키마](schema.md)를 따른다.
 ---
 
 ## 5. 멀티패키지(melos)를 쓰지 않는 이유
+
+> 2026-09-12 에 뒤집혔다. 둘째 앱이 생기면서 pub workspace + melos 로 옮겼다(§1).
+> 아래는 단일 앱 시절의 판단이고, "앱이 둘 이상 되면 그때 추출한다"는 조건이 그대로
+> 실행된 것이다.
 
 앱이 하나뿐이고 혼자 개발한다. melos 멀티패키지의 이점(빌드 격리, 팀 간 경계)은 이 조건에서 발생하지 않는 반면, **패키지마다 build_runner를 돌려야 해서 코드 생성이 느려지고 의존성 관리가 번거로워진다.**
 

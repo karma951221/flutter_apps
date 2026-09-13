@@ -48,7 +48,15 @@ supabase db reset                 # 전체 재적용 (로컬 데이터 초기화
 ## 3. 앱 실행
 
 ```bash
-cd ~/Desktop/socialapp/app
+cd ~/Desktop/socialapp/apps/trader
+flutter run -d emulator-5554
+```
+
+둘째 앱(통근 시간, [계획](features/commute/plan.md))은 **Supabase 가 필요 없다** —
+§1 을 건너뛰고 바로 띄운다. 위치 권한을 물으면 거부해도 된다(역 기준으로 동작한다).
+
+```bash
+cd ~/Desktop/socialapp/apps/commute
 flutter run -d emulator-5554
 ```
 

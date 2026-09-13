@@ -18,6 +18,7 @@
 | 3.6 | F9-DM (1:1 채팅) | **완료** |
 | 4 | (v1.1) 재설정 SMTP · 구글 로그인 · OTP · 푸시 · 채팅 | 대기 |
 | 5 | F10 trade (모의투자) — 시세 · 스키마 · 앱 · 결과 공유 | **완료** |
+| 둘째 앱 | commute (통근 시간) — 패키지 경계 시험 | **완료** |
 
 
 ## 0단계 — 완료
@@ -286,6 +287,12 @@ auth 쪽 8개는 `await` 뒤에 가드 없이 `emit` 한다. 다만 이 테스�
 - iOS 빌드 — Xcode 미설치라 한 번도 못 돌렸다 ([setup.md](setup.md) §4)
 - 4단계(v1.1) — 재설정 SMTP · 구글 로그인 · OTP · 푸시. 아직 대기다
 
+### 4. 패키지 경계 리팩터링
+
+둘째 앱이 알려준 [설계 §7](superpowers/specs/2026-09-13-commute-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것)
+의 후보 목록을 푼다. 설계는 [패키지 경계 리팩터링 설계](superpowers/specs/2026-09-13-package-boundary-design.md)
+(검토 중, 브랜치 `refactor/package-boundary` 예정).
+
 ## 5단계 — F10 trade (모의투자) — 완료
 
 방향 전환(v0.4)에 따라 4단계보다 먼저 간다. 결정과 화면은 [계획](features/trade/plan.md),
@@ -348,6 +355,32 @@ codec 경고가 로그에서 사라졌다.
       전체 봉 수·현재가를 선택 언어로 스크린 리더에 알린다
 
 남은 것: 없음.
+
+## 둘째 앱 — commute (완료, 2026-09-13)
+
+모노레포 전환(`feat/monorepo`, [프롬프트](superpowers/specs/2026-09-12-monorepo-codex-prompt.md))
+위에 둘째 앱 `apps/commute` 를 얹었다. 통근 시간 앱이지만 목적은 **`packages/` 의 경계
+시험**이다 — `core` · `design_system` · `l10n` 만 쓰고 `feature_*` 는 하나도 쓰지 않는다.
+설계는 [설계 문서](superpowers/specs/2026-09-13-commute-app-design.md), 화면 · 상태는
+[계획](features/commute/plan.md), 판단과 에뮬레이터에서 고친 것은
+[기록](features/commute/history.md), 테스트는 [테스트 문서](testing/features/commute.md).
+브랜치 `feat/commute-app`.
+
+- [x] **1 패키지 뼈대 + 도메인** — `packages/features/commute`, 엔티티 · 인터페이스 4개 ·
+      `CommuteUseCase` · 시나리오 4개, `core` 에 `FailureCode` 5개, ARB 3개 (`c8dad99`)
+- [x] **2 데이터 구현** — `FakeTransitRouteRepository` · `AssetStationRepository`(역 30개) ·
+      `PrefsCommuteSettingsRepository` · `GeolocatorLocationRepository` + `LocationGateway` (`7221452`)
+- [x] **3 앱 뼈대** — `apps/commute`, Supabase 없는 `bootstrap`, 라우터 2경로 + 설정 리다이렉트,
+      위치 권한 선언, `package_boundary_test` (`5c0ec79`)
+- [x] **4 설정 화면** — `CommuteSettingsCubit` · `StationSearchCubit` · 설정 페이지 · 역 검색 시트 (`d85d1a3`)
+- [x] **5 홈 화면** — `CommuteHomeCubit` · 홈 페이지 · 토글 · 배너 · 카드 · `CommuteFormat` (`e0e87eb`)
+- [x] **6 에뮬레이터 확인** — 4 시나리오 통과. 권한 거부 뒤 다이얼로그 반복과 설정 복귀 후
+      결과 잔존 두 가지를 고쳤다 (`d1c7d8e`)
+- [x] **7 문서** — 계획 · 기록 · 테스트 · 진행 현황 · 아키텍처 §1 · 개발환경 · 설계 §7 후보 7~9
+
+검증(2026-09-13): `flutter analyze` 0 · `melos run test` 전체 통과 · `apps/commute` ·
+`apps/trader` APK 빌드 · 에뮬레이터 4 시나리오 통과(릴리즈 arm64 APK —
+`/data` 부족으로 디버그 APK 설치 불가).
 
 ## UX 심리학 리뷰 반영 — 2026-09-06
 

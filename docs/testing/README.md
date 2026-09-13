@@ -88,6 +88,8 @@ feature 문서는 **대상 · 시나리오 · 기대 결과** 표 형식으로 �
 - [chat](features/chat.md)
 - [settings](features/settings.md)
 - [preferences](features/preferences.md)
+- [trade](features/trade.md)
+- [commute](features/commute.md) — 둘째 앱. `packages/features/commute` 와 `apps/commute` 에서 각각 돈다
 - [검수 기록 (2026-08-24)](audit-2026-08-24.md)
 - [검수 기록 (2026-08-27)](audit-2026-08-27.md)
 - [코드 컨벤션 검사](conventions.md)
