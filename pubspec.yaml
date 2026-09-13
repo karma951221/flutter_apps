@@ -5,6 +5,7 @@ environment:
   sdk: ^3.11.5
 
 workspace:
+  - apps/commute
   - apps/trader
   - packages/core
   - packages/design_system
