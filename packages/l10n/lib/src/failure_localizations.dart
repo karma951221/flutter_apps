@@ -113,5 +113,11 @@ extension on FailureCode {
     FailureCode.tradeQuantityInvalid => l10n.failureTradeQuantityInvalid,
     FailureCode.tradeSessionNotShareable =>
       l10n.failureTradeSessionNotShareable,
+    FailureCode.commuteNotConfigured => l10n.failureCommuteNotConfigured,
+    FailureCode.locationPermissionDenied =>
+      l10n.failureLocationPermissionDenied,
+    FailureCode.locationServiceDisabled => l10n.failureLocationServiceDisabled,
+    FailureCode.locationTimeout => l10n.failureLocationTimeout,
+    FailureCode.routeSearchFailed => l10n.failureRouteSearchFailed,
   };
 }

@@ -80,4 +80,9 @@ enum FailureCode {
   tradeInsufficientQuantity,
   tradeQuantityInvalid,
   tradeSessionNotShareable,
+  commuteNotConfigured,
+  locationPermissionDenied,
+  locationServiceDisabled,
+  locationTimeout,
+  routeSearchFailed,
 }

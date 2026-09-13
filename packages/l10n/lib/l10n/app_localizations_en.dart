@@ -1158,6 +1158,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'Only finished sessions can be shared';
 
   @override
+  String get failureCommuteNotConfigured =>
+      'Set your home and work stations first';
+
+  @override
+  String get failureLocationPermissionDenied =>
+      'Location permission is unavailable';
+
+  @override
+  String get failureLocationServiceDisabled =>
+      'Location services are turned off';
+
+  @override
+  String get failureLocationTimeout => 'Couldn\'t get your current location';
+
+  @override
+  String get failureRouteSearchFailed => 'Couldn\'t find a commute route';
+
+  @override
   String get tradeHomeTitle => 'Paper trading';
 
   @override

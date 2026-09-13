@@ -2200,6 +2200,36 @@ abstract class AppLocalizations {
   /// **'끝난 판만 공유할 수 있습니다'**
   String get failureTradeSessionNotShareable;
 
+  /// 통근 경로 검색 — 집 또는 회사 역이 아직 설정되지 않았을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'집과 회사 역을 먼저 설정해 주세요'**
+  String get failureCommuteNotConfigured;
+
+  /// 통근 출발지 확인 — 위치 권한이 거부됐거나 영구 거부됐을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 권한을 사용할 수 없습니다'**
+  String get failureLocationPermissionDenied;
+
+  /// 통근 출발지 확인 — 기기의 위치 서비스가 꺼져 있을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 서비스가 꺼져 있습니다'**
+  String get failureLocationServiceDisabled;
+
+  /// 통근 출발지 확인 — 제한 시간 안에 위치를 받지 못했을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'현재 위치를 가져오지 못했습니다'**
+  String get failureLocationTimeout;
+
+  /// 통근 경로 검색 구현이 결과를 만들지 못했을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'통근 경로를 찾지 못했습니다'**
+  String get failureRouteSearchFailed;
+
   /// 모의투자 홈(투자 탭) AppBar 제목
   ///
   /// In ko, this message translates to:

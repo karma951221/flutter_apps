@@ -1085,6 +1085,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get failureTradeSessionNotShareable => '끝난 판만 공유할 수 있습니다';
 
   @override
+  String get failureCommuteNotConfigured => '집과 회사 역을 먼저 설정해 주세요';
+
+  @override
+  String get failureLocationPermissionDenied => '위치 권한을 사용할 수 없습니다';
+
+  @override
+  String get failureLocationServiceDisabled => '위치 서비스가 꺼져 있습니다';
+
+  @override
+  String get failureLocationTimeout => '현재 위치를 가져오지 못했습니다';
+
+  @override
+  String get failureRouteSearchFailed => '통근 경로를 찾지 못했습니다';
+
+  @override
   String get tradeHomeTitle => '모의투자';
 
   @override

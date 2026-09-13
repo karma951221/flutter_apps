@@ -1085,6 +1085,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get failureTradeSessionNotShareable => '終了したセッションのみ共有できます';
 
   @override
+  String get failureCommuteNotConfigured => '自宅駅と勤務先駅を先に設定してください';
+
+  @override
+  String get failureLocationPermissionDenied => '位置情報の権限を利用できません';
+
+  @override
+  String get failureLocationServiceDisabled => '位置情報サービスがオフになっています';
+
+  @override
+  String get failureLocationTimeout => '現在地を取得できませんでした';
+
+  @override
+  String get failureRouteSearchFailed => '通勤経路を検索できませんでした';
+
+  @override
   String get tradeHomeTitle => '模擬投資';
 
   @override
