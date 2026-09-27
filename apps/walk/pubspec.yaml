@@ -1,5 +1,5 @@
 name: walk
-description: Personal step counter app reading Health Connect.
+description: Personal step counter and wake-up alarm app.
 publish_to: none
 resolution: workspace
 
@@ -23,6 +23,10 @@ dependencies:
   injectable: ^3.0.0
   intl: ^0.20.2
   permission: any
+  alarm: ^5.13.2
+  shared_preferences: ^2.5.5
+  permission_handler: ^12.0.3
+  package_info_plus: ^10.2.1
 
 dev_dependencies:
   bloc_test: ^10.0.0
@@ -36,3 +40,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/alarm/
