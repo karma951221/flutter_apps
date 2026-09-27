@@ -1,6 +1,6 @@
 # socialapp 문서 허브
 
-모노레포다. 앱마다 자기 문서를 `apps/<app>/docs/` 에 두고, 이 폴더에는 두 앱이 함께
+모노레포다. 앱마다 자기 문서를 `apps/<app>/docs/` 에 두고, 이 폴더에는 여러 앱이 함께
 쓰는 문서만 둔다. 같은 내용을 여러 문서에 복사하지 않고 상대 링크로 연결한다.
 
 ## 앱
@@ -9,6 +9,7 @@
 |---|---|---|
 | trader (daylog) | 과거 시세로 모의투자하고 결과를 소셜 피드에 공유한다. Supabase 백엔드 | [트레이더 허브](../apps/trader/docs/README.md) |
 | commute (통근) | 집·회사 역으로 출퇴근 소요 시간을 본다. 백엔드 없음 | [통근 허브](../apps/commute/docs/README.md) |
+| walk (걷기) | 오늘 걸음과 주간·월간 막대그래프. Health Connect 읽기, 백엔드 없음 | [걷기 허브](../apps/walk/docs/README.md) |
 
 ## 공통 문서
 
@@ -31,7 +32,7 @@ apps/<app>/docs/
 ```
 
 트레이더는 feature 가 많아 `features/<name>/` 아래에 `plan.md` · `history.md` ·
-`testing.md` 를 한 벌씩 둔다. 통근은 feature 가 하나라 `docs/` 바로 아래에 둔다.
+`testing.md` 를 한 벌씩 둔다. 통근 · 걷기는 feature 가 하나라 `docs/` 바로 아래에 둔다.
 
 ## 문서 유지 규칙
 
