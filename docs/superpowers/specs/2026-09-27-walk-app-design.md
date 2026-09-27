@@ -25,7 +25,7 @@
 | 앱 이름: 폴더 `apps/walk`, 패키지 `walk`, 표시 이름 "걷기" | 처음 제안한 `health` 는 의존할 pub 패키지 `health` 와 이름이 같아 쓸 수 없다 |
 | 30일보다 오래된 기록은 `READ_HEALTH_DATA_HISTORY` 권한을 함께 요청한다 | Health Connect 는 기본적으로 권한을 받은 시점 30일 전까지만 읽게 한다. 거부하면 그 이전 기간은 0으로 보인다 |
 | 라우터 없음 | 화면이 하나다. 둘째 화면이 생길 때 `go_router` 를 들인다 |
-| 막대그래프는 직접 그린다(`CustomPainter`) | 막대 · 강조 · 탭 표시만 필요하다. 모자라면 그때 `fl_chart` |
+| 막대그래프는 직접 그린다(`Row` + `Container` 막대) | 막대 · 강조 · 탭 표시만 필요하고 위젯이라 테스트가 쉽다. 모자라면 그때 `fl_chart` |
 
 ## 3. 화면
 
@@ -37,7 +37,7 @@
 3. **기간 머리** — `‹ 9월 22일 – 28일 ›` / `‹ 2026년 9월 ›`. 이전 기간으로 넘기고, 다음
    화살표는 현재 기간에서 비활성.
 4. **막대그래프** — 주간은 요일 7개, 월간은 그 달 날짜 수만큼. 오늘 막대 강조, 오늘
-   이후는 빈칸. 막대를 누르면 그날 걸음 수를 막대 위에 표시.
+   이후는 빈칸. 막대를 누르면 그래프 위 한 줄에 그날 걸음 수를 표시.
 5. **요약** — 기간 합계 걸음 · 일평균 걸음 · 합계 거리 · 합계 칼로리.
 
 동작:
@@ -115,7 +115,7 @@ apps/walk/test/  같은 구조 + convention/
 - `AndroidManifest.xml`: `READ_STEPS` · `READ_DISTANCE` · `READ_ACTIVE_CALORIES_BURNED` ·
   `READ_HEALTH_DATA_HISTORY` 권한, Health Connect 패키지 `<queries>`, 권한 이유
   (`ACTION_SHOW_PERMISSIONS_RATIONALE`) intent-filter 와 `VIEW_PERMISSION_USAGE`
-  activity-alias. 이유 화면은 앱이 무엇을 읽는지 한 문단으로 보여준다.
+  activity-alias. 이유 intent 는 앱을 그냥 연다 — 권한이 없으면 홈이 무엇을 읽는지 안내한다.
 
 ## 7. 표현 (`presentation/`)
 
@@ -123,7 +123,10 @@ apps/walk/test/  같은 구조 + convention/
 |---|---|---|
 | `HealthAccessCubit` | `HealthAccess?`(null = 확인 중) | 시작 · resumed 때 확인, 설치 · 권한 요청 |
 | `TodayActivityCubit` | loading / loaded(`DailyActivity`) / failure | 오늘 카드 |
-| `PeriodActivityCubit` | kind · offset · loading / loaded(`ActivityPeriod`) / failure · 선택한 막대 | 탭 하나당 하나. 이전 · 다음 · 새로고침. 늦게 온 이전 요청 응답은 버린다 |
+| `PeriodActivityCubit` | offset · loading / loaded(`ActivityPeriod`) / failure | 탭 하나당 하나(kind 고정). 이전 · 다음 · 새로고침. 늦게 온 이전 요청 응답은 버린다 |
+
+cubit 은 DI 에 등록하지 않고 페이지가 `getIt<WalkUseCase>()` 로 만든다. 선택한 막대는
+`ActivityBarChart` 의 위젯 상태다.
 
 위젯: `TodayActivityCard` · `PeriodHeader` · `ActivityBarChart` · `PeriodSummary`.
 숫자 포맷(`6,240` · `4.3 km` · `–`)은 `format/walk_format.dart` 한 곳.

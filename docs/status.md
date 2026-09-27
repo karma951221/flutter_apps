@@ -11,7 +11,7 @@
 |---|---|---|
 | trader (daylog) | 0~3.6단계 · 5단계(F10 모의투자) 완료, 4단계(v1.1) 대기 | [트레이더 진행 현황](../apps/trader/docs/status.md) |
 | commute (통근) | v1(패키지 경계 시험) 완료 | [통근 진행 현황](../apps/commute/docs/status.md) |
-| walk (걷기) | v1 설계 검토 중 | [걷기 진행 현황](../apps/walk/docs/status.md) |
+| walk (걷기) | v1 착수 전 (설계 · 계획 완료) | [걷기 진행 현황](../apps/walk/docs/status.md) |
 
 ## 모노레포
 
