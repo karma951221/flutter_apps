@@ -73,7 +73,7 @@ class _WalkHomePageState extends State<WalkHomePage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.walkAppTitle)),
+      appBar: AppBar(title: Text(l10n.walkShellTabWalk)),
       body: BlocConsumer<HealthAccessCubit, HealthAccessState>(
         bloc: _access,
         listenWhen: (previous, current) =>

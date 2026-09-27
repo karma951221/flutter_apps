@@ -425,7 +425,7 @@
   "commuteSettingsRequiredDescription": "自宅と職場の駅を先に選択してください",
   "commuteOpenSettings": "設定する",
   "commuteOpenSettingsTooltip": "通勤設定",
-  "walkAppTitle": "ウォーク",
+  "walkAppTitle": "Life Tool",
   "walkToday": "今日",
   "walkStepsCount": "{steps} 歩",
   "walkTabWeek": "週間",

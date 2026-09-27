@@ -1424,7 +1424,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commuteOpenSettingsTooltip => 'Commute settings';
 
   @override
-  String get walkAppTitle => 'Walk';
+  String get walkAppTitle => 'Life Tool';
 
   @override
   String get walkToday => 'Today';

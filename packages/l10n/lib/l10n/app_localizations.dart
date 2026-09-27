@@ -2654,10 +2654,10 @@ abstract class AppLocalizations {
   /// **'통근 설정'**
   String get commuteOpenSettingsTooltip;
 
-  /// 걷기 앱 이름
+  /// 앱 표시 이름 (걷기 외 생활 기능도 담을 예정이라 특정 기능명을 쓰지 않는다)
   ///
   /// In ko, this message translates to:
-  /// **'걷기'**
+  /// **'Life Tool'**
   String get walkAppTitle;
 
   /// 오늘 걸음 수 섹션 라벨

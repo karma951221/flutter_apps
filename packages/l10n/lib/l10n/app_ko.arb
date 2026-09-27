@@ -1835,9 +1835,9 @@
   "@commuteOpenSettingsTooltip": {
     "description": "통근 홈의 설정 아이콘 접근성 문구"
   },
-  "walkAppTitle": "걷기",
+  "walkAppTitle": "Life Tool",
   "@walkAppTitle": {
-    "description": "걷기 앱 이름"
+    "description": "앱 표시 이름 (걷기 외 생활 기능도 담을 예정이라 특정 기능명을 쓰지 않는다)"
   },
   "walkToday": "오늘",
   "@walkToday": {
