@@ -88,8 +88,8 @@ apps/walk/test/  같은 구조 + convention/
 | `ActivityPeriod` | Freezed 단일 | `kind`(week/month) · `start` · `end`(포함) · `days`(`DailyActivity` 목록, 빈 날은 0보) · 합계 · 일평균 게터 |
 | `PeriodKind` | enum | `week` · `month` |
 | `HealthAccess` | enum | `notInstalled` · `updateRequired` · `permissionDenied` · `granted` |
-| `ActivityRepository` | 인터페이스 | `access()` · `requestAccess()` · `openInstall()` · `dailyActivities(from, to)` → `Result<List<DailyActivity>>` |
-| `WalkUseCase` | facade | `access` · `requestAccess` · `openInstall` · `today(now)` · `period(kind, offset, now)` |
+| `ActivityRepository` | 인터페이스 | `access()`(이번 세션에 한 번 권한 요청) · `requestAccess()`(다시 요청) · `permissionDeclinedThisSession` · `openPermissionSettings()` · `openInstall()` · `dailyActivities(from, to)` → `Result<List<DailyActivity>>` |
+| `WalkUseCase` | facade | `access` · `requestAccess` · `permissionDeclinedThisSession` · `openPermissionSettings` · `openInstall` · `today()` · `period(kind, offset)` (현재 시각은 주입한 `Clock`) |
 
 기간 계산(`offset` 0 = 이번 주 / 이번 달, -1 = 지난 주 / 지난 달)은 순수 함수로 두고 단위
 테스트한다. 주 시작은 월요일.
