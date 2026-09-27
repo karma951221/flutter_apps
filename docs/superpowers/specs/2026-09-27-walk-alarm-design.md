@@ -150,12 +150,12 @@ abstract interface class AlarmScheduler {
 - 비면 `AppPlaceholder`.
 
 ### 편집 `AlarmEditPage`
-시각 휠 → 요일 칩 7개(월~일) → 라벨 입력 → 진동 스위치 → [저장](primary). 수정이면
-[삭제](text, 확인 `AppConfirmDialog`). 저장하면 켜진 상태로 저장, 권한 확인(§7), sync,
+시각 휠 → 요일 칩 7개(월~일) → 라벨 입력 → 진동 스위치 → [저장] (primary). 수정이면
+[삭제] (text, 확인 `AppConfirmDialog`). 저장하면 켜진 상태로 저장, 권한 확인(§7), sync,
 `AppSnackBar` "N시간 M분 뒤에 울려요", 목록으로.
 
 ### 울림 `AlarmRingingPage`
-큰 현재 시각 · 라벨 · [5분 뒤](secondary) · [끄기](primary). `PopScope(canPop: false)`.
+큰 현재 시각 · 라벨 · [5분 뒤] (secondary) · [끄기] (primary). `PopScope(canPop: false)`.
 앱이 살아 있을 때 `Alarm.ringing` 으로 뜬다. 앱이 죽어 있거나 잠금 상태면 패키지의 전체 화면
 알림 · 알림 버튼이 대신한다.
 
