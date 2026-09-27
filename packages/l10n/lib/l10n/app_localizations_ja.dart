@@ -1336,4 +1336,70 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get commuteOpenSettingsTooltip => '通勤設定';
+
+  @override
+  String get walkAppTitle => 'ウォーク';
+
+  @override
+  String get walkToday => '今日';
+
+  @override
+  String walkStepsCount(String steps) {
+    return '$steps 歩';
+  }
+
+  @override
+  String get walkTabWeek => '週間';
+
+  @override
+  String get walkTabMonth => '月間';
+
+  @override
+  String get walkTotalSteps => '合計';
+
+  @override
+  String get walkAverageSteps => '1日平均';
+
+  @override
+  String get walkDistance => '距離';
+
+  @override
+  String get walkActiveCalories => '活動カロリー';
+
+  @override
+  String get walkPreviousPeriod => '前へ';
+
+  @override
+  String get walkNextPeriod => '次へ';
+
+  @override
+  String get walkHealthConnectMissing => 'Health Connect が必要です';
+
+  @override
+  String get walkHealthConnectMissingDescription =>
+      'ヘルスアプリが Health Connect に記録した歩数を読み取ります';
+
+  @override
+  String get walkInstall => 'インストール';
+
+  @override
+  String get walkHealthConnectUpdate => 'Health Connect をアップデートしてください';
+
+  @override
+  String get walkUpdate => 'アップデート';
+
+  @override
+  String get walkPermissionNeeded => '歩数を読み取る許可が必要です';
+
+  @override
+  String get walkPermissionDescription => '歩数・距離・活動カロリーを読み取るだけで、保存や送信はしません';
+
+  @override
+  String get walkGrantPermission => '許可する';
+
+  @override
+  String get walkOpenSettings => '設定を開く';
+
+  @override
+  String get walkLoadFailed => '記録を読み込めませんでした';
 }

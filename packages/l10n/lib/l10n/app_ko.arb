@@ -1834,5 +1834,94 @@
   "commuteOpenSettingsTooltip": "통근 설정",
   "@commuteOpenSettingsTooltip": {
     "description": "통근 홈의 설정 아이콘 접근성 문구"
+  },
+  "walkAppTitle": "걷기",
+  "@walkAppTitle": {
+    "description": "걷기 앱 이름"
+  },
+  "walkToday": "오늘",
+  "@walkToday": {
+    "description": "오늘 걸음 수 섹션 라벨"
+  },
+  "walkStepsCount": "{steps} 걸음",
+  "@walkStepsCount": {
+    "description": "걸음 수를 단위와 함께 표시",
+    "placeholders": {
+      "steps": {
+        "type": "String"
+      }
+    }
+  },
+  "walkTabWeek": "주간",
+  "@walkTabWeek": {
+    "description": "주간 탭 라벨"
+  },
+  "walkTabMonth": "월간",
+  "@walkTabMonth": {
+    "description": "월간 탭 라벨"
+  },
+  "walkTotalSteps": "합계",
+  "@walkTotalSteps": {
+    "description": "기간 합계 걸음 수 라벨"
+  },
+  "walkAverageSteps": "일평균",
+  "@walkAverageSteps": {
+    "description": "기간 일평균 걸음 수 라벨"
+  },
+  "walkDistance": "거리",
+  "@walkDistance": {
+    "description": "이동 거리 라벨"
+  },
+  "walkActiveCalories": "활동 칼로리",
+  "@walkActiveCalories": {
+    "description": "활동 칼로리 라벨"
+  },
+  "walkPreviousPeriod": "이전",
+  "@walkPreviousPeriod": {
+    "description": "이전 기간으로 이동하는 버튼 라벨"
+  },
+  "walkNextPeriod": "다음",
+  "@walkNextPeriod": {
+    "description": "다음 기간으로 이동하는 버튼 라벨"
+  },
+  "walkHealthConnectMissing": "Health Connect 가 필요해요",
+  "@walkHealthConnectMissing": {
+    "description": "Health Connect 미설치 안내 제목"
+  },
+  "walkHealthConnectMissingDescription": "폰의 헬스 앱이 기록한 걸음을 Health Connect 에서 읽어요",
+  "@walkHealthConnectMissingDescription": {
+    "description": "Health Connect 미설치 안내 설명"
+  },
+  "walkInstall": "설치하기",
+  "@walkInstall": {
+    "description": "Health Connect 설치 버튼 라벨"
+  },
+  "walkHealthConnectUpdate": "Health Connect 를 업데이트해 주세요",
+  "@walkHealthConnectUpdate": {
+    "description": "Health Connect 업데이트 필요 안내 제목"
+  },
+  "walkUpdate": "업데이트하기",
+  "@walkUpdate": {
+    "description": "Health Connect 업데이트 버튼 라벨"
+  },
+  "walkPermissionNeeded": "걸음 기록을 읽을 권한이 필요해요",
+  "@walkPermissionNeeded": {
+    "description": "권한 요청 안내 제목"
+  },
+  "walkPermissionDescription": "걸음 · 거리 · 활동 칼로리를 읽기만 하고 저장하거나 보내지 않아요",
+  "@walkPermissionDescription": {
+    "description": "권한 요청 안내 설명"
+  },
+  "walkGrantPermission": "권한 허용",
+  "@walkGrantPermission": {
+    "description": "권한 요청 버튼 라벨"
+  },
+  "walkOpenSettings": "설정 열기",
+  "@walkOpenSettings": {
+    "description": "설정 화면을 여는 버튼 라벨"
+  },
+  "walkLoadFailed": "기록을 불러오지 못했어요",
+  "@walkLoadFailed": {
+    "description": "기록 불러오기 실패 안내 문구"
   }
 }

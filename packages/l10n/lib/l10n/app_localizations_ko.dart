@@ -1337,4 +1337,71 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get commuteOpenSettingsTooltip => '통근 설정';
+
+  @override
+  String get walkAppTitle => '걷기';
+
+  @override
+  String get walkToday => '오늘';
+
+  @override
+  String walkStepsCount(String steps) {
+    return '$steps 걸음';
+  }
+
+  @override
+  String get walkTabWeek => '주간';
+
+  @override
+  String get walkTabMonth => '월간';
+
+  @override
+  String get walkTotalSteps => '합계';
+
+  @override
+  String get walkAverageSteps => '일평균';
+
+  @override
+  String get walkDistance => '거리';
+
+  @override
+  String get walkActiveCalories => '활동 칼로리';
+
+  @override
+  String get walkPreviousPeriod => '이전';
+
+  @override
+  String get walkNextPeriod => '다음';
+
+  @override
+  String get walkHealthConnectMissing => 'Health Connect 가 필요해요';
+
+  @override
+  String get walkHealthConnectMissingDescription =>
+      '폰의 헬스 앱이 기록한 걸음을 Health Connect 에서 읽어요';
+
+  @override
+  String get walkInstall => '설치하기';
+
+  @override
+  String get walkHealthConnectUpdate => 'Health Connect 를 업데이트해 주세요';
+
+  @override
+  String get walkUpdate => '업데이트하기';
+
+  @override
+  String get walkPermissionNeeded => '걸음 기록을 읽을 권한이 필요해요';
+
+  @override
+  String get walkPermissionDescription =>
+      '걸음 · 거리 · 활동 칼로리를 읽기만 하고 저장하거나 보내지 않아요';
+
+  @override
+  String get walkGrantPermission => '권한 허용';
+
+  @override
+  String get walkOpenSettings => '설정 열기';
+
+  @override
+  String get walkLoadFailed => '기록을 불러오지 못했어요';
 }

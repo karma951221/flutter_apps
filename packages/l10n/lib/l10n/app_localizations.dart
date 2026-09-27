@@ -2653,6 +2653,132 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'통근 설정'**
   String get commuteOpenSettingsTooltip;
+
+  /// 걷기 앱 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'걷기'**
+  String get walkAppTitle;
+
+  /// 오늘 걸음 수 섹션 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘'**
+  String get walkToday;
+
+  /// 걸음 수를 단위와 함께 표시
+  ///
+  /// In ko, this message translates to:
+  /// **'{steps} 걸음'**
+  String walkStepsCount(String steps);
+
+  /// 주간 탭 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'주간'**
+  String get walkTabWeek;
+
+  /// 월간 탭 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'월간'**
+  String get walkTabMonth;
+
+  /// 기간 합계 걸음 수 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'합계'**
+  String get walkTotalSteps;
+
+  /// 기간 일평균 걸음 수 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'일평균'**
+  String get walkAverageSteps;
+
+  /// 이동 거리 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'거리'**
+  String get walkDistance;
+
+  /// 활동 칼로리 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'활동 칼로리'**
+  String get walkActiveCalories;
+
+  /// 이전 기간으로 이동하는 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'이전'**
+  String get walkPreviousPeriod;
+
+  /// 다음 기간으로 이동하는 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'다음'**
+  String get walkNextPeriod;
+
+  /// Health Connect 미설치 안내 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'Health Connect 가 필요해요'**
+  String get walkHealthConnectMissing;
+
+  /// Health Connect 미설치 안내 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'폰의 헬스 앱이 기록한 걸음을 Health Connect 에서 읽어요'**
+  String get walkHealthConnectMissingDescription;
+
+  /// Health Connect 설치 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'설치하기'**
+  String get walkInstall;
+
+  /// Health Connect 업데이트 필요 안내 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'Health Connect 를 업데이트해 주세요'**
+  String get walkHealthConnectUpdate;
+
+  /// Health Connect 업데이트 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'업데이트하기'**
+  String get walkUpdate;
+
+  /// 권한 요청 안내 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'걸음 기록을 읽을 권한이 필요해요'**
+  String get walkPermissionNeeded;
+
+  /// 권한 요청 안내 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'걸음 · 거리 · 활동 칼로리를 읽기만 하고 저장하거나 보내지 않아요'**
+  String get walkPermissionDescription;
+
+  /// 권한 요청 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'권한 허용'**
+  String get walkGrantPermission;
+
+  /// 설정 화면을 여는 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'설정 열기'**
+  String get walkOpenSettings;
+
+  /// 기록 불러오기 실패 안내 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 불러오지 못했어요'**
+  String get walkLoadFailed;
 }
 
 class _AppLocalizationsDelegate

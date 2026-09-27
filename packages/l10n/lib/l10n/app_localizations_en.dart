@@ -1422,4 +1422,71 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commuteOpenSettingsTooltip => 'Commute settings';
+
+  @override
+  String get walkAppTitle => 'Walk';
+
+  @override
+  String get walkToday => 'Today';
+
+  @override
+  String walkStepsCount(String steps) {
+    return '$steps steps';
+  }
+
+  @override
+  String get walkTabWeek => 'Week';
+
+  @override
+  String get walkTabMonth => 'Month';
+
+  @override
+  String get walkTotalSteps => 'Total';
+
+  @override
+  String get walkAverageSteps => 'Daily average';
+
+  @override
+  String get walkDistance => 'Distance';
+
+  @override
+  String get walkActiveCalories => 'Active calories';
+
+  @override
+  String get walkPreviousPeriod => 'Previous';
+
+  @override
+  String get walkNextPeriod => 'Next';
+
+  @override
+  String get walkHealthConnectMissing => 'Health Connect is required';
+
+  @override
+  String get walkHealthConnectMissingDescription =>
+      'Walk reads steps your health app saved to Health Connect';
+
+  @override
+  String get walkInstall => 'Install';
+
+  @override
+  String get walkHealthConnectUpdate => 'Please update Health Connect';
+
+  @override
+  String get walkUpdate => 'Update';
+
+  @override
+  String get walkPermissionNeeded => 'Permission to read your steps is needed';
+
+  @override
+  String get walkPermissionDescription =>
+      'Walk only reads steps, distance and active calories. Nothing is stored or sent';
+
+  @override
+  String get walkGrantPermission => 'Allow access';
+
+  @override
+  String get walkOpenSettings => 'Open settings';
+
+  @override
+  String get walkLoadFailed => 'Couldn\'t load your activity';
 }
