@@ -11,7 +11,7 @@ class SupabaseAccountDataSource implements AccountDataSource {
 
   /// 댓글은 `post_comments` 가 아니라 이 뷰로 센다. 테이블 쪽 SELECT GRANT 는
   /// 컬럼 목록(`content` 제외)이라 `select` 파라미터 없는 count HEAD 요청이
-  /// `select=*` 로 평가돼 42501 로 거부된다 — docs/schema.md §8 GRANT 참고.
+  /// `select=*` 로 평가돼 42501 로 거부된다 — apps/trader/docs/schema.md §8 GRANT 참고.
   /// 뷰는 `grant select ... to anon, authenticated` 전체라 그대로 통과한다.
   static const _commentSource = 'post_comments_visible';
 

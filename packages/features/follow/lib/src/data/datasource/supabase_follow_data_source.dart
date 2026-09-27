@@ -35,7 +35,7 @@ class SupabaseFollowDataSource implements FollowDataSource {
       //
       // 문구는 방향을 밝히지 않는다. is_blocked_with() 가 양방향이라 거부를
       // 보는 쪽이 차단을 건 쪽이라고 가정할 수 없다
-      // (docs/features/safety/plan-block.md 의 일반화된 규칙).
+      // (apps/trader/docs/features/safety/plan-block.md 의 일반화된 규칙).
       if (error.code == '42501') {
         throw Failure.forbidden(
           message: error.message,
@@ -93,7 +93,7 @@ class SupabaseFollowDataSource implements FollowDataSource {
     FollowCursor? cursor,
   }) async {
     // 차단 필터를 여기에 쓰지 않는다. 뷰 정의가 is_blocked_with() 로 이미
-    // 가린다 (docs/features/follow/plan.md).
+    // 가린다 (apps/trader/docs/features/follow/plan.md).
     var query = _client.from(view).select(_columns).eq('user_id', userId);
 
     if (cursor != null) {

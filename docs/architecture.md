@@ -1,8 +1,8 @@
 # 프로젝트 구조
 
-> [문서 허브](README.md) · [기획](overview.md) · [진행 현황](status.md) · [개발환경](setup.md) · [테스트 가이드](testing/README.md)
+> [문서 허브](README.md) · [기획](../apps/trader/docs/overview.md) · [진행 현황](status.md) · [개발환경](setup.md) · [테스트 가이드](testing/README.md)
 
-> v0.2 · 2026-08-20 작성 · 2026-08-22 갱신 · [overview.md](overview.md)의 기술 스택 결정을 전제로 함
+> v0.2 · 2026-08-20 작성 · 2026-08-22 갱신 · [overview.md](../apps/trader/docs/overview.md)의 기술 스택 결정을 전제로 함
 
 ---
 
@@ -10,22 +10,14 @@
 
 ```
 socialapp/
-├── docs/
-│   ├── README.md                # 문서 진입점
-│   ├── overview.md              # 기획서 (목표·범위·결정과 근거)
-│   ├── status.md                # ★ 진행 현황의 단일 기준 (자주 갱신)
-│   ├── schema.md                # ★ 테이블·RLS·GRANT의 단일 기준
+├── docs/                        # 두 앱이 함께 쓰는 문서만
+│   ├── README.md                # 문서 진입점 — 앱 허브로 가는 입구
+│   ├── status.md                # 모노레포 작업 · 앱별 한 줄 상태
 │   ├── architecture.md          # 이 문서
-│   ├── setup.md                 # 개발환경
-│   ├── testing/                 # 테스트 실행·규칙·feature별 범위
-│   │   ├── README.md
-│   │   ├── conventions.md
-│   │   └── features/
-│   │       └── <feature>.md
-│   └── features/
-│       └── <feature>/
-│           ├── plan.md          # 사전 — 화면·상태·완료 조건 (feature 착수 시 작성)
-│           └── history.md       # 사후 — 설계 판단·버그·검증 기록
+│   ├── dependencies.md          # 패키지 간 실제 의존
+│   ├── setup.md                 # 도구 · 앱 실행 · iOS · 공통 함정
+│   ├── testing/                 # 테스트 실행·규칙·컨벤션 검사
+│   └── superpowers/             # 스펙(specs/) · 실행 계획(plans/) 기록
 │
 ├── supabase/                    # supabase init 결과 (백엔드)
 │   ├── config.toml
@@ -41,7 +33,10 @@ socialapp/
 ├── melos.yaml                   # analyze · test · gen · l10n 일괄 실행
 ├── apps/
 │   ├── trader/                  # 첫째 앱 daylog — main · bootstrap · app shell · router · DI 조립 · config · home · patrol_test
+│   │   └── docs/                # 앱 문서 — README · status(★ 진행 현황) · overview · schema(★ DDL·RLS) ·
+│   │                            #   setup · e2e · audits/ · features/<name>/{plan,history,testing}.md
 │   └── commute/                 # 둘째 앱 통근 시간 — Supabase 없음. core · design_system · l10n · feature_commute 만 조립
+│       └── docs/                # 앱 문서 — README · status · plan · history · testing
 └── packages/
     ├── core/                    # error · result · pagination · validation · data 인프라 · media · di
     ├── design_system/           # theme + widget
@@ -56,7 +51,7 @@ socialapp/
 
 **앱은 둘이다.** `apps/trader` 가 feature 12개를 조립하는 본 앱이고, `apps/commute` 는
 기반 패키지 셋(`core` · `design_system` · `l10n`)만으로 둘째 앱이 서는지 시험하는
-앱이다([계획](features/commute/plan.md)). 두 앱은 `pubspec.yaml` 의 `workspace:` 로
+앱이다([계획](../apps/commute/docs/plan.md)). 두 앱은 `pubspec.yaml` 의 `workspace:` 로
 패키지를 이름으로 resolve 하고, 실제 의존 관계는 [의존 그래프](dependencies.md)에 있다.
 
 `packages/features/commute` 는 **`Routes` 대신 콜백을 받는다** — 페이지가
@@ -65,13 +60,13 @@ socialapp/
 쪽으로 통일할지는 패키지 경계 리팩터링에서 결정한다
 ([설계 §7](superpowers/specs/2026-09-13-commute-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것)).
 
-**스키마의 단일 기준은 [스키마 문서](schema.md)다.** 테이블·정책·권한이 지금 어떤 모습이어야 하는지는 거기서 확인하고, `supabase/migrations/`는 그 상태에 도달하는 실행 이력으로 읽는다.
+**스키마의 단일 기준은 [스키마 문서](../apps/trader/docs/schema.md)다.** 테이블·정책·권한이 지금 어떤 모습이어야 하는지는 거기서 확인하고, `supabase/migrations/`는 그 상태에 도달하는 실행 이력으로 읽는다.
 
 Studio UI에서 테이블을 직접 만들지 않는다. 반드시 `supabase migration new <name>`으로 SQL 파일을 만들어 커밋하고, **같은 커밋에서 스키마 문서를 갱신한다.** 이걸 지키지 않으면 로컬과 운영 스키마가 갈라진다.
 
 `seeds/` 의 파일은 **스크립트가 만든 산출물이지 손으로 쓰는 데이터가 아니다.** 시세를
 고치려면 `scripts/fetch_candles.py` 를 다시 돌려 seed 를 덮어쓴다
-([개발환경 §5](setup.md)).
+([트레이더 개발환경 §4](../apps/trader/docs/setup.md)).
 
 ---
 
@@ -265,7 +260,7 @@ SDK 타입은 datasource와 공용 data 인프라 안에서만 다룬다.
 화면이 `features/trade/presentation/widget/trade_result_card.dart` 를 import 해
 판 결과 카드를 그린다. trade → post 는 `domain` 만 참조하고, post → trade 는 이
 카드(와 그 입력인 `TradeResultSummary` 엔티티)로 제한한다 —
-[F10 계획](features/trade/plan.md).
+[F10 계획](../apps/trader/docs/features/trade/plan.md).
 
 **post와 feed의 경계가 이 규칙의 기준 예시다.**
 
@@ -286,7 +281,7 @@ feed는 post의 `domain/entity/post.dart`를 그대로 쓴다. 같은 게시물�
 
 로그인 뒤의 기본 화면(`/`)은 하단 내비게이션을 가진 **셸**이다(`features/home`).
 탭은 다섯이고 각 탭 본문은 해당 feature 가 소유한 화면을 그대로 쓴다. 첫 탭이
-투자인 이유는 [기획 v0.4](overview.md)에서 모의투자가 이 앱의 주인공이 됐기 때문이다.
+투자인 이유는 [기획 v0.4](../apps/trader/docs/overview.md)에서 모의투자가 이 앱의 주인공이 됐기 때문이다.
 
 | 탭 | 본문 | 소유 |
 |---|---|---|
@@ -327,7 +322,7 @@ feed는 post의 `domain/entity/post.dart`를 그대로 쓴다. 같은 게시물�
   항목으로 만들면 한 건이 건너뛰어진다
 - `created_at`이 같은 항목이 여러 개일 수 있으므로 `id` tie-break를 반드시 넣는다
 
-DB 쪽 인덱스와 정렬 조건은 [스키마](schema.md)를 따른다.
+DB 쪽 인덱스와 정렬 조건은 [스키마](../apps/trader/docs/schema.md)를 따른다.
 
 ---
 
@@ -394,4 +389,4 @@ dart run build_runner watch --delete-conflicting-outputs
 
 이 문서는 구조와 규칙만 다룬다. 단계별 체크리스트와 다음 할 일은
 **[진행 현황](status.md)이 단일 기준**이다. 세부 구축 절차와 겪은 함정은
-[setup.md](setup.md) 참조. 스키마의 현재 모습은 [schema.md](schema.md)를 본다.
+[setup.md](setup.md) 참조. 스키마의 현재 모습은 [schema.md](../apps/trader/docs/schema.md)를 본다.

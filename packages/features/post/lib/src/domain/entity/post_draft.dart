@@ -24,7 +24,7 @@ class PostDraft with _$PostDraft {
   /// 함께 공유할 끝난 판의 id. 붙이지 않으면 null 이다.
   ///
   /// 끝난 내 판인지는 DB 가 판정한다 — `create_post_with_images()` 가 어긋난
-  /// 판을 거부한다(docs/schema.md §5). 앱은 id 를 실어 나르기만 한다.
+  /// 판을 거부한다(apps/trader/docs/schema.md §5). 앱은 id 를 실어 나르기만 한다.
   @override
   final String? tradeSessionId;
 }

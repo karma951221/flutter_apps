@@ -9,7 +9,7 @@ part 'comment_state.freezed.dart';
 ///
 /// 부모 댓글은 [items] 에, 답글은 부모 id 로 나눈 [replies] 에 둔다. 답글을
 /// 부모 안에 중첩해 담지 않는 이유는 조회가 애초에 분리돼 있기 때문이다 —
-/// 답글은 부모를 눌렀을 때 읽는다 (docs/features/comment/plan.md).
+/// 답글은 부모를 눌렀을 때 읽는다 (apps/trader/docs/features/comment/plan.md).
 @freezed
 class CommentState with _$CommentState {
   const CommentState({

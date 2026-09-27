@@ -9,8 +9,8 @@
 **Tech Stack:** Flutter · bloc/cubit · freezed 3 · json_serializable · get_it + injectable · supabase_flutter · PostgreSQL(로컬 Supabase) · mocktail · bloc_test
 
 **스펙 (요구사항의 단일 기준):**
-- [docs/features/reaction/plan.md](../../features/reaction/plan.md)
-- [docs/features/comment/plan.md](../../features/comment/plan.md)
+- [docs/features/reaction/plan.md](../../../apps/trader/docs/features/reaction/plan.md)
+- [docs/features/comment/plan.md](../../../apps/trader/docs/features/comment/plan.md)
 
 ## Global Constraints
 
@@ -24,7 +24,7 @@
 - **Freezed 는 두 패턴만 쓴다** ([CLAUDE.md](../../../CLAUDE.md)): 단일 불변 모델은 Primary Constructor, 여러 변형이 필요한 모델은 `sealed class` + named `factory`. 분기는 `when`/`map` 대신 Dart pattern matching `switch`
 - **생성 파일(`.freezed.dart` · `.g.dart` · `injection.config.dart`)은 직접 수정하지 않는다.** `dart run build_runner build --delete-conflicting-outputs` 로만 갱신한다
 - **테스트 위치는 구현 구조를 그대로 미러링한다.** `app/lib/features/<name>/` ↔ `app/test/features/<name>/`
-- **스키마를 바꾸면 같은 커밋에서 [docs/schema.md](../../schema.md) 를 갱신한다.** Studio UI 로 테이블을 만들지 않는다
+- **스키마를 바꾸면 같은 커밋에서 [docs/schema.md](../../../apps/trader/docs/schema.md) 를 갱신한다.** Studio UI 로 테이블을 만들지 않는다
 - **문서 링크는 상대 Markdown 링크만 쓴다.** `app/test/convention/documentation_links_test.dart` 가 깨진 링크를 잡는다
 - **커밋 메시지는 한국어 현재형이다.** 기존 이력의 형식을 따른다 — `feat(db): feed_posts를 posts로 바꾸고 소프트 삭제를 도입한다`
 - **DB 값과 앱 상수는 일치해야 한다.** 댓글 본문 최대 길이는 DB CHECK 와 `CommentPolicy.maxContentLength` 양쪽에서 **300**
@@ -1282,7 +1282,7 @@ Expected: analyze 무경고, 전체 테스트 PASS. `injection.config.dart` 에 
 
 - [x] **Step 10: 테스트 문서 작성**
 
-`docs/testing/features/reaction.md` 를 만든다. 다른 feature 문서와 같은 **대상 · 시나리오 · 기대 결과** 표 형식을 쓰고, 헤더 링크 줄은 `docs/testing/features/feed.md` 를 본뜬다. 위에서 만든 두 테스트 파일의 케이스를 표로 옮기고, 마지막에 "로컬 Supabase 로만 확인되는 것" 문단을 넣어 [reaction 계획서](../../features/reaction/plan.md)의 검증 항목을 가리킨다.
+`docs/testing/features/reaction.md` 를 만든다. 다른 feature 문서와 같은 **대상 · 시나리오 · 기대 결과** 표 형식을 쓰고, 헤더 링크 줄은 `docs/testing/features/feed.md` 를 본뜬다. 위에서 만든 두 테스트 파일의 케이스를 표로 옮기고, 마지막에 "로컬 Supabase 로만 확인되는 것" 문단을 넣어 [reaction 계획서](../../../apps/trader/docs/features/reaction/plan.md)의 검증 항목을 가리킨다.
 
 `docs/testing/README.md` 의 "Feature별 범위" 목록에서 `post` 다음 줄에 항목을 하나 더한다 — 표시 문구는 `reaction`, 대상은 `features/reaction.md` 인 상대 Markdown 링크다.
 
@@ -2552,7 +2552,7 @@ Expected: analyze 무경고, 전체 PASS
 
 - [x] **Step 18: 테스트 문서 작성**
 
-`docs/testing/features/comment.md` 를 만든다. 형식은 `docs/testing/features/feed.md` 와 같은 **대상 · 시나리오 · 기대 결과** 표다. 위 네 테스트 파일의 케이스를 옮기고, 마지막에 "로컬 Supabase 로만 확인되는 것" 문단으로 [comment 계획서](../../features/comment/plan.md)의 검증 항목(2단 제한 트리거 · 삭제 본문 차단 · asc 커서 경계)을 가리킨다.
+`docs/testing/features/comment.md` 를 만든다. 형식은 `docs/testing/features/feed.md` 와 같은 **대상 · 시나리오 · 기대 결과** 표다. 위 네 테스트 파일의 케이스를 옮기고, 마지막에 "로컬 Supabase 로만 확인되는 것" 문단으로 [comment 계획서](../../../apps/trader/docs/features/comment/plan.md)의 검증 항목(2단 제한 트리거 · 삭제 본문 차단 · asc 커서 경계)을 가리킨다.
 
 `docs/testing/README.md` 의 "Feature별 범위" 목록에 항목을 하나 더한다 — 표시 문구는 `comment`, 대상은 `features/comment.md` 인 상대 Markdown 링크다.
 

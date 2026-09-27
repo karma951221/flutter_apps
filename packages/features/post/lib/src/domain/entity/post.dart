@@ -36,7 +36,7 @@ class Post with _$Post {
 
   /// 게시물에 붙은 끝난 판의 결과 요약. 판을 붙이지 않았으면 null 이다.
   ///
-  /// 판은 게시물을 만들 때 한 번 붙고 이후 바뀌지 않는다(docs/schema.md §5 —
+  /// 판은 게시물을 만들 때 한 번 붙고 이후 바뀌지 않는다(apps/trader/docs/schema.md §5 —
   /// `trade_session_id` 에는 UPDATE GRANT 가 없다).
   @override
   final TradeResultSummary? tradeResult;

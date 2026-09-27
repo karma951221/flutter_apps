@@ -8,7 +8,7 @@
 
 **Tech Stack:** Flutter · bloc/cubit · freezed 3 · json_serializable · get_it + injectable · supabase_flutter · PostgreSQL(로컬 Supabase) · mocktail · bloc_test
 
-**스펙 (요구사항의 단일 기준):** [docs/features/safety/plan-block.md](../../features/safety/plan-block.md)
+**스펙 (요구사항의 단일 기준):** [docs/features/safety/plan-block.md](../../../apps/trader/docs/features/safety/plan-block.md)
 
 ## Global Constraints
 
@@ -50,7 +50,7 @@ cd app && flutter test
 
 - [ ] **Step 1: 테이블과 판정 함수**
 
-[스펙](../../features/safety/plan-block.md)의 `blocks` DDL · `blocks_blocked_idx` · `is_blocked_with()` 를 그대로 쓴다. 함수는 `language sql` · `stable` · `security definer` · `set search_path = ''` 넷을 모두 갖춰야 한다.
+[스펙](../../../apps/trader/docs/features/safety/plan-block.md)의 `blocks` DDL · `blocks_blocked_idx` · `is_blocked_with()` 를 그대로 쓴다. 함수는 `language sql` · `stable` · `security definer` · `set search_path = ''` 넷을 모두 갖춰야 한다.
 
 - [ ] **Step 2: 조회 정책 둘을 바꾼다**
 
@@ -66,7 +66,7 @@ alter policy "post_comments_select_visible" on public.post_comments
 
 - [ ] **Step 3: `post_comments_visible` 재정의**
 
-최신 정의를 가져와 세 곳에 조건을 넣는다 ([스펙](../../features/safety/plan-block.md)의 표).
+최신 정의를 가져와 세 곳에 조건을 넣는다 ([스펙](../../../apps/trader/docs/features/safety/plan-block.md)의 표).
 
 1. 본문 `where` 의 `c.deleted_at is null` 갈래와 부모 되살리기 갈래를 **모두** 감싸도록 `and not public.is_blocked_with(c.author_id)` 를 건다
 2. `reply_count` 서브쿼리에 `and not public.is_blocked_with(reply.author_id)`
@@ -82,13 +82,13 @@ alter policy "post_comments_select_visible" on public.post_comments
 차단한 사용자의 게시물에는 댓글을 달 수 없습니다
 ```
 
-정책이 아니라 트리거인 이유는 [스펙](../../features/safety/plan-block.md)에 있다 — 정책 안에서 `posts` 를 읽으면 방금 넣은 차단 필터에 걸려 행이 사라지고, `is_blocked_with(null)` 이 `false` 라 삽입이 도리어 허용된다. 주석으로 이 함정을 남긴다.
+정책이 아니라 트리거인 이유는 [스펙](../../../apps/trader/docs/features/safety/plan-block.md)에 있다 — 정책 안에서 `posts` 를 읽으면 방금 넣은 차단 필터에 걸려 행이 사라지고, `is_blocked_with(null)` 이 `false` 라 삽입이 도리어 허용된다. 주석으로 이 함정을 남긴다.
 
 기존 검사 네 가지(부모 존재 · 답글의 답글 · 같은 게시물 · 삭제된 부모)를 **하나도 잃지 않는다.**
 
 - [ ] **Step 5: `blocked_users` 뷰 · RLS · GRANT**
 
-[스펙](../../features/safety/plan-block.md) 그대로. 뷰는 `security_invoker = on` 이라 `where` 가 필요 없다 — 정책이 걸러 준다.
+[스펙](../../../apps/trader/docs/features/safety/plan-block.md) 그대로. 뷰는 `security_invoker = on` 이라 `where` 가 필요 없다 — 정책이 걸러 준다.
 
 - [ ] **Step 6: 적용과 검증**
 
@@ -143,7 +143,7 @@ feat(db): 차단 테이블과 양방향 가시성 필터를 만든다
 
 `BlockedUser` 는 Freezed Primary Constructor: `{ String id, String nickname, String? avatarUrl, DateTime blockedAt }`.
 
-`BlockRepository` 는 네 메서드다 ([스펙](../../features/safety/plan-block.md)의 표). **`ReportRepository` 를 건드리지 않는다** — 저장소는 테이블 하나의 관심사를 담당한다.
+`BlockRepository` 는 네 메서드다 ([스펙](../../../apps/trader/docs/features/safety/plan-block.md)의 표). **`ReportRepository` 를 건드리지 않는다** — 저장소는 테이블 하나의 관심사를 담당한다.
 
 시나리오 넷은 각각 얇다. `@injectable` 을 붙이지 않는 일반 클래스다.
 
@@ -265,7 +265,7 @@ feat(db): 차단 테이블과 양방향 가시성 필터를 만든다
 
 - [ ] **Step 3: cubit · 화면**
 
-`BlockedUsersState` 는 `{ status, items, failure }` 다. 커서는 없다 ([스펙](../../features/safety/plan-block.md)).
+`BlockedUsersState` 는 `{ status, items, failure }` 다. 커서는 없다 ([스펙](../../../apps/trader/docs/features/safety/plan-block.md)).
 
 화면은 `AppBar('차단한 사용자')` + 목록이다. 각 행은 `AppListTile` 에 `AppAvatar` · 닉네임 · '차단 해제' 버튼(`AppButton.text`). 해제하면 그 행을 목록에서 걷어내고 Snackbar 를 띄운다.
 
@@ -290,7 +290,7 @@ cubit 상태 전이(로드 · 해제 · 실패)와 화면(빈 상태 · 목록 �
 
 - [ ] **Step 1: 완료 조건 12개를 실제 DB 로 확인**
 
-[스펙](../../features/safety/plan-block.md)의 완료 조건을 사용자 A·B 의 실제 JWT 로 확인한다. `docs/testing/audit-2026-08-24.md` 와 `.superpowers/sdd/2026-08-24-safety-report/task-6-report.md` 가 방법의 기준이다.
+[스펙](../../../apps/trader/docs/features/safety/plan-block.md)의 완료 조건을 사용자 A·B 의 실제 JWT 로 확인한다. `docs/testing/audit-2026-08-24.md` 와 `.superpowers/sdd/2026-08-24-safety-report/task-6-report.md` 가 방법의 기준이다.
 
 **양방향이 이 태스크의 핵심이다.** A가 B를 차단한 뒤 **B의 시야**에서도 A가 사라지는지를 B의 JWT 로 직접 확인한다. 한쪽만 보고 넘어가면 이 기능의 요점을 검증하지 않은 것이다.
 

@@ -11,7 +11,7 @@ part 'profile.freezed.dart';
 ///
 /// 팔로우 수와 관계를 함께 담는다 — `profile_details` 뷰가 한 번에 내려주므로
 /// 화면이 네 번 조회하지 않는다. `FeedPost` 가 reaction 의 집계를 함께 드는
-/// 것과 같은 자리다 (F8, docs/features/follow/plan.md).
+/// 것과 같은 자리다 (F8, apps/trader/docs/features/follow/plan.md).
 @freezed
 class Profile with _$Profile {
   @override

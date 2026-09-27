@@ -1,38 +1,41 @@
 # daylog — 에이전트 가이드
 
-Flutter + Supabase 앱(토이 프로젝트). **과거 시세로 매매를 연습하고 그 결과를
-소셜 피드에 공유하는 모의투자 앱**이다 — 소셜 피드(F1~F9)는 완성됐고, 지금은
-모의투자 시뮬레이터(F10)를 얹는 중이다. 앱은 `app/`, 백엔드는
-`supabase/`(마이그레이션·RLS·시세 seed), 문서는 `docs/`에 있다.
+Flutter 모노레포(토이 프로젝트). 앱이 둘이다 — **trader(daylog)** 는 과거 시세로 매매를
+연습하고 그 결과를 소셜 피드에 공유하는 모의투자 앱(Supabase), **commute** 는 출퇴근
+소요 시간을 보여주는 둘째 앱(백엔드 없음)이다. 앱은 `apps/`, 공유 패키지는 `packages/`,
+백엔드는 `supabase/`(마이그레이션·RLS·시세 seed)에 있다. 문서는 앱별로
+`apps/<app>/docs/` 에, 두 앱 공통 문서는 `docs/` 에 있다.
 
 ## 먼저 읽을 것
 
 작업 전에 [docs/README.md](docs/README.md)(문서 허브)에서 필요한 문서를 찾는다.
-자주 쓰는 단일 기준:
+작업할 앱의 허브부터 연다 — [트레이더](apps/trader/docs/README.md) · [통근](apps/commute/docs/README.md).
 
 | 알고 싶은 것 | 문서 |
 |---|---|
-| 지금 어디까지 왔고 다음이 뭔가 | [docs/status.md](docs/status.md) |
-| 기능의 의도·범위·결정 근거 | [docs/overview.md](docs/overview.md) |
+| 지금 어디까지 왔고 다음이 뭔가 | 앱별 `status.md` — [트레이더](apps/trader/docs/status.md) · [통근](apps/commute/docs/status.md) · [전체](docs/status.md) |
+| 기능의 의도·범위·결정 근거 | [트레이더 기획](apps/trader/docs/overview.md) · [통근 계획](apps/commute/docs/plan.md) |
 | 앱 구조와 계층 규칙 | [docs/architecture.md](docs/architecture.md) |
-| 테이블·RLS·GRANT의 현재 모습 | [docs/schema.md](docs/schema.md) |
-| 로컬 환경 준비·재현 절차 | [docs/setup.md](docs/setup.md) |
-| feature별 화면·상태·완료 조건 | `docs/features/<name>/plan.md` |
+| 테이블·RLS·GRANT의 현재 모습 | [apps/trader/docs/schema.md](apps/trader/docs/schema.md) |
+| 로컬 환경 준비·재현 절차 | [공통](docs/setup.md) · [트레이더(Supabase)](apps/trader/docs/setup.md) |
+| feature별 화면·상태·완료 조건 | `apps/trader/docs/features/<name>/plan.md` · `apps/commute/docs/plan.md` |
 | 테스트 실행·범위 | [docs/testing/README.md](docs/testing/README.md) |
-| E2E(Patrol) 설정·실행 | [docs/testing/e2e.md](docs/testing/e2e.md) |
+| E2E(Patrol) 설정·실행 | [apps/trader/docs/e2e.md](apps/trader/docs/e2e.md) |
 
 ## 작업 규칙
 
 - **스키마 변경**: Studio UI 금지. `supabase migration new <name>`으로 SQL을 만들고,
-  같은 커밋에서 [docs/schema.md](docs/schema.md)를 결과에 맞게 갱신한다
-- **진행 상태 갱신**: [docs/status.md](docs/status.md)에만 적는다. 다른 문서에는
-  진행 상태를 쓰지 않는다
-- **feature 착수/완료**: 착수 시 `docs/features/<name>/plan.md`, 완료 시 `history.md`,
-  테스트는 `docs/testing/features/<name>.md`를 함께 갱신한다
+  같은 커밋에서 [apps/trader/docs/schema.md](apps/trader/docs/schema.md)를 결과에 맞게 갱신한다
+- **진행 상태 갱신**: 해당 앱의 `status.md` 에만 적는다. 모노레포 공통 작업(패키지 경계 등)은
+  [docs/status.md](docs/status.md)에 적는다. 다른 문서에는 진행 상태를 쓰지 않는다
+- **feature 착수/완료**: 착수 시 `plan.md`, 완료 시 같은 폴더에 `history.md` 와 `testing.md` 를
+  함께 갱신한다. 트레이더는 `apps/trader/docs/features/<name>/`, 통근은 `apps/commute/docs/`
+- **새 문서 위치**: 한 앱에만 해당하면 `apps/<app>/docs/`, 두 앱 공통이면 `docs/`.
+  브레인스토밍 스펙과 실행 계획은 `docs/superpowers/{specs,plans}/`
 - **테스트 위치**: 구현 구조를 그대로 반영한다. `app/lib/features/<name>/` ↔
   `app/test/features/<name>/`. 특정 feature 테스트를 공통 디렉터리에 두지 않는다
-- **문서 링크**: 상대 Markdown 링크만 쓴다. `app/test/convention/documentation_links_test.dart`가
-  `docs/` 안의 깨진 링크를 잡는다 (이 파일은 검사 대상이 아니므로 링크를 직접 확인한다)
+- **문서 링크**: 상대 Markdown 링크만 쓴다. `apps/trader/test/convention/documentation_links_test.dart`가
+  `docs/` · `apps/*/docs/` · 이 파일의 깨진 링크를 잡는다
 - **생성 파일**: `.freezed.dart`, `.g.dart`, `injection.config.dart`는 직접 수정하지 않고
   build_runner로 갱신한다
 
@@ -50,7 +53,7 @@ supabase db reset                # 마이그레이션 전체 재적용 (로컬 �
 ```
 
 E2E는 **로컬 Supabase + 에뮬레이터**가 둘 다 떠 있어야 한다. 자세한 준비는
-[docs/testing/e2e.md](docs/testing/e2e.md).
+[apps/trader/docs/e2e.md](apps/trader/docs/e2e.md).
 
 ```bash
 cd app

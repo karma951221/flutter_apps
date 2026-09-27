@@ -2,7 +2,7 @@
 """Postgres Changes 구독이 실제로 메시지를 전달하는지, 그리고 구독자별 RLS
 재검사가 걸리는지 확인한다.
 
-단위 테스트로는 잡히지 않는 부분이다 (docs/features/chat/plan.md "테스트").
+단위 테스트로는 잡히지 않는 부분이다 (apps/trader/docs/features/chat/plan.md "테스트").
 """
 import asyncio
 import json

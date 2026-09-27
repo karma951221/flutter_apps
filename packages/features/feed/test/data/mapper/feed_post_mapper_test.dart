@@ -143,7 +143,7 @@ void main() {
   });
 
   test('판이 없는 게시물은 결과가 null 이다', () {
-    // 뷰의 lateral 이 0행이면 컬럼이 통째로 null 이다 (docs/schema.md §6).
+    // 뷰의 lateral 이 0행이면 컬럼이 통째로 null 이다 (apps/trader/docs/schema.md §6).
     final dto = FeedPostDto.fromJson({
       'id': 'post-id',
       'author_id': 'author-id',

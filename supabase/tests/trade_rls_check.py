@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """F10 모의투자(trade_sessions · trade_orders)의 권한 경계와 채점을 실제 JWT + REST 로 확인한다.
 
-docs/schema.md §17 이 약속한 것 두 가지를 훑는다.
+apps/trader/docs/schema.md §17 이 약속한 것 두 가지를 훑는다.
 
 1. **판이 끝나기 전엔 종목 · 날짜 · 미래 봉이 어떤 경로로도 내려가지 않는다** —
    컬럼 GRANT(`symbol` · `start_day`)와 RPC 의 거절 문구가 그 경계다.
@@ -104,7 +104,7 @@ DAY_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 def replay(closes, orders, end_index):
     """정규화 봉과 주문만으로 종료 시 현금과 지표 넷을 다시 계산한다.
 
-    docs/schema.md §17 의 정의를 그대로 옮긴 것이다 — 종료 봉 종가로 청산하고,
+    apps/trader/docs/schema.md §17 의 정의를 그대로 옮긴 것이다 — 종료 봉 종가로 청산하고,
     step 0..end 의 평가액 곡선에서 최대 낙폭을 잡는다. 청산은 주문이 아니다.
     """
     end_step = end_index - WARMUP_CANDLES + 1

@@ -11,7 +11,7 @@ import '../cubit/blocked_users_state.dart';
 /// 내가 차단한 사용자 목록 화면.
 ///
 /// 커서를 쓰지 않는다 — 차단 목록이 페이지가 필요할 만큼 커지는 사용자는
-/// 이 앱의 대상이 아니다 (docs/features/safety/plan-block.md).
+/// 이 앱의 대상이 아니다 (apps/trader/docs/features/safety/plan-block.md).
 class BlockedUsersPage extends StatelessWidget {
   const BlockedUsersPage({super.key});
 

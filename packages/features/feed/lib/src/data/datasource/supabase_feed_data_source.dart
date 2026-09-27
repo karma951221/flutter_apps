@@ -13,7 +13,7 @@ class SupabaseFeedDataSource implements FeedDataSource {
   final SupabaseClient _client;
 
   /// 작성자를 조인해 내려주는 뷰. posts 를 직접 읽지 않는 이유는
-  /// docs/schema.md 의 `posts_with_author` 항목에 있다.
+  /// apps/trader/docs/schema.md 의 `posts_with_author` 항목에 있다.
   static const _allSource = 'posts_with_author';
 
   /// 팔로잉 피드. 위 뷰를 내 follows 로 좁힌 것이라 컬럼·정렬·커서가 같다.
@@ -33,7 +33,7 @@ class SupabaseFeedDataSource implements FeedDataSource {
   }) async {
     // deleted_at 필터를 여기에 쓰지 않는다. 조회 RLS(posts_select_visible)가
     // 삭제행을 가리므로 앱이 빠뜨릴 수 없다. 뷰는 security_invoker = on 이라
-    // 그 정책을 그대로 물려받는다. docs/schema.md §2·§6 참고.
+    // 그 정책을 그대로 물려받는다. apps/trader/docs/schema.md §2·§6 참고.
     final view = switch (source) {
       FeedSource.all => _allSource,
       FeedSource.following => _followingSource,

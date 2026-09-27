@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """F9 chat 스키마의 권한 경계를 실제 JWT + REST 로 확인한다.
 
-docs/features/chat/plan.md 의 완료 조건 중 DB 로 판정되는 것들을 훑는다.
+apps/trader/docs/features/chat/plan.md 의 완료 조건 중 DB 로 판정되는 것들을 훑는다.
 """
 import json
 import urllib.request

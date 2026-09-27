@@ -1,6 +1,6 @@
 # 테스트 가이드
 
-> [문서 허브](../README.md) · [아키텍처](../architecture.md) · [개발환경](../setup.md) · [E2E](e2e.md) · [컨벤션 검사](conventions.md)
+> [문서 허브](../README.md) · [아키텍처](../architecture.md) · [개발환경](../setup.md) · [E2E](../../apps/trader/docs/e2e.md) · [컨벤션 검사](conventions.md)
 
 테스트는 구현 코드의 구조를 그대로 반영한다. feature 테스트는 반드시
 `app/test/features/<feature>/`에 두고, 해당 구현은
@@ -32,7 +32,7 @@ feature 표에 들어가지 않는 공용 검사는 아래에 있다. 여기 있
 
 | 파일 | 검증 |
 |---|---|
-| `core/data/nickname_match_test.dart` | 닉네임 매칭 — LIKE 메타문자 이스케이프, `lower()` 기준 비교 ([근거](audit-2026-08-27.md)) |
+| `core/data/nickname_match_test.dart` | 닉네임 매칭 — LIKE 메타문자 이스케이프, `lower()` 기준 비교 ([근거](../../apps/trader/docs/audits/audit-2026-08-27.md)) |
 | `core/data/mapper/supabase_error_mapper_test.dart` | DB 제약·트리거 문구 → 사용자 fallback + `FailureCode` 변환 |
 | `core/extension/date_time_format_test.dart` | 날짜 표기 세 종류(연도 포함·생략·시각), 로컬 시각 변환, ko·en·ja locale |
 | `core/l10n/failure_localizations_test.dart` | 오류 code 번역 · 미매핑 서버 원문 · 종류별 기본 문구 fallback |
@@ -55,7 +55,7 @@ flutter test test/features/post
 flutter test test/convention
 ```
 
-E2E는 에뮬레이터와 로컬 Supabase가 필요하므로 별도로 돈다. [E2E 테스트](e2e.md) 참고.
+E2E는 에뮬레이터와 로컬 Supabase가 필요하므로 별도로 돈다. [E2E 테스트](../../apps/trader/docs/e2e.md) 참고.
 
 ```bash
 cd app
@@ -74,23 +74,23 @@ patrol test
 
 ## Feature별 범위
 
-feature 문서는 **대상 · 시나리오 · 기대 결과** 표 형식으로 통일한다. 테스트를
+feature 테스트 문서(각 feature 폴더의 `testing.md`)는 **대상 · 시나리오 · 기대 결과** 표 형식으로 통일한다. 테스트를
 추가·변경하면 해당 문서의 표를 같은 커밋에서 갱신한다.
 
-- [auth](features/auth.md)
-- [profile](features/profile.md)
-- [post](features/post.md)
-- [feed](features/feed.md)
-- [reaction](features/reaction.md)
-- [comment](features/comment.md)
-- [safety](features/safety.md)
-- [follow](features/follow.md)
-- [chat](features/chat.md)
-- [settings](features/settings.md)
-- [preferences](features/preferences.md)
-- [trade](features/trade.md)
-- [commute](features/commute.md) — 둘째 앱. `packages/features/commute` 와 `apps/commute` 에서 각각 돈다
-- [검수 기록 (2026-08-24)](audit-2026-08-24.md)
-- [검수 기록 (2026-08-27)](audit-2026-08-27.md)
+- [auth](../../apps/trader/docs/features/auth/testing.md)
+- [profile](../../apps/trader/docs/features/profile/testing.md)
+- [post](../../apps/trader/docs/features/post/testing.md)
+- [feed](../../apps/trader/docs/features/feed/testing.md)
+- [reaction](../../apps/trader/docs/features/reaction/testing.md)
+- [comment](../../apps/trader/docs/features/comment/testing.md)
+- [safety](../../apps/trader/docs/features/safety/testing.md)
+- [follow](../../apps/trader/docs/features/follow/testing.md)
+- [chat](../../apps/trader/docs/features/chat/testing.md)
+- [settings](../../apps/trader/docs/features/settings/testing.md)
+- [preferences](../../apps/trader/docs/features/preferences/testing.md)
+- [trade](../../apps/trader/docs/features/trade/testing.md)
+- [commute](../../apps/commute/docs/testing.md) — 둘째 앱. `packages/features/commute` 와 `apps/commute` 에서 각각 돈다
+- [검수 기록 (2026-08-24)](../../apps/trader/docs/audits/audit-2026-08-24.md)
+- [검수 기록 (2026-08-27)](../../apps/trader/docs/audits/audit-2026-08-27.md)
 - [코드 컨벤션 검사](conventions.md)
-- [E2E 테스트 (Patrol)](e2e.md)
+- [E2E 테스트 (Patrol)](../../apps/trader/docs/e2e.md)

@@ -154,7 +154,7 @@ class SupabaseAuthDataSource implements AuthDataSource {
 
   @override
   Future<void> deleteAccount() async {
-    // 서버가 계정과 데이터를 한 트랜잭션에 지운다 (docs/schema.md 참고).
+    // 서버가 계정과 데이터를 한 트랜잭션에 지운다 (apps/trader/docs/schema.md 참고).
     await _client.rpc<void>('delete_account');
     // 사용자 행이 이미 없으므로 서버 로그아웃은 실패한다. 로컬 세션만 지운다 —
     // 이 호출이 auth 상태 스트림을 깨워 라우터가 로그인 화면으로 보낸다.

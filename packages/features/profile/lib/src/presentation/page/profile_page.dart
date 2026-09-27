@@ -97,7 +97,7 @@ class _ProfileView extends StatelessWidget {
         // 팔로우 버튼은 프로필 응답이 바뀔 때마다 다시 심는다.
         //
         // 관계와 팔로워 수는 프로필 조회가 함께 내려주므로 버튼이 따로 묻지
-        // 않는다 (docs/features/follow/plan.md). 그래서 id 가 바뀔 때만
+        // 않는다 (apps/trader/docs/features/follow/plan.md). 그래서 id 가 바뀔 때만
         // 심으면, 같은 사람을 다시 읽는 당겨서 새로고침에서는 값이 갱신되지
         // 않는다 — 그 사이 남이 팔로우해 팔로워가 늘거나 관계가 뒤집혔어도
         // 버튼과 팔로워 수만 옛 값으로 남고, 그 상태로 누르면 이미 있는 행을
@@ -580,7 +580,7 @@ Future<void> _confirmAndBlock(BuildContext context, String userId) async {
 }
 
 /// 차단 해제는 확인 없이 바로 실행한다 — 되돌리기 쉬운 동작이라는 스펙
-/// 결정(`docs/features/safety/plan-block.md` "확인 절차")을 따른다. 목록
+/// 결정(`apps/trader/docs/features/safety/plan-block.md` "확인 절차")을 따른다. 목록
 /// 화면(`blocked_users_page`)의 즉시 해제와 이 화면의 동작을 일치시킨다.
 Future<void> _unblockProfile(BuildContext context, String userId) async {
   final l10n = AppLocalizations.of(context);

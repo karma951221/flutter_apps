@@ -10,7 +10,7 @@ part 'trade_result_summary.freezed.dart';
 /// 전체의 결과(현금·종료 봉까지)이고, 이쪽은 **피드 카드 한 장에 필요한 만큼**
 /// 이다 — 대신 결과 화면으로 들어갈 [sessionId] 를 갖는다. 뷰
 /// (`posts_with_author.trade_result`)와 단건 조회의 임베드가 내려주는 여덟 키가
-/// 그대로 이 여덟 필드다(docs/schema.md §6).
+/// 그대로 이 여덟 필드다(apps/trader/docs/schema.md §6).
 @freezed
 class TradeResultSummary with _$TradeResultSummary {
   const TradeResultSummary({
@@ -56,7 +56,7 @@ class TradeResultSummary with _$TradeResultSummary {
   /// 이 타입 자체를 `extra` 로 넘기면 go_router 가 상태 복원용 기본 codec으로
   /// `json.encoder.convert` 를 시도하다 실패해 경고를 낸다(codec 미등록 클래스).
   /// 키는 `posts_with_author.trade_result` 뷰가 내려주는 여덟 키와 같다
-  /// (docs/schema.md §6).
+  /// (apps/trader/docs/schema.md §6).
   Map<String, Object?> toMap() => {
     'session_id': sessionId,
     'symbol': symbol,

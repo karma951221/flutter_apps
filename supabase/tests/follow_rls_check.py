@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """F8 follow 스키마의 권한 경계를 실제 JWT + REST 로 확인한다.
 
-docs/features/follow/plan.md 의 완료 조건 중 DB 로 판정되는 것들을 훑는다.
+apps/trader/docs/features/follow/plan.md 의 완료 조건 중 DB 로 판정되는 것들을 훑는다.
 차단(F7)과의 상호작용 — 엣지 삭제 트리거와 삽입 거부 — 이 이 스크립트의 중심이다.
 """
 import json

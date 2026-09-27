@@ -47,7 +47,7 @@ class SupabasePostDataSource implements PostDataSource {
     if (_client.auth.currentUser == null) return null;
 
     // 판을 붙일 때는 이미지가 없어도 RPC 로 간다. `trade_session_id` 에는 INSERT
-    // GRANT 가 없어서(docs/schema.md §5) 직접 insert 는 42501 로 막힌다.
+    // GRANT 가 없어서(apps/trader/docs/schema.md §5) 직접 insert 는 42501 로 막힌다.
     if (draft.images.isEmpty && draft.tradeSessionId == null) {
       // author_id 는 보내지 않는다. DB 의 default auth.uid() 가 채운다.
       final row = await _client
@@ -145,7 +145,7 @@ class SupabasePostDataSource implements PostDataSource {
 
     // deleted_at 을 직접 UPDATE 할 수는 없다. PostgreSQL 이 UPDATE 의 SELECT 정책을
     // 새 행에도 적용해서, 삭제 표시를 한 행이 자기 조회 정책에 걸리기 때문이다.
-    // 삭제 경로는 security definer 함수 하나뿐이다. docs/schema.md §6 참고.
+    // 삭제 경로는 security definer 함수 하나뿐이다. apps/trader/docs/schema.md §6 참고.
     final deleted = await _client.rpc(
       'soft_delete_post',
       params: {'post_id': postId},

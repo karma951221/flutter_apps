@@ -86,7 +86,7 @@ dev_dependencies:
   bloc_test: ^10.0.0
   mocktail: ^1.0.5
 
-  # E2E (patrol_test/). 실행 방법은 docs/testing/e2e.md 참고.
+  # E2E (patrol_test/). 실행 방법은 apps/trader/docs/e2e.md 참고.
   integration_test:
     sdk: flutter
   patrol: ^4.9.0

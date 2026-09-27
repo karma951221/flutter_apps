@@ -5,7 +5,7 @@ import '../../domain/entity/blocked_user.dart';
 
 part 'blocked_users_state.freezed.dart';
 
-/// 차단 목록 화면의 상태. 커서를 쓰지 않는다 (docs/features/safety/plan-block.md).
+/// 차단 목록 화면의 상태. 커서를 쓰지 않는다 (apps/trader/docs/features/safety/plan-block.md).
 @freezed
 class BlockedUsersState with _$BlockedUsersState {
   const BlockedUsersState({

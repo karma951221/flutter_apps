@@ -6,7 +6,7 @@ part 'follow_relation.freezed.dart';
 ///
 /// 두 방향을 따로 들고 맞팔은 파생값으로 둔다. DB 도 같은 모양이다 — 맞팔은
 /// 반대 방향 행이 하나 더 있는 것일 뿐이라 상태를 따로 저장하지 않는다
-/// (docs/features/follow/plan.md).
+/// (apps/trader/docs/features/follow/plan.md).
 @freezed
 class FollowRelation with _$FollowRelation {
   @override

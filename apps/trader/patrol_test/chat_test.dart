@@ -70,6 +70,6 @@ void main() {
     // 실시간 왕복 하나다. 뒤로가기까지 태웠더니 테스트 본문이 끝난 **뒤에**
     // 비동기 오류가 하나 더 올라와 실패로 잡혔는데, 그 오류는 harness 가
     // 원문을 가려 원인을 짚지 못했다 — auth_test 에 이미 있는 같은 증상이다
-    // (docs/testing/audit-2026-08-27.md).
+    // (apps/trader/docs/audits/audit-2026-08-27.md).
   });
 }

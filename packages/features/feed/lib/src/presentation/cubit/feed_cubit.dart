@@ -20,7 +20,7 @@ import 'feed_state.dart';
 /// 감정표현만 예외로 여기서 직접 저장한다 ([toggleReaction]). 반응 전용
 /// Bloc 을 두지 않기 때문이다 — 반응 상태는 목록 항목 안에 살고, 낙관적
 /// 업데이트와 실패 복원은 목록을 소유한 쪽만 할 수 있다
-/// (docs/features/reaction/plan.md).
+/// (apps/trader/docs/features/reaction/plan.md).
 @injectable
 class FeedCubit extends Cubit<FeedState> {
   FeedCubit(this._useCase, this._reactionUseCase) : super(const FeedState());
@@ -66,7 +66,7 @@ class FeedCubit extends Cubit<FeedState> {
   }
 
   /// 팔로우한 사람들의 글만 읽는다. 화면·커서·항목 모양은 전체 피드와 같고
-  /// 읽는 뷰만 바뀐다 (docs/features/follow/plan.md).
+  /// 읽는 뷰만 바뀐다 (apps/trader/docs/features/follow/plan.md).
   Future<void> loadFollowing() async {
     _authorId = null;
     _source = FeedSource.following;

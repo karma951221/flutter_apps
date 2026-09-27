@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """탈퇴 확인 화면이 보여주는 개수의 경계를 실제 JWT + REST 로 확인한다.
 
-docs/testing/features/settings.md 의 "로컬 Supabase 로만 확인되는 것". 앱은
+apps/trader/docs/features/settings/testing.md 의 "로컬 Supabase 로만 확인되는 것". 앱은
 `Prefer: count=exact` HEAD 두 번으로 내 게시물 수와 댓글 수를 센다.
 
 댓글은 `post_comments` 가 아니라 `post_comments_visible` 뷰로 센다. 원본 테이블은
-`content` 가 SELECT 컬럼 GRANT 에서 빠져 있어(docs/schema.md §8) `select=*` 로
+`content` 가 SELECT 컬럼 GRANT 에서 빠져 있어(apps/trader/docs/schema.md §8) `select=*` 로
 도는 count HEAD 가 42501 로 거부된다 — 이 스크립트의 마지막 검사가 그 이유를
 붙잡아 둔다. 뷰를 테이블로 되돌리면 여기서 깨진다.
 """

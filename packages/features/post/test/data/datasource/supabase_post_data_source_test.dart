@@ -69,7 +69,7 @@ void main() {
   });
 
   test('판을 붙이면 이미지가 없어도 RPC 로 만든다', () async {
-    // `trade_session_id` 에는 INSERT GRANT 가 없다(docs/schema.md §5). 이미지가
+    // `trade_session_id` 에는 INSERT GRANT 가 없다(apps/trader/docs/schema.md §5). 이미지가
     // 없다고 직접 insert 로 새면 42501 로 실패한다.
     when(
       () => client.rpc<dynamic>(

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """비로그인(anon) 이 게스트 피드를 읽을 수 있고, 쓰기는 전부 막히는지 REST 로 확인한다.
 
-docs/features/feed/plan.md 의 완료 조건 중 게스트 피드 두 줄을 DB 로 판정한다.
+apps/trader/docs/features/feed/plan.md 의 완료 조건 중 게스트 피드 두 줄을 DB 로 판정한다.
 스키마 변경 없이 기존 GRANT/RLS 만으로 성립해야 한다 — 이 스크립트가 깨지면
 누군가 anon 권한을 걷어낸 것이다.
 

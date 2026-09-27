@@ -8,7 +8,7 @@
 
 **Tech Stack:** Flutter · bloc/cubit · freezed 3 · get_it + injectable · supabase_flutter · PostgreSQL(로컬 Supabase) · mocktail · bloc_test
 
-**스펙 (요구사항의 단일 기준):** [docs/features/safety/plan.md](../../features/safety/plan.md)
+**스펙 (요구사항의 단일 기준):** [docs/features/safety/plan.md](../../../apps/trader/docs/features/safety/plan.md)
 
 ## Global Constraints
 
@@ -23,7 +23,7 @@
 - **생성 파일(`.freezed.dart` · `.g.dart` · `injection.config.dart`)은 직접 수정하지 않는다.** `dart run build_runner build --delete-conflicting-outputs` 로만 갱신한다
 - **UI 는 `design_system/widget/` 의 공통 위젯을 먼저 쓴다.** 색·여백·타이포는 `design_system/theme/` 토큰만 쓰고 하드코딩하지 않는다 ([CLAUDE.md](../../../CLAUDE.md))
 - **테스트 위치는 구현 구조를 그대로 미러링한다.** `app/lib/features/safety/` ↔ `app/test/features/safety/`
-- **스키마를 바꾸면 같은 커밋에서 [docs/schema.md](../../schema.md) 를 갱신한다.** Studio UI 로 테이블을 만들지 않는다
+- **스키마를 바꾸면 같은 커밋에서 [docs/schema.md](../../../apps/trader/docs/schema.md) 를 갱신한다.** Studio UI 로 테이블을 만들지 않는다
 - **문서 링크는 상대 Markdown 링크만 쓴다.** `app/test/convention/documentation_links_test.dart` 가 깨진 링크를 잡는다
 - **커밋 메시지는 한국어 현재형이다** — `feat(safety): 신고를 접수한다`
 - **DB 값과 앱 상수는 일치해야 한다.** 상세 설명 최대 길이는 DB CHECK 와 `ReportPolicy.maxDetailLength` 양쪽에서 **500**
@@ -845,7 +845,7 @@ feat(safety): 게시물·댓글·프로필에 신고 진입점을 붙인다
 
 - [ ] **Step 1: 완료 조건을 실제 DB 로 확인**
 
-[스펙](../../features/safety/plan.md)의 "완료 조건" 9개를 로컬 Supabase 로 직접
+[스펙](../../../apps/trader/docs/features/safety/plan.md)의 "완료 조건" 9개를 로컬 Supabase 로 직접
 확인한다. REST 로 확인하는 것들은 사용자 JWT 가 필요하다 —
 `docs/testing/audit-2026-08-24.md` 가 쓴 방법을 그대로 따른다.
 

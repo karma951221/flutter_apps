@@ -10,7 +10,7 @@
 
 ## 먼저: 이 앱에 원칙이 얼마나 적용되는가
 
-[기획서 §2](docs/overview.md) 가 못 박은 대로 이 프로젝트는 **토이 프로젝트이고 사용자 수가
+[기획서 §2](apps/trader/docs/overview.md) 가 못 박은 대로 이 프로젝트는 **토이 프로젝트이고 사용자 수가
 목표가 아니다.** 6원칙은 대부분 전환율·이탈률을 올리기 위한 설득 장치이므로, 여기서는
 "매출을 올릴 수 있는가" 가 아니라 **"처음 쓰는 사람이 빈 화면에서 막히지 않는가"** 를
 기준으로 읽었다. 결과적으로:
@@ -42,7 +42,7 @@ P1 세 개는 서버 변경 없이 화면과 ARB 만 고치면 된다. P2 는 �
 
 > 2026-09-06 반영: 사용자가 "임의로 결정해서 다 반영" 을 지시해 1~7 을 구현했다. 결정 내용과
 > 실행 기록은 [계획](docs/superpowers/plans/2026-09-06-ux-psychology.md) 과
-> [진행 현황](docs/status.md) 에 있다.
+> [진행 현황](apps/trader/docs/status.md) 에 있다.
 
 ## 잘 되어 있는 것 (유지)
 
@@ -130,7 +130,7 @@ P1 세 개는 서버 변경 없이 화면과 ARB 만 고치면 된다. P2 는 �
 2. 닉네임이 비어 있을 때 이메일 포커스가 빠지면 이메일 로컬 파트(`@` 앞)를 2~20자
    규칙에 맞춰 잘라 닉네임 **제안값** 으로 넣는다. 사용자가 닉네임을 이미 건드렸으면
    덮어쓰지 않는다. `Validators.nickname` 을 통과하는 경우에만 채운다.
-   중복이면 가입 시 `23505` 매핑 문구가 이미 잡는다([auth plan](docs/features/auth/plan.md)).
+   중복이면 가입 시 `23505` 매핑 문구가 이미 잡는다([auth plan](apps/trader/docs/features/auth/plan.md)).
 
 기본값은 추천으로 읽히므로 제안값이 이상하면 안 채우는 편이 낫다. 2 번은 1 번보다
 우선순위가 낮다.
@@ -143,7 +143,7 @@ P1 세 개는 서버 변경 없이 화면과 ARB 만 고치면 된다. P2 는 �
 "오늘 하루를 기록하고 이웃과 나눠보세요" 한 줄과 폼이다. "메뉴 보기 전에 카드부터"
 구조 그대로다.
 
-**이미 준비된 것** [스키마 §RLS](docs/schema.md) 를 보면 `profiles_select_all` 과
+**이미 준비된 것** [스키마 §RLS](apps/trader/docs/schema.md) 를 보면 `profiles_select_all` 과
 `posts_select_visible` 이 **이미 `to authenticated, anon`** 이고, `is_blocked_with()` 는
 비로그인이면 `false` 를 돌려주도록 설계돼 있다. 즉 게시물·프로필의 비로그인 열람은
 DB 가 이미 허용한다. 막고 있는 것은 라우터 게이트뿐이다.
@@ -154,10 +154,10 @@ DB 가 이미 허용한다. 막고 있는 것은 라우터 게이트뿐이다.
 - 화면: 게스트일 때 FAB 과 반응 버튼을 누르면 "가입하면 반응을 남길 수 있어요"
   시트 → 가입 화면. 블러·가림 없이 실제 내용을 그대로 보여 준다.
 - 확인할 것: `posts_with_author` 뷰와 `post_images`·반응 집계의 GRANT 가 `anon` 을
-  포함하는지 [스키마](docs/schema.md) §6 기준으로 확인하고, 빠진 곳은 마이그레이션으로
+  포함하는지 [스키마](apps/trader/docs/schema.md) §6 기준으로 확인하고, 빠진 곳은 마이그레이션으로
   맞춘다. 마이그레이션이 생기면 `supabase/tests/` 스크립트에 anon 열람 케이스를 더한다.
 
-**주의** 이 항목은 [기획서 §2](docs/overview.md) 의 부차 목표(권한 모델 직접 설계)와는
+**주의** 이 항목은 [기획서 §2](apps/trader/docs/overview.md) 의 부차 목표(권한 모델 직접 설계)와는
 맞지만, "사용자 수는 목표가 아니다" 와는 어긋난다. 그래서 P2 이고 아래 결정 목록에
 올린다.
 
@@ -178,7 +178,7 @@ DB 가 이미 허용한다. 막고 있는 것은 라우터 게이트뿐이다.
 2. 그다음 단계로 가려면: 가입 폼을 두 화면으로 나눠 **닉네임·사진·자기소개를
    먼저**, 이메일·비밀번호를 뒤에 둔다. 다만 아바타 업로드는 세션이 필요하므로
    사진은 로컬에 들고 있다가 가입 뒤 `UpdateAvatarScenario` 로 올려야 한다.
-   이건 auth 와 profile 두 feature 를 가로지르므로 [플랜](docs/features/auth/plan.md)
+   이건 auth 와 profile 두 feature 를 가로지르므로 [플랜](apps/trader/docs/features/auth/plan.md)
    갱신이 먼저다.
 
 1 번만으로도 소유 효과의 대부분을 얻는다. 2 번은 여기서 권하지 않는다.
@@ -225,7 +225,7 @@ DB 가 이미 허용한다. 막고 있는 것은 라우터 게이트뿐이다.
 
 ## 결정이 필요한 것
 
-[기획서](docs/overview.md) 의 방향과 부딪히거나 두 feature 를 가로지르는 항목이다.
+[기획서](apps/trader/docs/overview.md) 의 방향과 부딪히거나 두 feature 를 가로지르는 항목이다.
 구현 전에 답이 필요하다.
 
 1. **4 번 게스트 피드** — "사용자 수는 목표가 아니다" 와 어긋난다. 반대로 anon RLS 를
@@ -233,7 +233,7 @@ DB 가 이미 허용한다. 막고 있는 것은 라우터 게이트뿐이다.
 2. **5 번 가입 직후 프로필 꾸미기** — 1 안(기존 편집 화면 재사용, 건너뛰기 가능)으로
    충분한지, 2 안(가입 폼 재배치)까지 갈지.
 3. **7 번 카운터 숨김** — 문서에서 "글자 수 표시" 를 기능으로 적었다
-   ([status](docs/status.md) UI 절). 취향 문제라 확인이 필요하다.
+   ([status](apps/trader/docs/status.md) UI 절). 취향 문제라 확인이 필요하다.
 
 ## 적용하지 말아야 할 것
 
@@ -249,6 +249,6 @@ DB 가 이미 허용한다. 막고 있는 것은 라우터 게이트뿐이다.
 ## 다음 단계
 
 P1 세 개(1 · 2 · 3)는 결정 없이 바로 진행할 수 있다. 각각 화면 하나와 ARB 세 파일,
-위젯 테스트 하나 범위다. 착수하면 [feed](docs/features/feed/plan.md) ·
-[profile](docs/features/profile/plan.md) · [auth](docs/features/auth/plan.md) 플랜의
-화면 표에 항목을 더하고, [status](docs/status.md) 에 진행을 적는다.
+위젯 테스트 하나 범위다. 착수하면 [feed](apps/trader/docs/features/feed/plan.md) ·
+[profile](apps/trader/docs/features/profile/plan.md) · [auth](apps/trader/docs/features/auth/plan.md) 플랜의
+화면 표에 항목을 더하고, [status](apps/trader/docs/status.md) 에 진행을 적는다.

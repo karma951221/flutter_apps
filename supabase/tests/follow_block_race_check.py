@@ -5,7 +5,7 @@
 겹칠 때만 나타나므로 REST 로는 재현되지 않는다. psql 세션 둘로 직접 겹친다.
 
 배경은 `20260830150000_harden_follows.sql` 과
-`docs/features/follow/history.md` 에 있다. 요약하면, 락이 없을 때는
+`apps/trader/docs/features/follow/history.md` 에 있다. 요약하면, 락이 없을 때는
 
   A: begin; insert into follows ...   (아직 커밋 안 함)
   B: insert into blocks ...           (트리거가 0행 삭제하고 커밋)

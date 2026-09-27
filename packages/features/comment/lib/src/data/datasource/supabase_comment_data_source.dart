@@ -12,7 +12,7 @@ class SupabaseCommentDataSource implements CommentDataSource {
   final SupabaseClient _client;
 
   /// 본문에 닿는 유일한 경로. post_comments 테이블에는 content SELECT 권한이
-  /// 없다 — docs/schema.md 의 post_comments_visible 항목 참고.
+  /// 없다 — apps/trader/docs/schema.md 의 post_comments_visible 항목 참고.
   static const _source = 'post_comments_visible';
 
   static const _columns =
