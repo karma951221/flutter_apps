@@ -1,23 +1,73 @@
+import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
-import '../presentation/walk/page/walk_home_page.dart';
+import '../domain/settings/entity/app_settings.dart';
+import '../domain/settings/repository/settings_repository.dart';
+import '../presentation/alarm/page/alarm_ringing_page.dart';
+import '../presentation/settings/cubit/theme_cubit.dart';
+import '../presentation/shell/page/main_shell_page.dart';
+import 'alarm_ring_listener.dart';
 
-class WalkApp extends StatelessWidget {
+/// 울림 화면을 화면 밖(알람 스트림)에서 띄우려고 전역으로 둔다.
+final walkNavigatorKey = GlobalKey<NavigatorState>();
+
+class WalkApp extends StatefulWidget {
   const WalkApp({super.key});
 
   @override
+  State<WalkApp> createState() => _WalkAppState();
+}
+
+class _WalkAppState extends State<WalkApp> {
+  late final _theme = ThemeCubit(getIt<SettingsRepository>());
+  late final _ringListener = AlarmRingListener(
+    navigatorKey: walkNavigatorKey,
+    routeFor: (packageId) => MaterialPageRoute<void>(
+      fullscreenDialog: true,
+      builder: (_) => AlarmRingingPage(packageId: packageId),
+    ),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _ringListener.start();
+  }
+
+  @override
+  void dispose() {
+    _ringListener.dispose();
+    _theme.close();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      onGenerateTitle: (context) => AppLocalizations.of(context).walkAppTitle,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.system,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      debugShowCheckedModeBanner: false,
-      home: const WalkHomePage(),
+    return BlocProvider.value(
+      value: _theme,
+      child: BlocBuilder<ThemeCubit, AppThemeMode>(
+        builder: (context, mode) => MaterialApp(
+          navigatorKey: walkNavigatorKey,
+          navigatorObservers: [appRouteObserver],
+          onGenerateTitle: (context) => AppLocalizations.of(context).walkAppTitle,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: themeModeOf(mode),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          debugShowCheckedModeBanner: false,
+          home: const MainShellPage(),
+        ),
+      ),
     );
   }
 }
+
+ThemeMode themeModeOf(AppThemeMode mode) => switch (mode) {
+  AppThemeMode.system => ThemeMode.system,
+  AppThemeMode.light => ThemeMode.light,
+  AppThemeMode.dark => ThemeMode.dark,
+};
