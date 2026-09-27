@@ -26,6 +26,7 @@ import '../../domain/alarm/permission/alarm_permissions.dart' as _i933;
 import '../../domain/alarm/repository/alarm_repository.dart' as _i296;
 import '../../domain/alarm/scheduler/alarm_scheduler.dart' as _i702;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
+import '../../domain/app_info/app_info_source.dart' as _i811;
 import '../../domain/clock.dart' as _i1053;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
@@ -49,13 +50,13 @@ extension GetItInjectableX on _i174.GetIt {
       () => alarmPermissionModule.alarmPermissions,
     );
     gh.lazySingleton<_i1053.Clock>(() => _i1053.Clock());
-    gh.lazySingleton<_i527.AppInfoSource>(
-      () => _i527.PackageInfoAppInfoSource(),
-    );
     gh.lazySingleton<_i702.AlarmScheduler>(() => _i238.PackageAlarmScheduler());
     gh.lazySingleton<_i332.HealthGateway>(() => _i332.HealthPluginGateway());
     gh.lazySingleton<_i204.ActivityRepository>(
       () => _i1016.HealthConnectActivityRepository(gh<_i332.HealthGateway>()),
+    );
+    gh.lazySingleton<_i811.AppInfoSource>(
+      () => _i527.PackageInfoAppInfoSource(),
     );
     gh.lazySingleton<_i91.SettingsRepository>(
       () => _i724.PrefsSettingsRepository(gh<_i460.SharedPreferences>()),

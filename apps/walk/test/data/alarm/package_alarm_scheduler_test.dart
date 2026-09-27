@@ -20,6 +20,7 @@ void main() {
     expect(settings.volumeSettings.volume, 0.8);
     expect(settings.volumeSettings.fadeDuration, const Duration(seconds: 3));
     expect(settings.androidFullScreenIntent, isTrue);
+    expect(settings.androidStopAlarmOnTermination, isFalse);
     expect(settings.androidSnoozeDuration, alarmSnoozeDuration);
     expect(settings.allowSameSecondScheduling, isTrue);
     expect(settings.notificationSettings.title, '출근');

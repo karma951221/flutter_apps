@@ -1411,4 +1411,172 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkAlarmSnooze => '5分後';
+
+  @override
+  String get walkShellTabAlarm => 'アラーム';
+
+  @override
+  String get walkShellTabWalk => 'ウォーク';
+
+  @override
+  String get walkShellTabSettings => '設定';
+
+  @override
+  String get walkAlarmListTitle => 'アラーム';
+
+  @override
+  String get walkAlarmEmpty => 'アラームがありません';
+
+  @override
+  String get walkAlarmEmptyDescription => '＋をタップして目覚ましを追加しましょう';
+
+  @override
+  String get walkAlarmAdd => 'アラームを追加';
+
+  @override
+  String walkAlarmNextIn(String duration) {
+    return '次のアラームまで$duration';
+  }
+
+  @override
+  String walkAlarmRingsIn(String duration) {
+    return '$duration後に鳴ります';
+  }
+
+  @override
+  String walkAlarmDurationMinutes(int minutes) {
+    return '$minutes分';
+  }
+
+  @override
+  String walkAlarmDurationHours(int hours) {
+    return '$hours時間';
+  }
+
+  @override
+  String walkAlarmDurationHoursMinutes(int hours, int minutes) {
+    return '$hours時間$minutes分';
+  }
+
+  @override
+  String walkAlarmDurationDays(int days) {
+    return '$days日';
+  }
+
+  @override
+  String walkAlarmDurationDaysHours(int days, int hours) {
+    return '$days日$hours時間';
+  }
+
+  @override
+  String get walkAlarmPermissionWarning => 'アラームが鳴らない可能性があります';
+
+  @override
+  String get walkAlarmPermissionWarningAction => '設定タブで権限を確認してください';
+
+  @override
+  String get walkAlarmRepeatDaily => '毎日';
+
+  @override
+  String get walkAlarmRepeatWeekdays => '平日';
+
+  @override
+  String get walkAlarmRepeatWeekends => '週末';
+
+  @override
+  String get walkAlarmRepeatOnce => '1回';
+
+  @override
+  String get walkAlarmNew => '新しいアラーム';
+
+  @override
+  String get walkAlarmEdit => 'アラームを編集';
+
+  @override
+  String get walkAlarmRepeat => '繰り返し';
+
+  @override
+  String get walkAlarmLabel => 'ラベル';
+
+  @override
+  String get walkAlarmLabelHint => '例: 出勤';
+
+  @override
+  String get walkAlarmVibrate => 'バイブレーション';
+
+  @override
+  String get walkAlarmDeleteTitle => 'このアラームを削除しますか？';
+
+  @override
+  String get walkAlarmDeleteContent => '削除したアラームは元に戻せません';
+
+  @override
+  String get walkAlarmSaveFailed => 'アラームを保存できませんでした';
+
+  @override
+  String get walkSettingsTitle => '設定';
+
+  @override
+  String get walkSettingsPermissions => '権限';
+
+  @override
+  String get walkSettingsNotification => '通知';
+
+  @override
+  String get walkSettingsNotificationDescription => 'アラーム通知と停止ボタンを表示します';
+
+  @override
+  String get walkSettingsExactAlarm => 'アラームとリマインダー';
+
+  @override
+  String get walkSettingsExactAlarmDescription => '設定した時刻ちょうどに鳴ります';
+
+  @override
+  String get walkSettingsFullScreen => '全画面通知';
+
+  @override
+  String get walkSettingsFullScreenDescription => 'ロック画面にアラーム画面を表示します';
+
+  @override
+  String get walkSettingsHealthConnect => 'ヘルスコネクト';
+
+  @override
+  String get walkSettingsHealthConnectDescription => '歩数の記録を読み取ります';
+
+  @override
+  String get walkSettingsGranted => '許可済み';
+
+  @override
+  String get walkSettingsNeedsPermission => '許可が必要 ›';
+
+  @override
+  String get walkSettingsNeedsInstall => 'インストールが必要 ›';
+
+  @override
+  String get walkSettingsNeedsUpdate => 'アップデートが必要 ›';
+
+  @override
+  String get walkSettingsTheme => 'テーマ';
+
+  @override
+  String get walkSettingsThemeSystem => 'システム設定';
+
+  @override
+  String get walkSettingsThemeLight => 'ライト';
+
+  @override
+  String get walkSettingsThemeDark => 'ダーク';
+
+  @override
+  String get walkSettingsAbout => 'アプリ情報';
+
+  @override
+  String get walkSettingsVersion => 'バージョン';
+
+  @override
+  String get walkSettingsLicenses => 'オープンソースライセンス';
+
+  @override
+  String get walkSettingsInactiveNotice =>
+      '14日以上アプリを開かないと、繰り返しアラームが止まることがあります。';
 }

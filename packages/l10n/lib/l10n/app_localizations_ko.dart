@@ -1413,4 +1413,171 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkAlarmSnooze => '5분 뒤';
+
+  @override
+  String get walkShellTabAlarm => '알람';
+
+  @override
+  String get walkShellTabWalk => '걷기';
+
+  @override
+  String get walkShellTabSettings => '설정';
+
+  @override
+  String get walkAlarmListTitle => '알람';
+
+  @override
+  String get walkAlarmEmpty => '알람이 없어요';
+
+  @override
+  String get walkAlarmEmptyDescription => '+ 를 눌러 기상 알람을 추가하세요';
+
+  @override
+  String get walkAlarmAdd => '알람 추가';
+
+  @override
+  String walkAlarmNextIn(String duration) {
+    return '다음 알람까지 $duration';
+  }
+
+  @override
+  String walkAlarmRingsIn(String duration) {
+    return '$duration 뒤에 울려요';
+  }
+
+  @override
+  String walkAlarmDurationMinutes(int minutes) {
+    return '$minutes분';
+  }
+
+  @override
+  String walkAlarmDurationHours(int hours) {
+    return '$hours시간';
+  }
+
+  @override
+  String walkAlarmDurationHoursMinutes(int hours, int minutes) {
+    return '$hours시간 $minutes분';
+  }
+
+  @override
+  String walkAlarmDurationDays(int days) {
+    return '$days일';
+  }
+
+  @override
+  String walkAlarmDurationDaysHours(int days, int hours) {
+    return '$days일 $hours시간';
+  }
+
+  @override
+  String get walkAlarmPermissionWarning => '알람이 울리지 않을 수 있어요';
+
+  @override
+  String get walkAlarmPermissionWarningAction => '설정 탭에서 권한을 확인하세요';
+
+  @override
+  String get walkAlarmRepeatDaily => '매일';
+
+  @override
+  String get walkAlarmRepeatWeekdays => '평일';
+
+  @override
+  String get walkAlarmRepeatWeekends => '주말';
+
+  @override
+  String get walkAlarmRepeatOnce => '1회';
+
+  @override
+  String get walkAlarmNew => '새 알람';
+
+  @override
+  String get walkAlarmEdit => '알람 편집';
+
+  @override
+  String get walkAlarmRepeat => '반복';
+
+  @override
+  String get walkAlarmLabel => '라벨';
+
+  @override
+  String get walkAlarmLabelHint => '예: 출근';
+
+  @override
+  String get walkAlarmVibrate => '진동';
+
+  @override
+  String get walkAlarmDeleteTitle => '알람을 삭제할까요?';
+
+  @override
+  String get walkAlarmDeleteContent => '삭제한 알람은 되돌릴 수 없어요';
+
+  @override
+  String get walkAlarmSaveFailed => '알람을 저장하지 못했어요';
+
+  @override
+  String get walkSettingsTitle => '설정';
+
+  @override
+  String get walkSettingsPermissions => '권한';
+
+  @override
+  String get walkSettingsNotification => '알림';
+
+  @override
+  String get walkSettingsNotificationDescription => '알람 알림과 끄기 버튼을 보여줘요';
+
+  @override
+  String get walkSettingsExactAlarm => '정확한 알람';
+
+  @override
+  String get walkSettingsExactAlarmDescription => '정한 시각에 정확히 울려요';
+
+  @override
+  String get walkSettingsFullScreen => '전체 화면 알림';
+
+  @override
+  String get walkSettingsFullScreenDescription => '잠금 화면에서 알람 화면을 띄워요';
+
+  @override
+  String get walkSettingsHealthConnect => 'Health Connect';
+
+  @override
+  String get walkSettingsHealthConnectDescription => '걸음 기록을 읽어요';
+
+  @override
+  String get walkSettingsGranted => '허용됨';
+
+  @override
+  String get walkSettingsNeedsPermission => '허용 필요 ›';
+
+  @override
+  String get walkSettingsNeedsInstall => '설치 필요 ›';
+
+  @override
+  String get walkSettingsNeedsUpdate => '업데이트 필요 ›';
+
+  @override
+  String get walkSettingsTheme => '테마';
+
+  @override
+  String get walkSettingsThemeSystem => '시스템 설정';
+
+  @override
+  String get walkSettingsThemeLight => '라이트';
+
+  @override
+  String get walkSettingsThemeDark => '다크';
+
+  @override
+  String get walkSettingsAbout => '앱 정보';
+
+  @override
+  String get walkSettingsVersion => '버전';
+
+  @override
+  String get walkSettingsLicenses => '오픈소스 라이선스';
+
+  @override
+  String get walkSettingsInactiveNotice => '앱을 14일 넘게 열지 않으면 반복 알람이 멈출 수 있어요.';
 }

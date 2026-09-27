@@ -65,6 +65,8 @@ class PackageAlarmScheduler implements AlarmScheduler {
     // NotificationOnKillService 를 선언하지 않는다. 안드로이드는 앱이 죽어도 AlarmManager 가 울린다.
     warningNotificationOnKill: false,
     androidFullScreenIntent: true,
+    // 기상 알람이라 앱을 최근 앱에서 밀어 없애도 계속 울려야 한다.
+    androidStopAlarmOnTermination: false,
     // 여러 알람이 같은 시각이어도 서로 지우지 않고 차례로 울린다.
     allowSameSecondScheduling: true,
     androidSnoozeDuration: alarmSnoozeDuration,

@@ -1498,4 +1498,187 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkAlarmSnooze => 'In 5 min';
+
+  @override
+  String get walkShellTabAlarm => 'Alarms';
+
+  @override
+  String get walkShellTabWalk => 'Walk';
+
+  @override
+  String get walkShellTabSettings => 'Settings';
+
+  @override
+  String get walkAlarmListTitle => 'Alarms';
+
+  @override
+  String get walkAlarmEmpty => 'No alarms yet';
+
+  @override
+  String get walkAlarmEmptyDescription => 'Tap + to add a wake-up alarm';
+
+  @override
+  String get walkAlarmAdd => 'Add alarm';
+
+  @override
+  String walkAlarmNextIn(String duration) {
+    return 'Next alarm in $duration';
+  }
+
+  @override
+  String walkAlarmRingsIn(String duration) {
+    return 'Alarm set for $duration from now';
+  }
+
+  @override
+  String walkAlarmDurationMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String walkAlarmDurationHours(int hours) {
+    return '$hours hr';
+  }
+
+  @override
+  String walkAlarmDurationHoursMinutes(int hours, int minutes) {
+    return '$hours hr $minutes min';
+  }
+
+  @override
+  String walkAlarmDurationDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkAlarmDurationDaysHours(int days, int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days',
+      one: '1 day',
+    );
+    return '$_temp0 $hours hr';
+  }
+
+  @override
+  String get walkAlarmPermissionWarning => 'Alarms may not ring';
+
+  @override
+  String get walkAlarmPermissionWarningAction =>
+      'Check permissions in Settings';
+
+  @override
+  String get walkAlarmRepeatDaily => 'Every day';
+
+  @override
+  String get walkAlarmRepeatWeekdays => 'Weekdays';
+
+  @override
+  String get walkAlarmRepeatWeekends => 'Weekends';
+
+  @override
+  String get walkAlarmRepeatOnce => 'Once';
+
+  @override
+  String get walkAlarmNew => 'New alarm';
+
+  @override
+  String get walkAlarmEdit => 'Edit alarm';
+
+  @override
+  String get walkAlarmRepeat => 'Repeat';
+
+  @override
+  String get walkAlarmLabel => 'Label';
+
+  @override
+  String get walkAlarmLabelHint => 'e.g. Work';
+
+  @override
+  String get walkAlarmVibrate => 'Vibrate';
+
+  @override
+  String get walkAlarmDeleteTitle => 'Delete this alarm?';
+
+  @override
+  String get walkAlarmDeleteContent => 'Deleted alarms can\'t be restored';
+
+  @override
+  String get walkAlarmSaveFailed => 'Couldn\'t save the alarm';
+
+  @override
+  String get walkSettingsTitle => 'Settings';
+
+  @override
+  String get walkSettingsPermissions => 'Permissions';
+
+  @override
+  String get walkSettingsNotification => 'Notifications';
+
+  @override
+  String get walkSettingsNotificationDescription =>
+      'Shows the alarm notification and its buttons';
+
+  @override
+  String get walkSettingsExactAlarm => 'Alarms & reminders';
+
+  @override
+  String get walkSettingsExactAlarmDescription => 'Rings exactly on time';
+
+  @override
+  String get walkSettingsFullScreen => 'Full-screen notifications';
+
+  @override
+  String get walkSettingsFullScreenDescription =>
+      'Shows the alarm screen over the lock screen';
+
+  @override
+  String get walkSettingsHealthConnect => 'Health Connect';
+
+  @override
+  String get walkSettingsHealthConnectDescription => 'Reads your step history';
+
+  @override
+  String get walkSettingsGranted => 'Allowed';
+
+  @override
+  String get walkSettingsNeedsPermission => 'Allow ›';
+
+  @override
+  String get walkSettingsNeedsInstall => 'Install ›';
+
+  @override
+  String get walkSettingsNeedsUpdate => 'Update ›';
+
+  @override
+  String get walkSettingsTheme => 'Theme';
+
+  @override
+  String get walkSettingsThemeSystem => 'System default';
+
+  @override
+  String get walkSettingsThemeLight => 'Light';
+
+  @override
+  String get walkSettingsThemeDark => 'Dark';
+
+  @override
+  String get walkSettingsAbout => 'About';
+
+  @override
+  String get walkSettingsVersion => 'Version';
+
+  @override
+  String get walkSettingsLicenses => 'Open source licenses';
+
+  @override
+  String get walkSettingsInactiveNotice =>
+      'Repeating alarms may stop if you don\'t open the app for more than 14 days.';
 }

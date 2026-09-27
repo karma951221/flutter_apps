@@ -16,4 +16,16 @@ class AlarmPermissions {
   /// Android 14+ 에서 거부될 수 있다. 요청은 시스템 설정 화면을 여는 것뿐이라
   /// 결과는 복귀(resumed) 뒤 `check()` 로 다시 읽는다.
   final PermissionRequester fullScreenIntent;
+
+  /// 알람 저장 · 켜기 뒤에 부른다. 이번 세션에 이미 거부했으면 다시 묻지 않는다.
+  /// 거부돼도 알람은 이미 저장돼 있다 — 설정 탭 · 목록 경고가 남은 길이다.
+  Future<void> ensureForAlarm() async {
+    await notification.ensure();
+    await exactAlarm.ensure();
+  }
+
+  /// 알람이 제때 울리는 데 꼭 필요한 두 권한이 모두 허용인가. (목록 경고 배너)
+  Future<bool> canRing() async =>
+      await notification.check() == PermissionStatus.granted &&
+      await exactAlarm.check() == PermissionStatus.granted;
 }

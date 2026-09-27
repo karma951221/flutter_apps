@@ -2797,6 +2797,312 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'5분 뒤'**
   String get walkAlarmSnooze;
+
+  /// 하단 탭 — 알람
+  ///
+  /// In ko, this message translates to:
+  /// **'알람'**
+  String get walkShellTabAlarm;
+
+  /// 하단 탭 — 걸음
+  ///
+  /// In ko, this message translates to:
+  /// **'걷기'**
+  String get walkShellTabWalk;
+
+  /// 하단 탭 — 설정
+  ///
+  /// In ko, this message translates to:
+  /// **'설정'**
+  String get walkShellTabSettings;
+
+  /// 알람 목록 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'알람'**
+  String get walkAlarmListTitle;
+
+  /// 알람 목록이 비었을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'알람이 없어요'**
+  String get walkAlarmEmpty;
+
+  /// 알람 목록이 비었을 때 보조 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'+ 를 눌러 기상 알람을 추가하세요'**
+  String get walkAlarmEmptyDescription;
+
+  /// 새 알람 버튼(FAB) 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'알람 추가'**
+  String get walkAlarmAdd;
+
+  /// 알람 목록 머리 — 가장 이른 알람까지 남은 시간
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 알람까지 {duration}'**
+  String walkAlarmNextIn(String duration);
+
+  /// 알람 저장 · 켜기 뒤 스낵바 — 울릴 때까지 남은 시간
+  ///
+  /// In ko, this message translates to:
+  /// **'{duration} 뒤에 울려요'**
+  String walkAlarmRingsIn(String duration);
+
+  /// 남은 시간 — 분만
+  ///
+  /// In ko, this message translates to:
+  /// **'{minutes}분'**
+  String walkAlarmDurationMinutes(int minutes);
+
+  /// 남은 시간 — 시간만(분이 0)
+  ///
+  /// In ko, this message translates to:
+  /// **'{hours}시간'**
+  String walkAlarmDurationHours(int hours);
+
+  /// 남은 시간 — 시간과 분
+  ///
+  /// In ko, this message translates to:
+  /// **'{hours}시간 {minutes}분'**
+  String walkAlarmDurationHoursMinutes(int hours, int minutes);
+
+  /// 남은 시간 — 하루 이상, 시간이 0
+  ///
+  /// In ko, this message translates to:
+  /// **'{days}일'**
+  String walkAlarmDurationDays(int days);
+
+  /// 남은 시간 — 하루 이상(분은 생략)
+  ///
+  /// In ko, this message translates to:
+  /// **'{days}일 {hours}시간'**
+  String walkAlarmDurationDaysHours(int days, int hours);
+
+  /// 알림 · 정확한 알람 권한이 없을 때 목록 위 경고
+  ///
+  /// In ko, this message translates to:
+  /// **'알람이 울리지 않을 수 있어요'**
+  String get walkAlarmPermissionWarning;
+
+  /// 권한 경고의 보조 설명 — 누르면 설정 탭으로 간다
+  ///
+  /// In ko, this message translates to:
+  /// **'설정 탭에서 권한을 확인하세요'**
+  String get walkAlarmPermissionWarningAction;
+
+  /// 반복 요약 — 7일 모두
+  ///
+  /// In ko, this message translates to:
+  /// **'매일'**
+  String get walkAlarmRepeatDaily;
+
+  /// 반복 요약 — 월~금
+  ///
+  /// In ko, this message translates to:
+  /// **'평일'**
+  String get walkAlarmRepeatWeekdays;
+
+  /// 반복 요약 — 토 · 일
+  ///
+  /// In ko, this message translates to:
+  /// **'주말'**
+  String get walkAlarmRepeatWeekends;
+
+  /// 반복 요약 — 반복 없음(한 번 울리고 꺼짐)
+  ///
+  /// In ko, this message translates to:
+  /// **'1회'**
+  String get walkAlarmRepeatOnce;
+
+  /// 알람 추가 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'새 알람'**
+  String get walkAlarmNew;
+
+  /// 알람 편집 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'알람 편집'**
+  String get walkAlarmEdit;
+
+  /// 편집 화면 요일 칩 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'반복'**
+  String get walkAlarmRepeat;
+
+  /// 편집 화면 라벨 입력 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'라벨'**
+  String get walkAlarmLabel;
+
+  /// 라벨 입력 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 출근'**
+  String get walkAlarmLabelHint;
+
+  /// 편집 화면 진동 스위치
+  ///
+  /// In ko, this message translates to:
+  /// **'진동'**
+  String get walkAlarmVibrate;
+
+  /// 알람 삭제 확인 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'알람을 삭제할까요?'**
+  String get walkAlarmDeleteTitle;
+
+  /// 알람 삭제 확인 다이얼로그 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제한 알람은 되돌릴 수 없어요'**
+  String get walkAlarmDeleteContent;
+
+  /// 알람 저장 · 삭제 · 켜기 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'알람을 저장하지 못했어요'**
+  String get walkAlarmSaveFailed;
+
+  /// 설정 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'설정'**
+  String get walkSettingsTitle;
+
+  /// 설정 — 권한 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'권한'**
+  String get walkSettingsPermissions;
+
+  /// 설정 — 알림 권한 행
+  ///
+  /// In ko, this message translates to:
+  /// **'알림'**
+  String get walkSettingsNotification;
+
+  /// 설정 — 알림 권한 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'알람 알림과 끄기 버튼을 보여줘요'**
+  String get walkSettingsNotificationDescription;
+
+  /// 설정 — 정확한 알람(SCHEDULE_EXACT_ALARM) 권한 행
+  ///
+  /// In ko, this message translates to:
+  /// **'정확한 알람'**
+  String get walkSettingsExactAlarm;
+
+  /// 설정 — 정확한 알람 권한 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'정한 시각에 정확히 울려요'**
+  String get walkSettingsExactAlarmDescription;
+
+  /// 설정 — 전체 화면 알림(USE_FULL_SCREEN_INTENT) 권한 행
+  ///
+  /// In ko, this message translates to:
+  /// **'전체 화면 알림'**
+  String get walkSettingsFullScreen;
+
+  /// 설정 — 전체 화면 알림 권한 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'잠금 화면에서 알람 화면을 띄워요'**
+  String get walkSettingsFullScreenDescription;
+
+  /// 설정 — Health Connect 권한 행
+  ///
+  /// In ko, this message translates to:
+  /// **'Health Connect'**
+  String get walkSettingsHealthConnect;
+
+  /// 설정 — Health Connect 권한 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'걸음 기록을 읽어요'**
+  String get walkSettingsHealthConnectDescription;
+
+  /// 권한 상태 — 허용됨
+  ///
+  /// In ko, this message translates to:
+  /// **'허용됨'**
+  String get walkSettingsGranted;
+
+  /// 권한 상태 — 거부됨(누르면 설정을 연다)
+  ///
+  /// In ko, this message translates to:
+  /// **'허용 필요 ›'**
+  String get walkSettingsNeedsPermission;
+
+  /// Health Connect 상태 — 설치 안 됨
+  ///
+  /// In ko, this message translates to:
+  /// **'설치 필요 ›'**
+  String get walkSettingsNeedsInstall;
+
+  /// Health Connect 상태 — 업데이트 필요
+  ///
+  /// In ko, this message translates to:
+  /// **'업데이트 필요 ›'**
+  String get walkSettingsNeedsUpdate;
+
+  /// 설정 — 테마 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'테마'**
+  String get walkSettingsTheme;
+
+  /// 테마 — 기기 설정을 따름
+  ///
+  /// In ko, this message translates to:
+  /// **'시스템 설정'**
+  String get walkSettingsThemeSystem;
+
+  /// 테마 — 밝게
+  ///
+  /// In ko, this message translates to:
+  /// **'라이트'**
+  String get walkSettingsThemeLight;
+
+  /// 테마 — 어둡게
+  ///
+  /// In ko, this message translates to:
+  /// **'다크'**
+  String get walkSettingsThemeDark;
+
+  /// 설정 — 앱 정보 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'앱 정보'**
+  String get walkSettingsAbout;
+
+  /// 설정 — 앱 버전 행
+  ///
+  /// In ko, this message translates to:
+  /// **'버전'**
+  String get walkSettingsVersion;
+
+  /// 설정 — 오픈소스 라이선스 행
+  ///
+  /// In ko, this message translates to:
+  /// **'오픈소스 라이선스'**
+  String get walkSettingsLicenses;
+
+  /// 설정 하단 안내 — 반복 알람은 14일치만 미리 예약된다
+  ///
+  /// In ko, this message translates to:
+  /// **'앱을 14일 넘게 열지 않으면 반복 알람이 멈출 수 있어요.'**
+  String get walkSettingsInactiveNotice;
 }
 
 class _AppLocalizationsDelegate

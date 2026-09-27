@@ -1935,5 +1935,250 @@
   "walkAlarmSnooze": "5분 뒤",
   "@walkAlarmSnooze": {
     "description": "울리는 알람을 5분 미루는 버튼 라벨(알림 · 울림 화면)"
+  },
+  "walkShellTabAlarm": "알람",
+  "@walkShellTabAlarm": {
+    "description": "하단 탭 — 알람"
+  },
+  "walkShellTabWalk": "걷기",
+  "@walkShellTabWalk": {
+    "description": "하단 탭 — 걸음"
+  },
+  "walkShellTabSettings": "설정",
+  "@walkShellTabSettings": {
+    "description": "하단 탭 — 설정"
+  },
+  "walkAlarmListTitle": "알람",
+  "@walkAlarmListTitle": {
+    "description": "알람 목록 화면 제목"
+  },
+  "walkAlarmEmpty": "알람이 없어요",
+  "@walkAlarmEmpty": {
+    "description": "알람 목록이 비었을 때 안내"
+  },
+  "walkAlarmEmptyDescription": "+ 를 눌러 기상 알람을 추가하세요",
+  "@walkAlarmEmptyDescription": {
+    "description": "알람 목록이 비었을 때 보조 설명"
+  },
+  "walkAlarmAdd": "알람 추가",
+  "@walkAlarmAdd": {
+    "description": "새 알람 버튼(FAB) 툴팁"
+  },
+  "walkAlarmNextIn": "다음 알람까지 {duration}",
+  "@walkAlarmNextIn": {
+    "description": "알람 목록 머리 — 가장 이른 알람까지 남은 시간",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "walkAlarmRingsIn": "{duration} 뒤에 울려요",
+  "@walkAlarmRingsIn": {
+    "description": "알람 저장 · 켜기 뒤 스낵바 — 울릴 때까지 남은 시간",
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "walkAlarmDurationMinutes": "{minutes}분",
+  "@walkAlarmDurationMinutes": {
+    "description": "남은 시간 — 분만",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "walkAlarmDurationHours": "{hours}시간",
+  "@walkAlarmDurationHours": {
+    "description": "남은 시간 — 시간만(분이 0)",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "walkAlarmDurationHoursMinutes": "{hours}시간 {minutes}분",
+  "@walkAlarmDurationHoursMinutes": {
+    "description": "남은 시간 — 시간과 분",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "walkAlarmDurationDays": "{days}일",
+  "@walkAlarmDurationDays": {
+    "description": "남은 시간 — 하루 이상, 시간이 0",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "walkAlarmDurationDaysHours": "{days}일 {hours}시간",
+  "@walkAlarmDurationDaysHours": {
+    "description": "남은 시간 — 하루 이상(분은 생략)",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "walkAlarmPermissionWarning": "알람이 울리지 않을 수 있어요",
+  "@walkAlarmPermissionWarning": {
+    "description": "알림 · 정확한 알람 권한이 없을 때 목록 위 경고"
+  },
+  "walkAlarmPermissionWarningAction": "설정 탭에서 권한을 확인하세요",
+  "@walkAlarmPermissionWarningAction": {
+    "description": "권한 경고의 보조 설명 — 누르면 설정 탭으로 간다"
+  },
+  "walkAlarmRepeatDaily": "매일",
+  "@walkAlarmRepeatDaily": {
+    "description": "반복 요약 — 7일 모두"
+  },
+  "walkAlarmRepeatWeekdays": "평일",
+  "@walkAlarmRepeatWeekdays": {
+    "description": "반복 요약 — 월~금"
+  },
+  "walkAlarmRepeatWeekends": "주말",
+  "@walkAlarmRepeatWeekends": {
+    "description": "반복 요약 — 토 · 일"
+  },
+  "walkAlarmRepeatOnce": "1회",
+  "@walkAlarmRepeatOnce": {
+    "description": "반복 요약 — 반복 없음(한 번 울리고 꺼짐)"
+  },
+  "walkAlarmNew": "새 알람",
+  "@walkAlarmNew": {
+    "description": "알람 추가 화면 제목"
+  },
+  "walkAlarmEdit": "알람 편집",
+  "@walkAlarmEdit": {
+    "description": "알람 편집 화면 제목"
+  },
+  "walkAlarmRepeat": "반복",
+  "@walkAlarmRepeat": {
+    "description": "편집 화면 요일 칩 섹션 제목"
+  },
+  "walkAlarmLabel": "라벨",
+  "@walkAlarmLabel": {
+    "description": "편집 화면 라벨 입력 제목"
+  },
+  "walkAlarmLabelHint": "예: 출근",
+  "@walkAlarmLabelHint": {
+    "description": "라벨 입력 힌트"
+  },
+  "walkAlarmVibrate": "진동",
+  "@walkAlarmVibrate": {
+    "description": "편집 화면 진동 스위치"
+  },
+  "walkAlarmDeleteTitle": "알람을 삭제할까요?",
+  "@walkAlarmDeleteTitle": {
+    "description": "알람 삭제 확인 다이얼로그 제목"
+  },
+  "walkAlarmDeleteContent": "삭제한 알람은 되돌릴 수 없어요",
+  "@walkAlarmDeleteContent": {
+    "description": "알람 삭제 확인 다이얼로그 본문"
+  },
+  "walkAlarmSaveFailed": "알람을 저장하지 못했어요",
+  "@walkAlarmSaveFailed": {
+    "description": "알람 저장 · 삭제 · 켜기 실패 스낵바"
+  },
+  "walkSettingsTitle": "설정",
+  "@walkSettingsTitle": {
+    "description": "설정 화면 제목"
+  },
+  "walkSettingsPermissions": "권한",
+  "@walkSettingsPermissions": {
+    "description": "설정 — 권한 섹션 제목"
+  },
+  "walkSettingsNotification": "알림",
+  "@walkSettingsNotification": {
+    "description": "설정 — 알림 권한 행"
+  },
+  "walkSettingsNotificationDescription": "알람 알림과 끄기 버튼을 보여줘요",
+  "@walkSettingsNotificationDescription": {
+    "description": "설정 — 알림 권한 설명"
+  },
+  "walkSettingsExactAlarm": "정확한 알람",
+  "@walkSettingsExactAlarm": {
+    "description": "설정 — 정확한 알람(SCHEDULE_EXACT_ALARM) 권한 행"
+  },
+  "walkSettingsExactAlarmDescription": "정한 시각에 정확히 울려요",
+  "@walkSettingsExactAlarmDescription": {
+    "description": "설정 — 정확한 알람 권한 설명"
+  },
+  "walkSettingsFullScreen": "전체 화면 알림",
+  "@walkSettingsFullScreen": {
+    "description": "설정 — 전체 화면 알림(USE_FULL_SCREEN_INTENT) 권한 행"
+  },
+  "walkSettingsFullScreenDescription": "잠금 화면에서 알람 화면을 띄워요",
+  "@walkSettingsFullScreenDescription": {
+    "description": "설정 — 전체 화면 알림 권한 설명"
+  },
+  "walkSettingsHealthConnect": "Health Connect",
+  "@walkSettingsHealthConnect": {
+    "description": "설정 — Health Connect 권한 행"
+  },
+  "walkSettingsHealthConnectDescription": "걸음 기록을 읽어요",
+  "@walkSettingsHealthConnectDescription": {
+    "description": "설정 — Health Connect 권한 설명"
+  },
+  "walkSettingsGranted": "허용됨",
+  "@walkSettingsGranted": {
+    "description": "권한 상태 — 허용됨"
+  },
+  "walkSettingsNeedsPermission": "허용 필요 ›",
+  "@walkSettingsNeedsPermission": {
+    "description": "권한 상태 — 거부됨(누르면 설정을 연다)"
+  },
+  "walkSettingsNeedsInstall": "설치 필요 ›",
+  "@walkSettingsNeedsInstall": {
+    "description": "Health Connect 상태 — 설치 안 됨"
+  },
+  "walkSettingsNeedsUpdate": "업데이트 필요 ›",
+  "@walkSettingsNeedsUpdate": {
+    "description": "Health Connect 상태 — 업데이트 필요"
+  },
+  "walkSettingsTheme": "테마",
+  "@walkSettingsTheme": {
+    "description": "설정 — 테마 섹션 제목"
+  },
+  "walkSettingsThemeSystem": "시스템 설정",
+  "@walkSettingsThemeSystem": {
+    "description": "테마 — 기기 설정을 따름"
+  },
+  "walkSettingsThemeLight": "라이트",
+  "@walkSettingsThemeLight": {
+    "description": "테마 — 밝게"
+  },
+  "walkSettingsThemeDark": "다크",
+  "@walkSettingsThemeDark": {
+    "description": "테마 — 어둡게"
+  },
+  "walkSettingsAbout": "앱 정보",
+  "@walkSettingsAbout": {
+    "description": "설정 — 앱 정보 섹션 제목"
+  },
+  "walkSettingsVersion": "버전",
+  "@walkSettingsVersion": {
+    "description": "설정 — 앱 버전 행"
+  },
+  "walkSettingsLicenses": "오픈소스 라이선스",
+  "@walkSettingsLicenses": {
+    "description": "설정 — 오픈소스 라이선스 행"
+  },
+  "walkSettingsInactiveNotice": "앱을 14일 넘게 열지 않으면 반복 알람이 멈출 수 있어요.",
+  "@walkSettingsInactiveNotice": {
+    "description": "설정 하단 안내 — 반복 알람은 14일치만 미리 예약된다"
   }
 }
