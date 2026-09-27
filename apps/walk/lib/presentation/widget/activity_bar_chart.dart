@@ -22,12 +22,13 @@ class ActivityBarChart extends StatefulWidget {
 }
 
 class _ActivityBarChartState extends State<ActivityBarChart> {
-  DailyActivity? _selected;
+  /// 날짜만 기억한다 — 같은 기간을 새로 읽으면 build 가 새 값으로 다시 찾는다.
+  DateTime? _selectedDate;
 
   @override
   void didUpdateWidget(ActivityBarChart oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.period.start != widget.period.start) _selected = null;
+    if (oldWidget.period.start != widget.period.start) _selectedDate = null;
   }
 
   @override
@@ -36,7 +37,9 @@ class _ActivityBarChartState extends State<ActivityBarChart> {
     final locale = l10n.localeName;
     final period = widget.period;
     final maxSteps = period.days.fold(0, (m, d) => d.steps > m ? d.steps : m);
-    final selected = _selected;
+    final selected = period.days
+        .where((day) => day.date == _selectedDate)
+        .firstOrNull;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -84,12 +87,12 @@ class _ActivityBarChartState extends State<ActivityBarChart> {
     if (day.date.isAfter(widget.period.today)) return const SizedBox.shrink();
     final scheme = Theme.of(context).colorScheme;
     final isToday = day.date == widget.period.today;
-    final isSelected = day.date == _selected?.date;
+    final isSelected = day.date == _selectedDate;
     final ratio = maxSteps == 0 ? 0.0 : day.steps / maxSteps;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () => setState(() => _selected = day),
+      onTap: () => setState(() => _selectedDate = day.date),
       child: Align(
         alignment: Alignment.bottomCenter,
         child: FractionallySizedBox(

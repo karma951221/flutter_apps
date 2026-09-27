@@ -20,15 +20,16 @@ final _period = ActivityPeriod(
   ],
 );
 
-Future<void> _pump(WidgetTester tester) => tester.pumpWidget(
-  MaterialApp(
-    theme: AppTheme.light(),
-    locale: const Locale('ko'),
-    localizationsDelegates: AppLocalizations.localizationsDelegates,
-    supportedLocales: AppLocalizations.supportedLocales,
-    home: Scaffold(body: ActivityBarChart(period: _period)),
-  ),
-);
+Future<void> _pump(WidgetTester tester, [ActivityPeriod? period]) =>
+    tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(body: ActivityBarChart(period: period ?? _period)),
+      ),
+    );
 
 void main() {
   testWidgets('요일 7개와 막대를 그리고, 가장 많은 날이 가장 높다', (tester) async {
@@ -63,6 +64,32 @@ void main() {
         matching: find.textContaining('8,000'),
       ),
       findsOneWidget,
+    );
+  });
+
+  testWidgets('같은 기간을 새로 읽으면 선택한 날의 새 걸음을 보여준다', (tester) async {
+    await _pump(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('walk-bar-2026-09-23')));
+    await tester.pump();
+
+    final refreshed = _period.copyWith(
+      days: [
+        for (final day in _period.days)
+          day.date == DateTime(2026, 9, 23) ? day.copyWith(steps: 3500) : day,
+      ],
+    );
+    await _pump(tester, refreshed);
+    await tester.pump();
+
+    final selection = find.byKey(const Key('walk-bar-selection'));
+    expect(
+      find.descendant(of: selection, matching: find.textContaining('3,500')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: selection, matching: find.textContaining('2,000')),
+      findsNothing,
     );
   });
 }

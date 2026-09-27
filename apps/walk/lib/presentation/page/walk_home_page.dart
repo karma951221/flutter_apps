@@ -52,8 +52,12 @@ class _WalkHomePageState extends State<WalkHomePage> {
   }
 
   Future<void> _onResume() async {
+    // 복귀 확인으로 막 granted 가 됐으면 리스너가 이미 _load() 한다 — 두 번 읽지 않는다.
+    final wasGranted = _access.state.access == HealthAccess.granted;
     await _access.check();
-    if (_access.state.access == HealthAccess.granted) await _refresh();
+    if (wasGranted && _access.state.access == HealthAccess.granted) {
+      await _refresh();
+    }
   }
 
   void _load() {

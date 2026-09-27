@@ -2,6 +2,8 @@ import 'package:flutter/services.dart';
 import 'package:health/health.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../domain/entity/period_range.dart';
+
 /// `health` 패키지를 얇게 감싼다. 플랫폼 호출이라 mock 하기 어려운 것을 이 뒤로
 /// 숨겨 repository 를 단위 테스트한다 (commute 의 `LocationGateway` 와 같은 이유).
 abstract interface class HealthGateway {
@@ -22,9 +24,11 @@ abstract interface class HealthGateway {
   /// Health Connect 의 앱 권한 설정 화면을 연다(두 번 거부하면 다이얼로그가 안 뜨므로).
   Future<void> openHealthConnectSettings();
 
-  /// 로컬 자정인 [dayStart] 부터 하루 동안 [types] 별 합계. 기록이 없는 type 은 키가 없다.
-  Future<Map<HealthDataType, double>> dayTotals(
-    DateTime dayStart,
+  /// 로컬 자정 [from] 부터 [to](포함) 까지 날짜(로컬 자정) 별 [types] 합계를 한 번에 묻는다.
+  /// 기록이 없는 날 · type 은 키가 없다.
+  Future<Map<DateTime, Map<HealthDataType, double>>> dailyTotals(
+    DateTime from,
+    DateTime to,
     List<HealthDataType> types,
   );
 }
@@ -65,6 +69,7 @@ class HealthPluginGateway implements HealthGateway {
   @override
   Future<bool> requestHistoryPermission() async {
     await _ready();
+    if (!await _health.isHealthDataHistoryAvailable()) return false;
     if (await _health.isHealthDataHistoryAuthorized()) return true;
     return _health.requestHealthDataHistoryAuthorization();
   }
@@ -74,26 +79,29 @@ class HealthPluginGateway implements HealthGateway {
       _channel.invokeMethod<void>('openSettings');
 
   @override
-  Future<Map<HealthDataType, double>> dayTotals(
-    DateTime dayStart,
+  Future<Map<DateTime, Map<HealthDataType, double>>> dailyTotals(
+    DateTime from,
+    DateTime to,
     List<HealthDataType> types,
   ) async {
     await _ready();
-    final dayEnd = DateTime(dayStart.year, dayStart.month, dayStart.day + 1);
-    // 하루짜리 구간을 하루 크기 버킷 하나로 묻는다. interval 단위 문서가 엇갈려도
-    // (초 / 분) 구간이 하루라 버킷이 하나로 나온다 — 그래도 여러 개면 더한다.
+    // interval 은 초 단위(health 13.3.2 네이티브가 Duration.ofSeconds 로 쓴다) — 하루 버킷.
     final points = await _health.getHealthIntervalDataFromTypes(
-      startDate: dayStart,
-      endDate: dayEnd,
+      startDate: from,
+      endDate: DateTime(to.year, to.month, to.day + 1),
       types: types,
       interval: 86400,
     );
-    final totals = <HealthDataType, double>{};
+    final totals = <DateTime, Map<HealthDataType, double>>{};
     for (final point in points) {
       final value = point.value;
       if (value is! NumericHealthValue) continue;
+      // 데이터 출처가 없는 버킷은 기록이 없는 날이다 — 0 으로 두면 `–` 대신 0 이 보인다.
+      if (point.sourceName.isEmpty) continue;
       final amount = value.numericValue.toDouble();
-      totals.update(point.type, (sum) => sum + amount, ifAbsent: () => amount);
+      totals
+          .putIfAbsent(dateOnly(point.dateFrom.toLocal()), () => {})
+          .update(point.type, (sum) => sum + amount, ifAbsent: () => amount);
     }
     return totals;
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:health/health.dart';
@@ -68,6 +70,27 @@ void main() {
       expect(repository.permissionDeclinedThisSession, isTrue);
     });
 
+    test('확인이 진행 중이면 겹쳐 부르지 않고 같은 결과를 기다린다', () async {
+      final pending = Completer<bool>();
+      var granted = false;
+      when(() => gateway.hasPermission(_steps)).thenAnswer((_) async => granted);
+      when(() => gateway.requestPermissions(any())).thenAnswer((_) async {
+        final result = await pending.future;
+        granted = true;
+        return result;
+      });
+
+      final first = repository.access();
+      await pumpEventQueue(); // 첫 요청 화면이 떠 있는 동안
+      final second = repository.access(); // 복귀가 다시 확인한다
+      await pumpEventQueue();
+      pending.complete(true);
+
+      expect(await first, HealthAccess.granted);
+      expect(await second, HealthAccess.granted);
+      verify(() => gateway.requestPermissions(any())).called(1);
+    });
+
     test('확인 중 예외 → permissionDenied', () async {
       when(() => gateway.sdkStatus()).thenThrow(Exception('boom'));
       expect(await repository.access(), HealthAccess.permissionDenied);
@@ -104,13 +127,13 @@ void main() {
   });
 
   group('dailyActivities', () {
-    test('모든 날을 채우고 없는 값은 0보 · null', () async {
-      when(() => gateway.dayTotals(DateTime(2026, 9, 21), any()))
-          .thenAnswer((_) async => {_steps: 6240, _distance: 4310.5, _kcal: 182.4});
-      when(() => gateway.dayTotals(DateTime(2026, 9, 22), any()))
-          .thenAnswer((_) async => {_steps: 1200});
-      when(() => gateway.dayTotals(DateTime(2026, 9, 23), any()))
-          .thenAnswer((_) async => {});
+    test('한 번에 묻고 모든 날을 채운다 — 없는 값은 0보 · null', () async {
+      when(() => gateway.dailyTotals(any(), any(), any())).thenAnswer(
+        (_) async => {
+          DateTime(2026, 9, 21): {_steps: 6240, _distance: 4310.5, _kcal: 182.4},
+          DateTime(2026, 9, 22): {_steps: 1200},
+        },
+      );
 
       final result =
           await repository.dailyActivities(DateTime(2026, 9, 21), DateTime(2026, 9, 23));
@@ -125,20 +148,34 @@ void main() {
         DailyActivity(date: DateTime(2026, 9, 22), steps: 1200),
         DailyActivity.empty(DateTime(2026, 9, 23)),
       ]);
+      verify(
+        () => gateway.dailyTotals(
+          DateTime(2026, 9, 21),
+          DateTime(2026, 9, 23),
+          [_steps, _distance, _kcal],
+        ),
+      ).called(1);
     });
 
     test('권한이 없는 타입은 묻지 않는다', () async {
       when(() => gateway.hasPermission(_kcal)).thenAnswer((_) async => false);
-      when(() => gateway.dayTotals(any(), any())).thenAnswer((_) async => {});
+      when(() => gateway.dailyTotals(any(), any(), any()))
+          .thenAnswer((_) async => {});
 
       await repository.dailyActivities(DateTime(2026, 9, 21), DateTime(2026, 9, 21));
 
-      verify(() => gateway.dayTotals(DateTime(2026, 9, 21), [_steps, _distance]))
-          .called(1);
+      verify(
+        () => gateway.dailyTotals(
+          DateTime(2026, 9, 21),
+          DateTime(2026, 9, 21),
+          [_steps, _distance],
+        ),
+      ).called(1);
     });
 
     test('예외 → Err(unknown)', () async {
-      when(() => gateway.dayTotals(any(), any())).thenThrow(Exception('boom'));
+      when(() => gateway.dailyTotals(any(), any(), any()))
+          .thenThrow(Exception('boom'));
 
       final result =
           await repository.dailyActivities(DateTime(2026, 9, 21), DateTime(2026, 9, 21));

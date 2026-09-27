@@ -153,4 +153,48 @@ void main() {
     expect(find.text('기록을 불러오지 못했어요'), findsOneWidget);
     expect(find.text('다시 시도'), findsOneWidget);
   });
+
+  Future<void> resume(WidgetTester tester) async {
+    // AppLifecycleListener 는 실제 전이 순서만 받는다: 백그라운드로 갔다가 돌아온다.
+    for (final state in const [
+      AppLifecycleState.inactive,
+      AppLifecycleState.hidden,
+      AppLifecycleState.paused,
+      AppLifecycleState.hidden,
+      AppLifecycleState.inactive,
+      AppLifecycleState.resumed,
+    ]) {
+      tester.binding.handleAppLifecycleStateChanged(state);
+    }
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('복귀하면 접근을 다시 확인하고 새로 읽는다', (tester) async {
+    when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
+    await pump(tester);
+    expect(find.text('6,240 걸음'), findsOneWidget);
+
+    when(() => useCase.today()).thenAnswer(
+      (_) async => Ok(DailyActivity(date: DateTime(2026, 9, 23), steps: 7000)),
+    );
+    await resume(tester);
+
+    verify(() => useCase.access()).called(2);
+    expect(find.text('7,000 걸음'), findsOneWidget);
+  });
+
+  testWidgets('복귀해서 권한이 생기면 한 번만 읽는다', (tester) async {
+    var access = HealthAccess.permissionDenied;
+    when(() => useCase.access()).thenAnswer((_) async => access);
+    await pump(tester);
+    verifyNever(() => useCase.today());
+
+    access = HealthAccess.granted;
+    await resume(tester);
+
+    expect(find.text('6,240 걸음'), findsOneWidget);
+    verify(() => useCase.today()).called(1);
+    verify(() => useCase.period(PeriodKind.week, any())).called(1);
+    verify(() => useCase.period(PeriodKind.month, any())).called(1);
+  });
 }
