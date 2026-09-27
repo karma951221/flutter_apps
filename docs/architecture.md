@@ -41,6 +41,7 @@ socialapp/
     ├── core/                    # error · result · pagination · validation · data 인프라 · media · di
     ├── design_system/           # theme + widget
     ├── l10n/                    # ARB + AppLocalizations + failure/validation localizations
+    ├── permission/              # 런타임 권한 상태 · 세션당 1회 요청 정책 (의존 없음)
     └── features/                # feature_<name> 패키지. lib/src/ 아래가 §2 의 3계층
         ├── auth/ post/ feed/ comment/ follow/ reaction/
         └── profile/ chat/ safety/ settings/ preferences/ trade/

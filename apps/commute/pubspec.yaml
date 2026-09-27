@@ -12,6 +12,7 @@ dependencies:
   core: any
   design_system: any
   l10n: any
+  permission: any
   flutter:
     sdk: flutter
   flutter_localizations:

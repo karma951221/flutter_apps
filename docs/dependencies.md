@@ -21,6 +21,7 @@ flowchart TB
   DS[design_system]
   L[l10n]
   CORE[core]
+  PERM[permission]
 
   trader --> F
   F --> DS
@@ -31,6 +32,7 @@ flowchart TB
   commute_app --> DS
   commute_app --> L
   commute_app --> CORE
+  commute_app --> PERM
 ```
 
 의도한 방향은 `apps → features → {design_system, l10n} → core` 하나뿐이다. 이 그림에서

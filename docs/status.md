@@ -18,6 +18,7 @@
 - [x] **모노레포 전환** — `apps/` · `packages/` pub workspace + melos
       ([프롬프트](superpowers/specs/2026-09-12-monorepo-codex-prompt.md))
 - [x] **문서 앱별 재배치** — 앱 문서는 `apps/<app>/docs/`, 공통 문서만 `docs/` (2026-09-27)
+- [x] **permission 패키지** — 권한 상태 · 세션당 1회 요청 정책, commute 적용 · walk 는 구현 때 적용 ([설계](superpowers/specs/2026-09-27-permission-package-design.md)) (2026-09-27)
 
 ### 패키지 경계 리팩터링
 

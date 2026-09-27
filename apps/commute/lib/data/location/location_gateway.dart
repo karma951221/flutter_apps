@@ -9,6 +9,8 @@ abstract interface class LocationGateway {
   Future<LocationPermission> requestPermission();
 
   Future<Position> getCurrentPosition({required Duration timeout});
+
+  Future<bool> openAppSettings();
 }
 
 @LazySingleton(as: LocationGateway)
@@ -32,4 +34,7 @@ class GeolocatorGateway implements LocationGateway {
           timeLimit: timeout,
         ),
       );
+
+  @override
+  Future<bool> openAppSettings() => Geolocator.openAppSettings();
 }

@@ -128,3 +128,12 @@ arm64 APK 를 만들어 설치해 확인했다. 릴리즈라 hot reload 없이 �
 
 "둘째 앱은 `core` · `design_system` · `l10n` 만으로 선다"는 실험 결론은 바뀌지 않는다 —
 feature 코드가 패키지에서 앱으로 옮겨졌을 뿐 기반 패키지 외 의존은 여전히 없다.
+
+## 2026-09-27 — 위치 권한을 permission 패키지로
+
+저장소의 `_requestDeclined`(세션당 한 번만 묻기)를 공용 `packages/permission` 의
+`PermissionRequester` 로 옮겼다. walk(Health Connect)도 같은 정책이 필요해서다.
+`GeolocatorPermissionSource` 가 `LocationPermission` 을 `PermissionStatus` 로 바꾼다
+(`deniedForever` → `permanentlyDenied`). 저장소 생성자가 그대로라 DI 생성 파일은 바뀌지 않았고,
+기존 저장소 테스트 8개는 수정 없이 통과한다. 권한 거부 화면 동작은 그대로다(조용히 fallback).
+[설계](../../../docs/superpowers/specs/2026-09-27-permission-package-design.md)
