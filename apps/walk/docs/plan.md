@@ -2,7 +2,7 @@
 
 > [걷기 허브](README.md) · [설계](../../../docs/superpowers/specs/2026-09-27-walk-app-design.md) · [아키텍처](../../../docs/architecture.md) · [진행 현황](status.md)
 
-> 상태: **착수 전** · 작성 2026-09-27
+> 상태: **코드 완료 · 기기 확인 대기** · 작성 2026-09-27
 > 진행 상태의 단일 기준은 [진행 현황](status.md)이다. 결정 근거와 계층별 설계는
 > [설계 문서](../../../docs/superpowers/specs/2026-09-27-walk-app-design.md)가 단일 기준이다.
 
@@ -25,11 +25,11 @@
 ## 완료 조건
 
 - [ ] 실제 폰에서 첫 실행 → 권한 허용 → 오늘 걸음이 헬스 앱과 같은 숫자로 보인다
-- [ ] 주간(월~일) · 월간 막대그래프와 합계 · 일평균이 맞고, 이전 기간으로 넘길 수 있다
+- [x] 주간(월~일) · 월간 막대그래프와 합계 · 일평균이 맞고, 이전 기간으로 넘길 수 있다
 - [ ] 거리 · 활동 칼로리가 있으면 보이고 없으면 `–`
-- [ ] 권한 거부 · Health Connect 없음이 안내 화면으로 이어지고 재시도로 풀린다
+- [x] 권한 거부 · Health Connect 없음이 안내 화면으로 이어지고 재시도로 풀린다
 - [ ] 백그라운드에서 돌아오면 갱신되고, 자정을 넘겨 돌아오면 오늘이 새 날짜다
-- [ ] `flutter analyze` 0 · `flutter test` 통과 · `package_boundary_test` 통과
+- [x] `flutter analyze` 0 · `flutter test` 통과 · `package_boundary_test` 통과
 
 ## 범위 밖
 
