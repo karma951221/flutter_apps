@@ -24,6 +24,7 @@
 | 목표 걸음 수 없음 | v1 범위 밖. 막대 높이는 기간 안 최댓값 기준 |
 | 앱 이름: 폴더 `apps/walk`, 패키지 `walk`, 표시 이름 "걷기" | 처음 제안한 `health` 는 의존할 pub 패키지 `health` 와 이름이 같아 쓸 수 없다 |
 | 30일보다 오래된 기록은 `READ_HEALTH_DATA_HISTORY` 권한을 함께 요청한다 | Health Connect 는 기본적으로 권한을 받은 시점 30일 전까지만 읽게 한다. 거부하면 그 이전 기간은 0으로 보인다 |
+| 권한 확인 · 요청 정책은 공용 [`packages/permission`](2026-09-27-permission-package-design.md) 을 쓴다 | commute 와 같은 "이번 세션에 한 번 거부하면 다시 묻지 않기" 정책. Health Connect 는 두 번 거부하면 다이얼로그를 조용히 생략하므로, 거부한 뒤에는 "설정 열기"를 함께 보인다 (2026-09-27 결정) |
 | 라우터 없음 | 화면이 하나다. 둘째 화면이 생길 때 `go_router` 를 들인다 |
 | 막대그래프는 직접 그린다(`Row` + `Container` 막대) | 막대 · 강조 · 탭 표시만 필요하고 위젯이라 테스트가 쉽다. 모자라면 그때 `fl_chart` |
 
@@ -55,7 +56,7 @@
 | 확인 중 | 로딩 | — |
 | Health Connect 없음 | `AppPlaceholder` "Health Connect 가 필요해요" | 설치하기 → `installHealthConnect()` (플레이스토어) |
 | 업데이트 필요 | `AppPlaceholder` "Health Connect 를 업데이트해 주세요" | 업데이트하기 → 같은 호출 |
-| 권한 없음 | `AppPlaceholder` "걸음 기록을 읽을 권한이 필요해요" | 권한 허용 → `requestAuthorization`. 다시 거부되면 같은 화면 유지 |
+| 권한 없음 | `AppPlaceholder` "걸음 기록을 읽을 권한이 필요해요" | 시작할 때 이번 세션에 한 번 자동으로 요청 화면이 뜬다. 거부하면 이 화면 — 권한 허용(다시 요청) + 이번 세션에 거부했으면 설정 열기(Health Connect 권한 설정) |
 | 준비됨 | 위 화면 | — |
 
 읽기 실패(예외)는 오늘 카드 · 탭 영역 각각에서 `AppPlaceholder` + 재시도.
@@ -76,7 +77,7 @@ apps/walk/lib/
 apps/walk/test/  같은 구조 + convention/
 ```
 
-의존 패키지: 기존 것은 `core` · `design_system` · `l10n` 만. 새로 `health`.
+의존 패키지: 기존 것은 `core` · `design_system` · `l10n` · `permission` 만. 새로 `health`.
 `feature_*` · `supabase_flutter` 는 쓰지 않는다.
 
 ## 5. 도메인 (`domain/`)
@@ -101,7 +102,12 @@ apps/walk/test/  같은 구조 + convention/
 - `HealthGateway` — `health` 패키지(`Health()` 인스턴스)를 얇게 감싼 인터페이스.
   SDK 상태 · 권한 확인/요청 · 설치 · 기간 집계 읽기. commute 의 `LocationGateway` 와 같은
   이유(mock 가능성)다.
-- `HealthConnectActivityRepository` — `HealthGateway` 만 본다.
+- `HealthPermissionSource` — `permission` 패키지의 `PermissionSource` 구현. 걸음 권한 기준으로
+  check, 세 타입 요청(걸음을 허용했으면 기록 이력 권한도), 설정 열기는 Health Connect 설정
+  화면(`MainActivity` 의 MethodChannel 하나 — `health` 패키지에 API 가 없다).
+- `HealthConnectActivityRepository` — `HealthGateway` 만 보고, `PermissionRequester` 하나를
+  필드로 든다(저장소가 싱글턴이라 세션 기억이 앱 수명 동안 유지된다). `access()` 는
+  `ensure()`, 권한 허용 버튼은 `requestAgain()`.
   - 권한 대상: `STEPS` · `DISTANCE_DELTA` · `ACTIVE_ENERGY_BURNED` (읽기) + 기록 이력 권한.
     걸음 권한이 없으면 `permissionDenied`. 거리 · 칼로리 권한만 없으면 `granted` 로 보고
     그 값만 `null`.
@@ -121,7 +127,7 @@ apps/walk/test/  같은 구조 + convention/
 
 | cubit | 상태 | 역할 |
 |---|---|---|
-| `HealthAccessCubit` | `HealthAccess?`(null = 확인 중) | 시작 · resumed 때 확인, 설치 · 권한 요청 |
+| `HealthAccessCubit` | `HealthAccessState`(`access`: null = 확인 중, `canOpenSettings`) | 시작 · resumed 때 확인, 설치 · 권한 요청 · 설정 열기 |
 | `TodayActivityCubit` | loading / loaded(`DailyActivity`) / failure | 오늘 카드 |
 | `PeriodActivityCubit` | offset · loading / loaded(`ActivityPeriod`) / failure | 탭 하나당 하나(kind 고정). 이전 · 다음 · 새로고침. 늦게 온 이전 요청 응답은 버린다 |
 
