@@ -1,0 +1,1 @@
+enum PeriodKind { week, month }
