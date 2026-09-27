@@ -1,19 +1,23 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:l10n/l10n.dart';
 
-/// 앱 셸. 화면은 v1 구현 단계에서 `presentation/` 에 채운다.
+import '../presentation/page/walk_home_page.dart';
+
 class WalkApp extends StatelessWidget {
   const WalkApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '걷기',
+      onGenerateTitle: (context) => AppLocalizations.of(context).walkAppTitle,
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: false,
-      home: const Scaffold(body: Center(child: Text('걷기'))),
+      home: const WalkHomePage(),
     );
   }
 }
