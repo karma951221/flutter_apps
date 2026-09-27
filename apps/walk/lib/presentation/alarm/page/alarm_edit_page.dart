@@ -99,17 +99,18 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
               const SizedBox(height: AppSpacing.lg),
               Text(l10n.walkAlarmRepeat, style: theme.textTheme.titleSmall),
               const SizedBox(height: AppSpacing.sm),
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
+              Row(
                 children: [
-                  for (final day in Weekday.values)
-                    FilterChip(
-                      label: Text(AlarmFormat.weekday(l10n.localeName, day)),
-                      showCheckmark: false,
-                      selected: state.alarm.repeat.contains(day),
-                      onSelected: (_) => _cubit.toggleDay(day),
+                  for (final day in Weekday.values) ...[
+                    if (day != Weekday.values.first) const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: _WeekdayToggle(
+                        label: AlarmFormat.weekday(l10n.localeName, day),
+                        selected: state.alarm.repeat.contains(day),
+                        onTap: () => _cubit.toggleDay(day),
+                      ),
                     ),
+                  ],
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -153,6 +154,54 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
                 ),
               ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 요일 하나를 나타내는 원형 토글. `FilterChip` 은 내재 여백·최소 너비가 있어
+/// `Expanded` 로 7개를 한 줄에 균등하게 맞추기 어려워 직접 그린다.
+class _WeekdayToggle extends StatelessWidget {
+  const _WeekdayToggle({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: Material(
+          color: selected ? colorScheme.primary : Colors.transparent,
+          shape: CircleBorder(
+            side: selected
+                ? BorderSide.none
+                : BorderSide(color: colorScheme.outline),
+          ),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: Center(
+              child: Text(
+                label,
+                style: textTheme.labelLarge?.copyWith(
+                  color: selected ? colorScheme.onPrimary : colorScheme.onSurface,
+                ),
+              ),
+            ),
           ),
         ),
       ),

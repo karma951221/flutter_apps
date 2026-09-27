@@ -9,6 +9,7 @@ import 'package:walk/domain/alarm/entity/alarm.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/clock.dart';
+import 'package:walk/presentation/alarm/format/alarm_format.dart';
 import 'package:walk/presentation/alarm/page/alarm_edit_page.dart';
 
 class _MockUseCase extends Mock implements AlarmUseCase {}
@@ -123,5 +124,21 @@ void main() {
 
     verify(() => useCase.delete(3)).called(1);
     expect(results, [null]);
+  });
+
+  testWidgets('좁은 화면(320dp)에서도 요일 토글 7개가 한 줄에 오버플로 없이 들어간다', (tester) async {
+    await pump(tester, Alarm.draft());
+    await tester.binding.setSurfaceSize(const Size(320, 640));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+
+    final weekdayLabels = Weekday.values
+        .map((day) => AlarmFormat.weekday('ko', day))
+        .toList();
+    final positions = weekdayLabels
+        .map((label) => tester.getTopLeft(find.text(label)).dy)
+        .toSet();
+    expect(positions, hasLength(1), reason: '요일 토글은 모두 같은 줄(같은 dy)에 있어야 한다');
   });
 }
