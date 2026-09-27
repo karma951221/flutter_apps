@@ -8,4 +8,4 @@ import 'injection.config.dart';
   preferRelativeImports: true,
   asExtension: true,
 )
-void configureDependencies() => getIt.init();
+Future<void> configureDependencies() => getIt.init();

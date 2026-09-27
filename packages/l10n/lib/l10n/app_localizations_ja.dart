@@ -1402,4 +1402,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkLoadFailed => '記録を読み込めませんでした';
+
+  @override
+  String get walkAlarmDefaultTitle => 'アラーム';
+
+  @override
+  String get walkAlarmStop => '停止';
+
+  @override
+  String get walkAlarmSnooze => '5分後';
 }

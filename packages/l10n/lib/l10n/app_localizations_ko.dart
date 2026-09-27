@@ -1404,4 +1404,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkLoadFailed => '기록을 불러오지 못했어요';
+
+  @override
+  String get walkAlarmDefaultTitle => '알람';
+
+  @override
+  String get walkAlarmStop => '끄기';
+
+  @override
+  String get walkAlarmSnooze => '5분 뒤';
 }

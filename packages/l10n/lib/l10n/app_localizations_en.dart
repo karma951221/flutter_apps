@@ -1489,4 +1489,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkLoadFailed => 'Couldn\'t load your activity';
+
+  @override
+  String get walkAlarmDefaultTitle => 'Alarm';
+
+  @override
+  String get walkAlarmStop => 'Stop';
+
+  @override
+  String get walkAlarmSnooze => 'In 5 min';
 }

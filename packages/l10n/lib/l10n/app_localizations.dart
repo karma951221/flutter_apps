@@ -2779,6 +2779,24 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'기록을 불러오지 못했어요'**
   String get walkLoadFailed;
+
+  /// 라벨 없는 알람의 알림 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'알람'**
+  String get walkAlarmDefaultTitle;
+
+  /// 울리는 알람을 끄는 버튼 라벨(알림 · 울림 화면)
+  ///
+  /// In ko, this message translates to:
+  /// **'끄기'**
+  String get walkAlarmStop;
+
+  /// 울리는 알람을 5분 미루는 버튼 라벨(알림 · 울림 화면)
+  ///
+  /// In ko, this message translates to:
+  /// **'5분 뒤'**
+  String get walkAlarmSnooze;
 }
 
 class _AppLocalizationsDelegate

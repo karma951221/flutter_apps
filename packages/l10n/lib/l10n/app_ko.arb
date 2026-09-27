@@ -1923,5 +1923,17 @@
   "walkLoadFailed": "기록을 불러오지 못했어요",
   "@walkLoadFailed": {
     "description": "기록 불러오기 실패 안내 문구"
+  },
+  "walkAlarmDefaultTitle": "알람",
+  "@walkAlarmDefaultTitle": {
+    "description": "라벨 없는 알람의 알림 제목"
+  },
+  "walkAlarmStop": "끄기",
+  "@walkAlarmStop": {
+    "description": "울리는 알람을 끄는 버튼 라벨(알림 · 울림 화면)"
+  },
+  "walkAlarmSnooze": "5분 뒤",
+  "@walkAlarmSnooze": {
+    "description": "울리는 알람을 5분 미루는 버튼 라벨(알림 · 울림 화면)"
   }
 }

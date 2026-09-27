@@ -445,5 +445,8 @@
   "walkPermissionDescription": "歩数・距離・活動カロリーを読み取るだけで、保存や送信はしません",
   "walkGrantPermission": "許可する",
   "walkOpenSettings": "設定を開く",
-  "walkLoadFailed": "記録を読み込めませんでした"
+  "walkLoadFailed": "記録を読み込めませんでした",
+  "walkAlarmDefaultTitle": "アラーム",
+  "walkAlarmStop": "停止",
+  "walkAlarmSnooze": "5分後"
 }

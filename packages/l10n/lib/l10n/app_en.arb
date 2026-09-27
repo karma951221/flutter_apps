@@ -445,5 +445,8 @@
   "walkPermissionDescription": "Walk only reads steps, distance and active calories. Nothing is stored or sent",
   "walkGrantPermission": "Allow access",
   "walkOpenSettings": "Open settings",
-  "walkLoadFailed": "Couldn't load your activity"
+  "walkLoadFailed": "Couldn't load your activity",
+  "walkAlarmDefaultTitle": "Alarm",
+  "walkAlarmStop": "Stop",
+  "walkAlarmSnooze": "In 5 min"
 }
