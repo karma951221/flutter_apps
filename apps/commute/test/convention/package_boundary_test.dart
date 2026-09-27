@@ -3,11 +3,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('feature_commute는 허용된 패키지 경계를 넘지 않는다', () {
-    final workspaceRoot = Directory.current.parent.parent;
-    final pubspec = File(
-      '${workspaceRoot.path}/packages/features/commute/pubspec.yaml',
-    ).readAsStringSync();
+  test('commute 앱은 트레이더 feature 패키지와 Supabase 를 의존하지 않는다', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
     final dependencies = pubspec
         .split('dependencies:')[1]
         .split('dev_dependencies:')[0];
@@ -17,6 +14,17 @@ void main() {
       isFalse,
     );
     expect(dependencies, isNot(contains('supabase_flutter:')));
-    expect(dependencies, isNot(contains('go_router:')));
+  });
+
+  test('data · domain · presentation 은 go_router 를 모른다 — 페이지는 콜백을 받는다', () {
+    final offenders = ['lib/data', 'lib/domain', 'lib/presentation']
+        .expand((path) => Directory(path).listSync(recursive: true))
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'))
+        .where((file) => file.readAsStringSync().contains('package:go_router'))
+        .map((file) => file.path)
+        .toList();
+
+    expect(offenders, isEmpty);
   });
 }

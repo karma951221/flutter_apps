@@ -3,14 +3,13 @@
 > [테스트 가이드](../../../docs/testing/README.md) · [계획](plan.md) · [기록](history.md) · [진행 현황](status.md)
 
 ```bash
-cd packages/features/commute && flutter test   # feature 패키지 (도메인 · 데이터 · cubit · 위젯)
-cd apps/commute && flutter test                 # 앱 셸 (라우터 · 패키지 경계)
+cd apps/commute && flutter test   # feature (도메인 · 데이터 · cubit · 위젯) + 앱 셸 (라우터 · 경계)
 ```
 
-Supabase 가 없으므로 권한 경계 스크립트는 없다. 두 명령 모두 로컬 Supabase 없이 돈다
-(2026-09-13 기준 40건 · 4건).
+Supabase 가 없으므로 권한 경계 스크립트는 없다. 로컬 Supabase 없이 돈다
+(2026-09-27 기준 45건).
 
-## `packages/features/commute/test/` — 구현과 1:1
+## `apps/commute/test/{data,domain,presentation}/` — `lib/` 와 1:1
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
@@ -25,20 +24,20 @@ Supabase 가 없으므로 권한 경계 스크립트는 없다. 두 명령 모�
 | `presentation/page/commute_home_page_test.dart` | `CommuteHomePage` | `loaded` → 카드 3장 + "현 위치 기준" 배너 · 위치 실패면 "집 기준" 배너 · **설정이 닫히면 다시 검색한다**(`onOpenSettings` 의 Future 완료 시점) · `failure` → `AppPlaceholder` + 재시도 |
 | `presentation/page/commute_settings_page_test.dart` | `CommuteSettingsPage` | 역을 고르면 즉시 저장 · 집 · 회사가 모두 정해지면 `onDone` 을 한 번만 부른다 |
 
-## `apps/commute/test/`
+## `apps/commute/test/{core,convention}/` — 앱 셸 · 경계
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
-| `app/router/settings_redirect_test.dart` | `SettingsRedirect` | 미완성이면 홈 → `/settings` · 완성이면 홈 · 설정 모두 허용 · `markComplete()` 뒤 홈 허용 |
-| `convention/package_boundary_test.dart` | `packages/features/commute/pubspec.yaml` | 아래 불변식 |
+| `core/router/settings_redirect_test.dart` | `SettingsRedirect` | 미완성이면 홈 → `/settings` · 완성이면 홈 · 설정 모두 허용 · `markComplete()` 뒤 홈 허용 |
+| `convention/package_boundary_test.dart` | `apps/commute/pubspec.yaml` · `lib/{data,domain,presentation}/` | 아래 불변식 |
 
 ### `package_boundary_test` 의 불변식
 
-`feature_commute` 의 `dependencies:` 블록(`dev_dependencies:` 앞까지)에 대해:
-
-1. `feature_` 로 시작하는 의존이 없다 — 기존 feature 를 하나도 끌어오지 않는다
-2. `supabase_flutter:` 가 없다 — 백엔드 없이 선다
-3. `go_router:` 가 없다 — 이동은 콜백으로 받고 경로는 앱이 정한다
+1. `apps/commute/pubspec.yaml` 의 `dependencies:` 블록(`dev_dependencies:` 앞까지)에
+   `feature_` 로 시작하는 의존이 없다 — 트레이더 feature 를 하나도 끌어오지 않는다
+2. 같은 블록에 `supabase_flutter:` 가 없다 — 백엔드 없이 선다
+3. `data` · `domain` · `presentation` 아래 어떤 파일도 `package:go_router` 를 import 하지 않는다 —
+   이동은 콜백으로 받고 경로는 `lib/core/router/` 가 정한다
 
 이 셋이 "둘째 앱은 `core` · `design_system` · `l10n` 만으로 조립된다"는 실험의
 전제다. 어기면 [설계 §7](../../../docs/superpowers/specs/2026-09-13-commute-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것)
@@ -67,5 +66,5 @@ Supabase 가 없으므로 권한 경계 스크립트는 없다. 두 명령 모�
 - 홈 · 설정 페이지 테스트는 `getIt` 에 mock `CommuteUseCase` 와 cubit factory 를
   등록하고 `tearDown` 에서 `getIt.reset` 한다 — 페이지가 `BlocProvider` 안에서
   `getIt<...Cubit>()` 을 부르기 때문이다
-- `package_boundary_test` 는 `Directory.current.parent.parent` 로 workspace 루트를
-  찾는다. `apps/commute` 에서 실행해야 한다
+- `package_boundary_test` 는 상대 경로(`pubspec.yaml` · `lib/features`)를 읽는다.
+  `apps/commute` 에서 실행해야 한다

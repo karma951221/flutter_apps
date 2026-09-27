@@ -17,22 +17,20 @@ flowchart TB
   end
   subgraph features["packages/features/*"]
     F[feature_* 12개]
-    C[feature_commute]
   end
   DS[design_system]
   L[l10n]
   CORE[core]
 
   trader --> F
-  commute_app --> C
   F --> DS
   F --> L
-  C --> DS
-  C --> L
   DS --> L
   L --> CORE
   F --> CORE
-  C --> CORE
+  commute_app --> DS
+  commute_app --> L
+  commute_app --> CORE
 ```
 
 의도한 방향은 `apps → features → {design_system, l10n} → core` 하나뿐이다. 이 그림에서
@@ -171,7 +169,7 @@ switch (context.watch<AuthBloc>().state) {
 
 `safety`·`reaction`은 "있으면 붙는" 기능인데 소비자가 import한다. 이 조립은 원래 app
 레이어의 일이다 — **app이 위젯·콜백을 주입하면 feed는 safety를 몰라도 된다.**
-`feature_commute`가 go_router 없이 콜백만 받는 것은 이 방식의 대조 실험이다.
+`apps/commute` 의 통근 feature 가 go_router 없이 콜백만 받는 것은 이 방식의 대조 실험이다.
 
 ## 4. 라우팅 결합 — pubspec에 보이지 않는 의존
 

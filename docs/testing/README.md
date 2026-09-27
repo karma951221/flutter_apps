@@ -89,7 +89,7 @@ feature 테스트 문서(각 feature 폴더의 `testing.md`)는 **대상 · 시�
 - [settings](../../apps/trader/docs/features/settings/testing.md)
 - [preferences](../../apps/trader/docs/features/preferences/testing.md)
 - [trade](../../apps/trader/docs/features/trade/testing.md)
-- [commute](../../apps/commute/docs/testing.md) — 둘째 앱. `packages/features/commute` 와 `apps/commute` 에서 각각 돈다
+- [commute](../../apps/commute/docs/testing.md) — 둘째 앱. `apps/commute` 에서 한 번에 돈다
 - [검수 기록 (2026-08-24)](../../apps/trader/docs/audits/audit-2026-08-24.md)
 - [검수 기록 (2026-08-27)](../../apps/trader/docs/audits/audit-2026-08-27.md)
 - [코드 컨벤션 검사](conventions.md)

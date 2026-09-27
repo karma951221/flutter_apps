@@ -35,7 +35,7 @@ socialapp/
 │   ├── trader/                  # 첫째 앱 daylog — main · bootstrap · app shell · router · DI 조립 · config · home · patrol_test
 │   │   └── docs/                # 앱 문서 — README · status(★ 진행 현황) · overview · schema(★ DDL·RLS) ·
 │   │                            #   setup · e2e · audits/ · features/<name>/{plan,history,testing}.md
-│   └── commute/                 # 둘째 앱 통근 시간 — Supabase 없음. core · design_system · l10n · feature_commute 만 조립
+│   └── commute/                 # 둘째 앱 통근 시간 — Supabase 없음. core · design_system · l10n 만 쓴다. lib/ 아래 core(셸)·data·domain·presentation
 │       └── docs/                # 앱 문서 — README · status · plan · history · testing
 └── packages/
     ├── core/                    # error · result · pagination · validation · data 인프라 · media · di
@@ -43,8 +43,7 @@ socialapp/
     ├── l10n/                    # ARB + AppLocalizations + failure/validation localizations
     └── features/                # feature_<name> 패키지. lib/src/ 아래가 §2 의 3계층
         ├── auth/ post/ feed/ comment/ follow/ reaction/
-        ├── profile/ chat/ safety/ settings/ preferences/ trade/
-        └── commute/             # 둘째 앱 전용. feature_* 를 참조하지 않는다
+        └── profile/ chat/ safety/ settings/ preferences/ trade/
 ```
 
 **앱과 백엔드를 형제 폴더로 분리한다.** 나중에 자체 백엔드로 전환할 때 `server/`가 하나 더 생기면 되고, 그때 앱 코드는 손대지 않는다.
@@ -54,7 +53,7 @@ socialapp/
 앱이다([계획](../apps/commute/docs/plan.md)). 두 앱은 `pubspec.yaml` 의 `workspace:` 로
 패키지를 이름으로 resolve 하고, 실제 의존 관계는 [의존 그래프](dependencies.md)에 있다.
 
-`packages/features/commute` 는 **`Routes` 대신 콜백을 받는다** — 페이지가
+`apps/commute` 의 페이지는 **`Routes` 대신 콜백을 받는다** — 페이지가
 `onOpenSettings` · `onDone` 을 인자로 받고 경로는 `apps/commute` 의 라우터가 정한다.
 기존 feature 들이 `core` 의 `Routes` 로 `context.push` 하는 것과 다른 선택이고, 어느
 쪽으로 통일할지는 패키지 경계 리팩터링에서 결정한다

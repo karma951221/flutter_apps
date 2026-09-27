@@ -1,3 +1,10 @@
-import 'bootstrap.dart';
+import 'package:flutter/material.dart';
 
-void main() => bootstrap();
+import 'core/app.dart';
+import 'core/di/injection.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await configureDependencies();
+  runApp(const CommuteApp());
+}

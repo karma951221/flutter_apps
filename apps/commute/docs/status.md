@@ -32,6 +32,11 @@
       결과 잔존 두 가지를 고쳤다 (`d1c7d8e`)
 - [x] **7 문서** — 계획 · 기록 · 테스트 · 진행 현황 · 아키텍처 §1 · 개발환경 · 설계 §7 후보 7~9
 
+- [x] **8 앱 안으로 이동** (2026-09-27) — `packages/features/commute` 를 없애고 코드를
+      `apps/commute/lib/` 바로 아래 `core`(앱 셸) · `data` · `domain` · `presentation` 으로,
+      테스트도 같은 구조로, 역 자산을 `apps/commute/assets/` 로 옮겼다. micro package 모듈 대신 앱 `@InjectableInit` 이 직접 스캔.
+      [기록](history.md#2026-09-27--feature-코드를-앱-안으로-옮긴다)
+
 검증(2026-09-13): `flutter analyze` 0 · `melos run test` 전체 통과 · `apps/commute` ·
 `apps/trader` APK 빌드 · 에뮬레이터 4 시나리오 통과(릴리즈 arm64 APK —
 `/data` 부족으로 디버그 APK 설치 불가).

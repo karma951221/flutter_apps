@@ -106,3 +106,25 @@ arm64 APK 를 만들어 설치해 확인했다. 릴리즈라 hot reload 없이 �
 
 `flutter analyze` 0 · `melos run test` 전체 통과 · `apps/commute` 와 `apps/trader`
 둘 다 APK 빌드 · 에뮬레이터 4 시나리오 통과.
+
+## 2026-09-27 — feature 코드를 앱 안으로 옮긴다
+
+`packages/features/commute`(`feature_commute`)를 없애고 코드를 `apps/commute/lib/`
+바로 아래로 옮겼다. 통근 앱 하나만 쓰는 코드가 패키지로 떨어져 있어 앱 셸과 feature 를 오가며
+읽기 어려웠다. 재사용할 소비자가 없으니 패키지로 둘 이유도 없다. feature 가 하나뿐인 앱이라
+`lib/features/<name>/` 한 겹도 두지 않고 계층을 바로 편다 —
+`core/`(앱 셸: `app.dart` · `router/` · `di/`) · `data/` · `domain/` · `presentation/`.
+테스트는 `test/` 아래 같은 구조다.
+
+- 역 자산 경로가 `packages/feature_commute/assets/stations.json` → `assets/stations.json`
+- `FeatureCommutePackageModule`(micro package)은 없어지고 앱 `@InjectableInit` 이 직접 스캔한다.
+  등록 내용(lazySingleton 6 · factory 3)은 그대로다.
+  폴더를 옮긴 뒤 build_runner 가 `injectable_config_builder` 에서 멈추면 캐시 문제다 —
+  `dart run build_runner clean` 뒤 다시 빌드한다
+- barrel 이 없어져 테스트는 필요한 파일만 `package:commute/...` 로 import 한다
+- `package_boundary_test` 는 대상을 앱 pubspec 으로 옮겼다. `go_router` 금지는 pubspec 이 아니라
+  "`data` · `domain` · `presentation` 가 `go_router` 를 import 하지 않는다"로 바꿔 콜백 실험의 전제를 유지한다
+- 쓰지 않던 `intl` · `json_annotation` · `json_serializable` 의존은 옮기지 않았다
+
+"둘째 앱은 `core` · `design_system` · `l10n` 만으로 선다"는 실험 결론은 바뀌지 않는다 —
+feature 코드가 패키지에서 앱으로 옮겨졌을 뿐 기반 패키지 외 의존은 여전히 없다.

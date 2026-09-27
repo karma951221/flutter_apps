@@ -3,8 +3,10 @@
 > [문서 허브](../../../docs/README.md) · [전체 진행 현황](../../../docs/status.md)
 
 집·회사를 지하철역으로 등록해 두고 출근/퇴근 방향으로 지하철 · 버스 · 최적 소요 시간을
-보여주는 앱이다. 로그인 · 백엔드 · 외부 API 없음. 앱 코드는 `apps/commute/`, feature
-코드는 `packages/features/commute/` 에 있다.
+보여주는 앱이다. 로그인 · 백엔드 · 외부 API 없음. 코드는 전부 `apps/commute/` 에
+있다. `lib/` 바로 아래가 계층이다 — `core/`(앱 셸: `app.dart` · `router/` · `di/`) ·
+`data/` · `domain/` · `presentation/`. 테스트도 `test/` 아래 같은 구조다.
+`lib/core/` 는 앱 셸 폴더이고 workspace 패키지 `core`(`package:core/core.dart`)와는 별개다.
 
 ## 문서
 

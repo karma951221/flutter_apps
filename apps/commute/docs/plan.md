@@ -48,7 +48,7 @@
 
 로그인 · 출발 알림 · 실시간 도착 정보 · 지도 · 경로 상세 · 즐겨찾기 · 최근 검색.
 
-## 도메인 (`packages/features/commute/lib/src/domain/`)
+## 도메인 (`apps/commute/lib/domain/`)
 
 엔티티는 Freezed 단일 모델(Primary Constructor)이고 `Origin` 만 sealed 다 — 홈 배너가
 출처를 구분해야 하는데 bool 로 들고 다니면 흐려진다.
@@ -113,11 +113,10 @@
 
 ## DI · 앱 셸
 
-- `feature_commute` 는 `@InjectableInit.microPackage` 로 `FeatureCommutePackageModule`
-  을 만든다. 저장소 4개 · `CommuteUseCase` 는 lazySingleton, cubit 3개는 factory.
-  `SharedPreferences` 는 `CorePackageModule` 이 `@preResolve` 로 준다
-- `apps/commute/lib/di/injection.dart` 가 `externalPackageModulesBefore: [Core, FeatureCommute]`
-  로 조립한다. `bootstrap` 은 `ensureInitialized → configureDependencies → runApp` 뿐이고
+- `apps/commute/lib/core/di/injection.dart` 의 `@InjectableInit` 이 앱의 `lib/` 를 직접 스캔한다.
+  저장소 4개 · `CommuteUseCase` 는 lazySingleton, cubit 3개는 factory.
+  외부 모듈은 `externalPackageModulesBefore: [Core]` 하나이고, `SharedPreferences` 는
+  `CorePackageModule` 이 `@preResolve` 로 준다. `bootstrap` 은 `ensureInitialized → configureDependencies → runApp` 뿐이고
   Supabase 초기화가 없다
 - `CommuteApp` 은 `MaterialApp.router` + `AppTheme.light/dark` + `ThemeMode.system` +
   `AppLocalizations`. 라우터는 `/` · `/settings` 둘이고 `SettingsRedirect` 가 미설정을
@@ -125,19 +124,17 @@
 - 플랫폼 권한: Android `ACCESS_FINE_LOCATION` · `ACCESS_COARSE_LOCATION`, iOS
   `NSLocationWhenInUseUsageDescription`
 
-`feature_commute` 의 pubspec 에 허용되는 것은 `core` · `design_system` · `l10n` 과
-서드파티(`flutter_bloc` · `freezed_annotation` · `injectable` · `json_annotation` ·
-`shared_preferences` · `geolocator` · `intl`)뿐이다. `feature_*` · `supabase_flutter` ·
-`go_router` 는 금지이고 `apps/commute/test/convention/package_boundary_test.dart` 가
-검사한다.
+`apps/commute/pubspec.yaml` 이 쓰는 workspace 패키지는 `core` · `design_system` · `l10n`
+뿐이다. `feature_*` · `supabase_flutter` 는 금지이고, `data` · `domain` · `presentation` 는 `go_router` 를
+import 하지 않는다(라우터는 `lib/core/router/` 만 안다).
+`apps/commute/test/convention/package_boundary_test.dart` 가 검사한다.
 
 ## 완료 조건
 
 - [x] `melos run analyze` · `melos run test` 전부 통과. `apps/commute` 와 `apps/trader`
       둘 다 `flutter build apk` 로 빌드된다
-- [x] `packages/features/commute/pubspec.yaml` 에 `feature_` · `supabase_flutter` ·
-      `go_router` 가 없다 (`package_boundary_test` 통과)
-- [x] `grep -r "go_router\|package:feature_" packages/features/commute/lib` 가 비어 있다
+- [x] `apps/commute/pubspec.yaml` 에 `feature_` · `supabase_flutter` 가 없고
+      `lib/features/` 가 `go_router` 를 import 하지 않는다 (`package_boundary_test` 통과)
 - [x] 에뮬레이터에서 4가지 시나리오 확인 — ① 첫 실행이 설정으로 간다 ② 역 부분
       검색 · 선택이 된다 ③ 홈에 카드 3장이 뜬다 ④ 위치 권한을 거부하면 "집 기준"
       배너와 함께 결과가 나온다 ([테스트](testing.md))
