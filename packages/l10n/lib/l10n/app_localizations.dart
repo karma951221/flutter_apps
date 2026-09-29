@@ -2858,6 +2858,24 @@ abstract class AppLocalizations {
   /// **'켜진 알람이 없어요'**
   String get walkAlarmNoneEnabled;
 
+  /// 요약 카드 — 켜진 알람은 있는데 실제로 걸린 예약이 없을 때(권한 거부 등)
+  ///
+  /// In ko, this message translates to:
+  /// **'예약된 알람이 없어요'**
+  String get walkAlarmNoneScheduled;
+
+  /// 요약 카드 둘째 줄 — 예약이 없는 이유가 대개 권한임을 알린다
+  ///
+  /// In ko, this message translates to:
+  /// **'권한을 확인하세요'**
+  String get walkAlarmNoneScheduledHint;
+
+  /// 알람 탭 — 저장된 알람 목록을 읽지 못했을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'알람을 불러오지 못했어요'**
+  String get walkAlarmLoadFailed;
+
   /// 요약 카드 날짜 — 오늘 울릴 때
   ///
   /// In ko, this message translates to:

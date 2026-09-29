@@ -18,10 +18,18 @@ class AlarmListCubit extends Cubit<AlarmListState> {
   final AlarmPermissions _permissions;
   final Clock _clock;
 
+  /// 던지지 않는다. 목록을 못 읽으면 failure, 다음 울림을 못 읽으면 `nextAt` 을 비우고,
+  /// 권한을 확인하지 못하면 울릴지 모르니 경고(`canRing: false`)로 둔다.
   Future<void> load() async {
-    final alarms = await _useCase.list();
-    final nextAt = await _useCase.nextRings();
-    final canRing = await _permissions.canRing();
+    final List<Alarm> alarms;
+    try {
+      alarms = await _useCase.list();
+    } on Object {
+      if (!isClosed) emit(const AlarmListState.failure());
+      return;
+    }
+    final nextAt = await _orElse(_useCase.nextRings, const <int, DateTime>{});
+    final canRing = await _orElse(_permissions.canRing, false);
     if (isClosed) return;
     emit(AlarmListState.loaded(
       alarms: alarms,
@@ -29,6 +37,14 @@ class AlarmListCubit extends Cubit<AlarmListState> {
       now: _clock.now(),
       canRing: canRing,
     ));
+  }
+
+  static Future<T> _orElse<T>(Future<T> Function() read, T fallback) async {
+    try {
+      return await read();
+    } on Object {
+      return fallback;
+    }
   }
 
   /// 표시 기준 시각만 옮긴다 — 저장소 · 예약은 읽지 않는다. 어떤 알람의 울릴 시각이

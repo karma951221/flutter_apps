@@ -1445,6 +1445,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAlarmNoneEnabled => 'オンのアラームはありません';
 
   @override
+  String get walkAlarmNoneScheduled => '予約されたアラームはありません';
+
+  @override
+  String get walkAlarmNoneScheduledHint => '権限を確認してください';
+
+  @override
+  String get walkAlarmLoadFailed => 'アラームを読み込めませんでした';
+
+  @override
   String get walkAlarmDayToday => '今日';
 
   @override

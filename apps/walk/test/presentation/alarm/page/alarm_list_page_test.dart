@@ -263,6 +263,21 @@ void main() {
     });
   });
 
+  testWidgets('목록을 읽지 못하면 계속 돌지 않고 오류 안내, 다시 시도하면 다시 읽는다', (tester) async {
+    when(() => useCase.list()).thenThrow(const FormatException('corrupt'));
+    await pump(tester);
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('알람을 불러오지 못했어요'), findsOneWidget);
+
+    when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+    await tester.tap(find.text('다시 시도'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('알람을 불러오지 못했어요'), findsNothing);
+    expect(find.text('출근 · 평일'), findsOneWidget);
+  });
+
   testWidgets('권한이 없으면 경고 배너, 누르면 설정 탭으로', (tester) async {
     when(() => useCase.list()).thenAnswer((_) async => [weekday]);
     when(exactAlarm.check).thenAnswer((_) async => PermissionStatus.denied);

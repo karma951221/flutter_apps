@@ -113,6 +113,14 @@ class _AlarmListPageState extends State<AlarmListPage> {
           body: BlocBuilder<AlarmListCubit, AlarmListState>(
             builder: (context, state) => switch (state) {
               AlarmListLoading() => const Center(child: CircularProgressIndicator()),
+              AlarmListFailure() => Center(
+                child: AppPlaceholder(
+                  icon: Icons.error_outline,
+                  message: l10n.walkAlarmLoadFailed,
+                  actionLabel: l10n.commonRetry,
+                  onAction: context.read<AlarmListCubit>().load,
+                ),
+              ),
               AlarmListLoaded(:final alarms, :final nextAt, :final now, :final canRing) => ListView(
                 // FAB 가 마지막 행의 스위치를 가리지 않게.
                 padding: const EdgeInsets.only(bottom: AppSpacing.xl * 2.5),

@@ -55,12 +55,13 @@ extension AlarmListStatePatterns on AlarmListState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AlarmListLoading value)?  loading,TResult Function( AlarmListLoaded value)?  loaded,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AlarmListLoading value)?  loading,TResult Function( AlarmListLoaded value)?  loaded,TResult Function( AlarmListFailure value)?  failure,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case AlarmListLoading() when loading != null:
 return loading(_that);case AlarmListLoaded() when loaded != null:
-return loaded(_that);case _:
+return loaded(_that);case AlarmListFailure() when failure != null:
+return failure(_that);case _:
   return orElse();
 
 }
@@ -78,12 +79,13 @@ return loaded(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AlarmListLoading value)  loading,required TResult Function( AlarmListLoaded value)  loaded,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AlarmListLoading value)  loading,required TResult Function( AlarmListLoaded value)  loaded,required TResult Function( AlarmListFailure value)  failure,}){
 final _that = this;
 switch (_that) {
 case AlarmListLoading():
 return loading(_that);case AlarmListLoaded():
-return loaded(_that);}
+return loaded(_that);case AlarmListFailure():
+return failure(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -97,12 +99,13 @@ return loaded(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AlarmListLoading value)?  loading,TResult? Function( AlarmListLoaded value)?  loaded,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AlarmListLoading value)?  loading,TResult? Function( AlarmListLoaded value)?  loaded,TResult? Function( AlarmListFailure value)?  failure,}){
 final _that = this;
 switch (_that) {
 case AlarmListLoading() when loading != null:
 return loading(_that);case AlarmListLoaded() when loaded != null:
-return loaded(_that);case _:
+return loaded(_that);case AlarmListFailure() when failure != null:
+return failure(_that);case _:
   return null;
 
 }
@@ -119,11 +122,12 @@ return loaded(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing)?  loaded,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing)?  loaded,TResult Function()?  failure,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case AlarmListLoading() when loading != null:
 return loading();case AlarmListLoaded() when loaded != null:
-return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing);case _:
+return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing);case AlarmListFailure() when failure != null:
+return failure();case _:
   return orElse();
 
 }
@@ -141,11 +145,12 @@ return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing)  loaded,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing)  loaded,required TResult Function()  failure,}) {final _that = this;
 switch (_that) {
 case AlarmListLoading():
 return loading();case AlarmListLoaded():
-return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing);}
+return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing);case AlarmListFailure():
+return failure();}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -159,11 +164,12 @@ return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing)?  loaded,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing)?  loaded,TResult? Function()?  failure,}) {final _that = this;
 switch (_that) {
 case AlarmListLoading() when loading != null:
 return loading();case AlarmListLoaded() when loaded != null:
-return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing);case _:
+return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing);case AlarmListFailure() when failure != null:
+return failure();case _:
   return null;
 
 }
@@ -286,5 +292,37 @@ as bool,
 
 
 }
+
+/// @nodoc
+
+
+class AlarmListFailure implements AlarmListState {
+  const AlarmListFailure();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AlarmListFailure);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'AlarmListState.failure()';
+}
+
+
+}
+
+
+
 
 // dart format on
