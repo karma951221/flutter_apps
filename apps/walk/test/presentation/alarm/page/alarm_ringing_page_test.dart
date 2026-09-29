@@ -1,6 +1,7 @@
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
@@ -68,21 +69,65 @@ void main() {
     await pump(tester);
 
     expect(find.text('알람'), findsOneWidget);
-    await tester.tap(find.text('끄기'));
+    await tester.tap(find.text('알람 끄기'));
     await tester.pumpAndSettle();
 
     verify(() => useCase.stop(100)).called(1);
     expect(find.byType(AlarmRingingPage), findsNothing);
   });
 
-  testWidgets('5분 뒤는 snooze 후 닫힌다', (tester) async {
+  testWidgets('5분 뒤 다시 울림은 snooze 후 닫힌다', (tester) async {
     when(() => useCase.findByPackageId(100)).thenAnswer((_) async => null);
     await pump(tester);
 
-    await tester.tap(find.text('5분 뒤'));
+    await tester.tap(find.text('5분 뒤 다시 울림'));
     await tester.pumpAndSettle();
 
     verify(() => useCase.snooze(100)).called(1);
     expect(find.text('home'), findsOneWidget);
   });
+
+  for (final locale in const [Locale('ko'), Locale('en'), Locale('ja')]) {
+    testWidgets('320dp 폭에서도 버튼 문구가 잘리지 않는다 ($locale)', (tester) async {
+      tester.view
+        ..physicalSize = const Size(320, 640)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      when(() => useCase.findByPackageId(100)).thenAnswer((_) async => null);
+      final l10n = lookupAppLocalizations(locale);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const AlarmRingingPage(packageId: 100),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      for (final (label, button) in [
+        (l10n.walkAlarmSnooze, find.byType(OutlinedButton)),
+        (l10n.walkAlarmStop, find.byType(FilledButton)),
+      ]) {
+        final text = find.text(label);
+        final paragraph = tester.renderObject<RenderParagraph>(text);
+        final lineHeight = paragraph.getFullHeightForCaret(const TextPosition(offset: 0));
+        expect(paragraph.didExceedMaxLines, isFalse, reason: label);
+        expect(paragraph.size.height, lessThanOrEqualTo(lineHeight * 2 + 0.5), reason: label);
+        // 글자가 버튼 밖으로 나가지 않는다.
+        final buttonRect = tester.getRect(button);
+        final textRect = tester.getRect(text);
+        expect(buttonRect.contains(textRect.topLeft), isTrue, reason: label);
+        expect(buttonRect.contains(textRect.bottomRight - const Offset(1, 1)), isTrue, reason: label);
+        expect(tester.widget<Text>(text).textAlign, TextAlign.center);
+      }
+      // 두 버튼 높이가 같다.
+      expect(
+        tester.getSize(find.byType(OutlinedButton)).height,
+        tester.getSize(find.byType(FilledButton)).height,
+      );
+    });
+  }
 }

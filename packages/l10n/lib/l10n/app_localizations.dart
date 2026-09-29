@@ -2789,13 +2789,13 @@ abstract class AppLocalizations {
   /// 울리는 알람을 끄는 버튼 라벨(알림 · 울림 화면)
   ///
   /// In ko, this message translates to:
-  /// **'끄기'**
+  /// **'알람 끄기'**
   String get walkAlarmStop;
 
   /// 울리는 알람을 5분 미루는 버튼 라벨(알림 · 울림 화면)
   ///
   /// In ko, this message translates to:
-  /// **'5분 뒤'**
+  /// **'5분 뒤 다시 울림'**
   String get walkAlarmSnooze;
 
   /// 하단 탭 — 알람

@@ -43,7 +43,8 @@ class AppButton extends StatelessWidget {
             width: 20,
             child: CircularProgressIndicator(strokeWidth: 2),
           )
-        : Text(label);
+        // 좁은 폭에서 줄이 바뀌어도 버튼 가운데에 맞춘다(한 줄이면 차이 없음).
+        : Text(label, textAlign: TextAlign.center);
 
     return switch (_variant) {
       _AppButtonVariant.primary => FilledButton(

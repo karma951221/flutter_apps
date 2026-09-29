@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:alarm/alarm.dart' as pkg;
 import 'package:flutter/widgets.dart';
 import 'package:injectable/injectable.dart';
+import 'package:intl/intl.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../domain/alarm/entity/alarm.dart';
@@ -10,7 +11,13 @@ import '../../domain/alarm/scheduler/alarm_scheduler.dart';
 import '../../domain/alarm/upcoming_triggers.dart';
 
 /// 알림에 쓰는 문구. 예약은 화면 밖에서도 일어나 `BuildContext` 대신 기기 언어로 찾는다.
-typedef AlarmNotificationTexts = ({String defaultTitle, String stop, String snooze});
+/// [locale] 은 본문 시각(`오전 7:00`)을 쓰는 `intl` 로캘이다.
+typedef AlarmNotificationTexts = ({
+  String locale,
+  String defaultTitle,
+  String stop,
+  String snooze,
+});
 
 /// [`alarm`](https://pub.dev/packages/alarm) 패키지 래퍼.
 @LazySingleton(as: AlarmScheduler)
@@ -72,15 +79,22 @@ class PackageAlarmScheduler implements AlarmScheduler {
     androidSnoozeDuration: alarmSnoozeDuration,
     notificationSettings: pkg.NotificationSettings(
       title: alarm.label.isEmpty ? texts.defaultTitle : alarm.label,
-      body: _hhmm(alarm.hour, alarm.minute),
+      body: _time(texts.locale, alarm.hour, alarm.minute),
       stopButton: texts.stop,
       androidSnoozeButton: texts.snooze,
     ),
     payload: '${alarm.id}',
   );
 
-  static String _hhmm(int hour, int minute) =>
-      '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+  /// 기기 언어 시각 — `오전 7:00`, `7:00 AM`. data 계층이라 `MaterialLocalizations` 대신
+  /// `intl` 을 쓴다. 날짜 기호가 아직 없으면(로컬라이제이션 로드 전) `07:00` 으로 둔다.
+  static String _time(String locale, int hour, int minute) {
+    try {
+      return DateFormat.jm(locale).format(DateTime(2000, 1, 1, hour, minute));
+    } on Object {
+      return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+    }
+  }
 
   static AlarmNotificationTexts _texts() {
     final locale = basicLocaleListResolution(
@@ -89,6 +103,7 @@ class PackageAlarmScheduler implements AlarmScheduler {
     );
     final l10n = lookupAppLocalizations(locale);
     return (
+      locale: l10n.localeName,
       defaultTitle: l10n.walkAlarmDefaultTitle,
       stop: l10n.walkAlarmStop,
       snooze: l10n.walkAlarmSnooze,

@@ -29,9 +29,13 @@ class _AlarmRingingPageState extends State<AlarmRingingPage> {
   late DateTime _now = _clock.now();
   Timer? _ticker;
 
-  /// 잠금 화면에서 장갑 낀 손으로도 누르기 쉬운 버튼 높이.
+  /// 잠금 화면에서 장갑 낀 손으로도 누르기 쉬운 버튼 높이. 문구(`5분 뒤 다시 울림`)가
+  /// 반 폭에 들어가게 가로 여백을 줄이고, 두 줄이 되어도 위아래 여백을 둔다.
   static const _buttonStyle = ButtonStyle(
     minimumSize: WidgetStatePropertyAll(Size.fromHeight(AppSpacing.xl * 1.75)),
+    padding: WidgetStatePropertyAll(
+      EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
+    ),
   );
 
   @override
@@ -101,24 +105,28 @@ class _AlarmRingingPageState extends State<AlarmRingingPage> {
                       style: theme.textTheme.headlineSmall,
                     ),
                     const Spacer(),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AppButton.secondary(
-                            label: l10n.walkAlarmSnooze,
-                            style: _buttonStyle,
-                            onPressed: state.busy ? null : () => _finish(_cubit.snooze),
+                    // 문구가 길어 좁은 폭에서는 두 줄이 된다. 두 버튼 높이를 맞춘다.
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: AppButton.secondary(
+                              label: l10n.walkAlarmSnooze,
+                              style: _buttonStyle,
+                              onPressed: state.busy ? null : () => _finish(_cubit.snooze),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: AppButton.primary(
-                            label: l10n.walkAlarmStop,
-                            style: _buttonStyle,
-                            onPressed: state.busy ? null : () => _finish(_cubit.stop),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: AppButton.primary(
+                              label: l10n.walkAlarmStop,
+                              style: _buttonStyle,
+                              onPressed: state.busy ? null : () => _finish(_cubit.stop),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 );

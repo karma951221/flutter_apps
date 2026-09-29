@@ -1409,10 +1409,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAlarmDefaultTitle => '알람';
 
   @override
-  String get walkAlarmStop => '끄기';
+  String get walkAlarmStop => '알람 끄기';
 
   @override
-  String get walkAlarmSnooze => '5분 뒤';
+  String get walkAlarmSnooze => '5분 뒤 다시 울림';
 
   @override
   String get walkShellTabAlarm => '알람';

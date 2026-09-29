@@ -1407,10 +1407,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAlarmDefaultTitle => 'アラーム';
 
   @override
-  String get walkAlarmStop => '停止';
+  String get walkAlarmStop => 'アラームを止める';
 
   @override
-  String get walkAlarmSnooze => '5分後';
+  String get walkAlarmSnooze => '5分後に再通知';
 
   @override
   String get walkShellTabAlarm => 'アラーム';

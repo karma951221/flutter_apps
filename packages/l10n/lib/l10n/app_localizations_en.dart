@@ -1494,10 +1494,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkAlarmDefaultTitle => 'Alarm';
 
   @override
-  String get walkAlarmStop => 'Stop';
+  String get walkAlarmStop => 'Stop alarm';
 
   @override
-  String get walkAlarmSnooze => 'In 5 min';
+  String get walkAlarmSnooze => 'Snooze 5 min';
 
   @override
   String get walkShellTabAlarm => 'Alarms';
