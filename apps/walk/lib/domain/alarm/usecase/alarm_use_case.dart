@@ -37,6 +37,11 @@ abstract interface class AlarmUseCase {
   /// 울리는 회차를 끈다.
   Future<void> stop(int packageId);
 
+  /// 켜진 알람마다 실제로 다음에 울릴 시각(알람 id → 시각). 규칙이 아니라 **패키지에 걸린
+  /// 예약**에서 지금보다 뒤인 가장 이른 것을 고른다 — 스누즈된 회차가 들어가고, 권한 문제로
+  /// 예약이 빠진 알람은 키가 없다.
+  Future<Map<int, DateTime>> nextRings();
+
   /// 가장 이른 다음 회차. 없으면 null. ("다음 알람까지")
   Future<AlarmTrigger?> next();
 }
@@ -141,16 +146,31 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   @override
   Future<AlarmTrigger?> next() async => nextTrigger(await _repository.load(), _clock.now());
 
+  @override
+  Future<Map<int, DateTime>> nextRings() async {
+    final now = _clock.now();
+    final enabled = {for (final a in await _repository.load()) if (a.enabled) a.id};
+    final next = <int, DateTime>{};
+    for (final MapEntry(key: id, value: at) in (await _scheduler.scheduled()).entries) {
+      final alarmId = alarmIdOf(id);
+      if (!enabled.contains(alarmId) || !at.isAfter(now)) continue;
+      final earliest = next[alarmId];
+      if (earliest == null || at.isBefore(earliest)) next[alarmId] = at;
+    }
+    return next;
+  }
+
   Future<void> _sync() async {
     final now = _clock.now();
-    final alarms = await _expireOneShots(await _repository.load(), now);
+    // 1회성을 끌지는 남은 예약(스누즈)을 보고 정하므로 예약부터 읽는다.
+    final scheduled = await _scheduler.scheduled();
+    final ringing = await _scheduler.ringingIds();
+    final alarms = await _expireOneShots(await _repository.load(), now, scheduled, ringing);
 
     final desired = {
       for (final alarm in alarms)
         for (final trigger in triggersOf(alarm, now)) trigger.packageId: (trigger, alarm),
     };
-    final scheduled = await _scheduler.scheduled();
-    final ringing = await _scheduler.ringingIds();
     final alarmIds = {for (final a in alarms) a.id};
 
     for (final MapEntry(key: id, value: at) in scheduled.entries) {
@@ -168,10 +188,24 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     }
   }
 
-  /// 시각이 지난 1회성은 끈다.
-  Future<List<Alarm>> _expireOneShots(List<Alarm> alarms, DateTime now) async {
+  /// 시각이 지난 1회성은 끈다. 단, 그 알람의 회차가 아직 울리는 중이거나 지금 뒤에 걸려
+  /// 있으면(스누즈) 둔다 — 스누즈 중에 스위치가 꺼지고 요약 카드에서 사라지지 않게.
+  /// 울림이 끝나(끄기) 남은 예약이 없어진 뒤의 sync 에서 꺼진다.
+  Future<List<Alarm>> _expireOneShots(
+    List<Alarm> alarms,
+    DateTime now,
+    Map<int, DateTime> scheduled,
+    Set<int> ringing,
+  ) async {
+    final pending = {
+      for (final MapEntry(key: id, value: at) in scheduled.entries)
+        if (at.isAfter(now) || ringing.contains(id)) alarmIdOf(id),
+    };
     bool expired(Alarm a) =>
-        a.enabled && a.isOneShot && !(a.oneShotAt?.isAfter(now) ?? false);
+        a.enabled &&
+        a.isOneShot &&
+        !(a.oneShotAt?.isAfter(now) ?? false) &&
+        !pending.contains(a.id);
     if (!alarms.any(expired)) return alarms;
     final updated = [for (final a in alarms) expired(a) ? a.copyWith(enabled: false) : a];
     await _repository.save(updated);
