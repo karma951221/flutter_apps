@@ -477,6 +477,22 @@ void main() {
       expect(scheduler.entries, isEmpty);
       expect(scheduler.scheduleCalls, isEmpty);
     });
+
+    test('꺼진 알람의 울리는 회차를 snooze 하면 다시 걸지 않고 멈춘다', () async {
+      repository.alarms = [
+        const Alarm(id: 1, hour: 11, minute: 59, repeat: _everyDay, enabled: false),
+      ];
+      final ringingId = pid(1, mondayNoon);
+      scheduler.entries[ringingId] = DateTime(2026, 9, 28, 11, 59);
+      scheduler.ringing.add(ringingId);
+
+      await useCase.snooze(ringingId);
+
+      expect(scheduler.ringing, isEmpty);
+      expect(scheduler.entries, isEmpty);
+      expect(scheduler.scheduleCalls, isEmpty);
+      expect(await useCase.nextRings(), isEmpty);
+    });
   });
 
   group('sync 경계', () {

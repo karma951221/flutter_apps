@@ -31,7 +31,7 @@ abstract interface class AlarmUseCase {
   /// 앱 시작 · 복귀 · 울림 처리 뒤에 부른다.
   Future<void> sync();
 
-  /// 울리는 회차를 [alarmSnoozeDuration] 뒤로 다시 건다.
+  /// 울리는 회차를 [alarmSnoozeDuration] 뒤로 다시 건다. 알람이 지워졌거나 꺼졌으면 멈춘다.
   Future<void> snooze(int packageId);
 
   /// 울리는 회차를 끈다.
@@ -129,7 +129,8 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   @override
   Future<void> snooze(int packageId) => _serial(() async {
     final alarm = _byId(await _repository.load(), alarmIdOf(packageId));
-    if (alarm == null) {
+    // 지워졌거나 꺼진 알람은 다시 걸지 않고 멈춘다 — 꺼 둔 알람이 5분 뒤에 또 울리면 안 된다.
+    if (alarm == null || !alarm.enabled) {
       await _scheduler.stop(packageId);
     } else {
       await _scheduler.schedule(packageId, _clock.now().add(alarmSnoozeDuration), alarm);
