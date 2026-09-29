@@ -480,6 +480,19 @@ void main() {
   });
 
   group('sync 경계', () {
+    test('꺼진 알람의 곧 울릴 예약(5분 안)도 취소한다', () async {
+      repository.alarms = [
+        const Alarm(id: 1, hour: 12, minute: 3, repeat: _everyDay, enabled: false),
+      ];
+      final soonId = pid(1, mondayNoon);
+      scheduler.entries[soonId] = DateTime(2026, 9, 28, 12, 3);
+
+      await useCase.sync();
+
+      expect(scheduler.cancelCalls, contains(soonId));
+      expect(scheduler.entries, isEmpty);
+    });
+
     test('스누즈 보존 창 경계: now+5분은 남기고 넘으면 취소, now-1분(dueGrace)은 취소하고 그 안은 남긴다', () async {
       final staleId = pid(1, mondayNoon);
       final cases = {

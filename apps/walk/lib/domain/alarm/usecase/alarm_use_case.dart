@@ -168,15 +168,16 @@ class DefaultAlarmUseCase implements AlarmUseCase {
       for (final alarm in alarms)
         for (final trigger in triggersOf(alarm, now)) trigger.packageId: (trigger, alarm),
     };
-    final alarmIds = {for (final a in alarms) a.id};
+    // 꺼진 알람의 회차는 곧 울릴 참이어도 남기지 않는다 — 꺼 둔 알람이 울리면 안 된다.
+    final enabledIds = {for (final a in alarms) if (a.enabled) a.id};
 
     for (final MapEntry(key: id, value: at) in scheduled.entries) {
       if (desired.containsKey(id) || ringing.contains(id)) continue;
       // 스누즈된 회차(또는 막 울릴 참인 회차)는 원래 회차가 지나 원하는 목록에 없다.
-      // 알람이 남아 있고 시각이 스누즈 간격 안이면 둔다. 끄기 · 삭제 · 수정은 [_cancelAll] 로 지운다.
+      // 알람이 켜져 있고 시각이 스누즈 간격 안이면 둔다. 끄기 · 삭제 · 수정은 [_cancelAll] 로 지운다.
       final snoozedOrDue =
           at.isAfter(now.subtract(dueGrace)) && !at.isAfter(now.add(alarmSnoozeDuration));
-      if (alarmIds.contains(alarmIdOf(id)) && snoozedOrDue) continue;
+      if (enabledIds.contains(alarmIdOf(id)) && snoozedOrDue) continue;
       await _scheduler.cancel(id);
     }
     for (final MapEntry(key: id, value: (trigger, alarm)) in desired.entries) {
