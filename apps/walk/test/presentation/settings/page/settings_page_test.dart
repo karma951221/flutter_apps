@@ -66,10 +66,10 @@ void main() {
     await getIt.reset();
   });
 
-  Future<void> pump(WidgetTester tester) async {
+  Future<void> pump(WidgetTester tester, {bool checked = true}) async {
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    await permissions.check();
+    if (checked) await permissions.check();
     await tester.pumpWidget(
       MultiBlocProvider(
         providers: [
@@ -119,5 +119,72 @@ void main() {
     expect(theme.state, AppThemeMode.dark);
     verify(() => settings.save(const AppSettings(themeMode: AppThemeMode.dark))).called(1);
     expect(Theme.of(tester.element(find.byType(SettingsPage))).brightness, Brightness.dark);
+  });
+
+  testWidgets('확인 중(null)이면 상태 문구를 비운다', (tester) async {
+    await pump(tester, checked: false);
+
+    expect(find.text('알림'), findsOneWidget);
+    for (final label in ['허용됨', '허용 필요 ›', '설치 필요 ›', '업데이트 필요 ›']) {
+      expect(find.text(label), findsNothing, reason: label);
+    }
+  });
+
+  testWidgets('알림 행: 아직 물을 수 있으면(denied) 다시 묻고 상태를 다시 읽는다', (tester) async {
+    when(notification.check).thenAnswer((_) async => PermissionStatus.denied);
+    when(notification.requestAgain).thenAnswer((_) async {
+      when(notification.check).thenAnswer((_) async => PermissionStatus.granted);
+      return PermissionStatus.granted;
+    });
+    await pump(tester);
+    expect(find.text('허용 필요 ›'), findsNWidgets(2));
+
+    await tester.tap(find.text('알림'));
+    await tester.pumpAndSettle();
+
+    verify(notification.requestAgain).called(1);
+    verifyNever(notification.openSettings);
+    // 알림은 허용됨으로 바뀌고 정확한 알람만 허용 필요.
+    expect(find.text('허용 필요 ›'), findsOneWidget);
+  });
+
+  testWidgets('알림 행: 이미 허용이면 앱 설정을 연다', (tester) async {
+    when(notification.openSettings).thenAnswer((_) async {});
+    await pump(tester);
+
+    await tester.tap(find.text('알림'));
+    await tester.pumpAndSettle();
+
+    verify(notification.openSettings).called(1);
+    verifyNever(notification.requestAgain);
+  });
+
+  testWidgets('정확한 알람 행을 누르면 정확한 알람 설정을 연다', (tester) async {
+    when(exactAlarm.openSettings).thenAnswer((_) async {});
+    await pump(tester);
+
+    await tester.tap(find.text('정확한 알람'));
+    await tester.pumpAndSettle();
+
+    verify(exactAlarm.openSettings).called(1);
+  });
+
+  testWidgets('Health Connect 행: 설치가 필요하면 설치 화면을 연다', (tester) async {
+    when(walk.openInstall).thenAnswer((_) async {});
+    await pump(tester);
+
+    await tester.tap(find.text('Health Connect'));
+    await tester.pumpAndSettle();
+
+    verify(walk.openInstall).called(1);
+  });
+
+  testWidgets('오픈소스 라이선스 행은 LicensePage 를 연다', (tester) async {
+    await pump(tester);
+
+    await tester.tap(find.text('오픈소스 라이선스'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LicensePage), findsOneWidget);
   });
 }

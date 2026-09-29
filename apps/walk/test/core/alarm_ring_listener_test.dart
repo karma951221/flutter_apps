@@ -102,4 +102,39 @@ void main() {
 
     expect(find.text('ring 7'), findsOneWidget);
   });
+
+  testWidgets('첫 프레임 전에 울림이 시작됐다 끝났으면 화면을 띄우지 않는다', (tester) async {
+    ringing
+      ..add({7})
+      ..add({});
+    await tester.pump();
+    await pumpApp(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('ring 7'), findsNothing);
+    expect(find.text('home'), findsOneWidget);
+  });
+
+  testWidgets('start 를 두 번 해도 한 번만 구독한다', (tester) async {
+    await pumpApp(tester);
+
+    // 단일 구독 스트림이라 두 번 구독하면 StateError 가 난다.
+    listener.start();
+    ringing.add({312});
+    await tester.pumpAndSettle();
+
+    expect(find.text('ring 312'), findsOneWidget);
+  });
+
+  testWidgets('dispose 뒤에는 새 울림에 반응하지 않는다', (tester) async {
+    await pumpApp(tester);
+    unawaited(listener.dispose());
+    await tester.pump();
+
+    ringing.add({312});
+    await tester.pumpAndSettle();
+
+    expect(find.text('ring 312'), findsNothing);
+    expect(find.text('home'), findsOneWidget);
+  });
 }
