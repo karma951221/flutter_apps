@@ -195,9 +195,12 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     Map<int, DateTime> scheduled,
     Set<int> ringing,
   ) async {
+    // 울릴 시각이 막 됐지만 아직 울림으로 잡히지 않은 회차도 남은 예약으로 본다 — 예약
+    // 정리가 지우지 않고 두는 [dueGrace] 창과 같다. 여기서 끄면 울리는 동안 스위치가 꺼지고,
+    // 스누즈한 뒤 다음 울림에서도 빠진다.
     final pending = {
       for (final MapEntry(key: id, value: at) in scheduled.entries)
-        if (at.isAfter(now) || ringing.contains(id)) alarmIdOf(id),
+        if (at.isAfter(now.subtract(dueGrace)) || ringing.contains(id)) alarmIdOf(id),
     };
     bool expired(Alarm a) =>
         a.enabled &&

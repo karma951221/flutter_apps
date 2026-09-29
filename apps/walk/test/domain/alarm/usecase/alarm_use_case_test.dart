@@ -480,6 +480,28 @@ void main() {
   });
 
   group('sync 경계', () {
+    test('울릴 시각이 막 됐지만 아직 울림으로 잡히기 전이면 1회성을 끄지 않는다', () async {
+      final at = DateTime(2026, 9, 28, 12);
+      final dueId = pid(1, at);
+      repository.alarms = [Alarm(id: 1, hour: 12, minute: 0, oneShotAt: at)];
+      scheduler.entries[dueId] = at;
+
+      for (final now in [at, at.add(const Duration(seconds: 30))]) {
+        clock.current = now;
+        await useCase.sync();
+
+        expect(repository.alarms.single.enabled, isTrue, reason: '$now');
+        expect(scheduler.entries, {dueId: at}, reason: '$now');
+      }
+
+      // 이제 울림으로 잡혔고, 스누즈하면 켜진 채 다음 울림이 보인다.
+      scheduler.ringing.add(dueId);
+      await useCase.snooze(dueId);
+
+      expect(repository.alarms.single.enabled, isTrue);
+      expect(await useCase.nextRings(), {1: DateTime(2026, 9, 28, 12, 5, 30)});
+    });
+
     test('꺼진 알람의 곧 울릴 예약(5분 안)도 취소한다', () async {
       repository.alarms = [
         const Alarm(id: 1, hour: 12, minute: 3, repeat: _everyDay, enabled: false),
