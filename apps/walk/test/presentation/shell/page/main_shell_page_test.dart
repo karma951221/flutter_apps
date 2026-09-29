@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
@@ -33,11 +35,12 @@ class _MockSettings extends Mock implements SettingsRepository {}
 void main() {
   late _MockAlarmUseCase alarms;
   late _MockWalk walk;
+  late _MockRequester notification;
 
   setUp(() {
     alarms = _MockAlarmUseCase();
     walk = _MockWalk();
-    final notification = _MockRequester();
+    notification = _MockRequester();
     final exactAlarm = _MockRequester();
     final fullScreen = _MockRequester();
     for (final r in [notification, exactAlarm, fullScreen]) {
@@ -124,5 +127,86 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(alarms.sync).called(1);
+  });
+
+  testWidgets('위에 얹힌 울림 화면이 걷히면 예약을 동기화한 뒤 목록을 다시 읽는다', (tester) async {
+    await pump(tester);
+    final navigator = tester.state<NavigatorState>(find.byType(Navigator).first);
+    unawaited(
+      navigator.push(
+        MaterialPageRoute<void>(builder: (_) => const Text('ringing')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    clearInteractions(alarms);
+
+    navigator.pop();
+    await tester.pumpAndSettle();
+
+    verifyInOrder([alarms.sync, alarms.list]);
+  });
+
+  void resume(WidgetTester tester) {
+    for (final state in [
+      AppLifecycleState.inactive,
+      AppLifecycleState.hidden,
+      AppLifecycleState.paused,
+      AppLifecycleState.hidden,
+      AppLifecycleState.inactive,
+      AppLifecycleState.resumed,
+    ]) {
+      tester.binding.handleAppLifecycleStateChanged(state);
+    }
+  }
+
+  testWidgets('복귀하면 설정 권한 행을 다시 읽는다', (tester) async {
+    when(notification.check).thenAnswer((_) async => PermissionStatus.denied);
+    await pump(tester);
+    await tester.tap(find.byIcon(Icons.settings));
+    await tester.pumpAndSettle();
+    // 알림 · Health Connect 가 허용 필요.
+    expect(find.text('허용 필요 ›'), findsNWidgets(2));
+
+    // 시스템 설정에서 알림을 허용하고 돌아왔다.
+    when(notification.check).thenAnswer((_) async => PermissionStatus.granted);
+    resume(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('허용 필요 ›'), findsOneWidget);
+    expect(find.text('허용됨'), findsNWidgets(3));
+  });
+
+  testWidgets('시작 시 sync 가 끝난 뒤 목록을 읽는다', (tester) async {
+    final syncing = Completer<void>();
+    when(alarms.sync).thenAnswer((_) => syncing.future);
+    await pump(tester);
+    // sync 가 끝나기 전에 읽은 목록(첫 화면용)은 지난 1회성이 아직 켜진 목록일 수 있다.
+    clearInteractions(alarms);
+
+    syncing.complete();
+    await tester.pumpAndSettle();
+
+    verify(alarms.list).called(1);
+  });
+
+  testWidgets('예약 동기화가 실패해도 목록은 읽는다', (tester) async {
+    await pump(tester);
+    clearInteractions(alarms);
+    when(alarms.sync).thenThrow(Exception('scheduler'));
+
+    resume(tester);
+    await tester.pumpAndSettle();
+
+    verifyInOrder([alarms.sync, alarms.list]);
+  });
+
+  testWidgets('시작할 때 예약 동기화가 실패해도 목록 탭은 빈 목록을 보인다', (tester) async {
+    when(alarms.sync).thenThrow(Exception('scheduler'));
+    await pump(tester);
+
+    await tester.tap(find.byIcon(Icons.alarm));
+    await tester.pumpAndSettle();
+
+    expect(find.text('알람이 없어요'), findsOneWidget);
   });
 }

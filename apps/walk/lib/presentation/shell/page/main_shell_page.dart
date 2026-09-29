@@ -72,20 +72,20 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   }
 
   /// 편집 · 울림 화면이 닫혔다 — 알람이 바뀌었거나 권한을 허용했을 수 있다.
+  /// 알림 버튼으로 울림을 끈 경우에도 여기로 오므로 예약부터 다시 채운다.
   @override
-  void didPopNext() {
-    _alarms.load();
-    _permissions.check();
-  }
+  void didPopNext() => _refresh();
 
   /// 시작 · 복귀. 예약을 채운 뒤(지난 1회성이 꺼진 뒤) 목록을 읽는다.
   Future<void> _refresh() async {
     _permissions.check();
     try {
       await _alarmUseCase.sync();
-    } finally {
-      await _alarms.load();
+    } on Object {
+      // 부르는 쪽이 기다리지 않는다(시작 · 복귀 · 화면 복귀) — 예외를 올리면 잡을 곳이 없다.
+      // 예약은 다음 복귀에 다시 채우고, 목록은 저장된 대로 보인다.
     }
+    await _alarms.load();
   }
 
   void _select(ShellTab tab) => setState(() => _tab = tab);
