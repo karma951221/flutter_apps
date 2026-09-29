@@ -133,6 +133,31 @@ void main() {
     expect(find.text('다음 알람'), findsNothing);
   });
 
+  testWidgets('켜진 알람인데 예약이 없으면(권한 거부) 배너가 카드 위, 카드는 예약 없음 · 권한 안내, 행 셋째 줄 없음', (
+    tester,
+  ) async {
+    when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
+    when(() => useCase.nextRings()).thenAnswer((_) async => {});
+    when(exactAlarm.check).thenAnswer((_) async => PermissionStatus.denied);
+    await pump(tester);
+
+    final banner = find.text('알람이 울리지 않을 수 있어요');
+    final card = find.byType(AlarmSummaryCard);
+    expect(banner, findsOneWidget);
+    expect(tester.getTopLeft(banner).dy, lessThan(tester.getTopLeft(card).dy));
+    expect(
+      find.descendant(of: card, matching: find.text('예약된 알람이 없어요')),
+      findsOneWidget,
+    );
+    expect(find.descendant(of: card, matching: find.text('권한을 확인하세요')), findsOneWidget);
+    expect(find.text('켜진 알람이 없어요'), findsNothing);
+    expect(find.text('다음 알람'), findsNothing);
+    expect(
+      find.descendant(of: find.byType(AlarmTile), matching: find.textContaining('후')),
+      findsNothing,
+    );
+  });
+
   testWidgets('행은 시각 · 라벨 · 반복 요약 · 스위치, 켜진 알람만 남은 시간', (tester) async {
     when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
     // 꺼진 알람은 use case 가 키를 주지 않지만, 화면도 켜진 알람에만 셋째 줄을 둔다.
