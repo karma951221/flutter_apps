@@ -1447,6 +1447,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAlarmNoneEnabled => '켜진 알람이 없어요';
 
   @override
+  String get walkAlarmNoneScheduled => '예약된 알람이 없어요';
+
+  @override
+  String get walkAlarmNoneScheduledHint => '권한을 확인하세요';
+
+  @override
+  String get walkAlarmLoadFailed => '알람을 불러오지 못했어요';
+
+  @override
   String get walkAlarmDayToday => '오늘';
 
   @override

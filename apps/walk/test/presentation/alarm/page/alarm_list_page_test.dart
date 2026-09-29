@@ -20,6 +20,13 @@ class _MockUseCase extends Mock implements AlarmUseCase {}
 
 class _MockRequester extends Mock implements PermissionRequester {}
 
+class _MutableClock extends Clock {
+  _MutableClock(this.value);
+  DateTime value;
+  @override
+  DateTime now() => value;
+}
+
 class _FixedClock extends Clock {
   _FixedClock([DateTime? value]) : value = value ?? DateTime(2026, 9, 27, 23, 48); // 일요일
   final DateTime value;
@@ -133,6 +140,31 @@ void main() {
     expect(find.text('다음 알람'), findsNothing);
   });
 
+  testWidgets('켜진 알람인데 예약이 없으면(권한 거부) 배너가 카드 위, 카드는 예약 없음 · 권한 안내, 행 셋째 줄 없음', (
+    tester,
+  ) async {
+    when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
+    when(() => useCase.nextRings()).thenAnswer((_) async => {});
+    when(exactAlarm.check).thenAnswer((_) async => PermissionStatus.denied);
+    await pump(tester);
+
+    final banner = find.text('알람이 울리지 않을 수 있어요');
+    final card = find.byType(AlarmSummaryCard);
+    expect(banner, findsOneWidget);
+    expect(tester.getTopLeft(banner).dy, lessThan(tester.getTopLeft(card).dy));
+    expect(
+      find.descendant(of: card, matching: find.text('예약된 알람이 없어요')),
+      findsOneWidget,
+    );
+    expect(find.descendant(of: card, matching: find.text('권한을 확인하세요')), findsOneWidget);
+    expect(find.text('켜진 알람이 없어요'), findsNothing);
+    expect(find.text('다음 알람'), findsNothing);
+    expect(
+      find.descendant(of: find.byType(AlarmTile), matching: find.textContaining('후')),
+      findsNothing,
+    );
+  });
+
   testWidgets('행은 시각 · 라벨 · 반복 요약 · 스위치, 켜진 알람만 남은 시간', (tester) async {
     when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
     // 꺼진 알람은 use case 가 키를 주지 않지만, 화면도 켜진 알람에만 셋째 줄을 둔다.
@@ -194,6 +226,101 @@ void main() {
     expect(find.text('내일 (월) 오전 8:00 · 회의'), findsOneWidget);
     expect(find.text('7시간 12분 후'), findsNothing);
     expect(find.text('8시간 12분 후'), findsNWidgets(2));
+  });
+
+  testWidgets('스위치 저장이 실패하면 스위치가 돌아오고 오류 스낵바', (tester) async {
+    when(() => useCase.list()).thenAnswer((_) async => [off]);
+    when(() => useCase.toggle(2, enabled: true)).thenThrow(StateError('x'));
+    await pump(tester);
+
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
+    expect(find.text('알람을 저장하지 못했어요'), findsOneWidget);
+    expect(find.textContaining('뒤에 울려요'), findsNothing);
+  });
+
+  testWidgets('자정 tick 에서 카드의 내일이 오늘로 바뀐다', (tester) async {
+    final clock = _MutableClock(DateTime(2026, 9, 27, 23, 59)); // 일요일
+    await getIt.unregister<Clock>();
+    getIt.registerSingleton<Clock>(clock);
+    await cubit.close();
+    cubit = AlarmListCubit(useCase, permissions, clock);
+    when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+    when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 9, 28, 7)});
+    await pump(tester);
+    expect(find.text('내일 (월) 오전 7:00 · 출근'), findsOneWidget);
+    expect(find.text('7시간 1분 후'), findsNWidgets(2));
+
+    clock.value = DateTime(2026, 9, 28);
+    await cubit.tick();
+    await tester.pump();
+
+    expect(find.text('오늘 (월) 오전 7:00 · 출근'), findsOneWidget);
+    expect(find.text('7시간 후'), findsNWidgets(2));
+  });
+
+  testWidgets('행을 누르면 그 알람으로 편집을 열고, 저장 결과로 이 탭에 스낵바', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
+    when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 9, 28, 7)});
+    registerFallbackValue(Alarm.draft());
+    when(() => useCase.save(any())).thenAnswer(
+      (i) async => i.positionalArguments.single as Alarm,
+    );
+    await pump(tester);
+
+    await tester.tap(find.text('오전 7:00'));
+    await tester.pumpAndSettle();
+    expect(find.text('알람 편집'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '출근'), findsOneWidget);
+
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+
+    final saved = verify(() => useCase.save(captureAny())).captured.single as Alarm;
+    expect(saved.id, 1);
+    expect(find.byType(AlarmEditPage), findsNothing);
+    // 일요일 23:48 → 월요일 07:00. 탭 Scaffold 안에 뜬다.
+    expect(
+      find.descendant(
+        of: find.byType(AlarmListPage),
+        matching: find.widgetWithText(SnackBar, '7시간 12분 뒤에 울려요'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('꺼진 알람 행은 흐리게, 켜진 행은 그대로', (tester) async {
+    when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
+    await pump(tester);
+
+    final disabled = Theme.of(tester.element(find.byType(AlarmListPage))).disabledColor;
+    Color? colorOf(String text) => tester.widget<Text>(find.text(text)).style?.color;
+    expect(colorOf('오전 9:30'), disabled);
+    expect(colorOf('1회'), disabled);
+    expect(colorOf('오전 7:00'), isNot(disabled));
+    expect(colorOf('출근 · 평일'), isNot(disabled));
+  });
+
+  testWidgets('요약 카드는 누를 수 없다', (tester) async {
+    when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+    when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 9, 28, 7)});
+    await pump(tester);
+
+    final card = find.byType(AlarmSummaryCard);
+    expect(
+      find.descendant(
+        of: card,
+        matching: find.byWidgetPredicate((w) => w is InkWell || w is GestureDetector),
+      ),
+      findsNothing,
+    );
+    await tester.tap(find.text('다음 알람'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlarmEditPage), findsNothing);
   });
 
   group('분 경계 타이머', () {
@@ -261,6 +388,21 @@ void main() {
       await tester.pump(const Duration(minutes: 1));
       expect(spy.ticks, 2);
     });
+  });
+
+  testWidgets('목록을 읽지 못하면 계속 돌지 않고 오류 안내, 다시 시도하면 다시 읽는다', (tester) async {
+    when(() => useCase.list()).thenThrow(const FormatException('corrupt'));
+    await pump(tester);
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('알람을 불러오지 못했어요'), findsOneWidget);
+
+    when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+    await tester.tap(find.text('다시 시도'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('알람을 불러오지 못했어요'), findsNothing);
+    expect(find.text('출근 · 평일'), findsOneWidget);
   });
 
   testWidgets('권한이 없으면 경고 배너, 누르면 설정 탭으로', (tester) async {

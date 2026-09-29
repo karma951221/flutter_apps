@@ -1532,6 +1532,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkAlarmNoneEnabled => 'No alarms are on';
 
   @override
+  String get walkAlarmNoneScheduled => 'No alarms scheduled';
+
+  @override
+  String get walkAlarmNoneScheduledHint => 'Check permissions';
+
+  @override
+  String get walkAlarmLoadFailed => 'Couldn\'t load alarms';
+
+  @override
   String get walkAlarmDayToday => 'Today';
 
   @override

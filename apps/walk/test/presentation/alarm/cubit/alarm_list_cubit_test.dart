@@ -87,6 +87,52 @@ void main() {
     ],
   );
 
+  group('읽기 실패', () {
+    blocTest<AlarmListCubit, AlarmListState>(
+      '목록을 읽지 못하면 loading 에 머물지 않고 failure — load 는 던지지 않는다',
+      build: () {
+        when(() => useCase.list()).thenThrow(const FormatException('corrupt'));
+        return build();
+      },
+      act: (cubit) => cubit.load(),
+      expect: () => [const AlarmListState.failure()],
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      '권한 확인(canRing)이 예외여도 목록은 보이고, 울릴지 모르니 경고(canRing false)',
+      build: () {
+        when(() => notification.check()).thenThrow(StateError('plugin'));
+        return build();
+      },
+      act: (cubit) => cubit.load(),
+      expect: () => [loaded([seven, off], canRing: false)],
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      '다음 울림을 읽지 못해도 목록은 보인다(nextAt 비움)',
+      build: () {
+        when(() => useCase.nextRings()).thenThrow(StateError('scheduler'));
+        return build();
+      },
+      act: (cubit) => cubit.load(),
+      expect: () => [loaded([seven, off], nextAt: {})],
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      '실패 뒤 다시 load 하면 목록으로 돌아온다',
+      build: () {
+        when(() => useCase.list()).thenThrow(const FormatException('corrupt'));
+        return build();
+      },
+      act: (cubit) async {
+        await cubit.load();
+        when(() => useCase.list()).thenAnswer((_) async => [seven, off]);
+        await cubit.load();
+      },
+      expect: () => [const AlarmListState.failure(), loaded([seven, off])],
+    );
+  });
+
   group('tick', () {
     blocTest<AlarmListCubit, AlarmListState>(
       '기준 시각만 옮기고 저장소 · 예약은 읽지 않는다',
@@ -167,6 +213,35 @@ void main() {
   );
 
   blocTest<AlarmListCubit, AlarmListState>(
+    '켠 뒤 권한 확인이 예외여도 토글은 성공으로 끝난다',
+    build: () {
+      final on = off.copyWith(enabled: true, oneShotAt: DateTime(2026, 9, 28, 8));
+      when(() => useCase.toggle(2, enabled: true)).thenAnswer((_) async {
+        when(() => useCase.list()).thenAnswer((_) async => [seven, on]);
+        when(() => useCase.nextRings())
+            .thenAnswer((_) async => {1: sevenAt, 2: DateTime(2026, 9, 28, 8)});
+        return on;
+      });
+      when(() => notification.ensure()).thenThrow(StateError('plugin'));
+      return build();
+    },
+    seed: () => loaded([seven, off]),
+    act: (cubit) async {
+      expect(
+        await cubit.toggle(off, enabled: true),
+        const Duration(hours: 8, minutes: 12),
+      );
+    },
+    expect: () => [
+      loaded([seven, off.copyWith(enabled: true)]),
+      loaded(
+        [seven, off.copyWith(enabled: true, oneShotAt: DateTime(2026, 9, 28, 8))],
+        nextAt: {1: sevenAt, 2: DateTime(2026, 9, 28, 8)},
+      ),
+    ],
+  );
+
+  blocTest<AlarmListCubit, AlarmListState>(
     '끄면 권한을 묻지 않고 null',
     build: () {
       when(() => useCase.toggle(1, enabled: false)).thenAnswer((_) async {
@@ -201,6 +276,42 @@ void main() {
     expect: () => [
       loaded([seven.copyWith(enabled: false), off]),
       loaded([seven, off]),
+    ],
+  );
+
+  blocTest<AlarmListCubit, AlarmListState>(
+    '켜기가 실패해도 스위치를 되돌린다',
+    build: () {
+      when(() => useCase.toggle(2, enabled: true)).thenThrow(StateError('x'));
+      return build();
+    },
+    seed: () => loaded([seven, off]),
+    act: (cubit) async {
+      await expectLater(cubit.toggle(off, enabled: true), throwsStateError);
+    },
+    expect: () => [
+      loaded([seven, off.copyWith(enabled: true)]),
+      loaded([seven, off]),
+    ],
+    verify: (_) => verifyNever(() => notification.ensure()),
+  );
+
+  blocTest<AlarmListCubit, AlarmListState>(
+    '저장도 다시 읽기도 실패하면 저장 오류를 던지고, 낙관적 스위치 대신 failure 로 끝난다',
+    build: () {
+      when(() => useCase.toggle(1, enabled: false)).thenAnswer((_) async {
+        when(() => useCase.list()).thenThrow(const FormatException('corrupt'));
+        throw StateError('save');
+      });
+      return build();
+    },
+    seed: () => loaded([seven, off]),
+    act: (cubit) async {
+      await expectLater(cubit.toggle(seven, enabled: false), throwsStateError);
+    },
+    expect: () => [
+      loaded([seven.copyWith(enabled: false), off]),
+      const AlarmListState.failure(),
     ],
   );
 }

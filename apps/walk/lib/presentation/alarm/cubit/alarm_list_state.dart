@@ -18,4 +18,7 @@ sealed class AlarmListState with _$AlarmListState {
     required DateTime now,
     @Default(true) bool canRing,
   }) = AlarmListLoaded;
+
+  /// 저장된 알람 목록을 읽지 못했다. 다시 시도 · 복귀 때 [AlarmListCubit.load] 로 돌아온다.
+  const factory AlarmListState.failure() = AlarmListFailure;
 }
