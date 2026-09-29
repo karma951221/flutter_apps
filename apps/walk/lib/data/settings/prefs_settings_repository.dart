@@ -14,7 +14,8 @@ class PrefsSettingsRepository implements SettingsRepository {
 
   @override
   AppSettings load() {
-    final name = _prefs.getString(themeModeKey);
+    // getString 은 문자열이 아닌 값에서 던진다 — 첫 프레임 전 ThemeCubit 이 죽지 않게 get 으로 읽는다.
+    final name = _prefs.get(themeModeKey);
     final themeMode = AppThemeMode.values.asNameMap()[name] ?? AppThemeMode.system;
     return AppSettings(themeMode: themeMode);
   }

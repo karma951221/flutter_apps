@@ -27,4 +27,11 @@ void main() {
 
     expect(repository.load().themeMode, AppThemeMode.system);
   });
+
+  test('문자열이 아닌 값이 저장돼 있어도 시스템 테마', () async {
+    SharedPreferences.setMockInitialValues({PrefsSettingsRepository.themeModeKey: 2});
+    final repository = PrefsSettingsRepository(await SharedPreferences.getInstance());
+
+    expect(repository.load().themeMode, AppThemeMode.system);
+  });
 }
