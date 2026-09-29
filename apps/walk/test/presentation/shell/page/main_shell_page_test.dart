@@ -44,7 +44,7 @@ void main() {
       when(r.check).thenAnswer((_) async => PermissionStatus.granted);
     }
     when(alarms.list).thenAnswer((_) async => []);
-    when(alarms.next).thenAnswer((_) async => null);
+    when(alarms.nextRings).thenAnswer((_) async => {});
     when(alarms.sync).thenAnswer((_) async {});
     when(walk.access).thenAnswer((_) async => HealthAccess.permissionDenied);
     when(() => walk.permissionDeclinedThisSession).thenReturn(false);

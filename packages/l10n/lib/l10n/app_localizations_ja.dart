@@ -1434,9 +1434,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAlarmAdd => 'アラームを追加';
 
   @override
-  String walkAlarmNextIn(String duration) {
-    return '次のアラームまで$duration';
+  String get walkAlarmNextTitle => '次のアラーム';
+
+  @override
+  String walkAlarmIn(String duration) {
+    return '$duration後';
   }
+
+  @override
+  String get walkAlarmNoneEnabled => 'オンのアラームはありません';
+
+  @override
+  String get walkAlarmDayToday => '今日';
+
+  @override
+  String get walkAlarmDayTomorrow => '明日';
 
   @override
   String walkAlarmRingsIn(String duration) {

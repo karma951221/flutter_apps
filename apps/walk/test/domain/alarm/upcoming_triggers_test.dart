@@ -97,28 +97,13 @@ void main() {
     });
   });
 
-  group('triggersOf · nextTrigger', () {
+  group('triggersOf', () {
     test('triggersOf 는 날짜 index 로 packageId 를 준다', () {
       const alarm = Alarm(id: 7, hour: 7, minute: 0, repeat: {Weekday.tue});
       final first = triggersOf(alarm, mondayNoon).first;
       expect(first.at, DateTime(2026, 9, 29, 7));
       expect(first.alarmId, 7);
       expect(first.packageId, packageId(7, triggerIndex(DateTime(2026, 9, 29))));
-    });
-
-    test('nextTrigger 는 켜진 알람 중 가장 이른 회차', () {
-      final alarms = [
-        const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay),
-        const Alarm(id: 2, hour: 13, minute: 0, repeat: _everyDay, enabled: false),
-        Alarm(id: 3, hour: 22, minute: 0, oneShotAt: DateTime(2026, 9, 28, 22)),
-      ];
-      final next = nextTrigger(alarms, mondayNoon);
-      expect(next?.alarmId, 3);
-      expect(next?.at, DateTime(2026, 9, 28, 22));
-    });
-
-    test('켜진 알람이 없으면 null', () {
-      expect(nextTrigger(const [Alarm(id: 1, hour: 7, minute: 0, enabled: false)], mondayNoon), isNull);
     });
   });
 }

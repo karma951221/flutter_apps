@@ -50,14 +50,3 @@ List<AlarmTrigger> triggersOf(Alarm alarm, DateTime now) => [
   for (final at in upcomingTriggers(alarm, now))
     AlarmTrigger(packageId: packageId(alarm.id, triggerIndex(at)), alarmId: alarm.id, at: at),
 ];
-
-/// 켜진 알람 전체에서 가장 이른 회차. 없으면 null.
-AlarmTrigger? nextTrigger(Iterable<Alarm> alarms, DateTime now) {
-  AlarmTrigger? earliest;
-  for (final alarm in alarms) {
-    final triggers = triggersOf(alarm, now);
-    if (triggers.isEmpty) continue;
-    if (earliest == null || triggers.first.at.isBefore(earliest.at)) earliest = triggers.first;
-  }
-  return earliest;
-}

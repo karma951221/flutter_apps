@@ -40,6 +40,53 @@ void main() {
     });
   });
 
+  group('remaining', () {
+    test('스펙 §4.3 표 — duration 에 "후"를 붙인다', () {
+      const table = [
+        (Duration(seconds: 1), '1분 후'),
+        (Duration(minutes: 1), '1분 후'),
+        (Duration(minutes: 1, seconds: 30), '2분 후'),
+        (Duration(hours: 3), '3시간 후'),
+        (Duration(hours: 3, minutes: 5), '3시간 5분 후'),
+        (Duration(days: 1, hours: 3, minutes: 20), '1일 3시간 후'),
+        (Duration(days: 2), '2일 후'),
+      ];
+      for (final (remaining, text) in table) {
+        expect(AlarmFormat.remaining(ko, remaining), text, reason: '$remaining');
+      }
+      expect(AlarmFormat.remaining(en, const Duration(hours: 3, minutes: 5)), 'in 3 hr 5 min');
+    });
+  });
+
+  group('day', () {
+    final mondayEvening = DateTime(2026, 9, 28, 21); // 월요일
+
+    test('오늘 · 내일 · 그 뒤는 월일, 뒤에 요일', () {
+      expect(AlarmFormat.day(ko, DateTime(2026, 9, 28, 21, 45), mondayEvening), '오늘 (월)');
+      expect(AlarmFormat.day(ko, DateTime(2026, 9, 29, 7), mondayEvening), '내일 (화)');
+      expect(AlarmFormat.day(ko, DateTime(2026, 10, 3, 7), mondayEvening), '10월 3일 (토)');
+      expect(AlarmFormat.day(en, DateTime(2026, 9, 29, 7), mondayEvening), 'Tomorrow (Tue)');
+      expect(AlarmFormat.day(en, DateTime(2026, 10, 3, 7), mondayEvening), 'Oct 3 (Sat)');
+    });
+
+    test('자정 직전에는 내일, 자정이 지나면 같은 시각이 오늘', () {
+      final at = DateTime(2026, 9, 29, 7);
+      expect(AlarmFormat.day(ko, at, DateTime(2026, 9, 28, 23, 59)), '내일 (화)');
+      expect(AlarmFormat.day(ko, at, DateTime(2026, 9, 29)), '오늘 (화)');
+    });
+
+    test('달 · 해가 바뀌어도 내일을 알아본다', () {
+      expect(AlarmFormat.day(ko, DateTime(2027, 1, 1, 7), DateTime(2026, 12, 31, 22)), '내일 (금)');
+    });
+  });
+
+  test('earliest 는 가장 이른 시각, 같으면 id 가 작은 것', () {
+    final seven = DateTime(2026, 9, 29, 7);
+    expect(AlarmFormat.earliest({}), isNull);
+    expect(AlarmFormat.earliest({3: DateTime(2026, 9, 29, 8), 5: seven}), 5);
+    expect(AlarmFormat.earliest({5: seven, 2: seven, 9: DateTime(2026, 9, 30)}), 2);
+  });
+
   group('repeat', () {
     test('요약', () {
       expect(AlarmFormat.repeat(ko, const {}), '1회');

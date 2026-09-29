@@ -119,11 +119,11 @@ return loaded(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<Alarm> alarms,  Duration? untilNext,  bool canRing)?  loaded,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing)?  loaded,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case AlarmListLoading() when loading != null:
 return loading();case AlarmListLoaded() when loaded != null:
-return loaded(_that.alarms,_that.untilNext,_that.canRing);case _:
+return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing);case _:
   return orElse();
 
 }
@@ -141,11 +141,11 @@ return loaded(_that.alarms,_that.untilNext,_that.canRing);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<Alarm> alarms,  Duration? untilNext,  bool canRing)  loaded,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing)  loaded,}) {final _that = this;
 switch (_that) {
 case AlarmListLoading():
 return loading();case AlarmListLoaded():
-return loaded(_that.alarms,_that.untilNext,_that.canRing);}
+return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -159,11 +159,11 @@ return loaded(_that.alarms,_that.untilNext,_that.canRing);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<Alarm> alarms,  Duration? untilNext,  bool canRing)?  loaded,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing)?  loaded,}) {final _that = this;
 switch (_that) {
 case AlarmListLoading() when loading != null:
 return loading();case AlarmListLoaded() when loaded != null:
-return loaded(_that.alarms,_that.untilNext,_that.canRing);case _:
+return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing);case _:
   return null;
 
 }
@@ -207,7 +207,7 @@ String toString() {
 
 
 class AlarmListLoaded implements AlarmListState {
-  const AlarmListLoaded({required final  List<Alarm> alarms, this.untilNext, this.canRing = true}): _alarms = alarms;
+  const AlarmListLoaded({required final  List<Alarm> alarms, required final  Map<int, DateTime> nextAt, required this.now, this.canRing = true}): _alarms = alarms,_nextAt = nextAt;
   
 
  final  List<Alarm> _alarms;
@@ -217,7 +217,14 @@ class AlarmListLoaded implements AlarmListState {
   return EqualUnmodifiableListView(_alarms);
 }
 
- final  Duration? untilNext;
+ final  Map<int, DateTime> _nextAt;
+ Map<int, DateTime> get nextAt {
+  if (_nextAt is EqualUnmodifiableMapView) return _nextAt;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_nextAt);
+}
+
+ final  DateTime now;
 @JsonKey() final  bool canRing;
 
 /// Create a copy of AlarmListState
@@ -230,16 +237,16 @@ $AlarmListLoadedCopyWith<AlarmListLoaded> get copyWith => _$AlarmListLoadedCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AlarmListLoaded&&const DeepCollectionEquality().equals(other._alarms, _alarms)&&(identical(other.untilNext, untilNext) || other.untilNext == untilNext)&&(identical(other.canRing, canRing) || other.canRing == canRing));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AlarmListLoaded&&const DeepCollectionEquality().equals(other._alarms, _alarms)&&const DeepCollectionEquality().equals(other._nextAt, _nextAt)&&(identical(other.now, now) || other.now == now)&&(identical(other.canRing, canRing) || other.canRing == canRing));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_alarms),untilNext,canRing);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_alarms),const DeepCollectionEquality().hash(_nextAt),now,canRing);
 
 @override
 String toString() {
-  return 'AlarmListState.loaded(alarms: $alarms, untilNext: $untilNext, canRing: $canRing)';
+  return 'AlarmListState.loaded(alarms: $alarms, nextAt: $nextAt, now: $now, canRing: $canRing)';
 }
 
 
@@ -250,7 +257,7 @@ abstract mixin class $AlarmListLoadedCopyWith<$Res> implements $AlarmListStateCo
   factory $AlarmListLoadedCopyWith(AlarmListLoaded value, $Res Function(AlarmListLoaded) _then) = _$AlarmListLoadedCopyWithImpl;
 @useResult
 $Res call({
- List<Alarm> alarms, Duration? untilNext, bool canRing
+ List<Alarm> alarms, Map<int, DateTime> nextAt, DateTime now, bool canRing
 });
 
 
@@ -267,11 +274,12 @@ class _$AlarmListLoadedCopyWithImpl<$Res>
 
 /// Create a copy of AlarmListState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? alarms = null,Object? untilNext = freezed,Object? canRing = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? alarms = null,Object? nextAt = null,Object? now = null,Object? canRing = null,}) {
   return _then(AlarmListLoaded(
 alarms: null == alarms ? _self._alarms : alarms // ignore: cast_nullable_to_non_nullable
-as List<Alarm>,untilNext: freezed == untilNext ? _self.untilNext : untilNext // ignore: cast_nullable_to_non_nullable
-as Duration?,canRing: null == canRing ? _self.canRing : canRing // ignore: cast_nullable_to_non_nullable
+as List<Alarm>,nextAt: null == nextAt ? _self._nextAt : nextAt // ignore: cast_nullable_to_non_nullable
+as Map<int, DateTime>,now: null == now ? _self.now : now // ignore: cast_nullable_to_non_nullable
+as DateTime,canRing: null == canRing ? _self.canRing : canRing // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

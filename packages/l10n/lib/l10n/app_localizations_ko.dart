@@ -1436,9 +1436,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAlarmAdd => '알람 추가';
 
   @override
-  String walkAlarmNextIn(String duration) {
-    return '다음 알람까지 $duration';
+  String get walkAlarmNextTitle => '다음 알람';
+
+  @override
+  String walkAlarmIn(String duration) {
+    return '$duration 후';
   }
+
+  @override
+  String get walkAlarmNoneEnabled => '켜진 알람이 없어요';
+
+  @override
+  String get walkAlarmDayToday => '오늘';
+
+  @override
+  String get walkAlarmDayTomorrow => '내일';
 
   @override
   String walkAlarmRingsIn(String duration) {

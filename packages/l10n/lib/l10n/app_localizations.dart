@@ -2840,11 +2840,35 @@ abstract class AppLocalizations {
   /// **'알람 추가'**
   String get walkAlarmAdd;
 
-  /// 알람 목록 머리 — 가장 이른 알람까지 남은 시간
+  /// 알람 목록 맨 위 요약 카드 머리
   ///
   /// In ko, this message translates to:
-  /// **'다음 알람까지 {duration}'**
-  String walkAlarmNextIn(String duration);
+  /// **'다음 알람'**
+  String get walkAlarmNextTitle;
+
+  /// 요약 카드 · 알람 행 — 다음 울림까지 남은 시간
+  ///
+  /// In ko, this message translates to:
+  /// **'{duration} 후'**
+  String walkAlarmIn(String duration);
+
+  /// 요약 카드 — 알람은 있지만 모두 꺼졌을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'켜진 알람이 없어요'**
+  String get walkAlarmNoneEnabled;
+
+  /// 요약 카드 날짜 — 오늘 울릴 때
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘'**
+  String get walkAlarmDayToday;
+
+  /// 요약 카드 날짜 — 내일 울릴 때
+  ///
+  /// In ko, this message translates to:
+  /// **'내일'**
+  String get walkAlarmDayTomorrow;
 
   /// 알람 저장 · 켜기 뒤 스낵바 — 울릴 때까지 남은 시간
   ///

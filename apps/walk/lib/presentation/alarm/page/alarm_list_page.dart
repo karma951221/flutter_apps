@@ -1,15 +1,18 @@
 import 'dart:async';
 
+import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
+import '../../../domain/clock.dart';
 import '../cubit/alarm_list_cubit.dart';
 import '../cubit/alarm_list_state.dart';
 import '../format/alarm_format.dart';
 import '../widget/alarm_permission_banner.dart';
+import '../widget/alarm_summary_card.dart';
 import '../widget/alarm_tile.dart';
 import 'alarm_edit_page.dart';
 
@@ -28,22 +31,43 @@ class AlarmListPage extends StatefulWidget {
 }
 
 class _AlarmListPageState extends State<AlarmListPage> {
-  /// "다음 알람까지"를 매분 새로 센다.
+  final _clock = getIt<Clock>();
+
+  /// 남은 시간을 매분 0초에 새로 센다 — 다음 분 0초까지 [_align], 그 뒤 1분마다 [_ticker].
+  Timer? _align;
   Timer? _ticker;
+
+  /// 다른 탭에 가려져 있으면(IndexedStack 이 `TickerMode` 를 끈다) false.
+  bool _visible = true;
 
   @override
   void initState() {
     super.initState();
-    _ticker = Timer.periodic(const Duration(minutes: 1), (_) {
-      // 다른 탭에 가려져 있을 땐(IndexedStack) 건너뛴다.
-      if (mounted && TickerMode.valuesOf(context).enabled) {
-        context.read<AlarmListCubit>().load();
-      }
+    final now = _clock.now();
+    final nextMinute = DateTime(now.year, now.month, now.day, now.hour, now.minute + 1);
+    _align = Timer(nextMinute.difference(now), () {
+      _tick();
+      _ticker = Timer.periodic(const Duration(minutes: 1), (_) => _tick());
     });
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final visible = TickerMode.valuesOf(context).enabled;
+    if (visible == _visible) return;
+    _visible = visible;
+    // 가려진 동안 건너뛴 분을 탭이 다시 보이는 즉시 따라잡는다.
+    if (visible) context.read<AlarmListCubit>().tick();
+  }
+
+  void _tick() {
+    if (mounted && _visible) context.read<AlarmListCubit>().tick();
+  }
+
+  @override
   void dispose() {
+    _align?.cancel();
     _ticker?.cancel();
     super.dispose();
   }
@@ -89,7 +113,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
           body: BlocBuilder<AlarmListCubit, AlarmListState>(
             builder: (context, state) => switch (state) {
               AlarmListLoading() => const Center(child: CircularProgressIndicator()),
-              AlarmListLoaded(:final alarms, :final untilNext, :final canRing) => ListView(
+              AlarmListLoaded(:final alarms, :final nextAt, :final now, :final canRing) => ListView(
                 // FAB 가 마지막 행의 스위치를 가리지 않게.
                 padding: const EdgeInsets.only(bottom: AppSpacing.xl * 2.5),
                 children: [
@@ -103,7 +127,8 @@ class _AlarmListPageState extends State<AlarmListPage> {
                       ),
                       child: AlarmPermissionBanner(onTap: widget.onOpenSettings),
                     ),
-                  if (untilNext != null)
+                  // 알람이 하나도 없으면 카드 대신 아래 빈 상태만.
+                  if (alarms.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
                         AppSpacing.md,
@@ -111,10 +136,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
                         AppSpacing.md,
                         AppSpacing.sm,
                       ),
-                      child: Text(
-                        l10n.walkAlarmNextIn(AlarmFormat.duration(l10n, untilNext)),
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
+                      child: AlarmSummaryCard(alarms: alarms, nextAt: nextAt, now: now),
                     ),
                   if (alarms.isEmpty)
                     Padding(
@@ -130,6 +152,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
                       AlarmTile(
                         key: ValueKey(alarm.id),
                         alarm: alarm,
+                        untilRing: nextAt[alarm.id]?.difference(now),
                         onTap: () => _open(context, alarm),
                         onToggle: (enabled) => _toggle(context, alarm, enabled),
                       ),

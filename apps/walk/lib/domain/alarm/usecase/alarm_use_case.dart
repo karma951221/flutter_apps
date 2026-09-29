@@ -41,9 +41,6 @@ abstract interface class AlarmUseCase {
   /// 예약**에서 지금보다 뒤인 가장 이른 것을 고른다 — 스누즈된 회차가 들어가고, 권한 문제로
   /// 예약이 빠진 알람은 키가 없다.
   Future<Map<int, DateTime>> nextRings();
-
-  /// 가장 이른 다음 회차. 없으면 null. ("다음 알람까지")
-  Future<AlarmTrigger?> next();
 }
 
 @LazySingleton(as: AlarmUseCase)
@@ -142,9 +139,6 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     await _scheduler.stop(packageId);
     await _sync();
   });
-
-  @override
-  Future<AlarmTrigger?> next() async => nextTrigger(await _repository.load(), _clock.now());
 
   @override
   Future<Map<int, DateTime>> nextRings() async {

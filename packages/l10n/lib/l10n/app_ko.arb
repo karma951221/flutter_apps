@@ -1964,14 +1964,30 @@
   "@walkAlarmAdd": {
     "description": "새 알람 버튼(FAB) 툴팁"
   },
-  "walkAlarmNextIn": "다음 알람까지 {duration}",
-  "@walkAlarmNextIn": {
-    "description": "알람 목록 머리 — 가장 이른 알람까지 남은 시간",
+  "walkAlarmNextTitle": "다음 알람",
+  "@walkAlarmNextTitle": {
+    "description": "알람 목록 맨 위 요약 카드 머리"
+  },
+  "walkAlarmIn": "{duration} 후",
+  "@walkAlarmIn": {
+    "description": "요약 카드 · 알람 행 — 다음 울림까지 남은 시간",
     "placeholders": {
       "duration": {
         "type": "String"
       }
     }
+  },
+  "walkAlarmNoneEnabled": "켜진 알람이 없어요",
+  "@walkAlarmNoneEnabled": {
+    "description": "요약 카드 — 알람은 있지만 모두 꺼졌을 때"
+  },
+  "walkAlarmDayToday": "오늘",
+  "@walkAlarmDayToday": {
+    "description": "요약 카드 날짜 — 오늘 울릴 때"
+  },
+  "walkAlarmDayTomorrow": "내일",
+  "@walkAlarmDayTomorrow": {
+    "description": "요약 카드 날짜 — 내일 울릴 때"
   },
   "walkAlarmRingsIn": "{duration} 뒤에 울려요",
   "@walkAlarmRingsIn": {
