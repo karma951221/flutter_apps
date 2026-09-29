@@ -1,5 +1,8 @@
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
+import 'dart:async';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
@@ -128,6 +131,57 @@ void main() {
     expect(find.text('알람을 저장하지 못했어요'), findsNothing);
     expect(results, [const Duration(hours: 7, minutes: 12)]);
     verify(() => useCase.save(any())).called(1);
+  });
+
+  testWidgets('저장 중에는 저장 버튼이 잠겨 두 번 저장되지 않는다', (tester) async {
+    final saving = Completer<Alarm>();
+    when(() => useCase.save(any())).thenAnswer((_) => saving.future);
+    await pump(tester, Alarm.draft());
+
+    await tester.tap(find.text('저장'));
+    await tester.pump();
+    await tester.tap(find.byType(FilledButton), warnIfMissed: false);
+    await tester.pump();
+    saving.complete(const Alarm(id: 1, hour: 7, minute: 0, repeat: {Weekday.mon}));
+    await tester.pumpAndSettle();
+
+    verify(() => useCase.save(any())).called(1);
+    expect(find.byType(AlarmEditPage), findsNothing);
+  });
+
+  testWidgets('시각 휠을 돌리면 그 시각으로 저장한다', (tester) async {
+    when(() => useCase.save(any())).thenAnswer(
+      (i) async => (i.positionalArguments.single as Alarm).copyWith(id: 1),
+    );
+    await pump(tester, Alarm.draft());
+
+    tester
+        .widget<CupertinoDatePicker>(find.byType(CupertinoDatePicker))
+        .onDateTimeChanged(DateTime(2000, 1, 1, 6, 45));
+    await tester.pump();
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+
+    final saved = verify(() => useCase.save(captureAny())).captured.single as Alarm;
+    expect((saved.hour, saved.minute), (6, 45));
+  });
+
+  testWidgets('기존 알람 저장은 id · 라벨 · 반복을 유지한다', (tester) async {
+    const existing = Alarm(id: 3, hour: 6, minute: 30, label: '출근', repeat: {Weekday.mon});
+    when(() => useCase.save(any())).thenAnswer(
+      (i) async => i.positionalArguments.single as Alarm,
+    );
+    await pump(tester, existing);
+
+    expect(find.widgetWithText(TextField, '출근'), findsOneWidget);
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+
+    final saved = verify(() => useCase.save(captureAny())).captured.single as Alarm;
+    expect(saved.id, 3);
+    expect(saved.label, '출근');
+    expect(saved.repeat, {Weekday.mon});
+    expect((saved.hour, saved.minute), (6, 30));
   });
 
   testWidgets('편집: 삭제는 확인 뒤 지우고 결과 없이 닫힌다', (tester) async {

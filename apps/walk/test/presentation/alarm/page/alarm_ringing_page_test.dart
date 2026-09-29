@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
@@ -86,6 +88,41 @@ void main() {
     verify(() => useCase.snooze(100)).called(1);
     expect(find.text('home'), findsOneWidget);
   });
+
+  for (final (button, action) in [('알람 끄기', 'stop'), ('5분 뒤 다시 울림', 'snooze')]) {
+    testWidgets('$button 도중 리스너가 먼저 화면을 걷어도 아래 화면은 남는다', (tester) async {
+      final navigator = GlobalKey<NavigatorState>();
+      final route = MaterialPageRoute<void>(
+        builder: (_) => const AlarmRingingPage(packageId: 100),
+      );
+      // 알림 쪽에서 먼저 꺼져 AlarmRingListener 가 이 화면을 걷는 경우.
+      Future<void> removedByListener(Invocation _) async =>
+          navigator.currentState!.removeRoute(route);
+      when(() => useCase.findByPackageId(100)).thenAnswer((_) async => null);
+      when(() => useCase.stop(100)).thenAnswer(removedByListener);
+      when(() => useCase.snooze(100)).thenAnswer(removedByListener);
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorKey: navigator,
+          theme: AppTheme.light(),
+          locale: const Locale('ko'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Text('home'),
+        ),
+      );
+      unawaited(navigator.currentState!.push(route));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(button));
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(AlarmRingingPage), findsNothing);
+      expect(find.text('home'), findsOneWidget);
+      verify(() => action == 'stop' ? useCase.stop(100) : useCase.snooze(100)).called(1);
+    });
+  }
 
   for (final locale in const [Locale('ko'), Locale('en'), Locale('ja')]) {
     testWidgets('320dp 폭에서도 버튼 문구가 잘리지 않는다 ($locale)', (tester) async {
