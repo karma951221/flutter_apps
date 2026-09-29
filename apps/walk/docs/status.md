@@ -51,13 +51,16 @@
   테마 prefs 타입 오류 크래시 · 남은 시간 1초 미만 자투리 버림), 예약 없음 카드 문구(사용자 결정) 추가.
   바로 통과한 테스트는 전부 뮤테이션으로 실패를 확인했다. 병합 `30700c4`.
 
-검증(2026-09-30): `flutter analyze` 0 · `flutter test` 268건 통과(1건 skip — KST 에선 DST 테스트가 스스로 건너뜀) · 디버그 APK 빌드.
+- [x] **시간대 변경 대응(TDD, 2026-09-30)** — [설계](../../../docs/superpowers/specs/2026-09-30-walk-alarm-timezone-design.md).
+  `TIMEZONE_CHANGED` 수신기 → 앱이 떠 있으면 메인 엔진에 `resync`(`timeZoneChanged` = 전체 재설정 → sync → 목록),
+  아니면 헤드리스 엔진(`Alarm.init` → sync). 에뮬레이터에서 서울↔파리 양방향 · 앱 종료/전면 두 경우 모두
+  예약이 같은 벽시계 시각으로 옮겨짐 확인 (`214b6f0`).
+
+검증(2026-09-30, 시간대 대응 뒤): `flutter test` 278건 통과(1 skip).
+이전 검증(2026-09-30): `flutter analyze` 0 · `flutter test` 268건 통과(1건 skip — KST 에선 DST 테스트가 스스로 건너뜀) · 디버그 APK 빌드.
 
 ## 다음 할 일
 
-- **시간대 변경 대응** — 미리 걸어 둔 14일 예약은 절대 시각이라, 시간대가 바뀐 뒤 앱을 열지 않으면
-  옛 시간대 기준으로 울린다. `ACTION_TIMEZONE_CHANGED` 수신기 → 헤드리스 Flutter 엔진으로
-  `AlarmUseCase.sync()` 를 한 번 돌린다(2026-09-30 사용자 결정: 남은 시간 다음 작업).
 - 알람 작은 개선 후보 — 앱이 앞에 있을 때 울림 화면과 헤드업 알림이 함께 뜬다 · 울릴 때 시스템
   볼륨 패널이 뜬다(`VolumeSettings.showSystemUI`).
 
