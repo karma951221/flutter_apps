@@ -55,7 +55,10 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   /// (패키지 `checkAlarm` 의 30초 유예와 같은 이유 — 곧 울릴 알람을 지우는 쪽이 훨씬 나쁘다.)
   static const dueGrace = Duration(minutes: 1);
 
-  /// 시작 · 복귀 · 저장이 겹쳐 부를 수 있어 한 번에 하나씩 돈다.
+  /// 시작 · 복귀 · 저장이 겹쳐 부를 수 있어 한 번에 하나씩 돈다. 읽기([list] · [find] ·
+  /// [nextRings])도 같은 줄에 선다 — 바꾸는 도중에 읽으면 패키지 예약은 이미 바뀌었는데
+  /// 저장소는 아직인 순간을 본다. (울림 화면에서 끄면 패키지가 울림 스트림을 먼저 비워
+  /// 화면이 걷히고, 목록이 `stop` 의 sync 가 1회성을 끄기 전에 다시 읽는다.)
   Future<void> _tail = Future.value();
 
   Future<T> _serial<T>(Future<T> Function() body) {
@@ -65,10 +68,10 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   }
 
   @override
-  Future<List<Alarm>> list() async => _sorted(await _repository.load());
+  Future<List<Alarm>> list() => _serial(() async => _sorted(await _repository.load()));
 
   @override
-  Future<Alarm?> find(int alarmId) async => _byId(await _repository.load(), alarmId);
+  Future<Alarm?> find(int alarmId) => _serial(() async => _byId(await _repository.load(), alarmId));
 
   @override
   Future<Alarm?> findByPackageId(int packageId) => find(alarmIdOf(packageId));
@@ -141,7 +144,7 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   });
 
   @override
-  Future<Map<int, DateTime>> nextRings() async {
+  Future<Map<int, DateTime>> nextRings() => _serial(() async {
     final now = _clock.now();
     final enabled = {for (final a in await _repository.load()) if (a.enabled) a.id};
     final next = <int, DateTime>{};
@@ -152,7 +155,7 @@ class DefaultAlarmUseCase implements AlarmUseCase {
       if (earliest == null || at.isBefore(earliest)) next[alarmId] = at;
     }
     return next;
-  }
+  });
 
   Future<void> _sync() async {
     final now = _clock.now();

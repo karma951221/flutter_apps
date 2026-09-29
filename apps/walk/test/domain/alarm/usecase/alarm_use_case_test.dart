@@ -24,6 +24,10 @@ class _FakeScheduler implements AlarmScheduler {
   final List<int> scheduleCalls = [];
   final List<int> cancelCalls = [];
 
+  /// 패키지는 `stop` 안에서 울림 스트림을 비운다 — 그걸 보고 울림 화면이 걷히고 목록이
+  /// 다시 읽는 순간을 흉내 낸다.
+  void Function(int packageId)? onStop;
+
   @override
   Future<Map<int, DateTime>> scheduled() async => {...entries};
 
@@ -49,6 +53,7 @@ class _FakeScheduler implements AlarmScheduler {
   Future<void> stop(int packageId) async {
     entries.remove(packageId);
     ringing.remove(packageId);
+    onStop?.call(packageId);
   }
 }
 
@@ -283,6 +288,45 @@ void main() {
 
       expect(scheduler.entries, isEmpty);
       expect(repository.alarms.single.enabled, isFalse);
+    });
+
+    test('stop 도중 목록을 다시 읽어도 꺼진 1회성을 본다', () async {
+      final saved = await useCase.save(const Alarm(hour: 13, minute: 0));
+      final at = DateTime(2026, 9, 28, 13);
+      final ringingId = pid(saved.id, at);
+      clock.current = at;
+      scheduler.ringing.add(ringingId);
+      late Future<List<Alarm>> listed;
+      late Future<Map<int, DateTime>> next;
+      scheduler.onStop = (_) {
+        listed = useCase.list();
+        next = useCase.nextRings();
+      };
+
+      await useCase.stop(ringingId);
+
+      expect((await listed).single.enabled, isFalse);
+      expect(await next, isEmpty);
+    });
+
+    test('stop 도중 다시 읽어도 반복 알람은 켜진 채 다음 회차가 남는다', () async {
+      final saved = await useCase.save(const Alarm(hour: 13, minute: 0, repeat: _everyDay));
+      final at = DateTime(2026, 9, 29, 13);
+      final ringingId = pid(saved.id, at);
+      clock.current = at;
+      scheduler.ringing.add(ringingId);
+      late Future<List<Alarm>> listed;
+      late Future<Map<int, DateTime>> next;
+      scheduler.onStop = (_) {
+        listed = useCase.list();
+        next = useCase.nextRings();
+      };
+
+      await useCase.stop(ringingId);
+
+      expect((await listed).single.enabled, isTrue);
+      expect(await next, {saved.id: DateTime(2026, 9, 30, 13)});
+      expect(scheduler.entries.keys, isNot(contains(ringingId)));
     });
 
     test('findByPackageId 는 회차의 알람을 찾는다', () async {
