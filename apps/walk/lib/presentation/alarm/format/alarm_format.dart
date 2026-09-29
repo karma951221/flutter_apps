@@ -19,7 +19,7 @@ abstract final class AlarmFormat {
   /// 남은 시간. 분은 올림한다 — 곧 울릴 알람이 "0분"으로 보이지 않게.
   /// 하루가 넘으면 분은 생략한다.
   static String duration(AppLocalizations l10n, Duration remaining) {
-    final ceiled = (remaining.inSeconds / 60).ceil();
+    final ceiled = (remaining.inMicroseconds / Duration.microsecondsPerMinute).ceil();
     final totalMinutes = ceiled < 1 ? 1 : ceiled;
     final days = totalMinutes ~/ (24 * 60);
     final hours = totalMinutes ~/ 60 % 24;

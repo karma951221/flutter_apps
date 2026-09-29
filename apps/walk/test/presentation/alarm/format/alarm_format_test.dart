@@ -56,6 +56,32 @@ void main() {
       }
       expect(AlarmFormat.remaining(en, const Duration(hours: 3, minutes: 5)), 'in 3 hr 5 min');
     });
+
+    test('단위가 올라가는 경계 — 올림한 분으로 시간 · 일을 다시 센다', () {
+      const table = [
+        (Duration(minutes: 60), '1시간 후'),
+        (Duration(minutes: 59, seconds: 30), '1시간 후'),
+        (Duration(hours: 23, minutes: 59, seconds: 30), '1일 후'),
+        (Duration(hours: 24), '1일 후'),
+        (Duration(days: 1, minutes: 30), '1일 후'),
+      ];
+      for (final (remaining, text) in table) {
+        expect(AlarmFormat.remaining(ko, remaining), text, reason: '$remaining');
+      }
+    });
+
+    test('음수(막 지남)는 1분 후', () {
+      expect(AlarmFormat.remaining(ko, const Duration(seconds: -30)), '1분 후');
+      expect(AlarmFormat.remaining(ko, const Duration(minutes: -3)), '1분 후');
+    });
+
+    test('1초 미만 자투리도 올림한다 — 1분 0.5초는 2분 후', () {
+      expect(
+        AlarmFormat.remaining(ko, const Duration(minutes: 1, milliseconds: 500)),
+        '2분 후',
+      );
+      expect(AlarmFormat.remaining(ko, const Duration(microseconds: 1)), '1분 후');
+    });
   });
 
   group('day', () {
