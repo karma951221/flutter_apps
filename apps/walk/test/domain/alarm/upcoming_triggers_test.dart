@@ -77,6 +77,44 @@ void main() {
       ]);
     });
 
+    test('연말을 넘어가도 날짜와 요일이 맞다', () {
+      const alarm = Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay);
+      final triggers = upcomingTriggers(alarm, DateTime(2026, 12, 30, 12));
+      expect(triggers.take(3), [
+        DateTime(2026, 12, 31, 7),
+        DateTime(2027, 1, 1, 7),
+        DateTime(2027, 1, 2, 7),
+      ]);
+      expect(triggers, hasLength(14));
+      // 2027-01-01 은 금요일.
+      const fridays = Alarm(id: 1, hour: 7, minute: 0, repeat: {Weekday.fri});
+      expect(upcomingTriggers(fridays, DateTime(2026, 12, 30, 12)).first, DateTime(2027, 1, 1, 7));
+    });
+
+    test('윤년 2월 29일을 건너뛰지 않는다', () {
+      const alarm = Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay);
+      expect(upcomingTriggers(alarm, DateTime(2028, 2, 28, 12)).take(2), [
+        DateTime(2028, 2, 29, 7),
+        DateTime(2028, 3, 1, 7),
+      ]);
+    });
+
+    test(
+      '서머타임 전환을 지나도 매일 같은 벽시계 시각',
+      () {
+        const alarm = Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay);
+        final triggers = upcomingTriggers(alarm, DateTime(2026, 3, 1, 12));
+        expect(triggers, hasLength(14));
+        for (final (i, at) in triggers.indexed) {
+          expect((at.day, at.hour, at.minute), (2 + i, 7, 0), reason: '$at');
+        }
+      },
+      // 로컬 시간대에 3월 초 서머타임 전환(미국 등)이 없으면 확인할 것이 없다.
+      skip: DateTime(2026, 3, 1).timeZoneOffset == DateTime(2026, 3, 15).timeZoneOffset
+          ? '로컬 시간대에 3월 서머타임 전환이 없음(TZ=America/New_York 으로 실행)'
+          : false,
+    );
+
     test('1회성: oneShotAt 이 뒤면 그 시각, 지났으면 빈 목록', () {
       final alarm = Alarm(id: 1, hour: 7, minute: 0, oneShotAt: DateTime(2026, 9, 29, 7));
       expect(upcomingTriggers(alarm, mondayNoon), [DateTime(2026, 9, 29, 7)]);
@@ -94,6 +132,10 @@ void main() {
       expect(nextOccurrence(13, 0, mondayNoon), DateTime(2026, 9, 28, 13));
       expect(nextOccurrence(12, 0, mondayNoon), DateTime(2026, 9, 29, 12));
       expect(nextOccurrence(7, 0, DateTime(2026, 9, 30, 8)), DateTime(2026, 10, 1, 7));
+    });
+
+    test('12월 31일에 지났으면 다음 해 1월 1일', () {
+      expect(nextOccurrence(7, 0, DateTime(2026, 12, 31, 8)), DateTime(2027, 1, 1, 7));
     });
   });
 

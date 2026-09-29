@@ -17,6 +17,20 @@ class _MemoryRepository implements AlarmRepository {
   Future<void> save(List<Alarm> alarms) async => this.alarms = [...alarms];
 }
 
+/// 다음 저장 한 번만 실패한다.
+class _FlakyRepository extends _MemoryRepository {
+  bool failNextSave = false;
+
+  @override
+  Future<void> save(List<Alarm> alarms) async {
+    if (failNextSave) {
+      failNextSave = false;
+      throw StateError('저장 실패');
+    }
+    await super.save(alarms);
+  }
+}
+
 class _FakeScheduler implements AlarmScheduler {
   final Map<int, DateTime> entries = {};
   final Map<int, Alarm> alarms = {};
@@ -379,6 +393,175 @@ void main() {
       repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay)];
 
       expect(await useCase.nextRings(), isEmpty);
+    });
+  });
+
+  group('save · 예전 회차 정리', () {
+    test('곧(5분 안) 울릴 예전 회차도 수정하면 지운다', () async {
+      final saved = await useCase.save(const Alarm(hour: 12, minute: 3, repeat: {Weekday.mon}));
+      final soonId = pid(saved.id, mondayNoon);
+      expect(scheduler.entries[soonId], DateTime(2026, 9, 28, 12, 3));
+
+      await useCase.save(saved.copyWith(minute: 30, repeat: {Weekday.tue}));
+
+      expect(scheduler.entries.keys, isNot(contains(soonId)));
+      expect(scheduler.entries.values, isNot(contains(DateTime(2026, 9, 28, 12, 3))));
+      expect(scheduler.entries[pid(saved.id, DateTime(2026, 9, 29))], DateTime(2026, 9, 29, 12, 30));
+    });
+
+    test('스누즈 중인 알람을 수정하면 스누즈 회차도 지운다', () async {
+      const alarm = Alarm(id: 1, hour: 11, minute: 58, repeat: _everyDay);
+      repository.alarms = [alarm];
+      final snoozedId = pid(1, mondayNoon);
+      scheduler.entries[snoozedId] = DateTime(2026, 9, 28, 12, 3); // 11:58 → 12:03 스누즈
+
+      await useCase.save(alarm.copyWith(hour: 7, minute: 0));
+
+      expect(scheduler.entries.keys, isNot(contains(snoozedId)));
+      expect(await useCase.nextRings(), {1: DateTime(2026, 9, 29, 7)});
+    });
+  });
+
+  group('새 id', () {
+    test('최대 id(9999)를 쓰고 있으면 비어 있는 가장 작은 id 를 준다', () async {
+      repository.alarms = [
+        const Alarm(id: 1, hour: 6, minute: 0, enabled: false),
+        const Alarm(id: Alarm.maxId, hour: 6, minute: 0, enabled: false),
+      ];
+
+      final saved = await useCase.save(Alarm.draft());
+
+      expect(saved.id, 2);
+    });
+
+    test('9999개가 모두 차면 StateError', () async {
+      repository.alarms = [
+        for (var id = 1; id <= Alarm.maxId; id++) Alarm(id: id, hour: 6, minute: 0, enabled: false),
+      ];
+
+      await expectLater(useCase.save(Alarm.draft()), throwsStateError);
+      expect(repository.alarms, hasLength(Alarm.maxId));
+    });
+  });
+
+  group('울리는 중 끄기 · 지우기', () {
+    test('울리는 중에 끄거나 지워도 울리는 회차는 cancel 하지 않는다', () async {
+      repository.alarms = [
+        const Alarm(id: 1, hour: 11, minute: 59, repeat: _everyDay),
+        const Alarm(id: 2, hour: 11, minute: 59, repeat: _everyDay),
+      ];
+      final ringing1 = pid(1, mondayNoon);
+      final ringing2 = pid(2, mondayNoon);
+      scheduler.entries[ringing1] = DateTime(2026, 9, 28, 11, 59);
+      scheduler.entries[ringing2] = DateTime(2026, 9, 28, 11, 59);
+      scheduler.ringing.addAll({ringing1, ringing2});
+
+      await useCase.toggle(1, enabled: false);
+      await useCase.delete(2);
+
+      expect(scheduler.cancelCalls, isNot(contains(ringing1)));
+      expect(scheduler.cancelCalls, isNot(contains(ringing2)));
+      expect(scheduler.ringing, {ringing1, ringing2});
+      // 다른 회차는 모두 지워졌다.
+      expect(scheduler.entries.keys.toSet(), {ringing1, ringing2});
+    });
+
+    test('지워진 알람의 울림을 snooze 하면 다시 걸지 않고 멈춘다', () async {
+      final ringingId = pid(1, mondayNoon);
+      scheduler.entries[ringingId] = DateTime(2026, 9, 28, 11, 59);
+      scheduler.ringing.add(ringingId);
+
+      await useCase.snooze(ringingId);
+
+      expect(scheduler.ringing, isEmpty);
+      expect(scheduler.entries, isEmpty);
+      expect(scheduler.scheduleCalls, isEmpty);
+    });
+  });
+
+  group('sync 경계', () {
+    test('스누즈 보존 창 경계: now+5분은 남기고 넘으면 취소, now-1분(dueGrace)은 취소하고 그 안은 남긴다', () async {
+      final staleId = pid(1, mondayNoon);
+      final cases = {
+        DateTime(2026, 9, 28, 12, 5): true,
+        DateTime(2026, 9, 28, 12, 5, 1): false,
+        DateTime(2026, 9, 28, 11, 59): false,
+        DateTime(2026, 9, 28, 11, 59, 1): true,
+      };
+      for (final MapEntry(key: at, value: kept) in cases.entries) {
+        repository.alarms = [const Alarm(id: 1, hour: 11, minute: 58, repeat: _everyDay)];
+        scheduler.entries
+          ..clear()
+          ..[staleId] = at;
+
+        await useCase.sync();
+
+        expect(scheduler.entries[staleId], kept ? at : isNull, reason: '$at');
+      }
+    });
+
+    test('같은 id 가 다른 시각으로 걸려 있으면 원하는 시각으로 다시 건다(시간대 변경)', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay)];
+      final tomorrowId = pid(1, DateTime(2026, 9, 29));
+      scheduler.entries[tomorrowId] = DateTime(2026, 9, 29, 8); // 한 시간 밀린 채 걸림
+
+      await useCase.sync();
+
+      expect(scheduler.entries[tomorrowId], DateTime(2026, 9, 29, 7));
+      expect(scheduler.scheduleCalls, contains(tomorrowId));
+    });
+
+    test('스누즈 · 울리는 회차가 있어도 두 번째 sync 는 아무것도 바꾸지 않는다', () async {
+      repository.alarms = [
+        const Alarm(id: 1, hour: 11, minute: 58, repeat: _everyDay),
+        const Alarm(id: 2, hour: 11, minute: 50, repeat: _everyDay),
+      ];
+      final snoozedId = pid(1, mondayNoon);
+      final ringingId = pid(2, mondayNoon);
+      scheduler.entries[snoozedId] = DateTime(2026, 9, 28, 12, 3);
+      scheduler.entries[ringingId] = DateTime(2026, 9, 28, 11, 50);
+      scheduler.ringing.add(ringingId);
+
+      await useCase.sync();
+      final afterFirst = {...scheduler.entries};
+      scheduler.scheduleCalls.clear();
+      scheduler.cancelCalls.clear();
+
+      await useCase.sync();
+
+      expect(scheduler.scheduleCalls, isEmpty);
+      expect(scheduler.cancelCalls, isEmpty);
+      expect(scheduler.entries, afterFirst);
+      expect(afterFirst[snoozedId], DateTime(2026, 9, 28, 12, 3));
+      expect(afterFirst[ringingId], DateTime(2026, 9, 28, 11, 50));
+    });
+
+    test('자정을 넘긴 스누즈 회차는 남기고, 오늘 회차는 다른 id 로 건다', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 23, minute: 58, repeat: _everyDay)];
+      clock.current = DateTime(2026, 9, 29, 0, 1);
+      final yesterdayId = pid(1, DateTime(2026, 9, 28));
+      final todayId = pid(1, DateTime(2026, 9, 29));
+      scheduler.entries[yesterdayId] = DateTime(2026, 9, 29, 0, 3); // 어제 23:58 → 00:03 스누즈
+
+      await useCase.sync();
+
+      expect(yesterdayId, isNot(todayId));
+      expect(scheduler.entries[yesterdayId], DateTime(2026, 9, 29, 0, 3));
+      expect(scheduler.entries[todayId], DateTime(2026, 9, 29, 23, 58));
+      expect(await useCase.nextRings(), {1: DateTime(2026, 9, 29, 0, 3)});
+    });
+  });
+
+  group('직렬 줄', () {
+    test('저장이 한 번 실패해도 다음 호출은 끝난다', () async {
+      final flaky = _FlakyRepository()..failNextSave = true;
+      useCase = DefaultAlarmUseCase(flaky, scheduler, clock);
+
+      await expectLater(useCase.save(Alarm.draft()), throwsStateError);
+
+      expect(await useCase.list().timeout(const Duration(seconds: 1)), isEmpty);
+      final saved = await useCase.save(Alarm.draft()).timeout(const Duration(seconds: 1));
+      expect(saved.id, 1);
     });
   });
 }
