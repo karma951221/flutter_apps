@@ -108,6 +108,25 @@ void main() {
   );
 
   blocTest<AlarmEditCubit, AlarmEditState>(
+    '저장 뒤 권한 확인이 예외를 던져도 저장은 끝났으므로 남은 시간을 돌려준다',
+    build: () {
+      when(() => useCase.save(any())).thenAnswer(
+        (_) async => Alarm(id: 1, hour: 7, minute: 0, oneShotAt: DateTime(2026, 9, 28, 7)),
+      );
+      when(() => notification.ensure()).thenThrow(StateError('plugin'));
+      return build();
+    },
+    act: (cubit) async {
+      expect(await cubit.save(), const Duration(hours: 7, minutes: 12));
+    },
+    expect: () => [
+      AlarmEditState(alarm: Alarm.draft(), busy: true),
+      AlarmEditState(alarm: Alarm.draft()),
+    ],
+    verify: (_) => verify(() => useCase.save(any())).called(1),
+  );
+
+  blocTest<AlarmEditCubit, AlarmEditState>(
     '저장이 실패하면 던지고 권한은 묻지 않는다',
     build: () {
       when(() => useCase.save(any())).thenThrow(StateError('full'));

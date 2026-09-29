@@ -111,6 +111,25 @@ void main() {
     expect(find.text('알람을 저장하지 못했어요'), findsOneWidget);
   });
 
+  testWidgets('권한 확인이 실패해도 편집 화면은 닫히고, 다시 저장해 알람이 둘이 되지 않는다', (
+    tester,
+  ) async {
+    when(() => useCase.save(any())).thenAnswer(
+      (i) async => (i.positionalArguments.single as Alarm).copyWith(id: 1),
+    );
+    when(notification.ensure).thenThrow(StateError('plugin'));
+    final results = await pump(tester, Alarm.draft());
+
+    await tester.tap(find.text('월'));
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlarmEditPage), findsNothing);
+    expect(find.text('알람을 저장하지 못했어요'), findsNothing);
+    expect(results, [const Duration(hours: 7, minutes: 12)]);
+    verify(() => useCase.save(any())).called(1);
+  });
+
   testWidgets('편집: 삭제는 확인 뒤 지우고 결과 없이 닫힌다', (tester) async {
     when(() => useCase.delete(3)).thenAnswer((_) async {});
     final results = await pump(tester, const Alarm(id: 3, hour: 6, minute: 30));

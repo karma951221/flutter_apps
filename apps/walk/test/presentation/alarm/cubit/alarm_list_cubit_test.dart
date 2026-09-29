@@ -167,6 +167,35 @@ void main() {
   );
 
   blocTest<AlarmListCubit, AlarmListState>(
+    '켠 뒤 권한 확인이 예외여도 토글은 성공으로 끝난다',
+    build: () {
+      final on = off.copyWith(enabled: true, oneShotAt: DateTime(2026, 9, 28, 8));
+      when(() => useCase.toggle(2, enabled: true)).thenAnswer((_) async {
+        when(() => useCase.list()).thenAnswer((_) async => [seven, on]);
+        when(() => useCase.nextRings())
+            .thenAnswer((_) async => {1: sevenAt, 2: DateTime(2026, 9, 28, 8)});
+        return on;
+      });
+      when(() => notification.ensure()).thenThrow(StateError('plugin'));
+      return build();
+    },
+    seed: () => loaded([seven, off]),
+    act: (cubit) async {
+      expect(
+        await cubit.toggle(off, enabled: true),
+        const Duration(hours: 8, minutes: 12),
+      );
+    },
+    expect: () => [
+      loaded([seven, off.copyWith(enabled: true)]),
+      loaded(
+        [seven, off.copyWith(enabled: true, oneShotAt: DateTime(2026, 9, 28, 8))],
+        nextAt: {1: sevenAt, 2: DateTime(2026, 9, 28, 8)},
+      ),
+    ],
+  );
+
+  blocTest<AlarmListCubit, AlarmListState>(
     '끄면 권한을 묻지 않고 null',
     build: () {
       when(() => useCase.toggle(1, enabled: false)).thenAnswer((_) async {
