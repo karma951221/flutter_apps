@@ -31,6 +31,9 @@ abstract interface class AlarmUseCase {
   /// 앱 시작 · 복귀 · 울림 처리 뒤에 부른다.
   Future<void> sync();
 
+  /// 기기 시간대가 바뀌었다. 패키지 예약을 새 시간대의 벽시계로 옮겨 건 뒤 [sync] 한다.
+  Future<void> timeZoneChanged();
+
   /// 울리는 회차를 [alarmSnoozeDuration] 뒤로 다시 건다. 알람이 지워졌거나 꺼졌으면 멈춘다.
   Future<void> snooze(int packageId);
 
@@ -125,6 +128,12 @@ class DefaultAlarmUseCase implements AlarmUseCase {
 
   @override
   Future<void> sync() => _serial(_sync);
+
+  @override
+  Future<void> timeZoneChanged() => _serial(() async {
+    await _scheduler.rearmAll();
+    await _sync();
+  });
 
   @override
   Future<void> snooze(int packageId) => _serial(() async {

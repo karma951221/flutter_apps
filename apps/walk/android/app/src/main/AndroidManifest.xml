@@ -54,6 +54,15 @@
                 <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
             </intent-filter>
         </activity-alias>
+        <!-- 시간대가 바뀌면 알람 예약을 새 벽시계에 맞춰 다시 건다. TIMEZONE_CHANGED 는
+             암시적 방송 제한의 예외라 앱이 꺼져 있어도 받는다. -->
+        <receiver
+            android:name=".TimeZoneChangedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

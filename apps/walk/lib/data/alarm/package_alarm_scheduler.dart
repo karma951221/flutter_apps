@@ -44,6 +44,10 @@ class PackageAlarmScheduler implements AlarmScheduler {
     await pkg.Alarm.set(alarmSettings: settingsFor(packageId, at, alarm, _texts()));
   }
 
+  /// 패키지 `checkAlarm` 은 저장된 예약 중 아직 오지 않은 것을 모두 다시 `set` 한다.
+  @override
+  Future<void> rearmAll() => pkg.Alarm.checkAlarm();
+
   @override
   Future<void> cancel(int packageId) async {
     await pkg.Alarm.stop(packageId);

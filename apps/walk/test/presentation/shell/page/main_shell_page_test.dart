@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
@@ -49,6 +50,7 @@ void main() {
     when(alarms.list).thenAnswer((_) async => []);
     when(alarms.nextRings).thenAnswer((_) async => {});
     when(alarms.sync).thenAnswer((_) async {});
+    when(alarms.timeZoneChanged).thenAnswer((_) async {});
     when(walk.access).thenAnswer((_) async => HealthAccess.permissionDenied);
     when(() => walk.permissionDeclinedThisSession).thenReturn(false);
     final appInfo = _MockAppInfo();
@@ -208,5 +210,54 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('알람이 없어요'), findsOneWidget);
+  });
+
+  /// 네이티브(시간대 변경 수신기)가 메인 엔진에 `resync` 를 부른 것처럼 보낸다. 응답 봉투를 돌려준다.
+  Future<ByteData?> platformResync(WidgetTester tester) {
+    const codec = StandardMethodCodec();
+    final reply = Completer<ByteData?>();
+    tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+      'walk/background',
+      codec.encodeMethodCall(const MethodCall('resync')),
+      reply.complete,
+    );
+    return reply.future;
+  }
+
+  testWidgets('네이티브가 resync 를 부르면 예약을 새 시간대로 다시 건 뒤 목록을 다시 읽고 응답한다', (tester) async {
+    await pump(tester);
+    clearInteractions(alarms);
+
+    final reply = platformResync(tester);
+    await tester.pumpAndSettle();
+
+    verifyInOrder([alarms.timeZoneChanged, alarms.list]);
+    final envelope = await reply;
+    expect(envelope, isNotNull);
+    expect(const StandardMethodCodec().decodeEnvelope(envelope!), isNull);
+  });
+
+  testWidgets('resync 중 동기화가 실패해도 목록을 읽고 응답한다', (tester) async {
+    await pump(tester);
+    clearInteractions(alarms);
+    when(alarms.timeZoneChanged).thenThrow(Exception('scheduler'));
+
+    final reply = platformResync(tester);
+    await tester.pumpAndSettle();
+
+    verifyInOrder([alarms.timeZoneChanged, alarms.list]);
+    expect(await reply, isNotNull);
+  });
+
+  testWidgets('셸이 사라지면 resync 핸들러를 걷는다', (tester) async {
+    await pump(tester);
+    await tester.pumpWidget(const SizedBox());
+    clearInteractions(alarms);
+
+    final reply = platformResync(tester);
+    await tester.pump();
+
+    expect(await reply, isNull);
+    verifyNever(alarms.timeZoneChanged);
   });
 }

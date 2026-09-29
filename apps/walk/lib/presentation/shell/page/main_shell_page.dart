@@ -1,8 +1,10 @@
 import 'package:core/core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../../core/background/alarm_resync.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
 import '../../../domain/clock.dart';
@@ -18,7 +20,8 @@ enum ShellTab { alarm, walk, settings }
 
 /// 하단 탭 셸. 탭마다 자기 `Scaffold` · `AppBar` 를 둔다.
 ///
-/// 알람 예약 동기화(`AlarmUseCase.sync`)는 여기 한 곳에서 한다 — 시작과 복귀(resumed).
+/// 알람 예약 동기화(`AlarmUseCase.sync`)는 여기 한 곳에서 한다 — 시작과 복귀(resumed),
+/// 그리고 앱이 떠 있을 때 시간대가 바뀌면 네이티브 수신기가 [backgroundChannel] 로 부르는 `resync`.
 /// 알람 목록 · 설정 권한 cubit 을 소유해, 복귀하거나 위에 얹힌 화면(편집 · 울림)이
 /// 걷힐 때 다시 읽는다.
 class MainShellPage extends StatefulWidget {
@@ -47,6 +50,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   void initState() {
     super.initState();
     _lifecycle = AppLifecycleListener(onResume: _refresh);
+    backgroundChannel.setMethodCallHandler(_onBackgroundCall);
     _alarms.load();
     _refresh();
   }
@@ -64,6 +68,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
 
   @override
   void dispose() {
+    backgroundChannel.setMethodCallHandler(null);
     appRouteObserver.unsubscribe(this);
     _lifecycle.dispose();
     _alarms.close();
@@ -77,15 +82,23 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   void didPopNext() => _refresh();
 
   /// 시작 · 복귀. 예약을 채운 뒤(지난 1회성이 꺼진 뒤) 목록을 읽는다.
-  Future<void> _refresh() async {
+  Future<void> _refresh() => _reload(_alarmUseCase.sync);
+
+  Future<void> _reload(Future<void> Function() reschedule) async {
     _permissions.check();
     try {
-      await _alarmUseCase.sync();
+      await reschedule();
     } on Object {
       // 부르는 쪽이 기다리지 않는다(시작 · 복귀 · 화면 복귀) — 예외를 올리면 잡을 곳이 없다.
       // 예약은 다음 복귀에 다시 채우고, 목록은 저장된 대로 보인다.
     }
     await _alarms.load();
+  }
+
+  /// 시간대가 바뀌었다 — 새 시간대의 벽시계로 예약을 다시 걸고 목록을 읽은 뒤 응답한다.
+  Future<void> _onBackgroundCall(MethodCall call) async {
+    if (call.method != 'resync') throw MissingPluginException();
+    await _reload(_alarmUseCase.timeZoneChanged);
   }
 
   void _select(ShellTab tab) => setState(() => _tab = tab);

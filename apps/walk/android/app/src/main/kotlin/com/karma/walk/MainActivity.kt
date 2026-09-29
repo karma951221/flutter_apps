@@ -11,8 +11,16 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterFragmentActivity() {
+    companion object {
+        /** 떠 있는 메인 엔진. 시간대 변경 수신기가 헤드리스 엔진 대신 이것에 `resync` 를 부른다. */
+        @Volatile
+        var engine: FlutterEngine? = null
+            private set
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        engine = flutterEngine
         val messenger = flutterEngine.dartExecutor.binaryMessenger
         // health 패키지에 Health Connect 설정 화면을 여는 API 가 없어 채널 하나를 둔다.
         MethodChannel(messenger, "com.karma.walk/health_connect")
@@ -40,6 +48,11 @@ class MainActivity : FlutterFragmentActivity() {
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        if (engine === flutterEngine) engine = null
+        super.cleanUpFlutterEngine(flutterEngine)
     }
 
     /** Android 13 이하는 매니페스트 선언만으로 허용된다. */

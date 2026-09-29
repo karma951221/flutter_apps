@@ -38,6 +38,9 @@ class _FakeScheduler implements AlarmScheduler {
   final List<int> scheduleCalls = [];
   final List<int> cancelCalls = [];
 
+  /// [rearmAll] 과 [schedule] 의 순서.
+  final List<String> events = [];
+
   /// 패키지는 `stop` 안에서 울림 스트림을 비운다 — 그걸 보고 울림 화면이 걷히고 목록이
   /// 다시 읽는 순간을 흉내 낸다.
   void Function(int packageId)? onStop;
@@ -51,6 +54,7 @@ class _FakeScheduler implements AlarmScheduler {
   @override
   Future<void> schedule(int packageId, DateTime at, Alarm alarm) async {
     scheduleCalls.add(packageId);
+    events.add('schedule');
     entries[packageId] = at;
     alarms[packageId] = alarm;
     ringing.remove(packageId);
@@ -62,6 +66,9 @@ class _FakeScheduler implements AlarmScheduler {
     entries.remove(packageId);
     ringing.remove(packageId);
   }
+
+  @override
+  Future<void> rearmAll() async => events.add('rearm');
 
   @override
   Future<void> stop(int packageId) async {
@@ -560,6 +567,44 @@ void main() {
 
       expect(scheduler.entries[tomorrowId], DateTime(2026, 9, 29, 7));
       expect(scheduler.scheduleCalls, contains(tomorrowId));
+    });
+
+    // 테스트 안에서 기기 시간대를 바꿀 수 없어 절대 시각으로 흉내 낸다 — 서울에서 걸어 둔
+    // 내일 07:00(서울) 은 파리의 00:00 이다. 파리로 옮긴 뒤의 규칙은 파리 07:00 을 원한다.
+    test('시간대가 바뀌면 옛 시간대의 절대 시각으로 걸린 회차를 같은 id 로 새 벽시계에 다시 건다', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay)];
+      final wanted = DateTime(2026, 9, 29, 7);
+      final tomorrowId = pid(1, wanted);
+      const seoulMinusParis = Duration(hours: 7);
+      scheduler.entries[tomorrowId] = wanted.subtract(seoulMinusParis).toUtc();
+
+      await useCase.sync();
+
+      expect(scheduler.scheduleCalls, contains(tomorrowId));
+      expect(scheduler.entries[tomorrowId], wanted);
+      expect(scheduler.entries[tomorrowId]!.hour, 7);
+    });
+
+    test('1회성 oneShotAt 은 오프셋 없이 저장돼 읽은 곳의 같은 벽시계 시각으로 걸린다', () async {
+      final json = Alarm(id: 1, hour: 7, minute: 0, oneShotAt: DateTime(2026, 9, 29, 7)).toJson();
+      expect(json['oneShotAt'], '2026-09-29T07:00:00.000');
+      repository.alarms = [Alarm.fromJson(json)];
+
+      await useCase.sync();
+
+      final at = scheduler.entries[pid(1, DateTime(2026, 9, 29))];
+      expect(at, DateTime(2026, 9, 29, 7));
+      expect(at!.isUtc, isFalse);
+    });
+
+    test('timeZoneChanged 는 패키지 예약을 지금 시간대로 옮겨 건 뒤 sync 한다', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay)];
+
+      await useCase.timeZoneChanged();
+
+      expect(scheduler.events.first, 'rearm');
+      expect(scheduler.events.where((e) => e == 'rearm'), hasLength(1));
+      expect(scheduler.entries[pid(1, DateTime(2026, 9, 29))], DateTime(2026, 9, 29, 7));
     });
 
     test('스누즈 · 울리는 회차가 있어도 두 번째 sync 는 아무것도 바꾸지 않는다', () async {

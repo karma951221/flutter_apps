@@ -14,6 +14,11 @@ abstract interface class AlarmScheduler {
 
   Future<void> cancel(int packageId);
 
+  /// 패키지에 걸린 예약을 모두 지금 시간대로 다시 건다. 패키지는 시각을 오프셋 없는 벽시계로
+  /// 저장해, 시간대가 바뀐 뒤 부르면 새 시간대의 같은 벽시계로 옮겨 건다. ([scheduled] 도 그
+  /// 벽시계를 돌려주므로 시간대가 바뀐 뒤 AlarmManager 의 절대 시각과 어긋난 것은 보이지 않는다.)
+  Future<void> rearmAll();
+
   /// 울리는 중 끄기.
   Future<void> stop(int packageId);
 }
