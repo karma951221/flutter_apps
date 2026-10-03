@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 abstract final class AppTheme {
-  static ThemeData light() => _base(Brightness.light);
-  static ThemeData dark() => _base(Brightness.dark);
+  static ThemeData light({Color seedColor = AppColors.seed}) =>
+      _base(Brightness.light, seedColor);
+  static ThemeData dark({Color seedColor = AppColors.seed}) =>
+      _base(Brightness.dark, seedColor);
 
-  static ThemeData _base(Brightness brightness) {
+  static ThemeData _base(Brightness brightness, Color seedColor) {
     final scheme = ColorScheme.fromSeed(
-      seedColor: AppColors.seed,
+      seedColor: seedColor,
       brightness: brightness,
     );
     return ThemeData(

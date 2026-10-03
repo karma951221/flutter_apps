@@ -1,5 +1,4 @@
 import 'package:core/core.dart';
-import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
@@ -9,6 +8,7 @@ import '../domain/settings/repository/settings_repository.dart';
 import '../presentation/alarm/page/alarm_ringing_page.dart';
 import '../presentation/settings/cubit/theme_cubit.dart';
 import '../presentation/shell/page/main_shell_page.dart';
+import '../presentation/theme/walk_theme.dart';
 import 'alarm_ring_listener.dart';
 
 /// 울림 화면을 화면 밖(알람 스트림)에서 띄우려고 전역으로 둔다.
@@ -53,8 +53,8 @@ class _WalkAppState extends State<WalkApp> {
           navigatorKey: walkNavigatorKey,
           navigatorObservers: [appRouteObserver],
           onGenerateTitle: (context) => AppLocalizations.of(context).walkAppTitle,
-          theme: AppTheme.light(),
-          darkTheme: AppTheme.dark(),
+          theme: WalkTheme.light(),
+          darkTheme: WalkTheme.dark(),
           themeMode: themeModeOf(mode),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
