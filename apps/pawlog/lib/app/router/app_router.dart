@@ -26,13 +26,16 @@ GoRouter createRouter({required bool hasDogs}) {
         // TODO(phase ④~⑦): 산책 피드 페이지로 교체한다 (onStartWalk, onOpenWalk(id), onOpenDogs).
         builder: (context, _) => _Placeholder(
           title: 'feed',
+          onStartWalk: () => context.push(PawlogPaths.activeWalk),
           onOpenDogs: () => context.push(PawlogPaths.dogs),
         ),
       ),
       GoRoute(
         path: PawlogPaths.activeWalk,
-        // TODO(phase ④~⑦): 산책 진행 페이지로 교체한다.
-        builder: (context, _) => const _Placeholder(title: 'active walk'),
+        builder: (context, _) => ActiveWalkPage(
+          onStopped: () => context.go(PawlogPaths.saveWalk),
+          onOpenDogs: () => context.push(PawlogPaths.dogs),
+        ),
       ),
       GoRoute(
         path: PawlogPaths.saveWalk,
@@ -88,15 +91,19 @@ GoRouter createRouter({required bool hasDogs}) {
 }
 
 class _Placeholder extends StatelessWidget {
-  const _Placeholder({required this.title, this.onOpenDogs});
+  const _Placeholder({required this.title, this.onStartWalk, this.onOpenDogs});
 
   final String title;
+
+  /// 피드가 서기 전까지 진행 화면에 닿는 임시 진입점.
+  final VoidCallback? onStartWalk;
 
   /// 피드가 서기 전까지 반려견 화면에 닿는 임시 진입점.
   final VoidCallback? onOpenDogs;
 
   @override
   Widget build(BuildContext context) {
+    final onStartWalk = this.onStartWalk;
     final onOpenDogs = this.onOpenDogs;
     return Scaffold(
       body: Center(
@@ -104,6 +111,8 @@ class _Placeholder extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(title),
+            if (onStartWalk != null)
+              TextButton(onPressed: onStartWalk, child: const Text('walk')),
             if (onOpenDogs != null)
               TextButton(onPressed: onOpenDogs, child: const Text('dogs')),
           ],

@@ -22,6 +22,7 @@ import '../domain/repository/photo_storage.dart' as _i659;
 import '../domain/repository/walk_repository.dart' as _i868;
 import '../domain/repository/walk_tracker.dart' as _i890;
 import '../domain/usecase/walk_use_case.dart' as _i883;
+import '../presentation/cubit/active_walk_cubit.dart' as _i794;
 import '../presentation/cubit/dog_edit_cubit.dart' as _i641;
 import '../presentation/cubit/dog_list_cubit.dart' as _i665;
 import 'walk_register_module.dart' as _i911;
@@ -72,6 +73,9 @@ class FeatureWalkPackageModule extends _i526.MicroPackageModule {
     );
     gh.factory<_i665.DogListCubit>(
       () => _i665.DogListCubit(gh<_i883.WalkUseCase>()),
+    );
+    gh.factory<_i794.ActiveWalkCubit>(
+      () => _i794.ActiveWalkCubit(gh<_i883.WalkUseCase>()),
     );
   }
 }

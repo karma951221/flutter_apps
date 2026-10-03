@@ -47,3 +47,15 @@ void registerFallbacks() {
   registerFallbackValue(dog('fb'));
   registerFallbackValue(const TrackingNotice(title: '', text: ''));
 }
+
+WalkSession walkSession({
+  List<WalkTrackPoint>? points,
+  double distanceMeters = 0,
+  DateTime? endedAt,
+}) => WalkSession(
+  dogIds: const ['d1'],
+  startedAt: t0,
+  endedAt: endedAt,
+  points: points ?? const [],
+  distanceMeters: distanceMeters,
+);

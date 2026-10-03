@@ -2779,6 +2779,120 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'산책 기록은 남고, 기록에서 이 반려견만 빠집니다.'**
   String get walkDogDeleteConfirmMessage;
+
+  /// 진행 화면 앱바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 중'**
+  String get walkActiveTitle;
+
+  /// 진행 화면에서 산책에 데려갈 반려견을 고르는 칩 목록의 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'함께 걷는 반려견'**
+  String get walkSelectDogs;
+
+  /// 산책 시작 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 시작'**
+  String get walkStart;
+
+  /// 산책 종료 버튼 · 종료 확인 다이얼로그 확인 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 종료'**
+  String get walkStop;
+
+  /// 산책 종료 확인 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책을 끝낼까요?'**
+  String get walkStopConfirmTitle;
+
+  /// 산책 종료 확인 다이얼로그 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 멈추고 저장 화면으로 이동합니다.'**
+  String get walkStopConfirmMessage;
+
+  /// 진행 화면 경과 시간 칸의 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'시간'**
+  String get walkElapsedLabel;
+
+  /// 진행 화면 이동 거리 칸의 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'거리'**
+  String get walkDistanceLabel;
+
+  /// 1 km 미만 거리 표기. meters 는 반올림한 미터
+  ///
+  /// In ko, this message translates to:
+  /// **'{meters} m'**
+  String walkDistanceMeters(int meters);
+
+  /// 1 km 이상 거리 표기. km 는 소수 1자리로 포맷한 문자열
+  ///
+  /// In ko, this message translates to:
+  /// **'{km} km'**
+  String walkDistanceKm(String km);
+
+  /// 1시간 미만 산책 시간 표기
+  ///
+  /// In ko, this message translates to:
+  /// **'{minutes}분'**
+  String walkDurationMinutes(int minutes);
+
+  /// 1시간 이상 산책 시간 표기
+  ///
+  /// In ko, this message translates to:
+  /// **'{hours}시간 {minutes}분'**
+  String walkDurationHoursMinutes(int hours, int minutes);
+
+  /// Android 포그라운드 서비스 알림 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책을 기록하고 있어요'**
+  String get walkTrackingNotificationTitle;
+
+  /// Android 포그라운드 서비스 알림 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'앱을 닫아도 경로가 계속 기록됩니다'**
+  String get walkTrackingNotificationText;
+
+  /// 산책 시작 화면에서 등록된 반려견이 없을 때 안내 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'먼저 반려견을 등록해 주세요'**
+  String get walkActiveNoDogsTitle;
+
+  /// 산책 시작 화면에서 등록된 반려견이 없을 때 안내 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'산책에는 반려견이 한 마리 이상 필요합니다'**
+  String get walkActiveNoDogsMessage;
+
+  /// 반려견 등록 화면으로 가는 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견 등록하기'**
+  String get walkOpenDogsAction;
+
+  /// 위치 권한 거부 실패 안내 아래에 붙는 보조 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'설정에서 위치 권한을 허용한 뒤 다시 시도해 주세요'**
+  String get walkLocationDeniedHint;
+
+  /// 추적은 시작했지만 아직 GPS 점이 없을 때 지도 자리에 보이는 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'위치를 찾는 중…'**
+  String get walkLocating;
 }
 
 class _AppLocalizationsDelegate

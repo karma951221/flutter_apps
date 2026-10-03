@@ -1487,4 +1487,72 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkDogDeleteConfirmMessage =>
       'Your walks stay, but this dog is removed from them.';
+
+  @override
+  String get walkActiveTitle => 'Walking';
+
+  @override
+  String get walkSelectDogs => 'Dogs on this walk';
+
+  @override
+  String get walkStart => 'Start walk';
+
+  @override
+  String get walkStop => 'End walk';
+
+  @override
+  String get walkStopConfirmTitle => 'End this walk?';
+
+  @override
+  String get walkStopConfirmMessage =>
+      'Recording stops and you\'ll go to the save screen.';
+
+  @override
+  String get walkElapsedLabel => 'Time';
+
+  @override
+  String get walkDistanceLabel => 'Distance';
+
+  @override
+  String walkDistanceMeters(int meters) {
+    return '$meters m';
+  }
+
+  @override
+  String walkDistanceKm(String km) {
+    return '$km km';
+  }
+
+  @override
+  String walkDurationMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String walkDurationHoursMinutes(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String get walkTrackingNotificationTitle => 'Recording your walk';
+
+  @override
+  String get walkTrackingNotificationText =>
+      'The route keeps recording even if you close the app';
+
+  @override
+  String get walkActiveNoDogsTitle => 'Add a dog first';
+
+  @override
+  String get walkActiveNoDogsMessage => 'A walk needs at least one dog';
+
+  @override
+  String get walkOpenDogsAction => 'Add a dog';
+
+  @override
+  String get walkLocationDeniedHint =>
+      'Allow location access in Settings, then try again';
+
+  @override
+  String get walkLocating => 'Finding your location…';
 }

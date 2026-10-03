@@ -1399,4 +1399,69 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkDogDeleteConfirmMessage => '散歩の記録は残り、記録からこのわんちゃんだけが外れます。';
+
+  @override
+  String get walkActiveTitle => '散歩中';
+
+  @override
+  String get walkSelectDogs => '一緒に歩くわんちゃん';
+
+  @override
+  String get walkStart => '散歩を始める';
+
+  @override
+  String get walkStop => '散歩を終える';
+
+  @override
+  String get walkStopConfirmTitle => '散歩を終えますか？';
+
+  @override
+  String get walkStopConfirmMessage => '記録を止めて保存画面に移動します。';
+
+  @override
+  String get walkElapsedLabel => '時間';
+
+  @override
+  String get walkDistanceLabel => '距離';
+
+  @override
+  String walkDistanceMeters(int meters) {
+    return '$meters m';
+  }
+
+  @override
+  String walkDistanceKm(String km) {
+    return '$km km';
+  }
+
+  @override
+  String walkDurationMinutes(int minutes) {
+    return '$minutes分';
+  }
+
+  @override
+  String walkDurationHoursMinutes(int hours, int minutes) {
+    return '$hours時間$minutes分';
+  }
+
+  @override
+  String get walkTrackingNotificationTitle => '散歩を記録しています';
+
+  @override
+  String get walkTrackingNotificationText => 'アプリを閉じても経路は記録され続けます';
+
+  @override
+  String get walkActiveNoDogsTitle => 'まずわんちゃんを登録してください';
+
+  @override
+  String get walkActiveNoDogsMessage => '散歩にはわんちゃんが1匹以上必要です';
+
+  @override
+  String get walkOpenDogsAction => 'わんちゃんを登録する';
+
+  @override
+  String get walkLocationDeniedHint => '設定で位置情報の権限を許可してからもう一度お試しください';
+
+  @override
+  String get walkLocating => '位置情報を探しています…';
 }

@@ -1918,5 +1918,104 @@
   "walkDogDeleteConfirmMessage": "산책 기록은 남고, 기록에서 이 반려견만 빠집니다.",
   "@walkDogDeleteConfirmMessage": {
     "description": "반려견 삭제 확인 다이얼로그 본문. 산책 기록은 유지됨을 알린다"
+  },
+  "walkActiveTitle": "산책 중",
+  "@walkActiveTitle": {
+    "description": "진행 화면 앱바 제목"
+  },
+  "walkSelectDogs": "함께 걷는 반려견",
+  "@walkSelectDogs": {
+    "description": "진행 화면에서 산책에 데려갈 반려견을 고르는 칩 목록의 제목"
+  },
+  "walkStart": "산책 시작",
+  "@walkStart": {
+    "description": "산책 시작 버튼 라벨"
+  },
+  "walkStop": "산책 종료",
+  "@walkStop": {
+    "description": "산책 종료 버튼 · 종료 확인 다이얼로그 확인 버튼 라벨"
+  },
+  "walkStopConfirmTitle": "산책을 끝낼까요?",
+  "@walkStopConfirmTitle": {
+    "description": "산책 종료 확인 다이얼로그 제목"
+  },
+  "walkStopConfirmMessage": "기록을 멈추고 저장 화면으로 이동합니다.",
+  "@walkStopConfirmMessage": {
+    "description": "산책 종료 확인 다이얼로그 본문"
+  },
+  "walkElapsedLabel": "시간",
+  "@walkElapsedLabel": {
+    "description": "진행 화면 경과 시간 칸의 라벨"
+  },
+  "walkDistanceLabel": "거리",
+  "@walkDistanceLabel": {
+    "description": "진행 화면 이동 거리 칸의 라벨"
+  },
+  "walkDistanceMeters": "{meters} m",
+  "@walkDistanceMeters": {
+    "description": "1 km 미만 거리 표기. meters 는 반올림한 미터",
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "walkDistanceKm": "{km} km",
+  "@walkDistanceKm": {
+    "description": "1 km 이상 거리 표기. km 는 소수 1자리로 포맷한 문자열",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "walkDurationMinutes": "{minutes}분",
+  "@walkDurationMinutes": {
+    "description": "1시간 미만 산책 시간 표기",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "walkDurationHoursMinutes": "{hours}시간 {minutes}분",
+  "@walkDurationHoursMinutes": {
+    "description": "1시간 이상 산책 시간 표기",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "walkTrackingNotificationTitle": "산책을 기록하고 있어요",
+  "@walkTrackingNotificationTitle": {
+    "description": "Android 포그라운드 서비스 알림 제목"
+  },
+  "walkTrackingNotificationText": "앱을 닫아도 경로가 계속 기록됩니다",
+  "@walkTrackingNotificationText": {
+    "description": "Android 포그라운드 서비스 알림 본문"
+  },
+  "walkActiveNoDogsTitle": "먼저 반려견을 등록해 주세요",
+  "@walkActiveNoDogsTitle": {
+    "description": "산책 시작 화면에서 등록된 반려견이 없을 때 안내 제목"
+  },
+  "walkActiveNoDogsMessage": "산책에는 반려견이 한 마리 이상 필요합니다",
+  "@walkActiveNoDogsMessage": {
+    "description": "산책 시작 화면에서 등록된 반려견이 없을 때 안내 본문"
+  },
+  "walkOpenDogsAction": "반려견 등록하기",
+  "@walkOpenDogsAction": {
+    "description": "반려견 등록 화면으로 가는 버튼 라벨"
+  },
+  "walkLocationDeniedHint": "설정에서 위치 권한을 허용한 뒤 다시 시도해 주세요",
+  "@walkLocationDeniedHint": {
+    "description": "위치 권한 거부 실패 안내 아래에 붙는 보조 설명"
+  },
+  "walkLocating": "위치를 찾는 중…",
+  "@walkLocating": {
+    "description": "추적은 시작했지만 아직 GPS 점이 없을 때 지도 자리에 보이는 문구"
   }
 }
