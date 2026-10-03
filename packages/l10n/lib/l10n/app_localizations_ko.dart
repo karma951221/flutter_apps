@@ -1350,6 +1350,56 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String walkGoalOf(String goal) {
+    return '목표 $goal';
+  }
+
+  @override
+  String walkGoalRemaining(String steps) {
+    return '목표까지 $steps';
+  }
+
+  @override
+  String walkGoalRemainingWithDistance(String steps, String distance) {
+    return '목표까지 $steps · 약 $distance';
+  }
+
+  @override
+  String walkGoalExceeded(String steps) {
+    return '목표보다 $steps 더 걸었어요';
+  }
+
+  @override
+  String get walkGoalReached => '달성';
+
+  @override
+  String walkGoalDaysReached(int reached, int total) {
+    return '달성 $reached/$total일';
+  }
+
+  @override
+  String walkGoalOfPercent(int percent) {
+    return '목표 $percent%';
+  }
+
+  @override
+  String walkGoalRingSemantics(String steps, String goal, int percent) {
+    return '오늘 $steps, 목표 $goal의 $percent%';
+  }
+
+  @override
+  String get walkGoalLine => '목표';
+
+  @override
+  String get walkSettingsWalk => '걷기';
+
+  @override
+  String get walkSettingsStepGoal => '하루 목표';
+
+  @override
+  String get walkSettingsStepGoalSave => '저장';
+
+  @override
   String get walkTabWeek => '주간';
 
   @override

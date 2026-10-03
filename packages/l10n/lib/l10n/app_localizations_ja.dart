@@ -1349,6 +1349,56 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String walkGoalOf(String goal) {
+    return '目標 $goal';
+  }
+
+  @override
+  String walkGoalRemaining(String steps) {
+    return '目標まで $steps';
+  }
+
+  @override
+  String walkGoalRemainingWithDistance(String steps, String distance) {
+    return '目標まで $steps · 約 $distance';
+  }
+
+  @override
+  String walkGoalExceeded(String steps) {
+    return '目標より $steps 多く歩きました';
+  }
+
+  @override
+  String get walkGoalReached => '達成';
+
+  @override
+  String walkGoalDaysReached(int reached, int total) {
+    return '達成 $reached/$total日';
+  }
+
+  @override
+  String walkGoalOfPercent(int percent) {
+    return '目標の $percent%';
+  }
+
+  @override
+  String walkGoalRingSemantics(String steps, String goal, int percent) {
+    return '今日 $steps、目標 $goal の $percent%';
+  }
+
+  @override
+  String get walkGoalLine => '目標';
+
+  @override
+  String get walkSettingsWalk => 'ウォーキング';
+
+  @override
+  String get walkSettingsStepGoal => '1日の目標';
+
+  @override
+  String get walkSettingsStepGoalSave => '保存';
+
+  @override
   String get walkTabWeek => '週間';
 
   @override

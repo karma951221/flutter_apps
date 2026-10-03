@@ -2672,6 +2672,78 @@ abstract class AppLocalizations {
   /// **'{steps} 걸음'**
   String walkStepsCount(String steps);
 
+  /// 하루 걸음 목표 표시
+  ///
+  /// In ko, this message translates to:
+  /// **'목표 {goal}'**
+  String walkGoalOf(String goal);
+
+  /// 목표까지 남은 걸음 수. steps 는 walkStepsCount 로 포맷한 값
+  ///
+  /// In ko, this message translates to:
+  /// **'목표까지 {steps}'**
+  String walkGoalRemaining(String steps);
+
+  /// 목표까지 남은 걸음 수와 거리
+  ///
+  /// In ko, this message translates to:
+  /// **'목표까지 {steps} · 약 {distance}'**
+  String walkGoalRemainingWithDistance(String steps, String distance);
+
+  /// 목표를 넘긴 걸음 수
+  ///
+  /// In ko, this message translates to:
+  /// **'목표보다 {steps} 더 걸었어요'**
+  String walkGoalExceeded(String steps);
+
+  /// 목표 달성 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'달성'**
+  String get walkGoalReached;
+
+  /// 기간 중 목표를 달성한 일수
+  ///
+  /// In ko, this message translates to:
+  /// **'달성 {reached}/{total}일'**
+  String walkGoalDaysReached(int reached, int total);
+
+  /// 목표 대비 백분율
+  ///
+  /// In ko, this message translates to:
+  /// **'목표 {percent}%'**
+  String walkGoalOfPercent(int percent);
+
+  /// 목표 링의 접근성 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 {steps}, 목표 {goal}의 {percent}%'**
+  String walkGoalRingSemantics(String steps, String goal, int percent);
+
+  /// 차트의 목표선 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'목표'**
+  String get walkGoalLine;
+
+  /// 설정의 걷기 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'걷기'**
+  String get walkSettingsWalk;
+
+  /// 하루 걸음 목표 설정 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'하루 목표'**
+  String get walkSettingsStepGoal;
+
+  /// 하루 목표 저장 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get walkSettingsStepGoalSave;
+
   /// 주간 탭 라벨
   ///
   /// In ko, this message translates to:

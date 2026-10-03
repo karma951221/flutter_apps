@@ -1852,6 +1852,101 @@
       }
     }
   },
+  "walkGoalOf": "목표 {goal}",
+  "@walkGoalOf": {
+    "description": "하루 걸음 목표 표시",
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "walkGoalRemaining": "목표까지 {steps}",
+  "@walkGoalRemaining": {
+    "description": "목표까지 남은 걸음 수. steps 는 walkStepsCount 로 포맷한 값",
+    "placeholders": {
+      "steps": {
+        "type": "String"
+      }
+    }
+  },
+  "walkGoalRemainingWithDistance": "목표까지 {steps} · 약 {distance}",
+  "@walkGoalRemainingWithDistance": {
+    "description": "목표까지 남은 걸음 수와 거리",
+    "placeholders": {
+      "steps": {
+        "type": "String"
+      },
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
+  "walkGoalExceeded": "목표보다 {steps} 더 걸었어요",
+  "@walkGoalExceeded": {
+    "description": "목표를 넘긴 걸음 수",
+    "placeholders": {
+      "steps": {
+        "type": "String"
+      }
+    }
+  },
+  "walkGoalReached": "달성",
+  "@walkGoalReached": {
+    "description": "목표 달성 라벨"
+  },
+  "walkGoalDaysReached": "달성 {reached}/{total}일",
+  "@walkGoalDaysReached": {
+    "description": "기간 중 목표를 달성한 일수",
+    "placeholders": {
+      "reached": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "walkGoalOfPercent": "목표 {percent}%",
+  "@walkGoalOfPercent": {
+    "description": "목표 대비 백분율",
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "walkGoalRingSemantics": "오늘 {steps}, 목표 {goal}의 {percent}%",
+  "@walkGoalRingSemantics": {
+    "description": "목표 링의 접근성 설명",
+    "placeholders": {
+      "steps": {
+        "type": "String"
+      },
+      "goal": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "walkGoalLine": "목표",
+  "@walkGoalLine": {
+    "description": "차트의 목표선 라벨"
+  },
+  "walkSettingsWalk": "걷기",
+  "@walkSettingsWalk": {
+    "description": "설정의 걷기 섹션 제목"
+  },
+  "walkSettingsStepGoal": "하루 목표",
+  "@walkSettingsStepGoal": {
+    "description": "하루 걸음 목표 설정 항목"
+  },
+  "walkSettingsStepGoalSave": "저장",
+  "@walkSettingsStepGoalSave": {
+    "description": "하루 목표 저장 버튼"
+  },
   "walkTabWeek": "주간",
   "@walkTabWeek": {
     "description": "주간 탭 라벨"
