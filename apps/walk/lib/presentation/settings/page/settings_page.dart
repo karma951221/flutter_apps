@@ -10,14 +10,14 @@ import '../../../domain/settings/entity/app_settings.dart';
 import '../../../domain/walk/entity/health_access.dart';
 import '../../walk/cubit/step_goal_cubit.dart';
 import '../../walk/format/walk_format.dart';
-import '../widget/step_goal_sheet.dart';
 import '../cubit/app_info_cubit.dart';
 import '../cubit/settings_permissions_cubit.dart';
 import '../cubit/settings_permissions_state.dart';
 import '../cubit/theme_cubit.dart';
+import '../widget/step_goal_sheet.dart';
 
-/// 설정 탭 — 권한 모아보기 · 테마 · 앱 정보.
-/// [SettingsPermissionsCubit] 은 셸이, [ThemeCubit] 은 앱이 제공한다.
+/// 설정 탭 — 걷기(하루 목표) · 권한 모아보기 · 테마 · 앱 정보.
+/// [SettingsPermissionsCubit] 은 셸이, [ThemeCubit] · [StepGoalCubit] 은 앱이 제공한다.
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -50,12 +50,7 @@ class _SettingsPageState extends State<SettingsPage> {
               leading: const Icon(Icons.flag_outlined),
               title: Text(l10n.walkSettingsStepGoal),
               trailing: Text(
-                l10n.walkStepsCount(
-                  WalkFormat.steps(
-                    Localizations.localeOf(context).toString(),
-                    goal,
-                  ),
-                ),
+                l10n.walkStepsCount(WalkFormat.steps(l10n.localeName, goal)),
               ),
               onTap: () async {
                 final cubit = context.read<StepGoalCubit>();
