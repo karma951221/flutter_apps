@@ -33,4 +33,11 @@ void main() {
     expect(RoutePreview.decode(null), isEmpty);
     expect(RoutePreview.decode(''), isEmpty);
   });
+
+  test('깨진 값은 던지지 않고 빈 목록을 준다', () {
+    expect(RoutePreview.decode('not json'), isEmpty);
+    expect(RoutePreview.decode('{"a":1}'), isEmpty);
+    expect(RoutePreview.decode('[[37.5]]'), isEmpty);
+    expect(RoutePreview.decode('[["a","b"]]'), isEmpty);
+  });
 }

@@ -51,6 +51,17 @@ void main() {
     verifyNever(() => walks.insert(any(), any()));
   });
 
+  test('고른 반려견이 모두 삭제된 상태면 walkDogRequired', () async {
+    final result = await scenario(draft(dogIds: const ['gone']));
+
+    expect(
+      (result as Err<Walk>).failure.failureCode,
+      FailureCode.walkDogRequired,
+    );
+    verifyNever(() => walks.insert(any(), any()));
+    verifyNever(() => tracker.clear());
+  });
+
   test('id · 시각 · 프리뷰를 채워 저장하고 tracker 를 비운다', () async {
     final result = await scenario(draft());
 

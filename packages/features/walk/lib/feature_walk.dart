@@ -1,4 +1,9 @@
+export 'src/data/database/walk_database.dart';
+export 'src/data/repository/drift_dog_repository.dart';
+export 'src/data/repository/drift_walk_repository.dart';
+export 'src/data/repository/file_photo_storage.dart';
 export 'src/di/feature_walk.module.dart';
+export 'src/di/walk_register_module.dart';
 export 'src/domain/entity/dog.dart';
 export 'src/domain/entity/dog_draft.dart';
 export 'src/domain/entity/geo_point.dart';

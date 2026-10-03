@@ -14,5 +14,6 @@
 | [진행 현황](status.md) | 단계별 체크리스트, 다음 할 일 |
 | [기획서](overview.md) | 한 줄 정의 · 범위 · 기술 스택 · feature 분해(W1~W5) · 데이터 모델 · 개발 단계 · 확정 사항 |
 | `features/<name>/` | feature 착수 시 `plan.md`, 완료 시 `history.md` · `testing.md` (아직 없음) |
+| [구현 리뷰 · 요약](audits/2026-10-03-implementation-review.md) | 리뷰어 에이전트가 단계 커밋마다 독립적으로 읽고 쓴 소견과 요약 |
 
 실행은 [공통 개발환경 §1](../../../docs/setup.md#1-앱-실행)을 따른다. Supabase 없이 바로 뜬다.

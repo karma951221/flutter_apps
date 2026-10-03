@@ -36,6 +36,12 @@ class SaveWalkScenario {
       for (final dog in (dogs as Ok<List<Dog>>).value)
         if (draft.dogIds.contains(dog.id)) dog,
     ];
+    // 고른 id 가 모두 삭제된 강아지였을 수 있다. 0마리로 저장되면 안 된다 (기획 §9 #7).
+    if (selected.isEmpty) {
+      return const Err(
+        Failure.validation(failureCode: FailureCode.walkDogRequired),
+      );
+    }
 
     final now = _now();
     final walk = Walk(

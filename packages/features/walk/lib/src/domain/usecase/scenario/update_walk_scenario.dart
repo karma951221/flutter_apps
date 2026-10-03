@@ -37,6 +37,16 @@ class UpdateWalkScenario {
     }
     final dogs = await _dogs.getAll();
     if (dogs case Err(:final failure)) return Err(failure);
+    final selected = [
+      for (final dog in (dogs as Ok<List<Dog>>).value)
+        if (update.dogIds.contains(dog.id)) dog,
+    ];
+    // 고른 id 가 모두 삭제된 강아지였을 수 있다. 0마리로 저장되면 안 된다 (기획 §9 #7).
+    if (selected.isEmpty) {
+      return const Err(
+        Failure.validation(failureCode: FailureCode.walkDogRequired),
+      );
+    }
 
     // 남는 경로는 기존 id 를 유지하고, 새 경로만 새 id 를 받는다.
     final existingIdByPath = {for (final p in current.photos) p.path: p.id};
@@ -47,10 +57,7 @@ class UpdateWalkScenario {
       duration: current.duration,
       distanceMeters: current.distanceMeters,
       memo: update.memo,
-      dogs: [
-        for (final dog in (dogs as Ok<List<Dog>>).value)
-          if (update.dogIds.contains(dog.id)) dog,
-      ],
+      dogs: selected,
       photos: [
         for (final (index, path) in update.photoPaths.indexed)
           WalkPhoto(

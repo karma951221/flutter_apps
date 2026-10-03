@@ -39,6 +39,20 @@ void main() {
     expect((result as Err<Walk>).failure.failureCode, FailureCode.walkNotFound);
   });
 
+  test('고른 반려견이 모두 삭제된 상태면 walkDogRequired', () async {
+    when(() => walks.findById('w1')).thenAnswer((_) async => Ok(walk()));
+
+    final result = await scenario(
+      const WalkUpdate(id: 'w1', dogIds: ['gone'], photoPaths: []),
+    );
+
+    expect(
+      (result as Err<Walk>).failure.failureCode,
+      FailureCode.walkDogRequired,
+    );
+    verifyNever(() => walks.update(any()));
+  });
+
   test('빠진 사진 파일을 지운다', () async {
     when(() => walks.findById('w1')).thenAnswer(
       (_) async => Ok(

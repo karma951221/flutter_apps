@@ -25,15 +25,25 @@ class RoutePreview {
     for (final p in points) [p.lat, p.lng],
   ]);
 
+  /// 깨진 값이면 빈 목록을 준다. 행 하나의 프리뷰가 잘못됐다고 피드 스트림
+  /// 전체가 끊기면 안 된다 — 카드가 썸네일 없이 뜨는 쪽이 낫다.
   static List<GeoPoint> decode(String? json) {
     if (json == null || json.isEmpty) return const [];
-    final list = jsonDecode(json) as List<dynamic>;
-    return [
-      for (final e in list)
-        GeoPoint(
-          lat: ((e as List<dynamic>)[0] as num).toDouble(),
-          lng: (e[1] as num).toDouble(),
-        ),
-    ];
+    try {
+      final list = jsonDecode(json) as List<dynamic>;
+      return [
+        for (final e in list)
+          GeoPoint(
+            lat: ((e as List<dynamic>)[0] as num).toDouble(),
+            lng: (e[1] as num).toDouble(),
+          ),
+      ];
+    } on FormatException {
+      return const [];
+    } on TypeError {
+      return const [];
+    } on RangeError {
+      return const [];
+    }
   }
 }
