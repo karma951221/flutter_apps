@@ -30,9 +30,9 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `presentation/walk/cubit/today_activity_cubit_test.dart` | `TodayActivityCubit` | loading → loaded · failure · 새로고침은 로딩 없이 |
 | `presentation/walk/cubit/period_activity_cubit_test.dart` | `PeriodActivityCubit` | 현재 기간 · 이전 · 현재에서 다음 불가 · 새로고침은 같은 offset · 늦은 응답 버림 · 실패해도 offset 유지 |
 | `presentation/walk/widget/activity_bar_chart_test.dart` | `ActivityBarChart` | 요일 7개 · 최댓값 막대가 가장 높음 · 미래 날은 막대 없음 · 탭하면 그날 걸음 · **새로고침 뒤 선택 값 갱신** · 목표선 · 높이 기준 `max(최댓값, 목표)` · 달성일/미달일 색 · 오늘 테두리(**달성하면 `onPrimaryContainer`**) · 선택 줄의 목표 % · 막대 성장 · **마지막 막대와 라벨 겹침 없음(주간 · 월간) · 목표 높이의 마지막 막대 선택** |
-| `presentation/walk/page/walk_home_page_test.dart` | `WalkHomePage` | 오늘 걸음 · km · `–` · 현재 기간 다음 버튼 꺼짐 · 월간 탭 · 권한 요청 · 설정 열기 유무 · 설치 안내 · 오늘 실패 재시도 · **복귀 시 재확인 · 새로고침** · **복귀 중 허용되면 한 번만 읽기** · 값 읽는 동안 스켈레톤(오늘 · 기간, 높이 비슷) · 주간/월간 세그먼트 · **축하 날짜 1회**(처음 달성하면 저장 · 같은 날 재진입 무연출 · 미달이면 저장 안 함 · 목표 변경 · 실패 뒤 재시도 · 날이 바뀐 뒤 · 어제 값에서 오늘 값) |
+| `presentation/walk/page/walk_home_page_test.dart` | `WalkHomePage` | 오늘 걸음 · km · `–` · 현재 기간 다음 버튼 꺼짐 · 월간 탭 · 권한 요청 · 설정 열기 유무 · 설치 안내 · 오늘 실패 재시도 · **복귀 시 재확인 · 새로고침** · **복귀 중 허용되면 한 번만 읽기** · 값 읽는 동안 스켈레톤(오늘 · 기간, 높이 비슷) · 주간/월간 세그먼트 · **축하 날짜 1회**(처음 달성하면 저장 · 같은 날 재진입 무연출 · 미달이면 저장 안 함 · 목표 변경 · 실패 뒤 재시도 · 날이 바뀐 뒤 · 어제 값에서 오늘 값) · **숨은 탭이면 판정 · 저장 안 함, 보이게 되면 한 번**(달성 값 · 목표 낮춤) |
 | `domain/walk/entity/goal_progress_test.dart` | `GoalProgress` | 범위 밖 목표는 끝값 · 1,000 단위 반올림 · 0보 · 정확히 목표면 달성 · 초과 비율 · 남은 거리(오늘 보폭) · 축하 여부(기록 없음 / 어제 / 오늘 이미) |
-| `presentation/walk/cubit/step_goal_cubit_test.dart` | `StepGoalCubit` | 처음 값은 저장된 목표 · `select` 는 1,000 단위로 맞춰 반영 · 저장 · 다른 필드 유지 · 같은 값이면 무시 |
+| `presentation/walk/cubit/step_goal_cubit_test.dart` | `StepGoalCubit` | 처음 값은 저장된 목표 · `select` 는 1,000 단위로 맞춰 반영 · 저장 · 다른 필드 유지 · 같은 값이면 무시 · **실제 SharedPreferences 에서 목표 변경 직후 축하일 저장해도 새 목표 유지** |
 | `presentation/walk/widget/step_goal_ring_test.dart` | `StepGoalRing` | 진입 시 0 → 비율, 바뀌면 직전 → 새 값 · 넘침은 1 에서 멈춤 · 애니메이션 끄기면 끝 값 · 트랙 · 진행 색 |
 | `presentation/walk/widget/today_goal_card_test.dart` | `TodayGoalCard` | 걸음 · 목표 문구 · 링 접근성 비율 · 거리/칼로리 지표 · 링 탭 → 남은 걸음 · 다시 탭 → 지표 · **탭해도 카드 높이 그대로** · 거리 없으면 남은 걸음만 · 달성 배지 · 3초 뒤 복귀 |
 | `presentation/walk/widget/period_summary_test.dart` | `PeriodSummary` | 달성 n/m일(오늘 이후 제외, 지난 기간은 전부) · 네 지표 타일 |
@@ -53,7 +53,7 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `data/alarm/prefs_alarm_repository_test.dart` | `PrefsAlarmRepository` | 없음 · 왕복 · 비우기 · **깨진 JSON/배열 아님/항목 하나 깨짐/문자열 아님 → 던지지 않고 읽을 수 있는 것만, 원본은 `walk.alarms.corrupt`** · 백업 덮어쓰기 · 정상 저장 복구 |
 | `data/alarm/full_screen_intent_permission_source_test.dart` | 전체 화면 알림 채널 | `canUse` true/false · 요청은 설정을 열고 다시 읽음 · 채널 없으면 허용 |
 | `data/alarm/permission_handler_source_test.dart` | `permission_handler` 래퍼 | 상태 매핑 |
-| `data/settings/prefs_settings_repository_test.dart` | `PrefsSettingsRepository` | 없음/저장/모르는 값 → 시스템 · **문자열 아닌 값 → 시스템** |
+| `data/settings/prefs_settings_repository_test.dart` | `PrefsSettingsRepository` | 없음/저장/모르는 값 → 시스템 · **문자열 아닌 값 → 시스템** · 목표 · 축하일 왕복 · 깨진 값 기본/clamp · 축하일 null 은 키 삭제 · **저장 도중 읽어 다시 저장해도 앞선 목표 유지** |
 | `data/app_info/app_info_source_test.dart` | `PackageInfoAppInfoSource` | `이름 (빌드번호)` |
 
 ### 알람 · 설정 · 셸 — 화면
@@ -74,7 +74,7 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `presentation/alarm/widget/ringing_ripple_test.dart` | `RingingRipple` | 켜면 위상이 변함 · 애니메이션 제거면 정지 |
 | `presentation/settings/widget/step_goal_sheet_test.dart` | `StepGoalSheet` | 슬라이더 2,000~30,000 · 1,000 단위 · 저장하면 값 반환 |
 | `presentation/settings/page/settings_page_test.dart` | `SettingsPage` | 걷기 섹션 · 하루 목표 시트 → 저장 · 권한 상태 · 버전 · 안내 · 행 탭별 동작 · 확인 중이면 빈 문구 · 테마 선택 · 라이선스 페이지 |
-| `presentation/shell/page/main_shell_page_test.dart` | `MainShellPage` | 첫 탭 걷기 · 초록 컨테이너 · 선택 탭 채움 아이콘 · 탭 전환 · 시작/복귀 때 sync 뒤 목록 · 복귀 때 권한 행 · **울림 화면이 걷히면 sync** · **sync 실패해도 목록** · 네이티브 `resync` → 재설정 · 목록 · 응답(실패해도) · 사라지면 핸들러 해제 |
+| `presentation/shell/page/main_shell_page_test.dart` | `MainShellPage` | 첫 탭 걷기 · 초록 컨테이너 · 선택 탭 채움 아이콘 · 탭 전환 · 시작/복귀 때 sync 뒤 목록 · 복귀 때 권한 행 · **울림 화면이 걷히면 sync** · **sync 실패해도 목록** · 네이티브 `resync` → 재설정 · 목록 · 응답(실패해도) · 사라지면 핸들러 해제 · **설정 탭에서 목표를 낮춰 달성해도 걷기 탭을 열 때 한 번 축하** |
 | `core/alarm_ring_listener_test.dart` | `AlarmRingListener` | 한 번만 띄움 · 밖에서 끄면 걷음 · 화면이 먼저 닫힘 · 스누즈 뒤 다시 띄움 · 가려진 화면만 걷음 · 내비게이터 전 값 · 첫 프레임 전 시작→끝이면 안 띄움 · 중복 start · dispose |
 | `core/app_test.dart` | `WalkApp` · `themeModeOf` | 테마 매핑 · 저장된 다크로 첫 프레임 |
 | `core/background/alarm_resync_test.dart` | `runAlarmResync` | init → sync → done · init 실패면 sync 건너뛰고 done · sync/done 실패도 삼킴 · done 한 번 |

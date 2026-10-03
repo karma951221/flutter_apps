@@ -72,12 +72,14 @@
 - [x] **T6 설정** — 걷기 섹션 · 하루 목표 시트 (`7433ba1`)
 - [x] **T7 알람 · 울림 · 셸** — 초록 요약 카드 · 꺼진 알람 흐림 · 울림 파동 · 탭 채움 아이콘 (`5ef6967`)
 - [x] **기기 보정** — 다크 링 트랙 색 · 링 탭 시 카드 높이 고정 (`45da2f5`)
+- [x] **최종 리뷰 수정** — 설정 저장을 한 번에 써 목표 되돌림 방지 (`0289b5c`) · 걷기 탭이 보일 때만 축하 (`dc30a82`) · 설정 화면 · 스켈레톤 정리 (`60b6e3e`)
 - [x] **에뮬레이터 확인** (AVD Medium_Phone, 2026-10-03) — 걷기 탭 라이트/다크 · 링 탭 → 남은 걸음 · 주간/월간 세그먼트 · 목표선 · 라벨 거터 · 알람 탭 요약 카드 · 꺼진 알람 색 · 설정 걷기 섹션 · 하루 목표 시트
 - [ ] **실제 폰 확인** — 목표 달성 상태 · 축하 연출(에뮬레이터에 Health Connect 걸음 데이터 없음) · 울림 화면 파동(위젯 테스트로만 확인) · 물결 · 햅틱 체감
 - [x] **문서** — `plan.md` · `history.md` · `testing.md` · `README.md` (2026-10-03)
 
-검증(2026-10-03): `flutter analyze` 0 · `flutter test` 344건 통과(1 skip) · `packages/design_system` 44건 ·
-`apps/trader` `test/convention` 5건 · 디버그 APK 빌드.
+검증(2026-10-03, 최종 리뷰 수정 뒤): `flutter analyze` 0 · `flutter test` 349건 통과(1 skip) ·
+`apps/trader` `test/convention` 5건.
+이전 검증(2026-10-03): `flutter test` 344건 통과(1 skip) · `packages/design_system` 44건 · 디버그 APK 빌드.
 판단과 알려진 한계는 [기록](history.md#2026-10-03--시각--인터랙션-강화), 테스트 범위는 [테스트](testing.md).
 
 ## 다음 할 일
