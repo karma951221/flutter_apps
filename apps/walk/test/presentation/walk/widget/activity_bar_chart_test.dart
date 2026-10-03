@@ -118,8 +118,14 @@ void main() {
 
     expect(find.byKey(const Key('walk-goal-line')), findsOneWidget);
     expect(find.text('목표'), findsOneWidget);
-    final bar = tester.getSize(find.byKey(const Key('walk-bar-2026-09-21')));
+    final bar = tester.getRect(find.byKey(const Key('walk-bar-2026-09-21')));
     expect(bar.height, closeTo(ActivityBarChart.chartHeight * 0.5, 1));
+    // 목표 == 기준 → 목표선은 차트 맨 위(바닥에서 chartHeight).
+    final line = tester.getRect(find.byKey(const Key('walk-goal-line')));
+    expect(
+      line.center.dy,
+      closeTo(bar.bottom - ActivityBarChart.chartHeight, 1),
+    );
   });
 
   testWidgets('최댓값이 목표보다 크면 최댓값이 꽉 찬다', (tester) async {
@@ -128,6 +134,14 @@ void main() {
 
     final bar = tester.getSize(find.byKey(const Key('walk-bar-2026-09-22')));
     expect(bar.height, closeTo(ActivityBarChart.chartHeight, 1));
+    // 목표 4000 / 기준 8000 → 바닥에서 chartHeight × 0.5 = 4000 막대 꼭대기.
+    final half = tester.getRect(find.byKey(const Key('walk-bar-2026-09-21')));
+    final line = tester.getRect(find.byKey(const Key('walk-goal-line')));
+    expect(line.center.dy, closeTo(half.top, 1));
+    expect(
+      half.bottom - line.center.dy,
+      closeTo(ActivityBarChart.chartHeight * 0.5, 1),
+    );
   });
 
   testWidgets('달성일은 primary, 미달일은 primaryContainer, 오늘은 테두리', (tester) async {
@@ -144,6 +158,18 @@ void main() {
     expect((today.border! as Border).top.color, scheme.primary);
     expect((today.border! as Border).top.width, 2);
     expect(_decoration(tester, '2026-09-21').border, isNull);
+  });
+
+  testWidgets('오늘이 목표를 채우면 테두리는 onPrimaryContainer', (tester) async {
+    await _pump(tester, _period, 2000);
+    await tester.pumpAndSettle();
+    final scheme = Theme.of(
+      tester.element(find.byType(ActivityBarChart)),
+    ).colorScheme;
+
+    final today = _decoration(tester, '2026-09-23');
+    expect(today.color, scheme.primary);
+    expect((today.border! as Border).top.color, scheme.onPrimaryContainer);
   });
 
   testWidgets('선택 줄에 목표 % 가 붙는다', (tester) async {
@@ -182,5 +208,74 @@ void main() {
       tester.getSize(bar).height,
       closeTo(ActivityBarChart.chartHeight, 1),
     );
+  });
+
+  group('목표 라벨은 막대를 가리지 않는다', () {
+    // 일요일까지 모두 지난 주 — 마지막 막대가 목표선을 지난다.
+    final full = ActivityPeriod(
+      kind: PeriodKind.week,
+      start: DateTime(2026, 9, 21),
+      end: DateTime(2026, 9, 27),
+      today: DateTime(2026, 9, 27),
+      days: [
+        for (var d = 21; d <= 27; d++)
+          DailyActivity(date: DateTime(2026, 9, d), steps: 12000),
+      ],
+    );
+    final month = ActivityPeriod(
+      kind: PeriodKind.month,
+      start: DateTime(2026, 9),
+      end: DateTime(2026, 9, 30),
+      today: DateTime(2026, 9, 30),
+      days: [
+        for (var d = 1; d <= 30; d++)
+          DailyActivity(date: DateTime(2026, 9, d), steps: 12000),
+      ],
+    );
+    final label = find.byKey(const Key('walk-goal-label'));
+
+    Future<void> narrow(WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(360, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+    }
+
+    testWidgets('주간 마지막 막대와 라벨이 겹치지 않는다', (tester) async {
+      await narrow(tester);
+      await _pump(tester, full, 10000);
+      await tester.pumpAndSettle();
+
+      final bar = tester.getRect(find.byKey(const Key('walk-bar-2026-09-27')));
+      // 라벨은 막대 오른쪽 칸에만 — 맞닿는 것까지는 괜찮다(부동소수 오차 허용).
+      expect(bar.right, lessThanOrEqualTo(tester.getRect(label).left + 0.01));
+    });
+
+    testWidgets('월간 마지막 막대와 라벨이 겹치지 않는다', (tester) async {
+      await narrow(tester);
+      await _pump(tester, month, 10000);
+      await tester.pumpAndSettle();
+
+      final bar = tester.getRect(find.byKey(const Key('walk-bar-2026-09-30')));
+      // 라벨은 막대 오른쪽 칸에만 — 맞닿는 것까지는 괜찮다(부동소수 오차 허용).
+      expect(bar.right, lessThanOrEqualTo(tester.getRect(label).left + 0.01));
+    });
+
+    testWidgets('목표 높이에서 마지막 막대를 눌러도 선택된다', (tester) async {
+      await narrow(tester);
+      await _pump(tester, full, 10000);
+      await tester.pumpAndSettle();
+
+      final bar = tester.getRect(find.byKey(const Key('walk-bar-2026-09-27')));
+      final line = tester.getRect(find.byKey(const Key('walk-goal-line')));
+      await tester.tapAt(Offset(bar.center.dx, line.center.dy));
+      await tester.pump();
+
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('walk-bar-selection')),
+          matching: find.textContaining('27일'),
+        ),
+        findsOneWidget,
+      );
+    });
   });
 }

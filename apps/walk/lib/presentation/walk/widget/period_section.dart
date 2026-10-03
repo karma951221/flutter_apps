@@ -17,6 +17,12 @@ class PeriodSection extends StatelessWidget {
 
   final PeriodActivityCubit cubit;
 
+  /// 불러오는 동안 스켈레톤 높이 — 머리 · 선택 줄 · 그래프 · 날짜 · 달성 줄 · 타일 두 줄과
+  /// 비슷하게 맞춰 이전 · 다음 기간으로 넘길 때 목록이 튀지 않게 한다.
+  @visibleForTesting
+  static const loadingHeight =
+      ActivityBarChart.chartHeight + AppSpacing.xl * 8 + AppSpacing.sm;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -24,9 +30,7 @@ class PeriodSection extends StatelessWidget {
     return BlocBuilder<PeriodActivityCubit, PeriodActivityState>(
       bloc: cubit,
       builder: (context, state) => switch (state) {
-        PeriodActivityLoading() => const WalkSkeleton(
-          height: AppSpacing.xl * 9,
-        ),
+        PeriodActivityLoading() => const WalkSkeleton(height: loadingHeight),
         PeriodActivityFailure() => AppPlaceholder(
           message: l10n.walkLoadFailed,
           actionLabel: l10n.commonRetry,

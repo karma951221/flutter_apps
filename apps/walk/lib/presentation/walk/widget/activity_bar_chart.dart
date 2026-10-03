@@ -22,7 +22,7 @@ class ActivityBarChart extends StatefulWidget {
   final ActivityPeriod period;
   final int goal;
 
-  @visibleForTesting
+  /// 막대 영역 높이. 기간 스켈레톤 높이도 이것을 기준으로 잡는다.
   static const chartHeight = AppSpacing.xl * 5;
 
   @override
@@ -32,6 +32,9 @@ class ActivityBarChart extends StatefulWidget {
 class _ActivityBarChartState extends State<ActivityBarChart>
     with SingleTickerProviderStateMixin {
   static const _todayBorderWidth = 2.0;
+
+  /// 오른쪽에 비워 두는 `목표` 라벨 자리. 막대 · 날짜 줄이 같이 비운다.
+  static const _labelGutter = AppSpacing.xl;
   static const _barStagger = 30;
   static const _maxStagger = 900;
 
@@ -129,6 +132,7 @@ class _ActivityBarChartState extends State<ActivityBarChart>
           child: Stack(
             children: [
               Positioned.fill(
+                right: _labelGutter,
                 child: AnimatedBuilder(
                   animation: _growth,
                   builder: (context, _) => Row(
@@ -144,24 +148,30 @@ class _ActivityBarChartState extends State<ActivityBarChart>
                 // 점선 · 라벨이 막대 탭을 가로채지 않게 한다.
                 Positioned.fill(
                   child: IgnorePointer(
-                    child: GoalLineOverlay(ratio: goalRatio),
+                    child: GoalLineOverlay(
+                      ratio: goalRatio,
+                      gutter: _labelGutter,
+                    ),
                   ),
                 ),
             ],
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Row(
-          children: [
-            for (final day in period.days)
-              Expanded(
-                child: Text(
-                  _label(locale, day.date),
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelSmall,
+        Padding(
+          padding: const EdgeInsets.only(right: _labelGutter),
+          child: Row(
+            children: [
+              for (final day in period.days)
+                Expanded(
+                  child: Text(
+                    _label(locale, day.date),
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.labelSmall,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -200,8 +210,14 @@ class _ActivityBarChartState extends State<ActivityBarChart>
             margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs / 2),
             decoration: BoxDecoration(
               color: reached ? scheme.primary : scheme.primaryContainer,
+              // 달성한 오늘은 primary 위라 테두리를 onPrimaryContainer 로 바꿔 보이게 한다.
               border: isToday
-                  ? Border.all(color: scheme.primary, width: _todayBorderWidth)
+                  ? Border.all(
+                      color: reached
+                          ? scheme.onPrimaryContainer
+                          : scheme.primary,
+                      width: _todayBorderWidth,
+                    )
                   : null,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(AppRadius.sm / 2),

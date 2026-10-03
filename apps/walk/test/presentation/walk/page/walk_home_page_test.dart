@@ -17,6 +17,7 @@ import 'package:walk/domain/walk/entity/period_kind.dart';
 import 'package:walk/domain/walk/usecase/walk_use_case.dart';
 import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
 import 'package:walk/presentation/walk/page/walk_home_page.dart';
+import 'package:walk/presentation/walk/widget/period_section.dart';
 import 'package:walk/presentation/walk/widget/walk_skeleton.dart';
 
 class _MockUseCase extends Mock implements WalkUseCase {}
@@ -168,6 +169,14 @@ void main() {
     expect(find.byType(WalkSkeleton), findsOneWidget);
     expect(find.byKey(const Key('walk-today-steps')), findsOneWidget);
     expect(find.byKey(const Key('walk-goal-days')), findsNothing);
+  });
+
+  testWidgets('기간 스켈레톤은 불러온 기간 영역과 높이가 비슷하다', (tester) async {
+    when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
+    await pump(tester);
+
+    final loaded = tester.getSize(find.byType(PeriodSection)).height;
+    expect(PeriodSection.loadingHeight, closeTo(loaded, AppSpacing.sm));
   });
 
   testWidgets('주간 | 월간 세그먼트로 전환', (tester) async {
