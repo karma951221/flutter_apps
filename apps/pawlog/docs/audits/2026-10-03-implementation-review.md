@@ -4,7 +4,7 @@
 > [설계 스펙](../../../../docs/superpowers/specs/2026-10-03-walk-app-design.md) ·
 > [아키텍처](../../../../docs/architecture.md) · [에이전트 가이드](../../../../CLAUDE.md)
 
-작성 2026-10-03 · 대상 커밋 `077640e`(단계 ①) · `bdb60c3`(단계 ②) · `87c680d`(단계 ③) · `cdc1ac2`(단계 ④) · `4627805`(단계 ⑤)
+작성 2026-10-03 · 대상 커밋 `077640e`(단계 ①) · `bdb60c3`(단계 ②) · `87c680d`(단계 ③) · `cdc1ac2`(단계 ④) · `4627805`(단계 ⑤) · `93d722b`(단계 ⑥)
 
 구현 에이전트와 별개인 리뷰어 에이전트가 [기획서](../overview.md) §8 의 단계 커밋을 하나씩
 독립적으로 읽고, 기획서 · 설계 스펙 · [CLAUDE.md](../../../../CLAUDE.md) 규칙에 비추어 쓴 기록이다.
@@ -19,8 +19,9 @@
 | ① | `077640e` | `feature_walk` 뼈대 · 도메인(엔티티 11 · 정책 2 · 인터페이스 4 · facade · 시나리오 15) · `FailureCode` +5 · ARB 3개 | **통과(조건부)** — 버그 확정 0, 스펙과 다른 결정 13건(스펙 문서 반영 필요), 잠재 결함 3건(B1 · B3 → `bdb60c3`, B2 → `cdc1ac2` 반영) |
 | ② | `bdb60c3` | drift `WalkDatabase`(5테이블) · 매퍼 · `DriftDogRepository` · `DriftWalkRepository` · `FilePhotoStorage` · `WalkRegisterModule` · ① 소견 B1 · B3 반영 | **통과(조건부)** — 스키마 · cascade · 조인 watch 는 스펙대로이고 테스트가 실제로 단언한다. `WalkTracker` 미등록이라 ⑤ 전에는 `WalkUseCase` 를 resolve 할 수 없음(D3), watch 의 매핑 예외가 `Err` 로 바뀌지 않는 구멍(D1), DB dispose 누락(D2) — 셋 다 `cdc1ac2` 반영 |
 | ③ | `87c680d` | `apps/pawlog` 셸(부팅 · DI · 라우터 · `DogsRedirect` · 권한) · `AppAvatar.imageFile` · `captureImage` | **통과(조건부)** — 통근 셸과 같은 모양, 권한 선언 정확. 단 D3 때문에 실제 앱은 부팅 스피너에서 멈추고 오류가 안 보임(S1, 수정 작업 중), 스펙에 없는 `/walks` 경로(S2), 새 템플릿의 AGP 9 · iOS 15 미검증(I1). S1 은 `cdc1ac2` 반영 |
-| ④ | `cdc1ac2` | `GeolocatorWalkTracker` · `LocationGateway`(⑤ 데이터 몫을 당김) · W1 반려견 목록 · 편집(cubit 2 · 페이지 2 · `walkDog*` 15키) · ②③ 소견 반영 | **통과(조건부)** — tracker 계약 · W1 계획 · UI 규칙을 대체로 지킨다. 사진 고르기 ↔ 저장 경합으로 파일이 고아가 될 수 있음(T1), 수정 화면이 불러오는 동안 · 불러오기 실패 때 "등록" 제목(T2), `stop` 의 Failure 종류(T4). T1 · T2 · T4 · I1 수정은 작업 트리에서 진행 중(다음 커밋) |
-| ⑤ | `4627805` | W2 진행 화면 — `ActiveWalkCubit`(1초 타이머) · `RouteMap` · `WalkStatsRow` · `DogChips` · `WalkFormat` · `walk*` 19키, `/walk` 연결 | **통과(조건부)** — 상태 기계 · 타이머 · 재진입이 계획대로이고 `fakeAsync` 로 검증된다. `go(saveWalk)` 가 뒤로 갈 곳을 지움(V1), 0마리 안내에서 등록하고 돌아와도 갱신 안 됨(V2) |
+| ④ | `cdc1ac2` | `GeolocatorWalkTracker` · `LocationGateway`(⑤ 데이터 몫을 당김) · W1 반려견 목록 · 편집(cubit 2 · 페이지 2 · `walkDog*` 15키) · ②③ 소견 반영 | **통과(조건부)** — tracker 계약 · W1 계획 · UI 규칙을 대체로 지킨다. 사진 고르기 ↔ 저장 경합으로 파일이 고아가 될 수 있음(T1), 수정 화면이 불러오는 동안 · 불러오기 실패 때 "등록" 제목(T2), `stop` 의 Failure 종류(T4). T1 · T2 · T4 · I1 은 `93d722b` 반영 |
+| ⑤ | `4627805` | W2 진행 화면 — `ActiveWalkCubit`(1초 타이머) · `RouteMap` · `WalkStatsRow` · `DogChips` · `WalkFormat` · `walk*` 19키, `/walk` 연결 | **통과(조건부)** — 상태 기계 · 타이머 · 재진입이 계획대로이고 `fakeAsync` 로 검증된다. `go(saveWalk)` 가 뒤로 갈 곳을 지움(V1), 0마리 안내에서 등록하고 돌아와도 갱신 안 됨(V2). V1 은 `93d722b` 반영, V2 는 작업 트리 진행 중 |
+| ⑥ | `93d722b` | W3 저장 · 수정 폼과 상세(cubit 2 · 페이지 2 · 위젯 4), ④⑤ 소견 반영, `AppPlaceholder.actionKey` | **보류** — 폼 · 사진 규칙 · 경합 처리는 꼼꼼하고 테스트가 두텁다. 그러나 `/walks` 부모 redirect 때문에 **상세 · 수정 화면이 앱에서 열리지 않는다**(W1, go_router 로 재현). 저장 중 닫힘 고아(W2), 사진 빼기 버튼 의미 라벨(W3) |
 
 ---
 
@@ -88,7 +89,7 @@
 | # | 소견 | 위치 | 비고 |
 |---|---|---|---|
 | B1 | `RoutePreview.decode` 가 깨진 JSON 에서 던져 피드 스트림 전체를 끊을 수 있었다 | `route_preview.dart:28-38` | **반영됨**(`bdb60c3`) — 세 예외를 잡아 빈 목록, 깨진 값 4종 테스트 |
-| B2 | `DiscardWalkScenario` 가 항상 `tracker.clear()` 를 불러, 추적 중에 수정 폼을 버리면 tracker 를 건드릴 수 있었다 | `discard_walk_scenario.dart:10-15` | **반영됨**(`cdc1ac2`) — `clear()` 가 `finished` 에서만 `idle`(`geolocator_walk_tracker.dart:197-201`, 테스트 `geolocator_walk_tracker_test.dart:207`). 남는 것: 저장 안 한 `finished` 세션이 있을 때 ⑥ 수정 폼이 `discardWalk` 를 쓰면 그 세션을 지운다 → 수정 폼은 `removePhoto` |
+| B2 | `DiscardWalkScenario` 가 항상 `tracker.clear()` 를 불러, 추적 중에 수정 폼을 버리면 tracker 를 건드릴 수 있었다 | `discard_walk_scenario.dart:10-15` | **반영됨**(`cdc1ac2`) — `clear()` 가 `finished` 에서만 `idle`(`geolocator_walk_tracker.dart:197-201`, 테스트 `geolocator_walk_tracker_test.dart:207`). 잔여(⑥ 수정 폼이 `discardWalk` 를 쓰면 안 됨)도 `93d722b` 에서 지켜졌다 |
 | B3 | `SaveWalk` · `UpdateWalk` 가 못 찾은 강아지 id 를 버려 0마리 산책이 저장될 수 있었다(기획 §9 #7) | `save_walk_scenario.dart:35-38`, `update_walk_scenario.dart:50-53` | **반영됨**(`bdb60c3`) — `selected.isEmpty` → `walkDogRequired`, 테스트 2개 |
 
 #### R — 규칙 · 경계
@@ -154,7 +155,7 @@
 | ④ ✓ | 강아지 폼 버리기는 새 사진을 `removePhoto`(`dog_edit_cubit.dart:131-139`), `getDog` 의 `Ok(null)` → `loadFailure`(`:34-39`) | 스펙 §2 |
 | ④ ✓ | tracker 가 `stepMeters` 를 먼저 계산해 `accept` 에 넘기고 받아들인 점만 합산(`geolocator_walk_tracker.dart:151-165`) | `walk_tracking_policy.dart:5` |
 | ④ △ | `clear()` finished 전용 · `start` 중복 검사 · `stop` → `walkNotFound` 모두 됨. 단 `stop` 의 Failure 종류가 `validation`(T4) | B2, 스펙 §2 |
-| ⑥ W3 | `saveWalk` 가 `Walk` 를 돌려주므로 `saved(walk.id)`. 수정 폼 버리기는 `discardWalk` 가 아니라 `removePhoto` 로 | `walk_use_case.dart:43`, B2 |
+| ⑥ ✓ | `saved(walk.id)` · 수정 폼은 `discardWalk` 대신 파일만 정리 | B2 |
 | ⑦ W4 | `getWalk` 의 `Ok(null)` → `WalkDetailCubit` 이 `walkNotFound`. 강아지 삭제 뒤 `dogs` 가 빈 산책을 `WalkCard` · `DogAvatars` 가 그려야 한다 | `walk_repository.dart:10`, 기획서 W1 "산책 기록은 남는다" |
 | ⑧ | 설계 스펙 §2 · §3 을 위 "설계 대비" 의 "다름" 13건에 맞춰 고친다(특히 `PhotoStorage` · 레포 시그니처 · `accept` 의사코드 · ARB 설명 범위) | 스펙 §0 |
 
@@ -322,7 +323,7 @@ Android · iOS 빌드는 이 환경에서 돌리지 않았다.
 | # | 소견 | 위치 | 비고 |
 |---|---|---|---|
 | S1 | D3 때문에 `getIt<WalkUseCase>()` 가 던지고 `FutureBuilder` 가 `hasError` 를 보지 않아 부팅 스피너가 영원히 돌았다 | `app.dart:20-45` | **반영됨**(`cdc1ac2`) — D3 해소 + `snapshot.error` 를 `SelectableText` 로 표시(`app.dart:38-50`). l10n 전이라 원문 그대로인 것은 의도(주석). 통근 앱은 같은 구멍이 남아 있다 |
-| S2 | 스펙에 없는 `/walks` 목록 경로가 있다. 피드(`/`)가 목록이라 페이지 표에도 없다. `/walks/:id` 를 자식으로 두려고 만든 부모로 보이는데, 그 부모가 화면을 가져 `/walks` 로 갈 수 있게 됐다 | `app_router.dart:27-31` | 부모 `builder` 대신 `redirect: (_, _) => PawlogPaths.feed` 로 막거나, `/walks/:id` 를 최상위로 두면 8개로 맞는다 |
+| S2 | 스펙에 없는 `/walks` 목록 경로가 있다. 피드(`/`)가 목록이라 페이지 표에도 없다. `/walks/:id` 를 자식으로 두려고 만든 부모로 보이는데, 그 부모가 화면을 가져 `/walks` 로 갈 수 있게 됐다 | `app_router.dart:27-31` | 부모 `builder` 대신 `redirect: (_, _) => PawlogPaths.feed` 로 막거나, `/walks/:id` 를 최상위로 두면 8개로 맞는다 **`93d722b`**: 부모에 redirect 를 더했으나 자식까지 막는 결함이 생겼다 → ⑥ W1 |
 
 #### R — 규칙 · 경계
 
@@ -338,13 +339,9 @@ Android · iOS 빌드는 이 환경에서 돌리지 않았다.
 1. **`flutter create` 템플릿 세대 차.** pawlog 는 더 새 Flutter(`.metadata` revision `5fc3468…`, 통근 `cc0734a…`)로 만들어져
    플랫폼 설정이 통근과 다르다(권한 외 차이는 아래가 전부).
 
-   | 항목 | 통근 | pawlog | 위치 |
-   |---|---|---|---|
-   | AGP · Kotlin 플러그인 | 8.11.1 · 2.2.20 | **9.1.0 · 2.4.0** | `android/settings.gradle.kts:22-23` |
-   | Gradle wrapper | 8.14 | **9.3.1** | `android/gradle/wrapper/gradle-wrapper.properties:5` |
-   | 호환 플래그 | — | `android.newDsl=false` · `android.builtInKotlin=false` | `android/gradle.properties:3-6` |
-   | Kotlin 옵션 | `kotlinOptions { jvmTarget }`, `kotlin-android` 플러그인 | `kotlin { compilerOptions }`, 플러그인 줄 없음 | `android/app/build.gradle.kts:41-44` |
-   | iOS 최소 버전 · 플러그인 연결 | 13.0 · CocoaPods | **15.0** · SwiftPM(`FlutterGeneratedPluginSwiftPackage`) | `ios/Runner.xcodeproj/project.pbxproj` |
+   차이: AGP · Kotlin 플러그인 8.11.1 · 2.2.20 → **9.1.0 · 2.4.0**(`android/settings.gradle.kts:22-23`), Gradle 8.14 → **9.3.1**,
+   `android.newDsl=false` · `android.builtInKotlin=false`(`android/gradle.properties:3-6`), `kotlin { compilerOptions }`,
+   iOS 13.0 · CocoaPods → **15.0** · SwiftPM(`project.pbxproj`).
 
    각 앱의 Gradle · Xcode 프로젝트는 독립이라 **모노레포 빌드끼리 충돌하지는 않는다.** 위험은 둘이다:
    (a) AGP 9 에서 플러그인(drift 의 sqlite3 · geolocator · image_picker · path_provider)이 빌드되는지 아직
@@ -375,7 +372,7 @@ Android · iOS 빌드는 이 환경에서 돌리지 않았다.
 |---|---|---|
 | ④ ✓ | D3 수정 · `hasError` 분기 | S1 |
 | ④ ✓ | `onDone` → `markHasDogs()` → `canPop` 이면 `pop`, 아니면 `go(feed)`(`app_router.dart:11-18`). 0마리 `/dogs` 진입은 빈 상태 `AppPlaceholder` 가 감당 | S3 |
-| ④ ✗ | `/walks` 부모 경로 정리 — 그대로(`app_router.dart:43`) | S2 |
+| ⑥ △ | `/walks` 부모 경로 정리 — redirect 를 더했지만 상세 · 수정까지 막는다(⑥ W1) | S2 |
 | ⑤ W2 | 첫 실기기 빌드 전에 AGP 9 / iOS SwiftPM 빌드 확인, Android 13+ 알림 기대값 | I1, S5 |
 | ⑧ | 스펙 §5 의 부팅 순서(`PawlogApp(hasDogs)`) · 리다이렉트 범위 문구를 구현에 맞춘다 | 설계 대비 |
 
@@ -424,31 +421,27 @@ Android · iOS 빌드는 이 환경에서 돌리지 않았다.
 
 ### 리뷰 소견
 
-번호는 ④ 의 것(T). **T1 · T2 · T4 · I1 수정과 `AppPlaceholder.actionKey` 는 `4627805` 이후 작업 트리에서 진행 중이다 — 커밋되면 반영됨으로 바꾼다.**
+번호는 ④ 의 것(T). T1 · T2 · T4 · I1 은 `93d722b` 에서 반영됐다.
 
 #### B — 버그 · 잠재 결함
 
 | # | 소견 | 위치 | 비고 |
 |---|---|---|---|
-| T1 | **사진 저장 중 `save()` 경합.** `setPhoto` 는 시작할 때만 `isSaving` 을 본다(`:63`). `storePhoto` 를 기다리는 사이 사용자가 저장을 누르면 `save()` 가 **옛 폼**으로 `saveDog` 를 부르고, 뒤늦게 돌아온 `setPhoto` 가 `_emitEditing`(`:87`)으로 `isSaving: false` 를 덮어 버튼이 다시 살아난다. 저장이 끝나면 `_saved = true` 라 `close()` 가 새 파일을 안 지워 **고아 파일**이 남고, `saved` 뒤에 `editing` 이 다시 오면 화면이 폼으로 돌아갈 수도 있다 | `dog_edit_cubit.dart:61-108` | 사진 선택 UI 가 앞을 가려 드물다. `setPhoto` 의 await 뒤 `state is DogEditEditing && !isSaving` 재확인, 아니면 새 파일 삭제 후 반환 — tracker 가 `:86-93` 에서 한 것과 같은 모양 |
-| T2 | 수정 화면의 제목 · 메뉴가 `form?.id` 로 정해진다(`dog_edit_page.dart:137`). 불러오는 동안과 **`loadFailure`(없는 강아지)일 때 "반려견 등록"** 이 보인다 | `dog_edit_page.dart:137-158` | `widget.dogId != null` 로 정하면 된다. 페이지 테스트 `수정` 그룹은 로드 완료 뒤만 본다 |
+| T1 | 사진 저장 중 `save()` 경합 — 늦게 온 `setPhoto` 가 `isSaving` 을 덮고, 저장된 강아지와 무관한 새 파일이 고아로 남았다 | `dog_edit_cubit.dart:61-108` | **반영됨**(`93d722b`) — await 뒤 `_cannotAcceptPhoto`(닫힘 · 비편집 · 저장 중)면 새 파일을 지우고 끝(`dog_edit_cubit.dart:62,74,149-152`), 테스트 `dog_edit_cubit_test.dart:199`. 대가: 저장 직전에 고른 사진은 **조용히 빠진다** — 사진 고르기 UI 가 앞을 가려 실제로 겹치기 어렵고, 고아 파일보다 낫다. 받아들일 만하다 |
+| T2 | 수정 화면 제목 · 메뉴가 `form?.id` 기준이라 로딩 · `loadFailure` 중 "등록" 으로 보였다 | `dog_edit_page.dart:137` | **반영됨**(`93d722b`) — `isEdit: dogId != null`(`dog_edit_page.dart:23,138`), 로딩 중 제목 테스트(`dog_edit_page_test.dart:62`) |
 
 #### R — 규칙 · 경계
 
 | # | 소견 | 위치 | 의견 |
 |---|---|---|---|
 | T3 | UI 규칙 준수: `AppListTile` · `AppAvatar` · `AppPlaceholder`(빈 · 실패 · loadFailure) · `AppOverflowMenu` · `AppConfirmDialog`(기본 파괴적) · `AppSnackBar` · `AppButton`. 상태 분기는 전부 `switch`, 모든 await 뒤 `isClosed`, `close()` 에서 구독 해제(`dog_list_cubit.dart:36-40`) | `walk/presentation/**` | 위반 없음. 단 아바타 크기에 여백 토큰을 쓴다(`radius: AppSpacing.lg`, `AppSpacing.xl * 2` — `dog_list_page.dart:82`, `dog_edit_page.dart:218`). 크기 토큰이 없어서이지만 의미가 어긋난다 → `AppAvatar` 에 크기 프리셋을 두는 쪽을 설계 §7 후보로 |
-| T4 | `stop` 미추적이 `Failure.validation(walkNotFound)`. 스펙 §2 실패 표는 `walkNotFound` 를 `notFound` 로 정했고 도메인 시나리오(`delete_walk_scenario.dart:18`)도 `notFound` 다 | `geolocator_walk_tracker.dart:178-181` | 문구는 같아 사용자 영향은 없지만, Failure 종류로 분기하는 코드(예: 상세 화면의 "없음" 처리)가 생기면 갈린다. `notFound` 로 맞추자 |
+| T4 | 미추적 `stop` 이 `Failure.validation(walkNotFound)` 이었다(스펙은 `notFound`) | `geolocator_walk_tracker.dart:178-181` | **반영됨**(`93d722b`) — `Failure.notFound` |
 | T5 | `photoFile` 을 cubit 이 위임한다 | `dog_list_cubit.dart:34`, `dog_edit_cubit.dart:128` | 괜찮다 — 페이지가 `getIt<WalkUseCase>()` 를 직접 잡지 않게 하는 통로라 [아키텍처 ③](../../../../docs/architecture.md)과 맞는다. 매 빌드 `File` 을 새로 만들지만 `FileImage` 는 경로로 같음을 판단해 다시 읽지 않는다 |
 | T6 | `saved` · `deleted` 가 `SizedBox.shrink` | `dog_edit_page.dart:165-166` | 괜찮다 — listener 가 같은 프레임에 `onDone` 으로 떠난다. AppBar 는 남아 깜빡임도 작다 |
 
 #### I — 개선 제안
 
-1. **`setBirthday` 의 근거가 틀렸다.** "copyWith 로 null 을 못 넣는다" 는 사실이 아니다 — Freezed 생성
-   `copyWith` 는 nullable 필드에 `Object? birthday = freezed` 센티널을 써서 `copyWith(birthday: null)` 이
-   된다(`dog_form.freezed.dart:65,70`). 손으로 생성자를 다시 부르는 `setBirthday` · `_withPhoto`
-   (`dog_edit_cubit.dart:49-58,152-159`)는 `DogForm` 에 필드가 늘 때 빠뜨리기 쉽다 → `copyWith` 로.
-   UI 에 생일을 지우는 수단도 없다(계획에도 없음).
+1. ~~`setBirthday` · `_withPhoto` 를 손으로 생성~~ — Freezed `copyWith` 는 nullable 에 `null` 을 받는다. **반영됨**(`93d722b`, `copyWith` 로)
 2. **테스트 공백.** tracker: await 뒤 경합 가드(`:86-93`), 권한 요청 후 허용 경로, `catch` → `unknown`,
    `dispose`. cubit: `setPhoto` 실패(`walkPhotoSaveFailed`), `delete` 실패, `load` 의 `Err`, 수정 폼에서
    새 사진을 고른 뒤 닫을 때 **원래 사진은 남는지**(현재 테스트는 신규 폼만). 페이지: 사진 버튼 흐름
@@ -475,8 +468,8 @@ Android · iOS 빌드는 이 환경에서 돌리지 않았다.
 | ⑤ ✓ | `ActiveWalkCubit.load()` 가 구독을 먼저 걸고 `trackerState` 를 읽는다 | ⑤ 설계 대비 |
 | ⑤ ✓ | `finished` 재진입 → `stopped` → 저장 폼(화면 수준). tracker 자체는 여전히 허용 | 열린 질문 1 |
 | ⑤ ✗ | 실기기 Android `accuracy` · `intervalDuration`, AGP 9 빌드 — 에뮬레이터 검증으로 넘김 | 설계 대비 |
-| ⑤ ✗ | T4 · T1 · T2 — `4627805` 에는 없고 작업 트리 진행 중 | T1 · T2 · T4 |
-| ⑥ W3 | 수정 폼 버리기는 `removePhoto` 로(B2 잔여). 사진 경합은 T1 과 같은 가드 | B2, T1 |
+| ⑥ ✓ | T1 · T2 · T4 · I1 (`93d722b`) | T1 · T2 · T4 |
+| ⑥ ✓ | 수정 모드는 `discardWalk` 를 부르지 않는다(`walk_edit_cubit.dart:174-185`). 사진 경합은 T1 과 같은 가드(`:109-123`) | B2, T1 |
 | ⑧ | 스펙 §2 `states` 문구, W1 계획의 생일 지우기 여부 | 설계 대비, I1 |
 
 ---
@@ -517,7 +510,7 @@ Android · iOS 빌드는 이 환경에서 돌리지 않았다.
 | `RouteMap` 생성자 · 레이어 | 계획 표 | 그대로. `tileProvider ?? getIt<TileProvider>()`(`route_map.dart:87`), `userAgentPackageName: 'com.karma.pawlog'`, `SimpleAttributionWidget` | 일치 |
 | 첫 화면 · 추종 | `CameraFit.coordinates`, 점 1개면 줌 17, `didUpdateWidget` 에서 `move(last, 현재 줌)` | `route_map.dart:40-50,73-82`. 한 장소에 몰린 점도 "점 1개" 로 취급(`:69`) | 일치(보강) |
 | `WalkFormat` | 999 · 1000 · 1250 m, 59 · 65분, `07:05` · `1:02:03` | 모두 테스트(`walk_format_test.dart`), 999.6 m → `1.0 km` 경계도 | 일치 |
-| 위젯 키 | 7종 | `walk-active-retry` 없음 — 실패 `AppPlaceholder` 에 `walk-active-failure` 만(`active_walk_page.dart:148`) | 다름 — `AppPlaceholder` 에 액션 키 인자가 없어서. `actionKey` 추가가 작업 트리에서 진행 중 |
+| 위젯 키 | 7종 | `walk-active-retry` 없음 | 다름 — `AppPlaceholder.actionKey` 는 `93d722b` 에 들어왔지만(`app_placeholder.dart`, 테스트 `app_placeholder_test.dart:58`) **진행 화면에는 아직 안 붙었다** |
 | 플랫폼 설정 | Android `high` | ④ 그대로 `best` + 2초 간격 | 다름 — 실기기 검증 때 정한다(④ 설계 대비) |
 
 ### 리뷰 소견
@@ -528,8 +521,8 @@ Android · iOS 빌드는 이 환경에서 돌리지 않았다.
 
 | # | 소견 | 위치 | 비고 |
 |---|---|---|---|
-| V1 | **`go(saveWalk)` 는 뒤로 갈 곳을 지운다.** `/walk/save` 는 최상위 경로라 `go` 가 스택을 `[/walk/save]` 하나로 바꾼다. 같은 라우트 구성으로 확인했다 — `push('/walk')` 뒤 `go('/walk/save')` 는 `canPop() == false`, `pushReplacement` 는 `true`(피드 위). ⑥ 저장 폼에서 시스템 뒤로 가기를 누르면 **앱이 닫힌다**. 계획의 `pushReplacement` 가 맞다 | `app_router.dart:36` | `pushReplacement(PawlogPaths.saveWalk)`. 또는 `/walk/save` 를 `/` 의 자식으로 두면 `go` 도 피드를 깐다. ⑥ 의 `onDiscarded` · 뒤로 가기 처리와 함께 정할 것 |
-| V2 | **0마리 안내 → 반려견 등록 → 돌아와도 안내가 그대로다.** `_loadDogs` 는 `getDogs()` 한 번(`active_walk_cubit.dart:118-133`)이라, `onOpenDogs`(`push('/dogs')`) 로 등록하고 돌아와도 `selectingDogs([])` 에 머문다. 화면을 나갔다 와야 한다 | `active_walk_cubit.dart:118-133`, `app_router.dart:37` | `selectingDogs` 동안 `watchDogs()` 를 구독하거나(새 강아지는 선택에 더하고, 사라진 강아지는 빼고), 셸이 `await push(...)` 뒤 `retry()` 를 부르게. 전자가 W1 의 "수동 새로고침 없음" 원칙과 맞다 |
+| V1 | `onStopped → go(saveWalk)` 가 피드를 스택에서 지워 저장 폼의 뒤로 가기가 앱을 닫았다(go_router 로 재현: `canPop() == false`) | `app_router.dart:36` | **반영됨**(`93d722b`) — `pushReplacement`, 이유 주석 |
+| V2 | **0마리 안내 → 반려견 등록 → 돌아와도 안내가 그대로다.** `_loadDogs` 가 `getDogs()` 한 번뿐 | `active_walk_cubit.dart:118-133` | **작업 트리 진행 중**(`93d722b` 미포함). `selectingDogs` 동안 `watchDogs()` 구독이 W1 의 "수동 새로고침 없음" 과 맞다 |
 
 #### R — 규칙 · 경계
 
@@ -566,11 +559,75 @@ Android · iOS 빌드는 이 환경에서 돌리지 않았다.
 
 | 단계 | 할 일 | 근거 |
 |---|---|---|
-| 다음 커밋 | (작업 트리 진행 중) ④ T1 · T2 · T4 · I1, `AppPlaceholder.actionKey` → `walk-active-retry` | ④, 위젯 키 |
-| ⑥ W3 | `onStopped` 를 `pushReplacement` 로(V1), 저장 폼의 뒤로 가기 · 버리기가 피드로 돌아가는지 테스트 | V1 |
-| ⑥ · ⑦ | 0마리 안내 복귀 갱신(V2) | V2 |
+| ⑥ △ | ④ T1 · T2 · T4 · I1 ✓, `AppPlaceholder.actionKey` ✓ — 단 `walk-active-retry` 연결은 아직 | ④, 위젯 키 |
+| ⑥ ✓ | `onStopped` → `pushReplacement`(V1). 저장 뒤 `go(feed)` + `push(walk(id))` 스택도 go_router 로 확인: `[/, /walks/w1]`, 뒤로 → 피드 | V1 |
+| ⑦ | 0마리 안내 복귀 갱신(V2) — 작업 트리 진행 중 | V2 |
 | ⑦ W4 | `WalkFormat.duration` 경계(I2), 피드 FAB "계속" 은 `tracking` 뿐 아니라 `finished` 도(저장 폼으로) | I2, 열린 질문 1 |
 | 에뮬레이터 | Android `accuracy` · 간격, `©` 표기, 실제 추종 · 줌 | ④ 설계 대비, V5, I3 |
+
+---
+
+## ⑥ W3 record 화면 (93d722b)
+
+기준은 [W3 계획](../features/record/plan.md). 경로 접두는 ④ 와 같다.
+
+### 무엇이 들어왔나
+
+| 묶음 | 내용 | 위치 |
+|---|---|---|
+| 폼 | `WalkEditForm`(신규 = `session`, 수정 = `existing`), `addedPhotoPaths` · `toDraft` · `toUpdate`(메모 trim → 빈 값 `null`), `maxPhotos = 10` | `walk/presentation/cubit/walk_edit_form.dart:14-93` |
+| 편집 | `WalkEditCubit` — `loadNew` · `loadExisting`(레코드 `.wait`) · `toggleDog` · `setMemo` · `addPhotos` · `removePhoto` · `save` · `discard` · `close` 정리, 상태에 `loadFailure` | `walk_edit_cubit.dart:14-213`, `walk_edit_state.dart` |
+| 상세 | `WalkDetailCubit` — `getWalk` + `getWalkTrack` 동시, 내용이 떠 있으면 `loading` 없이 재조회, 삭제 실패는 `loaded(failure)` | `walk_detail_cubit.dart:10-65` |
+| 페이지 | `WalkEditPage({walkId, onSaved, onDiscarded})`(신규만 `PopScope`), `WalkDetailPage({walkId, onEdit, onDeleted})` | `walk/presentation/page/` |
+| 위젯 | `PhotoStrip` · `PhotoSourceSheet` · `WalkPhotoGrid` · `DogAvatars`, `DogChips.keyPrefix` | `walk/presentation/widget/` |
+| 앱 | `/walk/save` · `/walks/:id` · `/walks/:id/edit` 연결, `/walks` 부모에 route-level redirect | `apps/pawlog/lib/app/router/app_router.dart:38-87` |
+| 그 외 | ④⑤ 소견 반영(위), `AppPlaceholder.actionKey`, l10n `walk*` 약 20키(ko `@walk*` 35 → 56) | — |
+| 테스트 | +46(패키지 `+150`). `test/support/mock_image_picker_service.dart` | `test/presentation/{cubit,page}/` |
+
+`93d722b` worktree: `feature_walk` `+150`, `design_system` `+42`, 앱 `+5`, analyze 0건, 토큰 · `.when(` grep 0건.
+
+### 설계 대비
+
+| 항목 | 계획 | 구현 | 판정 |
+|---|---|---|---|
+| 신규 · 수정 | 한 페이지 두 모드, 신규 `loadFailure` 는 "저장할 산책 없음" + 피드로 | `walk_edit_page.dart:183-193` | 일치 |
+| 사진 규칙 1~3 | 즉시 저장, **이번 폼 추가분만** 즉시 삭제, 기존은 `UpdateWalkScenario` 몫, 10장 상한, `close()` 에서 추가분 삭제 | `walk_edit_cubit.dart:96-150,190-201`. 늦게 도착한 사진은 상태 재확인 후 파일 삭제(`:109-123`) | 일치 — 아래 "저장 중 닫힘" 만 다름 |
+| 저장 중 닫힘 | 규칙 3: `saved` · `discarded` 아니면 삭제 | `isSaving` 이면 **지우지 않는다**(`:189-195`) | 다름 — 소견 W2 |
+| 수정 모드 `discard` | `discardWalk` 를 부르지 않는다 | `if (!form.isNew) return`(`:178`), 페이지에 버리기 버튼 없음 | 일치(① B2 잔여 해소) |
+| 뒤로(신규) | `PopScope(canPop: false)` → 버리기와 같은 확인 | `walk_edit_page.dart:161-168`, 저장 중에는 조용히 무시 | 일치 |
+| 이동 | 신규 저장 `go(feed)` + `push(walk(id))`, 버리기 `go(feed)`, 수정 `pop`, 삭제 `canPop ? pop : go(feed)` | 그대로(`app_router.dart:44-87`) | 일치 — 단 `/walks/:id` 가 열리지 않는다(W1) |
+| 상세 재조회 | 수정에서 돌아오면 다시 읽기 | `onEdit` Future 를 기다린 뒤 `load`(`walk_detail_page.dart:56-61`), 내용이 있으면 `loading` 생략(`walk_detail_cubit.dart:19-21`) | 일치(보강) — 깜빡임 없이 바뀌는 쪽이 낫다 |
+| 실패 반복 | — | `addPhotos` 시작 때 이전 `failure` 를 비워(`:100`) 같은 실패도 다시 스낵바 | 일치(보강) — bloc 의 같은 상태 무시를 정확히 피했다 |
+| 사진 원천 | `ImagePickerService` 는 탭할 때 | `getIt` 을 탭 시점에 푼다(`walk_edit_page.dart:109`), 카메라는 `[?await captureImage()]` | 일치 |
+
+### 리뷰 소견
+
+번호는 ⑥ 의 것(W).
+
+| # | 등급 | 소견 | 위치 | 의견 |
+|---|---|---|---|---|
+| W1 | **B** | **`/walks/:id` · `/walks/:id/edit` 에 갈 수 없다.** 부모 `/walks` 의 route-level `redirect` 는 자식으로 갈 때도 `state.matchedLocation == '/walks'`(부모 자신의 위치)를 받는다. 같은 구성으로 go_router 를 돌려 확인했다 — `go('/walks/w1')` · `go('/walks/w1/edit')` 모두 `/` 로 간다. 저장 뒤 `push(walk(id))` 는 피드로 튕기고 상세 · 수정 화면은 앱에서 열리지 않는다. 페이지 테스트는 라우터 없이 페이지를 직접 띄워 못 잡았다 | `app_router.dart:56-58` | `state.fullPath == PawlogPaths.walks` 나 `state.uri.path == PawlogPaths.walks` 로 비교하거나, 부모를 경로 없는 묶음으로 두지 말고 `/walks/:id` 를 최상위로. 앱 쪽에 `createRouter` 로 `/walks/w1` 이 상세를 그리는 라우터 테스트를 하나 두자 |
+| W2 | I | 저장 중 닫히면 추가 사진을 지우지 않는다(계획 규칙 3 과 다름). 성공하면 파일이 산책 것이므로 지우면 안 되니 **방향은 맞다.** 그러나 `save()` 는 `isClosed` 면 결과를 버리므로(`walk_edit_cubit.dart:161`) 실패한 경우 고아가 남는다 | `walk_edit_cubit.dart:152-170,189-201` | `save()` 에서 `isClosed && result is Err` 면 `addedPhotoPaths` 를 지우면 고아가 0 이 된다. 신규 모드는 `PopScope` 로 저장 중 나가기가 막혀 실제로는 수정 모드만 해당 |
+| W3 | R | 사진 빼기 버튼이 `InkResponse` + `CircleAvatar`(반지름 `md - xs`) 라 터치 영역이 작고 **의미 라벨이 없다** — 스크린 리더가 "버튼" 만 읽는다 | `photo_strip.dart:114-129` | `IconButton(tooltip: l10n.…)` 이나 `Semantics(label:)`. 추가 칸은 `Semantics` 를 갖췄다(`:148-151`) |
+| W4 | R | 크기 · 수치 하드코딩: 그리드 `cacheWidth: 400`(`walk_photo_grid.dart:36`), 띠 `cacheWidth: tileSize * 2`(기기 배율 무시, `photo_strip.dart:104`), scrim `alpha: 0.6`(`:122`), 지도 높이 `AppSpacing.xl * 8`(`walk_detail_page.dart:169`) | 각 위치 | 규칙의 "숫자 여백" 위반은 아니지만 ④ T3 · ⑤ V3 의 크기 토큰 문제가 넓어졌다. `cacheWidth` 는 `MediaQuery.devicePixelRatioOf` 로 |
+| W5 | G | `Card` 를 쓰지 않았고 공통 위젯(`AppConfirmDialog` · `AppOverflowMenu` · `AppPlaceholder` · `AppSnackBar` · `AppListTile` · `AppButton`)만 썼다. `+n` 칩만 `CircleAvatar` — `AppAvatar` 로는 표현할 수 없어 타당한 예외 | `dog_avatars.dart:68-81` | 위반 없음 |
+| W6 | G | 늦게 도착한 사진 · 닫힘 · 저장 · 버리기 경합을 모두 상태 재확인 한 줄로 막고, 각 경우를 테스트했다(`walk_edit_cubit_test.dart:375,471`) | `walk_edit_cubit.dart:109-123` | ④ T1 수정과 같은 모양으로 일관된다 |
+
+**④ T1 수정의 UX**: 저장을 누른 뒤 도착한 사진은 반려견 · 산책 모두 조용히 빠진다. 사진 선택 UI 가 화면을
+가리고 있어 실제로 겹치기 어렵고, 고아 파일이나 저장 뒤 폼 복귀보다 낫다 — 받아들일 만하다. 알리고 싶다면
+`walkPhotoSaveFailed` 스낵바 정도.
+
+**테스트 공백**: 카메라 경로(`PhotoSource.camera`), 저장 중 닫힘(W2), 라우터 연결(W1), `DogAvatars` 의 `+n`,
+0마리 산책(강아지 삭제 후)의 상세 표시. 계획 표의 나머지 — 뒤로 가기 확인 · 취소, 기존 사진 빼도 파일 유지, 10장
+상한, 삭제 실패 시 내용 유지 — 는 모두 있다.
+
+### 다음 단계에 넘기는 것
+
+| 단계 | 할 일 | 근거 |
+|---|---|---|
+| 즉시 | `/walks` 부모 redirect 를 `fullPath` 비교로, 라우터 테스트 추가 | W1 |
+| ⑦ | `WalkCard` 탭 → `push(walk(id))` 가 W1 수정 뒤에 상세를 여는지 에뮬레이터로 확인. `DogAvatars` 재사용, `walk-active-retry` 연결 | W1, ⑤ 위젯 키 |
+| ⑦ 이후 | W2(저장 실패 시 정리) · W3(빼기 버튼 의미 라벨) · W4(`cacheWidth`) | W2 · W3 · W4 |
 
 ## 열린 질문
 
