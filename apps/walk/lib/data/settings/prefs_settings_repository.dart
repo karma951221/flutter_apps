@@ -34,17 +34,20 @@ class PrefsSettingsRepository implements SettingsRepository {
 
   @override
   Future<void> save(AppSettings settings) async {
-    await _prefs.setString(themeModeKey, settings.themeMode.name);
-    await _prefs.setInt(stepGoalKey, settings.stepGoal);
     final celebrated = settings.goalCelebratedOn;
-    if (celebrated == null) {
-      await _prefs.remove(goalCelebratedOnKey);
-    } else {
-      // 날짜만 저장한다(yyyy-MM-dd). 읽으면 로컬 자정이 된다.
-      await _prefs.setString(
-        goalCelebratedOnKey,
-        celebrated.toIso8601String().substring(0, 10),
-      );
-    }
+    // 모든 키 쓰기를 await 전에 시작한다 — SharedPreferences 는 캐시를 동기로 바꾸므로
+    // 저장 도중 다른 쪽이 load() 해도 반쯤 쓴 스냅샷(새 테마 + 옛 목표)을 읽지 않는다.
+    await Future.wait([
+      _prefs.setString(themeModeKey, settings.themeMode.name),
+      _prefs.setInt(stepGoalKey, settings.stepGoal),
+      if (celebrated == null)
+        _prefs.remove(goalCelebratedOnKey)
+      else
+        // 날짜만 저장한다(yyyy-MM-dd). 읽으면 로컬 자정이 된다.
+        _prefs.setString(
+          goalCelebratedOnKey,
+          celebrated.toIso8601String().substring(0, 10),
+        ),
+    ]);
   }
 }

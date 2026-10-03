@@ -90,6 +90,21 @@ void main() {
       expect(big.load().stepGoal, StepGoal.max);
     });
 
+    test('저장이 끝나기 전에 읽어 다시 저장해도 앞선 목표를 잃지 않는다', () async {
+      // 목표 변경 저장이 진행 중일 때 축하 판정이 읽고-고쳐-쓴다(걷기 탭 리스너).
+      final goalSave = repo.save(const AppSettings(stepGoal: 6000));
+      final celebrationSave = repo.save(
+        repo.load().copyWith(goalCelebratedOn: DateTime(2026, 10, 3)),
+      );
+      await Future.wait([goalSave, celebrationSave]);
+
+      final reread = PrefsSettingsRepository(
+        await SharedPreferences.getInstance(),
+      ).load();
+      expect(reread.stepGoal, 6000);
+      expect(reread.goalCelebratedOn, DateTime(2026, 10, 3));
+    });
+
     test('축하일 null 저장은 키를 지운다', () async {
       await repo.save(AppSettings(goalCelebratedOn: DateTime(2026, 10, 3)));
       await repo.save(const AppSettings());

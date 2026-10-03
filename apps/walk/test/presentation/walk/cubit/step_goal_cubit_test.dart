@@ -1,5 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:walk/data/settings/prefs_settings_repository.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
 import 'package:walk/domain/settings/repository/settings_repository.dart';
 import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
@@ -46,4 +48,30 @@ void main() {
     act: (cubit) => cubit.select(8000),
     expect: () => <int>[],
   );
+
+  test('목표를 바꾸자마자 축하일을 저장해도 새 목표가 남는다(실제 SharedPreferences)', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = PrefsSettingsRepository(
+      await SharedPreferences.getInstance(),
+    );
+    final cubit = StepGoalCubit(prefs);
+    addTearDown(cubit.close);
+    // 걷기 탭이 목표 변경을 듣고 축하일을 읽고-고쳐-쓰는 것과 같다.
+    final saves = <Future<void>>[];
+    final sub = cubit.stream.listen((_) {
+      saves.add(
+        prefs.save(
+          prefs.load().copyWith(goalCelebratedOn: DateTime(2026, 10, 3)),
+        ),
+      );
+    });
+    addTearDown(sub.cancel);
+
+    await cubit.select(6000);
+    await Future.wait(saves);
+
+    expect(cubit.state, 6000);
+    expect(prefs.load().stepGoal, 6000);
+    expect(prefs.load().goalCelebratedOn, DateTime(2026, 10, 3));
+  });
 }
