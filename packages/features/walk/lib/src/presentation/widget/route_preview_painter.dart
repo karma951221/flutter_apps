@@ -38,8 +38,11 @@ class RoutePreviewPainter extends CustomPainter {
       minLng = math.min(minLng, p.lng);
       maxLng = math.max(maxLng, p.lng);
     }
+    // 경도 1도는 위도 1도보다 짧다(cos 위도). 보정 없이 그리면 동서로 늘어난
+    // 모양이 된다 (⑦ 리뷰 F1).
+    final lngScale = math.cos((minLat + maxLat) / 2 * math.pi / 180);
     final spanLat = maxLat - minLat;
-    final spanLng = maxLng - minLng;
+    final spanLng = (maxLng - minLng) * lngScale;
     // 한 점이거나 한 직선 위여도 0 으로 나누지 않는다.
     final scale = math.min(
       spanLng == 0 ? double.infinity : area.width / spanLng,
@@ -52,7 +55,7 @@ class RoutePreviewPainter extends CustomPainter {
     final top = area.top + (area.height - drawnHeight) / 2;
 
     Offset project(GeoPoint p) => Offset(
-      left + (p.lng - minLng) * usable,
+      left + (p.lng - minLng) * lngScale * usable,
       // 위도는 위쪽이 크다.
       top + (maxLat - p.lat) * usable,
     );
