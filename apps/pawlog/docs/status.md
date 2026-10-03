@@ -24,11 +24,12 @@ feature 를 W1 dog · W2 tracking · W3 record · W4 feed · W5 social 로 나�
 - [x] **허브 · 진행 현황** — 이 폴더, [문서 허브](../../../docs/README.md) ·
       [전체 진행 현황](../../../docs/status.md) · [아키텍처 §1](../../../docs/architecture.md) ·
       `CLAUDE.md` 에 행 추가, `documentation_links_test` 스캔 대상에 추가
+- [x] **설계 스펙** — [설계 문서](../../../docs/superpowers/specs/2026-10-03-walk-app-design.md)
+      (통근 설계 문서와 같은 절 구성, §0~§8)
 
 ## 다음 할 일
 
-[기획서 §8](overview.md#8-개발-단계)의 순서대로 간다. 코드 착수 전에 할 것:
+[기획서 §8](overview.md#8-개발-단계)의 순서대로 간다. 개발 환경에는 Flutter stable
+(≥ 3.38.4) 이 필요하다 — 이 저장소의 `pubspec.lock` 이 요구한다.
 
-- 개발 환경에 Flutter stable(≥ 3.38.4) 설치 — 이 저장소의 `pubspec.lock` 이 요구한다
-- `docs/superpowers/specs/2026-10-03-walk-app-design.md` 설계 스펙(통근 설계 문서와 같은 절 구성)
 - ① 패키지 뼈대 + 도메인 → ② drift → ③ 앱 셸 → ④ W1 (착수 시 `features/dog/plan.md`)
