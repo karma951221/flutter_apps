@@ -31,7 +31,8 @@ class StepGoalRing extends StatelessWidget {
       builder: (context, progress, child) => CustomPaint(
         painter: StepGoalRingPainter(
           progress: progress,
-          track: scheme.surface,
+          // 카드(primaryContainer) 위에서 라이트 · 다크 모두 옅게 보이도록 카드 글자색을 낮춘 알파로.
+          track: scheme.onPrimaryContainer.withValues(alpha: 0.12),
           color: scheme.primary,
           strokeWidth: AppSpacing.md,
         ),

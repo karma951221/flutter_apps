@@ -10,6 +10,7 @@ import '../../theme/walk_motion.dart';
 import '../format/walk_format.dart';
 import 'goal_celebration.dart';
 import 'step_goal_ring.dart';
+import 'today_goal_footer.dart';
 
 /// 오늘 걸음을 목표 링으로 보여 주는 카드. 링을 누르면 아래 줄이 남은(넘친) 양으로 바뀌고,
 /// 3초 뒤 또는 다시 누르면 거리 · 칼로리로 돌아온다.
@@ -126,60 +127,15 @@ class _TodayGoalCardState extends State<TodayGoalCard> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            AnimatedSwitcher(
-              duration: WalkMotion.off(context)
-                  ? Duration.zero
-                  : WalkMotion.short,
-              child: _showRemaining
-                  ? Text(
-                      _remainingLine(l10n, locale, progress, steps),
-                      key: const ValueKey('remaining'),
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: onCard,
-                      ),
-                    )
-                  : Row(
-                      key: const ValueKey('metrics'),
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _Metric(
-                          label: l10n.walkDistance,
-                          value: WalkFormat.distance(
-                            locale,
-                            activity.distanceMeters,
-                          ),
-                        ),
-                        _Metric(
-                          label: l10n.walkActiveCalories,
-                          value: WalkFormat.kcal(locale, activity.activeKcal),
-                        ),
-                      ],
-                    ),
+            TodayGoalFooter(
+              activity: activity,
+              goal: widget.goal,
+              showRemaining: _showRemaining,
             ),
           ],
         ),
       ),
     );
-  }
-
-  String _remainingLine(
-    AppLocalizations l10n,
-    String locale,
-    GoalProgress progress,
-    String Function(int) steps,
-  ) {
-    if (progress.reached) {
-      return l10n.walkGoalExceeded(steps(progress.overSteps));
-    }
-    final meters = progress.remainingMeters(widget.activity.distanceMeters);
-    final remaining = steps(progress.remainingSteps);
-    return meters == null
-        ? l10n.walkGoalRemaining(remaining)
-        : l10n.walkGoalRemainingWithDistance(
-            remaining,
-            WalkFormat.distance(locale, meters),
-          );
   }
 }
 
@@ -225,25 +181,6 @@ class _ReachedBadge extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _Metric extends StatelessWidget {
-  const _Metric({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = theme.colorScheme.onPrimaryContainer;
-    return Column(
-      children: [
-        Text(value, style: theme.textTheme.titleLarge?.copyWith(color: color)),
-        Text(label, style: theme.textTheme.bodySmall?.copyWith(color: color)),
-      ],
     );
   }
 }

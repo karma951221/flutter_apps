@@ -15,15 +15,17 @@ Future<void> _pump(WidgetTester tester, double ratio, {bool off = false}) =>
       ),
     );
 
-double _progress(WidgetTester tester) {
+StepGoalRingPainter _painter(WidgetTester tester) {
   final paint = tester.widget<CustomPaint>(
     find.descendant(
       of: find.byType(StepGoalRing),
       matching: find.byType(CustomPaint),
     ),
   );
-  return (paint.painter! as StepGoalRingPainter).progress;
+  return paint.painter! as StepGoalRingPainter;
 }
+
+double _progress(WidgetTester tester) => _painter(tester).progress;
 
 void main() {
   testWidgets('진입 때 0 에서 비율까지, 바뀌면 직전 값에서 새 값까지', (tester) async {
@@ -53,5 +55,18 @@ void main() {
     await _pump(tester, 0.6, off: true);
     await tester.pump();
     expect(_progress(tester), closeTo(0.6, 1e-9));
+  });
+
+  testWidgets('트랙은 카드 글자색을 옅게, 진행은 primary', (tester) async {
+    await _pump(tester, 0.5, off: true);
+    final scheme = Theme.of(
+      tester.element(find.byType(StepGoalRing)),
+    ).colorScheme;
+
+    expect(
+      _painter(tester).track,
+      scheme.onPrimaryContainer.withValues(alpha: 0.12),
+    );
+    expect(_painter(tester).color, scheme.primary);
   });
 }
