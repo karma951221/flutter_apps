@@ -4,7 +4,7 @@
 > [설계 스펙](../../../../docs/superpowers/specs/2026-10-03-walk-app-design.md) ·
 > [아키텍처](../../../../docs/architecture.md) · [에이전트 가이드](../../../../CLAUDE.md)
 
-작성 2026-10-03 · 대상 커밋 `077640e`(단계 ①) · `bdb60c3`(단계 ②)
+작성 2026-10-03 · 대상 커밋 `077640e`(단계 ①) · `bdb60c3`(단계 ②) · `87c680d`(단계 ③)
 
 구현 에이전트와 별개인 리뷰어 에이전트가 [기획서](../overview.md) §8 의 단계 커밋을 하나씩
 독립적으로 읽고, 기획서 · 설계 스펙 · [CLAUDE.md](../../../../CLAUDE.md) 규칙에 비추어 쓴 기록이다.
@@ -18,6 +18,7 @@
 |---|---|---|---|
 | ① | `077640e` | `feature_walk` 뼈대 · 도메인(엔티티 11 · 정책 2 · 인터페이스 4 · facade · 시나리오 15) · `FailureCode` +5 · ARB 3개 | **통과(조건부)** — 버그 확정 0, 스펙과 다른 결정 13건(스펙 문서 반영 필요), 잠재 결함 3건을 다음 단계로 넘김(B1 · B3 은 `bdb60c3` 에서 반영됨) |
 | ② | `bdb60c3` | drift `WalkDatabase`(5테이블) · 매퍼 · `DriftDogRepository` · `DriftWalkRepository` · `FilePhotoStorage` · `WalkRegisterModule` · ① 소견 B1 · B3 반영 | **통과(조건부)** — 스키마 · cascade · 조인 watch 는 스펙대로이고 테스트가 실제로 단언한다. `WalkTracker` 미등록이라 ⑤ 전에는 `WalkUseCase` 를 resolve 할 수 없음(D3), watch 의 매핑 예외가 `Err` 로 바뀌지 않는 구멍(D1), DB dispose 누락(D2) |
+| ③ | `87c680d` | `apps/pawlog` 셸(부팅 · DI · 라우터 · `DogsRedirect` · 권한) · `AppAvatar.imageFile` · `captureImage` | **통과(조건부)** — 통근 셸과 같은 모양, 권한 선언 정확. 단 D3 때문에 실제 앱은 부팅 스피너에서 멈추고 오류가 안 보임(S1, 수정 작업 중), 스펙에 없는 `/walks` 경로(S2), 새 템플릿의 AGP 9 · iOS 15 미검증(I1) |
 
 ---
 
@@ -146,7 +147,7 @@
 
 ### 다음 단계에 넘기는 것
 
-단계 칸의 ✓ 는 그 단계 커밋에서 확인된 것, △ 는 일부만 된 것(② 절 참고).
+단계 칸의 ✓ 는 그 단계 커밋에서 확인된 것, △ 는 일부만 된 것, ✗ 는 그 단계에서 안 된 것.
 
 | 단계 | 할 일 | 근거 |
 |---|---|---|
@@ -155,7 +156,7 @@
 | ② ✓ | `route_preview` 컬럼 읽기에서 B1 을 막는다(도메인을 고치든 매퍼에서 잡든) | B1 |
 | ② △ | `PhotoStorage.remove` 가 없는 파일 · IO 오류에서 던지지 않음을 테스트로 고정 | I4 |
 | ② ✓ | 레포 2개 · `FilePhotoStorage` · `WalkRegisterModule` DI 등록. 지금 모듈은 `WalkUseCase` 만 등록해 해석 시 실패한다 | `feature_walk.module.dart:22-30` |
-| ③ | `AppAvatar.imageFile` 을 `File` 로 — facade `photoFile` 과 짝 | R1 |
+| ③ ✓ | `AppAvatar.imageFile` 을 `File` 로 — facade `photoFile` 과 짝 | R1 |
 | ④ W1 | 강아지 폼 버리기는 새로 쓴 사진을 `removePhoto` 로 지운다. `getDog` 의 `Ok(null)` 을 notFound 로 다룬다 | `walk_use_case.dart:64`, 스펙 §2 "강아지 폼도 같은 규칙" |
 | ⑤ W2 | tracker 가 `distanceBetween` 으로 `stepMeters` 를 **먼저** 계산해 `accept` 에 넘기고, 받아들인 점의 거리만 합산. 첫 점은 `previous: null` | `walk_tracking_policy.dart:5,12-16` |
 | ⑤ W2 | `clear()` 는 `finished` 일 때만 `idle` 로(아니면 no-op), `start` 는 tracker 도 `walkTrackingAlreadyActive` 검사, `stop` 은 추적 중이 아니면 `walkNotFound` | B2, `walk_tracker.dart:20-21`, 스펙 §2 |
@@ -273,13 +274,123 @@
 
 | 단계 | 할 일 | 근거 |
 |---|---|---|
-| ③ | `externalPackageModulesBefore: [Core, FeatureWalk]` 순서로 `IdGenerator` 를 먼저 등록. microPackage 빌드가 `IdGenerator` 미등록 경고를 내도 런타임에는 Core 모듈이 준다 | `feature_walk.module.dart:40,55`, 스펙 §5 |
-| ③ | `init` 이 `async`(preResolve) 가 됐으니 `configureDependencies` 를 `await` | `feature_walk.module.dart` `init(...) async` |
-| ③ · ④ | `WalkTracker` 가 ⑤ 까지 없으므로 `WalkUseCase` resolve 를 막지 않을 방법을 정한다 | D3, 열린 질문 3 |
-| ③ | `package_boundary_test` 에 "앱은 `WalkDatabase` · drift 를 직접 쓰지 않는다" 추가 고려 | D6 |
+| ③ ✓ | `externalPackageModulesBefore: [Core, FeatureWalk]` 순서로 `IdGenerator` 를 먼저 등록. microPackage 빌드가 `IdGenerator` 미등록 경고를 내도 런타임에는 Core 모듈이 준다 | `feature_walk.module.dart:40,55`, 스펙 §5 |
+| ③ ✓ | `init` 이 `async`(preResolve) 가 됐으니 `configureDependencies` 를 `await` | `feature_walk.module.dart` `init(...) async` |
+| ③ ✗ · ④ | `WalkTracker` 가 ⑤ 까지 없으므로 `WalkUseCase` resolve 를 막지 않을 방법을 정한다 | D3, 열린 질문 3 |
+| ③ ✗ | `package_boundary_test` 에 "앱은 `WalkDatabase` · drift 를 직접 쓰지 않는다" 추가 고려 | D6 |
 | ⑤ W2 | tracker 등록 시 D1 과 같은 이유로 `states` 스트림도 매핑 예외를 값으로 바꾼다 | D1 |
 | ⑦ W4 | `WalkFeedCubit` 은 `watchWalks` 를 `onError` 와 함께 구독하거나 D1 을 먼저 고친다 | D1 |
 | ⑧ | 스펙 §3 · §5 의 `build.yaml` · `DateOnlyConverter` · `photosRoot().create` · `@disposeMethod` 문구를 구현에 맞춘다(또는 D2 를 고친다) | 설계 대비 |
+
+---
+
+## ③ 앱 셸 (87c680d)
+
+경로 접두 `apps/pawlog/` 는 생략한다. 비교 대상은 같은 커밋의 `apps/commute/`.
+
+### 무엇이 들어왔나
+
+| 묶음 | 내용 | 위치 |
+|---|---|---|
+| 부팅 | `main` → `bootstrap`(ensureInitialized → `await configureDependencies()` → `runApp(PawlogApp())`) | `lib/main.dart:3`, `lib/bootstrap.dart:6-10` |
+| DI | `externalPackageModulesBefore: [Core, FeatureWalk]`, 생성물은 두 모듈 `init` 을 차례로 `await` | `lib/di/injection.dart:7-18`, `lib/di/injection.config.dart:20-28` |
+| 앱 | `PawlogApp` 이 `FutureBuilder` 로 `getDogs()` 1회 → `createRouter(hasDogs)`, 그동안 스피너. `MaterialApp.router` + `AppTheme` · `AppLocalizations` · `walkAppTitle` | `lib/app/app.dart:17-59` |
+| 라우터 | `GoRoute` **9개**(아래 설계 대비), 화면은 모두 `_Placeholder` + `TODO(phase ④~⑦)` | `lib/app/router/app_router.dart:6-81` |
+| 리다이렉트 | `PawlogPaths` · `DogsRedirect(hasDogs)` — 0마리면 `/dogs` 로 시작하지 않는 경로를 `/dogs/new` 로, `markHasDogs()` | `lib/app/router/dogs_redirect.dart:1-28` |
+| 플랫폼 | Android 권한 6개, iOS 위치 2 · 사진 · 카메라 문구 + `UIBackgroundModes: location` | `android/app/src/main/AndroidManifest.xml:2-7`, `ios/Runner/Info.plist:69-80` |
+| 공용 패키지 | `AppAvatar.imageFile`(bytes > file > url), `ImagePickerService.captureImage` | `packages/design_system/lib/src/widget/app_avatar.dart:28-46`, `packages/core/lib/src/media/image_picker_service.dart:49-56` |
+| 테스트 | 앱 **5개**(리다이렉트 4 · 경계 1), `AppAvatar` **3개** | `test/app/router/dogs_redirect_test.dart`, `test/convention/package_boundary_test.dart`, `packages/design_system/test/widget/app_avatar_test.dart` |
+
+`87c680d` 를 깨끗한 worktree 로 꺼내 확인했다: 앱 `flutter test` → `+5: All tests passed!`,
+`flutter analyze` → `No issues found!`, `app_avatar_test.dart` → `+3`, `core` analyze 통과.
+Android · iOS 빌드는 이 환경에서 돌리지 않았다.
+
+추적 파일 집합(png 제외)은 통근 앱과 **`settings_redirect` ↔ `dogs_redirect` 두 쌍 말고 같다.**
+
+### 설계 대비
+
+기준은 [설계 스펙](../../../../docs/superpowers/specs/2026-10-03-walk-app-design.md) §1 · §5 와 통근 앱 셸.
+
+| 항목 | 스펙 | 구현 | 판정 |
+|---|---|---|---|
+| 부팅 순서 | `bootstrap` 이 `getDogs()` 1회 → `runApp(PawlogApp(hasDogs))` | 통근 앱과 같은 `FutureBuilder` 방식(`app.dart:18-27`, 통근 `apps/commute/lib/app/app.dart:18-27`) | 다름 — 선례를 따랐다. 오류 처리 구멍은 소견 S1 |
+| DI 순서 | `[Core, FeatureWalk]` | 일치(`injection.dart:11-14`). `IdGenerator` 는 Core 가 먼저 준다 | 일치 — ② 다음 단계 표 두 줄 해소 |
+| 경로 | 8개 | 8개 + **`/walks` 목록 자리표시**(`app_router.dart:27-31`) | **다름 — 소견 S2.** 커밋 메시지도 "8경로" |
+| `/dogs/new` 순서 | `:id` 보다 먼저 | `app_router.dart:54-65`, 주석 포함 | 일치 |
+| 경로 구조 | 정하지 않음 | `/walks/:id/edit` 는 `:id` 의 자식, `/walk/save` 는 `/walk` 와 형제(최상위) | 일치 — `pushReplacement('/walk/save')` 에 맞다 |
+| 리다이렉트 | 0마리면 `/dogs/new` **외** 모든 경로를 보낸다 | `/dogs` 로 시작하는 경로는 모두 통과(`dogs_redirect.dart:21`) | **다름 — 소견 S3** |
+| `markHasDogs` 연결 | `DogEditPage.onDone` 에서 | 통근 `markComplete` 처럼 `createRouter` 클로저에서 부를 자리가 있다(`app_router.dart:57` TODO, 통근 `app_router.dart:21-24`) | 일치 — ④ 몫 |
+| 경계 테스트 | 통근 것 복사, `feature_` · `supabase_flutter` · `go_router` 없음 | 통근과 패키지 이름만 다르다 | 일치 |
+| Android 권한 | INTERNET · FINE · COARSE · FOREGROUND_SERVICE · FOREGROUND_SERVICE_LOCATION · POST_NOTIFICATIONS, CAMERA 없음 | 일치(`AndroidManifest.xml:2-7`) | 일치 — 아래 소견 S5 |
+| iOS | 위치 2 · 카메라 · 사진 · `UIBackgroundModes: [location]` | 일치(`Info.plist:69-80`) | 일치 |
+| `AppAvatar` | `File? imageFile`, `imageBytes > imageFile > imageUrl` | 레코드 패턴 `switch`(`app_avatar.dart:39-46`) | 일치 |
+| `captureImage` | `ImageSource.camera` → `prepare` | 같은 `requestFullMetadata: false` 로 `prepare` 재사용(`image_picker_service.dart:50-55`) | 일치 |
+
+### 리뷰 소견
+
+등급은 ① 과 같다. 번호는 ③ 의 것(S = shell).
+
+#### B — 버그 · 잠재 결함
+
+| # | 소견 | 위치 | 비고 |
+|---|---|---|---|
+| S1 | **② D3 이 그대로라 실제 앱은 부팅 화면에서 멈춘다.** `87c680d` 에도 `WalkTracker` 등록처가 없어 `getIt<WalkUseCase>()`(`app.dart:21`)가 던진다. `async` 함수 안이라 예외는 `_router` Future 의 오류가 되고, `FutureBuilder` 가 `snapshot.hasError` 를 보지 않으므로(`app.dart:31-45`) **스피너가 영원히 돌고 오류는 아무 데도 안 남는다** — 크래시보다 진단이 어렵다. 위젯 테스트가 `PawlogApp` 을 띄우지 않아 못 잡았다 | `app.dart:20-45` | D3 수정(임시 tracker 등록)은 작업 중이라고 들었다. 별개로 `hasError` 면 오류 화면(`AppPlaceholder`)이나 `hasDogs: false` 로 진행하는 분기가 있어야 한다 — 통근 앱(`apps/commute/lib/app/app.dart:31-45`)도 같은 구멍 |
+| S2 | 스펙에 없는 `/walks` 목록 경로가 있다. 피드(`/`)가 목록이라 페이지 표에도 없다. `/walks/:id` 를 자식으로 두려고 만든 부모로 보이는데, 그 부모가 화면을 가져 `/walks` 로 갈 수 있게 됐다 | `app_router.dart:27-31` | 부모 `builder` 대신 `redirect: (_, _) => PawlogPaths.feed` 로 막거나, `/walks/:id` 를 최상위로 두면 8개로 맞는다 |
+
+#### R — 규칙 · 경계
+
+| # | 소견 | 위치 | 의견 |
+|---|---|---|---|
+| S3 | 0마리일 때 `/dogs` 와 `/dogs/:id` 도 통과한다. 스펙은 `/dogs/new` 만 | `dogs_redirect.dart:21`, `dogs_redirect_test.dart:12-18` | 목록 → 추가로 가는 길이라 오히려 자연스럽다. 테스트도 이 의도로 썼다. **코드를 두고 스펙 §5 문구를 고치는 쪽을 권한다.** `startsWith('/dogs')` 는 `/dogsx` 도 통과시키지만 그런 경로는 없다 |
+| S4 | `_Placeholder` 가 `Text` 하드코딩 영문 · 공통 위젯 미사용. [CLAUDE.md](../../../../CLAUDE.md) UI 규칙과 어긋나지만 TODO 로 표시된 임시물이다 | `app_router.dart:72-81` | ④~⑦ 에서 사라지는지만 본다. TODO 가 전부 "④~⑦" 이라 어느 단계 몫인지 흐리다 |
+| S5 | `CAMERA` 를 선언하지 않은 것은 맞다 — image_picker 는 선언이 없으면 카메라 앱 인텐트로 동작하고, 선언하면 런타임 요청 의무가 생긴다. `ACCESS_BACKGROUND_LOCATION` 도 필요 없다 — geolocator 가 자기 매니페스트에 `foregroundServiceType="location"` 서비스를 선언한다(`geolocator_android-5.0.3/android/src/main/AndroidManifest.xml:5-8`). `POST_NOTIFICATIONS` 는 선언만 하고 요청하지 않으므로 Android 13+ 에서는 알림이 기본 거부다 — 스펙 §5 가 받아들인 결정 | `AndroidManifest.xml:2-7` | 위반 없음. ⑤ 에뮬레이터 검증 3번("알림이 보인다")은 Android 13+ 이미지에서 실패할 수 있으니 기대값을 맞춰 둘 것 |
+| S6 | `design_system` 이 `dart:io` 를 import 하게 됐다(① R1 과 같은 결) | `app_avatar.dart:1` | 세 앱 모두 `android/` · `ios/` 만 있고 `web/` 이 없어 실제 문제는 없다. 공용 패키지라 web 을 열 때 걸림돌이 된다는 점만 기록 |
+
+#### I — 개선 제안
+
+1. **`flutter create` 템플릿 세대 차.** pawlog 는 더 새 Flutter(`.metadata` revision `5fc3468…`, 통근 `cc0734a…`)로 만들어져
+   플랫폼 설정이 통근과 다르다(권한 외 차이는 아래가 전부).
+
+   | 항목 | 통근 | pawlog | 위치 |
+   |---|---|---|---|
+   | AGP · Kotlin 플러그인 | 8.11.1 · 2.2.20 | **9.1.0 · 2.4.0** | `android/settings.gradle.kts:22-23` |
+   | Gradle wrapper | 8.14 | **9.3.1** | `android/gradle/wrapper/gradle-wrapper.properties:5` |
+   | 호환 플래그 | — | `android.newDsl=false` · `android.builtInKotlin=false` | `android/gradle.properties:3-6` |
+   | Kotlin 옵션 | `kotlinOptions { jvmTarget }`, `kotlin-android` 플러그인 | `kotlin { compilerOptions }`, 플러그인 줄 없음 | `android/app/build.gradle.kts:41-44` |
+   | iOS 최소 버전 · 플러그인 연결 | 13.0 · CocoaPods | **15.0** · SwiftPM(`FlutterGeneratedPluginSwiftPackage`) | `ios/Runner.xcodeproj/project.pbxproj` |
+
+   각 앱의 Gradle · Xcode 프로젝트는 독립이라 **모노레포 빌드끼리 충돌하지는 않는다.** 위험은 둘이다:
+   (a) AGP 9 에서 플러그인(drift 의 sqlite3 · geolocator · image_picker · path_provider)이 빌드되는지 아직
+   아무도 확인하지 않았다 — 템플릿의 두 호환 플래그가 그 대비다, (b) 앱마다 JDK · Xcode 요구가 달라진다.
+   ⑤ 에뮬레이터 검증 전에 `flutter build apk --debug` 를 한 번 돌리고, [공통 개발 환경](../../../../docs/setup.md)에
+   앱별 툴체인 차이를 한 줄 남기자. 통근 · 트레이더를 올릴지는 따로 정한다.
+2. **`AppAvatar` 테스트 방식.** 1×1 PNG 를 실제 파일로 쓰지만 단언은 provider 타입뿐이고, `FakeAsync` 안에서
+   파일 디코드는 끝나지 않는다 — 실제 디코드를 검증하지는 않는다(`app_avatar_test.dart:27-39`). 타입 선택이
+   목적이라면 충분하다. 다만 임시 파일을 지우지 않고(`:28`), 두 번째 테스트가 같은 경로를 쓴다(`:47`).
+   네트워크 경우의 `tester.takeException()`(`:61`)은 반환값을 버린다 — `isA<NetworkImageLoadException>()` 로
+   단언하면 "왜 삼키는가" 가 테스트에 남고, 오류 종류가 바뀌면 드러난다. 통과 자체는 허용할 만하다.
+3. `captureImage` · `pickImages` 모두 `core` 테스트가 없다(`packages/core/test` 에 호출 없음). image_picker 를
+   감싼 얇은 층이라 기존 관례와 같다.
+4. `dogs_redirect_test` 는 `walk(id)` · `walkEdit(id)` · `saveWalk` 의 0마리 리다이렉트를 보지 않는다.
+   `startsWith` 하나라 위험은 낮다.
+
+#### G — 괜찮은 점
+
+- 통근 셸과 파일 집합 · 부팅 · DI · 리다이렉트 모양이 거의 같아 "셋째 앱이 같은 경계 위에 선다" 는
+  설계 목표(스펙 §0)를 셸 수준에서 보여 준다.
+- `/dogs/new` 를 `:id` 앞에 두고 이유를 주석으로 고정했다(`app_router.dart:54`).
+- `AppAvatar` 우선순위를 레코드 `switch` 로 써서 세 경우가 한눈에 보이고, 기존 호출부는 바뀌지 않는다(additive).
+- 권한 선언이 스펙 표와 정확히 같고, 각 iOS 문구가 왜 필요한지 사용자 문장으로 적혀 있다.
+
+### 다음 단계에 넘기는 것
+
+| 단계 | 할 일 | 근거 |
+|---|---|---|
+| ③ 후속 | D3 수정(임시 `WalkTracker` 등록) 뒤 실제 부팅 확인. `PawlogApp` 의 `snapshot.hasError` 분기 | S1 |
+| ④ W1 | `/dogs/new` · `/dogs/:id` 빌더에서 `onDone` → `dogsRedirect.markHasDogs()` + `go(feed)`. 0마리 상태의 `/dogs` 목록 진입(S3)을 화면이 감당하는지 | S3, `app_router.dart:57` |
+| ④ | `/walks` 부모 경로 정리 | S2 |
+| ⑤ W2 | 첫 실기기 빌드 전에 AGP 9 / iOS SwiftPM 빌드 확인, Android 13+ 알림 기대값 | I1, S5 |
+| ⑧ | 스펙 §5 의 부팅 순서(`PawlogApp(hasDogs)`) · 리다이렉트 범위 문구를 구현에 맞춘다 | 설계 대비 |
 
 ## 열린 질문
 
@@ -291,4 +402,5 @@
    "Dart 코어(`dart:io` 포함)는 허용" 을 한 줄 적어 두는 편이 다음 앱의 판단을 줄인다.
 3. **⑤ 이전에 `WalkUseCase` 를 어떻게 resolve 할지.** ② 시점에 `WalkTracker` 등록처가 없다(D3).
    (a) ③ 에서 `idle` 만 내는 임시 구현을 등록하고 ⑤ 에서 바꾼다, (b) ⑤ 의 tracker 를 ③ 앞으로 당긴다,
-   (c) ④ 를 ⑤ 뒤로 미룬다 — 기획서 §8 의 순서를 지키려면 (a) 가 가장 작다.
+   (c) ④ 를 ⑤ 뒤로 미룬다 — 기획서 §8 의 순서를 지키려면 (a) 가 가장 작다. ③(`87c680d`)에서도
+   미해결이라 앱이 부팅 스피너에서 멈춘다(S1). 수정이 진행 중이다.
