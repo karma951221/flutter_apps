@@ -424,5 +424,11 @@
   "commuteSettingsRequiredTitle": "通勤駅の設定が必要です",
   "commuteSettingsRequiredDescription": "自宅と職場の駅を先に選択してください",
   "commuteOpenSettings": "設定する",
-  "commuteOpenSettingsTooltip": "通勤設定"
+  "commuteOpenSettingsTooltip": "通勤設定",
+  "failureWalkDogRequired": "一緒に散歩した犬を選んでください",
+  "failureWalkTrackingAlreadyActive": "すでに散歩が進行中です",
+  "failureWalkNotFound": "散歩の記録が見つかりません",
+  "failureWalkPhotoSaveFailed": "写真を保存できませんでした",
+  "failureDogNameRequired": "犬の名前を入力してください",
+  "walkAppTitle": "pawlog"
 }

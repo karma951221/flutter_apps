@@ -70,4 +70,39 @@ void main() {
       expect(find.text('進行中のセッションがあります'), findsOneWidget);
     });
   });
+
+  group('walk FailureCode 는 로케일별 문구로 번역된다', () {
+    const failure = Failure.validation(
+      message: '반려견을 선택해 주세요',
+      failureCode: FailureCode.walkDogRequired,
+    );
+
+    testWidgets('ko', (tester) async {
+      await pumpFailure(tester, failure, locale: const Locale('ko'));
+      expect(find.text('함께 산책한 반려견을 선택해 주세요'), findsOneWidget);
+    });
+
+    testWidgets('en', (tester) async {
+      await pumpFailure(tester, failure, locale: const Locale('en'));
+      expect(find.text('Select the dog you walked with'), findsOneWidget);
+    });
+
+    testWidgets('ja', (tester) async {
+      await pumpFailure(tester, failure, locale: const Locale('ja'));
+      expect(find.text('一緒に散歩した犬を選んでください'), findsOneWidget);
+    });
+
+    testWidgets('나머지 walk 코드도 en 문구를 갖는다', (tester) async {
+      const expected = {
+        FailureCode.walkTrackingAlreadyActive: 'A walk is already in progress',
+        FailureCode.walkNotFound: "Can't find this walk",
+        FailureCode.walkPhotoSaveFailed: "Couldn't save the photo",
+        FailureCode.dogNameRequired: "Enter your dog's name",
+      };
+      for (final entry in expected.entries) {
+        await pumpFailure(tester, Failure.validation(failureCode: entry.key));
+        expect(find.text(entry.value), findsOneWidget);
+      }
+    });
+  });
 }

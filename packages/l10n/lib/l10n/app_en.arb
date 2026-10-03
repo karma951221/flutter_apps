@@ -424,5 +424,11 @@
   "commuteSettingsRequiredTitle": "Set up your commute stations",
   "commuteSettingsRequiredDescription": "Choose your home and work stations first",
   "commuteOpenSettings": "Open settings",
-  "commuteOpenSettingsTooltip": "Commute settings"
+  "commuteOpenSettingsTooltip": "Commute settings",
+  "failureWalkDogRequired": "Select the dog you walked with",
+  "failureWalkTrackingAlreadyActive": "A walk is already in progress",
+  "failureWalkNotFound": "Can't find this walk",
+  "failureWalkPhotoSaveFailed": "Couldn't save the photo",
+  "failureDogNameRequired": "Enter your dog's name",
+  "walkAppTitle": "pawlog"
 }

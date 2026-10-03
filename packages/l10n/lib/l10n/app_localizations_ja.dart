@@ -1336,4 +1336,22 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get commuteOpenSettingsTooltip => '通勤設定';
+
+  @override
+  String get failureWalkDogRequired => '一緒に散歩した犬を選んでください';
+
+  @override
+  String get failureWalkTrackingAlreadyActive => 'すでに散歩が進行中です';
+
+  @override
+  String get failureWalkNotFound => '散歩の記録が見つかりません';
+
+  @override
+  String get failureWalkPhotoSaveFailed => '写真を保存できませんでした';
+
+  @override
+  String get failureDogNameRequired => '犬の名前を入力してください';
+
+  @override
+  String get walkAppTitle => 'pawlog';
 }

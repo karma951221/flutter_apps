@@ -1337,4 +1337,22 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get commuteOpenSettingsTooltip => '통근 설정';
+
+  @override
+  String get failureWalkDogRequired => '함께 산책한 반려견을 선택해 주세요';
+
+  @override
+  String get failureWalkTrackingAlreadyActive => '이미 진행 중인 산책이 있습니다';
+
+  @override
+  String get failureWalkNotFound => '산책 기록을 찾을 수 없습니다';
+
+  @override
+  String get failureWalkPhotoSaveFailed => '사진을 저장하지 못했습니다';
+
+  @override
+  String get failureDogNameRequired => '반려견 이름을 입력해 주세요';
+
+  @override
+  String get walkAppTitle => 'pawlog';
 }

@@ -2653,6 +2653,42 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'통근 설정'**
   String get commuteOpenSettingsTooltip;
+
+  /// 산책을 시작하거나 저장할 때 반려견이 한 마리도 선택되지 않았을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'함께 산책한 반려견을 선택해 주세요'**
+  String get failureWalkDogRequired;
+
+  /// 산책 추적 중에 새 산책을 시작하려 할 때
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 진행 중인 산책이 있습니다'**
+  String get failureWalkTrackingAlreadyActive;
+
+  /// 수정하거나 삭제하려는 산책 기록이 이미 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 기록을 찾을 수 없습니다'**
+  String get failureWalkNotFound;
+
+  /// 산책이나 반려견 사진을 앱 저장소에 복사하지 못했을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'사진을 저장하지 못했습니다'**
+  String get failureWalkPhotoSaveFailed;
+
+  /// 반려견 이름이 비어 있는 채로 저장하려 할 때
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견 이름을 입력해 주세요'**
+  String get failureDogNameRequired;
+
+  /// pawlog 앱의 이름. 앱 바와 작업 전환 화면에 쓰인다
+  ///
+  /// In ko, this message translates to:
+  /// **'pawlog'**
+  String get walkAppTitle;
 }
 
 class _AppLocalizationsDelegate

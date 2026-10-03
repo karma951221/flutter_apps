@@ -1422,4 +1422,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get commuteOpenSettingsTooltip => 'Commute settings';
+
+  @override
+  String get failureWalkDogRequired => 'Select the dog you walked with';
+
+  @override
+  String get failureWalkTrackingAlreadyActive =>
+      'A walk is already in progress';
+
+  @override
+  String get failureWalkNotFound => 'Can\'t find this walk';
+
+  @override
+  String get failureWalkPhotoSaveFailed => 'Couldn\'t save the photo';
+
+  @override
+  String get failureDogNameRequired => 'Enter your dog\'s name';
+
+  @override
+  String get walkAppTitle => 'pawlog';
 }

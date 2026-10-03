@@ -85,4 +85,9 @@ enum FailureCode {
   locationServiceDisabled,
   locationTimeout,
   routeSearchFailed,
+  walkDogRequired,
+  walkTrackingAlreadyActive,
+  walkNotFound,
+  walkPhotoSaveFailed,
+  dogNameRequired,
 }

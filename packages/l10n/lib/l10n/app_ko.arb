@@ -1834,5 +1834,29 @@
   "commuteOpenSettingsTooltip": "통근 설정",
   "@commuteOpenSettingsTooltip": {
     "description": "통근 홈의 설정 아이콘 접근성 문구"
+  },
+  "failureWalkDogRequired": "함께 산책한 반려견을 선택해 주세요",
+  "@failureWalkDogRequired": {
+    "description": "산책을 시작하거나 저장할 때 반려견이 한 마리도 선택되지 않았을 때"
+  },
+  "failureWalkTrackingAlreadyActive": "이미 진행 중인 산책이 있습니다",
+  "@failureWalkTrackingAlreadyActive": {
+    "description": "산책 추적 중에 새 산책을 시작하려 할 때"
+  },
+  "failureWalkNotFound": "산책 기록을 찾을 수 없습니다",
+  "@failureWalkNotFound": {
+    "description": "수정하거나 삭제하려는 산책 기록이 이미 없을 때"
+  },
+  "failureWalkPhotoSaveFailed": "사진을 저장하지 못했습니다",
+  "@failureWalkPhotoSaveFailed": {
+    "description": "산책이나 반려견 사진을 앱 저장소에 복사하지 못했을 때"
+  },
+  "failureDogNameRequired": "반려견 이름을 입력해 주세요",
+  "@failureDogNameRequired": {
+    "description": "반려견 이름이 비어 있는 채로 저장하려 할 때"
+  },
+  "walkAppTitle": "pawlog",
+  "@walkAppTitle": {
+    "description": "pawlog 앱의 이름. 앱 바와 작업 전환 화면에 쓰인다"
   }
 }

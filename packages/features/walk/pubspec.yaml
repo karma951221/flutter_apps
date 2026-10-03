@@ -1,0 +1,35 @@
+name: feature_walk
+description: Dog walk logging feature for the pawlog app.
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  core: any
+  design_system: any
+  l10n: any
+  flutter:
+    sdk: flutter
+  flutter_bloc: ^9.1.1
+  freezed_annotation: ^3.1.0
+  geolocator: ^14.0.3
+  injectable: ^3.0.0
+  intl: ^0.20.2
+  drift: ^2.34.4
+  drift_flutter: ^0.3.1
+  path_provider: ^2.1.6
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
+
+dev_dependencies:
+  bloc_test: ^10.0.0
+  build_runner: ^2.15.1
+  drift_dev: ^2.34.0
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+  freezed: ^3.2.5
+  injectable_generator: ^3.0.2
+  mocktail: ^1.0.5
