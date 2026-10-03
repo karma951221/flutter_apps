@@ -108,15 +108,30 @@ void main() {
     verify(alarms.sync).called(1);
   });
 
+  testWidgets('탭 아이콘은 선택 시 채워진 변형을 쓴다', (tester) async {
+    await pump(tester);
+
+    final destinations = tester
+        .widgetList<NavigationDestination>(find.byType(NavigationDestination))
+        .toList();
+    IconData icon(Widget? w) => (w! as Icon).icon!;
+    expect(icon(destinations[0].icon), Icons.alarm_outlined);
+    expect(icon(destinations[0].selectedIcon), Icons.alarm);
+    expect(icon(destinations[1].icon), Icons.directions_walk);
+    expect(destinations[1].selectedIcon, isNull);
+    expect(icon(destinations[2].icon), Icons.settings_outlined);
+    expect(icon(destinations[2].selectedIcon), Icons.settings);
+  });
+
   testWidgets('탭을 누르면 해당 화면으로 바뀐다', (tester) async {
     await pump(tester);
 
-    await tester.tap(find.byIcon(Icons.alarm));
+    await tester.tap(find.byIcon(Icons.alarm_outlined));
     await tester.pumpAndSettle();
     expect(onstage(AlarmListPage), isTrue);
     expect(find.text('알람이 없어요'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.settings));
+    await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
     expect(onstage(SettingsPage), isTrue);
     expect(onstage(AlarmListPage), isFalse);
@@ -172,7 +187,7 @@ void main() {
   testWidgets('복귀하면 설정 권한 행을 다시 읽는다', (tester) async {
     when(notification.check).thenAnswer((_) async => PermissionStatus.denied);
     await pump(tester);
-    await tester.tap(find.byIcon(Icons.settings));
+    await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pumpAndSettle();
     // 알림 · Health Connect 가 허용 필요.
     expect(find.text('허용 필요 ›'), findsNWidgets(2));
@@ -214,7 +229,7 @@ void main() {
     when(alarms.sync).thenThrow(Exception('scheduler'));
     await pump(tester);
 
-    await tester.tap(find.byIcon(Icons.alarm));
+    await tester.tap(find.byIcon(Icons.alarm_outlined));
     await tester.pumpAndSettle();
 
     expect(find.text('알람이 없어요'), findsOneWidget);

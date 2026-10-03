@@ -297,7 +297,8 @@ void main() {
     when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
     await pump(tester);
 
-    final disabled = Theme.of(tester.element(find.byType(AlarmListPage))).disabledColor;
+    final disabled =
+        Theme.of(tester.element(find.byType(AlarmListPage))).colorScheme.onSurfaceVariant;
     Color? colorOf(String text) => tester.widget<Text>(find.text(text)).style?.color;
     expect(colorOf('오전 9:30'), disabled);
     expect(colorOf('1회'), disabled);

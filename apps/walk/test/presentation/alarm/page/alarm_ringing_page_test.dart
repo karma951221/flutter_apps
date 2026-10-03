@@ -19,6 +19,10 @@ class _FixedClock extends Clock {
   DateTime now() => DateTime(2026, 9, 28, 7, 0, 5);
 }
 
+/// 파문이 영원히 반복하므로 `pumpAndSettle` 이 끝나도록 애니메이션을 끈다.
+Widget _noAnimations(Widget child) =>
+    MediaQuery(data: const MediaQueryData(disableAnimations: true), child: child);
+
 void main() {
   late _MockUseCase useCase;
 
@@ -34,17 +38,19 @@ void main() {
 
   Future<void> pump(WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light(),
-        locale: const Locale('ko'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Builder(
-          builder: (context) => TextButton(
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const AlarmRingingPage(packageId: 100)),
+      _noAnimations(
+        MaterialApp(
+          theme: AppTheme.light(),
+          locale: const Locale('ko'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const AlarmRingingPage(packageId: 100)),
+              ),
+              child: const Text('home'),
             ),
-            child: const Text('home'),
           ),
         ),
       ),
@@ -64,6 +70,16 @@ void main() {
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.byType(AlarmRingingPage), findsOneWidget);
+  });
+
+  testWidgets('초록 컨테이너 배경에 글자는 onPrimaryContainer', (tester) async {
+    when(() => useCase.findByPackageId(100)).thenAnswer((_) async => null);
+    await pump(tester);
+
+    final scheme = Theme.of(tester.element(find.byType(AlarmRingingPage))).colorScheme;
+    expect(tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor, scheme.primaryContainer);
+    expect(tester.widget<Text>(find.text('오전 7:00')).style?.color, scheme.onPrimaryContainer);
+    expect(tester.widget<Text>(find.text('알람')).style?.color, scheme.onPrimaryContainer);
   });
 
   testWidgets('라벨이 없으면 기본 제목, 끄기는 stop 후 닫힌다', (tester) async {
@@ -102,13 +118,15 @@ void main() {
       when(() => useCase.stop(100)).thenAnswer(removedByListener);
       when(() => useCase.snooze(100)).thenAnswer(removedByListener);
       await tester.pumpWidget(
-        MaterialApp(
-          navigatorKey: navigator,
-          theme: AppTheme.light(),
-          locale: const Locale('ko'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: const Text('home'),
+        _noAnimations(
+          MaterialApp(
+            navigatorKey: navigator,
+            theme: AppTheme.light(),
+            locale: const Locale('ko'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Text('home'),
+          ),
         ),
       );
       unawaited(navigator.currentState!.push(route));
@@ -133,12 +151,14 @@ void main() {
       when(() => useCase.findByPackageId(100)).thenAnswer((_) async => null);
       final l10n = lookupAppLocalizations(locale);
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(),
-          locale: locale,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: const AlarmRingingPage(packageId: 100),
+        _noAnimations(
+          MaterialApp(
+            theme: AppTheme.light(),
+            locale: locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const AlarmRingingPage(packageId: 100),
+          ),
         ),
       );
       await tester.pumpAndSettle();

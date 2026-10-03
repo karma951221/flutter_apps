@@ -11,6 +11,7 @@ import '../../../domain/clock.dart';
 import '../cubit/alarm_ringing_cubit.dart';
 import '../cubit/alarm_ringing_state.dart';
 import '../format/alarm_format.dart';
+import '../widget/ringing_ripple.dart';
 
 /// 앱이 살아 있을 때 울리는 알람 화면(`AlarmRingListener` 가 띄운다). 뒤로가기로는
 /// 닫히지 않는다 — 끄거나 미뤄야 닫힌다. 잠금 화면 위에서도 읽히게 가운데에 크게 둔다.
@@ -74,6 +75,7 @@ class _AlarmRingingPageState extends State<AlarmRingingPage> {
     return PopScope(
       canPop: false,
       child: Scaffold(
+        backgroundColor: theme.colorScheme.primaryContainer,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.lg),
@@ -84,10 +86,12 @@ class _AlarmRingingPageState extends State<AlarmRingingPage> {
                 return Column(
                   children: [
                     const Spacer(),
-                    Icon(
-                      Icons.alarm,
-                      size: AppSpacing.xl * 2,
-                      color: theme.colorScheme.primary,
+                    RingingRipple(
+                      child: Icon(
+                        Icons.alarm,
+                        size: AppSpacing.xl * 2,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     FittedBox(
@@ -95,6 +99,7 @@ class _AlarmRingingPageState extends State<AlarmRingingPage> {
                         AlarmFormat.time(context, _now.hour, _now.minute),
                         style: theme.textTheme.displayLarge?.copyWith(
                           fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onPrimaryContainer,
                         ),
                       ),
                     ),
@@ -102,7 +107,9 @@ class _AlarmRingingPageState extends State<AlarmRingingPage> {
                     Text(
                       label.isEmpty ? l10n.walkAlarmDefaultTitle : label,
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineSmall,
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
                     ),
                     const Spacer(),
                     // 문구가 길어 좁은 폭에서는 두 줄이 된다. 두 버튼 높이를 맞춘다.

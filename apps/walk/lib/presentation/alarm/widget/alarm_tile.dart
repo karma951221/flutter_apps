@@ -1,5 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
@@ -27,7 +28,7 @@ class AlarmTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final dimmed = alarm.enabled ? null : theme.disabledColor;
+    final dimmed = alarm.enabled ? null : theme.colorScheme.onSurfaceVariant;
     final repeat = AlarmFormat.repeat(l10n, alarm.repeat);
     final summary = Text(
       alarm.label.isEmpty ? repeat : '${alarm.label} · $repeat',
@@ -51,7 +52,13 @@ class AlarmTile extends StatelessWidget {
                 ),
               ],
             ),
-      trailing: Switch(value: alarm.enabled, onChanged: onToggle),
+      trailing: Switch(
+        value: alarm.enabled,
+        onChanged: (value) {
+          HapticFeedback.selectionClick();
+          onToggle(value);
+        },
+      ),
       onTap: onTap,
     );
   }

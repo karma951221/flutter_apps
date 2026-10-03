@@ -125,7 +125,8 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
           onDestinationSelected: (index) => _select(ShellTab.values[index]),
           destinations: [
             NavigationDestination(
-              icon: const Icon(Icons.alarm),
+              icon: const Icon(Icons.alarm_outlined),
+              selectedIcon: const Icon(Icons.alarm),
               label: l10n.walkShellTabAlarm,
             ),
             NavigationDestination(
@@ -133,7 +134,8 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
               label: l10n.walkShellTabWalk,
             ),
             NavigationDestination(
-              icon: const Icon(Icons.settings),
+              icon: const Icon(Icons.settings_outlined),
+              selectedIcon: const Icon(Icons.settings),
               label: l10n.walkShellTabSettings,
             ),
           ],
