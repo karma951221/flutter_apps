@@ -75,7 +75,7 @@ void main() {
     await getIt.reset();
   });
 
-  Future<void> pump(WidgetTester tester, {Key? key}) async {
+  Future<void> pump(WidgetTester tester, {Key? key, bool active = true}) async {
     await tester.binding.setSurfaceSize(const Size(800, 1600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
@@ -88,7 +88,7 @@ void main() {
             locale: const Locale('ko'),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
-            home: WalkHomePage(key: key),
+            home: WalkHomePage(key: key, active: active),
           ),
         ),
       ),
@@ -402,5 +402,43 @@ void main() {
 
     expect(celebrations(), 2);
     expect(settings.load().goalCelebratedOn, DateTime(2026, 9, 24));
+  });
+
+  testWidgets('숨은 탭이면 달성해도 축하하지 않고, 보이게 되면 한 번 축하하고 저장한다', (tester) async {
+    when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
+    when(() => useCase.today()).thenAnswer(
+      (_) async => Ok(DailyActivity(date: DateTime(2026, 9, 23), steps: 10000)),
+    );
+    final celebrations = countCelebrations(tester);
+
+    await pump(tester, active: false);
+    expect(celebrations(), 0);
+    expect(settings.load().goalCelebratedOn, isNull);
+
+    await pump(tester);
+    expect(celebrations(), 1);
+    expect(settings.load().goalCelebratedOn, DateTime(2026, 9, 23));
+
+    // 다시 숨겼다 보여도 같은 날은 되풀이하지 않는다.
+    await pump(tester, active: false);
+    await pump(tester);
+    expect(celebrations(), 1);
+  });
+
+  testWidgets('숨은 탭에서 목표를 낮춰도 축하하지 않는다', (tester) async {
+    when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
+    final celebrations = countCelebrations(tester);
+    await pump(tester, active: false);
+
+    await goal.select(6000);
+    await tester.pumpAndSettle();
+
+    expect(celebrations(), 0);
+    expect(settings.load().goalCelebratedOn, isNull);
+
+    await pump(tester);
+    expect(celebrations(), 1);
+    expect(settings.load().goalCelebratedOn, DateTime(2026, 9, 23));
+    expect(settings.load().stepGoal, 6000);
   });
 }

@@ -116,7 +116,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
           index: _tab.index,
           children: [
             AlarmListPage(onOpenSettings: () => _select(ShellTab.settings)),
-            const WalkHomePage(),
+            WalkHomePage(active: _tab == ShellTab.walk),
             const SettingsPage(),
           ],
         ),

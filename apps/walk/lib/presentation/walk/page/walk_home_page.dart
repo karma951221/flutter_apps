@@ -28,7 +28,11 @@ import '../widget/walk_skeleton.dart';
 /// 백그라운드에서 돌아올 때마다 접근을 다시 확인한 뒤 새로 읽는다
 /// (자정을 넘겨 돌아오면 use case 가 새 "오늘"로 계산한다).
 class WalkHomePage extends StatefulWidget {
-  const WalkHomePage({super.key});
+  const WalkHomePage({super.key, this.active = true});
+
+  /// 셸에서 이 탭이 보이는지. 숨은 동안은 달성을 판정하지 않는다 —
+  /// `IndexedStack` 이 숨은 탭도 살려 두어 화면 밖에서 축하를 써 버리지 않게 한다.
+  final bool active;
 
   @override
   State<WalkHomePage> createState() => _WalkHomePageState();
@@ -84,6 +88,14 @@ class _WalkHomePageState extends State<WalkHomePage> {
   /// 오늘 값이나 목표가 바뀔 때마다 본다. 오늘 아직 축하하지 않았으면 연출을 켜고
   /// 같은 프레임에 오늘 날짜를 저장해, 같은 날 다시 열면 연출하지 않는다.
   void _judgeCelebration(DailyActivity activity, int goal) {
+    final today = _claimCelebration(activity, goal);
+    if (today != null) setState(() => _celebrateFor = today);
+  }
+
+  /// 축하할 차례면 오늘 날짜를 저장하고 그 날짜를 돌려준다. 숨은 탭이면 판정하지 않는다 —
+  /// 보이게 될 때 [didUpdateWidget] 이 다시 본다.
+  DateTime? _claimCelebration(DailyActivity activity, int goal) {
+    if (!widget.active) return null;
     final settings = getIt<SettingsRepository>();
     final saved = settings.load();
     final today = DateUtils.dateOnly(activity.date);
@@ -93,11 +105,27 @@ class _WalkHomePageState extends State<WalkHomePage> {
       today: today,
       lastCelebratedOn: saved.goalCelebratedOn,
     )) {
-      return;
+      return null;
     }
-    setState(() => _celebrateFor = today);
     // 저장이 실패해도 다음에 열 때 한 번 더 축하할 뿐이라 기다리지 않는다.
     unawaited(settings.save(saved.copyWith(goalCelebratedOn: today)));
+    return today;
+  }
+
+  @override
+  void didUpdateWidget(WalkHomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 숨은 동안 달성했거나 목표를 낮췄다면(설정 탭) 탭이 보이는 지금 축하한다.
+    if (!oldWidget.active && widget.active) {
+      if (_today.state case TodayActivityLoaded(:final activity)) {
+        final today = _claimCelebration(
+          activity,
+          context.read<StepGoalCubit>().state,
+        );
+        // 곧 build 가 뒤따르므로 setState 없이 둔다.
+        if (today != null) _celebrateFor = today;
+      }
+    }
   }
 
   @override

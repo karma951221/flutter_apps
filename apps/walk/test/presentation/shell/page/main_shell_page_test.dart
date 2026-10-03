@@ -15,7 +15,9 @@ import 'package:walk/domain/app_info/app_info_source.dart';
 import 'package:walk/domain/clock.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
 import 'package:walk/domain/settings/repository/settings_repository.dart';
+import 'package:walk/domain/walk/entity/daily_activity.dart';
 import 'package:walk/domain/walk/entity/health_access.dart';
+import 'package:walk/domain/walk/entity/period_kind.dart';
 import 'package:walk/domain/walk/usecase/walk_use_case.dart';
 import 'package:walk/presentation/alarm/page/alarm_list_page.dart';
 import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
@@ -34,11 +36,26 @@ class _MockAppInfo extends Mock implements AppInfoSource {}
 
 class _MockSettings extends Mock implements SettingsRepository {}
 
+class _MemorySettings implements SettingsRepository {
+  AppSettings value = const AppSettings();
+  var saves = 0;
+
+  @override
+  AppSettings load() => value;
+
+  @override
+  Future<void> save(AppSettings settings) async {
+    saves++;
+    value = settings;
+  }
+}
+
 void main() {
   late _MockAlarmUseCase alarms;
   late _MockWalk walk;
   late _MockRequester notification;
 
+  setUpAll(() => registerFallbackValue(PeriodKind.week));
   setUp(() {
     alarms = _MockAlarmUseCase();
     walk = _MockWalk();
@@ -71,9 +88,15 @@ void main() {
   });
   tearDown(getIt.reset);
 
-  Future<void> pump(WidgetTester tester) async {
-    final settings = _MockSettings();
-    when(settings.load).thenReturn(const AppSettings());
+  Future<StepGoalCubit> pump(
+    WidgetTester tester, {
+    SettingsRepository? settings,
+  }) async {
+    if (settings == null) {
+      final mock = _MockSettings();
+      when(mock.load).thenReturn(const AppSettings());
+      settings = mock;
+    }
     final theme = ThemeCubit(settings);
     addTearDown(theme.close);
     final goal = StepGoalCubit(settings);
@@ -95,6 +118,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    return goal;
   }
 
   bool onstage(Type page) =>
@@ -284,5 +308,52 @@ void main() {
 
     expect(await reply, isNull);
     verifyNever(alarms.timeZoneChanged);
+  });
+
+  testWidgets('설정 탭에서 목표를 낮춰 달성해도 걷기 탭을 열 때 한 번만 축하한다', (tester) async {
+    final settings = _MemorySettings();
+    getIt.registerSingleton<SettingsRepository>(settings);
+    when(walk.access).thenAnswer((_) async => HealthAccess.granted);
+    when(walk.today).thenAnswer(
+      (_) async => Ok(DailyActivity(date: DateTime(2026, 9, 23), steps: 6240)),
+    );
+    when(
+      () => walk.period(any(), any()),
+    ).thenAnswer((_) async => const Err(Failure.unknown()));
+    var celebrations = 0;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'HapticFeedback.vibrate' &&
+            call.arguments == 'HapticFeedbackType.mediumImpact') {
+          celebrations++;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    final goal = await pump(tester, settings: settings);
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+
+    // 설정 탭의 목표 시트가 고른 값을 반영한 것과 같다.
+    await goal.select(6000);
+    await tester.pumpAndSettle();
+
+    expect(celebrations, 0);
+    expect(settings.value.goalCelebratedOn, isNull);
+    expect(settings.value.stepGoal, 6000);
+
+    await tester.tap(find.byIcon(Icons.directions_walk));
+    await tester.pumpAndSettle();
+
+    expect(celebrations, 1);
+    expect(settings.value.goalCelebratedOn, DateTime(2026, 9, 23));
+    expect(settings.value.stepGoal, 6000);
   });
 }
