@@ -6,13 +6,21 @@ import 'package:flutter/services.dart';
 
 import '../../theme/walk_motion.dart';
 
-/// [play] 가 처음 참이 되는 순간 [child] 둘레로 점 16개가 퍼지며 사라지고 진동이 한 번 온다.
-/// 애니메이션 끄기면 진동만.
+/// [play] 가 참으로 처음 그려지거나 거짓 → 참으로 바뀌는 순간 [child] 둘레로 점 16개가 퍼지며
+/// 사라지고 진동이 한 번 온다. 애니메이션 끄기면 진동만. 같은 참이 이어지는 동안은 되풀이하지 않는다.
 class GoalCelebration extends StatefulWidget {
-  const GoalCelebration({required this.play, required this.child, super.key});
+  const GoalCelebration({
+    required this.play,
+    required this.child,
+    this.onPlayed,
+    super.key,
+  });
 
   final bool play;
   final Widget child;
+
+  /// 연출을 시작한 직후 불린다(build 단계일 수 있어 부모는 setState 하지 않는다).
+  final VoidCallback? onPlayed;
 
   @override
   State<GoalCelebration> createState() => _GoalCelebrationState();
@@ -24,25 +32,27 @@ class _GoalCelebrationState extends State<GoalCelebration>
     vsync: this,
     duration: WalkMotion.celebrate,
   );
-  bool _played = false;
+  bool _started = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _maybePlay();
+    // 테마 등 의존성이 바뀌어도 다시 불리므로 첫 번만.
+    if (_started) return;
+    _started = true;
+    if (widget.play) _play();
   }
 
   @override
   void didUpdateWidget(GoalCelebration oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _maybePlay();
+    if (widget.play && !oldWidget.play) _play();
   }
 
-  void _maybePlay() {
-    if (!widget.play || _played) return;
-    _played = true;
+  void _play() {
     HapticFeedback.mediumImpact();
     if (!WalkMotion.off(context)) _controller.forward(from: 0);
+    widget.onPlayed?.call();
   }
 
   @override

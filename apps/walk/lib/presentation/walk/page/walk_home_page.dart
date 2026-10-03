@@ -12,9 +12,9 @@ import '../../../domain/walk/entity/goal_progress.dart';
 import '../../../domain/walk/entity/health_access.dart';
 import '../../../domain/walk/entity/period_kind.dart';
 import '../../../domain/walk/usecase/walk_use_case.dart';
+import '../../theme/walk_motion.dart';
 import '../cubit/health_access_cubit.dart';
 import '../cubit/health_access_state.dart';
-import '../../theme/walk_motion.dart';
 import '../cubit/period_activity_cubit.dart';
 import '../cubit/step_goal_cubit.dart';
 import '../cubit/today_activity_cubit.dart';
@@ -43,8 +43,9 @@ class _WalkHomePageState extends State<WalkHomePage> {
   late final AppLifecycleListener _lifecycle;
   PeriodKind _kind = PeriodKind.week;
 
-  /// 이 화면이 떠 있는 동안 오늘 목표 달성을 처음 본 순간 참이 된다(카드가 한 번 연출한다).
-  bool _celebrate = false;
+  /// 아직 연출하지 않은 축하의 날짜(자정). 판정이 참이면 그날로 두고, 카드가 연출하면 비운다 —
+  /// 카드가 다시 만들어져도(재시도 · 스크롤) 되풀이하지 않고, 날이 바뀌면 다시 켤 수 있다.
+  DateTime? _celebrateFor;
 
   @override
   void initState() {
@@ -94,7 +95,8 @@ class _WalkHomePageState extends State<WalkHomePage> {
     )) {
       return;
     }
-    setState(() => _celebrate = true);
+    setState(() => _celebrateFor = today);
+    // 저장이 실패해도 다음에 열 때 한 번 더 축하할 뿐이라 기다리지 않는다.
     unawaited(settings.save(saved.copyWith(goalCelebratedOn: today)));
   }
 
@@ -189,7 +191,9 @@ class _WalkHomePageState extends State<WalkHomePage> {
               TodayActivityLoaded(:final activity) => TodayGoalCard(
                 activity: activity,
                 goal: context.select((StepGoalCubit c) => c.state),
-                celebrate: _celebrate,
+                celebrate: _celebrateFor == DateUtils.dateOnly(activity.date),
+                // 연출 중 build 에서 불리므로 setState 없이 비운다 — 다음 build 부터 false.
+                onCelebrated: () => _celebrateFor = null,
               ),
             },
           ),

@@ -18,14 +18,18 @@ class TodayGoalCard extends StatefulWidget {
     required this.activity,
     required this.goal,
     this.celebrate = false,
+    this.onCelebrated,
     super.key,
   });
 
   final DailyActivity activity;
   final int goal;
 
-  /// 참이 되는 첫 순간 한 번 축하 연출을 한다.
+  /// 거짓 → 참이 되는 순간(또는 참으로 처음 그려질 때) 축하 연출을 한 번 한다.
   final bool celebrate;
+
+  /// 연출을 시작한 직후 불린다. 부모가 [celebrate] 를 거두는 데 쓴다.
+  final VoidCallback? onCelebrated;
 
   @override
   State<TodayGoalCard> createState() => _TodayGoalCardState();
@@ -93,7 +97,10 @@ class _TodayGoalCardState extends State<TodayGoalCard> {
                 ),
                 excludeSemantics: true,
                 child: GoalCelebration(
+                  // 날이 바뀌면 새 연출 상태로 — 어제 연출한 채 오늘 달성 값이 바로 와도 놓치지 않는다.
+                  key: ValueKey(DateUtils.dateOnly(activity.date)),
                   play: widget.celebrate,
+                  onPlayed: widget.onCelebrated,
                   child: StepGoalRing(
                     ratio: progress.ratio,
                     child: Column(

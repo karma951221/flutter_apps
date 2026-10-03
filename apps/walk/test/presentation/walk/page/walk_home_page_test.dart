@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
@@ -16,7 +17,6 @@ import 'package:walk/domain/walk/entity/period_kind.dart';
 import 'package:walk/domain/walk/usecase/walk_use_case.dart';
 import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
 import 'package:walk/presentation/walk/page/walk_home_page.dart';
-import 'package:walk/presentation/walk/widget/goal_celebration.dart';
 import 'package:walk/presentation/walk/widget/walk_skeleton.dart';
 
 class _MockUseCase extends Mock implements WalkUseCase {}
@@ -95,8 +95,27 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  bool celebrating(WidgetTester tester) =>
-      tester.widget<GoalCelebration>(find.byType(GoalCelebration)).play;
+  /// 축하 연출 횟수 — 연출마다 진동(mediumImpact)이 한 번 온다.
+  int Function() countCelebrations(WidgetTester tester) {
+    var count = 0;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'HapticFeedback.vibrate' &&
+            call.arguments == 'HapticFeedbackType.mediumImpact') {
+          count++;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    return () => count;
+  }
 
   testWidgets('권한이 있으면 오늘 걸음 · 거리 · 없는 칼로리 – 를 보여준다', (tester) async {
     when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
@@ -159,25 +178,29 @@ void main() {
       (_) async => Ok(DailyActivity(date: DateTime(2026, 9, 23), steps: 10000)),
     );
 
+    final celebrations = countCelebrations(tester);
+
     await pump(tester, key: const ValueKey(1));
     expect(settings.load().goalCelebratedOn, DateTime(2026, 9, 23));
-    expect(celebrating(tester), isTrue);
+    expect(celebrations(), 1);
 
     await pump(tester, key: const ValueKey(2));
-    expect(celebrating(tester), isFalse);
+    expect(celebrations(), 1);
     expect(settings.load().goalCelebratedOn, DateTime(2026, 9, 23));
   });
 
   testWidgets('미달이면 축하하지 않고 날짜도 저장하지 않는다', (tester) async {
     when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
+    final celebrations = countCelebrations(tester);
     await pump(tester);
 
-    expect(celebrating(tester), isFalse);
+    expect(celebrations(), 0);
     expect(settings.load().goalCelebratedOn, isNull);
   });
 
   testWidgets('목표를 바꾸면 카드 목표 문구가 바뀌고, 새로 달성하면 축하한다', (tester) async {
     when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
+    final celebrations = countCelebrations(tester);
     await pump(tester);
     expect(find.text('목표 10,000 걸음'), findsOneWidget);
 
@@ -185,7 +208,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('목표 6,000 걸음'), findsOneWidget);
-    expect(celebrating(tester), isTrue);
+    expect(celebrations(), 1);
     expect(settings.load().goalCelebratedOn, DateTime(2026, 9, 23));
     expect(settings.load().stepGoal, 6000);
   });
@@ -292,5 +315,72 @@ void main() {
     verify(() => useCase.today()).called(1);
     verify(() => useCase.period(PeriodKind.week, any())).called(1);
     verify(() => useCase.period(PeriodKind.month, any())).called(1);
+  });
+
+  testWidgets('실패 뒤 다시 시도해도 같은 날 축하를 되풀이하지 않는다', (tester) async {
+    when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
+    when(() => useCase.today()).thenAnswer(
+      (_) async => Ok(DailyActivity(date: DateTime(2026, 9, 23), steps: 10000)),
+    );
+    final celebrations = countCelebrations(tester);
+    await pump(tester);
+    expect(celebrations(), 1);
+
+    when(
+      () => useCase.today(),
+    ).thenAnswer((_) async => const Err(Failure.unknown()));
+    await resume(tester);
+    expect(find.text('다시 시도'), findsOneWidget);
+
+    when(() => useCase.today()).thenAnswer(
+      (_) async => Ok(DailyActivity(date: DateTime(2026, 9, 23), steps: 10000)),
+    );
+    await tester.tap(find.text('다시 시도'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('10,000 걸음'), findsOneWidget);
+    expect(celebrations(), 1);
+  });
+
+  testWidgets('화면을 띄운 채 날이 바뀌어 다시 달성하면 또 축하하고 새 날짜를 저장한다', (tester) async {
+    when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
+    when(() => useCase.today()).thenAnswer(
+      (_) async => Ok(DailyActivity(date: DateTime(2026, 9, 23), steps: 10000)),
+    );
+    final celebrations = countCelebrations(tester);
+    await pump(tester);
+    expect(celebrations(), 1);
+
+    when(() => useCase.today()).thenAnswer(
+      (_) async => Ok(DailyActivity(date: DateTime(2026, 9, 24), steps: 3000)),
+    );
+    await resume(tester);
+    expect(celebrations(), 1);
+
+    when(() => useCase.today()).thenAnswer(
+      (_) async => Ok(DailyActivity(date: DateTime(2026, 9, 24), steps: 11000)),
+    );
+    await resume(tester);
+
+    expect(celebrations(), 2);
+    expect(settings.load().goalCelebratedOn, DateTime(2026, 9, 24));
+  });
+
+  testWidgets('어제 달성한 화면에 바로 오늘 달성 값이 와도 축하한다', (tester) async {
+    when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
+    when(() => useCase.today()).thenAnswer(
+      (_) async => Ok(DailyActivity(date: DateTime(2026, 9, 23), steps: 10000)),
+    );
+    final celebrations = countCelebrations(tester);
+    await pump(tester);
+    expect(celebrations(), 1);
+
+    when(() => useCase.today()).thenAnswer(
+      (_) async => Ok(DailyActivity(date: DateTime(2026, 9, 24), steps: 12000)),
+    );
+    await resume(tester);
+
+    expect(celebrations(), 2);
+    expect(settings.load().goalCelebratedOn, DateTime(2026, 9, 24));
   });
 }
