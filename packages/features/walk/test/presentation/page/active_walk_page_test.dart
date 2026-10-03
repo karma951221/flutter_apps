@@ -28,8 +28,8 @@ void main() {
     when(() => useCase.trackerState).thenAnswer((_) => current);
     when(() => useCase.trackerStates).thenAnswer((_) => states.stream);
     when(
-      () => useCase.getDogs(),
-    ).thenAnswer((_) async => Ok([dog('1'), dog('2')]));
+      () => useCase.watchDogs(),
+    ).thenAnswer((_) => Stream.value(Ok([dog('1'), dog('2')])));
     getIt
       ..registerFactory<ActiveWalkCubit>(
         () => ActiveWalkCubit.withClock(useCase, () => now),
@@ -111,7 +111,7 @@ void main() {
       tester.widget<Text>(find.byKey(const Key('walk-active-distance'))).data,
       '1.3 km',
     );
-    verifyNever(() => useCase.getDogs());
+    verifyNever(() => useCase.watchDogs());
     await disposePage(tester);
   });
 
@@ -222,7 +222,9 @@ void main() {
   });
 
   testWidgets('반려견이 0마리면 등록 안내를 보이고 버튼은 onOpenDogs 를 부른다', (tester) async {
-    when(() => useCase.getDogs()).thenAnswer((_) async => const Ok([]));
+    when(
+      () => useCase.watchDogs(),
+    ).thenAnswer((_) => Stream.value(const Ok([])));
     var opened = 0;
 
     await pumpApp(

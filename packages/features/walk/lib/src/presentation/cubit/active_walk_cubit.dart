@@ -24,6 +24,7 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
   final DateTime Function() _now;
 
   StreamSubscription<TrackerState>? _subscription;
+  StreamSubscription<Result<List<Dog>>>? _dogsSubscription;
   Timer? _timer;
   TrackingNotice? _notice;
   bool _stopping = false;
@@ -65,6 +66,8 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
     if (selectedIds.isEmpty) return;
 
     _notice = notice;
+    // 시작하면 목록 변화는 더 필요 없다.
+    unawaited(_cancelDogs());
     emit(ActiveWalkState.starting(dogs: dogs, selectedIds: selectedIds));
     final result = await _useCase.startWalk(
       dogIds: [
@@ -115,21 +118,53 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
     }
   }
 
+  /// 반려견을 구독한다. 첫 값까지 기다려서, 반려견 화면에서 등록하고 돌아오면
+  /// 목록이 저절로 갱신된다. 추적을 시작하거나 닫히면 끊는다.
   Future<void> _loadDogs() async {
-    final result = await _useCase.getDogs();
+    await _cancelDogs();
     if (isClosed) return;
 
+    final first = Completer<void>();
+    _dogsSubscription = _useCase.watchDogs().listen((result) {
+      _onDogs(result);
+      if (!first.isCompleted) first.complete();
+    });
+    await first.future;
+  }
+
+  void _onDogs(Result<List<Dog>> result) {
+    if (isClosed) return;
     switch (result) {
-      case Ok(value: final dogs):
-        emit(
-          ActiveWalkState.selectingDogs(
-            dogs: dogs,
-            selectedIds: {for (final dog in dogs) dog.id},
-          ),
-        );
       case Err(:final failure):
-        _emitFailure(failure, const [], const {});
+        if (state is ActiveWalkLoading || state is ActiveWalkSelectingDogs) {
+          _emitFailure(failure, const [], const {});
+        }
+      case Ok(value: final dogs):
+        final ids = {for (final dog in dogs) dog.id};
+        switch (state) {
+          case ActiveWalkSelectingDogs(dogs: final before, :final selectedIds):
+            final known = {for (final dog in before) dog.id};
+            emit(
+              ActiveWalkState.selectingDogs(
+                dogs: dogs,
+                selectedIds: {
+                  for (final id in ids)
+                    if (selectedIds.contains(id) || !known.contains(id)) id,
+                },
+              ),
+            );
+          case ActiveWalkLoading() || ActiveWalkFailure():
+            emit(ActiveWalkState.selectingDogs(dogs: dogs, selectedIds: ids));
+          default:
+            break;
+        }
     }
+  }
+
+  Future<void> _cancelDogs() async {
+    final subscription = _dogsSubscription;
+    _dogsSubscription = null;
+    await subscription?.cancel();
   }
 
   void _onTrackerState(TrackerState tracker) {
@@ -145,6 +180,7 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
   }
 
   void _enterTracking(WalkSession session) {
+    unawaited(_cancelDogs());
     emit(
       ActiveWalkState.tracking(
         session: session,
@@ -164,6 +200,7 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
   /// 구독과 `stop()` 결과 중 먼저 온 쪽만 낸다.
   void _emitStopped(WalkSession session) {
     _cancelTimer();
+    unawaited(_cancelDogs());
     if (state is ActiveWalkStopped) return;
     emit(ActiveWalkState.stopped(session));
   }
@@ -187,6 +224,7 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
   @override
   Future<void> close() async {
     _cancelTimer();
+    await _cancelDogs();
     await _subscription?.cancel();
     return super.close();
   }

@@ -1620,4 +1620,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkDateLabel => 'Date';
+
+  @override
+  String get walkFeedEmptyTitle => 'Start your first walk';
+
+  @override
+  String get walkFeedEmptyMessage =>
+      'Your walks will show up here once you finish one';
+
+  @override
+  String get walkContinue => 'Continue walk';
+
+  @override
+  String get walkInProgressBanner => 'Walk in progress · tap to return';
+
+  @override
+  String get walkUnsavedBanner => 'You have an unsaved walk · tap to save';
+
+  @override
+  String get walkOpenDogsTooltip => 'Dogs';
 }

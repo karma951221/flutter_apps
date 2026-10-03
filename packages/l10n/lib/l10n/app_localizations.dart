@@ -3019,6 +3019,42 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'날짜'**
   String get walkDateLabel;
+
+  /// 피드가 비어 있을 때 안내 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'첫 산책을 시작해 보세요'**
+  String get walkFeedEmptyTitle;
+
+  /// 피드가 비어 있을 때 안내 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'산책을 마치면 여기에 기록이 쌓입니다'**
+  String get walkFeedEmptyMessage;
+
+  /// 진행 중인 산책으로 돌아가는 피드의 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 계속'**
+  String get walkContinue;
+
+  /// 피드 상단의 산책 중 배너 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 중이에요 · 눌러서 돌아가기'**
+  String get walkInProgressBanner;
+
+  /// 피드 상단의 저장하지 않은 산책 배너 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 않은 산책이 있어요 · 눌러서 저장하기'**
+  String get walkUnsavedBanner;
+
+  /// 피드 앱 바의 반려견 목록 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견'**
+  String get walkOpenDogsTooltip;
 }
 
 class _AppLocalizationsDelegate

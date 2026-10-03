@@ -485,5 +485,11 @@
   "walkDeleteConfirmMessage": "ルートと写真も一緒に削除されます。",
   "walkNoTrack": "記録されたルートがありません",
   "walkDogsLabel": "一緒に歩いたわんちゃん",
-  "walkDateLabel": "日付"
+  "walkDateLabel": "日付",
+  "walkFeedEmptyTitle": "最初の散歩を始めましょう",
+  "walkFeedEmptyMessage": "散歩を終えると、ここに記録が貯まります",
+  "walkContinue": "散歩を続ける",
+  "walkInProgressBanner": "散歩中です · タップして戻る",
+  "walkUnsavedBanner": "保存していない散歩があります · タップして保存",
+  "walkOpenDogsTooltip": "わんちゃん"
 }

@@ -27,10 +27,11 @@ import '../presentation/cubit/dog_edit_cubit.dart' as _i641;
 import '../presentation/cubit/dog_list_cubit.dart' as _i665;
 import '../presentation/cubit/walk_detail_cubit.dart' as _i73;
 import '../presentation/cubit/walk_edit_cubit.dart' as _i185;
+import '../presentation/cubit/walk_feed_cubit.dart' as _i13;
 import 'walk_register_module.dart' as _i911;
 
 class FeatureWalkPackageModule extends _i526.MicroPackageModule {
-// initializes the registration of main-scope dependencies inside of GetIt
+  // initializes the registration of main-scope dependencies inside of GetIt
   @override
   _i687.FutureOr<void> init(_i526.GetItHelper gh) async {
     final walkRegisterModule = _$WalkRegisterModule();
@@ -49,31 +50,45 @@ class FeatureWalkPackageModule extends _i526.MicroPackageModule {
       () => _i460.GeolocatorWalkTracker(gh<_i47.LocationGateway>()),
       dispose: _i460.disposeWalkTracker,
     );
-    gh.lazySingleton<_i659.PhotoStorage>(() => _i77.FilePhotoStorage(
-          gh<_i497.Directory>(instanceName: 'walkPhotosRoot'),
-          gh<_i494.IdGenerator>(),
-        ));
+    gh.lazySingleton<_i659.PhotoStorage>(
+      () => _i77.FilePhotoStorage(
+        gh<_i497.Directory>(instanceName: 'walkPhotosRoot'),
+        gh<_i494.IdGenerator>(),
+      ),
+    );
     gh.lazySingleton<_i868.WalkRepository>(
-        () => _i739.DriftWalkRepository(gh<_i588.WalkDatabase>()));
+      () => _i739.DriftWalkRepository(gh<_i588.WalkDatabase>()),
+    );
     gh.lazySingleton<_i1047.DogRepository>(
-        () => _i583.DriftDogRepository(gh<_i588.WalkDatabase>()));
-    gh.lazySingleton<_i883.WalkUseCase>(() => _i883.DefaultWalkUseCase(
-          gh<_i868.WalkRepository>(),
-          gh<_i1047.DogRepository>(),
-          gh<_i890.WalkTracker>(),
-          gh<_i659.PhotoStorage>(),
-          gh<_i494.IdGenerator>(),
-        ));
+      () => _i583.DriftDogRepository(gh<_i588.WalkDatabase>()),
+    );
+    gh.lazySingleton<_i883.WalkUseCase>(
+      () => _i883.DefaultWalkUseCase(
+        gh<_i868.WalkRepository>(),
+        gh<_i1047.DogRepository>(),
+        gh<_i890.WalkTracker>(),
+        gh<_i659.PhotoStorage>(),
+        gh<_i494.IdGenerator>(),
+      ),
+    );
     gh.factory<_i641.DogEditCubit>(
-        () => _i641.DogEditCubit(gh<_i883.WalkUseCase>()));
+      () => _i641.DogEditCubit(gh<_i883.WalkUseCase>()),
+    );
     gh.factory<_i665.DogListCubit>(
-        () => _i665.DogListCubit(gh<_i883.WalkUseCase>()));
+      () => _i665.DogListCubit(gh<_i883.WalkUseCase>()),
+    );
     gh.factory<_i73.WalkDetailCubit>(
-        () => _i73.WalkDetailCubit(gh<_i883.WalkUseCase>()));
+      () => _i73.WalkDetailCubit(gh<_i883.WalkUseCase>()),
+    );
     gh.factory<_i185.WalkEditCubit>(
-        () => _i185.WalkEditCubit(gh<_i883.WalkUseCase>()));
+      () => _i185.WalkEditCubit(gh<_i883.WalkUseCase>()),
+    );
+    gh.factory<_i13.WalkFeedCubit>(
+      () => _i13.WalkFeedCubit(gh<_i883.WalkUseCase>()),
+    );
     gh.factory<_i794.ActiveWalkCubit>(
-        () => _i794.ActiveWalkCubit(gh<_i883.WalkUseCase>()));
+      () => _i794.ActiveWalkCubit(gh<_i883.WalkUseCase>()),
+    );
   }
 }
 

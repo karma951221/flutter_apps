@@ -485,5 +485,11 @@
   "walkDeleteConfirmMessage": "The route and photos will be deleted too.",
   "walkNoTrack": "No route was recorded",
   "walkDogsLabel": "Walked with",
-  "walkDateLabel": "Date"
+  "walkDateLabel": "Date",
+  "walkFeedEmptyTitle": "Start your first walk",
+  "walkFeedEmptyMessage": "Your walks will show up here once you finish one",
+  "walkContinue": "Continue walk",
+  "walkInProgressBanner": "Walk in progress · tap to return",
+  "walkUnsavedBanner": "You have an unsaved walk · tap to save",
+  "walkOpenDogsTooltip": "Dogs"
 }

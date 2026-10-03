@@ -2101,5 +2101,29 @@
   "walkDateLabel": "날짜",
   "@walkDateLabel": {
     "description": "산책 날짜 라벨"
+  },
+  "walkFeedEmptyTitle": "첫 산책을 시작해 보세요",
+  "@walkFeedEmptyTitle": {
+    "description": "피드가 비어 있을 때 안내 제목"
+  },
+  "walkFeedEmptyMessage": "산책을 마치면 여기에 기록이 쌓입니다",
+  "@walkFeedEmptyMessage": {
+    "description": "피드가 비어 있을 때 안내 본문"
+  },
+  "walkContinue": "산책 계속",
+  "@walkContinue": {
+    "description": "진행 중인 산책으로 돌아가는 피드의 버튼 라벨"
+  },
+  "walkInProgressBanner": "산책 중이에요 · 눌러서 돌아가기",
+  "@walkInProgressBanner": {
+    "description": "피드 상단의 산책 중 배너 문구"
+  },
+  "walkUnsavedBanner": "저장하지 않은 산책이 있어요 · 눌러서 저장하기",
+  "@walkUnsavedBanner": {
+    "description": "피드 상단의 저장하지 않은 산책 배너 문구"
+  },
+  "walkOpenDogsTooltip": "반려견",
+  "@walkOpenDogsTooltip": {
+    "description": "피드 앱 바의 반려견 목록 버튼 툴팁"
   }
 }

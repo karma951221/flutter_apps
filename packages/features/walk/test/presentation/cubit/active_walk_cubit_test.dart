@@ -29,8 +29,8 @@ void main() {
     when(() => useCase.trackerState).thenAnswer((_) => current);
     when(() => useCase.trackerStates).thenAnswer((_) => const Stream.empty());
     when(
-      () => useCase.getDogs(),
-    ).thenAnswer((_) async => Ok([dog('1'), dog('2')]));
+      () => useCase.watchDogs(),
+    ).thenAnswer((_) => Stream.value(Ok([dog('1'), dog('2')])));
   });
 
   ActiveWalkCubit build() => ActiveWalkCubit.withClock(useCase, () => now);
@@ -49,8 +49,9 @@ void main() {
 
   blocTest<ActiveWalkCubit, ActiveWalkState>(
     '반려견이 0마리면 빈 selectingDogs 가 되고 시작하지 않는다',
-    setUp: () =>
-        when(() => useCase.getDogs()).thenAnswer((_) async => const Ok([])),
+    setUp: () => when(
+      () => useCase.watchDogs(),
+    ).thenAnswer((_) => Stream.value(const Ok([]))),
     build: build,
     act: (cubit) async {
       await cubit.load();
@@ -68,6 +69,29 @@ void main() {
   );
 
   blocTest<ActiveWalkCubit, ActiveWalkState>(
+    '반려견을 등록하고 돌아오면 목록이 갱신된다',
+    setUp: () {
+      final controller = StreamController<Result<List<Dog>>>();
+      addTearDown(controller.close);
+      when(() => useCase.watchDogs()).thenAnswer((_) => controller.stream);
+      Future.microtask(() => controller.add(const Ok([])));
+      Future.delayed(
+        const Duration(milliseconds: 10),
+        () => controller.add(Ok([dog('1')])),
+      );
+    },
+    build: build,
+    act: (cubit) async {
+      await cubit.load();
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+    },
+    expect: () => [
+      const ActiveWalkState.selectingDogs(dogs: [], selectedIds: {}),
+      ActiveWalkState.selectingDogs(dogs: [dog('1')], selectedIds: const {'1'}),
+    ],
+  );
+
+  blocTest<ActiveWalkCubit, ActiveWalkState>(
     '추적 중 재진입은 반려견 조회 없이 tracking 으로 시작한다',
     setUp: () => current = TrackerState.tracking(session),
     build: build,
@@ -78,7 +102,7 @@ void main() {
         elapsed: const Duration(minutes: 5),
       ),
     ],
-    verify: (_) => verifyNever(() => useCase.getDogs()),
+    verify: (_) => verifyNever(() => useCase.watchDogs()),
   );
 
   blocTest<ActiveWalkCubit, ActiveWalkState>(
@@ -87,7 +111,7 @@ void main() {
     build: build,
     act: (cubit) => cubit.load(),
     expect: () => [ActiveWalkState.stopped(session)],
-    verify: (_) => verifyNever(() => useCase.getDogs()),
+    verify: (_) => verifyNever(() => useCase.watchDogs()),
   );
 
   blocTest<ActiveWalkCubit, ActiveWalkState>(
@@ -180,9 +204,10 @@ void main() {
     '반려견 조회 실패의 재시도는 다시 읽는다',
     setUp: () {
       var calls = 0;
-      when(() => useCase.getDogs()).thenAnswer(
-        (_) async =>
-            calls++ == 0 ? const Err(Failure.unknown()) : Ok([dog('1')]),
+      when(() => useCase.watchDogs()).thenAnswer(
+        (_) => Stream.value(
+          calls++ == 0 ? const Err(Failure.unknown()) : Ok([dog('1')]),
+        ),
       );
     },
     build: build,

@@ -1528,4 +1528,22 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkDateLabel => '날짜';
+
+  @override
+  String get walkFeedEmptyTitle => '첫 산책을 시작해 보세요';
+
+  @override
+  String get walkFeedEmptyMessage => '산책을 마치면 여기에 기록이 쌓입니다';
+
+  @override
+  String get walkContinue => '산책 계속';
+
+  @override
+  String get walkInProgressBanner => '산책 중이에요 · 눌러서 돌아가기';
+
+  @override
+  String get walkUnsavedBanner => '저장하지 않은 산책이 있어요 · 눌러서 저장하기';
+
+  @override
+  String get walkOpenDogsTooltip => '반려견';
 }

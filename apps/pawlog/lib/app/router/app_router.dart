@@ -23,10 +23,10 @@ GoRouter createRouter({required bool hasDogs}) {
     routes: [
       GoRoute(
         path: PawlogPaths.feed,
-        // TODO(phase ④~⑦): 산책 피드 페이지로 교체한다 (onStartWalk, onOpenWalk(id), onOpenDogs).
-        builder: (context, _) => _Placeholder(
-          title: 'feed',
+        builder: (context, _) => WalkFeedPage(
           onStartWalk: () => context.push(PawlogPaths.activeWalk),
+          onSaveWalk: () => context.push(PawlogPaths.saveWalk),
+          onOpenWalk: (id) => context.push(PawlogPaths.walk(id)),
           onOpenDogs: () => context.push(PawlogPaths.dogs),
         ),
       ),
@@ -53,9 +53,10 @@ GoRouter createRouter({required bool hasDogs}) {
       GoRoute(
         path: PawlogPaths.walks,
         // 산책 목록은 피드와 겹친다. 하위 `:id` 는 이 redirect 를 받지 않게 목록 경로만 돌린다.
-        redirect: (_, state) => state.matchedLocation == PawlogPaths.walks
-            ? PawlogPaths.feed
-            : null,
+        // 부모 경로의 redirect 안에서 `matchedLocation` 은 자식으로 가는 중에도 부모 경로라
+        // 상세 · 수정까지 피드로 튕겼다 (⑥ 리뷰 W1). 실제 요청 경로로 비교한다.
+        redirect: (_, state) =>
+            state.uri.path == PawlogPaths.walks ? PawlogPaths.feed : null,
         routes: [
           GoRoute(
             path: ':id',
@@ -110,36 +111,4 @@ GoRouter createRouter({required bool hasDogs}) {
       ),
     ],
   );
-}
-
-class _Placeholder extends StatelessWidget {
-  const _Placeholder({required this.title, this.onStartWalk, this.onOpenDogs});
-
-  final String title;
-
-  /// 피드가 서기 전까지 진행 화면에 닿는 임시 진입점.
-  final VoidCallback? onStartWalk;
-
-  /// 피드가 서기 전까지 반려견 화면에 닿는 임시 진입점.
-  final VoidCallback? onOpenDogs;
-
-  @override
-  Widget build(BuildContext context) {
-    final onStartWalk = this.onStartWalk;
-    final onOpenDogs = this.onOpenDogs;
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(title),
-            if (onStartWalk != null)
-              TextButton(onPressed: onStartWalk, child: const Text('walk')),
-            if (onOpenDogs != null)
-              TextButton(onPressed: onOpenDogs, child: const Text('dogs')),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -1527,4 +1527,22 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkDateLabel => '日付';
+
+  @override
+  String get walkFeedEmptyTitle => '最初の散歩を始めましょう';
+
+  @override
+  String get walkFeedEmptyMessage => '散歩を終えると、ここに記録が貯まります';
+
+  @override
+  String get walkContinue => '散歩を続ける';
+
+  @override
+  String get walkInProgressBanner => '散歩中です · タップして戻る';
+
+  @override
+  String get walkUnsavedBanner => '保存していない散歩があります · タップして保存';
+
+  @override
+  String get walkOpenDogsTooltip => 'わんちゃん';
 }
