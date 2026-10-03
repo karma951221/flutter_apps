@@ -48,7 +48,7 @@ W3 몫은 cubit 26 · 페이지 18 = 44건이다(2026-10-03, `93d722b` 기준). 
   생기고 지워지는지는 `file_photo_storage_test.dart`(임시 폴더)와 에뮬레이터의 `run-as ls` 로 확인한다
 - **image_picker · 카메라 인텐트** — `MockImagePickerService` 라 권한 · 압축 · 취소 동작은 기기에서만
 - **앱 라우터 연결** — 페이지를 라우터 없이 직접 띄우므로 `/walks/:id` 가 열리는지 모른다. 리뷰 ⑥ W1
-  (부모 `/walks` redirect 가 상세 · 수정까지 피드로 돌린다)이 이 틈으로 빠졌다 — `apps/pawlog/test/app/router/`
+  (부모 `/walks` redirect 가 상세 · 수정까지 피드로 돌린다, `d5f95b0` 에서 수정)이 이 틈으로 빠졌다 — `apps/pawlog/test/app/router/`
   에 `createRouter` 테스트가 필요하다([구현 기록](history.md))
 - **사진 디코드 · 지도 타일** — 없는 경로의 `File` 과 stub 타일이라 실제 썸네일 · 경로 그림은 안 보인다
 

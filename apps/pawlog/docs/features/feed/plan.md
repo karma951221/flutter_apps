@@ -1,8 +1,8 @@
 # W4 feed — 계획 (화면 · 상태 · 완료 조건)
 
-> [pawlog 허브](../../README.md) · [기획 W4](../../overview.md#w4-feed--피드) · [설계](../../../../../docs/superpowers/specs/2026-10-03-walk-app-design.md) · (완료 시 history.md · testing.md)
+> [pawlog 허브](../../README.md) · [기획 W4](../../overview.md#w4-feed--피드) · [설계](../../../../../docs/superpowers/specs/2026-10-03-walk-app-design.md) · [구현 기록](history.md) · [테스트](testing.md)
 
-> 상태: 착수 전 · 진행 상태의 단일 기준은 [진행 현황](../../status.md)
+> 상태: 구현 완료 2026-10-03 (`d5f95b0`) · 에뮬레이터 확인 전 · 진행 상태의 단일 기준은 [진행 현황](../../status.md)
 
 ## 범위
 

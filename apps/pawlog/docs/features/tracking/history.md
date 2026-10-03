@@ -77,14 +77,13 @@
 | B2 | `clear()` 가 `finished` 에서만 `idle` | `cdc1ac2` |
 | T4 | 추적 중이 아닐 때 `stop` 의 실패 종류를 `validation` → `notFound(walkNotFound)` | `93d722b` |
 | V1 | `onStopped` 를 `go` → `pushReplacement(saveWalk)` | `93d722b` |
+| V2 | 0마리 안내에서 등록하고 돌아와도 그대로이던 것을 `getDogs()` 대신 `watchDogs()` 구독으로([feed 기록](../feed/history.md)) | `d5f95b0` |
 
 ## 고치지 않았지만 적어 둘 것
 
-- **V2 진행 중** — 0마리 안내에서 반려견을 등록하고 돌아와도 안내가 그대로다. `getDogs()` 한 번
-  대신 `watchDogs()` 를 구독하는 수정이 작업 트리에 있다(아직 커밋 전)
 - **Android 정확도가 계획과 다르다** — 계획 `high`, 구현 `best` + 2초 간격. 배터리 차이라 실기기에서 정한다
-- `walk-active-retry` 키가 아직 없다. `AppPlaceholder.actionKey` 는 `93d722b` 에 들어왔지만
-  진행 화면이 쓰지 않아 실패 화면에는 `walk-active-failure` 만 있다
+- `walk-active-retry` 키는 `b4abf9c` 에서 붙였다(`AppPlaceholder.actionKey`). 페이지 테스트도
+  문구 대신 그 키를 누른다
 - `POST_NOTIFICATIONS` 런타임 요청을 하지 않는다(계획 · 스펙 §5 결정). Android 13+ 에서는 알림이
   기본 거부라 알림만 안 보이고 추적은 돈다 — 에뮬레이터 ③ 의 기대값을 이에 맞춰야 한다(리뷰 S5)
 - **iOS 는 미검증** — 빌드도 기기 확인도 하지 않았다. SwiftPM · iOS 15 템플릿도 처음이다(리뷰 ③ I1)

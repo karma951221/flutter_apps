@@ -248,6 +248,15 @@ clear() → emit idle
 
 ## 4. Presentation
 
+> **구현 뒤 안내(2026-10-03).** 이 절의 상태 표 · 페이지 콜백 · 문자열 키 이름은 착수 전 초안이다.
+> 구현은 feature 별 계획 — [W1 dog](../../../apps/pawlog/docs/features/dog/plan.md) ·
+> [W2 tracking](../../../apps/pawlog/docs/features/tracking/plan.md) ·
+> [W3 record](../../../apps/pawlog/docs/features/record/plan.md) ·
+> [W4 feed](../../../apps/pawlog/docs/features/feed/plan.md) — 을 따랐고, 둘이 다르면 **계획이 우선한다**.
+> 예: 피드 상태는 `loaded(walks, isTracking)` 이 아니라 `loaded(walks, tracker)`, 피드 콜백에
+> `onSaveWalk` 가 더해졌고, `walkFeedStartAction` 같은 키 대신 계획의 `walkStart` · `walkContinue` 등을 쓴다.
+> 왜 바꿨는지는 각 폴더의 `history.md` 에 있다. 이 절은 다시 쓰지 않는다.
+
 ### 상태를 어디에 두는가
 
 **추적 상태는 DI 싱글턴 `WalkTracker` 에, cubit 은 페이지마다.** 화면 이동이 추적을 끊으면

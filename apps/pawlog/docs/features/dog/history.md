@@ -75,7 +75,7 @@
   크기 프리셋은 설계 §7 후보
 - 로딩이 맨 `CircularProgressIndicator` 다(리뷰 ④ I3) — 공통 로딩 위젯 승격 후보
 - 마지막 강아지 삭제를 막지 않는다. W2 의 0마리 안내가 받는데, 안내에서 등록하고 돌아와도
-  갱신되지 않는 V2 는 작업 트리에서 진행 중이다([tracking 기록](../tracking/history.md))
+  갱신되지 않던 V2 는 `d5f95b0` 에서 고쳤다([tracking 기록](../tracking/history.md))
 - **테스트 공백**(리뷰 ④ I2): `setPhoto` 실패 스낵바, `delete` 실패, `load` 의 `Err`, 수정 폼에서
   새 사진을 고른 뒤 닫을 때 **원래 사진이 남는지**(지금은 신규 폼만), 페이지의 사진 버튼 흐름
   (`prepare` 예외 → 스낵바), `loadFailure` 일 때의 제목

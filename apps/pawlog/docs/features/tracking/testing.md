@@ -41,7 +41,8 @@ GPS · 지도 타일은 실제로 부르지 않는다 — `LocationGateway` mock
 - `trackerStates` 는 테스트가 만든 `StreamController.broadcast()` 이고, `trackerState` 는 바꿀 수 있는
   `current` 변수를 돌려준다 — 재진입은 `current` 만 바꿔 흉내 낸다
 - `pumpApp` 은 `Locale('ko')` 를 고정한다. `ko` 가 ARB 템플릿이라 원문이 곧 기대값이다
-- 작업 트리에서 V2(`watchDogs` 구독) 수정이 이 파일들을 바꾸는 중이다 — 위 표는 커밋된 `93d722b` 기준
+- 위 표는 `93d722b` 기준이다. `d5f95b0` 의 V2 수정으로 stub 이 `getDogs` 에서 `watchDogs`(`Stream.value`)로
+  바뀌었고, cubit 에 "반려견을 등록하고 돌아오면 목록이 갱신된다" 1건이 더해져 cubit 은 12건이다
 
 ## mock 으로 확인되지 않는 것
 

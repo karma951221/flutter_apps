@@ -1,6 +1,6 @@
 # 패키지 의존 그래프
 
-> [문서 허브](README.md) · [아키텍처](architecture.md) · 2026-09-13 작성 · `packages/**/pubspec.yaml`에서 뽑은 그래프
+> [문서 허브](README.md) · [아키텍처](architecture.md) · 2026-09-13 작성 · 2026-10-03 갱신(`feature_walk`) · `packages/**/pubspec.yaml`에서 뽑은 그래프
 > (다시 그리는 방법은 [§6](#6-다시-그리기))
 
 이 문서는 **지금 코드가 실제로 어떻게 얽혀 있는지**를 적는다. 어떻게 얽혀야 하는지(규칙)는
@@ -14,10 +14,12 @@ flowchart TB
   subgraph apps
     trader[apps/trader]
     commute_app[apps/commute]
+    pawlog_app[apps/pawlog]
   end
   subgraph features["packages/features/*"]
     F[feature_* 12개]
     C[feature_commute]
+    W[feature_walk]
   end
   DS[design_system]
   L[l10n]
@@ -25,14 +27,18 @@ flowchart TB
 
   trader --> F
   commute_app --> C
+  pawlog_app --> W
   F --> DS
   F --> L
   C --> DS
   C --> L
+  W --> DS
+  W --> L
   DS --> L
   L --> CORE
   F --> CORE
   C --> CORE
+  W --> CORE
 ```
 
 의도한 방향은 `apps → features → {design_system, l10n} → core` 하나뿐이다. 이 그림에서
@@ -55,13 +61,14 @@ flowchart LR
   follow:::leaf
   preferences:::leaf
   commute:::leaf
+  walk:::leaf
   chat
   comment
   feed
   settings
   profile
 
-  class auth,safety,reaction,follow,preferences,commute leaf
+  class auth,safety,reaction,follow,preferences,commute,walk leaf
 
   trade --> auth
   post --> reaction
@@ -89,6 +96,12 @@ flowchart LR
 
 순환은 없다(DAG). 노란 노드가 **허브**(3개 이상이 의존)다.
 
+`commute` 와 `walk` 는 각각 둘째 · 셋째 앱 전용 리프다. 둘 다 다른 feature 를 보지 않고 기반 패키지
+(`core` · `design_system` · `l10n`)에만 기대며, 앱이 콜백으로 화면을 잇는다. `walk` 는 거기에
+서드파티로 `drift` · `drift_flutter`(로컬 DB) · `geolocator`(위치) · `flutter_map` · `latlong2`(지도) ·
+`path_provider`(사진 파일 위치)를 더한다. 이 경계는 각 앱의 `package_boundary_test` 가 pubspec 으로
+지킨다(`feature_` 접두 · `supabase_flutter` · `go_router` 없음).
+
 ### 허브 — 몇 개가 나를 의존하나
 
 | 패키지 | 직접 의존하는 곳 | 수 |
@@ -113,7 +126,7 @@ pubspec에 적힌 직접 의존만 보면 과소평가한다. 실제로 딸려�
 | `chat` | 2 | auth, safety | 2 |
 | `settings` | 2 | auth, preferences | 2 |
 | `trade` | 1 | auth | 1 |
-| `auth` · `follow` · `preferences` · `reaction` · `safety` · `commute` | 0 | — | 0 |
+| `auth` · `follow` · `preferences` · `reaction` · `safety` · `commute` · `walk` | 0 | — | 0 |
 
 `profile` 하나를 쓰려면 feature 12개 중 8개가 온다. 둘째 앱이 "프로필 화면만" 가져다 쓰는
 것은 사실상 불가능하다.

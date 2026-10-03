@@ -4,7 +4,7 @@
 
 설계 판단 · 리뷰에서 고친 것 · 검증 결과를 남긴다. 진행 상태는 [진행 현황](../../status.md)에만 적는다.
 구현 커밋은 `93d722b`(단계 ⑥ 저장 폼 + 상세를 ⑦ 에서 당겨 함께)다. 리뷰 ⑥ 의 판정은 **보류**다 —
-상세 · 수정 화면이 앱 라우터에서 열리지 않는다(⑥ W1, 아래). 리뷰 ⑥ 의 소견 번호 W1~W6 은
+상세 · 수정 화면이 앱 라우터에서 열리지 않았다(⑥ W1, 아래 — `d5f95b0` 에서 고침). 리뷰 ⑥ 의 소견 번호 W1~W6 은
 feature 이름 W1 dog 등과 겹치므로 이 문서에서는 "⑥ W1" 처럼 단계를 붙여 쓴다.
 
 ## 2026-10-03 — 설계 판단
@@ -63,7 +63,7 @@ W1 과 같은 원칙이다. `addPhotos` 가 `storePhoto` 를 한 장씩 부르�
 
 `onSaved(id)` 에서 앱이 `go('/')` 후 `push('/walks/:id')` 한다. 상세에서 뒤로 가면 피드다. 수정
 모드는 `onSaved` · `onDiscarded` 모두 `pop()`. 저장 폼으로는 W2 가 `pushReplacement` 로 들어온다(V1).
-리뷰어가 go_router 로 스택 `[/, /walks/w1]` 을 확인했다 — 단 지금은 ⑥ W1 때문에 상세가 피드로 튕긴다.
+리뷰어가 go_router 로 스택 `[/, /walks/w1]` 을 확인했다 — 단 `93d722b` 에서는 ⑥ W1 때문에 상세가 피드로 튕겼다(`d5f95b0` 에서 고침).
 
 ### 페이지는 생성자 하나
 
@@ -76,21 +76,23 @@ null 이면 신규. `DogEditPage({dogId})` 와 같은 모양이다.
 |---|---|---|
 | B2 (잔여) | 수정 폼은 `discardWalk` 대신 `removePhoto` 로 정리 | `93d722b` |
 | S2 | 스펙에 없던 `/walks` 목록 화면을 `redirect` 로 피드에 돌린다 — **자식까지 막는 ⑥ W1 을 새로 만들었다** | `93d722b` (△) |
+| ⑥ W1 | `/walks` redirect 를 `state.uri.path` 비교로 — 상세 · 수정이 다시 열린다([feed 기록](../feed/history.md)) | `d5f95b0` |
 | V1 | 저장 폼에 `pushReplacement` 로 들어와 뒤로 가기가 앱을 닫지 않는다([tracking 기록](../tracking/history.md)) | `93d722b` |
 | T1 류 | `addPhotos` 의 await 뒤 가드 — 늦게 온 파일은 지운다 | `93d722b` |
 
 ## 고치지 않았지만 적어 둘 것
 
-- **⑥ W1 (버그, 미해결)** — `/walks` 부모의 route-level `redirect` 는 자식으로 갈 때도
+- **⑥ W1 (버그, `d5f95b0` 에서 수정 · 라우터 테스트 4건은 `b4abf9c`)** — `/walks` 부모의 route-level `redirect` 는 자식으로 갈 때도
   `matchedLocation == '/walks'` 를 받는다. 리뷰어가 같은 구성의 go_router 로 `go('/walks/w1')` ·
   `go('/walks/w1/edit')` 가 모두 `/` 로 가는 것을 재현했다. 저장 뒤 `push(walk(id))` 는 피드로 튕기고
   상세 · 수정은 앱에서 열리지 않는다. S2 를 고치며 생긴 결함이고, 페이지 테스트는 라우터 없이 페이지를
   띄워 못 잡았다. 제안: `state.fullPath` / `state.uri.path` 비교 또는 `/walks/:id` 최상위화 + 앱 라우터 테스트
-- **⑥ W2** — 저장 중 닫히면 추가 사진을 지우지 않는 위 판단의 대가로, 저장이 **실패**하면 고아가 남는다.
-  `save()` 가 `isClosed` 면 결과를 버리기 때문이다. 신규는 `PopScope` 가 막아 수정 모드만 해당
-- **⑥ W3** — 사진 빼기 버튼이 `InkResponse` + `CircleAvatar` 라 터치 영역이 작고 의미 라벨이 없다
-- **⑥ W4** — `cacheWidth: 400` · `tileSize * 2`(기기 배율 무시) · scrim `alpha: 0.6` · 지도 높이
-  `AppSpacing.xl * 8` 등 크기 수치(④ T3 · ⑤ V3 와 같은 결)
+- **⑥ W2 (`b4abf9c` 반영)** — 저장 중 닫히면 추가 사진을 지우지 않는 위 판단의 대가로, 저장이
+  **실패**하면 고아가 남았다. 이제 닫힌 뒤 결과가 `Err` 면 이번에 추가한 파일을 지운다(성공이면 유지)
+- **⑥ W3 (`b4abf9c` 반영)** — 사진 빼기 버튼에 `Semantics` 라벨 · 툴팁(`walkRemovePhoto`)을 붙였다.
+  터치 영역 크기는 그대로다
+- **⑥ W4 (`b4abf9c` 일부 반영)** — `cacheWidth` 는 기기 배율 기준으로, scrim 알파는 이름 있는 상수로.
+  지도 높이 `AppSpacing.xl * 8` 같은 크기 수치의 토큰화는 남았다(④ T3 · ⑦ F2 와 같은 결)
 - 저장 직전에 고른 사진은 조용히 빠진다 — ④ T1 수정과 같은 대가이고 리뷰는 받아들일 만하다고 봤다
 - 신규 모드에서 `getDogs` 가 실패해도 "저장할 산책이 없습니다" + "피드로 돌아가기" 가 보인다
   (계획 표대로지만 실패 원인을 가린다). 세션은 남는다
@@ -99,8 +101,7 @@ null 이면 신규. `DogEditPage({dogId})` 와 같은 모양이다.
 - 저장 중 닫힘 · 프로세스 종료로 남는 고아 사진 파일은 감수한다(계획 범위 밖)
 - `discardWalk` 결과를 보지 않는다(`Future<void>`) — 파일 삭제는 best-effort
 - `RouteMap` 이 `getIt<TileProvider>()` 를 푸는 곳이 진행 · 상세 둘이 됐다(V4)
-- **테스트 공백**: **앱 라우터 연결(⑥ W1 — `createRouter` 로 `/walks/w1` 이 상세를 그리는지)**,
-  저장 중 닫힘(⑥ W2), 카메라 경로(`captureImage`), 10장 도달 시 추가 칸 대신 캡션(UI), 시트 취소,
+- **테스트 공백**(앱 라우터 연결과 저장 중 닫힘은 `b4abf9c` 에서 채웠다): 카메라 경로(`captureImage`), 10장 도달 시 추가 칸 대신 캡션(UI), 시트 취소,
   `prepare` 예외 스낵바, 상세 실패 화면의 재시도, `WalkPhotoGrid` 의 깨진 파일 표시, `DogAvatars` 의 `+n`,
   삭제된 강아지만 있던 산책의 수정
 
@@ -108,6 +109,7 @@ null 이면 신규. `DogEditPage({dogId})` 와 같은 모양이다.
 
 - `93d722b` 스냅숏에서 `feature_walk` `flutter analyze` 0건 · `flutter test` `+150`(W3 몫 44건 —
   cubit 26 · 페이지 18), `apps/pawlog` `+5`. 리뷰어도 `93d722b` worktree 에서 같은 수와
-  `design_system` `+42` 를 확인했다. **테스트가 모두 통과해도 ⑥ W1 은 남아 있다** — 라우터 테스트가 없다
+  `design_system` `+42` 를 확인했다. 그 시점엔 테스트가 모두 통과해도 ⑥ W1 이 남아 있었다 —
+  라우터 테스트가 없었기 때문이고, `d5f95b0` 수정 · `b4abf9c` 테스트로 닫혔다
 - **에뮬레이터 확인은 아직 하지 않았다 (이 환경에 Android SDK 없음).** 저장 → 상세 → 수정 → 삭제와
   사진 파일 확인은 [테스트](testing.md#에뮬레이터)에 미실행으로 남겼다. iOS 도 빌드하지 않았다

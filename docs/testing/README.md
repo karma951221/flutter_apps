@@ -90,6 +90,7 @@ feature 테스트 문서(각 feature 폴더의 `testing.md`)는 **대상 · 시�
 - [preferences](../../apps/trader/docs/features/preferences/testing.md)
 - [trade](../../apps/trader/docs/features/trade/testing.md)
 - [commute](../../apps/commute/docs/testing.md) — 둘째 앱. `packages/features/commute` 와 `apps/commute` 에서 각각 돈다
+- [pawlog](../../apps/pawlog/docs/README.md#문서) — 셋째 앱. feature 별 testing: [dog](../../apps/pawlog/docs/features/dog/testing.md) · [tracking](../../apps/pawlog/docs/features/tracking/testing.md) · [record](../../apps/pawlog/docs/features/record/testing.md) · [feed](../../apps/pawlog/docs/features/feed/testing.md). `packages/features/walk` 와 `apps/pawlog` 에서 각각 돈다
 - [검수 기록 (2026-08-24)](../../apps/trader/docs/audits/audit-2026-08-24.md)
 - [검수 기록 (2026-08-27)](../../apps/trader/docs/audits/audit-2026-08-27.md)
 - [코드 컨벤션 검사](conventions.md)

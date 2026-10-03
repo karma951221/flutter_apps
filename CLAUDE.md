@@ -3,7 +3,7 @@
 Flutter 모노레포(토이 프로젝트). 앱이 셋이다 — **trader(daylog)** 는 과거 시세로 매매를
 연습하고 그 결과를 소셜 피드에 공유하는 모의투자 앱(Supabase), **commute** 는 출퇴근
 소요 시간을 보여주는 둘째 앱(백엔드 없음), **pawlog** 는 강아지 산책을 GPS 로 기록하고
-피드로 돌아보는 셋째 앱(v1 로컬 drift, 기획 단계)이다. 앱은 `apps/`, 공유 패키지는
+피드로 돌아보는 셋째 앱(v1 로컬 drift)이다. 앱은 `apps/`, 공유 패키지는
 `packages/`, 백엔드는 `supabase/`(마이그레이션·RLS·시세 seed)에 있다. 문서는 앱별로
 `apps/<app>/docs/` 에, 앱 공통 문서는 `docs/` 에 있다.
 
@@ -19,7 +19,7 @@ Flutter 모노레포(토이 프로젝트). 앱이 셋이다 — **trader(daylog)
 | 앱 구조와 계층 규칙 | [docs/architecture.md](docs/architecture.md) |
 | 테이블·RLS·GRANT의 현재 모습 | [apps/trader/docs/schema.md](apps/trader/docs/schema.md) |
 | 로컬 환경 준비·재현 절차 | [공통](docs/setup.md) · [트레이더(Supabase)](apps/trader/docs/setup.md) |
-| feature별 화면·상태·완료 조건 | `apps/trader/docs/features/<name>/plan.md` · `apps/commute/docs/plan.md` |
+| feature별 화면·상태·완료 조건 | `apps/trader/docs/features/<name>/plan.md` · `apps/commute/docs/plan.md` · `apps/pawlog/docs/features/<name>/plan.md` |
 | 테스트 실행·범위 | [docs/testing/README.md](docs/testing/README.md) |
 | E2E(Patrol) 설정·실행 | [apps/trader/docs/e2e.md](apps/trader/docs/e2e.md) |
 
@@ -30,7 +30,7 @@ Flutter 모노레포(토이 프로젝트). 앱이 셋이다 — **trader(daylog)
 - **진행 상태 갱신**: 해당 앱의 `status.md` 에만 적는다. 모노레포 공통 작업(패키지 경계 등)은
   [docs/status.md](docs/status.md)에 적는다. 다른 문서에는 진행 상태를 쓰지 않는다
 - **feature 착수/완료**: 착수 시 `plan.md`, 완료 시 같은 폴더에 `history.md` 와 `testing.md` 를
-  함께 갱신한다. 트레이더는 `apps/trader/docs/features/<name>/`, 통근은 `apps/commute/docs/`
+  함께 갱신한다. 트레이더는 `apps/trader/docs/features/<name>/`, 통근은 `apps/commute/docs/`, pawlog 는 `apps/pawlog/docs/features/<name>/`
 - **새 문서 위치**: 한 앱에만 해당하면 `apps/<app>/docs/`, 두 앱 공통이면 `docs/`.
   브레인스토밍 스펙과 실행 계획은 `docs/superpowers/{specs,plans}/`
 - **테스트 위치**: 구현 구조를 그대로 반영한다. `app/lib/features/<name>/` ↔

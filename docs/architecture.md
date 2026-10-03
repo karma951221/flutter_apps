@@ -37,7 +37,7 @@ socialapp/
 │   │                            #   setup · e2e · audits/ · features/<name>/{plan,history,testing}.md
 │   ├── commute/                 # 둘째 앱 통근 시간 — Supabase 없음. core · design_system · l10n · feature_commute 만 조립
 │   │   └── docs/                # 앱 문서 — README · status · plan · history · testing
-│   └── pawlog/                  # 셋째 앱 강아지 산책 — 기획 단계. v1 은 Supabase 없음(drift 로컬 DB), feature_walk 만 조립 예정
+│   └── pawlog/                  # 셋째 앱 강아지 산책 — v1 은 Supabase 없음(drift 로컬 DB · flutter_map). core · design_system · l10n · feature_walk 만 조립
 │       └── docs/                # 앱 문서 — README · status · overview(★ 기획) · features/<name>/{plan,history,testing}.md
 └── packages/
     ├── core/                    # error · result · pagination · validation · data 인프라 · media · di
@@ -47,7 +47,7 @@ socialapp/
         ├── auth/ post/ feed/ comment/ follow/ reaction/
         ├── profile/ chat/ safety/ settings/ preferences/ trade/
         ├── commute/             # 둘째 앱 전용. feature_* 를 참조하지 않는다
-        └── walk/                # 셋째 앱 전용 (예정). 같은 경계 — feature_* · supabase_flutter · go_router 없음
+        └── walk/                # 셋째 앱 전용. 같은 경계 — feature_* · supabase_flutter · go_router 없음
 ```
 
 **앱과 백엔드를 형제 폴더로 분리한다.** 나중에 자체 백엔드로 전환할 때 `server/`가 하나 더 생기면 되고, 그때 앱 코드는 손대지 않는다.
@@ -55,12 +55,13 @@ socialapp/
 **앱은 셋이다.** `apps/trader` 가 feature 12개를 조립하는 본 앱이고, `apps/commute` 는
 기반 패키지 셋(`core` · `design_system` · `l10n`)만으로 둘째 앱이 서는지 시험하는
 앱이다([계획](../apps/commute/docs/plan.md)). `apps/pawlog` 는 거기에 로컬 DB(drift) 와
-지도를 더해도 같은 경계가 유지되는지 보는 셋째 앱으로, 아직 기획 단계다
+지도(flutter_map · OSM 타일)를 더해도 같은 경계가 유지되는지 보는 셋째 앱이다
 ([기획서](../apps/pawlog/docs/overview.md)). 앱들은 `pubspec.yaml` 의 `workspace:` 로
 패키지를 이름으로 resolve 하고, 실제 의존 관계는 [의존 그래프](dependencies.md)에 있다.
 
-`packages/features/commute` 는 **`Routes` 대신 콜백을 받는다** — 페이지가
-`onOpenSettings` · `onDone` 을 인자로 받고 경로는 `apps/commute` 의 라우터가 정한다.
+`packages/features/commute` 와 `packages/features/walk` 는 **`Routes` 대신 콜백을 받는다** — 페이지가
+`onOpenSettings` · `onDone`(통근), `onStartWalk` · `onOpenWalk(id)`(pawlog) 같은 콜백을 인자로 받고
+경로는 각 앱의 라우터가 정한다.
 기존 feature 들이 `core` 의 `Routes` 로 `context.push` 하는 것과 다른 선택이고, 어느
 쪽으로 통일할지는 패키지 경계 리팩터링에서 결정한다
 ([설계 §7](superpowers/specs/2026-09-13-commute-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것)).
