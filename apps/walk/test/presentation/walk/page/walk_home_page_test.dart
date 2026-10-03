@@ -159,6 +159,17 @@ void main() {
     expect(find.byKey(const Key('walk-today-steps')), findsNothing);
   });
 
+  testWidgets('기간 값을 읽는 동안 그래프 자리에 스켈레톤을 보인다', (tester) async {
+    when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
+    final pending = Completer<Result<ActivityPeriod>>();
+    when(() => useCase.period(any(), any())).thenAnswer((_) => pending.future);
+    await pump(tester);
+
+    expect(find.byType(WalkSkeleton), findsOneWidget);
+    expect(find.byKey(const Key('walk-today-steps')), findsOneWidget);
+    expect(find.byKey(const Key('walk-goal-days')), findsNothing);
+  });
+
   testWidgets('주간 | 월간 세그먼트로 전환', (tester) async {
     when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
     await pump(tester);
