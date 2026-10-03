@@ -9,6 +9,7 @@ import '../presentation/alarm/page/alarm_ringing_page.dart';
 import '../presentation/settings/cubit/theme_cubit.dart';
 import '../presentation/shell/page/main_shell_page.dart';
 import '../presentation/theme/walk_theme.dart';
+import '../presentation/walk/cubit/step_goal_cubit.dart';
 import 'alarm_ring_listener.dart';
 
 /// 울림 화면을 화면 밖(알람 스트림)에서 띄우려고 전역으로 둔다.
@@ -23,6 +24,7 @@ class WalkApp extends StatefulWidget {
 
 class _WalkAppState extends State<WalkApp> {
   late final _theme = ThemeCubit(getIt<SettingsRepository>());
+  late final _goal = StepGoalCubit(getIt<SettingsRepository>());
   late final _ringListener = AlarmRingListener(
     navigatorKey: walkNavigatorKey,
     routeFor: (packageId) => MaterialPageRoute<void>(
@@ -41,18 +43,23 @@ class _WalkAppState extends State<WalkApp> {
   void dispose() {
     _ringListener.dispose();
     _theme.close();
+    _goal.close();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _theme,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: _theme),
+        BlocProvider.value(value: _goal),
+      ],
       child: BlocBuilder<ThemeCubit, AppThemeMode>(
         builder: (context, mode) => MaterialApp(
           navigatorKey: walkNavigatorKey,
           navigatorObservers: [appRouteObserver],
-          onGenerateTitle: (context) => AppLocalizations.of(context).walkAppTitle,
+          onGenerateTitle: (context) =>
+              AppLocalizations.of(context).walkAppTitle,
           theme: WalkTheme.light(),
           darkTheme: WalkTheme.dark(),
           themeMode: themeModeOf(mode),

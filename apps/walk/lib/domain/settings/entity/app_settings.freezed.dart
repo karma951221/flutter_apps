@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AppSettings {
 
- AppThemeMode get themeMode;
+ AppThemeMode get themeMode; int get stepGoal; DateTime? get goalCelebratedOn;
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $AppSettingsCopyWith<AppSettings> get copyWith => _$AppSettingsCopyWithImpl<AppS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppSettings&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppSettings&&(identical(other.themeMode, themeMode) || other.themeMode == themeMode)&&(identical(other.stepGoal, stepGoal) || other.stepGoal == stepGoal)&&(identical(other.goalCelebratedOn, goalCelebratedOn) || other.goalCelebratedOn == goalCelebratedOn));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,themeMode);
+int get hashCode => Object.hash(runtimeType,themeMode,stepGoal,goalCelebratedOn);
 
 @override
 String toString() {
-  return 'AppSettings(themeMode: $themeMode)';
+  return 'AppSettings(themeMode: $themeMode, stepGoal: $stepGoal, goalCelebratedOn: $goalCelebratedOn)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $AppSettingsCopyWith<$Res>  {
   factory $AppSettingsCopyWith(AppSettings value, $Res Function(AppSettings) _then) = _$AppSettingsCopyWithImpl;
 @useResult
 $Res call({
- AppThemeMode themeMode
+ AppThemeMode themeMode, int stepGoal, DateTime? goalCelebratedOn
 });
 
 
@@ -62,10 +62,12 @@ class _$AppSettingsCopyWithImpl<$Res>
 
 /// Create a copy of AppSettings
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? themeMode = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? themeMode = null,Object? stepGoal = null,Object? goalCelebratedOn = freezed,}) {
   return _then(AppSettings(
 themeMode: null == themeMode ? _self.themeMode : themeMode // ignore: cast_nullable_to_non_nullable
-as AppThemeMode,
+as AppThemeMode,stepGoal: null == stepGoal ? _self.stepGoal : stepGoal // ignore: cast_nullable_to_non_nullable
+as int,goalCelebratedOn: freezed == goalCelebratedOn ? _self.goalCelebratedOn : goalCelebratedOn // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 

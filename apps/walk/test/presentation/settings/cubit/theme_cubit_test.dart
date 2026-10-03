@@ -1,6 +1,8 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:walk/data/settings/prefs_settings_repository.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
 import 'package:walk/domain/settings/repository/settings_repository.dart';
 import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
@@ -13,8 +15,9 @@ void main() {
   setUpAll(() => registerFallbackValue(const AppSettings()));
   setUp(() {
     repository = _MockRepository();
-    when(() => repository.load())
-        .thenReturn(const AppSettings(themeMode: AppThemeMode.dark));
+    when(
+      () => repository.load(),
+    ).thenReturn(const AppSettings(themeMode: AppThemeMode.dark));
     when(() => repository.save(any())).thenAnswer((_) async {});
   });
 
@@ -39,4 +42,15 @@ void main() {
     expect: () => <AppThemeMode>[],
     verify: (_) => verifyNever(() => repository.save(any())),
   );
+
+  test('테마를 바꿔도 저장된 걸음 목표는 유지된다', () async {
+    SharedPreferences.setMockInitialValues({});
+    final real = PrefsSettingsRepository(await SharedPreferences.getInstance());
+    await real.save(const AppSettings(stepGoal: 8000));
+
+    await ThemeCubit(real).select(AppThemeMode.dark);
+
+    expect(real.load().stepGoal, 8000);
+    expect(real.load().themeMode, AppThemeMode.dark);
+  });
 }
