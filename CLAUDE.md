@@ -1,20 +1,21 @@
 # daylog — 에이전트 가이드
 
-Flutter 모노레포(토이 프로젝트). 앱이 둘이다 — **trader(daylog)** 는 과거 시세로 매매를
+Flutter 모노레포(토이 프로젝트). 앱이 셋이다 — **trader(daylog)** 는 과거 시세로 매매를
 연습하고 그 결과를 소셜 피드에 공유하는 모의투자 앱(Supabase), **commute** 는 출퇴근
-소요 시간을 보여주는 둘째 앱(백엔드 없음)이다. 앱은 `apps/`, 공유 패키지는 `packages/`,
-백엔드는 `supabase/`(마이그레이션·RLS·시세 seed)에 있다. 문서는 앱별로
-`apps/<app>/docs/` 에, 두 앱 공통 문서는 `docs/` 에 있다.
+소요 시간을 보여주는 둘째 앱(백엔드 없음), **pawlog** 는 강아지 산책을 GPS 로 기록하고
+피드로 돌아보는 셋째 앱(v1 로컬 drift, 기획 단계)이다. 앱은 `apps/`, 공유 패키지는
+`packages/`, 백엔드는 `supabase/`(마이그레이션·RLS·시세 seed)에 있다. 문서는 앱별로
+`apps/<app>/docs/` 에, 앱 공통 문서는 `docs/` 에 있다.
 
 ## 먼저 읽을 것
 
 작업 전에 [docs/README.md](docs/README.md)(문서 허브)에서 필요한 문서를 찾는다.
-작업할 앱의 허브부터 연다 — [트레이더](apps/trader/docs/README.md) · [통근](apps/commute/docs/README.md).
+작업할 앱의 허브부터 연다 — [트레이더](apps/trader/docs/README.md) · [통근](apps/commute/docs/README.md) · [pawlog](apps/pawlog/docs/README.md).
 
 | 알고 싶은 것 | 문서 |
 |---|---|
-| 지금 어디까지 왔고 다음이 뭔가 | 앱별 `status.md` — [트레이더](apps/trader/docs/status.md) · [통근](apps/commute/docs/status.md) · [전체](docs/status.md) |
-| 기능의 의도·범위·결정 근거 | [트레이더 기획](apps/trader/docs/overview.md) · [통근 계획](apps/commute/docs/plan.md) |
+| 지금 어디까지 왔고 다음이 뭔가 | 앱별 `status.md` — [트레이더](apps/trader/docs/status.md) · [통근](apps/commute/docs/status.md) · [pawlog](apps/pawlog/docs/status.md) · [전체](docs/status.md) |
+| 기능의 의도·범위·결정 근거 | [트레이더 기획](apps/trader/docs/overview.md) · [통근 계획](apps/commute/docs/plan.md) · [pawlog 기획](apps/pawlog/docs/overview.md) |
 | 앱 구조와 계층 규칙 | [docs/architecture.md](docs/architecture.md) |
 | 테이블·RLS·GRANT의 현재 모습 | [apps/trader/docs/schema.md](apps/trader/docs/schema.md) |
 | 로컬 환경 준비·재현 절차 | [공통](docs/setup.md) · [트레이더(Supabase)](apps/trader/docs/setup.md) |

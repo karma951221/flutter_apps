@@ -30,6 +30,7 @@ void main() {
 
     expect(paths, contains(endsWith('apps/trader/docs/README.md')));
     expect(paths, contains(endsWith('apps/commute/docs/README.md')));
+    expect(paths, contains(endsWith('apps/pawlog/docs/README.md')));
   });
 
   test('문서의 로컬 Markdown 링크는 존재하는 대상을 가리킨다', () {

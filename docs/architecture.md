@@ -10,7 +10,7 @@
 
 ```
 socialapp/
-├── docs/                        # 두 앱이 함께 쓰는 문서만
+├── docs/                        # 앱들이 함께 쓰는 문서만
 │   ├── README.md                # 문서 진입점 — 앱 허브로 가는 입구
 │   ├── status.md                # 모노레포 작업 · 앱별 한 줄 상태
 │   ├── architecture.md          # 이 문서
@@ -35,8 +35,10 @@ socialapp/
 │   ├── trader/                  # 첫째 앱 daylog — main · bootstrap · app shell · router · DI 조립 · config · home · patrol_test
 │   │   └── docs/                # 앱 문서 — README · status(★ 진행 현황) · overview · schema(★ DDL·RLS) ·
 │   │                            #   setup · e2e · audits/ · features/<name>/{plan,history,testing}.md
-│   └── commute/                 # 둘째 앱 통근 시간 — Supabase 없음. core · design_system · l10n · feature_commute 만 조립
-│       └── docs/                # 앱 문서 — README · status · plan · history · testing
+│   ├── commute/                 # 둘째 앱 통근 시간 — Supabase 없음. core · design_system · l10n · feature_commute 만 조립
+│   │   └── docs/                # 앱 문서 — README · status · plan · history · testing
+│   └── pawlog/                  # 셋째 앱 강아지 산책 — 기획 단계. v1 은 Supabase 없음(drift 로컬 DB), feature_walk 만 조립 예정
+│       └── docs/                # 앱 문서 — README · status · overview(★ 기획) · features/<name>/{plan,history,testing}.md
 └── packages/
     ├── core/                    # error · result · pagination · validation · data 인프라 · media · di
     ├── design_system/           # theme + widget
@@ -44,14 +46,17 @@ socialapp/
     └── features/                # feature_<name> 패키지. lib/src/ 아래가 §2 의 3계층
         ├── auth/ post/ feed/ comment/ follow/ reaction/
         ├── profile/ chat/ safety/ settings/ preferences/ trade/
-        └── commute/             # 둘째 앱 전용. feature_* 를 참조하지 않는다
+        ├── commute/             # 둘째 앱 전용. feature_* 를 참조하지 않는다
+        └── walk/                # 셋째 앱 전용 (예정). 같은 경계 — feature_* · supabase_flutter · go_router 없음
 ```
 
 **앱과 백엔드를 형제 폴더로 분리한다.** 나중에 자체 백엔드로 전환할 때 `server/`가 하나 더 생기면 되고, 그때 앱 코드는 손대지 않는다.
 
-**앱은 둘이다.** `apps/trader` 가 feature 12개를 조립하는 본 앱이고, `apps/commute` 는
+**앱은 셋이다.** `apps/trader` 가 feature 12개를 조립하는 본 앱이고, `apps/commute` 는
 기반 패키지 셋(`core` · `design_system` · `l10n`)만으로 둘째 앱이 서는지 시험하는
-앱이다([계획](../apps/commute/docs/plan.md)). 두 앱은 `pubspec.yaml` 의 `workspace:` 로
+앱이다([계획](../apps/commute/docs/plan.md)). `apps/pawlog` 는 거기에 로컬 DB(drift) 와
+지도를 더해도 같은 경계가 유지되는지 보는 셋째 앱으로, 아직 기획 단계다
+([기획서](../apps/pawlog/docs/overview.md)). 앱들은 `pubspec.yaml` 의 `workspace:` 로
 패키지를 이름으로 resolve 하고, 실제 의존 관계는 [의존 그래프](dependencies.md)에 있다.
 
 `packages/features/commute` 는 **`Routes` 대신 콜백을 받는다** — 페이지가
