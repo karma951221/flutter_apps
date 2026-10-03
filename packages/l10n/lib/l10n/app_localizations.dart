@@ -2930,6 +2930,12 @@ abstract class AppLocalizations {
   /// **'사진 추가'**
   String get walkAddPhoto;
 
+  /// 사진 띠 썸네일의 빼기 버튼 스크린 리더 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 삭제'**
+  String get walkRemovePhoto;
+
   /// 사진 추가 시트의 앨범 선택 항목
   ///
   /// In ko, this message translates to:

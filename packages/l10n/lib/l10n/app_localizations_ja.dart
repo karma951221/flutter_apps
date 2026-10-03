@@ -1484,6 +1484,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAddPhoto => '写真を追加';
 
   @override
+  String get walkRemovePhoto => '写真を削除';
+
+  @override
   String get walkAddPhotoFromGallery => 'アルバムから選ぶ';
 
   @override

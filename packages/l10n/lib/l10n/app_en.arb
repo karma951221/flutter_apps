@@ -471,6 +471,7 @@
   "walkMemoHint": "How was today's walk?",
   "walkPhotosLabel": "Photos",
   "walkAddPhoto": "Add photo",
+  "walkRemovePhoto": "Remove photo",
   "walkAddPhotoFromGallery": "Choose from gallery",
   "walkAddPhotoFromCamera": "Take a photo",
   "walkPhotoLimitReached": "You can attach up to 10 photos",

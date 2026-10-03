@@ -1575,6 +1575,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkAddPhoto => 'Add photo';
 
   @override
+  String get walkRemovePhoto => 'Remove photo';
+
+  @override
   String get walkAddPhotoFromGallery => 'Choose from gallery';
 
   @override

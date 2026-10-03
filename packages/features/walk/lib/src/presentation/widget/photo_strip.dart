@@ -28,6 +28,9 @@ class PhotoStrip extends StatelessWidget {
 
   static const _tileSize = AppSpacing.xl * 3;
 
+  /// 빼기 버튼 배경 scrim 의 불투명도 — 색 토큰에 반투명 값이 없다.
+  static const _scrimAlpha = 0.6;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -90,6 +93,7 @@ class _Thumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final dpr = MediaQuery.devicePixelRatioOf(context);
     return SizedBox.square(
       dimension: PhotoStrip._tileSize,
       child: Stack(
@@ -101,7 +105,7 @@ class _Thumbnail extends StatelessWidget {
               file,
               key: imageKey,
               fit: BoxFit.cover,
-              cacheWidth: PhotoStrip._tileSize.round() * 2,
+              cacheWidth: (PhotoStrip._tileSize * dpr).round(),
               errorBuilder: (_, _, _) => ColoredBox(
                 color: scheme.surfaceContainerHighest,
                 child: Icon(
@@ -114,16 +118,27 @@ class _Thumbnail extends StatelessWidget {
           Positioned(
             top: AppSpacing.xs,
             right: AppSpacing.xs,
-            child: InkResponse(
-              key: removeKey,
-              onTap: onRemove,
-              child: CircleAvatar(
-                radius: AppSpacing.md - AppSpacing.xs,
-                backgroundColor: scheme.scrim.withValues(alpha: 0.6),
-                child: Icon(
-                  Icons.close,
-                  size: AppSpacing.md,
-                  color: scheme.surface,
+            child: Semantics(
+              button: true,
+              enabled: onRemove != null,
+              label: AppLocalizations.of(context).walkRemovePhoto,
+              excludeSemantics: true,
+              child: Tooltip(
+                message: AppLocalizations.of(context).walkRemovePhoto,
+                child: InkResponse(
+                  key: removeKey,
+                  onTap: onRemove,
+                  child: CircleAvatar(
+                    radius: AppSpacing.md - AppSpacing.xs,
+                    backgroundColor: scheme.scrim.withValues(
+                      alpha: PhotoStrip._scrimAlpha,
+                    ),
+                    child: Icon(
+                      Icons.close,
+                      size: AppSpacing.md,
+                      color: scheme.surface,
+                    ),
+                  ),
                 ),
               ),
             ),

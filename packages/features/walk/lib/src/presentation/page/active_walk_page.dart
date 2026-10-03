@@ -153,6 +153,7 @@ class _ActiveWalkView extends StatelessWidget {
                       ? l10n.walkLocationDeniedHint
                       : null,
                   actionLabel: l10n.commonRetry,
+                  actionKey: const Key('walk-active-retry'),
                   onAction: cubit.retry,
                 ),
               ),

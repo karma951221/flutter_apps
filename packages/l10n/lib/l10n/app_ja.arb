@@ -471,6 +471,7 @@
   "walkMemoHint": "今日の散歩はどうでしたか？",
   "walkPhotosLabel": "写真",
   "walkAddPhoto": "写真を追加",
+  "walkRemovePhoto": "写真を削除",
   "walkAddPhotoFromGallery": "アルバムから選ぶ",
   "walkAddPhotoFromCamera": "カメラで撮る",
   "walkPhotoLimitReached": "写真は最大10枚まで添付できます",

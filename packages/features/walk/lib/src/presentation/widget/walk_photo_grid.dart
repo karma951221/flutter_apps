@@ -16,11 +16,18 @@ class WalkPhotoGrid extends StatelessWidget {
   final List<WalkPhoto> photos;
   final File Function(String relativePath) photoFile;
 
+  static const _columns = 3;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    // 한 칸의 논리 너비 — 화면 너비를 열 수로 나눈 값에서 간격을 뺀다.
+    final cell =
+        (MediaQuery.sizeOf(context).width - AppSpacing.xs * (_columns - 1)) /
+        _columns;
     return GridView.count(
-      crossAxisCount: 3,
+      crossAxisCount: _columns,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: AppSpacing.xs,
@@ -33,7 +40,7 @@ class WalkPhotoGrid extends StatelessWidget {
               photoFile(photo.path),
               key: Key('walk-detail-photo-$index'),
               fit: BoxFit.cover,
-              cacheWidth: 400,
+              cacheWidth: (cell * dpr).round(),
               errorBuilder: (_, _, _) => ColoredBox(
                 color: scheme.surfaceContainerHighest,
                 child: Icon(

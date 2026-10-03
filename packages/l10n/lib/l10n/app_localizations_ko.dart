@@ -1485,6 +1485,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAddPhoto => '사진 추가';
 
   @override
+  String get walkRemovePhoto => '사진 삭제';
+
+  @override
   String get walkAddPhotoFromGallery => '앨범에서 고르기';
 
   @override

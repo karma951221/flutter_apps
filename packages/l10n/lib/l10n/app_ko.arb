@@ -2042,6 +2042,10 @@
   "@walkAddPhoto": {
     "description": "사진 띠 끝의 추가 칸 라벨"
   },
+  "walkRemovePhoto": "사진 삭제",
+  "@walkRemovePhoto": {
+    "description": "사진 띠 썸네일의 빼기 버튼 스크린 리더 라벨"
+  },
   "walkAddPhotoFromGallery": "앨범에서 고르기",
   "@walkAddPhotoFromGallery": {
     "description": "사진 추가 시트의 앨범 선택 항목"

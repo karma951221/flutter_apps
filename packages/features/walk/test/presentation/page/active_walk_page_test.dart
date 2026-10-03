@@ -210,7 +210,7 @@ void main() {
     expect(find.byKey(const Key('walk-active-failure')), findsOneWidget);
     expect(find.text('설정에서 위치 권한을 허용한 뒤 다시 시도해 주세요'), findsOneWidget);
 
-    await tester.tap(find.text('다시 시도'));
+    await tester.tap(find.byKey(const Key('walk-active-retry')));
     await tester.pumpAndSettle();
 
     verify(

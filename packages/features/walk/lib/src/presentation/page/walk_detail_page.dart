@@ -166,6 +166,7 @@ class _Content extends StatelessWidget {
   final Walk walk;
   final List<WalkTrackPoint> track;
 
+  /// 상세 지도 높이 — 간격 토큰에 이 크기가 없다.
   static const _mapHeight = AppSpacing.xl * 8;
 
   @override

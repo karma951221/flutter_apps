@@ -485,4 +485,44 @@ void main() {
 
     verify(() => useCase.removePhoto('late.jpg')).called(1);
   });
+
+  group('저장 중에 닫힘', () {
+    Completer<Result<Walk>> stubSaving() {
+      stubStore(['n1.jpg']);
+      final saving = Completer<Result<Walk>>();
+      when(() => useCase.saveWalk(any())).thenAnswer((_) => saving.future);
+      return saving;
+    }
+
+    test('닫힌 뒤 저장이 실패하면 새 사진을 지운다', () async {
+      final saving = stubSaving();
+      final cubit = WalkEditCubit(useCase);
+      await cubit.loadNew();
+      await cubit.addPhotos([_image()]);
+      final save = cubit.save();
+      await cubit.close();
+      verifyNever(() => useCase.removePhoto(any()));
+
+      saving.complete(
+        const Err(Failure.validation(failureCode: FailureCode.walkDogRequired)),
+      );
+      await save;
+
+      verify(() => useCase.removePhoto('n1.jpg')).called(1);
+    });
+
+    test('닫힌 뒤 저장이 성공하면 사진은 산책 것이라 지우지 않는다', () async {
+      final saving = stubSaving();
+      final cubit = WalkEditCubit(useCase);
+      await cubit.loadNew();
+      await cubit.addPhotos([_image()]);
+      final save = cubit.save();
+      await cubit.close();
+
+      saving.complete(Ok(walk()));
+      await save;
+
+      verifyNever(() => useCase.removePhoto(any()));
+    });
+  });
 }

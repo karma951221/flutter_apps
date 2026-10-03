@@ -158,7 +158,15 @@ class WalkEditCubit extends Cubit<WalkEditState> {
     final result = form.isNew
         ? await _useCase.saveWalk(form.toDraft())
         : await _useCase.updateWalk(form.toUpdate());
-    if (isClosed) return;
+    if (isClosed) {
+      // 저장 중에 닫혔다. 성공이면 파일은 산책 것이니 두고, 실패면 고아가 되니 지운다.
+      if (result is Err) {
+        for (final path in form.addedPhotoPaths) {
+          await _useCase.removePhoto(path);
+        }
+      }
+      return;
+    }
 
     switch (result) {
       case Ok(value: final walk):
@@ -186,7 +194,7 @@ class WalkEditCubit extends Cubit<WalkEditState> {
 
   /// 저장 · 버리기 없이 닫히면 이번 폼에서 쓴 사진을 지운다. 신규 모드라도
   /// `tracker.clear()` 는 하지 않는다 — 세션은 피드 배너로 다시 온다.
-  /// 저장이 진행 중에 닫히면 결과를 알 수 없어 지우지 않는다(고아 파일은 감수).
+  /// 저장이 진행 중에 닫히면 결과를 알 수 없어 여기서는 지우지 않고, `save()` 가 실패로 끝났을 때 지운다.
   @override
   Future<void> close() async {
     final form = _form;
