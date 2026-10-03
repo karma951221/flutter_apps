@@ -177,7 +177,7 @@ class GeolocatorWalkTracker implements WalkTracker {
     final state = _state;
     if (state is! TrackerTracking) {
       return const Err(
-        Failure.validation(failureCode: FailureCode.walkNotFound),
+        Failure.notFound(failureCode: FailureCode.walkNotFound),
       );
     }
     await _sub?.cancel();

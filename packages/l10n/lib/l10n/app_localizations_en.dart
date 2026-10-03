@@ -1555,4 +1555,69 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkLocating => 'Finding your location…';
+
+  @override
+  String get walkEditNewTitle => 'Save walk';
+
+  @override
+  String get walkEditTitle => 'Edit walk';
+
+  @override
+  String get walkMemoLabel => 'Note';
+
+  @override
+  String get walkMemoHint => 'How was today\'s walk?';
+
+  @override
+  String get walkPhotosLabel => 'Photos';
+
+  @override
+  String get walkAddPhoto => 'Add photo';
+
+  @override
+  String get walkAddPhotoFromGallery => 'Choose from gallery';
+
+  @override
+  String get walkAddPhotoFromCamera => 'Take a photo';
+
+  @override
+  String get walkPhotoLimitReached => 'You can attach up to 10 photos';
+
+  @override
+  String get walkDiscard => 'Discard';
+
+  @override
+  String get walkDiscardConfirmTitle => 'Discard this walk?';
+
+  @override
+  String get walkDiscardConfirmMessage =>
+      'The route and attached photos will be deleted.';
+
+  @override
+  String get walkNoSessionToSave => 'There is no walk to save';
+
+  @override
+  String get walkBackToFeed => 'Back to feed';
+
+  @override
+  String get walkDetailTitle => 'Walk';
+
+  @override
+  String get walkEdit => 'Edit';
+
+  @override
+  String get walkDeleteConfirmTitle => 'Delete this walk?';
+
+  @override
+  String get walkDeleteConfirmMessage =>
+      'The route and photos will be deleted too.';
+
+  @override
+  String get walkNoTrack => 'No route was recorded';
+
+  @override
+  String get walkDogsLabel => 'Walked with';
+
+  @override
+  String get walkDateLabel => 'Date';
 }

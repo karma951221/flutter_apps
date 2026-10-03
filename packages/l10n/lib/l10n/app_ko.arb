@@ -2017,5 +2017,89 @@
   "walkLocating": "위치를 찾는 중…",
   "@walkLocating": {
     "description": "추적은 시작했지만 아직 GPS 점이 없을 때 지도 자리에 보이는 문구"
+  },
+  "walkEditNewTitle": "산책 저장",
+  "@walkEditNewTitle": {
+    "description": "산책 저장 화면(방금 끝낸 산책) 앱 바 제목"
+  },
+  "walkEditTitle": "산책 수정",
+  "@walkEditTitle": {
+    "description": "저장된 산책을 고치는 화면 앱 바 제목"
+  },
+  "walkMemoLabel": "메모",
+  "@walkMemoLabel": {
+    "description": "산책 메모 입력란 라벨"
+  },
+  "walkMemoHint": "오늘 산책은 어땠나요?",
+  "@walkMemoHint": {
+    "description": "산책 메모 입력란 힌트"
+  },
+  "walkPhotosLabel": "사진",
+  "@walkPhotosLabel": {
+    "description": "산책 사진 절 제목"
+  },
+  "walkAddPhoto": "사진 추가",
+  "@walkAddPhoto": {
+    "description": "사진 띠 끝의 추가 칸 라벨"
+  },
+  "walkAddPhotoFromGallery": "앨범에서 고르기",
+  "@walkAddPhotoFromGallery": {
+    "description": "사진 추가 시트의 앨범 선택 항목"
+  },
+  "walkAddPhotoFromCamera": "카메라로 찍기",
+  "@walkAddPhotoFromCamera": {
+    "description": "사진 추가 시트의 카메라 촬영 항목"
+  },
+  "walkPhotoLimitReached": "사진은 최대 10장까지 붙일 수 있어요",
+  "@walkPhotoLimitReached": {
+    "description": "사진이 최대 장수에 닿았을 때 추가 칸 대신 보이는 안내"
+  },
+  "walkDiscard": "버리기",
+  "@walkDiscard": {
+    "description": "방금 끝낸 산책을 저장하지 않고 버리는 버튼과 확인 버튼 라벨"
+  },
+  "walkDiscardConfirmTitle": "이 산책을 버릴까요?",
+  "@walkDiscardConfirmTitle": {
+    "description": "산책 버리기 확인 다이얼로그 제목"
+  },
+  "walkDiscardConfirmMessage": "경로와 붙인 사진이 모두 지워집니다.",
+  "@walkDiscardConfirmMessage": {
+    "description": "산책 버리기 확인 다이얼로그 본문"
+  },
+  "walkNoSessionToSave": "저장할 산책이 없습니다",
+  "@walkNoSessionToSave": {
+    "description": "저장 화면에 들어왔지만 끝난 산책 세션이 없을 때 안내"
+  },
+  "walkBackToFeed": "피드로 돌아가기",
+  "@walkBackToFeed": {
+    "description": "저장할 산책이 없을 때 피드로 가는 버튼 라벨"
+  },
+  "walkDetailTitle": "산책 기록",
+  "@walkDetailTitle": {
+    "description": "산책 상세 화면 앱 바 제목"
+  },
+  "walkEdit": "수정",
+  "@walkEdit": {
+    "description": "산책 상세 더보기 메뉴의 수정 항목"
+  },
+  "walkDeleteConfirmTitle": "산책 기록을 삭제할까요?",
+  "@walkDeleteConfirmTitle": {
+    "description": "산책 삭제 확인 다이얼로그 제목"
+  },
+  "walkDeleteConfirmMessage": "경로와 사진이 함께 삭제됩니다.",
+  "@walkDeleteConfirmMessage": {
+    "description": "산책 삭제 확인 다이얼로그 본문"
+  },
+  "walkNoTrack": "기록된 경로가 없습니다",
+  "@walkNoTrack": {
+    "description": "산책 상세에서 경로 점이 하나도 없을 때 지도 자리 문구"
+  },
+  "walkDogsLabel": "함께한 반려견",
+  "@walkDogsLabel": {
+    "description": "산책 상세의 반려견 절 제목"
+  },
+  "walkDateLabel": "날짜",
+  "@walkDateLabel": {
+    "description": "산책 날짜 라벨"
   }
 }

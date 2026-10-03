@@ -20,15 +20,16 @@ class DogEditPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (_) => getIt<DogEditCubit>()..load(dogId),
-    child: _DogEditView(onDone: onDone),
+    child: _DogEditView(isEdit: dogId != null, onDone: onDone),
   );
 }
 
 enum _DogMenuAction { delete }
 
 class _DogEditView extends StatefulWidget {
-  const _DogEditView({required this.onDone});
+  const _DogEditView({required this.isEdit, required this.onDone});
 
+  final bool isEdit;
   final VoidCallback onDone;
 
   @override
@@ -134,7 +135,7 @@ class _DogEditViewState extends State<_DogEditView> {
           _ => null,
         };
         if (form != null) _populate(form);
-        final isEdit = form?.id != null;
+        final isEdit = widget.isEdit;
         final isSaving = state is DogEditEditing && state.isSaving;
 
         return Scaffold(

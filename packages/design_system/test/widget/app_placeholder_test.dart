@@ -54,4 +54,18 @@ void main() {
     await tester.tap(find.text('다시 시도'));
     expect(tapped, 1);
   });
+
+  testWidgets('actionKey 가 버튼에 전달된다', (tester) async {
+    await pump(
+      tester,
+      AppPlaceholder(
+        message: '실패',
+        actionLabel: '다시 시도',
+        onAction: () {},
+        actionKey: const Key('retry'),
+      ),
+    );
+
+    expect(find.byKey(const Key('retry')), findsOneWidget);
+  });
 }

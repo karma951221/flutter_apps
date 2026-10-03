@@ -12,6 +12,7 @@ class DogChips extends StatelessWidget {
     required this.selectedIds,
     required this.onToggle,
     this.photoFile,
+    this.keyPrefix = 'walk-active-dog-chip',
     super.key,
   });
 
@@ -22,6 +23,9 @@ class DogChips extends StatelessWidget {
   /// 상대 경로의 사진을 파일로 푼다(`WalkUseCase.photoFile`).
   final File Function(String relativePath)? photoFile;
 
+  /// 칩 키는 `<keyPrefix>-<id>`. 화면마다 접두사를 달리한다.
+  final String keyPrefix;
+
   @override
   Widget build(BuildContext context) => Wrap(
     spacing: AppSpacing.sm,
@@ -29,7 +33,7 @@ class DogChips extends StatelessWidget {
     children: [
       for (final dog in dogs)
         FilterChip(
-          key: Key('walk-active-dog-chip-${dog.id}'),
+          key: Key('$keyPrefix-${dog.id}'),
           avatar: AppAvatar(
             nickname: dog.name,
             radius: AppSpacing.md,

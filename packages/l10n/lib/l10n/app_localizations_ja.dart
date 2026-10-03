@@ -1464,4 +1464,67 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkLocating => '位置情報を探しています…';
+
+  @override
+  String get walkEditNewTitle => '散歩を保存';
+
+  @override
+  String get walkEditTitle => '散歩を編集';
+
+  @override
+  String get walkMemoLabel => 'メモ';
+
+  @override
+  String get walkMemoHint => '今日の散歩はどうでしたか？';
+
+  @override
+  String get walkPhotosLabel => '写真';
+
+  @override
+  String get walkAddPhoto => '写真を追加';
+
+  @override
+  String get walkAddPhotoFromGallery => 'アルバムから選ぶ';
+
+  @override
+  String get walkAddPhotoFromCamera => 'カメラで撮る';
+
+  @override
+  String get walkPhotoLimitReached => '写真は最大10枚まで添付できます';
+
+  @override
+  String get walkDiscard => '破棄';
+
+  @override
+  String get walkDiscardConfirmTitle => 'この散歩を破棄しますか？';
+
+  @override
+  String get walkDiscardConfirmMessage => 'ルートと添付した写真がすべて削除されます。';
+
+  @override
+  String get walkNoSessionToSave => '保存する散歩がありません';
+
+  @override
+  String get walkBackToFeed => 'フィードに戻る';
+
+  @override
+  String get walkDetailTitle => '散歩の記録';
+
+  @override
+  String get walkEdit => '編集';
+
+  @override
+  String get walkDeleteConfirmTitle => '散歩の記録を削除しますか？';
+
+  @override
+  String get walkDeleteConfirmMessage => 'ルートと写真も一緒に削除されます。';
+
+  @override
+  String get walkNoTrack => '記録されたルートがありません';
+
+  @override
+  String get walkDogsLabel => '一緒に歩いたわんちゃん';
+
+  @override
+  String get walkDateLabel => '日付';
 }

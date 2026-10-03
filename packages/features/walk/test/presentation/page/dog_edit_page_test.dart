@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
 import 'package:feature_walk/feature_walk.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:l10n/l10n.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -53,6 +57,26 @@ void main() {
 
     expect(find.text('반려견 이름을 입력해 주세요'), findsOneWidget);
     expect(done, 0);
+  });
+
+  testWidgets('기존 반려견을 불러오는 동안에도 수정 제목을 보인다', (tester) async {
+    final pending = Completer<Result<Dog?>>();
+    when(() => useCase.getDog('1')).thenAnswer((_) => pending.future);
+    // 스피너가 끝없이 돌아 pumpAndSettle 을 쓸 수 없다.
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: DogEditPage(dogId: '1', onDone: () {}),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('반려견 수정'), findsOneWidget);
+    expect(find.text('반려견 등록'), findsNothing);
   });
 
   group('수정', () {

@@ -20,6 +20,7 @@ class AppPlaceholder extends StatelessWidget {
     this.description,
     this.actionLabel,
     this.onAction,
+    this.actionKey,
     super.key,
   });
 
@@ -35,6 +36,9 @@ class AppPlaceholder extends StatelessWidget {
   /// 행동 버튼 라벨. [onAction] 과 함께 있어야 그린다.
   final String? actionLabel;
   final VoidCallback? onAction;
+
+  /// 행동 버튼을 가리키는 키. 테스트·화면이 재시도 버튼을 찾을 때 쓴다.
+  final Key? actionKey;
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +78,11 @@ class AppPlaceholder extends StatelessWidget {
           ],
           if (label != null && action != null) ...[
             const SizedBox(height: AppSpacing.lg),
-            AppButton.secondary(label: label, onPressed: action),
+            AppButton.secondary(
+              key: actionKey,
+              label: label,
+              onPressed: action,
+            ),
           ],
         ],
       ),

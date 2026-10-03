@@ -33,31 +33,53 @@ GoRouter createRouter({required bool hasDogs}) {
       GoRoute(
         path: PawlogPaths.activeWalk,
         builder: (context, _) => ActiveWalkPage(
-          onStopped: () => context.go(PawlogPaths.saveWalk),
+          // go 는 최상위 경로라 피드가 스택에서 사라져 뒤로 가기가 앱을 닫는다.
+          // 진행 화면만 저장 폼으로 바꿔 끼운다 (⑤ 리뷰 V1).
+          onStopped: () => context.pushReplacement(PawlogPaths.saveWalk),
           onOpenDogs: () => context.push(PawlogPaths.dogs),
         ),
       ),
       GoRoute(
         path: PawlogPaths.saveWalk,
-        // TODO(phase ④~⑦): 산책 저장 페이지로 교체한다 (onDone).
-        builder: (context, _) => const _Placeholder(title: 'save walk'),
+        builder: (context, _) => WalkEditPage(
+          // 스택이 피드 → 상세가 되도록 먼저 피드로 간 뒤 상세를 올린다.
+          onSaved: (id) {
+            context.go(PawlogPaths.feed);
+            context.push(PawlogPaths.walk(id));
+          },
+          onDiscarded: () => context.go(PawlogPaths.feed),
+        ),
       ),
       GoRoute(
         path: PawlogPaths.walks,
-        // TODO(phase ④~⑦): 산책 목록 페이지로 교체한다 (onOpenWalk(id)).
-        builder: (context, _) => const _Placeholder(title: 'walks'),
+        // 산책 목록은 피드와 겹친다. 하위 `:id` 는 이 redirect 를 받지 않게 목록 경로만 돌린다.
+        redirect: (_, state) => state.matchedLocation == PawlogPaths.walks
+            ? PawlogPaths.feed
+            : null,
         routes: [
           GoRoute(
             path: ':id',
-            // TODO(phase ④~⑦): 산책 상세 페이지로 교체한다.
-            builder: (context, state) =>
-                _Placeholder(title: 'walk ${state.pathParameters['id']}'),
+            builder: (context, state) => WalkDetailPage(
+              walkId: state.pathParameters['id']!,
+              // 수정에서 돌아오면 상세가 스스로 다시 읽는다.
+              onEdit: (id) async {
+                await context.push(PawlogPaths.walkEdit(id));
+              },
+              onDeleted: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go(PawlogPaths.feed);
+                }
+              },
+            ),
             routes: [
               GoRoute(
                 path: 'edit',
-                // TODO(phase ④~⑦): 산책 수정 페이지로 교체한다.
-                builder: (context, state) => _Placeholder(
-                  title: 'edit walk ${state.pathParameters['id']}',
+                builder: (context, state) => WalkEditPage(
+                  walkId: state.pathParameters['id'],
+                  onSaved: (_) => context.pop(),
+                  onDiscarded: () => context.pop(),
                 ),
               ),
             ],

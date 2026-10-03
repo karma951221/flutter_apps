@@ -46,16 +46,8 @@ class DogEditCubit extends Cubit<DogEditState> {
 
   void setBreed(String breed) => _update((form) => form.copyWith(breed: breed));
 
-  void setBirthday(DateTime? birthday) => _update(
-    (form) => DogForm(
-      id: form.id,
-      name: form.name,
-      breed: form.breed,
-      birthday: birthday,
-      photoPath: form.photoPath,
-      originalPhotoPath: form.originalPhotoPath,
-    ),
-  );
+  void setBirthday(DateTime? birthday) =>
+      _update((form) => form.copyWith(birthday: birthday));
 
   /// 고르는 즉시 파일을 쓴다. 직전에 고른 새 파일은 지운다.
   Future<void> setPhoto(PreparedImage image) async {
@@ -66,7 +58,8 @@ class DogEditCubit extends Cubit<DogEditState> {
       bytes: image.bytes,
       extension: image.extension,
     );
-    if (isClosed) {
+    // 저장·삭제·종료가 먼저 끝났으면 늦게 도착한 파일은 쓸 곳이 없다.
+    if (_cannotAcceptPhoto) {
       if (result case Ok(value: final path)) {
         await _useCase.removePhoto(path);
       }
@@ -75,15 +68,15 @@ class DogEditCubit extends Cubit<DogEditState> {
 
     switch (result) {
       case Ok(value: final path):
-        final form = _form!;
-        final previous = form.photoPath;
-        if (previous != null && previous != form.originalPhotoPath) {
+        final previous = _form!.photoPath;
+        if (previous != null && previous != _form!.originalPhotoPath) {
           await _useCase.removePhoto(previous);
-          if (isClosed) {
+          if (_cannotAcceptPhoto) {
             await _useCase.removePhoto(path);
             return;
           }
         }
+        final form = _form!;
         _emitEditing(_withPhoto(form, path));
       case Err(:final failure):
         emit(DogEditState.editing(form: _form!, failure: failure));
@@ -149,12 +142,12 @@ class DogEditCubit extends Cubit<DogEditState> {
     emit(DogEditState.editing(form: form));
   }
 
-  DogForm _withPhoto(DogForm form, String path) => DogForm(
-    id: form.id,
-    name: form.name,
-    breed: form.breed,
-    birthday: form.birthday,
-    photoPath: path,
-    originalPhotoPath: form.originalPhotoPath,
-  );
+  DogForm _withPhoto(DogForm form, String path) =>
+      form.copyWith(photoPath: path);
+
+  /// 저장·삭제·종료로 더는 사진을 받을 수 없는 상태인지.
+  bool get _cannotAcceptPhoto {
+    final current = state;
+    return isClosed || current is! DogEditEditing || current.isSaving;
+  }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:bloc_test/bloc_test.dart';
@@ -193,5 +194,28 @@ void main() {
     await cubit.close();
 
     verifyNever(() => useCase.removePhoto(any()));
+  });
+
+  test('저장 중에 늦게 도착한 사진은 파일을 지우고 상태를 바꾸지 않는다', () async {
+    final store = Completer<Result<String>>();
+    when(
+      () => useCase.storePhoto(
+        bytes: any(named: 'bytes'),
+        extension: any(named: 'extension'),
+      ),
+    ).thenAnswer((_) => store.future);
+    when(() => useCase.saveDog(any())).thenAnswer((_) async => Ok(dog('1')));
+    final cubit = DogEditCubit(useCase);
+    addTearDown(cubit.close);
+    await cubit.load(null);
+    cubit.setName('콩이');
+
+    final photo = cubit.setPhoto(_image());
+    await cubit.save();
+    store.complete(const Ok('late.jpg'));
+    await photo;
+
+    verify(() => useCase.removePhoto('late.jpg')).called(1);
+    expect(cubit.state, isA<DogEditSaved>());
   });
 }

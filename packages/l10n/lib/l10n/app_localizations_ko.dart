@@ -1465,4 +1465,67 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkLocating => '위치를 찾는 중…';
+
+  @override
+  String get walkEditNewTitle => '산책 저장';
+
+  @override
+  String get walkEditTitle => '산책 수정';
+
+  @override
+  String get walkMemoLabel => '메모';
+
+  @override
+  String get walkMemoHint => '오늘 산책은 어땠나요?';
+
+  @override
+  String get walkPhotosLabel => '사진';
+
+  @override
+  String get walkAddPhoto => '사진 추가';
+
+  @override
+  String get walkAddPhotoFromGallery => '앨범에서 고르기';
+
+  @override
+  String get walkAddPhotoFromCamera => '카메라로 찍기';
+
+  @override
+  String get walkPhotoLimitReached => '사진은 최대 10장까지 붙일 수 있어요';
+
+  @override
+  String get walkDiscard => '버리기';
+
+  @override
+  String get walkDiscardConfirmTitle => '이 산책을 버릴까요?';
+
+  @override
+  String get walkDiscardConfirmMessage => '경로와 붙인 사진이 모두 지워집니다.';
+
+  @override
+  String get walkNoSessionToSave => '저장할 산책이 없습니다';
+
+  @override
+  String get walkBackToFeed => '피드로 돌아가기';
+
+  @override
+  String get walkDetailTitle => '산책 기록';
+
+  @override
+  String get walkEdit => '수정';
+
+  @override
+  String get walkDeleteConfirmTitle => '산책 기록을 삭제할까요?';
+
+  @override
+  String get walkDeleteConfirmMessage => '경로와 사진이 함께 삭제됩니다.';
+
+  @override
+  String get walkNoTrack => '기록된 경로가 없습니다';
+
+  @override
+  String get walkDogsLabel => '함께한 반려견';
+
+  @override
+  String get walkDateLabel => '날짜';
 }

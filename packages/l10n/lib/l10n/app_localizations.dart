@@ -2893,6 +2893,132 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'위치를 찾는 중…'**
   String get walkLocating;
+
+  /// 산책 저장 화면(방금 끝낸 산책) 앱 바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 저장'**
+  String get walkEditNewTitle;
+
+  /// 저장된 산책을 고치는 화면 앱 바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 수정'**
+  String get walkEditTitle;
+
+  /// 산책 메모 입력란 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'메모'**
+  String get walkMemoLabel;
+
+  /// 산책 메모 입력란 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 산책은 어땠나요?'**
+  String get walkMemoHint;
+
+  /// 산책 사진 절 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'사진'**
+  String get walkPhotosLabel;
+
+  /// 사진 띠 끝의 추가 칸 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 추가'**
+  String get walkAddPhoto;
+
+  /// 사진 추가 시트의 앨범 선택 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'앨범에서 고르기'**
+  String get walkAddPhotoFromGallery;
+
+  /// 사진 추가 시트의 카메라 촬영 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'카메라로 찍기'**
+  String get walkAddPhotoFromCamera;
+
+  /// 사진이 최대 장수에 닿았을 때 추가 칸 대신 보이는 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'사진은 최대 10장까지 붙일 수 있어요'**
+  String get walkPhotoLimitReached;
+
+  /// 방금 끝낸 산책을 저장하지 않고 버리는 버튼과 확인 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'버리기'**
+  String get walkDiscard;
+
+  /// 산책 버리기 확인 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'이 산책을 버릴까요?'**
+  String get walkDiscardConfirmTitle;
+
+  /// 산책 버리기 확인 다이얼로그 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'경로와 붙인 사진이 모두 지워집니다.'**
+  String get walkDiscardConfirmMessage;
+
+  /// 저장 화면에 들어왔지만 끝난 산책 세션이 없을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'저장할 산책이 없습니다'**
+  String get walkNoSessionToSave;
+
+  /// 저장할 산책이 없을 때 피드로 가는 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'피드로 돌아가기'**
+  String get walkBackToFeed;
+
+  /// 산책 상세 화면 앱 바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 기록'**
+  String get walkDetailTitle;
+
+  /// 산책 상세 더보기 메뉴의 수정 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'수정'**
+  String get walkEdit;
+
+  /// 산책 삭제 확인 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 기록을 삭제할까요?'**
+  String get walkDeleteConfirmTitle;
+
+  /// 산책 삭제 확인 다이얼로그 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'경로와 사진이 함께 삭제됩니다.'**
+  String get walkDeleteConfirmMessage;
+
+  /// 산책 상세에서 경로 점이 하나도 없을 때 지도 자리 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'기록된 경로가 없습니다'**
+  String get walkNoTrack;
+
+  /// 산책 상세의 반려견 절 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'함께한 반려견'**
+  String get walkDogsLabel;
+
+  /// 산책 날짜 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'날짜'**
+  String get walkDateLabel;
 }
 
 class _AppLocalizationsDelegate
