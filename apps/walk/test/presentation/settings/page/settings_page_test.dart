@@ -15,6 +15,7 @@ import 'package:walk/domain/walk/usecase/walk_use_case.dart';
 import 'package:walk/presentation/settings/cubit/settings_permissions_cubit.dart';
 import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
 import 'package:walk/presentation/settings/page/settings_page.dart';
+import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
 
 class _MockRequester extends Mock implements PermissionRequester {}
 
@@ -32,6 +33,7 @@ void main() {
   late _MockSettings settings;
   late SettingsPermissionsCubit permissions;
   late ThemeCubit theme;
+  late StepGoalCubit goal;
 
   setUpAll(() => registerFallbackValue(const AppSettings()));
   setUp(() {
@@ -59,10 +61,12 @@ void main() {
       walk,
     );
     theme = ThemeCubit(settings);
+    goal = StepGoalCubit(settings);
   });
   tearDown(() async {
     await permissions.close();
     await theme.close();
+    await goal.close();
     await getIt.reset();
   });
 
@@ -75,12 +79,15 @@ void main() {
         providers: [
           BlocProvider.value(value: permissions),
           BlocProvider.value(value: theme),
+          BlocProvider.value(value: goal),
         ],
         child: BlocBuilder<ThemeCubit, AppThemeMode>(
           builder: (context, mode) => MaterialApp(
             theme: AppTheme.light(),
             darkTheme: AppTheme.dark(),
-            themeMode: mode == AppThemeMode.dark ? ThemeMode.dark : ThemeMode.light,
+            themeMode: mode == AppThemeMode.dark
+                ? ThemeMode.dark
+                : ThemeMode.light,
             locale: const Locale('ko'),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
@@ -111,14 +118,22 @@ void main() {
 
   testWidgets('테마를 고르면 즉시 반영하고 저장한다', (tester) async {
     await pump(tester);
-    expect(Theme.of(tester.element(find.byType(SettingsPage))).brightness, Brightness.light);
+    expect(
+      Theme.of(tester.element(find.byType(SettingsPage))).brightness,
+      Brightness.light,
+    );
 
     await tester.tap(find.text('다크'));
     await tester.pumpAndSettle();
 
     expect(theme.state, AppThemeMode.dark);
-    verify(() => settings.save(const AppSettings(themeMode: AppThemeMode.dark))).called(1);
-    expect(Theme.of(tester.element(find.byType(SettingsPage))).brightness, Brightness.dark);
+    verify(
+      () => settings.save(const AppSettings(themeMode: AppThemeMode.dark)),
+    ).called(1);
+    expect(
+      Theme.of(tester.element(find.byType(SettingsPage))).brightness,
+      Brightness.dark,
+    );
   });
 
   testWidgets('확인 중(null)이면 상태 문구를 비운다', (tester) async {
@@ -133,7 +148,9 @@ void main() {
   testWidgets('알림 행: 아직 물을 수 있으면(denied) 다시 묻고 상태를 다시 읽는다', (tester) async {
     when(notification.check).thenAnswer((_) async => PermissionStatus.denied);
     when(notification.requestAgain).thenAnswer((_) async {
-      when(notification.check).thenAnswer((_) async => PermissionStatus.granted);
+      when(
+        notification.check,
+      ).thenAnswer((_) async => PermissionStatus.granted);
       return PermissionStatus.granted;
     });
     await pump(tester);
@@ -186,5 +203,49 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(LicensePage), findsOneWidget);
+  });
+
+  testWidgets('걷기 섹션의 하루 목표 행이 현재 목표를 보여준다', (tester) async {
+    await pump(tester);
+
+    expect(find.text('걷기'), findsOneWidget);
+    expect(find.text('하루 목표'), findsOneWidget);
+    expect(find.text('10,000 걸음'), findsOneWidget);
+  });
+
+  testWidgets('슬라이더를 옮기고 저장하면 cubit 과 행이 바뀐다', (tester) async {
+    await pump(tester);
+
+    await tester.tap(find.byKey(const Key('settings-step-goal')));
+    await tester.pumpAndSettle();
+    final slider = tester.widget<Slider>(
+      find.byKey(const Key('step-goal-slider')),
+    );
+    slider.onChanged!(8000);
+    await tester.pump();
+    expect(find.text('8,000 걸음'), findsWidgets);
+
+    await tester.tap(find.byKey(const Key('step-goal-save')));
+    await tester.pumpAndSettle();
+
+    expect(goal.state, 8000);
+    expect(find.byKey(const Key('step-goal-slider')), findsNothing);
+    expect(find.text('8,000 걸음'), findsOneWidget);
+  });
+
+  testWidgets('저장하지 않고 닫으면 그대로다', (tester) async {
+    await pump(tester);
+
+    await tester.tap(find.byKey(const Key('settings-step-goal')));
+    await tester.pumpAndSettle();
+    tester.widget<Slider>(find.byKey(const Key('step-goal-slider'))).onChanged!(
+      8000,
+    );
+    await tester.pump();
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    expect(goal.state, 10000);
+    expect(find.text('10,000 걸음'), findsOneWidget);
   });
 }

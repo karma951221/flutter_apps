@@ -21,6 +21,7 @@ import 'package:walk/presentation/alarm/page/alarm_list_page.dart';
 import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
 import 'package:walk/presentation/settings/page/settings_page.dart';
 import 'package:walk/presentation/shell/page/main_shell_page.dart';
+import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
 import 'package:walk/presentation/walk/page/walk_home_page.dart';
 
 class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
@@ -75,9 +76,14 @@ void main() {
     when(settings.load).thenReturn(const AppSettings());
     final theme = ThemeCubit(settings);
     addTearDown(theme.close);
+    final goal = StepGoalCubit(settings);
+    addTearDown(goal.close);
     await tester.pumpWidget(
-      BlocProvider.value(
-        value: theme,
+      MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: theme),
+          BlocProvider.value(value: goal),
+        ],
         child: MaterialApp(
           theme: AppTheme.light(),
           locale: const Locale('ko'),
@@ -133,7 +139,9 @@ void main() {
 
   testWidgets('위에 얹힌 울림 화면이 걷히면 예약을 동기화한 뒤 목록을 다시 읽는다', (tester) async {
     await pump(tester);
-    final navigator = tester.state<NavigatorState>(find.byType(Navigator).first);
+    final navigator = tester.state<NavigatorState>(
+      find.byType(Navigator).first,
+    );
     unawaited(
       navigator.push(
         MaterialPageRoute<void>(builder: (_) => const Text('ringing')),
@@ -224,7 +232,9 @@ void main() {
     return reply.future;
   }
 
-  testWidgets('네이티브가 resync 를 부르면 예약을 새 시간대로 다시 건 뒤 목록을 다시 읽고 응답한다', (tester) async {
+  testWidgets('네이티브가 resync 를 부르면 예약을 새 시간대로 다시 건 뒤 목록을 다시 읽고 응답한다', (
+    tester,
+  ) async {
     await pump(tester);
     clearInteractions(alarms);
 

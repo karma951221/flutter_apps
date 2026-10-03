@@ -8,6 +8,9 @@ import 'package:permission/permission.dart';
 import '../../../domain/app_info/app_info_source.dart';
 import '../../../domain/settings/entity/app_settings.dart';
 import '../../../domain/walk/entity/health_access.dart';
+import '../../walk/cubit/step_goal_cubit.dart';
+import '../../walk/format/walk_format.dart';
+import '../widget/step_goal_sheet.dart';
 import '../cubit/app_info_cubit.dart';
 import '../cubit/settings_permissions_cubit.dart';
 import '../cubit/settings_permissions_state.dart';
@@ -40,6 +43,27 @@ class _SettingsPageState extends State<SettingsPage> {
       appBar: AppBar(title: Text(l10n.walkSettingsTitle)),
       body: ListView(
         children: [
+          _SectionHeader(l10n.walkSettingsWalk),
+          BlocBuilder<StepGoalCubit, int>(
+            builder: (context, goal) => AppListTile(
+              key: const Key('settings-step-goal'),
+              leading: const Icon(Icons.flag_outlined),
+              title: Text(l10n.walkSettingsStepGoal),
+              trailing: Text(
+                l10n.walkStepsCount(
+                  WalkFormat.steps(
+                    Localizations.localeOf(context).toString(),
+                    goal,
+                  ),
+                ),
+              ),
+              onTap: () async {
+                final cubit = context.read<StepGoalCubit>();
+                final result = await StepGoalSheet.show(context, initial: goal);
+                if (result != null) await cubit.select(result);
+              },
+            ),
+          ),
           _SectionHeader(l10n.walkSettingsPermissions),
           BlocBuilder<SettingsPermissionsCubit, SettingsPermissionsState>(
             builder: (context, state) => Column(
@@ -86,7 +110,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     (AppThemeMode.light, l10n.walkSettingsThemeLight),
                     (AppThemeMode.dark, l10n.walkSettingsThemeDark),
                   ])
-                    RadioListTile<AppThemeMode>(value: value, title: Text(label)),
+                    RadioListTile<AppThemeMode>(
+                      value: value,
+                      title: Text(label),
+                    ),
                 ],
               ),
             ),
@@ -139,21 +166,26 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  static _Status? _statusLabel(AppLocalizations l10n, PermissionStatus? status) =>
-      switch (status) {
-        null => null,
-        PermissionStatus.granted => (l10n.walkSettingsGranted, false),
-        PermissionStatus.denied || PermissionStatus.permanentlyDenied => (
-          l10n.walkSettingsNeedsPermission,
-          true,
-        ),
-      };
+  static _Status? _statusLabel(
+    AppLocalizations l10n,
+    PermissionStatus? status,
+  ) => switch (status) {
+    null => null,
+    PermissionStatus.granted => (l10n.walkSettingsGranted, false),
+    PermissionStatus.denied || PermissionStatus.permanentlyDenied => (
+      l10n.walkSettingsNeedsPermission,
+      true,
+    ),
+  };
 
   static _Status? _healthLabel(AppLocalizations l10n, HealthAccess? access) =>
       switch (access) {
         null => null,
         HealthAccess.granted => (l10n.walkSettingsGranted, false),
-        HealthAccess.permissionDenied => (l10n.walkSettingsNeedsPermission, true),
+        HealthAccess.permissionDenied => (
+          l10n.walkSettingsNeedsPermission,
+          true,
+        ),
         HealthAccess.notInstalled => (l10n.walkSettingsNeedsInstall, true),
         HealthAccess.updateRequired => (l10n.walkSettingsNeedsUpdate, true),
       };
@@ -179,7 +211,9 @@ class _SectionHeader extends StatelessWidget {
       ),
       child: Text(
         title,
-        style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary),
+        style: theme.textTheme.labelLarge?.copyWith(
+          color: theme.colorScheme.primary,
+        ),
       ),
     );
   }
@@ -211,7 +245,9 @@ class _PermissionTile extends StatelessWidget {
           ? null
           : Text(
               status.$1,
-              style: TextStyle(color: status.$2 ? scheme.error : scheme.onSurfaceVariant),
+              style: TextStyle(
+                color: status.$2 ? scheme.error : scheme.onSurfaceVariant,
+              ),
             ),
       onTap: onTap,
     );
