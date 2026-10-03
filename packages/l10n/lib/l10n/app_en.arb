@@ -430,5 +430,20 @@
   "failureWalkNotFound": "Can't find this walk",
   "failureWalkPhotoSaveFailed": "Couldn't save the photo",
   "failureDogNameRequired": "Enter your dog's name",
-  "walkAppTitle": "pawlog"
+  "walkAppTitle": "pawlog",
+  "walkDogListTitle": "Dogs",
+  "walkDogListEmptyTitle": "No dogs yet",
+  "walkDogListEmptyMessage": "Add a dog to walk with",
+  "walkDogAddAction": "Add dog",
+  "walkDogNewTitle": "Add a dog",
+  "walkDogEditTitle": "Edit dog",
+  "walkDogNameLabel": "Name",
+  "walkDogBreedLabel": "Breed",
+  "walkDogBirthdayLabel": "Birthday",
+  "walkDogBirthdayUnset": "Not set",
+  "walkDogPhotoChange": "Change photo",
+  "walkDogSaveAction": "Save",
+  "walkDogDeleteAction": "Delete",
+  "walkDogDeleteConfirmTitle": "Delete this dog?",
+  "walkDogDeleteConfirmMessage": "Your walks stay, but this dog is removed from them."
 }

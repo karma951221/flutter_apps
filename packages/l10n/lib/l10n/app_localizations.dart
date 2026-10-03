@@ -2689,6 +2689,96 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'pawlog'**
   String get walkAppTitle;
+
+  /// 반려견 목록 화면 앱 바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견'**
+  String get walkDogListTitle;
+
+  /// 반려견이 한 마리도 없을 때 빈 상태 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'등록된 반려견이 없습니다'**
+  String get walkDogListEmptyTitle;
+
+  /// 반려견이 없을 때 등록을 권하는 안내 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'함께 산책할 반려견을 등록해 주세요'**
+  String get walkDogListEmptyMessage;
+
+  /// 반려견 등록 화면으로 가는 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견 추가'**
+  String get walkDogAddAction;
+
+  /// 반려견 등록 화면 앱 바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견 등록'**
+  String get walkDogNewTitle;
+
+  /// 반려견 수정 화면 앱 바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견 수정'**
+  String get walkDogEditTitle;
+
+  /// 반려견 이름 입력란 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'이름'**
+  String get walkDogNameLabel;
+
+  /// 반려견 품종 입력란 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'품종'**
+  String get walkDogBreedLabel;
+
+  /// 반려견 생일 행 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'생일'**
+  String get walkDogBirthdayLabel;
+
+  /// 반려견 생일을 아직 정하지 않았을 때 행에 보이는 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'설정 안 함'**
+  String get walkDogBirthdayUnset;
+
+  /// 반려견 사진을 고르는 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 변경'**
+  String get walkDogPhotoChange;
+
+  /// 반려견 폼 저장 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get walkDogSaveAction;
+
+  /// 반려견 수정 화면 더보기 메뉴의 삭제 항목 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제'**
+  String get walkDogDeleteAction;
+
+  /// 반려견 삭제 확인 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견을 삭제할까요?'**
+  String get walkDogDeleteConfirmTitle;
+
+  /// 반려견 삭제 확인 다이얼로그 본문. 산책 기록은 유지됨을 알린다
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 기록은 남고, 기록에서 이 반려견만 빠집니다.'**
+  String get walkDogDeleteConfirmMessage;
 }
 
 class _AppLocalizationsDelegate

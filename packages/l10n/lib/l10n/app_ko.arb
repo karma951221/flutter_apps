@@ -1858,5 +1858,65 @@
   "walkAppTitle": "pawlog",
   "@walkAppTitle": {
     "description": "pawlog 앱의 이름. 앱 바와 작업 전환 화면에 쓰인다"
+  },
+  "walkDogListTitle": "반려견",
+  "@walkDogListTitle": {
+    "description": "반려견 목록 화면 앱 바 제목"
+  },
+  "walkDogListEmptyTitle": "등록된 반려견이 없습니다",
+  "@walkDogListEmptyTitle": {
+    "description": "반려견이 한 마리도 없을 때 빈 상태 제목"
+  },
+  "walkDogListEmptyMessage": "함께 산책할 반려견을 등록해 주세요",
+  "@walkDogListEmptyMessage": {
+    "description": "반려견이 없을 때 등록을 권하는 안내 문구"
+  },
+  "walkDogAddAction": "반려견 추가",
+  "@walkDogAddAction": {
+    "description": "반려견 등록 화면으로 가는 버튼 라벨"
+  },
+  "walkDogNewTitle": "반려견 등록",
+  "@walkDogNewTitle": {
+    "description": "반려견 등록 화면 앱 바 제목"
+  },
+  "walkDogEditTitle": "반려견 수정",
+  "@walkDogEditTitle": {
+    "description": "반려견 수정 화면 앱 바 제목"
+  },
+  "walkDogNameLabel": "이름",
+  "@walkDogNameLabel": {
+    "description": "반려견 이름 입력란 라벨"
+  },
+  "walkDogBreedLabel": "품종",
+  "@walkDogBreedLabel": {
+    "description": "반려견 품종 입력란 라벨"
+  },
+  "walkDogBirthdayLabel": "생일",
+  "@walkDogBirthdayLabel": {
+    "description": "반려견 생일 행 라벨"
+  },
+  "walkDogBirthdayUnset": "설정 안 함",
+  "@walkDogBirthdayUnset": {
+    "description": "반려견 생일을 아직 정하지 않았을 때 행에 보이는 문구"
+  },
+  "walkDogPhotoChange": "사진 변경",
+  "@walkDogPhotoChange": {
+    "description": "반려견 사진을 고르는 버튼 라벨"
+  },
+  "walkDogSaveAction": "저장",
+  "@walkDogSaveAction": {
+    "description": "반려견 폼 저장 버튼 라벨"
+  },
+  "walkDogDeleteAction": "삭제",
+  "@walkDogDeleteAction": {
+    "description": "반려견 수정 화면 더보기 메뉴의 삭제 항목 라벨"
+  },
+  "walkDogDeleteConfirmTitle": "반려견을 삭제할까요?",
+  "@walkDogDeleteConfirmTitle": {
+    "description": "반려견 삭제 확인 다이얼로그 제목"
+  },
+  "walkDogDeleteConfirmMessage": "산책 기록은 남고, 기록에서 이 반려견만 빠집니다.",
+  "@walkDogDeleteConfirmMessage": {
+    "description": "반려견 삭제 확인 다이얼로그 본문. 산책 기록은 유지됨을 알린다"
   }
 }

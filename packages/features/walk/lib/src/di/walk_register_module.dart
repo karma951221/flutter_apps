@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:drift_flutter/drift_flutter.dart';
@@ -7,9 +8,12 @@ import 'package:path_provider/path_provider.dart';
 
 import '../data/database/walk_database.dart';
 
+/// getIt.reset · 테스트 해제 때 DB 를 닫는다.
+FutureOr<void> disposeWalkDatabase(WalkDatabase db) => db.close();
+
 @module
 abstract class WalkRegisterModule {
-  @lazySingleton
+  @LazySingleton(dispose: disposeWalkDatabase)
   WalkDatabase get database => WalkDatabase(driftDatabase(name: 'pawlog'));
 
   @preResolve

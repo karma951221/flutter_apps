@@ -1355,4 +1355,49 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkAppTitle => 'pawlog';
+
+  @override
+  String get walkDogListTitle => '반려견';
+
+  @override
+  String get walkDogListEmptyTitle => '등록된 반려견이 없습니다';
+
+  @override
+  String get walkDogListEmptyMessage => '함께 산책할 반려견을 등록해 주세요';
+
+  @override
+  String get walkDogAddAction => '반려견 추가';
+
+  @override
+  String get walkDogNewTitle => '반려견 등록';
+
+  @override
+  String get walkDogEditTitle => '반려견 수정';
+
+  @override
+  String get walkDogNameLabel => '이름';
+
+  @override
+  String get walkDogBreedLabel => '품종';
+
+  @override
+  String get walkDogBirthdayLabel => '생일';
+
+  @override
+  String get walkDogBirthdayUnset => '설정 안 함';
+
+  @override
+  String get walkDogPhotoChange => '사진 변경';
+
+  @override
+  String get walkDogSaveAction => '저장';
+
+  @override
+  String get walkDogDeleteAction => '삭제';
+
+  @override
+  String get walkDogDeleteConfirmTitle => '반려견을 삭제할까요?';
+
+  @override
+  String get walkDogDeleteConfirmMessage => '산책 기록은 남고, 기록에서 이 반려견만 빠집니다.';
 }

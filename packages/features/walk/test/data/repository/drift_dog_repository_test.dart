@@ -1,4 +1,5 @@
 import 'package:core/core.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:feature_walk/feature_walk.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -63,5 +64,23 @@ void main() {
 
     expect(((await repository.findById('1')) as Ok<Dog?>).value?.name, '콩이');
     expect(((await repository.findById('x')) as Ok<Dog?>).value, isNull);
+  });
+
+  test('생년월일이 깨진 행도 스트림을 끊지 않는다', () async {
+    await db
+        .into(db.dogs)
+        .insert(
+          DogsCompanion.insert(
+            id: 'bad',
+            name: '콩이',
+            birthday: const Value('bad'),
+            createdAt: t0,
+            updatedAt: t0,
+          ),
+        );
+
+    final result = await repository.watchAll().first;
+
+    expect(_ok(result).single.birthday, isNull);
   });
 }

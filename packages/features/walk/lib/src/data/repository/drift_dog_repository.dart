@@ -22,8 +22,13 @@ class DriftDogRepository implements DogRepository {
   @override
   Stream<Result<List<Dog>>> watchAll() => _byName().watch().transform(
     StreamTransformer<List<DogRow>, Result<List<Dog>>>.fromHandlers(
-      handleData: (rows, sink) =>
-          sink.add(Ok([for (final r in rows) dogFromRow(r)])),
+      handleData: (rows, sink) {
+        try {
+          sink.add(Ok([for (final r in rows) dogFromRow(r)]));
+        } catch (error) {
+          sink.add(Err(Failure.unknown(message: error.toString())));
+        }
+      },
       handleError: (error, _, sink) =>
           sink.add(Err(Failure.unknown(message: error.toString()))),
     ),

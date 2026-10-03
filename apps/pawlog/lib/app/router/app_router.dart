@@ -1,3 +1,4 @@
+import 'package:feature_walk/feature_walk.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -5,6 +6,17 @@ import 'dogs_redirect.dart';
 
 GoRouter createRouter({required bool hasDogs}) {
   final dogsRedirect = DogsRedirect(hasDogs: hasDogs);
+
+  /// 반려견 저장 · 삭제 뒤: 되돌아갈 곳이 있으면 pop, 첫 실행이면 피드로 간다.
+  void finishDogEdit(BuildContext context) {
+    dogsRedirect.markHasDogs();
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(PawlogPaths.feed);
+    }
+  }
+
   return GoRouter(
     initialLocation: PawlogPaths.feed,
     redirect: (_, state) => dogsRedirect.resolve(state.matchedLocation),
@@ -12,7 +24,10 @@ GoRouter createRouter({required bool hasDogs}) {
       GoRoute(
         path: PawlogPaths.feed,
         // TODO(phase ④~⑦): 산책 피드 페이지로 교체한다 (onStartWalk, onOpenWalk(id), onOpenDogs).
-        builder: (context, _) => const _Placeholder(title: 'feed'),
+        builder: (context, _) => _Placeholder(
+          title: 'feed',
+          onOpenDogs: () => context.push(PawlogPaths.dogs),
+        ),
       ),
       GoRoute(
         path: PawlogPaths.activeWalk,
@@ -48,20 +63,23 @@ GoRouter createRouter({required bool hasDogs}) {
       ),
       GoRoute(
         path: PawlogPaths.dogs,
-        // TODO(phase ④~⑦): 반려견 목록 페이지로 교체한다.
-        builder: (context, _) => const _Placeholder(title: 'dogs'),
+        builder: (context, _) => DogListPage(
+          onAddDog: () => context.push(PawlogPaths.newDog),
+          onOpenDog: (id) => context.push(PawlogPaths.dog(id)),
+        ),
         routes: [
           // `/dogs/new` 는 반드시 `/dogs/:id` 보다 먼저 선언한다.
           GoRoute(
             path: 'new',
-            // TODO(phase ④~⑦): 반려견 등록 페이지로 교체한다 (onDone → markHasDogs + go feed).
-            builder: (context, _) => const _Placeholder(title: 'new dog'),
+            builder: (context, _) =>
+                DogEditPage(onDone: () => finishDogEdit(context)),
           ),
           GoRoute(
             path: ':id',
-            // TODO(phase ④~⑦): 반려견 상세 페이지로 교체한다.
-            builder: (context, state) =>
-                _Placeholder(title: 'dog ${state.pathParameters['id']}'),
+            builder: (context, state) => DogEditPage(
+              dogId: state.pathParameters['id'],
+              onDone: () => finishDogEdit(context),
+            ),
           ),
         ],
       ),
@@ -70,12 +88,27 @@ GoRouter createRouter({required bool hasDogs}) {
 }
 
 class _Placeholder extends StatelessWidget {
-  const _Placeholder({required this.title});
+  const _Placeholder({required this.title, this.onOpenDogs});
 
   final String title;
 
+  /// 피드가 서기 전까지 반려견 화면에 닿는 임시 진입점.
+  final VoidCallback? onOpenDogs;
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text(title)));
+    final onOpenDogs = this.onOpenDogs;
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(title),
+            if (onOpenDogs != null)
+              TextButton(onPressed: onOpenDogs, child: const Text('dogs')),
+          ],
+        ),
+      ),
+    );
   }
 }

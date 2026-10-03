@@ -33,13 +33,23 @@ class _PawlogAppState extends State<PawlogApp> {
       builder: (context, snapshot) {
         final router = snapshot.data;
         if (router == null) {
+          // 부팅(DI · 첫 조회)이 실패하면 스피너가 영원히 돌지 않게 원인을 띄운다.
+          // 이 시점엔 l10n 이 없어 공통 안내 위젯 대신 오류 문자열을 그대로 보인다.
+          final error = snapshot.error;
           return MaterialApp(
             theme: AppTheme.light(),
             darkTheme: AppTheme.dark(),
             themeMode: ThemeMode.system,
             debugShowCheckedModeBanner: false,
-            home: const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
+            home: Scaffold(
+              body: Center(
+                child: error == null
+                    ? const CircularProgressIndicator()
+                    : Padding(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        child: SelectableText('$error'),
+                      ),
+              ),
             ),
           );
         }

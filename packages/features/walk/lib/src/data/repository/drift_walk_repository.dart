@@ -28,6 +28,7 @@ class DriftWalkRepository implements WalkRepository {
     ]);
     query.orderBy([
       OrderingTerm.desc(_db.walks.startedAt),
+      OrderingTerm.desc(_db.walks.id),
       OrderingTerm.asc(_db.walkPhotos.position),
     ]);
     return query;
@@ -45,7 +46,13 @@ class DriftWalkRepository implements WalkRepository {
   @override
   Stream<Result<List<Walk>>> watchAll() => _joined().watch().transform(
     StreamTransformer<List<TypedResult>, Result<List<Walk>>>.fromHandlers(
-      handleData: (rows, sink) => sink.add(Ok(_group(rows))),
+      handleData: (rows, sink) {
+        try {
+          sink.add(Ok(_group(rows)));
+        } catch (error) {
+          sink.add(Err(Failure.unknown(message: error.toString())));
+        }
+      },
       handleError: (error, _, sink) =>
           sink.add(Err(Failure.unknown(message: error.toString()))),
     ),

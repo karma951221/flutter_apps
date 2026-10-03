@@ -1441,4 +1441,50 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkAppTitle => 'pawlog';
+
+  @override
+  String get walkDogListTitle => 'Dogs';
+
+  @override
+  String get walkDogListEmptyTitle => 'No dogs yet';
+
+  @override
+  String get walkDogListEmptyMessage => 'Add a dog to walk with';
+
+  @override
+  String get walkDogAddAction => 'Add dog';
+
+  @override
+  String get walkDogNewTitle => 'Add a dog';
+
+  @override
+  String get walkDogEditTitle => 'Edit dog';
+
+  @override
+  String get walkDogNameLabel => 'Name';
+
+  @override
+  String get walkDogBreedLabel => 'Breed';
+
+  @override
+  String get walkDogBirthdayLabel => 'Birthday';
+
+  @override
+  String get walkDogBirthdayUnset => 'Not set';
+
+  @override
+  String get walkDogPhotoChange => 'Change photo';
+
+  @override
+  String get walkDogSaveAction => 'Save';
+
+  @override
+  String get walkDogDeleteAction => 'Delete';
+
+  @override
+  String get walkDogDeleteConfirmTitle => 'Delete this dog?';
+
+  @override
+  String get walkDogDeleteConfirmMessage =>
+      'Your walks stay, but this dog is removed from them.';
 }

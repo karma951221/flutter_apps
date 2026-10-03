@@ -20,7 +20,7 @@ Dog dogFromRow(DogRow row) => Dog(
   id: row.id,
   name: row.name,
   breed: row.breed,
-  birthday: row.birthday == null ? null : DateTime.parse(row.birthday!),
+  birthday: row.birthday == null ? null : DateTime.tryParse(row.birthday!),
   photoPath: row.photoPath,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,

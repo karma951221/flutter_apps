@@ -430,5 +430,20 @@
   "failureWalkNotFound": "散歩の記録が見つかりません",
   "failureWalkPhotoSaveFailed": "写真を保存できませんでした",
   "failureDogNameRequired": "犬の名前を入力してください",
-  "walkAppTitle": "pawlog"
+  "walkAppTitle": "pawlog",
+  "walkDogListTitle": "わんちゃん",
+  "walkDogListEmptyTitle": "登録されたわんちゃんがいません",
+  "walkDogListEmptyMessage": "一緒に散歩するわんちゃんを登録してください",
+  "walkDogAddAction": "わんちゃんを追加",
+  "walkDogNewTitle": "わんちゃんの登録",
+  "walkDogEditTitle": "わんちゃんの編集",
+  "walkDogNameLabel": "名前",
+  "walkDogBreedLabel": "犬種",
+  "walkDogBirthdayLabel": "誕生日",
+  "walkDogBirthdayUnset": "未設定",
+  "walkDogPhotoChange": "写真を変更",
+  "walkDogSaveAction": "保存",
+  "walkDogDeleteAction": "削除",
+  "walkDogDeleteConfirmTitle": "わんちゃんを削除しますか？",
+  "walkDogDeleteConfirmMessage": "散歩の記録は残り、記録からこのわんちゃんだけが外れます。"
 }

@@ -192,4 +192,14 @@ void main() {
     expect(loaded.dogs, isEmpty);
     expect(await count(db.walkDogs), 0);
   });
+
+  test('started_at 이 같으면 id 내림차순으로 정렬한다', () async {
+    await repository.insert(walkOf('a', startedAt: t0), const []);
+    await repository.insert(walkOf('c', startedAt: t0), const []);
+    await repository.insert(walkOf('b', startedAt: t0), const []);
+
+    final result = await repository.watchAll().first;
+
+    expect(_walks(result).map((w) => w.id), ['c', 'b', 'a']);
+  });
 }

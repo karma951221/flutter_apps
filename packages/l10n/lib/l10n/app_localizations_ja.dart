@@ -1354,4 +1354,49 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkAppTitle => 'pawlog';
+
+  @override
+  String get walkDogListTitle => 'わんちゃん';
+
+  @override
+  String get walkDogListEmptyTitle => '登録されたわんちゃんがいません';
+
+  @override
+  String get walkDogListEmptyMessage => '一緒に散歩するわんちゃんを登録してください';
+
+  @override
+  String get walkDogAddAction => 'わんちゃんを追加';
+
+  @override
+  String get walkDogNewTitle => 'わんちゃんの登録';
+
+  @override
+  String get walkDogEditTitle => 'わんちゃんの編集';
+
+  @override
+  String get walkDogNameLabel => '名前';
+
+  @override
+  String get walkDogBreedLabel => '犬種';
+
+  @override
+  String get walkDogBirthdayLabel => '誕生日';
+
+  @override
+  String get walkDogBirthdayUnset => '未設定';
+
+  @override
+  String get walkDogPhotoChange => '写真を変更';
+
+  @override
+  String get walkDogSaveAction => '保存';
+
+  @override
+  String get walkDogDeleteAction => '削除';
+
+  @override
+  String get walkDogDeleteConfirmTitle => 'わんちゃんを削除しますか？';
+
+  @override
+  String get walkDogDeleteConfirmMessage => '散歩の記録は残り、記録からこのわんちゃんだけが外れます。';
 }
