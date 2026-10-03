@@ -3145,6 +3145,414 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'앱을 14일 넘게 열지 않으면 반복 알람이 멈출 수 있어요.'**
   String get walkSettingsInactiveNotice;
+
+  /// 산책을 시작하거나 저장할 때 반려견이 한 마리도 선택되지 않았을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'함께 산책한 반려견을 선택해 주세요'**
+  String get failureWalkDogRequired;
+
+  /// 산책 추적 중에 새 산책을 시작하려 할 때
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 진행 중인 산책이 있습니다'**
+  String get failureWalkTrackingAlreadyActive;
+
+  /// 수정하거나 삭제하려는 산책 기록이 이미 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 기록을 찾을 수 없습니다'**
+  String get failureWalkNotFound;
+
+  /// 산책이나 반려견 사진을 앱 저장소에 복사하지 못했을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'사진을 저장하지 못했습니다'**
+  String get failureWalkPhotoSaveFailed;
+
+  /// 반려견 이름이 비어 있는 채로 저장하려 할 때
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견 이름을 입력해 주세요'**
+  String get failureDogNameRequired;
+
+  /// pawlog 앱의 이름. 앱 바와 작업 전환 화면에 쓰인다
+  ///
+  /// In ko, this message translates to:
+  /// **'pawlog'**
+  String get pawlogAppTitle;
+
+  /// 반려견 목록 화면 앱 바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견'**
+  String get walkDogListTitle;
+
+  /// 반려견이 한 마리도 없을 때 빈 상태 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'등록된 반려견이 없습니다'**
+  String get walkDogListEmptyTitle;
+
+  /// 반려견이 없을 때 등록을 권하는 안내 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'함께 산책할 반려견을 등록해 주세요'**
+  String get walkDogListEmptyMessage;
+
+  /// 반려견 등록 화면으로 가는 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견 추가'**
+  String get walkDogAddAction;
+
+  /// 반려견 등록 화면 앱 바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견 등록'**
+  String get walkDogNewTitle;
+
+  /// 반려견 수정 화면 앱 바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견 수정'**
+  String get walkDogEditTitle;
+
+  /// 반려견 이름 입력란 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'이름'**
+  String get walkDogNameLabel;
+
+  /// 반려견 품종 입력란 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'품종'**
+  String get walkDogBreedLabel;
+
+  /// 반려견 생일 행 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'생일'**
+  String get walkDogBirthdayLabel;
+
+  /// 반려견 생일을 아직 정하지 않았을 때 행에 보이는 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'설정 안 함'**
+  String get walkDogBirthdayUnset;
+
+  /// 반려견 사진을 고르는 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 변경'**
+  String get walkDogPhotoChange;
+
+  /// 반려견 폼 저장 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get walkDogSaveAction;
+
+  /// 반려견 수정 화면 더보기 메뉴의 삭제 항목 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제'**
+  String get walkDogDeleteAction;
+
+  /// 반려견 삭제 확인 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견을 삭제할까요?'**
+  String get walkDogDeleteConfirmTitle;
+
+  /// 반려견 삭제 확인 다이얼로그 본문. 산책 기록은 유지됨을 알린다
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 기록은 남고, 기록에서 이 반려견만 빠집니다.'**
+  String get walkDogDeleteConfirmMessage;
+
+  /// 진행 화면 앱바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 중'**
+  String get walkActiveTitle;
+
+  /// 진행 화면에서 산책에 데려갈 반려견을 고르는 칩 목록의 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'함께 걷는 반려견'**
+  String get walkSelectDogs;
+
+  /// 산책 시작 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 시작'**
+  String get walkStart;
+
+  /// 산책 종료 버튼 · 종료 확인 다이얼로그 확인 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 종료'**
+  String get walkStop;
+
+  /// 산책 종료 확인 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책을 끝낼까요?'**
+  String get walkStopConfirmTitle;
+
+  /// 산책 종료 확인 다이얼로그 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 멈추고 저장 화면으로 이동합니다.'**
+  String get walkStopConfirmMessage;
+
+  /// 진행 화면 경과 시간 칸의 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'시간'**
+  String get walkElapsedLabel;
+
+  /// 진행 화면 이동 거리 칸의 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'거리'**
+  String get walkDistanceLabel;
+
+  /// 1 km 미만 거리 표기. meters 는 반올림한 미터
+  ///
+  /// In ko, this message translates to:
+  /// **'{meters} m'**
+  String walkDistanceMeters(int meters);
+
+  /// 1 km 이상 거리 표기. km 는 소수 1자리로 포맷한 문자열
+  ///
+  /// In ko, this message translates to:
+  /// **'{km} km'**
+  String walkDistanceKm(String km);
+
+  /// 1시간 미만 산책 시간 표기
+  ///
+  /// In ko, this message translates to:
+  /// **'{minutes}분'**
+  String walkDurationMinutes(int minutes);
+
+  /// 1시간 이상 산책 시간 표기
+  ///
+  /// In ko, this message translates to:
+  /// **'{hours}시간 {minutes}분'**
+  String walkDurationHoursMinutes(int hours, int minutes);
+
+  /// Android 포그라운드 서비스 알림 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책을 기록하고 있어요'**
+  String get walkTrackingNotificationTitle;
+
+  /// Android 포그라운드 서비스 알림 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'앱을 닫아도 경로가 계속 기록됩니다'**
+  String get walkTrackingNotificationText;
+
+  /// 산책 시작 화면에서 등록된 반려견이 없을 때 안내 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'먼저 반려견을 등록해 주세요'**
+  String get walkActiveNoDogsTitle;
+
+  /// 산책 시작 화면에서 등록된 반려견이 없을 때 안내 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'산책에는 반려견이 한 마리 이상 필요합니다'**
+  String get walkActiveNoDogsMessage;
+
+  /// 반려견 등록 화면으로 가는 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견 등록하기'**
+  String get walkOpenDogsAction;
+
+  /// 위치 권한 거부 실패 안내 아래에 붙는 보조 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'설정에서 위치 권한을 허용한 뒤 다시 시도해 주세요'**
+  String get walkLocationDeniedHint;
+
+  /// 추적은 시작했지만 아직 GPS 점이 없을 때 지도 자리에 보이는 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'위치를 찾는 중…'**
+  String get walkLocating;
+
+  /// 산책 저장 화면(방금 끝낸 산책) 앱 바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 저장'**
+  String get walkEditNewTitle;
+
+  /// 저장된 산책을 고치는 화면 앱 바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 수정'**
+  String get walkEditTitle;
+
+  /// 산책 메모 입력란 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'메모'**
+  String get walkMemoLabel;
+
+  /// 산책 메모 입력란 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 산책은 어땠나요?'**
+  String get walkMemoHint;
+
+  /// 산책 사진 절 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'사진'**
+  String get walkPhotosLabel;
+
+  /// 사진 띠 끝의 추가 칸 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 추가'**
+  String get walkAddPhoto;
+
+  /// 사진 띠 썸네일의 빼기 버튼 스크린 리더 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 삭제'**
+  String get walkRemovePhoto;
+
+  /// 사진 추가 시트의 앨범 선택 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'앨범에서 고르기'**
+  String get walkAddPhotoFromGallery;
+
+  /// 사진 추가 시트의 카메라 촬영 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'카메라로 찍기'**
+  String get walkAddPhotoFromCamera;
+
+  /// 사진이 최대 장수에 닿았을 때 추가 칸 대신 보이는 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'사진은 최대 10장까지 붙일 수 있어요'**
+  String get walkPhotoLimitReached;
+
+  /// 방금 끝낸 산책을 저장하지 않고 버리는 버튼과 확인 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'버리기'**
+  String get walkDiscard;
+
+  /// 산책 버리기 확인 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'이 산책을 버릴까요?'**
+  String get walkDiscardConfirmTitle;
+
+  /// 산책 버리기 확인 다이얼로그 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'경로와 붙인 사진이 모두 지워집니다.'**
+  String get walkDiscardConfirmMessage;
+
+  /// 저장 화면에 들어왔지만 끝난 산책 세션이 없을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'저장할 산책이 없습니다'**
+  String get walkNoSessionToSave;
+
+  /// 저장할 산책이 없을 때 피드로 가는 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'피드로 돌아가기'**
+  String get walkBackToFeed;
+
+  /// 산책 상세 화면 앱 바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 기록'**
+  String get walkDetailTitle;
+
+  /// 산책 상세 더보기 메뉴의 수정 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'수정'**
+  String get walkEdit;
+
+  /// 산책 삭제 확인 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 기록을 삭제할까요?'**
+  String get walkDeleteConfirmTitle;
+
+  /// 산책 삭제 확인 다이얼로그 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'경로와 사진이 함께 삭제됩니다.'**
+  String get walkDeleteConfirmMessage;
+
+  /// 산책 상세에서 경로 점이 하나도 없을 때 지도 자리 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'기록된 경로가 없습니다'**
+  String get walkNoTrack;
+
+  /// 산책 상세의 반려견 절 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'함께한 반려견'**
+  String get walkDogsLabel;
+
+  /// 산책 날짜 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'날짜'**
+  String get walkDateLabel;
+
+  /// 피드가 비어 있을 때 안내 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'첫 산책을 시작해 보세요'**
+  String get walkFeedEmptyTitle;
+
+  /// 피드가 비어 있을 때 안내 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'산책을 마치면 여기에 기록이 쌓입니다'**
+  String get walkFeedEmptyMessage;
+
+  /// 진행 중인 산책으로 돌아가는 피드의 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 계속'**
+  String get walkContinue;
+
+  /// 피드 상단의 산책 중 배너 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 중이에요 · 눌러서 돌아가기'**
+  String get walkInProgressBanner;
+
+  /// 피드 상단의 저장하지 않은 산책 배너 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 않은 산책이 있어요 · 눌러서 저장하기'**
+  String get walkUnsavedBanner;
+
+  /// 피드 앱 바의 반려견 목록 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견'**
+  String get walkOpenDogsTooltip;
 }
 
 class _AppLocalizationsDelegate

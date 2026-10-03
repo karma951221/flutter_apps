@@ -10,7 +10,7 @@
 
 ```
 socialapp/
-├── docs/                        # 두 앱이 함께 쓰는 문서만
+├── docs/                        # 앱들이 함께 쓰는 문서만
 │   ├── README.md                # 문서 진입점 — 앱 허브로 가는 입구
 │   ├── status.md                # 모노레포 작업 · 앱별 한 줄 상태
 │   ├── architecture.md          # 이 문서
@@ -35,8 +35,12 @@ socialapp/
 │   ├── trader/                  # 첫째 앱 daylog — main · bootstrap · app shell · router · DI 조립 · config · home · patrol_test
 │   │   └── docs/                # 앱 문서 — README · status(★ 진행 현황) · overview · schema(★ DDL·RLS) ·
 │   │                            #   setup · e2e · audits/ · features/<name>/{plan,history,testing}.md
-│   └── commute/                 # 둘째 앱 통근 시간 — Supabase 없음. core · design_system · l10n 만 쓴다. lib/ 아래 core(셸)·data·domain·presentation
-│       └── docs/                # 앱 문서 — README · status · plan · history · testing
+│   ├── commute/                 # 둘째 앱 통근 시간 — Supabase 없음. core · design_system · l10n 만 쓴다. lib/ 아래 core(셸)·data·domain·presentation
+│   │   └── docs/                # 앱 문서 — README · status · plan · history · testing
+│   ├── walk/                    # 셋째 앱 만보기 — Health Connect 읽기 · 알람, 안드로이드만. core · design_system · l10n · permission 만 쓴다
+│   │   └── docs/                # 앱 문서 — README · status · plan · history · testing
+│   └── pawlog/                  # 넷째 앱 강아지 산책 — v1 은 Supabase 없음(drift 로컬 DB · flutter_map). core · design_system · l10n · feature_walk 만 조립
+│       └── docs/                # 앱 문서 — README · status · overview(★ 기획) · features/<name>/{plan,history,testing}.md
 └── packages/
     ├── core/                    # error · result · pagination · validation · data 인프라 · media · di
     ├── design_system/           # theme + widget
@@ -44,18 +48,23 @@ socialapp/
     ├── permission/              # 런타임 권한 상태 · 세션당 1회 요청 정책 (의존 없음)
     └── features/                # feature_<name> 패키지. lib/src/ 아래가 §2 의 3계층
         ├── auth/ post/ feed/ comment/ follow/ reaction/
-        └── profile/ chat/ safety/ settings/ preferences/ trade/
+        ├── profile/ chat/ safety/ settings/ preferences/ trade/
+        └── walk/                # feature_walk — pawlog 앱 전용. feature_* · supabase_flutter · go_router 없음
 ```
 
 **앱과 백엔드를 형제 폴더로 분리한다.** 나중에 자체 백엔드로 전환할 때 `server/`가 하나 더 생기면 되고, 그때 앱 코드는 손대지 않는다.
 
-**앱은 둘이다.** `apps/trader` 가 feature 12개를 조립하는 본 앱이고, `apps/commute` 는
+**앱은 넷이다.** `apps/trader` 가 feature 12개를 조립하는 본 앱이고, `apps/commute` 는
 기반 패키지 셋(`core` · `design_system` · `l10n`)만으로 둘째 앱이 서는지 시험하는
-앱이다([계획](../apps/commute/docs/plan.md)). 두 앱은 `pubspec.yaml` 의 `workspace:` 로
+앱이다([계획](../apps/commute/docs/plan.md)). `apps/walk` 는 같은 경계로 만든 만보기
+앱이다([계획](../apps/walk/docs/plan.md)). `apps/pawlog` 는 거기에 로컬 DB(drift) 와
+지도(flutter_map · OSM 타일)를 더해도 같은 경계가 유지되는지 보는 넷째 앱이다
+([기획서](../apps/pawlog/docs/overview.md)). 앱들은 `pubspec.yaml` 의 `workspace:` 로
 패키지를 이름으로 resolve 하고, 실제 의존 관계는 [의존 그래프](dependencies.md)에 있다.
 
-`apps/commute` 의 페이지는 **`Routes` 대신 콜백을 받는다** — 페이지가
-`onOpenSettings` · `onDone` 을 인자로 받고 경로는 `apps/commute` 의 라우터가 정한다.
+`apps/commute` 의 페이지와 `packages/features/walk` 는 **`Routes` 대신 콜백을 받는다** — 페이지가
+`onOpenSettings` · `onDone`(통근), `onStartWalk` · `onOpenWalk(id)`(pawlog) 같은 콜백을 인자로 받고
+경로는 각 앱의 라우터가 정한다.
 기존 feature 들이 `core` 의 `Routes` 로 `context.push` 하는 것과 다른 선택이고, 어느
 쪽으로 통일할지는 패키지 경계 리팩터링에서 결정한다
 ([설계 §7](superpowers/specs/2026-09-13-commute-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것)).

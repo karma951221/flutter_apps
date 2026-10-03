@@ -46,6 +46,15 @@ class ImagePickerService {
     requestFullMetadata: false,
   );
 
+  /// 카메라로 한 장 찍어 [prepare] 한 결과를 돌려준다. 취소하면 null.
+  Future<PreparedImage?> captureImage() async {
+    final file = await _picker.pickImage(
+      source: ImageSource.camera,
+      requestFullMetadata: false,
+    );
+    return file == null ? null : prepare(file);
+  }
+
   Future<List<PreparedImage>> pickImages({required int limit}) async {
     final files = await _picker.pickMultiImage(
       requestFullMetadata: false,

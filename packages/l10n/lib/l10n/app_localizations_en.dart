@@ -1702,4 +1702,224 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkSettingsInactiveNotice =>
       'Repeating alarms may stop if you don\'t open the app for more than 14 days.';
+
+  @override
+  String get failureWalkDogRequired => 'Select the dog you walked with';
+
+  @override
+  String get failureWalkTrackingAlreadyActive =>
+      'A walk is already in progress';
+
+  @override
+  String get failureWalkNotFound => 'Can\'t find this walk';
+
+  @override
+  String get failureWalkPhotoSaveFailed => 'Couldn\'t save the photo';
+
+  @override
+  String get failureDogNameRequired => 'Enter your dog\'s name';
+
+  @override
+  String get pawlogAppTitle => 'pawlog';
+
+  @override
+  String get walkDogListTitle => 'Dogs';
+
+  @override
+  String get walkDogListEmptyTitle => 'No dogs yet';
+
+  @override
+  String get walkDogListEmptyMessage => 'Add a dog to walk with';
+
+  @override
+  String get walkDogAddAction => 'Add dog';
+
+  @override
+  String get walkDogNewTitle => 'Add a dog';
+
+  @override
+  String get walkDogEditTitle => 'Edit dog';
+
+  @override
+  String get walkDogNameLabel => 'Name';
+
+  @override
+  String get walkDogBreedLabel => 'Breed';
+
+  @override
+  String get walkDogBirthdayLabel => 'Birthday';
+
+  @override
+  String get walkDogBirthdayUnset => 'Not set';
+
+  @override
+  String get walkDogPhotoChange => 'Change photo';
+
+  @override
+  String get walkDogSaveAction => 'Save';
+
+  @override
+  String get walkDogDeleteAction => 'Delete';
+
+  @override
+  String get walkDogDeleteConfirmTitle => 'Delete this dog?';
+
+  @override
+  String get walkDogDeleteConfirmMessage =>
+      'Your walks stay, but this dog is removed from them.';
+
+  @override
+  String get walkActiveTitle => 'Walking';
+
+  @override
+  String get walkSelectDogs => 'Dogs on this walk';
+
+  @override
+  String get walkStart => 'Start walk';
+
+  @override
+  String get walkStop => 'End walk';
+
+  @override
+  String get walkStopConfirmTitle => 'End this walk?';
+
+  @override
+  String get walkStopConfirmMessage =>
+      'Recording stops and you\'ll go to the save screen.';
+
+  @override
+  String get walkElapsedLabel => 'Time';
+
+  @override
+  String get walkDistanceLabel => 'Distance';
+
+  @override
+  String walkDistanceMeters(int meters) {
+    return '$meters m';
+  }
+
+  @override
+  String walkDistanceKm(String km) {
+    return '$km km';
+  }
+
+  @override
+  String walkDurationMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String walkDurationHoursMinutes(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String get walkTrackingNotificationTitle => 'Recording your walk';
+
+  @override
+  String get walkTrackingNotificationText =>
+      'The route keeps recording even if you close the app';
+
+  @override
+  String get walkActiveNoDogsTitle => 'Add a dog first';
+
+  @override
+  String get walkActiveNoDogsMessage => 'A walk needs at least one dog';
+
+  @override
+  String get walkOpenDogsAction => 'Add a dog';
+
+  @override
+  String get walkLocationDeniedHint =>
+      'Allow location access in Settings, then try again';
+
+  @override
+  String get walkLocating => 'Finding your location…';
+
+  @override
+  String get walkEditNewTitle => 'Save walk';
+
+  @override
+  String get walkEditTitle => 'Edit walk';
+
+  @override
+  String get walkMemoLabel => 'Note';
+
+  @override
+  String get walkMemoHint => 'How was today\'s walk?';
+
+  @override
+  String get walkPhotosLabel => 'Photos';
+
+  @override
+  String get walkAddPhoto => 'Add photo';
+
+  @override
+  String get walkRemovePhoto => 'Remove photo';
+
+  @override
+  String get walkAddPhotoFromGallery => 'Choose from gallery';
+
+  @override
+  String get walkAddPhotoFromCamera => 'Take a photo';
+
+  @override
+  String get walkPhotoLimitReached => 'You can attach up to 10 photos';
+
+  @override
+  String get walkDiscard => 'Discard';
+
+  @override
+  String get walkDiscardConfirmTitle => 'Discard this walk?';
+
+  @override
+  String get walkDiscardConfirmMessage =>
+      'The route and attached photos will be deleted.';
+
+  @override
+  String get walkNoSessionToSave => 'There is no walk to save';
+
+  @override
+  String get walkBackToFeed => 'Back to feed';
+
+  @override
+  String get walkDetailTitle => 'Walk';
+
+  @override
+  String get walkEdit => 'Edit';
+
+  @override
+  String get walkDeleteConfirmTitle => 'Delete this walk?';
+
+  @override
+  String get walkDeleteConfirmMessage =>
+      'The route and photos will be deleted too.';
+
+  @override
+  String get walkNoTrack => 'No route was recorded';
+
+  @override
+  String get walkDogsLabel => 'Walked with';
+
+  @override
+  String get walkDateLabel => 'Date';
+
+  @override
+  String get walkFeedEmptyTitle => 'Start your first walk';
+
+  @override
+  String get walkFeedEmptyMessage =>
+      'Your walks will show up here once you finish one';
+
+  @override
+  String get walkContinue => 'Continue walk';
+
+  @override
+  String get walkInProgressBanner => 'Walk in progress · tap to return';
+
+  @override
+  String get walkUnsavedBanner => 'You have an unsaved walk · tap to save';
+
+  @override
+  String get walkOpenDogsTooltip => 'Dogs';
 }

@@ -6,6 +6,7 @@ environment:
 
 workspace:
   - apps/commute
+  - apps/pawlog
   - apps/trader
   - apps/walk
   - packages/core
@@ -22,6 +23,7 @@ workspace:
   - packages/features/safety
   - packages/features/settings
   - packages/features/trade
+  - packages/features/walk
   - packages/l10n
   - packages/permission
 

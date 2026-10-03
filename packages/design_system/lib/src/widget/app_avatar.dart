@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -10,6 +11,7 @@ class AppAvatar extends StatelessWidget {
     required this.nickname,
     this.imageUrl,
     this.imageBytes,
+    this.imageFile,
     this.radius = 36,
     super.key,
   });
@@ -23,6 +25,9 @@ class AppAvatar extends StatelessWidget {
   /// 올리지 않기 위한 통로다.
   final Uint8List? imageBytes;
 
+  /// 기기에 저장된 이미지 파일. [imageBytes] 다음, [imageUrl] 앞의 우선순위다.
+  final File? imageFile;
+
   final double radius;
 
   @override
@@ -30,9 +35,11 @@ class AppAvatar extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final trimmedUrl = imageUrl?.trim();
     final bytes = imageBytes;
-    final foregroundImage = switch (bytes) {
-      final Uint8List value => MemoryImage(value) as ImageProvider<Object>,
-      null =>
+    final file = imageFile;
+    final foregroundImage = switch ((bytes, file)) {
+      (final Uint8List value, _) => MemoryImage(value) as ImageProvider<Object>,
+      (null, final File value) => FileImage(value),
+      (null, null) =>
         trimmedUrl != null && trimmedUrl.isNotEmpty
             ? NetworkImage(trimmedUrl)
             : null,

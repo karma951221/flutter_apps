@@ -119,5 +119,11 @@ extension on FailureCode {
     FailureCode.locationServiceDisabled => l10n.failureLocationServiceDisabled,
     FailureCode.locationTimeout => l10n.failureLocationTimeout,
     FailureCode.routeSearchFailed => l10n.failureRouteSearchFailed,
+    FailureCode.walkDogRequired => l10n.failureWalkDogRequired,
+    FailureCode.walkTrackingAlreadyActive =>
+      l10n.failureWalkTrackingAlreadyActive,
+    FailureCode.walkNotFound => l10n.failureWalkNotFound,
+    FailureCode.walkPhotoSaveFailed => l10n.failureWalkPhotoSaveFailed,
+    FailureCode.dogNameRequired => l10n.failureDogNameRequired,
   };
 }

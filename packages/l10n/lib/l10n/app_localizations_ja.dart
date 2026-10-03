@@ -1600,4 +1600,216 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get walkSettingsInactiveNotice =>
       '14日以上アプリを開かないと、繰り返しアラームが止まることがあります。';
+
+  @override
+  String get failureWalkDogRequired => '一緒に散歩した犬を選んでください';
+
+  @override
+  String get failureWalkTrackingAlreadyActive => 'すでに散歩が進行中です';
+
+  @override
+  String get failureWalkNotFound => '散歩の記録が見つかりません';
+
+  @override
+  String get failureWalkPhotoSaveFailed => '写真を保存できませんでした';
+
+  @override
+  String get failureDogNameRequired => '犬の名前を入力してください';
+
+  @override
+  String get pawlogAppTitle => 'pawlog';
+
+  @override
+  String get walkDogListTitle => 'わんちゃん';
+
+  @override
+  String get walkDogListEmptyTitle => '登録されたわんちゃんがいません';
+
+  @override
+  String get walkDogListEmptyMessage => '一緒に散歩するわんちゃんを登録してください';
+
+  @override
+  String get walkDogAddAction => 'わんちゃんを追加';
+
+  @override
+  String get walkDogNewTitle => 'わんちゃんの登録';
+
+  @override
+  String get walkDogEditTitle => 'わんちゃんの編集';
+
+  @override
+  String get walkDogNameLabel => '名前';
+
+  @override
+  String get walkDogBreedLabel => '犬種';
+
+  @override
+  String get walkDogBirthdayLabel => '誕生日';
+
+  @override
+  String get walkDogBirthdayUnset => '未設定';
+
+  @override
+  String get walkDogPhotoChange => '写真を変更';
+
+  @override
+  String get walkDogSaveAction => '保存';
+
+  @override
+  String get walkDogDeleteAction => '削除';
+
+  @override
+  String get walkDogDeleteConfirmTitle => 'わんちゃんを削除しますか？';
+
+  @override
+  String get walkDogDeleteConfirmMessage => '散歩の記録は残り、記録からこのわんちゃんだけが外れます。';
+
+  @override
+  String get walkActiveTitle => '散歩中';
+
+  @override
+  String get walkSelectDogs => '一緒に歩くわんちゃん';
+
+  @override
+  String get walkStart => '散歩を始める';
+
+  @override
+  String get walkStop => '散歩を終える';
+
+  @override
+  String get walkStopConfirmTitle => '散歩を終えますか？';
+
+  @override
+  String get walkStopConfirmMessage => '記録を止めて保存画面に移動します。';
+
+  @override
+  String get walkElapsedLabel => '時間';
+
+  @override
+  String get walkDistanceLabel => '距離';
+
+  @override
+  String walkDistanceMeters(int meters) {
+    return '$meters m';
+  }
+
+  @override
+  String walkDistanceKm(String km) {
+    return '$km km';
+  }
+
+  @override
+  String walkDurationMinutes(int minutes) {
+    return '$minutes分';
+  }
+
+  @override
+  String walkDurationHoursMinutes(int hours, int minutes) {
+    return '$hours時間$minutes分';
+  }
+
+  @override
+  String get walkTrackingNotificationTitle => '散歩を記録しています';
+
+  @override
+  String get walkTrackingNotificationText => 'アプリを閉じても経路は記録され続けます';
+
+  @override
+  String get walkActiveNoDogsTitle => 'まずわんちゃんを登録してください';
+
+  @override
+  String get walkActiveNoDogsMessage => '散歩にはわんちゃんが1匹以上必要です';
+
+  @override
+  String get walkOpenDogsAction => 'わんちゃんを登録する';
+
+  @override
+  String get walkLocationDeniedHint => '設定で位置情報の権限を許可してからもう一度お試しください';
+
+  @override
+  String get walkLocating => '位置情報を探しています…';
+
+  @override
+  String get walkEditNewTitle => '散歩を保存';
+
+  @override
+  String get walkEditTitle => '散歩を編集';
+
+  @override
+  String get walkMemoLabel => 'メモ';
+
+  @override
+  String get walkMemoHint => '今日の散歩はどうでしたか？';
+
+  @override
+  String get walkPhotosLabel => '写真';
+
+  @override
+  String get walkAddPhoto => '写真を追加';
+
+  @override
+  String get walkRemovePhoto => '写真を削除';
+
+  @override
+  String get walkAddPhotoFromGallery => 'アルバムから選ぶ';
+
+  @override
+  String get walkAddPhotoFromCamera => 'カメラで撮る';
+
+  @override
+  String get walkPhotoLimitReached => '写真は最大10枚まで添付できます';
+
+  @override
+  String get walkDiscard => '破棄';
+
+  @override
+  String get walkDiscardConfirmTitle => 'この散歩を破棄しますか？';
+
+  @override
+  String get walkDiscardConfirmMessage => 'ルートと添付した写真がすべて削除されます。';
+
+  @override
+  String get walkNoSessionToSave => '保存する散歩がありません';
+
+  @override
+  String get walkBackToFeed => 'フィードに戻る';
+
+  @override
+  String get walkDetailTitle => '散歩の記録';
+
+  @override
+  String get walkEdit => '編集';
+
+  @override
+  String get walkDeleteConfirmTitle => '散歩の記録を削除しますか？';
+
+  @override
+  String get walkDeleteConfirmMessage => 'ルートと写真も一緒に削除されます。';
+
+  @override
+  String get walkNoTrack => '記録されたルートがありません';
+
+  @override
+  String get walkDogsLabel => '一緒に歩いたわんちゃん';
+
+  @override
+  String get walkDateLabel => '日付';
+
+  @override
+  String get walkFeedEmptyTitle => '最初の散歩を始めましょう';
+
+  @override
+  String get walkFeedEmptyMessage => '散歩を終えると、ここに記録が貯まります';
+
+  @override
+  String get walkContinue => '散歩を続ける';
+
+  @override
+  String get walkInProgressBanner => '散歩中です · タップして戻る';
+
+  @override
+  String get walkUnsavedBanner => '保存していない散歩があります · タップして保存';
+
+  @override
+  String get walkOpenDogsTooltip => 'わんちゃん';
 }

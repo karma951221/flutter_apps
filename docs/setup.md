@@ -2,9 +2,9 @@
 
 > [문서 허브](README.md) · [아키텍처](architecture.md) · [테스트 가이드](testing/README.md)
 
-> 두 앱이 함께 쓰는 도구와 실행 절차. 앱별 절차는 각 앱 문서에 있다 —
+> 앱들이 함께 쓰는 도구와 실행 절차. 앱별 절차는 각 앱 문서에 있다 —
 > [트레이더 개발환경](../apps/trader/docs/setup.md)(Supabase · 스키마 변경 · 시세 seed) ·
-> [통근 허브](../apps/commute/docs/README.md)(Supabase 없음).
+> [통근 허브](../apps/commute/docs/README.md)(Supabase 없음) · [pawlog 허브](../apps/pawlog/docs/README.md)(Supabase 없음).
 
 ## 사전 요구
 
@@ -33,6 +33,23 @@ flutter run -d emulator-5554
 cd ~/Desktop/socialapp/apps/commute
 flutter run -d emulator-5554
 ```
+
+pawlog([허브](../apps/pawlog/docs/README.md))도 **Supabase 가 필요 없다** — 기록은 기기의 drift DB 와
+앱 문서 디렉터리의 사진 파일에만 남는다. 첫 실행은 반려견 등록 화면(`/dogs/new`)부터 뜬다.
+
+```bash
+cd ~/Desktop/socialapp/apps/pawlog
+flutter run -d emulator-5554
+```
+
+- **에뮬레이터 위치** — 에뮬레이터는 스스로 움직이지 않는다. 산책 추적을 보려면 Extended Controls
+  (`…`) → Location 에서 GPX/KML 경로를 불러와 재생한다. 위치 권한은 허용해야 추적이 시작된다
+- **툴체인이 앱마다 다르다** — pawlog 는 더 새 `flutter create` 템플릿으로 만들어 Android 가
+  AGP 9.1 · Kotlin 2.4 · Gradle 9.3(통근 · 트레이더는 AGP 8.11 · Kotlin 2.2), iOS 가 최소 15.0 ·
+  SwiftPM(다른 앱은 13.0 · CocoaPods)이다. 앱마다 Gradle · Xcode 프로젝트가 따로라 서로의 빌드를
+  깨지는 않는다. 다만 AGP 9 에서 플러그인(drift 의 sqlite3 · geolocator · image_picker ·
+  path_provider)이 빌드되는지는 **아직 확인하지 않았다** — 첫 `flutter build apk --debug` 를 아직
+  돌리지 않았다([구현 리뷰 ③ I1](../apps/pawlog/docs/audits/2026-10-03-implementation-review.md))
 
 코드 생성은 개발 중 watch 모드로 켜둔다:
 
