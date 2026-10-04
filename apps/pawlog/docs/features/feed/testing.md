@@ -3,22 +3,22 @@
 > [테스트 가이드](../../../../../docs/testing/README.md) · [pawlog 허브](../../README.md) · [계획](plan.md) · [구현 기록](history.md) · [구현 리뷰](../../audits/2026-10-03-implementation-review.md)
 
 ```bash
-cd packages/features/walk && flutter test test/presentation/cubit/walk_feed_cubit_test.dart
-cd packages/features/walk && flutter test test/presentation/page/walk_feed_page_test.dart test/presentation/widget/route_preview_painter_test.dart
-cd packages/features/walk && flutter test test/data/repository/drift_walk_repository_test.dart   # 최신순 · 이름 변경이 watch 에 흐름
+cd apps/pawlog && flutter test test/presentation/feed/cubit
+cd apps/pawlog && flutter test test/presentation/feed/page test/presentation/feed/widget
+cd apps/pawlog && flutter test test/data/walk/drift_walk_repository_test.dart   # 최신순 · 이름 변경이 watch 에 흐름
 ```
 
 W4 몫은 cubit 7 · 페이지 10 · `RoutePreviewPainter` 4 = 21건이다(2026-10-03, `d5f95b0` 기준). 같은
 커밋의 ⑤ V2 테스트 1건은 [tracking 테스트](../tracking/testing.md) 몫이다. 피드가 읽기만 하는
 `watchWalks` 의 정렬 · join · 강아지 이름 변경 반영은 ② 의 `drift_walk_repository_test.dart` 가 덮는다.
 
-## `test/presentation/cubit/`
+## `test/presentation/feed/cubit/`
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
 | `walk_feed_cubit_test.dart` (7) | `WalkFeedCubit` | 스트림이 2건 → 1건을 내면 `loading` → `loaded([2건], idle)` → `loaded([1건], idle)` · 시작 시 `trackerState` 가 `tracking` 이면 첫 `loaded` 부터 `tracking` · `trackerStates` 가 `finished` 를 내면 `loaded(walks, finished)` 로 갱신 · **목록 전에 온 `tracker` 변화는 `loading` 을 유지하고 첫 `loaded` 에 반영** · 스트림 `Err` → `failure` · `retry()` → `failure` → `loading` → `loaded`, `watchWalks` 2회 · 닫힌 뒤 온 값은 상태를 내지 않고 두 구독 모두 해제(`hasListener == false`) |
 
-## `test/presentation/page/` · `widget/`
+## `test/presentation/feed/page/` · `widget/`
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
@@ -47,7 +47,7 @@ W4 몫은 cubit 7 · 페이지 10 · `RoutePreviewPainter` 4 = 21건이다(2026-
 - **`errorBuilder` 폴백** — 사진 파일이 깨졌을 때 경로 썸네일로 바뀌는지는 단언하지 않는다
 - **빈 피드 + `finished`** — 시작 버튼이 숨는 분기는 테스트가 없다
 - **앱 라우터 연결** — 페이지를 라우터 없이 띄우므로 카드 탭 → `/walks/:id` 가 상세를 여는지,
-  `/walks` 가 피드로 가는지(⑥ W1 수정)는 모른다. `apps/pawlog/test/app/router/` 에 `createRouter`
+  `/walks` 가 피드로 가는지(⑥ W1 수정)는 모른다. `apps/pawlog/test/core/router/` 에 `createRouter`
   테스트가 아직 없다
 - **실제 drift 스트림** — 저장 · 수정 · 삭제 · 강아지 이름 변경이 피드에 흐르는 것은 레포 테스트(메모리 DB)와
   에뮬레이터로만 본다

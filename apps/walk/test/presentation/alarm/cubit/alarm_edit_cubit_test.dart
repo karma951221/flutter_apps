@@ -1,11 +1,11 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
-import 'package:walk/domain/clock.dart';
 import 'package:walk/presentation/alarm/cubit/alarm_edit_cubit.dart';
 import 'package:walk/presentation/alarm/cubit/alarm_edit_state.dart';
 

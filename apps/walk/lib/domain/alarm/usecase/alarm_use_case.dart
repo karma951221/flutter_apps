@@ -1,6 +1,6 @@
+import 'package:core/core.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../clock.dart';
 import '../entity/alarm.dart';
 import '../entity/alarm_trigger.dart';
 import '../repository/alarm_repository.dart';

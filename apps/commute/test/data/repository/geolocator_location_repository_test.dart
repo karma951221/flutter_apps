@@ -1,11 +1,10 @@
 import 'dart:async';
 
 import 'package:core/core.dart';
-import 'package:commute/data/location/location_gateway.dart';
 import 'package:commute/data/repository/geolocator_location_repository.dart';
 import 'package:commute/domain/entity/geo_point.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart';
 import 'package:mocktail/mocktail.dart';
 
 class _MockLocationGateway extends Mock implements LocationGateway {}
@@ -45,7 +44,10 @@ void main() {
   test('허용된 현재 위치를 GeoPoint로 반환한다', () async {
     stubServiceAndPermission();
     when(
-      () => gateway.getCurrentPosition(timeout: _timeout),
+      () => gateway.getCurrentPosition(
+        accuracy: LocationAccuracy.high,
+        timeout: _timeout,
+      ),
     ).thenAnswer((_) async => _position);
 
     final result = await repository.currentLocation(timeout: _timeout);
@@ -118,7 +120,10 @@ void main() {
       () => gateway.checkPermission(),
     ).thenAnswer((_) async => LocationPermission.whileInUse);
     when(
-      () => gateway.getCurrentPosition(timeout: _timeout),
+      () => gateway.getCurrentPosition(
+        accuracy: LocationAccuracy.high,
+        timeout: _timeout,
+      ),
     ).thenAnswer((_) async => _position);
 
     final result = await repository.currentLocation(timeout: _timeout);
@@ -144,7 +149,10 @@ void main() {
   test('위치 조회 제한 시간 초과를 구분한다', () async {
     stubServiceAndPermission();
     when(
-      () => gateway.getCurrentPosition(timeout: _timeout),
+      () => gateway.getCurrentPosition(
+        accuracy: LocationAccuracy.high,
+        timeout: _timeout,
+      ),
     ).thenThrow(TimeoutException('timeout'));
 
     final result = await repository.currentLocation(timeout: _timeout);
@@ -155,7 +163,10 @@ void main() {
   test('그 밖의 플랫폼 예외는 unknown으로 감싼다', () async {
     stubServiceAndPermission();
     when(
-      () => gateway.getCurrentPosition(timeout: _timeout),
+      () => gateway.getCurrentPosition(
+        accuracy: LocationAccuracy.high,
+        timeout: _timeout,
+      ),
     ).thenThrow(StateError('platform'));
 
     final result = await repository.currentLocation(timeout: _timeout);

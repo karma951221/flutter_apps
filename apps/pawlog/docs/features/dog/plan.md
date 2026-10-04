@@ -11,11 +11,11 @@
 
 | 이미 있는 것 (W1 이 쓰기만 한다) | 위치 |
 |---|---|
-| `Dog` · `DogDraft` 엔티티 | `packages/features/walk/lib/src/domain/entity/` |
+| `Dog` · `DogDraft` 엔티티 | `apps/pawlog/lib/domain/dog/entity/` |
 | `watchDogs` · `getDog` · `saveDog` · `deleteDog` · `storePhoto` · `removePhoto` · `photoFile` | `WalkUseCase` |
 | 이름 검증(trim 후 빈 값 → `FailureCode.dogNameRequired`) · 없는 강아지 → `targetNotFound` · 사진 교체 시 옛 파일 삭제 · 삭제 시 사진 파일 삭제 | `SaveDogScenario` · `DeleteDogScenario` |
 | 이름순 목록 스트림 | `DriftDogRepository.watchAll` |
-| 첫 실행 리다이렉트 `DogsRedirect` · `PawlogPaths` | `apps/pawlog/lib/app/router/dogs_redirect.dart` (③) |
+| 첫 실행 리다이렉트 `DogsRedirect` · `PawlogPaths` | `apps/pawlog/lib/core/router/dogs_redirect.dart` (③) |
 
 W1 이 소유하지 않는 것: 산책 ↔ 강아지 연결(W2 선택 칩 · W3 저장 폼), 피드 AppBar 의
 "강아지" 액션(W4 · ⑦). 페이지는 go_router 를 모른다 — 이동은 생성자 콜백으로만 한다.

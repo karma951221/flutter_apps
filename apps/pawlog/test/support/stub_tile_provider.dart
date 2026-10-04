@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_map/flutter_map.dart';
 
 // 1x1 PNG.
-final _png = base64Decode(
+final kTransparentImage1x1Png = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
 );
 
@@ -12,5 +12,5 @@ final _png = base64Decode(
 class StubTileProvider extends TileProvider {
   @override
   ImageProvider getImage(TileCoordinates coordinates, TileLayer options) =>
-      MemoryImage(_png);
+      MemoryImage(kTransparentImage1x1Png);
 }

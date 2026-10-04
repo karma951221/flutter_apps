@@ -11,13 +11,13 @@
 
 | 이미 있는 것 (W2 가 쓰기만 한다) | 위치 |
 |---|---|
-| `WalkSession`(`elapsedAt(now)`) · sealed `TrackerState`(`idle` / `tracking` / `finished`) · `TrackingNotice(title, text)` | `packages/features/walk/lib/src/domain/entity/` |
+| `WalkSession`(`elapsedAt(now)`) · sealed `TrackerState`(`idle` / `tracking` / `finished`) · `TrackingNotice(title, text)` | `apps/pawlog/lib/domain/tracking/entity/` |
 | `WalkTracker`(`current` · `states` · `start` · `stop` · `clear`) | `domain/repository/walk_tracker.dart` |
 | `WalkTrackingPolicy.accept` — 정확도 ≤ 50 m(null 통과) · 첫 점 외 이동 ≥ 2 m | `domain/policy/walk_tracking_policy.dart` |
 | `trackerState` · `trackerStates` · `startWalk(dogIds, notice)` · `stopWalk()` · `getDogs()` | `WalkUseCase` |
 | 강아지 0 → `walkDogRequired`, 추적 중 → `walkTrackingAlreadyActive` | `StartWalkScenario` |
 | `TileProvider` lazySingleton(`NetworkTileProvider`) | `di/walk_register_module.dart` |
-| 경로 `PawlogPaths.activeWalk = '/walk'` (지금은 `_Placeholder`) | `apps/pawlog/lib/app/router/` |
+| 경로 `PawlogPaths.activeWalk = '/walk'` (지금은 `_Placeholder`) | `apps/pawlog/lib/core/router/` |
 
 W2 가 소유하지 않는 것: 저장 폼(W3 — `onStopped` 가 `/walk/save` 로 넘긴다), 피드의 추적 중
 배너 `ActiveWalkBanner` 와 FAB(W4), Android 13+ 알림 권한 요청(범위 밖).
@@ -25,12 +25,14 @@ W2 가 소유하지 않는 것: 저장 폼(W3 — `onStopped` 가 `/walk/save` �
 ## 추적기 계약 (`GeolocatorWalkTracker`)
 
 설계 §3 을 따른다. 구현은 `data/tracker/geolocator_walk_tracker.dart` · `data/location/location_gateway.dart`(통근 앱에서 복사 + `positionStream` · `distanceBetween`).
+2026-10-04 부터 추적기는 `apps/pawlog/lib/data/tracking/` 에 있고, 게이트웨이와 서비스 → 권한 확인(`LocationAccess`)은
+`packages/location` 의 것을 쓴다.
 
 | 상황 | 결과 |
 |---|---|
 | `start` · 이미 `tracking` | `Err(walkTrackingAlreadyActive)` |
 | `start` · 위치 서비스 꺼짐 | `Err(locationServiceDisabled)` |
-| `start` · 권한 denied | 세션당 한 번만 요청(`_requestDeclined`). 거부 · 영구 거부 → `Err(locationPermissionDenied)` |
+| `start` · 권한 denied | 세션당 한 번만 요청(`_requestDeclined`, 2026-10-04 부터 `LocationAccess` → `PermissionRequester`). 거부 · 영구 거부 → `Err(locationPermissionDenied)` |
 | `start` · 성공 | `positionStream` 구독 → `tracking(빈 세션)` 방출 → `Ok` |
 | 위치 수신 | `distanceBetween(직전 점, p)` → 정책 탈락이면 버림 → 점 추가 · 거리 합산 → `tracking(session)` |
 | 스트림 오류 | 세션 유지, `tracking` 그대로(점만 안 쌓인다) |
@@ -66,7 +68,7 @@ W2 가 소유하지 않는 것: 저장 폼(W3 — `onStopped` 가 `/walk/save` �
 | `failure(failure, dogs, selectedIds)` | `getDogs` · `start` · `stop` 의 `Err` | `AppPlaceholder(message: failure.localizedMessage(context), description: 권한 거부면 walkLocationDeniedHint, actionLabel: commonRetry, onAction: retry)` |
 
 - `retry()` 는 `selectedIds` 가 있으면 `start(notice)` 를 다시, 없으면 `load()` 를 다시 부른다
-- `locationPermissionDenied` 재시도는 **이번 세션에 다시 묻지 않는다**(`_requestDeclined`).
+- `locationPermissionDenied` 재시도는 **이번 세션에 다시 묻지 않는다**(`PermissionRequester.ensure`).
   그래서 `walkLocationDeniedHint`("설정에서 위치 권한을 허용해 주세요")를 함께 보인다
 
 ## 상태 규칙
@@ -75,7 +77,7 @@ W2 가 소유하지 않는 것: 저장 폼(W3 — `onStopped` 가 `/walk/save` �
 |---|---|
 | 진입 | `load()` 가 `trackerState` 를 먼저 본다. `tracking` → 바로 `tracking(session, elapsed)`(재진입, 강아지 조회 생략), `finished` → `stopped(session)`(저장 안 된 세션을 새 산책으로 덮지 않게), `idle` → `getDogs()` → `selectingDogs` |
 | 구독 | `load()` 에서 `trackerStates` 구독. `tracking(s)` → `tracking(s, elapsed)`, `finished(s)` → `stopped(s)`. `close()` 에서 해제 |
-| 경과 시간 | `tracking` 일 때만 1초 `Timer.periodic` 이 `elapsed = session.elapsedAt(now())` 를 **다시 계산**(틱 누적 금지). `tracking` 을 벗어나거나 `close()` 에서 취소. 시계는 `DateTime Function() now` 주입 |
+| 경과 시간 | `tracking` 일 때만 1초 `Timer.periodic` 이 `elapsed = session.elapsedAt(now())` 를 **다시 계산**(틱 누적 금지). `tracking` 을 벗어나거나 `close()` 에서 취소. 시계는 `DateTime Function() now` 주입 (2026-10-04 부터 `core` 의 `Clock` 주입) |
 | 알림 문구 | 페이지가 `TrackingNotice(title: walkTrackingNotificationTitle, text: walkTrackingNotificationText)` 를 만들어 `cubit.start(notice)` 에 넘긴다(cubit 은 l10n 을 모른다) |
 | 뒤로 가기 | 추적 중에도 허용(`PopScope` 없음). 추적은 `WalkTracker` 싱글턴에 남는다 |
 | 중복 | 모든 `await` 뒤 `isClosed` 검사. `stopped` 는 한 번만 낸다(구독 · `stop()` 결과 중 먼저 온 쪽) |

@@ -7,7 +7,6 @@ import 'package:l10n/l10n.dart';
 import '../../../core/background/alarm_resync.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
-import '../../../domain/clock.dart';
 import '../../../domain/walk/usecase/walk_use_case.dart';
 import '../../alarm/cubit/alarm_list_cubit.dart';
 import '../../alarm/page/alarm_list_page.dart';

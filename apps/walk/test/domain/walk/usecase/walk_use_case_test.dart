@@ -1,7 +1,6 @@
 import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:walk/domain/clock.dart';
 import 'package:walk/domain/walk/entity/daily_activity.dart';
 import 'package:walk/domain/walk/entity/period_kind.dart';
 import 'package:walk/domain/walk/repository/activity_repository.dart';

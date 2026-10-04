@@ -1,3 +1,4 @@
+import 'package:core/core.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -8,4 +9,9 @@ abstract class RegisterModule {
   /// 첫 프레임부터 저장된 테마로 뜬다.
   @preResolve
   Future<SharedPreferences> get sharedPreferences => SharedPreferences.getInstance();
+
+  /// `core` 의 시계. 이 앱은 Supabase 를 등록하는 `CorePackageModule` 을 쓰지 않아
+  /// 여기서 직접 등록한다.
+  @lazySingleton
+  Clock get clock => const Clock();
 }

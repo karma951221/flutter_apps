@@ -484,15 +484,18 @@ Android 13+ 알림 권한은 따로 요청하지 않는다(`permission_handler` 
 ## 7. 리팩터링 후보 — 이 앱을 만들며 확인된 것
 
 여기 적힌 것은 **지금 고치지 않는다.** [통근 설계 §7](2026-09-13-commute-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것)과
-같은 방식으로 쌓고, 작업 중 새로 발견한 항목은 이 목록 끝에 추가한다.
+같은 방식으로 쌓고, 작업 중 새로 발견한 항목은 이 목록 끝에 추가한다. 처리한 항목은 "처리" 열에
+날짜와 커밋을 적는다(브랜치 `refactor/package-boundary`, 2026-10-04 — 같은 브랜치에서 `feature_walk`
+패키지도 `apps/pawlog/lib/` 로 옮겼다, `edc71b9`).
 
-| # | 발견 | 근거 |
-|---|---|---|
-| 1 | `LocationGateway` 가 `feature_commute` 와 `feature_walk` 에 두 벌 있다 | 규칙 ⑥ 때문에 복사했다. `location` 패키지(geolocator 래퍼 + 권한 흐름 `_requestDeclined`)로 빼면 둘 다 거기를 본다 |
-| 2 | 앱이 늘 때마다 `core` 의 `FailureCode` 와 `l10n` 의 ARB · exhaustive switch 가 함께 자란다 | 통근 후보 3 · 4 의 반복. 셋째 앱에서 +5 코드 · 약 60 키. feature 별 실패 코드 · ARB 분리가 필요하다는 근거가 하나 더 |
-| 3 | `AppAvatar` 의 필수 인자가 `nickname` 이다 | 강아지 이름을 `nickname` 으로 넘긴다. 사용자 아바타 전용 이름이 공용 위젯에 남았다 → `label` 등 |
-| 4 | 시나리오가 각자 `DateTime Function() now` 를 받는다 | `core` 에 시계 추상(`Clock`)이 없다. 셋째 앱부터 시각 단언이 필요해졌다 |
-| 5 | [CLAUDE.md](../../../CLAUDE.md) 의 경로가 `app/lib/design_system/…` · `cd app` 등 모노레포 이전 모습이다 | 실제는 `packages/design_system/lib/src/widget/` · `apps/<app>`. 새 앱을 만드는 에이전트가 처음 읽는 문서라 혼란이 크다 |
+| # | 발견 | 근거 | 처리 |
+|---|---|---|---|
+| 1 | `LocationGateway` 가 `feature_commute` 와 `feature_walk` 에 두 벌 있다 | 규칙 ⑥ 때문에 복사했다. `location` 패키지(geolocator 래퍼 + 권한 흐름 `_requestDeclined`)로 빼면 둘 다 거기를 본다 | **해결** (2026-10-04, `e908c25`). `packages/location` 에 `LocationGateway` · `GeolocatorGateway`(두 벌의 메서드 합집합) · `GeolocatorPermissionSource` · `LocationAccess`(서비스 → 권한). 권한은 `permission` 의 `PermissionRequester` 로 세션당 한 번 — pawlog 의 `_requestDeclined` 를 대체. 정확도 · 스트림 설정은 앱이 넘기고, 게이트웨이는 앱 `RegisterModule` 이 등록한다 |
+| 2 | 앱이 늘 때마다 `core` 의 `FailureCode` 와 `l10n` 의 ARB · exhaustive switch 가 함께 자란다 | 통근 후보 3 · 4 의 반복. 셋째 앱에서 +5 코드 · 약 60 키. feature 별 실패 코드 · ARB 분리가 필요하다는 근거가 하나 더 | — |
+| 3 | `AppAvatar` 의 필수 인자가 `nickname` 이다 | 강아지 이름을 `nickname` 으로 넘긴다. 사용자 아바타 전용 이름이 공용 위젯에 남았다 → `label` 등 | — |
+| 4 | 시나리오가 각자 `DateTime Function() now` 를 받는다 | `core` 에 시계 추상(`Clock`)이 없다. 셋째 앱부터 시각 단언이 필요해졌다 | **해결** (2026-10-04, `c84ee4c`). walk 앱의 `Clock` 을 `core` 로 올려 `CorePackageModule` 이 등록한다. pawlog 시나리오 · 유스케이스 · 추적기 · `ActiveWalkCubit` 이 `Clock` 을 주입받고 `withClock` 생성자를 없앴다. 테스트는 `FakeClock` |
+| 5 | [CLAUDE.md](../../../CLAUDE.md) 의 경로가 `app/lib/design_system/…` · `cd app` 등 모노레포 이전 모습이다 | 실제는 `packages/design_system/lib/src/widget/` · `apps/<app>`. 새 앱을 만드는 에이전트가 처음 읽는 문서라 혼란이 크다 | — |
+| 6 | `core` 의 injectable 등록(`Clock` 등)을 `CorePackageModule` 을 쓰지 않는 앱이 따로 등록한다 | walk 는 `SupabaseClient` 까지 등록되는 `CorePackageModule` 을 피하려고 그 모듈을 쓰지 않아, `Clock` 을 자기 `RegisterModule` 에서 등록했다(#4 처리 중 발견). [통근 후보 1](2026-09-13-commute-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것)(core 의 Supabase 결합)이 풀리면 사라진다 | — |
 
 ## 8. 남은 판단 (착수 시 결정)
 

@@ -113,6 +113,10 @@ cascade 가 검증되지 않는다.
 막고, `core` 로 올리면 이미 무거운 `core` 에 geolocator 가 하나 더 붙는다. 두 벌이 된
 것은 리팩터링 후보로 적어 둔다(§9).
 
+> 2026-10-04: 두 벌을 `packages/location`(`LocationGateway` · `GeolocatorGateway` · 서비스 → 권한
+> 확인 `LocationAccess`)으로 합쳤다. 권한은 `permission` 패키지의 `PermissionRequester` 가 세션당
+> 한 번만 묻는다. 위치 스트림 설정(정확도 · `distanceFilter` · 알림)은 여전히 pawlog 가 만든다.
+
 ### 4.4 지도는 flutter_map (OpenStreetMap)
 
 API 키 · 네이티브 SDK · 과금이 없고 순수 Dart 라 위젯 테스트가 된다. Google Maps 는
@@ -132,16 +136,21 @@ API 키 · 네이티브 SDK · 과금이 없고 순수 Dart 라 위젯 테스트
 
 ### 4.6 패키지 경계
 
-`feature_walk` 는 `core` · `design_system` · `l10n` 만 의존한다. `feature_*` ·
-`supabase_flutter` · `go_router` 는 쓰지 않는다 — 통근 앱의 `package_boundary_test` 를
-`apps/pawlog` 에도 둔다. 페이지는 콜백만 받고 경로는 앱의 라우터가 정한다(통근 앱과
-같은 선택).
+pawlog 는 `core` · `design_system` · `l10n` 만 의존한다. `feature_*` ·
+`supabase_flutter` 는 쓰지 않는다 — 통근 앱의 `package_boundary_test` 를
+`apps/pawlog` 에도 둔다. 페이지는 콜백만 받고 경로는 앱의 라우터(`lib/core/router/`)가
+정한다(통근 앱과 같은 선택).
+
+> 2026-10-04: v1 은 feature 코드를 `packages/features/walk`(`feature_walk`)에 따로 뒀으나, 한
+> 앱만 쓰는 코드는 앱 안에 둔다는 규칙에 따라 `apps/pawlog/lib/{core,data,domain,presentation}`
+> 로 옮겼다(걷기 앱과 같은 배치). 아래 §5 의 "패키지 하나" 는 그 이전 결정이다.
 
 ## 5. Feature 분해
 
-v1 은 **패키지 하나(`packages/features/walk`, `feature_walk`)** 에 feature 넷을 둔다.
-서로 엔티티를 공유하고(산책↔강아지) 화면이 적어, 패키지를 나누면 비용만 든다. v2 소셜이
-들어올 때 쪼갠다. 문서는 트레이더처럼 `apps/pawlog/docs/features/<name>/` 에 feature
+v1 은 feature 넷을 **한 코드 묶음** 에 둔다(처음엔 `packages/features/walk` 패키지, 2026-10-04
+부터 `apps/pawlog/lib/` 안 — §4.6). 서로 엔티티를 공유하고(산책↔강아지) 화면이 적어, 패키지를
+나누면 비용만 든다. 앱 안에서는 `domain/` · `data/` · `presentation/` 아래를 `dog` · `walk` ·
+`tracking` · `feed` · `photo` 영역으로 나눈다. v2 소셜이 들어올 때 다시 본다. 문서는 트레이더처럼 `apps/pawlog/docs/features/<name>/` 에 feature
 별로 `plan.md` · `history.md` · `testing.md` 를 둔다.
 
 | # | Feature | 역할 | 단계 |
@@ -156,10 +165,10 @@ v1 은 **패키지 하나(`packages/features/walk`, `feature_walk`)** 에 featur
 
 | 이름 | 역할 | 위치 |
 |------|------|------|
-| `WalkDatabase` (drift) | 테이블 5개(§7), 스키마 v1 | `feature_walk/src/data/database/` |
-| `PhotoStorage` | 사진 파일 저장 · 경로 해석 · 삭제 | `feature_walk/src/data/repository/` |
-| `WalkTracker` | **앱 수명 싱글턴.** 위치 스트림을 구독해 세션(점 · 거리 · 시작 시각)을 누적하고 `idle` / `tracking` / `finished` 상태를 스트림으로 준다. 화면을 떠나도 추적이 끊기지 않는 이유 | `feature_walk/src/data/tracker/` |
-| `WalkUseCase` | 유일한 facade. cubit 은 이것만 본다 | `feature_walk/src/domain/usecase/` |
+| `WalkDatabase` (drift) | 테이블 5개(§7), 스키마 v1 | `apps/pawlog/lib/data/database/` |
+| `PhotoStorage` | 사진 파일 저장 · 경로 해석 · 삭제 | `apps/pawlog/lib/data/photo/` |
+| `WalkTracker` | **앱 수명 싱글턴.** 위치 스트림을 구독해 세션(점 · 거리 · 시작 시각)을 누적하고 `idle` / `tracking` / `finished` 상태를 스트림으로 준다. 화면을 떠나도 추적이 끊기지 않는 이유 | `apps/pawlog/lib/data/tracking/` |
+| `WalkUseCase` | 유일한 facade. cubit 은 이것만 본다 | `apps/pawlog/lib/domain/walk/usecase/` |
 | `FailureCode` +5 | `walkDogRequired` · `walkTrackingAlreadyActive` · `walkNotFound` · `walkPhotoSaveFailed` · `dogNameRequired` | `core` + `l10n` 의 exhaustive switch + ARB 3개 |
 | `AppAvatar.imageFile` | 로컬 파일로 아바타를 그리는 인자 (지금은 URL · 바이트만 받는다) | `design_system` (+ 테스트) |
 | l10n `walk*` 키 | 약 55개. ko 템플릿 + en · ja, 모든 키에 `@` 설명 | `l10n` |

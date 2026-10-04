@@ -17,12 +17,14 @@ Supabase 가 없으므로 권한 경계 스크립트는 없다. 로컬 Supabase 
 | `data/repository/fake_transit_route_repository_test.dart` | `FakeTransitRouteRepository` | subway · bus · best 순서로 3개 · 같은 입력은 같은 출력 · 거리가 멀수록 모든 모드가 오래 걸림 · 각 leg 의 분 합 = `duration` |
 | `data/repository/asset_station_repository_test.dart` | `AssetStationRepository` | 공백 제거 부분 일치 · 영문 대소문자 무시 · 빈 질의는 자산을 읽지 않고 빈 목록 · 없는 id 는 null 이고 자산은 한 번만 읽는다 (`AssetBundle` 을 가짜로 주입) |
 | `data/repository/prefs_commute_settings_repository_test.dart` | `PrefsCommuteSettingsRepository` | 역 id 만 저장하고 `StationRepository` 로 복원 · 키가 없으면 빈 설정 · 목록에 없는 id 는 null |
-| `data/repository/geolocator_location_repository_test.dart` | `GeolocatorLocationRepository` (`LocationGateway` mock) | 허용 → `GeoPoint` · 서비스 꺼짐 → `locationServiceDisabled` · 거부 → 한 번 요청 후 `locationPermissionDenied` · **같은 세션에서 거부하면 다시 요청하지 않는다** · **거부 뒤 설정에서 허용하면 묻지 않고 위치 반환** · 영구 거부는 요청 없음 · `TimeoutException` → `locationTimeout` · 그 밖 예외 → `unknown` |
+| `data/repository/geolocator_location_repository_test.dart` | `GeolocatorLocationRepository` (`location` 패키지의 `LocationGateway` mock) | 허용 → `GeoPoint` · 서비스 꺼짐 → `locationServiceDisabled` · 거부 → 한 번 요청 후 `locationPermissionDenied` · **같은 세션에서 거부하면 다시 요청하지 않는다** · **거부 뒤 설정에서 허용하면 묻지 않고 위치 반환** · 영구 거부는 요청 없음 · `TimeoutException` → `locationTimeout` · 그 밖 예외 → `unknown` |
 | `presentation/cubit/commute_home_cubit_test.dart` | `CommuteHomeCubit` | 기본 출근 방향 검색 → `loading` · `loaded` · 방향 전환은 즉시 재검색 · 실패해도 방향 보존 · 앞 방향의 늦은 응답이 새 방향 결과를 덮지 않는다 |
 | `presentation/cubit/commute_settings_cubit_test.dart` | `CommuteSettingsCubit` | 읽어서 `loaded` · 집 역을 고르면 기존 회사 역을 보존해 저장 · 저장 실패 → `failure` |
 | `presentation/cubit/station_search_cubit_test.dart` | `StationSearchCubit` | 300ms 뒤 검색 · 새 질의가 이전 디바운스를 취소 · 빈 질의는 검색 없이 `idle` |
 | `presentation/page/commute_home_page_test.dart` | `CommuteHomePage` | `loaded` → 카드 3장 + "현 위치 기준" 배너 · 위치 실패면 "집 기준" 배너 · **설정이 닫히면 다시 검색한다**(`onOpenSettings` 의 Future 완료 시점) · `failure` → `AppPlaceholder` + 재시도 |
 | `presentation/page/commute_settings_page_test.dart` | `CommuteSettingsPage` | 역을 고르면 즉시 저장 · 집 · 회사가 모두 정해지면 `onDone` 을 한 번만 부른다 |
+
+`GeolocatorPermissionSource` 매핑 테스트는 게이트웨이와 함께 `packages/location/test/` 로 옮겼다(2026-10-04).
 
 ## `apps/commute/test/{core,convention}/` — 앱 셸 · 경계
 

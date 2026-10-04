@@ -1,3 +1,4 @@
+import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
 import 'package:walk/domain/alarm/entity/alarm_trigger.dart';
@@ -5,7 +6,6 @@ import 'package:walk/domain/alarm/repository/alarm_repository.dart';
 import 'package:walk/domain/alarm/scheduler/alarm_scheduler.dart';
 import 'package:walk/domain/alarm/upcoming_triggers.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
-import 'package:walk/domain/clock.dart';
 
 class _MemoryRepository implements AlarmRepository {
   List<Alarm> alarms = [];

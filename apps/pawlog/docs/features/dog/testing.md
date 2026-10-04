@@ -3,24 +3,24 @@
 > [테스트 가이드](../../../../../docs/testing/README.md) · [pawlog 허브](../../README.md) · [계획](plan.md) · [구현 기록](history.md) · [구현 리뷰](../../audits/2026-10-03-implementation-review.md)
 
 ```bash
-cd packages/features/walk && flutter test test/presentation/cubit/dog_list_cubit_test.dart test/presentation/cubit/dog_edit_cubit_test.dart
-cd packages/features/walk && flutter test test/presentation/page/dog_list_page_test.dart test/presentation/page/dog_edit_page_test.dart
-cd packages/features/walk && flutter test test/data/repository/drift_dog_repository_test.dart
-cd apps/pawlog && flutter test   # 첫 실행 리다이렉트 · 패키지 경계
+cd apps/pawlog && flutter test test/presentation/dog/cubit
+cd apps/pawlog && flutter test test/presentation/dog/page
+cd apps/pawlog && flutter test test/data/dog/drift_dog_repository_test.dart
+cd apps/pawlog && flutter test test/core test/convention   # 첫 실행 리다이렉트 · 패키지 경계
 ```
 
 백엔드가 없어 모두 로컬에서 돈다. W1 몫은 cubit 14 · 페이지 9 · 레포 5 · 앱 4건이다
 (2026-10-03, `93d722b` 기준). 도메인 규칙(이름 trim · 사진 교체 시 옛 파일 삭제 · 없는 강아지)은
 ① 의 `save_dog_scenario_test.dart` 가 이미 덮는다.
 
-## `packages/features/walk/test/presentation/cubit/`
+## `apps/pawlog/test/presentation/dog/cubit/`
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
 | `dog_list_cubit_test.dart` (3) | `DogListCubit` | 스트림이 2마리를 내면 `loading` → `loaded` · `Err` 면 `failure` · 닫힌 뒤 온 스트림 값은 상태를 내지 않는다 |
 | `dog_edit_cubit_test.dart` (11) | `DogEditCubit` | `load(null)` → 빈 폼 `editing` · `load(id)` → `loading` → 값이 찬 `editing` · 없는 강아지 → `loadFailure` · 빈 이름 저장 → `isSaving` 거쳐 `editing(failure)` · 정상 저장은 `DogDraft` 를 넘기고 `saved` · 삭제 → `deleteDog` · `deleted` · 사진을 고르면 `storePhoto` 후 경로를 폼에 · 두 번 고르면 첫 새 파일 삭제 · 저장 없이 닫으면 새 사진 삭제 · 저장했으면 닫아도 유지 · **저장 중 늦게 도착한 사진은 파일을 지우고 상태를 바꾸지 않는다**(T1) |
 
-## `packages/features/walk/test/presentation/page/`
+## `apps/pawlog/test/presentation/dog/page/`
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
@@ -31,9 +31,9 @@ cd apps/pawlog && flutter test   # 첫 실행 리다이렉트 · 패키지 경�
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
-| `test/data/repository/drift_dog_repository_test.dart` (5) | `DriftDogRepository` (메모리 drift) | 저장 후 이름순 watch · 수정이 스트림에 반영 · 삭제하면 사라짐 · `findById` 없으면 null · 생일이 깨진 행도 스트림을 끊지 않는다(D1) |
-| `apps/pawlog/test/app/router/dogs_redirect_test.dart` (4) | `DogsRedirect` | 0마리면 `/dogs` 밖 경로 → `/dogs/new` · `/dogs` 아래는 통과 · 있으면 통과 · `markHasDogs()` 뒤 통과 |
-| `apps/pawlog/test/convention/package_boundary_test.dart` (1) | `feature_walk` pubspec | 다른 feature · `supabase_flutter` · `go_router` 의존이 없다 |
+| `test/data/dog/drift_dog_repository_test.dart` (5) | `DriftDogRepository` (메모리 drift) | 저장 후 이름순 watch · 수정이 스트림에 반영 · 삭제하면 사라짐 · `findById` 없으면 null · 생일이 깨진 행도 스트림을 끊지 않는다(D1) |
+| `test/core/router/dogs_redirect_test.dart` (4) | `DogsRedirect` | 0마리면 `/dogs` 밖 경로 → `/dogs/new` · `/dogs` 아래는 통과 · 있으면 통과 · `markHasDogs()` 뒤 통과 |
+| `test/convention/package_boundary_test.dart` (1) | `apps/pawlog` pubspec | `feature_*` · `supabase_flutter` 의존이 없다 (2026-10-04 `feature_walk` 를 앱으로 옮기며 대상이 앱 pubspec 으로 바뀌었다) |
 
 계획 테스트 표의 17줄은 모두 위 파일에 있다. 리뷰 ④ I2 가 짚은 공백은 [구현 기록](history.md)의
 "고치지 않았지만 적어 둘 것" 에 남겼다.

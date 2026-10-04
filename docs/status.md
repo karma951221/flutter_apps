@@ -26,4 +26,19 @@
 둘째 앱이 알려준 [설계 §7](superpowers/specs/2026-09-13-commute-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것)
 의 후보 목록을 푼다. pawlog 가 더한 후보(`LocationGateway` 두 벌 등)는
 [pawlog 설계 §7](superpowers/specs/2026-10-03-walk-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것)에 있다. 설계 문서 `superpowers/specs/2026-09-13-package-boundary-design.md` 는
-아직 쓰지 않았다(검토 중, 브랜치 `refactor/package-boundary` 예정).
+아직 쓰지 않았다. 브랜치 `refactor/package-boundary` 에서 작은 것부터 푼다.
+
+- [x] **`feature_walk` → `apps/pawlog`** — pawlog 만 쓰는 코드를 앱 안 `lib/{core,data,domain,presentation}`
+      (영역 dog · walk · tracking · feed · photo)로 옮기고 `packages/features/walk` 를 지웠다.
+      마이크로 패키지 DI 는 앱 DI 로 합쳤다 (`edc71b9`, 2026-10-04)
+- [x] **`Clock` → `core`** — pawlog 설계 §7 #4. walk 의 `Clock` 을 `core` 로 올리고 pawlog 의
+      `DateTime Function() now` 주입을 바꿨다. walk 는 `CorePackageModule` 을 쓰지 않아 직접 등록한다
+      (§7 #6 으로 새로 적음) (`c84ee4c`, 2026-10-04)
+- [x] **`packages/location`** — pawlog 설계 §7 #1. commute · pawlog 의 `LocationGateway` 두 벌을 합치고
+      서비스 → 권한 확인(`LocationAccess`)을 `permission` 의 `PermissionRequester` 위에 둔다. pawlog 도
+      이제 `permission` 을 거친다 (`e908c25`, 2026-10-04)
+- [ ] 통근 설계 §7 의 후보(core 의 Supabase 결합 · `Routes` · l10n 분리 · `FailureCode` 등)와
+      pawlog 설계 §7 #2 · #3 · #5 · #6 — 남음
+
+검증(2026-10-04, `e908c25`): `flutter analyze` 0건 · `flutter test` 통과 — `core` +65 · `location` +20 ·
+`permission` +9 · `apps/walk` +349(건너뜀 1) · `apps/commute` +45 · `apps/pawlog` +186 · `apps/trader` +34.

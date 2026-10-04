@@ -23,8 +23,8 @@ workspace:
   - packages/features/safety
   - packages/features/settings
   - packages/features/trade
-  - packages/features/walk
   - packages/l10n
+  - packages/location
   - packages/permission
 
 dev_dependencies:

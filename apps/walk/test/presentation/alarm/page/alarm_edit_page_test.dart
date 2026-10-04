@@ -1,7 +1,7 @@
-import 'package:core/core.dart';
-import 'package:design_system/design_system.dart';
 import 'dart:async';
 
+import 'package:core/core.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,7 +11,6 @@ import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
-import 'package:walk/domain/clock.dart';
 import 'package:walk/presentation/alarm/format/alarm_format.dart';
 import 'package:walk/presentation/alarm/page/alarm_edit_page.dart';
 
