@@ -3,16 +3,16 @@
 > [테스트 가이드](../../../../../docs/testing/README.md) · [pawlog 허브](../../README.md) · [계획](plan.md) · [구현 기록](history.md) · [구현 리뷰](../../audits/2026-10-03-implementation-review.md)
 
 ```bash
-cd packages/features/walk && flutter test test/data/tracker
-cd packages/features/walk && flutter test test/presentation/cubit/active_walk_cubit_test.dart test/presentation/format
-cd packages/features/walk && flutter test test/presentation/page/active_walk_page_test.dart
+cd apps/pawlog && flutter test test/data/tracking
+cd apps/pawlog && flutter test test/presentation/tracking/cubit test/presentation/walk/format
+cd apps/pawlog && flutter test test/presentation/tracking/page
 ```
 
 W2 몫은 추적기 12 · cubit 11 · 포맷 7 · 페이지 9 = 39건이다(2026-10-03, `93d722b` 기준). 추적
 도메인(정책 4 · `StartWalkScenario` 3 · `DiscardWalkScenario` 1)은 ① 의 `test/domain/` 이 덮는다.
 GPS · 지도 타일은 실제로 부르지 않는다 — `LocationGateway` mock 과 stub `TileProvider` 를 쓴다.
 
-## `test/data/tracker/`
+## `test/data/tracking/`
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
@@ -22,9 +22,9 @@ GPS · 지도 타일은 실제로 부르지 않는다 — `LocationGateway` mock
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
-| `cubit/active_walk_cubit_test.dart` (11) | `ActiveWalkCubit` | 반려견 목록 → 전부 선택된 `selectingDogs` · 0마리 → 빈 `selectingDogs` 이고 시작하지 않음 · 추적 중 재진입 → `getDogs` 없이 `tracking` · `finished` 재진입 → `stopped` · `toggleDog` 넣고 빼기 · 시작 성공 → 선택한 반려견으로 `startWalk`, `starting` 뒤 `tracking` · 권한 거부 → 선택 유지 `failure`, 재시도는 같은 알림 문구 · 반려견 조회 실패의 재시도는 다시 읽기 · `stop` 성공은 `stopped` 한 번(구독이 먼저 `finished` 를 줘도) · `stop` 실패 → `failure`, 재시도는 추적 상태를 다시 읽기 · **`fakeAsync` 로 1 · 2 · 3초 `elapsed` 재계산, `close` 뒤 정지** |
-| `format/walk_format_test.dart` (7) | `WalkFormat` | `999 m` · `850 m` · `1.0 km` · `1.3 km` · 999.6 m → `1.0 km` 경계, `59분` · `1시간 5분`, `07:05` · `1:02:03` |
-| `page/active_walk_page_test.dart` (9) | `ActiveWalkPage` | 칩을 모두 해제하면 시작 버튼 비활성 · 시작하면 선택한 반려견과 알림 문구로 `startWalk` · 추적 중 지도 · 경과 시간 · 거리 · 점이 없으면 "위치를 찾는 중…" · 종료 확인 → `stopWalk` 후 `onStopped` 한 번 · 취소면 둘 다 없음 · 저장 안 된 종료 세션으로 들어오면 곧바로 `onStopped` · 권한 거부 → 안내 + 재시도 → `startWalk` 다시 · 0마리 → 등록 안내 → `onOpenDogs` |
+| `tracking/cubit/active_walk_cubit_test.dart` (11) | `ActiveWalkCubit` | 반려견 목록 → 전부 선택된 `selectingDogs` · 0마리 → 빈 `selectingDogs` 이고 시작하지 않음 · 추적 중 재진입 → `getDogs` 없이 `tracking` · `finished` 재진입 → `stopped` · `toggleDog` 넣고 빼기 · 시작 성공 → 선택한 반려견으로 `startWalk`, `starting` 뒤 `tracking` · 권한 거부 → 선택 유지 `failure`, 재시도는 같은 알림 문구 · 반려견 조회 실패의 재시도는 다시 읽기 · `stop` 성공은 `stopped` 한 번(구독이 먼저 `finished` 를 줘도) · `stop` 실패 → `failure`, 재시도는 추적 상태를 다시 읽기 · **`fakeAsync` 로 1 · 2 · 3초 `elapsed` 재계산, `close` 뒤 정지** |
+| `walk/format/walk_format_test.dart` (7) | `WalkFormat` | `999 m` · `850 m` · `1.0 km` · `1.3 km` · 999.6 m → `1.0 km` 경계, `59분` · `1시간 5분`, `07:05` · `1:02:03` |
+| `tracking/page/active_walk_page_test.dart` (9) | `ActiveWalkPage` | 칩을 모두 해제하면 시작 버튼 비활성 · 시작하면 선택한 반려견과 알림 문구로 `startWalk` · 추적 중 지도 · 경과 시간 · 거리 · 점이 없으면 "위치를 찾는 중…" · 종료 확인 → `stopWalk` 후 `onStopped` 한 번 · 취소면 둘 다 없음 · 저장 안 된 종료 세션으로 들어오면 곧바로 `onStopped` · 권한 거부 → 안내 + 재시도 → `startWalk` 다시 · 0마리 → 등록 안내 → `onOpenDogs` |
 
 계획 테스트 표의 14줄은 모두 위 파일에 있다. `RouteMap` · `WalkStatsRow` · `DogChips` 는 따로
 테스트 파일이 없고 페이지 테스트가 지난다.

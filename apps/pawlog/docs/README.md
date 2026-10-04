@@ -4,8 +4,8 @@
 
 강아지와 산책한 기록을 쌓고 피드로 돌아보는 앱이다. 산책 시작을 누르면 GPS 로 코스를
 그리고, 끝나면 강아지 · 사진 · 메모를 붙여 저장한다. v1 은 로그인 · 백엔드 없이 기기에만
-저장하고(drift), v2 에서 Supabase 소셜 피드를 얹는다. 앱 코드는 `apps/pawlog/`, feature
-코드는 `packages/features/walk/` 에 있다. v1(W1~W4)은 구현을 마쳤고 에뮬레이터 검증은 아직이다
+저장하고(drift), v2 에서 Supabase 소셜 피드를 얹는다. 코드는 모두 `apps/pawlog/` 에
+있다(`lib/{core,data,domain,presentation}`, 2026-10-04 `feature_walk` 패키지에서 옮김). v1(W1~W4)은 구현을 마쳤고 에뮬레이터 검증은 아직이다
 ([진행 현황](status.md)).
 
 ## 문서

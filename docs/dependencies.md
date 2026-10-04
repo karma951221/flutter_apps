@@ -1,6 +1,6 @@
 # 패키지 의존 그래프
 
-> [문서 허브](README.md) · [아키텍처](architecture.md) · 2026-09-13 작성 · 2026-10-03 갱신(`feature_walk`) · `packages/**/pubspec.yaml`에서 뽑은 그래프
+> [문서 허브](README.md) · [아키텍처](architecture.md) · 2026-09-13 작성 · 2026-10-04 갱신(`feature_walk` → `apps/pawlog`) · `packages/**/pubspec.yaml`에서 뽑은 그래프
 > (다시 그리는 방법은 [§6](#6-다시-그리기))
 
 이 문서는 **지금 코드가 실제로 어떻게 얽혀 있는지**를 적는다. 어떻게 얽혀야 하는지(규칙)는
@@ -19,7 +19,6 @@ flowchart TB
   end
   subgraph features["packages/features/*"]
     F[feature_* 12개]
-    W[feature_walk]
   end
   DS[design_system]
   L[l10n]
@@ -29,12 +28,9 @@ flowchart TB
   trader --> F
   F --> DS
   F --> L
-  W --> DS
-  W --> L
   DS --> L
   L --> CORE
   F --> CORE
-  W --> CORE
   commute_app --> DS
   commute_app --> L
   commute_app --> CORE
@@ -43,7 +39,6 @@ flowchart TB
   walk_app --> L
   walk_app --> CORE
   walk_app --> PERM
-  pawlog_app --> W
   pawlog_app --> DS
   pawlog_app --> L
   pawlog_app --> CORE
@@ -68,14 +63,13 @@ flowchart LR
   trade
   follow:::leaf
   preferences:::leaf
-  walk:::leaf
   chat
   comment
   feed
   settings
   profile
 
-  class auth,safety,reaction,follow,preferences,walk leaf
+  class auth,safety,reaction,follow,preferences leaf
 
   trade --> auth
   post --> reaction
@@ -103,12 +97,10 @@ flowchart LR
 
 순환은 없다(DAG). 노란 노드가 **허브**(3개 이상이 의존)다.
 
-`walk`(`feature_walk`) 는 pawlog 앱 전용 리프다. 다른 feature 를 보지 않고 기반 패키지
-(`core` · `design_system` · `l10n`)에만 기대며, 앱이 콜백으로 화면을 잇는다. 거기에
-서드파티로 `drift` · `drift_flutter`(로컬 DB) · `geolocator`(위치) · `flutter_map` · `latlong2`(지도) ·
-`path_provider`(사진 파일 위치)를 더한다. 이 경계는 각 앱의 `package_boundary_test` 가 pubspec 으로
-지킨다(`feature_` 접두 · `supabase_flutter` · `go_router` 없음). 통근 · 걷기(`apps/walk`) 앱은
-feature 패키지 없이 기반 패키지와 `permission` 만 쓰고 코드를 앱 안에 둔다.
+통근 · 걷기(`apps/walk`) · pawlog 앱은 feature 패키지 없이 기반 패키지(`core` · `design_system` ·
+`l10n`)와 `permission` 만 쓰고 코드를 앱 안에 둔다. pawlog 는 처음에 `feature_walk` 패키지를 따로
+뒀으나 한 앱만 쓰는 코드라 2026-10-04 앱 안으로 옮겼다. 이 경계는 각 앱의 `package_boundary_test` 가
+pubspec 으로 지킨다(`feature_` 접두 · `supabase_flutter` 없음).
 
 ### 허브 — 몇 개가 나를 의존하나
 
@@ -134,7 +126,7 @@ pubspec에 적힌 직접 의존만 보면 과소평가한다. 실제로 딸려�
 | `chat` | 2 | auth, safety | 2 |
 | `settings` | 2 | auth, preferences | 2 |
 | `trade` | 1 | auth | 1 |
-| `auth` · `follow` · `preferences` · `reaction` · `safety` · `walk` | 0 | — | 0 |
+| `auth` · `follow` · `preferences` · `reaction` · `safety` | 0 | — | 0 |
 
 `profile` 하나를 쓰려면 feature 12개 중 8개가 온다. 둘째 앱이 "프로필 화면만" 가져다 쓰는
 것은 사실상 불가능하다.

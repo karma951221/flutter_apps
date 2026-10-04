@@ -11,13 +11,13 @@
 
 | 이미 있는 것 (W2 가 쓰기만 한다) | 위치 |
 |---|---|
-| `WalkSession`(`elapsedAt(now)`) · sealed `TrackerState`(`idle` / `tracking` / `finished`) · `TrackingNotice(title, text)` | `packages/features/walk/lib/src/domain/entity/` |
+| `WalkSession`(`elapsedAt(now)`) · sealed `TrackerState`(`idle` / `tracking` / `finished`) · `TrackingNotice(title, text)` | `apps/pawlog/lib/domain/tracking/entity/` |
 | `WalkTracker`(`current` · `states` · `start` · `stop` · `clear`) | `domain/repository/walk_tracker.dart` |
 | `WalkTrackingPolicy.accept` — 정확도 ≤ 50 m(null 통과) · 첫 점 외 이동 ≥ 2 m | `domain/policy/walk_tracking_policy.dart` |
 | `trackerState` · `trackerStates` · `startWalk(dogIds, notice)` · `stopWalk()` · `getDogs()` | `WalkUseCase` |
 | 강아지 0 → `walkDogRequired`, 추적 중 → `walkTrackingAlreadyActive` | `StartWalkScenario` |
 | `TileProvider` lazySingleton(`NetworkTileProvider`) | `di/walk_register_module.dart` |
-| 경로 `PawlogPaths.activeWalk = '/walk'` (지금은 `_Placeholder`) | `apps/pawlog/lib/app/router/` |
+| 경로 `PawlogPaths.activeWalk = '/walk'` (지금은 `_Placeholder`) | `apps/pawlog/lib/core/router/` |
 
 W2 가 소유하지 않는 것: 저장 폼(W3 — `onStopped` 가 `/walk/save` 로 넘긴다), 피드의 추적 중
 배너 `ActiveWalkBanner` 와 FAB(W4), Android 13+ 알림 권한 요청(범위 밖).

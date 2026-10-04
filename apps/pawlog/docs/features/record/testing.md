@@ -3,23 +3,23 @@
 > [테스트 가이드](../../../../../docs/testing/README.md) · [pawlog 허브](../../README.md) · [계획](plan.md) · [구현 기록](history.md) · [구현 리뷰](../../audits/2026-10-03-implementation-review.md)
 
 ```bash
-cd packages/features/walk && flutter test test/presentation/cubit/walk_edit_cubit_test.dart test/presentation/cubit/walk_detail_cubit_test.dart
-cd packages/features/walk && flutter test test/presentation/page/walk_edit_page_test.dart test/presentation/page/walk_detail_page_test.dart
-cd packages/features/walk && flutter test test/domain/usecase/scenario   # 저장 · 수정 · 삭제 · 버리기 시나리오
+cd apps/pawlog && flutter test test/presentation/walk/cubit
+cd apps/pawlog && flutter test test/presentation/walk/page
+cd apps/pawlog && flutter test test/domain/walk/usecase test/domain/tracking/usecase   # 저장 · 수정 · 삭제 · 버리기 시나리오
 ```
 
 W3 몫은 cubit 26 · 페이지 18 = 44건이다(2026-10-03, `93d722b` 기준). 파일 정리 순서 · 사진 id 보존 ·
 0마리 거부는 ① ② 의 시나리오(`save_walk` 4 · `update_walk` 3 · `delete_walk` 3 · `discard_walk` 1)와
 `drift_walk_repository_test.dart`(8)가 덮는다.
 
-## `test/presentation/cubit/`
+## `test/presentation/walk/cubit/`
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
 | `walk_edit_cubit_test.dart` (20) | `WalkEditCubit` | `finished` 세션으로 폼(세션 강아지 선택) · 세션 없음 / 추적 중 → `loadFailure` · 기존 산책 불러오기 · 없는 산책 → `walkNotFound` · 강아지 토글 · 메모 · `addPhotos` 가 `storePhoto` 후 경로를 쌓는다 · **9장에 3장 → 1장만 저장, 10장** · 한 장 실패 → `failure` 싣고 나머지 계속 · `removePhoto` 는 추가분만 파일 삭제 · 신규 저장 → `saveWalk(WalkDraft)` → `saved` · 저장 실패 → `editing.failure` · 수정 → `updateWalk` · **저장 중 늦게 끝난 `addPhotos` 는 파일 삭제** · 버리기 → `discardWalk(추가분)` → `discarded` · **수정 모드 `discard` 는 `discardWalk` 를 부르지 않는다** · 저장 없이 닫으면 새 사진 삭제 · 수정 중 추가분만 닫을 때 삭제하고 `discardWalk` 없음 · 저장했으면 닫아도 유지 · `addPhotos` 도중 닫히면 방금 쓴 파일 삭제 |
 | `walk_detail_cubit_test.dart` (6) | `WalkDetailCubit` | `load` 가 walk · track 을 함께 읽는다 · `Ok(null)` → `failure(walkNotFound)` · 읽기 실패 → `failure` · **다시 읽을 때 `loading` 을 내지 않는다** · 삭제 → `deleting` → `deleted` · 삭제 실패 → `loaded(failure)` |
 
-## `test/presentation/page/`
+## `test/presentation/walk/page/`
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
@@ -48,7 +48,7 @@ W3 몫은 cubit 26 · 페이지 18 = 44건이다(2026-10-03, `93d722b` 기준). 
   생기고 지워지는지는 `file_photo_storage_test.dart`(임시 폴더)와 에뮬레이터의 `run-as ls` 로 확인한다
 - **image_picker · 카메라 인텐트** — `MockImagePickerService` 라 권한 · 압축 · 취소 동작은 기기에서만
 - **앱 라우터 연결** — 페이지를 라우터 없이 직접 띄우므로 `/walks/:id` 가 열리는지 모른다. 리뷰 ⑥ W1
-  (부모 `/walks` redirect 가 상세 · 수정까지 피드로 돌린다, `d5f95b0` 에서 수정)이 이 틈으로 빠졌다 — `apps/pawlog/test/app/router/`
+  (부모 `/walks` redirect 가 상세 · 수정까지 피드로 돌린다, `d5f95b0` 에서 수정)이 이 틈으로 빠졌다 — `apps/pawlog/test/core/router/`
   에 `createRouter` 테스트가 필요하다([구현 기록](history.md))
 - **사진 디코드 · 지도 타일** — 없는 경로의 `File` 과 stub 타일이라 실제 썸네일 · 경로 그림은 안 보인다
 

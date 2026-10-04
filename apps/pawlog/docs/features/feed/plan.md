@@ -12,14 +12,14 @@
 
 | 이미 있는 것 (W4 가 쓰기만 한다) | 위치 |
 |---|---|
-| `Walk(id, startedAt, endedAt, duration, distanceMeters, memo?, dogs, photos, previewPoints, …)` — 전체 경로 없음, `previewPoints` ≤ 64점 | `packages/features/walk/lib/src/domain/entity/walk.dart` |
+| `Walk(id, startedAt, endedAt, duration, distanceMeters, memo?, dogs, photos, previewPoints, …)` — 전체 경로 없음, `previewPoints` ≤ 64점 | `apps/pawlog/lib/domain/walk/entity/walk.dart` |
 | `watchWalks()` — `started_at` 내림차순(동률은 `id` 내림차순), 강아지 · 사진을 join, 사진은 `position` 순 | `DriftWalkRepository.watchAll` |
 | `trackerState` · `trackerStates`(브로드캐스트, 현재값을 먼저 내지 않는다) · `photoFile` | `WalkUseCase` |
 | sealed `TrackerState`(`idle` / `tracking(session)` / `finished(session)`) | `domain/entity/tracker_state.dart` |
 | `WalkStatsRow` · `WalkFormat.distance` · `WalkFormat.duration` | W2 |
 | `DogAvatars` | W3 |
 | `DateTime.displayDateTime(localeName)` | `packages/core/lib/src/extension/date_time_format.dart` |
-| 경로 `PawlogPaths.feed = '/'` (지금은 `_Placeholder` + 임시 "dogs" 버튼) | `apps/pawlog/lib/app/router/` |
+| 경로 `PawlogPaths.feed = '/'` (지금은 `_Placeholder` + 임시 "dogs" 버튼) | `apps/pawlog/lib/core/router/` |
 
 drift `watch()` 가 `walks` · `walk_dogs` · `dogs` · `walk_photos` 를 모두 보므로 저장 · 수정 ·
 삭제 · **강아지 이름 변경**이 그대로 흐른다. 그래서 "돌아오면 새로고침" 콜백이 없다.

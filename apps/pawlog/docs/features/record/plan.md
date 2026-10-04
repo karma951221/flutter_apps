@@ -11,7 +11,7 @@
 
 | 이미 있는 것 (W3 가 쓰기만 한다) | 위치 |
 |---|---|
-| `Walk` · `WalkDraft` · `WalkUpdate` · `WalkPhoto(id, path, position)` · `WalkSession` · sealed `TrackerState` | `packages/features/walk/lib/src/domain/entity/` |
+| `Walk` · `WalkDraft` · `WalkUpdate` · `WalkPhoto(id, path, position)` · `WalkSession` · sealed `TrackerState` | `apps/pawlog/lib/domain/{walk,tracking}/entity/` |
 | `saveWalk` → `Result<Walk>` · `updateWalk` → `Result<Walk>` · `deleteWalk` · `getWalk` → `Result<Walk?>` · `getWalkTrack` · `getDogs` · `storePhoto({bytes, extension})` · `removePhoto` · `photoFile` · `discardWalk({photoPaths})` · `trackerState` | `WalkUseCase` |
 | `dogIds` 가 비었거나 **모두 삭제된 강아지**면 `walkDogRequired`, 64점 프리뷰, 저장 성공 후 `tracker.clear()` | `SaveWalkScenario` |
 | 없는 산책 → `walkNotFound`, 남는 사진은 **기존 `WalkPhoto.id` 유지**, DB 성공 뒤 목록에서 빠진 파일만 삭제 | `UpdateWalkScenario` |
@@ -19,7 +19,7 @@
 | 파일 삭제 → `tracker.clear()`(**`finished` 에서만** `idle`) | `DiscardWalkScenario` |
 | `RouteMap({points, follow, emptyMessage})` · `WalkStatsRow` · `DogChips` · `WalkFormat` | W2 — [tracking 계획](../tracking/plan.md) |
 | `ImagePickerService.pickImages({limit})` → `List<PreparedImage>` · `captureImage()` → `PreparedImage?` | `packages/core/lib/src/media/` |
-| 경로 `PawlogPaths.saveWalk` · `walk(id)` · `walkEdit(id)` (지금은 `_Placeholder`) | `apps/pawlog/lib/app/router/` |
+| 경로 `PawlogPaths.saveWalk` · `walk(id)` · `walkEdit(id)` (지금은 `_Placeholder`) | `apps/pawlog/lib/core/router/` |
 
 W3 가 소유하지 않는 것: 피드 카드 · 배너(W4), 추적 시작 · 종료(W2).
 
