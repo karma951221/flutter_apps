@@ -1,0 +1,21 @@
+name: location
+description: Shared geolocator wrapper and location access flow.
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  geolocator: ^14.0.3
+  permission: any
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+  geolocator_platform_interface: ^4.2.6
+  mocktail: ^1.0.5
+  plugin_platform_interface: ^2.1.8

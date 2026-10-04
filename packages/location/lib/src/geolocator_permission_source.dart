@@ -23,8 +23,7 @@ class GeolocatorPermissionSource implements PermissionSource {
       switch (permission) {
         LocationPermission.always ||
         LocationPermission.whileInUse => PermissionStatus.granted,
-        LocationPermission.deniedForever =>
-          PermissionStatus.permanentlyDenied,
+        LocationPermission.deniedForever => PermissionStatus.permanentlyDenied,
         LocationPermission.denied ||
         LocationPermission.unableToDetermine => PermissionStatus.denied,
       };

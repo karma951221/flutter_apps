@@ -3,9 +3,8 @@ import 'dart:async';
 import 'package:core/core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:pawlog/data/location/location_gateway.dart';
 import 'package:pawlog/data/tracking/geolocator_walk_tracker.dart';
 import 'package:pawlog/domain/tracking/entity/tracker_state.dart';
 import 'package:pawlog/domain/tracking/entity/tracking_notice.dart';
@@ -39,7 +38,6 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(const LocationSettings());
-    registerFallbackValue(const GeoPoint(lat: 0, lng: 0));
   });
 
   setUp(() {
@@ -56,7 +54,9 @@ void main() {
     when(
       () => gateway.positionStream(any()),
     ).thenAnswer((_) => positions.stream);
-    when(() => gateway.distanceBetween(any(), any())).thenReturn(10);
+    when(
+      () => gateway.distanceBetween(any(), any(), any(), any()),
+    ).thenReturn(10);
   });
   tearDown(() async {
     debugDefaultTargetPlatformOverride = null;
@@ -171,7 +171,9 @@ void main() {
     await pumpEventQueue();
     expect(session().points, hasLength(1));
 
-    when(() => gateway.distanceBetween(any(), any())).thenReturn(1);
+    when(
+      () => gateway.distanceBetween(any(), any(), any(), any()),
+    ).thenReturn(1);
     positions.add(_pos(37.6));
     await pumpEventQueue();
     expect(session().points, hasLength(1));

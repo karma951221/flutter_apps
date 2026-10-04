@@ -16,10 +16,10 @@ import 'package:core/core.dart' as _i494;
 import 'package:flutter_map/flutter_map.dart' as _i525;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
+import 'package:location/location.dart' as _i645;
 
 import '../../data/database/walk_database.dart' as _i563;
 import '../../data/dog/drift_dog_repository.dart' as _i40;
-import '../../data/location/location_gateway.dart' as _i154;
 import '../../data/photo/file_photo_storage.dart' as _i508;
 import '../../data/tracking/geolocator_walk_tracker.dart' as _i976;
 import '../../data/walk/drift_walk_repository.dart' as _i1020;
@@ -49,8 +49,10 @@ extension GetItInjectableX on _i174.GetIt {
       () => registerModule.database,
       dispose: _i291.disposeWalkDatabase,
     );
+    gh.lazySingleton<_i645.LocationGateway>(
+      () => registerModule.locationGateway,
+    );
     gh.lazySingleton<_i525.TileProvider>(() => registerModule.tileProvider);
-    gh.lazySingleton<_i154.LocationGateway>(() => _i154.GeolocatorGateway());
     await gh.factoryAsync<_i497.Directory>(
       () => registerModule.photosRoot,
       instanceName: 'walkPhotosRoot',
@@ -59,15 +61,15 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i209.DogRepository>(
       () => _i40.DriftDogRepository(gh<_i563.WalkDatabase>()),
     );
-    gh.lazySingleton<_i612.WalkRepository>(
-      () => _i1020.DriftWalkRepository(gh<_i563.WalkDatabase>()),
-    );
     gh.lazySingleton<_i105.WalkTracker>(
       () => _i976.GeolocatorWalkTracker(
-        gh<_i154.LocationGateway>(),
+        gh<_i645.LocationGateway>(),
         gh<_i494.Clock>(),
       ),
       dispose: _i976.disposeWalkTracker,
+    );
+    gh.lazySingleton<_i612.WalkRepository>(
+      () => _i1020.DriftWalkRepository(gh<_i563.WalkDatabase>()),
     );
     gh.lazySingleton<_i475.PhotoStorage>(
       () => _i508.FilePhotoStorage(

@@ -13,9 +13,9 @@
 import 'package:core/core.dart' as _i494;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
+import 'package:location/location.dart' as _i645;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
-import '../../data/location/location_gateway.dart' as _i154;
 import '../../data/repository/asset_station_repository.dart' as _i979;
 import '../../data/repository/fake_transit_route_repository.dart' as _i932;
 import '../../data/repository/geolocator_location_repository.dart' as _i41;
@@ -28,6 +28,7 @@ import '../../domain/usecase/commute_use_case.dart' as _i365;
 import '../../presentation/cubit/commute_home_cubit.dart' as _i720;
 import '../../presentation/cubit/commute_settings_cubit.dart' as _i588;
 import '../../presentation/cubit/station_search_cubit.dart' as _i656;
+import 'register_module.dart' as _i291;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
@@ -37,15 +38,18 @@ extension GetItInjectableX on _i174.GetIt {
   }) async {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     await _i494.CorePackageModule().init(gh);
+    final registerModule = _$RegisterModule();
+    gh.lazySingleton<_i645.LocationGateway>(
+      () => registerModule.locationGateway,
+    );
     gh.lazySingleton<_i1039.TransitRouteRepository>(
       () => _i932.FakeTransitRouteRepository(),
     );
-    gh.lazySingleton<_i154.LocationGateway>(() => _i154.GeolocatorGateway());
     gh.lazySingleton<_i607.StationRepository>(
       () => _i979.AssetStationRepository(),
     );
     gh.lazySingleton<_i773.LocationRepository>(
-      () => _i41.GeolocatorLocationRepository(gh<_i154.LocationGateway>()),
+      () => _i41.GeolocatorLocationRepository(gh<_i645.LocationGateway>()),
     );
     gh.lazySingleton<_i404.CommuteSettingsRepository>(
       () => _i1028.PrefsCommuteSettingsRepository(
@@ -73,3 +77,5 @@ extension GetItInjectableX on _i174.GetIt {
     return this;
   }
 }
+
+class _$RegisterModule extends _i291.RegisterModule {}

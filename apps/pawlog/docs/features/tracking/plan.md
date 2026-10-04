@@ -25,12 +25,14 @@ W2 가 소유하지 않는 것: 저장 폼(W3 — `onStopped` 가 `/walk/save` �
 ## 추적기 계약 (`GeolocatorWalkTracker`)
 
 설계 §3 을 따른다. 구현은 `data/tracker/geolocator_walk_tracker.dart` · `data/location/location_gateway.dart`(통근 앱에서 복사 + `positionStream` · `distanceBetween`).
+2026-10-04 부터 추적기는 `apps/pawlog/lib/data/tracking/` 에 있고, 게이트웨이와 서비스 → 권한 확인(`LocationAccess`)은
+`packages/location` 의 것을 쓴다.
 
 | 상황 | 결과 |
 |---|---|
 | `start` · 이미 `tracking` | `Err(walkTrackingAlreadyActive)` |
 | `start` · 위치 서비스 꺼짐 | `Err(locationServiceDisabled)` |
-| `start` · 권한 denied | 세션당 한 번만 요청(`_requestDeclined`). 거부 · 영구 거부 → `Err(locationPermissionDenied)` |
+| `start` · 권한 denied | 세션당 한 번만 요청(`_requestDeclined`, 2026-10-04 부터 `LocationAccess` → `PermissionRequester`). 거부 · 영구 거부 → `Err(locationPermissionDenied)` |
 | `start` · 성공 | `positionStream` 구독 → `tracking(빈 세션)` 방출 → `Ok` |
 | 위치 수신 | `distanceBetween(직전 점, p)` → 정책 탈락이면 버림 → 점 추가 · 거리 합산 → `tracking(session)` |
 | 스트림 오류 | 세션 유지, `tracking` 그대로(점만 안 쌓인다) |
@@ -66,7 +68,7 @@ W2 가 소유하지 않는 것: 저장 폼(W3 — `onStopped` 가 `/walk/save` �
 | `failure(failure, dogs, selectedIds)` | `getDogs` · `start` · `stop` 의 `Err` | `AppPlaceholder(message: failure.localizedMessage(context), description: 권한 거부면 walkLocationDeniedHint, actionLabel: commonRetry, onAction: retry)` |
 
 - `retry()` 는 `selectedIds` 가 있으면 `start(notice)` 를 다시, 없으면 `load()` 를 다시 부른다
-- `locationPermissionDenied` 재시도는 **이번 세션에 다시 묻지 않는다**(`_requestDeclined`).
+- `locationPermissionDenied` 재시도는 **이번 세션에 다시 묻지 않는다**(`PermissionRequester.ensure`).
   그래서 `walkLocationDeniedHint`("설정에서 위치 권한을 허용해 주세요")를 함께 보인다
 
 ## 상태 규칙

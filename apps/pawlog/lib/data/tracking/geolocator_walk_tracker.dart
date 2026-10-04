@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:core/core.dart';
 import 'package:flutter/foundation.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:injectable/injectable.dart';
+import 'package:location/location.dart';
 
 import '../../domain/tracking/entity/tracker_state.dart';
 import '../../domain/tracking/entity/tracking_notice.dart';
@@ -12,7 +12,6 @@ import '../../domain/tracking/policy/walk_tracking_policy.dart';
 import '../../domain/tracking/repository/walk_tracker.dart';
 import '../../domain/walk/entity/geo_point.dart';
 import '../../domain/walk/entity/walk_track_point.dart';
-import '../location/location_gateway.dart';
 
 /// 등록 타입이 [WalkTracker] 라 인터페이스에 dispose 가 없으므로 함수로 닫는다.
 FutureOr<void> disposeWalkTracker(WalkTracker tracker) =>
@@ -20,22 +19,22 @@ FutureOr<void> disposeWalkTracker(WalkTracker tracker) =>
 
 @LazySingleton(as: WalkTracker, dispose: disposeWalkTracker)
 class GeolocatorWalkTracker implements WalkTracker {
-  GeolocatorWalkTracker(this._gateway, this._clock);
+  GeolocatorWalkTracker(this._gateway, this._clock)
+    : _access = LocationAccess(_gateway);
 
   static const _policy = WalkTrackingPolicy();
   static const _distanceFilter = 3;
 
   final LocationGateway _gateway;
   final Clock _clock;
+
+  /// 서비스 → 권한 순서로 확인하고, 권한은 세션당 한 번만 묻는다.
+  final LocationAccess _access;
   final StreamController<TrackerState> _controller =
       StreamController<TrackerState>.broadcast();
 
   TrackerState _state = const TrackerState.idle();
   StreamSubscription<Position>? _sub;
-
-  /// 이번 세션에서 사용자가 권한 요청을 거부했는지. Android 는 첫 거부 뒤에도
-  /// `denied` 를 돌려주므로 기억하지 않으면 시스템 다이얼로그가 계속 뜬다.
-  bool _requestDeclined = false;
 
   @override
   TrackerState get current => _state;
@@ -59,24 +58,21 @@ class GeolocatorWalkTracker implements WalkTracker {
       );
     }
     try {
-      if (!await _gateway.isLocationServiceEnabled()) {
-        return const Err(
-          Failure.validation(failureCode: FailureCode.locationServiceDisabled),
-        );
-      }
-
-      var permission = await _gateway.checkPermission();
-      if (permission == LocationPermission.denied && !_requestDeclined) {
-        permission = await _gateway.requestPermission();
-        _requestDeclined =
-            permission == LocationPermission.denied ||
-            permission == LocationPermission.deniedForever;
-      }
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        return const Err(
-          Failure.forbidden(failureCode: FailureCode.locationPermissionDenied),
-        );
+      switch (await _access.ensure()) {
+        case LocationAccessStatus.serviceDisabled:
+          return const Err(
+            Failure.validation(
+              failureCode: FailureCode.locationServiceDisabled,
+            ),
+          );
+        case LocationAccessStatus.permissionDenied:
+          return const Err(
+            Failure.forbidden(
+              failureCode: FailureCode.locationPermissionDenied,
+            ),
+          );
+        case LocationAccessStatus.granted:
+          break;
       }
 
       // await 사이에 다른 start 가 끼어들었을 수 있다.
@@ -147,7 +143,12 @@ class GeolocatorWalkTracker implements WalkTracker {
     final previous = session.points.lastOrNull;
     final step = previous == null
         ? 0.0
-        : _gateway.distanceBetween(previous.point, next.point);
+        : _gateway.distanceBetween(
+            previous.point.lat,
+            previous.point.lng,
+            next.point.lat,
+            next.point.lng,
+          );
 
     if (!_policy.accept(previous: previous, next: next, stepMeters: step)) {
       return;

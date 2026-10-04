@@ -24,6 +24,7 @@ workspace:
   - packages/features/settings
   - packages/features/trade
   - packages/l10n
+  - packages/location
   - packages/permission
 
 dev_dependencies:

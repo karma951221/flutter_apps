@@ -1,7 +1,5 @@
-import 'package:commute/data/location/geolocator_permission_source.dart';
-import 'package:commute/data/location/location_gateway.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:location/location.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 
@@ -31,9 +29,7 @@ void main() {
     });
 
     test('request: $platform → $expected', () async {
-      when(
-        () => gateway.requestPermission(),
-      ).thenAnswer((_) async => platform);
+      when(() => gateway.requestPermission()).thenAnswer((_) async => platform);
       expect(await source.request(), expected);
     });
   }

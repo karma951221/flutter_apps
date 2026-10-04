@@ -113,6 +113,10 @@ cascade 가 검증되지 않는다.
 막고, `core` 로 올리면 이미 무거운 `core` 에 geolocator 가 하나 더 붙는다. 두 벌이 된
 것은 리팩터링 후보로 적어 둔다(§9).
 
+> 2026-10-04: 두 벌을 `packages/location`(`LocationGateway` · `GeolocatorGateway` · 서비스 → 권한
+> 확인 `LocationAccess`)으로 합쳤다. 권한은 `permission` 패키지의 `PermissionRequester` 가 세션당
+> 한 번만 묻는다. 위치 스트림 설정(정확도 · `distanceFilter` · 알림)은 여전히 pawlog 가 만든다.
+
 ### 4.4 지도는 flutter_map (OpenStreetMap)
 
 API 키 · 네이티브 SDK · 과금이 없고 순수 Dart 라 위젯 테스트가 된다. Google Maps 는
