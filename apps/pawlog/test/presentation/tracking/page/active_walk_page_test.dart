@@ -35,7 +35,7 @@ void main() {
     ).thenAnswer((_) => Stream.value(Ok([dog('1'), dog('2')])));
     getIt
       ..registerFactory<ActiveWalkCubit>(
-        () => ActiveWalkCubit.withClock(useCase, () => now),
+        () => ActiveWalkCubit(useCase, FakeClock.fixed(now)),
       )
       ..registerSingleton<TileProvider>(StubTileProvider());
   });

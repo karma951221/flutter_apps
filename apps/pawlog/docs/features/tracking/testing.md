@@ -31,13 +31,13 @@ GPS · 지도 타일은 실제로 부르지 않는다 — `LocationGateway` mock
 
 ## 알아둘 것
 
-- 페이지 테스트는 `getIt` 에 `ActiveWalkCubit.withClock(useCase, () => now)` factory 와
+- 페이지 테스트는 `getIt` 에 `ActiveWalkCubit(useCase, FakeClock.fixed(now))` factory 와
   `StubTileProvider`(1×1 투명 PNG 를 메모리에서 준다)를 등록하고, `tearDown` 에서 스트림을 닫은 뒤
   `getIt.reset()` 한다. `RouteMap` 이 `tileProvider ?? getIt<TileProvider>()` 라 네트워크를 타지 않는다
 - 추적 화면은 1초 주기 타이머가 남는다. 테스트 끝에서 `tester.pumpWidget(const SizedBox())` 로
   페이지를 내려 cubit 을 닫아야 "타이머가 남았다" 실패가 나지 않는다
-- 타이머 테스트는 `fake_async`(dev 의존)의 `fakeAsync` + `async.getClock(t0)` 로 시계와 타이머를
-  함께 돌린다. "틱을 누적하지 않는다" 를 실제로 검증하는 유일한 곳이다
+- 타이머 테스트는 `fake_async`(dev 의존)의 `fakeAsync` + `FakeClock(async.getClock(t0).now)` 로 시계와
+  타이머를 함께 돌린다. `FakeClock` 은 `core` 의 `Clock` 을 상속한 `test/support/fakes.dart` 의 가짜다. "틱을 누적하지 않는다" 를 실제로 검증하는 유일한 곳이다
 - `trackerStates` 는 테스트가 만든 `StreamController.broadcast()` 이고, `trackerState` 는 바꿀 수 있는
   `current` 변수를 돌려준다 — 재진입은 `current` 만 바꿔 흉내 낸다
 - `pumpApp` 은 `Locale('ko')` 를 고정한다. `ko` 가 ARB 템플릿이라 원문이 곧 기대값이다

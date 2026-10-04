@@ -7,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
-import '../../../domain/clock.dart';
 import '../cubit/alarm_ringing_cubit.dart';
 import '../cubit/alarm_ringing_state.dart';
 import '../format/alarm_format.dart';

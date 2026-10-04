@@ -17,5 +17,6 @@ export 'src/navigation/routes.dart';
 export 'src/network/secure_supabase_storage.dart';
 export 'src/pagination/cursor_page.dart';
 export 'src/result/result.dart';
+export 'src/time/clock.dart';
 export 'src/validation/nickname_check.dart';
 export 'src/validation/validators.dart';

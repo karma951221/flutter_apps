@@ -10,13 +10,13 @@ class SaveDogScenario {
     this._dogs,
     this._storage,
     this._idGenerator,
-    this._now,
+    this._clock,
   );
 
   final DogRepository _dogs;
   final PhotoStorage _storage;
   final IdGenerator _idGenerator;
-  final DateTime Function() _now;
+  final Clock _clock;
 
   Future<Result<Dog>> call(DogDraft draft) async {
     final name = draft.name.trim();
@@ -26,7 +26,7 @@ class SaveDogScenario {
       );
     }
 
-    final now = _now();
+    final now = _clock.now();
     final id = draft.id;
     Dog? previous;
     if (id != null) {

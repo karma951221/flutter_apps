@@ -75,7 +75,7 @@ W2 가 소유하지 않는 것: 저장 폼(W3 — `onStopped` 가 `/walk/save` �
 |---|---|
 | 진입 | `load()` 가 `trackerState` 를 먼저 본다. `tracking` → 바로 `tracking(session, elapsed)`(재진입, 강아지 조회 생략), `finished` → `stopped(session)`(저장 안 된 세션을 새 산책으로 덮지 않게), `idle` → `getDogs()` → `selectingDogs` |
 | 구독 | `load()` 에서 `trackerStates` 구독. `tracking(s)` → `tracking(s, elapsed)`, `finished(s)` → `stopped(s)`. `close()` 에서 해제 |
-| 경과 시간 | `tracking` 일 때만 1초 `Timer.periodic` 이 `elapsed = session.elapsedAt(now())` 를 **다시 계산**(틱 누적 금지). `tracking` 을 벗어나거나 `close()` 에서 취소. 시계는 `DateTime Function() now` 주입 |
+| 경과 시간 | `tracking` 일 때만 1초 `Timer.periodic` 이 `elapsed = session.elapsedAt(now())` 를 **다시 계산**(틱 누적 금지). `tracking` 을 벗어나거나 `close()` 에서 취소. 시계는 `DateTime Function() now` 주입 (2026-10-04 부터 `core` 의 `Clock` 주입) |
 | 알림 문구 | 페이지가 `TrackingNotice(title: walkTrackingNotificationTitle, text: walkTrackingNotificationText)` 를 만들어 `cubit.start(notice)` 에 넘긴다(cubit 은 l10n 을 모른다) |
 | 뒤로 가기 | 추적 중에도 허용(`PopScope` 없음). 추적은 `WalkTracker` 싱글턴에 남는다 |
 | 중복 | 모든 `await` 뒤 `isClosed` 검사. `stopped` 는 한 번만 낸다(구독 · `stop()` 결과 중 먼저 온 쪽) |

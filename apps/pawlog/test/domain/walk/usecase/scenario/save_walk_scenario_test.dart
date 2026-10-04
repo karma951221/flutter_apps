@@ -22,7 +22,13 @@ void main() {
     dogs = MockDogRepository();
     tracker = MockWalkTracker();
     ids = MockIdGenerator();
-    scenario = SaveWalkScenario(walks, dogs, tracker, ids, () => now);
+    scenario = SaveWalkScenario(
+      walks,
+      dogs,
+      tracker,
+      ids,
+      FakeClock(() => now),
+    );
     when(
       () => dogs.getAll(),
     ).thenAnswer((_) async => Ok([dog('d1'), dog('d2')]));

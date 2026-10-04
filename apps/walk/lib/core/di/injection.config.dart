@@ -10,6 +10,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 
+import 'package:core/core.dart' as _i494;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
@@ -27,7 +28,6 @@ import '../../domain/alarm/repository/alarm_repository.dart' as _i296;
 import '../../domain/alarm/scheduler/alarm_scheduler.dart' as _i702;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
 import '../../domain/app_info/app_info_source.dart' as _i811;
-import '../../domain/clock.dart' as _i1053;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
@@ -46,10 +46,10 @@ extension GetItInjectableX on _i174.GetIt {
       () => registerModule.sharedPreferences,
       preResolve: true,
     );
+    gh.lazySingleton<_i494.Clock>(() => registerModule.clock);
     gh.lazySingleton<_i933.AlarmPermissions>(
       () => alarmPermissionModule.alarmPermissions,
     );
-    gh.lazySingleton<_i1053.Clock>(() => _i1053.Clock());
     gh.lazySingleton<_i702.AlarmScheduler>(() => _i238.PackageAlarmScheduler());
     gh.lazySingleton<_i332.HealthGateway>(() => _i332.HealthPluginGateway());
     gh.lazySingleton<_i204.ActivityRepository>(
@@ -61,20 +61,20 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i91.SettingsRepository>(
       () => _i724.PrefsSettingsRepository(gh<_i460.SharedPreferences>()),
     );
+    gh.lazySingleton<_i296.AlarmRepository>(
+      () => _i1.PrefsAlarmRepository(gh<_i460.SharedPreferences>()),
+    );
     gh.lazySingleton<_i5.WalkUseCase>(
       () => _i5.DefaultWalkUseCase(
         gh<_i204.ActivityRepository>(),
-        gh<_i1053.Clock>(),
+        gh<_i494.Clock>(),
       ),
-    );
-    gh.lazySingleton<_i296.AlarmRepository>(
-      () => _i1.PrefsAlarmRepository(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i873.AlarmUseCase>(
       () => _i873.DefaultAlarmUseCase(
         gh<_i296.AlarmRepository>(),
         gh<_i702.AlarmScheduler>(),
-        gh<_i1053.Clock>(),
+        gh<_i494.Clock>(),
       ),
     );
     return this;

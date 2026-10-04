@@ -15,14 +15,14 @@ class SaveWalkScenario {
     this._dogs,
     this._tracker,
     this._idGenerator,
-    this._now,
+    this._clock,
   );
 
   final WalkRepository _walks;
   final DogRepository _dogs;
   final WalkTracker _tracker;
   final IdGenerator _idGenerator;
-  final DateTime Function() _now;
+  final Clock _clock;
 
   Future<Result<Walk>> call(WalkDraft draft) async {
     if (draft.dogIds.isEmpty) {
@@ -43,7 +43,7 @@ class SaveWalkScenario {
       );
     }
 
-    final now = _now();
+    final now = _clock.now();
     final walk = Walk(
       id: _idGenerator.newId(),
       startedAt: draft.startedAt,

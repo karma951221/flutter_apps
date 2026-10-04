@@ -14,14 +14,14 @@ class UpdateWalkScenario {
     this._dogs,
     this._storage,
     this._idGenerator,
-    this._now,
+    this._clock,
   );
 
   final WalkRepository _walks;
   final DogRepository _dogs;
   final PhotoStorage _storage;
   final IdGenerator _idGenerator;
-  final DateTime Function() _now;
+  final Clock _clock;
 
   Future<Result<Walk>> call(WalkUpdate update) async {
     if (update.dogIds.isEmpty) {
@@ -68,7 +68,7 @@ class UpdateWalkScenario {
       ],
       previewPoints: current.previewPoints,
       createdAt: current.createdAt,
-      updatedAt: _now(),
+      updatedAt: _clock.now(),
     );
 
     final saved = await _walks.update(updated);

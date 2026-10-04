@@ -20,17 +20,13 @@ FutureOr<void> disposeWalkTracker(WalkTracker tracker) =>
 
 @LazySingleton(as: WalkTracker, dispose: disposeWalkTracker)
 class GeolocatorWalkTracker implements WalkTracker {
-  GeolocatorWalkTracker(LocationGateway gateway)
-    : this.withClock(gateway, DateTime.now);
-
-  @visibleForTesting
-  GeolocatorWalkTracker.withClock(this._gateway, this._now);
+  GeolocatorWalkTracker(this._gateway, this._clock);
 
   static const _policy = WalkTrackingPolicy();
   static const _distanceFilter = 3;
 
   final LocationGateway _gateway;
-  final DateTime Function() _now;
+  final Clock _clock;
   final StreamController<TrackerState> _controller =
       StreamController<TrackerState>.broadcast();
 
@@ -100,7 +96,7 @@ class GeolocatorWalkTracker implements WalkTracker {
         TrackerState.tracking(
           WalkSession(
             dogIds: dogIds,
-            startedAt: _now(),
+            startedAt: _clock.now(),
             points: const [],
             distanceMeters: 0,
           ),
@@ -176,9 +172,7 @@ class GeolocatorWalkTracker implements WalkTracker {
   Future<Result<WalkSession>> stop() async {
     final state = _state;
     if (state is! TrackerTracking) {
-      return const Err(
-        Failure.notFound(failureCode: FailureCode.walkNotFound),
-      );
+      return const Err(Failure.notFound(failureCode: FailureCode.walkNotFound));
     }
     await _sub?.cancel();
     _sub = null;
@@ -186,7 +180,7 @@ class GeolocatorWalkTracker implements WalkTracker {
     final finished = WalkSession(
       dogIds: s.dogIds,
       startedAt: s.startedAt,
-      endedAt: _now(),
+      endedAt: _clock.now(),
       points: s.points,
       distanceMeters: s.distanceMeters,
     );

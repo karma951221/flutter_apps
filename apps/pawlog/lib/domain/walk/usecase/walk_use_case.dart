@@ -82,28 +82,12 @@ abstract interface class WalkUseCase {
 @LazySingleton(as: WalkUseCase)
 class DefaultWalkUseCase implements WalkUseCase {
   DefaultWalkUseCase(
-    WalkRepository walkRepository,
-    DogRepository dogRepository,
-    WalkTracker tracker,
-    PhotoStorage photoStorage,
-    IdGenerator idGenerator,
-  ) : this.withClock(
-        walkRepository,
-        dogRepository,
-        tracker,
-        photoStorage,
-        idGenerator,
-        DateTime.now,
-      );
-
-  /// 테스트에서 시각을 고정하려고 둔 생성자. DI 는 위 생성자를 쓴다.
-  DefaultWalkUseCase.withClock(
     this._walks,
     this._dogs,
     this._tracker,
     this._photos,
     this._idGenerator,
-    this._now,
+    this._clock,
   );
 
   final WalkRepository _walks;
@@ -111,7 +95,7 @@ class DefaultWalkUseCase implements WalkUseCase {
   final WalkTracker _tracker;
   final PhotoStorage _photos;
   final IdGenerator _idGenerator;
-  final DateTime Function() _now;
+  final Clock _clock;
 
   @override
   Stream<Result<List<Walk>>> watchWalks() => WatchWalksScenario(_walks)();
@@ -125,11 +109,11 @@ class DefaultWalkUseCase implements WalkUseCase {
 
   @override
   Future<Result<Walk>> saveWalk(WalkDraft draft) =>
-      SaveWalkScenario(_walks, _dogs, _tracker, _idGenerator, _now)(draft);
+      SaveWalkScenario(_walks, _dogs, _tracker, _idGenerator, _clock)(draft);
 
   @override
   Future<Result<Walk>> updateWalk(WalkUpdate update) =>
-      UpdateWalkScenario(_walks, _dogs, _photos, _idGenerator, _now)(update);
+      UpdateWalkScenario(_walks, _dogs, _photos, _idGenerator, _clock)(update);
 
   @override
   Future<Result<void>> deleteWalk(String id) =>
@@ -146,7 +130,7 @@ class DefaultWalkUseCase implements WalkUseCase {
 
   @override
   Future<Result<Dog>> saveDog(DogDraft draft) =>
-      SaveDogScenario(_dogs, _photos, _idGenerator, _now)(draft);
+      SaveDogScenario(_dogs, _photos, _idGenerator, _clock)(draft);
 
   @override
   Future<Result<void>> deleteDog(String id) =>

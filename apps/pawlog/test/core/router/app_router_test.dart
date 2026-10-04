@@ -64,7 +64,9 @@ void main() {
       ..registerFactory<WalkFeedCubit>(() => WalkFeedCubit(useCase))
       ..registerFactory<WalkDetailCubit>(() => WalkDetailCubit(useCase))
       ..registerFactory<WalkEditCubit>(() => WalkEditCubit(useCase))
-      ..registerFactory<ActiveWalkCubit>(() => ActiveWalkCubit(useCase))
+      ..registerFactory<ActiveWalkCubit>(
+        () => ActiveWalkCubit(useCase, const Clock()),
+      )
       ..registerFactory<DogListCubit>(() => DogListCubit(useCase))
       ..registerFactory<DogEditCubit>(() => DogEditCubit(useCase))
       ..registerSingleton<TileProvider>(StubTileProvider());

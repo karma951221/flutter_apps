@@ -20,7 +20,7 @@ void main() {
     dogs = MockDogRepository();
     storage = MockPhotoStorage();
     ids = MockIdGenerator();
-    scenario = SaveDogScenario(dogs, storage, ids, () => now);
+    scenario = SaveDogScenario(dogs, storage, ids, FakeClock(() => now));
     when(() => dogs.upsert(any())).thenAnswer((_) async => const Ok(null));
     when(() => storage.remove(any())).thenAnswer((_) async {});
     when(() => ids.newId()).thenReturn('new-id');

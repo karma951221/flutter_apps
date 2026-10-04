@@ -8,7 +8,6 @@ import 'package:l10n/l10n.dart';
 import '../../../domain/alarm/entity/alarm.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
-import '../../../domain/clock.dart';
 import '../cubit/alarm_edit_cubit.dart';
 import '../cubit/alarm_edit_state.dart';
 import '../format/alarm_format.dart';

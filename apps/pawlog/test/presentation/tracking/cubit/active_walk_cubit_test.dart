@@ -37,7 +37,7 @@ void main() {
     ).thenAnswer((_) => Stream.value(Ok([dog('1'), dog('2')])));
   });
 
-  ActiveWalkCubit build() => ActiveWalkCubit.withClock(useCase, () => now);
+  ActiveWalkCubit build() => ActiveWalkCubit(useCase, FakeClock.fixed(now));
 
   blocTest<ActiveWalkCubit, ActiveWalkState>(
     '반려견 목록으로 selectingDogs 로 시작하고 전부 선택돼 있다',
@@ -283,7 +283,7 @@ void main() {
     fakeAsync((async) {
       current = TrackerState.tracking(walkSession());
       final clock = async.getClock(t0);
-      final cubit = ActiveWalkCubit.withClock(useCase, clock.now);
+      final cubit = ActiveWalkCubit(useCase, FakeClock(clock.now));
       final elapsed = <Duration>[];
       cubit.stream.listen((state) {
         if (state case ActiveWalkTracking(elapsed: final e)) elapsed.add(e);

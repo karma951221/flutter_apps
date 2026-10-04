@@ -16,6 +16,7 @@ import '../id/id_generator.dart' as _i1000;
 import '../media/image_picker_service.dart' as _i350;
 import '../media/image_storage.dart' as _i1040;
 import '../media/supabase_image_storage.dart' as _i571;
+import '../time/clock.dart' as _i807;
 import 'register_module.dart' as _i291;
 
 class CorePackageModule extends _i526.MicroPackageModule {
@@ -33,6 +34,7 @@ class CorePackageModule extends _i526.MicroPackageModule {
     gh.lazySingleton<_i706.Uuid>(() => registerModule.uuid);
     gh.lazySingleton<_i350.ImagePickerService>(
         () => _i350.ImagePickerService());
+    gh.lazySingleton<_i807.Clock>(() => const _i807.Clock());
     gh.lazySingleton<_i1000.IdGenerator>(
         () => _i1000.IdGenerator(gh<_i706.Uuid>()));
     gh.lazySingleton<_i1040.ImageStorage>(

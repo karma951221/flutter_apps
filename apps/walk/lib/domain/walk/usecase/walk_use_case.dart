@@ -1,7 +1,6 @@
 import 'package:core/core.dart';
 import 'package:injectable/injectable.dart';
 
-import '../../clock.dart';
 import '../entity/activity_period.dart';
 import '../entity/daily_activity.dart';
 import '../entity/health_access.dart';

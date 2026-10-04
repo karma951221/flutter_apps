@@ -14,14 +14,11 @@ import 'active_walk_state.dart';
 
 @injectable
 class ActiveWalkCubit extends Cubit<ActiveWalkState> {
-  ActiveWalkCubit(WalkUseCase useCase) : this.withClock(useCase, DateTime.now);
-
-  /// 테스트에서 시각을 고정하려고 둔 생성자. DI 는 위 생성자를 쓴다.
-  ActiveWalkCubit.withClock(this._useCase, this._now)
+  ActiveWalkCubit(this._useCase, this._clock)
     : super(const ActiveWalkState.loading());
 
   final WalkUseCase _useCase;
-  final DateTime Function() _now;
+  final Clock _clock;
 
   StreamSubscription<TrackerState>? _subscription;
   StreamSubscription<Result<List<Dog>>>? _dogsSubscription;
@@ -184,7 +181,7 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
     emit(
       ActiveWalkState.tracking(
         session: session,
-        elapsed: session.elapsedAt(_now()),
+        elapsed: session.elapsedAt(_clock.now()),
       ),
     );
     _timer ??= Timer.periodic(const Duration(seconds: 1), (_) => _tick());
@@ -194,7 +191,7 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
   void _tick() {
     final current = state;
     if (isClosed || current is! ActiveWalkTracking) return;
-    emit(current.copyWith(elapsed: current.session.elapsedAt(_now())));
+    emit(current.copyWith(elapsed: current.session.elapsedAt(_clock.now())));
   }
 
   /// 구독과 `stop()` 결과 중 먼저 온 쪽만 낸다.

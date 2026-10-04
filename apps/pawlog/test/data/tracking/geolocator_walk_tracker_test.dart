@@ -46,7 +46,7 @@ void main() {
     clock = t0;
     gateway = MockLocationGateway();
     positions = StreamController<Position>.broadcast();
-    tracker = GeolocatorWalkTracker.withClock(gateway, () => clock);
+    tracker = GeolocatorWalkTracker(gateway, FakeClock(() => clock));
     when(
       () => gateway.isLocationServiceEnabled(),
     ).thenAnswer((_) async => true);

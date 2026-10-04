@@ -62,15 +62,18 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i612.WalkRepository>(
       () => _i1020.DriftWalkRepository(gh<_i563.WalkDatabase>()),
     );
+    gh.lazySingleton<_i105.WalkTracker>(
+      () => _i976.GeolocatorWalkTracker(
+        gh<_i154.LocationGateway>(),
+        gh<_i494.Clock>(),
+      ),
+      dispose: _i976.disposeWalkTracker,
+    );
     gh.lazySingleton<_i475.PhotoStorage>(
       () => _i508.FilePhotoStorage(
         gh<_i497.Directory>(instanceName: 'walkPhotosRoot'),
         gh<_i494.IdGenerator>(),
       ),
-    );
-    gh.lazySingleton<_i105.WalkTracker>(
-      () => _i976.GeolocatorWalkTracker(gh<_i154.LocationGateway>()),
-      dispose: _i976.disposeWalkTracker,
     );
     gh.lazySingleton<_i5.WalkUseCase>(
       () => _i5.DefaultWalkUseCase(
@@ -79,10 +82,11 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i105.WalkTracker>(),
         gh<_i475.PhotoStorage>(),
         gh<_i494.IdGenerator>(),
+        gh<_i494.Clock>(),
       ),
     );
     gh.factory<_i143.ActiveWalkCubit>(
-      () => _i143.ActiveWalkCubit(gh<_i5.WalkUseCase>()),
+      () => _i143.ActiveWalkCubit(gh<_i5.WalkUseCase>(), gh<_i494.Clock>()),
     );
     gh.factory<_i980.DogEditCubit>(
       () => _i980.DogEditCubit(gh<_i5.WalkUseCase>()),

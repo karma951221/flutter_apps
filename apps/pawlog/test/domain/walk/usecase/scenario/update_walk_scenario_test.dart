@@ -23,7 +23,13 @@ void main() {
     dogs = MockDogRepository();
     storage = MockPhotoStorage();
     ids = MockIdGenerator();
-    scenario = UpdateWalkScenario(walks, dogs, storage, ids, () => now);
+    scenario = UpdateWalkScenario(
+      walks,
+      dogs,
+      storage,
+      ids,
+      FakeClock(() => now),
+    );
     when(
       () => dogs.getAll(),
     ).thenAnswer((_) async => Ok([dog('d1'), dog('d2')]));

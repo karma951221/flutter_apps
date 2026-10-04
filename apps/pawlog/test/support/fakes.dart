@@ -22,6 +22,18 @@ class MockPhotoStorage extends Mock implements PhotoStorage {}
 
 class MockIdGenerator extends Mock implements IdGenerator {}
 
+/// 시각을 고정하거나(`FakeClock.fixed`) 바깥 함수로 읽는(`FakeClock`, fake_async) 시계.
+class FakeClock extends Clock {
+  FakeClock(this._now);
+
+  FakeClock.fixed(DateTime value) : this(() => value);
+
+  final DateTime Function() _now;
+
+  @override
+  DateTime now() => _now();
+}
+
 final t0 = DateTime(2026, 10, 3, 9);
 final t1 = DateTime(2026, 10, 3, 9, 30);
 

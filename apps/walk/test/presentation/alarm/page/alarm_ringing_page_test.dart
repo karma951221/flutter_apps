@@ -9,7 +9,6 @@ import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
-import 'package:walk/domain/clock.dart';
 import 'package:walk/presentation/alarm/page/alarm_ringing_page.dart';
 
 class _MockUseCase extends Mock implements AlarmUseCase {}
