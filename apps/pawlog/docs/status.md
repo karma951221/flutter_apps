@@ -65,5 +65,24 @@ SDK 없음, 다음 세션.** APK · iOS 빌드도 아직 한 번도 하지 않�
    미테스트 경로(카메라 · 사진 없는 썸네일 fallback)
 3. **W5 social 기획** — v2. Supabase 소셜 피드를 얹는다. 착수 시 `features/social/plan.md`
 4. **리팩터링 후보** — [설계 §7](../../../docs/superpowers/specs/2026-10-03-walk-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것):
-   `LocationGateway` 가 `apps/commute` · `feature_walk` 에 두 벌, `FailureCode` · ARB 의 앱별 증가,
-   `AppAvatar.nickname`, 시계 추상 부재. 모노레포 공통 작업이라 [전체 진행 현황](../../../docs/status.md)에서 다룬다
+   남은 것은 `FailureCode` · ARB 의 앱별 증가, `AppAvatar.nickname`, `CLAUDE.md` 경로, `core` 등록을
+   앱이 따로 하는 문제. 모노레포 공통 작업이라 [전체 진행 현황](../../../docs/status.md)에서 다룬다.
+   2026-10-04 에 푼 것은 아래 "패키지 경계 정리" 에 있다
+
+## 패키지 경계 정리 (2026-10-04)
+
+브랜치 `refactor/package-boundary`. 동작은 바꾸지 않았다.
+
+- [x] **코드를 앱 안으로** — `packages/features/walk`(`feature_walk`)를 `apps/pawlog/lib/` 의
+      `core/`(app · router · di · bootstrap) · `data/` · `domain/` · `presentation/` 로 옮겼다. 영역은
+      `dog` · `walk` · `tracking` · `feed` · `photo`. `WalkRegisterModule` 은 앱의 `RegisterModule` 이 됐고
+      `FeatureWalkPackageModule` 은 없어졌다. 테스트도 `apps/pawlog/test/` 로 옮겨 `lib/` 와 1:1 이다.
+      `package_boundary_test` 는 앱 pubspec 을 본다 (`edc71b9`)
+- [x] **시계 주입** — 시나리오 · `DefaultWalkUseCase` · `GeolocatorWalkTracker` · `ActiveWalkCubit` 이
+      `core` 의 `Clock` 을 받는다. `withClock` 테스트 생성자는 없어지고 테스트는 `FakeClock` 을 쓴다 (`c84ee4c`)
+- [x] **위치는 `location` 패키지** — 추적기가 `packages/location` 의 `LocationGateway` · `LocationAccess` 를
+      쓴다. 권한은 `permission` 의 `PermissionRequester`(세션당 1회). 스트림 설정(정확도 `best` ·
+      `distanceFilter` 3 · 알림)은 그대로 추적기가 만든다 (`e908c25`)
+
+검증(2026-10-04, `e908c25`): `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+186`(옮긴 `feature_walk`
+테스트 포함). 에뮬레이터 검증은 여전히 미실행이다.

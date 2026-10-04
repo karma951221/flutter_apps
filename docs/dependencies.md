@@ -24,6 +24,7 @@ flowchart TB
   L[l10n]
   CORE[core]
   PERM[permission]
+  LOC[location]
 
   trader --> F
   F --> DS
@@ -34,7 +35,7 @@ flowchart TB
   commute_app --> DS
   commute_app --> L
   commute_app --> CORE
-  commute_app --> PERM
+  commute_app --> LOC
   walk_app --> DS
   walk_app --> L
   walk_app --> CORE
@@ -42,6 +43,8 @@ flowchart TB
   pawlog_app --> DS
   pawlog_app --> L
   pawlog_app --> CORE
+  pawlog_app --> LOC
+  LOC --> PERM
 ```
 
 의도한 방향은 `apps → features → {design_system, l10n} → core` 하나뿐이다. 이 그림에서
@@ -98,7 +101,8 @@ flowchart LR
 순환은 없다(DAG). 노란 노드가 **허브**(3개 이상이 의존)다.
 
 통근 · 걷기(`apps/walk`) · pawlog 앱은 feature 패키지 없이 기반 패키지(`core` · `design_system` ·
-`l10n`)와 `permission` 만 쓰고 코드를 앱 안에 둔다. pawlog 는 처음에 `feature_walk` 패키지를 따로
+`l10n`)와 `permission` · `location` 만 쓰고 코드를 앱 안에 둔다. 걷기는 `permission` 을 직접, 위치를 쓰는
+통근 · pawlog 는 `location`(→ `permission`)을 쓴다(2026-10-04). pawlog 는 처음에 `feature_walk` 패키지를 따로
 뒀으나 한 앱만 쓰는 코드라 2026-10-04 앱 안으로 옮겼다. 이 경계는 각 앱의 `package_boundary_test` 가
 pubspec 으로 지킨다(`feature_` 접두 · `supabase_flutter` 없음).
 

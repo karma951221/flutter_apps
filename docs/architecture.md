@@ -35,16 +35,17 @@ socialapp/
 │   ├── trader/                  # 첫째 앱 daylog — main · bootstrap · app shell · router · DI 조립 · config · home · patrol_test
 │   │   └── docs/                # 앱 문서 — README · status(★ 진행 현황) · overview · schema(★ DDL·RLS) ·
 │   │                            #   setup · e2e · audits/ · features/<name>/{plan,history,testing}.md
-│   ├── commute/                 # 둘째 앱 통근 시간 — Supabase 없음. core · design_system · l10n 만 쓴다. lib/ 아래 core(셸)·data·domain·presentation
+│   ├── commute/                 # 둘째 앱 통근 시간 — Supabase 없음. core · design_system · l10n · location 만 쓴다. lib/ 아래 core(셸)·data·domain·presentation
 │   │   └── docs/                # 앱 문서 — README · status · plan · history · testing
 │   ├── walk/                    # 셋째 앱 만보기 — Health Connect 읽기 · 알람, 안드로이드만. core · design_system · l10n · permission 만 쓴다
 │   │   └── docs/                # 앱 문서 — README · status · plan · history · testing
-│   └── pawlog/                  # 넷째 앱 강아지 산책 — v1 은 Supabase 없음(drift 로컬 DB · flutter_map). core · design_system · l10n 만 쓴다. lib/ 아래 core(셸)·data·domain·presentation
+│   └── pawlog/                  # 넷째 앱 강아지 산책 — v1 은 Supabase 없음(drift 로컬 DB · flutter_map). core · design_system · l10n · location 만 쓴다. lib/ 아래 core(셸)·data·domain·presentation
 │       └── docs/                # 앱 문서 — README · status · overview(★ 기획) · features/<name>/{plan,history,testing}.md
 └── packages/
-    ├── core/                    # error · result · pagination · validation · data 인프라 · media · di
+    ├── core/                    # error · result · pagination · validation · data 인프라 · media · time(Clock) · di
     ├── design_system/           # theme + widget
     ├── l10n/                    # ARB + AppLocalizations + failure/validation localizations
+    ├── location/                # geolocator 래퍼(LocationGateway) · 서비스 → 권한 확인(LocationAccess). permission 위에 선다
     ├── permission/              # 런타임 권한 상태 · 세션당 1회 요청 정책 (의존 없음)
     └── features/                # feature_<name> 패키지. lib/src/ 아래가 §2 의 3계층
         ├── auth/ post/ feed/ comment/ follow/ reaction/
