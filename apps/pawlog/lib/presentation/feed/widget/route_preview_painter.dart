@@ -8,7 +8,8 @@ import '../../theme/pawlog_theme.dart';
 
 /// 경로 점들을 타일 없이 폴리라인으로만 그리는 미리보기. 네트워크를 쓰지 않는다.
 ///
-/// 점들의 경계 상자를 비율을 유지한 채 캔버스에 맞춘다. 점이 없으면 아무것도 그리지 않는다.
+/// 점들의 경계 상자를 비율을 유지한 채 여백 안에 맞추고 가로 · 세로 모두 가운데에 둔다.
+/// 점이 없으면 아무것도 그리지 않는다.
 /// [casingColor] 가 있으면 그 색 9 테두리 위에 [color] 5 선을 얹는다(design.md 경로 선) —
 /// 연두는 밝은 바탕 위 대비가 약해 늘 남색 테두리와 함께 쓴다.
 class RoutePreviewPainter extends CustomPainter {
@@ -29,8 +30,9 @@ class RoutePreviewPainter extends CustomPainter {
   static const _strokeWidth = PawlogSize.routeStroke;
   static const _casingWidth = PawlogSize.routeCasing;
 
-  /// 테두리까지 캔버스 안에 들어오도록 가장자리에서 띄우는 폭.
-  static const _inset = PawlogSpacing.md;
+  /// 경로를 맞출 때 가장자리에서 띄우는 폭 — 선 테두리(반 폭) 바깥으로도 [PawlogSpacing.lg]
+  /// 가 남는다. 이전 14 는 테두리 4.5 를 빼면 9.5 만 남아 선이 상자에 붙어 보였다.
+  static const _inset = PawlogSpacing.lg + _casingWidth / 2;
 
   @override
   void paint(Canvas canvas, Size size) {
