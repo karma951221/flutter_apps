@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/entity/alarm_sound.dart';
 
 void main() {
   test('Weekday.of 는 DateTime.weekday 와 대응한다', () {
@@ -36,6 +37,47 @@ void main() {
 
     expect(decoded, alarm);
     expect(decoded.oneShotAt!.isUtc, isFalse);
+  });
+
+  group('sound', () {
+    Alarm roundTrip(Alarm alarm) =>
+        Alarm.fromJson(jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>);
+
+    test('기본은 시스템 기본 알람음', () {
+      expect(const Alarm(hour: 7, minute: 0).sound, const AlarmSound.system());
+      expect(Alarm.draft().sound, const AlarmSound.system());
+    });
+
+    test('JSON 에 sound 로 저장하고 3종 모두 되살린다', () {
+      const sounds = [
+        AlarmSound.system(),
+        AlarmSound.bundled(BundledAlarmSounds.rising),
+        AlarmSound.device(title: 'Morning Glory', path: '/data/app_flutter/alarm_sounds/1a2b.ogg'),
+      ];
+      for (final sound in sounds) {
+        final alarm = Alarm(id: 2, hour: 6, minute: 30, sound: sound);
+
+        expect(alarm.toJson()['sound'], sound.toJson());
+        expect(roundTrip(alarm), alarm);
+      }
+    });
+
+    test('sound 키가 없는 기존 알람은 시스템 기본으로 읽는다', () {
+      final alarm = Alarm.fromJson(const {'id': 1, 'hour': 7, 'minute': 0, 'enabled': true});
+
+      expect(alarm.sound, const AlarmSound.system());
+    });
+
+    test('sound 가 깨졌으면 알람은 살리고 소리만 시스템 기본으로 읽는다', () {
+      final alarm = Alarm.fromJson(const {
+        'id': 1,
+        'hour': 7,
+        'minute': 0,
+        'sound': {'type': 'device', 'title': 'A'},
+      });
+
+      expect(alarm.sound, const AlarmSound.system());
+    });
   });
 
   group('fromJson 기본값 · 깨진 값', () {

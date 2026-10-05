@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Alarm {
 
- int get id; int get hour; int get minute; Set<Weekday> get repeat; String get label; bool get vibrate; bool get enabled; DateTime? get oneShotAt;
+ int get id; int get hour; int get minute; Set<Weekday> get repeat; String get label; bool get vibrate; AlarmSound get sound; bool get enabled; DateTime? get oneShotAt;
 /// Create a copy of Alarm
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $AlarmCopyWith<Alarm> get copyWith => _$AlarmCopyWithImpl<Alarm>(this as Alarm, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Alarm&&(identical(other.id, id) || other.id == id)&&(identical(other.hour, hour) || other.hour == hour)&&(identical(other.minute, minute) || other.minute == minute)&&const DeepCollectionEquality().equals(other.repeat, repeat)&&(identical(other.label, label) || other.label == label)&&(identical(other.vibrate, vibrate) || other.vibrate == vibrate)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.oneShotAt, oneShotAt) || other.oneShotAt == oneShotAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Alarm&&(identical(other.id, id) || other.id == id)&&(identical(other.hour, hour) || other.hour == hour)&&(identical(other.minute, minute) || other.minute == minute)&&const DeepCollectionEquality().equals(other.repeat, repeat)&&(identical(other.label, label) || other.label == label)&&(identical(other.vibrate, vibrate) || other.vibrate == vibrate)&&(identical(other.sound, sound) || other.sound == sound)&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.oneShotAt, oneShotAt) || other.oneShotAt == oneShotAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,hour,minute,const DeepCollectionEquality().hash(repeat),label,vibrate,enabled,oneShotAt);
+int get hashCode => Object.hash(runtimeType,id,hour,minute,const DeepCollectionEquality().hash(repeat),label,vibrate,sound,enabled,oneShotAt);
 
 @override
 String toString() {
-  return 'Alarm(id: $id, hour: $hour, minute: $minute, repeat: $repeat, label: $label, vibrate: $vibrate, enabled: $enabled, oneShotAt: $oneShotAt)';
+  return 'Alarm(id: $id, hour: $hour, minute: $minute, repeat: $repeat, label: $label, vibrate: $vibrate, sound: $sound, enabled: $enabled, oneShotAt: $oneShotAt)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $AlarmCopyWith<$Res>  {
   factory $AlarmCopyWith(Alarm value, $Res Function(Alarm) _then) = _$AlarmCopyWithImpl;
 @useResult
 $Res call({
- int id, int hour, int minute, Set<Weekday> repeat, String label, bool vibrate, bool enabled, DateTime? oneShotAt
+ int id, int hour, int minute, Set<Weekday> repeat, String label, bool vibrate, AlarmSound sound, bool enabled, DateTime? oneShotAt
 });
 
 
@@ -62,7 +62,7 @@ class _$AlarmCopyWithImpl<$Res>
 
 /// Create a copy of Alarm
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? hour = null,Object? minute = null,Object? repeat = null,Object? label = null,Object? vibrate = null,Object? enabled = null,Object? oneShotAt = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? hour = null,Object? minute = null,Object? repeat = null,Object? label = null,Object? vibrate = null,Object? sound = null,Object? enabled = null,Object? oneShotAt = freezed,}) {
   return _then(Alarm(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,hour: null == hour ? _self.hour : hour // ignore: cast_nullable_to_non_nullable
@@ -70,7 +70,8 @@ as int,minute: null == minute ? _self.minute : minute // ignore: cast_nullable_t
 as int,repeat: null == repeat ? _self.repeat : repeat // ignore: cast_nullable_to_non_nullable
 as Set<Weekday>,label: null == label ? _self.label : label // ignore: cast_nullable_to_non_nullable
 as String,vibrate: null == vibrate ? _self.vibrate : vibrate // ignore: cast_nullable_to_non_nullable
-as bool,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
+as bool,sound: null == sound ? _self.sound : sound // ignore: cast_nullable_to_non_nullable
+as AlarmSound,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
 as bool,oneShotAt: freezed == oneShotAt ? _self.oneShotAt : oneShotAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,
   ));

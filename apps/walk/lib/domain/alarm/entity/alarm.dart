@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'alarm_sound.dart';
+
 part 'alarm.freezed.dart';
 
 /// 반복 요일. 순서가 [DateTime.weekday] 1(월)..7(일)과 같다.
@@ -39,6 +41,10 @@ class Alarm with _$Alarm {
   final String label;
   @override
   final bool vibrate;
+
+  /// 울릴 소리. 정보가 없는 기존 알람도 시스템 기본음이다.
+  @override
+  final AlarmSound sound;
   @override
   final bool enabled;
 
@@ -53,6 +59,7 @@ class Alarm with _$Alarm {
     this.repeat = const {},
     this.label = '',
     this.vibrate = true,
+    this.sound = const AlarmSound.system(),
     this.enabled = true,
     this.oneShotAt,
   });
@@ -62,7 +69,7 @@ class Alarm with _$Alarm {
 
   bool get isOneShot => repeat.isEmpty;
 
-  /// 새 알람의 기본값 — 07:00, 반복 없음, 진동 켬.
+  /// 새 알람의 기본값 — 07:00, 반복 없음, 진동 켬, 시스템 기본 알람음.
   static Alarm draft() => const Alarm(hour: 7, minute: 0);
 
   Map<String, Object?> toJson() => {
@@ -72,6 +79,7 @@ class Alarm with _$Alarm {
     'repeat': [for (final day in Weekday.values) if (repeat.contains(day)) day.name],
     'label': label,
     'vibrate': vibrate,
+    'sound': sound.toJson(),
     'enabled': enabled,
     'oneShotAt': oneShotAt?.toIso8601String(),
   };
@@ -89,6 +97,7 @@ class Alarm with _$Alarm {
       },
       label: json['label'] as String? ?? '',
       vibrate: json['vibrate'] as bool? ?? true,
+      sound: AlarmSound.fromJson(json['sound']),
       enabled: json['enabled'] as bool? ?? false,
       oneShotAt: oneShotAt == null ? null : DateTime.parse(oneShotAt),
     );
