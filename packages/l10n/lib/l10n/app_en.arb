@@ -587,6 +587,8 @@
   "walkDateLabel": "Date",
   "walkFeedEmptyTitle": "Start your first walk",
   "walkFeedEmptyMessage": "Your walks will show up here once you finish one",
+  "walkFeedEmptyActiveTitle": "Your first walk will show up here soon",
+  "walkFeedEmptyActiveMessage": "Finish and save it from the banner above",
   "walkContinue": "Continue walk",
   "walkInProgressBanner": "Walk in progress · tap to return",
   "walkUnsavedBanner": "You have an unsaved walk · tap to save",

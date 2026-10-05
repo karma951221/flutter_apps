@@ -1864,6 +1864,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkFeedEmptyMessage => '散歩を終えると、ここに記録が貯まります';
 
   @override
+  String get walkFeedEmptyActiveTitle => '最初の散歩がもうすぐここに表示されます';
+
+  @override
+  String get walkFeedEmptyActiveMessage => '上のバナーから散歩を終えて保存してください';
+
+  @override
   String get walkContinue => '散歩を続ける';
 
   @override

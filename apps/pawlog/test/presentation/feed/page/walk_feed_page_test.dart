@@ -84,6 +84,25 @@ void main() {
     expect(started, 1);
   });
 
+  for (final (name, tracker) in [
+    ('추적 중', TrackerState.tracking(walkSession(distanceMeters: 300))),
+    ('저장 안 한 산책이 있을 때', TrackerState.finished(walkSession(endedAt: t1))),
+  ]) {
+    testWidgets('빈 피드라도 $name 이면 시작 안내 · 버튼 대신 배너로 이끈다', (tester) async {
+      when(
+        () => useCase.watchWalks(),
+      ).thenAnswer((_) => Stream.value(const Ok([])));
+      current = tracker;
+
+      await pump(tester);
+
+      expect(find.byKey(const Key('walk-feed-banner')), findsOneWidget);
+      expect(find.text('첫 산책을 시작해 보세요'), findsNothing);
+      expect(find.text('산책 시작'), findsNothing);
+      expect(find.text('첫 산책이 곧 여기에 보여요'), findsOneWidget);
+    });
+  }
+
   testWidgets('카드에 반려견 · 거리 · 시간 · 메모가 보인다', (tester) async {
     await pump(tester);
 

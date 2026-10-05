@@ -102,16 +102,21 @@ class _WalkFeedView extends StatelessWidget {
                 Expanded(
                   child: walks.isEmpty
                       ? Center(
-                          child: AppPlaceholder(
-                            icon: Icons.pets_outlined,
-                            message: l10n.walkFeedEmptyTitle,
-                            description: l10n.walkFeedEmptyMessage,
-                            actionLabel: l10n.walkStart,
-                            // 저장 안 한 산책이 있으면 새로 시작하지 않는다.
-                            onAction: tracker is TrackerFinished
-                                ? null
-                                : onStartWalk,
-                          ),
+                          // 산책 중이거나 저장 전이면 시작을 권하지 않는다 — 위 배너가
+                          // 그 산책으로 이끈다.
+                          child: tracker is TrackerIdle
+                              ? AppPlaceholder(
+                                  icon: Icons.pets_outlined,
+                                  message: l10n.walkFeedEmptyTitle,
+                                  description: l10n.walkFeedEmptyMessage,
+                                  actionLabel: l10n.walkStart,
+                                  onAction: onStartWalk,
+                                )
+                              : AppPlaceholder(
+                                  icon: Icons.pets_outlined,
+                                  message: l10n.walkFeedEmptyActiveTitle,
+                                  description: l10n.walkFeedEmptyActiveMessage,
+                                ),
                         )
                       : ListView.builder(
                           padding: const EdgeInsets.only(

@@ -1976,6 +1976,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your walks will show up here once you finish one';
 
   @override
+  String get walkFeedEmptyActiveTitle =>
+      'Your first walk will show up here soon';
+
+  @override
+  String get walkFeedEmptyActiveMessage =>
+      'Finish and save it from the banner above';
+
+  @override
   String get walkContinue => 'Continue walk';
 
   @override

@@ -3626,6 +3626,18 @@ abstract class AppLocalizations {
   /// **'산책을 마치면 여기에 기록이 쌓입니다'**
   String get walkFeedEmptyMessage;
 
+  /// 피드가 비어 있지만 산책을 기록 중이거나 저장 전일 때 안내 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'첫 산책이 곧 여기에 보여요'**
+  String get walkFeedEmptyActiveTitle;
+
+  /// 피드가 비어 있지만 산책을 기록 중이거나 저장 전일 때 안내 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'위 배너에서 산책을 마치고 저장해 주세요'**
+  String get walkFeedEmptyActiveMessage;
+
   /// 진행 중인 산책으로 돌아가는 피드의 버튼 라벨
   ///
   /// In ko, this message translates to:

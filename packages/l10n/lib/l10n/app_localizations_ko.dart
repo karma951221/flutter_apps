@@ -1865,6 +1865,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkFeedEmptyMessage => '산책을 마치면 여기에 기록이 쌓입니다';
 
   @override
+  String get walkFeedEmptyActiveTitle => '첫 산책이 곧 여기에 보여요';
+
+  @override
+  String get walkFeedEmptyActiveMessage => '위 배너에서 산책을 마치고 저장해 주세요';
+
+  @override
   String get walkContinue => '산책 계속';
 
   @override
