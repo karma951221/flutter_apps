@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../common/widget/pawlog_primary_button.dart';
+import '../../photo/widget/photo_source_sheet.dart';
 import '../../theme/pawlog_theme.dart';
 import '../cubit/dog_edit_cubit.dart';
 import '../cubit/dog_edit_state.dart';
@@ -57,14 +58,22 @@ class _DogEditViewState extends State<_DogEditView> {
     _breedController.text = form.breed;
   }
 
+  /// 산책 사진과 같은 출처 시트(앨범 · 카메라). 카메라는 `captureImage` 가 picker 임시 파일을
+  /// 지운다(QA P5). 교체 · 저장 없이 나갈 때의 파일 정리는 cubit 이 맡는다.
   Future<void> _pickPhoto(DogEditCubit cubit) async {
-    final picker = getIt<ImagePickerService>();
-    final file = await picker.pickImage();
-    if (file == null || !mounted) return;
+    final source = await PhotoSourceSheet.show(context);
+    if (source == null || !mounted) return;
 
     try {
-      final prepared = await picker.prepare(file);
-      if (!mounted) return;
+      final picker = getIt<ImagePickerService>();
+      final prepared = switch (source) {
+        PhotoSource.gallery => switch (await picker.pickImage()) {
+          final file? => await picker.prepare(file),
+          null => null,
+        },
+        PhotoSource.camera => await picker.captureImage(),
+      };
+      if (prepared == null || !mounted) return;
       await cubit.setPhoto(prepared);
     } catch (_) {
       if (!mounted) return;

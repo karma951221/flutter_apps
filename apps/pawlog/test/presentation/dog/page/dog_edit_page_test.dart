@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:core/core.dart';
 import 'package:pawlog/presentation/theme/pawlog_theme.dart';
@@ -12,17 +14,26 @@ import 'package:pawlog/presentation/dog/cubit/dog_edit_cubit.dart';
 import 'package:pawlog/presentation/dog/page/dog_edit_page.dart';
 
 import '../../../support/fakes.dart';
+import '../../../support/mock_image_picker_service.dart';
 import '../../../support/mock_walk_use_case.dart';
 import '../../../support/pump_app.dart';
 
 void main() {
   late MockWalkUseCase useCase;
+  late MockImagePickerService picker;
 
-  setUpAll(() => registerFallbackValue(const DogDraft(name: '')));
+  setUpAll(() {
+    registerFallbackValue(const DogDraft(name: ''));
+    registerFallbackValue(Uint8List(0));
+  });
   setUp(() {
     useCase = MockWalkUseCase();
+    picker = MockImagePickerService();
     when(() => useCase.removePhoto(any())).thenAnswer((_) async {});
-    getIt.registerFactory<DogEditCubit>(() => DogEditCubit(useCase));
+    when(() => useCase.photoFile(any())).thenReturn(File('/no/such/photo.jpg'));
+    getIt
+      ..registerFactory<DogEditCubit>(() => DogEditCubit(useCase))
+      ..registerSingleton<ImagePickerService>(picker);
   });
   tearDown(getIt.reset);
 
@@ -83,6 +94,88 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(SnackBar), findsOneWidget);
+  });
+
+  group('사진 변경', () {
+    final image = PreparedImage(
+      bytes: Uint8List.fromList([1]),
+      width: 1,
+      height: 1,
+      contentType: 'image/jpeg',
+      extension: 'jpg',
+    );
+
+    setUp(() {
+      when(
+        () => useCase.storePhoto(
+          bytes: any(named: 'bytes'),
+          extension: any(named: 'extension'),
+        ),
+      ).thenAnswer((_) async => const Ok('new.jpg'));
+    });
+
+    Future<void> chooseSource(WidgetTester tester, String key) async {
+      await tester.tap(find.byKey(const Key('walk-dog-photo-button')));
+      await tester.pumpAndSettle();
+      // 산책 사진과 같은 출처 시트 — 앨범 · 카메라 둘 다 있다.
+      expect(find.byKey(const Key('walk-edit-photo-gallery')), findsOneWidget);
+      expect(find.byKey(const Key('walk-edit-photo-camera')), findsOneWidget);
+      await tester.tap(find.byKey(Key(key)));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('카메라를 고르면 captureImage 로 찍어 저장한다', (tester) async {
+      when(() => picker.captureImage()).thenAnswer((_) async => image);
+      await pumpApp(tester, DogEditPage(onDone: () {}));
+
+      await chooseSource(tester, 'walk-edit-photo-camera');
+
+      verify(() => picker.captureImage()).called(1);
+      verifyNever(() => picker.pickImage());
+      verify(
+        () => useCase.storePhoto(bytes: image.bytes, extension: 'jpg'),
+      ).called(1);
+    });
+
+    testWidgets('앨범을 고르면 갤러리 선택(pickImage)으로 간다', (tester) async {
+      // XFile 은 core 밖으로 내보내지 않는다 — 고르다 취소한 경우로 갈래만 본다.
+      when(() => picker.pickImage()).thenAnswer((_) async => null);
+      await pumpApp(tester, DogEditPage(onDone: () {}));
+
+      await chooseSource(tester, 'walk-edit-photo-gallery');
+
+      verify(() => picker.pickImage()).called(1);
+      verifyNever(() => picker.captureImage());
+      verifyNever(
+        () => useCase.storePhoto(
+          bytes: any(named: 'bytes'),
+          extension: any(named: 'extension'),
+        ),
+      );
+    });
+
+    testWidgets('시트를 닫으면 아무것도 고르지 않는다', (tester) async {
+      await pumpApp(tester, DogEditPage(onDone: () {}));
+
+      await tester.tap(find.byKey(const Key('walk-dog-photo-button')));
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      verifyNever(() => picker.captureImage());
+      verifyNever(() => picker.pickImage());
+    });
+
+    testWidgets('카메라로 찍고 저장하지 않고 나가면 새 사진 파일을 지운다', (tester) async {
+      when(() => picker.captureImage()).thenAnswer((_) async => image);
+      await pumpApp(tester, DogEditPage(onDone: () {}));
+      await chooseSource(tester, 'walk-edit-photo-camera');
+
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+
+      verify(() => useCase.removePhoto('new.jpg')).called(1);
+    });
   });
 
   testWidgets('기존 반려견을 불러오는 동안에도 수정 제목을 보인다', (tester) async {

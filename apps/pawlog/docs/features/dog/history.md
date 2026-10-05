@@ -93,6 +93,16 @@ pop 되고, 목록에는 피드로 가는 길이 없어(시스템 뒤로 가기�
 `go('/')` 한다. `DogsRedirect` 에 `hasDogs` 게터를 더했다. 라우터 테스트 2건(첫 등록 → 피드,
 목록에서 추가 → 목록).
 
+## 2026-10-05 — 반려견 사진도 카메라로
+
+디자인 적용 뒤 에뮬레이터 QA 에서, 산책 사진은 출처 시트(앨범에서 고르기 / 카메라로 찍기)를 여는데 반려견
+편집의 "사진 변경" 은 갤러리를 바로 여는 것이 걸렸다([디자인 기록 Q4](../design/history.md#q4--반려견-사진에-카메라가-없었다)).
+`DogEditPage._pickPhoto` 가 같은 `PhotoSourceSheet` 를 연다. 앨범은 그대로 `pickImage` → `prepare`, 카메라는
+`captureImage` — 산책 사진과 같은 메서드라 picker 임시 파일(카메라 원본)을 지운다(디자인 P5). 옛 파일 삭제 ·
+저장 없이 나갈 때 새 파일 삭제는 cubit(`setPhoto` · `close`) 몫이라 그대로이고, cubit 테스트가 계속 덮는다.
+페이지 테스트가 시트의 두 갈래 · 닫기 · 카메라로 찍고 저장 없이 나가면 새 파일 삭제를 본다. 시트 항목 키는
+산책과 같은 `walk-edit-photo-gallery` · `walk-edit-photo-camera` 다.
+
 ## 검증
 
 - `93d722b` 스냅숏에서 `feature_walk` `flutter analyze` 0건 · `flutter test` `+150`(W1 몫 23건 —

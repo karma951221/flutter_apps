@@ -203,3 +203,8 @@ OpenStreetMap contributors" 가 시트 밑에 들어갔다. OSM 타일 이용 �
 ⑤ I2 두 경계를 함께 닫았다([리뷰](../../audits/2026-10-03-implementation-review.md#아직-열린-것)). 초 단위
 (`58초`)는 쓰지 않았다 — 피드 · 상세의 시간은 분 단위 요약이고, 초는 진행 화면 시계(`clock`)의 몫이다.
 키는 `packages/l10n` 의 ko · en · ja ARB 에 더했다.
+
+### Q4 — 반려견 사진에 카메라가 없었다
+
+반려견 편집의 "사진 변경" 이 갤러리를 바로 열었다. 산책 사진과 같은 `PhotoSourceSheet` 를 열고, 카메라는
+`captureImage`(P5 의 임시 파일 삭제 포함)로 받는다. 파일 정리 규칙은 그대로 — [반려견 기록](../dog/history.md#2026-10-05--반려견-사진도-카메라로).

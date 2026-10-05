@@ -25,7 +25,7 @@ cd apps/pawlog && flutter test test/core test/convention   # 첫 실행 리다�
 | 파일 | 대상 | 확인 |
 |---|---|---|
 | `dog_list_page_test.dart` (3) | `DogListPage` | 빈 목록 → `AppPlaceholder` + 추가 버튼 → `onAddDog` · 2마리 → 행 2개 · 품종 subtitle · 행 탭 → `onOpenDog(id)` · 스트림 실패 → `AppPlaceholder` + 다시 시도 |
-| `dog_edit_page_test.dart` (6) | `DogEditPage` | 신규는 메뉴 없이 "반려견 등록" · 이름 입력 후 저장 → `onDone` 한 번 · 저장 실패 → 스낵바 · **불러오는 동안에도 "반려견 수정"**(T2) · 수정: 메뉴 → 삭제 → 확인이면 `deleteDog` · `onDone`, 취소면 `deleteDog` 없음 |
+| `dog_edit_page_test.dart` (6 → 12) | `DogEditPage` | 신규는 메뉴 없이 "반려견 등록" · 이름 입력 후 저장 → `onDone` 한 번 · 저장 실패 → 스낵바(이름 누락은 입력칸 `errorText`, 디자인 P3) · **사진 변경(2026-10-05) — 출처 시트에 앨범 · 카메라, 카메라 → `captureImage` → `storePhoto`, 앨범 → `pickImage`(카메라 없음), 시트를 닫으면 아무것도 안 부름, 카메라로 찍고 저장 없이 나가면 `removePhoto(새 파일)`** · **불러오는 동안에도 "반려견 수정"**(T2) · 수정: 메뉴 → 삭제 → 확인이면 `deleteDog` · `onDone`, 취소면 `deleteDog` 없음 |
 
 ## 데이터 · 앱 셸
 
