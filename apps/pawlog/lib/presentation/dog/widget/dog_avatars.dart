@@ -4,15 +4,18 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
 import '../../../domain/dog/entity/dog.dart';
+import '../../theme/pawlog_theme.dart';
 
 /// 겹쳐 놓은 반려견 아바타 줄. [maxVisible] 을 넘는 몫은 `+n` 으로 접는다.
-/// 상세 화면과 피드 카드가 함께 쓴다.
+/// 상세 화면과 피드 항목이 함께 쓴다.
+///
+/// 여러 마리면 12 씩 겹치고, 바탕색 2px 테두리로 떼어낸다(design.md Shapes).
 class DogAvatars extends StatelessWidget {
   const DogAvatars({
     required this.dogs,
     required this.photoFile,
     this.maxVisible = 3,
-    this.radius = AppSpacing.md,
+    this.radius = PawlogSize.avatarSm,
     super.key,
   });
 
@@ -23,38 +26,35 @@ class DogAvatars extends StatelessWidget {
   final int maxVisible;
   final double radius;
 
-  /// 아바타끼리 겹치는 정도 — 지름의 이 비율만큼씩 옆으로 민다.
-  static const _step = 0.7;
-
   @override
   Widget build(BuildContext context) {
     if (dogs.isEmpty) return const SizedBox.shrink();
 
-    final scheme = Theme.of(context).colorScheme;
+    final colors = PawlogColors.of(context);
     final visible = dogs.take(maxVisible).toList();
     final hidden = dogs.length - visible.length;
     final slots = visible.length + (hidden > 0 ? 1 : 0);
-    final diameter = radius * 2;
-    final border = AppSpacing.xs / 2;
-    final offset = diameter * _step;
+    const ring = PawlogSize.avatarRing;
+    final diameter = radius * 2 + ring * 2;
+    final offset = diameter - PawlogSize.avatarOverlap;
 
-    Widget ring(Widget child) => DecoratedBox(
+    Widget ringed(Widget child) => DecoratedBox(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: scheme.surface, width: border),
+        border: Border.all(color: colors.paper, width: ring),
       ),
       child: child,
     );
 
     return SizedBox(
-      width: offset * (slots - 1) + diameter + border * 2,
-      height: diameter + border * 2,
+      width: offset * (slots - 1) + diameter,
+      height: diameter,
       child: Stack(
         children: [
           for (final (index, dog) in visible.indexed)
             Positioned(
               left: offset * index,
-              child: ring(
+              child: ringed(
                 AppAvatar(
                   nickname: dog.name,
                   radius: radius,
@@ -68,11 +68,11 @@ class DogAvatars extends StatelessWidget {
           if (hidden > 0)
             Positioned(
               left: offset * visible.length,
-              child: ring(
+              child: ringed(
                 CircleAvatar(
                   radius: radius,
-                  backgroundColor: scheme.secondaryContainer,
-                  foregroundColor: scheme.onSecondaryContainer,
+                  backgroundColor: colors.rule,
+                  foregroundColor: colors.text,
                   child: Text(
                     '+$hidden',
                     style: Theme.of(context).textTheme.labelMedium,

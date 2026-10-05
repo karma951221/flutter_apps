@@ -9,6 +9,7 @@ import 'package:pawlog/domain/tracking/entity/tracker_state.dart';
 import 'package:pawlog/domain/walk/entity/walk_draft.dart';
 import 'package:pawlog/domain/walk/entity/walk_photo.dart';
 import 'package:pawlog/domain/walk/entity/walk_update.dart';
+import 'package:pawlog/presentation/theme/pawlog_theme.dart';
 import 'package:pawlog/presentation/walk/cubit/walk_edit_cubit.dart';
 import 'package:pawlog/presentation/walk/page/walk_edit_page.dart';
 
@@ -72,6 +73,17 @@ void main() {
   }
 
   group('신규', () {
+    testWidgets('요약에 경로 그림이 있고 메모 입력은 손글씨다', (tester) async {
+      useTallScreen(tester);
+      await pumpApp(tester, WalkEditPage(onSaved: (_) {}, onDiscarded: () {}));
+
+      expect(find.byKey(const Key('walk-edit-route')), findsOneWidget);
+      final memo = tester.widget<TextField>(
+        find.byKey(const Key('walk-edit-memo-field')),
+      );
+      expect(memo.style?.fontFamily, PawlogFonts.memo);
+    });
+
     testWidgets('반려견 없이 저장하면 스낵바를 보인다', (tester) async {
       useTallScreen(tester);
       when(() => useCase.saveWalk(any())).thenAnswer(

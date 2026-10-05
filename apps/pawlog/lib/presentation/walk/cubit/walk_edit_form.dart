@@ -2,8 +2,10 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../domain/dog/entity/dog.dart';
 import '../../../domain/tracking/entity/walk_session.dart';
+import '../../../domain/walk/entity/geo_point.dart';
 import '../../../domain/walk/entity/walk.dart';
 import '../../../domain/walk/entity/walk_draft.dart';
+import '../../../domain/walk/entity/walk_track_point.dart';
 import '../../../domain/walk/entity/walk_update.dart';
 
 part 'walk_edit_form.freezed.dart';
@@ -51,6 +53,11 @@ class WalkEditForm with _$WalkEditForm {
   Duration get duration =>
       existing?.duration ??
       session!.elapsedAt(session!.endedAt ?? session!.startedAt);
+
+  /// 요약 헤더의 경로 그림. 신규는 세션의 전체 점, 수정은 저장된 미리보기 점.
+  List<GeoPoint> get routePoints =>
+      existing?.previewPoints ??
+      [for (final p in session?.points ?? const <WalkTrackPoint>[]) p.point];
 
   /// 이번 폼에서 파일로 쓴 사진 — 저장되지 않으면 지워야 한다.
   List<String> get addedPhotoPaths {

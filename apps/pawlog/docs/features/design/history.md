@@ -121,3 +121,31 @@ walk 의 `WalkTheme` 은 `AppTheme.light(seedColor:)` 에 씨앗색만 바꾼다
 - **P1** — 진행 화면 제목을 상태로 고른다. 반려견 고르기 · 시작 중 · 시작 실패 = "산책 준비"
   (`walkReadyTitle`, ko · en · ja 를 `packages/l10n` ARB 에 추가), 추적 · 종료 = "산책 중", 첫 로딩은 빈 제목
   (이어 하던 산책이면 곧 "산책 중" 이 되므로 "산책 준비" 가 깜빡이지 않게)
+
+## 5 — 저장 · 상세 · 반려견 화면
+
+- **저장 폼** — 제목(시작 시각)을 고운돋움 22 로, 그 아래 4:3 경로 그림(`RouteSketch`, 모서리 4) → 거리 · 시간
+  → 반려견 → 메모 → 사진. 저장 폼에는 원래 경로가 없었는데 design.md Motion 의 "저장 화면에 들어가면
+  경로가 그려진다" 를 하려면 그릴 자리가 필요해 넣었다. 점은 `WalkEditForm.routePoints`(신규 = 세션 전체 점,
+  수정 = 저장된 `previewPoints`). 메모 입력칸 글자는 개구 20 — 사용자가 쓰는 글이므로. 라벨 · 힌트는
+  Pretendard 그대로
+- **`RouteSketch`** — 피드 항목의 경로 썸네일을 꺼내 저장 폼과 같이 쓴다(`walk/widget/`)
+- **상세** — 지도 280(`PawlogSize.detailMap`) 아래 제목(고운돋움 22) → 아바타 · 이름(고운돋움) → 거리 · 시간
+  → 사진 → 메모(개구 20). "날짜" · "반려견" · "사진" 소제목은 뺐다 — 줄글로 읽히게, 무엇인지 모양으로
+  드러나는 것에 라벨을 달지 않았다(ARB 키는 남아 있다). 사진은 3열 정사각 그리드(`WalkPhotoGrid`)에서
+  본문 폭 4:3 을 세로로 잇는 `WalkPhotos` 로(design.md Layout "사진은 본문 폭을 가득 채운다")
+- **아바타 겹침** — 지름의 0.7 씩 밀던 것을 지름(반지름 14 × 2 + 테두리 2 × 2) − 12 로, 테두리는
+  `paper`(바탕색) 2. `+n` 원은 `rule` 바탕
+- **P2** — `FilterChip.showCheckmark: false`(테마에도 같은 값). 선택은 남색 바탕 · 남색 테두리 · 밝은 글자,
+  해제는 시트 바탕 · `inputBorder` 테두리
+- **P3** — 이름 누락(`FailureCode.dogNameRequired`)은 스낵바 대신 이름 입력칸 `errorText`. 이름을 고치면
+  cubit 이 실패를 비워 사라진다. 다른 저장 실패는 스낵바 그대로. 저장 버튼은 2단계에서 본문 끝으로
+  옮겨 키보드 위로 올라온다
+- **P5** — `packages/core` 의 `ImagePickerService.captureImage` 가 `prepare` 뒤(실패해도) 카메라 원본
+  임시 파일을 지운다. 바이트는 이미 메모리에 있고 저장은 `storePhoto` 가 앱 문서 폴더에 따로 쓰므로
+  원본은 쓸 곳이 없다. `captureImage` 를 쓰는 곳은 pawlog 하나뿐이라 다른 앱 동작은 바뀌지 않는다.
+  테스트용 `ImagePickerService.withPicker` 생성자(`@visibleForTesting`)를 더했다 — injectable 은 이름 없는
+  생성자만 본다. 갤러리 선택(`pickMultiImage` · `pickImage`)이 캐시에 남기는 사본은 QA 항목이 아니었고
+  플랫폼마다 원본 경로일 수도 있어(iOS PHPicker 는 사본, Android 는 경우에 따라 원본) 건드리지 않았다
+- **반려견 목록** — 추가 FAB 를 하단 고정 주 버튼(`walk-dog-add-button`)으로. 빈 상태 안내의 추가 버튼은
+  하단 버튼과 겹쳐 뺐다. 행 사이는 `rule` 구분선(좌우 20 들여쓰기), 이름은 고운돋움

@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../common/widget/pawlog_primary_button.dart';
+import '../../theme/pawlog_theme.dart';
 import '../cubit/dog_edit_cubit.dart';
 import '../cubit/dog_edit_state.dart';
 import '../cubit/dog_form.dart';
@@ -120,7 +121,9 @@ class _DogEditViewState extends State<_DogEditView> {
         switch (state) {
           case DogEditSaved() || DogEditDeleted():
             widget.onDone();
-          case DogEditEditing(:final failure?):
+          // 이름 누락은 입력칸 아래에 보인다 — 스낵바는 키보드 위에서 저장 버튼을 가린다(QA P3).
+          case DogEditEditing(:final failure?)
+              when failure.failureCode != FailureCode.dogNameRequired:
             AppSnackBar.show(
               context,
               message: failure.localizedMessage(context),
@@ -171,14 +174,18 @@ class _DogEditViewState extends State<_DogEditView> {
                   message: failure.localizedMessage(context),
                 ),
               ),
-              DogEditEditing(:final form, :final isSaving) => _Form(
-                form: form,
-                isSaving: isSaving,
-                nameController: _nameController,
-                breedController: _breedController,
-                onPickPhoto: () => _pickPhoto(cubit),
-                onPickBirthday: () => _pickBirthday(cubit, form),
-              ),
+              DogEditEditing(:final form, :final isSaving, :final failure) =>
+                _Form(
+                  form: form,
+                  isSaving: isSaving,
+                  nameError: failure?.failureCode == FailureCode.dogNameRequired
+                      ? failure!.localizedMessage(context)
+                      : null,
+                  nameController: _nameController,
+                  breedController: _breedController,
+                  onPickPhoto: () => _pickPhoto(cubit),
+                  onPickBirthday: () => _pickBirthday(cubit, form),
+                ),
             },
           ),
         );
@@ -191,6 +198,7 @@ class _Form extends StatelessWidget {
   const _Form({
     required this.form,
     required this.isSaving,
+    required this.nameError,
     required this.nameController,
     required this.breedController,
     required this.onPickPhoto,
@@ -199,6 +207,9 @@ class _Form extends StatelessWidget {
 
   final DogForm form;
   final bool isSaving;
+
+  /// 이름 검증 실패 문구. 이름을 고치면 cubit 이 실패를 비워 사라진다.
+  final String? nameError;
   final TextEditingController nameController;
   final TextEditingController breedController;
   final VoidCallback onPickPhoto;
@@ -212,16 +223,16 @@ class _Form extends StatelessWidget {
     final birthday = form.birthday;
 
     final list = ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(PawlogSize.gutter),
       children: [
         Center(
           child: AppAvatar(
             nickname: form.name,
-            radius: AppSpacing.xl * 2,
+            radius: PawlogSize.avatarLg,
             imageFile: photoPath == null ? null : cubit.photoFile(photoPath),
           ),
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PawlogSpacing.sm),
         Center(
           child: AppButton.text(
             key: const Key('walk-dog-photo-button'),
@@ -229,16 +240,19 @@ class _Form extends StatelessWidget {
             onPressed: isSaving ? null : onPickPhoto,
           ),
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PawlogSpacing.md),
         TextField(
           key: const Key('walk-dog-name-field'),
           controller: nameController,
           enabled: !isSaving,
           textInputAction: TextInputAction.next,
-          decoration: InputDecoration(labelText: l10n.walkDogNameLabel),
+          decoration: InputDecoration(
+            labelText: l10n.walkDogNameLabel,
+            errorText: nameError,
+          ),
           onChanged: cubit.setName,
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: PawlogSpacing.md),
         TextField(
           key: const Key('walk-dog-breed-field'),
           controller: breedController,
@@ -247,7 +261,7 @@ class _Form extends StatelessWidget {
           decoration: InputDecoration(labelText: l10n.walkDogBreedLabel),
           onChanged: cubit.setBreed,
         ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PawlogSpacing.sm),
         AppListTile(
           key: const Key('walk-dog-birthday-tile'),
           title: Text(l10n.walkDogBirthdayLabel),

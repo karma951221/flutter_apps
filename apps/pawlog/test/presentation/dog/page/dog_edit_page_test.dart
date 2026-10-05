@@ -46,7 +46,7 @@ void main() {
     expect(done, 1);
   });
 
-  testWidgets('저장에 실패하면 스낵바에 실패 문구를 보인다', (tester) async {
+  testWidgets('이름이 비면 스낵바가 아니라 이름 입력칸 아래에 알린다(QA P3)', (tester) async {
     when(() => useCase.saveDog(any())).thenAnswer(
       (_) async => const Err(
         Failure.validation(failureCode: FailureCode.dogNameRequired),
@@ -58,8 +58,31 @@ void main() {
     await tester.tap(find.byKey(const Key('walk-dog-save-button')));
     await tester.pumpAndSettle();
 
-    expect(find.text('반려견 이름을 입력해 주세요'), findsOneWidget);
+    String? nameError() => tester
+        .widget<TextField>(find.byKey(const Key('walk-dog-name-field')))
+        .decoration
+        ?.errorText;
+    expect(nameError(), '반려견 이름을 입력해 주세요');
+    expect(find.byType(SnackBar), findsNothing);
     expect(done, 0);
+
+    // 이름을 고치면 안내가 사라진다.
+    await tester.enterText(find.byKey(const Key('walk-dog-name-field')), '콩');
+    await tester.pumpAndSettle();
+    expect(nameError(), isNull);
+  });
+
+  testWidgets('이름 외의 저장 실패는 스낵바로 알린다', (tester) async {
+    when(
+      () => useCase.saveDog(any()),
+    ).thenAnswer((_) async => const Err(Failure.unknown()));
+    await pumpApp(tester, DogEditPage(onDone: () {}));
+
+    await tester.enterText(find.byKey(const Key('walk-dog-name-field')), '콩이');
+    await tester.tap(find.byKey(const Key('walk-dog-save-button')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SnackBar), findsOneWidget);
   });
 
   testWidgets('기존 반려견을 불러오는 동안에도 수정 제목을 보인다', (tester) async {

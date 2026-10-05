@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../common/widget/pawlog_primary_button.dart';
+import '../../theme/pawlog_theme.dart';
 import '../cubit/dog_list_cubit.dart';
 import '../cubit/dog_list_state.dart';
 
@@ -38,16 +40,6 @@ class _DogListView extends StatelessWidget {
     return BlocBuilder<DogListCubit, DogListState>(
       builder: (context, state) => Scaffold(
         appBar: AppBar(title: Text(l10n.walkDogListTitle)),
-        floatingActionButton: switch (state) {
-          DogListLoaded(:final dogs) when dogs.isNotEmpty =>
-            FloatingActionButton(
-              key: const Key('walk-dog-add-fab'),
-              tooltip: l10n.walkDogAddAction,
-              onPressed: onAddDog,
-              child: const Icon(Icons.add),
-            ),
-          _ => null,
-        },
         body: SafeArea(
           child: switch (state) {
             DogListLoading() => const Center(
@@ -60,36 +52,55 @@ class _DogListView extends StatelessWidget {
                 onAction: cubit.start,
               ),
             ),
-            DogListLoaded(:final dogs) when dogs.isEmpty => Center(
-              child: AppPlaceholder(
-                icon: Icons.pets_outlined,
-                message: l10n.walkDogListEmptyTitle,
-                description: l10n.walkDogListEmptyMessage,
-                actionLabel: l10n.walkDogAddAction,
-                onAction: onAddDog,
-              ),
-            ),
-            DogListLoaded(:final dogs) => ListView.builder(
-              itemCount: dogs.length,
-              itemBuilder: (context, index) {
-                final dog = dogs[index];
-                final photoPath = dog.photoPath;
-                final breed = dog.breed;
-                return AppListTile(
-                  key: Key('walk-dog-list-tile-${dog.id}'),
-                  leading: AppAvatar(
-                    nickname: dog.name,
-                    radius: AppSpacing.lg,
-                    imageFile: photoPath == null
-                        ? null
-                        : cubit.photoFile(photoPath),
+            DogListLoaded(:final dogs) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: dogs.isEmpty
+                      ? Center(
+                          child: AppPlaceholder(
+                            message: l10n.walkDogListEmptyTitle,
+                            description: l10n.walkDogListEmptyMessage,
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: dogs.length,
+                          separatorBuilder: (_, _) => const Divider(
+                            indent: PawlogSize.gutter,
+                            endIndent: PawlogSize.gutter,
+                          ),
+                          itemBuilder: (context, index) {
+                            final dog = dogs[index];
+                            final photoPath = dog.photoPath;
+                            final breed = dog.breed;
+                            return AppListTile(
+                              key: Key('walk-dog-list-tile-${dog.id}'),
+                              leading: AppAvatar(
+                                nickname: dog.name,
+                                radius: PawlogSize.avatarMd,
+                                imageFile: photoPath == null
+                                    ? null
+                                    : cubit.photoFile(photoPath),
+                              ),
+                              title: Text(
+                                dog.name,
+                                style: PawlogTextStyles.of(context).dogName,
+                              ),
+                              subtitle: breed == null ? null : Text(breed),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () => onOpenDog(dog.id),
+                            );
+                          },
+                        ),
+                ),
+                PawlogBottomAction(
+                  child: PawlogPrimaryButton(
+                    key: const Key('walk-dog-add-button'),
+                    label: l10n.walkDogAddAction,
+                    onPressed: onAddDog,
                   ),
-                  title: Text(dog.name),
-                  subtitle: breed == null ? null : Text(breed),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => onOpenDog(dog.id),
-                );
-              },
+                ),
+              ],
             ),
           },
         ),

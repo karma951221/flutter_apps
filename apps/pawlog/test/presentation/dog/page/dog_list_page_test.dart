@@ -61,7 +61,7 @@ void main() {
     expect(find.byKey(const Key('walk-dog-list-tile-1')), findsOneWidget);
     expect(find.byKey(const Key('walk-dog-list-tile-2')), findsOneWidget);
     expect(find.text('말티즈'), findsOneWidget);
-    expect(find.byKey(const Key('walk-dog-add-fab')), findsOneWidget);
+    expect(find.byKey(const Key('walk-dog-add-button')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('walk-dog-list-tile-2')));
     expect(opened, '2');

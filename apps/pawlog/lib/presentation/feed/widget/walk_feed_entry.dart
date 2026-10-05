@@ -8,7 +8,7 @@ import '../../../domain/walk/entity/walk.dart';
 import '../../dog/widget/dog_avatars.dart';
 import '../../theme/pawlog_theme.dart';
 import '../../walk/format/walk_format.dart';
-import 'route_preview_painter.dart';
+import '../../walk/widget/route_sketch.dart';
 
 /// 피드 타임라인의 한 줄 — 카드가 아니라 수첩의 한 칸이다(design.md Components · 피드 항목).
 ///
@@ -187,19 +187,7 @@ class _Visual extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = PawlogColors.of(context);
-    final route = ColoredBox(
-      color: colors.mapBg,
-      child: walk.previewPoints.length < 2
-          ? Center(child: Icon(Icons.map_outlined, color: colors.textMuted))
-          : CustomPaint(
-              painter: RoutePreviewPainter(
-                walk.previewPoints,
-                color: colors.accent,
-                casingColor: colors.routeCasing,
-              ),
-            ),
-    );
+    final route = RouteSketch(points: walk.previewPoints);
     if (walk.photos.isEmpty) return route;
 
     // 본문 폭은 화면 폭보다 좁다 — 화면 폭으로 디코드하면 넉넉하다. LayoutBuilder 는

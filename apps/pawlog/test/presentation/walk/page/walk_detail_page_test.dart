@@ -6,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pawlog/domain/walk/entity/walk_photo.dart';
+import 'package:pawlog/presentation/theme/pawlog_theme.dart';
 import 'package:pawlog/presentation/walk/cubit/walk_detail_cubit.dart';
 import 'package:pawlog/presentation/walk/page/walk_detail_page.dart';
 
@@ -53,6 +54,38 @@ void main() {
     expect(find.text('콩이d1, 콩이d2'), findsOneWidget);
     expect(find.byKey(const Key('walk-detail-photo-0')), findsOneWidget);
     expect(find.text('공원을 한 바퀴 돌았다'), findsOneWidget);
+    await disposePage(tester);
+  });
+
+  testWidgets('메모는 손글씨, 사진은 본문 폭 4:3 · 모서리 4 다', (tester) async {
+    await pumpApp(
+      tester,
+      WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+    );
+
+    expect(
+      tester.widget<Text>(find.byKey(const Key('walk-detail-memo'))).style,
+      PawlogTextStyles.of(
+        tester.element(find.byKey(const Key('walk-detail-memo'))),
+      ).memo,
+    );
+    final photo = find.byKey(const Key('walk-detail-photo-0'));
+    expect(
+      tester
+          .widget<AspectRatio>(
+            find.ancestor(of: photo, matching: find.byType(AspectRatio)),
+          )
+          .aspectRatio,
+      PawlogSize.photoAspect,
+    );
+    expect(
+      tester
+          .widget<ClipRRect>(
+            find.ancestor(of: photo, matching: find.byType(ClipRRect)).first,
+          )
+          .borderRadius,
+      PawlogRadius.photoAll,
+    );
     await disposePage(tester);
   });
 

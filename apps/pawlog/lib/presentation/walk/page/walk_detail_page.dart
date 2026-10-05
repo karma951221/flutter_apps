@@ -7,10 +7,11 @@ import 'package:l10n/l10n.dart';
 import '../../../domain/walk/entity/walk.dart';
 import '../../../domain/walk/entity/walk_track_point.dart';
 import '../../dog/widget/dog_avatars.dart';
+import '../../theme/pawlog_theme.dart';
 import '../cubit/walk_detail_cubit.dart';
 import '../cubit/walk_detail_state.dart';
 import '../widget/route_map.dart';
-import '../widget/walk_photo_grid.dart';
+import '../widget/walk_photos.dart';
 import '../widget/walk_stats_row.dart';
 
 /// 산책 상세 화면. 지도 · 통계 · 반려견 · 사진 · 메모를 보이고 수정 · 삭제로 이어진다.
@@ -166,21 +167,19 @@ class _Content extends StatelessWidget {
   final Walk walk;
   final List<WalkTrackPoint> track;
 
-  /// 상세 지도 높이 — 간격 토큰에 이 크기가 없다.
-  static const _mapHeight = AppSpacing.xl * 8;
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final styles = PawlogTextStyles.of(context);
     final cubit = context.read<WalkDetailCubit>();
     final memo = walk.memo;
 
     return ListView(
-      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      padding: const EdgeInsets.only(bottom: PawlogSpacing.xl),
       children: [
         SizedBox(
-          height: _mapHeight,
+          height: PawlogSize.detailMap,
           child: RouteMap(
             key: const Key('walk-detail-map'),
             points: [for (final p in track) p.point],
@@ -189,56 +188,51 @@ class _Content extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.fromLTRB(
+            PawlogSize.gutter,
+            PawlogSpacing.lg,
+            PawlogSize.gutter,
+            0,
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                l10n.walkDateLabel,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text(
                 walk.startedAt.displayDateTime(l10n.localeName),
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              WalkStatsRow(
-                distanceMeters: walk.distanceMeters,
-                elapsed: walk.duration,
+                style: theme.textTheme.titleLarge,
               ),
               if (walk.dogs.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.lg),
-                Text(l10n.walkDogsLabel, style: theme.textTheme.titleMedium),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: PawlogSpacing.md),
                 Row(
                   children: [
                     DogAvatars(dogs: walk.dogs, photoFile: cubit.photoFile),
-                    const SizedBox(width: AppSpacing.sm),
+                    const SizedBox(width: PawlogSpacing.sm),
                     Expanded(
                       child: Text(
                         walk.dogs.map((dog) => dog.name).join(', '),
                         key: const Key('walk-detail-dog-names'),
-                        style: theme.textTheme.bodyMedium,
+                        style: styles.dogName,
                       ),
                     ),
                   ],
                 ),
               ],
+              const SizedBox(height: PawlogSpacing.lg),
+              WalkStatsRow(
+                distanceMeters: walk.distanceMeters,
+                elapsed: walk.duration,
+              ),
               if (walk.photos.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.lg),
-                Text(l10n.walkPhotosLabel, style: theme.textTheme.titleMedium),
-                const SizedBox(height: AppSpacing.sm),
-                WalkPhotoGrid(photos: walk.photos, photoFile: cubit.photoFile),
+                const SizedBox(height: PawlogSpacing.xl),
+                WalkPhotos(photos: walk.photos, photoFile: cubit.photoFile),
               ],
-              if (memo != null && memo.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.lg),
+              // 빈 메모는 자리를 차지하지 않는다.
+              if (memo != null && memo.trim().isNotEmpty) ...[
+                const SizedBox(height: PawlogSpacing.lg),
                 Text(
                   memo,
                   key: const Key('walk-detail-memo'),
-                  style: theme.textTheme.bodyLarge,
+                  style: styles.memo,
                 ),
               ],
             ],

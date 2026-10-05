@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -38,6 +39,10 @@ class PreparedImage {
 class ImagePickerService {
   ImagePickerService() : _picker = ImagePicker();
 
+  /// 테스트가 picker 를 바꿔 끼운다.
+  @visibleForTesting
+  ImagePickerService.withPicker(this._picker);
+
   final ImagePicker _picker;
 
   /// 단일 선택이 필요한 아바타 등에서 사용한다.
@@ -47,12 +52,28 @@ class ImagePickerService {
   );
 
   /// 카메라로 한 장 찍어 [prepare] 한 결과를 돌려준다. 취소하면 null.
+  ///
+  /// 카메라 원본은 picker 가 앱 캐시에 쓴 임시 파일이다. 바이트로 읽고 나면 쓸 곳이 없으므로
+  /// 성공 · 실패와 상관없이 지운다 — 남겨 두면 찍을 때마다 `cache/` 에 원본이 쌓인다.
   Future<PreparedImage?> captureImage() async {
     final file = await _picker.pickImage(
       source: ImageSource.camera,
       requestFullMetadata: false,
     );
-    return file == null ? null : prepare(file);
+    if (file == null) return null;
+    try {
+      return await prepare(file);
+    } finally {
+      await _deleteQuietly(file.path);
+    }
+  }
+
+  Future<void> _deleteQuietly(String path) async {
+    try {
+      await File(path).delete();
+    } on FileSystemException {
+      // 이미 없거나 지울 수 없는 위치면 그대로 둔다 — 캐시는 OS 가 결국 비운다.
+    }
   }
 
   Future<List<PreparedImage>> pickImages({required int limit}) async {

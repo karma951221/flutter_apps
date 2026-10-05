@@ -1,8 +1,9 @@
 import 'dart:io';
 
-import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
+
+import '../../theme/pawlog_theme.dart';
 
 /// 산책 사진 띠. 썸네일마다 빼기 버튼이 있고, 끝에 추가 칸이 붙는다.
 ///
@@ -26,7 +27,7 @@ class PhotoStrip extends StatelessWidget {
   final ValueChanged<int> onRemove;
   final bool enabled;
 
-  static const _tileSize = AppSpacing.xl * 3;
+  static const _tileSize = PawlogSize.photoTile;
 
   /// 빼기 버튼 배경 scrim 의 불투명도 — 색 토큰에 반투명 값이 없다.
   static const _scrimAlpha = 0.6;
@@ -45,7 +46,7 @@ class PhotoStrip extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: photoPaths.length + (isFull ? 0 : 1),
-            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
+            separatorBuilder: (_, _) => const SizedBox(width: PawlogSpacing.sm),
             itemBuilder: (context, index) {
               if (index == photoPaths.length) {
                 return _AddTile(
@@ -64,7 +65,7 @@ class PhotoStrip extends StatelessWidget {
           ),
         ),
         if (isFull) ...[
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: PawlogSpacing.sm),
           Text(
             l10n.walkPhotoLimitReached,
             style: theme.textTheme.bodySmall?.copyWith(
@@ -100,7 +101,7 @@ class _Thumbnail extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           ClipRRect(
-            borderRadius: AppRadius.smAll,
+            borderRadius: PawlogRadius.photoAll,
             child: Image.file(
               file,
               key: imageKey,
@@ -116,8 +117,8 @@ class _Thumbnail extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: AppSpacing.xs,
-            right: AppSpacing.xs,
+            top: PawlogSpacing.xs,
+            right: PawlogSpacing.xs,
             child: Semantics(
               button: true,
               enabled: onRemove != null,
@@ -129,13 +130,13 @@ class _Thumbnail extends StatelessWidget {
                   key: removeKey,
                   onTap: onRemove,
                   child: CircleAvatar(
-                    radius: AppSpacing.md - AppSpacing.xs,
+                    radius: PawlogSpacing.md - PawlogSpacing.xs / 2,
                     backgroundColor: scheme.scrim.withValues(
                       alpha: PhotoStrip._scrimAlpha,
                     ),
                     child: Icon(
                       Icons.close,
-                      size: AppSpacing.md,
+                      size: PawlogSpacing.md + PawlogSpacing.xs / 2,
                       color: scheme.surface,
                     ),
                   ),
@@ -160,25 +161,26 @@ class _AddTile extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final color = onTap == null ? scheme.outlineVariant : scheme.primary;
+    final border = onTap == null ? scheme.outlineVariant : scheme.outline;
     return Semantics(
       button: true,
       enabled: onTap != null,
       label: label,
       child: InkWell(
         onTap: onTap,
-        borderRadius: AppRadius.smAll,
+        borderRadius: PawlogRadius.photoAll,
         child: Ink(
           width: PhotoStrip._tileSize,
           height: PhotoStrip._tileSize,
           decoration: BoxDecoration(
-            borderRadius: AppRadius.smAll,
-            border: Border.all(color: scheme.outlineVariant),
+            borderRadius: PawlogRadius.photoAll,
+            border: Border.all(color: border),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.add_a_photo_outlined, color: color),
-              const SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: PawlogSpacing.xs),
               Text(
                 label,
                 style: theme.textTheme.labelMedium?.copyWith(color: color),

@@ -8,9 +8,11 @@ import '../../common/widget/pawlog_primary_button.dart';
 import '../../dog/widget/dog_chips.dart';
 import '../../photo/widget/photo_source_sheet.dart';
 import '../../photo/widget/photo_strip.dart';
+import '../../theme/pawlog_theme.dart';
 import '../cubit/walk_edit_cubit.dart';
 import '../cubit/walk_edit_form.dart';
 import '../cubit/walk_edit_state.dart';
+import '../widget/route_sketch.dart';
 import '../widget/walk_stats_row.dart';
 
 /// 산책 저장(신규) · 수정 화면.
@@ -230,21 +232,36 @@ class _Form extends StatelessWidget {
     final theme = Theme.of(context);
     final cubit = context.read<WalkEditCubit>();
 
+    final route = form.routePoints;
+
     final list = ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(PawlogSize.gutter),
       children: [
         Text(
           form.startedAt.displayDateTime(l10n.localeName),
-          style: theme.textTheme.titleMedium,
+          style: theme.textTheme.titleLarge,
         ),
-        const SizedBox(height: AppSpacing.sm),
+        if (route.isNotEmpty) ...[
+          const SizedBox(height: PawlogSpacing.md),
+          ClipRRect(
+            borderRadius: PawlogRadius.photoAll,
+            child: AspectRatio(
+              aspectRatio: PawlogSize.photoAspect,
+              child: RouteSketch(
+                key: const Key('walk-edit-route'),
+                points: route,
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: PawlogSpacing.md),
         WalkStatsRow(
           distanceMeters: form.distanceMeters,
           elapsed: form.duration,
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: PawlogSpacing.xl),
         Text(l10n.walkSelectDogs, style: theme.textTheme.titleMedium),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PawlogSpacing.sm),
         IgnorePointer(
           ignoring: isSaving,
           child: DogChips(
@@ -255,7 +272,7 @@ class _Form extends StatelessWidget {
             photoFile: cubit.photoFile,
           ),
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: PawlogSpacing.xl),
         TextField(
           key: const Key('walk-edit-memo-field'),
           controller: memoController,
@@ -264,6 +281,8 @@ class _Form extends StatelessWidget {
           maxLines: 6,
           textInputAction: TextInputAction.newline,
           keyboardType: TextInputType.multiline,
+          // 사용자가 쓰는 메모만 손글씨(개구 20).
+          style: PawlogTextStyles.of(context).memo,
           decoration: InputDecoration(
             labelText: l10n.walkMemoLabel,
             hintText: l10n.walkMemoHint,
@@ -271,9 +290,9 @@ class _Form extends StatelessWidget {
           ),
           onChanged: cubit.setMemo,
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: PawlogSpacing.xl),
         Text(l10n.walkPhotosLabel, style: theme.textTheme.titleMedium),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: PawlogSpacing.sm),
         PhotoStrip(
           photoPaths: form.photoPaths,
           photoFile: cubit.photoFile,
@@ -283,7 +302,7 @@ class _Form extends StatelessWidget {
           onRemove: cubit.removePhoto,
         ),
         if (form.isNew) ...[
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: PawlogSpacing.xl),
           AppButton.text(
             key: const Key('walk-edit-discard-button'),
             label: l10n.walkDiscard,

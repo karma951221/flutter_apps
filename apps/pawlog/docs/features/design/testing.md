@@ -4,7 +4,8 @@
 
 ```bash
 cd apps/pawlog && flutter test test/presentation/theme test/presentation/common
-cd apps/pawlog && flutter test test/presentation/feed test/presentation/tracking test/presentation/walk/widget
+cd apps/pawlog && flutter test test/presentation/feed test/presentation/tracking test/presentation/walk test/presentation/dog
+cd packages/core && flutter test test/media/image_picker_service_test.dart   # P5
 cd apps/pawlog && flutter test            # 전체
 ```
 
@@ -43,3 +44,18 @@ cd apps/pawlog && flutter test            # 전체
 
 기존 테스트에서 바꾼 것: 피드 테스트 중 추적 중 배너가 뜨는 두 건은 `pumpApp(disableAnimations: true)`
 (점멸이 끝나지 않아 `pumpAndSettle` 이 시간 초과).
+
+## 5단계 — 저장 · 상세 · 반려견
+
+| 파일 | 대상 | 확인 |
+|---|---|---|
+| `dog/page/dog_edit_page_test.dart` (1건 교체 + 1) | `DogEditPage` | **P3** 이름 누락 → 이름 입력칸 `errorText` "반려견 이름을 입력해 주세요", `SnackBar` 없음, 이름을 고치면 `errorText` 없음 · 이름 외 실패(`unknown`) → `SnackBar` |
+| `dog/widget/dog_chips_test.dart` (1, 새 파일) | `DogChips` | **P2** 선택 · 해제 상태, `showCheckmark: false`, 체크 아이콘 없음 |
+| `dog/widget/dog_avatars_test.dart` (+1) | `DogAvatars` | 두 마리 크기 52×32(지름 32, 겹침 12), 테두리 `paper` 2 |
+| `dog/page/dog_list_page_test.dart` | `DogListPage` | 키 `walk-dog-add-fab` → `walk-dog-add-button`(빈 상태의 "반려견 추가" 탭은 하단 버튼이 받는다) |
+| `walk/page/walk_edit_page_test.dart` (+1) | `WalkEditPage` | 신규 폼에 `walk-edit-route`, 메모 입력 글꼴 개구 |
+| `walk/page/walk_detail_page_test.dart` (+1) | `WalkDetailPage` | 메모 글자 모양 = `PawlogTextStyles.memo`, 사진 4:3 · 모서리 4 |
+| `packages/core` `test/media/image_picker_service_test.dart` (2, 새 파일) | `ImagePickerService.captureImage` | 취소 → null · **P5** 준비(디코드)가 실패해도 카메라 원본 파일이 지워진다 |
+
+성공 경로(압축 성공 뒤 삭제)는 `flutter_image_compress` 플러그인이 테스트에서 돌지 않아 단위 테스트로
+덮지 못했다 — 삭제가 `finally` 에 있어 두 경로가 같은 줄을 지난다.
