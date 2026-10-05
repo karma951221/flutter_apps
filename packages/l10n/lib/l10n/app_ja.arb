@@ -542,6 +542,7 @@
   "walkDogDeleteConfirmTitle": "わんちゃんを削除しますか？",
   "walkDogDeleteConfirmMessage": "散歩の記録は残り、記録からこのわんちゃんだけが外れます。",
   "walkActiveTitle": "散歩中",
+  "walkReadyTitle": "散歩の準備",
   "walkSelectDogs": "一緒に歩くわんちゃん",
   "walkStart": "散歩を始める",
   "walkStop": "散歩を終える",

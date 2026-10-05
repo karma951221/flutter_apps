@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pawlog/domain/walk/entity/geo_point.dart';
+import 'package:pawlog/presentation/theme/pawlog_theme.dart';
 import 'package:pawlog/presentation/walk/widget/route_map.dart';
 
 import '../../../support/pump_app.dart';
@@ -31,5 +32,29 @@ void main() {
     await pumpApp(tester, map(const [a, b]));
 
     expect(resolved, 1);
+  });
+
+  testWidgets('경로 선은 남색 테두리 9 위에 연두 5 다', (tester) async {
+    await pumpApp(
+      tester,
+      const Scaffold(
+        body: RouteMap(
+          points: [
+            GeoPoint(lat: 37.5, lng: 127),
+            GeoPoint(lat: 37.501, lng: 127.001),
+          ],
+        ),
+      ),
+    );
+
+    final line = tester
+        .widget<PolylineLayer>(find.byType(PolylineLayer))
+        .polylines
+        .single;
+    expect(line.color, PawlogColors.light.accent);
+    expect(line.strokeWidth, 5);
+    expect(line.borderColor, PawlogColors.light.routeCasing);
+    expect(line.strokeWidth + line.borderStrokeWidth, 9);
+    expect(line.strokeCap, StrokeCap.round);
   });
 }

@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/tracking/entity/tracking_notice.dart';
+import '../../../domain/walk/entity/geo_point.dart';
 import '../../common/widget/pawlog_primary_button.dart';
 import '../../dog/widget/dog_chips.dart';
 import '../../theme/pawlog_theme.dart';
@@ -61,11 +62,19 @@ class _ActiveWalkView extends StatelessWidget {
       listenWhen: (previous, current) =>
           previous is! ActiveWalkStopped && current is ActiveWalkStopped,
       listener: (_, _) => onStopped(),
-      child: Scaffold(
-        appBar: AppBar(title: Text(l10n.walkActiveTitle)),
-        body: SafeArea(
-          child: BlocBuilder<ActiveWalkCubit, ActiveWalkState>(
-            builder: (context, state) => switch (state) {
+      child: BlocBuilder<ActiveWalkCubit, ActiveWalkState>(
+        builder: (context, state) => Scaffold(
+          // 시작 전(반려견 고르기 · 시작 중 · 실패)은 '산책 준비', 추적부터 '산책 중'(QA P1).
+          appBar: AppBar(
+            title: Text(switch (state) {
+              ActiveWalkLoading() => '',
+              ActiveWalkTracking() ||
+              ActiveWalkStopped() => l10n.walkActiveTitle,
+              _ => l10n.walkReadyTitle,
+            }),
+          ),
+          body: SafeArea(
+            child: switch (state) {
               ActiveWalkLoading() || ActiveWalkStarting() => const Center(
                 child: CircularProgressIndicator(),
               ),
@@ -123,53 +132,14 @@ class _ActiveWalkView extends StatelessWidget {
                 :final elapsed,
                 :final locationError,
               ) =>
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      // 점이 없을 때 오류가 나면 "찾는 중" 대신 오류를 지도 자리에 둔다.
-                      child: locationError != null && session.points.isEmpty
-                          ? Center(
-                              child: _LocationError(
-                                failure: locationError,
-                                onRetry: cubit.resumeTracking,
-                                onOpenSettings: () =>
-                                    cubit.openSettings(locationError),
-                              ),
-                            )
-                          : RouteMap(
-                              key: const Key('walk-active-map'),
-                              points: [for (final p in session.points) p.point],
-                              follow: true,
-                              emptyMessage: l10n.walkLocating,
-                            ),
-                    ),
-                    if (locationError != null && session.points.isNotEmpty)
-                      _LocationError(
-                        failure: locationError,
-                        onRetry: cubit.resumeTracking,
-                        onOpenSettings: () => cubit.openSettings(locationError),
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          WalkStatsRow(
-                            distanceMeters: session.distanceMeters,
-                            elapsed: elapsed,
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          PawlogPrimaryButton.stop(
-                            key: const Key('walk-active-stop-button'),
-                            label: l10n.walkStop,
-                            onPressed: () => _confirmStop(context),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                _TrackingView(
+                  points: [for (final p in session.points) p.point],
+                  distanceMeters: session.distanceMeters,
+                  elapsed: elapsed,
+                  locationError: locationError,
+                  onRetry: cubit.resumeTracking,
+                  onOpenSettings: (failure) => cubit.openSettings(failure),
+                  onStop: () => _confirmStop(context),
                 ),
               ActiveWalkFailure(:final failure) => Center(
                 child: _LocationProblem(
@@ -264,4 +234,143 @@ class _LocationError extends StatelessWidget {
     onRetry: onRetry,
     onOpenSettings: onOpenSettings,
   );
+}
+
+/// 추적 중 — 지도 위로 20 둥근 시트가 올라와 거리 · 시간 두 숫자만 44 로 보인다.
+///
+/// 점이 생기기 전(찾는 중 · 오류)에는 지도 대신 안내가 그 자리를 차지하고, 시트는 아래에 붙는다.
+class _TrackingView extends StatelessWidget {
+  const _TrackingView({
+    required this.points,
+    required this.distanceMeters,
+    required this.elapsed,
+    required this.locationError,
+    required this.onRetry,
+    required this.onOpenSettings,
+    required this.onStop,
+  });
+
+  final List<GeoPoint> points;
+  final double distanceMeters;
+  final Duration elapsed;
+  final Failure? locationError;
+  final VoidCallback onRetry;
+  final ValueChanged<Failure> onOpenSettings;
+  final VoidCallback onStop;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final error = locationError;
+
+    final sheet = _TrackingSheet(
+      distanceMeters: distanceMeters,
+      elapsed: elapsed,
+      onStop: onStop,
+      // 지도가 있으면 오류는 시트 안에 — 기록은 이어지고 있다.
+      error: error != null && points.isNotEmpty
+          ? _LocationError(
+              failure: error,
+              onRetry: onRetry,
+              onOpenSettings: () => onOpenSettings(error),
+            )
+          : null,
+    );
+
+    if (points.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            // 점이 없을 때 오류가 나면 "찾는 중" 대신 오류를 지도 자리에 둔다.
+            child: error != null
+                ? Center(
+                    child: _LocationError(
+                      failure: error,
+                      onRetry: onRetry,
+                      onOpenSettings: () => onOpenSettings(error),
+                    ),
+                  )
+                : RouteMap(
+                    key: const Key('walk-active-map'),
+                    points: points,
+                    follow: true,
+                    emptyMessage: l10n.walkLocating,
+                  ),
+          ),
+          sheet,
+        ],
+      );
+    }
+
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: RouteMap(
+            key: const Key('walk-active-map'),
+            points: points,
+            follow: true,
+            emptyMessage: l10n.walkLocating,
+          ),
+        ),
+        Align(alignment: Alignment.bottomCenter, child: sheet),
+      ],
+    );
+  }
+}
+
+class _TrackingSheet extends StatelessWidget {
+  const _TrackingSheet({
+    required this.distanceMeters,
+    required this.elapsed,
+    required this.onStop,
+    this.error,
+  });
+
+  final double distanceMeters;
+  final Duration elapsed;
+  final VoidCallback onStop;
+  final Widget? error;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colors = PawlogColors.of(context);
+
+    return DecoratedBox(
+      key: const Key('walk-active-sheet'),
+      decoration: BoxDecoration(
+        color: colors.sheet,
+        borderRadius: PawlogRadius.sheetTop,
+        boxShadow: PawlogShadows.sheet(colors.shadow),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.only(top: PawlogSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ?error,
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: PawlogSize.gutter,
+              ),
+              child: WalkStatsRow(
+                distanceMeters: distanceMeters,
+                elapsed: elapsed,
+                hero: true,
+              ),
+            ),
+            PawlogBottomAction(
+              child: PawlogPrimaryButton.stop(
+                key: const Key('walk-active-stop-button'),
+                label: l10n.walkStop,
+                onPressed: onStop,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

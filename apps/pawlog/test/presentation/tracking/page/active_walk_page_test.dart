@@ -55,6 +55,13 @@ void main() {
     distanceMeters: 1250,
   );
 
+  testWidgets('시작 전 반려견 선택 화면의 제목은 산책 준비다(QA P1)', (tester) async {
+    await pumpApp(tester, ActiveWalkPage(onStopped: () {}, onOpenDogs: () {}));
+
+    expect(find.text('산책 준비'), findsOneWidget);
+    expect(find.text('산책 중'), findsNothing);
+  });
+
   testWidgets('반려견 선택을 모두 해제하면 시작 버튼이 비활성이 된다', (tester) async {
     await pumpApp(tester, ActiveWalkPage(onStopped: () {}, onOpenDogs: () {}));
 
@@ -116,6 +123,30 @@ void main() {
       '1.3 km',
     );
     verifyNever(() => useCase.watchDogs());
+    // 지도 위 시트 — 숫자 두 개는 44, 끝내기는 먹색, 제목은 산책 중.
+    expect(find.text('산책 중'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('walk-active-sheet')),
+        matching: find.byKey(const Key('walk-active-stop-button')),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('walk-active-elapsed')))
+          .style
+          ?.fontSize,
+      44,
+    );
+    expect(
+      tester
+          .widget<PawlogPrimaryButton>(
+            find.byKey(const Key('walk-active-stop-button')),
+          )
+          .isStop,
+      isTrue,
+    );
     await disposePage(tester);
   });
 

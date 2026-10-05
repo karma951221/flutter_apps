@@ -4,7 +4,7 @@
 
 ```bash
 cd apps/pawlog && flutter test test/presentation/theme test/presentation/common
-cd apps/pawlog && flutter test test/presentation/feed/page
+cd apps/pawlog && flutter test test/presentation/feed test/presentation/tracking test/presentation/walk/widget
 cd apps/pawlog && flutter test            # 전체
 ```
 
@@ -31,3 +31,15 @@ cd apps/pawlog && flutter test            # 전체
 
 날짜 묶음 테스트는 세 항목이 한 화면에 들어오도록 `tester.view` 를 400×2400 으로 둔다 — 4:3 사진 칸
 때문에 기본 800×600 에서는 둘째 항목부터 지연 생성돼 위젯을 찾을 수 없다.
+
+## 4단계 — 배너 · 진행 화면 · 경로 선
+
+| 파일 | 대상 | 확인 |
+|---|---|---|
+| `tracking/widget/active_walk_banner_test.dart` (4, 새 파일) | `ActiveWalkBanner` · `PulseDot` | 추적 중: 남색 · 모서리 12 · 연두 점 · `12:05` · 저장 전: 점 · 시간 없음 · 점은 0.8초에 0.5 미만으로 옅어졌다 1.6초에 1 로 · `disableAnimations` 면 멈춘 채 1, 돌아가는 애니메이션 없음 |
+| `tracking/page/active_walk_page_test.dart` (+1, 1건 보강) | `ActiveWalkPage` | **P1** 반려견 선택 화면 제목 "산책 준비", "산책 중" 없음 · 추적 중: 제목 "산책 중", 끝내기 버튼이 `walk-active-sheet` 안, 경과 시간 글자 44, 끝내기 `isStop` |
+| `walk/widget/route_map_test.dart` (+1) | `RouteMap` | 폴리라인 연두 · 5, 테두리 남색 · 합 9, 둥근 끝 |
+| `feed/widget/route_preview_painter_test.dart` (4 → 5) | `RoutePreviewPainter` | 테두리 색이 있으면 9 남색 `path` 다음 5 선 `path` · `shouldRepaint` 가 테두리 색도 비교 |
+
+기존 테스트에서 바꾼 것: 피드 테스트 중 추적 중 배너가 뜨는 두 건은 `pumpApp(disableAnimations: true)`
+(점멸이 끝나지 않아 `pumpAndSettle` 이 시간 초과).

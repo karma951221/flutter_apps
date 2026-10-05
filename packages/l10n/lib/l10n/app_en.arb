@@ -542,6 +542,7 @@
   "walkDogDeleteConfirmTitle": "Delete this dog?",
   "walkDogDeleteConfirmMessage": "Your walks stay, but this dog is removed from them.",
   "walkActiveTitle": "Walking",
+  "walkReadyTitle": "Get ready",
   "walkSelectDogs": "Dogs on this walk",
   "walkStart": "Start walk",
   "walkStop": "End walk",

@@ -1721,6 +1721,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkActiveTitle => '散歩中';
 
   @override
+  String get walkReadyTitle => '散歩の準備';
+
+  @override
   String get walkSelectDogs => '一緒に歩くわんちゃん';
 
   @override

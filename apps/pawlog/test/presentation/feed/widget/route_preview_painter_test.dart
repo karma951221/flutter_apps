@@ -3,13 +3,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pawlog/domain/walk/entity/geo_point.dart';
 import 'package:pawlog/presentation/feed/widget/route_preview_painter.dart';
 
-Widget _host(List<GeoPoint> points, {Color color = Colors.green}) => Center(
+Widget _host(
+  List<GeoPoint> points, {
+  Color color = Colors.green,
+  Color? casingColor,
+}) => Center(
   child: SizedBox(
     width: 100,
     height: 100,
     child: CustomPaint(
       key: const Key('preview'),
-      painter: RoutePreviewPainter(points, color: color),
+      painter: RoutePreviewPainter(
+        points,
+        color: color,
+        casingColor: casingColor,
+      ),
     ),
   ),
 );
@@ -38,6 +46,17 @@ void main() {
     expect(_render(tester), paints..path(color: Colors.green));
   });
 
+  testWidgets('테두리 색이 있으면 굵은 테두리 위에 가는 선을 얹는다', (tester) async {
+    await tester.pumpWidget(_host(_line, casingColor: Colors.indigo));
+
+    expect(
+      _render(tester),
+      paints
+        ..path(color: Colors.indigo, strokeWidth: 9)
+        ..path(color: Colors.green, strokeWidth: 5),
+    );
+  });
+
   testWidgets('점이 하나여도 예외 없이 그린다', (tester) async {
     await tester.pumpWidget(_host(const [GeoPoint(lat: 37.5, lng: 127)]));
 
@@ -45,7 +64,7 @@ void main() {
     expect(_render(tester), paints..circle());
   });
 
-  test('shouldRepaint 는 점 목록과 색을 비교한다', () {
+  test('shouldRepaint 는 점 목록 · 색 · 테두리 색을 비교한다', () {
     const base = RoutePreviewPainter(_line, color: Colors.green);
 
     expect(
@@ -58,6 +77,16 @@ void main() {
     );
     expect(
       base.shouldRepaint(const RoutePreviewPainter([], color: Colors.green)),
+      isTrue,
+    );
+    expect(
+      base.shouldRepaint(
+        const RoutePreviewPainter(
+          _line,
+          color: Colors.green,
+          casingColor: Colors.indigo,
+        ),
+      ),
       isTrue,
     );
   });

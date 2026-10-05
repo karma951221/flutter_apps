@@ -60,6 +60,7 @@ void main() {
 
   Future<void> pump(
     WidgetTester tester, {
+    bool disableAnimations = false,
     VoidCallback? onStartWalk,
     VoidCallback? onSaveWalk,
     ValueChanged<String>? onOpenWalk,
@@ -72,6 +73,7 @@ void main() {
       onOpenWalk: onOpenWalk ?? (_) {},
       onOpenDogs: onOpenDogs ?? () {},
     ),
+    disableAnimations: disableAnimations,
   );
 
   testWidgets('빈 피드는 날짜 열 없이 안내 한 줄과 하단 시작 버튼을 보인다', (tester) async {
@@ -100,7 +102,8 @@ void main() {
       ).thenAnswer((_) => Stream.value(const Ok([])));
       current = tracker;
 
-      await pump(tester);
+      // 추적 중 배너의 연두 점은 끝없이 점멸한다.
+      await pump(tester, disableAnimations: true);
 
       expect(find.byKey(const Key('walk-feed-banner')), findsOneWidget);
       expect(find.text('첫 산책을 시작해 보세요'), findsNothing);
@@ -213,7 +216,7 @@ void main() {
     current = TrackerState.tracking(walkSession(distanceMeters: 300));
     var started = 0;
 
-    await pump(tester, onStartWalk: () => started++);
+    await pump(tester, disableAnimations: true, onStartWalk: () => started++);
 
     expect(find.byKey(const Key('walk-feed-banner')), findsOneWidget);
     expect(find.text('산책 중이에요 · 눌러서 돌아가기'), findsOneWidget);

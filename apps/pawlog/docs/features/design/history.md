@@ -96,3 +96,28 @@ walk 의 `WalkTheme` 은 `AppTheme.light(seedColor:)` 에 씨앗색만 바꾼다
   (`idle` → "산책 시작", 기록이 있는 `tracking` → "산책 계속", `finished` → 없음)
 - 기록이 사진 없이 경로 점도 2개 미만이면 같은 4:3 자리에 `mapBg` + `Icons.map_outlined`(muted) 하나.
   발바닥 아이콘은 design.md Don't("발바닥 이모지 · 장식")에 걸려 바꿨다
+
+## 4 — 진행 배너 · 산책 중 화면 · 경로 선
+
+- **배너** — `primaryContainer` 카드에서 남색(`primary`) · 모서리 12 · 한 줄로. 추적 중이면 왼쪽
+  `PulseDot`(연두 8, 0.8초씩 옅어졌다 돌아와 1.6초 주기, `move` 곡선), 오른쪽 경과 시간 20/700 tnum.
+  저장 전 배너에는 점 · 시간이 없다 — '진행 중' 이 아니라서 연두를 쓰지 않는다. 배너 안의 거리
+  (`WalkStatsRow`)는 design.md 대로 뺐다. 경과 시간은 지금처럼 피드가 다시 그려질 때(추적 상태 · 점 변화)
+  갱신된다 — 배너에 1초 타이머를 따로 두지 않았다
+- **점멸과 테스트** — 반복 애니메이션은 `pumpAndSettle` 을 끝나지 않게 한다. `pumpApp` 에
+  `disableAnimations` 를 더하고 추적 중 배너가 뜨는 피드 테스트 두 건만 켰다. 점멸 자체는
+  `active_walk_banner_test` 가 시간을 흘려 확인한다
+- **진행 화면** — 점이 있으면 지도를 화면 가득 깔고 그 위에 `walk-active-sheet`(시트 색 · 위 모서리 20 ·
+  위로 6/18 그림자)를 얹는다. 시트에는 거리 · 시간 두 숫자(`WalkStatsRow(hero: true)`, 44)와 먹색
+  끝내기 버튼뿐이다. 점이 없을 때(찾는 중 · 오류)는 지도 대신 안내가 위를 차지하고 시트는 아래에 붙는다 —
+  가운데 정렬된 안내가 시트에 가리지 않게. 추적 중 위치 오류는 시트 맨 위에 들어간다
+- **`WalkStatsRow`** — 순서를 거리 → 시간으로(design.md "거리 · 시간"), 왼쪽 정렬, 값은 `number`(20) ·
+  `hero` 면 `numberHero`(44). 좁은 폭에서 44 숫자가 넘치지 않게 `FittedBox(scaleDown)`. 키
+  `walk-active-elapsed` · `walk-active-distance` 는 그대로
+- **경로 선** — 지도(`Polyline`)는 `strokeWidth` 5 연두 + `borderStrokeWidth` 4 남색(flutter_map 은
+  테두리를 선 폭에 더해 그려 합이 9), 둥근 끝 · 이음. 썸네일(`RoutePreviewPainter`)은 `casingColor` 를
+  받아 9 테두리 → 5 선 두 번 그린다. 출발 · 도착 표시는 `Icons.location_on`(`tertiary`) 핀 대신 남색 점 ·
+  연두 점(테두리 2) — 선과 같은 두 색만 쓴다
+- **P1** — 진행 화면 제목을 상태로 고른다. 반려견 고르기 · 시작 중 · 시작 실패 = "산책 준비"
+  (`walkReadyTitle`, ko · en · ja 를 `packages/l10n` ARB 에 추가), 추적 · 종료 = "산책 중", 첫 로딩은 빈 제목
+  (이어 하던 산책이면 곧 "산책 중" 이 되므로 "산책 준비" 가 깜빡이지 않게)

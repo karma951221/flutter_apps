@@ -3356,6 +3356,12 @@ abstract class AppLocalizations {
   /// **'산책 중'**
   String get walkActiveTitle;
 
+  /// 진행 화면에서 반려견을 고르는(시작 전) 동안의 앱바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 준비'**
+  String get walkReadyTitle;
+
   /// 진행 화면에서 산책에 데려갈 반려견을 고르는 칩 목록의 제목
   ///
   /// In ko, this message translates to:

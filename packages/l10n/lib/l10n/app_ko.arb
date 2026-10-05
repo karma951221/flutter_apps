@@ -2396,6 +2396,10 @@
   "@walkActiveTitle": {
     "description": "진행 화면 앱바 제목"
   },
+  "walkReadyTitle": "산책 준비",
+  "@walkReadyTitle": {
+    "description": "진행 화면에서 반려견을 고르는(시작 전) 동안의 앱바 제목"
+  },
   "walkSelectDogs": "함께 걷는 반려견",
   "@walkSelectDogs": {
     "description": "진행 화면에서 산책에 데려갈 반려견을 고르는 칩 목록의 제목"

@@ -1,31 +1,42 @@
 import 'dart:math' as math;
 
-import 'package:design_system/design_system.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../domain/walk/entity/geo_point.dart';
+import '../../theme/pawlog_theme.dart';
 
 /// 경로 점들을 타일 없이 폴리라인으로만 그리는 미리보기. 네트워크를 쓰지 않는다.
 ///
 /// 점들의 경계 상자를 비율을 유지한 채 캔버스에 맞춘다. 점이 없으면 아무것도 그리지 않는다.
+/// [casingColor] 가 있으면 그 색 9 테두리 위에 [color] 5 선을 얹는다(design.md 경로 선) —
+/// 연두는 밝은 바탕 위 대비가 약해 늘 남색 테두리와 함께 쓴다.
 class RoutePreviewPainter extends CustomPainter {
-  const RoutePreviewPainter(this.points, {required this.color});
+  const RoutePreviewPainter(
+    this.points, {
+    required this.color,
+    this.casingColor,
+  });
 
   final List<GeoPoint> points;
   final Color color;
+  final Color? casingColor;
 
-  static const _strokeWidth = 3.0;
+  static const _strokeWidth = PawlogSize.routeStroke;
+  static const _casingWidth = PawlogSize.routeCasing;
+
+  /// 테두리까지 캔버스 안에 들어오도록 가장자리에서 띄우는 폭.
+  static const _inset = PawlogSpacing.md;
 
   @override
   void paint(Canvas canvas, Size size) {
     if (points.isEmpty) return;
 
     final area = Rect.fromLTWH(
-      AppSpacing.sm,
-      AppSpacing.sm,
-      math.max(0, size.width - AppSpacing.sm * 2),
-      math.max(0, size.height - AppSpacing.sm * 2),
+      _inset,
+      _inset,
+      math.max(0, size.width - _inset * 2),
+      math.max(0, size.height - _inset * 2),
     );
 
     var minLat = points.first.lat;
@@ -60,18 +71,27 @@ class RoutePreviewPainter extends CustomPainter {
       top + (maxLat - p.lat) * usable,
     );
 
-    final paint = Paint()
+    Paint stroke(Color color, double width) => Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = _strokeWidth
+      ..strokeWidth = width
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
+    final casing = casingColor;
 
     if (points.length == 1) {
+      final center = project(points.first);
+      if (casing != null) {
+        canvas.drawCircle(
+          center,
+          _casingWidth / 2,
+          stroke(casing, 0)..style = PaintingStyle.fill,
+        );
+      }
       canvas.drawCircle(
-        project(points.first),
-        _strokeWidth,
-        paint..style = PaintingStyle.fill,
+        center,
+        _strokeWidth / 2,
+        stroke(color, 0)..style = PaintingStyle.fill,
       );
       return;
     }
@@ -81,10 +101,13 @@ class RoutePreviewPainter extends CustomPainter {
       final o = project(p);
       path.lineTo(o.dx, o.dy);
     }
-    canvas.drawPath(path, paint);
+    if (casing != null) canvas.drawPath(path, stroke(casing, _casingWidth));
+    canvas.drawPath(path, stroke(color, _strokeWidth));
   }
 
   @override
   bool shouldRepaint(RoutePreviewPainter oldDelegate) =>
-      color != oldDelegate.color || !listEquals(points, oldDelegate.points);
+      color != oldDelegate.color ||
+      casingColor != oldDelegate.casingColor ||
+      !listEquals(points, oldDelegate.points);
 }

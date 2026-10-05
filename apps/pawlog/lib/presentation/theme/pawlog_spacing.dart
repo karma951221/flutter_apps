@@ -31,6 +31,9 @@ abstract final class PawlogSize {
   static const routeStroke = 5.0;
   static const routeCasing = 9.0;
 
+  /// 지도 위 출발 · 도착 점 지름.
+  static const routeMarker = 16.0;
+
   /// 진행 배너의 연두 점 지름.
   static const pulseDot = 8.0;
 

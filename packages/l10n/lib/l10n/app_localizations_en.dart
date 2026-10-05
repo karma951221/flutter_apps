@@ -1825,6 +1825,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkActiveTitle => 'Walking';
 
   @override
+  String get walkReadyTitle => 'Get ready';
+
+  @override
   String get walkSelectDogs => 'Dogs on this walk';
 
   @override

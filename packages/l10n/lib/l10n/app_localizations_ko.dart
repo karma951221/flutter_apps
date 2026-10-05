@@ -1722,6 +1722,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkActiveTitle => '산책 중';
 
   @override
+  String get walkReadyTitle => '산책 준비';
+
+  @override
   String get walkSelectDogs => '함께 걷는 반려견';
 
   @override

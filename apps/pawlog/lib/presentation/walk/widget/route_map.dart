@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../domain/walk/entity/geo_point.dart';
+import '../../theme/pawlog_theme.dart';
 
 /// 경로 지도. W2 진행 화면(`follow`)과 W3 상세가 함께 쓴다.
 ///
@@ -69,7 +70,7 @@ class _RouteMapState extends State<RouteMap> {
       return Center(child: AppPlaceholder(message: widget.emptyMessage ?? ''));
     }
 
-    final scheme = Theme.of(context).colorScheme;
+    final colors = PawlogColors.of(context);
     final latLngs = [for (final p in points) _latLng(p)];
     final isSinglePlace = latLngs.every((p) => p == latLngs.first);
 
@@ -82,7 +83,7 @@ class _RouteMapState extends State<RouteMap> {
             ? null
             : CameraFit.coordinates(
                 coordinates: latLngs,
-                padding: const EdgeInsets.all(AppSpacing.lg),
+                padding: const EdgeInsets.all(PawlogSpacing.xl),
               ),
       ),
       children: [
@@ -91,12 +92,18 @@ class _RouteMapState extends State<RouteMap> {
           userAgentPackageName: 'com.karma.pawlog',
           tileProvider: _tileProvider,
         ),
+        // 남색 테두리 9 위에 연두 5, 둥근 끝 · 둥근 이음(design.md 경로 선).
         PolylineLayer(
           polylines: [
             Polyline(
               points: latLngs,
-              strokeWidth: AppSpacing.xs,
-              color: scheme.primary,
+              strokeWidth: PawlogSize.routeStroke,
+              color: colors.accent,
+              borderStrokeWidth:
+                  PawlogSize.routeCasing - PawlogSize.routeStroke,
+              borderColor: colors.routeCasing,
+              strokeCap: StrokeCap.round,
+              strokeJoin: StrokeJoin.round,
             ),
           ],
         ),
@@ -104,24 +111,16 @@ class _RouteMapState extends State<RouteMap> {
           markers: [
             Marker(
               point: latLngs.first,
-              width: AppSpacing.lg,
-              height: AppSpacing.lg,
-              child: Icon(
-                Icons.circle,
-                size: AppSpacing.md,
-                color: scheme.primary,
-              ),
+              width: PawlogSize.routeMarker,
+              height: PawlogSize.routeMarker,
+              child: _Dot(fill: colors.routeCasing, ring: colors.onPrimary),
             ),
             if (!isSinglePlace)
               Marker(
                 point: latLngs.last,
-                width: AppSpacing.xl,
-                height: AppSpacing.xl,
-                child: Icon(
-                  Icons.location_on,
-                  size: AppSpacing.xl,
-                  color: scheme.tertiary,
-                ),
+                width: PawlogSize.routeMarker,
+                height: PawlogSize.routeMarker,
+                child: _Dot(fill: colors.accent, ring: colors.routeCasing),
               ),
           ],
         ),
@@ -131,4 +130,21 @@ class _RouteMapState extends State<RouteMap> {
       ],
     );
   }
+}
+
+/// 출발(남색) · 현재 또는 도착(연두) 점. 핀 아이콘 대신 선과 같은 두 색만 쓴다.
+class _Dot extends StatelessWidget {
+  const _Dot({required this.fill, required this.ring});
+
+  final Color fill;
+  final Color ring;
+
+  @override
+  Widget build(BuildContext context) => DecoratedBox(
+    decoration: BoxDecoration(
+      color: fill,
+      shape: BoxShape.circle,
+      border: Border.all(color: ring, width: PawlogSize.avatarRing),
+    ),
+  );
 }

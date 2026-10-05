@@ -195,7 +195,8 @@ class _Visual extends StatelessWidget {
           : CustomPaint(
               painter: RoutePreviewPainter(
                 walk.previewPoints,
-                color: colors.primary,
+                color: colors.accent,
+                casingColor: colors.routeCasing,
               ),
             ),
     );
