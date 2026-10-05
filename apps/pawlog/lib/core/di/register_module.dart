@@ -29,6 +29,9 @@ abstract class RegisterModule {
   LocationGateway get locationGateway => const GeolocatorGateway();
 
   /// 지도 위젯이 getIt 에서 받아 가므로 테스트가 대체할 수 있다.
-  @lazySingleton
+  ///
+  /// 싱글턴이면 안 된다 — TileLayer 가 사라질 때 provider 를 dispose 하고,
+  /// NetworkTileProvider 는 그때 자기 http client 를 닫아 다음 지도가 회색이 된다.
+  @injectable
   TileProvider get tileProvider => NetworkTileProvider();
 }

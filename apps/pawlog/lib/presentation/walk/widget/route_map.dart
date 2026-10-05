@@ -24,7 +24,7 @@ class RouteMap extends StatefulWidget {
   final bool follow;
   final String? emptyMessage;
 
-  /// null 이면 `getIt<TileProvider>()`. 테스트가 stub 으로 바꾼다.
+  /// null 이면 `getIt<TileProvider>()` 로 지도마다 하나 받는다. 테스트가 stub 으로 바꾼다.
   final TileProvider? tileProvider;
 
   @override
@@ -35,6 +35,11 @@ class _RouteMapState extends State<RouteMap> {
   static const _singlePointZoom = 17.0;
 
   final _controller = MapController();
+
+  /// TileLayer 가 dispose 할 때까지 같은 것을 쓴다 — build 마다 새로 받으면
+  /// 바뀐 provider 는 dispose 되지 않는다.
+  late final TileProvider _tileProvider =
+      widget.tileProvider ?? getIt<TileProvider>();
 
   @override
   void didUpdateWidget(RouteMap oldWidget) {
@@ -84,7 +89,7 @@ class _RouteMapState extends State<RouteMap> {
         TileLayer(
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
           userAgentPackageName: 'com.karma.pawlog',
-          tileProvider: widget.tileProvider ?? getIt<TileProvider>(),
+          tileProvider: _tileProvider,
         ),
         PolylineLayer(
           polylines: [

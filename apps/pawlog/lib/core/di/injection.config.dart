@@ -45,6 +45,7 @@ extension GetItInjectableX on _i174.GetIt {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     await _i494.CorePackageModule().init(gh);
     final registerModule = _$RegisterModule();
+    gh.factory<_i525.TileProvider>(() => registerModule.tileProvider);
     gh.lazySingleton<_i563.WalkDatabase>(
       () => registerModule.database,
       dispose: _i291.disposeWalkDatabase,
@@ -52,7 +53,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i645.LocationGateway>(
       () => registerModule.locationGateway,
     );
-    gh.lazySingleton<_i525.TileProvider>(() => registerModule.tileProvider);
     await gh.factoryAsync<_i497.Directory>(
       () => registerModule.photosRoot,
       instanceName: 'walkPhotosRoot',
