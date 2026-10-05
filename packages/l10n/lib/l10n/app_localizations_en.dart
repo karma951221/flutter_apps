@@ -1891,6 +1891,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your walk is still being recorded. Try again to resume location updates';
 
   @override
+  String get walkLocationServiceHint =>
+      'Turn on location services, then try again';
+
+  @override
+  String get walkOpenLocationSettings => 'Open location settings';
+
+  @override
   String get walkLocating => 'Finding your location…';
 
   @override

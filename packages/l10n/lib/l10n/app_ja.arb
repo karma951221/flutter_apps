@@ -560,6 +560,8 @@
   "walkOpenDogsAction": "わんちゃんを登録する",
   "walkLocationDeniedHint": "設定で位置情報の権限を許可してからもう一度お試しください",
   "walkLocationLostHint": "散歩の記録は続いています。再試行すると位置情報を受け取り直します",
+  "walkLocationServiceHint": "位置情報サービスをオンにしてからもう一度お試しください",
+  "walkOpenLocationSettings": "位置情報の設定を開く",
   "walkLocating": "位置情報を探しています…",
   "walkEditNewTitle": "散歩を保存",
   "walkEditTitle": "散歩を編集",

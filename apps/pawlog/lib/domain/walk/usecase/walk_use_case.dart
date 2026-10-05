@@ -79,6 +79,10 @@ abstract interface class WalkUseCase {
 
   Future<Result<WalkSession>> stopWalk();
 
+  Future<void> openAppSettings();
+
+  Future<void> openLocationSettings();
+
   Future<void> discardWalk({required List<String> photoPaths});
 }
 
@@ -168,6 +172,12 @@ class DefaultWalkUseCase implements WalkUseCase {
 
   @override
   Future<Result<WalkSession>> stopWalk() => StopWalkScenario(_tracker)();
+
+  @override
+  Future<void> openAppSettings() => _tracker.openAppSettings();
+
+  @override
+  Future<void> openLocationSettings() => _tracker.openLocationSettings();
 
   @override
   Future<void> discardWalk({required List<String> photoPaths}) =>

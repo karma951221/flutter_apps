@@ -20,6 +20,9 @@ class LocationAccess {
   /// 설정 열기 · 다시 요청 같은 화면 동작에 쓴다.
   final PermissionRequester permission;
 
+  /// [LocationAccessStatus.serviceDisabled] 일 때 위치 서비스를 켜러 간다.
+  Future<void> openLocationSettings() => _gateway.openLocationSettings();
+
   Future<LocationAccessStatus> ensure() async {
     if (!await _gateway.isLocationServiceEnabled()) {
       return LocationAccessStatus.serviceDisabled;

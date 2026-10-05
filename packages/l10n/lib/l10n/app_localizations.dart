@@ -3464,6 +3464,18 @@ abstract class AppLocalizations {
   /// **'산책 기록은 이어집니다. 다시 시도하면 위치를 다시 받아요'**
   String get walkLocationLostHint;
 
+  /// 위치 서비스 꺼짐 실패 안내 아래에 붙는 보조 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 서비스를 켠 뒤 다시 시도해 주세요'**
+  String get walkLocationServiceHint;
+
+  /// 위치 서비스가 꺼져 있을 때 기기 위치 설정을 여는 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 설정 열기'**
+  String get walkOpenLocationSettings;
+
   /// 추적은 시작했지만 아직 GPS 점이 없을 때 지도 자리에 보이는 문구
   ///
   /// In ko, this message translates to:

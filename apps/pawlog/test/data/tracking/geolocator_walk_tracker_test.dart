@@ -289,4 +289,15 @@ void main() {
 
     expect(failureOf(r).failureCode, FailureCode.walkNotFound);
   });
+
+  test('설정 열기는 앱 설정 · 위치 설정을 게이트웨이에 맡긴다', () async {
+    when(() => gateway.openAppSettings()).thenAnswer((_) async => true);
+    when(() => gateway.openLocationSettings()).thenAnswer((_) async => true);
+
+    await tracker.openAppSettings();
+    await tracker.openLocationSettings();
+
+    verify(() => gateway.openAppSettings()).called(1);
+    verify(() => gateway.openLocationSettings()).called(1);
+  });
 }

@@ -12,6 +12,9 @@ abstract interface class LocationGateway {
 
   Future<bool> openAppSettings();
 
+  /// 기기의 위치 서비스 설정 화면(Android 위치 설정 · iOS 앱 설정)을 연다.
+  Future<bool> openLocationSettings();
+
   Future<Position> getCurrentPosition({
     required LocationAccuracy accuracy,
     required Duration timeout,
@@ -45,6 +48,9 @@ class GeolocatorGateway implements LocationGateway {
 
   @override
   Future<bool> openAppSettings() => Geolocator.openAppSettings();
+
+  @override
+  Future<bool> openLocationSettings() => Geolocator.openLocationSettings();
 
   @override
   Future<Position> getCurrentPosition({

@@ -265,6 +265,66 @@ void main() {
     ).called(2);
   });
 
+  testWidgets('위치 권한 거부 화면의 설정 열기는 앱 설정을 연다', (tester) async {
+    when(
+      () => useCase.startWalk(
+        dogIds: any(named: 'dogIds'),
+        notice: any(named: 'notice'),
+      ),
+    ).thenAnswer(
+      (_) async => const Err(
+        Failure.forbidden(failureCode: FailureCode.locationPermissionDenied),
+      ),
+    );
+    when(() => useCase.openAppSettings()).thenAnswer((_) async {});
+    await pumpApp(tester, ActiveWalkPage(onStopped: () {}, onOpenDogs: () {}));
+
+    await tester.tap(find.byKey(const Key('walk-active-start-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('walk-active-retry')), findsOneWidget);
+    await tester.tap(find.text('설정 열기'));
+    await tester.pump();
+
+    verify(() => useCase.openAppSettings()).called(1);
+  });
+
+  testWidgets('위치 서비스가 꺼져 있으면 위치 설정 열기를 보인다', (tester) async {
+    when(
+      () => useCase.startWalk(
+        dogIds: any(named: 'dogIds'),
+        notice: any(named: 'notice'),
+      ),
+    ).thenAnswer(
+      (_) async => const Err(
+        Failure.validation(failureCode: FailureCode.locationServiceDisabled),
+      ),
+    );
+    when(() => useCase.openLocationSettings()).thenAnswer((_) async {});
+    await pumpApp(tester, ActiveWalkPage(onStopped: () {}, onOpenDogs: () {}));
+
+    await tester.tap(find.byKey(const Key('walk-active-start-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('위치 설정 열기'));
+    await tester.pump();
+
+    verify(() => useCase.openLocationSettings()).called(1);
+  });
+
+  testWidgets('추적 중 권한이 끊기면 다시 시도와 설정 열기를 함께 보인다', (tester) async {
+    current = TrackerState.tracking(
+      walkSession(),
+      locationError: const Failure.forbidden(
+        failureCode: FailureCode.locationPermissionDenied,
+      ),
+    );
+
+    await pumpApp(tester, ActiveWalkPage(onStopped: () {}, onOpenDogs: () {}));
+
+    expect(find.byKey(const Key('walk-active-location-retry')), findsOneWidget);
+    expect(find.text('설정 열기'), findsOneWidget);
+    await disposePage(tester);
+  });
+
   testWidgets('반려견이 0마리면 등록 안내를 보이고 버튼은 onOpenDogs 를 부른다', (tester) async {
     when(
       () => useCase.watchDogs(),

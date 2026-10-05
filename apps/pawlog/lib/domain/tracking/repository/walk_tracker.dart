@@ -20,6 +20,13 @@ abstract interface class WalkTracker {
 
   Future<Result<WalkSession>> stop();
 
+  /// 위치 권한을 다시 허용하러 앱 설정을 연다. 권한은 세션당 한 번만 묻기 때문에
+  /// 거부 뒤에는 이 길밖에 없다.
+  Future<void> openAppSettings();
+
+  /// 꺼진 위치 서비스를 켜러 위치 설정을 연다.
+  Future<void> openLocationSettings();
+
   /// finished → idle.
   Future<void> clear();
 }

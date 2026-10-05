@@ -126,6 +126,8 @@ class _ActiveWalkView extends StatelessWidget {
                               child: _LocationError(
                                 failure: locationError,
                                 onRetry: cubit.resumeTracking,
+                                onOpenSettings: () =>
+                                    cubit.openSettings(locationError),
                               ),
                             )
                           : RouteMap(
@@ -139,6 +141,7 @@ class _ActiveWalkView extends StatelessWidget {
                       _LocationError(
                         failure: locationError,
                         onRetry: cubit.resumeTracking,
+                        onOpenSettings: () => cubit.openSettings(locationError),
                       ),
                     Padding(
                       padding: const EdgeInsets.all(AppSpacing.md),
@@ -162,17 +165,19 @@ class _ActiveWalkView extends StatelessWidget {
                   ],
                 ),
               ActiveWalkFailure(:final failure) => Center(
-                child: AppPlaceholder(
+                child: _LocationProblem(
                   key: const Key('walk-active-failure'),
-                  message: failure.localizedMessage(context),
-                  description:
-                      failure.failureCode ==
-                          FailureCode.locationPermissionDenied
-                      ? l10n.walkLocationDeniedHint
-                      : null,
-                  actionLabel: l10n.commonRetry,
-                  actionKey: const Key('walk-active-retry'),
-                  onAction: cubit.retry,
+                  failure: failure,
+                  description: switch (failure.failureCode) {
+                    FailureCode.locationPermissionDenied =>
+                      l10n.walkLocationDeniedHint,
+                    FailureCode.locationServiceDisabled =>
+                      l10n.walkLocationServiceHint,
+                    _ => null,
+                  },
+                  retryKey: const Key('walk-active-retry'),
+                  onRetry: cubit.retry,
+                  onOpenSettings: () => cubit.openSettings(failure),
                 ),
               ),
             },
@@ -183,23 +188,73 @@ class _ActiveWalkView extends StatelessWidget {
   }
 }
 
-/// 추적 중 위치 오류. 기록은 이어지고 있음을 알리고 다시 받기를 권한다.
-class _LocationError extends StatelessWidget {
-  const _LocationError({required this.failure, required this.onRetry});
+/// 위치를 쓸 수 없을 때의 안내. 다시 시도는 늘 두고, 권한 거부 · 서비스 꺼짐이면
+/// 그 설정을 여는 버튼을 아래에 더한다 — 권한은 세션당 한 번만 묻기 때문에 거부 뒤
+/// 다시 시도만으로는 풀리지 않는다.
+class _LocationProblem extends StatelessWidget {
+  const _LocationProblem({
+    required this.failure,
+    required this.retryKey,
+    required this.onRetry,
+    required this.onOpenSettings,
+    this.description,
+    super.key,
+  });
 
   final Failure failure;
+  final String? description;
+  final Key retryKey;
   final VoidCallback onRetry;
+  final VoidCallback onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return AppPlaceholder(
-      key: const Key('walk-active-location-error'),
-      message: failure.localizedMessage(context),
-      description: l10n.walkLocationLostHint,
-      actionLabel: l10n.commonRetry,
-      actionKey: const Key('walk-active-location-retry'),
-      onAction: onRetry,
+    final settingsLabel = switch (failure.failureCode) {
+      FailureCode.locationPermissionDenied => l10n.walkOpenSettings,
+      FailureCode.locationServiceDisabled => l10n.walkOpenLocationSettings,
+      _ => null,
+    };
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppPlaceholder(
+          message: failure.localizedMessage(context),
+          description: description,
+          actionLabel: l10n.commonRetry,
+          actionKey: retryKey,
+          onAction: onRetry,
+        ),
+        if (settingsLabel != null)
+          AppButton.text(
+            key: const Key('walk-active-open-settings'),
+            label: settingsLabel,
+            onPressed: onOpenSettings,
+          ),
+      ],
     );
   }
+}
+
+/// 추적 중 위치 오류. 기록은 이어지고 있음을 알리고 다시 받기를 권한다.
+class _LocationError extends StatelessWidget {
+  const _LocationError({
+    required this.failure,
+    required this.onRetry,
+    required this.onOpenSettings,
+  });
+
+  final Failure failure;
+  final VoidCallback onRetry;
+  final VoidCallback onOpenSettings;
+
+  @override
+  Widget build(BuildContext context) => _LocationProblem(
+    key: const Key('walk-active-location-error'),
+    failure: failure,
+    description: AppLocalizations.of(context).walkLocationLostHint,
+    retryKey: const Key('walk-active-location-retry'),
+    onRetry: onRetry,
+    onOpenSettings: onOpenSettings,
+  );
 }

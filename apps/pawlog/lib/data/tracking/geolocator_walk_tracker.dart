@@ -242,6 +242,12 @@ class GeolocatorWalkTracker implements WalkTracker {
     return Ok(finished);
   }
 
+  @override
+  Future<void> openAppSettings() => _access.permission.openSettings();
+
+  @override
+  Future<void> openLocationSettings() => _access.openLocationSettings();
+
   /// finished → idle 만 허용한다. 추적 중에는 무시해 진행 중인 산책을 지키지 않는 호출이 없게 한다.
   @override
   Future<void> clear() async {

@@ -70,4 +70,12 @@ void main() {
     verifyNever(() => gateway.requestPermission());
     expect(await access.permission.check(), PermissionStatus.permanentlyDenied);
   });
+
+  test('위치 설정 열기는 게이트웨이에 맡긴다', () async {
+    when(() => gateway.openLocationSettings()).thenAnswer((_) async => true);
+
+    await access.openLocationSettings();
+
+    verify(() => gateway.openLocationSettings()).called(1);
+  });
 }

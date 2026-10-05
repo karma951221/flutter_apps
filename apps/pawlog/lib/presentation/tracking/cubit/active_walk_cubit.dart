@@ -112,6 +112,12 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
     await _useCase.resumeTracking();
   }
 
+  /// [failure] 에 맞는 설정을 연다 — 서비스 꺼짐은 위치 설정, 권한 거부는 앱 설정.
+  Future<void> openSettings(Failure failure) =>
+      failure.failureCode == FailureCode.locationServiceDisabled
+      ? _useCase.openLocationSettings()
+      : _useCase.openAppSettings();
+
   Future<void> retry() async {
     final current = state;
     final notice = _notice;

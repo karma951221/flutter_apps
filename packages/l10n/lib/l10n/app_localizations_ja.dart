@@ -1783,6 +1783,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkLocationLostHint => '散歩の記録は続いています。再試行すると位置情報を受け取り直します';
 
   @override
+  String get walkLocationServiceHint => '位置情報サービスをオンにしてからもう一度お試しください';
+
+  @override
+  String get walkOpenLocationSettings => '位置情報の設定を開く';
+
+  @override
   String get walkLocating => '位置情報を探しています…';
 
   @override

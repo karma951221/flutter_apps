@@ -20,6 +20,7 @@ class _FakePlatform extends GeolocatorPlatform with MockPlatformInterfaceMixin {
   LocationSettings? currentSettings;
   LocationSettings? streamSettings;
   var openedSettings = 0;
+  var openedLocationSettings = 0;
 
   @override
   Future<bool> isLocationServiceEnabled() async => true;
@@ -35,6 +36,12 @@ class _FakePlatform extends GeolocatorPlatform with MockPlatformInterfaceMixin {
   @override
   Future<bool> openAppSettings() async {
     openedSettings++;
+    return true;
+  }
+
+  @override
+  Future<bool> openLocationSettings() async {
+    openedLocationSettings++;
     return true;
   }
 
@@ -68,6 +75,8 @@ void main() {
     expect(await gateway.requestPermission(), LocationPermission.denied);
     expect(await gateway.openAppSettings(), isTrue);
     expect(platform.openedSettings, 1);
+    expect(await gateway.openLocationSettings(), isTrue);
+    expect(platform.openedLocationSettings, 1);
   });
 
   test('현재 위치는 넘긴 정확도와 제한 시간으로 요청한다', () async {

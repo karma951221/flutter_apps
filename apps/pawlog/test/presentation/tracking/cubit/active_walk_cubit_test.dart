@@ -323,6 +323,23 @@ void main() {
     verify: (_) => verify(() => useCase.resumeTracking()).called(1),
   );
 
+  test('openSettings 는 서비스 꺼짐이면 위치 설정, 그 밖은 앱 설정을 연다', () async {
+    when(() => useCase.openAppSettings()).thenAnswer((_) async {});
+    when(() => useCase.openLocationSettings()).thenAnswer((_) async {});
+    final cubit = build();
+    addTearDown(cubit.close);
+
+    await cubit.openSettings(
+      const Failure.validation(
+        failureCode: FailureCode.locationServiceDisabled,
+      ),
+    );
+    await cubit.openSettings(_denied);
+
+    verify(() => useCase.openLocationSettings()).called(1);
+    verify(() => useCase.openAppSettings()).called(1);
+  });
+
   test('1초마다 elapsed 가 다시 계산돼 늘어나고 close 뒤에는 멈춘다', () {
     fakeAsync((async) {
       current = TrackerState.tracking(walkSession());

@@ -1784,6 +1784,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkLocationLostHint => '산책 기록은 이어집니다. 다시 시도하면 위치를 다시 받아요';
 
   @override
+  String get walkLocationServiceHint => '위치 서비스를 켠 뒤 다시 시도해 주세요';
+
+  @override
+  String get walkOpenLocationSettings => '위치 설정 열기';
+
+  @override
   String get walkLocating => '위치를 찾는 중…';
 
   @override

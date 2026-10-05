@@ -2491,6 +2491,14 @@
   "@walkLocationLostHint": {
     "description": "추적 중 위치 오류 안내 아래에 붙는 보조 설명"
   },
+  "walkLocationServiceHint": "위치 서비스를 켠 뒤 다시 시도해 주세요",
+  "@walkLocationServiceHint": {
+    "description": "위치 서비스 꺼짐 실패 안내 아래에 붙는 보조 설명"
+  },
+  "walkOpenLocationSettings": "위치 설정 열기",
+  "@walkOpenLocationSettings": {
+    "description": "위치 서비스가 꺼져 있을 때 기기 위치 설정을 여는 버튼 라벨"
+  },
   "walkLocating": "위치를 찾는 중…",
   "@walkLocating": {
     "description": "추적은 시작했지만 아직 GPS 점이 없을 때 지도 자리에 보이는 문구"

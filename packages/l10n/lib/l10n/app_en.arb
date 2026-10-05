@@ -560,6 +560,8 @@
   "walkOpenDogsAction": "Add a dog",
   "walkLocationDeniedHint": "Allow location access in Settings, then try again",
   "walkLocationLostHint": "Your walk is still being recorded. Try again to resume location updates",
+  "walkLocationServiceHint": "Turn on location services, then try again",
+  "walkOpenLocationSettings": "Open location settings",
   "walkLocating": "Finding your location…",
   "walkEditNewTitle": "Save walk",
   "walkEditTitle": "Edit walk",
