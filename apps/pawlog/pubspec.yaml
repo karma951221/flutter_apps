@@ -43,3 +43,19 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # 서체는 앱 에셋으로 번들한다 — 로컬 우선 앱이라 첫 실행 오프라인 대비. 라이선스는
+  # 같은 폴더의 OFL-*.txt(모두 SIL Open Font License 1.1).
+  fonts:
+    - family: Pretendard
+      fonts:
+        - asset: assets/fonts/Pretendard-Regular.otf
+        - asset: assets/fonts/Pretendard-Medium.otf
+          weight: 500
+        - asset: assets/fonts/Pretendard-Bold.otf
+          weight: 700
+    - family: GowunDodum
+      fonts:
+        - asset: assets/fonts/GowunDodum-Regular.ttf
+    - family: Gaegu
+      fonts:
+        - asset: assets/fonts/Gaegu-Regular.ttf

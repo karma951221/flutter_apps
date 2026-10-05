@@ -1,10 +1,10 @@
 import 'package:core/core.dart';
-import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:l10n/l10n.dart';
 
 import '../domain/walk/usecase/walk_use_case.dart';
+import '../presentation/theme/pawlog_theme.dart';
 import 'router/app_router.dart';
 
 class PawlogApp extends StatefulWidget {
@@ -37,8 +37,8 @@ class _PawlogAppState extends State<PawlogApp> {
           // 이 시점엔 l10n 이 없어 공통 안내 위젯 대신 오류 문자열을 그대로 보인다.
           final error = snapshot.error;
           return MaterialApp(
-            theme: AppTheme.light(),
-            darkTheme: AppTheme.dark(),
+            theme: PawlogTheme.light(),
+            darkTheme: PawlogTheme.dark(),
             themeMode: ThemeMode.system,
             debugShowCheckedModeBanner: false,
             home: Scaffold(
@@ -46,7 +46,7 @@ class _PawlogAppState extends State<PawlogApp> {
                 child: error == null
                     ? const CircularProgressIndicator()
                     : Padding(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        padding: const EdgeInsets.all(PawlogSpacing.lg),
                         child: SelectableText('$error'),
                       ),
               ),
@@ -56,8 +56,8 @@ class _PawlogAppState extends State<PawlogApp> {
         return MaterialApp.router(
           onGenerateTitle: (context) =>
               AppLocalizations.of(context).pawlogAppTitle,
-          theme: AppTheme.light(),
-          darkTheme: AppTheme.dark(),
+          theme: PawlogTheme.light(),
+          darkTheme: PawlogTheme.dark(),
           themeMode: ThemeMode.system,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,

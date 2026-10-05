@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:core/core.dart';
-import 'package:design_system/design_system.dart';
+import 'package:pawlog/presentation/theme/pawlog_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
@@ -68,7 +68,7 @@ void main() {
     // 스피너가 끝없이 돌아 pumpAndSettle 을 쓸 수 없다.
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light(),
+        theme: PawlogTheme.light(),
         locale: const Locale('ko'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
