@@ -32,6 +32,7 @@ cd apps/pawlog && flutter test test/core test/convention   # 첫 실행 리다�
 | 파일 | 대상 | 확인 |
 |---|---|---|
 | `test/data/dog/drift_dog_repository_test.dart` (5) | `DriftDogRepository` (메모리 drift) | 저장 후 이름순 watch · 수정이 스트림에 반영 · 삭제하면 사라짐 · `findById` 없으면 null · 생일이 깨진 행도 스트림을 끊지 않는다(D1) |
+| `test/core/router/app_router_test.dart` (+2, 2026-10-04) | `createRouter` | 첫 등록(0마리)을 마치면 목록이 아니라 피드(`/`) · 목록에서 추가를 마치면 목록으로 돌아간다 |
 | `test/core/router/dogs_redirect_test.dart` (4) | `DogsRedirect` | 0마리면 `/dogs` 밖 경로 → `/dogs/new` · `/dogs` 아래는 통과 · 있으면 통과 · `markHasDogs()` 뒤 통과 |
 | `test/convention/package_boundary_test.dart` (1) | `apps/pawlog` pubspec | `feature_*` · `supabase_flutter` 의존이 없다 (2026-10-04 `feature_walk` 를 앱으로 옮기며 대상이 앱 pubspec 으로 바뀌었다) |
 
@@ -50,11 +51,14 @@ cd apps/pawlog && flutter test test/core test/convention   # 첫 실행 리다�
 
 ## 에뮬레이터
 
-계획의 완료 조건 중 화면 확인 몫이다. **미실행** — 이 환경에 Android SDK 가 없다.
+계획의 완료 조건 중 화면 확인 몫이다. **2026-10-04 실행** — Android 17 에뮬레이터(`Medium_Phone`), 위치는 `adb emu geo fix` 로 경로를 흘렸다. 고친 것은 [구현 기록](history.md)의 "2026-10-04 — 에뮬레이터 QA" 에 있다.
 
 | # | 시나리오 | 결과 |
 |---|---|---|
-| ① | 첫 실행(0마리) → `/dogs/new` → 저장 → 피드 | 미실행 |
-| ② | 등록 → 목록에 이름순 → 수정 → 삭제 | 미실행 |
-| ③ | 사진 교체 시 옛 파일 삭제, 저장 없이 나가면 새 파일 삭제(`adb shell run-as com.karma.pawlog ls files/pawlog_photos`) | 미실행 |
+| ① | 첫 실행(0마리) → `/dogs/new` → 저장 → 피드 | **PASS**(수정 뒤) — 처음엔 저장 뒤 반려견 목록에 떨어져 피드로 갈 길이 없었다(`fce4e77`) |
+| ② | 등록 → 목록에 이름순 → 수정 → 삭제 | 일부 — 목록과 수정 폼은 확인, 삭제는 실행하지 않았다 |
+| ③ | 사진 교체 시 옛 파일 삭제, 저장 없이 나가면 새 파일 삭제(`adb shell run-as com.karma.pawlog ls app_flutter/pawlog_photos`) | 미실행 |
 | ④ | 강아지 삭제 후에도 산책 기록이 남는다 | 미실행 |
+
+사진 폴더는 `getApplicationDocumentsDirectory()` 아래라 Android 에서는 `files/` 가 아니라
+`app_flutter/pawlog_photos` 다.

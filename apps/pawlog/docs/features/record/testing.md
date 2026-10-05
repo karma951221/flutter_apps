@@ -55,13 +55,16 @@ W3 몫은 cubit 26 · 페이지 18 = 44건이다(2026-10-03, `93d722b` 기준). 
 ## 에뮬레이터
 
 계획 완료 조건과 [기획서](../../overview.md) §8 에뮬레이터 검증 시나리오 ④⑤⑥ 의 W3 몫이다.
-**미실행** — 이 환경에 Android SDK 가 없다.
+**2026-10-04 실행** — Android 17 에뮬레이터(`Medium_Phone`), 위치는 `adb emu geo fix` 로 경로를 흘렸다. 고친 것은 [구현 기록](history.md)의 "2026-10-04 — 에뮬레이터 QA" 에 있다.
 
 | # | 시나리오 | 결과 |
 |---|---|---|
-| ① | 종료 → `/walk/save` → 사진 2장 + 메모 → 저장 → 상세 → 뒤로 → 피드 | 미실행 |
-| ② | 상세 → 수정(메모 · 사진 하나 빼기) → 돌아오면 상세가 다시 읽힌다 | 미실행 |
-| ③ | 상세 → 삭제 → 피드. `adb shell run-as com.karma.pawlog ls files/pawlog_photos` 에서 파일이 사라진다 | 미실행 |
+| ① | 종료 → `/walk/save` → 사진 2장 + 메모 → 저장 → 상세 → 뒤로 → 피드 | **PASS** — 상세 지도가 회색이던 것은 `TileProvider` 싱글턴 dispose 탓(`e0594d9`) |
+| ② | 상세 → 수정(메모 · 사진 하나 빼기) → 돌아오면 상세가 다시 읽힌다 | **PASS** |
+| ③ | 상세 → 삭제 → 피드. `adb shell run-as com.karma.pawlog ls app_flutter/pawlog_photos` 에서 파일이 사라진다 | **PASS** |
 | ④ | 저장 폼에서 버리기 · 뒤로 → 확인 → 사진 파일 삭제, 추적기 `idle` | 미실행 |
 | ⑤ | `trackerState` 가 `finished` 가 아닐 때 `/walk/save` → 안내 + 피드로 | 미실행 |
-| ⑥ | 카메라로 찍기(`CAMERA` 미선언 → 카메라 앱 인텐트) | 미실행 |
+| ⑥ | 카메라로 찍기(`CAMERA` 미선언 → 카메라 앱 인텐트) | **PASS** — 카메라 인텐트가 뜨고 사진이 붙는다. 원본이 `cache/` 에 남는다(다음 할 일) |
+
+사진 폴더는 `getApplicationDocumentsDirectory()` 아래라 Android 에서는 `files/` 가 아니라
+`app_flutter/pawlog_photos` 다.

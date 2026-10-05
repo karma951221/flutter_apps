@@ -105,6 +105,22 @@ null 이면 신규. `DogEditPage({dogId})` 와 같은 모양이다.
   `prepare` 예외 스낵바, 상세 실패 화면의 재시도, `WalkPhotoGrid` 의 깨진 파일 표시, `DogAvatars` 의 `+n`,
   삭제된 강아지만 있던 산책의 수정
 
+## 2026-10-04 — 에뮬레이터 QA
+
+Android 17 에뮬레이터(`Medium_Phone`)에서 [테스트](testing.md#에뮬레이터)의 시나리오를 돌리며 찾은 것을 고쳤다.
+
+### 상세 지도가 회색 (`e0594d9`)
+
+진행 화면의 지도가 닫힌 뒤 상세의 `RouteMap` 이 타일을 못 받았다. `TileProvider` 싱글턴을
+`TileLayer` 가 dispose 하며 http client 를 닫은 탓이다 — [tracking 기록](../tracking/history.md)에
+자세히 있다.
+
+### 사진 폴더 경로
+
+문서의 `run-as … ls files/pawlog_photos` 는 틀렸다. `getApplicationDocumentsDirectory()` 는 Android
+에서 `app_flutter/` 라 실제 폴더는 `app_flutter/pawlog_photos` 다. 계획 · 테스트 · 기획서의 명령을 고쳤다.
+카메라로 찍은 원본은 image_picker 가 `cache/` 에 남긴다 — [진행 현황](../../status.md)의 다음 할 일.
+
 ## 검증
 
 - `93d722b` 스냅숏에서 `feature_walk` `flutter analyze` 0건 · `flutter test` `+150`(W3 몫 44건 —

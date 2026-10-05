@@ -16,7 +16,7 @@ GPS · 지도 타일은 실제로 부르지 않는다 — `LocationGateway` mock
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
-| `geolocator_walk_tracker_test.dart` (12) | `GeolocatorWalkTracker` (`LocationGateway` mock) | 서비스 꺼짐 → `locationServiceDisabled` · 권한 거부 → `locationPermissionDenied` 이고 **같은 세션에 다시 묻지 않는다**(요청 1회) · 영구 거부는 요청 없음 · 시작하면 빈 `tracking` · 플랫폼별 설정(`debugDefaultTargetPlatformOverride` 로 Android 알림 문구 · `distanceFilter`, iOS `fitness` · 자동 일시정지 끔) · 위치가 들어오면 점 · 거리 누적 · 정책이 버린 점은 쌓이지 않음 · 추적 중 `start` 거부 · `stop` 은 `endedAt` 을 채운 `finished` 와 구독 해제 · 비추적 `stop` → `walkNotFound` · `clear` 는 `finished` 에서만 `idle` · 스트림 오류에도 `tracking` 유지 |
+| `geolocator_walk_tracker_test.dart` (12 → 17) | `GeolocatorWalkTracker` (`LocationGateway` mock) | 서비스 꺼짐 → `locationServiceDisabled` · 권한 거부 → `locationPermissionDenied` 이고 **같은 세션에 다시 묻지 않는다**(요청 1회) · 영구 거부는 요청 없음 · 시작하면 빈 `tracking` · 플랫폼별 설정(`debugDefaultTargetPlatformOverride` 로 Android 알림 문구 · `distanceFilter`, iOS `fitness` · 자동 일시정지 끔) · 위치가 들어오면 점 · 거리 누적 · 정책이 버린 점은 쌓이지 않음 · 추적 중 `start` 거부 · `stop` 은 `endedAt` 을 채운 `finished` 와 구독 해제 · 비추적 `stop` → `walkNotFound` · `clear` 는 `finished` 에서만 `idle` · 스트림 오류에도 `tracking` 유지하고 `locationError` 에 싣는다(서비스 꺼짐 · 권한 거부 · 그 밖은 `locationStreamFailed`), 다음 점이 지운다 · `resume` 은 세션을 지킨 채 다시 구독 · 서비스 꺼짐이면 실패를 상태에도 · 비추적 `resume` → `walkNotFound` · 설정 열기 2종은 게이트웨이에 위임(2026-10-04 QA) |
 
 ## `test/presentation/`
 
@@ -24,7 +24,7 @@ GPS · 지도 타일은 실제로 부르지 않는다 — `LocationGateway` mock
 |---|---|---|
 | `tracking/cubit/active_walk_cubit_test.dart` (11) | `ActiveWalkCubit` | 반려견 목록 → 전부 선택된 `selectingDogs` · 0마리 → 빈 `selectingDogs` 이고 시작하지 않음 · 추적 중 재진입 → `getDogs` 없이 `tracking` · `finished` 재진입 → `stopped` · `toggleDog` 넣고 빼기 · 시작 성공 → 선택한 반려견으로 `startWalk`, `starting` 뒤 `tracking` · 권한 거부 → 선택 유지 `failure`, 재시도는 같은 알림 문구 · 반려견 조회 실패의 재시도는 다시 읽기 · `stop` 성공은 `stopped` 한 번(구독이 먼저 `finished` 를 줘도) · `stop` 실패 → `failure`, 재시도는 추적 상태를 다시 읽기 · **`fakeAsync` 로 1 · 2 · 3초 `elapsed` 재계산, `close` 뒤 정지** |
 | `walk/format/walk_format_test.dart` (7) | `WalkFormat` | `999 m` · `850 m` · `1.0 km` · `1.3 km` · 999.6 m → `1.0 km` 경계, `59분` · `1시간 5분`, `07:05` · `1:02:03` |
-| `tracking/page/active_walk_page_test.dart` (9) | `ActiveWalkPage` | 칩을 모두 해제하면 시작 버튼 비활성 · 시작하면 선택한 반려견과 알림 문구로 `startWalk` · 추적 중 지도 · 경과 시간 · 거리 · 점이 없으면 "위치를 찾는 중…" · 종료 확인 → `stopWalk` 후 `onStopped` 한 번 · 취소면 둘 다 없음 · 저장 안 된 종료 세션으로 들어오면 곧바로 `onStopped` · 권한 거부 → 안내 + 재시도 → `startWalk` 다시 · 0마리 → 등록 안내 → `onOpenDogs` |
+| `tracking/page/active_walk_page_test.dart` (9) | `ActiveWalkPage` | 칩을 모두 해제하면 시작 버튼 비활성 · 시작하면 선택한 반려견과 알림 문구로 `startWalk` · 추적 중 지도 · 경과 시간 · 거리 · 점이 없으면 "위치를 찾는 중…" · 종료 확인 → `stopWalk` 후 `onStopped` 한 번 · 취소면 둘 다 없음 · 저장 안 된 종료 세션으로 들어오면 곧바로 `onStopped` · 권한 거부 → 안내 + 재시도 → `startWalk` 다시 · 0마리 → 등록 안내 → `onOpenDogs` · (2026-10-04 QA) 점 없이 위치 오류 → 찾는 중 대신 오류 + 다시 시도 → `resumeTracking`, 종료 버튼 유지 · 경로가 있으면 지도를 둔 채 오류 · 권한 거부 "설정 열기" → `openAppSettings` · 서비스 꺼짐 "위치 설정 열기" → `openLocationSettings` · 추적 중 권한 끊김은 다시 시도와 설정 열기를 함께 |
 
 계획 테스트 표의 14줄은 모두 위 파일에 있다. `RouteMap` · `WalkStatsRow` · `DogChips` 는 따로
 테스트 파일이 없고 페이지 테스트가 지난다.
@@ -41,6 +41,9 @@ GPS · 지도 타일은 실제로 부르지 않는다 — `LocationGateway` mock
 - `trackerStates` 는 테스트가 만든 `StreamController.broadcast()` 이고, `trackerState` 는 바꿀 수 있는
   `current` 변수를 돌려준다 — 재진입은 `current` 만 바꿔 흉내 낸다
 - `pumpApp` 은 `Locale('ko')` 를 고정한다. `ko` 가 ARB 템플릿이라 원문이 곧 기대값이다
+- 2026-10-04 QA 수정으로 cubit 에 위치 오류 · `resumeTracking` · `openSettings` 3건, 페이지에 5건이 더해졌다.
+  `RouteMap` 은 `test/presentation/walk/widget/route_map_test.dart`(다시 그려도 `TileProvider` 를 한 번만
+  받는다), 등록 방식은 `test/core/di/injection_test.dart`(두 번 받으면 다른 인스턴스)가 본다
 - 위 표는 `93d722b` 기준이다. `d5f95b0` 의 V2 수정으로 stub 이 `getDogs` 에서 `watchDogs`(`Stream.value`)로
   바뀌었고, cubit 에 "반려견을 등록하고 돌아오면 목록이 갱신된다" 1건이 더해져 cubit 은 12건이다
 
@@ -54,13 +57,15 @@ GPS · 지도 타일은 실제로 부르지 않는다 — `LocationGateway` mock
 ## 에뮬레이터
 
 계획 완료 조건과 [기획서](../../overview.md) §8 에뮬레이터 검증 시나리오 ②③⑦ 의
-W2 몫이다. **미실행** — 이 환경에 Android SDK 가 없다.
+W2 몫이다. **2026-10-04 실행** — Android 17 에뮬레이터(`Medium_Phone`), 위치는 `adb emu geo fix` 로 경로를 흘렸다. 고친 것은 [구현 기록](history.md)의 "2026-10-04 — 에뮬레이터 QA" 에 있다.
 
 | # | 시나리오 | 결과 |
 |---|---|---|
-| ① | Extended Controls 로 GPX 재생 → 폴리라인 · 거리 · 경과 시간이 자란다 | 미실행 |
-| ② | 추적 중 뒤로 가기 → 다시 `/walk` → 같은 세션이 이어진다 | 미실행 |
-| ③ | 홈 버튼으로 30초 백그라운드 → 돌아오면 그동안의 점이 쌓여 있다(Android 13+ 는 알림이 안 보일 수 있다) | 미실행 |
-| ④ | 위치 권한 거부 · 서비스 꺼짐 → `AppPlaceholder` + 재시도, 같은 세션엔 다시 묻지 않는다 | 미실행 |
-| ⑤ | 종료 확인 → `onStopped` → `/walk/save`, 저장 폼에서 뒤로 가기가 앱을 닫지 않는다(V1) | 미실행 |
-| ⑥ | Android `accuracy` · 간격, OSM 출처 표기, 추종 · 줌 | 미실행 |
+| ① | Extended Controls 로 GPX 재생 → 폴리라인 · 거리 · 경과 시간이 자란다 | **PASS**(`geo fix` 경로) — 처음엔 `WAKE_LOCK` 미선언으로 스트림이 `SecurityException` 을 내 점이 하나도 안 들어왔다(`1b97e83`) |
+| ② | 추적 중 뒤로 가기 → 다시 `/walk` → 같은 세션이 이어진다 | **PASS** — 재진입 지도가 회색이던 것은 `TileProvider` 싱글턴 dispose 탓(`e0594d9`) |
+| ③ | 홈 버튼으로 30초 백그라운드 → 돌아오면 그동안의 점이 쌓여 있다(Android 13+ 는 알림이 안 보일 수 있다) | **PASS** |
+| ④ | 위치 권한 거부 · 서비스 꺼짐 → `AppPlaceholder` + 재시도, 같은 세션엔 다시 묻지 않는다 | **PASS** — 거부 → 안내, 다시 묻지 않음. "설정 열기" 가 없던 것을 더했다(`2d6fc8b`) |
+| ⑤ | 종료 확인 → `onStopped` → `/walk/save`, 저장 폼에서 뒤로 가기가 앱을 닫지 않는다(V1) | 일부 — 종료 확인 → 저장 폼까지 확인, 저장 폼의 뒤로 가기는 보지 않았다 |
+| ⑥ | Android `accuracy` · 간격, OSM 출처 표기, 추종 · 줌 | **PASS** — OSM 출처 표기 · 추종 확인 |
+
+QA 중 스트림 오류가 화면에 드러나지 않아 "위치를 찾는 중…" 에 머무는 것도 찾아 고쳤다(`0c1c07b`).

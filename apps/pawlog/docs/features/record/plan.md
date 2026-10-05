@@ -182,7 +182,7 @@ ko 템플릿 + en · ja, 모든 키에 `@` 설명. 설계 §4 의 키 이름 대
 
 - [ ] 종료 → `/walk/save` → 사진 2장 + 메모 → 저장 → 상세 → 뒤로 → 피드
 - [ ] 상세 → 수정(메모 · 사진 하나 빼기) → 돌아오면 상세가 다시 읽힌다
-- [ ] 상세 → 삭제 → 피드. `adb shell run-as com.karma.pawlog ls files/pawlog_photos` 에서 파일이 사라진다
+- [ ] 상세 → 삭제 → 피드. `adb shell run-as com.karma.pawlog ls app_flutter/pawlog_photos` 에서 파일이 사라진다
 - [ ] 저장 폼에서 버리기 · 뒤로 → 확인 → 사진 파일 삭제, 추적기 `idle`
 - [ ] `trackerState` 가 `finished` 가 아닐 때 `/walk/save` → 안내 + 피드로
 - [ ] cubit 테스트(`bloc_test`) · 페이지 테스트(mock `WalkUseCase` · stub `TileProvider` · mock `ImagePickerService`)

@@ -22,7 +22,7 @@ W4 몫은 cubit 7 · 페이지 10 · `RoutePreviewPainter` 4 = 21건이다(2026-
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
-| `page/walk_feed_page_test.dart` (10) | `WalkFeedPage` | 0건 → `AppPlaceholder`("첫 산책을 시작해 보세요") + 시작 버튼 → `onStartWalk`, FAB 없음 · 카드에 `DogAvatars` · 날짜(`2026.10.03 09:00`) · `1.2 km` · `30분` · 메모 · 메모가 없으면 메모 줄 없음 · 카드 탭 → `onOpenWalk('a')` · 사진이 없으면 `Image` 없음, 있으면 `Image` 1개 · `idle` FAB "산책 시작" → `onStartWalk`, 배너 없음 · `tracking` → 배너 + "산책 계속" FAB, 둘 다 `onStartWalk` · `finished` → 저장 안 함 배너 → `onSaveWalk`, FAB 없음, `onStartWalk` 0회 · 앱바 → `onOpenDogs` · 실패 → `walk-feed-retry` → 다시 구독해 카드 |
+| `page/walk_feed_page_test.dart` (10 → 12) | `WalkFeedPage` | 0건 → `AppPlaceholder`("첫 산책을 시작해 보세요") + 시작 버튼 → `onStartWalk`, FAB 없음 · 카드에 `DogAvatars` · 날짜(`2026.10.03 09:00`) · `1.2 km` · `30분` · 메모 · 메모가 없으면 메모 줄 없음 · 카드 탭 → `onOpenWalk('a')` · 사진이 없으면 `Image` 없음, 있으면 `Image` 1개 · `idle` FAB "산책 시작" → `onStartWalk`, 배너 없음 · `tracking` → 배너 + "산책 계속" FAB, 둘 다 `onStartWalk` · `finished` → 저장 안 함 배너 → `onSaveWalk`, FAB 없음, `onStartWalk` 0회 · 앱바 → `onOpenDogs` · 실패 → `walk-feed-retry` → 다시 구독해 카드 · (2026-10-04 QA) 0건이라도 `tracking` · `finished` 면 시작 안내 · 버튼 없이 "첫 산책이 곧 여기에 보여요" + 배너 |
 | `widget/route_preview_painter_test.dart` (4) | `RoutePreviewPainter` | 점 0개 → `paintsNothing` · 여러 점 → 주어진 색의 `path` · 1점 → 예외 없이 `circle` · `shouldRepaint` 는 색 · 점 목록이 다를 때만 `true` |
 
 계획 테스트 표의 13줄은 모두 위 파일에 있다. 단 "사진 있음 / 없음" 은 `Image` 의 유무만 보고
@@ -45,7 +45,6 @@ W4 몫은 cubit 7 · 페이지 10 · `RoutePreviewPainter` 4 = 21건이다(2026-
 ## mock 으로 확인되지 않는 것
 
 - **`errorBuilder` 폴백** — 사진 파일이 깨졌을 때 경로 썸네일로 바뀌는지는 단언하지 않는다
-- **빈 피드 + `finished`** — 시작 버튼이 숨는 분기는 테스트가 없다
 - **앱 라우터 연결** — 페이지를 라우터 없이 띄우므로 카드 탭 → `/walks/:id` 가 상세를 여는지,
   `/walks` 가 피드로 가는지(⑥ W1 수정)는 모른다. `apps/pawlog/test/core/router/` 에 `createRouter`
   테스트가 아직 없다
@@ -56,13 +55,13 @@ W4 몫은 cubit 7 · 페이지 10 · `RoutePreviewPainter` 4 = 21건이다(2026-
 ## 에뮬레이터
 
 계획 완료 조건과 [기획서](../../overview.md) §8 에뮬레이터 검증 시나리오 ①④⑤⑧ 의 W4 몫이다.
-**미실행** — 이 환경에 Android SDK 가 없다.
+**2026-10-04 실행** — Android 17 에뮬레이터(`Medium_Phone`), 위치는 `adb emu geo fix` 로 경로를 흘렸다. 고친 것은 [구현 기록](history.md)의 "2026-10-04 — 에뮬레이터 QA" 에 있다.
 
 | # | 시나리오 | 결과 |
 |---|---|---|
-| ① | 빈 피드(`AppPlaceholder` + 시작) → 산책 저장 → 카드가 맨 위에 생긴다 | 미실행 |
-| ② | 카드 → 상세(⑥ W1 수정 확인) → 삭제 → 피드에서 새로고침 없이 사라진다 | 미실행 |
+| ① | 빈 피드(`AppPlaceholder` + 시작) → 산책 저장 → 카드가 맨 위에 생긴다 | **PASS** — 단 추적 중에도 빈 피드의 시작 안내가 함께 보여 고쳤다(`af4cf22`) |
+| ② | 카드 → 상세(⑥ W1 수정 확인) → 삭제 → 피드에서 새로고침 없이 사라진다 | **PASS** |
 | ③ | 강아지 이름 · 사진 변경이 카드에 반영된다 | 미실행 |
-| ④ | 추적 중 배너 · "산책 계속" FAB → `/walk`, 종료 후 저장 전이면 "저장하지 않은 산책" 배너 → `/walk/save`, FAB 없음 | 미실행 |
-| ⑤ | 사진 있는 카드는 첫 사진, 없는 카드는 경로 썸네일. 다크 모드에서 선이 보인다 | 미실행 |
+| ④ | 추적 중 배너 · "산책 계속" FAB → `/walk`, 종료 후 저장 전이면 "저장하지 않은 산책" 배너 → `/walk/save`, FAB 없음 | 미실행 — 배너는 확인. 저장된 산책이 0건이라 "산책 계속" FAB 대신 배너만 보였다 |
+| ⑤ | 사진 있는 카드는 첫 사진, 없는 카드는 경로 썸네일. 다크 모드에서 선이 보인다 | **PASS** — 사진 썸네일 · 다크 모드 확인 |
 | ⑥ | `/walks` 로 가면 피드, 앱 완전 종료 후 재실행해도 카드가 남아 있다 | 미실행 |

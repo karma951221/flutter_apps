@@ -94,6 +94,46 @@
   `dispose`, `stop` 실패의 Failure **종류**(테스트는 코드만 본다), cubit 의 스트림으로 온 새 점
   (타이머 중복 없음), `stopped` 뒤 `pendingTimers`, 페이지의 서비스 꺼짐, `RouteMap` 추종 · `CameraFit`
 
+## 2026-10-04 — 에뮬레이터 QA
+
+Android 17 에뮬레이터(`Medium_Phone`)에서 [테스트](testing.md#에뮬레이터)의 시나리오를 돌리며 찾은 것을 고쳤다.
+
+### `WAKE_LOCK` 권한 (`1b97e83`)
+
+`ForegroundNotificationConfig(enableWakeLock: true)` 인데 매니페스트에 `WAKE_LOCK` 이 없어 위치
+스트림을 여는 순간 `SecurityException` 이 났고 점이 하나도 들어오지 않았다. 권한을 선언했다.
+mock 테스트로는 드러나지 않는 종류다.
+
+### 지도마다 새 `TileProvider` (`e0594d9`)
+
+`TileProvider` 를 `lazySingleton` 으로 등록했는데 flutter_map 8.3 의 `TileLayer` 는 사라질 때
+`tileProvider.dispose()` 를 부르고, `NetworkTileProvider` 는 그때 스스로 만든 http client 를 닫는다.
+첫 지도가 닫힌 뒤의 지도 — 진행 화면 재진입, 산책 상세([record](../record/history.md)) — 가 모두
+회색이었다. `@injectable`(factory)로 바꾸고, `RouteMap` 은 `State` 에서 한 번만 받아 다시 그려도
+바꾸지 않는다(바뀐 provider 는 `TileLayer` 가 dispose 하지 않는다). 테스트의 `RouteMap.tileProvider`
+· `getIt` stub 자리는 그대로다.
+
+### 스트림 오류를 화면에 (`0c1c07b`)
+
+"정책 수치" 의 "스트림 오류는 `debugPrint` 만" 을 바꿨다. 오류가 나도 산책은 끊지 않되
+`TrackerState.tracking(session, locationError:)` 에 싣는다 — `LocationServiceDisabledException` →
+`locationServiceDisabled`, `PermissionDeniedException` → `locationPermissionDenied`, 그 밖은 새
+`FailureCode.locationStreamFailed`(ARB 3개에 `failureLocationStreamFailed`). 다음 위치가 들어오면
+(정책이 버린 점이라도) 지운다. 추적기에 `resume()` 을 두어 세션을 지킨 채 위치 확인과 구독을 다시
+하고, 진행 화면은 오류를 `AppPlaceholder` + 다시 시도(`resumeTracking`)로 보인다. 점이 없으면 지도
+자리에, 경로가 있으면 지도 아래에 두고 종료 버튼은 늘 남긴다. `location` 패키지가 두 예외를 함께
+내보낸다.
+
+### 설정 열기 (`2d6fc8b`)
+
+권한 거부 안내가 "설정에서 허용한 뒤 다시 시도" 라면서 다시 시도만 있었고, 권한은 세션당 한 번만
+묻기 때문에 다시 시도로는 풀리지 않았다. 권한 거부는 "설정 열기"(`LocationAccess.permission.openSettings`),
+서비스 꺼짐은 "위치 설정 열기" 를 다시 시도 아래 `AppButton.text` 로 둔다. 서비스 꺼짐을 위해
+`location` 게이트웨이에 `openLocationSettings`(geolocator 의 같은 이름)를 더하고 `LocationAccess` 가
+넘긴다. `WalkTracker` · `WalkUseCase` 에 `openAppSettings` · `openLocationSettings`, cubit 은
+`openSettings(failure)` 로 고른다. 시작 실패와 추적 중 위치 오류가 같은 위젯(`_LocationProblem`)을 쓴다.
+`AppPlaceholder` 는 행동이 하나라 feature 안에서 감쌌다.
+
 ## 검증
 
 - `93d722b` 스냅숏에서 `feature_walk` `flutter analyze` 0건 · `flutter test` `+150`(W2 몫 39건 —

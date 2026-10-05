@@ -328,7 +328,7 @@ W3 → W4)로 간다. **W2 가 기기에서 돌아가기 전에 ⑥ 으로 넘�
 3. 홈 버튼으로 30초 백그라운드 → 알림이 보인다 → 돌아오면 점이 계속 쌓여 있다
 4. 종료 → 확인 → 저장 폼에 사진 2장 + 메모 → 저장 → 피드 카드에 사진 썸네일
 5. 카드 → 상세(지도 · 사진) → 메모 수정 → 피드가 새로고침 없이 바뀐다
-6. 산책 삭제 → 사진 파일이 사라진다(`adb shell run-as com.karma.pawlog ls files/pawlog_photos`)
+6. 산책 삭제 → 사진 파일이 사라진다(`adb shell run-as com.karma.pawlog ls app_flutter/pawlog_photos`)
 7. 위치 거부 → `AppPlaceholder` + 재시도
 8. 앱 완전 종료 후 재실행 → 기록이 남아 있다. 다크 모드
 
