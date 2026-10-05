@@ -5,7 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/tracking/entity/tracking_notice.dart';
+import '../../common/widget/pawlog_primary_button.dart';
 import '../../dog/widget/dog_chips.dart';
+import '../../theme/pawlog_theme.dart';
 import '../../walk/widget/route_map.dart';
 import '../../walk/widget/walk_stats_row.dart';
 import '../cubit/active_walk_cubit.dart';
@@ -79,24 +81,29 @@ class _ActiveWalkView extends StatelessWidget {
                 ),
               ),
               ActiveWalkSelectingDogs(:final dogs, :final selectedIds) =>
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        l10n.walkSelectDogs,
-                        style: Theme.of(context).textTheme.titleMedium,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: ListView(
+                        padding: const EdgeInsets.all(PawlogSize.gutter),
+                        children: [
+                          Text(
+                            l10n.walkSelectDogs,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: PawlogSpacing.md),
+                          DogChips(
+                            dogs: dogs,
+                            selectedIds: selectedIds,
+                            onToggle: cubit.toggleDog,
+                            photoFile: cubit.photoFile,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: AppSpacing.sm),
-                      DogChips(
-                        dogs: dogs,
-                        selectedIds: selectedIds,
-                        onToggle: cubit.toggleDog,
-                        photoFile: cubit.photoFile,
-                      ),
-                      const Spacer(),
-                      AppButton.primary(
+                    ),
+                    PawlogBottomAction(
+                      child: PawlogPrimaryButton(
                         key: const Key('walk-active-start-button'),
                         label: l10n.walkStart,
                         onPressed: selectedIds.isEmpty
@@ -108,8 +115,8 @@ class _ActiveWalkView extends StatelessWidget {
                                 ),
                               ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ActiveWalkTracking(
                 :final session,
@@ -154,7 +161,7 @@ class _ActiveWalkView extends StatelessWidget {
                             elapsed: elapsed,
                           ),
                           const SizedBox(height: AppSpacing.md),
-                          AppButton.primary(
+                          PawlogPrimaryButton.stop(
                             key: const Key('walk-active-stop-button'),
                             label: l10n.walkStop,
                             onPressed: () => _confirmStop(context),

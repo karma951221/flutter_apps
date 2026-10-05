@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../common/widget/pawlog_primary_button.dart';
 import '../../dog/widget/dog_chips.dart';
 import '../../photo/widget/photo_source_sheet.dart';
 import '../../photo/widget/photo_strip.dart';
@@ -229,7 +230,7 @@ class _Form extends StatelessWidget {
     final theme = Theme.of(context);
     final cubit = context.read<WalkEditCubit>();
 
-    return ListView(
+    final list = ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         Text(
@@ -281,21 +282,29 @@ class _Form extends StatelessWidget {
           onAdd: onAddPhoto,
           onRemove: cubit.removePhoto,
         ),
-        const SizedBox(height: AppSpacing.lg),
-        AppButton.primary(
-          key: const Key('walk-edit-save-button'),
-          label: l10n.commonSave,
-          isLoading: isSaving,
-          onPressed: cubit.save,
-        ),
         if (form.isNew) ...[
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.lg),
           AppButton.text(
             key: const Key('walk-edit-discard-button'),
             label: l10n.walkDiscard,
             onPressed: isSaving ? null : onDiscard,
           ),
         ],
+      ],
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: list),
+        PawlogBottomAction(
+          child: PawlogPrimaryButton(
+            key: const Key('walk-edit-save-button'),
+            label: l10n.commonSave,
+            isLoading: isSaving,
+            onPressed: cubit.save,
+          ),
+        ),
       ],
     );
   }

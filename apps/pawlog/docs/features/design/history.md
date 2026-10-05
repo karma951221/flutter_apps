@@ -49,3 +49,29 @@ walk 의 `WalkTheme` 은 `AppTheme.light(seedColor:)` 에 씨앗색만 바꾼다
 `assets/fonts/` 에 고운돋움 · 개구(Google Fonts, OFL) · Pretendard 400/500/700(orioncactus, OFL)과
 `OFL-*.txt` 를 함께 두고 `pubspec.yaml` `fonts:` 에 등록했다. 일본어 글리프는 세 서체 모두 없거나
 일부라 시스템 폰트로 대체된다(design.md Typography 그대로).
+
+## 2 — 주 버튼
+
+### `PawlogPrimaryButton` 은 `FilledButton` 을 직접 쓴다 — `AppButton.primary` 를 감싸지 않은 이유
+
+루트 CLAUDE.md 는 공용 위젯을 감싸라고 한다. `AppButton` 은 라벨이 `String` 이고 로딩이면 자식을
+즉시 스피너로 바꾼다. 버튼을 통째로 `AnimatedSwitcher` 에 넣으면 두 버튼의 남색 바탕이 겹쳐 페이드되며
+중간에 바탕이 75% 까지 옅어진다. 바탕은 그대로 두고 안쪽만 200ms 크로스페이드하려면 자식을 직접 쥐어야
+했다. 모양(알약 · 58 · 색 · 글자)은 `filledButtonTheme` 에서 오므로 `AppButton.primary` 와 같다.
+재사용 범위가 pawlog 하나라 `design_system` 으로 승격하지 않았다(`lib/presentation/common/widget/`).
+
+- 누름 0.97 · 120ms ease-out(`Listener` + `AnimatedScale`), 비활성 투명도 0.4(`AnimatedOpacity`),
+  로딩은 흐리지 않는다 — 로딩은 '기다림' 이지 '못 누름' 이 아니다
+- 테마의 `filledButtonTheme` 는 비활성 색을 따로 두지 않는다. 흐림은 이 위젯 한 곳에서만 일어난다
+- `.stop` — 먹색(`stop` · `onStop`) 변형, 산책 끝내기
+- 그림자는 design.md Elevation 대로 아래 6 · 블러 16. `MediaQuery.disableAnimations` 면 모든 전환이 0ms
+
+### 하단 고정은 `bottomNavigationBar` 가 아니라 본문 `Column` 끝
+
+`PawlogBottomAction` 이 좌우 20 · 아래 안전 영역을 둔다. `Scaffold.bottomNavigationBar` 는 키보드
+뒤에 남아 가려진다. 본문 `Column(Expanded(목록), PawlogBottomAction)` 이면 본문과 함께 키보드 위로
+올라온다 — 반려견 이름 입력 중 저장 버튼이 가려지던 QA P3 의 절반이 여기서 풀린다.
+
+적용: 진행 화면 시작 · 끝내기(`.stop`), 저장 폼 저장, 반려견 편집 저장. 저장 폼의 버리기는 목록 끝의
+텍스트 버튼으로 남겼다(design.md "다른 동작은 앱바나 줄글 안의 텍스트 버튼"). 피드 시작 버튼은 3단계,
+반려견 목록의 추가 버튼은 5단계에서 바꾼다.

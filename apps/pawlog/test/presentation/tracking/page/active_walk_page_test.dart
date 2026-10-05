@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pawlog/domain/tracking/entity/tracker_state.dart';
 import 'package:pawlog/domain/tracking/entity/tracking_notice.dart';
+import 'package:pawlog/presentation/common/widget/pawlog_primary_button.dart';
 import 'package:pawlog/presentation/tracking/cubit/active_walk_cubit.dart';
 import 'package:pawlog/presentation/tracking/page/active_walk_page.dart';
 
@@ -57,7 +58,7 @@ void main() {
   testWidgets('반려견 선택을 모두 해제하면 시작 버튼이 비활성이 된다', (tester) async {
     await pumpApp(tester, ActiveWalkPage(onStopped: () {}, onOpenDogs: () {}));
 
-    AppButton startButton() => tester.widget<AppButton>(
+    PawlogPrimaryButton startButton() => tester.widget<PawlogPrimaryButton>(
       find.byKey(const Key('walk-active-start-button')),
     );
     expect(startButton().onPressed, isNotNull);

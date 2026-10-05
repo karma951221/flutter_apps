@@ -23,6 +23,10 @@ abstract final class PawlogSize {
   /// 하단 고정 주 버튼 높이.
   static const primaryButton = 58.0;
 
+  /// 주 버튼 안 로딩 표시 크기 · 선 두께.
+  static const buttonSpinner = 20.0;
+  static const buttonSpinnerStroke = 2.0;
+
   /// 경로 선 · 그 테두리(casing) 두께.
   static const routeStroke = 5.0;
   static const routeCasing = 9.0;

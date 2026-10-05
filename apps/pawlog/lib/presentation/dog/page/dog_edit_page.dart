@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../common/widget/pawlog_primary_button.dart';
 import '../cubit/dog_edit_cubit.dart';
 import '../cubit/dog_edit_state.dart';
 import '../cubit/dog_form.dart';
@@ -210,7 +211,7 @@ class _Form extends StatelessWidget {
     final photoPath = form.photoPath;
     final birthday = form.birthday;
 
-    return ListView(
+    final list = ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         Center(
@@ -259,12 +260,20 @@ class _Form extends StatelessWidget {
           enabled: !isSaving,
           onTap: onPickBirthday,
         ),
-        const SizedBox(height: AppSpacing.lg),
-        AppButton.primary(
-          key: const Key('walk-dog-save-button'),
-          label: l10n.walkDogSaveAction,
-          isLoading: isSaving,
-          onPressed: cubit.save,
+      ],
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: list),
+        PawlogBottomAction(
+          child: PawlogPrimaryButton(
+            key: const Key('walk-dog-save-button'),
+            label: l10n.walkDogSaveAction,
+            isLoading: isSaving,
+            onPressed: cubit.save,
+          ),
         ),
       ],
     );
