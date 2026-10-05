@@ -247,9 +247,11 @@ class _Form extends StatelessWidget {
             borderRadius: PawlogRadius.photoAll,
             child: AspectRatio(
               aspectRatio: PawlogSize.photoAspect,
+              // 산책을 끝내고 저장 화면에 들어오면 경로가 그려진다. 수정은 이미 본 경로라 바로.
               child: RouteSketch(
                 key: const Key('walk-edit-route'),
                 points: route,
+                animate: form.isNew,
               ),
             ),
           ),

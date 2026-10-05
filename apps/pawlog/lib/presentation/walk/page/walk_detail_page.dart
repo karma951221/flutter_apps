@@ -184,6 +184,7 @@ class _Content extends StatelessWidget {
             key: const Key('walk-detail-map'),
             points: [for (final p in track) p.point],
             follow: false,
+            animateDraw: true,
             emptyMessage: l10n.walkNoTrack,
           ),
         ),

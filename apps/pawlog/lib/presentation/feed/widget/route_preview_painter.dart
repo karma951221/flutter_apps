@@ -16,11 +16,15 @@ class RoutePreviewPainter extends CustomPainter {
     this.points, {
     required this.color,
     this.casingColor,
+    this.progress = 1,
   });
 
   final List<GeoPoint> points;
   final Color color;
   final Color? casingColor;
+
+  /// 0 ~ 1 — 출발점부터 경로 길이의 이 비율까지만 그린다(경로 그리기 연출).
+  final double progress;
 
   static const _strokeWidth = PawlogSize.routeStroke;
   static const _casingWidth = PawlogSize.routeCasing;
@@ -95,18 +99,35 @@ class RoutePreviewPainter extends CustomPainter {
       );
       return;
     }
-    final path = Path()
+    final full = Path()
       ..moveTo(project(points.first).dx, project(points.first).dy);
     for (final p in points.skip(1)) {
       final o = project(p);
-      path.lineTo(o.dx, o.dy);
+      full.lineTo(o.dx, o.dy);
     }
+    final path = progress >= 1 ? full : _head(full, progress.clamp(0, 1));
     if (casing != null) canvas.drawPath(path, stroke(casing, _casingWidth));
     canvas.drawPath(path, stroke(color, _strokeWidth));
   }
 
+  /// [path] 의 앞쪽 [fraction] 만큼.
+  static Path _head(Path path, double fraction) {
+    final metrics = path.computeMetrics().toList();
+    final total = metrics.fold<double>(0, (sum, m) => sum + m.length);
+    var remaining = total * fraction;
+    final head = Path();
+    for (final metric in metrics) {
+      if (remaining <= 0) break;
+      final length = math.min(remaining, metric.length);
+      head.addPath(metric.extractPath(0, length), Offset.zero);
+      remaining -= length;
+    }
+    return head;
+  }
+
   @override
   bool shouldRepaint(RoutePreviewPainter oldDelegate) =>
+      progress != oldDelegate.progress ||
       color != oldDelegate.color ||
       casingColor != oldDelegate.casingColor ||
       !listEquals(points, oldDelegate.points);

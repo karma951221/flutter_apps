@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../domain/walk/entity/geo_point.dart';
 import '../../theme/pawlog_theme.dart';
+import 'route_draw.dart';
 
 /// 경로 지도. W2 진행 화면(`follow`)과 W3 상세가 함께 쓴다.
 ///
@@ -16,8 +19,52 @@ class RouteMap extends StatefulWidget {
     this.follow = false,
     this.emptyMessage,
     this.tileProvider,
+    this.animateDraw = false,
     super.key,
   });
+
+  /// 켜면 처음 보일 때 선이 출발점부터 1.6초에 걸쳐 그려진다(상세 화면). 애니메이션
+  /// 줄이기가 켜져 있으면 바로 완성된 선이다.
+  final bool animateDraw;
+
+  /// [points] 의 출발점부터 전체 길이의 [fraction] 까지 — 마지막 구간은 중간에서 끊는다.
+  @visibleForTesting
+  static List<LatLng> partialRoute(List<LatLng> points, double fraction) {
+    if (fraction >= 1 || points.length < 2) return points;
+    if (fraction <= 0) return [points.first];
+    // 짧은 산책 경로라 평면 근사로 충분하다. 경도는 위도에 따라 짧아진다.
+    final lngScale = math.cos(points.first.latitude * math.pi / 180);
+    double length(LatLng a, LatLng b) {
+      final dLat = b.latitude - a.latitude;
+      final dLng = (b.longitude - a.longitude) * lngScale;
+      return math.sqrt(dLat * dLat + dLng * dLng);
+    }
+
+    var total = 0.0;
+    for (var i = 1; i < points.length; i++) {
+      total += length(points[i - 1], points[i]);
+    }
+    var remaining = total * fraction;
+    final head = [points.first];
+    for (var i = 1; i < points.length; i++) {
+      final a = points[i - 1];
+      final b = points[i];
+      final segment = length(a, b);
+      if (segment >= remaining) {
+        final t = segment == 0 ? 1.0 : remaining / segment;
+        head.add(
+          LatLng(
+            a.latitude + (b.latitude - a.latitude) * t,
+            a.longitude + (b.longitude - a.longitude) * t,
+          ),
+        );
+        return head;
+      }
+      head.add(b);
+      remaining -= segment;
+    }
+    return head;
+  }
 
   final List<GeoPoint> points;
 
@@ -93,36 +140,54 @@ class _RouteMapState extends State<RouteMap> {
           tileProvider: _tileProvider,
         ),
         // 남색 테두리 9 위에 연두 5, 둥근 끝 · 둥근 이음(design.md 경로 선).
-        PolylineLayer(
-          polylines: [
-            Polyline(
-              points: latLngs,
-              strokeWidth: PawlogSize.routeStroke,
-              color: colors.accent,
-              borderStrokeWidth:
-                  PawlogSize.routeCasing - PawlogSize.routeStroke,
-              borderColor: colors.routeCasing,
-              strokeCap: StrokeCap.round,
-              strokeJoin: StrokeJoin.round,
-            ),
-          ],
-        ),
-        MarkerLayer(
-          markers: [
-            Marker(
-              point: latLngs.first,
-              width: PawlogSize.routeMarker,
-              height: PawlogSize.routeMarker,
-              child: _Dot(fill: colors.routeCasing, ring: colors.onPrimary),
-            ),
-            if (!isSinglePlace)
-              Marker(
-                point: latLngs.last,
-                width: PawlogSize.routeMarker,
-                height: PawlogSize.routeMarker,
-                child: _Dot(fill: colors.accent, ring: colors.routeCasing),
-              ),
-          ],
+        RouteDraw(
+          animate: widget.animateDraw,
+          builder: (context, progress) {
+            final drawn = RouteMap.partialRoute(latLngs, progress);
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: drawn,
+                      strokeWidth: PawlogSize.routeStroke,
+                      color: colors.accent,
+                      borderStrokeWidth:
+                          PawlogSize.routeCasing - PawlogSize.routeStroke,
+                      borderColor: colors.routeCasing,
+                      strokeCap: StrokeCap.round,
+                      strokeJoin: StrokeJoin.round,
+                    ),
+                  ],
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: latLngs.first,
+                      width: PawlogSize.routeMarker,
+                      height: PawlogSize.routeMarker,
+                      child: _Dot(
+                        fill: colors.routeCasing,
+                        ring: colors.onPrimary,
+                      ),
+                    ),
+                    // 도착 점은 선이 거기 닿은 뒤에 나타난다.
+                    if (!isSinglePlace && progress >= 1)
+                      Marker(
+                        point: latLngs.last,
+                        width: PawlogSize.routeMarker,
+                        height: PawlogSize.routeMarker,
+                        child: _Dot(
+                          fill: colors.accent,
+                          ring: colors.routeCasing,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            );
+          },
         ),
         const SimpleAttributionWidget(
           source: Text('OpenStreetMap contributors'),

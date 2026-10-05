@@ -149,3 +149,23 @@ walk 의 `WalkTheme` 은 `AppTheme.light(seedColor:)` 에 씨앗색만 바꾼다
   플랫폼마다 원본 경로일 수도 있어(iOS PHPicker 는 사본, Android 는 경우에 따라 원본) 건드리지 않았다
 - **반려견 목록** — 추가 FAB 를 하단 고정 주 버튼(`walk-dog-add-button`)으로. 빈 상태 안내의 추가 버튼은
   하단 버튼과 겹쳐 뺐다. 행 사이는 `rule` 구분선(좌우 20 들여쓰기), 이름은 고운돋움
+
+## 6 — 경로 그리기 모션
+
+- **`RouteDraw`**(`walk/widget/route_draw.dart`) — 처음 보일 때 한 번 0 → 1(1600ms, `move` 곡선)을
+  `builder` 에 넘긴다. `animate: false` 이거나 `MediaQuery.disableAnimations` 면 처음부터 1 이고 컨트롤러를
+  돌리지 않는다. 다시 그려져도(상세를 다시 읽거나 폼 상태가 바뀌어도) 처음 한 번만 돈다
+- **썸네일** — `RoutePreviewPainter.progress` 가 경로 `Path` 를 `PathMetrics` 로 잘라 앞쪽만 그린다(테두리 ·
+  선 같은 길이). 저장 폼은 신규일 때만 `animate`(산책을 끝내고 들어오는 순간). 수정 폼과 피드는 정지
+- **지도(상세)** — `RouteMap(animateDraw: true)`. `RouteMap.partialRoute` 가 점 목록을 누적 길이 비율에서
+  끊고 마지막 구간은 보간한다(경도 cos 보정 평면 근사 — 산책 거리에선 오차가 보이지 않는다). 카메라는
+  처음부터 전체 경로에 맞추고 선만 자란다. 도착 점은 선이 닿은 뒤(1)에 나타난다. 진행 화면 지도는 실시간
+  추적이라 그리지 않는다
+- 저장 화면의 "경로가 그려진다" 는 신규 저장 폼의 4:3 경로 그림에서 일어난다 — 저장 폼에는 지도가 없다
+  (5단계에서 그림을 넣은 이유)
+
+## 검증 (2026-10-05)
+
+`apps/pawlog` `flutter analyze` 0건 · `flutter test` `+242`(기존 205 → 디자인 적용 후). `packages/core`
+`+67`(P5 2건 포함), `packages/l10n` `+10`. `flutter build apk --debug` 성공. 에뮬레이터 라이트 · 다크
+확인은 [진행 현황](../../status.md)의 다음 할 일에 남겼다.
