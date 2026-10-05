@@ -1,0 +1,12 @@
+# 포크 디렉터리에서 재생성(flutter pub get · pigeon · build_runner)할 때 생기는 것.
+# 포크는 workspace 멤버가 아니라 자기 lock 을 만든다. 재생성 버전은 FORK.md 에 적는다.
+.dart_tool/
+build/
+pubspec.lock
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# 안드로이드 스튜디오 · Gradle 이 포크 android/ 를 직접 열 때 생기는 것
+android/.gradle/
+android/local.properties
+*.iml

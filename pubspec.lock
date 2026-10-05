@@ -12,10 +12,9 @@ packages:
   alarm:
     dependency: transitive
     description:
-      name: alarm
-      sha256: bdaafb634a957ae76a0320bdcb8909be3458383c60e2ab70a7f7c90ce8ac9a98
-      url: "https://pub.dev"
-    source: hosted
+      path: "apps/walk/third_party/alarm"
+      relative: true
+    source: path
     version: "5.14.0"
   analyzer:
     dependency: transitive

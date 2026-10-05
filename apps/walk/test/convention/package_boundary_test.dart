@@ -15,4 +15,28 @@ void main() {
     );
     expect(dependencies, isNot(contains('supabase_flutter:')));
   });
+
+  test('alarm 은 third_party 포크를 path 의존성으로 쓴다', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+
+    expect(
+      RegExp(
+        r'^  alarm:\n    path: third_party/alarm$',
+        multiLine: true,
+      ).hasMatch(pubspec),
+      isTrue,
+    );
+    expect(File('third_party/alarm/FORK.md').existsSync(), isTrue);
+    expect(File('third_party/alarm/LICENSE').existsSync(), isTrue);
+  });
+
+  test('alarm 포크는 루트 workspace 멤버가 아니다', () {
+    final rootPubspec = File('../../pubspec.yaml').readAsStringSync();
+    final forkPubspec = File(
+      'third_party/alarm/pubspec.yaml',
+    ).readAsStringSync();
+
+    expect(rootPubspec, isNot(contains('third_party')));
+    expect(forkPubspec, isNot(contains('resolution: workspace')));
+  });
 }
