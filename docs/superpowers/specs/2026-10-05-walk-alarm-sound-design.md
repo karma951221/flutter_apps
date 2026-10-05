@@ -162,3 +162,22 @@ abstract interface class AlarmSoundSource {
 
 완료 시 [walk plan](../../../apps/walk/docs/plan.md) 의 후보에서 "알람음 선택"을 빼고
 [walk status](../../../apps/walk/docs/status.md) 를 갱신한다.
+
+## 10. 추가 결정 (2026-10-05, 고도화 백로그 반영)
+
+[알람 고도화 백로그](2026-10-05-walk-alarm-upgrade-backlog-design.md) 를 진행하며 스파이크로 확인한 사실과
+사용자 결정을 반영한다. 아래가 §2 ~ §8 과 어긋나면 이 절이 우선한다.
+
+| 결정 | 이유 |
+|---|---|
+| `alarm` 패키지(실제 해석 버전 **5.14.0**, 루트 `pubspec.lock`)를 `apps/walk/third_party/alarm/` 에 복사해 path 의존성으로 쓴다(포크). 루트 workspace 멤버로 넣지 않는다 | 사용자 결정. 울리는 순간의 판단(무음 모드 · 자동 멈춤 · 스누즈 횟수 · 소리 대체)은 패키지 네이티브 `AlarmService` 안에서만 할 수 있다. MIT 라이선스 유지, 바꾼 점은 `third_party/alarm/FORK.md` 에 적는다 |
+| 기존 비프음 파일 이름 `assets/alarm/default.wav` 를 **그대로 둔다**(§6 의 `beep.wav` 이름 바꾸기 취소). 화면 이름은 "비프" | 이미 걸린 회차(최대 14일)는 옛 경로로 울린다. 이름을 바꾸면 그 회차가 소리 없이 울린다 |
+| **설정 지문(signature)으로 다시 걸기**: 패키지에 거는 회차의 `payload` 를 `'<alarmId>|<signature>'` 로 하고, `AlarmScheduler.scheduled()` 가 `packageId → (at, signature)` 를 돌려준다. `_sync` 는 시각이 같아도 지문이 다르면 다시 건다. 옛 payload(`'<alarmId>'`)는 지문 불일치로 보고 한 번 다시 건다 | `_sync` 는 시각만 비교해 소리 · 진동 같은 설정 변경이 이미 걸린 회차에 반영되지 않았다. 웨이브 1 · 3 의 새 설정도 같은 장치를 쓴다 |
+| 지문은 `PackageAlarmScheduler` 가 `settingsFor` 결과 중 울림에 영향을 주는 값(소리 경로 · 진동 · 볼륨 · 제목 등)을 정해진 순서로 이어 붙인 문자열의 해시(`fnv1a32` hex)로 만든다. 문구(l10n) 변경은 지문에 넣지 않는다 | 결정적이고 짧다. 로캘이 바뀔 때마다 전부 다시 걸 필요는 없다 |
+| 포크 네이티브에 **소리 대체**를 넣는다: `AlarmSettings.androidFallbackAudioPath`(String?). `AudioService.playAudio` 가 1차 경로(null 이면 시스템 기본 알람음)로 재생에 실패하면 이 경로로 다시 재생한다. 앱은 항상 `assets/alarm/default.wav` 를 넘긴다 | §2 의 "복사본이 없으면 시스템 기본음"은 예약 시점에만 판단돼, 울릴 때 실패하면 무음이었다. 시스템 기본음도 기기에서 "없음"이면 무음일 수 있다 |
+| `settingsFor` 의 파일 존재 확인은 생성자 주입이 아니라 정적 메서드 인자 `{bool Function(String) fileExists = _exists}` 로 둔다 | `PackageAlarmScheduler` 는 인자 없는 생성자로 DI 등록돼 있다. 함수 타입 생성자 인자는 injectable 이 풀지 못한다 |
+| `import` 는 복사 뒤 네이티브 `MediaPlayer.prepare()` 로 복사본을 검증하고, 실패하면 파일을 지우고 오류를 돌려준다 | 코덱 문제로 울릴 때 실패하는 파일을 미리 막는다 |
+
+포크 범위(웨이브 0): 복사 · path 의존성 · `analysis_options.yaml` 의 `third_party/**` 제외 · pigeon/json 재생성 절차를
+`FORK.md` 에 적기 · `androidFallbackAudioPath`. 다른 웨이브가 같은 방식으로 필드를 더한다
+(웨이브 1 무음 모드, 웨이브 3 자동 멈춤 · 스누즈 횟수).
