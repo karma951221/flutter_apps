@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Android 12+ 는 OS 스플래시 API 를 쓴다: 아이콘(adaptive 전경 재사용) + 하단 워드마크 -->
+    <!-- Android 12+ 는 OS 스플래시 API 를 쓴다: 아이콘(240dp 전용 이미지) + 하단 워드마크 -->
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">@drawable/launch_background</item>
         <item name="android:windowSplashScreenBackground">@color/ic_launcher_background</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
         <item name="android:windowSplashScreenBrandingImage">@drawable/splash_branding</item>
     </style>
     <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
