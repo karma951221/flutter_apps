@@ -58,20 +58,18 @@ SDK 없음, 다음 세션.** APK · iOS 빌드도 아직 한 번도 하지 않�
 1. **남은 에뮬레이터 시나리오** — feature 별 `testing.md` 의 "에뮬레이터" 표에서 미실행 · 일부인 것:
    dog ②(삭제) ③④, tracking ⑤(저장 폼 뒤로 가기), record ④⑤, feed ③④⑥. 이번 수정(위치 오류 안내 ·
    설정 열기 · 빈 피드 안내)도 화면에서 한 번 더 본다
-2. **QA 다듬을 것** (2026-10-04 에뮬레이터 QA 에서 본 것, 아직 안 고침)
+2. **QA 다듬을 것** (2026-10-04 에뮬레이터 QA) — 아래 "디자인 시스템 적용" 에서 P1~P5 를 고쳤다. 남은 것:
    - Android 12+ 스플래시 아이콘 해상도 — 따로 다루는 중
-   - 시작 전(반려견 선택) 화면 제목이 "산책 중" 이다
-   - 강아지 칩의 선택 체크가 아바타 글자와 겹친다
-   - 반려견 이름 검증이 스낵바뿐이고, 키보드가 올라오면 저장 버튼을 가린다
-   - 다크 모드에서 입력칸 테두리 대비가 낮다
-   - 앱 테마가 브랜드 주황(`#F08C3A`)이 아니라 기본 남색이다
-   - image_picker 카메라 원본이 `cache/` 에 남는다
-3. **리뷰 문서의 열린 항목** — [구현 리뷰](audits/2026-10-03-implementation-review.md)의 "다음 단계에
-   넘기는 것" 표와 열린 질문. 남은 것: 크기 수치의 토큰화(④ T3 · ⑦ F2), `WalkFormat.duration`
+   - ~~앱 테마가 브랜드 주황(`#F08C3A`)이 아니라 기본 남색이다~~ — [디자인 시스템](design.md)(회백지 · 남색 · 연두)이
+     대신한다
+3. **디자인 시스템 에뮬레이터 확인** — [디자인 테스트](features/design/testing.md#에뮬레이터) ①~④(라이트 · 다크 ·
+   경로 그리기 · 카메라 캐시) 미실행
+4. **리뷰 문서의 열린 항목** — [구현 리뷰](audits/2026-10-03-implementation-review.md)의 "다음 단계에
+   넘기는 것" 표와 열린 질문. 남은 것: 크기 수치의 토큰화(④ T3 · ⑦ F2 — 디자인 적용에서 `PawlogSize` 로 옮김, 리뷰 표 확인만), `WalkFormat.duration`
    경계(⑤ I2), Android 정확도 `best` vs 계획 `high`(실기기에서 결정), `POST_NOTIFICATIONS` 런타임 요청,
    미테스트 경로(카메라 · 사진 없는 썸네일 fallback)
-4. **W5 social 기획** — v2. Supabase 소셜 피드를 얹는다. 착수 시 `features/social/plan.md`
-5. **리팩터링 후보** — [설계 §7](../../../docs/superpowers/specs/2026-10-03-walk-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것):
+5. **W5 social 기획** — v2. Supabase 소셜 피드를 얹는다. 착수 시 `features/social/plan.md`
+6. **리팩터링 후보** — [설계 §7](../../../docs/superpowers/specs/2026-10-03-walk-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것):
    남은 것은 `FailureCode` · ARB 의 앱별 증가, `AppAvatar.nickname`, `CLAUDE.md` 경로, `core` 등록을
    앱이 따로 하는 문제. 모노레포 공통 작업이라 [전체 진행 현황](../../../docs/status.md)에서 다룬다.
    2026-10-04 에 푼 것은 아래 "패키지 경계 정리" 에 있다
@@ -116,3 +114,23 @@ Android 17 에뮬레이터(`Medium_Phone`), 위치는 `adb emu geo fix` 로 경�
 검증(2026-10-04, `af4cf22`): `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+205` ·
 `flutter build apk --debug` 성공. `packages/location` analyze 0건 · `+21`, `l10n` `+10`, `core` `+65`,
 `apps/commute` `+45`.
+
+## 디자인 시스템 적용 (2026-10-05)
+
+[디자인 시스템](design.md)을 화면 전체에 입혔다. 범위 · 단계는 [계획](features/design/plan.md), 판단 ·
+design.md 와 다르게 간 것은 [기록](features/design/history.md), 테스트는 [테스트](features/design/testing.md).
+
+- [x] **1 토큰 · 테마 · 서체** — `lib/presentation/theme/`(`PawlogTheme` · `PawlogColors` · `PawlogTextStyles` ·
+      간격 · 모서리 · 모션 · 그림자), 고운돋움 · 개구 · Pretendard 번들(OFL). **P4** 입력칸 테두리 (`fb18539`)
+- [x] **2 주 버튼** — `PawlogPrimaryButton`(알약 58 · 누름 0.97 · 비활성 0.4 · 로딩 크로스페이드 · 먹색 `.stop`),
+      `PawlogBottomAction` (`1ed0caa`)
+- [x] **3 피드 타임라인** — 카드 제거, 날짜 열 · 리드줄, 같은 날 묶음, 달 머리, 하단 시작 버튼 (`be697c8`)
+- [x] **4 배너 · 진행 화면 · 경로 선** — 남색 배너 + 연두 점멸, 지도 위 시트 44 숫자, 경로 남색 9 · 연두 5.
+      **P1** "산책 준비" 제목(`walkReadyTitle`) (`5f2952a`)
+- [x] **5 저장 · 상세 · 반려견** — 메모 개구, 사진 4:3 · 모서리 4, 아바타 겹침 12, 반려견 추가 하단 버튼.
+      **P2** 칩 체크 제거 · **P3** 이름 `errorText` · **P5** 카메라 원본 삭제(`core`) (`f63f36a`)
+- [x] **6 경로 그리기** — 신규 저장 폼 · 상세에서 1.6초, 애니메이션 줄이기면 바로 완성 (`6e0c902`)
+
+검증(2026-10-05, `6e0c902`): `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+242` ·
+`flutter build apk --debug` 성공. `packages/core` `+67` · `packages/l10n` `+10` · `apps/trader`
+`flutter test test/convention` 통과. 에뮬레이터 라이트 · 다크 확인은 미실행(다음 할 일 3).
