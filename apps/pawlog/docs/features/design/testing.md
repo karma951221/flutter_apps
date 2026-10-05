@@ -75,6 +75,7 @@ cd apps/pawlog && flutter test            # 전체
 | `tracking/page/active_walk_page_test.dart` (+1) | `ActiveWalkPage` | **Q1** 추적 중 `SimpleAttributionWidget` · "OpenStreetMap contributors" 가 있고 글자 띠 아래 끝 ≤ `walk-active-sheet` 위 끝 |
 | `walk/page/walk_detail_page_test.dart` (+1) | `WalkDetailPage` | **Q1** 출처 글자 띠가 `walk-detail-map` 안에 있다 |
 | `walk/widget/route_sketch_test.dart` (2, 새 파일) | `RouteSketch` · `RoutePreviewPainter` | **Q2** 400×300 상자에서 가로로 긴 경로: 좌우 끝이 여백 24.5(20 + 테두리 반 폭)에 닿고 경계 중심이 상자 중심 · 세로로 긴 경로: 위아래 끝이 여백에 닿고 중심이 상자 중심 |
+| `walk/format/walk_format_test.dart` (+3) | `WalkFormat.duration` | **Q3** 58초 · 0초 → `1분 미만`, 60초 → `1분` · 60분 → `1시간`, 2시간 30초 → `2시간` · en `< 1 min` · `1 h`, ja `1分未満` · `1時間` |
 
 ## 에뮬레이터
 

@@ -1761,6 +1761,14 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get walkDurationUnderMinute => '1분 미만';
+
+  @override
+  String walkDurationHours(int hours) {
+    return '$hours시간';
+  }
+
+  @override
   String walkDurationHoursMinutes(int hours, int minutes) {
     return '$hours시간 $minutes분';
   }

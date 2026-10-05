@@ -1865,6 +1865,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get walkDurationUnderMinute => '< 1 min';
+
+  @override
+  String walkDurationHours(int hours) {
+    return '$hours h';
+  }
+
+  @override
   String walkDurationHoursMinutes(int hours, int minutes) {
     return '$hours h $minutes min';
   }

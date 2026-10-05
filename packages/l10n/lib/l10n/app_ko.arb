@@ -2455,6 +2455,19 @@
       }
     }
   },
+  "walkDurationUnderMinute": "1분 미만",
+  "@walkDurationUnderMinute": {
+    "description": "1분이 안 되는 산책 시간 표기(0분 대신)"
+  },
+  "walkDurationHours": "{hours}시간",
+  "@walkDurationHours": {
+    "description": "분이 0인 1시간 이상 산책 시간 표기",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
   "walkDurationHoursMinutes": "{hours}시간 {minutes}분",
   "@walkDurationHoursMinutes": {
     "description": "1시간 이상 산책 시간 표기",

@@ -553,6 +553,8 @@
   "walkDistanceMeters": "{meters} m",
   "walkDistanceKm": "{km} km",
   "walkDurationMinutes": "{minutes} min",
+  "walkDurationUnderMinute": "< 1 min",
+  "walkDurationHours": "{hours} h",
   "walkDurationHoursMinutes": "{hours} h {minutes} min",
   "walkTrackingNotificationTitle": "Recording your walk",
   "walkTrackingNotificationText": "The route keeps recording even if you close the app",

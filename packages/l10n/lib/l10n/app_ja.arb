@@ -553,6 +553,8 @@
   "walkDistanceMeters": "{meters} m",
   "walkDistanceKm": "{km} km",
   "walkDurationMinutes": "{minutes}分",
+  "walkDurationUnderMinute": "1分未満",
+  "walkDurationHours": "{hours}時間",
   "walkDurationHoursMinutes": "{hours}時間{minutes}分",
   "walkTrackingNotificationTitle": "散歩を記録しています",
   "walkTrackingNotificationText": "アプリを閉じても経路は記録され続けます",

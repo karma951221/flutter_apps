@@ -3422,6 +3422,18 @@ abstract class AppLocalizations {
   /// **'{minutes}분'**
   String walkDurationMinutes(int minutes);
 
+  /// 1분이 안 되는 산책 시간 표기(0분 대신)
+  ///
+  /// In ko, this message translates to:
+  /// **'1분 미만'**
+  String get walkDurationUnderMinute;
+
+  /// 분이 0인 1시간 이상 산책 시간 표기
+  ///
+  /// In ko, this message translates to:
+  /// **'{hours}시간'**
+  String walkDurationHours(int hours);
+
   /// 1시간 이상 산책 시간 표기
   ///
   /// In ko, this message translates to:
