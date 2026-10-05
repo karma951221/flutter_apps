@@ -56,17 +56,16 @@ SDK 없음, 다음 세션.** APK · iOS 빌드도 아직 한 번도 하지 않�
 ## 다음 할 일
 
 1. **남은 에뮬레이터 시나리오** — feature 별 `testing.md` 의 "에뮬레이터" 표에서 미실행 · 일부인 것:
-   dog ②(삭제) ③④, tracking ⑤(저장 폼 뒤로 가기), record ④⑤, feed ③④⑥. 이번 수정(위치 오류 안내 ·
+   tracking ⑤(저장 폼 뒤로 가기), record ⑤, feed ③④⑥. dog ②③④ · record ④ 는 2026-10-05 에 PASS. 이번 수정(위치 오류 안내 ·
    설정 열기 · 빈 피드 안내)도 화면에서 한 번 더 본다
 2. **QA 다듬을 것** (2026-10-04 에뮬레이터 QA) — 아래 "디자인 시스템 적용" 에서 P1~P5 를 고쳤다. 남은 것:
    - Android 12+ 스플래시 아이콘 해상도 — 따로 다루는 중
    - ~~앱 테마가 브랜드 주황(`#F08C3A`)이 아니라 기본 남색이다~~ — [디자인 시스템](design.md)(회백지 · 남색 · 연두)이
      대신한다
-3. **디자인 시스템 에뮬레이터 확인** — [디자인 테스트](features/design/testing.md#에뮬레이터) ①~④(라이트 · 다크 ·
-   경로 그리기 · 카메라 캐시) 미실행
+3. **디자인 시스템 에뮬레이터 재확인** — 2026-10-05 라이트 · 다크 QA 는 PASS([디자인 테스트](features/design/testing.md#에뮬레이터)).
+   그때 찾은 Q1~Q4 수정(OSM 출처 · 경로 그림 여백 · 1분 미만 · 반려견 카메라)은 위젯 테스트로만 확인했다 — 화면에서 한 번 더 본다
 4. **리뷰 문서의 열린 항목** — [구현 리뷰](audits/2026-10-03-implementation-review.md)의 "다음 단계에
-   넘기는 것" 표와 열린 질문. 남은 것: 크기 수치의 토큰화(④ T3 · ⑦ F2 — 디자인 적용에서 `PawlogSize` 로 옮김, 리뷰 표 확인만), `WalkFormat.duration`
-   경계(⑤ I2), Android 정확도 `best` vs 계획 `high`(실기기에서 결정), `POST_NOTIFICATIONS` 런타임 요청,
+   넘기는 것" 표와 열린 질문. 남은 것: 크기 수치의 토큰화(④ T3 · ⑦ F2 — 디자인 적용에서 `PawlogSize` 로 옮김, 리뷰 표 확인만), Android 정확도 `best` vs 계획 `high`(실기기에서 결정), `POST_NOTIFICATIONS` 런타임 요청,
    미테스트 경로(카메라 · 사진 없는 썸네일 fallback)
 5. **W5 social 기획** — v2. Supabase 소셜 피드를 얹는다. 착수 시 `features/social/plan.md`
 6. **리팩터링 후보** — [설계 §7](../../../docs/superpowers/specs/2026-10-03-walk-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것):
@@ -134,3 +133,18 @@ design.md 와 다르게 간 것은 [기록](features/design/history.md), 테스�
 검증(2026-10-05, `6e0c902`): `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+242` ·
 `flutter build apk --debug` 성공. `packages/core` `+67` · `packages/l10n` `+10` · `apps/trader`
 `flutter test test/convention` 통과. 에뮬레이터 라이트 · 다크 확인은 미실행(다음 할 일 3).
+
+## 디자인 적용 뒤 에뮬레이터 QA (2026-10-05)
+
+Android 17 에뮬레이터, 라이트 · 다크. 디자인 항목(스플래시 · P1~P5 · 타임라인 · 배너 · 시트 · 경로 선 ·
+경로 그리기 · 개구 메모 · 4:3 사진 · 다크 화면)은 모두 PASS — [디자인 테스트](features/design/testing.md#에뮬레이터).
+dog ②③④ · record ④ 도 이때 PASS. 찾은 네 가지를 고쳤다([기록](features/design/history.md#에뮬레이터-qa-후속-2026-10-05)):
+
+- [x] **Q1** 진행 화면 시트가 OSM 출처 표시를 가림 — 지도를 시트 위 끝 + 모서리까지, `RouteMap.bottomInset` (`b2755d2`)
+- [x] **Q2** 경로 그림이 상자에 붙어 보임 — 여백 20 + 테두리 반 폭, 두 축 가운데(저장 폼 · 피드) (`34c7d80`)
+- [x] **Q3** 1분 미만 산책이 "0분" — "1분 미만", 정확히 몇 시간이면 "1시간". 리뷰 ⑤ I2 해결 (`324c99f`)
+- [x] **Q4** 반려견 사진에 카메라 없음 — 산책과 같은 출처 시트, 카메라는 임시 파일 삭제 (`62fc236`)
+
+검증(2026-10-05, `62fc236`): `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+253` ·
+`flutter build apk --debug` 성공. `packages/l10n` `+10`, `apps/trader` `flutter test test/convention` 통과.
+수정 뒤 화면 재확인은 다음 할 일 3.

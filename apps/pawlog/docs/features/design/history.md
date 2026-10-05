@@ -208,3 +208,9 @@ OpenStreetMap contributors" 가 시트 밑에 들어갔다. OSM 타일 이용 �
 
 반려견 편집의 "사진 변경" 이 갤러리를 바로 열었다. 산책 사진과 같은 `PhotoSourceSheet` 를 열고, 카메라는
 `captureImage`(P5 의 임시 파일 삭제 포함)로 받는다. 파일 정리 규칙은 그대로 — [반려견 기록](../dog/history.md#2026-10-05--반려견-사진도-카메라로).
+
+### 검증 (2026-10-05, QA 후속)
+
+`apps/pawlog` `flutter analyze` 0건 · `flutter test` `+253`(242 + Q1 2 · Q2 2 · Q3 3 · Q4 4) ·
+`flutter build apk --debug` 성공. `packages/l10n` `+10`(키 2개 추가 · 재생성), `apps/trader`
+`flutter test test/convention` 통과. 수정 뒤 화면을 에뮬레이터에서 다시 보지는 않았다.
