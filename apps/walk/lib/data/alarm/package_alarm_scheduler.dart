@@ -72,6 +72,8 @@ class PackageAlarmScheduler implements AlarmScheduler {
     volumeSettings: pkg.VolumeSettings.fade(
       volume: 0.8,
       fadeDuration: const Duration(seconds: 3),
+      // 울릴 때 · 끌 때 알람 볼륨을 바꾸며 시스템 볼륨 패널이 뜨지 않게 한다.
+      showSystemUI: false,
     ),
     // NotificationOnKillService 를 선언하지 않는다. 안드로이드는 앱이 죽어도 AlarmManager 가 울린다.
     warningNotificationOnKill: false,

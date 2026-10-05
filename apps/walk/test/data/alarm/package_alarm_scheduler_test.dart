@@ -28,6 +28,7 @@ void main() {
     expect(settings.vibrate, isFalse);
     expect(settings.volumeSettings.volume, 0.8);
     expect(settings.volumeSettings.fadeDuration, const Duration(seconds: 3));
+    expect(settings.volumeSettings.showSystemUI, isFalse);
     expect(settings.androidFullScreenIntent, isTrue);
     expect(settings.androidStopAlarmOnTermination, isFalse);
     expect(settings.androidSnoozeDuration, alarmSnoozeDuration);
