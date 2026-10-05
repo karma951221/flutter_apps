@@ -295,6 +295,7 @@ class AlarmService : Service() {
         audioService?.playAudio(
             id,
             alarmSettings.assetAudioPath,
+            alarmSettings.androidFallbackAudioPath,
             alarmSettings.loopAudio,
             alarmSettings.volumeSettings.fadeDuration,
             alarmSettings.volumeSettings.fadeSteps,

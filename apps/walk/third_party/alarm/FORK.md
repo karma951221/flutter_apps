@@ -60,6 +60,8 @@ JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradle
   `android/build.gradle` 이 빌드를 실패시킨다.
 - 바꾼 Kotlin 은 순수 규칙 함수로 빼서 `android/src/test/kotlin/...` 에 JUnit 테스트를 더한다. 나머지는 에뮬레이터 시나리오로 본다.
 - 포크 자체의 `flutter test`(`test/`)는 돌리지 않는다. 바꾼 Dart 동작은 앱 테스트(`apps/walk/test`)에서 확인한다.
+  포크 경로를 따라 `apps/walk/test/third_party/alarm/<lib 아래 경로>_test.dart` 에 둔다
+  (예: `lib/model/alarm_settings.dart` ↔ `test/third_party/alarm/model/alarm_settings_test.dart`).
 - 포크를 바꾼 뒤에는 `apps/walk` 에서 `flutter analyze` · `flutter test` · `flutter build apk --debug` 까지 돌린다.
 
 ## 원본 올리기
@@ -69,7 +71,8 @@ JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradle
 
 ## 바꾼 점
 
-원본 5.14.0 과 달라진 것을 태스크마다 한 줄씩 적는다. 아직 없다.
+원본 5.14.0 과 달라진 것을 태스크마다 한 줄씩 적는다. 포크에서 바꾼 코드에는 `Fork:` 주석을 단다.
 
 | 태스크 | 바꾼 파일 | 내용 | 이유 |
 |---|---|---|---|
+| W0-T2 소리 대체 | `pigeons/alarm_api.dart`(+ 생성물 3개) · `lib/model/alarm_settings.dart`(+ `.g.dart`) · `android/…/models/AlarmSettings.kt` · `android/…/services/AudioService.kt` · `android/…/alarm/AlarmService.kt` · 테스트 `android/src/test/…/services/AudioFallbackTest.kt` | `AlarmSettings.androidFallbackAudioPath`(String?, 기본 null, wire 끝에 추가 · 없는 옛 json 은 null). `AudioService.playAudio` 가 `audioCandidates(primary, fallback)` 순서(대체 경로가 null 이거나 1차와 같으면 하나)로 `prepare` · `start` 를 시도하고, 실패하면 다음 후보로 넘어간다. 모두 실패하면 원래처럼 로그만 남긴다 | 1차 소리(복사한 기기 알람음 · 시스템 기본음)가 울리는 순간 재생에 실패하면 무음이었다. [스펙 §10](../../../../docs/superpowers/specs/2026-10-05-walk-alarm-sound-design.md) |

@@ -219,6 +219,10 @@ struct AlarmSettingsWire: Hashable {
   var androidStaleAfterMillis: Int64? = nil
   /// Whether to arm with `setAlarmClock`. Android only.
   var androidAlarmClock: Bool
+  /// Fork: what to play when [assetAudioPath] (or, when that is null, the
+  /// device default alarm sound) cannot be played. Null means no retry.
+  /// Same formats as [assetAudioPath]. Android only.
+  var androidFallbackAudioPath: String? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
@@ -240,6 +244,7 @@ struct AlarmSettingsWire: Hashable {
     let androidSnoozeDurationMillis: Int64? = nilOrValue(pigeonVar_list[14])
     let androidStaleAfterMillis: Int64? = nilOrValue(pigeonVar_list[15])
     let androidAlarmClock = pigeonVar_list[16] as! Bool
+    let androidFallbackAudioPath: String? = nilOrValue(pigeonVar_list[17])
 
     return AlarmSettingsWire(
       id: id,
@@ -258,7 +263,8 @@ struct AlarmSettingsWire: Hashable {
       preferConnectedAudioDevice: preferConnectedAudioDevice,
       androidSnoozeDurationMillis: androidSnoozeDurationMillis,
       androidStaleAfterMillis: androidStaleAfterMillis,
-      androidAlarmClock: androidAlarmClock
+      androidAlarmClock: androidAlarmClock,
+      androidFallbackAudioPath: androidFallbackAudioPath
     )
   }
   func toList() -> [Any?] {
@@ -280,6 +286,7 @@ struct AlarmSettingsWire: Hashable {
       androidSnoozeDurationMillis,
       androidStaleAfterMillis,
       androidAlarmClock,
+      androidFallbackAudioPath,
     ]
   }
   static func == (lhs: AlarmSettingsWire, rhs: AlarmSettingsWire) -> Bool {

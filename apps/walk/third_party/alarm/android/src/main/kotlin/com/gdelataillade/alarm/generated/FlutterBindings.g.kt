@@ -203,7 +203,13 @@ data class AlarmSettingsWire (
    */
   val androidStaleAfterMillis: Long? = null,
   /** Whether to arm with `setAlarmClock`. Android only. */
-  val androidAlarmClock: Boolean
+  val androidAlarmClock: Boolean,
+  /**
+   * Fork: what to play when [assetAudioPath] (or, when that is null, the
+   * device default alarm sound) cannot be played. Null means no retry.
+   * Same formats as [assetAudioPath]. Android only.
+   */
+  val androidFallbackAudioPath: String? = null
 )
  {
   companion object {
@@ -225,7 +231,8 @@ data class AlarmSettingsWire (
       val androidSnoozeDurationMillis = pigeonVar_list[14] as Long?
       val androidStaleAfterMillis = pigeonVar_list[15] as Long?
       val androidAlarmClock = pigeonVar_list[16] as Boolean
-      return AlarmSettingsWire(id, millisecondsSinceEpoch, assetAudioPath, volumeSettings, notificationSettings, loopAudio, vibrate, warningNotificationOnKill, androidFullScreenIntent, allowAlarmOverlap, allowSameSecondScheduling, iOSBackgroundAudio, androidStopAlarmOnTermination, preferConnectedAudioDevice, androidSnoozeDurationMillis, androidStaleAfterMillis, androidAlarmClock)
+      val androidFallbackAudioPath = pigeonVar_list[17] as String?
+      return AlarmSettingsWire(id, millisecondsSinceEpoch, assetAudioPath, volumeSettings, notificationSettings, loopAudio, vibrate, warningNotificationOnKill, androidFullScreenIntent, allowAlarmOverlap, allowSameSecondScheduling, iOSBackgroundAudio, androidStopAlarmOnTermination, preferConnectedAudioDevice, androidSnoozeDurationMillis, androidStaleAfterMillis, androidAlarmClock, androidFallbackAudioPath)
     }
   }
   fun toList(): List<Any?> {
@@ -247,6 +254,7 @@ data class AlarmSettingsWire (
       androidSnoozeDurationMillis,
       androidStaleAfterMillis,
       androidAlarmClock,
+      androidFallbackAudioPath,
     )
   }
   override fun equals(other: Any?): Boolean {

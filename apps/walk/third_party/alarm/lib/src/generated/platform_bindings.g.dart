@@ -124,6 +124,7 @@ class AlarmSettingsWire {
     this.androidSnoozeDurationMillis,
     this.androidStaleAfterMillis,
     required this.androidAlarmClock,
+    this.androidFallbackAudioPath,
   });
 
   int id;
@@ -173,6 +174,11 @@ class AlarmSettingsWire {
   /// Whether to arm with `setAlarmClock`. Android only.
   bool androidAlarmClock;
 
+  /// Fork: what to play when [assetAudioPath] (or, when that is null, the
+  /// device default alarm sound) cannot be played. Null means no retry.
+  /// Same formats as [assetAudioPath]. Android only.
+  String? androidFallbackAudioPath;
+
   List<Object?> _toList() {
     return <Object?>[
       id,
@@ -192,6 +198,7 @@ class AlarmSettingsWire {
       androidSnoozeDurationMillis,
       androidStaleAfterMillis,
       androidAlarmClock,
+      androidFallbackAudioPath,
     ];
   }
 
@@ -219,6 +226,7 @@ class AlarmSettingsWire {
       androidSnoozeDurationMillis: result[14] as int?,
       androidStaleAfterMillis: result[15] as int?,
       androidAlarmClock: result[16]! as bool,
+      androidFallbackAudioPath: result[17] as String?,
     );
   }
 

@@ -14,6 +14,16 @@ import io.flutter.Log
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
+/**
+ * Fork: the sounds a ring tries, in order.
+ *
+ * [primary] is the alarm's own sound, where null means the device default
+ * alarm sound. [fallback] is retried only when [primary] cannot be played;
+ * null, or the same path again, adds nothing worth retrying.
+ */
+internal fun audioCandidates(primary: String?, fallback: String?): List<String?> =
+    if (fallback == null || fallback == primary) listOf(primary) else listOf(primary, fallback)
+
 class AudioService(private val context: Context) {
     companion object {
         private const val TAG = "AudioService"
@@ -37,6 +47,7 @@ class AudioService(private val context: Context) {
     fun playAudio(
         id: Int,
         filePath: String?,
+        fallbackFilePath: String?,
         loopAudio: Boolean,
         fadeDuration: Duration?,
         fadeSteps: List<VolumeFadeStep>,
@@ -44,6 +55,51 @@ class AudioService(private val context: Context) {
     ) {
         releaseMediaPlayer(id) // Stop and release any existing MediaPlayer and Timer for this ID
 
+        // Fork: try each candidate until one starts, so a sound that cannot be
+        // played falls back instead of leaving the alarm silent.
+        val mediaPlayer = audioCandidates(filePath, fallbackFilePath).firstNotNullOfOrNull { path ->
+            startMediaPlayer(id, path, loopAudio, preferConnectedAudioDevice)
+        } ?: run {
+            Log.e(TAG, "No playable sound for alarm $id")
+            return
+        }
+
+        try {
+            mediaPlayer.setOnCompletionListener {
+                if (!loopAudio) {
+                    onAudioCompleteListeners[id]?.invoke()
+                }
+            }
+
+            mediaPlayers[id] = mediaPlayer
+
+            if (fadeSteps.isNotEmpty()) {
+                val timer = Timer(true)
+                timers[id] = timer
+                startStaircaseFadeIn(mediaPlayer, fadeSteps, timer)
+            } else if (fadeDuration != null) {
+                val timer = Timer(true)
+                timers[id] = timer
+                startFadeIn(mediaPlayer, fadeDuration, timer)
+            }
+        } catch (e: Exception) {
+            // Never leak the MediaPlayer when setup fails.
+            mediaPlayers.remove(id)
+            runCatching { mediaPlayer.release() }
+            Log.e(TAG, "Error playing audio for alarm $id", e)
+        }
+    }
+
+    /**
+     * Prepares and starts a player for [filePath], or returns null when it
+     * cannot be played. Null [filePath] means the device default alarm sound.
+     */
+    private fun startMediaPlayer(
+        id: Int,
+        filePath: String?,
+        loopAudio: Boolean,
+        preferConnectedAudioDevice: Boolean
+    ): MediaPlayer? {
         val mediaPlayer = MediaPlayer()
         try {
             if (filePath == null) {
@@ -103,29 +159,12 @@ class AudioService(private val context: Context) {
             mediaPlayer.prepare()
             mediaPlayer.isLooping = loopAudio
             mediaPlayer.start()
-
-            mediaPlayer.setOnCompletionListener {
-                if (!loopAudio) {
-                    onAudioCompleteListeners[id]?.invoke()
-                }
-            }
-
-            mediaPlayers[id] = mediaPlayer
-
-            if (fadeSteps.isNotEmpty()) {
-                val timer = Timer(true)
-                timers[id] = timer
-                startStaircaseFadeIn(mediaPlayer, fadeSteps, timer)
-            } else if (fadeDuration != null) {
-                val timer = Timer(true)
-                timers[id] = timer
-                startFadeIn(mediaPlayer, fadeDuration, timer)
-            }
+            return mediaPlayer
         } catch (e: Exception) {
             // Never leak the MediaPlayer when setup fails.
-            mediaPlayers.remove(id)
             runCatching { mediaPlayer.release() }
-            Log.e(TAG, "Error playing audio for alarm $id", e)
+            Log.e(TAG, "Error playing audio ${filePath ?: "(device default)"} for alarm $id", e)
+            return null
         }
     }
 

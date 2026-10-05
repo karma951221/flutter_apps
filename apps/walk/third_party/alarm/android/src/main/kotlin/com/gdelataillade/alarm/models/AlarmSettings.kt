@@ -35,6 +35,9 @@ data class AlarmSettings(
     // Absent means the default; an explicit null means never discard.
     val androidStaleAfterMillis: Long? = DEFAULT_STALE_AFTER_MILLIS,
     val androidAlarmClock: Boolean = true, // Defaults to true for backward compatibility
+    // Fork: played when assetAudioPath (or the device default) cannot be.
+    // Null means no retry, which is also what alarms stored before it read as.
+    val androidFallbackAudioPath: String? = null,
 ) {
     /** Whether this alarm can be deferred rather than only stopped. */
     val canSnooze: Boolean
@@ -79,6 +82,7 @@ data class AlarmSettings(
                 e.androidSnoozeDurationMillis,
                 e.androidStaleAfterMillis,
                 e.androidAlarmClock,
+                e.androidFallbackAudioPath,
             )
         }
 
@@ -134,6 +138,11 @@ data class AlarmSettings(
             // Handle backward compatibility for `androidAlarmClock`
             val androidAlarmClock = jsonObject.primitiveBoolean("androidAlarmClock") ?: true
 
+            // Fork. contentOrNull, not primitiveString: JsonNull's content is
+            // the string "null", which must not become a path.
+            val androidFallbackAudioPath =
+                (jsonObject["androidFallbackAudioPath"] as? JsonPrimitive)?.contentOrNull
+
             // Handle backward compatibility for `volumeSettings`
             val volumeSettings = jsonObject["volumeSettings"]?.let {
                 Json.decodeFromJsonElement(VolumeSettings.serializer(), it)
@@ -169,6 +178,7 @@ data class AlarmSettings(
                 androidSnoozeDurationMillis = androidSnoozeDurationMillis,
                 androidStaleAfterMillis = androidStaleAfterMillis,
                 androidAlarmClock = androidAlarmClock,
+                androidFallbackAudioPath = androidFallbackAudioPath,
             )
         }
     }

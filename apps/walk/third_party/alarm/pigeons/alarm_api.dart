@@ -34,6 +34,7 @@ class AlarmSettingsWire {
     required this.androidSnoozeDurationMillis,
     required this.androidStaleAfterMillis,
     required this.androidAlarmClock,
+    required this.androidFallbackAudioPath,
   });
 
   final int id;
@@ -69,6 +70,11 @@ class AlarmSettingsWire {
 
   /// Whether to arm with `setAlarmClock`. Android only.
   final bool androidAlarmClock;
+
+  /// Fork: what to play when [assetAudioPath] (or, when that is null, the
+  /// device default alarm sound) cannot be played. Null means no retry.
+  /// Same formats as [assetAudioPath]. Android only.
+  final String? androidFallbackAudioPath;
 }
 
 class VolumeSettingsWire {

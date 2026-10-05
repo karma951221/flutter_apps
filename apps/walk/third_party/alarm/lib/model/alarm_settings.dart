@@ -37,6 +37,7 @@ class AlarmSettings extends Equatable {
     this.androidSnoozeDuration,
     this.androidStaleAfter = _defaultStaleAfter,
     this.androidAlarmClock = true,
+    this.androidFallbackAudioPath,
   });
 
   /// Constructs an `AlarmSettings` instance from the given JSON data.
@@ -296,6 +297,17 @@ class AlarmSettings extends Equatable {
   /// Defaults to `true`. Has no effect on iOS.
   final bool androidAlarmClock;
 
+  /// Fork: what to play when [assetAudioPath] cannot be played.
+  ///
+  /// **Android only.** The ring first tries [assetAudioPath] (null meaning the
+  /// device default alarm sound). If that fails — a copied file that is gone,
+  /// a codec the device refuses, a device whose default alarm is "none" — it
+  /// retries with this, rather than ringing silently. Null means no retry.
+  ///
+  /// Accepts the same formats as [assetAudioPath]. Defaults to `null`, which
+  /// is also what alarms stored before this field existed read back as.
+  final String? androidFallbackAudioPath;
+
   /// Reads [androidStaleAfter], recovering rather than throwing.
   ///
   /// Nothing between [Alarm.init] and the storage read catches, so throwing
@@ -345,6 +357,7 @@ class AlarmSettings extends Equatable {
         androidSnoozeDurationMillis: androidSnoozeDuration?.inMilliseconds,
         androidStaleAfterMillis: androidStaleAfter?.inMilliseconds,
         androidAlarmClock: androidAlarmClock,
+        androidFallbackAudioPath: androidFallbackAudioPath,
       );
 
   /// Creates a copy of `AlarmSettings` but with the given fields replaced with
@@ -382,6 +395,7 @@ class AlarmSettings extends Equatable {
     Duration? Function()? androidSnoozeDuration,
     Duration? Function()? androidStaleAfter,
     bool? androidAlarmClock,
+    String? Function()? androidFallbackAudioPath,
   }) {
     return AlarmSettings(
       id: id ?? this.id,
@@ -417,6 +431,10 @@ class AlarmSettings extends Equatable {
           ? androidStaleAfter()
           : this.androidStaleAfter,
       androidAlarmClock: androidAlarmClock ?? this.androidAlarmClock,
+      // Wrapped like payload so a caller can remove the fallback.
+      androidFallbackAudioPath: androidFallbackAudioPath != null
+          ? androidFallbackAudioPath()
+          : this.androidFallbackAudioPath,
     );
   }
 
@@ -440,5 +458,6 @@ class AlarmSettings extends Equatable {
         androidSnoozeDuration,
         androidStaleAfter,
         androidAlarmClock,
+        androidFallbackAudioPath,
       ];
 }
