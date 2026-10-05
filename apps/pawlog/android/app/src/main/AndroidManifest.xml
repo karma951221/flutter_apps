@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- geolocator 포그라운드 서비스가 enableWakeLock 으로 wake lock 을 잡는다 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <application
         android:label="pawlog"
         android:name="${applicationName}"
