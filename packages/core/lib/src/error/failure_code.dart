@@ -84,6 +84,7 @@ enum FailureCode {
   locationPermissionDenied,
   locationServiceDisabled,
   locationTimeout,
+  locationStreamFailed,
   routeSearchFailed,
   walkDogRequired,
   walkTrackingAlreadyActive,

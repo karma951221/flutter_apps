@@ -1094,6 +1094,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get failureLocationServiceDisabled => '위치 서비스가 꺼져 있습니다';
 
   @override
+  String get failureLocationStreamFailed => '위치를 받아 오지 못하고 있습니다';
+
+  @override
   String get failureLocationTimeout => '현재 위치를 가져오지 못했습니다';
 
   @override
@@ -1776,6 +1779,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkLocationDeniedHint => '설정에서 위치 권한을 허용한 뒤 다시 시도해 주세요';
+
+  @override
+  String get walkLocationLostHint => '산책 기록은 이어집니다. 다시 시도하면 위치를 다시 받아요';
 
   @override
   String get walkLocating => '위치를 찾는 중…';

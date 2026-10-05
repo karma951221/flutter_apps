@@ -128,6 +128,47 @@ void main() {
     await disposePage(tester);
   });
 
+  testWidgets('점이 없을 때 위치 오류가 나면 찾는 중 대신 오류와 다시 시도를 보인다', (tester) async {
+    current = TrackerState.tracking(
+      walkSession(),
+      locationError: const Failure.unknown(
+        failureCode: FailureCode.locationStreamFailed,
+      ),
+    );
+    when(
+      () => useCase.resumeTracking(),
+    ).thenAnswer((_) async => const Ok(null));
+
+    await pumpApp(tester, ActiveWalkPage(onStopped: () {}, onOpenDogs: () {}));
+
+    expect(find.text('위치를 찾는 중…'), findsNothing);
+    expect(find.text('위치를 받아 오지 못하고 있습니다'), findsOneWidget);
+    // 종료는 계속 할 수 있다.
+    expect(find.byKey(const Key('walk-active-stop-button')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('walk-active-location-retry')));
+    await tester.pump();
+
+    verify(() => useCase.resumeTracking()).called(1);
+    await disposePage(tester);
+  });
+
+  testWidgets('경로가 있을 때 위치 오류가 나면 지도를 둔 채 오류를 보인다', (tester) async {
+    current = TrackerState.tracking(
+      trackingSession,
+      locationError: const Failure.unknown(
+        failureCode: FailureCode.locationStreamFailed,
+      ),
+    );
+
+    await pumpApp(tester, ActiveWalkPage(onStopped: () {}, onOpenDogs: () {}));
+
+    expect(find.byType(FlutterMap), findsOneWidget);
+    expect(find.text('위치를 받아 오지 못하고 있습니다'), findsOneWidget);
+    expect(find.byKey(const Key('walk-active-location-retry')), findsOneWidget);
+    await disposePage(tester);
+  });
+
   testWidgets('종료를 확인하면 stopWalk 후 onStopped 를 한 번 부른다', (tester) async {
     current = TrackerState.tracking(trackingSession);
     final ended = walkSession(

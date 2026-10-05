@@ -10,6 +10,8 @@ export 'package:geolocator/geolocator.dart'
         ForegroundNotificationConfig,
         LocationAccuracy,
         LocationPermission,
+        LocationServiceDisabledException,
+        PermissionDeniedException,
         LocationSettings,
         Position;
 

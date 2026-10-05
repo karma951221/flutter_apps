@@ -131,13 +131,13 @@ return failure(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<Dog> dogs,  Set<String> selectedIds)?  selectingDogs,TResult Function( List<Dog> dogs,  Set<String> selectedIds)?  starting,TResult Function( WalkSession session,  Duration elapsed)?  tracking,TResult Function( WalkSession session)?  stopped,TResult Function( Failure failure,  List<Dog> dogs,  Set<String> selectedIds)?  failure,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<Dog> dogs,  Set<String> selectedIds)?  selectingDogs,TResult Function( List<Dog> dogs,  Set<String> selectedIds)?  starting,TResult Function( WalkSession session,  Duration elapsed,  Failure? locationError)?  tracking,TResult Function( WalkSession session)?  stopped,TResult Function( Failure failure,  List<Dog> dogs,  Set<String> selectedIds)?  failure,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ActiveWalkLoading() when loading != null:
 return loading();case ActiveWalkSelectingDogs() when selectingDogs != null:
 return selectingDogs(_that.dogs,_that.selectedIds);case ActiveWalkStarting() when starting != null:
 return starting(_that.dogs,_that.selectedIds);case ActiveWalkTracking() when tracking != null:
-return tracking(_that.session,_that.elapsed);case ActiveWalkStopped() when stopped != null:
+return tracking(_that.session,_that.elapsed,_that.locationError);case ActiveWalkStopped() when stopped != null:
 return stopped(_that.session);case ActiveWalkFailure() when failure != null:
 return failure(_that.failure,_that.dogs,_that.selectedIds);case _:
   return orElse();
@@ -157,13 +157,13 @@ return failure(_that.failure,_that.dogs,_that.selectedIds);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<Dog> dogs,  Set<String> selectedIds)  selectingDogs,required TResult Function( List<Dog> dogs,  Set<String> selectedIds)  starting,required TResult Function( WalkSession session,  Duration elapsed)  tracking,required TResult Function( WalkSession session)  stopped,required TResult Function( Failure failure,  List<Dog> dogs,  Set<String> selectedIds)  failure,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<Dog> dogs,  Set<String> selectedIds)  selectingDogs,required TResult Function( List<Dog> dogs,  Set<String> selectedIds)  starting,required TResult Function( WalkSession session,  Duration elapsed,  Failure? locationError)  tracking,required TResult Function( WalkSession session)  stopped,required TResult Function( Failure failure,  List<Dog> dogs,  Set<String> selectedIds)  failure,}) {final _that = this;
 switch (_that) {
 case ActiveWalkLoading():
 return loading();case ActiveWalkSelectingDogs():
 return selectingDogs(_that.dogs,_that.selectedIds);case ActiveWalkStarting():
 return starting(_that.dogs,_that.selectedIds);case ActiveWalkTracking():
-return tracking(_that.session,_that.elapsed);case ActiveWalkStopped():
+return tracking(_that.session,_that.elapsed,_that.locationError);case ActiveWalkStopped():
 return stopped(_that.session);case ActiveWalkFailure():
 return failure(_that.failure,_that.dogs,_that.selectedIds);}
 }
@@ -179,13 +179,13 @@ return failure(_that.failure,_that.dogs,_that.selectedIds);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<Dog> dogs,  Set<String> selectedIds)?  selectingDogs,TResult? Function( List<Dog> dogs,  Set<String> selectedIds)?  starting,TResult? Function( WalkSession session,  Duration elapsed)?  tracking,TResult? Function( WalkSession session)?  stopped,TResult? Function( Failure failure,  List<Dog> dogs,  Set<String> selectedIds)?  failure,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<Dog> dogs,  Set<String> selectedIds)?  selectingDogs,TResult? Function( List<Dog> dogs,  Set<String> selectedIds)?  starting,TResult? Function( WalkSession session,  Duration elapsed,  Failure? locationError)?  tracking,TResult? Function( WalkSession session)?  stopped,TResult? Function( Failure failure,  List<Dog> dogs,  Set<String> selectedIds)?  failure,}) {final _that = this;
 switch (_that) {
 case ActiveWalkLoading() when loading != null:
 return loading();case ActiveWalkSelectingDogs() when selectingDogs != null:
 return selectingDogs(_that.dogs,_that.selectedIds);case ActiveWalkStarting() when starting != null:
 return starting(_that.dogs,_that.selectedIds);case ActiveWalkTracking() when tracking != null:
-return tracking(_that.session,_that.elapsed);case ActiveWalkStopped() when stopped != null:
+return tracking(_that.session,_that.elapsed,_that.locationError);case ActiveWalkStopped() when stopped != null:
 return stopped(_that.session);case ActiveWalkFailure() when failure != null:
 return failure(_that.failure,_that.dogs,_that.selectedIds);case _:
   return null;
@@ -391,11 +391,12 @@ as Set<String>,
 
 
 class ActiveWalkTracking implements ActiveWalkState {
-  const ActiveWalkTracking({required this.session, required this.elapsed});
+  const ActiveWalkTracking({required this.session, required this.elapsed, this.locationError});
   
 
  final  WalkSession session;
  final  Duration elapsed;
+ final  Failure? locationError;
 
 /// Create a copy of ActiveWalkState
 /// with the given fields replaced by the non-null parameter values.
@@ -407,16 +408,16 @@ $ActiveWalkTrackingCopyWith<ActiveWalkTracking> get copyWith => _$ActiveWalkTrac
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ActiveWalkTracking&&(identical(other.session, session) || other.session == session)&&(identical(other.elapsed, elapsed) || other.elapsed == elapsed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ActiveWalkTracking&&(identical(other.session, session) || other.session == session)&&(identical(other.elapsed, elapsed) || other.elapsed == elapsed)&&(identical(other.locationError, locationError) || other.locationError == locationError));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,session,elapsed);
+int get hashCode => Object.hash(runtimeType,session,elapsed,locationError);
 
 @override
 String toString() {
-  return 'ActiveWalkState.tracking(session: $session, elapsed: $elapsed)';
+  return 'ActiveWalkState.tracking(session: $session, elapsed: $elapsed, locationError: $locationError)';
 }
 
 
@@ -427,11 +428,11 @@ abstract mixin class $ActiveWalkTrackingCopyWith<$Res> implements $ActiveWalkSta
   factory $ActiveWalkTrackingCopyWith(ActiveWalkTracking value, $Res Function(ActiveWalkTracking) _then) = _$ActiveWalkTrackingCopyWithImpl;
 @useResult
 $Res call({
- WalkSession session, Duration elapsed
+ WalkSession session, Duration elapsed, Failure? locationError
 });
 
 
-$WalkSessionCopyWith<$Res> get session;
+$WalkSessionCopyWith<$Res> get session;$FailureCopyWith<$Res>? get locationError;
 
 }
 /// @nodoc
@@ -444,11 +445,12 @@ class _$ActiveWalkTrackingCopyWithImpl<$Res>
 
 /// Create a copy of ActiveWalkState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? session = null,Object? elapsed = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? session = null,Object? elapsed = null,Object? locationError = freezed,}) {
   return _then(ActiveWalkTracking(
 session: null == session ? _self.session : session // ignore: cast_nullable_to_non_nullable
 as WalkSession,elapsed: null == elapsed ? _self.elapsed : elapsed // ignore: cast_nullable_to_non_nullable
-as Duration,
+as Duration,locationError: freezed == locationError ? _self.locationError : locationError // ignore: cast_nullable_to_non_nullable
+as Failure?,
   ));
 }
 
@@ -460,6 +462,18 @@ $WalkSessionCopyWith<$Res> get session {
   
   return $WalkSessionCopyWith<$Res>(_self.session, (value) {
     return _then(_self.copyWith(session: value));
+  });
+}/// Create a copy of ActiveWalkState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$FailureCopyWith<$Res>? get locationError {
+    if (_self.locationError == null) {
+    return null;
+  }
+
+  return $FailureCopyWith<$Res>(_self.locationError!, (value) {
+    return _then(_self.copyWith(locationError: value));
   });
 }
 }

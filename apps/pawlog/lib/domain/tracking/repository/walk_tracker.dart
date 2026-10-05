@@ -15,6 +15,9 @@ abstract interface class WalkTracker {
     required TrackingNotice notice,
   });
 
+  /// 위치 오류 뒤 세션을 지킨 채 위치 확인과 스트림 구독을 다시 한다.
+  Future<Result<void>> resume();
+
   Future<Result<WalkSession>> stop();
 
   /// finished → idle.

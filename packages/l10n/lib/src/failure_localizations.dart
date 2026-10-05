@@ -118,6 +118,7 @@ extension on FailureCode {
       l10n.failureLocationPermissionDenied,
     FailureCode.locationServiceDisabled => l10n.failureLocationServiceDisabled,
     FailureCode.locationTimeout => l10n.failureLocationTimeout,
+    FailureCode.locationStreamFailed => l10n.failureLocationStreamFailed,
     FailureCode.routeSearchFailed => l10n.failureRouteSearchFailed,
     FailureCode.walkDogRequired => l10n.failureWalkDogRequired,
     FailureCode.walkTrackingAlreadyActive =>

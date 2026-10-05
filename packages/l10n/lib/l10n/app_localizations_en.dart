@@ -1170,6 +1170,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Location services are turned off';
 
   @override
+  String get failureLocationStreamFailed => 'Location updates have stopped';
+
+  @override
   String get failureLocationTimeout => 'Couldn\'t get your current location';
 
   @override
@@ -1882,6 +1885,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkLocationDeniedHint =>
       'Allow location access in Settings, then try again';
+
+  @override
+  String get walkLocationLostHint =>
+      'Your walk is still being recorded. Try again to resume location updates';
 
   @override
   String get walkLocating => 'Finding your location…';

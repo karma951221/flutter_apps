@@ -222,15 +222,71 @@ void main() {
     expect(tracker.current, isA<TrackerIdle>());
   });
 
-  test('스트림 오류가 나도 tracking 을 유지한다', () async {
+  test('스트림 오류가 나도 tracking 을 유지하고 오류를 상태에 싣는다', () async {
     await started();
 
     positions.addError(Exception('gps lost'));
     await pumpEventQueue();
-    expect(tracker.current, isA<TrackerTracking>());
+    final state = tracker.current as TrackerTracking;
+    expect(state.locationError?.failureCode, FailureCode.locationStreamFailed);
 
     positions.add(_pos(37.5));
     await pumpEventQueue();
     expect(session().points, hasLength(1));
+    expect((tracker.current as TrackerTracking).locationError, isNull);
+  });
+
+  test('스트림이 서비스 꺼짐 · 권한 거부를 내면 그 코드로 싣는다', () async {
+    await started();
+
+    positions.addError(const LocationServiceDisabledException());
+    await pumpEventQueue();
+    expect(
+      (tracker.current as TrackerTracking).locationError?.failureCode,
+      FailureCode.locationServiceDisabled,
+    );
+
+    positions.addError(const PermissionDeniedException('denied'));
+    await pumpEventQueue();
+    expect(
+      (tracker.current as TrackerTracking).locationError?.failureCode,
+      FailureCode.locationPermissionDenied,
+    );
+  });
+
+  test('resume 은 세션을 지킨 채 스트림을 다시 구독하고 오류를 지운다', () async {
+    await started();
+    positions.add(_pos(37.5));
+    positions.addError(Exception('gps lost'));
+    await pumpEventQueue();
+
+    final r = await tracker.resume();
+
+    expect(r, isA<Ok<void>>());
+    verify(() => gateway.positionStream(any())).called(2);
+    final state = tracker.current as TrackerTracking;
+    expect(state.locationError, isNull);
+    expect(state.session.points, hasLength(1));
+  });
+
+  test('resume 때 서비스가 꺼져 있으면 실패를 돌려주고 상태에도 싣는다', () async {
+    await started();
+    when(
+      () => gateway.isLocationServiceEnabled(),
+    ).thenAnswer((_) async => false);
+
+    final r = await tracker.resume();
+
+    expect(failureOf(r).failureCode, FailureCode.locationServiceDisabled);
+    expect(
+      (tracker.current as TrackerTracking).locationError?.failureCode,
+      FailureCode.locationServiceDisabled,
+    );
+  });
+
+  test('추적 중이 아니면 resume 은 walkNotFound', () async {
+    final r = await tracker.resume();
+
+    expect(failureOf(r).failureCode, FailureCode.walkNotFound);
   });
 }

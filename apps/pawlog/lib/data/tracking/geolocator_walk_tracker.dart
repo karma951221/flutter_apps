@@ -36,6 +36,9 @@ class GeolocatorWalkTracker implements WalkTracker {
   TrackerState _state = const TrackerState.idle();
   StreamSubscription<Position>? _sub;
 
+  /// `resume` 이 같은 알림 문구로 다시 구독하도록 기억한다.
+  TrackingNotice? _notice;
+
   @override
   TrackerState get current => _state;
 
@@ -58,22 +61,7 @@ class GeolocatorWalkTracker implements WalkTracker {
       );
     }
     try {
-      switch (await _access.ensure()) {
-        case LocationAccessStatus.serviceDisabled:
-          return const Err(
-            Failure.validation(
-              failureCode: FailureCode.locationServiceDisabled,
-            ),
-          );
-        case LocationAccessStatus.permissionDenied:
-          return const Err(
-            Failure.forbidden(
-              failureCode: FailureCode.locationPermissionDenied,
-            ),
-          );
-        case LocationAccessStatus.granted:
-          break;
-      }
+      if (await _checkAccess() case final Failure failure) return Err(failure);
 
       // await 사이에 다른 start 가 끼어들었을 수 있다.
       if (_state is TrackerTracking) {
@@ -84,10 +72,8 @@ class GeolocatorWalkTracker implements WalkTracker {
         );
       }
 
-      await _sub?.cancel();
-      _sub = _gateway
-          .positionStream(_settings(notice))
-          .listen(_onPosition, onError: _onError);
+      _notice = notice;
+      await _subscribe(notice);
       _emit(
         TrackerState.tracking(
           WalkSession(
@@ -102,6 +88,51 @@ class GeolocatorWalkTracker implements WalkTracker {
     } catch (error) {
       return Err(Failure.unknown(message: error.toString()));
     }
+  }
+
+  @override
+  Future<Result<void>> resume() async {
+    final notice = _notice;
+    if (_state is! TrackerTracking || notice == null) {
+      return const Err(Failure.notFound(failureCode: FailureCode.walkNotFound));
+    }
+    try {
+      final failure = await _checkAccess();
+      // await 사이에 멈췄을 수 있다.
+      final state = _state;
+      if (state is! TrackerTracking) {
+        return const Err(
+          Failure.notFound(failureCode: FailureCode.walkNotFound),
+        );
+      }
+      if (failure != null) {
+        _emit(TrackerState.tracking(state.session, locationError: failure));
+        return Err(failure);
+      }
+      await _subscribe(notice);
+      _emit(TrackerState.tracking(state.session));
+      return const Ok(null);
+    } catch (error) {
+      return Err(Failure.unknown(message: error.toString()));
+    }
+  }
+
+  /// 서비스 → 권한 순서로 확인한다. 쓸 수 있으면 null.
+  Future<Failure?> _checkAccess() async => switch (await _access.ensure()) {
+    LocationAccessStatus.serviceDisabled => const Failure.validation(
+      failureCode: FailureCode.locationServiceDisabled,
+    ),
+    LocationAccessStatus.permissionDenied => const Failure.forbidden(
+      failureCode: FailureCode.locationPermissionDenied,
+    ),
+    LocationAccessStatus.granted => null,
+  };
+
+  Future<void> _subscribe(TrackingNotice notice) async {
+    await _sub?.cancel();
+    _sub = _gateway
+        .positionStream(_settings(notice))
+        .listen(_onPosition, onError: _onError);
   }
 
   LocationSettings _settings(TrackingNotice notice) =>
@@ -151,6 +182,8 @@ class GeolocatorWalkTracker implements WalkTracker {
           );
 
     if (!_policy.accept(previous: previous, next: next, stepMeters: step)) {
+      // 버린 점이라도 위치는 다시 들어오고 있다.
+      if (state.locationError != null) _emit(TrackerState.tracking(session));
       return;
     }
     _emit(
@@ -165,9 +198,29 @@ class GeolocatorWalkTracker implements WalkTracker {
     );
   }
 
-  /// 일시적 위치 오류로 산책을 끊지 않는다.
-  void _onError(Object error) =>
-      debugPrint('walk tracker stream error: $error');
+  /// 위치 오류로 산책을 끊지 않는다. 화면이 알리고 `resume` 으로 다시 받게
+  /// 상태에만 싣는다.
+  void _onError(Object error) {
+    debugPrint('walk tracker stream error: $error');
+    final state = _state;
+    if (state is! TrackerTracking) return;
+    _emit(
+      TrackerState.tracking(state.session, locationError: _failureOf(error)),
+    );
+  }
+
+  static Failure _failureOf(Object error) => switch (error) {
+    LocationServiceDisabledException() => const Failure.validation(
+      failureCode: FailureCode.locationServiceDisabled,
+    ),
+    PermissionDeniedException() => const Failure.forbidden(
+      failureCode: FailureCode.locationPermissionDenied,
+    ),
+    _ => Failure.unknown(
+      message: error.toString(),
+      failureCode: FailureCode.locationStreamFailed,
+    ),
+  };
 
   @override
   Future<Result<WalkSession>> stop() async {

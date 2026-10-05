@@ -22,9 +22,11 @@ sealed class ActiveWalkState with _$ActiveWalkState {
     required Set<String> selectedIds,
   }) = ActiveWalkStarting;
 
+  /// [locationError] 가 있으면 위치를 못 받고 있다 — 기록은 이어 가며 다시 받기를 권한다.
   const factory ActiveWalkState.tracking({
     required WalkSession session,
     required Duration elapsed,
+    Failure? locationError,
   }) = ActiveWalkTracking;
 
   const factory ActiveWalkState.stopped(WalkSession session) =

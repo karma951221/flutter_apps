@@ -111,38 +111,56 @@ class _ActiveWalkView extends StatelessWidget {
                     ],
                   ),
                 ),
-              ActiveWalkTracking(:final session, :final elapsed) => Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: RouteMap(
-                      key: const Key('walk-active-map'),
-                      points: [for (final p in session.points) p.point],
-                      follow: true,
-                      emptyMessage: l10n.walkLocating,
+              ActiveWalkTracking(
+                :final session,
+                :final elapsed,
+                :final locationError,
+              ) =>
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      // 점이 없을 때 오류가 나면 "찾는 중" 대신 오류를 지도 자리에 둔다.
+                      child: locationError != null && session.points.isEmpty
+                          ? Center(
+                              child: _LocationError(
+                                failure: locationError,
+                                onRetry: cubit.resumeTracking,
+                              ),
+                            )
+                          : RouteMap(
+                              key: const Key('walk-active-map'),
+                              points: [for (final p in session.points) p.point],
+                              follow: true,
+                              emptyMessage: l10n.walkLocating,
+                            ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        WalkStatsRow(
-                          distanceMeters: session.distanceMeters,
-                          elapsed: elapsed,
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        AppButton.primary(
-                          key: const Key('walk-active-stop-button'),
-                          label: l10n.walkStop,
-                          onPressed: () => _confirmStop(context),
-                        ),
-                      ],
+                    if (locationError != null && session.points.isNotEmpty)
+                      _LocationError(
+                        failure: locationError,
+                        onRetry: cubit.resumeTracking,
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          WalkStatsRow(
+                            distanceMeters: session.distanceMeters,
+                            elapsed: elapsed,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          AppButton.primary(
+                            key: const Key('walk-active-stop-button'),
+                            label: l10n.walkStop,
+                            onPressed: () => _confirmStop(context),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
               ActiveWalkFailure(:final failure) => Center(
                 child: AppPlaceholder(
                   key: const Key('walk-active-failure'),
@@ -161,6 +179,27 @@ class _ActiveWalkView extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 추적 중 위치 오류. 기록은 이어지고 있음을 알리고 다시 받기를 권한다.
+class _LocationError extends StatelessWidget {
+  const _LocationError({required this.failure, required this.onRetry});
+
+  final Failure failure;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AppPlaceholder(
+      key: const Key('walk-active-location-error'),
+      message: failure.localizedMessage(context),
+      description: l10n.walkLocationLostHint,
+      actionLabel: l10n.commonRetry,
+      actionKey: const Key('walk-active-location-retry'),
+      onAction: onRetry,
     );
   }
 }

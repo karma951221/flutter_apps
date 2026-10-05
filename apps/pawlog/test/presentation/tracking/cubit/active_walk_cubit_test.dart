@@ -18,6 +18,9 @@ const _notice = TrackingNotice(title: '제목', text: '본문');
 const _denied = Failure.forbidden(
   failureCode: FailureCode.locationPermissionDenied,
 );
+const _streamFailed = Failure.unknown(
+  failureCode: FailureCode.locationStreamFailed,
+);
 
 void main() {
   late MockWalkUseCase useCase;
@@ -277,6 +280,47 @@ void main() {
         elapsed: const Duration(minutes: 5),
       ),
     ],
+  );
+
+  blocTest<ActiveWalkCubit, ActiveWalkState>(
+    '추적 중 위치 오류는 tracking 상태에 locationError 로 실린다',
+    setUp: () {
+      current = TrackerState.tracking(session);
+      when(() => useCase.trackerStates).thenAnswer(
+        (_) => Stream.value(
+          TrackerState.tracking(session, locationError: _streamFailed),
+        ),
+      );
+    },
+    build: build,
+    act: (cubit) => cubit.load(),
+    expect: () => [
+      ActiveWalkState.tracking(
+        session: session,
+        elapsed: const Duration(minutes: 5),
+      ),
+      ActiveWalkState.tracking(
+        session: session,
+        elapsed: const Duration(minutes: 5),
+        locationError: _streamFailed,
+      ),
+    ],
+  );
+
+  blocTest<ActiveWalkCubit, ActiveWalkState>(
+    'resumeTracking 은 추적기에 다시 받기를 맡긴다',
+    setUp: () {
+      current = TrackerState.tracking(session, locationError: _streamFailed);
+      when(
+        () => useCase.resumeTracking(),
+      ).thenAnswer((_) async => const Ok(null));
+    },
+    build: build,
+    act: (cubit) async {
+      await cubit.load();
+      await cubit.resumeTracking();
+    },
+    verify: (_) => verify(() => useCase.resumeTracking()).called(1),
   );
 
   test('1초마다 elapsed 가 다시 계산돼 늘어나고 close 뒤에는 멈춘다', () {

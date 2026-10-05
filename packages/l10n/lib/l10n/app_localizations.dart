@@ -2218,6 +2218,12 @@ abstract class AppLocalizations {
   /// **'위치 서비스가 꺼져 있습니다'**
   String get failureLocationServiceDisabled;
 
+  /// 위치 추적 중 위치 스트림이 오류를 냈을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'위치를 받아 오지 못하고 있습니다'**
+  String get failureLocationStreamFailed;
+
   /// 통근 출발지 확인 — 제한 시간 안에 위치를 받지 못했을 때
   ///
   /// In ko, this message translates to:
@@ -3451,6 +3457,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'설정에서 위치 권한을 허용한 뒤 다시 시도해 주세요'**
   String get walkLocationDeniedHint;
+
+  /// 추적 중 위치 오류 안내 아래에 붙는 보조 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 기록은 이어집니다. 다시 시도하면 위치를 다시 받아요'**
+  String get walkLocationLostHint;
 
   /// 추적은 시작했지만 아직 GPS 점이 없을 때 지도 자리에 보이는 문구
   ///

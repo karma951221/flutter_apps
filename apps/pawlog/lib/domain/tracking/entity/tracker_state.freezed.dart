@@ -122,11 +122,11 @@ return finished(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function( WalkSession session)?  tracking,TResult Function( WalkSession session)?  finished,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function( WalkSession session,  Failure? locationError)?  tracking,TResult Function( WalkSession session)?  finished,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case TrackerIdle() when idle != null:
 return idle();case TrackerTracking() when tracking != null:
-return tracking(_that.session);case TrackerFinished() when finished != null:
+return tracking(_that.session,_that.locationError);case TrackerFinished() when finished != null:
 return finished(_that.session);case _:
   return orElse();
 
@@ -145,11 +145,11 @@ return finished(_that.session);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function( WalkSession session)  tracking,required TResult Function( WalkSession session)  finished,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function( WalkSession session,  Failure? locationError)  tracking,required TResult Function( WalkSession session)  finished,}) {final _that = this;
 switch (_that) {
 case TrackerIdle():
 return idle();case TrackerTracking():
-return tracking(_that.session);case TrackerFinished():
+return tracking(_that.session,_that.locationError);case TrackerFinished():
 return finished(_that.session);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -164,11 +164,11 @@ return finished(_that.session);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function( WalkSession session)?  tracking,TResult? Function( WalkSession session)?  finished,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function( WalkSession session,  Failure? locationError)?  tracking,TResult? Function( WalkSession session)?  finished,}) {final _that = this;
 switch (_that) {
 case TrackerIdle() when idle != null:
 return idle();case TrackerTracking() when tracking != null:
-return tracking(_that.session);case TrackerFinished() when finished != null:
+return tracking(_that.session,_that.locationError);case TrackerFinished() when finished != null:
 return finished(_that.session);case _:
   return null;
 
@@ -213,10 +213,11 @@ String toString() {
 
 
 class TrackerTracking implements TrackerState {
-  const TrackerTracking(this.session);
+  const TrackerTracking(this.session, {this.locationError});
   
 
  final  WalkSession session;
+ final  Failure? locationError;
 
 /// Create a copy of TrackerState
 /// with the given fields replaced by the non-null parameter values.
@@ -228,16 +229,16 @@ $TrackerTrackingCopyWith<TrackerTracking> get copyWith => _$TrackerTrackingCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrackerTracking&&(identical(other.session, session) || other.session == session));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TrackerTracking&&(identical(other.session, session) || other.session == session)&&(identical(other.locationError, locationError) || other.locationError == locationError));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,session);
+int get hashCode => Object.hash(runtimeType,session,locationError);
 
 @override
 String toString() {
-  return 'TrackerState.tracking(session: $session)';
+  return 'TrackerState.tracking(session: $session, locationError: $locationError)';
 }
 
 
@@ -248,11 +249,11 @@ abstract mixin class $TrackerTrackingCopyWith<$Res> implements $TrackerStateCopy
   factory $TrackerTrackingCopyWith(TrackerTracking value, $Res Function(TrackerTracking) _then) = _$TrackerTrackingCopyWithImpl;
 @useResult
 $Res call({
- WalkSession session
+ WalkSession session, Failure? locationError
 });
 
 
-$WalkSessionCopyWith<$Res> get session;
+$WalkSessionCopyWith<$Res> get session;$FailureCopyWith<$Res>? get locationError;
 
 }
 /// @nodoc
@@ -265,10 +266,11 @@ class _$TrackerTrackingCopyWithImpl<$Res>
 
 /// Create a copy of TrackerState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? session = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? session = null,Object? locationError = freezed,}) {
   return _then(TrackerTracking(
 null == session ? _self.session : session // ignore: cast_nullable_to_non_nullable
-as WalkSession,
+as WalkSession,locationError: freezed == locationError ? _self.locationError : locationError // ignore: cast_nullable_to_non_nullable
+as Failure?,
   ));
 }
 
@@ -280,6 +282,18 @@ $WalkSessionCopyWith<$Res> get session {
   
   return $WalkSessionCopyWith<$Res>(_self.session, (value) {
     return _then(_self.copyWith(session: value));
+  });
+}/// Create a copy of TrackerState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$FailureCopyWith<$Res>? get locationError {
+    if (_self.locationError == null) {
+    return null;
+  }
+
+  return $FailureCopyWith<$Res>(_self.locationError!, (value) {
+    return _then(_self.copyWith(locationError: value));
   });
 }
 }

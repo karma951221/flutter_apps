@@ -74,6 +74,9 @@ abstract interface class WalkUseCase {
     required TrackingNotice notice,
   });
 
+  /// 추적 중 위치 오류 뒤 다시 받기.
+  Future<Result<void>> resumeTracking();
+
   Future<Result<WalkSession>> stopWalk();
 
   Future<void> discardWalk({required List<String> photoPaths});
@@ -159,6 +162,9 @@ class DefaultWalkUseCase implements WalkUseCase {
     required List<String> dogIds,
     required TrackingNotice notice,
   }) => StartWalkScenario(_tracker)(dogIds: dogIds, notice: notice);
+
+  @override
+  Future<Result<void>> resumeTracking() => _tracker.resume();
 
   @override
   Future<Result<WalkSession>> stopWalk() => StopWalkScenario(_tracker)();

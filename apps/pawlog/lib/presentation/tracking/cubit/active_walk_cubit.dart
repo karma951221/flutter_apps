@@ -34,8 +34,8 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
     // 구독을 먼저 건다 — `states` 는 현재값을 내지 않으므로 읽는 사이의 변화를 놓치지 않게.
     _subscription = _useCase.trackerStates.listen(_onTrackerState);
     switch (_useCase.trackerState) {
-      case TrackerTracking(:final session):
-        _enterTracking(session);
+      case TrackerTracking(:final session, :final locationError):
+        _enterTracking(session, locationError);
       case TrackerFinished(:final session):
         _emitStopped(session);
       case TrackerIdle():
@@ -79,8 +79,11 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
       case Ok():
         // 스트림이 먼저 `tracking` 을 냈다면 이미 상태가 바뀌어 있다.
         if (state is ActiveWalkStarting) {
-          if (_useCase.trackerState case TrackerTracking(:final session)) {
-            _enterTracking(session);
+          if (_useCase.trackerState case TrackerTracking(
+            :final session,
+            :final locationError,
+          )) {
+            _enterTracking(session, locationError);
           }
         }
       case Err(:final failure):
@@ -101,6 +104,12 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
       case Err(:final failure):
         _emitFailure(failure, const [], const {});
     }
+  }
+
+  /// 추적 중 위치 오류 뒤 다시 받기. 결과는 추적기 상태로 돌아온다.
+  Future<void> resumeTracking() async {
+    if (state is! ActiveWalkTracking) return;
+    await _useCase.resumeTracking();
   }
 
   Future<void> retry() async {
@@ -167,8 +176,8 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
   void _onTrackerState(TrackerState tracker) {
     if (isClosed) return;
     switch (tracker) {
-      case TrackerTracking(:final session):
-        _enterTracking(session);
+      case TrackerTracking(:final session, :final locationError):
+        _enterTracking(session, locationError);
       case TrackerFinished(:final session):
         _emitStopped(session);
       case TrackerIdle():
@@ -176,12 +185,13 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
     }
   }
 
-  void _enterTracking(WalkSession session) {
+  void _enterTracking(WalkSession session, Failure? locationError) {
     unawaited(_cancelDogs());
     emit(
       ActiveWalkState.tracking(
         session: session,
         elapsed: session.elapsedAt(_clock.now()),
+        locationError: locationError,
       ),
     );
     _timer ??= Timer.periodic(const Duration(seconds: 1), (_) => _tick());

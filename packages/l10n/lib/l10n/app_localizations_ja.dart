@@ -1094,6 +1094,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get failureLocationServiceDisabled => '位置情報サービスがオフになっています';
 
   @override
+  String get failureLocationStreamFailed => '位置情報を受け取れていません';
+
+  @override
   String get failureLocationTimeout => '現在地を取得できませんでした';
 
   @override
@@ -1775,6 +1778,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkLocationDeniedHint => '設定で位置情報の権限を許可してからもう一度お試しください';
+
+  @override
+  String get walkLocationLostHint => '散歩の記録は続いています。再試行すると位置情報を受け取り直します';
 
   @override
   String get walkLocating => '位置情報を探しています…';
