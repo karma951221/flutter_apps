@@ -12,10 +12,14 @@ import 'dogs_redirect.dart';
 GoRouter createRouter({required bool hasDogs}) {
   final dogsRedirect = DogsRedirect(hasDogs: hasDogs);
 
-  /// 반려견 저장 · 삭제 뒤: 되돌아갈 곳이 있으면 pop, 첫 실행이면 피드로 간다.
+  /// 반려견 저장 · 삭제 뒤: 첫 등록이면 피드로, 아니면 되돌아갈 곳으로 pop 한다.
+  ///
+  /// 첫 실행의 `/dogs/new` 아래에는 go_router 가 부모 `/dogs` 를 깔아 두어
+  /// canPop 이 참이다. 그대로 pop 하면 피드로 갈 길이 없는 목록에 남는다.
   void finishDogEdit(BuildContext context) {
+    final isFirstDog = !dogsRedirect.hasDogs;
     dogsRedirect.markHasDogs();
-    if (context.canPop()) {
+    if (!isFirstDog && context.canPop()) {
       context.pop();
     } else {
       context.go(PawlogPaths.feed);

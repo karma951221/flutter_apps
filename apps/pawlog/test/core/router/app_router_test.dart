@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:core/core.dart';
@@ -137,6 +138,31 @@ void main() {
 
     expect(find.byType(DogEditPage), findsOneWidget);
     expect(path(router), '/dogs/new');
+    await dispose(tester);
+  });
+
+  testWidgets('첫 등록을 마치면 반려견 목록이 아니라 피드로 간다', (tester) async {
+    final router = await pumpRouter(tester, hasDogs: false);
+
+    tester.widget<DogEditPage>(find.byType(DogEditPage)).onDone();
+    await tester.pumpAndSettle();
+
+    expect(path(router), '/');
+    expect(find.byType(WalkFeedPage), findsOneWidget);
+    await dispose(tester);
+  });
+
+  testWidgets('목록에서 추가를 마치면 목록으로 돌아간다', (tester) async {
+    final router = await pumpRouter(tester);
+    router.go('/dogs');
+    await tester.pumpAndSettle();
+    unawaited(router.push('/dogs/new'));
+    await tester.pumpAndSettle();
+
+    tester.widget<DogEditPage>(find.byType(DogEditPage)).onDone();
+    await tester.pumpAndSettle();
+
+    expect(path(router), '/dogs');
     await dispose(tester);
   });
 }

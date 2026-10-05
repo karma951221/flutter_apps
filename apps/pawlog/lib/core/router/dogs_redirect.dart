@@ -17,6 +17,8 @@ class DogsRedirect {
 
   bool _hasDogs;
 
+  bool get hasDogs => _hasDogs;
+
   String? resolve(String location) {
     if (!_hasDogs && !location.startsWith(PawlogPaths.dogs)) {
       return PawlogPaths.newDog;
