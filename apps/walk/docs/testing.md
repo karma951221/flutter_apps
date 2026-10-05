@@ -89,7 +89,8 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 알람: `PackageAlarmScheduler` 의 실제 패키지 호출(`set` · `stop` · `getAlarms` · `checkAlarm`) ·
 `MainActivity` 채널 · `TimeZoneChangedReceiver`(Kotlin) · 헤드리스 진입점 `alarmResyncMain` 은 단위
 테스트하지 않고 아래 에뮬레이터 시나리오로 확인했다. 편집 화면 시각 휠 테스트는 드래그 대신
-`onDateTimeChanged` 를 직접 불러 연결만 본다.
+`onDateTimeChanged` 를 직접 불러 연결만 본다. 볼륨 패널을 끄는 `showSystemUI: false` 는 설정값만
+`package_alarm_scheduler_test` 에서 고정하고, 실제로 패널이 뜨지 않는지는 A11 로 본다.
 
 시각 강화(2026-10-03): `walk_theme` 다크 변형 · `WalkMotion.off` 의 거짓 경로, `WalkSkeleton` · `GoalCelebration` 의 애니메이션 켜진 경로와 햅틱 호출, 링 아래 줄 위젯 단독(`today_goal_footer`), 울림 파동의 런타임 `disableAnimations` 전환은 직접 테스트가 없다. 실제 폰에서 목표 달성 · 축하 · 파동을 확인한다.
 
@@ -124,3 +125,4 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | A8 | 앱을 띄운 채 시간대 변경 | 헤드리스 없이 메인 엔진 `resync`, 카드 즉시 갱신 | 통과(09-30) |
 | A9 | PIN 잠금 위 울림 | 잠금을 풀지 않고 울림 화면이 위에 뜸 | 대기(실제 폰) |
 | A10 | 설정: 테마 전환 · 권한 행 → 설정 이동 | 즉시 반영 · 해당 설정 화면 | 테마 통과, 권한 행 대기 |
+| A11 | 릴리스 APK 로 앱을 띄운 채 울림 → [알람 끄기] | 울림 화면 · 소리, 시스템 볼륨 패널이 뜨지 않음(울릴 때 · 끌 때) | 통과(10-05, 에뮬레이터 — 울림 8초 · 끈 뒤 `VolumeDialog` 창 없음. 헤드업은 함께 뜸) |

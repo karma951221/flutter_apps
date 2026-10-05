@@ -17,6 +17,22 @@
 `presentation/`. 계층 아래에 기능 폴더(`walk/` · `alarm/` · `settings/` · `shell/`)를 둔다. 테스트도
 `test/` 아래 같은 구조다.
 
+## 실제 폰에 설치
+
+스토어 배포 없이 APK 를 폰에 바로 깐다. release 빌드는 아직 이 맥의 디버그 키로 서명한다
+(`android/app/build.gradle.kts`).
+
+1. **빌드** — `cd apps/walk && flutter build apk --release` →
+   `apps/walk/build/app/outputs/flutter-apk/app-release.apk`(약 56MB, 모든 ABI).
+2. **옮기기** — 카카오톡 나와의 채팅 · 구글 드라이브 · USB 파일 전송 중 편한 것.
+3. **설치** — 폰에서 파일을 연다. 처음 한 번은 그 파일을 연 앱(카카오톡 · 내 파일 · 드라이브)에
+   "출처를 알 수 없는 앱 설치"를 허용한다. Play 프로텍트 경고가 뜨면 "무시하고 설치".
+4. **첫 실행** — Health Connect 권한을 허용하고, 설정 탭 권한 행에서 알림 · 정확한 알람 · 전체 화면 알림이
+   켜져 있는지 본다. Android 13 이하는 Play 스토어에서 Health Connect 앱을 먼저 깐다.
+
+고친 버전도 같은 방법으로 덮어 깔면 알람 · 설정이 남는다. 다른 맥에서 빌드한 APK 는 디버그 키가 달라
+덮어 깔 수 없다 — 지우고 다시 깔아야 하고 그때 알람이 사라진다.
+
 ## 문서
 
 | 문서 | 단일 진실 소스 |
