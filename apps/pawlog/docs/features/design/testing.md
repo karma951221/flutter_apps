@@ -4,6 +4,7 @@
 
 ```bash
 cd apps/pawlog && flutter test test/presentation/theme test/presentation/common
+cd apps/pawlog && flutter test test/presentation/feed/page
 cd apps/pawlog && flutter test            # 전체
 ```
 
@@ -21,3 +22,12 @@ cd apps/pawlog && flutter test            # 전체
 
 기존 테스트에서 바꾼 것: `active_walk_page_test` 의 시작 버튼 활성 판단을 `AppButton` 에서
 `PawlogPrimaryButton` 으로.
+
+## `test/presentation/feed/page/`
+
+| 파일 | 대상 | 바뀐 것 |
+|---|---|---|
+| `walk_feed_page_test.dart` (12 → 13) | `WalkFeedPage` · `WalkFeedEntry` | 빈 피드: 항목 없음 + 하단 `walk-feed-start-button` → `onStartWalk` · 추적 중 · 저장 전 빈 피드엔 시작 버튼 없음 · 항목: `Card` 없음, 달 머리 `2026년 10월` · 일 `3` · 요일 `토` · 이름 `콩이1` · 시각 `09:00` · `1.2 km` · `30분` · 메모 · **새 테스트 — 같은 날 두 기록 + 전날 하나: 첫 기록만 `walk-feed-date-*`, `showDate` / `continuesBelow` 가 (참, 참) · (거짓, 거짓) · (참, —), 달 머리 하나** · 키 `walk-feed-card-*` → `walk-feed-entry-*`, `walk-feed-fab` → `walk-feed-start-button` |
+
+날짜 묶음 테스트는 세 항목이 한 화면에 들어오도록 `tester.view` 를 400×2400 으로 둔다 — 4:3 사진 칸
+때문에 기본 800×600 에서는 둘째 항목부터 지연 생성돼 위젯을 찾을 수 없다.

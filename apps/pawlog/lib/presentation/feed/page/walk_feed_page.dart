@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
@@ -5,10 +7,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/tracking/entity/tracker_state.dart';
+import '../../../domain/walk/entity/walk.dart';
+import '../../common/widget/pawlog_primary_button.dart';
+import '../../theme/pawlog_theme.dart';
 import '../../tracking/widget/active_walk_banner.dart';
 import '../cubit/walk_feed_cubit.dart';
 import '../cubit/walk_feed_state.dart';
-import '../widget/walk_card.dart';
+import '../widget/walk_feed_entry.dart';
 
 /// 첫 화면 — 내 산책 기록의 최신순 타임라인.
 ///
@@ -70,19 +75,6 @@ class _WalkFeedView extends StatelessWidget {
             ),
           ],
         ),
-        floatingActionButton: switch (state) {
-          WalkFeedLoaded(:final walks, :final tracker)
-              when walks.isNotEmpty && tracker is! TrackerFinished =>
-            FloatingActionButton.extended(
-              key: const Key('walk-feed-fab'),
-              onPressed: onStartWalk,
-              label: Text(
-                tracker is TrackerTracking ? l10n.walkContinue : l10n.walkStart,
-              ),
-              icon: const Icon(Icons.directions_walk),
-            ),
-          _ => null,
-        },
         body: SafeArea(
           child: switch (state) {
             WalkFeedLoading() => const Center(
@@ -97,45 +89,42 @@ class _WalkFeedView extends StatelessWidget {
               ),
             ),
             WalkFeedLoaded(:final walks, :final tracker) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _banner(tracker),
                 Expanded(
                   child: walks.isEmpty
                       ? Center(
-                          // 산책 중이거나 저장 전이면 시작을 권하지 않는다 — 위 배너가
-                          // 그 산책으로 이끈다.
+                          // 수첩 첫 장 — 날짜 열 없이 안내 한 줄. 산책 중이거나 저장 전이면
+                          // 시작을 권하지 않는다 — 위 배너가 그 산책으로 이끈다.
                           child: tracker is TrackerIdle
                               ? AppPlaceholder(
-                                  icon: Icons.pets_outlined,
                                   message: l10n.walkFeedEmptyTitle,
                                   description: l10n.walkFeedEmptyMessage,
-                                  actionLabel: l10n.walkStart,
-                                  onAction: onStartWalk,
                                 )
                               : AppPlaceholder(
-                                  icon: Icons.pets_outlined,
                                   message: l10n.walkFeedEmptyActiveTitle,
                                   description: l10n.walkFeedEmptyActiveMessage,
                                 ),
                         )
-                      : ListView.builder(
-                          padding: const EdgeInsets.only(
-                            top: AppSpacing.sm,
-                            // FAB 에 마지막 카드가 가리지 않게.
-                            bottom: AppSpacing.xl * 3,
-                          ),
-                          itemCount: walks.length,
-                          itemBuilder: (context, index) {
-                            final walk = walks[index];
-                            return WalkCard(
-                              key: Key('walk-feed-card-${walk.id}'),
-                              walk: walk,
-                              photoFile: cubit.photoFile,
-                              onTap: () => onOpenWalk(walk.id),
-                            );
-                          },
+                      : _Timeline(
+                          walks: walks,
+                          photoFile: cubit.photoFile,
+                          onOpenWalk: onOpenWalk,
                         ),
                 ),
+                // 저장 · 버리기 전에는 새 산책을 막는다(finished). 0건 추적 중이면 배너가 이끈다.
+                if (tracker is TrackerIdle ||
+                    (tracker is TrackerTracking && walks.isNotEmpty))
+                  PawlogBottomAction(
+                    child: PawlogPrimaryButton(
+                      key: const Key('walk-feed-start-button'),
+                      label: tracker is TrackerTracking
+                          ? l10n.walkContinue
+                          : l10n.walkStart,
+                      onPressed: onStartWalk,
+                    ),
+                  ),
               ],
             ),
           },
@@ -153,4 +142,54 @@ class _WalkFeedView extends StatelessWidget {
     ),
     TrackerFinished() => ActiveWalkBanner.unsaved(onTap: onSaveWalk),
   };
+}
+
+/// 날짜별 타임라인. 최신순 목록을 받아 같은 날은 날짜를 한 번만 쓰고 리드줄로 잇는다.
+class _Timeline extends StatelessWidget {
+  const _Timeline({
+    required this.walks,
+    required this.photoFile,
+    required this.onOpenWalk,
+  });
+
+  final List<Walk> walks;
+  final File Function(String relativePath) photoFile;
+  final ValueChanged<String> onOpenWalk;
+
+  static bool _sameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  @override
+  Widget build(BuildContext context) => ListView.builder(
+    padding: const EdgeInsets.only(bottom: PawlogSpacing.sm),
+    itemCount: walks.length,
+    itemBuilder: (context, index) {
+      final walk = walks[index];
+      final day = walk.startedAt.toLocal();
+      final previous = index == 0 ? null : walks[index - 1].startedAt.toLocal();
+      final next = index + 1 < walks.length
+          ? walks[index + 1].startedAt.toLocal()
+          : null;
+      final newMonth =
+          previous == null ||
+          previous.year != day.year ||
+          previous.month != day.month;
+      final entry = WalkFeedEntry(
+        key: Key('walk-feed-entry-${walk.id}'),
+        walk: walk,
+        photoFile: photoFile,
+        onTap: () => onOpenWalk(walk.id),
+        showDate: previous == null || !_sameDay(previous, day),
+        continuesBelow: next != null && _sameDay(next, day),
+      );
+      if (!newMonth) return entry;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          WalkFeedMonthHeader(month: day),
+          entry,
+        ],
+      );
+    },
+  );
 }

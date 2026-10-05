@@ -13,28 +13,33 @@ import 'package:pawlog/domain/walk/entity/walk_photo.dart';
 import 'package:pawlog/presentation/dog/widget/dog_avatars.dart';
 import 'package:pawlog/presentation/feed/cubit/walk_feed_cubit.dart';
 import 'package:pawlog/presentation/feed/page/walk_feed_page.dart';
+import 'package:pawlog/presentation/feed/widget/walk_feed_entry.dart';
 
 import '../../../support/fakes.dart';
 import '../../../support/mock_walk_use_case.dart';
 import '../../../support/pump_app.dart';
 
-Walk _walk(String id, {String? memo, List<WalkPhoto> photos = const []}) =>
-    Walk(
-      id: id,
-      startedAt: t0,
-      endedAt: t1,
-      duration: const Duration(minutes: 30),
-      distanceMeters: 1200,
-      memo: memo,
-      dogs: [dog('1')],
-      photos: photos,
-      previewPoints: const [
-        GeoPoint(lat: 37.5, lng: 127),
-        GeoPoint(lat: 37.51, lng: 127.01),
-      ],
-      createdAt: t0,
-      updatedAt: t0,
-    );
+Walk _walk(
+  String id, {
+  String? memo,
+  List<WalkPhoto> photos = const [],
+  DateTime? startedAt,
+}) => Walk(
+  id: id,
+  startedAt: startedAt ?? t0,
+  endedAt: t1,
+  duration: const Duration(minutes: 30),
+  distanceMeters: 1200,
+  memo: memo,
+  dogs: [dog('1')],
+  photos: photos,
+  previewPoints: const [
+    GeoPoint(lat: 37.5, lng: 127),
+    GeoPoint(lat: 37.51, lng: 127.01),
+  ],
+  createdAt: t0,
+  updatedAt: t0,
+);
 
 void main() {
   late MockWalkUseCase useCase;
@@ -69,7 +74,7 @@ void main() {
     ),
   );
 
-  testWidgets('빈 피드는 AppPlaceholder 와 시작 버튼을 보이고 FAB 는 없다', (tester) async {
+  testWidgets('빈 피드는 날짜 열 없이 안내 한 줄과 하단 시작 버튼을 보인다', (tester) async {
     when(
       () => useCase.watchWalks(),
     ).thenAnswer((_) => Stream.value(const Ok([])));
@@ -79,7 +84,8 @@ void main() {
 
     expect(find.byType(AppPlaceholder), findsOneWidget);
     expect(find.text('첫 산책을 시작해 보세요'), findsOneWidget);
-    expect(find.byKey(const Key('walk-feed-fab')), findsNothing);
+    expect(find.byType(WalkFeedEntry), findsNothing);
+    expect(find.byKey(const Key('walk-feed-start-button')), findsOneWidget);
     await tester.tap(find.text('산책 시작'));
     expect(started, 1);
   });
@@ -100,19 +106,57 @@ void main() {
       expect(find.text('첫 산책을 시작해 보세요'), findsNothing);
       expect(find.text('산책 시작'), findsNothing);
       expect(find.text('첫 산책이 곧 여기에 보여요'), findsOneWidget);
+      expect(find.byKey(const Key('walk-feed-start-button')), findsNothing);
     });
   }
 
-  testWidgets('카드에 반려견 · 거리 · 시간 · 메모가 보인다', (tester) async {
+  testWidgets('항목에 날짜 열 · 반려견 · 시각 · 거리 · 시간 · 메모가 보인다', (tester) async {
     await pump(tester);
 
-    expect(find.byKey(const Key('walk-feed-card-a')), findsOneWidget);
-    expect(find.text('콩이1'), findsNothing); // 아바타는 이니셜만 그린다
+    expect(find.byKey(const Key('walk-feed-entry-a')), findsOneWidget);
+    expect(find.byType(Card), findsNothing); // 카드가 아니라 줄글이다
+    expect(find.text('2026년 10월'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget); // 날짜 열의 일
+    expect(find.text('토'), findsOneWidget); // 요일
+    expect(find.text('콩이1'), findsOneWidget);
     expect(find.byType(DogAvatars), findsOneWidget);
-    expect(find.textContaining('1.2 km'), findsOneWidget);
-    expect(find.textContaining('30분'), findsOneWidget);
+    expect(find.text('09:00'), findsOneWidget);
+    expect(find.text('1.2 km'), findsOneWidget);
+    expect(find.text('30분'), findsOneWidget);
     expect(find.text('공원 한 바퀴'), findsOneWidget);
-    expect(find.text('2026.10.03 09:00'), findsOneWidget);
+  });
+
+  testWidgets('같은 날 기록은 날짜를 한 번만 쓰고 리드줄로 잇는다', (tester) async {
+    // 세 항목이 한 화면에 다 들어오게 폰 폭 · 긴 화면.
+    tester.view.physicalSize = const Size(400, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final evening = t0.add(const Duration(hours: 9));
+    final yesterday = t0.subtract(const Duration(days: 1));
+    when(() => useCase.watchWalks()).thenAnswer(
+      (_) => Stream.value(
+        Ok([
+          _walk('pm', startedAt: evening),
+          _walk('am'),
+          _walk('prev', startedAt: yesterday),
+        ]),
+      ),
+    );
+
+    await pump(tester);
+
+    WalkFeedEntry entry(String id) =>
+        tester.widget(find.byKey(Key('walk-feed-entry-$id')));
+    expect(find.byKey(const Key('walk-feed-date-pm')), findsOneWidget);
+    expect(find.byKey(const Key('walk-feed-date-am')), findsNothing);
+    expect(entry('pm').showDate, isTrue);
+    expect(entry('pm').continuesBelow, isTrue);
+    expect(entry('am').showDate, isFalse);
+    expect(entry('am').continuesBelow, isFalse);
+    expect(find.byKey(const Key('walk-feed-date-prev')), findsOneWidget);
+    expect(entry('prev').showDate, isTrue);
+    // 같은 달이라 달 머리는 맨 위 하나뿐이다.
+    expect(find.byType(WalkFeedMonthHeader), findsOneWidget);
   });
 
   testWidgets('메모가 없으면 메모 줄이 없다', (tester) async {
@@ -123,14 +167,14 @@ void main() {
     await pump(tester);
 
     expect(find.text('공원 한 바퀴'), findsNothing);
-    expect(find.byKey(const Key('walk-feed-card-a')), findsOneWidget);
+    expect(find.byKey(const Key('walk-feed-entry-a')), findsOneWidget);
   });
 
   testWidgets('카드를 탭하면 onOpenWalk(id) 를 부른다', (tester) async {
     String? opened;
 
     await pump(tester, onOpenWalk: (id) => opened = id);
-    await tester.tap(find.byKey(const Key('walk-feed-card-a')));
+    await tester.tap(find.byKey(const Key('walk-feed-entry-a')));
 
     expect(opened, 'a');
   });
@@ -154,18 +198,18 @@ void main() {
     expect(find.byType(Image), findsOneWidget);
   });
 
-  testWidgets('FAB 를 누르면 onStartWalk 를 부른다', (tester) async {
+  testWidgets('하단 시작 버튼을 누르면 onStartWalk 를 부른다', (tester) async {
     var started = 0;
 
     await pump(tester, onStartWalk: () => started++);
-    await tester.tap(find.byKey(const Key('walk-feed-fab')));
+    await tester.tap(find.byKey(const Key('walk-feed-start-button')));
 
     expect(started, 1);
     expect(find.text('산책 시작'), findsOneWidget);
     expect(find.byKey(const Key('walk-feed-banner')), findsNothing);
   });
 
-  testWidgets('추적 중이면 배너와 산책 계속 FAB 가 모두 onStartWalk 를 부른다', (tester) async {
+  testWidgets('추적 중이면 배너와 산책 계속 버튼이 모두 onStartWalk 를 부른다', (tester) async {
     current = TrackerState.tracking(walkSession(distanceMeters: 300));
     var started = 0;
 
@@ -175,11 +219,11 @@ void main() {
     expect(find.text('산책 중이에요 · 눌러서 돌아가기'), findsOneWidget);
     expect(find.text('산책 계속'), findsOneWidget);
     await tester.tap(find.byKey(const Key('walk-feed-banner')));
-    await tester.tap(find.byKey(const Key('walk-feed-fab')));
+    await tester.tap(find.byKey(const Key('walk-feed-start-button')));
     expect(started, 2);
   });
 
-  testWidgets('저장 안 한 산책 배너는 onSaveWalk 를 부르고 FAB 는 없다', (tester) async {
+  testWidgets('저장 안 한 산책 배너는 onSaveWalk 를 부르고 시작 버튼은 없다', (tester) async {
     current = TrackerState.finished(walkSession(endedAt: t1));
     var saved = 0;
     var started = 0;
@@ -187,7 +231,7 @@ void main() {
     await pump(tester, onSaveWalk: () => saved++, onStartWalk: () => started++);
 
     expect(find.text('저장하지 않은 산책이 있어요 · 눌러서 저장하기'), findsOneWidget);
-    expect(find.byKey(const Key('walk-feed-fab')), findsNothing);
+    expect(find.byKey(const Key('walk-feed-start-button')), findsNothing);
     await tester.tap(find.byKey(const Key('walk-feed-banner')));
     expect(saved, 1);
     expect(started, 0);
@@ -216,7 +260,7 @@ void main() {
     await tester.tap(find.byKey(const Key('walk-feed-retry')));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('walk-feed-card-a')), findsOneWidget);
+    expect(find.byKey(const Key('walk-feed-entry-a')), findsOneWidget);
     expect(calls, 2);
   });
 }
