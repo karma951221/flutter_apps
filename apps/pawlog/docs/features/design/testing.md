@@ -68,6 +68,13 @@ cd apps/pawlog && flutter test            # 전체
 
 연출 테스트는 `pumpApp` 을 쓰지 않는다 — `pumpAndSettle` 이 1.6초를 끝까지 흘려 시작 상태를 볼 수 없다.
 
+## 에뮬레이터 QA 후속 (2026-10-05)
+
+| 파일 | 대상 | 확인 |
+|---|---|---|
+| `tracking/page/active_walk_page_test.dart` (+1) | `ActiveWalkPage` | **Q1** 추적 중 `SimpleAttributionWidget` · "OpenStreetMap contributors" 가 있고 글자 띠 아래 끝 ≤ `walk-active-sheet` 위 끝 |
+| `walk/page/walk_detail_page_test.dart` (+1) | `WalkDetailPage` | **Q1** 출처 글자 띠가 `walk-detail-map` 안에 있다 |
+
 ## 에뮬레이터
 
 | # | 시나리오 | 결과 |

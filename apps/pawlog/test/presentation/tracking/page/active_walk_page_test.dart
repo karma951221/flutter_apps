@@ -150,6 +150,26 @@ void main() {
     await disposePage(tester);
   });
 
+  testWidgets('추적 중 지도의 OSM 출처 표시는 시트에 가리지 않는다', (tester) async {
+    current = TrackerState.tracking(trackingSession);
+
+    await pumpApp(tester, ActiveWalkPage(onStopped: () {}, onOpenDogs: () {}));
+
+    final attribution = find.byType(SimpleAttributionWidget);
+    expect(attribution, findsOneWidget);
+    expect(find.text('OpenStreetMap contributors'), findsOneWidget);
+    // 글자 띠(ColoredBox)의 아래 끝이 시트 위 끝보다 위에 있어야 한다.
+    final label = tester.getRect(
+      find.descendant(of: attribution, matching: find.byType(ColoredBox)),
+    );
+    final sheetTop = tester
+        .getTopLeft(find.byKey(const Key('walk-active-sheet')))
+        .dy;
+    expect(label.bottom, lessThanOrEqualTo(sheetTop));
+    expect(label.top, greaterThanOrEqualTo(0));
+    await disposePage(tester);
+  });
+
   testWidgets('추적을 시작했지만 점이 없으면 위치를 찾는 중 문구를 보인다', (tester) async {
     current = TrackerState.tracking(walkSession());
 

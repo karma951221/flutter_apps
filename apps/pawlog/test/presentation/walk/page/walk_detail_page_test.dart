@@ -57,6 +57,23 @@ void main() {
     await disposePage(tester);
   });
 
+  testWidgets('지도의 OSM 출처 표시가 지도 안에 보인다', (tester) async {
+    await pumpApp(
+      tester,
+      WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+    );
+
+    final attribution = find.byType(SimpleAttributionWidget);
+    expect(find.text('OpenStreetMap contributors'), findsOneWidget);
+    final label = tester.getRect(
+      find.descendant(of: attribution, matching: find.byType(ColoredBox)),
+    );
+    final map = tester.getRect(find.byKey(const Key('walk-detail-map')));
+    expect(map.contains(label.topLeft), isTrue);
+    expect(label.bottom, lessThanOrEqualTo(map.bottom));
+    await disposePage(tester);
+  });
+
   testWidgets('메모는 손글씨, 사진은 본문 폭 4:3 · 모서리 4 다', (tester) async {
     await pumpApp(
       tester,

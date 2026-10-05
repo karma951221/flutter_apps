@@ -169,3 +169,19 @@ walk 의 `WalkTheme` 은 `AppTheme.light(seedColor:)` 에 씨앗색만 바꾼다
 `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+242`(기존 205 → 디자인 적용 후). `packages/core`
 `+67`(P5 2건 포함), `packages/l10n` `+10`. `flutter build apk --debug` 성공. 에뮬레이터 라이트 · 다크
 확인은 [진행 현황](../../status.md)의 다음 할 일에 남겼다.
+
+## 에뮬레이터 QA 후속 (2026-10-05)
+
+[테스트](testing.md#에뮬레이터)의 2026-10-05 실행에서 나온 네 가지를 고쳤다.
+
+### Q1 — 진행 화면 지도의 OSM 출처 표시가 시트에 가렸다
+
+4단계에서 지도를 화면 가득(`Positioned.fill`) 깔고 시트를 위에 얹어 오른쪽 아래 "flutter_map | ©
+OpenStreetMap contributors" 가 시트 밑에 들어갔다. OSM 타일 이용 정책상 출처는 보여야 한다.
+
+- 진행 화면은 `Stack` 대신 `CustomMultiChildLayout`(`_MapUnderSheetLayout`) — 시트를 먼저 재 아래에
+  붙이고, 지도는 시트 위 끝 + 둥근 모서리 20(`PawlogRadius.sheet`)까지만. 모서리 뒤로는 여전히 지도가
+  보인다. 시트 높이는 오류 안내가 끼면 달라지므로 고정값이 아니라 레이아웃에서 잰다
+- `RouteMap.bottomInset` — 지도 아래가 덮이는 높이. 출처 표시를 그만큼 올리고 처음 경로 맞춤
+  (`CameraFit` 아래 여백)에도 더한다. 진행 화면은 20, 상세는 0(지도 아래를 덮는 것이 없다)
+- 저장 폼의 경로 그림(`RouteSketch`)은 타일이 아니라 `CustomPaint` 라 출처가 필요 없다

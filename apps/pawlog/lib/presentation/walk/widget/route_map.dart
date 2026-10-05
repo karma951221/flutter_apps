@@ -20,8 +20,13 @@ class RouteMap extends StatefulWidget {
     this.emptyMessage,
     this.tileProvider,
     this.animateDraw = false,
+    this.bottomInset = 0,
     super.key,
   });
+
+  /// 지도 아래쪽이 다른 면(진행 화면 시트의 둥근 모서리)에 덮이는 높이. 출처 표시와
+  /// 처음 경로 맞춤을 그만큼 위로 올린다 — OSM 타일은 출처가 보여야 한다.
+  final double bottomInset;
 
   /// 켜면 처음 보일 때 선이 출발점부터 1.6초에 걸쳐 그려진다(상세 화면). 애니메이션
   /// 줄이기가 켜져 있으면 바로 완성된 선이다.
@@ -130,7 +135,9 @@ class _RouteMapState extends State<RouteMap> {
             ? null
             : CameraFit.coordinates(
                 coordinates: latLngs,
-                padding: const EdgeInsets.all(PawlogSpacing.xl),
+                padding: const EdgeInsets.all(
+                  PawlogSpacing.xl,
+                ).copyWith(bottom: PawlogSpacing.xl + widget.bottomInset),
               ),
       ),
       children: [
@@ -189,8 +196,11 @@ class _RouteMapState extends State<RouteMap> {
             );
           },
         ),
-        const SimpleAttributionWidget(
-          source: Text('OpenStreetMap contributors'),
+        Padding(
+          padding: EdgeInsets.only(bottom: widget.bottomInset),
+          child: const SimpleAttributionWidget(
+            source: Text('OpenStreetMap contributors'),
+          ),
         ),
       ],
     );

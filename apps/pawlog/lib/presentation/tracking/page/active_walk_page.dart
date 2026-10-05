@@ -303,20 +303,49 @@ class _TrackingView extends StatelessWidget {
       );
     }
 
-    return Stack(
+    // 지도는 시트 위 끝에서 둥근 모서리만큼만 시트 밑으로 들어간다. 그 아래로 깔면
+    // 출처 표시(OSM 필수)와 경로 일부가 시트에 가린다.
+    return CustomMultiChildLayout(
+      delegate: _MapUnderSheetLayout(),
       children: [
-        Positioned.fill(
+        LayoutId(
+          id: _MapUnderSheetLayout.map,
           child: RouteMap(
             key: const Key('walk-active-map'),
             points: points,
             follow: true,
             emptyMessage: l10n.walkLocating,
+            bottomInset: PawlogRadius.sheet,
           ),
         ),
-        Align(alignment: Alignment.bottomCenter, child: sheet),
+        LayoutId(id: _MapUnderSheetLayout.sheet, child: sheet),
       ],
     );
   }
+}
+
+/// 시트를 아래에 붙이고, 지도는 위에서부터 시트 위 끝 + 둥근 모서리([PawlogRadius.sheet])까지.
+class _MapUnderSheetLayout extends MultiChildLayoutDelegate {
+  static const map = 'map';
+  static const sheet = 'sheet';
+
+  @override
+  void performLayout(Size size) {
+    final sheetSize = layoutChild(
+      sheet,
+      BoxConstraints.tightFor(
+        width: size.width,
+      ).copyWith(maxHeight: size.height),
+    );
+    final sheetTop = size.height - sheetSize.height;
+    positionChild(sheet, Offset(0, sheetTop));
+    final mapHeight = (sheetTop + PawlogRadius.sheet).clamp(0.0, size.height);
+    layoutChild(map, BoxConstraints.tight(Size(size.width, mapHeight)));
+    positionChild(map, Offset.zero);
+  }
+
+  @override
+  bool shouldRelayout(_MapUnderSheetLayout oldDelegate) => false;
 }
 
 class _TrackingSheet extends StatelessWidget {
