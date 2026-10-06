@@ -25,7 +25,7 @@
 - TDD: 먼저 실패하는 테스트를 쓰고 실패를 확인한 뒤 구현한다. 바로 통과한 테스트는 구현을 잠시 되돌려(뮤테이션) 실패하는지 확인한다. Kotlin 은 순수 규칙 함수를 JUnit 으로, 나머지는 에뮬레이터 시나리오로.
 - 커밋: 경로 지정 `git add <경로…> && git commit -m "…"`. 메시지 `feat(walk): …`/`fix(walk): …`/`refactor(walk): …`/`docs(walk): …` 한국어 + 빈 줄 + `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. `.idea/` · `apps/pawlog/**` 는 절대 add 하지 않는다(다른 작업 중).
 - 각 태스크 끝: `flutter analyze` 0 이슈 · `flutter test` 전부 통과(기준선 349 통과 · 1 skip). 네이티브를 건드린 태스크는 `flutter build apk --debug` 성공.
-- 포크 재생성(필드 추가 시): `cd apps/walk/third_party/alarm && flutter pub get && dart run pigeon --input pigeons/alarm_api.dart && dart run build_runner build --delete-conflicting-outputs`. 포크 Kotlin 테스트: `cd apps/walk/android && ./gradlew :alarm:testDebugUnitTest`. 정확한 절차는 W0-T1 이 `FORK.md` 에 확정해 적는다.
+- 포크 재생성 · 테스트 절차는 `apps/walk/third_party/alarm/FORK.md` 가 단일 기준이다(pigeon 뒤 `dart format lib/src/generated/platform_bindings.g.dart` 포함). 포크 Kotlin 테스트: `cd apps/walk/android && ./gradlew :alarm:testDebugUnitTest`(JAVA_HOME=Android Studio jbr). 포크 Dart 를 바꾸면 포크 디렉터리에서 `flutter analyze` 도 돌린다.
 
 ---
 
