@@ -658,6 +658,41 @@ void main() {
     expect(find.text('비프'), findsNothing);
   });
 
+  testWidgets('제목을 입력하다 알람음 줄을 누르면 포커스를 풀고, 돌아와도 다시 잡지 않는다', (tester) async {
+    await pump(tester, const Alarm(id: 3, hour: 6, minute: 30, repeat: {Weekday.mon}));
+    final titleFocus = tester.widget<EditableText>(find.byType(EditableText)).focusNode;
+    bool titleFocused() => titleFocus.hasFocus;
+
+    await tester.tap(find.byType(TextField));
+    await tester.pump();
+    expect(titleFocused(), isTrue);
+
+    await tester.tap(find.text('알람음'));
+    await tester.pumpAndSettle();
+    expect(titleFocused(), isFalse);
+    expect(tester.testTextInput.isVisible, isFalse);
+
+    for (final back in [
+      () => tester.state<NavigatorState>(find.byType(Navigator)).maybePop(),
+      () async {
+        await tester.tap(find.text('비프'));
+        await tester.pump();
+        await tester.tap(find.text('선택'));
+      },
+    ]) {
+      if (find.byType(AlarmSoundPage).evaluate().isEmpty) {
+        await tester.tap(find.text('알람음'));
+        await tester.pumpAndSettle();
+      }
+      await back();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlarmSoundPage), findsNothing);
+      expect(titleFocused(), isFalse);
+      expect(tester.testTextInput.isVisible, isFalse);
+    }
+  });
+
   testWidgets('편집: 삭제는 확인 뒤 지우고 결과 없이 닫힌다', (tester) async {
     when(() => useCase.delete(3)).thenAnswer((_) async {});
     final results = await pump(

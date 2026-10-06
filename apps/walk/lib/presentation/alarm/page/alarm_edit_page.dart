@@ -111,6 +111,10 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
   }
 
   Future<void> _pickSound() async {
+    // 제목을 입력하던 중이면 포커스를 푼다 — 그대로 두면 선택 화면에서 돌아올 때 라우트가
+    // 제목 칸에 포커스를 되돌려 키보드가 다시 올라온다. 범위(scope) 노드가 아니라 포커스를 쥔
+    // 노드를 풀어야 이 화면 범위의 포커스 기록도 비워진다.
+    FocusManager.instance.primaryFocus?.unfocus();
     final sound = await Navigator.of(context).push<AlarmSound>(
       MaterialPageRoute(builder: (_) => AlarmSoundPage(initial: _cubit.state.alarm.sound)),
     );
