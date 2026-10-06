@@ -1,9 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 시작 화면 아이콘. 적응형 아이콘 전경(108 캔버스, 안전 원 반지름 33)을 288dp 로 그린다.
-     안드로이드 12+ 스플래시 아이콘 규격(288dp 중 지름 192 원)에서 그림은 반지름 88dp 안에 든다 -->
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:width="288dp"
-        android:height="288dp"
-        android:drawable="@drawable/ic_launcher_foreground" />
-</layer-list>
+<!-- 시작 화면 아이콘(안드로이드 12+ windowSplashScreenAnimatedIcon, 아이콘 배경 없음).
+     규격: 288dp 캔버스 중 가운데 지름 192dp 원 안에 그림을 둔다. 레이어 리스트로 108dp 벡터를
+     감싸면 시스템 스플래시가 크기를 무시하고 확대 · 잘라 그리므로 288 뷰포트 벡터 하나로 직접 그린다.
+     경로는 ic_launcher_foreground(108 캔버스, 안전 원 반지름 33)를 그대로 옮기고 group 으로
+     8/3 배 확대해 중심 (54,54) → (144,144), 안전 원 반지름 33 → 88(192 원 안). 그림을 바꾸면 함께 고친다 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="288dp"
+    android:height="288dp"
+    android:viewportWidth="288"
+    android:viewportHeight="288">
+    <group
+        android:scaleX="2.6666667"
+        android:scaleY="2.6666667"
+        android:translateX="0"
+        android:translateY="0">
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:pathData="M43.95,72.45 L40.35,78.45" />
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:pathData="M69.15,72.45 L72.75,78.45" />
+        <path
+            android:fillColor="#FFD27A"
+            android:pathData="M34.35,35.25 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 Z" />
+        <path
+            android:fillColor="#FFD27A"
+            android:pathData="M66.75,35.25 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M37.35,54.45 a19.2,19.2 0 1,0 38.4,0 a19.2,19.2 0 1,0 -38.4,0 Z" />
+        <path
+            android:strokeColor="#0B5D45"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:pathData="M56.55,54.45 L56.55,42.45" />
+        <path
+            android:strokeColor="#0B5D45"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:pathData="M56.55,54.45 L64.95,59.25" />
+        <path
+            android:fillColor="#9FE1C9"
+            android:pathData="M26.22,65.25 a2.73,3.9 0 1,0 5.46,0 a2.73,3.9 0 1,0 -5.46,0 Z" />
+        <path
+            android:fillColor="#9FE1C9"
+            android:pathData="M29.82,73.65 a2.73,3.9 0 1,0 5.46,0 a2.73,3.9 0 1,0 -5.46,0 Z" />
+    </group>
+</vector>
