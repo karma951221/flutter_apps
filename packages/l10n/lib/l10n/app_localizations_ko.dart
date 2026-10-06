@@ -1581,6 +1581,36 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAlarmVibrate => '진동';
 
   @override
+  String get walkAlarmSound => '알람음';
+
+  @override
+  String get walkAlarmSoundSystem => '시스템 기본';
+
+  @override
+  String get walkAlarmSoundBundledSection => '앱 소리';
+
+  @override
+  String get walkAlarmSoundDeviceSection => '기기 알람음';
+
+  @override
+  String get walkAlarmSoundBeep => '비프';
+
+  @override
+  String get walkAlarmSoundChime => '차임';
+
+  @override
+  String get walkAlarmSoundRising => '점점 빠르게';
+
+  @override
+  String get walkAlarmSoundSelect => '선택';
+
+  @override
+  String get walkAlarmSoundDeviceUnavailable => '기기 알람음을 불러오지 못했어요';
+
+  @override
+  String get walkAlarmSoundImportFailed => '이 알람음을 쓸 수 없어요';
+
+  @override
   String get walkAlarmDeleteTitle => '알람을 삭제할까요?';
 
   @override

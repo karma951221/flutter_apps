@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/entity/alarm_sound.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/presentation/alarm/cubit/alarm_edit_cubit.dart';
@@ -19,6 +20,13 @@ class _FixedClock extends Clock {
   @override
   DateTime now() => value;
 }
+
+const _chimeAlarm = Alarm(
+  id: 3,
+  hour: 6,
+  minute: 30,
+  sound: AlarmSound.bundled(BundledAlarmSounds.chime),
+);
 
 void main() {
   final now = DateTime(2026, 9, 27, 23, 48);
@@ -81,6 +89,26 @@ void main() {
         ),
       ),
     ],
+  );
+
+  blocTest<AlarmEditCubit, AlarmEditState>(
+    '알람음을 바꾸면 저장할 알람에 실린다',
+    build: () {
+      when(() => useCase.save(any())).thenAnswer(
+        (i) async => i.positionalArguments.single as Alarm,
+      );
+      return build(const Alarm(id: 3, hour: 6, minute: 30));
+    },
+    act: (cubit) async {
+      cubit.setSound(const AlarmSound.bundled(BundledAlarmSounds.chime));
+      await cubit.save();
+    },
+    expect: () => [
+      const AlarmEditState(alarm: _chimeAlarm),
+      const AlarmEditState(alarm: _chimeAlarm, busy: true),
+      const AlarmEditState(alarm: _chimeAlarm),
+    ],
+    verify: (_) => verify(() => useCase.save(_chimeAlarm)).called(1),
   );
 
   blocTest<AlarmEditCubit, AlarmEditState>(

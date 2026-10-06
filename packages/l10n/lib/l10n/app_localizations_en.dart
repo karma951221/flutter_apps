@@ -1679,6 +1679,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkAlarmVibrate => 'Vibrate';
 
   @override
+  String get walkAlarmSound => 'Alarm sound';
+
+  @override
+  String get walkAlarmSoundSystem => 'System default';
+
+  @override
+  String get walkAlarmSoundBundledSection => 'App sounds';
+
+  @override
+  String get walkAlarmSoundDeviceSection => 'Device alarm sounds';
+
+  @override
+  String get walkAlarmSoundBeep => 'Beep';
+
+  @override
+  String get walkAlarmSoundChime => 'Chime';
+
+  @override
+  String get walkAlarmSoundRising => 'Rising';
+
+  @override
+  String get walkAlarmSoundSelect => 'Select';
+
+  @override
+  String get walkAlarmSoundDeviceUnavailable =>
+      'Couldn\'t load device alarm sounds';
+
+  @override
+  String get walkAlarmSoundImportFailed => 'Can\'t use this alarm sound';
+
+  @override
   String get walkAlarmDeleteTitle => 'Delete this alarm?';
 
   @override

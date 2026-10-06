@@ -3074,6 +3074,66 @@ abstract class AppLocalizations {
   /// **'진동'**
   String get walkAlarmVibrate;
 
+  /// 편집 화면 알람음 줄 · 알람음 선택 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'알람음'**
+  String get walkAlarmSound;
+
+  /// 기기의 기본 알람음 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'시스템 기본'**
+  String get walkAlarmSoundSystem;
+
+  /// 알람음 선택 화면 — 앱 내장음 구역 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'앱 소리'**
+  String get walkAlarmSoundBundledSection;
+
+  /// 알람음 선택 화면 — 기기 알람음 구역 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'기기 알람음'**
+  String get walkAlarmSoundDeviceSection;
+
+  /// 앱 내장음 — 기존 비프음 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'비프'**
+  String get walkAlarmSoundBeep;
+
+  /// 앱 내장음 — 부드러운 2음 차임 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'차임'**
+  String get walkAlarmSoundChime;
+
+  /// 앱 내장음 — 간격이 점점 짧아지는 비프 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'점점 빠르게'**
+  String get walkAlarmSoundRising;
+
+  /// 알람음 선택 화면 아래 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'선택'**
+  String get walkAlarmSoundSelect;
+
+  /// 기기 알람음 목록을 읽지 못했거나 비었을 때 구역 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'기기 알람음을 불러오지 못했어요'**
+  String get walkAlarmSoundDeviceUnavailable;
+
+  /// 기기 알람음 복사 · 검증 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'이 알람음을 쓸 수 없어요'**
+  String get walkAlarmSoundImportFailed;
+
   /// 알람 삭제 확인 다이얼로그 제목
   ///
   /// In ko, this message translates to:

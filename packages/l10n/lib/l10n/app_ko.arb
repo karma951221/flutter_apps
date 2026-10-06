@@ -2208,6 +2208,46 @@
   "@walkAlarmVibrate": {
     "description": "편집 화면 진동 스위치"
   },
+  "walkAlarmSound": "알람음",
+  "@walkAlarmSound": {
+    "description": "편집 화면 알람음 줄 · 알람음 선택 화면 제목"
+  },
+  "walkAlarmSoundSystem": "시스템 기본",
+  "@walkAlarmSoundSystem": {
+    "description": "기기의 기본 알람음 이름"
+  },
+  "walkAlarmSoundBundledSection": "앱 소리",
+  "@walkAlarmSoundBundledSection": {
+    "description": "알람음 선택 화면 — 앱 내장음 구역 제목"
+  },
+  "walkAlarmSoundDeviceSection": "기기 알람음",
+  "@walkAlarmSoundDeviceSection": {
+    "description": "알람음 선택 화면 — 기기 알람음 구역 제목"
+  },
+  "walkAlarmSoundBeep": "비프",
+  "@walkAlarmSoundBeep": {
+    "description": "앱 내장음 — 기존 비프음 이름"
+  },
+  "walkAlarmSoundChime": "차임",
+  "@walkAlarmSoundChime": {
+    "description": "앱 내장음 — 부드러운 2음 차임 이름"
+  },
+  "walkAlarmSoundRising": "점점 빠르게",
+  "@walkAlarmSoundRising": {
+    "description": "앱 내장음 — 간격이 점점 짧아지는 비프 이름"
+  },
+  "walkAlarmSoundSelect": "선택",
+  "@walkAlarmSoundSelect": {
+    "description": "알람음 선택 화면 아래 확인 버튼"
+  },
+  "walkAlarmSoundDeviceUnavailable": "기기 알람음을 불러오지 못했어요",
+  "@walkAlarmSoundDeviceUnavailable": {
+    "description": "기기 알람음 목록을 읽지 못했거나 비었을 때 구역 안내"
+  },
+  "walkAlarmSoundImportFailed": "이 알람음을 쓸 수 없어요",
+  "@walkAlarmSoundImportFailed": {
+    "description": "기기 알람음 복사 · 검증 실패 스낵바"
+  },
   "walkAlarmDeleteTitle": "알람을 삭제할까요?",
   "@walkAlarmDeleteTitle": {
     "description": "알람 삭제 확인 다이얼로그 제목"

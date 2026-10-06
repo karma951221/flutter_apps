@@ -6,11 +6,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
+import '../../../domain/alarm/entity/alarm_sound.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
 import '../cubit/alarm_edit_cubit.dart';
 import '../cubit/alarm_edit_state.dart';
 import '../format/alarm_format.dart';
+import '../format/alarm_sound_format.dart';
+import 'alarm_sound_page.dart';
 
 /// 새 알람 · 알람 편집. 저장하면 울릴 때까지 남은 시간을 결과로 돌려주며 닫힌다
 /// (목록이 스낵바를 띄운다). 삭제하거나 그냥 닫으면 결과는 null.
@@ -52,6 +55,13 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
       if (!mounted) return;
       AppSnackBar.show(context, message: l10n.walkAlarmSaveFailed, type: AppSnackBarType.error);
     }
+  }
+
+  Future<void> _pickSound() async {
+    final sound = await Navigator.of(context).push<AlarmSound>(
+      MaterialPageRoute(builder: (_) => AlarmSoundPage(initial: _cubit.state.alarm.sound)),
+    );
+    if (sound != null) _cubit.setSound(sound);
   }
 
   Future<void> _delete() async {
@@ -129,6 +139,12 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
                   hintText: l10n.walkAlarmLabelHint,
                 ),
                 onChanged: _cubit.setLabel,
+              ),
+              AppListTile(
+                title: Text(l10n.walkAlarmSound),
+                subtitle: Text(AlarmSoundFormat.name(l10n, state.alarm.sound)),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: state.busy ? null : _pickSound,
               ),
               AppListTile(
                 title: Text(l10n.walkAlarmVibrate),

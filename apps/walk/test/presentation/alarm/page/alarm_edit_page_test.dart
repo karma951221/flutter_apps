@@ -9,14 +9,19 @@ import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/entity/alarm_sound.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
+import 'package:walk/domain/alarm/sound/alarm_sound_source.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/presentation/alarm/format/alarm_format.dart';
 import 'package:walk/presentation/alarm/page/alarm_edit_page.dart';
+import 'package:walk/presentation/alarm/page/alarm_sound_page.dart';
 
 class _MockUseCase extends Mock implements AlarmUseCase {}
 
 class _MockRequester extends Mock implements PermissionRequester {}
+
+class _MockSoundSource extends Mock implements AlarmSoundSource {}
 
 class _FixedClock extends Clock {
   @override
@@ -27,15 +32,24 @@ void main() {
   late _MockUseCase useCase;
   late _MockRequester notification;
   late _MockRequester exactAlarm;
+  late _MockSoundSource soundSource;
 
-  setUpAll(() => registerFallbackValue(Alarm.draft()));
+  setUpAll(() {
+    registerFallbackValue(Alarm.draft());
+    registerFallbackValue(const AlarmSound.system());
+  });
   setUp(() {
     useCase = _MockUseCase();
     notification = _MockRequester();
     exactAlarm = _MockRequester();
     when(notification.ensure).thenAnswer((_) async => PermissionStatus.granted);
     when(exactAlarm.ensure).thenAnswer((_) async => PermissionStatus.granted);
+    soundSource = _MockSoundSource();
+    when(soundSource.deviceRingtones).thenAnswer((_) async => []);
+    when(() => soundSource.preview(any(), uri: any(named: 'uri'))).thenAnswer((_) async {});
+    when(soundSource.stopPreview).thenAnswer((_) async {});
     getIt
+      ..registerSingleton<AlarmSoundSource>(soundSource)
       ..registerSingleton<AlarmUseCase>(useCase)
       ..registerSingleton<AlarmPermissions>(
         AlarmPermissions(
@@ -181,6 +195,63 @@ void main() {
     expect(saved.label, '출근');
     expect(saved.repeat, {Weekday.mon});
     expect((saved.hour, saved.minute), (6, 30));
+  });
+
+  testWidgets('알람음 줄은 진동 줄 위에 현재 이름을 보인다', (tester) async {
+    await pump(
+      tester,
+      const Alarm(id: 3, hour: 6, minute: 30, sound: AlarmSound.bundled(BundledAlarmSounds.chime)),
+    );
+
+    expect(find.text('알람음'), findsOneWidget);
+    expect(find.text('차임'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('알람음')).dy,
+      lessThan(tester.getTopLeft(find.text('진동')).dy),
+    );
+  });
+
+  testWidgets('새 알람의 알람음은 시스템 기본', (tester) async {
+    await pump(tester, Alarm.draft());
+
+    expect(find.text('시스템 기본'), findsOneWidget);
+  });
+
+  testWidgets('알람음 줄 → 선택 화면에서 고르면 줄에 반영되고 그 소리로 저장한다', (tester) async {
+    when(() => useCase.save(any())).thenAnswer(
+      (i) async => i.positionalArguments.single as Alarm,
+    );
+    await pump(tester, const Alarm(id: 3, hour: 6, minute: 30));
+
+    await tester.tap(find.text('알람음'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlarmSoundPage), findsOneWidget);
+    await tester.tap(find.text('비프'));
+    await tester.pump();
+    await tester.tap(find.text('선택'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlarmSoundPage), findsNothing);
+    expect(find.text('비프'), findsOneWidget);
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+
+    final saved = verify(() => useCase.save(captureAny())).captured.single as Alarm;
+    expect(saved.sound, const AlarmSound.bundled(BundledAlarmSounds.beep));
+  });
+
+  testWidgets('선택 화면에서 그냥 돌아오면 알람음은 그대로', (tester) async {
+    await pump(tester, const Alarm(id: 3, hour: 6, minute: 30));
+
+    await tester.tap(find.text('알람음'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('비프'));
+    await tester.pump();
+    await tester.state<NavigatorState>(find.byType(Navigator)).maybePop();
+    await tester.pumpAndSettle();
+
+    expect(find.text('시스템 기본'), findsOneWidget);
+    expect(find.text('비프'), findsNothing);
   });
 
   testWidgets('편집: 삭제는 확인 뒤 지우고 결과 없이 닫힌다', (tester) async {

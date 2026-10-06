@@ -2,6 +2,7 @@ import 'package:core/core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
+import '../../../domain/alarm/entity/alarm_sound.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/upcoming_triggers.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
@@ -28,6 +29,8 @@ class AlarmEditCubit extends Cubit<AlarmEditState> {
   void setLabel(String label) => _update(state.alarm.copyWith(label: label.trim()));
 
   void setVibrate(bool vibrate) => _update(state.alarm.copyWith(vibrate: vibrate));
+
+  void setSound(AlarmSound sound) => _update(state.alarm.copyWith(sound: sound));
 
   /// 켠 상태로 저장하고(예약까지) 권한을 확인한다 — 거부되거나 확인이 실패해도 저장은
   /// 이미 끝났다(목록 경고 배너가 남은 길). 울릴 때까지 남은 시간을 돌려준다.

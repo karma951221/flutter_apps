@@ -1579,6 +1579,36 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAlarmVibrate => 'バイブレーション';
 
   @override
+  String get walkAlarmSound => 'アラーム音';
+
+  @override
+  String get walkAlarmSoundSystem => 'システムのデフォルト';
+
+  @override
+  String get walkAlarmSoundBundledSection => 'アプリのサウンド';
+
+  @override
+  String get walkAlarmSoundDeviceSection => '端末のアラーム音';
+
+  @override
+  String get walkAlarmSoundBeep => 'ビープ';
+
+  @override
+  String get walkAlarmSoundChime => 'チャイム';
+
+  @override
+  String get walkAlarmSoundRising => 'だんだん速く';
+
+  @override
+  String get walkAlarmSoundSelect => '選択';
+
+  @override
+  String get walkAlarmSoundDeviceUnavailable => '端末のアラーム音を読み込めませんでした';
+
+  @override
+  String get walkAlarmSoundImportFailed => 'このアラーム音は使えません';
+
+  @override
   String get walkAlarmDeleteTitle => 'このアラームを削除しますか？';
 
   @override
