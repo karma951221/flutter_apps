@@ -19,7 +19,11 @@ object HolidayCalendarRules {
         val syncEvents: Int,
     )
 
-    /** 고른 휴일 캘린더. [official] 이면 설명을 몰라도 모든 일정을 공휴일로 본다. */
+    /**
+     * 고른 휴일 캘린더. [official] 이면 설명을 몰라도(비었거나 모르는 문구) 쉬는 날로 본다 — 구글
+     * `.official` 피드와 이름으로 찾은 캘린더(다른 앱 · 로컬은 설명을 비워 두는 일이 많다). 아니면(구글
+     * 일반 피드) 설명이 `공휴일`/`Public holiday` 인 것만. 어느 쪽이든 `기념일`/`Observance` 는 뺀다.
+     */
     data class Picked(val id: Long, val displayName: String, val official: Boolean)
 
     /** `Instances` 한 행. [startDay] · [endDay] 는 율리우스일(양 끝 포함). */
@@ -45,7 +49,7 @@ object HolidayCalendarRules {
      * 보지 않는다(화면에서 숨긴 것과 쉬는 날은 별개).
      * 1. 구글 계정의 한국 휴일 캘린더(id 가 `OWNER_ACCOUNT` · `CAL_SYNC1` · `_SYNC_ID` 중 하나에).
      * 2. 1 이 없으면 이름에 "휴일"(공휴일 포함) · "holiday" 가 든 캘린더(다른 앱 · 로컬). 다른 나라 구글
-     *    휴일 캘린더는 뺀다.
+     *    휴일 캘린더는 뺀다. 설명 필터는 구글 일반 피드에만 걸므로 이 캘린더는 [Picked.official].
      */
     fun pick(rows: List<CalendarRow>): List<Picked> {
         val live = rows.filter { it.syncEvents != 0 }
@@ -62,7 +66,7 @@ object HolidayCalendarRules {
                 .any { it != null && ANY_GOOGLE_HOLIDAY_ID.containsMatchIn(it) }
             if (otherCountry) return@mapNotNull null
             if (NAME_HINTS.none { name.contains(it, ignoreCase = true) }) return@mapNotNull null
-            Picked(row.id, name, official = false)
+            Picked(row.id, name, official = true)
         }
     }
 

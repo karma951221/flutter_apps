@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'core/app.dart';
 import 'core/background/alarm_resync.dart';
 import 'core/di/injection.dart';
+import 'domain/alarm/holiday/holiday_calendar.dart';
 import 'domain/alarm/usecase/alarm_use_case.dart';
 
 Future<void> main() async {
@@ -16,8 +17,8 @@ Future<void> main() async {
 }
 
 /// 앱이 떠 있지 않을 때 네이티브 `AlarmResync` 가 헤드리스 엔진에서 부른다 — 시간대가 바뀌었을 때와
-/// 하루 한 번 작업(`DailyAlarmSyncWorker`). 예약을 지금 시간대의 벽시계로 다시 채우고 `done` 을
-/// 보낸다(성공 · 실패 모두).
+/// 하루 한 번 작업(`DailyAlarmSyncWorker`). 공휴일 캐시를 갱신하고(하루 한 번, 엔진에 붙은
+/// `walk/holidays`), 예약을 지금 시간대의 벽시계로 다시 채우고 `done` 을 보낸다(성공 · 실패 모두).
 @pragma('vm:entry-point')
 Future<void> alarmResyncMain() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,7 @@ Future<void> alarmResyncMain() async {
       await Alarm.init();
       await configureDependencies();
     },
+    refreshHolidays: () => getIt<HolidayRefresher>().refresh(),
     sync: () => getIt<AlarmUseCase>().sync(),
     done: () => backgroundChannel.invokeMethod<void>('done'),
   );

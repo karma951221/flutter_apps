@@ -11,15 +11,32 @@ void main() {
     if (fail) throw StateError('$name 실패');
   };
 
-  test('init → sync → done 순서로 부른다', () async {
-    await runAlarmResync(init: record('init'), sync: record('sync'), done: record('done'));
+  test('init → 공휴일 갱신 → sync → done 순서로 부른다', () async {
+    await runAlarmResync(
+      init: record('init'),
+      refreshHolidays: record('holidays'),
+      sync: record('sync'),
+      done: record('done'),
+    );
 
-    expect(calls, ['init', 'sync', 'done']);
+    expect(calls, ['init', 'holidays', 'sync', 'done']);
   });
 
-  test('init 이 실패하면 sync 를 건너뛰고 done 을 부른다', () async {
+  test('공휴일 갱신이 실패해도 sync 와 done 을 부른다', () async {
+    await runAlarmResync(
+      init: record('init'),
+      refreshHolidays: record('holidays', fail: true),
+      sync: record('sync'),
+      done: record('done'),
+    );
+
+    expect(calls, ['init', 'holidays', 'sync', 'done']);
+  });
+
+  test('init 이 실패하면 공휴일 갱신 · sync 를 건너뛰고 done 을 부른다', () async {
     await runAlarmResync(
       init: record('init', fail: true),
+      refreshHolidays: record('holidays'),
       sync: record('sync'),
       done: record('done'),
     );
@@ -30,16 +47,18 @@ void main() {
   test('sync 가 실패해도 done 을 한 번 부르고 예외를 올리지 않는다', () async {
     await runAlarmResync(
       init: record('init'),
+      refreshHolidays: record('holidays'),
       sync: record('sync', fail: true),
       done: record('done'),
     );
 
-    expect(calls, ['init', 'sync', 'done']);
+    expect(calls, ['init', 'holidays', 'sync', 'done']);
   });
 
   test('done 이 실패해도 예외를 올리지 않고 다시 부르지 않는다', () async {
     await runAlarmResync(
       init: record('init'),
+      refreshHolidays: record('holidays'),
       sync: record('sync'),
       done: record('done', fail: true),
     );

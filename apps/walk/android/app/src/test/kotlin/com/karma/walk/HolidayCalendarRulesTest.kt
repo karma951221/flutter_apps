@@ -91,7 +91,25 @@ class HolidayCalendarRulesTest {
             ),
         )
         assertEquals(listOf(1L, 2L, 3L), picked.map { it.id })
-        assertFalse(picked.any { it.official })
+        // 이름으로 찾은 캘린더(다른 앱 · 로컬)는 설명을 비워 두는 일이 많다 — 설명을 몰라도 쉬는 날로 본다.
+        assertTrue(picked.all { it.official })
+    }
+
+    @Test
+    fun `이름으로 찾은 로컬 휴일 캘린더의 설명 없는 종일 일정도 공휴일 · 기념일은 뺀다`() {
+        val picked = HolidayCalendarRules.pick(listOf(row(7, accountType = "LOCAL", name = "대한민국의 휴일")))
+        val days = HolidayCalendarRules.holidays(
+            listOf(
+                instance(7, LocalDate.of(2026, 10, 9), "한글날", description = null),
+                instance(7, LocalDate.of(2026, 10, 3), "개천절", description = ""),
+                instance(7, LocalDate.of(2026, 5, 8), "어버이날", description = "기념일"),
+            ),
+            picked,
+        )
+        assertEquals(
+            mapOf(LocalDate.of(2026, 10, 3) to "개천절", LocalDate.of(2026, 10, 9) to "한글날"),
+            days,
+        )
     }
 
     @Test

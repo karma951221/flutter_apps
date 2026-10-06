@@ -209,7 +209,7 @@ static String signatureFor(Alarm alarm); // fnv1a32 hex, 울림 영향 값만(so
 
 ### W3-T3: 공휴일 — 폰 캘린더 + 내장 표
 
-**Files:** Create `lib/domain/alarm/holiday/holiday_calendar.dart`(`HolidayCalendar` · 출처 표시), `lib/domain/alarm/holiday/korean_holidays.dart`(내장 표), `lib/domain/alarm/holiday/device_holiday_source.dart`(인터페이스), `lib/data/alarm/channel_device_holiday_source.dart`, `lib/data/alarm/cached_holiday_calendar.dart`(캐시 + 대체), `android/app/src/main/kotlin/com/karma/walk/HolidayCalendarChannel.kt`, Kotlin 규칙 JUnit. Modify 매니페스트(`READ_CALENDAR`), 권한 묶음(`AlarmPermissions` 또는 별도 requester), `MainActivity.kt`(채널), 헤드리스 엔진 attach(W3-T5 의 `BackgroundDispatcher`). Tests 대응.
+**Files:** Create `lib/domain/alarm/holiday/holiday_calendar.dart`(`HolidayCalendar` · 출처 표시), `lib/domain/alarm/holiday/korean_holidays.dart`(내장 표), `lib/domain/alarm/holiday/device_holiday_source.dart`(인터페이스), `lib/data/alarm/channel_device_holiday_source.dart`, `lib/data/alarm/cached_holiday_calendar.dart`(캐시 + 대체), `android/app/src/main/kotlin/com/karma/walk/HolidayCalendarChannel.kt`, Kotlin 규칙 JUnit. Modify 매니페스트(`READ_CALENDAR`), 권한 묶음(`AlarmPermissions` 또는 별도 requester), `MainActivity.kt`(채널), 헤드리스 엔진 attach(지금의 `AlarmResync.startHeadless` — W3-T5 `BackgroundDispatcher` 가 이어받는다) · `alarmResyncMain` 에서 sync 앞에 `HolidayRefresher.refresh()`. Tests 대응.
 
 **Interfaces:**
 ```dart
@@ -218,8 +218,9 @@ sealed class HolidaySource // device(calendarName) | bundled(firstYear, lastYear
 abstract interface class DeviceHolidaySource { Future<List<({DateTime date, String name})>?> read(DateTime from, DateTime to); Future<String?> calendarName(); } // 권한 없음/캘린더 없음/실패 → null
 ```
 - [x] 내장 표: 조사 결과(`/private/tmp/claude-501/-Users-no-Desktop-socialapp/969b0496-efb7-4ae7-9aee-af71b5ffc927/scratchpad/korean_holidays_2026_2027.md`, 2026 · 2027 각 관공서 공휴일 · 대체공휴일 · 선거일, 노동절 · 제헌절 포함)를 상수로. 출처 URL 과 확인 날짜를 파일 머리 주석에.
-- [x] Kotlin: `CalendarContract.Calendars` 에서 휴일 캘린더 고르기(스펙 결정 기록의 순서) · `Instances` 로 범위 일정 읽기 · 종일 일정만 · 구글 휴일 캘린더는 설명이 "공휴일"/"Public holiday" 인 것만. 규칙은 순수 함수로 떼어 JUnit.
+- [x] Kotlin: `CalendarContract.Calendars` 에서 휴일 캘린더 고르기(스펙 결정 기록의 순서) · `Instances` 로 범위 일정 읽기 · 종일 일정만 · 구글 휴일 캘린더는 설명이 "공휴일"/"Public holiday" 인 것만(`.official` · 이름으로 찾은 캘린더는 "기념일"/"Observance" 만 뺀다). 규칙은 순수 함수로 떼어 JUnit.
 - [x] 캐시: 하루 한 번(앱 시작 · 하루 sync) 400일 범위를 읽어 `walk.holidays.cache` 에 저장, sync 는 캐시만 읽는다. 캐시 없음 → 내장 표.
+- [x] 하루 sync(헤드리스 `alarmResyncMain`)도 캐시를 갱신: `AlarmResync.startHeadless` 가 `walk/holidays` 를 attach, `runAlarmResync` 가 init → refreshHolidays(실패해도 계속) → sync → done.
 - [x] 실패 테스트(표 날짜 · 대체공휴일 · 캐시/대체 선택 · 채널 매핑 · Kotlin 규칙) → 구현 → `flutter build apk --debug`.
 - [ ] 에뮬레이터에서 로컬 캘린더(이름 "대한민국의 휴일", 종일 일정)를 만들어 읽히는지 확인. 실제 갤럭시 폰 확인은 사용자와(설정 탭의 출처 표시로).
 - [x] 커밋 `feat(walk): 공휴일을 폰 캘린더에서 읽고 없으면 내장 표를 쓴다`.
@@ -234,6 +235,7 @@ abstract interface class DeviceHolidaySource { Future<List<({DateTime date, Stri
 
 **Files:** 스펙 §4.1 · §4.2 의 Kotlin 파일 · 매니페스트 · `core/background/background_task.dart`(runAlarmResync 일반화) · `main.dart`(`alarmReminderActionMain`) · `main_shell_page.dart`(`reminderAction`). Tests: `background_task_test.dart`, `main_shell_page_test.dart`, Kotlin 저장소 · 재부팅 판정 순수 함수 JUnit.
 - [ ] 첫 확인: Dart 커스텀 진입점이 `List<String>` 인자를 받는지(안 되면 채널로 인자 받기).
+- [ ] 일반화해도 하루 sync 의 헤드리스 엔진에 `walk/holidays` attach 와 sync 앞 `HolidayRefresher.refresh()` 를 지킨다(W3-T3 에서 `AlarmResync` · `runAlarmResync` 에 넣은 것, 테스트도 옮긴다).
 - [ ] 실패 테스트 → 구현 → `flutter build apk --debug`. 커밋 `feat(walk): 미리 알림을 띄우고 알림에서 건너뛴다`.
 
 ### W3-T6: 화면 — 울림 설정 · 건너뛰기 · 칩 · 울림 화면 · 설정 스위치

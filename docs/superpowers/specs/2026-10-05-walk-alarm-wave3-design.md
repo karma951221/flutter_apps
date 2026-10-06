@@ -36,7 +36,7 @@
 | B5 는 앱 전역 설정 "공휴일 미리 알림"(설정 탭 알람 섹션, 기본 켬). 반복 알람의 회차가 공휴일이면 24시간 전에 알림: "10월 9일(한글날) 오전 7:00 알람이 공휴일에 울려요" + [다음 알람 건너뛰기] · [울리기] | 사용자 결정(자동 건너뛰기 대신 묻기) |
 | 공휴일 표는 `domain/alarm/holiday/korean_holidays.dart` 상수(2026 · 2027, 대체공휴일 포함, 이름 한국어). 출처(관보 · 우주항공청 월력요항)를 파일 머리 주석에 적는다. 임시공휴일은 앱 업데이트로만 | 사용자 결정(앱 내장). 백엔드 · API 키 없음 |
 | **공휴일 출처는 폰 캘린더가 먼저, 없으면 내장 표**(2026-10-06 사용자 결정). 안드로이드 캘린더 제공자(`CalendarContract`)의 모든 캘린더 중 휴일 캘린더를 찾아 일정을 읽는다. 특정 캘린더 앱을 가정하지 않는다: 구글 휴일 캘린더(`OWNER_ACCOUNT` 가 `#holiday@group.v.calendar.google.com` 로 끝남, 한국은 `ko.south_korea#holiday@…`) · 이름에 "휴일" · "공휴일" · "holiday" 가 든 캘린더(삼성 등 다른 앱 포함) 순으로 고른다 | 공휴일은 해마다 바뀌고 임시공휴일은 몇 주 전에 지정된다. 폰 캘린더는 캘린더 앱 제공자가 갱신하므로 인터넷 권한 · API 키 없이 따라간다(Health Connect 와 같은 "폰 데이터 읽기" 방식) |
-| 쉬는 날 판정(스파이크 2026-10-06 확인): 휴일 캘린더는 `ACCOUNT_TYPE == "com.google"` 이고 `OWNER_ACCOUNT`(또는 `CAL_SYNC1` · `_SYNC_ID`)가 `^[a-z_-]+\.south_korea(\.official)?#holiday@group\.v\.calendar\.google\.com$` 인 것. `Instances` 의 종일 일정 중 설명 첫 줄이 `공휴일`/`Public holiday` 면 쉬는 날, `기념일`/`Observance` 면 아님, 그 밖의 문구는 `.official` 캘린더일 때만 쉬는 날. 대체공휴일 · 선거일도 `공휴일` 로 들어온다. 표시 이름으로 찾기는 실기기 확인 뒤 보조 규칙으로만 | 구글 "대한민국의 휴일" 피드는 공휴일 205 · 기념일 75(어버이날 등)를 섞어 둔다. 삼성 캘린더 내장 공휴일은 다른 앱이 읽을 수 있는지 확인되지 않았다(앱 내부 데이터일 가능성). 구글 캘린더의 "데이터를 다른 앱과 공유" 토글이 꺼져 있으면 안 보인다 → 내장 표 |
+| 쉬는 날 판정(스파이크 2026-10-06 확인): 휴일 캘린더는 `ACCOUNT_TYPE == "com.google"` 이고 `OWNER_ACCOUNT`(또는 `CAL_SYNC1` · `_SYNC_ID`)가 `^[a-z_-]+\.south_korea(\.official)?#holiday@group\.v\.calendar\.google\.com$` 인 것. `Instances` 의 종일 일정 중 설명 첫 줄이 `공휴일`/`Public holiday` 면 쉬는 날, `기념일`/`Observance` 면 아님, 그 밖의 문구는 `.official` 캘린더일 때만 쉬는 날. 대체공휴일 · 선거일도 `공휴일` 로 들어온다. 표시 이름으로 찾기는 실기기 확인 뒤 보조 규칙으로만 — 이름으로 찾은 캘린더(다른 앱 · 로컬)는 설명을 비워 두는 일이 많아 `기념일`/`Observance` 만 빼고 모든 종일 일정을 쉬는 날로 본다(설명 필터는 구글 일반 피드에만) | 구글 "대한민국의 휴일" 피드는 공휴일 205 · 기념일 75(어버이날 등)를 섞어 둔다. 삼성 캘린더 내장 공휴일은 다른 앱이 읽을 수 있는지 확인되지 않았다(앱 내부 데이터일 가능성). 구글 캘린더의 "데이터를 다른 앱과 공유" 토글이 꺼져 있으면 안 보인다 → 내장 표 |
 | `READ_CALENDAR` 런타임 권한은 "공휴일 미리 알림"을 처음 켤 때(기본 켬이므로 알람 탭 첫 진입 뒤 알람 저장 때) 묻는다. 거부 · 휴일 캘린더 없음 · 읽기 실패면 내장 표. 설정 탭 공휴일 행에 지금 출처("폰 캘린더: 대한민국의 휴일" / "내장 표 2026–2027")와 권한 상태를 보인다 | 사용자가 갤럭시 폰에서 무엇이 잡히는지 바로 확인할 수 있다 |
 | 캘린더 읽기는 sync 마다 하지 않고, 앞으로 400일 범위를 읽어 하루 한 번(앱 시작 · 하루 sync) 캐시(`walk.holidays.cache`, 읽은 시각 · 출처 포함)한다. 캐시가 없으면 내장 표 | 백그라운드 헤드리스 sync 에서도 빠르다 |
 | 영어 · 일본어 알림은 공휴일 이름 없이 날짜만 쓴다 | 이름 번역표를 두지 않는다 |
@@ -130,13 +130,13 @@ abstract interface class ReminderScheduler {
 
 스파이크 C2/B5 §3.5 그대로:
 `BackgroundDispatcher`(웨이브 1 `AlarmResync` 를 일반화: method · arguments · entrypoint · entrypointArgs · `onEnd(ok)`, 헤드리스 엔진에
-`walk/reminders` 채널도 attach) · `ReminderStore`(SharedPreferences `walk_reminders`, org.json) · `ReminderAlarms` ·
+`walk/reminders` 채널도 attach. 웨이브 1 `AlarmResync` 헤드리스 엔진에 붙인 `walk/holidays` 도 그대로 attach — 하루 sync 진입점이 `sync` 앞에 공휴일 캐시를 갱신한다) · `ReminderStore`(SharedPreferences `walk_reminders`, org.json) · `ReminderAlarms` ·
 `ReminderChannel` · `ReminderFireReceiver` · `ReminderActionReceiver` · `ReminderBootReceiver` + 매니페스트 수신기 3개.
 setAlarmClock 은 쓰지 않는다(상태바 다음 알람 표시를 가져가지 않게).
 
 ### 4.2 Dart 진입점 · 셸
 
-- `core/background/background_task.dart`: `runBackgroundTask({init, task, done(bool ok)})` 로 `runAlarmResync` 를 일반화.
+- `core/background/background_task.dart`: `runBackgroundTask({init, task, done(bool ok)})` 로 `runAlarmResync` 를 일반화. 하루 sync 의 task 는 지금처럼 `HolidayRefresher.refresh()`(실패해도 계속) → `AlarmUseCase.sync()` 순서를 지킨다.
 - `main.dart`: `@pragma('vm:entry-point') alarmReminderActionMain(List<String> args)` — `Alarm.init()` → DI → `skipOccurrence`.
   커스텀 진입점이 인자를 못 받으면 시작 직후 채널로 인자를 받아 온다(구현 첫 확인 항목).
 - `MainShellPage._onBackgroundCall`: `'reminderAction'` → `skipOccurrence` → 목록 reload → `true`.

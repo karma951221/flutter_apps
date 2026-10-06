@@ -138,6 +138,8 @@ object AlarmResync {
         loader.startInitialization(context)
         loader.ensureInitializationComplete(context, null)
         val engine = FlutterEngine(context)
+        // alarmResyncMain 이 sync 앞에 공휴일 캐시를 갱신한다 — 앱을 오래 열지 않아도 하루 한 번 읽게.
+        HolidayCalendarChannel.attach(context, engine)
         MethodChannel(engine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result ->
                 if (call.method == "done") {
