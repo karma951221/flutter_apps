@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_motion.dart';
 import '../theme/app_spacing.dart';
 import 'app_button.dart';
 
@@ -13,6 +14,9 @@ import 'app_button.dart';
 ///
 /// 스스로 스크롤을 만들지 않는다. 당겨서 새로고침이 비어 있는 화면에서도
 /// 동작해야 하므로 스크롤 뷰는 목록 쪽이 감싼다.
+///
+/// [animateIn] 을 켜면 처음 나타날 때 한 번만 페이드 + 살짝 위로 올라온다. 상태가
+/// 바뀌어 다시 빌드돼도 재생하지 않는다 — 같은 안내가 깜빡이면 오류처럼 보인다.
 class AppPlaceholder extends StatelessWidget {
   const AppPlaceholder({
     required this.message,
@@ -21,6 +25,7 @@ class AppPlaceholder extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.actionKey,
+    this.animateIn = false,
     super.key,
   });
 
@@ -40,6 +45,11 @@ class AppPlaceholder extends StatelessWidget {
   /// 행동 버튼을 가리키는 키. 테스트·화면이 재시도 버튼을 찾을 때 쓴다.
   final Key? actionKey;
 
+  /// 처음 나타날 때 페이드 + 슬라이드로 등장할지. 기본 false.
+  ///
+  /// 켜도 시스템 '애니메이션 줄이기'면 바로 최종 모습으로 그린다.
+  final bool animateIn;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -47,7 +57,7 @@ class AppPlaceholder extends StatelessWidget {
     final label = actionLabel;
     final action = onAction;
 
-    return Padding(
+    final content = Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -85,6 +95,24 @@ class AppPlaceholder extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+
+    if (!animateIn || !AppMotion.enabled(context)) return content;
+
+    // `TweenAnimationBuilder` 는 끝값이 같으면 다시 빌드돼도 재생하지 않는다 —
+    // 마운트 때 한 번만 등장한다.
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: AppMotion.long,
+      curve: AppMotion.standard,
+      child: content,
+      builder: (context, t, child) => Opacity(
+        opacity: t,
+        child: Transform.translate(
+          offset: Offset(0, (1 - t) * AppSpacing.sm),
+          child: child,
+        ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 export 'src/theme/app_colors.dart';
+export 'src/theme/app_motion.dart';
 export 'src/theme/app_radius.dart';
 export 'src/theme/app_spacing.dart';
 export 'src/theme/app_theme.dart';
