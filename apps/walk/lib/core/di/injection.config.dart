@@ -19,6 +19,7 @@ import '../../data/alarm/alarm_permission_module.dart' as _i343;
 import '../../data/alarm/cached_holiday_calendar.dart' as _i93;
 import '../../data/alarm/channel_alarm_sound_source.dart' as _i793;
 import '../../data/alarm/channel_device_holiday_source.dart' as _i279;
+import '../../data/alarm/channel_reminder_scheduler.dart' as _i553;
 import '../../data/alarm/holiday_module.dart' as _i183;
 import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
@@ -32,6 +33,7 @@ import '../../domain/alarm/holiday/holiday_calendar_access.dart' as _i227;
 import '../../domain/alarm/permission/alarm_permissions.dart' as _i933;
 import '../../domain/alarm/repository/alarm_repository.dart' as _i296;
 import '../../domain/alarm/scheduler/alarm_scheduler.dart' as _i702;
+import '../../domain/alarm/scheduler/reminder_scheduler.dart' as _i297;
 import '../../domain/alarm/sound/alarm_sound_source.dart' as _i344;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
@@ -59,6 +61,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i344.AlarmSoundSource>(
       () => _i793.ChannelAlarmSoundSource(),
+    );
+    gh.lazySingleton<_i297.ReminderScheduler>(
+      () => const _i553.ChannelReminderScheduler(),
     );
     gh.lazySingleton<_i702.AlarmScheduler>(() => _i238.PackageAlarmScheduler());
     gh.lazySingleton<_i332.HealthGateway>(() => _i332.HealthPluginGateway());
@@ -102,6 +107,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i296.AlarmRepository>(),
         gh<_i702.AlarmScheduler>(),
         gh<_i494.Clock>(),
+        gh<_i297.ReminderScheduler>(),
+        gh<_i961.HolidayCalendar>(),
+        gh<_i91.SettingsRepository>(),
       ),
     );
     return this;

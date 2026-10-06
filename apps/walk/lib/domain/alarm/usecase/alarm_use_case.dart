@@ -2,9 +2,14 @@ import 'package:core/core.dart';
 import 'package:injectable/injectable.dart';
 
 import '../entity/alarm.dart';
+import '../../settings/repository/settings_repository.dart';
+import '../entity/alarm_reminder.dart';
 import '../entity/alarm_trigger.dart';
+import '../holiday/holiday_calendar.dart';
 import '../repository/alarm_repository.dart';
 import '../scheduler/alarm_scheduler.dart';
+import '../scheduler/reminder_scheduler.dart';
+import '../reminders.dart';
 import '../upcoming_triggers.dart';
 
 /// 알람 정의와 패키지 예약을 함께 다룬다. 바꾸는 동작은 모두 끝에 [sync] 한다.
@@ -65,11 +70,23 @@ abstract interface class AlarmUseCase {
 
 @LazySingleton(as: AlarmUseCase)
 class DefaultAlarmUseCase implements AlarmUseCase {
-  DefaultAlarmUseCase(this._repository, this._scheduler, this._clock);
+  DefaultAlarmUseCase(
+    this._repository,
+    this._scheduler,
+    this._clock,
+    this._reminders,
+    this._holidays,
+    this._settings,
+  );
 
   final AlarmRepository _repository;
   final AlarmScheduler _scheduler;
   final Clock _clock;
+  final ReminderScheduler _reminders;
+  final HolidayCalendar _holidays;
+
+  /// 공휴일 미리 알림 설정(`AppSettings.holidayReminder`)을 읽는다.
+  final SettingsRepository _settings;
 
   /// 방금 울릴 때가 됐지만 아직 울림으로 잡히지 않은 회차를 지우지 않는 여유.
   /// (패키지 `checkAlarm` 의 30초 유예와 같은 이유 — 곧 울릴 알람을 지우는 쪽이 훨씬 나쁘다.)
@@ -319,6 +336,51 @@ class DefaultAlarmUseCase implements AlarmUseCase {
       if (ringing.contains(id)) continue;
       if (scheduled[id] == (at: trigger.at, signature: _scheduler.signatureOf(alarm))) continue;
       await _scheduler.schedule(id, trigger.at, alarm);
+    }
+    await _syncReminders(alarms, now);
+  }
+
+  /// 미리 알림을 알람 정의에 맞춘다(웨이브 3 스펙 §3.3). 실패는 삼킨다 — 미리 알림 때문에
+  /// 알람 예약이 실패하면 안 된다.
+  ///
+  /// 이미 떠 있는(띄울 시각이 지난) 미리 알림은 그 회차가 아직 있고 종류가 여전히 켜져 있으면
+  /// 둔다 — 원하는 목록은 "아직 띄울 것"만 담아(soon 은 리드 안이면 만들지 않는다) 거기서 빠지지만
+  /// 지우면 사용자가 보던 알림이 사라진다. 다시 걸지도 않는다(같은 알림이 또 뜬다).
+  Future<void> _syncReminders(List<Alarm> alarms, DateTime now) async {
+    try {
+      final holidayReminder = _settings.load().holidayReminder;
+      final desired = <int, (AlarmReminder, Alarm)>{};
+      final alive = <int>{};
+      for (final alarm in alarms) {
+        final triggers = triggersOf(alarm, now);
+        List<AlarmReminder> of({Duration soonLead = alarmSoonLead}) => remindersOf(
+          alarm,
+          triggers,
+          now,
+          holidays: _holidays,
+          holidayReminder: holidayReminder,
+          soonLead: soonLead,
+        );
+        for (final reminder in of()) {
+          desired[reminder.id] = (reminder, alarm);
+        }
+        // 리드를 0 으로 두면 울릴 시각 전인 모든 회차 — 떠 있어도 되는 것.
+        alive.addAll([for (final reminder in of(soonLead: Duration.zero)) reminder.id]);
+      }
+
+      final scheduled = await _reminders.scheduled();
+      for (final MapEntry(key: id, value: at) in scheduled.entries) {
+        final shown = !at.isAfter(now);
+        if (desired.containsKey(id) || (shown && alive.contains(id))) continue;
+        await _reminders.cancel(id);
+      }
+      for (final MapEntry(key: id, value: (reminder, alarm)) in desired.entries) {
+        final at = scheduled[id];
+        if (at != null && (at == reminder.at || !at.isAfter(now))) continue;
+        await _reminders.schedule(reminder, alarm);
+      }
+    } on Object {
+      // 다음 sync 에서 다시 맞춘다.
     }
   }
 

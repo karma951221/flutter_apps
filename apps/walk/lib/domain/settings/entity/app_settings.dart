@@ -20,9 +20,14 @@ class AppSettings with _$AppSettings {
   @override
   final DateTime? goalCelebratedOn;
 
+  /// 반복 알람이 공휴일에 울리면 24시간 전에 알려 준다(앱 전역, 기본 켬).
+  @override
+  final bool holidayReminder;
+
   const AppSettings({
     this.themeMode = AppThemeMode.system,
     this.stepGoal = StepGoal.defaultSteps,
     this.goalCelebratedOn,
+    this.holidayReminder = true,
   });
 }

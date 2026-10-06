@@ -111,4 +111,40 @@ void main() {
       expect(repo.load().goalCelebratedOn, isNull);
     });
   });
+
+  group('공휴일 미리 알림', () {
+    late PrefsSettingsRepository repo;
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      repo = PrefsSettingsRepository(await SharedPreferences.getInstance());
+    });
+
+    test('저장값이 없으면 켬', () {
+      expect(repo.load().holidayReminder, isTrue);
+    });
+
+    test('끔 · 켬 왕복', () async {
+      await repo.save(const AppSettings(holidayReminder: false));
+      expect(repo.load().holidayReminder, isFalse);
+      await repo.save(const AppSettings());
+      expect(repo.load().holidayReminder, isTrue);
+    });
+
+    test('다른 설정을 바꿔도 유지된다', () async {
+      await repo.save(const AppSettings(holidayReminder: false));
+      await repo.save(repo.load().copyWith(stepGoal: 9000));
+      expect(repo.load().holidayReminder, isFalse);
+    });
+
+    test('bool 이 아닌 값이면 켬', () async {
+      SharedPreferences.setMockInitialValues({
+        PrefsSettingsRepository.holidayReminderKey: 'no',
+      });
+      final broken = PrefsSettingsRepository(
+        await SharedPreferences.getInstance(),
+      );
+      expect(broken.load().holidayReminder, isTrue);
+    });
+  });
 }

@@ -1555,6 +1555,36 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get walkReminderSoonTitle => 'Alarm coming up';
+
+  @override
+  String walkReminderSoonBody(String time, String label) {
+    return '$time $label';
+  }
+
+  @override
+  String get walkReminderTurnOffOnce => 'Skip this one';
+
+  @override
+  String get walkReminderHolidayTitle => 'Alarm on a holiday';
+
+  @override
+  String walkReminderHolidayBody(String date, String name, String time) {
+    return 'Your $time alarm on $date falls on a holiday';
+  }
+
+  @override
+  String walkReminderHolidayBodyNoName(String date, String time) {
+    return 'Your $time alarm on $date falls on a holiday';
+  }
+
+  @override
+  String get walkReminderSkip => 'Skip next alarm';
+
+  @override
+  String get walkReminderRing => 'Keep it';
+
+  @override
   String get walkShellTabAlarm => 'Alarms';
 
   @override

@@ -1470,6 +1470,36 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get walkReminderSoonTitle => '곧 알람이 울려요';
+
+  @override
+  String walkReminderSoonBody(String time, String label) {
+    return '$time $label';
+  }
+
+  @override
+  String get walkReminderTurnOffOnce => '이번만 끄기';
+
+  @override
+  String get walkReminderHolidayTitle => '공휴일에 울리는 알람';
+
+  @override
+  String walkReminderHolidayBody(String date, String name, String time) {
+    return '$date($name) $time 알람이 공휴일에 울려요';
+  }
+
+  @override
+  String walkReminderHolidayBodyNoName(String date, String time) {
+    return '$date $time 알람이 공휴일에 울려요';
+  }
+
+  @override
+  String get walkReminderSkip => '다음 알람 건너뛰기';
+
+  @override
+  String get walkReminderRing => '울리기';
+
+  @override
   String get walkShellTabAlarm => '알람';
 
   @override

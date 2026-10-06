@@ -14,6 +14,7 @@ class PrefsSettingsRepository implements SettingsRepository {
   static const themeModeKey = 'walk.themeMode';
   static const stepGoalKey = 'walk.stepGoal';
   static const goalCelebratedOnKey = 'walk.goalCelebratedOn';
+  static const holidayReminderKey = 'walk.holidayReminder';
 
   @override
   AppSettings load() {
@@ -23,12 +24,14 @@ class PrefsSettingsRepository implements SettingsRepository {
         AppThemeMode.values.asNameMap()[name] ?? AppThemeMode.system;
     final goal = _prefs.get(stepGoalKey);
     final celebrated = _prefs.get(goalCelebratedOnKey);
+    final holidayReminder = _prefs.get(holidayReminderKey);
     return AppSettings(
       themeMode: themeMode,
       stepGoal: goal is int ? StepGoal.clamp(goal) : StepGoal.defaultSteps,
       goalCelebratedOn: celebrated is String
           ? DateTime.tryParse(celebrated)
           : null,
+      holidayReminder: holidayReminder is bool ? holidayReminder : true,
     );
   }
 
@@ -40,6 +43,7 @@ class PrefsSettingsRepository implements SettingsRepository {
     await Future.wait([
       _prefs.setString(themeModeKey, settings.themeMode.name),
       _prefs.setInt(stepGoalKey, settings.stepGoal),
+      _prefs.setBool(holidayReminderKey, settings.holidayReminder),
       if (celebrated == null)
         _prefs.remove(goalCelebratedOnKey)
       else

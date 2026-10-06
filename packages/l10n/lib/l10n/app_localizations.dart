@@ -2876,6 +2876,54 @@ abstract class AppLocalizations {
   /// **'{minutes}분 뒤 다시 울림'**
   String walkAlarmSnooze(int minutes);
 
+  /// 울리기 30분 전 미리 알림의 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'곧 알람이 울려요'**
+  String get walkReminderSoonTitle;
+
+  /// 울리기 30분 전 미리 알림의 본문. time 은 기기 언어의 울릴 시각(오전 7:00), label 은 알람 라벨(없으면 '알람')
+  ///
+  /// In ko, this message translates to:
+  /// **'{time} {label}'**
+  String walkReminderSoonBody(String time, String label);
+
+  /// 미리 알림의 액션 — 곧 울릴 회차 하나만 쉰다
+  ///
+  /// In ko, this message translates to:
+  /// **'이번만 끄기'**
+  String get walkReminderTurnOffOnce;
+
+  /// 반복 알람이 공휴일에 울릴 때 24시간 전에 띄우는 알림의 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'공휴일에 울리는 알람'**
+  String get walkReminderHolidayTitle;
+
+  /// 공휴일 미리 알림의 본문. date 는 기기 언어의 날짜(10월 9일), name 은 공휴일 이름(한글날), time 은 울릴 시각(오전 7:00). 영어 · 일본어는 이름을 쓰지 않는다
+  ///
+  /// In ko, this message translates to:
+  /// **'{date}({name}) {time} 알람이 공휴일에 울려요'**
+  String walkReminderHolidayBody(String date, String name, String time);
+
+  /// 공휴일 이름을 모를 때의 공휴일 미리 알림 본문. date 는 날짜, time 은 울릴 시각
+  ///
+  /// In ko, this message translates to:
+  /// **'{date} {time} 알람이 공휴일에 울려요'**
+  String walkReminderHolidayBodyNoName(String date, String time);
+
+  /// 공휴일 미리 알림의 액션 — 공휴일 회차 하나를 건너뛴다
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 알람 건너뛰기'**
+  String get walkReminderSkip;
+
+  /// 공휴일 미리 알림의 액션 — 그대로 울리도록 알림만 닫는다
+  ///
+  /// In ko, this message translates to:
+  /// **'울리기'**
+  String get walkReminderRing;
+
   /// 하단 탭 — 알람
   ///
   /// In ko, this message translates to:

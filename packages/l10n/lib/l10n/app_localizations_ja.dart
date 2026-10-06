@@ -1468,6 +1468,36 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get walkReminderSoonTitle => 'まもなくアラームが鳴ります';
+
+  @override
+  String walkReminderSoonBody(String time, String label) {
+    return '$time $label';
+  }
+
+  @override
+  String get walkReminderTurnOffOnce => '今回だけオフ';
+
+  @override
+  String get walkReminderHolidayTitle => '祝日に鳴るアラーム';
+
+  @override
+  String walkReminderHolidayBody(String date, String name, String time) {
+    return '$date $timeのアラームは祝日に鳴ります';
+  }
+
+  @override
+  String walkReminderHolidayBodyNoName(String date, String time) {
+    return '$date $timeのアラームは祝日に鳴ります';
+  }
+
+  @override
+  String get walkReminderSkip => '次のアラームをスキップ';
+
+  @override
+  String get walkReminderRing => '鳴らす';
+
+  @override
   String get walkShellTabAlarm => 'アラーム';
 
   @override

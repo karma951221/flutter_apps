@@ -2,10 +2,15 @@ import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
 import 'package:walk/domain/alarm/entity/alarm_sound.dart';
+import 'package:walk/domain/alarm/entity/alarm_reminder.dart';
 import 'package:walk/domain/alarm/entity/alarm_trigger.dart';
+import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/repository/alarm_repository.dart';
 import 'package:walk/domain/alarm/scheduler/alarm_scheduler.dart';
+import 'package:walk/domain/alarm/scheduler/reminder_scheduler.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
+import 'package:walk/domain/settings/entity/app_settings.dart';
+import 'package:walk/domain/settings/repository/settings_repository.dart';
 
 class _MemoryRepository implements AlarmRepository {
   List<Alarm> alarms = [];
@@ -96,6 +101,55 @@ class _FakeScheduler implements AlarmScheduler {
   }
 }
 
+class _FakeReminders implements ReminderScheduler {
+  /// id → 띄울 시각(걸렸거나 떠 있는 것).
+  final Map<int, DateTime> entries = {};
+  final Map<int, AlarmReminder> reminders = {};
+  final List<int> scheduleCalls = [];
+  final List<int> cancelCalls = [];
+  bool failScheduled = false;
+
+  @override
+  Future<Map<int, DateTime>> scheduled() async {
+    if (failScheduled) throw StateError('채널 실패');
+    return {...entries};
+  }
+
+  @override
+  Future<void> schedule(AlarmReminder reminder, Alarm alarm) async {
+    scheduleCalls.add(reminder.id);
+    entries[reminder.id] = reminder.at;
+    reminders[reminder.id] = reminder;
+  }
+
+  @override
+  Future<void> cancel(int reminderId) async {
+    cancelCalls.add(reminderId);
+    entries.remove(reminderId);
+    reminders.remove(reminderId);
+  }
+}
+
+class _Holidays implements HolidayCalendar {
+  final Map<DateTime, String> days = {};
+
+  @override
+  String? nameOf(DateTime date) => days[DateTime(date.year, date.month, date.day)];
+
+  @override
+  HolidaySource get source => const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
+}
+
+class _MemorySettings implements SettingsRepository {
+  AppSettings value = const AppSettings();
+
+  @override
+  AppSettings load() => value;
+
+  @override
+  Future<void> save(AppSettings settings) async => value = settings;
+}
+
 class _MutableClock extends Clock {
   _MutableClock(this.current);
   DateTime current;
@@ -109,6 +163,9 @@ void main() {
   late _MemoryRepository repository;
   late _FakeScheduler scheduler;
   late _MutableClock clock;
+  late _FakeReminders reminders;
+  late _Holidays holidays;
+  late _MemorySettings settings;
   late AlarmUseCase useCase;
 
   // 2026-09-28 월요일 정오.
@@ -119,7 +176,10 @@ void main() {
     repository = _MemoryRepository();
     scheduler = _FakeScheduler();
     clock = _MutableClock(mondayNoon);
-    useCase = DefaultAlarmUseCase(repository, scheduler, clock);
+    reminders = _FakeReminders();
+    holidays = _Holidays();
+    settings = _MemorySettings();
+    useCase = DefaultAlarmUseCase(repository, scheduler, clock, reminders, holidays, settings);
   });
 
   group('save', () {
@@ -971,10 +1031,162 @@ void main() {
     });
   });
 
+  group('미리 알림', () {
+    // 화 9-29 07:00 · 수 9-30 07:00 … (월 정오 기준)
+    final tuesday7 = DateTime(2026, 9, 29, 7);
+    final wednesday7 = DateTime(2026, 9, 30, 7);
+    int soonId(int alarmId, DateTime at) => reminderId(pid(alarmId, at), ReminderKind.soon);
+    int holidayId(int alarmId, DateTime at) => reminderId(pid(alarmId, at), ReminderKind.holiday);
+    const weekdays = {Weekday.tue, Weekday.wed};
+
+    test('remindBefore 알람은 회차마다 30분 전 미리 알림을 건다', () async {
+      await useCase.save(const Alarm(hour: 7, minute: 0, repeat: weekdays, remindBefore: true));
+
+      expect(reminders.entries, {
+        soonId(1, tuesday7): DateTime(2026, 9, 29, 6, 30),
+        soonId(1, wednesday7): DateTime(2026, 9, 30, 6, 30),
+        soonId(1, DateTime(2026, 10, 6, 7)): DateTime(2026, 10, 6, 6, 30),
+        soonId(1, DateTime(2026, 10, 7, 7)): DateTime(2026, 10, 7, 6, 30),
+      });
+      expect(reminders.reminders[soonId(1, tuesday7)]!.packageId, pid(1, tuesday7));
+    });
+
+    test('remindBefore 가 꺼진 알람은 걸지 않는다', () async {
+      await useCase.save(const Alarm(hour: 7, minute: 0, repeat: weekdays));
+      expect(reminders.entries, isEmpty);
+    });
+
+    test('멱등이다 — 같은 시각이면 다시 걸지 않는다', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: weekdays, remindBefore: true)];
+      await useCase.sync();
+      reminders.scheduleCalls.clear();
+
+      await useCase.sync();
+
+      expect(reminders.scheduleCalls, isEmpty);
+      expect(reminders.cancelCalls, isEmpty);
+    });
+
+    test('끄면 미리 알림도 지운다', () async {
+      final saved = await useCase.save(
+        const Alarm(hour: 7, minute: 0, repeat: weekdays, remindBefore: true),
+      );
+
+      await useCase.toggle(saved.id, enabled: false);
+
+      expect(reminders.entries, isEmpty);
+    });
+
+    test('시각을 바꾸면 띄울 시각도 바꿔 건다', () async {
+      final saved = await useCase.save(
+        const Alarm(hour: 7, minute: 0, repeat: {Weekday.tue}, remindBefore: true),
+      );
+
+      await useCase.save(saved.copyWith(minute: 20));
+
+      expect(reminders.entries, {
+        soonId(1, tuesday7): DateTime(2026, 9, 29, 6, 50),
+        soonId(1, DateTime(2026, 10, 6)): DateTime(2026, 10, 6, 6, 50),
+      });
+    });
+
+    test('정의에 없는 미리 알림은 지운다', () async {
+      reminders.entries[soonId(9, tuesday7)] = DateTime(2026, 9, 29, 6, 30); // 지워진 알람
+
+      await useCase.sync();
+
+      expect(reminders.cancelCalls, [soonId(9, tuesday7)]);
+    });
+
+    test('떠 있는(띄울 시각이 지난) 미리 알림은 다시 걸지도 지우지도 않는다', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: weekdays, remindBefore: true)];
+      await useCase.sync();
+      clock.current = DateTime(2026, 9, 29, 6, 40); // 화 6:30 미리 알림이 떠 있다
+      reminders.scheduleCalls.clear();
+
+      await useCase.sync();
+
+      expect(reminders.entries[soonId(1, tuesday7)], DateTime(2026, 9, 29, 6, 30));
+      expect(reminders.scheduleCalls, isEmpty);
+      expect(reminders.cancelCalls, isEmpty);
+    });
+
+    test('떠 있는 미리 알림도 그 회차를 건너뛰면 지운다', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: weekdays, remindBefore: true)];
+      await useCase.sync();
+      clock.current = DateTime(2026, 9, 29, 6, 40);
+
+      await useCase.skipOccurrence(pid(1, tuesday7));
+
+      expect(reminders.entries.keys, isNot(contains(soonId(1, tuesday7))));
+      expect(reminders.entries.keys, contains(soonId(1, wednesday7)));
+    });
+
+    test('떠 있는 미리 알림도 remindBefore 를 끄면 지운다', () async {
+      final saved = await useCase.save(
+        const Alarm(hour: 7, minute: 0, repeat: weekdays, remindBefore: true),
+      );
+      clock.current = DateTime(2026, 9, 29, 6, 40);
+
+      await useCase.save(saved.copyWith(remindBefore: false));
+
+      expect(reminders.entries, isEmpty);
+    });
+
+    group('공휴일', () {
+      setUp(() => holidays.days[DateTime(2026, 9, 30)] = '테스트휴일');
+
+      test('반복 알람의 공휴일 회차는 24시간 전에 이름과 함께 건다', () async {
+        await useCase.save(const Alarm(hour: 7, minute: 0, repeat: weekdays));
+
+        expect(reminders.entries, {holidayId(1, wednesday7): tuesday7});
+        expect(reminders.reminders.values.single.holidayName, '테스트휴일');
+      });
+
+      test('설정을 끄면 걸지 않고, 걸린 것도 지운다', () async {
+        await useCase.save(const Alarm(hour: 7, minute: 0, repeat: weekdays));
+        settings.value = const AppSettings(holidayReminder: false);
+
+        await useCase.sync();
+
+        expect(reminders.entries, isEmpty);
+      });
+
+      test('24시간 전이 지났으면 지금 띄우고, 다음 sync 에서 다시 띄우지 않는다', () async {
+        clock.current = DateTime(2026, 9, 29, 9);
+        await useCase.save(const Alarm(hour: 7, minute: 0, repeat: weekdays));
+        expect(reminders.entries, {holidayId(1, wednesday7): DateTime(2026, 9, 29, 9)});
+
+        clock.current = DateTime(2026, 9, 29, 9, 5);
+        reminders.scheduleCalls.clear();
+        await useCase.sync();
+
+        expect(reminders.scheduleCalls, isEmpty);
+        expect(reminders.entries, {holidayId(1, wednesday7): DateTime(2026, 9, 29, 9)});
+      });
+
+      test('1회성은 걸지 않는다', () async {
+        await useCase.save(Alarm(hour: 7, minute: 0, oneShotAt: wednesday7));
+        expect(reminders.entries, isEmpty);
+      });
+    });
+
+    test('미리 알림이 실패해도 알람 예약은 끝난다', () async {
+      reminders.failScheduled = true;
+
+      final saved = await useCase.save(
+        const Alarm(hour: 7, minute: 0, repeat: weekdays, remindBefore: true),
+      );
+
+      expect(saved.id, 1);
+      expect(scheduler.entries, hasLength(4));
+    });
+  });
+
   group('직렬 줄', () {
     test('저장이 한 번 실패해도 다음 호출은 끝난다', () async {
       final flaky = _FlakyRepository()..failNextSave = true;
-      useCase = DefaultAlarmUseCase(flaky, scheduler, clock);
+      useCase = DefaultAlarmUseCase(flaky, scheduler, clock, reminders, holidays, settings);
 
       await expectLater(useCase.save(Alarm.draft()), throwsStateError);
 

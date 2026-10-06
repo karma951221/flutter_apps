@@ -228,8 +228,8 @@ abstract interface class DeviceHolidaySource { Future<List<({DateTime date, Stri
 ### W3-T4: 미리 알림 도메인 · Dart 데이터 · 설정
 
 **Files:** Create `lib/domain/alarm/entity/alarm_reminder.dart`, `lib/domain/alarm/reminders.dart`, `lib/domain/alarm/scheduler/reminder_scheduler.dart`, `lib/data/alarm/channel_reminder_scheduler.dart`. Modify `alarm_use_case.dart`(생성자 · `_syncReminders`), `app_settings.dart` · `prefs_settings_repository.dart`(`holidayReminder`), DI. Tests 대응.
-- [ ] 실패 테스트: 스펙 §7 의 reminders · use case 미리 알림 diff · channel scheduler · settings 왕복.
-- [ ] 구현. 커밋 `feat(walk): 알람 미리 알림을 계산해 네이티브에 넘긴다`.
+- [x] 실패 테스트: 스펙 §7 의 reminders · use case 미리 알림 diff · channel scheduler · settings 왕복.
+- [x] 구현. 커밋 `feat(walk): 알람 미리 알림을 계산해 네이티브에 넘긴다`.
 
 ### W3-T5: 미리 알림 네이티브 · 액션 디스패치
 
