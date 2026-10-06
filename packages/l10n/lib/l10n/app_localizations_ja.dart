@@ -1498,6 +1498,111 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkReminderRing => '鳴らす';
 
   @override
+  String get walkAlarmRingSettings => '鳴動設定';
+
+  @override
+  String walkAlarmRingSummary(int volume, String snooze, String autoStop) {
+    return '音量 $volume% · スヌーズ $snooze · 自動停止 $autoStop';
+  }
+
+  @override
+  String get walkAlarmAutoStopNone => 'なし';
+
+  @override
+  String get walkAlarmVolume => '音量';
+
+  @override
+  String walkAlarmPercent(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String get walkAlarmFade => 'だんだん大きく';
+
+  @override
+  String get walkAlarmFadeOff => 'オフ';
+
+  @override
+  String walkAlarmSeconds(int seconds) {
+    return '$seconds秒';
+  }
+
+  @override
+  String get walkAlarmSnoozeInterval => 'スヌーズ間隔';
+
+  @override
+  String get walkAlarmSnoozeLimit => 'スヌーズ回数';
+
+  @override
+  String get walkAlarmSnoozeUnlimited => '無制限';
+
+  @override
+  String walkAlarmTimes(int count) {
+    return '$count回';
+  }
+
+  @override
+  String get walkAlarmAutoStop => '自動停止';
+
+  @override
+  String get walkAlarmAutoStopNever => 'しない';
+
+  @override
+  String walkAlarmMinutes(int minutes) {
+    return '$minutes分';
+  }
+
+  @override
+  String get walkAlarmRemindBefore => '30分前に知らせる';
+
+  @override
+  String get walkAlarmRemindBeforeHint => '通知から今回だけオフにできます';
+
+  @override
+  String get walkAlarmSkipNext => '次のアラームをスキップ';
+
+  @override
+  String get walkAlarmUnskip => 'スキップを取り消す';
+
+  @override
+  String get walkAlarmSkipped => 'スキップ';
+
+  @override
+  String get walkAlarmHolidayChip => '祝日';
+
+  @override
+  String get walkSettingsAlarm => 'アラーム';
+
+  @override
+  String get walkSettingsHolidayReminder => '祝日のお知らせ';
+
+  @override
+  String get walkSettingsHolidayReminderDescription =>
+      '繰り返しアラームが祝日に鳴るとき前日にお知らせします';
+
+  @override
+  String get walkSettingsHolidaySource => '祝日の情報元';
+
+  @override
+  String walkSettingsHolidaySourceDevice(String name) {
+    return '端末のカレンダー: $name';
+  }
+
+  @override
+  String get walkSettingsHolidaySourceDeviceUnnamed => '端末のカレンダー';
+
+  @override
+  String walkSettingsHolidaySourceBundled(String firstYear, String lastYear) {
+    return '内蔵の表 $firstYear–$lastYear';
+  }
+
+  @override
+  String get walkSettingsCalendarGranted => 'カレンダー許可済み';
+
+  @override
+  String get walkSettingsCalendarNeedsPermission => 'カレンダーの許可が必要 ›';
+
+  @override
   String get walkShellTabAlarm => 'アラーム';
 
   @override

@@ -2924,6 +2924,186 @@ abstract class AppLocalizations {
   /// **'울리기'**
   String get walkReminderRing;
 
+  /// 알람 편집 화면 아래 접히는 울림 설정 영역 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'울림 설정'**
+  String get walkAlarmRingSettings;
+
+  /// 접힌 울림 설정 영역의 한 줄 요약. snooze 는 "5분", autoStop 은 "10분" 또는 "없음"
+  ///
+  /// In ko, this message translates to:
+  /// **'볼륨 {volume}% · 스누즈 {snooze} · 자동 멈춤 {autoStop}'**
+  String walkAlarmRingSummary(int volume, String snooze, String autoStop);
+
+  /// 울림 설정 요약에서 자동 멈춤을 쓰지 않을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'없음'**
+  String get walkAlarmAutoStopNone;
+
+  /// 울림 설정 — 볼륨 슬라이더 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'볼륨'**
+  String get walkAlarmVolume;
+
+  /// 볼륨 값 표시
+  ///
+  /// In ko, this message translates to:
+  /// **'{percent}%'**
+  String walkAlarmPercent(int percent);
+
+  /// 울림 설정 — 소리가 처음엔 작다가 점점 커지는 시간 선택 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'점점 커지기'**
+  String get walkAlarmFade;
+
+  /// 점점 커지기 선택지 — 쓰지 않음
+  ///
+  /// In ko, this message translates to:
+  /// **'끔'**
+  String get walkAlarmFadeOff;
+
+  /// 초 단위 선택지(점점 커지기)
+  ///
+  /// In ko, this message translates to:
+  /// **'{seconds}초'**
+  String walkAlarmSeconds(int seconds);
+
+  /// 울림 설정 — 스누즈 간격 선택 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'스누즈 간격'**
+  String get walkAlarmSnoozeInterval;
+
+  /// 울림 설정 — 스누즈 최대 횟수 선택 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'스누즈 횟수'**
+  String get walkAlarmSnoozeLimit;
+
+  /// 스누즈 횟수 선택지 — 제한 없음
+  ///
+  /// In ko, this message translates to:
+  /// **'무제한'**
+  String get walkAlarmSnoozeUnlimited;
+
+  /// 횟수 선택지(스누즈 횟수)
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}회'**
+  String walkAlarmTimes(int count);
+
+  /// 울림 설정 — 울리기 시작해 정한 시간이 지나면 스스로 멈추는 선택 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'자동 멈춤'**
+  String get walkAlarmAutoStop;
+
+  /// 자동 멈춤 선택지 — 쓰지 않음
+  ///
+  /// In ko, this message translates to:
+  /// **'안 함'**
+  String get walkAlarmAutoStopNever;
+
+  /// 분 단위 선택지(스누즈 간격 · 자동 멈춤)
+  ///
+  /// In ko, this message translates to:
+  /// **'{minutes}분'**
+  String walkAlarmMinutes(int minutes);
+
+  /// 울림 설정 — 울리기 30분 전 미리 알림 스위치
+  ///
+  /// In ko, this message translates to:
+  /// **'30분 전에 알려 주기'**
+  String get walkAlarmRemindBefore;
+
+  /// 30분 전 미리 알림 스위치 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'알림에서 이번만 끌 수 있어요'**
+  String get walkAlarmRemindBeforeHint;
+
+  /// 반복 알람 행을 길게 누르면 뜨는 시트 — 다음 회차 하나를 건너뛴다
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 알람 건너뛰기'**
+  String get walkAlarmSkipNext;
+
+  /// 건너뛰기 시트 — 건너뛴 회차를 다시 울리게 한다
+  ///
+  /// In ko, this message translates to:
+  /// **'건너뛰기 취소'**
+  String get walkAlarmUnskip;
+
+  /// 다음 회차를 건너뛴 반복 알람 행의 칩
+  ///
+  /// In ko, this message translates to:
+  /// **'건너뜀'**
+  String get walkAlarmSkipped;
+
+  /// 다음 울림이 24시간 안 공휴일인 반복 알람 행의 칩(누르면 건너뛰기 시트)
+  ///
+  /// In ko, this message translates to:
+  /// **'공휴일'**
+  String get walkAlarmHolidayChip;
+
+  /// 설정 탭 — 알람 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'알람'**
+  String get walkSettingsAlarm;
+
+  /// 설정 탭 — 반복 알람이 공휴일에 울리면 하루 전에 알리는 스위치
+  ///
+  /// In ko, this message translates to:
+  /// **'공휴일 미리 알림'**
+  String get walkSettingsHolidayReminder;
+
+  /// 공휴일 미리 알림 스위치 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'반복 알람이 공휴일에 울리면 하루 전에 알려요'**
+  String get walkSettingsHolidayReminderDescription;
+
+  /// 설정 탭 — 공휴일을 어디서 읽는지 보이는 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'공휴일 출처'**
+  String get walkSettingsHolidaySource;
+
+  /// 공휴일 출처 — 폰 캘린더의 휴일 캘린더. name 은 캘린더 표시 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'폰 캘린더: {name}'**
+  String walkSettingsHolidaySourceDevice(String name);
+
+  /// 공휴일 출처 — 이름을 모르는 폰 캘린더
+  ///
+  /// In ko, this message translates to:
+  /// **'폰 캘린더'**
+  String get walkSettingsHolidaySourceDeviceUnnamed;
+
+  /// 공휴일 출처 — 앱에 들어 있는 표. 연도는 그대로(쉼표 없이) 넣는다
+  ///
+  /// In ko, this message translates to:
+  /// **'내장 표 {firstYear}–{lastYear}'**
+  String walkSettingsHolidaySourceBundled(String firstYear, String lastYear);
+
+  /// 공휴일 출처 행 — 캘린더 읽기 권한이 허용됨
+  ///
+  /// In ko, this message translates to:
+  /// **'캘린더 허용됨'**
+  String get walkSettingsCalendarGranted;
+
+  /// 공휴일 출처 행 — 캘린더 읽기 권한이 없어 내장 표를 쓴다. 누르면 권한을 묻는다
+  ///
+  /// In ko, this message translates to:
+  /// **'캘린더 허용 필요 ›'**
+  String get walkSettingsCalendarNeedsPermission;
+
   /// 하단 탭 — 알람
   ///
   /// In ko, this message translates to:

@@ -1585,6 +1585,112 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkReminderRing => 'Keep it';
 
   @override
+  String get walkAlarmRingSettings => 'Ring settings';
+
+  @override
+  String walkAlarmRingSummary(int volume, String snooze, String autoStop) {
+    return 'Volume $volume% · Snooze $snooze · Auto-stop $autoStop';
+  }
+
+  @override
+  String get walkAlarmAutoStopNone => 'off';
+
+  @override
+  String get walkAlarmVolume => 'Volume';
+
+  @override
+  String walkAlarmPercent(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String get walkAlarmFade => 'Gradually louder';
+
+  @override
+  String get walkAlarmFadeOff => 'Off';
+
+  @override
+  String walkAlarmSeconds(int seconds) {
+    return '${seconds}s';
+  }
+
+  @override
+  String get walkAlarmSnoozeInterval => 'Snooze interval';
+
+  @override
+  String get walkAlarmSnoozeLimit => 'Snooze limit';
+
+  @override
+  String get walkAlarmSnoozeUnlimited => 'Unlimited';
+
+  @override
+  String walkAlarmTimes(int count) {
+    return '$count times';
+  }
+
+  @override
+  String get walkAlarmAutoStop => 'Auto-stop';
+
+  @override
+  String get walkAlarmAutoStopNever => 'Never';
+
+  @override
+  String walkAlarmMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get walkAlarmRemindBefore => 'Remind me 30 min before';
+
+  @override
+  String get walkAlarmRemindBeforeHint =>
+      'Turn off just this one from the notification';
+
+  @override
+  String get walkAlarmSkipNext => 'Skip next alarm';
+
+  @override
+  String get walkAlarmUnskip => 'Cancel skip';
+
+  @override
+  String get walkAlarmSkipped => 'Skipped';
+
+  @override
+  String get walkAlarmHolidayChip => 'Holiday';
+
+  @override
+  String get walkSettingsAlarm => 'Alarms';
+
+  @override
+  String get walkSettingsHolidayReminder => 'Holiday reminder';
+
+  @override
+  String get walkSettingsHolidayReminderDescription =>
+      'Notifies you a day before a repeating alarm rings on a holiday';
+
+  @override
+  String get walkSettingsHolidaySource => 'Holiday source';
+
+  @override
+  String walkSettingsHolidaySourceDevice(String name) {
+    return 'Phone calendar: $name';
+  }
+
+  @override
+  String get walkSettingsHolidaySourceDeviceUnnamed => 'Phone calendar';
+
+  @override
+  String walkSettingsHolidaySourceBundled(String firstYear, String lastYear) {
+    return 'Built-in table $firstYear–$lastYear';
+  }
+
+  @override
+  String get walkSettingsCalendarGranted => 'Calendar allowed';
+
+  @override
+  String get walkSettingsCalendarNeedsPermission => 'Allow calendar ›';
+
+  @override
   String get walkShellTabAlarm => 'Alarms';
 
   @override

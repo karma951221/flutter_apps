@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AlarmRingingState {
 
- Alarm? get alarm; bool get busy;
+ Alarm? get alarm; bool get canSnooze; bool get busy;
 /// Create a copy of AlarmRingingState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $AlarmRingingStateCopyWith<AlarmRingingState> get copyWith => _$AlarmRingingStat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AlarmRingingState&&(identical(other.alarm, alarm) || other.alarm == alarm)&&(identical(other.busy, busy) || other.busy == busy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AlarmRingingState&&(identical(other.alarm, alarm) || other.alarm == alarm)&&(identical(other.canSnooze, canSnooze) || other.canSnooze == canSnooze)&&(identical(other.busy, busy) || other.busy == busy));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,alarm,busy);
+int get hashCode => Object.hash(runtimeType,alarm,canSnooze,busy);
 
 @override
 String toString() {
-  return 'AlarmRingingState(alarm: $alarm, busy: $busy)';
+  return 'AlarmRingingState(alarm: $alarm, canSnooze: $canSnooze, busy: $busy)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $AlarmRingingStateCopyWith<$Res>  {
   factory $AlarmRingingStateCopyWith(AlarmRingingState value, $Res Function(AlarmRingingState) _then) = _$AlarmRingingStateCopyWithImpl;
 @useResult
 $Res call({
- Alarm? alarm, bool busy
+ Alarm? alarm, bool canSnooze, bool busy
 });
 
 
@@ -62,10 +62,11 @@ class _$AlarmRingingStateCopyWithImpl<$Res>
 
 /// Create a copy of AlarmRingingState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? alarm = freezed,Object? busy = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? alarm = freezed,Object? canSnooze = null,Object? busy = null,}) {
   return _then(AlarmRingingState(
 alarm: freezed == alarm ? _self.alarm : alarm // ignore: cast_nullable_to_non_nullable
-as Alarm?,busy: null == busy ? _self.busy : busy // ignore: cast_nullable_to_non_nullable
+as Alarm?,canSnooze: null == canSnooze ? _self.canSnooze : canSnooze // ignore: cast_nullable_to_non_nullable
+as bool,busy: null == busy ? _self.busy : busy // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

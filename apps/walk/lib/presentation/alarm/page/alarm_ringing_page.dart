@@ -117,16 +117,19 @@ class _AlarmRingingPageState extends State<AlarmRingingPage> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Expanded(
-                            child: AppButton.secondary(
-                              label: l10n.walkAlarmSnooze(
-                                state.alarm?.snoozeMinutes ?? AlarmOptions.defaultSnoozeMinutes,
+                          // 스누즈 한도를 다 썼으면 끄기만 전체 폭으로.
+                          if (state.canSnooze) ...[
+                            Expanded(
+                              child: AppButton.secondary(
+                                label: l10n.walkAlarmSnooze(
+                                  state.alarm?.snoozeMinutes ?? AlarmOptions.defaultSnoozeMinutes,
+                                ),
+                                style: _buttonStyle,
+                                onPressed: state.busy ? null : () => _finish(_cubit.snooze),
                               ),
-                              style: _buttonStyle,
-                              onPressed: state.busy ? null : () => _finish(_cubit.snooze),
                             ),
-                          ),
-                          const SizedBox(width: AppSpacing.md),
+                            const SizedBox(width: AppSpacing.md),
+                          ],
                           Expanded(
                             child: AppButton.primary(
                               label: l10n.walkAlarmStop,

@@ -29,6 +29,7 @@ void main() {
     useCase = _MockUseCase();
     when(() => useCase.snooze(100)).thenAnswer((_) async {});
     when(() => useCase.stop(100)).thenAnswer((_) async {});
+    when(() => useCase.canSnooze(100)).thenAnswer((_) async => true);
     getIt
       ..registerSingleton<AlarmUseCase>(useCase)
       ..registerSingleton<Clock>(_FixedClock());
@@ -102,6 +103,26 @@ void main() {
 
     verify(() => useCase.snooze(100)).called(1);
     expect(find.text('home'), findsOneWidget);
+  });
+
+  testWidgets('스누즈 간격이 10분이면 10분 뒤 다시 울림', (tester) async {
+    when(() => useCase.findByPackageId(100))
+        .thenAnswer((_) async => const Alarm(id: 1, hour: 7, minute: 0, snoozeMinutes: 10));
+    await pump(tester);
+
+    expect(find.text('10분 뒤 다시 울림'), findsOneWidget);
+  });
+
+  testWidgets('스누즈 한도를 다 썼으면 스누즈 버튼이 없고 끄기가 전체 폭', (tester) async {
+    when(() => useCase.findByPackageId(100))
+        .thenAnswer((_) async => const Alarm(id: 1, hour: 7, minute: 0, snoozeLimit: 3));
+    when(() => useCase.canSnooze(100)).thenAnswer((_) async => false);
+    await pump(tester);
+
+    expect(find.byType(OutlinedButton), findsNothing);
+    expect(find.textContaining('다시 울림'), findsNothing);
+    final width = tester.getSize(find.byType(AlarmRingingPage)).width;
+    expect(tester.getSize(find.byType(FilledButton)).width, width - AppSpacing.lg * 2);
   });
 
   for (final (button, action) in [('알람 끄기', 'stop'), ('5분 뒤 다시 울림', 'snooze')]) {

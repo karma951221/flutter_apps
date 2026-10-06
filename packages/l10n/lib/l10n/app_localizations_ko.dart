@@ -1500,6 +1500,111 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkReminderRing => '울리기';
 
   @override
+  String get walkAlarmRingSettings => '울림 설정';
+
+  @override
+  String walkAlarmRingSummary(int volume, String snooze, String autoStop) {
+    return '볼륨 $volume% · 스누즈 $snooze · 자동 멈춤 $autoStop';
+  }
+
+  @override
+  String get walkAlarmAutoStopNone => '없음';
+
+  @override
+  String get walkAlarmVolume => '볼륨';
+
+  @override
+  String walkAlarmPercent(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String get walkAlarmFade => '점점 커지기';
+
+  @override
+  String get walkAlarmFadeOff => '끔';
+
+  @override
+  String walkAlarmSeconds(int seconds) {
+    return '$seconds초';
+  }
+
+  @override
+  String get walkAlarmSnoozeInterval => '스누즈 간격';
+
+  @override
+  String get walkAlarmSnoozeLimit => '스누즈 횟수';
+
+  @override
+  String get walkAlarmSnoozeUnlimited => '무제한';
+
+  @override
+  String walkAlarmTimes(int count) {
+    return '$count회';
+  }
+
+  @override
+  String get walkAlarmAutoStop => '자동 멈춤';
+
+  @override
+  String get walkAlarmAutoStopNever => '안 함';
+
+  @override
+  String walkAlarmMinutes(int minutes) {
+    return '$minutes분';
+  }
+
+  @override
+  String get walkAlarmRemindBefore => '30분 전에 알려 주기';
+
+  @override
+  String get walkAlarmRemindBeforeHint => '알림에서 이번만 끌 수 있어요';
+
+  @override
+  String get walkAlarmSkipNext => '다음 알람 건너뛰기';
+
+  @override
+  String get walkAlarmUnskip => '건너뛰기 취소';
+
+  @override
+  String get walkAlarmSkipped => '건너뜀';
+
+  @override
+  String get walkAlarmHolidayChip => '공휴일';
+
+  @override
+  String get walkSettingsAlarm => '알람';
+
+  @override
+  String get walkSettingsHolidayReminder => '공휴일 미리 알림';
+
+  @override
+  String get walkSettingsHolidayReminderDescription =>
+      '반복 알람이 공휴일에 울리면 하루 전에 알려요';
+
+  @override
+  String get walkSettingsHolidaySource => '공휴일 출처';
+
+  @override
+  String walkSettingsHolidaySourceDevice(String name) {
+    return '폰 캘린더: $name';
+  }
+
+  @override
+  String get walkSettingsHolidaySourceDeviceUnnamed => '폰 캘린더';
+
+  @override
+  String walkSettingsHolidaySourceBundled(String firstYear, String lastYear) {
+    return '내장 표 $firstYear–$lastYear';
+  }
+
+  @override
+  String get walkSettingsCalendarGranted => '캘린더 허용됨';
+
+  @override
+  String get walkSettingsCalendarNeedsPermission => '캘린더 허용 필요 ›';
+
+  @override
   String get walkShellTabAlarm => '알람';
 
   @override

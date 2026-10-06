@@ -90,8 +90,10 @@ extension GetItInjectableX on _i174.GetIt {
       () => holidayModule.holidayRefresher(gh<_i93.CachedHolidayCalendar>()),
     );
     gh.lazySingleton<_i227.HolidayCalendarAccess>(
-      () =>
-          holidayModule.holidayCalendarAccess(gh<_i93.CachedHolidayCalendar>()),
+      () => holidayModule.holidayCalendarAccess(
+        gh<_i93.CachedHolidayCalendar>(),
+        gh<_i91.SettingsRepository>(),
+      ),
     );
     gh.lazySingleton<_i296.AlarmRepository>(
       () => _i1.PrefsAlarmRepository(gh<_i460.SharedPreferences>()),

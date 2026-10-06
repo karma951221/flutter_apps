@@ -8,6 +8,7 @@ import 'package:l10n/l10n.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
 import '../../../domain/alarm/entity/alarm_sound.dart';
+import '../../../domain/alarm/holiday/holiday_calendar_access.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
 import '../cubit/alarm_edit_cubit.dart';
@@ -15,10 +16,12 @@ import '../cubit/alarm_edit_state.dart';
 import '../format/alarm_sound_format.dart';
 import '../widget/one_shot_section.dart';
 import '../widget/repeat_section.dart';
+import '../widget/ring_settings_section.dart';
 import 'alarm_sound_page.dart';
 
 /// 새 알람 · 알람 편집. 종류는 [initial] 로 정한다 — 한 번 알람이면 "얼마 뒤" 영역,
-/// 반복 알람이면 시각 휠 · 요일 영역이고, 아래쪽(제목 · 알람음 · 무음 체크 · 저장)은 같다.
+/// 반복 알람이면 시각 휠 · 요일 영역이고, 아래쪽(제목 · 알람음 · 무음 체크 · 접힌 울림 설정 ·
+/// 저장)은 같다.
 /// 저장하면 울릴 때까지 남은 시간을 결과로 돌려주며 닫힌다(목록이 스낵바를 띄운다).
 /// 삭제하거나 그냥 닫으면 결과는 null.
 class AlarmEditPage extends StatefulWidget {
@@ -36,6 +39,7 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
     getIt<AlarmPermissions>(),
     getIt<Clock>(),
     widget.initial,
+    holidayCalendar: getIt<HolidayCalendarAccess>(),
   );
   late final _label = TextEditingController(text: widget.initial.label);
   final _clock = getIt<Clock>();
@@ -200,6 +204,16 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
                   onTap: state.busy
                       ? null
                       : () => _cubit.setSilentWhenRingerMuted(!state.alarm.silentWhenRingerMuted),
+                ),
+                RingSettingsSection(
+                  alarm: state.alarm,
+                  enabled: !state.busy,
+                  onVolumePercent: _cubit.setVolumePercent,
+                  onFadeSeconds: _cubit.setFadeSeconds,
+                  onSnoozeMinutes: _cubit.setSnoozeMinutes,
+                  onSnoozeLimit: _cubit.setSnoozeLimit,
+                  onAutoStopMinutes: _cubit.setAutoStopMinutes,
+                  onRemindBefore: _cubit.setRemindBefore,
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 if (!canSave) ...[

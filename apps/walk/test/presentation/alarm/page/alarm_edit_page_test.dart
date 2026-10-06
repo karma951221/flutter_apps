@@ -10,6 +10,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
 import 'package:walk/domain/alarm/entity/alarm_sound.dart';
+import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/sound/alarm_sound_source.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
@@ -22,6 +23,8 @@ class _MockUseCase extends Mock implements AlarmUseCase {}
 class _MockRequester extends Mock implements PermissionRequester {}
 
 class _MockSoundSource extends Mock implements AlarmSoundSource {}
+
+class _MockCalendarAccess extends Mock implements HolidayCalendarAccess {}
 
 /// 일요일 23:48 에서 시작한다. 테스트가 [value] 를 직접 옮기거나, [follow] 로 가짜 시간을 따라가게 한다.
 class _MutableClock extends Clock {
@@ -49,6 +52,7 @@ void main() {
   late _MockRequester exactAlarm;
   late _MockSoundSource soundSource;
   late _MutableClock clock;
+  late _MockCalendarAccess calendar;
 
   setUpAll(() {
     registerFallbackValue(Alarm.draft());
@@ -64,7 +68,10 @@ void main() {
     when(soundSource.deviceRingtones).thenAnswer((_) async => []);
     when(() => soundSource.preview(any(), uri: any(named: 'uri'))).thenAnswer((_) async {});
     when(soundSource.stopPreview).thenAnswer((_) async {});
+    calendar = _MockCalendarAccess();
+    when(calendar.ensureIfReminding).thenAnswer((_) async {});
     getIt
+      ..registerSingleton<HolidayCalendarAccess>(calendar)
       ..registerSingleton<AlarmSoundSource>(soundSource)
       ..registerSingleton<AlarmUseCase>(useCase)
       ..registerSingleton<AlarmPermissions>(
@@ -421,7 +428,7 @@ void main() {
       expect(saved.repeat, {Weekday.mon});
       expect(saved.label, '출근');
       expect((saved.hour, saved.minute), (6, 45));
-      verifyInOrder([notification.ensure, exactAlarm.ensure]);
+      verifyInOrder([notification.ensure, exactAlarm.ensure, calendar.ensureIfReminding]);
       // 일요일 23:48 → 월요일 06:45
       expect(results, [const Duration(hours: 6, minutes: 57)]);
       expect(find.byType(AlarmEditPage), findsNothing);
@@ -471,6 +478,58 @@ void main() {
     expect(top('무음 · 진동 모드에선 진동만'), lessThan(top('저장')));
     expect(find.text('진동'), findsNothing);
     expect(find.byType(Switch), findsNothing);
+  });
+
+  testWidgets('울림 설정은 체크 줄 아래 · 저장 위에 접혀 있고, 요약은 알람 값', (tester) async {
+    await pump(tester, _newRepeat.copyWith(id: 3, snoozeMinutes: 10, autoStopMinutes: 5));
+
+    expect(find.text('울림 설정'), findsOneWidget);
+    expect(find.text('볼륨 80% · 스누즈 10분 · 자동 멈춤 5분'), findsOneWidget);
+    double top(String text) => tester.getTopLeft(find.text(text)).dy;
+    expect(top('무음 · 진동 모드에선 진동만'), lessThan(top('울림 설정')));
+    expect(top('울림 설정'), lessThan(top('저장')));
+    expect(find.byType(Slider), findsNothing);
+  });
+
+  testWidgets('울림 설정을 펼쳐 고른 값으로 저장한다', (tester) async {
+    answerSaveWithId();
+    await pump(tester, _newRepeat);
+
+    await tester.tap(find.text('울림 설정'));
+    await tester.pumpAndSettle();
+    Finder segment(String group, String label) =>
+        find.descendant(of: find.byKey(Key('ring-$group')), matching: find.text(label));
+    await tester.tap(segment('fade', '30초'));
+    await tester.tap(segment('snooze-interval', '15분'));
+    await tester.tap(segment('snooze-limit', '3회'));
+    await tester.tap(segment('auto-stop', '10분'));
+    await tester.tap(find.text('30분 전에 알려 주기'));
+    await tester.pump();
+    expect(find.text('볼륨 80% · 스누즈 15분 · 자동 멈춤 10분'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('저장'));
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+
+    final saved = savedAlarm();
+    expect(
+      (saved.fadeSeconds, saved.snoozeMinutes, saved.snoozeLimit, saved.autoStopMinutes),
+      (30, 15, 3, 10),
+    );
+    expect(saved.remindBefore, isTrue);
+  });
+
+  testWidgets('한 번 알람도 울림 설정이 있고, 저장 때 캘린더 권한은 묻지 않는다', (tester) async {
+    answerSaveWithId();
+    await pump(tester, Alarm.draft());
+
+    expect(find.text('울림 설정'), findsOneWidget);
+    await tester.tap(find.text('+1시간'));
+    await tester.pump();
+    await tester.tap(find.text('저장'));
+    await tester.pumpAndSettle();
+
+    verifyNever(calendar.ensureIfReminding);
   });
 
   testWidgets('체크 줄을 누르면 체크되고 그 값으로 저장한다', (tester) async {

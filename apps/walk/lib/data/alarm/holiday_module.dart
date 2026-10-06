@@ -4,6 +4,7 @@ import 'package:permission_handler/permission_handler.dart' as ph;
 
 import '../../domain/alarm/holiday/holiday_calendar.dart';
 import '../../domain/alarm/holiday/holiday_calendar_access.dart';
+import '../../domain/settings/repository/settings_repository.dart';
 import 'cached_holiday_calendar.dart';
 import 'permission_handler_source.dart';
 
@@ -18,9 +19,12 @@ abstract class HolidayModule {
 
   /// `calendarFullAccess` 는 매니페스트에 선언된 것만 묻는다 — 이 앱은 `READ_CALENDAR` 하나.
   @lazySingleton
-  HolidayCalendarAccess holidayCalendarAccess(CachedHolidayCalendar calendar) =>
-      HolidayCalendarAccess(
-        calendar: PermissionRequester(PermissionHandlerSource(ph.Permission.calendarFullAccess)),
-        refresher: calendar,
-      );
+  HolidayCalendarAccess holidayCalendarAccess(
+    CachedHolidayCalendar calendar,
+    SettingsRepository settings,
+  ) => HolidayCalendarAccess(
+    calendar: PermissionRequester(PermissionHandlerSource(ph.Permission.calendarFullAccess)),
+    refresher: calendar,
+    settings: settings,
+  );
 }

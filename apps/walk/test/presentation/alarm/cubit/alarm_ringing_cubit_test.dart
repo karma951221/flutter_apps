@@ -17,6 +17,7 @@ void main() {
     when(() => useCase.findByPackageId(312)).thenAnswer((_) async => alarm);
     when(() => useCase.snooze(312)).thenAnswer((_) async {});
     when(() => useCase.stop(312)).thenAnswer((_) async {});
+    when(() => useCase.canSnooze(312)).thenAnswer((_) async => true);
   });
 
   blocTest<AlarmRingingCubit, AlarmRingingState>(
@@ -24,6 +25,37 @@ void main() {
     build: () => AlarmRingingCubit(useCase, 312),
     act: (cubit) => cubit.load(),
     expect: () => [const AlarmRingingState(alarm: alarm)],
+  );
+
+  blocTest<AlarmRingingCubit, AlarmRingingState>(
+    '스누즈 한도를 다 썼으면 canSnooze false',
+    build: () {
+      when(() => useCase.canSnooze(312)).thenAnswer((_) async => false);
+      return AlarmRingingCubit(useCase, 312);
+    },
+    act: (cubit) => cubit.load(),
+    expect: () => [const AlarmRingingState(alarm: alarm, canSnooze: false)],
+  );
+
+  blocTest<AlarmRingingCubit, AlarmRingingState>(
+    'canSnooze 를 읽지 못하면 스누즈를 남긴다(use case 가 늦은 스누즈를 막는다)',
+    build: () {
+      when(() => useCase.canSnooze(312)).thenThrow(StateError('plugin'));
+      return AlarmRingingCubit(useCase, 312);
+    },
+    act: (cubit) => cubit.load(),
+    expect: () => [const AlarmRingingState(alarm: alarm)],
+  );
+
+  blocTest<AlarmRingingCubit, AlarmRingingState>(
+    '처리 중에도 canSnooze 는 그대로',
+    build: () => AlarmRingingCubit(useCase, 312),
+    seed: () => const AlarmRingingState(alarm: alarm, canSnooze: false),
+    act: (cubit) => cubit.stop(),
+    expect: () => [
+      const AlarmRingingState(alarm: alarm, canSnooze: false, busy: true),
+      const AlarmRingingState(alarm: alarm, canSnooze: false),
+    ],
   );
 
   blocTest<AlarmRingingCubit, AlarmRingingState>(

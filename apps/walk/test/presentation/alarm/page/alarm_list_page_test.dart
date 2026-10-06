@@ -7,6 +7,7 @@ import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/presentation/alarm/cubit/alarm_list_cubit.dart';
@@ -19,6 +20,8 @@ import 'package:walk/presentation/alarm/widget/weekday_dots.dart';
 class _MockUseCase extends Mock implements AlarmUseCase {}
 
 class _MockRequester extends Mock implements PermissionRequester {}
+
+class _MockCalendarAccess extends Mock implements HolidayCalendarAccess {}
 
 class _MutableClock extends Clock {
   _MutableClock(this.value);
@@ -71,7 +74,10 @@ void main() {
       when(r.ensure).thenAnswer((_) async => PermissionStatus.granted);
     }
     when(() => useCase.nextRings()).thenAnswer((_) async => {});
+    final calendar = _MockCalendarAccess();
+    when(calendar.ensureIfReminding).thenAnswer((_) async {});
     getIt
+      ..registerSingleton<HolidayCalendarAccess>(calendar)
       ..registerSingleton<AlarmUseCase>(useCase)
       ..registerSingleton<AlarmPermissions>(permissions)
       ..registerSingleton<Clock>(_FixedClock());

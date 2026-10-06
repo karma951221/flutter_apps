@@ -12,7 +12,13 @@ class AlarmRingingCubit extends Cubit<AlarmRingingState> {
 
   Future<void> load() async {
     final alarm = await _useCase.findByPackageId(packageId);
-    if (!isClosed) emit(AlarmRingingState(alarm: alarm, busy: state.busy));
+    bool canSnooze;
+    try {
+      canSnooze = await _useCase.canSnooze(packageId);
+    } on Object {
+      canSnooze = true;
+    }
+    if (!isClosed) emit(state.copyWith(alarm: alarm, canSnooze: canSnooze));
   }
 
   Future<void> snooze() => _busy(() => _useCase.snooze(packageId));
@@ -20,11 +26,11 @@ class AlarmRingingCubit extends Cubit<AlarmRingingState> {
   Future<void> stop() => _busy(() => _useCase.stop(packageId));
 
   Future<void> _busy(Future<void> Function() body) async {
-    emit(AlarmRingingState(alarm: state.alarm, busy: true));
+    emit(state.copyWith(busy: true));
     try {
       await body();
     } finally {
-      if (!isClosed) emit(AlarmRingingState(alarm: state.alarm));
+      if (!isClosed) emit(state.copyWith(busy: false));
     }
   }
 }

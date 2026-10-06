@@ -6,6 +6,7 @@ import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
 import 'package:walk/domain/alarm/entity/alarm_sound.dart';
 import 'package:walk/domain/alarm/entity/repeat_preset.dart';
+import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/one_shot_draft.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
@@ -15,6 +16,8 @@ import 'package:walk/presentation/alarm/cubit/alarm_edit_state.dart';
 class _MockUseCase extends Mock implements AlarmUseCase {}
 
 class _MockRequester extends Mock implements PermissionRequester {}
+
+class _MockCalendarAccess extends Mock implements HolidayCalendarAccess {}
 
 class _FixedClock extends Clock {
   _FixedClock(this.value);
@@ -33,15 +36,33 @@ const _chimeAlarm = Alarm(
 
 const _monday = Alarm(hour: 7, minute: 0, repeat: {Weekday.mon});
 
+const _tuned = Alarm(
+  hour: 7,
+  minute: 0,
+  repeat: {Weekday.mon},
+  volumePercent: 50,
+  fadeSeconds: 30,
+  snoozeMinutes: 10,
+  snoozeLimit: 3,
+  autoStopMinutes: 15,
+  remindBefore: true,
+);
+
 void main() {
   final now = DateTime(2026, 9, 27, 23, 48);
   late _MockUseCase useCase;
   late _MockRequester notification;
   late _MockRequester exactAlarm;
   late AlarmPermissions permissions;
+  late _MockCalendarAccess calendar;
 
-  AlarmEditCubit build([Alarm? initial]) =>
-      AlarmEditCubit(useCase, permissions, _FixedClock(now), initial ?? Alarm.draft());
+  AlarmEditCubit build([Alarm? initial]) => AlarmEditCubit(
+    useCase,
+    permissions,
+    _FixedClock(now),
+    initial ?? Alarm.draft(),
+    holidayCalendar: calendar,
+  );
 
   setUpAll(() => registerFallbackValue(Alarm.draft()));
   setUp(() {
@@ -55,6 +76,8 @@ void main() {
     );
     when(() => notification.ensure()).thenAnswer((_) async => PermissionStatus.denied);
     when(() => exactAlarm.ensure()).thenAnswer((_) async => PermissionStatus.granted);
+    calendar = _MockCalendarAccess();
+    when(() => calendar.ensureIfReminding()).thenAnswer((_) async {});
   });
 
   test('새 알람은 isNew', () {
@@ -136,7 +159,79 @@ void main() {
         () => useCase.save(_monday),
         () => notification.ensure(),
         () => exactAlarm.ensure(),
+        () => calendar.ensureIfReminding(),
       ]);
+    },
+  );
+
+  blocTest<AlarmEditCubit, AlarmEditState>(
+    '캘린더 권한 확인이 예외를 던져도 저장은 끝났으므로 남은 시간을 돌려준다',
+    build: () {
+      when(() => useCase.save(any())).thenAnswer(
+        (i) async => (i.positionalArguments.single as Alarm).copyWith(id: 1),
+      );
+      when(() => calendar.ensureIfReminding()).thenThrow(StateError('plugin'));
+      return build(_monday);
+    },
+    act: (cubit) async {
+      expect(await cubit.save(), const Duration(hours: 7, minutes: 12));
+    },
+    skip: 2,
+  );
+
+  blocTest<AlarmEditCubit, AlarmEditState>(
+    '울림 설정(볼륨 · 점점 커지기 · 스누즈 간격 · 횟수 · 자동 멈춤 · 30분 전 알림)을 바꿔 저장한다',
+    build: () {
+      when(() => useCase.save(any())).thenAnswer((i) async => i.positionalArguments.single as Alarm);
+      return build(_monday);
+    },
+    act: (cubit) async {
+      cubit
+        ..setVolumePercent(50)
+        ..setFadeSeconds(30)
+        ..setSnoozeMinutes(10)
+        ..setSnoozeLimit(3)
+        ..setAutoStopMinutes(15)
+        ..setRemindBefore(true);
+      await cubit.save();
+      cubit
+        ..setSnoozeLimit(null)
+        ..setAutoStopMinutes(null);
+    },
+    expect: () => [
+      const AlarmEditState(alarm: Alarm(hour: 7, minute: 0, repeat: {Weekday.mon}, volumePercent: 50)),
+      const AlarmEditState(
+        alarm: Alarm(hour: 7, minute: 0, repeat: {Weekday.mon}, volumePercent: 50, fadeSeconds: 30),
+      ),
+      AlarmEditState(
+        alarm: _tuned.copyWith(snoozeLimit: null, autoStopMinutes: null, remindBefore: false),
+      ),
+      AlarmEditState(alarm: _tuned.copyWith(autoStopMinutes: null, remindBefore: false)),
+      AlarmEditState(alarm: _tuned.copyWith(remindBefore: false)),
+      const AlarmEditState(alarm: _tuned),
+      const AlarmEditState(alarm: _tuned, busy: true),
+      const AlarmEditState(alarm: _tuned),
+      AlarmEditState(alarm: _tuned.copyWith(snoozeLimit: null)),
+      AlarmEditState(alarm: _tuned.copyWith(snoozeLimit: null, autoStopMinutes: null)),
+    ],
+    verify: (_) => verify(() => useCase.save(_tuned)).called(1),
+  );
+
+  blocTest<AlarmEditCubit, AlarmEditState>(
+    '한 번 알람은 공휴일 미리 알림이 없으므로 캘린더 권한을 묻지 않는다',
+    build: () {
+      when(() => useCase.save(any())).thenAnswer(
+        (i) async => (i.positionalArguments.single as Alarm).copyWith(id: 1),
+      );
+      return build();
+    },
+    act: (cubit) async {
+      cubit.addOffset(const Duration(hours: 1));
+      await cubit.save();
+    },
+    verify: (_) {
+      verify(() => exactAlarm.ensure()).called(1);
+      verifyNever(() => calendar.ensureIfReminding());
     },
   );
 
