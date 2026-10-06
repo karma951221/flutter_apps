@@ -2295,7 +2295,7 @@
   "@walkAlarmNextTitle": {
     "description": "알람 목록 맨 위 요약 카드 머리"
   },
-  "walkAlarmIn": "{duration} 후",
+  "walkAlarmIn": "{duration} 뒤",
   "@walkAlarmIn": {
     "description": "요약 카드 · 알람 행 — 다음 울림까지 남은 시간",
     "placeholders": {

@@ -1630,7 +1630,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String walkAlarmIn(String duration) {
-    return '$duration 후';
+    return '$duration 뒤';
   }
 
   @override

@@ -134,7 +134,7 @@ void main() {
     await pump(tester);
 
     expect(find.text('다음 알람'), findsOneWidget);
-    expect(find.text('7시간 12분 후'), findsOneWidget); // 카드만 — 반복 행은 요일 점
+    expect(find.text('7시간 12분 뒤'), findsOneWidget); // 카드만 — 반복 행은 요일 점
     expect(find.text('내일 (월) 오전 7:00 · 출근'), findsOneWidget);
   });
 
@@ -180,7 +180,7 @@ void main() {
     expect(find.text('켜진 알람이 없어요'), findsNothing);
     expect(find.text('다음 알람'), findsNothing);
     expect(
-      find.descendant(of: find.byType(AlarmTile), matching: find.textContaining('후')),
+      find.descendant(of: find.byType(AlarmTile), matching: find.textContaining('뒤')),
       findsNothing,
     );
   });
@@ -205,7 +205,7 @@ void main() {
     expect(inRow(0, find.text('오전 7:00')), findsOneWidget);
     expect(inRow(0, find.text('출근 · 평일')), findsOneWidget);
     expect(inRow(0, find.byType(WeekdayDots)), findsOneWidget);
-    expect(inRow(0, find.textContaining('후')), findsNothing);
+    expect(inRow(0, find.textContaining('뒤')), findsNothing);
     expect(inRow(1, find.text('오전 9:30')), findsOneWidget);
     expect(inRow(1, find.text('한 번')), findsOneWidget);
     expect(inRow(1, find.textContaining('뒤')), findsNothing);
@@ -237,7 +237,7 @@ void main() {
     verify(notification.ensure).called(1);
     expect(find.text('9시간 42분 뒤에 울려요'), findsOneWidget);
     expect(find.text('켜진 알람이 없어요'), findsNothing);
-    expect(find.text('9시간 42분 후'), findsOneWidget);
+    expect(find.text('9시간 42분 뒤'), findsOneWidget);
     expect(find.text('한 번 · 9시간 42분 뒤'), findsOneWidget);
     expect(find.text('내일 (월) 오전 9:30'), findsOneWidget);
   });
@@ -260,8 +260,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('내일 (월) 오전 8:00 · 회의'), findsOneWidget);
-    expect(find.text('7시간 12분 후'), findsNothing);
-    expect(find.text('8시간 12분 후'), findsOneWidget);
+    expect(find.text('7시간 12분 뒤'), findsNothing);
+    expect(find.text('8시간 12분 뒤'), findsOneWidget);
   });
 
   testWidgets('스위치 저장이 실패하면 스위치가 돌아오고 오류 스낵바', (tester) async {
@@ -287,14 +287,14 @@ void main() {
     when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 9, 28, 7)});
     await pump(tester);
     expect(find.text('내일 (월) 오전 7:00 · 출근'), findsOneWidget);
-    expect(find.text('7시간 1분 후'), findsOneWidget);
+    expect(find.text('7시간 1분 뒤'), findsOneWidget);
 
     clock.value = DateTime(2026, 9, 28);
     await cubit.tick();
     await tester.pump();
 
     expect(find.text('오늘 (월) 오전 7:00 · 출근'), findsOneWidget);
-    expect(find.text('7시간 후'), findsOneWidget);
+    expect(find.text('7시간 뒤'), findsOneWidget);
   });
 
   testWidgets('행을 누르면 그 알람으로 편집을 열고, 저장 결과로 이 탭에 스낵바', (tester) async {

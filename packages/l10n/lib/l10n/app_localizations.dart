@@ -3155,7 +3155,7 @@ abstract class AppLocalizations {
   /// 요약 카드 · 알람 행 — 다음 울림까지 남은 시간
   ///
   /// In ko, this message translates to:
-  /// **'{duration} 후'**
+  /// **'{duration} 뒤'**
   String walkAlarmIn(String duration);
 
   /// 요약 카드 — 알람은 있지만 모두 꺼졌을 때

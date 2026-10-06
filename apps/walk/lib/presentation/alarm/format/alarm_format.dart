@@ -35,7 +35,7 @@ abstract final class AlarmFormat {
     return l10n.walkAlarmDurationMinutes(minutes);
   }
 
-  /// 다음 울림까지 — `7시간 12분 후`. [duration] 규칙(분 올림)을 그대로 쓴다.
+  /// 다음 울림까지 — `7시간 12분 뒤`. [duration] 규칙(분 올림)을 그대로 쓴다.
   static String remaining(AppLocalizations l10n, Duration remaining) =>
       l10n.walkAlarmIn(duration(l10n, remaining));
 
