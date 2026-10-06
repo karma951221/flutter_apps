@@ -550,6 +550,7 @@
   "walkAlarmNewRepeat": "Repeating alarm",
   "walkAlarmAfter": "in {duration}",
   "walkAlarmRingsAtChip": "Rings at {time}",
+  "walkAlarmWheelHourSemantics": "{hour, plural, =1{1 hour} other{{hour} hours}}",
   "walkAlarmAddHour": "+{hours} hr",
   "walkAlarmAddMinutes": "+{minutes} min",
   "walkAlarmReset": "Reset",

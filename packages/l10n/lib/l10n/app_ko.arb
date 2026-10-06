@@ -2516,6 +2516,16 @@
       }
     }
   },
+  "walkAlarmWheelHourSemantics": "{hour}시",
+  "@walkAlarmWheelHourSemantics": {
+    "description": "시각 휠 — 시 열 한 칸의 화면 읽기 라벨. 분과 어긋나지 않게 '정각'을 붙이지 않는다",
+    "placeholders": {
+      "hour": {
+        "type": "int",
+        "example": "12"
+      }
+    }
+  },
   "walkAlarmAddHour": "+{hours}시간",
   "@walkAlarmAddHour": {
     "description": "한 번 알람 편집 — 시간 더하기 버튼",

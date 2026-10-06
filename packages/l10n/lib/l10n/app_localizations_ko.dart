@@ -1773,6 +1773,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String walkAlarmWheelHourSemantics(int hour) {
+    return '$hour시';
+  }
+
+  @override
   String walkAlarmAddHour(int hours) {
     return '+$hours시간';
   }

@@ -1,11 +1,11 @@
 import 'package:design_system/design_system.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
 import '../../../domain/alarm/entity/repeat_preset.dart';
 import '../format/alarm_format.dart';
+import 'alarm_time_wheel.dart';
 
 /// 반복 알람 편집 영역 — 시각 휠 · 빠른 버튼(매일 · 평일 · 주말) · 요일 원 7개 · 반복 요약.
 ///
@@ -44,13 +44,9 @@ class RepeatSection extends StatelessWidget {
       children: [
         SizedBox(
           height: _pickerHeight,
-          // Material 의 `showTimePicker` 는 다이얼로그라 화면 안에 휠을 둘 수 없다.
-          // 알람 앱의 익숙한 휠 모양을 위해 Cupertino 위젯을 직접 쓴다.
-          child: CupertinoDatePicker(
-            mode: CupertinoDatePickerMode.time,
-            use24hFormat: MediaQuery.alwaysUse24HourFormatOf(context),
-            initialDateTime: DateTime(2000, 1, 1, initialHour, initialMinute),
-            onDateTimeChanged: (value) => onTimeChanged(value.hour, value.minute),
+          child: AlarmTimeWheel(
+            initial: TimeOfDay(hour: initialHour, minute: initialMinute),
+            onChanged: (time) => onTimeChanged(time.hour, time.minute),
           ),
         ),
         const SizedBox(height: AppSpacing.lg),

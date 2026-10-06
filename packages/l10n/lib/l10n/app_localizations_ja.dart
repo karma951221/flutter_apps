@@ -1771,6 +1771,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String walkAlarmWheelHourSemantics(int hour) {
+    return '$hour時';
+  }
+
+  @override
   String walkAlarmAddHour(int hours) {
     return '+$hours時間';
   }

@@ -550,6 +550,7 @@
   "walkAlarmNewRepeat": "繰り返しアラーム",
   "walkAlarmAfter": "{duration}後",
   "walkAlarmRingsAtChip": "{time}に鳴ります",
+  "walkAlarmWheelHourSemantics": "{hour}時",
   "walkAlarmAddHour": "+{hours}時間",
   "walkAlarmAddMinutes": "+{minutes}分",
   "walkAlarmReset": "リセット",

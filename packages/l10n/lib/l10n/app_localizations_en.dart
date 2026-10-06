@@ -1873,6 +1873,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String walkAlarmWheelHourSemantics(int hour) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hour,
+      locale: localeName,
+      other: '$hour hours',
+      one: '1 hour',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String walkAlarmAddHour(int hours) {
     return '+$hours hr';
   }

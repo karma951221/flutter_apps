@@ -3404,6 +3404,12 @@ abstract class AppLocalizations {
   /// **'{time}에 울림'**
   String walkAlarmRingsAtChip(String time);
 
+  /// 시각 휠 — 시 열 한 칸의 화면 읽기 라벨. 분과 어긋나지 않게 '정각'을 붙이지 않는다
+  ///
+  /// In ko, this message translates to:
+  /// **'{hour}시'**
+  String walkAlarmWheelHourSemantics(int hour);
+
   /// 한 번 알람 편집 — 시간 더하기 버튼
   ///
   /// In ko, this message translates to:

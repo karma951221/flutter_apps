@@ -1,10 +1,10 @@
 import 'package:design_system/design_system.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/alarm/one_shot_draft.dart';
 import '../format/alarm_format.dart';
+import 'alarm_time_wheel.dart';
 
 /// 한 번 알람 편집 영역 — 큰 "N시간 M분 뒤" · 울릴 시각 칩 · 2×2 더하기 버튼 · 초기화.
 ///
@@ -148,13 +148,10 @@ class _OneShotTimeSheetState extends State<OneShotTimeSheet> {
           children: [
             SizedBox(
               height: OneShotTimeSheet.pickerHeight,
-              // 편집 화면의 반복 휠과 같은 Cupertino 휠(이유는 RepeatSection 참고).
-              child: CupertinoDatePicker(
-                mode: CupertinoDatePickerMode.time,
-                use24hFormat: MediaQuery.alwaysUse24HourFormatOf(context),
-                initialDateTime: DateTime(2000, 1, 1, widget.initial.hour, widget.initial.minute),
-                onDateTimeChanged: (value) =>
-                    setState(() => _value = TimeOfDay(hour: value.hour, minute: value.minute)),
+              // 편집 화면의 반복 휠과 같은 휠.
+              child: AlarmTimeWheel(
+                initial: widget.initial,
+                onChanged: (time) => _value = time,
               ),
             ),
             const SizedBox(height: AppSpacing.md),
