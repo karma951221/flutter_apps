@@ -143,6 +143,8 @@ class PackageAlarmScheduler implements AlarmScheduler {
       body: _time(texts.locale, alarm.hour, alarm.minute),
       stopButton: texts.stop,
       androidSnoozeButton: texts.snooze,
+      // res/drawable/ic_stat_alarm.xml — 적응형 런처 아이콘은 상태바에서 덩어리로 보인다.
+      icon: 'ic_stat_alarm',
     ),
     payload: '${alarm.id}|${signatureFor(alarm)}',
   );

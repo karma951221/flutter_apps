@@ -58,6 +58,14 @@ void main() {
     }
   });
 
+  test('알림 작은 아이콘은 흰 단색 알람시계 drawable 이다', () {
+    const alarm = Alarm(id: 3, hour: 7, minute: 5);
+
+    final settings = PackageAlarmScheduler.settingsFor(312, at, alarm, texts);
+
+    expect(settings.notificationSettings.icon, 'ic_stat_alarm');
+  });
+
   test('라벨이 없으면 기본 제목', () {
     const alarm = Alarm(id: 3, hour: 7, minute: 5);
 

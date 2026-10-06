@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 알람 알림 상태바 아이콘(24dp, 흰 단색 알람시계 실루엣) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <group android:scaleX="0.4339" android:scaleY="0.4339" android:translateX="-12.538" android:translateY="-11.692">
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:pathData="M43.95,72.45 L40.35,78.45" />
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:pathData="M69.15,72.45 L72.75,78.45" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M34.35,35.25 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M66.75,35.25 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 Z" />
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:pathData="M38.85,54.45 a17.7,17.7 0 1,0 35.4,0 a17.7,17.7 0 1,0 -35.4,0 Z" />
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:pathData="M56.55,54.45 L56.55,42.45" />
+        <path
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="3"
+            android:strokeLineCap="round"
+            android:pathData="M56.55,54.45 L64.95,59.25" />
+    </group>
+</vector>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ic_stat_alarm 은 Dart 에서 이름(문자열)으로만 넘기고 alarm 포크가 getIdentifier 로 찾는다.
+     릴리스 리소스 축소가 지우지 않게 남긴다. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_alarm" />
