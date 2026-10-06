@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/core/app.dart';
+import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
@@ -19,6 +20,11 @@ class _MockWalk extends Mock implements WalkUseCase {}
 class _MockRequester extends Mock implements PermissionRequester {}
 
 class _MockSettings extends Mock implements SettingsRepository {}
+
+class _NoHolidays implements HolidayRefresher {
+  @override
+  Future<void> refresh({bool force = false}) async {}
+}
 
 void main() {
   group('themeModeOf', () {
@@ -48,6 +54,7 @@ void main() {
         ..registerSingleton<WalkUseCase>(walk)
         ..registerSingleton<SettingsRepository>(settings)
         ..registerSingleton<Clock>(Clock())
+        ..registerSingleton<HolidayRefresher>(_NoHolidays())
         ..registerSingleton<AlarmPermissions>(
           AlarmPermissions(
             notification: requester,

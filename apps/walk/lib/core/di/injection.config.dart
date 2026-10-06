@@ -16,13 +16,19 @@ import 'package:injectable/injectable.dart' as _i526;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
 import '../../data/alarm/alarm_permission_module.dart' as _i343;
+import '../../data/alarm/cached_holiday_calendar.dart' as _i93;
 import '../../data/alarm/channel_alarm_sound_source.dart' as _i793;
+import '../../data/alarm/channel_device_holiday_source.dart' as _i279;
+import '../../data/alarm/holiday_module.dart' as _i183;
 import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
 import '../../data/settings/prefs_settings_repository.dart' as _i724;
 import '../../data/walk/health/health_gateway.dart' as _i332;
 import '../../data/walk/repository/health_connect_activity_repository.dart'
     as _i1016;
+import '../../domain/alarm/holiday/device_holiday_source.dart' as _i77;
+import '../../domain/alarm/holiday/holiday_calendar.dart' as _i961;
+import '../../domain/alarm/holiday/holiday_calendar_access.dart' as _i227;
 import '../../domain/alarm/permission/alarm_permissions.dart' as _i933;
 import '../../domain/alarm/repository/alarm_repository.dart' as _i296;
 import '../../domain/alarm/scheduler/alarm_scheduler.dart' as _i702;
@@ -42,6 +48,7 @@ extension GetItInjectableX on _i174.GetIt {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final registerModule = _$RegisterModule();
     final alarmPermissionModule = _$AlarmPermissionModule();
+    final holidayModule = _$HolidayModule();
     await gh.factoryAsync<_i460.SharedPreferences>(
       () => registerModule.sharedPreferences,
       preResolve: true,
@@ -55,11 +62,31 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i702.AlarmScheduler>(() => _i238.PackageAlarmScheduler());
     gh.lazySingleton<_i332.HealthGateway>(() => _i332.HealthPluginGateway());
+    gh.lazySingleton<_i77.DeviceHolidaySource>(
+      () => const _i279.ChannelDeviceHolidaySource(),
+    );
+    gh.lazySingleton<_i93.CachedHolidayCalendar>(
+      () => _i93.CachedHolidayCalendar(
+        gh<_i460.SharedPreferences>(),
+        gh<_i77.DeviceHolidaySource>(),
+        gh<_i494.Clock>(),
+      ),
+    );
     gh.lazySingleton<_i204.ActivityRepository>(
       () => _i1016.HealthConnectActivityRepository(gh<_i332.HealthGateway>()),
     );
     gh.lazySingleton<_i91.SettingsRepository>(
       () => _i724.PrefsSettingsRepository(gh<_i460.SharedPreferences>()),
+    );
+    gh.lazySingleton<_i961.HolidayCalendar>(
+      () => holidayModule.holidayCalendar(gh<_i93.CachedHolidayCalendar>()),
+    );
+    gh.lazySingleton<_i961.HolidayRefresher>(
+      () => holidayModule.holidayRefresher(gh<_i93.CachedHolidayCalendar>()),
+    );
+    gh.lazySingleton<_i227.HolidayCalendarAccess>(
+      () =>
+          holidayModule.holidayCalendarAccess(gh<_i93.CachedHolidayCalendar>()),
     );
     gh.lazySingleton<_i296.AlarmRepository>(
       () => _i1.PrefsAlarmRepository(gh<_i460.SharedPreferences>()),
@@ -84,3 +111,5 @@ extension GetItInjectableX on _i174.GetIt {
 class _$RegisterModule extends _i291.RegisterModule {}
 
 class _$AlarmPermissionModule extends _i343.AlarmPermissionModule {}
+
+class _$HolidayModule extends _i183.HolidayModule {}

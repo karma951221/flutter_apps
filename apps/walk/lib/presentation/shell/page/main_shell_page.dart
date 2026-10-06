@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../core/background/alarm_resync.dart';
+import '../../../domain/alarm/holiday/holiday_calendar.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
 import '../../../domain/walk/usecase/walk_use_case.dart';
@@ -21,7 +22,7 @@ enum ShellTab { alarm, walk, settings }
 ///
 /// 알람 예약 동기화(`AlarmUseCase.sync`)는 여기 한 곳에서 한다 — 시작과 복귀(resumed),
 /// 그리고 앱이 떠 있을 때 네이티브 `AlarmResync`(시간대 변경 · 하루 한 번 작업)가
-/// [backgroundChannel] 로 부르는 `resync`.
+/// [backgroundChannel] 로 부르는 `resync`. 그 앞에 공휴일 캐시(`HolidayRefresher`)를 갱신한다.
 /// 알람 목록 · 설정 권한 cubit 을 소유해, 복귀하거나 위에 얹힌 화면(편집 · 울림)이
 /// 걷힐 때 다시 읽는다.
 class MainShellPage extends StatefulWidget {
@@ -33,6 +34,7 @@ class MainShellPage extends StatefulWidget {
 
 class _MainShellPageState extends State<MainShellPage> with RouteAware {
   final _alarmUseCase = getIt<AlarmUseCase>();
+  final _holidays = getIt<HolidayRefresher>();
   late final _alarms = AlarmListCubit(
     _alarmUseCase,
     getIt<AlarmPermissions>(),
@@ -86,6 +88,13 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
 
   Future<void> _reload(Future<void> Function() reschedule) async {
     _permissions.check();
+    try {
+      // 공휴일 캐시(폰 캘린더)는 하루 한 번만 실제로 읽는다 — 시작 · 하루 sync 때 갱신된다.
+      // 실패해도 예약은 채운다(지난 캐시나 내장 표로 판정).
+      await _holidays.refresh();
+    } on Object {
+      // refresh 는 던지지 않지만, 던져도 알람 예약을 막지 않는다.
+    }
     try {
       await reschedule();
     } on Object {

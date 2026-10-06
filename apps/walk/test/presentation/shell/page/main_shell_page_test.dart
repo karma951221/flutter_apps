@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
+import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
@@ -32,6 +33,8 @@ class _MockRequester extends Mock implements PermissionRequester {}
 
 class _MockSettings extends Mock implements SettingsRepository {}
 
+class _MockHolidays extends Mock implements HolidayRefresher {}
+
 class _MemorySettings implements SettingsRepository {
   AppSettings value = const AppSettings();
   var saves = 0;
@@ -50,12 +53,15 @@ void main() {
   late _MockAlarmUseCase alarms;
   late _MockWalk walk;
   late _MockRequester notification;
+  late _MockHolidays holidays;
 
   setUpAll(() => registerFallbackValue(PeriodKind.week));
   setUp(() {
     alarms = _MockAlarmUseCase();
     walk = _MockWalk();
     notification = _MockRequester();
+    holidays = _MockHolidays();
+    when(() => holidays.refresh()).thenAnswer((_) async {});
     final exactAlarm = _MockRequester();
     final fullScreen = _MockRequester();
     for (final r in [notification, exactAlarm, fullScreen]) {
@@ -71,6 +77,7 @@ void main() {
       ..registerSingleton<AlarmUseCase>(alarms)
       ..registerSingleton<WalkUseCase>(walk)
       ..registerSingleton<Clock>(Clock())
+      ..registerSingleton<HolidayRefresher>(holidays)
       ..registerSingleton<AlarmPermissions>(
         AlarmPermissions(
           notification: notification,
@@ -277,6 +284,27 @@ void main() {
     final envelope = await reply;
     expect(envelope, isNotNull);
     expect(const StandardMethodCodec().decodeEnvelope(envelope!), isNull);
+  });
+
+  testWidgets('시작 · resync 때 공휴일 캐시를 먼저 새로 읽고(하루 한 번은 캐시가 판단) 예약을 채운다', (
+    tester,
+  ) async {
+    await pump(tester);
+    verifyInOrder([() => holidays.refresh(), alarms.sync]);
+    clearInteractions(holidays);
+    clearInteractions(alarms);
+
+    final reply = platformResync(tester);
+    await tester.pumpAndSettle();
+
+    verifyInOrder([() => holidays.refresh(), alarms.timeZoneChanged]);
+    expect(await reply, isNotNull);
+  });
+
+  testWidgets('공휴일 캐시 읽기가 실패해도 예약을 채운다', (tester) async {
+    when(() => holidays.refresh()).thenThrow(Exception('calendar'));
+    await pump(tester);
+    verify(alarms.sync).called(1);
   });
 
   testWidgets('resync 중 동기화가 실패해도 목록을 읽고 응답한다', (tester) async {

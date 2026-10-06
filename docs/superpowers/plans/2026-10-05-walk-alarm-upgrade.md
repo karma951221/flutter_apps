@@ -217,12 +217,12 @@ abstract interface class HolidayCalendar { String? nameOf(DateTime date); Holida
 sealed class HolidaySource // device(calendarName) | bundled(firstYear, lastYear)
 abstract interface class DeviceHolidaySource { Future<List<({DateTime date, String name})>?> read(DateTime from, DateTime to); Future<String?> calendarName(); } // 권한 없음/캘린더 없음/실패 → null
 ```
-- [ ] 내장 표: 조사 결과(`/private/tmp/claude-501/-Users-no-Desktop-socialapp/969b0496-efb7-4ae7-9aee-af71b5ffc927/scratchpad/korean_holidays_2026_2027.md`, 2026 · 2027 각 관공서 공휴일 · 대체공휴일 · 선거일, 노동절 · 제헌절 포함)를 상수로. 출처 URL 과 확인 날짜를 파일 머리 주석에.
-- [ ] Kotlin: `CalendarContract.Calendars` 에서 휴일 캘린더 고르기(스펙 결정 기록의 순서) · `Instances` 로 범위 일정 읽기 · 종일 일정만 · 구글 휴일 캘린더는 설명이 "공휴일"/"Public holiday" 인 것만. 규칙은 순수 함수로 떼어 JUnit.
-- [ ] 캐시: 하루 한 번(앱 시작 · 하루 sync) 400일 범위를 읽어 `walk.holidays.cache` 에 저장, sync 는 캐시만 읽는다. 캐시 없음 → 내장 표.
-- [ ] 실패 테스트(표 날짜 · 대체공휴일 · 캐시/대체 선택 · 채널 매핑 · Kotlin 규칙) → 구현 → `flutter build apk --debug`.
+- [x] 내장 표: 조사 결과(`/private/tmp/claude-501/-Users-no-Desktop-socialapp/969b0496-efb7-4ae7-9aee-af71b5ffc927/scratchpad/korean_holidays_2026_2027.md`, 2026 · 2027 각 관공서 공휴일 · 대체공휴일 · 선거일, 노동절 · 제헌절 포함)를 상수로. 출처 URL 과 확인 날짜를 파일 머리 주석에.
+- [x] Kotlin: `CalendarContract.Calendars` 에서 휴일 캘린더 고르기(스펙 결정 기록의 순서) · `Instances` 로 범위 일정 읽기 · 종일 일정만 · 구글 휴일 캘린더는 설명이 "공휴일"/"Public holiday" 인 것만. 규칙은 순수 함수로 떼어 JUnit.
+- [x] 캐시: 하루 한 번(앱 시작 · 하루 sync) 400일 범위를 읽어 `walk.holidays.cache` 에 저장, sync 는 캐시만 읽는다. 캐시 없음 → 내장 표.
+- [x] 실패 테스트(표 날짜 · 대체공휴일 · 캐시/대체 선택 · 채널 매핑 · Kotlin 규칙) → 구현 → `flutter build apk --debug`.
 - [ ] 에뮬레이터에서 로컬 캘린더(이름 "대한민국의 휴일", 종일 일정)를 만들어 읽히는지 확인. 실제 갤럭시 폰 확인은 사용자와(설정 탭의 출처 표시로).
-- [ ] 커밋 `feat(walk): 공휴일을 폰 캘린더에서 읽고 없으면 내장 표를 쓴다`.
+- [x] 커밋 `feat(walk): 공휴일을 폰 캘린더에서 읽고 없으면 내장 표를 쓴다`.
 
 ### W3-T4: 미리 알림 도메인 · Dart 데이터 · 설정
 

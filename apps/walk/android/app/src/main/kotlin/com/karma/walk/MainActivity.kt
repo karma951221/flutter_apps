@@ -46,6 +46,7 @@ class MainActivity : FlutterFragmentActivity() {
                 }
             }
         alarmSounds = AlarmSoundsChannel(applicationContext, messenger)
+        HolidayCalendarChannel.attach(applicationContext, flutterEngine)
         // permission_handler 에 전체 화면 알림(Android 14+) 확인 API 가 없어 채널을 둔다.
         MethodChannel(messenger, "walk/full_screen_intent")
             .setMethodCallHandler { call, result ->
