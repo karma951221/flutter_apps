@@ -3,7 +3,7 @@
 > [테스트 가이드](../../../docs/testing/README.md) · [계획](plan.md) · [기록](history.md) · [진행 현황](status.md)
 
 ```bash
-cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-10-06 기준 440건 통과 · 1건 skip)
+cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-10-07 기준 523건 통과 · 1건 skip)
 ```
 
 백엔드가 없어 로컬 Supabase 없이 돈다. Health Connect 는 `HealthGateway` 를 mock 해서 본다
@@ -13,14 +13,15 @@ cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · �
 
 `alarm` 은 `third_party/alarm` 포크다([FORK.md](../third_party/alarm/FORK.md)). 포크 자체의 `test/` 는 돌리지
 않는다. 포크의 Dart 모델은 앱의 `test/third_party/alarm/…`(포크 경로와 1:1)에서, 포크 Kotlin 의 순수 규칙
-(`audioCandidates` · 설정 저장)은 포크 JUnit 으로 본다. 앱 Kotlin 의 순수 규칙(`replaceVerified`)은 앱 JUnit 이다.
-`AudioService.playAudio` 가 실제로 대체음으로 다시 트는지는 에뮬레이터로 본다.
+(`audioCandidates` · `shouldMuteForRinger` · `EngineRegistry` · 설정 저장)은 포크 JUnit 으로 본다. 앱 Kotlin 의 순수
+규칙(`replaceVerified` · `ResyncQueue`)은 앱 JUnit 이다. `AudioService.playAudio` 가 실제로 대체음으로 다시 트는지,
+무음 · 진동 모드에서 진동만 하는지, 하루 sync 가 헤드리스로 도는지는 에뮬레이터로 본다.
 
 ```bash
 cd apps/walk/android
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-./gradlew :alarm:testDebugUnitTest   # 포크 — AudioFallbackTest 등
-./gradlew :app:testDebugUnitTest     # 앱 — VerifiedReplaceTest
+./gradlew :alarm:testDebugUnitTest   # 포크 — AudioFallbackTest · RingerMuteTest · EngineRegistryTest 등
+./gradlew :app:testDebugUnitTest     # 앱 — VerifiedReplaceTest · ResyncQueueTest
 ```
 
 skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 전환이 없으면(KST) 스스로 건너뛴다 —
@@ -59,16 +60,17 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `domain/alarm/entity/alarm_test.dart` | `Alarm` · `Weekday` | JSON 왕복(1회성 `oneShotAt` 은 로컬 시각 그대로) · `fromJson` 기본값 · 깨진 값은 던짐(저장소가 건너뜀) · `draft` · `sound`(기본 시스템 · 3종 왕복) |
 | `domain/alarm/entity/alarm_sound_test.dart` | `AlarmSound` · `BundledAlarmSounds` | 시스템 · 내장 · 기기 JSON 왕복 · 값 없음/모르는 type/맵 아님/필드 빠짐 → 시스템(던지지 않음) · 비프는 `default.wav` 이름 그대로 · 내장음은 22.05kHz 모노 16bit 3초 WAV |
 | `domain/alarm/entity/alarm_trigger_test.dart` | `packageId` · `triggerIndex` | `alarmId * 100 + index` 왕복 · 날짜 index 는 14일 안에서 겹치지 않음 |
+| `domain/alarm/entity/repeat_preset_test.dart` | `RepeatPreset` | 매일 · 평일 · 주말의 요일 · 요일 집합이 묶음과 같으면 그 묶음(순서 무관) · 빈 집합 · 일부 · 넘침은 null |
+| `domain/alarm/one_shot_draft_test.dart` | `OneShotDraft` | 버튼 상수 · 상한 23시간 59분 · 상대 모드는 offset 에 쌓기 · 고정 모드는 fixedAt 에 더하기(자정 넘김) · reset · `fixAt`(오늘/내일, 초 0) · `ringAt` · `remaining`(지난 시각은 0) · `canSave` 1분 경계(두 모드) · `fromAlarm`(미래면 고정, 지났거나 없으면 상대 0) |
 | `domain/alarm/upcoming_triggers_test.dart` | `upcomingTriggers` · `nextOccurrence` · `triggersOf` | 꺼짐 · 반복 요일만 오름차순 · 오늘 지남/아직 · `now` 와 같은 시각 제외 · 자정 · 14일 경계 포함/제외 · 월말 · 연말 · 윤년 · 1회성 · 서머타임(skip 조건부) |
 | `domain/alarm/permission/alarm_permissions_test.dart` | `AlarmPermissions` | 알림 → 정확한 알람 순서 · `canRing` 은 둘 다 허용일 때만 |
 | `domain/alarm/usecase/alarm_use_case_test.dart` | `DefaultAlarmUseCase` | **save**(새 id · 최대 id/9999 가득 · 1회성 `oneShotAt` · 14일 예약 · 수정 시 예전 회차(5분 안 · 스누즈 포함) 정리) · **toggle** · **delete** · **sync**(빠진 회차 걸기 · 남은 것 취소 · 멱등(스누즈 · 울림 있어도) · 1회성 만료 · **스누즈 중 1회성 유지** · **막 된 1회성 유지** · **꺼진 알람의 5분 안 예약 취소** · 울리는 회차 보존 · 스누즈 보존 창 경계 · 자정 넘은 스누즈 · 시간대 변경 재설정) · **지문**(시각 · 지문이 같으면 그대로 · 지문이 다르면 다시 걸기 · 옛 payload 는 한 번 다시 걸기 · 울리는 회차는 건드리지 않음) · **snooze/stop**(5분 뒤 · **꺼진/지운 알람은 멈춤** · **stop 도중 읽어도 꺼진 1회성**) · **nextRings**(알람별 최솟값 · 스누즈 포함 · 지난 것 · 꺼짐 · 예약 없음) · `timeZoneChanged` · 직렬 줄이 실패 뒤에도 풀림 |
-| `data/alarm/package_alarm_scheduler_test.dart` | `PackageAlarmScheduler.settingsFor` · 지문 | 스펙 §5 설정(반복 재생 · 전체 화면 · 스와이프해도 계속 · 5분 스누즈) · 기본 제목 · 본문은 기기 언어 시각 · 버튼 문구(ko/en/ja) · **소리**(시스템은 경로 없음 · 내장은 에셋 · 기기는 복사본이 있으면 그 경로, 없으면 시스템 · 대체음은 항상 비프) · **지문**(결정적 8자리 hex · 소리/진동/라벨이 바뀌면 바뀜 · 켜짐/시각/로캘 문구는 무관 · payload `'<id>\|<지문>'` 읽기, 옛 payload 는 빈 지문) |
+| `data/alarm/package_alarm_scheduler_test.dart` | `PackageAlarmScheduler.settingsFor` · 지문 | 스펙 §5 설정(반복 재생 · 전체 화면 · 스와이프해도 계속 · 5분 스누즈) · 기본 제목 · 본문은 기기 언어 시각 · 버튼 문구(ko/en/ja) · **소리**(시스템은 경로 없음 · 내장은 에셋 · 기기는 복사본이 있으면 그 경로, 없으면 시스템 · 대체음은 항상 비프) · **지문**(결정적 8자리 hex · 소리/무음 모드 체크/라벨이 바뀌면 바뀜 · **웨이브 1 전(vibrate 자리) 지문과 겹치지 않음** · 켜짐/시각/로캘 문구는 무관 · payload `'<id>\|<지문>'` 읽기, 옛 payload 는 빈 지문) |
 | `data/alarm/channel_alarm_sound_source_test.dart` | `ChannelAlarmSoundSource`(`walk/alarm_sounds`) | `list` → 제목 · uri, null 은 빈 목록 · `preview` 의 kind(system · asset · uri, 복사본은 `file://`) · `stopPreview`(채널 없으면 조용히) · `import` 경로 → `AlarmSound.device`, 빈 경로 · 오류 · 채널 없음 → `AlarmSoundException` |
 | `data/alarm/prefs_alarm_repository_test.dart` | `PrefsAlarmRepository` | 없음 · 왕복 · 비우기 · **깨진 JSON/배열 아님/항목 하나 깨짐/문자열 아님 → 던지지 않고 읽을 수 있는 것만, 원본은 `walk.alarms.corrupt`** · 백업 덮어쓰기 · 정상 저장 복구 |
 | `data/alarm/full_screen_intent_permission_source_test.dart` | 전체 화면 알림 채널 | `canUse` true/false · 요청은 설정을 열고 다시 읽음 · 채널 없으면 허용 |
 | `data/alarm/permission_handler_source_test.dart` | `permission_handler` 래퍼 | 상태 매핑 |
 | `data/settings/prefs_settings_repository_test.dart` | `PrefsSettingsRepository` | 없음/저장/모르는 값 → 시스템 · **문자열 아닌 값 → 시스템** · 목표 · 축하일 왕복 · 깨진 값 기본/clamp · 축하일 null 은 키 삭제 · **저장 도중 읽어 다시 저장해도 앞선 목표 유지** |
-| `data/app_info/app_info_source_test.dart` | `PackageInfoAppInfoSource` | `이름 (빌드번호)` |
 
 ### 알람 · 설정 · 셸 — 화면
 
@@ -76,21 +78,23 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 |---|---|---|
 | `presentation/alarm/format/alarm_format_test.dart` | `AlarmFormat` | 분 올림 · 시간/일 · `N 후` 표(스펙 §4.3) · 단위 경계 · 음수 → 1분 · **1초 미만 자투리 올림** · 오늘/내일/월일 · 자정 · 달/해 넘김 · `earliest` 동률은 작은 id · 반복 요약 · 기기 언어 시각 |
 | `presentation/alarm/cubit/alarm_list_cubit_test.dart` | `AlarmListCubit` | load(목록 · `nextAt` · `now` · 권한) · **읽기 실패 → failure(던지지 않음)** · 권한/다음 울림 실패에도 목록 · 다시 load · `tick` 은 저장소를 안 읽음 · 회차 지나면 다시 읽음 · 토글(낙관적 반영 · 권한 · 남은 시간 · **권한 예외여도 성공** · 실패 시 되돌림 · **저장+재읽기 실패 → failure**) |
-| `presentation/alarm/cubit/alarm_edit_cubit_test.dart` | `AlarmEditCubit` | isNew · 값 바꾸기(알람음 포함) · 저장 → 권한(거부돼도 계속) → 남은 시간 · **권한 예외여도 저장 성공** · 저장 실패면 권한 안 물음 |
+| `presentation/alarm/cubit/alarm_edit_cubit_test.dart` | `AlarmEditCubit` | isNew · 값 바꾸기(시각 · 요일 · 라벨 · 무음 모드 체크 · 알람음) · 저장 → 권한(거부돼도 계속) → 남은 시간 · **권한 예외여도 저장 성공** · 저장 실패면 권한 안 물음 · 삭제 · **한 번**(새 알람은 상대 0 · 저장 불가, 미래 `oneShotAt` 은 고정으로 열기, 더하기 · 초기화 · 시각 고정, 상대 모드 저장은 지금 + offset, **고정 모드 저장은 그 시각 · id 그대로**, 저장 불가면 던짐) · **반복**(묶음 · 요일 없으면 저장 불가 · 던짐) |
 | `presentation/alarm/cubit/alarm_sound_cubit_test.dart` | `AlarmSoundCubit` | 처음 선택(시스템 · 내장 · 기기) · 목록을 읽으면 같은 제목 줄로 표시 이동, 없으면 현재 값 · **목록을 읽는 동안 고른 선택 유지**(Completer) · 목록 실패 · 탭하면 미리 듣기(기기는 uri) · 미리 듣기 실패 무시 · confirm(시스템 · 내장 그대로 · 기기는 import, 그동안 importing · 실패면 던짐 · 복사 중 선택 무시) · **현재 기기 소리 줄을 그대로(또는 돌아와) 고르면 import 없이 원래 값** · `pausePreview` · 닫으면 미리 듣기 멈춤 |
 | `presentation/alarm/format/alarm_sound_format_test.dart` | `AlarmSoundFormat` | 시스템 기본 · 내장음은 에셋 경로로 이름(`default.wav` 는 "비프") · 모르는 에셋은 파일 이름 · 기기는 제목 |
 | `presentation/alarm/cubit/alarm_ringing_cubit_test.dart` | `AlarmRingingCubit` | 회차의 알람 찾기 · snooze · stop |
 | `presentation/alarm/page/alarm_list_page_test.dart` | `AlarmListPage` | 빈 상태(카드 숨김) · 요약 카드(가장 이른 알람 · 동률 · 모두 꺼짐 · **켜졌는데 예약 없음 → 예약 없음 · 권한 안내, 배너가 위**) · 행(켜진 것만 남은 시간 · 꺼진 행 흐림) · 스위치 켜기/끄기 → 카드 · 행 갱신 · 실패 되돌림 + 스낵바 · 자정 tick · 행 탭 → 편집 → 스낵바 · 카드 누를 수 없음 · 분 경계 타이머(0초 · 가려지면 건너뜀) · 읽기 실패 → 다시 시도 · 권한 배너 → 설정 탭 · FAB |
-| `presentation/alarm/page/alarm_edit_page_test.dart` | `AlarmEditPage` | 알람음 줄(진동 위 · 현재 이름 · 새 알람은 시스템 기본 · 고르면 반영되고 그 소리로 저장 · 그냥 돌아오면 그대로) · 저장 흐름 · 실패 스낵바 · **권한 실패여도 닫히고 중복 저장 없음** · 저장 중 잠금 · 휠 값 저장 · 기존 알람 id · 라벨 유지 · 삭제 확인 · 320dp 요일 한 줄 |
+| `presentation/alarm/page/alarm_edit_page_test.dart` | `AlarmEditPage` | **한 번**: 0분 뒤 · 저장 잠금 + 안내 · 더하기 · 초기화 · 시각 칩 → 휠 시트 고정 · 상대 모드는 분이 지나도 N 뒤 그대로 · 기존 알람은 그 시각으로 열고 저장 · 칩으로 고정한 시각으로 저장 · **연 초와 상관없이 다음 분 0초에 맞춰 갱신 · 그 뒤 매분** · **고정 모드 남은 시간이 줄고 1분 밑으로 내려가는 순간 잠금 · 안내** · **기준 시각이 늦어도 저장 때 다시 보고 오류 대신 잠금 · 안내** · **칩으로 고정하면 기준 시각을 새로 읽음** / **반복**: 휠 · 빠른 버튼 ↔ 요일 · 요일 없으면 잠금 + 안내 · 저장 흐름 · 기존 알람 id · 라벨 유지 / 공통: 제목 · 알람음 · 무음 모드 체크 줄 순서(진동 토글 없음) · 체크 값 저장 · 실패 스낵바 · **권한 실패여도 닫히고 중복 저장 없음** · 저장 중 잠금 · 알람음 선택 반영 · 삭제 확인 · 320dp(요일 한 줄 · ko/en/ja) |
 | `presentation/alarm/page/alarm_sound_page_test.dart` | `AlarmSoundPage` | 세 구역(시스템 · 앱 소리 3줄 · 기기 목록) · 복사해 둔 소리는 같은 제목 줄에 표시 · 목록 실패/빈 목록은 그 구역만 안내 · 탭 → 표시 이동 · 미리 듣기 → 선택하면 그 소리로 닫힘 · 복사 중 버튼 로딩 · 복사 실패 스낵바 · 뒤로 가면 null · 미리 듣기 멈춤 · **앱이 가려지면(홈 · 잠금) 미리 듣기 멈춤** |
 | `presentation/alarm/page/alarm_ringing_page_test.dart` | `AlarmRingingPage` | 시각 · 라벨 · 뒤로가기 막힘 · 기본 제목 · 끄기/5분 뒤 후 닫힘 · 리스너가 먼저 걷어도 아래 화면 유지 · 320dp 버튼 문구(ko/en/ja) |
-| `presentation/settings/cubit/*_test.dart` | 테마 · 권한 · 앱 정보 cubit | 저장된 테마로 동기 시작 · 선택 즉시 반영/저장 · 네 권한 읽기 · 알림 다시 묻기/설정 · 정확한 알람 · 전체 화면 · Health Connect 요청/설정/스토어 · 버전 |
+| `presentation/settings/cubit/*_test.dart` | 테마 · 권한 cubit | 저장된 테마로 동기 시작 · 선택 즉시 반영/저장 · 네 권한 읽기 · 알림 다시 묻기/설정 · 정확한 알람 · 전체 화면 · Health Connect 요청/설정/스토어 |
 | `presentation/theme/walk_theme_test.dart` | `WalkTheme` · `WalkMotion` | 초록 시드 · 애니메이션 끄기 읽기 |
 | `presentation/alarm/widget/alarm_summary_card_test.dart` | `AlarmSummaryCard` | 초록 컨테이너 색 · 남은 시간 색 · 시간이 바뀌면 `AnimatedSwitcher` |
-| `presentation/alarm/widget/alarm_tile_test.dart` | `AlarmTile` | 꺼진 알람 글자색 · 꺼져도 행 탭 동작 · 스위치 햅틱 후 `onToggle` |
+| `presentation/alarm/widget/alarm_tile_test.dart` | `AlarmTile` | 둥근 카드 행 · 반복(시각 · 제목 · 요약 · 요일 점) · 한 번(모래시계 · N 뒤) · 꺼진 알람 흐림 · 꺼져도 행 탭 동작 · 스위치 햅틱 후 `onToggle` · 320dp 긴 제목 |
+| `presentation/alarm/widget/alarm_kind_sheet_test.dart` | `AlarmKindSheet` | 손잡이 · 제목 · 두 행 · 한 번/반복을 고르면 그 종류로 닫힘 · 그냥 닫으면 null · 320dp(ko/en/ja) |
+| `presentation/alarm/widget/weekday_dots_test.dart` | `WeekdayDots` | 월~일 7개 · 켜진 요일 primary, 나머지 outlineVariant · 흐리게면 onSurfaceVariant |
 | `presentation/alarm/widget/ringing_ripple_test.dart` | `RingingRipple` | 켜면 위상이 변함 · 애니메이션 제거면 정지 |
 | `presentation/settings/widget/step_goal_sheet_test.dart` | `StepGoalSheet` | 슬라이더 2,000~30,000 · 1,000 단위 · 저장하면 값 반환 |
-| `presentation/settings/page/settings_page_test.dart` | `SettingsPage` | 걷기 섹션 · 하루 목표 시트 → 저장 · 권한 상태 · 버전 · 안내 · 행 탭별 동작 · 확인 중이면 빈 문구 · 테마 선택 · 라이선스 페이지 |
+| `presentation/settings/page/settings_page_test.dart` | `SettingsPage` | 걷기 섹션 · 하루 목표 시트 → 저장 · 권한 상태 · 앱 정보(버전 · 라이선스)와 14일 안내 없음 · 행 탭별 동작 · 확인 중이면 빈 문구 · 테마 선택 |
 | `presentation/shell/page/main_shell_page_test.dart` | `MainShellPage` | 첫 탭 걷기 · 초록 컨테이너 · 선택 탭 채움 아이콘 · 탭 전환 · 시작/복귀 때 sync 뒤 목록 · 복귀 때 권한 행 · **울림 화면이 걷히면 sync** · **sync 실패해도 목록** · 네이티브 `resync` → 재설정 · 목록 · 응답(실패해도) · 사라지면 핸들러 해제 · **설정 탭에서 목표를 낮춰 달성해도 걷기 탭을 열 때 한 번 축하** |
 | `core/alarm_ring_listener_test.dart` | `AlarmRingListener` | 한 번만 띄움 · 밖에서 끄면 걷음 · 화면이 먼저 닫힘 · 스누즈 뒤 다시 띄움 · 가려진 화면만 걷음 · 내비게이터 전 값 · 첫 프레임 전 시작→끝이면 안 띄움 · 중복 start · dispose |
 | `core/app_test.dart` | `WalkApp` · `themeModeOf` | 테마 매핑 · 저장된 다크로 첫 프레임 |
@@ -100,8 +104,11 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
-| `test/third_party/alarm/model/alarm_settings_test.dart` | 포크 `AlarmSettings.androidFallbackAudioPath` | 기본 null · json 왕복(null 포함) · 키 없는 옛 json 은 null · 값이 다르면 다른 설정 · 네이티브로 넘김 · `copyWith` |
+| `test/third_party/alarm/model/alarm_settings_test.dart` | 포크 `AlarmSettings.androidFallbackAudioPath` · `androidSilentWhenRingerMuted` | 기본 null/false · json 왕복 · 키 없는 옛 json 은 null/false · 값이 다르면 다른 설정 · 네이티브로 넘김 · `copyWith` |
 | `third_party/alarm/android/src/test/…/AudioFallbackTest.kt` | 포크 `audioCandidates` · 설정 저장 | 대체음 없음/있음 × 기본음/파일 · 1차와 같은 대체음은 한 번 · 저장 왕복 · 옛 저장값 · 명시적 null · 전달 |
+| `third_party/alarm/android/src/test/…/alarm/RingerMuteTest.kt` | 포크 `shouldMuteForRinger` · 설정 저장 | 켰을 때 일반 모드는 소리, 진동 · 무음 모드는 음소거 · 껐으면 모드와 상관없이 소리 · 저장 왕복 · 옛 저장값은 무시 · 전달 |
+| `third_party/alarm/android/src/test/…/alarm/EngineRegistryTest.kt` | 포크 `EngineRegistry`(`AlarmPlugin.alarmTriggerApi`) | 가장 나중에 붙은 엔진이 현재 · **먼저 붙은 헤드리스 엔진을 내려도 앱 엔진 유지** · 현재 엔진을 내리면 남은 엔진으로 · 마지막을 내리면 없음 · 같은 엔진 다시 붙기 · 모르는 엔진 무시 |
+| `android/app/src/test/…/ResyncQueueTest.kt` | 앱 `ResyncQueue`(`AlarmResync`) | 첫 요청은 실행 · 도는 중 요청은 끝난 뒤 한 번 더(여러 개는 하나로) · 그 실행 중 요청은 또 한 번 · 쉬면 새 실행 · 취소한 대기자는 받지 않지만 실행은 함 · 지금 실행의 대기자 |
 | `android/app/src/test/…/VerifiedReplaceTest.kt` | 앱 `replaceVerified`(기기 알람음 복사) | 임시 파일에 쓰고 검증한 뒤 바꿈 · 기존 복사본 덮어쓰기 · **쓰기 · 검증이 실패하면 기존 복사본은 그대로, 임시 파일만 지움** · 임시 파일은 확장자가 끝 |
 
 굵은 항목은 확인하며 고친 버그의 회귀 테스트다([기록](history.md#알람--확인하며-고친-것)).
@@ -112,7 +119,8 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 월간 차트의 기간 전환. 코드 검토로는 맞지만 테스트는 없다.
 
 알람: `PackageAlarmScheduler` 의 실제 패키지 호출(`set` · `stop` · `getAlarms` · `checkAlarm`) ·
-`MainActivity` 채널 · `AlarmSoundsChannel`(목록 · 미리 듣기 · 복사와 `MediaPlayer` 검증 — 파일 바꾸기 규칙만 JUnit) · `TimeZoneChangedReceiver`(Kotlin) · 헤드리스 진입점 `alarmResyncMain` 은 단위
+`MainActivity` 채널 · `AlarmSoundsChannel`(목록 · 미리 듣기 · 복사와 `MediaPlayer` 검증 — 파일 바꾸기 규칙만 JUnit) · `TimeZoneChangedReceiver` ·
+`DailyAlarmSyncWorker` · `AlarmResync`(Kotlin, 대기 규칙만 JUnit) · 포크 `AlarmService` 의 무음 판단 적용(규칙만 JUnit) · 헤드리스 진입점 `alarmResyncMain` 은 단위
 테스트하지 않고 아래 에뮬레이터 시나리오로 확인했다. 편집 화면 시각 휠 테스트는 드래그 대신
 `onDateTimeChanged` 를 직접 불러 연결만 본다. 볼륨 패널을 끄는 `showSystemUI: false` 는 설정값만
 `package_alarm_scheduler_test` 에서 고정하고, 실제로 패널이 뜨지 않는지는 A11 로 본다.
@@ -151,3 +159,6 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | A9 | PIN 잠금 위 울림 | 잠금을 풀지 않고 울림 화면이 위에 뜸 | 대기(실제 폰) |
 | A10 | 설정: 테마 전환 · 권한 행 → 설정 이동 | 즉시 반영 · 해당 설정 화면 | 테마 통과, 권한 행 대기 |
 | A11 | 릴리스 APK 로 앱을 띄운 채 울림 → [알람 끄기] | 울림 화면 · 소리, 시스템 볼륨 패널이 뜨지 않음(울릴 때 · 끌 때) | 통과(10-05, 에뮬레이터 — 울림 8초 · 끈 뒤 `VolumeDialog` 창 없음. 헤드업은 함께 뜸) |
+| A12 | 벨소리 모드(소리 · 진동 · 무음) × 무음 모드 체크(켬 · 끔)로 울림 | 체크를 켜고 진동 · 무음 모드면 소리 없이 진동만, 나머지는 소리 + 진동 | 대기 |
+| A13 | 앱을 내린 채 `adb shell am broadcast -a com.karma.walk.DEBUG_DAILY_SYNC -p com.karma.walk`(디버그) | 헤드리스 엔진으로 sync 뒤 `finish: headless done`, 14일 창 끝 회차가 채워짐 | 대기 |
+| A14 | A13 직후 1~2초 안에 앱을 열고 1분 뒤 알람 → 울림 → 알림의 [알람 끄기] | 헤드리스 엔진을 내린 뒤에도 앱의 울림 화면이 뜨고 끄면 닫힘(포크 `EngineRegistry`) | 대기 |
