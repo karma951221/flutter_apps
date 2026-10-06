@@ -15,14 +15,15 @@ Future<void> main() async {
   runApp(const WalkApp());
 }
 
-/// 앱이 떠 있지 않을 때 시간대가 바뀌면 네이티브 수신기가 헤드리스 엔진에서 부른다.
-/// 새 시간대의 벽시계로 예약을 다시 걸고 `done` 을 보낸다(성공 · 실패 모두).
+/// 앱이 떠 있지 않을 때 네이티브 `AlarmResync` 가 헤드리스 엔진에서 부른다 — 시간대가 바뀌었을 때와
+/// 하루 한 번 작업(`DailyAlarmSyncWorker`). 예약을 지금 시간대의 벽시계로 다시 채우고 `done` 을
+/// 보낸다(성공 · 실패 모두).
 @pragma('vm:entry-point')
 Future<void> alarmResyncMain() async {
   WidgetsFlutterBinding.ensureInitialized();
   await runAlarmResync(
     init: () async {
-      // 새 프로세스라 init 의 checkAlarm 이 저장된 예약(오프셋 없는 벽시계)을 새 시간대로
+      // 새 엔진이라 init 의 checkAlarm 이 저장된 예약(오프셋 없는 벽시계)을 지금 시간대로
       // 다시 건다 — 메인 isolate 의 `timeZoneChanged` 가 하는 일과 같아 sync 만 남는다.
       await Alarm.init();
       await configureDependencies();

@@ -46,6 +46,8 @@ flutter {
 }
 
 dependencies {
+    // 하루 한 번 알람 예약 채우기(DailyAlarmSyncWorker).
+    implementation("androidx.work:work-runtime-ktx:2.10.5")
     // 순수 Kotlin 규칙(파일 바꾸기 등)은 JVM JUnit 으로 확인한다. 기기 · 에뮬레이터가 필요 없다.
     testImplementation("junit:junit:4.13.2")
 }

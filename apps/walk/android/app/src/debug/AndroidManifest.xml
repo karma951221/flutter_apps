@@ -4,4 +4,15 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <application>
+        <!-- 하루 sync 를 지금 한 번 돌린다(에뮬레이터 확인용). 디버그 빌드에만 있다.
+             adb shell am broadcast -a com.karma.walk.DEBUG_DAILY_SYNC -p com.karma.walk -->
+        <receiver
+            android:name=".DebugDailySyncReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.karma.walk.DEBUG_DAILY_SYNC" />
+            </intent-filter>
+        </receiver>
+    </application>
 </manifest>

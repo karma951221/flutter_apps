@@ -20,7 +20,8 @@ enum ShellTab { alarm, walk, settings }
 /// 하단 탭 셸. 탭마다 자기 `Scaffold` · `AppBar` 를 둔다.
 ///
 /// 알람 예약 동기화(`AlarmUseCase.sync`)는 여기 한 곳에서 한다 — 시작과 복귀(resumed),
-/// 그리고 앱이 떠 있을 때 시간대가 바뀌면 네이티브 수신기가 [backgroundChannel] 로 부르는 `resync`.
+/// 그리고 앱이 떠 있을 때 네이티브 `AlarmResync`(시간대 변경 · 하루 한 번 작업)가
+/// [backgroundChannel] 로 부르는 `resync`.
 /// 알람 목록 · 설정 권한 cubit 을 소유해, 복귀하거나 위에 얹힌 화면(편집 · 울림)이
 /// 걷힐 때 다시 읽는다.
 class MainShellPage extends StatefulWidget {
@@ -94,7 +95,9 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     await _alarms.load();
   }
 
-  /// 시간대가 바뀌었다 — 새 시간대의 벽시계로 예약을 다시 걸고 목록을 읽은 뒤 응답한다.
+  /// 시간대가 바뀌었거나 하루 한 번 작업이다 — 지금 시간대의 벽시계로 예약을 다시 걸고
+  /// ([AlarmUseCase.timeZoneChanged] 는 시간대가 그대로면 같은 예약을 다시 걸 뿐이다) 목록을
+  /// 읽은 뒤 응답한다.
   Future<void> _onBackgroundCall(MethodCall call) async {
     if (call.method != 'resync') throw MissingPluginException();
     await _reload(_alarmUseCase.timeZoneChanged);

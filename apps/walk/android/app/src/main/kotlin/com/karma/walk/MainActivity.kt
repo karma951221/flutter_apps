@@ -5,6 +5,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.provider.Settings
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -12,13 +13,19 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterFragmentActivity() {
     companion object {
-        /** 떠 있는 메인 엔진. 시간대 변경 수신기가 헤드리스 엔진 대신 이것에 `resync` 를 부른다. */
+        /** 떠 있는 메인 엔진. [AlarmResync] 가 헤드리스 엔진 대신 이것에 `resync` 를 부른다. */
         @Volatile
         var engine: FlutterEngine? = null
             private set
     }
 
     private var alarmSounds: AlarmSoundsChannel? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // 하루 한 번 예약 채우기. 이미 걸려 있으면 그대로 둔다(KEEP).
+        DailyAlarmSyncWorker.enqueue(applicationContext)
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
