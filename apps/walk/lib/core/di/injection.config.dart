@@ -16,6 +16,7 @@ import 'package:injectable/injectable.dart' as _i526;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
 import '../../data/alarm/alarm_permission_module.dart' as _i343;
+import '../../data/alarm/channel_alarm_sound_source.dart' as _i793;
 import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
 import '../../data/app_info/app_info_source.dart' as _i527;
@@ -26,6 +27,7 @@ import '../../data/walk/repository/health_connect_activity_repository.dart'
 import '../../domain/alarm/permission/alarm_permissions.dart' as _i933;
 import '../../domain/alarm/repository/alarm_repository.dart' as _i296;
 import '../../domain/alarm/scheduler/alarm_scheduler.dart' as _i702;
+import '../../domain/alarm/sound/alarm_sound_source.dart' as _i344;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
 import '../../domain/app_info/app_info_source.dart' as _i811;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
@@ -49,6 +51,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i494.Clock>(() => registerModule.clock);
     gh.lazySingleton<_i933.AlarmPermissions>(
       () => alarmPermissionModule.alarmPermissions,
+    );
+    gh.lazySingleton<_i344.AlarmSoundSource>(
+      () => _i793.ChannelAlarmSoundSource(),
     );
     gh.lazySingleton<_i702.AlarmScheduler>(() => _i238.PackageAlarmScheduler());
     gh.lazySingleton<_i332.HealthGateway>(() => _i332.HealthPluginGateway());
