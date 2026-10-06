@@ -16,8 +16,9 @@ import io.flutter.plugin.common.MethodChannel
  * Dart 를 부른다.
  *
  * - 메인 엔진이 살아 있으면(앱이 떠 있음) 그 엔진에 `walk/background` 의 `resync` 를 요청한다.
- *   엔진을 하나 더 띄우면 `alarm` 플러그인의 네이티브 싱글턴이 두 번째 엔진에 붙었다가 destroy 때
- *   떨어진다.
+ *   엔진을 하나 더 띄우면 그 엔진이 도는 동안 `alarm` 플러그인의 울림 이벤트가 두 번째 엔진으로 간다.
+ *   헤드리스 실행 중에 앱 엔진이 새로 붙어도, 포크의 `AlarmPlugin` 이 엔진마다 API 를 따로 기억하므로
+ *   헤드리스 엔진을 내릴 때 앱 엔진의 API 는 남는다(`third_party/alarm/FORK.md`).
  * - 없으면 헤드리스 엔진을 띄워 `alarmResyncMain` 을 돌리고 `done` 을 받으면 내린다.
  *
  * 프로세스 안에서 한 번에 하나만 돌고, 도는 중에 들어온 요청은 끝난 뒤 한 번 더 돈다([ResyncQueue]).

@@ -11,6 +11,7 @@ import androidx.lifecycle.Observer
 import com.gdelataillade.alarm.api.AlarmApiImpl
 import com.gdelataillade.alarm.services.AlarmRingingLiveData
 import io.flutter.Log
+import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -21,18 +22,25 @@ class AlarmPlugin : FlutterPlugin, ActivityAware {
     companion object {
         private const val TAG = "AlarmPlugin"
 
+        // Fork: 엔진마다 API 를 따로 기억하고 가장 나중에 붙은 엔진의 것을 쓴다([EngineRegistry]).
+        // 헤드리스 엔진이 내려가도 앱 엔진의 API 는 남는다.
+        private val triggerApis = EngineRegistry<BinaryMessenger, AlarmTriggerApi>()
+
         @JvmStatic
-        var alarmTriggerApi: AlarmTriggerApi? = null
+        val alarmTriggerApi: AlarmTriggerApi?
+            get() = synchronized(triggerApis) { triggerApis.current }
     }
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         AlarmApi.setUp(binding.binaryMessenger, AlarmApiImpl(binding.applicationContext))
-        alarmTriggerApi = AlarmTriggerApi(binding.binaryMessenger)
+        synchronized(triggerApis) {
+            triggerApis.attach(binding.binaryMessenger, AlarmTriggerApi(binding.binaryMessenger))
+        }
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         AlarmApi.setUp(binding.binaryMessenger, null)
-        alarmTriggerApi = null
+        synchronized(triggerApis) { triggerApis.detach(binding.binaryMessenger) }
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
