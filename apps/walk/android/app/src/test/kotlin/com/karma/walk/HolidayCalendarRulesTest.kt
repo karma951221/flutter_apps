@@ -96,6 +96,21 @@ class HolidayCalendarRulesTest {
     }
 
     @Test
+    fun `이름 보조 규칙은 한국 휴일 캘린더만 - 다른 나라 이름(구글 아닌 계정)은 고르지 않는다`() {
+        val picked = HolidayCalendarRules.pick(
+            listOf(
+                row(1, accountType = "com.google.android.exchange", name = "United States holidays"),
+                row(2, accountType = "com.microsoft.office.outlook", name = "미국의 휴일"),
+                row(3, accountType = "com.samsung", name = "Holidays in Japan"),
+                row(4, accountType = "LOCAL", name = "Holidays"),
+                row(5, accountType = "LOCAL", name = "한국 공휴일"),
+                row(6, accountType = "com.google.android.exchange", name = "South Korea holidays"),
+            ),
+        )
+        assertEquals(listOf(4L, 5L, 6L), picked.map { it.id })
+    }
+
+    @Test
     fun `이름으로 찾은 로컬 휴일 캘린더의 설명 없는 종일 일정도 공휴일 · 기념일은 뺀다`() {
         val picked = HolidayCalendarRules.pick(listOf(row(7, accountType = "LOCAL", name = "대한민국의 휴일")))
         val days = HolidayCalendarRules.holidays(

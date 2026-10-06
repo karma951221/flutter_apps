@@ -41,6 +41,10 @@ object HolidayCalendarRules {
         Regex("""^[a-z_-]+\.south_korea(\.official)?#holiday@group\.v\.calendar\.google\.com$""")
     private val ANY_GOOGLE_HOLIDAY_ID = Regex("""#holiday@group\.v\.calendar\.google\.com$""")
     private val NAME_HINTS = listOf("휴일", "holiday")
+    private val KOREA_HINTS = listOf("대한민국", "한국", "korea")
+
+    /** 나라 없이 휴일만 이르는 이름(공백 빼고 소문자) — 삼성 '공휴일' 처럼 기기 지역(한국)의 것으로 본다. */
+    private val GENERIC_NAMES = setOf("휴일", "공휴일", "법정공휴일", "holiday", "holidays", "publicholidays")
     private val PUBLIC = listOf("공휴일", "Public holiday")
     private val OBSERVANCE = listOf("기념일", "Observance")
 
@@ -48,8 +52,8 @@ object HolidayCalendarRules {
      * 휴일 캘린더를 고른다. 동기화가 꺼진(`SYNC_EVENTS = 0`) 행은 일정이 없을 수 있어 빼고, `VISIBLE` 은
      * 보지 않는다(화면에서 숨긴 것과 쉬는 날은 별개).
      * 1. 구글 계정의 한국 휴일 캘린더(id 가 `OWNER_ACCOUNT` · `CAL_SYNC1` · `_SYNC_ID` 중 하나에).
-     * 2. 1 이 없으면 이름에 "휴일"(공휴일 포함) · "holiday" 가 든 캘린더(다른 앱 · 로컬). 다른 나라 구글
-     *    휴일 캘린더는 뺀다. 설명 필터는 구글 일반 피드에만 걸므로 이 캘린더는 [Picked.official].
+     * 2. 1 이 없으면 이름이 한국 휴일 캘린더인 것(다른 앱 · 로컬 — [isKoreanHolidayName]). 다른 나라
+     *    구글 휴일 캘린더는 id 로도 뺀다. 설명 필터는 구글 일반 피드에만 걸므로 이 캘린더는 [Picked.official].
      */
     fun pick(rows: List<CalendarRow>): List<Picked> {
         val live = rows.filter { it.syncEvents != 0 }
@@ -65,9 +69,20 @@ object HolidayCalendarRules {
             val otherCountry = listOf(row.ownerAccount, row.calSync1, row.syncId)
                 .any { it != null && ANY_GOOGLE_HOLIDAY_ID.containsMatchIn(it) }
             if (otherCountry) return@mapNotNull null
-            if (NAME_HINTS.none { name.contains(it, ignoreCase = true) }) return@mapNotNull null
+            if (!isKoreanHolidayName(name)) return@mapNotNull null
             Picked(row.id, name, official = true)
         }
+    }
+
+    /**
+     * 이름 보조 규칙: 휴일을 이르고(`휴일` · `holiday`) 한국을 가리키거나(`대한민국` · `한국` · `Korea`)
+     * 나라 없이 휴일만 이르는 이름. 고른 캘린더는 내장 표를 대신하므로 다른 나라 휴일 캘린더(구글이 아닌
+     * 계정의 'United States holidays' · '미국의 휴일')는 고르지 않는다.
+     */
+    private fun isKoreanHolidayName(name: String): Boolean {
+        if (NAME_HINTS.none { name.contains(it, ignoreCase = true) }) return false
+        if (KOREA_HINTS.any { name.contains(it, ignoreCase = true) }) return true
+        return name.filterNot(Char::isWhitespace).lowercase() in GENERIC_NAMES
     }
 
     /**
