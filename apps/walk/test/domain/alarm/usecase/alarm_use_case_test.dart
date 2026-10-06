@@ -5,7 +5,6 @@ import 'package:walk/domain/alarm/entity/alarm_sound.dart';
 import 'package:walk/domain/alarm/entity/alarm_trigger.dart';
 import 'package:walk/domain/alarm/repository/alarm_repository.dart';
 import 'package:walk/domain/alarm/scheduler/alarm_scheduler.dart';
-import 'package:walk/domain/alarm/upcoming_triggers.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 
 class _MemoryRepository implements AlarmRepository {
@@ -41,6 +40,9 @@ class _FakeScheduler implements AlarmScheduler {
   final Map<int, Alarm> alarms = {};
   final Set<int> ringing = {};
   final List<int> scheduleCalls = [];
+
+  /// packageId → 걸 때 넘긴(또는 포크가 센) 스누즈 횟수.
+  final Map<int, int> snoozeCounts = {};
   final List<int> cancelCalls = [];
 
   /// [rearmAll] 과 [schedule] 의 순서.
@@ -63,14 +65,18 @@ class _FakeScheduler implements AlarmScheduler {
   Future<Set<int>> ringingIds() async => {...ringing};
 
   @override
-  Future<void> schedule(int packageId, DateTime at, Alarm alarm) async {
+  Future<void> schedule(int packageId, DateTime at, Alarm alarm, {int snoozeCount = 0}) async {
     scheduleCalls.add(packageId);
+    snoozeCounts[packageId] = snoozeCount;
     events.add('schedule');
     entries[packageId] = at;
     signatures[packageId] = signatureOf(alarm);
     alarms[packageId] = alarm;
     ringing.remove(packageId);
   }
+
+  @override
+  Future<int> snoozeCountOf(int packageId) async => snoozeCounts[packageId] ?? 0;
 
   @override
   Future<void> cancel(int packageId) async {
@@ -395,7 +401,7 @@ void main() {
 
       await useCase.snooze(ringingId);
 
-      expect(scheduler.entries[ringingId], firstAt.add(alarmSnoozeDuration));
+      expect(scheduler.entries[ringingId], firstAt.add(const Duration(minutes: 5)));
       expect(scheduler.ringing, isEmpty);
     });
 
@@ -746,6 +752,222 @@ void main() {
       expect(scheduler.entries[yesterdayId], DateTime(2026, 9, 29, 0, 3));
       expect(scheduler.entries[todayId], DateTime(2026, 9, 29, 23, 58));
       expect(await useCase.nextRings(), {1: DateTime(2026, 9, 29, 0, 3)});
+    });
+  });
+
+  group('스누즈 세부', () {
+    // 화요일 12:00 회차가 울리는 중.
+    final firstAt = DateTime(2026, 9, 29, 12);
+    late int ringingId;
+
+    Future<void> ring(Alarm alarm, {int count = 0}) async {
+      repository.alarms = [alarm];
+      ringingId = pid(alarm.id, firstAt);
+      clock.current = firstAt;
+      scheduler.entries[ringingId] = firstAt;
+      scheduler.snoozeCounts[ringingId] = count;
+      scheduler.ringing.add(ringingId);
+    }
+
+    test('snooze 는 알람의 스누즈 간격 뒤로 다시 건다', () async {
+      await ring(const Alarm(id: 1, hour: 12, minute: 0, repeat: _everyDay, snoozeMinutes: 15));
+
+      await useCase.snooze(ringingId);
+
+      expect(scheduler.entries[ringingId], DateTime(2026, 9, 29, 12, 15));
+    });
+
+    test('snooze 는 지금까지 센 횟수 + 1 을 넘긴다', () async {
+      await ring(const Alarm(id: 1, hour: 12, minute: 0, repeat: _everyDay, snoozeLimit: 3), count: 1);
+
+      await useCase.snooze(ringingId);
+
+      expect(scheduler.snoozeCounts[ringingId], 2);
+    });
+
+    test('한도를 다 쓴 회차는 snooze 해도 다시 걸지 않고 멈춘다', () async {
+      await ring(const Alarm(id: 1, hour: 12, minute: 0, repeat: _everyDay, snoozeLimit: 3), count: 3);
+
+      await useCase.snooze(ringingId);
+
+      expect(scheduler.entries.keys, isNot(contains(ringingId)));
+      expect(scheduler.ringing, isEmpty);
+    });
+
+    test('canSnooze — 무제한이면 true, 한도 전이면 true, 한도에 닿으면 false', () async {
+      await ring(const Alarm(id: 1, hour: 12, minute: 0, repeat: _everyDay), count: 50);
+      expect(await useCase.canSnooze(ringingId), isTrue);
+
+      await ring(const Alarm(id: 1, hour: 12, minute: 0, repeat: _everyDay, snoozeLimit: 3), count: 2);
+      expect(await useCase.canSnooze(ringingId), isTrue);
+
+      scheduler.snoozeCounts[ringingId] = 3;
+      expect(await useCase.canSnooze(ringingId), isFalse);
+    });
+
+    test('canSnooze — 지워졌거나 꺼진 알람은 false', () async {
+      await ring(const Alarm(id: 1, hour: 12, minute: 0, repeat: _everyDay, enabled: false));
+      expect(await useCase.canSnooze(ringingId), isFalse);
+
+      repository.alarms = [];
+      expect(await useCase.canSnooze(ringingId), isFalse);
+    });
+
+    test('스누즈 보존 창은 알람의 스누즈 간격 — 15분이면 now+15분까지 남긴다', () async {
+      final staleId = pid(1, mondayNoon);
+      final cases = {
+        DateTime(2026, 9, 28, 12, 15): true,
+        DateTime(2026, 9, 28, 12, 15, 1): false,
+      };
+      for (final MapEntry(key: at, value: kept) in cases.entries) {
+        repository.alarms = [
+          const Alarm(id: 1, hour: 11, minute: 58, repeat: _everyDay, snoozeMinutes: 15),
+        ];
+        scheduler.entries
+          ..clear()
+          ..[staleId] = at;
+
+        await useCase.sync();
+
+        expect(scheduler.entries[staleId], kept ? at : isNull, reason: '$at');
+      }
+    });
+
+    test('sync 가 새로 거는 회차는 스누즈 횟수 0 으로 건다', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay, snoozeLimit: 3)];
+
+      await useCase.sync();
+
+      expect(scheduler.snoozeCounts.values.toSet(), {0});
+    });
+  });
+
+  group('건너뛰기', () {
+    // 월요일 정오 기준 다음 회차는 화요일 07:00.
+    final tuesday7 = DateTime(2026, 9, 29, 7);
+    const daily = Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay);
+
+    test('skipNext 는 다음 회차를 skippedAt 으로 저장하고 그 예약을 지운다', () async {
+      repository.alarms = [daily];
+      await useCase.sync();
+      expect(scheduler.entries, contains(pid(1, tuesday7)));
+
+      final skipped = await useCase.skipNext(1);
+
+      expect(skipped!.skippedAt, tuesday7);
+      expect(repository.alarms.single.skippedAt, tuesday7);
+      expect(scheduler.entries.keys, isNot(contains(pid(1, tuesday7))));
+      expect(scheduler.entries, contains(pid(1, DateTime(2026, 9, 30))));
+      expect(await useCase.nextRings(), {1: DateTime(2026, 9, 30, 7)});
+    });
+
+    test('skipNext 는 스누즈 보존 창 안의 곧 울릴 회차도 지운다', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 12, minute: 3, repeat: _everyDay)];
+      await useCase.sync();
+      final soon = pid(1, mondayNoon);
+      expect(scheduler.entries[soon], DateTime(2026, 9, 28, 12, 3));
+
+      await useCase.skipNext(1);
+
+      expect(scheduler.entries.keys, isNot(contains(soon)));
+      expect(repository.alarms.single.skippedAt, DateTime(2026, 9, 28, 12, 3));
+    });
+
+    test('skipNext 를 두 번 불러도 같은 다음 회차 하나만 건너뛴다', () async {
+      repository.alarms = [daily];
+
+      await useCase.skipNext(1);
+      await useCase.skipNext(1);
+
+      expect(repository.alarms.single.skippedAt, tuesday7);
+    });
+
+    test('skipNext 는 1회성 · 꺼진 알람을 바꾸지 않고, 없는 id 는 null', () async {
+      final oneShot = Alarm(id: 1, hour: 7, minute: 0, oneShotAt: tuesday7);
+      const off = Alarm(id: 2, hour: 7, minute: 0, repeat: _everyDay, enabled: false);
+      repository.alarms = [oneShot, off];
+
+      expect(await useCase.skipNext(1), oneShot);
+      expect(await useCase.skipNext(2), off);
+      expect(await useCase.skipNext(3), isNull);
+      expect(repository.alarms, [oneShot, off]);
+    });
+
+    test('unskip 은 skippedAt 을 지우고 그 회차를 다시 건다', () async {
+      repository.alarms = [daily.copyWith(skippedAt: tuesday7)];
+      await useCase.sync();
+      expect(scheduler.entries.keys, isNot(contains(pid(1, tuesday7))));
+
+      final unskipped = await useCase.unskip(1);
+
+      expect(unskipped!.skippedAt, isNull);
+      expect(repository.alarms.single.skippedAt, isNull);
+      expect(scheduler.entries[pid(1, tuesday7)], tuesday7);
+      expect(await useCase.unskip(9), isNull);
+    });
+
+    test('skipOccurrence — 반복이면 그 회차를 skippedAt 으로, 30분 안 회차도 지운다', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 12, minute: 20, repeat: _everyDay)];
+      await useCase.sync();
+      final todayId = pid(1, mondayNoon);
+      // 울리기 3분 전 — 스누즈 보존 창(5분) 안이라 sync 만으로는 지우지 않는다.
+      clock.current = DateTime(2026, 9, 28, 12, 17);
+
+      await useCase.skipOccurrence(todayId);
+
+      expect(repository.alarms.single.skippedAt, DateTime(2026, 9, 28, 12, 20));
+      expect(repository.alarms.single.enabled, isTrue);
+      expect(scheduler.entries.keys, isNot(contains(todayId)));
+      expect(scheduler.entries, contains(pid(1, DateTime(2026, 9, 29))));
+    });
+
+    test('skipOccurrence — 다음이 아닌 회차(공휴일)도 그 회차만 건너뛴다', () async {
+      repository.alarms = [daily];
+      await useCase.sync();
+      final thursdayId = pid(1, DateTime(2026, 10, 1));
+
+      await useCase.skipOccurrence(thursdayId);
+
+      expect(repository.alarms.single.skippedAt, DateTime(2026, 10, 1, 7));
+      expect(scheduler.entries.keys, isNot(contains(thursdayId)));
+      expect(scheduler.entries, contains(pid(1, tuesday7)));
+    });
+
+    test('skipOccurrence — 1회성이면 알람을 끄고 예약을 지운다', () async {
+      final at = DateTime(2026, 9, 28, 12, 20);
+      repository.alarms = [Alarm(id: 1, hour: 12, minute: 20, oneShotAt: at)];
+      await useCase.sync();
+      clock.current = DateTime(2026, 9, 28, 12, 18);
+
+      await useCase.skipOccurrence(pid(1, at));
+
+      expect(repository.alarms.single.enabled, isFalse);
+      expect(repository.alarms.single.skippedAt, isNull);
+      expect(scheduler.entries, isEmpty);
+    });
+
+    test('skipOccurrence — 지워진 알람의 회차는 예약만 지운다', () async {
+      final orphan = pid(4, tuesday7);
+      scheduler.entries[orphan] = tuesday7;
+
+      await useCase.skipOccurrence(orphan);
+
+      expect(scheduler.entries, isEmpty);
+      expect(repository.alarms, isEmpty);
+    });
+
+    test('sync 는 지난 skippedAt 을 지워 저장하고, 남은 것은 둔다', () async {
+      repository.alarms = [
+        daily.copyWith(skippedAt: DateTime(2026, 9, 28, 7)),
+        daily.copyWith(id: 2, skippedAt: tuesday7),
+      ];
+
+      await useCase.sync();
+
+      expect(repository.alarms[0].skippedAt, isNull);
+      expect(repository.alarms[1].skippedAt, tuesday7);
+      expect(scheduler.entries, contains(pid(1, tuesday7)));
+      expect(scheduler.entries.keys, isNot(contains(pid(2, tuesday7))));
     });
   });
 

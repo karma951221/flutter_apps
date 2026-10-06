@@ -147,7 +147,10 @@ void main() {
         ..physicalSize = const Size(320, 640)
         ..devicePixelRatio = 1;
       addTearDown(tester.view.reset);
-      when(() => useCase.findByPackageId(100)).thenAnswer((_) async => null);
+      // 스누즈 문구가 가장 긴 15분 간격으로 본다.
+      when(
+        () => useCase.findByPackageId(100),
+      ).thenAnswer((_) async => const Alarm(id: 1, hour: 7, minute: 0, snoozeMinutes: 15));
       final l10n = lookupAppLocalizations(locale);
       await tester.pumpWidget(
         _noAnimations(
@@ -164,7 +167,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       for (final (label, button) in [
-        (l10n.walkAlarmSnooze, find.byType(OutlinedButton)),
+        (l10n.walkAlarmSnooze(15), find.byType(OutlinedButton)),
         (l10n.walkAlarmStop, find.byType(FilledButton)),
       ]) {
         final text = find.text(label);

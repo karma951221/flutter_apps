@@ -4,10 +4,8 @@ import 'entity/alarm_trigger.dart';
 /// 반복 알람을 미리 걸어 두는 기간. 앱이 열릴 때마다 채운다(스펙 §5).
 const alarmScheduleWindow = Duration(days: 14);
 
-/// 스누즈 간격. 설정 항목 없이 고정이다.
-const alarmSnoozeDuration = Duration(minutes: 5);
-
 /// [alarm] 이 `now` 뒤 · `now + window` 이하에 울릴 시각들(오름차순).
+/// 건너뛴 회차(`Alarm.skippedAt` 과 같은 순간)는 뺀다.
 List<DateTime> upcomingTriggers(
   Alarm alarm,
   DateTime now, {
@@ -25,7 +23,9 @@ List<DateTime> upcomingTriggers(
     now.millisecond,
     now.microsecond,
   );
-  bool inWindow(DateTime at) => at.isAfter(now) && !at.isAfter(limit);
+  final skipped = alarm.skippedAt;
+  bool inWindow(DateTime at) =>
+      at.isAfter(now) && !at.isAfter(limit) && !(skipped?.isAtSameMomentAs(at) ?? false);
 
   if (alarm.isOneShot) {
     final at = alarm.oneShotAt;

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/entity/alarm_options.dart';
 import 'package:walk/domain/alarm/entity/alarm_sound.dart';
 
 void main() {
@@ -133,6 +134,100 @@ void main() {
         () => Alarm.fromJson(const {'id': 1, 'hour': 7, 'minute': 0, 'oneShotAt': 'nope'}),
         throwsA(anything),
       );
+    });
+  });
+
+  group('울림 세부 · 건너뛰기', () {
+    Alarm roundTrip(Alarm alarm) =>
+        Alarm.fromJson(jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>);
+
+    test('기본은 볼륨 80 · 점점 커지기 끔 · 스누즈 5분 무제한 · 자동 멈춤 없음 · 미리 알림 끔 · 건너뛰기 없음', () {
+      const alarm = Alarm(hour: 7, minute: 0);
+
+      expect(alarm.volumePercent, 80);
+      expect(alarm.fadeSeconds, 0);
+      expect(alarm.snoozeMinutes, 5);
+      expect(alarm.snoozeLimit, isNull);
+      expect(alarm.autoStopMinutes, isNull);
+      expect(alarm.remindBefore, isFalse);
+      expect(alarm.skippedAt, isNull);
+      expect(Alarm.draft(), const Alarm(hour: 7, minute: 0));
+    });
+
+    test('기본값은 선택지 안에 있다', () {
+      expect(AlarmOptions.volumePercents, contains(AlarmOptions.defaultVolumePercent));
+      expect(AlarmOptions.volumePercents, [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]);
+      expect(AlarmOptions.fadeSeconds, [0, 30, 60]);
+      expect(AlarmOptions.snoozeMinutes, [5, 10, 15]);
+      expect(AlarmOptions.snoozeLimits, [null, 3]);
+      expect(AlarmOptions.autoStopMinutes, [null, 5, 10, 15]);
+    });
+
+    test('새 필드를 JSON 키 그대로 저장하고 되살린다(skippedAt 은 로컬 ISO)', () {
+      final alarm = Alarm(
+        id: 2,
+        hour: 7,
+        minute: 0,
+        repeat: const {Weekday.mon},
+        volumePercent: 40,
+        fadeSeconds: 30,
+        snoozeMinutes: 15,
+        snoozeLimit: 3,
+        autoStopMinutes: 10,
+        remindBefore: true,
+        skippedAt: DateTime(2026, 10, 5, 7),
+      );
+
+      final json = alarm.toJson();
+
+      expect(json['volumePercent'], 40);
+      expect(json['fadeSeconds'], 30);
+      expect(json['snoozeMinutes'], 15);
+      expect(json['snoozeLimit'], 3);
+      expect(json['autoStopMinutes'], 10);
+      expect(json['remindBefore'], isTrue);
+      expect(json['skippedAt'], '2026-10-05T07:00:00.000');
+      final decoded = roundTrip(alarm);
+      expect(decoded, alarm);
+      expect(decoded.skippedAt!.isUtc, isFalse);
+    });
+
+    test('null 값(무제한 · 안 함 · 건너뛰기 없음)도 왕복한다', () {
+      const alarm = Alarm(id: 2, hour: 7, minute: 0, snoozeMinutes: 10, autoStopMinutes: null);
+
+      expect(roundTrip(alarm), alarm);
+      expect(roundTrip(alarm).snoozeLimit, isNull);
+    });
+
+    test('키가 없는 기존 알람은 기본값으로 읽는다', () {
+      final alarm = Alarm.fromJson(const {'id': 1, 'hour': 7, 'minute': 0, 'enabled': true});
+
+      expect(alarm, const Alarm(id: 1, hour: 7, minute: 0));
+    });
+
+    test('선택지 밖이거나 타입이 다르면 기본값으로 읽는다', () {
+      final alarm = Alarm.fromJson(const {
+        'id': 1,
+        'hour': 7,
+        'minute': 0,
+        'enabled': true,
+        'volumePercent': 0,
+        'fadeSeconds': 45,
+        'snoozeMinutes': 7,
+        'snoozeLimit': 5,
+        'autoStopMinutes': 3,
+        'remindBefore': 'yes',
+        'skippedAt': 'nope',
+      });
+
+      expect(alarm, const Alarm(id: 1, hour: 7, minute: 0));
+    });
+
+    test('볼륨은 10 단위만 받는다', () {
+      for (final (raw, read) in [(10, 10), (100, 100), (55, 80), (110, 80), ('80', 80)]) {
+        final alarm = Alarm.fromJson({'id': 1, 'hour': 7, 'minute': 0, 'volumePercent': raw});
+        expect(alarm.volumePercent, read, reason: '$raw');
+      }
     });
   });
 

@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'alarm_options.dart';
 import 'alarm_sound.dart';
 
 part 'alarm.freezed.dart';
@@ -54,6 +55,35 @@ class Alarm with _$Alarm {
   @override
   final DateTime? oneShotAt;
 
+  /// 울림 볼륨(%) — [AlarmOptions.volumePercents].
+  @override
+  final int volumePercent;
+
+  /// 점점 커지는 시간(초). 0 이면 처음부터 [volumePercent] — [AlarmOptions.fadeSeconds].
+  @override
+  final int fadeSeconds;
+
+  /// 스누즈 간격(분) — [AlarmOptions.snoozeMinutes].
+  @override
+  final int snoozeMinutes;
+
+  /// 스누즈 최대 횟수. null 이면 무제한 — [AlarmOptions.snoozeLimits].
+  @override
+  final int? snoozeLimit;
+
+  /// 울리기 시작해 이만큼(분) 지나면 스스로 멈춘다. null 이면 안 함 — [AlarmOptions.autoStopMinutes].
+  @override
+  final int? autoStopMinutes;
+
+  /// 울리기 30분 전에 미리 알림을 띄운다.
+  @override
+  final bool remindBefore;
+
+  /// 건너뛸 회차 하나의 정확한 시각. 반복 알람의 "다음 1회"(또는 공휴일 회차)만 쉰다.
+  /// 지난 값은 다음 sync 때 지운다.
+  @override
+  final DateTime? skippedAt;
+
   const Alarm({
     this.id = unsavedId,
     required this.hour,
@@ -64,6 +94,13 @@ class Alarm with _$Alarm {
     this.sound = const AlarmSound.system(),
     this.enabled = true,
     this.oneShotAt,
+    this.volumePercent = AlarmOptions.defaultVolumePercent,
+    this.fadeSeconds = AlarmOptions.defaultFadeSeconds,
+    this.snoozeMinutes = AlarmOptions.defaultSnoozeMinutes,
+    this.snoozeLimit,
+    this.autoStopMinutes,
+    this.remindBefore = false,
+    this.skippedAt,
   });
 
   static const unsavedId = 0;
@@ -84,6 +121,13 @@ class Alarm with _$Alarm {
     'sound': sound.toJson(),
     'enabled': enabled,
     'oneShotAt': oneShotAt?.toIso8601String(),
+    'volumePercent': volumePercent,
+    'fadeSeconds': fadeSeconds,
+    'snoozeMinutes': snoozeMinutes,
+    'snoozeLimit': snoozeLimit,
+    'autoStopMinutes': autoStopMinutes,
+    'remindBefore': remindBefore,
+    'skippedAt': skippedAt?.toIso8601String(),
   };
 
   /// (Freezed 가 factory 를 union 으로 오해하지 않게 static 으로 둔다.)
@@ -103,6 +147,24 @@ class Alarm with _$Alarm {
       sound: AlarmSound.fromJson(json['sound']),
       enabled: json['enabled'] as bool? ?? false,
       oneShotAt: oneShotAt == null ? null : DateTime.parse(oneShotAt),
+      // 울림 세부 · 건너뛰기는 없거나 선택지 밖이면 기본값으로 읽는다(알람은 살린다).
+      volumePercent: _option(json['volumePercent'], AlarmOptions.volumePercents) ??
+          AlarmOptions.defaultVolumePercent,
+      fadeSeconds:
+          _option(json['fadeSeconds'], AlarmOptions.fadeSeconds) ?? AlarmOptions.defaultFadeSeconds,
+      snoozeMinutes: _option(json['snoozeMinutes'], AlarmOptions.snoozeMinutes) ??
+          AlarmOptions.defaultSnoozeMinutes,
+      snoozeLimit: _option(json['snoozeLimit'], AlarmOptions.snoozeLimits),
+      autoStopMinutes: _option(json['autoStopMinutes'], AlarmOptions.autoStopMinutes),
+      remindBefore: json['remindBefore'] == true,
+      skippedAt: switch (json['skippedAt']) {
+        final String raw => DateTime.tryParse(raw),
+        _ => null,
+      },
     );
   }
+
+  /// [raw] 가 [options] 중 하나인 정수면 그 값, 아니면 null.
+  static int? _option(Object? raw, List<int?> options) =>
+      raw is int && options.contains(raw) ? raw : null;
 }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../../domain/alarm/entity/alarm_options.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
 import '../cubit/alarm_ringing_cubit.dart';
 import '../cubit/alarm_ringing_state.dart';
@@ -118,7 +119,9 @@ class _AlarmRingingPageState extends State<AlarmRingingPage> {
                         children: [
                           Expanded(
                             child: AppButton.secondary(
-                              label: l10n.walkAlarmSnooze,
+                              label: l10n.walkAlarmSnooze(
+                                state.alarm?.snoozeMinutes ?? AlarmOptions.defaultSnoozeMinutes,
+                              ),
                               style: _buttonStyle,
                               onPressed: state.busy ? null : () => _finish(_cubit.snooze),
                             ),

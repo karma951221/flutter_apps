@@ -1463,7 +1463,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAlarmStop => 'アラームを止める';
 
   @override
-  String get walkAlarmSnooze => '5分後に再通知';
+  String walkAlarmSnooze(int minutes) {
+    return '$minutes分後に再通知';
+  }
 
   @override
   String get walkShellTabAlarm => 'アラーム';

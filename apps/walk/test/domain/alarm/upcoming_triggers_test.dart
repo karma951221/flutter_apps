@@ -115,6 +115,39 @@ void main() {
           : false,
     );
 
+    test('skippedAt 과 같은 시각의 회차만 빠지고 다른 회차는 남는다', () {
+      final alarm = Alarm(
+        id: 1,
+        hour: 7,
+        minute: 30,
+        repeat: const {Weekday.mon, Weekday.thu},
+        skippedAt: DateTime(2026, 10, 1, 7, 30),
+      );
+      expect(upcomingTriggers(alarm, mondayNoon), [
+        DateTime(2026, 10, 5, 7, 30),
+        DateTime(2026, 10, 8, 7, 30),
+        DateTime(2026, 10, 12, 7, 30),
+      ]);
+      expect(triggersOf(alarm, mondayNoon).map((t) => t.at), upcomingTriggers(alarm, mondayNoon));
+    });
+
+    test('skippedAt 이 회차와 다른 시각이면 아무것도 빼지 않는다', () {
+      final alarm = Alarm(
+        id: 1,
+        hour: 7,
+        minute: 30,
+        repeat: const {Weekday.thu},
+        skippedAt: DateTime(2026, 10, 1, 7, 31),
+      );
+      expect(upcomingTriggers(alarm, mondayNoon).first, DateTime(2026, 10, 1, 7, 30));
+    });
+
+    test('skippedAt 은 같은 순간이면 UTC 로 들어와도 뺀다', () {
+      final at = DateTime(2026, 10, 1, 7, 30);
+      final alarm = Alarm(id: 1, hour: 7, minute: 30, repeat: const {Weekday.thu}, skippedAt: at.toUtc());
+      expect(upcomingTriggers(alarm, mondayNoon).first, DateTime(2026, 10, 8, 7, 30));
+    });
+
     test('1회성: oneShotAt 이 뒤면 그 시각, 지났으면 빈 목록', () {
       final alarm = Alarm(id: 1, hour: 7, minute: 0, oneShotAt: DateTime(2026, 9, 29, 7));
       expect(upcomingTriggers(alarm, mondayNoon), [DateTime(2026, 9, 29, 7)]);

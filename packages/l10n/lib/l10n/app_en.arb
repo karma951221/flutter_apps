@@ -461,7 +461,7 @@
   "walkLoadFailed": "Couldn't load your activity",
   "walkAlarmDefaultTitle": "Alarm",
   "walkAlarmStop": "Stop alarm",
-  "walkAlarmSnooze": "Snooze 5 min",
+  "walkAlarmSnooze": "Snooze {minutes} min",
   "walkShellTabAlarm": "Alarms",
   "walkShellTabWalk": "Walk",
   "walkShellTabSettings": "Settings",

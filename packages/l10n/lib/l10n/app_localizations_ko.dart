@@ -1465,7 +1465,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAlarmStop => '알람 끄기';
 
   @override
-  String get walkAlarmSnooze => '5분 뒤 다시 울림';
+  String walkAlarmSnooze(int minutes) {
+    return '$minutes분 뒤 다시 울림';
+  }
 
   @override
   String get walkShellTabAlarm => '알람';

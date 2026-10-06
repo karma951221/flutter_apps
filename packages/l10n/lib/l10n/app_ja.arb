@@ -461,7 +461,7 @@
   "walkLoadFailed": "記録を読み込めませんでした",
   "walkAlarmDefaultTitle": "アラーム",
   "walkAlarmStop": "アラームを止める",
-  "walkAlarmSnooze": "5分後に再通知",
+  "walkAlarmSnooze": "{minutes}分後に再通知",
   "walkShellTabAlarm": "アラーム",
   "walkShellTabWalk": "ウォーク",
   "walkShellTabSettings": "設定",

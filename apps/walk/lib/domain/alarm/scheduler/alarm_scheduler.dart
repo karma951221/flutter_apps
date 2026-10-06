@@ -18,7 +18,13 @@ abstract interface class AlarmScheduler {
   Future<Set<int>> ringingIds();
 
   /// 같은 id 면 덮어쓴다(울리는 중이면 멈추고 다시 건다).
-  Future<void> schedule(int packageId, DateTime at, Alarm alarm);
+  /// [snoozeCount] 는 이 회차가 지금까지 스누즈된 횟수다. `Alarm.snoozeLimit` 에 닿으면
+  /// 그 울림에는 스누즈가 없다. 새 회차는 0.
+  Future<void> schedule(int packageId, DateTime at, Alarm alarm, {int snoozeCount = 0});
+
+  /// 걸려 있는(울리는 중 포함) 회차가 지금까지 스누즈된 횟수. 알림 스누즈는 포크가 세므로
+  /// 패키지 예약에서 읽는다. 없으면 0.
+  Future<int> snoozeCountOf(int packageId);
 
   Future<void> cancel(int packageId);
 

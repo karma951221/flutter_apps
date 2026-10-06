@@ -35,8 +35,24 @@ abstract interface class AlarmUseCase {
   /// 기기 시간대가 바뀌었다. 패키지 예약을 새 시간대의 벽시계로 옮겨 건 뒤 [sync] 한다.
   Future<void> timeZoneChanged();
 
-  /// 울리는 회차를 [alarmSnoozeDuration] 뒤로 다시 건다. 알람이 지워졌거나 꺼졌으면 멈춘다.
+  /// 울리는 회차를 알람의 스누즈 간격(`Alarm.snoozeMinutes`) 뒤로, 스누즈 횟수를 하나 올려
+  /// 다시 건다. 알람이 지워졌거나 꺼졌거나 스누즈 한도를 다 썼으면([canSnooze] 가 false) 멈춘다.
   Future<void> snooze(int packageId);
+
+  /// 울리는 회차를 지금 스누즈할 수 있는가(울림 화면 버튼 표시용). 알람이 켜져 있고
+  /// 스누즈 한도가 없거나 그 회차가 센 횟수가 한도보다 적어야 한다.
+  Future<bool> canSnooze(int packageId);
+
+  /// 반복 알람의 다음 회차 하나를 건너뛴다(`Alarm.skippedAt`). 이미 건너뛴 것이 있으면 그것을
+  /// 다음 회차로 바꾼다. 1회성 · 꺼진 알람은 그대로 돌려준다. 없는 id 면 null.
+  Future<Alarm?> skipNext(int alarmId);
+
+  /// 건너뛰기를 취소한다. 없는 id 면 null.
+  Future<Alarm?> unskip(int alarmId);
+
+  /// 회차 하나를 쉰다(미리 알림의 [이번만 끄기] · [다음 알람 건너뛰기]). 반복이면 그 회차를
+  /// `skippedAt` 으로, 1회성이면 알람을 끈다. 그 회차의 예약은 곧 울릴 참이어도 지운다.
+  Future<void> skipOccurrence(int packageId);
 
   /// 울리는 회차를 끈다.
   Future<void> stop(int packageId);
@@ -149,14 +165,102 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   @override
   Future<void> snooze(int packageId) => _serial(() async {
     final alarm = _byId(await _repository.load(), alarmIdOf(packageId));
+    final count = await _scheduler.snoozeCountOf(packageId);
     // 지워졌거나 꺼진 알람은 다시 걸지 않고 멈춘다 — 꺼 둔 알람이 5분 뒤에 또 울리면 안 된다.
-    if (alarm == null || !alarm.enabled) {
+    // 한도를 다 쓴 회차도 멈춘다(울림 화면은 버튼을 숨기지만 늦게 눌린 경우).
+    if (alarm == null || !_snoozable(alarm, count)) {
       await _scheduler.stop(packageId);
     } else {
-      await _scheduler.schedule(packageId, _clock.now().add(alarmSnoozeDuration), alarm);
+      await _scheduler.schedule(
+        packageId,
+        _clock.now().add(Duration(minutes: alarm.snoozeMinutes)),
+        alarm,
+        snoozeCount: count + 1,
+      );
     }
     await _sync();
   });
+
+  @override
+  Future<bool> canSnooze(int packageId) => _serial(() async {
+    final alarm = _byId(await _repository.load(), alarmIdOf(packageId));
+    return alarm != null && _snoozable(alarm, await _scheduler.snoozeCountOf(packageId));
+  });
+
+  static bool _snoozable(Alarm alarm, int count) {
+    final limit = alarm.snoozeLimit;
+    return alarm.enabled && (limit == null || count < limit);
+  }
+
+  @override
+  Future<Alarm?> skipNext(int alarmId) => _serial(() async {
+    final alarm = _byId(await _repository.load(), alarmId);
+    if (alarm == null || alarm.isOneShot || !alarm.enabled) return alarm;
+    final next = upcomingTriggers(alarm.copyWith(skippedAt: null), _clock.now()).firstOrNull;
+    if (next == null) return alarm;
+    return _skip(alarm, next);
+  });
+
+  @override
+  Future<Alarm?> unskip(int alarmId) => _serial(() async {
+    final alarm = _byId(await _repository.load(), alarmId);
+    if (alarm == null) return null;
+    final updated = alarm.copyWith(skippedAt: null);
+    await _put(updated);
+    await _sync();
+    return updated;
+  });
+
+  @override
+  Future<void> skipOccurrence(int packageId) => _serial(() async {
+    final alarm = _byId(await _repository.load(), alarmIdOf(packageId));
+    if (alarm == null) {
+      await _cancelUnlessRinging(packageId);
+      await _sync();
+      return;
+    }
+    if (alarm.isOneShot) {
+      await _put(alarm.copyWith(enabled: false));
+      await _cancelUnlessRinging(packageId);
+      await _sync();
+      return;
+    }
+    // 규칙의 회차 시각. 이미 규칙에 없으면(건너뛴 뒤 · 지난 회차) 걸린 예약의 시각을 쓴다.
+    final now = _clock.now();
+    final at =
+        triggersOf(alarm.copyWith(skippedAt: null), now)
+            .where((t) => t.packageId == packageId)
+            .firstOrNull
+            ?.at ??
+        (await _scheduler.scheduled())[packageId]?.at;
+    if (at == null || !at.isAfter(now)) {
+      await _cancelUnlessRinging(packageId);
+      await _sync();
+      return;
+    }
+    await _skip(alarm, at);
+  });
+
+  /// [alarm] 의 [at] 회차를 건너뛰어 저장하고, 그 회차의 예약을 지운 뒤 sync 한다.
+  /// sync 는 스누즈 보존 창 안의 회차를 남기므로 명시적으로 지운다.
+  Future<Alarm> _skip(Alarm alarm, DateTime at) async {
+    final updated = alarm.copyWith(skippedAt: at);
+    await _put(updated);
+    await _cancelUnlessRinging(packageId(alarm.id, triggerIndex(at)));
+    await _sync();
+    return updated;
+  }
+
+  /// 저장소의 같은 id 알람을 [alarm] 으로 바꾼다.
+  Future<void> _put(Alarm alarm) async {
+    final alarms = await _repository.load();
+    await _repository.save([for (final a in alarms) a.id == alarm.id ? alarm : a]);
+  }
+
+  Future<void> _cancelUnlessRinging(int packageId) async {
+    if ((await _scheduler.ringingIds()).contains(packageId)) return;
+    if ((await _scheduler.scheduled()).containsKey(packageId)) await _scheduler.cancel(packageId);
+  }
 
   @override
   Future<void> stop(int packageId) => _serial(() async {
@@ -183,22 +287,31 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     // 1회성을 끌지는 남은 예약(스누즈)을 보고 정하므로 예약부터 읽는다.
     final scheduled = await _scheduler.scheduled();
     final ringing = await _scheduler.ringingIds();
-    final alarms = await _expireOneShots(await _repository.load(), now, scheduled, ringing);
+    final alarms = await _expireOneShots(
+      await _clearPastSkips(await _repository.load(), now),
+      now,
+      scheduled,
+      ringing,
+    );
 
     final desired = {
       for (final alarm in alarms)
         for (final trigger in triggersOf(alarm, now)) trigger.packageId: (trigger, alarm),
     };
     // 꺼진 알람의 회차는 곧 울릴 참이어도 남기지 않는다 — 꺼 둔 알람이 울리면 안 된다.
-    final enabledIds = {for (final a in alarms) if (a.enabled) a.id};
+    // 켜진 알람은 스누즈 보존 창을 알람의 스누즈 간격으로 잡는다.
+    final enabled = {for (final a in alarms) if (a.enabled) a.id: a};
 
     for (final MapEntry(key: id, value: (:at, signature: _)) in scheduled.entries) {
       if (desired.containsKey(id) || ringing.contains(id)) continue;
       // 스누즈된 회차(또는 막 울릴 참인 회차)는 원래 회차가 지나 원하는 목록에 없다.
       // 알람이 켜져 있고 시각이 스누즈 간격 안이면 둔다. 끄기 · 삭제 · 수정은 [_cancelAll] 로 지운다.
+      final alarm = enabled[alarmIdOf(id)];
       final snoozedOrDue =
-          at.isAfter(now.subtract(dueGrace)) && !at.isAfter(now.add(alarmSnoozeDuration));
-      if (enabledIds.contains(alarmIdOf(id)) && snoozedOrDue) continue;
+          alarm != null &&
+          at.isAfter(now.subtract(dueGrace)) &&
+          !at.isAfter(now.add(Duration(minutes: alarm.snoozeMinutes)));
+      if (snoozedOrDue) continue;
       await _scheduler.cancel(id);
     }
     // 시각이 같아도 지문이 다르면(설정이 바뀌었거나 지문 없는 옛 회차) 지금 설정으로 다시 건다.
@@ -232,6 +345,15 @@ class DefaultAlarmUseCase implements AlarmUseCase {
         !pending.contains(a.id);
     if (!alarms.any(expired)) return alarms;
     final updated = [for (final a in alarms) expired(a) ? a.copyWith(enabled: false) : a];
+    await _repository.save(updated);
+    return updated;
+  }
+
+  /// 지난(지금 이전) `skippedAt` 을 지워 저장한다. 바뀐 것이 없으면 저장하지 않는다.
+  Future<List<Alarm>> _clearPastSkips(List<Alarm> alarms, DateTime now) async {
+    bool past(Alarm a) => !(a.skippedAt?.isAfter(now) ?? true);
+    if (!alarms.any(past)) return alarms;
+    final updated = [for (final a in alarms) past(a) ? a.copyWith(skippedAt: null) : a];
     await _repository.save(updated);
     return updated;
   }

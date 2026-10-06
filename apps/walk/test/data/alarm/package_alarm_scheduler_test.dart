@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:alarm/alarm.dart' as pkg;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -7,10 +8,14 @@ import 'package:l10n/l10n.dart';
 import 'package:walk/data/alarm/package_alarm_scheduler.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
 import 'package:walk/domain/alarm/entity/alarm_sound.dart';
-import 'package:walk/domain/alarm/upcoming_triggers.dart';
 
 void main() {
-  const texts = (locale: 'ko', defaultTitle: '알람', stop: '알람 끄기', snooze: '5분 뒤 다시 울림');
+  final AlarmNotificationTexts texts = (
+    locale: 'ko',
+    defaultTitle: '알람',
+    stop: '알람 끄기',
+    snooze: (int minutes) => '$minutes분 뒤 다시 울림',
+  );
   final at = DateTime(2026, 9, 29, 7, 5);
 
   setUpAll(() async {
@@ -32,11 +37,14 @@ void main() {
     expect(settings.vibrate, isTrue);
     expect(settings.androidSilentWhenRingerMuted, isTrue);
     expect(settings.volumeSettings.volume, 0.8);
-    expect(settings.volumeSettings.fadeDuration, const Duration(seconds: 3));
+    expect(settings.volumeSettings.fadeDuration, isNull);
     expect(settings.volumeSettings.showSystemUI, isFalse);
     expect(settings.androidFullScreenIntent, isTrue);
     expect(settings.androidStopAlarmOnTermination, isFalse);
-    expect(settings.androidSnoozeDuration, alarmSnoozeDuration);
+    expect(settings.androidSnoozeDuration, const Duration(minutes: 5));
+    expect(settings.androidSnoozeLimit, isNull);
+    expect(settings.snoozeCount, 0);
+    expect(settings.androidAutoStopAfter, isNull);
     expect(settings.allowSameSecondScheduling, isTrue);
     expect(settings.notificationSettings.title, '출근');
     expect(settings.notificationSettings.body, '오전 7:05');
@@ -82,7 +90,7 @@ void main() {
       312,
       at,
       alarm,
-      (locale: locale, defaultTitle: '', stop: '', snooze: ''),
+      (locale: locale, defaultTitle: '', stop: '', snooze: (_) => ''),
     ).notificationSettings.body;
 
     expect(body('ko'), '오후 9:45');
@@ -94,9 +102,82 @@ void main() {
     final ko = lookupAppLocalizations(const Locale('ko'));
     final en = lookupAppLocalizations(const Locale('en'));
     final ja = lookupAppLocalizations(const Locale('ja'));
-    expect((ko.walkAlarmStop, ko.walkAlarmSnooze), ('알람 끄기', '5분 뒤 다시 울림'));
-    expect((en.walkAlarmStop, en.walkAlarmSnooze), ('Stop alarm', 'Snooze 5 min'));
-    expect((ja.walkAlarmStop, ja.walkAlarmSnooze), ('アラームを止める', '5分後に再通知'));
+    expect((ko.walkAlarmStop, ko.walkAlarmSnooze(10)), ('알람 끄기', '10분 뒤 다시 울림'));
+    expect((en.walkAlarmStop, en.walkAlarmSnooze(10)), ('Stop alarm', 'Snooze 10 min'));
+    expect((ja.walkAlarmStop, ja.walkAlarmSnooze(10)), ('アラームを止める', '10分後に再通知'));
+  });
+
+  group('울림 세부', () {
+    pkg.AlarmSettings settings(Alarm alarm, {int snoozeCount = 0}) =>
+        PackageAlarmScheduler.settingsFor(312, at, alarm, texts, snoozeCount: snoozeCount);
+    const base = Alarm(id: 3, hour: 7, minute: 5);
+
+    test('점점 커지기를 끄면 처음부터 그 볼륨(fixed)', () {
+      final volume = settings(base.copyWith(volumePercent: 40)).volumeSettings;
+
+      expect(volume.volume, 0.4);
+      expect(volume.fadeDuration, isNull);
+      expect(volume.fadeSteps, isEmpty);
+      expect(volume.showSystemUI, isFalse);
+    });
+
+    test('점점 커지기를 켜면 그 시간 동안 그 볼륨까지(fade)', () {
+      final volume = settings(base.copyWith(volumePercent: 100, fadeSeconds: 60)).volumeSettings;
+
+      expect(volume.volume, 1.0);
+      expect(volume.fadeDuration, const Duration(seconds: 60));
+      expect(volume.showSystemUI, isFalse);
+    });
+
+    test('스누즈 간격은 알람 값이고 버튼 문구에 그 분을 넣는다', () {
+      final s = settings(base.copyWith(snoozeMinutes: 15));
+
+      expect(s.androidSnoozeDuration, const Duration(minutes: 15));
+      expect(s.notificationSettings.androidSnoozeButton, '15분 뒤 다시 울림');
+    });
+
+    test('스누즈 한도와 지금까지 센 횟수를 넘긴다 — 한도 전이면 스누즈가 남는다', () {
+      final s = settings(base.copyWith(snoozeLimit: 3), snoozeCount: 2);
+
+      expect(s.androidSnoozeLimit, 3);
+      expect(s.snoozeCount, 2);
+      expect(s.androidSnoozeDuration, const Duration(minutes: 5));
+      expect(s.notificationSettings.androidSnoozeButton, isNotNull);
+    });
+
+    test('횟수가 한도에 닿으면 스누즈 간격 · 버튼이 모두 없다', () {
+      final s = settings(base.copyWith(snoozeLimit: 3), snoozeCount: 3);
+
+      expect(s.snoozeCount, 3);
+      expect(s.androidSnoozeDuration, isNull);
+      expect(s.notificationSettings.androidSnoozeButton, isNull);
+    });
+
+    test('무제한이면 횟수와 상관없이 스누즈가 남는다', () {
+      final s = settings(base, snoozeCount: 99);
+
+      expect(s.androidSnoozeLimit, isNull);
+      expect(s.androidSnoozeDuration, const Duration(minutes: 5));
+    });
+
+    test('자동 멈춤은 분을 Duration 으로, 안 함이면 null', () {
+      expect(settings(base.copyWith(autoStopMinutes: 10)).androidAutoStopAfter, const Duration(minutes: 10));
+      expect(settings(base).androidAutoStopAfter, isNull);
+    });
+
+    test('포크 nextAfterSnooze 와 같은 결과 — 한도 3 에서 세 번째 스누즈 뒤 스누즈 없음', () {
+      final alarm = base.copyWith(snoozeLimit: 3);
+      final next = at.add(const Duration(minutes: 5));
+      for (final count in [1, 2, 3]) {
+        final fromFork = settings(alarm, snoozeCount: count - 1).nextAfterSnooze(next);
+        final fromApp = PackageAlarmScheduler.settingsFor(312, next, alarm, texts, snoozeCount: count);
+        expect(
+          (fromApp.snoozeCount, fromApp.androidSnoozeDuration, fromApp.notificationSettings.androidSnoozeButton),
+          (fromFork.snoozeCount, fromFork.androidSnoozeDuration, fromFork.notificationSettings.androidSnoozeButton),
+          reason: '$count',
+        );
+      }
+    });
   });
 
   group('소리', () {
@@ -174,7 +255,7 @@ void main() {
           alarm.label,
           0.8,
           3000,
-          alarmSnoozeDuration.inSeconds,
+          300,
         ].join('\u0000');
         var hash = 0x811c9dc5;
         for (final byte in utf8.encode(input)) {
@@ -209,7 +290,7 @@ void main() {
           alarm.label,
           0.8,
           3000,
-          alarmSnoozeDuration.inSeconds,
+          300,
         ].join('\u0000');
         var hash = 0x811c9dc5;
         for (final byte in utf8.encode(input)) {
@@ -227,6 +308,49 @@ void main() {
       }
     });
 
+    test('볼륨 · 점점 커지기 · 스누즈 간격 · 한도 · 자동 멈춤이 바뀌면 지문이 바뀐다', () {
+      final variants = [
+        base,
+        base.copyWith(volumePercent: 50),
+        base.copyWith(fadeSeconds: 30),
+        base.copyWith(fadeSeconds: 60),
+        base.copyWith(snoozeMinutes: 10),
+        base.copyWith(snoozeLimit: 3),
+        base.copyWith(autoStopMinutes: 5),
+        base.copyWith(autoStopMinutes: 15),
+      ];
+      expect({for (final a in variants) sig(a)}, hasLength(variants.length));
+    });
+
+    test('미리 알림 · 건너뛰기는 울림과 상관없어 지문에 들지 않는다', () {
+      expect(sig(base.copyWith(remindBefore: true)), sig(base));
+      expect(sig(base.copyWith(skippedAt: DateTime(2026, 10, 1, 7, 5))), sig(base));
+    });
+
+    test('웨이브 3 전 지문(고정 볼륨 0.8 · 페이드 3초 · 스누즈 5분)과 겹치지 않는다 — 올린 뒤 한 번 다시 건다', () {
+      String preWave3(Alarm alarm) {
+        final input = [
+          'system',
+          BundledAlarmSounds.beep,
+          'silentWhenRingerMuted:${alarm.silentWhenRingerMuted}',
+          alarm.label,
+          0.8,
+          3000,
+          300,
+          'icon:ic_stat_alarm',
+        ].join('\u0000');
+        var hash = 0x811c9dc5;
+        for (final byte in utf8.encode(input)) {
+          hash = ((hash ^ byte) * 0x01000193) & 0xffffffff;
+        }
+        return hash.toRadixString(16).padLeft(8, '0');
+      }
+
+      for (final alarm in [base, base.copyWith(label: ''), base.copyWith(silentWhenRingerMuted: true)]) {
+        expect(sig(alarm), isNot(preWave3(alarm)), reason: '$alarm');
+      }
+    });
+
     test('울림과 상관없는 값(켜짐 · 시각)은 지문에 들지 않는다', () {
       expect(sig(base.copyWith(enabled: false)), sig(base));
       expect(sig(base.copyWith(hour: 9, minute: 30)), sig(base));
@@ -237,7 +361,7 @@ void main() {
           PackageAlarmScheduler.settingsFor(312, at, base.copyWith(label: ''), texts).payload!;
 
       expect(
-        payload((locale: 'en', defaultTitle: 'Alarm', stop: 'Stop', snooze: 'Snooze')),
+        payload((locale: 'en', defaultTitle: 'Alarm', stop: 'Stop', snooze: (_) => 'Snooze')),
         payload(texts),
       );
     });

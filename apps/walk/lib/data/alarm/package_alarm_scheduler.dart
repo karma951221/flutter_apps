@@ -11,7 +11,6 @@ import 'package:l10n/l10n.dart';
 import '../../domain/alarm/entity/alarm.dart';
 import '../../domain/alarm/entity/alarm_sound.dart';
 import '../../domain/alarm/scheduler/alarm_scheduler.dart';
-import '../../domain/alarm/upcoming_triggers.dart';
 
 /// 알림에 쓰는 문구. 예약은 화면 밖에서도 일어나 `BuildContext` 대신 기기 언어로 찾는다.
 /// [locale] 은 본문 시각(`오전 7:00`)을 쓰는 `intl` 로캘이다.
@@ -19,16 +18,12 @@ typedef AlarmNotificationTexts = ({
   String locale,
   String defaultTitle,
   String stop,
-  String snooze,
+  String Function(int minutes) snooze,
 });
 
 /// [`alarm`](https://pub.dev/packages/alarm) 패키지 래퍼.
 @LazySingleton(as: AlarmScheduler)
 class PackageAlarmScheduler implements AlarmScheduler {
-  /// 울림 볼륨과 페이드. 지문에도 들어가 바꾸면 이미 걸린 회차가 다시 걸린다.
-  static const _volume = 0.8;
-  static const _fadeDuration = Duration(seconds: 3);
-
   /// 알림 작은 아이콘 — `res/drawable/ic_stat_alarm.xml`(흰 단색 알람시계). 포크가 이 이름을
   /// `getIdentifier` 로 찾으니 `res/raw/keep.xml` 도 같은 이름을 남긴다(컨벤션 테스트가 본다).
   static const notificationIcon = 'ic_stat_alarm';
@@ -48,9 +43,10 @@ class PackageAlarmScheduler implements AlarmScheduler {
     return (at: settings.dateTime, signature: bar < 0 ? '' : payload.substring(bar + 1));
   }
 
-  /// 울림에 영향을 주는 값(소리 · 대체음 · 무음 모드 체크 · 라벨 · 볼륨 · 페이드 · 스누즈 · 알림
-  /// 아이콘)을 정해진 순서로 이은 문자열의 fnv1a32(8자리 hex). 알림 문구(l10n)와 시각은 넣지 않는다
-  /// — 로캘이 바뀌어도 다시 걸지 않고, 시각은 따로 비교한다. 기기 알람음은 복사본 유무가 아니라 저장된 경로를 넣는다.
+  /// 울림에 영향을 주는 값(소리 · 대체음 · 무음 모드 체크 · 라벨 · 볼륨 · 페이드 · 스누즈 간격 · 한도 ·
+  /// 자동 멈춤 · 알림 아이콘)을 정해진 순서로 이은 문자열의 fnv1a32(8자리 hex). 알림 문구(l10n)와 시각은
+  /// 넣지 않는다 — 로캘이 바뀌어도 다시 걸지 않고, 시각은 따로 비교한다. 기기 알람음은 복사본 유무가
+  /// 아니라 저장된 경로를 넣는다. 스누즈 횟수는 회차마다 다르고 울리는 동안 바뀌므로 넣지 않는다.
   static String signatureFor(Alarm alarm) => _fnv1a32(
     [
       switch (alarm.sound) {
@@ -63,9 +59,12 @@ class PackageAlarmScheduler implements AlarmScheduler {
       // 진동을 끈 옛 알람의 지문이 그대로라, 진동 없이 걸린 회차를 다시 걸지 않는다.
       'silentWhenRingerMuted:${alarm.silentWhenRingerMuted}',
       alarm.label,
-      _volume,
-      _fadeDuration.inMilliseconds,
-      alarmSnoozeDuration.inSeconds,
+      // 웨이브 3 전에는 같은 자리에 고정 0.8 · 3000ms · 300s 가 있었다. 이름을 붙여 겹치지 않게 한다.
+      'volume:${alarm.volumePercent}',
+      'fade:${alarm.fadeSeconds}',
+      'snooze:${alarm.snoozeMinutes}',
+      'snoozeLimit:${alarm.snoozeLimit}',
+      'autoStop:${alarm.autoStopMinutes}',
       // 알림 아이콘을 넣기 전에 걸린 회차는 icon 이 없어 포크가 적응형 런처 아이콘으로 알림을 만든다
       // (안드로이드 8.0 은 알림이 실패할 수 있다). 이름을 넣어 올린 뒤 한 번 다시 걸게 한다.
       'icon:$notificationIcon',
@@ -92,9 +91,15 @@ class PackageAlarmScheduler implements AlarmScheduler {
   }
 
   @override
-  Future<void> schedule(int packageId, DateTime at, Alarm alarm) async {
-    await pkg.Alarm.set(alarmSettings: settingsFor(packageId, at, alarm, _texts()));
+  Future<void> schedule(int packageId, DateTime at, Alarm alarm, {int snoozeCount = 0}) async {
+    await pkg.Alarm.set(
+      alarmSettings: settingsFor(packageId, at, alarm, _texts(), snoozeCount: snoozeCount),
+    );
   }
+
+  @override
+  Future<int> snoozeCountOf(int packageId) async =>
+      (await pkg.Alarm.getAlarm(packageId))?.snoozeCount ?? 0;
 
   /// 패키지 `checkAlarm` 은 저장된 예약 중 아직 오지 않은 것을 모두 다시 `set` 한다.
   @override
@@ -115,46 +120,61 @@ class PackageAlarmScheduler implements AlarmScheduler {
     DateTime at,
     Alarm alarm,
     AlarmNotificationTexts texts, {
+    int snoozeCount = 0,
     bool Function(String path) fileExists = _exists,
-  }) => pkg.AlarmSettings(
-    id: packageId,
-    dateTime: at,
-    // null 이면 포크가 기기의 기본 알람음으로 울린다.
-    assetAudioPath: switch (alarm.sound) {
-      SystemAlarmSound() => null,
-      BundledAlarmSound(:final asset) => asset,
-      DeviceAlarmSound(:final path) => fileExists(path) ? path : null,
-    },
-    // 위 소리로 울리지 못하면(파일 손상 · 기기 기본음 없음) 비프로 울린다.
-    androidFallbackAudioPath: BundledAlarmSounds.beep,
-    loopAudio: true,
-    // 진동은 항상 켠다. 폰이 무음 · 진동 모드일 때 소리를 낼지는 포크가 울리는 순간 정한다.
-    vibrate: true,
-    androidSilentWhenRingerMuted: alarm.silentWhenRingerMuted,
-    volumeSettings: pkg.VolumeSettings.fade(
-      volume: _volume,
-      fadeDuration: _fadeDuration,
+  }) {
+    final limit = alarm.snoozeLimit;
+    // 포크 `AlarmSettings.nextAfterSnooze` 와 같은 규칙 — 한도에 닿으면 간격 · 버튼 모두 없다.
+    final canSnooze = limit == null || snoozeCount < limit;
+    final volume = alarm.volumePercent / 100;
+    return pkg.AlarmSettings(
+      id: packageId,
+      dateTime: at,
+      // null 이면 포크가 기기의 기본 알람음으로 울린다.
+      assetAudioPath: switch (alarm.sound) {
+        SystemAlarmSound() => null,
+        BundledAlarmSound(:final asset) => asset,
+        DeviceAlarmSound(:final path) => fileExists(path) ? path : null,
+      },
+      // 위 소리로 울리지 못하면(파일 손상 · 기기 기본음 없음) 비프로 울린다.
+      androidFallbackAudioPath: BundledAlarmSounds.beep,
+      loopAudio: true,
+      // 진동은 항상 켠다. 폰이 무음 · 진동 모드일 때 소리를 낼지는 포크가 울리는 순간 정한다.
+      vibrate: true,
+      androidSilentWhenRingerMuted: alarm.silentWhenRingerMuted,
       // 울릴 때 · 끌 때 알람 볼륨을 바꾸며 시스템 볼륨 패널이 뜨지 않게 한다.
-      showSystemUI: false,
-    ),
-    // NotificationOnKillService 를 선언하지 않는다. 안드로이드는 앱이 죽어도 AlarmManager 가 울린다.
-    warningNotificationOnKill: false,
-    androidFullScreenIntent: true,
-    // 기상 알람이라 앱을 최근 앱에서 밀어 없애도 계속 울려야 한다.
-    androidStopAlarmOnTermination: false,
-    // 여러 알람이 같은 시각이어도 서로 지우지 않고 차례로 울린다.
-    allowSameSecondScheduling: true,
-    androidSnoozeDuration: alarmSnoozeDuration,
-    notificationSettings: pkg.NotificationSettings(
-      title: alarm.label.isEmpty ? texts.defaultTitle : alarm.label,
-      body: _time(texts.locale, alarm.hour, alarm.minute),
-      stopButton: texts.stop,
-      androidSnoozeButton: texts.snooze,
-      // 적응형 런처 아이콘은 상태바에서 덩어리로 보인다.
-      icon: notificationIcon,
-    ),
-    payload: '${alarm.id}|${signatureFor(alarm)}',
-  );
+      volumeSettings: alarm.fadeSeconds == 0
+          ? pkg.VolumeSettings.fixed(volume: volume, showSystemUI: false)
+          : pkg.VolumeSettings.fade(
+              volume: volume,
+              fadeDuration: Duration(seconds: alarm.fadeSeconds),
+              showSystemUI: false,
+            ),
+      // NotificationOnKillService 를 선언하지 않는다. 안드로이드는 앱이 죽어도 AlarmManager 가 울린다.
+      warningNotificationOnKill: false,
+      androidFullScreenIntent: true,
+      // 기상 알람이라 앱을 최근 앱에서 밀어 없애도 계속 울려야 한다.
+      androidStopAlarmOnTermination: false,
+      // 여러 알람이 같은 시각이어도 서로 지우지 않고 차례로 울린다.
+      allowSameSecondScheduling: true,
+      androidSnoozeDuration: canSnooze ? Duration(minutes: alarm.snoozeMinutes) : null,
+      androidSnoozeLimit: limit,
+      snoozeCount: snoozeCount,
+      androidAutoStopAfter: switch (alarm.autoStopMinutes) {
+        final minutes? => Duration(minutes: minutes),
+        null => null,
+      },
+      notificationSettings: pkg.NotificationSettings(
+        title: alarm.label.isEmpty ? texts.defaultTitle : alarm.label,
+        body: _time(texts.locale, alarm.hour, alarm.minute),
+        stopButton: texts.stop,
+        androidSnoozeButton: canSnooze ? texts.snooze(alarm.snoozeMinutes) : null,
+        // 적응형 런처 아이콘은 상태바에서 덩어리로 보인다.
+        icon: notificationIcon,
+      ),
+      payload: '${alarm.id}|${signatureFor(alarm)}',
+    );
+  }
 
   static bool _exists(String path) => File(path).existsSync();
 

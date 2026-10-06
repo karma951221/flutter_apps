@@ -2870,11 +2870,11 @@ abstract class AppLocalizations {
   /// **'알람 끄기'**
   String get walkAlarmStop;
 
-  /// 울리는 알람을 5분 미루는 버튼 라벨(알림 · 울림 화면)
+  /// 울리는 알람을 스누즈 간격만큼 미루는 버튼 라벨(알림 · 울림 화면). minutes 는 알람별 스누즈 간격(5 · 10 · 15)
   ///
   /// In ko, this message translates to:
-  /// **'5분 뒤 다시 울림'**
-  String get walkAlarmSnooze;
+  /// **'{minutes}분 뒤 다시 울림'**
+  String walkAlarmSnooze(int minutes);
 
   /// 하단 탭 — 알람
   ///
