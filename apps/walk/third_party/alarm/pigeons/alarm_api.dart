@@ -35,6 +35,7 @@ class AlarmSettingsWire {
     required this.androidStaleAfterMillis,
     required this.androidAlarmClock,
     required this.androidFallbackAudioPath,
+    required this.androidSilentWhenRingerMuted,
   });
 
   final int id;
@@ -75,6 +76,11 @@ class AlarmSettingsWire {
   /// device default alarm sound) cannot be played. Null means no retry.
   /// Same formats as [assetAudioPath]. Android only.
   final String? androidFallbackAudioPath;
+
+  /// Fork: when the phone's ringer is on vibrate or silent at ring time,
+  /// play without sound (the player keeps running at volume 0) and vibrate.
+  /// Android only.
+  final bool androidSilentWhenRingerMuted;
 }
 
 class VolumeSettingsWire {

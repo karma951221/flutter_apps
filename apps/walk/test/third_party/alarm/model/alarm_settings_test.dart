@@ -84,4 +84,56 @@ void main() {
       );
     });
   });
+
+  group('androidSilentWhenRingerMuted', () {
+    test('기본은 false', () {
+      expect(settings().androidSilentWhenRingerMuted, isFalse);
+    });
+
+    test('json 왕복', () {
+      final original = settings().copyWith(androidSilentWhenRingerMuted: true);
+
+      final restored = AlarmSettings.fromJson(original.toJson());
+
+      expect(restored.androidSilentWhenRingerMuted, isTrue);
+      expect(restored, original);
+    });
+
+    test('키가 없는 옛 json 은 false', () {
+      final json =
+          settings().copyWith(androidSilentWhenRingerMuted: true).toJson()
+            ..remove('androidSilentWhenRingerMuted');
+
+      expect(
+        AlarmSettings.fromJson(json).androidSilentWhenRingerMuted,
+        isFalse,
+      );
+    });
+
+    test('값이 다르면 다른 설정', () {
+      expect(
+        settings().copyWith(androidSilentWhenRingerMuted: true),
+        isNot(settings()),
+      );
+    });
+
+    test('네이티브로 넘긴다', () {
+      final on = settings().copyWith(androidSilentWhenRingerMuted: true);
+
+      expect(on.toWire().androidSilentWhenRingerMuted, isTrue);
+      expect(settings().toWire().androidSilentWhenRingerMuted, isFalse);
+    });
+
+    test('copyWith 는 주지 않으면 유지한다', () {
+      final on = settings().copyWith(androidSilentWhenRingerMuted: true);
+
+      expect(on.copyWith().androidSilentWhenRingerMuted, isTrue);
+      expect(
+        on
+            .copyWith(androidSilentWhenRingerMuted: false)
+            .androidSilentWhenRingerMuted,
+        isFalse,
+      );
+    });
+  });
 }

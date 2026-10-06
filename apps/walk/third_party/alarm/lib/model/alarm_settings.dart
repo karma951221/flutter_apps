@@ -38,6 +38,7 @@ class AlarmSettings extends Equatable {
     this.androidStaleAfter = _defaultStaleAfter,
     this.androidAlarmClock = true,
     this.androidFallbackAudioPath,
+    this.androidSilentWhenRingerMuted = false,
   });
 
   /// Constructs an `AlarmSettings` instance from the given JSON data.
@@ -308,6 +309,17 @@ class AlarmSettings extends Equatable {
   /// is also what alarms stored before this field existed read back as.
   final String? androidFallbackAudioPath;
 
+  /// Fork: whether the alarm follows the phone's ringer mode.
+  ///
+  /// **Android only.** When `true` and the ringer is on vibrate or silent at
+  /// the moment the alarm rings, it rings without sound: the stream volume
+  /// and audio focus are left alone, the player runs at volume 0 (so the
+  /// ring still counts as playing), and the phone vibrates.
+  ///
+  /// Defaults to `false`, which is also what alarms stored before this field
+  /// existed read back as.
+  final bool androidSilentWhenRingerMuted;
+
   /// Reads [androidStaleAfter], recovering rather than throwing.
   ///
   /// Nothing between [Alarm.init] and the storage read catches, so throwing
@@ -358,6 +370,7 @@ class AlarmSettings extends Equatable {
         androidStaleAfterMillis: androidStaleAfter?.inMilliseconds,
         androidAlarmClock: androidAlarmClock,
         androidFallbackAudioPath: androidFallbackAudioPath,
+        androidSilentWhenRingerMuted: androidSilentWhenRingerMuted,
       );
 
   /// Creates a copy of `AlarmSettings` but with the given fields replaced with
@@ -396,6 +409,7 @@ class AlarmSettings extends Equatable {
     Duration? Function()? androidStaleAfter,
     bool? androidAlarmClock,
     String? Function()? androidFallbackAudioPath,
+    bool? androidSilentWhenRingerMuted,
   }) {
     return AlarmSettings(
       id: id ?? this.id,
@@ -435,6 +449,8 @@ class AlarmSettings extends Equatable {
       androidFallbackAudioPath: androidFallbackAudioPath != null
           ? androidFallbackAudioPath()
           : this.androidFallbackAudioPath,
+      androidSilentWhenRingerMuted:
+          androidSilentWhenRingerMuted ?? this.androidSilentWhenRingerMuted,
     );
   }
 
@@ -459,5 +475,6 @@ class AlarmSettings extends Equatable {
         androidStaleAfter,
         androidAlarmClock,
         androidFallbackAudioPath,
+        androidSilentWhenRingerMuted,
       ];
 }

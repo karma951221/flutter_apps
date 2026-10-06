@@ -12,6 +12,7 @@ import android.app.Notification
 import android.content.Intent
 import android.content.Context
 import android.content.pm.ServiceInfo
+import android.media.AudioManager
 import android.os.IBinder
 import android.os.PowerManager
 import android.os.Build
@@ -29,6 +30,16 @@ import com.gdelataillade.alarm.services.WarningNotificationState
 import com.gdelataillade.alarm.services.SnoozeCoordinator
 import io.flutter.Log
 import kotlinx.serialization.json.Json
+
+/**
+ * Fork: whether a ring goes without sound because the phone's ringer is muted.
+ *
+ * Only an alarm that opted in ([optIn]) follows the ringer, and only a ringer
+ * that is not [AudioManager.RINGER_MODE_NORMAL] -- vibrate or silent -- mutes
+ * it. A muted ring vibrates instead.
+ */
+internal fun shouldMuteForRinger(optIn: Boolean, ringerMode: Int): Boolean =
+    optIn && ringerMode != AudioManager.RINGER_MODE_NORMAL
 
 class AlarmService : Service() {
     companion object {
@@ -257,12 +268,20 @@ class AlarmService : Service() {
         // Read showSystemUI before any volume calls that depend on it
         showSystemUI = alarmSettings.volumeSettings.showSystemUI
 
+        // Fork: decided at ring time, so it is right even when the app is not
+        // running. A muted ring leaves the stream volume and audio focus alone.
+        val ringerMode = (getSystemService(Context.AUDIO_SERVICE) as? AudioManager)?.ringerMode
+            ?: AudioManager.RINGER_MODE_NORMAL
+        val muted = shouldMuteForRinger(alarmSettings.androidSilentWhenRingerMuted, ringerMode)
+
         // Enforcement belongs to the ring that asked for it. An alarm with no volume
         // never reaches setVolume, so stop the previous one's here too (#444).
         volumeService?.stopVolumeEnforcement()
 
         // Set the volume if specified
-        if (alarmSettings.volumeSettings.volume != null) {
+        if (muted) {
+            Log.d(TAG, "Ringer is muted (mode $ringerMode); alarm $id vibrates only.")
+        } else if (alarmSettings.volumeSettings.volume != null) {
             volumeService?.setVolume(
                 alarmSettings.volumeSettings.volume,
                 alarmSettings.volumeSettings.volumeEnforced,
@@ -279,7 +298,9 @@ class AlarmService : Service() {
         }
 
         // Request audio focus
-        volumeService?.requestAudioFocus(alarmSettings.preferConnectedAudioDevice)
+        if (!muted) {
+            volumeService?.requestAudioFocus(alarmSettings.preferConnectedAudioDevice)
+        }
 
         // Set up audio completion listener
         audioService?.setOnAudioCompleteListener(id) {
@@ -299,11 +320,13 @@ class AlarmService : Service() {
             alarmSettings.loopAudio,
             alarmSettings.volumeSettings.fadeDuration,
             alarmSettings.volumeSettings.fadeSteps,
-            alarmSettings.preferConnectedAudioDevice
+            alarmSettings.preferConnectedAudioDevice,
+            muted
         )
 
-        // Start vibration if enabled
-        if (alarmSettings.vibrate) {
+        // Start vibration if enabled. Fork: a muted ring always vibrates; the
+        // player keeps running at volume 0 so the ring still counts as playing.
+        if (alarmSettings.vibrate || muted) {
             vibrationService?.startVibrating(longArrayOf(0, 500, 500), 1)
         }
 

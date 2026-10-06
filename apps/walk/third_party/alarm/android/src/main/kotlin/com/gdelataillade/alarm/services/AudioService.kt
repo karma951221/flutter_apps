@@ -51,14 +51,17 @@ class AudioService(private val context: Context) {
         loopAudio: Boolean,
         fadeDuration: Duration?,
         fadeSteps: List<VolumeFadeStep>,
-        preferConnectedAudioDevice: Boolean
+        preferConnectedAudioDevice: Boolean,
+        // Fork: play at volume 0 (and skip any fade, which would raise it).
+        // The player still runs, so the ring counts as playing.
+        muted: Boolean = false
     ) {
         releaseMediaPlayer(id) // Stop and release any existing MediaPlayer and Timer for this ID
 
         // Fork: try each candidate until one starts, so a sound that cannot be
         // played falls back instead of leaving the alarm silent.
         val mediaPlayer = audioCandidates(filePath, fallbackFilePath).firstNotNullOfOrNull { path ->
-            startMediaPlayer(id, path, loopAudio, preferConnectedAudioDevice)
+            startMediaPlayer(id, path, loopAudio, preferConnectedAudioDevice, muted)
         } ?: run {
             Log.e(TAG, "No playable sound for alarm $id")
             return
@@ -73,7 +76,9 @@ class AudioService(private val context: Context) {
 
             mediaPlayers[id] = mediaPlayer
 
-            if (fadeSteps.isNotEmpty()) {
+            if (muted) {
+                // Fork: no fade; it would bring the sound back.
+            } else if (fadeSteps.isNotEmpty()) {
                 val timer = Timer(true)
                 timers[id] = timer
                 startStaircaseFadeIn(mediaPlayer, fadeSteps, timer)
@@ -98,7 +103,8 @@ class AudioService(private val context: Context) {
         id: Int,
         filePath: String?,
         loopAudio: Boolean,
-        preferConnectedAudioDevice: Boolean
+        preferConnectedAudioDevice: Boolean,
+        muted: Boolean
     ): MediaPlayer? {
         val mediaPlayer = MediaPlayer()
         try {
@@ -158,6 +164,8 @@ class AudioService(private val context: Context) {
 
             mediaPlayer.prepare()
             mediaPlayer.isLooping = loopAudio
+            // Fork: silent from the first frame, not only after a fade step.
+            if (muted) mediaPlayer.setVolume(0f, 0f)
             mediaPlayer.start()
             return mediaPlayer
         } catch (e: Exception) {

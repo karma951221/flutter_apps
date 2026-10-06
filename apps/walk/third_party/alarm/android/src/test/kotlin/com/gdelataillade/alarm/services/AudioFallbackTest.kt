@@ -127,6 +127,7 @@ class AudioFallbackTest {
             preferConnectedAudioDevice = false,
             androidAlarmClock = true,
             androidFallbackAudioPath = beep,
+            androidSilentWhenRingerMuted = false,
         )
 
         assertEquals(beep, AlarmSettings.fromWire(wire).androidFallbackAudioPath)

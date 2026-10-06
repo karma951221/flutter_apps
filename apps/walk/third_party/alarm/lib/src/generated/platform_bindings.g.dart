@@ -125,6 +125,7 @@ class AlarmSettingsWire {
     this.androidStaleAfterMillis,
     required this.androidAlarmClock,
     this.androidFallbackAudioPath,
+    required this.androidSilentWhenRingerMuted,
   });
 
   int id;
@@ -179,6 +180,11 @@ class AlarmSettingsWire {
   /// Same formats as [assetAudioPath]. Android only.
   String? androidFallbackAudioPath;
 
+  /// Fork: when the phone's ringer is on vibrate or silent at ring time,
+  /// play without sound (the player keeps running at volume 0) and vibrate.
+  /// Android only.
+  bool androidSilentWhenRingerMuted;
+
   List<Object?> _toList() {
     return <Object?>[
       id,
@@ -199,6 +205,7 @@ class AlarmSettingsWire {
       androidStaleAfterMillis,
       androidAlarmClock,
       androidFallbackAudioPath,
+      androidSilentWhenRingerMuted,
     ];
   }
 
@@ -227,6 +234,7 @@ class AlarmSettingsWire {
       androidStaleAfterMillis: result[15] as int?,
       androidAlarmClock: result[16]! as bool,
       androidFallbackAudioPath: result[17] as String?,
+      androidSilentWhenRingerMuted: result[18]! as bool,
     );
   }
 

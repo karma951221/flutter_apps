@@ -38,6 +38,9 @@ data class AlarmSettings(
     // Fork: played when assetAudioPath (or the device default) cannot be.
     // Null means no retry, which is also what alarms stored before it read as.
     val androidFallbackAudioPath: String? = null,
+    // Fork: ring vibration-only when the ringer is on vibrate or silent.
+    // False ignores the ringer, which is also what older alarms read as.
+    val androidSilentWhenRingerMuted: Boolean = false,
 ) {
     /** Whether this alarm can be deferred rather than only stopped. */
     val canSnooze: Boolean
@@ -83,6 +86,7 @@ data class AlarmSettings(
                 e.androidStaleAfterMillis,
                 e.androidAlarmClock,
                 e.androidFallbackAudioPath,
+                e.androidSilentWhenRingerMuted,
             )
         }
 
@@ -143,6 +147,10 @@ data class AlarmSettings(
             val androidFallbackAudioPath =
                 (jsonObject["androidFallbackAudioPath"] as? JsonPrimitive)?.contentOrNull
 
+            // Fork. Absent in alarms saved before it existed: ignore the ringer.
+            val androidSilentWhenRingerMuted =
+                jsonObject.primitiveBoolean("androidSilentWhenRingerMuted") ?: false
+
             // Handle backward compatibility for `volumeSettings`
             val volumeSettings = jsonObject["volumeSettings"]?.let {
                 Json.decodeFromJsonElement(VolumeSettings.serializer(), it)
@@ -179,6 +187,7 @@ data class AlarmSettings(
                 androidStaleAfterMillis = androidStaleAfterMillis,
                 androidAlarmClock = androidAlarmClock,
                 androidFallbackAudioPath = androidFallbackAudioPath,
+                androidSilentWhenRingerMuted = androidSilentWhenRingerMuted,
             )
         }
     }

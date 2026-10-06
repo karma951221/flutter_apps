@@ -209,7 +209,13 @@ data class AlarmSettingsWire (
    * device default alarm sound) cannot be played. Null means no retry.
    * Same formats as [assetAudioPath]. Android only.
    */
-  val androidFallbackAudioPath: String? = null
+  val androidFallbackAudioPath: String? = null,
+  /**
+   * Fork: when the phone's ringer is on vibrate or silent at ring time,
+   * play without sound (the player keeps running at volume 0) and vibrate.
+   * Android only.
+   */
+  val androidSilentWhenRingerMuted: Boolean
 )
  {
   companion object {
@@ -232,7 +238,8 @@ data class AlarmSettingsWire (
       val androidStaleAfterMillis = pigeonVar_list[15] as Long?
       val androidAlarmClock = pigeonVar_list[16] as Boolean
       val androidFallbackAudioPath = pigeonVar_list[17] as String?
-      return AlarmSettingsWire(id, millisecondsSinceEpoch, assetAudioPath, volumeSettings, notificationSettings, loopAudio, vibrate, warningNotificationOnKill, androidFullScreenIntent, allowAlarmOverlap, allowSameSecondScheduling, iOSBackgroundAudio, androidStopAlarmOnTermination, preferConnectedAudioDevice, androidSnoozeDurationMillis, androidStaleAfterMillis, androidAlarmClock, androidFallbackAudioPath)
+      val androidSilentWhenRingerMuted = pigeonVar_list[18] as Boolean
+      return AlarmSettingsWire(id, millisecondsSinceEpoch, assetAudioPath, volumeSettings, notificationSettings, loopAudio, vibrate, warningNotificationOnKill, androidFullScreenIntent, allowAlarmOverlap, allowSameSecondScheduling, iOSBackgroundAudio, androidStopAlarmOnTermination, preferConnectedAudioDevice, androidSnoozeDurationMillis, androidStaleAfterMillis, androidAlarmClock, androidFallbackAudioPath, androidSilentWhenRingerMuted)
     }
   }
   fun toList(): List<Any?> {
@@ -255,6 +262,7 @@ data class AlarmSettingsWire (
       androidStaleAfterMillis,
       androidAlarmClock,
       androidFallbackAudioPath,
+      androidSilentWhenRingerMuted,
     )
   }
   override fun equals(other: Any?): Boolean {

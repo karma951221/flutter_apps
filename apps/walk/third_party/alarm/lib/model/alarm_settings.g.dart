@@ -52,6 +52,8 @@ AlarmSettings _$AlarmSettingsFromJson(Map<String, dynamic> json) =>
               $checkedConvert('androidAlarmClock', (v) => v as bool? ?? true),
           androidFallbackAudioPath:
               $checkedConvert('androidFallbackAudioPath', (v) => v as String?),
+          androidSilentWhenRingerMuted: $checkedConvert(
+              'androidSilentWhenRingerMuted', (v) => v as bool? ?? false),
         );
         return val;
       },
@@ -81,4 +83,5 @@ Map<String, dynamic> _$AlarmSettingsToJson(AlarmSettings instance) =>
       'androidAlarmClock': instance.androidAlarmClock,
       if (instance.androidFallbackAudioPath case final value?)
         'androidFallbackAudioPath': value,
+      'androidSilentWhenRingerMuted': instance.androidSilentWhenRingerMuted,
     };
