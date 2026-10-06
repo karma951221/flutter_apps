@@ -131,7 +131,10 @@ class AlarmSoundsChannel(
         player = null
     }
 
-    /** 복사 후 재생 가능한지 검증한다. 실패하면 복사본을 지우고 던진다. 같은 uri 는 덮어쓴다. */
+    /**
+     * 복사 후 재생 가능한지 검증한다. 같은 uri 는 같은 경로라 여러 알람이 한 복사본을 함께 쓴다.
+     * 그래서 임시 파일에 복사 · 검증한 뒤에만 바꾸고([replaceVerified]), 실패하면 임시 파일만 지운다.
+     */
     private fun importRingtone(uri: Uri): String {
         val folder = File(context.getDir("flutter", Context.MODE_PRIVATE), FOLDER).apply { mkdirs() }
         val extension =
@@ -139,21 +142,23 @@ class AlarmSoundsChannel(
                 ?.let { MimeTypeMap.getSingleton().getExtensionFromMimeType(it) }
                 ?: DEFAULT_EXTENSION
         val target = File(folder, "${hash(uri.toString())}.$extension")
-        try {
-            val input = context.contentResolver.openInputStream(uri)
-                ?: throw IllegalStateException("cannot open $uri")
-            input.use { source -> target.outputStream().use { source.copyTo(it) } }
-            val check = MediaPlayer()
-            try {
-                check.setDataSource(target.absolutePath)
-                check.prepare()
-            } finally {
-                check.release()
-            }
-        } catch (e: Exception) {
-            target.delete()
-            throw e
-        }
+        replaceVerified(
+            target,
+            write = { temp ->
+                val input = context.contentResolver.openInputStream(uri)
+                    ?: throw IllegalStateException("cannot open $uri")
+                input.use { source -> temp.outputStream().use { source.copyTo(it) } }
+            },
+            verify = { temp ->
+                val check = MediaPlayer()
+                try {
+                    check.setDataSource(temp.absolutePath)
+                    check.prepare()
+                } finally {
+                    check.release()
+                }
+            },
+        )
         return target.absolutePath
     }
 
