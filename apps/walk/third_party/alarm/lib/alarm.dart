@@ -840,7 +840,8 @@ class Alarm {
     // already moved has nothing to write — but that is not the same as having
     // nothing to do, because process-local state does not survive a restart.
     final isNewDeferral = alarm.dateTime.isBefore(nextRingAt);
-    // Fork: a snooze also counts itself, the same rule the host applied.
+    // Fork: a snooze takes the count the host reached, the same rule the host
+    // applied. One marker can stand for several snoozes, so it is not counted.
     final snoozedAlarm = isNewDeferral ? event.applyTo(alarm) : alarm;
 
     if (isNewDeferral) await AlarmStorage.saveAlarm(snoozedAlarm);

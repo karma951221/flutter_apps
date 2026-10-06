@@ -153,4 +153,20 @@ class SnoozeRuleTest {
         assertEquals(3, settings.androidSnoozeLimit)
         assertEquals(600_000L, settings.androidAutoStopAfterMillis)
     }
+
+    @Test
+    fun `the snooze marker carries the count the host reached`() {
+        // Fork: markers overwrite each other per alarm, so the last one must
+        // say how many snoozes there were in all, not just that one happened.
+        val deferred = settings(limit = 3, count = 2).nextAfterSnooze(Date(1_786_086_570_000))
+
+        val event = HostAlarmEvent.snoozed(deferred, recordedAtMillis = 1_786_086_270_000)
+
+        assertEquals(42, event.alarmId)
+        assertEquals(AlarmEventVerb.MOVED, event.verb)
+        assertEquals(AlarmEventCause.SNOOZE, event.cause)
+        assertEquals(1_786_086_570_000, event.atMillis)
+        assertEquals(1_786_086_270_000, event.recordedAtMillis)
+        assertEquals(3, event.snoozeCount)
+    }
 }

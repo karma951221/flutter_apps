@@ -57,6 +57,7 @@ sealed class AlarmEvent extends Equatable {
           cause: cause,
           recordedAt: recordedAt,
           nextRingAt: at,
+          snoozeCount: wire.snoozeCount,
         ),
       AlarmEventVerbWire.dropped => AlarmDropped(
           id: wire.alarmId,
@@ -85,23 +86,38 @@ final class AlarmMoved extends AlarmEvent {
     required super.cause,
     required super.recordedAt,
     required this.nextRingAt,
+    this.snoozeCount,
   });
 
   /// When the alarm rings now.
   final DateTime nextRingAt;
 
+  /// Fork: for a snooze, the alarm's snooze count the host reached with it.
+  ///
+  /// Null for any other move and for markers recorded before the host sent
+  /// it. The host keeps one marker per alarm, so this can stand for several
+  /// snoozes taken while no engine was attached.
+  final int? snoozeCount;
+
   /// Fork: [alarm] with this move applied, as the host applied it.
   ///
-  /// A snooze also counts itself through [AlarmSettings.nextAfterSnooze], so
-  /// Dart's store keeps the same count as the host's. Anything else only moves
-  /// the time.
-  AlarmSettings applyTo(AlarmSettings alarm) => switch (cause) {
-        AlarmEventCause.snooze => alarm.nextAfterSnooze(nextRingAt),
-        _ => alarm.copyWith(dateTime: nextRingAt),
-      };
+  /// A snooze takes the host's [snoozeCount] through
+  /// [AlarmSettings.snoozedTo], so Dart's store keeps the same count as the
+  /// host's however many snoozes this one marker stands for. A marker without
+  /// a count counts one through [AlarmSettings.nextAfterSnooze]. Anything else
+  /// only moves the time.
+  AlarmSettings applyTo(AlarmSettings alarm) {
+    final count = snoozeCount;
+    return switch (cause) {
+      AlarmEventCause.snooze when count != null =>
+        alarm.snoozedTo(nextRingAt, snoozeCount: count),
+      AlarmEventCause.snooze => alarm.nextAfterSnooze(nextRingAt),
+      _ => alarm.copyWith(dateTime: nextRingAt),
+    };
+  }
 
   @override
-  List<Object?> get props => [id, cause, recordedAt, nextRingAt];
+  List<Object?> get props => [id, cause, recordedAt, nextRingAt, snoozeCount];
 }
 
 /// The alarm is gone and will not ring.

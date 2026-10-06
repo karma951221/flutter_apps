@@ -342,9 +342,9 @@ class AlarmSettings extends Equatable {
 
   /// Fork: how many times this alarm has been snoozed since it was set.
   ///
-  /// Raised by [nextAfterSnooze], which both the host's snooze and
-  /// `Alarm._applyMove` use. Defaults to `0`, which is also what alarms stored
-  /// before this field existed read back as.
+  /// Raised by [nextAfterSnooze] on the host's snooze. `Alarm._applyMove`
+  /// copies the host's total through [snoozedTo]. Defaults to `0`, which is
+  /// also what alarms stored before this field existed read back as.
   final int snoozeCount;
 
   /// Fork: these settings after one more snooze, ringing again at [next].
@@ -352,8 +352,18 @@ class AlarmSettings extends Equatable {
   /// Counts the snooze and, once [snoozeCount] reaches [androidSnoozeLimit],
   /// removes the snooze from the next ring. Must match
   /// `AlarmSettings.nextAfterSnooze` on the Kotlin side.
-  AlarmSettings nextAfterSnooze(DateTime next) {
-    final count = snoozeCount + 1;
+  AlarmSettings nextAfterSnooze(DateTime next) =>
+      snoozedTo(next, snoozeCount: snoozeCount + 1);
+
+  /// Fork: these settings once snoozed [snoozeCount] times in all, ringing
+  /// again at [next].
+  ///
+  /// The same rule as [nextAfterSnooze], but from a count the host already
+  /// reached. Several snoozes taken with no engine attached reach Dart as one
+  /// event, so counting events would fall short. Taking the total also makes a
+  /// replayed event harmless.
+  AlarmSettings snoozedTo(DateTime next, {required int snoozeCount}) {
+    final count = snoozeCount;
     final limit = androidSnoozeLimit;
     final exhausted = limit != null && count >= limit;
     return copyWith(

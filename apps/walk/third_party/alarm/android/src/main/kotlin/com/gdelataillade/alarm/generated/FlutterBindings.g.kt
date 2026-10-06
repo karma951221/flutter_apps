@@ -450,7 +450,15 @@ data class AlarmEventWire (
    */
   val atMillis: Long,
   /** When the host recorded this, used to acknowledge exactly this event. */
-  val recordedAtMillis: Long
+  val recordedAtMillis: Long,
+  /**
+   * Fork: for a snooze, how many snoozes the host has counted in all once
+   * this one was applied. The host keeps one marker per alarm, so several
+   * snoozes taken with no engine attached reach Dart as a single event, and
+   * Dart takes the count from here rather than counting events. Null for
+   * anything else and for markers written before the field existed.
+   */
+  val snoozeCount: Long? = null
 )
  {
   companion object {
@@ -460,7 +468,8 @@ data class AlarmEventWire (
       val cause = pigeonVar_list[2] as AlarmEventCauseWire
       val atMillis = pigeonVar_list[3] as Long
       val recordedAtMillis = pigeonVar_list[4] as Long
-      return AlarmEventWire(alarmId, verb, cause, atMillis, recordedAtMillis)
+      val snoozeCount = pigeonVar_list[5] as Long?
+      return AlarmEventWire(alarmId, verb, cause, atMillis, recordedAtMillis, snoozeCount)
     }
   }
   fun toList(): List<Any?> {
@@ -470,6 +479,7 @@ data class AlarmEventWire (
       cause,
       atMillis,
       recordedAtMillis,
+      snoozeCount,
     )
   }
   override fun equals(other: Any?): Boolean {

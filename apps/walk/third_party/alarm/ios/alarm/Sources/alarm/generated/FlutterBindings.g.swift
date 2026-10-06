@@ -474,6 +474,12 @@ struct AlarmEventWire: Hashable {
   var atMillis: Int64
   /// When the host recorded this, used to acknowledge exactly this event.
   var recordedAtMillis: Int64
+  /// Fork: for a snooze, how many snoozes the host has counted in all once
+  /// this one was applied. The host keeps one marker per alarm, so several
+  /// snoozes taken with no engine attached reach Dart as a single event, and
+  /// Dart takes the count from here rather than counting events. Null for
+  /// anything else and for markers written before the field existed.
+  var snoozeCount: Int64? = nil
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
@@ -483,13 +489,15 @@ struct AlarmEventWire: Hashable {
     let cause = pigeonVar_list[2] as! AlarmEventCauseWire
     let atMillis = pigeonVar_list[3] as! Int64
     let recordedAtMillis = pigeonVar_list[4] as! Int64
+    let snoozeCount: Int64? = nilOrValue(pigeonVar_list[5])
 
     return AlarmEventWire(
       alarmId: alarmId,
       verb: verb,
       cause: cause,
       atMillis: atMillis,
-      recordedAtMillis: recordedAtMillis
+      recordedAtMillis: recordedAtMillis,
+      snoozeCount: snoozeCount
     )
   }
   func toList() -> [Any?] {
@@ -499,6 +507,7 @@ struct AlarmEventWire: Hashable {
       cause,
       atMillis,
       recordedAtMillis,
+      snoozeCount,
     ]
   }
   static func == (lhs: AlarmEventWire, rhs: AlarmEventWire) -> Bool {

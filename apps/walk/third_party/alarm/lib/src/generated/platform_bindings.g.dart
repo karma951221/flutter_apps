@@ -489,6 +489,7 @@ class AlarmEventWire {
     required this.cause,
     required this.atMillis,
     required this.recordedAtMillis,
+    this.snoozeCount,
   });
 
   int alarmId;
@@ -504,6 +505,13 @@ class AlarmEventWire {
   /// When the host recorded this, used to acknowledge exactly this event.
   int recordedAtMillis;
 
+  /// Fork: for a snooze, how many snoozes the host has counted in all once
+  /// this one was applied. The host keeps one marker per alarm, so several
+  /// snoozes taken with no engine attached reach Dart as a single event, and
+  /// Dart takes the count from here rather than counting events. Null for
+  /// anything else and for markers written before the field existed.
+  int? snoozeCount;
+
   List<Object?> _toList() {
     return <Object?>[
       alarmId,
@@ -511,6 +519,7 @@ class AlarmEventWire {
       cause,
       atMillis,
       recordedAtMillis,
+      snoozeCount,
     ];
   }
 
@@ -526,6 +535,7 @@ class AlarmEventWire {
       cause: result[2]! as AlarmEventCauseWire,
       atMillis: result[3]! as int,
       recordedAtMillis: result[4]! as int,
+      snoozeCount: result[5] as int?,
     );
   }
 

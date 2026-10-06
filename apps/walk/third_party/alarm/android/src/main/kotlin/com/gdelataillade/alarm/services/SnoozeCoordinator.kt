@@ -3,8 +3,6 @@ package com.gdelataillade.alarm.services
 import android.content.Context
 import com.gdelataillade.alarm.alarm.AlarmPlugin
 import com.gdelataillade.alarm.alarm.AlarmService
-import com.gdelataillade.alarm.models.AlarmEventCause
-import com.gdelataillade.alarm.models.AlarmEventVerb
 import com.gdelataillade.alarm.models.AlarmSettings
 import com.gdelataillade.alarm.models.HostAlarmEvent
 import io.flutter.Log
@@ -62,13 +60,9 @@ object SnoozeCoordinator {
         // Fork: counts the snooze, and drops snooze from the next ring once the
         // alarm's limit is reached.
         val deferred = settings.nextAfterSnooze(Date(nextRingAt))
-        val event = HostAlarmEvent(
-            alarmId = alarmId,
-            verb = AlarmEventVerb.MOVED,
-            cause = AlarmEventCause.SNOOZE,
-            atMillis = nextRingAt,
-            recordedAtMillis = recordedAt,
-        )
+        // Fork: the marker carries the new count, because a later snooze
+        // overwrites this marker before Dart may have seen it.
+        val event = HostAlarmEvent.snoozed(deferred, recordedAtMillis = recordedAt)
 
         // Written before scheduling so a crash mid-way still leaves Dart able to
         // learn the alarm moved. Without it, Dart's own store keeps the original

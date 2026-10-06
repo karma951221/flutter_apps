@@ -49,7 +49,27 @@ data class HostAlarmEvent(
     val atMillis: Long,
     /** When this was recorded, so exactly this event can be acknowledged. */
     val recordedAtMillis: Long,
+    /**
+     * Fork: for a snooze, the alarm's snooze count after it. Markers overwrite
+     * each other per alarm, so this is the only way Dart learns how many
+     * snoozes happened while no engine was attached. Null for anything else
+     * and for markers stored before the field existed.
+     */
+    val snoozeCount: Int? = null,
 ) {
+    companion object {
+        /** Fork: the marker for a snooze that left the alarm as [deferred]. */
+        fun snoozed(deferred: AlarmSettings, recordedAtMillis: Long): HostAlarmEvent =
+            HostAlarmEvent(
+                alarmId = deferred.id,
+                verb = AlarmEventVerb.MOVED,
+                cause = AlarmEventCause.SNOOZE,
+                atMillis = deferred.dateTime.time,
+                recordedAtMillis = recordedAtMillis,
+                snoozeCount = deferred.snoozeCount,
+            )
+    }
+
     /**
      * Converts to the datatype used for host platform communication.
      *
@@ -70,5 +90,6 @@ data class HostAlarmEvent(
         },
         atMillis = atMillis,
         recordedAtMillis = recordedAtMillis,
+        snoozeCount = snoozeCount?.toLong(),
     )
 }

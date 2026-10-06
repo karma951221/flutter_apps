@@ -66,4 +66,27 @@ class HostAlarmEventTest {
 
         assertEquals(event, Json.decodeFromString<HostAlarmEvent>(onDisk))
     }
+
+    @Test
+    fun `toWire carries the host's snooze count`() {
+        // Fork: one marker per alarm survives, so Dart takes the count from it
+        // rather than counting markers.
+        assertEquals(3L, event.copy(snoozeCount = 3).toWire().snoozeCount)
+        assertEquals(null, event.toWire().snoozeCount)
+    }
+
+    @Test
+    fun `a marker written before the snooze count reads as none`() {
+        val onDisk = """{"alarmId":42,"verb":"MOVED","cause":"PLATFORM_REFUSAL",""" +
+            """"atMillis":1786086270257,"recordedAtMillis":1786086270589}"""
+
+        assertEquals(null, Json.decodeFromString<HostAlarmEvent>(onDisk).snoozeCount)
+    }
+
+    @Test
+    fun `the snooze count round trips in the stored form`() {
+        val counted = event.copy(snoozeCount = 2)
+
+        assertEquals(counted, Json.decodeFromString<HostAlarmEvent>(Json.encodeToString(counted)))
+    }
 }
