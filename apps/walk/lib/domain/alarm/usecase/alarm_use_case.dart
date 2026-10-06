@@ -26,6 +26,7 @@ abstract interface class AlarmUseCase {
   /// 켠 상태로 저장한다. `id == Alarm.unsavedId` 면 새 id(최대+1)를 준다.
   /// 1회성이면 넘어온 `oneShotAt` 이 미래면 그대로 쓰고, 없거나 지났으면 지금 기준 다음
   /// `hour:minute` 으로 정한다. `hour` · `minute` 는 정한 `oneShotAt` 에 맞춘다.
+  /// `skippedAt` 은 저장한 정의에도 그 회차가 있을 때만 남긴다(시각 · 요일을 바꾸면 지운다).
   Future<Alarm> save(Alarm alarm);
 
   Future<void> delete(int alarmId);
@@ -126,13 +127,22 @@ class DefaultAlarmUseCase implements AlarmUseCase {
         : given != null && given.isAfter(now)
         ? given
         : nextOccurrence(alarm.hour, alarm.minute, now);
-    final saved = alarm.copyWith(
+    final defined = alarm.copyWith(
       id: id,
       hour: oneShotAt?.hour ?? alarm.hour,
       minute: oneShotAt?.minute ?? alarm.minute,
       enabled: true,
       oneShotAt: oneShotAt,
+      skippedAt: null,
     );
+    // 건너뛰기는 새 정의에도 그 회차가 있을 때만 남긴다. 시각 · 요일을 바꿔 옛 회차가 없어지면
+    // 지운다 — 남기면 아무것도 건너뛰지 않으면서 "건너뜀" 으로 보이고, 시각을 되돌리면 되살아난다.
+    final skippedAt = alarm.skippedAt;
+    final saved = skippedAt != null &&
+            !defined.isOneShot &&
+            upcomingTriggers(defined, now).any(skippedAt.isAtSameMomentAs)
+        ? defined.copyWith(skippedAt: skippedAt)
+        : defined;
     final index = alarms.indexWhere((a) => a.id == id);
     await _repository.save([
       if (index < 0) ...[...alarms, saved] else

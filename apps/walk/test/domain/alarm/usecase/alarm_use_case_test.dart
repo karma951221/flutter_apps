@@ -1027,6 +1027,50 @@ void main() {
       expect(repository.alarms, isEmpty);
     });
 
+    test('건너뛴 알람의 시각을 바꿔 저장하면 건너뛰기를 지운다(옛 회차는 더 없다)', () async {
+      repository.alarms = [daily];
+      final skipped = await useCase.skipNext(1);
+
+      final saved = await useCase.save(skipped!.copyWith(hour: 8));
+
+      final tuesday8 = DateTime(2026, 9, 29, 8);
+      expect(saved.skippedAt, isNull);
+      expect(repository.alarms.single.skippedAt, isNull);
+      expect(scheduler.entries[pid(1, tuesday8)], tuesday8);
+    });
+
+    test('건너뛴 회차의 요일을 반복에서 빼고 저장해도 건너뛰기를 지운다', () async {
+      repository.alarms = [daily];
+      final skipped = await useCase.skipNext(1);
+
+      final saved = await useCase.save(
+        skipped!.copyWith(repeat: {..._everyDay}..remove(Weekday.tue)),
+      );
+
+      expect(saved.skippedAt, isNull);
+    });
+
+    test('건너뛴 회차가 그대로 있으면(라벨만 바꿈) 건너뛰기를 둔다', () async {
+      repository.alarms = [daily];
+      final skipped = await useCase.skipNext(1);
+
+      final saved = await useCase.save(skipped!.copyWith(label: '출근'));
+
+      expect(saved.skippedAt, tuesday7);
+      expect(scheduler.entries.keys, isNot(contains(pid(1, tuesday7))));
+    });
+
+    test('시각을 바꿨다 되돌려도 지운 건너뛰기가 살아나지 않는다', () async {
+      repository.alarms = [daily];
+      final skipped = await useCase.skipNext(1);
+      final moved = await useCase.save(skipped!.copyWith(hour: 8));
+
+      final back = await useCase.save(moved.copyWith(hour: 7));
+
+      expect(back.skippedAt, isNull);
+      expect(scheduler.entries[pid(1, tuesday7)], tuesday7);
+    });
+
     test('sync 는 지난 skippedAt 을 지워 저장하고, 남은 것은 둔다', () async {
       repository.alarms = [
         daily.copyWith(skippedAt: DateTime(2026, 9, 28, 7)),
