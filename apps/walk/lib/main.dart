@@ -1,6 +1,7 @@
 import 'package:alarm/alarm.dart';
 import 'package:core/core.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/app.dart';
 import 'core/background/background_task.dart';
@@ -10,6 +11,8 @@ import 'domain/alarm/usecase/alarm_use_case.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // 시작 sync 가 거는 알림 문구(기기 언어 시각)가 로컬라이제이션 로드를 기다리지 않게.
+  await initializeDateFormatting();
   // 이전 세션의 예약을 다시 걸고 알림 스누즈 기록을 반영한다. DI 의 스케줄러가 쓰기 전에 끝나야 한다.
   await Alarm.init();
   await configureDependencies();
@@ -18,8 +21,10 @@ Future<void> main() async {
 
 /// 헤드리스 엔진 준비. 새 엔진이라 `Alarm.init` 의 checkAlarm 이 저장된 예약(오프셋 없는 벽시계)을
 /// 지금 시간대로 다시 걸고, 알림 스누즈 기록을 Dart 저장소에 반영한다 — 빠뜨리면 sync 가 스누즈된
-/// 회차를 지난 예약으로 보고 지울 수 있다.
+/// 회차를 지난 예약으로 보고 지울 수 있다. 날짜 기호도 올린다 — `MaterialApp` 이 없어, 빠뜨리면 이
+/// 엔진이 거는 알람 · 미리 알림 문구가 기기 언어 시각(`오전 7:00`) 대신 `07:00` 으로 저장된다.
 Future<void> _initHeadless() async {
+  await initializeDateFormatting();
   await Alarm.init();
   await configureDependencies();
 }

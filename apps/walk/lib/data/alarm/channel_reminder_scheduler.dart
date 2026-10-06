@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:injectable/injectable.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:l10n/l10n.dart';
 
@@ -49,8 +50,24 @@ class ChannelReminderScheduler implements ReminderScheduler {
   }
 
   @override
-  Future<void> schedule(AlarmReminder reminder, Alarm alarm) =>
-      _invoke('schedule', argumentsFor(reminder, alarm, _l10n()));
+  Future<void> schedule(AlarmReminder reminder, Alarm alarm) async =>
+      _invoke('schedule', await prepareArguments(reminder, alarm, _l10n()));
+
+  /// [argumentsFor] 를 부르기 전에 그 언어의 날짜 기호를 올린다. 헤드리스 엔진(하루 sync · 미리 알림
+  /// 버튼)에는 기호를 올려 줄 `MaterialApp` 이 없어, 빠뜨리면 대체 문구(`07:00` · `10/9`)가 저장돼
+  /// 시각이 같은 동안 메인 엔진 sync 도 다시 걸지 않는다.
+  static Future<Map<String, Object?>> prepareArguments(
+    AlarmReminder reminder,
+    Alarm alarm,
+    AppLocalizations l10n,
+  ) async {
+    try {
+      await initializeDateFormatting(l10n.localeName);
+    } on Object {
+      // 기호가 없는 언어면 argumentsFor 가 대체 문구를 쓴다.
+    }
+    return argumentsFor(reminder, alarm, l10n);
+  }
 
   @override
   Future<void> cancel(int reminderId) => _invoke('cancel', {'id': reminderId});
