@@ -1,3 +1,4 @@
+import 'package:alarm/model/alarm_settings.dart';
 import 'package:alarm/src/generated/platform_bindings.g.dart';
 import 'package:equatable/equatable.dart';
 
@@ -88,6 +89,16 @@ final class AlarmMoved extends AlarmEvent {
 
   /// When the alarm rings now.
   final DateTime nextRingAt;
+
+  /// Fork: [alarm] with this move applied, as the host applied it.
+  ///
+  /// A snooze also counts itself through [AlarmSettings.nextAfterSnooze], so
+  /// Dart's store keeps the same count as the host's. Anything else only moves
+  /// the time.
+  AlarmSettings applyTo(AlarmSettings alarm) => switch (cause) {
+        AlarmEventCause.snooze => alarm.nextAfterSnooze(nextRingAt),
+        _ => alarm.copyWith(dateTime: nextRingAt),
+      };
 
   @override
   List<Object?> get props => [id, cause, recordedAt, nextRingAt];

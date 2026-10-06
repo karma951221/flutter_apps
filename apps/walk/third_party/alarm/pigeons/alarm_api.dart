@@ -36,6 +36,9 @@ class AlarmSettingsWire {
     required this.androidAlarmClock,
     required this.androidFallbackAudioPath,
     required this.androidSilentWhenRingerMuted,
+    required this.androidAutoStopAfterMillis,
+    required this.androidSnoozeLimit,
+    required this.snoozeCount,
   });
 
   final int id;
@@ -81,6 +84,18 @@ class AlarmSettingsWire {
   /// play without sound (the player keeps running at volume 0) and vibrate.
   /// Android only.
   final bool androidSilentWhenRingerMuted;
+
+  /// Fork: how long a ring lasts before it stops itself, in milliseconds.
+  /// Null never stops. Android only.
+  final int? androidAutoStopAfterMillis;
+
+  /// Fork: how many snoozes this alarm allows. Once [snoozeCount] reaches it,
+  /// the next ring offers no snooze. Null allows any number. Android only.
+  final int? androidSnoozeLimit;
+
+  /// Fork: how many times this alarm has been snoozed since it was set.
+  /// Android only.
+  final int snoozeCount;
 }
 
 class VolumeSettingsWire {

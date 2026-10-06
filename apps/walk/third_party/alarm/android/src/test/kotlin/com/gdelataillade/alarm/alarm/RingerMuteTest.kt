@@ -119,6 +119,7 @@ class RingerMuteTest {
             preferConnectedAudioDevice = false,
             androidAlarmClock = true,
             androidSilentWhenRingerMuted = true,
+            snoozeCount = 0,
         )
 
         assertTrue(AlarmSettings.fromWire(wire).androidSilentWhenRingerMuted)

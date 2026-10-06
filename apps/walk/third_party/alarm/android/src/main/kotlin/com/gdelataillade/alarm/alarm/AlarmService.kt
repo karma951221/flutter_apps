@@ -13,7 +13,9 @@ import android.content.Intent
 import android.content.Context
 import android.content.pm.ServiceInfo
 import android.media.AudioManager
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.PowerManager
 import android.os.Build
 import androidx.core.app.ServiceCompat
@@ -40,6 +42,13 @@ import kotlinx.serialization.json.Json
  */
 internal fun shouldMuteForRinger(optIn: Boolean, ringerMode: Int): Boolean =
     optIn && ringerMode != AudioManager.RINGER_MODE_NORMAL
+
+/**
+ * Fork: how long after the ring starts the service stops it on its own, or
+ * null when it never does. Zero or negative never stops either.
+ */
+internal fun autoStopDelayMillis(settings: AlarmSettings): Long? =
+    settings.androidAutoStopAfterMillis?.takeIf { it > 0 }
 
 class AlarmService : Service() {
     companion object {
@@ -136,6 +145,11 @@ class AlarmService : Service() {
     private val stopOnTermination = mutableMapOf<Int, Boolean>()
     private val ringingQueue = mutableListOf<Int>()
     private val queuedAlarmSettings = mutableMapOf<Int, AlarmSettings>()
+
+    // Fork: pending auto stops per ringing alarm. Cancelled by stop, snooze
+    // (both end in stopAlarm) and by the service going away.
+    private val autoStopHandler by lazy { Handler(Looper.getMainLooper()) }
+    private val autoStops = mutableMapOf<Int, Runnable>()
 
     // One lock per service, not reference counted: each ring re-acquires it and a
     // single release ends it, however many alarms rang.
@@ -332,6 +346,8 @@ class AlarmService : Service() {
 
         stopOnTermination[id] = alarmSettings.androidStopAlarmOnTermination
 
+        scheduleAutoStop(id, alarmSettings)
+
         // Acquire a wake lock to wake up the device
         val lock = wakeLock
             ?: (getSystemService(Context.POWER_SERVICE) as PowerManager)
@@ -472,6 +488,27 @@ class AlarmService : Service() {
         if (ringingAlarmIds.isEmpty()) {
             stopSelf()
         }
+    }
+
+    /**
+     * Fork: stops [id] after its own auto-stop delay, exactly as a stop
+     * command would, so a one-off alarm ends and Flutter hears it stopped.
+     * Replaces any auto stop left from an earlier ring of the same id.
+     */
+    private fun scheduleAutoStop(id: Int, alarmSettings: AlarmSettings) {
+        cancelAutoStop(id)
+        val delay = autoStopDelayMillis(alarmSettings) ?: return
+        val stop = Runnable {
+            autoStops.remove(id)
+            Log.d(TAG, "Alarm $id rang for ${delay}ms; stopping it automatically.")
+            handleStopAlarmCommand(id)
+        }
+        autoStops[id] = stop
+        autoStopHandler.postDelayed(stop, delay)
+    }
+
+    private fun cancelAutoStop(id: Int) {
+        autoStops.remove(id)?.let { autoStopHandler.removeCallbacks(it) }
     }
 
     fun handleStopAlarmCommand(alarmId: Int) {
@@ -667,6 +704,7 @@ class AlarmService : Service() {
     private fun stopAlarm(id: Int) {
         try {
             stopOnTermination.remove(id)
+            cancelAutoStop(id)
             audioService?.stopAudio(id)
 
             // Remove from queue if present so stopped alarms never get promoted
@@ -724,6 +762,8 @@ class AlarmService : Service() {
         ringingQueue.clear()
         queuedAlarmSettings.clear()
         stopOnTermination.clear()
+        autoStops.values.forEach { autoStopHandler.removeCallbacks(it) }
+        autoStops.clear()
 
         audioService?.cleanUp()
         vibrationService?.stopVibrating()

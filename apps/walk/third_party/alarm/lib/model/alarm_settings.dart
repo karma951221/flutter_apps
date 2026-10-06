@@ -39,6 +39,9 @@ class AlarmSettings extends Equatable {
     this.androidAlarmClock = true,
     this.androidFallbackAudioPath,
     this.androidSilentWhenRingerMuted = false,
+    this.androidAutoStopAfter,
+    this.androidSnoozeLimit,
+    this.snoozeCount = 0,
   });
 
   /// Constructs an `AlarmSettings` instance from the given JSON data.
@@ -320,6 +323,49 @@ class AlarmSettings extends Equatable {
   /// existed read back as.
   final bool androidSilentWhenRingerMuted;
 
+  /// Fork: how long a ring lasts before it stops itself.
+  ///
+  /// **Android only.** Measured from when the ring starts. When it runs out
+  /// the alarm is stopped exactly as if the user had pressed stop. A stop or a
+  /// snooze before then cancels it. Null, zero or negative never stops.
+  ///
+  /// Defaults to `null`, which is also what alarms stored before this field
+  /// existed read back as.
+  final Duration? androidAutoStopAfter;
+
+  /// Fork: how many snoozes this alarm allows.
+  ///
+  /// **Android only.** Once [snoozeCount] reaches it, [nextAfterSnooze] drops
+  /// both [androidSnoozeDuration] and the snooze button, so the next ring
+  /// offers no snooze anywhere. Null allows any number.
+  final int? androidSnoozeLimit;
+
+  /// Fork: how many times this alarm has been snoozed since it was set.
+  ///
+  /// Raised by [nextAfterSnooze], which both the host's snooze and
+  /// `Alarm._applyMove` use. Defaults to `0`, which is also what alarms stored
+  /// before this field existed read back as.
+  final int snoozeCount;
+
+  /// Fork: these settings after one more snooze, ringing again at [next].
+  ///
+  /// Counts the snooze and, once [snoozeCount] reaches [androidSnoozeLimit],
+  /// removes the snooze from the next ring. Must match
+  /// `AlarmSettings.nextAfterSnooze` on the Kotlin side.
+  AlarmSettings nextAfterSnooze(DateTime next) {
+    final count = snoozeCount + 1;
+    final limit = androidSnoozeLimit;
+    final exhausted = limit != null && count >= limit;
+    return copyWith(
+      dateTime: next,
+      snoozeCount: count,
+      androidSnoozeDuration: exhausted ? () => null : null,
+      notificationSettings: exhausted
+          ? notificationSettings.copyWith(androidSnoozeButton: () => null)
+          : null,
+    );
+  }
+
   /// Reads [androidStaleAfter], recovering rather than throwing.
   ///
   /// Nothing between [Alarm.init] and the storage read catches, so throwing
@@ -371,6 +417,9 @@ class AlarmSettings extends Equatable {
         androidAlarmClock: androidAlarmClock,
         androidFallbackAudioPath: androidFallbackAudioPath,
         androidSilentWhenRingerMuted: androidSilentWhenRingerMuted,
+        androidAutoStopAfterMillis: androidAutoStopAfter?.inMilliseconds,
+        androidSnoozeLimit: androidSnoozeLimit,
+        snoozeCount: snoozeCount,
       );
 
   /// Creates a copy of `AlarmSettings` but with the given fields replaced with
@@ -410,6 +459,9 @@ class AlarmSettings extends Equatable {
     bool? androidAlarmClock,
     String? Function()? androidFallbackAudioPath,
     bool? androidSilentWhenRingerMuted,
+    Duration? Function()? androidAutoStopAfter,
+    int? Function()? androidSnoozeLimit,
+    int? snoozeCount,
   }) {
     return AlarmSettings(
       id: id ?? this.id,
@@ -451,6 +503,15 @@ class AlarmSettings extends Equatable {
           : this.androidFallbackAudioPath,
       androidSilentWhenRingerMuted:
           androidSilentWhenRingerMuted ?? this.androidSilentWhenRingerMuted,
+      // Wrapped like payload so a caller can remove the auto stop or the
+      // snooze limit.
+      androidAutoStopAfter: androidAutoStopAfter != null
+          ? androidAutoStopAfter()
+          : this.androidAutoStopAfter,
+      androidSnoozeLimit: androidSnoozeLimit != null
+          ? androidSnoozeLimit()
+          : this.androidSnoozeLimit,
+      snoozeCount: snoozeCount ?? this.snoozeCount,
     );
   }
 
@@ -476,5 +537,8 @@ class AlarmSettings extends Equatable {
         androidAlarmClock,
         androidFallbackAudioPath,
         androidSilentWhenRingerMuted,
+        androidAutoStopAfter,
+        androidSnoozeLimit,
+        snoozeCount,
       ];
 }

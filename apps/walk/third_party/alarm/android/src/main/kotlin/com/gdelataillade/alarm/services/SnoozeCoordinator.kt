@@ -59,7 +59,9 @@ object SnoozeCoordinator {
 
         val recordedAt = System.currentTimeMillis()
         val nextRingAt = recordedAt + durationMillis
-        val deferred = settings.copy(dateTime = Date(nextRingAt))
+        // Fork: counts the snooze, and drops snooze from the next ring once the
+        // alarm's limit is reached.
+        val deferred = settings.nextAfterSnooze(Date(nextRingAt))
         val event = HostAlarmEvent(
             alarmId = alarmId,
             verb = AlarmEventVerb.MOVED,

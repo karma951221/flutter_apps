@@ -215,7 +215,22 @@ data class AlarmSettingsWire (
    * play without sound (the player keeps running at volume 0) and vibrate.
    * Android only.
    */
-  val androidSilentWhenRingerMuted: Boolean
+  val androidSilentWhenRingerMuted: Boolean,
+  /**
+   * Fork: how long a ring lasts before it stops itself, in milliseconds.
+   * Null never stops. Android only.
+   */
+  val androidAutoStopAfterMillis: Long? = null,
+  /**
+   * Fork: how many snoozes this alarm allows. Once [snoozeCount] reaches it,
+   * the next ring offers no snooze. Null allows any number. Android only.
+   */
+  val androidSnoozeLimit: Long? = null,
+  /**
+   * Fork: how many times this alarm has been snoozed since it was set.
+   * Android only.
+   */
+  val snoozeCount: Long
 )
  {
   companion object {
@@ -239,7 +254,10 @@ data class AlarmSettingsWire (
       val androidAlarmClock = pigeonVar_list[16] as Boolean
       val androidFallbackAudioPath = pigeonVar_list[17] as String?
       val androidSilentWhenRingerMuted = pigeonVar_list[18] as Boolean
-      return AlarmSettingsWire(id, millisecondsSinceEpoch, assetAudioPath, volumeSettings, notificationSettings, loopAudio, vibrate, warningNotificationOnKill, androidFullScreenIntent, allowAlarmOverlap, allowSameSecondScheduling, iOSBackgroundAudio, androidStopAlarmOnTermination, preferConnectedAudioDevice, androidSnoozeDurationMillis, androidStaleAfterMillis, androidAlarmClock, androidFallbackAudioPath, androidSilentWhenRingerMuted)
+      val androidAutoStopAfterMillis = pigeonVar_list[19] as Long?
+      val androidSnoozeLimit = pigeonVar_list[20] as Long?
+      val snoozeCount = pigeonVar_list[21] as Long
+      return AlarmSettingsWire(id, millisecondsSinceEpoch, assetAudioPath, volumeSettings, notificationSettings, loopAudio, vibrate, warningNotificationOnKill, androidFullScreenIntent, allowAlarmOverlap, allowSameSecondScheduling, iOSBackgroundAudio, androidStopAlarmOnTermination, preferConnectedAudioDevice, androidSnoozeDurationMillis, androidStaleAfterMillis, androidAlarmClock, androidFallbackAudioPath, androidSilentWhenRingerMuted, androidAutoStopAfterMillis, androidSnoozeLimit, snoozeCount)
     }
   }
   fun toList(): List<Any?> {
@@ -263,6 +281,9 @@ data class AlarmSettingsWire (
       androidAlarmClock,
       androidFallbackAudioPath,
       androidSilentWhenRingerMuted,
+      androidAutoStopAfterMillis,
+      androidSnoozeLimit,
+      snoozeCount,
     )
   }
   override fun equals(other: Any?): Boolean {

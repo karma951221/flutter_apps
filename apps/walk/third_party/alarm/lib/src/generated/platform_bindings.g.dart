@@ -126,6 +126,9 @@ class AlarmSettingsWire {
     required this.androidAlarmClock,
     this.androidFallbackAudioPath,
     required this.androidSilentWhenRingerMuted,
+    this.androidAutoStopAfterMillis,
+    this.androidSnoozeLimit,
+    required this.snoozeCount,
   });
 
   int id;
@@ -185,6 +188,18 @@ class AlarmSettingsWire {
   /// Android only.
   bool androidSilentWhenRingerMuted;
 
+  /// Fork: how long a ring lasts before it stops itself, in milliseconds.
+  /// Null never stops. Android only.
+  int? androidAutoStopAfterMillis;
+
+  /// Fork: how many snoozes this alarm allows. Once [snoozeCount] reaches it,
+  /// the next ring offers no snooze. Null allows any number. Android only.
+  int? androidSnoozeLimit;
+
+  /// Fork: how many times this alarm has been snoozed since it was set.
+  /// Android only.
+  int snoozeCount;
+
   List<Object?> _toList() {
     return <Object?>[
       id,
@@ -206,6 +221,9 @@ class AlarmSettingsWire {
       androidAlarmClock,
       androidFallbackAudioPath,
       androidSilentWhenRingerMuted,
+      androidAutoStopAfterMillis,
+      androidSnoozeLimit,
+      snoozeCount,
     ];
   }
 
@@ -235,6 +253,9 @@ class AlarmSettingsWire {
       androidAlarmClock: result[16]! as bool,
       androidFallbackAudioPath: result[17] as String?,
       androidSilentWhenRingerMuted: result[18]! as bool,
+      androidAutoStopAfterMillis: result[19] as int?,
+      androidSnoozeLimit: result[20] as int?,
+      snoozeCount: result[21]! as int,
     );
   }
 

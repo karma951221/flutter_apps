@@ -41,10 +41,40 @@ data class AlarmSettings(
     // Fork: ring vibration-only when the ringer is on vibrate or silent.
     // False ignores the ringer, which is also what older alarms read as.
     val androidSilentWhenRingerMuted: Boolean = false,
+    // Fork: the ring stops itself this long after it starts. Null never stops,
+    // which is also what alarms stored before it read as.
+    val androidAutoStopAfterMillis: Long? = null,
+    // Fork: snoozes allowed before the next ring offers none. Null is any number.
+    val androidSnoozeLimit: Int? = null,
+    // Fork: snoozes taken since the alarm was set. Older alarms read as 0.
+    val snoozeCount: Int = 0,
 ) {
     /** Whether this alarm can be deferred rather than only stopped. */
     val canSnooze: Boolean
         get() = (androidSnoozeDurationMillis ?: 0L) >= SNOOZE_MINIMUM_MILLIS
+
+    /**
+     * Fork: these settings after one more snooze, ringing again at [next].
+     *
+     * Counts the snooze and, once [snoozeCount] reaches [androidSnoozeLimit],
+     * removes both the duration and the button so the next ring offers no
+     * snooze anywhere. Must match `AlarmSettings.nextAfterSnooze` in Dart.
+     */
+    fun nextAfterSnooze(next: Date): AlarmSettings {
+        val count = snoozeCount + 1
+        val limit = androidSnoozeLimit
+        val exhausted = limit != null && count >= limit
+        return copy(
+            dateTime = next,
+            snoozeCount = count,
+            androidSnoozeDurationMillis = if (exhausted) null else androidSnoozeDurationMillis,
+            notificationSettings = if (exhausted) {
+                notificationSettings.copy(androidSnoozeButton = null)
+            } else {
+                notificationSettings
+            },
+        )
+    }
 
     companion object {
         /**
@@ -87,6 +117,9 @@ data class AlarmSettings(
                 e.androidAlarmClock,
                 e.androidFallbackAudioPath,
                 e.androidSilentWhenRingerMuted,
+                e.androidAutoStopAfterMillis,
+                e.androidSnoozeLimit?.toInt(),
+                e.snoozeCount.toInt(),
             )
         }
 
@@ -151,6 +184,12 @@ data class AlarmSettings(
             val androidSilentWhenRingerMuted =
                 jsonObject.primitiveBoolean("androidSilentWhenRingerMuted") ?: false
 
+            // Fork. Absent in alarms saved before they existed: never stop on
+            // its own, no snooze limit, nothing counted yet.
+            val androidAutoStopAfterMillis = jsonObject.primitiveLong("androidAutoStopAfterMillis")
+            val androidSnoozeLimit = jsonObject.primitiveInt("androidSnoozeLimit")
+            val snoozeCount = jsonObject.primitiveInt("snoozeCount") ?: 0
+
             // Handle backward compatibility for `volumeSettings`
             val volumeSettings = jsonObject["volumeSettings"]?.let {
                 Json.decodeFromJsonElement(VolumeSettings.serializer(), it)
@@ -188,6 +227,9 @@ data class AlarmSettings(
                 androidAlarmClock = androidAlarmClock,
                 androidFallbackAudioPath = androidFallbackAudioPath,
                 androidSilentWhenRingerMuted = androidSilentWhenRingerMuted,
+                androidAutoStopAfterMillis = androidAutoStopAfterMillis,
+                androidSnoozeLimit = androidSnoozeLimit,
+                snoozeCount = snoozeCount,
             )
         }
     }

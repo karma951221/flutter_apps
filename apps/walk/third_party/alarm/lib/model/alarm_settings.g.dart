@@ -54,6 +54,15 @@ AlarmSettings _$AlarmSettingsFromJson(Map<String, dynamic> json) =>
               $checkedConvert('androidFallbackAudioPath', (v) => v as String?),
           androidSilentWhenRingerMuted: $checkedConvert(
               'androidSilentWhenRingerMuted', (v) => v as bool? ?? false),
+          androidAutoStopAfter: $checkedConvert(
+              'androidAutoStopAfter',
+              (v) => v == null
+                  ? null
+                  : Duration(microseconds: (v as num).toInt())),
+          androidSnoozeLimit: $checkedConvert(
+              'androidSnoozeLimit', (v) => (v as num?)?.toInt()),
+          snoozeCount:
+              $checkedConvert('snoozeCount', (v) => (v as num?)?.toInt() ?? 0),
         );
         return val;
       },
@@ -84,4 +93,9 @@ Map<String, dynamic> _$AlarmSettingsToJson(AlarmSettings instance) =>
       if (instance.androidFallbackAudioPath case final value?)
         'androidFallbackAudioPath': value,
       'androidSilentWhenRingerMuted': instance.androidSilentWhenRingerMuted,
+      if (instance.androidAutoStopAfter?.inMicroseconds case final value?)
+        'androidAutoStopAfter': value,
+      if (instance.androidSnoozeLimit case final value?)
+        'androidSnoozeLimit': value,
+      'snoozeCount': instance.snoozeCount,
     };

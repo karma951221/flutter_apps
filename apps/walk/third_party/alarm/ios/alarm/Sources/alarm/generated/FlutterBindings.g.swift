@@ -227,6 +227,15 @@ struct AlarmSettingsWire: Hashable {
   /// play without sound (the player keeps running at volume 0) and vibrate.
   /// Android only.
   var androidSilentWhenRingerMuted: Bool
+  /// Fork: how long a ring lasts before it stops itself, in milliseconds.
+  /// Null never stops. Android only.
+  var androidAutoStopAfterMillis: Int64? = nil
+  /// Fork: how many snoozes this alarm allows. Once [snoozeCount] reaches it,
+  /// the next ring offers no snooze. Null allows any number. Android only.
+  var androidSnoozeLimit: Int64? = nil
+  /// Fork: how many times this alarm has been snoozed since it was set.
+  /// Android only.
+  var snoozeCount: Int64
 
 
   // swift-format-ignore: AlwaysUseLowerCamelCase
@@ -250,6 +259,9 @@ struct AlarmSettingsWire: Hashable {
     let androidAlarmClock = pigeonVar_list[16] as! Bool
     let androidFallbackAudioPath: String? = nilOrValue(pigeonVar_list[17])
     let androidSilentWhenRingerMuted = pigeonVar_list[18] as! Bool
+    let androidAutoStopAfterMillis: Int64? = nilOrValue(pigeonVar_list[19])
+    let androidSnoozeLimit: Int64? = nilOrValue(pigeonVar_list[20])
+    let snoozeCount = pigeonVar_list[21] as! Int64
 
     return AlarmSettingsWire(
       id: id,
@@ -270,7 +282,10 @@ struct AlarmSettingsWire: Hashable {
       androidStaleAfterMillis: androidStaleAfterMillis,
       androidAlarmClock: androidAlarmClock,
       androidFallbackAudioPath: androidFallbackAudioPath,
-      androidSilentWhenRingerMuted: androidSilentWhenRingerMuted
+      androidSilentWhenRingerMuted: androidSilentWhenRingerMuted,
+      androidAutoStopAfterMillis: androidAutoStopAfterMillis,
+      androidSnoozeLimit: androidSnoozeLimit,
+      snoozeCount: snoozeCount
     )
   }
   func toList() -> [Any?] {
@@ -294,6 +309,9 @@ struct AlarmSettingsWire: Hashable {
       androidAlarmClock,
       androidFallbackAudioPath,
       androidSilentWhenRingerMuted,
+      androidAutoStopAfterMillis,
+      androidSnoozeLimit,
+      snoozeCount,
     ]
   }
   static func == (lhs: AlarmSettingsWire, rhs: AlarmSettingsWire) -> Bool {
