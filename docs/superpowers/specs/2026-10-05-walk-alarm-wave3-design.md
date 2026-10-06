@@ -97,7 +97,7 @@ abstract interface class HolidayCalendar { String? nameOf(DateTime date); }
 
 // domain/alarm/scheduler/reminder_scheduler.dart
 abstract interface class ReminderScheduler {
-  Future<Map<int, DateTime>> scheduled();          // 걸렸거나 떠 있는(ringAt 전) 것: id → at
+  Future<Map<int, ({DateTime at, DateTime ringAt})>> scheduled(); // 걸렸거나 떠 있는(ringAt 전) 것
   Future<void> schedule(AlarmReminder reminder, Alarm alarm);
   Future<void> cancel(int reminderId);             // 예약과 떠 있는 알림 모두
 }
@@ -105,6 +105,10 @@ abstract interface class ReminderScheduler {
 
 규칙: soon 은 `remindBefore` 이고 `ringAt - soonLead > now` 일 때. holiday 는 반복 알람 · `holidayReminder` 켬 ·
 `holidays.nameOf(ringAt) != null` · `ringAt > now` 일 때(`at` 이 이미 지났으면 다음 sync 에서 바로 띄우도록 `at = now`).
+id 는 회차(날짜)로만 정해지므로, 이미 떠 있는 미리 알림은 `ringAt` 이 지금 정의와 같을 때만 그대로 두고
+다르면(알람 시각을 바꿨으면) 다시 걸거나 지운다. 네이티브는 띄운 항목을 알림이 닫혀도([울리기] · 밀어 지우기)
+`ringAt` 까지 저장소에 남겨(`shown=true`) `scheduled` 로 계속 돌려준다 — 빠지면 Dart 가 다시 걸어 같은 공휴일
+알림이 sync 마다 또 뜬다. 저장 항목을 지우는 것은 `cancel` 과 `ringAt` 이 지났을 때뿐이다.
 `DefaultAlarmUseCase` 생성자에 `ReminderScheduler` · `HolidayCalendar` · `SettingsRepository`(공휴일 설정 읽기)를 더하고,
 `_sync` 끝에 `_syncReminders` 를 둔다(예외는 삼켜 알람 예약을 막지 않는다).
 

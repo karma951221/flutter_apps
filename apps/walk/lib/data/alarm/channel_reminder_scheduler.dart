@@ -13,9 +13,12 @@ import '../../domain/alarm/scheduler/reminder_scheduler.dart';
 /// 네이티브 미리 알림(`walk/reminders`, 웨이브 3 스펙 §4.1)으로 건다. 시각은 epoch millis.
 ///
 /// 채널 약속:
-/// - `scheduled` → `[{id: int, at: int}]`(걸렸거나 떠 있는 것, 울릴 시각 전)
+/// - `scheduled` → `[{id: int, at: int, ringAt: int}]`(걸렸거나 떠 있는 것, 울릴 시각 전). 띄운 항목은
+///   알림이 닫혀도(`dismiss` · 밀어 지우기) 울릴 시각까지 저장소에 남겨(`shown=true`) 계속 돌려준다 —
+///   빠지면 Dart 가 다시 걸어 같은 알림이 또 뜬다. 저장소에서 지우는 것은 `cancel` 과 울릴 시각이
+///   지났을 때뿐이다.
 /// - `schedule` ← [argumentsFor] 의 맵. `actions` 의 `action` 은 `skip`(Dart `skipOccurrence(packageId)`) ·
-///   `dismiss`(알림만 닫는다)
+///   `dismiss`(알림만 닫는다. 저장 항목은 남긴다)
 /// - `cancel` ← `{id: int}`(예약과 떠 있는 알림 모두)
 ///
 /// 문구는 예약이 화면 밖에서도 일어나므로 `PackageAlarmScheduler` 처럼 기기 언어로 Dart 가 만든다.
@@ -28,7 +31,7 @@ class ChannelReminderScheduler implements ReminderScheduler {
   static const _channel = MethodChannel(channelName);
 
   @override
-  Future<Map<int, DateTime>> scheduled() async {
+  Future<Map<int, ScheduledReminder>> scheduled() async {
     final List<Object?>? rows;
     try {
       rows = await _channel.invokeMethod<List<Object?>>('scheduled');
@@ -37,8 +40,11 @@ class ChannelReminderScheduler implements ReminderScheduler {
     }
     return {
       for (final row in rows ?? const [])
-        if (row case {'id': final int id, 'at': final int at})
-          id: DateTime.fromMillisecondsSinceEpoch(at),
+        if (row case {'id': final int id, 'at': final int at, 'ringAt': final int ringAt})
+          id: (
+            at: DateTime.fromMillisecondsSinceEpoch(at),
+            ringAt: DateTime.fromMillisecondsSinceEpoch(ringAt),
+          ),
     };
   }
 

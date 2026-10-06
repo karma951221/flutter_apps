@@ -104,28 +104,39 @@ class _FakeScheduler implements AlarmScheduler {
 class _FakeReminders implements ReminderScheduler {
   /// id → 띄울 시각(걸렸거나 떠 있는 것).
   final Map<int, DateTime> entries = {};
+
+  /// id → 울릴 시각. [entries] 에 직접 넣을 때 함께 넣는다.
+  final Map<int, DateTime> ringAts = {};
   final Map<int, AlarmReminder> reminders = {};
   final List<int> scheduleCalls = [];
   final List<int> cancelCalls = [];
   bool failScheduled = false;
 
   @override
-  Future<Map<int, DateTime>> scheduled() async {
+  Future<Map<int, ScheduledReminder>> scheduled() async {
     if (failScheduled) throw StateError('채널 실패');
-    return {...entries};
+    return {
+      for (final MapEntry(key: id, value: at) in entries.entries)
+        id: (at: at, ringAt: ringAts[id]!),
+    };
   }
 
   @override
   Future<void> schedule(AlarmReminder reminder, Alarm alarm) async {
     scheduleCalls.add(reminder.id);
     entries[reminder.id] = reminder.at;
+    ringAts[reminder.id] = reminder.ringAt;
     reminders[reminder.id] = reminder;
   }
+
+  /// [울리기] — 계약상 알림만 닫고 저장 항목은 울릴 시각까지 남긴다(`scheduled` 가 계속 돌려준다).
+  void dismiss(int reminderId) {}
 
   @override
   Future<void> cancel(int reminderId) async {
     cancelCalls.add(reminderId);
     entries.remove(reminderId);
+    ringAts.remove(reminderId);
     reminders.remove(reminderId);
   }
 }
@@ -1092,6 +1103,7 @@ void main() {
 
     test('정의에 없는 미리 알림은 지운다', () async {
       reminders.entries[soonId(9, tuesday7)] = DateTime(2026, 9, 29, 6, 30); // 지워진 알람
+      reminders.ringAts[soonId(9, tuesday7)] = tuesday7;
 
       await useCase.sync();
 
@@ -1109,6 +1121,30 @@ void main() {
       expect(reminders.entries[soonId(1, tuesday7)], DateTime(2026, 9, 29, 6, 30));
       expect(reminders.scheduleCalls, isEmpty);
       expect(reminders.cancelCalls, isEmpty);
+    });
+
+    test('떠 있는 미리 알림도 울릴 시각이 바뀌면 새 시각으로 다시 건다', () async {
+      final saved = await useCase.save(
+        const Alarm(hour: 7, minute: 0, repeat: weekdays, remindBefore: true),
+      );
+      clock.current = DateTime(2026, 9, 29, 6, 40); // 화 6:30 미리 알림("7:00")이 떠 있다
+
+      await useCase.save(saved.copyWith(hour: 8));
+
+      expect(reminders.entries[soonId(1, tuesday7)], DateTime(2026, 9, 29, 7, 30));
+      expect(reminders.reminders[soonId(1, tuesday7)]!.ringAt, DateTime(2026, 9, 29, 8));
+    });
+
+    test('떠 있는 미리 알림은 새 시각이 리드 안이면 지운다(옛 시각을 보여 주지 않는다)', () async {
+      final saved = await useCase.save(
+        const Alarm(hour: 7, minute: 0, repeat: weekdays, remindBefore: true),
+      );
+      clock.current = DateTime(2026, 9, 29, 6, 40);
+
+      await useCase.save(saved.copyWith(minute: 5));
+
+      expect(reminders.entries.keys, isNot(contains(soonId(1, tuesday7))));
+      expect(reminders.cancelCalls, contains(soonId(1, tuesday7)));
     });
 
     test('떠 있는 미리 알림도 그 회차를 건너뛰면 지운다', () async {
@@ -1163,6 +1199,30 @@ void main() {
 
         expect(reminders.scheduleCalls, isEmpty);
         expect(reminders.entries, {holidayId(1, wednesday7): DateTime(2026, 9, 29, 9)});
+      });
+
+      test('[울리기] 로 닫은 미리 알림은 다음 sync 에서 다시 띄우지 않는다', () async {
+        clock.current = DateTime(2026, 9, 29, 9);
+        await useCase.save(const Alarm(hour: 7, minute: 0, repeat: weekdays));
+        reminders.dismiss(holidayId(1, wednesday7));
+
+        clock.current = DateTime(2026, 9, 29, 20);
+        reminders.scheduleCalls.clear();
+        await useCase.sync();
+
+        expect(reminders.scheduleCalls, isEmpty);
+      });
+
+      test('떠 있는 공휴일 알림도 울릴 시각이 바뀌면 새 문구로 다시 띄운다', () async {
+        clock.current = DateTime(2026, 9, 29, 9);
+        final saved = await useCase.save(const Alarm(hour: 7, minute: 0, repeat: weekdays));
+
+        clock.current = DateTime(2026, 9, 29, 10);
+        await useCase.save(saved.copyWith(hour: 8));
+
+        final wednesday8 = DateTime(2026, 9, 30, 8);
+        expect(reminders.entries, {holidayId(1, wednesday8): DateTime(2026, 9, 29, 10)});
+        expect(reminders.reminders.values.single.ringAt, wednesday8);
       });
 
       test('1회성은 걸지 않는다', () async {

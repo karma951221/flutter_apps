@@ -343,14 +343,17 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   /// 미리 알림을 알람 정의에 맞춘다(웨이브 3 스펙 §3.3). 실패는 삼킨다 — 미리 알림 때문에
   /// 알람 예약이 실패하면 안 된다.
   ///
-  /// 이미 떠 있는(띄울 시각이 지난) 미리 알림은 그 회차가 아직 있고 종류가 여전히 켜져 있으면
-  /// 둔다 — 원하는 목록은 "아직 띄울 것"만 담아(soon 은 리드 안이면 만들지 않는다) 거기서 빠지지만
-  /// 지우면 사용자가 보던 알림이 사라진다. 다시 걸지도 않는다(같은 알림이 또 뜬다).
+  /// 이미 떠 있는(띄울 시각이 지난) 미리 알림은 그 회차가 아직 있고 종류가 여전히 켜져 있으며
+  /// 울릴 시각이 그대로면 둔다 — 원하는 목록은 "아직 띄울 것"만 담아(soon 은 리드 안이면 만들지
+  /// 않는다) 거기서 빠지지만 지우면 사용자가 보던 알림이 사라진다. 다시 걸지도 않는다(같은 알림이
+  /// 또 뜬다). id 는 회차(날짜)로만 정해지므로 알람 시각을 바꾸면 울릴 시각으로 가린다: 바뀌었으면
+  /// 옛 시각을 보여 주는 알림을 지금 정의로 다시 걸거나(원하는 목록에 있을 때) 지운다.
   Future<void> _syncReminders(List<Alarm> alarms, DateTime now) async {
     try {
       final holidayReminder = _settings.load().holidayReminder;
       final desired = <int, (AlarmReminder, Alarm)>{};
-      final alive = <int>{};
+      // id → 울릴 시각.
+      final alive = <int, DateTime>{};
       for (final alarm in alarms) {
         final triggers = triggersOf(alarm, now);
         List<AlarmReminder> of({Duration soonLead = alarmSoonLead}) => remindersOf(
@@ -365,18 +368,23 @@ class DefaultAlarmUseCase implements AlarmUseCase {
           desired[reminder.id] = (reminder, alarm);
         }
         // 리드를 0 으로 두면 울릴 시각 전인 모든 회차 — 떠 있어도 되는 것.
-        alive.addAll([for (final reminder in of(soonLead: Duration.zero)) reminder.id]);
+        alive.addAll({
+          for (final reminder in of(soonLead: Duration.zero)) reminder.id: reminder.ringAt,
+        });
       }
 
       final scheduled = await _reminders.scheduled();
-      for (final MapEntry(key: id, value: at) in scheduled.entries) {
+      // 원하는 것은 아래에서 같은 id 로 덮어쓴다.
+      for (final MapEntry(key: id, value: (:at, :ringAt)) in scheduled.entries) {
         final shown = !at.isAfter(now);
-        if (desired.containsKey(id) || (shown && alive.contains(id))) continue;
+        if (desired.containsKey(id) || (shown && alive[id] == ringAt)) continue;
         await _reminders.cancel(id);
       }
       for (final MapEntry(key: id, value: (reminder, alarm)) in desired.entries) {
-        final at = scheduled[id];
-        if (at != null && (at == reminder.at || !at.isAfter(now))) continue;
+        if (scheduled[id] case (:final at, :final ringAt)
+            when ringAt == reminder.ringAt && (at == reminder.at || !at.isAfter(now))) {
+          continue;
+        }
         await _reminders.schedule(reminder, alarm);
       }
     } on Object {

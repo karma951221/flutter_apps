@@ -102,18 +102,24 @@ void main() {
   });
 
   group('scheduled', () {
-    test('id · 띄울 시각(epoch millis)을 맵으로', () async {
+    test('id · 띄울 시각 · 울릴 시각(epoch millis)을 맵으로', () async {
+      final ring = ringAt.millisecondsSinceEpoch;
       answer(
         (_) => [
-          {'id': 1000824, 'at': DateTime(2026, 10, 9, 6, 30).millisecondsSinceEpoch},
-          {'id': 1000825, 'at': DateTime(2026, 10, 8, 7).millisecondsSinceEpoch},
+          {
+            'id': 1000824,
+            'at': DateTime(2026, 10, 9, 6, 30).millisecondsSinceEpoch,
+            'ringAt': ring,
+          },
+          {'id': 1000825, 'at': DateTime(2026, 10, 8, 7).millisecondsSinceEpoch, 'ringAt': ring},
+          {'id': 1000826, 'at': DateTime(2026, 10, 8, 7).millisecondsSinceEpoch}, // ringAt 없음
           {'id': 'broken'},
         ],
       );
 
       expect(await const ChannelReminderScheduler().scheduled(), {
-        1000824: DateTime(2026, 10, 9, 6, 30),
-        1000825: DateTime(2026, 10, 8, 7),
+        1000824: (at: DateTime(2026, 10, 9, 6, 30), ringAt: ringAt),
+        1000825: (at: DateTime(2026, 10, 8, 7), ringAt: ringAt),
       });
       expect(calls.single.method, 'scheduled');
     });

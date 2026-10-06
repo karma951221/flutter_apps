@@ -235,6 +235,7 @@ abstract interface class DeviceHolidaySource { Future<List<({DateTime date, Stri
 
 **Files:** 스펙 §4.1 · §4.2 의 Kotlin 파일 · 매니페스트 · `core/background/background_task.dart`(runAlarmResync 일반화) · `main.dart`(`alarmReminderActionMain`) · `main_shell_page.dart`(`reminderAction`). Tests: `background_task_test.dart`, `main_shell_page_test.dart`, Kotlin 저장소 · 재부팅 판정 순수 함수 JUnit.
 - [ ] 첫 확인: Dart 커스텀 진입점이 `List<String>` 인자를 받는지(안 되면 채널로 인자 받기).
+- [ ] 채널 계약(스펙 §3.3 · `ChannelReminderScheduler` 문서): `scheduled` 는 `[{id, at, ringAt}]`. [울리기]는 알림만 닫고 store 항목은 `shown=true` 로 `ringAt` 까지 남긴다(스파이크 r7 의 "store 에서 제거"를 따르지 않는다). store 에서 지우는 것은 `cancel` · `ringAt` 경과뿐. Kotlin JUnit 으로 고정.
 - [ ] 일반화해도 하루 sync 의 헤드리스 엔진에 `walk/holidays` attach 와 sync 앞 `HolidayRefresher.refresh()` 를 지킨다(W3-T3 에서 `AlarmResync` · `runAlarmResync` 에 넣은 것, 테스트도 옮긴다).
 - [ ] 실패 테스트 → 구현 → `flutter build apk --debug`. 커밋 `feat(walk): 미리 알림을 띄우고 알림에서 건너뛴다`.
 
