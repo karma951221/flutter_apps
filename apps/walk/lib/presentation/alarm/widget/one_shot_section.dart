@@ -9,7 +9,8 @@ import '../format/alarm_format.dart';
 /// 한 번 알람 편집 영역 — 큰 "N시간 M분 뒤" · 울릴 시각 칩 · 2×2 더하기 버튼 · 초기화.
 ///
 /// 칩을 누르면 시각 휠 시트가 떠서 고른 시각으로 고정한다([onFixAt]). [now] 는 화면이
-/// 매분 0초에 새로 넘긴다 — 상대 모드면 울릴 시각이, 고정 모드면 남은 시간이 바뀐다.
+/// 매분 0초(고정 모드면 저장이 잠기는 순간에도) 새로 넘긴다 — 상대 모드면 울릴 시각이,
+/// 고정 모드면 남은 시간이 바뀐다.
 class OneShotSection extends StatelessWidget {
   const OneShotSection({
     required this.draft,
@@ -46,7 +47,8 @@ class OneShotSection extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     final remaining = draft.remaining(now);
     final ringAt = draft.ringAt(now);
-    final duration = remaining == Duration.zero
+    // 1분 미만은 저장할 수 없는 값이라 올림하지 않고 0분으로 보인다.
+    final duration = remaining < const Duration(minutes: 1)
         ? l10n.walkAlarmDurationMinutes(0)
         : AlarmFormat.duration(l10n, remaining);
 

@@ -244,6 +244,42 @@ void main() {
     );
 
     blocTest<AlarmEditCubit, AlarmEditState>(
+      '고정 모드: 기존 한 번 알람을 제목만 바꿔 저장하면 울릴 시각 · id 가 그대로 넘어간다',
+      build: () {
+        when(() => useCase.save(any())).thenAnswer((i) async => i.positionalArguments.single as Alarm);
+        return build(Alarm(id: 3, hour: 7, minute: 0, oneShotAt: DateTime(2026, 9, 28, 7)));
+      },
+      act: (cubit) async {
+        cubit.setLabel('낮잠');
+        expect(await cubit.save(), const Duration(hours: 7, minutes: 12));
+      },
+      skip: 2,
+      verify: (_) => verify(
+        () => useCase.save(
+          Alarm(id: 3, hour: 7, minute: 0, label: '낮잠', oneShotAt: DateTime(2026, 9, 28, 7)),
+        ),
+      ).called(1),
+    );
+
+    blocTest<AlarmEditCubit, AlarmEditState>(
+      '고정 모드: 시각 휠로 고른 시각으로 저장한다',
+      build: () {
+        when(() => useCase.save(any())).thenAnswer(
+          (i) async => (i.positionalArguments.single as Alarm).copyWith(id: 1),
+        );
+        return build();
+      },
+      act: (cubit) async {
+        cubit.fixOneShotAt(7, 30);
+        expect(await cubit.save(), const Duration(hours: 7, minutes: 42));
+      },
+      skip: 2,
+      verify: (_) => verify(
+        () => useCase.save(Alarm(hour: 7, minute: 30, oneShotAt: DateTime(2026, 9, 28, 7, 30))),
+      ).called(1),
+    );
+
+    blocTest<AlarmEditCubit, AlarmEditState>(
       '저장할 수 없으면 save 는 던지고 use case 를 부르지 않는다',
       build: build,
       act: (cubit) => expectLater(cubit.save(), throwsStateError),

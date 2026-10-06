@@ -23,11 +23,19 @@ class _MockRequester extends Mock implements PermissionRequester {}
 
 class _MockSoundSource extends Mock implements AlarmSoundSource {}
 
-/// 일요일 23:48 에서 시작한다. 분 경계 테스트가 값을 옮긴다.
+/// 일요일 23:48 에서 시작한다. 테스트가 [value] 를 직접 옮기거나, [follow] 로 가짜 시간을 따라가게 한다.
 class _MutableClock extends Clock {
   DateTime value = DateTime(2026, 9, 27, 23, 48);
+  DateTime Function()? _source;
+
+  /// 지금부터 [start] 에서 시작해 테스트의 가짜 시간(`pump(Duration)`)만큼 흐른다.
+  void follow(WidgetTester tester, DateTime start) {
+    final base = tester.binding.clock.now();
+    _source = () => start.add(tester.binding.clock.now().difference(base));
+  }
+
   @override
-  DateTime now() => value;
+  DateTime now() => _source?.call() ?? value;
 }
 
 const _weekdays = {Weekday.mon, Weekday.tue, Weekday.wed, Weekday.thu, Weekday.fri};
@@ -219,6 +227,124 @@ void main() {
       expect(find.text('오전 7:00에 울림'), findsOneWidget);
       expect(find.text('삭제'), findsOneWidget);
       expect(find.widgetWithText(TextField, '낮잠'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), '산책');
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+
+      final saved = savedAlarm();
+      expect(saved.oneShotAt, DateTime(2026, 9, 28, 7));
+      expect((saved.id, saved.hour, saved.minute, saved.label), (3, 7, 0, '산책'));
+    });
+
+    testWidgets('시각 칩으로 고정하면 그 시각으로 저장한다', (tester) async {
+      answerSaveWithId();
+      final results = await pump(tester, Alarm.draft());
+
+      await tester.tap(find.text('오후 11:48에 울림'));
+      await tester.pumpAndSettle();
+      tester
+          .widget<CupertinoDatePicker>(find.byType(CupertinoDatePicker))
+          .onDateTimeChanged(DateTime(2000, 1, 1, 7, 30));
+      await tester.tap(find.text('이 시각으로'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+
+      final saved = savedAlarm();
+      expect(saved.oneShotAt, DateTime(2026, 9, 28, 7, 30));
+      expect((saved.hour, saved.minute), (7, 30));
+      expect(results, [const Duration(hours: 7, minutes: 42)]);
+    });
+
+    testWidgets('화면을 연 초와 상관없이 다음 분 0초에 맞춰 갱신하고, 그 뒤 매분 갱신한다', (tester) async {
+      clock.follow(tester, DateTime(2026, 9, 27, 23, 48, 30));
+      await pump(tester, Alarm.draft());
+      await tester.tap(find.text('+1시간'));
+      await tester.pump();
+      expect(find.text('오전 12:48에 울림'), findsOneWidget);
+
+      // 23:48:59 대 — 아직 같은 분
+      await tester.pump(DateTime(2026, 9, 27, 23, 48, 59).difference(clock.now()));
+      expect(find.text('오전 12:48에 울림'), findsOneWidget);
+
+      // 23:49:00 — 다음 분 0초에 바로 바뀐다
+      await tester.pump(DateTime(2026, 9, 27, 23, 49).difference(clock.now()));
+      expect(find.text('오전 12:49에 울림'), findsOneWidget);
+
+      await tester.pump(const Duration(minutes: 1));
+      expect(find.text('오전 12:50에 울림'), findsOneWidget);
+      await tester.pump(const Duration(minutes: 1));
+      expect(find.text('오전 12:51에 울림'), findsOneWidget);
+      expect(find.text('1시간 뒤'), findsOneWidget);
+    });
+
+    testWidgets('고정 모드: 분이 지나면 N분 뒤가 줄고, 1분 밑으로 내려가는 순간 저장이 잠기고 안내', (
+      tester,
+    ) async {
+      clock.follow(tester, DateTime(2026, 9, 27, 23, 48));
+      await pump(tester, Alarm.draft());
+      await tester.tap(find.text('오후 11:48에 울림'));
+      await tester.pumpAndSettle();
+      tester
+          .widget<CupertinoDatePicker>(find.byType(CupertinoDatePicker))
+          .onDateTimeChanged(DateTime(2000, 1, 1, 23, 50));
+      await tester.tap(find.text('이 시각으로'));
+      await tester.pumpAndSettle();
+      expect(find.text('2분 뒤'), findsOneWidget);
+      expect(saveEnabled(tester), isTrue);
+
+      // 23:49:00 — 정확히 1분 남았다(아직 저장할 수 있다)
+      await tester.pump(DateTime(2026, 9, 27, 23, 49).difference(clock.now()));
+      expect(find.text('1분 뒤'), findsOneWidget);
+      expect(saveEnabled(tester), isTrue);
+
+      // 바로 뒤 — 1분 미만
+      await tester.pump(const Duration(milliseconds: 1));
+      expect(find.text('0분 뒤'), findsOneWidget);
+      expect(find.text('시간을 더해 주세요'), findsOneWidget);
+      expect(saveEnabled(tester), isFalse);
+    });
+
+    testWidgets('기준 시각이 늦어 버튼이 켜져 있어도 실제로 1분 미만이면 저장하지 않고 잠금 · 안내로 돌린다', (
+      tester,
+    ) async {
+      answerSaveWithId();
+      await pump(
+        tester,
+        Alarm(id: 3, hour: 23, minute: 49, oneShotAt: DateTime(2026, 9, 27, 23, 49, 30)),
+      );
+      expect(saveEnabled(tester), isTrue);
+
+      // 화면의 타이머가 돌기 전에 실제 시각이 지나갔다(남은 시간 45초).
+      clock.value = DateTime(2026, 9, 27, 23, 48, 45);
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+
+      verifyNever(() => useCase.save(any()));
+      expect(find.text('알람을 저장하지 못했어요'), findsNothing);
+      expect(find.byType(AlarmEditPage), findsOneWidget);
+      expect(find.text('시간을 더해 주세요'), findsOneWidget);
+      expect(find.text('0분 뒤'), findsOneWidget);
+      expect(saveEnabled(tester), isFalse);
+    });
+
+    testWidgets('시각 칩으로 고정하면 기준 시각을 새로 읽어 저장 가능 여부를 판단한다', (tester) async {
+      await pump(tester, Alarm.draft());
+
+      // 분 중간(23:48:20)에 23:49 를 고른다 — 남은 시간 40초.
+      clock.value = DateTime(2026, 9, 27, 23, 48, 20);
+      await tester.tap(find.byType(ActionChip));
+      await tester.pumpAndSettle();
+      tester
+          .widget<CupertinoDatePicker>(find.byType(CupertinoDatePicker))
+          .onDateTimeChanged(DateTime(2000, 1, 1, 23, 49));
+      await tester.tap(find.text('이 시각으로'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('0분 뒤'), findsOneWidget);
+      expect(find.text('시간을 더해 주세요'), findsOneWidget);
+      expect(saveEnabled(tester), isFalse);
     });
   });
 
