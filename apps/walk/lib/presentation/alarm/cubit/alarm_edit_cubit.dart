@@ -17,8 +17,9 @@ class AlarmEditCubit extends Cubit<AlarmEditState> {
   final AlarmPermissions _permissions;
   final Clock _clock;
 
+  /// 예전 1회성 울릴 시각은 버린다 — save 가 새 시각의 다음 회차로 정한다.
   void setTime(int hour, int minute) =>
-      _update(state.alarm.copyWith(hour: hour, minute: minute));
+      _update(state.alarm.copyWith(hour: hour, minute: minute, oneShotAt: null));
 
   void toggleDay(Weekday day) {
     final repeat = {...state.alarm.repeat};
@@ -28,7 +29,8 @@ class AlarmEditCubit extends Cubit<AlarmEditState> {
 
   void setLabel(String label) => _update(state.alarm.copyWith(label: label.trim()));
 
-  void setVibrate(bool vibrate) => _update(state.alarm.copyWith(vibrate: vibrate));
+  void setSilentWhenRingerMuted(bool value) =>
+      _update(state.alarm.copyWith(silentWhenRingerMuted: value));
 
   void setSound(AlarmSound sound) => _update(state.alarm.copyWith(sound: sound));
 

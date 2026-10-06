@@ -18,7 +18,7 @@ void main() {
   });
 
   test('AlarmSettings 는 스펙 §5 대로 만든다', () {
-    const alarm = Alarm(id: 3, hour: 7, minute: 5, label: '출근', vibrate: false);
+    const alarm = Alarm(id: 3, hour: 7, minute: 5, label: '출근', silentWhenRingerMuted: true);
 
     final settings = PackageAlarmScheduler.settingsFor(312, at, alarm, texts);
 
@@ -27,7 +27,8 @@ void main() {
     expect(settings.assetAudioPath, isNull);
     expect(settings.androidFallbackAudioPath, BundledAlarmSounds.beep);
     expect(settings.loopAudio, isTrue);
-    expect(settings.vibrate, isFalse);
+    expect(settings.vibrate, isTrue);
+    expect(settings.androidSilentWhenRingerMuted, isTrue);
     expect(settings.volumeSettings.volume, 0.8);
     expect(settings.volumeSettings.fadeDuration, const Duration(seconds: 3));
     expect(settings.volumeSettings.showSystemUI, isFalse);
@@ -40,6 +41,19 @@ void main() {
     expect(settings.notificationSettings.stopButton, '알람 끄기');
     expect(settings.notificationSettings.androidSnoozeButton, '5분 뒤 다시 울림');
     expect(settings.payload, '3|${PackageAlarmScheduler.signatureFor(alarm)}');
+  });
+
+  test('진동은 항상 켜고, 무음 모드 체크는 알람 값을 그대로 넘긴다', () {
+    for (final silent in [false, true]) {
+      final settings = PackageAlarmScheduler.settingsFor(
+        312,
+        at,
+        Alarm(id: 3, hour: 7, minute: 5, silentWhenRingerMuted: silent),
+        texts,
+      );
+      expect(settings.vibrate, isTrue, reason: '$silent');
+      expect(settings.androidSilentWhenRingerMuted, silent);
+    }
   });
 
   test('라벨이 없으면 기본 제목', () {
@@ -124,7 +138,7 @@ void main() {
       expect(sig(base), matches(RegExp(r'^[0-9a-f]{8}$')));
     });
 
-    test('소리 · 진동 · 라벨이 바뀌면 지문이 바뀐다', () {
+    test('소리 · 무음 모드 체크 · 라벨이 바뀌면 지문이 바뀐다', () {
       final variants = [
         base,
         base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.chime)),
@@ -132,7 +146,7 @@ void main() {
         base.copyWith(
           sound: const AlarmSound.device(title: 'Oxygen', path: '/a.ogg'),
         ),
-        base.copyWith(vibrate: false),
+        base.copyWith(silentWhenRingerMuted: true),
         base.copyWith(label: '운동'),
         base.copyWith(label: ''),
       ];

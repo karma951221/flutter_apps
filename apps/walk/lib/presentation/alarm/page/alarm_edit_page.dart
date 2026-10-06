@@ -146,14 +146,6 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: state.busy ? null : _pickSound,
               ),
-              AppListTile(
-                title: Text(l10n.walkAlarmVibrate),
-                trailing: Switch(
-                  value: state.alarm.vibrate,
-                  onChanged: state.busy ? null : _cubit.setVibrate,
-                ),
-                onTap: state.busy ? null : () => _cubit.setVibrate(!state.alarm.vibrate),
-              ),
               const SizedBox(height: AppSpacing.lg),
               AppButton.primary(
                 label: l10n.commonSave,

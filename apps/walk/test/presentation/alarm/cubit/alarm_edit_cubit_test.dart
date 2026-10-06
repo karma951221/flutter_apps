@@ -58,7 +58,7 @@ void main() {
   });
 
   blocTest<AlarmEditCubit, AlarmEditState>(
-    '시각 · 요일 · 라벨 · 진동을 바꾼다',
+    '시각 · 요일 · 라벨 · 무음 모드 체크를 바꾼다',
     build: build,
     act: (cubit) {
       cubit
@@ -67,7 +67,7 @@ void main() {
         ..toggleDay(Weekday.fri)
         ..toggleDay(Weekday.mon)
         ..setLabel('  출근 ')
-        ..setVibrate(false);
+        ..setSilentWhenRingerMuted(true);
     },
     expect: () => [
       const AlarmEditState(alarm: Alarm(hour: 6, minute: 30)),
@@ -85,10 +85,17 @@ void main() {
           minute: 30,
           repeat: {Weekday.fri},
           label: '출근',
-          vibrate: false,
+          silentWhenRingerMuted: true,
         ),
       ),
     ],
+  );
+
+  blocTest<AlarmEditCubit, AlarmEditState>(
+    '시각을 바꾸면 예전 1회성 울릴 시각을 버린다(save 가 새 시각으로 정한다)',
+    build: () => build(Alarm(id: 3, hour: 6, minute: 30, oneShotAt: DateTime(2099, 1, 1, 6, 30))),
+    act: (cubit) => cubit.setTime(9, 0),
+    expect: () => [const AlarmEditState(alarm: Alarm(id: 3, hour: 9, minute: 0))],
   );
 
   blocTest<AlarmEditCubit, AlarmEditState>(

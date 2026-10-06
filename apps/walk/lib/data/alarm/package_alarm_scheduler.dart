@@ -44,7 +44,7 @@ class PackageAlarmScheduler implements AlarmScheduler {
     return (at: settings.dateTime, signature: bar < 0 ? '' : payload.substring(bar + 1));
   }
 
-  /// 울림에 영향을 주는 값(소리 · 대체음 · 진동 · 라벨 · 볼륨 · 페이드 · 스누즈)을 정해진 순서로
+  /// 울림에 영향을 주는 값(소리 · 대체음 · 무음 모드 체크 · 라벨 · 볼륨 · 페이드 · 스누즈)을 정해진 순서로
   /// 이은 문자열의 fnv1a32(8자리 hex). 알림 문구(l10n)와 시각은 넣지 않는다 — 로캘이 바뀌어도
   /// 다시 걸지 않고, 시각은 따로 비교한다. 기기 알람음은 복사본 유무가 아니라 저장된 경로를 넣는다.
   static String signatureFor(Alarm alarm) => _fnv1a32(
@@ -55,7 +55,7 @@ class PackageAlarmScheduler implements AlarmScheduler {
         DeviceAlarmSound(:final path) => 'device:$path',
       },
       BundledAlarmSounds.beep,
-      alarm.vibrate,
+      alarm.silentWhenRingerMuted,
       alarm.label,
       _volume,
       _fadeDuration.inMilliseconds,
@@ -119,7 +119,9 @@ class PackageAlarmScheduler implements AlarmScheduler {
     // 위 소리로 울리지 못하면(파일 손상 · 기기 기본음 없음) 비프로 울린다.
     androidFallbackAudioPath: BundledAlarmSounds.beep,
     loopAudio: true,
-    vibrate: alarm.vibrate,
+    // 진동은 항상 켠다. 폰이 무음 · 진동 모드일 때 소리를 낼지는 포크가 울리는 순간 정한다.
+    vibrate: true,
+    androidSilentWhenRingerMuted: alarm.silentWhenRingerMuted,
     volumeSettings: pkg.VolumeSettings.fade(
       volume: _volume,
       fadeDuration: _fadeDuration,

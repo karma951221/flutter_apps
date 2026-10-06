@@ -197,7 +197,7 @@ void main() {
     expect((saved.hour, saved.minute), (6, 30));
   });
 
-  testWidgets('알람음 줄은 진동 줄 위에 현재 이름을 보인다', (tester) async {
+  testWidgets('알람음 줄은 저장 버튼 위에 현재 이름을 보이고, 진동 토글은 없다', (tester) async {
     await pump(
       tester,
       const Alarm(id: 3, hour: 6, minute: 30, sound: AlarmSound.bundled(BundledAlarmSounds.chime)),
@@ -207,8 +207,9 @@ void main() {
     expect(find.text('차임'), findsOneWidget);
     expect(
       tester.getTopLeft(find.text('알람음')).dy,
-      lessThan(tester.getTopLeft(find.text('진동')).dy),
+      lessThan(tester.getTopLeft(find.text('저장')).dy),
     );
+    expect(find.text('진동'), findsNothing);
   });
 
   testWidgets('새 알람의 알람음은 시스템 기본', (tester) async {

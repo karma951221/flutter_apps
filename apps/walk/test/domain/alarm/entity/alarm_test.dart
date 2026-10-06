@@ -17,7 +17,7 @@ void main() {
       minute: 45,
       repeat: {Weekday.fri, Weekday.mon},
       label: '출근',
-      vibrate: false,
+      silentWhenRingerMuted: true,
     );
 
     final decoded = Alarm.fromJson(
@@ -80,6 +80,24 @@ void main() {
     });
   });
 
+  group('silentWhenRingerMuted', () {
+    test('JSON 에 silentWhenRingerMuted 로 저장하고 vibrate 키는 쓰지 않는다', () {
+      const alarm = Alarm(id: 1, hour: 7, minute: 0, silentWhenRingerMuted: true);
+
+      final json = alarm.toJson();
+
+      expect(json['silentWhenRingerMuted'], isTrue);
+      expect(json.containsKey('vibrate'), isFalse);
+      expect(Alarm.fromJson(jsonDecode(jsonEncode(json)) as Map<String, Object?>), alarm);
+    });
+
+    test('옛 vibrate 키는 읽고 버린다', () {
+      final alarm = Alarm.fromJson(const {'id': 1, 'hour': 7, 'minute': 0, 'vibrate': false});
+
+      expect(alarm, const Alarm(id: 1, hour: 7, minute: 0, enabled: false));
+    });
+  });
+
   group('fromJson 기본값 · 깨진 값', () {
     test('enabled 가 없으면 꺼진 알람으로 읽는다', () {
       final alarm = Alarm.fromJson(const {'id': 1, 'hour': 7, 'minute': 0});
@@ -87,12 +105,12 @@ void main() {
       expect(alarm.enabled, isFalse);
     });
 
-    test('선택 필드가 없으면 반복 없음 · 라벨 없음 · 진동 켬 · oneShotAt 없음', () {
+    test('선택 필드가 없으면 반복 없음 · 라벨 없음 · 무음 모드 체크 끔 · oneShotAt 없음', () {
       final alarm = Alarm.fromJson(const {'id': 1, 'hour': 7, 'minute': 0});
 
       expect(alarm.repeat, isEmpty);
       expect(alarm.label, '');
-      expect(alarm.vibrate, isTrue);
+      expect(alarm.silentWhenRingerMuted, isFalse);
       expect(alarm.oneShotAt, isNull);
     });
 
@@ -118,11 +136,11 @@ void main() {
     });
   });
 
-  test('draft 는 07:00 · 반복 없음 · 진동 켬 · 저장 전 id', () {
+  test('draft 는 07:00 · 반복 없음 · 무음 모드 체크 끔 · 저장 전 id', () {
     final draft = Alarm.draft();
     expect((draft.hour, draft.minute), (7, 0));
     expect(draft.isOneShot, isTrue);
-    expect(draft.vibrate, isTrue);
+    expect(draft.silentWhenRingerMuted, isFalse);
     expect(draft.id, Alarm.unsavedId);
   });
 }

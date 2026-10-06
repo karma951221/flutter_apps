@@ -57,7 +57,7 @@ class _FakeScheduler implements AlarmScheduler {
   };
 
   @override
-  String signatureOf(Alarm alarm) => '${alarm.label}|${alarm.vibrate}|${alarm.sound}';
+  String signatureOf(Alarm alarm) => '${alarm.label}|${alarm.silentWhenRingerMuted}|${alarm.sound}';
 
   @override
   Future<Set<int>> ringingIds() async => {...ringing};
@@ -137,6 +137,41 @@ void main() {
 
       expect(saved.oneShotAt, DateTime(2026, 9, 29, 7));
       expect(scheduler.entries, {pid(1, DateTime(2026, 9, 29)): DateTime(2026, 9, 29, 7)});
+    });
+
+    test('1회성에 미래 oneShotAt 이 넘어오면 초까지 그대로 쓰고 hour · minute 를 맞춘다', () async {
+      final at = DateTime(2026, 9, 28, 13, 25, 30); // 정오 + 1시간 25분 30초
+
+      final saved = await useCase.save(Alarm(hour: 7, minute: 0, oneShotAt: at));
+
+      expect(saved.oneShotAt, at);
+      expect((saved.hour, saved.minute), (13, 25));
+      expect(repository.alarms.single, saved);
+      expect(scheduler.entries, {pid(1, at): at});
+    });
+
+    test('1회성에 지난 oneShotAt 이 넘어오면 hour:minute 의 다음 시각으로 정한다', () async {
+      final saved = await useCase.save(
+        Alarm(hour: 7, minute: 0, oneShotAt: DateTime(2026, 9, 28, 11, 59)),
+      );
+
+      expect(saved.oneShotAt, DateTime(2026, 9, 29, 7));
+      expect((saved.hour, saved.minute), (7, 0));
+    });
+
+    test('1회성 oneShotAt 이 지금과 같으면 지난 것으로 본다', () async {
+      final saved = await useCase.save(Alarm(hour: 12, minute: 0, oneShotAt: mondayNoon));
+
+      expect(saved.oneShotAt, DateTime(2026, 9, 29, 12));
+    });
+
+    test('반복 알람은 넘어온 oneShotAt 을 버린다', () async {
+      final saved = await useCase.save(
+        Alarm(hour: 7, minute: 0, repeat: _everyDay, oneShotAt: DateTime(2026, 9, 28, 13)),
+      );
+
+      expect(saved.oneShotAt, isNull);
+      expect((saved.hour, saved.minute), (7, 0));
     });
 
     test('반복 알람은 14일치 회차를 모두 예약한다', () async {

@@ -3,12 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
+import '../../../domain/alarm/entity/repeat_preset.dart';
 
 /// 알람 화면의 시각 · 남은 시간 · 울릴 날 · 반복 요약 표기.
 abstract final class AlarmFormat {
-  static const _weekdays = {Weekday.mon, Weekday.tue, Weekday.wed, Weekday.thu, Weekday.fri};
-  static const _weekend = {Weekday.sat, Weekday.sun};
-
   /// 기기 언어 · 24시간제 설정을 따른다 — `오전 7:00`, `7:00 AM`, `07:00`.
   static String time(BuildContext context, int hour, int minute) =>
       MaterialLocalizations.of(context).formatTimeOfDay(
@@ -77,9 +75,15 @@ abstract final class AlarmFormat {
   /// 매일 · 평일 · 주말 · `월·수·금` · 1회.
   static String repeat(AppLocalizations l10n, Set<Weekday> days) {
     if (days.isEmpty) return l10n.walkAlarmRepeatOnce;
-    if (days.length == Weekday.values.length) return l10n.walkAlarmRepeatDaily;
-    if (_sameSet(days, _weekdays)) return l10n.walkAlarmRepeatWeekdays;
-    if (_sameSet(days, _weekend)) return l10n.walkAlarmRepeatWeekends;
+    switch (RepeatPreset.of(days)) {
+      case RepeatPreset.everyday:
+        return l10n.walkAlarmRepeatDaily;
+      case RepeatPreset.weekdays:
+        return l10n.walkAlarmRepeatWeekdays;
+      case RepeatPreset.weekend:
+        return l10n.walkAlarmRepeatWeekends;
+      case null:
+    }
     return [
       for (final day in Weekday.values)
         if (days.contains(day)) weekday(l10n.localeName, day),
@@ -90,7 +94,4 @@ abstract final class AlarmFormat {
   static String weekday(String locale, Weekday day) =>
       // 2024-01-01 은 월요일이다.
       DateFormat.E(locale).format(DateTime(2024, 1, 1 + day.index));
-
-  static bool _sameSet(Set<Weekday> a, Set<Weekday> b) =>
-      a.length == b.length && a.containsAll(b);
 }

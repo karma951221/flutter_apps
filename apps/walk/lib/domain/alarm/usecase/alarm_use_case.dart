@@ -19,7 +19,8 @@ abstract interface class AlarmUseCase {
   Future<Alarm?> findByPackageId(int packageId);
 
   /// 켠 상태로 저장한다. `id == Alarm.unsavedId` 면 새 id(최대+1)를 준다.
-  /// 1회성이면 지금 기준 다음 `hour:minute` 을 `oneShotAt` 으로 정한다.
+  /// 1회성이면 넘어온 `oneShotAt` 이 미래면 그대로 쓰고, 없거나 지났으면 지금 기준 다음
+  /// `hour:minute` 으로 정한다. `hour` · `minute` 는 정한 `oneShotAt` 에 맞춘다.
   Future<Alarm> save(Alarm alarm);
 
   Future<void> delete(int alarmId);
@@ -84,10 +85,20 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     final now = _clock.now();
     final alarms = await _repository.load();
     final id = alarm.id == Alarm.unsavedId ? _newId(alarms) : alarm.id;
+    // 1회성: 화면이 정한 oneShotAt 이 미래면 그대로(초까지), 없거나 지났으면 다음 hour:minute.
+    // hour · minute 는 정해진 시각에 맞춘다(목록 표시용).
+    final given = alarm.oneShotAt;
+    final oneShotAt = !alarm.isOneShot
+        ? null
+        : given != null && given.isAfter(now)
+        ? given
+        : nextOccurrence(alarm.hour, alarm.minute, now);
     final saved = alarm.copyWith(
       id: id,
+      hour: oneShotAt?.hour ?? alarm.hour,
+      minute: oneShotAt?.minute ?? alarm.minute,
       enabled: true,
-      oneShotAt: alarm.isOneShot ? nextOccurrence(alarm.hour, alarm.minute, now) : null,
+      oneShotAt: oneShotAt,
     );
     final index = alarms.indexWhere((a) => a.id == id);
     await _repository.save([

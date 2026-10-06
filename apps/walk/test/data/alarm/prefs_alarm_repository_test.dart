@@ -18,7 +18,7 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     final alarms = [
       const Alarm(id: 1, hour: 6, minute: 30, repeat: {Weekday.mon, Weekday.wed}, label: '운동'),
-      Alarm(id: 2, hour: 22, minute: 0, vibrate: false, oneShotAt: DateTime(2026, 9, 28, 22)),
+      Alarm(id: 2, hour: 22, minute: 0, silentWhenRingerMuted: true, oneShotAt: DateTime(2026, 9, 28, 22)),
     ];
 
     await PrefsAlarmRepository(prefs).save(alarms);

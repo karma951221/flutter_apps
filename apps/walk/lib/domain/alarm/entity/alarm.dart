@@ -39,8 +39,10 @@ class Alarm with _$Alarm {
   /// 빈 문자열이면 라벨 없음.
   @override
   final String label;
+
+  /// 폰이 무음 · 진동 모드면 소리 없이 진동만. 진동은 항상 켠다.
   @override
-  final bool vibrate;
+  final bool silentWhenRingerMuted;
 
   /// 울릴 소리. 정보가 없는 기존 알람도 시스템 기본음이다.
   @override
@@ -58,7 +60,7 @@ class Alarm with _$Alarm {
     required this.minute,
     this.repeat = const {},
     this.label = '',
-    this.vibrate = true,
+    this.silentWhenRingerMuted = false,
     this.sound = const AlarmSound.system(),
     this.enabled = true,
     this.oneShotAt,
@@ -69,7 +71,7 @@ class Alarm with _$Alarm {
 
   bool get isOneShot => repeat.isEmpty;
 
-  /// 새 알람의 기본값 — 07:00, 반복 없음, 진동 켬, 시스템 기본 알람음.
+  /// 새 알람의 기본값 — 07:00, 반복 없음, 무음 모드 체크 끔, 시스템 기본 알람음.
   static Alarm draft() => const Alarm(hour: 7, minute: 0);
 
   Map<String, Object?> toJson() => {
@@ -78,7 +80,7 @@ class Alarm with _$Alarm {
     'minute': minute,
     'repeat': [for (final day in Weekday.values) if (repeat.contains(day)) day.name],
     'label': label,
-    'vibrate': vibrate,
+    'silentWhenRingerMuted': silentWhenRingerMuted,
     'sound': sound.toJson(),
     'enabled': enabled,
     'oneShotAt': oneShotAt?.toIso8601String(),
@@ -96,7 +98,8 @@ class Alarm with _$Alarm {
           Weekday.values.byName(name! as String),
       },
       label: json['label'] as String? ?? '',
-      vibrate: json['vibrate'] as bool? ?? true,
+      // 옛 `vibrate` 키는 읽지 않는다(진동은 항상 켠다).
+      silentWhenRingerMuted: json['silentWhenRingerMuted'] as bool? ?? false,
       sound: AlarmSound.fromJson(json['sound']),
       enabled: json['enabled'] as bool? ?? false,
       oneShotAt: oneShotAt == null ? null : DateTime.parse(oneShotAt),
