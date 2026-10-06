@@ -3,7 +3,7 @@
 > [테스트 가이드](../../../docs/testing/README.md) · [계획](plan.md) · [기록](history.md) · [진행 현황](status.md)
 
 ```bash
-cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-10-07 기준 523건 통과 · 1건 skip)
+cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-10-07 기준 535건 통과 · 1건 skip)
 ```
 
 백엔드가 없어 로컬 Supabase 없이 돈다. Health Connect 는 `HealthGateway` 를 mock 해서 본다
@@ -13,7 +13,7 @@ cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · �
 
 `alarm` 은 `third_party/alarm` 포크다([FORK.md](../third_party/alarm/FORK.md)). 포크 자체의 `test/` 는 돌리지
 않는다. 포크의 Dart 모델은 앱의 `test/third_party/alarm/…`(포크 경로와 1:1)에서, 포크 Kotlin 의 순수 규칙
-(`audioCandidates` · `shouldMuteForRinger` · `EngineRegistry` · 설정 저장)은 포크 JUnit 으로 본다. 앱 Kotlin 의 순수
+(`audioCandidates` · `shouldMuteForRinger` · `EngineRegistry` · `smallIconResId` · 설정 저장)은 포크 JUnit 으로 본다. 앱 Kotlin 의 순수
 규칙(`replaceVerified` · `ResyncQueue`)은 앱 JUnit 이다. `AudioService.playAudio` 가 실제로 대체음으로 다시 트는지,
 무음 · 진동 모드에서 진동만 하는지, 하루 sync 가 헤드리스로 도는지는 에뮬레이터로 본다.
 
@@ -50,6 +50,7 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `presentation/walk/widget/today_goal_card_test.dart` | `TodayGoalCard` | 걸음 · 목표 문구 · 링 접근성 비율 · 거리/칼로리 지표 · 링 탭 → 남은 걸음 · 다시 탭 → 지표 · **탭해도 카드 높이 그대로** · 거리 없으면 남은 걸음만 · 달성 배지 · 3초 뒤 복귀 |
 | `presentation/walk/widget/period_summary_test.dart` | `PeriodSummary` | 달성 n/m일(오늘 이후 제외, 지난 기간은 전부) · 네 지표 타일 |
 | `convention/package_boundary_test.dart` | `pubspec.yaml` | `feature_*` · `supabase_flutter` 의존 없음 · `alarm` 은 `third_party/alarm` path 의존(FORK.md · LICENSE 있음) · 포크는 루트 workspace 멤버 아님 |
+| `convention/android_icon_resources_test.dart` | `android/app/src/main/res` 알림 아이콘 | **`PackageAlarmScheduler.notificationIcon` 이름의 `drawable/<이름>.xml` 이 있고 `raw/keep.xml` 의 `tools:keep` 이 `@drawable/<이름>` 을 남긴다**(포크는 못 찾으면 조용히 대체 아이콘으로 넘어간다) |
 | `convention/android_splash_resources_test.dart` | `android/app/src/main/res` 시작 화면 리소스 | 배경 색 라이트 #1D9E75 · 다크 #0F6E56 · `splash_icon` 은 전경을 288dp 로 · `values(-night)-v31` `LaunchTheme` 의 스플래시 배경 · 아이콘(아이콘 배경 없음) · 12 미만 `launch_background`(drawable · v21 · night) 초록 바탕 가운데 아이콘 · `NormalTheme` 은 `?android:colorBackground` 유지 |
 
 걷기 표의 굵은 항목은 최종 리뷰에서 고친 것의 회귀 테스트다([기록](history.md#2026-09-27--최종-리뷰에서-고친-것)).
@@ -66,7 +67,7 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `domain/alarm/upcoming_triggers_test.dart` | `upcomingTriggers` · `nextOccurrence` · `triggersOf` | 꺼짐 · 반복 요일만 오름차순 · 오늘 지남/아직 · `now` 와 같은 시각 제외 · 자정 · 14일 경계 포함/제외 · 월말 · 연말 · 윤년 · 1회성 · 서머타임(skip 조건부) |
 | `domain/alarm/permission/alarm_permissions_test.dart` | `AlarmPermissions` | 알림 → 정확한 알람 순서 · `canRing` 은 둘 다 허용일 때만 |
 | `domain/alarm/usecase/alarm_use_case_test.dart` | `DefaultAlarmUseCase` | **save**(새 id · 최대 id/9999 가득 · 1회성 `oneShotAt` · 14일 예약 · 수정 시 예전 회차(5분 안 · 스누즈 포함) 정리) · **toggle** · **delete** · **sync**(빠진 회차 걸기 · 남은 것 취소 · 멱등(스누즈 · 울림 있어도) · 1회성 만료 · **스누즈 중 1회성 유지** · **막 된 1회성 유지** · **꺼진 알람의 5분 안 예약 취소** · 울리는 회차 보존 · 스누즈 보존 창 경계 · 자정 넘은 스누즈 · 시간대 변경 재설정) · **지문**(시각 · 지문이 같으면 그대로 · 지문이 다르면 다시 걸기 · 옛 payload 는 한 번 다시 걸기 · 울리는 회차는 건드리지 않음) · **snooze/stop**(5분 뒤 · **꺼진/지운 알람은 멈춤** · **stop 도중 읽어도 꺼진 1회성**) · **nextRings**(알람별 최솟값 · 스누즈 포함 · 지난 것 · 꺼짐 · 예약 없음) · `timeZoneChanged` · 직렬 줄이 실패 뒤에도 풀림 |
-| `data/alarm/package_alarm_scheduler_test.dart` | `PackageAlarmScheduler.settingsFor` · 지문 | 스펙 §5 설정(반복 재생 · 전체 화면 · 스와이프해도 계속 · 5분 스누즈) · 기본 제목 · 본문은 기기 언어 시각 · 버튼 문구(ko/en/ja) · **소리**(시스템은 경로 없음 · 내장은 에셋 · 기기는 복사본이 있으면 그 경로, 없으면 시스템 · 대체음은 항상 비프) · **지문**(결정적 8자리 hex · 소리/무음 모드 체크/라벨이 바뀌면 바뀜 · **웨이브 1 전(vibrate 자리) 지문과 겹치지 않음** · 켜짐/시각/로캘 문구는 무관 · payload `'<id>\|<지문>'` 읽기, 옛 payload 는 빈 지문) |
+| `data/alarm/package_alarm_scheduler_test.dart` | `PackageAlarmScheduler.settingsFor` · 지문 | 스펙 §5 설정(반복 재생 · 전체 화면 · 스와이프해도 계속 · 5분 스누즈) · 기본 제목 · 본문은 기기 언어 시각 · 버튼 문구(ko/en/ja) · 알림 작은 아이콘 `ic_stat_alarm`(`notificationIcon`) · **소리**(시스템은 경로 없음 · 내장은 에셋 · 기기는 복사본이 있으면 그 경로, 없으면 시스템 · 대체음은 항상 비프) · **지문**(결정적 8자리 hex · 소리/무음 모드 체크/라벨이 바뀌면 바뀜 · **웨이브 1 전(vibrate 자리) 지문과 겹치지 않음** · **알림 아이콘을 넣기 전 지문과 겹치지 않음(아이콘 없이 걸린 회차를 다시 건다)** · 켜짐/시각/로캘 문구는 무관 · payload `'<id>\|<지문>'` 읽기, 옛 payload 는 빈 지문) |
 | `data/alarm/channel_alarm_sound_source_test.dart` | `ChannelAlarmSoundSource`(`walk/alarm_sounds`) | `list` → 제목 · uri, null 은 빈 목록 · `preview` 의 kind(system · asset · uri, 복사본은 `file://`) · `stopPreview`(채널 없으면 조용히) · `import` 경로 → `AlarmSound.device`, 빈 경로 · 오류 · 채널 없음 → `AlarmSoundException` |
 | `data/alarm/prefs_alarm_repository_test.dart` | `PrefsAlarmRepository` | 없음 · 왕복 · 비우기 · **깨진 JSON/배열 아님/항목 하나 깨짐/문자열 아님 → 던지지 않고 읽을 수 있는 것만, 원본은 `walk.alarms.corrupt`** · 백업 덮어쓰기 · 정상 저장 복구 |
 | `data/alarm/full_screen_intent_permission_source_test.dart` | 전체 화면 알림 채널 | `canUse` true/false · 요청은 설정을 열고 다시 읽음 · 채널 없으면 허용 |
@@ -108,6 +109,7 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `test/third_party/alarm/model/alarm_settings_test.dart` | 포크 `AlarmSettings.androidFallbackAudioPath` · `androidSilentWhenRingerMuted` | 기본 null/false · json 왕복 · 키 없는 옛 json 은 null/false · 값이 다르면 다른 설정 · 네이티브로 넘김 · `copyWith` |
 | `third_party/alarm/android/src/test/…/AudioFallbackTest.kt` | 포크 `audioCandidates` · 설정 저장 | 대체음 없음/있음 × 기본음/파일 · 1차와 같은 대체음은 한 번 · 저장 왕복 · 옛 저장값 · 명시적 null · 전달 |
 | `third_party/alarm/android/src/test/…/alarm/RingerMuteTest.kt` | 포크 `shouldMuteForRinger` · 설정 저장 | 켰을 때 일반 모드는 소리, 진동 · 무음 모드는 음소거 · 껐으면 모드와 상관없이 소리 · 저장 왕복 · 옛 저장값은 무시 · 전달 |
+| `third_party/alarm/android/src/test/…/services/NotificationIconTest.kt` | 포크 `smallIconResId`(알림 작은 아이콘) | 찾은 이름은 그 drawable · **이름 없음 · 못 찾은 이름은 앱(적응형) 아이콘 대신 플랫폼 단색 `ic_lock_idle_alarm`** |
 | `third_party/alarm/android/src/test/…/alarm/EngineRegistryTest.kt` | 포크 `EngineRegistry`(`AlarmPlugin.alarmTriggerApi`) | 가장 나중에 붙은 엔진이 현재 · **먼저 붙은 헤드리스 엔진을 내려도 앱 엔진 유지** · 현재 엔진을 내리면 남은 엔진으로 · 마지막을 내리면 없음 · 같은 엔진 다시 붙기 · 모르는 엔진 무시 |
 | `android/app/src/test/…/ResyncQueueTest.kt` | 앱 `ResyncQueue`(`AlarmResync`) | 첫 요청은 실행 · 도는 중 요청은 끝난 뒤 한 번 더(여러 개는 하나로) · 그 실행 중 요청은 또 한 번 · 쉬면 새 실행 · 취소한 대기자는 받지 않지만 실행은 함 · 지금 실행의 대기자 |
 | `android/app/src/test/…/VerifiedReplaceTest.kt` | 앱 `replaceVerified`(기기 알람음 복사) | 임시 파일에 쓰고 검증한 뒤 바꿈 · 기존 복사본 덮어쓰기 · **쓰기 · 검증이 실패하면 기존 복사본은 그대로, 임시 파일만 지움** · 임시 파일은 확장자가 끝 |

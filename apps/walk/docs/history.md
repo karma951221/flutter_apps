@@ -187,6 +187,11 @@ Health Connect 는 두 번 거부하면 다이얼로그를 조용히 생략하�
 - 안드로이드 12 미만 `launch_background` 도 같은 `splash_icon` 을 가운데 둔다. minSdk 26 이라 빌드는
   `drawable/` 과 `drawable-v21/` 를 하나로 합친다(두 파일은 같게 둔다). 다크는 `drawable-night`.
 - 리소스라 단위 테스트 대신 `test/convention/android_splash_resources_test.dart` 가 파일끼리 맞물리는지 본다.
+- 리뷰 수정: 알림 아이콘(`ic_stat_alarm`)을 넣기 전에 걸린 회차는 `icon` 이 없어 포크가 앱 아이콘(이제 적응형)으로
+  알림을 만들었다 — 상태바 덩어리, 안드로이드 8.0 은 알림 실패 우려. 지문에 `icon:ic_stat_alarm` 을 넣어 다음
+  sync 에서 다시 걸고, 그 전에 울려도 되게 포크의 대체 아이콘을 플랫폼 단색 `ic_lock_idle_alarm` 으로 바꿨다
+  ([FORK.md](../third_party/alarm/FORK.md)). 아이콘 이름 · drawable · `keep.xml` 은
+  `test/convention/android_icon_resources_test.dart` 가 맞물리는지 본다. 스펙 §4 좌표도 0.6 배로 고쳤다.
 
 ## 알려진 한계
 
