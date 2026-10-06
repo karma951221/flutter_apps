@@ -14,6 +14,9 @@ Widget _app(
   ValueChanged<bool>? onToggle,
   VoidCallback? onTap,
   Duration? untilRing,
+  VoidCallback? onLongPress,
+  String? holidayName,
+  VoidCallback? onHolidayTap,
   Locale locale = const Locale('ko'),
 }) => MaterialApp(
   theme: AppTheme.light(),
@@ -26,6 +29,9 @@ Widget _app(
       untilRing: untilRing,
       onTap: onTap ?? () {},
       onToggle: onToggle ?? (_) {},
+      onLongPress: onLongPress,
+      holidayName: holidayName,
+      onHolidayTap: onHolidayTap,
     ),
   ),
 );
@@ -151,7 +157,92 @@ void main() {
     expect(haptics, ['HapticFeedbackType.selectionClick']);
   });
 
+  testWidgets('건너뛴 반복 알람은 요일 점 옆에 "건너뜀" 칩', (tester) async {
+    await tester.pumpWidget(
+      _app(Alarm(id: 1, hour: 7, minute: 0, repeat: _weekdays, skippedAt: DateTime(2026, 10, 9, 7))),
+    );
+
+    expect(find.text('건너뜀'), findsOneWidget);
+    expect(
+      tester.getCenter(find.text('건너뜀')).dx,
+      greaterThan(tester.getCenter(find.byType(WeekdayDots)).dx),
+    );
+
+    await tester.pumpWidget(_app(const Alarm(id: 1, hour: 7, minute: 0, repeat: _weekdays)));
+    expect(find.text('건너뜀'), findsNothing);
+  });
+
+  testWidgets('꺼진 알람은 건너뛴 값이 남아 있어도 칩이 없다', (tester) async {
+    await tester.pumpWidget(
+      _app(
+        Alarm(
+          id: 1,
+          hour: 7,
+          minute: 0,
+          repeat: _weekdays,
+          enabled: false,
+          skippedAt: DateTime(2026, 10, 9, 7),
+        ),
+        holidayName: '한글날',
+      ),
+    );
+
+    expect(find.text('건너뜀'), findsNothing);
+    expect(find.text('공휴일'), findsNothing);
+  });
+
+  testWidgets('공휴일이면 "공휴일" 칩, 누르면 onHolidayTap', (tester) async {
+    var taps = 0;
+    var rowTaps = 0;
+    await tester.pumpWidget(
+      _app(
+        const Alarm(id: 1, hour: 7, minute: 0, repeat: _weekdays),
+        holidayName: '한글날',
+        onHolidayTap: () => taps++,
+        onTap: () => rowTaps++,
+      ),
+    );
+
+    expect(find.text('공휴일'), findsOneWidget);
+    await tester.tap(find.text('공휴일'));
+    expect((taps, rowTaps), (1, 0));
+  });
+
+  testWidgets('길게 누르면 onLongPress', (tester) async {
+    var longPresses = 0;
+    await tester.pumpWidget(
+      _app(
+        const Alarm(id: 1, hour: 7, minute: 0, repeat: _weekdays),
+        onLongPress: () => longPresses++,
+      ),
+    );
+
+    await tester.longPress(find.text('오전 7:00'));
+    expect(longPresses, 1);
+  });
+
   for (final locale in const [Locale('ko'), Locale('en'), Locale('ja')]) {
+    testWidgets('320dp 에서 칩 둘이 있어도 넘치지 않는다 ($locale)', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(320, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        _app(
+          Alarm(
+            id: 1,
+            hour: 23,
+            minute: 59,
+            label: '아주아주 긴 제목이 들어가는 알람',
+            repeat: _weekdays,
+            skippedAt: DateTime(2026, 10, 9, 23, 59),
+          ),
+          holidayName: '한글날',
+          onHolidayTap: () {},
+          locale: locale,
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('320dp 에서 긴 제목도 넘치지 않는다 ($locale)', (tester) async {
       await tester.binding.setSurfaceSize(const Size(320, 640));
       addTearDown(() => tester.binding.setSurfaceSize(null));

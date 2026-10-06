@@ -10,6 +10,7 @@ import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
+import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
@@ -35,6 +36,16 @@ class _MockSettings extends Mock implements SettingsRepository {}
 
 class _MockHolidays extends Mock implements HolidayRefresher {}
 
+class _MockAccess extends Mock implements HolidayCalendarAccess {}
+
+class _FakeCalendar implements HolidayCalendar {
+  @override
+  HolidaySource source = const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
+
+  @override
+  String? nameOf(DateTime date) => null;
+}
+
 class _MemorySettings implements SettingsRepository {
   AppSettings value = const AppSettings();
   var saves = 0;
@@ -54,6 +65,9 @@ void main() {
   late _MockWalk walk;
   late _MockRequester notification;
   late _MockHolidays holidays;
+  late _MockAccess calendarAccess;
+  late _FakeCalendar calendar;
+  late _MemorySettings memorySettings;
 
   setUpAll(() => registerFallbackValue(PeriodKind.week));
   setUp(() {
@@ -61,7 +75,13 @@ void main() {
     walk = _MockWalk();
     notification = _MockRequester();
     holidays = _MockHolidays();
+    when(() => holidays.refresh(force: any(named: 'force'))).thenAnswer((_) async {});
     when(() => holidays.refresh()).thenAnswer((_) async {});
+    calendar = _FakeCalendar();
+    calendarAccess = _MockAccess();
+    when(calendarAccess.check).thenAnswer((_) async => PermissionStatus.denied);
+    when(() => calendarAccess.refresher).thenReturn(holidays);
+    memorySettings = _MemorySettings();
     final exactAlarm = _MockRequester();
     final fullScreen = _MockRequester();
     for (final r in [notification, exactAlarm, fullScreen]) {
@@ -78,6 +98,9 @@ void main() {
       ..registerSingleton<WalkUseCase>(walk)
       ..registerSingleton<Clock>(Clock())
       ..registerSingleton<HolidayRefresher>(holidays)
+      ..registerSingleton<HolidayCalendar>(calendar)
+      ..registerSingleton<HolidayCalendarAccess>(calendarAccess)
+      ..registerSingleton<SettingsRepository>(memorySettings)
       ..registerSingleton<AlarmPermissions>(
         AlarmPermissions(
           notification: notification,
@@ -223,6 +246,28 @@ void main() {
 
     expect(find.text('허용 필요 ›'), findsOneWidget);
     expect(find.text('허용됨'), findsNWidgets(3));
+  });
+
+  testWidgets('설정 탭 알람 섹션: 시작 때 출처 · 캘린더 권한을 읽고, 시스템 설정에서 허용하고 돌아오면 다시 읽는다', (
+    tester,
+  ) async {
+    await pump(tester);
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+    expect(find.text('내장 표 2026–2027'), findsOneWidget);
+    expect(find.text('캘린더 허용 필요 ›'), findsOneWidget);
+    clearInteractions(alarms);
+
+    when(calendarAccess.check).thenAnswer((_) async => PermissionStatus.granted);
+    when(() => holidays.refresh(force: true)).thenAnswer((_) async {
+      calendar.source = const HolidaySource.device(calendarName: '대한민국의 휴일');
+    });
+    resume(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('폰 캘린더: 대한민국의 휴일'), findsOneWidget);
+    expect(find.text('캘린더 허용됨'), findsOneWidget);
+    verify(() => holidays.refresh(force: true)).called(1);
   });
 
   testWidgets('시작 시 sync 가 끝난 뒤 목록을 읽는다', (tester) async {
@@ -379,8 +424,7 @@ void main() {
   });
 
   testWidgets('설정 탭에서 목표를 낮춰 달성해도 걷기 탭을 열 때 한 번만 축하한다', (tester) async {
-    final settings = _MemorySettings();
-    getIt.registerSingleton<SettingsRepository>(settings);
+    final settings = memorySettings;
     when(walk.access).thenAnswer((_) async => HealthAccess.granted);
     when(walk.today).thenAnswer(
       (_) async => Ok(DailyActivity(date: DateTime(2026, 9, 23), steps: 6240)),

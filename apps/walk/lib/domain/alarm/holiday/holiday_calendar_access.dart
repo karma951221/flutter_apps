@@ -20,9 +20,15 @@ class HolidayCalendarAccess {
 
   /// 아직 안 물었으면 묻는다. 이번에 새로 허용되면 오늘 이미 읽은 캐시(권한 없음 → 내장 표)를
   /// 버리고 바로 폰 캘린더를 다시 읽는다.
-  Future<PermissionStatus> ensure() async {
+  Future<PermissionStatus> ensure() => _asking(calendar.ensure);
+
+  /// 설정 탭에서 사용자가 직접 허용을 눌렀을 때 — 세션 기억과 상관없이 묻는다.
+  /// 새로 허용되면 [ensure] 처럼 바로 다시 읽는다.
+  Future<PermissionStatus> requestAgain() => _asking(calendar.requestAgain);
+
+  Future<PermissionStatus> _asking(Future<PermissionStatus> Function() ask) async {
     final before = await calendar.check();
-    final after = await calendar.ensure();
+    final after = await ask();
     if (before != PermissionStatus.granted && after == PermissionStatus.granted) {
       await refresher.refresh(force: true);
     }

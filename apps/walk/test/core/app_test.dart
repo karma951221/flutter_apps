@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/core/app.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
+import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
@@ -21,9 +22,15 @@ class _MockRequester extends Mock implements PermissionRequester {}
 
 class _MockSettings extends Mock implements SettingsRepository {}
 
-class _NoHolidays implements HolidayRefresher {
+class _NoHolidays implements HolidayRefresher, HolidayCalendar {
   @override
   Future<void> refresh({bool force = false}) async {}
+
+  @override
+  String? nameOf(DateTime date) => null;
+
+  @override
+  HolidaySource get source => const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
 }
 
 void main() {
@@ -55,6 +62,10 @@ void main() {
         ..registerSingleton<SettingsRepository>(settings)
         ..registerSingleton<Clock>(Clock())
         ..registerSingleton<HolidayRefresher>(_NoHolidays())
+        ..registerSingleton<HolidayCalendar>(_NoHolidays())
+        ..registerSingleton<HolidayCalendarAccess>(
+          HolidayCalendarAccess(calendar: requester, refresher: _NoHolidays(), settings: settings),
+        )
         ..registerSingleton<AlarmPermissions>(
           AlarmPermissions(
             notification: requester,

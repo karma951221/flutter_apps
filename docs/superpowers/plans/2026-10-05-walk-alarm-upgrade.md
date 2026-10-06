@@ -242,8 +242,8 @@ abstract interface class DeviceHolidaySource { Future<List<({DateTime date, Stri
 ### W3-T6: 화면 — 울림 설정 · 건너뛰기 · 칩 · 울림 화면 · 설정 스위치
 
 **Files:** Create `lib/presentation/alarm/widget/ring_settings_section.dart`, `lib/presentation/alarm/widget/alarm_skip_sheet.dart`. Modify 편집 · 목록 · 타일 · 울림 페이지/cubit · 설정 페이지 · ARB. Tests 대응.
-- [ ] 실패 테스트: 스펙 §5 · §7 화면 항목 + 설정 공휴일 행의 출처 · 권한 표시.
-- [ ] 구현. 커밋 여러 개 가능.
+- [x] 실패 테스트: 스펙 §5 · §7 화면 항목 + 설정 공휴일 행의 출처 · 권한 표시.
+- [x] 구현. 커밋 여러 개 가능. (반복 알람 저장 · 설정 스위치를 켤 때 `READ_CALENDAR` 를 묻는다 — `HolidayCalendarAccess.ensureIfReminding` · 설정 탭 "공휴일 출처" 행은 다시 묻기/앱 설정 열기.)
 
 ### W3-R: 웨이브 3 리뷰 · 문서 · 에뮬레이터
 

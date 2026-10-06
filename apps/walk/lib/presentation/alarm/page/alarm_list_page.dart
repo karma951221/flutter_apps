@@ -13,6 +13,7 @@ import '../cubit/alarm_list_state.dart';
 import '../format/alarm_format.dart';
 import '../widget/alarm_kind_sheet.dart';
 import '../widget/alarm_permission_banner.dart';
+import '../widget/alarm_skip_sheet.dart';
 import '../widget/alarm_summary_card.dart';
 import '../widget/alarm_tile.dart';
 import 'alarm_edit_page.dart';
@@ -102,6 +103,29 @@ class _AlarmListPageState extends State<AlarmListPage> {
     }
   }
 
+  /// 반복 알람 행 길게 누르기 · "공휴일" 칩 — 다음 회차를 건너뛰거나 건너뛰기를 취소한다.
+  Future<void> _skip(BuildContext context, Alarm alarm) async {
+    final l10n = AppLocalizations.of(context);
+    final cubit = context.read<AlarmListCubit>();
+    final action = await AlarmSkipSheet.show(context, alarm: alarm, now: _clock.now());
+    if (action == null || !context.mounted) return;
+    try {
+      switch (action) {
+        case AlarmSkipAction.skip:
+          await cubit.skipNext(alarm.id);
+        case AlarmSkipAction.unskip:
+          await cubit.unskip(alarm.id);
+      }
+    } on Object {
+      if (!context.mounted) return;
+      AppSnackBar.show(context, message: l10n.walkAlarmSaveFailed, type: AppSnackBarType.error);
+    }
+  }
+
+  /// 건너뛰기 시트를 열 수 있는 행 — 켜진 반복 알람, 또는 건너뛴 값이 남은 반복 알람(취소).
+  static bool _skippable(Alarm alarm) =>
+      !alarm.isOneShot && (alarm.enabled || alarm.skippedAt != null);
+
   void _showRingsIn(BuildContext context, Duration untilRing) {
     final l10n = AppLocalizations.of(context);
     AppSnackBar.show(
@@ -133,7 +157,13 @@ class _AlarmListPageState extends State<AlarmListPage> {
                   onAction: context.read<AlarmListCubit>().load,
                 ),
               ),
-              AlarmListLoaded(:final alarms, :final nextAt, :final now, :final canRing) => ListView(
+              AlarmListLoaded(
+                :final alarms,
+                :final nextAt,
+                :final now,
+                :final canRing,
+                :final holidays,
+              ) => ListView(
                 // FAB 가 마지막 행의 스위치를 가리지 않게.
                 padding: const EdgeInsets.only(bottom: AppSpacing.xl * 2.5),
                 children: [
@@ -182,6 +212,9 @@ class _AlarmListPageState extends State<AlarmListPage> {
                           untilRing: nextAt[alarm.id]?.difference(now),
                           onTap: () => _open(context, alarm),
                           onToggle: (enabled) => _toggle(context, alarm, enabled),
+                          onLongPress: _skippable(alarm) ? () => _skip(context, alarm) : null,
+                          holidayName: holidays[alarm.id],
+                          onHolidayTap: () => _skip(context, alarm),
                         ),
                       ),
                 ],

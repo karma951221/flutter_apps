@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/presentation/alarm/cubit/alarm_list_cubit.dart';
@@ -12,6 +13,17 @@ import 'package:walk/presentation/alarm/cubit/alarm_list_state.dart';
 class _MockUseCase extends Mock implements AlarmUseCase {}
 
 class _MockRequester extends Mock implements PermissionRequester {}
+
+/// [days] 의 날짜(자정)만 공휴일.
+class _FakeHolidays implements HolidayCalendar {
+  final days = <DateTime, String>{};
+
+  @override
+  String? nameOf(DateTime date) => days[DateTime(date.year, date.month, date.day)];
+
+  @override
+  HolidaySource get source => const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
+}
 
 class _MutableClock extends Clock {
   _MutableClock(this.value);
@@ -29,25 +41,29 @@ void main() {
   late _MockRequester exactAlarm;
   late AlarmPermissions permissions;
   late _MutableClock clock;
+  late _FakeHolidays holidays;
   final sevenAt = DateTime(2026, 9, 28, 7);
 
-  AlarmListCubit build() => AlarmListCubit(useCase, permissions, clock);
+  AlarmListCubit build() => AlarmListCubit(useCase, permissions, clock, holidays);
 
   AlarmListState loaded(
     List<Alarm> alarms, {
     Map<int, DateTime>? nextAt,
     DateTime? at,
     bool canRing = true,
+    Map<int, String> holidayNames = const {},
   }) => AlarmListState.loaded(
     alarms: alarms,
     nextAt: nextAt ?? {1: sevenAt},
     now: at ?? now,
     canRing: canRing,
+    holidays: holidayNames,
   );
 
   setUp(() {
     useCase = _MockUseCase();
     clock = _MutableClock(now);
+    holidays = _FakeHolidays();
     notification = _MockRequester();
     exactAlarm = _MockRequester();
     permissions = AlarmPermissions(
@@ -86,6 +102,102 @@ void main() {
       loaded([seven, off], nextAt: {}, canRing: false),
     ],
   );
+
+  group('공휴일 칩', () {
+    blocTest<AlarmListCubit, AlarmListState>(
+      '다음 울림이 24시간 안 공휴일인 반복 알람은 그 이름을 담는다',
+      build: () {
+        holidays.days[DateTime(2026, 9, 28)] = '대체공휴일';
+        return build();
+      },
+      act: (cubit) => cubit.load(),
+      expect: () => [
+        loaded([seven, off], holidayNames: {1: '대체공휴일'}),
+      ],
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      '24시간보다 멀면 담지 않고, 다가오면 tick 에서 담는다',
+      build: () {
+        holidays.days[DateTime(2026, 10, 5)] = '공휴일';
+        when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 10, 5, 7)});
+        return build();
+      },
+      act: (cubit) async {
+        await cubit.load();
+        clock.value = DateTime(2026, 10, 4, 7);
+        await cubit.tick();
+      },
+      expect: () => [
+        loaded([seven, off], nextAt: {1: DateTime(2026, 10, 5, 7)}),
+        loaded(
+          [seven, off],
+          nextAt: {1: DateTime(2026, 10, 5, 7)},
+          at: DateTime(2026, 10, 4, 7),
+          holidayNames: {1: '공휴일'},
+        ),
+      ],
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      '한 번 알람은 공휴일 칩이 없다(공휴일 미리 알림도 건너뛰기도 반복 알람만)',
+      build: () {
+        holidays.days[DateTime(2026, 9, 28)] = '대체공휴일';
+        when(() => useCase.list()).thenAnswer((_) async => [off.copyWith(enabled: true)]);
+        when(() => useCase.nextRings()).thenAnswer((_) async => {2: DateTime(2026, 9, 28, 8)});
+        return build();
+      },
+      act: (cubit) => cubit.load(),
+      expect: () => [
+        loaded([off.copyWith(enabled: true)], nextAt: {2: DateTime(2026, 9, 28, 8)}),
+      ],
+    );
+  });
+
+  group('건너뛰기', () {
+    blocTest<AlarmListCubit, AlarmListState>(
+      'skipNext 는 use case 로 건너뛰고 다시 읽는다',
+      build: () {
+        final skipped = seven.copyWith(skippedAt: sevenAt);
+        when(() => useCase.skipNext(1)).thenAnswer((_) async {
+          when(() => useCase.list()).thenAnswer((_) async => [skipped, off]);
+          when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 10, 5, 7)});
+          return skipped;
+        });
+        return build();
+      },
+      seed: () => loaded([seven, off]),
+      act: (cubit) => cubit.skipNext(1),
+      expect: () => [
+        loaded([seven.copyWith(skippedAt: sevenAt), off], nextAt: {1: DateTime(2026, 10, 5, 7)}),
+      ],
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      'unskip 은 use case 로 취소하고 다시 읽는다',
+      build: () {
+        when(() => useCase.list()).thenAnswer((_) async => [seven.copyWith(skippedAt: sevenAt), off]);
+        when(() => useCase.unskip(1)).thenAnswer((_) async {
+          when(() => useCase.list()).thenAnswer((_) async => [seven, off]);
+          return seven;
+        });
+        return build();
+      },
+      act: (cubit) => cubit.unskip(1),
+      expect: () => [loaded([seven, off])],
+      verify: (_) => verify(() => useCase.unskip(1)).called(1),
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      '실패하면 다시 읽은 뒤 던진다',
+      build: () {
+        when(() => useCase.skipNext(1)).thenThrow(StateError('x'));
+        return build();
+      },
+      act: (cubit) => expectLater(cubit.skipNext(1), throwsStateError),
+      expect: () => [loaded([seven, off])],
+    );
+  });
 
   group('읽기 실패', () {
     blocTest<AlarmListCubit, AlarmListState>(

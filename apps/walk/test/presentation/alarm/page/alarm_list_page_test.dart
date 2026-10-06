@@ -7,6 +7,7 @@ import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
@@ -22,6 +23,17 @@ class _MockUseCase extends Mock implements AlarmUseCase {}
 class _MockRequester extends Mock implements PermissionRequester {}
 
 class _MockCalendarAccess extends Mock implements HolidayCalendarAccess {}
+
+/// [days] 의 날짜(자정)만 공휴일.
+class _FakeHolidays implements HolidayCalendar {
+  final days = <DateTime, String>{};
+
+  @override
+  String? nameOf(DateTime date) => days[DateTime(date.year, date.month, date.day)];
+
+  @override
+  HolidaySource get source => const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
+}
 
 class _MutableClock extends Clock {
   _MutableClock(this.value);
@@ -39,7 +51,7 @@ class _FixedClock extends Clock {
 
 /// 분 경계 타이머가 부르는 [tick] 을 센다.
 class _TickCountingCubit extends AlarmListCubit {
-  _TickCountingCubit(super.useCase, super.permissions, super.clock);
+  _TickCountingCubit(super.useCase, super.permissions, super.clock, super.holidays);
   int ticks = 0;
   @override
   Future<void> tick() async => ticks++;
@@ -59,6 +71,7 @@ void main() {
   late _MockRequester exactAlarm;
   late AlarmPermissions permissions;
   late AlarmListCubit cubit;
+  late _FakeHolidays holidays;
 
   setUp(() {
     useCase = _MockUseCase();
@@ -81,7 +94,8 @@ void main() {
       ..registerSingleton<AlarmUseCase>(useCase)
       ..registerSingleton<AlarmPermissions>(permissions)
       ..registerSingleton<Clock>(_FixedClock());
-    cubit = AlarmListCubit(useCase, permissions, _FixedClock());
+    holidays = _FakeHolidays();
+    cubit = AlarmListCubit(useCase, permissions, _FixedClock(), holidays);
   });
   tearDown(() async {
     await cubit.close();
@@ -268,7 +282,7 @@ void main() {
     await getIt.unregister<Clock>();
     getIt.registerSingleton<Clock>(clock);
     await cubit.close();
-    cubit = AlarmListCubit(useCase, permissions, clock);
+    cubit = AlarmListCubit(useCase, permissions, clock, holidays);
     when(() => useCase.list()).thenAnswer((_) async => [weekday]);
     when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 9, 28, 7)});
     await pump(tester);
@@ -315,6 +329,110 @@ void main() {
     );
   });
 
+  group('건너뛰기', () {
+    final skipped = weekday.copyWith(skippedAt: DateTime(2026, 9, 28, 7));
+
+    testWidgets('반복 알람 행을 길게 누르면 시트 → 다음 알람 건너뛰기 → 건너뜀 칩', (tester) async {
+      when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+      when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 9, 28, 7)});
+      when(() => useCase.skipNext(1)).thenAnswer((_) async {
+        when(() => useCase.list()).thenAnswer((_) async => [skipped]);
+        when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 9, 29, 7)});
+        return skipped;
+      });
+      await pump(tester);
+      expect(find.text('건너뜀'), findsNothing);
+
+      await tester.longPress(find.text('오전 7:00'));
+      await tester.pumpAndSettle();
+      expect(find.text('다음 알람 건너뛰기'), findsOneWidget);
+      expect(find.text('내일 (월) 오전 7:00'), findsWidgets);
+
+      await tester.tap(find.text('다음 알람 건너뛰기'));
+      await tester.pumpAndSettle();
+
+      verify(() => useCase.skipNext(1)).called(1);
+      expect(find.text('다음 알람 건너뛰기'), findsNothing);
+      expect(find.text('건너뜀'), findsOneWidget);
+    });
+
+    testWidgets('건너뛴 알람을 길게 누르면 건너뛰기 취소', (tester) async {
+      when(() => useCase.list()).thenAnswer((_) async => [skipped]);
+      when(() => useCase.unskip(1)).thenAnswer((_) async => weekday);
+      await pump(tester);
+
+      await tester.longPress(find.text('오전 7:00'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('건너뛰기 취소'));
+      await tester.pumpAndSettle();
+
+      verify(() => useCase.unskip(1)).called(1);
+      verifyNever(() => useCase.skipNext(any()));
+    });
+
+    testWidgets('한 번 알람 · 꺼진 반복 알람은 길게 누르기가 없고, 꺼져도 건너뛴 값이 남았으면 취소할 수 있다', (
+      tester,
+    ) async {
+      when(() => useCase.list()).thenAnswer(
+        (_) async => [
+          off,
+          weekday.copyWith(id: 5, hour: 8, enabled: false),
+          skipped.copyWith(id: 6, hour: 10, enabled: false),
+        ],
+      );
+      await pump(tester);
+
+      final tiles = tester.widgetList<AlarmTile>(find.byType(AlarmTile)).toList();
+      expect([for (final t in tiles) (t.alarm.id, t.onLongPress != null)], [
+        (2, false),
+        (5, false),
+        (6, true),
+      ]);
+    });
+
+    testWidgets('시트를 그냥 닫으면 아무것도 하지 않는다', (tester) async {
+      when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+      await pump(tester);
+
+      await tester.longPress(find.text('오전 7:00'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      verifyNever(() => useCase.skipNext(any()));
+      verifyNever(() => useCase.unskip(any()));
+    });
+
+    testWidgets('건너뛰기가 실패하면 오류 스낵바', (tester) async {
+      when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+      when(() => useCase.skipNext(1)).thenThrow(StateError('x'));
+      await pump(tester);
+
+      await tester.longPress(find.text('오전 7:00'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('다음 알람 건너뛰기'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('알람을 저장하지 못했어요'), findsOneWidget);
+    });
+
+    testWidgets('다음 울림이 24시간 안 공휴일이면 공휴일 칩, 누르면 건너뛰기 시트', (tester) async {
+      holidays.days[DateTime(2026, 9, 28)] = '대체공휴일';
+      when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+      when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 9, 28, 7)});
+      when(() => useCase.skipNext(1)).thenAnswer((_) async => skipped);
+      await pump(tester);
+
+      await tester.tap(find.text('공휴일'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('다음 알람 건너뛰기'));
+      await tester.pumpAndSettle();
+
+      verify(() => useCase.skipNext(1)).called(1);
+      expect(find.byType(AlarmEditPage), findsNothing);
+    });
+  });
+
   testWidgets('꺼진 알람 행은 흐리게, 켜진 행은 그대로', (tester) async {
     when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
     await pump(tester);
@@ -355,7 +473,7 @@ void main() {
       final clock = _FixedClock(DateTime(2026, 9, 27, 23, 48, 20));
       getIt.registerSingleton<Clock>(clock);
       when(() => useCase.list()).thenAnswer((_) async => [weekday]);
-      spy = _TickCountingCubit(useCase, permissions, clock);
+      spy = _TickCountingCubit(useCase, permissions, clock, holidays);
       await spy.load();
       visible = ValueNotifier(true);
       await tester.pumpWidget(

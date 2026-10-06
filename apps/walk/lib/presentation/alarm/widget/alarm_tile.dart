@@ -12,12 +12,18 @@ import 'weekday_dots.dart';
 /// (켜져 있고 [untilRing] 이 있을 때. 아니면 `한 번`). 꺼진 알람은 글자를 흐리게.
 ///
 /// 한 번 알람은 종류 줄이 반복 요약을 대신하므로 둘째 줄은 제목만(없으면 줄째 생략).
+///
+/// 켜진 반복 알람의 요일 점 옆에 칩: 다음 회차를 건너뛰었으면 "건너뜀", 다음 울림이 24시간 안
+/// 공휴일이면([holidayName]) "공휴일"(누르면 [onHolidayTap] — 건너뛰기 시트).
 class AlarmTile extends StatelessWidget {
   const AlarmTile({
     required this.alarm,
     required this.onTap,
     required this.onToggle,
     this.untilRing,
+    this.onLongPress,
+    this.holidayName,
+    this.onHolidayTap,
     super.key,
   });
 
@@ -25,6 +31,13 @@ class AlarmTile extends StatelessWidget {
   final VoidCallback onTap;
   final ValueChanged<bool> onToggle;
   final Duration? untilRing;
+
+  /// 반복 알람의 건너뛰기 시트. null 이면 길게 누르기가 없다.
+  final VoidCallback? onLongPress;
+
+  /// 다음 울림 날의 공휴일 이름. null 이면 "공휴일" 칩이 없다.
+  final String? holidayName;
+  final VoidCallback? onHolidayTap;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +58,7 @@ class AlarmTile extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.lg,
@@ -70,7 +84,24 @@ class AlarmTile extends StatelessWidget {
                     if (alarm.isOneShot)
                       _OneShotLine(untilRing: untilRing, color: dimmed ?? colorScheme.primary)
                     else
-                      WeekdayDots(days: alarm.repeat, dimmed: !alarm.enabled),
+                      // 칩이 붙으면 좁은 폭에서 다음 줄로 넘긴다.
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.xs,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          WeekdayDots(days: alarm.repeat, dimmed: !alarm.enabled),
+                          if (alarm.enabled && alarm.skippedAt != null)
+                            _TileChip(label: l10n.walkAlarmSkipped, icon: Icons.skip_next),
+                          if (alarm.enabled && holidayName != null)
+                            _TileChip(
+                              label: l10n.walkAlarmHolidayChip,
+                              icon: Icons.event,
+                              tooltip: holidayName,
+                              onPressed: onHolidayTap,
+                            ),
+                        ],
+                      ),
                   ],
                 ),
               ),
@@ -86,6 +117,44 @@ class AlarmTile extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// 행 안의 작은 칩. [onPressed] 가 있으면 누를 수 있다.
+class _TileChip extends StatelessWidget {
+  const _TileChip({required this.label, required this.icon, this.tooltip, this.onPressed});
+
+  final String label;
+  final IconData icon;
+  final String? tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final avatar = Icon(icon, color: colorScheme.onSecondaryContainer);
+    final text = Text(label);
+    const density = VisualDensity(horizontal: -4, vertical: -4);
+    final onPressed = this.onPressed;
+    return onPressed == null
+        ? Chip(
+            avatar: avatar,
+            label: text,
+            visualDensity: density,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            backgroundColor: colorScheme.secondaryContainer,
+            side: BorderSide.none,
+          )
+        : ActionChip(
+            avatar: avatar,
+            label: text,
+            tooltip: tooltip,
+            visualDensity: density,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            backgroundColor: colorScheme.secondaryContainer,
+            side: BorderSide.none,
+            onPressed: onPressed,
+          );
   }
 }
 

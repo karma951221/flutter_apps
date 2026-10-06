@@ -6,11 +6,14 @@ import 'package:l10n/l10n.dart';
 
 import '../../../core/background/background_task.dart';
 import '../../../domain/alarm/holiday/holiday_calendar.dart';
+import '../../../domain/alarm/holiday/holiday_calendar_access.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
+import '../../../domain/settings/repository/settings_repository.dart';
 import '../../../domain/walk/usecase/walk_use_case.dart';
 import '../../alarm/cubit/alarm_list_cubit.dart';
 import '../../alarm/page/alarm_list_page.dart';
+import '../../settings/cubit/holiday_settings_cubit.dart';
 import '../../settings/cubit/settings_permissions_cubit.dart';
 import '../../settings/page/settings_page.dart';
 import '../../walk/page/walk_home_page.dart';
@@ -23,8 +26,8 @@ enum ShellTab { alarm, walk, settings }
 /// 알람 예약 동기화(`AlarmUseCase.sync`)는 여기 한 곳에서 한다 — 시작과 복귀(resumed),
 /// 그리고 앱이 떠 있을 때 네이티브 `BackgroundDispatcher`(시간대 변경 · 하루 한 번 작업 ·
 /// 미리 알림 액션)가 [backgroundChannel] 로 부르는 `resync` · `reminderAction`. 그 앞에 공휴일 캐시(`HolidayRefresher`)를 갱신한다.
-/// 알람 목록 · 설정 권한 cubit 을 소유해, 복귀하거나 위에 얹힌 화면(편집 · 울림)이
-/// 걷힐 때 다시 읽는다.
+/// 알람 목록 · 설정 권한 · 설정 알람 섹션(공휴일) cubit 을 소유해, 복귀하거나 위에 얹힌
+/// 화면(편집 · 울림)이 걷힐 때 다시 읽는다.
 class MainShellPage extends StatefulWidget {
   const MainShellPage({super.key});
 
@@ -39,6 +42,13 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     _alarmUseCase,
     getIt<AlarmPermissions>(),
     getIt<Clock>(),
+    getIt<HolidayCalendar>(),
+  );
+  late final _holidaySettings = HolidaySettingsCubit(
+    getIt<SettingsRepository>(),
+    getIt<HolidayCalendar>(),
+    getIt<HolidayCalendarAccess>(),
+    _alarmUseCase,
   );
   late final _permissions = SettingsPermissionsCubit(
     getIt<AlarmPermissions>(),
@@ -75,6 +85,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     _lifecycle.dispose();
     _alarms.close();
     _permissions.close();
+    _holidaySettings.close();
     super.dispose();
   }
 
@@ -102,6 +113,9 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
       // 예약은 다음 복귀에 다시 채우고, 목록은 저장된 대로 보인다.
     }
     await _alarms.load();
+    // 공휴일 출처는 위 캐시 갱신 뒤에 읽는다. 시스템 설정에서 캘린더를 허용하고 돌아왔으면
+    // 여기서 다시 읽고 예약을 맞춘다.
+    await _holidaySettings.check();
   }
 
   /// 네이티브 `BackgroundDispatcher` 가 앱이 떠 있을 때 부른다.
@@ -145,6 +159,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
       providers: [
         BlocProvider.value(value: _alarms),
         BlocProvider.value(value: _permissions),
+        BlocProvider.value(value: _holidaySettings),
       ],
       child: Scaffold(
         body: IndexedStack(

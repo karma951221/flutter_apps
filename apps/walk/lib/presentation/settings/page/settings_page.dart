@@ -4,17 +4,21 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 import 'package:permission/permission.dart';
 
+import '../../../domain/alarm/holiday/holiday_calendar.dart';
 import '../../../domain/settings/entity/app_settings.dart';
 import '../../../domain/walk/entity/health_access.dart';
 import '../../walk/cubit/step_goal_cubit.dart';
 import '../../walk/format/walk_format.dart';
+import '../cubit/holiday_settings_cubit.dart';
+import '../cubit/holiday_settings_state.dart';
 import '../cubit/settings_permissions_cubit.dart';
 import '../cubit/settings_permissions_state.dart';
 import '../cubit/theme_cubit.dart';
 import '../widget/step_goal_sheet.dart';
 
-/// 설정 탭 — 걷기(하루 목표) · 권한 모아보기 · 테마.
-/// [SettingsPermissionsCubit] 은 셸이, [ThemeCubit] · [StepGoalCubit] 은 앱이 제공한다.
+/// 설정 탭 — 걷기(하루 목표) · 알람(공휴일 미리 알림 · 공휴일 출처) · 권한 모아보기 · 테마.
+/// [SettingsPermissionsCubit] · [HolidaySettingsCubit] 은 셸이, [ThemeCubit] · [StepGoalCubit] 은
+/// 앱이 제공한다.
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
@@ -41,6 +45,49 @@ class SettingsPage extends StatelessWidget {
                 if (result != null) await cubit.select(result);
               },
             ),
+          ),
+          _SectionHeader(l10n.walkSettingsAlarm),
+          BlocBuilder<HolidaySettingsCubit, HolidaySettingsState>(
+            builder: (context, state) {
+              final cubit = context.read<HolidaySettingsCubit>();
+              final scheme = Theme.of(context).colorScheme;
+              final source = state.source;
+              final calendar = state.calendar;
+              return Column(
+                children: [
+                  AppListTile(
+                    key: const Key('settings-holiday-reminder'),
+                    leading: const Icon(Icons.event_outlined),
+                    title: Text(l10n.walkSettingsHolidayReminder),
+                    subtitle: Text(l10n.walkSettingsHolidayReminderDescription),
+                    trailing: Switch(
+                      value: state.holidayReminder,
+                      onChanged: cubit.setHolidayReminder,
+                    ),
+                    onTap: () => cubit.setHolidayReminder(!state.holidayReminder),
+                  ),
+                  AppListTile(
+                    key: const Key('settings-holiday-source'),
+                    leading: const Icon(Icons.calendar_month_outlined),
+                    title: Text(l10n.walkSettingsHolidaySource),
+                    subtitle: source == null ? null : Text(_sourceLabel(l10n, source)),
+                    trailing: calendar == null
+                        ? null
+                        : Text(
+                            calendar == PermissionStatus.granted
+                                ? l10n.walkSettingsCalendarGranted
+                                : l10n.walkSettingsCalendarNeedsPermission,
+                            style: TextStyle(
+                              color: calendar == PermissionStatus.granted
+                                  ? scheme.onSurfaceVariant
+                                  : scheme.error,
+                            ),
+                          ),
+                    onTap: cubit.openCalendar,
+                  ),
+                ],
+              );
+            },
           ),
           _SectionHeader(l10n.walkSettingsPermissions),
           BlocBuilder<SettingsPermissionsCubit, SettingsPermissionsState>(
@@ -100,6 +147,14 @@ class SettingsPage extends StatelessWidget {
       ),
     );
   }
+
+  /// "폰 캘린더: 대한민국의 휴일" · "내장 표 2026–2027".
+  static String _sourceLabel(AppLocalizations l10n, HolidaySource source) => switch (source) {
+    DeviceCalendarHolidays(calendarName: '') => l10n.walkSettingsHolidaySourceDeviceUnnamed,
+    DeviceCalendarHolidays(:final calendarName) => l10n.walkSettingsHolidaySourceDevice(calendarName),
+    BundledHolidays(:final firstYear, :final lastYear) =>
+      l10n.walkSettingsHolidaySourceBundled('$firstYear', '$lastYear'),
+  };
 
   static _Status? _statusLabel(
     AppLocalizations l10n,
