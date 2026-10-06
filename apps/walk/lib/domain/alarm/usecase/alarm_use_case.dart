@@ -158,7 +158,7 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     final now = _clock.now();
     final enabled = {for (final a in await _repository.load()) if (a.enabled) a.id};
     final next = <int, DateTime>{};
-    for (final MapEntry(key: id, value: at) in (await _scheduler.scheduled()).entries) {
+    for (final MapEntry(key: id, value: (:at, signature: _)) in (await _scheduler.scheduled()).entries) {
       final alarmId = alarmIdOf(id);
       if (!enabled.contains(alarmId) || !at.isAfter(now)) continue;
       final earliest = next[alarmId];
@@ -181,7 +181,7 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     // 꺼진 알람의 회차는 곧 울릴 참이어도 남기지 않는다 — 꺼 둔 알람이 울리면 안 된다.
     final enabledIds = {for (final a in alarms) if (a.enabled) a.id};
 
-    for (final MapEntry(key: id, value: at) in scheduled.entries) {
+    for (final MapEntry(key: id, value: (:at, signature: _)) in scheduled.entries) {
       if (desired.containsKey(id) || ringing.contains(id)) continue;
       // 스누즈된 회차(또는 막 울릴 참인 회차)는 원래 회차가 지나 원하는 목록에 없다.
       // 알람이 켜져 있고 시각이 스누즈 간격 안이면 둔다. 끄기 · 삭제 · 수정은 [_cancelAll] 로 지운다.
@@ -190,8 +190,10 @@ class DefaultAlarmUseCase implements AlarmUseCase {
       if (enabledIds.contains(alarmIdOf(id)) && snoozedOrDue) continue;
       await _scheduler.cancel(id);
     }
+    // 시각이 같아도 지문이 다르면(설정이 바뀌었거나 지문 없는 옛 회차) 지금 설정으로 다시 건다.
     for (final MapEntry(key: id, value: (trigger, alarm)) in desired.entries) {
-      if (ringing.contains(id) || scheduled[id] == trigger.at) continue;
+      if (ringing.contains(id)) continue;
+      if (scheduled[id] == (at: trigger.at, signature: _scheduler.signatureOf(alarm))) continue;
       await _scheduler.schedule(id, trigger.at, alarm);
     }
   }
@@ -202,14 +204,14 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   Future<List<Alarm>> _expireOneShots(
     List<Alarm> alarms,
     DateTime now,
-    Map<int, DateTime> scheduled,
+    Map<int, ScheduledRing> scheduled,
     Set<int> ringing,
   ) async {
     // 울릴 시각이 막 됐지만 아직 울림으로 잡히지 않은 회차도 남은 예약으로 본다 — 예약
     // 정리가 지우지 않고 두는 [dueGrace] 창과 같다. 여기서 끄면 울리는 동안 스위치가 꺼지고,
     // 스누즈한 뒤 다음 울림에서도 빠진다.
     final pending = {
-      for (final MapEntry(key: id, value: at) in scheduled.entries)
+      for (final MapEntry(key: id, value: (:at, signature: _)) in scheduled.entries)
         if (at.isAfter(now.subtract(dueGrace)) || ringing.contains(id)) alarmIdOf(id),
     };
     bool expired(Alarm a) =>

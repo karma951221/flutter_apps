@@ -1,10 +1,18 @@
 import '../entity/alarm.dart';
 
+/// 패키지에 걸린 회차 하나. [signature] 는 걸 때 붙인 설정 지문([AlarmScheduler.signatureOf]),
+/// 지문 없이 걸린 옛 회차는 빈 문자열이다.
+typedef ScheduledRing = ({DateTime at, String signature});
+
 /// 울림 패키지 경계. id 는 `packageId`(알람 id * 100 + 날짜 index).
 abstract interface class AlarmScheduler {
-  /// 패키지에 걸린 회차: packageId → 울릴 시각.
+  /// 패키지에 걸린 회차: packageId → 울릴 시각 · 설정 지문.
   /// 시각까지 받는 이유는 스누즈된 회차를 알아보기 위해서다(`AlarmUseCase.sync`).
-  Future<Map<int, DateTime>> scheduled();
+  /// 지문은 시각이 같아도 소리 · 진동 같은 설정이 바뀐 회차를 다시 걸기 위해서다.
+  Future<Map<int, ScheduledRing>> scheduled();
+
+  /// [alarm] 으로 지금 [schedule] 하면 회차에 붙을 지문. 울림에 영향을 주는 값만 담는다.
+  String signatureOf(Alarm alarm);
 
   /// 지금 울리는 중인 packageId.
   Future<Set<int>> ringingIds();

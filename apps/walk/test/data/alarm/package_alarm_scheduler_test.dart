@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:l10n/l10n.dart';
 import 'package:walk/data/alarm/package_alarm_scheduler.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/entity/alarm_sound.dart';
 import 'package:walk/domain/alarm/upcoming_triggers.dart';
 
 void main() {
@@ -23,7 +24,8 @@ void main() {
 
     expect(settings.id, 312);
     expect(settings.dateTime, at);
-    expect(settings.assetAudioPath, PackageAlarmScheduler.assetAudioPath);
+    expect(settings.assetAudioPath, isNull);
+    expect(settings.androidFallbackAudioPath, BundledAlarmSounds.beep);
     expect(settings.loopAudio, isTrue);
     expect(settings.vibrate, isFalse);
     expect(settings.volumeSettings.volume, 0.8);
@@ -37,7 +39,7 @@ void main() {
     expect(settings.notificationSettings.body, '오전 7:05');
     expect(settings.notificationSettings.stopButton, '알람 끄기');
     expect(settings.notificationSettings.androidSnoozeButton, '5분 뒤 다시 울림');
-    expect(settings.payload, '3');
+    expect(settings.payload, '3|${PackageAlarmScheduler.signatureFor(alarm)}');
   });
 
   test('라벨이 없으면 기본 제목', () {
@@ -70,5 +72,99 @@ void main() {
     expect((ko.walkAlarmStop, ko.walkAlarmSnooze), ('알람 끄기', '5분 뒤 다시 울림'));
     expect((en.walkAlarmStop, en.walkAlarmSnooze), ('Stop alarm', 'Snooze 5 min'));
     expect((ja.walkAlarmStop, ja.walkAlarmSnooze), ('アラームを止める', '5分後に再通知'));
+  });
+
+  group('소리', () {
+    String? audio(AlarmSound sound, {bool exists = true}) => PackageAlarmScheduler.settingsFor(
+      312,
+      at,
+      Alarm(id: 3, hour: 7, minute: 5, sound: sound),
+      texts,
+      fileExists: (_) => exists,
+    ).assetAudioPath;
+
+    test('시스템 기본음은 경로 없이 건다', () {
+      expect(audio(const AlarmSound.system()), isNull);
+    });
+
+    test('내장음은 에셋 경로로 건다', () {
+      expect(audio(const AlarmSound.bundled(BundledAlarmSounds.chime)), BundledAlarmSounds.chime);
+    });
+
+    test('기기 알람음은 복사본이 있으면 그 경로, 없으면 시스템 기본음', () {
+      const sound = AlarmSound.device(title: 'Oxygen', path: '/data/alarm_sounds/a.ogg');
+      expect(audio(sound), '/data/alarm_sounds/a.ogg');
+      expect(audio(sound, exists: false), isNull);
+    });
+
+    test('대체음은 소리와 상관없이 항상 비프', () {
+      for (final sound in [
+        const AlarmSound.system(),
+        const AlarmSound.bundled(BundledAlarmSounds.rising),
+        const AlarmSound.device(title: 'Oxygen', path: '/nope.ogg'),
+      ]) {
+        final settings = PackageAlarmScheduler.settingsFor(
+          312,
+          at,
+          Alarm(id: 3, hour: 7, minute: 5, sound: sound),
+          texts,
+          fileExists: (_) => false,
+        );
+        expect(settings.androidFallbackAudioPath, BundledAlarmSounds.beep, reason: '$sound');
+      }
+    });
+  });
+
+  group('지문', () {
+    const base = Alarm(id: 3, hour: 7, minute: 5, label: '출근');
+    String sig(Alarm alarm) => PackageAlarmScheduler.signatureFor(alarm);
+
+    test('같은 입력이면 같은 지문(8자리 hex)', () {
+      expect(sig(base), sig(base.copyWith()));
+      expect(sig(base), matches(RegExp(r'^[0-9a-f]{8}$')));
+    });
+
+    test('소리 · 진동 · 라벨이 바뀌면 지문이 바뀐다', () {
+      final variants = [
+        base,
+        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.chime)),
+        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.rising)),
+        base.copyWith(
+          sound: const AlarmSound.device(title: 'Oxygen', path: '/a.ogg'),
+        ),
+        base.copyWith(vibrate: false),
+        base.copyWith(label: '운동'),
+        base.copyWith(label: ''),
+      ];
+      expect({for (final a in variants) sig(a)}, hasLength(variants.length));
+    });
+
+    test('울림과 상관없는 값(켜짐 · 시각)은 지문에 들지 않는다', () {
+      expect(sig(base.copyWith(enabled: false)), sig(base));
+      expect(sig(base.copyWith(hour: 9, minute: 30)), sig(base));
+    });
+
+    test('로캘 문구는 지문에 영향이 없다', () {
+      String payload(AlarmNotificationTexts texts) =>
+          PackageAlarmScheduler.settingsFor(312, at, base.copyWith(label: ''), texts).payload!;
+
+      expect(
+        payload((locale: 'en', defaultTitle: 'Alarm', stop: 'Stop', snooze: 'Snooze')),
+        payload(texts),
+      );
+    });
+
+    test('payload 에서 지문을 읽는다 — 옛 payload 는 빈 지문', () {
+      final settings = PackageAlarmScheduler.settingsFor(312, at, base, texts);
+      expect(PackageAlarmScheduler.ringOf(settings), (at: at, signature: sig(base)));
+      expect(PackageAlarmScheduler.ringOf(settings.copyWith(payload: () => '3')), (
+        at: at,
+        signature: '',
+      ));
+      expect(PackageAlarmScheduler.ringOf(settings.copyWith(payload: () => null)), (
+        at: at,
+        signature: '',
+      ));
+    });
   });
 }

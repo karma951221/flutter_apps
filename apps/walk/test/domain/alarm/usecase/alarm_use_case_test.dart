@@ -1,6 +1,7 @@
 import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/entity/alarm_sound.dart';
 import 'package:walk/domain/alarm/entity/alarm_trigger.dart';
 import 'package:walk/domain/alarm/repository/alarm_repository.dart';
 import 'package:walk/domain/alarm/scheduler/alarm_scheduler.dart';
@@ -33,6 +34,10 @@ class _FlakyRepository extends _MemoryRepository {
 
 class _FakeScheduler implements AlarmScheduler {
   final Map<int, DateTime> entries = {};
+
+  /// packageId → 걸 때 붙은 지문. 없으면 옛 payload(빈 지문)로 걸린 회차다.
+  final Map<int, String> signatures = {};
+
   final Map<int, Alarm> alarms = {};
   final Set<int> ringing = {};
   final List<int> scheduleCalls = [];
@@ -46,7 +51,13 @@ class _FakeScheduler implements AlarmScheduler {
   void Function(int packageId)? onStop;
 
   @override
-  Future<Map<int, DateTime>> scheduled() async => {...entries};
+  Future<Map<int, ScheduledRing>> scheduled() async => {
+    for (final MapEntry(key: id, value: at) in entries.entries)
+      id: (at: at, signature: signatures[id] ?? ''),
+  };
+
+  @override
+  String signatureOf(Alarm alarm) => '${alarm.label}|${alarm.vibrate}|${alarm.sound}';
 
   @override
   Future<Set<int>> ringingIds() async => {...ringing};
@@ -56,6 +67,7 @@ class _FakeScheduler implements AlarmScheduler {
     scheduleCalls.add(packageId);
     events.add('schedule');
     entries[packageId] = at;
+    signatures[packageId] = signatureOf(alarm);
     alarms[packageId] = alarm;
     ringing.remove(packageId);
   }
@@ -281,6 +293,60 @@ void main() {
       await useCase.sync();
 
       expect(scheduler.entries.keys, isNot(contains(staleId)));
+    });
+  });
+
+  group('지문', () {
+    const alarm = Alarm(id: 1, hour: 7, minute: 0, repeat: {Weekday.tue});
+    final tuesdayId = pid(1, DateTime(2026, 9, 29));
+    final tuesdayAt = DateTime(2026, 9, 29, 7);
+
+    test('시각과 지문이 같으면 다시 걸지 않는다', () async {
+      repository.alarms = [alarm];
+      scheduler.entries[tuesdayId] = tuesdayAt;
+      scheduler.signatures[tuesdayId] = scheduler.signatureOf(alarm);
+
+      await useCase.sync();
+
+      expect(scheduler.scheduleCalls, isNot(contains(tuesdayId)));
+    });
+
+    test('시각이 같아도 지문이 다르면 지금 설정으로 다시 건다', () async {
+      final changed = alarm.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.chime));
+      repository.alarms = [changed];
+      scheduler.entries[tuesdayId] = tuesdayAt;
+      scheduler.signatures[tuesdayId] = scheduler.signatureOf(alarm);
+
+      await useCase.sync();
+
+      expect(scheduler.scheduleCalls, contains(tuesdayId));
+      expect(scheduler.alarms[tuesdayId], changed);
+      expect(scheduler.signatures[tuesdayId], scheduler.signatureOf(changed));
+    });
+
+    test('옛 payload(빈 지문)로 걸린 회차는 한 번 다시 건다', () async {
+      repository.alarms = [alarm];
+      scheduler.entries[tuesdayId] = tuesdayAt;
+
+      await useCase.sync();
+      expect(scheduler.scheduleCalls, contains(tuesdayId));
+
+      scheduler.scheduleCalls.clear();
+      await useCase.sync();
+      expect(scheduler.scheduleCalls, isEmpty);
+    });
+
+    test('울리는 중인 회차는 지문이 달라도 건드리지 않는다', () async {
+      repository.alarms = [alarm.copyWith(label: '새 라벨')];
+      scheduler.entries[tuesdayId] = tuesdayAt;
+      scheduler.signatures[tuesdayId] = scheduler.signatureOf(alarm);
+      scheduler.ringing.add(tuesdayId);
+
+      await useCase.sync();
+
+      expect(scheduler.scheduleCalls, isNot(contains(tuesdayId)));
+      expect(scheduler.cancelCalls, isEmpty);
+      expect(scheduler.signatures[tuesdayId], scheduler.signatureOf(alarm));
     });
   });
 

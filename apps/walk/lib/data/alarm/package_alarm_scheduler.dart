@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:alarm/alarm.dart' as pkg;
@@ -7,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../domain/alarm/entity/alarm.dart';
+import '../../domain/alarm/entity/alarm_sound.dart';
 import '../../domain/alarm/scheduler/alarm_scheduler.dart';
 import '../../domain/alarm/upcoming_triggers.dart';
 
@@ -22,12 +25,52 @@ typedef AlarmNotificationTexts = ({
 /// [`alarm`](https://pub.dev/packages/alarm) 패키지 래퍼.
 @LazySingleton(as: AlarmScheduler)
 class PackageAlarmScheduler implements AlarmScheduler {
-  static const assetAudioPath = 'assets/alarm/default.wav';
+  /// 울림 볼륨과 페이드. 지문에도 들어가 바꾸면 이미 걸린 회차가 다시 걸린다.
+  static const _volume = 0.8;
+  static const _fadeDuration = Duration(seconds: 3);
 
   @override
-  Future<Map<int, DateTime>> scheduled() async => {
-    for (final settings in await pkg.Alarm.getAlarms()) settings.id: settings.dateTime,
+  Future<Map<int, ScheduledRing>> scheduled() async => {
+    for (final settings in await pkg.Alarm.getAlarms()) settings.id: ringOf(settings),
   };
+
+  @override
+  String signatureOf(Alarm alarm) => signatureFor(alarm);
+
+  /// 걸린 예약의 시각과 payload(`'<alarmId>|<지문>'`)의 지문. 지문 없는 옛 payload(`'<alarmId>'`)는 빈 지문.
+  static ScheduledRing ringOf(pkg.AlarmSettings settings) {
+    final payload = settings.payload ?? '';
+    final bar = payload.indexOf('|');
+    return (at: settings.dateTime, signature: bar < 0 ? '' : payload.substring(bar + 1));
+  }
+
+  /// 울림에 영향을 주는 값(소리 · 대체음 · 진동 · 라벨 · 볼륨 · 페이드 · 스누즈)을 정해진 순서로
+  /// 이은 문자열의 fnv1a32(8자리 hex). 알림 문구(l10n)와 시각은 넣지 않는다 — 로캘이 바뀌어도
+  /// 다시 걸지 않고, 시각은 따로 비교한다. 기기 알람음은 복사본 유무가 아니라 저장된 경로를 넣는다.
+  static String signatureFor(Alarm alarm) => _fnv1a32(
+    [
+      switch (alarm.sound) {
+        SystemAlarmSound() => 'system',
+        BundledAlarmSound(:final asset) => 'bundled:$asset',
+        DeviceAlarmSound(:final path) => 'device:$path',
+      },
+      BundledAlarmSounds.beep,
+      alarm.vibrate,
+      alarm.label,
+      _volume,
+      _fadeDuration.inMilliseconds,
+      alarmSnoozeDuration.inSeconds,
+    ].join('\u0000'),
+  );
+
+  static String _fnv1a32(String input) {
+    var hash = 0x811c9dc5;
+    for (final byte in utf8.encode(input)) {
+      hash ^= byte;
+      hash = (hash * 0x01000193) & 0xffffffff;
+    }
+    return hash.toRadixString(16).padLeft(8, '0');
+  }
 
   /// 울리는 알람은 시각이 지난 것뿐이라 그것만 플랫폼에 묻는다.
   @override
@@ -62,16 +105,24 @@ class PackageAlarmScheduler implements AlarmScheduler {
     int packageId,
     DateTime at,
     Alarm alarm,
-    AlarmNotificationTexts texts,
-  ) => pkg.AlarmSettings(
+    AlarmNotificationTexts texts, {
+    bool Function(String path) fileExists = _exists,
+  }) => pkg.AlarmSettings(
     id: packageId,
     dateTime: at,
-    assetAudioPath: assetAudioPath,
+    // null 이면 포크가 기기의 기본 알람음으로 울린다.
+    assetAudioPath: switch (alarm.sound) {
+      SystemAlarmSound() => null,
+      BundledAlarmSound(:final asset) => asset,
+      DeviceAlarmSound(:final path) => fileExists(path) ? path : null,
+    },
+    // 위 소리로 울리지 못하면(파일 손상 · 기기 기본음 없음) 비프로 울린다.
+    androidFallbackAudioPath: BundledAlarmSounds.beep,
     loopAudio: true,
     vibrate: alarm.vibrate,
     volumeSettings: pkg.VolumeSettings.fade(
-      volume: 0.8,
-      fadeDuration: const Duration(seconds: 3),
+      volume: _volume,
+      fadeDuration: _fadeDuration,
       // 울릴 때 · 끌 때 알람 볼륨을 바꾸며 시스템 볼륨 패널이 뜨지 않게 한다.
       showSystemUI: false,
     ),
@@ -89,8 +140,10 @@ class PackageAlarmScheduler implements AlarmScheduler {
       stopButton: texts.stop,
       androidSnoozeButton: texts.snooze,
     ),
-    payload: '${alarm.id}',
+    payload: '${alarm.id}|${signatureFor(alarm)}',
   );
+
+  static bool _exists(String path) => File(path).existsSync();
 
   /// 기기 언어 시각 — `오전 7:00`, `7:00 AM`. data 계층이라 `MaterialLocalizations` 대신
   /// `intl` 을 쓴다. 날짜 기호가 아직 없으면(로컬라이제이션 로드 전) `07:00` 으로 둔다.
