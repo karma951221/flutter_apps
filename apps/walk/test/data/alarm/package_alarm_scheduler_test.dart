@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -151,6 +153,36 @@ void main() {
         base.copyWith(label: ''),
       ];
       expect({for (final a in variants) sig(a)}, hasLength(variants.length));
+    });
+
+    test('웨이브 1 전 지문(vibrate 자리)과 겹치지 않는다 — 올린 뒤 이미 걸린 회차를 한 번 다시 건다', () {
+      // 웨이브 1 전 signatureFor: 같은 자리에 alarm.vibrate 를 넣었다.
+      String legacy(Alarm alarm, {required bool vibrate}) {
+        final input = [
+          'system',
+          BundledAlarmSounds.beep,
+          vibrate,
+          alarm.label,
+          0.8,
+          3000,
+          alarmSnoozeDuration.inSeconds,
+        ].join('\u0000');
+        var hash = 0x811c9dc5;
+        for (final byte in utf8.encode(input)) {
+          hash = ((hash ^ byte) * 0x01000193) & 0xffffffff;
+        }
+        return hash.toRadixString(16).padLeft(8, '0');
+      }
+
+      for (final vibrate in [false, true]) {
+        for (final silent in [false, true]) {
+          expect(
+            sig(base.copyWith(silentWhenRingerMuted: silent)),
+            isNot(legacy(base, vibrate: vibrate)),
+            reason: 'vibrate=$vibrate · silentWhenRingerMuted=$silent',
+          );
+        }
+      }
     });
 
     test('울림과 상관없는 값(켜짐 · 시각)은 지문에 들지 않는다', () {

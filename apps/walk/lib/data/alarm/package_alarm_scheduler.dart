@@ -55,7 +55,9 @@ class PackageAlarmScheduler implements AlarmScheduler {
         DeviceAlarmSound(:final path) => 'device:$path',
       },
       BundledAlarmSounds.beep,
-      alarm.silentWhenRingerMuted,
+      // 이름을 붙인다 — 웨이브 1 전에는 같은 자리에 vibrate(true/false)가 있었다. 값만 넣으면
+      // 진동을 끈 옛 알람의 지문이 그대로라, 진동 없이 걸린 회차를 다시 걸지 않는다.
+      'silentWhenRingerMuted:${alarm.silentWhenRingerMuted}',
       alarm.label,
       _volume,
       _fadeDuration.inMilliseconds,
