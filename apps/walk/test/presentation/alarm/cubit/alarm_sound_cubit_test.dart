@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -64,21 +66,22 @@ void main() {
       ],
     );
 
-    blocTest<AlarmSoundCubit, AlarmSoundState>(
-      '목록을 읽기 전에 다른 것을 골랐으면 목록이 와도 선택을 바꾸지 않는다',
-      build: () => build(copiedBell),
-      act: (cubit) async {
-        cubit.select(const AlarmSoundChoice.system());
-        await cubit.load();
-      },
-      skip: 1,
-      expect: () => [
+    test('목록을 읽는 동안 다른 것을 골랐으면 목록이 와도 선택을 바꾸지 않는다', () async {
+      final ringtones = Completer<List<DeviceRingtone>>();
+      when(() => source.deviceRingtones()).thenAnswer((_) => ringtones.future);
+      final cubit = build(copiedBell);
+      final loading = cubit.load();
+      await cubit.select(const AlarmSoundChoice.system());
+      ringtones.complete([bell, dawn]);
+      await loading;
+      expect(
+        cubit.state,
         const AlarmSoundState(
           selected: AlarmSoundChoice.system(),
           ringtones: DeviceRingtones.loaded([bell, dawn]),
         ),
-      ],
-    );
+      );
+    });
   });
 
   blocTest<AlarmSoundCubit, AlarmSoundState>(
@@ -149,6 +152,37 @@ void main() {
       verifyNever(() => source.import(any()));
     });
 
+    test('목록에서 찾은 현재 기기 소리를 바꾸지 않고 선택하면 다시 복사하지 않고 그대로 돌려준다', () async {
+      final cubit = build(copiedBell);
+      await cubit.load();
+      expect(cubit.state.selected, const AlarmSoundChoice.device(bell));
+      expect(await cubit.confirm(), copiedBell);
+      verifyNever(() => source.import(any()));
+    });
+
+    test('다른 줄을 골랐다가 현재 소리 줄로 돌아와도 다시 복사하지 않는다', () async {
+      final cubit = build(copiedBell);
+      await cubit.load();
+      await cubit.select(const AlarmSoundChoice.device(dawn));
+      await cubit.select(const AlarmSoundChoice.device(bell));
+      expect(await cubit.confirm(), copiedBell);
+      verifyNever(() => source.import(any()));
+    });
+
+    test('현재 소리와 다른 기기 줄을 고르면 복사한다', () async {
+      when(() => source.import(dawn)).thenAnswer(
+        (_) async => const AlarmSound.device(title: 'Dawn', path: '/data/alarm_sounds/b.ogg'),
+      );
+      final cubit = build(copiedBell);
+      await cubit.load();
+      await cubit.select(const AlarmSoundChoice.device(dawn));
+      expect(
+        await cubit.confirm(),
+        const AlarmSound.device(title: 'Dawn', path: '/data/alarm_sounds/b.ogg'),
+      );
+      verify(() => source.import(dawn)).called(1);
+    });
+
     test('목록에 없는 현재 기기 소리는 그대로 돌려준다', () async {
       final cubit = build(copiedBell);
       expect(await cubit.confirm(), copiedBell);
@@ -207,6 +241,14 @@ void main() {
         const AlarmSoundState(selected: AlarmSoundChoice.device(bell)),
       ],
     );
+  });
+
+  test('pausePreview 는 선택은 두고 미리 듣기만 멈춘다', () async {
+    final cubit = build();
+    await cubit.select(const AlarmSoundChoice.bundled(BundledAlarmSounds.chime));
+    await cubit.pausePreview();
+    verify(() => source.stopPreview()).called(1);
+    expect(cubit.state.selected, const AlarmSoundChoice.bundled(BundledAlarmSounds.chime));
   });
 
   test('닫으면 미리 듣기를 멈춘다', () async {

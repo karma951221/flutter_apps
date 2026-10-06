@@ -7,10 +7,16 @@ import 'alarm_sound_state.dart';
 /// 알람음 선택 화면. 줄을 고르면 미리 듣고, [confirm] 으로 결과 소리를 만든다.
 /// 닫으면 미리 듣기를 멈춘다.
 class AlarmSoundCubit extends Cubit<AlarmSoundState> {
-  AlarmSoundCubit(this._source, AlarmSound initial)
-    : super(AlarmSoundState(selected: _choiceOf(initial)));
+  AlarmSoundCubit(this._source, this._initial)
+    : super(AlarmSoundState(selected: _choiceOf(_initial)));
 
   final AlarmSoundSource _source;
+  final AlarmSound _initial;
+
+  /// 현재 소리(이미 복사해 둔 기기 소리)와 같은 제목으로 찾은 목록 줄. 이 줄을 그대로
+  /// 선택하면 다시 복사하지 않고 [_initial] 을 돌려준다 — 같은 경로를 덮어쓰다 실패하면
+  /// 다른 알람이 쓰던 복사본까지 잃을 수 있다.
+  DeviceRingtone? _currentRingtone;
 
   static AlarmSoundChoice _choiceOf(AlarmSound sound) => switch (sound) {
     SystemAlarmSound() => const AlarmSoundChoice.system(),
@@ -35,6 +41,7 @@ class AlarmSoundCubit extends Cubit<AlarmSoundState> {
     )) {
       for (final item in items) {
         if (item.title == title) {
+          _currentRingtone = item;
           selected = AlarmSoundChoice.device(item);
           break;
         }
@@ -71,6 +78,8 @@ class AlarmSoundCubit extends Cubit<AlarmSoundState> {
         return AlarmSound.bundled(asset);
       case CurrentSoundChoice(:final sound):
         return sound;
+      case DeviceSoundChoice(:final ringtone) when ringtone == _currentRingtone:
+        return _initial;
       case DeviceSoundChoice(:final ringtone):
         emit(state.copyWith(importing: true));
         try {
@@ -80,6 +89,10 @@ class AlarmSoundCubit extends Cubit<AlarmSoundState> {
         }
     }
   }
+
+  /// 앱이 화면에서 내려갈 때 부른다. 선택은 두고 미리 듣기만 멈춘다 — 알람 볼륨으로
+  /// 반복 재생 중이라 그대로 두면 무음 모드에서도 계속 울린다.
+  Future<void> pausePreview() => _source.stopPreview();
 
   @override
   Future<void> close() async {

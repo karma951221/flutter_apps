@@ -24,8 +24,18 @@ class AlarmSoundPage extends StatefulWidget {
 class _AlarmSoundPageState extends State<AlarmSoundPage> {
   late final _cubit = AlarmSoundCubit(getIt<AlarmSoundSource>(), widget.initial)..load();
 
+  /// 홈 · 화면 잠금으로 앱이 가려지면 미리 듣기를 멈춘다. 화면은 그대로 두므로 dispose 로는 못 잡는다.
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(onHide: _cubit.pausePreview);
+  }
+
   @override
   void dispose() {
+    _lifecycle.dispose();
     _cubit.close();
     super.dispose();
   }

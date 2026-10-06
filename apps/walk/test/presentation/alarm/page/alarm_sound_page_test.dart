@@ -173,4 +173,24 @@ void main() {
     expect(results, [null]);
     verify(() => source.stopPreview()).called(1);
   });
+
+  testWidgets('앱이 화면에서 내려가면(홈 · 화면 잠금) 미리 듣기를 멈추고 화면은 그대로', (tester) async {
+    await pump(tester, const AlarmSound.system());
+    await tester.tap(find.text('차임'));
+    await tester.pump();
+    verifyNever(() => source.stopPreview());
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+
+    verify(() => source.stopPreview()).called(1);
+    expect(find.byType(AlarmSoundPage), findsOneWidget);
+    expect(isChecked(tester, '차임'), isTrue);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+  });
 }
