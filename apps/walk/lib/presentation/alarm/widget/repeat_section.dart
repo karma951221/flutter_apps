@@ -10,7 +10,7 @@ import 'alarm_time_wheel.dart';
 /// 반복 알람 편집 영역 — 시각 휠 · 빠른 버튼(매일 · 평일 · 주말) · 요일 원 7개 · 반복 요약.
 ///
 /// 빠른 버튼은 지금 요일 집합이 그 묶음과 같을 때 채워진다. 요일이 하나도 없으면 요약 줄을
-/// 두지 않는다(화면이 저장을 잠그고 안내한다).
+/// 숨기되 자리는 남긴다(화면이 저장을 잠그고 안내한다).
 class RepeatSection extends StatelessWidget {
   const RepeatSection({
     required this.initialHour,
@@ -86,14 +86,19 @@ class RepeatSection extends StatelessWidget {
             ],
           ],
         ),
-        if (repeat.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Text(
+        const SizedBox(height: AppSpacing.sm),
+        // 요일이 없으면 요약을 숨기되 자리는 남긴다 — 마지막 요일을 끌 때 아래가 위로 뛰지 않게.
+        Visibility(
+          visible: repeat.isNotEmpty,
+          maintainSize: true,
+          maintainAnimation: true,
+          maintainState: true,
+          child: Text(
             AlarmFormat.repeat(l10n, repeat),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
           ),
-        ],
+        ),
       ],
     );
   }

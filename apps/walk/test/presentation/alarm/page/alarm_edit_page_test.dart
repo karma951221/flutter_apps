@@ -427,10 +427,13 @@ void main() {
 
     testWidgets('요일을 모두 끄면 저장이 잠기고 안내', (tester) async {
       await pump(tester, Alarm.draft().copyWith(repeat: {Weekday.mon}));
+      final titleTop = tester.getTopLeft(find.byType(TextField)).dy;
 
       await tester.tap(find.text('월').first);
       await tester.pump();
 
+      // 요약 줄 자리는 남는다 — 아래가 위로 뛰지 않는다.
+      expect(tester.getTopLeft(find.byType(TextField)).dy, titleTop);
       expect(find.text('요일을 골라 주세요'), findsOneWidget);
       expect(saveEnabled(tester), isFalse);
       // 한 번 알람 화면으로 바뀌지 않는다.
