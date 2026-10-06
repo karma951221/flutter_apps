@@ -30,6 +30,10 @@ void main() {
       tester.widget<Card>(find.byType(Card)).color,
       scheme.primaryContainer,
     );
+    expect(
+      tester.widget<Card>(find.byType(Card)).shape,
+      const RoundedRectangleBorder(borderRadius: AppRadius.lgAll),
+    );
     final remaining = tester.widget<Text>(
       find.byKey(const Key('alarm-summary-remaining')),
     );

@@ -95,6 +95,7 @@ class AlarmSummaryCard extends StatelessWidget {
     return Card(
       color: theme.colorScheme.primaryContainer,
       margin: EdgeInsets.zero,
+      shape: const RoundedRectangleBorder(borderRadius: AppRadius.lgAll),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: lines),

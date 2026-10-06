@@ -14,6 +14,7 @@ import 'package:walk/presentation/alarm/page/alarm_edit_page.dart';
 import 'package:walk/presentation/alarm/page/alarm_list_page.dart';
 import 'package:walk/presentation/alarm/widget/alarm_summary_card.dart';
 import 'package:walk/presentation/alarm/widget/alarm_tile.dart';
+import 'package:walk/presentation/alarm/widget/weekday_dots.dart';
 
 class _MockUseCase extends Mock implements AlarmUseCase {}
 
@@ -113,7 +114,7 @@ void main() {
     await pump(tester);
 
     expect(find.text('다음 알람'), findsOneWidget);
-    expect(find.text('7시간 12분 후'), findsNWidgets(2)); // 카드 · 행
+    expect(find.text('7시간 12분 후'), findsOneWidget); // 카드만 — 반복 행은 요일 점
     expect(find.text('내일 (월) 오전 7:00 · 출근'), findsOneWidget);
   });
 
@@ -164,23 +165,38 @@ void main() {
     );
   });
 
-  testWidgets('행은 시각 · 라벨 · 반복 요약 · 스위치, 켜진 알람만 남은 시간', (tester) async {
-    when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
-    // 꺼진 알람은 use case 가 키를 주지 않지만, 화면도 켜진 알람에만 셋째 줄을 둔다.
+  testWidgets('행은 둥근 카드 — 반복은 제목 · 요약 · 요일 점, 한 번은 모래시계 줄, 행 사이 간격', (
+    tester,
+  ) async {
+    final soon = Alarm(id: 4, hour: 1, minute: 13, oneShotAt: DateTime(2026, 9, 28, 1, 13));
+    when(() => useCase.list()).thenAnswer((_) async => [weekday, off, soon]);
+    // 꺼진 알람은 use case 가 키를 주지 않지만, 화면도 켜진 알람에만 남은 시간을 둔다.
     when(() => useCase.nextRings()).thenAnswer(
-      (_) async => {1: DateTime(2026, 9, 28, 7), 2: DateTime(2026, 9, 28, 9, 30)},
+      (_) async => {
+        1: DateTime(2026, 9, 28, 7),
+        2: DateTime(2026, 9, 28, 9, 30),
+        4: DateTime(2026, 9, 28, 1, 13),
+      },
     );
     await pump(tester);
 
-    expect(find.text('오전 7:00'), findsOneWidget);
-    expect(find.text('출근 · 평일'), findsOneWidget);
-    expect(find.text('오전 9:30'), findsOneWidget);
-    expect(find.text('1회'), findsOneWidget);
     final rows = find.byType(AlarmTile);
-    expect(find.descendant(of: rows.first, matching: find.text('7시간 12분 후')), findsOneWidget);
-    expect(find.descendant(of: rows.last, matching: find.textContaining('후')), findsNothing);
+    Finder inRow(int i, Finder f) => find.descendant(of: rows.at(i), matching: f);
+    expect(inRow(0, find.text('오전 7:00')), findsOneWidget);
+    expect(inRow(0, find.text('출근 · 평일')), findsOneWidget);
+    expect(inRow(0, find.byType(WeekdayDots)), findsOneWidget);
+    expect(inRow(0, find.textContaining('후')), findsNothing);
+    expect(inRow(1, find.text('오전 9:30')), findsOneWidget);
+    expect(inRow(1, find.text('한 번')), findsOneWidget);
+    expect(inRow(1, find.textContaining('뒤')), findsNothing);
+    expect(inRow(2, find.text('한 번 · 1시간 25분 뒤')), findsOneWidget);
+    expect(inRow(2, find.byIcon(Icons.hourglass_bottom)), findsOneWidget);
     final switches = tester.widgetList<Switch>(find.byType(Switch)).toList();
-    expect(switches.map((s) => s.value), [true, false]);
+    expect(switches.map((s) => s.value), [true, false, true]);
+    expect(
+      tester.getTopLeft(rows.at(1)).dy - tester.getBottomLeft(rows.at(0)).dy,
+      AppSpacing.sm,
+    );
   });
 
   testWidgets('켜면 use case 를 부르고 스낵바를 띄우며 카드 · 행 시간이 함께 바뀐다', (tester) async {
@@ -201,7 +217,8 @@ void main() {
     verify(notification.ensure).called(1);
     expect(find.text('9시간 42분 뒤에 울려요'), findsOneWidget);
     expect(find.text('켜진 알람이 없어요'), findsNothing);
-    expect(find.text('9시간 42분 후'), findsNWidgets(2));
+    expect(find.text('9시간 42분 후'), findsOneWidget);
+    expect(find.text('한 번 · 9시간 42분 뒤'), findsOneWidget);
     expect(find.text('내일 (월) 오전 9:30'), findsOneWidget);
   });
 
@@ -224,7 +241,7 @@ void main() {
 
     expect(find.text('내일 (월) 오전 8:00 · 회의'), findsOneWidget);
     expect(find.text('7시간 12분 후'), findsNothing);
-    expect(find.text('8시간 12분 후'), findsNWidgets(2));
+    expect(find.text('8시간 12분 후'), findsOneWidget);
   });
 
   testWidgets('스위치 저장이 실패하면 스위치가 돌아오고 오류 스낵바', (tester) async {
@@ -250,14 +267,14 @@ void main() {
     when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 9, 28, 7)});
     await pump(tester);
     expect(find.text('내일 (월) 오전 7:00 · 출근'), findsOneWidget);
-    expect(find.text('7시간 1분 후'), findsNWidgets(2));
+    expect(find.text('7시간 1분 후'), findsOneWidget);
 
     clock.value = DateTime(2026, 9, 28);
     await cubit.tick();
     await tester.pump();
 
     expect(find.text('오늘 (월) 오전 7:00 · 출근'), findsOneWidget);
-    expect(find.text('7시간 후'), findsNWidgets(2));
+    expect(find.text('7시간 후'), findsOneWidget);
   });
 
   testWidgets('행을 누르면 그 알람으로 편집을 열고, 저장 결과로 이 탭에 스낵바', (tester) async {
@@ -300,7 +317,7 @@ void main() {
         Theme.of(tester.element(find.byType(AlarmListPage))).colorScheme.onSurfaceVariant;
     Color? colorOf(String text) => tester.widget<Text>(find.text(text)).style?.color;
     expect(colorOf('오전 9:30'), disabled);
-    expect(colorOf('1회'), disabled);
+    expect(colorOf('한 번'), disabled);
     expect(colorOf('오전 7:00'), isNot(disabled));
     expect(colorOf('출근 · 평일'), isNot(disabled));
   });
@@ -415,14 +432,49 @@ void main() {
     expect(opened, isTrue);
   });
 
-  testWidgets('FAB 는 새 알람 편집을 연다', (tester) async {
+  testWidgets('FAB → 종류 시트 → 한 번이면 한 번 알람 편집', (tester) async {
     when(() => useCase.list()).thenAnswer((_) async => []);
     await pump(tester);
 
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
+    expect(find.text('어떤 알람을 만들까요'), findsOneWidget);
+    await tester.tap(find.text('한 번'));
+    await tester.pumpAndSettle();
 
     expect(find.byType(AlarmEditPage), findsOneWidget);
     expect(find.text('한 번 알람'), findsOneWidget);
+    expect(find.text('0분 뒤'), findsOneWidget);
+  });
+
+  testWidgets('FAB → 종류 시트 → 반복이면 평일로 시작하는 반복 알람 편집', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1600));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    when(() => useCase.list()).thenAnswer((_) async => []);
+    await pump(tester);
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('반복'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('반복 알람'), findsOneWidget);
+    expect(
+      tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '평일')).selected,
+      isTrue,
+    );
+  });
+
+  testWidgets('종류 시트를 그냥 닫으면 편집을 열지 않는다', (tester) async {
+    when(() => useCase.list()).thenAnswer((_) async => []);
+    await pump(tester);
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    expect(find.text('어떤 알람을 만들까요'), findsNothing);
+    expect(find.byType(AlarmEditPage), findsNothing);
   });
 }

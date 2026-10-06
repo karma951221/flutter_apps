@@ -7,9 +7,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
+import '../../../domain/alarm/entity/repeat_preset.dart';
 import '../cubit/alarm_list_cubit.dart';
 import '../cubit/alarm_list_state.dart';
 import '../format/alarm_format.dart';
+import '../widget/alarm_kind_sheet.dart';
 import '../widget/alarm_permission_banner.dart';
 import '../widget/alarm_summary_card.dart';
 import '../widget/alarm_tile.dart';
@@ -78,6 +80,17 @@ class _AlarmListPageState extends State<AlarmListPage> {
     if (untilRing != null && context.mounted) _showRingsIn(context, untilRing);
   }
 
+  /// 종류 시트에서 고른 종류의 새 알람 편집을 연다. 반복은 평일로 시작한다.
+  Future<void> _add(BuildContext context) async {
+    final kind = await AlarmKindSheet.show(context);
+    if (kind == null || !context.mounted) return;
+    final draft = switch (kind) {
+      AlarmKind.oneShot => Alarm.draft(),
+      AlarmKind.repeating => Alarm.draft().copyWith(repeat: RepeatPreset.weekdays.days),
+    };
+    await _open(context, draft);
+  }
+
   Future<void> _toggle(BuildContext context, Alarm alarm, bool enabled) async {
     final l10n = AppLocalizations.of(context);
     try {
@@ -106,7 +119,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
           appBar: AppBar(title: Text(l10n.walkAlarmListTitle)),
           floatingActionButton: FloatingActionButton(
             tooltip: l10n.walkAlarmAdd,
-            onPressed: () => _open(context, Alarm.draft()),
+            onPressed: () => _add(context),
             child: const Icon(Icons.add),
           ),
           body: BlocBuilder<AlarmListCubit, AlarmListState>(
@@ -156,12 +169,20 @@ class _AlarmListPageState extends State<AlarmListPage> {
                     )
                   else
                     for (final alarm in alarms)
-                      AlarmTile(
+                      Padding(
                         key: ValueKey(alarm.id),
-                        alarm: alarm,
-                        untilRing: nextAt[alarm.id]?.difference(now),
-                        onTap: () => _open(context, alarm),
-                        onToggle: (enabled) => _toggle(context, alarm, enabled),
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md,
+                          AppSpacing.sm,
+                          AppSpacing.md,
+                          0,
+                        ),
+                        child: AlarmTile(
+                          alarm: alarm,
+                          untilRing: nextAt[alarm.id]?.difference(now),
+                          onTap: () => _open(context, alarm),
+                          onToggle: (enabled) => _toggle(context, alarm, enabled),
+                        ),
                       ),
                 ],
               ),
