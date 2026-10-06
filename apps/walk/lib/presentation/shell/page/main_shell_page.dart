@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
-import '../../../core/background/alarm_resync.dart';
+import '../../../core/background/background_task.dart';
 import '../../../domain/alarm/holiday/holiday_calendar.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
@@ -21,8 +21,8 @@ enum ShellTab { alarm, walk, settings }
 /// 하단 탭 셸. 탭마다 자기 `Scaffold` · `AppBar` 를 둔다.
 ///
 /// 알람 예약 동기화(`AlarmUseCase.sync`)는 여기 한 곳에서 한다 — 시작과 복귀(resumed),
-/// 그리고 앱이 떠 있을 때 네이티브 `AlarmResync`(시간대 변경 · 하루 한 번 작업)가
-/// [backgroundChannel] 로 부르는 `resync`. 그 앞에 공휴일 캐시(`HolidayRefresher`)를 갱신한다.
+/// 그리고 앱이 떠 있을 때 네이티브 `BackgroundDispatcher`(시간대 변경 · 하루 한 번 작업 ·
+/// 미리 알림 액션)가 [backgroundChannel] 로 부르는 `resync` · `reminderAction`. 그 앞에 공휴일 캐시(`HolidayRefresher`)를 갱신한다.
 /// 알람 목록 · 설정 권한 cubit 을 소유해, 복귀하거나 위에 얹힌 화면(편집 · 울림)이
 /// 걷힐 때 다시 읽는다.
 class MainShellPage extends StatefulWidget {
@@ -104,12 +104,36 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     await _alarms.load();
   }
 
-  /// 시간대가 바뀌었거나 하루 한 번 작업이다 — 지금 시간대의 벽시계로 예약을 다시 걸고
-  /// ([AlarmUseCase.timeZoneChanged] 는 시간대가 그대로면 같은 예약을 다시 걸 뿐이다) 목록을
-  /// 읽은 뒤 응답한다.
-  Future<void> _onBackgroundCall(MethodCall call) async {
-    if (call.method != 'resync') throw MissingPluginException();
-    await _reload(_alarmUseCase.timeZoneChanged);
+  /// 네이티브 `BackgroundDispatcher` 가 앱이 떠 있을 때 부른다.
+  ///
+  /// - `resync`: 시간대가 바뀌었거나 하루 한 번 작업이다 — 지금 시간대의 벽시계로 예약을 다시 걸고
+  ///   ([AlarmUseCase.timeZoneChanged] 는 시간대가 그대로면 같은 예약을 다시 걸 뿐이다) 목록을
+  ///   읽은 뒤 응답한다.
+  /// - `reminderAction`(`{action: 'skip', packageId}`): 미리 알림의 [이번만 끄기] · [다음 알람
+  ///   건너뛰기] — 그 회차를 건너뛰고 목록을 읽은 뒤 성공 여부로 응답한다. `false` 면 네이티브가
+  ///   알림을 남겨 다시 누를 수 있게 한다.
+  Future<Object?> _onBackgroundCall(MethodCall call) async {
+    switch (call.method) {
+      case 'resync':
+        await _reload(_alarmUseCase.timeZoneChanged);
+        return null;
+      case 'reminderAction':
+        final packageId = switch (call.arguments) {
+          {'action': 'skip', 'packageId': final int id} => id,
+          _ => throw PlatformException(
+            code: 'bad_args',
+            message: '${call.arguments}',
+          ),
+        };
+        var ok = false;
+        await _reload(() async {
+          await _alarmUseCase.skipOccurrence(packageId);
+          ok = true;
+        });
+        return ok;
+      default:
+        throw MissingPluginException();
+    }
   }
 
   void _select(ShellTab tab) => setState(() => _tab = tab);

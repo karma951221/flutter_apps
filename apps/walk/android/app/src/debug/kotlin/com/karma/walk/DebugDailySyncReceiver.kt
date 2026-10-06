@@ -12,7 +12,7 @@ import androidx.work.WorkManager
  *
  * ```
  * adb shell am broadcast -a com.karma.walk.DEBUG_DAILY_SYNC -p com.karma.walk
- * adb logcat -s WalkDailySync WalkAlarmResync
+ * adb logcat -s WalkDailySync WalkBackground
  * ```
  */
 class DebugDailySyncReceiver : BroadcastReceiver() {

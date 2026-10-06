@@ -331,6 +331,53 @@ void main() {
     verifyNever(alarms.timeZoneChanged);
   });
 
+  /// 네이티브(미리 알림 액션 수신기)가 메인 엔진에 `reminderAction` 을 부른 것처럼 보낸다.
+  Future<ByteData?> platformReminderAction(WidgetTester tester, int packageId) {
+    const codec = StandardMethodCodec();
+    final reply = Completer<ByteData?>();
+    tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+      'walk/background',
+      codec.encodeMethodCall(
+        MethodCall('reminderAction', {
+          'action': 'skip',
+          'packageId': packageId,
+        }),
+      ),
+      reply.complete,
+    );
+    return reply.future;
+  }
+
+  testWidgets('네이티브가 reminderAction 을 부르면 그 회차를 건너뛰고 목록을 다시 읽은 뒤 true 로 응답한다', (
+    tester,
+  ) async {
+    when(() => alarms.skipOccurrence(any())).thenAnswer((_) async {});
+    await pump(tester);
+    clearInteractions(alarms);
+
+    final reply = platformReminderAction(tester, 1203);
+    await tester.pumpAndSettle();
+
+    verifyInOrder([() => alarms.skipOccurrence(1203), alarms.list]);
+    final envelope = await reply;
+    expect(const StandardMethodCodec().decodeEnvelope(envelope!), isTrue);
+  });
+
+  testWidgets('reminderAction 의 건너뛰기가 실패하면 목록은 읽고 false 로 응답한다(알림을 남긴다)', (
+    tester,
+  ) async {
+    when(() => alarms.skipOccurrence(any())).thenThrow(Exception('scheduler'));
+    await pump(tester);
+    clearInteractions(alarms);
+
+    final reply = platformReminderAction(tester, 1203);
+    await tester.pumpAndSettle();
+
+    verify(alarms.list).called(1);
+    final envelope = await reply;
+    expect(const StandardMethodCodec().decodeEnvelope(envelope!), isFalse);
+  });
+
   testWidgets('설정 탭에서 목표를 낮춰 달성해도 걷기 탭을 열 때 한 번만 축하한다', (tester) async {
     final settings = _MemorySettings();
     getIt.registerSingleton<SettingsRepository>(settings);

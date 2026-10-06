@@ -66,6 +66,15 @@
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
         </receiver>
+        <!-- 미리 알림(30분 전 · 공휴일, 웨이브 3): 띄우기 · 버튼 · 재부팅 뒤 다시 걸기. -->
+        <receiver android:name=".ReminderFireReceiver" android:exported="false" />
+        <receiver android:name=".ReminderActionReceiver" android:exported="false" />
+        <receiver android:name=".ReminderBootReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

@@ -17,7 +17,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * 하루 한 번 알람 예약을 다시 채운다. 예약은 앞으로 14일만 걸어 두므로(`AlarmUseCase.sync`),
- * 앱을 2주 넘게 열지 않아도 반복 알람이 끊기지 않게 한다. 실행은 [AlarmResync] 가 맡는다.
+ * 앱을 2주 넘게 열지 않아도 반복 알람이 끊기지 않게 한다. 실행은 [BackgroundDispatcher] 가 맡는다.
  *
  * 결과와 상관없이 성공으로 끝낸다 — 실패해도 다음 날 다시 돌고, 재시도 백오프로 쌓지 않는다.
  */
@@ -26,7 +26,11 @@ class DailyAlarmSyncWorker(context: Context, params: WorkerParameters) :
     override suspend fun doWork(): Result {
         val reason = withContext(Dispatchers.Main.immediate) {
             suspendCancellableCoroutine { continuation ->
-                val handle = AlarmResync.run(applicationContext, TIMEOUT_MS) { reason ->
+                val handle = BackgroundDispatcher.dispatch(
+                    applicationContext,
+                    BackgroundJob.resync,
+                    TIMEOUT_MS,
+                ) { _, reason ->
                     if (continuation.isActive) continuation.resume(reason)
                 }
                 continuation.invokeOnCancellation {

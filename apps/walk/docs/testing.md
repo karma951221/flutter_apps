@@ -14,14 +14,14 @@ cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · �
 `alarm` 은 `third_party/alarm` 포크다([FORK.md](../third_party/alarm/FORK.md)). 포크 자체의 `test/` 는 돌리지
 않는다. 포크의 Dart 모델은 앱의 `test/third_party/alarm/…`(포크 경로와 1:1)에서, 포크 Kotlin 의 순수 규칙
 (`audioCandidates` · `shouldMuteForRinger` · `EngineRegistry` · `smallIconResId` · 설정 저장)은 포크 JUnit 으로 본다. 앱 Kotlin 의 순수
-규칙(`replaceVerified` · `ResyncQueue`)은 앱 JUnit 이다. `AudioService.playAudio` 가 실제로 대체음으로 다시 트는지,
+규칙(`replaceVerified` · `BackgroundQueue` · `ReminderRules`)은 앱 JUnit 이다. `AudioService.playAudio` 가 실제로 대체음으로 다시 트는지,
 무음 · 진동 모드에서 진동만 하는지, 하루 sync 가 헤드리스로 도는지는 에뮬레이터로 본다.
 
 ```bash
 cd apps/walk/android
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ./gradlew :alarm:testDebugUnitTest   # 포크 — AudioFallbackTest · RingerMuteTest · EngineRegistryTest 등
-./gradlew :app:testDebugUnitTest     # 앱 — VerifiedReplaceTest · ResyncQueueTest
+./gradlew :app:testDebugUnitTest     # 앱 — VerifiedReplaceTest · BackgroundQueueTest · ReminderRulesTest · HolidayCalendarRulesTest
 ```
 
 skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 전환이 없으면(KST) 스스로 건너뛴다 —
@@ -100,7 +100,7 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `presentation/shell/page/main_shell_page_test.dart` | `MainShellPage` | 첫 탭 걷기 · 초록 컨테이너 · 선택 탭 채움 아이콘 · 탭 전환 · 시작/복귀 때 sync 뒤 목록 · 복귀 때 권한 행 · **울림 화면이 걷히면 sync** · **sync 실패해도 목록** · 네이티브 `resync` → 재설정 · 목록 · 응답(실패해도) · 사라지면 핸들러 해제 · **설정 탭에서 목표를 낮춰 달성해도 걷기 탭을 열 때 한 번 축하** |
 | `core/alarm_ring_listener_test.dart` | `AlarmRingListener` | 한 번만 띄움 · 밖에서 끄면 걷음 · 화면이 먼저 닫힘 · 스누즈 뒤 다시 띄움 · 가려진 화면만 걷음 · 내비게이터 전 값 · 첫 프레임 전 시작→끝이면 안 띄움 · 중복 start · dispose |
 | `core/app_test.dart` | `WalkApp` · `themeModeOf` | 테마 매핑 · 저장된 다크로 첫 프레임 |
-| `core/background/alarm_resync_test.dart` | `runAlarmResync` | init → sync → done · init 실패면 sync 건너뛰고 done · sync/done 실패도 삼킴 · done 한 번 |
+| `core/background/background_task_test.dart` | `runBackgroundTask` · `resyncTask` · `reminderActionPackageId` | init → task → done(true) · init 실패면 task 건너뛰고 done(false) · task 실패면 done(false) · done 실패도 삼킴 · done 한 번 · 공휴일 갱신 → sync(갱신 실패해도 sync) · 진입점 인자 `["skip", id]` |
 
 ### 포크 · 네이티브(JUnit)
 
@@ -111,7 +111,8 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `third_party/alarm/android/src/test/…/alarm/RingerMuteTest.kt` | 포크 `shouldMuteForRinger` · 설정 저장 | 켰을 때 일반 모드는 소리, 진동 · 무음 모드는 음소거 · 껐으면 모드와 상관없이 소리 · 저장 왕복 · 옛 저장값은 무시 · 전달 |
 | `third_party/alarm/android/src/test/…/services/NotificationIconTest.kt` | 포크 `smallIconResId`(알림 작은 아이콘) | 찾은 이름은 그 drawable · **이름 없음 · 못 찾은 이름은 앱(적응형) 아이콘 대신 플랫폼 단색 `ic_lock_idle_alarm`** |
 | `third_party/alarm/android/src/test/…/alarm/EngineRegistryTest.kt` | 포크 `EngineRegistry`(`AlarmPlugin.alarmTriggerApi`) | 가장 나중에 붙은 엔진이 현재 · **먼저 붙은 헤드리스 엔진을 내려도 앱 엔진 유지** · 현재 엔진을 내리면 남은 엔진으로 · 마지막을 내리면 없음 · 같은 엔진 다시 붙기 · 모르는 엔진 무시 |
-| `android/app/src/test/…/ResyncQueueTest.kt` | 앱 `ResyncQueue`(`AlarmResync`) | 첫 요청은 실행 · 도는 중 요청은 끝난 뒤 한 번 더(여러 개는 하나로) · 그 실행 중 요청은 또 한 번 · 쉬면 새 실행 · 취소한 대기자는 받지 않지만 실행은 함 · 지금 실행의 대기자 |
+| `android/app/src/test/…/BackgroundQueueTest.kt` | 앱 `BackgroundQueue`(`BackgroundDispatcher`) | 첫 요청은 실행 · 도는 중 같은 일 요청은 끝난 뒤 한 번 더(여러 개는 하나로) · 그 실행 중 요청은 또 한 번 · 쉬면 새 실행 · 취소한 대기자는 받지 않지만 실행은 함 · 지금 실행의 대기자 · 다른 일은 들어온 순서대로 하나씩 · 기다리는 같은 일은 하나로 묶음 |
+| `android/app/src/test/…/ReminderRulesTest.kt` | 앱 `ReminderBook` · `ReminderRules` | `scheduled` 는 울릴 시각 전 걸린 것 · 띄운 것 · 덮어쓰면 shown 해제 · 닫은(shown) 항목은 울릴 시각까지 남고 `remove` · 경과만 지움 · 지난 띄울 시각은 바로 띄움 · 재부팅: 지난 것 버림 · 띄운 것 유지 · 미래는 다시 걺 · 놓친 것은 1분보다 남았을 때만 바로 띄움 |
 | `android/app/src/test/…/VerifiedReplaceTest.kt` | 앱 `replaceVerified`(기기 알람음 복사) | 임시 파일에 쓰고 검증한 뒤 바꿈 · 기존 복사본 덮어쓰기 · **쓰기 · 검증이 실패하면 기존 복사본은 그대로, 임시 파일만 지움** · 임시 파일은 확장자가 끝 |
 
 굵은 항목은 확인하며 고친 버그의 회귀 테스트다([기록](history.md#알람--확인하며-고친-것)).
@@ -123,10 +124,12 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 
 알람: `PackageAlarmScheduler` 의 실제 패키지 호출(`set` · `stop` · `getAlarms` · `checkAlarm`) ·
 `MainActivity` 채널 · `AlarmSoundsChannel`(목록 · 미리 듣기 · 복사와 `MediaPlayer` 검증 — 파일 바꾸기 규칙만 JUnit) · `TimeZoneChangedReceiver` ·
-`DailyAlarmSyncWorker` · `AlarmResync`(Kotlin, 대기 규칙만 JUnit) · 포크 `AlarmService` 의 무음 판단 적용(규칙만 JUnit) · 헤드리스 진입점 `alarmResyncMain` 은 단위
+`DailyAlarmSyncWorker` · `BackgroundDispatcher`(Kotlin, 대기 규칙만 JUnit) · 포크 `AlarmService` 의 무음 판단 적용(규칙만 JUnit) · 헤드리스 진입점 `alarmResyncMain` 은 단위
 테스트하지 않고 아래 에뮬레이터 시나리오로 확인했다. 편집 화면 시각 휠 테스트는 드래그 대신
 `onDateTimeChanged` 를 직접 불러 연결만 본다. 볼륨 패널을 끄는 `showSystemUI: false` 는 설정값만
 `package_alarm_scheduler_test` 에서 고정하고, 실제로 패널이 뜨지 않는지는 A11 로 본다.
+미리 알림 네이티브(`ReminderChannel` · `ReminderAlarms` · `ReminderStore` · 수신기 셋)와 헤드리스 진입점
+`alarmReminderActionMain` 도 규칙(`ReminderRules`)만 JUnit 이고 나머지는 에뮬레이터 시나리오(스파이크 R1~R8) 몫이다.
 
 시각 강화(2026-10-03): `walk_theme` 다크 변형 · `WalkMotion.off` 의 거짓 경로, `WalkSkeleton` · `GoalCelebration` 의 애니메이션 켜진 경로와 햅틱 호출, 링 아래 줄 위젯 단독(`today_goal_footer`), 울림 파동의 런타임 `disableAnimations` 전환은 직접 테스트가 없다. 실제 폰에서 목표 달성 · 축하 · 파동을 확인한다.
 
