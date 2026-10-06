@@ -151,7 +151,7 @@ void main() {
       }
 
       expect(find.text('1시간 16분 뒤'), findsOneWidget);
-      expect(find.text('오전 1:04에 울림'), findsOneWidget);
+      expect(find.text('내일 (월) 오전 1:04에 울림'), findsOneWidget);
       expect(find.text('시간을 더해 주세요'), findsNothing);
       expect(saveEnabled(tester), isTrue);
 
@@ -191,11 +191,11 @@ void main() {
 
       expect(find.byType(CupertinoDatePicker), findsNothing);
       expect(find.text('7시간 42분 뒤'), findsOneWidget);
-      expect(find.text('오전 7:30에 울림'), findsOneWidget);
+      expect(find.text('내일 (월) 오전 7:30에 울림'), findsOneWidget);
 
       await tester.tap(find.text('+10분'));
       await tester.pump();
-      expect(find.text('오전 7:40에 울림'), findsOneWidget);
+      expect(find.text('내일 (월) 오전 7:40에 울림'), findsOneWidget);
     });
 
     testWidgets('휠 시트를 그냥 닫으면 그대로', (tester) async {
@@ -213,13 +213,13 @@ void main() {
       await pump(tester, Alarm.draft());
       await tester.tap(find.text('+1시간'));
       await tester.pump();
-      expect(find.text('오전 12:48에 울림'), findsOneWidget);
+      expect(find.text('내일 (월) 오전 12:48에 울림'), findsOneWidget);
 
       clock.value = DateTime(2026, 9, 27, 23, 49);
       await tester.pump(const Duration(minutes: 1));
 
       expect(find.text('1시간 뒤'), findsOneWidget);
-      expect(find.text('오전 12:49에 울림'), findsOneWidget);
+      expect(find.text('내일 (월) 오전 12:49에 울림'), findsOneWidget);
     });
 
     testWidgets('기존 한 번 알람(미래)은 그 시각으로 열리고 수정 제목 · 삭제가 있다', (tester) async {
@@ -231,7 +231,7 @@ void main() {
 
       expect(find.text('알람 수정'), findsOneWidget);
       expect(find.text('7시간 12분 뒤'), findsOneWidget);
-      expect(find.text('오전 7:00에 울림'), findsOneWidget);
+      expect(find.text('내일 (월) 오전 7:00에 울림'), findsOneWidget);
       expect(find.text('삭제'), findsOneWidget);
       expect(find.widgetWithText(TextField, '낮잠'), findsOneWidget);
 
@@ -269,21 +269,48 @@ void main() {
       await pump(tester, Alarm.draft());
       await tester.tap(find.text('+1시간'));
       await tester.pump();
-      expect(find.text('오전 12:48에 울림'), findsOneWidget);
+      expect(find.text('내일 (월) 오전 12:48에 울림'), findsOneWidget);
 
       // 23:48:59 대 — 아직 같은 분
       await tester.pump(DateTime(2026, 9, 27, 23, 48, 59).difference(clock.now()));
-      expect(find.text('오전 12:48에 울림'), findsOneWidget);
+      expect(find.text('내일 (월) 오전 12:48에 울림'), findsOneWidget);
 
       // 23:49:00 — 다음 분 0초에 바로 바뀐다
       await tester.pump(DateTime(2026, 9, 27, 23, 49).difference(clock.now()));
-      expect(find.text('오전 12:49에 울림'), findsOneWidget);
+      expect(find.text('내일 (월) 오전 12:49에 울림'), findsOneWidget);
 
       await tester.pump(const Duration(minutes: 1));
-      expect(find.text('오전 12:50에 울림'), findsOneWidget);
+      expect(find.text('내일 (월) 오전 12:50에 울림'), findsOneWidget);
       await tester.pump(const Duration(minutes: 1));
-      expect(find.text('오전 12:51에 울림'), findsOneWidget);
+      expect(find.text('내일 (월) 오전 12:51에 울림'), findsOneWidget);
       expect(find.text('1시간 뒤'), findsOneWidget);
+    });
+
+    testWidgets('상대 모드는 분 중간에 저장해도 칩에 보인 분(초 0)에 울린다', (tester) async {
+      answerSaveWithId();
+      clock.value = DateTime(2026, 9, 27, 23, 40, 40);
+      await pump(tester, Alarm.draft());
+      await tester.tap(find.text('+10분'));
+      await tester.pump();
+      expect(find.text('오후 11:50에 울림'), findsOneWidget);
+
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+
+      expect(savedAlarm().oneShotAt, DateTime(2026, 9, 27, 23, 50));
+    });
+
+    testWidgets('울릴 날이 오늘이 아니면 칩에 날짜를 붙인다(오늘이면 시각만)', (tester) async {
+      await pump(tester, Alarm.draft());
+      expect(find.text('오후 11:48에 울림'), findsOneWidget);
+
+      await tester.tap(find.text('+10분'));
+      await tester.pump();
+      expect(find.text('오후 11:58에 울림'), findsOneWidget);
+
+      await tester.tap(find.text('+10분'));
+      await tester.pump();
+      expect(find.text('내일 (월) 오전 12:08에 울림'), findsOneWidget);
     });
 
     testWidgets('고정 모드: 분이 지나면 N분 뒤가 줄고, 1분 밑으로 내려가는 순간 저장이 잠기고 안내', (

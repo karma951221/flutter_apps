@@ -20,7 +20,7 @@ void main() {
     const draft = OneShotDraft();
     expect(draft.offset, Duration.zero);
     expect(draft.fixedAt, isNull);
-    expect(draft.ringAt(now), now);
+    expect(draft.ringAt(now), DateTime(2026, 9, 28, 15, 25));
     expect(draft.remaining(now), Duration.zero);
     expect(draft.canSave(now), isFalse);
   });
@@ -34,7 +34,7 @@ void main() {
           .add(const Duration(minutes: 5));
 
       expect(draft, const OneShotDraft(offset: Duration(hours: 1, minutes: 25)));
-      expect(draft.ringAt(now), DateTime(2026, 9, 28, 16, 50, 30));
+      expect(draft.ringAt(now), DateTime(2026, 9, 28, 16, 50));
     });
 
     test('상대 모드 상한 23시간 59분에서 멈춘다', () {
@@ -87,12 +87,40 @@ void main() {
   });
 
   group('ringAt · remaining', () {
-    test('상대 모드는 지금 + offset — 시간이 흘러도 "N 뒤"는 그대로', () {
+    test('상대 모드는 지금이 든 분(초 0) + offset — 칩에 보인 분에 울린다', () {
       const draft = OneShotDraft(offset: Duration(minutes: 10));
-      final later = now.add(const Duration(minutes: 3));
+      final later = now.add(const Duration(minutes: 3)); // 15:28:30
 
-      expect(draft.ringAt(later), DateTime(2026, 9, 28, 15, 38, 30));
-      expect(draft.remaining(later), const Duration(minutes: 10));
+      expect(draft.ringAt(later), DateTime(2026, 9, 28, 15, 38));
+      expect(draft.remaining(later), const Duration(minutes: 9, seconds: 30));
+    });
+
+    test('상대 모드 — 같은 분 안이면 몇 초에 저장해도 같은 시각', () {
+      const draft = OneShotDraft(offset: Duration(minutes: 10));
+
+      for (final second in [0, 1, 30, 59]) {
+        expect(
+          draft.ringAt(DateTime(2026, 9, 28, 15, 25, second, 999)),
+          DateTime(2026, 9, 28, 15, 35),
+          reason: '15:25:$second',
+        );
+      }
+    });
+
+    test('상대 모드 — 내림해서 1분 미만이 되면 한 분 미룬다', () {
+      const draft = OneShotDraft(offset: Duration(minutes: 1));
+
+      // 15:25:30 + 1분 → 15:26 은 30초 뒤라 15:27.
+      expect(draft.ringAt(now), DateTime(2026, 9, 28, 15, 27));
+      expect(draft.remaining(now), greaterThanOrEqualTo(const Duration(minutes: 1)));
+      // 정각이면 그대로 1분 뒤.
+      expect(draft.ringAt(DateTime(2026, 9, 28, 15, 25)), DateTime(2026, 9, 28, 15, 26));
+    });
+
+    test('상대 모드 — 자정을 넘기면 다음 날 시각', () {
+      const draft = OneShotDraft(offset: Duration(minutes: 40));
+
+      expect(draft.ringAt(DateTime(2026, 9, 28, 23, 50, 12)), DateTime(2026, 9, 29, 0, 30));
     });
 
     test('고정 모드는 fixedAt, 남은 시간은 줄어든다', () {

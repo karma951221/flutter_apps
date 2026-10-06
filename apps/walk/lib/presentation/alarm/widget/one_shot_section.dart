@@ -82,7 +82,12 @@ class OneShotSection extends StatelessWidget {
           child: ActionChip(
             avatar: Icon(Icons.alarm, color: colorScheme.onPrimaryContainer),
             label: Text(
-              l10n.walkAlarmRingsAtChip(AlarmFormat.time(context, ringAt.hour, ringAt.minute)),
+              l10n.walkAlarmRingsAtChip(
+                // 오늘이 아니면 날짜를 붙인다 — `내일 (화) 오전 12:56`.
+                DateUtils.isSameDay(ringAt, now)
+                    ? AlarmFormat.time(context, ringAt.hour, ringAt.minute)
+                    : AlarmFormat.ringAt(context, ringAt, now),
+              ),
             ),
             labelStyle: theme.textTheme.labelLarge?.copyWith(color: colorScheme.onPrimaryContainer),
             backgroundColor: colorScheme.primaryContainer,

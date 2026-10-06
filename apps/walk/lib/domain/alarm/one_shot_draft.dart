@@ -65,7 +65,20 @@ class OneShotDraft with _$OneShotDraft {
   OneShotDraft fixAt(int hour, int minute, DateTime now) =>
       OneShotDraft(fixedAt: nextOccurrence(hour, minute, now));
 
-  DateTime ringAt(DateTime now) => fixedAt ?? now.add(offset);
+  /// 울릴 시각. 고정 모드는 [fixedAt]. 상대 모드는 지금이 든 분(초 0)에 [offset] 을 더한다 —
+  /// 칩이 보여 주는 시 · 분에 그대로 울리고, 같은 분 안이면 몇 초에 저장해도 같은 시각이다.
+  /// 내림 때문에 1분 미만으로 가까워지면(+1분을 :30 초에 저장) 한 분 미룬다.
+  DateTime ringAt(DateTime now) {
+    final at = fixedAt;
+    if (at != null) return at;
+    // 벽시계 산술 — 생성자가 자정 · 월말을 넘긴다.
+    DateTime plus(int minutes) => DateTime(now.year, now.month, now.day, now.hour, now.minute + minutes);
+    final ring = plus(offset.inMinutes);
+    if (offset >= const Duration(minutes: 1) && ring.difference(now) < const Duration(minutes: 1)) {
+      return plus(offset.inMinutes + 1);
+    }
+    return ring;
+  }
 
   /// 울릴 때까지. 지났으면 0.
   Duration remaining(DateTime now) {
@@ -73,6 +86,9 @@ class OneShotDraft with _$OneShotDraft {
     return left.isNegative ? Duration.zero : left;
   }
 
-  /// 1분 미만이면 저장하지 않는다(0분 알람 방지).
-  bool canSave(DateTime now) => remaining(now) >= const Duration(minutes: 1);
+  /// 1분 미만이면 저장하지 않는다(0분 알람 방지). 상대 모드는 [offset] 으로 본다 —
+  /// [ringAt] 이 내림한 만큼 미뤄 1분 이상을 지킨다.
+  bool canSave(DateTime now) => fixedAt == null
+      ? offset >= const Duration(minutes: 1)
+      : remaining(now) >= const Duration(minutes: 1);
 }
