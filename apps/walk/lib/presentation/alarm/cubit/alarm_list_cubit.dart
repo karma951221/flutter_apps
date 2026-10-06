@@ -42,17 +42,20 @@ class AlarmListCubit extends Cubit<AlarmListState> {
       nextAt: nextAt,
       now: now,
       canRing: canRing,
-      holidays: _holidaysOf(alarms, nextAt, now),
+      holidays: _holidaysOf(alarms, now),
     ));
   }
 
-  /// 다음 울림이 [alarmHolidayLead](공휴일 미리 알림과 같은 24시간) 안이고 그날이 공휴일인
-  /// 반복 알람 id → 공휴일 이름. 칩을 누르면 그 회차를 건너뛰는 시트가 뜬다.
-  Map<int, String> _holidaysOf(List<Alarm> alarms, Map<int, DateTime> nextAt, DateTime now) {
+  /// 규칙의 다음 회차가 [alarmHolidayLead](공휴일 미리 알림과 같은 24시간) 안이고 그날이 공휴일인
+  /// 반복 알람 id → 공휴일 이름. 칩을 누르면 그 회차를 건너뛰는(건너뛰었으면 취소하는) 시트가 뜬다.
+  /// 회차는 `skipNext` 가 고르는 것과 같게 건너뛰기를 빼고 센다. 걸린 예약(`nextAt`)은 보지 않는다 —
+  /// 스누즈된 울림은 건너뛰기 대상이 아니라, 그것으로 정하면 칩과 다른 날을 건너뛴다.
+  Map<int, String> _holidaysOf(List<Alarm> alarms, DateTime now) {
     final names = <int, String>{};
     for (final alarm in alarms) {
-      final at = nextAt[alarm.id];
-      if (alarm.isOneShot || at == null || at.difference(now) > alarmHolidayLead) continue;
+      if (alarm.isOneShot) continue;
+      final at = upcomingTriggers(alarm.copyWith(skippedAt: null), now).firstOrNull;
+      if (at == null || at.difference(now) > alarmHolidayLead) continue;
       if (_holidays.nameOf(at) case final name?) names[alarm.id] = name;
     }
     return names;
@@ -72,7 +75,7 @@ class AlarmListCubit extends Cubit<AlarmListState> {
     if (state case AlarmListLoaded(:final nextAt) && final loaded) {
       final now = _clock.now();
       if (nextAt.values.any((at) => !now.isBefore(at))) return load();
-      emit(loaded.copyWith(now: now, holidays: _holidaysOf(loaded.alarms, nextAt, now)));
+      emit(loaded.copyWith(now: now, holidays: _holidaysOf(loaded.alarms, now)));
     }
   }
 

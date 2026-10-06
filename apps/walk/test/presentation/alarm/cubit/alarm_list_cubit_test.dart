@@ -140,6 +140,43 @@ void main() {
     );
 
     blocTest<AlarmListCubit, AlarmListState>(
+      '스누즈된 울림이 공휴일이어도 규칙의 다음 회차(건너뛰기가 고를 회차)가 아니면 칩이 없다',
+      build: () {
+        // 월요일(공휴일) 07:00 을 07:10 으로 스누즈했다. 규칙의 다음 회차는 다음 주 월요일.
+        clock.value = DateTime(2026, 9, 28, 7, 2);
+        holidays.days[DateTime(2026, 9, 28)] = '추석';
+        when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 9, 28, 7, 10)});
+        return build();
+      },
+      act: (cubit) => cubit.load(),
+      expect: () => [
+        loaded(
+          [seven, off],
+          nextAt: {1: DateTime(2026, 9, 28, 7, 10)},
+          at: DateTime(2026, 9, 28, 7, 2),
+        ),
+      ],
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      '건너뛴 공휴일 회차에도 칩을 둔다(시트가 건너뛰기 취소를 보인다)',
+      build: () {
+        holidays.days[DateTime(2026, 9, 28)] = '대체공휴일';
+        when(() => useCase.list()).thenAnswer((_) async => [seven.copyWith(skippedAt: sevenAt), off]);
+        when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 10, 5, 7)});
+        return build();
+      },
+      act: (cubit) => cubit.load(),
+      expect: () => [
+        loaded(
+          [seven.copyWith(skippedAt: sevenAt), off],
+          nextAt: {1: DateTime(2026, 10, 5, 7)},
+          holidayNames: {1: '대체공휴일'},
+        ),
+      ],
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
       '한 번 알람은 공휴일 칩이 없다(공휴일 미리 알림도 건너뛰기도 반복 알람만)',
       build: () {
         holidays.days[DateTime(2026, 9, 28)] = '대체공휴일';
