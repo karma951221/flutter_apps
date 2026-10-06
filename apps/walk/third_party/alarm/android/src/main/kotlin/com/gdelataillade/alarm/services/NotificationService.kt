@@ -12,6 +12,17 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.gdelataillade.alarm.alarm.AlarmReceiver
 
+/**
+ * Fork: the alarm notification's small icon -- [requested] when [lookup]
+ * resolves it, else the platform's monochrome alarm drawable. The original
+ * fell back to the application icon; an adaptive-icon launcher shows as a
+ * solid blob in the status bar, and Android 8.0 can fail to post it.
+ */
+internal fun smallIconResId(requested: String?, lookup: (String) -> Int): Int {
+    val resId = requested?.let(lookup) ?: 0
+    return if (resId != 0) resId else android.R.drawable.ic_lock_idle_alarm
+}
+
 class NotificationHandler(private val context: Context) {
     companion object {
         private const val CHANNEL_ID = "alarm_plugin_channel"
@@ -75,18 +86,9 @@ class NotificationHandler(private val context: Context) {
         alarmId: Int,
         canSnooze: Boolean = false
     ): Notification {
-        val defaultIconResId =
-            context.packageManager.getApplicationInfo(context.packageName, 0).icon
-
-        val iconResId = if (notificationSettings.icon != null) {
-            val resId = context.resources.getIdentifier(
-                notificationSettings.icon,
-                "drawable",
-                context.packageName
-            )
-            if (resId != 0) resId else defaultIconResId
-        } else {
-            defaultIconResId
+        // Fork: fall back to the platform alarm drawable, not the application icon.
+        val iconResId = smallIconResId(notificationSettings.icon) { name ->
+            context.resources.getIdentifier(name, "drawable", context.packageName)
         }
 
         val stopIntent = Intent(context, AlarmReceiver::class.java).apply {

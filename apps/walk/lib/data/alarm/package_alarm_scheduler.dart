@@ -29,6 +29,10 @@ class PackageAlarmScheduler implements AlarmScheduler {
   static const _volume = 0.8;
   static const _fadeDuration = Duration(seconds: 3);
 
+  /// 알림 작은 아이콘 — `res/drawable/ic_stat_alarm.xml`(흰 단색 알람시계). 포크가 이 이름을
+  /// `getIdentifier` 로 찾으니 `res/raw/keep.xml` 도 같은 이름을 남긴다(컨벤션 테스트가 본다).
+  static const notificationIcon = 'ic_stat_alarm';
+
   @override
   Future<Map<int, ScheduledRing>> scheduled() async => {
     for (final settings in await pkg.Alarm.getAlarms()) settings.id: ringOf(settings),
@@ -44,9 +48,9 @@ class PackageAlarmScheduler implements AlarmScheduler {
     return (at: settings.dateTime, signature: bar < 0 ? '' : payload.substring(bar + 1));
   }
 
-  /// 울림에 영향을 주는 값(소리 · 대체음 · 무음 모드 체크 · 라벨 · 볼륨 · 페이드 · 스누즈)을 정해진 순서로
-  /// 이은 문자열의 fnv1a32(8자리 hex). 알림 문구(l10n)와 시각은 넣지 않는다 — 로캘이 바뀌어도
-  /// 다시 걸지 않고, 시각은 따로 비교한다. 기기 알람음은 복사본 유무가 아니라 저장된 경로를 넣는다.
+  /// 울림에 영향을 주는 값(소리 · 대체음 · 무음 모드 체크 · 라벨 · 볼륨 · 페이드 · 스누즈 · 알림
+  /// 아이콘)을 정해진 순서로 이은 문자열의 fnv1a32(8자리 hex). 알림 문구(l10n)와 시각은 넣지 않는다
+  /// — 로캘이 바뀌어도 다시 걸지 않고, 시각은 따로 비교한다. 기기 알람음은 복사본 유무가 아니라 저장된 경로를 넣는다.
   static String signatureFor(Alarm alarm) => _fnv1a32(
     [
       switch (alarm.sound) {
@@ -62,6 +66,9 @@ class PackageAlarmScheduler implements AlarmScheduler {
       _volume,
       _fadeDuration.inMilliseconds,
       alarmSnoozeDuration.inSeconds,
+      // 알림 아이콘을 넣기 전에 걸린 회차는 icon 이 없어 포크가 적응형 런처 아이콘으로 알림을 만든다
+      // (안드로이드 8.0 은 알림이 실패할 수 있다). 이름을 넣어 올린 뒤 한 번 다시 걸게 한다.
+      'icon:$notificationIcon',
     ].join('\u0000'),
   );
 
@@ -143,8 +150,8 @@ class PackageAlarmScheduler implements AlarmScheduler {
       body: _time(texts.locale, alarm.hour, alarm.minute),
       stopButton: texts.stop,
       androidSnoozeButton: texts.snooze,
-      // res/drawable/ic_stat_alarm.xml — 적응형 런처 아이콘은 상태바에서 덩어리로 보인다.
-      icon: 'ic_stat_alarm',
+      // 적응형 런처 아이콘은 상태바에서 덩어리로 보인다.
+      icon: notificationIcon,
     ),
     payload: '${alarm.id}|${signatureFor(alarm)}',
   );

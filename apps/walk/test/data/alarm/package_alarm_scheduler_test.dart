@@ -64,6 +64,7 @@ void main() {
     final settings = PackageAlarmScheduler.settingsFor(312, at, alarm, texts);
 
     expect(settings.notificationSettings.icon, 'ic_stat_alarm');
+    expect(PackageAlarmScheduler.notificationIcon, 'ic_stat_alarm');
   });
 
   test('라벨이 없으면 기본 제목', () {
@@ -190,6 +191,39 @@ void main() {
             reason: 'vibrate=$vibrate · silentWhenRingerMuted=$silent',
           );
         }
+      }
+    });
+
+    test('알림 아이콘을 넣기 전 지문과 겹치지 않는다 — 올린 뒤 이미 걸린 회차를 새 아이콘으로 다시 건다', () {
+      // 66a2326 전 signatureFor: 알림 아이콘이 입력에 없었다. 그때 걸린 회차는 icon 이 null 이라
+      // 포크가 적응형 런처 아이콘으로 알림을 만든다.
+      String preIcon(Alarm alarm) {
+        final input = [
+          switch (alarm.sound) {
+            SystemAlarmSound() => 'system',
+            BundledAlarmSound(:final asset) => 'bundled:$asset',
+            DeviceAlarmSound(:final path) => 'device:$path',
+          },
+          BundledAlarmSounds.beep,
+          'silentWhenRingerMuted:${alarm.silentWhenRingerMuted}',
+          alarm.label,
+          0.8,
+          3000,
+          alarmSnoozeDuration.inSeconds,
+        ].join('\u0000');
+        var hash = 0x811c9dc5;
+        for (final byte in utf8.encode(input)) {
+          hash = ((hash ^ byte) * 0x01000193) & 0xffffffff;
+        }
+        return hash.toRadixString(16).padLeft(8, '0');
+      }
+
+      for (final alarm in [
+        base,
+        base.copyWith(label: '', silentWhenRingerMuted: true),
+        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.chime)),
+      ]) {
+        expect(sig(alarm), isNot(preIcon(alarm)), reason: '$alarm');
       }
     });
 

@@ -52,9 +52,9 @@ class NotificationOnKillService : Service() {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            val appIconResId = packageManager.getApplicationInfo(packageName, 0).icon
+            // Fork: the platform alarm drawable, not the (adaptive) application icon.
             val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(appIconResId)
+                .setSmallIcon(smallIconResId(null) { 0 })
                 .setContentTitle(title)
                 .setContentText(body)
                 .setAutoCancel(false)
