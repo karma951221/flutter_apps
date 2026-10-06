@@ -1661,22 +1661,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkAlarmRepeatOnce => 'Once';
 
   @override
-  String get walkAlarmNew => 'New alarm';
-
-  @override
   String get walkAlarmEdit => 'Edit alarm';
-
-  @override
-  String get walkAlarmRepeat => 'Repeat';
-
-  @override
-  String get walkAlarmLabel => 'Label';
-
-  @override
-  String get walkAlarmLabelHint => 'e.g. Work';
-
-  @override
-  String get walkAlarmVibrate => 'Vibrate';
 
   @override
   String get walkAlarmSound => 'Alarm sound';
@@ -1717,6 +1702,87 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkAlarmSaveFailed => 'Couldn\'t save the alarm';
+
+  @override
+  String get walkAlarmKindTitle => 'What kind of alarm?';
+
+  @override
+  String get walkAlarmKindOneShot => 'Once';
+
+  @override
+  String get walkAlarmKindOneShotHint => 'Rings after a set time from now';
+
+  @override
+  String get walkAlarmKindRepeat => 'Repeating';
+
+  @override
+  String get walkAlarmKindRepeatHint => 'Rings on the days you choose';
+
+  @override
+  String get walkAlarmNewOneShot => 'One-time alarm';
+
+  @override
+  String get walkAlarmNewRepeat => 'Repeating alarm';
+
+  @override
+  String walkAlarmAfter(String duration) {
+    return 'in $duration';
+  }
+
+  @override
+  String walkAlarmRingsAtChip(String time) {
+    return 'Rings at $time';
+  }
+
+  @override
+  String walkAlarmAddHour(int hours) {
+    return '+$hours hr';
+  }
+
+  @override
+  String walkAlarmAddMinutes(int minutes) {
+    return '+$minutes min';
+  }
+
+  @override
+  String get walkAlarmReset => 'Reset';
+
+  @override
+  String get walkAlarmNeedTime => 'Add some time';
+
+  @override
+  String get walkAlarmNeedDays => 'Choose at least one day';
+
+  @override
+  String get walkAlarmPickTimeConfirm => 'Use this time';
+
+  @override
+  String get walkAlarmPresetEveryday => 'Every day';
+
+  @override
+  String get walkAlarmPresetWeekdays => 'Weekdays';
+
+  @override
+  String get walkAlarmPresetWeekend => 'Weekend';
+
+  @override
+  String get walkAlarmTitle => 'Title';
+
+  @override
+  String get walkAlarmTitleHint => 'e.g. Work';
+
+  @override
+  String get walkAlarmSilentWhenMuted =>
+      'Vibrate only in silent or vibrate mode';
+
+  @override
+  String get walkAlarmSilentWhenMutedHint =>
+      'When your phone is on silent or vibrate, the alarm vibrates without sound';
+
+  @override
+  String walkAlarmOneShotRow(String remaining) {
+    return 'Once · $remaining';
+  }
 
   @override
   String get walkSettingsTitle => 'Settings';

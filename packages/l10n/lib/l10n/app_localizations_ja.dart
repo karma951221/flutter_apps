@@ -1561,22 +1561,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAlarmRepeatOnce => '1回';
 
   @override
-  String get walkAlarmNew => '新しいアラーム';
-
-  @override
   String get walkAlarmEdit => 'アラームを編集';
-
-  @override
-  String get walkAlarmRepeat => '繰り返し';
-
-  @override
-  String get walkAlarmLabel => 'ラベル';
-
-  @override
-  String get walkAlarmLabelHint => '例: 出勤';
-
-  @override
-  String get walkAlarmVibrate => 'バイブレーション';
 
   @override
   String get walkAlarmSound => 'アラーム音';
@@ -1616,6 +1601,85 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkAlarmSaveFailed => 'アラームを保存できませんでした';
+
+  @override
+  String get walkAlarmKindTitle => 'どんなアラームにしますか';
+
+  @override
+  String get walkAlarmKindOneShot => '1回';
+
+  @override
+  String get walkAlarmKindOneShotHint => '今から指定した時間後に鳴ります';
+
+  @override
+  String get walkAlarmKindRepeat => '繰り返し';
+
+  @override
+  String get walkAlarmKindRepeatHint => '選んだ曜日ごとに鳴ります';
+
+  @override
+  String get walkAlarmNewOneShot => '1回のアラーム';
+
+  @override
+  String get walkAlarmNewRepeat => '繰り返しアラーム';
+
+  @override
+  String walkAlarmAfter(String duration) {
+    return '$duration後';
+  }
+
+  @override
+  String walkAlarmRingsAtChip(String time) {
+    return '$timeに鳴ります';
+  }
+
+  @override
+  String walkAlarmAddHour(int hours) {
+    return '+$hours時間';
+  }
+
+  @override
+  String walkAlarmAddMinutes(int minutes) {
+    return '+$minutes分';
+  }
+
+  @override
+  String get walkAlarmReset => 'リセット';
+
+  @override
+  String get walkAlarmNeedTime => '時間を追加してください';
+
+  @override
+  String get walkAlarmNeedDays => '曜日を選んでください';
+
+  @override
+  String get walkAlarmPickTimeConfirm => 'この時刻にする';
+
+  @override
+  String get walkAlarmPresetEveryday => '毎日';
+
+  @override
+  String get walkAlarmPresetWeekdays => '平日';
+
+  @override
+  String get walkAlarmPresetWeekend => '週末';
+
+  @override
+  String get walkAlarmTitle => 'タイトル';
+
+  @override
+  String get walkAlarmTitleHint => '例: 出勤';
+
+  @override
+  String get walkAlarmSilentWhenMuted => 'マナー・サイレントモードでは振動のみ';
+
+  @override
+  String get walkAlarmSilentWhenMutedHint => '端末がマナーやサイレントモードのときは音を出さず振動で知らせます';
+
+  @override
+  String walkAlarmOneShotRow(String remaining) {
+    return '1回 · $remaining';
+  }
 
   @override
   String get walkSettingsTitle => '設定';

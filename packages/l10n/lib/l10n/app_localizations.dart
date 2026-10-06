@@ -3038,41 +3038,11 @@ abstract class AppLocalizations {
   /// **'1회'**
   String get walkAlarmRepeatOnce;
 
-  /// 알람 추가 화면 제목
+  /// 기존 알람 편집 화면 제목
   ///
   /// In ko, this message translates to:
-  /// **'새 알람'**
-  String get walkAlarmNew;
-
-  /// 알람 편집 화면 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'알람 편집'**
+  /// **'알람 수정'**
   String get walkAlarmEdit;
-
-  /// 편집 화면 요일 칩 섹션 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'반복'**
-  String get walkAlarmRepeat;
-
-  /// 편집 화면 라벨 입력 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'라벨'**
-  String get walkAlarmLabel;
-
-  /// 라벨 입력 힌트
-  ///
-  /// In ko, this message translates to:
-  /// **'예: 출근'**
-  String get walkAlarmLabelHint;
-
-  /// 편집 화면 진동 스위치
-  ///
-  /// In ko, this message translates to:
-  /// **'진동'**
-  String get walkAlarmVibrate;
 
   /// 편집 화면 알람음 줄 · 알람음 선택 화면 제목
   ///
@@ -3151,6 +3121,144 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'알람을 저장하지 못했어요'**
   String get walkAlarmSaveFailed;
+
+  /// 알람 종류 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'어떤 알람을 만들까요'**
+  String get walkAlarmKindTitle;
+
+  /// 알람 종류 시트 — 한 번 울리는 알람
+  ///
+  /// In ko, this message translates to:
+  /// **'한 번'**
+  String get walkAlarmKindOneShot;
+
+  /// 알람 종류 시트 — 한 번 알람 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'지금부터 얼마 뒤에 울려요'**
+  String get walkAlarmKindOneShotHint;
+
+  /// 알람 종류 시트 — 요일마다 울리는 알람
+  ///
+  /// In ko, this message translates to:
+  /// **'반복'**
+  String get walkAlarmKindRepeat;
+
+  /// 알람 종류 시트 — 반복 알람 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'정한 요일마다 울려요'**
+  String get walkAlarmKindRepeatHint;
+
+  /// 새 한 번 알람 편집 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'한 번 알람'**
+  String get walkAlarmNewOneShot;
+
+  /// 새 반복 알람 편집 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'반복 알람'**
+  String get walkAlarmNewRepeat;
+
+  /// 한 번 알람 편집 — 울릴 때까지 남은 시간(큰 글자)
+  ///
+  /// In ko, this message translates to:
+  /// **'{duration} 뒤'**
+  String walkAlarmAfter(String duration);
+
+  /// 한 번 알람 편집 — 울릴 시각 칩. 누르면 시각을 직접 고른다
+  ///
+  /// In ko, this message translates to:
+  /// **'{time}에 울림'**
+  String walkAlarmRingsAtChip(String time);
+
+  /// 한 번 알람 편집 — 시간 더하기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'+{hours}시간'**
+  String walkAlarmAddHour(int hours);
+
+  /// 한 번 알람 편집 — 분 더하기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'+{minutes}분'**
+  String walkAlarmAddMinutes(int minutes);
+
+  /// 한 번 알람 편집 — 남은 시간을 0 으로
+  ///
+  /// In ko, this message translates to:
+  /// **'초기화'**
+  String get walkAlarmReset;
+
+  /// 한 번 알람 편집 — 1분 미만이라 저장할 수 없을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'시간을 더해 주세요'**
+  String get walkAlarmNeedTime;
+
+  /// 반복 알람 편집 — 요일이 없어 저장할 수 없을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'요일을 골라 주세요'**
+  String get walkAlarmNeedDays;
+
+  /// 한 번 알람 편집 — 시각 휠 시트의 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'이 시각으로'**
+  String get walkAlarmPickTimeConfirm;
+
+  /// 반복 알람 편집 — 빠른 버튼(월~일)
+  ///
+  /// In ko, this message translates to:
+  /// **'매일'**
+  String get walkAlarmPresetEveryday;
+
+  /// 반복 알람 편집 — 빠른 버튼(월~금)
+  ///
+  /// In ko, this message translates to:
+  /// **'평일'**
+  String get walkAlarmPresetWeekdays;
+
+  /// 반복 알람 편집 — 빠른 버튼(토 · 일)
+  ///
+  /// In ko, this message translates to:
+  /// **'주말'**
+  String get walkAlarmPresetWeekend;
+
+  /// 알람 편집 — 제목 입력
+  ///
+  /// In ko, this message translates to:
+  /// **'제목'**
+  String get walkAlarmTitle;
+
+  /// 알람 편집 — 제목 입력 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 출근'**
+  String get walkAlarmTitleHint;
+
+  /// 알람 편집 — 무음 모드 체크 줄
+  ///
+  /// In ko, this message translates to:
+  /// **'무음 · 진동 모드에선 진동만'**
+  String get walkAlarmSilentWhenMuted;
+
+  /// 알람 편집 — 무음 모드 체크 줄 보조 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'폰이 무음이나 진동 모드면 소리 없이 진동으로 울려요'**
+  String get walkAlarmSilentWhenMutedHint;
+
+  /// 알람 목록 — 한 번 알람 행의 남은 시간 줄
+  ///
+  /// In ko, this message translates to:
+  /// **'한 번 · {remaining}'**
+  String walkAlarmOneShotRow(String remaining);
 
   /// 설정 화면 제목
   ///

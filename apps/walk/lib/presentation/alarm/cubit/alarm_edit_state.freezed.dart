@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AlarmEditState {
 
- Alarm get alarm; bool get busy;
+ Alarm get alarm; OneShotDraft get draft; bool get busy;
 /// Create a copy of AlarmEditState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $AlarmEditStateCopyWith<AlarmEditState> get copyWith => _$AlarmEditStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AlarmEditState&&(identical(other.alarm, alarm) || other.alarm == alarm)&&(identical(other.busy, busy) || other.busy == busy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AlarmEditState&&(identical(other.alarm, alarm) || other.alarm == alarm)&&(identical(other.draft, draft) || other.draft == draft)&&(identical(other.busy, busy) || other.busy == busy));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,alarm,busy);
+int get hashCode => Object.hash(runtimeType,alarm,draft,busy);
 
 @override
 String toString() {
-  return 'AlarmEditState(alarm: $alarm, busy: $busy)';
+  return 'AlarmEditState(alarm: $alarm, draft: $draft, busy: $busy)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $AlarmEditStateCopyWith<$Res>  {
   factory $AlarmEditStateCopyWith(AlarmEditState value, $Res Function(AlarmEditState) _then) = _$AlarmEditStateCopyWithImpl;
 @useResult
 $Res call({
- Alarm alarm, bool busy
+ Alarm alarm, OneShotDraft draft, bool busy
 });
 
 
@@ -62,10 +62,11 @@ class _$AlarmEditStateCopyWithImpl<$Res>
 
 /// Create a copy of AlarmEditState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? alarm = null,Object? busy = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? alarm = null,Object? draft = null,Object? busy = null,}) {
   return _then(AlarmEditState(
 alarm: null == alarm ? _self.alarm : alarm // ignore: cast_nullable_to_non_nullable
-as Alarm,busy: null == busy ? _self.busy : busy // ignore: cast_nullable_to_non_nullable
+as Alarm,draft: null == draft ? _self.draft : draft // ignore: cast_nullable_to_non_nullable
+as OneShotDraft,busy: null == busy ? _self.busy : busy // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

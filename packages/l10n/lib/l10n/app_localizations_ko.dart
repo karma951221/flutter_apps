@@ -1563,22 +1563,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAlarmRepeatOnce => '1회';
 
   @override
-  String get walkAlarmNew => '새 알람';
-
-  @override
-  String get walkAlarmEdit => '알람 편집';
-
-  @override
-  String get walkAlarmRepeat => '반복';
-
-  @override
-  String get walkAlarmLabel => '라벨';
-
-  @override
-  String get walkAlarmLabelHint => '예: 출근';
-
-  @override
-  String get walkAlarmVibrate => '진동';
+  String get walkAlarmEdit => '알람 수정';
 
   @override
   String get walkAlarmSound => '알람음';
@@ -1618,6 +1603,85 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkAlarmSaveFailed => '알람을 저장하지 못했어요';
+
+  @override
+  String get walkAlarmKindTitle => '어떤 알람을 만들까요';
+
+  @override
+  String get walkAlarmKindOneShot => '한 번';
+
+  @override
+  String get walkAlarmKindOneShotHint => '지금부터 얼마 뒤에 울려요';
+
+  @override
+  String get walkAlarmKindRepeat => '반복';
+
+  @override
+  String get walkAlarmKindRepeatHint => '정한 요일마다 울려요';
+
+  @override
+  String get walkAlarmNewOneShot => '한 번 알람';
+
+  @override
+  String get walkAlarmNewRepeat => '반복 알람';
+
+  @override
+  String walkAlarmAfter(String duration) {
+    return '$duration 뒤';
+  }
+
+  @override
+  String walkAlarmRingsAtChip(String time) {
+    return '$time에 울림';
+  }
+
+  @override
+  String walkAlarmAddHour(int hours) {
+    return '+$hours시간';
+  }
+
+  @override
+  String walkAlarmAddMinutes(int minutes) {
+    return '+$minutes분';
+  }
+
+  @override
+  String get walkAlarmReset => '초기화';
+
+  @override
+  String get walkAlarmNeedTime => '시간을 더해 주세요';
+
+  @override
+  String get walkAlarmNeedDays => '요일을 골라 주세요';
+
+  @override
+  String get walkAlarmPickTimeConfirm => '이 시각으로';
+
+  @override
+  String get walkAlarmPresetEveryday => '매일';
+
+  @override
+  String get walkAlarmPresetWeekdays => '평일';
+
+  @override
+  String get walkAlarmPresetWeekend => '주말';
+
+  @override
+  String get walkAlarmTitle => '제목';
+
+  @override
+  String get walkAlarmTitleHint => '예: 출근';
+
+  @override
+  String get walkAlarmSilentWhenMuted => '무음 · 진동 모드에선 진동만';
+
+  @override
+  String get walkAlarmSilentWhenMutedHint => '폰이 무음이나 진동 모드면 소리 없이 진동으로 울려요';
+
+  @override
+  String walkAlarmOneShotRow(String remaining) {
+    return '한 번 · $remaining';
+  }
 
   @override
   String get walkSettingsTitle => '설정';

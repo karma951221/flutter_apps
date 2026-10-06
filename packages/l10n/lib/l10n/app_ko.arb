@@ -2184,29 +2184,9 @@
   "@walkAlarmRepeatOnce": {
     "description": "반복 요약 — 반복 없음(한 번 울리고 꺼짐)"
   },
-  "walkAlarmNew": "새 알람",
-  "@walkAlarmNew": {
-    "description": "알람 추가 화면 제목"
-  },
-  "walkAlarmEdit": "알람 편집",
+  "walkAlarmEdit": "알람 수정",
   "@walkAlarmEdit": {
-    "description": "알람 편집 화면 제목"
-  },
-  "walkAlarmRepeat": "반복",
-  "@walkAlarmRepeat": {
-    "description": "편집 화면 요일 칩 섹션 제목"
-  },
-  "walkAlarmLabel": "라벨",
-  "@walkAlarmLabel": {
-    "description": "편집 화면 라벨 입력 제목"
-  },
-  "walkAlarmLabelHint": "예: 출근",
-  "@walkAlarmLabelHint": {
-    "description": "라벨 입력 힌트"
-  },
-  "walkAlarmVibrate": "진동",
-  "@walkAlarmVibrate": {
-    "description": "편집 화면 진동 스위치"
+    "description": "기존 알람 편집 화면 제목"
   },
   "walkAlarmSound": "알람음",
   "@walkAlarmSound": {
@@ -2259,6 +2239,126 @@
   "walkAlarmSaveFailed": "알람을 저장하지 못했어요",
   "@walkAlarmSaveFailed": {
     "description": "알람 저장 · 삭제 · 켜기 실패 스낵바"
+  },
+  "walkAlarmKindTitle": "어떤 알람을 만들까요",
+  "@walkAlarmKindTitle": {
+    "description": "알람 종류 시트 제목"
+  },
+  "walkAlarmKindOneShot": "한 번",
+  "@walkAlarmKindOneShot": {
+    "description": "알람 종류 시트 — 한 번 울리는 알람"
+  },
+  "walkAlarmKindOneShotHint": "지금부터 얼마 뒤에 울려요",
+  "@walkAlarmKindOneShotHint": {
+    "description": "알람 종류 시트 — 한 번 알람 설명"
+  },
+  "walkAlarmKindRepeat": "반복",
+  "@walkAlarmKindRepeat": {
+    "description": "알람 종류 시트 — 요일마다 울리는 알람"
+  },
+  "walkAlarmKindRepeatHint": "정한 요일마다 울려요",
+  "@walkAlarmKindRepeatHint": {
+    "description": "알람 종류 시트 — 반복 알람 설명"
+  },
+  "walkAlarmNewOneShot": "한 번 알람",
+  "@walkAlarmNewOneShot": {
+    "description": "새 한 번 알람 편집 화면 제목"
+  },
+  "walkAlarmNewRepeat": "반복 알람",
+  "@walkAlarmNewRepeat": {
+    "description": "새 반복 알람 편집 화면 제목"
+  },
+  "walkAlarmAfter": "{duration} 뒤",
+  "@walkAlarmAfter": {
+    "description": "한 번 알람 편집 — 울릴 때까지 남은 시간(큰 글자)",
+    "placeholders": {
+      "duration": {
+        "type": "String",
+        "example": "1시간 25분"
+      }
+    }
+  },
+  "walkAlarmRingsAtChip": "{time}에 울림",
+  "@walkAlarmRingsAtChip": {
+    "description": "한 번 알람 편집 — 울릴 시각 칩. 누르면 시각을 직접 고른다",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "오후 4:50"
+      }
+    }
+  },
+  "walkAlarmAddHour": "+{hours}시간",
+  "@walkAlarmAddHour": {
+    "description": "한 번 알람 편집 — 시간 더하기 버튼",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      }
+    }
+  },
+  "walkAlarmAddMinutes": "+{minutes}분",
+  "@walkAlarmAddMinutes": {
+    "description": "한 번 알람 편집 — 분 더하기 버튼",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "walkAlarmReset": "초기화",
+  "@walkAlarmReset": {
+    "description": "한 번 알람 편집 — 남은 시간을 0 으로"
+  },
+  "walkAlarmNeedTime": "시간을 더해 주세요",
+  "@walkAlarmNeedTime": {
+    "description": "한 번 알람 편집 — 1분 미만이라 저장할 수 없을 때 안내"
+  },
+  "walkAlarmNeedDays": "요일을 골라 주세요",
+  "@walkAlarmNeedDays": {
+    "description": "반복 알람 편집 — 요일이 없어 저장할 수 없을 때 안내"
+  },
+  "walkAlarmPickTimeConfirm": "이 시각으로",
+  "@walkAlarmPickTimeConfirm": {
+    "description": "한 번 알람 편집 — 시각 휠 시트의 확인 버튼"
+  },
+  "walkAlarmPresetEveryday": "매일",
+  "@walkAlarmPresetEveryday": {
+    "description": "반복 알람 편집 — 빠른 버튼(월~일)"
+  },
+  "walkAlarmPresetWeekdays": "평일",
+  "@walkAlarmPresetWeekdays": {
+    "description": "반복 알람 편집 — 빠른 버튼(월~금)"
+  },
+  "walkAlarmPresetWeekend": "주말",
+  "@walkAlarmPresetWeekend": {
+    "description": "반복 알람 편집 — 빠른 버튼(토 · 일)"
+  },
+  "walkAlarmTitle": "제목",
+  "@walkAlarmTitle": {
+    "description": "알람 편집 — 제목 입력"
+  },
+  "walkAlarmTitleHint": "예: 출근",
+  "@walkAlarmTitleHint": {
+    "description": "알람 편집 — 제목 입력 힌트"
+  },
+  "walkAlarmSilentWhenMuted": "무음 · 진동 모드에선 진동만",
+  "@walkAlarmSilentWhenMuted": {
+    "description": "알람 편집 — 무음 모드 체크 줄"
+  },
+  "walkAlarmSilentWhenMutedHint": "폰이 무음이나 진동 모드면 소리 없이 진동으로 울려요",
+  "@walkAlarmSilentWhenMutedHint": {
+    "description": "알람 편집 — 무음 모드 체크 줄 보조 설명"
+  },
+  "walkAlarmOneShotRow": "한 번 · {remaining}",
+  "@walkAlarmOneShotRow": {
+    "description": "알람 목록 — 한 번 알람 행의 남은 시간 줄",
+    "placeholders": {
+      "remaining": {
+        "type": "String",
+        "example": "1시간 25분 뒤"
+      }
+    }
   },
   "walkSettingsTitle": "설정",
   "@walkSettingsTitle": {

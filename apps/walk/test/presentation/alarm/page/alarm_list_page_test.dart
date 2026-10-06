@@ -273,7 +273,7 @@ void main() {
 
     await tester.tap(find.text('오전 7:00'));
     await tester.pumpAndSettle();
-    expect(find.text('알람 편집'), findsOneWidget);
+    expect(find.text('알람 수정'), findsOneWidget);
     expect(find.widgetWithText(TextField, '출근'), findsOneWidget);
 
     await tester.tap(find.text('저장'));
@@ -423,6 +423,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(AlarmEditPage), findsOneWidget);
-    expect(find.text('새 알람'), findsOneWidget);
+    expect(find.text('한 번 알람'), findsOneWidget);
   });
 }
