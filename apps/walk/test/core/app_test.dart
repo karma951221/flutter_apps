@@ -6,7 +6,6 @@ import 'package:permission/permission.dart';
 import 'package:walk/core/app.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
-import 'package:walk/domain/app_info/app_info_source.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
 import 'package:walk/domain/settings/repository/settings_repository.dart';
 import 'package:walk/domain/walk/entity/health_access.dart';
@@ -18,8 +17,6 @@ class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
 class _MockWalk extends Mock implements WalkUseCase {}
 
 class _MockRequester extends Mock implements PermissionRequester {}
-
-class _MockAppInfo extends Mock implements AppInfoSource {}
 
 class _MockSettings extends Mock implements SettingsRepository {}
 
@@ -45,13 +42,10 @@ void main() {
       when(alarms.sync).thenAnswer((_) async {});
       when(walk.access).thenAnswer((_) async => HealthAccess.permissionDenied);
       when(() => walk.permissionDeclinedThisSession).thenReturn(false);
-      final appInfo = _MockAppInfo();
-      when(appInfo.version).thenAnswer((_) async => '1.0.0 (1)');
       settings = _MockSettings();
       getIt
         ..registerSingleton<AlarmUseCase>(alarms)
         ..registerSingleton<WalkUseCase>(walk)
-        ..registerSingleton<AppInfoSource>(appInfo)
         ..registerSingleton<SettingsRepository>(settings)
         ..registerSingleton<Clock>(Clock())
         ..registerSingleton<AlarmPermissions>(

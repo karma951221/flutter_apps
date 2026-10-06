@@ -1841,19 +1841,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkSettingsThemeDark => 'Dark';
 
   @override
-  String get walkSettingsAbout => 'About';
-
-  @override
-  String get walkSettingsVersion => 'Version';
-
-  @override
-  String get walkSettingsLicenses => 'Open source licenses';
-
-  @override
-  String get walkSettingsInactiveNotice =>
-      'Repeating alarms may stop if you don\'t open the app for more than 14 days.';
-
-  @override
   String get failureWalkDogRequired => 'Select the dog you walked with';
 
   @override

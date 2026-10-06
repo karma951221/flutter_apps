@@ -1736,19 +1736,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkSettingsThemeDark => 'ダーク';
 
   @override
-  String get walkSettingsAbout => 'アプリ情報';
-
-  @override
-  String get walkSettingsVersion => 'バージョン';
-
-  @override
-  String get walkSettingsLicenses => 'オープンソースライセンス';
-
-  @override
-  String get walkSettingsInactiveNotice =>
-      '14日以上アプリを開かないと、繰り返しアラームが止まることがあります。';
-
-  @override
   String get failureWalkDogRequired => '一緒に散歩した犬を選んでください';
 
   @override

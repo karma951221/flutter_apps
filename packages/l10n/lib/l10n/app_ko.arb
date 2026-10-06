@@ -2432,22 +2432,6 @@
   "@walkSettingsThemeDark": {
     "description": "테마 — 어둡게"
   },
-  "walkSettingsAbout": "앱 정보",
-  "@walkSettingsAbout": {
-    "description": "설정 — 앱 정보 섹션 제목"
-  },
-  "walkSettingsVersion": "버전",
-  "@walkSettingsVersion": {
-    "description": "설정 — 앱 버전 행"
-  },
-  "walkSettingsLicenses": "오픈소스 라이선스",
-  "@walkSettingsLicenses": {
-    "description": "설정 — 오픈소스 라이선스 행"
-  },
-  "walkSettingsInactiveNotice": "앱을 14일 넘게 열지 않으면 반복 알람이 멈출 수 있어요.",
-  "@walkSettingsInactiveNotice": {
-    "description": "설정 하단 안내 — 반복 알람은 14일치만 미리 예약된다"
-  },
   "failureWalkDogRequired": "함께 산책한 반려견을 선택해 주세요",
   "@failureWalkDogRequired": {
     "description": "산책을 시작하거나 저장할 때 반려견이 한 마리도 선택되지 않았을 때"

@@ -1738,18 +1738,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkSettingsThemeDark => '다크';
 
   @override
-  String get walkSettingsAbout => '앱 정보';
-
-  @override
-  String get walkSettingsVersion => '버전';
-
-  @override
-  String get walkSettingsLicenses => '오픈소스 라이선스';
-
-  @override
-  String get walkSettingsInactiveNotice => '앱을 14일 넘게 열지 않으면 반복 알람이 멈출 수 있어요.';
-
-  @override
   String get failureWalkDogRequired => '함께 산책한 반려견을 선택해 주세요';
 
   @override

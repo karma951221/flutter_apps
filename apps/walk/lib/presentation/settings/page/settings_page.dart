@@ -1,43 +1,26 @@
-import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 import 'package:permission/permission.dart';
 
-import '../../../domain/app_info/app_info_source.dart';
 import '../../../domain/settings/entity/app_settings.dart';
 import '../../../domain/walk/entity/health_access.dart';
 import '../../walk/cubit/step_goal_cubit.dart';
 import '../../walk/format/walk_format.dart';
-import '../cubit/app_info_cubit.dart';
 import '../cubit/settings_permissions_cubit.dart';
 import '../cubit/settings_permissions_state.dart';
 import '../cubit/theme_cubit.dart';
 import '../widget/step_goal_sheet.dart';
 
-/// 설정 탭 — 걷기(하루 목표) · 권한 모아보기 · 테마 · 앱 정보.
+/// 설정 탭 — 걷기(하루 목표) · 권한 모아보기 · 테마.
 /// [SettingsPermissionsCubit] 은 셸이, [ThemeCubit] · [StepGoalCubit] 은 앱이 제공한다.
-class SettingsPage extends StatefulWidget {
+class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
-
-  @override
-  State<SettingsPage> createState() => _SettingsPageState();
-}
-
-class _SettingsPageState extends State<SettingsPage> {
-  late final _appInfo = AppInfoCubit(getIt<AppInfoSource>())..load();
-
-  @override
-  void dispose() {
-    _appInfo.close();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final permissions = context.read<SettingsPermissionsCubit>();
     return Scaffold(
       appBar: AppBar(title: Text(l10n.walkSettingsTitle)),
@@ -111,49 +94,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                 ],
               ),
-            ),
-          ),
-          _SectionHeader(l10n.walkSettingsAbout),
-          BlocBuilder<AppInfoCubit, String?>(
-            bloc: _appInfo,
-            builder: (context, version) => Column(
-              children: [
-                AppListTile(
-                  title: Text(l10n.walkSettingsVersion),
-                  trailing: Text(version ?? ''),
-                ),
-                AppListTile(
-                  title: Text(l10n.walkSettingsLicenses),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => showLicensePage(
-                    context: context,
-                    applicationName: l10n.walkAppTitle,
-                    applicationVersion: version,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: AppSpacing.md,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: Text(
-                    l10n.walkSettingsInactiveNotice,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
         ],

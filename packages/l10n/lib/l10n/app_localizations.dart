@@ -3368,30 +3368,6 @@ abstract class AppLocalizations {
   /// **'다크'**
   String get walkSettingsThemeDark;
 
-  /// 설정 — 앱 정보 섹션 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'앱 정보'**
-  String get walkSettingsAbout;
-
-  /// 설정 — 앱 버전 행
-  ///
-  /// In ko, this message translates to:
-  /// **'버전'**
-  String get walkSettingsVersion;
-
-  /// 설정 — 오픈소스 라이선스 행
-  ///
-  /// In ko, this message translates to:
-  /// **'오픈소스 라이선스'**
-  String get walkSettingsLicenses;
-
-  /// 설정 하단 안내 — 반복 알람은 14일치만 미리 예약된다
-  ///
-  /// In ko, this message translates to:
-  /// **'앱을 14일 넘게 열지 않으면 반복 알람이 멈출 수 있어요.'**
-  String get walkSettingsInactiveNotice;
-
   /// 산책을 시작하거나 저장할 때 반려견이 한 마리도 선택되지 않았을 때
   ///
   /// In ko, this message translates to:

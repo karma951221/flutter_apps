@@ -7,7 +7,6 @@ import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
-import 'package:walk/domain/app_info/app_info_source.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
 import 'package:walk/domain/settings/repository/settings_repository.dart';
 import 'package:walk/domain/walk/entity/health_access.dart';
@@ -22,8 +21,6 @@ class _MockRequester extends Mock implements PermissionRequester {}
 class _MockWalk extends Mock implements WalkUseCase {}
 
 class _MockSettings extends Mock implements SettingsRepository {}
-
-class _MockAppInfo extends Mock implements AppInfoSource {}
 
 void main() {
   late _MockRequester notification;
@@ -49,9 +46,6 @@ void main() {
     when(walk.access).thenAnswer((_) async => HealthAccess.notInstalled);
     when(settings.load).thenReturn(const AppSettings());
     when(() => settings.save(any())).thenAnswer((_) async {});
-    final appInfo = _MockAppInfo();
-    when(appInfo.version).thenAnswer((_) async => '1.0.0 (1)');
-    getIt.registerSingleton<AppInfoSource>(appInfo);
     permissions = SettingsPermissionsCubit(
       AlarmPermissions(
         notification: notification,
@@ -99,14 +93,22 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('권한 상태 · 버전 · 안내를 보인다', (tester) async {
+  testWidgets('권한 상태를 보인다', (tester) async {
     await pump(tester);
 
     expect(find.text('허용됨'), findsNWidgets(2));
     expect(find.text('허용 필요 ›'), findsOneWidget);
     expect(find.text('설치 필요 ›'), findsOneWidget);
-    expect(find.text('1.0.0 (1)'), findsOneWidget);
-    expect(find.text('앱을 14일 넘게 열지 않으면 반복 알람이 멈출 수 있어요.'), findsOneWidget);
+  });
+
+  testWidgets('앱 정보(버전 · 라이선스)와 14일 안내가 없다', (tester) async {
+    await pump(tester);
+
+    expect(find.text('앱 정보'), findsNothing);
+    expect(find.text('버전'), findsNothing);
+    expect(find.text('1.0.0 (1)'), findsNothing);
+    expect(find.text('오픈소스 라이선스'), findsNothing);
+    expect(find.textContaining('14일'), findsNothing);
   });
 
   testWidgets('권한 행을 누르면 해당 설정을 연다', (tester) async {
@@ -194,15 +196,6 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(walk.openInstall).called(1);
-  });
-
-  testWidgets('오픈소스 라이선스 행은 LicensePage 를 연다', (tester) async {
-    await pump(tester);
-
-    await tester.tap(find.text('오픈소스 라이선스'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(LicensePage), findsOneWidget);
   });
 
   testWidgets('걷기 섹션의 하루 목표 행이 현재 목표를 보여준다', (tester) async {
