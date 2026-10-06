@@ -175,6 +175,19 @@ Health Connect 는 두 번 거부하면 다이얼로그를 조용히 생략하�
 같은 [알람 끄기] · [5분 뒤 다시 울림] 이라 동작은 맞으므로 그대로 두기로 했다(사용자 결정). 실제 폰에서
 써 보고 거슬리면 다시 본다.
 
+## 2026-10-07 — 앱 아이콘 · 스플래시(웨이브 2)
+
+[설계](../../../docs/superpowers/specs/2026-10-05-walk-app-face-design.md).
+
+- 아이콘은 VectorDrawable 로 손으로 옮겼다. 스펙대로 미리보기 좌표를 0.9 배하면 안전 원(반지름 33)을
+  벗어나 0.6 배로 줄였다(최대 반지름 32.5, `66a2326`).
+- 스플래시 아이콘 `splash_icon` 은 그림을 다시 그리지 않고 전경 drawable 을 288dp 로 감싼 layer-list 다.
+  108 캔버스를 288dp 로 키우면 안전 원이 반지름 88dp 가 되어 스플래시 아이콘 원(지름 192)에 든다.
+  그림을 바꾸면 전경 하나만 고친다.
+- 안드로이드 12 미만 `launch_background` 도 같은 `splash_icon` 을 가운데 둔다. minSdk 26 이라 빌드는
+  `drawable/` 과 `drawable-v21/` 를 하나로 합친다(두 파일은 같게 둔다). 다크는 `drawable-night`.
+- 리소스라 단위 테스트 대신 `test/convention/android_splash_resources_test.dart` 가 파일끼리 맞물리는지 본다.
+
 ## 알려진 한계
 
 - 걷기: Health Connect 읽기 실패는 `health` 플러그인이 `success(null)` 로 삼켜 빈 결과가 된다.

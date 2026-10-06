@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 시작 화면 아이콘. 적응형 아이콘 전경(108 캔버스, 안전 원 반지름 33)을 288dp 로 그린다.
+     안드로이드 12+ 스플래시 아이콘 규격(288dp 중 지름 192 원)에서 그림은 반지름 88dp 안에 든다 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:width="288dp"
+        android:height="288dp"
+        android:drawable="@drawable/ic_launcher_foreground" />
+</layer-list>

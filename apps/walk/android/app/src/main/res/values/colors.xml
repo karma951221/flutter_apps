@@ -2,4 +2,7 @@
 <resources>
     <!-- 적응형 아이콘 배경. 그림은 drawable/ic_launcher_foreground.xml -->
     <color name="ic_launcher_background">#1D9E75</color>
+    <!-- 시작 화면 배경. 라이트는 아이콘 배경과 같은 초록, 다크는 진한 초록 -->
+    <color name="splash_background">#1D9E75</color>
+    <color name="splash_background_dark">#0F6E56</color>
 </resources>

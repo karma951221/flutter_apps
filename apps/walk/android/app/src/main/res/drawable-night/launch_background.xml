@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 안드로이드 12 미만 시작 화면(다크): 초록 바탕 가운데 알람시계. 12 이상은 values(-night)-v31 의 시스템 스플래시 -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/splash_background_dark" />
+    <item
+        android:drawable="@drawable/splash_icon"
+        android:gravity="center" />
+</layer-list>

@@ -50,6 +50,7 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `presentation/walk/widget/today_goal_card_test.dart` | `TodayGoalCard` | 걸음 · 목표 문구 · 링 접근성 비율 · 거리/칼로리 지표 · 링 탭 → 남은 걸음 · 다시 탭 → 지표 · **탭해도 카드 높이 그대로** · 거리 없으면 남은 걸음만 · 달성 배지 · 3초 뒤 복귀 |
 | `presentation/walk/widget/period_summary_test.dart` | `PeriodSummary` | 달성 n/m일(오늘 이후 제외, 지난 기간은 전부) · 네 지표 타일 |
 | `convention/package_boundary_test.dart` | `pubspec.yaml` | `feature_*` · `supabase_flutter` 의존 없음 · `alarm` 은 `third_party/alarm` path 의존(FORK.md · LICENSE 있음) · 포크는 루트 workspace 멤버 아님 |
+| `convention/android_splash_resources_test.dart` | `android/app/src/main/res` 시작 화면 리소스 | 배경 색 라이트 #1D9E75 · 다크 #0F6E56 · `splash_icon` 은 전경을 288dp 로 · `values(-night)-v31` `LaunchTheme` 의 스플래시 배경 · 아이콘(아이콘 배경 없음) · 12 미만 `launch_background`(drawable · v21 · night) 초록 바탕 가운데 아이콘 · `NormalTheme` 은 `?android:colorBackground` 유지 |
 
 걷기 표의 굵은 항목은 최종 리뷰에서 고친 것의 회귀 테스트다([기록](history.md#2026-09-27--최종-리뷰에서-고친-것)).
 
