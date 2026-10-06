@@ -28,6 +28,26 @@ void main() {
     expect(prefs.getString(PrefsAlarmRepository.key), isNotNull);
   });
 
+  test('다른 isolate(헤드리스 엔진)가 쓴 값을 읽는다 — 메모리 사본을 다시 읽는다', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final repository = PrefsAlarmRepository(prefs);
+    expect(await repository.load(), isEmpty);
+    // 다른 isolate 의 쓰기: 디스크(플랫폼 저장소)만 바뀌고 이 isolate 의 사본은 그대로다.
+    final skipped = Alarm(
+      id: 1,
+      hour: 7,
+      minute: 0,
+      repeat: const {Weekday.tue},
+      skippedAt: DateTime(2026, 9, 29, 7),
+    );
+    SharedPreferences.setMockInitialValues({
+      PrefsAlarmRepository.key: jsonEncode([skipped.toJson()]),
+    });
+
+    expect(await repository.load(), [skipped]);
+  });
+
   test('빈 목록으로 저장하면 비운다', () async {
     SharedPreferences.setMockInitialValues({});
     final repository = PrefsAlarmRepository(await SharedPreferences.getInstance());
