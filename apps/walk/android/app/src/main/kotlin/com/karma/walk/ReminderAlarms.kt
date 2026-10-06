@@ -72,7 +72,7 @@ internal object ReminderAlarms {
         context.getSystemService(AlarmManager::class.java).cancel(fireIntent(context, id))
     }
 
-    /** 알림을 띄운다. 알림 권한이 없으면 시스템이 조용히 무시한다. */
+    /** 알림을 띄운다. 울릴 시각에 저절로 닫힌다. 알림 권한이 없으면 시스템이 조용히 무시한다. */
     fun show(context: Context, entry: ReminderEntry) {
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
@@ -96,6 +96,7 @@ internal object ReminderAlarms {
             .setCategory(Notification.CATEGORY_REMINDER)
             .setContentIntent(open)
             .setAutoCancel(true)
+            .setTimeoutAfter(ReminderRules.timeoutAfter(entry, System.currentTimeMillis()))
         for (action in entry.actions) {
             val name = when (action.action) {
                 "skip" -> ACTION_SKIP

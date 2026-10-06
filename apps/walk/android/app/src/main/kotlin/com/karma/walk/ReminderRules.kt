@@ -51,6 +51,30 @@ internal class ReminderBook(entries: Collection<ReminderEntry> = emptyList()) {
         entries.remove(id)
     }
 
+    /**
+     * 알림 버튼([action] 은 [ReminderAction.action])을 눌렀을 때.
+     * - `dismiss`([울리기]): [ReminderRules.Action.CLOSE] — 알림만 닫는다. 항목은 [ReminderEntry.shown]
+     *   으로 울릴 시각까지 남긴다(빠지면 다음 sync 가 다시 걸어 같은 알림이 또 뜬다).
+     * - `skip`: [ReminderRules.Action.SKIP] — Dart `skipOccurrence`. 항목은 Dart sync 가 `cancel` 로 지운다.
+     * - 항목이 없거나(취소됨) 울릴 시각이 지났거나 모르는 버튼이면 [ReminderRules.Action.STALE] — Dart 에
+     *   보내지 않는다. 울린 뒤 스누즈된 회차를 옛 알림이 지우면 안 된다. 지난 항목은 지운다.
+     */
+    fun onAction(id: Int, action: String, nowMillis: Long): ReminderRules.Action {
+        val entry = entries[id] ?: return ReminderRules.Action.STALE
+        if (entry.ringAtMillis <= nowMillis) {
+            entries.remove(id)
+            return ReminderRules.Action.STALE
+        }
+        return when (action) {
+            "dismiss" -> {
+                markShown(id)
+                ReminderRules.Action.CLOSE
+            }
+            "skip" -> ReminderRules.Action.SKIP
+            else -> ReminderRules.Action.STALE
+        }
+    }
+
     /** 울릴 시각이 지난 항목을 지우고 그 id 를 돌려준다. */
     fun pruneExpired(nowMillis: Long): List<Int> {
         val expired = entries.values.filter { it.ringAtMillis <= nowMillis }.map { it.id }
@@ -69,6 +93,16 @@ internal object ReminderRules {
     enum class Fire { SHOW, DROP, IGNORE }
 
     enum class Boot { ARM, SHOW_NOW, MARK_SHOWN, KEEP, DROP }
+
+    /** 알림 버튼([ReminderBook.onAction]). */
+    enum class Action { CLOSE, SKIP, STALE }
+
+    /**
+     * 띄운 알림이 저절로 닫힐 때까지(`Notification.Builder.setTimeoutAfter`) — 울릴 시각. Dart sync 가
+     * 돌지 않아도(앱이 꺼진 채 울리고 스누즈 · 끄기) 지난 회차의 알림이 남지 않는다.
+     */
+    fun timeoutAfter(entry: ReminderEntry, nowMillis: Long): Long =
+        maxOf(1L, entry.ringAtMillis - nowMillis)
 
     /** `schedule` 받았을 때. 띄울 시각이 지났으면 바로 띄운다(공휴일 알림의 `at = now`). */
     fun onSchedule(entry: ReminderEntry, nowMillis: Long): Schedule = when {

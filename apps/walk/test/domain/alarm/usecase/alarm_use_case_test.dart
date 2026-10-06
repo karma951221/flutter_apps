@@ -129,9 +129,6 @@ class _FakeReminders implements ReminderScheduler {
     reminders[reminder.id] = reminder;
   }
 
-  /// [울리기] — 계약상 알림만 닫고 저장 항목은 울릴 시각까지 남긴다(`scheduled` 가 계속 돌려준다).
-  void dismiss(int reminderId) {}
-
   @override
   Future<void> cancel(int reminderId) async {
     cancelCalls.add(reminderId);
@@ -1243,18 +1240,6 @@ void main() {
 
         expect(reminders.scheduleCalls, isEmpty);
         expect(reminders.entries, {holidayId(1, wednesday7): DateTime(2026, 9, 29, 9)});
-      });
-
-      test('[울리기] 로 닫은 미리 알림은 다음 sync 에서 다시 띄우지 않는다', () async {
-        clock.current = DateTime(2026, 9, 29, 9);
-        await useCase.save(const Alarm(hour: 7, minute: 0, repeat: weekdays));
-        reminders.dismiss(holidayId(1, wednesday7));
-
-        clock.current = DateTime(2026, 9, 29, 20);
-        reminders.scheduleCalls.clear();
-        await useCase.sync();
-
-        expect(reminders.scheduleCalls, isEmpty);
       });
 
       test('떠 있는 공휴일 알림도 울릴 시각이 바뀌면 새 문구로 다시 띄운다', () async {

@@ -113,6 +113,59 @@ class ReminderRulesTest {
         assertEquals(ReminderRules.Fire.IGNORE, ReminderRules.onFire(null, now))
     }
 
+    // ── 알림 버튼 · 저절로 닫힘 ──
+
+    @Test
+    fun `ring (dismiss) only closes the notification, the shown entry stays until ringAt`() {
+        val book = ReminderBook()
+        book.put(entry(at = now - minute))
+        book.markShown(1_002_406)
+
+        assertEquals(ReminderRules.Action.CLOSE, book.onAction(1_002_406, "dismiss", now))
+
+        val kept = book.get(1_002_406)!!
+        assertTrue(kept.shown)
+        assertEquals(listOf(1_002_406), book.scheduled(now).map { it.id })
+    }
+
+    @Test
+    fun `skip goes to Dart while the ring time is ahead, entry untouched`() {
+        val book = ReminderBook()
+        book.put(entry(at = now - minute))
+        book.markShown(1_002_406)
+
+        assertEquals(ReminderRules.Action.SKIP, book.onAction(1_002_406, "skip", now))
+        assertTrue(book.get(1_002_406)!!.shown)
+    }
+
+    @Test
+    fun `a tap after the ring time is stale - not sent to Dart, expired entry removed`() {
+        val book = ReminderBook()
+        book.put(entry(at = now - 30 * minute, ringAt = now - 2 * minute))
+        book.markShown(1_002_406)
+
+        // 울린 뒤 스누즈된 회차를 이 알림이 지우면 안 된다.
+        assertEquals(ReminderRules.Action.STALE, book.onAction(1_002_406, "skip", now))
+        assertNull(book.get(1_002_406))
+        assertEquals(ReminderRules.Action.STALE, book.onAction(1_002_406, "dismiss", now))
+    }
+
+    @Test
+    fun `a tap on a cancelled entry or an unknown action is stale`() {
+        val book = ReminderBook()
+        assertEquals(ReminderRules.Action.STALE, book.onAction(1_002_406, "skip", now))
+
+        book.put(entry(at = now - minute))
+        assertEquals(ReminderRules.Action.STALE, book.onAction(1_002_406, "open", now))
+        assertTrue(book.get(1_002_406) != null)
+    }
+
+    @Test
+    fun `a shown notification times out at the ring time`() {
+        assertEquals(30 * minute, ReminderRules.timeoutAfter(entry(ringAt = now + 30 * minute), now))
+        assertEquals(1L, ReminderRules.timeoutAfter(entry(ringAt = now), now))
+    }
+
     // ── 재부팅 · 업데이트 ──
 
     @Test
