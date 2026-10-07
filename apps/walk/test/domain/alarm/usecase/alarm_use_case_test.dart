@@ -1511,12 +1511,41 @@ void main() {
     RingLogEntry skipped(int packageId, DateTime at) =>
         RingLogEntry(at: at, packageId: packageId, kind: RingLogKind.skipped);
 
-    test('skipNext 는 건너뛴 회차(시각 · packageId)를 기록한다', () async {
+    test('skipNext 는 건너뛴 회차를 바로 기록하지 않고, 그 시각이 지난 sync 에서 기록한다', () async {
       repository.alarms = [daily];
 
       await useCase.skipNext(1);
+      expect(ringLog.entries, isEmpty, reason: '취소할 수 있으니 회차가 지나야 확정이다');
+
+      clock.current = DateTime(2026, 9, 29, 7, 1);
+      await useCase.sync();
+      await useCase.sync();
 
       expect(ringLog.entries, [skipped(pid(1, tuesday7), tuesday7)]);
+      expect(repository.alarms.single.skippedAt, isNull);
+    });
+
+    test('건너뛰기를 취소하면 그 회차가 지나도 기록하지 않는다', () async {
+      repository.alarms = [daily];
+      await useCase.skipNext(1);
+      await useCase.unskip(1);
+      await useCase.toggle(1, enabled: false);
+
+      clock.current = DateTime(2026, 9, 29, 7, 1);
+      await useCase.sync();
+
+      expect(ringLog.entries, isEmpty);
+    });
+
+    test('시각을 바꿔 건너뛰기가 지워지면 그 회차가 지나도 기록하지 않는다', () async {
+      repository.alarms = [daily];
+      final skippedAlarm = (await useCase.skipNext(1))!;
+      await useCase.save(skippedAlarm.copyWith(hour: 8));
+
+      clock.current = DateTime(2026, 9, 29, 8, 1);
+      await useCase.sync();
+
+      expect(ringLog.entries, isEmpty);
     });
 
     test('skipNext 가 바꾸지 않은 알람(1회성 · 꺼짐)은 기록하지 않는다', () async {
@@ -1527,16 +1556,22 @@ void main() {
 
       await useCase.skipNext(1);
       await useCase.skipNext(2);
+      clock.current = DateTime(2026, 9, 29, 7, 1);
+      await useCase.sync();
 
       expect(ringLog.entries, isEmpty);
     });
 
-    test('skipOccurrence(헤드리스 미리 알림 버튼) — 반복은 그 회차를 기록한다', () async {
+    test('skipOccurrence(헤드리스 미리 알림 버튼) — 반복은 그 회차가 지난 뒤 기록한다', () async {
       repository.alarms = [daily];
       await useCase.sync();
       final thursday7 = DateTime(2026, 10, 1, 7);
 
       await useCase.skipOccurrence(pid(1, thursday7));
+      expect(ringLog.entries, isEmpty);
+
+      clock.current = DateTime(2026, 10, 1, 7, 1);
+      await useCase.sync();
 
       expect(ringLog.entries, [skipped(pid(1, thursday7), thursday7)]);
     });
@@ -1568,6 +1603,10 @@ void main() {
 
       expect(result!.skippedAt, tuesday7);
       expect(repository.alarms.single.skippedAt, tuesday7);
+
+      clock.current = DateTime(2026, 9, 29, 7, 1);
+      await useCase.sync();
+      expect(repository.alarms.single.skippedAt, isNull, reason: '기록이 실패해도 지난 건너뛰기는 지운다');
     });
   });
 

@@ -57,6 +57,28 @@ void main() {
   );
 
   blocTest<AlarmHistoryCubit, AlarmHistoryState>(
+    '회차가 지났지만 아직 sync 가 기록하지 않은 건너뛰기(skippedAt)도 건너뜀으로 싣는다',
+    setUp: () {
+      when(() => ringLog.read(since: any(named: 'since'))).thenAnswer((_) async => [rang]);
+      when(() => useCase.list()).thenAnswer(
+        (_) async => [
+          work.copyWith(skippedAt: DateTime(2026, 10, 7, 7)),
+          const Alarm(id: 2, hour: 9, minute: 0, repeat: {Weekday.thu}).copyWith(
+            skippedAt: DateTime(2026, 10, 8, 9), // 아직 오지 않았다
+          ),
+        ],
+      );
+    },
+    build: build,
+    act: (cubit) => cubit.load(),
+    verify: (cubit) {
+      final groups = (cubit.state as AlarmHistoryLoaded).groups;
+      final skippedGroups = groups.where((g) => g.skipped);
+      expect(skippedGroups.map((g) => (g.alarmId, g.at)), [(1, DateTime(2026, 10, 7, 7))]);
+    },
+  );
+
+  blocTest<AlarmHistoryCubit, AlarmHistoryState>(
     '읽기에 실패하면 failure, 다시 읽으면 loading 을 거쳐 돌아온다',
     setUp: () =>
         when(() => ringLog.read(since: any(named: 'since'))).thenThrow(StateError('채널 실패')),

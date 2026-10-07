@@ -63,7 +63,8 @@ abstract interface class AlarmUseCase {
   /// 회차 하나를 쉰다(미리 알림의 [이번만 끄기] · [다음 알람 건너뛰기]). 반복이면 그 회차를
   /// `skippedAt` 으로, 1회성이면 알람을 끈다. 그 회차의 예약은 곧 울릴 참이어도 지운다.
   ///
-  /// [skipNext] 와 함께 건너뛴 회차를 울림 기록에 남긴다(그 회차의 시각으로, 실패는 삼킨다).
+  /// 1회성은 끈 회차를 바로 울림 기록에 남긴다(그 회차의 시각으로, 실패는 삼킨다). 반복은
+  /// [skipNext] 와 같이 회차가 지난 뒤 sync 가 남긴다 — 그 전에 취소하거나 시각을 바꿀 수 있다.
   Future<void> skipOccurrence(int packageId);
 
   /// 울리는 회차를 끈다.
@@ -299,12 +300,12 @@ class DefaultAlarmUseCase implements AlarmUseCase {
 
   /// [alarm] 의 [at] 회차를 건너뛰어 저장하고, 그 회차의 예약을 지운 뒤 sync 한다.
   /// sync 는 스누즈 보존 창 안의 회차를 남기므로 명시적으로 지운다.
+  /// 울림 기록에는 아직 쓰지 않는다 — 취소(unskip)하거나 시각을 바꿔 지워질 수 있어서, 회차가
+  /// 지나 `skippedAt` 이 남아 있을 때 [_clearPastSkips] 가 쓴다.
   Future<Alarm> _skip(Alarm alarm, DateTime at) async {
     final updated = alarm.copyWith(skippedAt: at);
-    final id = packageId(alarm.id, triggerIndex(at));
     await _put(updated);
-    await _cancelUnlessRinging(id);
-    await _logSkip(id, at);
+    await _cancelUnlessRinging(packageId(alarm.id, triggerIndex(at)));
     await _sync();
     return updated;
   }
@@ -519,10 +520,15 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     return updated;
   }
 
-  /// 지난(지금 이전) `skippedAt` 을 지워 저장한다. 바뀐 것이 없으면 저장하지 않는다.
+  /// 지난(지금 이전) `skippedAt` 을 울림 기록에 건너뜀으로 남기고 지워 저장한다. 끝까지 남은
+  /// 건너뛰기만 확정이라 이때 기록한다. 바뀐 것이 없으면 저장하지 않는다.
   Future<List<Alarm>> _clearPastSkips(List<Alarm> alarms, DateTime now) async {
     bool past(Alarm a) => !(a.skippedAt?.isAfter(now) ?? true);
     if (!alarms.any(past)) return alarms;
+    for (final a in alarms.where(past)) {
+      final at = a.skippedAt!;
+      await _logSkip(packageId(a.id, triggerIndex(at)), at);
+    }
     final updated = [for (final a in alarms) past(a) ? a.copyWith(skippedAt: null) : a];
     await _repository.save(updated);
     return updated;
