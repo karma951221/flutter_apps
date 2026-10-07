@@ -21,7 +21,7 @@ cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · �
 cd apps/walk/android
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ./gradlew :alarm:testDebugUnitTest   # 포크 — AudioFallbackTest · RingerMuteTest · EngineRegistryTest · SnoozeRuleTest · AutoStopTest · HostAlarmEventTest 등
-./gradlew :app:testDebugUnitTest     # 앱 — VerifiedReplaceTest · BackgroundQueueTest · ReminderRulesTest · HolidayCalendarRulesTest
+./gradlew :app:testDebugUnitTest     # 앱 — VerifiedReplaceTest · BackgroundQueueTest · ReminderRulesTest · HolidayCalendarRulesTest · CalendarPermissionRulesTest
 ```
 
 skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 전환이 없으면(KST) 스스로 건너뛴다 —
@@ -75,8 +75,9 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `data/alarm/channel_reminder_scheduler_test.dart` | `ChannelReminderScheduler`(`walk/reminders`) | 채널 이름 · `argumentsFor`(soon: epoch millis · 문구 · [이번만 끄기] · 라벨 없으면 기본 제목 / holiday: 날짜 · 이름 · 시각 · [다음 알람 건너뛰기] · [울리기] · 이름 없으면 날짜만 · 영어는 이름 없이) · `scheduled` 맵 · `schedule` 은 기기 언어 문구 · `cancel` id · 채널 없으면 빈 맵/무시 |
 | `data/alarm/channel_reminder_scheduler_symbols_test.dart` | `ChannelReminderScheduler.prepareArguments` | **날짜 기호를 아무도 올리지 않은 상태(헤드리스)에서도 `오전 7:00` · `10월 9일` 로 만든다(대체 문구 `07:00` · `10/9` 아님)** — 다른 테스트의 `initializeDateFormatting` 에 가리지 않게 파일을 나눴다 |
 | `data/alarm/channel_device_holiday_source_test.dart` | `ChannelDeviceHolidaySource`(`walk/holidays`) | 채널 이름 · `read` 는 범위를 날짜 문자열로 넘기고 날짜 · 이름으로 옮김 · 깨진 행 건너뜀 · 권한 없음/캘린더 없음(null) · 오류 · 채널 없음은 null · `calendarName` 그대로 · 오류/채널 없음 null |
-| `data/alarm/cached_holiday_calendar_test.dart` | `CachedHolidayCalendar` | 캐시 없으면 내장 표 · refresh 는 오늘부터 400일을 캐시하고 폰 캘린더로 답함 · 새 인스턴스(헤드리스)도 캐시를 읽음 · 하루 한 번(같은 날 건너뜀 · 다음 날 · force) · 폰 캘린더 없음(null)이면 내장 표, 그날은 다시 안 읽음 · 이름 없어도 폰 캘린더 출처 · 읽기가 던져도 끝나고 캐시 유지 · 오래된 캐시(maxAge) · 범위 밖 날짜 · 깨진 캐시는 내장 표 |
+| `data/alarm/cached_holiday_calendar_test.dart` | `CachedHolidayCalendar` | 캐시 없으면 내장 표 · refresh 는 오늘부터 400일을 캐시하고 폰 캘린더로 답함 · 새 인스턴스(헤드리스)도 캐시를 읽음 · 하루 한 번(같은 날 건너뜀 · 다음 날 · force) · 폰 캘린더 없음(null)이면 내장 표, 그날은 다시 안 읽음 · 이름 없어도 폰 캘린더 출처 · 읽기가 던져도 끝나고 캐시 유지 · 오래된 캐시(maxAge) · 범위 밖 날짜 · 깨진 캐시는 내장 표 · **캐시를 새로 쓰면 `refreshed` 로 알림(같은 날 건너뜀 · 읽기 실패는 안 알림, force 는 알림)** |
 | `data/alarm/prefs_alarm_repository_test.dart` | `PrefsAlarmRepository` | 없음 · 왕복 · 비우기 · **다른 isolate(헤드리스 엔진)가 쓴 값을 읽음(읽을 때마다 `reload`)** · **깨진 JSON/배열 아님/항목 하나 깨짐/문자열 아님 → 던지지 않고 읽을 수 있는 것만, 원본은 `walk.alarms.corrupt`** · 백업 덮어쓰기 · 정상 저장 복구 |
+| `data/alarm/calendar_permission_source_test.dart` | 캘린더 읽기 권한 채널(`walk/calendar_permission`) | `granted` · `denied` · `permanentlyDenied` 매핑 · 모르는 값 · null 은 거부 · request 는 네이티브 요청 · openSettings · 채널 없으면 거부(던지지 않음) · `HolidayCalendarAccess` 와 엮어 거부 → 다시 묻기 → 허용이면 캐시를 force 로 다시 읽음 |
 | `data/alarm/full_screen_intent_permission_source_test.dart` | 전체 화면 알림 채널 | `canUse` true/false · 요청은 설정을 열고 다시 읽음 · 채널 없으면 허용 |
 | `data/alarm/permission_handler_source_test.dart` | `permission_handler` 래퍼 | 상태 매핑 |
 | `data/settings/prefs_settings_repository_test.dart` | `PrefsSettingsRepository` | 없음/저장/모르는 값 → 시스템 · **문자열 아닌 값 → 시스템** · 목표 · 축하일 왕복 · 깨진 값 기본/clamp · 축하일 null 은 키 삭제 · **저장 도중 읽어 다시 저장해도 앞선 목표 유지** |
@@ -95,14 +96,14 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `presentation/alarm/page/alarm_edit_page_test.dart` | `AlarmEditPage` | **한 번**: 0분 뒤 · 저장 잠금 + 안내 · 더하기 · 초기화 · 시각 칩 → 휠 시트 고정 · 상대 모드는 분이 지나도 N 뒤 그대로 · 기존 알람은 그 시각으로 열고 저장 · 칩으로 고정한 시각으로 저장 · **연 초와 상관없이 다음 분 0초에 맞춰 갱신 · 그 뒤 매분** · **고정 모드 남은 시간이 줄고 1분 밑으로 내려가는 순간 잠금 · 안내** · **기준 시각이 늦어도 저장 때 다시 보고 오류 대신 잠금 · 안내** · **칩으로 고정하면 기준 시각을 새로 읽음** · **분 중간에 저장해도 칩에 보인 분(초 0)으로 저장** · **오늘이 아니면 칩에 날짜(`내일 (월) 오전 12:08에 울림`)** / **반복**: 휠 · 빠른 버튼 ↔ 요일 · 요일 없으면 잠금 + 안내(**요약 줄 자리 유지 — 제목 칸이 뛰지 않음**) · 저장 흐름 · 기존 알람 id · 라벨 유지 / 공통: 제목 · 알람음 · 무음 모드 체크 줄 순서(진동 토글 없음) · 체크 값 저장 · 실패 스낵바 · **권한 실패여도 닫히고 중복 저장 없음** · 저장 중 잠금 · 알람음 선택 반영 · **제목 입력 중 알람음 줄을 누르면 포커스를 풀고 돌아와도(뒤로 · 선택) 다시 잡지 않음** · 삭제 확인 · 320dp(요일 한 줄 · ko/en/ja) / **울림 설정**: 체크 줄 아래 · 저장 위에 접힘 · 요약 · 펼쳐 고른 값으로 저장 · 한 번 알람도 있고 캘린더 권한은 안 물음 |
 | `presentation/alarm/page/alarm_sound_page_test.dart` | `AlarmSoundPage` | 세 구역(시스템 · 앱 소리 3줄 · 기기 목록) · 복사해 둔 소리는 같은 제목 줄에 표시 · 목록 실패/빈 목록은 그 구역만 안내 · 탭 → 표시 이동 · 미리 듣기 → 선택하면 그 소리로 닫힘 · 복사 중 버튼 로딩 · 복사 실패 스낵바 · 뒤로 가면 null · 미리 듣기 멈춤 · **앱이 가려지면(홈 · 잠금) 미리 듣기 멈춤** |
 | `presentation/alarm/page/alarm_ringing_page_test.dart` | `AlarmRingingPage` | 시각 · 라벨 · 뒤로가기 막힘 · 기본 제목 · 끄기 · N분 뒤(알람의 스누즈 간격) 후 닫힘 · **스누즈 한도를 다 쓰면 스누즈 버튼 없이 끄기만 전체 폭** · 리스너가 먼저 걷어도 아래 화면 유지 · 320dp 버튼 문구(ko/en/ja) |
-| `presentation/settings/cubit/*_test.dart` | 테마 · 권한 · 공휴일 cubit | 저장된 테마로 동기 시작 · 선택 즉시 반영/저장 · 네 권한 읽기 · 알림 다시 묻기/설정 · 정확한 알람 · 전체 화면 · Health Connect 요청/설정/스토어 · **공휴일**(`HolidaySettingsCubit`: 저장된 설정 · 출처 · 캘린더 권한 읽기 · 권한 실패여도 출처 · 시스템 설정에서 허용하고 돌아오면 다시 읽고 알람 맞추기(처음 확인은 안 읽음) · 끄면 저장 · 맞추기 · 안 물음 · 켜면 저장 → 권한 → 맞추기 → 출처 · 실패해도 설정은 바뀜 · 거부면 다시 묻고 영구 거부 · 허용이면 앱 설정) |
+| `presentation/settings/cubit/*_test.dart` | 테마 · 권한 · 공휴일 cubit | 저장된 테마로 동기 시작 · 선택 즉시 반영/저장 · 네 권한 읽기 · 알림 다시 묻기/설정 · 정확한 알람 · 전체 화면 · Health Connect 요청/설정/스토어 · **공휴일**(`HolidaySettingsCubit`: 저장된 설정 · 출처 · 캘린더 권한 읽기 · 권한 실패여도 출처 · 시스템 설정에서 허용하고 돌아오면 다시 읽고 알람 맞추기(처음 확인은 안 읽음) · 끄면 저장 · 맞추기 · 안 물음 · 켜면 저장 → 권한 → 맞추기 → 출처 · 실패해도 설정은 바뀜 · 거부면 다시 묻고 영구 거부 · 허용이면 앱 설정 · **캐시 갱신(`refreshed`)이면 확인 없이 출처를 다시 읽음 · 닫으면 구독 해제**) |
 | `presentation/theme/walk_theme_test.dart` | `WalkTheme` · `WalkMotion` | 초록 시드 · 애니메이션 끄기 읽기 |
 | `presentation/alarm/widget/alarm_summary_card_test.dart` | `AlarmSummaryCard` | 초록 컨테이너 색 · 남은 시간 색 · 시간이 바뀌면 `AnimatedSwitcher` |
 | `presentation/alarm/widget/alarm_tile_test.dart` | `AlarmTile` | 둥근 카드 행 · 반복(시각 · 제목 · 요약 · 요일 점) · 한 번(모래시계 · N 뒤) · 꺼진 알람 흐림 · 꺼져도 행 탭 동작 · 스위치 햅틱 후 `onToggle` · 320dp 긴 제목 · 건너뛴 반복 알람은 "건너뜀" 칩(꺼지면 없음) · 공휴일 칩 → `onHolidayTap` · 길게 누르기 → `onLongPress` · 320dp 칩 둘 |
 | `presentation/alarm/widget/alarm_kind_sheet_test.dart` | `AlarmKindSheet` | 손잡이 · 제목 · 두 행 · 한 번/반복을 고르면 그 종류로 닫힘 · 그냥 닫으면 null · 320dp(ko/en/ja) |
 | `presentation/alarm/widget/alarm_skip_sheet_test.dart` | `AlarmSkipSheet` | 손잡이 · 알람 · [다음 알람 건너뛰기 · 다음 회차] → skip · 건너뛴 알람은 [건너뛰기 취소 · 건너뛴 회차] → unskip · 라벨 없으면 시각만 · 그냥 닫으면 null · 320dp(ko/en/ja) |
 | `presentation/alarm/widget/alarm_time_wheel_test.dart` | `AlarmTimeWheel` | 시 열 화면 읽기 라벨에 '정각' 없음(`12시` · `12 hours` · `12時`, QA: 분 43 인데 `12시 정각`) · 휠 전체 라벨은 고른 시각(`오전 12:43`)이고 바꾸면 따라감 · `onChanged` |
-| `presentation/alarm/widget/ring_settings_section_test.dart` | `RingSettingsSection` | 접힌 상태는 제목 · 요약 한 줄(알람 값) · 펼치면 볼륨 · 점점 커지기 · 스누즈 간격 · 횟수 · 자동 멈춤 · 30분 전 알림 · 고르면 그 값(무제한 · 안 함은 null) · 볼륨 10 단위 · 저장 중 잠금 · 320dp 펼쳐도 안 넘침(ko/en/ja) |
+| `presentation/alarm/widget/ring_settings_section_test.dart` | `RingSettingsSection` | 접힌 상태는 제목 · 요약 한 줄(알람 값) · 펼치면 볼륨 · 점점 커지기 · 스누즈 간격 · 횟수 · 자동 멈춤 · 30분 전 알림 · 고르면 그 값(무제한 · 안 함은 null) · 볼륨 10 단위 · **볼륨 슬라이더는 이름표 `볼륨` · 값 `80%`(±10%) 한 번만 읽음** · 저장 중 잠금 · 320dp 펼쳐도 안 넘침(ko/en/ja) |
 | `presentation/alarm/widget/weekday_dots_test.dart` | `WeekdayDots` | 월~일 7개 · 켜진 요일 primary, 나머지 outlineVariant · 흐리게면 onSurfaceVariant |
 | `presentation/alarm/widget/ringing_ripple_test.dart` | `RingingRipple` | 켜면 위상이 변함 · 애니메이션 제거면 정지 |
 | `presentation/settings/widget/step_goal_sheet_test.dart` | `StepGoalSheet` | 슬라이더 2,000~30,000 · 1,000 단위 · 저장하면 값 반환 |
@@ -128,6 +129,7 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `android/app/src/test/…/BackgroundQueueTest.kt` | 앱 `BackgroundQueue`(`BackgroundDispatcher`) | 첫 요청은 실행 · 도는 중 같은 일 요청은 끝난 뒤 한 번 더(여러 개는 하나로) · 그 실행 중 요청은 또 한 번 · 쉬면 새 실행 · 취소한 대기자는 받지 않지만 실행은 함 · 지금 실행의 대기자 · 다른 일은 들어온 순서대로 하나씩 · 기다리는 같은 일은 하나로 묶음 |
 | `android/app/src/test/…/ReminderRulesTest.kt` | 앱 `ReminderBook` · `ReminderRules` | `scheduled` 는 울릴 시각 전 걸린 것 · 띄운 것 · 덮어쓰면 shown 해제 · 닫은(shown) 항목은 울릴 시각까지 남고 `remove` · 경과만 지움 · 지난 띄울 시각은 바로 띄움 · **알림 버튼(`onAction`)**: `dismiss` 버튼([울리기])은 알림만 닫고 항목 · shown 유지 · skip 은 Dart 로(항목 그대로) · **울릴 시각이 지난 · 취소된 · 모르는 버튼은 STALE(Dart 에 안 보냄, 지난 항목 지움)** · 띄운 알림은 울릴 시각에 저절로 닫힘(`timeoutAfter`) · 재부팅: 지난 것 버림 · 띄운 것 유지 · 미래는 다시 걺 · 놓친 것은 1분보다 남았을 때만 바로 띄움 |
 | `android/app/src/test/…/HolidayCalendarRulesTest.kt` | 앱 `HolidayCalendarRules`(폰 캘린더 휴일) | 구글 한국 휴일 캘린더를 `OWNER_ACCOUNT` · `CAL_SYNC1` · `_SYNC_ID` 로 고름 · official · 영어 피드 · 다른 나라 · 구글 아닌 계정 · 동기화 꺼짐은 id 로 안 고름 · 구글 것이 있으면 이름 규칙 안 씀 · 없으면 이름(대한민국의 휴일 · 공휴일 · Holidays in South Korea) · **이름 규칙은 한국 휴일만(United States holidays · 미국의 휴일 · Holidays in Japan 은 안 고름)** · 이름으로 찾은 캘린더의 설명 없는 일정은 쉬는 날, 기념일은 뺌 · 설명 첫 줄 판정 · 모르는 설명은 official 만 · 종일 공휴일만 날짜 → 이름 · 여러 날 · 같은 날은 먼저 온 이름 · 없으면 null |
+| `android/app/src/test/…/CalendarPermissionRulesTest.kt` | 앱 `CalendarPermissionRules`(`READ_CALENDAR` 만 묻는 채널) | 허용이 먼저 · rationale 을 본 적 없으면 거부(대화상자 띄움) · rationale 이 보이면 거부 · 본 뒤 사라지면 영구 거부 · rationale 본 기록은 남음 |
 | `android/app/src/test/…/VerifiedReplaceTest.kt` | 앱 `replaceVerified`(기기 알람음 복사) | 임시 파일에 쓰고 검증한 뒤 바꿈 · 기존 복사본 덮어쓰기 · **쓰기 · 검증이 실패하면 기존 복사본은 그대로, 임시 파일만 지움** · 임시 파일은 확장자가 끝 |
 
 굵은 항목은 확인하며 고친 버그의 회귀 테스트다([기록](history.md#알람--확인하며-고친-것)).
@@ -183,3 +185,4 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | A12 | 벨소리 모드(소리 · 진동 · 무음) × 무음 모드 체크(켬 · 끔)로 울림 | 체크를 켜고 진동 · 무음 모드면 소리 없이 진동만, 나머지는 소리 + 진동 | 대기 |
 | A13 | 앱을 내린 채 `adb shell am broadcast -a com.karma.walk.DEBUG_DAILY_SYNC -p com.karma.walk`(디버그) | 헤드리스 엔진으로 sync 뒤 `finish: headless done`, 14일 창 끝 회차가 채워짐 | 대기 |
 | A14 | A13 직후 1~2초 안에 앱을 열고 1분 뒤 알람 → 울림 → 알림의 [알람 끄기] | 헤드리스 엔진을 내린 뒤에도 앱의 울림 화면이 뜨고 끄면 닫힘(포크 `EngineRegistry`) | 대기 |
+| A15 | `pm revoke … READ_CALENDAR` 뒤 새 APK → 설정 탭 "공휴일 출처 · 캘린더 허용 필요" 행 → 허용 | 읽기 권한 대화상자가 뜸(쓰기 권한 없이), 허용하면 캐시를 다시 읽고 "캘린더 허용됨" · 휴일 캘린더가 있으면 "폰 캘린더: …" · 콜드 스타트 첫 화면도 최신 출처 | 통과(10-07, 에뮬레이터 — 휴일 캘린더를 지운 상태라 내장 표 · 로컬 "대한민국의 휴일" 캘린더를 넣고 캐시를 지운 콜드 스타트는 첫 화면부터 폰 캘린더) |
