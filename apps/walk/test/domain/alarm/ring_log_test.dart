@@ -128,6 +128,33 @@ void main() {
     expect(groups, hasLength(2));
   });
 
+  test('자정을 넘긴 스누즈 · 끔도 같은 회차다', () {
+    final sunday2355 = DateTime(2026, 10, 4, 23, 55);
+    final late = Alarm(id: 1, hour: 23, minute: 55, label: '약', repeat: const {Weekday.sun});
+    final groups = ringLogGroups(
+      [
+        entry(1, sunday2355, RingLogKind.rang),
+        entry(1, DateTime(2026, 10, 4, 23, 56), RingLogKind.snoozed, occurrence: sunday2355),
+        entry(1, DateTime(2026, 10, 5, 0, 6), RingLogKind.rang, occurrence: sunday2355),
+        entry(1, DateTime(2026, 10, 5, 0, 7), RingLogKind.stopped, occurrence: sunday2355),
+      ],
+      [late],
+    );
+
+    expect(groups, [
+      RingLogGroup(
+        packageId: pid(1, sunday2355),
+        alarm: late,
+        at: sunday2355,
+        rangAt: sunday2355,
+        snoozes: 1,
+        end: RingLogKind.stopped,
+        endedAt: DateTime(2026, 10, 5, 0, 7),
+        skipped: false,
+      ),
+    ]);
+  });
+
   test('비면 빈 목록', () {
     expect(ringLogGroups(const [], [work]), isEmpty);
   });

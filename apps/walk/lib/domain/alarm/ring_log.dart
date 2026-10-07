@@ -6,7 +6,7 @@ import 'entity/ring_log_entry.dart';
 
 part 'ring_log.freezed.dart';
 
-/// 울림 기록의 회차 하나(packageId + 날짜) 요약 — "7:00 울림 · 스누즈 2번 · 7:12 끔".
+/// 울림 기록의 회차 하나(packageId + 그 회차의 하루) 요약 — "7:00 울림 · 스누즈 2번 · 7:12 끔".
 @freezed
 class RingLogGroup with _$RingLogGroup {
   @override
@@ -51,21 +51,33 @@ class RingLogGroup with _$RingLogGroup {
   int get alarmId => alarmIdOf(packageId);
 }
 
-/// [entries] 를 회차(packageId + [RingLogEntry.at] 의 날짜)별로 묶는다. 최근 회차가 먼저.
-/// [alarms] 에서 알람을 찾는다(지웠으면 null).
+/// [entries] 를 회차별로 묶는다. 최근 회차가 먼저. [alarms] 에서 알람을 찾는다(지웠으면 null).
+///
+/// 회차는 packageId 와, 그 packageId 의 묶음이 시작된 지 [occurrenceSpan] 안인지로 정한다.
+/// 스누즈 · 끔은 실제 시각으로 남아 자정을 넘길 수 있으니 기록 날짜로 나누지 않는다.
+/// packageId 의 index 는 회차 날짜로 정해 100일마다 돌아오므로, 그보다 짧은 창이면 다른 회차와
+/// 섞이지 않는다.
 List<RingLogGroup> ringLogGroups(List<RingLogEntry> entries, List<Alarm> alarms) {
   final byId = {for (final a in alarms) a.id: a};
-  final buckets = <(int, DateTime), List<RingLogEntry>>{};
+  final buckets = <List<RingLogEntry>>[];
+  final open = <int, List<RingLogEntry>>{};
   for (final e in [...entries]..sort((a, b) => a.at.compareTo(b.at))) {
-    final key = (e.packageId, DateTime(e.at.year, e.at.month, e.at.day));
-    (buckets[key] ??= []).add(e);
+    final bucket = open[e.packageId];
+    if (bucket != null && e.at.difference(bucket.first.at) < occurrenceSpan) {
+      bucket.add(e);
+    } else {
+      buckets.add(open[e.packageId] = [e]);
+    }
   }
   final groups = [
-    for (final MapEntry(key: (packageId, _), value: events) in buckets.entries)
-      _group(packageId, events, byId[alarmIdOf(packageId)]),
+    for (final events in buckets)
+      _group(events.first.packageId, events, byId[alarmIdOf(events.first.packageId)]),
   ];
   return groups..sort((a, b) => b.at.compareTo(a.at));
 }
+
+/// 한 회차의 기록이 걸칠 수 있는 최대 폭 — 첫 기록부터 이 안의 같은 packageId 는 같은 회차다.
+const occurrenceSpan = Duration(days: 1);
 
 RingLogGroup _group(int packageId, List<RingLogEntry> events, Alarm? alarm) {
   DateTime? first(RingLogKind kind) => events.where((e) => e.kind == kind).firstOrNull?.at;
