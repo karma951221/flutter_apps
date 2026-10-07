@@ -39,6 +39,15 @@ class AlarmApiImpl(private val context: Context) : AlarmApi {
             in queued -> AlarmStateWire.QUEUED
             else -> AlarmStateWire.INACTIVE
         }
+
+        /**
+         * Fork: whether setting [id] replaces an alarm that has to be torn down first.
+         * A ringing alarm counts even when this process never armed it: Dart's snooze
+         * re-sets the ringing id without stopping it first (`Alarm.set`), and after a
+         * process restart [tracked] no longer holds the id.
+         */
+        internal fun clearsForReplace(id: Int, tracked: Set<Int>, ringing: List<Int>): Boolean =
+            id in tracked || id in ringing
     }
 
     // A set, so the replace path in [setAlarm] cannot add a second copy of an id it
@@ -191,7 +200,7 @@ class AlarmApiImpl(private val context: Context) : AlarmApi {
      * storage is the only record it re-arms from.
      */
     fun setAlarm(alarm: AlarmSettings): Boolean {
-        if (alarmIds.contains(alarm.id)) {
+        if (clearsForReplace(alarm.id, alarmIds, AlarmService.ringingAlarmIds)) {
             Log.w(TAG, "Replacing alarm with identical ID=${alarm.id}.")
             clearForReplace(alarm.id)
         }

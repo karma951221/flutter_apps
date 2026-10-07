@@ -694,18 +694,15 @@ class AlarmService : Service() {
     }
 
     /**
-     * Silences [alarmId] without unsaving it or telling Flutter it stopped.
-     *
-     * Only for [SnoozeCoordinator], and only once it has armed the replacement:
-     * the alarm is still owed, so none of the stop bookkeeping applies.
-     */
-    /**
      * Stops [alarmId]'s audio and dequeues it, touching neither storage nor Flutter.
      *
      * Fork: both callers silence a ringing alarm only to snooze it — the
-     * notification's snooze through [SnoozeCoordinator], and Dart's snooze,
-     * which re-sets the ringing alarm later (`AlarmApiImpl.clearForReplace`) —
-     * so a ringing alarm silenced here is logged as snoozed.
+     * notification's snooze through [SnoozeCoordinator], once it has armed the
+     * replacement, and Dart's snooze: `Alarm.set` re-sets a ringing alarm under
+     * its own id *without* stopping it first, so the host's same-id replace
+     * (`AlarmApiImpl.clearForReplace`) lands here — so a ringing alarm silenced
+     * here is logged as snoozed. A stop that does go through
+     * [handleStopAlarmCommand] is logged as stopped.
      */
     fun silenceRing(alarmId: Int) {
         if (ringingAlarmIds.contains(alarmId)) logRing(alarmId, RingLogKind.SNOOZED)

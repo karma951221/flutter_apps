@@ -427,6 +427,16 @@ class Alarm {
       final shouldReplaceSameSecond =
           sameSecond && !alarmSettings.allowSameSecondScheduling;
 
+      // Fork: re-setting a ringing alarm under its own id defers it (a snooze).
+      // Stopping it first would make the host log the ring as stopped, so the
+      // host's same-id replace (`AlarmApiImpl.clearForReplace` → `silenceRing`)
+      // silences it instead and logs the snooze. It also keeps the host's
+      // `alarmStopped` callback from racing the save below.
+      if (sameId && !iOS && await AndroidAlarm().isRinging(alarm.id)) {
+        _scheduled.add(_scheduled.value.removeById(alarm.id));
+        continue;
+      }
+
       if (sameId || shouldReplaceSameSecond) {
         await Alarm.stop(alarm.id);
       }

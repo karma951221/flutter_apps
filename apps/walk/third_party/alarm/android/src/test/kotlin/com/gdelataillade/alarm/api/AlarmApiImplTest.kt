@@ -59,4 +59,21 @@ class AlarmApiImplTest {
             AlarmApiImpl.alarmState(7, ringing = emptyList(), queued = emptyList()),
         )
     }
+
+    @Test
+    fun `a same-id set clears an alarm this process armed`() {
+        assertEquals(true, AlarmApiImpl.clearsForReplace(7, tracked = setOf(7), ringing = emptyList()))
+    }
+
+    @Test
+    fun `a same-id set clears a ringing alarm armed by an earlier process`() {
+        // Dart leaves a ringing alarm to this replace (its snooze), and after a
+        // process restart the in-memory set no longer holds the id.
+        assertEquals(true, AlarmApiImpl.clearsForReplace(7, tracked = emptySet(), ringing = listOf(7)))
+    }
+
+    @Test
+    fun `a new id is not cleared`() {
+        assertEquals(false, AlarmApiImpl.clearsForReplace(7, tracked = setOf(8), ringing = listOf(9)))
+    }
 }
