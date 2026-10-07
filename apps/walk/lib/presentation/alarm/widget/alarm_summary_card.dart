@@ -8,7 +8,8 @@ import '../format/alarm_format.dart';
 
 /// 알람 목록 맨 위 요약 — 가장 먼저 울릴 알람까지 남은 시간과 그 날 · 시각 · 라벨.
 /// 알람이 모두 꺼져 있으면 `켜진 알람이 없어요` 한 줄, 켜진 알람은 있는데 예약이 없으면
-/// (권한 거부 등) `예약된 알람이 없어요` + `권한을 확인하세요`. 누를 수 없다.
+/// (권한 거부 등) `예약된 알람이 없어요` + `권한을 확인하세요`. 쉬는 중([paused])이면 기간이
+/// 회차를 덮은 것이라 권한 안내 없이 `예약된 알람이 없어요` 만(쉬기 배너가 위에 있다). 누를 수 없다.
 /// 알람이 하나도 없을 때는 목록이 이 카드를 두지 않는다.
 ///
 /// 모양은 걷기 탭의 `TodayGoalCard` 와 같은 초록 컨테이너 `Card` 다.
@@ -18,12 +19,16 @@ class AlarmSummaryCard extends StatelessWidget {
     required this.alarms,
     required this.nextAt,
     required this.now,
+    this.paused = false,
     super.key,
   });
 
   final List<Alarm> alarms;
   final Map<int, DateTime> nextAt;
   final DateTime now;
+
+  /// 쉬는 기간이 걸려 있다 — 예약이 없어도 권한 탓이 아니다.
+  final bool paused;
 
   @override
   Widget build(BuildContext context) {
@@ -40,11 +45,13 @@ class AlarmSummaryCard extends StatelessWidget {
           l10n.walkAlarmNoneScheduled,
           style: theme.textTheme.titleMedium?.copyWith(color: onCard),
         ),
-        const SizedBox(height: AppSpacing.xs),
-        Text(
-          l10n.walkAlarmNoneScheduledHint,
-          style: theme.textTheme.bodyMedium?.copyWith(color: onCard),
-        ),
+        if (!paused) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            l10n.walkAlarmNoneScheduledHint,
+            style: theme.textTheme.bodyMedium?.copyWith(color: onCard),
+          ),
+        ],
       ];
     } else if (id == null) {
       lines = [

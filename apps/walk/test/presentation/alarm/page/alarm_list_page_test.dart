@@ -600,6 +600,18 @@ void main() {
       expect(find.text('내일 (월)부터 10월 2일 (금)까지 알람을 쉬어요'), findsOneWidget);
     });
 
+    testWidgets('쉬는 기간이 모든 회차를 덮어 예약이 없으면 권한 안내 대신 예약 없음만', (tester) async {
+      when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+      when(() => useCase.nextRings()).thenAnswer((_) async => {});
+      when(() => useCase.pause()).thenAnswer(
+        (_) async => AlarmPause(from: DateTime(2026, 9, 27), until: DateTime(2026, 10, 31)),
+      );
+      await pump(tester);
+
+      expect(find.text('예약된 알람이 없어요'), findsOneWidget);
+      expect(find.text('권한을 확인하세요'), findsNothing);
+    });
+
     testWidgets('알람이 없어도 쉬는 중이면 배너', (tester) async {
       when(() => useCase.list()).thenAnswer((_) async => []);
       when(() => useCase.pause()).thenAnswer((_) async => today);

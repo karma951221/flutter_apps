@@ -259,7 +259,12 @@ class _AlarmListPageState extends State<AlarmListPage> {
                           AppSpacing.md,
                           AppSpacing.sm,
                         ),
-                        child: AlarmSummaryCard(alarms: alarms, nextAt: nextAt, now: now),
+                        child: AlarmSummaryCard(
+                          alarms: alarms,
+                          nextAt: nextAt,
+                          now: now,
+                          paused: pause != null,
+                        ),
                       ),
                     if (alarms.isEmpty)
                       Padding(
