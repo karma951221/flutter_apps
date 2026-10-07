@@ -160,9 +160,7 @@ void main() {
     expect(find.text('다음 알람'), findsNothing);
   });
 
-  testWidgets('켜진 알람인데 예약이 없으면(권한 거부) 배너가 카드 위, 카드는 예약 없음 · 권한 안내, 행 셋째 줄 없음', (
-    tester,
-  ) async {
+  testWidgets('켜진 알람인데 예약이 없으면(권한 거부) 배너가 카드 위, 카드는 예약 없음 · 권한 안내, 행 셋째 줄 없음', (tester) async {
     when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
     when(() => useCase.nextRings()).thenAnswer((_) async => {});
     when(exactAlarm.check).thenAnswer((_) async => PermissionStatus.denied);
@@ -172,10 +170,7 @@ void main() {
     final card = find.byType(AlarmSummaryCard);
     expect(banner, findsOneWidget);
     expect(tester.getTopLeft(banner).dy, lessThan(tester.getTopLeft(card).dy));
-    expect(
-      find.descendant(of: card, matching: find.text('예약된 알람이 없어요')),
-      findsOneWidget,
-    );
+    expect(find.descendant(of: card, matching: find.text('예약된 알람이 없어요')), findsOneWidget);
     expect(find.descendant(of: card, matching: find.text('권한을 확인하세요')), findsOneWidget);
     expect(find.text('켜진 알람이 없어요'), findsNothing);
     expect(find.text('다음 알람'), findsNothing);
@@ -185,9 +180,7 @@ void main() {
     );
   });
 
-  testWidgets('행은 둥근 카드 — 반복은 제목 · 요약 · 요일 점, 한 번은 모래시계 줄, 행 사이 간격', (
-    tester,
-  ) async {
+  testWidgets('행은 둥근 카드 — 반복은 제목 · 요약 · 요일 점, 한 번은 모래시계 줄, 행 사이 간격', (tester) async {
     final soon = Alarm(id: 4, hour: 1, minute: 13, oneShotAt: DateTime(2026, 9, 28, 1, 13));
     when(() => useCase.list()).thenAnswer((_) async => [weekday, off, soon]);
     // 꺼진 알람은 use case 가 키를 주지 않지만, 화면도 켜진 알람에만 남은 시간을 둔다.
@@ -213,10 +206,7 @@ void main() {
     expect(inRow(2, find.byIcon(Icons.hourglass_bottom)), findsOneWidget);
     final switches = tester.widgetList<Switch>(find.byType(Switch)).toList();
     expect(switches.map((s) => s.value), [true, false, true]);
-    expect(
-      tester.getTopLeft(rows.at(1)).dy - tester.getBottomLeft(rows.at(0)).dy,
-      AppSpacing.sm,
-    );
+    expect(tester.getTopLeft(rows.at(1)).dy - tester.getBottomLeft(rows.at(0)).dy, AppSpacing.sm);
   });
 
   testWidgets('켜면 use case 를 부르고 스낵바를 띄우며 카드 · 행 시간이 함께 바뀐다', (tester) async {
@@ -245,9 +235,9 @@ void main() {
   testWidgets('끄면 카드가 다음 알람으로 넘어가고 그 행의 남은 시간이 사라진다', (tester) async {
     const late = Alarm(id: 3, hour: 8, minute: 0, label: '회의', repeat: {Weekday.mon});
     when(() => useCase.list()).thenAnswer((_) async => [weekday, late]);
-    when(() => useCase.nextRings()).thenAnswer(
-      (_) async => {1: DateTime(2026, 9, 28, 7), 3: DateTime(2026, 9, 28, 8)},
-    );
+    when(
+      () => useCase.nextRings(),
+    ).thenAnswer((_) async => {1: DateTime(2026, 9, 28, 7), 3: DateTime(2026, 9, 28, 8)});
     when(() => useCase.toggle(1, enabled: false)).thenAnswer((_) async {
       when(() => useCase.list()).thenAnswer((_) async => [weekday.copyWith(enabled: false), late]);
       when(() => useCase.nextRings()).thenAnswer((_) async => {3: DateTime(2026, 9, 28, 8)});
@@ -303,9 +293,7 @@ void main() {
     when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
     when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 9, 28, 7)});
     registerFallbackValue(Alarm.draft());
-    when(() => useCase.save(any())).thenAnswer(
-      (i) async => i.positionalArguments.single as Alarm,
-    );
+    when(() => useCase.save(any())).thenAnswer((i) async => i.positionalArguments.single as Alarm);
     await pump(tester);
 
     await tester.tap(find.text('오전 7:00'));
@@ -370,24 +358,14 @@ void main() {
       verifyNever(() => useCase.skipNext(any()));
     });
 
-    testWidgets('한 번 알람 · 꺼진 반복 알람은 길게 누르기가 없고, 꺼져도 건너뛴 값이 남았으면 취소할 수 있다', (
-      tester,
-    ) async {
-      when(() => useCase.list()).thenAnswer(
-        (_) async => [
-          off,
-          weekday.copyWith(id: 5, hour: 8, enabled: false),
-          skipped.copyWith(id: 6, hour: 10, enabled: false),
-        ],
-      );
+    testWidgets('모든 알람 행을 길게 누를 수 있다(한 번 · 꺼진 반복 포함)', (tester) async {
+      when(
+        () => useCase.list(),
+      ).thenAnswer((_) async => [off, weekday.copyWith(id: 5, hour: 8, enabled: false)]);
       await pump(tester);
 
       final tiles = tester.widgetList<AlarmTile>(find.byType(AlarmTile)).toList();
-      expect([for (final t in tiles) (t.alarm.id, t.onLongPress != null)], [
-        (2, false),
-        (5, false),
-        (6, true),
-      ]);
+      expect([for (final t in tiles) (t.alarm.id, t.onLongPress != null)], [(2, true), (5, true)]);
     });
 
     testWidgets('시트를 그냥 닫으면 아무것도 하지 않는다', (tester) async {
@@ -433,12 +411,112 @@ void main() {
     });
   });
 
+  group('알람 메뉴', () {
+    testWidgets('[복제] 는 같은 설정의 새 알람 편집을 열고, 저장하면 새 알람으로 · 스낵바', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final skipped = weekday.copyWith(skippedAt: DateTime(2026, 9, 28, 7));
+      when(() => useCase.list()).thenAnswer((_) async => [skipped]);
+      registerFallbackValue(Alarm.draft());
+      when(
+        () => useCase.save(any()),
+      ).thenAnswer((i) async => (i.positionalArguments.single as Alarm).copyWith(id: 7));
+      await pump(tester);
+
+      await tester.longPress(find.text('오전 7:00'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('복제'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlarmEditPage), findsOneWidget);
+      expect(find.text('반복 알람'), findsOneWidget); // 새 알람 제목
+      expect(find.widgetWithText(TextField, '출근'), findsOneWidget);
+      verifyNever(() => useCase.save(any()));
+
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+
+      final saved = verify(() => useCase.save(captureAny())).captured.single as Alarm;
+      expect(saved, weekday.copyWith(id: Alarm.unsavedId));
+      expect(find.byType(AlarmEditPage), findsNothing);
+      expect(find.widgetWithText(SnackBar, '7시간 12분 뒤에 울려요'), findsOneWidget);
+    });
+
+    testWidgets('한 번 알람의 [복제] 는 새 한 번 알람 편집(0분 뒤)', (tester) async {
+      when(() => useCase.list()).thenAnswer(
+        (_) async => [off.copyWith(label: '약', oneShotAt: DateTime(2026, 9, 27, 9, 30))],
+      );
+      await pump(tester);
+
+      await tester.longPress(find.text('오전 9:30'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('복제'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('한 번 알람'), findsOneWidget);
+      expect(find.text('0분 뒤'), findsOneWidget);
+      expect(find.widgetWithText(TextField, '약'), findsOneWidget);
+    });
+
+    testWidgets('[삭제] 는 확인 뒤 지우고 목록에서 사라진다', (tester) async {
+      when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
+      when(() => useCase.delete(2)).thenAnswer((_) async {
+        when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+      });
+      await pump(tester);
+
+      await tester.longPress(find.text('오전 9:30'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pumpAndSettle();
+      expect(find.text('알람을 삭제할까요?'), findsOneWidget);
+      verifyNever(() => useCase.delete(any()));
+
+      await tester.tap(find.text('삭제').last);
+      await tester.pumpAndSettle();
+
+      verify(() => useCase.delete(2)).called(1);
+      expect(find.text('오전 9:30'), findsNothing);
+    });
+
+    testWidgets('삭제 확인을 취소하면 지우지 않는다', (tester) async {
+      when(() => useCase.list()).thenAnswer((_) async => [off]);
+      await pump(tester);
+
+      await tester.longPress(find.text('오전 9:30'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('취소'));
+      await tester.pumpAndSettle();
+
+      verifyNever(() => useCase.delete(any()));
+      expect(find.text('오전 9:30'), findsOneWidget);
+    });
+
+    testWidgets('삭제가 실패하면 오류 스낵바', (tester) async {
+      when(() => useCase.list()).thenAnswer((_) async => [off]);
+      when(() => useCase.delete(2)).thenThrow(StateError('x'));
+      await pump(tester);
+
+      await tester.longPress(find.text('오전 9:30'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('알람을 저장하지 못했어요'), findsOneWidget);
+    });
+  });
+
   testWidgets('꺼진 알람 행은 흐리게, 켜진 행은 그대로', (tester) async {
     when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
     await pump(tester);
 
-    final disabled =
-        Theme.of(tester.element(find.byType(AlarmListPage))).colorScheme.onSurfaceVariant;
+    final disabled = Theme.of(
+      tester.element(find.byType(AlarmListPage)),
+    ).colorScheme.onSurfaceVariant;
     Color? colorOf(String text) => tester.widget<Text>(find.text(text)).style?.color;
     expect(colorOf('오전 9:30'), disabled);
     expect(colorOf('한 번'), disabled);
@@ -583,10 +661,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('반복 알람'), findsOneWidget);
-    expect(
-      tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '평일')).selected,
-      isTrue,
-    );
+    expect(tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, '평일')).selected, isTrue);
   });
 
   testWidgets('종류 시트를 그냥 닫으면 편집을 열지 않는다', (tester) async {

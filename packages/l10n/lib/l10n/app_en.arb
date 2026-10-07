@@ -540,6 +540,7 @@
   "walkAlarmSoundImportFailed": "Can't use this alarm sound",
   "walkAlarmDeleteTitle": "Delete this alarm?",
   "walkAlarmDeleteContent": "Deleted alarms can't be restored",
+  "walkAlarmDuplicate": "Duplicate",
   "walkAlarmSaveFailed": "Couldn't save the alarm",
   "walkAlarmKindTitle": "What kind of alarm?",
   "walkAlarmKindOneShot": "Once",

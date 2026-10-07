@@ -68,7 +68,9 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
     final fixedAt = _oneShot ? _cubit.state.draft.fixedAt : null;
     if (fixedAt != null) {
       // canSave 는 1분 "이상"이라 정확히 1분 남은 순간은 아직 저장할 수 있다 — 그 바로 뒤.
-      final lock = fixedAt.subtract(const Duration(minutes: 1)).add(const Duration(milliseconds: 1));
+      final lock = fixedAt
+          .subtract(const Duration(minutes: 1))
+          .add(const Duration(milliseconds: 1));
       if (lock.isAfter(now) && lock.isBefore(next)) next = lock;
     }
     _refresh = Timer(next.difference(now), () {
@@ -139,6 +141,16 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
     }
   }
 
+  /// 앱바 메뉴 [복제] — 저장된 설정의 저장 전 알람으로 편집 화면을 위에 연다. 복제본을 저장하면
+  /// 그 결과(남은 시간)로 이 화면도 닫혀 목록이 스낵바를 띄운다. 그냥 닫으면 이 화면으로 돌아온다.
+  Future<void> _duplicate() async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    final untilRing = await Navigator.of(context).push<Duration>(
+      MaterialPageRoute(builder: (_) => AlarmEditPage(initial: widget.initial.duplicate())),
+    );
+    if (untilRing != null && mounted) Navigator.of(context).pop(untilRing);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -156,6 +168,22 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
                   ? l10n.walkAlarmNewOneShot
                   : l10n.walkAlarmNewRepeat,
             ),
+            actions: [
+              if (!state.isNew)
+                AppOverflowMenu<_EditMenuAction>(
+                  enabled: !state.busy,
+                  items: [
+                    AppOverflowMenuItem(
+                      value: _EditMenuAction.duplicate,
+                      label: l10n.walkAlarmDuplicate,
+                      icon: Icons.content_copy,
+                    ),
+                  ],
+                  onSelected: (action) => switch (action) {
+                    _EditMenuAction.duplicate => _duplicate(),
+                  },
+                ),
+            ],
           ),
           body: SafeArea(
             child: ListView(
@@ -251,3 +279,6 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
     );
   }
 }
+
+/// 편집 화면 앱바 메뉴 항목.
+enum _EditMenuAction { duplicate }

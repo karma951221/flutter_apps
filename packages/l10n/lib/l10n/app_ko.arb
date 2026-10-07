@@ -2464,6 +2464,10 @@
   "@walkAlarmDeleteContent": {
     "description": "알람 삭제 확인 다이얼로그 본문"
   },
+  "walkAlarmDuplicate": "복제",
+  "@walkAlarmDuplicate": {
+    "description": "알람 메뉴 시트 · 편집 화면 앱바 메뉴의 알람 복제 항목"
+  },
   "walkAlarmSaveFailed": "알람을 저장하지 못했어요",
   "@walkAlarmSaveFailed": {
     "description": "알람 저장 · 삭제 · 켜기 실패 스낵바"

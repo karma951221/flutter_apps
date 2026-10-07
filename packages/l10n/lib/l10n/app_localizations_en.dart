@@ -1839,6 +1839,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkAlarmDeleteContent => 'Deleted alarms can\'t be restored';
 
   @override
+  String get walkAlarmDuplicate => 'Duplicate';
+
+  @override
   String get walkAlarmSaveFailed => 'Couldn\'t save the alarm';
 
   @override

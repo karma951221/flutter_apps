@@ -540,6 +540,7 @@
   "walkAlarmSoundImportFailed": "このアラーム音は使えません",
   "walkAlarmDeleteTitle": "このアラームを削除しますか？",
   "walkAlarmDeleteContent": "削除したアラームは元に戻せません",
+  "walkAlarmDuplicate": "複製",
   "walkAlarmSaveFailed": "アラームを保存できませんでした",
   "walkAlarmKindTitle": "どんなアラームにしますか",
   "walkAlarmKindOneShot": "1回",

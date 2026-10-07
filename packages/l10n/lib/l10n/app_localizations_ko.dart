@@ -1739,6 +1739,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAlarmDeleteContent => '삭제한 알람은 되돌릴 수 없어요';
 
   @override
+  String get walkAlarmDuplicate => '복제';
+
+  @override
   String get walkAlarmSaveFailed => '알람을 저장하지 못했어요';
 
   @override

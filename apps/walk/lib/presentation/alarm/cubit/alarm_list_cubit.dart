@@ -37,13 +37,15 @@ class AlarmListCubit extends Cubit<AlarmListState> {
     final canRing = await _orElse(_permissions.canRing, false);
     if (isClosed) return;
     final now = _clock.now();
-    emit(AlarmListState.loaded(
-      alarms: alarms,
-      nextAt: nextAt,
-      now: now,
-      canRing: canRing,
-      holidays: _holidaysOf(alarms, now),
-    ));
+    emit(
+      AlarmListState.loaded(
+        alarms: alarms,
+        nextAt: nextAt,
+        now: now,
+        canRing: canRing,
+        holidays: _holidaysOf(alarms, now),
+      ),
+    );
   }
 
   /// 규칙의 다음 회차가 [alarmHolidayLead](공휴일 미리 알림과 같은 24시간) 안이고 그날이 공휴일인
@@ -79,11 +81,14 @@ class AlarmListCubit extends Cubit<AlarmListState> {
     }
   }
 
-  /// 반복 알람의 다음 회차 하나를 건너뛴다(길게 누르기 · 공휴일 칩 시트). 실패하면 다시 읽은 뒤 던진다.
+  /// 반복 알람의 다음 회차 하나를 건너뛴다(알람 메뉴 시트). 실패하면 다시 읽은 뒤 던진다.
   Future<void> skipNext(int alarmId) => _thenLoad(() => _useCase.skipNext(alarmId));
 
   /// 건너뛰기를 취소한다. 실패하면 다시 읽은 뒤 던진다.
   Future<void> unskip(int alarmId) => _thenLoad(() => _useCase.unskip(alarmId));
+
+  /// 알람을 지운다(알람 메뉴 — 확인은 화면이 받았다). 실패하면 다시 읽은 뒤 던진다.
+  Future<void> delete(int alarmId) => _thenLoad(() => _useCase.delete(alarmId));
 
   Future<void> _thenLoad(Future<void> Function() change) async {
     try {
@@ -97,9 +102,11 @@ class AlarmListCubit extends Cubit<AlarmListState> {
   /// 울릴 때까지 남은 시간을 돌려준다(스낵바). 끄거나 실패하면 null.
   Future<Duration?> toggle(Alarm alarm, {required bool enabled}) async {
     if (state case AlarmListLoaded(:final alarms) && final loaded) {
-      emit(loaded.copyWith(alarms: [
-        for (final a in alarms) a.id == alarm.id ? a.copyWith(enabled: enabled) : a,
-      ]));
+      emit(
+        loaded.copyWith(
+          alarms: [for (final a in alarms) a.id == alarm.id ? a.copyWith(enabled: enabled) : a],
+        ),
+      );
     }
     try {
       final toggled = await _useCase.toggle(alarm.id, enabled: enabled);

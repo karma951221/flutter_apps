@@ -21,20 +21,22 @@ void main() {
       silentWhenRingerMuted: true,
     );
 
-    final decoded = Alarm.fromJson(
-      jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>,
-    );
+    final decoded = Alarm.fromJson(jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>);
 
     expect(decoded, alarm);
     expect(alarm.toJson()['repeat'], ['mon', 'fri']); // 요일 순서로 저장
   });
 
   test('1회성 알람 JSON 왕복은 oneShotAt 을 로컬 시각 그대로 되살린다', () {
-    final alarm = Alarm(id: 1, hour: 7, minute: 0, enabled: false, oneShotAt: DateTime(2026, 9, 28, 7));
-
-    final decoded = Alarm.fromJson(
-      jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>,
+    final alarm = Alarm(
+      id: 1,
+      hour: 7,
+      minute: 0,
+      enabled: false,
+      oneShotAt: DateTime(2026, 9, 28, 7),
     );
+
+    final decoded = Alarm.fromJson(jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>);
 
     expect(decoded, alarm);
     expect(decoded.oneShotAt!.isUtc, isFalse);
@@ -118,7 +120,12 @@ void main() {
     // 저장소(PrefsAlarmRepository.load)가 던진 항목만 건너뛴다.
     test('모르는 요일 이름이면 던진다(저장소가 그 항목을 건너뛴다)', () {
       expect(
-        () => Alarm.fromJson(const {'id': 1, 'hour': 7, 'minute': 0, 'repeat': ['funday']}),
+        () => Alarm.fromJson(const {
+          'id': 1,
+          'hour': 7,
+          'minute': 0,
+          'repeat': ['funday'],
+        }),
         throwsA(anything),
       );
     });
@@ -237,5 +244,48 @@ void main() {
     expect(draft.isOneShot, isTrue);
     expect(draft.silentWhenRingerMuted, isFalse);
     expect(draft.id, Alarm.unsavedId);
+  });
+
+  group('duplicate', () {
+    test('반복 알람은 같은 설정의 저장 전 알람 — id · 건너뛰기만 비운다', () {
+      final alarm = Alarm(
+        id: 4,
+        hour: 6,
+        minute: 45,
+        repeat: const {Weekday.mon, Weekday.fri},
+        label: '출근',
+        silentWhenRingerMuted: true,
+        sound: const AlarmSound.bundled(BundledAlarmSounds.rising),
+        enabled: false,
+        volumePercent: 50,
+        fadeSeconds: 0,
+        snoozeMinutes: 10,
+        snoozeLimit: 3,
+        autoStopMinutes: 5,
+        remindBefore: true,
+        skippedAt: DateTime(2026, 10, 9, 6, 45),
+      );
+
+      final copy = alarm.duplicate();
+
+      expect(copy.id, Alarm.unsavedId);
+      expect(copy.skippedAt, isNull);
+      expect(copy, alarm.copyWith(id: Alarm.unsavedId, skippedAt: null));
+    });
+
+    test('1회성은 지난 울릴 시각(oneShotAt)도 비운다', () {
+      final alarm = Alarm(
+        id: 2,
+        hour: 7,
+        minute: 0,
+        label: '약',
+        oneShotAt: DateTime(2026, 10, 1, 7),
+      );
+
+      final copy = alarm.duplicate();
+
+      expect(copy, const Alarm(hour: 7, minute: 0, label: '약'));
+      expect(copy.oneShotAt, isNull);
+    });
   });
 }

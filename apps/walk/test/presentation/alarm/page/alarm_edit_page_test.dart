@@ -104,9 +104,9 @@ void main() {
         home: Builder(
           builder: (context) => TextButton(
             onPressed: () async => results.add(
-              await Navigator.of(context).push<Duration>(
-                MaterialPageRoute(builder: (_) => AlarmEditPage(initial: initial)),
-              ),
+              await Navigator.of(
+                context,
+              ).push<Duration>(MaterialPageRoute(builder: (_) => AlarmEditPage(initial: initial))),
             ),
             child: const Text('open'),
           ),
@@ -118,9 +118,9 @@ void main() {
     return results;
   }
 
-  void answerSaveWithId() => when(() => useCase.save(any())).thenAnswer(
-    (i) async => (i.positionalArguments.single as Alarm).copyWith(id: 1),
-  );
+  void answerSaveWithId() => when(
+    () => useCase.save(any()),
+  ).thenAnswer((i) async => (i.positionalArguments.single as Alarm).copyWith(id: 1));
 
   Alarm savedAlarm() => verify(() => useCase.save(captureAny())).captured.single as Alarm;
 
@@ -313,9 +313,7 @@ void main() {
       expect(find.text('내일 (월) 오전 12:08에 울림'), findsOneWidget);
     });
 
-    testWidgets('고정 모드: 분이 지나면 N분 뒤가 줄고, 1분 밑으로 내려가는 순간 저장이 잠기고 안내', (
-      tester,
-    ) async {
+    testWidgets('고정 모드: 분이 지나면 N분 뒤가 줄고, 1분 밑으로 내려가는 순간 저장이 잠기고 안내', (tester) async {
       clock.follow(tester, DateTime(2026, 9, 27, 23, 48));
       await pump(tester, Alarm.draft());
       await tester.tap(find.text('오후 11:48에 울림'));
@@ -340,9 +338,7 @@ void main() {
       expect(saveEnabled(tester), isFalse);
     });
 
-    testWidgets('기준 시각이 늦어 버튼이 켜져 있어도 실제로 1분 미만이면 저장하지 않고 잠금 · 안내로 돌린다', (
-      tester,
-    ) async {
+    testWidgets('기준 시각이 늦어 버튼이 켜져 있어도 실제로 1분 미만이면 저장하지 않고 잠금 · 안내로 돌린다', (tester) async {
       answerSaveWithId();
       await pump(
         tester,
@@ -389,7 +385,8 @@ void main() {
       expect(find.text('반복 알람'), findsOneWidget);
       expect(find.byType(CupertinoDatePicker), findsOneWidget);
       expect(find.text('0분 뒤'), findsNothing);
-      ChoiceChip chip(String label) => tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label));
+      ChoiceChip chip(String label) =>
+          tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label));
       expect(chip('매일').selected, isFalse);
       expect(chip('평일').selected, isTrue);
       expect(chip('주말').selected, isFalse);
@@ -401,7 +398,8 @@ void main() {
 
     testWidgets('빠른 버튼 ↔ 요일 토글이 서로 맞는다', (tester) async {
       await pump(tester, _newRepeat);
-      ChoiceChip chip(String label) => tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label));
+      ChoiceChip chip(String label) =>
+          tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, label));
 
       await tester.tap(find.text('토').first);
       await tester.pump();
@@ -466,9 +464,9 @@ void main() {
 
     testWidgets('기존 알람 저장은 id · 제목 · 반복을 유지한다', (tester) async {
       const existing = Alarm(id: 3, hour: 6, minute: 30, label: '출근', repeat: {Weekday.mon});
-      when(() => useCase.save(any())).thenAnswer(
-        (i) async => i.positionalArguments.single as Alarm,
-      );
+      when(
+        () => useCase.save(any()),
+      ).thenAnswer((i) async => i.positionalArguments.single as Alarm);
       await pump(tester, existing);
 
       expect(find.text('알람 수정'), findsOneWidget);
@@ -587,9 +585,7 @@ void main() {
     expect(find.text('알람을 저장하지 못했어요'), findsOneWidget);
   });
 
-  testWidgets('권한 확인이 실패해도 편집 화면은 닫히고, 다시 저장해 알람이 둘이 되지 않는다', (
-    tester,
-  ) async {
+  testWidgets('권한 확인이 실패해도 편집 화면은 닫히고, 다시 저장해 알람이 둘이 되지 않는다', (tester) async {
     answerSaveWithId();
     when(notification.ensure).thenThrow(StateError('plugin'));
     final results = await pump(tester, Alarm.draft().copyWith(repeat: {Weekday.mon}));
@@ -626,9 +622,7 @@ void main() {
   });
 
   testWidgets('알람음 줄 → 선택 화면에서 고르면 줄에 반영되고 그 소리로 저장한다', (tester) async {
-    when(() => useCase.save(any())).thenAnswer(
-      (i) async => i.positionalArguments.single as Alarm,
-    );
+    when(() => useCase.save(any())).thenAnswer((i) async => i.positionalArguments.single as Alarm);
     await pump(tester, const Alarm(id: 3, hour: 6, minute: 30, repeat: {Weekday.mon}));
 
     await tester.tap(find.text('알람음'));
@@ -711,6 +705,61 @@ void main() {
 
     verify(() => useCase.delete(3)).called(1);
     expect(results, [null]);
+  });
+
+  group('복제', () {
+    const saved = Alarm(id: 3, hour: 6, minute: 30, label: '출근', repeat: {Weekday.mon});
+
+    Future<void> openDuplicate(WidgetTester tester) async {
+      await tester.tap(find.byTooltip('더보기'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('복제'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('새 알람에는 앱바 메뉴가 없다', (tester) async {
+      await pump(tester, _newRepeat);
+
+      expect(find.byTooltip('더보기'), findsNothing);
+    });
+
+    testWidgets('편집 앱바 메뉴 [복제] 는 같은 설정의 새 알람 편집을 위에 연다', (tester) async {
+      await pump(tester, saved.copyWith(skippedAt: DateTime(2026, 9, 28, 6, 30)));
+
+      await openDuplicate(tester);
+
+      expect(find.byType(AlarmEditPage), findsOneWidget); // 원래 화면은 아래에 남는다
+      expect(find.byType(AlarmEditPage, skipOffstage: false), findsNWidgets(2));
+      expect(find.text('반복 알람'), findsOneWidget);
+      expect(find.widgetWithText(TextField, '출근'), findsOneWidget);
+    });
+
+    testWidgets('복제본을 저장하면 새 알람으로 저장하고 두 화면이 남은 시간으로 닫힌다', (tester) async {
+      answerSaveWithId();
+      final results = await pump(tester, saved);
+
+      await openDuplicate(tester);
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+
+      expect(savedAlarm(), saved.copyWith(id: Alarm.unsavedId));
+      expect(find.byType(AlarmEditPage, skipOffstage: false), findsNothing);
+      // 일요일 23:48 → 월요일 06:30.
+      expect(results, [const Duration(hours: 6, minutes: 42)]);
+    });
+
+    testWidgets('복제본을 그냥 닫으면 원래 편집 화면으로 돌아온다', (tester) async {
+      final results = await pump(tester, saved);
+
+      await openDuplicate(tester);
+      await tester.state<NavigatorState>(find.byType(Navigator)).maybePop();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlarmEditPage), findsOneWidget);
+      expect(find.text('알람 수정'), findsOneWidget);
+      expect(results, isEmpty);
+      verifyNever(() => useCase.save(any()));
+    });
   });
 
   testWidgets('좁은 화면(320dp)에서도 요일 토글 7개가 한 줄에 오버플로 없이 들어간다', (tester) async {

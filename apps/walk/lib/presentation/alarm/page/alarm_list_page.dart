@@ -13,7 +13,7 @@ import '../cubit/alarm_list_state.dart';
 import '../format/alarm_format.dart';
 import '../widget/alarm_kind_sheet.dart';
 import '../widget/alarm_permission_banner.dart';
-import '../widget/alarm_skip_sheet.dart';
+import '../widget/alarm_menu_sheet.dart';
 import '../widget/alarm_summary_card.dart';
 import '../widget/alarm_tile.dart';
 import 'alarm_edit_page.dart';
@@ -75,9 +75,9 @@ class _AlarmListPageState extends State<AlarmListPage> {
   }
 
   Future<void> _open(BuildContext context, Alarm alarm) async {
-    final untilRing = await Navigator.of(context).push<Duration>(
-      MaterialPageRoute(builder: (_) => AlarmEditPage(initial: alarm)),
-    );
+    final untilRing = await Navigator.of(
+      context,
+    ).push<Duration>(MaterialPageRoute(builder: (_) => AlarmEditPage(initial: alarm)));
     if (untilRing != null && context.mounted) _showRingsIn(context, untilRing);
   }
 
@@ -103,28 +103,35 @@ class _AlarmListPageState extends State<AlarmListPage> {
     }
   }
 
-  /// 반복 알람 행 길게 누르기 · "공휴일" 칩 — 다음 회차를 건너뛰거나 건너뛰기를 취소한다.
-  Future<void> _skip(BuildContext context, Alarm alarm) async {
+  /// 알람 행 길게 누르기 · "공휴일" 칩 — 알람 메뉴(복제 · 건너뛰기 · 삭제).
+  Future<void> _menu(BuildContext context, Alarm alarm) async {
     final l10n = AppLocalizations.of(context);
     final cubit = context.read<AlarmListCubit>();
-    final action = await AlarmSkipSheet.show(context, alarm: alarm, now: _clock.now());
+    final action = await AlarmMenuSheet.show(context, alarm: alarm, now: _clock.now());
     if (action == null || !context.mounted) return;
     try {
       switch (action) {
-        case AlarmSkipAction.skip:
+        case AlarmMenuAction.duplicate:
+          // 저장 전 알람으로 편집을 연다 — 저장해야 생긴다(같은 시각에 두 번 울리지 않게).
+          await _open(context, alarm.duplicate());
+        case AlarmMenuAction.skip:
           await cubit.skipNext(alarm.id);
-        case AlarmSkipAction.unskip:
+        case AlarmMenuAction.unskip:
           await cubit.unskip(alarm.id);
+        case AlarmMenuAction.delete:
+          final confirmed = await AppConfirmDialog.show(
+            context,
+            title: l10n.walkAlarmDeleteTitle,
+            content: l10n.walkAlarmDeleteContent,
+            confirmLabel: l10n.commonDelete,
+          );
+          if (confirmed) await cubit.delete(alarm.id);
       }
     } on Object {
       if (!context.mounted) return;
       AppSnackBar.show(context, message: l10n.walkAlarmSaveFailed, type: AppSnackBarType.error);
     }
   }
-
-  /// 건너뛰기 시트를 열 수 있는 행 — 켜진 반복 알람, 또는 건너뛴 값이 남은 반복 알람(취소).
-  static bool _skippable(Alarm alarm) =>
-      !alarm.isOneShot && (alarm.enabled || alarm.skippedAt != null);
 
   void _showRingsIn(BuildContext context, Duration untilRing) {
     final l10n = AppLocalizations.of(context);
@@ -163,62 +170,63 @@ class _AlarmListPageState extends State<AlarmListPage> {
                 :final now,
                 :final canRing,
                 :final holidays,
-              ) => ListView(
-                // FAB 가 마지막 행의 스위치를 가리지 않게.
-                padding: const EdgeInsets.only(bottom: AppSpacing.xl * 2.5),
-                children: [
-                  if (!canRing)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.md,
-                        AppSpacing.sm,
-                        AppSpacing.md,
-                        0,
-                      ),
-                      child: AlarmPermissionBanner(onTap: widget.onOpenSettings),
-                    ),
-                  // 알람이 하나도 없으면 카드 대신 아래 빈 상태만.
-                  if (alarms.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.md,
-                        AppSpacing.md,
-                        AppSpacing.md,
-                        AppSpacing.sm,
-                      ),
-                      child: AlarmSummaryCard(alarms: alarms, nextAt: nextAt, now: now),
-                    ),
-                  if (alarms.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.xl),
-                      child: AppPlaceholder(
-                        icon: Icons.alarm_add,
-                        message: l10n.walkAlarmEmpty,
-                        description: l10n.walkAlarmEmptyDescription,
-                      ),
-                    )
-                  else
-                    for (final alarm in alarms)
+              ) =>
+                ListView(
+                  // FAB 가 마지막 행의 스위치를 가리지 않게.
+                  padding: const EdgeInsets.only(bottom: AppSpacing.xl * 2.5),
+                  children: [
+                    if (!canRing)
                       Padding(
-                        key: ValueKey(alarm.id),
                         padding: const EdgeInsets.fromLTRB(
                           AppSpacing.md,
                           AppSpacing.sm,
                           AppSpacing.md,
                           0,
                         ),
-                        child: AlarmTile(
-                          alarm: alarm,
-                          untilRing: nextAt[alarm.id]?.difference(now),
-                          onTap: () => _open(context, alarm),
-                          onToggle: (enabled) => _toggle(context, alarm, enabled),
-                          onLongPress: _skippable(alarm) ? () => _skip(context, alarm) : null,
-                          holidayName: holidays[alarm.id],
-                          onHolidayTap: () => _skip(context, alarm),
-                        ),
+                        child: AlarmPermissionBanner(onTap: widget.onOpenSettings),
                       ),
-                ],
-              ),
+                    // 알람이 하나도 없으면 카드 대신 아래 빈 상태만.
+                    if (alarms.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md,
+                          AppSpacing.md,
+                          AppSpacing.md,
+                          AppSpacing.sm,
+                        ),
+                        child: AlarmSummaryCard(alarms: alarms, nextAt: nextAt, now: now),
+                      ),
+                    if (alarms.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.xl),
+                        child: AppPlaceholder(
+                          icon: Icons.alarm_add,
+                          message: l10n.walkAlarmEmpty,
+                          description: l10n.walkAlarmEmptyDescription,
+                        ),
+                      )
+                    else
+                      for (final alarm in alarms)
+                        Padding(
+                          key: ValueKey(alarm.id),
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.md,
+                            AppSpacing.sm,
+                            AppSpacing.md,
+                            0,
+                          ),
+                          child: AlarmTile(
+                            alarm: alarm,
+                            untilRing: nextAt[alarm.id]?.difference(now),
+                            onTap: () => _open(context, alarm),
+                            onToggle: (enabled) => _toggle(context, alarm, enabled),
+                            onLongPress: () => _menu(context, alarm),
+                            holidayName: holidays[alarm.id],
+                            onHolidayTap: () => _menu(context, alarm),
+                          ),
+                        ),
+                  ],
+                ),
             },
           ),
         ),

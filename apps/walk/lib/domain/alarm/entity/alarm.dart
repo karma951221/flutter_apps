@@ -111,11 +111,18 @@ class Alarm with _$Alarm {
   /// 새 알람의 기본값 — 07:00, 반복 없음, 무음 모드 체크 끔, 시스템 기본 알람음.
   static Alarm draft() => const Alarm(hour: 7, minute: 0);
 
+  /// 같은 설정의 저장 전 알람(복제). 건너뛰기와 1회성의 울릴 시각은 비운다 — 편집 화면이
+  /// 새로 정한다.
+  Alarm duplicate() => copyWith(id: unsavedId, skippedAt: null, oneShotAt: null);
+
   Map<String, Object?> toJson() => {
     'id': id,
     'hour': hour,
     'minute': minute,
-    'repeat': [for (final day in Weekday.values) if (repeat.contains(day)) day.name],
+    'repeat': [
+      for (final day in Weekday.values)
+        if (repeat.contains(day)) day.name,
+    ],
     'label': label,
     'silentWhenRingerMuted': silentWhenRingerMuted,
     'sound': sound.toJson(),
@@ -148,11 +155,13 @@ class Alarm with _$Alarm {
       enabled: json['enabled'] as bool? ?? false,
       oneShotAt: oneShotAt == null ? null : DateTime.parse(oneShotAt),
       // 울림 세부 · 건너뛰기는 없거나 선택지 밖이면 기본값으로 읽는다(알람은 살린다).
-      volumePercent: _option(json['volumePercent'], AlarmOptions.volumePercents) ??
+      volumePercent:
+          _option(json['volumePercent'], AlarmOptions.volumePercents) ??
           AlarmOptions.defaultVolumePercent,
       fadeSeconds:
           _option(json['fadeSeconds'], AlarmOptions.fadeSeconds) ?? AlarmOptions.defaultFadeSeconds,
-      snoozeMinutes: _option(json['snoozeMinutes'], AlarmOptions.snoozeMinutes) ??
+      snoozeMinutes:
+          _option(json['snoozeMinutes'], AlarmOptions.snoozeMinutes) ??
           AlarmOptions.defaultSnoozeMinutes,
       snoozeLimit: _option(json['snoozeLimit'], AlarmOptions.snoozeLimits),
       autoStopMinutes: _option(json['autoStopMinutes'], AlarmOptions.autoStopMinutes),

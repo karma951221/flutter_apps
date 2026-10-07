@@ -1737,6 +1737,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAlarmDeleteContent => '削除したアラームは元に戻せません';
 
   @override
+  String get walkAlarmDuplicate => '複製';
+
+  @override
   String get walkAlarmSaveFailed => 'アラームを保存できませんでした';
 
   @override

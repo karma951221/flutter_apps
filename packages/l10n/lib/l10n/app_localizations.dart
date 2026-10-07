@@ -3344,6 +3344,12 @@ abstract class AppLocalizations {
   /// **'삭제한 알람은 되돌릴 수 없어요'**
   String get walkAlarmDeleteContent;
 
+  /// 알람 메뉴 시트 · 편집 화면 앱바 메뉴의 알람 복제 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'복제'**
+  String get walkAlarmDuplicate;
+
   /// 알람 저장 · 삭제 · 켜기 실패 스낵바
   ///
   /// In ko, this message translates to:

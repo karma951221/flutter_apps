@@ -87,7 +87,9 @@ void main() {
     'load 는 목록 · 알람별 다음 울림 · 기준 시각 · 권한을 담는다',
     build: build,
     act: (cubit) => cubit.load(),
-    expect: () => [loaded([seven, off])],
+    expect: () => [
+      loaded([seven, off]),
+    ],
   );
 
   blocTest<AlarmListCubit, AlarmListState>(
@@ -162,7 +164,9 @@ void main() {
       '건너뛴 공휴일 회차에도 칩을 둔다(시트가 건너뛰기 취소를 보인다)',
       build: () {
         holidays.days[DateTime(2026, 9, 28)] = '대체공휴일';
-        when(() => useCase.list()).thenAnswer((_) async => [seven.copyWith(skippedAt: sevenAt), off]);
+        when(
+          () => useCase.list(),
+        ).thenAnswer((_) async => [seven.copyWith(skippedAt: sevenAt), off]);
         when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 10, 5, 7)});
         return build();
       },
@@ -213,7 +217,9 @@ void main() {
     blocTest<AlarmListCubit, AlarmListState>(
       'unskip 은 use case 로 취소하고 다시 읽는다',
       build: () {
-        when(() => useCase.list()).thenAnswer((_) async => [seven.copyWith(skippedAt: sevenAt), off]);
+        when(
+          () => useCase.list(),
+        ).thenAnswer((_) async => [seven.copyWith(skippedAt: sevenAt), off]);
         when(() => useCase.unskip(1)).thenAnswer((_) async {
           when(() => useCase.list()).thenAnswer((_) async => [seven, off]);
           return seven;
@@ -221,7 +227,9 @@ void main() {
         return build();
       },
       act: (cubit) => cubit.unskip(1),
-      expect: () => [loaded([seven, off])],
+      expect: () => [
+        loaded([seven, off]),
+      ],
       verify: (_) => verify(() => useCase.unskip(1)).called(1),
     );
 
@@ -232,7 +240,39 @@ void main() {
         return build();
       },
       act: (cubit) => expectLater(cubit.skipNext(1), throwsStateError),
-      expect: () => [loaded([seven, off])],
+      expect: () => [
+        loaded([seven, off]),
+      ],
+    );
+  });
+
+  group('삭제', () {
+    blocTest<AlarmListCubit, AlarmListState>(
+      'delete 는 use case 로 지우고 다시 읽는다',
+      build: () {
+        when(() => useCase.delete(2)).thenAnswer((_) async {
+          when(() => useCase.list()).thenAnswer((_) async => [seven]);
+        });
+        return build();
+      },
+      seed: () => loaded([seven, off]),
+      act: (cubit) => cubit.delete(2),
+      expect: () => [
+        loaded([seven]),
+      ],
+      verify: (_) => verify(() => useCase.delete(2)).called(1),
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      '실패하면 다시 읽은 뒤 던진다',
+      build: () {
+        when(() => useCase.delete(2)).thenThrow(StateError('x'));
+        return build();
+      },
+      act: (cubit) => expectLater(cubit.delete(2), throwsStateError),
+      expect: () => [
+        loaded([seven, off]),
+      ],
     );
   });
 
@@ -254,7 +294,9 @@ void main() {
         return build();
       },
       act: (cubit) => cubit.load(),
-      expect: () => [loaded([seven, off], canRing: false)],
+      expect: () => [
+        loaded([seven, off], canRing: false),
+      ],
     );
 
     blocTest<AlarmListCubit, AlarmListState>(
@@ -264,7 +306,9 @@ void main() {
         return build();
       },
       act: (cubit) => cubit.load(),
-      expect: () => [loaded([seven, off], nextAt: {})],
+      expect: () => [
+        loaded([seven, off], nextAt: {}),
+      ],
     );
 
     blocTest<AlarmListCubit, AlarmListState>(
@@ -278,7 +322,10 @@ void main() {
         when(() => useCase.list()).thenAnswer((_) async => [seven, off]);
         await cubit.load();
       },
-      expect: () => [const AlarmListState.failure(), loaded([seven, off])],
+      expect: () => [
+        const AlarmListState.failure(),
+        loaded([seven, off]),
+      ],
     );
   });
 
@@ -304,8 +351,7 @@ void main() {
     blocTest<AlarmListCubit, AlarmListState>(
       '울릴 시각이 지났으면 다시 읽어 다음 회차로 넘긴다',
       build: () {
-        when(() => useCase.nextRings())
-            .thenAnswer((_) async => {1: DateTime(2026, 10, 5, 7)});
+        when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 10, 5, 7)});
         return build();
       },
       seed: () => loaded([seven, off]),
@@ -333,8 +379,9 @@ void main() {
       final on = off.copyWith(enabled: true, oneShotAt: DateTime(2026, 9, 28, 8));
       when(() => useCase.toggle(2, enabled: true)).thenAnswer((_) async {
         when(() => useCase.list()).thenAnswer((_) async => [seven, on]);
-        when(() => useCase.nextRings())
-            .thenAnswer((_) async => {1: sevenAt, 2: DateTime(2026, 9, 28, 8)});
+        when(
+          () => useCase.nextRings(),
+        ).thenAnswer((_) async => {1: sevenAt, 2: DateTime(2026, 9, 28, 8)});
         return on;
       });
       return build();
@@ -367,8 +414,9 @@ void main() {
       final on = off.copyWith(enabled: true, oneShotAt: DateTime(2026, 9, 28, 8));
       when(() => useCase.toggle(2, enabled: true)).thenAnswer((_) async {
         when(() => useCase.list()).thenAnswer((_) async => [seven, on]);
-        when(() => useCase.nextRings())
-            .thenAnswer((_) async => {1: sevenAt, 2: DateTime(2026, 9, 28, 8)});
+        when(
+          () => useCase.nextRings(),
+        ).thenAnswer((_) async => {1: sevenAt, 2: DateTime(2026, 9, 28, 8)});
         return on;
       });
       when(() => notification.ensure()).thenThrow(StateError('plugin'));
@@ -376,10 +424,7 @@ void main() {
     },
     seed: () => loaded([seven, off]),
     act: (cubit) async {
-      expect(
-        await cubit.toggle(off, enabled: true),
-        const Duration(hours: 8, minutes: 12),
-      );
+      expect(await cubit.toggle(off, enabled: true), const Duration(hours: 8, minutes: 12));
     },
     expect: () => [
       loaded([seven, off.copyWith(enabled: true)]),
