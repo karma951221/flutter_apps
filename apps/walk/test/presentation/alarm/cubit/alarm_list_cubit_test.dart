@@ -145,6 +145,36 @@ void main() {
     );
 
     blocTest<AlarmListCubit, AlarmListState>(
+      'tick 도 쉬는 기간을 보고 — 기간 안 공휴일 회차는 다가와도 담지 않는다',
+      build: () {
+        holidays.days[DateTime(2026, 10, 5)] = '공휴일';
+        when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 10, 12, 7)});
+        when(() => useCase.pause()).thenAnswer(
+          (_) async => AlarmPause(from: DateTime(2026, 10, 5), until: DateTime(2026, 10, 5)),
+        );
+        return build();
+      },
+      act: (cubit) async {
+        await cubit.load();
+        clock.value = DateTime(2026, 10, 4, 7);
+        await cubit.tick();
+      },
+      expect: () => [
+        loaded(
+          [seven, off],
+          nextAt: {1: DateTime(2026, 10, 12, 7)},
+          pause: AlarmPause(from: DateTime(2026, 10, 5), until: DateTime(2026, 10, 5)),
+        ),
+        loaded(
+          [seven, off],
+          nextAt: {1: DateTime(2026, 10, 12, 7)},
+          at: DateTime(2026, 10, 4, 7),
+          pause: AlarmPause(from: DateTime(2026, 10, 5), until: DateTime(2026, 10, 5)),
+        ),
+      ],
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
       '스누즈된 울림이 공휴일이어도 규칙의 다음 회차(건너뛰기가 고를 회차)가 아니면 칩이 없다',
       build: () {
         // 월요일(공휴일) 07:00 을 07:10 으로 스누즈했다. 규칙의 다음 회차는 다음 주 월요일.

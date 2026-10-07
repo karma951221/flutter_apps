@@ -1654,8 +1654,12 @@ void main() {
 
       await useCase.sync();
 
+      // 두 알람을 섞어 가장 이른 20개 — 9-29 07:00 · 08:00 … 10-8 07:00 · 08:00.
+      expect(widget.shown.last.map((r) => r.at), [
+        for (var day = 29; day < 39; day++)
+          for (final hour in [7, 8]) DateTime(2026, 9, day, hour),
+      ]);
       expect(widget.shown.last, hasLength(NextAlarmWidget.maxRings));
-      expect(widget.shown.last.first.at, DateTime(2026, 9, 29, 7));
     });
 
     test('바꾸는 동작(저장 · 쉬기)도 끝에 위젯을 갱신한다', () async {
