@@ -68,4 +68,67 @@ void main() {
 
     expect(find.byKey(const Key('retry')), findsOneWidget);
   });
+
+  group('animateIn', () {
+    Future<void> pumpAnimated(
+      WidgetTester tester, {
+      required bool animateIn,
+      bool disableAnimations = false,
+      String message = '비어 있습니다',
+    }) => tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: MediaQueryData(disableAnimations: disableAnimations),
+          child: Scaffold(
+            body: Center(
+              child: AppPlaceholder(message: message, animateIn: animateIn),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Finder inPlaceholder(Type type) => find.descendant(
+      of: find.byType(AppPlaceholder),
+      matching: find.byType(type),
+    );
+
+    testWidgets('기본값이면 전환 위젯 없이 그린다', (tester) async {
+      await pumpAnimated(tester, animateIn: false);
+
+      expect(inPlaceholder(TweenAnimationBuilder<double>), findsNothing);
+      expect(inPlaceholder(Opacity), findsNothing);
+      expect(find.text('비어 있습니다'), findsOneWidget);
+    });
+
+    testWidgets('켜면 투명에서 시작해 끝나면 완전히 보인다', (tester) async {
+      await pumpAnimated(tester, animateIn: true);
+
+      expect(inPlaceholder(TweenAnimationBuilder<double>), findsOneWidget);
+      expect(tester.widget<Opacity>(inPlaceholder(Opacity)).opacity, 0);
+
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<Opacity>(inPlaceholder(Opacity)).opacity, 1);
+      expect(find.text('비어 있습니다'), findsOneWidget);
+    });
+
+    testWidgets('다시 빌드돼도 재생하지 않는다', (tester) async {
+      await pumpAnimated(tester, animateIn: true);
+      await tester.pumpAndSettle();
+
+      await pumpAnimated(tester, animateIn: true, message: '불러오지 못했습니다');
+
+      expect(tester.widget<Opacity>(inPlaceholder(Opacity)).opacity, 1);
+      expect(tester.hasRunningAnimations, isFalse);
+    });
+
+    testWidgets('애니메이션 줄이기면 켜도 바로 최종 상태', (tester) async {
+      await pumpAnimated(tester, animateIn: true, disableAnimations: true);
+
+      expect(inPlaceholder(TweenAnimationBuilder<double>), findsNothing);
+      expect(inPlaceholder(Opacity), findsNothing);
+      expect(find.text('비어 있습니다'), findsOneWidget);
+    });
+  });
 }

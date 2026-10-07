@@ -90,8 +90,11 @@ patrol develop -t patrol_test/post_test.dart   # Hot Restart 로 짜면서 실�
 - 더보기 메뉴: `AppOverflowMenu` + `AppOverflowMenuItem`
 - 아이콘 + 개수 버튼: `AppCountAction`
 - 인증 입력: `AuthTextField` 및 `InputDecorationTheme`
+- 애니메이션(선택, 기본 끔): `AppCountAction(animate:)` · `AppButton.primary/secondary(animateLoading:)` ·
+  `AppPlaceholder(animateIn:)` · `AppListFooter(animate:)` · `AppAvatar(fadeInImage:)`. 시간·곡선은
+  `AppMotion` 토큰만 쓰고, `AppMotion.enabled(context)` 가 false('애니메이션 줄이기')면 전환 없이 그린다
 
-시각 토큰은 `design_system/theme/` 의 `AppColors` · `AppSpacing` · `AppRadius` 와
+시각 토큰은 `design_system/theme/` 의 `AppColors` · `AppSpacing` · `AppRadius` · `AppMotion` 과
 `Theme.of(context)` 를 쓴다. `Colors.*` · 숫자 여백 · `BorderRadius.circular(n)` 을
 화면에 직접 적지 않는다.
 
