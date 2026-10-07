@@ -12,7 +12,7 @@ import 'alarm_list_state.dart';
 import 'ensure_for_alarm_quietly.dart';
 
 /// 알람 탭. 셸이 소유한다 — 시작 · 복귀(sync 뒤) · 위에 얹힌 화면이 걷힐 때 [load].
-/// 화면이 떠 있는 동안에는 매분 0초에 [tick] 해 남은 시간을 새로 센다.
+/// 화면이 떠 있는 동안에는 매분 0초에 [tick] 해 남은 시간 · 쉬는 기간 만료를 새로 센다.
 class AlarmListCubit extends Cubit<AlarmListState> {
   AlarmListCubit(this._useCase, this._permissions, this._clock, this._holidays)
     : super(const AlarmListState.loading());
@@ -77,10 +77,15 @@ class AlarmListCubit extends Cubit<AlarmListState> {
   }
 
   /// 표시 기준 시각만 옮긴다 — 저장소 · 예약은 읽지 않는다. 어떤 알람의 울릴 시각이
-  /// 지났으면 대신 [load] 해 다음 회차로 넘긴다.
+  /// 지났으면 대신 [load] 해 다음 회차로 넘긴다. 쉬는 기간이 끝났으면(앱을 띄운 채 자정을 넘김)
+  /// sync 해 기간을 지우고 그동안 빠졌던 회차를 다시 건 뒤 [load] 한다(sync 실패는 삼킨다).
   Future<void> tick() async {
     if (state case AlarmListLoaded(:final nextAt, :final pause) && final loaded) {
       final now = _clock.now();
+      if (pause != null && pause.isOver(now)) {
+        await _orElse<void>(_useCase.sync, null);
+        return load();
+      }
       if (nextAt.values.any((at) => !now.isBefore(at))) return load();
       emit(loaded.copyWith(now: now, holidays: _holidaysOf(loaded.alarms, now, pause)));
     }

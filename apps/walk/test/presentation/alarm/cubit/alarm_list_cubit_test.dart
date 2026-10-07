@@ -481,6 +481,58 @@ void main() {
     );
 
     blocTest<AlarmListCubit, AlarmListState>(
+      '쉬는 기간이 끝났으면(자정을 넘김) sync 해 기간을 지우고 다시 읽는다',
+      build: () {
+        when(() => useCase.sync()).thenAnswer((_) async {});
+        when(() => useCase.pause()).thenAnswer((_) async => null);
+        return build();
+      },
+      seed: () => loaded([seven, off], pause: AlarmPause.today(now)),
+      act: (cubit) {
+        clock.value = DateTime(2026, 9, 28);
+        return cubit.tick();
+      },
+      expect: () => [
+        loaded([seven, off], at: DateTime(2026, 9, 28)),
+      ],
+      verify: (_) {
+        verify(() => useCase.sync()).called(1);
+        verify(() => useCase.list()).called(1);
+      },
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      '끝난 쉬는 기간의 sync 가 실패해도 다시 읽는다',
+      build: () {
+        when(() => useCase.sync()).thenThrow(Exception('sync'));
+        when(() => useCase.pause()).thenAnswer((_) async => null);
+        return build();
+      },
+      seed: () => loaded([seven, off], pause: AlarmPause.today(now)),
+      act: (cubit) {
+        clock.value = DateTime(2026, 9, 28);
+        return cubit.tick();
+      },
+      expect: () => [
+        loaded([seven, off], at: DateTime(2026, 9, 28)),
+      ],
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      '쉬는 기간의 끝 날 안에서는 sync 하지 않는다',
+      build: build,
+      seed: () => loaded([seven, off], pause: AlarmPause.today(now)),
+      act: (cubit) {
+        clock.value = DateTime(2026, 9, 27, 23, 59);
+        return cubit.tick();
+      },
+      expect: () => [
+        loaded([seven, off], at: DateTime(2026, 9, 27, 23, 59), pause: AlarmPause.today(now)),
+      ],
+      verify: (_) => verifyNever(() => useCase.sync()),
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
       '아직 읽지 않았으면(loading) 아무것도 하지 않는다',
       build: build,
       act: (cubit) => cubit.tick(),
