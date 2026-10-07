@@ -69,4 +69,12 @@ class NextAlarmWidgetRulesTest {
         assertEquals(midnight, NextAlarmWidgetRules.nextRefreshAt(listOf(WidgetRing(millis(2026, 10, 8, 7), "")), now, seoul))
         assertEquals(midnight, NextAlarmWidgetRules.nextRefreshAt(emptyList(), now, seoul))
     }
+
+    @Test
+    fun `refresh is delivered within ten minutes of the planned time, not an open inexact window`() {
+        // 일반 set 은 at + 0.75 × (at − now) 까지 늦을 수 있어 자정 문구가 반나절 밀린다.
+        val window = NextAlarmWidgetRules.REFRESH_WINDOW_MILLIS
+
+        assertEquals(true, window in 1..10 * 60 * 1000L)
+    }
 }

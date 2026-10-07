@@ -40,6 +40,15 @@ object NextAlarmWidgetRules {
         return minOf(shown + 1, midnight)
     }
 
+    /**
+     * 다시 그리기 알람이 [nextRefreshAt] 뒤로 늦어져도 되는 폭. 일반 `AlarmManager.set` 은 API 19+ 에서
+     * 정확하지 않아 at + 0.75 × (at − now) 까지 밀릴 수 있다 — 아침 8시에 건 자정 알람이 다음 날 정오에
+     * 와서 그 사이 "내일" 문구나 이미 울린 회차가 남는다. `ACTION_DATE_CHANGED` 가 Android 8+ 매니페스트
+     * 수신기에 오지 않으니 이 알람만이 문구를 넘긴다. `setWindow` 로 이 폭 안에 오게 한다(깨우지 않는
+     * 창 알람이라 정확한 알람 권한이 필요 없다).
+     */
+    const val REFRESH_WINDOW_MILLIS: Long = 5 * 60 * 1000L
+
     private fun dateOf(millis: Long, zone: ZoneId): LocalDate =
         Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
 }
