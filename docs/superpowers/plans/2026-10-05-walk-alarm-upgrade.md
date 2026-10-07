@@ -249,3 +249,23 @@ abstract interface class DeviceHolidaySource { Future<List<({DateTime date, Stri
 
 - [ ] 리뷰 워크플로 → 수정. 문서 갱신.
 - [ ] 에뮬레이터: 스파이크 R1~R8(리드 시간을 `--dart-define` 으로 줄여) · 자동 멈춤(앱 종료) · 알림 스누즈 3회 후 버튼 없음 · 스크린샷.
+
+---
+
+## 웨이브 4 — 복제 · 쉬는 기간 · 울림 기록 · 홈 화면 위젯
+
+스펙: [웨이브 4](../specs/2026-10-07-walk-alarm-wave4-design.md). 각 태스크는 스펙 §6 의 해당 테스트를 먼저 쓰고 구현한다.
+
+### W4-T1: 복제 · 알람 메뉴 시트
+`Alarm.duplicate()` · 길게 누르기 시트를 모든 알람용 메뉴로(복제 · 건너뛰기 · 삭제) · 편집 앱바 [복제]. 커밋 `feat(walk): 알람을 복제한다`.
+
+### W4-T2: 쉬는 기간
+`AlarmPause` · `AppSettings.pause` · `upcomingTriggers`/`triggersOf` 의 pause · `AlarmUseCase.setPause` · 지난 기간 정리 · 쉬기 시트 · 배너 · 앱바 아이콘. 커밋 `feat(walk): 기간을 정해 모든 알람을 쉰다`.
+
+### W4-T3: 울림 기록
+포크 `RingLog`(rang · stopped · autoStopped · snoozed) + JUnit · 앱 `RingLogChannel.kt` · `RingLogSource` · 건너뛰기 기록(앱 · 헤드리스) · `ringLogGroups` · `AlarmHistoryPage`. `FORK.md` 갱신. 커밋 `feat(walk): 알람이 울리고 꺼진 기록을 남기고 본다`.
+
+### W4-T4: 홈 화면 위젯
+`NextAlarmWidgetProvider` · 레이아웃 · 위젯 정보 · 문자열(ko/en/ja) · `WidgetChannel` · `NextAlarmWidget` · `_sync` 끝 갱신 · 날짜 변경 수신. 커밋 `feat(walk): 다음 알람을 홈 화면 위젯으로 보인다`.
+
+### W4-R: 리뷰 · 문서 · 에뮬레이터
