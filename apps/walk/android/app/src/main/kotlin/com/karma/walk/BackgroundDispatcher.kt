@@ -8,6 +8,7 @@ import androidx.annotation.MainThread
 import io.flutter.FlutterInjector
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
+import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodChannel
 
 /**
@@ -50,6 +51,10 @@ data class BackgroundJob(
  *
  * 프로세스 안에서 한 번에 하나만 돌고, 기다리는 일은 들어온 순서대로 돈다. 도는 중인 일과 같은
  * 일이 오면 끝난 뒤 한 번 더 돈다([BackgroundQueue]). 모든 메서드는 메인 스레드에서 부른다.
+ *
+ * 메인 엔진은 시작 · 복귀 sync 앞에 `walk/background` 의 `awaitIdle` 을 부른다([attachMainEngine]).
+ * 헤드리스 일이 돌고 있으면 그 일이 끝날 때(또는 다음 실행이 메인 엔진으로 넘어갈 때) 답한다
+ * ([HeadlessIdleGate]) — 헤드리스의 건너뛰기를 메인 엔진의 sync 가 덮지 않게.
  */
 object BackgroundDispatcher {
     /** [dispatch] 의 대기를 그만둔다. 실행 자체는 멈추지 않는다(다른 대기자 · 다음 실행이 있을 수 있다). */
@@ -72,11 +77,35 @@ object BackgroundDispatcher {
 
     private val main = Handler(Looper.getMainLooper())
     private val queue = BackgroundQueue<BackgroundJob, Waiter>()
+    private val idle = HeadlessIdleGate<MethodChannel.Result>()
 
     /** 지금 실행의 시간 초과 · 헤드리스 엔진. 실행이 끝나면 비운다. */
     private var runTimeout: Runnable? = null
     private var headless: FlutterEngine? = null
     private var runId = 0
+
+    /**
+     * 메인 엔진의 `walk/background` 에 `awaitIdle` 을 붙인다. [MainActivity] 가 엔진을 설정할 때 부른다.
+     * (같은 채널로 이 실행기가 메인 엔진에 `resync` · `reminderAction` 을 보내는 방향과는 따로다.)
+     */
+    @MainThread
+    fun attachMainEngine(messenger: BinaryMessenger) {
+        MethodChannel(messenger, CHANNEL).setMethodCallHandler { call, result ->
+            if (call.method == "awaitIdle") {
+                if (idle.await(result)) {
+                    result.success(null)
+                } else {
+                    Log.i(TAG, "awaitIdle: waiting for headless run")
+                }
+            } else {
+                result.notImplemented()
+            }
+        }
+    }
+
+    private fun release(waiters: List<MethodChannel.Result>) {
+        for (waiter in waiters) waiter.success(null)
+    }
 
     /**
      * [job] 을 요청한다. 끝나면(응답 · 오류 · [timeoutMs] 초과 중 먼저 온 것) [onEnd] 를 한 번
@@ -127,8 +156,10 @@ object BackgroundDispatcher {
         try {
             val engine = MainActivity.engine
             if (engine != null) {
+                release(idle.started(headless = false))
                 runOnMainEngine(engine, job, finish)
             } else {
+                idle.started(headless = true)
                 headless = startHeadless(context, job) { ok, reason ->
                     main.post { finish(ok, reason) }
                 }
@@ -148,7 +179,11 @@ object BackgroundDispatcher {
         Log.i(TAG, "finish: $reason (ok=$ok)")
         val done = queue.finish()
         for (waiter in done.served) waiter.onEnd(ok, reason)
-        val next = done.next ?: return
+        val next = done.next
+        if (next == null) {
+            release(idle.stopped())
+            return
+        }
         Log.i(TAG, "run next: ${next.method}")
         // 다음 실행의 한도는 그 실행을 기다리는 쪽 중 가장 긴 것. 모두 빠졌으면 짧게 잡는다.
         start(context, next, queue.waiting().maxOfOrNull { it.timeoutMs } ?: FALLBACK_TIMEOUT_MS)

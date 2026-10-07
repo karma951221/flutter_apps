@@ -48,6 +48,8 @@ class MainActivity : FlutterFragmentActivity() {
         alarmSounds = AlarmSoundsChannel(applicationContext, messenger)
         HolidayCalendarChannel.attach(applicationContext, flutterEngine)
         ReminderChannel.attach(applicationContext, messenger)
+        // 시작 · 복귀 sync 가 헤드리스 일(미리 알림 건너뛰기)이 끝나기를 기다린다(`awaitIdle`).
+        BackgroundDispatcher.attachMainEngine(messenger)
         // permission_handler 의 캘린더 권한은 READ + WRITE 를 함께 요구한다 — 읽기만 묻는다.
         CalendarPermissionChannel(this, messenger)
         // permission_handler 에 전체 화면 알림(Android 14+) 확인 API 가 없어 채널을 둔다.

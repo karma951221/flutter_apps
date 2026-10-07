@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/core/app.dart';
+import 'package:walk/core/background/background_task.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
@@ -49,6 +50,10 @@ void main() {
     late _MockSettings settings;
 
     setUp(() {
+      // 네이티브 디스패처 자리: 헤드리스 일이 없어 셸의 awaitIdle 에 바로 답한다.
+      final messenger = TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger;
+      messenger.setMockMethodCallHandler(backgroundChannel, (call) async => null);
+      addTearDown(() => messenger.setMockMethodCallHandler(backgroundChannel, null));
       final alarms = _MockAlarmUseCase();
       final walk = _MockWalk();
       final requester = _MockRequester();

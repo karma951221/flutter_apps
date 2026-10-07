@@ -95,7 +95,14 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   void didPopNext() => _refresh();
 
   /// 시작 · 복귀. 예약을 채운 뒤(지난 1회성이 꺼진 뒤) 목록을 읽는다.
-  Future<void> _refresh() => _reload(_alarmUseCase.sync);
+  ///
+  /// 그 앞에 헤드리스 엔진의 일(미리 알림 [이번만 끄기] 등)이 끝나기를 기다린다 — 알림을 누르고
+  /// 바로 앱을 열면, 헤드리스가 `skippedAt` 을 쓰기 직전 상태로 sync 해 건너뛴 회차를 다시 걸 수 있다.
+  /// 네이티브 일(`resync` · `reminderAction`)은 기다리지 않는다 — 디스패처가 그 일을 돌리는 중이다.
+  Future<void> _refresh() async {
+    await awaitBackgroundIdle();
+    await _reload(_alarmUseCase.sync);
+  }
 
   Future<void> _reload(Future<void> Function() reschedule) async {
     _permissions.check();

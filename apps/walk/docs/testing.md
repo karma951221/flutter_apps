@@ -21,7 +21,7 @@ cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · �
 cd apps/walk/android
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
 ./gradlew :alarm:testDebugUnitTest   # 포크 — AudioFallbackTest · RingerMuteTest · EngineRegistryTest · SnoozeRuleTest · AutoStopTest · HostAlarmEventTest 등
-./gradlew :app:testDebugUnitTest     # 앱 — VerifiedReplaceTest · BackgroundQueueTest · ReminderRulesTest · HolidayCalendarRulesTest · CalendarPermissionRulesTest
+./gradlew :app:testDebugUnitTest     # 앱 — VerifiedReplaceTest · BackgroundQueueTest · HeadlessIdleGateTest · ReminderRulesTest · HolidayCalendarRulesTest · CalendarPermissionRulesTest
 ```
 
 skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 전환이 없으면(KST) 스스로 건너뛴다 —
@@ -108,10 +108,10 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `presentation/alarm/widget/ringing_ripple_test.dart` | `RingingRipple` | 켜면 위상이 변함 · 애니메이션 제거면 정지 |
 | `presentation/settings/widget/step_goal_sheet_test.dart` | `StepGoalSheet` | 슬라이더 2,000~30,000 · 1,000 단위 · 저장하면 값 반환 |
 | `presentation/settings/page/settings_page_test.dart` | `SettingsPage` | 걷기 섹션 · 하루 목표 시트 → 저장 · 권한 상태 · 앱 정보(버전 · 라이선스)와 14일 안내 없음 · 행 탭별 동작 · 확인 중이면 빈 문구 · 테마 선택 · **공휴일**(걷기와 권한 사이 스위치 · 출처(내장 표 · 캘린더 이름 · 이름 모름) · 캘린더 권한 · 확인 중 빈 문구 · 끄면 저장 · 맞추기 · 출처 행 → 권한 다시 묻기 · 320dp) |
-| `presentation/shell/page/main_shell_page_test.dart` | `MainShellPage` | 첫 탭 걷기 · 초록 컨테이너 · 선택 탭 채움 아이콘 · 탭 전환 · 시작/복귀 때 sync 뒤 목록 · 복귀 때 권한 행 · **울림 화면이 걷히면 sync** · **sync 실패해도 목록** · 네이티브 `resync` → 재설정 · 목록 · 응답(실패해도) · 사라지면 핸들러 해제 · **설정 탭에서 목표를 낮춰 달성해도 걷기 탭을 열 때 한 번 축하** · 설정 탭 공휴일 출처 · 권한 읽기(허용하고 돌아오면 다시) · 시작 · resync 때 공휴일 캐시 갱신 → 예약(갱신 실패해도 예약) · 네이티브 `reminderAction` → 건너뛰고 목록 · true(실패면 false, 알림 남김) |
+| `presentation/shell/page/main_shell_page_test.dart` | `MainShellPage` | 첫 탭 걷기 · 초록 컨테이너 · 선택 탭 채움 아이콘 · 탭 전환 · 시작/복귀 때 sync 뒤 목록 · 복귀 때 권한 행 · **울림 화면이 걷히면 sync** · **sync 실패해도 목록** · 네이티브 `resync` → 재설정 · 목록 · 응답(실패해도) · 사라지면 핸들러 해제 · **설정 탭에서 목표를 낮춰 달성해도 걷기 탭을 열 때 한 번 축하** · 설정 탭 공휴일 출처 · 권한 읽기(허용하고 돌아오면 다시) · 시작 · resync 때 공휴일 캐시 갱신 → 예약(갱신 실패해도 예약) · 네이티브 `reminderAction` → 건너뛰고 목록 · true(실패면 false, 알림 남김) · **헤드리스 기다리기: 시작 · 복귀 sync 는 네이티브 `awaitIdle` 응답 뒤(그 전엔 공휴일 갱신 · sync 없음) · 응답이 없으면 10초 뒤 그냥 sync · 네이티브 `resync` 는 `awaitIdle` 을 묻지 않음** |
 | `core/alarm_ring_listener_test.dart` | `AlarmRingListener` | 한 번만 띄움 · 밖에서 끄면 걷음 · 화면이 먼저 닫힘 · 스누즈 뒤 다시 띄움 · 가려진 화면만 걷음 · 내비게이터 전 값 · 첫 프레임 전 시작→끝이면 안 띄움 · 중복 start · dispose |
 | `core/app_test.dart` | `WalkApp` · `themeModeOf` | 테마 매핑 · 저장된 다크로 첫 프레임 |
-| `core/background/background_task_test.dart` | `runBackgroundTask` · `resyncTask` · `reminderActionPackageId` | init → task → done(true) · init 실패면 task 건너뛰고 done(false) · task 실패면 done(false) · done 실패도 삼킴 · done 한 번 · 공휴일 갱신 → sync(갱신 실패해도 sync) · 진입점 인자 `["skip", id]` |
+| `core/background/background_task_test.dart` | `runBackgroundTask` · `resyncTask` · `reminderActionPackageId` | init → task → done(true) · init 실패면 task 건너뛰고 done(false) · task 실패면 done(false) · done 실패도 삼킴 · done 한 번 · 공휴일 갱신 → sync(갱신 실패해도 sync) · 진입점 인자 `["skip", id]` · **`awaitBackgroundIdle`: `awaitIdle` 을 부르고 응답까지 기다림 · 시간 한도(10초) 뒤 그냥 끝남 · 채널 없음/오류면 바로 끝남** |
 
 ### 포크 · 네이티브(JUnit)
 
@@ -127,6 +127,7 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `third_party/alarm/android/src/test/…/alarm/AutoStopTest.kt` | 포크 자동 멈춤 | 기본 없음 · 10분이면 울림 시작 10분 뒤 · 0/음수는 멈추지 않음 · 저장 왕복 · 옛 저장값은 멈추지 않음 |
 | `third_party/alarm/android/src/test/…/models/HostAlarmEventTest.kt` | 포크 호스트 표식(`HostAlarmEvent`) | `toWire` 모든 필드 · 동사 · 원인 매핑 · 저장 형식 왕복 · 디스크의 기존 형식 · **호스트가 센 스누즈 횟수**(wire · 옛 표식은 없음 · 저장 왕복) |
 | `android/app/src/test/…/BackgroundQueueTest.kt` | 앱 `BackgroundQueue`(`BackgroundDispatcher`) | 첫 요청은 실행 · 도는 중 같은 일 요청은 끝난 뒤 한 번 더(여러 개는 하나로) · 그 실행 중 요청은 또 한 번 · 쉬면 새 실행 · 취소한 대기자는 받지 않지만 실행은 함 · 지금 실행의 대기자 · 다른 일은 들어온 순서대로 하나씩 · 기다리는 같은 일은 하나로 묶음 |
+| `android/app/src/test/…/HeadlessIdleGateTest.kt` | 앱 `HeadlessIdleGate`(`BackgroundDispatcher` 의 `awaitIdle`) | 도는 일이 없으면 바로 답함 · 헤드리스 일이 도는 동안은 기다리고 끝나면(`stopped`) 풀어 줌 · 다음 실행이 메인 엔진이면 풀어 줌 · 다음도 헤드리스면 계속 기다림 · 대기자는 한 번만 풀림 |
 | `android/app/src/test/…/ReminderRulesTest.kt` | 앱 `ReminderBook` · `ReminderRules` | `scheduled` 는 울릴 시각 전 걸린 것 · 띄운 것 · 덮어쓰면 shown 해제 · 닫은(shown) 항목은 울릴 시각까지 남고 `remove` · 경과만 지움 · 지난 띄울 시각은 바로 띄움 · **알림 버튼(`onAction`)**: `dismiss` 버튼([울리기])은 알림만 닫고 항목 · shown 유지 · skip 은 Dart 로(항목 그대로) · **울릴 시각이 지난 · 취소된 · 모르는 버튼은 STALE(Dart 에 안 보냄, 지난 항목 지움)** · 띄운 알림은 울릴 시각에 저절로 닫힘(`timeoutAfter`) · 재부팅: 지난 것 버림 · 띄운 것 유지 · 미래는 다시 걺 · 놓친 것은 1분보다 남았을 때만 바로 띄움 |
 | `android/app/src/test/…/HolidayCalendarRulesTest.kt` | 앱 `HolidayCalendarRules`(폰 캘린더 휴일) | 구글 한국 휴일 캘린더를 `OWNER_ACCOUNT` · `CAL_SYNC1` · `_SYNC_ID` 로 고름 · official · 영어 피드 · 다른 나라 · 구글 아닌 계정 · 동기화 꺼짐은 id 로 안 고름 · 구글 것이 있으면 이름 규칙 안 씀 · 없으면 이름(대한민국의 휴일 · 공휴일 · Holidays in South Korea) · **이름 규칙은 한국 휴일만(United States holidays · 미국의 휴일 · Holidays in Japan 은 안 고름)** · 이름으로 찾은 캘린더의 설명 없는 일정은 쉬는 날, 기념일은 뺌 · 설명 첫 줄 판정 · 모르는 설명은 official 만 · 종일 공휴일만 날짜 → 이름 · 여러 날 · 같은 날은 먼저 온 이름 · 없으면 null |
 | `android/app/src/test/…/CalendarPermissionRulesTest.kt` | 앱 `CalendarPermissionRules`(`READ_CALENDAR` 만 묻는 채널) | 허용이 먼저 · rationale 을 본 적 없으면 거부(대화상자 띄움) · rationale 이 보이면 거부 · 본 뒤 사라지면 영구 거부 · rationale 본 기록은 남음 |
@@ -186,3 +187,5 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | A13 | 앱을 내린 채 `adb shell am broadcast -a com.karma.walk.DEBUG_DAILY_SYNC -p com.karma.walk`(디버그) | 헤드리스 엔진으로 sync 뒤 `finish: headless done`, 14일 창 끝 회차가 채워짐 | 대기 |
 | A14 | A13 직후 1~2초 안에 앱을 열고 1분 뒤 알람 → 울림 → 알림의 [알람 끄기] | 헤드리스 엔진을 내린 뒤에도 앱의 울림 화면이 뜨고 끄면 닫힘(포크 `EngineRegistry`) | 대기 |
 | A15 | `pm revoke … READ_CALENDAR` 뒤 새 APK → 설정 탭 "공휴일 출처 · 캘린더 허용 필요" 행 → 허용 | 읽기 권한 대화상자가 뜸(쓰기 권한 없이), 허용하면 캐시를 다시 읽고 "캘린더 허용됨" · 휴일 캘린더가 있으면 "폰 캘린더: …" · 콜드 스타트 첫 화면도 최신 출처 | 통과(10-07, 에뮬레이터 — 휴일 캘린더를 지운 상태라 내장 표 · 로컬 "대한민국의 휴일" 캘린더를 넣고 캐시를 지운 콜드 스타트는 첫 화면부터 폰 캘린더) |
+| A16 | 오늘 "폰 캘린더: …" 캐시가 있는 채 `pm revoke com.karma.walk android.permission.READ_CALENDAR` → 앱 실행 → 설정 탭 | 다음 날까지 기다리지 않고 바로 "내장 표 2026–2027 · 캘린더 허용 필요"(시작 refresh 가 권한 회수를 보고 캐시를 내장 표 기록으로 바꿈) | 통과(10-07, 에뮬레이터 — 로컬 "대한민국의 휴일" 캘린더) |
+| A17 | 앱 프로세스를 내린 채(force-stop 아님) 반복 알람의 30분 전 미리 알림 [이번만 끄기] → 0.2초 안에 앱 실행 | 로그 `awaitIdle: waiting for headless run` → `finish: headless done`, 그 회차는 `skippedAt` 으로 남고 예약 · 다음 알람 카드는 다음 회차 | 통과(10-07, 에뮬레이터 — 오늘 22:45 회차 건너뜀, 카드 "내일 (목) 오후 10:45") |

@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
+import 'package:walk/core/background/background_task.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
@@ -71,6 +72,11 @@ void main() {
 
   setUpAll(() => registerFallbackValue(PeriodKind.week));
   setUp(() {
+    // 네이티브 디스패처 자리: 헤드리스 일이 없어 awaitIdle 에 바로 답한다.
+    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger.setMockMethodCallHandler(
+      backgroundChannel,
+      (call) async => null,
+    );
     alarms = _MockAlarmUseCase();
     walk = _MockWalk();
     notification = _MockRequester();
@@ -110,7 +116,13 @@ void main() {
         ),
       );
   });
-  tearDown(getIt.reset);
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
+      backgroundChannel,
+      null,
+    );
+    return getIt.reset();
+  });
 
   Future<StepGoalCubit> pump(
     WidgetTester tester, {
@@ -468,5 +480,92 @@ void main() {
     expect(celebrations, 1);
     expect(settings.value.goalCelebratedOn, DateTime(2026, 9, 23));
     expect(settings.value.stepGoal, 6000);
+  });
+
+  group('헤드리스 작업 기다리기(awaitIdle)', () {
+    late List<String> calls;
+    late Completer<void> idle;
+
+    void answerAwaitIdle(WidgetTester tester, {bool never = false}) {
+      calls = [];
+      idle = Completer<void>();
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(backgroundChannel, (
+        call,
+      ) async {
+        calls.add(call.method);
+        if (call.method == 'awaitIdle') {
+          if (never) return Completer<Object?>().future;
+          await idle.future;
+        }
+        return null;
+      });
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          backgroundChannel,
+          null,
+        ),
+      );
+    }
+
+    testWidgets('시작 sync 는 네이티브가 헤드리스 작업이 끝났다고 답한 뒤에 한다', (tester) async {
+      answerAwaitIdle(tester);
+      await pump(tester);
+
+      expect(calls, ['awaitIdle']);
+      verifyNever(alarms.sync);
+      verifyNever(() => holidays.refresh());
+
+      idle.complete();
+      await tester.pumpAndSettle();
+
+      verifyInOrder([() => holidays.refresh(), alarms.sync, alarms.list]);
+    });
+
+    testWidgets('복귀 sync 도 awaitIdle 응답 뒤에 한다', (tester) async {
+      answerAwaitIdle(tester);
+      idle.complete();
+      await pump(tester);
+      clearInteractions(alarms);
+      idle = Completer<void>();
+
+      resume(tester);
+      await tester.pumpAndSettle();
+      expect(calls, ['awaitIdle', 'awaitIdle']);
+      verifyNever(alarms.sync);
+
+      idle.complete();
+      await tester.pumpAndSettle();
+      verify(alarms.sync).called(1);
+    });
+
+    testWidgets('응답이 없으면 시간 한도(backgroundIdleTimeout) 뒤 그냥 sync 한다', (tester) async {
+      answerAwaitIdle(tester, never: true);
+      final start = tester.binding.clock.now();
+      final syncedAfter = <Duration>[];
+      when(alarms.sync).thenAnswer((_) async {
+        syncedAfter.add(tester.binding.clock.now().difference(start));
+      });
+      await pump(tester);
+      await tester.pump(backgroundIdleTimeout);
+      await tester.pumpAndSettle();
+
+      expect(syncedAfter, hasLength(1));
+      expect(syncedAfter.single, greaterThanOrEqualTo(backgroundIdleTimeout));
+    });
+
+    testWidgets('네이티브 resync 는 awaitIdle 을 묻지 않는다(디스패처가 그 일을 돌리는 중이다)', (
+      tester,
+    ) async {
+      answerAwaitIdle(tester);
+      idle.complete();
+      await pump(tester);
+      calls.clear();
+
+      final reply = platformResync(tester);
+      await tester.pumpAndSettle();
+
+      expect(calls, isEmpty);
+      expect(await reply, isNotNull);
+    });
   });
 }

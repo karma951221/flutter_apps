@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/core/background/background_task.dart';
 
@@ -109,6 +112,53 @@ void main() {
           reason: '$args',
         );
       }
+    });
+  });
+
+  group('awaitBackgroundIdle', () {
+    final messenger = TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger;
+    late List<String> methods;
+
+    void answer(Future<Object?> Function() reply) {
+      methods = [];
+      messenger.setMockMethodCallHandler(backgroundChannel, (call) {
+        methods.add(call.method);
+        return reply();
+      });
+    }
+
+    tearDown(() => messenger.setMockMethodCallHandler(backgroundChannel, null));
+
+    test('시간 한도는 10초', () {
+      expect(backgroundIdleTimeout, const Duration(seconds: 10));
+    });
+
+    test('walk/background 의 awaitIdle 을 부르고 응답할 때까지 기다린다', () async {
+      final idle = Completer<Object?>();
+      answer(() => idle.future);
+
+      var done = false;
+      final waiting = awaitBackgroundIdle().then((_) => done = true);
+      await pumpEventQueue();
+      expect(methods, ['awaitIdle']);
+      expect(done, isFalse);
+
+      idle.complete(null);
+      await waiting;
+      expect(done, isTrue);
+    });
+
+    test('응답이 없으면 시간 한도 뒤 그냥 끝난다', () async {
+      answer(() => Completer<Object?>().future);
+      await awaitBackgroundIdle(timeout: const Duration(milliseconds: 20));
+      expect(methods, ['awaitIdle']);
+    });
+
+    test('채널이 없거나 오류면 바로 끝난다(던지지 않는다)', () async {
+      await awaitBackgroundIdle();
+      answer(() async => throw PlatformException(code: 'boom'));
+      await awaitBackgroundIdle();
+      expect(methods, ['awaitIdle']);
     });
   });
 }
