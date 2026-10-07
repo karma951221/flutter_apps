@@ -295,6 +295,32 @@ void main() {
     );
 
     blocTest<AlarmListCubit, AlarmListState>(
+      '쉬는 날의 공휴일 회차는 울리지 않으니 칩을 띄우지 않는다',
+      build: () {
+        holidays.days[DateTime(2026, 9, 28)] = '대체공휴일';
+        when(() => useCase.pause()).thenAnswer((_) async => pause);
+        return build();
+      },
+      act: (cubit) => cubit.load(),
+      expect: () => [
+        loaded([seven, off], pause: pause),
+      ],
+    );
+
+    test('쉬는 중에 켜면 남은 시간은 기간 뒤 첫 회차까지다', () async {
+      const daily = Alarm(id: 3, hour: 7, minute: 0, repeat: {...Weekday.values}, enabled: false);
+      when(() => useCase.pause()).thenAnswer((_) async => pause);
+      when(
+        () => useCase.toggle(3, enabled: true),
+      ).thenAnswer((_) async => daily.copyWith(enabled: true));
+      final cubit = build();
+
+      // 9-28 ~ 9-30 을 쉬므로 다음 울림은 10-1 07:00.
+      expect(await cubit.toggle(daily, enabled: true), DateTime(2026, 10, 1, 7).difference(now));
+      await cubit.close();
+    });
+
+    blocTest<AlarmListCubit, AlarmListState>(
       '쉬는 기간을 읽지 못하면 쉬지 않는 것으로 보인다',
       build: () {
         when(() => useCase.pause()).thenThrow(StateError('prefs'));

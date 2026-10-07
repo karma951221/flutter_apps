@@ -537,6 +537,25 @@ void main() {
       );
     });
 
+    testWidgets('쉬는 중의 알람 메뉴는 기간 뒤 실제로 울릴 회차를 건너뛰기로 보인다', (tester) async {
+      final monday = AlarmPause(from: DateTime(2026, 9, 28), until: DateTime(2026, 9, 28));
+      when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+      when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 9, 29, 7)});
+      when(() => useCase.pause()).thenAnswer((_) async => monday);
+      await pump(tester);
+
+      await tester.longPress(find.text('오전 7:00'));
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(BottomSheet);
+      expect(find.descendant(of: sheet, matching: find.text('다음 알람 건너뛰기')), findsOneWidget);
+      expect(
+        find.descendant(of: sheet, matching: find.textContaining('9월 29일 (화)')),
+        findsOneWidget,
+      );
+      expect(find.descendant(of: sheet, matching: find.text('내일 (월) 오전 7:00')), findsNothing);
+    });
+
     testWidgets('시작이 뒤면 시작 · 끝을 함께 보인다', (tester) async {
       when(() => useCase.list()).thenAnswer((_) async => [weekday]);
       when(() => useCase.pause()).thenAnswer(

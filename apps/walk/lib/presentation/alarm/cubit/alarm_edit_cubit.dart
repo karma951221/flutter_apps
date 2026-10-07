@@ -2,6 +2,7 @@ import 'package:core/core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
+import '../../../domain/alarm/entity/alarm_pause.dart';
 import '../../../domain/alarm/entity/alarm_sound.dart';
 import '../../../domain/alarm/entity/repeat_preset.dart';
 import '../../../domain/alarm/holiday/holiday_calendar_access.dart';
@@ -89,7 +90,8 @@ class AlarmEditCubit extends Cubit<AlarmEditState> {
 
   /// 켠 상태로 저장하고(예약까지) 권한을 확인한다 — 거부되거나 확인이 실패해도 저장은
   /// 이미 끝났다(목록 경고 배너가 남은 길). 반복 알람이면 공휴일 미리 알림용 캘린더 권한도
-  /// 묻는다(거부하면 내장 표). 울릴 때까지 남은 시간을 돌려준다.
+  /// 묻는다(거부하면 내장 표). 울릴 때까지 남은 시간을 돌려준다 — 쉬는 기간의 회차는 빼고
+  /// 센다(기간을 못 읽으면 쉬지 않는 것으로).
   /// 저장이 실패하면 던진다.
   Future<Duration?> save() => _busy(() async {
     final now = _clock.now();
@@ -107,9 +109,14 @@ class AlarmEditCubit extends Cubit<AlarmEditState> {
         // 저장은 끝났다 — 캘린더를 못 읽으면 내장 표로 판정한다.
       }
     }
+    AlarmPause? pause;
+    try {
+      pause = await _useCase.pause();
+    } on Object {
+      // 저장은 끝났다 — 쉬지 않는 것으로 센다.
+    }
     final after = _clock.now();
-    final triggers = upcomingTriggers(saved, after);
-    return triggers.isEmpty ? null : triggers.first.difference(after);
+    return upcomingTriggers(saved, after, pause: pause).firstOrNull?.difference(after);
   });
 
   Future<void> delete() => _busy(() => _useCase.delete(state.alarm.id));

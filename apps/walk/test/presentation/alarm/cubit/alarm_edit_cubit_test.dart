@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/entity/alarm_pause.dart';
 import 'package:walk/domain/alarm/entity/alarm_sound.dart';
 import 'package:walk/domain/alarm/entity/repeat_preset.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
@@ -138,6 +139,31 @@ void main() {
     ],
     verify: (_) => verify(() => useCase.save(_chimeAlarm)).called(1),
   );
+
+  test('쉬는 중에 저장하면 남은 시간은 기간 뒤 첫 회차까지다', () async {
+    when(() => useCase.save(any())).thenAnswer(
+      (i) async => (i.positionalArguments.single as Alarm).copyWith(id: 1),
+    );
+    // 월 9-28 을 쉬므로 다음 울림은 다음 주 월 10-5 07:00.
+    when(() => useCase.pause()).thenAnswer(
+      (_) async => AlarmPause(from: DateTime(2026, 9, 28), until: DateTime(2026, 9, 28)),
+    );
+    final cubit = build(_monday);
+
+    expect(await cubit.save(), DateTime(2026, 10, 5, 7).difference(now));
+    await cubit.close();
+  });
+
+  test('쉬는 기간을 읽지 못해도 저장은 성공하고 쉬지 않는 것으로 센다', () async {
+    when(() => useCase.save(any())).thenAnswer(
+      (i) async => (i.positionalArguments.single as Alarm).copyWith(id: 1),
+    );
+    when(() => useCase.pause()).thenThrow(StateError('prefs'));
+    final cubit = build(_monday);
+
+    expect(await cubit.save(), const Duration(hours: 7, minutes: 12));
+    await cubit.close();
+  });
 
   blocTest<AlarmEditCubit, AlarmEditState>(
     '저장 → 권한 확인(거부돼도 계속) → 울릴 때까지 남은 시간',

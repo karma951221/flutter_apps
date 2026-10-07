@@ -1380,6 +1380,19 @@ void main() {
       expect(settings.value.pause, today);
     });
 
+    test('쉬는 중의 skipNext 는 기간 뒤 실제로 울릴 첫 회차를 건너뛴다', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay)];
+      settings.value = AppSettings(pause: pause);
+      await useCase.sync();
+      expect(scheduler.entries[pid(1, thursday7)], thursday7);
+
+      final skipped = await useCase.skipNext(1);
+
+      expect(skipped!.skippedAt, thursday7);
+      expect(scheduler.entries, isNot(contains(pid(1, thursday7))));
+      expect(await useCase.nextRings(), {1: DateTime(2026, 10, 2, 7)});
+    });
+
     test('pause 는 저장된 기간을, 지났으면 null 을 돌려준다', () async {
       settings.value = AppSettings(pause: pause);
       expect(await useCase.pause(), pause);

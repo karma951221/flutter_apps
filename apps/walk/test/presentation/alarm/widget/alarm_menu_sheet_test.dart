@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/entity/alarm_pause.dart';
 import 'package:walk/presentation/alarm/widget/alarm_menu_sheet.dart';
 
 /// 월 · 금 오전 7:00 출근.
@@ -17,6 +18,7 @@ void main() {
     Alarm alarm, {
     Locale locale = const Locale('ko'),
     Size size = const Size(800, 1600),
+    AlarmPause? pause,
   }) async {
     await tester.binding.setSurfaceSize(size);
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -29,8 +31,9 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) => TextButton(
-            onPressed: () async =>
-                results.add(await AlarmMenuSheet.show(context, alarm: alarm, now: now)),
+            onPressed: () async => results.add(
+              await AlarmMenuSheet.show(context, alarm: alarm, now: now, pause: pause),
+            ),
             child: const Text('open'),
           ),
         ),
@@ -55,6 +58,18 @@ void main() {
     expect(rows(tester), ['복제', '다음 알람 건너뛰기', '삭제']);
     expect(find.text('10월 9일 (금) 오전 7:00'), findsOneWidget);
     expect(find.text('건너뛰기 취소'), findsNothing);
+  });
+
+  testWidgets('쉬는 중이면 다음 회차는 기간 뒤 실제로 울릴 첫 회차', (tester) async {
+    // 금 10-9 를 쉬므로 다음 울림은 월 10-12 07:00.
+    await pump(
+      tester,
+      _alarm,
+      pause: AlarmPause(from: DateTime(2026, 10, 9), until: DateTime(2026, 10, 9)),
+    );
+
+    expect(find.text('10월 12일 (월) 오전 7:00'), findsOneWidget);
+    expect(find.text('10월 9일 (금) 오전 7:00'), findsNothing);
   });
 
   testWidgets('한 번 알람 · 꺼진 반복 알람은 건너뛰기 없이 [복제 · 삭제]', (tester) async {

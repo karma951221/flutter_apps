@@ -51,7 +51,7 @@ abstract interface class AlarmUseCase {
   Future<bool> canSnooze(int packageId);
 
   /// 반복 알람의 다음 회차 하나를 건너뛴다(`Alarm.skippedAt`). 이미 건너뛴 것이 있으면 그것을
-  /// 다음 회차로 바꾼다. 1회성 · 꺼진 알람은 그대로 돌려준다. 없는 id 면 null.
+  /// 다음 회차로 바꾼다. 다음 회차는 쉬는 기간([pause])을 뺀, 실제로 울릴 회차다. 1회성 · 꺼진 알람은 그대로 돌려준다. 없는 id 면 null.
   Future<Alarm?> skipNext(int alarmId);
 
   /// 건너뛰기를 취소한다. 없는 id 면 null.
@@ -231,7 +231,12 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   Future<Alarm?> skipNext(int alarmId) => _serial(() async {
     final alarm = _byId(await _repository.load(), alarmId);
     if (alarm == null || alarm.isOneShot || !alarm.enabled) return alarm;
-    final next = upcomingTriggers(alarm.copyWith(skippedAt: null), _clock.now()).firstOrNull;
+    final now = _clock.now();
+    final next = upcomingTriggers(
+      alarm.copyWith(skippedAt: null),
+      now,
+      pause: _activePause(now),
+    ).firstOrNull;
     if (next == null) return alarm;
     return _skip(alarm, next);
   });
@@ -304,10 +309,13 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   });
 
   @override
-  Future<AlarmPause?> pause() => _serial(() async {
+  Future<AlarmPause?> pause() => _serial(() async => _activePause(_clock.now()));
+
+  /// 설정의 쉬는 기간. 끝 날이 지났으면 null(설정은 [_currentPause] 가 sync 에서 지운다).
+  AlarmPause? _activePause(DateTime now) {
     final pause = _settings.load().pause;
-    return pause == null || pause.isOver(_clock.now()) ? null : pause;
-  });
+    return pause == null || pause.isOver(now) ? null : pause;
+  }
 
   @override
   Future<void> setPause(AlarmPause? pause) => _serial(() async {

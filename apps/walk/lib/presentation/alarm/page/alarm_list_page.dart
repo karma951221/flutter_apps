@@ -109,7 +109,16 @@ class _AlarmListPageState extends State<AlarmListPage> {
   Future<void> _menu(BuildContext context, Alarm alarm) async {
     final l10n = AppLocalizations.of(context);
     final cubit = context.read<AlarmListCubit>();
-    final action = await AlarmMenuSheet.show(context, alarm: alarm, now: _clock.now());
+    final pause = switch (cubit.state) {
+      AlarmListLoaded(:final pause) => pause,
+      _ => null,
+    };
+    final action = await AlarmMenuSheet.show(
+      context,
+      alarm: alarm,
+      now: _clock.now(),
+      pause: pause,
+    );
     if (action == null || !context.mounted) return;
     try {
       switch (action) {

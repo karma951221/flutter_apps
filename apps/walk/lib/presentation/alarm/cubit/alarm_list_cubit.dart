@@ -46,7 +46,7 @@ class AlarmListCubit extends Cubit<AlarmListState> {
         nextAt: nextAt,
         now: now,
         canRing: canRing,
-        holidays: _holidaysOf(alarms, now),
+        holidays: _holidaysOf(alarms, now, pause),
         pause: pause,
       ),
     );
@@ -54,13 +54,14 @@ class AlarmListCubit extends Cubit<AlarmListState> {
 
   /// 규칙의 다음 회차가 [alarmHolidayLead](공휴일 미리 알림과 같은 24시간) 안이고 그날이 공휴일인
   /// 반복 알람 id → 공휴일 이름. 칩을 누르면 그 회차를 건너뛰는(건너뛰었으면 취소하는) 시트가 뜬다.
-  /// 회차는 `skipNext` 가 고르는 것과 같게 건너뛰기를 빼고 센다. 걸린 예약(`nextAt`)은 보지 않는다 —
+  /// 회차는 `skipNext` 가 고르는 것과 같게 건너뛰기를 빼고, 쉬는 기간([pause])의 회차도 뺀다 —
+  /// 울리지 않을 회차를 건너뛰라고 권하지 않는다. 걸린 예약(`nextAt`)은 보지 않는다 —
   /// 스누즈된 울림은 건너뛰기 대상이 아니라, 그것으로 정하면 칩과 다른 날을 건너뛴다.
-  Map<int, String> _holidaysOf(List<Alarm> alarms, DateTime now) {
+  Map<int, String> _holidaysOf(List<Alarm> alarms, DateTime now, AlarmPause? pause) {
     final names = <int, String>{};
     for (final alarm in alarms) {
       if (alarm.isOneShot) continue;
-      final at = upcomingTriggers(alarm.copyWith(skippedAt: null), now).firstOrNull;
+      final at = upcomingTriggers(alarm.copyWith(skippedAt: null), now, pause: pause).firstOrNull;
       if (at == null || at.difference(now) > alarmHolidayLead) continue;
       if (_holidays.nameOf(at) case final name?) names[alarm.id] = name;
     }
@@ -78,10 +79,10 @@ class AlarmListCubit extends Cubit<AlarmListState> {
   /// 표시 기준 시각만 옮긴다 — 저장소 · 예약은 읽지 않는다. 어떤 알람의 울릴 시각이
   /// 지났으면 대신 [load] 해 다음 회차로 넘긴다.
   Future<void> tick() async {
-    if (state case AlarmListLoaded(:final nextAt) && final loaded) {
+    if (state case AlarmListLoaded(:final nextAt, :final pause) && final loaded) {
       final now = _clock.now();
       if (nextAt.values.any((at) => !now.isBefore(at))) return load();
-      emit(loaded.copyWith(now: now, holidays: _holidaysOf(loaded.alarms, now)));
+      emit(loaded.copyWith(now: now, holidays: _holidaysOf(loaded.alarms, now, pause)));
     }
   }
 
@@ -106,7 +107,7 @@ class AlarmListCubit extends Cubit<AlarmListState> {
   }
 
   /// 스위치. 스위치가 바로 움직이게 먼저 반영하고 저장한다. 켰으면 권한을 확인하고
-  /// 울릴 때까지 남은 시간을 돌려준다(스낵바). 끄거나 실패하면 null.
+  /// 울릴 때까지 남은 시간을 돌려준다(스낵바) — 쉬는 기간의 회차는 빼고 센다. 끄거나 실패하면 null.
   Future<Duration?> toggle(Alarm alarm, {required bool enabled}) async {
     if (state case AlarmListLoaded(:final alarms) && final loaded) {
       emit(
@@ -119,8 +120,10 @@ class AlarmListCubit extends Cubit<AlarmListState> {
       final toggled = await _useCase.toggle(alarm.id, enabled: enabled);
       if (!enabled || toggled == null) return null;
       await ensureForAlarmQuietly(_permissions);
-      final triggers = upcomingTriggers(toggled, _clock.now());
-      return triggers.isEmpty ? null : triggers.first.difference(_clock.now());
+      final pause = await _orElse<AlarmPause?>(_useCase.pause, null);
+      final now = _clock.now();
+      final next = upcomingTriggers(toggled, now, pause: pause).firstOrNull;
+      return next?.difference(now);
     } finally {
       await load();
     }

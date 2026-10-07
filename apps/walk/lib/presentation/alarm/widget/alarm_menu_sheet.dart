@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
+import '../../../domain/alarm/entity/alarm_pause.dart';
 import '../../../domain/alarm/upcoming_triggers.dart';
 import '../format/alarm_format.dart';
 
@@ -15,12 +16,15 @@ enum AlarmMenuAction { duplicate, skip, unskip, delete }
 /// [건너뛰기 취소 · 건너뛴 회차] · [삭제]. 고르면 그 동작을, 그냥 닫으면 null 을 돌려준다.
 /// 삭제 확인은 부르는 쪽이 한다.
 class AlarmMenuSheet extends StatelessWidget {
-  const AlarmMenuSheet({required this.alarm, required this.now, super.key});
+  const AlarmMenuSheet({required this.alarm, required this.now, this.pause, super.key});
 
   final Alarm alarm;
 
   /// 다음 회차 · 오늘/내일 표기의 기준 시각.
   final DateTime now;
+
+  /// 쉬는 기간. 다음 회차는 이 기간을 뺀, 실제로 울릴 회차다.
+  final AlarmPause? pause;
 
   /// 건너뛰기 행을 보이는 알람 — 켜진 반복 알람, 또는 건너뛴 값이 남은 반복 알람(취소).
   static bool canSkip(Alarm alarm) =>
@@ -30,11 +34,12 @@ class AlarmMenuSheet extends StatelessWidget {
     BuildContext context, {
     required Alarm alarm,
     required DateTime now,
+    AlarmPause? pause,
   }) => showModalBottomSheet<AlarmMenuAction>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
-    builder: (_) => AlarmMenuSheet(alarm: alarm, now: now),
+    builder: (_) => AlarmMenuSheet(alarm: alarm, now: now, pause: pause),
   );
 
   @override
@@ -63,8 +68,8 @@ class AlarmMenuSheet extends StatelessWidget {
     Widget? skipRow() {
       if (!canSkip(alarm)) return null;
       final skippedAt = alarm.skippedAt;
-      // use case 의 skipNext 와 같은 회차 — 건너뛰기를 뺀 규칙의 다음 회차.
-      final at = skippedAt ?? upcomingTriggers(alarm, now).firstOrNull;
+      // use case 의 skipNext 와 같은 회차 — 건너뛰기 · 쉬는 기간을 뺀 규칙의 다음 회차.
+      final at = skippedAt ?? upcomingTriggers(alarm, now, pause: pause).firstOrNull;
       final (title, icon, action) = skippedAt == null
           ? (l10n.walkAlarmSkipNext, Icons.skip_next, AlarmMenuAction.skip)
           : (l10n.walkAlarmUnskip, Icons.undo, AlarmMenuAction.unskip);
