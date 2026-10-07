@@ -111,9 +111,13 @@ class Alarm with _$Alarm {
   /// 새 알람의 기본값 — 07:00, 반복 없음, 무음 모드 체크 끔, 시스템 기본 알람음.
   static Alarm draft() => const Alarm(hour: 7, minute: 0);
 
-  /// 같은 설정의 저장 전 알람(복제). 건너뛰기와 1회성의 울릴 시각은 비운다 — 편집 화면이
-  /// 새로 정한다.
-  Alarm duplicate() => copyWith(id: unsavedId, skippedAt: null, oneShotAt: null);
+  /// 같은 설정의 저장 전 알람(복제). 건너뛰기와 1회성의 지난 울릴 시각은 비운다 — 편집 화면이
+  /// 새로 정한다. 아직 오지 않은 [oneShotAt] 은 그대로 두어 같은 날짜 · 시각으로 연다.
+  Alarm duplicate(DateTime now) => copyWith(
+    id: unsavedId,
+    skippedAt: null,
+    oneShotAt: (oneShotAt?.isAfter(now) ?? false) ? oneShotAt : null,
+  );
 
   Map<String, Object?> toJson() => {
     'id': id,

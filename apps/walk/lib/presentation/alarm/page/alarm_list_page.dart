@@ -125,7 +125,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
       switch (action) {
         case AlarmMenuAction.duplicate:
           // 저장 전 알람으로 편집을 연다 — 저장해야 생긴다(같은 시각에 두 번 울리지 않게).
-          await _open(context, alarm.duplicate());
+          await _open(context, alarm.duplicate(_clock.now()));
         case AlarmMenuAction.skip:
           await cubit.skipNext(alarm.id);
         case AlarmMenuAction.unskip:

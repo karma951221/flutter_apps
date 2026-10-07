@@ -146,7 +146,7 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
   Future<void> _duplicate() async {
     FocusManager.instance.primaryFocus?.unfocus();
     final untilRing = await Navigator.of(context).push<Duration>(
-      MaterialPageRoute(builder: (_) => AlarmEditPage(initial: widget.initial.duplicate())),
+      MaterialPageRoute(builder: (_) => AlarmEditPage(initial: widget.initial.duplicate(_clock.now()))),
     );
     if (untilRing != null && mounted) Navigator.of(context).pop(untilRing);
   }

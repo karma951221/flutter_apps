@@ -463,6 +463,22 @@ void main() {
       expect(find.widgetWithText(TextField, '약'), findsOneWidget);
     });
 
+    testWidgets('아직 오지 않은 한 번 알람의 [복제] 는 같은 날짜 · 시각으로 연다', (tester) async {
+      when(() => useCase.list()).thenAnswer(
+        (_) async => [off.copyWith(label: '약', oneShotAt: DateTime(2026, 9, 28, 9, 30))],
+      );
+      await pump(tester);
+
+      await tester.longPress(find.text('오전 9:30'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('복제'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('한 번 알람'), findsOneWidget);
+      expect(find.text('내일 (월) 오전 9:30에 울림'), findsOneWidget);
+      expect(find.text('0분 뒤'), findsNothing);
+    });
+
     testWidgets('[삭제] 는 확인 뒤 지우고 목록에서 사라진다', (tester) async {
       when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
       when(() => useCase.delete(2)).thenAnswer((_) async {

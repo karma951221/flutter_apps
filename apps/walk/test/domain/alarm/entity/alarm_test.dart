@@ -266,7 +266,7 @@ void main() {
         skippedAt: DateTime(2026, 10, 9, 6, 45),
       );
 
-      final copy = alarm.duplicate();
+      final copy = alarm.duplicate(DateTime(2026, 10, 7, 12));
 
       expect(copy.id, Alarm.unsavedId);
       expect(copy.skippedAt, isNull);
@@ -282,10 +282,26 @@ void main() {
         oneShotAt: DateTime(2026, 10, 1, 7),
       );
 
-      final copy = alarm.duplicate();
+      final copy = alarm.duplicate(DateTime(2026, 10, 7, 12));
 
       expect(copy, const Alarm(hour: 7, minute: 0, label: '약'));
       expect(copy.oneShotAt, isNull);
+    });
+
+    test('1회성의 아직 오지 않은 울릴 시각은 그대로 둔다 — 같은 날짜 · 시각으로 연다', () {
+      final alarm = Alarm(
+        id: 2,
+        hour: 7,
+        minute: 0,
+        label: '약',
+        oneShotAt: DateTime(2026, 10, 20, 7),
+      );
+
+      final copy = alarm.duplicate(DateTime(2026, 10, 7, 12));
+
+      expect(copy.id, Alarm.unsavedId);
+      expect(copy.oneShotAt, DateTime(2026, 10, 20, 7));
+      expect(copy, alarm.copyWith(id: Alarm.unsavedId));
     });
   });
 }
