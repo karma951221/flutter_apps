@@ -45,9 +45,10 @@ object NextAlarmWidgetRules {
      * 정확하지 않아 at + 0.75 × (at − now) 까지 밀릴 수 있다 — 아침 8시에 건 자정 알람이 다음 날 정오에
      * 와서 그 사이 "내일" 문구나 이미 울린 회차가 남는다. `ACTION_DATE_CHANGED` 가 Android 8+ 매니페스트
      * 수신기에 오지 않으니 이 알람만이 문구를 넘긴다. `setWindow` 로 이 폭 안에 오게 한다(깨우지 않는
-     * 창 알람이라 정확한 알람 권한이 필요 없다).
+     * 창 알람이라 정확한 알람 권한이 필요 없다). API 31+ 는 10분보다 짧은 창을 10분까지 늘릴 수 있어
+     * 처음부터 10분으로 둔다 — 자정 문구 · 지난 회차는 최대 약 10분 남는다(보장은 아니다).
      */
-    const val REFRESH_WINDOW_MILLIS: Long = 5 * 60 * 1000L
+    const val REFRESH_WINDOW_MILLIS: Long = 10 * 60 * 1000L
 
     private fun dateOf(millis: Long, zone: ZoneId): LocalDate =
         Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()

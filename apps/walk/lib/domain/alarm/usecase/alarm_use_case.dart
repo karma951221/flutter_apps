@@ -419,6 +419,10 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   /// 홈 화면 위젯을 실제 예약(스누즈 포함, 권한 문제로 빠진 것은 없음)으로 갱신한다. 켜진 알람의
   /// 지금 뒤 회차를 이른 순으로 [NextAlarmWidget.maxRings] 개. 실패는 삼킨다 — 위젯 때문에 알람
   /// 예약이 실패하면 안 된다.
+  ///
+  /// 앱(엔진)이 없을 때 알림에서 누른 스누즈는 포크가 네이티브로만 다시 걸어 sync 가 돌지 않는다.
+  /// 그 회차는 다음 sync(앱 열기 · 하루 sync)까지 위젯에 없고, 위젯은 그다음 정규 회차를 보인다.
+  /// 알고 둔 한계다(웨이브 4 스펙 C5).
   Future<void> _showWidget(List<Alarm> alarms, DateTime now) async {
     try {
       final enabled = {for (final a in alarms) if (a.enabled) a.id: a};

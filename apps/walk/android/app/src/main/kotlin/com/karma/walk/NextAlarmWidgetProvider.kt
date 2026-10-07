@@ -103,7 +103,8 @@ class NextAlarmWidgetProvider : AppWidgetProvider() {
         /**
          * 깨우지 않는 창 알람 — 화면이 꺼져 있으면 켜질 때 다시 그려도 된다. 일반 `set` 은 늦어지는 폭에
          * 끝이 없어(시각까지 남은 시간의 0.75 배) 자정 문구 · 지난 회차가 몇 시간 남을 수 있으므로
-         * [NextAlarmWidgetRules.REFRESH_WINDOW_MILLIS] 안에 오게 `setWindow` 를 쓴다.
+         * [NextAlarmWidgetRules.REFRESH_WINDOW_MILLIS] 안에 오게 `setWindow` 를 쓴다. `AlarmManager` 호출이라
+         * JUnit 으로 지킬 수 없다 — 에뮬레이터 시나리오로만 확인한다(`docs/testing.md`).
          */
         private fun scheduleRefresh(context: Context, atMillis: Long) {
             context.getSystemService(AlarmManager::class.java).setWindow(
