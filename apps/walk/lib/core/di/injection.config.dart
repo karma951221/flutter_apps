@@ -19,6 +19,7 @@ import '../../data/alarm/alarm_permission_module.dart' as _i343;
 import '../../data/alarm/cached_holiday_calendar.dart' as _i93;
 import '../../data/alarm/channel_alarm_sound_source.dart' as _i793;
 import '../../data/alarm/channel_device_holiday_source.dart' as _i279;
+import '../../data/alarm/channel_next_alarm_widget.dart' as _i132;
 import '../../data/alarm/channel_reminder_scheduler.dart' as _i553;
 import '../../data/alarm/channel_ring_log_source.dart' as _i879;
 import '../../data/alarm/holiday_module.dart' as _i183;
@@ -38,6 +39,7 @@ import '../../domain/alarm/scheduler/alarm_scheduler.dart' as _i702;
 import '../../domain/alarm/scheduler/reminder_scheduler.dart' as _i297;
 import '../../domain/alarm/sound/alarm_sound_source.dart' as _i344;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
+import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
@@ -82,6 +84,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i204.ActivityRepository>(
       () => _i1016.HealthConnectActivityRepository(gh<_i332.HealthGateway>()),
     );
+    gh.lazySingleton<_i920.NextAlarmWidget>(
+      () => const _i132.ChannelNextAlarmWidget(),
+    );
     gh.lazySingleton<_i353.RingLogSource>(
       () => const _i879.ChannelRingLogSource(),
     );
@@ -118,6 +123,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i961.HolidayCalendar>(),
         gh<_i91.SettingsRepository>(),
         gh<_i353.RingLogSource>(),
+        gh<_i920.NextAlarmWidget>(),
       ),
     );
     return this;

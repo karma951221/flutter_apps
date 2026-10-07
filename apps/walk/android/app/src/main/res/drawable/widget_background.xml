@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 홈 화면 "다음 알람" 위젯 배경: 아이콘 초록, 둥근 모서리. 색은 values · values-night -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/widget_background" />
+    <corners android:radius="@dimen/widget_radius" />
+</shape>

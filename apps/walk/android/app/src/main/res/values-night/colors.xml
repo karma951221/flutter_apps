@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 홈 화면 위젯 다크: 시작 화면 다크와 같은 진한 초록 위에 옅은 민트 글자 -->
+    <color name="widget_background">#0F6E56</color>
+    <color name="widget_on_background">#E6F7F1</color>
+    <color name="widget_on_background_muted">#B3E6F7F1</color>
+</resources>

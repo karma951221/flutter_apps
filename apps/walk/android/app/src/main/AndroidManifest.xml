@@ -75,6 +75,22 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+        <!-- 홈 화면 "다음 알람" 위젯(웨이브 4). 날짜 · 시각 · 시간대가 바뀌면 문구를 다시 그린다.
+             WIDGET_REFRESH 는 자기 자신에게 거는 다시 그리기 알람(명시적 인텐트). -->
+        <receiver
+            android:name=".NextAlarmWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_heading">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/next_alarm_widget_info" />
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

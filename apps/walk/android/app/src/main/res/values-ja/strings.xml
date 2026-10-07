@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="reminder_channel_name">アラームの事前通知</string>
+    <string name="widget_heading">次のアラーム</string>
+    <string name="widget_empty">予定されたアラームはありません</string>
+    <string name="widget_today">今日 %1$s</string>
+    <string name="widget_tomorrow">明日 (%1$s) %2$s</string>
+    <string name="widget_description">次のアラームを表示します</string>
 </resources>

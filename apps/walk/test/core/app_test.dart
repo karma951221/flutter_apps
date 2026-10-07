@@ -5,10 +5,12 @@ import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/core/app.dart';
 import 'package:walk/core/background/background_task.dart';
+import 'package:walk/data/alarm/channel_next_alarm_widget.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
+import 'package:walk/domain/alarm/widget/next_alarm_widget.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
 import 'package:walk/domain/settings/repository/settings_repository.dart';
 import 'package:walk/domain/walk/entity/health_access.dart';
@@ -69,6 +71,8 @@ void main() {
         ..registerSingleton<WalkUseCase>(walk)
         ..registerSingleton<SettingsRepository>(settings)
         ..registerSingleton<Clock>(Clock())
+        // 채널이 없어 위젯으로 열지 않은 시작이다.
+        ..registerSingleton<NextAlarmWidget>(const ChannelNextAlarmWidget())
         ..registerSingleton<HolidayRefresher>(_NoHolidays())
         ..registerSingleton<HolidayCalendar>(_NoHolidays())
         ..registerSingleton<HolidayCalendarAccess>(

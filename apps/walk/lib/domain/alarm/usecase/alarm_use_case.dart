@@ -14,6 +14,7 @@ import '../scheduler/alarm_scheduler.dart';
 import '../scheduler/reminder_scheduler.dart';
 import '../reminders.dart';
 import '../upcoming_triggers.dart';
+import '../widget/next_alarm_widget.dart';
 
 /// 알람 정의와 패키지 예약을 함께 다룬다. 바꾸는 동작은 모두 끝에 [sync] 한다.
 /// 권한 확인은 여기서 하지 않는다 — 화면이 `AlarmPermissions` 로 한다.
@@ -91,6 +92,7 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     this._holidays,
     this._settings,
     this._ringLog,
+    this._widget,
   );
 
   final AlarmRepository _repository;
@@ -105,6 +107,9 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   /// 건너뛴 회차를 남긴다(울림 · 끔 · 스누즈는 포크 네이티브가 쓴다). 새 id 는 기록에 남은
   /// id 를 피한다([_newId]).
   final RingLogSource _ringLog;
+
+  /// 홈 화면 "다음 알람" 위젯. [_sync] 끝에 실제 예약으로 갱신한다.
+  final NextAlarmWidget _widget;
 
   /// 방금 울릴 때가 됐지만 아직 울림으로 잡히지 않은 회차를 지우지 않는 여유.
   /// (패키지 `checkAlarm` 의 30초 유예와 같은 이유 — 곧 울릴 알람을 지우는 쪽이 훨씬 나쁘다.)
@@ -407,6 +412,23 @@ class DefaultAlarmUseCase implements AlarmUseCase {
       await _scheduler.schedule(id, trigger.at, alarm);
     }
     await _syncReminders(alarms, now, pause);
+    await _showWidget(alarms, now);
+  }
+
+  /// 홈 화면 위젯을 실제 예약(스누즈 포함, 권한 문제로 빠진 것은 없음)으로 갱신한다. 켜진 알람의
+  /// 지금 뒤 회차를 이른 순으로 [NextAlarmWidget.maxRings] 개. 실패는 삼킨다 — 위젯 때문에 알람
+  /// 예약이 실패하면 안 된다.
+  Future<void> _showWidget(List<Alarm> alarms, DateTime now) async {
+    try {
+      final enabled = {for (final a in alarms) if (a.enabled) a.id: a};
+      final rings = <WidgetRing>[
+        for (final MapEntry(key: id, value: (:at, signature: _)) in (await _scheduler.scheduled()).entries)
+          if (enabled[alarmIdOf(id)] case final alarm? when at.isAfter(now)) (at: at, title: alarm.label),
+      ]..sort((a, b) => a.at.compareTo(b.at));
+      await _widget.show(rings.take(NextAlarmWidget.maxRings).toList());
+    } on Object {
+      // 다음 sync 에서 다시 맞춘다.
+    }
   }
 
   /// 설정의 쉬는 기간. 끝 날이 지났으면 설정에서 지우고 null.

@@ -47,7 +47,7 @@ data class BackgroundJob(
  *   헤드리스 엔진을 내릴 때 앱 엔진의 API 는 남는다(`third_party/alarm/FORK.md`, EngineRegistry).
  * - 없으면 헤드리스 엔진을 띄워 진입점을 돌리고 `done`(bool: 성공 여부)을 받으면 내린다. 헤드리스
  *   엔진에는 `walk/holidays`(하루 sync 가 sync 앞에 공휴일 캐시를 갱신) · `walk/reminders`(sync 가
- *   미리 알림을 맞춘다) · `walk/ring_log`(건너뛰기를 울림 기록에 남긴다)를 붙인다.
+ *   미리 알림을 맞춘다) · `walk/ring_log`(건너뛰기를 울림 기록에 남긴다) · `walk/widget`(sync 가 홈 화면 위젯을 갱신한다)을 붙인다.
  *
  * 프로세스 안에서 한 번에 하나만 돌고, 기다리는 일은 들어온 순서대로 돈다. 도는 중인 일과 같은
  * 일이 오면 끝난 뒤 한 번 더 돈다([BackgroundQueue]). 모든 메서드는 메인 스레드에서 부른다.
@@ -228,6 +228,8 @@ object BackgroundDispatcher {
         ReminderChannel.attach(context, engine.dartExecutor.binaryMessenger)
         // 미리 알림 [다음 알람 건너뛰기] 가 건너뛴 회차를 울림 기록에 남긴다.
         RingLogChannel.attach(context, engine.dartExecutor.binaryMessenger)
+        // sync 끝에 홈 화면 위젯을 갱신한다(앱을 열지 않아도 하루 sync 로 맞는다).
+        WidgetChannel.attach(context, engine.dartExecutor.binaryMessenger)
         MethodChannel(engine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result ->
                 if (call.method == "done") {

@@ -22,9 +22,23 @@ class MainActivity : FlutterFragmentActivity() {
     private var alarmSounds: AlarmSoundsChannel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 위젯을 눌러 열었다(다시 만들어진 액티비티 · 최근 앱에서 연 옛 인텐트는 빼고).
+        if (savedInstanceState == null) noteWidgetLaunch(intent)
         super.onCreate(savedInstanceState)
         // 하루 한 번 예약 채우기. 이미 걸려 있으면 그대로 둔다(KEEP).
         DailyAlarmSyncWorker.enqueue(applicationContext)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // 떠 있던 앱을 위젯으로 다시 열었다. Dart 는 복귀(resumed)에서 `takeLaunch` 로 읽는다.
+        noteWidgetLaunch(intent)
+    }
+
+    private fun noteWidgetLaunch(intent: Intent?) {
+        if (intent?.action != NextAlarmWidgetProvider.ACTION_OPEN_ALARMS) return
+        if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
+        WidgetChannel.launchPending = true
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -49,6 +63,7 @@ class MainActivity : FlutterFragmentActivity() {
         HolidayCalendarChannel.attach(applicationContext, flutterEngine)
         ReminderChannel.attach(applicationContext, messenger)
         RingLogChannel.attach(applicationContext, messenger)
+        WidgetChannel.attach(applicationContext, messenger)
         // 시작 · 복귀 sync 가 헤드리스 일(미리 알림 건너뛰기)이 끝나기를 기다린다(`awaitIdle`).
         BackgroundDispatcher.attachMainEngine(messenger)
         // permission_handler 의 캘린더 권한은 READ + WRITE 를 함께 요구한다 — 읽기만 묻는다.

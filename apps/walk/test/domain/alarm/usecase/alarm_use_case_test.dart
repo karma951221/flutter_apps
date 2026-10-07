@@ -12,6 +12,7 @@ import 'package:walk/domain/alarm/ring_log/ring_log_source.dart';
 import 'package:walk/domain/alarm/scheduler/alarm_scheduler.dart';
 import 'package:walk/domain/alarm/scheduler/reminder_scheduler.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
+import 'package:walk/domain/alarm/widget/next_alarm_widget.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
 import 'package:walk/domain/settings/repository/settings_repository.dart';
 
@@ -180,6 +181,21 @@ class _MemoryRingLog implements RingLogSource {
   }
 }
 
+class _FakeWidget implements NextAlarmWidget {
+  /// [show] 로 받은 목록들(부른 순).
+  final List<List<WidgetRing>> shown = [];
+  bool failShow = false;
+
+  @override
+  Future<void> show(List<WidgetRing> upcoming) async {
+    if (failShow) throw StateError('위젯 실패');
+    shown.add(upcoming);
+  }
+
+  @override
+  Future<bool> takeLaunch() async => false;
+}
+
 class _MutableClock extends Clock {
   _MutableClock(this.current);
   DateTime current;
@@ -197,6 +213,7 @@ void main() {
   late _Holidays holidays;
   late _MemorySettings settings;
   late _MemoryRingLog ringLog;
+  late _FakeWidget widget;
   late AlarmUseCase useCase;
 
   // 2026-09-28 월요일 정오.
@@ -211,6 +228,7 @@ void main() {
     holidays = _Holidays();
     settings = _MemorySettings();
     ringLog = _MemoryRingLog();
+    widget = _FakeWidget();
     useCase = DefaultAlarmUseCase(
       repository,
       scheduler,
@@ -219,6 +237,7 @@ void main() {
       holidays,
       settings,
       ringLog,
+      widget,
     );
   });
 
@@ -1552,6 +1571,72 @@ void main() {
     });
   });
 
+  group('홈 화면 위젯', () {
+    test('sync 끝에 켜진 알람의 걸린 예약 중 지금 뒤의 것을 이른 순으로 (시각, 라벨) 보낸다', () async {
+      repository.alarms = [
+        const Alarm(id: 1, hour: 7, minute: 0, repeat: {Weekday.tue}, label: '출근'),
+        Alarm(id: 2, hour: 13, minute: 0, oneShotAt: DateTime(2026, 9, 28, 13)),
+        const Alarm(id: 3, hour: 6, minute: 0, repeat: _everyDay, enabled: false),
+      ];
+      // 울리는 중인(지난) 회차는 빠진다.
+      final ringingId = pid(4, mondayNoon);
+      scheduler.entries[ringingId] = DateTime(2026, 9, 28, 11, 59);
+      scheduler.ringing.add(ringingId);
+
+      await useCase.sync();
+
+      expect(widget.shown.last, [
+        (at: DateTime(2026, 9, 28, 13), title: ''),
+        (at: DateTime(2026, 9, 29, 7), title: '출근'),
+        (at: DateTime(2026, 10, 6, 7), title: '출근'),
+      ]);
+    });
+
+    test('스누즈된 회차가 들어간다', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 11, minute: 58, repeat: {Weekday.mon})];
+      scheduler.entries[pid(1, mondayNoon)] = DateTime(2026, 9, 28, 12, 3);
+
+      await useCase.sync();
+
+      expect(widget.shown.last.first, (at: DateTime(2026, 9, 28, 12, 3), title: ''));
+    });
+
+    test('알람이 없으면 빈 목록을 보낸다', () async {
+      await useCase.sync();
+
+      expect(widget.shown, [isEmpty]);
+    });
+
+    test('최대 ${NextAlarmWidget.maxRings}개까지만 보낸다', () async {
+      repository.alarms = [
+        const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay),
+        const Alarm(id: 2, hour: 8, minute: 0, repeat: _everyDay),
+      ];
+
+      await useCase.sync();
+
+      expect(widget.shown.last, hasLength(NextAlarmWidget.maxRings));
+      expect(widget.shown.last.first.at, DateTime(2026, 9, 29, 7));
+    });
+
+    test('바꾸는 동작(저장 · 쉬기)도 끝에 위젯을 갱신한다', () async {
+      await useCase.save(const Alarm(hour: 7, minute: 0, repeat: {Weekday.tue}));
+      expect(widget.shown.last.map((r) => r.at), [DateTime(2026, 9, 29, 7), DateTime(2026, 10, 6, 7)]);
+
+      await useCase.setPause(AlarmPause(from: DateTime(2026, 9, 29), until: DateTime(2026, 9, 29)));
+      expect(widget.shown.last.map((r) => r.at), [DateTime(2026, 10, 6, 7)]);
+    });
+
+    test('위젯 실패는 삼킨다 — 예약은 그대로 걸린다', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: {Weekday.tue})];
+      widget.failShow = true;
+
+      await useCase.sync();
+
+      expect(scheduler.entries, hasLength(2));
+    });
+  });
+
   group('직렬 줄', () {
     test('저장이 한 번 실패해도 다음 호출은 끝난다', () async {
       final flaky = _FlakyRepository()..failNextSave = true;
@@ -1563,6 +1648,7 @@ void main() {
         holidays,
         settings,
         ringLog,
+        widget,
       );
 
       await expectLater(useCase.save(Alarm.draft()), throwsStateError);

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 홈 화면 위젯 모서리. Android 12+ 는 런처 기본값(values-v31) -->
+    <dimen name="widget_radius">16dp</dimen>
+    <dimen name="widget_padding">12dp</dimen>
+</resources>

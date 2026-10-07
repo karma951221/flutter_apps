@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="reminder_channel_name">알람 미리 알림</string>
+    <string name="widget_heading">다음 알람</string>
+    <string name="widget_empty">예정된 알람 없음</string>
+    <string name="widget_today">오늘 %1$s</string>
+    <string name="widget_tomorrow">내일 (%1$s) %2$s</string>
+    <string name="widget_description">다음 알람을 보여 줘요</string>
 </resources>

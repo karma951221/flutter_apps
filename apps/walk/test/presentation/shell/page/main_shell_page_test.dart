@@ -14,6 +14,7 @@ import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
+import 'package:walk/domain/alarm/widget/next_alarm_widget.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
 import 'package:walk/domain/settings/repository/settings_repository.dart';
 import 'package:walk/domain/walk/entity/daily_activity.dart';
@@ -47,6 +48,21 @@ class _FakeCalendar implements HolidayCalendar {
   String? nameOf(DateTime date) => null;
 }
 
+/// 위젯을 눌러 연 횟수만큼 [takeLaunch] 가 한 번씩 true.
+class _FakeWidget implements NextAlarmWidget {
+  var launches = 0;
+
+  @override
+  Future<void> show(List<WidgetRing> upcoming) async {}
+
+  @override
+  Future<bool> takeLaunch() async {
+    if (launches == 0) return false;
+    launches--;
+    return true;
+  }
+}
+
 class _MemorySettings implements SettingsRepository {
   AppSettings value = const AppSettings();
   var saves = 0;
@@ -69,6 +85,7 @@ void main() {
   late _MockAccess calendarAccess;
   late _FakeCalendar calendar;
   late _MemorySettings memorySettings;
+  late _FakeWidget homeWidget;
 
   setUpAll(() => registerFallbackValue(PeriodKind.week));
   setUp(() {
@@ -89,6 +106,7 @@ void main() {
     when(calendarAccess.check).thenAnswer((_) async => PermissionStatus.denied);
     when(() => calendarAccess.refresher).thenReturn(holidays);
     memorySettings = _MemorySettings();
+    homeWidget = _FakeWidget();
     final exactAlarm = _MockRequester();
     final fullScreen = _MockRequester();
     for (final r in [notification, exactAlarm, fullScreen]) {
@@ -108,6 +126,7 @@ void main() {
       ..registerSingleton<HolidayCalendar>(calendar)
       ..registerSingleton<HolidayCalendarAccess>(calendarAccess)
       ..registerSingleton<SettingsRepository>(memorySettings)
+      ..registerSingleton<NextAlarmWidget>(homeWidget)
       ..registerSingleton<AlarmPermissions>(
         AlarmPermissions(
           notification: notification,
@@ -243,6 +262,37 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(state);
     }
   }
+
+  testWidgets('홈 화면 위젯을 눌러 열면 알람 탭으로 시작한다', (tester) async {
+    homeWidget.launches = 1;
+    await pump(tester);
+
+    expect(onstage(AlarmListPage), isTrue);
+    expect(onstage(WalkHomePage), isFalse);
+  });
+
+  testWidgets('떠 있던 앱을 위젯으로 다시 열면(복귀) 알람 탭으로 바꾼다', (tester) async {
+    await pump(tester);
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+
+    homeWidget.launches = 1;
+    resume(tester);
+    await tester.pumpAndSettle();
+
+    expect(onstage(AlarmListPage), isTrue);
+  });
+
+  testWidgets('위젯으로 열지 않은 복귀는 탭을 그대로 둔다', (tester) async {
+    await pump(tester);
+    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+
+    resume(tester);
+    await tester.pumpAndSettle();
+
+    expect(onstage(SettingsPage), isTrue);
+  });
 
   testWidgets('복귀하면 설정 권한 행을 다시 읽는다', (tester) async {
     when(notification.check).thenAnswer((_) async => PermissionStatus.denied);

@@ -9,6 +9,7 @@ import '../../../domain/alarm/holiday/holiday_calendar.dart';
 import '../../../domain/alarm/holiday/holiday_calendar_access.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
+import '../../../domain/alarm/widget/next_alarm_widget.dart';
 import '../../../domain/settings/repository/settings_repository.dart';
 import '../../../domain/walk/usecase/walk_use_case.dart';
 import '../../alarm/cubit/alarm_list_cubit.dart';
@@ -38,6 +39,7 @@ class MainShellPage extends StatefulWidget {
 class _MainShellPageState extends State<MainShellPage> with RouteAware {
   final _alarmUseCase = getIt<AlarmUseCase>();
   final _holidays = getIt<HolidayRefresher>();
+  final _homeWidget = getIt<NextAlarmWidget>();
   late final _alarms = AlarmListCubit(
     _alarmUseCase,
     getIt<AlarmPermissions>(),
@@ -99,7 +101,10 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   /// 그 앞에 헤드리스 엔진의 일(미리 알림 [이번만 끄기] 등)이 끝나기를 기다린다 — 알림을 누르고
   /// 바로 앱을 열면, 헤드리스가 `skippedAt` 을 쓰기 직전 상태로 sync 해 건너뛴 회차를 다시 걸 수 있다.
   /// 네이티브 일(`resync` · `reminderAction`)은 기다리지 않는다 — 디스패처가 그 일을 돌리는 중이다.
+  ///
+  /// 홈 화면 위젯을 눌러 열었으면(시작 · 복귀) 먼저 알람 탭으로 바꾼다.
   Future<void> _refresh() async {
+    await _openFromHomeWidget();
     await awaitBackgroundIdle();
     await _reload(_alarmUseCase.sync);
   }
@@ -155,6 +160,16 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
       default:
         throw MissingPluginException();
     }
+  }
+
+  Future<void> _openFromHomeWidget() async {
+    final bool launched;
+    try {
+      launched = await _homeWidget.takeLaunch();
+    } on Object {
+      return;
+    }
+    if (launched && mounted) _select(ShellTab.alarm);
   }
 
   void _select(ShellTab tab) => setState(() => _tab = tab);

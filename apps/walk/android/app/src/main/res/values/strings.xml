@@ -2,4 +2,12 @@
 <resources>
     <!-- 미리 알림(30분 전 · 공휴일) 알림 채널 이름. 시스템 알림 설정에 보인다. -->
     <string name="reminder_channel_name">Alarm reminders</string>
+    <!-- 홈 화면 "다음 알람" 위젯(NextAlarmWidgetProvider). 시각은 기기 언어 · 12/24시간 설정을 따른다.
+         widget_tomorrow: %1$s 요일 약자, %2$s 시각. widget_later: %1$s 날짜(요일 포함), %2$s 시각 -->
+    <string name="widget_heading">Next alarm</string>
+    <string name="widget_empty">No upcoming alarms</string>
+    <string name="widget_today">Today %1$s</string>
+    <string name="widget_tomorrow">Tomorrow (%1$s) %2$s</string>
+    <string name="widget_later" translatable="false">%1$s %2$s</string>
+    <string name="widget_description">Shows your next alarm</string>
 </resources>

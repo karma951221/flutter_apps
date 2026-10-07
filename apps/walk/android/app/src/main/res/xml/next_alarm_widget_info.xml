@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 홈 화면 "다음 알람" 위젯. 갱신은 앱(sync · WidgetChannel)과 NextAlarmWidgetProvider 의 다시
+     그리기 알람이 한다 — 주기 갱신(updatePeriodMillis)은 쓰지 않는다. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_description"
+    android:initialLayout="@layout/widget_next_alarm"
+    android:minWidth="110dp"
+    android:minHeight="40dp"
+    android:previewLayout="@layout/widget_next_alarm"
+    android:resizeMode="horizontal"
+    android:targetCellWidth="2"
+    android:targetCellHeight="1"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />
