@@ -1,6 +1,7 @@
 import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/entity/alarm_pause.dart';
 import 'package:walk/domain/alarm/entity/alarm_sound.dart';
 import 'package:walk/domain/alarm/entity/alarm_reminder.dart';
 import 'package:walk/domain/alarm/entity/alarm_trigger.dart';
@@ -1269,6 +1270,124 @@ void main() {
 
       expect(saved.id, 1);
       expect(scheduler.entries, hasLength(4));
+    });
+  });
+
+  group('쉬는 기간', () {
+    // 월 9-28 정오 기준. 화 9-29 ~ 수 9-30 을 쉰다.
+    final pause = AlarmPause(from: DateTime(2026, 9, 29), until: DateTime(2026, 9, 30));
+    final tuesday7 = DateTime(2026, 9, 29, 7);
+    final wednesday7 = DateTime(2026, 9, 30, 7);
+    final thursday7 = DateTime(2026, 10, 1, 7);
+
+    test('setPause 는 설정에 저장하고 기간 안 회차의 예약을 지운다', () async {
+      await useCase.save(const Alarm(hour: 7, minute: 0, repeat: _everyDay));
+      expect(scheduler.entries, contains(pid(1, tuesday7)));
+
+      await useCase.setPause(pause);
+
+      expect(settings.value.pause, pause);
+      expect(scheduler.entries, isNot(contains(pid(1, tuesday7))));
+      expect(scheduler.entries, isNot(contains(pid(1, wednesday7))));
+      expect(scheduler.entries[pid(1, thursday7)], thursday7);
+      expect(scheduler.entries, hasLength(12));
+      // 스위치는 그대로다.
+      expect(repository.alarms.single.enabled, isTrue);
+    });
+
+    test('1회성도 기간 안이면 예약하지 않고 켜 둔다', () async {
+      final saved = await useCase.save(Alarm(hour: 7, minute: 0, oneShotAt: tuesday7));
+
+      await useCase.setPause(pause);
+
+      expect(scheduler.entries, isEmpty);
+      expect(repository.alarms.single, saved);
+    });
+
+    test('곧 울릴 참인(스누즈 보존 창 안) 기간 회차도 지운다', () async {
+      clock.current = DateTime(2026, 9, 29, 6, 58);
+      await useCase.save(const Alarm(hour: 7, minute: 0, repeat: _everyDay));
+      expect(scheduler.entries, contains(pid(1, tuesday7)));
+
+      await useCase.setPause(pause);
+
+      expect(scheduler.entries, isNot(contains(pid(1, tuesday7))));
+    });
+
+    test('울리는 중인 회차는 두고, 기간 밖 회차는 건드리지 않는다', () async {
+      await useCase.save(const Alarm(hour: 7, minute: 0, repeat: _everyDay));
+      clock.current = DateTime(2026, 9, 29, 7);
+      scheduler.ringing.add(pid(1, tuesday7));
+      scheduler.cancelCalls.clear();
+
+      await useCase.setPause(pause);
+
+      expect(scheduler.entries, contains(pid(1, tuesday7)));
+      expect(scheduler.cancelCalls, [pid(1, wednesday7)]);
+    });
+
+    test('기간 회차의 미리 알림도 지운다', () async {
+      await useCase.save(
+        const Alarm(hour: 7, minute: 0, repeat: {Weekday.tue, Weekday.thu}, remindBefore: true),
+      );
+      final soonTuesday = reminderId(pid(1, tuesday7), ReminderKind.soon);
+      expect(reminders.entries, contains(soonTuesday));
+
+      await useCase.setPause(pause);
+
+      expect(reminders.entries, isNot(contains(soonTuesday)));
+      expect(reminders.entries, contains(reminderId(pid(1, thursday7), ReminderKind.soon)));
+    });
+
+    test('setPause(null) 이면 기간 회차를 다시 건다', () async {
+      await useCase.save(const Alarm(hour: 7, minute: 0, repeat: _everyDay));
+      await useCase.setPause(pause);
+
+      await useCase.setPause(null);
+
+      expect(settings.value.pause, isNull);
+      expect(scheduler.entries[pid(1, tuesday7)], tuesday7);
+      expect(scheduler.entries, hasLength(14));
+    });
+
+    test('sync 는 설정의 기간을 따른다(다른 엔진이 저장한 경우)', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay)];
+      settings.value = AppSettings(pause: pause);
+
+      await useCase.sync();
+
+      expect(scheduler.entries, isNot(contains(pid(1, tuesday7))));
+      expect(scheduler.entries, hasLength(12));
+    });
+
+    test('끝 날이 지난 기간은 sync 가 지운다', () async {
+      settings.value = AppSettings(
+        stepGoal: 8000,
+        pause: AlarmPause(from: DateTime(2026, 9, 26), until: DateTime(2026, 9, 27)),
+      );
+
+      await useCase.sync();
+
+      expect(settings.value, const AppSettings(stepGoal: 8000));
+    });
+
+    test('끝 날이 오늘인 기간은 남긴다', () async {
+      final today = AlarmPause(from: DateTime(2026, 9, 28), until: DateTime(2026, 9, 28));
+      settings.value = AppSettings(pause: today);
+
+      await useCase.sync();
+
+      expect(settings.value.pause, today);
+    });
+
+    test('pause 는 저장된 기간을, 지났으면 null 을 돌려준다', () async {
+      settings.value = AppSettings(pause: pause);
+      expect(await useCase.pause(), pause);
+
+      settings.value = AppSettings(
+        pause: AlarmPause(from: DateTime(2026, 9, 26), until: DateTime(2026, 9, 27)),
+      );
+      expect(await useCase.pause(), isNull);
     });
   });
 

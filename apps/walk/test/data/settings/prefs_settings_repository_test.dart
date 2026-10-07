@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/data/settings/prefs_settings_repository.dart';
+import 'package:walk/domain/alarm/entity/alarm_pause.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
 import 'package:walk/domain/walk/entity/step_goal.dart';
 
@@ -145,6 +146,51 @@ void main() {
         await SharedPreferences.getInstance(),
       );
       expect(broken.load().holidayReminder, isTrue);
+    });
+  });
+
+  group('쉬는 기간', () {
+    late PrefsSettingsRepository repo;
+    final pause = AlarmPause(from: DateTime(2026, 10, 8), until: DateTime(2026, 10, 12));
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      repo = PrefsSettingsRepository(await SharedPreferences.getInstance());
+    });
+
+    test('저장값이 없으면 null', () {
+      expect(repo.load().pause, isNull);
+    });
+
+    test('날짜만 왕복한다', () async {
+      await repo.save(AppSettings(pause: pause));
+      final reread = PrefsSettingsRepository(await SharedPreferences.getInstance());
+      expect(reread.load().pause, pause);
+      expect(
+        (await SharedPreferences.getInstance()).getString(PrefsSettingsRepository.pauseFromKey),
+        '2026-10-08',
+      );
+    });
+
+    test('null 로 저장하면 지운다', () async {
+      await repo.save(AppSettings(pause: pause));
+      await repo.save(const AppSettings());
+      expect(repo.load().pause, isNull);
+    });
+
+    test('다른 설정을 바꿔도 유지된다', () async {
+      await repo.save(AppSettings(pause: pause));
+      await repo.save(repo.load().copyWith(stepGoal: 9000));
+      expect(repo.load().pause, pause);
+    });
+
+    test('한쪽만 있거나 날짜가 아니면 null', () async {
+      SharedPreferences.setMockInitialValues({
+        PrefsSettingsRepository.pauseFromKey: '2026-10-08',
+        PrefsSettingsRepository.pauseUntilKey: 7,
+      });
+      final broken = PrefsSettingsRepository(await SharedPreferences.getInstance());
+      expect(broken.load().pause, isNull);
     });
   });
 }

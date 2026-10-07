@@ -12,6 +12,8 @@ import '../cubit/alarm_list_cubit.dart';
 import '../cubit/alarm_list_state.dart';
 import '../format/alarm_format.dart';
 import '../widget/alarm_kind_sheet.dart';
+import '../widget/alarm_pause_banner.dart';
+import '../widget/alarm_pause_sheet.dart';
 import '../widget/alarm_permission_banner.dart';
 import '../widget/alarm_menu_sheet.dart';
 import '../widget/alarm_summary_card.dart';
@@ -133,6 +135,25 @@ class _AlarmListPageState extends State<AlarmListPage> {
     }
   }
 
+  /// 앱바 [알람 쉬기] — 기간을 고르면 모든 알람을 그 기간 쉰다.
+  Future<void> _pause(BuildContext context) async {
+    final cubit = context.read<AlarmListCubit>();
+    final pause = await AlarmPauseSheet.show(context, now: _clock.now());
+    if (pause == null || !context.mounted) return;
+    await _savePause(context, () => cubit.setPause(pause));
+  }
+
+  /// 쉬기 저장 · 그만 쉬기. 실패하면 오류 스낵바.
+  Future<void> _savePause(BuildContext context, Future<void> Function() change) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      await change();
+    } on Object {
+      if (!context.mounted) return;
+      AppSnackBar.show(context, message: l10n.walkAlarmSaveFailed, type: AppSnackBarType.error);
+    }
+  }
+
   void _showRingsIn(BuildContext context, Duration untilRing) {
     final l10n = AppLocalizations.of(context);
     AppSnackBar.show(
@@ -147,7 +168,16 @@ class _AlarmListPageState extends State<AlarmListPage> {
     return ScaffoldMessenger(
       child: Builder(
         builder: (context) => Scaffold(
-          appBar: AppBar(title: Text(l10n.walkAlarmListTitle)),
+          appBar: AppBar(
+            title: Text(l10n.walkAlarmListTitle),
+            actions: [
+              IconButton(
+                tooltip: l10n.walkAlarmPause,
+                icon: const Icon(Icons.bedtime_outlined),
+                onPressed: () => _pause(context),
+              ),
+            ],
+          ),
           floatingActionButton: FloatingActionButton(
             tooltip: l10n.walkAlarmAdd,
             onPressed: () => _add(context),
@@ -170,6 +200,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
                 :final now,
                 :final canRing,
                 :final holidays,
+                :final pause,
               ) =>
                 ListView(
                   // FAB 가 마지막 행의 스위치를 가리지 않게.
@@ -184,6 +215,23 @@ class _AlarmListPageState extends State<AlarmListPage> {
                           0,
                         ),
                         child: AlarmPermissionBanner(onTap: widget.onOpenSettings),
+                      ),
+                    if (pause != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md,
+                          AppSpacing.sm,
+                          AppSpacing.md,
+                          0,
+                        ),
+                        child: AlarmPauseBanner(
+                          pause: pause,
+                          now: now,
+                          onStop: () => _savePause(
+                            context,
+                            () => context.read<AlarmListCubit>().setPause(null),
+                          ),
+                        ),
                       ),
                     // 알람이 하나도 없으면 카드 대신 아래 빈 상태만.
                     if (alarms.isNotEmpty)

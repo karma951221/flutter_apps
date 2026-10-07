@@ -3350,6 +3350,60 @@ abstract class AppLocalizations {
   /// **'복제'**
   String get walkAlarmDuplicate;
 
+  /// 알람 탭 앱바 쉬기 아이콘 툴팁 · 쉬기 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'알람 쉬기'**
+  String get walkAlarmPause;
+
+  /// 쉬기 시트 안내 — 기간 동안 모든 알람이 빠지고 스위치는 그대로
+  ///
+  /// In ko, this message translates to:
+  /// **'고른 기간에는 모든 알람이 울리지 않아요. 스위치는 그대로예요.'**
+  String get walkAlarmPauseDescription;
+
+  /// 쉬기 시트 빠른 기간 — 오늘 하루
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘만'**
+  String get walkAlarmPauseToday;
+
+  /// 쉬기 시트 빠른 기간 — 오늘부터 내일까지
+  ///
+  /// In ko, this message translates to:
+  /// **'내일까지'**
+  String get walkAlarmPauseUntilTomorrow;
+
+  /// 쉬기 시트 빠른 기간 — 이번 토 · 일
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 주말'**
+  String get walkAlarmPauseWeekend;
+
+  /// 쉬기 시트 — 기간 달력을 여는 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'날짜 고르기'**
+  String get walkAlarmPausePickDates;
+
+  /// 알람 탭 쉬는 중 배너 — 이미 쉬기 시작했을 때. until 은 '10월 12일 (월)' 같은 날
+  ///
+  /// In ko, this message translates to:
+  /// **'{until}까지 알람을 쉬어요'**
+  String walkAlarmPausedUntil(String until);
+
+  /// 알람 탭 쉬는 중 배너 — 시작 날이 아직 오지 않았을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'{from}부터 {until}까지 알람을 쉬어요'**
+  String walkAlarmPausedRange(String from, String until);
+
+  /// 쉬는 중 배너 버튼 — 쉬는 기간을 지운다
+  ///
+  /// In ko, this message translates to:
+  /// **'그만 쉬기'**
+  String get walkAlarmPauseStop;
+
   /// 알람 저장 · 삭제 · 켜기 실패 스낵바
   ///
   /// In ko, this message translates to:

@@ -2468,6 +2468,55 @@
   "@walkAlarmDuplicate": {
     "description": "알람 메뉴 시트 · 편집 화면 앱바 메뉴의 알람 복제 항목"
   },
+  "walkAlarmPause": "알람 쉬기",
+  "@walkAlarmPause": {
+    "description": "알람 탭 앱바 쉬기 아이콘 툴팁 · 쉬기 시트 제목"
+  },
+  "walkAlarmPauseDescription": "고른 기간에는 모든 알람이 울리지 않아요. 스위치는 그대로예요.",
+  "@walkAlarmPauseDescription": {
+    "description": "쉬기 시트 안내 — 기간 동안 모든 알람이 빠지고 스위치는 그대로"
+  },
+  "walkAlarmPauseToday": "오늘만",
+  "@walkAlarmPauseToday": {
+    "description": "쉬기 시트 빠른 기간 — 오늘 하루"
+  },
+  "walkAlarmPauseUntilTomorrow": "내일까지",
+  "@walkAlarmPauseUntilTomorrow": {
+    "description": "쉬기 시트 빠른 기간 — 오늘부터 내일까지"
+  },
+  "walkAlarmPauseWeekend": "이번 주말",
+  "@walkAlarmPauseWeekend": {
+    "description": "쉬기 시트 빠른 기간 — 이번 토 · 일"
+  },
+  "walkAlarmPausePickDates": "날짜 고르기",
+  "@walkAlarmPausePickDates": {
+    "description": "쉬기 시트 — 기간 달력을 여는 항목"
+  },
+  "walkAlarmPausedUntil": "{until}까지 알람을 쉬어요",
+  "@walkAlarmPausedUntil": {
+    "description": "알람 탭 쉬는 중 배너 — 이미 쉬기 시작했을 때. until 은 '10월 12일 (월)' 같은 날",
+    "placeholders": {
+      "until": {
+        "type": "String"
+      }
+    }
+  },
+  "walkAlarmPausedRange": "{from}부터 {until}까지 알람을 쉬어요",
+  "@walkAlarmPausedRange": {
+    "description": "알람 탭 쉬는 중 배너 — 시작 날이 아직 오지 않았을 때",
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "until": {
+        "type": "String"
+      }
+    }
+  },
+  "walkAlarmPauseStop": "그만 쉬기",
+  "@walkAlarmPauseStop": {
+    "description": "쉬는 중 배너 버튼 — 쉬는 기간을 지운다"
+  },
   "walkAlarmSaveFailed": "알람을 저장하지 못했어요",
   "@walkAlarmSaveFailed": {
     "description": "알람 저장 · 삭제 · 켜기 실패 스낵바"

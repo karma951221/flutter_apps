@@ -1842,6 +1842,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkAlarmDuplicate => 'Duplicate';
 
   @override
+  String get walkAlarmPause => 'Pause alarms';
+
+  @override
+  String get walkAlarmPauseDescription =>
+      'No alarm will ring on the chosen days. Switches stay as they are.';
+
+  @override
+  String get walkAlarmPauseToday => 'Today only';
+
+  @override
+  String get walkAlarmPauseUntilTomorrow => 'Until tomorrow';
+
+  @override
+  String get walkAlarmPauseWeekend => 'This weekend';
+
+  @override
+  String get walkAlarmPausePickDates => 'Pick dates';
+
+  @override
+  String walkAlarmPausedUntil(String until) {
+    return 'Alarms paused until $until';
+  }
+
+  @override
+  String walkAlarmPausedRange(String from, String until) {
+    return 'Alarms paused from $from to $until';
+  }
+
+  @override
+  String get walkAlarmPauseStop => 'Resume';
+
+  @override
   String get walkAlarmSaveFailed => 'Couldn\'t save the alarm';
 
   @override

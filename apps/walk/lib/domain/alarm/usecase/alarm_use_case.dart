@@ -2,6 +2,7 @@ import 'package:core/core.dart';
 import 'package:injectable/injectable.dart';
 
 import '../entity/alarm.dart';
+import '../entity/alarm_pause.dart';
 import '../../settings/repository/settings_repository.dart';
 import '../entity/alarm_reminder.dart';
 import '../entity/alarm_trigger.dart';
@@ -63,6 +64,13 @@ abstract interface class AlarmUseCase {
   /// 울리는 회차를 끈다.
   Future<void> stop(int packageId);
 
+  /// 모든 알람을 쉬는 기간(`AppSettings.pause`). 쉬지 않거나 끝 날이 지났으면 null.
+  Future<AlarmPause?> pause();
+
+  /// 쉬는 기간을 정한다(null 이면 그만 쉰다). 저장한 뒤 그 기간 회차의 예약을 — 곧 울릴 참이어도 —
+  /// 지우고 sync 한다. 울리는 중인 회차는 둔다. 스위치는 건드리지 않는다.
+  Future<void> setPause(AlarmPause? pause);
+
   /// 켜진 알람마다 실제로 다음에 울릴 시각(알람 id → 시각). 규칙이 아니라 **패키지에 걸린
   /// 예약**에서 지금보다 뒤인 가장 이른 것을 고른다 — 스누즈된 회차가 들어가고, 권한 문제로
   /// 예약이 빠진 알람은 키가 없다.
@@ -86,7 +94,7 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   final ReminderScheduler _reminders;
   final HolidayCalendar _holidays;
 
-  /// 공휴일 미리 알림 설정(`AppSettings.holidayReminder`)을 읽는다.
+  /// 공휴일 미리 알림 설정(`AppSettings.holidayReminder`) · 쉬는 기간(`AppSettings.pause`)을 읽는다.
   final SettingsRepository _settings;
 
   /// 방금 울릴 때가 됐지만 아직 울림으로 잡히지 않은 회차를 지우지 않는 여유.
@@ -296,6 +304,25 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   });
 
   @override
+  Future<AlarmPause?> pause() => _serial(() async {
+    final pause = _settings.load().pause;
+    return pause == null || pause.isOver(_clock.now()) ? null : pause;
+  });
+
+  @override
+  Future<void> setPause(AlarmPause? pause) => _serial(() async {
+    await _settings.save(_settings.load().copyWith(pause: pause));
+    if (pause != null) {
+      // sync 는 스누즈 보존 창 안의 회차를 남기므로 기간 회차를 명시적으로 지운다.
+      final ringing = await _scheduler.ringingIds();
+      for (final MapEntry(key: id, value: (:at, signature: _)) in (await _scheduler.scheduled()).entries) {
+        if (pause.contains(at) && !ringing.contains(id)) await _scheduler.cancel(id);
+      }
+    }
+    await _sync();
+  });
+
+  @override
   Future<Map<int, DateTime>> nextRings() => _serial(() async {
     final now = _clock.now();
     final enabled = {for (final a in await _repository.load()) if (a.enabled) a.id};
@@ -311,6 +338,7 @@ class DefaultAlarmUseCase implements AlarmUseCase {
 
   Future<void> _sync() async {
     final now = _clock.now();
+    final pause = await _currentPause(now);
     // 1회성을 끌지는 남은 예약(스누즈)을 보고 정하므로 예약부터 읽는다.
     final scheduled = await _scheduler.scheduled();
     final ringing = await _scheduler.ringingIds();
@@ -323,7 +351,8 @@ class DefaultAlarmUseCase implements AlarmUseCase {
 
     final desired = {
       for (final alarm in alarms)
-        for (final trigger in triggersOf(alarm, now)) trigger.packageId: (trigger, alarm),
+        for (final trigger in triggersOf(alarm, now, pause: pause))
+          trigger.packageId: (trigger, alarm),
     };
     // 꺼진 알람의 회차는 곧 울릴 참이어도 남기지 않는다 — 꺼 둔 알람이 울리면 안 된다.
     // 켜진 알람은 스누즈 보존 창을 알람의 스누즈 간격으로 잡는다.
@@ -347,7 +376,16 @@ class DefaultAlarmUseCase implements AlarmUseCase {
       if (scheduled[id] == (at: trigger.at, signature: _scheduler.signatureOf(alarm))) continue;
       await _scheduler.schedule(id, trigger.at, alarm);
     }
-    await _syncReminders(alarms, now);
+    await _syncReminders(alarms, now, pause);
+  }
+
+  /// 설정의 쉬는 기간. 끝 날이 지났으면 설정에서 지우고 null.
+  Future<AlarmPause?> _currentPause(DateTime now) async {
+    final settings = _settings.load();
+    final pause = settings.pause;
+    if (pause == null || !pause.isOver(now)) return pause;
+    await _settings.save(settings.copyWith(pause: null));
+    return null;
   }
 
   /// 미리 알림을 알람 정의에 맞춘다(웨이브 3 스펙 §3.3). 실패는 삼킨다 — 미리 알림 때문에
@@ -358,14 +396,14 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   /// 않는다) 거기서 빠지지만 지우면 사용자가 보던 알림이 사라진다. 다시 걸지도 않는다(같은 알림이
   /// 또 뜬다). id 는 회차(날짜)로만 정해지므로 알람 시각을 바꾸면 울릴 시각으로 가린다: 바뀌었으면
   /// 옛 시각을 보여 주는 알림을 지금 정의로 다시 걸거나(원하는 목록에 있을 때) 지운다.
-  Future<void> _syncReminders(List<Alarm> alarms, DateTime now) async {
+  Future<void> _syncReminders(List<Alarm> alarms, DateTime now, AlarmPause? pause) async {
     try {
       final holidayReminder = _settings.load().holidayReminder;
       final desired = <int, (AlarmReminder, Alarm)>{};
       // id → 울릴 시각.
       final alive = <int, DateTime>{};
       for (final alarm in alarms) {
-        final triggers = triggersOf(alarm, now);
+        final triggers = triggersOf(alarm, now, pause: pause);
         List<AlarmReminder> of({Duration soonLead = alarmSoonLead}) => remindersOf(
           alarm,
           triggers,

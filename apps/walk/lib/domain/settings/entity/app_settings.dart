@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../alarm/entity/alarm_pause.dart';
 import '../../walk/entity/step_goal.dart';
 
 part 'app_settings.freezed.dart';
@@ -24,10 +25,15 @@ class AppSettings with _$AppSettings {
   @override
   final bool holidayReminder;
 
+  /// 모든 알람을 쉬는 기간(앱 전역 하나). 없으면 null. 지나면 알람 sync 가 지운다.
+  @override
+  final AlarmPause? pause;
+
   const AppSettings({
     this.themeMode = AppThemeMode.system,
     this.stepGoal = StepGoal.defaultSteps,
     this.goalCelebratedOn,
     this.holidayReminder = true,
+    this.pause,
   });
 }

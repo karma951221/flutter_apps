@@ -7,6 +7,7 @@ import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/entity/alarm_pause.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
@@ -504,6 +505,92 @@ void main() {
       await tester.tap(find.text('삭제'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('삭제').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('알람을 저장하지 못했어요'), findsOneWidget);
+    });
+  });
+
+  group('쉬는 기간', () {
+    // 기준 시각은 일 9-27 23:48.
+    final today = AlarmPause(from: DateTime(2026, 9, 27), until: DateTime(2026, 9, 27));
+
+    testWidgets('앱바 [알람 쉬기] → 시트 → 오늘만 → 저장 · 카드 위 배너', (tester) async {
+      when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+      when(() => useCase.setPause(today)).thenAnswer((_) async {
+        when(() => useCase.pause()).thenAnswer((_) async => today);
+      });
+      await pump(tester);
+      expect(find.text('그만 쉬기'), findsNothing);
+
+      await tester.tap(find.byTooltip('알람 쉬기'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('오늘만'));
+      await tester.pumpAndSettle();
+
+      verify(() => useCase.setPause(today)).called(1);
+      expect(find.text('오늘 (일)까지 알람을 쉬어요'), findsOneWidget);
+      expect(find.text('그만 쉬기'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('그만 쉬기')).dy,
+        lessThan(tester.getTopLeft(find.byType(AlarmSummaryCard)).dy),
+      );
+    });
+
+    testWidgets('시작이 뒤면 시작 · 끝을 함께 보인다', (tester) async {
+      when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+      when(() => useCase.pause()).thenAnswer(
+        (_) async => AlarmPause(from: DateTime(2026, 9, 28), until: DateTime(2026, 10, 2)),
+      );
+      await pump(tester);
+
+      expect(find.text('내일 (월)부터 10월 2일 (금)까지 알람을 쉬어요'), findsOneWidget);
+    });
+
+    testWidgets('알람이 없어도 쉬는 중이면 배너', (tester) async {
+      when(() => useCase.list()).thenAnswer((_) async => []);
+      when(() => useCase.pause()).thenAnswer((_) async => today);
+      await pump(tester);
+
+      expect(find.text('오늘 (일)까지 알람을 쉬어요'), findsOneWidget);
+    });
+
+    testWidgets('[그만 쉬기] 는 기간을 지우고 배너를 걷는다', (tester) async {
+      when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+      when(() => useCase.pause()).thenAnswer((_) async => today);
+      when(() => useCase.setPause(null)).thenAnswer((_) async {
+        when(() => useCase.pause()).thenAnswer((_) async => null);
+      });
+      await pump(tester);
+
+      await tester.tap(find.text('그만 쉬기'));
+      await tester.pumpAndSettle();
+
+      verify(() => useCase.setPause(null)).called(1);
+      expect(find.text('오늘 (일)까지 알람을 쉬어요'), findsNothing);
+    });
+
+    testWidgets('시트를 그냥 닫으면 저장하지 않는다', (tester) async {
+      registerFallbackValue(today);
+      when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+      await pump(tester);
+
+      await tester.tap(find.byTooltip('알람 쉬기'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      verifyNever(() => useCase.setPause(any()));
+    });
+
+    testWidgets('저장이 실패하면 오류 스낵바', (tester) async {
+      when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+      when(() => useCase.setPause(today)).thenThrow(StateError('x'));
+      await pump(tester);
+
+      await tester.tap(find.byTooltip('알람 쉬기'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('오늘만'));
       await tester.pumpAndSettle();
 
       expect(find.text('알람을 저장하지 못했어요'), findsOneWidget);

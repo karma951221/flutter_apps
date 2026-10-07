@@ -1742,6 +1742,37 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAlarmDuplicate => '복제';
 
   @override
+  String get walkAlarmPause => '알람 쉬기';
+
+  @override
+  String get walkAlarmPauseDescription => '고른 기간에는 모든 알람이 울리지 않아요. 스위치는 그대로예요.';
+
+  @override
+  String get walkAlarmPauseToday => '오늘만';
+
+  @override
+  String get walkAlarmPauseUntilTomorrow => '내일까지';
+
+  @override
+  String get walkAlarmPauseWeekend => '이번 주말';
+
+  @override
+  String get walkAlarmPausePickDates => '날짜 고르기';
+
+  @override
+  String walkAlarmPausedUntil(String until) {
+    return '$until까지 알람을 쉬어요';
+  }
+
+  @override
+  String walkAlarmPausedRange(String from, String until) {
+    return '$from부터 $until까지 알람을 쉬어요';
+  }
+
+  @override
+  String get walkAlarmPauseStop => '그만 쉬기';
+
+  @override
   String get walkAlarmSaveFailed => '알람을 저장하지 못했어요';
 
   @override

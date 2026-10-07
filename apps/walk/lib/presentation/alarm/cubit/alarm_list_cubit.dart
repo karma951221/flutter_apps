@@ -2,6 +2,7 @@ import 'package:core/core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
+import '../../../domain/alarm/entity/alarm_pause.dart';
 import '../../../domain/alarm/holiday/holiday_calendar.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/reminders.dart';
@@ -24,7 +25,8 @@ class AlarmListCubit extends Cubit<AlarmListState> {
   final HolidayCalendar _holidays;
 
   /// 던지지 않는다. 목록을 못 읽으면 failure, 다음 울림을 못 읽으면 `nextAt` 을 비우고,
-  /// 권한을 확인하지 못하면 울릴지 모르니 경고(`canRing: false`)로 둔다.
+  /// 권한을 확인하지 못하면 울릴지 모르니 경고(`canRing: false`)로 둔다. 쉬는 기간을 못 읽으면
+  /// 쉬지 않는 것으로 보인다.
   Future<void> load() async {
     final List<Alarm> alarms;
     try {
@@ -35,6 +37,7 @@ class AlarmListCubit extends Cubit<AlarmListState> {
     }
     final nextAt = await _orElse(_useCase.nextRings, const <int, DateTime>{});
     final canRing = await _orElse(_permissions.canRing, false);
+    final pause = await _orElse<AlarmPause?>(_useCase.pause, null);
     if (isClosed) return;
     final now = _clock.now();
     emit(
@@ -44,6 +47,7 @@ class AlarmListCubit extends Cubit<AlarmListState> {
         now: now,
         canRing: canRing,
         holidays: _holidaysOf(alarms, now),
+        pause: pause,
       ),
     );
   }
@@ -86,6 +90,9 @@ class AlarmListCubit extends Cubit<AlarmListState> {
 
   /// 건너뛰기를 취소한다. 실패하면 다시 읽은 뒤 던진다.
   Future<void> unskip(int alarmId) => _thenLoad(() => _useCase.unskip(alarmId));
+
+  /// 쉬는 기간을 정한다(null 이면 그만 쉰다). 실패하면 다시 읽은 뒤 던진다.
+  Future<void> setPause(AlarmPause? pause) => _thenLoad(() => _useCase.setPause(pause));
 
   /// 알람을 지운다(알람 메뉴 — 확인은 화면이 받았다). 실패하면 다시 읽은 뒤 던진다.
   Future<void> delete(int alarmId) => _thenLoad(() => _useCase.delete(alarmId));

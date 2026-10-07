@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
+import '../../../domain/alarm/entity/alarm_pause.dart';
 
 part 'alarm_list_state.freezed.dart';
 
@@ -14,12 +15,14 @@ sealed class AlarmListState with _$AlarmListState {
   /// [canRing] 이 false 면 알림 · 정확한 알람 중 하나가 거부된 상태(경고 배너).
   /// [holidays] 는 다음 울림이 공휴일 미리 알림 리드(24시간) 안의 공휴일인 반복 알람 id →
   /// 공휴일 이름("공휴일" 칩).
+  /// [pause] 는 모든 알람을 쉬는 기간(쉬는 중 배너). 쉬지 않으면 null.
   const factory AlarmListState.loaded({
     required List<Alarm> alarms,
     required Map<int, DateTime> nextAt,
     required DateTime now,
     @Default(true) bool canRing,
     @Default(<int, String>{}) Map<int, String> holidays,
+    AlarmPause? pause,
   }) = AlarmListLoaded;
 
   /// 저장된 알람 목록을 읽지 못했다. 다시 시도 · 복귀 때 [AlarmListCubit.load] 로 돌아온다.

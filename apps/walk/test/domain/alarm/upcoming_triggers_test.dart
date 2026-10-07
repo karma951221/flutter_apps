@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/entity/alarm_pause.dart';
 import 'package:walk/domain/alarm/entity/alarm_trigger.dart';
 import 'package:walk/domain/alarm/upcoming_triggers.dart';
 
@@ -152,6 +153,57 @@ void main() {
       final alarm = Alarm(id: 1, hour: 7, minute: 0, oneShotAt: DateTime(2026, 9, 29, 7));
       expect(upcomingTriggers(alarm, mondayNoon), [DateTime(2026, 9, 29, 7)]);
       expect(upcomingTriggers(alarm, DateTime(2026, 9, 29, 7)), isEmpty);
+    });
+
+    group('쉬는 기간', () {
+      // 수 9-30 ~ 금 10-2 쉰다.
+      final pause = AlarmPause(from: DateTime(2026, 9, 30), until: DateTime(2026, 10, 2));
+
+      test('기간 안 날짜의 회차는 빠진다(시작 · 끝 날 포함)', () {
+        const alarm = Alarm(id: 1, hour: 7, minute: 0, repeat: _weekdays);
+        expect(upcomingTriggers(alarm, mondayNoon, pause: pause).take(3), [
+          DateTime(2026, 9, 29, 7), // 화
+          DateTime(2026, 10, 5, 7), // 월
+          DateTime(2026, 10, 6, 7), // 화
+        ]);
+      });
+
+      test('자정 직전 회차도 끝 날이면 빠지고, 다음 날 0시 회차는 남는다', () {
+        const lateNight = Alarm(id: 1, hour: 23, minute: 59, repeat: _everyDay);
+        const midnight = Alarm(id: 2, hour: 0, minute: 0, repeat: _everyDay);
+        expect(
+          upcomingTriggers(lateNight, mondayNoon, pause: pause),
+          isNot(contains(DateTime(2026, 10, 2, 23, 59))),
+        );
+        expect(
+          upcomingTriggers(lateNight, mondayNoon, pause: pause),
+          contains(DateTime(2026, 9, 29, 23, 59)),
+        );
+        expect(
+          upcomingTriggers(midnight, mondayNoon, pause: pause),
+          contains(DateTime(2026, 10, 3)),
+        );
+        expect(
+          upcomingTriggers(midnight, mondayNoon, pause: pause),
+          isNot(contains(DateTime(2026, 9, 30))),
+        );
+      });
+
+      test('1회성도 기간 안이면 빠진다', () {
+        final inside = Alarm(id: 1, hour: 7, minute: 0, oneShotAt: DateTime(2026, 10, 1, 7));
+        final outside = Alarm(id: 2, hour: 7, minute: 0, oneShotAt: DateTime(2026, 10, 3, 7));
+        expect(upcomingTriggers(inside, mondayNoon, pause: pause), isEmpty);
+        expect(upcomingTriggers(outside, mondayNoon, pause: pause), [DateTime(2026, 10, 3, 7)]);
+      });
+
+      test('triggersOf 도 같은 회차를 뺀다', () {
+        const alarm = Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay);
+        expect(
+          triggersOf(alarm, mondayNoon, pause: pause).map((t) => t.at),
+          upcomingTriggers(alarm, mondayNoon, pause: pause),
+        );
+        expect(triggersOf(alarm, mondayNoon, pause: pause), hasLength(11));
+      });
     });
 
     test('1회성인데 oneShotAt 이 없으면 빈 목록', () {

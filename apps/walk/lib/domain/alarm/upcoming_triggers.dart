@@ -1,15 +1,17 @@
 import 'entity/alarm.dart';
+import 'entity/alarm_pause.dart';
 import 'entity/alarm_trigger.dart';
 
 /// 반복 알람을 미리 걸어 두는 기간. 앱이 열릴 때마다 채운다(스펙 §5).
 const alarmScheduleWindow = Duration(days: 14);
 
 /// [alarm] 이 `now` 뒤 · `now + window` 이하에 울릴 시각들(오름차순).
-/// 건너뛴 회차(`Alarm.skippedAt` 과 같은 순간)는 뺀다.
+/// 건너뛴 회차(`Alarm.skippedAt` 과 같은 순간)와 쉬는 기간([pause]) 날짜의 회차는 뺀다.
 List<DateTime> upcomingTriggers(
   Alarm alarm,
   DateTime now, {
   Duration window = alarmScheduleWindow,
+  AlarmPause? pause,
 }) {
   if (!alarm.enabled) return const [];
   final days = window.inDays;
@@ -25,7 +27,10 @@ List<DateTime> upcomingTriggers(
   );
   final skipped = alarm.skippedAt;
   bool inWindow(DateTime at) =>
-      at.isAfter(now) && !at.isAfter(limit) && !(skipped?.isAtSameMomentAs(at) ?? false);
+      at.isAfter(now) &&
+      !at.isAfter(limit) &&
+      !(skipped?.isAtSameMomentAs(at) ?? false) &&
+      !(pause?.contains(at) ?? false);
 
   if (alarm.isOneShot) {
     final at = alarm.oneShotAt;
@@ -45,8 +50,8 @@ DateTime nextOccurrence(int hour, int minute, DateTime now) {
   return today.isAfter(now) ? today : DateTime(now.year, now.month, now.day + 1, hour, minute);
 }
 
-/// [alarm] 의 회차를 패키지 id 와 함께.
-List<AlarmTrigger> triggersOf(Alarm alarm, DateTime now) => [
-  for (final at in upcomingTriggers(alarm, now))
+/// [alarm] 의 회차를 패키지 id 와 함께. [pause] 는 [upcomingTriggers] 와 같다.
+List<AlarmTrigger> triggersOf(Alarm alarm, DateTime now, {AlarmPause? pause}) => [
+  for (final at in upcomingTriggers(alarm, now, pause: pause))
     AlarmTrigger(packageId: packageId(alarm.id, triggerIndex(at)), alarmId: alarm.id, at: at),
 ];

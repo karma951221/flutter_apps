@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
+import 'package:walk/domain/alarm/entity/alarm_pause.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
@@ -52,12 +53,14 @@ void main() {
     DateTime? at,
     bool canRing = true,
     Map<int, String> holidayNames = const {},
+    AlarmPause? pause,
   }) => AlarmListState.loaded(
     alarms: alarms,
     nextAt: nextAt ?? {1: sevenAt},
     now: at ?? now,
     canRing: canRing,
     holidays: holidayNames,
+    pause: pause,
   );
 
   setUp(() {
@@ -272,6 +275,62 @@ void main() {
       act: (cubit) => expectLater(cubit.delete(2), throwsStateError),
       expect: () => [
         loaded([seven, off]),
+      ],
+    );
+  });
+
+  group('쉬는 기간', () {
+    final pause = AlarmPause(from: DateTime(2026, 9, 28), until: DateTime(2026, 9, 30));
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      'load 는 쉬는 기간을 담는다',
+      build: () {
+        when(() => useCase.pause()).thenAnswer((_) async => pause);
+        return build();
+      },
+      act: (cubit) => cubit.load(),
+      expect: () => [
+        loaded([seven, off], pause: pause),
+      ],
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      '쉬는 기간을 읽지 못하면 쉬지 않는 것으로 보인다',
+      build: () {
+        when(() => useCase.pause()).thenThrow(StateError('prefs'));
+        return build();
+      },
+      act: (cubit) => cubit.load(),
+      expect: () => [
+        loaded([seven, off]),
+      ],
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      'setPause 는 use case 로 저장하고 다시 읽는다',
+      build: () {
+        when(() => useCase.setPause(pause)).thenAnswer((_) async {
+          when(() => useCase.pause()).thenAnswer((_) async => pause);
+        });
+        return build();
+      },
+      act: (cubit) => cubit.setPause(pause),
+      expect: () => [
+        loaded([seven, off], pause: pause),
+      ],
+      verify: (_) => verify(() => useCase.setPause(pause)).called(1),
+    );
+
+    blocTest<AlarmListCubit, AlarmListState>(
+      'setPause(null) 로 그만 쉰다 · 실패하면 다시 읽은 뒤 던진다',
+      build: () {
+        when(() => useCase.pause()).thenAnswer((_) async => pause);
+        when(() => useCase.setPause(null)).thenThrow(StateError('x'));
+        return build();
+      },
+      act: (cubit) => expectLater(cubit.setPause(null), throwsStateError),
+      expect: () => [
+        loaded([seven, off], pause: pause),
       ],
     );
   });

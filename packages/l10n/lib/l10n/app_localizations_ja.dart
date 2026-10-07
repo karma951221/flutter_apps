@@ -1740,6 +1740,37 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAlarmDuplicate => '複製';
 
   @override
+  String get walkAlarmPause => 'アラームを休む';
+
+  @override
+  String get walkAlarmPauseDescription => '選んだ期間はすべてのアラームが鳴りません。スイッチはそのままです。';
+
+  @override
+  String get walkAlarmPauseToday => '今日だけ';
+
+  @override
+  String get walkAlarmPauseUntilTomorrow => '明日まで';
+
+  @override
+  String get walkAlarmPauseWeekend => '今週末';
+
+  @override
+  String get walkAlarmPausePickDates => '日付を選ぶ';
+
+  @override
+  String walkAlarmPausedUntil(String until) {
+    return '$untilまでアラームを休みます';
+  }
+
+  @override
+  String walkAlarmPausedRange(String from, String until) {
+    return '$fromから$untilまでアラームを休みます';
+  }
+
+  @override
+  String get walkAlarmPauseStop => '休むのをやめる';
+
+  @override
   String get walkAlarmSaveFailed => 'アラームを保存できませんでした';
 
   @override

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
+import '../../../domain/alarm/entity/alarm_pause.dart';
 import '../../../domain/alarm/entity/repeat_preset.dart';
 
 /// 알람 화면의 시각 · 남은 시간 · 울릴 날 · 반복 요약 표기.
@@ -52,6 +53,12 @@ abstract final class AlarmFormat {
       name = DateFormat.MMMd(locale).format(at);
     }
     return '$name (${DateFormat.E(locale).format(at)})';
+  }
+
+  /// 쉬는 기간 — 하루면 `오늘 (수)`, 여러 날이면 `오늘 (수) ~ 내일 (목)`.
+  static String pauseRange(AppLocalizations l10n, AlarmPause pause, DateTime now) {
+    final from = day(l10n, pause.from, now);
+    return pause.from == pause.until ? from : '$from ~ ${day(l10n, pause.until, now)}';
   }
 
   /// 울릴 날과 시각 — `내일 (화) 오전 7:00`.
