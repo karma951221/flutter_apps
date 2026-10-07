@@ -23,16 +23,16 @@
 | B4 쉬는 기간은 앱 전역 하나: `AppSettings.pause = (from: 날짜, until: 날짜)?`(포함 범위, 날짜 단위). 그 기간의 회차는 **모든 알람**에서 빠진다(1회성 포함). 기간이 지나면 저절로 풀린다(지난 기간은 sync 가 지움) | 휴가 때 알람을 하나씩 끄고 다시 켜는 수고를 없앤다. 스위치 상태는 건드리지 않는다 |
 | B4 진입: 알람 탭 앱바의 [쉬기] 아이콘 → 시트(시작 · 끝 날짜, 빠른 버튼 [오늘만] · [내일까지] · [이번 주말], 날짜 고르기는 `showDateRangePicker`). 쉬는 중이면 다음 알람 카드 위에 "10월 12일까지 알람을 쉬어요 · 그만 쉬기" 배너 | 목록 화면에서 상태가 보여야 한다 |
 | B4 는 `upcomingTriggers` 가 기간 안 날짜의 회차를 빼는 방식. 미리 알림 · 공휴일 알림도 회차에서 나오므로 함께 빠진다 | 기존 sync 구조를 그대로 쓴다 |
-| C4 울림 기록은 **포크 네이티브가 쓴다**: `AlarmService` 가 울림 시작 · 끄기(사용자/알림/자동 멈춤) · 스누즈에서 이벤트를 앱 전용 저장소(SharedPreferences `walk_ring_log`, JSON 줄, 최근 200개)에 덧붙인다. 앱은 채널 `walk/ring_log` 로 읽는다. 건너뛰기(앱 · 헤드리스)는 Dart 가 같은 채널로 덧붙인다 | 앱이 꺼진 채 울리고 알림으로 끈 경우까지 남는다. Dart 만으로는 엔진이 없을 때를 놓친다 |
-| C4 이벤트: `{at, packageId, alarmId, kind: rang|stopped|autoStopped|snoozed|skipped}`. 화면은 회차(packageId + 날짜)별로 묶어 "오전 7:00 출근 — 7:00 울림 · 스누즈 2번 · 7:12 끔" 한 줄. 날짜별 머리. 최근 30일 | 사용자가 보고 싶은 것은 "언제 일어났나" |
+| C4 울림 기록은 **포크 네이티브가 쓴다**: `AlarmService` 가 울림 시작 · 끄기(사용자/알림/자동 멈춤) · 스누즈에서 이벤트를 앱 전용 저장소(SharedPreferences `walk_ring_log`, JSON 줄, 최근 200개)에 덧붙인다. 앱은 채널 `walk/ring_log` 로 읽는다. 건너뛰기(앱 · 헤드리스)는 Dart 가 같은 채널로 덧붙인다 — 반복 알람은 취소 · 시각 변경으로 지워질 수 있어 회차가 지난 뒤 sync 가 남은 `skippedAt` 을 기록한다 | 앱이 꺼진 채 울리고 알림으로 끈 경우까지 남는다. Dart 만으로는 엔진이 없을 때를 놓친다 |
+| C4 이벤트: `{at, packageId, alarmId, kind: rang|stopped|autoStopped|snoozed|skipped}`. 화면은 회차(packageId + 그 회차의 하루 — 자정을 넘긴 스누즈 · 끔도 같은 회차)별로 묶어 "오전 7:00 출근 — 7:00 울림 · 스누즈 2번 · 7:12 끔" 한 줄. 날짜별 머리. 최근 30일 | 사용자가 보고 싶은 것은 "언제 일어났나" |
 | C4 진입: 알람 탭 앱바 [기록] 아이콘 → `AlarmHistoryPage`. 비면 `AppPlaceholder` | |
 | C5 홈 화면 위젯: 네이티브 `AppWidgetProvider` + `RemoteViews`(2×1 기본, 가로 늘림 가능). 내용 "다음 알람" · "내일 (목) 오전 7:00" · 제목. 알람이 없으면 "예정된 알람 없음". 누르면 앱 알람 탭을 연다. 초록 배경(아이콘 색) · 라이트/다크 | 남은 시간 카운트다운은 매분 갱신이 필요해 넣지 않는다(절대 시각만) |
-| C5 갱신: Dart `_sync` 끝(메인 · 헤드리스 모두)에서 채널 `walk/widget` 의 `update({atMillis, title})` 를 부르면 Kotlin 이 SharedPreferences 에 쓰고 `AppWidgetManager.updateAppWidget`. 날짜 문구(오늘/내일)는 위젯이 그릴 때 기기 시각으로 계산하고, 자정에 바뀌게 `ACTION_DATE_CHANGED` · `TIME_SET` · `TIMEZONE_CHANGED` 를 받는다 | home_widget 패키지 없이. 하루 sync 와 앱 사용으로 충분히 자주 갱신된다 |
+| C5 갱신: Dart `_sync` 끝(메인 · 헤드리스 모두)에서 채널 `walk/widget` 의 `update({atMillis, title})` 를 부르면 Kotlin 이 SharedPreferences 에 쓰고 `AppWidgetManager.updateAppWidget`. 날짜 문구(오늘/내일)는 위젯이 그릴 때 기기 시각으로 계산하고, 자정에 바뀌게 `ACTION_DATE_CHANGED` · `TIME_SET` · `TIMEZONE_CHANGED` 를 받는다 | home_widget 패키지 없이. 하루 sync 와 앱 사용으로 충분히 자주 갱신된다. 한계: 앱이 꺼진 채 알림에서 누른 스누즈는 네이티브만 다시 걸어 다음 sync 까지 위젯에 없다. 다시 그리기 알람은 `setWindow` 10분 창(API 31+ 가 10분 미만 창을 늘리므로)이라 자정 문구는 최대 약 10분 늦을 수 있다 |
 | 새 pub 의존성 없음 | |
 
 ## 3. 도메인 · 데이터
 
-- `Alarm.duplicate()` → `id: unsavedId`, `skippedAt: null`, 1회성이면 `oneShotAt: null`.
+- `Alarm.duplicate(now)` → `id: unsavedId`, `skippedAt: null`, 1회성의 `oneShotAt` 은 지났으면 null(아직 오지 않았으면 그대로 — 같은 날짜 · 시각으로 연다).
 - `AlarmPause {DateTime from; DateTime until}`(날짜만) — `contains(DateTime at)`. `AppSettings.pause`(JSON `pauseFrom` · `pauseUntil`, 없으면 null).
 - `upcomingTriggers(alarm, now, {AlarmPause? pause})`, `triggersOf` 도. `AlarmUseCase` 가 설정에서 pause 를 읽어 넘긴다. `setPause(AlarmPause?)` 는 저장 뒤 sync.
 - `RingLogEntry`(Freezed) · `RingLogSource`(domain 인터페이스: `Future<List<RingLogEntry>> read({required DateTime since})`, `Future<void> append(RingLogEntry)`) · `ChannelRingLogSource`.
