@@ -137,4 +137,88 @@ void main() {
     expect(find.text('ring 312'), findsNothing);
     expect(find.text('home'), findsOneWidget);
   });
+
+  group('앱으로 돌아올 때 안전망', () {
+    late Set<int> native;
+    late AlarmRingListener guarded;
+
+    setUp(() async {
+      // 바깥 setUp 의 리스너는 쓰지 않는다(같은 스트림을 두 번 구독할 수 없다).
+      await listener.dispose();
+      native = {};
+      ringing = StreamController<Set<int>>();
+      guarded = AlarmRingListener(
+        navigatorKey: key,
+        ringing: ringing.stream,
+        isRinging: (id) async => native.contains(id),
+        routeFor: (id) => MaterialPageRoute<void>(
+          builder: (context) => Scaffold(body: Text('ring $id')),
+        ),
+      )..start();
+    });
+    tearDown(() => guarded.dispose());
+
+    void goHome(WidgetTester tester) {
+      for (final state in [AppLifecycleState.inactive, AppLifecycleState.hidden, AppLifecycleState.paused]) {
+        tester.binding.handleAppLifecycleStateChanged(state);
+      }
+    }
+
+    void comeBack(WidgetTester tester) {
+      for (final state in [AppLifecycleState.hidden, AppLifecycleState.inactive, AppLifecycleState.resumed]) {
+        tester.binding.handleAppLifecycleStateChanged(state);
+      }
+    }
+
+    testWidgets('돌아왔을 때 이미 안 울리는 알람의 울림 화면을 걷는다', (tester) async {
+      await pumpApp(tester);
+      native.add(312);
+      ringing.add({312});
+      await tester.pumpAndSettle();
+      goHome(tester);
+
+      // 끝났다는 값이 오지 않은 채 밖에서 꺼졌다.
+      native.remove(312);
+      comeBack(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('ring 312'), findsNothing);
+      expect(find.text('home'), findsOneWidget);
+    });
+
+    testWidgets('돌아왔을 때 아직 울리는 알람의 화면은 둔다', (tester) async {
+      await pumpApp(tester);
+      native.add(312);
+      ringing.add({312});
+      await tester.pumpAndSettle();
+      goHome(tester);
+
+      comeBack(tester);
+      await tester.pumpAndSettle();
+
+      expect(find.text('ring 312'), findsOneWidget);
+    });
+
+    testWidgets('안전망이 걷은 뒤 늦게 온 같은 울림 값으로 다시 띄우지 않는다', (tester) async {
+      await pumpApp(tester);
+      native.add(312);
+      ringing.add({312});
+      await tester.pumpAndSettle();
+      goHome(tester);
+      native.remove(312);
+      comeBack(tester);
+      await tester.pumpAndSettle();
+
+      ringing.add({312});
+      await tester.pumpAndSettle();
+      expect(find.text('ring 312'), findsNothing);
+
+      // 끝났다는 값 뒤에 다시 울리면(스누즈 뒤) 다시 띄운다.
+      ringing
+        ..add({})
+        ..add({312});
+      await tester.pumpAndSettle();
+      expect(find.text('ring 312'), findsOneWidget);
+    });
+  });
 }

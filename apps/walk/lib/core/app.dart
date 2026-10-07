@@ -27,6 +27,7 @@ class _WalkAppState extends State<WalkApp> {
   late final _goal = StepGoalCubit(getIt<SettingsRepository>());
   late final _ringListener = AlarmRingListener(
     navigatorKey: walkNavigatorKey,
+    isRinging: AlarmRingListener.packageIsRinging,
     routeFor: (packageId) => MaterialPageRoute<void>(
       fullscreenDialog: true,
       builder: (_) => AlarmRingingPage(packageId: packageId),

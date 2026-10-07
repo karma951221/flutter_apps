@@ -668,6 +668,11 @@ class Alarm {
 
   /// PRIVATE: Called by the native platform when the alarm rings.
   static void alarmRang(AlarmSettings alarm) {
+    // Fork: the ring is now known, so the fallback timer has nothing left to
+    // catch. Left armed, its foreground listener re-arms it for the passed
+    // time on the next resume and reports the ring a second time once the
+    // host has stopped it (see [_alarmStopped]).
+    PlatformTimers.stopAlarm(alarm.id);
     _scheduled.add(_scheduled.value.remove(alarm));
     _ringing.add(_ringing.value.add(alarm));
     ringStream.add(alarm);
@@ -905,6 +910,13 @@ class Alarm {
     // Incase the alarm was stopped via the platform (e.g. notification action),
     // we need to make sure it is deleted from storage.
     await AlarmStorage.unsaveAlarm(alarmId);
+
+    // Fork: like [stop], drop the fallback timer. A host stop never passes
+    // through [stop], so an alarm set while the app was in the foreground kept
+    // its foreground listener, which on the next resume saw "not ringing",
+    // re-armed the timer for the passed time and reported a phantom ring —
+    // the ringing screen came back for an alarm already turned off.
+    PlatformTimers.stopAlarm(alarmId);
 
     _scheduled.add(_scheduled.value.removeById(alarmId));
     _ringing.add(_ringing.value.removeById(alarmId));
