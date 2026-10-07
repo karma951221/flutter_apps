@@ -56,20 +56,30 @@ class RingSettingsSection extends StatelessWidget {
         ),
       ),
       children: [
-        Row(
-          children: [
-            Expanded(child: Text(l10n.walkAlarmVolume, style: theme.textTheme.titleSmall)),
-            Text(l10n.walkAlarmPercent(alarm.volumePercent)),
-          ],
+        // 화면 읽기는 아래 슬라이더가 "볼륨, 80%" 로 한 번에 읽는다 — 이 줄은 눈으로만 본다.
+        ExcludeSemantics(
+          child: Row(
+            children: [
+              Expanded(child: Text(l10n.walkAlarmVolume, style: theme.textTheme.titleSmall)),
+              Text(l10n.walkAlarmPercent(alarm.volumePercent)),
+            ],
+          ),
         ),
-        Slider(
-          key: const Key('ring-volume'),
-          min: volume.first.toDouble(),
-          max: volume.last.toDouble(),
-          divisions: volume.length - 1,
-          value: alarm.volumePercent.toDouble(),
-          label: l10n.walkAlarmPercent(alarm.volumePercent),
-          onChanged: enabled ? (value) => onVolumePercent(value.round()) : null,
+        // `label` 은 값 말풍선 글자이면서 화면 읽기 이름표다. 값을 주면 값(퍼센트)과 범위 안 위치
+        // (10–100 에서 78%)가 겹쳐 "80%, 78%" 로 읽힌다 — 이름표는 "볼륨", 값은 지금 퍼센트로
+        // 읽게 하고 말풍선은 끈다(끌어 옮기는 동안 위 줄의 퍼센트가 바로 바뀐다).
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(showValueIndicator: ShowValueIndicator.never),
+          child: Slider(
+            key: const Key('ring-volume'),
+            min: volume.first.toDouble(),
+            max: volume.last.toDouble(),
+            divisions: volume.length - 1,
+            value: alarm.volumePercent.toDouble(),
+            label: l10n.walkAlarmVolume,
+            semanticFormatterCallback: (value) => l10n.walkAlarmPercent(value.round()),
+            onChanged: enabled ? (value) => onVolumePercent(value.round()) : null,
+          ),
         ),
         _Choice<int>(
           key: const Key('ring-fade'),

@@ -74,6 +74,18 @@ void main() {
     expect(find.text('볼륨 50% · 스누즈 15분 · 자동 멈춤 10분'), findsOneWidget);
   });
 
+  testWidgets('볼륨 슬라이더는 값을 한 번만(지금 퍼센트로) 읽는다', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await pump(tester, _alarm);
+    await expand(tester);
+
+    final node = tester.getSemantics(find.byType(Slider));
+    // 범위(10–100) 안 위치(78%)가 아니라 볼륨 값을, 이름표에 값을 겹치지 않고.
+    expect((node.label, node.value), ('볼륨', '80%'));
+    expect((node.increasedValue, node.decreasedValue), ('90%', '70%'));
+    semantics.dispose();
+  });
+
   testWidgets('펼치면 볼륨 · 점점 커지기 · 스누즈 간격 · 횟수 · 자동 멈춤 · 30분 전 알림', (tester) async {
     await pump(tester, _alarm);
     await expand(tester);
