@@ -31,10 +31,11 @@ Future<void> runBackgroundTask({
   }
 }
 
-/// 알람 예약을 다시 맞추는 일(시간대가 바뀌었거나 하루 한 번 작업).
+/// 알람 예약을 다시 맞추는 일(시간대가 바뀌었거나 하루 한 번 작업 · 미리 알림 액션의 건너뛰기).
 ///
 /// [sync] 앞에 [refreshHolidays] 로 공휴일 캐시를 갱신한다 — 앱을 오래 열지 않아도 하루 한 번
-/// 작업이 폰 캘린더를 다시 읽게(웨이브 3 스펙 §2). 갱신이 실패해도 [sync] 는 한다(지난 캐시 · 내장 표).
+/// 작업이 폰 캘린더를 다시 읽고, 캘린더 권한이 회수됐으면 앱과 같이 내장 표로 판단하게(웨이브 3 스펙 §2).
+/// 갱신이 실패해도 [sync] 는 한다(지난 캐시 · 내장 표).
 Future<void> Function() resyncTask({
   required Future<void> Function() refreshHolidays,
   required Future<void> Function() sync,

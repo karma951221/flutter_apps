@@ -9,4 +9,8 @@ abstract interface class DeviceHolidaySource {
 
   /// 고른 휴일 캘린더의 표시 이름.
   Future<String?> calendarName();
+
+  /// 지금 폰 캘린더 읽기 권한(`READ_CALENDAR`)이 있는가. 헤드리스 엔진에서도 묻는다 — 액티비티 없이
+  /// `Context.checkSelfPermission` 으로 답한다. 모르면(오류 · 채널 없음) true(캐시를 버리지 않는다).
+  Future<bool> canRead();
 }

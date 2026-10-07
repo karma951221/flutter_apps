@@ -48,14 +48,18 @@ Future<void> alarmResyncMain() async {
 /// 앱이 떠 있지 않을 때 미리 알림의 [이번만 끄기] · [다음 알람 건너뛰기] 를 누르면 네이티브
 /// `ReminderActionReceiver` 가 헤드리스 엔진에서 부른다. [args] 는 `["skip", "<packageId>"]`
 /// (엔진이 커스텀 진입점에도 `List<String>` 인자를 넘긴다 — `DartExecutor.executeDartEntrypoint`).
-/// 그 회차를 건너뛰고 `done`(성공 여부)을 보낸다. 실패면 네이티브가 알림을 남긴다.
+/// 공휴일 캐시를 갱신하고(권한이 회수됐으면 내장 표로 — 미리 알림 계산이 앱과 같은 출처를 보게) 그 회차를
+/// 건너뛰고 `done`(성공 여부)을 보낸다. 실패면 네이티브가 알림을 남긴다.
 @pragma('vm:entry-point')
 Future<void> alarmReminderActionMain(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   await runBackgroundTask(
     init: _initHeadless,
-    task: () =>
-        getIt<AlarmUseCase>().skipOccurrence(reminderActionPackageId(args)),
+    task: resyncTask(
+      refreshHolidays: () => getIt<HolidayRefresher>().refresh(),
+      sync: () =>
+          getIt<AlarmUseCase>().skipOccurrence(reminderActionPackageId(args)),
+    ),
     done: (ok) => backgroundChannel.invokeMethod<void>('done', ok),
   );
 }

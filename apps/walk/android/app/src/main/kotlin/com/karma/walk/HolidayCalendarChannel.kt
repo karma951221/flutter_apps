@@ -25,6 +25,7 @@ import java.util.concurrent.Executors
  * - `read {from, to}`(`yyyy-MM-dd`, 양 끝 포함) → `[{date, name}]`, 권한 없음 · 휴일 캘린더 없음 ·
  *   공휴일 일정 없음 · 실패면 null(Dart 가 내장 표로 간다).
  * - `calendarName` → 고른 휴일 캘린더의 표시 이름 또는 null.
+ * - `canRead` → 읽기 권한(`READ_CALENDAR`)이 있는가(bool). 권한이 회수되면 Dart 가 오늘 캐시를 버린다.
  *
  * 어느 캘린더를 고르고 무엇을 쉬는 날로 볼지는 [HolidayCalendarRules]. 질의는 메인 스레드를 막지 않게
  * 별도 스레드에서 한다. 메인 엔진은 [MainActivity] 가, 헤드리스 엔진은 백그라운드 실행기가 [attach] 한다.
@@ -63,6 +64,8 @@ class HolidayCalendarChannel private constructor(
                 }
             }
             "calendarName" -> background(result) { calendars()?.firstOrNull()?.displayName }
+            // 액티비티 없이 답한다 — 헤드리스 엔진의 sync 도 권한 회수를 보고 캐시를 버린다.
+            "canRead" -> result.success(canRead())
             else -> result.notImplemented()
         }
     }

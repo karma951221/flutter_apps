@@ -12,6 +12,7 @@ import '../../domain/alarm/holiday/korean_holidays.dart';
 
 /// 폰 캘린더를 하루 한 번 읽어 [cacheKey] 에 두고 그것으로 답한다. 캐시가 없거나(권한 없음 ·
 /// 휴일 캘린더 없음) 오래됐거나 날짜가 읽은 범위 밖이면 내장 표([KoreanHolidayCalendar]).
+/// 권한이 회수되면 다음 [refresh](시작 · 복귀 · 헤드리스 sync)가 오늘 캐시를 내장 표 기록으로 바꾼다.
 ///
 /// 알람 sync 는 캐시만 읽는다 — 헤드리스 엔진에서도 빠르고, 같은 저장소라 엔진끼리 공유된다.
 /// 폰 캘린더에 휴일 캘린더가 있으면 그 범위 안에서는 그것만 본다(임시공휴일을 먼저 반영한다).
@@ -63,7 +64,7 @@ class CachedHolidayCalendar implements HolidayCalendar, HolidayRefresher {
     try {
       final now = _clock.now();
       final today = DateTime(now.year, now.month, now.day);
-      if (!force && _readOn() == today) return;
+      if (!force && _readOn() == today && !await _revoked()) return;
       final to = DateTime(today.year, today.month, today.day + rangeDays);
       final days = await _device.read(today, to);
       final name = days == null ? null : await _device.calendarName();
@@ -83,6 +84,19 @@ class CachedHolidayCalendar implements HolidayCalendar, HolidayRefresher {
     } on Object catch (e) {
       // 읽기 실패는 지난 캐시(또는 내장 표)로 버틴다.
       debugPrint('holiday refresh failed: $e');
+    }
+  }
+
+  /// 폰 캘린더 캐시가 있는데 읽기 권한이 없어졌는가. 그러면 오늘 이미 읽었어도 다시 읽는다 —
+  /// 권한이 없으니 내장 표 기록으로 바뀐다. 캐시가 이미 내장 표면 묻지 않는다(복귀마다 채널을 타지 않게).
+  /// 권한 확인이 던지면 false(지난 캐시로 버틴다).
+  Future<bool> _revoked() async {
+    if (_load() == null) return false;
+    try {
+      return !await _device.canRead();
+    } on Object catch (e) {
+      debugPrint('holiday permission check failed: $e');
+      return false;
     }
   }
 

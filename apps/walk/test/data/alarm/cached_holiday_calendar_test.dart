@@ -20,11 +20,23 @@ class _FakeDevice implements DeviceHolidaySource {
   Object? error;
   final reads = <(DateTime, DateTime)>[];
 
+  /// 읽기 권한. false 면 [read] 도 null 을 준다(네이티브와 같게).
+  bool granted = true;
+  var permissionChecks = 0;
+  Object? permissionError;
+
+  @override
+  Future<bool> canRead() async {
+    permissionChecks++;
+    if (permissionError case final e?) throw e;
+    return granted;
+  }
+
   @override
   Future<List<DeviceHoliday>?> read(DateTime from, DateTime to) async {
     reads.add((from, to));
     if (error case final e?) throw e;
-    return days;
+    return granted ? days : null;
   }
 
   @override
@@ -184,5 +196,71 @@ void main() {
     final c = calendar();
     expect(c.source, bundled);
     expect(c.nameOf(DateTime(2026, 10, 9)), '한글날');
+  });
+
+  group('권한 회수', () {
+    test('오늘 읽은 폰 캘린더 캐시가 있어도 권한이 없어졌으면 refresh 가 다시 읽어 내장 표로 간다', () async {
+      final c = calendar();
+      await c.refresh();
+      expect(c.source, isA<DeviceCalendarHolidays>());
+
+      device.granted = false;
+      clock.value = DateTime(2026, 10, 7, 10);
+      await c.refresh();
+
+      expect(device.reads, hasLength(2));
+      expect(c.source, bundled);
+      expect(c.nameOf(DateTime(2026, 10, 9)), '한글날');
+      expect(c.nameOf(DateTime(2026, 11, 2)), isNull);
+      // 새 인스턴스(헤드리스 엔진 · 미리 알림 계산)도 같은 캐시를 본다.
+      expect(calendar().source, bundled);
+    });
+
+    test('권한이 없어 캐시를 버리면 refreshed 로 알린다(설정 탭이 다시 읽는다)', () async {
+      final c = calendar();
+      await c.refresh();
+      final events = <void>[];
+      final sub = c.refreshed.listen(events.add);
+      addTearDown(sub.cancel);
+
+      device.granted = false;
+      await c.refresh();
+      await pumpEventQueue();
+
+      expect(events, hasLength(1));
+    });
+
+    test('권한이 그대로면 같은 날은 다시 읽지 않는다', () async {
+      final c = calendar();
+      await c.refresh();
+      await c.refresh();
+
+      expect(device.reads, hasLength(1));
+      expect(device.permissionChecks, 1);
+      expect(c.source, isA<DeviceCalendarHolidays>());
+    });
+
+    test('캐시가 이미 내장 표면 권한을 묻지 않는다', () async {
+      device.granted = false;
+      final c = calendar();
+      await c.refresh();
+      final checks = device.permissionChecks;
+
+      await c.refresh();
+
+      expect(device.reads, hasLength(1));
+      expect(device.permissionChecks, checks);
+    });
+
+    test('권한 확인이 던지면 지난 캐시로 버틴다', () async {
+      final c = calendar();
+      await c.refresh();
+      device.permissionError = StateError('boom');
+
+      await c.refresh();
+
+      expect(device.reads, hasLength(1));
+      expect(c.source, isA<DeviceCalendarHolidays>());
+    });
   });
 }

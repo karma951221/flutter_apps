@@ -88,4 +88,24 @@ void main() {
       expect(await const ChannelDeviceHolidaySource().calendarName(), isNull);
     });
   });
+
+  group('canRead', () {
+    test('네이티브 응답(읽기 권한)을 그대로 돌려준다', () async {
+      answer((_) => false);
+      expect(await const ChannelDeviceHolidaySource().canRead(), isFalse);
+      expect(calls.single.method, 'canRead');
+
+      answer((_) => true);
+      expect(await const ChannelDeviceHolidaySource().canRead(), isTrue);
+    });
+
+    test('모르면(null · 오류 · 채널 없음) true — 캐시를 버리지 않는다', () async {
+      answer((_) => null);
+      expect(await const ChannelDeviceHolidaySource().canRead(), isTrue);
+      answer((_) => throw PlatformException(code: 'failed'));
+      expect(await const ChannelDeviceHolidaySource().canRead(), isTrue);
+      messenger.setMockMethodCallHandler(channel, null);
+      expect(await const ChannelDeviceHolidaySource().canRead(), isTrue);
+    });
+  });
 }

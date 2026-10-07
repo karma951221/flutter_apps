@@ -27,6 +27,9 @@ class ChannelDeviceHolidaySource implements DeviceHolidaySource {
   @override
   Future<String?> calendarName() => _invoke<String>('calendarName');
 
+  @override
+  Future<bool> canRead() async => await _invoke<bool>('canRead') ?? true;
+
   Future<T?> _invoke<T>(String method, [Object? arguments]) async {
     try {
       return await _channel.invokeMethod<T>(method, arguments);
