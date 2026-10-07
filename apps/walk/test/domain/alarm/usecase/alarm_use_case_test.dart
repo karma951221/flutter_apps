@@ -5,8 +5,10 @@ import 'package:walk/domain/alarm/entity/alarm_pause.dart';
 import 'package:walk/domain/alarm/entity/alarm_sound.dart';
 import 'package:walk/domain/alarm/entity/alarm_reminder.dart';
 import 'package:walk/domain/alarm/entity/alarm_trigger.dart';
+import 'package:walk/domain/alarm/entity/ring_log_entry.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/repository/alarm_repository.dart';
+import 'package:walk/domain/alarm/ring_log/ring_log_source.dart';
 import 'package:walk/domain/alarm/scheduler/alarm_scheduler.dart';
 import 'package:walk/domain/alarm/scheduler/reminder_scheduler.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
@@ -159,6 +161,23 @@ class _MemorySettings implements SettingsRepository {
   Future<void> save(AppSettings settings) async => value = settings;
 }
 
+class _MemoryRingLog implements RingLogSource {
+  final List<RingLogEntry> entries = [];
+  bool failAppend = false;
+
+  @override
+  Future<List<RingLogEntry>> read({required DateTime since}) async => [
+    for (final e in entries)
+      if (!e.at.isBefore(since)) e,
+  ];
+
+  @override
+  Future<void> append(RingLogEntry entry) async {
+    if (failAppend) throw StateError('기록 실패');
+    entries.add(entry);
+  }
+}
+
 class _MutableClock extends Clock {
   _MutableClock(this.current);
   DateTime current;
@@ -175,6 +194,7 @@ void main() {
   late _FakeReminders reminders;
   late _Holidays holidays;
   late _MemorySettings settings;
+  late _MemoryRingLog ringLog;
   late AlarmUseCase useCase;
 
   // 2026-09-28 월요일 정오.
@@ -188,7 +208,16 @@ void main() {
     reminders = _FakeReminders();
     holidays = _Holidays();
     settings = _MemorySettings();
-    useCase = DefaultAlarmUseCase(repository, scheduler, clock, reminders, holidays, settings);
+    ringLog = _MemoryRingLog();
+    useCase = DefaultAlarmUseCase(
+      repository,
+      scheduler,
+      clock,
+      reminders,
+      holidays,
+      settings,
+      ringLog,
+    );
   });
 
   group('save', () {
@@ -1404,10 +1433,84 @@ void main() {
     });
   });
 
+  group('건너뛰기 기록', () {
+    final tuesday7 = DateTime(2026, 9, 29, 7);
+    const daily = Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay);
+    RingLogEntry skipped(int packageId, DateTime at) =>
+        RingLogEntry(at: at, packageId: packageId, kind: RingLogKind.skipped);
+
+    test('skipNext 는 건너뛴 회차(시각 · packageId)를 기록한다', () async {
+      repository.alarms = [daily];
+
+      await useCase.skipNext(1);
+
+      expect(ringLog.entries, [skipped(pid(1, tuesday7), tuesday7)]);
+    });
+
+    test('skipNext 가 바꾸지 않은 알람(1회성 · 꺼짐)은 기록하지 않는다', () async {
+      repository.alarms = [
+        Alarm(id: 1, hour: 7, minute: 0, oneShotAt: tuesday7),
+        const Alarm(id: 2, hour: 7, minute: 0, repeat: _everyDay, enabled: false),
+      ];
+
+      await useCase.skipNext(1);
+      await useCase.skipNext(2);
+
+      expect(ringLog.entries, isEmpty);
+    });
+
+    test('skipOccurrence(헤드리스 미리 알림 버튼) — 반복은 그 회차를 기록한다', () async {
+      repository.alarms = [daily];
+      await useCase.sync();
+      final thursday7 = DateTime(2026, 10, 1, 7);
+
+      await useCase.skipOccurrence(pid(1, thursday7));
+
+      expect(ringLog.entries, [skipped(pid(1, thursday7), thursday7)]);
+    });
+
+    test('skipOccurrence — 1회성은 끈 회차를 기록한다', () async {
+      final at = DateTime(2026, 9, 28, 12, 20);
+      repository.alarms = [Alarm(id: 1, hour: 12, minute: 20, oneShotAt: at)];
+      await useCase.sync();
+
+      await useCase.skipOccurrence(pid(1, at));
+
+      expect(ringLog.entries, [skipped(pid(1, at), at)]);
+    });
+
+    test('skipOccurrence — 지워진 알람의 회차는 기록하지 않는다', () async {
+      final orphan = pid(4, tuesday7);
+      scheduler.entries[orphan] = tuesday7;
+
+      await useCase.skipOccurrence(orphan);
+
+      expect(ringLog.entries, isEmpty);
+    });
+
+    test('기록이 실패해도 건너뛰기는 된다', () async {
+      repository.alarms = [daily];
+      ringLog.failAppend = true;
+
+      final result = await useCase.skipNext(1);
+
+      expect(result!.skippedAt, tuesday7);
+      expect(repository.alarms.single.skippedAt, tuesday7);
+    });
+  });
+
   group('직렬 줄', () {
     test('저장이 한 번 실패해도 다음 호출은 끝난다', () async {
       final flaky = _FlakyRepository()..failNextSave = true;
-      useCase = DefaultAlarmUseCase(flaky, scheduler, clock, reminders, holidays, settings);
+      useCase = DefaultAlarmUseCase(
+        flaky,
+        scheduler,
+        clock,
+        reminders,
+        holidays,
+        settings,
+        ringLog,
+      );
 
       await expectLater(useCase.save(Alarm.draft()), throwsStateError);
 

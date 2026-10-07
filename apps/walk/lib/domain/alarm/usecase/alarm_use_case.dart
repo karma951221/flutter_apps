@@ -6,8 +6,10 @@ import '../entity/alarm_pause.dart';
 import '../../settings/repository/settings_repository.dart';
 import '../entity/alarm_reminder.dart';
 import '../entity/alarm_trigger.dart';
+import '../entity/ring_log_entry.dart';
 import '../holiday/holiday_calendar.dart';
 import '../repository/alarm_repository.dart';
+import '../ring_log/ring_log_source.dart';
 import '../scheduler/alarm_scheduler.dart';
 import '../scheduler/reminder_scheduler.dart';
 import '../reminders.dart';
@@ -59,6 +61,8 @@ abstract interface class AlarmUseCase {
 
   /// 회차 하나를 쉰다(미리 알림의 [이번만 끄기] · [다음 알람 건너뛰기]). 반복이면 그 회차를
   /// `skippedAt` 으로, 1회성이면 알람을 끈다. 그 회차의 예약은 곧 울릴 참이어도 지운다.
+  ///
+  /// [skipNext] 와 함께 건너뛴 회차를 울림 기록에 남긴다(그 회차의 시각으로, 실패는 삼킨다).
   Future<void> skipOccurrence(int packageId);
 
   /// 울리는 회차를 끈다.
@@ -86,6 +90,7 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     this._reminders,
     this._holidays,
     this._settings,
+    this._ringLog,
   );
 
   final AlarmRepository _repository;
@@ -96,6 +101,9 @@ class DefaultAlarmUseCase implements AlarmUseCase {
 
   /// 공휴일 미리 알림 설정(`AppSettings.holidayReminder`) · 쉬는 기간(`AppSettings.pause`)을 읽는다.
   final SettingsRepository _settings;
+
+  /// 건너뛴 회차를 남긴다(울림 · 끔 · 스누즈는 포크 네이티브가 쓴다).
+  final RingLogSource _ringLog;
 
   /// 방금 울릴 때가 됐지만 아직 울림으로 잡히지 않은 회차를 지우지 않는 여유.
   /// (패키지 `checkAlarm` 의 30초 유예와 같은 이유 — 곧 울릴 알람을 지우는 쪽이 훨씬 나쁘다.)
@@ -260,8 +268,10 @@ class DefaultAlarmUseCase implements AlarmUseCase {
       return;
     }
     if (alarm.isOneShot) {
+      final at = (await _scheduler.scheduled())[packageId]?.at ?? alarm.oneShotAt;
       await _put(alarm.copyWith(enabled: false));
       await _cancelUnlessRinging(packageId);
+      if (at != null) await _logSkip(packageId, at);
       await _sync();
       return;
     }
@@ -285,10 +295,21 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   /// sync 는 스누즈 보존 창 안의 회차를 남기므로 명시적으로 지운다.
   Future<Alarm> _skip(Alarm alarm, DateTime at) async {
     final updated = alarm.copyWith(skippedAt: at);
+    final id = packageId(alarm.id, triggerIndex(at));
     await _put(updated);
-    await _cancelUnlessRinging(packageId(alarm.id, triggerIndex(at)));
+    await _cancelUnlessRinging(id);
+    await _logSkip(id, at);
     await _sync();
     return updated;
+  }
+
+  /// 건너뛴 회차를 울림 기록에 남긴다. 실패는 삼킨다 — 기록 때문에 건너뛰기가 실패하면 안 된다.
+  Future<void> _logSkip(int packageId, DateTime at) async {
+    try {
+      await _ringLog.append(RingLogEntry(at: at, packageId: packageId, kind: RingLogKind.skipped));
+    } on Object {
+      // 기록은 보조 기능이다.
+    }
   }
 
   /// 저장소의 같은 id 알람을 [alarm] 으로 바꾼다.

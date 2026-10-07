@@ -2517,6 +2517,62 @@
   "@walkAlarmPauseStop": {
     "description": "쉬는 중 배너 버튼 — 쉬는 기간을 지운다"
   },
+  "walkAlarmHistory": "울림 기록",
+  "@walkAlarmHistory": {
+    "description": "알람 탭 앱바 기록 아이콘 툴팁 · 울림 기록 화면 제목"
+  },
+  "walkAlarmHistoryEmpty": "아직 기록이 없어요",
+  "@walkAlarmHistoryEmpty": {
+    "description": "울림 기록 화면 — 최근 30일 기록이 없을 때 제목"
+  },
+  "walkAlarmHistoryEmptyHint": "알람이 울리고 꺼지면 여기에 30일 동안 남아요",
+  "@walkAlarmHistoryEmptyHint": {
+    "description": "울림 기록 화면 — 빈 상태 설명"
+  },
+  "walkAlarmHistoryLoadFailed": "기록을 불러오지 못했어요",
+  "@walkAlarmHistoryLoadFailed": {
+    "description": "울림 기록 화면 — 읽기 실패"
+  },
+  "walkAlarmHistoryRang": "{time} 울림",
+  "@walkAlarmHistoryRang": {
+    "description": "울림 기록 한 줄 — 처음 울린 시각. time 은 '오전 7:00'",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "walkAlarmHistorySnoozes": "스누즈 {count}번",
+  "@walkAlarmHistorySnoozes": {
+    "description": "울림 기록 한 줄 — 그 회차에서 스누즈한 횟수",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "walkAlarmHistoryStopped": "{time} 끔",
+  "@walkAlarmHistoryStopped": {
+    "description": "울림 기록 한 줄 — 사용자가 끈 시각",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "walkAlarmHistoryAutoStopped": "{time} 자동 멈춤",
+  "@walkAlarmHistoryAutoStopped": {
+    "description": "울림 기록 한 줄 — 자동 멈춤 설정으로 스스로 멈춘 시각",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "walkAlarmHistoryDeleted": "지운 알람",
+  "@walkAlarmHistoryDeleted": {
+    "description": "울림 기록 — 지금은 지운 알람의 회차 제목"
+  },
   "walkAlarmSaveFailed": "알람을 저장하지 못했어요",
   "@walkAlarmSaveFailed": {
     "description": "알람 저장 · 삭제 · 켜기 실패 스낵바"

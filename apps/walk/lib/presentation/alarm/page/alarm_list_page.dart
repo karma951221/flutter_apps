@@ -19,6 +19,7 @@ import '../widget/alarm_menu_sheet.dart';
 import '../widget/alarm_summary_card.dart';
 import '../widget/alarm_tile.dart';
 import 'alarm_edit_page.dart';
+import 'alarm_history_page.dart';
 
 /// 알람 탭. [AlarmListCubit] 은 셸이 제공한다.
 ///
@@ -184,6 +185,13 @@ class _AlarmListPageState extends State<AlarmListPage> {
                 tooltip: l10n.walkAlarmPause,
                 icon: const Icon(Icons.bedtime_outlined),
                 onPressed: () => _pause(context),
+              ),
+              IconButton(
+                tooltip: l10n.walkAlarmHistory,
+                icon: const Icon(Icons.history),
+                onPressed: () => Navigator.of(
+                  context,
+                ).push<void>(MaterialPageRoute(builder: (_) => const AlarmHistoryPage())),
               ),
             ],
           ),

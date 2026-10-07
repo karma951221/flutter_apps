@@ -3404,6 +3404,60 @@ abstract class AppLocalizations {
   /// **'그만 쉬기'**
   String get walkAlarmPauseStop;
 
+  /// 알람 탭 앱바 기록 아이콘 툴팁 · 울림 기록 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'울림 기록'**
+  String get walkAlarmHistory;
+
+  /// 울림 기록 화면 — 최근 30일 기록이 없을 때 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 기록이 없어요'**
+  String get walkAlarmHistoryEmpty;
+
+  /// 울림 기록 화면 — 빈 상태 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'알람이 울리고 꺼지면 여기에 30일 동안 남아요'**
+  String get walkAlarmHistoryEmptyHint;
+
+  /// 울림 기록 화면 — 읽기 실패
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 불러오지 못했어요'**
+  String get walkAlarmHistoryLoadFailed;
+
+  /// 울림 기록 한 줄 — 처음 울린 시각. time 은 '오전 7:00'
+  ///
+  /// In ko, this message translates to:
+  /// **'{time} 울림'**
+  String walkAlarmHistoryRang(String time);
+
+  /// 울림 기록 한 줄 — 그 회차에서 스누즈한 횟수
+  ///
+  /// In ko, this message translates to:
+  /// **'스누즈 {count}번'**
+  String walkAlarmHistorySnoozes(int count);
+
+  /// 울림 기록 한 줄 — 사용자가 끈 시각
+  ///
+  /// In ko, this message translates to:
+  /// **'{time} 끔'**
+  String walkAlarmHistoryStopped(String time);
+
+  /// 울림 기록 한 줄 — 자동 멈춤 설정으로 스스로 멈춘 시각
+  ///
+  /// In ko, this message translates to:
+  /// **'{time} 자동 멈춤'**
+  String walkAlarmHistoryAutoStopped(String time);
+
+  /// 울림 기록 — 지금은 지운 알람의 회차 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'지운 알람'**
+  String get walkAlarmHistoryDeleted;
+
   /// 알람 저장 · 삭제 · 켜기 실패 스낵바
   ///
   /// In ko, this message translates to:

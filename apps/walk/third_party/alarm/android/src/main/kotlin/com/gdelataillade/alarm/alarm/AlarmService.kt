@@ -30,6 +30,8 @@ import java.util.Date
 import com.gdelataillade.alarm.services.NotificationHandler
 import com.gdelataillade.alarm.services.WarningNotificationState
 import com.gdelataillade.alarm.services.SnoozeCoordinator
+import com.gdelataillade.alarm.services.RingLog
+import com.gdelataillade.alarm.services.RingLogKind
 import io.flutter.Log
 import kotlinx.serialization.json.Json
 
@@ -270,6 +272,9 @@ class AlarmService : Service() {
             AlarmRingingLiveData.instance.update(true)
         }
 
+        // Fork: the ring is on, with or without a Flutter engine to hear about it.
+        logRing(id, RingLogKind.RANG)
+
         // Notify the plugin about the alarm ringing
         AlarmPlugin.alarmTriggerApi?.alarmRang(id.toLong()) {
             if (it.isSuccess) {
@@ -501,7 +506,7 @@ class AlarmService : Service() {
         val stop = Runnable {
             autoStops.remove(id)
             Log.d(TAG, "Alarm $id rang for ${delay}ms; stopping it automatically.")
-            handleStopAlarmCommand(id)
+            handleStopAlarmCommand(id, automatic = true)
         }
         autoStops[id] = stop
         autoStopHandler.postDelayed(stop, delay)
@@ -511,9 +516,20 @@ class AlarmService : Service() {
         autoStops.remove(id)?.let { autoStopHandler.removeCallbacks(it) }
     }
 
-    fun handleStopAlarmCommand(alarmId: Int) {
+    /** Fork: [automatic] is the auto stop, logged apart from a stop someone asked for. */
+    fun handleStopAlarmCommand(alarmId: Int, automatic: Boolean = false) {
         if (alarmId == 0) return
+        RingLog.stopKind(ringingAlarmIds.contains(alarmId), automatic)?.let { logRing(alarmId, it) }
         unsaveAlarm(alarmId)
+    }
+
+    /** Fork: writes the ring log. Never lets the log get in the way of the alarm. */
+    private fun logRing(id: Int, kind: RingLogKind) {
+        try {
+            RingLog.append(this, id, kind)
+        } catch (e: Exception) {
+            Log.e(TAG, "Could not log $kind for alarm $id", e)
+        }
     }
 
     /**
@@ -683,8 +699,16 @@ class AlarmService : Service() {
      * Only for [SnoozeCoordinator], and only once it has armed the replacement:
      * the alarm is still owed, so none of the stop bookkeeping applies.
      */
-    /** Stops [alarmId]'s audio and dequeues it, touching neither storage nor Flutter. */
+    /**
+     * Stops [alarmId]'s audio and dequeues it, touching neither storage nor Flutter.
+     *
+     * Fork: both callers silence a ringing alarm only to snooze it — the
+     * notification's snooze through [SnoozeCoordinator], and Dart's snooze,
+     * which re-sets the ringing alarm later (`AlarmApiImpl.clearForReplace`) —
+     * so a ringing alarm silenced here is logged as snoozed.
+     */
     fun silenceRing(alarmId: Int) {
+        if (ringingAlarmIds.contains(alarmId)) logRing(alarmId, RingLogKind.SNOOZED)
         stopAlarm(alarmId)
     }
 

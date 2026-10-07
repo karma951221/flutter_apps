@@ -1773,6 +1773,41 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAlarmPauseStop => '그만 쉬기';
 
   @override
+  String get walkAlarmHistory => '울림 기록';
+
+  @override
+  String get walkAlarmHistoryEmpty => '아직 기록이 없어요';
+
+  @override
+  String get walkAlarmHistoryEmptyHint => '알람이 울리고 꺼지면 여기에 30일 동안 남아요';
+
+  @override
+  String get walkAlarmHistoryLoadFailed => '기록을 불러오지 못했어요';
+
+  @override
+  String walkAlarmHistoryRang(String time) {
+    return '$time 울림';
+  }
+
+  @override
+  String walkAlarmHistorySnoozes(int count) {
+    return '스누즈 $count번';
+  }
+
+  @override
+  String walkAlarmHistoryStopped(String time) {
+    return '$time 끔';
+  }
+
+  @override
+  String walkAlarmHistoryAutoStopped(String time) {
+    return '$time 자동 멈춤';
+  }
+
+  @override
+  String get walkAlarmHistoryDeleted => '지운 알람';
+
+  @override
   String get walkAlarmSaveFailed => '알람을 저장하지 못했어요';
 
   @override

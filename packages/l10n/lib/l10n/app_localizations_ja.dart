@@ -1771,6 +1771,41 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAlarmPauseStop => '休むのをやめる';
 
   @override
+  String get walkAlarmHistory => '鳴動履歴';
+
+  @override
+  String get walkAlarmHistoryEmpty => 'まだ履歴がありません';
+
+  @override
+  String get walkAlarmHistoryEmptyHint => 'アラームが鳴って止まると、ここに30日間残ります';
+
+  @override
+  String get walkAlarmHistoryLoadFailed => '履歴を読み込めませんでした';
+
+  @override
+  String walkAlarmHistoryRang(String time) {
+    return '$time 鳴動';
+  }
+
+  @override
+  String walkAlarmHistorySnoozes(int count) {
+    return 'スヌーズ $count回';
+  }
+
+  @override
+  String walkAlarmHistoryStopped(String time) {
+    return '$time 停止';
+  }
+
+  @override
+  String walkAlarmHistoryAutoStopped(String time) {
+    return '$time 自動停止';
+  }
+
+  @override
+  String get walkAlarmHistoryDeleted => '削除したアラーム';
+
+  @override
   String get walkAlarmSaveFailed => 'アラームを保存できませんでした';
 
   @override

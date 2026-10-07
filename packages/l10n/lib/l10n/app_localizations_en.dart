@@ -1874,6 +1874,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkAlarmPauseStop => 'Resume';
 
   @override
+  String get walkAlarmHistory => 'Alarm history';
+
+  @override
+  String get walkAlarmHistoryEmpty => 'No history yet';
+
+  @override
+  String get walkAlarmHistoryEmptyHint =>
+      'Alarms that ring and stop show up here for 30 days';
+
+  @override
+  String get walkAlarmHistoryLoadFailed => 'Couldn\'t load the history';
+
+  @override
+  String walkAlarmHistoryRang(String time) {
+    return 'Rang $time';
+  }
+
+  @override
+  String walkAlarmHistorySnoozes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Snoozed $count times',
+      one: 'Snoozed once',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkAlarmHistoryStopped(String time) {
+    return 'Stopped $time';
+  }
+
+  @override
+  String walkAlarmHistoryAutoStopped(String time) {
+    return 'Stopped itself $time';
+  }
+
+  @override
+  String get walkAlarmHistoryDeleted => 'Deleted alarm';
+
+  @override
   String get walkAlarmSaveFailed => 'Couldn\'t save the alarm';
 
   @override
