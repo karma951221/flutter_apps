@@ -102,7 +102,8 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   /// 공휴일 미리 알림 설정(`AppSettings.holidayReminder`) · 쉬는 기간(`AppSettings.pause`)을 읽는다.
   final SettingsRepository _settings;
 
-  /// 건너뛴 회차를 남긴다(울림 · 끔 · 스누즈는 포크 네이티브가 쓴다).
+  /// 건너뛴 회차를 남긴다(울림 · 끔 · 스누즈는 포크 네이티브가 쓴다). 새 id 는 기록에 남은
+  /// id 를 피한다([_newId]).
   final RingLogSource _ringLog;
 
   /// 방금 울릴 때가 됐지만 아직 울림으로 잡히지 않은 회차를 지우지 않는 여유.
@@ -134,7 +135,7 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   Future<Alarm> save(Alarm alarm) => _serial(() async {
     final now = _clock.now();
     final alarms = await _repository.load();
-    final id = alarm.id == Alarm.unsavedId ? _newId(alarms) : alarm.id;
+    final id = alarm.id == Alarm.unsavedId ? _newId(alarms, await _loggedAlarmIds()) : alarm.id;
     // 1회성: 화면이 정한 oneShotAt 이 미래면 그대로(초까지), 없거나 지났으면 다음 hour:minute.
     // hour · minute 는 정해진 시각에 맞춘다(목록 표시용).
     final given = alarm.oneShotAt;
@@ -514,14 +515,29 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     }
   }
 
-  int _newId(List<Alarm> alarms) {
+  /// 새 id — 지금 알람과 울림 기록에 남은(지운 알람일 수 있는) id 중 최대+1.
+  /// 기록에 남은 id 를 다시 주면 지운 알람의 지난 회차가 새 알람의 라벨로 보인다(울림 기록 C4).
+  /// 최대 id 에 닿으면 비어 있고 기록에 없는 가장 작은 id, 그것도 없으면 비어 있는 가장 작은 id.
+  static int _newId(List<Alarm> alarms, Set<int> logged) {
     final used = {for (final a in alarms) a.id};
-    final max = used.fold(0, (m, id) => id > m ? id : m);
+    final max = {...used, ...logged}.fold(0, (m, id) => id > m ? id : m);
     if (max < Alarm.maxId) return max + 1;
+    for (var id = 1; id <= Alarm.maxId; id++) {
+      if (!used.contains(id) && !logged.contains(id)) return id;
+    }
     for (var id = 1; id <= Alarm.maxId; id++) {
       if (!used.contains(id)) return id;
     }
     throw StateError('알람은 ${Alarm.maxId}개까지 만들 수 있다');
+  }
+
+  /// 울림 기록에 남은 알람 id. 읽지 못하면 비어 있다 — 기록 때문에 저장이 실패하면 안 된다.
+  Future<Set<int>> _loggedAlarmIds() async {
+    try {
+      return {for (final e in await _ringLog.read(since: DateTime(0))) alarmIdOf(e.packageId)};
+    } on Object {
+      return const {};
+    }
   }
 
   static Alarm? _byId(List<Alarm> alarms, int id) {

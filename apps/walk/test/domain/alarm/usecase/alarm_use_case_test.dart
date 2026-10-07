@@ -164,9 +164,11 @@ class _MemorySettings implements SettingsRepository {
 class _MemoryRingLog implements RingLogSource {
   final List<RingLogEntry> entries = [];
   bool failAppend = false;
+  bool failRead = false;
 
   @override
   Future<List<RingLogEntry>> read({required DateTime since}) async => [
+    if (failRead) throw StateError('읽기 실패'),
     for (final e in entries)
       if (!e.at.isBefore(since)) e,
   ];
@@ -635,6 +637,57 @@ void main() {
   });
 
   group('새 id', () {
+    RingLogEntry rang(int alarmId) => RingLogEntry(
+      at: DateTime(2026, 9, 27, 6, 30),
+      packageId: packageId(alarmId, triggerIndex(DateTime(2026, 9, 27, 6, 30))),
+      kind: RingLogKind.rang,
+    );
+
+    test('지운 알람의 id 가 울림 기록에 남아 있으면 다시 쓰지 않는다', () async {
+      // 2 를 지웠다. 2 를 다시 주면 2 의 지난 기록이 새 알람의 라벨로 보인다.
+      repository.alarms = [const Alarm(id: 1, hour: 6, minute: 0, enabled: false)];
+      ringLog.entries.add(rang(2));
+
+      final saved = await useCase.save(Alarm.draft());
+
+      expect(saved.id, 3);
+    });
+
+    test('울림 기록을 읽지 못하면 지금 알람의 최대+1', () async {
+      repository.alarms = [const Alarm(id: 1, hour: 6, minute: 0, enabled: false)];
+      ringLog
+        ..entries.add(rang(2))
+        ..failRead = true;
+
+      final saved = await useCase.save(Alarm.draft());
+
+      expect(saved.id, 2);
+    });
+
+    test('최대 id 를 쓰고 있으면 비어 있고 기록에 없는 가장 작은 id 를 준다', () async {
+      repository.alarms = [
+        const Alarm(id: 1, hour: 6, minute: 0, enabled: false),
+        const Alarm(id: Alarm.maxId, hour: 6, minute: 0, enabled: false),
+      ];
+      ringLog.entries.add(rang(2));
+
+      final saved = await useCase.save(Alarm.draft());
+
+      expect(saved.id, 3);
+    });
+
+    test('비어 있는 id 가 모두 기록에 있으면 그중 가장 작은 것을 준다', () async {
+      repository.alarms = [
+        for (var id = 1; id <= Alarm.maxId; id++)
+          if (id != 5) Alarm(id: id, hour: 6, minute: 0, enabled: false),
+      ];
+      ringLog.entries.add(rang(5));
+
+      final saved = await useCase.save(Alarm.draft());
+
+      expect(saved.id, 5);
+    });
+
     test('최대 id(9999)를 쓰고 있으면 비어 있는 가장 작은 id 를 준다', () async {
       repository.alarms = [
         const Alarm(id: 1, hour: 6, minute: 0, enabled: false),
