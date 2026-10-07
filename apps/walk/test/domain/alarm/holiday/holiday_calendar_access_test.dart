@@ -13,6 +13,9 @@ class _FakeRefresher implements HolidayRefresher {
 
   @override
   Future<void> refresh({bool force = false}) async => calls.add(force);
+
+  @override
+  Stream<void> get refreshed => const Stream.empty();
 }
 
 class _MemorySettings implements SettingsRepository {

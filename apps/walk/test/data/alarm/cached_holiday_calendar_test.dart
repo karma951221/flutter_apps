@@ -71,6 +71,39 @@ void main() {
     expect(prefs.getString(CachedHolidayCalendar.cacheKey), isNotNull);
   });
 
+  test('캐시를 새로 쓰면 refreshed 로 알린다 — 오늘 이미 읽어 건너뛰면 알리지 않는다', () async {
+    final c = calendar();
+    final events = <void>[];
+    final sub = c.refreshed.listen(events.add);
+    addTearDown(sub.cancel);
+
+    await c.refresh();
+    await pumpEventQueue();
+    expect(events, hasLength(1));
+    expect(c.source, const HolidaySource.device(calendarName: '대한민국의 휴일'));
+
+    await c.refresh();
+    await pumpEventQueue();
+    expect(events, hasLength(1), reason: '같은 날은 읽지 않는다');
+
+    await c.refresh(force: true);
+    await pumpEventQueue();
+    expect(events, hasLength(2));
+  });
+
+  test('읽기가 실패하면 알리지 않는다(캐시 그대로)', () async {
+    final c = calendar();
+    final events = <void>[];
+    final sub = c.refreshed.listen(events.add);
+    addTearDown(sub.cancel);
+    device.error = StateError('provider');
+
+    await c.refresh();
+    await pumpEventQueue();
+
+    expect(events, isEmpty);
+  });
+
   test('캐시는 새 인스턴스(헤드리스 엔진)에서도 읽힌다', () async {
     await calendar().refresh();
 

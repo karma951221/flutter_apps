@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:permission/permission.dart';
 
@@ -13,12 +15,24 @@ import 'holiday_settings_state.dart';
 /// 권한을 새로 받으면 오늘 이미 읽은 캐시(내장 표)를 버리고 폰 캘린더를 다시 읽은 뒤 맞춘다.
 class HolidaySettingsCubit extends Cubit<HolidaySettingsState> {
   HolidaySettingsCubit(this._settings, this._holidays, this._access, this._alarms)
-    : super(HolidaySettingsState(holidayReminder: _settings.load().holidayReminder));
+    : super(HolidaySettingsState(holidayReminder: _settings.load().holidayReminder)) {
+    // 시작 · 하루 sync 의 캐시 갱신이 check 보다 늦게 끝나도 출처가 옛것으로 남지 않게 한다.
+    _refreshed = _access.refresher.refreshed.listen((_) {
+      if (!isClosed) emit(state.copyWith(source: _holidays.source));
+    });
+  }
 
   final SettingsRepository _settings;
   final HolidayCalendar _holidays;
   final HolidayCalendarAccess _access;
   final AlarmUseCase _alarms;
+  late final StreamSubscription<void> _refreshed;
+
+  @override
+  Future<void> close() async {
+    await _refreshed.cancel();
+    return super.close();
+  }
 
   /// 던지지 않는다. 시스템 설정에서 캘린더를 허용하고 돌아왔으면(앞서 허용 아님 → 지금 허용)
   /// 캘린더를 다시 읽고 알람을 맞춘다.

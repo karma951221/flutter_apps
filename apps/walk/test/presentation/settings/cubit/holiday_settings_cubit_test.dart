@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -45,6 +47,7 @@ void main() {
   late _MockRequester requester;
   late _MockRefresher refresher;
   late _MockUseCase alarms;
+  late StreamController<void> refreshed;
 
   HolidaySettingsCubit build() => HolidaySettingsCubit(settings, holidays, access, alarms);
 
@@ -55,6 +58,8 @@ void main() {
     requester = _MockRequester();
     refresher = _MockRefresher();
     alarms = _MockUseCase();
+    refreshed = StreamController<void>.broadcast();
+    when(() => refresher.refreshed).thenAnswer((_) => refreshed.stream);
     when(() => access.calendar).thenReturn(requester);
     when(() => access.refresher).thenReturn(refresher);
     when(access.check).thenAnswer((_) async => PermissionStatus.denied);
@@ -77,6 +82,27 @@ void main() {
       HolidaySettingsState(source: bundled, calendar: PermissionStatus.denied),
     ],
   );
+
+  blocTest<HolidaySettingsCubit, HolidaySettingsState>(
+    '공휴일 캐시가 새로 쓰이면(앱 시작 · 하루 sync) 확인을 기다리지 않고 출처를 다시 읽는다',
+    build: build,
+    seed: () => const HolidaySettingsState(source: bundled, calendar: PermissionStatus.granted),
+    act: (cubit) async {
+      holidays.source = device;
+      refreshed.add(null);
+      await pumpEventQueue();
+    },
+    expect: () => const [
+      HolidaySettingsState(source: device, calendar: PermissionStatus.granted),
+    ],
+  );
+
+  test('닫으면 캐시 갱신 구독을 끊는다', () async {
+    final cubit = build();
+    expect(refreshed.hasListener, isTrue);
+    await cubit.close();
+    expect(refreshed.hasListener, isFalse);
+  });
 
   blocTest<HolidaySettingsCubit, HolidaySettingsState>(
     '권한 확인이 실패해도 출처는 보인다',

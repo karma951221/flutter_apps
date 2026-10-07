@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:core/core.dart';
@@ -30,6 +31,12 @@ class CachedHolidayCalendar implements HolidayCalendar, HolidayRefresher {
 
   /// 이보다 오래된 캐시는 믿지 않는다(그동안 새로 못 읽었다).
   static const maxAge = Duration(days: 30);
+
+  /// 싱글턴이 앱 수명 동안 들고 있어 닫지 않는다.
+  final _refreshed = StreamController<void>.broadcast(sync: false);
+
+  @override
+  Stream<void> get refreshed => _refreshed.stream;
 
   /// 마지막으로 푼 저장 문자열과 그 결과. 저장소가 바뀌면(다른 엔진이 썼을 때도) 다시 푼다.
   String? _parsedRaw;
@@ -72,6 +79,7 @@ class CachedHolidayCalendar implements HolidayCalendar, HolidayRefresher {
           },
         }),
       );
+      _refreshed.add(null);
     } on Object catch (e) {
       // 읽기 실패는 지난 캐시(또는 내장 표)로 버틴다.
       debugPrint('holiday refresh failed: $e');

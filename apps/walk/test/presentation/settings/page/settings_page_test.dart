@@ -30,6 +30,14 @@ class _MockAccess extends Mock implements HolidayCalendarAccess {}
 
 class _MockUseCase extends Mock implements AlarmUseCase {}
 
+class _NoRefresh implements HolidayRefresher {
+  @override
+  Future<void> refresh({bool force = false}) async {}
+
+  @override
+  Stream<void> get refreshed => const Stream.empty();
+}
+
 class _FakeHolidays implements HolidayCalendar {
   @override
   HolidaySource source = const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
@@ -81,6 +89,7 @@ void main() {
     alarms = _MockUseCase();
     when(access.check).thenAnswer((_) async => PermissionStatus.denied);
     when(alarms.sync).thenAnswer((_) async {});
+    when(() => access.refresher).thenReturn(_NoRefresh());
     holiday = HolidaySettingsCubit(settings, holidays, access, alarms);
   });
   tearDown(() async {

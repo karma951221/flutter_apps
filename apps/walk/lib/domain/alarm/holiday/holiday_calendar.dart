@@ -27,4 +27,8 @@ sealed class HolidaySource with _$HolidaySource {
 abstract interface class HolidayRefresher {
   /// 오늘 이미 읽었으면 건너뛴다. [force] 면 그래도 읽는다. 던지지 않는다.
   Future<void> refresh({bool force = false});
+
+  /// 캐시를 새로 쓸 때마다 알린다(broadcast). 출처를 보여 주는 화면이 확인 순서와 상관없이
+  /// 최신 출처를 다시 읽는다. 같은 isolate 의 갱신만 알린다 — 헤드리스 엔진의 갱신은 복귀 때 읽는다.
+  Stream<void> get refreshed;
 }

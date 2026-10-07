@@ -77,6 +77,7 @@ void main() {
     holidays = _MockHolidays();
     when(() => holidays.refresh(force: any(named: 'force'))).thenAnswer((_) async {});
     when(() => holidays.refresh()).thenAnswer((_) async {});
+    when(() => holidays.refreshed).thenAnswer((_) => const Stream.empty());
     calendar = _FakeCalendar();
     calendarAccess = _MockAccess();
     when(calendarAccess.check).thenAnswer((_) async => PermissionStatus.denied);

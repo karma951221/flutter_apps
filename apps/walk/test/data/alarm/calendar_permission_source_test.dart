@@ -12,6 +12,9 @@ class _Refresher implements HolidayRefresher {
 
   @override
   Future<void> refresh({bool force = false}) async => forced.add(force);
+
+  @override
+  Stream<void> get refreshed => const Stream.empty();
 }
 
 class _Settings implements SettingsRepository {

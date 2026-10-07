@@ -27,6 +27,9 @@ class _NoHolidays implements HolidayRefresher, HolidayCalendar {
   Future<void> refresh({bool force = false}) async {}
 
   @override
+  Stream<void> get refreshed => const Stream.empty();
+
+  @override
   String? nameOf(DateTime date) => null;
 
   @override
