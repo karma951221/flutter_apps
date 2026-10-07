@@ -3200,6 +3200,18 @@ abstract class AppLocalizations {
   /// **'{duration} 뒤에 울려요'**
   String walkAlarmRingsIn(String duration);
 
+  /// 알람 저장 · 켜기 뒤 스낵바 — 쉬는 기간 안의 회차뿐이라 울리지 않을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'쉬는 기간이라 울리지 않아요'**
+  String get walkAlarmSavedPausedOut;
+
+  /// 알람 목록 — 쉬는 기간 때문에 예약이 없는 알람 행의 표시(한 번 알람은 `한 번 · 쉬는 중`)
+  ///
+  /// In ko, this message translates to:
+  /// **'쉬는 중'**
+  String get walkAlarmPausedOutRow;
+
   /// 남은 시간 — 분만
   ///
   /// In ko, this message translates to:

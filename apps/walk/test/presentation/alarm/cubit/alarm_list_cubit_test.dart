@@ -10,6 +10,7 @@ import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/presentation/alarm/cubit/alarm_list_cubit.dart';
 import 'package:walk/presentation/alarm/cubit/alarm_list_state.dart';
+import 'package:walk/presentation/alarm/cubit/alarm_save_result.dart';
 
 class _MockUseCase extends Mock implements AlarmUseCase {}
 
@@ -346,7 +347,10 @@ void main() {
       final cubit = build();
 
       // 9-28 ~ 9-30 을 쉬므로 다음 울림은 10-1 07:00.
-      expect(await cubit.toggle(daily, enabled: true), DateTime(2026, 10, 1, 7).difference(now));
+      expect(
+        await cubit.toggle(daily, enabled: true),
+        AlarmSaveResult.ringsIn(DateTime(2026, 10, 1, 7).difference(now)),
+      );
       await cubit.close();
     });
 
@@ -443,6 +447,25 @@ void main() {
       ],
     );
   });
+
+  blocTest<AlarmListCubit, AlarmListState>(
+    'load 는 쉬는 기간 때문에 예약이 없는 켜진 알람을 pausedOut 에 담는다',
+    build: () {
+      final pausedOneShot = Alarm(
+        id: 3,
+        hour: 23,
+        minute: 58,
+        oneShotAt: DateTime(2026, 9, 27, 23, 58),
+      );
+      when(() => useCase.list()).thenAnswer((_) async => [seven, off, pausedOneShot]);
+      when(() => useCase.pause()).thenAnswer((_) async => AlarmPause.today(now));
+      return build();
+    },
+    act: (cubit) => cubit.load(),
+    expect: () => [
+      isA<AlarmListLoaded>().having((s) => s.pausedOut, 'pausedOut', {3}),
+    ],
+  );
 
   group('tick', () {
     blocTest<AlarmListCubit, AlarmListState>(
@@ -556,7 +579,7 @@ void main() {
     seed: () => loaded([seven, off]),
     act: (cubit) async {
       final untilRing = await cubit.toggle(off, enabled: true);
-      expect(untilRing, const Duration(hours: 8, minutes: 12));
+      expect(untilRing, const AlarmSaveResult.ringsIn(Duration(hours: 8, minutes: 12)));
     },
     expect: () => [
       // 스위치만 먼저 움직이고, 남은 시간(nextAt)은 저장 뒤 다시 읽을 때 바뀐다.
@@ -591,7 +614,10 @@ void main() {
     },
     seed: () => loaded([seven, off]),
     act: (cubit) async {
-      expect(await cubit.toggle(off, enabled: true), const Duration(hours: 8, minutes: 12));
+      expect(
+        await cubit.toggle(off, enabled: true),
+        const AlarmSaveResult.ringsIn(Duration(hours: 8, minutes: 12)),
+      );
     },
     expect: () => [
       loaded([seven, off.copyWith(enabled: true)]),

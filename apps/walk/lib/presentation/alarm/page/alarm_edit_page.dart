@@ -13,6 +13,7 @@ import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
 import '../cubit/alarm_edit_cubit.dart';
 import '../cubit/alarm_edit_state.dart';
+import '../cubit/alarm_save_result.dart';
 import '../format/alarm_sound_format.dart';
 import '../widget/one_shot_section.dart';
 import '../widget/repeat_section.dart';
@@ -104,8 +105,8 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
     _refreshNow();
     if (!_cubit.canSave(_now)) return;
     try {
-      final untilRing = await _cubit.save();
-      if (mounted) Navigator.of(context).pop(untilRing);
+      final result = await _cubit.save();
+      if (mounted) Navigator.of(context).pop(result);
     } on Object {
       if (!mounted) return;
       AppSnackBar.show(context, message: l10n.walkAlarmSaveFailed, type: AppSnackBarType.error);
@@ -142,13 +143,13 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
   }
 
   /// 앱바 메뉴 [복제] — 저장된 설정의 저장 전 알람으로 편집 화면을 위에 연다. 복제본을 저장하면
-  /// 그 결과(남은 시간)로 이 화면도 닫혀 목록이 스낵바를 띄운다. 그냥 닫으면 이 화면으로 돌아온다.
+  /// 그 결과(남은 시간 · 쉬는 중)로 이 화면도 닫혀 목록이 스낵바를 띄운다. 그냥 닫으면 이 화면으로 돌아온다.
   Future<void> _duplicate() async {
     FocusManager.instance.primaryFocus?.unfocus();
-    final untilRing = await Navigator.of(context).push<Duration>(
+    final result = await Navigator.of(context).push<AlarmSaveResult>(
       MaterialPageRoute(builder: (_) => AlarmEditPage(initial: widget.initial.duplicate(_clock.now()))),
     );
-    if (untilRing != null && mounted) Navigator.of(context).pop(untilRing);
+    if (result != null && mounted) Navigator.of(context).pop(result);
   }
 
   @override

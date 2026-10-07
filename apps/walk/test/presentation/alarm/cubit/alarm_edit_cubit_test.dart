@@ -13,6 +13,7 @@ import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/presentation/alarm/cubit/alarm_edit_cubit.dart';
 import 'package:walk/presentation/alarm/cubit/alarm_edit_state.dart';
+import 'package:walk/presentation/alarm/cubit/alarm_save_result.dart';
 
 class _MockUseCase extends Mock implements AlarmUseCase {}
 
@@ -150,7 +151,18 @@ void main() {
     );
     final cubit = build(_monday);
 
-    expect(await cubit.save(), DateTime(2026, 10, 5, 7).difference(now));
+    expect(await cubit.save(), AlarmSaveResult.ringsIn(DateTime(2026, 10, 5, 7).difference(now)));
+    await cubit.close();
+  });
+
+  test('쉬는 기간 안에 울릴 한 번 알람을 저장하면 쉬는 기간이라 울리지 않는다고 돌려준다', () async {
+    when(() => useCase.save(any())).thenAnswer(
+      (i) async => (i.positionalArguments.single as Alarm).copyWith(id: 1),
+    );
+    when(() => useCase.pause()).thenAnswer((_) async => AlarmPause.today(now));
+    final cubit = build()..addOffset(const Duration(minutes: 5));
+
+    expect(await cubit.save(), const AlarmSaveResult.pausedOut());
     await cubit.close();
   });
 
@@ -161,7 +173,7 @@ void main() {
     when(() => useCase.pause()).thenThrow(StateError('prefs'));
     final cubit = build(_monday);
 
-    expect(await cubit.save(), const Duration(hours: 7, minutes: 12));
+    expect(await cubit.save(), const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)));
     await cubit.close();
   });
 
@@ -174,7 +186,7 @@ void main() {
       return build(_monday);
     },
     act: (cubit) async {
-      expect(await cubit.save(), const Duration(hours: 7, minutes: 12));
+      expect(await cubit.save(), const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)));
     },
     expect: () => const [
       AlarmEditState(alarm: _monday, busy: true),
@@ -200,7 +212,7 @@ void main() {
       return build(_monday);
     },
     act: (cubit) async {
-      expect(await cubit.save(), const Duration(hours: 7, minutes: 12));
+      expect(await cubit.save(), const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)));
     },
     skip: 2,
   );
@@ -271,7 +283,7 @@ void main() {
       return build(_monday);
     },
     act: (cubit) async {
-      expect(await cubit.save(), const Duration(hours: 7, minutes: 12));
+      expect(await cubit.save(), const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)));
     },
     expect: () => const [
       AlarmEditState(alarm: _monday, busy: true),
@@ -356,7 +368,7 @@ void main() {
         cubit
           ..addOffset(const Duration(hours: 1))
           ..addOffset(const Duration(minutes: 10));
-        expect(await cubit.save(), const Duration(hours: 1, minutes: 10));
+        expect(await cubit.save(), const AlarmSaveResult.ringsIn(Duration(hours: 1, minutes: 10)));
       },
       skip: 2,
       verify: (_) => verify(
@@ -372,7 +384,7 @@ void main() {
       },
       act: (cubit) async {
         cubit.setLabel('낮잠');
-        expect(await cubit.save(), const Duration(hours: 7, minutes: 12));
+        expect(await cubit.save(), const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)));
       },
       skip: 2,
       verify: (_) => verify(
@@ -392,7 +404,7 @@ void main() {
       },
       act: (cubit) async {
         cubit.fixOneShotAt(7, 30);
-        expect(await cubit.save(), const Duration(hours: 7, minutes: 42));
+        expect(await cubit.save(), const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 42)));
       },
       skip: 2,
       verify: (_) => verify(

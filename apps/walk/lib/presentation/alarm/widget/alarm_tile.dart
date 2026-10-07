@@ -15,6 +15,9 @@ import 'weekday_dots.dart';
 ///
 /// 켜진 반복 알람의 요일 점 옆에 칩: 다음 회차를 건너뛰었으면 "건너뜀", 다음 울림이 24시간 안
 /// 공휴일이면([holidayName]) "공휴일"(누르면 [onHolidayTap] — 건너뛰기 시트).
+///
+/// 쉬는 기간 때문에 예약이 없는 켜진 알람([pausedOut])은 한 번 알람이면 종류 줄이 `한 번 · 쉬는 중`,
+/// 반복 알람이면 요일 점 옆에 "쉬는 중" 칩 — 울리지 않을 것을 행에서 알 수 있게.
 class AlarmTile extends StatelessWidget {
   const AlarmTile({
     required this.alarm,
@@ -24,6 +27,7 @@ class AlarmTile extends StatelessWidget {
     this.onLongPress,
     this.holidayName,
     this.onHolidayTap,
+    this.pausedOut = false,
     super.key,
   });
 
@@ -39,6 +43,9 @@ class AlarmTile extends StatelessWidget {
   final String? holidayName;
   final VoidCallback? onHolidayTap;
 
+  /// 쉬는 기간 때문에 예약이 없다(켜져 있을 때만 보인다).
+  final bool pausedOut;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -51,6 +58,7 @@ class AlarmTile extends StatelessWidget {
         ? AlarmFormat.repeat(l10n, alarm.repeat)
         : '${alarm.label} · ${AlarmFormat.repeat(l10n, alarm.repeat)}';
     final untilRing = alarm.enabled ? this.untilRing : null;
+    final pausedOut = alarm.enabled && this.pausedOut;
 
     return Material(
       color: colorScheme.surfaceContainerLow,
@@ -82,7 +90,11 @@ class AlarmTile extends StatelessWidget {
                       ),
                     const SizedBox(height: AppSpacing.xs),
                     if (alarm.isOneShot)
-                      _OneShotLine(untilRing: untilRing, color: dimmed ?? colorScheme.primary)
+                      _OneShotLine(
+                        untilRing: untilRing,
+                        pausedOut: pausedOut,
+                        color: dimmed ?? colorScheme.primary,
+                      )
                     else
                       // 칩이 붙으면 좁은 폭에서 다음 줄로 넘긴다.
                       Wrap(
@@ -91,6 +103,8 @@ class AlarmTile extends StatelessWidget {
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           WeekdayDots(days: alarm.repeat, dimmed: !alarm.enabled),
+                          if (pausedOut)
+                            _TileChip(label: l10n.walkAlarmPausedOutRow, icon: Icons.bedtime),
                           if (alarm.enabled && alarm.skippedAt != null)
                             _TileChip(label: l10n.walkAlarmSkipped, icon: Icons.skip_next),
                           if (alarm.enabled && holidayName != null)
@@ -191,11 +205,13 @@ class _Time extends StatelessWidget {
   }
 }
 
-/// 한 번 알람의 종류 줄 — 모래시계 + `한 번 · N 뒤`(남은 시간을 모르면 `한 번`).
+/// 한 번 알람의 종류 줄 — 모래시계 + `한 번 · N 뒤`(쉬는 기간 때문에 예약이 없으면 `한 번 · 쉬는 중`,
+/// 남은 시간을 모르면 `한 번`).
 class _OneShotLine extends StatelessWidget {
-  const _OneShotLine({required this.untilRing, required this.color});
+  const _OneShotLine({required this.untilRing, required this.pausedOut, required this.color});
 
   final Duration? untilRing;
+  final bool pausedOut;
   final Color color;
 
   @override
@@ -209,7 +225,9 @@ class _OneShotLine extends StatelessWidget {
         const SizedBox(width: AppSpacing.xs),
         Flexible(
           child: Text(
-            untilRing == null
+            pausedOut
+                ? l10n.walkAlarmOneShotRow(l10n.walkAlarmPausedOutRow)
+                : untilRing == null
                 ? l10n.walkAlarmKindOneShot
                 : l10n.walkAlarmOneShotRow(
                     l10n.walkAlarmAfter(AlarmFormat.duration(l10n, untilRing)),

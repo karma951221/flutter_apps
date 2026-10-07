@@ -14,6 +14,7 @@ import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/sound/alarm_sound_source.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
+import 'package:walk/presentation/alarm/cubit/alarm_save_result.dart';
 import 'package:walk/presentation/alarm/format/alarm_format.dart';
 import 'package:walk/presentation/alarm/page/alarm_edit_page.dart';
 import 'package:walk/presentation/alarm/page/alarm_sound_page.dart';
@@ -86,7 +87,7 @@ void main() {
   tearDown(getIt.reset);
 
   /// 편집 화면을 띄우고, 닫힐 때의 결과를 [results] 에 모은다.
-  Future<List<Duration?>> pump(
+  Future<List<AlarmSaveResult?>> pump(
     WidgetTester tester,
     Alarm initial, {
     Locale locale = const Locale('ko'),
@@ -94,7 +95,7 @@ void main() {
   }) async {
     await tester.binding.setSurfaceSize(size);
     addTearDown(() => tester.binding.setSurfaceSize(null));
-    final results = <Duration?>[];
+    final results = <AlarmSaveResult?>[];
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
@@ -104,9 +105,9 @@ void main() {
         home: Builder(
           builder: (context) => TextButton(
             onPressed: () async => results.add(
-              await Navigator.of(
-                context,
-              ).push<Duration>(MaterialPageRoute(builder: (_) => AlarmEditPage(initial: initial))),
+              await Navigator.of(context).push<AlarmSaveResult>(
+                MaterialPageRoute(builder: (_) => AlarmEditPage(initial: initial)),
+              ),
             ),
             child: const Text('open'),
           ),
@@ -162,7 +163,7 @@ void main() {
       expect(saved.oneShotAt, DateTime(2026, 9, 28, 1, 4));
       expect((saved.hour, saved.minute), (1, 4));
       expect(saved.repeat, isEmpty);
-      expect(results, [const Duration(hours: 1, minutes: 16)]);
+      expect(results, [const AlarmSaveResult.ringsIn(Duration(hours: 1, minutes: 16))]);
     });
 
     testWidgets('초기화는 0분 뒤로 돌리고 저장을 다시 잠근다', (tester) async {
@@ -261,7 +262,7 @@ void main() {
       final saved = savedAlarm();
       expect(saved.oneShotAt, DateTime(2026, 9, 28, 7, 30));
       expect((saved.hour, saved.minute), (7, 30));
-      expect(results, [const Duration(hours: 7, minutes: 42)]);
+      expect(results, [const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 42))]);
     });
 
     testWidgets('화면을 연 초와 상관없이 다음 분 0초에 맞춰 갱신하고, 그 뒤 매분 갱신한다', (tester) async {
@@ -458,7 +459,7 @@ void main() {
       expect((saved.hour, saved.minute), (6, 45));
       verifyInOrder([notification.ensure, exactAlarm.ensure, calendar.ensureIfReminding]);
       // 일요일 23:48 → 월요일 06:45
-      expect(results, [const Duration(hours: 6, minutes: 57)]);
+      expect(results, [const AlarmSaveResult.ringsIn(Duration(hours: 6, minutes: 57))]);
       expect(find.byType(AlarmEditPage), findsNothing);
     });
 
@@ -595,7 +596,7 @@ void main() {
 
     expect(find.byType(AlarmEditPage), findsNothing);
     expect(find.text('알람을 저장하지 못했어요'), findsNothing);
-    expect(results, [const Duration(hours: 7, minutes: 12)]);
+    expect(results, [const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12))]);
     verify(() => useCase.save(any())).called(1);
   });
 
@@ -745,7 +746,7 @@ void main() {
       expect(savedAlarm(), saved.copyWith(id: Alarm.unsavedId));
       expect(find.byType(AlarmEditPage, skipOffstage: false), findsNothing);
       // 일요일 23:48 → 월요일 06:30.
-      expect(results, [const Duration(hours: 6, minutes: 42)]);
+      expect(results, [const AlarmSaveResult.ringsIn(Duration(hours: 6, minutes: 42))]);
     });
 
     testWidgets('복제본을 그냥 닫으면 원래 편집 화면으로 돌아온다', (tester) async {

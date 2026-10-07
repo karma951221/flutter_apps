@@ -10,6 +10,7 @@ import '../../../domain/alarm/entity/alarm.dart';
 import '../../../domain/alarm/entity/repeat_preset.dart';
 import '../cubit/alarm_list_cubit.dart';
 import '../cubit/alarm_list_state.dart';
+import '../cubit/alarm_save_result.dart';
 import '../format/alarm_format.dart';
 import '../widget/alarm_kind_sheet.dart';
 import '../widget/alarm_pause_banner.dart';
@@ -78,10 +79,10 @@ class _AlarmListPageState extends State<AlarmListPage> {
   }
 
   Future<void> _open(BuildContext context, Alarm alarm) async {
-    final untilRing = await Navigator.of(
+    final result = await Navigator.of(
       context,
-    ).push<Duration>(MaterialPageRoute(builder: (_) => AlarmEditPage(initial: alarm)));
-    if (untilRing != null && context.mounted) _showRingsIn(context, untilRing);
+    ).push<AlarmSaveResult>(MaterialPageRoute(builder: (_) => AlarmEditPage(initial: alarm)));
+    if (result != null && context.mounted) _showSaved(context, result);
   }
 
   /// 종류 시트에서 고른 종류의 새 알람 편집을 연다. 반복은 평일로 시작한다.
@@ -98,8 +99,8 @@ class _AlarmListPageState extends State<AlarmListPage> {
   Future<void> _toggle(BuildContext context, Alarm alarm, bool enabled) async {
     final l10n = AppLocalizations.of(context);
     try {
-      final untilRing = await context.read<AlarmListCubit>().toggle(alarm, enabled: enabled);
-      if (untilRing != null && context.mounted) _showRingsIn(context, untilRing);
+      final result = await context.read<AlarmListCubit>().toggle(alarm, enabled: enabled);
+      if (result != null && context.mounted) _showSaved(context, result);
     } on Object {
       if (!context.mounted) return;
       AppSnackBar.show(context, message: l10n.walkAlarmSaveFailed, type: AppSnackBarType.error);
@@ -164,11 +165,17 @@ class _AlarmListPageState extends State<AlarmListPage> {
     }
   }
 
-  void _showRingsIn(BuildContext context, Duration untilRing) {
+  /// 저장 · 켜기 뒤 스낵바 — 남은 시간, 또는 쉬는 기간이라 울리지 않는다는 안내.
+  void _showSaved(BuildContext context, AlarmSaveResult result) {
     final l10n = AppLocalizations.of(context);
     AppSnackBar.show(
       context,
-      message: l10n.walkAlarmRingsIn(AlarmFormat.duration(l10n, untilRing)),
+      message: switch (result) {
+        AlarmRingsIn(:final untilRing) => l10n.walkAlarmRingsIn(
+          AlarmFormat.duration(l10n, untilRing),
+        ),
+        AlarmPausedOut() => l10n.walkAlarmSavedPausedOut,
+      },
     );
   }
 
@@ -217,6 +224,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
                 :final now,
                 :final canRing,
                 :final holidays,
+                :final pausedOut,
                 :final pause,
               ) =>
                 ListView(
@@ -292,6 +300,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
                             onToggle: (enabled) => _toggle(context, alarm, enabled),
                             onLongPress: () => _menu(context, alarm),
                             holidayName: holidays[alarm.id],
+                            pausedOut: pausedOut.contains(alarm.id),
                             onHolidayTap: () => _menu(context, alarm),
                           ),
                         ),

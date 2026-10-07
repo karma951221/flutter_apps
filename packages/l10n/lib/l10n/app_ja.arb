@@ -516,6 +516,8 @@
   "walkAlarmDayToday": "今日",
   "walkAlarmDayTomorrow": "明日",
   "walkAlarmRingsIn": "{duration}後に鳴ります",
+  "walkAlarmSavedPausedOut": "アラームを休む期間なので鳴りません",
+  "walkAlarmPausedOutRow": "休み中",
   "walkAlarmDurationMinutes": "{minutes}分",
   "walkAlarmDurationHours": "{hours}時間",
   "walkAlarmDurationHoursMinutes": "{hours}時間{minutes}分",

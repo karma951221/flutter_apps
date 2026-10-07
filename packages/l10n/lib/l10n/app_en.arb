@@ -516,6 +516,8 @@
   "walkAlarmDayToday": "Today",
   "walkAlarmDayTomorrow": "Tomorrow",
   "walkAlarmRingsIn": "Alarm set for {duration} from now",
+  "walkAlarmSavedPausedOut": "Alarms are paused, so this one won't ring",
+  "walkAlarmPausedOutRow": "Paused",
   "walkAlarmDurationMinutes": "{minutes} min",
   "walkAlarmDurationHours": "{hours} hr",
   "walkAlarmDurationHoursMinutes": "{hours} hr {minutes} min",

@@ -1655,6 +1655,12 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get walkAlarmSavedPausedOut => 'アラームを休む期間なので鳴りません';
+
+  @override
+  String get walkAlarmPausedOutRow => '休み中';
+
+  @override
   String walkAlarmDurationMinutes(int minutes) {
     return '$minutes分';
   }

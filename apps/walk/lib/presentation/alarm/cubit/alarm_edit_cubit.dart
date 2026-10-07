@@ -8,9 +8,9 @@ import '../../../domain/alarm/entity/repeat_preset.dart';
 import '../../../domain/alarm/holiday/holiday_calendar_access.dart';
 import '../../../domain/alarm/one_shot_draft.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
-import '../../../domain/alarm/upcoming_triggers.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
 import 'alarm_edit_state.dart';
+import 'alarm_save_result.dart';
 import 'ensure_for_alarm_quietly.dart';
 
 /// 종류(한 번 · 반복)는 [initial] 로 정해지고 편집 중에는 바뀌지 않는다 — 반복 알람의 요일을
@@ -92,8 +92,9 @@ class AlarmEditCubit extends Cubit<AlarmEditState> {
   /// 이미 끝났다(목록 경고 배너가 남은 길). 반복 알람이면 공휴일 미리 알림용 캘린더 권한도
   /// 묻는다(거부하면 내장 표). 울릴 때까지 남은 시간을 돌려준다 — 쉬는 기간의 회차는 빼고
   /// 센다(기간을 못 읽으면 쉬지 않는 것으로).
+  /// 쉬는 기간 때문에 울릴 회차가 없으면 그렇다고 돌려준다([AlarmSaveResult.of]).
   /// 저장이 실패하면 던진다.
-  Future<Duration?> save() => _busy(() async {
+  Future<AlarmSaveResult?> save() => _busy(() async {
     final now = _clock.now();
     if (!canSave(now)) throw StateError('alarm cannot be saved yet');
     final ringAt = state.draft.ringAt(now);
@@ -115,8 +116,7 @@ class AlarmEditCubit extends Cubit<AlarmEditState> {
     } on Object {
       // 저장은 끝났다 — 쉬지 않는 것으로 센다.
     }
-    final after = _clock.now();
-    return upcomingTriggers(saved, after, pause: pause).firstOrNull?.difference(after);
+    return AlarmSaveResult.of(saved, _clock.now(), pause);
   });
 
   Future<void> delete() => _busy(() => _useCase.delete(state.alarm.id));

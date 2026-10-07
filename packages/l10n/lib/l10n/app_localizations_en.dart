@@ -1743,6 +1743,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get walkAlarmSavedPausedOut =>
+      'Alarms are paused, so this one won\'t ring';
+
+  @override
+  String get walkAlarmPausedOutRow => 'Paused';
+
+  @override
   String walkAlarmDurationMinutes(int minutes) {
     return '$minutes min';
   }

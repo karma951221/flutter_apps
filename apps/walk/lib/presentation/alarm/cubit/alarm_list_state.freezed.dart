@@ -122,11 +122,11 @@ return failure(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing,  Map<int, String> holidays,  AlarmPause? pause)?  loaded,TResult Function()?  failure,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing,  Map<int, String> holidays,  AlarmPause? pause,  Set<int> pausedOut)?  loaded,TResult Function()?  failure,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case AlarmListLoading() when loading != null:
 return loading();case AlarmListLoaded() when loaded != null:
-return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing,_that.holidays,_that.pause);case AlarmListFailure() when failure != null:
+return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing,_that.holidays,_that.pause,_that.pausedOut);case AlarmListFailure() when failure != null:
 return failure();case _:
   return orElse();
 
@@ -145,11 +145,11 @@ return failure();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing,  Map<int, String> holidays,  AlarmPause? pause)  loaded,required TResult Function()  failure,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing,  Map<int, String> holidays,  AlarmPause? pause,  Set<int> pausedOut)  loaded,required TResult Function()  failure,}) {final _that = this;
 switch (_that) {
 case AlarmListLoading():
 return loading();case AlarmListLoaded():
-return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing,_that.holidays,_that.pause);case AlarmListFailure():
+return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing,_that.holidays,_that.pause,_that.pausedOut);case AlarmListFailure():
 return failure();}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -164,11 +164,11 @@ return failure();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing,  Map<int, String> holidays,  AlarmPause? pause)?  loaded,TResult? Function()?  failure,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<Alarm> alarms,  Map<int, DateTime> nextAt,  DateTime now,  bool canRing,  Map<int, String> holidays,  AlarmPause? pause,  Set<int> pausedOut)?  loaded,TResult? Function()?  failure,}) {final _that = this;
 switch (_that) {
 case AlarmListLoading() when loading != null:
 return loading();case AlarmListLoaded() when loaded != null:
-return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing,_that.holidays,_that.pause);case AlarmListFailure() when failure != null:
+return loaded(_that.alarms,_that.nextAt,_that.now,_that.canRing,_that.holidays,_that.pause,_that.pausedOut);case AlarmListFailure() when failure != null:
 return failure();case _:
   return null;
 
@@ -213,7 +213,7 @@ String toString() {
 
 
 class AlarmListLoaded implements AlarmListState {
-  const AlarmListLoaded({required final  List<Alarm> alarms, required final  Map<int, DateTime> nextAt, required this.now, this.canRing = true, final  Map<int, String> holidays = const <int, String>{}, this.pause}): _alarms = alarms,_nextAt = nextAt,_holidays = holidays;
+  const AlarmListLoaded({required final  List<Alarm> alarms, required final  Map<int, DateTime> nextAt, required this.now, this.canRing = true, final  Map<int, String> holidays = const <int, String>{}, this.pause, final  Set<int> pausedOut = const <int>{}}): _alarms = alarms,_nextAt = nextAt,_holidays = holidays,_pausedOut = pausedOut;
   
 
  final  List<Alarm> _alarms;
@@ -240,6 +240,13 @@ class AlarmListLoaded implements AlarmListState {
 }
 
  final  AlarmPause? pause;
+ final  Set<int> _pausedOut;
+@JsonKey() Set<int> get pausedOut {
+  if (_pausedOut is EqualUnmodifiableSetView) return _pausedOut;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableSetView(_pausedOut);
+}
+
 
 /// Create a copy of AlarmListState
 /// with the given fields replaced by the non-null parameter values.
@@ -251,16 +258,16 @@ $AlarmListLoadedCopyWith<AlarmListLoaded> get copyWith => _$AlarmListLoadedCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AlarmListLoaded&&const DeepCollectionEquality().equals(other._alarms, _alarms)&&const DeepCollectionEquality().equals(other._nextAt, _nextAt)&&(identical(other.now, now) || other.now == now)&&(identical(other.canRing, canRing) || other.canRing == canRing)&&const DeepCollectionEquality().equals(other._holidays, _holidays)&&(identical(other.pause, pause) || other.pause == pause));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AlarmListLoaded&&const DeepCollectionEquality().equals(other._alarms, _alarms)&&const DeepCollectionEquality().equals(other._nextAt, _nextAt)&&(identical(other.now, now) || other.now == now)&&(identical(other.canRing, canRing) || other.canRing == canRing)&&const DeepCollectionEquality().equals(other._holidays, _holidays)&&(identical(other.pause, pause) || other.pause == pause)&&const DeepCollectionEquality().equals(other._pausedOut, _pausedOut));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_alarms),const DeepCollectionEquality().hash(_nextAt),now,canRing,const DeepCollectionEquality().hash(_holidays),pause);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_alarms),const DeepCollectionEquality().hash(_nextAt),now,canRing,const DeepCollectionEquality().hash(_holidays),pause,const DeepCollectionEquality().hash(_pausedOut));
 
 @override
 String toString() {
-  return 'AlarmListState.loaded(alarms: $alarms, nextAt: $nextAt, now: $now, canRing: $canRing, holidays: $holidays, pause: $pause)';
+  return 'AlarmListState.loaded(alarms: $alarms, nextAt: $nextAt, now: $now, canRing: $canRing, holidays: $holidays, pause: $pause, pausedOut: $pausedOut)';
 }
 
 
@@ -271,7 +278,7 @@ abstract mixin class $AlarmListLoadedCopyWith<$Res> implements $AlarmListStateCo
   factory $AlarmListLoadedCopyWith(AlarmListLoaded value, $Res Function(AlarmListLoaded) _then) = _$AlarmListLoadedCopyWithImpl;
 @useResult
 $Res call({
- List<Alarm> alarms, Map<int, DateTime> nextAt, DateTime now, bool canRing, Map<int, String> holidays, AlarmPause? pause
+ List<Alarm> alarms, Map<int, DateTime> nextAt, DateTime now, bool canRing, Map<int, String> holidays, AlarmPause? pause, Set<int> pausedOut
 });
 
 
@@ -288,7 +295,7 @@ class _$AlarmListLoadedCopyWithImpl<$Res>
 
 /// Create a copy of AlarmListState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? alarms = null,Object? nextAt = null,Object? now = null,Object? canRing = null,Object? holidays = null,Object? pause = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? alarms = null,Object? nextAt = null,Object? now = null,Object? canRing = null,Object? holidays = null,Object? pause = freezed,Object? pausedOut = null,}) {
   return _then(AlarmListLoaded(
 alarms: null == alarms ? _self._alarms : alarms // ignore: cast_nullable_to_non_nullable
 as List<Alarm>,nextAt: null == nextAt ? _self._nextAt : nextAt // ignore: cast_nullable_to_non_nullable
@@ -296,7 +303,8 @@ as Map<int, DateTime>,now: null == now ? _self.now : now // ignore: cast_nullabl
 as DateTime,canRing: null == canRing ? _self.canRing : canRing // ignore: cast_nullable_to_non_nullable
 as bool,holidays: null == holidays ? _self._holidays : holidays // ignore: cast_nullable_to_non_nullable
 as Map<int, String>,pause: freezed == pause ? _self.pause : pause // ignore: cast_nullable_to_non_nullable
-as AlarmPause?,
+as AlarmPause?,pausedOut: null == pausedOut ? _self._pausedOut : pausedOut // ignore: cast_nullable_to_non_nullable
+as Set<int>,
   ));
 }
 

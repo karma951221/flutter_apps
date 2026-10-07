@@ -16,6 +16,7 @@ sealed class AlarmListState with _$AlarmListState {
   /// [holidays] 는 다음 울림이 공휴일 미리 알림 리드(24시간) 안의 공휴일인 반복 알람 id →
   /// 공휴일 이름("공휴일" 칩).
   /// [pause] 는 모든 알람을 쉬는 기간(쉬는 중 배너). 쉬지 않으면 null.
+  /// [pausedOut] 은 쉬는 기간 때문에 예약이 없는 켜진 알람 id("쉬는 중" 표시).
   const factory AlarmListState.loaded({
     required List<Alarm> alarms,
     required Map<int, DateTime> nextAt,
@@ -23,6 +24,7 @@ sealed class AlarmListState with _$AlarmListState {
     @Default(true) bool canRing,
     @Default(<int, String>{}) Map<int, String> holidays,
     AlarmPause? pause,
+    @Default(<int>{}) Set<int> pausedOut,
   }) = AlarmListLoaded;
 
   /// 저장된 알람 목록을 읽지 못했다. 다시 시도 · 복귀 때 [AlarmListCubit.load] 로 돌아온다.

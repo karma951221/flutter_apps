@@ -612,6 +612,50 @@ void main() {
       expect(find.text('권한을 확인하세요'), findsNothing);
     });
 
+    testWidgets('쉬는 기간 때문에 예약이 없는 알람 행에 쉬는 중을 보인다', (tester) async {
+      final pausedOneShot = Alarm(
+        id: 3,
+        hour: 23,
+        minute: 58,
+        oneShotAt: DateTime(2026, 9, 27, 23, 58),
+      );
+      when(() => useCase.list()).thenAnswer((_) async => [weekday, pausedOneShot]);
+      when(() => useCase.nextRings()).thenAnswer((_) async => {});
+      when(() => useCase.pause()).thenAnswer(
+        (_) async => AlarmPause(from: DateTime(2026, 9, 27), until: DateTime(2026, 10, 31)),
+      );
+      await pump(tester);
+
+      final rows = find.byType(AlarmTile);
+      expect(find.descendant(of: rows.at(0), matching: find.text('쉬는 중')), findsOneWidget);
+      expect(find.descendant(of: rows.at(1), matching: find.text('한 번 · 쉬는 중')), findsOneWidget);
+    });
+
+    testWidgets('쉬는 중에 그 기간 안의 한 번 알람을 저장하면 울리지 않는다고 스낵바', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(800, 1600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      registerFallbackValue(Alarm.draft());
+      when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+      when(() => useCase.pause()).thenAnswer((_) async => today);
+      when(
+        () => useCase.save(any()),
+      ).thenAnswer((i) async => (i.positionalArguments.single as Alarm).copyWith(id: 3));
+      await pump(tester);
+
+      await tester.tap(find.byTooltip('알람 추가'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('한 번'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('+5분'));
+      await tester.pump();
+      await tester.tap(find.text('저장'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlarmEditPage), findsNothing);
+      expect(find.widgetWithText(SnackBar, '쉬는 기간이라 울리지 않아요'), findsOneWidget);
+      expect(find.textContaining('뒤에 울려요'), findsNothing);
+    });
+
     testWidgets('알람이 없어도 쉬는 중이면 배너', (tester) async {
       when(() => useCase.list()).thenAnswer((_) async => []);
       when(() => useCase.pause()).thenAnswer((_) async => today);

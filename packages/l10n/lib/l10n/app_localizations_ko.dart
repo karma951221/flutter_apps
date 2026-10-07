@@ -1657,6 +1657,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get walkAlarmSavedPausedOut => '쉬는 기간이라 울리지 않아요';
+
+  @override
+  String get walkAlarmPausedOutRow => '쉬는 중';
+
+  @override
   String walkAlarmDurationMinutes(int minutes) {
     return '$minutes분';
   }

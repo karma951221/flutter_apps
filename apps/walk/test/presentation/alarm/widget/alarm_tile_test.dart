@@ -17,6 +17,7 @@ Widget _app(
   VoidCallback? onLongPress,
   String? holidayName,
   VoidCallback? onHolidayTap,
+  bool pausedOut = false,
   Locale locale = const Locale('ko'),
 }) => MaterialApp(
   theme: AppTheme.light(),
@@ -32,6 +33,7 @@ Widget _app(
       onLongPress: onLongPress,
       holidayName: holidayName,
       onHolidayTap: onHolidayTap,
+      pausedOut: pausedOut,
     ),
   ),
 );
@@ -206,6 +208,28 @@ void main() {
     expect(find.text('공휴일'), findsOneWidget);
     await tester.tap(find.text('공휴일'));
     expect((taps, rowTaps), (1, 0));
+  });
+
+  testWidgets('쉬는 기간 때문에 예약이 없는 한 번 알람은 한 번 · 쉬는 중', (tester) async {
+    await tester.pumpWidget(
+      _app(Alarm(id: 1, hour: 7, minute: 0, oneShotAt: DateTime(2026, 10, 9, 7)), pausedOut: true),
+    );
+
+    expect(find.text('한 번 · 쉬는 중'), findsOneWidget);
+  });
+
+  testWidgets('쉬는 기간 때문에 예약이 없는 반복 알람은 요일 점 옆에 "쉬는 중" 칩', (tester) async {
+    await tester.pumpWidget(_app(const Alarm(id: 1, hour: 7, minute: 0, repeat: _weekdays), pausedOut: true));
+
+    expect(find.text('쉬는 중'), findsOneWidget);
+  });
+
+  testWidgets('꺼진 알람은 쉬는 중을 보이지 않는다', (tester) async {
+    await tester.pumpWidget(
+      _app(const Alarm(id: 1, hour: 7, minute: 0, repeat: _weekdays, enabled: false), pausedOut: true),
+    );
+
+    expect(find.textContaining('쉬는 중'), findsNothing);
   });
 
   testWidgets('길게 누르면 onLongPress', (tester) async {
