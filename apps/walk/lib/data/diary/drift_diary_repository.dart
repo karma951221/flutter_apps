@@ -330,6 +330,42 @@ class DriftDiaryRepository implements DiaryRepository {
   }) => _counts.watchTagCounts(query, limit);
 
   @override
+  Future<List<DiaryEntry>> entriesMissingPlaceName() async {
+    final rows =
+        await (_db.select(_db.entries)
+              ..where(
+                (e) =>
+                    e.deletedAt.isNull() &
+                    e.placeId.isNull() &
+                    e.lat.isNotNull() &
+                    e.lng.isNotNull(),
+              )
+              ..orderBy([(e) => OrderingTerm.asc(e.createdAt.julianday)]))
+            .get();
+    return _assemble(rows);
+  }
+
+  @override
+  Future<Result<void>> fillPlaceName(String entryId, String name) =>
+      _guard(() async {
+        return _db.transaction<Result<void>>(() async {
+          final row = await (_db.select(
+            _db.entries,
+          )..where((e) => e.id.equals(entryId))).getSingleOrNull();
+          if (row == null) return const Err(Failure.notFound());
+          if (row.placeId != null) return const Ok(null);
+          final placeId = await _placeId(
+            EntryLocation(placeName: name),
+            _clock.now(),
+          );
+          if (placeId == null) return const Ok(null);
+          await (_db.update(_db.entries)..where((e) => e.id.equals(entryId)))
+              .write(EntriesCompanion(placeId: Value(placeId)));
+          return const Ok(null);
+        });
+      });
+
+  @override
   Stream<List<NamedCount>> watchPlaceCounts({
     String query = '',
     int limit = 20,

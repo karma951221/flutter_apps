@@ -85,6 +85,17 @@ abstract interface class DiaryRepository {
   /// DB 가 아는 모든 미디어 경로(휴지통 포함). 고아 청소용.
   Future<Set<String>> allMediaPaths();
 
+  // 장소 지연 채우기
+
+  /// 좌표는 있고 장소(placeId)가 없는 기록(휴지통 제외), 오래된 것부터.
+  /// 오프라인으로 저장한 기록의 이름을 나중에 채우는 데 쓴다.
+  Future<List<DiaryEntry>> entriesMissingPlaceName();
+
+  /// [name] 을 trim 해 같은 이름의 `places` 행을 재사용(없으면 생성)하고 기록에 붙인다.
+  /// updatedAt 은 그대로. 이미 장소가 있거나 [name] 이 비면 아무것도 하지 않는다.
+  /// 없는 기록은 notFound.
+  Future<Result<void>> fillPlaceName(String entryId, String name);
+
   // 모아보기 · 추천 · 검색
 
   /// 쓰는 기록(휴지통 제외)이 1 이상인 태그만. [query] 는 `TagName.searchKey`

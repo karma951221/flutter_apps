@@ -48,6 +48,7 @@ import '../../domain/alarm/scheduler/reminder_scheduler.dart' as _i297;
 import '../../domain/alarm/sound/alarm_sound_source.dart' as _i344;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
+import '../../domain/diary/location/place_source.dart' as _i693;
 import '../../domain/diary/media/media_processor.dart' as _i674;
 import '../../domain/diary/media/media_store.dart' as _i870;
 import '../../domain/diary/repository/diary_repository.dart' as _i122;
@@ -75,6 +76,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i645.LocationGateway>(
       () => registerModule.locationGateway,
     );
+    gh.lazySingleton<_i693.PlaceNamer>(() => registerModule.placeNamer);
     gh.lazySingleton<_i933.AlarmPermissions>(
       () => alarmPermissionModule.alarmPermissions,
     );
@@ -116,6 +118,16 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i91.SettingsRepository>(
       () => _i724.PrefsSettingsRepository(gh<_i460.SharedPreferences>()),
+    );
+    gh.lazySingleton<_i645.LocationAccess>(
+      () => registerModule.locationAccess(gh<_i645.LocationGateway>()),
+    );
+    gh.lazySingleton<_i693.PlaceSource>(
+      () => registerModule.placeSource(
+        gh<_i645.LocationAccess>(),
+        gh<_i645.LocationGateway>(),
+        gh<_i693.PlaceNamer>(),
+      ),
     );
     gh.lazySingleton<_i961.HolidayCalendar>(
       () => holidayModule.holidayCalendar(gh<_i93.CachedHolidayCalendar>()),

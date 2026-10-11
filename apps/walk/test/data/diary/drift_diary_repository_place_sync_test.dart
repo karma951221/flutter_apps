@@ -7,8 +7,7 @@ import 'package:walk/domain/diary/entity/story.dart';
 
 import '../../support/diary_fixtures.dart';
 
-/// 스펙 §9.3.3 장소 반영. 오프라인 기록 이름 채우기 두 행은 `fillPlaceName`
-/// 이 생기는 T8 에서 더한다. 각 단계는 같은 구독의 다음 이벤트로 확인한다.
+/// 스펙 §9.3.3 장소 반영. 각 단계는 같은 구독의 다음 이벤트로 확인한다.
 void main() {
   late DiaryHarness h;
   late Story trip;
@@ -182,5 +181,39 @@ void main() {
     expect(namedCounts(w.list.last), ['애월읍 1']);
     expect(w.gathered.last.map((e) => e.id), [kept.id]);
     expect(await placeRows(), ['애월읍']);
+  });
+
+  const offline = EntryLocation(lat: 33.46, lng: 126.33);
+
+  test('오프라인 기록에 이름이 나중에 채워짐 → 그때부터 +1 · 같은 이름 장소와 합쳐짐', () async {
+    await create(occurredAt: DateTime(2026, 10, 1), location: aewol);
+    final off = await create(
+      occurredAt: DateTime(2026, 10, 2),
+      location: offline,
+    );
+    final w = await watchAll();
+    expect(namedCounts(w.list.last), ['애월읍 1']);
+
+    okValue(await h.repository.fillPlaceName(off.id, '애월읍'));
+    await pumpEventQueue();
+
+    expect(namedCounts(w.list.last), ['애월읍 2']);
+    expect(w.gathered.last.map((e) => e.id), contains(off.id));
+    expect(await placeRows(), ['애월읍']);
+  });
+
+  test('휴지통의 오프라인 기록 → 채우기 대상 제외 · 복원하면 다시 대상', () async {
+    final off = await create(
+      occurredAt: DateTime(2026, 10, 2),
+      location: offline,
+    );
+    okValue(await h.repository.trashEntry(off.id));
+    expect(await h.repository.entriesMissingPlaceName(), isEmpty);
+
+    okValue(await h.repository.restoreEntry(off.id));
+
+    expect((await h.repository.entriesMissingPlaceName()).map((e) => e.id), [
+      off.id,
+    ]);
   });
 }

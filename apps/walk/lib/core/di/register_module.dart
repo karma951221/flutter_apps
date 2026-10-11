@@ -10,6 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../data/diary/database/diary_database.dart';
+import '../../data/diary/location/current_place_source.dart';
+import '../../data/diary/location/geocoding_place_namer.dart';
+import '../../domain/diary/location/place_source.dart';
 
 /// getIt.reset · 테스트 해제 때 DB 를 닫는다.
 FutureOr<void> disposeDiaryDatabase(DiaryDatabase db) => db.close();
@@ -49,4 +52,19 @@ abstract class RegisterModule {
 
   @lazySingleton
   LocationGateway get locationGateway => const GeolocatorGateway();
+
+  /// 위치 권한을 세션당 한 번만 묻는 기억을 가지므로 하나만 둔다.
+  @lazySingleton
+  LocationAccess locationAccess(LocationGateway gateway) =>
+      LocationAccess(gateway);
+
+  @lazySingleton
+  PlaceNamer get placeNamer => GeocodingPlaceNamer();
+
+  @lazySingleton
+  PlaceSource placeSource(
+    LocationAccess access,
+    LocationGateway gateway,
+    PlaceNamer namer,
+  ) => CurrentPlaceSource(access, gateway, namer);
 }
