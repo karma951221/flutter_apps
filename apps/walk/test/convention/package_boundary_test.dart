@@ -16,6 +16,18 @@ void main() {
     expect(dependencies, isNot(contains('supabase_flutter:')));
   });
 
+  test('walk 앱은 일기 위치 태그에 workspace location 패키지를 의존한다', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    final dependencies = pubspec
+        .split('dependencies:')[1]
+        .split('dev_dependencies:')[0];
+
+    expect(
+      RegExp(r'^  location: any$', multiLine: true).hasMatch(dependencies),
+      isTrue,
+    );
+  });
+
   test('alarm 은 third_party 포크를 path 의존성으로 쓴다', () {
     final pubspec = File('pubspec.yaml').readAsStringSync();
 

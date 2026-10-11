@@ -17,6 +17,10 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <!-- 공휴일: 폰 캘린더의 휴일 캘린더를 읽는다(HolidayCalendarChannel). 거부하면 내장 표. -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <!-- 일기: 기록의 현재 위치 태그(geolocator) · 일기 잠금 재설정용 폰 인증(local_auth). -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <application
         android:label="Life Tool"
         android:name="${applicationName}"
@@ -110,6 +114,13 @@
         <package android:name="com.google.android.apps.healthdata" />
         <intent>
             <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+        </intent>
+        <!-- 일기: image_picker 의 카메라 촬영(사진 · 영상) 앱을 찾는다. -->
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+        <intent>
+            <action android:name="android.media.action.VIDEO_CAPTURE" />
         </intent>
     </queries>
 </manifest>

@@ -352,3 +352,18 @@ places      id, name(UNIQUE), createdAt
 - `local_auth` 는 `FlutterFragmentActivity` 가 필요하다 — 알람 울림 Activity 와 충돌하지 않는지 확인.
 - 미디어 선택으로 나갔다 오는 동안 잠금 예외를 정확히 판단(선택 시작/끝 플래그).
 - 사진 · 영상이 많아질 때 피드 · 릴스 메모리(썸네일 사용, 화면 밖 영상 컨트롤러 해제).
+
+## 11. 스파이크 결과
+
+> 2026-10-12 · T1 · 에뮬레이터 `Medium_Phone`(Android 17, google_apis_playstore arm64) 에서 버리는 앱(`lib/spike_main.dart`, 커밋 안 함)으로 확인.
+> **기기** = 에뮬레이터에서 실제로 돌려 본 것, **소스** = `~/.pub-cache` 의 플러그인 소스 · pub.dev 메타데이터로만 확인한 것(T19 실제 폰에서 다시 본다).
+
+| 패키지 · 버전 | 확인한 동작 | 근거 | 선택 | 우회 · 구현 메모 |
+|---|---|---|---|---|
+| `video_compress` 3.1.4 (pub.dev 마지막 배포 2025-02-13) | 1080×2400 · 19.9초 · 51MB 화면 녹화 → `Res1280x720Quality` 로 **1280×576 · 8MB**, `MediaInfo.duration` = 19942.0(ms, double), 원본 유지(`deleteOrigin: false`), 에뮬레이터에서 약 30초. `getFileThumbnail` 정상(jpg 13KB) | 기기 | **채택** (`light_compressor` 불필요) | 해상도는 **긴 변 1280** 기준(비율 유지)이라 "최대 720p" 를 만족. 결과 · 썸네일이 **외부 앱 폴더**(`Android/data/<pkg>/files/video_compress/`)에 생기므로 T7 은 앱 문서 폴더로 옮기고 `VideoCompress.deleteAllCache()` 로 비운다. 길이 판단은 압축 전 `getMediaInfo(path).duration`(ms) 으로. 동시 압축은 `StateError` — 한 번에 하나씩. 빌드 classpath AGP 8.1.1 · compileSdk 34 지만 `flutter build apk --debug` 통과 |
+| `flutter_image_compress` 2.5.1 | GPS · Make 가 든 4000×3000 JPEG → EXIF 태그 **0개**(`keepExif: false`). 1000×750 은 **확대 안 됨**(그대로). 단 `minWidth: 1600, minHeight: 1600` 은 **짧은 변**을 1600 에 맞춘다: 4000×3000 → **2133×1600**, 3000×4000 → 1600×2133 | 기기(결과 파일을 꺼내 Pillow 로 EXIF · 크기 확인) · 소스(`calcScale = max(1, min(w/minW, h/minH))`) | 채택 | **긴 변 1600** 을 지키려면 T7 에서 원본 크기를 먼저 읽어 `minWidth`/`minHeight` 를 비율대로 준다: 가로가 길면 `minWidth: 1600, minHeight: (1600*h/w).round()`, 세로가 길면 반대. 긴 변이 1600 이하면 그대로(확대 없음은 플러그인이 보장) |
+| `local_auth` 3.0.2 (`local_auth_android` 2.0.8) | 기기 PIN 으로 `authenticate(localizedReason:, biometricOnly: false)` → `true`. 틀린 PIN 은 시스템 화면이 그대로 남고 Dart 쪽 결과 없음. **취소(뒤로) → `false` 가 아니라 `LocalAuthException(code: userCanceled)` 를 던진다**. `isDeviceSupported()` = 화면 잠금 있으면 true | 기기 · 소스 | 채택 | 3.x 는 `AuthenticationOptions` 가 없어졌다 — `biometricOnly` · `sensitiveTransaction` · `persistAcrossBackgrounding` 이 `authenticate` 의 이름 인자. 결과 분류: `true` 성공 / `userCanceled` · `systemCanceled` · `timeout` 취소(실패 횟수에 안 셈) / `noCredentialsSet` 화면 잠금 없음 / `temporaryLockout` · `biometricLockout` 폰 쪽 차단 / 그 밖 오류. `false` 반환은 Android 에서 사실상 나오지 않지만 실패로 처리. `MainActivity` 는 이미 `FlutterFragmentActivity`, 알람 울림도 같은 Activity 라 충돌 없음 |
+| `geocoding` 5.0.0 (`geocoding_android` 5.0.2) | `isPresent()` = true. `placemarkFromCoordinates(37.5665, 126.9780, locale: ko_KR)` 는 에뮬레이터 망이 검증되지 않은 상태에서 **15분 넘게 완료되지 않았다**(오류도 없음) | 기기(응답 없음) · 소스 | 채택 | 5.x 는 `Geocoding()` 인스턴스 API. **생성자 `locale` 인자는 내부에서 버려지므로**(소스) 호출마다 `locale:` 을 넘긴다. Android 13+ 는 `GeocodeListener` 비동기라 백엔드가 응답하지 않으면 Future 가 끝나지 않는다 → T8 은 반드시 `.timeout(...)` 으로 감싸고 실패 시 장소 이름 없이 좌표만 저장. `Placemark` 필드: `name` · `street` · `country` · `administrativeArea`(시) · `subAdministrativeArea` · `locality` · `subLocality`(구/동) · `thoroughfare`(도로·동) · `subThoroughfare`. **어느 필드가 채워지는지는 미확인 → T19 실제 폰에서 기록** |
+| `image_picker` 1.2.4 | 카메라 촬영용 `<queries>` (`IMAGE_CAPTURE` · `VIDEO_CAPTURE`) 추가, 빌드 통과 | 소스 · 빌드 | 채택 | 고르기 화면은 T19 기기 시나리오에서 |
+| `video_player` 2.11.1 | 빌드 통과 | 빌드 | 채택 | 최신 2.14.1 은 현재 SDK 제약으로 해석기가 2.11.1 을 골랐다 |
+| `drift` 2.34.4 · `drift_flutter` 0.3.1 · `drift_dev` 2.34.0 · `path_provider` 2.1.6 · `crypto` 3.0.7 · `uuid` 4.6.0(제약 `^4.5.1`, core 와 같음) | pawlog · core 와 같은 제약 | — | 채택 | — |
