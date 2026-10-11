@@ -58,10 +58,27 @@ class PluginMediaProcessor implements MediaProcessor {
     return duration.round();
   }
 
+  /// 앞선 영상 처리가 끝나면 완료되는 꼬리. `VideoCompress` 는 앱 전역 하나라
+  /// 인스턴스가 아니라 클래스에 둔다.
+  static Future<void> _videoQueue = Future.value();
+
   /// 결과 · 썸네일은 플러그인 자기 캐시 폴더에 생기므로(스펙 §11) [target] ·
   /// [thumb] 로 복사하고, 성공하든 실패하든 캐시를 비운다.
+  ///
+  /// 플러그인은 압축 중 두 번째 호출을 바로 거절하고 캐시 비우기는 진행 중인
+  /// 결과까지 지우므로, 압축 · 복사 · 캐시 비우기 전체를 한 번에 하나씩 줄 세운다.
   @override
   Future<({int width, int height, int durationMs})> compressVideo(
+    File source,
+    File target,
+    File thumb,
+  ) {
+    final run = _videoQueue.then((_) => _compressVideo(source, target, thumb));
+    _videoQueue = run.then((_) {}, onError: (_) {});
+    return run;
+  }
+
+  Future<({int width, int height, int durationMs})> _compressVideo(
     File source,
     File target,
     File thumb,

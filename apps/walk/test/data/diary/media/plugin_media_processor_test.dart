@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -223,6 +224,108 @@ void main() {
       final thumbCall = calls.firstWhere((c) => c.method == 'getFileThumbnail');
       expect((thumbCall.arguments as Map)['path'], target.path);
       expect(calls.last.method, 'deleteAllCache');
+    });
+
+    test('동시에 두 번 불러도 차례로 처리해 둘 다 성공한다', () async {
+      // 플러그인은 압축 중 두 번째 호출을 바로 StateError 로 거절하고, 캐시 비우기는
+      // 진행 중인 결과까지 지운다. 처리기가 줄을 세워야 둘 다 산다.
+      final gates = [Completer<void>(), Completer<void>()];
+      var started = 0;
+      messenger.setMockMethodCallHandler(_videoChannel, (call) async {
+        calls.add(call);
+        final args = call.arguments as Map<Object?, Object?>?;
+        switch (call.method) {
+          case 'compressVideo':
+            final n = started++;
+            cache.createSync(recursive: true);
+            final out = File('${cache.path}/out$n.mp4')..writeAsBytesSync([n]);
+            await gates[n].future;
+            return jsonEncode({
+              'path': out.path,
+              'width': 1280,
+              'height': 720,
+              'duration': 1000.0,
+            });
+          case 'getFileThumbnail':
+            final name = (args!['path'] as String).split('/').last;
+            return (File(
+              '${cache.path}/$name.jpg',
+            )..writeAsBytesSync([9])).path;
+          case 'deleteAllCache':
+            if (cache.existsSync()) cache.deleteSync(recursive: true);
+            return true;
+        }
+        return null;
+      });
+      final source = File('${sandbox.path}/in.mp4')..writeAsBytesSync([1]);
+      File out(String name) => File('${sandbox.path}/$name');
+
+      final first = PluginMediaProcessor().compressVideo(
+        source,
+        out('a.mp4'),
+        out('a.jpg'),
+      );
+      final second = PluginMediaProcessor().compressVideo(
+        source,
+        out('b.mp4'),
+        out('b.jpg'),
+      );
+      await pumpEventQueue();
+      expect(started, 1, reason: '두 번째는 첫 번째가 끝날 때까지 기다린다');
+      gates[0].complete();
+      await first;
+      await pumpEventQueue();
+      gates[1].complete();
+      await second;
+
+      expect(out('a.mp4').readAsBytesSync(), [0]);
+      expect(out('b.mp4').readAsBytesSync(), [1]);
+      expect(out('a.jpg').existsSync() && out('b.jpg').existsSync(), isTrue);
+      expect(
+        [for (final c in calls) c.method],
+        [
+          'compressVideo',
+          'getFileThumbnail',
+          'deleteAllCache',
+          'compressVideo',
+          'getFileThumbnail',
+          'deleteAllCache',
+        ],
+      );
+    });
+
+    test('앞 호출이 실패해도 다음 호출은 처리된다', () async {
+      var n = 0;
+      messenger.setMockMethodCallHandler(_videoChannel, (call) async {
+        switch (call.method) {
+          case 'compressVideo':
+            if (n++ == 0) return null; // 첫 번째는 실패
+            cache.createSync(recursive: true);
+            final out = File('${cache.path}/ok.mp4')..writeAsBytesSync([5]);
+            return jsonEncode({'path': out.path, 'duration': 1000.0});
+          case 'getFileThumbnail':
+            return (File('${cache.path}/ok.jpg')..writeAsBytesSync([9])).path;
+          case 'deleteAllCache':
+            return true;
+        }
+        return null;
+      });
+      final source = File('${sandbox.path}/in.mp4')..writeAsBytesSync([1]);
+
+      final first = PluginMediaProcessor().compressVideo(
+        source,
+        File('${sandbox.path}/a.mp4'),
+        File('${sandbox.path}/a.jpg'),
+      );
+      final second = PluginMediaProcessor().compressVideo(
+        source,
+        File('${sandbox.path}/b.mp4'),
+        File('${sandbox.path}/b.jpg'),
+      );
+
+      await expectLater(first, throwsA(anything));
+      await second;
+      expect(File('${sandbox.path}/b.mp4').readAsBytesSync(), [5]);
     });
 
     test('압축이 실패해도(null) 캐시를 비우고 예외', () async {

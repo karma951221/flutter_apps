@@ -13,6 +13,7 @@ abstract interface class MediaStore {
   Future<Result<EntryMedia>> importPhoto(String sourcePath);
 
   /// 길이 > 30초면 Err(videoTooLong) — 압축 전에 확인. path `'tmp/<id>.mp4'`, thumbPath `'tmp/<id>_thumb.jpg'`.
+  /// 여러 영상을 동시에 불러도 압축은 차례로 하나씩 진행된다(`MediaProcessor.compressVideo`).
   Future<Result<EntryMedia>> importVideo(String sourcePath);
 
   /// tmp/ → media/ 로 옮긴 EntryMedia(경로만 바뀜). 이미 media/ 면 그대로.

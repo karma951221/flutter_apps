@@ -9,6 +9,9 @@ abstract interface class MediaProcessor {
   Future<int> videoDurationMs(File source);
 
   /// 720p 로 [target] 에 쓰고 썸네일을 [thumb] 에 쓴다.
+  ///
+  /// 겹쳐 불러도 된다 — 구현이 앱 전체에서 한 번에 하나씩 차례로 처리한다.
+  /// 앞 호출이 실패해도 다음 호출은 처리된다.
   Future<({int width, int height, int durationMs})> compressVideo(
     File source,
     File target,
