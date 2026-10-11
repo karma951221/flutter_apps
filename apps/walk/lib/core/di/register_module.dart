@@ -1,6 +1,18 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:core/core.dart';
+import 'package:drift_flutter/drift_flutter.dart';
 import 'package:injectable/injectable.dart';
+import 'package:location/location.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+
+import '../../data/diary/database/diary_database.dart';
+
+/// getIt.reset · 테스트 해제 때 DB 를 닫는다.
+FutureOr<void> disposeDiaryDatabase(DiaryDatabase db) => db.close();
 
 /// 직접 소유하지 않는 인스턴스 등록.
 @module
@@ -14,4 +26,27 @@ abstract class RegisterModule {
   /// 여기서 직접 등록한다.
   @lazySingleton
   Clock get clock => const Clock();
+
+  @LazySingleton(dispose: disposeDiaryDatabase)
+  DiaryDatabase diaryDatabase(Clock clock) =>
+      DiaryDatabase(driftDatabase(name: 'diary'), now: clock.now);
+
+  /// 일기 미디어가 사는 폴더. DI 준비 중에 경로를 받아 둔다.
+  @preResolve
+  @Named('diaryRoot')
+  Future<Directory> get diaryRoot async {
+    final docs = await getApplicationDocumentsDirectory();
+    return Directory('${docs.path}/diary');
+  }
+
+  /// 이 앱은 `CorePackageModule` 을 쓰지 않아 `IdGenerator` 와 그 재료도 직접
+  /// 등록한다.
+  @lazySingleton
+  Uuid get uuid => const Uuid();
+
+  @lazySingleton
+  IdGenerator idGenerator(Uuid uuid) => IdGenerator(uuid);
+
+  @lazySingleton
+  LocationGateway get locationGateway => const GeolocatorGateway();
 }

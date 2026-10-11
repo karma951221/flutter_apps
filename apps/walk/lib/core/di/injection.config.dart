@@ -10,10 +10,14 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 
+import 'dart:io' as _i497;
+
 import 'package:core/core.dart' as _i494;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
+import 'package:location/location.dart' as _i645;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
+import 'package:uuid/uuid.dart' as _i706;
 
 import '../../data/alarm/alarm_permission_module.dart' as _i343;
 import '../../data/alarm/cached_holiday_calendar.dart' as _i93;
@@ -25,6 +29,7 @@ import '../../data/alarm/channel_ring_log_source.dart' as _i879;
 import '../../data/alarm/holiday_module.dart' as _i183;
 import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
+import '../../data/diary/database/diary_database.dart' as _i611;
 import '../../data/settings/prefs_settings_repository.dart' as _i724;
 import '../../data/walk/health/health_gateway.dart' as _i332;
 import '../../data/walk/repository/health_connect_activity_repository.dart'
@@ -60,8 +65,20 @@ extension GetItInjectableX on _i174.GetIt {
       preResolve: true,
     );
     gh.lazySingleton<_i494.Clock>(() => registerModule.clock);
+    gh.lazySingleton<_i706.Uuid>(() => registerModule.uuid);
+    gh.lazySingleton<_i645.LocationGateway>(
+      () => registerModule.locationGateway,
+    );
     gh.lazySingleton<_i933.AlarmPermissions>(
       () => alarmPermissionModule.alarmPermissions,
+    );
+    gh.lazySingleton<_i494.IdGenerator>(
+      () => registerModule.idGenerator(gh<_i706.Uuid>()),
+    );
+    await gh.factoryAsync<_i497.Directory>(
+      () => registerModule.diaryRoot,
+      instanceName: 'diaryRoot',
+      preResolve: true,
     );
     gh.lazySingleton<_i344.AlarmSoundSource>(
       () => _i793.ChannelAlarmSoundSource(),
@@ -98,6 +115,10 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i961.HolidayRefresher>(
       () => holidayModule.holidayRefresher(gh<_i93.CachedHolidayCalendar>()),
+    );
+    gh.lazySingleton<_i611.DiaryDatabase>(
+      () => registerModule.diaryDatabase(gh<_i494.Clock>()),
+      dispose: _i291.disposeDiaryDatabase,
     );
     gh.lazySingleton<_i227.HolidayCalendarAccess>(
       () => holidayModule.holidayCalendarAccess(
