@@ -25,4 +25,17 @@ void main() {
       expect(TagName.normalize('#🍊귤'), '🍊귤');
     });
   });
+
+  group('TagName.searchKey', () {
+    test('normalize 와 같이 다듬는다', () {
+      expect(TagName.searchKey('  #JE ju '), 'jeju');
+    });
+    test('# 뿐이거나 공백이면 빈 문자열(입력 없음)', () {
+      expect(TagName.searchKey('#'), '');
+      expect(TagName.searchKey('  '), '');
+    });
+    test('30자를 넘어도 null 이 아니라 다듬은 값(어떤 태그와도 맞지 않는다)', () {
+      expect(TagName.searchKey('#${'A' * 31}'), 'a' * 31);
+    });
+  });
 }

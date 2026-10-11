@@ -1,10 +1,12 @@
 import 'package:core/core.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/data/diary/database/diary_database.dart';
 import 'package:walk/domain/diary/diary_failure.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/entity/entry_location.dart';
+import 'package:walk/domain/diary/entity/entry_media.dart';
 import 'package:walk/domain/diary/entity/story.dart';
 
 import '../../support/diary_fixtures.dart';
@@ -487,6 +489,52 @@ void main() {
       await h.db
           .into(h.db.entryTags)
           .insert(EntryTagsCompanion.insert(entryId: entry.id, tagId: 't1'));
+      await expectation;
+    });
+
+    test('media 만 바뀌어도 새 값을 내보낸다', () async {
+      final entry = await create();
+      final stream = h.repository.watchEntries(const EntryFilter.all());
+      final expectation = expectLater(
+        stream.map((l) => [for (final m in l.single.media) m.id]),
+        emitsInOrder([
+          isEmpty,
+          ['m1'],
+        ]),
+      );
+      await pumpEventQueue();
+
+      // entries 행은 건드리지 않고 media 만 쓴다.
+      await h.db
+          .into(h.db.media)
+          .insert(
+            MediaCompanion.insert(
+              id: 'm1',
+              entryId: entry.id,
+              kind: MediaKind.photo,
+              path: 'media/m1.jpg',
+              sortOrder: 0,
+              width: 10,
+              height: 10,
+              bytes: 1,
+            ),
+          );
+      await expectation;
+    });
+
+    test('places 만 바뀌어도 새 값을 내보낸다', () async {
+      await create(location: const EntryLocation(placeName: '애월읍'));
+      final stream = h.repository.watchEntries(const EntryFilter.all());
+      final expectation = expectLater(
+        stream.map((l) => l.single.location?.placeName),
+        emitsInOrder(['애월읍', '애월리']),
+      );
+      await pumpEventQueue();
+
+      // entries 행은 건드리지 않고 places 이름만 바꾼다.
+      await h.db
+          .update(h.db.places)
+          .write(const PlacesCompanion(name: Value('애월리')));
       await expectation;
     });
 

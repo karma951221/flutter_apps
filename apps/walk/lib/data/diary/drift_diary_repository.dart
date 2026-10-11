@@ -4,22 +4,27 @@ import 'package:injectable/injectable.dart';
 
 import '../../domain/diary/diary_failure.dart';
 import '../../domain/diary/entity/diary_entry.dart';
+import '../../domain/diary/entity/diary_usage.dart';
 import '../../domain/diary/entity/entry_draft.dart';
 import '../../domain/diary/entity/entry_filter.dart';
 import '../../domain/diary/entity/entry_location.dart';
+import '../../domain/diary/entity/named_count.dart';
 import '../../domain/diary/entity/story.dart';
 import '../../domain/diary/entity/tag_name.dart';
 import '../../domain/diary/repository/diary_repository.dart';
 import 'database/diary_database.dart';
 import 'database/diary_mapper.dart';
+import 'diary_count_queries.dart';
 
 @LazySingleton(as: DiaryRepository)
 class DriftDiaryRepository implements DiaryRepository {
-  DriftDiaryRepository(this._db, this._ids, this._clock);
+  DriftDiaryRepository(this._db, this._ids, this._clock)
+    : _counts = DiaryCountQueries(_db);
 
   final DiaryDatabase _db;
   final IdGenerator _ids;
   final Clock _clock;
+  final DiaryCountQueries _counts;
 
   // ---------------------------------------------------------------- 스토리
 
@@ -115,12 +120,13 @@ class DriftDiaryRepository implements DiaryRepository {
         'AND EXISTS (SELECT 1 FROM entry_tags et '
             'JOIN tags t ON t.id = et.tag_id '
             'WHERE et.entry_id = e.id AND t.name = ?)',
-        [Variable.withString(TagName.normalize(name) ?? name)],
+        [Variable.withString(TagName.searchKey(name))],
       ),
+      // 저장할 때처럼 trim 한 이름으로 찾는다.
       PlaceEntries(:final name) => (
         'AND EXISTS (SELECT 1 FROM places p '
             'WHERE p.id = e.place_id AND p.name = ?)',
-        [Variable.withString(name)],
+        [Variable.withString(name.trim())],
       ),
       BodyEntries(:final query) => (
         r"AND e.body LIKE ? ESCAPE '\'",
@@ -314,6 +320,29 @@ class DriftDiaryRepository implements DiaryRepository {
       ?m.thumbPath,
     ],
   };
+
+  // ----------------------------------------------------- 모아보기 · 추천
+
+  @override
+  Stream<List<NamedCount>> watchTagCounts({
+    String query = '',
+    int limit = 20,
+  }) => _counts.watchTagCounts(query, limit);
+
+  @override
+  Stream<List<NamedCount>> watchPlaceCounts({
+    String query = '',
+    int limit = 20,
+  }) => _counts.watchPlaceCounts(query, limit);
+
+  @override
+  Stream<List<({Story story, int count})>> watchStoryMatches(
+    String query, {
+    required String dailyTitle,
+  }) => _counts.watchStoryMatches(query, dailyTitle);
+
+  @override
+  Future<DiaryUsage> usage() => _counts.usage();
 
   // ------------------------------------------------------------------ 내부
 

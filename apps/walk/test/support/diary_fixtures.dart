@@ -8,6 +8,7 @@ import 'package:walk/data/diary/drift_diary_repository.dart';
 import 'package:walk/domain/diary/entity/entry_draft.dart';
 import 'package:walk/domain/diary/entity/entry_location.dart';
 import 'package:walk/domain/diary/entity/entry_media.dart';
+import 'package:walk/domain/diary/entity/named_count.dart';
 import 'package:walk/domain/diary/entity/story.dart';
 
 /// 일기 테스트 공용 시각.
@@ -104,3 +105,18 @@ Failure errFailure<T>(Result<T> result) => switch (result) {
 /// `Failure.validation(field: name)` 인지 확인한다.
 Matcher isDiaryFailure(String name) =>
     isA<ValidationFailure>().having((f) => f.field, 'field', name);
+
+/// [stream] 을 지금 구독해 이벤트를 모두 모은다. 첫 이벤트까지 기다리고,
+/// 구독은 테스트가 끝날 때 취소한다. 같은 구독의 연속 이벤트로 반영을 확인할 때 쓴다.
+Future<List<T>> recordEvents<T>(Stream<T> stream) async {
+  final events = <T>[];
+  final sub = stream.listen(events.add);
+  addTearDown(sub.cancel);
+  await pumpEventQueue();
+  return events;
+}
+
+/// 집계를 `'이름 개수'` 로 펼친다(순서 유지).
+List<String> namedCounts(List<NamedCount> counts) => [
+  for (final c in counts) '${c.name} ${c.count}',
+];

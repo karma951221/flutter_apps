@@ -1,8 +1,10 @@
 import 'package:core/core.dart';
 
 import '../entity/diary_entry.dart';
+import '../entity/diary_usage.dart';
 import '../entity/entry_draft.dart';
 import '../entity/entry_filter.dart';
+import '../entity/named_count.dart';
 import '../entity/story.dart';
 
 /// 일기 저장소. 규칙 위반은 `Failure.validation(field: DiaryFailure.x.name)`,
@@ -82,4 +84,28 @@ abstract interface class DiaryRepository {
 
   /// DB 가 아는 모든 미디어 경로(휴지통 포함). 고아 청소용.
   Future<Set<String>> allMediaPaths();
+
+  // 모아보기 · 추천 · 검색
+
+  /// 쓰는 기록(휴지통 제외)이 1 이상인 태그만. [query] 는 `TagName.searchKey`
+  /// (normalize 와 같은 규칙, 길이 검사 없음)로 다듬은 뒤 포함 일치. 비면 전체. 정렬: count 내림차순 → lastUsedAt(쓰는
+  /// 기록의 최대 occurredAt) 내림차순 → name 오름차순. 상위 [limit] 개.
+  /// entries · entry_tags · tags · places 가 바뀌면 다시 내보낸다.
+  Stream<List<NamedCount>> watchTagCounts({String query = '', int limit = 20});
+
+  /// [watchTagCounts] 와 같되 장소. [query] 는 trim 후 포함 일치(ASCII 대소문자 무시).
+  Stream<List<NamedCount>> watchPlaceCounts({
+    String query = '',
+    int limit = 20,
+  });
+
+  /// 스토리 제목 포함 일치(대소문자 무시) + 휴지통 제외 기록 수. 기본 스토리는
+  /// title 이 '' 이므로 [dailyTitle] 로 찾는다. 정렬은 `StoryOrder`(열린 것 → 보관함).
+  Stream<List<({Story story, int count})>> watchStoryMatches(
+    String query, {
+    required String dailyTitle,
+  });
+
+  /// 사진 · 영상 개수와 바이트 합(휴지통 포함). 휴지통 몫은 trashBytes 로 따로.
+  Future<DiaryUsage> usage();
 }
