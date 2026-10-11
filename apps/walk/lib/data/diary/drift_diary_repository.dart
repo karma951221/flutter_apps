@@ -81,6 +81,26 @@ class DriftDiaryRepository implements DiaryRepository {
     return Ok(storyFromRow((await _storyRow(story.id))!));
   });
 
+  @override
+  Future<Result<void>> deleteStory(String id) => _guard(() async {
+    if (id == Story.dailyId) {
+      return Err(DiaryFailure.defaultStoryLocked.toFailure());
+    }
+    final failure = await _db.transaction(() async {
+      if (await _storyRow(id) == null) return const Failure.notFound();
+      await (_db.update(_db.entries)
+            ..where((e) => e.storyId.equals(id) & e.deletedAt.isNull()))
+          .write(EntriesCompanion(deletedAt: Value(_clock.now())));
+      // 스토리 행을 지우려면 FK 상 기록이 다른 스토리를 가리켜야 한다 → '일상'.
+      await (_db.update(_db.entries)..where((e) => e.storyId.equals(id))).write(
+        const EntriesCompanion(storyId: Value(Story.dailyId)),
+      );
+      await (_db.delete(_db.stories)..where((s) => s.id.equals(id))).go();
+      return null;
+    });
+    return failure == null ? const Ok(null) : Err(failure);
+  });
+
   // ------------------------------------------------------------------ 기록
 
   @override
@@ -107,26 +127,13 @@ class DriftDiaryRepository implements DiaryRepository {
         [Variable.withString('%${LikePattern.escape(query)}%')],
       ),
     };
-    // 미디어 · 태그 · 장소만 바뀌어도 다시 흐르도록 조립에 쓰는 테이블을 모두 구독한다.
-    return _db
-        .customSelect(
-          'SELECT e.* FROM entries e '
-          'WHERE e.deleted_at IS NULL $where '
-          'ORDER BY julianday(e.occurred_at) DESC, '
-          'julianday(e.created_at) DESC',
-          variables: args,
-          readsFrom: {
-            _db.entries,
-            _db.media,
-            _db.entryTags,
-            _db.tags,
-            _db.places,
-          },
-        )
-        .watch()
-        .asyncMap(
-          (rows) => _assemble([for (final r in rows) _db.entries.map(r.data)]),
-        );
+    return _watchAssembled(
+      'SELECT e.* FROM entries e '
+      'WHERE e.deleted_at IS NULL $where '
+      'ORDER BY julianday(e.occurred_at) DESC, '
+      'julianday(e.created_at) DESC',
+      args,
+    );
   }
 
   @override
@@ -175,7 +182,10 @@ class DriftDiaryRepository implements DiaryRepository {
         final row = await (_db.select(
           _db.entries,
         )..where((e) => e.id.equals(id))).getSingleOrNull();
-        if (row == null) return const Failure.notFound();
+        // 휴지통 기록은 복원하기 전까지 읽기만 한다.
+        if (row == null || row.deletedAt != null) {
+          return const Failure.notFound();
+        }
         final moving = row.storyId != draft.storyId;
         if (moving) {
           final storyFailure = await _checkTargetStory(draft.storyId);
@@ -212,10 +222,11 @@ class DriftDiaryRepository implements DiaryRepository {
         final failure = await _db.transaction(() async {
           final storyFailure = await _checkTargetStory(storyId);
           if (storyFailure != null) return storyFailure;
-          await (_db.update(_db.entries)..where((e) => e.id.isIn(ids))).write(
-            EntriesCompanion(storyId: Value(storyId)),
-          );
-          await _markPosted(storyId, _clock.now());
+          final moved =
+              await (_db.update(_db.entries)
+                    ..where((e) => e.id.isIn(ids) & e.deletedAt.isNull()))
+                  .write(EntriesCompanion(storyId: Value(storyId)));
+          if (moved > 0) await _markPosted(storyId, _clock.now());
           return null;
         });
         return failure == null ? const Ok(null) : Err(failure);
@@ -246,7 +257,131 @@ class DriftDiaryRepository implements DiaryRepository {
     return _assemble(rows);
   }
 
+  // ---------------------------------------------------------------- 휴지통
+
+  @override
+  Future<Result<void>> trashEntry(String id) => _guard(() async {
+    final written =
+        await (_db.update(_db.entries)
+              ..where((e) => e.id.equals(id) & e.deletedAt.isNull()))
+            .write(EntriesCompanion(deletedAt: Value(_clock.now())));
+    // 0 이면 없거나 이미 휴지통(처음 deletedAt 유지).
+    if (written == 0 && await _entryOrNull(id) == null) {
+      return const Err(Failure.notFound());
+    }
+    return const Ok(null);
+  });
+
+  @override
+  Future<Result<DiaryEntry>> restoreEntry(String id) => _guard(() async {
+    final written =
+        await (_db.update(_db.entries)..where((e) => e.id.equals(id))).write(
+          const EntriesCompanion(deletedAt: Value(null)),
+        );
+    if (written == 0) return const Err(Failure.notFound());
+    return Ok((await _entryOrNull(id))!);
+  });
+
+  @override
+  Stream<List<DiaryEntry>> watchTrash() => _watchAssembled(
+    'SELECT e.* FROM entries e '
+    'WHERE e.deleted_at IS NOT NULL '
+    'ORDER BY julianday(e.deleted_at) DESC, julianday(e.created_at) DESC',
+    const [],
+  );
+
+  @override
+  Future<Result<List<String>>> purgeEntries(List<String> ids) => ids.isEmpty
+      ? Future.value(const Ok([]))
+      : _purgeTrashed((e) => e.id.isIn(ids));
+
+  @override
+  Future<Result<List<String>>> purgeTrashedBefore(DateTime deletedBefore) =>
+      _purgeTrashed(
+        (e) => e.deletedAt.julianday.isSmallerOrEqual(
+          Variable(deletedBefore).julianday,
+        ),
+      );
+
+  @override
+  Future<Result<List<String>>> purgeAllTrash() =>
+      _purgeTrashed((_) => const Constant(true));
+
+  @override
+  Future<Set<String>> allMediaPaths() async => {
+    for (final m in await _db.select(_db.media).get()) ...[
+      m.path,
+      ?m.thumbPath,
+    ],
+  };
+
   // ------------------------------------------------------------------ 내부
+
+  /// 기록 행을 고르는 SQL 을 구독해 조립한 기록으로 내보낸다. 미디어 · 태그 ·
+  /// 장소만 바뀌어도 다시 흐르도록 조립에 쓰는 테이블을 모두 구독한다.
+  Stream<List<DiaryEntry>> _watchAssembled(String sql, List<Variable> args) =>
+      _db
+          .customSelect(
+            sql,
+            variables: args,
+            readsFrom: {
+              _db.entries,
+              _db.media,
+              _db.entryTags,
+              _db.tags,
+              _db.places,
+            },
+          )
+          .watch()
+          .asyncMap(
+            (rows) =>
+                _assemble([for (final r in rows) _db.entries.map(r.data)]),
+          );
+
+  /// 휴지통 기록 중 [which] 에 맞는 것을 한 트랜잭션에서 영구 삭제하고,
+  /// 지워진 미디어 파일의 상대 경로(원본 · 썸네일)를 돌려준다. 파일은 건드리지 않는다.
+  Future<Result<List<String>>> _purgeTrashed(
+    Expression<bool> Function($EntriesTable e) which,
+  ) => _guard(() async {
+    final paths = await _db.transaction(() async {
+      final targets = _db.selectOnly(_db.entries)
+        ..addColumns([_db.entries.id])
+        ..where(_db.entries.deletedAt.isNotNull() & which(_db.entries));
+      final mediaRows = await (_db.select(
+        _db.media,
+      )..where((m) => m.entryId.isInQuery(targets))).get();
+
+      // 표지 정리는 미디어 행이 연쇄 삭제되기 전에 한다.
+      final targetMedia = _db.selectOnly(_db.media)
+        ..addColumns([_db.media.id])
+        ..where(_db.media.entryId.isInQuery(targets));
+      await (_db.update(_db.stories)
+            ..where((s) => s.coverMediaId.isInQuery(targetMedia)))
+          .write(const StoriesCompanion(coverMediaId: Value(null)));
+
+      // media · entry_tags 는 ON DELETE CASCADE 로 함께 지워진다.
+      await (_db.delete(
+        _db.entries,
+      )..where((e) => e.deletedAt.isNotNull() & which(e))).go();
+
+      // 휴지통에 남은 기록이 쓰는 행은 남는다(복원 시 같은 id).
+      await _db.customUpdate(
+        'DELETE FROM tags WHERE id NOT IN (SELECT tag_id FROM entry_tags)',
+        updates: {_db.tags},
+        updateKind: UpdateKind.delete,
+      );
+      await _db.customUpdate(
+        'DELETE FROM places WHERE id NOT IN '
+        '(SELECT place_id FROM entries WHERE place_id IS NOT NULL)',
+        updates: {_db.places},
+        updateKind: UpdateKind.delete,
+      );
+      return [
+        for (final m in mediaRows) ...[m.path, ?m.thumbPath],
+      ];
+    });
+    return Ok(paths);
+  });
 
   /// SQLite 예외를 `Failure.unknown` 으로 바꾼다.
   Future<Result<T>> _guard<T>(Future<Result<T>> Function() body) async {

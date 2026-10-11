@@ -306,6 +306,21 @@ void main() {
       final result = await h.repository.updateEntry('ghost', entryDraft());
       expect(errFailure(result), isA<NotFoundFailure>());
     });
+
+    test('휴지통 기록은 복원 전까지 고칠 수 없다(notFound)', () async {
+      final entry = await create(body: '원본');
+      await h.trashDirectly(entry.id);
+
+      final result = await h.repository.updateEntry(
+        entry.id,
+        entryDraft(body: '고침'),
+      );
+
+      expect(errFailure(result), isA<NotFoundFailure>());
+      final stored = okValue(await h.repository.entry(entry.id));
+      expect(stored.body, '원본');
+      expect(stored.updatedAt, entry.updatedAt);
+    });
   });
 
   group('moveEntries', () {
@@ -342,6 +357,64 @@ void main() {
         errFailure(await h.repository.moveEntries([a.id], 'ghost')),
         isA<NotFoundFailure>(),
       );
+    });
+
+    test('휴지통 기록은 옮기지 않는다', () async {
+      final jeju = await newStory('제주');
+      final live = await create();
+      final trashed = await create();
+      await h.trashDirectly(trashed.id);
+
+      okValue(await h.repository.moveEntries([live.id, trashed.id], jeju.id));
+
+      expect(okValue(await h.repository.entry(live.id)).storyId, jeju.id);
+      expect(
+        okValue(await h.repository.entry(trashed.id)).storyId,
+        Story.dailyId,
+      );
+    });
+
+    test('실제로 옮긴 기록이 없으면 lastPostedAt 을 바꾸지 않는다', () async {
+      final jeju = await newStory('제주');
+      final trashed = await create();
+      await h.trashDirectly(trashed.id);
+      h.clock.advance(const Duration(hours: 1));
+
+      okValue(await h.repository.moveEntries([trashed.id, 'ghost'], jeju.id));
+      okValue(await h.repository.moveEntries([], jeju.id));
+
+      expect((await storyOf(jeju.id)).lastPostedAt, isNull);
+    });
+  });
+
+  group('트랜잭션 실패', () {
+    test('도중에 실패하면 기록 · 태그 · 장소 행이 남지 않고 lastPostedAt 도 그대로', () async {
+      final first = okValue(
+        await h.repository.createEntry(entryDraft(media: [photoMedia('m1')])),
+      );
+      final postedBefore = (await storyOf(Story.dailyId)).lastPostedAt;
+      h.clock.advance(const Duration(hours: 1));
+
+      // 이미 다른 기록이 가진 미디어 id → media PK 위반으로 트랜잭션 중간에 실패.
+      final result = await h.repository.createEntry(
+        entryDraft(
+          body: '실패할 기록',
+          media: [photoMedia('m1')],
+          tags: ['새태그'],
+          location: const EntryLocation(placeName: '새장소'),
+        ),
+      );
+
+      expect(errFailure(result), isA<UnknownFailure>());
+      final entries = await h.db.select(h.db.entries).get();
+      expect(entries.map((e) => e.id), [first.id]);
+      expect(await h.db.select(h.db.tags).get(), isEmpty);
+      expect(await h.db.select(h.db.entryTags).get(), isEmpty);
+      expect(await h.db.select(h.db.places).get(), isEmpty);
+      expect((await storyOf(Story.dailyId)).lastPostedAt, postedBefore);
+      expect((await h.db.select(h.db.media).get()).map((m) => m.entryId), [
+        first.id,
+      ]);
     });
   });
 

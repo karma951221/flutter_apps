@@ -226,4 +226,75 @@ void main() {
         .first;
     expect(list.map((e) => e.id), [mine.id]);
   });
+
+  group('deleteStory', () {
+    test('기록 전부 휴지통으로(storyId = daily), 스토리 행은 지운다', () async {
+      final jeju = okValue(
+        await h.repository.createStory(title: '제주', startedAt: diaryT0),
+      );
+      final a = okValue(
+        await h.repository.createEntry(
+          entryDraft(storyId: jeju.id, media: [photoMedia('p1')]),
+        ),
+      );
+      final b = okValue(
+        await h.repository.createEntry(entryDraft(storyId: jeju.id)),
+      );
+      final daily = okValue(await h.repository.createEntry(entryDraft()));
+      h.clock.advance(const Duration(hours: 1));
+
+      okValue(await h.repository.deleteStory(jeju.id));
+
+      final stories = await h.repository.watchStories().first;
+      expect(stories.map((s) => s.id), [Story.dailyId]);
+      final trash = await h.repository.watchTrash().first;
+      expect(trash.map((e) => e.id).toSet(), {a.id, b.id});
+      for (final e in trash) {
+        expect(e.storyId, Story.dailyId);
+        expect(e.deletedAt, h.clock.now());
+      }
+      expect(okValue(await h.repository.entry(a.id)).media, a.media);
+      expect(okValue(await h.repository.entry(a.id)).updatedAt, a.updatedAt);
+      final live = await h.repository
+          .watchEntries(const EntryFilter.all())
+          .first;
+      expect(live.map((e) => e.id), [daily.id]);
+    });
+
+    test('이미 휴지통에 있던 기록은 처음 deletedAt 을 유지한다', () async {
+      final jeju = okValue(
+        await h.repository.createStory(title: '제주', startedAt: diaryT0),
+      );
+      final early = okValue(
+        await h.repository.createEntry(entryDraft(storyId: jeju.id)),
+      );
+      okValue(await h.repository.trashEntry(early.id));
+      final firstDeleted = h.clock.now();
+      h.clock.advance(const Duration(days: 1));
+
+      okValue(await h.repository.deleteStory(jeju.id));
+
+      final stored = okValue(await h.repository.entry(early.id));
+      expect(stored.deletedAt, firstDeleted);
+      expect(stored.storyId, Story.dailyId);
+    });
+
+    test('기본 스토리는 defaultStoryLocked, 아무것도 바뀌지 않는다', () async {
+      final entry = okValue(await h.repository.createEntry(entryDraft()));
+
+      expect(
+        errFailure(await h.repository.deleteStory(Story.dailyId)),
+        isDiaryFailure(DiaryFailure.defaultStoryLocked.name),
+      );
+      expect(await h.repository.watchStories().first, hasLength(1));
+      expect(okValue(await h.repository.entry(entry.id)).isTrashed, isFalse);
+    });
+
+    test('없는 스토리는 notFound', () async {
+      expect(
+        errFailure(await h.repository.deleteStory('ghost')),
+        isA<NotFoundFailure>(),
+      );
+    });
+  });
 }
