@@ -31,6 +31,8 @@ import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
 import '../../data/diary/database/diary_database.dart' as _i611;
 import '../../data/diary/drift_diary_repository.dart' as _i1049;
+import '../../data/diary/media/file_media_store.dart' as _i928;
+import '../../data/diary/media/plugin_media_processor.dart' as _i17;
 import '../../data/settings/prefs_settings_repository.dart' as _i724;
 import '../../data/walk/health/health_gateway.dart' as _i332;
 import '../../data/walk/repository/health_connect_activity_repository.dart'
@@ -46,6 +48,8 @@ import '../../domain/alarm/scheduler/reminder_scheduler.dart' as _i297;
 import '../../domain/alarm/sound/alarm_sound_source.dart' as _i344;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
+import '../../domain/diary/media/media_processor.dart' as _i674;
+import '../../domain/diary/media/media_store.dart' as _i870;
 import '../../domain/diary/repository/diary_repository.dart' as _i122;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
@@ -89,6 +93,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => const _i553.ChannelReminderScheduler(),
     );
     gh.lazySingleton<_i702.AlarmScheduler>(() => _i238.PackageAlarmScheduler());
+    gh.lazySingleton<_i674.MediaProcessor>(() => _i17.PluginMediaProcessor());
     gh.lazySingleton<_i332.HealthGateway>(() => _i332.HealthPluginGateway());
     gh.lazySingleton<_i77.DeviceHolidaySource>(
       () => const _i279.ChannelDeviceHolidaySource(),
@@ -130,6 +135,13 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i296.AlarmRepository>(
       () => _i1.PrefsAlarmRepository(gh<_i460.SharedPreferences>()),
+    );
+    gh.lazySingleton<_i870.MediaStore>(
+      () => _i928.FileMediaStore(
+        gh<_i497.Directory>(instanceName: 'diaryRoot'),
+        gh<_i494.IdGenerator>(),
+        gh<_i674.MediaProcessor>(),
+      ),
     );
     gh.lazySingleton<_i5.WalkUseCase>(
       () => _i5.DefaultWalkUseCase(
