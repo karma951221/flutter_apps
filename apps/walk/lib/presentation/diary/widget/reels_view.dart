@@ -49,6 +49,10 @@ class _ReelsViewState extends State<ReelsView> with RouteAware {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final route = ModalRoute.of(context);
+    // 위에 화면이 얹힌 채 새로 만들어질 수 있다(다시 잠겼다 위 화면에서 풀림).
+    // subscribe 는 didPush 만 부르고 didPushNext 는 부르지 않으므로 지금 모습으로 맞춘다.
+    // ModalRoute.of 에 기대므로 isCurrent 가 바뀌어도 여기가 다시 불린다.
+    _covered = !(route?.isCurrent ?? true);
     if (route == _route) return;
     if (_route != null) appRouteObserver.unsubscribe(this);
     _route = route;

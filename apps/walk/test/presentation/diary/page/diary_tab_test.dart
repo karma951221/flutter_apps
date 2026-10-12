@@ -384,6 +384,42 @@ void main() {
       await tester.pumpAndSettle();
       expect(playing(), isTrue);
     });
+
+    testWidgets('위에 화면이 얹힌 채 다시 잠겼다 풀려도 재생하지 않고, 걷히면 재생한다(R29)', (
+      tester,
+    ) async {
+      await pump(tester);
+      bool playing() => tester
+          .widget<MediaPager>(find.byType(MediaPager, skipOffstage: false))
+          .playing;
+      expect(playing(), isTrue);
+
+      unawaited(
+        Navigator.of(
+          tester.element(find.byType(ReelsView)),
+        ).push(MaterialPageRoute<void>(builder: (_) => const Text('위 화면'))),
+      );
+      await tester.pumpAndSettle();
+      expect(playing(), isFalse);
+
+      await lockRepo.setSecret(LockMethod.pin, '1234');
+      await lockRepo.saveConfig(const LockConfig(enabled: true));
+      final clock = getIt<Clock>() as MutableClock;
+      lock.onPaused();
+      clock.advance(const Duration(minutes: 5));
+      lock.onResumed();
+      await tester.pumpAndSettle();
+      expect(find.byType(ReelsView, skipOffstage: false), findsNothing);
+
+      await lock.submit('1234');
+      await tester.pumpAndSettle();
+      expect(find.byType(ReelsView, skipOffstage: false), findsOneWidget);
+      expect(playing(), isFalse);
+
+      Navigator.of(tester.element(find.text('위 화면'))).pop();
+      await tester.pumpAndSettle();
+      expect(playing(), isTrue);
+    });
   });
 
   group('작성 화면 열기', () {
