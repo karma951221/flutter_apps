@@ -33,6 +33,7 @@ import '../../data/diary/database/diary_database.dart' as _i611;
 import '../../data/diary/drift_diary_repository.dart' as _i1049;
 import '../../data/diary/media/file_media_store.dart' as _i928;
 import '../../data/diary/media/plugin_media_processor.dart' as _i17;
+import '../../data/diary/prefs_diary_preferences.dart' as _i383;
 import '../../data/settings/prefs_settings_repository.dart' as _i724;
 import '../../data/walk/health/health_gateway.dart' as _i332;
 import '../../data/walk/repository/health_connect_activity_repository.dart'
@@ -51,7 +52,9 @@ import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
 import '../../domain/diary/location/place_source.dart' as _i693;
 import '../../domain/diary/media/media_processor.dart' as _i674;
 import '../../domain/diary/media/media_store.dart' as _i870;
+import '../../domain/diary/repository/diary_preferences.dart' as _i300;
 import '../../domain/diary/repository/diary_repository.dart' as _i122;
+import '../../domain/diary/usecase/diary_use_case.dart' as _i567;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
@@ -119,6 +122,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i91.SettingsRepository>(
       () => _i724.PrefsSettingsRepository(gh<_i460.SharedPreferences>()),
     );
+    gh.lazySingleton<_i300.DiaryPreferences>(
+      () => _i383.PrefsDiaryPreferences(gh<_i460.SharedPreferences>()),
+    );
     gh.lazySingleton<_i645.LocationAccess>(
       () => registerModule.locationAccess(gh<_i645.LocationGateway>()),
     );
@@ -178,6 +184,15 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i91.SettingsRepository>(),
         gh<_i353.RingLogSource>(),
         gh<_i920.NextAlarmWidget>(),
+      ),
+    );
+    gh.lazySingleton<_i567.DiaryUseCase>(
+      () => _i567.DiaryUseCase(
+        gh<_i122.DiaryRepository>(),
+        gh<_i870.MediaStore>(),
+        gh<_i693.PlaceSource>(),
+        gh<_i300.DiaryPreferences>(),
+        gh<_i494.Clock>(),
       ),
     );
     return this;
