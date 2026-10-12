@@ -60,10 +60,7 @@ void main() {
     useCase = _MockUseCase();
     when(() => useCase.restore(any())).thenAnswer(
       (inv) async => Ok(
-        _entry(
-          inv.positionalArguments.single as String,
-          deletedAt: diaryT0,
-        ),
+        _entry(inv.positionalArguments.single as String, deletedAt: diaryT0),
       ),
     );
     when(() => useCase.purge(any())).thenAnswer((_) async => const Ok(null));
@@ -193,17 +190,32 @@ void main() {
     await choose(tester, '어제 글', '복원');
 
     expect(find.text('기록을 복원했어요'), findsNothing);
-    expect(find.textContaining('저장하지 못했어요'), findsOneWidget);
+    expect(find.text('복원하지 못했어요. 다시 시도해 주세요'), findsOneWidget);
+  });
+
+  testWidgets('영구 삭제가 실패하면 삭제 오류를 알린다', (tester) async {
+    when(
+      () => useCase.purge(any()),
+    ).thenAnswer((_) async => const Err(Failure.unknown()));
+    await pump(tester);
+
+    await choose(tester, '어제 글', '영구 삭제');
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('영구 삭제'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('삭제하지 못했어요. 다시 시도해 주세요'), findsOneWidget);
   });
 
   testWidgets('비어 있으면 빈 상태 안내, 비우기는 못 누른다', (tester) async {
     when(repo.watchTrash).thenAnswer((_) => Stream.value(const []));
     await pump(tester);
 
-    expect(
-      find.widgetWithText(AppPlaceholder, '휴지통이 비어 있어요'),
-      findsOneWidget,
-    );
+    expect(find.widgetWithText(AppPlaceholder, '휴지통이 비어 있어요'), findsOneWidget);
     final button = tester.widget<IconButton>(
       find.widgetWithIcon(IconButton, Icons.delete_sweep_outlined),
     );

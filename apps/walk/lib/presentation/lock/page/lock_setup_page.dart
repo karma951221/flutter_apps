@@ -151,7 +151,10 @@ class _LockSetupViewState extends State<LockSetupView> {
                   },
             status: switch (error) {
               LockSetupError.mismatch => l10n.walkLockSetupMismatch,
-              LockSetupError.tooShort => l10n.walkLockSetupTooShort,
+              LockSetupError.tooShort => switch (method) {
+                LockMethod.pin => l10n.walkLockSetupPinInvalid,
+                LockMethod.pattern => l10n.walkLockSetupTooShort,
+              },
               null => null,
             },
             input: LockSecretInput(

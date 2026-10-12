@@ -9,6 +9,7 @@ import 'package:walk/domain/lock/device_auth.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
 import 'package:walk/presentation/lock/page/lock_setup_page.dart';
+import 'package:walk/presentation/lock/widget/lock_secret_input.dart';
 import 'package:walk/presentation/lock/widget/pattern_lock.dart';
 
 import '../../../support/diary_fixtures.dart';
@@ -102,6 +103,18 @@ void main() {
 
     expect(find.text('처음 입력과 달라요. 처음부터 다시 입력하세요'), findsOneWidget);
     expect(find.text('새 PIN 4자리를 입력하세요'), findsOneWidget);
+  });
+
+  testWidgets('PIN 이 4자리가 아니면 PIN 문구로 알린다(패턴 문구 아님)', (tester) async {
+    await open(tester);
+    await tester.tap(find.text('PIN 4자리'));
+    await tester.pump();
+
+    tester.widget<LockSecretInput>(find.byType(LockSecretInput)).onSecret('12');
+    await tester.pump();
+
+    expect(find.text('숫자 4자리를 입력해 주세요'), findsOneWidget);
+    expect(find.text('점을 4개 이상 이어 주세요'), findsNothing);
   });
 
   testWidgets('패턴을 고르면 패턴 입력을 보인다', (tester) async {

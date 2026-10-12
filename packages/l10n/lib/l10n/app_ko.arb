@@ -3323,6 +3323,10 @@
   "@walkLockSetupTooShort": {
     "description": "일기 잠금 패턴 점이 4개보다 적을 때 오류"
   },
+  "walkLockSetupPinInvalid": "숫자 4자리를 입력해 주세요",
+  "@walkLockSetupPinInvalid": {
+    "description": "일기 잠금 새 PIN 이 숫자 4자리가 아닐 때 오류"
+  },
   "walkLockSetupSaved": "일기 잠금 설정을 저장했어요",
   "@walkLockSetupSaved": {
     "description": "일기 잠금 켜기 · 끄기 · 방식 변경을 마쳤을 때 알림"
@@ -3664,6 +3668,10 @@
   "@walkDiaryEntryTrashed": {
     "description": "일기 기록을 휴지통으로 보낸 뒤 알림"
   },
+  "walkDiaryEntryTrashFailed": "휴지통으로 옮기지 못했어요. 다시 시도해 주세요",
+  "@walkDiaryEntryTrashFailed": {
+    "description": "일기 기록을 휴지통으로 보내지 못했을 때 오류"
+  },
   "walkDiaryEntryDateTime": "{date} {time}",
   "@walkDiaryEntryDateTime": {
     "description": "일기 기록 상세의 날짜와 시각",
@@ -3794,6 +3802,14 @@
   "walkDiaryTrashEmptied": "휴지통을 비웠어요",
   "@walkDiaryTrashEmptied": {
     "description": "휴지통을 비운 뒤 알림"
+  },
+  "walkDiaryTrashRestoreFailed": "복원하지 못했어요. 다시 시도해 주세요",
+  "@walkDiaryTrashRestoreFailed": {
+    "description": "휴지통 기록을 복원하지 못했을 때 오류"
+  },
+  "walkDiaryTrashDeleteFailed": "삭제하지 못했어요. 다시 시도해 주세요",
+  "@walkDiaryTrashDeleteFailed": {
+    "description": "휴지통 기록을 영구 삭제하거나 휴지통을 비우지 못했을 때 오류"
   },
   "walkDiarySettings": "일기",
   "@walkDiarySettings": {

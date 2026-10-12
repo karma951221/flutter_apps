@@ -2325,6 +2325,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkLockSetupTooShort => '4つ以上の点をつないでください';
 
   @override
+  String get walkLockSetupPinInvalid => '4桁の数字を入力してください';
+
+  @override
   String get walkLockSetupSaved => '日記のロック設定を保存しました';
 
   @override
@@ -2554,6 +2557,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryEntryTrashed => '記録をゴミ箱に移動しました';
 
   @override
+  String get walkDiaryEntryTrashFailed => 'ゴミ箱に移動できませんでした。もう一度お試しください';
+
+  @override
   String walkDiaryEntryDateTime(String date, String time) {
     return '$date $time';
   }
@@ -2641,6 +2647,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkDiaryTrashEmptied => 'ごみ箱を空にしました';
+
+  @override
+  String get walkDiaryTrashRestoreFailed => '復元できませんでした。もう一度お試しください';
+
+  @override
+  String get walkDiaryTrashDeleteFailed => '削除できませんでした。もう一度お試しください';
 
   @override
   String get walkDiarySettings => '日記';

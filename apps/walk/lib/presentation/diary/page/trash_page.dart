@@ -42,15 +42,18 @@ class _TrashPageState extends State<TrashPage> {
     super.dispose();
   }
 
-  /// 동작을 기다린 뒤 성공이면 [success] 를, 실패면 저장 오류를 알린다.
-  Future<void> _run(Future<void> action, String success) async {
+  /// 동작을 기다린 뒤 성공이면 [success] 를, 실패면 [failure] 를 알린다.
+  Future<void> _run(
+    Future<void> action, {
+    required String success,
+    required String failure,
+  }) async {
     await action;
     if (!mounted) return;
-    final l10n = AppLocalizations.of(context);
     final failed = _cubit.state.actionFailed;
     AppSnackBar.show(
       context,
-      message: failed ? l10n.walkDiaryErrorSave : success,
+      message: failed ? failure : success,
       type: failed ? AppSnackBarType.error : AppSnackBarType.success,
     );
   }
@@ -59,7 +62,11 @@ class _TrashPageState extends State<TrashPage> {
     final l10n = AppLocalizations.of(context);
     switch (action) {
       case _TrashAction.restore:
-        await _run(_cubit.restore(id), l10n.walkDiaryTrashRestored);
+        await _run(
+          _cubit.restore(id),
+          success: l10n.walkDiaryTrashRestored,
+          failure: l10n.walkDiaryTrashRestoreFailed,
+        );
       case _TrashAction.purge:
         final confirmed = await AppConfirmDialog.show(
           context,
@@ -68,7 +75,11 @@ class _TrashPageState extends State<TrashPage> {
           confirmLabel: l10n.walkDiaryTrashDeleteForever,
         );
         if (!confirmed || !mounted) return;
-        await _run(_cubit.purge(id), l10n.walkDiaryTrashPurged);
+        await _run(
+          _cubit.purge(id),
+          success: l10n.walkDiaryTrashPurged,
+          failure: l10n.walkDiaryTrashDeleteFailed,
+        );
     }
   }
 
@@ -81,7 +92,11 @@ class _TrashPageState extends State<TrashPage> {
       confirmLabel: l10n.walkDiaryTrashEmptyAll,
     );
     if (!confirmed || !mounted) return;
-    await _run(_cubit.emptyAll(), l10n.walkDiaryTrashEmptied);
+    await _run(
+      _cubit.emptyAll(),
+      success: l10n.walkDiaryTrashEmptied,
+      failure: l10n.walkDiaryTrashDeleteFailed,
+    );
   }
 
   @override

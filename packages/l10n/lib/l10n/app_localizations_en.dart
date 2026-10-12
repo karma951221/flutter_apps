@@ -2460,6 +2460,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkLockSetupTooShort => 'Connect at least 4 dots';
 
   @override
+  String get walkLockSetupPinInvalid => 'Enter 4 digits';
+
+  @override
   String get walkLockSetupSaved => 'Diary lock settings saved';
 
   @override
@@ -2694,6 +2697,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryEntryTrashed => 'Entry moved to the trash';
 
   @override
+  String get walkDiaryEntryTrashFailed =>
+      'Couldn\'t move to the trash. Please try again';
+
+  @override
   String walkDiaryEntryDateTime(String date, String time) {
     return '$date $time';
   }
@@ -2800,6 +2807,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkDiaryTrashEmptied => 'Trash emptied';
+
+  @override
+  String get walkDiaryTrashRestoreFailed =>
+      'Couldn\'t restore. Please try again';
+
+  @override
+  String get walkDiaryTrashDeleteFailed => 'Couldn\'t delete. Please try again';
 
   @override
   String get walkDiarySettings => 'Diary';

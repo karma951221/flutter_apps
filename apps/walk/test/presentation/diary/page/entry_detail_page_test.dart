@@ -178,6 +178,23 @@ void main() {
     expect(find.widgetWithText(SnackBar, '기록을 휴지통으로 옮겼어요'), findsOneWidget);
   });
 
+  testWidgets('휴지통으로 보내지 못하면 그 오류를 알리고 남는다', (tester) async {
+    when(
+      () => useCase.trash(any()),
+    ).thenAnswer((_) async => const Err(Failure.unknown()));
+    await pumpDetail(tester);
+
+    await openMenu(tester, '삭제');
+    await tester.tap(find.widgetWithText(TextButton, '삭제'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(EntryDetailPage), findsOneWidget);
+    expect(
+      find.widgetWithText(SnackBar, '휴지통으로 옮기지 못했어요. 다시 시도해 주세요'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('삭제 확인에서 취소하면 그대로다', (tester) async {
     await pumpDetail(tester);
 

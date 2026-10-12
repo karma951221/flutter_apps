@@ -2328,6 +2328,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkLockSetupTooShort => '점을 4개 이상 이어 주세요';
 
   @override
+  String get walkLockSetupPinInvalid => '숫자 4자리를 입력해 주세요';
+
+  @override
   String get walkLockSetupSaved => '일기 잠금 설정을 저장했어요';
 
   @override
@@ -2557,6 +2560,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryEntryTrashed => '기록을 휴지통으로 옮겼어요';
 
   @override
+  String get walkDiaryEntryTrashFailed => '휴지통으로 옮기지 못했어요. 다시 시도해 주세요';
+
+  @override
   String walkDiaryEntryDateTime(String date, String time) {
     return '$date $time';
   }
@@ -2644,6 +2650,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkDiaryTrashEmptied => '휴지통을 비웠어요';
+
+  @override
+  String get walkDiaryTrashRestoreFailed => '복원하지 못했어요. 다시 시도해 주세요';
+
+  @override
+  String get walkDiaryTrashDeleteFailed => '삭제하지 못했어요. 다시 시도해 주세요';
 
   @override
   String get walkDiarySettings => '일기';

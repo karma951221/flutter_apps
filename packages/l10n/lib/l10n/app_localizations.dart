@@ -4424,6 +4424,12 @@ abstract class AppLocalizations {
   /// **'점을 4개 이상 이어 주세요'**
   String get walkLockSetupTooShort;
 
+  /// 일기 잠금 새 PIN 이 숫자 4자리가 아닐 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'숫자 4자리를 입력해 주세요'**
+  String get walkLockSetupPinInvalid;
+
   /// 일기 잠금 켜기 · 끄기 · 방식 변경을 마쳤을 때 알림
   ///
   /// In ko, this message translates to:
@@ -4832,6 +4838,12 @@ abstract class AppLocalizations {
   /// **'기록을 휴지통으로 옮겼어요'**
   String get walkDiaryEntryTrashed;
 
+  /// 일기 기록을 휴지통으로 보내지 못했을 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통으로 옮기지 못했어요. 다시 시도해 주세요'**
+  String get walkDiaryEntryTrashFailed;
+
   /// 일기 기록 상세의 날짜와 시각
   ///
   /// In ko, this message translates to:
@@ -4993,6 +5005,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'휴지통을 비웠어요'**
   String get walkDiaryTrashEmptied;
+
+  /// 휴지통 기록을 복원하지 못했을 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'복원하지 못했어요. 다시 시도해 주세요'**
+  String get walkDiaryTrashRestoreFailed;
+
+  /// 휴지통 기록을 영구 삭제하거나 휴지통을 비우지 못했을 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제하지 못했어요. 다시 시도해 주세요'**
+  String get walkDiaryTrashDeleteFailed;
 
   /// 설정 탭 일기 섹션 제목
   ///

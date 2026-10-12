@@ -104,7 +104,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
       case Err():
         AppSnackBar.show(
           context,
-          message: l10n.walkDiaryErrorSave,
+          message: l10n.walkDiaryEntryTrashFailed,
           type: AppSnackBarType.error,
         );
     }
