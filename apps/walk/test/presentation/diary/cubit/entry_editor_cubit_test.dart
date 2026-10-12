@@ -60,6 +60,15 @@ class _OverlapProcessor extends FakeMediaProcessor {
   }
 }
 
+/// 가져오기가 Result 대신 예외를 던진다(예상하지 못한 오류).
+class _ThrowingMediaStore extends FileMediaStore {
+  _ThrowingMediaStore(super.root, super.ids, super.processor);
+
+  @override
+  Future<Result<EntryMedia>> importPhoto(String sourcePath) =>
+      Future.error(const FileSystemException('disk full'));
+}
+
 /// 기록 만들기 호출 수를 센다.
 class _CountingRepository extends DriftDiaryRepository {
   _CountingRepository(DiaryHarness h)
@@ -366,6 +375,24 @@ void main() {
         if (before == null && errors[i] == DiaryFailure.videoTooLong) shown++;
       }
       expect(shown, 2);
+    });
+
+    test('가져오기가 던져도 가져오는 중 표시가 풀린다', () async {
+      final throwing = _ThrowingMediaStore(
+        Directory('${sandbox.path}/diary'),
+        const IdGenerator(Uuid()),
+        processor,
+      );
+      final c = EntryEditorCubit(useCase, repo, throwing, places, h.clock);
+      cubits.add(c);
+      await c.startNew();
+
+      await expectLater(
+        c.addMedia([photo()]),
+        throwsA(isA<FileSystemException>()),
+      );
+
+      expect(c.state.importing, isFalse);
     });
 
     test('새로 넣은 미디어를 빼면 그 임시 사본을 지운다', () async {

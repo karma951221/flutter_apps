@@ -124,6 +124,32 @@ void main() {
     });
   });
 
+  group('폴더를 만들 수 없을 때(파일 시스템 오류)', () {
+    late FileMediaStore broken;
+
+    setUp(() {
+      // 루트 자리에 일반 파일이 있어 tmp/ 폴더를 만들 수 없다.
+      final blocker = File('${sandbox.path}/blocked')..writeAsStringSync('x');
+      broken = FileMediaStore(
+        Directory(blocker.path),
+        const IdGenerator(Uuid()),
+        processor,
+      );
+    });
+
+    test('사진 → 던지지 않고 Err(mediaProcessing)', () async {
+      final failure = errFailure(await broken.importPhoto(photo.path));
+
+      expect(failure, isDiaryFailure(DiaryFailure.mediaProcessing.name));
+    });
+
+    test('영상 → 던지지 않고 Err(mediaProcessing)', () async {
+      final failure = errFailure(await broken.importVideo(video.path));
+
+      expect(failure, isDiaryFailure(DiaryFailure.mediaProcessing.name));
+    });
+  });
+
   group('promote · demote', () {
     test('promote 는 tmp/ 의 파일을 media/ 로 옮기고 경로만 바꾼다', () async {
       final media = okValue(await store.importVideo(video.path));

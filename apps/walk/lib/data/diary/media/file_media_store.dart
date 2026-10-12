@@ -33,8 +33,9 @@ class FileMediaStore implements MediaStore {
   Future<Result<EntryMedia>> importPhoto(String sourcePath) async {
     final id = _ids.newId();
     final path = '$_tmp/$id.jpg';
-    final target = await _prepare(path);
     try {
+      // 폴더를 만들지 못해도(파일 시스템 오류) 처리 실패로 돌려준다.
+      final target = await _prepare(path);
       final size = await _processor.compressPhoto(File(sourcePath), target);
       return Ok(
         EntryMedia(
@@ -68,8 +69,8 @@ class FileMediaStore implements MediaStore {
     final id = _ids.newId();
     final path = '$_tmp/$id.mp4';
     final thumbPath = '$_tmp/${id}_thumb.jpg';
-    final target = await _prepare(path);
     try {
+      final target = await _prepare(path);
       final result = await _processor.compressVideo(
         source,
         target,

@@ -219,37 +219,43 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
     emit(state.copyWith(importing: true));
     DiaryFailure? error;
     var failed = false;
-    for (final p in picked) {
-      if (!MediaLimits.canAdd(state.draft.media.length, 1)) {
-        error = DiaryFailure.tooManyMedia;
-        break;
+    try {
+      for (final p in picked) {
+        if (!MediaLimits.canAdd(state.draft.media.length, 1)) {
+          error = DiaryFailure.tooManyMedia;
+          break;
+        }
+        final result = switch (p.kind) {
+          MediaKind.photo => await _media.importPhoto(p.path),
+          MediaKind.video => await _media.importVideo(p.path),
+        };
+        if (isClosed || _cancelled) {
+          if (result case Ok(:final value)) await _useCase.cancelDraft([value]);
+          return;
+        }
+        switch (result) {
+          case Ok(:final value):
+            emit(
+              state.copyWith(
+                draft: state.draft.copyWith(
+                  media: [...state.draft.media, value],
+                ),
+                newMedia: [...state.newMedia, value],
+              ),
+            );
+          case Err(:final failure):
+            final diary = _diaryFailureOf(failure);
+            if (diary == null) {
+              failed = true;
+            } else {
+              error = diary;
+            }
+        }
       }
-      final result = switch (p.kind) {
-        MediaKind.photo => await _media.importPhoto(p.path),
-        MediaKind.video => await _media.importVideo(p.path),
-      };
-      if (isClosed || _cancelled) {
-        if (result case Ok(:final value)) await _useCase.cancelDraft([value]);
-        return;
-      }
-      switch (result) {
-        case Ok(:final value):
-          emit(
-            state.copyWith(
-              draft: state.draft.copyWith(media: [...state.draft.media, value]),
-              newMedia: [...state.newMedia, value],
-            ),
-          );
-        case Err(:final failure):
-          final diary = _diaryFailureOf(failure);
-          if (diary == null) {
-            failed = true;
-          } else {
-            error = diary;
-          }
-      }
+    } finally {
+      // 가져오기가 던져도(예상 못 한 오류) 가져오는 중 표시가 남지 않게 한다.
+      if (!isClosed) emit(state.copyWith(importing: false));
     }
-    emit(state.copyWith(importing: false));
     if (error != null) {
       _report(error);
     } else if (failed) {
