@@ -77,6 +77,14 @@ class EntryEditorState with _$EntryEditorState {
 
   bool get isEditing => editingId != null;
 
-  /// 기록 시각을 사용자가 바꿨는지 — '되돌리기'를 보인다.
-  bool get timeEdited => draft.occurredAt != createdAt;
+  /// 기록 시각을 사용자가 바꿨는지 — '되돌리기'를 보인다. 시각은 분 단위로 고르므로
+  /// 분까지만 비교한다(열린 시각 15:24:37 에 15:24 를 고르면 바꾼 것이 아니다).
+  bool get timeEdited => !sameMinute(draft.occurredAt, createdAt);
+
+  static bool sameMinute(DateTime a, DateTime b) =>
+      a.year == b.year &&
+      a.month == b.month &&
+      a.day == b.day &&
+      a.hour == b.hour &&
+      a.minute == b.minute;
 }

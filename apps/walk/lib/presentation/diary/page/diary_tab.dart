@@ -208,11 +208,3 @@ class _Entries extends StatelessWidget {
     );
   }
 }
-
-/// 작성 화면을 연다. [editingId] 가 있으면 그 기록을 고친다.
-Future<void> openEntryEditor(BuildContext context, {String? editingId}) =>
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => EntryEditorPage(editingId: editingId),
-      ),
-    );

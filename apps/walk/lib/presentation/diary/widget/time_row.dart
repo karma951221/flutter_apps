@@ -11,7 +11,7 @@ import '../format/diary_format.dart';
 class TimeRow extends StatelessWidget {
   const TimeRow({
     required this.occurredAt,
-    required this.createdAt,
+    required this.edited,
     required this.isEditing,
     required this.now,
     required this.onPick,
@@ -20,7 +20,9 @@ class TimeRow extends StatelessWidget {
   });
 
   final DateTime occurredAt;
-  final DateTime createdAt;
+
+  /// 처음 시각(새 기록은 연 시각, 수정은 기록의 createdAt)과 분 단위로 다른지.
+  final bool edited;
   final bool isEditing;
   final DateTime now;
 
@@ -30,8 +32,6 @@ class TimeRow extends StatelessWidget {
 
   /// 날짜 고르기의 가장 이른 날.
   static final _firstDate = DateTime(2000);
-
-  bool get _edited => occurredAt != createdAt;
 
   @override
   Widget build(BuildContext context) {
@@ -47,12 +47,12 @@ class TimeRow extends StatelessWidget {
         AppListTile(
           leading: const Icon(Icons.schedule),
           title: Text(
-            !isEditing && !_edited ? l10n.walkDiaryEditorTimeNow(when) : when,
+            !isEditing && !edited ? l10n.walkDiaryEditorTimeNow(when) : when,
           ),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => _pick(context),
         ),
-        if (_edited)
+        if (edited)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             child: AppButton.text(

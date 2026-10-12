@@ -201,6 +201,24 @@ void main() {
   });
 
   group('시각', () {
+    test('초가 있는 시각에 열고 같은 분을 고르면 바꾼 것이 아니다 — 위치 · 지금 유지', () async {
+      h.clock.value = DateTime(2026, 10, 10, 15, 24, 37, 500);
+      final c = await started();
+      final opened = c.state.createdAt;
+      expect(opened, DateTime(2026, 10, 10, 15, 24, 37, 500));
+
+      c.setTime(DateTime(2026, 10, 10, 15, 24));
+
+      expect(c.state.timeEdited, isFalse);
+      expect(c.state.draft.occurredAt, opened);
+      expect(c.state.draft.location, _aewol);
+      expect(c.state.manualPlace, isFalse);
+
+      c.setTime(DateTime(2026, 10, 10, 15, 23));
+      expect(c.state.timeEdited, isTrue);
+      expect(c.state.draft.location, isNull);
+    });
+
     test('과거로 바꾸면 지금 위치를 빼고 장소를 직접 입력한다', () async {
       final c = await started();
 

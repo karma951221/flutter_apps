@@ -327,8 +327,11 @@ void main() {
       await tester.tap(find.byType(FloatingActionButton));
       await tester.pumpAndSettle();
 
-      final page = tester.widget<EntryEditorPage>(find.byType(EntryEditorPage));
-      expect(page.editingId, isNull);
+      final scope = tester.widget<EntryEditorScope>(
+        find.byType(EntryEditorScope),
+      );
+      expect(scope.editingId, isNull);
+      expect(find.byType(EntryEditorPage), findsOneWidget);
       expect(find.text('새 기록'), findsOneWidget);
     });
 
@@ -341,8 +344,10 @@ void main() {
       await tester.tap(find.text('출근'));
       await tester.pumpAndSettle();
 
-      final page = tester.widget<EntryEditorPage>(find.byType(EntryEditorPage));
-      expect(page.editingId, '출근');
+      final scope = tester.widget<EntryEditorScope>(
+        find.byType(EntryEditorScope),
+      );
+      expect(scope.editingId, '출근');
     });
 
     testWidgets('릴스에서도 ＋ 가 있고 위의 머리 · 토글을 가리지 않는다', (tester) async {

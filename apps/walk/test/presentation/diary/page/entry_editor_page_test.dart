@@ -4,6 +4,15 @@ import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:walk/data/lock/prefs_lock_repository.dart';
+import 'package:walk/domain/lock/device_auth.dart';
+import 'package:walk/domain/lock/lock_config.dart';
+import 'package:walk/domain/lock/lock_repository.dart';
+import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
+import 'package:walk/presentation/lock/media_pick_guard.dart';
+import 'package:walk/presentation/lock/widget/pin_pad.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/diary/diary_failure.dart';
@@ -22,6 +31,7 @@ import 'package:walk/presentation/diary/page/entry_editor_page.dart';
 import 'package:walk/presentation/diary/widget/time_row.dart';
 
 import '../../../support/diary_fixtures.dart';
+import '../../../support/fake_device_auth.dart';
 
 class _MockRepo extends Mock implements DiaryRepository {}
 
@@ -59,13 +69,18 @@ void main() {
   late _MockPicker picker;
   late _FakePlaces places;
   late List<Story> stories;
+  late MutableClock clock;
+  late PrefsLockRepository lockRepo;
+  late DiaryLockCubit lock;
 
   setUpAll(() {
     registerFallbackValue(entryDraft());
     registerFallbackValue(<EntryMedia>[]);
   });
 
-  setUp(() {
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    clock = MutableClock(diaryT0);
     stories = [
       _story(Story.dailyId, ''),
       _story('jeju', '제주 여행'),
@@ -94,35 +109,43 @@ void main() {
       ..registerSingleton<MediaStore>(store)
       ..registerSingleton<PlaceSource>(places)
       ..registerSingleton<MediaPicker>(picker)
-      ..registerSingleton<Clock>(MutableClock(diaryT0));
+      ..registerSingleton<Clock>(clock);
+    lockRepo = PrefsLockRepository(await SharedPreferences.getInstance());
+    lock = DiaryLockCubit(lockRepo, FakeDeviceAuth(), clock, MediaPickGuard());
+    getIt
+      ..registerSingleton<LockRepository>(lockRepo)
+      ..registerSingleton<DeviceAuth>(FakeDeviceAuth());
   });
 
-  tearDown(() => getIt.reset());
+  tearDown(() async {
+    await lock.close();
+    await getIt.reset();
+  });
 
-  /// 첫 화면 위에 작성 화면을 띄운다. 닫히면 'home' 이 보인다.
-  Future<void> pump(WidgetTester tester, {String? editingId}) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light(),
-        locale: const Locale('ko'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: Builder(
-          builder: (context) => Scaffold(
-            body: Center(
-              child: TextButton(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => EntryEditorPage(editingId: editingId),
-                  ),
-                ),
-                child: const Text('home'),
-              ),
+  Widget app({String? editingId, bool editorOpen = true}) => MaterialApp(
+    theme: AppTheme.light(),
+    locale: const Locale('ko'),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: BlocProvider.value(
+      value: lock,
+      child: Builder(
+        builder: (context) => Scaffold(
+          body: Center(
+            child: TextButton(
+              onPressed: () => openEntryEditor(context, editingId: editingId),
+              child: const Text('home'),
             ),
           ),
         ),
       ),
-    );
+    ),
+  );
+
+  /// 첫 화면(셸처럼 일기 잠금을 내려 주는 자리) 위에 작성 화면을 띄운다. 닫히면 'home' 이 보인다.
+  Future<void> pump(WidgetTester tester, {String? editingId}) async {
+    lock.start();
+    await tester.pumpWidget(app(editingId: editingId));
     await tester.tap(find.text('home'));
     await tester.pumpAndSettle();
   }
@@ -364,5 +387,72 @@ void main() {
     expect(find.widgetWithText(InputChip, '#바다'), findsOneWidget);
     expect(timeText(tester), contains('10월 8일 (목) 오후 6:00'));
     expect(timeText(tester), isNot(contains('지금')));
+  });
+
+  testWidgets('초가 있는 시각에 열고 오늘 같은 분을 그대로 확인하면 지금 · 위치 그대로', (tester) async {
+    clock.value = DateTime(2026, 10, 10, 9, 0, 37);
+    await pump(tester);
+
+    await tester.tap(timeRow());
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('확인'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('확인'));
+    await tester.pumpAndSettle();
+
+    expect(timeText(tester), contains('지금 · 10월 10일 (토) 오전 9:00'));
+    expect(find.text('올린 시각으로 되돌리기'), findsNothing);
+    expect(find.text('애월읍'), findsOneWidget);
+  });
+
+  testWidgets('다시 잠기면 작성 화면이 트리에서 빠지고, 풀면 쓰던 글 그대로 돌아온다', (tester) async {
+    await pump(tester);
+    await tester.enterText(
+      find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요'),
+      '쓰다 만 글',
+    );
+    await lockRepo.setSecret(LockMethod.pin, '1234');
+    await lockRepo.saveConfig(const LockConfig(enabled: true));
+
+    lock.onPaused();
+    clock.advance(const Duration(minutes: 5));
+    lock.onResumed();
+    await tester.pumpAndSettle();
+
+    expect(find.byType(EntryEditorPage, skipOffstage: false), findsNothing);
+    expect(find.text('쓰다 만 글', skipOffstage: false), findsNothing);
+    expect(find.byType(PinPad), findsOneWidget);
+
+    for (final d in '1234'.split('')) {
+      await tester.tap(find.widgetWithText(TextButton, d));
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+
+    expect(find.byType(EntryEditorPage), findsOneWidget);
+    expect(find.text('쓰다 만 글'), findsOneWidget);
+  });
+
+  testWidgets('취소 없이 화면이 사라져도 새로 가져온 임시 사본을 지운다', (tester) async {
+    when(
+      () => picker.pickGallery(limit: any(named: 'limit')),
+    ).thenAnswer((_) async => [(path: '/picked/a.jpg', kind: MediaKind.photo)]);
+    final imported = photoMedia('m1', path: 'tmp/m1.jpg');
+    when(
+      () => store.importPhoto('/picked/a.jpg'),
+    ).thenAnswer((_) async => Ok(imported));
+    await pump(tester);
+    await tester.tap(find.text('사진·영상 추가'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('앨범에서 고르기'));
+    await tester.pumpAndSettle();
+
+    await tester.pumpWidget(const SizedBox());
+    await tester.pumpAndSettle();
+
+    final discarded =
+        verify(() => useCase.cancelDraft(captureAny())).captured.single
+            as List<EntryMedia>;
+    expect(discarded, [imported]);
   });
 }

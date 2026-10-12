@@ -128,11 +128,18 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
 
   /// 미래면 무시한다. 새 기록을 과거로 옮기면 지금 위치(좌표)를 빼고 장소를 직접 입력한다.
   /// 그 시각이 든 열린 스토리를 제안한다(없으면 '일상'). 닫힌 스토리의 기록은 옮기지 않는다.
+  ///
+  /// 시각은 분 단위로 고른다 — [EntryEditorState.createdAt] 과 같은 분이면 [revertTime] 과
+  /// 같다(occurredAt = 초까지의 실제 createdAt, 위치 · 스토리는 그대로).
   void setTime(DateTime at) {
     if (at.isAfter(_clock.now())) return;
+    if (EntryEditorState.sameMinute(at, state.createdAt)) {
+      revertTime();
+      return;
+    }
     var draft = state.draft.copyWith(occurredAt: at);
     var manualPlace = state.manualPlace;
-    if (!state.isEditing && at != state.createdAt) {
+    if (!state.isEditing) {
       manualPlace = true;
       if (draft.location?.hasCoordinates ?? false) {
         draft = draft.copyWith(location: null);
