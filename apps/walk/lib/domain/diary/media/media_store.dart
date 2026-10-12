@@ -30,6 +30,7 @@ abstract interface class MediaStore {
 
   File resolve(String relativePath);
 
-  /// media/ 아래 [keep] 에 없는 파일, tmp/ 아래 [now] 기준 24시간 지난 파일을 지운다.
+  /// [now] 기준 24시간 넘게 바뀌지 않은 파일 중 media/ 아래 [keep] 에 없는 것과
+  /// tmp/ 아래 전부를 지운다. 24시간 안의 media/ 파일은 저장이 진행 중일 수 있어 남긴다.
   Future<void> cleanOrphans(Set<String> keep, DateTime now);
 }

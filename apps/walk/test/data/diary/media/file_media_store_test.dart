@@ -204,12 +204,14 @@ void main() {
       return file;
     }
 
+    final old = now.subtract(const Duration(hours: 25));
+
     test('media/ 는 keep 에 있는 것만 남긴다(휴지통 기록 경로 포함)', () async {
-      put('media/live.jpg');
-      put('media/trashed.jpg');
-      put('media/trashed_thumb.jpg');
-      put('media/orphan.jpg');
-      put('media/orphan_thumb.jpg');
+      put('media/live.jpg', modified: old);
+      put('media/trashed.jpg', modified: old);
+      put('media/trashed_thumb.jpg', modified: old);
+      put('media/orphan.jpg', modified: old);
+      put('media/orphan_thumb.jpg', modified: old);
 
       await store.cleanOrphans({
         'media/live.jpg',
@@ -222,6 +224,18 @@ void main() {
         'media/trashed.jpg',
         'media/trashed_thumb.jpg',
       ]);
+    });
+
+    test('media/ 라도 24시간 안에 바뀐 파일은 keep 에 없어도 남긴다(저장 중인 기록)', () async {
+      put(
+        'media/saving.jpg',
+        modified: now.subtract(const Duration(hours: 23)),
+      );
+      put('media/stale.jpg', modified: old);
+
+      await store.cleanOrphans({}, now);
+
+      expect(filesUnder('media'), ['media/saving.jpg']);
     });
 
     test('tmp/ 는 24시간 지난 것만 지운다', () async {

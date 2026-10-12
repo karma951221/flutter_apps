@@ -12,8 +12,9 @@ import '../../../domain/diary/media/media_store.dart';
 const _tmp = 'tmp';
 const _media = 'media';
 
-/// tmp/ 에 남은 사본을 버려진 것으로 보는 시간.
-const _tmpExpiry = Duration(hours: 24);
+/// 이 시간 안에 바뀐 파일은 고아 청소가 건드리지 않는다. tmp/ 는 아직 저장 전인
+/// 사본, media/ 는 promote 했지만 DB 저장이 아직 끝나지 않은 파일일 수 있다.
+const _orphanGrace = Duration(hours: 24);
 
 /// [root] 아래 `tmp/`(저장 전 사본) · `media/`(저장된 기록) 두 폴더로 나눠 둔다.
 /// 바깥에는 루트 기준 상대 경로만 내보낸다.
@@ -123,13 +124,23 @@ class FileMediaStore implements MediaStore {
   Future<void> cleanOrphans(Set<String> keep, DateTime now) async {
     for (final file in await _filesIn(_media)) {
       final path = '$_media/${file.uri.pathSegments.last}';
-      if (!keep.contains(path)) await deleteFiles([path]);
+      if (!keep.contains(path) && await _settled(file, now)) {
+        await deleteFiles([path]);
+      }
     }
     for (final file in await _filesIn(_tmp)) {
-      final modified = await file.lastModified();
-      if (now.difference(modified) > _tmpExpiry) {
+      if (await _settled(file, now)) {
         await deleteFiles(['$_tmp/${file.uri.pathSegments.last}']);
       }
+    }
+  }
+
+  /// [file] 이 [now] 기준 [_orphanGrace] 보다 오래전에 바뀌었는지. 읽지 못하면 false.
+  static Future<bool> _settled(File file, DateTime now) async {
+    try {
+      return now.difference(await file.lastModified()) > _orphanGrace;
+    } catch (_) {
+      return false;
     }
   }
 
