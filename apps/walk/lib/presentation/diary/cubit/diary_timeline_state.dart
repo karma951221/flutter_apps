@@ -32,6 +32,10 @@ class DiaryTimelineState with _$DiaryTimelineState {
   @override
   final bool loading;
 
+  /// 스토리 · 기록 목록을 읽지 못했다. 다른 스토리를 고르면 다시 시도한다.
+  @override
+  final bool failed;
+
   const DiaryTimelineState({
     this.openStories = const [],
     this.archived = const [],
@@ -39,5 +43,6 @@ class DiaryTimelineState with _$DiaryTimelineState {
     this.viewMode = DiaryViewMode.prose,
     this.entries = const [],
     this.loading = true,
+    this.failed = false,
   });
 }

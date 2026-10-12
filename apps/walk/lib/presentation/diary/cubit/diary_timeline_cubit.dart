@@ -34,20 +34,27 @@ class DiaryTimelineCubit extends Cubit<DiaryTimelineState> {
     );
     _watchEntries();
     unawaited(_stories?.cancel());
-    _stories = _repo.watchStories().listen(_onStories);
+    _stories = _repo.watchStories().listen(_onStories, onError: _onError);
   }
 
   /// [storyId] 가 null 이면 '전체'. 옛 필터의 구독을 끊어 늦게 온 목록이 섞이지 않는다.
+  /// 이미 보고 있는 스토리면 아무것도 하지 않는다.
   void selectStory(String? storyId) {
-    unawaited(_prefs.setLastViewedStoryId(storyId));
+    if (storyId == state.selectedStoryId) return;
+    _save(_prefs.setLastViewedStoryId(storyId));
     emit(state.copyWith(selectedStoryId: storyId));
     _watchEntries();
   }
 
   void setViewMode(DiaryViewMode m) {
-    unawaited(_prefs.setViewMode(m));
+    _save(_prefs.setViewMode(m));
     emit(state.copyWith(viewMode: m));
   }
+
+  /// 설정 저장은 다음 실행의 편의일 뿐이라 실패를 삼킨다.
+  void _save(Future<void> write) => unawaited(write.catchError((Object _) {}));
+
+  void _onError(Object _) => emit(state.copyWith(loading: false, failed: true));
 
   /// 보던 스토리가 사라졌으면(삭제 · 시작 때 이미 없음) '전체'로 바꾼다.
   void _onStories(List<Story> stories) {
@@ -61,7 +68,7 @@ class DiaryTimelineCubit extends Cubit<DiaryTimelineState> {
 
   void _watchEntries() {
     unawaited(_entries?.cancel());
-    emit(state.copyWith(entries: const [], loading: true));
+    emit(state.copyWith(entries: const [], loading: true, failed: false));
     final filter = switch (state.selectedStoryId) {
       null => const EntryFilter.all(),
       final id => EntryFilter.story(id),
@@ -70,6 +77,7 @@ class DiaryTimelineCubit extends Cubit<DiaryTimelineState> {
         .watchEntries(filter)
         .listen(
           (entries) => emit(state.copyWith(entries: entries, loading: false)),
+          onError: _onError,
         );
   }
 

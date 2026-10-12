@@ -1629,6 +1629,53 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryEmpty => '아직 기록이 없어요';
 
   @override
+  String get walkDiaryToday => '오늘';
+
+  @override
+  String get walkDiaryYesterday => '어제';
+
+  @override
+  String get walkDiaryNow => '지금';
+
+  @override
+  String get walkDiaryOngoing => '진행 중';
+
+  @override
+  String walkDiaryStoryPeriod(String start, String end) {
+    return '$start ~ $end';
+  }
+
+  @override
+  String get walkDiaryViewProse => '줄글';
+
+  @override
+  String get walkDiaryViewFeed => '피드';
+
+  @override
+  String get walkDiaryViewReels => '릴스';
+
+  @override
+  String get walkDiaryShowMore => '더 보기';
+
+  @override
+  String walkDiaryPlace(String name) {
+    return '📍 $name';
+  }
+
+  @override
+  String walkDiaryTag(String name) {
+    return '#$name';
+  }
+
+  @override
+  String walkDiaryMediaPosition(int index, int count) {
+    return '$index/$count';
+  }
+
+  @override
+  String get walkDiaryLoadError => '기록을 불러오지 못했어요';
+
+  @override
   String get walkAlarmListTitle => '알람';
 
   @override

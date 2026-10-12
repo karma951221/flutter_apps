@@ -12,7 +12,9 @@ import '../../../domain/diary/usecase/diary_use_case.dart';
 import '../../lock/widget/diary_lock_gate.dart';
 import '../cubit/diary_timeline_cubit.dart';
 import '../cubit/diary_timeline_state.dart';
+import '../widget/diary_entries_view.dart';
 import '../widget/story_bar.dart';
+import '../widget/story_header.dart';
 
 /// 셸의 일기 탭(스펙 §6.1). 위에서 `DiaryLockCubit` 를 받는다(셸이 소유).
 ///
@@ -68,7 +70,7 @@ class _DiaryTabState extends State<DiaryTab> {
   }
 }
 
-/// 스토리 바 + 고른 스토리의 기록.
+/// 스토리 바 + 고른 스토리의 머리 · 보기 모드 토글 + 기록.
 class _Timeline extends StatelessWidget {
   const _Timeline();
 
@@ -77,16 +79,29 @@ class _Timeline extends StatelessWidget {
       BlocBuilder<DiaryTimelineCubit, DiaryTimelineState>(
         builder: (context, state) {
           final cubit = context.read<DiaryTimelineCubit>();
+          final selectedId = state.selectedStoryId;
+          final selected = selectedId == null
+              ? null
+              : [
+                  ...state.openStories,
+                  ...state.archived,
+                ].where((s) => s.id == selectedId).firstOrNull;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               StoryBar(
                 open: state.openStories,
                 archived: state.archived,
-                selectedId: state.selectedStoryId,
+                selectedId: selectedId,
                 onSelect: cubit.selectStory,
               ),
               const Divider(height: 1),
+              StoryHeader(
+                story: selected,
+                now: getIt<Clock>().now(),
+                mode: state.viewMode,
+                onMode: cubit.setViewMode,
+              ),
               Expanded(child: _Entries(state: state)),
             ],
           );
@@ -94,7 +109,7 @@ class _Timeline extends StatelessWidget {
       );
 }
 
-/// 기록 목록. 보기 모드(줄글 · 피드 · 릴스)는 T13 이 이 자리를 바꾼다 — 지금은 본문만 보인다.
+/// 기록 목록을 고른 보기 모드로. 읽지 못했으면 오류 안내, 비었으면 빈 상태 안내.
 class _Entries extends StatelessWidget {
   const _Entries({required this.state});
 
@@ -102,17 +117,33 @@ class _Entries extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (state.failed) {
+      return AppPlaceholder(
+        icon: Icons.error_outline,
+        message: l10n.walkDiaryLoadError,
+      );
+    }
     if (state.loading) return const SizedBox.shrink();
     final entries = state.entries;
     if (entries.isEmpty) {
       return AppPlaceholder(
         icon: Icons.menu_book_outlined,
-        message: AppLocalizations.of(context).walkDiaryEmpty,
+        message: l10n.walkDiaryEmpty,
       );
     }
-    return ListView.builder(
-      itemCount: entries.length,
-      itemBuilder: (context, i) => AppListTile(title: Text(entries[i].body)),
+    return DiaryEntriesView(
+      // 스토리를 바꾸면 스크롤 · 릴스 페이지를 처음부터.
+      key: ValueKey(state.selectedStoryId),
+      mode: state.viewMode,
+      entries: entries,
+      showStoryName: state.selectedStoryId == null,
+      storyTitles: {
+        for (final s in [...state.openStories, ...state.archived])
+          s.id: storyDisplayTitle(l10n, s),
+      },
+      // 기록 상세(T15)가 생기면 여기서 연다.
+      onOpen: (_) {},
     );
   }
 }

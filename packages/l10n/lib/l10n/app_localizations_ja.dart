@@ -1627,6 +1627,53 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryEmpty => 'まだ記録がありません';
 
   @override
+  String get walkDiaryToday => '今日';
+
+  @override
+  String get walkDiaryYesterday => '昨日';
+
+  @override
+  String get walkDiaryNow => 'たった今';
+
+  @override
+  String get walkDiaryOngoing => '進行中';
+
+  @override
+  String walkDiaryStoryPeriod(String start, String end) {
+    return '$start〜$end';
+  }
+
+  @override
+  String get walkDiaryViewProse => '文章';
+
+  @override
+  String get walkDiaryViewFeed => 'フィード';
+
+  @override
+  String get walkDiaryViewReels => 'リール';
+
+  @override
+  String get walkDiaryShowMore => 'もっと見る';
+
+  @override
+  String walkDiaryPlace(String name) {
+    return '📍 $name';
+  }
+
+  @override
+  String walkDiaryTag(String name) {
+    return '#$name';
+  }
+
+  @override
+  String walkDiaryMediaPosition(int index, int count) {
+    return '$index/$count';
+  }
+
+  @override
+  String get walkDiaryLoadError => '記録を読み込めませんでした';
+
+  @override
   String get walkAlarmListTitle => 'アラーム';
 
   @override

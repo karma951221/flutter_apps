@@ -3152,6 +3152,84 @@ abstract class AppLocalizations {
   /// **'아직 기록이 없어요'**
   String get walkDiaryEmpty;
 
+  /// 일기 날짜 머리 — 오늘
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘'**
+  String get walkDiaryToday;
+
+  /// 일기 날짜 머리 — 어제
+  ///
+  /// In ko, this message translates to:
+  /// **'어제'**
+  String get walkDiaryYesterday;
+
+  /// 일기 기록 시각 — 1분 안에 올린 기록
+  ///
+  /// In ko, this message translates to:
+  /// **'지금'**
+  String get walkDiaryNow;
+
+  /// 일기 스토리 기간 — 아직 닫지 않은 스토리의 끝 자리
+  ///
+  /// In ko, this message translates to:
+  /// **'진행 중'**
+  String get walkDiaryOngoing;
+
+  /// 일기 스토리 머리의 기간 — 시작일 ~ 끝난 날(또는 진행 중)
+  ///
+  /// In ko, this message translates to:
+  /// **'{start} ~ {end}'**
+  String walkDiaryStoryPeriod(String start, String end);
+
+  /// 일기 보기 모드 — 날짜별로 글이 이어지는 줄글
+  ///
+  /// In ko, this message translates to:
+  /// **'줄글'**
+  String get walkDiaryViewProse;
+
+  /// 일기 보기 모드 — 카드 세로 목록
+  ///
+  /// In ko, this message translates to:
+  /// **'피드'**
+  String get walkDiaryViewFeed;
+
+  /// 일기 보기 모드 — 전체 화면으로 한 기록씩 넘기는 릴스
+  ///
+  /// In ko, this message translates to:
+  /// **'릴스'**
+  String get walkDiaryViewReels;
+
+  /// 일기 피드 카드 — 접힌 긴 본문을 펼치는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'더 보기'**
+  String get walkDiaryShowMore;
+
+  /// 일기 기록의 장소 이름 표시
+  ///
+  /// In ko, this message translates to:
+  /// **'📍 {name}'**
+  String walkDiaryPlace(String name);
+
+  /// 일기 기록의 해시태그 칩
+  ///
+  /// In ko, this message translates to:
+  /// **'#{name}'**
+  String walkDiaryTag(String name);
+
+  /// 일기 기록의 사진 · 영상 중 지금 보이는 순번 / 전체 개수
+  ///
+  /// In ko, this message translates to:
+  /// **'{index}/{count}'**
+  String walkDiaryMediaPosition(int index, int count);
+
+  /// 일기 타임라인을 읽지 못했을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 불러오지 못했어요'**
+  String get walkDiaryLoadError;
+
   /// 알람 목록 화면 제목
   ///
   /// In ko, this message translates to:

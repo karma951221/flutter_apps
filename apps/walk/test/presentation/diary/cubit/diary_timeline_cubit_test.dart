@@ -8,12 +8,32 @@ import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/diary_view_mode.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/entity/story.dart';
+import 'package:walk/domain/diary/entity/trash_retention.dart';
+import 'package:walk/domain/diary/repository/diary_preferences.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/presentation/diary/cubit/diary_timeline_cubit.dart';
 
 import '../../../support/diary_fixtures.dart';
 
 class _MockRepo extends Mock implements DiaryRepository {}
+
+/// 저장이 늘 실패하는 설정. 읽기는 기본값.
+class _FailingPrefs implements DiaryPreferences {
+  @override
+  String? get lastViewedStoryId => null;
+  @override
+  DiaryViewMode get viewMode => DiaryViewMode.prose;
+  @override
+  TrashRetention get trashRetention => TrashRetention.fallback;
+  @override
+  Future<void> setLastViewedStoryId(String? id) =>
+      Future.error(Exception('io'));
+  @override
+  Future<void> setViewMode(DiaryViewMode v) => Future.error(Exception('io'));
+  @override
+  Future<void> setTrashRetention(TrashRetention v) =>
+      Future.error(Exception('io'));
+}
 
 void main() {
   late DiaryHarness h;
@@ -187,6 +207,93 @@ void main() {
     await pumpEventQueue();
     expect(bodies(cubit), ['바다']);
     expect(cubit.state.loading, isFalse);
+  });
+
+  group('실패', () {
+    late _MockRepo repo;
+    late StreamController<List<Story>> storyStream;
+    late StreamController<List<DiaryEntry>> entryStream;
+
+    setUp(() {
+      repo = _MockRepo();
+      storyStream = StreamController<List<Story>>();
+      entryStream = StreamController<List<DiaryEntry>>();
+      when(repo.watchStories).thenAnswer((_) => storyStream.stream);
+      when(
+        () => repo.watchEntries(any()),
+      ).thenAnswer((_) => entryStream.stream);
+    });
+
+    test('기록 스트림이 실패하면 로딩을 끝내고 실패를 표시한다', () async {
+      final cubit = DiaryTimelineCubit(repo, prefs)..start();
+      addTearDown(cubit.close);
+      await pumpEventQueue();
+      expect(cubit.state.loading, isTrue);
+
+      entryStream.addError(Exception('db'));
+      await pumpEventQueue();
+
+      expect(cubit.state.loading, isFalse);
+      expect(cubit.state.failed, isTrue);
+    });
+
+    test('스토리 스트림이 실패해도 로딩을 끝내고 실패를 표시한다', () async {
+      final cubit = DiaryTimelineCubit(repo, prefs)..start();
+      addTearDown(cubit.close);
+      await pumpEventQueue();
+
+      storyStream.addError(Exception('db'));
+      await pumpEventQueue();
+
+      expect(cubit.state.loading, isFalse);
+      expect(cubit.state.failed, isTrue);
+    });
+
+    test('다른 스토리를 고르면 실패 표시를 지우고 다시 받는다', () async {
+      final cubit = DiaryTimelineCubit(repo, prefs)..start();
+      addTearDown(cubit.close);
+      await pumpEventQueue();
+      entryStream.addError(Exception('db'));
+      await pumpEventQueue();
+
+      entryStream = StreamController<List<DiaryEntry>>();
+      cubit.selectStory('trip');
+      entryStream.add([_entry('바다')]);
+      await pumpEventQueue();
+
+      expect(cubit.state.failed, isFalse);
+      expect(bodies(cubit), ['바다']);
+    });
+
+    test('설정 저장이 실패해도 고른 스토리 · 보기 모드는 바뀐다', () async {
+      final cubit = DiaryTimelineCubit(repo, _FailingPrefs())..start();
+      addTearDown(cubit.close);
+      await pumpEventQueue();
+      entryStream = StreamController<List<DiaryEntry>>();
+
+      cubit
+        ..selectStory('trip')
+        ..setViewMode(DiaryViewMode.feed);
+      await pumpEventQueue();
+
+      expect(cubit.state.selectedStoryId, 'trip');
+      expect(cubit.state.viewMode, DiaryViewMode.feed);
+    });
+
+    test('이미 보고 있는 스토리를 다시 고르면 아무 일도 없다', () async {
+      final cubit = DiaryTimelineCubit(repo, prefs)..start();
+      addTearDown(cubit.close);
+      await pumpEventQueue();
+      entryStream.add([_entry('출근')]);
+      await pumpEventQueue();
+
+      cubit.selectStory(null);
+      await pumpEventQueue();
+
+      verify(() => repo.watchEntries(any())).called(1);
+      expect(cubit.state.loading, isFalse);
+      expect(bodies(cubit), ['출근']);
+    });
   });
 }
 

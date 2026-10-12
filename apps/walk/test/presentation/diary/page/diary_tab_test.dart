@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/data/diary/prefs_diary_preferences.dart';
 import 'package:walk/data/lock/prefs_lock_repository.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
+import 'package:walk/domain/diary/entity/diary_view_mode.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
@@ -18,8 +19,12 @@ import 'package:walk/domain/lock/device_auth.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
 import 'package:walk/presentation/diary/page/diary_tab.dart';
+import 'package:walk/presentation/diary/widget/feed_view.dart';
+import 'package:walk/presentation/diary/widget/prose_view.dart';
+import 'package:walk/presentation/diary/widget/reels_view.dart';
 import 'package:walk/presentation/diary/widget/story_avatar.dart';
 import 'package:walk/presentation/diary/widget/story_bar.dart';
+import 'package:walk/presentation/diary/widget/story_header.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
 import 'package:walk/presentation/lock/widget/pin_pad.dart';
@@ -182,6 +187,67 @@ void main() {
 
     expect(find.text('출근'), findsNothing);
     expect(find.text('바다'), findsOneWidget);
+  });
+
+  Finder inHeader(String text) => find.descendant(
+    of: find.byType(StoryHeader),
+    matching: find.textContaining(text),
+  );
+
+  testWidgets('머리: 전체는 이름만, 스토리를 고르면 이름 · 기간', (tester) async {
+    stories = [
+      _story(Story.dailyId, ''),
+      _story('jeju', '제주 여행'),
+      Story(
+        id: 'busan',
+        title: '부산',
+        status: StoryStatus.closed,
+        startedAt: DateTime(2026, 10, 1),
+        endedAt: DateTime(2026, 10, 3),
+        createdAt: diaryT0,
+      ),
+    ];
+    await pump(tester);
+    expect(inHeader('전체'), findsOneWidget);
+    expect(inHeader('~'), findsNothing);
+
+    await tester.tap(find.text('제주 여행'));
+    await tester.pumpAndSettle();
+    expect(inHeader('제주 여행 · 10월 10일 ~ 진행 중'), findsOneWidget);
+
+    await tester.tap(find.text('보관함'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('부산'));
+    await tester.pumpAndSettle();
+    expect(inHeader('부산 · 10월 1일 ~ 10월 3일'), findsOneWidget);
+  });
+
+  testWidgets('보기 모드 토글로 줄글 · 피드 · 릴스를 바꾼다', (tester) async {
+    entries[const EntryFilter.all()] = [_entry('출근')];
+    await pump(tester);
+    expect(find.byType(ProseView), findsOneWidget);
+
+    await tester.tap(find.text('피드'));
+    await tester.pumpAndSettle();
+    expect(find.byType(FeedView), findsOneWidget);
+    expect(find.text('출근'), findsOneWidget);
+
+    await tester.tap(find.text('릴스'));
+    await tester.pumpAndSettle();
+    expect(find.byType(ReelsView), findsOneWidget);
+    expect(getIt<DiaryPreferences>().viewMode, DiaryViewMode.reels);
+  });
+
+  testWidgets('기록을 읽지 못하면 오류 안내', (tester) async {
+    when(
+      () => repo.watchEntries(any()),
+    ).thenAnswer((_) => Stream.error(Exception('db')));
+    await pump(tester);
+
+    expect(
+      find.widgetWithText(AppPlaceholder, '기록을 불러오지 못했어요'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('탭이 보이게 될 때마다 정리(maintain)를 한 번 부른다', (tester) async {

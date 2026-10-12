@@ -1715,6 +1715,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryEmpty => 'No entries yet';
 
   @override
+  String get walkDiaryToday => 'Today';
+
+  @override
+  String get walkDiaryYesterday => 'Yesterday';
+
+  @override
+  String get walkDiaryNow => 'Just now';
+
+  @override
+  String get walkDiaryOngoing => 'Ongoing';
+
+  @override
+  String walkDiaryStoryPeriod(String start, String end) {
+    return '$start – $end';
+  }
+
+  @override
+  String get walkDiaryViewProse => 'Prose';
+
+  @override
+  String get walkDiaryViewFeed => 'Feed';
+
+  @override
+  String get walkDiaryViewReels => 'Reels';
+
+  @override
+  String get walkDiaryShowMore => 'More';
+
+  @override
+  String walkDiaryPlace(String name) {
+    return '📍 $name';
+  }
+
+  @override
+  String walkDiaryTag(String name) {
+    return '#$name';
+  }
+
+  @override
+  String walkDiaryMediaPosition(int index, int count) {
+    return '$index/$count';
+  }
+
+  @override
+  String get walkDiaryLoadError => 'Couldn\'t load entries';
+
+  @override
   String get walkAlarmListTitle => 'Alarms';
 
   @override
