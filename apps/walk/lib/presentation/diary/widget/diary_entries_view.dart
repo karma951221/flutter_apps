@@ -16,6 +16,7 @@ class DiaryEntriesView extends StatelessWidget {
     required this.showStoryName,
     required this.storyTitles,
     required this.onOpen,
+    this.active = true,
     this.videoBuilder = videoSurface,
     super.key,
   });
@@ -32,6 +33,10 @@ class DiaryEntriesView extends StatelessWidget {
   final Map<String, String> storyTitles;
 
   final ValueChanged<DiaryEntry> onOpen;
+
+  /// 이 보기가 화면에 보이는지. 셸의 `IndexedStack` 은 가려진 탭도 트리에 두고
+  /// `video_player` 는 `TickerMode` 를 따르지 않으므로, false 면 릴스 영상을 멈춘다.
+  final bool active;
 
   /// 릴스의 영상 재생 자리. 테스트는 가짜를 넣는다.
   final VideoSurfaceBuilder videoBuilder;
@@ -59,6 +64,7 @@ class DiaryEntriesView extends StatelessWidget {
         now: now,
         storyNameOf: storyNameOf,
         onOpen: onOpen,
+        active: active,
         videoBuilder: videoBuilder,
       ),
     };

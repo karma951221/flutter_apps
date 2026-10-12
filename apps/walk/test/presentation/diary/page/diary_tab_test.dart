@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +13,7 @@ import 'package:walk/data/lock/prefs_lock_repository.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/diary_view_mode.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
+import 'package:walk/domain/diary/media/media_store.dart';
 import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
@@ -19,6 +22,7 @@ import 'package:walk/domain/lock/device_auth.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
 import 'package:walk/presentation/diary/page/diary_tab.dart';
+import 'package:walk/presentation/diary/widget/entry_media_view.dart';
 import 'package:walk/presentation/diary/widget/feed_view.dart';
 import 'package:walk/presentation/diary/widget/prose_view.dart';
 import 'package:walk/presentation/diary/widget/reels_view.dart';
@@ -35,6 +39,8 @@ import '../../../support/fake_device_auth.dart';
 class _MockRepo extends Mock implements DiaryRepository {}
 
 class _MockUseCase extends Mock implements DiaryUseCase {}
+
+class _MockStore extends Mock implements MediaStore {}
 
 Story _story(String id, String title, {DateTime? lastPostedAt}) => Story(
   id: id,
@@ -236,6 +242,57 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(ReelsView), findsOneWidget);
     expect(getIt<DiaryPreferences>().viewMode, DiaryViewMode.reels);
+  });
+
+  group('릴스', () {
+    setUp(() async {
+      await getIt<DiaryPreferences>().setViewMode(DiaryViewMode.reels);
+      final store = _MockStore();
+      when(
+        () => store.resolve(any()),
+      ).thenAnswer((inv) => File('/fake/${inv.positionalArguments.single}'));
+      getIt.registerSingleton<MediaStore>(store);
+      entries[const EntryFilter.all()] = [
+        _entry('바다').copyWith(media: [photoMedia('p1')]),
+      ];
+    });
+
+    testWidgets('탭 몸통을 꽉 채우고, 스토리 바 · 앱바 대신 머리 · 토글을 위에 얹는다', (tester) async {
+      await pump(tester);
+
+      expect(find.byType(ReelsView), findsOneWidget);
+      expect(find.byType(StoryBar), findsNothing);
+      expect(find.byType(AppBar), findsNothing);
+      final body = tester.getRect(find.byType(DiaryTab));
+      expect(tester.getRect(find.byType(ReelsView)), body);
+      expect(inHeader('전체'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.byType(StoryHeader)).dy,
+        lessThan(tester.getBottomLeft(find.byType(ReelsView)).dy),
+      );
+
+      await tester.tap(find.text('줄글'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProseView), findsOneWidget);
+      expect(find.byType(StoryBar), findsOneWidget);
+      expect(find.byType(AppBar), findsOneWidget);
+    });
+
+    testWidgets('탭이 가려지면 재생을 멈춘다', (tester) async {
+      await pump(tester);
+      bool playing() =>
+          tester.widget<MediaPager>(find.byType(MediaPager)).playing;
+      expect(playing(), isTrue);
+
+      await tester.pumpWidget(app(active: false));
+      await tester.pumpAndSettle();
+      expect(playing(), isFalse);
+
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+      expect(playing(), isTrue);
+    });
   });
 
   testWidgets('기록을 읽지 못하면 오류 안내', (tester) async {

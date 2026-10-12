@@ -95,6 +95,7 @@ void main() {
     DiaryViewMode mode,
     List<DiaryEntry> entries, {
     bool showStoryName = false,
+    bool active = true,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -107,6 +108,7 @@ void main() {
             mode: mode,
             entries: entries,
             showStoryName: showStoryName,
+            active: active,
             storyTitles: const {Story.dailyId: '일상', 'jeju': '제주 여행'},
             onOpen: opened.add,
             videoBuilder: (context, file) => _FakeSurface(file.path, videoLog),
@@ -269,6 +271,21 @@ void main() {
     expect(videoLog, ['play /fake/media/v1.mp4']);
     await side.up();
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('릴스: 탭이 가려지면(active false) 영상을 멈추고 버린다', (tester) async {
+    final entries = [
+      _entry('a', media: [videoMedia('v1')]),
+    ];
+    await pump(tester, DiaryViewMode.reels, entries);
+    expect(videoLog, ['play /fake/media/v1.mp4']);
+
+    await pump(tester, DiaryViewMode.reels, entries, active: false);
+    expect(videoLog, ['play /fake/media/v1.mp4', 'dispose /fake/media/v1.mp4']);
+    expect(mediaOf('v1'), findsOneWidget); // 썸네일로 남는다
+
+    await pump(tester, DiaryViewMode.reels, entries);
+    expect(videoLog.last, 'play /fake/media/v1.mp4');
   });
 
   testWidgets('피드 · 줄글의 영상은 재생하지 않고 썸네일', (tester) async {

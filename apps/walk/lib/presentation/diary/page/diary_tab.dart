@@ -6,10 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../../domain/diary/entity/diary_view_mode.dart';
 import '../../../domain/diary/repository/diary_preferences.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
+import '../../lock/cubit/diary_lock_cubit.dart';
+import '../../lock/cubit/diary_lock_state.dart';
 import '../../lock/widget/diary_lock_gate.dart';
+import '../../theme/walk_theme.dart';
 import '../cubit/diary_timeline_cubit.dart';
 import '../cubit/diary_timeline_state.dart';
 import '../widget/diary_entries_view.dart';
@@ -61,18 +65,36 @@ class _DiaryTabState extends State<DiaryTab> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.walkShellTabDiary)),
-      body: DiaryLockGate(
-        child: BlocProvider.value(value: _timeline, child: const _Timeline()),
+    final unlocked = context.select<DiaryLockCubit, bool>(
+      (c) => c.state is LockUnlocked,
+    );
+    return BlocProvider.value(
+      value: _timeline,
+      child: BlocBuilder<DiaryTimelineCubit, DiaryTimelineState>(
+        buildWhen: (a, b) => a.viewMode != b.viewMode,
+        builder: (context, state) {
+          // 릴스는 탭 몸통을 꽉 채운다 — 앱바 대신 위에 얹은 머리가 토글을 들고 있다.
+          final reels = unlocked && state.viewMode == DiaryViewMode.reels;
+          return Scaffold(
+            appBar: reels ? null : AppBar(title: Text(l10n.walkShellTabDiary)),
+            body: DiaryLockGate(child: _Timeline(active: widget.active)),
+          );
+        },
       ),
     );
   }
 }
 
 /// 스토리 바 + 고른 스토리의 머리 · 보기 모드 토글 + 기록.
+/// 릴스에서는 기록이 몸통을 채우고, 스토리 바 없이 머리만 반투명하게 위에 얹는다.
 class _Timeline extends StatelessWidget {
-  const _Timeline();
+  const _Timeline({required this.active});
+
+  /// 셸에서 이 탭이 보이는지. 가려지면 릴스 영상을 멈춘다.
+  final bool active;
+
+  /// 릴스 위 머리 바탕의 불투명도.
+  static const _overlayAlpha = 0.7;
 
   @override
   Widget build(BuildContext context) =>
@@ -86,6 +108,37 @@ class _Timeline extends StatelessWidget {
                   ...state.openStories,
                   ...state.archived,
                 ].where((s) => s.id == selectedId).firstOrNull;
+          final header = StoryHeader(
+            story: selected,
+            now: getIt<Clock>().now(),
+            mode: state.viewMode,
+            onMode: cubit.setViewMode,
+          );
+          final entries = _Entries(state: state, active: active);
+          if (state.viewMode == DiaryViewMode.reels) {
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                entries,
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Theme(
+                    data: WalkTheme.dark(),
+                    child: Builder(
+                      builder: (context) => ColoredBox(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surface.withValues(alpha: _overlayAlpha),
+                        child: SafeArea(bottom: false, child: header),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -96,13 +149,8 @@ class _Timeline extends StatelessWidget {
                 onSelect: cubit.selectStory,
               ),
               const Divider(height: 1),
-              StoryHeader(
-                story: selected,
-                now: getIt<Clock>().now(),
-                mode: state.viewMode,
-                onMode: cubit.setViewMode,
-              ),
-              Expanded(child: _Entries(state: state)),
+              header,
+              Expanded(child: entries),
             ],
           );
         },
@@ -111,9 +159,10 @@ class _Timeline extends StatelessWidget {
 
 /// 기록 목록을 고른 보기 모드로. 읽지 못했으면 오류 안내, 비었으면 빈 상태 안내.
 class _Entries extends StatelessWidget {
-  const _Entries({required this.state});
+  const _Entries({required this.state, required this.active});
 
   final DiaryTimelineState state;
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
@@ -138,6 +187,7 @@ class _Entries extends StatelessWidget {
       mode: state.viewMode,
       entries: entries,
       showStoryName: state.selectedStoryId == null,
+      active: active,
       storyTitles: {
         for (final s in [...state.openStories, ...state.archived])
           s.id: storyDisplayTitle(l10n, s),

@@ -15,6 +15,7 @@ class ReelsView extends StatefulWidget {
     required this.now,
     required this.storyNameOf,
     required this.onOpen,
+    this.active = true,
     this.videoBuilder = videoSurface,
     super.key,
   });
@@ -24,6 +25,9 @@ class ReelsView extends StatefulWidget {
   final DateTime now;
   final String? Function(DiaryEntry) storyNameOf;
   final ValueChanged<DiaryEntry> onOpen;
+
+  /// false 면(탭이 가려짐) 어떤 영상도 재생하지 않는다.
+  final bool active;
   final VideoSurfaceBuilder videoBuilder;
 
   @override
@@ -50,7 +54,7 @@ class _ReelsViewState extends State<ReelsView> {
               entry: entry,
               now: widget.now,
               storyName: widget.storyNameOf(entry),
-              active: i == _current,
+              active: widget.active && i == _current,
               onTap: () => widget.onOpen(entry),
               videoBuilder: widget.videoBuilder,
             );
