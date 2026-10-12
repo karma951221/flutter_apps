@@ -3,19 +3,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/core/app.dart';
 import 'package:walk/core/background/background_task.dart';
 import 'package:walk/data/alarm/channel_next_alarm_widget.dart';
+import 'package:walk/data/diary/prefs_diary_preferences.dart';
+import 'package:walk/data/lock/prefs_lock_repository.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/alarm/widget/next_alarm_widget.dart';
+import 'package:walk/domain/diary/entity/entry_filter.dart';
+import 'package:walk/domain/diary/repository/diary_preferences.dart';
+import 'package:walk/domain/diary/repository/diary_repository.dart';
+import 'package:walk/domain/diary/usecase/diary_use_case.dart';
+import 'package:walk/domain/lock/device_auth.dart';
+import 'package:walk/domain/lock/lock_repository.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
 import 'package:walk/domain/settings/repository/settings_repository.dart';
 import 'package:walk/domain/walk/entity/health_access.dart';
 import 'package:walk/domain/walk/usecase/walk_use_case.dart';
+import 'package:walk/presentation/lock/media_pick_guard.dart';
 import 'package:walk/presentation/shell/page/main_shell_page.dart';
+
+import '../support/fake_device_auth.dart';
 
 class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
 
@@ -24,6 +36,10 @@ class _MockWalk extends Mock implements WalkUseCase {}
 class _MockRequester extends Mock implements PermissionRequester {}
 
 class _MockSettings extends Mock implements SettingsRepository {}
+
+class _MockDiaryRepo extends Mock implements DiaryRepository {}
+
+class _MockDiaryUseCase extends Mock implements DiaryUseCase {}
 
 class _NoHolidays implements HolidayRefresher, HolidayCalendar {
   @override
@@ -51,7 +67,8 @@ void main() {
   group('WalkApp', () {
     late _MockSettings settings;
 
-    setUp(() {
+    setUpAll(() => registerFallbackValue(const EntryFilter.all()));
+    setUp(() async {
       // 네이티브 디스패처 자리: 헤드리스 일이 없어 셸의 awaitIdle 에 바로 답한다.
       final messenger = TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger;
       messenger.setMockMethodCallHandler(backgroundChannel, (call) async => null);
@@ -66,6 +83,21 @@ void main() {
       when(walk.access).thenAnswer((_) async => HealthAccess.permissionDenied);
       when(() => walk.permissionDeclinedThisSession).thenReturn(false);
       settings = _MockSettings();
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final diary = _MockDiaryUseCase();
+      when(diary.maintain).thenAnswer((_) async {});
+      when(diary.cleanOrphans).thenAnswer((_) async {});
+      final diaryRepo = _MockDiaryRepo();
+      when(diaryRepo.watchStories).thenAnswer((_) => Stream.value(const []));
+      when(() => diaryRepo.watchEntries(any())).thenAnswer((_) => Stream.value(const []));
+      getIt
+        ..registerSingleton<DiaryUseCase>(diary)
+        ..registerSingleton<DiaryRepository>(diaryRepo)
+        ..registerSingleton<DiaryPreferences>(PrefsDiaryPreferences(prefs))
+        ..registerSingleton<LockRepository>(PrefsLockRepository(prefs))
+        ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
+        ..registerSingleton<MediaPickGuard>(MediaPickGuard());
       getIt
         ..registerSingleton<AlarmUseCase>(alarms)
         ..registerSingleton<WalkUseCase>(walk)

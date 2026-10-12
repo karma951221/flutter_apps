@@ -9,12 +9,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/core/background/background_task.dart';
+import 'package:walk/data/diary/prefs_diary_preferences.dart';
+import 'package:walk/data/lock/prefs_lock_repository.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/alarm/widget/next_alarm_widget.dart';
+import 'package:walk/domain/diary/entity/entry_filter.dart';
+import 'package:walk/domain/diary/repository/diary_preferences.dart';
+import 'package:walk/domain/diary/repository/diary_repository.dart';
+import 'package:walk/domain/diary/usecase/diary_use_case.dart';
+import 'package:walk/domain/lock/device_auth.dart';
+import 'package:walk/domain/lock/lock_config.dart';
+import 'package:walk/domain/lock/lock_repository.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
 import 'package:walk/domain/settings/repository/settings_repository.dart';
 import 'package:walk/domain/walk/entity/daily_activity.dart';
@@ -22,11 +32,18 @@ import 'package:walk/domain/walk/entity/health_access.dart';
 import 'package:walk/domain/walk/entity/period_kind.dart';
 import 'package:walk/domain/walk/usecase/walk_use_case.dart';
 import 'package:walk/presentation/alarm/page/alarm_list_page.dart';
+import 'package:walk/presentation/diary/page/diary_tab.dart';
+import 'package:walk/presentation/diary/widget/story_bar.dart';
+import 'package:walk/presentation/lock/media_pick_guard.dart';
+import 'package:walk/presentation/lock/widget/pin_pad.dart';
 import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
 import 'package:walk/presentation/settings/page/settings_page.dart';
 import 'package:walk/presentation/shell/page/main_shell_page.dart';
 import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
 import 'package:walk/presentation/walk/page/walk_home_page.dart';
+
+import '../../../support/diary_fixtures.dart';
+import '../../../support/fake_device_auth.dart';
 
 class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
 
@@ -40,9 +57,16 @@ class _MockHolidays extends Mock implements HolidayRefresher {}
 
 class _MockAccess extends Mock implements HolidayCalendarAccess {}
 
+class _MockDiaryRepo extends Mock implements DiaryRepository {}
+
+class _MockDiaryUseCase extends Mock implements DiaryUseCase {}
+
 class _FakeCalendar implements HolidayCalendar {
   @override
-  HolidaySource source = const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
+  HolidaySource source = const HolidaySource.bundled(
+    firstYear: 2026,
+    lastYear: 2027,
+  );
 
   @override
   String? nameOf(DateTime date) => null;
@@ -86,19 +110,25 @@ void main() {
   late _FakeCalendar calendar;
   late _MemorySettings memorySettings;
   late _FakeWidget homeWidget;
+  late _MockDiaryUseCase diary;
+  late PrefsLockRepository lockRepo;
+  late MutableClock clock;
 
-  setUpAll(() => registerFallbackValue(PeriodKind.week));
-  setUp(() {
+  setUpAll(() {
+    registerFallbackValue(PeriodKind.week);
+    registerFallbackValue(const EntryFilter.all());
+  });
+  setUp(() async {
     // 네이티브 디스패처 자리: 헤드리스 일이 없어 awaitIdle 에 바로 답한다.
-    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger.setMockMethodCallHandler(
-      backgroundChannel,
-      (call) async => null,
-    );
+    TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
+        .setMockMethodCallHandler(backgroundChannel, (call) async => null);
     alarms = _MockAlarmUseCase();
     walk = _MockWalk();
     notification = _MockRequester();
     holidays = _MockHolidays();
-    when(() => holidays.refresh(force: any(named: 'force'))).thenAnswer((_) async {});
+    when(
+      () => holidays.refresh(force: any(named: 'force')),
+    ).thenAnswer((_) async {});
     when(() => holidays.refresh()).thenAnswer((_) async {});
     when(() => holidays.refreshed).thenAnswer((_) => const Stream.empty());
     calendar = _FakeCalendar();
@@ -118,10 +148,29 @@ void main() {
     when(alarms.timeZoneChanged).thenAnswer((_) async {});
     when(walk.access).thenAnswer((_) async => HealthAccess.permissionDenied);
     when(() => walk.permissionDeclinedThisSession).thenReturn(false);
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    lockRepo = PrefsLockRepository(prefs);
+    clock = MutableClock(DateTime.now());
+    diary = _MockDiaryUseCase();
+    when(diary.maintain).thenAnswer((_) async {});
+    when(diary.cleanOrphans).thenAnswer((_) async {});
+    final diaryRepo = _MockDiaryRepo();
+    when(diaryRepo.watchStories).thenAnswer((_) => Stream.value(const []));
+    when(
+      () => diaryRepo.watchEntries(any()),
+    ).thenAnswer((_) => Stream.value(const []));
+    getIt
+      ..registerSingleton<DiaryUseCase>(diary)
+      ..registerSingleton<DiaryRepository>(diaryRepo)
+      ..registerSingleton<DiaryPreferences>(PrefsDiaryPreferences(prefs))
+      ..registerSingleton<LockRepository>(lockRepo)
+      ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
+      ..registerSingleton<MediaPickGuard>(MediaPickGuard());
     getIt
       ..registerSingleton<AlarmUseCase>(alarms)
       ..registerSingleton<WalkUseCase>(walk)
-      ..registerSingleton<Clock>(Clock())
+      ..registerSingleton<Clock>(clock)
       ..registerSingleton<HolidayRefresher>(holidays)
       ..registerSingleton<HolidayCalendar>(calendar)
       ..registerSingleton<HolidayCalendarAccess>(calendarAccess)
@@ -136,10 +185,8 @@ void main() {
       );
   });
   tearDown(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-      backgroundChannel,
-      null,
-    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(backgroundChannel, null);
     return getIt.reset();
   });
 
@@ -198,8 +245,98 @@ void main() {
     expect(icon(destinations[0].selectedIcon), Icons.alarm);
     expect(icon(destinations[1].icon), Icons.directions_walk);
     expect(destinations[1].selectedIcon, isNull);
-    expect(icon(destinations[2].icon), Icons.settings_outlined);
-    expect(icon(destinations[2].selectedIcon), Icons.settings);
+    expect(icon(destinations[2].icon), Icons.book_outlined);
+    expect(icon(destinations[2].selectedIcon), Icons.book);
+    expect(icon(destinations[3].icon), Icons.settings_outlined);
+    expect(icon(destinations[3].selectedIcon), Icons.settings);
+  });
+
+  testWidgets('탭은 알람 · 걷기 · 일기 · 설정 순서', (tester) async {
+    await pump(tester);
+
+    final labels = [
+      for (final d in tester.widgetList<NavigationDestination>(
+        find.byType(NavigationDestination),
+      ))
+        d.label,
+    ];
+    expect(labels, ['알람', '걷기', '일기', '설정']);
+    expect(ShellTab.values, [
+      ShellTab.alarm,
+      ShellTab.walk,
+      ShellTab.diary,
+      ShellTab.settings,
+    ]);
+
+    await tester.tap(find.byIcon(Icons.book_outlined));
+    await tester.pumpAndSettle();
+    expect(onstage(DiaryTab), isTrue);
+    expect(find.byType(StoryBar), findsOneWidget);
+  });
+
+  testWidgets('시작할 때 고아 미디어 청소를 한 번 부르고, 실패해도 화면은 뜬다', (tester) async {
+    when(diary.cleanOrphans).thenAnswer((_) => Future.error(Exception('io')));
+    await pump(tester);
+
+    verify(diary.cleanOrphans).called(1);
+    expect(tester.takeException(), isNull);
+    expect(onstage(WalkHomePage), isTrue);
+  });
+
+  Future<void> enableDiaryLock() async {
+    await lockRepo.setSecret(LockMethod.pin, '1234');
+    await lockRepo.saveConfig(const LockConfig(enabled: true));
+  }
+
+  testWidgets('일기는 잠긴 채 시작하고, 풀었다가 백그라운드에 오래 있다 돌아오면 다시 잠긴다', (tester) async {
+    await enableDiaryLock();
+    await pump(tester);
+    await tester.tap(find.byIcon(Icons.book_outlined));
+    await tester.pumpAndSettle();
+    expect(find.byType(PinPad), findsOneWidget);
+    expect(find.byType(StoryBar, skipOffstage: false), findsNothing);
+
+    for (final d in '1234'.split('')) {
+      await tester.tap(find.widgetWithText(TextButton, d));
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+    expect(find.byType(StoryBar), findsOneWidget);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    clock.advance(const Duration(minutes: 2));
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StoryBar, skipOffstage: false), findsNothing);
+    expect(find.byType(PinPad), findsOneWidget);
+  });
+
+  testWidgets('일기가 잠겨 있어도 알람 울림 화면(셸 바깥 라우트)은 보인다', (tester) async {
+    await enableDiaryLock();
+    await pump(tester);
+    await tester.tap(find.byIcon(Icons.book_outlined));
+    await tester.pumpAndSettle();
+    expect(find.byType(PinPad), findsOneWidget);
+
+    final navigator = tester.state<NavigatorState>(
+      find.byType(Navigator).first,
+    );
+    unawaited(
+      navigator.push(
+        MaterialPageRoute<void>(
+          builder: (_) => const Scaffold(body: Text('ringing')),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('ringing').hitTestable(), findsOneWidget);
+    expect(find.byType(PinPad), findsNothing);
   });
 
   testWidgets('탭을 누르면 해당 화면으로 바뀐다', (tester) async {
@@ -321,7 +458,9 @@ void main() {
     expect(find.text('캘린더 허용 필요 ›'), findsOneWidget);
     clearInteractions(alarms);
 
-    when(calendarAccess.check).thenAnswer((_) async => PermissionStatus.granted);
+    when(
+      calendarAccess.check,
+    ).thenAnswer((_) async => PermissionStatus.granted);
     when(() => holidays.refresh(force: true)).thenAnswer((_) async {
       calendar.source = const HolidaySource.device(calendarName: '대한민국의 휴일');
     });
@@ -539,16 +678,17 @@ void main() {
     void answerAwaitIdle(WidgetTester tester, {bool never = false}) {
       calls = [];
       idle = Completer<void>();
-      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(backgroundChannel, (
-        call,
-      ) async {
-        calls.add(call.method);
-        if (call.method == 'awaitIdle') {
-          if (never) return Completer<Object?>().future;
-          await idle.future;
-        }
-        return null;
-      });
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        backgroundChannel,
+        (call) async {
+          calls.add(call.method);
+          if (call.method == 'awaitIdle') {
+            if (never) return Completer<Object?>().future;
+            await idle.future;
+          }
+          return null;
+        },
+      );
       addTearDown(
         () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
           backgroundChannel,
@@ -588,7 +728,9 @@ void main() {
       verify(alarms.sync).called(1);
     });
 
-    testWidgets('응답이 없으면 시간 한도(backgroundIdleTimeout) 뒤 그냥 sync 한다', (tester) async {
+    testWidgets('응답이 없으면 시간 한도(backgroundIdleTimeout) 뒤 그냥 sync 한다', (
+      tester,
+    ) async {
       answerAwaitIdle(tester, never: true);
       final start = tester.binding.clock.now();
       final syncedAfter = <Duration>[];

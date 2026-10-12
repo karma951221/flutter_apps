@@ -1700,6 +1700,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkShellTabSettings => 'Settings';
 
   @override
+  String get walkShellTabDiary => 'Diary';
+
+  @override
+  String get walkDiaryDailyStoryTitle => 'Daily';
+
+  @override
+  String get walkDiaryAll => 'All';
+
+  @override
+  String get walkDiaryArchive => 'Archive';
+
+  @override
+  String get walkDiaryEmpty => 'No entries yet';
+
+  @override
   String get walkAlarmListTitle => 'Alarms';
 
   @override

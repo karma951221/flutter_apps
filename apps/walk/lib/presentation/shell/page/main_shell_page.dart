@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,17 +12,23 @@ import '../../../domain/alarm/holiday/holiday_calendar_access.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
 import '../../../domain/alarm/widget/next_alarm_widget.dart';
+import '../../../domain/diary/usecase/diary_use_case.dart';
+import '../../../domain/lock/device_auth.dart';
+import '../../../domain/lock/lock_repository.dart';
 import '../../../domain/settings/repository/settings_repository.dart';
 import '../../../domain/walk/usecase/walk_use_case.dart';
 import '../../alarm/cubit/alarm_list_cubit.dart';
 import '../../alarm/page/alarm_list_page.dart';
+import '../../diary/page/diary_tab.dart';
+import '../../lock/cubit/diary_lock_cubit.dart';
+import '../../lock/media_pick_guard.dart';
 import '../../settings/cubit/holiday_settings_cubit.dart';
 import '../../settings/cubit/settings_permissions_cubit.dart';
 import '../../settings/page/settings_page.dart';
 import '../../walk/page/walk_home_page.dart';
 
 /// 하단 탭 순서. 첫 탭은 [walk] — 원래 한 화면짜리 앱이던 흐름을 지킨다.
-enum ShellTab { alarm, walk, settings }
+enum ShellTab { alarm, walk, diary, settings }
 
 /// 하단 탭 셸. 탭마다 자기 `Scaffold` · `AppBar` 를 둔다.
 ///
@@ -29,6 +37,11 @@ enum ShellTab { alarm, walk, settings }
 /// 미리 알림 액션)가 [backgroundChannel] 로 부르는 `resync` · `reminderAction`. 그 앞에 공휴일 캐시(`HolidayRefresher`)를 갱신한다.
 /// 알람 목록 · 설정 권한 · 설정 알람 섹션(공휴일) cubit 을 소유해, 복귀하거나 위에 얹힌
 /// 화면(편집 · 울림)이 걷힐 때 다시 읽는다.
+///
+/// 일기 잠금([DiaryLockCubit])도 여기 하나를 두고 `BlocProvider` 로 내린다 — 일기 탭의 게이트와
+/// 설정 탭(잠금 설정 뒤 `configChanged`)이 같은 것을 본다. 앱 생명주기(pause · resume)를 넘겨
+/// 백그라운드 경과로 다시 잠근다. 알람 울림 화면은 셸 바깥 라우트라 일기 잠금과 무관하다.
+/// 시작할 때 일기 고아 미디어 청소([DiaryUseCase.cleanOrphans])를 한 번, 기다리지 않고 부른다.
 class MainShellPage extends StatefulWidget {
   const MainShellPage({super.key});
 
@@ -56,6 +69,12 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     getIt<AlarmPermissions>(),
     getIt<WalkUseCase>(),
   );
+  late final _diaryLock = DiaryLockCubit(
+    getIt<LockRepository>(),
+    getIt<DeviceAuth>(),
+    getIt<Clock>(),
+    getIt<MediaPickGuard>(),
+  );
   late final AppLifecycleListener _lifecycle;
   ShellTab _tab = ShellTab.walk;
   ModalRoute<void>? _route;
@@ -63,9 +82,20 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   @override
   void initState() {
     super.initState();
-    _lifecycle = AppLifecycleListener(onResume: _refresh);
+    _lifecycle = AppLifecycleListener(
+      onPause: _diaryLock.onPaused,
+      onResume: _onResume,
+    );
     backgroundChannel.setMethodCallHandler(_onBackgroundCall);
+    _diaryLock.start();
+    // 앱 시작 청소는 화면을 막지 않는다. 실패해도 다음 시작에 다시 한다.
+    unawaited(getIt<DiaryUseCase>().cleanOrphans().catchError((Object _) {}));
     _alarms.load();
+    _refresh();
+  }
+
+  void _onResume() {
+    _diaryLock.onResumed();
     _refresh();
   }
 
@@ -88,6 +118,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     _alarms.close();
     _permissions.close();
     _holidaySettings.close();
+    _diaryLock.close();
     super.dispose();
   }
 
@@ -182,6 +213,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
         BlocProvider.value(value: _alarms),
         BlocProvider.value(value: _permissions),
         BlocProvider.value(value: _holidaySettings),
+        BlocProvider.value(value: _diaryLock),
       ],
       child: Scaffold(
         body: IndexedStack(
@@ -189,6 +221,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
           children: [
             AlarmListPage(onOpenSettings: () => _select(ShellTab.settings)),
             WalkHomePage(active: _tab == ShellTab.walk),
+            DiaryTab(active: _tab == ShellTab.diary),
             const SettingsPage(),
           ],
         ),
@@ -204,6 +237,11 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
             NavigationDestination(
               icon: const Icon(Icons.directions_walk),
               label: l10n.walkShellTabWalk,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.book_outlined),
+              selectedIcon: const Icon(Icons.book),
+              label: l10n.walkShellTabDiary,
             ),
             NavigationDestination(
               icon: const Icon(Icons.settings_outlined),

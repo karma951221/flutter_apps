@@ -1612,6 +1612,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkShellTabSettings => '設定';
 
   @override
+  String get walkShellTabDiary => '日記';
+
+  @override
+  String get walkDiaryDailyStoryTitle => '日常';
+
+  @override
+  String get walkDiaryAll => 'すべて';
+
+  @override
+  String get walkDiaryArchive => 'アーカイブ';
+
+  @override
+  String get walkDiaryEmpty => 'まだ記録がありません';
+
+  @override
   String get walkAlarmListTitle => 'アラーム';
 
   @override

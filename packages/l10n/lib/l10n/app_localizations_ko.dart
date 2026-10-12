@@ -1614,6 +1614,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkShellTabSettings => '설정';
 
   @override
+  String get walkShellTabDiary => '일기';
+
+  @override
+  String get walkDiaryDailyStoryTitle => '일상';
+
+  @override
+  String get walkDiaryAll => '전체';
+
+  @override
+  String get walkDiaryArchive => '보관함';
+
+  @override
+  String get walkDiaryEmpty => '아직 기록이 없어요';
+
+  @override
   String get walkAlarmListTitle => '알람';
 
   @override

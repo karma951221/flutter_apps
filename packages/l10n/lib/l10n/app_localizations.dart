@@ -3122,6 +3122,36 @@ abstract class AppLocalizations {
   /// **'설정'**
   String get walkShellTabSettings;
 
+  /// 하단 탭 — 일기
+  ///
+  /// In ko, this message translates to:
+  /// **'일기'**
+  String get walkShellTabDiary;
+
+  /// 기본 스토리의 표시 이름 — 사용자가 이름을 바꾸지 않았을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'일상'**
+  String get walkDiaryDailyStoryTitle;
+
+  /// 일기 스토리 바 — 모든 스토리의 기록을 함께 보는 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'전체'**
+  String get walkDiaryAll;
+
+  /// 일기 스토리 바 끝 — 닫힌 스토리 모음. 누르면 목록 시트가 열린다
+  ///
+  /// In ko, this message translates to:
+  /// **'보관함'**
+  String get walkDiaryArchive;
+
+  /// 일기 타임라인에 보일 기록이 없을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 기록이 없어요'**
+  String get walkDiaryEmpty;
+
   /// 알람 목록 화면 제목
   ///
   /// In ko, this message translates to:
