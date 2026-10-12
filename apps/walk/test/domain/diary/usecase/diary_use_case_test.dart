@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import 'package:walk/data/diary/drift_diary_repository.dart';
 import 'package:walk/data/diary/media/file_media_store.dart';
 import 'package:walk/data/diary/prefs_diary_preferences.dart';
 import 'package:walk/domain/diary/diary_failure.dart';
@@ -42,6 +44,35 @@ class _FakePlaceSource implements PlaceSource {
   Future<String?> nameFor(double lat, double lng) async {
     asked.add((lat, lng));
     return name;
+  }
+}
+
+/// [release] 가 끝날 때까지 이름 찾기를 붙잡아 둔다.
+class _GatedPlaceSource implements PlaceSource {
+  final release = Completer<String?>();
+  int calls = 0;
+
+  @override
+  Future<EntryLocation?> current() async => null;
+
+  @override
+  Future<String?> nameFor(double lat, double lng) {
+    calls++;
+    return release.future;
+  }
+}
+
+/// 기한 지난 휴지통 정리 호출 수를 센다.
+class _CountingRepository extends DriftDiaryRepository {
+  _CountingRepository(DiaryHarness h)
+    : super(h.db, const IdGenerator(Uuid()), h.clock);
+
+  int purgeCalls = 0;
+
+  @override
+  Future<Result<List<String>>> purgeTrashedBefore(DateTime deletedBefore) {
+    purgeCalls++;
+    return super.purgeTrashedBefore(deletedBefore);
   }
 }
 
@@ -373,6 +404,46 @@ void main() {
         okValue(await h.repository.entry(entry.id)).location?.placeName,
         '애월읍',
       );
+    });
+
+    test('첫 이름 찾기가 실패하면(오프라인) 나머지는 묻지 않고 멈춘다', () async {
+      for (final lat in [33.1, 33.2, 33.3]) {
+        okValue(
+          await useCase.save(
+            entryDraft(location: EntryLocation(lat: lat, lng: 126.31)),
+          ),
+        );
+        h.clock.advance(const Duration(minutes: 1));
+      }
+
+      await useCase.maintain();
+
+      expect(places.asked, hasLength(1));
+      expect(await h.repository.entriesMissingPlaceName(), hasLength(3));
+    });
+
+    test('진행 중에 다시 부르면 같은 작업을 기다리고 정리 · 이름 찾기는 한 번만 한다', () async {
+      final repo = _CountingRepository(h);
+      final gated = _GatedPlaceSource();
+      final useCase = DiaryUseCase(repo, media, gated, prefs, h.clock);
+      okValue(
+        await useCase.save(
+          entryDraft(location: const EntryLocation(lat: 33.46, lng: 126.31)),
+        ),
+      );
+
+      final first = useCase.maintain();
+      await pumpEventQueue();
+      final second = useCase.maintain();
+      gated.release.complete('애월읍');
+      await Future.wait([first, second]);
+
+      expect(repo.purgeCalls, 1);
+      expect(gated.calls, 1);
+
+      // 끝난 뒤에는 다시 돈다.
+      await useCase.maintain();
+      expect(repo.purgeCalls, 2);
     });
   });
 

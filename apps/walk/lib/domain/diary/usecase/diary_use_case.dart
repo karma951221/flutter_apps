@@ -88,7 +88,16 @@ class DiaryUseCase {
   Future<Result<void>> deleteStory(String id) => _repo.deleteStory(id);
 
   /// 일기 탭 진입 시: 기한 지난 휴지통 영구 삭제(+파일) → 장소 이름 채우기(네트워크 실패면 다음에).
-  Future<void> maintain() async {
+  ///
+  /// 이름 찾기는 네트워크를 기다리므로(호출당 수 초) 화면은 이것을 기다리지 말고
+  /// 띄워만 둔다. 이름을 하나라도 못 찾으면 오프라인으로 보고 남은 기록은 다음 호출로
+  /// 미룬다. 진행 중에 다시 부르면 새로 돌지 않고 진행 중인 작업을 돌려준다.
+  Future<void> maintain() =>
+      _maintaining ??= _maintain().whenComplete(() => _maintaining = null);
+
+  Future<void>? _maintaining;
+
+  Future<void> _maintain() async {
     final period = _prefs.trashRetention.period;
     if (period != null) {
       // TrashRetention.expired 와 같은 경계: deletedAt + period <= now.
@@ -102,7 +111,8 @@ class DiaryUseCase {
       final lng = entry.location?.lng;
       if (lat == null || lng == null) continue;
       final name = await _places.nameFor(lat, lng);
-      if (name != null) await _repo.fillPlaceName(entry.id, name);
+      if (name == null) break;
+      await _repo.fillPlaceName(entry.id, name);
     }
   }
 
