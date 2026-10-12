@@ -14,10 +14,14 @@ import '../format/alarm_format.dart';
 /// "정각"으로 읽힌다. 시 열 라벨만 `12시` 로 바꾸고, 휠 전체에는 지금 고른 시각(`오전 12:43`)을
 /// 라벨로 단다.
 class AlarmTimeWheel extends StatefulWidget {
-  const AlarmTimeWheel({required this.initial, required this.onChanged, super.key});
+  const AlarmTimeWheel({required this.initial, required this.onChanged, this.maximum, super.key});
 
   final TimeOfDay initial;
   final ValueChanged<TimeOfDay> onChanged;
+
+  /// 있으면 이보다 늦은 시각은 휠에서 고를 수 없다(일기 시각 — 오늘의 지금 이후 금지).
+  /// [initial] 은 이보다 늦으면 안 된다.
+  final TimeOfDay? maximum;
 
   @override
   State<AlarmTimeWheel> createState() => _AlarmTimeWheelState();
@@ -44,6 +48,10 @@ class _AlarmTimeWheelState extends State<AlarmTimeWheel> {
           mode: CupertinoDatePickerMode.time,
           use24hFormat: MediaQuery.alwaysUse24HourFormatOf(context),
           initialDateTime: DateTime(2000, 1, 1, widget.initial.hour, widget.initial.minute),
+          maximumDate: switch (widget.maximum) {
+            final max? => DateTime(2000, 1, 1, max.hour, max.minute),
+            null => null,
+          },
           onDateTimeChanged: (value) {
             final time = TimeOfDay(hour: value.hour, minute: value.minute);
             setState(() => _value = time);

@@ -56,4 +56,25 @@ void main() {
     expect(find.bySemanticsLabel('오전 12:43'), findsNothing);
     handle.dispose();
   });
+
+  testWidgets('maximum 을 주면 그 뒤 시각은 휠에서 고를 수 없다', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: AlarmTimeWheel(
+            initial: const TimeOfDay(hour: 9, minute: 0),
+            maximum: const TimeOfDay(hour: 9, minute: 30),
+            onChanged: changes.add,
+          ),
+        ),
+      ),
+    );
+
+    final picker = tester.widget<CupertinoDatePicker>(find.byType(CupertinoDatePicker));
+    expect(picker.maximumDate, DateTime(2000, 1, 1, 9, 30));
+  });
 }

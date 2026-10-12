@@ -4435,6 +4435,216 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'폰 화면 잠금을 먼저 설정해야 일기 잠금을 켤 수 있어요'**
   String get walkLockNeedsScreenLock;
+
+  /// 일기 작성 화면 제목 · 일기 탭의 새 기록 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'새 기록'**
+  String get walkDiaryEditorNewTitle;
+
+  /// 일기 기록 수정 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 고치기'**
+  String get walkDiaryEditorEditTitle;
+
+  /// 새 일기 기록을 저장하는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'올리기'**
+  String get walkDiaryEditorPost;
+
+  /// 고친 일기 기록을 저장하는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get walkDiaryEditorSave;
+
+  /// 일기 작성 화면을 닫는 ✕ 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'닫기'**
+  String get walkDiaryEditorClose;
+
+  /// 일기 작성 시각 행 — 시각을 바꾸지 않았을 때. when 은 '10월 10일 (토) 오후 3:24'
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 · {when}'**
+  String walkDiaryEditorTimeNow(String when);
+
+  /// 일기 작성 시각 행의 날짜와 시각
+  ///
+  /// In ko, this message translates to:
+  /// **'{date} {time}'**
+  String walkDiaryEditorDateTime(String date, String time);
+
+  /// 일기 기록 시각을 바꿨을 때 처음 시각으로 되돌리는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'올린 시각으로 되돌리기'**
+  String get walkDiaryEditorRevertTime;
+
+  /// 일기 기록 시각 휠 시트의 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'확인'**
+  String get walkDiaryEditorPickTimeConfirm;
+
+  /// 일기 작성 화면에서 지금 위치를 찾는 동안 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'위치를 찾는 중…'**
+  String get walkDiaryEditorLocating;
+
+  /// 좌표만 있고 장소 이름을 못 찾았을 때 위치 행 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'이름 없는 위치'**
+  String get walkDiaryEditorUnnamedPlace;
+
+  /// 일기 작성 화면 위치 행의 ✕ 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 빼기'**
+  String get walkDiaryEditorRemoveLocation;
+
+  /// 일기 작성 화면 장소 직접 입력칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'장소 이름'**
+  String get walkDiaryEditorPlaceHint;
+
+  /// 일기 작성 화면 스토리 행
+  ///
+  /// In ko, this message translates to:
+  /// **'스토리: {title}'**
+  String walkDiaryEditorStory(String title);
+
+  /// 일기 작성 화면 스토리 선택 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'스토리 고르기'**
+  String get walkDiaryEditorPickStory;
+
+  /// 일기 작성 화면 미디어 추가 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'사진·영상 추가'**
+  String get walkDiaryEditorAddMedia;
+
+  /// 일기 작성 화면 미디어 썸네일의 ✕ 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'빼기'**
+  String get walkDiaryEditorRemoveMedia;
+
+  /// 일기 미디어 추가 시트 — 앨범에서 사진 · 영상 고르기
+  ///
+  /// In ko, this message translates to:
+  /// **'앨범에서 고르기'**
+  String get walkDiaryEditorPickGallery;
+
+  /// 일기 미디어 추가 시트 — 카메라로 사진 찍기
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 찍기'**
+  String get walkDiaryEditorTakePhoto;
+
+  /// 일기 미디어 추가 시트 — 카메라로 영상 찍기
+  ///
+  /// In ko, this message translates to:
+  /// **'영상 찍기'**
+  String get walkDiaryEditorTakeVideo;
+
+  /// 일기 작성 화면 본문 입력칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 있었던 일을 적어 보세요'**
+  String get walkDiaryEditorBodyHint;
+
+  /// 일기 작성 화면 태그 입력칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'태그 추가'**
+  String get walkDiaryEditorTagHint;
+
+  /// 일기 작성 중 닫을 때 확인 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'작성을 그만둘까요?'**
+  String get walkDiaryEditorDiscardTitle;
+
+  /// 일기 작성 중 닫을 때 확인 다이얼로그 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'쓴 내용은 저장되지 않아요.'**
+  String get walkDiaryEditorDiscardContent;
+
+  /// 일기 작성 중 닫을 때 확인 다이얼로그의 버리기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'그만두기'**
+  String get walkDiaryEditorDiscardConfirm;
+
+  /// 빈 일기 기록을 저장하려 할 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'글이나 사진·영상을 넣어 주세요'**
+  String get walkDiaryErrorEmptyEntry;
+
+  /// 일기 기록 시각이 미래일 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'앞으로의 시각으로는 쓸 수 없어요'**
+  String get walkDiaryErrorFutureTime;
+
+  /// 일기 기록 하나에 미디어 개수 제한을 넘었을 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'사진·영상은 {max}개까지 넣을 수 있어요'**
+  String walkDiaryErrorTooManyMedia(int max);
+
+  /// 일기에 넣으려는 영상이 길이 제한을 넘었을 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'{seconds}초 이하 영상만 넣을 수 있어요'**
+  String walkDiaryErrorVideoTooLong(int seconds);
+
+  /// 닫힌 스토리로 일기 기록을 저장하려 할 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'닫힌 스토리에는 쓸 수 없어요'**
+  String get walkDiaryErrorStoryClosed;
+
+  /// 고치려는 일기 기록이 없거나 휴지통에 있을 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 찾을 수 없어요'**
+  String get walkDiaryErrorNotFound;
+
+  /// 일기에 고른 사진 · 영상을 열거나 줄이지 못했을 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'사진·영상을 불러오지 못했어요'**
+  String get walkDiaryErrorMediaProcessing;
+
+  /// 일기 기록을 저장 · 읽기 중 규칙 밖의 오류가 났을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 못했어요. 다시 시도해 주세요'**
+  String get walkDiaryErrorSave;
+
+  /// 일기 작성 화면 태그 추천 — 태그 이름과 쓴 기록 수
+  ///
+  /// In ko, this message translates to:
+  /// **'#{name} {count}'**
+  String walkDiaryEditorTagSuggestion(String name, int count);
+
+  /// 일기 작성 화면 장소 추천 — 장소 이름과 쓴 기록 수
+  ///
+  /// In ko, this message translates to:
+  /// **'{name} {count}'**
+  String walkDiaryEditorPlaceSuggestion(String name, int count);
 }
 
 class _AppLocalizationsDelegate

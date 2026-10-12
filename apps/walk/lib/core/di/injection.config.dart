@@ -63,6 +63,7 @@ import '../../domain/lock/lock_repository.dart' as _i43;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
+import '../../presentation/diary/media_picker.dart' as _i287;
 import '../../presentation/lock/media_pick_guard.dart' as _i488;
 import 'register_module.dart' as _i291;
 
@@ -100,6 +101,9 @@ extension GetItInjectableX on _i174.GetIt {
       () => registerModule.diaryRoot,
       instanceName: 'diaryRoot',
       preResolve: true,
+    );
+    gh.lazySingleton<_i287.MediaPicker>(
+      () => _i287.MediaPicker(gh<_i488.MediaPickGuard>()),
     );
     gh.lazySingleton<_i344.AlarmSoundSource>(
       () => _i793.ChannelAlarmSoundSource(),

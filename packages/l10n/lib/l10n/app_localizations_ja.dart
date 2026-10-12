@@ -2329,4 +2329,123 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkLockNeedsScreenLock => '日記のロックをオンにするには、先にスマホの画面ロックを設定してください';
+
+  @override
+  String get walkDiaryEditorNewTitle => '新しい記録';
+
+  @override
+  String get walkDiaryEditorEditTitle => '記録を編集';
+
+  @override
+  String get walkDiaryEditorPost => '投稿';
+
+  @override
+  String get walkDiaryEditorSave => '保存';
+
+  @override
+  String get walkDiaryEditorClose => '閉じる';
+
+  @override
+  String walkDiaryEditorTimeNow(String when) {
+    return '今 · $when';
+  }
+
+  @override
+  String walkDiaryEditorDateTime(String date, String time) {
+    return '$date $time';
+  }
+
+  @override
+  String get walkDiaryEditorRevertTime => '投稿時刻に戻す';
+
+  @override
+  String get walkDiaryEditorPickTimeConfirm => '決定';
+
+  @override
+  String get walkDiaryEditorLocating => '位置を取得中…';
+
+  @override
+  String get walkDiaryEditorUnnamedPlace => '名前のない場所';
+
+  @override
+  String get walkDiaryEditorRemoveLocation => '位置を外す';
+
+  @override
+  String get walkDiaryEditorPlaceHint => '場所の名前';
+
+  @override
+  String walkDiaryEditorStory(String title) {
+    return 'ストーリー: $title';
+  }
+
+  @override
+  String get walkDiaryEditorPickStory => 'ストーリーを選ぶ';
+
+  @override
+  String get walkDiaryEditorAddMedia => '写真・動画を追加';
+
+  @override
+  String get walkDiaryEditorRemoveMedia => '外す';
+
+  @override
+  String get walkDiaryEditorPickGallery => 'アルバムから選ぶ';
+
+  @override
+  String get walkDiaryEditorTakePhoto => '写真を撮る';
+
+  @override
+  String get walkDiaryEditorTakeVideo => '動画を撮る';
+
+  @override
+  String get walkDiaryEditorBodyHint => '今日あったことを書いてみましょう';
+
+  @override
+  String get walkDiaryEditorTagHint => 'タグを追加';
+
+  @override
+  String get walkDiaryEditorDiscardTitle => '作成をやめますか?';
+
+  @override
+  String get walkDiaryEditorDiscardContent => '書いた内容は保存されません。';
+
+  @override
+  String get walkDiaryEditorDiscardConfirm => 'やめる';
+
+  @override
+  String get walkDiaryErrorEmptyEntry => '文章か写真・動画を入れてください';
+
+  @override
+  String get walkDiaryErrorFutureTime => '未来の時刻は選べません';
+
+  @override
+  String walkDiaryErrorTooManyMedia(int max) {
+    return '写真・動画は$max件まで追加できます';
+  }
+
+  @override
+  String walkDiaryErrorVideoTooLong(int seconds) {
+    return '$seconds秒以下の動画のみ追加できます';
+  }
+
+  @override
+  String get walkDiaryErrorStoryClosed => '終了したストーリーには書けません';
+
+  @override
+  String get walkDiaryErrorNotFound => '記録が見つかりません';
+
+  @override
+  String get walkDiaryErrorMediaProcessing => '写真・動画を読み込めませんでした';
+
+  @override
+  String get walkDiaryErrorSave => '保存できませんでした。もう一度お試しください';
+
+  @override
+  String walkDiaryEditorTagSuggestion(String name, int count) {
+    return '#$name $count';
+  }
+
+  @override
+  String walkDiaryEditorPlaceSuggestion(String name, int count) {
+    return '$name $count';
+  }
 }

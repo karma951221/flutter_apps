@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:l10n/l10n.dart';
+import 'package:walk/domain/diary/diary_failure.dart';
 import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/presentation/diary/format/diary_format.dart';
 
@@ -53,6 +54,32 @@ void main() {
         '어제',
       );
     });
+  });
+
+  test('dateWithWeekday: 오늘도 날짜로, 지난해는 연도까지', () {
+    expect(DiaryFormat.dateWithWeekday(ko, now, now), '10월 10일 (토)');
+    expect(
+      DiaryFormat.dateWithWeekday(ko, DateTime(2025, 12, 31), now),
+      '2025년 12월 31일 (수)',
+    );
+  });
+
+  test('failure: 일기 규칙 위반마다 안내 문구', () {
+    expect(
+      DiaryFormat.failure(ko, DiaryFailure.tooManyMedia),
+      '사진·영상은 10개까지 넣을 수 있어요',
+    );
+    expect(
+      DiaryFormat.failure(ko, DiaryFailure.videoTooLong),
+      '30초 이하 영상만 넣을 수 있어요',
+    );
+    expect(
+      DiaryFormat.failure(ko, DiaryFailure.emptyEntry),
+      '글이나 사진·영상을 넣어 주세요',
+    );
+    for (final f in DiaryFailure.values) {
+      expect(DiaryFormat.failure(ko, f), isNotEmpty);
+    }
   });
 
   test('sameDay: 시각이 달라도 같은 날이면 true', () {

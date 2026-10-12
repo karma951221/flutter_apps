@@ -13,6 +13,7 @@ import 'package:walk/data/lock/prefs_lock_repository.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/diary_view_mode.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
+import 'package:walk/domain/diary/location/place_source.dart';
 import 'package:walk/domain/diary/media/media_store.dart';
 import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
@@ -22,6 +23,7 @@ import 'package:walk/domain/lock/device_auth.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
 import 'package:walk/presentation/diary/page/diary_tab.dart';
+import 'package:walk/presentation/diary/page/entry_editor_page.dart';
 import 'package:walk/presentation/diary/widget/entry_media_view.dart';
 import 'package:walk/presentation/diary/widget/feed_view.dart';
 import 'package:walk/presentation/diary/widget/prose_view.dart';
@@ -29,6 +31,7 @@ import 'package:walk/presentation/diary/widget/reels_view.dart';
 import 'package:walk/presentation/diary/widget/story_avatar.dart';
 import 'package:walk/presentation/diary/widget/story_bar.dart';
 import 'package:walk/presentation/diary/widget/story_header.dart';
+import 'package:walk/presentation/diary/media_picker.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
 import 'package:walk/presentation/lock/widget/pin_pad.dart';
@@ -41,6 +44,10 @@ class _MockRepo extends Mock implements DiaryRepository {}
 class _MockUseCase extends Mock implements DiaryUseCase {}
 
 class _MockStore extends Mock implements MediaStore {}
+
+class _MockPlaces extends Mock implements PlaceSource {}
+
+class _MockPicker extends Mock implements MediaPicker {}
 
 Story _story(String id, String title, {DateTime? lastPostedAt}) => Story(
   id: id,
@@ -140,6 +147,7 @@ void main() {
     expect(find.byType(StoryBar, skipOffstage: false), findsNothing);
     expect(find.text('비밀 기록', skipOffstage: false), findsNothing);
     expect(find.byType(PinPad), findsOneWidget);
+    expect(find.byType(FloatingActionButton), findsNothing);
 
     for (final d in '1234'.split('')) {
       await tester.tap(find.widgetWithText(TextButton, d));
@@ -292,6 +300,59 @@ void main() {
       await tester.pumpWidget(app());
       await tester.pumpAndSettle();
       expect(playing(), isTrue);
+    });
+  });
+
+  group('작성 화면 열기', () {
+    setUp(() {
+      final places = _MockPlaces();
+      when(places.current).thenAnswer((_) async => null);
+      when(
+        () => repo.watchTagCounts(query: any(named: 'query')),
+      ).thenAnswer((_) => Stream.value(const []));
+      when(
+        () => repo.watchPlaceCounts(query: any(named: 'query')),
+      ).thenAnswer((_) => Stream.value(const []));
+      final store = _MockStore();
+      when(() => store.resolve(any())).thenAnswer((_) => File('/fake'));
+      getIt
+        ..registerSingleton<PlaceSource>(places)
+        ..registerSingleton<MediaPicker>(_MockPicker())
+        ..registerSingleton<MediaStore>(store);
+    });
+
+    testWidgets('＋ 를 누르면 새 기록 화면', (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      final page = tester.widget<EntryEditorPage>(find.byType(EntryEditorPage));
+      expect(page.editingId, isNull);
+      expect(find.text('새 기록'), findsOneWidget);
+    });
+
+    testWidgets('기록을 누르면 그 기록 고치기 화면', (tester) async {
+      final entry = _entry('출근');
+      entries[const EntryFilter.all()] = [entry];
+      when(() => repo.entry('출근')).thenAnswer((_) async => Ok(entry));
+      await pump(tester);
+
+      await tester.tap(find.text('출근'));
+      await tester.pumpAndSettle();
+
+      final page = tester.widget<EntryEditorPage>(find.byType(EntryEditorPage));
+      expect(page.editingId, '출근');
+    });
+
+    testWidgets('릴스에서도 ＋ 가 있고 위의 머리 · 토글을 가리지 않는다', (tester) async {
+      await getIt<DiaryPreferences>().setViewMode(DiaryViewMode.reels);
+      entries[const EntryFilter.all()] = [_entry('바다')];
+      await pump(tester);
+
+      final fab = tester.getRect(find.byType(FloatingActionButton));
+      final header = tester.getRect(find.byType(StoryHeader));
+      expect(fab.overlaps(header), isFalse);
     });
   });
 

@@ -19,6 +19,7 @@ import '../cubit/diary_timeline_state.dart';
 import '../widget/diary_entries_view.dart';
 import '../widget/story_bar.dart';
 import '../widget/story_header.dart';
+import 'entry_editor_page.dart';
 
 /// 셸의 일기 탭(스펙 §6.1). 위에서 `DiaryLockCubit` 를 받는다(셸이 소유).
 ///
@@ -78,6 +79,16 @@ class _DiaryTabState extends State<DiaryTab> {
           return Scaffold(
             appBar: reels ? null : AppBar(title: Text(l10n.walkShellTabDiary)),
             body: DiaryLockGate(child: _Timeline(active: widget.active)),
+            // 오른쪽 아래 — 릴스에서도 위에 얹은 머리 · 토글을 가리지 않는다.
+            floatingActionButton: unlocked
+                ? FloatingActionButton(
+                    // 셸의 IndexedStack 에 알람 탭 ＋ 도 있다 — 기본 Hero 태그가 겹치지 않게 끈다.
+                    heroTag: null,
+                    tooltip: l10n.walkDiaryEditorNewTitle,
+                    onPressed: () => openEntryEditor(context),
+                    child: const Icon(Icons.add),
+                  )
+                : null,
           );
         },
       ),
@@ -192,8 +203,16 @@ class _Entries extends StatelessWidget {
         for (final s in [...state.openStories, ...state.archived])
           s.id: storyDisplayTitle(l10n, s),
       },
-      // 기록 상세(T15)가 생기면 여기서 연다.
-      onOpen: (_) {},
+      // 기록 상세(T15)가 생기기 전까지는 바로 고치기 화면을 연다.
+      onOpen: (entry) => openEntryEditor(context, editingId: entry.id),
     );
   }
 }
+
+/// 작성 화면을 연다. [editingId] 가 있으면 그 기록을 고친다.
+Future<void> openEntryEditor(BuildContext context, {String? editingId}) =>
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => EntryEditorPage(editingId: editingId),
+      ),
+    );

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../../domain/diary/diary_failure.dart';
+import '../../../domain/diary/entity/media_limits.dart';
 import '../../../domain/diary/entity/story.dart';
 
 /// 일기 화면의 날짜 머리 · 기록 시각 · 스토리 기간 표기.
@@ -18,8 +20,15 @@ abstract final class DiaryFormat {
     if (sameDay(at, DateTime(now.year, now.month, now.day - 1))) {
       return l10n.walkDiaryYesterday;
     }
-    return '${date(l10n, at, now)} (${DateFormat.E(l10n.localeName).format(at)})';
+    return dateWithWeekday(l10n, at, now);
   }
+
+  /// `10월 7일 (수)`, 지난해면 `2025년 12월 31일 (수)` — 오늘이어도 날짜로.
+  static String dateWithWeekday(
+    AppLocalizations l10n,
+    DateTime at,
+    DateTime now,
+  ) => '${date(l10n, at, now)} (${DateFormat.E(l10n.localeName).format(at)})';
 
   /// `10월 7일`, 지난해면 `2025년 10월 7일`.
   static String date(AppLocalizations l10n, DateTime at, DateTime now) {
@@ -53,4 +62,23 @@ abstract final class DiaryFormat {
       end == null ? l10n.walkDiaryOngoing : date(l10n, end, now),
     );
   }
+
+  /// 일기 규칙 위반 안내.
+  static String failure(AppLocalizations l10n, DiaryFailure failure) =>
+      switch (failure) {
+        DiaryFailure.emptyEntry => l10n.walkDiaryErrorEmptyEntry,
+        DiaryFailure.futureTime => l10n.walkDiaryErrorFutureTime,
+        DiaryFailure.tooManyMedia => l10n.walkDiaryErrorTooManyMedia(
+          MediaLimits.maxItems,
+        ),
+        DiaryFailure.videoTooLong => l10n.walkDiaryErrorVideoTooLong(
+          MediaLimits.maxVideo.inSeconds,
+        ),
+        DiaryFailure.storyClosed => l10n.walkDiaryErrorStoryClosed,
+        DiaryFailure.notFound => l10n.walkDiaryErrorNotFound,
+        DiaryFailure.mediaProcessing => l10n.walkDiaryErrorMediaProcessing,
+        // 작성 화면에서는 나오지 않는 스토리 규칙 — 일반 저장 오류로 알린다.
+        DiaryFailure.defaultStoryLocked ||
+        DiaryFailure.endBeforeStart => l10n.walkDiaryErrorSave,
+      };
 }

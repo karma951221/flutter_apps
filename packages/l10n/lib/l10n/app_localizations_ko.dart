@@ -2332,4 +2332,123 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkLockNeedsScreenLock => '폰 화면 잠금을 먼저 설정해야 일기 잠금을 켤 수 있어요';
+
+  @override
+  String get walkDiaryEditorNewTitle => '새 기록';
+
+  @override
+  String get walkDiaryEditorEditTitle => '기록 고치기';
+
+  @override
+  String get walkDiaryEditorPost => '올리기';
+
+  @override
+  String get walkDiaryEditorSave => '저장';
+
+  @override
+  String get walkDiaryEditorClose => '닫기';
+
+  @override
+  String walkDiaryEditorTimeNow(String when) {
+    return '지금 · $when';
+  }
+
+  @override
+  String walkDiaryEditorDateTime(String date, String time) {
+    return '$date $time';
+  }
+
+  @override
+  String get walkDiaryEditorRevertTime => '올린 시각으로 되돌리기';
+
+  @override
+  String get walkDiaryEditorPickTimeConfirm => '확인';
+
+  @override
+  String get walkDiaryEditorLocating => '위치를 찾는 중…';
+
+  @override
+  String get walkDiaryEditorUnnamedPlace => '이름 없는 위치';
+
+  @override
+  String get walkDiaryEditorRemoveLocation => '위치 빼기';
+
+  @override
+  String get walkDiaryEditorPlaceHint => '장소 이름';
+
+  @override
+  String walkDiaryEditorStory(String title) {
+    return '스토리: $title';
+  }
+
+  @override
+  String get walkDiaryEditorPickStory => '스토리 고르기';
+
+  @override
+  String get walkDiaryEditorAddMedia => '사진·영상 추가';
+
+  @override
+  String get walkDiaryEditorRemoveMedia => '빼기';
+
+  @override
+  String get walkDiaryEditorPickGallery => '앨범에서 고르기';
+
+  @override
+  String get walkDiaryEditorTakePhoto => '사진 찍기';
+
+  @override
+  String get walkDiaryEditorTakeVideo => '영상 찍기';
+
+  @override
+  String get walkDiaryEditorBodyHint => '오늘 있었던 일을 적어 보세요';
+
+  @override
+  String get walkDiaryEditorTagHint => '태그 추가';
+
+  @override
+  String get walkDiaryEditorDiscardTitle => '작성을 그만둘까요?';
+
+  @override
+  String get walkDiaryEditorDiscardContent => '쓴 내용은 저장되지 않아요.';
+
+  @override
+  String get walkDiaryEditorDiscardConfirm => '그만두기';
+
+  @override
+  String get walkDiaryErrorEmptyEntry => '글이나 사진·영상을 넣어 주세요';
+
+  @override
+  String get walkDiaryErrorFutureTime => '앞으로의 시각으로는 쓸 수 없어요';
+
+  @override
+  String walkDiaryErrorTooManyMedia(int max) {
+    return '사진·영상은 $max개까지 넣을 수 있어요';
+  }
+
+  @override
+  String walkDiaryErrorVideoTooLong(int seconds) {
+    return '$seconds초 이하 영상만 넣을 수 있어요';
+  }
+
+  @override
+  String get walkDiaryErrorStoryClosed => '닫힌 스토리에는 쓸 수 없어요';
+
+  @override
+  String get walkDiaryErrorNotFound => '기록을 찾을 수 없어요';
+
+  @override
+  String get walkDiaryErrorMediaProcessing => '사진·영상을 불러오지 못했어요';
+
+  @override
+  String get walkDiaryErrorSave => '저장하지 못했어요. 다시 시도해 주세요';
+
+  @override
+  String walkDiaryEditorTagSuggestion(String name, int count) {
+    return '#$name $count';
+  }
+
+  @override
+  String walkDiaryEditorPlaceSuggestion(String name, int count) {
+    return '$name $count';
+  }
 }

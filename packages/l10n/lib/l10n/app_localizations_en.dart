@@ -2465,4 +2465,123 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkLockNeedsScreenLock =>
       'Set up a screen lock on your phone first to turn on the diary lock';
+
+  @override
+  String get walkDiaryEditorNewTitle => 'New entry';
+
+  @override
+  String get walkDiaryEditorEditTitle => 'Edit entry';
+
+  @override
+  String get walkDiaryEditorPost => 'Post';
+
+  @override
+  String get walkDiaryEditorSave => 'Save';
+
+  @override
+  String get walkDiaryEditorClose => 'Close';
+
+  @override
+  String walkDiaryEditorTimeNow(String when) {
+    return 'Now · $when';
+  }
+
+  @override
+  String walkDiaryEditorDateTime(String date, String time) {
+    return '$date $time';
+  }
+
+  @override
+  String get walkDiaryEditorRevertTime => 'Back to posting time';
+
+  @override
+  String get walkDiaryEditorPickTimeConfirm => 'Done';
+
+  @override
+  String get walkDiaryEditorLocating => 'Finding your location…';
+
+  @override
+  String get walkDiaryEditorUnnamedPlace => 'Unnamed location';
+
+  @override
+  String get walkDiaryEditorRemoveLocation => 'Remove location';
+
+  @override
+  String get walkDiaryEditorPlaceHint => 'Place name';
+
+  @override
+  String walkDiaryEditorStory(String title) {
+    return 'Story: $title';
+  }
+
+  @override
+  String get walkDiaryEditorPickStory => 'Choose a story';
+
+  @override
+  String get walkDiaryEditorAddMedia => 'Add photos/videos';
+
+  @override
+  String get walkDiaryEditorRemoveMedia => 'Remove';
+
+  @override
+  String get walkDiaryEditorPickGallery => 'Choose from gallery';
+
+  @override
+  String get walkDiaryEditorTakePhoto => 'Take a photo';
+
+  @override
+  String get walkDiaryEditorTakeVideo => 'Record a video';
+
+  @override
+  String get walkDiaryEditorBodyHint => 'Write about your day';
+
+  @override
+  String get walkDiaryEditorTagHint => 'Add a tag';
+
+  @override
+  String get walkDiaryEditorDiscardTitle => 'Discard this entry?';
+
+  @override
+  String get walkDiaryEditorDiscardContent => 'What you wrote won\'t be saved.';
+
+  @override
+  String get walkDiaryEditorDiscardConfirm => 'Discard';
+
+  @override
+  String get walkDiaryErrorEmptyEntry => 'Add some text or a photo/video';
+
+  @override
+  String get walkDiaryErrorFutureTime => 'You can\'t pick a time in the future';
+
+  @override
+  String walkDiaryErrorTooManyMedia(int max) {
+    return 'You can add up to $max photos/videos';
+  }
+
+  @override
+  String walkDiaryErrorVideoTooLong(int seconds) {
+    return 'Videos must be $seconds seconds or shorter';
+  }
+
+  @override
+  String get walkDiaryErrorStoryClosed => 'This story is closed';
+
+  @override
+  String get walkDiaryErrorNotFound => 'Couldn\'t find this entry';
+
+  @override
+  String get walkDiaryErrorMediaProcessing => 'Couldn\'t load the photo/video';
+
+  @override
+  String get walkDiaryErrorSave => 'Couldn\'t save. Please try again';
+
+  @override
+  String walkDiaryEditorTagSuggestion(String name, int count) {
+    return '#$name $count';
+  }
+
+  @override
+  String walkDiaryEditorPlaceSuggestion(String name, int count) {
+    return '$name $count';
+  }
 }

@@ -3330,5 +3330,189 @@
   "walkLockNeedsScreenLock": "폰 화면 잠금을 먼저 설정해야 일기 잠금을 켤 수 있어요",
   "@walkLockNeedsScreenLock": {
     "description": "폰에 화면 잠금이 없어 일기 잠금을 켤 수 없을 때 안내"
+  },
+  "walkDiaryEditorNewTitle": "새 기록",
+  "@walkDiaryEditorNewTitle": {
+    "description": "일기 작성 화면 제목 · 일기 탭의 새 기록 버튼 툴팁"
+  },
+  "walkDiaryEditorEditTitle": "기록 고치기",
+  "@walkDiaryEditorEditTitle": {
+    "description": "일기 기록 수정 화면 제목"
+  },
+  "walkDiaryEditorPost": "올리기",
+  "@walkDiaryEditorPost": {
+    "description": "새 일기 기록을 저장하는 버튼"
+  },
+  "walkDiaryEditorSave": "저장",
+  "@walkDiaryEditorSave": {
+    "description": "고친 일기 기록을 저장하는 버튼"
+  },
+  "walkDiaryEditorClose": "닫기",
+  "@walkDiaryEditorClose": {
+    "description": "일기 작성 화면을 닫는 ✕ 버튼 툴팁"
+  },
+  "walkDiaryEditorTimeNow": "지금 · {when}",
+  "@walkDiaryEditorTimeNow": {
+    "description": "일기 작성 시각 행 — 시각을 바꾸지 않았을 때. when 은 '10월 10일 (토) 오후 3:24'",
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "walkDiaryEditorDateTime": "{date} {time}",
+  "@walkDiaryEditorDateTime": {
+    "description": "일기 작성 시각 행의 날짜와 시각",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "walkDiaryEditorRevertTime": "올린 시각으로 되돌리기",
+  "@walkDiaryEditorRevertTime": {
+    "description": "일기 기록 시각을 바꿨을 때 처음 시각으로 되돌리는 버튼"
+  },
+  "walkDiaryEditorPickTimeConfirm": "확인",
+  "@walkDiaryEditorPickTimeConfirm": {
+    "description": "일기 기록 시각 휠 시트의 확인 버튼"
+  },
+  "walkDiaryEditorLocating": "위치를 찾는 중…",
+  "@walkDiaryEditorLocating": {
+    "description": "일기 작성 화면에서 지금 위치를 찾는 동안 안내"
+  },
+  "walkDiaryEditorUnnamedPlace": "이름 없는 위치",
+  "@walkDiaryEditorUnnamedPlace": {
+    "description": "좌표만 있고 장소 이름을 못 찾았을 때 위치 행 문구"
+  },
+  "walkDiaryEditorRemoveLocation": "위치 빼기",
+  "@walkDiaryEditorRemoveLocation": {
+    "description": "일기 작성 화면 위치 행의 ✕ 버튼 툴팁"
+  },
+  "walkDiaryEditorPlaceHint": "장소 이름",
+  "@walkDiaryEditorPlaceHint": {
+    "description": "일기 작성 화면 장소 직접 입력칸 힌트"
+  },
+  "walkDiaryEditorStory": "스토리: {title}",
+  "@walkDiaryEditorStory": {
+    "description": "일기 작성 화면 스토리 행",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "walkDiaryEditorPickStory": "스토리 고르기",
+  "@walkDiaryEditorPickStory": {
+    "description": "일기 작성 화면 스토리 선택 시트 제목"
+  },
+  "walkDiaryEditorAddMedia": "사진·영상 추가",
+  "@walkDiaryEditorAddMedia": {
+    "description": "일기 작성 화면 미디어 추가 버튼"
+  },
+  "walkDiaryEditorRemoveMedia": "빼기",
+  "@walkDiaryEditorRemoveMedia": {
+    "description": "일기 작성 화면 미디어 썸네일의 ✕ 버튼 툴팁"
+  },
+  "walkDiaryEditorPickGallery": "앨범에서 고르기",
+  "@walkDiaryEditorPickGallery": {
+    "description": "일기 미디어 추가 시트 — 앨범에서 사진 · 영상 고르기"
+  },
+  "walkDiaryEditorTakePhoto": "사진 찍기",
+  "@walkDiaryEditorTakePhoto": {
+    "description": "일기 미디어 추가 시트 — 카메라로 사진 찍기"
+  },
+  "walkDiaryEditorTakeVideo": "영상 찍기",
+  "@walkDiaryEditorTakeVideo": {
+    "description": "일기 미디어 추가 시트 — 카메라로 영상 찍기"
+  },
+  "walkDiaryEditorBodyHint": "오늘 있었던 일을 적어 보세요",
+  "@walkDiaryEditorBodyHint": {
+    "description": "일기 작성 화면 본문 입력칸 힌트"
+  },
+  "walkDiaryEditorTagHint": "태그 추가",
+  "@walkDiaryEditorTagHint": {
+    "description": "일기 작성 화면 태그 입력칸 힌트"
+  },
+  "walkDiaryEditorDiscardTitle": "작성을 그만둘까요?",
+  "@walkDiaryEditorDiscardTitle": {
+    "description": "일기 작성 중 닫을 때 확인 다이얼로그 제목"
+  },
+  "walkDiaryEditorDiscardContent": "쓴 내용은 저장되지 않아요.",
+  "@walkDiaryEditorDiscardContent": {
+    "description": "일기 작성 중 닫을 때 확인 다이얼로그 본문"
+  },
+  "walkDiaryEditorDiscardConfirm": "그만두기",
+  "@walkDiaryEditorDiscardConfirm": {
+    "description": "일기 작성 중 닫을 때 확인 다이얼로그의 버리기 버튼"
+  },
+  "walkDiaryErrorEmptyEntry": "글이나 사진·영상을 넣어 주세요",
+  "@walkDiaryErrorEmptyEntry": {
+    "description": "빈 일기 기록을 저장하려 할 때 오류"
+  },
+  "walkDiaryErrorFutureTime": "앞으로의 시각으로는 쓸 수 없어요",
+  "@walkDiaryErrorFutureTime": {
+    "description": "일기 기록 시각이 미래일 때 오류"
+  },
+  "walkDiaryErrorTooManyMedia": "사진·영상은 {max}개까지 넣을 수 있어요",
+  "@walkDiaryErrorTooManyMedia": {
+    "description": "일기 기록 하나에 미디어 개수 제한을 넘었을 때 오류",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "walkDiaryErrorVideoTooLong": "{seconds}초 이하 영상만 넣을 수 있어요",
+  "@walkDiaryErrorVideoTooLong": {
+    "description": "일기에 넣으려는 영상이 길이 제한을 넘었을 때 오류",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "walkDiaryErrorStoryClosed": "닫힌 스토리에는 쓸 수 없어요",
+  "@walkDiaryErrorStoryClosed": {
+    "description": "닫힌 스토리로 일기 기록을 저장하려 할 때 오류"
+  },
+  "walkDiaryErrorNotFound": "기록을 찾을 수 없어요",
+  "@walkDiaryErrorNotFound": {
+    "description": "고치려는 일기 기록이 없거나 휴지통에 있을 때 오류"
+  },
+  "walkDiaryErrorMediaProcessing": "사진·영상을 불러오지 못했어요",
+  "@walkDiaryErrorMediaProcessing": {
+    "description": "일기에 고른 사진 · 영상을 열거나 줄이지 못했을 때 오류"
+  },
+  "walkDiaryErrorSave": "저장하지 못했어요. 다시 시도해 주세요",
+  "@walkDiaryErrorSave": {
+    "description": "일기 기록을 저장 · 읽기 중 규칙 밖의 오류가 났을 때"
+  },
+  "walkDiaryEditorTagSuggestion": "#{name} {count}",
+  "@walkDiaryEditorTagSuggestion": {
+    "description": "일기 작성 화면 태그 추천 — 태그 이름과 쓴 기록 수",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "walkDiaryEditorPlaceSuggestion": "{name} {count}",
+  "@walkDiaryEditorPlaceSuggestion": {
+    "description": "일기 작성 화면 장소 추천 — 장소 이름과 쓴 기록 수",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }
