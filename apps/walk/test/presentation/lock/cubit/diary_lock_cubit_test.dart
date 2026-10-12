@@ -10,6 +10,8 @@ import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/domain/lock/lock_policy.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_state.dart';
+import 'package:walk/presentation/lock/cubit/lock_setup_cubit.dart';
+import 'package:walk/presentation/lock/cubit/lock_setup_state.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
 
 import '../../../support/diary_fixtures.dart';
@@ -428,6 +430,105 @@ void main() {
       clock.advance(const Duration(hours: 1));
 
       cubit.onResumed();
+
+      expect(cubit.state, const DiaryLockState.unlocked());
+      await cubit.close();
+    });
+  });
+
+  group('configChanged(설정 화면에서 바꾼 뒤)', () {
+    setUp(enableLock);
+
+    Future<LockSetupCubit> verifiedSetup() async {
+      final setup = LockSetupCubit(repo, auth, clock);
+      await setup.start();
+      await setup.verifyCurrent('1234');
+      expect(setup.state, isA<SetupChoosing>());
+      return setup;
+    }
+
+    test('잠긴 채 PIN → 패턴으로 바꾸면 패턴 입력으로 잠긴다', () async {
+      final cubit = newCubit()..start();
+      final setup = await verifiedSetup();
+      setup.choose(LockMethod.pattern);
+      await setup.enter('0-1-2-5');
+      await setup.enter('0-1-2-5');
+
+      cubit.configChanged();
+
+      expect(
+        cubit.state,
+        const DiaryLockState.locked(method: LockMethod.pattern),
+      );
+      await cubit.submit('0-1-2-5');
+      expect(cubit.state, const DiaryLockState.unlocked());
+      await setup.close();
+      await cubit.close();
+    });
+
+    test('잠긴 채 잠금을 끄면 unlocked', () async {
+      final cubit = newCubit()..start();
+      final setup = await verifiedSetup();
+      await setup.turnOff();
+
+      cubit.configChanged();
+
+      expect(cubit.state, const DiaryLockState.unlocked());
+      await setup.close();
+      await cubit.close();
+    });
+
+    test('잠긴 채 바뀌어도 진행 중인 차단은 그대로 보인다', () async {
+      final cubit = newCubit()..start();
+      await repo.setSecret(LockMethod.pattern, '0-1-2-5');
+      await repo.saveAttempts(
+        LockAttempts(blockedUntil: diaryT0.add(const Duration(seconds: 20))),
+      );
+
+      cubit.configChanged();
+
+      expect(
+        cubit.state,
+        const DiaryLockState.locked(
+          method: LockMethod.pattern,
+          blockedFor: Duration(seconds: 20),
+        ),
+      );
+      await cubit.close();
+    });
+
+    test('풀린 상태에서 방식을 바꿔도 풀린 채', () async {
+      final cubit = await unlocked();
+      await repo.setSecret(LockMethod.pattern, '0-1-2-5');
+
+      cubit.configChanged();
+
+      expect(cubit.state, const DiaryLockState.unlocked());
+      await cubit.close();
+    });
+
+    test('꺼져 있다가 켜도 지금은 풀린 채, 다음 백그라운드 복귀에서 잠근다', () async {
+      await repo.saveConfig(const LockConfig());
+      final cubit = newCubit()..start();
+      await repo.saveConfig(const LockConfig(enabled: true));
+
+      cubit.configChanged();
+      expect(cubit.state, const DiaryLockState.unlocked());
+
+      cubit.onPaused();
+      clock.advance(const Duration(minutes: 2));
+      cubit.onResumed();
+      expect(cubit.state, isA<LockLocked>());
+      await cubit.close();
+    });
+
+    test('재설정 중에 잠금이 꺼지면 unlocked', () async {
+      final cubit = newCubit()..start();
+      await cubit.forgot('reason');
+      await repo.clearSecret();
+      await repo.saveConfig(const LockConfig());
+
+      cubit.configChanged();
 
       expect(cubit.state, const DiaryLockState.unlocked());
       await cubit.close();

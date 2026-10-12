@@ -124,6 +124,19 @@ class DiaryLockCubit extends Cubit<DiaryLockState> {
     }
   }
 
+  /// 설정 화면(`LockSetupPage`)이 잠금을 켜고 끄거나 방식을 바꾼 뒤 부른다(설정 탭이
+  /// 페이지가 `true` 로 닫히면 호출). 꺼졌으면 unlocked, 잠긴 중이면 새 방식으로 다시
+  /// 잠그고(진행 중인 차단은 유지), 풀린 · 재설정 중이면 그대로 둔다 — 새로 켰으면 다음
+  /// 백그라운드 복귀에서 잠긴다.
+  void configChanged() {
+    final config = _repo.loadConfig();
+    if (!config.enabled) {
+      emit(const DiaryLockState.unlocked());
+      return;
+    }
+    if (state is LockLocked) emit(_locked(config.method));
+  }
+
   void onPaused() {
     if (state is LockLocked) return;
     _pausedAt = _clock.now();
