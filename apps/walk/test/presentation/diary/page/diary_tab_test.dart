@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:core/core.dart';
@@ -163,6 +164,61 @@ void main() {
 
     expect(find.byType(StoryBar), findsOneWidget);
     expect(find.text('비밀 기록'), findsOneWidget);
+  });
+
+  group('다시 잠기면(스펙 §7)', () {
+    Future<void> relock(WidgetTester tester) async {
+      await lockRepo.setSecret(LockMethod.pin, '1234');
+      await lockRepo.saveConfig(const LockConfig(enabled: true));
+      final clock = getIt<Clock>() as MutableClock;
+      lock.onPaused();
+      clock.advance(const Duration(minutes: 5));
+      lock.onResumed();
+      await tester.pumpAndSettle();
+    }
+
+    setUp(() {
+      stories = [
+        _story(Story.dailyId, ''),
+        Story(
+          id: 'busan',
+          title: '부산 비밀 여행',
+          status: StoryStatus.closed,
+          startedAt: diaryT0,
+          endedAt: diaryT0,
+          createdAt: diaryT0,
+        ),
+      ];
+    });
+
+    testWidgets('보관함 시트가 닫혀 스토리 이름이 남지 않는다', (tester) async {
+      await pump(tester);
+      await tester.tap(find.text('보관함'));
+      await tester.pumpAndSettle();
+      expect(find.text('부산 비밀 여행'), findsOneWidget);
+
+      await relock(tester);
+
+      expect(find.byType(BottomSheet, skipOffstage: false), findsNothing);
+      expect(find.text('부산 비밀 여행', skipOffstage: false), findsNothing);
+      expect(find.byType(PinPad), findsOneWidget);
+    });
+
+    testWidgets('가려진 탭이면 다른 탭의 팝업을 닫지 않는다', (tester) async {
+      await pump(tester, active: false);
+      final context = tester.element(find.byType(DiaryTab));
+      unawaited(
+        showDialog<void>(
+          context: context,
+          builder: (_) => const AlertDialog(title: Text('알람 다이얼로그')),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await relock(tester);
+
+      expect(find.text('알람 다이얼로그'), findsOneWidget);
+    });
   });
 
   testWidgets('스토리 바: 전체 → 열린 스토리 lastPostedAt 순 → 보관함, 기본 스토리는 일상', (
@@ -468,6 +524,37 @@ void main() {
     verifyNever(useCase.maintain);
 
     await tester.pumpWidget(app(active: false));
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    verify(useCase.maintain).called(1);
+  });
+
+  testWidgets('잠긴 동안에는 정리를 부르지 않고, 풀리면 부른다', (tester) async {
+    await lockRepo.setSecret(LockMethod.pin, '1234');
+    await lockRepo.saveConfig(const LockConfig(enabled: true));
+    await pump(tester);
+    verifyNever(useCase.maintain);
+
+    // 잠긴 채 탭을 떠났다 돌아와도 부르지 않는다.
+    await tester.pumpWidget(app(active: false));
+    await tester.pumpWidget(app());
+    await tester.pumpAndSettle();
+    verifyNever(useCase.maintain);
+
+    await lock.submit('1234');
+    await tester.pumpAndSettle();
+    verify(useCase.maintain).called(1);
+  });
+
+  testWidgets('가려진 탭에서 풀려도 부르지 않고, 탭이 보일 때 부른다', (tester) async {
+    await lockRepo.setSecret(LockMethod.pin, '1234');
+    await lockRepo.saveConfig(const LockConfig(enabled: true));
+    await pump(tester, active: false);
+
+    await lock.submit('1234');
+    await tester.pumpAndSettle();
+    verifyNever(useCase.maintain);
+
     await tester.pumpWidget(app());
     await tester.pumpAndSettle();
     verify(useCase.maintain).called(1);

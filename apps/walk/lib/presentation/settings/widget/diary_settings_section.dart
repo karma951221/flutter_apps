@@ -7,6 +7,7 @@ import '../../../domain/diary/entity/diary_usage.dart';
 import '../../../domain/diary/entity/trash_retention.dart';
 import '../../../domain/lock/lock_config.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
+import '../../lock/cubit/diary_lock_state.dart';
 import '../../lock/page/lock_setup_page.dart';
 import '../cubit/diary_settings_cubit.dart';
 import '../cubit/diary_settings_state.dart';
@@ -62,7 +63,8 @@ class _DiarySettingsSectionState extends State<DiarySettingsSection> {
       current: current,
       options: [for (final d in RelockDelay.values) (d, _relockLabel(l10n, d))],
     );
-    if (picked == null) return;
+    // 시트가 열린 사이 일기가 잠겼으면 고른 값을 버린다.
+    if (picked == null || lock.state is! LockUnlocked) return;
     await settings.setRelockDelay(picked);
     lock.configChanged();
   }
@@ -70,6 +72,7 @@ class _DiarySettingsSectionState extends State<DiarySettingsSection> {
   Future<void> _pickRetention(TrashRetention current) async {
     final l10n = AppLocalizations.of(context);
     final settings = context.read<DiarySettingsCubit>();
+    final lock = context.read<DiaryLockCubit>();
     final picked = await _ChoiceSheet.show<TrashRetention>(
       context,
       title: l10n.walkDiarySettingsRetention,
@@ -78,13 +81,20 @@ class _DiarySettingsSectionState extends State<DiarySettingsSection> {
         for (final r in TrashRetention.values) (r, _retentionLabel(l10n, r)),
       ],
     );
-    if (picked != null) await settings.setRetention(picked);
+    // 시트가 열린 사이 일기가 잠겼으면 고른 값을 버린다.
+    if (picked == null || lock.state is! LockUnlocked) return;
+    await settings.setRetention(picked);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    // 일기가 잠긴 동안 PIN 없이 휴지통 기한 · 다시 잠기는 시간을 바꾸지 못한다(보관 기간을 줄이면
+    // 다음 정리에서 영구 삭제된다). 잠금 행은 스스로 비밀을 확인하므로 그대로 둔다.
+    final diaryUnlocked = context.select<DiaryLockCubit, bool>(
+      (c) => c.state is LockUnlocked,
+    );
     return BlocBuilder<DiarySettingsCubit, DiarySettingsState>(
       builder: (context, state) {
         final lock = state.lock;
@@ -108,8 +118,8 @@ class _DiarySettingsSectionState extends State<DiarySettingsSection> {
                   ? null
                   : Text(_relockLabel(l10n, lock.relockDelay)),
               // 잠금이 꺼져 있으면 다시 잠길 일이 없다.
-              enabled: lock != null && lock.enabled,
-              onTap: lock == null || !lock.enabled
+              enabled: lock != null && lock.enabled && diaryUnlocked,
+              onTap: lock == null || !lock.enabled || !diaryUnlocked
                   ? null
                   : () => _pickRelock(lock.relockDelay),
             ),
@@ -118,7 +128,10 @@ class _DiarySettingsSectionState extends State<DiarySettingsSection> {
               leading: const Icon(Icons.delete_outline),
               title: Text(l10n.walkDiarySettingsRetention),
               trailing: Text(_retentionLabel(l10n, state.retention)),
-              onTap: () => _pickRetention(state.retention),
+              enabled: diaryUnlocked,
+              onTap: diaryUnlocked
+                  ? () => _pickRetention(state.retention)
+                  : null,
             ),
             AppListTile(
               key: const Key('settings-diary-storage'),

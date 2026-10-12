@@ -30,8 +30,10 @@ import 'trash_page.dart';
 
 /// 셸의 일기 탭(스펙 §6.1). 위에서 `DiaryLockCubit` 를 받는다(셸이 소유).
 ///
-/// 타임라인은 [DiaryLockGate] 안쪽에 있어 잠긴 동안 트리에 없다. 탭이 보이게 될 때마다
-/// (처음부터 보이면 시작할 때) [DiaryUseCase.maintain] 을 부른다 — 기다리지 않고 실패는 삼킨다.
+/// 타임라인은 [DiaryLockGate] 안쪽에 있어 잠긴 동안 트리에 없다. 탭이 보이고 잠금이 풀려 있게
+/// 될 때마다(풀린 채 탭이 보이게 되거나, 보이는 탭에서 잠금이 풀릴 때) [DiaryUseCase.maintain] 을
+/// 부른다 — 기다리지 않고 실패는 삼킨다. 잠긴 동안 부르지 않는 것은 PIN 없이 휴지통 기한이 지난
+/// 기록을 영구 삭제시키지 못하게 하기 위해서다.
 class DiaryTab extends StatefulWidget {
   const DiaryTab({required this.active, super.key});
 
@@ -53,13 +55,13 @@ class _DiaryTabState extends State<DiaryTab> {
   @override
   void initState() {
     super.initState();
-    if (widget.active) _maintain();
+    if (widget.active && _unlocked) _maintain();
   }
 
   @override
   void didUpdateWidget(DiaryTab oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!oldWidget.active && widget.active) _maintain();
+    if (!oldWidget.active && widget.active && _unlocked) _maintain();
   }
 
   @override
@@ -68,6 +70,8 @@ class _DiaryTabState extends State<DiaryTab> {
     _covers.close();
     super.dispose();
   }
+
+  bool get _unlocked => context.read<DiaryLockCubit>().state is LockUnlocked;
 
   /// 휴지통 기한 · 장소 이름 채우기. 화면을 막지 않는다 — 결과는 저장소 스트림으로 들어온다.
   void _maintain() => unawaited(_useCase.maintain().catchError((Object _) {}));
@@ -78,41 +82,51 @@ class _DiaryTabState extends State<DiaryTab> {
     final unlocked = context.select<DiaryLockCubit, bool>(
       (c) => c.state is LockUnlocked,
     );
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider.value(value: _timeline),
-        BlocProvider.value(value: _covers),
-      ],
-      child: BlocBuilder<DiaryTimelineCubit, DiaryTimelineState>(
-        buildWhen: (a, b) => a.viewMode != b.viewMode,
-        builder: (context, state) {
-          // 릴스는 탭 몸통을 꽉 채운다 — 앱바 대신 위에 얹은 머리가 토글을 들고 있다.
-          final reels = unlocked && state.viewMode == DiaryViewMode.reels;
-          return Scaffold(
-            appBar: reels
-                ? null
-                : AppBar(
-                    title: Text(l10n.walkShellTabDiary),
-                    actions: [
-                      if (unlocked) ...[
-                        const _SearchAction(),
-                        const _DiaryMenu(),
+    return BlocListener<DiaryLockCubit, DiaryLockState>(
+      listenWhen: (a, b) => a is! LockUnlocked && b is LockUnlocked,
+      listener: (_, _) {
+        if (widget.active) _maintain();
+      },
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: _timeline),
+          BlocProvider.value(value: _covers),
+        ],
+        child: BlocBuilder<DiaryTimelineCubit, DiaryTimelineState>(
+          buildWhen: (a, b) => a.viewMode != b.viewMode,
+          builder: (context, state) {
+            // 릴스는 탭 몸통을 꽉 채운다 — 앱바 대신 위에 얹은 머리가 토글을 들고 있다.
+            final reels = unlocked && state.viewMode == DiaryViewMode.reels;
+            return Scaffold(
+              appBar: reels
+                  ? null
+                  : AppBar(
+                      title: Text(l10n.walkShellTabDiary),
+                      actions: [
+                        if (unlocked) ...[
+                          const _SearchAction(),
+                          const _DiaryMenu(),
+                        ],
                       ],
-                    ],
-                  ),
-            body: DiaryLockGate(child: _Timeline(active: widget.active)),
-            // 오른쪽 아래 — 릴스에서도 위에 얹은 머리 · 토글을 가리지 않는다.
-            floatingActionButton: unlocked
-                ? FloatingActionButton(
-                    // 셸의 IndexedStack 에 알람 탭 ＋ 도 있다 — 기본 Hero 태그가 겹치지 않게 끈다.
-                    heroTag: null,
-                    tooltip: l10n.walkDiaryEditorNewTitle,
-                    onPressed: () => openEntryEditor(context),
-                    child: const Icon(Icons.add),
-                  )
-                : null,
-          );
-        },
+                    ),
+              // 다시 잠기면 이 탭에서 띄운 시트(보관함 등)를 닫는다 — 가려진 탭이면 위의 팝업은 다른 탭의 것.
+              body: DiaryLockGate(
+                dismissPopups: widget.active,
+                child: _Timeline(active: widget.active),
+              ),
+              // 오른쪽 아래 — 릴스에서도 위에 얹은 머리 · 토글을 가리지 않는다.
+              floatingActionButton: unlocked
+                  ? FloatingActionButton(
+                      // 셸의 IndexedStack 에 알람 탭 ＋ 도 있다 — 기본 Hero 태그가 겹치지 않게 끈다.
+                      heroTag: null,
+                      tooltip: l10n.walkDiaryEditorNewTitle,
+                      onPressed: () => openEntryEditor(context),
+                      child: const Icon(Icons.add),
+                    )
+                  : null,
+            );
+          },
+        ),
       ),
     );
   }

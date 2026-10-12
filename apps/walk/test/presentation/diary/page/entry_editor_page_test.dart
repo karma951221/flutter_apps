@@ -433,6 +433,55 @@ void main() {
     expect(find.text('쓰다 만 글'), findsOneWidget);
   });
 
+  Future<void> relock(WidgetTester tester) async {
+    await lockRepo.setSecret(LockMethod.pin, '1234');
+    await lockRepo.saveConfig(const LockConfig(enabled: true));
+    lock.onPaused();
+    clock.advance(const Duration(minutes: 5));
+    lock.onResumed();
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> unlock(WidgetTester tester) async {
+    for (final d in '1234'.split('')) {
+      await tester.tap(find.widgetWithText(TextButton, d));
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('잠금 화면에서 뒤로 가기는 무시한다 — 풀면 쓰던 글 그대로', (tester) async {
+    await pump(tester);
+    await tester.enterText(
+      find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요'),
+      '쓰다 만 글',
+    );
+    await relock(tester);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(find.text('home'), findsNothing);
+    expect(find.byType(PinPad), findsOneWidget);
+    verifyNever(() => useCase.cancelDraft(any()));
+
+    await unlock(tester);
+    expect(find.text('쓰다 만 글'), findsOneWidget);
+  });
+
+  testWidgets('다시 잠기면 스토리 시트가 닫힌다', (tester) async {
+    await pump(tester);
+    await tester.tap(find.text('스토리: 일상'));
+    await tester.pumpAndSettle();
+    expect(find.byType(BottomSheet), findsOneWidget);
+
+    await relock(tester);
+
+    expect(find.byType(BottomSheet, skipOffstage: false), findsNothing);
+    expect(find.text('제주 여행', skipOffstage: false), findsNothing);
+    expect(find.byType(PinPad), findsOneWidget);
+  });
+
   testWidgets('취소 없이 화면이 사라져도 새로 가져온 임시 사본을 지운다', (tester) async {
     when(
       () => picker.pickGallery(limit: any(named: 'limit')),

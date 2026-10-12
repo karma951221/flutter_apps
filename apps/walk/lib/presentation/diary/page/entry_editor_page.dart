@@ -12,6 +12,8 @@ import '../../../domain/diary/location/place_source.dart';
 import '../../../domain/diary/media/media_store.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
+import '../../lock/cubit/diary_lock_cubit.dart';
+import '../../lock/cubit/diary_lock_state.dart';
 import '../cubit/entry_editor_cubit.dart';
 import '../cubit/entry_editor_state.dart';
 import '../format/diary_format.dart';
@@ -75,9 +77,15 @@ class _EntryEditorScopeState extends State<EntryEditorScope> {
     super.dispose();
   }
 
+  /// 잠긴 동안(게이트가 작성 화면 대신 잠금 화면을 보일 때) 뒤로 가기는 무시한다 — 쓰던 글을
+  /// 묻지 않고 버리지 않는다. 풀려 있으면 작성 화면이 버릴지 묻는다.
   @override
-  Widget build(BuildContext context) =>
-      BlocProvider.value(value: _cubit, child: widget.child);
+  Widget build(BuildContext context) => PopScope(
+    canPop: context.select<DiaryLockCubit, bool>(
+      (c) => c.state is LockUnlocked,
+    ),
+    child: BlocProvider.value(value: _cubit, child: widget.child),
+  );
 }
 
 /// 기록 작성 · 수정(스펙 §6.2). 위에서 [EntryEditorCubit] 를 받는다([EntryEditorScope]).

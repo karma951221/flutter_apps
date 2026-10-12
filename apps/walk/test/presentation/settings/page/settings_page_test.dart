@@ -600,8 +600,42 @@ void main() {
       expect(inRow('settings-diary-retention', '30일'), findsOneWidget);
     });
 
+    testWidgets('일기가 잠긴 동안 보관 기간 · 다시 잠기는 시간 행은 열리지 않는다', (tester) async {
+      await enablePin();
+      await pump(tester);
+
+      await tester.tap(find.byKey(const Key('settings-diary-retention')));
+      await tester.pumpAndSettle();
+      expect(find.text('지우지 않음'), findsNothing);
+
+      await tester.tap(find.byKey(const Key('settings-diary-relock')));
+      await tester.pumpAndSettle();
+      expect(find.text('5분 뒤'), findsNothing);
+
+      // 잠금 행은 스스로 비밀을 확인하므로 그대로 열린다.
+      await tester.tap(find.byKey(const Key('settings-diary-lock')));
+      await tester.pumpAndSettle();
+      expect(find.byType(LockSetupPage), findsOneWidget);
+    });
+
+    testWidgets('보관 기간 시트가 열린 사이 잠기면 고른 값을 저장하지 않는다', (tester) async {
+      await enablePin();
+      await diaryLock.submit('1234');
+      await pump(tester);
+
+      await tester.tap(find.byKey(const Key('settings-diary-retention')));
+      await tester.pumpAndSettle();
+      diaryLock.start();
+      await tester.pump();
+      await tester.tap(find.text('지우지 않음').last);
+      await tester.pumpAndSettle();
+
+      expect(diaryPrefs.trashRetention, TrashRetention.day7);
+    });
+
     testWidgets('다시 잠기는 시간: 4개 중 고르면 최신 설정에 저장하고 잠금에 알린다', (tester) async {
       await enablePin();
+      await diaryLock.submit('1234');
       await pump(tester);
 
       await tester.tap(find.byKey(const Key('settings-diary-relock')));
@@ -625,8 +659,8 @@ void main() {
           relockDelay: RelockDelay.minutes5,
         ),
       );
-      // configChanged 가 불렸다.
-      expect((diaryLock.state as LockLocked).method, LockMethod.pattern);
+      // 풀린 채 그대로다(다음 백그라운드 복귀에서 새 시간으로 잠긴다).
+      expect(diaryLock.state, isA<LockUnlocked>());
     });
 
     testWidgets('잠금이 꺼져 있으면 다시 잠기는 시간 행은 눌러도 열리지 않는다', (tester) async {

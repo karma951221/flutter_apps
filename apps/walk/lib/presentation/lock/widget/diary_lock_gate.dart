@@ -19,19 +19,36 @@ import 'lock_secret_input.dart';
 ///
 /// [child] 는 잠금이 풀렸을 때만 build 한다 — 잠긴 동안 기록 위젯은 트리에 아예 없다
 /// (덮어 가리는 것이 아니다).
+///
+/// "잠긴 동안 기록 내용을 보이지 않는다"의 주인이기도 하다: 다시 잠기는 순간 내비게이터 맨 위의
+/// 팝업(바텀 시트 · 다이얼로그 · 메뉴)을 모두 닫는다. 팝업은 게이트 위의 별도 경로라 게이트가
+/// 화면을 바꿔도 남기 때문이다. 화면(페이지) 경로는 닫지 않는다 — 그 화면의 게이트가 가린다.
+/// [dismissPopups] 가 false 면(셸에서 가려진 탭) 닫지 않는다 — 그 팝업은 다른 탭의 것이다.
 class DiaryLockGate extends StatelessWidget {
-  const DiaryLockGate({required this.child, super.key});
+  const DiaryLockGate({
+    required this.child,
+    this.dismissPopups = true,
+    super.key,
+  });
 
   final Widget child;
+  final bool dismissPopups;
 
   @override
   Widget build(BuildContext context) =>
-      BlocBuilder<DiaryLockCubit, DiaryLockState>(
-        builder: (context, state) => switch (state) {
-          LockUnlocked() => child,
-          LockLocked() => _LockScreen(state: state),
-          LockResetting() => const _ResetScreen(),
+      BlocListener<DiaryLockCubit, DiaryLockState>(
+        listenWhen: (a, b) => a is! LockLocked && b is LockLocked,
+        listener: (context, _) {
+          if (!dismissPopups) return;
+          Navigator.of(context).popUntil((route) => route is! PopupRoute);
         },
+        child: BlocBuilder<DiaryLockCubit, DiaryLockState>(
+          builder: (context, state) => switch (state) {
+            LockUnlocked() => child,
+            LockLocked() => _LockScreen(state: state),
+            LockResetting() => const _ResetScreen(),
+          },
+        ),
       );
 }
 

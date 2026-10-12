@@ -4,9 +4,18 @@ import 'dart:io';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:walk/data/lock/prefs_lock_repository.dart';
+import 'package:walk/domain/lock/device_auth.dart';
+import 'package:walk/domain/lock/lock_config.dart';
+import 'package:walk/domain/lock/lock_repository.dart';
+import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
+import 'package:walk/presentation/lock/media_pick_guard.dart';
+import 'package:walk/presentation/lock/widget/pin_pad.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/entity/entry_media.dart';
@@ -17,6 +26,7 @@ import 'package:walk/domain/diary/usecase/diary_use_case.dart';
 import 'package:walk/presentation/diary/page/story_manage_page.dart';
 
 import '../../../support/diary_fixtures.dart';
+import '../../../support/fake_device_auth.dart';
 
 class _MockRepo extends Mock implements DiaryRepository {}
 
@@ -377,5 +387,100 @@ void main() {
       find.widgetWithText(SnackBar, '기본 스토리는 닫거나 지울 수 없어요'),
       findsOneWidget,
     );
+  });
+
+  group('다시 잠기면(스펙 §7)', () {
+    late MutableClock clock;
+    late PrefsLockRepository lockRepo;
+    late DiaryLockCubit lock;
+
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+      clock = getIt<Clock>() as MutableClock;
+      lockRepo = PrefsLockRepository(await SharedPreferences.getInstance());
+      lock = DiaryLockCubit(
+        lockRepo,
+        FakeDeviceAuth(),
+        clock,
+        MediaPickGuard(),
+      );
+      getIt
+        ..registerSingleton<LockRepository>(lockRepo)
+        ..registerSingleton<DeviceAuth>(FakeDeviceAuth());
+    });
+
+    tearDown(() => lock.close());
+
+    /// 셸처럼 잠금을 내려 주는 첫 화면 위에 스토리 관리를 띄운다.
+    Future<void> pumpRoute(WidgetTester tester) async {
+      tester.view
+        ..physicalSize = const Size(1080, 2400)
+        ..devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      lock.start();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          locale: const Locale('ko'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: BlocProvider.value(
+            value: lock,
+            child: Builder(
+              builder: (context) => Scaffold(
+                body: Center(
+                  child: TextButton(
+                    onPressed: () => openStoryManage(context),
+                    child: const Text('home'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('home'));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> relock(WidgetTester tester) async {
+      await lockRepo.setSecret(LockMethod.pin, '1234');
+      await lockRepo.saveConfig(const LockConfig(enabled: true));
+      lock.onPaused();
+      clock.advance(const Duration(minutes: 5));
+      lock.onResumed();
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('표지 시트의 사진이 남지 않는다', (tester) async {
+      entries[const EntryFilter.story('jeju')] = [
+        _entry('e1', storyId: 'jeju', media: [photoMedia('p1')]),
+      ];
+      await pumpRoute(tester);
+      await choose(tester, '제주 여행', '표지 바꾸기');
+      expect(find.byKey(const ValueKey('cover-p1')), findsOneWidget);
+
+      await relock(tester);
+
+      expect(find.byType(BottomSheet, skipOffstage: false), findsNothing);
+      expect(find.byType(Image, skipOffstage: false), findsNothing);
+      expect(find.byType(PinPad), findsOneWidget);
+      expect(find.text('home', skipOffstage: false), findsOneWidget);
+    });
+
+    testWidgets('삭제 확인 다이얼로그가 닫히고 지우지 않는다', (tester) async {
+      await pumpRoute(tester);
+      await choose(tester, '제주 여행', '삭제');
+      expect(find.text("'제주 여행' 스토리를 삭제할까요?"), findsOneWidget);
+
+      await relock(tester);
+
+      expect(
+        find.text("'제주 여행' 스토리를 삭제할까요?", skipOffstage: false),
+        findsNothing,
+      );
+      expect(find.byType(PinPad), findsOneWidget);
+      verifyNever(() => useCase.deleteStory(any()));
+    });
   });
 }
