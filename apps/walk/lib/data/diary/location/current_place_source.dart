@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:location/location.dart';
 
 import '../../../domain/diary/entity/entry_location.dart';
+import '../../../domain/diary/location/place_lookup.dart';
 import '../../../domain/diary/location/place_source.dart';
 
 /// 지금 위치를 읽고 [PlaceNamer] 로 이름을 붙인다. 권한은 [LocationAccess] 가
@@ -27,9 +28,15 @@ class CurrentPlaceSource implements PlaceSource {
       final position = await _gateway
           .getCurrentPosition(accuracy: LocationAccuracy.high, timeout: timeout)
           .timeout(timeout);
-      final name = await _namer.nameFor(position.latitude, position.longitude);
+      final lookup = await _namer.nameFor(
+        position.latitude,
+        position.longitude,
+      );
       return EntryLocation(
-        placeName: name,
+        placeName: switch (lookup) {
+          PlaceNamed(:final name) => name,
+          PlaceNoName() || PlaceOffline() => null,
+        },
         lat: position.latitude,
         lng: position.longitude,
       );
@@ -39,5 +46,6 @@ class CurrentPlaceSource implements PlaceSource {
   }
 
   @override
-  Future<String?> nameFor(double lat, double lng) => _namer.nameFor(lat, lng);
+  Future<PlaceLookup> nameFor(double lat, double lng) =>
+      _namer.nameFor(lat, lng);
 }

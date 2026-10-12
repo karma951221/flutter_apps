@@ -4,6 +4,7 @@ import 'package:injectable/injectable.dart';
 import '../entity/diary_entry.dart';
 import '../entity/entry_draft.dart';
 import '../entity/entry_media.dart';
+import '../location/place_lookup.dart';
 import '../location/place_source.dart';
 import '../media/media_store.dart';
 import '../repository/diary_preferences.dart';
@@ -90,12 +91,16 @@ class DiaryUseCase {
   /// 일기 탭 진입 시: 기한 지난 휴지통 영구 삭제(+파일) → 장소 이름 채우기(네트워크 실패면 다음에).
   ///
   /// 이름 찾기는 네트워크를 기다리므로(호출당 수 초) 화면은 이것을 기다리지 말고
-  /// 띄워만 둔다. 이름을 하나라도 못 찾으면 오프라인으로 보고 남은 기록은 다음 호출로
-  /// 미룬다. 진행 중에 다시 부르면 새로 돌지 않고 진행 중인 작업을 돌려준다.
+  /// 띄워만 둔다. 오프라인이면 남은 기록은 다음 호출로 미루고, 이 좌표에 붙일 이름이 없으면
+  /// 그 기록만 건너뛴다(다음 호출에 다시 묻는다). 한 번에 [maxPlaceLookups] 번까지만 묻는다.
+  /// 진행 중에 다시 부르면 새로 돌지 않고 진행 중인 작업을 돌려준다.
   Future<void> maintain() =>
       _maintaining ??= _maintain().whenComplete(() => _maintaining = null);
 
   Future<void>? _maintaining;
+
+  /// [maintain] 한 번에 묻는 장소 이름의 최대 수.
+  static const maxPlaceLookups = 20;
 
   Future<void> _maintain() async {
     final period = _prefs.trashRetention.period;
@@ -106,13 +111,20 @@ class DiaryUseCase {
       );
     }
 
+    var lookups = 0;
     for (final entry in await _repo.entriesMissingPlaceName()) {
       final lat = entry.location?.lat;
       final lng = entry.location?.lng;
       if (lat == null || lng == null) continue;
-      final name = await _places.nameFor(lat, lng);
-      if (name == null) break;
-      await _repo.fillPlaceName(entry.id, name);
+      if (lookups++ >= maxPlaceLookups) break;
+      switch (await _places.nameFor(lat, lng)) {
+        case PlaceOffline():
+          return;
+        case PlaceNoName():
+          continue;
+        case PlaceNamed(:final name):
+          await _repo.fillPlaceName(entry.id, name);
+      }
     }
   }
 

@@ -22,6 +22,7 @@ import 'package:walk/domain/diary/entity/entry_location.dart';
 import 'package:walk/domain/diary/entity/entry_media.dart';
 import 'package:walk/domain/diary/entity/named_count.dart';
 import 'package:walk/domain/diary/entity/story.dart';
+import 'package:walk/domain/diary/location/place_lookup.dart';
 import 'package:walk/domain/diary/location/place_source.dart';
 import 'package:walk/domain/diary/media/media_store.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
@@ -48,7 +49,8 @@ class _FakePlaces implements PlaceSource {
   Future<EntryLocation?> current() async => location;
 
   @override
-  Future<String?> nameFor(double lat, double lng) async => null;
+  Future<PlaceLookup> nameFor(double lat, double lng) async =>
+      const PlaceLookup.offline();
 }
 
 Story _story(String id, String title, {bool closed = false}) => Story(

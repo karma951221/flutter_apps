@@ -13,6 +13,7 @@ import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_location.dart';
 import 'package:walk/domain/diary/entity/entry_media.dart';
 import 'package:walk/domain/diary/entity/trash_retention.dart';
+import 'package:walk/domain/diary/location/place_lookup.dart';
 import 'package:walk/domain/diary/location/place_source.dart';
 import 'package:walk/domain/diary/usecase/diary_use_case.dart';
 
@@ -35,28 +36,33 @@ class _FlakyMediaStore extends FileMediaStore {
 class _FakePlaceSource implements PlaceSource {
   /// null 이면 이름을 못 찾은 것(오프라인).
   String? name;
+
+  /// 좌표(위도)별 결과. 없으면 [name] 으로 정한다.
+  final Map<double, PlaceLookup> byLat = {};
   final List<(double, double)> asked = [];
 
   @override
   Future<EntryLocation?> current() async => null;
 
   @override
-  Future<String?> nameFor(double lat, double lng) async {
+  Future<PlaceLookup> nameFor(double lat, double lng) async {
     asked.add((lat, lng));
-    return name;
+    final name = this.name;
+    return byLat[lat] ??
+        (name == null ? const PlaceLookup.offline() : PlaceLookup.named(name));
   }
 }
 
 /// [release] 가 끝날 때까지 이름 찾기를 붙잡아 둔다.
 class _GatedPlaceSource implements PlaceSource {
-  final release = Completer<String?>();
+  final release = Completer<PlaceLookup>();
   int calls = 0;
 
   @override
   Future<EntryLocation?> current() async => null;
 
   @override
-  Future<String?> nameFor(double lat, double lng) {
+  Future<PlaceLookup> nameFor(double lat, double lng) {
     calls++;
     return release.future;
   }
@@ -416,6 +422,51 @@ void main() {
       expect(await h.repository.entriesMissingPlaceName(), hasLength(3));
     });
 
+    test('이름이 없는 좌표는 건너뛰고 다음 기록의 이름을 채운다', () async {
+      final unnameable = okValue(
+        await useCase.save(
+          entryDraft(location: const EntryLocation(lat: 10, lng: 126.31)),
+        ),
+      );
+      h.clock.advance(const Duration(minutes: 1));
+      final nameable = okValue(
+        await useCase.save(
+          entryDraft(location: const EntryLocation(lat: 33.46, lng: 126.31)),
+        ),
+      );
+      places
+        ..byLat[10] = const PlaceLookup.noName()
+        ..name = '애월읍';
+
+      await useCase.maintain();
+
+      expect(places.asked, [(10.0, 126.31), (33.46, 126.31)]);
+      expect(
+        okValue(await h.repository.entry(nameable.id)).location?.placeName,
+        '애월읍',
+      );
+      expect((await h.repository.entriesMissingPlaceName()).map((e) => e.id), [
+        unnameable.id,
+      ]);
+    });
+
+    test('한 번에 묻는 이름은 정해진 수까지', () async {
+      const count = DiaryUseCase.maxPlaceLookups + 2;
+      for (var i = 0; i < count; i++) {
+        okValue(
+          await useCase.save(
+            entryDraft(location: EntryLocation(lat: 10.0 + i, lng: 126.31)),
+          ),
+        );
+        h.clock.advance(const Duration(minutes: 1));
+        places.byLat[10.0 + i] = const PlaceLookup.noName();
+      }
+
+      await useCase.maintain();
+
+      expect(places.asked, hasLength(DiaryUseCase.maxPlaceLookups));
+    });
+
     test('진행 중에 다시 부르면 같은 작업을 기다리고 정리 · 이름 찾기는 한 번만 한다', () async {
       final repo = _CountingRepository(h);
       final gated = _GatedPlaceSource();
@@ -429,7 +480,7 @@ void main() {
       final first = useCase.maintain();
       await pumpEventQueue();
       final second = useCase.maintain();
-      gated.release.complete('애월읍');
+      gated.release.complete(const PlaceLookup.named('애월읍'));
       await Future.wait([first, second]);
 
       expect(repo.purgeCalls, 1);

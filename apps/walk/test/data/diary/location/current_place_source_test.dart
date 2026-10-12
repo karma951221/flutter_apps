@@ -5,6 +5,7 @@ import 'package:location/location.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/data/diary/location/current_place_source.dart';
 import 'package:walk/domain/diary/entity/entry_location.dart';
+import 'package:walk/domain/diary/location/place_lookup.dart';
 import 'package:walk/domain/diary/location/place_source.dart';
 
 class _MockAccess extends Mock implements LocationAccess {}
@@ -13,11 +14,11 @@ class _MockGateway extends Mock implements LocationGateway {}
 
 class _FakeNamer implements PlaceNamer {
   _FakeNamer(this.result);
-  String? result;
+  PlaceLookup result;
   final calls = <(double, double)>[];
 
   @override
-  Future<String?> nameFor(double lat, double lng) async {
+  Future<PlaceLookup> nameFor(double lat, double lng) async {
     calls.add((lat, lng));
     return result;
   }
@@ -55,7 +56,7 @@ void main() {
   setUp(() {
     access = _MockAccess();
     gateway = _MockGateway();
-    namer = _FakeNamer('애월읍');
+    namer = _FakeNamer(const PlaceLookup.named('애월읍'));
     when(
       () => access.ensure(),
     ).thenAnswer((_) async => LocationAccessStatus.granted);
@@ -107,7 +108,7 @@ void main() {
   });
 
   test('이름을 못 얻으면(namer null) 좌표만 돌려준다', () async {
-    namer.result = null;
+    namer.result = const PlaceLookup.offline();
 
     final location = await source.current();
 
@@ -116,7 +117,7 @@ void main() {
   });
 
   test('nameFor 는 namer 에 위임한다', () async {
-    expect(await source.nameFor(1, 2), '애월읍');
+    expect(await source.nameFor(1, 2), const PlaceLookup.named('애월읍'));
     expect(namer.calls, [(1.0, 2.0)]);
   });
 }

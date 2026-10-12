@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:geocoding/geocoding.dart';
 
+import '../../../domain/diary/location/place_lookup.dart';
 import '../../../domain/diary/location/place_source.dart';
 
 /// 장소 이름 조합: `[locality, subLocality, thoroughfare]` 중 비지 않은 앞의
@@ -25,7 +26,8 @@ typedef PlacemarkLookup =
 
 /// `geocoding` 으로 이름을 얻는다. 생성자의 locale 은 버려지므로(스펙 §11) 호출마다
 /// 넘기고, Android 13+ 에서 백엔드가 응답하지 않으면 Future 가 끝나지 않으므로
-/// [timeout] 으로 끊는다. 예외 · 시간 초과는 null.
+/// [timeout] 으로 끊는다. 예외 · 시간 초과는 오프라인, 응답은 왔지만 조합할 이름이 없으면
+/// (빈 목록 포함) 이름 없음.
 class GeocodingPlaceNamer implements PlaceNamer {
   GeocodingPlaceNamer({
     PlacemarkLookup? placemarks,
@@ -45,16 +47,18 @@ class GeocodingPlaceNamer implements PlaceNamer {
   ) => Geocoding().placemarkFromCoordinates(lat, lng, locale: locale);
 
   @override
-  Future<String?> nameFor(double lat, double lng) async {
+  Future<PlaceLookup> nameFor(double lat, double lng) async {
+    final List<Placemark> found;
     try {
-      final found = await _placemarks(lat, lng, _locale()).timeout(timeout);
-      for (final placemark in found) {
-        final name = composePlaceName(placemark);
-        if (name != null) return name;
-      }
+      found = await _placemarks(lat, lng, _locale()).timeout(timeout);
     } on Object {
-      // 네트워크 없음 · 기기 미지원 · 시간 초과: 좌표만 둔다.
+      // 네트워크 없음 · 기기 미지원 · 시간 초과: 좌표만 두고 나중에 다시 묻는다.
+      return const PlaceLookup.offline();
     }
-    return null;
+    for (final placemark in found) {
+      final name = composePlaceName(placemark);
+      if (name != null) return PlaceLookup.named(name);
+    }
+    return const PlaceLookup.noName();
   }
 }

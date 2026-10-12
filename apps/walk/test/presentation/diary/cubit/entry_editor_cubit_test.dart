@@ -15,6 +15,7 @@ import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/entity/entry_location.dart';
 import 'package:walk/domain/diary/entity/entry_media.dart';
 import 'package:walk/domain/diary/entity/story.dart';
+import 'package:walk/domain/diary/location/place_lookup.dart';
 import 'package:walk/domain/diary/location/place_source.dart';
 import 'package:walk/domain/diary/usecase/diary_use_case.dart';
 import 'package:walk/presentation/diary/cubit/entry_editor_cubit.dart';
@@ -34,7 +35,8 @@ class _FakePlaceSource implements PlaceSource {
   }
 
   @override
-  Future<String?> nameFor(double lat, double lng) async => null;
+  Future<PlaceLookup> nameFor(double lat, double lng) async =>
+      const PlaceLookup.offline();
 }
 
 /// 겹쳐 실행된 압축 수의 최댓값을 잰다.

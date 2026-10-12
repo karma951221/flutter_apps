@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:walk/data/diary/location/geocoding_place_namer.dart';
+import 'package:walk/domain/diary/location/place_lookup.dart';
 
 void main() {
   group('composePlaceName', () {
@@ -23,13 +24,21 @@ void main() {
     test('빈 값 · 공백은 건너뛴다', () {
       expect(
         composePlaceName(
-          const Placemark(locality: ' ', subLocality: null, thoroughfare: '애월로'),
+          const Placemark(
+            locality: ' ',
+            subLocality: null,
+            thoroughfare: '애월로',
+          ),
         ),
         '애월로',
       );
       expect(
         composePlaceName(
-          const Placemark(locality: '서울', subLocality: '', thoroughfare: '세종대로'),
+          const Placemark(
+            locality: '서울',
+            subLocality: '',
+            thoroughfare: '세종대로',
+          ),
         ),
         '서울 세종대로',
       );
@@ -54,7 +63,7 @@ void main() {
         locale: () => locale,
       );
 
-      expect(await namer.nameFor(37.5, 127), '서울 중구');
+      expect(await namer.nameFor(37.5, 127), const PlaceLookup.named('서울 중구'));
       expect(seen, locale);
     });
 
@@ -67,35 +76,44 @@ void main() {
         locale: () => locale,
       );
 
-      expect(await namer.nameFor(1, 2), '서울');
+      expect(await namer.nameFor(1, 2), const PlaceLookup.named('서울'));
     });
 
-    test('빈 목록 → null', () async {
+    test('빈 목록 → 이름 없음(물어봤지만 붙일 이름이 없다)', () async {
       final namer = GeocodingPlaceNamer(
         placemarks: (_, _, _) async => const [],
         locale: () => locale,
       );
 
-      expect(await namer.nameFor(1, 2), isNull);
+      expect(await namer.nameFor(1, 2), const PlaceLookup.noName());
     });
 
-    test('예외 → null', () async {
+    test('결과는 있지만 조합할 이름이 없으면 이름 없음', () async {
+      final namer = GeocodingPlaceNamer(
+        placemarks: (_, _, _) async => [const Placemark(country: '대한민국')],
+        locale: () => locale,
+      );
+
+      expect(await namer.nameFor(1, 2), const PlaceLookup.noName());
+    });
+
+    test('예외 → 오프라인', () async {
       final namer = GeocodingPlaceNamer(
         placemarks: (_, _, _) async => throw Exception('no network'),
         locale: () => locale,
       );
 
-      expect(await namer.nameFor(1, 2), isNull);
+      expect(await namer.nameFor(1, 2), const PlaceLookup.offline());
     });
 
-    test('응답이 끝나지 않으면 타임아웃 뒤 null', () async {
+    test('응답이 끝나지 않으면 타임아웃 뒤 오프라인', () async {
       final namer = GeocodingPlaceNamer(
         placemarks: (_, _, _) => Completer<List<Placemark>>().future,
         locale: () => locale,
         timeout: const Duration(milliseconds: 50),
       );
 
-      expect(await namer.nameFor(1, 2), isNull);
+      expect(await namer.nameFor(1, 2), const PlaceLookup.offline());
     });
   });
 }

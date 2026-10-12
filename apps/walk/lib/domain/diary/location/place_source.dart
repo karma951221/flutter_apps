@@ -1,8 +1,10 @@
 import '../entity/entry_location.dart';
+import 'place_lookup.dart';
 
-/// 좌표 → 장소 이름. 실패 · 네트워크 없음 · 시간 초과는 모두 null.
+/// 좌표 → 장소 이름. 실패 · 네트워크 없음 · 시간 초과는 [PlaceLookup.offline],
+/// 물어봤는데 붙일 이름이 없으면 [PlaceLookup.noName].
 abstract interface class PlaceNamer {
-  Future<String?> nameFor(double lat, double lng);
+  Future<PlaceLookup> nameFor(double lat, double lng);
 }
 
 /// 지금 위치와 그 이름.
@@ -12,5 +14,5 @@ abstract interface class PlaceSource {
   Future<EntryLocation?> current();
 
   /// 오프라인으로 저장한 기록의 이름을 나중에 채울 때 쓴다.
-  Future<String?> nameFor(double lat, double lng);
+  Future<PlaceLookup> nameFor(double lat, double lng);
 }
