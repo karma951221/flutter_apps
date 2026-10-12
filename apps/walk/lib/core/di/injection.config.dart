@@ -15,6 +15,7 @@ import 'dart:io' as _i497;
 import 'package:core/core.dart' as _i494;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
+import 'package:local_auth/local_auth.dart' as _i152;
 import 'package:location/location.dart' as _i645;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 import 'package:uuid/uuid.dart' as _i706;
@@ -34,6 +35,8 @@ import '../../data/diary/drift_diary_repository.dart' as _i1049;
 import '../../data/diary/media/file_media_store.dart' as _i928;
 import '../../data/diary/media/plugin_media_processor.dart' as _i17;
 import '../../data/diary/prefs_diary_preferences.dart' as _i383;
+import '../../data/lock/local_auth_device_auth.dart' as _i982;
+import '../../data/lock/prefs_lock_repository.dart' as _i691;
 import '../../data/settings/prefs_settings_repository.dart' as _i724;
 import '../../data/walk/health/health_gateway.dart' as _i332;
 import '../../data/walk/repository/health_connect_activity_repository.dart'
@@ -55,6 +58,8 @@ import '../../domain/diary/media/media_store.dart' as _i870;
 import '../../domain/diary/repository/diary_preferences.dart' as _i300;
 import '../../domain/diary/repository/diary_repository.dart' as _i122;
 import '../../domain/diary/usecase/diary_use_case.dart' as _i567;
+import '../../domain/lock/device_auth.dart' as _i439;
+import '../../domain/lock/lock_repository.dart' as _i43;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
@@ -78,6 +83,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i706.Uuid>(() => registerModule.uuid);
     gh.lazySingleton<_i645.LocationGateway>(
       () => registerModule.locationGateway,
+    );
+    gh.lazySingleton<_i152.LocalAuthentication>(
+      () => registerModule.localAuthentication,
     );
     gh.lazySingleton<_i693.PlaceNamer>(() => registerModule.placeNamer);
     gh.lazySingleton<_i933.AlarmPermissions>(
@@ -122,6 +130,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i91.SettingsRepository>(
       () => _i724.PrefsSettingsRepository(gh<_i460.SharedPreferences>()),
     );
+    gh.lazySingleton<_i43.LockRepository>(
+      () => _i691.PrefsLockRepository(gh<_i460.SharedPreferences>()),
+    );
     gh.lazySingleton<_i300.DiaryPreferences>(
       () => _i383.PrefsDiaryPreferences(gh<_i460.SharedPreferences>()),
     );
@@ -153,6 +164,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i296.AlarmRepository>(
       () => _i1.PrefsAlarmRepository(gh<_i460.SharedPreferences>()),
+    );
+    gh.lazySingleton<_i439.DeviceAuth>(
+      () => _i982.LocalAuthDeviceAuth(gh<_i152.LocalAuthentication>()),
     );
     gh.lazySingleton<_i870.MediaStore>(
       () => _i928.FileMediaStore(
