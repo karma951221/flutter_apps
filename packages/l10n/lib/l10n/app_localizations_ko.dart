@@ -2644,4 +2644,59 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkDiaryTrashEmptied => '휴지통을 비웠어요';
+
+  @override
+  String get walkDiarySettings => '일기';
+
+  @override
+  String get walkDiarySettingsLock => '일기 잠금';
+
+  @override
+  String get walkDiarySettingsLockOff => '꺼짐';
+
+  @override
+  String get walkDiarySettingsRelock => '다시 잠기는 시간';
+
+  @override
+  String get walkDiarySettingsRelockImmediate => '바로';
+
+  @override
+  String get walkDiarySettingsRelock30s => '30초 뒤';
+
+  @override
+  String get walkDiarySettingsRelock1m => '1분 뒤';
+
+  @override
+  String get walkDiarySettingsRelock5m => '5분 뒤';
+
+  @override
+  String get walkDiarySettingsRetention => '휴지통 보관 기간';
+
+  @override
+  String get walkDiarySettingsRetention1d => '1일';
+
+  @override
+  String get walkDiarySettingsRetention7d => '7일';
+
+  @override
+  String get walkDiarySettingsRetention30d => '30일';
+
+  @override
+  String get walkDiarySettingsRetentionNever => '지우지 않음';
+
+  @override
+  String get walkDiarySettingsStorage => '저장 공간';
+
+  @override
+  String walkDiarySettingsStorageUsage(String size) {
+    return '사용 중 $size';
+  }
+
+  @override
+  String walkDiarySettingsStorageDetail(int photos, int videos, String trash) {
+    return '사진 $photos장 · 영상 $videos개, 휴지통 $trash 포함';
+  }
+
+  @override
+  String get walkDiarySettingsLocalOnly => '기록은 이 폰에만 저장돼요. 앱을 지우면 함께 사라져요.';
 }

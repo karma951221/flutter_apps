@@ -814,5 +814,42 @@
   "walkDiaryTrashEmptyAllContent": "{count, plural, =1{1 entry} other{{count} entries}} will be deleted forever. This can't be undone.",
   "walkDiaryTrashRestored": "Entry restored",
   "walkDiaryTrashPurged": "Entry deleted forever",
-  "walkDiaryTrashEmptied": "Trash emptied"
+  "walkDiaryTrashEmptied": "Trash emptied",
+  "walkDiarySettings": "Diary",
+  "walkDiarySettingsLock": "Diary lock",
+  "walkDiarySettingsLockOff": "Off",
+  "walkDiarySettingsRelock": "Lock again after",
+  "walkDiarySettingsRelockImmediate": "Immediately",
+  "walkDiarySettingsRelock30s": "After 30 seconds",
+  "walkDiarySettingsRelock1m": "After 1 minute",
+  "walkDiarySettingsRelock5m": "After 5 minutes",
+  "walkDiarySettingsRetention": "Keep trash for",
+  "walkDiarySettingsRetention1d": "1 day",
+  "walkDiarySettingsRetention7d": "7 days",
+  "walkDiarySettingsRetention30d": "30 days",
+  "walkDiarySettingsRetentionNever": "Never delete",
+  "walkDiarySettingsStorage": "Storage",
+  "walkDiarySettingsStorageUsage": "{size} in use",
+  "@walkDiarySettingsStorageUsage": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "walkDiarySettingsStorageDetail": "{photos, plural, =1{1 photo} other{{photos} photos}} · {videos, plural, =1{1 video} other{{videos} videos}}, including {trash} in trash",
+  "@walkDiarySettingsStorageDetail": {
+    "placeholders": {
+      "photos": {
+        "type": "int"
+      },
+      "videos": {
+        "type": "int"
+      },
+      "trash": {
+        "type": "String"
+      }
+    }
+  },
+  "walkDiarySettingsLocalOnly": "Entries are saved only on this phone. They're deleted along with the app."
 }

@@ -199,6 +199,9 @@ void main() {
       when(mock.load).thenReturn(const AppSettings());
       settings = mock;
     }
+    // 설정 탭의 일기 섹션이 길어 권한 행이 기본 화면 밖으로 밀린다.
+    await tester.binding.setSurfaceSize(const Size(800, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     final theme = ThemeCubit(settings);
     addTearDown(theme.close);
     final goal = StepGoalCubit(settings);

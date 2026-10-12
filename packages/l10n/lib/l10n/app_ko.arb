@@ -3794,5 +3794,89 @@
   "walkDiaryTrashEmptied": "휴지통을 비웠어요",
   "@walkDiaryTrashEmptied": {
     "description": "휴지통을 비운 뒤 알림"
+  },
+  "walkDiarySettings": "일기",
+  "@walkDiarySettings": {
+    "description": "설정 탭 일기 섹션 제목"
+  },
+  "walkDiarySettingsLock": "일기 잠금",
+  "@walkDiarySettingsLock": {
+    "description": "설정 탭 일기 잠금 행 제목"
+  },
+  "walkDiarySettingsLockOff": "꺼짐",
+  "@walkDiarySettingsLockOff": {
+    "description": "일기 잠금이 꺼져 있을 때 행 오른쪽 문구"
+  },
+  "walkDiarySettingsRelock": "다시 잠기는 시간",
+  "@walkDiarySettingsRelock": {
+    "description": "앱을 떠난 뒤 일기가 다시 잠기기까지의 시간 행 제목"
+  },
+  "walkDiarySettingsRelockImmediate": "바로",
+  "@walkDiarySettingsRelockImmediate": {
+    "description": "다시 잠기는 시간 선택지: 즉시"
+  },
+  "walkDiarySettingsRelock30s": "30초 뒤",
+  "@walkDiarySettingsRelock30s": {
+    "description": "다시 잠기는 시간 선택지: 30초"
+  },
+  "walkDiarySettingsRelock1m": "1분 뒤",
+  "@walkDiarySettingsRelock1m": {
+    "description": "다시 잠기는 시간 선택지: 1분"
+  },
+  "walkDiarySettingsRelock5m": "5분 뒤",
+  "@walkDiarySettingsRelock5m": {
+    "description": "다시 잠기는 시간 선택지: 5분"
+  },
+  "walkDiarySettingsRetention": "휴지통 보관 기간",
+  "@walkDiarySettingsRetention": {
+    "description": "휴지통 자동 삭제 기간 행 제목"
+  },
+  "walkDiarySettingsRetention1d": "1일",
+  "@walkDiarySettingsRetention1d": {
+    "description": "휴지통 보관 기간 선택지: 1일"
+  },
+  "walkDiarySettingsRetention7d": "7일",
+  "@walkDiarySettingsRetention7d": {
+    "description": "휴지통 보관 기간 선택지: 7일"
+  },
+  "walkDiarySettingsRetention30d": "30일",
+  "@walkDiarySettingsRetention30d": {
+    "description": "휴지통 보관 기간 선택지: 30일"
+  },
+  "walkDiarySettingsRetentionNever": "지우지 않음",
+  "@walkDiarySettingsRetentionNever": {
+    "description": "휴지통 보관 기간 선택지: 자동으로 지우지 않음"
+  },
+  "walkDiarySettingsStorage": "저장 공간",
+  "@walkDiarySettingsStorage": {
+    "description": "일기가 차지하는 저장 공간 행 제목"
+  },
+  "walkDiarySettingsStorageUsage": "사용 중 {size}",
+  "@walkDiarySettingsStorageUsage": {
+    "description": "저장 공간 행 본문. size 는 1.2GB 같은 크기",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "walkDiarySettingsStorageDetail": "사진 {photos}장 · 영상 {videos}개, 휴지통 {trash} 포함",
+  "@walkDiarySettingsStorageDetail": {
+    "description": "저장 공간 행 부가 설명. trash 는 휴지통이 차지하는 크기",
+    "placeholders": {
+      "photos": {
+        "type": "int"
+      },
+      "videos": {
+        "type": "int"
+      },
+      "trash": {
+        "type": "String"
+      }
+    }
+  },
+  "walkDiarySettingsLocalOnly": "기록은 이 폰에만 저장돼요. 앱을 지우면 함께 사라져요.",
+  "@walkDiarySettingsLocalOnly": {
+    "description": "일기 섹션 맨 아래 안내"
   }
 }

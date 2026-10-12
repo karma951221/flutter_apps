@@ -12,6 +12,8 @@ import '../../../domain/alarm/holiday/holiday_calendar_access.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
 import '../../../domain/alarm/widget/next_alarm_widget.dart';
+import '../../../domain/diary/repository/diary_preferences.dart';
+import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
 import '../../../domain/lock/device_auth.dart';
 import '../../../domain/lock/lock_repository.dart';
@@ -22,6 +24,7 @@ import '../../alarm/page/alarm_list_page.dart';
 import '../../diary/page/diary_tab.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/media_pick_guard.dart';
+import '../../settings/cubit/diary_settings_cubit.dart';
 import '../../settings/cubit/holiday_settings_cubit.dart';
 import '../../settings/cubit/settings_permissions_cubit.dart';
 import '../../settings/page/settings_page.dart';
@@ -75,6 +78,11 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     getIt<Clock>(),
     getIt<MediaPickGuard>(),
   );
+  late final _diarySettings = DiarySettingsCubit(
+    getIt<LockRepository>(),
+    getIt<DiaryPreferences>(),
+    getIt<DiaryRepository>(),
+  );
   late final AppLifecycleListener _lifecycle;
   ShellTab _tab = ShellTab.walk;
   ModalRoute<void>? _route;
@@ -119,6 +127,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     _permissions.close();
     _holidaySettings.close();
     _diaryLock.close();
+    _diarySettings.close();
     super.dispose();
   }
 
@@ -214,6 +223,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
         BlocProvider.value(value: _permissions),
         BlocProvider.value(value: _holidaySettings),
         BlocProvider.value(value: _diaryLock),
+        BlocProvider.value(value: _diarySettings),
       ],
       child: Scaffold(
         body: IndexedStack(
@@ -222,7 +232,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
             AlarmListPage(onOpenSettings: () => _select(ShellTab.settings)),
             WalkHomePage(active: _tab == ShellTab.walk),
             DiaryTab(active: _tab == ShellTab.diary),
-            const SettingsPage(),
+            SettingsPage(active: _tab == ShellTab.settings),
           ],
         ),
         bottomNavigationBar: NavigationBar(

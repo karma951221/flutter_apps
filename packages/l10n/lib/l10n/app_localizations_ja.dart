@@ -2641,4 +2641,60 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkDiaryTrashEmptied => 'ごみ箱を空にしました';
+
+  @override
+  String get walkDiarySettings => '日記';
+
+  @override
+  String get walkDiarySettingsLock => '日記のロック';
+
+  @override
+  String get walkDiarySettingsLockOff => 'オフ';
+
+  @override
+  String get walkDiarySettingsRelock => '再ロックまでの時間';
+
+  @override
+  String get walkDiarySettingsRelockImmediate => 'すぐ';
+
+  @override
+  String get walkDiarySettingsRelock30s => '30秒後';
+
+  @override
+  String get walkDiarySettingsRelock1m => '1分後';
+
+  @override
+  String get walkDiarySettingsRelock5m => '5分後';
+
+  @override
+  String get walkDiarySettingsRetention => 'ゴミ箱の保管期間';
+
+  @override
+  String get walkDiarySettingsRetention1d => '1日';
+
+  @override
+  String get walkDiarySettingsRetention7d => '7日';
+
+  @override
+  String get walkDiarySettingsRetention30d => '30日';
+
+  @override
+  String get walkDiarySettingsRetentionNever => '削除しない';
+
+  @override
+  String get walkDiarySettingsStorage => '保存容量';
+
+  @override
+  String walkDiarySettingsStorageUsage(String size) {
+    return '使用中 $size';
+  }
+
+  @override
+  String walkDiarySettingsStorageDetail(int photos, int videos, String trash) {
+    return '写真$photos枚・動画$videos本、ゴミ箱$trashを含む';
+  }
+
+  @override
+  String get walkDiarySettingsLocalOnly =>
+      '記録はこのスマホにだけ保存されます。アプリを削除するといっしょに消えます。';
 }

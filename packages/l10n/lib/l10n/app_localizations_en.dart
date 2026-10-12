@@ -2800,4 +2800,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkDiaryTrashEmptied => 'Trash emptied';
+
+  @override
+  String get walkDiarySettings => 'Diary';
+
+  @override
+  String get walkDiarySettingsLock => 'Diary lock';
+
+  @override
+  String get walkDiarySettingsLockOff => 'Off';
+
+  @override
+  String get walkDiarySettingsRelock => 'Lock again after';
+
+  @override
+  String get walkDiarySettingsRelockImmediate => 'Immediately';
+
+  @override
+  String get walkDiarySettingsRelock30s => 'After 30 seconds';
+
+  @override
+  String get walkDiarySettingsRelock1m => 'After 1 minute';
+
+  @override
+  String get walkDiarySettingsRelock5m => 'After 5 minutes';
+
+  @override
+  String get walkDiarySettingsRetention => 'Keep trash for';
+
+  @override
+  String get walkDiarySettingsRetention1d => '1 day';
+
+  @override
+  String get walkDiarySettingsRetention7d => '7 days';
+
+  @override
+  String get walkDiarySettingsRetention30d => '30 days';
+
+  @override
+  String get walkDiarySettingsRetentionNever => 'Never delete';
+
+  @override
+  String get walkDiarySettingsStorage => 'Storage';
+
+  @override
+  String walkDiarySettingsStorageUsage(String size) {
+    return '$size in use';
+  }
+
+  @override
+  String walkDiarySettingsStorageDetail(int photos, int videos, String trash) {
+    String _temp0 = intl.Intl.pluralLogic(
+      photos,
+      locale: localeName,
+      other: '$photos photos',
+      one: '1 photo',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      videos,
+      locale: localeName,
+      other: '$videos videos',
+      one: '1 video',
+    );
+    return '$_temp0 · $_temp1, including $trash in trash';
+  }
+
+  @override
+  String get walkDiarySettingsLocalOnly =>
+      'Entries are saved only on this phone. They\'re deleted along with the app.';
 }

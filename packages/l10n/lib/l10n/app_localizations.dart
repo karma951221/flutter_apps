@@ -4993,6 +4993,108 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'휴지통을 비웠어요'**
   String get walkDiaryTrashEmptied;
+
+  /// 설정 탭 일기 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'일기'**
+  String get walkDiarySettings;
+
+  /// 설정 탭 일기 잠금 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'일기 잠금'**
+  String get walkDiarySettingsLock;
+
+  /// 일기 잠금이 꺼져 있을 때 행 오른쪽 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'꺼짐'**
+  String get walkDiarySettingsLockOff;
+
+  /// 앱을 떠난 뒤 일기가 다시 잠기기까지의 시간 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 잠기는 시간'**
+  String get walkDiarySettingsRelock;
+
+  /// 다시 잠기는 시간 선택지: 즉시
+  ///
+  /// In ko, this message translates to:
+  /// **'바로'**
+  String get walkDiarySettingsRelockImmediate;
+
+  /// 다시 잠기는 시간 선택지: 30초
+  ///
+  /// In ko, this message translates to:
+  /// **'30초 뒤'**
+  String get walkDiarySettingsRelock30s;
+
+  /// 다시 잠기는 시간 선택지: 1분
+  ///
+  /// In ko, this message translates to:
+  /// **'1분 뒤'**
+  String get walkDiarySettingsRelock1m;
+
+  /// 다시 잠기는 시간 선택지: 5분
+  ///
+  /// In ko, this message translates to:
+  /// **'5분 뒤'**
+  String get walkDiarySettingsRelock5m;
+
+  /// 휴지통 자동 삭제 기간 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통 보관 기간'**
+  String get walkDiarySettingsRetention;
+
+  /// 휴지통 보관 기간 선택지: 1일
+  ///
+  /// In ko, this message translates to:
+  /// **'1일'**
+  String get walkDiarySettingsRetention1d;
+
+  /// 휴지통 보관 기간 선택지: 7일
+  ///
+  /// In ko, this message translates to:
+  /// **'7일'**
+  String get walkDiarySettingsRetention7d;
+
+  /// 휴지통 보관 기간 선택지: 30일
+  ///
+  /// In ko, this message translates to:
+  /// **'30일'**
+  String get walkDiarySettingsRetention30d;
+
+  /// 휴지통 보관 기간 선택지: 자동으로 지우지 않음
+  ///
+  /// In ko, this message translates to:
+  /// **'지우지 않음'**
+  String get walkDiarySettingsRetentionNever;
+
+  /// 일기가 차지하는 저장 공간 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'저장 공간'**
+  String get walkDiarySettingsStorage;
+
+  /// 저장 공간 행 본문. size 는 1.2GB 같은 크기
+  ///
+  /// In ko, this message translates to:
+  /// **'사용 중 {size}'**
+  String walkDiarySettingsStorageUsage(String size);
+
+  /// 저장 공간 행 부가 설명. trash 는 휴지통이 차지하는 크기
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 {photos}장 · 영상 {videos}개, 휴지통 {trash} 포함'**
+  String walkDiarySettingsStorageDetail(int photos, int videos, String trash);
+
+  /// 일기 섹션 맨 아래 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'기록은 이 폰에만 저장돼요. 앱을 지우면 함께 사라져요.'**
+  String get walkDiarySettingsLocalOnly;
 }
 
 class _AppLocalizationsDelegate

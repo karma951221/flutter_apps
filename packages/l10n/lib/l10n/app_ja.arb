@@ -814,5 +814,42 @@
   "walkDiaryTrashEmptyAllContent": "記録{count}件が完全に削除されます。元に戻せません。",
   "walkDiaryTrashRestored": "記録を元に戻しました",
   "walkDiaryTrashPurged": "記録を完全に削除しました",
-  "walkDiaryTrashEmptied": "ごみ箱を空にしました"
+  "walkDiaryTrashEmptied": "ごみ箱を空にしました",
+  "walkDiarySettings": "日記",
+  "walkDiarySettingsLock": "日記のロック",
+  "walkDiarySettingsLockOff": "オフ",
+  "walkDiarySettingsRelock": "再ロックまでの時間",
+  "walkDiarySettingsRelockImmediate": "すぐ",
+  "walkDiarySettingsRelock30s": "30秒後",
+  "walkDiarySettingsRelock1m": "1分後",
+  "walkDiarySettingsRelock5m": "5分後",
+  "walkDiarySettingsRetention": "ゴミ箱の保管期間",
+  "walkDiarySettingsRetention1d": "1日",
+  "walkDiarySettingsRetention7d": "7日",
+  "walkDiarySettingsRetention30d": "30日",
+  "walkDiarySettingsRetentionNever": "削除しない",
+  "walkDiarySettingsStorage": "保存容量",
+  "walkDiarySettingsStorageUsage": "使用中 {size}",
+  "@walkDiarySettingsStorageUsage": {
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "walkDiarySettingsStorageDetail": "写真{photos}枚・動画{videos}本、ゴミ箱{trash}を含む",
+  "@walkDiarySettingsStorageDetail": {
+    "placeholders": {
+      "photos": {
+        "type": "int"
+      },
+      "videos": {
+        "type": "int"
+      },
+      "trash": {
+        "type": "String"
+      }
+    }
+  },
+  "walkDiarySettingsLocalOnly": "記録はこのスマホにだけ保存されます。アプリを削除するといっしょに消えます。"
 }
