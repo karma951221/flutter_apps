@@ -1,0 +1,381 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:core/core.dart';
+import 'package:design_system/design_system.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:l10n/l10n.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:walk/domain/diary/entity/diary_entry.dart';
+import 'package:walk/domain/diary/entity/entry_filter.dart';
+import 'package:walk/domain/diary/entity/entry_media.dart';
+import 'package:walk/domain/diary/entity/story.dart';
+import 'package:walk/domain/diary/media/media_store.dart';
+import 'package:walk/domain/diary/repository/diary_repository.dart';
+import 'package:walk/domain/diary/usecase/diary_use_case.dart';
+import 'package:walk/presentation/diary/page/story_manage_page.dart';
+
+import '../../../support/diary_fixtures.dart';
+
+class _MockRepo extends Mock implements DiaryRepository {}
+
+class _MockUseCase extends Mock implements DiaryUseCase {}
+
+class _MockStore extends Mock implements MediaStore {}
+
+Story _story(String id, String title, {DateTime? endedAt}) => Story(
+  id: id,
+  title: title,
+  status: endedAt == null ? StoryStatus.open : StoryStatus.closed,
+  startedAt: diaryT0,
+  endedAt: endedAt,
+  createdAt: diaryT0,
+);
+
+DiaryEntry _entry(
+  String id, {
+  String storyId = Story.dailyId,
+  DateTime? occurredAt,
+  List<EntryMedia> media = const [],
+}) => DiaryEntry(
+  id: id,
+  storyId: storyId,
+  body: '글 $id',
+  occurredAt: occurredAt ?? diaryT0,
+  createdAt: diaryT0,
+  updatedAt: diaryT0,
+  media: media,
+  tags: const [],
+);
+
+void main() {
+  late _MockRepo repo;
+  late _MockUseCase useCase;
+  late StreamController<List<Story>> stories;
+  late List<Story> current;
+  late Map<EntryFilter, List<DiaryEntry>> entries;
+  late List<Story> updated;
+
+  setUpAll(() {
+    registerFallbackValue(const EntryFilter.all());
+    registerFallbackValue(_story('x', 'x'));
+  });
+
+  setUp(() {
+    current = [
+      _story(Story.dailyId, ''),
+      _story('jeju', '제주 여행'),
+      _story('busan', '부산', endedAt: diaryT0),
+    ];
+    stories = StreamController<List<Story>>.broadcast();
+    entries = {};
+    updated = [];
+    repo = _MockRepo();
+    when(repo.watchStories).thenAnswer(
+      (_) => Stream.multi((c) {
+        c.add(current);
+        final sub = stories.stream.listen(c.add);
+        c.onCancel = sub.cancel;
+      }),
+    );
+    when(() => repo.watchEntries(any())).thenAnswer(
+      (inv) => Stream.value(
+        entries[inv.positionalArguments.single as EntryFilter] ?? const [],
+      ),
+    );
+    when(() => repo.updateStory(any())).thenAnswer((inv) async {
+      final story = inv.positionalArguments.single as Story;
+      updated.add(story);
+      return Ok(story);
+    });
+    useCase = _MockUseCase();
+    when(
+      () => useCase.deleteStory(any()),
+    ).thenAnswer((_) async => const Ok(null));
+    final store = _MockStore();
+    when(
+      () => store.resolve(any()),
+    ).thenAnswer((inv) => File('/fake/${inv.positionalArguments.single}'));
+    getIt
+      ..registerSingleton<DiaryRepository>(repo)
+      ..registerSingleton<DiaryUseCase>(useCase)
+      ..registerSingleton<MediaStore>(store)
+      ..registerSingleton<Clock>(MutableClock(diaryT0));
+  });
+
+  tearDown(() async {
+    await stories.close();
+    await getIt.reset();
+  });
+
+  Future<void> pump(WidgetTester tester) async {
+    tester.view
+      ..physicalSize = const Size(1080, 2400)
+      ..devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const StoryManagePage(),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  Finder menuOf(String title) => find.descendant(
+    of: find.widgetWithText(AppListTile, title),
+    matching: find.byIcon(Icons.more_vert),
+  );
+
+  Future<List<String>> menuItems(WidgetTester tester, String title) async {
+    await tester.tap(menuOf(title));
+    await tester.pumpAndSettle();
+    final items = [
+      for (final item in tester.widgetList<PopupMenuItem<Object?>>(
+        find.byWidgetPredicate((w) => w is PopupMenuItem),
+      ))
+        tester
+            .widgetList<Text>(
+              find.descendant(
+                of: find.byWidget(item),
+                matching: find.byType(Text),
+              ),
+            )
+            .single
+            .data!,
+    ];
+    return items;
+  }
+
+  Future<void> choose(WidgetTester tester, String title, String item) async {
+    await tester.tap(menuOf(title));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(item).last);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('열린 스토리 · 보관함을 나눠 보인다(기본 스토리는 일상)', (tester) async {
+    await pump(tester);
+
+    expect(find.widgetWithText(AppListTile, '일상'), findsOneWidget);
+    expect(find.widgetWithText(AppListTile, '제주 여행'), findsOneWidget);
+    expect(find.text('보관함'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('보관함')).dy,
+      lessThan(tester.getTopLeft(find.widgetWithText(AppListTile, '부산')).dy),
+    );
+  });
+
+  testWidgets('기본 스토리 메뉴에는 닫기 · 삭제가 없다', (tester) async {
+    await pump(tester);
+
+    expect(await menuItems(tester, '일상'), ['이름 바꾸기', '표지 바꾸기']);
+  });
+
+  testWidgets('열린 스토리는 닫기 · 삭제, 닫힌 스토리는 다시 열기', (tester) async {
+    await pump(tester);
+
+    expect(await menuItems(tester, '제주 여행'), ['이름 바꾸기', '표지 바꾸기', '닫기', '삭제']);
+    await tester.tapAt(Offset.zero);
+    await tester.pumpAndSettle();
+    expect(await menuItems(tester, '부산'), ['이름 바꾸기', '표지 바꾸기', '다시 열기', '삭제']);
+  });
+
+  testWidgets('삭제는 확인을 받고, 확인하면 지운다(기록은 휴지통으로)', (tester) async {
+    await pump(tester);
+
+    await choose(tester, '제주 여행', '삭제');
+    expect(find.text("'제주 여행' 스토리를 삭제할까요?"), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, '취소'));
+    await tester.pumpAndSettle();
+    verifyNever(() => useCase.deleteStory(any()));
+
+    await choose(tester, '제주 여행', '삭제');
+    await tester.tap(find.widgetWithText(TextButton, '삭제'));
+    await tester.pumpAndSettle();
+    verify(() => useCase.deleteStory('jeju')).called(1);
+  });
+
+  testWidgets('닫기 → 지금 닫기는 지금 시각으로 닫는다', (tester) async {
+    await pump(tester);
+
+    await choose(tester, '제주 여행', '닫기');
+    await tester.tap(find.text('지금 닫기'));
+    await tester.pumpAndSettle();
+
+    expect(updated.single.id, 'jeju');
+    expect(updated.single.isOpen, isFalse);
+    expect(updated.single.endedAt, diaryT0);
+  });
+
+  testWidgets('다시 열기', (tester) async {
+    await pump(tester);
+
+    await choose(tester, '부산', '다시 열기');
+
+    expect(updated.single.id, 'busan');
+    expect(updated.single.isOpen, isTrue);
+  });
+
+  testWidgets('이름 바꾸기', (tester) async {
+    await pump(tester);
+
+    await choose(tester, '제주 여행', '이름 바꾸기');
+    await tester.enterText(find.byType(TextField), '제주 한 달');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(AppButton, '저장'));
+    await tester.pumpAndSettle();
+
+    expect(updated.single.title, '제주 한 달');
+  });
+
+  testWidgets('표지 시트에는 그 스토리의 사진만 있고, 고르면 표지가 된다', (tester) async {
+    entries[const EntryFilter.story('jeju')] = [
+      _entry('e1', storyId: 'jeju', media: [photoMedia('p1')]),
+    ];
+    entries[const EntryFilter.all()] = [
+      ...entries[const EntryFilter.story('jeju')]!,
+      _entry('d1', media: [photoMedia('daily-photo')]),
+    ];
+    await pump(tester);
+
+    await choose(tester, '제주 여행', '표지 바꾸기');
+
+    expect(find.byKey(const ValueKey('cover-p1')), findsOneWidget);
+    expect(find.byKey(const ValueKey('cover-daily-photo')), findsNothing);
+    expect(find.text('자동 (가장 최근 사진)'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('cover-p1')));
+    await tester.pumpAndSettle();
+
+    expect(updated.single.coverMediaId, 'p1');
+  });
+
+  testWidgets('사진이 없는 스토리의 표지 시트는 안내만', (tester) async {
+    await pump(tester);
+
+    await choose(tester, '제주 여행', '표지 바꾸기');
+
+    expect(find.text('이 스토리에는 아직 사진이 없어요'), findsOneWidget);
+  });
+
+  testWidgets('지난 기간으로 만들면 그 기간의 일상 기록을 골라 옮긴다', (tester) async {
+    final created = Story(
+      id: 'chuseok',
+      title: '추석',
+      status: StoryStatus.open,
+      startedAt: DateTime(2026, 10, 3),
+      createdAt: diaryT0,
+    );
+    when(
+      () => repo.createStory(
+        title: any(named: 'title'),
+        startedAt: any(named: 'startedAt'),
+        endedAt: any(named: 'endedAt'),
+      ),
+    ).thenAnswer((_) async => Ok(created));
+    when(
+      () => repo.entriesBetween(any(), any(), storyId: any(named: 'storyId')),
+    ).thenAnswer(
+      (_) async => [
+        _entry('a', occurredAt: DateTime(2026, 10, 4)),
+        _entry('b', occurredAt: DateTime(2026, 10, 3)),
+      ],
+    );
+    when(
+      () => repo.moveEntries(any(), any()),
+    ).thenAnswer((_) async => const Ok(null));
+    await pump(tester);
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '추석');
+    await tester.tap(find.textContaining('시작일'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('3'));
+    await tester.tap(find.text('확인'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(AppButton, '만들기'));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => repo.createStory(
+        title: '추석',
+        startedAt: DateTime(2026, 10, 3),
+        endedAt: null,
+      ),
+    ).called(1);
+    verify(
+      () => repo.entriesBetween(
+        DateTime(2026, 10, 3),
+        diaryT0,
+        storyId: Story.dailyId,
+      ),
+    ).called(1);
+    expect(find.text("이 기간의 '일상' 기록을 옮길까요?"), findsOneWidget);
+    expect(find.text('글 a'), findsOneWidget);
+    expect(find.text('글 b'), findsOneWidget);
+
+    // 하나를 빼고 옮긴다.
+    await tester.tap(find.text('글 b'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(AppButton, '1개 옮기기'));
+    await tester.pumpAndSettle();
+
+    verify(() => repo.moveEntries(['a'], 'chuseok')).called(1);
+    expect(find.widgetWithText(SnackBar, '기록 1개를 옮겼어요'), findsOneWidget);
+  });
+
+  testWidgets('오늘 시작하는 스토리는 옮기기를 제안하지 않는다', (tester) async {
+    when(
+      () => repo.createStory(
+        title: any(named: 'title'),
+        startedAt: any(named: 'startedAt'),
+        endedAt: any(named: 'endedAt'),
+      ),
+    ).thenAnswer((_) async => Ok(_story('new', '새 여행')));
+    when(
+      () => repo.entriesBetween(any(), any(), storyId: any(named: 'storyId')),
+    ).thenAnswer((_) async => [_entry('a')]);
+    await pump(tester);
+
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '새 여행');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(AppButton, '만들기'));
+    await tester.pumpAndSettle();
+
+    verifyNever(
+      () => repo.entriesBetween(any(), any(), storyId: any(named: 'storyId')),
+    );
+    expect(find.text("이 기간의 '일상' 기록을 옮길까요?"), findsNothing);
+    verify(
+      () => repo.createStory(
+        title: '새 여행',
+        startedAt: DateTime(2026, 10, 10),
+        endedAt: null,
+      ),
+    ).called(1);
+  });
+
+  testWidgets('동작이 규칙에 걸리면 스낵바로 알린다', (tester) async {
+    when(() => useCase.deleteStory(any())).thenAnswer(
+      (_) async => const Err(Failure.validation(field: 'defaultStoryLocked')),
+    );
+    await pump(tester);
+
+    await choose(tester, '제주 여행', '삭제');
+    await tester.tap(find.widgetWithText(TextButton, '삭제'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.widgetWithText(SnackBar, '기본 스토리는 닫거나 지울 수 없어요'),
+      findsOneWidget,
+    );
+  });
+}

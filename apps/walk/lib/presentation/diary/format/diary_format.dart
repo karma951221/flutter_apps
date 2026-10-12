@@ -77,8 +77,8 @@ abstract final class DiaryFormat {
         DiaryFailure.storyClosed => l10n.walkDiaryErrorStoryClosed,
         DiaryFailure.notFound => l10n.walkDiaryErrorNotFound,
         DiaryFailure.mediaProcessing => l10n.walkDiaryErrorMediaProcessing,
-        // 작성 화면에서는 나오지 않는 스토리 규칙 — 일반 저장 오류로 알린다.
-        DiaryFailure.defaultStoryLocked ||
-        DiaryFailure.endBeforeStart => l10n.walkDiaryErrorSave,
+        DiaryFailure.defaultStoryLocked =>
+          l10n.walkDiaryErrorDefaultStoryLocked,
+        DiaryFailure.endBeforeStart => l10n.walkDiaryErrorEndBeforeStart,
       };
 }

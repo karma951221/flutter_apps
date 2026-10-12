@@ -10,16 +10,21 @@ import '../../../domain/diary/entity/diary_view_mode.dart';
 import '../../../domain/diary/repository/diary_preferences.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
+import '../../../domain/diary/usecase/story_cover.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/cubit/diary_lock_state.dart';
 import '../../lock/widget/diary_lock_gate.dart';
 import '../../theme/walk_theme.dart';
 import '../cubit/diary_timeline_cubit.dart';
 import '../cubit/diary_timeline_state.dart';
+import '../cubit/story_covers_cubit.dart';
 import '../widget/diary_entries_view.dart';
+import '../widget/story_avatar.dart';
 import '../widget/story_bar.dart';
 import '../widget/story_header.dart';
+import 'entry_detail_page.dart';
 import 'entry_editor_page.dart';
+import 'story_manage_page.dart';
 
 /// 셸의 일기 탭(스펙 §6.1). 위에서 `DiaryLockCubit` 를 받는다(셸이 소유).
 ///
@@ -41,6 +46,7 @@ class _DiaryTabState extends State<DiaryTab> {
     getIt<DiaryRepository>(),
     getIt<DiaryPreferences>(),
   )..start();
+  late final _covers = StoryCoversCubit(getIt<DiaryRepository>())..start();
 
   @override
   void initState() {
@@ -57,6 +63,7 @@ class _DiaryTabState extends State<DiaryTab> {
   @override
   void dispose() {
     _timeline.close();
+    _covers.close();
     super.dispose();
   }
 
@@ -69,15 +76,23 @@ class _DiaryTabState extends State<DiaryTab> {
     final unlocked = context.select<DiaryLockCubit, bool>(
       (c) => c.state is LockUnlocked,
     );
-    return BlocProvider.value(
-      value: _timeline,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: _timeline),
+        BlocProvider.value(value: _covers),
+      ],
       child: BlocBuilder<DiaryTimelineCubit, DiaryTimelineState>(
         buildWhen: (a, b) => a.viewMode != b.viewMode,
         builder: (context, state) {
           // 릴스는 탭 몸통을 꽉 채운다 — 앱바 대신 위에 얹은 머리가 토글을 들고 있다.
           final reels = unlocked && state.viewMode == DiaryViewMode.reels;
           return Scaffold(
-            appBar: reels ? null : AppBar(title: Text(l10n.walkShellTabDiary)),
+            appBar: reels
+                ? null
+                : AppBar(
+                    title: Text(l10n.walkShellTabDiary),
+                    actions: [if (unlocked) const _DiaryMenu()],
+                  ),
             body: DiaryLockGate(child: _Timeline(active: widget.active)),
             // 오른쪽 아래 — 릴스에서도 위에 얹은 머리 · 토글을 가리지 않는다.
             floatingActionButton: unlocked
@@ -94,6 +109,33 @@ class _DiaryTabState extends State<DiaryTab> {
       ),
     );
   }
+}
+
+enum _DiaryMenuItem { stories }
+
+/// 일기 탭 앱바 ⋮(스펙 §6.1): 스토리 관리 · (휴지통). 잠긴 동안은 두지 않는다.
+/// 항목을 더하려면 [_DiaryMenuItem] 값과 [_items] · [_open] 의 한 줄씩.
+class _DiaryMenu extends StatelessWidget {
+  const _DiaryMenu();
+
+  List<AppOverflowMenuItem<_DiaryMenuItem>> _items(AppLocalizations l10n) => [
+    AppOverflowMenuItem(
+      value: _DiaryMenuItem.stories,
+      label: l10n.walkDiaryMenuStories,
+      icon: Icons.auto_stories_outlined,
+    ),
+  ];
+
+  Future<void> _open(BuildContext context, _DiaryMenuItem item) =>
+      switch (item) {
+        _DiaryMenuItem.stories => openStoryManage(context),
+      };
+
+  @override
+  Widget build(BuildContext context) => AppOverflowMenu<_DiaryMenuItem>(
+    items: _items(AppLocalizations.of(context)),
+    onSelected: (item) => unawaited(_open(context, item)),
+  );
 }
 
 /// 스토리 바 + 고른 스토리의 머리 · 보기 모드 토글 + 기록.
@@ -153,11 +195,14 @@ class _Timeline extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              StoryBar(
-                open: state.openStories,
-                archived: state.archived,
-                selectedId: selectedId,
-                onSelect: cubit.selectStory,
+              BlocBuilder<StoryCoversCubit, Map<String, StoryCover>>(
+                builder: (context, covers) => StoryBar(
+                  open: state.openStories,
+                  archived: state.archived,
+                  selectedId: selectedId,
+                  onSelect: cubit.selectStory,
+                  covers: coverFiles(covers),
+                ),
               ),
               const Divider(height: 1),
               header,
@@ -203,8 +248,7 @@ class _Entries extends StatelessWidget {
         for (final s in [...state.openStories, ...state.archived])
           s.id: storyDisplayTitle(l10n, s),
       },
-      // 기록 상세(T15)가 생기기 전까지는 바로 고치기 화면을 연다.
-      onOpen: (entry) => openEntryEditor(context, editingId: entry.id),
+      onOpen: (entry) => openEntryDetail(context, entry.id),
     );
   }
 }

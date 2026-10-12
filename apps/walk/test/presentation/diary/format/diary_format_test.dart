@@ -77,6 +77,14 @@ void main() {
       DiaryFormat.failure(ko, DiaryFailure.emptyEntry),
       '글이나 사진·영상을 넣어 주세요',
     );
+    expect(
+      DiaryFormat.failure(ko, DiaryFailure.endBeforeStart),
+      '종료일이 시작일보다 빠를 수 없어요',
+    );
+    expect(
+      DiaryFormat.failure(ko, DiaryFailure.defaultStoryLocked),
+      '기본 스토리는 닫거나 지울 수 없어요',
+    );
     for (final f in DiaryFailure.values) {
       expect(DiaryFormat.failure(ko, f), isNotEmpty);
     }

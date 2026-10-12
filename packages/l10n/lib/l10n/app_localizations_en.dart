@@ -2584,4 +2584,117 @@ class AppLocalizationsEn extends AppLocalizations {
   String walkDiaryEditorPlaceSuggestion(String name, int count) {
     return '$name $count';
   }
+
+  @override
+  String get walkDiaryMenuStories => 'Manage stories';
+
+  @override
+  String get walkDiaryStoryNew => 'New story';
+
+  @override
+  String get walkDiaryStoryRename => 'Rename';
+
+  @override
+  String get walkDiaryStoryCover => 'Change cover';
+
+  @override
+  String get walkDiaryStoryClose => 'Close';
+
+  @override
+  String get walkDiaryStoryReopen => 'Reopen';
+
+  @override
+  String get walkDiaryStoryDelete => 'Delete';
+
+  @override
+  String walkDiaryStoryDeleteTitle(String title) {
+    return 'Delete the story \'$title\'?';
+  }
+
+  @override
+  String get walkDiaryStoryDeleteContent =>
+      'Its entries move to the trash. Restored entries go to \'Daily\'.';
+
+  @override
+  String get walkDiaryStoryTitleLabel => 'Title';
+
+  @override
+  String walkDiaryStoryStart(String date) {
+    return 'Starts $date';
+  }
+
+  @override
+  String walkDiaryStoryEnd(String date) {
+    return 'Ends $date';
+  }
+
+  @override
+  String get walkDiaryStoryNoEnd => 'No end date (ongoing)';
+
+  @override
+  String get walkDiaryStoryClearEnd => 'Clear end date';
+
+  @override
+  String get walkDiaryStoryCreate => 'Create';
+
+  @override
+  String get walkDiaryStorySave => 'Save';
+
+  @override
+  String get walkDiaryStoryCloseNow => 'Close now';
+
+  @override
+  String get walkDiaryStoryCloseOnDate => 'Close on a date';
+
+  @override
+  String get walkDiaryStoryCoverAuto => 'Automatic (latest photo)';
+
+  @override
+  String get walkDiaryStoryCoverEmpty => 'This story has no photos yet';
+
+  @override
+  String get walkDiaryStoryMoveTitle =>
+      'Move \'Daily\' entries from this period?';
+
+  @override
+  String walkDiaryStoryMoveConfirm(int count) {
+    return 'Move $count';
+  }
+
+  @override
+  String get walkDiaryStoryMoveSkip => 'Skip';
+
+  @override
+  String walkDiaryStoryMoved(int count) {
+    return 'Moved $count entries';
+  }
+
+  @override
+  String get walkDiaryErrorEndBeforeStart =>
+      'The end date can\'t be before the start date';
+
+  @override
+  String get walkDiaryErrorDefaultStoryLocked =>
+      'The default story can\'t be closed or deleted';
+
+  @override
+  String get walkDiaryEntryEdit => 'Edit';
+
+  @override
+  String get walkDiaryEntryDelete => 'Delete';
+
+  @override
+  String get walkDiaryEntryDeleteTitle => 'Delete this entry?';
+
+  @override
+  String get walkDiaryEntryDeleteContent =>
+      'It moves to the trash, where you can restore it.';
+
+  @override
+  String get walkDiaryEntryTrashed => 'Entry moved to the trash';
+
+  @override
+  String walkDiaryEntryDateTime(String date, String time) {
+    return '$date $time';
+  }
 }

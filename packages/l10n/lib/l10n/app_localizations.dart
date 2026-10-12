@@ -4645,6 +4645,198 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{name} {count}'**
   String walkDiaryEditorPlaceSuggestion(String name, int count);
+
+  /// 일기 탭 ⋮ 메뉴의 스토리 관리 항목 · 스토리 관리 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'스토리 관리'**
+  String get walkDiaryMenuStories;
+
+  /// 스토리 관리 화면의 새 스토리 만들기 버튼 · 만들기 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'새 스토리'**
+  String get walkDiaryStoryNew;
+
+  /// 스토리 메뉴의 이름 바꾸기 · 이름 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'이름 바꾸기'**
+  String get walkDiaryStoryRename;
+
+  /// 스토리 메뉴의 표지 바꾸기 · 표지 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'표지 바꾸기'**
+  String get walkDiaryStoryCover;
+
+  /// 스토리 메뉴의 닫기(보관함으로) 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'닫기'**
+  String get walkDiaryStoryClose;
+
+  /// 닫힌 스토리 메뉴의 다시 열기 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 열기'**
+  String get walkDiaryStoryReopen;
+
+  /// 스토리 메뉴의 삭제 항목 · 삭제 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제'**
+  String get walkDiaryStoryDelete;
+
+  /// 스토리 삭제 확인 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'\'{title}\' 스토리를 삭제할까요?'**
+  String walkDiaryStoryDeleteTitle(String title);
+
+  /// 스토리 삭제 확인 다이얼로그 본문 — 기록은 휴지통, 복원하면 기본 스토리
+  ///
+  /// In ko, this message translates to:
+  /// **'이 스토리의 기록은 휴지통으로 가요. 복원하면 \'일상\'으로 돌아와요.'**
+  String get walkDiaryStoryDeleteContent;
+
+  /// 스토리 만들기 · 이름 바꾸기 시트의 제목 입력칸
+  ///
+  /// In ko, this message translates to:
+  /// **'제목'**
+  String get walkDiaryStoryTitleLabel;
+
+  /// 스토리 만들기 시트의 시작일 행
+  ///
+  /// In ko, this message translates to:
+  /// **'시작일 {date}'**
+  String walkDiaryStoryStart(String date);
+
+  /// 스토리 만들기 시트의 종료일 행(넣었을 때)
+  ///
+  /// In ko, this message translates to:
+  /// **'종료일 {date}'**
+  String walkDiaryStoryEnd(String date);
+
+  /// 스토리 만들기 시트의 종료일 행(비었을 때) — 누르면 날짜를 고른다
+  ///
+  /// In ko, this message translates to:
+  /// **'종료일 없음 (진행 중)'**
+  String get walkDiaryStoryNoEnd;
+
+  /// 스토리 만들기 시트에서 넣은 종료일을 지우는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'종료일 지우기'**
+  String get walkDiaryStoryClearEnd;
+
+  /// 스토리 만들기 시트의 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'만들기'**
+  String get walkDiaryStoryCreate;
+
+  /// 스토리 이름 바꾸기 시트의 저장 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get walkDiaryStorySave;
+
+  /// 스토리 닫기 시트 — 지금 시각으로 닫기
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 닫기'**
+  String get walkDiaryStoryCloseNow;
+
+  /// 스토리 닫기 시트 — 종료일을 골라 닫기
+  ///
+  /// In ko, this message translates to:
+  /// **'날짜를 골라 닫기'**
+  String get walkDiaryStoryCloseOnDate;
+
+  /// 스토리 표지 시트의 자동 표지 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'자동 (가장 최근 사진)'**
+  String get walkDiaryStoryCoverAuto;
+
+  /// 스토리 표지 시트 — 고를 사진 · 영상이 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'이 스토리에는 아직 사진이 없어요'**
+  String get walkDiaryStoryCoverEmpty;
+
+  /// 지난 기간 스토리를 만든 뒤 그 기간의 기본 스토리 기록을 옮기자는 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'이 기간의 \'일상\' 기록을 옮길까요?'**
+  String get walkDiaryStoryMoveTitle;
+
+  /// 일상 기록 옮기기 시트의 확인 버튼 — 고른 기록 수
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}개 옮기기'**
+  String walkDiaryStoryMoveConfirm(int count);
+
+  /// 일상 기록 옮기기 시트의 건너뛰기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'건너뛰기'**
+  String get walkDiaryStoryMoveSkip;
+
+  /// 일상 기록을 새 스토리로 옮긴 뒤 알림
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 {count}개를 옮겼어요'**
+  String walkDiaryStoryMoved(int count);
+
+  /// 스토리 종료일이 시작일보다 이를 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'종료일이 시작일보다 빠를 수 없어요'**
+  String get walkDiaryErrorEndBeforeStart;
+
+  /// 기본 스토리(일상)를 닫거나 지우려 할 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 스토리는 닫거나 지울 수 없어요'**
+  String get walkDiaryErrorDefaultStoryLocked;
+
+  /// 일기 기록 상세 ⋮ 메뉴의 수정 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'수정'**
+  String get walkDiaryEntryEdit;
+
+  /// 일기 기록 상세 ⋮ 메뉴의 삭제 항목 · 삭제 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제'**
+  String get walkDiaryEntryDelete;
+
+  /// 일기 기록 삭제 확인 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 삭제할까요?'**
+  String get walkDiaryEntryDeleteTitle;
+
+  /// 일기 기록 삭제 확인 다이얼로그 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통으로 옮겨요. 휴지통에서 복원할 수 있어요.'**
+  String get walkDiaryEntryDeleteContent;
+
+  /// 일기 기록을 휴지통으로 보낸 뒤 알림
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 휴지통으로 옮겼어요'**
+  String get walkDiaryEntryTrashed;
+
+  /// 일기 기록 상세의 날짜와 시각
+  ///
+  /// In ko, this message translates to:
+  /// **'{date} {time}'**
+  String walkDiaryEntryDateTime(String date, String time);
 }
 
 class _AppLocalizationsDelegate

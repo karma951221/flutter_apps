@@ -23,7 +23,9 @@ import 'package:walk/domain/lock/device_auth.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
 import 'package:walk/presentation/diary/page/diary_tab.dart';
+import 'package:walk/presentation/diary/page/entry_detail_page.dart';
 import 'package:walk/presentation/diary/page/entry_editor_page.dart';
+import 'package:walk/presentation/diary/page/story_manage_page.dart';
 import 'package:walk/presentation/diary/widget/entry_media_view.dart';
 import 'package:walk/presentation/diary/widget/feed_view.dart';
 import 'package:walk/presentation/diary/widget/prose_view.dart';
@@ -148,6 +150,7 @@ void main() {
     expect(find.text('비밀 기록', skipOffstage: false), findsNothing);
     expect(find.byType(PinPad), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsNothing);
+    expect(find.byIcon(Icons.more_vert), findsNothing);
 
     for (final d in '1234'.split('')) {
       await tester.tap(find.widgetWithText(TextButton, d));
@@ -335,7 +338,7 @@ void main() {
       expect(find.text('새 기록'), findsOneWidget);
     });
 
-    testWidgets('기록을 누르면 그 기록 고치기 화면', (tester) async {
+    testWidgets('기록을 누르면 그 기록 상세(R18)', (tester) async {
       final entry = _entry('출근');
       entries[const EntryFilter.all()] = [entry];
       when(() => repo.entry('출근')).thenAnswer((_) async => Ok(entry));
@@ -344,10 +347,22 @@ void main() {
       await tester.tap(find.text('출근'));
       await tester.pumpAndSettle();
 
-      final scope = tester.widget<EntryEditorScope>(
-        find.byType(EntryEditorScope),
+      final detail = tester.widget<EntryDetailPage>(
+        find.byType(EntryDetailPage),
       );
-      expect(scope.editingId, '출근');
+      expect(detail.entryId, '출근');
+      expect(find.byType(EntryEditorPage), findsNothing);
+    });
+
+    testWidgets('앱바 ⋮ → 스토리 관리', (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('스토리 관리'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(StoryManagePage), findsOneWidget);
     });
 
     testWidgets('릴스에서도 ＋ 가 있고 위의 머리 · 토글을 가리지 않는다', (tester) async {
@@ -404,5 +419,24 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.byType(StoryBar), findsOneWidget);
+  });
+
+  testWidgets('스토리 바에 표지 사진을 보인다(R17)', (tester) async {
+    final store = _MockStore();
+    when(
+      () => store.resolve(any()),
+    ).thenAnswer((inv) => File('/fake/${inv.positionalArguments.single}'));
+    getIt.registerSingleton<MediaStore>(store);
+    stories = [_story(Story.dailyId, ''), _story('jeju', '제주 여행')];
+    entries[const EntryFilter.all()] = [
+      _entry('바다', storyId: 'jeju').copyWith(media: [videoMedia('v1')]),
+    ];
+    await pump(tester);
+
+    StoryAvatar avatar(String label) => tester.widget<StoryAvatar>(
+      find.byWidgetPredicate((w) => w is StoryAvatar && w.label == label),
+    );
+    expect(avatar('제주 여행').image?.path, '/fake/media/v1.thumb.jpg');
+    expect(avatar('일상').image, isNull);
   });
 }

@@ -2451,4 +2451,113 @@ class AppLocalizationsKo extends AppLocalizations {
   String walkDiaryEditorPlaceSuggestion(String name, int count) {
     return '$name $count';
   }
+
+  @override
+  String get walkDiaryMenuStories => '스토리 관리';
+
+  @override
+  String get walkDiaryStoryNew => '새 스토리';
+
+  @override
+  String get walkDiaryStoryRename => '이름 바꾸기';
+
+  @override
+  String get walkDiaryStoryCover => '표지 바꾸기';
+
+  @override
+  String get walkDiaryStoryClose => '닫기';
+
+  @override
+  String get walkDiaryStoryReopen => '다시 열기';
+
+  @override
+  String get walkDiaryStoryDelete => '삭제';
+
+  @override
+  String walkDiaryStoryDeleteTitle(String title) {
+    return '\'$title\' 스토리를 삭제할까요?';
+  }
+
+  @override
+  String get walkDiaryStoryDeleteContent =>
+      '이 스토리의 기록은 휴지통으로 가요. 복원하면 \'일상\'으로 돌아와요.';
+
+  @override
+  String get walkDiaryStoryTitleLabel => '제목';
+
+  @override
+  String walkDiaryStoryStart(String date) {
+    return '시작일 $date';
+  }
+
+  @override
+  String walkDiaryStoryEnd(String date) {
+    return '종료일 $date';
+  }
+
+  @override
+  String get walkDiaryStoryNoEnd => '종료일 없음 (진행 중)';
+
+  @override
+  String get walkDiaryStoryClearEnd => '종료일 지우기';
+
+  @override
+  String get walkDiaryStoryCreate => '만들기';
+
+  @override
+  String get walkDiaryStorySave => '저장';
+
+  @override
+  String get walkDiaryStoryCloseNow => '지금 닫기';
+
+  @override
+  String get walkDiaryStoryCloseOnDate => '날짜를 골라 닫기';
+
+  @override
+  String get walkDiaryStoryCoverAuto => '자동 (가장 최근 사진)';
+
+  @override
+  String get walkDiaryStoryCoverEmpty => '이 스토리에는 아직 사진이 없어요';
+
+  @override
+  String get walkDiaryStoryMoveTitle => '이 기간의 \'일상\' 기록을 옮길까요?';
+
+  @override
+  String walkDiaryStoryMoveConfirm(int count) {
+    return '$count개 옮기기';
+  }
+
+  @override
+  String get walkDiaryStoryMoveSkip => '건너뛰기';
+
+  @override
+  String walkDiaryStoryMoved(int count) {
+    return '기록 $count개를 옮겼어요';
+  }
+
+  @override
+  String get walkDiaryErrorEndBeforeStart => '종료일이 시작일보다 빠를 수 없어요';
+
+  @override
+  String get walkDiaryErrorDefaultStoryLocked => '기본 스토리는 닫거나 지울 수 없어요';
+
+  @override
+  String get walkDiaryEntryEdit => '수정';
+
+  @override
+  String get walkDiaryEntryDelete => '삭제';
+
+  @override
+  String get walkDiaryEntryDeleteTitle => '기록을 삭제할까요?';
+
+  @override
+  String get walkDiaryEntryDeleteContent => '휴지통으로 옮겨요. 휴지통에서 복원할 수 있어요.';
+
+  @override
+  String get walkDiaryEntryTrashed => '기록을 휴지통으로 옮겼어요';
+
+  @override
+  String walkDiaryEntryDateTime(String date, String time) {
+    return '$date $time';
+  }
 }

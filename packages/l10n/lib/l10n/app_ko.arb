@@ -3514,5 +3514,166 @@
         "type": "int"
       }
     }
+  },
+  "walkDiaryMenuStories": "스토리 관리",
+  "@walkDiaryMenuStories": {
+    "description": "일기 탭 ⋮ 메뉴의 스토리 관리 항목 · 스토리 관리 화면 제목"
+  },
+  "walkDiaryStoryNew": "새 스토리",
+  "@walkDiaryStoryNew": {
+    "description": "스토리 관리 화면의 새 스토리 만들기 버튼 · 만들기 시트 제목"
+  },
+  "walkDiaryStoryRename": "이름 바꾸기",
+  "@walkDiaryStoryRename": {
+    "description": "스토리 메뉴의 이름 바꾸기 · 이름 시트 제목"
+  },
+  "walkDiaryStoryCover": "표지 바꾸기",
+  "@walkDiaryStoryCover": {
+    "description": "스토리 메뉴의 표지 바꾸기 · 표지 시트 제목"
+  },
+  "walkDiaryStoryClose": "닫기",
+  "@walkDiaryStoryClose": {
+    "description": "스토리 메뉴의 닫기(보관함으로) 항목"
+  },
+  "walkDiaryStoryReopen": "다시 열기",
+  "@walkDiaryStoryReopen": {
+    "description": "닫힌 스토리 메뉴의 다시 열기 항목"
+  },
+  "walkDiaryStoryDelete": "삭제",
+  "@walkDiaryStoryDelete": {
+    "description": "스토리 메뉴의 삭제 항목 · 삭제 확인 버튼"
+  },
+  "walkDiaryStoryDeleteTitle": "'{title}' 스토리를 삭제할까요?",
+  "@walkDiaryStoryDeleteTitle": {
+    "description": "스토리 삭제 확인 다이얼로그 제목",
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "walkDiaryStoryDeleteContent": "이 스토리의 기록은 휴지통으로 가요. 복원하면 '일상'으로 돌아와요.",
+  "@walkDiaryStoryDeleteContent": {
+    "description": "스토리 삭제 확인 다이얼로그 본문 — 기록은 휴지통, 복원하면 기본 스토리"
+  },
+  "walkDiaryStoryTitleLabel": "제목",
+  "@walkDiaryStoryTitleLabel": {
+    "description": "스토리 만들기 · 이름 바꾸기 시트의 제목 입력칸"
+  },
+  "walkDiaryStoryStart": "시작일 {date}",
+  "@walkDiaryStoryStart": {
+    "description": "스토리 만들기 시트의 시작일 행",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "walkDiaryStoryEnd": "종료일 {date}",
+  "@walkDiaryStoryEnd": {
+    "description": "스토리 만들기 시트의 종료일 행(넣었을 때)",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "walkDiaryStoryNoEnd": "종료일 없음 (진행 중)",
+  "@walkDiaryStoryNoEnd": {
+    "description": "스토리 만들기 시트의 종료일 행(비었을 때) — 누르면 날짜를 고른다"
+  },
+  "walkDiaryStoryClearEnd": "종료일 지우기",
+  "@walkDiaryStoryClearEnd": {
+    "description": "스토리 만들기 시트에서 넣은 종료일을 지우는 버튼"
+  },
+  "walkDiaryStoryCreate": "만들기",
+  "@walkDiaryStoryCreate": {
+    "description": "스토리 만들기 시트의 확인 버튼"
+  },
+  "walkDiaryStorySave": "저장",
+  "@walkDiaryStorySave": {
+    "description": "스토리 이름 바꾸기 시트의 저장 버튼"
+  },
+  "walkDiaryStoryCloseNow": "지금 닫기",
+  "@walkDiaryStoryCloseNow": {
+    "description": "스토리 닫기 시트 — 지금 시각으로 닫기"
+  },
+  "walkDiaryStoryCloseOnDate": "날짜를 골라 닫기",
+  "@walkDiaryStoryCloseOnDate": {
+    "description": "스토리 닫기 시트 — 종료일을 골라 닫기"
+  },
+  "walkDiaryStoryCoverAuto": "자동 (가장 최근 사진)",
+  "@walkDiaryStoryCoverAuto": {
+    "description": "스토리 표지 시트의 자동 표지 항목"
+  },
+  "walkDiaryStoryCoverEmpty": "이 스토리에는 아직 사진이 없어요",
+  "@walkDiaryStoryCoverEmpty": {
+    "description": "스토리 표지 시트 — 고를 사진 · 영상이 없을 때"
+  },
+  "walkDiaryStoryMoveTitle": "이 기간의 '일상' 기록을 옮길까요?",
+  "@walkDiaryStoryMoveTitle": {
+    "description": "지난 기간 스토리를 만든 뒤 그 기간의 기본 스토리 기록을 옮기자는 시트 제목"
+  },
+  "walkDiaryStoryMoveConfirm": "{count}개 옮기기",
+  "@walkDiaryStoryMoveConfirm": {
+    "description": "일상 기록 옮기기 시트의 확인 버튼 — 고른 기록 수",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "walkDiaryStoryMoveSkip": "건너뛰기",
+  "@walkDiaryStoryMoveSkip": {
+    "description": "일상 기록 옮기기 시트의 건너뛰기 버튼"
+  },
+  "walkDiaryStoryMoved": "기록 {count}개를 옮겼어요",
+  "@walkDiaryStoryMoved": {
+    "description": "일상 기록을 새 스토리로 옮긴 뒤 알림",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "walkDiaryErrorEndBeforeStart": "종료일이 시작일보다 빠를 수 없어요",
+  "@walkDiaryErrorEndBeforeStart": {
+    "description": "스토리 종료일이 시작일보다 이를 때 오류"
+  },
+  "walkDiaryErrorDefaultStoryLocked": "기본 스토리는 닫거나 지울 수 없어요",
+  "@walkDiaryErrorDefaultStoryLocked": {
+    "description": "기본 스토리(일상)를 닫거나 지우려 할 때 오류"
+  },
+  "walkDiaryEntryEdit": "수정",
+  "@walkDiaryEntryEdit": {
+    "description": "일기 기록 상세 ⋮ 메뉴의 수정 항목"
+  },
+  "walkDiaryEntryDelete": "삭제",
+  "@walkDiaryEntryDelete": {
+    "description": "일기 기록 상세 ⋮ 메뉴의 삭제 항목 · 삭제 확인 버튼"
+  },
+  "walkDiaryEntryDeleteTitle": "기록을 삭제할까요?",
+  "@walkDiaryEntryDeleteTitle": {
+    "description": "일기 기록 삭제 확인 다이얼로그 제목"
+  },
+  "walkDiaryEntryDeleteContent": "휴지통으로 옮겨요. 휴지통에서 복원할 수 있어요.",
+  "@walkDiaryEntryDeleteContent": {
+    "description": "일기 기록 삭제 확인 다이얼로그 본문"
+  },
+  "walkDiaryEntryTrashed": "기록을 휴지통으로 옮겼어요",
+  "@walkDiaryEntryTrashed": {
+    "description": "일기 기록을 휴지통으로 보낸 뒤 알림"
+  },
+  "walkDiaryEntryDateTime": "{date} {time}",
+  "@walkDiaryEntryDateTime": {
+    "description": "일기 기록 상세의 날짜와 시각",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
   }
 }

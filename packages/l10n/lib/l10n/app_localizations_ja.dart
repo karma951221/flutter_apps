@@ -2448,4 +2448,113 @@ class AppLocalizationsJa extends AppLocalizations {
   String walkDiaryEditorPlaceSuggestion(String name, int count) {
     return '$name $count';
   }
+
+  @override
+  String get walkDiaryMenuStories => 'ストーリー管理';
+
+  @override
+  String get walkDiaryStoryNew => '新しいストーリー';
+
+  @override
+  String get walkDiaryStoryRename => '名前を変更';
+
+  @override
+  String get walkDiaryStoryCover => 'カバーを変更';
+
+  @override
+  String get walkDiaryStoryClose => '終了';
+
+  @override
+  String get walkDiaryStoryReopen => '再開';
+
+  @override
+  String get walkDiaryStoryDelete => '削除';
+
+  @override
+  String walkDiaryStoryDeleteTitle(String title) {
+    return '「$title」を削除しますか?';
+  }
+
+  @override
+  String get walkDiaryStoryDeleteContent =>
+      'このストーリーの記録はゴミ箱に移動します。復元すると「日常」に戻ります。';
+
+  @override
+  String get walkDiaryStoryTitleLabel => 'タイトル';
+
+  @override
+  String walkDiaryStoryStart(String date) {
+    return '開始日 $date';
+  }
+
+  @override
+  String walkDiaryStoryEnd(String date) {
+    return '終了日 $date';
+  }
+
+  @override
+  String get walkDiaryStoryNoEnd => '終了日なし(進行中)';
+
+  @override
+  String get walkDiaryStoryClearEnd => '終了日を消す';
+
+  @override
+  String get walkDiaryStoryCreate => '作成';
+
+  @override
+  String get walkDiaryStorySave => '保存';
+
+  @override
+  String get walkDiaryStoryCloseNow => '今すぐ終了';
+
+  @override
+  String get walkDiaryStoryCloseOnDate => '日付を選んで終了';
+
+  @override
+  String get walkDiaryStoryCoverAuto => '自動(最新の写真)';
+
+  @override
+  String get walkDiaryStoryCoverEmpty => 'このストーリーにはまだ写真がありません';
+
+  @override
+  String get walkDiaryStoryMoveTitle => 'この期間の「日常」の記録を移動しますか?';
+
+  @override
+  String walkDiaryStoryMoveConfirm(int count) {
+    return '$count件を移動';
+  }
+
+  @override
+  String get walkDiaryStoryMoveSkip => 'スキップ';
+
+  @override
+  String walkDiaryStoryMoved(int count) {
+    return '$count件の記録を移動しました';
+  }
+
+  @override
+  String get walkDiaryErrorEndBeforeStart => '終了日を開始日より前にはできません';
+
+  @override
+  String get walkDiaryErrorDefaultStoryLocked => 'デフォルトのストーリーは終了・削除できません';
+
+  @override
+  String get walkDiaryEntryEdit => '編集';
+
+  @override
+  String get walkDiaryEntryDelete => '削除';
+
+  @override
+  String get walkDiaryEntryDeleteTitle => '記録を削除しますか?';
+
+  @override
+  String get walkDiaryEntryDeleteContent => 'ゴミ箱に移動します。ゴミ箱から復元できます。';
+
+  @override
+  String get walkDiaryEntryTrashed => '記録をゴミ箱に移動しました';
+
+  @override
+  String walkDiaryEntryDateTime(String date, String time) {
+    return '$date $time';
+  }
 }

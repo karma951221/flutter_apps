@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
@@ -17,6 +19,7 @@ class StoryBar extends StatelessWidget {
     required this.archived,
     required this.selectedId,
     required this.onSelect,
+    this.covers = const {},
     super.key,
   });
 
@@ -28,6 +31,9 @@ class StoryBar extends StatelessWidget {
 
   /// 고른 스토리 id. '전체'는 null.
   final ValueChanged<String?> onSelect;
+
+  /// 스토리 id → 표지 사진 파일. 없는 스토리는 이니셜.
+  final Map<String, File> covers;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +54,7 @@ class StoryBar extends StatelessWidget {
             StoryAvatar(
               label: storyDisplayTitle(l10n, story),
               selected: story.id == selectedId,
+              image: covers[story.id],
               onTap: () => onSelect(story.id),
             ),
           if (archived.isNotEmpty)

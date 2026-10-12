@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -28,6 +30,7 @@ void main() {
     List<Story>? open,
     List<Story> archived = const [],
     String? selectedId,
+    Map<String, File> covers = const {},
   }) async {
     final selected = <String?>[];
     await tester.pumpWidget(
@@ -42,6 +45,7 @@ void main() {
             archived: archived,
             selectedId: selectedId,
             onSelect: selected.add,
+            covers: covers,
           ),
         ),
       ),
@@ -122,5 +126,33 @@ void main() {
 
     expect(isSelected(tester, '보관함'), isTrue);
     expect(isSelected(tester, '전체'), isFalse);
+  });
+
+  testWidgets('표지 파일이 있는 스토리는 그 사진, 없으면 이니셜(R17)', (tester) async {
+    final file = File('/fake/media/p1.jpg');
+    await pump(tester, covers: {'jeju': file});
+
+    StoryAvatar avatar(String label) => tester.widget<StoryAvatar>(
+      find.byWidgetPredicate((w) => w is StoryAvatar && w.label == label),
+    );
+    expect(avatar('제주 여행').image, file);
+    expect(avatar('출장').image, isNull);
+    final circle = tester.widget<CircleAvatar>(
+      find.descendant(
+        of: find.byWidget(avatar('제주 여행')),
+        matching: find.byType(CircleAvatar),
+      ),
+    );
+    expect(circle.foregroundImage, isNotNull);
+    // 파일을 읽지 못해도 이니셜이 남는다.
+    expect(
+      find.descendant(
+        of: find.byWidget(avatar('제주 여행')),
+        matching: find.text('제'),
+      ),
+      findsOneWidget,
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
   });
 }
