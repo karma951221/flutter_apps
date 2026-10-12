@@ -2189,4 +2189,82 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkOpenDogsTooltip => 'わんちゃん';
+
+  @override
+  String get walkLockTitle => '日記はロックされています';
+
+  @override
+  String get walkLockEnterPin => '4桁のPINを入力してください';
+
+  @override
+  String get walkLockEnterPattern => 'パターンを描いてください';
+
+  @override
+  String get walkLockWrong => '違います。もう一度お試しください';
+
+  @override
+  String walkLockBlocked(int seconds) {
+    return '$seconds秒後にもう一度お試しください';
+  }
+
+  @override
+  String walkLockBlockedLong(int hours, int minutes) {
+    return '本人確認に失敗しました。$hours時間$minutes分後にもう一度お試しください';
+  }
+
+  @override
+  String get walkLockForgot => '忘れました';
+
+  @override
+  String get walkLockDeviceReason => '日記のロックを再設定するには本人確認が必要です';
+
+  @override
+  String get walkLockDeviceUnavailable => '今は本人確認を使えません。スマホの画面ロック設定を確認してください';
+
+  @override
+  String get walkLockPinDelete => '削除';
+
+  @override
+  String get walkLockSetupTitle => '日記のロック';
+
+  @override
+  String get walkLockSetupChoose => 'ロック方法を選んでください';
+
+  @override
+  String get walkLockSetupPin => '4桁のPIN';
+
+  @override
+  String get walkLockSetupPattern => 'パターン';
+
+  @override
+  String walkLockSetupInUse(String method) {
+    return '$method（使用中）';
+  }
+
+  @override
+  String get walkLockSetupOff => 'ロックをオフにする';
+
+  @override
+  String get walkLockSetupVerify => '今のPIN・パターンを入力してください';
+
+  @override
+  String get walkLockSetupNewPin => '新しい4桁のPINを入力してください';
+
+  @override
+  String get walkLockSetupNewPattern => '4つ以上の点をつないで新しいパターンを描いてください';
+
+  @override
+  String get walkLockSetupConfirm => '確認のためもう一度入力してください';
+
+  @override
+  String get walkLockSetupMismatch => '最初の入力と違います。最初からやり直してください';
+
+  @override
+  String get walkLockSetupTooShort => '4つ以上の点をつないでください';
+
+  @override
+  String get walkLockSetupSaved => '日記のロック設定を保存しました';
+
+  @override
+  String get walkLockNeedsScreenLock => '日記のロックをオンにするには、先にスマホの画面ロックを設定してください';
 }

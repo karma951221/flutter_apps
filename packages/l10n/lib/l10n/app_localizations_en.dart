@@ -2322,4 +2322,85 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkOpenDogsTooltip => 'Dogs';
+
+  @override
+  String get walkLockTitle => 'Your diary is locked';
+
+  @override
+  String get walkLockEnterPin => 'Enter your 4-digit PIN';
+
+  @override
+  String get walkLockEnterPattern => 'Draw your pattern';
+
+  @override
+  String get walkLockWrong => 'That\'s not right. Try again';
+
+  @override
+  String walkLockBlocked(int seconds) {
+    return 'Try again in $seconds s';
+  }
+
+  @override
+  String walkLockBlockedLong(int hours, int minutes) {
+    return 'Phone verification failed. Try again in $hours h $minutes min';
+  }
+
+  @override
+  String get walkLockForgot => 'I forgot';
+
+  @override
+  String get walkLockDeviceReason => 'Verify it’s you to reset the diary lock';
+
+  @override
+  String get walkLockDeviceUnavailable =>
+      'Phone verification isn\'t available right now. Check your phone\'s screen lock';
+
+  @override
+  String get walkLockPinDelete => 'Delete';
+
+  @override
+  String get walkLockSetupTitle => 'Diary lock';
+
+  @override
+  String get walkLockSetupChoose => 'Choose a lock type';
+
+  @override
+  String get walkLockSetupPin => '4-digit PIN';
+
+  @override
+  String get walkLockSetupPattern => 'Pattern';
+
+  @override
+  String walkLockSetupInUse(String method) {
+    return '$method (in use)';
+  }
+
+  @override
+  String get walkLockSetupOff => 'Turn off lock';
+
+  @override
+  String get walkLockSetupVerify => 'Enter your current PIN or pattern';
+
+  @override
+  String get walkLockSetupNewPin => 'Enter a new 4-digit PIN';
+
+  @override
+  String get walkLockSetupNewPattern =>
+      'Connect at least 4 dots to draw a new pattern';
+
+  @override
+  String get walkLockSetupConfirm => 'Enter it once more to confirm';
+
+  @override
+  String get walkLockSetupMismatch => 'That didn\'t match. Start again';
+
+  @override
+  String get walkLockSetupTooShort => 'Connect at least 4 dots';
+
+  @override
+  String get walkLockSetupSaved => 'Diary lock settings saved';
+
+  @override
+  String get walkLockNeedsScreenLock =>
+      'Set up a screen lock on your phone first to turn on the diary lock';
 }

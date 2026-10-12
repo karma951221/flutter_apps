@@ -63,6 +63,7 @@ import '../../domain/lock/lock_repository.dart' as _i43;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
+import '../../presentation/lock/media_pick_guard.dart' as _i488;
 import 'register_module.dart' as _i291;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -91,6 +92,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i933.AlarmPermissions>(
       () => alarmPermissionModule.alarmPermissions,
     );
+    gh.lazySingleton<_i488.MediaPickGuard>(() => _i488.MediaPickGuard());
     gh.lazySingleton<_i494.IdGenerator>(
       () => registerModule.idGenerator(gh<_i706.Uuid>()),
     );

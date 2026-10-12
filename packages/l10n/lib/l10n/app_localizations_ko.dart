@@ -2191,4 +2191,83 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkOpenDogsTooltip => '반려견';
+
+  @override
+  String get walkLockTitle => '일기가 잠겨 있어요';
+
+  @override
+  String get walkLockEnterPin => 'PIN 4자리를 입력하세요';
+
+  @override
+  String get walkLockEnterPattern => '패턴을 그리세요';
+
+  @override
+  String get walkLockWrong => '맞지 않아요. 다시 해 보세요';
+
+  @override
+  String walkLockBlocked(int seconds) {
+    return '$seconds초 뒤에 다시 시도할 수 있어요';
+  }
+
+  @override
+  String walkLockBlockedLong(int hours, int minutes) {
+    return '폰 인증에 실패했어요. $hours시간 $minutes분 뒤에 다시 시도할 수 있어요';
+  }
+
+  @override
+  String get walkLockForgot => '잊어버렸어요';
+
+  @override
+  String get walkLockDeviceReason => '일기 잠금을 다시 설정하려면 본인 확인이 필요해요';
+
+  @override
+  String get walkLockDeviceUnavailable =>
+      '지금은 폰 인증을 쓸 수 없어요. 폰 화면 잠금 설정을 확인해 주세요';
+
+  @override
+  String get walkLockPinDelete => '지우기';
+
+  @override
+  String get walkLockSetupTitle => '일기 잠금';
+
+  @override
+  String get walkLockSetupChoose => '잠금 방식을 고르세요';
+
+  @override
+  String get walkLockSetupPin => 'PIN 4자리';
+
+  @override
+  String get walkLockSetupPattern => '패턴';
+
+  @override
+  String walkLockSetupInUse(String method) {
+    return '$method (사용 중)';
+  }
+
+  @override
+  String get walkLockSetupOff => '잠금 끄기';
+
+  @override
+  String get walkLockSetupVerify => '지금 쓰는 PIN · 패턴을 입력하세요';
+
+  @override
+  String get walkLockSetupNewPin => '새 PIN 4자리를 입력하세요';
+
+  @override
+  String get walkLockSetupNewPattern => '점 4개 이상을 이어 새 패턴을 그리세요';
+
+  @override
+  String get walkLockSetupConfirm => '확인을 위해 한 번 더 입력하세요';
+
+  @override
+  String get walkLockSetupMismatch => '처음 입력과 달라요. 처음부터 다시 입력하세요';
+
+  @override
+  String get walkLockSetupTooShort => '점을 4개 이상 이어 주세요';
+
+  @override
+  String get walkLockSetupSaved => '일기 잠금 설정을 저장했어요';
+
+  @override
+  String get walkLockNeedsScreenLock => '폰 화면 잠금을 먼저 설정해야 일기 잠금을 켤 수 있어요';
 }

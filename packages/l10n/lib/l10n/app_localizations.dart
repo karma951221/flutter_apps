@@ -4183,6 +4183,150 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'반려견'**
   String get walkOpenDogsTooltip;
+
+  /// 일기 잠금 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'일기가 잠겨 있어요'**
+  String get walkLockTitle;
+
+  /// 일기 잠금 화면에서 PIN 입력 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'PIN 4자리를 입력하세요'**
+  String get walkLockEnterPin;
+
+  /// 일기 잠금 화면에서 패턴 입력 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'패턴을 그리세요'**
+  String get walkLockEnterPattern;
+
+  /// 일기 잠금 해제 시 PIN · 패턴이 틀렸을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'맞지 않아요. 다시 해 보세요'**
+  String get walkLockWrong;
+
+  /// 일기 잠금 해제를 5회 틀려 잠시 막혔을 때 남은 초 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'{seconds}초 뒤에 다시 시도할 수 있어요'**
+  String walkLockBlocked(int seconds);
+
+  /// 폰 인증 실패로 일기 잠금 해제가 24시간 막혔을 때 남은 시간 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'폰 인증에 실패했어요. {hours}시간 {minutes}분 뒤에 다시 시도할 수 있어요'**
+  String walkLockBlockedLong(int hours, int minutes);
+
+  /// 일기 잠금 화면에서 폰 인증으로 PIN · 패턴을 재설정하는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'잊어버렸어요'**
+  String get walkLockForgot;
+
+  /// 일기 잠금 재설정 시 폰 인증 창에 보이는 이유 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'일기 잠금을 다시 설정하려면 본인 확인이 필요해요'**
+  String get walkLockDeviceReason;
+
+  /// 일기 잠금 재설정 시 폰 인증 창을 띄울 수 없을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'지금은 폰 인증을 쓸 수 없어요. 폰 화면 잠금 설정을 확인해 주세요'**
+  String get walkLockDeviceUnavailable;
+
+  /// PIN 입력 키패드의 마지막 숫자 지우기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'지우기'**
+  String get walkLockPinDelete;
+
+  /// 일기 잠금 설정 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'일기 잠금'**
+  String get walkLockSetupTitle;
+
+  /// 일기 잠금 설정에서 방식 고르기 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'잠금 방식을 고르세요'**
+  String get walkLockSetupChoose;
+
+  /// 일기 잠금 방식 PIN 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'PIN 4자리'**
+  String get walkLockSetupPin;
+
+  /// 일기 잠금 방식 패턴 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'패턴'**
+  String get walkLockSetupPattern;
+
+  /// 일기 잠금 설정에서 지금 쓰는 방식 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'{method} (사용 중)'**
+  String walkLockSetupInUse(String method);
+
+  /// 일기 잠금을 끄는 버튼 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'잠금 끄기'**
+  String get walkLockSetupOff;
+
+  /// 일기 잠금을 끄거나 방식을 바꾸기 전 현재 비밀 확인 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 쓰는 PIN · 패턴을 입력하세요'**
+  String get walkLockSetupVerify;
+
+  /// 일기 잠금 새 PIN 첫 입력 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'새 PIN 4자리를 입력하세요'**
+  String get walkLockSetupNewPin;
+
+  /// 일기 잠금 새 패턴 첫 입력 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'점 4개 이상을 이어 새 패턴을 그리세요'**
+  String get walkLockSetupNewPattern;
+
+  /// 일기 잠금 새 PIN · 패턴 확인 입력 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'확인을 위해 한 번 더 입력하세요'**
+  String get walkLockSetupConfirm;
+
+  /// 일기 잠금 확인 입력이 첫 입력과 다를 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'처음 입력과 달라요. 처음부터 다시 입력하세요'**
+  String get walkLockSetupMismatch;
+
+  /// 일기 잠금 패턴 점이 4개보다 적을 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'점을 4개 이상 이어 주세요'**
+  String get walkLockSetupTooShort;
+
+  /// 일기 잠금 켜기 · 끄기 · 방식 변경을 마쳤을 때 알림
+  ///
+  /// In ko, this message translates to:
+  /// **'일기 잠금 설정을 저장했어요'**
+  String get walkLockSetupSaved;
+
+  /// 폰에 화면 잠금이 없어 일기 잠금을 켤 수 없을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'폰 화면 잠금을 먼저 설정해야 일기 잠금을 켤 수 있어요'**
+  String get walkLockNeedsScreenLock;
 }
 
 class _AppLocalizationsDelegate

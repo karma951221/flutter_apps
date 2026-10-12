@@ -3118,5 +3118,119 @@
   "walkOpenDogsTooltip": "반려견",
   "@walkOpenDogsTooltip": {
     "description": "피드 앱 바의 반려견 목록 버튼 툴팁"
+  },
+  "walkLockTitle": "일기가 잠겨 있어요",
+  "@walkLockTitle": {
+    "description": "일기 잠금 화면 제목"
+  },
+  "walkLockEnterPin": "PIN 4자리를 입력하세요",
+  "@walkLockEnterPin": {
+    "description": "일기 잠금 화면에서 PIN 입력 안내"
+  },
+  "walkLockEnterPattern": "패턴을 그리세요",
+  "@walkLockEnterPattern": {
+    "description": "일기 잠금 화면에서 패턴 입력 안내"
+  },
+  "walkLockWrong": "맞지 않아요. 다시 해 보세요",
+  "@walkLockWrong": {
+    "description": "일기 잠금 해제 시 PIN · 패턴이 틀렸을 때 안내"
+  },
+  "walkLockBlocked": "{seconds}초 뒤에 다시 시도할 수 있어요",
+  "@walkLockBlocked": {
+    "description": "일기 잠금 해제를 5회 틀려 잠시 막혔을 때 남은 초 안내",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "walkLockBlockedLong": "폰 인증에 실패했어요. {hours}시간 {minutes}분 뒤에 다시 시도할 수 있어요",
+  "@walkLockBlockedLong": {
+    "description": "폰 인증 실패로 일기 잠금 해제가 24시간 막혔을 때 남은 시간 안내",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "walkLockForgot": "잊어버렸어요",
+  "@walkLockForgot": {
+    "description": "일기 잠금 화면에서 폰 인증으로 PIN · 패턴을 재설정하는 버튼"
+  },
+  "walkLockDeviceReason": "일기 잠금을 다시 설정하려면 본인 확인이 필요해요",
+  "@walkLockDeviceReason": {
+    "description": "일기 잠금 재설정 시 폰 인증 창에 보이는 이유 문구"
+  },
+  "walkLockDeviceUnavailable": "지금은 폰 인증을 쓸 수 없어요. 폰 화면 잠금 설정을 확인해 주세요",
+  "@walkLockDeviceUnavailable": {
+    "description": "일기 잠금 재설정 시 폰 인증 창을 띄울 수 없을 때 안내"
+  },
+  "walkLockPinDelete": "지우기",
+  "@walkLockPinDelete": {
+    "description": "PIN 입력 키패드의 마지막 숫자 지우기 버튼"
+  },
+  "walkLockSetupTitle": "일기 잠금",
+  "@walkLockSetupTitle": {
+    "description": "일기 잠금 설정 화면 제목"
+  },
+  "walkLockSetupChoose": "잠금 방식을 고르세요",
+  "@walkLockSetupChoose": {
+    "description": "일기 잠금 설정에서 방식 고르기 안내"
+  },
+  "walkLockSetupPin": "PIN 4자리",
+  "@walkLockSetupPin": {
+    "description": "일기 잠금 방식 PIN 버튼 라벨"
+  },
+  "walkLockSetupPattern": "패턴",
+  "@walkLockSetupPattern": {
+    "description": "일기 잠금 방식 패턴 버튼 라벨"
+  },
+  "walkLockSetupInUse": "{method} (사용 중)",
+  "@walkLockSetupInUse": {
+    "description": "일기 잠금 설정에서 지금 쓰는 방식 버튼 라벨",
+    "placeholders": {
+      "method": {
+        "type": "String"
+      }
+    }
+  },
+  "walkLockSetupOff": "잠금 끄기",
+  "@walkLockSetupOff": {
+    "description": "일기 잠금을 끄는 버튼 라벨"
+  },
+  "walkLockSetupVerify": "지금 쓰는 PIN · 패턴을 입력하세요",
+  "@walkLockSetupVerify": {
+    "description": "일기 잠금을 끄거나 방식을 바꾸기 전 현재 비밀 확인 안내"
+  },
+  "walkLockSetupNewPin": "새 PIN 4자리를 입력하세요",
+  "@walkLockSetupNewPin": {
+    "description": "일기 잠금 새 PIN 첫 입력 안내"
+  },
+  "walkLockSetupNewPattern": "점 4개 이상을 이어 새 패턴을 그리세요",
+  "@walkLockSetupNewPattern": {
+    "description": "일기 잠금 새 패턴 첫 입력 안내"
+  },
+  "walkLockSetupConfirm": "확인을 위해 한 번 더 입력하세요",
+  "@walkLockSetupConfirm": {
+    "description": "일기 잠금 새 PIN · 패턴 확인 입력 안내"
+  },
+  "walkLockSetupMismatch": "처음 입력과 달라요. 처음부터 다시 입력하세요",
+  "@walkLockSetupMismatch": {
+    "description": "일기 잠금 확인 입력이 첫 입력과 다를 때 오류"
+  },
+  "walkLockSetupTooShort": "점을 4개 이상 이어 주세요",
+  "@walkLockSetupTooShort": {
+    "description": "일기 잠금 패턴 점이 4개보다 적을 때 오류"
+  },
+  "walkLockSetupSaved": "일기 잠금 설정을 저장했어요",
+  "@walkLockSetupSaved": {
+    "description": "일기 잠금 켜기 · 끄기 · 방식 변경을 마쳤을 때 알림"
+  },
+  "walkLockNeedsScreenLock": "폰 화면 잠금을 먼저 설정해야 일기 잠금을 켤 수 있어요",
+  "@walkLockNeedsScreenLock": {
+    "description": "폰에 화면 잠금이 없어 일기 잠금을 켤 수 없을 때 안내"
   }
 }
