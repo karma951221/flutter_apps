@@ -9,6 +9,9 @@ typedef SuggestionSource = Stream<List<NamedCount>> Function(String query);
 
 /// 해시태그 칩 입력(스펙 §6.2). 완료 · 띄어쓰기 · 쉼표로 칩을 만들고, 입력칸에 있는 동안
 /// 기존 태그를 추천한다. 정규화 · 중복 무시는 부모(cubit)가 한다 — 여기서는 원문을 넘긴다.
+///
+/// 저장 직전에 부모가 `GlobalKey<TagChipInputState>` 로 [TagChipInputState.commitPending] 을
+/// 불러 아직 칩이 되지 않은 글자를 칩으로 만든다.
 class TagChipInput extends StatefulWidget {
   const TagChipInput({
     required this.tags,
@@ -25,10 +28,10 @@ class TagChipInput extends StatefulWidget {
   final SuggestionSource suggestionsFor;
 
   @override
-  State<TagChipInput> createState() => _TagChipInputState();
+  State<TagChipInput> createState() => TagChipInputState();
 }
 
-class _TagChipInputState extends State<TagChipInput> {
+class TagChipInputState extends State<TagChipInput> {
   final _controller = TextEditingController();
   final _focus = FocusNode();
   late Stream<List<NamedCount>> _suggestions = widget.suggestionsFor('');
@@ -55,6 +58,12 @@ class _TagChipInputState extends State<TagChipInput> {
       return;
     }
     _search(text);
+  }
+
+  /// 입력칸에 남은 글자(칩으로 만들지 않은 것)를 칩으로 만든다. 비었으면 아무것도 하지 않는다.
+  void commitPending() {
+    if (_controller.text.trim().isEmpty) return;
+    _commit(_controller.text);
   }
 
   void _commit(String raw) {

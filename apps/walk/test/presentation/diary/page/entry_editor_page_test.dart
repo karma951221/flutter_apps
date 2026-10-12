@@ -298,6 +298,42 @@ void main() {
     expect(find.text('home'), findsOneWidget);
   });
 
+  testWidgets('칩으로 만들지 않은 태그 글자도 올리기에 넣는다', (tester) async {
+    when(
+      () => useCase.save(any(), editingId: any(named: 'editingId')),
+    ).thenAnswer(
+      (inv) async => Ok(
+        DiaryEntry(
+          id: 'e1',
+          storyId: Story.dailyId,
+          body: '바다',
+          occurredAt: diaryT0,
+          createdAt: diaryT0,
+          updatedAt: diaryT0,
+          media: const [],
+          tags: const ['제주'],
+        ),
+      ),
+    );
+    await pump(tester);
+    await tester.enterText(
+      find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요'),
+      '바다',
+    );
+    await tester.enterText(find.widgetWithText(TextField, '태그 추가'), '#제주');
+    await tester.pump();
+
+    await tester.tap(find.text('올리기'));
+    await tester.pumpAndSettle();
+
+    final draft =
+        verify(
+              () => useCase.save(captureAny(), editingId: null),
+            ).captured.single
+            as EntryDraft;
+    expect(draft.tags, ['제주']);
+  });
+
   testWidgets('저장이 규칙에 걸리면 안내하고 화면에 남는다', (tester) async {
     when(
       () => useCase.save(any(), editingId: any(named: 'editingId')),

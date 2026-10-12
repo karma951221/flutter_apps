@@ -111,6 +111,14 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
   /// 앨범 · 카메라가 열려 있는 동안 다시 열지 않는다.
   bool _picking = false;
 
+  final _tags = GlobalKey<TagChipInputState>();
+
+  /// 칩으로 만들지 않고 남긴 태그 글자도 함께 저장한다.
+  void _save() {
+    _tags.currentState?.commitPending();
+    unawaited(_cubit.save());
+  }
+
   @override
   void initState() {
     super.initState();
@@ -232,9 +240,7 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
                   label: state.isEditing
                       ? l10n.walkDiaryEditorSave
                       : l10n.walkDiaryEditorPost,
-                  onPressed: state.saving || state.importing
-                      ? null
-                      : _cubit.save,
+                  onPressed: state.saving || state.importing ? null : _save,
                 ),
               ],
             ),
@@ -291,6 +297,7 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
                     horizontal: AppSpacing.md,
                   ),
                   child: TagChipInput(
+                    key: _tags,
                     tags: state.draft.tags,
                     onAdd: _cubit.addTag,
                     onRemove: _cubit.removeTag,
