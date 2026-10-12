@@ -1,6 +1,9 @@
+import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
+import 'package:walk/data/diary/drift_diary_repository.dart';
 import 'package:walk/data/diary/prefs_diary_preferences.dart';
 import 'package:walk/domain/diary/diary_failure.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
@@ -16,22 +19,37 @@ class _MockStore extends Mock implements MediaStore {}
 
 class _MockPlaces extends Mock implements PlaceSource {}
 
+/// 실제 drift 저장소 + updateStory 호출 수.
+class _SpyRepo extends DriftDiaryRepository {
+  _SpyRepo(DiaryHarness h) : super(h.db, const IdGenerator(Uuid()), h.clock);
+
+  int storyUpdates = 0;
+
+  @override
+  Future<Result<Story>> updateStory(Story story) {
+    storyUpdates++;
+    return super.updateStory(story);
+  }
+}
+
 void main() {
   late DiaryHarness h;
   late StoryManageCubit cubit;
+  late _SpyRepo repo;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     final prefs = PrefsDiaryPreferences(await SharedPreferences.getInstance());
     h = DiaryHarness();
+    repo = _SpyRepo(h);
     final useCase = DiaryUseCase(
-      h.repository,
+      repo,
       _MockStore(),
       _MockPlaces(),
       prefs,
       h.clock,
     );
-    cubit = StoryManageCubit(h.repository, useCase, h.clock)..start();
+    cubit = StoryManageCubit(repo, useCase, h.clock)..start();
     await pumpEventQueue();
   });
 
@@ -146,6 +164,7 @@ void main() {
     );
     final a = await entry(body: 'a', occurredAt: DateTime(2026, 8, 2));
     final b = await entry(body: 'b', occurredAt: DateTime(2026, 8, 3));
+    repo.storyUpdates = 0;
 
     await cubit.moveIn([a.id], past.id);
 
@@ -153,7 +172,8 @@ void main() {
     expect(okValue(await h.repository.entry(b.id)).storyId, Story.dailyId);
     expect(cubit.state.error, isNull);
     expect(cubit.state.actionFailed, isFalse);
-    // 닫힌(지난 기간) 스토리로 옮겨도 같은 종료일로 닫힌 채 남는다.
+    // 닫힌(지난 기간) 스토리로 바로 옮긴다(R23) — 열었다 닫지 않는다.
+    expect(repo.storyUpdates, 0);
     await pumpEventQueue();
     expect(byId(past.id).isOpen, isFalse);
     expect(byId(past.id).endedAt, DateTime(2026, 8, 31, 23, 59));

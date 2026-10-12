@@ -44,11 +44,12 @@ abstract interface class DiaryRepository {
   Future<Result<DiaryEntry>> createEntry(EntryDraft draft);
 
   /// updatedAt = now, createdAt 은 그대로. 휴지통 기록은 notFound(복원 전까지 읽기만). 스토리를 바꾸면 새 스토리
-  /// lastPostedAt = now(닫힌 스토리로는 `storyClosed`).
+  /// lastPostedAt = now. 닫힌 스토리로도 옮길 수 있다(지난 여행 정리, R23) — 스토리는 닫힌 채.
+  /// 없는 스토리면 notFound.
   Future<Result<DiaryEntry>> updateEntry(String id, EntryDraft draft);
 
   /// 기록들(휴지통 제외)을 [storyId] 로 옮기고, 하나라도 옮겼으면 그 스토리
-  /// lastPostedAt = now.
+  /// lastPostedAt = now. 닫힌 스토리도 받는다(R23) — 상태 · endedAt 은 그대로. 없는 스토리면 notFound.
   Future<Result<void>> moveEntries(List<String> ids, String storyId);
 
   /// [from] ~ [to](양 끝 포함)에 든 [storyId] 의 기록(휴지통 제외), 최신순.

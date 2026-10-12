@@ -223,18 +223,12 @@ void main() {
 
     test('수정 저장이 실패하면 뺀 미디어 파일은 남고 새 미디어는 tmp 로 돌아간다', () async {
       final entry = await saveRich();
-      final closed = okValue(
-        await h.repository.createStory(
-          title: '지난 여행',
-          startedAt: DateTime(2026, 9, 1),
-          endedAt: DateTime(2026, 9, 3),
-        ),
-      );
       final added = await newPhoto();
 
+      // 없는 스토리로 옮기면 DB 가 거절한다(닫힌 스토리로 옮기기는 R23 으로 허용).
       errFailure(
         await useCase.save(
-          entryDraft(storyId: closed.id, media: [entry.media.first, added]),
+          entryDraft(storyId: 'ghost', media: [entry.media.first, added]),
           editingId: entry.id,
         ),
       );

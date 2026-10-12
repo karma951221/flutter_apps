@@ -71,27 +71,12 @@ class StoryManageCubit extends Cubit<StoryManageState> {
   Future<List<DiaryEntry>> dailyEntriesIn(DateTime from, DateTime to) =>
       _repo.entriesBetween(from, to, storyId: Story.dailyId);
 
-  /// 기록들을 [storyId] 로 옮긴다. 저장소는 닫힌 스토리로의 이동을 거절하므로(`storyClosed` —
-  /// 닫힌 스토리에 새로 쓰지 않는 규칙), 지난 기간으로 만든 닫힌 스토리면 잠시 열고
-  /// 옮긴 뒤 같은 종료일로 다시 닫는다. 옮기다 실패해도 다시 닫는다.
+  /// 기록들을 [storyId] 로 옮긴다. 지난 기간으로 만든 닫힌 스토리도 받는다(R23 — 저장소가
+  /// 한 트랜잭션으로 옮기고 스토리는 닫힌 채 둔다).
   Future<void> moveIn(List<String> entryIds, String storyId) async {
     _begin();
     if (entryIds.isEmpty) return;
-    final target =
-        _find(storyId) ?? (state.created?.id == storyId ? state.created : null);
-    if (target == null || target.isOpen) {
-      _settle(await _repo.moveEntries(entryIds, storyId));
-      return;
-    }
-    final reopened = target.copyWith(status: StoryStatus.open, endedAt: null);
-    if (await _repo.updateStory(reopened) case Err(:final failure)) {
-      _fail(failure);
-      return;
-    }
-    final moved = await _repo.moveEntries(entryIds, storyId);
-    final reclosed = await _repo.updateStory(target);
-    _settle(moved);
-    _settle(reclosed);
+    _settle(await _repo.moveEntries(entryIds, storyId));
   }
 
   /// [at] 이 없으면 지금 닫는다. 기본 스토리 · 시작 전 날은 거절한다.

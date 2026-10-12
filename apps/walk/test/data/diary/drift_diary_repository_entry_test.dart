@@ -269,20 +269,21 @@ void main() {
       expect((await storyOf(jeju.id)).lastPostedAt, h.clock.now());
     });
 
-    test('닫힌 스토리로 옮기면 storyClosed', () async {
+    test('닫힌 스토리로도 옮길 수 있다(R23 — 지난 여행 정리), 스토리는 닫힌 채', () async {
       final closed = await newStory('지난 여행', endedAt: DateTime(2026, 2, 1));
       final entry = await create();
 
-      final result = await h.repository.updateEntry(
-        entry.id,
-        entryDraft(storyId: closed.id),
+      final moved = okValue(
+        await h.repository.updateEntry(
+          entry.id,
+          entryDraft(storyId: closed.id),
+        ),
       );
 
-      expect(errFailure(result), isDiaryFailure(DiaryFailure.storyClosed.name));
-      expect(
-        okValue(await h.repository.entry(entry.id)).storyId,
-        Story.dailyId,
-      );
+      expect(moved.storyId, closed.id);
+      final story = await storyOf(closed.id);
+      expect(story.status, StoryStatus.closed);
+      expect(story.endedAt, DateTime(2026, 2, 1));
     });
 
     test('닫힌 스토리의 기존 기록은 스토리를 그대로 두면 고칠 수 있다', () async {
@@ -343,14 +344,16 @@ void main() {
       expect((await storyOf(jeju.id)).lastPostedAt, h.clock.now());
     });
 
-    test('닫힌 스토리로는 storyClosed', () async {
+    test('닫힌 스토리로도 옮긴다(R23), 스토리는 닫힌 채 같은 종료일', () async {
       final closed = await newStory('지난 여행', endedAt: DateTime(2026, 2, 1));
       final a = await create();
 
-      final result = await h.repository.moveEntries([a.id], closed.id);
+      okValue(await h.repository.moveEntries([a.id], closed.id));
 
-      expect(errFailure(result), isDiaryFailure(DiaryFailure.storyClosed.name));
-      expect(okValue(await h.repository.entry(a.id)).storyId, Story.dailyId);
+      expect(okValue(await h.repository.entry(a.id)).storyId, closed.id);
+      final story = await storyOf(closed.id);
+      expect(story.status, StoryStatus.closed);
+      expect(story.endedAt, DateTime(2026, 2, 1));
     });
 
     test('없는 스토리로는 notFound', () async {

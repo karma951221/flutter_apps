@@ -193,9 +193,9 @@ class DriftDiaryRepository implements DiaryRepository {
           return const Failure.notFound();
         }
         final moving = row.storyId != draft.storyId;
-        if (moving) {
-          final storyFailure = await _checkTargetStory(draft.storyId);
-          if (storyFailure != null) return storyFailure;
+        // 닫힌 스토리로 옮기는 것은 정리라 허용한다(R23).
+        if (moving && await _storyRow(draft.storyId) == null) {
+          return const Failure.notFound();
         }
         await (_db.update(_db.entries)..where((e) => e.id.equals(id))).write(
           EntriesCompanion(
@@ -226,8 +226,8 @@ class DriftDiaryRepository implements DiaryRepository {
   Future<Result<void>> moveEntries(List<String> ids, String storyId) =>
       _guard(() async {
         final failure = await _db.transaction(() async {
-          final storyFailure = await _checkTargetStory(storyId);
-          if (storyFailure != null) return storyFailure;
+          // 닫힌(지난 기간) 스토리로도 옮긴다(R23). 스토리 상태 · 종료일은 그대로.
+          if (await _storyRow(storyId) == null) return const Failure.notFound();
           final moved =
               await (_db.update(_db.entries)
                     ..where((e) => e.id.isIn(ids) & e.deletedAt.isNull()))
@@ -461,7 +461,8 @@ class DriftDiaryRepository implements DiaryRepository {
     _db.stories,
   )..where((s) => s.id.equals(id))).getSingleOrNull();
 
-  /// 기록을 새로 두거나 옮겨 갈 스토리: 없으면 notFound, 닫혔으면 storyClosed.
+  /// 새 기록을 둘 스토리: 없으면 notFound, 닫혔으면 storyClosed.
+  /// (옮기기 — updateEntry · moveEntries — 는 닫힌 스토리도 받는다, R23.)
   Future<Failure?> _checkTargetStory(String storyId) async {
     final story = await _storyRow(storyId);
     if (story == null) return const Failure.notFound();
