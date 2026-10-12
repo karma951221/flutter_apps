@@ -2595,4 +2595,53 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkDiaryCollectionEmpty => '모아 볼 기록이 없어요';
+
+  @override
+  String get walkDiaryMenuTrash => '휴지통';
+
+  @override
+  String get walkDiaryTrashEmpty => '휴지통이 비어 있어요';
+
+  @override
+  String walkDiaryTrashDaysLeft(int days) {
+    return '$days일 남음';
+  }
+
+  @override
+  String get walkDiaryTrashDueToday => '오늘 삭제돼요';
+
+  @override
+  String get walkDiaryTrashNoBody => '(글 없는 기록)';
+
+  @override
+  String get walkDiaryTrashRestore => '복원';
+
+  @override
+  String get walkDiaryTrashDeleteForever => '영구 삭제';
+
+  @override
+  String get walkDiaryTrashEmptyAll => '휴지통 비우기';
+
+  @override
+  String get walkDiaryTrashPurgeTitle => '영구 삭제할까요?';
+
+  @override
+  String get walkDiaryTrashPurgeContent => '되돌릴 수 없어요. 사진과 영상도 함께 지워져요.';
+
+  @override
+  String get walkDiaryTrashEmptyAllTitle => '휴지통을 비울까요?';
+
+  @override
+  String walkDiaryTrashEmptyAllContent(int count) {
+    return '기록 $count개가 영구 삭제돼요. 되돌릴 수 없어요.';
+  }
+
+  @override
+  String get walkDiaryTrashRestored => '기록을 복원했어요';
+
+  @override
+  String get walkDiaryTrashPurged => '기록을 영구 삭제했어요';
+
+  @override
+  String get walkDiaryTrashEmptied => '휴지통을 비웠어요';
 }

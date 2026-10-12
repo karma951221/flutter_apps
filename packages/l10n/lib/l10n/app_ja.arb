@@ -799,5 +799,20 @@
   "walkDiarySearchStoryPrompt": "探すストーリー名を入力してください",
   "walkDiarySearchNoResults": "見つかりませんでした",
   "walkDiaryEntryCount": "記録{count}件",
-  "walkDiaryCollectionEmpty": "表示する記録がありません"
+  "walkDiaryCollectionEmpty": "表示する記録がありません",
+  "walkDiaryMenuTrash": "ごみ箱",
+  "walkDiaryTrashEmpty": "ごみ箱は空です",
+  "walkDiaryTrashDaysLeft": "あと{days}日",
+  "walkDiaryTrashDueToday": "今日削除されます",
+  "walkDiaryTrashNoBody": "(本文なし)",
+  "walkDiaryTrashRestore": "元に戻す",
+  "walkDiaryTrashDeleteForever": "完全に削除",
+  "walkDiaryTrashEmptyAll": "ごみ箱を空にする",
+  "walkDiaryTrashPurgeTitle": "完全に削除しますか?",
+  "walkDiaryTrashPurgeContent": "元に戻せません。写真と動画も一緒に削除されます。",
+  "walkDiaryTrashEmptyAllTitle": "ごみ箱を空にしますか?",
+  "walkDiaryTrashEmptyAllContent": "記録{count}件が完全に削除されます。元に戻せません。",
+  "walkDiaryTrashRestored": "記録を元に戻しました",
+  "walkDiaryTrashPurged": "記録を完全に削除しました",
+  "walkDiaryTrashEmptied": "ごみ箱を空にしました"
 }

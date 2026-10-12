@@ -27,6 +27,7 @@ import 'package:walk/presentation/diary/page/diary_tab.dart';
 import 'package:walk/presentation/diary/page/entry_detail_page.dart';
 import 'package:walk/presentation/diary/page/entry_editor_page.dart';
 import 'package:walk/presentation/diary/page/story_manage_page.dart';
+import 'package:walk/presentation/diary/page/trash_page.dart';
 import 'package:walk/presentation/diary/widget/entry_media_view.dart';
 import 'package:walk/presentation/diary/widget/feed_view.dart';
 import 'package:walk/presentation/diary/widget/prose_view.dart';
@@ -365,6 +366,39 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(StoryManagePage), findsOneWidget);
+    });
+
+    testWidgets('앱바 ⋮ → 휴지통', (tester) async {
+      when(repo.watchTrash).thenAnswer((_) => Stream.value(const []));
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('휴지통'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TrashPage), findsOneWidget);
+    });
+
+    testWidgets('릴스에서도 🔍 · ⋮ 를 누를 수 있다(R25)', (tester) async {
+      when(repo.watchTrash).thenAnswer((_) => Stream.value(const []));
+      await getIt<DiaryPreferences>().setViewMode(DiaryViewMode.reels);
+      entries[const EntryFilter.all()] = [_entry('바다')];
+      await pump(tester);
+      expect(find.byType(AppBar), findsNothing);
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      expect(find.text('스토리 관리'), findsOneWidget);
+      await tester.tap(find.text('휴지통'));
+      await tester.pumpAndSettle();
+      expect(find.byType(TrashPage), findsOneWidget);
+
+      tester.state<NavigatorState>(find.byType(Navigator)).pop();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+      expect(find.byType(DiarySearchPage), findsOneWidget);
     });
 
     testWidgets('앱바 🔍 → 스토리 결과를 누르면 타임라인이 그 스토리를 고른다', (tester) async {

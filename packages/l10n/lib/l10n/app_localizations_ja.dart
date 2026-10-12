@@ -2592,4 +2592,53 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkDiaryCollectionEmpty => '表示する記録がありません';
+
+  @override
+  String get walkDiaryMenuTrash => 'ごみ箱';
+
+  @override
+  String get walkDiaryTrashEmpty => 'ごみ箱は空です';
+
+  @override
+  String walkDiaryTrashDaysLeft(int days) {
+    return 'あと$days日';
+  }
+
+  @override
+  String get walkDiaryTrashDueToday => '今日削除されます';
+
+  @override
+  String get walkDiaryTrashNoBody => '(本文なし)';
+
+  @override
+  String get walkDiaryTrashRestore => '元に戻す';
+
+  @override
+  String get walkDiaryTrashDeleteForever => '完全に削除';
+
+  @override
+  String get walkDiaryTrashEmptyAll => 'ごみ箱を空にする';
+
+  @override
+  String get walkDiaryTrashPurgeTitle => '完全に削除しますか?';
+
+  @override
+  String get walkDiaryTrashPurgeContent => '元に戻せません。写真と動画も一緒に削除されます。';
+
+  @override
+  String get walkDiaryTrashEmptyAllTitle => 'ごみ箱を空にしますか?';
+
+  @override
+  String walkDiaryTrashEmptyAllContent(int count) {
+    return '記録$count件が完全に削除されます。元に戻せません。';
+  }
+
+  @override
+  String get walkDiaryTrashRestored => '記録を元に戻しました';
+
+  @override
+  String get walkDiaryTrashPurged => '記録を完全に削除しました';
+
+  @override
+  String get walkDiaryTrashEmptied => 'ごみ箱を空にしました';
 }

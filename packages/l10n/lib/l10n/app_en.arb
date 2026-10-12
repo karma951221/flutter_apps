@@ -799,5 +799,20 @@
   "walkDiarySearchStoryPrompt": "Type a story name to find",
   "walkDiarySearchNoResults": "No results",
   "walkDiaryEntryCount": "{count, plural, =1{1 entry} other{{count} entries}}",
-  "walkDiaryCollectionEmpty": "No entries to show"
+  "walkDiaryCollectionEmpty": "No entries to show",
+  "walkDiaryMenuTrash": "Trash",
+  "walkDiaryTrashEmpty": "The trash is empty",
+  "walkDiaryTrashDaysLeft": "{days, plural, =1{1 day left} other{{days} days left}}",
+  "walkDiaryTrashDueToday": "Deleted today",
+  "walkDiaryTrashNoBody": "(No text)",
+  "walkDiaryTrashRestore": "Restore",
+  "walkDiaryTrashDeleteForever": "Delete forever",
+  "walkDiaryTrashEmptyAll": "Empty trash",
+  "walkDiaryTrashPurgeTitle": "Delete forever?",
+  "walkDiaryTrashPurgeContent": "This can't be undone. Photos and videos are deleted too.",
+  "walkDiaryTrashEmptyAllTitle": "Empty the trash?",
+  "walkDiaryTrashEmptyAllContent": "{count, plural, =1{1 entry} other{{count} entries}} will be deleted forever. This can't be undone.",
+  "walkDiaryTrashRestored": "Entry restored",
+  "walkDiaryTrashPurged": "Entry deleted forever",
+  "walkDiaryTrashEmptied": "Trash emptied"
 }

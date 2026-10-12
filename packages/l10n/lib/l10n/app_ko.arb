@@ -3724,5 +3724,75 @@
   "walkDiaryCollectionEmpty": "모아 볼 기록이 없어요",
   "@walkDiaryCollectionEmpty": {
     "description": "태그 · 장소 모아보기에 남은 기록이 없을 때(모두 휴지통으로 갔을 때 등) 안내"
+  },
+  "walkDiaryMenuTrash": "휴지통",
+  "@walkDiaryMenuTrash": {
+    "description": "일기 탭 ⋮ 메뉴의 휴지통 항목 · 휴지통 화면 제목"
+  },
+  "walkDiaryTrashEmpty": "휴지통이 비어 있어요",
+  "@walkDiaryTrashEmpty": {
+    "description": "휴지통에 기록이 없을 때 빈 상태 안내"
+  },
+  "walkDiaryTrashDaysLeft": "{days}일 남음",
+  "@walkDiaryTrashDaysLeft": {
+    "description": "휴지통 기록이 영구 삭제되기까지 남은 일수(1일 이상)",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "walkDiaryTrashDueToday": "오늘 삭제돼요",
+  "@walkDiaryTrashDueToday": {
+    "description": "휴지통 기록이 오늘 영구 삭제될 때의 표시"
+  },
+  "walkDiaryTrashNoBody": "(글 없는 기록)",
+  "@walkDiaryTrashNoBody": {
+    "description": "본문이 없는 휴지통 기록의 제목 자리 표시"
+  },
+  "walkDiaryTrashRestore": "복원",
+  "@walkDiaryTrashRestore": {
+    "description": "휴지통 기록 복원 메뉴 항목"
+  },
+  "walkDiaryTrashDeleteForever": "영구 삭제",
+  "@walkDiaryTrashDeleteForever": {
+    "description": "휴지통 기록 영구 삭제 메뉴 항목 · 확인 버튼"
+  },
+  "walkDiaryTrashEmptyAll": "휴지통 비우기",
+  "@walkDiaryTrashEmptyAll": {
+    "description": "휴지통 화면 앱바의 비우기 버튼 · 확인 버튼"
+  },
+  "walkDiaryTrashPurgeTitle": "영구 삭제할까요?",
+  "@walkDiaryTrashPurgeTitle": {
+    "description": "휴지통 기록 영구 삭제 확인 제목"
+  },
+  "walkDiaryTrashPurgeContent": "되돌릴 수 없어요. 사진과 영상도 함께 지워져요.",
+  "@walkDiaryTrashPurgeContent": {
+    "description": "휴지통 기록 영구 삭제 확인 본문"
+  },
+  "walkDiaryTrashEmptyAllTitle": "휴지통을 비울까요?",
+  "@walkDiaryTrashEmptyAllTitle": {
+    "description": "휴지통 비우기 확인 제목"
+  },
+  "walkDiaryTrashEmptyAllContent": "기록 {count}개가 영구 삭제돼요. 되돌릴 수 없어요.",
+  "@walkDiaryTrashEmptyAllContent": {
+    "description": "휴지통 비우기 확인 본문",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "walkDiaryTrashRestored": "기록을 복원했어요",
+  "@walkDiaryTrashRestored": {
+    "description": "휴지통 기록을 복원한 뒤 알림"
+  },
+  "walkDiaryTrashPurged": "기록을 영구 삭제했어요",
+  "@walkDiaryTrashPurged": {
+    "description": "휴지통 기록을 영구 삭제한 뒤 알림"
+  },
+  "walkDiaryTrashEmptied": "휴지통을 비웠어요",
+  "@walkDiaryTrashEmptied": {
+    "description": "휴지통을 비운 뒤 알림"
   }
 }

@@ -4903,6 +4903,96 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'모아 볼 기록이 없어요'**
   String get walkDiaryCollectionEmpty;
+
+  /// 일기 탭 ⋮ 메뉴의 휴지통 항목 · 휴지통 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통'**
+  String get walkDiaryMenuTrash;
+
+  /// 휴지통에 기록이 없을 때 빈 상태 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통이 비어 있어요'**
+  String get walkDiaryTrashEmpty;
+
+  /// 휴지통 기록이 영구 삭제되기까지 남은 일수(1일 이상)
+  ///
+  /// In ko, this message translates to:
+  /// **'{days}일 남음'**
+  String walkDiaryTrashDaysLeft(int days);
+
+  /// 휴지통 기록이 오늘 영구 삭제될 때의 표시
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 삭제돼요'**
+  String get walkDiaryTrashDueToday;
+
+  /// 본문이 없는 휴지통 기록의 제목 자리 표시
+  ///
+  /// In ko, this message translates to:
+  /// **'(글 없는 기록)'**
+  String get walkDiaryTrashNoBody;
+
+  /// 휴지통 기록 복원 메뉴 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'복원'**
+  String get walkDiaryTrashRestore;
+
+  /// 휴지통 기록 영구 삭제 메뉴 항목 · 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'영구 삭제'**
+  String get walkDiaryTrashDeleteForever;
+
+  /// 휴지통 화면 앱바의 비우기 버튼 · 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통 비우기'**
+  String get walkDiaryTrashEmptyAll;
+
+  /// 휴지통 기록 영구 삭제 확인 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'영구 삭제할까요?'**
+  String get walkDiaryTrashPurgeTitle;
+
+  /// 휴지통 기록 영구 삭제 확인 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'되돌릴 수 없어요. 사진과 영상도 함께 지워져요.'**
+  String get walkDiaryTrashPurgeContent;
+
+  /// 휴지통 비우기 확인 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통을 비울까요?'**
+  String get walkDiaryTrashEmptyAllTitle;
+
+  /// 휴지통 비우기 확인 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 {count}개가 영구 삭제돼요. 되돌릴 수 없어요.'**
+  String walkDiaryTrashEmptyAllContent(int count);
+
+  /// 휴지통 기록을 복원한 뒤 알림
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 복원했어요'**
+  String get walkDiaryTrashRestored;
+
+  /// 휴지통 기록을 영구 삭제한 뒤 알림
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 영구 삭제했어요'**
+  String get walkDiaryTrashPurged;
+
+  /// 휴지통을 비운 뒤 알림
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통을 비웠어요'**
+  String get walkDiaryTrashEmptied;
 }
 
 class _AppLocalizationsDelegate

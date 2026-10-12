@@ -2738,4 +2738,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkDiaryCollectionEmpty => 'No entries to show';
+
+  @override
+  String get walkDiaryMenuTrash => 'Trash';
+
+  @override
+  String get walkDiaryTrashEmpty => 'The trash is empty';
+
+  @override
+  String walkDiaryTrashDaysLeft(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days left',
+      one: '1 day left',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get walkDiaryTrashDueToday => 'Deleted today';
+
+  @override
+  String get walkDiaryTrashNoBody => '(No text)';
+
+  @override
+  String get walkDiaryTrashRestore => 'Restore';
+
+  @override
+  String get walkDiaryTrashDeleteForever => 'Delete forever';
+
+  @override
+  String get walkDiaryTrashEmptyAll => 'Empty trash';
+
+  @override
+  String get walkDiaryTrashPurgeTitle => 'Delete forever?';
+
+  @override
+  String get walkDiaryTrashPurgeContent =>
+      'This can\'t be undone. Photos and videos are deleted too.';
+
+  @override
+  String get walkDiaryTrashEmptyAllTitle => 'Empty the trash?';
+
+  @override
+  String walkDiaryTrashEmptyAllContent(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries',
+      one: '1 entry',
+    );
+    return '$_temp0 will be deleted forever. This can\'t be undone.';
+  }
+
+  @override
+  String get walkDiaryTrashRestored => 'Entry restored';
+
+  @override
+  String get walkDiaryTrashPurged => 'Entry deleted forever';
+
+  @override
+  String get walkDiaryTrashEmptied => 'Trash emptied';
 }

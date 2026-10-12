@@ -26,6 +26,7 @@ import 'diary_search_page.dart';
 import 'entry_detail_page.dart';
 import 'entry_editor_page.dart';
 import 'story_manage_page.dart';
+import 'trash_page.dart';
 
 /// 셸의 일기 탭(스펙 §6.1). 위에서 `DiaryLockCubit` 를 받는다(셸이 소유).
 ///
@@ -135,9 +136,10 @@ class _SearchAction extends StatelessWidget {
   );
 }
 
-enum _DiaryMenuItem { stories }
+enum _DiaryMenuItem { stories, trash }
 
-/// 일기 탭 앱바 ⋮(스펙 §6.1): 스토리 관리 · (휴지통). 잠긴 동안은 두지 않는다.
+/// 일기 탭 앱바 ⋮(스펙 §6.1): 스토리 관리 · 휴지통. 잠긴 동안은 두지 않는다.
+/// 릴스에서는 앱바가 없어 위에 얹은 머리 옆에 같은 위젯을 둔다.
 /// 항목을 더하려면 [_DiaryMenuItem] 값과 [_items] · [_open] 의 한 줄씩.
 class _DiaryMenu extends StatelessWidget {
   const _DiaryMenu();
@@ -148,11 +150,17 @@ class _DiaryMenu extends StatelessWidget {
       label: l10n.walkDiaryMenuStories,
       icon: Icons.auto_stories_outlined,
     ),
+    AppOverflowMenuItem(
+      value: _DiaryMenuItem.trash,
+      label: l10n.walkDiaryMenuTrash,
+      icon: Icons.delete_outline,
+    ),
   ];
 
   Future<void> _open(BuildContext context, _DiaryMenuItem item) =>
       switch (item) {
         _DiaryMenuItem.stories => openStoryManage(context),
+        _DiaryMenuItem.trash => openTrash(context),
       };
 
   @override
@@ -208,7 +216,18 @@ class _Timeline extends StatelessWidget {
                         color: Theme.of(
                           context,
                         ).colorScheme.surface.withValues(alpha: _overlayAlpha),
-                        child: SafeArea(bottom: false, child: header),
+                        // 앱바가 없으니 🔍 · ⋮ 를 머리 옆에 둔다(R25) — 앱바와 같은 위젯.
+                        child: SafeArea(
+                          bottom: false,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(child: header),
+                              const _SearchAction(),
+                              const _DiaryMenu(),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
