@@ -788,5 +788,16 @@
   "walkDiaryEntryDeleteTitle": "Delete this entry?",
   "walkDiaryEntryDeleteContent": "It moves to the trash, where you can restore it.",
   "walkDiaryEntryTrashed": "Entry moved to the trash",
-  "walkDiaryEntryDateTime": "{date} {time}"
+  "walkDiaryEntryDateTime": "{date} {time}",
+  "walkDiarySearch": "Search",
+  "walkDiarySearchHint": "Search your diary",
+  "walkDiarySearchTabBody": "Text",
+  "walkDiarySearchTabStory": "Stories",
+  "walkDiarySearchTabTag": "Hashtags",
+  "walkDiarySearchTabPlace": "Places",
+  "walkDiarySearchBodyPrompt": "Type words to find in your entries",
+  "walkDiarySearchStoryPrompt": "Type a story name to find",
+  "walkDiarySearchNoResults": "No results",
+  "walkDiaryEntryCount": "{count, plural, =1{1 entry} other{{count} entries}}",
+  "walkDiaryCollectionEmpty": "No entries to show"
 }

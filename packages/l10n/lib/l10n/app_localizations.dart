@@ -4837,6 +4837,72 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{date} {time}'**
   String walkDiaryEntryDateTime(String date, String time);
+
+  /// 일기 탭 앱바의 검색 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'검색'**
+  String get walkDiarySearch;
+
+  /// 일기 검색 화면 입력칸 안내 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'일기 검색'**
+  String get walkDiarySearchHint;
+
+  /// 일기 검색 탭 — 기록 본문에서 찾기
+  ///
+  /// In ko, this message translates to:
+  /// **'글'**
+  String get walkDiarySearchTabBody;
+
+  /// 일기 검색 탭 — 스토리 이름에서 찾기
+  ///
+  /// In ko, this message translates to:
+  /// **'스토리'**
+  String get walkDiarySearchTabStory;
+
+  /// 일기 검색 탭 — 해시태그 추천
+  ///
+  /// In ko, this message translates to:
+  /// **'해시태그'**
+  String get walkDiarySearchTabTag;
+
+  /// 일기 검색 탭 — 장소 추천
+  ///
+  /// In ko, this message translates to:
+  /// **'장소'**
+  String get walkDiarySearchTabPlace;
+
+  /// 일기 검색 글 탭에서 아직 아무것도 입력하지 않았을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'글에서 찾을 말을 입력해 보세요'**
+  String get walkDiarySearchBodyPrompt;
+
+  /// 일기 검색 스토리 탭에서 아직 아무것도 입력하지 않았을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'찾을 스토리 이름을 입력해 보세요'**
+  String get walkDiarySearchStoryPrompt;
+
+  /// 일기 검색 결과가 없을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'찾는 결과가 없어요'**
+  String get walkDiarySearchNoResults;
+
+  /// 일기 검색 결과 · 모아보기의 기록 수
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 {count}개'**
+  String walkDiaryEntryCount(int count);
+
+  /// 태그 · 장소 모아보기에 남은 기록이 없을 때(모두 휴지통으로 갔을 때 등) 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'모아 볼 기록이 없어요'**
+  String get walkDiaryCollectionEmpty;
 }
 
 class _AppLocalizationsDelegate

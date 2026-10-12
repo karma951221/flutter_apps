@@ -2560,4 +2560,39 @@ class AppLocalizationsKo extends AppLocalizations {
   String walkDiaryEntryDateTime(String date, String time) {
     return '$date $time';
   }
+
+  @override
+  String get walkDiarySearch => '검색';
+
+  @override
+  String get walkDiarySearchHint => '일기 검색';
+
+  @override
+  String get walkDiarySearchTabBody => '글';
+
+  @override
+  String get walkDiarySearchTabStory => '스토리';
+
+  @override
+  String get walkDiarySearchTabTag => '해시태그';
+
+  @override
+  String get walkDiarySearchTabPlace => '장소';
+
+  @override
+  String get walkDiarySearchBodyPrompt => '글에서 찾을 말을 입력해 보세요';
+
+  @override
+  String get walkDiarySearchStoryPrompt => '찾을 스토리 이름을 입력해 보세요';
+
+  @override
+  String get walkDiarySearchNoResults => '찾는 결과가 없어요';
+
+  @override
+  String walkDiaryEntryCount(int count) {
+    return '기록 $count개';
+  }
+
+  @override
+  String get walkDiaryCollectionEmpty => '모아 볼 기록이 없어요';
 }

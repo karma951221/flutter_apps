@@ -2697,4 +2697,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String walkDiaryEntryDateTime(String date, String time) {
     return '$date $time';
   }
+
+  @override
+  String get walkDiarySearch => 'Search';
+
+  @override
+  String get walkDiarySearchHint => 'Search your diary';
+
+  @override
+  String get walkDiarySearchTabBody => 'Text';
+
+  @override
+  String get walkDiarySearchTabStory => 'Stories';
+
+  @override
+  String get walkDiarySearchTabTag => 'Hashtags';
+
+  @override
+  String get walkDiarySearchTabPlace => 'Places';
+
+  @override
+  String get walkDiarySearchBodyPrompt => 'Type words to find in your entries';
+
+  @override
+  String get walkDiarySearchStoryPrompt => 'Type a story name to find';
+
+  @override
+  String get walkDiarySearchNoResults => 'No results';
+
+  @override
+  String walkDiaryEntryCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count entries',
+      one: '1 entry',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get walkDiaryCollectionEmpty => 'No entries to show';
 }

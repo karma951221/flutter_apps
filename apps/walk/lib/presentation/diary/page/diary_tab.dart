@@ -22,6 +22,7 @@ import '../widget/diary_entries_view.dart';
 import '../widget/story_avatar.dart';
 import '../widget/story_bar.dart';
 import '../widget/story_header.dart';
+import 'diary_search_page.dart';
 import 'entry_detail_page.dart';
 import 'entry_editor_page.dart';
 import 'story_manage_page.dart';
@@ -91,7 +92,12 @@ class _DiaryTabState extends State<DiaryTab> {
                 ? null
                 : AppBar(
                     title: Text(l10n.walkShellTabDiary),
-                    actions: [if (unlocked) const _DiaryMenu()],
+                    actions: [
+                      if (unlocked) ...[
+                        const _SearchAction(),
+                        const _DiaryMenu(),
+                      ],
+                    ],
                   ),
             body: DiaryLockGate(child: _Timeline(active: widget.active)),
             // 오른쪽 아래 — 릴스에서도 위에 얹은 머리 · 토글을 가리지 않는다.
@@ -109,6 +115,24 @@ class _DiaryTabState extends State<DiaryTab> {
       ),
     );
   }
+}
+
+/// 일기 탭 앱바 🔍(스펙 §6.4). 검색에서 스토리를 고르고 돌아오면 타임라인이 그 스토리를 고른다.
+class _SearchAction extends StatelessWidget {
+  const _SearchAction();
+
+  Future<void> _search(BuildContext context) async {
+    final timeline = context.read<DiaryTimelineCubit>();
+    final storyId = await openDiarySearch(context);
+    if (storyId != null && !timeline.isClosed) timeline.selectStory(storyId);
+  }
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+    icon: const Icon(Icons.search),
+    tooltip: AppLocalizations.of(context).walkDiarySearch,
+    onPressed: () => unawaited(_search(context)),
+  );
 }
 
 enum _DiaryMenuItem { stories }

@@ -788,5 +788,16 @@
   "walkDiaryEntryDeleteTitle": "記録を削除しますか?",
   "walkDiaryEntryDeleteContent": "ゴミ箱に移動します。ゴミ箱から復元できます。",
   "walkDiaryEntryTrashed": "記録をゴミ箱に移動しました",
-  "walkDiaryEntryDateTime": "{date} {time}"
+  "walkDiaryEntryDateTime": "{date} {time}",
+  "walkDiarySearch": "検索",
+  "walkDiarySearchHint": "日記を検索",
+  "walkDiarySearchTabBody": "本文",
+  "walkDiarySearchTabStory": "ストーリー",
+  "walkDiarySearchTabTag": "ハッシュタグ",
+  "walkDiarySearchTabPlace": "場所",
+  "walkDiarySearchBodyPrompt": "本文から探す言葉を入力してください",
+  "walkDiarySearchStoryPrompt": "探すストーリー名を入力してください",
+  "walkDiarySearchNoResults": "見つかりませんでした",
+  "walkDiaryEntryCount": "記録{count}件",
+  "walkDiaryCollectionEmpty": "表示する記録がありません"
 }

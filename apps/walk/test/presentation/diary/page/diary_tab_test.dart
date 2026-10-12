@@ -22,6 +22,7 @@ import 'package:walk/domain/diary/usecase/diary_use_case.dart';
 import 'package:walk/domain/lock/device_auth.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
+import 'package:walk/presentation/diary/page/diary_search_page.dart';
 import 'package:walk/presentation/diary/page/diary_tab.dart';
 import 'package:walk/presentation/diary/page/entry_detail_page.dart';
 import 'package:walk/presentation/diary/page/entry_editor_page.dart';
@@ -151,6 +152,7 @@ void main() {
     expect(find.byType(PinPad), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsNothing);
     expect(find.byIcon(Icons.more_vert), findsNothing);
+    expect(find.byIcon(Icons.search), findsNothing);
 
     for (final d in '1234'.split('')) {
       await tester.tap(find.widgetWithText(TextButton, d));
@@ -363,6 +365,36 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(StoryManagePage), findsOneWidget);
+    });
+
+    testWidgets('앱바 🔍 → 스토리 결과를 누르면 타임라인이 그 스토리를 고른다', (tester) async {
+      stories = [_story(Story.dailyId, ''), _story('jeju', '제주 여행')];
+      entries[const EntryFilter.all()] = [_entry('출근')];
+      entries[const EntryFilter.story('jeju')] = [
+        _entry('바다', storyId: 'jeju'),
+      ];
+      when(
+        () =>
+            repo.watchStoryMatches(any(), dailyTitle: any(named: 'dailyTitle')),
+      ).thenAnswer(
+        (_) => Stream.value([(story: _story('jeju', '제주 여행'), count: 1)]),
+      );
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+      expect(find.byType(DiarySearchPage), findsOneWidget);
+      await tester.tap(find.widgetWithText(Tab, '스토리'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '제주');
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(AppListTile, '제주 여행'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DiarySearchPage), findsNothing);
+      expect(find.text('바다'), findsOneWidget);
+      expect(find.text('출근'), findsNothing);
     });
 
     testWidgets('릴스에서도 ＋ 가 있고 위의 머리 · 토글을 가리지 않는다', (tester) async {

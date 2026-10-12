@@ -2557,4 +2557,39 @@ class AppLocalizationsJa extends AppLocalizations {
   String walkDiaryEntryDateTime(String date, String time) {
     return '$date $time';
   }
+
+  @override
+  String get walkDiarySearch => '検索';
+
+  @override
+  String get walkDiarySearchHint => '日記を検索';
+
+  @override
+  String get walkDiarySearchTabBody => '本文';
+
+  @override
+  String get walkDiarySearchTabStory => 'ストーリー';
+
+  @override
+  String get walkDiarySearchTabTag => 'ハッシュタグ';
+
+  @override
+  String get walkDiarySearchTabPlace => '場所';
+
+  @override
+  String get walkDiarySearchBodyPrompt => '本文から探す言葉を入力してください';
+
+  @override
+  String get walkDiarySearchStoryPrompt => '探すストーリー名を入力してください';
+
+  @override
+  String get walkDiarySearchNoResults => '見つかりませんでした';
+
+  @override
+  String walkDiaryEntryCount(int count) {
+    return '記録$count件';
+  }
+
+  @override
+  String get walkDiaryCollectionEmpty => '表示する記録がありません';
 }
