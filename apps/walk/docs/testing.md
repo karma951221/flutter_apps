@@ -3,7 +3,7 @@
 > [테스트 가이드](../../../docs/testing/README.md) · [계획](plan.md) · [기록](history.md) · [진행 현황](status.md)
 
 ```bash
-cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-10-08 기준 954건 통과 · 1건 skip)
+cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-10-13 기준 1634건 통과 · 1건 skip)
 ```
 
 백엔드가 없어 로컬 Supabase 없이 돈다. Health Connect 는 `HealthGateway` 를 mock 해서 본다
@@ -49,7 +49,7 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `presentation/walk/widget/step_goal_ring_test.dart` | `StepGoalRing` | 진입 시 0 → 비율, 바뀌면 직전 → 새 값 · 넘침은 1 에서 멈춤 · 애니메이션 끄기면 끝 값 · 트랙 · 진행 색 |
 | `presentation/walk/widget/today_goal_card_test.dart` | `TodayGoalCard` | 걸음 · 목표 문구 · 링 접근성 비율 · 거리/칼로리 지표 · 링 탭 → 남은 걸음 · 다시 탭 → 지표 · **탭해도 카드 높이 그대로** · 거리 없으면 남은 걸음만 · 달성 배지 · 3초 뒤 복귀 |
 | `presentation/walk/widget/period_summary_test.dart` | `PeriodSummary` | 달성 n/m일(오늘 이후 제외, 지난 기간은 전부) · 네 지표 타일 |
-| `convention/package_boundary_test.dart` | `pubspec.yaml` | `feature_*` · `supabase_flutter` 의존 없음 · `alarm` 은 `third_party/alarm` path 의존(FORK.md · LICENSE 있음) · 포크는 루트 workspace 멤버 아님 |
+| `convention/package_boundary_test.dart` | `pubspec.yaml` | `feature_*` · `supabase_flutter` 의존 없음 · `alarm` 은 `third_party/alarm` path 의존(FORK.md · LICENSE 있음) · 포크는 루트 workspace 멤버 아님 · walk 는 일기 위치에 workspace `location` 을 의존 |
 | `convention/android_icon_resources_test.dart` | `android/app/src/main/res` 알림 아이콘 | **`PackageAlarmScheduler.notificationIcon` 이름의 `drawable/<이름>.xml` 이 있고 `raw/keep.xml` 의 `tools:keep` 이 `@drawable/<이름>` 을 남긴다**(포크는 못 찾으면 조용히 대체 아이콘으로 넘어간다) |
 | `convention/android_splash_resources_test.dart` | `android/app/src/main/res` 시작 화면 리소스 | 배경 색 라이트 #1D9E75 · 다크 #0F6E56 · **`splash_icon` 은 레이어 리스트가 아닌 288 뷰포트 벡터 하나 · 전경 경로 그대로 · 중심 (54,54)→(144,144) · 안전 원이 지름 192 원 안**(QA: 12+ 스플래시 확대 · 잘림) · `values(-night)-v31` `LaunchTheme` 의 스플래시 배경 · 아이콘(아이콘 배경 없음) · 12 미만 `launch_background`(drawable · v21 · night) 초록 바탕 가운데 아이콘 · `NormalTheme` 은 `?android:colorBackground` 유지 |
 
@@ -112,16 +112,101 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `presentation/alarm/widget/alarm_tile_test.dart` | `AlarmTile` | 둥근 카드 행 · 반복(시각 · 제목 · 요약 · 요일 점) · 한 번(모래시계 · N 뒤) · 꺼진 알람 흐림 · 꺼져도 행 탭 동작 · 스위치 햅틱 후 `onToggle` · 320dp 긴 제목 · 건너뛴 반복 알람은 "건너뜀" 칩(꺼지면 없음) · 공휴일 칩 → `onHolidayTap` · 길게 누르기 → `onLongPress` · 320dp 칩 둘 · **쉬는 기간 때문에 예약이 없으면 한 번은 `한 번 · 쉬는 중`, 반복은 "쉬는 중" 칩(꺼지면 없음)** |
 | `presentation/alarm/widget/alarm_kind_sheet_test.dart` | `AlarmKindSheet` | 손잡이 · 제목 · 두 행 · 한 번/반복을 고르면 그 종류로 닫힘 · 그냥 닫으면 null · 320dp(ko/en/ja) |
 | `presentation/alarm/widget/alarm_skip_sheet_test.dart` | `AlarmSkipSheet` | 손잡이 · 알람 · [다음 알람 건너뛰기 · 다음 회차] → skip · 건너뛴 알람은 [건너뛰기 취소 · 건너뛴 회차] → unskip · 라벨 없으면 시각만 · 그냥 닫으면 null · 320dp(ko/en/ja) |
-| `presentation/alarm/widget/alarm_time_wheel_test.dart` | `AlarmTimeWheel` | 시 열 화면 읽기 라벨에 '정각' 없음(`12시` · `12 hours` · `12時`, QA: 분 43 인데 `12시 정각`) · 휠 전체 라벨은 고른 시각(`오전 12:43`)이고 바꾸면 따라감 · `onChanged` |
+| `presentation/alarm/widget/alarm_time_wheel_test.dart` | `AlarmTimeWheel` | 시 열 화면 읽기 라벨에 '정각' 없음(`12시` · `12 hours` · `12時`, QA: 분 43 인데 `12시 정각`) · 휠 전체 라벨은 고른 시각(`오전 12:43`)이고 바꾸면 따라감 · `onChanged` · `maximum` 뒤 시각은 고를 수 없음(일기 미래 시각 금지) |
 | `presentation/alarm/widget/ring_settings_section_test.dart` | `RingSettingsSection` | 접힌 상태는 제목 · 요약 한 줄(알람 값) · 펼치면 볼륨 · 점점 커지기 · 스누즈 간격 · 횟수 · 자동 멈춤 · 30분 전 알림 · 고르면 그 값(무제한 · 안 함은 null) · 볼륨 10 단위 · **볼륨 슬라이더는 이름표 `볼륨` · 값 `80%`(±10%) 한 번만 읽음** · 저장 중 잠금 · 320dp 펼쳐도 안 넘침(ko/en/ja) |
 | `presentation/alarm/widget/weekday_dots_test.dart` | `WeekdayDots` | 월~일 7개 · 켜진 요일 primary, 나머지 outlineVariant · 흐리게면 onSurfaceVariant |
 | `presentation/alarm/widget/ringing_ripple_test.dart` | `RingingRipple` | 켜면 위상이 변함 · 애니메이션 제거면 정지 |
 | `presentation/settings/widget/step_goal_sheet_test.dart` | `StepGoalSheet` | 슬라이더 2,000~30,000 · 1,000 단위 · 저장하면 값 반환 |
-| `presentation/settings/page/settings_page_test.dart` | `SettingsPage` | 걷기 섹션 · 하루 목표 시트 → 저장 · 권한 상태 · 앱 정보(버전 · 라이선스)와 14일 안내 없음 · 행 탭별 동작 · 확인 중이면 빈 문구 · 테마 선택 · **공휴일**(걷기와 권한 사이 스위치 · 출처(내장 표 · 캘린더 이름 · 이름 모름) · 캘린더 권한 · 확인 중 빈 문구 · 끄면 저장 · 맞추기 · 출처 행 → 권한 다시 묻기 · 320dp) |
-| `presentation/shell/page/main_shell_page_test.dart` | `MainShellPage` | 첫 탭 걷기 · 초록 컨테이너 · 선택 탭 채움 아이콘 · 탭 전환 · 시작/복귀 때 sync 뒤 목록 · 복귀 때 권한 행 · **울림 화면이 걷히면 sync** · **sync 실패해도 목록** · 네이티브 `resync` → 재설정 · 목록 · 응답(실패해도) · 사라지면 핸들러 해제 · **설정 탭에서 목표를 낮춰 달성해도 걷기 탭을 열 때 한 번 축하** · 설정 탭 공휴일 출처 · 권한 읽기(허용하고 돌아오면 다시) · 시작 · resync 때 공휴일 캐시 갱신 → 예약(갱신 실패해도 예약) · 네이티브 `reminderAction` → 건너뛰고 목록 · true(실패면 false, 알림 남김) · **헤드리스 기다리기: 시작 · 복귀 sync 는 네이티브 `awaitIdle` 응답 뒤(그 전엔 공휴일 갱신 · sync 없음) · 응답이 없으면 10초 뒤 그냥 sync · 네이티브 `resync` 는 `awaitIdle` 을 묻지 않음** |
+| `presentation/settings/page/settings_page_test.dart` | `SettingsPage` | 걷기 섹션 · 하루 목표 시트 → 저장 · 권한 상태 · 앱 정보(버전 · 라이선스)와 14일 안내 없음 · 행 탭별 동작 · 확인 중이면 빈 문구 · 테마 선택 · **공휴일**(걷기와 권한 사이 스위치 · 출처(내장 표 · 캘린더 이름 · 이름 모름) · 캘린더 권한 · 확인 중 빈 문구 · 끄면 저장 · 맞추기 · 출처 행 → 권한 다시 묻기 · 320dp) · **일기 섹션**(알람과 권한 사이 · 잠금 꺼짐/PIN/패턴 표시 · 용량 문구(크기 · 사진 · 영상 수 · 휴지통 몫, B · KB) · 탭이 다시 보이면 용량 다시 읽기 · 휴지통 기간 4개 · 다시 잠기는 시간 4개 → 최신 설정에 저장하고 잠금에 알림 · 잠금 꺼짐이면 다시 잠기는 시간 행 막힘 · **일기가 잠긴 동안 두 행 막힘 · 시트가 열린 사이 잠기면 저장 안 함** · 잠금 행 → `LockSetupPage` · PIN → 패턴 · 끄면 풀림 · 그냥 닫으면 그대로) |
+| `presentation/shell/page/main_shell_page_test.dart` | `MainShellPage` | 첫 탭 걷기 · 초록 컨테이너 · 선택 탭 채움 아이콘 · 탭 전환 · 시작/복귀 때 sync 뒤 목록 · 복귀 때 권한 행 · **울림 화면이 걷히면 sync** · **sync 실패해도 목록** · 네이티브 `resync` → 재설정 · 목록 · 응답(실패해도) · 사라지면 핸들러 해제 · **설정 탭에서 목표를 낮춰 달성해도 걷기 탭을 열 때 한 번 축하** · 설정 탭 공휴일 출처 · 권한 읽기(허용하고 돌아오면 다시) · 시작 · resync 때 공휴일 캐시 갱신 → 예약(갱신 실패해도 예약) · 네이티브 `reminderAction` → 건너뛰고 목록 · true(실패면 false, 알림 남김) · **헤드리스 기다리기: 시작 · 복귀 sync 는 네이티브 `awaitIdle` 응답 뒤(그 전엔 공휴일 갱신 · sync 없음) · 응답이 없으면 10초 뒤 그냥 sync · 네이티브 `resync` 는 `awaitIdle` 을 묻지 않음** · **일기**: 탭 순서 알람 · 걷기 · 일기 · 설정 · 시작 때 고아 청소 한 번(실패해도 화면) · 잠긴 채 시작, 풀었다 백그라운드에 오래 있으면 다시 잠김 · 일기가 잠겨 있어도 알람 울림 화면 |
 | `core/alarm_ring_listener_test.dart` | `AlarmRingListener` | 한 번만 띄움 · 밖에서 끄면 걷음 · 화면이 먼저 닫힘 · 스누즈 뒤 다시 띄움 · 가려진 화면만 걷음 · 내비게이터 전 값 · 첫 프레임 전 시작→끝이면 안 띄움 · 중복 start · dispose · **앱 복귀 안전망: 플랫폼이 안 울린다는 화면을 걷음 · 아직 울리면 둠 · 걷은 뒤 늦은 같은 울림 값으로 다시 띄우지 않음(끝 값 뒤 다시 울리면 띄움)** |
-| `core/app_test.dart` | `WalkApp` · `themeModeOf` | 테마 매핑 · 저장된 다크로 첫 프레임 |
+| `core/app_test.dart` | `WalkApp` · `themeModeOf` | 테마 매핑 · 저장된 다크로 첫 프레임 · 일기 의존을 등록한 앱 시작 |
 | `core/background/background_task_test.dart` | `runBackgroundTask` · `resyncTask` · `reminderActionPackageId` | init → task → done(true) · init 실패면 task 건너뛰고 done(false) · task 실패면 done(false) · done 실패도 삼킴 · done 한 번 · 공휴일 갱신 → sync(갱신 실패해도 sync) · 진입점 인자 `["skip", id]` · **`awaitBackgroundIdle`: `awaitIdle` 을 부르고 응답까지 기다림 · 시간 한도(10초) 뒤 그냥 끝남 · 채널 없음/오류면 바로 끝남** |
+
+### 일기 — 도메인 · 데이터
+
+DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 연쇄), 파일은 임시 디렉터리, 압축은
+`FakeMediaProcessor`(`test/support/`), 위치 · 역지오코딩은 가짜 함수, 시간은 `Clock` 주입. 픽스처는 `test/support/diary_fixtures.dart`.
+저장소 테스트는 `DriftDiaryRepository` 하나를 관심사별 파일로 나눴다(설계 §9.3). 괄호 안은 2026-10-13 기준 건수.
+
+| 파일 | 대상 | 확인 |
+|---|---|---|
+| `domain/diary/entity/tag_name_test.dart` (9) | `TagName` | 앞뒤 공백 · `#`(여러 개) · 안쪽 공백 제거 · 소문자 · `#` 뿐이거나 빈 값은 null · 30자 되고 31자 null · 이모지 그대로 · `searchKey` 는 30자를 넘어도 다듬은 값(어떤 태그와도 안 맞음) |
+| `domain/diary/entity/entry_time_test.dart` (12) | `EntryDraft.validate` · `DiaryEntry` | now 와 같은 시각 OK · +1초 `futureTime` · 빈 글/공백 글 + 미디어 0 은 `emptyEntry` · 미디어만 OK · 11개 `tooManyMedia` · 30,001ms `videoTooLong` · 검사 순서 · `timeEdited` · `isTrashed` |
+| `domain/diary/entity/media_limits_test.dart` (3) | `MediaLimits` | 합 10 이하만 추가 · 영상 30초까지 · 상수 |
+| `domain/diary/entity/story_test.dart` (9) | `Story` | 닫으면 `endedAt` · 기본 스토리 거절 · 시작 전 시각 거절 · 시작과 같은 시각 허용 · 다시 열기 · `covers` 경계 포함 · `endedAt` 없으면 미래 전부 |
+| `domain/diary/entity/trash_retention_test.dart` (4) | `TrashRetention` | 7일: 6일 23:59:59 아직 · 정확히 7일 만료 · 안 함은 1000일도 아님 · 모르는 값은 7일 |
+| `domain/diary/usecase/story_suggestion_test.dart` (11) | `StorySuggestion` | 작성 기본: 열린 것 중 `lastPostedAt` 최신 · 닫힌 것 제외 · 없으면 일상 · 같으면 최근 생성 · 시각 제안: 기간 안 열린 것 · 여럿이면 최신 · `endedAt` 없음은 시작 이후 전부 · 양 끝 포함 · 닫힌 것 제외 · 없으면 일상 |
+| `domain/diary/usecase/story_order_test.dart` (3) | `StoryOrder` | 열린 것 `lastPostedAt` 내림차순(없으면 `createdAt`) · 같으면 최근 생성 · 닫힌 것은 보관함 `endedAt` 내림차순 |
+| `domain/diary/usecase/story_cover_test.dart` (8) | `StoryCoverRule` | 지정 표지 · 없으면 최신 기록의 첫 사진 · **지정 표지의 기록이 휴지통이면 자동 표지** · 휴지통 미디어 안 씀 · 영상만이면 썸네일 · 사진 먼저 · 미디어 없으면 이니셜 · **유일한 사진이 휴지통이면 이니셜** |
+| `domain/diary/usecase/diary_use_case_test.dart` (22) | `DiaryUseCase` | 저장: 새 미디어 tmp → media 이동 · **DB 실패면 옮긴 파일을 되돌림** · 규칙 위반이면 안 옮김 · 수정에서 뺀 파일은 성공 뒤에만 지움 · 취소는 tmp 정리 · 휴지통: 파일 그대로 · 복원하면 같은 경로가 열림 · **사진 2 + 영상 1 영구 삭제 → 썸네일까지 파일 0, 다른 기록 파일 유지** · 비우기 · 파일 삭제가 던져도 Ok(고아 청소가 회수) · 스토리 삭제 · 정리: 휴지통 기한 · 장소 이름 채우기(오프라인이면 멈춤 · `noName` 은 건너뜀 · 한 번에 20곳 · 겹쳐 부르면 한 번) · 고아 청소(저장 중인 파일 남김) |
+| `data/diary/database/diary_database_test.dart` (8) | `DiaryDatabase` | 첫 실행 "일상" 한 행 · 다시 열어도 하나 · 지워도 되살아남 · `foreign_keys` · `tags.name` · `places.name` UNIQUE · 기록 삭제 시 `media` · `entry_tags` 연쇄 · 없는 스토리 FK |
+| `data/diary/drift_diary_repository_entry_test.dart` (38) | 기록 CRUD · `watchEntries` | 미디어 순서 · 태그 · 장소 기존 행 재사용 · 표기만 다른 태그 하나 · 좌표만 있는 위치 · `lastPostedAt` · 닫힌 스토리에 새 기록 `storyClosed` · 이모지 · 1만 자 왕복 · 수정은 `updatedAt` 만 · 위치 끄면 장소 · 좌표 null · 정렬 · **닫힌 스토리로 옮기기(R23)** · 휴지통 기록은 고칠 수 없음 · `moveEntries` · **트랜잭션 중간 실패면 아무 행도 안 남음** · 태그 · 미디어 · 장소만 바뀌어도 다시 내보냄 · 필터 5종 |
+| `data/diary/drift_diary_repository_story_test.dart` (15) | 스토리 | 만들기(open/closed · `endBeforeStart`) · 닫기 · 다시 열기 · 이름 · 표지 · 기본 스토리 닫기 거절 · 스토리 바 순서 · `entriesBetween` · **스토리 삭제 = 기록 전부 휴지통 + 행 삭제** · 처음 `deletedAt` 유지 · 기본 스토리 삭제 거절 |
+| `data/diary/drift_diary_repository_trash_test.dart` (16) | 휴지통 · 연쇄 삭제 | `deletedAt` 만 채움 · 모든 목록 · 검색에서 빠짐 · **영구 삭제 → 기록 · 미디어 · 태그 연결 행 삭제, 원본 · 썸네일 경로 반환** · 다른 기록의 미디어 · 공유 태그 · 장소 유지 · 휴지통 기록이 쓰는 태그 · 장소 유지 · 지운 표지 → `coverMediaId` null · 살아 있는 기록은 안 지움 · 트랜잭션 실패 · 닫힌 DB → `Err` · 비우기 · 기한(같은 시각 포함) · `allMediaPaths` |
+| `data/diary/drift_diary_repository_trash_restore_test.dart` (9) | 휴지통 → 복원(설계 §9.3.1) | 삭제해도 미디어 행 · 경로 그대로 · 복원 뒤 스토리 · 전체 · 검색 · 태그 · 장소에 다시 · 지정 표지 되돌아옴 · 닫힌 스토리로 복원(보관함) · 지워진 스토리면 일상으로 · 영구 삭제 뒤 `notFound` · `updatedAt` 불변 |
+| `data/diary/drift_diary_repository_tag_sync_test.dart` (8) | 해시태그 반영(§9.3.2) | 추가 +1 · 스토리를 넘나드는 모아보기 · 휴지통 -1 · 마지막도 휴지통이면 숨김(행은 남음) · 복원은 같은 `tags.id` · `#제주` → `#부산` · 영구 삭제 정리 · 휴지통 기록만 가진 태그 검색 0 |
+| `data/diary/drift_diary_repository_place_sync_test.dart` (7) | 장소 반영(§9.3.3) | 같은 장소 행 하나 · 휴지통 → 복원 같은 `places.id` · 모두 휴지통이면 숨김 · 수정으로 바꾸기 · 빼기 · 영구 삭제 정리 · 오프라인 기록 이름이 나중에 채워지면 합쳐짐 · 휴지통 오프라인 기록 제외 |
+| `data/diary/drift_diary_repository_search_test.dart` (13) | 검색 | 부분 일치 · ASCII 대소문자 무시 · **`%` · `_` · `\` 글자 그대로** · 휴지통 제외 · 최신순 · 스토리를 넘나듦 · **한글 · 이모지 · 1만 자** · 태그 · 장소 모아보기 · 스토리 제목(일상 · 바꾼 기본 이름 · 순서 · 개수 갱신) |
+| `data/diary/drift_diary_repository_suggest_test.dart` (12) | 추천 | 포함 일치 · 개수 → 최근 사용 순 · `lastUsedAt` 은 휴지통 아닌 기록 기준 · 빈 입력이면 상위 N · **`#Jeju` · `jeju` · ` 제 주 ` 는 하나** · 휴지통 제외 개수 · 0개 숨김 · 30자 초과 입력 · `%` · `_` 글자 그대로 · 장소 앞뒤 공백 |
+| `data/diary/drift_diary_repository_place_fill_test.dart` (8) | 장소 지연 채우기 | 좌표만 있는 기록만(스토리 무관 · 휴지통 제외, 복원하면 다시) · 채우면 좌표 · `updatedAt` 그대로 · 같은 이름과 합침 · 빈 이름 무시 · 이미 장소가 있으면 안 덮음 |
+| `data/diary/drift_diary_repository_usage_test.dart` (4) | 용량 | 0 · 사진 · 영상 개수와 바이트 · 휴지통 몫 따로(합계 포함) · 영구 삭제하면 빠짐 |
+| `data/diary/media/file_media_store_test.dart` (20) | `FileMediaStore` | 원본 그대로 `tmp/<id>` 사본 · 겹치지 않는 경로 · 처리 실패면 `Err` + tmp 정리 · 영상 30초 받고 31초 `videoTooLong` · 길이 못 읽음 · **폴더를 못 만들면 던지지 않고 `Err`** · promote · demote · discard · deleteFiles · 고아 청소(keep · **24시간 안 바뀐 `media/` 남김** · tmp 는 24시간 지난 것만) |
+| `data/diary/media/plugin_media_processor_test.dart` (19) | `PluginMediaProcessor`(플랫폼 인스턴스 가짜) | 긴 변 1600 목표 표 · 키우지 않음 · JPEG 85 · EXIF 제거 · 회전 보정 · 가로/세로 짧은 변 목표 · 영상 길이 ms 반올림 · 720p 압축 뒤 결과 · 썸네일 이동과 캐시 비우기 · **동시 호출은 차례로** · 앞 실패 뒤 다음 처리 · 실패해도 캐시 비움 |
+| `data/diary/location/current_place_source_test.dart` (7) | `CurrentPlaceSource` | 좌표 + 이름 · 위치 서비스 꺼짐 · 권한 거부 · 예외 · 타임아웃 → null(오류 아님) · 이름 못 얻으면 좌표만 |
+| `data/diary/location/geocoding_place_namer_test.dart` (9) | `composePlaceName` · `GeocodingPlaceNamer` | 앞의 두 필드 · 빈 값 건너뜀 · 호출마다 `locale` · 다음 결과로 넘어감 · 빈 목록 · 조합 불가 → `noName` · 예외 · 타임아웃 → `offline` |
+| `data/diary/prefs_diary_preferences_test.dart` (5) | `PrefsDiaryPreferences` | 기본 7일 · 전체 · 줄글 · 새 인스턴스로 왕복 · 전체(null) 저장 · 타입이 다르거나 모르는 값은 기본값 |
+
+### 일기 — 화면
+
+| 파일 | 대상 | 확인 |
+|---|---|---|
+| `presentation/diary/cubit/diary_timeline_cubit_test.dart` (13) | `DiaryTimelineCubit` | 처음 전체 · 줄글 · 마지막 스토리 · 보기 모드 복원 · 지워진 스토리면 전체로 · 전환 · 저장 · 삭제 · 복원 즉시 반영 · 옛 스토리 스트림의 늦은 이벤트 버림 · 스트림 실패 · 설정 저장 실패에도 선택 반영 |
+| `presentation/diary/cubit/entry_editor_cubit_test.dart` (24) | `EntryEditorCubit` | 기본 스토리 · 지금 위치 · 위치 실패면 직접 입력 · **같은 분이면 안 바뀐 것** · 과거면 위치 빼기 · 미래 무시 · 스토리 제안 · 되돌리기 · 늦게 온 위치 버림 · 칩 · 위치 빼기 · 11개째 `tooManyMedia` · **한 번에 하나씩 가져오기** · 31초 거절 · **가져오기가 던져도 표시가 풀림** · 순서 바꾸기 · 빈 기록 · 중복 탭 · 취소 정리 · 뺀 미디어는 저장 뒤에만 |
+| `presentation/diary/cubit/diary_search_cubit_test.dart` (13) | `DiarySearchCubit` | 탭 4개 · 299ms 조회 없음 / 300ms 한 번 · 마지막 입력만 · 빈 입력(글 · 스토리 조회 없음, 태그 · 장소 상위 추천) · 늦은 응답 버림(입력 · 탭) · 실패 · **메모리 DB 에서 휴지통 · 복원하면 추천 개수 · 결과 갱신** |
+| `presentation/diary/cubit/filtered_entries_cubit_test.dart` (9) | `FilteredEntriesCubit`(태그 · 장소) | 열린 채 추가 +1 · 휴지통 -1 · 복원 +1 · 마지막이 사라지면 빈 상태 · 스토리를 넘나듦 · 보기 모드 저장 |
+| `presentation/diary/cubit/story_manage_cubit_test.dart` (18) | `StoryManageCubit` | 만들기(열림 · 닫힘 · 종료일 오류) · 지난 기간의 일상 기록만 제안 · 고른 것만 옮김 · 닫기(지금 · 고른 날 · 시작 전 거절) · 다시 열기 · 기본 스토리 닫기 거절 · 이름(기본 스토리 비우면 기본 이름) · 표지 · 후보는 살아 있는 기록 미디어 · 삭제 |
+| `presentation/diary/cubit/story_covers_cubit_test.dart` (3) | `StoryCoversCubit` | 이니셜 → 사진 · 고른 표지와 휴지통이면 자동 · 스토리마다 자기 기록 |
+| `presentation/diary/cubit/trash_cubit_test.dart` (12) | `TrashCubit` | 최신순 · 살아 있는 기록 안 보임 · 남은 일수(올림 · 0 아래 없음 · 안 함 null · 30일) · 복원 · 영구 삭제 · 비우기 · 실패 표시 |
+| `presentation/diary/format/diary_format_test.dart` (9) | `DiaryFormat` | 오늘 · 어제 · 올해 · 지난해 날짜 머리 · 1월 1일의 어제 · 규칙 위반 문구 · 같은 날 · 1분 안이면 지금 · 스토리 기간 |
+| `presentation/diary/media_picker_test.dart` (2) | `MediaPicker` | 앨범 · 카메라 고르기가 잠금 예외(`MediaPickGuard`) 안에서 · 남은 칸만큼 · 취소면 빈 목록 |
+| `presentation/diary/page/diary_tab_test.dart` (26) | `DiaryTab` | **잠긴 동안 타임라인 위젯이 트리에 없음** · 풀면 스토리 바 · **다시 잠기면 보관함 시트가 닫힘 · 가려진 탭은 다른 탭 팝업을 안 닫음** · 스토리 바 순서 · 빈 상태 · 머리 · 보기 토글 · 릴스(탭 몸통을 꽉 채움 · **가려진 탭 · 위 화면에서 멈춤 · 위 화면에 덮인 채 다시 잠겼다 풀려도 안 틂(R29)**) · `＋` · 상세 · ⋮ 스토리 관리 · 휴지통 · 릴스에서도 🔍 · ⋮ · 검색 결과로 스토리 고르기 · 오류 · 정리는 보이고 풀려 있을 때만 · 정리 실패 무시 · 표지 사진 |
+| `presentation/diary/widget/view_modes_test.dart` (25) | `ProseView` · `FeedView` · `ReelsView` | 같은 기록으로 세 모드 · 날짜 머리 · 피드 좌우 넘김 · 릴스 세로 · 가로 · **보이는 영상만 재생, 넘긴 영상은 버림 · 반쯤 걸친 영상은 안 틂** · 가려지면 멈춤 · 피드 · 줄글은 썸네일 · 전체에서만 스토리 이름 · 위치 · 태그 · 미디어 없는 기록 · **1만 자 피드 6줄 접기 · 줄글 안 자름** · 누르면 onOpen |
+| `presentation/diary/page/entry_editor_page_test.dart` (16) | `EntryEditorPage` | 시각 행 · 스토리 시트(열린 것만) · 칩 · 추천 · 위치 ✕ → 직접 입력 · 올리기 · **칩으로 안 만든 태그 글자도 넣음** · 규칙 위반 안내 · 닫기 전 확인 · 앨범에서 남은 칸만큼 · 고치기 · **다시 잠기면 트리에서 빠지고 풀면 쓰던 글 그대로 · 잠금 화면 뒤로 가기 무시 · 스토리 시트 닫힘** · 화면이 사라져도 임시 사본 정리 |
+| `presentation/diary/page/entry_detail_page_test.dart` (6) | `EntryDetailPage` | 글 · 날짜 · 장소 · 태그 · 미디어 · 스토리 · 삭제 확인 → 휴지통 · 실패 문구 · 취소 · 수정 뒤 다시 읽기 · 휴지통 기록이면 없음 |
+| `presentation/diary/page/story_manage_page_test.dart` (14) | `StoryManagePage` | 열린 · 보관함 · 기본 스토리 메뉴 · 닫기 · 다시 열기 · 이름 · 표지 시트 · 삭제 확인 · 지난 기간이면 일상 기록 옮기기 · 규칙 위반 스낵바 · **다시 잠기면 표지 시트 · 삭제 다이얼로그가 닫히고 지우지 않음** |
+| `presentation/diary/page/story_form_sheet_test.dart` (8) | `StoryFormSheet` | 시작일 기본 오늘 · 제목 필수 · 종료일은 그날 끝 · 지우면 진행 중 · 시작일을 종료일 뒤로 · 이름 바꾸기(기본 스토리만 비우기 허용) |
+| `presentation/diary/page/diary_search_page_test.dart` (8) | `DiarySearchPage` | 탭 4개 · 입력 안내 · 태그 · 장소 입력 전 추천과 개수 · 본문 강조 · 결과 없음 · 스토리 결과 → id 로 닫힘 · 태그 · 장소 → 모아보기 · 오류 |
+| `presentation/diary/page/filtered_entries_page_test.dart` (5) | `FilteredEntriesPage` | 태그 · 장소 제목과 개수 · 열린 채 늘고 줄어듦 · 보기 모드 저장 · 오류 |
+| `presentation/diary/page/trash_page_test.dart` (9) | `TrashPage` | 남은 일수 · 안 함이면 없음 · 오늘 삭제 · 복원 · 영구 삭제 · 비우기 확인 · 복원 · 삭제 실패 문구 따로 · 빈 상태 |
+| `presentation/diary/widget/story_bar_test.dart` (8) | `StoryBar` | 전체 → 열린 스토리 → 보관함 · 일상 · 바꾼 이름 · 선택 표시 · 보관함 시트 · 표지 사진 · 이니셜(R17) |
+| `presentation/diary/widget/tag_chip_input_test.dart` (5) | `TagChipInput` | 완료 · 띄어쓰기로 칩 · 같은 태그 무시 · ✕ · 추천 |
+| `presentation/diary/widget/highlighted_text_test.dart` (7) | `matchRanges` · `matchSnippet` | 대소문자 무시 · 한글 · 이모지 · `%` · `_` · `\` · 겹치지 않게 · 긴 본문 자르기 · 이모지를 깨지 않음 · 굵게 |
+| `presentation/settings/cubit/diary_settings_cubit_test.dart` (5) | `DiarySettingsCubit` | 잠금 설정 · 보관 기간 · 저장 공간 읽기 · 용량을 못 읽어도 나머지 · 다시 잠기는 시간은 방금 읽은 설정에 얹어 저장 · 보관 기간 |
+
+굵은 항목은 Review Focus(저장 도중 실패 · 같은 태그 · 이모지와 1만 자 · 휴지통 표지 · 잠금 우회)나 리뷰에서 고친 것의 회귀 테스트다
+([기록](history.md#2026-10-13--일기)).
+
+### 잠금
+
+| 파일 | 대상 | 확인 |
+|---|---|---|
+| `domain/lock/lock_policy_test.dart` (14) | `LockPolicy` · `PatternRule` | 4회까지 차단 없음 · 5회째 30초 + 횟수 0 · 30초 뒤 풀림 · 폰 인증 실패 24시간(24시간 - 1초까지) · 성공하면 초기화 · **시계가 거꾸로 가면 남은 시간을 전체로** · 건너뛴 가운데 점(가로 · 세로 · 대각선 · 이미 쓴 점) |
+| `domain/lock/relock_timer_test.dart` (8) | `RelockTimer` | 기본 꺼짐 · PIN · 1분 · 즉시 · 30초 · 1분 · 5분 경계 · 미디어 고르는 동안 10분도 안 잠금 · 백그라운드 없으면 안 잠금 · **시계 역행이면 잠금** |
+| `data/lock/secret_hasher_test.dart` (4) | `SecretHasher` | salt 16바이트 · 매번 다름 · SHA-256 10,000번 · 상수 시간 비교 |
+| `data/lock/prefs_lock_repository_test.dart` (17) | `PrefsLockRepository` | **원문 PIN 이 prefs 어디에도 없음** · 같은 PIN 도 해시 다름 · 검증 · 패턴 순서 · 재시작 뒤 검증 · **실패 횟수 · 차단 해제 시각 재시작 뒤 유지** · **깨진 prefs(해시만 · salt 만 · 타입 다름)는 켜진 채 검증 거절** · 모르는 값은 기본값 |
+| `data/lock/local_auth_device_auth_test.dart` (10) | `LocalAuthDeviceAuth` | 화면 잠금 유무 · 기기 PIN 허용 · true 성공 · false 실패 · 사용자 · 시스템 닫힘 · 시간 초과는 취소 · 잠금 없음 → unavailable · 폰 잠김 → lockedOut · 채널 오류 |
+| `presentation/lock/cubit/diary_lock_cubit_test.dart` (32) | `DiaryLockCubit` | 시작 상태 · 해제 · 5회째 30초 · 차단 중 맞는 비밀 무시 · 24시간 차단을 30초로 덮지 않음 · **재시작 뒤 차단 유지(30초 · 24시간)** · tick · 폰 인증 성공 → 재설정 · 실패 · lockedOut → 24시간 · 취소 · 쓸 수 없음 · 다시 잠그기(70초 잠김 / 50초 열림 · 미디어 고르는 동안 3분 · 시계 역행 · 꺼짐) · `configChanged` |
+| `presentation/lock/cubit/lock_setup_cubit_test.dart` (17) | `LockSetupCubit` | 화면 잠금 없음 · PIN 두 번 · 불일치 · 패턴 3점 · PIN 길이 · 켜져 있으면 현재 비밀 먼저 · 틀린 횟수를 잠금 화면과 같이 · 30초 · 24시간 차단 · 끄기 · 방식 변경 · 재설정은 onSave 로 |
+| `presentation/lock/media_pick_guard_test.dart` (3) | `MediaPickGuard` | run 동안만 active · 겹침 · 던져도 풀림 |
+| `presentation/lock/widget/diary_lock_gate_test.dart` (9) | `DiaryLockGate` | 꺼짐이면 기록 · **잠기면 기록 위젯이 트리에 없음** · 패턴 · 맞는 PIN · 틀림 · 30초 남은 초 · 24시간 시간 · 분 · 잊어버렸어요 → 폰 인증 → 새 PIN · 쓸 수 없으면 안내 |
+| `presentation/lock/widget/pin_pad_test.dart` (5) | `PinPad` | 점 4개 · 4번째에 완료 · 지우기 · 막힘 · 오류 색 |
+| `presentation/lock/widget/pattern_lock_test.dart` (6) | `PatternLock` | 연결 · 건너뛴 점 넣기 · 재방문 무시 · 3점 오류 · 막힘 |
+| `presentation/lock/widget/lock_secret_input_test.dart` (4) | `lockBlockedMessage` · 패턴 입력 | 차단 아님 null · 30초 올림 · 24시간 시간 · 분 · 패턴은 `-` 로 이어 넘김 |
+| `presentation/lock/page/lock_setup_page_test.dart` (6) | `LockSetupPage` | 화면 잠금 없음 안내 · PIN 두 번 → true · 불일치 문구 · **PIN 길이는 PIN 문구** · 패턴 입력 · 현재 PIN 확인 뒤 끄기 |
+
+설정 · 셸 · 앱 시작의 일기 · 잠금 연결은 위 "알람 · 설정 · 셸 — 화면" 표의 `settings_page_test` · `main_shell_page_test` ·
+`app_test` 행에, `location` 의존은 걷기 표의 `package_boundary_test` 행에 있다.
 
 ### 포크 · 네이티브(JUnit)
 
@@ -171,6 +256,11 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 
 시각 강화(2026-10-03): `walk_theme` 다크 변형 · `WalkMotion.off` 의 거짓 경로, `WalkSkeleton` · `GoalCelebration` 의 애니메이션 켜진 경로와 햅틱 호출, 링 아래 줄 위젯 단독(`today_goal_footer`), 울림 파동의 런타임 `disableAnimations` 전환은 직접 테스트가 없다. 실제 폰에서 목표 달성 · 축하 · 파동을 확인한다.
 
+일기(2026-10-13): 실제 플러그인 호출 — `flutter_image_compress` · `video_compress`(처리기는 플랫폼 인스턴스를 가짜로) · `geolocator`
+(`location` 패키지) · `geocoding` · `local_auth`(채널 결과 매핑만) · `image_picker` · `video_player`(`videoSurface`, 테스트는 가짜 영상 면) —
+는 단위 테스트하지 않고 아래 [일기 기기 시나리오](#일기-기기-시나리오--대기)로 본다. drift 의 파일 DB · 실제 앱 문서 폴더도 기기 몫이다.
+상태 · 매퍼 · 표 정의처럼 테스트 파일이 따로 없는 `lib/` 파일은 쓰는 쪽(저장소 · cubit · 페이지) 테스트가 덮는다.
+
 ## 걷기 기기 시나리오 — 대기
 
 실제 폰(Health Connect 에 헬스 앱 기록이 있는)에서 볼 것. 에뮬레이터는 기록이 없어 ② · ⑥ · ⑦ 만 의미가 있다.
@@ -211,3 +301,26 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | A17 | 앱 프로세스를 내린 채(force-stop 아님) 반복 알람의 30분 전 미리 알림 [이번만 끄기] → 0.2초 안에 앱 실행 | 로그 `awaitIdle: waiting for headless run` → `finish: headless done`, 그 회차는 `skippedAt` 으로 남고 예약 · 다음 알람 카드는 다음 회차 | 통과(10-07, 에뮬레이터 — 오늘 22:45 회차 건너뜀, 카드 "내일 (목) 오후 10:45") |
 | A18 | 앱 프로세스가 살아 있는 채 홈 화면 → 1분 뒤 한 번 알람 → 헤드업 [알람 끄기] → 런처로 앱 열기 | 꺼진 알람의 울림 화면이 다시 뜨지 않고 알람 탭이 보임(포크 콜백이 Dart 대체 타이머를 지움) | 통과(10-08, 에뮬레이터 — 고치기 전엔 복귀 ~1초 뒤 `ringing` 에 다시 들어 울림 화면이 떴음) |
 | A19 | [알람 쉬기] 오늘만 → 한 번 알람 +5분 저장 | 스낵바 `쉬는 기간이라 울리지 않아요`, 행 `한 번 · 쉬는 중` | 통과(10-08, 에뮬레이터) |
+
+## 일기 기기 시나리오 — 대기
+
+설계 §9.7 의 9개(D1~D9)에, 단위 테스트 · 에뮬레이터 스파이크로 확인하지 못한 것(D10~D15)을 더했다. 에뮬레이터에서는
+`geocoding` 이 응답하지 않을 수 있어 장소 이름(D3 · D10)은 실제 폰에서도 본다.
+
+| # | 시나리오 | 기대 | 결과 |
+|---|---|---|---|
+| D1 | 갤러리 사진 3장 첨부 → 저장 | 사본 긴 변 ≤ 1600px · EXIF GPS 없음 · 갤러리 원본 그대로 | 대기 |
+| D2 | 40초 영상 첨부 / 25초 영상 첨부 | 거절 안내 / 720p 압축 · 릴스에서 재생 | 대기 |
+| D3 | 비행기 모드에서 기록 → 연결 후 일기 탭 | 장소 이름 없음 → 채워짐 | 대기 |
+| D4 | 잠금(1분) → 홈 → 50초 / 70초 뒤 복귀 | 열림 / 잠김 | 대기 |
+| D5 | 즉시 설정에서 사진 고르는 중 3분 | 잠기지 않음 | 대기 |
+| D6 | 폰 인증 실패 → 앱 재시작 | 24시간 차단 유지 | 대기 |
+| D7 | 삭제 → 휴지통 1일 → 시계 다음 날 → 일기 탭 | 행 · 파일 모두 사라짐 | 대기 |
+| D8 | 삭제 → 복원 | 사진 · 영상이 피드 · 릴스에서 그대로 보이고 재생 | 대기 |
+| D9 | 일기 잠금 중 알람 울림 | 울림 화면 정상 | 대기 |
+| D10 | 위치를 켜고 새 기록(실제 폰, 도시 · 동네 몇 곳) | `Placemark` 의 `locality` · `subLocality` · `thoroughfare` 중 무엇이 채워지는지 기록, 장소 이름이 "시 동"처럼 읽힘 | 대기 |
+| D11 | EXIF 회전 값이 있는 세로 JPEG(폰으로 세로 촬영) 첨부 | 사본이 바로 선 방향 · **긴 변**(세로)이 1600 이하 | 대기 |
+| D12 | HEIC 원본 첨부 | 오류 없이 JPEG 사본, 갤러리 원본 그대로 | 대기 |
+| D13 | 세로로 찍은 영상 첨부 | 압축본이 세로 비율 그대로(눕지 않음) · 릴스 · 상세에서 비율 맞게 재생 | 대기 |
+| D14 | `image_picker` 앨범 여러 장 고르기 · 카메라 사진 · 카메라 영상 | 고르기 화면이 뜨고 남은 칸만큼 들어옴, 카메라에 다녀와도 잠기지 않음 | 대기 |
+| D15 | 태그 · 장소 모아보기를 릴스로 보기 | 모아보기 화면 안에서 릴스가 화면을 채우고 넘기기 · 영상 재생 · 위 화면이 얹히면 멈춤 | 대기 |
