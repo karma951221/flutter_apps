@@ -116,6 +116,7 @@ void main() {
   });
 
   Widget app({bool active = true}) => MaterialApp(
+    navigatorObservers: [appRouteObserver],
     theme: AppTheme.light(),
     locale: const Locale('ko'),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -360,6 +361,26 @@ void main() {
       expect(playing(), isFalse);
 
       await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+      expect(playing(), isTrue);
+    });
+
+    testWidgets('위에 화면이 얹히면 멈추고, 걷히면 다시 재생한다', (tester) async {
+      await pump(tester);
+      bool playing() => tester
+          .widget<MediaPager>(find.byType(MediaPager, skipOffstage: false))
+          .playing;
+      expect(playing(), isTrue);
+
+      unawaited(
+        Navigator.of(
+          tester.element(find.byType(ReelsView)),
+        ).push(MaterialPageRoute<void>(builder: (_) => const Text('위 화면'))),
+      );
+      await tester.pumpAndSettle();
+      expect(playing(), isFalse);
+
+      Navigator.of(tester.element(find.text('위 화면'))).pop();
       await tester.pumpAndSettle();
       expect(playing(), isTrue);
     });

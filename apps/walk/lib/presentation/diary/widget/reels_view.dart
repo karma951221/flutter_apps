@@ -1,3 +1,4 @@
+import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
@@ -9,6 +10,9 @@ import 'entry_meta.dart';
 /// 릴스: 한 화면에 기록 하나. 세로로 다음 기록, 가로로 같은 기록의 다음 미디어.
 /// 영상은 보이는 기록 · 보이는 장만 재생한다 — 넘기면 그 영상 자리는 트리에서 빠진다.
 /// 미디어 위에 글이 얹히므로 앱 테마와 상관없이 어두운 테마로 그린다.
+///
+/// 이 화면 위에 다른 화면(상세 · 작성 · 검색)이 얹혀 있는 동안에도 재생하지 않는다 —
+/// [appRouteObserver] 로 듣는다(앱의 `navigatorObservers` 에 있어야 한다).
 class ReelsView extends StatefulWidget {
   const ReelsView({
     required this.entries,
@@ -26,7 +30,7 @@ class ReelsView extends StatefulWidget {
   final String? Function(DiaryEntry) storyNameOf;
   final ValueChanged<DiaryEntry> onOpen;
 
-  /// false 면(탭이 가려짐) 어떤 영상도 재생하지 않는다.
+  /// false 면(탭이 가려짐) 어떤 영상도 재생하지 않는다. 위에 화면이 얹혀도 재생하지 않는다.
   final bool active;
   final VideoSurfaceBuilder videoBuilder;
 
@@ -34,8 +38,34 @@ class ReelsView extends StatefulWidget {
   State<ReelsView> createState() => _ReelsViewState();
 }
 
-class _ReelsViewState extends State<ReelsView> {
+class _ReelsViewState extends State<ReelsView> with RouteAware {
   var _current = 0;
+
+  /// 이 화면 위에 다른 화면이 얹혀 있다.
+  var _covered = false;
+  ModalRoute<void>? _route;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route == _route) return;
+    if (_route != null) appRouteObserver.unsubscribe(this);
+    _route = route;
+    if (route != null) appRouteObserver.subscribe(this, route);
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPushNext() => setState(() => _covered = true);
+
+  @override
+  void didPopNext() => setState(() => _covered = false);
 
   @override
   Widget build(BuildContext context) => Theme(
@@ -54,7 +84,7 @@ class _ReelsViewState extends State<ReelsView> {
               entry: entry,
               now: widget.now,
               storyName: widget.storyNameOf(entry),
-              active: widget.active && i == _current,
+              active: widget.active && !_covered && i == _current,
               onTap: () => widget.onOpen(entry),
               videoBuilder: widget.videoBuilder,
             );
