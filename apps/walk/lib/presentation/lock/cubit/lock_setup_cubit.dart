@@ -49,6 +49,14 @@ class LockSetupCubit extends Cubit<LockSetupState> {
     );
   }
 
+  /// 설정 앱을 다녀온 뒤. 화면 잠금 안내 중일 때만 다시 확인해, 생겼으면 이어서 진행한다.
+  Future<void> recheck() async {
+    if (state is! SetupNeedsScreenLock) return;
+    final hasScreenLock = await _auth.hasScreenLock();
+    if (isClosed || state is! SetupNeedsScreenLock || !hasScreenLock) return;
+    emit(const LockSetupState.choosing());
+  }
+
   /// 폰 인증 뒤 새 비밀 등록. 확인 없이 방식 고르기부터, 두 번 같으면 [save] 로 넘긴다.
   void startReset(LockSecretSave save) {
     _save = save;

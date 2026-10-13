@@ -2470,6 +2470,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Set up a screen lock on your phone first to turn on the diary lock';
 
   @override
+  String get walkLockOpenScreenLockSettings => 'Open screen lock settings';
+
+  @override
   String get walkDiaryEditorNewTitle => 'New entry';
 
   @override

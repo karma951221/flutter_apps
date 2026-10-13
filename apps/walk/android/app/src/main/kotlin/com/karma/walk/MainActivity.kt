@@ -1,6 +1,7 @@
 package com.karma.walk
 
 import android.app.NotificationManager
+import android.app.admin.DevicePolicyManager
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
@@ -57,6 +58,25 @@ class MainActivity : FlutterFragmentActivity() {
                     result.success(null)
                 } catch (e: ActivityNotFoundException) {
                     result.error("unavailable", e.message, null)
+                }
+            }
+        // 일기 잠금: 폰 화면 잠금이 없을 때 설정 화면으로 바로 보낸다.
+        MethodChannel(messenger, "com.karma.walk/screen_lock")
+            .setMethodCallHandler { call, result ->
+                if (call.method != "openSettings") {
+                    result.notImplemented()
+                    return@setMethodCallHandler
+                }
+                try {
+                    startActivity(Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD))
+                    result.success(null)
+                } catch (e: ActivityNotFoundException) {
+                    try {
+                        startActivity(Intent(Settings.ACTION_SECURITY_SETTINGS))
+                        result.success(null)
+                    } catch (e2: ActivityNotFoundException) {
+                        result.error("unavailable", e2.message, null)
+                    }
                 }
             }
         alarmSounds = AlarmSoundsChannel(applicationContext, messenger)

@@ -2337,6 +2337,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkLockNeedsScreenLock => '폰 화면 잠금을 먼저 설정해야 일기 잠금을 켤 수 있어요';
 
   @override
+  String get walkLockOpenScreenLockSettings => '화면 잠금 설정 열기';
+
+  @override
   String get walkDiaryEditorNewTitle => '새 기록';
 
   @override

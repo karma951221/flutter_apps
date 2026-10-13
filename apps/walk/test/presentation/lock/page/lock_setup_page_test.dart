@@ -8,26 +8,31 @@ import 'package:walk/data/lock/prefs_lock_repository.dart';
 import 'package:walk/domain/lock/device_auth.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
+import 'package:walk/domain/lock/screen_lock_settings.dart';
 import 'package:walk/presentation/lock/page/lock_setup_page.dart';
 import 'package:walk/presentation/lock/widget/lock_secret_input.dart';
 import 'package:walk/presentation/lock/widget/pattern_lock.dart';
 
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_device_auth.dart';
+import '../../../support/fake_screen_lock_settings.dart';
 
 void main() {
   late PrefsLockRepository repo;
   late FakeDeviceAuth auth;
+  late FakeScreenLockSettings screenLockSettings;
   late List<Object?> results;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     repo = PrefsLockRepository(await SharedPreferences.getInstance());
     auth = FakeDeviceAuth();
+    screenLockSettings = FakeScreenLockSettings();
     results = [];
     getIt
       ..registerSingleton<LockRepository>(repo)
       ..registerSingleton<DeviceAuth>(auth)
+      ..registerSingleton<ScreenLockSettings>(screenLockSettings)
       ..registerSingleton<Clock>(MutableClock(diaryT0));
   });
 
@@ -73,6 +78,33 @@ void main() {
 
     expect(find.text('폰 화면 잠금을 먼저 설정해야 일기 잠금을 켤 수 있어요'), findsOneWidget);
     expect(find.text('PIN 4자리'), findsNothing);
+  });
+
+  testWidgets('화면 잠금이 없으면 설정 열기 버튼이 폰 설정을 연다', (tester) async {
+    auth.screenLock = false;
+    await open(tester);
+
+    await tester.tap(find.text('화면 잠금 설정 열기'));
+    await tester.pump();
+
+    expect(screenLockSettings.opened, 1);
+  });
+
+  testWidgets('설정을 다녀와(resume) 화면 잠금이 생기면 방식 고르기로 넘어간다', (tester) async {
+    auth.screenLock = false;
+    await open(tester);
+    expect(find.text('PIN 4자리'), findsNothing);
+
+    auth.screenLock = true;
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+
+    expect(find.text('PIN 4자리'), findsOneWidget);
   });
 
   testWidgets('PIN 두 번 → 저장 알림과 함께 true 로 닫힌다', (tester) async {

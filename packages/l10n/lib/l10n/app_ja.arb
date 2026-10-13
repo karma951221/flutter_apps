@@ -723,6 +723,7 @@
   "walkLockSetupPinInvalid": "4桁の数字を入力してください",
   "walkLockSetupSaved": "日記のロック設定を保存しました",
   "walkLockNeedsScreenLock": "日記のロックをオンにするには、先にスマホの画面ロックを設定してください",
+  "walkLockOpenScreenLockSettings": "画面ロックの設定を開く",
   "walkDiaryEditorNewTitle": "新しい記録",
   "walkDiaryEditorEditTitle": "記録を編集",
   "walkDiaryEditorPost": "投稿",

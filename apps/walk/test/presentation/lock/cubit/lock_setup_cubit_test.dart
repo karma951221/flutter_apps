@@ -280,4 +280,33 @@ void main() {
       expect(repo.verify('1234'), isTrue);
     });
   });
+
+  group('recheck', () {
+    test('화면 잠금이 생기면 방식 고르기로 넘어간다', () async {
+      auth.screenLock = false;
+      await cubit.start();
+      expect(cubit.state, isA<SetupNeedsScreenLock>());
+
+      auth.screenLock = true;
+      await cubit.recheck();
+
+      expect(cubit.state, isA<SetupChoosing>());
+    });
+
+    test('여전히 없으면 그대로 둔다', () async {
+      auth.screenLock = false;
+      await cubit.start();
+      await cubit.recheck();
+
+      expect(cubit.state, isA<SetupNeedsScreenLock>());
+    });
+
+    test('다른 단계에서는 건드리지 않는다', () async {
+      await cubit.start();
+      cubit.choose(LockMethod.pin);
+      await cubit.recheck();
+
+      expect(cubit.state, isA<SetupEntering>());
+    });
+  });
 }

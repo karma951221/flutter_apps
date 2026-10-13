@@ -35,6 +35,7 @@ import '../../data/diary/drift_diary_repository.dart' as _i1049;
 import '../../data/diary/media/file_media_store.dart' as _i928;
 import '../../data/diary/media/plugin_media_processor.dart' as _i17;
 import '../../data/diary/prefs_diary_preferences.dart' as _i383;
+import '../../data/lock/channel_screen_lock_settings.dart' as _i952;
 import '../../data/lock/local_auth_device_auth.dart' as _i982;
 import '../../data/lock/prefs_lock_repository.dart' as _i691;
 import '../../data/settings/prefs_settings_repository.dart' as _i724;
@@ -60,6 +61,7 @@ import '../../domain/diary/repository/diary_repository.dart' as _i122;
 import '../../domain/diary/usecase/diary_use_case.dart' as _i567;
 import '../../domain/lock/device_auth.dart' as _i439;
 import '../../domain/lock/lock_repository.dart' as _i43;
+import '../../domain/lock/screen_lock_settings.dart' as _i194;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
@@ -96,6 +98,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i488.MediaPickGuard>(() => _i488.MediaPickGuard());
     gh.lazySingleton<_i494.IdGenerator>(
       () => registerModule.idGenerator(gh<_i706.Uuid>()),
+    );
+    gh.lazySingleton<_i194.ScreenLockSettings>(
+      () => _i952.ChannelScreenLockSettings(),
     );
     await gh.factoryAsync<_i497.Directory>(
       () => registerModule.diaryRoot,

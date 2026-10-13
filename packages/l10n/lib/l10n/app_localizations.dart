@@ -4442,6 +4442,12 @@ abstract class AppLocalizations {
   /// **'폰 화면 잠금을 먼저 설정해야 일기 잠금을 켤 수 있어요'**
   String get walkLockNeedsScreenLock;
 
+  /// 화면 잠금이 없을 때 폰의 화면 잠금 설정 화면을 여는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'화면 잠금 설정 열기'**
+  String get walkLockOpenScreenLockSettings;
+
   /// 일기 작성 화면 제목 · 일기 탭의 새 기록 버튼 툴팁
   ///
   /// In ko, this message translates to:

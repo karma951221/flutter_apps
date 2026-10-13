@@ -9,6 +9,7 @@ import 'package:l10n/l10n.dart';
 import '../../../domain/lock/device_auth.dart';
 import '../../../domain/lock/lock_config.dart';
 import '../../../domain/lock/lock_repository.dart';
+import '../../../domain/lock/screen_lock_settings.dart';
 import '../cubit/lock_setup_cubit.dart';
 import '../cubit/lock_setup_state.dart';
 import '../widget/lock_secret_input.dart';
@@ -71,9 +72,13 @@ class _LockSetupViewState extends State<LockSetupView> {
   /// 현재 비밀 확인이 막힌 동안 남은 시간을 줄인다.
   late final Timer _ticker;
 
+  /// 설정 앱에서 돌아오면 화면 잠금이 생겼는지 다시 본다.
+  late final AppLifecycleListener _lifecycle;
+
   @override
   void initState() {
     super.initState();
+    _lifecycle = AppLifecycleListener(onResume: widget.cubit.recheck);
     _ticker = Timer.periodic(
       const Duration(seconds: 1),
       (_) => widget.cubit.tick(),
@@ -83,6 +88,7 @@ class _LockSetupViewState extends State<LockSetupView> {
   @override
   void dispose() {
     _ticker.cancel();
+    _lifecycle.dispose();
     super.dispose();
   }
 
@@ -95,9 +101,20 @@ class _LockSetupViewState extends State<LockSetupView> {
       builder: (context, state) => switch (state) {
         SetupLoading() ||
         SetupDone() => const Center(child: CircularProgressIndicator()),
-        SetupNeedsScreenLock() => AppPlaceholder(
-          icon: Icons.lock_outline,
-          message: l10n.walkLockNeedsScreenLock,
+        SetupNeedsScreenLock() => Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppPlaceholder(
+                icon: Icons.lock_outline,
+                message: l10n.walkLockNeedsScreenLock,
+              ),
+              AppButton.primary(
+                label: l10n.walkLockOpenScreenLockSettings,
+                onPressed: () => getIt<ScreenLockSettings>().open(),
+              ),
+            ],
+          ),
         ),
         SetupVerifying(
           :final method,

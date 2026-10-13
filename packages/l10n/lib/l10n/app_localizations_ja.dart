@@ -2334,6 +2334,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkLockNeedsScreenLock => '日記のロックをオンにするには、先にスマホの画面ロックを設定してください';
 
   @override
+  String get walkLockOpenScreenLockSettings => '画面ロックの設定を開く';
+
+  @override
   String get walkDiaryEditorNewTitle => '新しい記録';
 
   @override

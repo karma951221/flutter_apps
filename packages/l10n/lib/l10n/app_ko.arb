@@ -3335,6 +3335,10 @@
   "@walkLockNeedsScreenLock": {
     "description": "폰에 화면 잠금이 없어 일기 잠금을 켤 수 없을 때 안내"
   },
+  "walkLockOpenScreenLockSettings": "화면 잠금 설정 열기",
+  "@walkLockOpenScreenLockSettings": {
+    "description": "화면 잠금이 없을 때 폰의 화면 잠금 설정 화면을 여는 버튼"
+  },
   "walkDiaryEditorNewTitle": "새 기록",
   "@walkDiaryEditorNewTitle": {
     "description": "일기 작성 화면 제목 · 일기 탭의 새 기록 버튼 툴팁"

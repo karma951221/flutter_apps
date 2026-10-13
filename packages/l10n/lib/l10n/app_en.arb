@@ -723,6 +723,7 @@
   "walkLockSetupPinInvalid": "Enter 4 digits",
   "walkLockSetupSaved": "Diary lock settings saved",
   "walkLockNeedsScreenLock": "Set up a screen lock on your phone first to turn on the diary lock",
+  "walkLockOpenScreenLockSettings": "Open screen lock settings",
   "walkDiaryEditorNewTitle": "New entry",
   "walkDiaryEditorEditTitle": "Edit entry",
   "walkDiaryEditorPost": "Post",
