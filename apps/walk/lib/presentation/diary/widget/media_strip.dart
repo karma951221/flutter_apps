@@ -45,13 +45,9 @@ class MediaStrip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
           child: Row(
             children: [
-              AppButton.secondary(
-                // 앱 테마 버튼은 폭을 가득 채운다(`Size.fromHeight`) — 줄 안이라 최소 크기만 푼다.
-                style: const ButtonStyle(
-                  minimumSize: WidgetStatePropertyAll(Size.zero),
-                ),
+              _AddButton(
                 label: l10n.walkDiaryEditorAddMedia,
-                isLoading: importing,
+                importing: importing,
                 onPressed: full ? null : () => _chooseSource(context),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -123,6 +119,64 @@ class MediaStrip extends StatelessWidget {
     );
     if (source != null) onAdd(source);
   }
+}
+
+/// '사진·영상 추가' 버튼. 가져오는 중에는 같은 자리 · 같은 크기의 진행 표시 버튼으로 바뀐다.
+///
+/// [AppButton] 의 진행 표시는 라벨 대신 들어가 버튼 폭이 줄고, 이 줄처럼 최소 크기를 푼
+/// 버튼에서는 높이가 진행 표시와 같아져 테두리에 잘린다. 라벨 버튼을 보이지 않게 자리만
+/// 남겨 두고 그 위에 진행 표시 버튼을 겹쳐 크기를 지킨다.
+class _AddButton extends StatelessWidget {
+  const _AddButton({
+    required this.label,
+    required this.importing,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool importing;
+  final VoidCallback? onPressed;
+
+  /// 머티리얼 3 기본 버튼 높이. 진행 표시(20)가 위아래 여백을 두고 들어간다.
+  static const _height = 40.0;
+
+  // 앱 테마 버튼은 폭을 가득 채운다(`Size.fromHeight`) — 줄 안이라 폭 최소만 푼다.
+  static const _style = ButtonStyle(
+    minimumSize: WidgetStatePropertyAll(Size(0, _height)),
+  );
+
+  @override
+  Widget build(BuildContext context) => Stack(
+    alignment: Alignment.center,
+    children: [
+      Visibility(
+        visible: !importing,
+        maintainSize: true,
+        maintainAnimation: true,
+        maintainState: true,
+        child: AppButton.secondary(
+          style: _style,
+          label: label,
+          onPressed: onPressed,
+        ),
+      ),
+      if (importing)
+        // 폭은 라벨 버튼 그대로, 높이는 버튼이 정하게(터치 영역 여백이 몸통에 들어가지 않게).
+        Positioned.fill(
+          child: Center(
+            child: SizedBox(
+              width: double.infinity,
+              child: AppButton.secondary(
+                style: _style,
+                label: label,
+                isLoading: true,
+                onPressed: null,
+              ),
+            ),
+          ),
+        ),
+    ],
+  );
 }
 
 class _Thumb extends StatelessWidget {
