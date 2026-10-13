@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
@@ -9,8 +10,10 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/data/diary/prefs_diary_preferences.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
+import 'package:walk/domain/diary/entity/entry_media.dart';
 import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/domain/diary/entity/trash_retention.dart';
+import 'package:walk/domain/diary/media/media_store.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/diary/usecase/diary_use_case.dart';
@@ -22,7 +25,13 @@ class _MockRepo extends Mock implements DiaryRepository {}
 
 class _MockUseCase extends Mock implements DiaryUseCase {}
 
-DiaryEntry _entry(String body, {required DateTime deletedAt}) => DiaryEntry(
+class _MockStore extends Mock implements MediaStore {}
+
+DiaryEntry _entry(
+  String body, {
+  required DateTime deletedAt,
+  List<EntryMedia> media = const [],
+}) => DiaryEntry(
   id: body,
   storyId: Story.dailyId,
   body: body,
@@ -30,7 +39,7 @@ DiaryEntry _entry(String body, {required DateTime deletedAt}) => DiaryEntry(
   createdAt: diaryT0,
   updatedAt: diaryT0,
   deletedAt: deletedAt,
-  media: const [],
+  media: media,
   tags: const [],
 );
 
@@ -65,7 +74,12 @@ void main() {
     );
     when(() => useCase.purge(any())).thenAnswer((_) async => const Ok(null));
     when(useCase.emptyTrash).thenAnswer((_) async => const Ok(null));
+    final store = _MockStore();
+    when(
+      () => store.resolve(any()),
+    ).thenAnswer((inv) => File('/diary/${inv.positionalArguments.single}'));
     getIt
+      ..registerSingleton<MediaStore>(store)
       ..registerSingleton<DiaryRepository>(repo)
       ..registerSingleton<DiaryUseCase>(useCase)
       ..registerSingleton<DiaryPreferences>(prefs)
@@ -109,6 +123,43 @@ void main() {
     expect(find.widgetWithText(AppListTile, '어제 글'), findsOneWidget);
     expect(find.textContaining('6일 남음'), findsOneWidget);
     expect(find.textContaining('5일 남음'), findsOneWidget);
+  });
+
+  testWidgets('행 앞에 첫 미디어 썸네일(사진 · 영상 썸네일), 없으면 아이콘', (tester) async {
+    when(repo.watchTrash).thenAnswer(
+      (_) => Stream.value([
+        _entry(
+          '사진 글',
+          deletedAt: diaryT0,
+          media: [photoMedia('p1'), videoMedia('v1')],
+        ),
+        _entry('영상 글', deletedAt: diaryT0, media: [videoMedia('v2')]),
+        _entry('글만', deletedAt: diaryT0),
+      ]),
+    );
+    await pump(tester);
+
+    Finder leadingOf(String row) => find.descendant(
+      of: find.widgetWithText(AppListTile, row),
+      matching: find.byType(Image),
+    );
+    String imagePath(String row) =>
+        ((tester.widget<Image>(leadingOf(row)).image as ResizeImage)
+                    .imageProvider
+                as FileImage)
+            .file
+            .path;
+
+    expect(imagePath('사진 글'), '/diary/media/p1.jpg');
+    expect(imagePath('영상 글'), '/diary/media/v2.thumb.jpg');
+    expect(leadingOf('글만'), findsNothing);
+    expect(
+      find.descendant(
+        of: find.widgetWithText(AppListTile, '글만'),
+        matching: find.byIcon(Icons.notes_outlined),
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('보관 기간이 안 함이면 남은 일수를 보이지 않는다', (tester) async {

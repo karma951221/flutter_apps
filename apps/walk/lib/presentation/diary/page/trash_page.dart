@@ -6,12 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/repository/diary_preferences.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
 import '../cubit/trash_cubit.dart';
 import '../cubit/trash_state.dart';
 import '../format/diary_format.dart';
+import '../widget/entry_media_view.dart';
 import 'diary_route.dart';
 
 /// 휴지통을 연다. 일기 잠금에 묶인 화면([pushDiaryRoute])이라 다시 잠기면 가려진다.
@@ -141,6 +143,7 @@ class _TrashPageState extends State<TrashPage> {
         for (final item in state.items)
           AppListTile(
             key: ValueKey(item.entry.id),
+            leading: _TrashThumb(entry: item.entry),
             title: Text(
               item.entry.body.trim().isEmpty
                   ? l10n.walkDiaryTrashNoBody
@@ -179,5 +182,29 @@ class _TrashPageState extends State<TrashPage> {
         ? l10n.walkDiaryTrashDueToday
         : l10n.walkDiaryTrashDaysLeft(left);
     return '$date · $label';
+  }
+}
+
+/// 휴지통 행 앞의 첫 미디어 썸네일(영상은 썸네일 + 재생 표시). 미디어가 없으면 글 아이콘.
+class _TrashThumb extends StatelessWidget {
+  const _TrashThumb({required this.entry});
+
+  final DiaryEntry entry;
+
+  /// 썸네일 한 변. 시각 토큰이 아니라 이 행의 크기다.
+  static const _size = 48.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final first = entry.media.firstOrNull;
+    return SizedBox.square(
+      dimension: _size,
+      child: first == null
+          ? const Icon(Icons.notes_outlined)
+          : ClipRRect(
+              borderRadius: AppRadius.smAll,
+              child: EntryMediaView(media: first),
+            ),
+    );
   }
 }
