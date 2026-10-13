@@ -78,6 +78,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(entryDraft());
     registerFallbackValue(<EntryMedia>[]);
+    registerFallbackValue(<PickedMedia>[]);
   });
 
   setUp(() async {
@@ -104,6 +105,7 @@ void main() {
     store = _MockStore();
     when(() => store.resolve(any())).thenAnswer((_) => File('/missing'));
     picker = _MockPicker();
+    when(() => picker.release(any())).thenAnswer((_) async {});
     places = _FakePlaces()..location = _aewol;
     getIt
       ..registerSingleton<DiaryRepository>(repo)
@@ -397,6 +399,60 @@ void main() {
 
     verify(() => picker.pickGallery(limit: 10)).called(1);
     expect(find.byTooltip('빼기'), findsOneWidget);
+  });
+
+  group('고른 원본의 캐시 복사본 정리', () {
+    const picked = [
+      (path: '/cache/a.jpg', kind: MediaKind.photo),
+      (path: '/cache/b.jpg', kind: MediaKind.photo),
+    ];
+
+    Future<void> pickFromGallery(WidgetTester tester) async {
+      when(
+        () => picker.pickGallery(limit: any(named: 'limit')),
+      ).thenAnswer((_) async => picked);
+      await pump(tester);
+      await tester.tap(find.text('사진·영상 추가'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('앨범에서 고르기'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('가져오기에 성공하면 고른 것을 모두 release 한다', (tester) async {
+      for (final id in ['a', 'b']) {
+        when(
+          () => store.importPhoto('/cache/$id.jpg'),
+        ).thenAnswer((_) async => Ok(photoMedia(id, path: 'tmp/$id.jpg')));
+      }
+
+      await pickFromGallery(tester);
+
+      verifyInOrder([
+        () => store.importPhoto('/cache/a.jpg'),
+        () => store.importPhoto('/cache/b.jpg'),
+        () => picker.release(picked),
+      ]);
+    });
+
+    testWidgets('처리에 실패해도 고른 것을 모두 release 한다', (tester) async {
+      when(
+        () => store.importPhoto(any()),
+      ).thenAnswer((_) async => Err(DiaryFailure.mediaProcessing.toFailure()));
+
+      await pickFromGallery(tester);
+
+      verify(() => picker.release(picked)).called(1);
+    });
+
+    testWidgets('가져오기가 던져도 고른 것을 release 한다', (tester) async {
+      when(
+        () => store.importPhoto(any()),
+      ).thenAnswer((_) => Future.error(const FileSystemException('disk full')));
+
+      await pickFromGallery(tester);
+
+      verify(() => picker.release(picked)).called(1);
+    });
   });
 
   testWidgets('고치기: 기록 내용을 채우고 저장 버튼', (tester) async {

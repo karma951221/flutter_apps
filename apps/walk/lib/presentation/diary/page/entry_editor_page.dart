@@ -158,7 +158,12 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
         MediaSource.photo => _picker.takePhoto(),
         MediaSource.video => _picker.recordVideo(),
       };
-      await _cubit.addMedia(picked);
+      try {
+        await _cubit.addMedia(picked);
+      } finally {
+        // 압축 사본을 만들었든 못 만들었든, 피커가 캐시에 남긴 원본 복사본(GPS 포함)을 지운다.
+        await _picker.release(picked);
+      }
     } catch (_) {
       // 권한 거부 · 카메라 없음 등 — 가져오지 못한 것으로 알린다.
       if (mounted) {
