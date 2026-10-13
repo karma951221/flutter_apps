@@ -117,8 +117,8 @@ class _ReelsPage extends StatelessWidget {
   final VoidCallback onTap;
   final VideoSurfaceBuilder videoBuilder;
 
-  /// 미디어 위 글에 깔리는 그늘의 가장 진한 불투명도.
-  static const _scrimAlpha = 0.6;
+  /// 미디어 위 글 뒤에 깔리는 그늘의 불투명도.
+  static const _scrimAlpha = 0.7;
 
   /// 미디어 위에 겹치는 글의 최대 줄 수. 전부는 누르면 여는 화면에서 본다.
   static const _overlayLines = 4;
@@ -152,45 +152,61 @@ class _ReelsPage extends StatelessWidget {
             left: 0,
             right: 0,
             bottom: 0,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    scrim.withValues(alpha: 0),
-                    scrim.withValues(alpha: _scrimAlpha),
-                  ],
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.md,
-                  AppSpacing.xl,
-                  AppSpacing.md,
-                  AppSpacing.md,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    EntryMeta(entry: entry, now: now, storyName: storyName),
-                    if (hasMedia && entry.body.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.xs),
-                      Text(
-                        entry.body,
-                        style: theme.textTheme.bodyLarge,
-                        maxLines: _overlayLines,
-                        overflow: TextOverflow.ellipsis,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 위로 바래는 띠는 글 위에만 둔다 — 글 뒤는 전부 진한 그늘이어야 밝은 사진
+                // 위에서도 첫 줄(시각 · 스토리)까지 읽힌다.
+                SizedBox(
+                  height: AppSpacing.xl,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          scrim.withValues(alpha: 0),
+                          scrim.withValues(alpha: _scrimAlpha),
+                        ],
                       ),
-                    ],
-                    if (entry.tags.isNotEmpty) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      EntryTags(tags: entry.tags),
-                    ],
-                  ],
+                    ),
+                  ),
                 ),
-              ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: scrim.withValues(alpha: _scrimAlpha),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      0,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        EntryMeta(entry: entry, now: now, storyName: storyName),
+                        if (hasMedia && entry.body.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            entry.body,
+                            style: theme.textTheme.bodyLarge,
+                            maxLines: _overlayLines,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                        if (entry.tags.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.sm),
+                          EntryTags(tags: entry.tags),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

@@ -14,6 +14,7 @@ import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/domain/diary/media/media_store.dart';
 import 'package:walk/presentation/diary/widget/diary_entries_view.dart';
 import 'package:walk/presentation/diary/widget/entry_media_view.dart';
+import 'package:walk/presentation/diary/widget/entry_meta.dart';
 import 'package:walk/presentation/diary/widget/feed_view.dart';
 import 'package:walk/presentation/diary/widget/prose_view.dart';
 import 'package:walk/presentation/diary/widget/reels_view.dart';
@@ -192,6 +193,33 @@ void main() {
 
     expect(mediaOf('p2'), findsOneWidget);
     expect(find.text('2/2'), findsOneWidget);
+  });
+
+  testWidgets('릴스: 시각 · 스토리 줄과 글 뒤 전체에 진한 그늘(scrim ≥ 0.6)이 깔린다', (
+    tester,
+  ) async {
+    await pump(tester, DiaryViewMode.reels, mixed, showStoryName: true);
+
+    final meta = find.byType(EntryMeta);
+    final behind = find
+        .ancestor(of: meta, matching: find.byType(DecoratedBox))
+        .first;
+    final decoration =
+        tester.widget<DecoratedBox>(behind).decoration as BoxDecoration;
+    final colors = [?decoration.color, ...?decoration.gradient?.colors];
+    final scrim = Theme.of(tester.element(meta)).colorScheme.scrim;
+
+    expect(colors, isNotEmpty);
+    for (final c in colors) {
+      expect(c.withValues(alpha: 1), scrim.withValues(alpha: 1));
+      // 위가 투명하게 바래는 그라데이션이면 첫 줄(시각 · 스토리)이 밝은 사진 위에 뜬다.
+      expect(c.a, greaterThanOrEqualTo(0.6), reason: '$colors');
+    }
+    final box = tester.getRect(behind);
+    for (final text in [meta, find.text('바다')]) {
+      final r = tester.getRect(text);
+      expect(box.contains(r.topLeft) && box.contains(r.bottomRight), isTrue);
+    }
   });
 
   testWidgets('릴스: 세로로 다음 기록, 가로로 같은 기록의 다음 미디어', (tester) async {
