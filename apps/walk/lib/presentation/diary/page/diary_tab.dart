@@ -29,6 +29,7 @@ import 'story_manage_page.dart';
 import 'trash_page.dart';
 
 /// 셸의 일기 탭(스펙 §6.1). 위에서 `DiaryLockCubit` 를 받는다(셸이 소유).
+/// ＋ 는 셸이 이 탭일 때 [DiaryNewEntryButton] 으로 둔다.
 ///
 /// 타임라인은 [DiaryLockGate] 안쪽에 있어 잠긴 동안 트리에 없다. 탭이 보이고 잠금이 풀려 있게
 /// 될 때마다(풀린 채 탭이 보이게 되거나, 보이는 탭에서 잠금이 풀릴 때) [DiaryUseCase.maintain] 을
@@ -114,20 +115,35 @@ class _DiaryTabState extends State<DiaryTab> {
                 dismissPopups: widget.active,
                 child: _Timeline(active: widget.active),
               ),
-              // 오른쪽 아래 — 릴스에서도 위에 얹은 머리 · 토글을 가리지 않는다.
-              floatingActionButton: unlocked
-                  ? FloatingActionButton(
-                      // 셸의 IndexedStack 에 알람 탭 ＋ 도 있다 — 기본 Hero 태그가 겹치지 않게 끈다.
-                      heroTag: null,
-                      tooltip: l10n.walkDiaryEditorNewTitle,
-                      onPressed: () => openEntryEditor(context),
-                      child: const Icon(Icons.add),
-                    )
-                  : null,
             );
           },
         ),
       ),
+    );
+  }
+}
+
+/// 일기 탭의 ＋(새 기록). 잠긴 동안은 두지 않는다.
+///
+/// 탭 `Scaffold` 가 아니라 셸 `Scaffold` 의 `floatingActionButton` 에 둔다 — 스낵바(휴지통으로
+/// 옮기기 · 되살리기처럼 위에 얹힌 화면에서 띄운 것)는 앱 전체 메신저의 바깥 `Scaffold`(셸)에만
+/// 뜨므로, 같은 `Scaffold` 에 있어야 ＋ 가 스낵바 위로 비킨다. 오른쪽 아래라 릴스에서도
+/// 위에 얹은 머리 · 토글을 가리지 않는다.
+class DiaryNewEntryButton extends StatelessWidget {
+  const DiaryNewEntryButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final unlocked = context.select<DiaryLockCubit, bool>(
+      (c) => c.state is LockUnlocked,
+    );
+    if (!unlocked) return const SizedBox.shrink();
+    return FloatingActionButton(
+      // 셸의 IndexedStack 에 알람 탭 ＋ 도 있다 — 기본 Hero 태그가 겹치지 않게 끈다.
+      heroTag: null,
+      tooltip: AppLocalizations.of(context).walkDiaryEditorNewTitle,
+      onPressed: () => openEntryEditor(context),
+      child: const Icon(Icons.add),
     );
   }
 }

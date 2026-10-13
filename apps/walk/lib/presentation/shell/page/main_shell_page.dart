@@ -235,6 +235,10 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
             SettingsPage(active: _tab == ShellTab.settings),
           ],
         ),
+        // 일기 ＋ 는 탭이 아니라 여기 둔다 — 스낵바가 뜨는 이 Scaffold 에 있어야 위로 비킨다.
+        floatingActionButton: _tab == ShellTab.diary
+            ? const DiaryNewEntryButton()
+            : null,
         bottomNavigationBar: NavigationBar(
           selectedIndex: _tab.index,
           onDestinationSelected: (index) => _select(ShellTab.values[index]),

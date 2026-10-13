@@ -123,7 +123,11 @@ void main() {
     supportedLocales: AppLocalizations.supportedLocales,
     home: BlocProvider.value(
       value: lock,
-      child: DiaryTab(active: active),
+      // 셸처럼 바깥 Scaffold 가 ＋ 를 든다.
+      child: Scaffold(
+        body: DiaryTab(active: active),
+        floatingActionButton: const DiaryNewEntryButton(),
+      ),
     ),
   );
 

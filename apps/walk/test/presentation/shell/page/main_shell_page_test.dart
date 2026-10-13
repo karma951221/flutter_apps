@@ -277,6 +277,27 @@ void main() {
     expect(find.byType(StoryBar), findsOneWidget);
   });
 
+  testWidgets('일기 탭: 스낵바가 떠도 ＋ 를 가리지 않는다(＋ 가 위로 비킨다)', (tester) async {
+    await pump(tester);
+    await tester.tap(find.byIcon(Icons.book_outlined));
+    await tester.pumpAndSettle();
+    final fab = find.byTooltip('새 기록');
+    final before = tester.getRect(fab);
+
+    // 휴지통으로 옮기기 · 되살리기처럼 위에 얹힌 화면에서 띄운 것과 같은(앱 전체) 메신저.
+    AppSnackBar.show(
+      tester.element(find.byType(StoryBar)),
+      message: '휴지통으로 옮겼어요',
+      type: AppSnackBarType.success,
+    );
+    await tester.pumpAndSettle();
+
+    final snack = tester.getRect(find.byType(SnackBar));
+    final after = tester.getRect(fab);
+    expect(after.overlaps(snack), isFalse, reason: '$after ∩ $snack');
+    expect(after.right, before.right);
+  });
+
   testWidgets('시작할 때 고아 미디어 청소를 한 번 부르고, 실패해도 화면은 뜬다', (tester) async {
     when(diary.cleanOrphans).thenAnswer((_) => Future.error(Exception('io')));
     await pump(tester);
