@@ -2885,4 +2885,110 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkDiarySettingsLocalOnly =>
       'Entries are saved only on this phone. They\'re deleted along with the app.';
+
+  @override
+  String get walkStatsTitle => 'Walk stats';
+
+  @override
+  String get walkStatsWeek => 'Week';
+
+  @override
+  String get walkStatsMonth => 'Month';
+
+  @override
+  String get walkStatsPreviousTooltip => 'Previous';
+
+  @override
+  String get walkStatsNextTooltip => 'Next';
+
+  @override
+  String get walkStatsDistanceLabel => 'Distance';
+
+  @override
+  String get walkStatsDurationLabel => 'Time';
+
+  @override
+  String get walkStatsCountLabel => 'Walks';
+
+  @override
+  String walkStatsCountValue(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count walks',
+      one: '1 walk',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkStatsMoreThanLastWeek(String distance) {
+    return '$distance more than last week';
+  }
+
+  @override
+  String walkStatsLastWeek(String distance) {
+    return 'Last week $distance';
+  }
+
+  @override
+  String walkStatsMoreThanLastMonth(String distance) {
+    return '$distance more than last month';
+  }
+
+  @override
+  String walkStatsLastMonth(String distance) {
+    return 'Last month $distance';
+  }
+
+  @override
+  String walkStatsBarSemantics(String label, String distance) {
+    return '$label $distance';
+  }
+
+  @override
+  String get walkStatsRecordsTitle => 'Records';
+
+  @override
+  String get walkStatsCurrentStreak => 'Current streak';
+
+  @override
+  String get walkStatsLongestStreak => 'Longest streak';
+
+  @override
+  String walkStatsDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get walkStatsFarthestWalk => 'Farthest walk';
+
+  @override
+  String get walkStatsLongestWalk => 'Longest walk';
+
+  @override
+  String get walkStatsEmptyTitle => 'No stats yet';
+
+  @override
+  String get walkStatsEmptyMessage => 'Your walks will add up here';
+
+  @override
+  String walkFeedWeekSummary(String distance, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count walks',
+      one: '1 walk',
+    );
+    return 'This week $distance · $_temp0';
+  }
+
+  @override
+  String get walkFeedWeekSummaryEmpty => 'No walks yet this week';
 }

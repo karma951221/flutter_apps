@@ -856,5 +856,29 @@
       }
     }
   },
-  "walkDiarySettingsLocalOnly": "Entries are saved only on this phone. They're deleted along with the app."
+  "walkDiarySettingsLocalOnly": "Entries are saved only on this phone. They're deleted along with the app.",
+  "walkStatsTitle": "Walk stats",
+  "walkStatsWeek": "Week",
+  "walkStatsMonth": "Month",
+  "walkStatsPreviousTooltip": "Previous",
+  "walkStatsNextTooltip": "Next",
+  "walkStatsDistanceLabel": "Distance",
+  "walkStatsDurationLabel": "Time",
+  "walkStatsCountLabel": "Walks",
+  "walkStatsCountValue": "{count, plural, =1{1 walk} other{{count} walks}}",
+  "walkStatsMoreThanLastWeek": "{distance} more than last week",
+  "walkStatsLastWeek": "Last week {distance}",
+  "walkStatsMoreThanLastMonth": "{distance} more than last month",
+  "walkStatsLastMonth": "Last month {distance}",
+  "walkStatsBarSemantics": "{label} {distance}",
+  "walkStatsRecordsTitle": "Records",
+  "walkStatsCurrentStreak": "Current streak",
+  "walkStatsLongestStreak": "Longest streak",
+  "walkStatsDays": "{count, plural, =1{1 day} other{{count} days}}",
+  "walkStatsFarthestWalk": "Farthest walk",
+  "walkStatsLongestWalk": "Longest walk",
+  "walkStatsEmptyTitle": "No stats yet",
+  "walkStatsEmptyMessage": "Your walks will add up here",
+  "walkFeedWeekSummary": "This week {distance} · {count, plural, =1{1 walk} other{{count} walks}}",
+  "walkFeedWeekSummaryEmpty": "No walks yet this week"
 }

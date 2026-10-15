@@ -856,5 +856,29 @@
       }
     }
   },
-  "walkDiarySettingsLocalOnly": "記録はこのスマホにだけ保存されます。アプリを削除するといっしょに消えます。"
+  "walkDiarySettingsLocalOnly": "記録はこのスマホにだけ保存されます。アプリを削除するといっしょに消えます。",
+  "walkStatsTitle": "散歩の記録",
+  "walkStatsWeek": "週",
+  "walkStatsMonth": "月",
+  "walkStatsPreviousTooltip": "前の期間",
+  "walkStatsNextTooltip": "次の期間",
+  "walkStatsDistanceLabel": "距離",
+  "walkStatsDurationLabel": "時間",
+  "walkStatsCountLabel": "散歩",
+  "walkStatsCountValue": "{count}回",
+  "walkStatsMoreThanLastWeek": "先週より{distance}多く歩きました",
+  "walkStatsLastWeek": "先週 {distance}",
+  "walkStatsMoreThanLastMonth": "先月より{distance}多く歩きました",
+  "walkStatsLastMonth": "先月 {distance}",
+  "walkStatsBarSemantics": "{label} {distance}",
+  "walkStatsRecordsTitle": "記録",
+  "walkStatsCurrentStreak": "連続散歩",
+  "walkStatsLongestStreak": "最長連続",
+  "walkStatsDays": "{count}日",
+  "walkStatsFarthestWalk": "いちばん遠い散歩",
+  "walkStatsLongestWalk": "いちばん長い散歩",
+  "walkStatsEmptyTitle": "まだ記録がありません",
+  "walkStatsEmptyMessage": "散歩を記録するとここに積み上がります",
+  "walkFeedWeekSummary": "今週 {distance}・{count}回",
+  "walkFeedWeekSummaryEmpty": "今週はまだ散歩していません"
 }

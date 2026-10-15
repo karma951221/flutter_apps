@@ -5125,6 +5125,150 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'기록은 이 폰에만 저장돼요. 앱을 지우면 함께 사라져요.'**
   String get walkDiarySettingsLocalOnly;
+
+  /// 통계 화면 앱바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 통계'**
+  String get walkStatsTitle;
+
+  /// 통계 기간 토글 — 주
+  ///
+  /// In ko, this message translates to:
+  /// **'주'**
+  String get walkStatsWeek;
+
+  /// 통계 기간 토글 — 월
+  ///
+  /// In ko, this message translates to:
+  /// **'월'**
+  String get walkStatsMonth;
+
+  /// 통계 이전 기간 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'이전 기간'**
+  String get walkStatsPreviousTooltip;
+
+  /// 통계 다음 기간 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 기간'**
+  String get walkStatsNextTooltip;
+
+  /// 통계 요약 — 총 거리 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'걸은 거리'**
+  String get walkStatsDistanceLabel;
+
+  /// 통계 요약 — 총 시간 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'걸은 시간'**
+  String get walkStatsDurationLabel;
+
+  /// 통계 요약 — 산책 횟수 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'산책'**
+  String get walkStatsCountLabel;
+
+  /// 통계 요약 — 산책 횟수 값
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}번'**
+  String walkStatsCountValue(int count);
+
+  /// 이번 기간이 지난주보다 길 때. distance 는 차이(WalkFormat.distance)
+  ///
+  /// In ko, this message translates to:
+  /// **'지난주보다 {distance} 더 걸었어요'**
+  String walkStatsMoreThanLastWeek(String distance);
+
+  /// 이번 기간이 지난주보다 길지 않을 때 중립 비교. distance 는 지난주 합
+  ///
+  /// In ko, this message translates to:
+  /// **'지난주 {distance}'**
+  String walkStatsLastWeek(String distance);
+
+  /// 이번 기간이 지난달보다 길 때. distance 는 차이
+  ///
+  /// In ko, this message translates to:
+  /// **'지난달보다 {distance} 더 걸었어요'**
+  String walkStatsMoreThanLastMonth(String distance);
+
+  /// 이번 기간이 지난달보다 길지 않을 때 중립 비교. distance 는 지난달 합
+  ///
+  /// In ko, this message translates to:
+  /// **'지난달 {distance}'**
+  String walkStatsLastMonth(String distance);
+
+  /// 막대 한 칸의 접근성 라벨. label 은 요일 또는 일 범위
+  ///
+  /// In ko, this message translates to:
+  /// **'{label} {distance}'**
+  String walkStatsBarSemantics(String label, String distance);
+
+  /// 통계 화면 기록 절 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'기록'**
+  String get walkStatsRecordsTitle;
+
+  /// 지금 이어지고 있는 연속 산책 일수 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'연속 산책'**
+  String get walkStatsCurrentStreak;
+
+  /// 가장 길게 이어진 연속 산책 일수 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'최장 연속'**
+  String get walkStatsLongestStreak;
+
+  /// 연속 일수 값
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}일'**
+  String walkStatsDays(int count);
+
+  /// 거리가 가장 긴 산책 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'가장 먼 산책'**
+  String get walkStatsFarthestWalk;
+
+  /// 시간이 가장 긴 산책 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'가장 오래 걸은 산책'**
+  String get walkStatsLongestWalk;
+
+  /// 산책이 하나도 없을 때 통계 화면 안내 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 통계가 없어요'**
+  String get walkStatsEmptyTitle;
+
+  /// 산책이 하나도 없을 때 통계 화면 안내 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'산책을 기록하면 여기에 쌓여요'**
+  String get walkStatsEmptyMessage;
+
+  /// 피드 맨 위 이번 주 요약 줄. 탭하면 통계
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 주 {distance} · {count}번'**
+  String walkFeedWeekSummary(String distance, int count);
+
+  /// 이번 주 산책이 0건일 때 피드 요약 줄
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 주는 아직 산책 전이에요'**
+  String get walkFeedWeekSummaryEmpty;
 }
 
 class _AppLocalizationsDelegate

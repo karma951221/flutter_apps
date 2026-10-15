@@ -2712,4 +2712,92 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get walkDiarySettingsLocalOnly =>
       '記録はこのスマホにだけ保存されます。アプリを削除するといっしょに消えます。';
+
+  @override
+  String get walkStatsTitle => '散歩の記録';
+
+  @override
+  String get walkStatsWeek => '週';
+
+  @override
+  String get walkStatsMonth => '月';
+
+  @override
+  String get walkStatsPreviousTooltip => '前の期間';
+
+  @override
+  String get walkStatsNextTooltip => '次の期間';
+
+  @override
+  String get walkStatsDistanceLabel => '距離';
+
+  @override
+  String get walkStatsDurationLabel => '時間';
+
+  @override
+  String get walkStatsCountLabel => '散歩';
+
+  @override
+  String walkStatsCountValue(int count) {
+    return '$count回';
+  }
+
+  @override
+  String walkStatsMoreThanLastWeek(String distance) {
+    return '先週より$distance多く歩きました';
+  }
+
+  @override
+  String walkStatsLastWeek(String distance) {
+    return '先週 $distance';
+  }
+
+  @override
+  String walkStatsMoreThanLastMonth(String distance) {
+    return '先月より$distance多く歩きました';
+  }
+
+  @override
+  String walkStatsLastMonth(String distance) {
+    return '先月 $distance';
+  }
+
+  @override
+  String walkStatsBarSemantics(String label, String distance) {
+    return '$label $distance';
+  }
+
+  @override
+  String get walkStatsRecordsTitle => '記録';
+
+  @override
+  String get walkStatsCurrentStreak => '連続散歩';
+
+  @override
+  String get walkStatsLongestStreak => '最長連続';
+
+  @override
+  String walkStatsDays(int count) {
+    return '$count日';
+  }
+
+  @override
+  String get walkStatsFarthestWalk => 'いちばん遠い散歩';
+
+  @override
+  String get walkStatsLongestWalk => 'いちばん長い散歩';
+
+  @override
+  String get walkStatsEmptyTitle => 'まだ記録がありません';
+
+  @override
+  String get walkStatsEmptyMessage => '散歩を記録するとここに積み上がります';
+
+  @override
+  String walkFeedWeekSummary(String distance, int count) {
+    return '今週 $distance・$count回';
+  }
+
+  @override
+  String get walkFeedWeekSummaryEmpty => '今週はまだ散歩していません';
 }

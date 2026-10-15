@@ -2714,4 +2714,92 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkDiarySettingsLocalOnly => '기록은 이 폰에만 저장돼요. 앱을 지우면 함께 사라져요.';
+
+  @override
+  String get walkStatsTitle => '산책 통계';
+
+  @override
+  String get walkStatsWeek => '주';
+
+  @override
+  String get walkStatsMonth => '월';
+
+  @override
+  String get walkStatsPreviousTooltip => '이전 기간';
+
+  @override
+  String get walkStatsNextTooltip => '다음 기간';
+
+  @override
+  String get walkStatsDistanceLabel => '걸은 거리';
+
+  @override
+  String get walkStatsDurationLabel => '걸은 시간';
+
+  @override
+  String get walkStatsCountLabel => '산책';
+
+  @override
+  String walkStatsCountValue(int count) {
+    return '$count번';
+  }
+
+  @override
+  String walkStatsMoreThanLastWeek(String distance) {
+    return '지난주보다 $distance 더 걸었어요';
+  }
+
+  @override
+  String walkStatsLastWeek(String distance) {
+    return '지난주 $distance';
+  }
+
+  @override
+  String walkStatsMoreThanLastMonth(String distance) {
+    return '지난달보다 $distance 더 걸었어요';
+  }
+
+  @override
+  String walkStatsLastMonth(String distance) {
+    return '지난달 $distance';
+  }
+
+  @override
+  String walkStatsBarSemantics(String label, String distance) {
+    return '$label $distance';
+  }
+
+  @override
+  String get walkStatsRecordsTitle => '기록';
+
+  @override
+  String get walkStatsCurrentStreak => '연속 산책';
+
+  @override
+  String get walkStatsLongestStreak => '최장 연속';
+
+  @override
+  String walkStatsDays(int count) {
+    return '$count일';
+  }
+
+  @override
+  String get walkStatsFarthestWalk => '가장 먼 산책';
+
+  @override
+  String get walkStatsLongestWalk => '가장 오래 걸은 산책';
+
+  @override
+  String get walkStatsEmptyTitle => '아직 통계가 없어요';
+
+  @override
+  String get walkStatsEmptyMessage => '산책을 기록하면 여기에 쌓여요';
+
+  @override
+  String walkFeedWeekSummary(String distance, int count) {
+    return '이번 주 $distance · $count번';
+  }
+
+  @override
+  String get walkFeedWeekSummaryEmpty => '이번 주는 아직 산책 전이에요';
 }

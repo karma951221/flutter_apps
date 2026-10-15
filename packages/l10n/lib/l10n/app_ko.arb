@@ -3898,5 +3898,77 @@
   "walkDiarySettingsLocalOnly": "기록은 이 폰에만 저장돼요. 앱을 지우면 함께 사라져요.",
   "@walkDiarySettingsLocalOnly": {
     "description": "일기 섹션 맨 아래 안내"
-  }
+  },
+  "walkStatsTitle": "산책 통계",
+  "@walkStatsTitle": { "description": "통계 화면 앱바 제목" },
+  "walkStatsWeek": "주",
+  "@walkStatsWeek": { "description": "통계 기간 토글 — 주" },
+  "walkStatsMonth": "월",
+  "@walkStatsMonth": { "description": "통계 기간 토글 — 월" },
+  "walkStatsPreviousTooltip": "이전 기간",
+  "@walkStatsPreviousTooltip": { "description": "통계 이전 기간 버튼 툴팁" },
+  "walkStatsNextTooltip": "다음 기간",
+  "@walkStatsNextTooltip": { "description": "통계 다음 기간 버튼 툴팁" },
+  "walkStatsDistanceLabel": "걸은 거리",
+  "@walkStatsDistanceLabel": { "description": "통계 요약 — 총 거리 라벨" },
+  "walkStatsDurationLabel": "걸은 시간",
+  "@walkStatsDurationLabel": { "description": "통계 요약 — 총 시간 라벨" },
+  "walkStatsCountLabel": "산책",
+  "@walkStatsCountLabel": { "description": "통계 요약 — 산책 횟수 라벨" },
+  "walkStatsCountValue": "{count}번",
+  "@walkStatsCountValue": {
+    "description": "통계 요약 — 산책 횟수 값",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "walkStatsMoreThanLastWeek": "지난주보다 {distance} 더 걸었어요",
+  "@walkStatsMoreThanLastWeek": {
+    "description": "이번 기간이 지난주보다 길 때. distance 는 차이(WalkFormat.distance)",
+    "placeholders": { "distance": { "type": "String" } }
+  },
+  "walkStatsLastWeek": "지난주 {distance}",
+  "@walkStatsLastWeek": {
+    "description": "이번 기간이 지난주보다 길지 않을 때 중립 비교. distance 는 지난주 합",
+    "placeholders": { "distance": { "type": "String" } }
+  },
+  "walkStatsMoreThanLastMonth": "지난달보다 {distance} 더 걸었어요",
+  "@walkStatsMoreThanLastMonth": {
+    "description": "이번 기간이 지난달보다 길 때. distance 는 차이",
+    "placeholders": { "distance": { "type": "String" } }
+  },
+  "walkStatsLastMonth": "지난달 {distance}",
+  "@walkStatsLastMonth": {
+    "description": "이번 기간이 지난달보다 길지 않을 때 중립 비교. distance 는 지난달 합",
+    "placeholders": { "distance": { "type": "String" } }
+  },
+  "walkStatsBarSemantics": "{label} {distance}",
+  "@walkStatsBarSemantics": {
+    "description": "막대 한 칸의 접근성 라벨. label 은 요일 또는 일 범위",
+    "placeholders": { "label": { "type": "String" }, "distance": { "type": "String" } }
+  },
+  "walkStatsRecordsTitle": "기록",
+  "@walkStatsRecordsTitle": { "description": "통계 화면 기록 절 제목" },
+  "walkStatsCurrentStreak": "연속 산책",
+  "@walkStatsCurrentStreak": { "description": "지금 이어지고 있는 연속 산책 일수 라벨" },
+  "walkStatsLongestStreak": "최장 연속",
+  "@walkStatsLongestStreak": { "description": "가장 길게 이어진 연속 산책 일수 라벨" },
+  "walkStatsDays": "{count}일",
+  "@walkStatsDays": {
+    "description": "연속 일수 값",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "walkStatsFarthestWalk": "가장 먼 산책",
+  "@walkStatsFarthestWalk": { "description": "거리가 가장 긴 산책 라벨" },
+  "walkStatsLongestWalk": "가장 오래 걸은 산책",
+  "@walkStatsLongestWalk": { "description": "시간이 가장 긴 산책 라벨" },
+  "walkStatsEmptyTitle": "아직 통계가 없어요",
+  "@walkStatsEmptyTitle": { "description": "산책이 하나도 없을 때 통계 화면 안내 제목" },
+  "walkStatsEmptyMessage": "산책을 기록하면 여기에 쌓여요",
+  "@walkStatsEmptyMessage": { "description": "산책이 하나도 없을 때 통계 화면 안내 본문" },
+  "walkFeedWeekSummary": "이번 주 {distance} · {count}번",
+  "@walkFeedWeekSummary": {
+    "description": "피드 맨 위 이번 주 요약 줄. 탭하면 통계",
+    "placeholders": { "distance": { "type": "String" }, "count": { "type": "int" } }
+  },
+  "walkFeedWeekSummaryEmpty": "이번 주는 아직 산책 전이에요",
+  "@walkFeedWeekSummaryEmpty": { "description": "이번 주 산책이 0건일 때 피드 요약 줄" }
 }
