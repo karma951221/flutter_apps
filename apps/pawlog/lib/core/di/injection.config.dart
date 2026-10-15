@@ -31,6 +31,7 @@ import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
 import '../../presentation/dog/cubit/dog_edit_cubit.dart' as _i980;
 import '../../presentation/dog/cubit/dog_list_cubit.dart' as _i596;
 import '../../presentation/feed/cubit/walk_feed_cubit.dart' as _i733;
+import '../../presentation/stats/cubit/stats_cubit.dart' as _i184;
 import '../../presentation/tracking/cubit/active_walk_cubit.dart' as _i143;
 import '../../presentation/walk/cubit/walk_detail_cubit.dart' as _i174;
 import '../../presentation/walk/cubit/walk_edit_cubit.dart' as _i804;
@@ -86,6 +87,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.IdGenerator>(),
         gh<_i494.Clock>(),
       ),
+    );
+    gh.factory<_i184.StatsCubit>(
+      () => _i184.StatsCubit(gh<_i5.WalkUseCase>(), gh<_i494.Clock>()),
     );
     gh.factory<_i143.ActiveWalkCubit>(
       () => _i143.ActiveWalkCubit(gh<_i5.WalkUseCase>(), gh<_i494.Clock>()),
