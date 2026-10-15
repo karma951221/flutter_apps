@@ -160,6 +160,22 @@ void main() {
     expect(opened, 'b');
   });
 
+  testWidgets('거리 없는 산책뿐이면 가장 먼 산책 줄을 숨긴다', (tester) async {
+    when(() => useCase.watchWalks()).thenAnswer(
+      (_) =>
+          Stream.value(Ok([_walk('z', DateTime(2026, 10, 16, 8), meters: 0)])),
+    );
+
+    await pump(tester);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('stats-record-longest')),
+      200,
+    );
+
+    expect(find.byKey(const Key('stats-record-farthest')), findsNothing);
+    expect(find.text('가장 먼 산책'), findsNothing);
+  });
+
   testWidgets('산책이 없으면 안내 한 장만 보인다', (tester) async {
     when(
       () => useCase.watchWalks(),

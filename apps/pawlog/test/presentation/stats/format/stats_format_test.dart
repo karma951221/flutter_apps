@@ -17,7 +17,10 @@ PeriodSummary _km(double meters) => PeriodSummary(
 PeriodStats _stats(StatsPeriod period, double current, double previous) =>
     PeriodStats(
       period: period,
-      range: PeriodRange(start: DateTime(2026, 10, 12), end: DateTime(2026, 10, 19)),
+      range: PeriodRange(
+        start: DateTime(2026, 10, 12),
+        end: DateTime(2026, 10, 19),
+      ),
       summary: _km(current),
       previousSummary: _km(previous),
       buckets: const [],
@@ -34,7 +37,10 @@ void main() {
         StatsFormat.rangeLabel(
           'ko',
           StatsPeriod.week,
-          PeriodRange(start: DateTime(2026, 10, 12), end: DateTime(2026, 10, 19)),
+          PeriodRange(
+            start: DateTime(2026, 10, 12),
+            end: DateTime(2026, 10, 19),
+          ),
           now,
         ),
         '10월 12일 – 18일',
@@ -107,7 +113,10 @@ void main() {
 
   group('comparison', () {
     test('지난 기간이 0 이면 숨긴다', () {
-      expect(StatsFormat.comparison(l10n, _stats(StatsPeriod.week, 3500, 0)), isNull);
+      expect(
+        StatsFormat.comparison(l10n, _stats(StatsPeriod.week, 3500, 0)),
+        isNull,
+      );
     });
 
     test('더 걸었으면 차이를 말한다', () {
@@ -129,6 +138,13 @@ void main() {
       expect(
         StatsFormat.comparison(l10n, _stats(StatsPeriod.month, 800, 800)),
         '지난달 800 m',
+      );
+    });
+
+    test('반올림해 0 m 인 차이는 더 걸었다고 하지 않는다', () {
+      expect(
+        StatsFormat.comparison(l10n, _stats(StatsPeriod.week, 800.4, 800)),
+        '지난주 800 m',
       );
     });
   });

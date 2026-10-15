@@ -48,7 +48,7 @@ class WalkFeedPage extends StatelessWidget {
   );
 }
 
-class _WalkFeedView extends StatelessWidget {
+class _WalkFeedView extends StatefulWidget {
   const _WalkFeedView({
     required this.onStartWalk,
     required this.onSaveWalk,
@@ -62,6 +62,34 @@ class _WalkFeedView extends StatelessWidget {
   final ValueChanged<String> onOpenWalk;
   final VoidCallback onOpenDogs;
   final VoidCallback onOpenStats;
+
+  @override
+  State<_WalkFeedView> createState() => _WalkFeedViewState();
+}
+
+class _WalkFeedViewState extends State<_WalkFeedView> {
+  // 주 경계를 넘긴 채 돌아오면 '이번 주' 요약을 다시 잡는다.
+  late final AppLifecycleListener _lifecycle;
+
+  VoidCallback get onStartWalk => widget.onStartWalk;
+  VoidCallback get onSaveWalk => widget.onSaveWalk;
+  ValueChanged<String> get onOpenWalk => widget.onOpenWalk;
+  VoidCallback get onOpenDogs => widget.onOpenDogs;
+  VoidCallback get onOpenStats => widget.onOpenStats;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(
+      onResume: () => context.read<WalkFeedCubit>().refreshWeekSummary(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

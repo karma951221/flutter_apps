@@ -34,19 +34,31 @@ Matcher _loaded({
   int? walkCount,
 }) {
   var matcher = isA<StatsLoaded>();
-  if (offset != null) matcher = matcher.having((s) => s.offset, 'offset', offset);
+  if (offset != null) {
+    matcher = matcher.having((s) => s.offset, 'offset', offset);
+  }
   if (canShowPrevious != null) {
-    matcher = matcher.having((s) => s.canShowPrevious, 'canShowPrevious', canShowPrevious);
+    matcher = matcher.having(
+      (s) => s.canShowPrevious,
+      'canShowPrevious',
+      canShowPrevious,
+    );
   }
   if (canShowNext != null) {
     matcher = matcher.having((s) => s.canShowNext, 'canShowNext', canShowNext);
   }
-  if (isEmpty != null) matcher = matcher.having((s) => s.isEmpty, 'isEmpty', isEmpty);
+  if (isEmpty != null) {
+    matcher = matcher.having((s) => s.isEmpty, 'isEmpty', isEmpty);
+  }
   if (period != null) {
     matcher = matcher.having((s) => s.stats.period, 'period', period);
   }
   if (walkCount != null) {
-    matcher = matcher.having((s) => s.stats.summary.walkCount, 'walkCount', walkCount);
+    matcher = matcher.having(
+      (s) => s.stats.summary.walkCount,
+      'walkCount',
+      walkCount,
+    );
   }
   return matcher;
 }
@@ -78,7 +90,13 @@ void main() {
     },
     expect: () => [
       const StatsState.loading(),
-      _loaded(offset: 0, canShowPrevious: true, canShowNext: false, isEmpty: false, walkCount: 1),
+      _loaded(
+        offset: 0,
+        canShowPrevious: true,
+        canShowNext: false,
+        isEmpty: false,
+        walkCount: 1,
+      ),
     ],
   );
 
@@ -101,7 +119,12 @@ void main() {
       const StatsState.loading(),
       _loaded(offset: 0),
       _loaded(offset: -1, canShowPrevious: true, canShowNext: true),
-      _loaded(offset: -2, canShowPrevious: false, canShowNext: true, walkCount: 1),
+      _loaded(
+        offset: -2,
+        canShowPrevious: false,
+        canShowNext: true,
+        walkCount: 1,
+      ),
       _loaded(offset: -1),
       _loaded(offset: 0, canShowNext: false),
     ],

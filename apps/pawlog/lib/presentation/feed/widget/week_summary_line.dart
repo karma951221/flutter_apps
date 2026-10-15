@@ -28,26 +28,29 @@ class WeekSummaryLine extends StatelessWidget {
             summary.walkCount,
           );
 
-    return InkWell(
-      key: const Key('walk-feed-week-summary'),
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: PawlogSize.gutter,
-          vertical: PawlogSpacing.md,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                text,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: colors.primary,
+    return Semantics(
+      button: true,
+      child: InkWell(
+        key: const Key('walk-feed-week-summary'),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: PawlogSize.gutter,
+            vertical: PawlogSpacing.md,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  text,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: colors.primary,
+                  ),
                 ),
               ),
-            ),
-            Icon(Icons.chevron_right, color: colors.primary),
-          ],
+              Icon(Icons.chevron_right, color: colors.primary),
+            ],
+          ),
         ),
       ),
     );

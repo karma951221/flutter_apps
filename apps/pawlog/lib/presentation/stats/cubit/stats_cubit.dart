@@ -80,7 +80,12 @@ class StatsCubit extends Cubit<StatsState> {
     _offset = math.max(earliest, math.min(0, _offset));
     emit(
       StatsState.loaded(
-        stats: WalkStatsPolicy.periodStats(walks, _period, now, offset: _offset),
+        stats: WalkStatsPolicy.periodStats(
+          walks,
+          _period,
+          now,
+          offset: _offset,
+        ),
         records: WalkStatsPolicy.records(walks, now),
         offset: _offset,
         canShowPrevious: _offset > earliest,

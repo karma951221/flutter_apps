@@ -196,6 +196,53 @@ void main() {
     },
   );
 
+  group('refreshWeekSummary', () {
+    // t0 = 2026-10-03(토) → 처음엔 같은 주 일요일, 다음엔 다음 주 월요일.
+    var now = DateTime(2026, 10, 4, 12);
+    const summary = PeriodSummary(
+      distanceMeters: 1200,
+      duration: Duration(minutes: 30),
+      walkCount: 1,
+    );
+
+    blocTest<WalkFeedCubit, WalkFeedState>(
+      '주 경계를 넘긴 뒤 부르면 캐시한 목록으로 빈 요약을 낸다',
+      setUp: () {
+        now = DateTime(2026, 10, 4, 12);
+        when(
+          () => useCase.watchWalks(),
+        ).thenAnswer((_) => Stream.value(Ok([walk()])));
+      },
+      build: () => WalkFeedCubit(useCase, FakeClock(() => now)),
+      act: (cubit) async {
+        await cubit.start();
+        await Future<void>.delayed(Duration.zero);
+        now = DateTime(2026, 10, 5, 8);
+        cubit.refreshWeekSummary();
+      },
+      expect: () => [
+        const WalkFeedState.loading(),
+        WalkFeedState.loaded(
+          walks: [walk()],
+          tracker: const TrackerState.idle(),
+          weekSummary: summary,
+        ),
+        WalkFeedState.loaded(
+          walks: [walk()],
+          tracker: const TrackerState.idle(),
+        ),
+      ],
+      verify: (_) => verify(() => useCase.watchWalks()).called(1),
+    );
+
+    blocTest<WalkFeedCubit, WalkFeedState>(
+      '목록이 아직 없으면 아무것도 내지 않는다',
+      build: () => WalkFeedCubit(useCase, clock),
+      act: (cubit) => cubit.refreshWeekSummary(),
+      expect: () => <WalkFeedState>[],
+    );
+  });
+
   test('닫힌 뒤에 온 값은 상태를 내지 않고 구독을 끊는다', () async {
     final controller = StreamController<Result<List<Walk>>>();
     when(() => useCase.watchWalks()).thenAnswer((_) => controller.stream);

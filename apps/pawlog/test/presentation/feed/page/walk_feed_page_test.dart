@@ -262,6 +262,44 @@ void main() {
     expect(opened, 1);
   });
 
+  testWidgets('요약 줄은 스크린리더에 버튼으로 읽힌다', (tester) async {
+    final handle = tester.ensureSemantics();
+    await pump(tester);
+
+    expect(
+      tester.getSemantics(find.byKey(const Key('walk-feed-week-summary'))),
+      matchesSemantics(
+        label: '이번 주 1.2 km · 1번',
+        isButton: true,
+        hasTapAction: true,
+        isFocusable: true,
+        hasFocusAction: true,
+      ),
+    );
+    handle.dispose();
+  });
+
+  testWidgets('앱이 다시 돌아오면 이번 주 요약을 지금 시각으로 다시 잡는다', (tester) async {
+    var now = DateTime(2026, 10, 3, 12);
+    getIt.unregister<WalkFeedCubit>();
+    getIt.registerFactory<WalkFeedCubit>(
+      () => WalkFeedCubit(useCase, FakeClock(() => now)),
+    );
+    await pump(tester);
+    expect(find.text('이번 주 1.2 km · 1번'), findsOneWidget);
+
+    now = DateTime(2026, 10, 5, 8); // 다음 주 월요일
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+
+    expect(find.text('이번 주는 아직 산책 전이에요'), findsOneWidget);
+  });
+
   testWidgets('이번 주 산책이 없으면 아직 전이라고 말한다', (tester) async {
     when(() => useCase.watchWalks()).thenAnswer(
       (_) =>

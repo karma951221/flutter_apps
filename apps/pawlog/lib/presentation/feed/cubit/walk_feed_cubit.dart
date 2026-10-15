@@ -43,6 +43,28 @@ class WalkFeedCubit extends Cubit<WalkFeedState> {
 
   File photoFile(String relativePath) => _useCase.photoFile(relativePath);
 
+  /// 캐시한 목록으로 이번 주 요약을 지금 시각 기준으로 다시 잡는다 — 앱이 주 경계를
+  /// 넘긴 채 백그라운드에 있다 돌아오면 스트림 값이 없어도 요약이 바뀌어야 한다.
+  /// 목록이 아직 없거나 loaded 가 아니면 아무것도 하지 않는다.
+  void refreshWeekSummary() {
+    final walks = _walks;
+    if (isClosed || walks == null || state is! WalkFeedLoaded) return;
+    _weekSummary = _summaryOf(walks);
+    emit(
+      WalkFeedState.loaded(
+        walks: walks,
+        tracker: _tracker,
+        weekSummary: _weekSummary,
+      ),
+    );
+  }
+
+  PeriodSummary _summaryOf(List<Walk> walks) => WalkStatsPolicy.periodStats(
+    walks,
+    StatsPeriod.week,
+    _clock.now(),
+  ).summary;
+
   Future<void> _watchWalks() async {
     // 위젯 테스트의 가짜 비동기에서 끝난 스트림의 cancel 을 기다리면 멈추므로 기다리지 않는다.
     unawaited(_walksSubscription?.cancel());
@@ -58,11 +80,7 @@ class WalkFeedCubit extends Cubit<WalkFeedState> {
     switch (result) {
       case Ok(value: final walks):
         _walks = walks;
-        _weekSummary = WalkStatsPolicy.periodStats(
-          walks,
-          StatsPeriod.week,
-          _clock.now(),
-        ).summary;
+        _weekSummary = _summaryOf(walks);
         emit(
           WalkFeedState.loaded(
             walks: walks,

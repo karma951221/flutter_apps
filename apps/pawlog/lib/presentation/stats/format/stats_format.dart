@@ -48,21 +48,24 @@ abstract final class StatsFormat {
     }
   }
 
-  /// 지난 기간 거리가 0 이면 null. 이번이 더 길면 차이를, 아니면 지난 기간 합만 말한다 —
+  /// 지난 기간 거리가 0 이면 null. 이번이 1 m 이상 더 길면 차이를, 아니면 지난 기간 합만 말한다 —
   /// 주 초반에 '덜 걸었어요' 를 보이지 않으려는 것.
   static String? comparison(AppLocalizations l10n, PeriodStats stats) {
     final previous = stats.previousSummary.distanceMeters;
     if (previous <= 0) return null;
     final current = stats.summary.distanceMeters;
     final isWeek = stats.period == StatsPeriod.week;
-    if (current > previous) {
+    // 반올림해 0 m 가 되는 차이는 '더 걸었어요' 라 하지 않는다.
+    if ((current - previous).round() >= 1) {
       final diff = WalkFormat.distance(l10n, current - previous);
       return isWeek
           ? l10n.walkStatsMoreThanLastWeek(diff)
           : l10n.walkStatsMoreThanLastMonth(diff);
     }
     final total = WalkFormat.distance(l10n, previous);
-    return isWeek ? l10n.walkStatsLastWeek(total) : l10n.walkStatsLastMonth(total);
+    return isWeek
+        ? l10n.walkStatsLastWeek(total)
+        : l10n.walkStatsLastMonth(total);
   }
 
   static DateTime _lastDay(PeriodRange range) =>

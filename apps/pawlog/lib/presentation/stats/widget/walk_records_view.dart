@@ -42,7 +42,8 @@ class WalkRecordsView extends StatelessWidget {
           label: l10n.walkStatsLongestStreak,
           value: l10n.walkStatsDays(records.longestStreakDays),
         ),
-        if (farthest != null)
+        // 거리 없는 산책뿐이면 '가장 먼 산책 0 m' 는 의미가 없다.
+        if (farthest != null && farthest.distanceMeters >= 1)
           _RecordRow(
             key: const Key('stats-record-farthest'),
             label: l10n.walkStatsFarthestWalk,
