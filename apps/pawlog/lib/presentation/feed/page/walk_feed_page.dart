@@ -14,6 +14,7 @@ import '../../tracking/widget/active_walk_banner.dart';
 import '../cubit/walk_feed_cubit.dart';
 import '../cubit/walk_feed_state.dart';
 import '../widget/walk_feed_entry.dart';
+import '../widget/week_summary_line.dart';
 
 /// 첫 화면 — 내 산책 기록의 최신순 타임라인.
 ///
@@ -24,6 +25,7 @@ class WalkFeedPage extends StatelessWidget {
     required this.onSaveWalk,
     required this.onOpenWalk,
     required this.onOpenDogs,
+    required this.onOpenStats,
     super.key,
   });
 
@@ -31,6 +33,7 @@ class WalkFeedPage extends StatelessWidget {
   final VoidCallback onSaveWalk;
   final ValueChanged<String> onOpenWalk;
   final VoidCallback onOpenDogs;
+  final VoidCallback onOpenStats;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
@@ -40,6 +43,7 @@ class WalkFeedPage extends StatelessWidget {
       onSaveWalk: onSaveWalk,
       onOpenWalk: onOpenWalk,
       onOpenDogs: onOpenDogs,
+      onOpenStats: onOpenStats,
     ),
   );
 }
@@ -50,12 +54,14 @@ class _WalkFeedView extends StatelessWidget {
     required this.onSaveWalk,
     required this.onOpenWalk,
     required this.onOpenDogs,
+    required this.onOpenStats,
   });
 
   final VoidCallback onStartWalk;
   final VoidCallback onSaveWalk;
   final ValueChanged<String> onOpenWalk;
   final VoidCallback onOpenDogs;
+  final VoidCallback onOpenStats;
 
   @override
   Widget build(BuildContext context) {
@@ -88,45 +94,49 @@ class _WalkFeedView extends StatelessWidget {
                 onAction: cubit.retry,
               ),
             ),
-            WalkFeedLoaded(:final walks, :final tracker) => Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _banner(tracker),
-                Expanded(
-                  child: walks.isEmpty
-                      ? Center(
-                          // 수첩 첫 장 — 날짜 열 없이 안내 한 줄. 산책 중이거나 저장 전이면
-                          // 시작을 권하지 않는다 — 위 배너가 그 산책으로 이끈다.
-                          child: tracker is TrackerIdle
-                              ? AppPlaceholder(
-                                  message: l10n.walkFeedEmptyTitle,
-                                  description: l10n.walkFeedEmptyMessage,
-                                )
-                              : AppPlaceholder(
-                                  message: l10n.walkFeedEmptyActiveTitle,
-                                  description: l10n.walkFeedEmptyActiveMessage,
-                                ),
-                        )
-                      : _Timeline(
-                          walks: walks,
-                          photoFile: cubit.photoFile,
-                          onOpenWalk: onOpenWalk,
-                        ),
-                ),
-                // 저장 · 버리기 전에는 새 산책을 막는다(finished). 0건 추적 중이면 배너가 이끈다.
-                if (tracker is TrackerIdle ||
-                    (tracker is TrackerTracking && walks.isNotEmpty))
-                  PawlogBottomAction(
-                    child: PawlogPrimaryButton(
-                      key: const Key('walk-feed-start-button'),
-                      label: tracker is TrackerTracking
-                          ? l10n.walkContinue
-                          : l10n.walkStart,
-                      onPressed: onStartWalk,
-                    ),
+            WalkFeedLoaded(:final walks, :final tracker, :final weekSummary) =>
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _banner(tracker),
+                  if (walks.isNotEmpty)
+                    WeekSummaryLine(summary: weekSummary, onTap: onOpenStats),
+                  Expanded(
+                    child: walks.isEmpty
+                        ? Center(
+                            // 수첩 첫 장 — 날짜 열 없이 안내 한 줄. 산책 중이거나 저장 전이면
+                            // 시작을 권하지 않는다 — 위 배너가 그 산책으로 이끈다.
+                            child: tracker is TrackerIdle
+                                ? AppPlaceholder(
+                                    message: l10n.walkFeedEmptyTitle,
+                                    description: l10n.walkFeedEmptyMessage,
+                                  )
+                                : AppPlaceholder(
+                                    message: l10n.walkFeedEmptyActiveTitle,
+                                    description:
+                                        l10n.walkFeedEmptyActiveMessage,
+                                  ),
+                          )
+                        : _Timeline(
+                            walks: walks,
+                            photoFile: cubit.photoFile,
+                            onOpenWalk: onOpenWalk,
+                          ),
                   ),
-              ],
-            ),
+                  // 저장 · 버리기 전에는 새 산책을 막는다(finished). 0건 추적 중이면 배너가 이끈다.
+                  if (tracker is TrackerIdle ||
+                      (tracker is TrackerTracking && walks.isNotEmpty))
+                    PawlogBottomAction(
+                      child: PawlogPrimaryButton(
+                        key: const Key('walk-feed-start-button'),
+                        label: tracker is TrackerTracking
+                            ? l10n.walkContinue
+                            : l10n.walkStart,
+                        onPressed: onStartWalk,
+                      ),
+                    ),
+                ],
+              ),
           },
         ),
       ),

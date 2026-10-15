@@ -5,6 +5,9 @@ import 'package:core/core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../../domain/stats/entity/period_summary.dart';
+import '../../../domain/stats/entity/stats_period.dart';
+import '../../../domain/stats/policy/walk_stats_policy.dart';
 import '../../../domain/tracking/entity/tracker_state.dart';
 import '../../../domain/walk/entity/walk.dart';
 import '../../../domain/walk/usecase/walk_use_case.dart';
@@ -12,14 +15,17 @@ import 'walk_feed_state.dart';
 
 @injectable
 class WalkFeedCubit extends Cubit<WalkFeedState> {
-  WalkFeedCubit(this._useCase) : super(const WalkFeedState.loading());
+  WalkFeedCubit(this._useCase, this._clock)
+    : super(const WalkFeedState.loading());
 
   final WalkUseCase _useCase;
+  final Clock _clock;
 
   StreamSubscription<Result<List<Walk>>>? _walksSubscription;
   StreamSubscription<TrackerState>? _trackerSubscription;
   List<Walk>? _walks;
   TrackerState _tracker = const TrackerState.idle();
+  PeriodSummary _weekSummary = PeriodSummary.empty;
 
   /// 추적기 상태를 먼저 읽고 두 스트림을 구독한다.
   Future<void> start() async {
@@ -52,7 +58,18 @@ class WalkFeedCubit extends Cubit<WalkFeedState> {
     switch (result) {
       case Ok(value: final walks):
         _walks = walks;
-        emit(WalkFeedState.loaded(walks: walks, tracker: _tracker));
+        _weekSummary = WalkStatsPolicy.periodStats(
+          walks,
+          StatsPeriod.week,
+          _clock.now(),
+        ).summary;
+        emit(
+          WalkFeedState.loaded(
+            walks: walks,
+            tracker: _tracker,
+            weekSummary: _weekSummary,
+          ),
+        );
       case Err(:final failure):
         _walks = null;
         emit(WalkFeedState.failure(failure));
@@ -65,7 +82,13 @@ class WalkFeedCubit extends Cubit<WalkFeedState> {
     final walks = _walks;
     // 목록이 아직 없거나 실패 상태면 보관만 한다.
     if (walks == null || state is! WalkFeedLoaded) return;
-    emit(WalkFeedState.loaded(walks: walks, tracker: tracker));
+    emit(
+      WalkFeedState.loaded(
+        walks: walks,
+        tracker: tracker,
+        weekSummary: _weekSummary,
+      ),
+    );
   }
 
   @override

@@ -38,6 +38,7 @@ GoRouter createRouter({required bool hasDogs}) {
           onSaveWalk: () => context.push(PawlogPaths.saveWalk),
           onOpenWalk: (id) => context.push(PawlogPaths.walk(id)),
           onOpenDogs: () => context.push(PawlogPaths.dogs),
+          onOpenStats: () => context.push(PawlogPaths.stats),
         ),
       ),
       GoRoute(

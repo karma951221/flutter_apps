@@ -64,7 +64,9 @@ void main() {
     when(() => useCase.photoFile(any())).thenReturn(File('/no/such/photo.jpg'));
     when(() => useCase.removePhoto(any())).thenAnswer((_) async {});
     getIt
-      ..registerFactory<WalkFeedCubit>(() => WalkFeedCubit(useCase))
+      ..registerFactory<WalkFeedCubit>(
+        () => WalkFeedCubit(useCase, const Clock()),
+      )
       ..registerFactory<WalkDetailCubit>(() => WalkDetailCubit(useCase))
       ..registerFactory<WalkEditCubit>(() => WalkEditCubit(useCase))
       ..registerFactory<ActiveWalkCubit>(

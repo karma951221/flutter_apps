@@ -54,7 +54,9 @@ void main() {
       () => useCase.watchWalks(),
     ).thenAnswer((_) => Stream.value(Ok([_walk('a', memo: '공원 한 바퀴')])));
     when(() => useCase.photoFile(any())).thenReturn(File('missing.png'));
-    getIt.registerFactory<WalkFeedCubit>(() => WalkFeedCubit(useCase));
+    getIt.registerFactory<WalkFeedCubit>(
+      () => WalkFeedCubit(useCase, FakeClock.fixed(DateTime(2026, 10, 3, 12))),
+    );
   });
   tearDown(getIt.reset);
 
@@ -65,6 +67,7 @@ void main() {
     VoidCallback? onSaveWalk,
     ValueChanged<String>? onOpenWalk,
     VoidCallback? onOpenDogs,
+    VoidCallback? onOpenStats,
   }) => pumpApp(
     tester,
     WalkFeedPage(
@@ -72,6 +75,7 @@ void main() {
       onSaveWalk: onSaveWalk ?? () {},
       onOpenWalk: onOpenWalk ?? (_) {},
       onOpenDogs: onOpenDogs ?? () {},
+      onOpenStats: onOpenStats ?? () {},
     ),
     disableAnimations: disableAnimations,
   );
@@ -247,6 +251,36 @@ void main() {
     await tester.tap(find.byKey(const Key('walk-feed-open-dogs')));
 
     expect(opened, 1);
+  });
+
+  testWidgets('타임라인 위에 이번 주 요약 줄, 탭하면 통계로', (tester) async {
+    var opened = 0;
+    await pump(tester, onOpenStats: () => opened++);
+
+    expect(find.text('이번 주 1.2 km · 1번'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('walk-feed-week-summary')));
+    expect(opened, 1);
+  });
+
+  testWidgets('이번 주 산책이 없으면 아직 전이라고 말한다', (tester) async {
+    when(() => useCase.watchWalks()).thenAnswer(
+      (_) =>
+          Stream.value(Ok([_walk('old', startedAt: DateTime(2026, 9, 1, 9))])),
+    );
+
+    await pump(tester);
+
+    expect(find.text('이번 주는 아직 산책 전이에요'), findsOneWidget);
+  });
+
+  testWidgets('빈 피드에는 요약 줄이 없다', (tester) async {
+    when(
+      () => useCase.watchWalks(),
+    ).thenAnswer((_) => Stream.value(const Ok([])));
+
+    await pump(tester);
+
+    expect(find.byKey(const Key('walk-feed-week-summary')), findsNothing);
   });
 
   testWidgets('실패는 재시도 버튼을 보이고 누르면 다시 구독한다', (tester) async {

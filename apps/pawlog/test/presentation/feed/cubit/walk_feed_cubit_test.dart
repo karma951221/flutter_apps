@@ -4,6 +4,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pawlog/domain/stats/entity/period_summary.dart';
 import 'package:pawlog/domain/tracking/entity/tracker_state.dart';
 import 'package:pawlog/domain/walk/entity/walk.dart';
 import 'package:pawlog/presentation/feed/cubit/walk_feed_cubit.dart';
@@ -13,6 +14,7 @@ import '../../../support/fakes.dart';
 import '../../../support/mock_walk_use_case.dart';
 
 void main() {
+  final clock = FakeClock.fixed(DateTime(2026, 12, 1));
   late MockWalkUseCase useCase;
   late TrackerState current;
   late StreamController<TrackerState> trackerController;
@@ -38,7 +40,7 @@ void main() {
         Ok([walk()]),
       ]),
     ),
-    build: () => WalkFeedCubit(useCase),
+    build: () => WalkFeedCubit(useCase, clock),
     act: (cubit) => cubit.start(),
     expect: () => [
       const WalkFeedState.loading(),
@@ -58,7 +60,7 @@ void main() {
         () => useCase.watchWalks(),
       ).thenAnswer((_) => Stream.value(Ok([walk()])));
     },
-    build: () => WalkFeedCubit(useCase),
+    build: () => WalkFeedCubit(useCase, clock),
     act: (cubit) => cubit.start(),
     expect: () => [
       const WalkFeedState.loading(),
@@ -81,7 +83,7 @@ void main() {
         return Stream.value(Ok([walk()]));
       });
     },
-    build: () => WalkFeedCubit(useCase),
+    build: () => WalkFeedCubit(useCase, clock),
     act: (cubit) async {
       await cubit.start();
       await Future<void>.delayed(const Duration(milliseconds: 20));
@@ -103,7 +105,7 @@ void main() {
         Future.delayed(const Duration(milliseconds: 10), () => Ok([walk()])),
       ),
     ),
-    build: () => WalkFeedCubit(useCase),
+    build: () => WalkFeedCubit(useCase, clock),
     act: (cubit) async {
       await cubit.start();
       trackerController.add(TrackerState.tracking(session));
@@ -123,7 +125,7 @@ void main() {
     setUp: () => when(
       () => useCase.watchWalks(),
     ).thenAnswer((_) => Stream.value(const Err(Failure.unknown()))),
-    build: () => WalkFeedCubit(useCase),
+    build: () => WalkFeedCubit(useCase, clock),
     act: (cubit) => cubit.start(),
     expect: () => [
       const WalkFeedState.loading(),
@@ -141,7 +143,7 @@ void main() {
         ),
       );
     },
-    build: () => WalkFeedCubit(useCase),
+    build: () => WalkFeedCubit(useCase, clock),
     act: (cubit) async {
       await cubit.start();
       await Future<void>.delayed(Duration.zero);
@@ -156,10 +158,48 @@ void main() {
     verify: (_) => verify(() => useCase.watchWalks()).called(2),
   );
 
+  blocTest<WalkFeedCubit, WalkFeedState>(
+    '이번 주 요약을 시계 기준으로 싣고, 추적 상태가 바뀌어도 유지한다',
+    setUp: () => when(() => useCase.watchWalks()).thenAnswer((_) {
+      Future<void>.delayed(
+        const Duration(milliseconds: 5),
+        () => trackerController.add(TrackerState.tracking(session)),
+      );
+      return Stream.value(Ok([walk()]));
+    }),
+    // t0 = 2026-10-03(토) 09:00 → 같은 주의 일요일
+    build: () =>
+        WalkFeedCubit(useCase, FakeClock.fixed(DateTime(2026, 10, 4, 12))),
+    act: (cubit) async {
+      await cubit.start();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    },
+    expect: () {
+      const summary = PeriodSummary(
+        distanceMeters: 1200,
+        duration: Duration(minutes: 30),
+        walkCount: 1,
+      );
+      return [
+        const WalkFeedState.loading(),
+        WalkFeedState.loaded(
+          walks: [walk()],
+          tracker: const TrackerState.idle(),
+          weekSummary: summary,
+        ),
+        WalkFeedState.loaded(
+          walks: [walk()],
+          tracker: TrackerState.tracking(session),
+          weekSummary: summary,
+        ),
+      ];
+    },
+  );
+
   test('닫힌 뒤에 온 값은 상태를 내지 않고 구독을 끊는다', () async {
     final controller = StreamController<Result<List<Walk>>>();
     when(() => useCase.watchWalks()).thenAnswer((_) => controller.stream);
-    final cubit = WalkFeedCubit(useCase);
+    final cubit = WalkFeedCubit(useCase, clock);
     await cubit.start();
     await cubit.close();
 
