@@ -67,15 +67,19 @@ class _DistanceBarChartState extends State<DistanceBarChart> {
       color: colors.textMuted,
     );
 
+    void toggle() => setState(() => _selected = selected ? null : index);
+
+    // excludeSemantics 는 GestureDetector 의 탭 동작까지 지우므로 여기서 다시 단다.
     return Semantics(
       label: l10n.walkStatsBarSemantics(label, distance),
       button: true,
       selected: selected,
       excludeSemantics: true,
+      onTap: toggle,
       child: GestureDetector(
         key: Key('stats-bar-$index'),
         behavior: HitTestBehavior.opaque,
-        onTap: () => setState(() => _selected = selected ? null : index),
+        onTap: toggle,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: PawlogSpacing.xs),
           child: Column(

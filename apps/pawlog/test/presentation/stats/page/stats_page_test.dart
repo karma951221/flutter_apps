@@ -1,6 +1,7 @@
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pawlog/domain/walk/entity/walk.dart';
@@ -101,12 +102,33 @@ void main() {
     expect(find.byKey(const Key('stats-bar-value')), findsNothing);
   });
 
-  testWidgets('이전 주로 가면 지난주가 보이고 다음이 켜진다', (tester) async {
+  testWidgets('스크린리더로 막대를 누르면 값이 뜬다', (tester) async {
+    final handle = tester.ensureSemantics();
     await pump(tester);
+
+    final node = tester.getSemantics(find.byKey(const Key('stats-bar-4')));
+    expect(node.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
+
+    node.owner!.performAction(node.id, SemanticsAction.tap);
+    await tester.pump();
+    expect(text(tester, 'stats-bar-value'), '2.5 km');
+    handle.dispose();
+  });
+
+  testWidgets('이전 주로 가면 지난주가 보이고 다음이 켜진다', (tester) async {
+    IconButton next() => tester.widget<IconButton>(
+      find.descendant(
+        of: find.byKey(const Key('stats-next')),
+        matching: find.byType(IconButton),
+      ),
+    );
+    await pump(tester);
+    expect(next().onPressed, isNull); // 이번 주에서는 다음이 꺼져 있다
 
     await tester.tap(find.byKey(const Key('stats-previous')));
     await tester.pumpAndSettle();
 
+    expect(next().onPressed, isNotNull);
     expect(text(tester, 'stats-range-label'), '10월 5일 – 11일');
     expect(text(tester, 'stats-total-distance'), '800 m');
     expect(find.byKey(const Key('stats-comparison')), findsNothing); // 그 전 주는 0
