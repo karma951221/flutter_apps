@@ -150,7 +150,7 @@ pawlog 는 `core` · `design_system` · `l10n` 만 의존한다. `feature_*` ·
 v1 은 feature 넷을 **한 코드 묶음** 에 둔다(처음엔 `packages/features/walk` 패키지, 2026-10-04
 부터 `apps/pawlog/lib/` 안 — §4.6). 서로 엔티티를 공유하고(산책↔강아지) 화면이 적어, 패키지를
 나누면 비용만 든다. 앱 안에서는 `domain/` · `data/` · `presentation/` 아래를 `dog` · `walk` ·
-`tracking` · `feed` · `photo` 영역으로 나눈다. v2 소셜이 들어올 때 다시 본다. 문서는 트레이더처럼 `apps/pawlog/docs/features/<name>/` 에 feature
+`tracking` · `feed` · `photo` · `stats` 영역으로 나눈다. v2 소셜이 들어올 때 다시 본다. 문서는 트레이더처럼 `apps/pawlog/docs/features/<name>/` 에 feature
 별로 `plan.md` · `history.md` · `testing.md` 를 둔다.
 
 | # | Feature | 역할 | 단계 |
@@ -159,7 +159,7 @@ v1 은 feature 넷을 **한 코드 묶음** 에 둔다(처음엔 `packages/featu
 | W2 | **tracking** | 산책 시작/종료, GPS 경로 · 거리 · 시간, 백그라운드 유지, 진행 화면(지도) | 1 |
 | W3 | **record** | 산책 저장(강아지 · 메모 · 사진) · 수정 · 삭제 · 상세 | 2 |
 | W4 | **feed** | 내 기록 타임라인 · 카드 · 빈 상태 · 추적 중 배너 · 변경 반영 | 2 |
-| W6 | **stats** | 주 · 월 기간 요약 · 거리 막대 · 연속 · 최고 기록, 피드 요약 줄 — [계획](features/stats/plan.md) (2026-10-16 착수, 범위 밖이던 통계 대시보드 중 로컬 데이터로 되는 부분) | 2+ |
+| W6 | **stats** | 주 · 월 기간 요약 · 거리 막대 · 연속 · 최고 기록, 피드 요약 줄 — [계획](features/stats/plan.md) (v1 범위 밖이던 통계 대시보드 중 로컬 데이터로 되는 부분) | 2+ |
 | W5 | **social** (v2) | Supabase 동기화 · 공개 피드 · 프로필 · 반응/댓글 — 트레이더 feature 재사용 검토 | 3 |
 
 ### 교차 관심사 (특정 feature 소유 아님)
