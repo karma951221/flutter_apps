@@ -11,7 +11,7 @@
 | 0 | 기획 — 기획서 · 설계 스펙 · 허브 | **완료** |
 | 1 | 바닥(패키지 뼈대 · drift · 앱 셸) + W1 dog + W2 tracking | **완료** |
 | 2 | W3 record + W4 feed + 문서 | **완료** — 에뮬레이터 QA 2026-10-04(일부 시나리오 미실행) |
-| 2+ | W6 stats — 주 · 월 통계, 피드 요약 줄 | **착수** 2026-10-16 — 스펙 · [계획](features/stats/plan.md) |
+| 2+ | W6 stats — 주 · 월 통계, 피드 요약 줄 | **완료** 2026-10-16 — 에뮬레이터 일부([테스트](features/stats/testing.md#에뮬레이터)) |
 | 3 | W5 social (v2) | 미정 |
 
 ## 0 — 기획 (완료, 2026-10-03)
@@ -74,14 +74,22 @@ SDK 없음, 다음 세션.** APK · iOS 빌드도 아직 한 번도 하지 않�
    앱이 따로 하는 문제. 모노레포 공통 작업이라 [전체 진행 현황](../../../docs/status.md)에서 다룬다.
    2026-10-04 에 푼 것은 아래 "패키지 경계 정리" 에 있다
 
-## W6 stats (착수 2026-10-16)
+## W6 stats (2026-10-16)
 
 사용자가 고른 범위: 기간 요약 · 막대 그래프 · 연속 · 최고 기록, 진입점은 피드 맨 위 요약 줄. 강아지별 누적은 뺐다.
 설계는 [통계 설계](../../../docs/superpowers/specs/2026-10-16-pawlog-stats-design.md), 화면 · 상태 · 문자열은
 [계획](features/stats/plan.md). 스키마 변경 없음.
 
 - [x] 스펙 · 계획
-- [ ] ① 계산 정책 · ② 문자열 · ③ 통계 화면 · ④ 피드 요약 줄 · ⑤ 문서
+- [x] ① 계산 정책 (`deb4198`) · ② 문자열 (`e43bcd1`) · ③ 상태 · 표기 (`74fc881`) · ④ 통계 화면 · `/stats`
+      (`ac6c3bc` · 리뷰 수정 `6ecb8ac`) · ⑤ 피드 요약 줄 (`ab5e10a`) · 문서 — [기록](features/stats/history.md) · [테스트](features/stats/testing.md)
+- [x] 에뮬레이터 — ①③⑤ PASS, ②④ 일부. 새 AVD 에서 GPS 가 앱에 들어오지 않아 거리 0 m 산책으로 봤다
+- [ ] 남은 것: GPS 가 되는 기기에서 거리 · 막대 높이 · 지난 기간 이동을 한 번 더 본다. 위치 꺼짐 뒤 "다시 시도" 가
+      위치 요청을 다시 걸지 않는 W2 문제([기록](features/stats/history.md#에뮬레이터-qa-2026-10-16))
+
+검증(2026-10-16, `ab5e10a`): `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+303` · `flutter build apk --debug`
+성공. `packages/l10n` `+10`. `apps/trader` `flutter test test/convention` 은 워크트리에 미커밋 `design.md` 가 없어
+링크 1건 실패 — 메인 체크아웃에서는 통과
 
 ## 패키지 경계 정리 (2026-10-04)
 

@@ -12,7 +12,7 @@
 | trader (daylog) | 0~3.6단계 · 5단계(F10 모의투자) 완료, 4단계(v1.1) 대기 | [트레이더 진행 현황](../apps/trader/docs/status.md) |
 | commute (통근) | v1(패키지 경계 시험) 완료 | [통근 진행 현황](../apps/commute/docs/status.md) |
 | walk (걷기) | v1 코드 완료, 기기 확인 대기 | [걷기 진행 현황](../apps/walk/docs/status.md) |
-| pawlog (강아지 산책) | v1 구현 완료(W1~W4, 에뮬레이터 검증 전), W5 social(v2) 미정 | [pawlog 진행 현황](../apps/pawlog/docs/status.md) |
+| pawlog (강아지 산책) | v1 구현 완료(W1~W4), W6 stats 완료(2026-10-16), W5 social(v2) 미정 | [pawlog 진행 현황](../apps/pawlog/docs/status.md) |
 
 ## 모노레포
 

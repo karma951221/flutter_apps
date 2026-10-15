@@ -1,8 +1,8 @@
 # W6 stats — 계획 (화면 · 상태 · 완료 조건)
 
-> [pawlog 허브](../../README.md) · [기획 §5](../../overview.md#5-feature-분해) · [설계](../../../../../docs/superpowers/specs/2026-10-16-pawlog-stats-design.md) · [디자인 시스템](../../design.md)
+> [pawlog 허브](../../README.md) · [기획 §5](../../overview.md#5-feature-분해) · [구현 기록](history.md) · [테스트](testing.md) · [설계](../../../../../docs/superpowers/specs/2026-10-16-pawlog-stats-design.md) · [디자인 시스템](../../design.md)
 
-> 상태: 착수 2026-10-16 · 진행 상태의 단일 기준은 [진행 현황](../../status.md)
+> 상태: 구현 완료 2026-10-16 (`ab5e10a`) · 에뮬레이터 일부(GPS 없이 0 m 산책으로) · 진행 상태의 단일 기준은 [진행 현황](../../status.md)
 
 ## 범위
 
