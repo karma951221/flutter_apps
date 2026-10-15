@@ -5,6 +5,7 @@ abstract final class PawlogPaths {
   static const walks = '/walks';
   static const dogs = '/dogs';
   static const newDog = '/dogs/new';
+  static const stats = '/stats';
 
   static String walk(String id) => '$walks/$id';
   static String walkEdit(String id) => '$walks/$id/edit';

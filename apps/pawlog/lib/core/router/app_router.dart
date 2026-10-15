@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../presentation/dog/page/dog_edit_page.dart';
 import '../../presentation/dog/page/dog_list_page.dart';
 import '../../presentation/feed/page/walk_feed_page.dart';
+import '../../presentation/stats/page/stats_page.dart';
 import '../../presentation/tracking/page/active_walk_page.dart';
 import '../../presentation/walk/page/walk_detail_page.dart';
 import '../../presentation/walk/page/walk_edit_page.dart';
@@ -95,6 +96,11 @@ GoRouter createRouter({required bool hasDogs}) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: PawlogPaths.stats,
+        builder: (context, _) =>
+            StatsPage(onOpenWalk: (id) => context.push(PawlogPaths.walk(id))),
       ),
       GoRoute(
         path: PawlogPaths.dogs,

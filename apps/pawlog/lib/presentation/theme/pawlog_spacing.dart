@@ -58,4 +58,10 @@ abstract final class PawlogSize {
   /// 진행 화면 시트 위 끌 손잡이.
   static const handleWidth = 36.0;
   static const handleHeight = 4.0;
+
+  /// 통계 막대 그래프 전체 높이(값 표시 · 칸 라벨 포함).
+  static const statsChart = 180.0;
+
+  /// 구분선 · 0 인 막대의 바닥선 두께.
+  static const hairline = 1.0;
 }

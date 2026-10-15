@@ -18,6 +18,8 @@ import 'package:pawlog/presentation/dog/cubit/dog_list_cubit.dart';
 import 'package:pawlog/presentation/dog/page/dog_edit_page.dart';
 import 'package:pawlog/presentation/feed/cubit/walk_feed_cubit.dart';
 import 'package:pawlog/presentation/feed/page/walk_feed_page.dart';
+import 'package:pawlog/presentation/stats/cubit/stats_cubit.dart';
+import 'package:pawlog/presentation/stats/page/stats_page.dart';
 import 'package:pawlog/presentation/tracking/cubit/active_walk_cubit.dart';
 import 'package:pawlog/presentation/walk/cubit/walk_detail_cubit.dart';
 import 'package:pawlog/presentation/walk/cubit/walk_edit_cubit.dart';
@@ -70,6 +72,7 @@ void main() {
       )
       ..registerFactory<DogListCubit>(() => DogListCubit(useCase))
       ..registerFactory<DogEditCubit>(() => DogEditCubit(useCase))
+      ..registerFactory<StatsCubit>(() => StatsCubit(useCase, const Clock()))
       ..registerSingleton<TileProvider>(StubTileProvider());
   });
   tearDown(getIt.reset);
@@ -163,6 +166,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(path(router), '/dogs');
+    await dispose(tester);
+  });
+
+  testWidgets('/stats 로 가면 통계 화면이 뜬다', (tester) async {
+    final router = await pumpRouter(tester);
+
+    router.go('/stats');
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StatsPage), findsOneWidget);
+    expect(path(router), '/stats');
+    await dispose(tester);
+  });
+
+  testWidgets('반려견이 없으면 /stats 도 /dogs/new 로 간다', (tester) async {
+    final router = await pumpRouter(tester, hasDogs: false);
+
+    router.go('/stats');
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DogEditPage), findsOneWidget);
+    expect(path(router), '/dogs/new');
     await dispose(tester);
   });
 }

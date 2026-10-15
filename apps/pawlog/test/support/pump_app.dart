@@ -9,10 +9,11 @@ Future<void> pumpApp(
   WidgetTester tester,
   Widget home, {
   bool disableAnimations = false,
+  ThemeData? theme,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
-      theme: PawlogTheme.light(),
+      theme: theme ?? PawlogTheme.light(),
       locale: const Locale('ko'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
