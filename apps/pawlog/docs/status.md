@@ -12,7 +12,7 @@
 | 1 | 바닥(패키지 뼈대 · drift · 앱 셸) + W1 dog + W2 tracking | **완료** |
 | 2 | W3 record + W4 feed + 문서 | **완료** — 에뮬레이터 QA 2026-10-04(일부 시나리오 미실행) |
 | 2+ | W6 stats — 주 · 월 통계, 피드 요약 줄 | **완료** 2026-10-16 — 에뮬레이터 일부([테스트](features/stats/testing.md#에뮬레이터)) |
-| 2+ | W7 session — 일시정지 · 재개, 강제 종료 뒤 복구 | **착수** 2026-10-16 — [계획](features/session/plan.md) |
+| 2+ | W7 session — 일시정지 · 재개, 강제 종료 뒤 복구 | **완료** 2026-10-17 — 에뮬레이터 PASS(거리 제외, [테스트](features/session/testing.md#에뮬레이터)) |
 | 3 | W5 social (v2) | 미정 |
 
 ## 0 — 기획 (완료, 2026-10-03)
@@ -74,6 +74,20 @@ SDK 없음, 다음 세션.** APK · iOS 빌드도 아직 한 번도 하지 않�
    남은 것은 `FailureCode` · ARB 의 앱별 증가, `AppAvatar.nickname`, `CLAUDE.md` 경로, `core` 등록을
    앱이 따로 하는 문제. 모노레포 공통 작업이라 [전체 진행 현황](../../../docs/status.md)에서 다룬다.
    2026-10-04 에 푼 것은 아래 "패키지 경계 정리" 에 있다
+
+## W7 session (2026-10-16 ~ 17)
+
+일시정지 · 재개와 강제 종료 뒤 복구. "묻지 말고 알아서" 지시로 오케스트레이터가 골랐다. 설계는
+[일시정지 · 복구 설계](../../../docs/superpowers/specs/2026-10-16-pawlog-pause-recovery-design.md), 화면 · 문자열은
+[계획](features/session/plan.md). **drift 스키마 v1 → v2**(`active_walks` · `active_walk_points`).
+
+- [x] ① 세션 멈춤 시간 (`ffb6dfd`) · ② 추적기 pause/unpause (`c8929e3`) · ③ 버튼 · 표시 · 문자열 (`3210f23`) ·
+      ④ drift v2 저장소 (`b7bf501`) · ⑤ 써 두기 · 복구 (`7419b14` · 리뷰 수정 `5affebb`) — [기록](features/session/history.md) · [테스트](features/session/testing.md)
+- [x] 에뮬레이터 ①②④⑤ PASS, ③ 시간 PASS — 거리 이어짐은 GPS 가 앱에 안 들어와 못 봄
+- [ ] 남은 것: GPS 가 되는 기기에서 복구 뒤 거리 · 점이 이어지는지
+
+검증(2026-10-17, `5affebb`): `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+360` · `flutter build apk --debug` 성공.
+`packages/location` `+24` · `packages/l10n` `+10` · `apps/trader` `flutter test test/convention` 통과.
 
 ## W6 stats (2026-10-16)
 

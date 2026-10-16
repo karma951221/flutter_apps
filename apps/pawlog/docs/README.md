@@ -20,6 +20,7 @@
 | W3 record — [계획](features/record/plan.md) · [기록](features/record/history.md) · [테스트](features/record/testing.md) | 산책 저장 · 수정 폼, 사진, 상세 |
 | W4 feed — [계획](features/feed/plan.md) · [기록](features/feed/history.md) · [테스트](features/feed/testing.md) | 첫 화면 피드 · 카드 · 추적 상태 배너 |
 | W6 stats — [계획](features/stats/plan.md) · [기록](features/stats/history.md) · [테스트](features/stats/testing.md) | 주 · 월 산책 통계 화면, 피드 맨 위 이번 주 요약 줄 |
+| W7 session — [계획](features/session/plan.md) · [기록](features/session/history.md) · [테스트](features/session/testing.md) | 산책 일시정지 · 재개, 강제 종료 뒤 복구 |
 | [구현 리뷰 · 요약](audits/2026-10-03-implementation-review.md) | 리뷰어 에이전트가 단계 커밋마다 독립적으로 읽고 쓴 소견과 요약 |
 
 feature 문서는 `features/<name>/` 에 착수 시 `plan.md`, 완료 시 `history.md` · `testing.md` 를 둔다.
