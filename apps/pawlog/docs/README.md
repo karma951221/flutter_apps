@@ -14,6 +14,7 @@
 |---|---|
 | [진행 현황](status.md) | 단계별 체크리스트, 검증 결과, 다음 할 일 |
 | [기획서](overview.md) | 한 줄 정의 · 범위 · 기술 스택 · feature 분해(W1~W5) · 데이터 모델 · 개발 단계 · 확정 사항 |
+| [디자인 시스템](design.md) | 색 · 서체 · 모양 · 모션 토큰과 컴포넌트 규칙. UI 를 만들거나 고치기 전에 읽는다 |
 | W1 dog — [계획](features/dog/plan.md) · [기록](features/dog/history.md) · [테스트](features/dog/testing.md) | 반려견 목록 · 등록 · 수정, 첫 실행 리다이렉트 |
 | W2 tracking — [계획](features/tracking/plan.md) · [기록](features/tracking/history.md) · [테스트](features/tracking/testing.md) | GPS 추적기와 진행 화면 |
 | W3 record — [계획](features/record/plan.md) · [기록](features/record/history.md) · [테스트](features/record/testing.md) | 산책 저장 · 수정 폼, 사진, 상세 |
