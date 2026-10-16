@@ -3,8 +3,10 @@ import 'package:pawlog/domain/export/policy/gpx_encoder.dart';
 import 'package:pawlog/domain/walk/entity/geo_point.dart';
 import 'package:pawlog/domain/walk/entity/walk_track_point.dart';
 
-WalkTrackPoint _p(double lat, double lng, DateTime at) =>
-    WalkTrackPoint(point: GeoPoint(lat: lat, lng: lng), recordedAt: at);
+WalkTrackPoint _p(double lat, double lng, DateTime at) => WalkTrackPoint(
+  point: GeoPoint(lat: lat, lng: lng),
+  recordedAt: at,
+);
 
 void main() {
   final startedAt = DateTime.utc(2026, 10, 17, 0, 12);
@@ -56,6 +58,29 @@ void main() {
       );
       expect(xml, isNot(contains('<desc>')));
     }
+  });
+
+  test('메모의 앞뒤 공백과 줄바꿈은 잘라서 desc 에 쓴다', () {
+    final xml = GpxEncoder.encode(
+      name: 'a',
+      description: '  \n 공원 한 바퀴 \n ',
+      startedAt: startedAt,
+      points: const [],
+    );
+    expect(xml, contains('<desc>공원 한 바퀴</desc>'));
+  });
+
+  test('XML 에서 쓸 수 없는 제어 문자는 지우고 탭 · 줄바꿈은 남긴다', () {
+    final xml = GpxEncoder.encode(
+      name: 'a\u0001b\u001Fc\u0000',
+      description: 'x\ty\u000Bz',
+      startedAt: startedAt,
+      points: const [],
+    );
+    expect(xml, contains('<name>abc</name>'));
+    expect(xml, contains('<desc>x\tyz</desc>'));
+    expect(xml, isNot(contains('\u0001')));
+    expect(xml, isNot(contains('\u001F')));
   });
 
   test('점이 없으면 trkseg 가 비어 있다', () {

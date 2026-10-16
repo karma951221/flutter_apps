@@ -29,3 +29,11 @@
 | 실패 스낵바는 `AppSnackBarType.error`, 경로 없음은 `info` | 경로 없음은 오류가 아니라 안내다 |
 | `AppOverflowMenuItem` 에 선택 인자 `key` 를 더해 `PopupMenuItem` 에 붙인다(`packages/design_system`) | 계획이 메뉴 항목 키를 정했는데 공통 항목에 키를 둘 자리가 없었다. 기존 호출부는 그대로 |
 | 공유 시트에서 취소해도 `shared` | `share_plus` 결과를 보지 않는다. 계획 "공유 · 취소 모두 아무것도 안 띄움" 과 같다 |
+
+## 리뷰에서 고친 것
+
+| # | 고친 것 | 방법 |
+|---|---|---|
+| 1 | `<desc>` 가 trim 전 메모를 썼다 | trim 한 `memo` 를 이스케이프해 쓴다. 앞뒤 공백·줄바꿈 테스트 추가 |
+| 2 | XML 1.0 에서 쓸 수 없는 제어 문자가 그대로 나갔다 | `_escape` 가 U+0000–0008 · 000B · 000C · 000E–001F 를 지운다(탭 · LF · CR 은 유지). 제어 문자 테스트 추가 |
+| 4 | 페이지 테스트 하나가 `disposePage` 를 빼먹었다. 삭제 중 `exportGpx()` 경로에 테스트가 없었다 | `disposePage` 호출 추가. 삭제 중 `failed` · 공유 안 부름 테스트(`Completer` 로 `deleteWalk` 를 붙잡음) 추가 |

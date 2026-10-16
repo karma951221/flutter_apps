@@ -4,6 +4,10 @@ import '../../walk/entity/walk_track_point.dart';
 
 /// 산책 한 건을 GPX 1.1 문서로 바꾸는 순수 함수 모음.
 abstract final class GpxEncoder {
+  static final _invalidXmlChars = RegExp(
+    '[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F]',
+  );
+
   static String encode({
     required String name,
     String? description,
@@ -25,7 +29,7 @@ abstract final class GpxEncoder {
       ..writeln('  <trk>')
       ..writeln('    <name>$escapedName</name>');
     if (memo.isNotEmpty) {
-      buffer.writeln('    <desc>${_escape(description!)}</desc>');
+      buffer.writeln('    <desc>${_escape(memo)}</desc>');
     }
     buffer
       ..writeln('    <type>walking</type>')
@@ -54,7 +58,9 @@ abstract final class GpxEncoder {
     return '${iso.substring(0, 19)}Z';
   }
 
+  /// XML 1.0 에서 쓸 수 없는 제어 문자(탭 · LF · CR 만 허용)를 지우고 이스케이프한다.
   static String _escape(String s) => s
+      .replaceAll(_invalidXmlChars, '')
       .replaceAll('&', '&amp;')
       .replaceAll('<', '&lt;')
       .replaceAll('>', '&gt;')

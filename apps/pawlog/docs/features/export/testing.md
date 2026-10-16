@@ -7,12 +7,12 @@ cd apps/pawlog && flutter test test/domain/export test/presentation/walk test/co
 cd packages/design_system && flutter test test/widget/app_overflow_menu_test.dart
 ```
 
-W8 몫은 `apps/pawlog` 15건(`+375` → `+390`, ① 7건 · ② 8건)과 `packages/design_system` 1건이다.
+W8 몫은 `apps/pawlog` 18건(`+375` → `+393`, ① 9건 · ② 9건)과 `packages/design_system` 1건이다.
 
 | 파일 | 추가 | 확인 |
 |---|---|---|
-| `test/domain/export/policy/gpx_encoder_test.dart` | 7 | 점 2개 · 메모 문서 전체 · `& < > " '` 이스케이프 · 메모 null/공백이면 `<desc>` 없음 · 점 없으면 빈 `trkseg` · 현지 시각 → UTC `Z` · 좌표 소수 6자리 · `fileName` 은 현지 시작 시각 |
-| `test/presentation/walk/cubit/walk_detail_cubit_test.dart` | 4 | `exportGpx` — 불러오기 전 `failed` · 점 없으면 `noRoute`(공유 안 부름) · `shared` 에 넘긴 파일 이름 · 내용(`GpxEncoder.encode` 같은 인자) · MIME · 공유 `Err` → `failed(failure)`. 모두 상태 그대로 |
+| `test/domain/export/policy/gpx_encoder_test.dart` | 9 | 점 2개 · 메모 문서 전체 · `& < > " '` 이스케이프 · 메모 null/공백이면 `<desc>` 없음 · 메모 앞뒤 공백·줄바꿈은 잘라서 `<desc>` · 제어 문자(`\u0001` 등) 제거, 탭 유지 · 점 없으면 빈 `trkseg` · 현지 시각 → UTC `Z` · 좌표 소수 6자리 · `fileName` 은 현지 시작 시각 |
+| `test/presentation/walk/cubit/walk_detail_cubit_test.dart` | 5 | `exportGpx` — 불러오기 전 `failed` · 삭제 중 `failed`(공유 안 부름) · 점 없으면 `noRoute`(공유 안 부름) · `shared` 에 넘긴 파일 이름 · 내용(`GpxEncoder.encode` 같은 인자) · MIME · 공유 `Err` → `failed(failure)`. 모두 상태 그대로 |
 | `test/presentation/walk/page/walk_detail_page_test.dart` | 4 | 메뉴에 수정 · 내보내기 · 삭제 순서 · 점 없으면 "경로가 없어 내보낼 수 없어요"(공유 안 부름) · 점 있으면 `.gpx` · `<trkpt` · `application/gpx+xml` 로 공유하고 스낵바 없음 · 실패면 "내보내지 못했어요" |
 | `packages/design_system/test/widget/app_overflow_menu_test.dart` | 1 | 항목 `key` 가 메뉴 행에 붙어 탭하면 값이 온다 |
 

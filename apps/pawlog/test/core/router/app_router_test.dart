@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:core/core.dart';
-import 'package:pawlog/presentation/theme/pawlog_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,6 +19,7 @@ import 'package:pawlog/presentation/feed/cubit/walk_feed_cubit.dart';
 import 'package:pawlog/presentation/feed/page/walk_feed_page.dart';
 import 'package:pawlog/presentation/stats/cubit/stats_cubit.dart';
 import 'package:pawlog/presentation/stats/page/stats_page.dart';
+import 'package:pawlog/presentation/theme/pawlog_theme.dart';
 import 'package:pawlog/presentation/tracking/cubit/active_walk_cubit.dart';
 import 'package:pawlog/presentation/walk/cubit/walk_detail_cubit.dart';
 import 'package:pawlog/presentation/walk/cubit/walk_edit_cubit.dart';
@@ -68,7 +68,9 @@ void main() {
       ..registerFactory<WalkFeedCubit>(
         () => WalkFeedCubit(useCase, const Clock()),
       )
-      ..registerFactory<WalkDetailCubit>(() => WalkDetailCubit(useCase, MockWalkFileSharer()))
+      ..registerFactory<WalkDetailCubit>(
+        () => WalkDetailCubit(useCase, MockWalkFileSharer()),
+      )
       ..registerFactory<WalkEditCubit>(() => WalkEditCubit(useCase))
       ..registerFactory<ActiveWalkCubit>(
         () => ActiveWalkCubit(useCase, const Clock()),

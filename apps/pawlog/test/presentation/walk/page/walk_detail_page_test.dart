@@ -297,6 +297,7 @@ void main() {
 
       expect(find.text('경로가 없어 내보낼 수 없어요'), findsOneWidget);
       verifyZeroInteractions(sharer);
+      await disposePage(tester);
     });
 
     testWidgets('경로가 있으면 GPX 를 공유하고 스낵바는 없다', (tester) async {

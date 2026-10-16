@@ -1,11 +1,13 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pawlog/domain/export/policy/gpx_encoder.dart';
 import 'package:pawlog/presentation/walk/cubit/walk_detail_cubit.dart';
-import 'package:pawlog/presentation/walk/cubit/walk_export_result.dart';
 import 'package:pawlog/presentation/walk/cubit/walk_detail_state.dart';
+import 'package:pawlog/presentation/walk/cubit/walk_export_result.dart';
 
 import '../../../support/fakes.dart';
 import '../../../support/mock_walk_file_sharer.dart';
@@ -154,9 +156,7 @@ void main() {
       final memoWalk = walk(
         dogs: [dog('d1'), dog('d2')],
       ).copyWith(memo: '공원 한 바퀴');
-      when(
-        () => useCase.getWalk('w1'),
-      ).thenAnswer((_) async => Ok(memoWalk));
+      when(() => useCase.getWalk('w1')).thenAnswer((_) async => Ok(memoWalk));
       stubSharer(const Ok(null));
       final cubit = WalkDetailCubit(useCase, sharer);
       addTearDown(cubit.close);
@@ -177,6 +177,22 @@ void main() {
         ),
       ).called(1);
       expect(cubit.state, before);
+    });
+
+    test('삭제 중에는 failed 이고 공유하지 않는다', () async {
+      final gate = Completer<Result<void>>();
+      when(() => useCase.deleteWalk('w1')).thenAnswer((_) => gate.future);
+      final cubit = WalkDetailCubit(useCase, sharer);
+      addTearDown(cubit.close);
+      await cubit.load('w1');
+      final deleting = cubit.delete();
+      expect(cubit.state, isA<WalkDetailDeleting>());
+
+      expect(await cubit.exportGpx(), isA<WalkExportFailed>());
+      verifyZeroInteractions(sharer);
+
+      gate.complete(const Ok(null));
+      await deleting;
     });
 
     test('공유가 실패하면 failed 에 그 failure', () async {

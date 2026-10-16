@@ -8,6 +8,9 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../domain/export/repository/walk_file_sharer.dart';
 
+/// 임시 파일은 OS 캐시 디렉터리에 쓰고 같은 이름이면 덮어쓴다.
+/// iPad 는 공유 시트에 `sharePositionOrigin` 이 필요하지만 iOS 가 아직 검증 전이라
+/// pawlog 는 넘기지 않는다(docs/status.md 의 iOS 미검증 메모 참고).
 @LazySingleton(as: WalkFileSharer)
 class SharePlusWalkFileSharer implements WalkFileSharer {
   @override
