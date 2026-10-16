@@ -2013,6 +2013,911 @@ class WalkPhotosCompanion extends UpdateCompanion<WalkPhotoRow> {
   }
 }
 
+class $ActiveWalksTable extends ActiveWalks
+    with TableInfo<$ActiveWalksTable, ActiveWalkRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ActiveWalksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _dogIdsMeta = const VerificationMeta('dogIds');
+  @override
+  late final GeneratedColumn<String> dogIds = GeneratedColumn<String>(
+    'dog_ids',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _startedAtMeta = const VerificationMeta(
+    'startedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
+    'started_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _endedAtMeta = const VerificationMeta(
+    'endedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> endedAt = GeneratedColumn<DateTime>(
+    'ended_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pausedMsMeta = const VerificationMeta(
+    'pausedMs',
+  );
+  @override
+  late final GeneratedColumn<int> pausedMs = GeneratedColumn<int>(
+    'paused_ms',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _pausedAtMeta = const VerificationMeta(
+    'pausedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> pausedAt = GeneratedColumn<DateTime>(
+    'paused_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _distanceMetersMeta = const VerificationMeta(
+    'distanceMeters',
+  );
+  @override
+  late final GeneratedColumn<double> distanceMeters = GeneratedColumn<double>(
+    'distance_meters',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noticeTitleMeta = const VerificationMeta(
+    'noticeTitle',
+  );
+  @override
+  late final GeneratedColumn<String> noticeTitle = GeneratedColumn<String>(
+    'notice_title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noticeTextMeta = const VerificationMeta(
+    'noticeText',
+  );
+  @override
+  late final GeneratedColumn<String> noticeText = GeneratedColumn<String>(
+    'notice_text',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    dogIds,
+    startedAt,
+    endedAt,
+    pausedMs,
+    pausedAt,
+    distanceMeters,
+    noticeTitle,
+    noticeText,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'active_walks';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ActiveWalkRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('dog_ids')) {
+      context.handle(
+        _dogIdsMeta,
+        dogIds.isAcceptableOrUnknown(data['dog_ids']!, _dogIdsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_dogIdsMeta);
+    }
+    if (data.containsKey('started_at')) {
+      context.handle(
+        _startedAtMeta,
+        startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_startedAtMeta);
+    }
+    if (data.containsKey('ended_at')) {
+      context.handle(
+        _endedAtMeta,
+        endedAt.isAcceptableOrUnknown(data['ended_at']!, _endedAtMeta),
+      );
+    }
+    if (data.containsKey('paused_ms')) {
+      context.handle(
+        _pausedMsMeta,
+        pausedMs.isAcceptableOrUnknown(data['paused_ms']!, _pausedMsMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pausedMsMeta);
+    }
+    if (data.containsKey('paused_at')) {
+      context.handle(
+        _pausedAtMeta,
+        pausedAt.isAcceptableOrUnknown(data['paused_at']!, _pausedAtMeta),
+      );
+    }
+    if (data.containsKey('distance_meters')) {
+      context.handle(
+        _distanceMetersMeta,
+        distanceMeters.isAcceptableOrUnknown(
+          data['distance_meters']!,
+          _distanceMetersMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_distanceMetersMeta);
+    }
+    if (data.containsKey('notice_title')) {
+      context.handle(
+        _noticeTitleMeta,
+        noticeTitle.isAcceptableOrUnknown(
+          data['notice_title']!,
+          _noticeTitleMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_noticeTitleMeta);
+    }
+    if (data.containsKey('notice_text')) {
+      context.handle(
+        _noticeTextMeta,
+        noticeText.isAcceptableOrUnknown(data['notice_text']!, _noticeTextMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_noticeTextMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ActiveWalkRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ActiveWalkRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      dogIds: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}dog_ids'],
+      )!,
+      startedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}started_at'],
+      )!,
+      endedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}ended_at'],
+      ),
+      pausedMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}paused_ms'],
+      )!,
+      pausedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}paused_at'],
+      ),
+      distanceMeters: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}distance_meters'],
+      )!,
+      noticeTitle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notice_title'],
+      )!,
+      noticeText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}notice_text'],
+      )!,
+    );
+  }
+
+  @override
+  $ActiveWalksTable createAlias(String alias) {
+    return $ActiveWalksTable(attachedDatabase, alias);
+  }
+}
+
+class ActiveWalkRow extends DataClass implements Insertable<ActiveWalkRow> {
+  final int id;
+
+  /// JSON 배열.
+  final String dogIds;
+  final DateTime startedAt;
+  final DateTime? endedAt;
+  final int pausedMs;
+  final DateTime? pausedAt;
+  final double distanceMeters;
+  final String noticeTitle;
+  final String noticeText;
+  const ActiveWalkRow({
+    required this.id,
+    required this.dogIds,
+    required this.startedAt,
+    this.endedAt,
+    required this.pausedMs,
+    this.pausedAt,
+    required this.distanceMeters,
+    required this.noticeTitle,
+    required this.noticeText,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['dog_ids'] = Variable<String>(dogIds);
+    map['started_at'] = Variable<DateTime>(startedAt);
+    if (!nullToAbsent || endedAt != null) {
+      map['ended_at'] = Variable<DateTime>(endedAt);
+    }
+    map['paused_ms'] = Variable<int>(pausedMs);
+    if (!nullToAbsent || pausedAt != null) {
+      map['paused_at'] = Variable<DateTime>(pausedAt);
+    }
+    map['distance_meters'] = Variable<double>(distanceMeters);
+    map['notice_title'] = Variable<String>(noticeTitle);
+    map['notice_text'] = Variable<String>(noticeText);
+    return map;
+  }
+
+  ActiveWalksCompanion toCompanion(bool nullToAbsent) {
+    return ActiveWalksCompanion(
+      id: Value(id),
+      dogIds: Value(dogIds),
+      startedAt: Value(startedAt),
+      endedAt: endedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(endedAt),
+      pausedMs: Value(pausedMs),
+      pausedAt: pausedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pausedAt),
+      distanceMeters: Value(distanceMeters),
+      noticeTitle: Value(noticeTitle),
+      noticeText: Value(noticeText),
+    );
+  }
+
+  factory ActiveWalkRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ActiveWalkRow(
+      id: serializer.fromJson<int>(json['id']),
+      dogIds: serializer.fromJson<String>(json['dogIds']),
+      startedAt: serializer.fromJson<DateTime>(json['startedAt']),
+      endedAt: serializer.fromJson<DateTime?>(json['endedAt']),
+      pausedMs: serializer.fromJson<int>(json['pausedMs']),
+      pausedAt: serializer.fromJson<DateTime?>(json['pausedAt']),
+      distanceMeters: serializer.fromJson<double>(json['distanceMeters']),
+      noticeTitle: serializer.fromJson<String>(json['noticeTitle']),
+      noticeText: serializer.fromJson<String>(json['noticeText']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'dogIds': serializer.toJson<String>(dogIds),
+      'startedAt': serializer.toJson<DateTime>(startedAt),
+      'endedAt': serializer.toJson<DateTime?>(endedAt),
+      'pausedMs': serializer.toJson<int>(pausedMs),
+      'pausedAt': serializer.toJson<DateTime?>(pausedAt),
+      'distanceMeters': serializer.toJson<double>(distanceMeters),
+      'noticeTitle': serializer.toJson<String>(noticeTitle),
+      'noticeText': serializer.toJson<String>(noticeText),
+    };
+  }
+
+  ActiveWalkRow copyWith({
+    int? id,
+    String? dogIds,
+    DateTime? startedAt,
+    Value<DateTime?> endedAt = const Value.absent(),
+    int? pausedMs,
+    Value<DateTime?> pausedAt = const Value.absent(),
+    double? distanceMeters,
+    String? noticeTitle,
+    String? noticeText,
+  }) => ActiveWalkRow(
+    id: id ?? this.id,
+    dogIds: dogIds ?? this.dogIds,
+    startedAt: startedAt ?? this.startedAt,
+    endedAt: endedAt.present ? endedAt.value : this.endedAt,
+    pausedMs: pausedMs ?? this.pausedMs,
+    pausedAt: pausedAt.present ? pausedAt.value : this.pausedAt,
+    distanceMeters: distanceMeters ?? this.distanceMeters,
+    noticeTitle: noticeTitle ?? this.noticeTitle,
+    noticeText: noticeText ?? this.noticeText,
+  );
+  ActiveWalkRow copyWithCompanion(ActiveWalksCompanion data) {
+    return ActiveWalkRow(
+      id: data.id.present ? data.id.value : this.id,
+      dogIds: data.dogIds.present ? data.dogIds.value : this.dogIds,
+      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
+      endedAt: data.endedAt.present ? data.endedAt.value : this.endedAt,
+      pausedMs: data.pausedMs.present ? data.pausedMs.value : this.pausedMs,
+      pausedAt: data.pausedAt.present ? data.pausedAt.value : this.pausedAt,
+      distanceMeters: data.distanceMeters.present
+          ? data.distanceMeters.value
+          : this.distanceMeters,
+      noticeTitle: data.noticeTitle.present
+          ? data.noticeTitle.value
+          : this.noticeTitle,
+      noticeText: data.noticeText.present
+          ? data.noticeText.value
+          : this.noticeText,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ActiveWalkRow(')
+          ..write('id: $id, ')
+          ..write('dogIds: $dogIds, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('endedAt: $endedAt, ')
+          ..write('pausedMs: $pausedMs, ')
+          ..write('pausedAt: $pausedAt, ')
+          ..write('distanceMeters: $distanceMeters, ')
+          ..write('noticeTitle: $noticeTitle, ')
+          ..write('noticeText: $noticeText')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    dogIds,
+    startedAt,
+    endedAt,
+    pausedMs,
+    pausedAt,
+    distanceMeters,
+    noticeTitle,
+    noticeText,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ActiveWalkRow &&
+          other.id == this.id &&
+          other.dogIds == this.dogIds &&
+          other.startedAt == this.startedAt &&
+          other.endedAt == this.endedAt &&
+          other.pausedMs == this.pausedMs &&
+          other.pausedAt == this.pausedAt &&
+          other.distanceMeters == this.distanceMeters &&
+          other.noticeTitle == this.noticeTitle &&
+          other.noticeText == this.noticeText);
+}
+
+class ActiveWalksCompanion extends UpdateCompanion<ActiveWalkRow> {
+  final Value<int> id;
+  final Value<String> dogIds;
+  final Value<DateTime> startedAt;
+  final Value<DateTime?> endedAt;
+  final Value<int> pausedMs;
+  final Value<DateTime?> pausedAt;
+  final Value<double> distanceMeters;
+  final Value<String> noticeTitle;
+  final Value<String> noticeText;
+  const ActiveWalksCompanion({
+    this.id = const Value.absent(),
+    this.dogIds = const Value.absent(),
+    this.startedAt = const Value.absent(),
+    this.endedAt = const Value.absent(),
+    this.pausedMs = const Value.absent(),
+    this.pausedAt = const Value.absent(),
+    this.distanceMeters = const Value.absent(),
+    this.noticeTitle = const Value.absent(),
+    this.noticeText = const Value.absent(),
+  });
+  ActiveWalksCompanion.insert({
+    this.id = const Value.absent(),
+    required String dogIds,
+    required DateTime startedAt,
+    this.endedAt = const Value.absent(),
+    required int pausedMs,
+    this.pausedAt = const Value.absent(),
+    required double distanceMeters,
+    required String noticeTitle,
+    required String noticeText,
+  }) : dogIds = Value(dogIds),
+       startedAt = Value(startedAt),
+       pausedMs = Value(pausedMs),
+       distanceMeters = Value(distanceMeters),
+       noticeTitle = Value(noticeTitle),
+       noticeText = Value(noticeText);
+  static Insertable<ActiveWalkRow> custom({
+    Expression<int>? id,
+    Expression<String>? dogIds,
+    Expression<DateTime>? startedAt,
+    Expression<DateTime>? endedAt,
+    Expression<int>? pausedMs,
+    Expression<DateTime>? pausedAt,
+    Expression<double>? distanceMeters,
+    Expression<String>? noticeTitle,
+    Expression<String>? noticeText,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (dogIds != null) 'dog_ids': dogIds,
+      if (startedAt != null) 'started_at': startedAt,
+      if (endedAt != null) 'ended_at': endedAt,
+      if (pausedMs != null) 'paused_ms': pausedMs,
+      if (pausedAt != null) 'paused_at': pausedAt,
+      if (distanceMeters != null) 'distance_meters': distanceMeters,
+      if (noticeTitle != null) 'notice_title': noticeTitle,
+      if (noticeText != null) 'notice_text': noticeText,
+    });
+  }
+
+  ActiveWalksCompanion copyWith({
+    Value<int>? id,
+    Value<String>? dogIds,
+    Value<DateTime>? startedAt,
+    Value<DateTime?>? endedAt,
+    Value<int>? pausedMs,
+    Value<DateTime?>? pausedAt,
+    Value<double>? distanceMeters,
+    Value<String>? noticeTitle,
+    Value<String>? noticeText,
+  }) {
+    return ActiveWalksCompanion(
+      id: id ?? this.id,
+      dogIds: dogIds ?? this.dogIds,
+      startedAt: startedAt ?? this.startedAt,
+      endedAt: endedAt ?? this.endedAt,
+      pausedMs: pausedMs ?? this.pausedMs,
+      pausedAt: pausedAt ?? this.pausedAt,
+      distanceMeters: distanceMeters ?? this.distanceMeters,
+      noticeTitle: noticeTitle ?? this.noticeTitle,
+      noticeText: noticeText ?? this.noticeText,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (dogIds.present) {
+      map['dog_ids'] = Variable<String>(dogIds.value);
+    }
+    if (startedAt.present) {
+      map['started_at'] = Variable<DateTime>(startedAt.value);
+    }
+    if (endedAt.present) {
+      map['ended_at'] = Variable<DateTime>(endedAt.value);
+    }
+    if (pausedMs.present) {
+      map['paused_ms'] = Variable<int>(pausedMs.value);
+    }
+    if (pausedAt.present) {
+      map['paused_at'] = Variable<DateTime>(pausedAt.value);
+    }
+    if (distanceMeters.present) {
+      map['distance_meters'] = Variable<double>(distanceMeters.value);
+    }
+    if (noticeTitle.present) {
+      map['notice_title'] = Variable<String>(noticeTitle.value);
+    }
+    if (noticeText.present) {
+      map['notice_text'] = Variable<String>(noticeText.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ActiveWalksCompanion(')
+          ..write('id: $id, ')
+          ..write('dogIds: $dogIds, ')
+          ..write('startedAt: $startedAt, ')
+          ..write('endedAt: $endedAt, ')
+          ..write('pausedMs: $pausedMs, ')
+          ..write('pausedAt: $pausedAt, ')
+          ..write('distanceMeters: $distanceMeters, ')
+          ..write('noticeTitle: $noticeTitle, ')
+          ..write('noticeText: $noticeText')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ActiveWalkPointsTable extends ActiveWalkPoints
+    with TableInfo<$ActiveWalkPointsTable, ActiveWalkPointRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ActiveWalkPointsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _seqMeta = const VerificationMeta('seq');
+  @override
+  late final GeneratedColumn<int> seq = GeneratedColumn<int>(
+    'seq',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _latMeta = const VerificationMeta('lat');
+  @override
+  late final GeneratedColumn<double> lat = GeneratedColumn<double>(
+    'lat',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _lngMeta = const VerificationMeta('lng');
+  @override
+  late final GeneratedColumn<double> lng = GeneratedColumn<double>(
+    'lng',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordedAtMeta = const VerificationMeta(
+    'recordedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> recordedAt = GeneratedColumn<DateTime>(
+    'recorded_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _accuracyMeta = const VerificationMeta(
+    'accuracy',
+  );
+  @override
+  late final GeneratedColumn<double> accuracy = GeneratedColumn<double>(
+    'accuracy',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [seq, lat, lng, recordedAt, accuracy];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'active_walk_points';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ActiveWalkPointRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('seq')) {
+      context.handle(
+        _seqMeta,
+        seq.isAcceptableOrUnknown(data['seq']!, _seqMeta),
+      );
+    }
+    if (data.containsKey('lat')) {
+      context.handle(
+        _latMeta,
+        lat.isAcceptableOrUnknown(data['lat']!, _latMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_latMeta);
+    }
+    if (data.containsKey('lng')) {
+      context.handle(
+        _lngMeta,
+        lng.isAcceptableOrUnknown(data['lng']!, _lngMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_lngMeta);
+    }
+    if (data.containsKey('recorded_at')) {
+      context.handle(
+        _recordedAtMeta,
+        recordedAt.isAcceptableOrUnknown(data['recorded_at']!, _recordedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recordedAtMeta);
+    }
+    if (data.containsKey('accuracy')) {
+      context.handle(
+        _accuracyMeta,
+        accuracy.isAcceptableOrUnknown(data['accuracy']!, _accuracyMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {seq};
+  @override
+  ActiveWalkPointRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ActiveWalkPointRow(
+      seq: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}seq'],
+      )!,
+      lat: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}lat'],
+      )!,
+      lng: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}lng'],
+      )!,
+      recordedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}recorded_at'],
+      )!,
+      accuracy: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}accuracy'],
+      ),
+    );
+  }
+
+  @override
+  $ActiveWalkPointsTable createAlias(String alias) {
+    return $ActiveWalkPointsTable(attachedDatabase, alias);
+  }
+}
+
+class ActiveWalkPointRow extends DataClass
+    implements Insertable<ActiveWalkPointRow> {
+  final int seq;
+  final double lat;
+  final double lng;
+  final DateTime recordedAt;
+  final double? accuracy;
+  const ActiveWalkPointRow({
+    required this.seq,
+    required this.lat,
+    required this.lng,
+    required this.recordedAt,
+    this.accuracy,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['seq'] = Variable<int>(seq);
+    map['lat'] = Variable<double>(lat);
+    map['lng'] = Variable<double>(lng);
+    map['recorded_at'] = Variable<DateTime>(recordedAt);
+    if (!nullToAbsent || accuracy != null) {
+      map['accuracy'] = Variable<double>(accuracy);
+    }
+    return map;
+  }
+
+  ActiveWalkPointsCompanion toCompanion(bool nullToAbsent) {
+    return ActiveWalkPointsCompanion(
+      seq: Value(seq),
+      lat: Value(lat),
+      lng: Value(lng),
+      recordedAt: Value(recordedAt),
+      accuracy: accuracy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(accuracy),
+    );
+  }
+
+  factory ActiveWalkPointRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ActiveWalkPointRow(
+      seq: serializer.fromJson<int>(json['seq']),
+      lat: serializer.fromJson<double>(json['lat']),
+      lng: serializer.fromJson<double>(json['lng']),
+      recordedAt: serializer.fromJson<DateTime>(json['recordedAt']),
+      accuracy: serializer.fromJson<double?>(json['accuracy']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'seq': serializer.toJson<int>(seq),
+      'lat': serializer.toJson<double>(lat),
+      'lng': serializer.toJson<double>(lng),
+      'recordedAt': serializer.toJson<DateTime>(recordedAt),
+      'accuracy': serializer.toJson<double?>(accuracy),
+    };
+  }
+
+  ActiveWalkPointRow copyWith({
+    int? seq,
+    double? lat,
+    double? lng,
+    DateTime? recordedAt,
+    Value<double?> accuracy = const Value.absent(),
+  }) => ActiveWalkPointRow(
+    seq: seq ?? this.seq,
+    lat: lat ?? this.lat,
+    lng: lng ?? this.lng,
+    recordedAt: recordedAt ?? this.recordedAt,
+    accuracy: accuracy.present ? accuracy.value : this.accuracy,
+  );
+  ActiveWalkPointRow copyWithCompanion(ActiveWalkPointsCompanion data) {
+    return ActiveWalkPointRow(
+      seq: data.seq.present ? data.seq.value : this.seq,
+      lat: data.lat.present ? data.lat.value : this.lat,
+      lng: data.lng.present ? data.lng.value : this.lng,
+      recordedAt: data.recordedAt.present
+          ? data.recordedAt.value
+          : this.recordedAt,
+      accuracy: data.accuracy.present ? data.accuracy.value : this.accuracy,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ActiveWalkPointRow(')
+          ..write('seq: $seq, ')
+          ..write('lat: $lat, ')
+          ..write('lng: $lng, ')
+          ..write('recordedAt: $recordedAt, ')
+          ..write('accuracy: $accuracy')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(seq, lat, lng, recordedAt, accuracy);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ActiveWalkPointRow &&
+          other.seq == this.seq &&
+          other.lat == this.lat &&
+          other.lng == this.lng &&
+          other.recordedAt == this.recordedAt &&
+          other.accuracy == this.accuracy);
+}
+
+class ActiveWalkPointsCompanion extends UpdateCompanion<ActiveWalkPointRow> {
+  final Value<int> seq;
+  final Value<double> lat;
+  final Value<double> lng;
+  final Value<DateTime> recordedAt;
+  final Value<double?> accuracy;
+  const ActiveWalkPointsCompanion({
+    this.seq = const Value.absent(),
+    this.lat = const Value.absent(),
+    this.lng = const Value.absent(),
+    this.recordedAt = const Value.absent(),
+    this.accuracy = const Value.absent(),
+  });
+  ActiveWalkPointsCompanion.insert({
+    this.seq = const Value.absent(),
+    required double lat,
+    required double lng,
+    required DateTime recordedAt,
+    this.accuracy = const Value.absent(),
+  }) : lat = Value(lat),
+       lng = Value(lng),
+       recordedAt = Value(recordedAt);
+  static Insertable<ActiveWalkPointRow> custom({
+    Expression<int>? seq,
+    Expression<double>? lat,
+    Expression<double>? lng,
+    Expression<DateTime>? recordedAt,
+    Expression<double>? accuracy,
+  }) {
+    return RawValuesInsertable({
+      if (seq != null) 'seq': seq,
+      if (lat != null) 'lat': lat,
+      if (lng != null) 'lng': lng,
+      if (recordedAt != null) 'recorded_at': recordedAt,
+      if (accuracy != null) 'accuracy': accuracy,
+    });
+  }
+
+  ActiveWalkPointsCompanion copyWith({
+    Value<int>? seq,
+    Value<double>? lat,
+    Value<double>? lng,
+    Value<DateTime>? recordedAt,
+    Value<double?>? accuracy,
+  }) {
+    return ActiveWalkPointsCompanion(
+      seq: seq ?? this.seq,
+      lat: lat ?? this.lat,
+      lng: lng ?? this.lng,
+      recordedAt: recordedAt ?? this.recordedAt,
+      accuracy: accuracy ?? this.accuracy,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (seq.present) {
+      map['seq'] = Variable<int>(seq.value);
+    }
+    if (lat.present) {
+      map['lat'] = Variable<double>(lat.value);
+    }
+    if (lng.present) {
+      map['lng'] = Variable<double>(lng.value);
+    }
+    if (recordedAt.present) {
+      map['recorded_at'] = Variable<DateTime>(recordedAt.value);
+    }
+    if (accuracy.present) {
+      map['accuracy'] = Variable<double>(accuracy.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ActiveWalkPointsCompanion(')
+          ..write('seq: $seq, ')
+          ..write('lat: $lat, ')
+          ..write('lng: $lng, ')
+          ..write('recordedAt: $recordedAt, ')
+          ..write('accuracy: $accuracy')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$WalkDatabase extends GeneratedDatabase {
   _$WalkDatabase(QueryExecutor e) : super(e);
   $WalkDatabaseManager get managers => $WalkDatabaseManager(this);
@@ -2021,6 +2926,10 @@ abstract class _$WalkDatabase extends GeneratedDatabase {
   late final $WalkDogsTable walkDogs = $WalkDogsTable(this);
   late final $WalkPointsTable walkPoints = $WalkPointsTable(this);
   late final $WalkPhotosTable walkPhotos = $WalkPhotosTable(this);
+  late final $ActiveWalksTable activeWalks = $ActiveWalksTable(this);
+  late final $ActiveWalkPointsTable activeWalkPoints = $ActiveWalkPointsTable(
+    this,
+  );
   late final Index walksStartedAt = Index(
     'walks_started_at',
     'CREATE INDEX walks_started_at ON walks (started_at)',
@@ -2039,6 +2948,8 @@ abstract class _$WalkDatabase extends GeneratedDatabase {
     walkDogs,
     walkPoints,
     walkPhotos,
+    activeWalks,
+    activeWalkPoints,
     walksStartedAt,
     walkPhotosWalkId,
   ];
@@ -3978,6 +4889,488 @@ typedef $$WalkPhotosTableProcessedTableManager =
       WalkPhotoRow,
       PrefetchHooks Function({bool walkId})
     >;
+typedef $$ActiveWalksTableCreateCompanionBuilder =
+    ActiveWalksCompanion Function({
+      Value<int> id,
+      required String dogIds,
+      required DateTime startedAt,
+      Value<DateTime?> endedAt,
+      required int pausedMs,
+      Value<DateTime?> pausedAt,
+      required double distanceMeters,
+      required String noticeTitle,
+      required String noticeText,
+    });
+typedef $$ActiveWalksTableUpdateCompanionBuilder =
+    ActiveWalksCompanion Function({
+      Value<int> id,
+      Value<String> dogIds,
+      Value<DateTime> startedAt,
+      Value<DateTime?> endedAt,
+      Value<int> pausedMs,
+      Value<DateTime?> pausedAt,
+      Value<double> distanceMeters,
+      Value<String> noticeTitle,
+      Value<String> noticeText,
+    });
+
+class $$ActiveWalksTableFilterComposer
+    extends Composer<_$WalkDatabase, $ActiveWalksTable> {
+  $$ActiveWalksTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get dogIds => $composableBuilder(
+    column: $table.dogIds,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get pausedMs => $composableBuilder(
+    column: $table.pausedMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get pausedAt => $composableBuilder(
+    column: $table.pausedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get distanceMeters => $composableBuilder(
+    column: $table.distanceMeters,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get noticeTitle => $composableBuilder(
+    column: $table.noticeTitle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get noticeText => $composableBuilder(
+    column: $table.noticeText,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ActiveWalksTableOrderingComposer
+    extends Composer<_$WalkDatabase, $ActiveWalksTable> {
+  $$ActiveWalksTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get dogIds => $composableBuilder(
+    column: $table.dogIds,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
+    column: $table.startedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get endedAt => $composableBuilder(
+    column: $table.endedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get pausedMs => $composableBuilder(
+    column: $table.pausedMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get pausedAt => $composableBuilder(
+    column: $table.pausedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get distanceMeters => $composableBuilder(
+    column: $table.distanceMeters,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get noticeTitle => $composableBuilder(
+    column: $table.noticeTitle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get noticeText => $composableBuilder(
+    column: $table.noticeText,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ActiveWalksTableAnnotationComposer
+    extends Composer<_$WalkDatabase, $ActiveWalksTable> {
+  $$ActiveWalksTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get dogIds =>
+      $composableBuilder(column: $table.dogIds, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get startedAt =>
+      $composableBuilder(column: $table.startedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get endedAt =>
+      $composableBuilder(column: $table.endedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get pausedMs =>
+      $composableBuilder(column: $table.pausedMs, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get pausedAt =>
+      $composableBuilder(column: $table.pausedAt, builder: (column) => column);
+
+  GeneratedColumn<double> get distanceMeters => $composableBuilder(
+    column: $table.distanceMeters,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get noticeTitle => $composableBuilder(
+    column: $table.noticeTitle,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get noticeText => $composableBuilder(
+    column: $table.noticeText,
+    builder: (column) => column,
+  );
+}
+
+class $$ActiveWalksTableTableManager
+    extends
+        RootTableManager<
+          _$WalkDatabase,
+          $ActiveWalksTable,
+          ActiveWalkRow,
+          $$ActiveWalksTableFilterComposer,
+          $$ActiveWalksTableOrderingComposer,
+          $$ActiveWalksTableAnnotationComposer,
+          $$ActiveWalksTableCreateCompanionBuilder,
+          $$ActiveWalksTableUpdateCompanionBuilder,
+          (
+            ActiveWalkRow,
+            BaseReferences<_$WalkDatabase, $ActiveWalksTable, ActiveWalkRow>,
+          ),
+          ActiveWalkRow,
+          PrefetchHooks Function()
+        > {
+  $$ActiveWalksTableTableManager(_$WalkDatabase db, $ActiveWalksTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ActiveWalksTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ActiveWalksTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ActiveWalksTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> dogIds = const Value.absent(),
+                Value<DateTime> startedAt = const Value.absent(),
+                Value<DateTime?> endedAt = const Value.absent(),
+                Value<int> pausedMs = const Value.absent(),
+                Value<DateTime?> pausedAt = const Value.absent(),
+                Value<double> distanceMeters = const Value.absent(),
+                Value<String> noticeTitle = const Value.absent(),
+                Value<String> noticeText = const Value.absent(),
+              }) => ActiveWalksCompanion(
+                id: id,
+                dogIds: dogIds,
+                startedAt: startedAt,
+                endedAt: endedAt,
+                pausedMs: pausedMs,
+                pausedAt: pausedAt,
+                distanceMeters: distanceMeters,
+                noticeTitle: noticeTitle,
+                noticeText: noticeText,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String dogIds,
+                required DateTime startedAt,
+                Value<DateTime?> endedAt = const Value.absent(),
+                required int pausedMs,
+                Value<DateTime?> pausedAt = const Value.absent(),
+                required double distanceMeters,
+                required String noticeTitle,
+                required String noticeText,
+              }) => ActiveWalksCompanion.insert(
+                id: id,
+                dogIds: dogIds,
+                startedAt: startedAt,
+                endedAt: endedAt,
+                pausedMs: pausedMs,
+                pausedAt: pausedAt,
+                distanceMeters: distanceMeters,
+                noticeTitle: noticeTitle,
+                noticeText: noticeText,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ActiveWalksTableProcessedTableManager =
+    ProcessedTableManager<
+      _$WalkDatabase,
+      $ActiveWalksTable,
+      ActiveWalkRow,
+      $$ActiveWalksTableFilterComposer,
+      $$ActiveWalksTableOrderingComposer,
+      $$ActiveWalksTableAnnotationComposer,
+      $$ActiveWalksTableCreateCompanionBuilder,
+      $$ActiveWalksTableUpdateCompanionBuilder,
+      (
+        ActiveWalkRow,
+        BaseReferences<_$WalkDatabase, $ActiveWalksTable, ActiveWalkRow>,
+      ),
+      ActiveWalkRow,
+      PrefetchHooks Function()
+    >;
+typedef $$ActiveWalkPointsTableCreateCompanionBuilder =
+    ActiveWalkPointsCompanion Function({
+      Value<int> seq,
+      required double lat,
+      required double lng,
+      required DateTime recordedAt,
+      Value<double?> accuracy,
+    });
+typedef $$ActiveWalkPointsTableUpdateCompanionBuilder =
+    ActiveWalkPointsCompanion Function({
+      Value<int> seq,
+      Value<double> lat,
+      Value<double> lng,
+      Value<DateTime> recordedAt,
+      Value<double?> accuracy,
+    });
+
+class $$ActiveWalkPointsTableFilterComposer
+    extends Composer<_$WalkDatabase, $ActiveWalkPointsTable> {
+  $$ActiveWalkPointsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get lat => $composableBuilder(
+    column: $table.lat,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get lng => $composableBuilder(
+    column: $table.lng,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get accuracy => $composableBuilder(
+    column: $table.accuracy,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ActiveWalkPointsTableOrderingComposer
+    extends Composer<_$WalkDatabase, $ActiveWalkPointsTable> {
+  $$ActiveWalkPointsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get seq => $composableBuilder(
+    column: $table.seq,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get lat => $composableBuilder(
+    column: $table.lat,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get lng => $composableBuilder(
+    column: $table.lng,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get accuracy => $composableBuilder(
+    column: $table.accuracy,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ActiveWalkPointsTableAnnotationComposer
+    extends Composer<_$WalkDatabase, $ActiveWalkPointsTable> {
+  $$ActiveWalkPointsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get seq =>
+      $composableBuilder(column: $table.seq, builder: (column) => column);
+
+  GeneratedColumn<double> get lat =>
+      $composableBuilder(column: $table.lat, builder: (column) => column);
+
+  GeneratedColumn<double> get lng =>
+      $composableBuilder(column: $table.lng, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get recordedAt => $composableBuilder(
+    column: $table.recordedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get accuracy =>
+      $composableBuilder(column: $table.accuracy, builder: (column) => column);
+}
+
+class $$ActiveWalkPointsTableTableManager
+    extends
+        RootTableManager<
+          _$WalkDatabase,
+          $ActiveWalkPointsTable,
+          ActiveWalkPointRow,
+          $$ActiveWalkPointsTableFilterComposer,
+          $$ActiveWalkPointsTableOrderingComposer,
+          $$ActiveWalkPointsTableAnnotationComposer,
+          $$ActiveWalkPointsTableCreateCompanionBuilder,
+          $$ActiveWalkPointsTableUpdateCompanionBuilder,
+          (
+            ActiveWalkPointRow,
+            BaseReferences<
+              _$WalkDatabase,
+              $ActiveWalkPointsTable,
+              ActiveWalkPointRow
+            >,
+          ),
+          ActiveWalkPointRow,
+          PrefetchHooks Function()
+        > {
+  $$ActiveWalkPointsTableTableManager(
+    _$WalkDatabase db,
+    $ActiveWalkPointsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ActiveWalkPointsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ActiveWalkPointsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ActiveWalkPointsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> seq = const Value.absent(),
+                Value<double> lat = const Value.absent(),
+                Value<double> lng = const Value.absent(),
+                Value<DateTime> recordedAt = const Value.absent(),
+                Value<double?> accuracy = const Value.absent(),
+              }) => ActiveWalkPointsCompanion(
+                seq: seq,
+                lat: lat,
+                lng: lng,
+                recordedAt: recordedAt,
+                accuracy: accuracy,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> seq = const Value.absent(),
+                required double lat,
+                required double lng,
+                required DateTime recordedAt,
+                Value<double?> accuracy = const Value.absent(),
+              }) => ActiveWalkPointsCompanion.insert(
+                seq: seq,
+                lat: lat,
+                lng: lng,
+                recordedAt: recordedAt,
+                accuracy: accuracy,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ActiveWalkPointsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$WalkDatabase,
+      $ActiveWalkPointsTable,
+      ActiveWalkPointRow,
+      $$ActiveWalkPointsTableFilterComposer,
+      $$ActiveWalkPointsTableOrderingComposer,
+      $$ActiveWalkPointsTableAnnotationComposer,
+      $$ActiveWalkPointsTableCreateCompanionBuilder,
+      $$ActiveWalkPointsTableUpdateCompanionBuilder,
+      (
+        ActiveWalkPointRow,
+        BaseReferences<
+          _$WalkDatabase,
+          $ActiveWalkPointsTable,
+          ActiveWalkPointRow
+        >,
+      ),
+      ActiveWalkPointRow,
+      PrefetchHooks Function()
+    >;
 
 class $WalkDatabaseManager {
   final _$WalkDatabase _db;
@@ -3991,4 +5384,8 @@ class $WalkDatabaseManager {
       $$WalkPointsTableTableManager(_db, _db.walkPoints);
   $$WalkPhotosTableTableManager get walkPhotos =>
       $$WalkPhotosTableTableManager(_db, _db.walkPhotos);
+  $$ActiveWalksTableTableManager get activeWalks =>
+      $$ActiveWalksTableTableManager(_db, _db.activeWalks);
+  $$ActiveWalkPointsTableTableManager get activeWalkPoints =>
+      $$ActiveWalkPointsTableTableManager(_db, _db.activeWalkPoints);
 }

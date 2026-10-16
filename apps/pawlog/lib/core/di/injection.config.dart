@@ -21,10 +21,12 @@ import 'package:location/location.dart' as _i645;
 import '../../data/database/walk_database.dart' as _i563;
 import '../../data/dog/drift_dog_repository.dart' as _i40;
 import '../../data/photo/file_photo_storage.dart' as _i508;
+import '../../data/tracking/drift_active_walk_store.dart' as _i52;
 import '../../data/tracking/geolocator_walk_tracker.dart' as _i976;
 import '../../data/walk/drift_walk_repository.dart' as _i1020;
 import '../../domain/dog/repository/dog_repository.dart' as _i209;
 import '../../domain/photo/repository/photo_storage.dart' as _i475;
+import '../../domain/tracking/repository/active_walk_store.dart' as _i845;
 import '../../domain/tracking/repository/walk_tracker.dart' as _i105;
 import '../../domain/walk/repository/walk_repository.dart' as _i612;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
@@ -71,6 +73,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i612.WalkRepository>(
       () => _i1020.DriftWalkRepository(gh<_i563.WalkDatabase>()),
+    );
+    gh.lazySingleton<_i845.ActiveWalkStore>(
+      () => _i52.DriftActiveWalkStore(gh<_i563.WalkDatabase>()),
     );
     gh.lazySingleton<_i475.PhotoStorage>(
       () => _i508.FilePhotoStorage(

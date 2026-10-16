@@ -4,12 +4,22 @@ import 'tables.dart';
 
 part 'walk_database.g.dart';
 
-@DriftDatabase(tables: [Dogs, Walks, WalkDogs, WalkPoints, WalkPhotos])
+@DriftDatabase(
+  tables: [
+    Dogs,
+    Walks,
+    WalkDogs,
+    WalkPoints,
+    WalkPhotos,
+    ActiveWalks,
+    ActiveWalkPoints,
+  ],
+)
 class WalkDatabase extends _$WalkDatabase {
   WalkDatabase(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   DriftDatabaseOptions get options =>
@@ -17,6 +27,13 @@ class WalkDatabase extends _$WalkDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (m, from, to) async {
+      // v2: 진행 중 산책 복구. 기존 다섯 테이블은 그대로 둔다.
+      if (from < 2) {
+        await m.createTable(activeWalks);
+        await m.createTable(activeWalkPoints);
+      }
+    },
     // 꺼져 있으면 ON DELETE CASCADE 가 조용히 동작하지 않는다.
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
