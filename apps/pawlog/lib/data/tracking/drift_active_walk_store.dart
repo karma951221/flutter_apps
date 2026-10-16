@@ -88,6 +88,8 @@ class DriftActiveWalkStore implements ActiveWalkStore {
             recordedAt: point.recordedAt,
             accuracy: Value(point.accuracy),
           ),
+          // 앞선 쓰기가 실패했으면 복구 뒤 번호가 겹칠 수 있다 — 덮어써서 막히지 않게 한다.
+          mode: InsertMode.insertOrReplace,
         );
     await (_db.update(_db.activeWalks)..where((t) => t.id.equals(_rowId)))
         .write(ActiveWalksCompanion(distanceMeters: Value(distanceMeters)));

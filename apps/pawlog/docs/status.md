@@ -84,7 +84,7 @@ SDK 없음, 다음 세션.** APK · iOS 빌드도 아직 한 번도 하지 않�
 - [x] ① 세션 멈춤 시간 (`ffb6dfd`) · ② 추적기 pause/unpause (`c8929e3`) · ③ 버튼 · 표시 · 문자열 (`3210f23`) ·
       ④ drift v2 저장소 (`b7bf501`) · ⑤ 써 두기 · 복구 (`7419b14` · 리뷰 수정 `5affebb`) — [기록](features/session/history.md) · [테스트](features/session/testing.md)
 - [x] 에뮬레이터 ①②④⑤ PASS, ③ 시간 PASS — 거리 이어짐은 GPS 가 앱에 안 들어와 못 봄
-- [ ] 남은 것: GPS 가 되는 기기에서 복구 뒤 거리 · 점이 이어지는지
+- [ ] 남은 것: GPS 가 되는 기기에서 — 추적 중 강제 종료 뒤 다시 열면 포그라운드 알림이 돌아오고 점 · 거리가 이어지는지(복구가 다시 구독하는 경로는 에뮬레이터에서 못 봤다). 그 밖의 넘긴 것: 저장 직후 몇 ms 안에 죽으면 같은 산책이 두 번 저장될 수 있음 · 앱이 죽어 있던 시간에 상한이 없음(밤새 두면 14시간 산책) · 첫 위치 전 멈춤이면 "위치 찾는 중" 이 남음 — [기록](features/session/history.md)
 
 검증(2026-10-17, `5affebb`): `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+360` · `flutter build apk --debug` 성공.
 `packages/location` `+24` · `packages/l10n` `+10` · `apps/trader` `flutter test test/convention` 통과.

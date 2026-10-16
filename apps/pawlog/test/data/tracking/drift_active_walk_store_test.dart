@@ -85,6 +85,35 @@ void main() {
     expect(loaded.endedAt, endedAt);
   });
 
+  test('같은 seq 를 두 번 appendPoint 해도 한 행에 마지막 값이 남고 던지지 않는다', () async {
+    await store.begin(session, notice);
+    await store.appendPoint(0, pointAt(0), 0);
+    await store.appendPoint(1, pointAt(1), 10);
+    await store.appendPoint(1, pointAt(5, accuracy: 3), 30);
+
+    final loaded = (await store.load())!.session;
+    expect(loaded.points, [pointAt(0), pointAt(5, accuracy: 3)]);
+    expect(loaded.distanceMeters, 30);
+  });
+
+  test('updateTiming 으로 pausedAt 을 null 로 되돌리고 멈춤 합을 키운다', () async {
+    await store.begin(session, notice);
+    final pausedAt = t0.add(const Duration(minutes: 20));
+    await store.updateTiming(
+      session.copyWith(
+        pausedDuration: const Duration(minutes: 5),
+        pausedAt: pausedAt,
+      ),
+    );
+    await store.updateTiming(
+      session.copyWith(pausedDuration: const Duration(minutes: 8)),
+    );
+
+    final loaded = (await store.load())!.session;
+    expect(loaded.pausedAt, isNull);
+    expect(loaded.pausedDuration, const Duration(minutes: 8));
+  });
+
   test('두 번째 begin 은 이전 세션의 점까지 지운다', () async {
     await store.begin(session, notice);
     await store.appendPoint(0, pointAt(0), 0);
