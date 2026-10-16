@@ -67,8 +67,8 @@ SDK 없음, 다음 세션.** APK · iOS 빌드도 아직 한 번도 하지 않�
 3. **디자인 시스템 에뮬레이터 재확인** — 2026-10-05 라이트 · 다크 QA 는 PASS([디자인 테스트](features/design/testing.md#에뮬레이터)).
    그때 찾은 Q1~Q4 수정(OSM 출처 · 경로 그림 여백 · 1분 미만 · 반려견 카메라)은 위젯 테스트로만 확인했다 — 화면에서 한 번 더 본다
 4. **리뷰 문서의 열린 항목** — [구현 리뷰](audits/2026-10-03-implementation-review.md)의 "다음 단계에
-   넘기는 것" 표와 열린 질문. 남은 것: 크기 수치의 토큰화(④ T3 · ⑦ F2 — 디자인 적용에서 `PawlogSize` 로 옮김, 리뷰 표 확인만), Android 정확도 `best` vs 계획 `high`(실기기에서 결정), `POST_NOTIFICATIONS` 런타임 요청,
-   미테스트 경로(카메라 · 사진 없는 썸네일 fallback)
+   넘기는 것" 표와 열린 질문. 남은 것: 크기 수치의 토큰화(④ T3 · ⑦ F2 — 디자인 적용에서 `PawlogSize` 로 옮김, 리뷰 표 확인만), Android 정확도 `best` vs 계획 `high`(실기기에서 결정),
+   미테스트 경로(카메라 · 사진 없는 썸네일 fallback). `POST_NOTIFICATIONS` 런타임 요청은 2026-10-17 에 했다([tracking 기록](features/tracking/history.md))
 5. **W5 social 기획** — v2. Supabase 소셜 피드를 얹는다. 착수 시 `features/social/plan.md`
 6. **리팩터링 후보** — [설계 §7](../../../docs/superpowers/specs/2026-10-03-walk-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것):
    남은 것은 `FailureCode` · ARB 의 앱별 증가, `AppAvatar.nickname`, `CLAUDE.md` 경로, `core` 등록을
@@ -84,7 +84,7 @@ SDK 없음, 다음 세션.** APK · iOS 빌드도 아직 한 번도 하지 않�
 - [x] ① 세션 멈춤 시간 (`ffb6dfd`) · ② 추적기 pause/unpause (`c8929e3`) · ③ 버튼 · 표시 · 문자열 (`3210f23`) ·
       ④ drift v2 저장소 (`b7bf501`) · ⑤ 써 두기 · 복구 (`7419b14` · 리뷰 수정 `5affebb`) — [기록](features/session/history.md) · [테스트](features/session/testing.md)
 - [x] 에뮬레이터 ①②④⑤ PASS, ③ 시간 PASS — 거리 이어짐은 GPS 가 앱에 안 들어와 못 봄
-- [ ] 남은 것: GPS 가 되는 기기에서 — 추적 중 강제 종료 뒤 다시 열면 포그라운드 알림이 돌아오고 점 · 거리가 이어지는지(복구가 다시 구독하는 경로는 에뮬레이터에서 못 봤다). 그 밖의 넘긴 것: 저장 직후 몇 ms 안에 죽으면 같은 산책이 두 번 저장될 수 있음 · 앱이 죽어 있던 시간에 상한이 없음(밤새 두면 14시간 산책) · 첫 위치 전 멈춤이면 "위치 찾는 중" 이 남음 — [기록](features/session/history.md)
+- [ ] 남은 것: GPS 가 되는 기기에서 — 추적 중 강제 종료 뒤 다시 열면 포그라운드 알림이 돌아오고 점 · 거리가 이어지는지(복구가 다시 구독하는 경로는 에뮬레이터에서 못 봤다). 그 밖의 넘긴 것: 저장 직후 몇 ms 안에 죽으면 같은 산책이 두 번 저장될 수 있음 · 첫 위치 전 멈춤이면 "위치 찾는 중" 이 남음 — [기록](features/session/history.md)
 
 검증(2026-10-17, `5affebb`): `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+360` · `flutter build apk --debug` 성공.
 `packages/location` `+24` · `packages/l10n` `+10` · `apps/trader` `flutter test test/convention` 통과.

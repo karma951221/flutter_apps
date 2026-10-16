@@ -748,6 +748,98 @@ void main() {
       expect(positions.hasListener, isTrue);
     });
 
+    group('오래 죽어 있던 산책', () {
+      final lastAt = t0.add(const Duration(minutes: 20));
+      WalkSession withLastPointAt(DateTime at) => saved().copyWith(
+        points: [
+          point1,
+          WalkTrackPoint(
+            point: const GeoPoint(lat: 37.6, lng: 127),
+            recordedAt: at,
+            accuracy: 5,
+          ),
+        ],
+      );
+
+      test('마지막 점 뒤 31분이 지났으면 그 점 시각에 멈춘 것으로 되살린다', () async {
+        loads(withLastPointAt(lastAt));
+        clock = lastAt.add(const Duration(minutes: 31));
+
+        await tracker.restore();
+        await tracker.pendingWrites;
+
+        final restored = session();
+        expect(restored.pausedAt, lastAt);
+        // 걸은 시간은 마지막 점까지 20 분에서 앞선 멈춤 1 분을 뺀 것.
+        expect(restored.elapsedAt(clock), const Duration(minutes: 19));
+        verify(() => store.updateTiming(restored)).called(1);
+
+        // 멈춘 채로 구독하고, 들어오는 점은 버린다.
+        expect(positions.hasListener, isTrue);
+        positions.add(_pos(37.7, at: clock));
+        await pumpEventQueue();
+        await tracker.pendingWrites;
+        expect(session().points, hasLength(2));
+        verifyNever(() => store.appendPoint(any(), any(), any()));
+      });
+
+      test('마지막 점 뒤 29분이면 멈추지 않고 그대로 되살린다', () async {
+        final active = withLastPointAt(lastAt);
+        loads(active);
+        clock = lastAt.add(const Duration(minutes: 29));
+
+        await tracker.restore();
+        await tracker.pendingWrites;
+
+        expect(session(), active);
+        expect(session().isPaused, isFalse);
+        verifyNever(() => store.updateTiming(any()));
+      });
+
+      test('점이 없으면 시작 시각에 멈춘 것으로 되살린다', () async {
+        loads(
+          WalkSession(
+            dogIds: const ['d1'],
+            startedAt: t0,
+            points: const [],
+            distanceMeters: 0,
+          ),
+        );
+        clock = t0.add(const Duration(hours: 2));
+
+        await tracker.restore();
+        await tracker.pendingWrites;
+
+        expect(session().pausedAt, t0);
+        expect(session().elapsedAt(clock), Duration.zero);
+        verify(() => store.updateTiming(session())).called(1);
+      });
+
+      test('이미 멈춘 세션은 원래 멈춘 시각을 지킨다', () async {
+        final paused = saved(pausedAt: t0.add(const Duration(minutes: 5)));
+        loads(paused);
+        clock = t0.add(const Duration(hours: 5));
+
+        await tracker.restore();
+        await tracker.pendingWrites;
+
+        expect(session(), paused);
+        verifyNever(() => store.updateTiming(any()));
+      });
+
+      test('끝난 세션은 그대로다', () async {
+        final ended = saved(endedAt: t1);
+        loads(ended);
+        clock = t0.add(const Duration(hours: 5));
+
+        await tracker.restore();
+        await tracker.pendingWrites;
+
+        expect((tracker.current as TrackerFinished).session, ended);
+        verifyNever(() => store.updateTiming(any()));
+      });
+    });
+
     test('load 가 던지면 idle 그대로다', () async {
       when(() => store.load()).thenThrow(Exception('corrupt'));
 

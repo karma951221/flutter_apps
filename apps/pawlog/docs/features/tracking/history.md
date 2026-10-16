@@ -158,5 +158,6 @@ mock 테스트로는 드러나지 않는 종류다.
 **동작** — 앱 세션당 한 번만 묻는다. 기억은 `PermissionRequester` 가 가진다(거부하면 같은 세션의 다음
 `start` 는 묻지 않는다). 결과는 산책을 막지 않는다 — 허용 · 거부 · 영구 거부 모두 그대로 추적하고, 확인 ·
 요청이 던지면 `debugPrint` 만 남긴다. 위치 확인이 실패하면 묻지 않고, 화면 밖에서 도는 `restore()` 와
-위치 오류 뒤 `resume()` 은 묻지 않는다. Android 12 이하 · iOS 는 `permission_handler` 가 허용으로 답해
-따로 할 일이 없다.
+위치 오류 뒤 `resume()` 은 묻지 않는다. Android 12 이하는 `permission_handler` 가 허용으로 답해 따로 할
+일이 없다. iOS 는 Podfile 이 `PERMISSION_NOTIFICATIONS` 를 켜야만 묻는데 pawlog 는 켜지 않았다 — 어느
+쪽이든 산책을 막지는 않는다.

@@ -28,6 +28,12 @@ class GeolocatorWalkTracker implements WalkTracker {
     @Named('notificationPermission') this._notifications,
   ) : _access = LocationAccess(_gateway);
 
+  /// 앱이 죽어 있던 시간을 걸은 시간으로 세는 한도. 이보다 오래 아무 기록이
+  /// 없었으면 그 뒤로는 걷지 않았다고 보고, 마지막 활동 시점에 멈춘 것으로
+  /// 되살린다. 밤새 죽어 있던 산책이 14 시간짜리로 남아 "가장 긴 산책" 같은
+  /// 통계를 오염시키지 않게 한다. 짧은 끊김(잠깐 앱이 죽었다 켜짐)은 그대로 센다.
+  static const staleRestoreGap = Duration(minutes: 30);
+
   static const _policy = WalkTrackingPolicy();
   static const _distanceFilter = 3;
 
@@ -124,13 +130,19 @@ class GeolocatorWalkTracker implements WalkTracker {
     try {
       final snapshot = await _store.load();
       if (snapshot == null || _state is! TrackerIdle) return;
-      final session = snapshot.session;
+      var session = snapshot.session;
       _notice = snapshot.notice;
       if (session.endedAt != null) {
         _emit(TrackerState.finished(session));
         return;
       }
-      // 죽어 있던 동안도 걸은 것으로 센다. 첫 새 점의 거리를 그대로 더한다.
+      if (_staleAt(session) case final lastActivity?) {
+        // 오래 죽어 있었다. 마지막 활동 뒤로는 멈춘 것으로 본다.
+        final paused = session.copyWith(pausedAt: lastActivity);
+        session = paused;
+        _enqueue(() => _store.updateTiming(paused));
+      }
+      // 짧게 죽어 있던 동안은 걸은 것으로 센다. 첫 새 점의 거리를 그대로 더한다.
       _skipNextStep = false;
       // 화면 밖이라 권한을 묻지 않는다. 거부면 화면의 resume 이 맥락 안에서 묻는다.
       final failure = _failureOfAccess(await _access.check());
@@ -144,6 +156,16 @@ class GeolocatorWalkTracker implements WalkTracker {
     } catch (error) {
       debugPrint('walk tracker restore: $error');
     }
+  }
+
+  /// 걷던 중인 [session] 이 마지막 활동 뒤 [staleRestoreGap] 넘게 비었으면
+  /// 그 마지막 활동 시각, 아니면 null. 이미 멈춘 세션은 건드리지 않는다.
+  DateTime? _staleAt(WalkSession session) {
+    if (session.isPaused) return null;
+    final lastActivity =
+        session.points.lastOrNull?.recordedAt ?? session.startedAt;
+    final gap = _clock.now().difference(lastActivity);
+    return gap > staleRestoreGap ? lastActivity : null;
   }
 
   @override
