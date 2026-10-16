@@ -10,7 +10,7 @@
 | # | 커밋 | 범위 |
 |---|---|---|
 | ① | `fb4bf8a` | `GpxEncoder.encode` · `fileName`(도메인 순수 함수), `WalkFileSharer` 경계와 `share_plus` 구현 |
-| ② | (이 커밋) | 상세 더보기 "GPX로 내보내기", `WalkDetailCubit.exportGpx()` · `WalkExportResult`, 문자열 3개 |
+| ② | `3a5b648` | 상세 더보기 "GPX로 내보내기", `WalkDetailCubit.exportGpx()` · `WalkExportResult`, 문자열 3개 |
 
 ## 결정 (만든 그대로)
 
