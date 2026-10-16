@@ -123,7 +123,8 @@ class GeolocatorWalkTracker implements WalkTracker {
       }
       // 죽어 있던 동안도 걸은 것으로 센다. 첫 새 점의 거리를 그대로 더한다.
       _skipNextStep = false;
-      final failure = await _checkAccess();
+      // 화면 밖이라 권한을 묻지 않는다. 거부면 화면의 resume 이 맥락 안에서 묻는다.
+      final failure = _failureOfAccess(await _access.check());
       if (_state is! TrackerIdle) return;
       if (failure != null) {
         _emit(TrackerState.tracking(session, locationError: failure));
@@ -164,15 +165,19 @@ class GeolocatorWalkTracker implements WalkTracker {
   }
 
   /// 서비스 → 권한 순서로 확인한다. 쓸 수 있으면 null.
-  Future<Failure?> _checkAccess() async => switch (await _access.ensure()) {
-    LocationAccessStatus.serviceDisabled => const Failure.validation(
-      failureCode: FailureCode.locationServiceDisabled,
-    ),
-    LocationAccessStatus.permissionDenied => const Failure.forbidden(
-      failureCode: FailureCode.locationPermissionDenied,
-    ),
-    LocationAccessStatus.granted => null,
-  };
+  Future<Failure?> _checkAccess() async =>
+      _failureOfAccess(await _access.ensure());
+
+  static Failure? _failureOfAccess(LocationAccessStatus status) =>
+      switch (status) {
+        LocationAccessStatus.serviceDisabled => const Failure.validation(
+          failureCode: FailureCode.locationServiceDisabled,
+        ),
+        LocationAccessStatus.permissionDenied => const Failure.forbidden(
+          failureCode: FailureCode.locationPermissionDenied,
+        ),
+        LocationAccessStatus.granted => null,
+      };
 
   Future<void> _subscribe(TrackingNotice notice) async {
     await _sub?.cancel();

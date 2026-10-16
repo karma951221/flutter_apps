@@ -71,6 +71,42 @@ void main() {
     expect(await access.permission.check(), PermissionStatus.permanentlyDenied);
   });
 
+  group('check', () {
+    test('서비스가 꺼져 있으면 serviceDisabled', () async {
+      when(
+        () => gateway.isLocationServiceEnabled(),
+      ).thenAnswer((_) async => false);
+
+      expect(await access.check(), LocationAccessStatus.serviceDisabled);
+      verifyNever(() => gateway.checkPermission());
+    });
+
+    test('허용돼 있으면 granted', () async {
+      when(
+        () => gateway.checkPermission(),
+      ).thenAnswer((_) async => LocationPermission.always);
+
+      expect(await access.check(), LocationAccessStatus.granted);
+    });
+
+    test('거부 상태여도 묻지 않고 permissionDenied, 세션 기억도 쓰지 않는다', () async {
+      when(
+        () => gateway.checkPermission(),
+      ).thenAnswer((_) async => LocationPermission.denied);
+      when(
+        () => gateway.requestPermission(),
+      ).thenAnswer((_) async => LocationPermission.whileInUse);
+
+      expect(await access.check(), LocationAccessStatus.permissionDenied);
+      verifyNever(() => gateway.requestPermission());
+      expect(access.permission.declinedThisSession, isFalse);
+
+      // 한 번 묻기는 그대로 남아 있다.
+      expect(await access.ensure(), LocationAccessStatus.granted);
+      verify(() => gateway.requestPermission()).called(1);
+    });
+  });
+
   test('위치 설정 열기는 게이트웨이에 맡긴다', () async {
     when(() => gateway.openLocationSettings()).thenAnswer((_) async => true);
 

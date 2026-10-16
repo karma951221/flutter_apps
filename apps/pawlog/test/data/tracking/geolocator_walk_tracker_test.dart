@@ -708,6 +708,33 @@ void main() {
       expect(positions.hasListener, isTrue);
     });
 
+    test('권한이 거부돼 있으면 묻지 않고 세션을 지킨 채 오류를 싣는다', () async {
+      when(
+        () => gateway.checkPermission(),
+      ).thenAnswer((_) async => LocationPermission.denied);
+      when(
+        () => gateway.requestPermission(),
+      ).thenAnswer((_) async => LocationPermission.whileInUse);
+      final active = saved();
+      loads(active);
+
+      await tracker.restore();
+
+      final state = tracker.current as TrackerTracking;
+      expect(state.session, active);
+      expect(
+        state.locationError?.failureCode,
+        FailureCode.locationPermissionDenied,
+      );
+      verifyNever(() => gateway.requestPermission());
+      verifyNever(() => gateway.positionStream(any()));
+
+      // 묻는 건 화면의 resume 이 맥락 안에서 한다.
+      expect(await tracker.resume(), isA<Ok<void>>());
+      verify(() => gateway.requestPermission()).called(1);
+      expect(positions.hasListener, isTrue);
+    });
+
     test('load 가 던지면 idle 그대로다', () async {
       when(() => store.load()).thenThrow(Exception('corrupt'));
 

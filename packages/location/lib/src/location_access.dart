@@ -23,6 +23,18 @@ class LocationAccess {
   /// [LocationAccessStatus.serviceDisabled] 일 때 위치 서비스를 켜러 간다.
   Future<void> openLocationSettings() => _gateway.openLocationSettings();
 
+  /// [ensure] 와 같은 순서로 확인만 한다. 권한을 묻지 않고 세션 기억도 쓰지 않아
+  /// 화면이 뜨기 전(복구) 같은 맥락 밖에서 쓴다.
+  Future<LocationAccessStatus> check() async {
+    if (!await _gateway.isLocationServiceEnabled()) {
+      return LocationAccessStatus.serviceDisabled;
+    }
+    if (await permission.check() != PermissionStatus.granted) {
+      return LocationAccessStatus.permissionDenied;
+    }
+    return LocationAccessStatus.granted;
+  }
+
   Future<LocationAccessStatus> ensure() async {
     if (!await _gateway.isLocationServiceEnabled()) {
       return LocationAccessStatus.serviceDisabled;
