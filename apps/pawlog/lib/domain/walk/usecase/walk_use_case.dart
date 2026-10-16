@@ -4,6 +4,11 @@ import 'dart:typed_data';
 import 'package:core/core.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../backup/entity/backup_import_result.dart';
+import '../../backup/repository/backup_archive_codec.dart';
+import '../../backup/repository/backup_file_picker.dart';
+import '../../backup/usecase/scenario/export_backup_scenario.dart';
+import '../../backup/usecase/scenario/import_backup_scenario.dart';
 import '../../dog/entity/dog.dart';
 import '../../dog/entity/dog_draft.dart';
 import '../../dog/repository/dog_repository.dart';
@@ -12,6 +17,7 @@ import '../../dog/usecase/scenario/get_dog_scenario.dart';
 import '../../dog/usecase/scenario/get_dogs_scenario.dart';
 import '../../dog/usecase/scenario/save_dog_scenario.dart';
 import '../../dog/usecase/scenario/watch_dogs_scenario.dart';
+import '../../export/repository/walk_file_sharer.dart';
 import '../../photo/repository/photo_storage.dart';
 import '../../photo/usecase/scenario/store_photo_scenario.dart';
 import '../../tracking/entity/tracker_state.dart';
@@ -89,6 +95,12 @@ abstract interface class WalkUseCase {
   Future<void> openLocationSettings();
 
   Future<void> discardWalk({required List<String> photoPaths});
+
+  /// 모든 기록과 사진을 zip 하나로 묶어 공유 시트로 넘긴다.
+  Future<Result<void>> exportBackup();
+
+  /// 백업 zip 을 골라 지금 기록에 합친다(있는 id 는 건너뜀).
+  Future<BackupImportResult> importBackup();
 }
 
 @LazySingleton(as: WalkUseCase)
@@ -100,6 +112,9 @@ class DefaultWalkUseCase implements WalkUseCase {
     this._photos,
     this._idGenerator,
     this._clock,
+    this._sharer,
+    this._archive,
+    this._picker,
   );
 
   final WalkRepository _walks;
@@ -108,6 +123,9 @@ class DefaultWalkUseCase implements WalkUseCase {
   final PhotoStorage _photos;
   final IdGenerator _idGenerator;
   final Clock _clock;
+  final WalkFileSharer _sharer;
+  final BackupArchiveCodec _archive;
+  final BackupFilePicker _picker;
 
   @override
   Stream<Result<List<Walk>>> watchWalks() => WatchWalksScenario(_walks)();
@@ -193,4 +211,12 @@ class DefaultWalkUseCase implements WalkUseCase {
   @override
   Future<void> discardWalk({required List<String> photoPaths}) =>
       DiscardWalkScenario(_tracker, _photos)(photoPaths: photoPaths);
+
+  @override
+  Future<Result<void>> exportBackup() =>
+      ExportBackupScenario(_dogs, _walks, _photos, _archive, _sharer, _clock)();
+
+  @override
+  Future<BackupImportResult> importBackup() =>
+      ImportBackupScenario(_dogs, _walks, _photos, _archive, _picker)();
 }

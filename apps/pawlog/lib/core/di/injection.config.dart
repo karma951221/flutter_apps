@@ -113,16 +113,10 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i475.PhotoStorage>(),
         gh<_i494.IdGenerator>(),
         gh<_i494.Clock>(),
+        gh<_i524.WalkFileSharer>(),
+        gh<_i702.BackupArchiveCodec>(),
+        gh<_i347.BackupFilePicker>(),
       ),
-    );
-    gh.factory<_i733.WalkFeedCubit>(
-      () => _i733.WalkFeedCubit(gh<_i5.WalkUseCase>(), gh<_i494.Clock>()),
-    );
-    gh.factory<_i184.StatsCubit>(
-      () => _i184.StatsCubit(gh<_i5.WalkUseCase>(), gh<_i494.Clock>()),
-    );
-    gh.factory<_i143.ActiveWalkCubit>(
-      () => _i143.ActiveWalkCubit(gh<_i5.WalkUseCase>(), gh<_i494.Clock>()),
     );
     gh.factory<_i174.WalkDetailCubit>(
       () => _i174.WalkDetailCubit(
@@ -138,6 +132,15 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i804.WalkEditCubit>(
       () => _i804.WalkEditCubit(gh<_i5.WalkUseCase>()),
+    );
+    gh.factory<_i733.WalkFeedCubit>(
+      () => _i733.WalkFeedCubit(gh<_i5.WalkUseCase>(), gh<_i494.Clock>()),
+    );
+    gh.factory<_i184.StatsCubit>(
+      () => _i184.StatsCubit(gh<_i5.WalkUseCase>(), gh<_i494.Clock>()),
+    );
+    gh.factory<_i143.ActiveWalkCubit>(
+      () => _i143.ActiveWalkCubit(gh<_i5.WalkUseCase>(), gh<_i494.Clock>()),
     );
     return this;
   }
