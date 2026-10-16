@@ -49,4 +49,31 @@ void main() {
 
     expect(storage.resolve(path).existsSync(), isFalse);
   });
+
+  group('write', () {
+    test('없던 파일을 root 아래 상대 경로로 쓴다', () async {
+      final result = await storage.write('b.jpg', Uint8List.fromList([4, 5]));
+
+      expect(result, isA<Ok<void>>());
+      expect(storage.resolve('b.jpg').readAsBytesSync(), [4, 5]);
+    });
+
+    test('이미 있으면 덮어쓰지 않고 Ok', () async {
+      await storage.write('b.jpg', Uint8List.fromList([1]));
+
+      final result = await storage.write('b.jpg', Uint8List.fromList([9, 9]));
+
+      expect(result, isA<Ok<void>>());
+      expect(storage.resolve('b.jpg').readAsBytesSync(), [1]);
+    });
+
+    for (final path in ['../evil.jpg', 'a/../../evil.jpg', '/abs.jpg', '']) {
+      test('"$path" 는 쓰지 않고 Err', () async {
+        final result = await storage.write(path, Uint8List.fromList([1]));
+
+        expect(result, isA<Err<void>>());
+        expect(File('${root.parent.path}/evil.jpg').existsSync(), isFalse);
+      });
+    }
+  });
 }

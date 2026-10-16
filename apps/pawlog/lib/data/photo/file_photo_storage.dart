@@ -35,6 +35,32 @@ class FilePhotoStorage implements PhotoStorage {
   }
 
   @override
+  Future<Result<void>> write(String relativePath, Uint8List bytes) async {
+    if (!isSafePhotoPath(relativePath)) {
+      return Err(
+        Failure.validation(
+          failureCode: FailureCode.invalidData,
+          message: 'unsafe photo path: $relativePath',
+        ),
+      );
+    }
+    try {
+      final file = resolve(relativePath);
+      if (file.existsSync()) return const Ok(null);
+      await file.parent.create(recursive: true);
+      await file.writeAsBytes(bytes, flush: true);
+      return const Ok(null);
+    } on FileSystemException catch (error) {
+      return Err(
+        Failure.unknown(
+          failureCode: FailureCode.walkPhotoSaveFailed,
+          message: error.toString(),
+        ),
+      );
+    }
+  }
+
+  @override
   File resolve(String relativePath) => File('${_root.path}/$relativePath');
 
   @override

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:core/core.dart';
 import 'package:injectable/injectable.dart';
@@ -18,13 +19,26 @@ class SharePlusWalkFileSharer implements WalkFileSharer {
     required String fileName,
     required String contents,
     required String mimeType,
-  }) async {
+  }) => _share(fileName, mimeType, (file) => file.writeAsString(contents));
+
+  @override
+  Future<Result<void>> shareBytes({
+    required String fileName,
+    required Uint8List bytes,
+    required String mimeType,
+  }) => _share(fileName, mimeType, (file) => file.writeAsBytes(bytes));
+
+  Future<Result<void>> _share(
+    String fileName,
+    String mimeType,
+    Future<File> Function(File file) write,
+  ) async {
     try {
       final temp = await getTemporaryDirectory();
       final dir = Directory(p.join(temp.path, 'pawlog_export'));
       await dir.create(recursive: true);
       final path = p.join(dir.path, fileName);
-      await File(path).writeAsString(contents);
+      await write(File(path));
       await SharePlus.instance.share(
         ShareParams(files: [XFile(path, mimeType: mimeType)]),
       );

@@ -19,6 +19,8 @@ import 'package:injectable/injectable.dart' as _i526;
 import 'package:location/location.dart' as _i645;
 import 'package:permission/permission.dart' as _i1009;
 
+import '../../data/backup/backup_archive.dart' as _i1058;
+import '../../data/backup/file_picker_backup_file_picker.dart' as _i456;
 import '../../data/database/walk_database.dart' as _i563;
 import '../../data/dog/drift_dog_repository.dart' as _i40;
 import '../../data/export/share_plus_walk_file_sharer.dart' as _i1060;
@@ -26,6 +28,8 @@ import '../../data/photo/file_photo_storage.dart' as _i508;
 import '../../data/tracking/drift_active_walk_store.dart' as _i52;
 import '../../data/tracking/geolocator_walk_tracker.dart' as _i976;
 import '../../data/walk/drift_walk_repository.dart' as _i1020;
+import '../../domain/backup/repository/backup_archive_codec.dart' as _i702;
+import '../../domain/backup/repository/backup_file_picker.dart' as _i347;
 import '../../domain/dog/repository/dog_repository.dart' as _i209;
 import '../../domain/export/repository/walk_file_sharer.dart' as _i524;
 import '../../domain/photo/repository/photo_storage.dart' as _i475;
@@ -66,10 +70,16 @@ extension GetItInjectableX on _i174.GetIt {
       () => registerModule.notificationPermission,
       instanceName: 'notificationPermission',
     );
+    gh.lazySingleton<_i347.BackupFilePicker>(
+      () => _i456.FilePickerBackupFilePicker(),
+    );
     await gh.factoryAsync<_i497.Directory>(
       () => registerModule.photosRoot,
       instanceName: 'walkPhotosRoot',
       preResolve: true,
+    );
+    gh.lazySingleton<_i702.BackupArchiveCodec>(
+      () => const _i1058.BackupArchive(),
     );
     gh.lazySingleton<_i209.DogRepository>(
       () => _i40.DriftDogRepository(gh<_i563.WalkDatabase>()),
