@@ -21,11 +21,13 @@ import 'package:permission/permission.dart' as _i1009;
 
 import '../../data/database/walk_database.dart' as _i563;
 import '../../data/dog/drift_dog_repository.dart' as _i40;
+import '../../data/export/share_plus_walk_file_sharer.dart' as _i1060;
 import '../../data/photo/file_photo_storage.dart' as _i508;
 import '../../data/tracking/drift_active_walk_store.dart' as _i52;
 import '../../data/tracking/geolocator_walk_tracker.dart' as _i976;
 import '../../data/walk/drift_walk_repository.dart' as _i1020;
 import '../../domain/dog/repository/dog_repository.dart' as _i209;
+import '../../domain/export/repository/walk_file_sharer.dart' as _i524;
 import '../../domain/photo/repository/photo_storage.dart' as _i475;
 import '../../domain/tracking/repository/active_walk_store.dart' as _i845;
 import '../../domain/tracking/repository/walk_tracker.dart' as _i105;
@@ -56,6 +58,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i645.LocationGateway>(
       () => registerModule.locationGateway,
+    );
+    gh.lazySingleton<_i524.WalkFileSharer>(
+      () => _i1060.SharePlusWalkFileSharer(),
     );
     gh.lazySingleton<_i1009.PermissionRequester>(
       () => registerModule.notificationPermission,
