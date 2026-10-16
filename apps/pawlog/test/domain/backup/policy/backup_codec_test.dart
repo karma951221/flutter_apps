@@ -11,7 +11,8 @@ import 'package:pawlog/domain/walk/entity/walk_photo.dart';
 import 'package:pawlog/domain/walk/entity/walk_track_point.dart';
 import 'package:pawlog/domain/walk/policy/route_preview.dart';
 
-final _exportedAt = DateTime.utc(2026, 10, 17, 3);
+// 앱이 drift 에서 읽는 값처럼 현지 시각이다.
+final _exportedAt = DateTime.utc(2026, 10, 17, 3).toLocal();
 // 현지 시각으로 만든 값 — UTC 로 쓰고 같은 순간으로 돌아와야 한다.
 final _t0 = DateTime(2026, 10, 3, 9);
 final _t1 = DateTime(2026, 10, 3, 9, 30, 15, 250);
@@ -90,43 +91,6 @@ BackupData _decodeOk(String json) => switch (BackupCodec.decode(json)) {
   Err(:final failure) => fail('Err: $failure'),
 };
 
-void _expectSameDog(Dog actual, Dog expected) {
-  expect(actual.id, expected.id);
-  expect(actual.name, expected.name);
-  expect(actual.breed, expected.breed);
-  expect(actual.birthday, expected.birthday);
-  expect(actual.photoPath, expected.photoPath);
-  expect(actual.createdAt.isAtSameMomentAs(expected.createdAt), isTrue);
-  expect(actual.updatedAt.isAtSameMomentAs(expected.updatedAt), isTrue);
-}
-
-void _expectSameWalk(BackupWalk actual, BackupWalk expected) {
-  final a = actual.walk;
-  final e = expected.walk;
-  expect(a.id, e.id);
-  expect(a.startedAt.isAtSameMomentAs(e.startedAt), isTrue);
-  expect(a.endedAt.isAtSameMomentAs(e.endedAt), isTrue);
-  expect(a.duration, e.duration);
-  expect(a.distanceMeters, e.distanceMeters);
-  expect(a.memo, e.memo);
-  expect(a.dogs.map((d) => d.id), e.dogs.map((d) => d.id));
-  expect(a.photos, e.photos);
-  expect(a.previewPoints, e.previewPoints);
-  expect(a.createdAt.isAtSameMomentAs(e.createdAt), isTrue);
-  expect(a.updatedAt.isAtSameMomentAs(e.updatedAt), isTrue);
-  expect(actual.points.length, expected.points.length);
-  for (var i = 0; i < actual.points.length; i++) {
-    expect(actual.points[i].point, expected.points[i].point);
-    expect(actual.points[i].accuracy, expected.points[i].accuracy);
-    expect(
-      actual.points[i].recordedAt.isAtSameMomentAs(
-        expected.points[i].recordedAt,
-      ),
-      isTrue,
-    );
-  }
-}
-
 Map<String, dynamic> _sampleJson() =>
     jsonDecode(BackupCodec.encode(_sample())) as Map<String, dynamic>;
 
@@ -149,15 +113,20 @@ void main() {
 
     final decoded = _decodeOk(BackupCodec.encode(original));
 
-    expect(decoded.exportedAt.isAtSameMomentAs(original.exportedAt), isTrue);
-    expect(decoded.dogs.length, 2);
-    _expectSameDog(decoded.dogs[0], _kong);
-    _expectSameDog(decoded.dogs[1], _bori);
-    expect(decoded.walks.length, 2);
-    _expectSameWalk(decoded.walks[0], original.walks[0]);
-    _expectSameWalk(decoded.walks[1], original.walks[1]);
+    expect(decoded, original);
     // walk.dogs 는 같은 백업의 dogs 에서 채운 값이다
-    _expectSameDog(decoded.walks[0].walk.dogs[0], _kong);
+    expect(decoded.walks[0].walk.dogs, [_kong, _bori]);
+  });
+
+  test('읽은 시각은 현지 시각이다', () {
+    final decoded = _decodeOk(BackupCodec.encode(_sample()));
+
+    final walk = decoded.walks[0];
+    expect(decoded.exportedAt.isUtc, isFalse);
+    expect(decoded.dogs[0].createdAt.isUtc, isFalse);
+    expect(walk.walk.startedAt.isUtc, isFalse);
+    expect(walk.walk.updatedAt.isUtc, isFalse);
+    expect(walk.points[0].recordedAt.isUtc, isFalse);
   });
 
   test('형식 머리 · 시각은 UTC · birthday 는 날짜만 · previewPoints 는 싣지 않는다', () {

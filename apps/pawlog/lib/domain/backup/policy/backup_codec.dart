@@ -12,9 +12,10 @@ import '../entity/backup_data.dart';
 
 /// `backup.json` 을 손으로 쓰고 읽는 순수 함수 모음.
 ///
-/// 시각은 UTC ISO-8601, `birthday` 는 날짜만(`yyyy-MM-dd`). `previewPoints` 는
-/// 싣지 않고 읽을 때 점으로 다시 만든다. [decode] 는 던지지 않는다 — 형식이
-/// 하나라도 어긋나면 아무것도 돌려주지 않고 `Err` 다(반쯤 읽은 값을 쓰지 않게).
+/// 시각은 UTC ISO-8601 로 쓰고, 읽을 때는 drift 가 돌려주는 값처럼 현지 시각으로
+/// 돌려준다. `birthday` 는 날짜만(`yyyy-MM-dd`). `previewPoints` 는 싣지 않고
+/// 읽을 때 점으로 다시 만든다. [decode] 는 던지지 않는다 — 형식이 하나라도
+/// 어긋나면 아무것도 돌려주지 않고 `Err` 다(반쯤 읽은 값을 쓰지 않게).
 abstract final class BackupCodec {
   static const format = 'pawlog-backup';
   static const version = 1;
@@ -233,7 +234,7 @@ abstract final class BackupCodec {
     if (!_zonePattern.hasMatch(raw)) throw _InvalidBackup('$key has no zone');
     final parsed = DateTime.tryParse(raw);
     if (parsed == null) throw _InvalidBackup('$key is not a timestamp');
-    return parsed.toUtc();
+    return parsed.toLocal();
   }
 
   /// DB 처럼 현지 자정으로 되살린다. `2020-02-30` 같은 없는 날짜는 받지 않는다.
