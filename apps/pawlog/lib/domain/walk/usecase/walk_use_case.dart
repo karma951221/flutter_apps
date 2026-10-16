@@ -77,6 +77,11 @@ abstract interface class WalkUseCase {
   /// 추적 중 위치 오류 뒤 다시 받기.
   Future<Result<void>> resumeTracking();
 
+  /// 산책 일시정지. 멈춘 시간은 걸은 시간에서 빠진다.
+  Future<Result<void>> pauseWalk();
+
+  Future<Result<void>> unpauseWalk();
+
   Future<Result<WalkSession>> stopWalk();
 
   Future<void> openAppSettings();
@@ -169,6 +174,12 @@ class DefaultWalkUseCase implements WalkUseCase {
 
   @override
   Future<Result<void>> resumeTracking() => _tracker.resume();
+
+  @override
+  Future<Result<void>> pauseWalk() => _tracker.pause();
+
+  @override
+  Future<Result<void>> unpauseWalk() => _tracker.unpause();
 
   @override
   Future<Result<WalkSession>> stopWalk() => StopWalkScenario(_tracker)();

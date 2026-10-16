@@ -39,6 +39,9 @@ class GeolocatorWalkTracker implements WalkTracker {
   /// `resume` 이 같은 알림 문구로 다시 구독하도록 기억한다.
   TrackingNotice? _notice;
 
+  /// 재개 뒤 첫 수락 점은 멈춘 동안 옮긴 거리를 걸은 거리로 세지 않는다.
+  bool _skipNextStep = false;
+
   @override
   TrackerState get current => _state;
 
@@ -73,6 +76,7 @@ class GeolocatorWalkTracker implements WalkTracker {
       }
 
       _notice = notice;
+      _skipNextStep = false;
       await _subscribe(notice);
       _emit(
         TrackerState.tracking(
@@ -166,6 +170,12 @@ class GeolocatorWalkTracker implements WalkTracker {
     if (state is! TrackerTracking) return;
     final session = state.session;
 
+    if (session.isPaused) {
+      // 멈춤 중에도 위치는 들어오고 있다. 점은 버리고 오류만 지운다.
+      if (state.locationError != null) _emit(TrackerState.tracking(session));
+      return;
+    }
+
     final next = WalkTrackPoint(
       point: GeoPoint(lat: position.latitude, lng: position.longitude),
       recordedAt: position.timestamp,
@@ -186,15 +196,62 @@ class GeolocatorWalkTracker implements WalkTracker {
       if (state.locationError != null) _emit(TrackerState.tracking(session));
       return;
     }
+    final added = _skipNextStep ? 0.0 : step;
+    _skipNextStep = false;
     _emit(
       TrackerState.tracking(
-        WalkSession(
-          dogIds: session.dogIds,
-          startedAt: session.startedAt,
+        session.copyWith(
           points: [...session.points, next],
-          distanceMeters: session.distanceMeters + step,
+          distanceMeters: session.distanceMeters + added,
         ),
       ),
+    );
+  }
+
+  @override
+  Future<Result<void>> pause() async {
+    final state = _state;
+    if (state is! TrackerTracking) {
+      return const Err(Failure.notFound(failureCode: FailureCode.walkNotFound));
+    }
+    if (state.session.isPaused) return const Ok(null);
+    _emit(
+      TrackerState.tracking(
+        state.session.copyWith(pausedAt: _clock.now()),
+        locationError: state.locationError,
+      ),
+    );
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void>> unpause() async {
+    final state = _state;
+    if (state is! TrackerTracking) {
+      return const Err(Failure.notFound(failureCode: FailureCode.walkNotFound));
+    }
+    final session = state.session;
+    if (!session.isPaused) return const Ok(null);
+    _skipNextStep = true;
+    _emit(
+      TrackerState.tracking(
+        _closePause(session, _clock.now()),
+        locationError: state.locationError,
+      ),
+    );
+    return const Ok(null);
+  }
+
+  /// 진행 중인 멈춤을 [now] 에 닫아 `pausedDuration` 에 더한다.
+  static WalkSession _closePause(WalkSession session, DateTime now) {
+    final pausedAt = session.pausedAt;
+    if (pausedAt == null) return session;
+    final length = now.isBefore(pausedAt)
+        ? Duration.zero
+        : now.difference(pausedAt);
+    return session.copyWith(
+      pausedDuration: session.pausedDuration + length,
+      pausedAt: null,
     );
   }
 
@@ -230,14 +287,9 @@ class GeolocatorWalkTracker implements WalkTracker {
     }
     await _sub?.cancel();
     _sub = null;
-    final s = state.session;
-    final finished = WalkSession(
-      dogIds: s.dogIds,
-      startedAt: s.startedAt,
-      endedAt: _clock.now(),
-      points: s.points,
-      distanceMeters: s.distanceMeters,
-    );
+    _skipNextStep = false;
+    final now = _clock.now();
+    final finished = _closePause(state.session, now).copyWith(endedAt: now);
     _emit(TrackerState.finished(finished));
     return Ok(finished);
   }

@@ -18,6 +18,14 @@ abstract interface class WalkTracker {
   /// 위치 오류 뒤 세션을 지킨 채 위치 확인과 스트림 구독을 다시 한다.
   Future<Result<void>> resume();
 
+  /// 세션을 지킨 채 멈춘다. 위치 스트림은 끊지 않고 들어오는 점을 버린다.
+  /// 이미 멈춤 중이면 아무것도 하지 않는다. 추적 중이 아니면 walkNotFound.
+  Future<Result<void>> pause();
+
+  /// 멈춤을 닫아 그 길이를 `pausedDuration` 에 더한다. 재개 뒤 첫 점은 거리를
+  /// 더하지 않는다. 진행 중이면 아무것도 하지 않는다. 추적 중이 아니면 walkNotFound.
+  Future<Result<void>> unpause();
+
   Future<Result<WalkSession>> stop();
 
   /// 위치 권한을 다시 허용하러 앱 설정을 연다. 권한은 세션당 한 번만 묻기 때문에
