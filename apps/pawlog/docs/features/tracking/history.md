@@ -161,3 +161,5 @@ mock 테스트로는 드러나지 않는 종류다.
 위치 오류 뒤 `resume()` 은 묻지 않는다. Android 12 이하는 `permission_handler` 가 허용으로 답해 따로 할
 일이 없다. iOS 는 Podfile 이 `PERMISSION_NOTIFICATIONS` 를 켜야만 묻는데 pawlog 는 켜지 않았다 — 어느
 쪽이든 산책을 막지는 않는다.
+
+**에뮬레이터** (2026-10-17, Android 17 `Medium_Phone_2`) — 권한을 되돌린 뒤 산책 시작 → "Allow pawlog to send you notifications?" 가 뜬다 → "Don’t allow" 를 눌러도 진행 화면으로 넘어가 시간이 흐른다. PASS
