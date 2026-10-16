@@ -880,5 +880,9 @@
   "walkStatsEmptyTitle": "No stats yet",
   "walkStatsEmptyMessage": "Your walks will add up here",
   "walkFeedWeekSummary": "This week {distance} · {count, plural, =1{1 walk} other{{count} walks}}",
-  "walkFeedWeekSummaryEmpty": "No walks yet this week"
+  "walkFeedWeekSummaryEmpty": "No walks yet this week",
+  "walkPause": "Pause",
+  "walkUnpause": "Resume",
+  "walkPausedLabel": "Paused",
+  "walkPausedBanner": "Walk paused"
 }

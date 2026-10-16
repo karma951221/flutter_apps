@@ -112,6 +112,18 @@ class ActiveWalkCubit extends Cubit<ActiveWalkState> {
     await _useCase.resumeTracking();
   }
 
+  /// 산책을 잠시 멈춘다. 결과는 추적기 상태로 돌아온다.
+  Future<void> pause() async {
+    if (state is! ActiveWalkTracking) return;
+    await _useCase.pauseWalk();
+  }
+
+  /// 멈춘 산책을 이어 간다. 결과는 추적기 상태로 돌아온다.
+  Future<void> unpause() async {
+    if (state is! ActiveWalkTracking) return;
+    await _useCase.unpauseWalk();
+  }
+
   /// [failure] 에 맞는 설정을 연다 — 서비스 꺼짐은 위치 설정, 권한 거부는 앱 설정.
   Future<void> openSettings(Failure failure) =>
       failure.failureCode == FailureCode.locationServiceDisabled

@@ -2800,4 +2800,16 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkFeedWeekSummaryEmpty => '今週はまだ散歩していません';
+
+  @override
+  String get walkPause => '一時停止';
+
+  @override
+  String get walkUnpause => '再開';
+
+  @override
+  String get walkPausedLabel => '一時停止中';
+
+  @override
+  String get walkPausedBanner => '散歩を一時停止中';
 }

@@ -2802,4 +2802,16 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkFeedWeekSummaryEmpty => '이번 주는 아직 산책 전이에요';
+
+  @override
+  String get walkPause => '일시정지';
+
+  @override
+  String get walkUnpause => '계속 걷기';
+
+  @override
+  String get walkPausedLabel => '일시정지 중';
+
+  @override
+  String get walkPausedBanner => '산책을 잠시 멈췄어요';
 }

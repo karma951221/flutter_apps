@@ -136,9 +136,11 @@ class _ActiveWalkView extends StatelessWidget {
                   points: [for (final p in session.points) p.point],
                   distanceMeters: session.distanceMeters,
                   elapsed: elapsed,
+                  isPaused: session.isPaused,
                   locationError: locationError,
                   onRetry: cubit.resumeTracking,
                   onOpenSettings: (failure) => cubit.openSettings(failure),
+                  onTogglePause: session.isPaused ? cubit.unpause : cubit.pause,
                   onStop: () => _confirmStop(context),
                 ),
               ActiveWalkFailure(:final failure) => Center(
@@ -244,18 +246,22 @@ class _TrackingView extends StatelessWidget {
     required this.points,
     required this.distanceMeters,
     required this.elapsed,
+    required this.isPaused,
     required this.locationError,
     required this.onRetry,
     required this.onOpenSettings,
+    required this.onTogglePause,
     required this.onStop,
   });
 
   final List<GeoPoint> points;
   final double distanceMeters;
   final Duration elapsed;
+  final bool isPaused;
   final Failure? locationError;
   final VoidCallback onRetry;
   final ValueChanged<Failure> onOpenSettings;
+  final VoidCallback onTogglePause;
   final VoidCallback onStop;
 
   @override
@@ -266,6 +272,8 @@ class _TrackingView extends StatelessWidget {
     final sheet = _TrackingSheet(
       distanceMeters: distanceMeters,
       elapsed: elapsed,
+      isPaused: isPaused,
+      onTogglePause: onTogglePause,
       onStop: onStop,
       // 지도가 있으면 오류는 시트 안에 — 기록은 이어지고 있다.
       error: error != null && points.isNotEmpty
@@ -352,12 +360,16 @@ class _TrackingSheet extends StatelessWidget {
   const _TrackingSheet({
     required this.distanceMeters,
     required this.elapsed,
+    required this.isPaused,
+    required this.onTogglePause,
     required this.onStop,
     this.error,
   });
 
   final double distanceMeters;
   final Duration elapsed;
+  final bool isPaused;
+  final VoidCallback onTogglePause;
   final VoidCallback onStop;
   final Widget? error;
 
@@ -380,6 +392,21 @@ class _TrackingSheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ?error,
+            if (isPaused)
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: PawlogSize.gutter,
+                  right: PawlogSize.gutter,
+                  bottom: PawlogSpacing.sm,
+                ),
+                child: Text(
+                  l10n.walkPausedLabel,
+                  key: const Key('walk-active-paused-label'),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelMedium?.copyWith(color: colors.textMuted),
+                ),
+              ),
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: PawlogSize.gutter,
@@ -391,10 +418,22 @@ class _TrackingSheet extends StatelessWidget {
               ),
             ),
             PawlogBottomAction(
-              child: PawlogPrimaryButton.stop(
-                key: const Key('walk-active-stop-button'),
-                label: l10n.walkStop,
-                onPressed: onStop,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppButton.secondary(
+                    key: const Key('walk-active-pause-button'),
+                    label: isPaused ? l10n.walkUnpause : l10n.walkPause,
+                    onPressed: onTogglePause,
+                  ),
+                  const SizedBox(height: PawlogSpacing.sm),
+                  PawlogPrimaryButton.stop(
+                    key: const Key('walk-active-stop-button'),
+                    label: l10n.walkStop,
+                    onPressed: onStop,
+                  ),
+                ],
               ),
             ),
           ],

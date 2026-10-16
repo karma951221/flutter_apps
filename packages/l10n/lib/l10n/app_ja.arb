@@ -880,5 +880,9 @@
   "walkStatsEmptyTitle": "まだ記録がありません",
   "walkStatsEmptyMessage": "散歩を記録するとここに積み上がります",
   "walkFeedWeekSummary": "今週 {distance}・{count}回",
-  "walkFeedWeekSummaryEmpty": "今週はまだ散歩していません"
+  "walkFeedWeekSummaryEmpty": "今週はまだ散歩していません",
+  "walkPause": "一時停止",
+  "walkUnpause": "再開",
+  "walkPausedLabel": "一時停止中",
+  "walkPausedBanner": "散歩を一時停止中"
 }

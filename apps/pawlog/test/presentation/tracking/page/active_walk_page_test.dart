@@ -393,4 +393,65 @@ void main() {
     await tester.tap(find.text('반려견 등록하기'));
     expect(opened, 1);
   });
+
+  testWidgets('추적 중 일시정지 보조 버튼은 pauseWalk 를 부르고 끝내기는 하나다', (tester) async {
+    current = TrackerState.tracking(trackingSession);
+    when(() => useCase.pauseWalk()).thenAnswer((_) async => const Ok(null));
+
+    await pumpApp(tester, ActiveWalkPage(onStopped: () {}, onOpenDogs: () {}));
+
+    final pause = find.byKey(const Key('walk-active-pause-button'));
+    expect(
+      find.descendant(of: pause, matching: find.text('일시정지')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('walk-active-paused-label')), findsNothing);
+    expect(find.byType(PawlogPrimaryButton), findsOneWidget);
+
+    await tester.tap(pause);
+    await tester.pump();
+
+    verify(() => useCase.pauseWalk()).called(1);
+    await disposePage(tester);
+  });
+
+  testWidgets('멈춘 세션이면 일시정지 중 라벨과 계속 걷기를 보이고 unpauseWalk 를 부른다', (
+    tester,
+  ) async {
+    current = TrackerState.tracking(
+      walkSession(
+        points: [trackPoint(37.5), trackPoint(37.501)],
+        distanceMeters: 1250,
+        pausedAt: t0.add(const Duration(minutes: 2)),
+      ),
+    );
+    when(() => useCase.unpauseWalk()).thenAnswer((_) async => const Ok(null));
+
+    await pumpApp(tester, ActiveWalkPage(onStopped: () {}, onOpenDogs: () {}));
+
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('walk-active-paused-label')))
+          .data,
+      '일시정지 중',
+    );
+    expect(
+      tester.widget<Text>(find.byKey(const Key('walk-active-elapsed'))).data,
+      '02:00',
+    );
+    final pause = find.byKey(const Key('walk-active-pause-button'));
+    expect(
+      find.descendant(of: pause, matching: find.text('계속 걷기')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('walk-active-stop-button')), findsOneWidget);
+    expect(find.byType(PawlogPrimaryButton), findsOneWidget);
+
+    await tester.tap(pause);
+    await tester.pump();
+
+    verify(() => useCase.unpauseWalk()).called(1);
+    verifyNever(() => useCase.pauseWalk());
+    await disposePage(tester);
+  });
 }

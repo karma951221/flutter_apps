@@ -14,6 +14,7 @@ import 'package:pawlog/presentation/dog/widget/dog_avatars.dart';
 import 'package:pawlog/presentation/feed/cubit/walk_feed_cubit.dart';
 import 'package:pawlog/presentation/feed/page/walk_feed_page.dart';
 import 'package:pawlog/presentation/feed/widget/walk_feed_entry.dart';
+import 'package:pawlog/presentation/tracking/widget/active_walk_banner.dart';
 
 import '../../../support/fakes.dart';
 import '../../../support/mock_walk_use_case.dart';
@@ -228,6 +229,29 @@ void main() {
     await tester.tap(find.byKey(const Key('walk-feed-banner')));
     await tester.tap(find.byKey(const Key('walk-feed-start-button')));
     expect(started, 2);
+  });
+
+  testWidgets('멈춘 세션이면 배너가 멈췄다고 말하고 연두 점이 없다', (tester) async {
+    current = TrackerState.tracking(
+      walkSession(distanceMeters: 300, pausedAt: t0),
+    );
+
+    await pump(tester, disableAnimations: true);
+
+    expect(find.byKey(const Key('walk-feed-banner')), findsOneWidget);
+    expect(find.byKey(const Key('walk-feed-banner-paused')), findsOneWidget);
+    expect(find.text('산책을 잠시 멈췄어요'), findsOneWidget);
+    expect(find.text('산책 중이에요 · 눌러서 돌아가기'), findsNothing);
+    expect(find.byType(PulseDot), findsNothing);
+  });
+
+  testWidgets('추적 중 배너에는 연두 점이 있고 멈춤 표시는 없다', (tester) async {
+    current = TrackerState.tracking(walkSession(distanceMeters: 300));
+
+    await pump(tester, disableAnimations: true);
+
+    expect(find.byType(PulseDot), findsOneWidget);
+    expect(find.byKey(const Key('walk-feed-banner-paused')), findsNothing);
   });
 
   testWidgets('저장 안 한 산책 배너는 onSaveWalk 를 부르고 시작 버튼은 없다', (tester) async {

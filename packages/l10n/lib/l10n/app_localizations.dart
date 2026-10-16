@@ -5269,6 +5269,30 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'이번 주는 아직 산책 전이에요'**
   String get walkFeedWeekSummaryEmpty;
+
+  /// 산책 진행 화면의 일시정지 보조 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'일시정지'**
+  String get walkPause;
+
+  /// 일시정지 중 산책을 이어 가는 보조 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'계속 걷기'**
+  String get walkUnpause;
+
+  /// 산책 진행 시트에서 멈춘 상태를 알리는 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'일시정지 중'**
+  String get walkPausedLabel;
+
+  /// 피드 맨 위 배너. 산책이 일시정지 중일 때
+  ///
+  /// In ko, this message translates to:
+  /// **'산책을 잠시 멈췄어요'**
+  String get walkPausedBanner;
 }
 
 class _AppLocalizationsDelegate

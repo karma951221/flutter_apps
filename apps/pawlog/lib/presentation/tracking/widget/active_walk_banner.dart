@@ -8,6 +8,7 @@ import '../../walk/format/walk_format.dart';
 /// 피드 맨 위의 진행 배너 — 남색 바탕(design.md Components · 진행 배너).
 ///
 /// 추적 중이면 왼쪽에 연두 점이 1.6초 주기로 점멸하고 오른쪽에 경과 시간이 붙는다.
+/// 일시정지 중이면 점 없이 멈췄다는 문구와 멈춘 시간 — 연두는 진행 중에만 쓴다.
 /// 저장 전이면 안내 문구만 — '진행 중' 이 아니므로 연두를 쓰지 않는다.
 class ActiveWalkBanner extends StatelessWidget {
   const ActiveWalkBanner.tracking({
@@ -33,6 +34,8 @@ class ActiveWalkBanner extends StatelessWidget {
     final colors = PawlogColors.of(context);
     final styles = PawlogTextStyles.of(context);
     final theme = Theme.of(context);
+    final paused = session?.isPaused ?? false;
+    final showDot = !unsaved && !paused;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -55,7 +58,7 @@ class ActiveWalkBanner extends StatelessWidget {
             ),
             child: Row(
               children: [
-                if (!unsaved) ...[
+                if (showDot) ...[
                   PulseDot(color: colors.accent),
                   const SizedBox(width: PawlogSpacing.sm),
                 ],
@@ -63,7 +66,10 @@ class ActiveWalkBanner extends StatelessWidget {
                   child: Text(
                     unsaved
                         ? l10n.walkUnsavedBanner
+                        : paused
+                        ? l10n.walkPausedBanner
                         : l10n.walkInProgressBanner,
+                    key: paused ? const Key('walk-feed-banner-paused') : null,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colors.onPrimary,
                       fontWeight: FontWeight.w500,

@@ -366,4 +366,59 @@ void main() {
       expect(elapsed, hasLength(4));
     });
   });
+
+  blocTest<ActiveWalkCubit, ActiveWalkState>(
+    'pause · unpause 는 추적 중이면 유스케이스를 한 번씩 부른다',
+    setUp: () {
+      current = TrackerState.tracking(session);
+      when(() => useCase.pauseWalk()).thenAnswer((_) async => const Ok(null));
+      when(() => useCase.unpauseWalk()).thenAnswer((_) async => const Ok(null));
+    },
+    build: build,
+    act: (cubit) async {
+      await cubit.load();
+      await cubit.pause();
+      await cubit.unpause();
+    },
+    verify: (_) {
+      verify(() => useCase.pauseWalk()).called(1);
+      verify(() => useCase.unpauseWalk()).called(1);
+    },
+  );
+
+  blocTest<ActiveWalkCubit, ActiveWalkState>(
+    '추적 중이 아니면 pause · unpause 는 아무것도 하지 않는다',
+    build: build,
+    act: (cubit) async {
+      await cubit.load();
+      await cubit.pause();
+      await cubit.unpause();
+    },
+    verify: (_) {
+      verifyNever(() => useCase.pauseWalk());
+      verifyNever(() => useCase.unpauseWalk());
+    },
+  );
+
+  test('멈춘 세션이면 1초가 지나도 elapsed 가 그대로다', () {
+    fakeAsync((async) {
+      final clock = async.getClock(t0.add(const Duration(minutes: 3)));
+      current = TrackerState.tracking(
+        walkSession(pausedAt: t0.add(const Duration(minutes: 2))),
+      );
+      final cubit = ActiveWalkCubit(useCase, FakeClock(clock.now));
+      final elapsed = <Duration>[];
+      cubit.stream.listen((state) {
+        if (state case ActiveWalkTracking(elapsed: final e)) elapsed.add(e);
+      });
+
+      cubit.load();
+      async.flushMicrotasks();
+      async.elapse(const Duration(seconds: 2));
+      expect(elapsed.toSet(), {const Duration(minutes: 2)});
+
+      cubit.close();
+      async.flushMicrotasks();
+    });
+  });
 }

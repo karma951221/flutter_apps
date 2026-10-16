@@ -2991,4 +2991,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkFeedWeekSummaryEmpty => 'No walks yet this week';
+
+  @override
+  String get walkPause => 'Pause';
+
+  @override
+  String get walkUnpause => 'Resume';
+
+  @override
+  String get walkPausedLabel => 'Paused';
+
+  @override
+  String get walkPausedBanner => 'Walk paused';
 }
