@@ -2812,4 +2812,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkPausedBanner => '散歩を一時停止中';
+
+  @override
+  String get walkExportGpx => 'GPXで書き出す';
+
+  @override
+  String get walkExportNoRoute => '書き出せる経路がありません';
+
+  @override
+  String get walkExportFailed => '書き出せませんでした';
 }

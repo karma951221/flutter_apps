@@ -5293,6 +5293,24 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'산책을 잠시 멈췄어요'**
   String get walkPausedBanner;
+
+  /// 산책 상세 더보기 메뉴에서 산책 한 건을 GPX 파일로 공유하는 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'GPX로 내보내기'**
+  String get walkExportGpx;
+
+  /// 경로 점이 없는 산책을 GPX 로 내보내려 할 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'경로가 없어 내보낼 수 없어요'**
+  String get walkExportNoRoute;
+
+  /// GPX 파일 쓰기 · 공유가 실패했을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'내보내지 못했어요'**
+  String get walkExportFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -10,6 +10,7 @@ import '../../dog/widget/dog_avatars.dart';
 import '../../theme/pawlog_theme.dart';
 import '../cubit/walk_detail_cubit.dart';
 import '../cubit/walk_detail_state.dart';
+import '../cubit/walk_export_result.dart';
 import '../widget/route_map.dart';
 import '../widget/walk_photos.dart';
 import '../widget/walk_stats_row.dart';
@@ -41,7 +42,7 @@ class WalkDetailPage extends StatelessWidget {
   );
 }
 
-enum _WalkMenuAction { edit, delete }
+enum _WalkMenuAction { edit, export, delete }
 
 class _WalkDetailView extends StatelessWidget {
   const _WalkDetailView({
@@ -72,6 +73,26 @@ class _WalkDetailView extends StatelessWidget {
     );
     if (!confirmed || cubit.isClosed) return;
     await cubit.delete();
+  }
+
+  Future<void> _export(BuildContext context) async {
+    final cubit = context.read<WalkDetailCubit>();
+    final l10n = AppLocalizations.of(context);
+    final result = await cubit.exportGpx();
+    if (!context.mounted) return;
+    final message = switch (result) {
+      WalkExportShared() => null,
+      WalkExportNoRoute() => l10n.walkExportNoRoute,
+      WalkExportFailed() => l10n.walkExportFailed,
+    };
+    if (message == null) return;
+    AppSnackBar.show(
+      context,
+      message: message,
+      type: result is WalkExportFailed
+          ? AppSnackBarType.error
+          : AppSnackBarType.info,
+    );
   }
 
   @override
@@ -121,6 +142,12 @@ class _WalkDetailView extends StatelessWidget {
                       icon: Icons.edit_outlined,
                     ),
                     AppOverflowMenuItem(
+                      key: const Key('walk-detail-export'),
+                      value: _WalkMenuAction.export,
+                      label: l10n.walkExportGpx,
+                      icon: Icons.ios_share_outlined,
+                    ),
+                    AppOverflowMenuItem(
                       value: _WalkMenuAction.delete,
                       label: l10n.commonDelete,
                       icon: Icons.delete_outline,
@@ -129,6 +156,7 @@ class _WalkDetailView extends StatelessWidget {
                   ],
                   onSelected: (action) => switch (action) {
                     _WalkMenuAction.edit => _edit(context),
+                    _WalkMenuAction.export => _export(context),
                     _WalkMenuAction.delete => _confirmDelete(context),
                   },
                 ),

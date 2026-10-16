@@ -11,12 +11,14 @@ import 'package:pawlog/presentation/walk/cubit/walk_detail_cubit.dart';
 import 'package:pawlog/presentation/walk/page/walk_detail_page.dart';
 
 import '../../../support/fakes.dart';
+import '../../../support/mock_walk_file_sharer.dart';
 import '../../../support/mock_walk_use_case.dart';
 import '../../../support/pump_app.dart';
 import '../../../support/stub_tile_provider.dart';
 
 void main() {
   late MockWalkUseCase useCase;
+  late MockWalkFileSharer sharer;
 
   final fullWalk = walk(
     dogs: [dog('d1'), dog('d2')],
@@ -25,13 +27,14 @@ void main() {
 
   setUp(() {
     useCase = MockWalkUseCase();
+    sharer = MockWalkFileSharer();
     when(() => useCase.getWalk('w1')).thenAnswer((_) async => Ok(fullWalk));
     when(
       () => useCase.getWalkTrack('w1'),
     ).thenAnswer((_) async => Ok([trackPoint(37.5), trackPoint(37.501)]));
     when(() => useCase.photoFile(any())).thenReturn(File('/no/such/photo.jpg'));
     getIt
-      ..registerFactory<WalkDetailCubit>(() => WalkDetailCubit(useCase))
+      ..registerFactory<WalkDetailCubit>(() => WalkDetailCubit(useCase, sharer))
       ..registerSingleton<TileProvider>(StubTileProvider());
   });
   tearDown(getIt.reset);
@@ -246,5 +249,88 @@ void main() {
     expect(ids, ['w1']);
     verify(() => useCase.getWalk('w1')).called(2);
     await disposePage(tester);
+  });
+
+  group('GPX로 내보내기', () {
+    void stubSharer(Result<void> result) => when(
+      () => sharer.shareFile(
+        fileName: any(named: 'fileName'),
+        contents: any(named: 'contents'),
+        mimeType: any(named: 'mimeType'),
+      ),
+    ).thenAnswer((_) async => result);
+
+    Future<void> tapExport(WidgetTester tester) async {
+      await tester.tap(find.byKey(const Key('walk-detail-menu')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('walk-detail-export')));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('더보기 메뉴에 수정 · 내보내기 · 삭제가 차례로 있다', (tester) async {
+      await pumpApp(
+        tester,
+        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      );
+
+      await tester.tap(find.byKey(const Key('walk-detail-menu')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('GPX로 내보내기'), findsOneWidget);
+      final edit = tester.getTopLeft(find.text('수정')).dy;
+      final export = tester.getTopLeft(find.text('GPX로 내보내기')).dy;
+      final delete = tester.getTopLeft(find.text('삭제')).dy;
+      expect(edit < export && export < delete, isTrue);
+      await disposePage(tester);
+    });
+
+    testWidgets('경로가 없으면 스낵바만 띄우고 공유하지 않는다', (tester) async {
+      when(
+        () => useCase.getWalkTrack('w1'),
+      ).thenAnswer((_) async => const Ok([]));
+      await pumpApp(
+        tester,
+        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      );
+
+      await tapExport(tester);
+
+      expect(find.text('경로가 없어 내보낼 수 없어요'), findsOneWidget);
+      verifyZeroInteractions(sharer);
+    });
+
+    testWidgets('경로가 있으면 GPX 를 공유하고 스낵바는 없다', (tester) async {
+      stubSharer(const Ok(null));
+      await pumpApp(
+        tester,
+        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      );
+
+      await tapExport(tester);
+
+      verify(
+        () => sharer.shareFile(
+          fileName: any(named: 'fileName', that: endsWith('.gpx')),
+          contents: any(named: 'contents', that: contains('<trkpt')),
+          mimeType: 'application/gpx+xml',
+        ),
+      ).called(1);
+      expect(find.byType(SnackBar), findsNothing);
+      await disposePage(tester);
+    });
+
+    testWidgets('공유가 실패하면 실패 스낵바를 보인다', (tester) async {
+      stubSharer(const Err(Failure.unknown()));
+      await pumpApp(
+        tester,
+        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      );
+
+      await tapExport(tester);
+
+      expect(find.text('내보내지 못했어요'), findsOneWidget);
+      expect(find.byKey(const Key('walk-detail-map')), findsOneWidget);
+      await disposePage(tester);
+    });
   });
 }

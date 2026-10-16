@@ -884,5 +884,8 @@
   "walkPause": "Pause",
   "walkUnpause": "Resume",
   "walkPausedLabel": "Paused",
-  "walkPausedBanner": "Walk paused"
+  "walkPausedBanner": "Walk paused",
+  "walkExportGpx": "Export GPX",
+  "walkExportNoRoute": "There's no route to export",
+  "walkExportFailed": "Couldn't export the walk"
 }

@@ -884,5 +884,8 @@
   "walkPause": "一時停止",
   "walkUnpause": "再開",
   "walkPausedLabel": "一時停止中",
-  "walkPausedBanner": "散歩を一時停止中"
+  "walkPausedBanner": "散歩を一時停止中",
+  "walkExportGpx": "GPXで書き出す",
+  "walkExportNoRoute": "書き出せる経路がありません",
+  "walkExportFailed": "書き出せませんでした"
 }

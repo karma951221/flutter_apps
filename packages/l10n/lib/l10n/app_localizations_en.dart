@@ -3003,4 +3003,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkPausedBanner => 'Walk paused';
+
+  @override
+  String get walkExportGpx => 'Export GPX';
+
+  @override
+  String get walkExportNoRoute => 'There\'s no route to export';
+
+  @override
+  String get walkExportFailed => 'Couldn\'t export the walk';
 }

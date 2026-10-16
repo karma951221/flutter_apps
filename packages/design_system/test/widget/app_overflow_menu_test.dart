@@ -116,4 +116,29 @@ void main() {
     final editText = tester.widget<Text>(find.text('수정'));
     expect(editText.style?.color, isNot(scheme.error));
   });
+
+  testWidgets('항목 key 는 메뉴 행에 붙어 탭할 수 있다', (tester) async {
+    String? selected;
+    await tester.pumpWidget(
+      wrap(
+        AppOverflowMenu<String>(
+          items: const [
+            AppOverflowMenuItem(
+              key: Key('menu-export'),
+              value: 'export',
+              label: '내보내기',
+            ),
+          ],
+          onSelected: (value) => selected = value,
+        ),
+      ),
+    );
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('menu-export')));
+    await tester.pumpAndSettle();
+
+    expect(selected, 'export');
+  });
 }

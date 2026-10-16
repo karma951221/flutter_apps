@@ -3978,5 +3978,11 @@
   "walkPausedLabel": "일시정지 중",
   "@walkPausedLabel": { "description": "산책 진행 시트에서 멈춘 상태를 알리는 라벨" },
   "walkPausedBanner": "산책을 잠시 멈췄어요",
-  "@walkPausedBanner": { "description": "피드 맨 위 배너. 산책이 일시정지 중일 때" }
+  "@walkPausedBanner": { "description": "피드 맨 위 배너. 산책이 일시정지 중일 때" },
+  "walkExportGpx": "GPX로 내보내기",
+  "@walkExportGpx": { "description": "산책 상세 더보기 메뉴에서 산책 한 건을 GPX 파일로 공유하는 항목" },
+  "walkExportNoRoute": "경로가 없어 내보낼 수 없어요",
+  "@walkExportNoRoute": { "description": "경로 점이 없는 산책을 GPX 로 내보내려 할 때 스낵바" },
+  "walkExportFailed": "내보내지 못했어요",
+  "@walkExportFailed": { "description": "GPX 파일 쓰기 · 공유가 실패했을 때 스낵바" }
 }

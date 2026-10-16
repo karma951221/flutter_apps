@@ -26,6 +26,7 @@ import 'package:pawlog/presentation/walk/cubit/walk_edit_cubit.dart';
 import 'package:pawlog/presentation/walk/page/walk_detail_page.dart';
 import 'package:pawlog/presentation/walk/page/walk_edit_page.dart';
 
+import '../../support/mock_walk_file_sharer.dart';
 import '../../support/mock_walk_use_case.dart';
 import '../../support/stub_tile_provider.dart';
 
@@ -67,7 +68,7 @@ void main() {
       ..registerFactory<WalkFeedCubit>(
         () => WalkFeedCubit(useCase, const Clock()),
       )
-      ..registerFactory<WalkDetailCubit>(() => WalkDetailCubit(useCase))
+      ..registerFactory<WalkDetailCubit>(() => WalkDetailCubit(useCase, MockWalkFileSharer()))
       ..registerFactory<WalkEditCubit>(() => WalkEditCubit(useCase))
       ..registerFactory<ActiveWalkCubit>(
         () => ActiveWalkCubit(useCase, const Clock()),

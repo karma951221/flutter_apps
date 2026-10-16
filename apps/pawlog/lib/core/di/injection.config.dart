@@ -114,14 +114,17 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i143.ActiveWalkCubit>(
       () => _i143.ActiveWalkCubit(gh<_i5.WalkUseCase>(), gh<_i494.Clock>()),
     );
+    gh.factory<_i174.WalkDetailCubit>(
+      () => _i174.WalkDetailCubit(
+        gh<_i5.WalkUseCase>(),
+        gh<_i524.WalkFileSharer>(),
+      ),
+    );
     gh.factory<_i980.DogEditCubit>(
       () => _i980.DogEditCubit(gh<_i5.WalkUseCase>()),
     );
     gh.factory<_i596.DogListCubit>(
       () => _i596.DogListCubit(gh<_i5.WalkUseCase>()),
-    );
-    gh.factory<_i174.WalkDetailCubit>(
-      () => _i174.WalkDetailCubit(gh<_i5.WalkUseCase>()),
     );
     gh.factory<_i804.WalkEditCubit>(
       () => _i804.WalkEditCubit(gh<_i5.WalkUseCase>()),

@@ -53,6 +53,7 @@ class AppOverflowMenu<T> extends StatelessWidget {
       itemBuilder: (_) => [
         for (final item in items)
           PopupMenuItem(
+            key: item.key,
             value: item.value,
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -82,14 +83,17 @@ class AppOverflowMenu<T> extends StatelessWidget {
 ///
 /// [isDestructive] 는 삭제처럼 되돌릴 수 없는 항목에 쓴다 — 라벨을
 /// `colorScheme.error` 로 그려 다른 항목과 구분한다.
+/// [key] 는 그 행(`PopupMenuItem`)에 붙는다 — 테스트가 라벨 문자열 없이 찾게 한다.
 class AppOverflowMenuItem<T> {
   const AppOverflowMenuItem({
     required this.value,
     required this.label,
     this.icon,
     this.isDestructive = false,
+    this.key,
   });
 
+  final Key? key;
   final T value;
   final String label;
   final IconData? icon;

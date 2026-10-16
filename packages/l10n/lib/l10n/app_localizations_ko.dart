@@ -2814,4 +2814,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkPausedBanner => '산책을 잠시 멈췄어요';
+
+  @override
+  String get walkExportGpx => 'GPX로 내보내기';
+
+  @override
+  String get walkExportNoRoute => '경로가 없어 내보낼 수 없어요';
+
+  @override
+  String get walkExportFailed => '내보내지 못했어요';
 }
