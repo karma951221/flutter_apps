@@ -70,6 +70,7 @@ void main() {
     'photos/../../x.jpg',
     'photos/sub/../../x.jpg',
     'photos//etc/passwd',
+    r'photos/..\..\x.jpg',
   ]) {
     test('사진 경로 $name 은 Err', () {
       final result = codec.unpack(
@@ -94,5 +95,16 @@ void main() {
     final value =
         (result as Ok<({String json, Map<String, Uint8List> photos})>).value;
     expect(value.photos, isEmpty);
+  });
+
+  test('잘린 zip 은 던지지 않고 Err', () {
+    final bytes = codec.pack(
+      json: '{"format":"pawlog-backup"}',
+      photos: {'a.jpg': Uint8List.fromList(List.generate(500, (i) => i % 7))},
+    );
+    final truncated = Uint8List.sublistView(bytes, 0, bytes.length ~/ 2);
+
+    expect(() => codec.unpack(truncated), returnsNormally);
+    expect(codec.unpack(truncated), isA<Err<Object?>>());
   });
 }

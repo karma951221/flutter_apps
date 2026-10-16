@@ -56,6 +56,7 @@ void main() {
 
       expect(result, isA<Ok<void>>());
       expect(storage.resolve('b.jpg').readAsBytesSync(), [4, 5]);
+      expect(storage.resolve('b.jpg.tmp').existsSync(), isFalse);
     });
 
     test('이미 있으면 덮어쓰지 않고 Ok', () async {

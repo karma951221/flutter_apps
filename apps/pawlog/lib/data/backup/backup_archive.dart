@@ -51,9 +51,10 @@ class BackupArchive implements BackupArchiveCodec {
       }
       if (json == null) return _invalid('missing $_jsonName');
       return Ok((json: json, photos: photos));
-    } on FormatException catch (e) {
-      // ArchiveException 도 FormatException 이다. utf8 디코딩 실패도 여기로 온다.
-      return _invalid(e.message);
+    } on Object catch (e) {
+      // 깨지거나 잘린 zip 은 ArchiveException(FormatException) 말고도
+      // RangeError 등을 던질 수 있다. utf8 디코딩 실패도 여기로 온다.
+      return _invalid(e.toString());
     }
   }
 

@@ -20,12 +20,16 @@ abstract interface class PhotoStorage {
   Future<void> remove(String relativePath);
 }
 
-/// 루트 밖으로 나가지 않는 상대 경로인가. 비었거나 `/` · `\\` 로 시작하거나
-/// `..` 조각이 있으면 아니다(백업 zip 의 경로 탈출 방지).
+/// 루트 밖으로 나가지 않는 상대 경로인가(백업 zip 의 경로 탈출 방지).
+///
+/// 비었거나, `\0` 이 있거나, `/` · `\` 로 시작하거나, `/` · `\` 로 나눈 조각 중
+/// 빈 것 · `.` · `..` · 드라이브 접두사(`C:`)가 있으면 아니다.
 bool isSafePhotoPath(String relativePath) {
-  if (relativePath.isEmpty) return false;
-  if (relativePath.startsWith('/') || relativePath.startsWith(r'\')) {
-    return false;
+  if (relativePath.isEmpty || relativePath.contains('\u0000')) return false;
+  final drive = RegExp(r'^[A-Za-z]:');
+  for (final segment in relativePath.split(RegExp(r'[/\\]'))) {
+    if (segment.isEmpty || segment == '.' || segment == '..') return false;
+    if (drive.hasMatch(segment)) return false;
   }
-  return !relativePath.split(RegExp(r'[/\\]')).contains('..');
+  return true;
 }

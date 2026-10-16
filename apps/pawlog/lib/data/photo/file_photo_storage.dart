@@ -48,7 +48,10 @@ class FilePhotoStorage implements PhotoStorage {
       final file = resolve(relativePath);
       if (file.existsSync()) return const Ok(null);
       await file.parent.create(recursive: true);
-      await file.writeAsBytes(bytes, flush: true);
+      // 쓰다가 죽어도 최종 경로에 반쪽 파일이 남지 않게 임시 파일에 쓰고 옮긴다.
+      final temp = File('${file.path}.tmp');
+      await temp.writeAsBytes(bytes, flush: true);
+      await temp.rename(file.path);
       return const Ok(null);
     } on FileSystemException catch (error) {
       return Err(
