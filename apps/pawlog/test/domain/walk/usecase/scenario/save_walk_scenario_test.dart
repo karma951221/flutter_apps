@@ -40,9 +40,13 @@ void main() {
     when(() => ids.newId()).thenAnswer((_) => 'id${n++}');
   });
 
-  WalkDraft draft({List<String> dogIds = const ['d1']}) => WalkDraft(
+  WalkDraft draft({
+    List<String> dogIds = const ['d1'],
+    Duration duration = const Duration(minutes: 30),
+  }) => WalkDraft(
     startedAt: t0,
     endedAt: t1,
+    duration: duration,
     distanceMeters: 1200,
     points: [trackPoint(37), trackPoint(37.01)],
     dogIds: dogIds,
@@ -86,6 +90,12 @@ void main() {
     ]);
     verify(() => walks.insert(saved, any())).called(1);
     verify(() => tracker.clear()).called(1);
+  });
+
+  test('저장 시간은 draft.duration(멈춘 시간을 뺀 값)이다', () async {
+    final result = await scenario(draft(duration: const Duration(minutes: 20)));
+
+    expect((result as Ok<Walk>).value.duration, const Duration(minutes: 20));
   });
 
   test('저장 실패면 tracker 를 비우지 않는다', () async {

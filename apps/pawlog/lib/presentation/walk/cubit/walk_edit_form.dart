@@ -83,6 +83,7 @@ class WalkEditForm with _$WalkEditForm {
     return WalkDraft(
       startedAt: session.startedAt,
       endedAt: session.endedAt ?? session.startedAt,
+      duration: session.elapsedAt(session.endedAt ?? session.startedAt),
       distanceMeters: session.distanceMeters,
       points: session.points,
       dogIds: _selectedIds,

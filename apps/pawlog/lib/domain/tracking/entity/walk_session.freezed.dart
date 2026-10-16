@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$WalkSession {
 
- List<String> get dogIds; DateTime get startedAt; DateTime? get endedAt; List<WalkTrackPoint> get points; double get distanceMeters;
+ List<String> get dogIds; DateTime get startedAt; DateTime? get endedAt; List<WalkTrackPoint> get points; double get distanceMeters; Duration get pausedDuration; DateTime? get pausedAt;
 /// Create a copy of WalkSession
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $WalkSessionCopyWith<WalkSession> get copyWith => _$WalkSessionCopyWithImpl<Walk
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WalkSession&&const DeepCollectionEquality().equals(other.dogIds, dogIds)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.endedAt, endedAt) || other.endedAt == endedAt)&&const DeepCollectionEquality().equals(other.points, points)&&(identical(other.distanceMeters, distanceMeters) || other.distanceMeters == distanceMeters));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WalkSession&&const DeepCollectionEquality().equals(other.dogIds, dogIds)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.endedAt, endedAt) || other.endedAt == endedAt)&&const DeepCollectionEquality().equals(other.points, points)&&(identical(other.distanceMeters, distanceMeters) || other.distanceMeters == distanceMeters)&&(identical(other.pausedDuration, pausedDuration) || other.pausedDuration == pausedDuration)&&(identical(other.pausedAt, pausedAt) || other.pausedAt == pausedAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(dogIds),startedAt,endedAt,const DeepCollectionEquality().hash(points),distanceMeters);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(dogIds),startedAt,endedAt,const DeepCollectionEquality().hash(points),distanceMeters,pausedDuration,pausedAt);
 
 @override
 String toString() {
-  return 'WalkSession(dogIds: $dogIds, startedAt: $startedAt, endedAt: $endedAt, points: $points, distanceMeters: $distanceMeters)';
+  return 'WalkSession(dogIds: $dogIds, startedAt: $startedAt, endedAt: $endedAt, points: $points, distanceMeters: $distanceMeters, pausedDuration: $pausedDuration, pausedAt: $pausedAt)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $WalkSessionCopyWith<$Res>  {
   factory $WalkSessionCopyWith(WalkSession value, $Res Function(WalkSession) _then) = _$WalkSessionCopyWithImpl;
 @useResult
 $Res call({
- List<String> dogIds, DateTime startedAt, DateTime? endedAt, List<WalkTrackPoint> points, double distanceMeters
+ List<String> dogIds, DateTime startedAt, DateTime? endedAt, List<WalkTrackPoint> points, double distanceMeters, Duration pausedDuration, DateTime? pausedAt
 });
 
 
@@ -62,14 +62,16 @@ class _$WalkSessionCopyWithImpl<$Res>
 
 /// Create a copy of WalkSession
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? dogIds = null,Object? startedAt = null,Object? endedAt = freezed,Object? points = null,Object? distanceMeters = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? dogIds = null,Object? startedAt = null,Object? endedAt = freezed,Object? points = null,Object? distanceMeters = null,Object? pausedDuration = null,Object? pausedAt = freezed,}) {
   return _then(WalkSession(
 dogIds: null == dogIds ? _self.dogIds : dogIds // ignore: cast_nullable_to_non_nullable
 as List<String>,startedAt: null == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,endedAt: freezed == endedAt ? _self.endedAt : endedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,points: null == points ? _self.points : points // ignore: cast_nullable_to_non_nullable
 as List<WalkTrackPoint>,distanceMeters: null == distanceMeters ? _self.distanceMeters : distanceMeters // ignore: cast_nullable_to_non_nullable
-as double,
+as double,pausedDuration: null == pausedDuration ? _self.pausedDuration : pausedDuration // ignore: cast_nullable_to_non_nullable
+as Duration,pausedAt: freezed == pausedAt ? _self.pausedAt : pausedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 

@@ -28,6 +28,7 @@ void main() {
       WalkDraft(
         startedAt: t0,
         endedAt: t1,
+        duration: const Duration(minutes: 30),
         distanceMeters: 0,
         points: const [],
         dogIds: const [],

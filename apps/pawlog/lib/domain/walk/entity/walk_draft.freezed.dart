@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$WalkDraft {
 
- DateTime get startedAt; DateTime get endedAt; double get distanceMeters; List<WalkTrackPoint> get points; List<String> get dogIds; String? get memo; List<String> get photoPaths;
+ DateTime get startedAt; DateTime get endedAt; Duration get duration; double get distanceMeters; List<WalkTrackPoint> get points; List<String> get dogIds; String? get memo; List<String> get photoPaths;
 /// Create a copy of WalkDraft
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $WalkDraftCopyWith<WalkDraft> get copyWith => _$WalkDraftCopyWithImpl<WalkDraft>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WalkDraft&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.endedAt, endedAt) || other.endedAt == endedAt)&&(identical(other.distanceMeters, distanceMeters) || other.distanceMeters == distanceMeters)&&const DeepCollectionEquality().equals(other.points, points)&&const DeepCollectionEquality().equals(other.dogIds, dogIds)&&(identical(other.memo, memo) || other.memo == memo)&&const DeepCollectionEquality().equals(other.photoPaths, photoPaths));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WalkDraft&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.endedAt, endedAt) || other.endedAt == endedAt)&&(identical(other.duration, duration) || other.duration == duration)&&(identical(other.distanceMeters, distanceMeters) || other.distanceMeters == distanceMeters)&&const DeepCollectionEquality().equals(other.points, points)&&const DeepCollectionEquality().equals(other.dogIds, dogIds)&&(identical(other.memo, memo) || other.memo == memo)&&const DeepCollectionEquality().equals(other.photoPaths, photoPaths));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,startedAt,endedAt,distanceMeters,const DeepCollectionEquality().hash(points),const DeepCollectionEquality().hash(dogIds),memo,const DeepCollectionEquality().hash(photoPaths));
+int get hashCode => Object.hash(runtimeType,startedAt,endedAt,duration,distanceMeters,const DeepCollectionEquality().hash(points),const DeepCollectionEquality().hash(dogIds),memo,const DeepCollectionEquality().hash(photoPaths));
 
 @override
 String toString() {
-  return 'WalkDraft(startedAt: $startedAt, endedAt: $endedAt, distanceMeters: $distanceMeters, points: $points, dogIds: $dogIds, memo: $memo, photoPaths: $photoPaths)';
+  return 'WalkDraft(startedAt: $startedAt, endedAt: $endedAt, duration: $duration, distanceMeters: $distanceMeters, points: $points, dogIds: $dogIds, memo: $memo, photoPaths: $photoPaths)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $WalkDraftCopyWith<$Res>  {
   factory $WalkDraftCopyWith(WalkDraft value, $Res Function(WalkDraft) _then) = _$WalkDraftCopyWithImpl;
 @useResult
 $Res call({
- DateTime startedAt, DateTime endedAt, double distanceMeters, List<WalkTrackPoint> points, List<String> dogIds, String? memo, List<String> photoPaths
+ DateTime startedAt, DateTime endedAt, Duration duration, double distanceMeters, List<WalkTrackPoint> points, List<String> dogIds, String? memo, List<String> photoPaths
 });
 
 
@@ -62,11 +62,12 @@ class _$WalkDraftCopyWithImpl<$Res>
 
 /// Create a copy of WalkDraft
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? startedAt = null,Object? endedAt = null,Object? distanceMeters = null,Object? points = null,Object? dogIds = null,Object? memo = freezed,Object? photoPaths = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? startedAt = null,Object? endedAt = null,Object? duration = null,Object? distanceMeters = null,Object? points = null,Object? dogIds = null,Object? memo = freezed,Object? photoPaths = null,}) {
   return _then(WalkDraft(
 startedAt: null == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,endedAt: null == endedAt ? _self.endedAt : endedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,distanceMeters: null == distanceMeters ? _self.distanceMeters : distanceMeters // ignore: cast_nullable_to_non_nullable
+as DateTime,duration: null == duration ? _self.duration : duration // ignore: cast_nullable_to_non_nullable
+as Duration,distanceMeters: null == distanceMeters ? _self.distanceMeters : distanceMeters // ignore: cast_nullable_to_non_nullable
 as double,points: null == points ? _self.points : points // ignore: cast_nullable_to_non_nullable
 as List<WalkTrackPoint>,dogIds: null == dogIds ? _self.dogIds : dogIds // ignore: cast_nullable_to_non_nullable
 as List<String>,memo: freezed == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable

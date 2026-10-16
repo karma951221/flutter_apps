@@ -74,10 +74,14 @@ WalkSession walkSession({
   List<WalkTrackPoint>? points,
   double distanceMeters = 0,
   DateTime? endedAt,
+  Duration pausedDuration = Duration.zero,
+  DateTime? pausedAt,
 }) => WalkSession(
   dogIds: const ['d1'],
   startedAt: t0,
   endedAt: endedAt,
   points: points ?? const [],
   distanceMeters: distanceMeters,
+  pausedDuration: pausedDuration,
+  pausedAt: pausedAt,
 );

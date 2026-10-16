@@ -48,7 +48,7 @@ class SaveWalkScenario {
       id: _idGenerator.newId(),
       startedAt: draft.startedAt,
       endedAt: draft.endedAt,
-      duration: draft.endedAt.difference(draft.startedAt),
+      duration: draft.duration,
       distanceMeters: draft.distanceMeters,
       memo: draft.memo,
       dogs: selected,

@@ -30,6 +30,7 @@ WalkPhoto _photo(String path, int position) =>
     WalkPhoto(id: 'p$position', path: path, position: position);
 
 void main() {
+  _formDurationTest();
   late MockWalkUseCase useCase;
   late WalkSession session;
 
@@ -38,6 +39,7 @@ void main() {
       WalkDraft(
         startedAt: t0,
         endedAt: t1,
+        duration: const Duration(minutes: 30),
         distanceMeters: 0,
         points: const [],
         dogIds: const [],
@@ -532,5 +534,20 @@ void main() {
 
       verifyNever(() => useCase.removePhoto(any()));
     });
+  });
+}
+
+void _formDurationTest() {
+  test('WalkEditForm.toDraft 의 duration 은 멈춘 시간을 뺀 값이다', () {
+    final form = WalkEditForm(
+      dogs: [dog('d1')],
+      selectedDogIds: const {'d1'},
+      session: walkSession(
+        endedAt: t1,
+        pausedDuration: const Duration(minutes: 10),
+      ),
+    );
+
+    expect(form.toDraft().duration, const Duration(minutes: 20));
   });
 }

@@ -11,6 +11,8 @@ class WalkDraft with _$WalkDraft {
   @override
   final DateTime endedAt;
   @override
+  final Duration duration;
+  @override
   final double distanceMeters;
   @override
   final List<WalkTrackPoint> points;
@@ -24,6 +26,7 @@ class WalkDraft with _$WalkDraft {
   const WalkDraft({
     required this.startedAt,
     required this.endedAt,
+    required this.duration,
     required this.distanceMeters,
     required this.points,
     required this.dogIds,
