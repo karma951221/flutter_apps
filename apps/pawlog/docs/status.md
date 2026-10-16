@@ -84,8 +84,8 @@ SDK 없음, 다음 세션.** APK · iOS 빌드도 아직 한 번도 하지 않�
 - [x] ① 계산 정책 (`deb4198`) · ② 문자열 (`e43bcd1`) · ③ 상태 · 표기 (`74fc881`) · ④ 통계 화면 · `/stats`
       (`ac6c3bc` · 리뷰 수정 `6ecb8ac`) · ⑤ 피드 요약 줄 (`ab5e10a`) · 문서 — [기록](features/stats/history.md) · [테스트](features/stats/testing.md)
 - [x] 에뮬레이터 — ①③⑤ PASS, ②④ 일부. 새 AVD 에서 GPS 가 앱에 들어오지 않아 거리 0 m 산책으로 봤다
-- [ ] 남은 것: GPS 가 되는 기기에서 거리 · 막대 높이 · 지난 기간 이동을 한 번 더 본다. 위치 꺼짐 뒤 "다시 시도" 가
-      위치 요청을 다시 걸지 않는 W2 문제([기록](features/stats/history.md#에뮬레이터-qa-2026-10-16))
+- [ ] 남은 것: GPS 가 되는 기기에서 거리 · 막대 높이 · 지난 기간 이동을 한 번 더 본다. `Medium_Phone_2` 는 Google Play
+      서비스 위치가 깨져 있어 안 된다([기록](features/stats/history.md#에뮬레이터-qa-2026-10-16))
 
 검증(2026-10-16, `ab5e10a`): `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+303` · `flutter build apk --debug`
 성공. `packages/l10n` `+10`. `apps/trader` `flutter test test/convention` 은 워크트리에 미커밋 `design.md` 가 없어

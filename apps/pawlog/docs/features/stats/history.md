@@ -61,8 +61,10 @@
 `Medium_Phone_2`(Android, 영어), 새로 설치. 결과는 [테스트 — 에뮬레이터](testing.md#에뮬레이터).
 
 - 이 AVD 에서는 `adb emu geo fix` 를 넣어도 geolocator 가 "The location service on the device is disabled" 를 냈다.
-  기기 위치는 켜져 있고 `gps` 의 마지막 위치도 갱신됐다. 새 AVD 에 Google 위치 정확도 동의가 없어서로 보인다.
-  동의는 사용자 몫이라 켜지 않았고, 통계는 **거리 0 m 산책 두 건**으로 확인했다
-- 위치 서비스 꺼짐 오류 뒤 위치를 켜고 "Try again" 을 눌러도 앱이 위치 요청을 다시 등록하지 않았다
-  (`dumpsys location` 에 pawlog 요청 없음). W2 tracking 의 다시 시도 경로라 이 범위 밖 — 따로 본다
+  기기 위치는 켜져 있고 `gps` 의 마지막 위치도 갱신됐다. logcat 에 Google Play 서비스의 `FusedLocationService` 가
+  부팅 때부터 죽고 다시 뜨기를 되풀이한다 — geolocator 가 쓰는 fused 경로가 이 AVD 에서 깨져 있다(환경).
+  통계는 **거리 0 m 산책 두 건**으로 확인했다
+- 처음에는 "Try again" 이 위치 요청을 다시 걸지 않는 W2 버그로 보였다. 임시 로그로 다시 보니 자동화 스크립트가
+  버튼이 아니라 "…Try again to resume…" 안내 문구를 누르고 있었다. 버튼을 누르면 `resume` → 구독 취소 →
+  native 재시작까지 정상이고, 같은 fused 오류로 다시 실패할 뿐이다 — 앱 버그 아님
 - 기존 `Medium_Phone` AVD 는 저장 공간 부족(설치 실패) · 화면 잠금 PIN 으로 쓰지 않았다
