@@ -13,6 +13,7 @@
 | 2 | W3 record + W4 feed + 문서 | **완료** — 에뮬레이터 QA 2026-10-04(일부 시나리오 미실행) |
 | 2+ | W6 stats — 주 · 월 통계, 피드 요약 줄 | **완료** 2026-10-16 — 에뮬레이터 일부([테스트](features/stats/testing.md#에뮬레이터)) |
 | 2+ | W7 session — 일시정지 · 재개, 강제 종료 뒤 복구 | **완료** 2026-10-17 — 에뮬레이터 PASS(거리 제외, [테스트](features/session/testing.md#에뮬레이터)) |
+| 2+ | W8 export — 산책 한 건 GPX 내보내기 | **착수** 2026-10-17 — [계획](features/export/plan.md) |
 | 3 | W5 social (v2) | 미정 |
 
 ## 0 — 기획 (완료, 2026-10-03)
