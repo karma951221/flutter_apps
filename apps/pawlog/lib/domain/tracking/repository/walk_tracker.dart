@@ -15,6 +15,11 @@ abstract interface class WalkTracker {
     required TrackingNotice notice,
   });
 
+  /// 지난 실행이 써 둔 세션을 되살린다. idle 일 때만 한다. 진행 중이면 위치를
+  /// 다시 확인해 구독하고(실패는 `locationError` 로 싣는다), 끝난 세션이면
+  /// finished 로 둔다. 남은 게 없거나 읽기가 실패하면 idle 그대로다.
+  Future<void> restore();
+
   /// 위치 오류 뒤 세션을 지킨 채 위치 확인과 스트림 구독을 다시 한다.
   Future<Result<void>> resume();
 

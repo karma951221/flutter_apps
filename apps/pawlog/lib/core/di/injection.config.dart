@@ -64,13 +64,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i209.DogRepository>(
       () => _i40.DriftDogRepository(gh<_i563.WalkDatabase>()),
     );
-    gh.lazySingleton<_i105.WalkTracker>(
-      () => _i976.GeolocatorWalkTracker(
-        gh<_i645.LocationGateway>(),
-        gh<_i494.Clock>(),
-      ),
-      dispose: _i976.disposeWalkTracker,
-    );
     gh.lazySingleton<_i612.WalkRepository>(
       () => _i1020.DriftWalkRepository(gh<_i563.WalkDatabase>()),
     );
@@ -82,6 +75,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i497.Directory>(instanceName: 'walkPhotosRoot'),
         gh<_i494.IdGenerator>(),
       ),
+    );
+    gh.lazySingleton<_i105.WalkTracker>(
+      () => _i976.GeolocatorWalkTracker(
+        gh<_i645.LocationGateway>(),
+        gh<_i494.Clock>(),
+        gh<_i845.ActiveWalkStore>(),
+      ),
+      dispose: _i976.disposeWalkTracker,
     );
     gh.lazySingleton<_i5.WalkUseCase>(
       () => _i5.DefaultWalkUseCase(

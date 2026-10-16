@@ -9,6 +9,7 @@ import '../../domain/tracking/entity/tracker_state.dart';
 import '../../domain/tracking/entity/tracking_notice.dart';
 import '../../domain/tracking/entity/walk_session.dart';
 import '../../domain/tracking/policy/walk_tracking_policy.dart';
+import '../../domain/tracking/repository/active_walk_store.dart';
 import '../../domain/tracking/repository/walk_tracker.dart';
 import '../../domain/walk/entity/geo_point.dart';
 import '../../domain/walk/entity/walk_track_point.dart';
@@ -19,7 +20,7 @@ FutureOr<void> disposeWalkTracker(WalkTracker tracker) =>
 
 @LazySingleton(as: WalkTracker, dispose: disposeWalkTracker)
 class GeolocatorWalkTracker implements WalkTracker {
-  GeolocatorWalkTracker(this._gateway, this._clock)
+  GeolocatorWalkTracker(this._gateway, this._clock, this._store)
     : _access = LocationAccess(_gateway);
 
   static const _policy = WalkTrackingPolicy();
@@ -27,6 +28,9 @@ class GeolocatorWalkTracker implements WalkTracker {
 
   final LocationGateway _gateway;
   final Clock _clock;
+
+  /// 앱이 죽어도 다음 실행에 되살리도록 진행 중 세션을 써 둔다.
+  final ActiveWalkStore _store;
 
   /// 서비스 → 권한 순서로 확인하고, 권한은 세션당 한 번만 묻는다.
   final LocationAccess _access;
@@ -41,6 +45,19 @@ class GeolocatorWalkTracker implements WalkTracker {
 
   /// 재개 뒤 첫 수락 점은 멈춘 동안 옮긴 거리를 걸은 거리로 세지 않는다.
   bool _skipNextStep = false;
+
+  /// 저장소 쓰기를 순서대로 잇는 큐. 실패는 알리기만 하고 추적은 이어 간다.
+  Future<void> _writes = Future.value();
+
+  void _enqueue(Future<void> Function() op) {
+    _writes = _writes
+        .then((_) => op())
+        .catchError((Object e) => debugPrint('active walk store: $e'));
+  }
+
+  /// 지금까지 넣은 쓰기가 모두 끝날 때 완료된다.
+  @visibleForTesting
+  Future<void> get pendingWrites => _writes;
 
   @override
   TrackerState get current => _state;
@@ -78,19 +95,44 @@ class GeolocatorWalkTracker implements WalkTracker {
       _notice = notice;
       _skipNextStep = false;
       await _subscribe(notice);
-      _emit(
-        TrackerState.tracking(
-          WalkSession(
-            dogIds: dogIds,
-            startedAt: _clock.now(),
-            points: const [],
-            distanceMeters: 0,
-          ),
-        ),
+      final session = WalkSession(
+        dogIds: dogIds,
+        startedAt: _clock.now(),
+        points: const [],
+        distanceMeters: 0,
       );
+      _emit(TrackerState.tracking(session));
+      _enqueue(() => _store.begin(session, notice));
       return const Ok(null);
     } catch (error) {
       return Err(Failure.unknown(message: error.toString()));
+    }
+  }
+
+  @override
+  Future<void> restore() async {
+    if (_state is! TrackerIdle) return;
+    try {
+      final snapshot = await _store.load();
+      if (snapshot == null || _state is! TrackerIdle) return;
+      final session = snapshot.session;
+      _notice = snapshot.notice;
+      if (session.endedAt != null) {
+        _emit(TrackerState.finished(session));
+        return;
+      }
+      // 죽어 있던 동안도 걸은 것으로 센다. 첫 새 점의 거리를 그대로 더한다.
+      _skipNextStep = false;
+      final failure = await _checkAccess();
+      if (_state is! TrackerIdle) return;
+      if (failure != null) {
+        _emit(TrackerState.tracking(session, locationError: failure));
+        return;
+      }
+      await _subscribe(snapshot.notice);
+      _emit(TrackerState.tracking(session));
+    } catch (error) {
+      debugPrint('walk tracker restore: $error');
     }
   }
 
@@ -198,14 +240,13 @@ class GeolocatorWalkTracker implements WalkTracker {
     }
     final added = _skipNextStep ? 0.0 : step;
     _skipNextStep = false;
-    _emit(
-      TrackerState.tracking(
-        session.copyWith(
-          points: [...session.points, next],
-          distanceMeters: session.distanceMeters + added,
-        ),
-      ),
+    final updated = session.copyWith(
+      points: [...session.points, next],
+      distanceMeters: session.distanceMeters + added,
     );
+    _emit(TrackerState.tracking(updated));
+    final seq = updated.points.length - 1;
+    _enqueue(() => _store.appendPoint(seq, next, updated.distanceMeters));
   }
 
   @override
@@ -215,12 +256,9 @@ class GeolocatorWalkTracker implements WalkTracker {
       return const Err(Failure.notFound(failureCode: FailureCode.walkNotFound));
     }
     if (state.session.isPaused) return const Ok(null);
-    _emit(
-      TrackerState.tracking(
-        state.session.copyWith(pausedAt: _clock.now()),
-        locationError: state.locationError,
-      ),
-    );
+    final paused = state.session.copyWith(pausedAt: _clock.now());
+    _emit(TrackerState.tracking(paused, locationError: state.locationError));
+    _enqueue(() => _store.updateTiming(paused));
     return const Ok(null);
   }
 
@@ -233,12 +271,9 @@ class GeolocatorWalkTracker implements WalkTracker {
     final session = state.session;
     if (!session.isPaused) return const Ok(null);
     _skipNextStep = true;
-    _emit(
-      TrackerState.tracking(
-        _closePause(session, _clock.now()),
-        locationError: state.locationError,
-      ),
-    );
+    final resumed = _closePause(session, _clock.now());
+    _emit(TrackerState.tracking(resumed, locationError: state.locationError));
+    _enqueue(() => _store.updateTiming(resumed));
     return const Ok(null);
   }
 
@@ -291,6 +326,7 @@ class GeolocatorWalkTracker implements WalkTracker {
     final now = _clock.now();
     final finished = _closePause(state.session, now).copyWith(endedAt: now);
     _emit(TrackerState.finished(finished));
+    _enqueue(() => _store.updateTiming(finished));
     return Ok(finished);
   }
 
@@ -303,7 +339,9 @@ class GeolocatorWalkTracker implements WalkTracker {
   /// finished → idle 만 허용한다. 추적 중에는 무시해 진행 중인 산책을 지키지 않는 호출이 없게 한다.
   @override
   Future<void> clear() async {
-    if (_state is TrackerFinished) _emit(const TrackerState.idle());
+    if (_state is! TrackerFinished) return;
+    _emit(const TrackerState.idle());
+    _enqueue(_store.clear);
   }
 
   Future<void> dispose() async {

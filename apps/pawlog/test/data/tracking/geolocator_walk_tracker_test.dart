@@ -6,14 +6,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:location/location.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pawlog/data/tracking/geolocator_walk_tracker.dart';
+import 'package:pawlog/domain/tracking/entity/active_walk_snapshot.dart';
 import 'package:pawlog/domain/tracking/entity/tracker_state.dart';
 import 'package:pawlog/domain/tracking/entity/tracking_notice.dart';
 import 'package:pawlog/domain/tracking/entity/walk_session.dart';
+import 'package:pawlog/domain/tracking/repository/active_walk_store.dart';
 import 'package:pawlog/domain/walk/entity/geo_point.dart';
+import 'package:pawlog/domain/walk/entity/walk_track_point.dart';
 
 import '../../support/fakes.dart';
 
 class MockLocationGateway extends Mock implements LocationGateway {}
+
+class MockActiveWalkStore extends Mock implements ActiveWalkStore {}
 
 const _notice = TrackingNotice(title: '산책 중', text: '기록하고 있어요');
 
@@ -33,18 +38,35 @@ Position _pos(double lat, {double accuracy = 5, DateTime? at}) => Position(
 void main() {
   late MockLocationGateway gateway;
   late StreamController<Position> positions;
+  late MockActiveWalkStore store;
   late GeolocatorWalkTracker tracker;
   var clock = t0;
 
   setUpAll(() {
     registerFallbackValue(const LocationSettings());
+    registerFallbackValue(
+      WalkSession(
+        dogIds: const [],
+        startedAt: t0,
+        points: const [],
+        distanceMeters: 0,
+      ),
+    );
+    registerFallbackValue(_notice);
+    registerFallbackValue(trackPoint(0));
   });
 
   setUp(() {
     clock = t0;
     gateway = MockLocationGateway();
     positions = StreamController<Position>.broadcast();
-    tracker = GeolocatorWalkTracker(gateway, FakeClock(() => clock));
+    store = MockActiveWalkStore();
+    tracker = GeolocatorWalkTracker(gateway, FakeClock(() => clock), store);
+    when(() => store.load()).thenAnswer((_) async => null);
+    when(() => store.begin(any(), any())).thenAnswer((_) async {});
+    when(() => store.appendPoint(any(), any(), any())).thenAnswer((_) async {});
+    when(() => store.updateTiming(any())).thenAnswer((_) async {});
+    when(() => store.clear()).thenAnswer((_) async {});
     when(
       () => gateway.isLocationServiceEnabled(),
     ).thenAnswer((_) async => true);
@@ -459,6 +481,249 @@ void main() {
 
       expect(session().isPaused, isTrue);
       expect(session().pausedAt, t0);
+    });
+  });
+
+  group('저장소에 써 두기', () {
+    test('start 는 세션 머리를 한 번 쓴다', () async {
+      await started();
+      await tracker.pendingWrites;
+
+      final captured = verify(
+        () => store.begin(captureAny(), _notice),
+      ).captured;
+      expect(captured, hasLength(1));
+      final written = captured.single as WalkSession;
+      expect(written.dogIds, ['d1']);
+      expect(written.startedAt, t0);
+      expect(written.points, isEmpty);
+    });
+
+    test('수락한 점은 seq 와 누적 거리로 begin 다음에 차례로 쓴다', () async {
+      await started();
+      positions.add(_pos(37.5));
+      await pumpEventQueue();
+      positions.add(_pos(37.6));
+      await pumpEventQueue();
+      await tracker.pendingWrites;
+
+      verifyInOrder([
+        () => store.begin(any(), any()),
+        () => store.appendPoint(0, any(), 0),
+        () => store.appendPoint(1, any(), 10),
+      ]);
+    });
+
+    test('정책이 버린 점 · 멈춤 중 점은 쓰지 않는다', () async {
+      await started();
+      positions.add(_pos(37.5));
+      await pumpEventQueue();
+      positions.add(_pos(37.6, accuracy: 80));
+      await pumpEventQueue();
+      await tracker.pause();
+      positions.add(_pos(37.7));
+      await pumpEventQueue();
+      await tracker.pendingWrites;
+
+      verify(() => store.appendPoint(0, any(), 0)).called(1);
+      verifyNever(() => store.appendPoint(1, any(), any()));
+    });
+
+    test('pause · unpause · stop 은 그 시점 세션으로 시간을 덮어쓴다', () async {
+      await started();
+      clock = t0.add(const Duration(minutes: 10));
+      await tracker.pause();
+      clock = t0.add(const Duration(minutes: 12));
+      await tracker.unpause();
+      clock = t1;
+      await tracker.stop();
+      await tracker.pendingWrites;
+
+      final written = verify(
+        () => store.updateTiming(captureAny()),
+      ).captured.cast<WalkSession>();
+      expect(written, hasLength(3));
+      expect(written[0].pausedAt, t0.add(const Duration(minutes: 10)));
+      expect(written[1].pausedAt, isNull);
+      expect(written[1].pausedDuration, const Duration(minutes: 2));
+      expect(written[2].endedAt, t1);
+      expect(written[2].pausedAt, isNull);
+    });
+
+    test('finished 에서 clear 는 저장소를 비운다', () async {
+      await started();
+      await tracker.clear();
+      await tracker.pendingWrites;
+      verifyNever(() => store.clear());
+
+      await tracker.stop();
+      await tracker.clear();
+      await tracker.pendingWrites;
+
+      verify(() => store.clear()).called(1);
+      expect(tracker.current, isA<TrackerIdle>());
+    });
+
+    test('쓰기가 던져도 추적은 이어 가고 뒤 쓰기도 순서대로 한다', () async {
+      when(() => store.begin(any(), any())).thenThrow(Exception('disk full'));
+      when(
+        () => store.appendPoint(0, any(), any()),
+      ).thenAnswer((_) async => throw Exception('disk full'));
+
+      await started();
+      positions.add(_pos(37.5));
+      await pumpEventQueue();
+      positions.add(_pos(37.6));
+      await pumpEventQueue();
+      await tracker.pendingWrites;
+
+      expect(session().points, hasLength(2));
+      verifyInOrder([
+        () => store.begin(any(), any()),
+        () => store.appendPoint(0, any(), 0),
+        () => store.appendPoint(1, any(), 10),
+      ]);
+    });
+
+    test('느린 begin 이 끝나기 전에는 점을 쓰지 않는다', () async {
+      final gate = Completer<void>();
+      when(() => store.begin(any(), any())).thenAnswer((_) => gate.future);
+
+      await started();
+      positions.add(_pos(37.5));
+      await pumpEventQueue();
+      verifyNever(() => store.appendPoint(any(), any(), any()));
+
+      gate.complete();
+      await tracker.pendingWrites;
+      verify(() => store.appendPoint(0, any(), 0)).called(1);
+    });
+  });
+
+  group('restore', () {
+    final point1 = WalkTrackPoint(
+      point: const GeoPoint(lat: 37.5, lng: 127),
+      recordedAt: t0,
+      accuracy: 5,
+    );
+    final point2 = WalkTrackPoint(
+      point: const GeoPoint(lat: 37.6, lng: 127),
+      recordedAt: t0,
+      accuracy: 5,
+    );
+    WalkSession saved({DateTime? pausedAt, DateTime? endedAt}) => WalkSession(
+      dogIds: const ['d1'],
+      startedAt: t0,
+      points: [point1, point2],
+      distanceMeters: 20,
+      pausedDuration: const Duration(minutes: 1),
+      pausedAt: pausedAt,
+      endedAt: endedAt,
+    );
+    void loads(WalkSession session) => when(() => store.load()).thenAnswer(
+      (_) async => ActiveWalkSnapshot(session: session, notice: _notice),
+    );
+
+    test('남은 세션이 없으면 idle 그대로이고 구독하지 않는다', () async {
+      await tracker.restore();
+
+      expect(tracker.current, isA<TrackerIdle>());
+      verifyNever(() => gateway.positionStream(any()));
+    });
+
+    test('끝난 세션이면 finished 로 되살리고 구독하지 않는다', () async {
+      final ended = saved(endedAt: t1);
+      loads(ended);
+
+      await tracker.restore();
+
+      expect((tracker.current as TrackerFinished).session, ended);
+      verifyNever(() => gateway.positionStream(any()));
+    });
+
+    test('진행 중 세션이면 tracking 으로 되살리고 점을 이어 쓴다', () async {
+      final active = saved();
+      loads(active);
+
+      await tracker.restore();
+
+      final state = tracker.current as TrackerTracking;
+      expect(state.session, active);
+      expect(state.locationError, isNull);
+      expect(positions.hasListener, isTrue);
+
+      positions.add(_pos(37.7));
+      await pumpEventQueue();
+      await tracker.pendingWrites;
+
+      // 죽어 있던 동안도 걸은 것으로 센다: 첫 새 점의 거리를 그대로 더한다.
+      expect(session().points, hasLength(3));
+      expect(session().distanceMeters, 30);
+      verify(() => store.appendPoint(2, any(), 30)).called(1);
+      verifyNever(() => store.begin(any(), any()));
+    });
+
+    test('멈춘 채 저장된 세션은 멈춤 그대로 되살리고 점을 버린다', () async {
+      final paused = saved(pausedAt: t0.add(const Duration(minutes: 5)));
+      loads(paused);
+
+      await tracker.restore();
+      clock = t1;
+
+      expect(session().isPaused, isTrue);
+      expect(session().pausedAt, t0.add(const Duration(minutes: 5)));
+      // 죽어 있던 동안도 멈춤으로 센다: 걸은 시간은 1 분 + 4 분 뒤 멈춤.
+      expect(session().elapsedAt(clock), const Duration(minutes: 4));
+
+      positions.add(_pos(37.7));
+      await pumpEventQueue();
+      await tracker.pendingWrites;
+
+      expect(session().points, hasLength(2));
+      verifyNever(() => store.appendPoint(any(), any(), any()));
+    });
+
+    test('위치 서비스가 꺼져 있으면 세션을 지킨 채 오류를 싣는다', () async {
+      when(
+        () => gateway.isLocationServiceEnabled(),
+      ).thenAnswer((_) async => false);
+      final active = saved();
+      loads(active);
+
+      await tracker.restore();
+
+      final state = tracker.current as TrackerTracking;
+      expect(state.session, active);
+      expect(
+        state.locationError?.failureCode,
+        FailureCode.locationServiceDisabled,
+      );
+      verifyNever(() => gateway.positionStream(any()));
+
+      // 알림 문구를 기억해 resume 으로 다시 받을 수 있다.
+      when(
+        () => gateway.isLocationServiceEnabled(),
+      ).thenAnswer((_) async => true);
+      expect(await tracker.resume(), isA<Ok<void>>());
+      expect(positions.hasListener, isTrue);
+    });
+
+    test('load 가 던지면 idle 그대로다', () async {
+      when(() => store.load()).thenThrow(Exception('corrupt'));
+
+      await tracker.restore();
+
+      expect(tracker.current, isA<TrackerIdle>());
+    });
+
+    test('이미 시작했으면 아무것도 하지 않는다', () async {
+      await started();
+      loads(saved());
+
+      await tracker.restore();
+
+      expect(session().points, isEmpty);
+      verifyNever(() => store.load());
     });
   });
 
