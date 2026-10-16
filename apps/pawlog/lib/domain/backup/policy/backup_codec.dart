@@ -109,15 +109,30 @@ abstract final class BackupCodec {
     final dogs = [
       for (final e in _list(map, 'dogs')) _decodeDog(_map(e, 'dog')),
     ];
+    _requireUnique('dog', [for (final dog in dogs) dog.id]);
     final dogsById = {for (final dog in dogs) dog.id: dog};
+    final walks = [
+      for (final e in _list(map, 'walks'))
+        _decodeWalk(_map(e, 'walk'), dogsById),
+    ];
+    _requireUnique('walk', [for (final w in walks) w.walk.id]);
+    _requireUnique('photo', [
+      for (final w in walks)
+        for (final photo in w.walk.photos) photo.id,
+    ]);
     return BackupData(
       exportedAt: _parseInstant(map, 'exportedAt'),
       dogs: dogs,
-      walks: [
-        for (final e in _list(map, 'walks'))
-          _decodeWalk(_map(e, 'walk'), dogsById),
-      ],
+      walks: walks,
     );
+  }
+
+  /// 같은 id 가 두 번 나오면 어느 쪽을 믿을지 정할 수 없으니 통째로 읽지 않는다.
+  static void _requireUnique(String what, List<String> ids) {
+    final seen = <String>{};
+    for (final id in ids) {
+      if (!seen.add(id)) throw _InvalidBackup('duplicate $what id $id');
+    }
   }
 
   static Dog _decodeDog(Map<String, Object?> m) => Dog(

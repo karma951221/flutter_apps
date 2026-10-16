@@ -301,6 +301,37 @@ void main() {
       _expectInvalid(jsonEncode(_sampleJson()..['walks'] = {'w1': 1}));
     });
 
+    test('겹친 반려견 id', () {
+      final json = _sampleJson();
+      (json['dogs'] as List<dynamic>)[1]['id'] = 'd1';
+      // dogId 는 모두 있는 값이라 겹친 id 만이 실패 이유다
+      for (final w in json['walks'] as List<dynamic>) {
+        (w as Map<String, dynamic>)['dogIds'] = ['d1'];
+      }
+      _expectInvalid(jsonEncode(json));
+    });
+
+    test('겹친 산책 id', () {
+      final json = _sampleJson();
+      (json['walks'] as List<dynamic>)[1]['id'] = 'w1';
+      _expectInvalid(jsonEncode(json));
+    });
+
+    test('산책끼리 겹친 사진 id', () {
+      final json = _sampleJson();
+      (json['walks'] as List<dynamic>)[1]['photos'] = [
+        {'id': 'p1', 'path': 'walks/w2/x.jpg', 'position': 0},
+      ];
+      _expectInvalid(jsonEncode(json));
+    });
+
+    test('한 산책 안에서 겹친 사진 id', () {
+      final json = _sampleJson();
+      final w1 = (json['walks'] as List<dynamic>)[0] as Map<String, dynamic>;
+      ((w1['photos'] as List<dynamic>)[1] as Map<String, dynamic>)['id'] = 'p1';
+      _expectInvalid(jsonEncode(json));
+    });
+
     test('백업에 없는 dogId', () {
       final json = _sampleJson();
       (json['walks'] as List<dynamic>)[1]['dogIds'] = ['d1', 'ghost'];
