@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:location/location.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:permission/permission.dart';
 import 'package:pawlog/data/tracking/geolocator_walk_tracker.dart';
 import 'package:pawlog/domain/tracking/entity/active_walk_snapshot.dart';
 import 'package:pawlog/domain/tracking/entity/tracker_state.dart';
@@ -19,6 +20,8 @@ import '../../support/fakes.dart';
 class MockLocationGateway extends Mock implements LocationGateway {}
 
 class MockActiveWalkStore extends Mock implements ActiveWalkStore {}
+
+class MockPermissionSource extends Mock implements PermissionSource {}
 
 const _notice = TrackingNotice(title: '산책 중', text: '기록하고 있어요');
 
@@ -39,6 +42,7 @@ void main() {
   late MockLocationGateway gateway;
   late StreamController<Position> positions;
   late MockActiveWalkStore store;
+  late MockPermissionSource notifications;
   late GeolocatorWalkTracker tracker;
   var clock = t0;
 
@@ -61,7 +65,16 @@ void main() {
     gateway = MockLocationGateway();
     positions = StreamController<Position>.broadcast();
     store = MockActiveWalkStore();
-    tracker = GeolocatorWalkTracker(gateway, FakeClock(() => clock), store);
+    notifications = MockPermissionSource();
+    when(
+      () => notifications.check(),
+    ).thenAnswer((_) async => PermissionStatus.granted);
+    tracker = GeolocatorWalkTracker(
+      gateway,
+      FakeClock(() => clock),
+      store,
+      PermissionRequester(notifications),
+    );
     when(() => store.load()).thenAnswer((_) async => null);
     when(() => store.begin(any(), any())).thenAnswer((_) async {});
     when(() => store.appendPoint(any(), any(), any())).thenAnswer((_) async {});
@@ -751,6 +764,104 @@ void main() {
 
       expect(session().points, isEmpty);
       verifyNever(() => store.load());
+    });
+  });
+
+  group('알림 권한', () {
+    void notificationDenied({
+      PermissionStatus after = PermissionStatus.denied,
+    }) {
+      when(
+        () => notifications.check(),
+      ).thenAnswer((_) async => PermissionStatus.denied);
+      when(() => notifications.request()).thenAnswer((_) async => after);
+    }
+
+    test('start 는 위치 확인을 통과한 뒤 구독 전에 알림 권한을 한 번 묻는다', () async {
+      notificationDenied(after: PermissionStatus.granted);
+
+      await started();
+
+      verifyInOrder([
+        () => gateway.checkPermission(),
+        () => notifications.check(),
+        () => notifications.request(),
+        () => gateway.positionStream(any()),
+      ]);
+      verifyNoMoreInteractions(notifications);
+    });
+
+    test('거부했으면 같은 세션의 다음 start 는 다시 묻지 않는다', () async {
+      notificationDenied();
+
+      await started();
+      await tracker.stop();
+      await tracker.clear();
+      await started();
+
+      verify(() => notifications.request()).called(1);
+    });
+
+    test('알림 권한을 거부해도 Ok 이고 tracking 이다', () async {
+      notificationDenied();
+
+      await started();
+
+      expect(tracker.current, isA<TrackerTracking>());
+      expect(positions.hasListener, isTrue);
+    });
+
+    test('영구 거부여도 묻지 않고 tracking 이다', () async {
+      when(
+        () => notifications.check(),
+      ).thenAnswer((_) async => PermissionStatus.permanentlyDenied);
+
+      await started();
+
+      expect(tracker.current, isA<TrackerTracking>());
+      verifyNever(() => notifications.request());
+    });
+
+    test('알림 권한 확인이 던져도 Ok 이고 tracking 이다', () async {
+      when(() => notifications.check()).thenThrow(Exception('channel'));
+
+      await started();
+
+      expect(tracker.current, isA<TrackerTracking>());
+      expect(positions.hasListener, isTrue);
+    });
+
+    test('위치 확인이 실패하면 알림 권한을 묻지 않는다', () async {
+      when(
+        () => gateway.isLocationServiceEnabled(),
+      ).thenAnswer((_) async => false);
+
+      await tracker.start(dogIds: const ['d1'], notice: _notice);
+
+      verifyZeroInteractions(notifications);
+    });
+
+    test('restore · resume 은 알림 권한을 건드리지 않는다', () async {
+      notificationDenied();
+      when(() => store.load()).thenAnswer(
+        (_) async => ActiveWalkSnapshot(
+          session: WalkSession(
+            dogIds: const ['d1'],
+            startedAt: t0,
+            points: const [],
+            distanceMeters: 0,
+          ),
+          notice: _notice,
+        ),
+      );
+
+      await tracker.restore();
+      expect(tracker.current, isA<TrackerTracking>());
+      positions.addError(const LocationServiceDisabledException());
+      await pumpEventQueue();
+      expect(await tracker.resume(), isA<Ok<void>>());
+
+      verifyZeroInteractions(notifications);
     });
   });
 

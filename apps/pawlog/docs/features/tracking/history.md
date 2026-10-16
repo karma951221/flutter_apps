@@ -142,3 +142,21 @@ mock 테스트로는 드러나지 않는 종류다.
 - **에뮬레이터 확인은 아직 하지 않았다 (이 환경에 Android SDK 없음).** GPX 재생 · 백그라운드 30초 ·
   재진입 · 권한 거부는 [테스트](testing.md#에뮬레이터)에 미실행으로 남겼다. AGP 9 디버그 빌드도
   아직 돌리지 않았다
+
+## 2026-10-17 — 알림 권한 요청
+
+**무엇** — 산책을 시작할 때(`GeolocatorWalkTracker.start`) 위치 확인을 통과한 뒤, 구독하기 전에 알림
+권한을 묻는다. `permission_handler` 의 `Permission.notification` 을 `PermissionSource` 로 바꾸는
+`NotificationPermissionSource`(`lib/data/tracking/`, walk 앱의 상태 매핑을 옮겨 왔다)를 두고,
+`RegisterModule` 이 `@Named('notificationPermission')` `PermissionRequester` 싱글턴으로 등록해 추적기
+네 번째 인자로 넘긴다.
+
+**왜** — 매니페스트에 `POST_NOTIFICATIONS` 를 선언만 하고 요청하지 않아 Android 13+ 에서는 "산책 중"
+포그라운드 알림이 기본으로 숨었다. [구현 리뷰](../../audits/2026-10-03-implementation-review.md) S5 로
+남아 있던 일이다.
+
+**동작** — 앱 세션당 한 번만 묻는다. 기억은 `PermissionRequester` 가 가진다(거부하면 같은 세션의 다음
+`start` 는 묻지 않는다). 결과는 산책을 막지 않는다 — 허용 · 거부 · 영구 거부 모두 그대로 추적하고, 확인 ·
+요청이 던지면 `debugPrint` 만 남긴다. 위치 확인이 실패하면 묻지 않고, 화면 밖에서 도는 `restore()` 와
+위치 오류 뒤 `resume()` 은 묻지 않는다. Android 12 이하 · iOS 는 `permission_handler` 가 허용으로 답해
+따로 할 일이 없다.

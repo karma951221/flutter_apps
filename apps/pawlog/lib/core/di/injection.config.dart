@@ -17,6 +17,7 @@ import 'package:flutter_map/flutter_map.dart' as _i525;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:location/location.dart' as _i645;
+import 'package:permission/permission.dart' as _i1009;
 
 import '../../data/database/walk_database.dart' as _i563;
 import '../../data/dog/drift_dog_repository.dart' as _i40;
@@ -56,6 +57,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i645.LocationGateway>(
       () => registerModule.locationGateway,
     );
+    gh.lazySingleton<_i1009.PermissionRequester>(
+      () => registerModule.notificationPermission,
+      instanceName: 'notificationPermission',
+    );
     await gh.factoryAsync<_i497.Directory>(
       () => registerModule.photosRoot,
       instanceName: 'walkPhotosRoot',
@@ -81,6 +86,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i645.LocationGateway>(),
         gh<_i494.Clock>(),
         gh<_i845.ActiveWalkStore>(),
+        gh<_i1009.PermissionRequester>(instanceName: 'notificationPermission'),
       ),
       dispose: _i976.disposeWalkTracker,
     );

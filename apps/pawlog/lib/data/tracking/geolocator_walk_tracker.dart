@@ -4,6 +4,7 @@ import 'package:core/core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:location/location.dart';
+import 'package:permission/permission.dart';
 
 import '../../domain/tracking/entity/tracker_state.dart';
 import '../../domain/tracking/entity/tracking_notice.dart';
@@ -20,8 +21,12 @@ FutureOr<void> disposeWalkTracker(WalkTracker tracker) =>
 
 @LazySingleton(as: WalkTracker, dispose: disposeWalkTracker)
 class GeolocatorWalkTracker implements WalkTracker {
-  GeolocatorWalkTracker(this._gateway, this._clock, this._store)
-    : _access = LocationAccess(_gateway);
+  GeolocatorWalkTracker(
+    this._gateway,
+    this._clock,
+    this._store,
+    @Named('notificationPermission') this._notifications,
+  ) : _access = LocationAccess(_gateway);
 
   static const _policy = WalkTrackingPolicy();
   static const _distanceFilter = 3;
@@ -31,6 +36,9 @@ class GeolocatorWalkTracker implements WalkTracker {
 
   /// 앱이 죽어도 다음 실행에 되살리도록 진행 중 세션을 써 둔다.
   final ActiveWalkStore _store;
+
+  /// Android 13+ 에서 "산책 중" 알림이 보이도록 start 때만 묻는다. 세션당 한 번.
+  final PermissionRequester _notifications;
 
   /// 서비스 → 권한 순서로 확인하고, 권한은 세션당 한 번만 묻는다.
   final LocationAccess _access;
@@ -82,6 +90,7 @@ class GeolocatorWalkTracker implements WalkTracker {
     }
     try {
       if (await _checkAccess() case final Failure failure) return Err(failure);
+      await _askNotifications();
 
       // await 사이에 다른 start 가 끼어들었을 수 있다.
       if (_state is TrackerTracking) {
@@ -161,6 +170,15 @@ class GeolocatorWalkTracker implements WalkTracker {
       return const Ok(null);
     } catch (error) {
       return Err(Failure.unknown(message: error.toString()));
+    }
+  }
+
+  /// 결과와 무관하게 산책은 이어 간다. 거부면 알림만 안 보일 뿐이다.
+  Future<void> _askNotifications() async {
+    try {
+      await _notifications.ensure();
+    } catch (error) {
+      debugPrint('notification permission: $error');
     }
   }
 

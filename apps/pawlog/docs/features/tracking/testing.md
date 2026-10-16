@@ -17,6 +17,8 @@ GPS · 지도 타일은 실제로 부르지 않는다 — `LocationGateway` mock
 | 파일 | 대상 | 확인 |
 |---|---|---|
 | `geolocator_walk_tracker_test.dart` (12 → 17) | `GeolocatorWalkTracker` (`LocationGateway` mock) | 서비스 꺼짐 → `locationServiceDisabled` · 권한 거부 → `locationPermissionDenied` 이고 **같은 세션에 다시 묻지 않는다**(요청 1회) · 영구 거부는 요청 없음 · 시작하면 빈 `tracking` · 플랫폼별 설정(`debugDefaultTargetPlatformOverride` 로 Android 알림 문구 · `distanceFilter`, iOS `fitness` · 자동 일시정지 끔) · 위치가 들어오면 점 · 거리 누적 · 정책이 버린 점은 쌓이지 않음 · 추적 중 `start` 거부 · `stop` 은 `endedAt` 을 채운 `finished` 와 구독 해제 · 비추적 `stop` → `walkNotFound` · `clear` 는 `finished` 에서만 `idle` · 스트림 오류에도 `tracking` 유지하고 `locationError` 에 싣는다(서비스 꺼짐 · 권한 거부 · 그 밖은 `locationStreamFailed`), 다음 점이 지운다 · `resume` 은 세션을 지킨 채 다시 구독 · 서비스 꺼짐이면 실패를 상태에도 · 비추적 `resume` → `walkNotFound` · 설정 열기 2종은 게이트웨이에 위임(2026-10-04 QA) |
+| `geolocator_walk_tracker_test.dart` 알림 권한 (+7, 2026-10-17) | 실제 `PermissionRequester` + `PermissionSource` mock | `start` 는 위치 확인 뒤 · 구독 전에 한 번 묻는다 · 거부했으면 `stop` · `clear` 뒤 다음 `start` 는 다시 묻지 않는다 · 거부여도 `Ok` · `tracking` · 영구 거부는 요청 없이 `tracking` · 소스가 던져도 `Ok` · `tracking` · 위치 확인이 실패하면 묻지 않는다 · `restore` · `resume` 은 소스를 건드리지 않는다 |
+| `notification_permission_source_test.dart` (1, 2026-10-17) | `NotificationPermissionSource.statusOf` | `permission_handler` 상태 6가지를 허용 · 거부 · 영구 거부로 접는다. 채널을 부르는 `check` · `request` 는 보지 않는다 |
 
 ## `test/presentation/`
 

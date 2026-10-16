@@ -13,6 +13,7 @@ dependencies:
   design_system: any
   l10n: any
   location: any
+  permission: any
   flutter:
     sdk: flutter
   flutter_localizations:
@@ -28,6 +29,7 @@ dependencies:
   intl: ^0.20.2
   latlong2: ^0.10.1
   path_provider: ^2.1.6
+  permission_handler: ^12.0.3
 
 dev_dependencies:
   bloc_test: ^10.0.0
