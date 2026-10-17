@@ -65,3 +65,9 @@ W4 몫은 cubit 7 · 페이지 10 · `RoutePreviewPainter` 4 = 21건이다(2026-
 | ④ | 추적 중 배너 · "산책 계속" FAB → `/walk`, 종료 후 저장 전이면 "저장하지 않은 산책" 배너 → `/walk/save`, FAB 없음 | **PASS**(2026-10-17) — 산책 1건이 있는 상태에서 추적 중 배너 + "Continue walk" → 진행 화면, 종료 뒤 저장 전(강제 종료 후 재실행)이면 "You have an unsaved walk" 배너 → 저장 폼, 시작 버튼 없음 |
 | ⑤ | 사진 있는 카드는 첫 사진, 없는 카드는 경로 썸네일. 다크 모드에서 선이 보인다 | **PASS** — 사진 썸네일 · 다크 모드 확인 |
 | ⑥ | `/walks` 로 가면 피드, 앱 완전 종료 후 재실행해도 카드가 남아 있다 | **일부**(2026-10-17) — 강제 종료 뒤 카드가 남는다 PASS. `/walks` 는 화면에서 갈 길이 없어 [라우터 테스트](../../../test/core/router/app_router_test.dart)로만 |
+
+## 2026-10-17 — 다듬기
+
+| 파일 | 추가 | 확인 |
+|---|---|---|
+| `test/presentation/feed/page/walk_feed_page_test.dart` | 2 | 즐겨찾기 별이 합친 라벨에 "즐겨찾기" 로 읽힌다(`bySemanticsLabel`) · 목록 실패 중 더보기에 `walk-feed-favorites-toggle` 없음(백업 항목은 있음) |

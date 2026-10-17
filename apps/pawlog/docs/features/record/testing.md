@@ -68,3 +68,9 @@ W3 몫은 cubit 26 · 페이지 18 = 44건이다(2026-10-03, `93d722b` 기준). 
 
 사진 폴더는 `getApplicationDocumentsDirectory()` 아래라 Android 에서는 `files/` 가 아니라
 `app_flutter/pawlog_photos` 다.
+
+## 2026-10-17 — 다듬기
+
+| 파일 | 추가 | 확인 |
+|---|---|---|
+| `test/presentation/walk/page/walk_detail_page_test.dart` | 1 | 삭제 중(`deleteWalk` 를 `Completer` 로 붙잡음) 별이 눌리지 않고 색이 `primary` → `textMuted` |

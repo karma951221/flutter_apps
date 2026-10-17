@@ -28,3 +28,9 @@ W8 몫은 `apps/pawlog` 18건(`+375` → `+393`, ① 9건 · ② 9건)과 `packa
 | ② | 공유 시트를 닫는다 → 스낵바 없음, 상세 그대로 | **PASS** |
 | ③ | 점 없는 산책 → GPX로 내보내기 → "경로가 없어 내보낼 수 없어요" | **PASS** — 메뉴 순서 Edit · Export GPX · Delete, 스낵바 "There's no route to export" |
 | ④ | 받은 파일을 다른 앱(파일 · 지도)에서 열면 경로가 보인다 | 미실행 — AVD 에 GPX 를 여는 앱이 없다. 형태는 ① 에서 파일로 확인 |
+
+## 2026-10-17 — 다듬기
+
+| 파일 | 추가 | 확인 |
+|---|---|---|
+| `test/presentation/walk/cubit/walk_detail_cubit_test.dart` | 1 | 공유가 끝나기 전 `exportGpx()` 두 번 → 둘 다 `shared`, sharer 1회 · 끝난 뒤에는 다시 공유된다 |

@@ -34,3 +34,9 @@ W7 몫은 `apps/pawlog` 58건과 `packages/location` 3건(`+21` → `+24`)이다
 | ③ | 추적 중 강제 종료 → 다시 열면 배너, 진행 화면에서 이어진다 | **PASS(시간)** — 멈춤 중 강제 종료 → "Walk paused \| 00:49" 그대로. 진행 중 강제 종료(9초) → "Walk in progress \| 00:59"(죽은 동안을 걸은 시간으로). 거리 · 점 이어짐은 GPS 문제로 못 봄 |
 | ④ | 끝낸 뒤 저장 폼에서 강제 종료 → 저장 안 함 배너 → 저장 | **PASS** — "You have an unsaved walk" → 저장 폼 `01:23` → 저장 |
 | ⑤ | 저장 뒤 강제 종료 → 배너 없음 | **PASS** |
+
+## 2026-10-17 — 다듬기
+
+| 파일 | 추가 | 확인 |
+|---|---|---|
+| `test/presentation/tracking/page/active_walk_page_test.dart` | 1 | 점 없이 멈춘 세션 → `walk-active-map` 안에 "일시정지 중", "위치를 찾는 중…" 없음 |
