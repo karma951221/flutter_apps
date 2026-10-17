@@ -2852,4 +2852,22 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkFeedMoreTooltip => '더보기';
+
+  @override
+  String get walkFavoriteAdd => '즐겨찾기에 추가';
+
+  @override
+  String get walkFavoriteRemove => '즐겨찾기에서 빼기';
+
+  @override
+  String get walkFeedShowFavorites => '즐겨찾기만 보기';
+
+  @override
+  String get walkFeedShowAll => '모든 산책 보기';
+
+  @override
+  String get walkFeedFavoritesEmptyTitle => '즐겨찾기한 산책이 없어요';
+
+  @override
+  String get walkFeedFavoritesEmptyMessage => '산책 상세에서 별을 눌러 보세요';
 }

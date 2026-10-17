@@ -5365,6 +5365,42 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'더보기'**
   String get walkFeedMoreTooltip;
+
+  /// 산책 상세 앱바의 빈 별 버튼 툴팁 — 누르면 즐겨찾기에 넣는다
+  ///
+  /// In ko, this message translates to:
+  /// **'즐겨찾기에 추가'**
+  String get walkFavoriteAdd;
+
+  /// 산책 상세 앱바의 꽉 찬 별 버튼 툴팁 — 누르면 즐겨찾기에서 뺀다
+  ///
+  /// In ko, this message translates to:
+  /// **'즐겨찾기에서 빼기'**
+  String get walkFavoriteRemove;
+
+  /// 피드 더보기 메뉴에서 즐겨찾기한 산책만 보게 거르는 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'즐겨찾기만 보기'**
+  String get walkFeedShowFavorites;
+
+  /// 즐겨찾기 필터 중 피드 더보기 메뉴에서 필터를 끄는 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'모든 산책 보기'**
+  String get walkFeedShowAll;
+
+  /// 즐겨찾기만 보기 중 결과가 없을 때 안내 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'즐겨찾기한 산책이 없어요'**
+  String get walkFeedFavoritesEmptyTitle;
+
+  /// 즐겨찾기만 보기 중 결과가 없을 때 안내 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'산책 상세에서 별을 눌러 보세요'**
+  String get walkFeedFavoritesEmptyMessage;
 }
 
 class _AppLocalizationsDelegate

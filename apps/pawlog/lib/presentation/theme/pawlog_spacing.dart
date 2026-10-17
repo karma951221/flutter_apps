@@ -49,6 +49,9 @@ abstract final class PawlogSize {
   /// 사진 · 경로 썸네일 비율(4:3).
   static const photoAspect = 4 / 3;
 
+  /// 피드 항목 시각 옆 즐겨찾기 별 크기.
+  static const favoriteIcon = 14.0;
+
   /// 상세 화면 지도 높이.
   static const detailMap = 280.0;
 

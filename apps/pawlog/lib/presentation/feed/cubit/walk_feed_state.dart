@@ -12,11 +12,13 @@ sealed class WalkFeedState with _$WalkFeedState {
   /// `start()` 직후 첫 `watchWalks` 값 전.
   const factory WalkFeedState.loading() = WalkFeedLoading;
 
-  /// [walks] 는 최신순. [tracker] 로 배너 · FAB 를 정한다. [weekSummary] 는 맨 위 요약 줄.
+  /// [walks] 는 최신순 전체 목록. [tracker] 로 배너 · FAB 를 정한다. [weekSummary] 는 맨 위
+  /// 요약 줄(필터와 무관하게 전체). [favoritesOnly] 면 화면이 즐겨찾기만 걸러 보인다.
   const factory WalkFeedState.loaded({
     required List<Walk> walks,
     required TrackerState tracker,
     @Default(PeriodSummary.empty) PeriodSummary weekSummary,
+    @Default(false) bool favoritesOnly,
   }) = WalkFeedLoaded;
 
   const factory WalkFeedState.failure(Failure failure) = WalkFeedFailure;

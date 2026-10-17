@@ -244,6 +244,55 @@ void main() {
     );
   });
 
+  group('toggleFavoritesOnly', () {
+    blocTest<WalkFeedCubit, WalkFeedState>(
+      '필터를 켜고 끄며, 켠 채로 새 목록이 와도 유지한다',
+      setUp: () {
+        final controller = StreamController<Result<List<Walk>>>();
+        addTearDown(controller.close);
+        when(() => useCase.watchWalks()).thenAnswer((_) => controller.stream);
+        controller.add(Ok([walk()]));
+        Future<void>.delayed(
+          const Duration(milliseconds: 10),
+          () => controller.add(const Ok([])),
+        );
+      },
+      build: () => WalkFeedCubit(useCase, clock),
+      act: (cubit) async {
+        await cubit.start();
+        await Future<void>.delayed(Duration.zero);
+        cubit.toggleFavoritesOnly();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        cubit.toggleFavoritesOnly();
+      },
+      expect: () => [
+        const WalkFeedState.loading(),
+        WalkFeedState.loaded(
+          walks: [walk()],
+          tracker: const TrackerState.idle(),
+        ),
+        WalkFeedState.loaded(
+          walks: [walk()],
+          tracker: const TrackerState.idle(),
+          favoritesOnly: true,
+        ),
+        const WalkFeedState.loaded(
+          walks: [],
+          tracker: TrackerState.idle(),
+          favoritesOnly: true,
+        ),
+        const WalkFeedState.loaded(walks: [], tracker: TrackerState.idle()),
+      ],
+    );
+
+    blocTest<WalkFeedCubit, WalkFeedState>(
+      'loaded 전에는 아무것도 내지 않는다',
+      build: () => WalkFeedCubit(useCase, clock),
+      act: (cubit) => cubit.toggleFavoritesOnly(),
+      expect: () => <WalkFeedState>[],
+    );
+  });
+
   test('닫힌 뒤에 온 값은 상태를 내지 않고 구독을 끊는다', () async {
     final controller = StreamController<Result<List<Walk>>>();
     when(() => useCase.watchWalks()).thenAnswer((_) => controller.stream);

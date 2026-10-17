@@ -131,6 +131,22 @@ class _WalkDetailView extends StatelessWidget {
           appBar: AppBar(
             title: Text(l10n.walkDetailTitle),
             actions: [
+              if (state
+                  case WalkDetailLoaded(:final walk) ||
+                      WalkDetailDeleting(:final walk))
+                IconButton(
+                  key: const Key('walk-detail-favorite'),
+                  icon: Icon(
+                    walk.isFavorite ? Icons.star : Icons.star_border,
+                    color: PawlogColors.of(context).primary,
+                  ),
+                  tooltip: walk.isFavorite
+                      ? l10n.walkFavoriteRemove
+                      : l10n.walkFavoriteAdd,
+                  onPressed: state is WalkDetailLoaded
+                      ? cubit.toggleFavorite
+                      : null,
+                ),
               if (hasContent)
                 AppOverflowMenu<_WalkMenuAction>(
                   key: const Key('walk-detail-menu'),

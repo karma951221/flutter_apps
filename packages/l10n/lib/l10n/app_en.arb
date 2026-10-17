@@ -896,5 +896,11 @@
   "walkBackupNothingNew": "Nothing new to import",
   "walkBackupInvalid": "This isn't a readable pawlog backup",
   "walkBackupImportFailed": "Couldn't import the backup",
-  "walkFeedMoreTooltip": "More"
+  "walkFeedMoreTooltip": "More",
+  "walkFavoriteAdd": "Add to favorites",
+  "walkFavoriteRemove": "Remove from favorites",
+  "walkFeedShowFavorites": "Show favorites only",
+  "walkFeedShowAll": "Show all walks",
+  "walkFeedFavoritesEmptyTitle": "No favorite walks yet",
+  "walkFeedFavoritesEmptyMessage": "Tap the star on a walk to add it"
 }

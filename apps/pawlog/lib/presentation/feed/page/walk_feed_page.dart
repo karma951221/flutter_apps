@@ -49,7 +49,7 @@ class WalkFeedPage extends StatelessWidget {
   );
 }
 
-enum _FeedMenuAction { exportBackup, importBackup }
+enum _FeedMenuAction { favoritesOnly, exportBackup, importBackup }
 
 class _WalkFeedView extends StatefulWidget {
   const _WalkFeedView({
@@ -97,6 +97,8 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
   Future<void> _onMenu(_FeedMenuAction action) async {
     final cubit = context.read<WalkFeedCubit>();
     switch (action) {
+      case _FeedMenuAction.favoritesOnly:
+        cubit.toggleFavoritesOnly();
       case _FeedMenuAction.exportBackup:
         final result = await cubit.exportBackup();
         if (!mounted || result is! Err) return;
@@ -118,96 +120,140 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
     final cubit = context.read<WalkFeedCubit>();
 
     return BlocBuilder<WalkFeedCubit, WalkFeedState>(
-      builder: (context, state) => Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.pawlogAppTitle),
-          actions: [
-            IconButton(
-              key: const Key('walk-feed-open-dogs'),
-              icon: const Icon(Icons.pets),
-              tooltip: l10n.walkOpenDogsTooltip,
-              onPressed: onOpenDogs,
-            ),
-            AppOverflowMenu<_FeedMenuAction>(
-              key: const Key('walk-feed-more'),
-              tooltip: l10n.walkFeedMoreTooltip,
-              items: [
-                AppOverflowMenuItem(
-                  key: const Key('walk-feed-backup-export'),
-                  value: _FeedMenuAction.exportBackup,
-                  label: l10n.walkBackupExport,
-                  icon: Icons.ios_share,
-                ),
-                AppOverflowMenuItem(
-                  key: const Key('walk-feed-backup-import'),
-                  value: _FeedMenuAction.importBackup,
-                  label: l10n.walkBackupImport,
-                  icon: Icons.download_outlined,
-                ),
-              ],
-              onSelected: _onMenu,
-            ),
-          ],
-        ),
-        body: SafeArea(
-          child: switch (state) {
-            WalkFeedLoading() => const Center(
-              child: CircularProgressIndicator(),
-            ),
-            WalkFeedFailure(:final failure) => Center(
-              child: AppPlaceholder(
-                message: failure.localizedMessage(context),
-                actionLabel: l10n.commonRetry,
-                actionKey: const Key('walk-feed-retry'),
-                onAction: cubit.retry,
+      builder: (context, state) {
+        final favoritesOnly = state is WalkFeedLoaded && state.favoritesOnly;
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(l10n.pawlogAppTitle),
+            actions: [
+              IconButton(
+                key: const Key('walk-feed-open-dogs'),
+                icon: const Icon(Icons.pets),
+                tooltip: l10n.walkOpenDogsTooltip,
+                onPressed: onOpenDogs,
               ),
-            ),
-            WalkFeedLoaded(:final walks, :final tracker, :final weekSummary) =>
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _banner(tracker),
-                  if (walks.isNotEmpty)
-                    WeekSummaryLine(summary: weekSummary, onTap: onOpenStats),
-                  Expanded(
-                    child: walks.isEmpty
-                        ? Center(
-                            // 수첩 첫 장 — 날짜 열 없이 안내 한 줄. 산책 중이거나 저장 전이면
-                            // 시작을 권하지 않는다 — 위 배너가 그 산책으로 이끈다.
-                            child: tracker is TrackerIdle
-                                ? AppPlaceholder(
-                                    message: l10n.walkFeedEmptyTitle,
-                                    description: l10n.walkFeedEmptyMessage,
-                                  )
-                                : AppPlaceholder(
-                                    message: l10n.walkFeedEmptyActiveTitle,
-                                    description:
-                                        l10n.walkFeedEmptyActiveMessage,
-                                  ),
-                          )
-                        : _Timeline(
-                            walks: walks,
-                            photoFile: cubit.photoFile,
-                            onOpenWalk: onOpenWalk,
-                          ),
+              AppOverflowMenu<_FeedMenuAction>(
+                key: const Key('walk-feed-more'),
+                tooltip: l10n.walkFeedMoreTooltip,
+                items: [
+                  AppOverflowMenuItem(
+                    key: const Key('walk-feed-favorites-toggle'),
+                    value: _FeedMenuAction.favoritesOnly,
+                    label: favoritesOnly
+                        ? l10n.walkFeedShowAll
+                        : l10n.walkFeedShowFavorites,
+                    icon: favoritesOnly ? Icons.star : Icons.star_border,
                   ),
-                  // 저장 · 버리기 전에는 새 산책을 막는다(finished). 0건 추적 중이면 배너가 이끈다.
-                  if (tracker is TrackerIdle ||
-                      (tracker is TrackerTracking && walks.isNotEmpty))
-                    PawlogBottomAction(
-                      child: PawlogPrimaryButton(
-                        key: const Key('walk-feed-start-button'),
-                        label: tracker is TrackerTracking
-                            ? l10n.walkContinue
-                            : l10n.walkStart,
-                        onPressed: onStartWalk,
+                  AppOverflowMenuItem(
+                    key: const Key('walk-feed-backup-export'),
+                    value: _FeedMenuAction.exportBackup,
+                    label: l10n.walkBackupExport,
+                    icon: Icons.ios_share,
+                  ),
+                  AppOverflowMenuItem(
+                    key: const Key('walk-feed-backup-import'),
+                    value: _FeedMenuAction.importBackup,
+                    label: l10n.walkBackupImport,
+                    icon: Icons.download_outlined,
+                  ),
+                ],
+                onSelected: _onMenu,
+              ),
+            ],
+          ),
+          body: SafeArea(
+            child: switch (state) {
+              WalkFeedLoading() => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              WalkFeedFailure(:final failure) => Center(
+                child: AppPlaceholder(
+                  message: failure.localizedMessage(context),
+                  actionLabel: l10n.commonRetry,
+                  actionKey: const Key('walk-feed-retry'),
+                  onAction: cubit.retry,
+                ),
+              ),
+              WalkFeedLoaded(
+                :final walks,
+                :final tracker,
+                :final weekSummary,
+              ) =>
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _banner(tracker),
+                    if (walks.isNotEmpty)
+                      WeekSummaryLine(summary: weekSummary, onTap: onOpenStats),
+                    Expanded(
+                      child: _body(
+                        walks: walks,
+                        tracker: tracker,
+                        favoritesOnly: favoritesOnly,
                       ),
                     ),
-                ],
+                    // 저장 · 버리기 전에는 새 산책을 막는다(finished). 0건 추적 중이면 배너가 이끈다.
+                    if (tracker is TrackerIdle ||
+                        (tracker is TrackerTracking && walks.isNotEmpty))
+                      PawlogBottomAction(
+                        child: PawlogPrimaryButton(
+                          key: const Key('walk-feed-start-button'),
+                          label: tracker is TrackerTracking
+                              ? l10n.walkContinue
+                              : l10n.walkStart,
+                          onPressed: onStartWalk,
+                        ),
+                      ),
+                  ],
+                ),
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  /// 요약 줄과 하단 버튼 사이. 즐겨찾기만 보기면 [walks] 를 걸러 타임라인을 그린다 —
+  /// 0건이면 즐겨찾기 안내. 필터가 꺼진 빈 피드는 첫 산책 안내다.
+  Widget _body({
+    required List<Walk> walks,
+    required TrackerState tracker,
+    required bool favoritesOnly,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    if (walks.isEmpty) {
+      return Center(
+        // 수첩 첫 장 — 날짜 열 없이 안내 한 줄. 산책 중이거나 저장 전이면
+        // 시작을 권하지 않는다 — 위 배너가 그 산책으로 이끈다.
+        child: tracker is TrackerIdle
+            ? AppPlaceholder(
+                message: l10n.walkFeedEmptyTitle,
+                description: l10n.walkFeedEmptyMessage,
+              )
+            : AppPlaceholder(
+                message: l10n.walkFeedEmptyActiveTitle,
+                description: l10n.walkFeedEmptyActiveMessage,
               ),
-          },
+      );
+    }
+    final shown = favoritesOnly
+        ? [
+            for (final walk in walks)
+              if (walk.isFavorite) walk,
+          ]
+        : walks;
+    if (shown.isEmpty) {
+      return Center(
+        child: AppPlaceholder(
+          message: l10n.walkFeedFavoritesEmptyTitle,
+          description: l10n.walkFeedFavoritesEmptyMessage,
         ),
-      ),
+      );
+    }
+    return _Timeline(
+      walks: shown,
+      photoFile: context.read<WalkFeedCubit>().photoFile,
+      onOpenWalk: onOpenWalk,
     );
   }
 

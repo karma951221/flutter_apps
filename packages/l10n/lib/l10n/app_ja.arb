@@ -896,5 +896,11 @@
   "walkBackupNothingNew": "新しく読み込む記録はありません",
   "walkBackupInvalid": "バックアップファイルを読み込めませんでした",
   "walkBackupImportFailed": "読み込めませんでした",
-  "walkFeedMoreTooltip": "その他"
+  "walkFeedMoreTooltip": "その他",
+  "walkFavoriteAdd": "お気に入りに追加",
+  "walkFavoriteRemove": "お気に入りから外す",
+  "walkFeedShowFavorites": "お気に入りだけ表示",
+  "walkFeedShowAll": "すべての散歩を表示",
+  "walkFeedFavoritesEmptyTitle": "お気に入りの散歩はまだありません",
+  "walkFeedFavoritesEmptyMessage": "散歩の詳細で星をタップしてください"
 }

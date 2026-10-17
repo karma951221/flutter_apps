@@ -209,4 +209,116 @@ void main() {
       expect(cubit.state, before);
     });
   });
+
+  group('toggleFavorite', () {
+    blocTest<WalkDetailCubit, WalkDetailState>(
+      '즐겨찾기가 아니면 true 로 저장하고 별이 켜진 walk 로 바꾼다',
+      setUp: () => when(
+        () => useCase.setWalkFavorite('w1', true),
+      ).thenAnswer((_) async => const Ok(null)),
+      build: () => WalkDetailCubit(useCase, sharer),
+      act: (cubit) async {
+        await cubit.load('w1');
+        await cubit.toggleFavorite();
+      },
+      skip: 2,
+      expect: () => [
+        WalkDetailState.loaded(
+          walk: walk().copyWith(isFavorite: true),
+          track: track,
+        ),
+      ],
+      verify: (_) =>
+          verify(() => useCase.setWalkFavorite('w1', true)).called(1),
+    );
+
+    blocTest<WalkDetailCubit, WalkDetailState>(
+      '즐겨찾기면 false 로 저장한다',
+      setUp: () {
+        when(
+          () => useCase.getWalk('w1'),
+        ).thenAnswer((_) async => Ok(walk().copyWith(isFavorite: true)));
+        when(
+          () => useCase.setWalkFavorite('w1', false),
+        ).thenAnswer((_) async => const Ok(null));
+      },
+      build: () => WalkDetailCubit(useCase, sharer),
+      act: (cubit) async {
+        await cubit.load('w1');
+        await cubit.toggleFavorite();
+      },
+      skip: 2,
+      expect: () => [WalkDetailState.loaded(walk: walk(), track: track)],
+    );
+
+    blocTest<WalkDetailCubit, WalkDetailState>(
+      '실패하면 별은 그대로 두고 failure 를 싣는다',
+      setUp: () => when(
+        () => useCase.setWalkFavorite('w1', true),
+      ).thenAnswer((_) async => const Err(Failure.unknown())),
+      build: () => WalkDetailCubit(useCase, sharer),
+      act: (cubit) async {
+        await cubit.load('w1');
+        await cubit.toggleFavorite();
+      },
+      skip: 2,
+      expect: () => [
+        WalkDetailState.loaded(
+          walk: walk(),
+          track: track,
+          failure: const Failure.unknown(),
+        ),
+      ],
+    );
+
+    blocTest<WalkDetailCubit, WalkDetailState>(
+      '같은 실패가 다시 나도 알릴 수 있게 시작할 때 이전 failure 를 지운다',
+      setUp: () => when(
+        () => useCase.setWalkFavorite('w1', true),
+      ).thenAnswer((_) async => const Err(Failure.unknown())),
+      build: () => WalkDetailCubit(useCase, sharer),
+      act: (cubit) async {
+        await cubit.load('w1');
+        await cubit.toggleFavorite();
+        await cubit.toggleFavorite();
+      },
+      skip: 3,
+      expect: () => [
+        WalkDetailState.loaded(walk: walk(), track: track),
+        WalkDetailState.loaded(
+          walk: walk(),
+          track: track,
+          failure: const Failure.unknown(),
+        ),
+      ],
+    );
+
+    test('진행 중에 다시 부르면 무시한다', () async {
+      final pending = Completer<Result<void>>();
+      when(
+        () => useCase.setWalkFavorite('w1', true),
+      ).thenAnswer((_) => pending.future);
+      final cubit = WalkDetailCubit(useCase, sharer);
+      addTearDown(cubit.close);
+      await cubit.load('w1');
+
+      final first = cubit.toggleFavorite();
+      await cubit.toggleFavorite();
+      pending.complete(const Ok(null));
+      await first;
+
+      verify(() => useCase.setWalkFavorite('w1', true)).called(1);
+      expect((cubit.state as WalkDetailLoaded).walk.isFavorite, isTrue);
+    });
+
+    test('불러오기 전에는 아무것도 하지 않는다', () async {
+      final cubit = WalkDetailCubit(useCase, sharer);
+      addTearDown(cubit.close);
+
+      await cubit.toggleFavorite();
+
+      verifyNever(() => useCase.setWalkFavorite(any(), any()));
+      expect(cubit.state, const WalkDetailState.loading());
+    });
+  });
 }

@@ -26,6 +26,7 @@ Walk _walk(
   String? memo,
   List<WalkPhoto> photos = const [],
   DateTime? startedAt,
+  bool isFavorite = false,
 }) => Walk(
   id: id,
   startedAt: startedAt ?? t0,
@@ -41,6 +42,7 @@ Walk _walk(
   ],
   createdAt: t0,
   updatedAt: t0,
+  isFavorite: isFavorite,
 );
 
 void main() {
@@ -437,6 +439,84 @@ void main() {
       await choose(tester, 'walk-feed-backup-import');
 
       expect(find.byType(SnackBar), findsNothing);
+    });
+  });
+
+  group('즐겨찾기', () {
+    Future<void> tapToggle(WidgetTester tester) async {
+      await tester.tap(find.byKey(const Key('walk-feed-more')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('walk-feed-favorites-toggle')));
+      await tester.pumpAndSettle();
+    }
+
+    void stubWalks(List<Walk> walks) => when(
+      () => useCase.watchWalks(),
+    ).thenAnswer((_) => Stream.value(Ok(walks)));
+
+    testWidgets('즐겨찾기 산책에만 시각 옆 별이 있다', (tester) async {
+      stubWalks([
+        _walk('a', isFavorite: true),
+        _walk('b', startedAt: t0.subtract(const Duration(hours: 1))),
+      ]);
+      await pump(tester);
+
+      expect(find.byKey(const Key('walk-feed-favorite-a')), findsOneWidget);
+      // b 는 화면 밖이라 그려질 때까지 내린 뒤 별이 없는지 본다.
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('walk-feed-entry-b')),
+        200,
+      );
+      expect(find.byKey(const Key('walk-feed-favorite-b')), findsNothing);
+    });
+
+    testWidgets('즐겨찾기만 보기로 거르고, 메뉴 라벨이 모든 산책 보기로 바뀐다', (tester) async {
+      // 위가 즐겨찾기 아닌 b — 화면 밖 항목은 그려지지 않으므로 맨 위로 비교한다.
+      stubWalks([
+        _walk('b'),
+        _walk(
+          'a',
+          isFavorite: true,
+          startedAt: t0.subtract(const Duration(hours: 1)),
+        ),
+      ]);
+      await pump(tester);
+      expect(find.byKey(const Key('walk-feed-entry-b')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('walk-feed-more')));
+      await tester.pumpAndSettle();
+      expect(find.text('즐겨찾기만 보기'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('walk-feed-favorites-toggle')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('walk-feed-entry-a')), findsOneWidget);
+      expect(find.byKey(const Key('walk-feed-entry-b')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('walk-feed-more')));
+      await tester.pumpAndSettle();
+      expect(find.text('모든 산책 보기'), findsOneWidget);
+      expect(find.text('즐겨찾기만 보기'), findsNothing);
+      await tester.tap(find.byKey(const Key('walk-feed-favorites-toggle')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('walk-feed-entry-b')), findsOneWidget);
+    });
+
+    testWidgets('즐겨찾기가 없으면 안내를 보이고 요약 줄 · 시작 버튼은 그대로', (tester) async {
+      await pump(tester);
+
+      await tapToggle(tester);
+
+      expect(find.byType(WalkFeedEntry), findsNothing);
+      expect(find.text('즐겨찾기한 산책이 없어요'), findsOneWidget);
+      expect(find.text('산책 상세에서 별을 눌러 보세요'), findsOneWidget);
+      expect(find.text('이번 주 1.2 km · 1번'), findsOneWidget);
+      expect(find.byKey(const Key('walk-feed-start-button')), findsOneWidget);
+
+      await tapToggle(tester);
+
+      expect(find.byKey(const Key('walk-feed-entry-a')), findsOneWidget);
+      expect(find.text('즐겨찾기한 산책이 없어요'), findsNothing);
     });
   });
 }

@@ -2850,4 +2850,22 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkFeedMoreTooltip => 'その他';
+
+  @override
+  String get walkFavoriteAdd => 'お気に入りに追加';
+
+  @override
+  String get walkFavoriteRemove => 'お気に入りから外す';
+
+  @override
+  String get walkFeedShowFavorites => 'お気に入りだけ表示';
+
+  @override
+  String get walkFeedShowAll => 'すべての散歩を表示';
+
+  @override
+  String get walkFeedFavoritesEmptyTitle => 'お気に入りの散歩はまだありません';
+
+  @override
+  String get walkFeedFavoritesEmptyMessage => '散歩の詳細で星をタップしてください';
 }

@@ -99,6 +99,15 @@ class WalkFeedEntry extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: PawlogSpacing.sm),
+                          if (walk.isFavorite) ...[
+                            Icon(
+                              Icons.star,
+                              key: Key('walk-feed-favorite-${walk.id}'),
+                              size: PawlogSize.favoriteIcon,
+                              color: colors.primary,
+                            ),
+                            const SizedBox(width: PawlogSpacing.xs),
+                          ],
                           Text(
                             DateFormat.Hm(l10n.localeName).format(startedAt),
                             style: theme.textTheme.labelMedium?.copyWith(

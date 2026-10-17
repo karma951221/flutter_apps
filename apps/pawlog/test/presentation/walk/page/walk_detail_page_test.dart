@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:core/core.dart';
@@ -331,6 +332,108 @@ void main() {
 
       expect(find.text('내보내지 못했어요'), findsOneWidget);
       expect(find.byKey(const Key('walk-detail-map')), findsOneWidget);
+      await disposePage(tester);
+    });
+  });
+
+  group('즐겨찾기 별', () {
+    Finder star() => find.byKey(const Key('walk-detail-favorite'));
+    IconButton starButton(WidgetTester tester) =>
+        tester.widget<IconButton>(star());
+
+    testWidgets('즐겨찾기가 아니면 빈 별 · 추가 툴팁', (tester) async {
+      await pumpApp(
+        tester,
+        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      );
+
+      expect(
+        find.descendant(of: star(), matching: find.byIcon(Icons.star_border)),
+        findsOneWidget,
+      );
+      expect(starButton(tester).tooltip, '즐겨찾기에 추가');
+      await disposePage(tester);
+    });
+
+    testWidgets('즐겨찾기면 꽉 찬 별 · 빼기 툴팁', (tester) async {
+      when(
+        () => useCase.getWalk('w1'),
+      ).thenAnswer((_) async => Ok(fullWalk.copyWith(isFavorite: true)));
+      await pumpApp(
+        tester,
+        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      );
+
+      expect(
+        find.descendant(of: star(), matching: find.byIcon(Icons.star)),
+        findsOneWidget,
+      );
+      expect(starButton(tester).tooltip, '즐겨찾기에서 빼기');
+      await disposePage(tester);
+    });
+
+    testWidgets('누르면 setWalkFavorite(id, true) 후 별이 켜진다', (tester) async {
+      when(
+        () => useCase.setWalkFavorite('w1', true),
+      ).thenAnswer((_) async => const Ok(null));
+      await pumpApp(
+        tester,
+        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      );
+
+      await tester.tap(star());
+      await tester.pumpAndSettle();
+
+      verify(() => useCase.setWalkFavorite('w1', true)).called(1);
+      expect(
+        find.descendant(of: star(), matching: find.byIcon(Icons.star)),
+        findsOneWidget,
+      );
+      await disposePage(tester);
+    });
+
+    testWidgets('실패하면 스낵바를 보이고 별은 그대로', (tester) async {
+      when(
+        () => useCase.setWalkFavorite('w1', true),
+      ).thenAnswer((_) async => const Err(Failure.network()));
+      await pumpApp(
+        tester,
+        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      );
+
+      await tester.tap(star());
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(
+        find.descendant(of: star(), matching: find.byIcon(Icons.star_border)),
+        findsOneWidget,
+      );
+      await disposePage(tester);
+    });
+
+    testWidgets('저장 중에 다시 누르면 무시한다', (tester) async {
+      final pending = Completer<Result<void>>();
+      when(
+        () => useCase.setWalkFavorite('w1', true),
+      ).thenAnswer((_) => pending.future);
+      await pumpApp(
+        tester,
+        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      );
+
+      await tester.tap(star());
+      await tester.pump();
+      await tester.tap(star());
+      await tester.pump();
+      pending.complete(const Ok(null));
+      await tester.pumpAndSettle();
+
+      verify(() => useCase.setWalkFavorite('w1', true)).called(1);
+      expect(
+        find.descendant(of: star(), matching: find.byIcon(Icons.star)),
+        findsOneWidget,
+      );
       await disposePage(tester);
     });
   });

@@ -3053,4 +3053,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkFeedMoreTooltip => 'More';
+
+  @override
+  String get walkFavoriteAdd => 'Add to favorites';
+
+  @override
+  String get walkFavoriteRemove => 'Remove from favorites';
+
+  @override
+  String get walkFeedShowFavorites => 'Show favorites only';
+
+  @override
+  String get walkFeedShowAll => 'Show all walks';
+
+  @override
+  String get walkFeedFavoritesEmptyTitle => 'No favorite walks yet';
+
+  @override
+  String get walkFeedFavoritesEmptyMessage =>
+      'Tap the star on a walk to add it';
 }

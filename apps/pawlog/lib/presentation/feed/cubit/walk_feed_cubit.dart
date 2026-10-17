@@ -28,6 +28,9 @@ class WalkFeedCubit extends Cubit<WalkFeedState> {
   TrackerState _tracker = const TrackerState.idle();
   PeriodSummary _weekSummary = PeriodSummary.empty;
 
+  /// 즐겨찾기만 보기 — 화면 상태라 저장하지 않는다(앱을 다시 열면 전체).
+  bool _favoritesOnly = false;
+
   /// 내보내기 · 가져오기가 진행 중이면 다시 누른 것은 무시한다 — 공유 시트 · 파일 고르기가
   /// 두 번 뜨지 않게.
   bool _backupBusy = false;
@@ -83,8 +86,17 @@ class WalkFeedCubit extends Cubit<WalkFeedState> {
         walks: walks,
         tracker: _tracker,
         weekSummary: _weekSummary,
+        favoritesOnly: _favoritesOnly,
       ),
     );
+  }
+
+  /// 즐겨찾기만 보기를 켜고 끈다. loaded 가 아니면 아무것도 하지 않는다.
+  void toggleFavoritesOnly() {
+    final current = state;
+    if (isClosed || current is! WalkFeedLoaded) return;
+    _favoritesOnly = !_favoritesOnly;
+    emit(current.copyWith(favoritesOnly: _favoritesOnly));
   }
 
   PeriodSummary _summaryOf(List<Walk> walks) => WalkStatsPolicy.periodStats(
@@ -114,6 +126,7 @@ class WalkFeedCubit extends Cubit<WalkFeedState> {
             walks: walks,
             tracker: _tracker,
             weekSummary: _weekSummary,
+            favoritesOnly: _favoritesOnly,
           ),
         );
       case Err(:final failure):
@@ -133,6 +146,7 @@ class WalkFeedCubit extends Cubit<WalkFeedState> {
         walks: walks,
         tracker: tracker,
         weekSummary: _weekSummary,
+        favoritesOnly: _favoritesOnly,
       ),
     );
   }
