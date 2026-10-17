@@ -15,6 +15,7 @@
 | 2+ | W7 session — 일시정지 · 재개, 강제 종료 뒤 복구 | **완료** 2026-10-17 — 에뮬레이터 PASS(거리 제외, [테스트](features/session/testing.md#에뮬레이터)) |
 | 2+ | W8 export — 산책 한 건 GPX 내보내기 | **완료** 2026-10-17 — [기록](features/export/history.md) · [테스트](features/export/testing.md) |
 | 2+ | W9 backup — 전체 백업 내보내기 · 합쳐 가져오기 | **완료** 2026-10-17 — [기록](features/backup/history.md) · [테스트](features/backup/testing.md) |
+| 2+ | W10 favorites — 산책 즐겨찾기 · 피드 필터 | **착수** 2026-10-17 — [계획](features/favorites/plan.md) |
 | 3 | W5 social (v2) | 미정 |
 
 ## 0 — 기획 (완료, 2026-10-03)
