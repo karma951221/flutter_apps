@@ -2,7 +2,7 @@
 
 > [pawlog 허브](../../README.md) · [기획 W5](../../overview.md#w5-social--소셜-v2-별도-기획) · [트레이더 스키마](../../../../trader/docs/schema.md) · [아키텍처](../../../../../docs/architecture.md)
 
-> 상태: 착수 2026-10-17 · 진행 상태의 단일 기준은 [진행 현황](../../status.md)
+> 상태: **완료** 2026-10-18(착수 2026-10-17) — [구현 기록](history.md) · [테스트](testing.md) · 진행 상태의 단일 기준은 [진행 현황](../../status.md)
 
 ## 범위
 
@@ -102,8 +102,8 @@ create table public.walk_post_likes (
 
 ## 완료 조건
 
-- [ ] 마이그레이션 · `schema.md` 새 절 · RLS 스크립트(로컬 `supabase db reset` 뒤 통과)
-- [ ] 경로 앞뒤 잘라 내기 정책 · 저장소(Supabase, 모의) · 로그인 · 모두의 산책 · 공유 테스트
-- [ ] Supabase 가 없어도 앱이 뜨고 로컬 기능이 그대로(테스트 + 에뮬레이터)
-- [ ] `flutter analyze` 0 · `flutter test` · `flutter build apk --debug` · 패키지 경계 테스트 갱신
-- [ ] 에뮬레이터(로컬 Supabase): 가입 → 산책 공유 → 모두의 산책에 보임(경로 앞뒤 잘림) → 좋아요 → 공유 취소 → 사라짐 → 로그아웃 뒤 둘러보기
+- [x] 마이그레이션 · `schema.md` 새 절 · RLS 스크립트(로컬 `supabase db reset` 뒤 통과)
+- [x] 경로 앞뒤 잘라 내기 정책 · 저장소(Supabase, 모의) · 로그인 · 모두의 산책 · 공유 테스트
+- [x] Supabase 가 없어도 앱이 뜨고 로컬 기능이 그대로(테스트 + 에뮬레이터)
+- [x] `flutter analyze` 0 · `flutter test` · `flutter build apk --debug` · 패키지 경계 테스트 갱신
+- [x] 에뮬레이터(로컬 Supabase): 가입 → 산책 공유 → 모두의 산책에 보임(경로 앞뒤 잘림) → 좋아요 → 공유 취소 → 사라짐 → 로그아웃 뒤 둘러보기

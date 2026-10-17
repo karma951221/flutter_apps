@@ -39,7 +39,7 @@ socialapp/
 │   │   └── docs/                # 앱 문서 — README · status · plan · history · testing
 │   ├── walk/                    # 셋째 앱 만보기 — Health Connect 읽기 · 알람, 안드로이드만. core · design_system · l10n · permission 만 쓴다
 │   │   └── docs/                # 앱 문서 — README · status · plan · history · testing
-│   └── pawlog/                  # 넷째 앱 강아지 산책 — v1 은 Supabase 없음(drift 로컬 DB · flutter_map). core · design_system · l10n · location 만 쓴다. lib/ 아래 core(셸)·data·domain·presentation
+│   └── pawlog/                  # 넷째 앱 강아지 산책 — 로컬 우선(drift 로컬 DB · flutter_map), W5 social 만 같은 Supabase 에 선택적으로 붙는다. core · design_system · l10n · location 만 쓴다. lib/ 아래 core(셸)·data·domain·presentation
 │       └── docs/                # 앱 문서 — README · status · overview(★ 기획) · features/<name>/{plan,history,testing}.md
 └── packages/
     ├── core/                    # error · result · pagination · validation · data 인프라 · media · time(Clock) · di
@@ -59,7 +59,10 @@ socialapp/
 앱이다([계획](../apps/commute/docs/plan.md)). `apps/walk` 는 같은 경계로 만든 만보기
 앱이다([계획](../apps/walk/docs/plan.md)). `apps/pawlog` 는 거기에 로컬 DB(drift) 와
 지도(flutter_map · OSM 타일)를 더해도 같은 경계가 유지되는지 보는 넷째 앱이다
-([기획서](../apps/pawlog/docs/overview.md)). 앱들은 `pubspec.yaml` 의 `workspace:` 로
+([기획서](../apps/pawlog/docs/overview.md)). pawlog 는 W5 social 부터 트레이더와 같은 Supabase · 같은 계정에
+**선택적으로** 붙는다(`--dart-define` 주소 · 키). 초기화가 실패해도 앱은 뜨고 로컬 기능은 그대로다 —
+`SocialAvailability` 를 보고 Supabase 저장소 대신 "쓸 수 없음" 저장소를 등록한다
+([W5 기록](../apps/pawlog/docs/features/social/history.md)). 앱들은 `pubspec.yaml` 의 `workspace:` 로
 패키지를 이름으로 resolve 하고, 실제 의존 관계는 [의존 그래프](dependencies.md)에 있다.
 
 `apps/commute` · `apps/pawlog` 의 페이지는 **`Routes` 대신 콜백을 받는다** — 페이지가

@@ -16,7 +16,8 @@
 
 산책 시작을 누르면 GPS 로 코스를 그리고, 끝나면 강아지 · 사진 · 메모를 붙여 저장한다.
 홈은 그 기록의 타임라인(피드)이다. v1 은 **혼자 쓰는 기록 앱**이고, 로그인과 다른
-사람의 피드는 v2 에서 Supabase 위에 얹는다.
+사람의 피드는 v2 에서 Supabase 위에 얹는다. v2 의 첫 조각인 [W5 social](features/social/plan.md)
+(산책 한 건 공유 · 모두의 산책 · 좋아요)이 시작됐다 — 기록은 여전히 기기에 먼저 저장되고, 로그인은 공유 · 좋아요에만 필요하다.
 
 ## 2. 목표와 성공 기준
 
@@ -54,7 +55,7 @@ Supabase 구현을 DI 교체로 넣을 수 있게 한다. 그 외 소셜 관련 
 
 ### 제외 (v1 범위 밖)
 
-로그인 · Supabase · 다른 사람의 피드 · 좋아요/댓글 · 코스 즐겨찾기/추천(→ W10 favorites: 산책 즐겨찾기 · 피드 필터) · 수동 코스
+로그인 · Supabase · 다른 사람의 피드 · 좋아요/댓글(→ v2 첫 조각 W5 social: 이메일 로그인 · 산책 한 건 공유 · 모두의 산책 · 좋아요, 댓글은 아직) · 코스 즐겨찾기/추천(→ W10 favorites: 산책 즐겨찾기 · 피드 필터) · 수동 코스
 입력 · 일시정지/재개 · 앱 강제종료 후 진행 중 산책 복구(→ v1 뒤 W7 session) · 통계 대시보드(→ v1 뒤 W6 stats 로 일부 착수) · 알림 권한
 안내(`permission_handler`) · 피드 페이지네이션(→ 2026-10-17 적용) · 데이터 내보내기(→ W8 export: 산책 한 건 GPX · W9 backup: 전체 백업 · 가져오기) · API 키가 필요한
 지도 서비스.
@@ -164,7 +165,7 @@ v1 은 feature 넷을 **한 코드 묶음** 에 둔다(처음엔 `packages/featu
 | W8 | **export** | 상세 더보기에서 산책 한 건을 GPX 1.1 파일로 공유 시트에 넘기기 — [계획](features/export/plan.md) (v1 범위 밖이던 데이터 내보내기의 첫 조각) | 2+ |
 | W9 | **backup** | 반려견 · 산책 · 경로 · 사진 전부를 zip 하나로 내보내고 합쳐 가져오기, 첫 실행 화면에서 복원 — [계획](features/backup/plan.md) | 2+ |
 | W10 | **favorites** | 산책 별(즐겨찾기) · 피드 즐겨찾기만 보기 — [계획](features/favorites/plan.md) | 2+ |
-| W5 | **social** (v2) | Supabase 동기화 · 공개 피드 · 프로필 · 반응/댓글 — 트레이더 feature 재사용 검토 | 3 |
+| W5 | **social** (v2) | 첫 조각: 이메일 로그인 · 산책 한 건 골라 공유(경로 앞뒤 · 집 근처 잘라 냄) · 모두의 산책 · 좋아요 — [계획](features/social/plan.md). 동기화 · 프로필 · 댓글은 그 뒤 | 3 |
 
 ### 교차 관심사 (특정 feature 소유 아님)
 
@@ -276,9 +277,8 @@ v1 은 feature 넷을 **한 코드 묶음** 에 둔다(처음엔 `packages/featu
 
 ### W5. social — 소셜 (v2, 별도 기획)
 
-로그인(`feature_auth`), Supabase 테이블 + RLS, 내 기록 동기화, 공개 피드, 프로필,
-반응 · 댓글. 트레이더의 feature 를 얼마나 재사용할지는 그때 정한다. v1 은 §2 의
-"v2 를 위해 지키는 것" 만 지킨다.
+첫 조각은 [계획](features/social/plan.md) — 트레이더와 같은 Supabase · 같은 계정, 로그인 화면은 pawlog 안에 직접
+(`feature_auth` 를 쓰지 않는다), 공유는 한 건씩 고를 때만. 내 기록 동기화 · 프로필 · 댓글은 아직이다.
 
 ## 7. 데이터 모델 (drift 스키마 v1)
 
@@ -311,6 +311,8 @@ active_walk_points (seq INT pk, lat REAL, lng REAL, recorded_at, accuracy?)
   옮겨진다
 - v2 때 `user_id` 와 RLS 만 얹으면 되도록 snake_case · timestamptz 호환 이름을 쓴다.
   [트레이더 명명 규칙](../../trader/docs/overview.md#명명-규칙)과 같다
+- 서버 쪽(W5 social 공유 산책 `walk_posts` · `walk_post_likes`)은 drift 가 아니라 Supabase 에 있고, 단일 기준은
+  [트레이더 스키마 §18](../../trader/docs/schema.md)이다. 기기의 `walks.id` 가 서버의 `local_walk_id` 다
 
 ## 8. 개발 단계
 
@@ -328,7 +330,7 @@ active_walk_points (seq INT pk, lat REAL, lng REAL, recorded_at, accuracy?)
 | ⑦ | `feat(walk): 산책 피드와 상세 화면을 구현한다` | **W4** + W3 상세 |
 | — | 에뮬레이터 검증 → `fix(walk): …` | 통근 앱 `d1c7d8e` 선례. 고친 것은 `history.md` 에 |
 | ⑧ | `docs(pawlog): …` | feature 별 `history` · `testing`, 진행 현황, 아키텍처 · 의존 그래프 · 개발환경 · 테스트 허브 |
-| v2 | W5 social | 별도 기획 |
+| v2 | W5 social | [계획](features/social/plan.md) — 첫 조각 |
 
 ①~③ 은 feature 가 서기 위한 바닥이라 W1 보다 앞선다. ④ 부터 feature 순서(W1 → W2 →
 W3 → W4)로 간다. **W2 가 기기에서 돌아가기 전에 ⑥ 으로 넘어가지 않는다.**

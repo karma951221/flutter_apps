@@ -4,7 +4,7 @@
 
 > 앱들이 함께 쓰는 도구와 실행 절차. 앱별 절차는 각 앱 문서에 있다 —
 > [트레이더 개발환경](../apps/trader/docs/setup.md)(Supabase · 스키마 변경 · 시세 seed) ·
-> [통근 허브](../apps/commute/docs/README.md)(Supabase 없음) · [pawlog 허브](../apps/pawlog/docs/README.md)(Supabase 없음).
+> [통근 허브](../apps/commute/docs/README.md)(Supabase 없음) · [pawlog 허브](../apps/pawlog/docs/README.md)(Supabase 선택 — 모두의 산책만).
 
 ## 사전 요구
 
@@ -34,12 +34,18 @@ cd ~/Desktop/socialapp/apps/commute
 flutter run -d emulator-5554
 ```
 
-pawlog([허브](../apps/pawlog/docs/README.md))도 **Supabase 가 필요 없다** — 기록은 기기의 drift DB 와
-앱 문서 디렉터리의 사진 파일에만 남는다. 첫 실행은 반려견 등록 화면(`/dogs/new`)부터 뜬다.
+pawlog([허브](../apps/pawlog/docs/README.md))는 **Supabase 없이도 뜬다** — 기록은 기기의 drift DB 와
+앱 문서 디렉터리의 사진 파일에 먼저 남는다. 첫 실행은 반려견 등록 화면(`/dogs/new`)부터 뜬다.
+W5 social(모두의 산책 · 공유 · 좋아요)만 트레이더와 **같은 로컬 Supabase** 에 선택적으로 붙는다
+([트레이더 개발환경 §1](../apps/trader/docs/setup.md#1-백엔드-기동)). 주소 · 키는 트레이더처럼
+`--dart-define` `SUPABASE_URL` · `SUPABASE_PUBLISHABLE_KEY`, 없으면 로컬 기본값(안드로이드 `10.0.2.2:54321`).
+Supabase 가 꺼져 있거나 초기화가 실패해도 로컬 기능은 그대로고, 모두의 산책만 오류 안내를 보인다.
+요청마다 10초 시간 제한이 있다.
 
 ```bash
 cd ~/Desktop/socialapp/apps/pawlog
 flutter run -d emulator-5554
+# 원격 Supabase: --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_PUBLISHABLE_KEY=...
 ```
 
 - **에뮬레이터 위치** — 에뮬레이터는 스스로 움직이지 않는다. 산책 추적을 보려면 Extended Controls

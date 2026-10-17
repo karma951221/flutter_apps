@@ -17,7 +17,7 @@
 | 2+ | W9 backup — 전체 백업 내보내기 · 합쳐 가져오기 | **완료** 2026-10-17 — [기록](features/backup/history.md) · [테스트](features/backup/testing.md) |
 | 2+ | W10 favorites — 산책 즐겨찾기 · 피드 필터 | **완료** 2026-10-17 — [기록](features/favorites/history.md) · [테스트](features/favorites/testing.md) |
 | 2+ | 피드 페이지네이션 — 30개씩 나눠 읽기 | **완료** 2026-10-17 — [기록](features/feed/history.md#2026-10-17--페이지네이션) · [테스트](features/feed/testing.md#2026-10-17--페이지네이션) |
-| 3 | W5 social (v2) — 산책 공유 · 모두의 산책 · 좋아요 | **착수** 2026-10-17 — [계획](features/social/plan.md) |
+| 3 | W5 social (v2) — 산책 공유 · 모두의 산책 · 좋아요 | **완료** 2026-10-18 — 에뮬레이터 PASS([기록](features/social/history.md) · [테스트](features/social/testing.md#에뮬레이터)) |
 
 ## 0 — 기획 (완료, 2026-10-03)
 
@@ -73,11 +73,27 @@ SDK 없음, 다음 세션.** APK · iOS 빌드도 아직 한 번도 하지 않�
 4. **리뷰 문서의 열린 항목** — [구현 리뷰](audits/2026-10-03-implementation-review.md)의 "다음 단계에
    넘기는 것" 표와 열린 질문. 남은 것: 크기 수치의 토큰화(④ T3 · ⑦ F2 — 디자인 적용에서 `PawlogSize` 로 옮김, 리뷰 표 확인만), Android 정확도 `best` vs 계획 `high`(실기기에서 결정),
    ~~미테스트 경로(카메라 · 사진 없는 썸네일 fallback)~~ — 2026-10-17 화면에서 둘 다 PASS. `POST_NOTIFICATIONS` 런타임 요청은 2026-10-17 에 했다([tracking 기록](features/tracking/history.md))
-5. **W5 social 기획** — v2. Supabase 소셜 피드를 얹는다. 착수 시 `features/social/plan.md`
+5. ~~**W5 social 기획**~~ — 2026-10-18 첫 조각 완료(아래 "W5 social"). 넘긴 것은 [기록](features/social/history.md#넘기는-것)
 6. **리팩터링 후보** — [설계 §7](../../../docs/superpowers/specs/2026-10-03-walk-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것):
    남은 것은 `FailureCode` · ARB 의 앱별 증가, `AppAvatar.nickname`, `CLAUDE.md` 경로, `core` 등록을
    앱이 따로 하는 문제. 모노레포 공통 작업이라 [전체 진행 현황](../../../docs/status.md)에서 다룬다.
    2026-10-04 에 푼 것은 아래 "패키지 경계 정리" 에 있다
+
+## W5 social (2026-10-17 ~ 18)
+
+v2 의 첫 조각 — 산책 한 건을 골라 모두에게 공유하고, 모두의 산책을 둘러보고 좋아요를 누른다. "묻지 말고 알아서" 지시로
+오케스트레이터가 정했다. 결정 · 스키마 · 화면은 [계획](features/social/plan.md), 서버 테이블은
+[트레이더 스키마 §18](../../trader/docs/schema.md). 트레이더와 같은 Supabase · 같은 계정, 기록은 여전히 기기에 먼저 저장된다.
+
+- [x] ① 마이그레이션 · RLS · RPC (`e00cf8d` · 리뷰 수정 `8f62152`) · ② Supabase 초기화 · 로그인 (`ca03af1`) ·
+      ③ 경로 감추기 · 저장소 (`a80e261`) · ④ 모두의 산책 · 상세 공유 (`40f7881`) · 최종 리뷰 수정 (`e4a005c`) —
+      [기록](features/social/history.md) · [테스트](features/social/testing.md)
+- [x] 에뮬레이터 10 시나리오 PASS — API 컨테이너를 멈추면 스피너가 끝없이 돌던 것을 찾아 시간 제한으로 고쳤다
+- [ ] 남은 것: [넘기는 것](features/social/history.md#넘기는-것) — 원인별 오류 문구 · 산책 수정이 공유 글에 반영되지 않음 · 잘린 경로의 방향 등
+
+검증(2026-10-18, `e4a005c`): `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+739`(건너뜀 2) · 통합
+`--run-skipped -t integration` `+5` · `flutter build apk --debug` 성공. `packages/core` `+69` · `packages/l10n` `+10` ·
+`apps/trader` `flutter test test/convention` 통과 · `walk_posts_rls_check.py` 53/53.
 
 ## W7 session (2026-10-16 ~ 17)
 

@@ -4,7 +4,7 @@
 
 강아지와 산책한 기록을 쌓고 피드로 돌아보는 앱이다. 산책 시작을 누르면 GPS 로 코스를
 그리고, 끝나면 강아지 · 사진 · 메모를 붙여 저장한다. v1 은 로그인 · 백엔드 없이 기기에만
-저장하고(drift), v2 에서 Supabase 소셜 피드를 얹는다. 코드는 모두 `apps/pawlog/` 에
+저장하고(drift), v2 에서 Supabase 소셜 피드를 얹는다 — 첫 조각(W5 social: 산책 공유 · 모두의 산책 · 좋아요)을 2026-10-18 마쳤다. 코드는 모두 `apps/pawlog/` 에
 있다(`lib/{core,data,domain,presentation}`, 2026-10-04 `feature_walk` 패키지에서 옮김). v1(W1~W4)은 구현을 마쳤고 에뮬레이터 검증은 아직이다
 ([진행 현황](status.md)).
 
@@ -24,10 +24,12 @@
 | W8 export — [계획](features/export/plan.md) · [기록](features/export/history.md) · [테스트](features/export/testing.md) | 산책 한 건을 GPX 파일로 공유 시트에 넘기기 |
 | W9 backup — [계획](features/backup/plan.md) · [기록](features/backup/history.md) · [테스트](features/backup/testing.md) | 전체 백업 내보내기 · 합쳐 가져오기, 첫 실행 복원 |
 | W10 favorites — [계획](features/favorites/plan.md) · [기록](features/favorites/history.md) · [테스트](features/favorites/testing.md) | 산책 즐겨찾기 · 피드 즐겨찾기만 보기 |
+| W5 social (v2) — [계획](features/social/plan.md) · [기록](features/social/history.md) · [테스트](features/social/testing.md) | 산책 한 건 공유 · 모두의 산책 · 좋아요, 이메일 로그인(Supabase, 선택) |
 | [구현 리뷰 · 요약](audits/2026-10-03-implementation-review.md) | 리뷰어 에이전트가 단계 커밋마다 독립적으로 읽고 쓴 소견과 요약 |
 
 feature 문서는 `features/<name>/` 에 착수 시 `plan.md`, 완료 시 `history.md` · `testing.md` 를 둔다.
 설계는 [설계 스펙](../../../docs/superpowers/specs/2026-10-03-walk-app-design.md)이지만 화면 · 상태 ·
 문자열 키는 각 `plan.md` 가 우선한다.
 
-실행은 [공통 개발환경 §1](../../../docs/setup.md#1-앱-실행)을 따른다. Supabase 없이 바로 뜬다.
+실행은 [공통 개발환경 §1](../../../docs/setup.md#1-앱-실행)을 따른다. Supabase 없이도 바로 뜬다 — 모두의 산책만
+로컬 Supabase(트레이더와 같은 것, `--dart-define` `SUPABASE_URL` · `SUPABASE_PUBLISHABLE_KEY`)가 필요하다.
