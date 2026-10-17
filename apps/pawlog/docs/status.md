@@ -59,18 +59,18 @@ SDK 없음, 다음 세션.** APK · iOS 빌드도 아직 한 번도 하지 않�
 
 ## 다음 할 일
 
-1. **남은 에뮬레이터 시나리오** — feature 별 `testing.md` 의 "에뮬레이터" 표에서 미실행 · 일부인 것:
-   tracking ⑤(저장 폼 뒤로 가기), record ⑤, feed ③④⑥. dog ②③④ · record ④ 는 2026-10-05 에 PASS. 이번 수정(위치 오류 안내 ·
-   설정 열기 · 빈 피드 안내)도 화면에서 한 번 더 본다
+1. ~~**남은 에뮬레이터 시나리오**~~ — 2026-10-17 에 tracking ⑤ · feed ③④ PASS, feed ⑥ 일부(`/walks` 는 라우터 테스트),
+   record ⑤ 는 화면에서 갈 길이 없어 위젯 테스트로 둔다. 위치 오류 안내 · 설정 열기 · 빈 피드 안내도 이때 화면에서 봤다
 2. **QA 다듬을 것** (2026-10-04 에뮬레이터 QA) — 아래 "디자인 시스템 적용" 에서 P1~P5 를 고쳤다. 남은 것:
    - Android 12+ 스플래시 아이콘 해상도 — 따로 다루는 중
    - ~~앱 테마가 브랜드 주황(`#F08C3A`)이 아니라 기본 남색이다~~ — [디자인 시스템](design.md)(회백지 · 남색 · 연두)이
      대신한다
 3. **디자인 시스템 에뮬레이터 재확인** — 2026-10-05 라이트 · 다크 QA 는 PASS([디자인 테스트](features/design/testing.md#에뮬레이터)).
-   그때 찾은 Q1~Q4 수정(OSM 출처 · 경로 그림 여백 · 1분 미만 · 반려견 카메라)은 위젯 테스트로만 확인했다 — 화면에서 한 번 더 본다
+   그때 찾은 Q1~Q4 수정 중 Q2(경로 그림 여백) · Q4(반려견 카메라 — 에뮬레이터 카메라로 찍어 저장) 는 2026-10-17 화면에서 PASS.
+   Q1(진행 화면 OSM 출처)은 GPS 점이 있어야 지도가 떠서 GPS 되는 기기에서 본다. 상세 화면 출처는 PASS
 4. **리뷰 문서의 열린 항목** — [구현 리뷰](audits/2026-10-03-implementation-review.md)의 "다음 단계에
    넘기는 것" 표와 열린 질문. 남은 것: 크기 수치의 토큰화(④ T3 · ⑦ F2 — 디자인 적용에서 `PawlogSize` 로 옮김, 리뷰 표 확인만), Android 정확도 `best` vs 계획 `high`(실기기에서 결정),
-   미테스트 경로(카메라 · 사진 없는 썸네일 fallback). `POST_NOTIFICATIONS` 런타임 요청은 2026-10-17 에 했다([tracking 기록](features/tracking/history.md))
+   ~~미테스트 경로(카메라 · 사진 없는 썸네일 fallback)~~ — 2026-10-17 화면에서 둘 다 PASS. `POST_NOTIFICATIONS` 런타임 요청은 2026-10-17 에 했다([tracking 기록](features/tracking/history.md))
 5. **W5 social 기획** — v2. Supabase 소셜 피드를 얹는다. 착수 시 `features/social/plan.md`
 6. **리팩터링 후보** — [설계 §7](../../../docs/superpowers/specs/2026-10-03-walk-app-design.md#7-리팩터링-후보--이-앱을-만들며-확인된-것):
    남은 것은 `FailureCode` · ARB 의 앱별 증가, `AppAvatar.nickname`, `CLAUDE.md` 경로, `core` 등록을

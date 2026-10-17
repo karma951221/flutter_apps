@@ -63,7 +63,7 @@ W3 몫은 cubit 26 · 페이지 18 = 44건이다(2026-10-03, `93d722b` 기준). 
 | ② | 상세 → 수정(메모 · 사진 하나 빼기) → 돌아오면 상세가 다시 읽힌다 | **PASS** |
 | ③ | 상세 → 삭제 → 피드. `adb shell run-as com.karma.pawlog ls app_flutter/pawlog_photos` 에서 파일이 사라진다 | **PASS** |
 | ④ | 저장 폼에서 버리기 · 뒤로 → 확인 → 사진 파일 삭제, 추적기 `idle` | **PASS**(2026-10-05) — 뒤로 가기에 버리기 확인이 뜬다. 사진 파일 삭제 · 추적기 `idle` 은 따로 기록하지 않았다 |
-| ⑤ | `trackerState` 가 `finished` 가 아닐 때 `/walk/save` → 안내 + 피드로 | 미실행 |
+| ⑤ | `trackerState` 가 `finished` 가 아닐 때 `/walk/save` → 안내 + 피드로 | 화면에서 갈 길이 없음(2026-10-17 확인) — 저장 폼은 끝낸 산책이 있을 때만 열린다. 위젯 테스트로만 |
 | ⑥ | 카메라로 찍기(`CAMERA` 미선언 → 카메라 앱 인텐트) | **PASS** — 카메라 인텐트가 뜨고 사진이 붙는다. 원본이 `cache/` 에 남는다(다음 할 일) |
 
 사진 폴더는 `getApplicationDocumentsDirectory()` 아래라 Android 에서는 `files/` 가 아니라
