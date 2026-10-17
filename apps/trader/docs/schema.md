@@ -2424,6 +2424,13 @@ pawlog(강아지 산책 앱)의 W5 소셜. 같은 프로젝트 · 같은 계정(
 ([20261017090722](../../../supabase/migrations/20261017090722_walk_posts.sql))
 
 ```sql
+-- CHECK 안에서는 서브쿼리를 못 쓰므로 이름 원소 검사를 immutable 함수로 감싼다
+create function public.walk_dog_names_valid(p_names text[]) returns boolean
+language sql immutable set search_path = '' as $$
+  select coalesce(bool_and(n is not null and char_length(btrim(n)) between 1 and 30), false)
+    from unnest(p_names) as n;
+$$;
+
 create table public.walk_posts (
   id               uuid             primary key default gen_random_uuid(),
   author_id        uuid             not null default auth.uid()
@@ -2432,10 +2439,13 @@ create table public.walk_posts (
   started_at       timestamptz      not null,
   duration_seconds integer          not null check (duration_seconds >= 0),
   distance_meters  double precision not null check (distance_meters >= 0),
-  dog_names        text[]           not null check (cardinality(dog_names) between 1 and 10),
+  dog_names        text[]           not null check (cardinality(dog_names) between 1 and 10)
+                                    check (public.walk_dog_names_valid(dog_names)),
   memo             text             check (char_length(memo) <= 500),
-  -- 앞뒤 150 m 를 잘라 낸 경로 미리보기 [{lat, lng}, ...]. 잘라 내기는 앱이 한다
-  route_preview    jsonb            check (route_preview is null or jsonb_array_length(route_preview) <= 64),
+  -- 앞뒤 150 m 를 잘라 낸 경로 미리보기 [{lat, lng}, ...]. 잘라 내기는 앱이 한다.
+  -- 원소 모양은 publish_walk_post 가 검사하고, 크기는 여기서 막는다
+  route_preview    jsonb            check (route_preview is null or jsonb_array_length(route_preview) <= 64)
+                                    check (route_preview is null or pg_column_size(route_preview) <= 8192),
   created_at       timestamptz      not null default now(),
   deleted_at       timestamptz,
   unique (author_id, local_walk_id)
@@ -2452,7 +2462,13 @@ create table public.walk_post_likes (
 
 `unique (author_id, local_walk_id)` 가 "같은 산책은 한 행" 을 강제한다. `deleted_at` 이
 null 이면 공유 중이고, 공유 취소는 소프트 삭제다. 다시 공유하면 **같은 행이 되살아나고
-id 가 그대로**라 좋아요도 그대로 돌아온다.
+id 가 그대로**라 좋아요도 그대로 돌아온다. 이때 `created_at` 은 `now()` 로 다시 찍혀
+다시 공유한 산책이 모두의 산책 맨 위에 온다 — `created_at` 은 "처음 만든 시각" 이 아니라
+"마지막으로 공유한 시각" 이다.
+
+**쓰기는 RPC 둘로만 한다.** `walk_posts` 에는 insert · update · delete 정책도 GRANT 도
+없다. PostgREST 의 직접 INSERT · upsert(`merge-duplicates`) · PATCH · DELETE 는 모두 `42501`
+이다.
 
 ### 인덱스
 
@@ -2476,13 +2492,13 @@ create policy "walk_posts_select_visible"
   on public.walk_posts for select to anon, authenticated
   using (deleted_at is null);
 
-create policy "walk_posts_insert_own"
-  on public.walk_posts for insert to authenticated
-  with check ((select auth.uid()) = author_id);
-
-create policy "walk_post_likes_select_all"
+-- 조회: 공유 중인 글의 좋아요만. walk_posts 는 조회자 RLS 로 삭제행이 가려지므로
+-- exists 만으로 충분하다
+create policy "walk_post_likes_select_visible"
   on public.walk_post_likes for select to anon, authenticated
-  using (true);
+  using (
+    exists (select 1 from public.walk_posts wp where wp.id = walk_post_likes.post_id)
+  );
 
 -- 본인 것만, 그리고 공유 중인 글에만. 다른 테이블 참조라 §11 의 42P17 은 아니다
 create policy "walk_post_likes_insert_own"
@@ -2500,8 +2516,8 @@ create policy "walk_post_likes_delete_own"
   using ((select auth.uid()) = user_id);
 ```
 
-`walk_posts` 에는 update · delete 정책이 없다. 갱신과 공유 취소는 아래 RPC 둘로만 한다
-(소프트 삭제를 UPDATE 로 하면 막히는 이유는 §11).
+`walk_posts` 에는 insert · update · delete 정책이 없다. 공유 · 갱신 · 공유 취소는 아래 RPC
+둘로만 한다(소프트 삭제를 UPDATE 로 하면 막히는 이유는 §11).
 
 ### GRANT
 
@@ -2509,10 +2525,7 @@ create policy "walk_post_likes_delete_own"
 revoke all privileges on public.walk_posts      from anon, authenticated;
 revoke all privileges on public.walk_post_likes from anon, authenticated;
 
-grant select on public.walk_posts to anon, authenticated;
-grant insert (local_walk_id, started_at, duration_seconds, distance_meters,
-              dog_names, memo, route_preview)
-  on public.walk_posts to authenticated;
+grant select on public.walk_posts to anon, authenticated;   -- 쓰기 GRANT 없음
 
 grant select           on public.walk_post_likes to anon, authenticated;
 grant insert (post_id) on public.walk_post_likes to authenticated;
@@ -2521,14 +2534,13 @@ grant delete           on public.walk_post_likes to authenticated;
 grant select on public.walk_posts_with_author to anon, authenticated;
 ```
 
-- `walk_posts` 에 `update` · `delete` 는 어떤 role 에도 없다. `author_id` · `deleted_at` 은
-  INSERT GRANT 에서 빠져 있어 `author_id` 는 `default auth.uid()` 로만 채워진다.
+- `walk_posts` 에 `insert` · `update` · `delete` 는 어떤 role 에도 없다. `author_id` 는
+  `publish_walk_post` 가 `auth.uid()` 로만 채운다.
 - **SELECT 는 테이블 단위다**(§5 `posts` 와 같다). `deleted_at` 을 빼고 컬럼 단위로 주면
   `walk_post_likes_insert_own` 의 `exists` 서브쿼리가 조회자 권한으로 그 컬럼을 읽지 못해
   모든 좋아요가 `42501` 로 막힌다(2026-10-17 확인). 조회 정책이 삭제행을 가리므로 보이는
   행의 `deleted_at` 은 언제나 null 이다.
-- 앱은 `walk_posts` 를 직접 읽지 않고 뷰만 읽는다. 쓰기는 `publish_walk_post` 를 쓴다 —
-  직접 INSERT 는 정책상 가능하지만 되살리기(upsert)가 안 되므로 앱 경로가 아니다.
+- 앱은 `walk_posts` 를 직접 읽지 않고 뷰만 읽는다.
 - 좋아요 INSERT 는 `post_id` 만 받는다. 취소는 내 행 DELETE 다. upsert 를 쓰지 않으므로
   `update` 는 주지 않는다(§10 과 다른 점).
 
@@ -2542,9 +2554,12 @@ publish_walk_post(
 ```
 
 공유(또는 다시 공유)의 유일한 경로. `auth.uid()` 가 null 이면
-`authentication required`(`42501`). `(auth.uid(), p_local_walk_id)` 로
+`authentication required`(`42501`). `p_route_preview` 가 null 이 아닌데 배열이 아니거나
+원소 중 `lat` · `lng` 가 숫자인 객체가 아닌 것이 있으면 `invalid route_preview`(`22023`).
+그다음 `(auth.uid(), p_local_walk_id)` 로
 `insert ... on conflict (author_id, local_walk_id) do update` 해서 내용을 갱신하고
-`deleted_at = null` 로 되살린 뒤 글 id 를 돌려준다.
+`created_at = now()` · `deleted_at = null` 로 되살린 뒤 글 id 를 돌려준다. 두 문구 모두
+영어라 `SupabaseErrorMapper` 의 한국어 문구 맵 대상이 아니다(코드로 매핑된다).
 
 `security definer` 인 이유: `update` GRANT 가 없고, 공유 취소된 행은 조회 정책에 걸려
 invoker 로는 `on conflict do update` 가 닿지 않는다. **`author_id` 를 `auth.uid()` 로
@@ -2581,18 +2596,23 @@ null 이라 `liked_by_me` 는 `false` 다. 커서는 `walk_posts_created_at_idx`
 
 ### 검증한 것 (로컬 Supabase · PostgREST 경유)
 
-`supabase/tests/walk_posts_rls_check.py` 33건이 모두 통과한다(2026-10-17).
+`supabase/tests/walk_posts_rls_check.py` 53건이 모두 통과한다(2026-10-17). 만든 사용자는
+끝에 지운다.
 
 - **게스트.** 보기를 읽는다. `walk_posts` insert · update · delete 와 `publish_walk_post`
   호출은 `401`
 - **공유 · 조회.** A 가 공유한 글을 B 와 게스트가 보기로 읽고 `author_nickname` 이 채워진다
 - **한 행.** 같은 `local_walk_id` 로 두 번 공유하면 같은 id 이고 행은 하나, 내용은 갱신된다
 - **남의 글.** B 의 `unpublish_walk_post(A 의 local_walk_id)` 는 `false` 이고 글은 남는다
-- **직접 쓰기.** 작성자라도 `PATCH` · `DELETE walk_posts` 는 `403`. `author_id` 위조 insert 도 `403`
+- **직접 쓰기.** 로그인해도 `INSERT` · upsert(`merge-duplicates`) · `PATCH` · `DELETE
+  walk_posts` 는 `403`. `author_id` 위조 insert 도 `403`
 - **좋아요.** B 가 누르면 `like_count = 1`, B 의 `liked_by_me` 는 `true`, A · 게스트는 `false`.
   두 번 누르면 `409`, B 는 A 의 좋아요를 못 지우고(0행), `user_id` 위조는 `403`
-- **공유 취소 · 되살리기.** 취소하면 보기에서 사라지고 그 글의 좋아요는 `403`, 다시 취소하면
-  `false`. 다시 공유하면 같은 id 로 보기에 돌아온다
-- **CHECK.** `route_preview` 65점 · 빈 `dog_names` · 501자 `memo` 는 `400`(`23514`).
-  64점과 `route_preview = null` 은 통과
-- **탈퇴 cascade.** 좋아요를 누른 사람을 지우면 `like_count` 가 함께 준다
+- **공유 취소 · 되살리기.** 취소하면 보기에서 사라지고, 게스트 · B · 작성자 모두 기반
+  테이블에서도 0행, 그 글의 좋아요 행도 게스트 · B 에게 0행이다. 그 글에 좋아요는 `403`,
+  다시 취소하면 `false`. 다시 공유하면 같은 id 로 좋아요 2개와 함께 목록 맨 위에 돌아온다
+- **CHECK.** `route_preview` 65점 · 8 KB 초과 · 빈 `dog_names` · 31자 또는 공백뿐인 이름 ·
+  501자 `memo` 는 `400`(`23514`). 64점 · 30자 이름 · `route_preview = null` 은 통과
+- **경로 모양.** 배열이 아닌 값 · 문자열 `lat` · `lng` 없음 · 숫자 원소는 `400`(`22023`)
+- **탈퇴 cascade.** 좋아요를 누른 사람을 지우면 `like_count` 가 함께 줄고, 작성자를
+  지우면 공유 산책도 사라진다

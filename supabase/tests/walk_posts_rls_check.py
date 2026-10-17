@@ -155,11 +155,23 @@ st, body = call("DELETE", f"/rest/v1/walk_posts?id=eq.{post_id}", A, None,
                 {"Prefer": "return=representation"})
 check("작성자라도 DELETE walk_posts 는 거부된다", st in (401, 403), f"{st} {str(body)[:60]}")
 
+st, body = call("POST", "/rest/v1/walk_posts", A,
+                {"local_walk_id": str(uuid.uuid4()), "started_at": "2026-10-17T00:00:00Z",
+                 "duration_seconds": 1, "distance_meters": 1, "dog_names": ["x"]})
+check("로그인해도 직접 INSERT walk_posts 는 거부된다 (RPC 로만)", st in (401, 403),
+      f"{st} {str(body)[:60]}")
+
 st, body = call("POST", "/rest/v1/walk_posts", B,
                 {"author_id": a_id, "local_walk_id": str(uuid.uuid4()),
                  "started_at": "2026-10-17T00:00:00Z", "duration_seconds": 1,
                  "distance_meters": 1, "dog_names": ["x"]})
 check("author_id 위조 insert 는 거부된다 (GRANT 없음)", st in (401, 403), f"{st} {str(body)[:60]}")
+
+st, body = call("POST", "/rest/v1/walk_posts?on_conflict=author_id,local_walk_id", A,
+                {"local_walk_id": walk_a, "started_at": "2026-10-17T00:00:00Z",
+                 "duration_seconds": 1, "distance_meters": 1, "dog_names": ["x"]},
+                {"Prefer": "resolution=merge-duplicates,return=representation"})
+check("PostgREST upsert(merge-duplicates) 는 거부된다", st in (401, 403), f"{st} {str(body)[:60]}")
 
 # --- 좋아요 -----------------------------------------------------------------------
 st, _ = call("POST", "/rest/v1/walk_post_likes", B, {"post_id": post_id})
@@ -197,6 +209,16 @@ check("A 가 공유 취소한다", st == 200 and ok is True, f"{st} {ok}")
 st, row = view_row(B, post_id)
 check("공유 취소한 글은 보기에서 사라진다", row is None, f"{st} {str(row)[:60]}")
 
+for who, token in (("anon", ANON), ("B", B), ("작성자 A", A)):
+    st, rows = call("GET", f"/rest/v1/walk_posts?select=id&id=eq.{post_id}", token)
+    check(f"공유 취소한 행은 {who} 가 기반 테이블에서도 못 읽는다", st == 200 and rows == [],
+          f"{st} {str(rows)[:60]}")
+
+for who, token in (("anon", ANON), ("B", B)):
+    st, rows = call("GET", f"/rest/v1/walk_post_likes?post_id=eq.{post_id}", token)
+    check(f"공유 취소한 글의 좋아요는 {who} 에게 안 보인다", st == 200 and rows == [],
+          f"{st} {str(rows)[:60]}")
+
 c_id, C = signup(f"C{suffix}")
 st, body = call("POST", "/rest/v1/walk_post_likes", C, {"post_id": post_id})
 check("공유 취소한 글엔 좋아요가 거부된다", st in (401, 403), f"{st} {str(body)[:60]}")
@@ -208,6 +230,10 @@ st, again = publish(A, walk(walk_a))
 check("다시 공유하면 같은 id 로 되살아난다", again == post_id, f"{st} {again}")
 st, row = view_row(B, post_id)
 check("되살린 글이 보기에 다시 보인다", row is not None, f"{st}")
+check("되살리면 좋아요도 돌아온다", row and row["like_count"] == 2, str(row and row["like_count"]))
+
+st, rows = call("GET", "/rest/v1/walk_posts_with_author?select=id&order=created_at.desc,id.desc&limit=1", B)
+check("다시 공유한 글이 목록 맨 위에 온다", rows and rows[0]["id"] == post_id, str(rows)[:80])
 
 # --- CHECK 제약 --------------------------------------------------------------------
 too_long = [{"lat": 37.5 + i * 1e-4, "lng": 127.0} for i in range(65)]
@@ -224,6 +250,28 @@ check("route_preview 없이도 공유된다", st == 200, f"{st} {str(body)[:80]}
 st, body = publish(A, walk(str(uuid.uuid4()), p_dog_names=[]))
 check("dog_names 가 비면 거부된다", st == 400, f"{st} {str(body)[:80]}")
 
+st, body = publish(A, walk(str(uuid.uuid4()), p_dog_names=["콩이", "가" * 31]))
+check("31자 반려견 이름은 거부된다", st == 400, f"{st} {str(body)[:80]}")
+
+st, body = publish(A, walk(str(uuid.uuid4()), p_dog_names=["  "]))
+check("공백뿐인 반려견 이름은 거부된다", st == 400, f"{st} {str(body)[:80]}")
+
+st, body = publish(A, walk(str(uuid.uuid4()), p_dog_names=["가" * 30]))
+check("30자 반려견 이름은 허용된다", st == 200, f"{st} {str(body)[:80]}")
+
+fat = [{"lat": 37.5, "lng": 127.0, "pad": "x" * 200} for _ in range(60)]
+st, body = publish(A, walk(str(uuid.uuid4()), p_route_preview=fat))
+check("8KB 를 넘는 route_preview 는 거부된다", st == 400, f"{st} {str(body)[:80]}")
+
+for label, bad in (("배열이 아닌", {"lat": 1, "lng": 2}),
+                   ("lat 이 문자열인", [{"lat": "37.5", "lng": 127.0}]),
+                   ("lng 가 빠진", [{"lat": 37.5}]),
+                   ("원소가 숫자인", [1, 2])):
+    st, body = publish(A, walk(str(uuid.uuid4()), p_route_preview=bad))
+    check(f"{label} route_preview 는 거부된다 (22023)",
+          st == 400 and isinstance(body, dict) and body.get("code") == "22023",
+          f"{st} {str(body)[:80]}")
+
 st, body = publish(A, walk(str(uuid.uuid4()), p_memo="가" * 501))
 check("memo 500자 초과는 거부된다", st == 400, f"{st} {str(body)[:80]}")
 
@@ -232,6 +280,13 @@ st, _ = call("DELETE", f"/auth/v1/admin/users/{b_id}", SERVICE)
 st, row = view_row(A, post_id)
 check("탈퇴하면 그 사람의 좋아요가 함께 사라진다",
       row and row["like_count"] == 1, str(row and row["like_count"]))
+
+# --- 정리 -------------------------------------------------------------------------
+for uid in (a_id, c_id):
+    st, _ = call("DELETE", f"/auth/v1/admin/users/{uid}", SERVICE)
+    check("테스트 사용자를 지운다", st == 200, f"{st}")
+st, rows = call("GET", f"/rest/v1/walk_posts_with_author?select=id&author_id=eq.{a_id}", ANON)
+check("작성자를 지우면 공유 산책도 사라진다", rows == [], str(rows)[:60])
 
 print()
 failed = [r for r in results if not r[0]]
