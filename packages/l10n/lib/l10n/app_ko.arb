@@ -4017,5 +4017,7 @@
   "walkFeedFavoritesEmptyTitle": "즐겨찾기한 산책이 없어요",
   "@walkFeedFavoritesEmptyTitle": { "description": "즐겨찾기만 보기 중 결과가 없을 때 안내 제목" },
   "walkFeedFavoritesEmptyMessage": "산책 상세에서 별을 눌러 보세요",
-  "@walkFeedFavoritesEmptyMessage": { "description": "즐겨찾기만 보기 중 결과가 없을 때 안내 설명" }
+  "@walkFeedFavoritesEmptyMessage": { "description": "즐겨찾기만 보기 중 결과가 없을 때 안내 설명" },
+  "walkFavoriteLabel": "즐겨찾기",
+  "@walkFavoriteLabel": { "description": "피드 항목의 즐겨찾기 별 아이콘의 스크린리더 라벨" }
 }

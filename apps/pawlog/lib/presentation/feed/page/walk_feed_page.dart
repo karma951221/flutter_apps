@@ -136,14 +136,16 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
                 key: const Key('walk-feed-more'),
                 tooltip: l10n.walkFeedMoreTooltip,
                 items: [
-                  AppOverflowMenuItem(
-                    key: const Key('walk-feed-favorites-toggle'),
-                    value: _FeedMenuAction.favoritesOnly,
-                    label: favoritesOnly
-                        ? l10n.walkFeedShowAll
-                        : l10n.walkFeedShowFavorites,
-                    icon: favoritesOnly ? Icons.star : Icons.star_border,
-                  ),
+                  // 목록을 못 불러온 동안에는 거를 것이 없다 — 토글 라벨이 틀린 말을 하게 된다.
+                  if (state is WalkFeedLoaded)
+                    AppOverflowMenuItem(
+                      key: const Key('walk-feed-favorites-toggle'),
+                      value: _FeedMenuAction.favoritesOnly,
+                      label: favoritesOnly
+                          ? l10n.walkFeedShowAll
+                          : l10n.walkFeedShowFavorites,
+                      icon: favoritesOnly ? Icons.star : Icons.star_border,
+                    ),
                   AppOverflowMenuItem(
                     key: const Key('walk-feed-backup-export'),
                     value: _FeedMenuAction.exportBackup,

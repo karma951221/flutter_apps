@@ -85,38 +85,45 @@ class _DistanceBarChartState extends State<DistanceBarChart> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SizedBox(
-                height: PawlogSpacing.lg,
-                child: selected
-                    ? FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          distance,
-                          key: const Key('stats-bar-value'),
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: colors.primary,
-                          ),
-                        ),
-                      )
-                    : null,
-              ),
               Expanded(
                 child: LayoutBuilder(
-                  builder: (context, constraints) => Align(
-                    alignment: Alignment.bottomCenter,
-                    child: fraction == 0
-                        ? SizedBox(
+                  builder: (context, constraints) {
+                    // 값 한 줄 높이는 늘 비워 두어 가장 높은 막대 위에도 값이 들어간다.
+                    final barSpace = math.max(
+                      constraints.maxHeight - PawlogSpacing.lg,
+                      0.0,
+                    );
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // 값은 막대 바로 위에 — 0 인 칸이면 바닥선 바로 위.
+                        if (selected)
+                          SizedBox(
+                            height: PawlogSpacing.lg,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                distance,
+                                key: const Key('stats-bar-value'),
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: colors.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (fraction == 0)
+                          SizedBox(
                             height: PawlogSize.hairline,
-                            width: double.infinity,
                             child: ColoredBox(color: colors.rule),
                           )
-                        : SizedBox(
+                        else
+                          SizedBox(
                             // 아주 짧은 산책도 보이도록 바닥선 두 배는 남긴다.
                             height: math.max(
-                              constraints.maxHeight * fraction,
+                              barSpace * fraction,
                               PawlogSize.hairline * 2,
                             ),
-                            width: double.infinity,
                             child: DecoratedBox(
                               decoration: BoxDecoration(
                                 color: colors.primary,
@@ -126,7 +133,9 @@ class _DistanceBarChartState extends State<DistanceBarChart> {
                               ),
                             ),
                           ),
-                  ),
+                      ],
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: PawlogSpacing.sm),

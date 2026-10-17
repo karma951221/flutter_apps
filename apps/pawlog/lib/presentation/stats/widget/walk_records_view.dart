@@ -111,8 +111,14 @@ class _RecordRow extends StatelessWidget {
                 ),
               ),
               Text(value, style: styles.number),
-              if (onTap != null)
-                Icon(Icons.chevron_right, color: colors.primary),
+              // 화살표 없는 줄도 같은 폭을 비워 값 열의 오른쪽 끝을 맞춘다.
+              Visibility(
+                visible: onTap != null,
+                maintainSize: true,
+                maintainAnimation: true,
+                maintainState: true,
+                child: Icon(Icons.chevron_right, color: colors.primary),
+              ),
             ],
           ),
         ),

@@ -105,6 +105,7 @@ class WalkFeedEntry extends StatelessWidget {
                               key: Key('walk-feed-favorite-${walk.id}'),
                               size: PawlogSize.favoriteIcon,
                               color: colors.primary,
+                              semanticLabel: l10n.walkFavoriteLabel,
                             ),
                             const SizedBox(width: PawlogSpacing.xs),
                           ],

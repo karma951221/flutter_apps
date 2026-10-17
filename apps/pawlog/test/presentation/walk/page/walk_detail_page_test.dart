@@ -436,5 +436,40 @@ void main() {
       );
       await disposePage(tester);
     });
+
+    testWidgets('삭제 중에는 별이 흐린 색이라 꺼진 것으로 보인다', (tester) async {
+      final pending = Completer<Result<void>>();
+      when(() => useCase.deleteWalk('w1')).thenAnswer((_) => pending.future);
+      await pumpApp(
+        tester,
+        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      );
+      Color? starColor() => tester
+          .widget<Icon>(
+            find.descendant(of: star(), matching: find.byType(Icon)),
+          )
+          .color;
+      final colors = PawlogColors.of(tester.element(star()));
+      expect(starColor(), colors.primary);
+
+      await tester.tap(find.byKey(const Key('walk-detail-menu')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('삭제'),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(starButton(tester).onPressed, isNull);
+      expect(starColor(), colors.textMuted);
+      pending.complete(const Err(Failure.unknown()));
+      await tester.pumpAndSettle();
+      await disposePage(tester);
+    });
   });
 }

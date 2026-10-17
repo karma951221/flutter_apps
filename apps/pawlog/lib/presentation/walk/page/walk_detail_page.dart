@@ -138,7 +138,10 @@ class _WalkDetailView extends StatelessWidget {
                   key: const Key('walk-detail-favorite'),
                   icon: Icon(
                     walk.isFavorite ? Icons.star : Icons.star_border,
-                    color: PawlogColors.of(context).primary,
+                    // 지우는 중에는 누를 수 없다 — 꺼진 것으로 보이게 흐린 색.
+                    color: state is WalkDetailDeleting
+                        ? PawlogColors.of(context).textMuted
+                        : PawlogColors.of(context).primary,
                   ),
                   tooltip: walk.isFavorite
                       ? l10n.walkFavoriteRemove

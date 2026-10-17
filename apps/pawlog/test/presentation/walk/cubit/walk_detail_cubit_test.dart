@@ -208,6 +208,38 @@ void main() {
       );
       expect(cubit.state, before);
     });
+
+    test('공유 시트가 떠 있는 동안 다시 부르면 sharer 를 한 번만 부른다', () async {
+      final gate = Completer<Result<void>>();
+      when(
+        () => sharer.shareFile(
+          fileName: any(named: 'fileName'),
+          contents: any(named: 'contents'),
+          mimeType: any(named: 'mimeType'),
+        ),
+      ).thenAnswer((_) => gate.future);
+      final cubit = WalkDetailCubit(useCase, sharer);
+      addTearDown(cubit.close);
+      await cubit.load('w1');
+
+      final first = cubit.exportGpx();
+      final second = cubit.exportGpx();
+      gate.complete(const Ok(null));
+
+      expect(await second, const WalkExportResult.shared());
+      expect(await first, const WalkExportResult.shared());
+      verify(
+        () => sharer.shareFile(
+          fileName: any(named: 'fileName'),
+          contents: any(named: 'contents'),
+          mimeType: any(named: 'mimeType'),
+        ),
+      ).called(1);
+
+      // 끝나면 다시 내보낼 수 있다.
+      stubSharer(const Ok(null));
+      expect(await cubit.exportGpx(), const WalkExportResult.shared());
+    });
   });
 
   group('toggleFavorite', () {

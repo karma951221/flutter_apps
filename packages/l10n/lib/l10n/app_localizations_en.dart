@@ -3072,4 +3072,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkFeedFavoritesEmptyMessage =>
       'Tap the star on a walk to add it';
+
+  @override
+  String get walkFavoriteLabel => 'Favorite';
 }

@@ -102,6 +102,37 @@ void main() {
     expect(find.byKey(const Key('stats-bar-value')), findsNothing);
   });
 
+  testWidgets('0 인 칸을 탭하면 값이 바닥선 바로 위에 뜬다', (tester) async {
+    await pump(tester);
+
+    // 화요일(1) 은 산책이 없어 바닥선만 있다.
+    await tester.tap(find.byKey(const Key('stats-bar-1')));
+    await tester.pump();
+
+    expect(text(tester, 'stats-bar-value'), '0 m');
+    final baseline = tester.getRect(
+      find.descendant(
+        of: find.byKey(const Key('stats-bar-1')),
+        matching: find.byType(ColoredBox),
+      ),
+    );
+    final value = tester.getRect(find.byKey(const Key('stats-bar-value')));
+    expect(value.bottom, lessThanOrEqualTo(baseline.top));
+    expect(baseline.top - value.bottom, lessThanOrEqualTo(PawlogSpacing.lg));
+  });
+
+  testWidgets('값을 띄운 높은 막대도 차트 칸을 넘지 않는다', (tester) async {
+    await pump(tester);
+
+    await tester.tap(find.byKey(const Key('stats-bar-4')));
+    await tester.pump();
+
+    final bar = tester.getRect(find.byKey(const Key('stats-bar-4')));
+    final value = tester.getRect(find.byKey(const Key('stats-bar-value')));
+    expect(value.top, greaterThanOrEqualTo(bar.top));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('스크린리더로 막대를 누르면 값이 뜬다', (tester) async {
     final handle = tester.ensureSemantics();
     await pump(tester);
@@ -158,6 +189,30 @@ void main() {
     expect(find.text('1일'), findsWidgets);
     await tester.tap(find.byKey(const Key('stats-record-farthest')));
     expect(opened, 'b');
+  });
+
+  testWidgets('기록 값 열은 화살표 없는 줄도 오른쪽 끝이 맞는다', (tester) async {
+    await pump(tester);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('stats-record-longest')),
+      200,
+    );
+
+    double valueRight(String key) => tester
+        .getRect(
+          find
+              .descendant(of: find.byKey(Key(key)), matching: find.byType(Text))
+              .last,
+        )
+        .right;
+    expect(
+      valueRight('stats-record-current-streak'),
+      valueRight('stats-record-farthest'),
+    );
+    expect(
+      valueRight('stats-record-longest-streak'),
+      valueRight('stats-record-farthest'),
+    );
   });
 
   testWidgets('거리 없는 산책뿐이면 가장 먼 산책 줄을 숨긴다', (tester) async {

@@ -2870,4 +2870,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkFeedFavoritesEmptyMessage => '산책 상세에서 별을 눌러 보세요';
+
+  @override
+  String get walkFavoriteLabel => '즐겨찾기';
 }

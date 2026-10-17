@@ -303,7 +303,10 @@ class _TrackingView extends StatelessWidget {
                     key: const Key('walk-active-map'),
                     points: points,
                     follow: true,
-                    emptyMessage: l10n.walkLocating,
+                    // 멈춘 동안에는 위치를 찾지 않는다 — 찾는 중이라고 하면 틀린 말이다.
+                    emptyMessage: isPaused
+                        ? l10n.walkPausedLabel
+                        : l10n.walkLocating,
                   ),
           ),
           sheet,

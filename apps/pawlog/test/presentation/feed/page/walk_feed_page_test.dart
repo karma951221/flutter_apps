@@ -518,5 +518,26 @@ void main() {
       expect(find.byKey(const Key('walk-feed-entry-a')), findsOneWidget);
       expect(find.text('즐겨찾기한 산책이 없어요'), findsNothing);
     });
+
+    testWidgets('피드 별은 스크린리더에 즐겨찾기라고 읽힌다', (tester) async {
+      stubWalks([_walk('a', isFavorite: true)]);
+      await pump(tester);
+
+      // 항목 전체가 InkWell 하나로 합쳐 읽히므로 합친 라벨 안에 있는지 본다.
+      expect(find.bySemanticsLabel(RegExp('즐겨찾기')), findsOneWidget);
+    });
+
+    testWidgets('목록을 못 불러오면 더보기에 즐겨찾기 토글이 없다', (tester) async {
+      when(
+        () => useCase.watchWalks(),
+      ).thenAnswer((_) => Stream.value(const Err(Failure.unknown())));
+      await pump(tester);
+
+      await tester.tap(find.byKey(const Key('walk-feed-more')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('walk-feed-backup-export')), findsOneWidget);
+      expect(find.byKey(const Key('walk-feed-favorites-toggle')), findsNothing);
+    });
   });
 }

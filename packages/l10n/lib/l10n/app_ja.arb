@@ -902,5 +902,6 @@
   "walkFeedShowFavorites": "お気に入りだけ表示",
   "walkFeedShowAll": "すべての散歩を表示",
   "walkFeedFavoritesEmptyTitle": "お気に入りの散歩はまだありません",
-  "walkFeedFavoritesEmptyMessage": "散歩の詳細で星をタップしてください"
+  "walkFeedFavoritesEmptyMessage": "散歩の詳細で星をタップしてください",
+  "walkFavoriteLabel": "お気に入り"
 }

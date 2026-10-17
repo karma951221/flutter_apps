@@ -23,6 +23,9 @@ class WalkDetailCubit extends Cubit<WalkDetailState> {
   /// 별 저장이 진행 중이면 다시 누른 것은 무시한다.
   bool _favoriteBusy = false;
 
+  /// 공유 시트가 떠 있는 동안 다시 누른 내보내기는 시트를 또 열지 않는다.
+  bool _exportBusy = false;
+
   /// 산책과 경로를 함께 읽는다. 이미 내용이 떠 있으면(수정에서 돌아온 재조회)
   /// 로딩 표시로 화면을 비우지 않고 조용히 바꾼다.
   Future<void> load(String id) async {
@@ -108,22 +111,29 @@ class WalkDetailCubit extends Cubit<WalkDetailState> {
       return const WalkExportResult.failed(Failure.unknown());
     }
     if (current.track.isEmpty) return const WalkExportResult.noRoute();
+    // 이미 열린 시트가 결과를 알린다 — 겹친 호출은 조용히 끝낸다.
+    if (_exportBusy) return const WalkExportResult.shared();
 
-    final walk = current.walk;
-    final result = await _sharer.shareFile(
-      fileName: GpxEncoder.fileName(walk.startedAt),
-      contents: GpxEncoder.encode(
-        name: walk.dogs.map((dog) => dog.name).join(', '),
-        description: walk.memo,
-        startedAt: walk.startedAt,
-        points: current.track,
-      ),
-      mimeType: gpxMimeType,
-    );
-    return switch (result) {
-      Ok() => const WalkExportResult.shared(),
-      Err(:final failure) => WalkExportResult.failed(failure),
-    };
+    _exportBusy = true;
+    try {
+      final walk = current.walk;
+      final result = await _sharer.shareFile(
+        fileName: GpxEncoder.fileName(walk.startedAt),
+        contents: GpxEncoder.encode(
+          name: walk.dogs.map((dog) => dog.name).join(', '),
+          description: walk.memo,
+          startedAt: walk.startedAt,
+          points: current.track,
+        ),
+        mimeType: gpxMimeType,
+      );
+      return switch (result) {
+        Ok() => const WalkExportResult.shared(),
+        Err(:final failure) => WalkExportResult.failed(failure),
+      };
+    } finally {
+      _exportBusy = false;
+    }
   }
 
   File photoFile(String relativePath) => _useCase.photoFile(relativePath);

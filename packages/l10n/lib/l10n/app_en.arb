@@ -902,5 +902,6 @@
   "walkFeedShowFavorites": "Show favorites only",
   "walkFeedShowAll": "Show all walks",
   "walkFeedFavoritesEmptyTitle": "No favorite walks yet",
-  "walkFeedFavoritesEmptyMessage": "Tap the star on a walk to add it"
+  "walkFeedFavoritesEmptyMessage": "Tap the star on a walk to add it",
+  "walkFavoriteLabel": "Favorite"
 }

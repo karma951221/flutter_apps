@@ -2868,4 +2868,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkFeedFavoritesEmptyMessage => '散歩の詳細で星をタップしてください';
+
+  @override
+  String get walkFavoriteLabel => 'お気に入り';
 }

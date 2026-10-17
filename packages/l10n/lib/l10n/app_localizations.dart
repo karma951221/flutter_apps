@@ -5401,6 +5401,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'산책 상세에서 별을 눌러 보세요'**
   String get walkFeedFavoritesEmptyMessage;
+
+  /// 피드 항목의 즐겨찾기 별 아이콘의 스크린리더 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'즐겨찾기'**
+  String get walkFavoriteLabel;
 }
 
 class _AppLocalizationsDelegate

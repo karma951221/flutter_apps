@@ -180,6 +180,24 @@ void main() {
     await disposePage(tester);
   });
 
+  testWidgets('점이 생기기 전에 멈추면 지도 자리에 찾는 중 대신 일시정지 중을 보인다', (tester) async {
+    current = TrackerState.tracking(
+      walkSession(pausedAt: t0.add(const Duration(minutes: 1))),
+    );
+
+    await pumpApp(tester, ActiveWalkPage(onStopped: () {}, onOpenDogs: () {}));
+
+    expect(find.text('위치를 찾는 중…'), findsNothing);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('walk-active-map')),
+        matching: find.text('일시정지 중'),
+      ),
+      findsOneWidget,
+    );
+    await disposePage(tester);
+  });
+
   testWidgets('점이 없을 때 위치 오류가 나면 찾는 중 대신 오류와 다시 시도를 보인다', (tester) async {
     current = TrackerState.tracking(
       walkSession(),
