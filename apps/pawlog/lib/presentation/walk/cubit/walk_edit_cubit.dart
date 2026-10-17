@@ -183,9 +183,11 @@ class WalkEditCubit extends Cubit<WalkEditState> {
         _done = true;
         // 새 산책은 아직 공유한 적이 없다.
         if (!form.isNew) {
+          // 예상 밖의 throw 도 실패로 거른다 — 아무도 받지 않는 오류가 되면 안 된다.
           _sharedPostUpdate = _social
               .updateSharedWalk(walk.id)
-              .then((result) => result is Ok);
+              .then((result) => result is Ok)
+              .catchError((Object _) => false);
         }
         emit(WalkEditState.saved(walk.id));
       case Err(:final failure):

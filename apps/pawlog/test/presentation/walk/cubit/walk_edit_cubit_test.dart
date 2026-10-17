@@ -428,6 +428,22 @@ void main() {
         expect(await cubit.sharedPostUpdate, isFalse);
       });
 
+      test(
+        '공유 글 고치기가 예상 밖으로 던져도 저장은 saved — sharedPostUpdate 는 false',
+        () async {
+          when(
+            () => social.updateSharedWalk('w1'),
+          ).thenAnswer((_) => Future.error(StateError('boom')));
+          final cubit = WalkEditCubit(useCase, social);
+          await cubit.loadExisting('w1');
+          await cubit.save();
+
+          expect(cubit.state, const WalkEditState.saved('w1'));
+          expect(await cubit.sharedPostUpdate, isFalse);
+          await cubit.close();
+        },
+      );
+
       test('수정 저장이 실패하면 공유 글을 건드리지 않는다', () async {
         when(() => useCase.updateWalk(any())).thenAnswer(
           (_) async =>

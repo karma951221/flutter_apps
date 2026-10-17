@@ -13,7 +13,7 @@ cd apps/pawlog && flutter test --run-skipped -t integration
 python3 supabase/tests/walk_posts_rls_check.py
 ```
 
-`apps/pawlog` 전체는 `+766`(건너뜀 2 — 통합 파일 둘)이다(2026-10-18 후속, `e4a005c` 때 `+739`, W5 전 `+562`). 통합 6건 · RLS 스크립트 67/67.
+`apps/pawlog` 전체는 `+767`(건너뜀 2 — 통합 파일 둘)이다(2026-10-18 후속, `e4a005c` 때 `+739`, W5 전 `+562`). 통합 6건 · RLS 스크립트 67/67.
 
 | 파일 | 건수 | 확인 |
 |---|---|---|
@@ -33,7 +33,7 @@ python3 supabase/tests/walk_posts_rls_check.py
 | `presentation/social/cubit/community_cubit_test.dart` | 22 | 첫 페이지 · 더 읽기 · **실패 뒤 스크롤 재요청 막음 · `retryLoadMore` · 새로고침이 풀어 줌** · **응답 없는 읽기가 10초 뒤 실패로 끝남(fake_async)** · 세션 변화 · 낙관적 좋아요 |
 | `presentation/social/page/community_page_test.dart` | 14 | 줄글 목록 · 하트 · 빈 목록 · 실패 · 쓸 수 없음 · 더 읽기 · **더 읽기 실패 스낵바 한 번 · "다시 시도"** · 새로고침 · 로그인 · 로그아웃 메뉴 |
 | `presentation/social/page/sign_in_page_test.dart` | 9 | 로그인 · 가입 전환 · 닉네임 2~20자 · 이메일 형식 · 성공 콜백 · 자격 실패 스낵바 · 닉네임 겹침 안내 |
-| `presentation/walk/cubit/walk_edit_cubit_test.dart` 중 후속 | 4 | 수정 저장 성공 → `updateSharedWalk` · 서버를 기다리지 않고 saved · 실패면 `sharedPostUpdate` false · 저장 실패 · 새 산책은 부르지 않음 |
+| `presentation/walk/cubit/walk_edit_cubit_test.dart` 중 후속 | 5 | 수정 저장 성공 → `updateSharedWalk` · 서버를 기다리지 않고 saved · 실패 · 예상 밖 throw 면 `sharedPostUpdate` false · 저장 실패 · 새 산책은 부르지 않음 |
 | `presentation/walk/page/walk_edit_page_test.dart` 중 후속 | 2 | 공유 글 고치기가 실패해도 화면이 닫히고 그 뒤 스낵바 `walkSocialUpdateFailed` · 성공이면 스낵바 없음 |
 | `presentation/walk/cubit/walk_share_cubit_test.dart` | 20 | 공유 여부 · **읽기 실패 → 숨김, 로그인 변화 · 다시 열기에 다시 읽음** · 토글 · **보내는 사이 로그인 변화는 덮어쓰지 않음** · `unshareForDelete` 5 |
 | `presentation/walk/page/walk_detail_page_test.dart` 중 W5 | 11 | 공유 항목 위치 · 라벨 · 로그인 이동 · 쓸 수 없음 · **읽기 실패면 숨김** · **공유한 산책 삭제: 공유 취소 → 삭제 · 취소 실패에도 삭제 + 스낵바 · 로그아웃이면 서버 안 부름** |

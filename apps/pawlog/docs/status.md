@@ -91,9 +91,9 @@ v2 의 첫 조각 — 산책 한 건을 골라 모두에게 공유하고, 모두
 - [x] 에뮬레이터 10 시나리오 PASS — API 컨테이너를 멈추면 스피너가 끝없이 돌던 것을 찾아 시간 제한으로 고쳤다
 - [ ] 남은 것: [넘기는 것](features/social/history.md#넘기는-것) — 원인별 오류 문구 · 잘린 경로의 방향 등. 후속(2026-10-18): 서버가 멈췄을 때 오류를 12초 안에 보임 · 산책을 고치면 공유 글도 고침([기록](features/social/history.md#후속-2026-10-18))
 
-검증(2026-10-18, `e4a005c`): `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+739`(건너뜀 2) · 통합
-`--run-skipped -t integration` `+5` · `flutter build apk --debug` 성공. `packages/core` `+69` · `packages/l10n` `+10` ·
-`apps/trader` `flutter test test/convention` 통과 · `walk_posts_rls_check.py` 53/53.
+검증(2026-10-18, 후속 `dd801e1`): `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+767`(건너뜀 2) · 통합
+`--run-skipped -t integration` 6/6 · `flutter build apk --debug` 성공. `packages/core` `+69`(`e4a005c`) · `packages/l10n` `+10` ·
+`apps/trader` `flutter test test/convention` 통과 · `walk_posts_rls_check.py` 67/67.
 
 ## W7 session (2026-10-16 ~ 17)
 
