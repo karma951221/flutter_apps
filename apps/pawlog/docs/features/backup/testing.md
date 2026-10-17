@@ -7,18 +7,18 @@ cd apps/pawlog && flutter test test/domain/backup test/data/backup test/domain/p
 cd apps/pawlog && flutter test test/presentation/backup test/presentation/feed test/presentation/dog test/core/router
 ```
 
-W9 몫은 `apps/pawlog` 98건(`+393` → `+491`, 2026-10-17 `9b5a587` 기준)이다.
+W9 몫은 `apps/pawlog` 113건(`+393` → `+506`, 2026-10-17 최종 리뷰 수정 기준)이다. `9b5a587` 에서 98건(`+491`), 최종 리뷰 수정이 15건(코덱 4 · 사진 저장소 1 · 반려견 편집 cubit 8 · 페이지 2)을 더했다.
 
 | 파일 | 확인 |
 |---|---|
-| `test/domain/backup/policy/backup_codec_test.dart` | 왕복(`==`) · 키 이름 · UTC 쓰기 · 현지 시각 읽기 · 다른 시간대 같은 순간 · `birthday` · 다른 format · version 2 · 깨진 json · 필드 누락 · 타입 오류 · 없는 dogId · 겹친 id(반려견 · 산책 · 사진) · 시간대 없는 시각 · previewPoints 재구성 |
+| `test/domain/backup/policy/backup_codec_test.dart` | 왕복(`==`) · 키 이름 · UTC 쓰기 · 현지 시각 읽기 · 다른 시간대 같은 순간 · `birthday` · 다른 format · version 2 · 깨진 json · 필드 누락 · 타입 오류 · 없는 dogId · 겹친 id(반려견 · 산책 · 사진) · 시간대 없는 시각 · previewPoints 재구성 · 사진 경로 탈출(`photoPath: ../x` · 사진 `path: a/../../x` · 절대 `/etc/x` 둘) |
 | `test/data/backup/backup_archive_test.dart` | zip 왕복(사진 바이트) · 항목 이름 · zip 아님 · `backup.json` 없음 · 경로 탈출(`..` · 역슬래시 · 절대) · 잘린 zip |
 | `test/domain/photo/repository/photo_storage_test.dart` | `isSafePhotoPath` 13가지 |
-| `test/data/photo/file_photo_storage_test.dart` | `write` 쓰기 · 있으면 안 덮음 · 위험 경로 거부(루트 밖에 아무것도 없음) · `.tmp` 안 남음 |
+| `test/data/photo/file_photo_storage_test.dart` | `write` 쓰기 · 있으면 안 덮음 · 위험 경로 거부(루트 밖에 아무것도 없음) · `.tmp` 안 남음 · `remove('../x')` 는 루트 밖도 안도 지우지 않음 |
 | `test/domain/backup/usecase/scenario/export_backup_scenario_test.dart` | 전체 수집 · 없는 사진 파일 빠짐 · 현지 날짜 파일 이름 · zip mime · 읽기 · 공유 실패 |
 | `test/domain/backup/usecase/scenario/import_backup_scenario_test.dart` | 취소 · invalid 에서 쓰기 없음 · 새 항목 · 일부만 새것 · 같은 백업 두 번(상태 있는 stub) → nothingNew · 사진 → 반려견 → 산책 순서 · 새 항목 사진만 · 사진 쓰기 실패 뒤 다시 가져오기 · 존재 확인 실패 |
 | `test/presentation/backup/backup_messages_test.dart` | 결과 → 스낵바 문구 |
-| `test/presentation/feed/…`, `test/presentation/dog/…` | 피드 더보기 두 항목 · 결과 스낵바 · 취소 무반응 · 진행 중 다시 누르기 무시 · 첫 실행에서만 버튼 · 가져오면 `onImported` |
+| `test/presentation/feed/…`, `test/presentation/dog/…` | 피드 더보기 두 항목 · 결과 스낵바 · 취소 무반응 · 진행 중 다시 누르기 무시 · 첫 실행에서만 버튼 · 가져오면 `onImported` · `importBackup()` 의 `hasDogs`(`failed` · `imported(0, k)` · `nothingNew` 라도 반려견이 있으면 참, 없으면 거짓, 취소 · invalid 는 `getDogs` 안 읽음, 목록 실패면 가져온 수) · 가져오는 중 `save` 무시 · `failed` + 반려견 있음 → `onImported` · 반려견 없으면 안 부름 · 가져오는 중 저장 · 가져오기 버튼 비활성 + 진행 표시 |
 | `test/core/router/app_router_test.dart` | 반려견 0 → `/dogs/new` 에서 가져오기 → `/` 피드, 그 뒤 리다이렉트 안 됨 |
 
 ## 에뮬레이터
