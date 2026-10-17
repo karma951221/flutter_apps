@@ -10,7 +10,7 @@ part 'walk_detail_state.freezed.dart';
 sealed class WalkDetailState with _$WalkDetailState {
   const factory WalkDetailState.loading() = WalkDetailLoading;
 
-  /// [failure] 는 삭제 실패 — 화면이 비지 않게 내용을 그대로 둔다.
+  /// [failure] 는 삭제 · 즐겨찾기 저장 실패 — 화면이 비지 않게 내용을 그대로 둔다.
   const factory WalkDetailState.loaded({
     required Walk walk,
     required List<WalkTrackPoint> track,
