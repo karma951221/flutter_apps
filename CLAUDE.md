@@ -4,7 +4,7 @@ Flutter 모노레포(토이 프로젝트). 앱이 넷이다 — **trader(daylog)
 연습하고 그 결과를 소셜 피드에 공유하는 모의투자 앱(Supabase), **commute** 는 출퇴근
 소요 시간을 보여주는 둘째 앱(백엔드 없음), **walk** 는 Health Connect 걸음을 읽는
 만보기 앱(백엔드 없음, 안드로이드만), **pawlog** 는 강아지 산책을 GPS 로 기록하고
-피드로 돌아보는 앱(v1 로컬 drift)이다. 앱은 `apps/`, 공유 패키지는 `packages/`,
+피드로 돌아보는 앱(로컬 drift 우선, v2 에서 산책 공유 · 모두의 산책을 트레이더와 같은 Supabase 에 얹음)이다. 앱은 `apps/`, 공유 패키지는 `packages/`,
 백엔드는 `supabase/`(마이그레이션·RLS·시세 seed)에 있다. 문서는 앱별로
 `apps/<app>/docs/` 에, 앱 공통 문서는 `docs/` 에 있다.
 
