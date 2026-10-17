@@ -1,3 +1,4 @@
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:core/core.dart';
@@ -47,12 +48,13 @@ class ImportBackupScenario {
         bytes = value;
     }
 
-    final unpacked = _archive.unpack(bytes);
+    final unpacked = await _archive.unpack(bytes);
     if (unpacked case Err()) return const BackupImportResult.invalid();
     final archive =
         (unpacked as Ok<({String json, Map<String, Uint8List> photos})>).value;
 
-    final decoded = BackupCodec.decode(archive.json);
+    final json = archive.json;
+    final decoded = await Isolate.run(() => BackupCodec.decode(json));
     if (decoded case Err()) return const BackupImportResult.invalid();
     final data = (decoded as Ok<BackupData>).value;
 

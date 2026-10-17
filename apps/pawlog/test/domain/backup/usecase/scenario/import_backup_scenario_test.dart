@@ -79,7 +79,7 @@ void main() {
     when(() => picker.pick()).thenAnswer((_) async => Ok(fileBytes));
     when(
       () => archive.unpack(fileBytes),
-    ).thenReturn(Ok((json: json, photos: zipPhotos)));
+    ).thenAnswer((_) async => Ok((json: json, photos: zipPhotos)));
     when(() => dogs.findById(any())).thenAnswer(
       (i) async => Ok(storedDogs[i.positionalArguments.first as String]),
     );
@@ -131,7 +131,7 @@ void main() {
   test('zip 을 풀지 못하면 invalid 이고 아무것도 쓰지 않는다', () async {
     when(
       () => archive.unpack(fileBytes),
-    ).thenReturn(const Err(Failure.validation()));
+    ).thenAnswer((_) async => const Err(Failure.validation()));
 
     final result = await scenario();
 
@@ -145,7 +145,7 @@ void main() {
     expect(broken, isNot(json));
     when(
       () => archive.unpack(fileBytes),
-    ).thenReturn(Ok((json: broken, photos: zipPhotos)));
+    ).thenAnswer((_) async => Ok((json: broken, photos: zipPhotos)));
 
     final result = await scenario();
 
@@ -211,7 +211,7 @@ void main() {
   test('zip 에 없는 사진은 건너뛰고 항목은 가져온다', () async {
     when(
       () => archive.unpack(fileBytes),
-    ).thenReturn(Ok((json: json, photos: <String, Uint8List>{})));
+    ).thenAnswer((_) async => Ok((json: json, photos: <String, Uint8List>{})));
 
     final result = await scenario();
 

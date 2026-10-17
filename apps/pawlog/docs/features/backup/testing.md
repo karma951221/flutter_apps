@@ -7,7 +7,7 @@ cd apps/pawlog && flutter test test/domain/backup test/data/backup test/domain/p
 cd apps/pawlog && flutter test test/presentation/backup test/presentation/feed test/presentation/dog test/core/router
 ```
 
-W9 몫은 `apps/pawlog` 113건(`+393` → `+506`, 2026-10-17 최종 리뷰 수정 기준)이다. `9b5a587` 에서 98건(`+491`), 최종 리뷰 수정이 15건(코덱 4 · 사진 저장소 1 · 반려견 편집 cubit 8 · 페이지 2)을 더했다.
+W9 몫은 `apps/pawlog` 114건(`+393` → `+507`, 2026-10-17 최종 리뷰 수정 기준)이다. `9b5a587` 에서 98건(`+491`), 최종 리뷰 수정이 15건(코덱 4 · 사진 저장소 1 · 반려견 편집 cubit 8 · 페이지 2)을 더했다.
 
 | 파일 | 확인 |
 |---|---|

@@ -45,10 +45,11 @@
 
 ## 넘기는 것
 
-- zip 크기 · 항목 수 상한이 없고 UI isolate 에서 푼다 — 사용자가 고른 로컬 파일이라 받아들인다
-- `backup.json` 도 크기 상한 없이 UI isolate 에서 `jsonDecode` 한다 — 기록이 아주 많으면 잠깐 멈출 수 있다. 같은 이유로 받아들이고, 문제가 되면 `compute` 로 옮긴다
+- zip 크기 · 항목 수 상한이 없다 — 사용자가 고른 로컬 파일이라 받아들인다
+- `backup.json` 도 크기 상한이 없다 — 같은 이유로 받아들인다
 - 날짜만 있는 시각(`2026-10-03`)은 시간대 검사를 통과한다 · 음수 시간 · 범위 밖 좌표는 검사하지 않는다(손으로 고친 파일만 해당)
 - 백업 파일 암호화 · 자동 백업 · 덮어쓰기 복원은 범위 밖
+- 2026-10-17: 백업 zip 묶기 · 풀기(`BackupArchive`)와 json 인코딩 · 디코딩(`BackupCodec`, 시나리오에서)을 `Isolate.run` 으로 UI isolate 밖에서 한다. `BackupArchiveCodec.pack` · `unpack` 은 `Future` 를 돌려주고 `unpack` 은 isolate 안팎 어디서든 던지지 않고 `Err`
 
 ## 에뮬레이터 QA (2026-10-17)
 

@@ -1,3 +1,4 @@
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:core/core.dart';
@@ -69,7 +70,8 @@ class ExportBackupScenario {
       return Err(Failure.unknown(message: '사진을 읽지 못했어요: $e'));
     }
 
-    final bytes = _archive.pack(json: BackupCodec.encode(data), photos: photos);
+    final json = await Isolate.run(() => BackupCodec.encode(data));
+    final bytes = await _archive.pack(json: json, photos: photos);
     return _sharer.shareBytes(
       fileName: fileNameFor(now),
       bytes: bytes,

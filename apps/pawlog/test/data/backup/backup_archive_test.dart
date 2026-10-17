@@ -17,17 +17,17 @@ Uint8List _zip(Map<String, List<int>> entries) {
 void main() {
   const codec = BackupArchive();
 
-  test('pack 한 것을 unpack 하면 json 과 사진 바이트가 그대로다', () {
+  test('pack 한 것을 unpack 하면 json 과 사진 바이트가 그대로다', () async {
     final photos = {
       'a.jpg': Uint8List.fromList([1, 2, 3]),
       'b.png': Uint8List.fromList(List.generate(300, (i) => i % 256)),
     };
 
-    final bytes = codec.pack(
+    final bytes = await codec.pack(
       json: '{"format":"pawlog-backup"}',
       photos: photos,
     );
-    final result = codec.unpack(bytes);
+    final result = await codec.unpack(bytes);
 
     final value =
         (result as Ok<({String json, Map<String, Uint8List> photos})>).value;
@@ -37,8 +37,14 @@ void main() {
     expect(value.photos['b.png'], photos['b.png']);
   });
 
-  test('항목 이름은 backup.json 과 photos/<상대 경로> 다', () {
-    final bytes = codec.pack(
+  test('깨진 바이트도 isolate 를 거쳐 던지지 않고 Err', () async {
+    final result = await codec.unpack(Uint8List.fromList([0, 1, 2, 3, 255]));
+
+    expect(result, isA<Err<Object?>>());
+  });
+
+  test('항목 이름은 backup.json 과 photos/<상대 경로> 다', () async {
+    final bytes = await codec.pack(
       json: '{}',
       photos: {
         'a.jpg': Uint8List.fromList([1]),
@@ -49,14 +55,16 @@ void main() {
     expect(names, unorderedEquals(['backup.json', 'photos/a.jpg']));
   });
 
-  test('zip 이 아니면 Err', () {
-    final result = codec.unpack(Uint8List.fromList(utf8.encode('not a zip')));
+  test('zip 이 아니면 Err', () async {
+    final result = await codec.unpack(
+      Uint8List.fromList(utf8.encode('not a zip')),
+    );
 
     expect(result, isA<Err<Object?>>());
   });
 
-  test('backup.json 이 없으면 Err', () {
-    final result = codec.unpack(
+  test('backup.json 이 없으면 Err', () async {
+    final result = await codec.unpack(
       _zip({
         'photos/a.jpg': [1],
       }),
@@ -72,8 +80,8 @@ void main() {
     'photos//etc/passwd',
     r'photos/..\..\x.jpg',
   ]) {
-    test('사진 경로 $name 은 Err', () {
-      final result = codec.unpack(
+    test('사진 경로 $name 은 Err', () async {
+      final result = await codec.unpack(
         _zip({
           'backup.json': utf8.encode('{}'),
           name: [1],
@@ -84,8 +92,8 @@ void main() {
     });
   }
 
-  test('photos/ 밖의 다른 항목은 무시한다', () {
-    final result = codec.unpack(
+  test('photos/ 밖의 다른 항목은 무시한다', () async {
+    final result = await codec.unpack(
       _zip({
         'backup.json': utf8.encode('{}'),
         'readme.txt': [1],
@@ -97,14 +105,13 @@ void main() {
     expect(value.photos, isEmpty);
   });
 
-  test('잘린 zip 은 던지지 않고 Err', () {
-    final bytes = codec.pack(
+  test('잘린 zip 은 던지지 않고 Err', () async {
+    final bytes = await codec.pack(
       json: '{"format":"pawlog-backup"}',
       photos: {'a.jpg': Uint8List.fromList(List.generate(500, (i) => i % 7))},
     );
     final truncated = Uint8List.sublistView(bytes, 0, bytes.length ~/ 2);
 
-    expect(() => codec.unpack(truncated), returnsNormally);
-    expect(codec.unpack(truncated), isA<Err<Object?>>());
+    expect(codec.unpack(truncated), completion(isA<Err<Object?>>()));
   });
 }

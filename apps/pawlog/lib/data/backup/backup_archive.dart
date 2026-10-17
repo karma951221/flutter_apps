@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
@@ -17,10 +18,12 @@ class BackupArchive implements BackupArchiveCodec {
   static const _photoPrefix = 'photos/';
 
   @override
-  Uint8List pack({
+  Future<Uint8List> pack({
     required String json,
     required Map<String, Uint8List> photos,
-  }) {
+  }) => Isolate.run(() => _pack(json, photos));
+
+  static Uint8List _pack(String json, Map<String, Uint8List> photos) {
     final archive = Archive()
       ..addFile(ArchiveFile.bytes(_jsonName, utf8.encode(json)));
     for (final MapEntry(key: path, value: bytes) in photos.entries) {
@@ -30,7 +33,18 @@ class BackupArchive implements BackupArchiveCodec {
   }
 
   @override
-  Result<({String json, Map<String, Uint8List> photos})> unpack(
+  Future<Result<({String json, Map<String, Uint8List> photos})>> unpack(
+    Uint8List bytes,
+  ) async {
+    try {
+      return await Isolate.run(() => _unpack(bytes));
+    } on Object catch (e) {
+      // isolate 를 띄우거나 결과를 넘기지 못한 경우도 던지지 않고 Err.
+      return _invalid(e.toString());
+    }
+  }
+
+  static Result<({String json, Map<String, Uint8List> photos})> _unpack(
     Uint8List bytes,
   ) {
     try {

@@ -51,7 +51,7 @@ void main() {
         json: any(named: 'json'),
         photos: any(named: 'photos'),
       ),
-    ).thenReturn(Uint8List.fromList([9, 9]));
+    ).thenAnswer((_) async => Uint8List.fromList([9, 9]));
     when(
       () => sharer.shareBytes(
         fileName: any(named: 'fileName'),

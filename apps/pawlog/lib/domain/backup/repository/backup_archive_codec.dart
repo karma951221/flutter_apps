@@ -6,13 +6,13 @@ import 'package:core/core.dart';
 ///
 /// 사진 맵의 키는 사진 루트 기준 상대 경로다(`photos/` 접두사 없이).
 abstract interface class BackupArchiveCodec {
-  Uint8List pack({
+  Future<Uint8List> pack({
     required String json,
     required Map<String, Uint8List> photos,
   });
 
   /// zip 이 아니거나 `backup.json` 이 없거나 사진 경로가 루트 밖을 가리키면 `Err`.
-  Result<({String json, Map<String, Uint8List> photos})> unpack(
+  Future<Result<({String json, Map<String, Uint8List> photos})>> unpack(
     Uint8List bytes,
   );
 }
