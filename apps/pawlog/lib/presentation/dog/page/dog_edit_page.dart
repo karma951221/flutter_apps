@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../../domain/backup/entity/backup_import_result.dart';
+import '../../backup/backup_messages.dart';
 import '../../common/widget/pawlog_primary_button.dart';
 import '../../photo/widget/photo_source_sheet.dart';
 import '../../theme/pawlog_theme.dart';
@@ -12,7 +14,13 @@ import '../cubit/dog_edit_state.dart';
 import '../cubit/dog_form.dart';
 
 class DogEditPage extends StatelessWidget {
-  const DogEditPage({this.dogId, required this.onDone, super.key});
+  const DogEditPage({
+    this.dogId,
+    required this.onDone,
+    this.showImportBackup = false,
+    this.onImported,
+    super.key,
+  });
 
   /// null 이면 새 반려견을 등록한다.
   final String? dogId;
@@ -20,20 +28,38 @@ class DogEditPage extends StatelessWidget {
   /// 저장 또는 삭제가 끝났을 때 한 번 불린다.
   final VoidCallback onDone;
 
+  /// 첫 실행 등록 화면에서 폼 아래에 "백업에서 가져오기" 를 보인다. 수정 화면에서는 무시한다.
+  final bool showImportBackup;
+
+  /// 백업에서 반려견을 한 마리 이상 가져왔을 때 불린다.
+  final VoidCallback? onImported;
+
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (_) => getIt<DogEditCubit>()..load(dogId),
-    child: _DogEditView(isEdit: dogId != null, onDone: onDone),
+    child: _DogEditView(
+      isEdit: dogId != null,
+      onDone: onDone,
+      showImportBackup: showImportBackup && dogId == null,
+      onImported: onImported,
+    ),
   );
 }
 
 enum _DogMenuAction { delete }
 
 class _DogEditView extends StatefulWidget {
-  const _DogEditView({required this.isEdit, required this.onDone});
+  const _DogEditView({
+    required this.isEdit,
+    required this.onDone,
+    required this.showImportBackup,
+    required this.onImported,
+  });
 
   final bool isEdit;
   final VoidCallback onDone;
+  final bool showImportBackup;
+  final VoidCallback? onImported;
 
   @override
   State<_DogEditView> createState() => _DogEditViewState();
@@ -110,6 +136,15 @@ class _DogEditViewState extends State<_DogEditView> {
     );
     if (!confirmed || !mounted) return;
     await cubit.delete();
+  }
+
+  Future<void> _importBackup(DogEditCubit cubit) async {
+    final result = await cubit.importBackup();
+    if (!mounted) return;
+    showBackupImportResult(context, result);
+    if (result case BackupImported(:final dogs) when dogs >= 1) {
+      widget.onImported?.call();
+    }
   }
 
   @override
@@ -194,6 +229,9 @@ class _DogEditViewState extends State<_DogEditView> {
                   breedController: _breedController,
                   onPickPhoto: () => _pickPhoto(cubit),
                   onPickBirthday: () => _pickBirthday(cubit, form),
+                  onImportBackup: widget.showImportBackup
+                      ? () => _importBackup(cubit)
+                      : null,
                 ),
             },
           ),
@@ -212,6 +250,7 @@ class _Form extends StatelessWidget {
     required this.breedController,
     required this.onPickPhoto,
     required this.onPickBirthday,
+    required this.onImportBackup,
   });
 
   final DogForm form;
@@ -223,6 +262,9 @@ class _Form extends StatelessWidget {
   final TextEditingController breedController;
   final VoidCallback onPickPhoto;
   final VoidCallback onPickBirthday;
+
+  /// null 이면 "백업에서 가져오기" 버튼을 그리지 않는다.
+  final VoidCallback? onImportBackup;
 
   @override
   Widget build(BuildContext context) {
@@ -283,6 +325,16 @@ class _Form extends StatelessWidget {
           enabled: !isSaving,
           onTap: onPickBirthday,
         ),
+        if (onImportBackup case final onImport?) ...[
+          const SizedBox(height: PawlogSpacing.md),
+          Center(
+            child: AppButton.text(
+              key: const Key('dog-edit-import-backup'),
+              label: l10n.walkBackupImportFromFirstRun,
+              onPressed: isSaving ? null : onImport,
+            ),
+          ),
+        ],
       ],
     );
 

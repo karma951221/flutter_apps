@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pawlog/core/router/app_router.dart';
+import 'package:pawlog/domain/backup/entity/backup_import_result.dart';
 import 'package:pawlog/domain/dog/entity/dog.dart';
 import 'package:pawlog/domain/tracking/entity/tracker_state.dart';
 import 'package:pawlog/domain/walk/entity/walk.dart';
@@ -194,5 +195,38 @@ void main() {
     expect(find.byType(DogEditPage), findsOneWidget);
     expect(path(router), '/dogs/new');
     await dispose(tester);
+  });
+
+  group('첫 실행 백업 가져오기', () {
+    testWidgets('반려견이 없을 때만 등록 화면에 가져오기 버튼이 보인다', (tester) async {
+      final router = await pumpRouter(tester);
+      router.go('/dogs');
+      await tester.pumpAndSettle();
+      unawaited(router.push('/dogs/new'));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('dog-edit-import-backup')), findsNothing);
+      await dispose(tester);
+    });
+
+    testWidgets('/dogs/new 에서 가져오면 redirect 가 풀리고 피드로 간다', (tester) async {
+      when(
+        () => useCase.importBackup(),
+      ).thenAnswer((_) async => const BackupImportResult.imported(1, 1));
+      final router = await pumpRouter(tester, hasDogs: false);
+      expect(path(router), '/dogs/new');
+
+      await tester.tap(find.byKey(const Key('dog-edit-import-backup')));
+      await tester.pumpAndSettle();
+
+      expect(path(router), '/');
+      expect(find.byType(WalkFeedPage), findsOneWidget);
+
+      // redirect 가 풀렸다 — 다른 화면으로 가도 등록 화면으로 튕기지 않는다.
+      router.go('/stats');
+      await tester.pumpAndSettle();
+      expect(path(router), '/stats');
+      await dispose(tester);
+    });
   });
 }

@@ -3984,5 +3984,26 @@
   "walkExportNoRoute": "경로가 없어 내보낼 수 없어요",
   "@walkExportNoRoute": { "description": "경로 점이 없는 산책을 GPX 로 내보내려 할 때 스낵바" },
   "walkExportFailed": "내보내지 못했어요",
-  "@walkExportFailed": { "description": "GPX 파일 쓰기 · 공유가 실패했을 때 스낵바" }
+  "@walkExportFailed": { "description": "GPX 파일 쓰기 · 공유가 실패했을 때 스낵바" },
+  "walkBackupExport": "백업 내보내기",
+  "@walkBackupExport": { "description": "피드 더보기 메뉴에서 모든 기록을 백업 파일로 공유하는 항목" },
+  "walkBackupImport": "백업 가져오기",
+  "@walkBackupImport": { "description": "피드 더보기 메뉴에서 백업 파일을 골라 기록을 합쳐 넣는 항목" },
+  "walkBackupImportFromFirstRun": "백업에서 가져오기",
+  "@walkBackupImportFromFirstRun": { "description": "첫 실행 반려견 등록 화면 아래의 백업 가져오기 텍스트 버튼" },
+  "walkBackupExportFailed": "백업을 만들지 못했어요",
+  "@walkBackupExportFailed": { "description": "백업 파일 만들기 · 공유가 실패했을 때 스낵바" },
+  "walkBackupImported": "반려견 {dogs}마리 · 산책 {walks}개를 가져왔어요",
+  "@walkBackupImported": {
+    "description": "백업에서 새 항목을 가져왔을 때 스낵바",
+    "placeholders": { "dogs": { "type": "int" }, "walks": { "type": "int" } }
+  },
+  "walkBackupNothingNew": "새로 가져올 기록이 없어요",
+  "@walkBackupNothingNew": { "description": "백업의 항목이 모두 이미 있을 때 스낵바" },
+  "walkBackupInvalid": "백업 파일을 읽지 못했어요",
+  "@walkBackupInvalid": { "description": "고른 파일이 읽을 수 있는 pawlog 백업이 아닐 때 스낵바" },
+  "walkBackupImportFailed": "가져오지 못했어요",
+  "@walkBackupImportFailed": { "description": "백업을 읽었지만 저장에 실패했을 때 스낵바" },
+  "walkFeedMoreTooltip": "더보기",
+  "@walkFeedMoreTooltip": { "description": "피드 앱바 더보기 메뉴 버튼의 툴팁" }
 }

@@ -8,6 +8,7 @@ import 'package:l10n/l10n.dart';
 
 import '../../../domain/tracking/entity/tracker_state.dart';
 import '../../../domain/walk/entity/walk.dart';
+import '../../backup/backup_messages.dart';
 import '../../common/widget/pawlog_primary_button.dart';
 import '../../theme/pawlog_theme.dart';
 import '../../tracking/widget/active_walk_banner.dart';
@@ -47,6 +48,8 @@ class WalkFeedPage extends StatelessWidget {
     ),
   );
 }
+
+enum _FeedMenuAction { exportBackup, importBackup }
 
 class _WalkFeedView extends StatefulWidget {
   const _WalkFeedView({
@@ -91,6 +94,24 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
     super.dispose();
   }
 
+  Future<void> _onMenu(_FeedMenuAction action) async {
+    final cubit = context.read<WalkFeedCubit>();
+    switch (action) {
+      case _FeedMenuAction.exportBackup:
+        final result = await cubit.exportBackup();
+        if (!mounted || result is! Err) return;
+        AppSnackBar.show(
+          context,
+          message: AppLocalizations.of(context).walkBackupExportFailed,
+          type: AppSnackBarType.error,
+        );
+      case _FeedMenuAction.importBackup:
+        final result = await cubit.importBackup();
+        if (!mounted) return;
+        showBackupImportResult(context, result);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -106,6 +127,25 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
               icon: const Icon(Icons.pets),
               tooltip: l10n.walkOpenDogsTooltip,
               onPressed: onOpenDogs,
+            ),
+            AppOverflowMenu<_FeedMenuAction>(
+              key: const Key('walk-feed-more'),
+              tooltip: l10n.walkFeedMoreTooltip,
+              items: [
+                AppOverflowMenuItem(
+                  key: const Key('walk-feed-backup-export'),
+                  value: _FeedMenuAction.exportBackup,
+                  label: l10n.walkBackupExport,
+                  icon: Icons.ios_share,
+                ),
+                AppOverflowMenuItem(
+                  key: const Key('walk-feed-backup-import'),
+                  value: _FeedMenuAction.importBackup,
+                  label: l10n.walkBackupImport,
+                  icon: Icons.download_outlined,
+                ),
+              ],
+              onSelected: _onMenu,
             ),
           ],
         ),

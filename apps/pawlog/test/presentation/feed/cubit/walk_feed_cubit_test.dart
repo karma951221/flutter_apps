@@ -4,6 +4,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pawlog/domain/backup/entity/backup_import_result.dart';
 import 'package:pawlog/domain/stats/entity/period_summary.dart';
 import 'package:pawlog/domain/tracking/entity/tracker_state.dart';
 import 'package:pawlog/domain/walk/entity/walk.dart';
@@ -258,5 +259,59 @@ void main() {
     expect(controller.hasListener, isFalse);
     expect(trackerController.hasListener, isFalse);
     await controller.close();
+  });
+
+  group('백업', () {
+    setUp(
+      () => when(
+        () => useCase.watchWalks(),
+      ).thenAnswer((_) => Stream.value(const Ok([]))),
+    );
+
+    test('내보내기 · 가져오기는 유스케이스 결과를 그대로 돌려주고 상태를 바꾸지 않는다', () async {
+      when(
+        () => useCase.exportBackup(),
+      ).thenAnswer((_) async => const Err(Failure.unknown()));
+      when(
+        () => useCase.importBackup(),
+      ).thenAnswer((_) async => const BackupImportResult.imported(1, 2));
+      final cubit = WalkFeedCubit(useCase, clock);
+      final states = <WalkFeedState>[];
+      final sub = cubit.stream.listen(states.add);
+
+      expect(await cubit.exportBackup(), const Err<void>(Failure.unknown()));
+      expect(
+        await cubit.importBackup(),
+        const BackupImportResult.imported(1, 2),
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      expect(states, isEmpty);
+      await sub.cancel();
+      await cubit.close();
+    });
+
+    test('진행 중에 다시 부르면 유스케이스를 또 부르지 않는다', () async {
+      final exporting = Completer<Result<void>>();
+      final importing = Completer<BackupImportResult>();
+      when(() => useCase.exportBackup()).thenAnswer((_) => exporting.future);
+      when(() => useCase.importBackup()).thenAnswer((_) => importing.future);
+      final cubit = WalkFeedCubit(useCase, clock);
+
+      final first = cubit.exportBackup();
+      expect(await cubit.exportBackup(), const Ok<void>(null));
+      expect(await cubit.importBackup(), const BackupImportResult.cancelled());
+      exporting.complete(const Ok(null));
+      await first;
+
+      final second = cubit.importBackup();
+      expect(await cubit.importBackup(), const BackupImportResult.cancelled());
+      importing.complete(const BackupImportResult.nothingNew());
+      expect(await second, const BackupImportResult.nothingNew());
+
+      verify(() => useCase.exportBackup()).called(1);
+      verify(() => useCase.importBackup()).called(1);
+      await cubit.close();
+    });
   });
 }

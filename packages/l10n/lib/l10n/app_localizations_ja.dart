@@ -2821,4 +2821,33 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkExportFailed => '書き出せませんでした';
+
+  @override
+  String get walkBackupExport => 'バックアップを書き出す';
+
+  @override
+  String get walkBackupImport => 'バックアップを読み込む';
+
+  @override
+  String get walkBackupImportFromFirstRun => 'バックアップから復元';
+
+  @override
+  String get walkBackupExportFailed => 'バックアップを作成できませんでした';
+
+  @override
+  String walkBackupImported(int dogs, int walks) {
+    return '犬$dogs匹・散歩$walks件を読み込みました';
+  }
+
+  @override
+  String get walkBackupNothingNew => '新しく読み込む記録はありません';
+
+  @override
+  String get walkBackupInvalid => 'バックアップファイルを読み込めませんでした';
+
+  @override
+  String get walkBackupImportFailed => '読み込めませんでした';
+
+  @override
+  String get walkFeedMoreTooltip => 'その他';
 }

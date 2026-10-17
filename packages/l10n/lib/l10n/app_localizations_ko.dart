@@ -2823,4 +2823,33 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkExportFailed => '내보내지 못했어요';
+
+  @override
+  String get walkBackupExport => '백업 내보내기';
+
+  @override
+  String get walkBackupImport => '백업 가져오기';
+
+  @override
+  String get walkBackupImportFromFirstRun => '백업에서 가져오기';
+
+  @override
+  String get walkBackupExportFailed => '백업을 만들지 못했어요';
+
+  @override
+  String walkBackupImported(int dogs, int walks) {
+    return '반려견 $dogs마리 · 산책 $walks개를 가져왔어요';
+  }
+
+  @override
+  String get walkBackupNothingNew => '새로 가져올 기록이 없어요';
+
+  @override
+  String get walkBackupInvalid => '백업 파일을 읽지 못했어요';
+
+  @override
+  String get walkBackupImportFailed => '가져오지 못했어요';
+
+  @override
+  String get walkFeedMoreTooltip => '더보기';
 }

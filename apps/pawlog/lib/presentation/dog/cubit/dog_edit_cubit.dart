@@ -4,6 +4,7 @@ import 'package:core/core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../../domain/backup/entity/backup_import_result.dart';
 import '../../../domain/walk/usecase/walk_use_case.dart';
 import 'dog_edit_state.dart';
 import 'dog_form.dart';
@@ -16,6 +17,7 @@ class DogEditCubit extends Cubit<DogEditState> {
 
   DogForm? _form;
   bool _saved = false;
+  bool _importing = false;
 
   /// [id] 가 null 이면 신규, 아니면 불러와 채운다.
   Future<void> load(String? id) async {
@@ -119,6 +121,18 @@ class DogEditCubit extends Cubit<DogEditState> {
   }
 
   File photoFile(String relativePath) => _useCase.photoFile(relativePath);
+
+  /// 첫 실행 화면의 백업 가져오기. 폼 상태는 바꾸지 않는다. 진행 중에 다시 부르면
+  /// 취소로 친다 — 파일 고르기가 두 번 뜨지 않게.
+  Future<BackupImportResult> importBackup() async {
+    if (_importing) return const BackupImportResult.cancelled();
+    _importing = true;
+    try {
+      return await _useCase.importBackup();
+    } finally {
+      _importing = false;
+    }
+  }
 
   /// 저장하지 않고 닫히면 이번에 새로 고른 사진 파일을 지운다.
   @override

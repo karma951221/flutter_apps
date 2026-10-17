@@ -6,6 +6,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pawlog/domain/backup/entity/backup_import_result.dart';
 import 'package:pawlog/domain/tracking/entity/tracker_state.dart';
 import 'package:pawlog/domain/walk/entity/geo_point.dart';
 import 'package:pawlog/domain/walk/entity/walk.dart';
@@ -361,5 +362,81 @@ void main() {
 
     expect(find.byKey(const Key('walk-feed-entry-a')), findsOneWidget);
     expect(calls, 2);
+  });
+
+  group('백업 메뉴', () {
+    Future<void> openMenu(WidgetTester tester) async {
+      await tester.tap(find.byKey(const Key('walk-feed-more')));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> choose(WidgetTester tester, String key) async {
+      await openMenu(tester);
+      await tester.tap(find.byKey(Key(key)));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('더보기에 내보내기 · 가져오기 두 항목이 있다', (tester) async {
+      await pump(tester);
+
+      expect(find.byTooltip('더보기'), findsOneWidget);
+      await openMenu(tester);
+
+      expect(find.byKey(const Key('walk-feed-backup-export')), findsOneWidget);
+      expect(find.byKey(const Key('walk-feed-backup-import')), findsOneWidget);
+      expect(find.text('백업 내보내기'), findsOneWidget);
+      expect(find.text('백업 가져오기'), findsOneWidget);
+    });
+
+    testWidgets('내보내기에 성공하면 스낵바가 없다', (tester) async {
+      when(
+        () => useCase.exportBackup(),
+      ).thenAnswer((_) async => const Ok(null));
+      await pump(tester);
+
+      await choose(tester, 'walk-feed-backup-export');
+
+      verify(() => useCase.exportBackup()).called(1);
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
+    testWidgets('내보내기에 실패하면 스낵바로 알린다', (tester) async {
+      when(
+        () => useCase.exportBackup(),
+      ).thenAnswer((_) async => const Err(Failure.unknown()));
+      await pump(tester);
+
+      await choose(tester, 'walk-feed-backup-export');
+
+      expect(find.text('백업을 만들지 못했어요'), findsOneWidget);
+    });
+
+    for (final (result, message) in [
+      (const BackupImportResult.imported(1, 2), '반려견 1마리 · 산책 2개를 가져왔어요'),
+      (const BackupImportResult.nothingNew(), '새로 가져올 기록이 없어요'),
+      (const BackupImportResult.invalid(), '백업 파일을 읽지 못했어요'),
+      (const BackupImportResult.failed(Failure.unknown()), '가져오지 못했어요'),
+    ]) {
+      testWidgets('가져오기 결과 $result 는 "$message" 스낵바', (tester) async {
+        when(() => useCase.importBackup()).thenAnswer((_) async => result);
+        await pump(tester);
+
+        await choose(tester, 'walk-feed-backup-import');
+
+        verify(() => useCase.importBackup()).called(1);
+        expect(find.text(message), findsOneWidget);
+      });
+    }
+
+    testWidgets('파일 고르기를 취소하면 아무것도 보이지 않는다', (tester) async {
+      when(
+        () => useCase.importBackup(),
+      ).thenAnswer((_) async => const BackupImportResult.cancelled());
+      await pump(tester);
+
+      await choose(tester, 'walk-feed-backup-import');
+
+      expect(find.byType(SnackBar), findsNothing);
+    });
   });
 }

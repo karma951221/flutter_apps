@@ -5,6 +5,7 @@ import 'package:core/core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../../domain/backup/entity/backup_import_result.dart';
 import '../../../domain/stats/entity/period_summary.dart';
 import '../../../domain/stats/entity/stats_period.dart';
 import '../../../domain/stats/policy/walk_stats_policy.dart';
@@ -27,6 +28,10 @@ class WalkFeedCubit extends Cubit<WalkFeedState> {
   TrackerState _tracker = const TrackerState.idle();
   PeriodSummary _weekSummary = PeriodSummary.empty;
 
+  /// 내보내기 · 가져오기가 진행 중이면 다시 누른 것은 무시한다 — 공유 시트 · 파일 고르기가
+  /// 두 번 뜨지 않게.
+  bool _backupBusy = false;
+
   /// 추적기 상태를 먼저 읽고 두 스트림을 구독한다.
   Future<void> start() async {
     await _trackerSubscription?.cancel();
@@ -42,6 +47,29 @@ class WalkFeedCubit extends Cubit<WalkFeedState> {
   Future<void> retry() => _watchWalks();
 
   File photoFile(String relativePath) => _useCase.photoFile(relativePath);
+
+  /// 모든 기록을 백업 파일로 공유한다. 진행 중에 다시 부르면 아무것도 하지 않고 성공으로 친다.
+  Future<Result<void>> exportBackup() async {
+    if (_backupBusy) return const Ok(null);
+    _backupBusy = true;
+    try {
+      return await _useCase.exportBackup();
+    } finally {
+      _backupBusy = false;
+    }
+  }
+
+  /// 백업을 골라 합친다. 상태는 바꾸지 않는다 — 가져온 산책은 스트림으로 들어온다.
+  /// 진행 중에 다시 부르면 취소로 친다(알릴 것이 없다).
+  Future<BackupImportResult> importBackup() async {
+    if (_backupBusy) return const BackupImportResult.cancelled();
+    _backupBusy = true;
+    try {
+      return await _useCase.importBackup();
+    } finally {
+      _backupBusy = false;
+    }
+  }
 
   /// 캐시한 목록으로 이번 주 요약을 지금 시각 기준으로 다시 잡는다 — 앱이 주 경계를
   /// 넘긴 채 백그라운드에 있다 돌아오면 스트림 값이 없어도 요약이 바뀌어야 한다.

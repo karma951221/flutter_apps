@@ -113,8 +113,16 @@ GoRouter createRouter({required bool hasDogs}) {
           // `/dogs/new` 는 반드시 `/dogs/:id` 보다 먼저 선언한다.
           GoRoute(
             path: 'new',
-            builder: (context, _) =>
-                DogEditPage(onDone: () => finishDogEdit(context)),
+            builder: (context, _) => DogEditPage(
+              onDone: () => finishDogEdit(context),
+              // 재설치 직후의 첫 실행이 가져오기의 주 장면이다. 반려견이 생기면
+              // redirect 를 풀고 등록을 건너뛴 셈으로 피드로 간다.
+              showImportBackup: !dogsRedirect.hasDogs,
+              onImported: () {
+                dogsRedirect.markHasDogs();
+                context.go(PawlogPaths.feed);
+              },
+            ),
           ),
           GoRoute(
             path: ':id',

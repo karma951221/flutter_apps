@@ -3012,4 +3012,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkExportFailed => 'Couldn\'t export the walk';
+
+  @override
+  String get walkBackupExport => 'Export backup';
+
+  @override
+  String get walkBackupImport => 'Import backup';
+
+  @override
+  String get walkBackupImportFromFirstRun => 'Restore from backup';
+
+  @override
+  String get walkBackupExportFailed => 'Couldn\'t create the backup';
+
+  @override
+  String walkBackupImported(int dogs, int walks) {
+    String _temp0 = intl.Intl.pluralLogic(
+      dogs,
+      locale: localeName,
+      other: '$dogs dogs',
+      one: '1 dog',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      walks,
+      locale: localeName,
+      other: '$walks walks',
+      one: '1 walk',
+    );
+    return 'Imported $_temp0 · $_temp1';
+  }
+
+  @override
+  String get walkBackupNothingNew => 'Nothing new to import';
+
+  @override
+  String get walkBackupInvalid => 'This isn\'t a readable pawlog backup';
+
+  @override
+  String get walkBackupImportFailed => 'Couldn\'t import the backup';
+
+  @override
+  String get walkFeedMoreTooltip => 'More';
 }

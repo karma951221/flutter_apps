@@ -5,6 +5,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pawlog/domain/backup/entity/backup_import_result.dart';
 import 'package:pawlog/domain/dog/entity/dog_draft.dart';
 import 'package:pawlog/presentation/dog/cubit/dog_edit_cubit.dart';
 import 'package:pawlog/presentation/dog/cubit/dog_edit_state.dart';
@@ -220,5 +221,38 @@ void main() {
 
     verify(() => useCase.removePhoto('late.jpg')).called(1);
     expect(cubit.state, isA<DogEditSaved>());
+  });
+
+  group('백업 가져오기', () {
+    test('유스케이스 결과를 그대로 돌려주고 폼 상태를 바꾸지 않는다', () async {
+      when(
+        () => useCase.importBackup(),
+      ).thenAnswer((_) async => const BackupImportResult.imported(1, 3));
+      final cubit = DogEditCubit(useCase);
+      await cubit.load(null);
+      final before = cubit.state;
+
+      expect(
+        await cubit.importBackup(),
+        const BackupImportResult.imported(1, 3),
+      );
+      expect(cubit.state, before);
+      await cubit.close();
+    });
+
+    test('진행 중에 다시 부르면 cancelled 로 무시한다', () async {
+      final importing = Completer<BackupImportResult>();
+      when(() => useCase.importBackup()).thenAnswer((_) => importing.future);
+      final cubit = DogEditCubit(useCase);
+      await cubit.load(null);
+
+      final first = cubit.importBackup();
+      expect(await cubit.importBackup(), const BackupImportResult.cancelled());
+      importing.complete(const BackupImportResult.invalid());
+      expect(await first, const BackupImportResult.invalid());
+
+      verify(() => useCase.importBackup()).called(1);
+      await cubit.close();
+    });
   });
 }

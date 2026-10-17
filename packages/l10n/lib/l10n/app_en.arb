@@ -887,5 +887,14 @@
   "walkPausedBanner": "Walk paused",
   "walkExportGpx": "Export GPX",
   "walkExportNoRoute": "There's no route to export",
-  "walkExportFailed": "Couldn't export the walk"
+  "walkExportFailed": "Couldn't export the walk",
+  "walkBackupExport": "Export backup",
+  "walkBackupImport": "Import backup",
+  "walkBackupImportFromFirstRun": "Restore from backup",
+  "walkBackupExportFailed": "Couldn't create the backup",
+  "walkBackupImported": "Imported {dogs, plural, =1{1 dog} other{{dogs} dogs}} · {walks, plural, =1{1 walk} other{{walks} walks}}",
+  "walkBackupNothingNew": "Nothing new to import",
+  "walkBackupInvalid": "This isn't a readable pawlog backup",
+  "walkBackupImportFailed": "Couldn't import the backup",
+  "walkFeedMoreTooltip": "More"
 }

@@ -5311,6 +5311,60 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'내보내지 못했어요'**
   String get walkExportFailed;
+
+  /// 피드 더보기 메뉴에서 모든 기록을 백업 파일로 공유하는 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'백업 내보내기'**
+  String get walkBackupExport;
+
+  /// 피드 더보기 메뉴에서 백업 파일을 골라 기록을 합쳐 넣는 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'백업 가져오기'**
+  String get walkBackupImport;
+
+  /// 첫 실행 반려견 등록 화면 아래의 백업 가져오기 텍스트 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'백업에서 가져오기'**
+  String get walkBackupImportFromFirstRun;
+
+  /// 백업 파일 만들기 · 공유가 실패했을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'백업을 만들지 못했어요'**
+  String get walkBackupExportFailed;
+
+  /// 백업에서 새 항목을 가져왔을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'반려견 {dogs}마리 · 산책 {walks}개를 가져왔어요'**
+  String walkBackupImported(int dogs, int walks);
+
+  /// 백업의 항목이 모두 이미 있을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'새로 가져올 기록이 없어요'**
+  String get walkBackupNothingNew;
+
+  /// 고른 파일이 읽을 수 있는 pawlog 백업이 아닐 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'백업 파일을 읽지 못했어요'**
+  String get walkBackupInvalid;
+
+  /// 백업을 읽었지만 저장에 실패했을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'가져오지 못했어요'**
+  String get walkBackupImportFailed;
+
+  /// 피드 앱바 더보기 메뉴 버튼의 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'더보기'**
+  String get walkFeedMoreTooltip;
 }
 
 class _AppLocalizationsDelegate

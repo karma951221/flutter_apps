@@ -887,5 +887,14 @@
   "walkPausedBanner": "散歩を一時停止中",
   "walkExportGpx": "GPXで書き出す",
   "walkExportNoRoute": "書き出せる経路がありません",
-  "walkExportFailed": "書き出せませんでした"
+  "walkExportFailed": "書き出せませんでした",
+  "walkBackupExport": "バックアップを書き出す",
+  "walkBackupImport": "バックアップを読み込む",
+  "walkBackupImportFromFirstRun": "バックアップから復元",
+  "walkBackupExportFailed": "バックアップを作成できませんでした",
+  "walkBackupImported": "犬{dogs}匹・散歩{walks}件を読み込みました",
+  "walkBackupNothingNew": "新しく読み込む記録はありません",
+  "walkBackupInvalid": "バックアップファイルを読み込めませんでした",
+  "walkBackupImportFailed": "読み込めませんでした",
+  "walkFeedMoreTooltip": "その他"
 }
