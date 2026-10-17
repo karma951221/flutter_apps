@@ -48,15 +48,35 @@ Walk _walk(
 void main() {
   late MockWalkUseCase useCase;
   late TrackerState current;
+  late Stream<Result<List<Walk>>> Function() feed;
+
+  setUpAll(() => registerFallbackValue(DateTime(2000)));
 
   setUp(() {
     useCase = MockWalkUseCase();
     current = const TrackerState.idle();
     when(() => useCase.trackerState).thenAnswer((_) => current);
     when(() => useCase.trackerStates).thenAnswer((_) => const Stream.empty());
+    // 목록 · 이번 주 요약 모두 [feed] 에서 읽는다. 목록은 저장소처럼 즐겨찾기 · limit 을 적용한다.
+    feed = () => Stream.value(Ok([_walk('a', memo: '공원 한 바퀴')]));
     when(
-      () => useCase.watchWalks(),
-    ).thenAnswer((_) => Stream.value(Ok([_walk('a', memo: '공원 한 바퀴')])));
+      () => useCase.watchRecentWalks(
+        limit: any(named: 'limit'),
+        favoritesOnly: any(named: 'favoritesOnly'),
+      ),
+    ).thenAnswer((inv) {
+      final limit = inv.namedArguments[#limit] as int;
+      final favoritesOnly = inv.namedArguments[#favoritesOnly] as bool;
+      return feed().map(
+        (result) => switch (result) {
+          Ok(:final value) => Ok([
+            ...value.where((w) => !favoritesOnly || w.isFavorite).take(limit),
+          ]),
+          Err() => result,
+        },
+      );
+    });
+    when(() => useCase.watchWalksSince(any())).thenAnswer((_) => feed());
     when(() => useCase.photoFile(any())).thenReturn(File('missing.png'));
     getIt.registerFactory<WalkFeedCubit>(
       () => WalkFeedCubit(useCase, FakeClock.fixed(DateTime(2026, 10, 3, 12))),
@@ -85,9 +105,7 @@ void main() {
   );
 
   testWidgets('빈 피드는 날짜 열 없이 안내 한 줄과 하단 시작 버튼을 보인다', (tester) async {
-    when(
-      () => useCase.watchWalks(),
-    ).thenAnswer((_) => Stream.value(const Ok([])));
+    feed = () => Stream.value(const Ok([]));
     var started = 0;
 
     await pump(tester, onStartWalk: () => started++);
@@ -105,9 +123,7 @@ void main() {
     ('저장 안 한 산책이 있을 때', TrackerState.finished(walkSession(endedAt: t1))),
   ]) {
     testWidgets('빈 피드라도 $name 이면 시작 안내 · 버튼 대신 배너로 이끈다', (tester) async {
-      when(
-        () => useCase.watchWalks(),
-      ).thenAnswer((_) => Stream.value(const Ok([])));
+      feed = () => Stream.value(const Ok([]));
       current = tracker;
 
       // 추적 중 배너의 연두 점은 끝없이 점멸한다.
@@ -144,14 +160,12 @@ void main() {
     addTearDown(tester.view.reset);
     final evening = t0.add(const Duration(hours: 9));
     final yesterday = t0.subtract(const Duration(days: 1));
-    when(() => useCase.watchWalks()).thenAnswer(
-      (_) => Stream.value(
-        Ok([
-          _walk('pm', startedAt: evening),
-          _walk('am'),
-          _walk('prev', startedAt: yesterday),
-        ]),
-      ),
+    feed = () => Stream.value(
+      Ok([
+        _walk('pm', startedAt: evening),
+        _walk('am'),
+        _walk('prev', startedAt: yesterday),
+      ]),
     );
 
     await pump(tester);
@@ -171,9 +185,7 @@ void main() {
   });
 
   testWidgets('메모가 없으면 메모 줄이 없다', (tester) async {
-    when(
-      () => useCase.watchWalks(),
-    ).thenAnswer((_) => Stream.value(Ok([_walk('a')])));
+    feed = () => Stream.value(Ok([_walk('a')]));
 
     await pump(tester);
 
@@ -194,15 +206,13 @@ void main() {
     await pump(tester);
     expect(find.byType(Image), findsNothing);
 
-    when(() => useCase.watchWalks()).thenAnswer(
-      (_) => Stream.value(
-        Ok([
-          _walk(
-            'a',
-            photos: const [WalkPhoto(id: 'p', path: 'p.png', position: 0)],
-          ),
-        ]),
-      ),
+    feed = () => Stream.value(
+      Ok([
+        _walk(
+          'a',
+          photos: const [WalkPhoto(id: 'p', path: 'p.png', position: 0)],
+        ),
+      ]),
     );
     await tester.pumpWidget(const SizedBox());
     await pump(tester);
@@ -328,10 +338,8 @@ void main() {
   });
 
   testWidgets('이번 주 산책이 없으면 아직 전이라고 말한다', (tester) async {
-    when(() => useCase.watchWalks()).thenAnswer(
-      (_) =>
-          Stream.value(Ok([_walk('old', startedAt: DateTime(2026, 9, 1, 9))])),
-    );
+    feed = () =>
+        Stream.value(Ok([_walk('old', startedAt: DateTime(2026, 9, 1, 9))]));
 
     await pump(tester);
 
@@ -339,9 +347,7 @@ void main() {
   });
 
   testWidgets('빈 피드에는 요약 줄이 없다', (tester) async {
-    when(
-      () => useCase.watchWalks(),
-    ).thenAnswer((_) => Stream.value(const Ok([])));
+    feed = () => Stream.value(const Ok([]));
 
     await pump(tester);
 
@@ -350,11 +356,13 @@ void main() {
 
   testWidgets('실패는 재시도 버튼을 보이고 누르면 다시 구독한다', (tester) async {
     var calls = 0;
-    when(() => useCase.watchWalks()).thenAnswer(
-      (_) => Stream.value(
-        calls++ == 0 ? const Err(Failure.unknown()) : Ok([_walk('a')]),
-      ),
+    feed = () => Stream.value(
+      calls++ == 0 ? const Err(Failure.unknown()) : Ok([_walk('a')]),
     );
+    // 요약 스트림이 [feed] 를 함께 세지 않게 따로 둔다.
+    when(
+      () => useCase.watchWalksSince(any()),
+    ).thenAnswer((_) => Stream.value(const Ok([])));
 
     await pump(tester);
     expect(find.byKey(const Key('walk-feed-retry')), findsOneWidget);
@@ -364,6 +372,87 @@ void main() {
 
     expect(find.byKey(const Key('walk-feed-entry-a')), findsOneWidget);
     expect(calls, 2);
+  });
+
+  group('페이지', () {
+    List<Walk> walks(int n) => [
+      for (var i = 0; i < n; i++)
+        _walk('w$i', startedAt: t0.subtract(Duration(hours: i))),
+    ];
+
+    void stubPages(Stream<Result<List<Walk>>> Function(int limit) answer) =>
+        when(
+          () => useCase.watchRecentWalks(
+            limit: any(named: 'limit'),
+            favoritesOnly: any(named: 'favoritesOnly'),
+          ),
+        ).thenAnswer((inv) => answer(inv.namedArguments[#limit] as int));
+
+    Future<void> scrollToEnd(WidgetTester tester) => tester.scrollUntilVisible(
+      find.byType(AppListFooter),
+      500,
+      scrollable: find
+          .descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+
+    testWidgets('목록 끝까지 내리면 다음 페이지를 구독하고, 읽는 동안 끝에 로딩 줄이 보인다', (tester) async {
+      final more = StreamController<Result<List<Walk>>>();
+      // 듣는 구독이 남아 있으면 close 를 기다리다 멈추므로 기다리지 않는다.
+      addTearDown(() => unawaited(more.close()));
+      stubPages(
+        (limit) => limit == 30 ? Stream.value(Ok(walks(30))) : more.stream,
+      );
+      await pump(tester);
+      expect(find.byType(AppLoadMoreListener), findsOneWidget);
+      verifyNever(
+        () => useCase.watchRecentWalks(limit: 60, favoritesOnly: false),
+      );
+
+      await scrollToEnd(tester);
+
+      verify(
+        () => useCase.watchRecentWalks(limit: 60, favoritesOnly: false),
+      ).called(1);
+      final footer = tester.widget<AppListFooter>(find.byType(AppListFooter));
+      expect(footer.isLoadingMore, isTrue);
+      expect(
+        find.descendant(
+          of: find.byType(AppListFooter),
+          matching: find.byType(CircularProgressIndicator),
+        ),
+        findsOneWidget,
+      );
+
+      more.add(Ok(walks(40)));
+      await tester.pump();
+      await scrollToEnd(tester);
+      final done = tester.widget<AppListFooter>(find.byType(AppListFooter));
+      expect(done.isLoadingMore, isFalse);
+      expect(done.canLoadMore, isFalse);
+      expect(find.byKey(const Key('walk-feed-entry-w39')), findsOneWidget);
+    });
+
+    testWidgets('한 페이지보다 적으면 끝까지 내려도 더 구독하지 않는다', (tester) async {
+      stubPages((_) => Stream.value(Ok(walks(10))));
+      await pump(tester);
+
+      await scrollToEnd(tester);
+
+      verify(
+        () => useCase.watchRecentWalks(
+          limit: any(named: 'limit'),
+          favoritesOnly: any(named: 'favoritesOnly'),
+        ),
+      ).called(1);
+      expect(
+        tester.widget<AppListFooter>(find.byType(AppListFooter)).canLoadMore,
+        isFalse,
+      );
+    });
   });
 
   group('백업 메뉴', () {
@@ -450,9 +539,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    void stubWalks(List<Walk> walks) => when(
-      () => useCase.watchWalks(),
-    ).thenAnswer((_) => Stream.value(Ok(walks)));
+    void stubWalks(List<Walk> walks) => feed = () => Stream.value(Ok(walks));
 
     testWidgets('즐겨찾기 산책에만 시각 옆 별이 있다', (tester) async {
       stubWalks([
@@ -528,9 +615,7 @@ void main() {
     });
 
     testWidgets('목록을 못 불러오면 더보기에 즐겨찾기 토글이 없다', (tester) async {
-      when(
-        () => useCase.watchWalks(),
-      ).thenAnswer((_) => Stream.value(const Err(Failure.unknown())));
+      feed = () => Stream.value(const Err(Failure.unknown()));
       await pump(tester);
 
       await tester.tap(find.byKey(const Key('walk-feed-more')));

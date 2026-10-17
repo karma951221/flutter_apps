@@ -71,3 +71,24 @@ W4 몫은 cubit 7 · 페이지 10 · `RoutePreviewPainter` 4 = 21건이다(2026-
 | 파일 | 추가 | 확인 |
 |---|---|---|
 | `test/presentation/feed/page/walk_feed_page_test.dart` | 2 | 즐겨찾기 별이 합친 라벨에 "즐겨찾기" 로 읽힌다(`bySemanticsLabel`) · 목록 실패 중 더보기에 `walk-feed-favorites-toggle` 없음(백업 항목은 있음) |
+
+## 2026-10-17 — 페이지네이션
+
+```bash
+cd apps/pawlog && flutter test test/data/walk/drift_walk_repository_test.dart test/presentation/feed
+```
+
+| 파일 | 추가 | 확인 |
+|---|---|---|
+| `test/data/walk/drift_walk_repository_test.dart` | 5 | 반려견 2 · 사진 2 인 산책 5개에서 `watchRecent(limit: 3)` 은 정확히 3개를 최신순으로, 반려견 · 사진을 모두 싣고 · `favoritesOnly` 는 즐겨찾기만 limit 까지 · 같은 시각이면 id 내림차순 · 더 최근 산책을 넣으면 그 산책을 맨 앞에 두고 다시 흐름 · `watchStartedSince(from)` 은 from 과 같거나 뒤에 시작한 것만 |
+| `test/presentation/feed/cubit/walk_feed_cubit_test.dart` | 8 (14 → 22) | 첫 구독 limit 30, 30개가 오면 `hasMore` · `loadMore` → limit 60 으로 다시 구독, 값이 올 때까지 `isLoadingMore`(읽는 중 두 번째 `loadMore` 는 무시) · limit 보다 적게 오면 `hasMore` false, `loadMore` 는 다시 구독하지 않음 · loaded 전 `loadMore` 무시 · 즐겨찾기 켜면 limit 30 · `favoritesOnly: true` 로 다시 구독(60 까지 읽은 뒤에도), 끄면 전체 30 으로 다시 · 이번 주 31개 · 페이지 30개면 요약은 31 · 요약 스트림이 목록 뒤에 와도 요약 갱신 · `refreshWeekSummary` 는 주가 바뀌면 새 주 시작으로 다시 구독, 같은 주면 구독하지 않음 |
+| `test/presentation/feed/page/walk_feed_page_test.dart` | 2 | 30개를 끝까지 내리면 `watchRecentWalks(limit: 60)` 을 부르고 `AppListFooter` 에 로딩 스피너, 값이 오면 로딩 끝 · `canLoadMore` false · 10개면 끝까지 내려도 다시 구독하지 않음 |
+| `test/core/router/app_router_test.dart` | 0 | 피드가 새 유스케이스 호출(`watchRecentWalks` · `watchWalksSince`)을 쓰도록 stub 만 더함 |
+
+- 기존 cubit · 페이지 테스트는 `watchWalks` 대신 `watchRecentWalks` · `watchWalksSince` 를 stub 한다.
+  페이지 테스트의 목록 stub 은 저장소처럼 즐겨찾기 · limit 을 적용해, 즐겨찾기 화면 테스트가 그대로 지난다
+- mocktail `any()` 로 `DateTime` 을 받으려고 `registerFallbackValue(DateTime(2000))` 을 둔다
+- 페이지 테스트의 끝까지 내리기는 `scrollUntilVisible(find.byType(AppListFooter), …)` — 큰 `drag` 한 번은
+  지연 레이아웃의 예상 길이에 막혀 끝까지 가지 않았다
+- 실제 drift 의 `isInQuery` 부분 쿼리 · watch 재방출은 레포 테스트(메모리 DB)가 덮는다. 스크롤 체감 ·
+  끝 안내의 모양은 에뮬레이터에서 보지 않았다

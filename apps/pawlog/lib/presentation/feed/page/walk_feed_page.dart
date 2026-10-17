@@ -180,23 +180,29 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
                 :final walks,
                 :final tracker,
                 :final weekSummary,
+                :final hasMore,
+                :final isLoadingMore,
               ) =>
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _banner(tracker),
-                    if (walks.isNotEmpty)
+                    // 목록이 걸러져 오므로 즐겨찾기만 보기에서는 0건이어도 기록이 있는 피드로 친다.
+                    if (walks.isNotEmpty || favoritesOnly)
                       WeekSummaryLine(summary: weekSummary, onTap: onOpenStats),
                     Expanded(
                       child: _body(
                         walks: walks,
                         tracker: tracker,
                         favoritesOnly: favoritesOnly,
+                        hasMore: hasMore,
+                        isLoadingMore: isLoadingMore,
                       ),
                     ),
                     // 저장 · 버리기 전에는 새 산책을 막는다(finished). 0건 추적 중이면 배너가 이끈다.
                     if (tracker is TrackerIdle ||
-                        (tracker is TrackerTracking && walks.isNotEmpty))
+                        (tracker is TrackerTracking &&
+                            (walks.isNotEmpty || favoritesOnly)))
                       PawlogBottomAction(
                         child: PawlogPrimaryButton(
                           key: const Key('walk-feed-start-button'),
@@ -215,14 +221,24 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
     );
   }
 
-  /// 요약 줄과 하단 버튼 사이. 즐겨찾기만 보기면 [walks] 를 걸러 타임라인을 그린다 —
-  /// 0건이면 즐겨찾기 안내. 필터가 꺼진 빈 피드는 첫 산책 안내다.
+  /// 요약 줄과 하단 버튼 사이. [walks] 는 이미 걸러진(즐겨찾기만 보기면 즐겨찾기만) 읽은
+  /// 페이지다. 즐겨찾기만 보기에서 0건이면 즐겨찾기 안내, 필터가 꺼진 빈 피드는 첫 산책 안내다.
   Widget _body({
     required List<Walk> walks,
     required TrackerState tracker,
     required bool favoritesOnly,
+    required bool hasMore,
+    required bool isLoadingMore,
   }) {
     final l10n = AppLocalizations.of(context);
+    if (walks.isEmpty && favoritesOnly) {
+      return Center(
+        child: AppPlaceholder(
+          message: l10n.walkFeedFavoritesEmptyTitle,
+          description: l10n.walkFeedFavoritesEmptyMessage,
+        ),
+      );
+    }
     if (walks.isEmpty) {
       return Center(
         // 수첩 첫 장 — 날짜 열 없이 안내 한 줄. 산책 중이거나 저장 전이면
@@ -238,24 +254,16 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
               ),
       );
     }
-    final shown = favoritesOnly
-        ? [
-            for (final walk in walks)
-              if (walk.isFavorite) walk,
-          ]
-        : walks;
-    if (shown.isEmpty) {
-      return Center(
-        child: AppPlaceholder(
-          message: l10n.walkFeedFavoritesEmptyTitle,
-          description: l10n.walkFeedFavoritesEmptyMessage,
-        ),
-      );
-    }
-    return _Timeline(
-      walks: shown,
-      photoFile: context.read<WalkFeedCubit>().photoFile,
-      onOpenWalk: onOpenWalk,
+    final cubit = context.read<WalkFeedCubit>();
+    return AppLoadMoreListener(
+      onLoadMore: cubit.loadMore,
+      child: _Timeline(
+        walks: walks,
+        hasMore: hasMore,
+        isLoadingMore: isLoadingMore,
+        photoFile: cubit.photoFile,
+        onOpenWalk: onOpenWalk,
+      ),
     );
   }
 
@@ -271,14 +279,20 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
 }
 
 /// 날짜별 타임라인. 최신순 목록을 받아 같은 날은 날짜를 한 번만 쓰고 리드줄로 잇는다.
+/// 페이지를 이어 붙인 전체 목록으로 그리므로 페이지 경계에서도 날짜 묶음이 이어진다.
+/// 맨 끝 한 줄은 다음 페이지 로딩 · 끝 안내다.
 class _Timeline extends StatelessWidget {
   const _Timeline({
     required this.walks,
+    required this.hasMore,
+    required this.isLoadingMore,
     required this.photoFile,
     required this.onOpenWalk,
   });
 
   final List<Walk> walks;
+  final bool hasMore;
+  final bool isLoadingMore;
   final File Function(String relativePath) photoFile;
   final ValueChanged<String> onOpenWalk;
 
@@ -288,8 +302,14 @@ class _Timeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListView.builder(
     padding: const EdgeInsets.only(bottom: PawlogSpacing.sm),
-    itemCount: walks.length,
+    itemCount: walks.length + 1,
     itemBuilder: (context, index) {
+      if (index == walks.length) {
+        return AppListFooter(
+          isLoadingMore: isLoadingMore,
+          canLoadMore: hasMore,
+        );
+      }
       final walk = walks[index];
       final day = walk.startedAt.toLocal();
       final previous = index == 0 ? null : walks[index - 1].startedAt.toLocal();

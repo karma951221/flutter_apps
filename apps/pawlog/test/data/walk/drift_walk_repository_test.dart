@@ -278,4 +278,99 @@ void main() {
       expect(loaded.isFavorite, isTrue);
     });
   });
+
+  group('watchRecent', () {
+    // w0 이 가장 오래, w4 가 가장 최근. 산책마다 반려견 둘 · 사진 둘.
+    Future<void> seedFive({Set<String> favorites = const {}}) async {
+      for (var i = 0; i < 5; i++) {
+        await repository.insert(
+          walkOf(
+            'w$i',
+            startedAt: DateTime(2026, 10, 1 + i, 9),
+            withDogs: [named('d1', '하늘'), named('d2', '가을')],
+            photos: [
+              WalkPhoto(id: 'w$i-p0', path: 'w$i-0.jpg', position: 0),
+              WalkPhoto(id: 'w$i-p1', path: 'w$i-1.jpg', position: 1),
+            ],
+            isFavorite: favorites.contains('w$i'),
+          ),
+          const [],
+        );
+      }
+    }
+
+    test('조인 행이 아니라 산책 수로 자르고, 최신순에 반려견 · 사진을 모두 싣는다', () async {
+      await seedFive();
+
+      final result = _walks(await repository.watchRecent(limit: 3).first);
+
+      expect(result.map((w) => w.id), ['w4', 'w3', 'w2']);
+      for (final walk in result) {
+        expect(walk.dogs.map((d) => d.id), unorderedEquals(['d1', 'd2']));
+        expect(walk.photos.map((p) => p.position), [0, 1]);
+      }
+    });
+
+    test('favoritesOnly 면 즐겨찾기만, 그래도 limit 을 지킨다', () async {
+      await seedFive(favorites: {'w0', 'w2', 'w3'});
+
+      final result = _walks(
+        await repository.watchRecent(limit: 2, favoritesOnly: true).first,
+      );
+
+      expect(result.map((w) => w.id), ['w3', 'w2']);
+      expect(result.every((w) => w.isFavorite), isTrue);
+    });
+
+    test('started_at 이 같으면 id 내림차순이다', () async {
+      await repository.insert(walkOf('a', startedAt: t0), const []);
+      await repository.insert(walkOf('b', startedAt: t0), const []);
+
+      final result = _walks(await repository.watchRecent(limit: 1).first);
+
+      expect(result.map((w) => w.id), ['b']);
+    });
+
+    test('더 최근 산책을 넣으면 그 산책을 맨 앞에 두고 다시 흐른다', () async {
+      await seedFive();
+      final emitted = <List<String>>[];
+      final sub = repository
+          .watchRecent(limit: 3)
+          .listen((r) => emitted.add([for (final w in _walks(r)) w.id]));
+      await pumpEventQueue();
+
+      await repository.insert(
+        walkOf('newest', startedAt: DateTime(2026, 10, 9, 9)),
+        const [],
+      );
+      await pumpEventQueue();
+      await sub.cancel();
+
+      expect(emitted.first, ['w4', 'w3', 'w2']);
+      expect(emitted.last, ['newest', 'w4', 'w3']);
+    });
+  });
+
+  group('watchStartedSince', () {
+    test('from 이후(같은 시각 포함)에 시작한 산책만 반려견 · 사진과 함께 낸다', () async {
+      final from = DateTime(2026, 10, 5);
+      await repository.insert(
+        walkOf('before', startedAt: from.subtract(const Duration(minutes: 1))),
+        const [],
+      );
+      await repository.insert(
+        walkOf('at', startedAt: from, withDogs: [named('d1', '하늘')]),
+        const [],
+      );
+      await repository.insert(
+        walkOf('after', startedAt: DateTime(2026, 10, 6, 9)),
+        const [],
+      );
+
+      final result = _walks(await repository.watchStartedSince(from).first);
+
+      expect(result.map((w) => w.id), ['after', 'at']);
+      expect(result.last.dogs.single.id, 'd1');
+    });
+  });
 }

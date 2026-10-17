@@ -44,7 +44,33 @@ class DriftWalkRepository implements WalkRepository {
   ]);
 
   @override
-  Stream<Result<List<Walk>>> watchAll() => _joined().watch().transform(
+  Stream<Result<List<Walk>>> watchAll() => _watch(_joined());
+
+  @override
+  Stream<Result<List<Walk>>> watchRecent({
+    required int limit,
+    bool favoritesOnly = false,
+  }) {
+    // 조인하면 산책 하나가 (반려견 × 사진) 행으로 늘어나므로, 같은 순서로 산책 id 를
+    // 먼저 잘라 고르고 그 id 들만 조인한다.
+    final ids = _db.selectOnly(_db.walks)
+      ..addColumns([_db.walks.id])
+      ..orderBy([
+        OrderingTerm.desc(_db.walks.startedAt),
+        OrderingTerm.desc(_db.walks.id),
+      ])
+      ..limit(limit);
+    if (favoritesOnly) ids.where(_db.walks.isFavorite.equals(true));
+    return _watch(_joined()..where(_db.walks.id.isInQuery(ids)));
+  }
+
+  @override
+  Stream<Result<List<Walk>>> watchStartedSince(DateTime from) =>
+      _watch(_joined()..where(_db.walks.startedAt.isBiggerOrEqualValue(from)));
+
+  Stream<Result<List<Walk>>> _watch(
+    JoinedSelectStatement<HasResultSet, dynamic> query,
+  ) => query.watch().transform(
     StreamTransformer<List<TypedResult>, Result<List<Walk>>>.fromHandlers(
       handleData: (rows, sink) {
         try {

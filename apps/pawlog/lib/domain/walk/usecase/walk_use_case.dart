@@ -40,7 +40,17 @@ import 'scenario/update_walk_scenario.dart';
 import 'scenario/watch_walks_scenario.dart';
 
 abstract interface class WalkUseCase {
+  /// 모든 산책(통계 · 백업용). 피드는 [watchRecentWalks] 로 나눠 읽는다.
   Stream<Result<List<Walk>>> watchWalks();
+
+  /// 피드 한 화면 분량 — 최근 [limit] 개 산책. [favoritesOnly] 면 즐겨찾기만.
+  Stream<Result<List<Walk>>> watchRecentWalks({
+    required int limit,
+    bool favoritesOnly = false,
+  });
+
+  /// [from] 이후에 시작한 산책 — 피드의 이번 주 요약을 페이지와 무관하게 센다.
+  Stream<Result<List<Walk>>> watchWalksSince(DateTime from);
 
   Future<Result<Walk?>> getWalk(String id);
 
@@ -132,6 +142,16 @@ class DefaultWalkUseCase implements WalkUseCase {
 
   @override
   Stream<Result<List<Walk>>> watchWalks() => WatchWalksScenario(_walks)();
+
+  @override
+  Stream<Result<List<Walk>>> watchRecentWalks({
+    required int limit,
+    bool favoritesOnly = false,
+  }) => _walks.watchRecent(limit: limit, favoritesOnly: favoritesOnly);
+
+  @override
+  Stream<Result<List<Walk>>> watchWalksSince(DateTime from) =>
+      _walks.watchStartedSince(from);
 
   @override
   Future<Result<Walk?>> getWalk(String id) => GetWalkScenario(_walks)(id);

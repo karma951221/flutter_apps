@@ -154,3 +154,55 @@ W10 최종 리뷰에서 넘긴 것([favorites](../favorites/history.md#넘기는
 - 목록을 못 불러온 동안(`WalkFeedFailure`)에는 더보기 메뉴에 즐겨찾기 토글을 두지 않는다 — 거를 목록이
   없고, 필터가 켜져 있어도 문구가 "즐겨찾기만 보기" 로 돌아가 틀린 말을 했다. `WalkFeedLoaded` 에서만 보인다
 - 페이지 테스트 2건(별 라벨 · 실패 중 메뉴)
+
+## 2026-10-17 — 페이지네이션
+
+피드가 `watchWalks()` 로 모든 산책을 반려견 · 사진과 조인해 읽던 것을 최근 30개씩 나눠 읽는다.
+통계 · 백업 · 진행 중 산책은 그대로 `watchWalks()`(전체)를 쓴다.
+
+### 저장소 — 산책 수로 자른 뒤 조인
+
+- `WalkRepository.watchRecent({limit, favoritesOnly})` — 조인하면 산책 하나가 (반려견 × 사진) 행으로
+  늘어나 `LIMIT` 이 행을 센다. 그래서 같은 순서(`started_at` 내림차순, 같으면 `id` 내림차순)로 산책 id 만
+  `LIMIT` 으로 고르는 부분 쿼리를 만들고 `walks.id.isInQuery(...)` 로 그 id 들만 조인한다. 쿼리 하나라
+  drift `watch()` 가 walks · walk_dogs · dogs · walk_photos 변경에 다시 흐른다
+- `favoritesOnly` 는 부분 쿼리에 `is_favorite = 1` 을 건다 — 즐겨찾기만 세어 자른다. 화면은 더 이상
+  목록을 걸러 그리지 않는다
+- `WalkRepository.watchStartedSince(from)` — `started_at >= from` 인 산책을 조인해 낸다. 한 주 분량이라
+  조인 비용은 작고, 요약 계산은 그대로 `WalkStatsPolicy` 한 곳에 둔다(저장소에 합계 SQL 을 두지 않았다)
+- 유스케이스는 `watchRecentWalks` · `watchWalksSince` 로 그대로 넘긴다(시나리오 없음)
+
+### cubit — 커서가 아니라 늘어나는 `limit`
+
+- `WalkFeedCubit.pageSize = 30`. `limit` 은 30 에서 시작하고 `loadMore()` 가 한 페이지씩 올려 다시
+  구독한다. 로컬 drift 라 커서(`CursorPage`)보다 "최근 N개 watch" 가 단순하고, 이미 읽은 페이지에 생긴
+  수정 · 삭제 · 새 산책도 같은 스트림으로 흐른다
+- `hasMore = 받은 수 == limit`. 딱 limit 개만 있으면 한 번 더 읽어 끝을 안다
+- `loaded` 에 `hasMore` · `isLoadingMore`(둘 다 `@Default(false)`). `loadMore()` 는 loaded 가 아니거나
+  읽는 중이거나 `hasMore` 가 false 면 아무것도 하지 않는다 — `AppLoadMoreListener` 가 스크롤마다 불러도 된다
+- 즐겨찾기 토글은 `limit` 을 한 페이지로 되돌리고 `favoritesOnly` 로 다시 구독한다. `loading` 을 내지
+  않고 새 목록이 올 때까지 지금 목록을 둔다 — 스피너가 깜빡이고 더보기 메뉴의 토글이 잠깐 사라지는 것보다
+  낫다고 봤다
+- 이번 주 요약은 페이지와 무관하게 `watchWalksSince(이번 주 월요일 0시)` 스트림으로 센다(이번 주에 31번
+  걸어도 31). 요약 스트림이 목록보다 먼저 오면 보관만 하고, 나중에 오면 loaded 의 요약만 바꾼다.
+  요약 스트림의 `Err` 는 무시하고 지난 요약을 둔다 — 요약 줄 때문에 피드를 실패로 돌리지 않는다
+- `refreshWeekSummary()`(앱 복귀)는 주가 바뀌었을 때만 들고 있던 목록으로 바로 다시 세고 새 주 시작으로
+  다시 구독한다. 새 주는 옛 주 시작 이후의 부분이라 들고 있던 목록으로 세도 맞다
+- `retry()` 는 요약 · 목록을 첫 페이지부터 다시 구독한다
+
+### 페이지
+
+- 타임라인을 `AppLoadMoreListener(onLoadMore: cubit.loadMore)` 로 감싸고 마지막 항목으로
+  `AppListFooter(isLoadingMore:, canLoadMore: hasMore)` 를 붙인다. 끝까지 읽으면 공통 끝 안내
+  (`feedEndOfList` "모두 확인했습니다")가 보인다 — 공통 위젯의 문구다
+- 날짜 열 · 달 머리는 이어 붙인 전체 목록으로 계산하므로 페이지 경계에서도 이어진다
+- 목록이 이제 걸러져 오므로 "즐겨찾기만 보기인데 0건" 이면 즐겨찾기 안내, 필터가 꺼진 0건이면 첫 산책
+  안내다. 요약 줄 · 추적 중 시작 버튼은 `목록이 있거나 즐겨찾기만 보기` 일 때 보인다(예전에는 거르기 전
+  전체 목록으로 판단했다). 산책이 아예 없는데 즐겨찾기만 보기를 켜면 0건 요약 줄과 즐겨찾기 안내가 보이는
+  것은 받아들였다
+
+### 검증
+
+- `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+558` · `flutter build apk --debug` 성공
+- `apps/trader` `flutter test test/convention` 통과
+- 에뮬레이터 확인은 하지 않았다

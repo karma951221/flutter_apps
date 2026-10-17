@@ -16,6 +16,7 @@
 | 2+ | W8 export — 산책 한 건 GPX 내보내기 | **완료** 2026-10-17 — [기록](features/export/history.md) · [테스트](features/export/testing.md) |
 | 2+ | W9 backup — 전체 백업 내보내기 · 합쳐 가져오기 | **완료** 2026-10-17 — [기록](features/backup/history.md) · [테스트](features/backup/testing.md) |
 | 2+ | W10 favorites — 산책 즐겨찾기 · 피드 필터 | **완료** 2026-10-17 — [기록](features/favorites/history.md) · [테스트](features/favorites/testing.md) |
+| 2+ | 피드 페이지네이션 — 30개씩 나눠 읽기 | **완료** 2026-10-17 — [기록](features/feed/history.md#2026-10-17--페이지네이션) · [테스트](features/feed/testing.md#2026-10-17--페이지네이션) |
 | 3 | W5 social (v2) | 미정 |
 
 ## 0 — 기획 (완료, 2026-10-03)

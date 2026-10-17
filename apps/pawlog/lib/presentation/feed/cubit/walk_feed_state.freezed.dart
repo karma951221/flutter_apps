@@ -122,11 +122,11 @@ return failure(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<Walk> walks,  TrackerState tracker,  PeriodSummary weekSummary,  bool favoritesOnly)?  loaded,TResult Function( Failure failure)?  failure,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<Walk> walks,  TrackerState tracker,  PeriodSummary weekSummary,  bool favoritesOnly,  bool hasMore,  bool isLoadingMore)?  loaded,TResult Function( Failure failure)?  failure,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case WalkFeedLoading() when loading != null:
 return loading();case WalkFeedLoaded() when loaded != null:
-return loaded(_that.walks,_that.tracker,_that.weekSummary,_that.favoritesOnly);case WalkFeedFailure() when failure != null:
+return loaded(_that.walks,_that.tracker,_that.weekSummary,_that.favoritesOnly,_that.hasMore,_that.isLoadingMore);case WalkFeedFailure() when failure != null:
 return failure(_that.failure);case _:
   return orElse();
 
@@ -145,11 +145,11 @@ return failure(_that.failure);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<Walk> walks,  TrackerState tracker,  PeriodSummary weekSummary,  bool favoritesOnly)  loaded,required TResult Function( Failure failure)  failure,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<Walk> walks,  TrackerState tracker,  PeriodSummary weekSummary,  bool favoritesOnly,  bool hasMore,  bool isLoadingMore)  loaded,required TResult Function( Failure failure)  failure,}) {final _that = this;
 switch (_that) {
 case WalkFeedLoading():
 return loading();case WalkFeedLoaded():
-return loaded(_that.walks,_that.tracker,_that.weekSummary,_that.favoritesOnly);case WalkFeedFailure():
+return loaded(_that.walks,_that.tracker,_that.weekSummary,_that.favoritesOnly,_that.hasMore,_that.isLoadingMore);case WalkFeedFailure():
 return failure(_that.failure);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -164,11 +164,11 @@ return failure(_that.failure);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<Walk> walks,  TrackerState tracker,  PeriodSummary weekSummary,  bool favoritesOnly)?  loaded,TResult? Function( Failure failure)?  failure,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<Walk> walks,  TrackerState tracker,  PeriodSummary weekSummary,  bool favoritesOnly,  bool hasMore,  bool isLoadingMore)?  loaded,TResult? Function( Failure failure)?  failure,}) {final _that = this;
 switch (_that) {
 case WalkFeedLoading() when loading != null:
 return loading();case WalkFeedLoaded() when loaded != null:
-return loaded(_that.walks,_that.tracker,_that.weekSummary,_that.favoritesOnly);case WalkFeedFailure() when failure != null:
+return loaded(_that.walks,_that.tracker,_that.weekSummary,_that.favoritesOnly,_that.hasMore,_that.isLoadingMore);case WalkFeedFailure() when failure != null:
 return failure(_that.failure);case _:
   return null;
 
@@ -213,7 +213,7 @@ String toString() {
 
 
 class WalkFeedLoaded implements WalkFeedState {
-  const WalkFeedLoaded({required final  List<Walk> walks, required this.tracker, this.weekSummary = PeriodSummary.empty, this.favoritesOnly = false}): _walks = walks;
+  const WalkFeedLoaded({required final  List<Walk> walks, required this.tracker, this.weekSummary = PeriodSummary.empty, this.favoritesOnly = false, this.hasMore = false, this.isLoadingMore = false}): _walks = walks;
   
 
  final  List<Walk> _walks;
@@ -226,6 +226,8 @@ class WalkFeedLoaded implements WalkFeedState {
  final  TrackerState tracker;
 @JsonKey() final  PeriodSummary weekSummary;
 @JsonKey() final  bool favoritesOnly;
+@JsonKey() final  bool hasMore;
+@JsonKey() final  bool isLoadingMore;
 
 /// Create a copy of WalkFeedState
 /// with the given fields replaced by the non-null parameter values.
@@ -237,16 +239,16 @@ $WalkFeedLoadedCopyWith<WalkFeedLoaded> get copyWith => _$WalkFeedLoadedCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WalkFeedLoaded&&const DeepCollectionEquality().equals(other._walks, _walks)&&(identical(other.tracker, tracker) || other.tracker == tracker)&&(identical(other.weekSummary, weekSummary) || other.weekSummary == weekSummary)&&(identical(other.favoritesOnly, favoritesOnly) || other.favoritesOnly == favoritesOnly));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WalkFeedLoaded&&const DeepCollectionEquality().equals(other._walks, _walks)&&(identical(other.tracker, tracker) || other.tracker == tracker)&&(identical(other.weekSummary, weekSummary) || other.weekSummary == weekSummary)&&(identical(other.favoritesOnly, favoritesOnly) || other.favoritesOnly == favoritesOnly)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore)&&(identical(other.isLoadingMore, isLoadingMore) || other.isLoadingMore == isLoadingMore));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_walks),tracker,weekSummary,favoritesOnly);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_walks),tracker,weekSummary,favoritesOnly,hasMore,isLoadingMore);
 
 @override
 String toString() {
-  return 'WalkFeedState.loaded(walks: $walks, tracker: $tracker, weekSummary: $weekSummary, favoritesOnly: $favoritesOnly)';
+  return 'WalkFeedState.loaded(walks: $walks, tracker: $tracker, weekSummary: $weekSummary, favoritesOnly: $favoritesOnly, hasMore: $hasMore, isLoadingMore: $isLoadingMore)';
 }
 
 
@@ -257,7 +259,7 @@ abstract mixin class $WalkFeedLoadedCopyWith<$Res> implements $WalkFeedStateCopy
   factory $WalkFeedLoadedCopyWith(WalkFeedLoaded value, $Res Function(WalkFeedLoaded) _then) = _$WalkFeedLoadedCopyWithImpl;
 @useResult
 $Res call({
- List<Walk> walks, TrackerState tracker, PeriodSummary weekSummary, bool favoritesOnly
+ List<Walk> walks, TrackerState tracker, PeriodSummary weekSummary, bool favoritesOnly, bool hasMore, bool isLoadingMore
 });
 
 
@@ -274,12 +276,14 @@ class _$WalkFeedLoadedCopyWithImpl<$Res>
 
 /// Create a copy of WalkFeedState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? walks = null,Object? tracker = null,Object? weekSummary = null,Object? favoritesOnly = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? walks = null,Object? tracker = null,Object? weekSummary = null,Object? favoritesOnly = null,Object? hasMore = null,Object? isLoadingMore = null,}) {
   return _then(WalkFeedLoaded(
 walks: null == walks ? _self._walks : walks // ignore: cast_nullable_to_non_nullable
 as List<Walk>,tracker: null == tracker ? _self.tracker : tracker // ignore: cast_nullable_to_non_nullable
 as TrackerState,weekSummary: null == weekSummary ? _self.weekSummary : weekSummary // ignore: cast_nullable_to_non_nullable
 as PeriodSummary,favoritesOnly: null == favoritesOnly ? _self.favoritesOnly : favoritesOnly // ignore: cast_nullable_to_non_nullable
+as bool,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullable_to_non_nullable
+as bool,isLoadingMore: null == isLoadingMore ? _self.isLoadingMore : isLoadingMore // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

@@ -71,7 +71,7 @@ drift `watch()` 가 `walks` · `walk_dogs` · `dogs` · `walk_photos` 를 모두
 | 실패 | `watchWalks` 의 `Err` → `failure`. 이후 `tracker` 변화는 무시 |
 | 재시도 | `retry()` 가 `watchWalks` 구독만 끊고 다시 건다(`loading` 부터) |
 | 정리 | `close()` 에서 두 구독 해제. 모든 비동기 뒤 `isClosed` 검사 |
-| 전체 로드 | v1 은 페이지네이션 없이 전부 읽는다 — `Walk` 에 경로가 없어 가볍다. v2 에서 `CursorPage` · `AppLoadMoreListener` · `AppListFooter` |
+| 전체 로드 | v1 은 페이지네이션 없이 전부 읽는다 — `Walk` 에 경로가 없어 가볍다. v2 에서 `CursorPage` · `AppLoadMoreListener` · `AppListFooter` (→ 2026-10-17 적용, [기록](history.md#2026-10-17--페이지네이션)) |
 
 ```mermaid
 flowchart TD
@@ -179,7 +179,7 @@ W2 가 추가하는 `walkStart` · `walkDistance*` · `walkDuration*`. 설계 §
 
 ## 범위 밖
 
-- 페이지네이션 — v1 은 전체 로드([기획 §3 제외](../../overview.md#제외-v1-범위-밖))
+- 페이지네이션 — v1 은 전체 로드([기획 §3 제외](../../overview.md#제외-v1-범위-밖)). 2026-10-17 에 적용했다([기록](history.md#2026-10-17--페이지네이션))
 - 날짜별 묶음 머리글("오늘 · 어제 · 이번 주") — v1 은 단순 목록
 - 강아지별 필터 · 검색
 - 통계 대시보드(주간 거리 등)

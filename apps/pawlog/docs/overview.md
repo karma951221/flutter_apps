@@ -56,7 +56,7 @@ Supabase 구현을 DI 교체로 넣을 수 있게 한다. 그 외 소셜 관련 
 
 로그인 · Supabase · 다른 사람의 피드 · 좋아요/댓글 · 코스 즐겨찾기/추천(→ W10 favorites: 산책 즐겨찾기 · 피드 필터) · 수동 코스
 입력 · 일시정지/재개 · 앱 강제종료 후 진행 중 산책 복구(→ v1 뒤 W7 session) · 통계 대시보드(→ v1 뒤 W6 stats 로 일부 착수) · 알림 권한
-안내(`permission_handler`) · 피드 페이지네이션 · 데이터 내보내기(→ W8 export: 산책 한 건 GPX · W9 backup: 전체 백업 · 가져오기) · API 키가 필요한
+안내(`permission_handler`) · 피드 페이지네이션(→ 2026-10-17 적용) · 데이터 내보내기(→ W8 export: 산책 한 건 GPX · W9 backup: 전체 백업 · 가져오기) · API 키가 필요한
 지도 서비스.
 
 > 복구와 페이지네이션은 v1 스키마가 이미 받아 줄 수 있게 설계한다(§7). 만들지 않을
@@ -270,6 +270,7 @@ v1 은 feature 넷을 **한 코드 묶음** 에 둔다(처음엔 `packages/featu
   `watch()` 로 반영되므로 "돌아오면 새로고침" 콜백이 없다
 - 상태 `WalkFeedState: loading / loaded(walks, isTracking) / failure`
 - v1 은 전체 로드. v2 에서 `CursorPage` · `AppLoadMoreListener` 로 바꾼다
+  (→ 2026-10-17 적용: 커서 대신 늘어나는 `limit` 으로 30개씩, [피드 기록](features/feed/history.md#2026-10-17--페이지네이션))
 - 완료 조건: 빈 상태 → 저장 후 카드 → 상세 → 삭제 후 사라짐, 강아지 이름 변경이
   카드에 반영, 다크 모드
 

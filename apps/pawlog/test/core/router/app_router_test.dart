@@ -54,6 +54,16 @@ void main() {
     when(
       () => useCase.watchWalks(),
     ).thenAnswer((_) => Stream.value(const Ok([])));
+    registerFallbackValue(DateTime(2000));
+    when(
+      () => useCase.watchRecentWalks(
+        limit: any(named: 'limit'),
+        favoritesOnly: any(named: 'favoritesOnly'),
+      ),
+    ).thenAnswer((_) => Stream.value(const Ok([])));
+    when(
+      () => useCase.watchWalksSince(any()),
+    ).thenAnswer((_) => Stream.value(const Ok([])));
     when(() => useCase.trackerState).thenReturn(const TrackerState.idle());
     when(() => useCase.trackerStates).thenAnswer((_) => const Stream.empty());
     when(() => useCase.getWalk('w1')).thenAnswer((_) async => Ok(walk));
