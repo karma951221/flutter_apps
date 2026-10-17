@@ -23,6 +23,7 @@
 | W7 session — [계획](features/session/plan.md) · [기록](features/session/history.md) · [테스트](features/session/testing.md) | 산책 일시정지 · 재개, 강제 종료 뒤 복구 |
 | W8 export — [계획](features/export/plan.md) · [기록](features/export/history.md) · [테스트](features/export/testing.md) | 산책 한 건을 GPX 파일로 공유 시트에 넘기기 |
 | W9 backup — [계획](features/backup/plan.md) · [기록](features/backup/history.md) · [테스트](features/backup/testing.md) | 전체 백업 내보내기 · 합쳐 가져오기, 첫 실행 복원 |
+| W10 favorites — [계획](features/favorites/plan.md) · [기록](features/favorites/history.md) · [테스트](features/favorites/testing.md) | 산책 즐겨찾기 · 피드 즐겨찾기만 보기 |
 | [구현 리뷰 · 요약](audits/2026-10-03-implementation-review.md) | 리뷰어 에이전트가 단계 커밋마다 독립적으로 읽고 쓴 소견과 요약 |
 
 feature 문서는 `features/<name>/` 에 착수 시 `plan.md`, 완료 시 `history.md` · `testing.md` 를 둔다.

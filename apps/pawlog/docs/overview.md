@@ -54,7 +54,7 @@ Supabase 구현을 DI 교체로 넣을 수 있게 한다. 그 외 소셜 관련 
 
 ### 제외 (v1 범위 밖)
 
-로그인 · Supabase · 다른 사람의 피드 · 좋아요/댓글 · 코스 즐겨찾기/추천 · 수동 코스
+로그인 · Supabase · 다른 사람의 피드 · 좋아요/댓글 · 코스 즐겨찾기/추천(→ W10 favorites: 산책 즐겨찾기 · 피드 필터) · 수동 코스
 입력 · 일시정지/재개 · 앱 강제종료 후 진행 중 산책 복구(→ v1 뒤 W7 session) · 통계 대시보드(→ v1 뒤 W6 stats 로 일부 착수) · 알림 권한
 안내(`permission_handler`) · 피드 페이지네이션 · 데이터 내보내기(→ W8 export: 산책 한 건 GPX · W9 backup: 전체 백업 · 가져오기) · API 키가 필요한
 지도 서비스.
@@ -162,6 +162,7 @@ v1 은 feature 넷을 **한 코드 묶음** 에 둔다(처음엔 `packages/featu
 | W6 | **stats** | 주 · 월 기간 요약 · 거리 막대 · 연속 · 최고 기록, 피드 요약 줄 — [계획](features/stats/plan.md) (v1 범위 밖이던 통계 대시보드 중 로컬 데이터로 되는 부분) | 2+ |
 | W7 | **session** | 산책 일시정지 · 재개, 강제 종료 뒤 진행 중 · 저장 전 산책 복구 — [계획](features/session/plan.md) | 2+ |
 | W8 | **export** | 상세 더보기에서 산책 한 건을 GPX 1.1 파일로 공유 시트에 넘기기 — [계획](features/export/plan.md) (v1 범위 밖이던 데이터 내보내기의 첫 조각) | 2+ |
+| W10 | **favorites** | 산책 별(즐겨찾기) · 피드 즐겨찾기만 보기 — [계획](features/favorites/plan.md) | 2+ |
 | W9 | **backup** | 반려견 · 산책 · 경로 · 사진 전부를 zip 하나로 내보내고 합쳐 가져오기, 첫 실행 화면에서 복원 — [계획](features/backup/plan.md) | 2+ |
 | W5 | **social** (v2) | Supabase 동기화 · 공개 피드 · 프로필 · 반응/댓글 — 트레이더 feature 재사용 검토 | 3 |
 
@@ -296,6 +297,8 @@ walk_photos (id TEXT pk, walk_id fk→walks cascade, path [상대 경로], posit
 active_walks       (id INT pk [언제나 1], dog_ids TEXT [JSON], started_at, ended_at?,
                     paused_ms INT, paused_at?, distance_meters REAL, notice_title, notice_text)
 active_walk_points (seq INT pk, lat REAL, lng REAL, recorded_at, accuracy?)
+
+-- 스키마 v3 (W10 favorites): walks.is_favorite BOOL 기본 false
 ```
 
 ### 설계 원칙

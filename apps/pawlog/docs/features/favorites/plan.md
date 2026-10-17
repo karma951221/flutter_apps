@@ -1,8 +1,8 @@
 # W10 favorites — 계획 (결정 · 화면 · 완료 조건)
 
-> [pawlog 허브](../../README.md) · [기획 §3](../../overview.md#3-mvpv1-범위) · [W4 feed](../feed/plan.md)
+> [pawlog 허브](../../README.md) · [구현 기록](history.md) · [테스트](testing.md) · [기획 §3](../../overview.md#3-mvpv1-범위) · [W4 feed](../feed/plan.md)
 
-> 상태: 착수 2026-10-17 · 진행 상태의 단일 기준은 [진행 현황](../../status.md)
+> 상태: 구현 완료 2026-10-17 · 에뮬레이터 PASS · 진행 상태의 단일 기준은 [진행 현황](../../status.md)
 
 ## 범위
 
