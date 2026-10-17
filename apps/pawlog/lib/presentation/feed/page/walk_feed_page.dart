@@ -180,7 +180,6 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
                 :final walks,
                 :final tracker,
                 :final weekSummary,
-                :final hasMore,
                 :final isLoadingMore,
               ) =>
                 Column(
@@ -195,7 +194,6 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
                         walks: walks,
                         tracker: tracker,
                         favoritesOnly: favoritesOnly,
-                        hasMore: hasMore,
                         isLoadingMore: isLoadingMore,
                       ),
                     ),
@@ -227,7 +225,6 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
     required List<Walk> walks,
     required TrackerState tracker,
     required bool favoritesOnly,
-    required bool hasMore,
     required bool isLoadingMore,
   }) {
     final l10n = AppLocalizations.of(context);
@@ -259,7 +256,6 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
       onLoadMore: cubit.loadMore,
       child: _Timeline(
         walks: walks,
-        hasMore: hasMore,
         isLoadingMore: isLoadingMore,
         photoFile: cubit.photoFile,
         onOpenWalk: onOpenWalk,
@@ -280,18 +276,16 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
 
 /// 날짜별 타임라인. 최신순 목록을 받아 같은 날은 날짜를 한 번만 쓰고 리드줄로 잇는다.
 /// 페이지를 이어 붙인 전체 목록으로 그리므로 페이지 경계에서도 날짜 묶음이 이어진다.
-/// 맨 끝 한 줄은 다음 페이지 로딩 · 끝 안내다.
+/// 다음 페이지를 읽는 동안에만 맨 끝에 로딩 줄이 붙는다.
 class _Timeline extends StatelessWidget {
   const _Timeline({
     required this.walks,
-    required this.hasMore,
     required this.isLoadingMore,
     required this.photoFile,
     required this.onOpenWalk,
   });
 
   final List<Walk> walks;
-  final bool hasMore;
   final bool isLoadingMore;
   final File Function(String relativePath) photoFile;
   final ValueChanged<String> onOpenWalk;
@@ -302,13 +296,11 @@ class _Timeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListView.builder(
     padding: const EdgeInsets.only(bottom: PawlogSpacing.sm),
-    itemCount: walks.length + 1,
+    // 끝 안내는 두지 않는다 — 조용한 일기장 피드. 다음 페이지를 읽는 동안에만 스피너 한 줄.
+    itemCount: walks.length + (isLoadingMore ? 1 : 0),
     itemBuilder: (context, index) {
       if (index == walks.length) {
-        return AppListFooter(
-          isLoadingMore: isLoadingMore,
-          canLoadMore: hasMore,
-        );
+        return const AppListFooter(isLoadingMore: true, canLoadMore: true);
       }
       final walk = walks[index];
       final day = walk.startedAt.toLocal();

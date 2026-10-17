@@ -388,18 +388,24 @@ void main() {
           ),
         ).thenAnswer((inv) => answer(inv.namedArguments[#limit] as int));
 
-    Future<void> scrollToEnd(WidgetTester tester) => tester.scrollUntilVisible(
-      find.byType(AppListFooter),
-      500,
-      scrollable: find
-          .descendant(
-            of: find.byType(ListView),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
+    Future<void> scrollTo(WidgetTester tester, Finder target) =>
+        tester.scrollUntilVisible(
+          target,
+          500,
+          scrollable: find
+              .descendant(
+                of: find.byType(ListView),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
 
-    testWidgets('목록 끝까지 내리면 다음 페이지를 구독하고, 읽는 동안 끝에 로딩 줄이 보인다', (tester) async {
+    Future<void> scrollToEntry(WidgetTester tester, String id) =>
+        scrollTo(tester, find.byKey(Key('walk-feed-entry-$id')));
+
+    testWidgets('목록 끝까지 내리면 다음 페이지를 구독하고, 읽는 동안에만 끝에 로딩 줄이 보인다', (
+      tester,
+    ) async {
       final more = StreamController<Result<List<Walk>>>();
       // 듣는 구독이 남아 있으면 close 를 기다리다 멈추므로 기다리지 않는다.
       addTearDown(() => unawaited(more.close()));
@@ -408,17 +414,18 @@ void main() {
       );
       await pump(tester);
       expect(find.byType(AppLoadMoreListener), findsOneWidget);
+      expect(find.byType(AppListFooter), findsNothing);
       verifyNever(
         () => useCase.watchRecentWalks(limit: 60, favoritesOnly: false),
       );
 
-      await scrollToEnd(tester);
+      await scrollToEntry(tester, 'w29');
+      await tester.pump();
 
       verify(
         () => useCase.watchRecentWalks(limit: 60, favoritesOnly: false),
       ).called(1);
-      final footer = tester.widget<AppListFooter>(find.byType(AppListFooter));
-      expect(footer.isLoadingMore, isTrue);
+      await scrollTo(tester, find.byType(AppListFooter));
       expect(
         find.descendant(
           of: find.byType(AppListFooter),
@@ -429,18 +436,22 @@ void main() {
 
       more.add(Ok(walks(40)));
       await tester.pump();
-      await scrollToEnd(tester);
-      final done = tester.widget<AppListFooter>(find.byType(AppListFooter));
-      expect(done.isLoadingMore, isFalse);
-      expect(done.canLoadMore, isFalse);
-      expect(find.byKey(const Key('walk-feed-entry-w39')), findsOneWidget);
+      await scrollToEntry(tester, 'w39');
+      await tester.pump();
+
+      // 끝까지 읽어도 끝 안내는 없다 — 조용한 일기장 피드.
+      await tester.drag(find.byType(ListView), const Offset(0, -2000));
+      await tester.pump();
+      expect(find.byType(AppListFooter, skipOffstage: false), findsNothing);
+      expect(find.text('모두 확인했습니다', skipOffstage: false), findsNothing);
     });
 
-    testWidgets('한 페이지보다 적으면 끝까지 내려도 더 구독하지 않는다', (tester) async {
+    testWidgets('한 페이지보다 적으면 끝까지 내려도 더 구독하지 않고 끝 안내도 없다', (tester) async {
       stubPages((_) => Stream.value(Ok(walks(10))));
       await pump(tester);
 
-      await scrollToEnd(tester);
+      await scrollToEntry(tester, 'w9');
+      await tester.pump();
 
       verify(
         () => useCase.watchRecentWalks(
@@ -448,10 +459,10 @@ void main() {
           favoritesOnly: any(named: 'favoritesOnly'),
         ),
       ).called(1);
-      expect(
-        tester.widget<AppListFooter>(find.byType(AppListFooter)).canLoadMore,
-        isFalse,
-      );
+      await tester.drag(find.byType(ListView), const Offset(0, -2000));
+      await tester.pump();
+      expect(find.byType(AppListFooter, skipOffstage: false), findsNothing);
+      expect(find.text('모두 확인했습니다', skipOffstage: false), findsNothing);
     });
   });
 

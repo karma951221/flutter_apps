@@ -69,7 +69,7 @@ drift `watch()` 가 `walks` · `walk_dogs` · `dogs` · `walk_photos` 를 모두
 | 시작 | `start()` 가 `trackerState` 를 **먼저 읽어** 보관하고, `trackerStates` · `watchWalks()` 를 구독한다 |
 | 합치기 | 마지막 `walks` 와 마지막 `tracker` 를 보관해, 어느 쪽이 와도 `loaded(walks, tracker)` 를 다시 낸다. `walks` 가 아직 없으면 `tracker` 만 바꾸고 `loading` 유지 |
 | 실패 | `watchWalks` 의 `Err` → `failure`. 이후 `tracker` 변화는 무시 |
-| 재시도 | `retry()` 가 `watchWalks` 구독만 끊고 다시 건다(`loading` 부터) |
+| 재시도 | `retry()` 가 `watchWalks` 구독만 끊고 다시 건다(`loading` 부터). 2026-10-17 부터는 `watchRecentWalks`(limit 30 으로 되돌림) · `watchWalksSince` 를 다시 건다 |
 | 정리 | `close()` 에서 두 구독 해제. 모든 비동기 뒤 `isClosed` 검사 |
 | 전체 로드 | v1 은 페이지네이션 없이 전부 읽는다 — `Walk` 에 경로가 없어 가볍다. v2 에서 `CursorPage` · `AppLoadMoreListener` · `AppListFooter` (→ 2026-10-17 적용, [기록](history.md#2026-10-17--페이지네이션)) |
 

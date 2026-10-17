@@ -181,8 +181,9 @@ W10 최종 리뷰에서 넘긴 것([favorites](../favorites/history.md#넘기는
 - `loaded` 에 `hasMore` · `isLoadingMore`(둘 다 `@Default(false)`). `loadMore()` 는 loaded 가 아니거나
   읽는 중이거나 `hasMore` 가 false 면 아무것도 하지 않는다 — `AppLoadMoreListener` 가 스크롤마다 불러도 된다
 - 즐겨찾기 토글은 `limit` 을 한 페이지로 되돌리고 `favoritesOnly` 로 다시 구독한다. `loading` 을 내지
-  않고 새 목록이 올 때까지 지금 목록을 둔다 — 스피너가 깜빡이고 더보기 메뉴의 토글이 잠깐 사라지는 것보다
-  낫다고 봤다
+  않는다. 켤 때는 읽어 둔 목록을 `isFavorite` 로 바로 걸러 낸다 — 읽은 페이지 안의 즐겨찾기는 즐겨찾기
+  첫 페이지의 앞부분이라 정확한 부분집합이고 깜빡임이 없다. 새 구독의 첫 값 전까지 `hasMore` 는 false 라
+  `loadMore` 가 끼어들지 않는다. 끌 때는 새 목록이 올 때까지 지금 목록을 둔다(리뷰 반영)
 - 이번 주 요약은 페이지와 무관하게 `watchWalksSince(이번 주 월요일 0시)` 스트림으로 센다(이번 주에 31번
   걸어도 31). 요약 스트림이 목록보다 먼저 오면 보관만 하고, 나중에 오면 loaded 의 요약만 바꾼다.
   요약 스트림의 `Err` 는 무시하고 지난 요약을 둔다 — 요약 줄 때문에 피드를 실패로 돌리지 않는다
@@ -192,9 +193,10 @@ W10 최종 리뷰에서 넘긴 것([favorites](../favorites/history.md#넘기는
 
 ### 페이지
 
-- 타임라인을 `AppLoadMoreListener(onLoadMore: cubit.loadMore)` 로 감싸고 마지막 항목으로
-  `AppListFooter(isLoadingMore:, canLoadMore: hasMore)` 를 붙인다. 끝까지 읽으면 공통 끝 안내
-  (`feedEndOfList` "모두 확인했습니다")가 보인다 — 공통 위젯의 문구다
+- 타임라인을 `AppLoadMoreListener(onLoadMore: cubit.loadMore)` 로 감싸고, 다음 페이지를 읽는 동안에만
+  마지막 항목으로 `AppListFooter(isLoadingMore: true, canLoadMore: true)`(스피너)를 붙인다. 공통 끝 안내
+  (`feedEndOfList` "모두 확인했습니다")는 조용한 일기장 피드에 맞지 않아 그리지 않는다(리뷰 반영) —
+  `itemCount = walks.length + (isLoadingMore ? 1 : 0)`
 - 날짜 열 · 달 머리는 이어 붙인 전체 목록으로 계산하므로 페이지 경계에서도 이어진다
 - 목록이 이제 걸러져 오므로 "즐겨찾기만 보기인데 0건" 이면 즐겨찾기 안내, 필터가 꺼진 0건이면 첫 산책
   안내다. 요약 줄 · 추적 중 시작 버튼은 `목록이 있거나 즐겨찾기만 보기` 일 때 보인다(예전에는 거르기 전
@@ -203,6 +205,6 @@ W10 최종 리뷰에서 넘긴 것([favorites](../favorites/history.md#넘기는
 
 ### 검증
 
-- `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+558` · `flutter build apk --debug` 성공
+- `apps/pawlog` `flutter analyze` 0건 · `flutter test` `+558`(리뷰 반영 뒤 `+562`) · `flutter build apk --debug` 성공
 - `apps/trader` `flutter test test/convention` 통과
 - 에뮬레이터 확인은 하지 않았다

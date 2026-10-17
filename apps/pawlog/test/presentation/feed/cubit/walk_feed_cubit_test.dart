@@ -296,15 +296,20 @@ void main() {
 
   group('toggleFavoritesOnly', () {
     final favorite = walk().copyWith(id: 'fav', isFavorite: true);
+    final inPage = walk().copyWith(id: 'w5', isFavorite: true);
+    final older = walk().copyWith(id: 'old', isFavorite: true);
 
     blocTest<WalkFeedCubit, WalkFeedState>(
-      '켜면 limit 을 한 페이지로 되돌리고 favoritesOnly 로 다시 구독한다',
+      '켜면 지금 목록을 바로 걸러 내고, limit 을 한 페이지로 되돌려 favoritesOnly 로 다시 구독한다',
       setUp: () => stubRecent(
         (limit, favoritesOnly) => Stream.value(
           Ok(
             favoritesOnly
-                ? [favorite]
-                : List.generate(limit, (i) => walk().copyWith(id: 'w$i')),
+                ? [inPage, older]
+                : [
+                    for (var i = 0; i < limit; i++)
+                      i == 5 ? inPage : walk().copyWith(id: 'w$i'),
+                  ],
           ),
         ),
       ),
@@ -319,11 +324,14 @@ void main() {
       },
       skip: 4, // loading · 30 · 60 로딩 중 · 60
       expect: () => [
-        isA<WalkFeedLoaded>()
-            .having((s) => s.favoritesOnly, 'favoritesOnly', isTrue)
-            .having((s) => s.walks.length, 'walks', 60),
+        // 깜빡임 없이 읽은 목록 중 즐겨찾기만. 새 구독 첫 값 전에는 더 읽지 않는다.
         WalkFeedState.loaded(
-          walks: [favorite],
+          walks: [inPage],
+          tracker: const TrackerState.idle(),
+          favoritesOnly: true,
+        ),
+        WalkFeedState.loaded(
+          walks: [inPage, older],
           tracker: const TrackerState.idle(),
           favoritesOnly: true,
         ),
@@ -333,6 +341,41 @@ void main() {
         verifyRecent(limit: 60);
         verifyRecent(limit: 30, favoritesOnly: true);
       },
+    );
+
+    blocTest<WalkFeedCubit, WalkFeedState>(
+      '켠 직후 새 값 전에는 loadMore 가 아무것도 하지 않는다',
+      setUp: () => stubRecent(
+        (limit, favoritesOnly) => favoritesOnly
+            ? const Stream.empty()
+            : Stream.value(
+                Ok([
+                  for (var i = 0; i < limit; i++)
+                    walk().copyWith(id: 'w$i', isFavorite: true),
+                ]),
+              ),
+      ),
+      build: () => WalkFeedCubit(useCase, clock),
+      act: (cubit) async {
+        await cubit.start();
+        await Future<void>.delayed(Duration.zero);
+        cubit.toggleFavoritesOnly();
+        cubit.loadMore();
+        await Future<void>.delayed(Duration.zero);
+      },
+      skip: 2,
+      expect: () => [
+        isA<WalkFeedLoaded>()
+            .having((s) => s.walks.length, 'walks', 30)
+            .having((s) => s.hasMore, 'hasMore', isFalse)
+            .having((s) => s.isLoadingMore, 'isLoadingMore', isFalse),
+      ],
+      verify: (_) => verifyNever(
+        () => useCase.watchRecentWalks(
+          limit: 60,
+          favoritesOnly: any(named: 'favoritesOnly'),
+        ),
+      ),
     );
 
     blocTest<WalkFeedCubit, WalkFeedState>(
@@ -350,8 +393,8 @@ void main() {
         cubit.toggleFavoritesOnly();
         await Future<void>.delayed(Duration.zero);
       },
-      // loading · 전체 · 켬(이전 목록) · 즐겨찾기 · 끔(이전 목록) · 전체
-      skip: 5,
+      // loading · 전체 · 켬(바로 거른 목록 — 새 값과 같아 한 번만) · 끔(이전 목록) · 전체
+      skip: 4,
       expect: () => [
         WalkFeedState.loaded(
           walks: [walk(), favorite],
@@ -458,6 +501,107 @@ void main() {
       build: () => WalkFeedCubit(useCase, clock),
       act: (cubit) => cubit.loadMore(),
       expect: () => <WalkFeedState>[],
+    );
+
+    blocTest<WalkFeedCubit, WalkFeedState>(
+      'loadMore 뒤 retry 는 limit 을 30 으로 되돌린다',
+      setUp: () {
+        var failed = false;
+        stubRecent((limit, _) {
+          if (limit == 60 && !failed) {
+            failed = true;
+            return Stream.value(const Err(Failure.unknown()));
+          }
+          return Stream.value(Ok(walks(limit)));
+        });
+      },
+      build: () => WalkFeedCubit(useCase, clock),
+      act: (cubit) async {
+        await cubit.start();
+        await Future<void>.delayed(Duration.zero);
+        cubit.loadMore();
+        await Future<void>.delayed(Duration.zero);
+        await cubit.retry();
+        await Future<void>.delayed(Duration.zero);
+      },
+      skip: 3, // loading · 30 · 로딩 중
+      expect: () => [
+        const WalkFeedState.failure(Failure.unknown()),
+        const WalkFeedState.loading(),
+        WalkFeedState.loaded(
+          walks: walks(30),
+          tracker: const TrackerState.idle(),
+          hasMore: true,
+        ),
+      ],
+      verify: (_) {
+        verify(
+          () => useCase.watchRecentWalks(limit: 30, favoritesOnly: false),
+        ).called(2);
+        verifyRecent(limit: 60);
+      },
+    );
+
+    test('loadMore 뒤 이전 구독이 늦게 낸 값은 무시한다', () async {
+      final first = StreamController<Result<List<Walk>>>();
+      final second = StreamController<Result<List<Walk>>>();
+      addTearDown(() {
+        unawaited(first.close());
+        unawaited(second.close());
+      });
+      stubRecent((limit, _) => limit == 30 ? first.stream : second.stream);
+      final cubit = WalkFeedCubit(useCase, clock);
+      await cubit.start();
+      first.add(Ok(walks(30)));
+      await Future<void>.delayed(Duration.zero);
+
+      cubit.loadMore();
+      first.add(Ok(walks(3)));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(
+        cubit.state,
+        isA<WalkFeedLoaded>()
+            .having((s) => s.walks.length, 'walks', 30)
+            .having((s) => s.isLoadingMore, 'isLoadingMore', isTrue),
+      );
+      expect(first.hasListener, isFalse);
+
+      second.add(Ok(walks(45)));
+      await Future<void>.delayed(Duration.zero);
+      expect((cubit.state as WalkFeedLoaded).walks.length, 45);
+      await cubit.close();
+    });
+
+    blocTest<WalkFeedCubit, WalkFeedState>(
+      '요약 스트림이 Err 를 내면 지난 요약을 둔다',
+      setUp: () {
+        stubWalks(() => Stream.value(Ok([walk()])));
+        stubWeek(
+          () => Stream.fromIterable([
+            Ok([walk()]),
+            const Err(Failure.unknown()),
+          ]),
+        );
+      },
+      build: () =>
+          WalkFeedCubit(useCase, FakeClock.fixed(DateTime(2026, 10, 4, 12))),
+      act: (cubit) async {
+        await cubit.start();
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      },
+      skip: 1,
+      expect: () => [
+        WalkFeedState.loaded(
+          walks: [walk()],
+          tracker: const TrackerState.idle(),
+          weekSummary: const PeriodSummary(
+            distanceMeters: 1200,
+            duration: Duration(minutes: 30),
+            walkCount: 1,
+          ),
+        ),
+      ],
     );
 
     blocTest<WalkFeedCubit, WalkFeedState>(

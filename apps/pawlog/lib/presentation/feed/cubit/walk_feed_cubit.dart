@@ -114,15 +114,31 @@ class WalkFeedCubit extends Cubit<WalkFeedState> {
     _subscribeWeek();
   }
 
-  /// 즐겨찾기만 보기를 켜고 끈다. 첫 페이지부터 다시 구독하고, 새 목록이 올 때까지 지금
-  /// 목록을 둔다. loaded 가 아니면 아무것도 하지 않는다.
+  /// 즐겨찾기만 보기를 켜고 끈다. 첫 페이지부터 다시 구독한다. 켤 때는 읽어 둔 목록을 바로
+  /// 걸러 내고(읽은 페이지의 즐겨찾기는 즐겨찾기 첫 페이지의 앞부분이라 깜빡임이 없다) 새 첫
+  /// 값까지 더 읽지 않는다. 끌 때는 새 목록이 올 때까지 지금 목록을 둔다.
+  /// loaded 가 아니면 아무것도 하지 않는다.
   void toggleFavoritesOnly() {
     final current = state;
     if (isClosed || current is! WalkFeedLoaded) return;
     _favoritesOnly = !_favoritesOnly;
     _limit = pageSize;
     _isLoadingMore = false;
-    emit(current.copyWith(favoritesOnly: _favoritesOnly, isLoadingMore: false));
+    if (_favoritesOnly) {
+      _walks = [
+        for (final walk in current.walks)
+          if (walk.isFavorite) walk,
+      ];
+      _hasMore = false;
+    }
+    emit(
+      current.copyWith(
+        walks: _walks ?? current.walks,
+        favoritesOnly: _favoritesOnly,
+        hasMore: _hasMore,
+        isLoadingMore: false,
+      ),
+    );
     _subscribeWalks();
   }
 
