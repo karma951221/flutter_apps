@@ -125,12 +125,12 @@ return failure(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  unavailable,TResult Function( bool isSignedIn)?  loading,TResult Function( List<WalkPost> posts,  bool isSignedIn,  String? nextCursor,  bool isLoadingMore,  Failure? failure)?  loaded,TResult Function( Failure failure,  bool isSignedIn)?  failure,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  unavailable,TResult Function( bool isSignedIn)?  loading,TResult Function( List<WalkPost> posts,  bool isSignedIn,  String? nextCursor,  bool isLoadingMore,  bool loadMoreFailed,  Failure? failure)?  loaded,TResult Function( Failure failure,  bool isSignedIn)?  failure,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case CommunityUnavailable() when unavailable != null:
 return unavailable();case CommunityLoading() when loading != null:
 return loading(_that.isSignedIn);case CommunityLoaded() when loaded != null:
-return loaded(_that.posts,_that.isSignedIn,_that.nextCursor,_that.isLoadingMore,_that.failure);case CommunityFailure() when failure != null:
+return loaded(_that.posts,_that.isSignedIn,_that.nextCursor,_that.isLoadingMore,_that.loadMoreFailed,_that.failure);case CommunityFailure() when failure != null:
 return failure(_that.failure,_that.isSignedIn);case _:
   return orElse();
 
@@ -149,12 +149,12 @@ return failure(_that.failure,_that.isSignedIn);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  unavailable,required TResult Function( bool isSignedIn)  loading,required TResult Function( List<WalkPost> posts,  bool isSignedIn,  String? nextCursor,  bool isLoadingMore,  Failure? failure)  loaded,required TResult Function( Failure failure,  bool isSignedIn)  failure,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  unavailable,required TResult Function( bool isSignedIn)  loading,required TResult Function( List<WalkPost> posts,  bool isSignedIn,  String? nextCursor,  bool isLoadingMore,  bool loadMoreFailed,  Failure? failure)  loaded,required TResult Function( Failure failure,  bool isSignedIn)  failure,}) {final _that = this;
 switch (_that) {
 case CommunityUnavailable():
 return unavailable();case CommunityLoading():
 return loading(_that.isSignedIn);case CommunityLoaded():
-return loaded(_that.posts,_that.isSignedIn,_that.nextCursor,_that.isLoadingMore,_that.failure);case CommunityFailure():
+return loaded(_that.posts,_that.isSignedIn,_that.nextCursor,_that.isLoadingMore,_that.loadMoreFailed,_that.failure);case CommunityFailure():
 return failure(_that.failure,_that.isSignedIn);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -169,12 +169,12 @@ return failure(_that.failure,_that.isSignedIn);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  unavailable,TResult? Function( bool isSignedIn)?  loading,TResult? Function( List<WalkPost> posts,  bool isSignedIn,  String? nextCursor,  bool isLoadingMore,  Failure? failure)?  loaded,TResult? Function( Failure failure,  bool isSignedIn)?  failure,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  unavailable,TResult? Function( bool isSignedIn)?  loading,TResult? Function( List<WalkPost> posts,  bool isSignedIn,  String? nextCursor,  bool isLoadingMore,  bool loadMoreFailed,  Failure? failure)?  loaded,TResult? Function( Failure failure,  bool isSignedIn)?  failure,}) {final _that = this;
 switch (_that) {
 case CommunityUnavailable() when unavailable != null:
 return unavailable();case CommunityLoading() when loading != null:
 return loading(_that.isSignedIn);case CommunityLoaded() when loaded != null:
-return loaded(_that.posts,_that.isSignedIn,_that.nextCursor,_that.isLoadingMore,_that.failure);case CommunityFailure() when failure != null:
+return loaded(_that.posts,_that.isSignedIn,_that.nextCursor,_that.isLoadingMore,_that.loadMoreFailed,_that.failure);case CommunityFailure() when failure != null:
 return failure(_that.failure,_that.isSignedIn);case _:
   return null;
 
@@ -285,7 +285,7 @@ as bool,
 
 
 class CommunityLoaded implements CommunityState {
-  const CommunityLoaded({required final  List<WalkPost> posts, required this.isSignedIn, this.nextCursor, this.isLoadingMore = false, this.failure}): _posts = posts;
+  const CommunityLoaded({required final  List<WalkPost> posts, required this.isSignedIn, this.nextCursor, this.isLoadingMore = false, this.loadMoreFailed = false, this.failure}): _posts = posts;
   
 
  final  List<WalkPost> _posts;
@@ -298,6 +298,7 @@ class CommunityLoaded implements CommunityState {
  final  bool isSignedIn;
  final  String? nextCursor;
 @JsonKey() final  bool isLoadingMore;
+@JsonKey() final  bool loadMoreFailed;
  final  Failure? failure;
 
 /// Create a copy of CommunityState
@@ -310,16 +311,16 @@ $CommunityLoadedCopyWith<CommunityLoaded> get copyWith => _$CommunityLoadedCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CommunityLoaded&&const DeepCollectionEquality().equals(other._posts, _posts)&&(identical(other.isSignedIn, isSignedIn) || other.isSignedIn == isSignedIn)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.isLoadingMore, isLoadingMore) || other.isLoadingMore == isLoadingMore)&&(identical(other.failure, failure) || other.failure == failure));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CommunityLoaded&&const DeepCollectionEquality().equals(other._posts, _posts)&&(identical(other.isSignedIn, isSignedIn) || other.isSignedIn == isSignedIn)&&(identical(other.nextCursor, nextCursor) || other.nextCursor == nextCursor)&&(identical(other.isLoadingMore, isLoadingMore) || other.isLoadingMore == isLoadingMore)&&(identical(other.loadMoreFailed, loadMoreFailed) || other.loadMoreFailed == loadMoreFailed)&&(identical(other.failure, failure) || other.failure == failure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_posts),isSignedIn,nextCursor,isLoadingMore,failure);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_posts),isSignedIn,nextCursor,isLoadingMore,loadMoreFailed,failure);
 
 @override
 String toString() {
-  return 'CommunityState.loaded(posts: $posts, isSignedIn: $isSignedIn, nextCursor: $nextCursor, isLoadingMore: $isLoadingMore, failure: $failure)';
+  return 'CommunityState.loaded(posts: $posts, isSignedIn: $isSignedIn, nextCursor: $nextCursor, isLoadingMore: $isLoadingMore, loadMoreFailed: $loadMoreFailed, failure: $failure)';
 }
 
 
@@ -330,7 +331,7 @@ abstract mixin class $CommunityLoadedCopyWith<$Res> implements $CommunityStateCo
   factory $CommunityLoadedCopyWith(CommunityLoaded value, $Res Function(CommunityLoaded) _then) = _$CommunityLoadedCopyWithImpl;
 @useResult
 $Res call({
- List<WalkPost> posts, bool isSignedIn, String? nextCursor, bool isLoadingMore, Failure? failure
+ List<WalkPost> posts, bool isSignedIn, String? nextCursor, bool isLoadingMore, bool loadMoreFailed, Failure? failure
 });
 
 
@@ -347,12 +348,13 @@ class _$CommunityLoadedCopyWithImpl<$Res>
 
 /// Create a copy of CommunityState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? posts = null,Object? isSignedIn = null,Object? nextCursor = freezed,Object? isLoadingMore = null,Object? failure = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? posts = null,Object? isSignedIn = null,Object? nextCursor = freezed,Object? isLoadingMore = null,Object? loadMoreFailed = null,Object? failure = freezed,}) {
   return _then(CommunityLoaded(
 posts: null == posts ? _self._posts : posts // ignore: cast_nullable_to_non_nullable
 as List<WalkPost>,isSignedIn: null == isSignedIn ? _self.isSignedIn : isSignedIn // ignore: cast_nullable_to_non_nullable
 as bool,nextCursor: freezed == nextCursor ? _self.nextCursor : nextCursor // ignore: cast_nullable_to_non_nullable
 as String?,isLoadingMore: null == isLoadingMore ? _self.isLoadingMore : isLoadingMore // ignore: cast_nullable_to_non_nullable
+as bool,loadMoreFailed: null == loadMoreFailed ? _self.loadMoreFailed : loadMoreFailed // ignore: cast_nullable_to_non_nullable
 as bool,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
 as Failure?,
   ));

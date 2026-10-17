@@ -143,7 +143,11 @@ class _CommunityView extends StatelessWidget {
                   onAction: cubit.retry,
                 ),
               ),
-              CommunityLoaded(:final posts, :final isLoadingMore) =>
+              CommunityLoaded(
+                :final posts,
+                :final isLoadingMore,
+                :final loadMoreFailed,
+              ) =>
                 RefreshIndicator(
                   onRefresh: cubit.refresh,
                   child: posts.isEmpty
@@ -170,10 +174,29 @@ class _CommunityView extends StatelessWidget {
                             padding: const EdgeInsets.only(
                               top: PawlogSpacing.lg,
                             ),
-                            // 끝 안내는 두지 않는다 — 피드와 같다. 읽는 동안에만 스피너 한 줄.
-                            itemCount: posts.length + (isLoadingMore ? 1 : 0),
+                            // 끝 안내는 두지 않는다 — 피드와 같다. 읽는 동안엔 스피너 한 줄,
+                            // 더 읽기가 실패했으면 "다시 시도" 한 줄.
+                            itemCount:
+                                posts.length +
+                                (isLoadingMore || loadMoreFailed ? 1 : 0),
                             itemBuilder: (context, index) {
                               if (index == posts.length) {
+                                if (loadMoreFailed && !isLoadingMore) {
+                                  return Padding(
+                                    padding: const EdgeInsets.all(
+                                      PawlogSpacing.md,
+                                    ),
+                                    child: Center(
+                                      child: AppButton.text(
+                                        key: const Key(
+                                          'community-load-more-retry',
+                                        ),
+                                        label: l10n.commonRetry,
+                                        onPressed: cubit.retryLoadMore,
+                                      ),
+                                    ),
+                                  );
+                                }
                                 return const AppListFooter(
                                   isLoadingMore: true,
                                   canLoadMore: true,

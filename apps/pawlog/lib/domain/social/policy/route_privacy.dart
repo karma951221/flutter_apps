@@ -8,14 +8,19 @@ typedef GeoDistance = double Function(GeoPoint a, GeoPoint b);
 
 /// 공유 경로의 앞뒤를 잘라 집 위치를 감춘다(plan 결정 4).
 ///
-/// 산책은 대개 집에서 시작해 집에서 끝난다. 그래서 출발점 · 도착점에서 **걸은 거리**로
-/// [defaultMeters] 안에 드는 점을 버린다. 직선 거리가 아니라 누적 거리로 재는 이유:
-/// 집 앞을 맴돈 경로는 직선으로는 늘 가깝지만, 그만큼 걸은 뒤의 점은 집에서 멀어졌다고
-/// 보기 어렵다 — 누적 거리 쪽이 더 많이 잘라 보수적이다.
+/// 산책은 대개 집에서 시작해 집에서 끝난다. 두 단계로 버린다.
+///
+/// 1. 출발점 · 도착점에서 **걸은 거리(누적)** 로 [defaultMeters] 안의 앞뒤 점.
+/// 2. 남은 점 가운데 원래 출발점 · 도착점에서 **직선 거리** 로 [defaultMeters] 안인 점.
+///
+/// 누적 거리만으로는 부족하다 — 집 앞을 맴돌거나 중간에 집 앞을 다시 지나가면 누적은
+/// 150 m 를 넘어도 그 점은 집 바로 옆이다. 그래서 직선 거리로 한 번 더 거른다.
+/// (그래도 남은 선의 방향은 집 쪽을 가리킬 수 있다 — history.md 의 넘긴 항목.)
 abstract final class RoutePrivacy {
   static const defaultMeters = 150.0;
 
-  /// 앞뒤 [meters] 안(경계 포함)의 점을 버리고 [RoutePreview.maxPoints] 개 이하로 줄인다.
+  /// 앞뒤 [meters] 안(경계 포함)의 점과 출발점 · 도착점에서 직선 [meters] 안(경계 포함)의
+  /// 점을 버리고 [RoutePreview.maxPoints] 개 이하로 줄인다.
   /// 남은 점이 2개 미만이면 선이 안 되므로 빈 목록 — 경로 없이 공유한다.
   static List<GeoPoint> trim(
     List<GeoPoint> points, {
@@ -30,10 +35,16 @@ abstract final class RoutePrivacy {
       fromStart[i] = fromStart[i - 1] + distance(points[i - 1], points[i]);
     }
     final total = fromStart.last;
+    final home = points.first;
+    final end = points.last;
 
     final kept = [
       for (var i = 0; i < points.length; i++)
-        if (fromStart[i] > meters && total - fromStart[i] > meters) points[i],
+        if (fromStart[i] > meters &&
+            total - fromStart[i] > meters &&
+            distance(home, points[i]) > meters &&
+            distance(end, points[i]) > meters)
+          points[i],
     ];
     if (kept.length < 2) return const [];
     return RoutePreview.downsamplePoints(kept);

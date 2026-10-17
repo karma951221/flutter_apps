@@ -2934,4 +2934,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkSocialLikeTooltip => 'いいね';
+
+  @override
+  String get walkSocialUnshareOnDeleteFailed => '散歩は削除しましたが、共有をやめられませんでした';
 }

@@ -19,18 +19,24 @@ abstract final class SupabaseErrorMapper {
         failureCode: FailureCode.invalidData,
       );
     }
-    if (error is SocketException || error is TimeoutException) {
-      return const Failure.network(
-        message: '네트워크에 연결할 수 없습니다',
-        failureCode: FailureCode.networkUnavailable,
-      );
-    }
+    if (error is SocketException || error is TimeoutException) return _network;
     return Failure.unknown(message: error.toString());
   }
+
+  static const _network = Failure.network(
+    message: '네트워크에 연결할 수 없습니다',
+    failureCode: FailureCode.networkUnavailable,
+  );
 
   static Failure _auth(AuthException e) {
     final constraint = _constraintFrom(e.message);
     if (constraint != null) return constraint;
+
+    // gotrue 는 요청 자체가 실패하면(연결 끊김 · 시간 제한) 원래 예외를 상태 코드 없는
+    // AuthRetryableFetchException 으로 감싼다. 상태 코드가 있으면 서버가 답한 것이다.
+    if (e is AuthRetryableFetchException && e.statusCode == null) {
+      return _network;
+    }
 
     return switch (e.code) {
       'invalid_credentials' || 'invalid_grant' => const Failure.auth(

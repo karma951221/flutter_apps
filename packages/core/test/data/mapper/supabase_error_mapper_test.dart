@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -246,6 +247,28 @@ void main() {
     expect(
       SupabaseErrorMapper.map(const SocketException('no route')),
       isA<NetworkFailure>(),
+    );
+  });
+
+  test('시간 제한은 network 로 분류한다', () {
+    expect(
+      SupabaseErrorMapper.map(TimeoutException('slow')),
+      isA<NetworkFailure>(),
+    );
+  });
+
+  test('gotrue 가 감싼 요청 실패(상태 코드 없음)는 network, 있으면 server 다', () {
+    expect(
+      SupabaseErrorMapper.map(
+        AuthRetryableFetchException(message: 'TimeoutException'),
+      ),
+      isA<NetworkFailure>(),
+    );
+    expect(
+      SupabaseErrorMapper.map(
+        AuthRetryableFetchException(message: 'bad gateway', statusCode: '502'),
+      ),
+      isA<ServerFailure>(),
     );
   });
 

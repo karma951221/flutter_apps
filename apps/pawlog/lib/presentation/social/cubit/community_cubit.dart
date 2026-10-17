@@ -59,8 +59,18 @@ class CommunityCubit extends Cubit<CommunityState> {
     await _fetchFirst();
   }
 
-  /// 다음 페이지. loaded 가 아니거나, 읽는 중이거나, 더 없으면 아무것도 하지 않는다.
+  /// 다음 페이지(스크롤이 부른다). loaded 가 아니거나, 읽는 중이거나, 더 없거나, 앞선 더 읽기가
+  /// 실패했으면 아무것도 하지 않는다 — 실패 뒤엔 [retryLoadMore] · [refresh] 만 다시 연다.
   Future<void> loadMore() async {
+    final current = state;
+    if (current is CommunityLoaded && current.loadMoreFailed) return;
+    await _loadMore();
+  }
+
+  /// 목록 끝 "다시 시도" — 실패 표시를 지우고 다음 페이지를 다시 읽는다.
+  Future<void> retryLoadMore() => _loadMore();
+
+  Future<void> _loadMore() async {
     final current = state;
     if (isClosed ||
         current is! CommunityLoaded ||
@@ -69,7 +79,13 @@ class CommunityCubit extends Cubit<CommunityState> {
       return;
     }
     final epoch = _epoch;
-    emit(current.copyWith(isLoadingMore: true, failure: null));
+    emit(
+      current.copyWith(
+        isLoadingMore: true,
+        loadMoreFailed: false,
+        failure: null,
+      ),
+    );
     final result = await _useCase.fetchCommunityPage(after: current.nextCursor);
     if (isClosed || epoch != _epoch) return;
     final latest = state;
@@ -84,7 +100,13 @@ class CommunityCubit extends Cubit<CommunityState> {
           ),
         );
       case Err(:final failure):
-        emit(latest.copyWith(isLoadingMore: false, failure: failure));
+        emit(
+          latest.copyWith(
+            isLoadingMore: false,
+            loadMoreFailed: true,
+            failure: failure,
+          ),
+        );
     }
   }
 

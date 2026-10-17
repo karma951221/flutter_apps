@@ -689,5 +689,93 @@ void main() {
       expect(find.text('공유하지 못했어요'), findsOneWidget);
       await disposePage(tester);
     });
+
+    testWidgets('공유 여부를 읽지 못하면 공유 항목을 숨긴다', (tester) async {
+      when(
+        () => social.isWalkShared('w1'),
+      ).thenAnswer((_) async => const Err(Failure.network()));
+      await pumpDetail(tester);
+      await openMenu(tester);
+
+      expect(find.byKey(const Key('walk-detail-share')), findsNothing);
+      expect(find.text('삭제'), findsOneWidget);
+      await disposePage(tester);
+    });
+  });
+
+  group('공유한 산책 삭제', () {
+    Future<int> deleteFromMenu(WidgetTester tester) async {
+      var deleted = 0;
+      await pumpApp(
+        tester,
+        WalkDetailPage(
+          walkId: 'w1',
+          onEdit: (_) async {},
+          onDeleted: () => deleted++,
+          onSignIn: () {},
+        ),
+      );
+      await tester.tap(find.byKey(const Key('walk-detail-menu')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('삭제'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return deleted;
+    }
+
+    setUp(() {
+      when(
+        () => useCase.deleteWalk('w1'),
+      ).thenAnswer((_) async => const Ok(null));
+      when(
+        () => social.isWalkShared('w1'),
+      ).thenAnswer((_) async => const Ok(true));
+    });
+
+    testWidgets('공유한 산책을 지우면 공유를 먼저 취소하고 지운다', (tester) async {
+      when(
+        () => social.unshareWalk('w1'),
+      ).thenAnswer((_) async => const Ok(null));
+
+      final deleted = await deleteFromMenu(tester);
+
+      verifyInOrder([
+        () => social.unshareWalk('w1'),
+        () => useCase.deleteWalk('w1'),
+      ]);
+      expect(deleted, 1);
+      expect(find.text('산책은 지웠지만 공유를 취소하지 못했어요'), findsNothing);
+      await disposePage(tester);
+    });
+
+    testWidgets('공유 취소가 실패해도 지우고 스낵바로 알린다', (tester) async {
+      when(
+        () => social.unshareWalk('w1'),
+      ).thenAnswer((_) async => const Err(Failure.network()));
+
+      final deleted = await deleteFromMenu(tester);
+
+      verify(() => useCase.deleteWalk('w1')).called(1);
+      expect(deleted, 1);
+      expect(find.text('산책은 지웠지만 공유를 취소하지 못했어요'), findsOneWidget);
+      await disposePage(tester);
+    });
+
+    testWidgets('로그인하지 않았으면 서버에 묻지 않고 지운다', (tester) async {
+      session = null;
+
+      final deleted = await deleteFromMenu(tester);
+
+      verifyNever(() => social.unshareWalk(any()));
+      verify(() => useCase.deleteWalk('w1')).called(1);
+      expect(deleted, 1);
+      await disposePage(tester);
+    });
   });
 }

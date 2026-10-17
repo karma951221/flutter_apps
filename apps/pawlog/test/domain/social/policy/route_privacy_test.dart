@@ -23,16 +23,31 @@ void main() {
     expect(_meters(trimmed), isNot(contains(850)));
   });
 
-  test('누적 거리로 잰다 — 시작점으로 되돌아오는 경로도 150 m 걸은 뒤부터 남는다', () {
-    // 0 → 100 → 0 → 100 ... 왕복. 직선 거리는 늘 100 m 이하지만 누적은 늘어난다.
+  test('집 앞을 오간 경로는 누적이 늘어도 직선 150 m 안이라 모두 버린다', () {
+    // 0 → 100 → 0 → 100 ... 왕복. 누적은 1900 m 까지 늘지만 직선 거리는 늘 100 m 이하.
     final points = [
       for (var i = 0; i < 20; i++) GeoPoint(lat: i.isEven ? 0 : 100, lng: 0),
     ];
 
+    expect(RoutePrivacy.trim(points, distance: _planar), isEmpty);
+  });
+
+  test('중간에 집 앞을 다시 지나가면 그 점들을 버린다', () {
+    // 0 → 500 → 0(집 앞 통과) → 500 → 1000. 끝점은 1000 m.
+    final points = [
+      for (var m = 0; m <= 500; m += 10) GeoPoint(lat: m.toDouble(), lng: 0),
+      for (var m = 490; m >= 0; m -= 10) GeoPoint(lat: m.toDouble(), lng: 0),
+      for (var m = 10; m <= 1000; m += 10) GeoPoint(lat: m.toDouble(), lng: 0),
+    ];
+
     final trimmed = RoutePrivacy.trim(points, distance: _planar);
 
-    // 누적 0,100,200,...,1900 — 앞에서 200 m(세 번째 점)부터, 뒤에서 1700 m 까지.
-    expect(trimmed, hasLength(16));
+    // 집(0 m)에서 150 m 안 · 끝(1000 m)에서 150 m 안은 하나도 남지 않는다.
+    expect(_meters(trimmed).where((m) => m <= 150), isEmpty);
+    expect(_meters(trimmed).where((m) => m >= 850), isEmpty);
+    // 집 앞을 지나간 뒤의 160 m 이후 점들은 다시 남는다.
+    expect(_meters(trimmed), contains(160));
+    expect(_meters(trimmed), contains(840));
   });
 
   test('정확히 300 m 경로는 남는 점이 없어 빈 목록이다', () {

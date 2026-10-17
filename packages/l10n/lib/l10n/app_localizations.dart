@@ -5533,6 +5533,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'좋아요'**
   String get walkSocialLikeTooltip;
+
+  /// 공유한 산책을 지울 때 공유 취소가 실패한 스낵바(산책은 지워졌다)
+  ///
+  /// In ko, this message translates to:
+  /// **'산책은 지웠지만 공유를 취소하지 못했어요'**
+  String get walkSocialUnshareOnDeleteFailed;
 }
 
 class _AppLocalizationsDelegate

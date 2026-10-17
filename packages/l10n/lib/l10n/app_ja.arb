@@ -924,5 +924,6 @@
   "walkSocialShared": "共有しました",
   "walkSocialUnshared": "共有をやめました",
   "walkSocialShareFailed": "共有できませんでした",
-  "walkSocialLikeTooltip": "いいね"
+  "walkSocialLikeTooltip": "いいね",
+  "walkSocialUnshareOnDeleteFailed": "散歩は削除しましたが、共有をやめられませんでした"
 }

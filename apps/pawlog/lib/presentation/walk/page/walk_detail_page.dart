@@ -106,8 +106,19 @@ class _WalkDetailView extends StatelessWidget {
       content: l10n.walkDeleteConfirmMessage,
       confirmLabel: l10n.commonDelete,
     );
-    if (!confirmed || cubit.isClosed) return;
+    if (!confirmed || cubit.isClosed || !context.mounted) return;
+    // 공유한 산책이면 먼저 공유를 거둔다. 못 거둬도 지운다 — 기록은 기기의 것이다.
+    final unshared = await context.read<WalkShareCubit>().unshareForDelete();
+    if (cubit.isClosed) return;
     await cubit.delete();
+    if (unshared || cubit.state is! WalkDetailDeleted || !context.mounted) {
+      return;
+    }
+    AppSnackBar.show(
+      context,
+      message: l10n.walkSocialUnshareOnDeleteFailed,
+      type: AppSnackBarType.error,
+    );
   }
 
   Future<void> _export(BuildContext context) async {

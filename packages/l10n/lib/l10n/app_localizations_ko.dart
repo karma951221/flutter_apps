@@ -2936,4 +2936,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkSocialLikeTooltip => '좋아요';
+
+  @override
+  String get walkSocialUnshareOnDeleteFailed => '산책은 지웠지만 공유를 취소하지 못했어요';
 }

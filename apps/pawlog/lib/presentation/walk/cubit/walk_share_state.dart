@@ -8,7 +8,8 @@ sealed class WalkShareState with _$WalkShareState {
   /// 공유 여부를 읽는 중 — 틀린 라벨을 보이지 않게 항목을 숨긴다.
   const factory WalkShareState.checking() = WalkShareChecking;
 
-  /// Supabase 를 쓸 수 없다 — 항목을 숨긴다.
+  /// Supabase 를 쓸 수 없거나 공유 여부를 읽지 못했다 — 항목을 숨긴다. 짐작으로 "모두에게
+  /// 공유" 를 보이지 않는다. 읽기 실패는 다음 상세 열기 · 로그인 변화 때 다시 읽는다.
   const factory WalkShareState.hidden() = WalkShareHidden;
 
   /// [busy] 는 공유 · 공유 취소를 보내는 중 — 다시 누른 것은 무시한다.

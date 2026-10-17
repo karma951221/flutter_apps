@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pawlog/core/supabase/social_availability.dart';
@@ -165,10 +166,75 @@ void main() {
           posts: [p1, p2],
           nextCursor: 'c1',
           isSignedIn: false,
+          loadMoreFailed: true,
           failure: networkError,
         ),
       ],
     );
+
+    test('실패한 뒤엔 스크롤 loadMore 를 막고 retryLoadMore 로만 다시 읽는다', () async {
+      when(
+        () => useCase.fetchCommunityPage(after: 'c1'),
+      ).thenAnswer((_) async => const Err(networkError));
+      final cubit = build();
+      addTearDown(cubit.close);
+      await cubit.start();
+
+      await cubit.loadMore();
+      await cubit.loadMore();
+      await cubit.loadMore();
+      verify(() => useCase.fetchCommunityPage(after: 'c1')).called(1);
+      expect(loadedOf(cubit).loadMoreFailed, isTrue);
+
+      when(
+        () => useCase.fetchCommunityPage(after: 'c1'),
+      ).thenAnswer((_) async => Ok(CursorPage(items: [p3])));
+      await cubit.retryLoadMore();
+
+      verify(() => useCase.fetchCommunityPage(after: 'c1')).called(1);
+      expect(loadedOf(cubit).posts, [p1, p2, p3]);
+      expect(loadedOf(cubit).loadMoreFailed, isFalse);
+    });
+
+    test('새로고침하면 실패 표시가 풀려 스크롤로 다시 읽는다', () async {
+      when(
+        () => useCase.fetchCommunityPage(after: 'c1'),
+      ).thenAnswer((_) async => const Err(networkError));
+      final cubit = build();
+      addTearDown(cubit.close);
+      await cubit.start();
+      await cubit.loadMore();
+
+      await cubit.refresh();
+      expect(loadedOf(cubit).loadMoreFailed, isFalse);
+      await cubit.loadMore();
+
+      verify(() => useCase.fetchCommunityPage(after: 'c1')).called(2);
+    });
+  });
+
+  test('응답 없는 첫 읽기가 시간 제한으로 실패하면 로딩에서 실패로 끝난다', () {
+    fakeAsync((async) {
+      // TimeoutHttpClient(10초)가 끊으면 저장소는 network 실패를 돌려준다 — 그 모양을 흉내 낸다.
+      when(() => useCase.fetchCommunityPage()).thenAnswer(
+        (_) => Future.delayed(
+          const Duration(seconds: 10),
+          () => const Err<CursorPage<WalkPost>>(networkError),
+        ),
+      );
+      final cubit = build();
+      unawaited(cubit.start());
+
+      async.elapse(const Duration(seconds: 9));
+      expect(cubit.state, isA<CommunityLoading>());
+      async.elapse(const Duration(seconds: 1));
+      expect(
+        cubit.state,
+        const CommunityState.failure(networkError, isSignedIn: false),
+      );
+      unawaited(cubit.close());
+      async.flushMicrotasks();
+    });
   });
 
   group('refresh', () {

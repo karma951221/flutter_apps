@@ -188,6 +188,40 @@ void main() {
     expect(find.text('모두 확인했습니다'), findsNothing);
   });
 
+  testWidgets('더 읽기가 실패하면 스낵바 한 번 · 스크롤로는 다시 읽지 않고 "다시 시도" 로 읽는다', (
+    tester,
+  ) async {
+    final first = [for (var i = 0; i < 20; i++) walkPost('a$i')];
+    when(
+      () => useCase.fetchCommunityPage(),
+    ).thenAnswer((_) async => Ok(CursorPage(items: first, nextCursor: 'c1')));
+    when(
+      () => useCase.fetchCommunityPage(after: 'c1'),
+    ).thenAnswer((_) async => const Err(Failure.network()));
+    await pump(tester);
+
+    for (var i = 0; i < 3; i++) {
+      await tester.drag(find.byType(ListView), const Offset(0, -20000));
+      await tester.pump();
+    }
+    await tester.pump();
+
+    verify(() => useCase.fetchCommunityPage(after: 'c1')).called(1);
+    expect(find.byType(SnackBar), findsOneWidget);
+    final retry = find.byKey(const Key('community-load-more-retry'));
+    expect(retry, findsOneWidget);
+
+    when(
+      () => useCase.fetchCommunityPage(after: 'c1'),
+    ).thenAnswer((_) async => Ok(CursorPage(items: [walkPost('b0')])));
+    await tester.tap(retry);
+    await tester.pumpAndSettle();
+
+    verify(() => useCase.fetchCommunityPage(after: 'c1')).called(1);
+    expect(find.text('산책러b0'), findsOneWidget);
+    expect(retry, findsNothing);
+  });
+
   testWidgets('당겨서 새로고침하면 첫 페이지를 다시 읽는다', (tester) async {
     await pump(tester);
 
