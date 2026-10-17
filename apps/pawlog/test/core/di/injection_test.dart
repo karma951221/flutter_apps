@@ -5,8 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pawlog/core/di/injection.dart';
 import 'package:pawlog/core/supabase/social_availability.dart';
 import 'package:pawlog/data/social/supabase_auth_repository.dart';
+import 'package:pawlog/data/social/supabase_community_repository.dart';
 import 'package:pawlog/data/social/unavailable_auth_repository.dart';
+import 'package:pawlog/data/social/unavailable_community_repository.dart';
 import 'package:pawlog/domain/social/repository/auth_repository.dart';
+import 'package:pawlog/domain/social/repository/community_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
@@ -46,6 +49,7 @@ void main() {
 
     expect(getIt<SocialAvailability>().isAvailable, isFalse);
     expect(getIt<AuthRepository>(), isA<UnavailableAuthRepository>());
+    expect(getIt<CommunityRepository>(), isA<UnavailableCommunityRepository>());
   });
 
   test('Supabase 가 있으면 Supabase 저장소를 받는다', () async {
@@ -55,5 +59,6 @@ void main() {
     await configureDependencies(social: SocialAvailability.available(client));
 
     expect(getIt<AuthRepository>(), isA<SupabaseAuthRepository>());
+    expect(getIt<CommunityRepository>(), isA<SupabaseCommunityRepository>());
   });
 }

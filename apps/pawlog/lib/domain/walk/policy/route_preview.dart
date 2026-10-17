@@ -10,14 +10,16 @@ class RoutePreview {
   static const maxPoints = 64;
 
   /// 균등 간격으로 [maxPoints] 개 이하로 줄이되 처음과 끝은 항상 남긴다.
-  static List<GeoPoint> downsample(List<WalkTrackPoint> points) {
-    if (points.length <= maxPoints) {
-      return [for (final p in points) p.point];
-    }
+  static List<GeoPoint> downsample(List<WalkTrackPoint> points) =>
+      downsamplePoints([for (final p in points) p.point]);
+
+  /// [downsample] 의 좌표판 — 공유 경로(`RoutePrivacy`)가 잘라 낸 뒤 줄일 때 쓴다.
+  static List<GeoPoint> downsamplePoints(List<GeoPoint> points) {
+    if (points.length <= maxPoints) return List.of(points);
     final last = points.length - 1;
     return [
       for (var i = 0; i < maxPoints; i++)
-        points[(i * last / (maxPoints - 1)).round()].point,
+        points[(i * last / (maxPoints - 1)).round()],
     ];
   }
 

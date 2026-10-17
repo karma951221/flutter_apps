@@ -11,9 +11,13 @@ import 'package:permission/permission.dart';
 import '../../data/database/walk_database.dart';
 import '../../data/social/supabase_auth_gateway.dart';
 import '../../data/social/supabase_auth_repository.dart';
+import '../../data/social/supabase_community_gateway.dart';
+import '../../data/social/supabase_community_repository.dart';
 import '../../data/social/unavailable_auth_repository.dart';
+import '../../data/social/unavailable_community_repository.dart';
 import '../../data/tracking/notification_permission_source.dart';
 import '../../domain/social/repository/auth_repository.dart';
+import '../../domain/social/repository/community_repository.dart';
 import '../supabase/social_availability.dart';
 
 /// getIt.reset · 테스트 해제 때 DB 를 닫는다.
@@ -56,5 +60,15 @@ abstract class RegisterModule {
           SupabaseClientAuthGateway(client),
         ),
         null => const UnavailableAuthRepository(),
+      };
+
+  /// [authRepository] 와 같은 판단 — 초기화가 실패했으면 늘 네트워크 실패인 대역.
+  @lazySingleton
+  CommunityRepository communityRepository(SocialAvailability social) =>
+      switch (social.client) {
+        final client? => SupabaseCommunityRepository(
+          SupabaseClientCommunityGateway(client),
+        ),
+        null => const UnavailableCommunityRepository(),
       };
 }

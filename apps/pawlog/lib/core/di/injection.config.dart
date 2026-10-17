@@ -34,6 +34,7 @@ import '../../domain/dog/repository/dog_repository.dart' as _i209;
 import '../../domain/export/repository/walk_file_sharer.dart' as _i524;
 import '../../domain/photo/repository/photo_storage.dart' as _i475;
 import '../../domain/social/repository/auth_repository.dart' as _i684;
+import '../../domain/social/repository/community_repository.dart' as _i659;
 import '../../domain/social/usecase/social_use_case.dart' as _i186;
 import '../../domain/tracking/repository/active_walk_store.dart' as _i845;
 import '../../domain/tracking/repository/walk_tracker.dart' as _i105;
@@ -70,6 +71,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i684.AuthRepository>(
       () => registerModule.authRepository(gh<_i671.SocialAvailability>()),
     );
+    gh.lazySingleton<_i659.CommunityRepository>(
+      () => registerModule.communityRepository(gh<_i671.SocialAvailability>()),
+    );
     gh.lazySingleton<_i524.WalkFileSharer>(
       () => _i1060.SharePlusWalkFileSharer(),
     );
@@ -91,12 +95,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i209.DogRepository>(
       () => _i40.DriftDogRepository(gh<_i563.WalkDatabase>()),
     );
-    gh.lazySingleton<_i186.SocialUseCase>(
-      () => _i186.DefaultSocialUseCase(gh<_i684.AuthRepository>()),
-    );
-    gh.factory<_i566.AuthCubit>(
-      () => _i566.AuthCubit(gh<_i186.SocialUseCase>()),
-    );
     gh.lazySingleton<_i612.WalkRepository>(
       () => _i1020.DriftWalkRepository(gh<_i563.WalkDatabase>()),
     );
@@ -108,6 +106,16 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i497.Directory>(instanceName: 'walkPhotosRoot'),
         gh<_i494.IdGenerator>(),
       ),
+    );
+    gh.lazySingleton<_i186.SocialUseCase>(
+      () => _i186.DefaultSocialUseCase(
+        gh<_i684.AuthRepository>(),
+        gh<_i612.WalkRepository>(),
+        gh<_i659.CommunityRepository>(),
+      ),
+    );
+    gh.factory<_i566.AuthCubit>(
+      () => _i566.AuthCubit(gh<_i186.SocialUseCase>()),
     );
     gh.lazySingleton<_i105.WalkTracker>(
       () => _i976.GeolocatorWalkTracker(
