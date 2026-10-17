@@ -3143,4 +3143,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkSocialUnshareOnDeleteFailed =>
       'Deleted the walk, but couldn\'t stop sharing it';
+
+  @override
+  String get walkSocialUpdateFailed =>
+      'Saved, but couldn\'t update the shared post';
 }

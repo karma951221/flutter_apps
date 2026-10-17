@@ -315,6 +315,56 @@ void main() {
     });
   });
 
+  group('updatePublished', () {
+    final draft = WalkPostDraft(
+      localWalkId: 'w1',
+      startedAt: DateTime.utc(2026, 10, 17, 8),
+      duration: const Duration(minutes: 30),
+      distanceMeters: 1200,
+      dogNames: const ['콩이', '보리'],
+      memo: '고친 메모',
+      routePreview: const [
+        GeoPoint(lat: 37.5, lng: 127.1),
+        GeoPoint(lat: 37.6, lng: 127),
+      ],
+    );
+
+    test('반려견 · 메모 · 경로만 update_walk_post 에 넘긴다(시각 · 거리는 그대로)', () async {
+      expect(_value(await repository.updatePublished(draft)), isTrue);
+
+      expect(gateway.updatedParams.single, {
+        'p_local_walk_id': 'w1',
+        'p_dog_names': ['콩이', '보리'],
+        'p_memo': '고친 메모',
+        'p_route_preview': [
+          {'lat': 37.5, 'lng': 127.1},
+          {'lat': 37.6, 'lng': 127},
+        ],
+      });
+    });
+
+    test('남은 경로가 없으면 null, 공유하지 않은 산책이면 false', () async {
+      gateway.updateResult = false;
+
+      final updated = _value(
+        await repository.updatePublished(
+          WalkPostDraft(
+            localWalkId: 'w2',
+            startedAt: DateTime.utc(2026, 10, 17, 8),
+            duration: Duration.zero,
+            distanceMeters: 0,
+            dogNames: const ['콩이'],
+            routePreview: const [],
+          ),
+        ),
+      );
+
+      expect(updated, isFalse);
+      expect(gateway.updatedParams.single['p_route_preview'], isNull);
+      expect(gateway.updatedParams.single['p_memo'], isNull);
+    });
+  });
+
   group('서버가 멈추면 동작마다 시간 안에 네트워크 실패로 끝난다', () {
     final draft = WalkPostDraft(
       localWalkId: 'w1',
@@ -328,6 +378,7 @@ void main() {
       'fetchPage': () => repository.fetchPage(),
       'publish': () => repository.publish(draft),
       'unpublish': () => repository.unpublish('w1'),
+      'updatePublished': () => repository.updatePublished(draft),
       'isPublished': () => repository.isPublished('w1'),
       'like': () => repository.like('p1'),
       'unlike': () => repository.unlike('p1'),

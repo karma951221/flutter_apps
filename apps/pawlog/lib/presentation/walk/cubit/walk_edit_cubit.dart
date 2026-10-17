@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../domain/dog/entity/dog.dart';
+import '../../../domain/social/usecase/social_use_case.dart';
 import '../../../domain/tracking/entity/tracker_state.dart';
 import '../../../domain/walk/entity/walk.dart';
 import '../../../domain/walk/usecase/walk_use_case.dart';
@@ -13,9 +14,18 @@ import 'walk_edit_state.dart';
 
 @injectable
 class WalkEditCubit extends Cubit<WalkEditState> {
-  WalkEditCubit(this._useCase) : super(const WalkEditState.loading());
+  WalkEditCubit(this._useCase, this._social)
+    : super(const WalkEditState.loading());
 
   final WalkUseCase _useCase;
+  final SocialUseCase _social;
+
+  /// 기존 산책을 고쳐 저장한 뒤 공유한 글에도 반영하는 중 — 반영했거나 고칠 글이 없으면 true.
+  ///
+  /// 저장은 이것을 기다리지 않는다(기록은 기기의 것이다). 화면은 저장 뒤 바로 닫히고, 이
+  /// cubit 이 닫힌 뒤에 끝날 수 있어 상태가 아니라 Future 로 내준다. 고치지 않았으면 null.
+  Future<bool>? get sharedPostUpdate => _sharedPostUpdate;
+  Future<bool>? _sharedPostUpdate;
 
   WalkEditForm? _form;
 
@@ -171,6 +181,12 @@ class WalkEditCubit extends Cubit<WalkEditState> {
     switch (result) {
       case Ok(value: final walk):
         _done = true;
+        // 새 산책은 아직 공유한 적이 없다.
+        if (!form.isNew) {
+          _sharedPostUpdate = _social
+              .updateSharedWalk(walk.id)
+              .then((result) => result is Ok);
+        }
         emit(WalkEditState.saved(walk.id));
       case Err(:final failure):
         emit(WalkEditState.editing(form: form, failure: failure));

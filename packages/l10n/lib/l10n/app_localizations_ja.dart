@@ -2937,4 +2937,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkSocialUnshareOnDeleteFailed => '散歩は削除しましたが、共有をやめられませんでした';
+
+  @override
+  String get walkSocialUpdateFailed => '記録は保存しましたが、共有した投稿は更新できませんでした';
 }

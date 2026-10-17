@@ -128,6 +128,22 @@ class _WalkEditViewState extends State<_WalkEditView> {
     }
   }
 
+  /// 공유한 글 고치기가 실패하면 알린다. 이 화면은 저장 뒤 바로 닫히므로, 남아 있는 앱
+  /// 바탕(최상위 Navigator — ScaffoldMessenger 아래)에 스낵바를 띄운다.
+  void _reportSharedPostUpdate(Future<bool>? update) {
+    if (update == null) return;
+    final host = Navigator.of(context, rootNavigator: true);
+    final message = AppLocalizations.of(context).walkSocialUpdateFailed;
+    update.then((updated) {
+      if (updated || !host.mounted) return;
+      AppSnackBar.show(
+        host.context,
+        message: message,
+        type: AppSnackBarType.error,
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -145,6 +161,7 @@ class _WalkEditViewState extends State<_WalkEditView> {
       listener: (context, state) {
         switch (state) {
           case WalkEditSaved(:final walkId):
+            _reportSharedPostUpdate(cubit.sharedPostUpdate);
             widget.onSaved(walkId);
           case WalkEditDiscarded():
             widget.onDiscarded();

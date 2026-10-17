@@ -2421,7 +2421,8 @@ pawlog(강아지 산책 앱)의 W5 소셜. 같은 프로젝트 · 같은 계정(
 `posts` 와 섞이지 않게 `walk_` 접두사를 붙인다. 산책 기록은 기기(drift)에 먼저 저장되고
 사용자가 고른 한 건만 여기로 올라온다. 의도와 결정은
 [pawlog social 계획](../../pawlog/docs/features/social/plan.md)에 있다.
-([20261017090722](../../../supabase/migrations/20261017090722_walk_posts.sql))
+([20261017090722](../../../supabase/migrations/20261017090722_walk_posts.sql) ·
+[20261017184727](../../../supabase/migrations/20261017184727_walk_post_update.sql) — `update_walk_post`)
 
 ```sql
 -- CHECK 안에서는 서브쿼리를 못 쓰므로 이름 원소 검사를 immutable 함수로 감싼다
@@ -2535,7 +2536,7 @@ grant select on public.walk_posts_with_author to anon, authenticated;
 ```
 
 - `walk_posts` 에 `insert` · `update` · `delete` 는 어떤 role 에도 없다. `author_id` 는
-  `publish_walk_post` 가 `auth.uid()` 로만 채운다.
+  `publish_walk_post` 가 `auth.uid()` 로만 채운다. 내용 고치기는 `update_walk_post` 로만 한다.
 - **SELECT 는 테이블 단위다**(§5 `posts` 와 같다). `deleted_at` 을 빼고 컬럼 단위로 주면
   `walk_post_likes_insert_own` 의 `exists` 서브쿼리가 조회자 권한으로 그 컬럼을 읽지 못해
   모든 좋아요가 `42501` 로 막힌다(2026-10-17 확인). 조회 정책이 삭제행을 가리므로 보이는
@@ -2573,6 +2574,17 @@ auth.uid() and deleted_at is null` 인 행의 `deleted_at = now()`. 바뀐 행�
 없거나 남의 것이거나 이미 취소했으면 `false`. 좋아요 행은 지우지 않는다 — 다시 공유하면
 돌아온다. 실행 권한은 `authenticated` 만.
 
+### `update_walk_post(p_local_walk_id uuid, p_dog_names text[], p_memo text, p_route_preview jsonb) → boolean`
+
+앱에서 산책을 고쳤을 때 공유 글에 반영하는 경로. `publish_walk_post` 와 달리 **`created_at` 을
+건드리지 않아** 글이 목록에서 제자리에 남는다. `auth.uid()` 가 null 이면 `42501`, 경로 모양
+검사(`22023`)는 `publish_walk_post` 와 같다. 그다음 `local_walk_id = p_local_walk_id and
+author_id = auth.uid() and deleted_at is null` 인 행의 `dog_names` · `memo` · `route_preview`
+만 바꾼다. 바뀐 행이 있으면 `true`, 공유한 적 없거나 · 공유 취소했거나 · 남의 것이면 `false`
+— **공유 취소한 글을 되살리지 않는다**(되살리기는 `publish_walk_post` 만). 개수 · 크기 ·
+이름 · 메모 길이는 테이블 CHECK(`23514`)가 막는다. `security definer`(update GRANT 없음),
+where 의 `author_id` 조건이 권한 경계다. 실행 권한은 `authenticated` 만.
+
 ### `walk_posts_with_author` (뷰, `security_invoker = on`)
 
 ```sql
@@ -2596,7 +2608,7 @@ null 이라 `liked_by_me` 는 `false` 다. 커서는 `walk_posts_created_at_idx`
 
 ### 검증한 것 (로컬 Supabase · PostgREST 경유)
 
-`supabase/tests/walk_posts_rls_check.py` 53건이 모두 통과한다(2026-10-17). 만든 사용자는
+`supabase/tests/walk_posts_rls_check.py` 67건이 모두 통과한다(2026-10-18). 만든 사용자는
 끝에 지운다.
 
 - **게스트.** 보기를 읽는다. `walk_posts` insert · update · delete 와 `publish_walk_post`
@@ -2604,6 +2616,10 @@ null 이라 `liked_by_me` 는 `false` 다. 커서는 `walk_posts_created_at_idx`
 - **공유 · 조회.** A 가 공유한 글을 B 와 게스트가 보기로 읽고 `author_nickname` 이 채워진다
 - **한 행.** 같은 `local_walk_id` 로 두 번 공유하면 같은 id 이고 행은 하나, 내용은 갱신된다
 - **남의 글.** B 의 `unpublish_walk_post(A 의 local_walk_id)` 는 `false` 이고 글은 남는다
+- **고치기(`update_walk_post`).** 작성자가 반려견 · 메모 · 경로를 고치면 보기에 반영되고
+  `created_at` 은 그대로다. 경로 null 로도 고친다. B 가 부르면 `false` 이고 글은 그대로,
+  게스트는 `401`, 공유하지 않은 산책은 `false`. 경로 모양은 `22023`, 65점 · 빈 반려견 ·
+  공백 이름 · 501자 메모는 `400`. 공유 취소한 글에 부르면 `false` 이고 되살아나지 않는다
 - **직접 쓰기.** 로그인해도 `INSERT` · upsert(`merge-duplicates`) · `PATCH` · `DELETE
   walk_posts` 는 `403`. `author_id` 위조 insert 도 `403`
 - **좋아요.** B 가 누르면 `like_count = 1`, B 의 `liked_by_me` 는 `true`, A · 게스트는 `false`.

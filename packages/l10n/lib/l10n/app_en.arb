@@ -925,5 +925,6 @@
   "walkSocialUnshared": "No longer shared",
   "walkSocialShareFailed": "Couldn't share the walk",
   "walkSocialLikeTooltip": "Like",
-  "walkSocialUnshareOnDeleteFailed": "Deleted the walk, but couldn't stop sharing it"
+  "walkSocialUnshareOnDeleteFailed": "Deleted the walk, but couldn't stop sharing it",
+  "walkSocialUpdateFailed": "Saved, but couldn't update the shared post"
 }

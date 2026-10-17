@@ -128,6 +128,94 @@ void main() {
     });
   });
 
+  group('updateSharedWalk', () {
+    setUp(() {
+      when(
+        () => community.updatePublished(any()),
+      ).thenAnswer((_) async => const Ok(true));
+    });
+
+    test('로그인하지 않았으면 서버에 묻지 않고 Ok', () async {
+      when(() => auth.current).thenReturn(null);
+
+      expect(await useCase.updateSharedWalk('w1'), isA<Ok<void>>());
+      verifyNever(() => walks.findById(any()));
+      verifyNever(() => community.updatePublished(any()));
+    });
+
+    test('로그인했으면 공유와 같은 초안(경로 앞뒤 자르기)으로 고친다', () async {
+      expect(await useCase.updateSharedWalk('w1'), isA<Ok<void>>());
+
+      final draft =
+          verify(() => community.updatePublished(captureAny())).captured.single
+              as WalkPostDraft;
+      final track = _track(90);
+      expect(draft, WalkPostDraft.fromWalk(walk(), track));
+      expect(draft.routePreview.first, isNot(track.first.point));
+      expect(draft.routePreview.last, isNot(track.last.point));
+    });
+
+    test('공유하지 않은 산책이면(RPC false) 그대로 Ok', () async {
+      when(
+        () => community.updatePublished(any()),
+      ).thenAnswer((_) async => const Ok(false));
+
+      expect(await useCase.updateSharedWalk('w1'), isA<Ok<void>>());
+    });
+
+    test('서버 실패는 그대로 낸다', () async {
+      when(() => community.updatePublished(any())).thenAnswer(
+        (_) async => const Err(
+          Failure.network(failureCode: FailureCode.networkUnavailable),
+        ),
+      );
+
+      expect(
+        _codeOf(await useCase.updateSharedWalk('w1')),
+        FailureCode.networkUnavailable,
+      );
+    });
+
+    test('없는 산책이면 walkNotFound', () async {
+      when(() => walks.findById('w1')).thenAnswer((_) async => const Ok(null));
+
+      expect(
+        _codeOf(await useCase.updateSharedWalk('w1')),
+        FailureCode.walkNotFound,
+      );
+      verifyNever(() => community.updatePublished(any()));
+    });
+
+    group('반려견이 하나도 없으면(서버는 1~10마리)', () {
+      setUp(() {
+        when(
+          () => walks.findById('w1'),
+        ).thenAnswer((_) async => Ok(walk(dogs: const [])));
+      });
+
+      test('공유하지 않은 산책은 Ok — 고칠 글이 없다', () async {
+        when(
+          () => community.isPublished('w1'),
+        ).thenAnswer((_) async => const Ok(false));
+
+        expect(await useCase.updateSharedWalk('w1'), isA<Ok<void>>());
+        verifyNever(() => community.updatePublished(any()));
+      });
+
+      test('공유한 산책은 walkDogRequired', () async {
+        when(
+          () => community.isPublished('w1'),
+        ).thenAnswer((_) async => const Ok(true));
+
+        expect(
+          _codeOf(await useCase.updateSharedWalk('w1')),
+          FailureCode.walkDogRequired,
+        );
+        verifyNever(() => community.updatePublished(any()));
+      });
+    });
+  });
+
   group('isWalkShared', () {
     test('로그인하지 않았으면 서버에 묻지 않고 false', () async {
       when(() => auth.current).thenReturn(null);

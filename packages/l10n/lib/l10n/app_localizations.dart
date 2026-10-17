@@ -5539,6 +5539,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'산책은 지웠지만 공유를 취소하지 못했어요'**
   String get walkSocialUnshareOnDeleteFailed;
+
+  /// 산책을 고친 뒤 공유한 글 고치기가 실패한 스낵바(기록은 저장됐다)
+  ///
+  /// In ko, this message translates to:
+  /// **'기록은 고쳤지만 공유한 글은 바꾸지 못했어요'**
+  String get walkSocialUpdateFailed;
 }
 
 class _AppLocalizationsDelegate

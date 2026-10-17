@@ -84,6 +84,17 @@ def publish(token, body):
     return call("POST", "/rest/v1/rpc/publish_walk_post", token, body)
 
 
+def update(token, local_walk_id, **overrides):
+    body = {
+        "p_local_walk_id": local_walk_id,
+        "p_dog_names": ["콩이", "보리"],
+        "p_memo": "고친 메모",
+        "p_route_preview": [{"lat": 37.5, "lng": 127.0}, {"lat": 37.502, "lng": 127.002}],
+    }
+    body.update(overrides)
+    return call("POST", "/rest/v1/rpc/update_walk_post", token, body)
+
+
 def unpublish(token, local_walk_id):
     return call("POST", "/rest/v1/rpc/unpublish_walk_post", token,
                 {"p_local_walk_id": local_walk_id})
@@ -140,6 +151,56 @@ check("여전히 한 행이고 내용이 갱신된다",
       st == 200 and len(rows) == 1 and rows[0]["memo"] == "고친 메모"
       and rows[0]["dog_names"] == ["콩이", "보리"],
       f"{st} {str(rows)[:80]}")
+
+# --- 공유 글 고치기(update_walk_post) — created_at 은 그대로 ----------------------------
+st, rows = call("GET", f"/rest/v1/walk_posts?select=created_at&id=eq.{post_id}", A)
+created_before = rows[0]["created_at"] if st == 200 and rows else None
+
+st, ok = update(A, walk_a, p_memo="산책을 고쳤다", p_dog_names=["콩이", "보리", "쿠키"])
+st2, row = view_row(B, post_id)
+check("작성자가 update RPC 로 공유 글을 고친다",
+      st == 200 and ok is True and row is not None and row["memo"] == "산책을 고쳤다"
+      and row["dog_names"] == ["콩이", "보리", "쿠키"]
+      and row["route_preview"][1] == {"lat": 37.502, "lng": 127.002},
+      f"{st} {ok} {str(row)[:80]}")
+check("고쳐도 created_at 은 그대로다 (목록 위치 유지)",
+      created_before is not None and row is not None and row["created_at"] == created_before,
+      f"{created_before} → {row and row['created_at']}")
+
+st, ok = update(A, walk_a, p_memo="산책을 고쳤다", p_route_preview=None)
+st2, row = view_row(B, post_id)
+check("경로 없이 고칠 수 있다", ok is True and row and row["route_preview"] is None, f"{st} {ok}")
+
+st, ok = update(B, walk_a, p_memo="남이 고침")
+st2, row = view_row(B, post_id)
+check("B 는 A 의 글을 못 고친다 (false · 그대로)",
+      st == 200 and ok is False and row and row["memo"] == "산책을 고쳤다", f"{st} {ok}")
+
+st, body = update(ANON, walk_a, p_memo="anon")
+st2, row = view_row(B, post_id)
+check("anon 은 update RPC 를 못 부른다",
+      st in (401, 403, 404) and row and row["memo"] == "산책을 고쳤다", f"{st} {str(body)[:60]}")
+
+st, ok = update(A, str(uuid.uuid4()))
+check("공유하지 않은 산책을 고치면 false", st == 200 and ok is False, f"{st} {ok}")
+
+for label, bad in (("배열이 아닌", {"lat": 1, "lng": 2}),
+                   ("lat 이 문자열인", [{"lat": "37.5", "lng": 127.0}])):
+    st, body = update(A, walk_a, p_route_preview=bad)
+    check(f"update: {label} route_preview 는 거부된다 (22023)",
+          st == 400 and isinstance(body, dict) and body.get("code") == "22023",
+          f"{st} {str(body)[:80]}")
+
+too_long = [{"lat": 37.5 + i * 1e-4, "lng": 127.0} for i in range(65)]
+for label, overrides in (("64점 넘는 경로", {"p_route_preview": too_long}),
+                         ("빈 반려견", {"p_dog_names": []}),
+                         ("공백 반려견 이름", {"p_dog_names": ["  "]}),
+                         ("501자 메모", {"p_memo": "가" * 501})):
+    st, body = update(A, walk_a, **overrides)
+    check(f"update: {label} 는 CHECK 로 거부된다", st == 400, f"{st} {str(body)[:80]}")
+
+st2, row = view_row(B, post_id)
+check("거부된 update 뒤에도 글은 그대로다", row and row["memo"] == "산책을 고쳤다", str(row)[:60])
 
 # --- 남의 글은 공유 취소 못 함 ----------------------------------------------------
 st, ok = unpublish(B, walk_a)
@@ -225,6 +286,11 @@ check("공유 취소한 글엔 좋아요가 거부된다", st in (401, 403), f"{
 
 st, ok = unpublish(A, walk_a)
 check("이미 취소한 글을 다시 취소하면 false", ok is False, f"{st} {ok}")
+
+st, ok = update(A, walk_a, p_memo="되살리지 마")
+st2, row = view_row(B, post_id)
+check("공유 취소한 글은 update 로 되살아나지 않는다 (false · 안 보임)",
+      st == 200 and ok is False and row is None, f"{st} {ok} {str(row)[:60]}")
 
 st, again = publish(A, walk(walk_a))
 check("다시 공유하면 같은 id 로 되살아난다", again == post_id, f"{st} {again}")

@@ -105,7 +105,7 @@ void main() {
       ..registerFactory<WalkDetailCubit>(
         () => WalkDetailCubit(useCase, MockWalkFileSharer()),
       )
-      ..registerFactory<WalkEditCubit>(() => WalkEditCubit(useCase))
+      ..registerFactory<WalkEditCubit>(() => WalkEditCubit(useCase, social))
       ..registerFactory<ActiveWalkCubit>(
         () => ActiveWalkCubit(useCase, const Clock()),
       )

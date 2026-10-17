@@ -17,6 +17,8 @@ class FakeCommunityGateway implements SupabaseCommunityGateway {
   final publishedParams = <Map<String, dynamic>>[];
   String publishedId = 'p1';
   bool unpublishResult = true;
+  final updatedParams = <Map<String, dynamic>>[];
+  bool updateResult = true;
   final unpublished = <String>[];
 
   /// `(authorId, localWalkId)` 로 살아 있는 글.
@@ -62,6 +64,12 @@ class FakeCommunityGateway implements SupabaseCommunityGateway {
   Future<bool> unpublish(String localWalkId) => _hangOr(() async {
     unpublished.add(localWalkId);
     return unpublishResult;
+  });
+
+  @override
+  Future<bool> update(Map<String, dynamic> params) => _hangOr(() async {
+    updatedParams.add(params);
+    return updateResult;
   });
 
   @override

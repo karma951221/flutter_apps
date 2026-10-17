@@ -153,6 +153,10 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i347.BackupFilePicker>(),
       ),
     );
+    gh.factory<_i804.WalkEditCubit>(
+      () =>
+          _i804.WalkEditCubit(gh<_i5.WalkUseCase>(), gh<_i186.SocialUseCase>()),
+    );
     gh.factory<_i174.WalkDetailCubit>(
       () => _i174.WalkDetailCubit(
         gh<_i5.WalkUseCase>(),
@@ -164,9 +168,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i596.DogListCubit>(
       () => _i596.DogListCubit(gh<_i5.WalkUseCase>()),
-    );
-    gh.factory<_i804.WalkEditCubit>(
-      () => _i804.WalkEditCubit(gh<_i5.WalkUseCase>()),
     );
     gh.factory<_i733.WalkFeedCubit>(
       () => _i733.WalkFeedCubit(gh<_i5.WalkUseCase>(), gh<_i494.Clock>()),

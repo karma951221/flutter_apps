@@ -28,6 +28,9 @@ abstract interface class SupabaseCommunityGateway {
   /// `unpublish_walk_post` RPC. 바뀐 행이 있으면 true.
   Future<bool> unpublish(String localWalkId);
 
+  /// `update_walk_post` RPC. 공유 중인 내 글이 바뀌었으면 true.
+  Future<bool> update(Map<String, dynamic> params);
+
   /// 내 좋아요 — `post_id` 만 넣는다(열 GRANT). 겹치면 23505(409)를 던진다.
   Future<void> insertLike(String postId);
 
@@ -95,6 +98,10 @@ class SupabaseClientCommunityGateway implements SupabaseCommunityGateway {
             params: {'p_local_walk_id': localWalkId},
           )
           as bool;
+
+  @override
+  Future<bool> update(Map<String, dynamic> params) async =>
+      await _client.rpc<dynamic>('update_walk_post', params: params) as bool;
 
   @override
   Future<void> insertLike(String postId) async {

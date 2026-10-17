@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -15,12 +16,14 @@ import 'package:pawlog/presentation/walk/page/walk_edit_page.dart';
 
 import '../../../support/fakes.dart';
 import '../../../support/mock_image_picker_service.dart';
+import '../../../support/mock_social_use_case.dart';
 import '../../../support/mock_walk_use_case.dart';
 import '../../../support/pump_app.dart';
 
 void main() {
   late MockWalkUseCase useCase;
   late MockImagePickerService picker;
+  late MockSocialUseCase social;
 
   setUpAll(() {
     registerFallbackValue(Uint8List(0));
@@ -43,6 +46,10 @@ void main() {
   setUp(() {
     useCase = MockWalkUseCase();
     picker = MockImagePickerService();
+    social = MockSocialUseCase();
+    when(
+      () => social.updateSharedWalk(any()),
+    ).thenAnswer((_) async => const Ok(null));
     when(() => useCase.trackerState).thenReturn(
       TrackerState.finished(
         walkSession(
@@ -61,7 +68,7 @@ void main() {
       () => useCase.discardWalk(photoPaths: any(named: 'photoPaths')),
     ).thenAnswer((_) async {});
     getIt
-      ..registerFactory<WalkEditCubit>(() => WalkEditCubit(useCase))
+      ..registerFactory<WalkEditCubit>(() => WalkEditCubit(useCase, social))
       ..registerSingleton<ImagePickerService>(picker);
   });
   tearDown(getIt.reset);
@@ -272,6 +279,75 @@ void main() {
 
       verify(() => useCase.updateWalk(any())).called(1);
       expect(saved, ['w1']);
+    });
+
+    group('공유한 글 고치기', () {
+      const failedMessage = '기록은 고쳤지만 공유한 글은 바꾸지 못했어요';
+
+      /// 상세에서 수정 화면을 올리고, 저장하면 닫는다(라우터와 같은 흐름).
+      Future<void> openEditFromHost(WidgetTester tester) async {
+        useTallScreen(tester);
+        when(
+          () => useCase.updateWalk(any()),
+        ).thenAnswer((_) async => Ok(walk()));
+        await pumpApp(
+          tester,
+          Builder(
+            builder: (host) => Scaffold(
+              body: TextButton(
+                onPressed: () => Navigator.of(host).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => WalkEditPage(
+                      walkId: 'w1',
+                      onSaved: (_) => Navigator.of(host).pop(),
+                      onDiscarded: () {},
+                    ),
+                  ),
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+      }
+
+      testWidgets('실패해도 기록은 저장되고 화면이 닫힌 뒤 스낵바를 보인다', (tester) async {
+        final server = Completer<Result<void>>();
+        when(
+          () => social.updateSharedWalk('w1'),
+        ).thenAnswer((_) => server.future);
+        await openEditFromHost(tester);
+
+        await tester.tap(find.byKey(const Key('walk-edit-save-button')));
+        await tester.pumpAndSettle();
+
+        // 서버를 기다리지 않고 닫힌다.
+        verify(() => useCase.updateWalk(any())).called(1);
+        expect(find.byType(WalkEditPage), findsNothing);
+        expect(find.text(failedMessage), findsNothing);
+
+        server.complete(
+          const Err(
+            Failure.network(failureCode: FailureCode.networkUnavailable),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text(failedMessage), findsOneWidget);
+      });
+
+      testWidgets('성공하면 스낵바가 없다', (tester) async {
+        await openEditFromHost(tester);
+
+        await tester.tap(find.byKey(const Key('walk-edit-save-button')));
+        await tester.pumpAndSettle();
+
+        verify(() => social.updateSharedWalk('w1')).called(1);
+        expect(find.byType(WalkEditPage), findsNothing);
+        expect(find.text(failedMessage), findsNothing);
+      });
     });
 
     testWidgets('기존 사진을 빼도 파일은 지우지 않는다', (tester) async {

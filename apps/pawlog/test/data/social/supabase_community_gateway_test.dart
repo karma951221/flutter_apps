@@ -99,6 +99,15 @@ void main() {
     expect(await gateway.unpublish('w1'), isFalse);
   });
 
+  test('update 는 update_walk_post 의 boolean 을 돌려준다', () async {
+    final params = {'p_local_walk_id': 'w1'};
+    when(
+      () => client.rpc<dynamic>('update_walk_post', params: params),
+    ).thenAnswer((_) => _FakeBuilder<dynamic>(true));
+
+    expect(await gateway.update(params), isTrue);
+  });
+
   test('fetchPosts 는 보기를 (created_at desc, id desc) 로 읽고 커서 뒤만 거른다', () async {
     final builder = _FakeBuilder<PostgrestList>([
       {'id': 'p1'},

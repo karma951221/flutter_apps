@@ -15,6 +15,10 @@ abstract interface class CommunityRepository {
   /// 공유하고 글 id 를 돌려준다. 같은 산책을 다시 공유하면 그 글을 갱신해 맨 위로 올린다.
   Future<Result<String>> publish(WalkPostDraft draft);
 
+  /// 공유 중인 글의 반려견 · 메모 · 경로를 [draft] 로 고친다. 목록 위치(`created_at`)는 그대로.
+  /// 고친 글이 있으면 true, 공유하지 않았거나 공유 취소한 산책이면 false(되살리지 않는다).
+  Future<Result<bool>> updatePublished(WalkPostDraft draft);
+
   /// 공유 취소. 공유한 적 없는 산책이어도 Ok.
   Future<Result<void>> unpublish(String localWalkId);
 

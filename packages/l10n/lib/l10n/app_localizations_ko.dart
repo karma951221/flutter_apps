@@ -2939,4 +2939,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkSocialUnshareOnDeleteFailed => '산책은 지웠지만 공유를 취소하지 못했어요';
+
+  @override
+  String get walkSocialUpdateFailed => '기록은 고쳤지만 공유한 글은 바꾸지 못했어요';
 }

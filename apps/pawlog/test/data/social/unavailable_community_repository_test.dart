@@ -25,6 +25,7 @@ void main() {
       await repository.fetchPage(),
       await repository.publish(draft),
       await repository.unpublish('w1'),
+      await repository.updatePublished(draft),
       await repository.isPublished('w1'),
       await repository.like('p1'),
       await repository.unlike('p1'),

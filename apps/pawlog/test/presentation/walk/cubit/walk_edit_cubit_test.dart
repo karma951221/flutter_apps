@@ -16,6 +16,7 @@ import 'package:pawlog/presentation/walk/cubit/walk_edit_form.dart';
 import 'package:pawlog/presentation/walk/cubit/walk_edit_state.dart';
 
 import '../../../support/fakes.dart';
+import '../../../support/mock_social_use_case.dart';
 import '../../../support/mock_walk_use_case.dart';
 
 PreparedImage _image() => PreparedImage(
@@ -32,6 +33,7 @@ WalkPhoto _photo(String path, int position) =>
 void main() {
   _formDurationTest();
   late MockWalkUseCase useCase;
+  late MockSocialUseCase social;
   late WalkSession session;
 
   setUpAll(() {
@@ -54,6 +56,10 @@ void main() {
 
   setUp(() {
     useCase = MockWalkUseCase();
+    social = MockSocialUseCase();
+    when(
+      () => social.updateSharedWalk(any()),
+    ).thenAnswer((_) async => const Ok(null));
     session = walkSession(
       points: [trackPoint(37.5)],
       distanceMeters: 800,
@@ -96,7 +102,7 @@ void main() {
 
   blocTest<WalkEditCubit, WalkEditState>(
     'finished 세션에서 폼을 만든다',
-    build: () => WalkEditCubit(useCase),
+    build: () => WalkEditCubit(useCase, social),
     act: (cubit) => cubit.loadNew(),
     expect: () => [
       const WalkEditState.loading(),
@@ -108,7 +114,7 @@ void main() {
     '세션이 없으면 loadFailure',
     setUp: () =>
         when(() => useCase.trackerState).thenReturn(const TrackerState.idle()),
-    build: () => WalkEditCubit(useCase),
+    build: () => WalkEditCubit(useCase, social),
     act: (cubit) => cubit.loadNew(),
     expect: () => [
       const WalkEditState.loading(),
@@ -126,7 +132,7 @@ void main() {
     setUp: () => when(
       () => useCase.trackerState,
     ).thenReturn(TrackerState.tracking(session)),
-    build: () => WalkEditCubit(useCase),
+    build: () => WalkEditCubit(useCase, social),
     act: (cubit) => cubit.loadNew(),
     expect: () => [const WalkEditState.loading(), isA<WalkEditLoadFailure>()],
   );
@@ -136,7 +142,7 @@ void main() {
     setUp: () => when(() => useCase.getWalk('w1')).thenAnswer(
       (_) async => Ok(walk(photos: [_photo('a.jpg', 0)]).copyWith(memo: '메모')),
     ),
-    build: () => WalkEditCubit(useCase),
+    build: () => WalkEditCubit(useCase, social),
     act: (cubit) => cubit.loadExisting('w1'),
     expect: () => [
       const WalkEditState.loading(),
@@ -159,7 +165,7 @@ void main() {
     setUp: () => when(
       () => useCase.getWalk('w1'),
     ).thenAnswer((_) async => const Ok(null)),
-    build: () => WalkEditCubit(useCase),
+    build: () => WalkEditCubit(useCase, social),
     act: (cubit) => cubit.loadExisting('w1'),
     expect: () => [
       const WalkEditState.loading(),
@@ -173,7 +179,7 @@ void main() {
 
   blocTest<WalkEditCubit, WalkEditState>(
     '강아지를 토글하고 메모를 바꾼다',
-    build: () => WalkEditCubit(useCase),
+    build: () => WalkEditCubit(useCase, social),
     act: (cubit) async {
       await cubit.loadNew();
       cubit
@@ -190,7 +196,7 @@ void main() {
   blocTest<WalkEditCubit, WalkEditState>(
     '사진 추가가 storePhoto 를 부르고 경로를 쌓는다',
     setUp: () => stubStore(['n1.jpg', 'n2.jpg']),
-    build: () => WalkEditCubit(useCase),
+    build: () => WalkEditCubit(useCase, social),
     act: (cubit) async {
       await cubit.loadNew();
       await cubit.addPhotos([_image(), _image()]);
@@ -212,7 +218,7 @@ void main() {
           Ok(walk(photos: [for (var i = 0; i < 9; i++) _photo('p$i.jpg', i)])),
     );
     stubStore(['n1.jpg']);
-    final cubit = WalkEditCubit(useCase);
+    final cubit = WalkEditCubit(useCase, social);
     await cubit.loadExisting('w1');
     await cubit.addPhotos([_image(), _image(), _image()]);
 
@@ -243,7 +249,7 @@ void main() {
         ),
       ).thenAnswer((_) async => results.removeAt(0));
     },
-    build: () => WalkEditCubit(useCase),
+    build: () => WalkEditCubit(useCase, social),
     act: (cubit) async {
       await cubit.loadNew();
       await cubit.addPhotos([_image(), _image()]);
@@ -270,7 +276,7 @@ void main() {
         () => useCase.getWalk('w1'),
       ).thenAnswer((_) async => Ok(walk(photos: [_photo('old.jpg', 0)])));
       stubStore(['new.jpg']);
-      final cubit = WalkEditCubit(useCase);
+      final cubit = WalkEditCubit(useCase, social);
       await cubit.loadExisting('w1');
       await cubit.addPhotos([_image()]);
       expect(formOf(cubit).photoPaths, ['old.jpg', 'new.jpg']);
@@ -293,7 +299,7 @@ void main() {
         stubStore(['n1.jpg']);
         when(() => useCase.saveWalk(any())).thenAnswer((_) async => Ok(walk()));
       },
-      build: () => WalkEditCubit(useCase),
+      build: () => WalkEditCubit(useCase, social),
       act: (cubit) async {
         await cubit.loadNew();
         cubit.setMemo('  좋았다  ');
@@ -330,7 +336,7 @@ void main() {
           Failure.validation(failureCode: FailureCode.walkDogRequired),
         ),
       ),
-      build: () => WalkEditCubit(useCase),
+      build: () => WalkEditCubit(useCase, social),
       act: (cubit) async {
         await cubit.loadNew();
         await cubit.save();
@@ -359,7 +365,7 @@ void main() {
           () => useCase.updateWalk(any()),
         ).thenAnswer((_) async => Ok(walk()));
       },
-      build: () => WalkEditCubit(useCase),
+      build: () => WalkEditCubit(useCase, social),
       act: (cubit) async {
         await cubit.loadExisting('w1');
         cubit
@@ -382,6 +388,72 @@ void main() {
       },
     );
 
+    group('공유한 글 고치기', () {
+      setUp(() {
+        when(() => useCase.getWalk('w1')).thenAnswer((_) async => Ok(walk()));
+        when(
+          () => useCase.updateWalk(any()),
+        ).thenAnswer((_) async => Ok(walk()));
+      });
+
+      test('수정 저장이 성공하면 공유 글도 고친다 — 결과는 sharedPostUpdate', () async {
+        final cubit = WalkEditCubit(useCase, social);
+        await cubit.loadExisting('w1');
+        cubit.setMemo('고친 메모');
+        await cubit.save();
+
+        expect(cubit.state, const WalkEditState.saved('w1'));
+        verify(() => social.updateSharedWalk('w1')).called(1);
+        expect(await cubit.sharedPostUpdate, isTrue);
+        await cubit.close();
+      });
+
+      test('공유 글 고치기가 실패해도 저장은 saved — sharedPostUpdate 는 false', () async {
+        final server = Completer<Result<void>>();
+        when(
+          () => social.updateSharedWalk('w1'),
+        ).thenAnswer((_) => server.future);
+        final cubit = WalkEditCubit(useCase, social);
+        await cubit.loadExisting('w1');
+        await cubit.save();
+
+        // 서버를 기다리지 않고 저장이 끝난다.
+        expect(cubit.state, const WalkEditState.saved('w1'));
+        await cubit.close();
+        server.complete(
+          const Err(
+            Failure.network(failureCode: FailureCode.networkUnavailable),
+          ),
+        );
+        expect(await cubit.sharedPostUpdate, isFalse);
+      });
+
+      test('수정 저장이 실패하면 공유 글을 건드리지 않는다', () async {
+        when(() => useCase.updateWalk(any())).thenAnswer(
+          (_) async =>
+              const Err(Failure.unknown(failureCode: FailureCode.invalidData)),
+        );
+        final cubit = WalkEditCubit(useCase, social);
+        await cubit.loadExisting('w1');
+        await cubit.save();
+
+        verifyNever(() => social.updateSharedWalk(any()));
+        expect(cubit.sharedPostUpdate, isNull);
+        await cubit.close();
+      });
+
+      test('새 산책 저장은 공유 글을 찾지 않는다 — 아직 공유한 적이 없다', () async {
+        when(() => useCase.saveWalk(any())).thenAnswer((_) async => Ok(walk()));
+        final cubit = WalkEditCubit(useCase, social);
+        await cubit.loadNew();
+        await cubit.save();
+
+        expect(cubit.state, const WalkEditState.saved('w1'));
+        verifyNever(() => social.updateSharedWalk(any()));
+        await cubit.close();
+      });
+    });
+
     test('저장 중에 늦게 끝난 addPhotos 는 파일을 지운다', () async {
       final store = Completer<Result<String>>();
       when(
@@ -393,7 +465,7 @@ void main() {
       final saving = Completer<Result<Walk>>();
       when(() => useCase.saveWalk(any())).thenAnswer((_) => saving.future);
 
-      final cubit = WalkEditCubit(useCase);
+      final cubit = WalkEditCubit(useCase, social);
       await cubit.loadNew();
       final adding = cubit.addPhotos([_image()]);
       final save = cubit.save();
@@ -411,7 +483,7 @@ void main() {
   blocTest<WalkEditCubit, WalkEditState>(
     '버리면 discardWalk 를 부르고 discarded',
     setUp: () => stubStore(['n1.jpg']),
-    build: () => WalkEditCubit(useCase),
+    build: () => WalkEditCubit(useCase, social),
     act: (cubit) async {
       await cubit.loadNew();
       await cubit.addPhotos([_image()]);
@@ -425,7 +497,7 @@ void main() {
 
   test('수정 모드에서는 discard 가 discardWalk 를 부르지 않는다', () async {
     when(() => useCase.getWalk('w1')).thenAnswer((_) async => Ok(walk()));
-    final cubit = WalkEditCubit(useCase);
+    final cubit = WalkEditCubit(useCase, social);
     await cubit.loadExisting('w1');
     await cubit.discard();
 
@@ -438,7 +510,7 @@ void main() {
 
   test('저장 안 하고 닫으면 새 사진을 지운다', () async {
     stubStore(['n1.jpg']);
-    final cubit = WalkEditCubit(useCase);
+    final cubit = WalkEditCubit(useCase, social);
     await cubit.loadNew();
     await cubit.addPhotos([_image()]);
     await cubit.close();
@@ -454,7 +526,7 @@ void main() {
       () => useCase.getWalk('w1'),
     ).thenAnswer((_) async => Ok(walk(photos: [_photo('old.jpg', 0)])));
     stubStore(['n1.jpg']);
-    final cubit = WalkEditCubit(useCase);
+    final cubit = WalkEditCubit(useCase, social);
     await cubit.loadExisting('w1');
     await cubit.addPhotos([_image()]);
     await cubit.close();
@@ -469,7 +541,7 @@ void main() {
   test('저장했으면 닫아도 사진을 지우지 않는다', () async {
     stubStore(['n1.jpg']);
     when(() => useCase.saveWalk(any())).thenAnswer((_) async => Ok(walk()));
-    final cubit = WalkEditCubit(useCase);
+    final cubit = WalkEditCubit(useCase, social);
     await cubit.loadNew();
     await cubit.addPhotos([_image()]);
     await cubit.save();
@@ -486,7 +558,7 @@ void main() {
         extension: any(named: 'extension'),
       ),
     ).thenAnswer((_) => store.future);
-    final cubit = WalkEditCubit(useCase);
+    final cubit = WalkEditCubit(useCase, social);
     await cubit.loadNew();
     final adding = cubit.addPhotos([_image()]);
     await cubit.close();
@@ -506,7 +578,7 @@ void main() {
 
     test('닫힌 뒤 저장이 실패하면 새 사진을 지운다', () async {
       final saving = stubSaving();
-      final cubit = WalkEditCubit(useCase);
+      final cubit = WalkEditCubit(useCase, social);
       await cubit.loadNew();
       await cubit.addPhotos([_image()]);
       final save = cubit.save();
@@ -523,7 +595,7 @@ void main() {
 
     test('닫힌 뒤 저장이 성공하면 사진은 산책 것이라 지우지 않는다', () async {
       final saving = stubSaving();
-      final cubit = WalkEditCubit(useCase);
+      final cubit = WalkEditCubit(useCase, social);
       await cubit.loadNew();
       await cubit.addPhotos([_image()]);
       final save = cubit.save();

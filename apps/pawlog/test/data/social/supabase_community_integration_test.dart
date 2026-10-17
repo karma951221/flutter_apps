@@ -143,4 +143,46 @@ void main() {
       value(await repository.unpublish('00000000-0000-4000-9000-$suffix'));
     }
   });
+
+  test('공유한 산책을 고치면 새 메모가 보이고 목록 위치는 그대로다', () async {
+    value(
+      await auth.signUp(
+        'pawlog_u_$stamp@example.com',
+        'password123',
+        'pu$stamp',
+      ),
+    );
+    WalkPostDraft draftOf(String suffix, {String? memo}) => WalkPostDraft(
+      localWalkId: '00000000-0000-4000-a000-$suffix',
+      startedAt: DateTime(2026, 10, 18),
+      duration: const Duration(minutes: 20),
+      distanceMeters: 900,
+      dogNames: const ['콩이'],
+      memo: memo,
+      routePreview: const [],
+    );
+    final older = value(
+      await repository.publish(draftOf('000000000001', memo: '처음 메모')),
+    );
+    final newer = value(await repository.publish(draftOf('000000000002')));
+
+    final updated = value(
+      await repository.updatePublished(draftOf('000000000001', memo: '고친 메모')),
+    );
+
+    expect(updated, isTrue);
+    final page = value(await repository.fetchPage(limit: 2));
+    expect([for (final p in page.items) p.id], [newer, older]);
+    expect(page.items.last.memo, '고친 메모');
+
+    for (final suffix in ['000000000001', '000000000002']) {
+      value(await repository.unpublish('00000000-0000-4000-a000-$suffix'));
+    }
+    // 공유 취소한 글은 고쳐도 되살아나지 않는다.
+    expect(
+      value(await repository.updatePublished(draftOf('000000000001'))),
+      isFalse,
+    );
+    expect(await findInFirstPage(older), isNull);
+  });
 }

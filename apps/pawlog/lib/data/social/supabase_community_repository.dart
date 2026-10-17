@@ -70,6 +70,16 @@ class SupabaseCommunityRepository
       _guarded(() => _gateway.publish(_paramsOf(draft)));
 
   @override
+  Future<Result<bool>> updatePublished(WalkPostDraft draft) => _guarded(
+    () => _gateway.update({
+      'p_local_walk_id': draft.localWalkId,
+      'p_dog_names': draft.dogNames,
+      'p_memo': draft.memo,
+      'p_route_preview': _routeParamOf(draft),
+    }),
+  );
+
+  @override
   Future<Result<void>> unpublish(String localWalkId) =>
       _guarded(() => _gateway.unpublish(localWalkId));
 
@@ -105,13 +115,16 @@ class SupabaseCommunityRepository
     'p_distance_meters': draft.distanceMeters,
     'p_dog_names': draft.dogNames,
     'p_memo': draft.memo,
-    // 남은 경로가 없으면 경로 없이 공유한다(plan 결정 4).
-    'p_route_preview': draft.routePreview.isEmpty
-        ? null
-        : [
-            for (final p in draft.routePreview) {'lat': p.lat, 'lng': p.lng},
-          ],
+    'p_route_preview': _routeParamOf(draft),
   };
+
+  /// 남은 경로가 없으면 경로 없이 공유한다(plan 결정 4).
+  static List<Map<String, double>>? _routeParamOf(WalkPostDraft draft) =>
+      draft.routePreview.isEmpty
+      ? null
+      : [
+          for (final p in draft.routePreview) {'lat': p.lat, 'lng': p.lng},
+        ];
 
   static WalkPost _toPost(Map<String, dynamic> row) => WalkPost(
     id: row['id'] as String,

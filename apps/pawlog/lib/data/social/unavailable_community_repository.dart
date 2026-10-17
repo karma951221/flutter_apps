@@ -24,6 +24,10 @@ class UnavailableCommunityRepository implements CommunityRepository {
       const Err(_failure);
 
   @override
+  Future<Result<bool>> updatePublished(WalkPostDraft draft) async =>
+      const Err(_failure);
+
+  @override
   Future<Result<void>> unpublish(String localWalkId) async =>
       const Err(_failure);
 
