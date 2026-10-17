@@ -154,11 +154,14 @@ void main() {
     verifyNoWrites();
   });
 
-  test('모두 새것이면 반려견 먼저 쓰고 imported(2, 3)', () async {
+  test('모두 새것이면 사진 → 반려견 → 산책 순서로 쓰고 imported(2, 3)', () async {
     final result = await scenario();
 
     expect(result, const BackupImportResult.imported(2, 3));
     verifyInOrder([
+      () => photos.write('dogs/d1.jpg', zipPhotos['dogs/d1.jpg']!),
+      () => photos.write('walks/p1.jpg', zipPhotos['walks/p1.jpg']!),
+      () => photos.write('walks/p2.jpg', zipPhotos['walks/p2.jpg']!),
       () => dogs.upsert(decoded.dogs[0]),
       () => dogs.upsert(decoded.dogs[1]),
       () => walks.insert(decoded.walks[0].walk, decoded.walks[0].points),
@@ -236,7 +239,6 @@ void main() {
 
     expect(result, const BackupImportResult.failed(Failure.unknown()));
     verifyNever(() => walks.insert(any(), any()));
-    verifyNever(() => photos.write(any(), any()));
   });
 
   test('산책 쓰기가 실패하면 failed', () async {
@@ -247,16 +249,26 @@ void main() {
     final result = await scenario();
 
     expect(result, const BackupImportResult.failed(Failure.unknown()));
-    verifyNever(() => photos.write(any(), any()));
   });
 
-  test('사진 쓰기가 실패하면 failed', () async {
+  test('사진 쓰기가 실패하면 행을 쓰지 않고 failed, 다시 가져오면 모두 들어간다', () async {
     when(
       () => photos.write(any(), any()),
     ).thenAnswer((_) async => const Err(Failure.unknown()));
 
-    final result = await scenario();
+    final first = await scenario();
 
-    expect(result, const BackupImportResult.failed(Failure.unknown()));
+    expect(first, const BackupImportResult.failed(Failure.unknown()));
+    verifyNever(() => dogs.upsert(any()));
+    verifyNever(() => walks.insert(any(), any()));
+
+    when(
+      () => photos.write(any(), any()),
+    ).thenAnswer((_) async => const Ok(null));
+
+    final second = await scenario();
+
+    expect(second, const BackupImportResult.imported(2, 3));
+    verify(() => photos.write('walks/p2.jpg', any())).called(1);
   });
 }

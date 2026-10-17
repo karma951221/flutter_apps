@@ -16,7 +16,10 @@ import '../../repository/backup_file_picker.dart';
 /// 고른 백업 zip 을 지금 기록에 합친다. 이미 있는 id 는 건너뛴다.
 ///
 /// 풀기 · 디코딩 · 존재 확인을 모두 끝낸 뒤에만 쓴다(반쯤 쓰지 않기).
-/// 쓰는 순서는 반려견 → 산책 → 새로 가져온 항목의 사진.
+/// 쓰는 순서는 새로 가져올 항목의 사진 → 반려견 → 산책. 사진을 먼저 쓰는 까닭은
+/// 사진 쓰기가 실패해도 다시 가져오면 처음부터 이어지게 하려는 것이다(행이 먼저
+/// 들어가면 다시 가져올 때 nothingNew 라 사진에 닿지 못한다). `write` 는 있는 파일을
+/// 건너뛰므로 여러 번 써도 된다.
 class ImportBackupScenario {
   const ImportBackupScenario(
     this._dogs,
@@ -83,17 +86,6 @@ class ImportBackupScenario {
       return const BackupImportResult.nothingNew();
     }
 
-    for (final dog in newDogs) {
-      if (await _dogs.upsert(dog) case Err(:final failure)) {
-        return BackupImportResult.failed(failure);
-      }
-    }
-    for (final BackupWalk(:walk, :points) in newWalks) {
-      if (await _walks.insert(walk, points) case Err(:final failure)) {
-        return BackupImportResult.failed(failure);
-      }
-    }
-
     for (final path in _photoPaths(newDogs, [
       for (final w in newWalks) w.walk,
     ])) {
@@ -101,6 +93,17 @@ class ImportBackupScenario {
       // zip 에 없는 사진은 건너뛴다. 항목은 경로를 그대로 갖고 들어간다.
       if (photo == null) continue;
       if (await _photos.write(path, photo) case Err(:final failure)) {
+        return BackupImportResult.failed(failure);
+      }
+    }
+
+    for (final dog in newDogs) {
+      if (await _dogs.upsert(dog) case Err(:final failure)) {
+        return BackupImportResult.failed(failure);
+      }
+    }
+    for (final BackupWalk(:walk, :points) in newWalks) {
+      if (await _walks.insert(walk, points) case Err(:final failure)) {
         return BackupImportResult.failed(failure);
       }
     }
