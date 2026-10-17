@@ -2873,4 +2873,43 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkFavoriteLabel => '즐겨찾기';
+
+  @override
+  String get walkSocialTitle => '모두의 산책';
+
+  @override
+  String get walkSocialSignIn => '로그인';
+
+  @override
+  String get walkSocialSignUp => '가입하기';
+
+  @override
+  String get walkSocialSignOut => '로그아웃';
+
+  @override
+  String get walkSocialEmail => '이메일';
+
+  @override
+  String get walkSocialPassword => '비밀번호';
+
+  @override
+  String get walkSocialNickname => '닉네임';
+
+  @override
+  String get walkSocialSwitchToSignUp => '처음이면 가입하기';
+
+  @override
+  String get walkSocialSwitchToSignIn => '이미 계정이 있으면 로그인';
+
+  @override
+  String get walkSocialSignInRequired => '로그인하면 공유하고 좋아요를 누를 수 있어요';
+
+  @override
+  String get walkSocialAuthFailed => '로그인하지 못했어요. 이메일과 비밀번호를 확인해 주세요';
+
+  @override
+  String get walkSocialNicknameTaken => '이미 쓰는 닉네임이에요';
+
+  @override
+  String get walkSocialEmpty => '아직 공유된 산책이 없어요';
 }

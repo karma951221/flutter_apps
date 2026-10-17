@@ -3075,4 +3075,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkFavoriteLabel => 'Favorite';
+
+  @override
+  String get walkSocialTitle => 'Community walks';
+
+  @override
+  String get walkSocialSignIn => 'Sign in';
+
+  @override
+  String get walkSocialSignUp => 'Sign up';
+
+  @override
+  String get walkSocialSignOut => 'Sign out';
+
+  @override
+  String get walkSocialEmail => 'Email';
+
+  @override
+  String get walkSocialPassword => 'Password';
+
+  @override
+  String get walkSocialNickname => 'Nickname';
+
+  @override
+  String get walkSocialSwitchToSignUp => 'New here? Sign up';
+
+  @override
+  String get walkSocialSwitchToSignIn => 'Have an account? Sign in';
+
+  @override
+  String get walkSocialSignInRequired => 'Sign in to share and like walks';
+
+  @override
+  String get walkSocialAuthFailed =>
+      'Couldn\'t sign in. Check your email and password';
+
+  @override
+  String get walkSocialNicknameTaken => 'That nickname is taken';
+
+  @override
+  String get walkSocialEmpty => 'No shared walks yet';
 }

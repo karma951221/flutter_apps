@@ -3,6 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pawlog/core/di/injection.dart';
+import 'package:pawlog/core/supabase/social_availability.dart';
+import 'package:pawlog/data/social/supabase_auth_repository.dart';
+import 'package:pawlog/data/social/unavailable_auth_repository.dart';
+import 'package:pawlog/domain/social/repository/auth_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -34,5 +39,21 @@ void main() {
     final second = getIt<TileProvider>();
 
     expect(identical(first, second), isFalse);
+  });
+
+  test('Supabase 초기화가 실패했으면 쓸 수 없음 저장소를 받는다', () async {
+    await configureDependencies();
+
+    expect(getIt<SocialAvailability>().isAvailable, isFalse);
+    expect(getIt<AuthRepository>(), isA<UnavailableAuthRepository>());
+  });
+
+  test('Supabase 가 있으면 Supabase 저장소를 받는다', () async {
+    final client = SupabaseClient('http://127.0.0.1:54321', 'key');
+    addTearDown(client.dispose);
+
+    await configureDependencies(social: SocialAvailability.available(client));
+
+    expect(getIt<AuthRepository>(), isA<SupabaseAuthRepository>());
   });
 }

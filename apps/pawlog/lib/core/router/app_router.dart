@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../presentation/dog/page/dog_edit_page.dart';
 import '../../presentation/dog/page/dog_list_page.dart';
 import '../../presentation/feed/page/walk_feed_page.dart';
+import '../../presentation/social/page/community_page.dart';
+import '../../presentation/social/page/sign_in_page.dart';
 import '../../presentation/stats/page/stats_page.dart';
 import '../../presentation/tracking/page/active_walk_page.dart';
 import '../../presentation/walk/page/walk_detail_page.dart';
@@ -25,6 +27,17 @@ GoRouter createRouter({required bool hasDogs}) {
     } else {
       context.go(PawlogPaths.feed);
     }
+  }
+
+  /// 로그인 뒤: push 로 열렸으면(상세 · 모두의 산책에서 올라온 경우) 원래 화면으로 pop,
+  /// 바로 열렸으면 `from` 으로 go. `from` 은 앱 안 경로(`/` 로 시작, `//` 아님)만 믿는다.
+  void finishSignIn(BuildContext context, String? from) {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+    final safe = from != null && from.startsWith('/') && !from.startsWith('//');
+    context.go(safe ? from : PawlogPaths.community);
   }
 
   return GoRouter(
@@ -102,6 +115,17 @@ GoRouter createRouter({required bool hasDogs}) {
         path: PawlogPaths.stats,
         builder: (context, _) =>
             StatsPage(onOpenWalk: (id) => context.push(PawlogPaths.walk(id))),
+      ),
+      GoRoute(
+        path: PawlogPaths.signIn,
+        builder: (context, state) => SignInPage(
+          onSignedIn: () =>
+              finishSignIn(context, state.uri.queryParameters['from']),
+        ),
+      ),
+      GoRoute(
+        path: PawlogPaths.community,
+        builder: (_, _) => const CommunityPage(),
       ),
       GoRoute(
         path: PawlogPaths.dogs,

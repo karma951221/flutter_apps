@@ -31,4 +31,15 @@ void main() {
     expect(redirect.resolve(PawlogPaths.feed), isNull);
     expect(redirect.resolve(PawlogPaths.newDog), isNull);
   });
+
+  test('반려견이 없어도 로그인 · 모두의 산책은 막지 않는다', () {
+    final redirect = DogsRedirect(hasDogs: false);
+
+    expect(redirect.resolve(PawlogPaths.signIn), isNull);
+    expect(redirect.resolve(PawlogPaths.community), isNull);
+  });
+
+  test('signInFrom 은 돌아갈 곳을 쿼리로 싣는다', () {
+    expect(PawlogPaths.signInFrom('/walks/w1'), '/sign-in?from=%2Fwalks%2Fw1');
+  });
 }

@@ -1,0 +1,5 @@
+# 로컬 Supabase 가 떠 있어야 하는 시험은 기본으로 건너뛴다.
+# 실행: flutter test --run-skipped -t integration
+tags:
+  integration:
+    skip: "로컬 Supabase 필요 — flutter test --run-skipped -t integration"

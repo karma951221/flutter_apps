@@ -9,7 +9,12 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission/permission.dart';
 
 import '../../data/database/walk_database.dart';
+import '../../data/social/supabase_auth_gateway.dart';
+import '../../data/social/supabase_auth_repository.dart';
+import '../../data/social/unavailable_auth_repository.dart';
 import '../../data/tracking/notification_permission_source.dart';
+import '../../domain/social/repository/auth_repository.dart';
+import '../supabase/social_availability.dart';
 
 /// getIt.reset · 테스트 해제 때 DB 를 닫는다.
 FutureOr<void> disposeWalkDatabase(WalkDatabase db) => db.close();
@@ -42,4 +47,14 @@ abstract class RegisterModule {
   /// NetworkTileProvider 는 그때 자기 http client 를 닫아 다음 지도가 회색이 된다.
   @injectable
   TileProvider get tileProvider => NetworkTileProvider();
+
+  /// Supabase 초기화가 실패했으면 늘 로그아웃 상태인 대역을 쓴다 — 앱은 그대로 뜬다.
+  @lazySingleton
+  AuthRepository authRepository(SocialAvailability social) =>
+      switch (social.client) {
+        final client? => SupabaseAuthRepository(
+          SupabaseClientAuthGateway(client),
+        ),
+        null => const UnavailableAuthRepository(),
+      };
 }

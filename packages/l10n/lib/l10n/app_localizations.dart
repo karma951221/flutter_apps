@@ -5407,6 +5407,84 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'즐겨찾기'**
   String get walkFavoriteLabel;
+
+  /// 모두의 산책 화면 앱바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'모두의 산책'**
+  String get walkSocialTitle;
+
+  /// pawlog 로그인 화면 제목 · 로그인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'로그인'**
+  String get walkSocialSignIn;
+
+  /// pawlog 가입 모드의 제목 · 가입 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'가입하기'**
+  String get walkSocialSignUp;
+
+  /// 모두의 산책 앱바 더보기의 로그아웃 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'로그아웃'**
+  String get walkSocialSignOut;
+
+  /// pawlog 로그인 화면 이메일 입력칸 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'이메일'**
+  String get walkSocialEmail;
+
+  /// pawlog 로그인 화면 비밀번호 입력칸 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호'**
+  String get walkSocialPassword;
+
+  /// pawlog 가입 모드의 닉네임 입력칸 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'닉네임'**
+  String get walkSocialNickname;
+
+  /// 로그인 모드에서 가입 모드로 바꾸는 글자 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'처음이면 가입하기'**
+  String get walkSocialSwitchToSignUp;
+
+  /// 가입 모드에서 로그인 모드로 바꾸는 글자 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 계정이 있으면 로그인'**
+  String get walkSocialSwitchToSignIn;
+
+  /// 로그인 화면 위 안내 — 왜 로그인이 필요한지
+  ///
+  /// In ko, this message translates to:
+  /// **'로그인하면 공유하고 좋아요를 누를 수 있어요'**
+  String get walkSocialSignInRequired;
+
+  /// 이메일 · 비밀번호가 틀렸을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'로그인하지 못했어요. 이메일과 비밀번호를 확인해 주세요'**
+  String get walkSocialAuthFailed;
+
+  /// 가입 때 닉네임이 이미 있을 때 닉네임 입력칸 아래 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'이미 쓰는 닉네임이에요'**
+  String get walkSocialNicknameTaken;
+
+  /// 모두의 산책에 공유된 산책이 하나도 없을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 공유된 산책이 없어요'**
+  String get walkSocialEmpty;
 }
 
 class _AppLocalizationsDelegate

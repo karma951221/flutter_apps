@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:pawlog/core/router/app_router.dart';
+import 'package:pawlog/core/router/dogs_redirect.dart';
 import 'package:pawlog/domain/backup/entity/backup_import_result.dart';
 import 'package:pawlog/domain/dog/entity/dog.dart';
 import 'package:pawlog/domain/tracking/entity/tracker_state.dart';
@@ -18,6 +19,9 @@ import 'package:pawlog/presentation/dog/cubit/dog_list_cubit.dart';
 import 'package:pawlog/presentation/dog/page/dog_edit_page.dart';
 import 'package:pawlog/presentation/feed/cubit/walk_feed_cubit.dart';
 import 'package:pawlog/presentation/feed/page/walk_feed_page.dart';
+import 'package:pawlog/presentation/social/cubit/auth_cubit.dart';
+import 'package:pawlog/presentation/social/page/community_page.dart';
+import 'package:pawlog/presentation/social/page/sign_in_page.dart';
 import 'package:pawlog/presentation/stats/cubit/stats_cubit.dart';
 import 'package:pawlog/presentation/stats/page/stats_page.dart';
 import 'package:pawlog/presentation/theme/pawlog_theme.dart';
@@ -27,6 +31,7 @@ import 'package:pawlog/presentation/walk/cubit/walk_edit_cubit.dart';
 import 'package:pawlog/presentation/walk/page/walk_detail_page.dart';
 import 'package:pawlog/presentation/walk/page/walk_edit_page.dart';
 
+import '../../support/mock_social_use_case.dart';
 import '../../support/mock_walk_file_sharer.dart';
 import '../../support/mock_walk_use_case.dart';
 import '../../support/stub_tile_provider.dart';
@@ -89,6 +94,7 @@ void main() {
       ..registerFactory<DogListCubit>(() => DogListCubit(useCase))
       ..registerFactory<DogEditCubit>(() => DogEditCubit(useCase))
       ..registerFactory<StatsCubit>(() => StatsCubit(useCase, const Clock()))
+      ..registerFactory<AuthCubit>(() => AuthCubit(MockSocialUseCase()))
       ..registerSingleton<TileProvider>(StubTileProvider());
   });
   tearDown(getIt.reset);
@@ -236,6 +242,64 @@ void main() {
       router.go('/stats');
       await tester.pumpAndSettle();
       expect(path(router), '/stats');
+      await dispose(tester);
+    });
+  });
+
+  group('로그인 · 모두의 산책', () {
+    testWidgets('/sign-in?from= 으로 열고 로그인하면 from 으로 간다', (tester) async {
+      final router = await pumpRouter(tester);
+
+      router.go(PawlogPaths.signInFrom('/stats'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SignInPage), findsOneWidget);
+
+      tester.widget<SignInPage>(find.byType(SignInPage)).onSignedIn();
+      await tester.pumpAndSettle();
+
+      expect(path(router), '/stats');
+      await dispose(tester);
+    });
+
+    testWidgets('push 로 열었으면 로그인 뒤 원래 화면으로 pop 한다', (tester) async {
+      final router = await pumpRouter(tester);
+      router.go('/stats');
+      await tester.pumpAndSettle();
+      unawaited(router.push(PawlogPaths.signInFrom('/stats')));
+      await tester.pumpAndSettle();
+
+      tester.widget<SignInPage>(find.byType(SignInPage)).onSignedIn();
+      await tester.pumpAndSettle();
+
+      expect(path(router), '/stats');
+      expect(router.canPop(), isFalse);
+      await dispose(tester);
+    });
+
+    testWidgets('from 이 앱 안 경로가 아니면 모두의 산책으로 간다', (tester) async {
+      final router = await pumpRouter(tester);
+
+      router.go('/sign-in?from=https://example.com');
+      await tester.pumpAndSettle();
+      tester.widget<SignInPage>(find.byType(SignInPage)).onSignedIn();
+      await tester.pumpAndSettle();
+
+      expect(path(router), '/community');
+      expect(find.byType(CommunityPage), findsOneWidget);
+      await dispose(tester);
+    });
+
+    testWidgets('반려견이 없어도 /sign-in 과 /community 는 열린다', (tester) async {
+      final router = await pumpRouter(tester, hasDogs: false);
+
+      router.go('/sign-in');
+      await tester.pumpAndSettle();
+      expect(path(router), '/sign-in');
+      expect(find.byType(SignInPage), findsOneWidget);
+
+      router.go('/community');
+      await tester.pumpAndSettle();
+      expect(path(router), '/community');
       await dispose(tester);
     });
   });

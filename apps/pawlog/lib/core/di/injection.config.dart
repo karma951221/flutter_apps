@@ -33,6 +33,8 @@ import '../../domain/backup/repository/backup_file_picker.dart' as _i347;
 import '../../domain/dog/repository/dog_repository.dart' as _i209;
 import '../../domain/export/repository/walk_file_sharer.dart' as _i524;
 import '../../domain/photo/repository/photo_storage.dart' as _i475;
+import '../../domain/social/repository/auth_repository.dart' as _i684;
+import '../../domain/social/usecase/social_use_case.dart' as _i186;
 import '../../domain/tracking/repository/active_walk_store.dart' as _i845;
 import '../../domain/tracking/repository/walk_tracker.dart' as _i105;
 import '../../domain/walk/repository/walk_repository.dart' as _i612;
@@ -40,10 +42,12 @@ import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
 import '../../presentation/dog/cubit/dog_edit_cubit.dart' as _i980;
 import '../../presentation/dog/cubit/dog_list_cubit.dart' as _i596;
 import '../../presentation/feed/cubit/walk_feed_cubit.dart' as _i733;
+import '../../presentation/social/cubit/auth_cubit.dart' as _i566;
 import '../../presentation/stats/cubit/stats_cubit.dart' as _i184;
 import '../../presentation/tracking/cubit/active_walk_cubit.dart' as _i143;
 import '../../presentation/walk/cubit/walk_detail_cubit.dart' as _i174;
 import '../../presentation/walk/cubit/walk_edit_cubit.dart' as _i804;
+import '../supabase/social_availability.dart' as _i671;
 import 'register_module.dart' as _i291;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -62,6 +66,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i645.LocationGateway>(
       () => registerModule.locationGateway,
+    );
+    gh.lazySingleton<_i684.AuthRepository>(
+      () => registerModule.authRepository(gh<_i671.SocialAvailability>()),
     );
     gh.lazySingleton<_i524.WalkFileSharer>(
       () => _i1060.SharePlusWalkFileSharer(),
@@ -83,6 +90,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i209.DogRepository>(
       () => _i40.DriftDogRepository(gh<_i563.WalkDatabase>()),
+    );
+    gh.lazySingleton<_i186.SocialUseCase>(
+      () => _i186.DefaultSocialUseCase(gh<_i684.AuthRepository>()),
+    );
+    gh.factory<_i566.AuthCubit>(
+      () => _i566.AuthCubit(gh<_i186.SocialUseCase>()),
     );
     gh.lazySingleton<_i612.WalkRepository>(
       () => _i1020.DriftWalkRepository(gh<_i563.WalkDatabase>()),

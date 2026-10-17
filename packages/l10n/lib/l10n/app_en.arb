@@ -903,5 +903,18 @@
   "walkFeedShowAll": "Show all walks",
   "walkFeedFavoritesEmptyTitle": "No favorite walks yet",
   "walkFeedFavoritesEmptyMessage": "Tap the star on a walk to add it",
-  "walkFavoriteLabel": "Favorite"
+  "walkFavoriteLabel": "Favorite",
+  "walkSocialTitle": "Community walks",
+  "walkSocialSignIn": "Sign in",
+  "walkSocialSignUp": "Sign up",
+  "walkSocialSignOut": "Sign out",
+  "walkSocialEmail": "Email",
+  "walkSocialPassword": "Password",
+  "walkSocialNickname": "Nickname",
+  "walkSocialSwitchToSignUp": "New here? Sign up",
+  "walkSocialSwitchToSignIn": "Have an account? Sign in",
+  "walkSocialSignInRequired": "Sign in to share and like walks",
+  "walkSocialAuthFailed": "Couldn't sign in. Check your email and password",
+  "walkSocialNicknameTaken": "That nickname is taken",
+  "walkSocialEmpty": "No shared walks yet"
 }

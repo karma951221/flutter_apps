@@ -2871,4 +2871,43 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkFavoriteLabel => 'お気に入り';
+
+  @override
+  String get walkSocialTitle => 'みんなの散歩';
+
+  @override
+  String get walkSocialSignIn => 'ログイン';
+
+  @override
+  String get walkSocialSignUp => '登録';
+
+  @override
+  String get walkSocialSignOut => 'ログアウト';
+
+  @override
+  String get walkSocialEmail => 'メール';
+
+  @override
+  String get walkSocialPassword => 'パスワード';
+
+  @override
+  String get walkSocialNickname => 'ニックネーム';
+
+  @override
+  String get walkSocialSwitchToSignUp => '初めての方は登録';
+
+  @override
+  String get walkSocialSwitchToSignIn => 'アカウントをお持ちの方はログイン';
+
+  @override
+  String get walkSocialSignInRequired => 'ログインすると共有やいいねができます';
+
+  @override
+  String get walkSocialAuthFailed => 'ログインできませんでした。メールとパスワードを確認してください';
+
+  @override
+  String get walkSocialNicknameTaken => 'そのニックネームは使われています';
+
+  @override
+  String get walkSocialEmpty => 'まだ共有された散歩はありません';
 }

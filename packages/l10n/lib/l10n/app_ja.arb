@@ -903,5 +903,18 @@
   "walkFeedShowAll": "すべての散歩を表示",
   "walkFeedFavoritesEmptyTitle": "お気に入りの散歩はまだありません",
   "walkFeedFavoritesEmptyMessage": "散歩の詳細で星をタップしてください",
-  "walkFavoriteLabel": "お気に入り"
+  "walkFavoriteLabel": "お気に入り",
+  "walkSocialTitle": "みんなの散歩",
+  "walkSocialSignIn": "ログイン",
+  "walkSocialSignUp": "登録",
+  "walkSocialSignOut": "ログアウト",
+  "walkSocialEmail": "メール",
+  "walkSocialPassword": "パスワード",
+  "walkSocialNickname": "ニックネーム",
+  "walkSocialSwitchToSignUp": "初めての方は登録",
+  "walkSocialSwitchToSignIn": "アカウントをお持ちの方はログイン",
+  "walkSocialSignInRequired": "ログインすると共有やいいねができます",
+  "walkSocialAuthFailed": "ログインできませんでした。メールとパスワードを確認してください",
+  "walkSocialNicknameTaken": "そのニックネームは使われています",
+  "walkSocialEmpty": "まだ共有された散歩はありません"
 }
