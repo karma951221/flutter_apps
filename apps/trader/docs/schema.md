@@ -56,6 +56,8 @@ profiles ──1:N──▶ posts ──┬──1:N──▶ post_images
 (`trade_sessions` → `trade_orders`도 1:N), `posts.trade_session_id`가 끝난 판 하나를
 게시물에 붙인다 — 그림에 넣으면 선이 `posts`를 두 방향에서 지나가 읽기 어려워져
 §17의 설명으로 대신한다.
+pawlog 의 `walk_posts` · `walk_post_likes`(§18)는 `profiles` 에서 1:N 으로 내려가는 별도
+갈래다 — 트레이더 테이블과 선이 없다.
 아직 없는 테이블의 계획은 [기획서](overview.md)에 있고, 여기에는 **실제로 존재하는 것만** 적는다.
 
 ---
@@ -2410,3 +2412,187 @@ incomplete` · `invalid side`(22023). 사용자에게 보일 자리가 아니다
   `session_id` · `symbol` · `return_pct` 가 채워지고, 판이 없는 게시물은 `null`
   이다. `following_posts_with_author` 도 같은 값을 넘긴다
 - **탈퇴 cascade.** 사용자를 지우면 `trade_sessions` 의 그 사람 행이 함께 사라진다
+
+---
+
+## 18. pawlog 공유 산책 — `walk_posts` · `walk_post_likes` · `walk_posts_with_author`(뷰)
+
+pawlog(강아지 산책 앱)의 W5 소셜. 같은 프로젝트 · 같은 계정(`profiles`)을 쓰고, 트레이더의
+`posts` 와 섞이지 않게 `walk_` 접두사를 붙인다. 산책 기록은 기기(drift)에 먼저 저장되고
+사용자가 고른 한 건만 여기로 올라온다. 의도와 결정은
+[pawlog social 계획](../../pawlog/docs/features/social/plan.md)에 있다.
+([20261017090722](../../../supabase/migrations/20261017090722_walk_posts.sql))
+
+```sql
+create table public.walk_posts (
+  id               uuid             primary key default gen_random_uuid(),
+  author_id        uuid             not null default auth.uid()
+                                    references public.profiles (id) on delete cascade,
+  local_walk_id    uuid             not null,   -- 기기의 산책 id
+  started_at       timestamptz      not null,
+  duration_seconds integer          not null check (duration_seconds >= 0),
+  distance_meters  double precision not null check (distance_meters >= 0),
+  dog_names        text[]           not null check (cardinality(dog_names) between 1 and 10),
+  memo             text             check (char_length(memo) <= 500),
+  -- 앞뒤 150 m 를 잘라 낸 경로 미리보기 [{lat, lng}, ...]. 잘라 내기는 앱이 한다
+  route_preview    jsonb            check (route_preview is null or jsonb_array_length(route_preview) <= 64),
+  created_at       timestamptz      not null default now(),
+  deleted_at       timestamptz,
+  unique (author_id, local_walk_id)
+);
+
+create table public.walk_post_likes (
+  post_id    uuid        not null references public.walk_posts (id) on delete cascade,
+  user_id    uuid        not null default auth.uid()
+                         references public.profiles (id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (post_id, user_id)
+);
+```
+
+`unique (author_id, local_walk_id)` 가 "같은 산책은 한 행" 을 강제한다. `deleted_at` 이
+null 이면 공유 중이고, 공유 취소는 소프트 삭제다. 다시 공유하면 **같은 행이 되살아나고
+id 가 그대로**라 좋아요도 그대로 돌아온다.
+
+### 인덱스
+
+```sql
+-- 모두의 산책 커서
+create index walk_posts_created_at_idx
+  on public.walk_posts (created_at desc, id desc) where deleted_at is null;
+
+-- 내 좋아요 · 탈퇴 cascade. (post_id, ...) 쪽은 PK 가 덮는다
+create index walk_post_likes_user_id_idx on public.walk_post_likes (user_id);
+```
+
+### RLS
+
+```sql
+alter table public.walk_posts enable row level security;
+alter table public.walk_post_likes enable row level security;
+
+-- 조회: 공유 중인 글만. 둘러보기는 로그인 없이 된다
+create policy "walk_posts_select_visible"
+  on public.walk_posts for select to anon, authenticated
+  using (deleted_at is null);
+
+create policy "walk_posts_insert_own"
+  on public.walk_posts for insert to authenticated
+  with check ((select auth.uid()) = author_id);
+
+create policy "walk_post_likes_select_all"
+  on public.walk_post_likes for select to anon, authenticated
+  using (true);
+
+-- 본인 것만, 그리고 공유 중인 글에만. 다른 테이블 참조라 §11 의 42P17 은 아니다
+create policy "walk_post_likes_insert_own"
+  on public.walk_post_likes for insert to authenticated
+  with check (
+    (select auth.uid()) = user_id
+    and exists (
+      select 1 from public.walk_posts wp
+       where wp.id = walk_post_likes.post_id and wp.deleted_at is null
+    )
+  );
+
+create policy "walk_post_likes_delete_own"
+  on public.walk_post_likes for delete to authenticated
+  using ((select auth.uid()) = user_id);
+```
+
+`walk_posts` 에는 update · delete 정책이 없다. 갱신과 공유 취소는 아래 RPC 둘로만 한다
+(소프트 삭제를 UPDATE 로 하면 막히는 이유는 §11).
+
+### GRANT
+
+```sql
+revoke all privileges on public.walk_posts      from anon, authenticated;
+revoke all privileges on public.walk_post_likes from anon, authenticated;
+
+grant select on public.walk_posts to anon, authenticated;
+grant insert (local_walk_id, started_at, duration_seconds, distance_meters,
+              dog_names, memo, route_preview)
+  on public.walk_posts to authenticated;
+
+grant select           on public.walk_post_likes to anon, authenticated;
+grant insert (post_id) on public.walk_post_likes to authenticated;
+grant delete           on public.walk_post_likes to authenticated;
+
+grant select on public.walk_posts_with_author to anon, authenticated;
+```
+
+- `walk_posts` 에 `update` · `delete` 는 어떤 role 에도 없다. `author_id` · `deleted_at` 은
+  INSERT GRANT 에서 빠져 있어 `author_id` 는 `default auth.uid()` 로만 채워진다.
+- **SELECT 는 테이블 단위다**(§5 `posts` 와 같다). `deleted_at` 을 빼고 컬럼 단위로 주면
+  `walk_post_likes_insert_own` 의 `exists` 서브쿼리가 조회자 권한으로 그 컬럼을 읽지 못해
+  모든 좋아요가 `42501` 로 막힌다(2026-10-17 확인). 조회 정책이 삭제행을 가리므로 보이는
+  행의 `deleted_at` 은 언제나 null 이다.
+- 앱은 `walk_posts` 를 직접 읽지 않고 뷰만 읽는다. 쓰기는 `publish_walk_post` 를 쓴다 —
+  직접 INSERT 는 정책상 가능하지만 되살리기(upsert)가 안 되므로 앱 경로가 아니다.
+- 좋아요 INSERT 는 `post_id` 만 받는다. 취소는 내 행 DELETE 다. upsert 를 쓰지 않으므로
+  `update` 는 주지 않는다(§10 과 다른 점).
+
+### `publish_walk_post(...) → uuid`
+
+```sql
+publish_walk_post(
+  p_local_walk_id uuid, p_started_at timestamptz, p_duration_seconds integer,
+  p_distance_meters double precision, p_dog_names text[], p_memo text, p_route_preview jsonb
+) returns uuid   -- security definer · set search_path = ''
+```
+
+공유(또는 다시 공유)의 유일한 경로. `auth.uid()` 가 null 이면
+`authentication required`(`42501`). `(auth.uid(), p_local_walk_id)` 로
+`insert ... on conflict (author_id, local_walk_id) do update` 해서 내용을 갱신하고
+`deleted_at = null` 로 되살린 뒤 글 id 를 돌려준다.
+
+`security definer` 인 이유: `update` GRANT 가 없고, 공유 취소된 행은 조회 정책에 걸려
+invoker 로는 `on conflict do update` 가 닿지 않는다. **`author_id` 를 `auth.uid()` 로
+직접 넣는 것이 권한 경계다** — 남의 행은 충돌 대상에 들어올 수 없다. CHECK 위반은
+`23514`(400)로 그대로 나간다. 실행 권한은 `authenticated` 만.
+
+### `unpublish_walk_post(p_local_walk_id uuid) → boolean`
+
+`soft_delete_post`(§5)와 같은 모양이다. `local_walk_id = p_local_walk_id and author_id =
+auth.uid() and deleted_at is null` 인 행의 `deleted_at = now()`. 바뀐 행이 있으면 `true`,
+없거나 남의 것이거나 이미 취소했으면 `false`. 좋아요 행은 지우지 않는다 — 다시 공유하면
+돌아온다. 실행 권한은 `authenticated` 만.
+
+### `walk_posts_with_author` (뷰, `security_invoker = on`)
+
+```sql
+select
+  wp.id, wp.author_id, wp.local_walk_id, wp.started_at, wp.duration_seconds,
+  wp.distance_meters, wp.dog_names, wp.memo, wp.route_preview, wp.created_at,
+  pr.nickname   as author_nickname,
+  pr.avatar_url as author_avatar_url,
+  (select count(*) from public.walk_post_likes l where l.post_id = wp.id) as like_count,  -- bigint
+  exists (select 1 from public.walk_post_likes l
+           where l.post_id = wp.id and l.user_id = (select auth.uid())) as liked_by_me
+from public.walk_posts wp
+join public.profiles pr on pr.id = wp.author_id;
+```
+
+`deleted_at` 은 내리지 않는다. `security_invoker = on` 이라 `walk_posts_select_visible` 이
+그대로 걸려 공유 취소된 글이 저절로 빠진다(§6 과 같은 이유). 비로그인이면 `auth.uid()` 가
+null 이라 `liked_by_me` 는 `false` 다. 커서는 `walk_posts_created_at_idx` 를 그대로 탄다.
+
+트레이더의 차단(§13)은 아직 적용하지 않는다 — pawlog 에는 차단 화면이 없다(계획의 범위 밖).
+
+### 검증한 것 (로컬 Supabase · PostgREST 경유)
+
+`supabase/tests/walk_posts_rls_check.py` 33건이 모두 통과한다(2026-10-17).
+
+- **게스트.** 보기를 읽는다. `walk_posts` insert · update · delete 와 `publish_walk_post`
+  호출은 `401`
+- **공유 · 조회.** A 가 공유한 글을 B 와 게스트가 보기로 읽고 `author_nickname` 이 채워진다
+- **한 행.** 같은 `local_walk_id` 로 두 번 공유하면 같은 id 이고 행은 하나, 내용은 갱신된다
+- **남의 글.** B 의 `unpublish_walk_post(A 의 local_walk_id)` 는 `false` 이고 글은 남는다
+- **직접 쓰기.** 작성자라도 `PATCH` · `DELETE walk_posts` 는 `403`. `author_id` 위조 insert 도 `403`
+- **좋아요.** B 가 누르면 `like_count = 1`, B 의 `liked_by_me` 는 `true`, A · 게스트는 `false`.
+  두 번 누르면 `409`, B 는 A 의 좋아요를 못 지우고(0행), `user_id` 위조는 `403`
+- **공유 취소 · 되살리기.** 취소하면 보기에서 사라지고 그 글의 좋아요는 `403`, 다시 취소하면
+  `false`. 다시 공유하면 같은 id 로 보기에 돌아온다
+- **CHECK.** `route_preview` 65점 · 빈 `dog_names` · 501자 `memo` 는 `400`(`23514`).
+  64점과 `route_preview = null` 은 통과
+- **탈퇴 cascade.** 좋아요를 누른 사람을 지우면 `like_count` 가 함께 준다
