@@ -69,6 +69,7 @@ class UpdateWalkScenario {
       previewPoints: current.previewPoints,
       createdAt: current.createdAt,
       updatedAt: _clock.now(),
+      isFavorite: current.isFavorite,
     );
 
     final saved = await _walks.update(updated);

@@ -560,6 +560,21 @@ class $WalksTable extends Walks with TableInfo<$WalksTable, WalkRow> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _isFavoriteMeta = const VerificationMeta(
+    'isFavorite',
+  );
+  @override
+  late final GeneratedColumn<bool> isFavorite = GeneratedColumn<bool>(
+    'is_favorite',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_favorite" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -571,6 +586,7 @@ class $WalksTable extends Walks with TableInfo<$WalksTable, WalkRow> {
     routePreview,
     createdAt,
     updatedAt,
+    isFavorite,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -658,6 +674,12 @@ class $WalksTable extends Walks with TableInfo<$WalksTable, WalkRow> {
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('is_favorite')) {
+      context.handle(
+        _isFavoriteMeta,
+        isFavorite.isAcceptableOrUnknown(data['is_favorite']!, _isFavoriteMeta),
+      );
+    }
     return context;
   }
 
@@ -703,6 +725,10 @@ class $WalksTable extends Walks with TableInfo<$WalksTable, WalkRow> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
       )!,
+      isFavorite: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_favorite'],
+      )!,
     );
   }
 
@@ -722,6 +748,9 @@ class WalkRow extends DataClass implements Insertable<WalkRow> {
   final String? routePreview;
   final DateTime createdAt;
   final DateTime updatedAt;
+
+  /// v3. 기록 내용이 아니라 표시라서 바꿔도 [updatedAt] 은 그대로 둔다.
+  final bool isFavorite;
   const WalkRow({
     required this.id,
     required this.startedAt,
@@ -732,6 +761,7 @@ class WalkRow extends DataClass implements Insertable<WalkRow> {
     this.routePreview,
     required this.createdAt,
     required this.updatedAt,
+    required this.isFavorite,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -749,6 +779,7 @@ class WalkRow extends DataClass implements Insertable<WalkRow> {
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['is_favorite'] = Variable<bool>(isFavorite);
     return map;
   }
 
@@ -765,6 +796,7 @@ class WalkRow extends DataClass implements Insertable<WalkRow> {
           : Value(routePreview),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      isFavorite: Value(isFavorite),
     );
   }
 
@@ -783,6 +815,7 @@ class WalkRow extends DataClass implements Insertable<WalkRow> {
       routePreview: serializer.fromJson<String?>(json['routePreview']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      isFavorite: serializer.fromJson<bool>(json['isFavorite']),
     );
   }
   @override
@@ -798,6 +831,7 @@ class WalkRow extends DataClass implements Insertable<WalkRow> {
       'routePreview': serializer.toJson<String?>(routePreview),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'isFavorite': serializer.toJson<bool>(isFavorite),
     };
   }
 
@@ -811,6 +845,7 @@ class WalkRow extends DataClass implements Insertable<WalkRow> {
     Value<String?> routePreview = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isFavorite,
   }) => WalkRow(
     id: id ?? this.id,
     startedAt: startedAt ?? this.startedAt,
@@ -821,6 +856,7 @@ class WalkRow extends DataClass implements Insertable<WalkRow> {
     routePreview: routePreview.present ? routePreview.value : this.routePreview,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
+    isFavorite: isFavorite ?? this.isFavorite,
   );
   WalkRow copyWithCompanion(WalksCompanion data) {
     return WalkRow(
@@ -839,6 +875,9 @@ class WalkRow extends DataClass implements Insertable<WalkRow> {
           : this.routePreview,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      isFavorite: data.isFavorite.present
+          ? data.isFavorite.value
+          : this.isFavorite,
     );
   }
 
@@ -853,7 +892,8 @@ class WalkRow extends DataClass implements Insertable<WalkRow> {
           ..write('memo: $memo, ')
           ..write('routePreview: $routePreview, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isFavorite: $isFavorite')
           ..write(')'))
         .toString();
   }
@@ -869,6 +909,7 @@ class WalkRow extends DataClass implements Insertable<WalkRow> {
     routePreview,
     createdAt,
     updatedAt,
+    isFavorite,
   );
   @override
   bool operator ==(Object other) =>
@@ -882,7 +923,8 @@ class WalkRow extends DataClass implements Insertable<WalkRow> {
           other.memo == this.memo &&
           other.routePreview == this.routePreview &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.isFavorite == this.isFavorite);
 }
 
 class WalksCompanion extends UpdateCompanion<WalkRow> {
@@ -895,6 +937,7 @@ class WalksCompanion extends UpdateCompanion<WalkRow> {
   final Value<String?> routePreview;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
+  final Value<bool> isFavorite;
   final Value<int> rowid;
   const WalksCompanion({
     this.id = const Value.absent(),
@@ -906,6 +949,7 @@ class WalksCompanion extends UpdateCompanion<WalkRow> {
     this.routePreview = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.isFavorite = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   WalksCompanion.insert({
@@ -918,6 +962,7 @@ class WalksCompanion extends UpdateCompanion<WalkRow> {
     this.routePreview = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
+    this.isFavorite = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        startedAt = Value(startedAt),
@@ -936,6 +981,7 @@ class WalksCompanion extends UpdateCompanion<WalkRow> {
     Expression<String>? routePreview,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
+    Expression<bool>? isFavorite,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -948,6 +994,7 @@ class WalksCompanion extends UpdateCompanion<WalkRow> {
       if (routePreview != null) 'route_preview': routePreview,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (isFavorite != null) 'is_favorite': isFavorite,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -962,6 +1009,7 @@ class WalksCompanion extends UpdateCompanion<WalkRow> {
     Value<String?>? routePreview,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
+    Value<bool>? isFavorite,
     Value<int>? rowid,
   }) {
     return WalksCompanion(
@@ -974,6 +1022,7 @@ class WalksCompanion extends UpdateCompanion<WalkRow> {
       routePreview: routePreview ?? this.routePreview,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isFavorite: isFavorite ?? this.isFavorite,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1008,6 +1057,9 @@ class WalksCompanion extends UpdateCompanion<WalkRow> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (isFavorite.present) {
+      map['is_favorite'] = Variable<bool>(isFavorite.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1026,6 +1078,7 @@ class WalksCompanion extends UpdateCompanion<WalkRow> {
           ..write('routePreview: $routePreview, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('isFavorite: $isFavorite, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3325,6 +3378,7 @@ typedef $$WalksTableCreateCompanionBuilder =
       Value<String?> routePreview,
       required DateTime createdAt,
       required DateTime updatedAt,
+      Value<bool> isFavorite,
       Value<int> rowid,
     });
 typedef $$WalksTableUpdateCompanionBuilder =
@@ -3338,6 +3392,7 @@ typedef $$WalksTableUpdateCompanionBuilder =
       Value<String?> routePreview,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
+      Value<bool> isFavorite,
       Value<int> rowid,
     });
 
@@ -3450,6 +3505,11 @@ class $$WalksTableFilterComposer extends Composer<_$WalkDatabase, $WalksTable> {
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isFavorite => $composableBuilder(
+    column: $table.isFavorite,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3582,6 +3642,11 @@ class $$WalksTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get isFavorite => $composableBuilder(
+    column: $table.isFavorite,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$WalksTableAnnotationComposer
@@ -3625,6 +3690,11 @@ class $$WalksTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isFavorite => $composableBuilder(
+    column: $table.isFavorite,
+    builder: (column) => column,
+  );
 
   Expression<T> walkDogsRefs<T extends Object>(
     Expression<T> Function($$WalkDogsTableAnnotationComposer a) f,
@@ -3743,6 +3813,7 @@ class $$WalksTableTableManager
                 Value<String?> routePreview = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
+                Value<bool> isFavorite = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => WalksCompanion(
                 id: id,
@@ -3754,6 +3825,7 @@ class $$WalksTableTableManager
                 routePreview: routePreview,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                isFavorite: isFavorite,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3767,6 +3839,7 @@ class $$WalksTableTableManager
                 Value<String?> routePreview = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
+                Value<bool> isFavorite = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => WalksCompanion.insert(
                 id: id,
@@ -3778,6 +3851,7 @@ class $$WalksTableTableManager
                 routePreview: routePreview,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                isFavorite: isFavorite,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

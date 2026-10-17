@@ -8,16 +8,18 @@ void main() {
   DogRow dogRow(String id, String name) =>
       DogRow(id: id, name: name, createdAt: t0, updatedAt: t0);
 
-  WalkRow walkRow(String id, DateTime startedAt) => WalkRow(
-    id: id,
-    startedAt: startedAt,
-    endedAt: t1,
-    durationSeconds: 1800,
-    distanceMeters: 100,
-    routePreview: '[[37.5,127.0]]',
-    createdAt: t0,
-    updatedAt: t0,
-  );
+  WalkRow walkRow(String id, DateTime startedAt, {bool isFavorite = false}) =>
+      WalkRow(
+        id: id,
+        startedAt: startedAt,
+        endedAt: t1,
+        durationSeconds: 1800,
+        distanceMeters: 100,
+        routePreview: '[[37.5,127.0]]',
+        createdAt: t0,
+        updatedAt: t0,
+        isFavorite: isFavorite,
+      );
 
   WalkPhotoRow photoRow(String id, String walkId, int position) => WalkPhotoRow(
     id: id,
@@ -49,5 +51,14 @@ void main() {
     expect(walks[0].previewPoints.single.lat, 37.5);
     expect(walks[1].dogs, isEmpty);
     expect(walks[1].photos, isEmpty);
+  });
+
+  test('isFavorite 를 엔티티에 옮긴다', () {
+    final walks = walksFromJoinRows([
+      (walk: walkRow('w1', t1, isFavorite: true), dog: null, photo: null),
+      (walk: walkRow('w2', t0), dog: null, photo: null),
+    ]);
+
+    expect(walks.map((w) => w.isFavorite), [true, false]);
   });
 }

@@ -93,4 +93,16 @@ void main() {
     verify(() => storage.remove('a.jpg')).called(1);
     verifyNever(() => storage.remove('b.jpg'));
   });
+
+  test('즐겨찾기는 그대로 둔다', () async {
+    when(
+      () => walks.findById('w1'),
+    ).thenAnswer((_) async => Ok(walk().copyWith(isFavorite: true)));
+
+    final result = await scenario(
+      const WalkUpdate(id: 'w1', dogIds: ['d1'], photoPaths: []),
+    );
+
+    expect((result as Ok<Walk>).value.isFavorite, isTrue);
+  });
 }

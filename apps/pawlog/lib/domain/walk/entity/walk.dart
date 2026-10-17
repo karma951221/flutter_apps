@@ -31,6 +31,8 @@ class Walk with _$Walk {
   final DateTime createdAt;
   @override
   final DateTime updatedAt;
+  @override
+  final bool isFavorite;
 
   const Walk({
     required this.id,
@@ -44,5 +46,6 @@ class Walk with _$Walk {
     required this.previewPoints,
     required this.createdAt,
     required this.updatedAt,
+    this.isFavorite = false,
   });
 }

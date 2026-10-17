@@ -13,8 +13,11 @@ abstract interface class WalkRepository {
 
   Future<Result<void>> insert(Walk walk, List<WalkTrackPoint> track);
 
-  /// 반려견·메모·사진·updatedAt 만 바꾼다.
+  /// 반려견·메모·사진·updatedAt 만 바꾼다. 즐겨찾기는 그대로 둔다.
   Future<Result<void>> update(Walk walk);
+
+  /// 즐겨찾기만 바꾼다(updatedAt 그대로). 없는 id 면 `walkNotFound`.
+  Future<Result<void>> setFavorite(String id, bool value);
 
   Future<Result<void>> delete(String id);
 }

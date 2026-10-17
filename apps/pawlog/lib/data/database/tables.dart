@@ -29,6 +29,9 @@ class Walks extends Table {
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
 
+  /// v3. 기록 내용이 아니라 표시라서 바꿔도 [updatedAt] 은 그대로 둔다.
+  BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }

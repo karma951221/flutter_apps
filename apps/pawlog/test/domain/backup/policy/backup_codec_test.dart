@@ -64,6 +64,7 @@ BackupData _sample() {
           previewPoints: RoutePreview.downsample(points1),
           createdAt: _t1,
           updatedAt: _t1,
+          isFavorite: true,
         ),
         points: points1,
       ),
@@ -188,6 +189,30 @@ void main() {
     expect(decoded.walks[1].walk.previewPoints, isEmpty);
   });
 
+  group('isFavorite', () {
+    test('산책마다 bool 로 쓰고 왕복한다', () {
+      final json = _sampleJson();
+      final walks = json['walks'] as List<dynamic>;
+
+      expect((walks[0] as Map<String, dynamic>)['isFavorite'], isTrue);
+      expect((walks[1] as Map<String, dynamic>)['isFavorite'], isFalse);
+      final decoded = _decodeOk(jsonEncode(json));
+      expect(decoded.walks[0].walk.isFavorite, isTrue);
+      expect(decoded.walks[1].walk.isFavorite, isFalse);
+    });
+
+    test('없으면(예전 백업) false 로 읽는다', () {
+      final json = _sampleJson();
+      for (final walk in json['walks'] as List<dynamic>) {
+        (walk as Map<String, dynamic>).remove('isFavorite');
+      }
+
+      final decoded = _decodeOk(jsonEncode(json));
+
+      expect(decoded.walks.map((w) => w.walk.isFavorite), [false, false]);
+    });
+  });
+
   test('version 이 1.0 으로 적혀도 읽는다', () {
     final json = _sampleJson()..['version'] = 1.0;
 
@@ -268,6 +293,12 @@ void main() {
 
     test('walks 가 목록이 아님', () {
       _expectInvalid(jsonEncode(_sampleJson()..['walks'] = {'w1': 1}));
+    });
+
+    test('isFavorite 가 bool 이 아님', () {
+      final json = _sampleJson();
+      (json['walks'] as List<dynamic>)[0]['isFavorite'] = 'yes';
+      _expectInvalid(jsonEncode(json));
     });
 
     test('겹친 반려견 id', () {

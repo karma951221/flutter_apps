@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Walk {
 
- String get id; DateTime get startedAt; DateTime get endedAt; Duration get duration; double get distanceMeters; String? get memo; List<Dog> get dogs; List<WalkPhoto> get photos; List<GeoPoint> get previewPoints; DateTime get createdAt; DateTime get updatedAt;
+ String get id; DateTime get startedAt; DateTime get endedAt; Duration get duration; double get distanceMeters; String? get memo; List<Dog> get dogs; List<WalkPhoto> get photos; List<GeoPoint> get previewPoints; DateTime get createdAt; DateTime get updatedAt; bool get isFavorite;
 /// Create a copy of Walk
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $WalkCopyWith<Walk> get copyWith => _$WalkCopyWithImpl<Walk>(this as Walk, _$ide
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Walk&&(identical(other.id, id) || other.id == id)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.endedAt, endedAt) || other.endedAt == endedAt)&&(identical(other.duration, duration) || other.duration == duration)&&(identical(other.distanceMeters, distanceMeters) || other.distanceMeters == distanceMeters)&&(identical(other.memo, memo) || other.memo == memo)&&const DeepCollectionEquality().equals(other.dogs, dogs)&&const DeepCollectionEquality().equals(other.photos, photos)&&const DeepCollectionEquality().equals(other.previewPoints, previewPoints)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Walk&&(identical(other.id, id) || other.id == id)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.endedAt, endedAt) || other.endedAt == endedAt)&&(identical(other.duration, duration) || other.duration == duration)&&(identical(other.distanceMeters, distanceMeters) || other.distanceMeters == distanceMeters)&&(identical(other.memo, memo) || other.memo == memo)&&const DeepCollectionEquality().equals(other.dogs, dogs)&&const DeepCollectionEquality().equals(other.photos, photos)&&const DeepCollectionEquality().equals(other.previewPoints, previewPoints)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isFavorite, isFavorite) || other.isFavorite == isFavorite));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,startedAt,endedAt,duration,distanceMeters,memo,const DeepCollectionEquality().hash(dogs),const DeepCollectionEquality().hash(photos),const DeepCollectionEquality().hash(previewPoints),createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,startedAt,endedAt,duration,distanceMeters,memo,const DeepCollectionEquality().hash(dogs),const DeepCollectionEquality().hash(photos),const DeepCollectionEquality().hash(previewPoints),createdAt,updatedAt,isFavorite);
 
 @override
 String toString() {
-  return 'Walk(id: $id, startedAt: $startedAt, endedAt: $endedAt, duration: $duration, distanceMeters: $distanceMeters, memo: $memo, dogs: $dogs, photos: $photos, previewPoints: $previewPoints, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Walk(id: $id, startedAt: $startedAt, endedAt: $endedAt, duration: $duration, distanceMeters: $distanceMeters, memo: $memo, dogs: $dogs, photos: $photos, previewPoints: $previewPoints, createdAt: $createdAt, updatedAt: $updatedAt, isFavorite: $isFavorite)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $WalkCopyWith<$Res>  {
   factory $WalkCopyWith(Walk value, $Res Function(Walk) _then) = _$WalkCopyWithImpl;
 @useResult
 $Res call({
- String id, DateTime startedAt, DateTime endedAt, Duration duration, double distanceMeters, String? memo, List<Dog> dogs, List<WalkPhoto> photos, List<GeoPoint> previewPoints, DateTime createdAt, DateTime updatedAt
+ String id, DateTime startedAt, DateTime endedAt, Duration duration, double distanceMeters, String? memo, List<Dog> dogs, List<WalkPhoto> photos, List<GeoPoint> previewPoints, DateTime createdAt, DateTime updatedAt, bool isFavorite
 });
 
 
@@ -62,7 +62,7 @@ class _$WalkCopyWithImpl<$Res>
 
 /// Create a copy of Walk
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? startedAt = null,Object? endedAt = null,Object? duration = null,Object? distanceMeters = null,Object? memo = freezed,Object? dogs = null,Object? photos = null,Object? previewPoints = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? startedAt = null,Object? endedAt = null,Object? duration = null,Object? distanceMeters = null,Object? memo = freezed,Object? dogs = null,Object? photos = null,Object? previewPoints = null,Object? createdAt = null,Object? updatedAt = null,Object? isFavorite = null,}) {
   return _then(Walk(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,startedAt: null == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
@@ -75,7 +75,8 @@ as List<Dog>,photos: null == photos ? _self.photos : photos // ignore: cast_null
 as List<WalkPhoto>,previewPoints: null == previewPoints ? _self.previewPoints : previewPoints // ignore: cast_nullable_to_non_nullable
 as List<GeoPoint>,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,isFavorite: null == isFavorite ? _self.isFavorite : isFavorite // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

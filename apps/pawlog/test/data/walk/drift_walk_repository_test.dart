@@ -29,6 +29,7 @@ void main() {
     List<Dog> withDogs = const [],
     List<WalkPhoto> photos = const [],
     String? memo,
+    bool isFavorite = false,
   }) => Walk(
     id: id,
     startedAt: startedAt,
@@ -41,7 +42,11 @@ void main() {
     previewPoints: const [GeoPoint(lat: 37.5, lng: 127.0)],
     createdAt: t0,
     updatedAt: t0,
+    isFavorite: isFavorite,
   );
+
+  Future<Walk> load(String id) async =>
+      ((await repository.findById(id)) as Ok<Walk?>).value!;
 
   Future<int> count(TableInfo<Table, dynamic> table) async =>
       (await db.select(table).get()).length;
@@ -208,5 +213,69 @@ void main() {
     final result = await repository.watchAll().first;
 
     expect(_walks(result).map((w) => w.id), ['c', 'b', 'a']);
+  });
+
+  group('즐겨찾기', () {
+    test('insert 는 isFavorite 를 저장한다', () async {
+      await repository.insert(
+        walkOf('w1', startedAt: t0, isFavorite: true),
+        const [],
+      );
+
+      expect((await load('w1')).isFavorite, isTrue);
+    });
+
+    test('setFavorite 로 켜고 끈 값이 findById · watchAll 에 보인다', () async {
+      await repository.insert(walkOf('w1', startedAt: t0), const []);
+
+      expect(await repository.setFavorite('w1', true), isA<Ok<void>>());
+      expect((await load('w1')).isFavorite, isTrue);
+      expect(
+        _walks(await repository.watchAll().first).single.isFavorite,
+        isTrue,
+      );
+
+      expect(await repository.setFavorite('w1', false), isA<Ok<void>>());
+      expect((await load('w1')).isFavorite, isFalse);
+      expect(
+        _walks(await repository.watchAll().first).single.isFavorite,
+        isFalse,
+      );
+    });
+
+    test('setFavorite 는 updatedAt 을 바꾸지 않는다', () async {
+      await repository.insert(walkOf('w1', startedAt: t0), const []);
+
+      await repository.setFavorite('w1', true);
+
+      expect((await load('w1')).updatedAt, t0);
+    });
+
+    test('없는 id 면 Err(notFound · walkNotFound)', () async {
+      final result = await repository.setFavorite('missing', true);
+
+      expect(result, isA<Err<void>>());
+      expect(
+        (result as Err<void>).failure,
+        isA<NotFoundFailure>().having(
+          (f) => f.failureCode,
+          'failureCode',
+          FailureCode.walkNotFound,
+        ),
+      );
+    });
+
+    test('update 는 즐겨찾기를 지우지 않는다', () async {
+      await repository.insert(
+        walkOf('w1', startedAt: t0, isFavorite: true),
+        const [],
+      );
+
+      await repository.update(walkOf('w1', startedAt: t0, memo: '수정'));
+
+      final loaded = await load('w1');
+      expect(loaded.memo, '수정');
+      expect(loaded.isFavorite, isTrue);
+    });
   });
 }

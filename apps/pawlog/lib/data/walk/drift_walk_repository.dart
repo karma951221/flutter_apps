@@ -127,6 +127,24 @@ class DriftWalkRepository implements WalkRepository {
   }
 
   @override
+  Future<Result<void>> setFavorite(String id, bool value) async {
+    try {
+      final changed =
+          await (_db.update(_db.walks)..where((t) => t.id.equals(id))).write(
+            WalksCompanion(isFavorite: Value(value)),
+          );
+      if (changed == 0) {
+        return const Err(
+          Failure.notFound(failureCode: FailureCode.walkNotFound),
+        );
+      }
+      return const Ok(null);
+    } catch (error) {
+      return Err(Failure.unknown(message: error.toString()));
+    }
+  }
+
+  @override
   Future<Result<void>> delete(String id) async {
     try {
       // walk_dogs · walk_points · walk_photos 는 FK cascade 로 함께 지워진다.

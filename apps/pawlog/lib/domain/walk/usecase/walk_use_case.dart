@@ -52,6 +52,9 @@ abstract interface class WalkUseCase {
 
   Future<Result<void>> deleteWalk(String id);
 
+  /// 즐겨찾기를 켜거나 끈다. 기록 수정이 아니라 updatedAt 은 그대로다.
+  Future<Result<void>> setWalkFavorite(String id, bool value);
+
   Stream<Result<List<Dog>>> watchDogs();
 
   Future<Result<List<Dog>>> getDogs();
@@ -148,6 +151,10 @@ class DefaultWalkUseCase implements WalkUseCase {
   @override
   Future<Result<void>> deleteWalk(String id) =>
       DeleteWalkScenario(_walks, _photos)(id);
+
+  @override
+  Future<Result<void>> setWalkFavorite(String id, bool value) =>
+      _walks.setFavorite(id, value);
 
   @override
   Stream<Result<List<Dog>>> watchDogs() => WatchDogsScenario(_dogs)();

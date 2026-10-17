@@ -65,6 +65,7 @@ WalksCompanion walkToCompanion(Walk walk) => WalksCompanion.insert(
   routePreview: Value(RoutePreview.encode(walk.previewPoints)),
   createdAt: walk.createdAt,
   updatedAt: walk.updatedAt,
+  isFavorite: Value(walk.isFavorite),
 );
 
 WalkPhotosCompanion photoToCompanion(
@@ -121,6 +122,7 @@ List<Walk> walksFromJoinRows(Iterable<WalkJoinRow> rows) {
         previewPoints: RoutePreview.decode(entry.value.routePreview),
         createdAt: entry.value.createdAt,
         updatedAt: entry.value.updatedAt,
+        isFavorite: entry.value.isFavorite,
       ),
   ];
 }

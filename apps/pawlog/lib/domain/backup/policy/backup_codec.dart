@@ -89,6 +89,7 @@ abstract final class BackupCodec {
       ],
       'createdAt': _instant(walk.createdAt),
       'updatedAt': _instant(walk.updatedAt),
+      'isFavorite': walk.isFavorite,
       'points': [
         for (final p in backup.points)
           {
@@ -173,6 +174,8 @@ abstract final class BackupCodec {
         previewPoints: RoutePreview.downsample(points),
         createdAt: _parseInstant(m, 'createdAt'),
         updatedAt: _parseInstant(m, 'updatedAt'),
+        // W10 에 생겼다. 그 전 백업에는 없으니 false 로 읽는다(version 은 그대로 1).
+        isFavorite: _optionalBool(m, 'isFavorite') ?? false,
       ),
       points: points,
     );
@@ -225,6 +228,12 @@ abstract final class BackupCodec {
     final value = m[key];
     if (value == null || value is String) return value as String?;
     throw _InvalidBackup('$key is not a string');
+  }
+
+  static bool? _optionalBool(Map<String, Object?> m, String key) {
+    final value = m[key];
+    if (value == null || value is bool) return value as bool?;
+    throw _InvalidBackup('$key is not a bool');
   }
 
   static num _num(Map<String, Object?> m, String key) {
