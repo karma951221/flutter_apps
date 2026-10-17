@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:core/core.dart';
 
 import '../../dog/entity/dog.dart';
+import '../../photo/repository/photo_storage.dart';
 import '../../walk/entity/geo_point.dart';
 import '../../walk/entity/walk.dart';
 import '../../walk/entity/walk_photo.dart';
@@ -141,7 +142,7 @@ abstract final class BackupCodec {
     name: _string(m, 'name'),
     breed: _optionalString(m, 'breed'),
     birthday: _parseDate(m['birthday']),
-    photoPath: _optionalString(m, 'photoPath'),
+    photoPath: _photoPath(_optionalString(m, 'photoPath'), 'photoPath'),
     createdAt: _parseInstant(m, 'createdAt'),
     updatedAt: _parseInstant(m, 'updatedAt'),
   );
@@ -179,9 +180,18 @@ abstract final class BackupCodec {
 
   static WalkPhoto _decodePhoto(Map<String, Object?> m) => WalkPhoto(
     id: _string(m, 'id'),
-    path: _string(m, 'path'),
+    path: _photoPath(_string(m, 'path'), 'path'),
     position: _int(m, 'position'),
   );
+
+  /// DB 에 들어간 경로는 나중에 `PhotoStorage.remove` · `resolve` 로 쓰이므로,
+  /// 사진 폴더 밖을 가리키는 경로(`../pawlog.sqlite` 등)가 있으면 통째로 받지 않는다.
+  static T _photoPath<T extends String?>(T path, String key) {
+    if (path != null && !isSafePhotoPath(path)) {
+      throw _InvalidBackup('unsafe $key $path');
+    }
+    return path;
+  }
 
   static WalkTrackPoint _decodePoint(Map<String, Object?> m) => WalkTrackPoint(
     point: GeoPoint(

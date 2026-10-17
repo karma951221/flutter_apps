@@ -50,6 +50,17 @@ void main() {
     expect(storage.resolve(path).existsSync(), isFalse);
   });
 
+  test('remove 는 root 밖을 가리키는 경로(../x)면 아무것도 지우지 않는다', () async {
+    await root.create(recursive: true);
+    final outside = File('${root.parent.path}/x')..writeAsBytesSync([9]);
+    final inside = File('${root.path}/x')..writeAsBytesSync([8]);
+
+    await storage.remove('../x');
+
+    expect(outside.existsSync(), isTrue);
+    expect(inside.existsSync(), isTrue);
+  });
+
   group('write', () {
     test('없던 파일을 root 아래 상대 경로로 쓴다', () async {
       final result = await storage.write('b.jpg', Uint8List.fromList([4, 5]));

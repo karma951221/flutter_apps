@@ -16,7 +16,7 @@ abstract interface class PhotoStorage {
 
   File resolve(String relativePath);
 
-  /// best-effort. 던지지 않는다.
+  /// best-effort. 던지지 않는다. [isSafePhotoPath] 가 아니면 아무것도 지우지 않는다.
   Future<void> remove(String relativePath);
 }
 

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
-import '../../../domain/backup/entity/backup_import_result.dart';
 import '../../backup/backup_messages.dart';
 import '../../common/widget/pawlog_primary_button.dart';
 import '../../photo/widget/photo_source_sheet.dart';
@@ -31,7 +30,7 @@ class DogEditPage extends StatelessWidget {
   /// 첫 실행 등록 화면에서 폼 아래에 "백업에서 가져오기" 를 보인다. 수정 화면에서는 무시한다.
   final bool showImportBackup;
 
-  /// 백업에서 반려견을 한 마리 이상 가져왔을 때 불린다.
+  /// 가져오기(취소 · 읽지 못함 제외)가 끝난 뒤 DB 에 반려견이 한 마리라도 있으면 불린다.
   final VoidCallback? onImported;
 
   @override
@@ -69,6 +68,9 @@ class _DogEditViewState extends State<_DogEditView> {
   final _nameController = TextEditingController();
   final _breedController = TextEditingController();
   bool _populated = false;
+
+  /// 백업을 가져오는 동안 가져오기 버튼과 저장을 막는다.
+  bool _importing = false;
 
   @override
   void dispose() {
@@ -139,12 +141,13 @@ class _DogEditViewState extends State<_DogEditView> {
   }
 
   Future<void> _importBackup(DogEditCubit cubit) async {
-    final result = await cubit.importBackup();
+    if (_importing) return;
+    setState(() => _importing = true);
+    final (:result, :hasDogs) = await cubit.importBackup();
     if (!mounted) return;
+    setState(() => _importing = false);
     showBackupImportResult(context, result);
-    if (result case BackupImported(:final dogs) when dogs >= 1) {
-      widget.onImported?.call();
-    }
+    if (hasDogs) widget.onImported?.call();
   }
 
   @override
@@ -222,6 +225,7 @@ class _DogEditViewState extends State<_DogEditView> {
                 _Form(
                   form: form,
                   isSaving: isSaving,
+                  isImporting: _importing,
                   nameError: failure?.failureCode == FailureCode.dogNameRequired
                       ? failure!.localizedMessage(context)
                       : null,
@@ -245,6 +249,7 @@ class _Form extends StatelessWidget {
   const _Form({
     required this.form,
     required this.isSaving,
+    required this.isImporting,
     required this.nameError,
     required this.nameController,
     required this.breedController,
@@ -255,6 +260,9 @@ class _Form extends StatelessWidget {
 
   final DogForm form;
   final bool isSaving;
+
+  /// 백업을 가져오는 중이면 가져오기 버튼과 저장을 막고 버튼 라벨 자리에 진행 표시를 보인다.
+  final bool isImporting;
 
   /// 이름 검증 실패 문구. 이름을 고치면 cubit 이 실패를 비워 사라진다.
   final String? nameError;
@@ -328,10 +336,28 @@ class _Form extends StatelessWidget {
         if (onImportBackup case final onImport?) ...[
           const SizedBox(height: PawlogSpacing.md),
           Center(
-            child: AppButton.text(
-              key: const Key('dog-edit-import-backup'),
-              label: l10n.walkBackupImportFromFirstRun,
-              onPressed: isSaving ? null : onImport,
+            // `AppButton.text` 에는 로딩 상태가 없어, 비활성 버튼의 자리(크기)는 그대로
+            // 두고 라벨만 가린 채 그 위에 진행 표시를 겹친다.
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Opacity(
+                  opacity: isImporting ? 0 : 1,
+                  child: AppButton.text(
+                    key: const Key('dog-edit-import-backup'),
+                    label: l10n.walkBackupImportFromFirstRun,
+                    onPressed: isSaving || isImporting ? null : onImport,
+                  ),
+                ),
+                if (isImporting)
+                  const SizedBox.square(
+                    key: Key('dog-edit-import-backup-progress'),
+                    dimension: PawlogSize.buttonSpinner,
+                    child: CircularProgressIndicator(
+                      strokeWidth: PawlogSize.buttonSpinnerStroke,
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
@@ -347,7 +373,7 @@ class _Form extends StatelessWidget {
             key: const Key('walk-dog-save-button'),
             label: l10n.walkDogSaveAction,
             isLoading: isSaving,
-            onPressed: cubit.save,
+            onPressed: isImporting ? null : cubit.save,
           ),
         ),
       ],

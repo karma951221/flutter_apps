@@ -63,11 +63,16 @@ class FilePhotoStorage implements PhotoStorage {
     }
   }
 
+  /// 경로를 검사하지 않고 root 에 붙이기만 한다 — 보여 주기용 `File` 을 돌려주는 자리라
+  /// 호출하는 쪽이 많다. 쓰거나 지울 때는 [write] · [remove] 를 거쳐야 [isSafePhotoPath]
+  /// 검사를 받는다. 백업에서 들어오는 경로는 `BackupCodec.decode` 가 미리 거른다.
   @override
   File resolve(String relativePath) => File('${_root.path}/$relativePath');
 
+  /// [isSafePhotoPath] 가 아니면(`../pawlog.sqlite` 등) 아무것도 하지 않는다.
   @override
   Future<void> remove(String relativePath) async {
+    if (!isSafePhotoPath(relativePath)) return;
     try {
       final file = resolve(relativePath);
       if (file.existsSync()) await file.delete();

@@ -11,6 +11,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:pawlog/domain/backup/entity/backup_import_result.dart';
 import 'package:pawlog/domain/dog/entity/dog.dart';
 import 'package:pawlog/domain/dog/entity/dog_draft.dart';
+import 'package:pawlog/presentation/common/widget/pawlog_primary_button.dart';
 import 'package:pawlog/presentation/dog/cubit/dog_edit_cubit.dart';
 import 'package:pawlog/presentation/dog/page/dog_edit_page.dart';
 
@@ -249,6 +250,18 @@ void main() {
 
   group('백업에서 가져오기', () {
     const button = Key('dog-edit-import-backup');
+    const save = Key('walk-dog-save-button');
+
+    TextButton importButton(WidgetTester tester) => tester.widget<TextButton>(
+      find.descendant(
+        of: find.byKey(button),
+        matching: find.byType(TextButton),
+      ),
+    );
+
+    setUp(() {
+      when(() => useCase.getDogs()).thenAnswer((_) async => const Ok([]));
+    });
 
     testWidgets('첫 실행 등록 화면에만 버튼이 보인다', (tester) async {
       await pumpApp(tester, DogEditPage(onDone: () {}, showImportBackup: true));
@@ -277,6 +290,7 @@ void main() {
       when(
         () => useCase.importBackup(),
       ).thenAnswer((_) async => const BackupImportResult.imported(1, 2));
+      when(() => useCase.getDogs()).thenAnswer((_) async => Ok([dog('1')]));
       var imported = 0;
       await pumpApp(
         tester,
@@ -300,7 +314,7 @@ void main() {
       const BackupImportResult.cancelled(),
       const BackupImportResult.imported(0, 0),
     ]) {
-      testWidgets('$result 이면 onImported 를 부르지 않는다', (tester) async {
+      testWidgets('$result 이고 반려견이 없으면 onImported 를 부르지 않는다', (tester) async {
         when(() => useCase.importBackup()).thenAnswer((_) async => result);
         var imported = 0;
         await pumpApp(
@@ -318,6 +332,63 @@ void main() {
         expect(imported, 0);
       });
     }
+
+    testWidgets('실패했어도 이미 반려견이 있으면 스낵바와 함께 onImported 를 부른다', (tester) async {
+      when(() => useCase.importBackup()).thenAnswer(
+        (_) async => const BackupImportResult.failed(Failure.unknown()),
+      );
+      when(() => useCase.getDogs()).thenAnswer((_) async => Ok([dog('1')]));
+      var imported = 0;
+      await pumpApp(
+        tester,
+        DogEditPage(
+          onDone: () {},
+          showImportBackup: true,
+          onImported: () => imported++,
+        ),
+      );
+
+      await tester.tap(find.byKey(button));
+      await tester.pumpAndSettle();
+
+      expect(imported, 1);
+      expect(find.byType(SnackBar), findsOneWidget);
+    });
+
+    testWidgets('가져오는 동안 저장과 가져오기 버튼을 막고 진행 표시를 보인다', (tester) async {
+      final importing = Completer<BackupImportResult>();
+      when(() => useCase.importBackup()).thenAnswer((_) => importing.future);
+      await pumpApp(tester, DogEditPage(onDone: () {}, showImportBackup: true));
+
+      await tester.tap(find.byKey(button));
+      await tester.pump();
+
+      expect(importButton(tester).onPressed, isNull);
+      expect(
+        tester.widget<PawlogPrimaryButton>(find.byKey(save)).onPressed,
+        isNull,
+      );
+      expect(
+        find.byKey(const Key('dog-edit-import-backup-progress')),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(save), warnIfMissed: false);
+      await tester.pump();
+      verifyNever(() => useCase.saveDog(any()));
+
+      importing.complete(const BackupImportResult.cancelled());
+      await tester.pumpAndSettle();
+
+      expect(importButton(tester).onPressed, isNotNull);
+      expect(
+        tester.widget<PawlogPrimaryButton>(find.byKey(save)).onPressed,
+        isNotNull,
+      );
+      expect(
+        find.byKey(const Key('dog-edit-import-backup-progress')),
+        findsNothing,
+      );
+    });
 
     testWidgets('읽을 수 없는 파일은 스낵바로 알린다', (tester) async {
       when(

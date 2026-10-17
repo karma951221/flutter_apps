@@ -87,7 +87,7 @@ class DogEditCubit extends Cubit<DogEditState> {
 
   Future<void> save() async {
     final current = state;
-    if (current is! DogEditEditing || current.isSaving) return;
+    if (current is! DogEditEditing || current.isSaving || _importing) return;
 
     emit(DogEditState.editing(form: current.form, isSaving: true));
     final result = await _useCase.saveDog(current.form.toDraft());
@@ -124,14 +124,34 @@ class DogEditCubit extends Cubit<DogEditState> {
 
   /// 첫 실행 화면의 백업 가져오기. 폼 상태는 바꾸지 않는다. 진행 중에 다시 부르면
   /// 취소로 친다 — 파일 고르기가 두 번 뜨지 않게.
-  Future<BackupImportResult> importBackup() async {
-    if (_importing) return const BackupImportResult.cancelled();
+  ///
+  /// [hasDogs] 는 가져온 뒤 DB 에 반려견이 한 마리라도 있는지다. 일부만 들어가고
+  /// 실패했거나(`failed` · `imported(0, k)`) 이미 있던 것뿐이어도(`nothingNew`)
+  /// 반려견이 있으면 첫 실행 등록 화면에 머물 이유가 없다. 취소 · 읽지 못함은 DB 를
+  /// 건드리지 않았으므로 확인하지 않는다.
+  Future<({BackupImportResult result, bool hasDogs})> importBackup() async {
+    if (_importing) {
+      return (result: const BackupImportResult.cancelled(), hasDogs: false);
+    }
     _importing = true;
     try {
-      return await _useCase.importBackup();
+      final result = await _useCase.importBackup();
+      return (result: result, hasDogs: await _hasDogsAfter(result));
     } finally {
       _importing = false;
     }
+  }
+
+  Future<bool> _hasDogsAfter(BackupImportResult result) async {
+    if (result case BackupImportCancelled() || BackupInvalid()) return false;
+    return switch (await _useCase.getDogs()) {
+      Ok(value: final dogs) => dogs.isNotEmpty,
+      // 목록을 못 읽으면 가져온 개수만 믿는다.
+      Err() => switch (result) {
+        BackupImported(:final dogs) => dogs >= 1,
+        _ => false,
+      },
+    };
   }
 
   /// 저장하지 않고 닫히면 이번에 새로 고른 사진 파일을 지운다.

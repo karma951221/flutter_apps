@@ -306,5 +306,33 @@ void main() {
       (json['walks'] as List<dynamic>)[1]['dogIds'] = ['d1', 'ghost'];
       _expectInvalid(jsonEncode(json));
     });
+
+    test('반려견 photoPath 가 사진 폴더 밖(../x)', () {
+      final json = _sampleJson();
+      (json['dogs'] as List<dynamic>)[0]['photoPath'] = '../x';
+      _expectInvalid(jsonEncode(json));
+    });
+
+    test('사진 path 가 중간에서 밖으로 나감(a/../../x)', () {
+      final json = _sampleJson();
+      final w1 = (json['walks'] as List<dynamic>)[0] as Map<String, dynamic>;
+      ((w1['photos'] as List<dynamic>)[0] as Map<String, dynamic>)['path'] =
+          'a/../../x';
+      _expectInvalid(jsonEncode(json));
+    });
+
+    test('절대 경로 photoPath(/etc/x)', () {
+      final json = _sampleJson();
+      (json['dogs'] as List<dynamic>)[0]['photoPath'] = '/etc/x';
+      _expectInvalid(jsonEncode(json));
+    });
+
+    test('절대 경로 사진 path(/etc/x)', () {
+      final json = _sampleJson();
+      final w1 = (json['walks'] as List<dynamic>)[0] as Map<String, dynamic>;
+      ((w1['photos'] as List<dynamic>)[0] as Map<String, dynamic>)['path'] =
+          '/etc/x';
+      _expectInvalid(jsonEncode(json));
+    });
   });
 }

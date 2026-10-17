@@ -228,14 +228,15 @@ void main() {
       when(
         () => useCase.importBackup(),
       ).thenAnswer((_) async => const BackupImportResult.imported(1, 3));
+      when(() => useCase.getDogs()).thenAnswer((_) async => Ok([dog('d1')]));
       final cubit = DogEditCubit(useCase);
       await cubit.load(null);
       final before = cubit.state;
 
-      expect(
-        await cubit.importBackup(),
-        const BackupImportResult.imported(1, 3),
-      );
+      final outcome = await cubit.importBackup();
+
+      expect(outcome.result, const BackupImportResult.imported(1, 3));
+      expect(outcome.hasDogs, isTrue);
       expect(cubit.state, before);
       await cubit.close();
     });
@@ -247,11 +248,89 @@ void main() {
       await cubit.load(null);
 
       final first = cubit.importBackup();
-      expect(await cubit.importBackup(), const BackupImportResult.cancelled());
+      expect(
+        (await cubit.importBackup()).result,
+        const BackupImportResult.cancelled(),
+      );
       importing.complete(const BackupImportResult.invalid());
-      expect(await first, const BackupImportResult.invalid());
+      expect((await first).result, const BackupImportResult.invalid());
 
       verify(() => useCase.importBackup()).called(1);
+      await cubit.close();
+    });
+
+    for (final result in [
+      const BackupImportResult.failed(Failure.unknown()),
+      const BackupImportResult.imported(0, 2),
+      const BackupImportResult.nothingNew(),
+    ]) {
+      test('$result 이어도 반려견이 있으면 hasDogs 다', () async {
+        when(() => useCase.importBackup()).thenAnswer((_) async => result);
+        when(() => useCase.getDogs()).thenAnswer((_) async => Ok([dog('d1')]));
+        final cubit = DogEditCubit(useCase);
+        await cubit.load(null);
+
+        final outcome = await cubit.importBackup();
+
+        expect(outcome.result, result);
+        expect(outcome.hasDogs, isTrue);
+        await cubit.close();
+      });
+    }
+
+    test('반려견이 없으면 hasDogs 가 아니다', () async {
+      when(
+        () => useCase.importBackup(),
+      ).thenAnswer((_) async => const BackupImportResult.nothingNew());
+      when(() => useCase.getDogs()).thenAnswer((_) async => const Ok([]));
+      final cubit = DogEditCubit(useCase);
+      await cubit.load(null);
+
+      expect((await cubit.importBackup()).hasDogs, isFalse);
+      await cubit.close();
+    });
+
+    for (final result in [
+      const BackupImportResult.cancelled(),
+      const BackupImportResult.invalid(),
+    ]) {
+      test('$result 이면 반려견 목록을 읽지 않는다', () async {
+        when(() => useCase.importBackup()).thenAnswer((_) async => result);
+        final cubit = DogEditCubit(useCase);
+        await cubit.load(null);
+
+        expect((await cubit.importBackup()).hasDogs, isFalse);
+        verifyNever(() => useCase.getDogs());
+        await cubit.close();
+      });
+    }
+
+    test('목록을 못 읽으면 가져온 반려견 수로 정한다', () async {
+      when(
+        () => useCase.importBackup(),
+      ).thenAnswer((_) async => const BackupImportResult.imported(1, 0));
+      when(
+        () => useCase.getDogs(),
+      ).thenAnswer((_) async => const Err(Failure.unknown()));
+      final cubit = DogEditCubit(useCase);
+      await cubit.load(null);
+
+      expect((await cubit.importBackup()).hasDogs, isTrue);
+      await cubit.close();
+    });
+
+    test('가져오는 동안 save 는 무시한다', () async {
+      final importing = Completer<BackupImportResult>();
+      when(() => useCase.importBackup()).thenAnswer((_) => importing.future);
+      final cubit = DogEditCubit(useCase);
+      await cubit.load(null);
+
+      final pending = cubit.importBackup();
+      await cubit.save();
+      verifyNever(() => useCase.saveDog(any()));
+
+      importing.complete(const BackupImportResult.cancelled());
+      await pending;
       await cubit.close();
     });
   });
