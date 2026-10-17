@@ -2912,4 +2912,28 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkSocialEmpty => '아직 공유된 산책이 없어요';
+
+  @override
+  String get walkSocialOpenTooltip => '모두의 산책';
+
+  @override
+  String get walkSocialLoadFailed => '모두의 산책을 불러오지 못했어요';
+
+  @override
+  String get walkSocialShare => '모두에게 공유';
+
+  @override
+  String get walkSocialUnshare => '공유 취소';
+
+  @override
+  String get walkSocialShared => '공유했어요';
+
+  @override
+  String get walkSocialUnshared => '공유를 취소했어요';
+
+  @override
+  String get walkSocialShareFailed => '공유하지 못했어요';
+
+  @override
+  String get walkSocialLikeTooltip => '좋아요';
 }

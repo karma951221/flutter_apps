@@ -52,6 +52,7 @@ GoRouter createRouter({required bool hasDogs}) {
           onOpenWalk: (id) => context.push(PawlogPaths.walk(id)),
           onOpenDogs: () => context.push(PawlogPaths.dogs),
           onOpenStats: () => context.push(PawlogPaths.stats),
+          onOpenCommunity: () => context.push(PawlogPaths.community),
         ),
       ),
       GoRoute(
@@ -97,6 +98,11 @@ GoRouter createRouter({required bool hasDogs}) {
                   context.go(PawlogPaths.feed);
                 }
               },
+              onSignIn: () => context.push(
+                PawlogPaths.signInFrom(
+                  PawlogPaths.walk(state.pathParameters['id']!),
+                ),
+              ),
             ),
             routes: [
               GoRoute(
@@ -125,7 +131,10 @@ GoRouter createRouter({required bool hasDogs}) {
       ),
       GoRoute(
         path: PawlogPaths.community,
-        builder: (_, _) => const CommunityPage(),
+        builder: (context, _) => CommunityPage(
+          onSignIn: () =>
+              context.push(PawlogPaths.signInFrom(PawlogPaths.community)),
+        ),
       ),
       GoRoute(
         path: PawlogPaths.dogs,

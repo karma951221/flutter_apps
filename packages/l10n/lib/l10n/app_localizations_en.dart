@@ -3115,4 +3115,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkSocialEmpty => 'No shared walks yet';
+
+  @override
+  String get walkSocialOpenTooltip => 'Community walks';
+
+  @override
+  String get walkSocialLoadFailed => 'Couldn\'t load community walks';
+
+  @override
+  String get walkSocialShare => 'Share with everyone';
+
+  @override
+  String get walkSocialUnshare => 'Stop sharing';
+
+  @override
+  String get walkSocialShared => 'Shared';
+
+  @override
+  String get walkSocialUnshared => 'No longer shared';
+
+  @override
+  String get walkSocialShareFailed => 'Couldn\'t share the walk';
+
+  @override
+  String get walkSocialLikeTooltip => 'Like';
 }

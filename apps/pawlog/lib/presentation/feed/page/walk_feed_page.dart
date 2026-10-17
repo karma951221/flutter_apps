@@ -27,6 +27,7 @@ class WalkFeedPage extends StatelessWidget {
     required this.onOpenWalk,
     required this.onOpenDogs,
     required this.onOpenStats,
+    required this.onOpenCommunity,
     super.key,
   });
 
@@ -35,6 +36,7 @@ class WalkFeedPage extends StatelessWidget {
   final ValueChanged<String> onOpenWalk;
   final VoidCallback onOpenDogs;
   final VoidCallback onOpenStats;
+  final VoidCallback onOpenCommunity;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
@@ -45,6 +47,7 @@ class WalkFeedPage extends StatelessWidget {
       onOpenWalk: onOpenWalk,
       onOpenDogs: onOpenDogs,
       onOpenStats: onOpenStats,
+      onOpenCommunity: onOpenCommunity,
     ),
   );
 }
@@ -58,6 +61,7 @@ class _WalkFeedView extends StatefulWidget {
     required this.onOpenWalk,
     required this.onOpenDogs,
     required this.onOpenStats,
+    required this.onOpenCommunity,
   });
 
   final VoidCallback onStartWalk;
@@ -65,6 +69,7 @@ class _WalkFeedView extends StatefulWidget {
   final ValueChanged<String> onOpenWalk;
   final VoidCallback onOpenDogs;
   final VoidCallback onOpenStats;
+  final VoidCallback onOpenCommunity;
 
   @override
   State<_WalkFeedView> createState() => _WalkFeedViewState();
@@ -126,6 +131,12 @@ class _WalkFeedViewState extends State<_WalkFeedView> {
           appBar: AppBar(
             title: Text(l10n.pawlogAppTitle),
             actions: [
+              IconButton(
+                key: const Key('walk-feed-community'),
+                icon: const Icon(Icons.people_outline),
+                tooltip: l10n.walkSocialOpenTooltip,
+                onPressed: widget.onOpenCommunity,
+              ),
               IconButton(
                 key: const Key('walk-feed-open-dogs'),
                 icon: const Icon(Icons.pets),

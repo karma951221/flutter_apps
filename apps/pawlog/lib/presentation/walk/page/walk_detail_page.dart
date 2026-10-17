@@ -11,6 +11,8 @@ import '../../theme/pawlog_theme.dart';
 import '../cubit/walk_detail_cubit.dart';
 import '../cubit/walk_detail_state.dart';
 import '../cubit/walk_export_result.dart';
+import '../cubit/walk_share_cubit.dart';
+import '../cubit/walk_share_state.dart';
 import '../widget/route_map.dart';
 import '../widget/walk_photos.dart';
 import '../widget/walk_stats_row.dart';
@@ -18,42 +20,75 @@ import '../widget/walk_stats_row.dart';
 /// 산책 상세 화면. 지도 · 통계 · 반려견 · 사진 · 메모를 보이고 수정 · 삭제로 이어진다.
 ///
 /// 라우팅은 모른다. [onEdit] 이 돌려주는 Future 가 끝나면(수정 화면에서 돌아오면)
-/// 상세를 다시 읽는다. 삭제되면 [onDeleted] 가 한 번 불린다.
+/// 상세를 다시 읽는다. 삭제되면 [onDeleted] 가 한 번 불린다. 로그인하지 않은 채
+/// "모두에게 공유" 를 누르면 [onSignIn] 이 불린다 — 돌아와서 다시 누른다(plan 화면 표).
 class WalkDetailPage extends StatelessWidget {
   const WalkDetailPage({
     required this.walkId,
     required this.onEdit,
     required this.onDeleted,
+    required this.onSignIn,
     super.key,
   });
 
   final String walkId;
   final Future<void> Function(String id) onEdit;
   final VoidCallback onDeleted;
+  final VoidCallback onSignIn;
 
   @override
-  Widget build(BuildContext context) => BlocProvider(
-    create: (_) => getIt<WalkDetailCubit>()..load(walkId),
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider(create: (_) => getIt<WalkDetailCubit>()..load(walkId)),
+      BlocProvider(create: (_) => getIt<WalkShareCubit>()..load(walkId)),
+    ],
     child: _WalkDetailView(
       walkId: walkId,
       onEdit: onEdit,
       onDeleted: onDeleted,
+      onSignIn: onSignIn,
     ),
   );
 }
 
-enum _WalkMenuAction { edit, export, delete }
+enum _WalkMenuAction { edit, export, share, delete }
 
 class _WalkDetailView extends StatelessWidget {
   const _WalkDetailView({
     required this.walkId,
     required this.onEdit,
     required this.onDeleted,
+    required this.onSignIn,
   });
 
   final String walkId;
   final Future<void> Function(String id) onEdit;
   final VoidCallback onDeleted;
+  final VoidCallback onSignIn;
+
+  /// 공유 · 공유 취소. 화면은 그대로 두고 스낵바만 띄운다 — 메뉴 라벨은 상태로 바뀐다.
+  Future<void> _toggleShare(BuildContext context) async {
+    final cubit = context.read<WalkShareCubit>();
+    final l10n = AppLocalizations.of(context);
+    final outcome = await cubit.toggle();
+    if (!context.mounted) return;
+    final (message, type) = switch (outcome) {
+      WalkShareOutcome.shared => (l10n.walkSocialShared, AppSnackBarType.info),
+      WalkShareOutcome.unshared => (
+        l10n.walkSocialUnshared,
+        AppSnackBarType.info,
+      ),
+      WalkShareOutcome.failed => (
+        l10n.walkSocialShareFailed,
+        AppSnackBarType.error,
+      ),
+      WalkShareOutcome.signInRequired ||
+      WalkShareOutcome.ignored => (null, null),
+    };
+    if (outcome == WalkShareOutcome.signInRequired) onSignIn();
+    if (message == null || type == null) return;
+    AppSnackBar.show(context, message: message, type: type);
+  }
 
   Future<void> _edit(BuildContext context) async {
     final cubit = context.read<WalkDetailCubit>();
@@ -126,6 +161,7 @@ class _WalkDetailView extends StatelessWidget {
       builder: (context, state) {
         final hasContent =
             state is WalkDetailLoaded || state is WalkDetailDeleting;
+        final share = context.watch<WalkShareCubit>().state;
 
         return Scaffold(
           appBar: AppBar(
@@ -166,6 +202,18 @@ class _WalkDetailView extends StatelessWidget {
                       label: l10n.walkExportGpx,
                       icon: Icons.ios_share_outlined,
                     ),
+                    // 공유 여부를 읽는 중이거나 Supabase 를 쓸 수 없으면 숨긴다.
+                    if (share case WalkShareReady(:final shared))
+                      AppOverflowMenuItem(
+                        key: const Key('walk-detail-share'),
+                        value: _WalkMenuAction.share,
+                        label: shared
+                            ? l10n.walkSocialUnshare
+                            : l10n.walkSocialShare,
+                        icon: shared
+                            ? Icons.public_off_outlined
+                            : Icons.public_outlined,
+                      ),
                     AppOverflowMenuItem(
                       value: _WalkMenuAction.delete,
                       label: l10n.commonDelete,
@@ -176,6 +224,7 @@ class _WalkDetailView extends StatelessWidget {
                   onSelected: (action) => switch (action) {
                     _WalkMenuAction.edit => _edit(context),
                     _WalkMenuAction.export => _export(context),
+                    _WalkMenuAction.share => _toggleShare(context),
                     _WalkMenuAction.delete => _confirmDelete(context),
                   },
                 ),

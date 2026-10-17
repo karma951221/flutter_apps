@@ -6,20 +6,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pawlog/core/supabase/social_availability.dart';
+import 'package:pawlog/domain/social/entity/auth_session.dart';
 import 'package:pawlog/domain/walk/entity/walk_photo.dart';
 import 'package:pawlog/presentation/theme/pawlog_theme.dart';
 import 'package:pawlog/presentation/walk/cubit/walk_detail_cubit.dart';
+import 'package:pawlog/presentation/walk/cubit/walk_share_cubit.dart';
 import 'package:pawlog/presentation/walk/page/walk_detail_page.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../support/fakes.dart';
+import '../../../support/mock_social_use_case.dart';
 import '../../../support/mock_walk_file_sharer.dart';
 import '../../../support/mock_walk_use_case.dart';
 import '../../../support/pump_app.dart';
+import '../../../support/social_fakes.dart';
 import '../../../support/stub_tile_provider.dart';
+
+class _MockSupabaseClient extends Mock implements SupabaseClient {}
 
 void main() {
   late MockWalkUseCase useCase;
   late MockWalkFileSharer sharer;
+  late MockSocialUseCase social;
+  late SocialAvailability availability;
+  AuthSession? session;
 
   final fullWalk = walk(
     dogs: [dog('d1'), dog('d2')],
@@ -34,8 +45,19 @@ void main() {
       () => useCase.getWalkTrack('w1'),
     ).thenAnswer((_) async => Ok([trackPoint(37.5), trackPoint(37.501)]));
     when(() => useCase.photoFile(any())).thenReturn(File('/no/such/photo.jpg'));
+    social = MockSocialUseCase();
+    availability = SocialAvailability.available(_MockSupabaseClient());
+    session = alice;
+    when(() => social.sessions).thenAnswer((_) => const Stream.empty());
+    when(() => social.currentSession).thenAnswer((_) => session);
+    when(
+      () => social.isWalkShared('w1'),
+    ).thenAnswer((_) async => const Ok(false));
     getIt
       ..registerFactory<WalkDetailCubit>(() => WalkDetailCubit(useCase, sharer))
+      ..registerFactory<WalkShareCubit>(
+        () => WalkShareCubit(social, availability),
+      )
       ..registerSingleton<TileProvider>(StubTileProvider());
   });
   tearDown(getIt.reset);
@@ -47,7 +69,12 @@ void main() {
   testWidgets('지도 · 통계 · 반려견 · 메모가 보인다', (tester) async {
     await pumpApp(
       tester,
-      WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      WalkDetailPage(
+        onSignIn: () {},
+        walkId: 'w1',
+        onEdit: (_) async {},
+        onDeleted: () {},
+      ),
     );
 
     expect(find.byKey(const Key('walk-detail-map')), findsOneWidget);
@@ -64,7 +91,12 @@ void main() {
   testWidgets('지도의 OSM 출처 표시가 지도 안에 보인다', (tester) async {
     await pumpApp(
       tester,
-      WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      WalkDetailPage(
+        onSignIn: () {},
+        walkId: 'w1',
+        onEdit: (_) async {},
+        onDeleted: () {},
+      ),
     );
 
     final attribution = find.byType(SimpleAttributionWidget);
@@ -81,7 +113,12 @@ void main() {
   testWidgets('메모는 손글씨, 사진은 본문 폭 4:3 · 모서리 4 다', (tester) async {
     await pumpApp(
       tester,
-      WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      WalkDetailPage(
+        onSignIn: () {},
+        walkId: 'w1',
+        onEdit: (_) async {},
+        onDeleted: () {},
+      ),
     );
 
     expect(
@@ -116,7 +153,12 @@ void main() {
     ).thenAnswer((_) async => const Ok([]));
     await pumpApp(
       tester,
-      WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      WalkDetailPage(
+        onSignIn: () {},
+        walkId: 'w1',
+        onEdit: (_) async {},
+        onDeleted: () {},
+      ),
     );
 
     expect(find.text('기록된 경로가 없습니다'), findsOneWidget);
@@ -127,7 +169,12 @@ void main() {
     when(() => useCase.getWalk('w1')).thenAnswer((_) async => Ok(walk()));
     await pumpApp(
       tester,
-      WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      WalkDetailPage(
+        onSignIn: () {},
+        walkId: 'w1',
+        onEdit: (_) async {},
+        onDeleted: () {},
+      ),
     );
 
     expect(find.byKey(const Key('walk-detail-memo')), findsNothing);
@@ -139,7 +186,12 @@ void main() {
     when(() => useCase.getWalk('w1')).thenAnswer((_) async => const Ok(null));
     await pumpApp(
       tester,
-      WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+      WalkDetailPage(
+        onSignIn: () {},
+        walkId: 'w1',
+        onEdit: (_) async {},
+        onDeleted: () {},
+      ),
     );
 
     expect(find.text('산책 기록을 찾을 수 없습니다'), findsOneWidget);
@@ -158,6 +210,7 @@ void main() {
     await pumpApp(
       tester,
       WalkDetailPage(
+        onSignIn: () {},
         walkId: 'w1',
         onEdit: (_) async {},
         onDeleted: () => deleted++,
@@ -183,6 +236,7 @@ void main() {
     await pumpApp(
       tester,
       WalkDetailPage(
+        onSignIn: () {},
         walkId: 'w1',
         onEdit: (_) async {},
         onDeleted: () => deleted++,
@@ -210,6 +264,7 @@ void main() {
     await pumpApp(
       tester,
       WalkDetailPage(
+        onSignIn: () {},
         walkId: 'w1',
         onEdit: (_) async {},
         onDeleted: () => deleted++,
@@ -236,6 +291,7 @@ void main() {
     await pumpApp(
       tester,
       WalkDetailPage(
+        onSignIn: () {},
         walkId: 'w1',
         onEdit: (id) async => ids.add(id),
         onDeleted: () {},
@@ -271,7 +327,12 @@ void main() {
     testWidgets('더보기 메뉴에 수정 · 내보내기 · 삭제가 차례로 있다', (tester) async {
       await pumpApp(
         tester,
-        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+        WalkDetailPage(
+          onSignIn: () {},
+          walkId: 'w1',
+          onEdit: (_) async {},
+          onDeleted: () {},
+        ),
       );
 
       await tester.tap(find.byKey(const Key('walk-detail-menu')));
@@ -291,7 +352,12 @@ void main() {
       ).thenAnswer((_) async => const Ok([]));
       await pumpApp(
         tester,
-        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+        WalkDetailPage(
+          onSignIn: () {},
+          walkId: 'w1',
+          onEdit: (_) async {},
+          onDeleted: () {},
+        ),
       );
 
       await tapExport(tester);
@@ -305,7 +371,12 @@ void main() {
       stubSharer(const Ok(null));
       await pumpApp(
         tester,
-        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+        WalkDetailPage(
+          onSignIn: () {},
+          walkId: 'w1',
+          onEdit: (_) async {},
+          onDeleted: () {},
+        ),
       );
 
       await tapExport(tester);
@@ -325,7 +396,12 @@ void main() {
       stubSharer(const Err(Failure.unknown()));
       await pumpApp(
         tester,
-        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+        WalkDetailPage(
+          onSignIn: () {},
+          walkId: 'w1',
+          onEdit: (_) async {},
+          onDeleted: () {},
+        ),
       );
 
       await tapExport(tester);
@@ -344,7 +420,12 @@ void main() {
     testWidgets('즐겨찾기가 아니면 빈 별 · 추가 툴팁', (tester) async {
       await pumpApp(
         tester,
-        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+        WalkDetailPage(
+          onSignIn: () {},
+          walkId: 'w1',
+          onEdit: (_) async {},
+          onDeleted: () {},
+        ),
       );
 
       expect(
@@ -361,7 +442,12 @@ void main() {
       ).thenAnswer((_) async => Ok(fullWalk.copyWith(isFavorite: true)));
       await pumpApp(
         tester,
-        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+        WalkDetailPage(
+          onSignIn: () {},
+          walkId: 'w1',
+          onEdit: (_) async {},
+          onDeleted: () {},
+        ),
       );
 
       expect(
@@ -378,7 +464,12 @@ void main() {
       ).thenAnswer((_) async => const Ok(null));
       await pumpApp(
         tester,
-        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+        WalkDetailPage(
+          onSignIn: () {},
+          walkId: 'w1',
+          onEdit: (_) async {},
+          onDeleted: () {},
+        ),
       );
 
       await tester.tap(star());
@@ -398,7 +489,12 @@ void main() {
       ).thenAnswer((_) async => const Err(Failure.network()));
       await pumpApp(
         tester,
-        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+        WalkDetailPage(
+          onSignIn: () {},
+          walkId: 'w1',
+          onEdit: (_) async {},
+          onDeleted: () {},
+        ),
       );
 
       await tester.tap(star());
@@ -419,7 +515,12 @@ void main() {
       ).thenAnswer((_) => pending.future);
       await pumpApp(
         tester,
-        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+        WalkDetailPage(
+          onSignIn: () {},
+          walkId: 'w1',
+          onEdit: (_) async {},
+          onDeleted: () {},
+        ),
       );
 
       await tester.tap(star());
@@ -442,7 +543,12 @@ void main() {
       when(() => useCase.deleteWalk('w1')).thenAnswer((_) => pending.future);
       await pumpApp(
         tester,
-        WalkDetailPage(walkId: 'w1', onEdit: (_) async {}, onDeleted: () {}),
+        WalkDetailPage(
+          onSignIn: () {},
+          walkId: 'w1',
+          onEdit: (_) async {},
+          onDeleted: () {},
+        ),
       );
       Color? starColor() => tester
           .widget<Icon>(
@@ -469,6 +575,118 @@ void main() {
       expect(starColor(), colors.textMuted);
       pending.complete(const Err(Failure.unknown()));
       await tester.pumpAndSettle();
+      await disposePage(tester);
+    });
+  });
+
+  group('모두에게 공유', () {
+    Future<void> openMenu(WidgetTester tester) async {
+      await tester.tap(find.byKey(const Key('walk-detail-menu')));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> tapShare(WidgetTester tester) async {
+      await openMenu(tester);
+      await tester.tap(find.byKey(const Key('walk-detail-share')));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> pumpDetail(WidgetTester tester, {VoidCallback? onSignIn}) =>
+        pumpApp(
+          tester,
+          WalkDetailPage(
+            walkId: 'w1',
+            onEdit: (_) async {},
+            onDeleted: () {},
+            onSignIn: onSignIn ?? () {},
+          ),
+        );
+
+    testWidgets('공유 안 된 산책은 내보내기와 삭제 사이에 "모두에게 공유"', (tester) async {
+      await pumpDetail(tester);
+      await openMenu(tester);
+
+      final export = tester.getTopLeft(find.text('GPX로 내보내기')).dy;
+      final share = tester.getTopLeft(find.text('모두에게 공유')).dy;
+      final delete = tester.getTopLeft(find.text('삭제')).dy;
+      expect(export < share && share < delete, isTrue);
+      await disposePage(tester);
+    });
+
+    testWidgets('공유된 산책은 "공유 취소"', (tester) async {
+      when(
+        () => social.isWalkShared('w1'),
+      ).thenAnswer((_) async => const Ok(true));
+      await pumpDetail(tester);
+      await openMenu(tester);
+
+      expect(find.text('공유 취소'), findsOneWidget);
+      expect(find.text('모두에게 공유'), findsNothing);
+      await disposePage(tester);
+    });
+
+    testWidgets('로그인하지 않았어도 "모두에게 공유" 가 보이고 누르면 로그인으로', (tester) async {
+      session = null;
+      var signIn = 0;
+      await pumpDetail(tester, onSignIn: () => signIn++);
+
+      await tapShare(tester);
+
+      expect(signIn, 1);
+      verifyNever(() => social.shareWalk(any()));
+      await disposePage(tester);
+    });
+
+    testWidgets('Supabase 를 쓸 수 없으면 공유 항목이 없다', (tester) async {
+      availability = const SocialAvailability.unavailable();
+      await pumpDetail(tester);
+      await openMenu(tester);
+
+      expect(find.byKey(const Key('walk-detail-share')), findsNothing);
+      expect(find.text('GPX로 내보내기'), findsOneWidget);
+      await disposePage(tester);
+    });
+
+    testWidgets('공유하면 스낵바를 보이고 라벨이 "공유 취소" 로 바뀐다', (tester) async {
+      when(
+        () => social.shareWalk('w1'),
+      ).thenAnswer((_) async => const Ok('p1'));
+      await pumpDetail(tester);
+
+      await tapShare(tester);
+
+      expect(find.text('공유했어요'), findsOneWidget);
+      expect(find.byType(WalkDetailPage), findsOneWidget);
+      await openMenu(tester);
+      expect(find.text('공유 취소'), findsOneWidget);
+      await disposePage(tester);
+    });
+
+    testWidgets('공유 취소하면 스낵바를 보인다', (tester) async {
+      when(
+        () => social.isWalkShared('w1'),
+      ).thenAnswer((_) async => const Ok(true));
+      when(
+        () => social.unshareWalk('w1'),
+      ).thenAnswer((_) async => const Ok(null));
+      await pumpDetail(tester);
+
+      await tapShare(tester);
+
+      expect(find.text('공유를 취소했어요'), findsOneWidget);
+      verify(() => social.unshareWalk('w1')).called(1);
+      await disposePage(tester);
+    });
+
+    testWidgets('실패하면 실패 스낵바', (tester) async {
+      when(
+        () => social.shareWalk('w1'),
+      ).thenAnswer((_) async => const Err(Failure.network()));
+      await pumpDetail(tester);
+
+      await tapShare(tester);
+
+      expect(find.text('공유하지 못했어요'), findsOneWidget);
       await disposePage(tester);
     });
   });

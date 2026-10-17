@@ -92,6 +92,7 @@ void main() {
     ValueChanged<String>? onOpenWalk,
     VoidCallback? onOpenDogs,
     VoidCallback? onOpenStats,
+    VoidCallback? onOpenCommunity,
   }) => pumpApp(
     tester,
     WalkFeedPage(
@@ -100,9 +101,25 @@ void main() {
       onOpenWalk: onOpenWalk ?? (_) {},
       onOpenDogs: onOpenDogs ?? () {},
       onOpenStats: onOpenStats ?? () {},
+      onOpenCommunity: onOpenCommunity ?? () {},
     ),
     disableAnimations: disableAnimations,
   );
+
+  testWidgets('앱바 사람들 아이콘이 모두의 산책을 연다', (tester) async {
+    var opened = 0;
+
+    await pump(tester, onOpenCommunity: () => opened++);
+
+    final button = find.byKey(const Key('walk-feed-community'));
+    expect(
+      find.descendant(of: button, matching: find.byIcon(Icons.people_outline)),
+      findsOneWidget,
+    );
+    expect(tester.widget<IconButton>(button).tooltip, '모두의 산책');
+    await tester.tap(button);
+    expect(opened, 1);
+  });
 
   testWidgets('빈 피드는 날짜 열 없이 안내 한 줄과 하단 시작 버튼을 보인다', (tester) async {
     feed = () => Stream.value(const Ok([]));

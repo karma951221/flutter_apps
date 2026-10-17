@@ -916,5 +916,13 @@
   "walkSocialSignInRequired": "Sign in to share and like walks",
   "walkSocialAuthFailed": "Couldn't sign in. Check your email and password",
   "walkSocialNicknameTaken": "That nickname is taken",
-  "walkSocialEmpty": "No shared walks yet"
+  "walkSocialEmpty": "No shared walks yet",
+  "walkSocialOpenTooltip": "Community walks",
+  "walkSocialLoadFailed": "Couldn't load community walks",
+  "walkSocialShare": "Share with everyone",
+  "walkSocialUnshare": "Stop sharing",
+  "walkSocialShared": "Shared",
+  "walkSocialUnshared": "No longer shared",
+  "walkSocialShareFailed": "Couldn't share the walk",
+  "walkSocialLikeTooltip": "Like"
 }

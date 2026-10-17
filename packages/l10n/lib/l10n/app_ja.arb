@@ -916,5 +916,13 @@
   "walkSocialSignInRequired": "ログインすると共有やいいねができます",
   "walkSocialAuthFailed": "ログインできませんでした。メールとパスワードを確認してください",
   "walkSocialNicknameTaken": "そのニックネームは使われています",
-  "walkSocialEmpty": "まだ共有された散歩はありません"
+  "walkSocialEmpty": "まだ共有された散歩はありません",
+  "walkSocialOpenTooltip": "みんなの散歩",
+  "walkSocialLoadFailed": "みんなの散歩を読み込めませんでした",
+  "walkSocialShare": "みんなに共有",
+  "walkSocialUnshare": "共有をやめる",
+  "walkSocialShared": "共有しました",
+  "walkSocialUnshared": "共有をやめました",
+  "walkSocialShareFailed": "共有できませんでした",
+  "walkSocialLikeTooltip": "いいね"
 }

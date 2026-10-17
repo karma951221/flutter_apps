@@ -44,10 +44,12 @@ import '../../presentation/dog/cubit/dog_edit_cubit.dart' as _i980;
 import '../../presentation/dog/cubit/dog_list_cubit.dart' as _i596;
 import '../../presentation/feed/cubit/walk_feed_cubit.dart' as _i733;
 import '../../presentation/social/cubit/auth_cubit.dart' as _i566;
+import '../../presentation/social/cubit/community_cubit.dart' as _i115;
 import '../../presentation/stats/cubit/stats_cubit.dart' as _i184;
 import '../../presentation/tracking/cubit/active_walk_cubit.dart' as _i143;
 import '../../presentation/walk/cubit/walk_detail_cubit.dart' as _i174;
 import '../../presentation/walk/cubit/walk_edit_cubit.dart' as _i804;
+import '../../presentation/walk/cubit/walk_share_cubit.dart' as _i464;
 import '../supabase/social_availability.dart' as _i671;
 import 'register_module.dart' as _i291;
 
@@ -112,6 +114,18 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i684.AuthRepository>(),
         gh<_i612.WalkRepository>(),
         gh<_i659.CommunityRepository>(),
+      ),
+    );
+    gh.factory<_i115.CommunityCubit>(
+      () => _i115.CommunityCubit(
+        gh<_i186.SocialUseCase>(),
+        gh<_i671.SocialAvailability>(),
+      ),
+    );
+    gh.factory<_i464.WalkShareCubit>(
+      () => _i464.WalkShareCubit(
+        gh<_i186.SocialUseCase>(),
+        gh<_i671.SocialAvailability>(),
       ),
     );
     gh.factory<_i566.AuthCubit>(

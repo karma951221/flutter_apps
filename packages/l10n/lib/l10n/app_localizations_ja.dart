@@ -2910,4 +2910,28 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkSocialEmpty => 'まだ共有された散歩はありません';
+
+  @override
+  String get walkSocialOpenTooltip => 'みんなの散歩';
+
+  @override
+  String get walkSocialLoadFailed => 'みんなの散歩を読み込めませんでした';
+
+  @override
+  String get walkSocialShare => 'みんなに共有';
+
+  @override
+  String get walkSocialUnshare => '共有をやめる';
+
+  @override
+  String get walkSocialShared => '共有しました';
+
+  @override
+  String get walkSocialUnshared => '共有をやめました';
+
+  @override
+  String get walkSocialShareFailed => '共有できませんでした';
+
+  @override
+  String get walkSocialLikeTooltip => 'いいね';
 }

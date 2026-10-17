@@ -5485,6 +5485,54 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'아직 공유된 산책이 없어요'**
   String get walkSocialEmpty;
+
+  /// 피드 앱바에서 모두의 산책을 여는 아이콘 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'모두의 산책'**
+  String get walkSocialOpenTooltip;
+
+  /// 모두의 산책 목록을 못 읽었거나 서버를 쓸 수 없을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'모두의 산책을 불러오지 못했어요'**
+  String get walkSocialLoadFailed;
+
+  /// 산책 상세 더보기 — 이 산책을 모두의 산책에 공유
+  ///
+  /// In ko, this message translates to:
+  /// **'모두에게 공유'**
+  String get walkSocialShare;
+
+  /// 산책 상세 더보기 — 공유한 산책을 내림
+  ///
+  /// In ko, this message translates to:
+  /// **'공유 취소'**
+  String get walkSocialUnshare;
+
+  /// 공유 성공 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'공유했어요'**
+  String get walkSocialShared;
+
+  /// 공유 취소 성공 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'공유를 취소했어요'**
+  String get walkSocialUnshared;
+
+  /// 공유 · 공유 취소 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'공유하지 못했어요'**
+  String get walkSocialShareFailed;
+
+  /// 모두의 산책 하트 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'좋아요'**
+  String get walkSocialLikeTooltip;
 }
 
 class _AppLocalizationsDelegate

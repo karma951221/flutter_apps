@@ -19,7 +19,9 @@ import 'package:pawlog/presentation/dog/cubit/dog_list_cubit.dart';
 import 'package:pawlog/presentation/dog/page/dog_edit_page.dart';
 import 'package:pawlog/presentation/feed/cubit/walk_feed_cubit.dart';
 import 'package:pawlog/presentation/feed/page/walk_feed_page.dart';
+import 'package:pawlog/core/supabase/social_availability.dart';
 import 'package:pawlog/presentation/social/cubit/auth_cubit.dart';
+import 'package:pawlog/presentation/social/cubit/community_cubit.dart';
 import 'package:pawlog/presentation/social/page/community_page.dart';
 import 'package:pawlog/presentation/social/page/sign_in_page.dart';
 import 'package:pawlog/presentation/stats/cubit/stats_cubit.dart';
@@ -28,16 +30,22 @@ import 'package:pawlog/presentation/theme/pawlog_theme.dart';
 import 'package:pawlog/presentation/tracking/cubit/active_walk_cubit.dart';
 import 'package:pawlog/presentation/walk/cubit/walk_detail_cubit.dart';
 import 'package:pawlog/presentation/walk/cubit/walk_edit_cubit.dart';
+import 'package:pawlog/presentation/walk/cubit/walk_share_cubit.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pawlog/presentation/walk/page/walk_detail_page.dart';
 import 'package:pawlog/presentation/walk/page/walk_edit_page.dart';
 
 import '../../support/mock_social_use_case.dart';
 import '../../support/mock_walk_file_sharer.dart';
 import '../../support/mock_walk_use_case.dart';
+import '../../support/social_fakes.dart';
 import '../../support/stub_tile_provider.dart';
+
+class _MockSupabaseClient extends Mock implements SupabaseClient {}
 
 void main() {
   late MockWalkUseCase useCase;
+  late MockSocialUseCase social;
 
   final now = DateTime(2026, 10, 3, 9);
   final dog = Dog(id: 'd1', name: '콩이', createdAt: now, updatedAt: now);
@@ -80,6 +88,16 @@ void main() {
     when(() => useCase.getDog(any())).thenAnswer((_) async => Ok(dog));
     when(() => useCase.photoFile(any())).thenReturn(File('/no/such/photo.jpg'));
     when(() => useCase.removePhoto(any())).thenAnswer((_) async {});
+    social = MockSocialUseCase();
+    final availability = SocialAvailability.available(_MockSupabaseClient());
+    when(() => social.sessions).thenAnswer((_) => const Stream.empty());
+    when(() => social.currentSession).thenReturn(null);
+    when(
+      () => social.isWalkShared(any()),
+    ).thenAnswer((_) async => const Ok(false));
+    when(
+      () => social.fetchCommunityPage(),
+    ).thenAnswer((_) async => Ok(CursorPage(items: [walkPost('p1')])));
     getIt
       ..registerFactory<WalkFeedCubit>(
         () => WalkFeedCubit(useCase, const Clock()),
@@ -94,7 +112,13 @@ void main() {
       ..registerFactory<DogListCubit>(() => DogListCubit(useCase))
       ..registerFactory<DogEditCubit>(() => DogEditCubit(useCase))
       ..registerFactory<StatsCubit>(() => StatsCubit(useCase, const Clock()))
-      ..registerFactory<AuthCubit>(() => AuthCubit(MockSocialUseCase()))
+      ..registerFactory<AuthCubit>(() => AuthCubit(social))
+      ..registerFactory<CommunityCubit>(
+        () => CommunityCubit(social, availability),
+      )
+      ..registerFactory<WalkShareCubit>(
+        () => WalkShareCubit(social, availability),
+      )
       ..registerSingleton<TileProvider>(StubTileProvider());
   });
   tearDown(getIt.reset);
@@ -300,6 +324,50 @@ void main() {
       router.go('/community');
       await tester.pumpAndSettle();
       expect(path(router), '/community');
+      await dispose(tester);
+    });
+    testWidgets('피드의 사람들 아이콘으로 모두의 산책을 연다', (tester) async {
+      final router = await pumpRouter(tester);
+
+      await tester.tap(find.byKey(const Key('walk-feed-community')));
+      await tester.pumpAndSettle();
+
+      expect(router.state.uri.path, '/community');
+      expect(find.byType(CommunityPage), findsOneWidget);
+      expect(router.canPop(), isTrue);
+      await dispose(tester);
+    });
+
+    testWidgets('로그아웃 상태로 하트를 누르면 from=/community 로 로그인을 연다', (tester) async {
+      final router = await pumpRouter(tester);
+      router.go('/community');
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.byKey(const Key('community-like-p1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('community-like-p1')));
+      await tester.pumpAndSettle();
+
+      final uri = router.state.uri;
+      expect(uri.path, '/sign-in');
+      expect(uri.queryParameters['from'], '/community');
+      expect(router.canPop(), isTrue);
+      await dispose(tester);
+    });
+
+    testWidgets('로그아웃 상태로 상세에서 공유하면 from=/walks/w1 로 로그인을 연다', (tester) async {
+      final router = await pumpRouter(tester);
+      router.go('/walks/w1');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('walk-detail-menu')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('walk-detail-share')));
+      await tester.pumpAndSettle();
+
+      final uri = router.state.uri;
+      expect(uri.path, '/sign-in');
+      expect(uri.queryParameters['from'], '/walks/w1');
       await dispose(tester);
     });
   });
