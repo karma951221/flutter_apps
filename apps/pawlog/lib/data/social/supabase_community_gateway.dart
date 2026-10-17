@@ -34,6 +34,10 @@ abstract interface class SupabaseCommunityGateway {
   Future<void> deleteLike({required String postId, required String userId});
 }
 
+/// 읽기는 요청마다 `retry(enabled: false)` — 사용자가 화면 앞에서 기다리는 읽기라 다시 시도하지
+/// 않는다. postgrest 는 실패한 GET 을 기본 3번(1·2·4초 대기) 다시 보내고, `SupabaseClient.from`
+/// 은 `PostgrestClientOptions` 의 재시도 설정을 넘기지 않아(supabase 2.16.1) 클라이언트
+/// 설정으로는 끌 수 없다. 서버가 멈추면 10초 × 4 + 7초 ≈ 47초를 기다렸다.
 class SupabaseClientCommunityGateway implements SupabaseCommunityGateway {
   SupabaseClientCommunityGateway(this._client);
 
@@ -61,7 +65,8 @@ class SupabaseClientCommunityGateway implements SupabaseCommunityGateway {
     return request
         .order('created_at', ascending: false)
         .order('id', ascending: false)
-        .limit(limit);
+        .limit(limit)
+        .retry(enabled: false);
   }
 
   @override
@@ -74,7 +79,8 @@ class SupabaseClientCommunityGateway implements SupabaseCommunityGateway {
         .select('id')
         .eq('author_id', authorId)
         .eq('local_walk_id', localWalkId)
-        .limit(1);
+        .limit(1)
+        .retry(enabled: false);
     return rows.isNotEmpty;
   }
 

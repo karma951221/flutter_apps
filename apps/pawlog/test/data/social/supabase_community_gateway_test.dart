@@ -49,6 +49,16 @@ class _FakeBuilder<T> extends Fake implements PostgrestFilterBuilder<T> {
   }
 
   @override
+  PostgrestFilterBuilder<T> retry({
+    bool enabled = true,
+    int? count,
+    Duration? requestTimeout,
+  }) {
+    calls.add('retry $enabled');
+    return this;
+  }
+
+  @override
   Future<U> then<U>(
     FutureOr<U> Function(T value) onValue, {
     Function? onError,
@@ -113,6 +123,7 @@ void main() {
       'order created_at desc',
       'order id desc',
       'limit 21',
+      'retry false',
     ]);
   });
 
@@ -127,6 +138,7 @@ void main() {
       'order created_at desc',
       'order id desc',
       'limit 21',
+      'retry false',
     ]);
   });
 
@@ -144,6 +156,7 @@ void main() {
       'eq author_id u1',
       'eq local_walk_id w1',
       'limit 1',
+      'retry false',
     ]);
   });
 

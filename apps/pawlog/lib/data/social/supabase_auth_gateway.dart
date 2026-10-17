@@ -29,6 +29,7 @@ abstract interface class SupabaseAuthGateway {
   Future<bool> isNicknameTaken(String nickname);
 }
 
+/// 읽기는 다시 시도하지 않는다 — 이유는 `SupabaseClientCommunityGateway`.
 class SupabaseClientAuthGateway implements SupabaseAuthGateway {
   SupabaseClientAuthGateway(this._client);
 
@@ -104,7 +105,8 @@ class SupabaseClientAuthGateway implements SupabaseAuthGateway {
         .from('profiles')
         .select('nickname')
         .eq('id', userId)
-        .maybeSingle();
+        .maybeSingle()
+        .retry(enabled: false);
     return row?['nickname'] as String?;
   }
 
@@ -116,7 +118,8 @@ class SupabaseClientAuthGateway implements SupabaseAuthGateway {
         .from('profiles')
         .select('nickname')
         .ilike('nickname', NicknameMatch.escapeLikePattern(candidate))
-        .limit(NicknameMatch.candidateLimit);
+        .limit(NicknameMatch.candidateLimit)
+        .retry(enabled: false);
     return rows.any(
       (row) =>
           NicknameMatch.isSameNickname(row['nickname'] as String, candidate),

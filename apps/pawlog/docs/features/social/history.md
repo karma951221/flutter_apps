@@ -30,7 +30,7 @@
 | 상세의 공유 항목은 `WalkDetailCubit` 이 아니라 따로 `WalkShareCubit` | 상세의 읽기 · 삭제 · 즐겨찾기는 로컬이고 이것만 서버를 부른다. 세션 변화 구독도 이 cubit 만 한다 |
 | 쓰기는 **RPC 로만**(`publish_walk_post` · `unpublish_walk_post`). `walk_posts` 직접 insert · update · delete 는 GRANT 없음 | 리뷰 수정 `8f62152`. 입력 크기(반려견 1~10 · 메모 500 · 경로 64점)와 `author_id` 를 서버 한곳에서 지킨다 |
 | 다시 공유하면 그 행을 되살리고 `created_at` 을 지금으로 올린다 | 공유 취소 뒤 다시 공유한 글이 목록 아래 묻히지 않게. 커서가 `created_at` 기준이라 새 글처럼 맨 위에 온다 |
-| **시간 제한**: 모든 Supabase 요청에 10초(`TimeoutHttpClient`), postgrest 읽기 재시도는 1번 | 에뮬레이터 QA 에서 API 컨테이너를 멈추자 모두의 산책이 끝없이 돌았다. 기본 재시도 3번이면 최악 약 47초, 1번이면 약 21초. gotrue 가 감싼 요청 실패(상태 코드 없는 `AuthRetryableFetchException`)도 core 에서 network 로 분류한다 |
+| **시간 제한**: 모든 Supabase 요청에 10초(`TimeoutHttpClient`), postgrest 읽기 재시도는 1번 | 에뮬레이터 QA 에서 API 컨테이너를 멈추자 모두의 산책이 끝없이 돌았다. 기본 재시도 3번이면 최악 약 47초, 1번이면 약 21초. gotrue 가 감싼 요청 실패(상태 코드 없는 `AuthRetryableFetchException`)도 core 에서 network 로 분류한다. **후속에서 바꿈** — 재시도 설정이 `from()` 에 먹지 않아 실제는 3번(47초)이었다. 재시도 0번 + 동작당 12초([후속](#후속-2026-10-18)) |
 | **경로 감추기 규칙**: 누적 거리로 앞뒤 150 m 를 자른 뒤, 원래 출발점 · 도착점에서 직선 150 m 안인 점도 버린다. 2점 미만이면 경로 없이 | 누적만으로는 집 앞을 맴돌거나 중간에 집 앞을 다시 지나간 점이 남는다(최종 리뷰). 320 m 산책은 경로가 다 잘린다 — 의도한 결과 |
 | **지운 산책의 공유**: 지우기 전에 공유 중(또는 여부를 모름)이고 로그인했으면 공유 취소를 먼저 보낸다. 실패해도 지우고 스낵바 `walkSocialUnshareOnDeleteFailed`. 로그인하지 않았으면 서버에 묻지 않는다 | 지운 산책이 모두의 산책에 남으면 안 된다. 그래도 기록은 기기의 것이라 서버 때문에 지우기를 막지 않는다. 순서는 상세 페이지가 정한다(`WalkShareCubit.unshareForDelete` → `WalkDetailCubit.delete`) |
 
@@ -60,4 +60,32 @@
 
 로컬 Supabase + Android 에뮬레이터. 결과는 [테스트 — 에뮬레이터](testing.md#에뮬레이터). 찾아서 고친 것 하나:
 API 컨테이너를 멈추면 모두의 산책 스피너가 끝없이 돌았다 → 시간 제한(위 "계획 밖에서 정한 것", `e4a005c`).
-수정 뒤 다시 보니(2026-10-18) API 를 멈춘 채 들어가면 30~60초 뒤 "Couldn't load community walks · Try again" 이 뜨고, API 를 되살려 Try again 을 누르면 목록을 다시 읽는다. 기다림이 계산(약 21초)보다 길다 — 세션 확인 · 프로필 읽기가 앞에 붙는 것으로 보인다. 넘기는 것: 첫 화면 기다림을 줄이기(재시도 0번 · 더 짧은 시간 제한)
+수정 뒤 다시 보니(2026-10-18) API 를 멈춘 채 들어가면 30~60초 뒤 "Couldn't load community walks · Try again" 이 뜨고, API 를 되살려 Try again 을 누르면 목록을 다시 읽는다. 기다림이 계산(약 21초)보다 길었다 — 원인과 수정은 아래 "후속 (2026-10-18)".
+
+## 후속 (2026-10-18)
+
+브랜치 `feat/pawlog-social-followups`. 위 "넘기는 것" 중 둘을 끝냈다.
+
+### 서버가 멈췄을 때의 기다림 — 47초 → 12초
+
+**원인(측정).** 진짜 `SupabaseClient` 에 답하지 않는 http 클라이언트를 물려 시간을 쟀다(`supabase 2.16.1` · `postgrest 2.9.1` · `gotrue 2.27.2`).
+
+| 경우 | 요청 | 걸린 시간 |
+|---|---|---|
+| 로그아웃 · 유효한 세션 | `GET walk_posts_with_author` × 4 (0 · 11 · 23 · 37초에 시작) | **47초** |
+| 곧 만료되는 세션, 재시도 1번을 요청에 직접 건 경우 | `POST /auth/v1/token`(10초) → `GET`(10초) → 다시 `POST /token` | 31초 |
+
+- `CommunityCubit.start` 는 첫 페이지 앞에서 아무것도 기다리지 않는다. 세션 스트림은 구독만 하고(프로필 읽기는 그 안에서 따로 돈다) 바로 `fetchCommunityPage` 를 부른다 — 의심했던 "세션 확인 · 프로필 읽기가 앞에 붙는다" 는 아니었다.
+- **주된 원인**: `connectSupabase` 의 `PostgrestClientOptions(retryCount: 1)` 이 먹지 않았다. `SupabaseClient.from()` 은 `SupabaseQueryBuilder` 를 만들 때 재시도 설정을 넘기지 않아 postgrest 기본값(3번, 1 · 2 · 4초 대기)이 그대로 쓰였다(`rpc` 는 `rest` 를 거쳐 설정이 먹는다). 10초 × 4 + 7초 ≈ 47초. 에뮬레이터의 30~60초가 이것이다.
+- **둘째 원인**: 로그인 세션이 만료 30초 안이면 SDK 의 `AuthHttpClient` 가 요청마다 먼저 `getSession()` → 토큰 갱신을 기다린다. 갱신도 같은 http 클라이언트라 10초를 쓴다(gotrue 는 갱신을 10초 창 안에서만 다시 시도하므로 멈춘 서버엔 한 번). 그래서 요청 하나가 최대 약 20초다.
+
+**수정(최소).** 둘 다 고쳤다.
+
+| 무엇 | 왜 |
+|---|---|
+| 게이트웨이의 읽기(`fetchPosts` · `hasLivePost` · `fetchNickname` · `isNicknameTaken`)에 요청마다 `retry(enabled: false)`. 클라이언트 설정도 `retryEnabled: false` 로(`rpc` 용) | 사용자가 화면 앞에서 기다리는 읽기다. 실패하면 화면의 "다시 시도" 가 재시도다. 설정이 `from()` 에 안 먹으니 요청에 직접 건다 |
+| `SupabaseCommunityRepository` 가 호출 하나하나에 전체 제한 `socialCallDeadline`(12초, `Future.timeout`) | 갱신 10초 + 요청 10초를 한 동작 안에서 묶는다. 목록 · 더 읽기 · 공유 · 공유 취소 · 공유 여부 · 좋아요 모두. 넘으면 `TimeoutException` → 네트워크 실패(core) |
+| 요청 하나의 제한(`TimeoutHttpClient` 10초)은 그대로 | 더 짧게 하면 느린 망에서 정상 요청도 끊긴다. 바깥 제한이 12초를 지킨다 |
+
+첫 페이지를 세션과 떼어 놓는 수정은 하지 않았다 — 이미 떼어져 있다. 인증 저장소(로그인 · 가입)에는 전체 제한을 걸지 않았다(이번 범위는 모두의 산책 · 공유 · 좋아요). 다만 가입 전 닉네임 확인도 같은 재시도 문제로 47초를 기다릴 수 있어 재시도는 껐다.
+

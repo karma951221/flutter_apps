@@ -21,8 +21,9 @@ python3 supabase/tests/walk_posts_rls_check.py
 | `core/supabase/timeout_http_client_test.dart` | 4 | 끝나지 않는 요청 → 10초 뒤 `TimeoutException` · 빠른 응답 통과 · `close` 전달 · `TimeoutException` → `networkUnavailable` |
 | `data/social/supabase_auth_gateway_test.dart` | 5 | 가입은 닉네임을 메타데이터로 · 세션 없는 가입 → `signUpFailed` · 로그인 · 사용자 변화 스트림 · 현재 사용자 |
 | `data/social/supabase_auth_repository_test.dart` | 10 | 프로필 닉네임으로 세션 · 틀린 자격 → `invalidCredentials` · 프로필 실패에도 로그인 · 닉네임 사전 확인(대소문자 무시) · 경합 유일 위반 → `nicknameTaken` · 로그아웃 · 세션 스트림 |
-| `data/social/supabase_community_gateway_test.dart` | 8 | RPC 인자 · 반환 · 보기 정렬과 커서 `or` 필터 · 내 글 찾기 · 좋아요 insert(`post_id` 만) · delete · 현재 사용자 |
-| `data/social/supabase_community_repository_test.dart` | 20 | 행 → `WalkPost`(UTC → 현지) · limit+1 로 다음 페이지 · 커서 · 이미 누른 좋아요 · 없는 공유 취소는 Ok · 로그인 필요 |
+| `data/social/supabase_community_gateway_test.dart` | 8 | RPC 인자 · 반환 · 보기 정렬과 커서 `or` 필터 · **읽기는 `retry false`** · 내 글 찾기 · 좋아요 insert(`post_id` 만) · delete · 현재 사용자 |
+| `data/social/supabase_community_repository_test.dart` | 26 | 행 → `WalkPost`(UTC → 현지) · limit+1 로 다음 페이지 · 커서 · 이미 누른 좋아요 · 없는 공유 취소는 Ok · 로그인 필요 · **멈춘 서버: 목록 · 공유 · 공유 취소 · 공유 여부 · 좋아요 · 좋아요 취소가 12초에 네트워크 실패(fake_async)** |
+| `data/social/supabase_hang_test.dart` | 4 | 진짜 `SupabaseClient` + 답하지 않는 http: 읽기 4종이 **요청 한 번**으로 끝남(SDK 기본 재시도 3번을 막음) · **곧 만료되는 세션의 토큰 갱신까지 멈춰도 첫 페이지가 12초에 실패(fake_async)** |
 | `data/social/unavailable_*_repository_test.dart` | 1 · 1 | 쓸 수 없음 저장소는 서버 없이 실패를 돌려준다 |
 | `data/social/walk_post_cursor_test.dart` | 4 | 마이크로초 · UTC 왕복 · 현지 시각 · null · 깨진 커서 → `feedCursorInvalid` |
 | `domain/social/entity/walk_post_draft_test.dart` | 5 | 산책 → 공유 초안 · 경로 감추기 · 트랙 없으면 미리보기 점 · 메모 500자 · 반려견 이름 30자 · 10마리 |

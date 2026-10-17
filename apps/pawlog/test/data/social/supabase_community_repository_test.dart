@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pawlog/core/supabase/supabase_initializer.dart';
 import 'package:pawlog/data/social/supabase_community_repository.dart';
 import 'package:pawlog/data/social/walk_post_cursor.dart';
 import 'package:pawlog/domain/social/entity/walk_post.dart';
@@ -309,5 +313,39 @@ void main() {
       expect(gateway.likes, isEmpty);
       expect(gateway.unlikes, isEmpty);
     });
+  });
+
+  group('서버가 멈추면 동작마다 시간 안에 네트워크 실패로 끝난다', () {
+    final draft = WalkPostDraft(
+      localWalkId: 'w1',
+      startedAt: DateTime.utc(2026, 10, 17, 8),
+      duration: const Duration(minutes: 30),
+      distanceMeters: 1200,
+      dogNames: const ['콩이'],
+      routePreview: const [],
+    );
+    final calls = <String, Future<Result<Object?>> Function()>{
+      'fetchPage': () => repository.fetchPage(),
+      'publish': () => repository.publish(draft),
+      'unpublish': () => repository.unpublish('w1'),
+      'isPublished': () => repository.isPublished('w1'),
+      'like': () => repository.like('p1'),
+      'unlike': () => repository.unlike('p1'),
+    };
+
+    for (final MapEntry(key: name, value: call) in calls.entries) {
+      test(name, () {
+        fakeAsync((async) {
+          gateway.hang = true;
+          Result<Object?>? result;
+          unawaited(call().then((r) => result = r));
+
+          async.elapse(socialCallDeadline - const Duration(milliseconds: 1));
+          expect(result, isNull);
+          async.elapse(const Duration(milliseconds: 1));
+          expect(_codeOf(result!), FailureCode.networkUnavailable);
+        });
+      });
+    }
   });
 }

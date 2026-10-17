@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:pawlog/data/social/supabase_community_gateway.dart';
 import 'package:pawlog/data/social/walk_post_cursor.dart';
 
@@ -23,6 +25,12 @@ class FakeCommunityGateway implements SupabaseCommunityGateway {
   final likes = <String>[];
   final unlikes = <({String postId, String userId})>[];
 
+  /// true 면 모든 호출이 끝나지 않는다(서버가 멈춘 것처럼).
+  bool hang = false;
+
+  Future<T> _hangOr<T>(Future<T> Function() body) =>
+      hang ? Completer<T>().future : body();
+
   Object? fetchError;
   Object? publishError;
   Object? likeError;
@@ -31,42 +39,40 @@ class FakeCommunityGateway implements SupabaseCommunityGateway {
   Future<List<Map<String, dynamic>>> fetchPosts({
     required int limit,
     WalkPostCursor? before,
-  }) async {
+  }) => _hangOr(() async {
     fetchCalls.add((limit: limit, before: before));
     if (fetchError case final error?) throw error;
     return rows.take(limit).toList();
-  }
+  });
 
   @override
   Future<bool> hasLivePost({
     required String authorId,
     required String localWalkId,
-  }) async => live.contains((authorId, localWalkId));
+  }) => _hangOr(() async => live.contains((authorId, localWalkId)));
 
   @override
-  Future<String> publish(Map<String, dynamic> params) async {
+  Future<String> publish(Map<String, dynamic> params) => _hangOr(() async {
     if (publishError case final error?) throw error;
     publishedParams.add(params);
     return publishedId;
-  }
+  });
 
   @override
-  Future<bool> unpublish(String localWalkId) async {
+  Future<bool> unpublish(String localWalkId) => _hangOr(() async {
     unpublished.add(localWalkId);
     return unpublishResult;
-  }
+  });
 
   @override
-  Future<void> insertLike(String postId) async {
+  Future<void> insertLike(String postId) => _hangOr(() async {
     if (likeError case final error?) throw error;
     likes.add(postId);
-  }
+  });
 
   @override
-  Future<void> deleteLike({
-    required String postId,
-    required String userId,
-  }) async {
-    unlikes.add((postId: postId, userId: userId));
-  }
+  Future<void> deleteLike({required String postId, required String userId}) =>
+      _hangOr(() async {
+        unlikes.add((postId: postId, userId: userId));
+      });
 }

@@ -1,5 +1,7 @@
 import 'package:core/core.dart';
 
+import '../../core/supabase/supabase_initializer.dart';
+
 import '../../domain/social/entity/walk_post.dart';
 import '../../domain/social/entity/walk_post_draft.dart';
 import '../../domain/social/repository/community_repository.dart';
@@ -13,13 +15,25 @@ import 'walk_post_cursor.dart';
 /// 없는 좋아요 지우기(지울 행 0), 공유한 적 없는 산책의 공유 취소(RPC false).
 /// 화면은 "그 상태가 되었는가" 만 알면 된다.
 ///
+/// 서버 호출은 하나하나 [deadline](기본 [socialCallDeadline]) 안에 끝낸다. 요청마다 걸린
+/// 시간 제한(`TimeoutHttpClient`)만으로는 SDK 가 요청 앞에 붙이는 세션 갱신(같은 제한)까지
+/// 더해져 약 20초가 된다. 넘으면 `TimeoutException` → 네트워크 실패다.
+///
 /// 등록은 `RegisterModule` 이 Supabase 초기화 결과를 보고 한다.
 class SupabaseCommunityRepository
     with RepositoryErrorHandler
     implements CommunityRepository {
-  SupabaseCommunityRepository(this._gateway);
+  SupabaseCommunityRepository(
+    this._gateway, {
+    this.deadline = socialCallDeadline,
+  });
 
   final SupabaseCommunityGateway _gateway;
+  final Duration deadline;
+
+  /// [call] 을 [deadline] 안에 끝내고 오류를 바꾼다.
+  Future<Result<T>> _guarded<T>(Future<T> Function() call) =>
+      guard(() => call().timeout(deadline));
 
   static const _signInRequired = Failure.auth(
     message: '로그인이 필요합니다',
@@ -31,7 +45,7 @@ class SupabaseCommunityRepository
   Future<Result<CursorPage<WalkPost>>> fetchPage({
     String? after,
     int limit = 20,
-  }) => guard(() async {
+  }) => _guarded(() async {
     // limit + 1 을 읽어 다음 페이지가 있는지 본다(COUNT 없이).
     final rows = await _gateway.fetchPosts(
       limit: limit + 1,
@@ -53,14 +67,14 @@ class SupabaseCommunityRepository
 
   @override
   Future<Result<String>> publish(WalkPostDraft draft) =>
-      guard(() => _gateway.publish(_paramsOf(draft)));
+      _guarded(() => _gateway.publish(_paramsOf(draft)));
 
   @override
   Future<Result<void>> unpublish(String localWalkId) =>
-      guard(() => _gateway.unpublish(localWalkId));
+      _guarded(() => _gateway.unpublish(localWalkId));
 
   @override
-  Future<Result<bool>> isPublished(String localWalkId) => guard(() async {
+  Future<Result<bool>> isPublished(String localWalkId) => _guarded(() async {
     final userId = _gateway.currentUserId;
     if (userId == null) return false;
     return _gateway.hasLivePost(authorId: userId, localWalkId: localWalkId);
@@ -69,7 +83,7 @@ class SupabaseCommunityRepository
   @override
   Future<Result<void>> like(String postId) async {
     if (_gateway.currentUserId == null) return const Err(_signInRequired);
-    final result = await guard(() => _gateway.insertLike(postId));
+    final result = await _guarded(() => _gateway.insertLike(postId));
     return switch (result) {
       Err(failure: Failure(failureCode: FailureCode.duplicateValue)) =>
         const Ok(null),
@@ -81,7 +95,7 @@ class SupabaseCommunityRepository
   Future<Result<void>> unlike(String postId) async {
     final userId = _gateway.currentUserId;
     if (userId == null) return const Err(_signInRequired);
-    return guard(() => _gateway.deleteLike(postId: postId, userId: userId));
+    return _guarded(() => _gateway.deleteLike(postId: postId, userId: userId));
   }
 
   static Map<String, dynamic> _paramsOf(WalkPostDraft draft) => {
