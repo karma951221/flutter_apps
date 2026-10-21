@@ -2566,6 +2566,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryEntryTrashFailed => 'ゴミ箱に移動できませんでした。もう一度お試しください';
 
   @override
+  String get walkDiaryEntryTrash => 'ゴミ箱へ';
+
+  @override
   String get walkDiaryEntryMove => 'ストーリーを移動';
 
   @override

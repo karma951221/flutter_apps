@@ -188,6 +188,32 @@ void main() {
       );
     });
 
+    testWidgets('confirm: false 면 묻지 않고 바로 보낸다', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('ko'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () async => results.add(
+                  await trashEntry(context, entry, confirm: false),
+                ),
+                child: const Text('trash'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('trash'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('기록을 삭제할까요?'), findsNothing);
+      verify(() => useCase.trash('e1')).called(1);
+      expect(results, [true]);
+    });
+
     testWidgets('확인에서 취소하면 보내지 않고 false', (tester) async {
       await pumpHost(tester);
       await tester.tap(find.text('trash'));

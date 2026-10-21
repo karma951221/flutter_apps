@@ -5,6 +5,7 @@ import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:l10n/l10n.dart';
 
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/entity/entry_filter.dart';
@@ -124,6 +125,12 @@ class _StoryViewerPageState extends State<StoryViewerPage>
   var _dragging = false;
   var _swiping = false;
   var _closing = false;
+
+  /// 처음 데이터가 오기 전에 읽기가 실패했다.
+  var _loadFailed = false;
+
+  /// 같은 조각을 처음부터 다시 볼 때마다 늘려 영상 자리를 새로 만든다.
+  var _restarts = 0;
   double _dragDy = 0;
 
   /// 지금 조각 길이를 안다(영상은 준비 전엔 모른다).
@@ -167,20 +174,20 @@ class _StoryViewerPageState extends State<StoryViewerPage>
             _repo.watchStories().listen((stories) {
               _stories = stories;
               _rebuild();
-            }, onError: (Object _) {}),
+            }, onError: _onError),
           )
           ..add(
             _repo.watchEntries(const EntryFilter.all()).listen((entries) {
               _entries = entries;
               _rebuild();
-            }, onError: (Object _) {}),
+            }, onError: _onError),
           );
       case FilterSource(:final filter):
         _subs.add(
           _repo.watchEntries(filter).listen((entries) {
             _entries = entries;
             _rebuild();
-          }, onError: (Object _) {}),
+          }, onError: _onError),
         );
     }
   }
@@ -219,6 +226,12 @@ class _StoryViewerPageState extends State<StoryViewerPage>
   }
 
   // 데이터
+
+  /// 처음 데이터 전 실패면 오류 안내(닫기 있음)를 보인다. 그 뒤 실패는 마지막 데이터를 그대로 둔다.
+  void _onError(Object _) {
+    if (!mounted || _pos != null) return;
+    _update(() => _loadFailed = true);
+  }
 
   void _rebuild() {
     final entries = _entries;
@@ -396,9 +409,12 @@ class _StoryViewerPageState extends State<StoryViewerPage>
 
   void _onVideoReady(_SlideKey key, Duration length) {
     if (key != _currentKey || _videoFailed) return;
-    _progress.duration = length > Duration.zero
-        ? length
-        : const Duration(milliseconds: 1);
+    if (length <= Duration.zero) {
+      // 길이를 모르면 끝도 알 수 없다 — 실패처럼 사진 길이 뒤 넘어간다.
+      _onVideoFailed(key);
+      return;
+    }
+    _progress.duration = length;
     _timed = true;
     _sync();
   }
@@ -438,7 +454,9 @@ class _StoryViewerPageState extends State<StoryViewerPage>
     if (pos == null || _closing) return;
     final prev = prevPos(_groups, pos);
     if (prev == pos) {
-      setState(_startSlide);
+      // 맨 처음 조각: 처음부터 다시(영상이면 자리를 새로 만들어 되감고 다시 준비를 기다린다).
+      setState(() => _restarts++);
+      _startSlide();
     } else {
       _goTo(prev);
     }
@@ -512,7 +530,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
       case ViewerEntryAction.move:
         await moveEntry(context, entry);
       case ViewerEntryAction.trash:
-        final trashed = await trashEntry(context, entry);
+        final trashed = await trashEntry(context, entry, confirm: false);
         if (!trashed || !mounted) return;
         if (next == null) {
           _close();
@@ -537,7 +555,9 @@ class _StoryViewerPageState extends State<StoryViewerPage>
         final pos = _pos;
         return Scaffold(
           backgroundColor: colors.surfaceContainerLowest,
-          body: pos == null || _groups.isEmpty
+          body: _loadFailed
+              ? _failure(context)
+              : pos == null || _groups.isEmpty
               ? const SizedBox.expand()
               : GestureDetector(
                   onVerticalDragStart: (_) => _update(() => _dragging = true),
@@ -579,6 +599,29 @@ class _StoryViewerPageState extends State<StoryViewerPage>
     ),
   );
 
+  /// 처음 읽기 실패: 머리가 없으니 닫기를 따로 둔다.
+  Widget _failure(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SafeArea(
+      child: Stack(
+        children: [
+          AppPlaceholder(
+            icon: Icons.error_outline,
+            message: l10n.walkDiaryLoadError,
+          ),
+          Align(
+            alignment: Alignment.topRight,
+            child: IconButton(
+              icon: const Icon(Icons.close),
+              tooltip: l10n.walkDiaryViewerClose,
+              onPressed: _close,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   bool _onScroll(ScrollNotification n) {
     if (n is ScrollStartNotification && n.dragDetails != null) {
       _update(() => _swiping = true);
@@ -615,8 +658,9 @@ class _StoryViewerPageState extends State<StoryViewerPage>
                 : _next(),
             onLongPressStart: (_) => _update(() => _holding = true),
             onLongPressEnd: (_) => _update(() => _holding = false),
+            onLongPressCancel: () => _update(() => _holding = false),
             child: ViewerSlideView(
-              key: ValueKey(key),
+              key: ValueKey((key, _restarts)),
               slide: slide,
               active: true,
               videoBuilder: widget.videoBuilder,

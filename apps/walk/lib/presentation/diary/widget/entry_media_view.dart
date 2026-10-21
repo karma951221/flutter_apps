@@ -171,7 +171,8 @@ class _MediaPagerState extends State<MediaPager> {
 /// `video_player` 로 [file] 을 재생한다([loop] 면 반복). 트리에서 빠지면 컨트롤러를 버린다.
 ///
 /// [playing] 이 false 면 멈춰 둔다. 준비되면 [onReady] 로 길이를, 반복하지 않을 때 끝까지
-/// 재생하면 [onEnded] 를 한 번 알린다. 열지 못하면 [onFailed] 를 부르고 깨진 그림을 보인다.
+/// 재생하면 [onEnded] 를 한 번 알린다. 열지 못하거나 길이를 모르면(0) [onFailed] 를 부르고
+/// 깨진 그림을 보인다.
 class VideoSurface extends StatefulWidget {
   const VideoSurface({
     required this.file,
@@ -218,16 +219,27 @@ class _VideoSurfaceState extends State<VideoSurface> {
       return;
     }
     if (!mounted) return;
+    final length = _controller.value.duration;
+    if (length <= Duration.zero) {
+      // 끝을 알 수 없어 한 번 재생이 멈춰 버린다 — 실패로 다룬다.
+      setState(() => _failed = true);
+      widget.onFailed?.call();
+      return;
+    }
     _controller.addListener(_watchEnd);
     setState(() => _ready = true);
-    widget.onReady?.call(_controller.value.duration);
+    widget.onReady?.call(length);
   }
 
   /// 반복하지 않을 때 끝까지 재생했으면 한 번 알린다.
   void _watchEnd() {
     final value = _controller.value;
-    if (widget.loop || _ended || value.isPlaying) return;
-    if (value.duration > Duration.zero && value.position >= value.duration) {
+    if (widget.loop || _ended) return;
+    final atEnd =
+        !value.isPlaying &&
+        value.duration > Duration.zero &&
+        value.position >= value.duration;
+    if (value.isCompleted || atEnd) {
       _ended = true;
       widget.onEnded?.call();
     }

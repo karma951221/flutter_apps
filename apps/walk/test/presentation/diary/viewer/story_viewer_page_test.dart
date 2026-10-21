@@ -102,7 +102,13 @@ List<DiaryEntry> _seed() => [
     tags: ['제주'],
     place: '애월읍',
   ),
-  _entry('j4', 'jeju', DateTime(2026, 10, 7, 19), media: [videoMedia('v1')]),
+  _entry(
+    'j4',
+    'jeju',
+    DateTime(2026, 10, 7, 19),
+    media: [videoMedia('v1')],
+    tags: ['영상'],
+  ),
   _entry(
     'd1',
     Story.dailyId,
@@ -120,14 +126,36 @@ List<DiaryEntry> _seed() => [
   ),
 ];
 
-/// 영상 자리의 가짜 — 마지막으로 받은 [ViewerVideo] 를 들고 있다.
+/// 영상 자리의 가짜 — 마지막으로 받은 [ViewerVideo] 와 새로 만들어진(처음부터 재생) 횟수.
 class _Videos {
   ViewerVideo? last;
+  var starts = 0;
 
   Widget build(BuildContext context, ViewerVideo video) {
     last = video;
-    return Text('video ${video.file.path}');
+    return _FakeVideo(video.file.path, this);
   }
+}
+
+class _FakeVideo extends StatefulWidget {
+  const _FakeVideo(this.path, this.videos);
+
+  final String path;
+  final _Videos videos;
+
+  @override
+  State<_FakeVideo> createState() => _FakeVideoState();
+}
+
+class _FakeVideoState extends State<_FakeVideo> {
+  @override
+  void initState() {
+    super.initState();
+    widget.videos.starts++;
+  }
+
+  @override
+  Widget build(BuildContext context) => Text('video ${widget.path}');
 }
 
 void main() {
@@ -424,14 +452,14 @@ void main() {
     Future<void> trashCurrent() async {
       await tester.tap(find.byIcon(Icons.more_vert));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('삭제').last);
-      await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(TextButton, '삭제'));
+      await tester.tap(find.text('휴지통으로').last);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
     }
 
     await trashCurrent();
+    // 되돌릴 수 있으므로 확인 없이 바로 보낸다.
+    expect(find.text('기록을 삭제할까요?'), findsNothing);
     verify(() => useCase.trash('j1')).called(1);
     expect(find.widgetWithText(SnackBar, '기록을 휴지통으로 옮겼어요'), findsOneWidget);
     // 같은 기록의 두 번째 사진은 건너뛴다.
@@ -531,5 +559,109 @@ void main() {
     await wait(tester, const Duration(seconds: 5));
     expect(current(tester), 'j3/p3');
     expect(find.text('10월 7일 (수)'), findsOneWidget);
+  });
+  testWidgets('남은 마지막 조각을 휴지통으로 보내면 닫힌다', (tester) async {
+    await open(
+      tester,
+      source: const ViewerSource.filter(EntryFilter.tag('영상'), '#영상'),
+    );
+    expect(current(tester), 'j4/v1');
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('휴지통으로').last);
+    await settleClose(tester);
+
+    verify(() => useCase.trash('j4')).called(1);
+    expect(viewerOpen(), isFalse);
+    expect(find.widgetWithText(SnackBar, '기록을 휴지통으로 옮겼어요'), findsOneWidget);
+  });
+
+  testWidgets('기록이 모두 사라지면 닫힌다', (tester) async {
+    await open(tester);
+    expect(current(tester), 'j3/p3');
+
+    entries = [];
+    changes.add(entries);
+    await settleClose(tester);
+    expect(viewerOpen(), isFalse);
+  });
+
+  testWidgets('지금 기록의 날이 바뀌면(수정) 그 조각을 새 날에서 다시 찾는다', (tester) async {
+    await open(tester);
+    expect(current(tester), 'j3/p3');
+
+    entries = [
+      for (final e in entries)
+        e.id == 'j3' ? e.copyWith(occurredAt: DateTime(2026, 10, 6, 20)) : e,
+    ];
+    changes.add(entries);
+    await tester.pump();
+
+    expect(current(tester), 'j3/p3');
+    expect(find.text('1일차 · 10월 6일 (화)'), findsOneWidget);
+    final bar = tester.widget<StoryProgressBar>(find.byType(StoryProgressBar));
+    expect((bar.count, bar.index), (4, 3));
+  });
+
+  testWidgets('처음 읽기에 실패하면 오류 안내와 닫기를 보인다', (tester) async {
+    when(
+      () => repo.watchEntries(any()),
+    ).thenAnswer((_) => Stream.error(StateError('db')));
+    await open(tester);
+
+    expect(find.text('기록을 불러오지 못했어요'), findsOneWidget);
+    await tester.tap(find.byTooltip('닫기'));
+    await settleClose(tester);
+    expect(viewerOpen(), isFalse);
+  });
+
+  testWidgets('영상 길이가 0 이면 실패처럼 5초 뒤 넘어간다', (tester) async {
+    await open(tester, entryId: 'j4');
+
+    videos.last!.onReady(Duration.zero);
+    await tester.pump();
+    await wait(tester, const Duration(seconds: 4));
+    expect(current(tester), 'j4/v1');
+    await wait(tester, const Duration(seconds: 1));
+    await wait(tester, const Duration(milliseconds: 500));
+    expect(current(tester), 'd1/p8');
+  });
+
+  testWidgets('맨 처음 영상 조각에서 이전을 누르면 영상을 처음부터 다시 튼다', (tester) async {
+    await open(
+      tester,
+      source: const ViewerSource.filter(EntryFilter.tag('영상'), '#영상'),
+    );
+    expect(current(tester), 'j4/v1');
+    expect(videos.starts, 1);
+    videos.last!.onReady(const Duration(seconds: 10));
+    await tester.pump();
+    await wait(tester, const Duration(seconds: 2));
+
+    await tester.tapAt(const Offset(40, 400));
+    await tester.pump();
+
+    expect(current(tester), 'j4/v1');
+    expect(videos.starts, 2);
+    final bar = tester.widget<StoryProgressBar>(find.byType(StoryProgressBar));
+    expect(bar.progress.value, 0);
+    // 다시 준비될 때까지 막대는 멈춘다.
+    await wait(tester, const Duration(seconds: 3));
+    expect(bar.progress.value, 0);
+  });
+
+  testWidgets('길게 누르기가 취소되면 다시 간다', (tester) async {
+    await open(tester);
+
+    final gesture = await tester.startGesture(const Offset(180, 400));
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 100));
+    expect(find.text('제주 여행'), findsNothing);
+    await gesture.cancel();
+    await tester.pump();
+
+    expect(find.text('제주 여행'), findsOneWidget);
+    await wait(tester, const Duration(seconds: 5));
+    expect(current(tester), 'j4/v1');
   });
 }

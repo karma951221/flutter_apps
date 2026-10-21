@@ -792,6 +792,7 @@
   "walkDiaryEntryDeleteContent": "ゴミ箱に移動します。ゴミ箱から復元できます。",
   "walkDiaryEntryTrashed": "記録をゴミ箱に移動しました",
   "walkDiaryEntryTrashFailed": "ゴミ箱に移動できませんでした。もう一度お試しください",
+  "walkDiaryEntryTrash": "ゴミ箱へ",
   "walkDiaryEntryMove": "ストーリーを移動",
   "walkDiaryEntryMoved": "{story}に移動しました",
   "walkDiaryEntryMoveFailed": "移動できませんでした。もう一度お試しください",

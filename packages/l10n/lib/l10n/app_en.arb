@@ -792,6 +792,7 @@
   "walkDiaryEntryDeleteContent": "It moves to the trash, where you can restore it.",
   "walkDiaryEntryTrashed": "Entry moved to the trash",
   "walkDiaryEntryTrashFailed": "Couldn't move to the trash. Please try again",
+  "walkDiaryEntryTrash": "Move to trash",
   "walkDiaryEntryMove": "Move to story",
   "walkDiaryEntryMoved": "Moved to {story}",
   "walkDiaryEntryMoveFailed": "Couldn't move it. Please try again",

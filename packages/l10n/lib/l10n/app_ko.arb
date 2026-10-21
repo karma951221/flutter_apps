@@ -3680,6 +3680,10 @@
   "@walkDiaryEntryTrashFailed": {
     "description": "일기 기록을 휴지통으로 보내지 못했을 때 오류"
   },
+  "walkDiaryEntryTrash": "휴지통으로",
+  "@walkDiaryEntryTrash": {
+    "description": "스토리 뷰어 ⋮ 메뉴의 휴지통으로 보내기 항목(확인 없이, 되돌리기 스낵바)"
+  },
   "walkDiaryEntryMove": "스토리 옮기기",
   "@walkDiaryEntryMove": {
     "description": "일기 기록 ⋮ 메뉴의 다른 스토리로 옮기기 항목"

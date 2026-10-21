@@ -4856,6 +4856,12 @@ abstract class AppLocalizations {
   /// **'휴지통으로 옮기지 못했어요. 다시 시도해 주세요'**
   String get walkDiaryEntryTrashFailed;
 
+  /// 스토리 뷰어 ⋮ 메뉴의 휴지통으로 보내기 항목(확인 없이, 되돌리기 스낵바)
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통으로'**
+  String get walkDiaryEntryTrash;
+
   /// 일기 기록 ⋮ 메뉴의 다른 스토리로 옮기기 항목
   ///
   /// In ko, this message translates to:

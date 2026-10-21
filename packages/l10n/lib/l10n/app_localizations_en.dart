@@ -2707,6 +2707,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t move to the trash. Please try again';
 
   @override
+  String get walkDiaryEntryTrash => 'Move to trash';
+
+  @override
   String get walkDiaryEntryMove => 'Move to story';
 
   @override

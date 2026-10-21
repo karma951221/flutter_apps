@@ -64,17 +64,23 @@ Future<bool> moveEntry(BuildContext context, DiaryEntry entry) async {
   }
 }
 
-/// 확인을 받고 휴지통으로 보낸다. 보냈으면 되돌리기(복원) 스낵바를 띄우고 true.
-/// 취소 · 실패면 false(실패는 오류 스낵바).
-Future<bool> trashEntry(BuildContext context, DiaryEntry entry) async {
+/// 휴지통으로 보낸다([confirm] 이면 먼저 확인을 받는다 — 뷰어는 되돌리기가 있어 묻지 않는다).
+/// 보냈으면 되돌리기(복원) 스낵바를 띄우고 true. 취소 · 실패면 false(실패는 오류 스낵바).
+Future<bool> trashEntry(
+  BuildContext context,
+  DiaryEntry entry, {
+  bool confirm = true,
+}) async {
   final l10n = AppLocalizations.of(context);
-  final confirmed = await AppConfirmDialog.show(
-    context,
-    title: l10n.walkDiaryEntryDeleteTitle,
-    content: l10n.walkDiaryEntryDeleteContent,
-    confirmLabel: l10n.walkDiaryEntryDelete,
-  );
-  if (!confirmed || !context.mounted) return false;
+  if (confirm) {
+    final confirmed = await AppConfirmDialog.show(
+      context,
+      title: l10n.walkDiaryEntryDeleteTitle,
+      content: l10n.walkDiaryEntryDeleteContent,
+      confirmLabel: l10n.walkDiaryEntryDelete,
+    );
+    if (!confirmed || !context.mounted) return false;
+  }
   final useCase = getIt<DiaryUseCase>();
   final result = await useCase.trash(entry.id);
   if (!context.mounted) return result is Ok;

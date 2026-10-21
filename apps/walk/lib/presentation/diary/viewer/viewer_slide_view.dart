@@ -312,7 +312,7 @@ class ViewerHeader extends StatelessWidget {
                       ),
                       AppOverflowMenuItem(
                         value: ViewerEntryAction.trash,
-                        label: l10n.walkDiaryEntryDelete,
+                        label: l10n.walkDiaryEntryTrash,
                         icon: Icons.delete_outline,
                         isDestructive: true,
                       ),
