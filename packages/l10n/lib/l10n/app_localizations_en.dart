@@ -2548,8 +2548,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryEditorPlaceHint => 'Place name';
 
   @override
-  String walkDiaryEditorStory(String title) {
-    return 'Story: $title';
+  String get walkDiaryWhereToPost => 'Where to post?';
+
+  @override
+  String get walkDiaryTextOnly => 'Text only';
+
+  @override
+  String walkDiaryPostedTo(String title) {
+    return 'Posted to $title';
   }
 
   @override

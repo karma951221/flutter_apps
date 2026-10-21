@@ -2403,8 +2403,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryEditorPlaceHint => '장소 이름';
 
   @override
-  String walkDiaryEditorStory(String title) {
-    return '스토리: $title';
+  String get walkDiaryWhereToPost => '어디에 올릴까요?';
+
+  @override
+  String get walkDiaryTextOnly => '글만 쓰기';
+
+  @override
+  String walkDiaryPostedTo(String title) {
+    return '$title에 올렸어요';
   }
 
   @override

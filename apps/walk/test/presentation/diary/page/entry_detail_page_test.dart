@@ -10,6 +10,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/data/lock/prefs_lock_repository.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
+import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/entity/entry_location.dart';
 import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/domain/diary/location/place_source.dart';
@@ -60,6 +61,10 @@ void main() {
     );
     trashed = false;
     repo = _MockRepo();
+    // 작성 화면의 스토리 줄 표지.
+    when(
+      () => repo.watchEntries(const EntryFilter.all()),
+    ).thenAnswer((_) => Stream.value(const []));
     when(() => repo.entry('e1')).thenAnswer(
       (_) async => Ok(trashed ? entry.copyWith(deletedAt: diaryT0) : entry),
     );

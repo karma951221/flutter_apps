@@ -85,7 +85,10 @@ void main() {
   late List<Story> stories;
   late Map<EntryFilter, List<DiaryEntry>> entries;
 
-  setUpAll(() => registerFallbackValue(const EntryFilter.all()));
+  setUpAll(() {
+    registerFallbackValue(const EntryFilter.all());
+    registerFallbackValue(<PickedMedia>[]);
+  });
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
@@ -460,7 +463,11 @@ void main() {
   });
 
   group('작성 화면 열기', () {
+    late _MockPicker picker;
+
     setUp(() {
+      picker = _MockPicker();
+      when(() => picker.release(any())).thenAnswer((_) async {});
       final places = _MockPlaces();
       when(places.current).thenAnswer((_) async => null);
       when(
@@ -473,14 +480,54 @@ void main() {
       when(() => store.resolve(any())).thenAnswer((_) => File('/fake'));
       getIt
         ..registerSingleton<PlaceSource>(places)
-        ..registerSingleton<MediaPicker>(_MockPicker())
+        ..registerSingleton<MediaPicker>(picker)
         ..registerSingleton<MediaStore>(store);
     });
 
-    testWidgets('＋ 를 누르면 새 기록 화면', (tester) async {
+    testWidgets('＋ → 시트 4항목, 닫으면 아무 화면도 안 뜸', (tester) async {
       await pump(tester);
 
       await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      final sheet = find.byType(BottomSheet);
+      for (final label in ['앨범에서 고르기', '사진 찍기', '영상 찍기', '글만 쓰기']) {
+        expect(
+          find.descendant(of: sheet, matching: find.text(label)),
+          findsOneWidget,
+        );
+      }
+
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(find.byType(EntryEditorPage), findsNothing);
+    });
+
+    testWidgets('앨범에서 → 작성 화면이 열리며 고르기가 한 번 실행', (tester) async {
+      when(
+        () => picker.pickGallery(limit: any(named: 'limit')),
+      ).thenAnswer((_) async => const []);
+      await pump(tester);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('앨범에서 고르기'));
+      await tester.pumpAndSettle();
+
+      verify(() => picker.pickGallery(limit: 10)).called(1);
+      // 고르기를 그만둬도 글만 쓰는 작성 화면으로 남는다.
+      expect(find.byType(EntryEditorPage), findsOneWidget);
+      expect(find.text('새 기록'), findsOneWidget);
+    });
+
+    testWidgets('글만 쓰기 → 미디어 없이 작성 화면', (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('글만 쓰기'));
       await tester.pumpAndSettle();
 
       final scope = tester.widget<EntryEditorScope>(
@@ -489,6 +536,9 @@ void main() {
       expect(scope.editingId, isNull);
       expect(find.byType(EntryEditorPage), findsOneWidget);
       expect(find.text('새 기록'), findsOneWidget);
+      verifyNever(() => picker.pickGallery(limit: any(named: 'limit')));
+      verifyNever(picker.takePhoto);
+      verifyNever(picker.recordVideo);
     });
 
     testWidgets('앱바 ⋮ → 모든 스토리', (tester) async {

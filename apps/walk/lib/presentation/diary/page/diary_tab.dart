@@ -20,6 +20,7 @@ import '../cubit/diary_timeline_state.dart';
 import '../cubit/story_covers_cubit.dart';
 import '../viewer/story_viewer_page.dart';
 import '../widget/feed_view.dart';
+import '../widget/media_source_sheet.dart';
 import '../widget/story_avatar.dart';
 import '../widget/story_ring.dart';
 import '../widget/story_ring_row.dart';
@@ -112,7 +113,7 @@ class _DiaryTabState extends State<DiaryTab> {
   }
 }
 
-/// 일기 탭의 ＋(새 기록). 잠긴 동안은 두지 않는다.
+/// 일기 탭의 ＋(새 기록 — 고르기 시트 먼저). 잠긴 동안은 두지 않는다.
 ///
 /// 탭 `Scaffold` 가 아니라 셸 `Scaffold` 의 `floatingActionButton` 에 둔다 — 스낵바(휴지통으로
 /// 옮기기 · 되살리기처럼 위에 얹힌 화면에서 띄운 것)는 앱 전체 메신저의 바깥 `Scaffold`(셸)에만
@@ -130,9 +131,17 @@ class DiaryNewEntryButton extends StatelessWidget {
       // 셸의 IndexedStack 에 알람 탭 ＋ 도 있다 — 기본 Hero 태그가 겹치지 않게 끈다.
       heroTag: null,
       tooltip: AppLocalizations.of(context).walkDiaryEditorNewTitle,
-      onPressed: () => openEntryEditor(context),
+      onPressed: () => unawaited(_post(context)),
       child: const Icon(Icons.add),
     );
+  }
+
+  /// 스펙 §3.6: 고르기 시트를 먼저 띄운다. 앨범 · 카메라면 작성 화면이 열리며 그 고르기를
+  /// 실행하고, 글만이면 미디어 없이 연다. 시트를 닫으면 아무것도 열지 않는다.
+  static Future<void> _post(BuildContext context) async {
+    final choice = await showMediaSourceSheet(context, textOnly: true);
+    if (choice == null || !context.mounted) return;
+    await openEntryEditor(context, initialPick: choice.source);
   }
 }
 

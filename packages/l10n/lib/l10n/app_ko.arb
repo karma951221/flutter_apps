@@ -3436,9 +3436,17 @@
   "@walkDiaryEditorPlaceHint": {
     "description": "일기 작성 화면 장소 직접 입력칸 힌트"
   },
-  "walkDiaryEditorStory": "스토리: {title}",
-  "@walkDiaryEditorStory": {
-    "description": "일기 작성 화면 스토리 행",
+  "walkDiaryWhereToPost": "어디에 올릴까요?",
+  "@walkDiaryWhereToPost": {
+    "description": "일기 작성 화면 스토리 동그라미 줄 제목"
+  },
+  "walkDiaryTextOnly": "글만 쓰기",
+  "@walkDiaryTextOnly": {
+    "description": "일기 ＋ 시트의 미디어 없이 쓰기 항목"
+  },
+  "walkDiaryPostedTo": "{title}에 올렸어요",
+  "@walkDiaryPostedTo": {
+    "description": "일기 기록을 올린 뒤 스낵바",
     "placeholders": {
       "title": {
         "type": "String"

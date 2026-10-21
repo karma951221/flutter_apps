@@ -29,11 +29,15 @@ Future<void> openAllStories(BuildContext context) =>
 
 /// 스토리를 만든다(모든 스토리 앱바 ＋ · 일기 탭 동그라미 줄 `＋ 새 스토리`): 만들기 시트 →
 /// 만들기 → 오늘 전에 시작했으면 그 기간의 '일상' 기록을 골라 옮기도록 제안한다.
-/// 실패는 스낵바로 알린다.
-Future<void> createStory(BuildContext context) async {
+/// 실패는 스낵바로 알린다. 만든 스토리를 돌려준다(취소 · 실패면 null).
+/// 작성 화면의 `＋새` 처럼 옮기기 제안이 어울리지 않는 곳은 [suggestMove] 를 끈다.
+Future<Story?> createStory(
+  BuildContext context, {
+  bool suggestMove = true,
+}) async {
   final clock = getIt<Clock>();
   final input = await StoryFormSheet.create(context, now: clock.now());
-  if (input == null || !context.mounted) return;
+  if (input == null || !context.mounted) return null;
   final cubit = StoryManageCubit(
     getIt<DiaryRepository>(),
     getIt<DiaryUseCase>(),
@@ -45,10 +49,11 @@ Future<void> createStory(BuildContext context) async {
       startedAt: input.startedAt,
       endedAt: input.endedAt,
     );
-    if (!context.mounted || _reportFailure(context, cubit.state)) return;
+    if (!context.mounted || _reportFailure(context, cubit.state)) return null;
     final created = cubit.state.created;
-    if (created == null) return;
-    await _suggestMove(context, cubit, created, clock.now());
+    if (created == null) return null;
+    if (suggestMove) await _suggestMove(context, cubit, created, clock.now());
+    return created;
   } finally {
     await cubit.close();
   }

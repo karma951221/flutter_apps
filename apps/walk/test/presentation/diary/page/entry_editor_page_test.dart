@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:core/core.dart';
@@ -18,6 +19,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/diary/diary_failure.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_draft.dart';
+import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/entity/entry_location.dart';
 import 'package:walk/domain/diary/entity/entry_media.dart';
 import 'package:walk/domain/diary/entity/named_count.dart';
@@ -29,6 +31,9 @@ import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/diary/usecase/diary_use_case.dart';
 import 'package:walk/presentation/diary/media_picker.dart';
 import 'package:walk/presentation/diary/page/entry_editor_page.dart';
+import 'package:walk/presentation/diary/widget/media_source_sheet.dart';
+import 'package:walk/presentation/diary/widget/story_ring.dart';
+import 'package:walk/presentation/diary/widget/story_ring_row.dart';
 import 'package:walk/presentation/diary/widget/time_row.dart';
 
 import '../../../support/diary_fixtures.dart';
@@ -71,6 +76,7 @@ void main() {
   late _MockPicker picker;
   late _FakePlaces places;
   late List<Story> stories;
+  late StreamController<List<Story>> storyUpdates;
   late MutableClock clock;
   late PrefsLockRepository lockRepo;
   late DiaryLockCubit lock;
@@ -79,6 +85,7 @@ void main() {
     registerFallbackValue(entryDraft());
     registerFallbackValue(<EntryMedia>[]);
     registerFallbackValue(<PickedMedia>[]);
+    registerFallbackValue(const EntryFilter.all());
   });
 
   setUp(() async {
@@ -89,8 +96,15 @@ void main() {
       _story('jeju', '제주 여행'),
       _story('busan', '부산 출장', closed: true),
     ];
+    storyUpdates = StreamController<List<Story>>.broadcast();
     repo = _MockRepo();
-    when(repo.watchStories).thenAnswer((_) => Stream.value(stories));
+    when(repo.watchStories).thenAnswer((_) async* {
+      yield stories;
+      yield* storyUpdates.stream;
+    });
+    when(
+      () => repo.watchEntries(any()),
+    ).thenAnswer((_) => Stream.value(const []));
     when(() => repo.watchTagCounts(query: any(named: 'query'))).thenAnswer(
       (_) =>
           Stream.value([NamedCount(name: '제주', count: 2, lastUsedAt: diaryT0)]),
@@ -122,11 +136,12 @@ void main() {
   });
 
   tearDown(() async {
+    await storyUpdates.close();
     await lock.close();
     await getIt.reset();
   });
 
-  Widget app({String? editingId, bool editorOpen = true}) => MaterialApp(
+  Widget app({String? editingId, MediaSource? initialPick}) => MaterialApp(
     theme: AppTheme.light(),
     locale: const Locale('ko'),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -137,7 +152,11 @@ void main() {
         builder: (context) => Scaffold(
           body: Center(
             child: TextButton(
-              onPressed: () => openEntryEditor(context, editingId: editingId),
+              onPressed: () => openEntryEditor(
+                context,
+                editingId: editingId,
+                initialPick: initialPick,
+              ),
               child: const Text('home'),
             ),
           ),
@@ -147,14 +166,79 @@ void main() {
   );
 
   /// 첫 화면(셸처럼 일기 잠금을 내려 주는 자리) 위에 작성 화면을 띄운다. 닫히면 'home' 이 보인다.
-  Future<void> pump(WidgetTester tester, {String? editingId}) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    String? editingId,
+    MediaSource? initialPick,
+  }) async {
+    // 미리보기 · 스토리 줄 아래의 시각 · 장소 행까지 한 화면에 들어오게 세로로 길게.
+    tester.view
+      ..physicalSize = const Size(800, 2000)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     lock.start();
-    await tester.pumpWidget(app(editingId: editingId));
+    await tester.pumpWidget(
+      app(editingId: editingId, initialPick: initialPick),
+    );
     await tester.tap(find.text('home'));
     await tester.pumpAndSettle();
   }
 
   Finder timeRow() => find.byType(TimeRow);
+
+  Future<void> relock(WidgetTester tester) async {
+    await lockRepo.setSecret(LockMethod.pin, '1234');
+    await lockRepo.saveConfig(const LockConfig(enabled: true));
+    lock.onPaused();
+    clock.advance(const Duration(minutes: 5));
+    lock.onResumed();
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> unlock(WidgetTester tester) async {
+    for (final d in '1234'.split('')) {
+      await tester.tap(find.widgetWithText(TextButton, d));
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+  }
+
+  Finder ringOf(String id) =>
+      find.byWidgetPredicate((w) => w is StoryRing && w.story.id == id);
+
+  /// '어디에 올릴까요?' 줄에서 체크된 스토리 id.
+  List<String> selectedRings(WidgetTester tester) => [
+    for (final r in tester.widgetList<StoryRing>(
+      find.descendant(
+        of: find.byType(StoryRingRow),
+        matching: find.byType(StoryRing),
+      ),
+    ))
+      if (r.selected) r.story.id,
+  ];
+
+  List<String> ringIds(WidgetTester tester) => [
+    for (final r in tester.widgetList<StoryRing>(
+      find.descendant(
+        of: find.byType(StoryRingRow),
+        matching: find.byType(StoryRing),
+      ),
+    ))
+      r.story.id,
+  ];
+
+  Ok<DiaryEntry> savedEntry(String storyId) => Ok(
+    DiaryEntry(
+      id: 'e1',
+      storyId: storyId,
+      body: '바다',
+      occurredAt: diaryT0,
+      createdAt: diaryT0,
+      updatedAt: diaryT0,
+      media: const [],
+      tags: const [],
+    ),
+  );
 
   String timeText(WidgetTester tester) => tester
       .widgetList<Text>(
@@ -192,31 +276,154 @@ void main() {
     expect(find.text('올린 시각으로 되돌리기'), findsNothing);
   });
 
-  testWidgets('스토리 시트에는 열린 스토리만, 고르면 행이 바뀐다', (tester) async {
+  testWidgets('어디에 올릴까요 줄: 제안 스토리 체크, 탭하면 setStory, 새 기록엔 닫힌 스토리 없음', (
+    tester,
+  ) async {
+    when(
+      () => useCase.save(any(), editingId: any(named: 'editingId')),
+    ).thenAnswer((_) async => savedEntry('jeju'));
     await pump(tester);
-    expect(find.text('스토리: 일상'), findsOneWidget);
 
-    await tester.tap(find.text('스토리: 일상'));
+    expect(find.text('어디에 올릴까요?'), findsOneWidget);
+    expect(ringIds(tester), containsAll([Story.dailyId, 'jeju']));
+    expect(ringIds(tester), isNot(contains('busan')));
+    expect(selectedRings(tester), [Story.dailyId]);
+    // 작성 화면 줄에는 '모두 보기'가 없다.
+    expect(find.text('모두 보기'), findsNothing);
+
+    await tester.tap(ringOf('jeju'));
     await tester.pumpAndSettle();
 
-    final sheet = find.byType(BottomSheet);
-    expect(
-      find.descendant(of: sheet, matching: find.text('일상')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: sheet, matching: find.text('제주 여행')),
-      findsOneWidget,
-    );
-    expect(
-      find.descendant(of: sheet, matching: find.text('부산 출장')),
-      findsNothing,
-    );
+    expect(selectedRings(tester), ['jeju']);
 
-    await tester.tap(find.descendant(of: sheet, matching: find.text('제주 여행')));
+    await tester.enterText(
+      find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요'),
+      '바다',
+    );
+    await tester.tap(find.text('올리기'));
     await tester.pumpAndSettle();
 
-    expect(find.text('스토리: 제주 여행'), findsOneWidget);
+    final draft =
+        verify(
+              () => useCase.save(captureAny(), editingId: null),
+            ).captured.single
+            as EntryDraft;
+    expect(draft.storyId, 'jeju');
+  });
+
+  testWidgets('＋새 → 만들기 시트 → 만든 스토리 선택', (tester) async {
+    final created = Story(
+      id: 'chuseok',
+      title: '추석',
+      status: StoryStatus.open,
+      startedAt: diaryT0,
+      createdAt: diaryT0,
+    );
+    when(
+      () => repo.createStory(
+        title: any(named: 'title'),
+        startedAt: any(named: 'startedAt'),
+        endedAt: any(named: 'endedAt'),
+      ),
+    ).thenAnswer((_) async {
+      stories = [...stories, created];
+      storyUpdates.add(stories);
+      return Ok(created);
+    });
+    await pump(tester);
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(StoryRingRow),
+        matching: find.text('새 스토리'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.byType(TextField),
+      ),
+      '추석',
+    );
+    await tester.pump();
+    await tester.tap(find.widgetWithText(AppButton, '만들기'));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => repo.createStory(
+        title: '추석',
+        startedAt: any(named: 'startedAt'),
+        endedAt: null,
+      ),
+    ).called(1);
+    expect(find.byType(EntryEditorPage), findsOneWidget);
+    expect(ringIds(tester), contains('chuseok'));
+    expect(selectedRings(tester), ['chuseok']);
+  });
+
+  testWidgets('올리면 스낵바 "제주 여행에 올렸어요"', (tester) async {
+    when(
+      () => useCase.save(any(), editingId: any(named: 'editingId')),
+    ).thenAnswer((_) async => savedEntry('jeju'));
+    await pump(tester);
+    await tester.tap(ringOf('jeju'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요'),
+      '바다',
+    );
+
+    await tester.tap(find.text('올리기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('home'), findsOneWidget);
+    expect(find.text('제주 여행에 올렸어요'), findsOneWidget);
+  });
+
+  testWidgets('기본 스토리로 올리면 스낵바에 일상 이름', (tester) async {
+    when(
+      () => useCase.save(any(), editingId: any(named: 'editingId')),
+    ).thenAnswer((_) async => savedEntry(Story.dailyId));
+    await pump(tester);
+    await tester.enterText(
+      find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요'),
+      '바다',
+    );
+
+    await tester.tap(find.text('올리기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('일상에 올렸어요'), findsOneWidget);
+  });
+
+  testWidgets('처음 고르기(initialPick)는 한 번만 — 잠겼다 풀려도 다시 열지 않는다', (tester) async {
+    when(
+      () => picker.pickGallery(limit: any(named: 'limit')),
+    ).thenAnswer((_) async => [(path: '/picked/a.jpg', kind: MediaKind.photo)]);
+    when(
+      () => store.importPhoto('/picked/a.jpg'),
+    ).thenAnswer((_) async => Ok(photoMedia('m1', path: 'tmp/m1.jpg')));
+    await pump(tester, initialPick: MediaSource.gallery);
+
+    verify(() => picker.pickGallery(limit: 10)).called(1);
+    expect(find.byTooltip('빼기'), findsOneWidget);
+
+    await relock(tester);
+    await unlock(tester);
+
+    expect(find.byType(EntryEditorPage), findsOneWidget);
+    verifyNever(() => picker.pickGallery(limit: any(named: 'limit')));
+    expect(find.byTooltip('빼기'), findsOneWidget);
+  });
+
+  testWidgets('처음 고르기를 그만두면 글만 쓰는 작성 화면으로 남는다', (tester) async {
+    when(picker.takePhoto).thenAnswer((_) async => const []);
+    await pump(tester, initialPick: MediaSource.photo);
+
+    verify(picker.takePhoto).called(1);
+    expect(find.byType(EntryEditorPage), findsOneWidget);
+    expect(find.byTooltip('빼기'), findsNothing);
   });
 
   testWidgets('태그 칩 추가 · 삭제 · 추천', (tester) async {
@@ -476,7 +683,9 @@ void main() {
     expect(find.text('기록 고치기'), findsOneWidget);
     expect(find.text('저장'), findsOneWidget);
     expect(find.text('옛 글'), findsOneWidget);
-    expect(find.text('스토리: 제주 여행'), findsOneWidget);
+    expect(selectedRings(tester), ['jeju']);
+    // 수정은 지난 스토리로도 옮길 수 있어 닫힌 스토리도 줄에 나온다.
+    expect(ringIds(tester), contains('busan'));
     expect(find.widgetWithText(TextField, '협재'), findsOneWidget);
     expect(find.widgetWithText(InputChip, '#바다'), findsOneWidget);
     expect(timeText(tester), contains('10월 8일 (목) 오후 6:00'));
@@ -527,23 +736,6 @@ void main() {
     expect(find.text('쓰다 만 글'), findsOneWidget);
   });
 
-  Future<void> relock(WidgetTester tester) async {
-    await lockRepo.setSecret(LockMethod.pin, '1234');
-    await lockRepo.saveConfig(const LockConfig(enabled: true));
-    lock.onPaused();
-    clock.advance(const Duration(minutes: 5));
-    lock.onResumed();
-    await tester.pumpAndSettle();
-  }
-
-  Future<void> unlock(WidgetTester tester) async {
-    for (final d in '1234'.split('')) {
-      await tester.tap(find.widgetWithText(TextButton, d));
-      await tester.pump();
-    }
-    await tester.pumpAndSettle();
-  }
-
   testWidgets('잠금 화면에서 뒤로 가기는 무시한다 — 풀면 쓰던 글 그대로', (tester) async {
     await pump(tester);
     await tester.enterText(
@@ -563,16 +755,16 @@ void main() {
     expect(find.text('쓰다 만 글'), findsOneWidget);
   });
 
-  testWidgets('다시 잠기면 스토리 시트가 닫힌다', (tester) async {
+  testWidgets('다시 잠기면 미디어 고르기 시트가 닫힌다', (tester) async {
     await pump(tester);
-    await tester.tap(find.text('스토리: 일상'));
+    await tester.tap(find.text('사진·영상 추가'));
     await tester.pumpAndSettle();
     expect(find.byType(BottomSheet), findsOneWidget);
 
     await relock(tester);
 
     expect(find.byType(BottomSheet, skipOffstage: false), findsNothing);
-    expect(find.text('제주 여행', skipOffstage: false), findsNothing);
+    expect(find.text('앨범에서 고르기', skipOffstage: false), findsNothing);
     expect(find.byType(PinPad), findsOneWidget);
   });
 
