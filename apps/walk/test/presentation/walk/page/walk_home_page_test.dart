@@ -90,6 +90,12 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// 둘째 탭(기록 — 주간 · 월간 그래프)으로 넘긴다.
+  Future<void> openHistory(WidgetTester tester) async {
+    await tester.tap(find.text('기록'));
+    await tester.pumpAndSettle();
+  }
+
   /// 축하 연출 횟수 — 연출마다 진동(mediumImpact)이 한 번 온다.
   int Function() countCelebrations(WidgetTester tester) {
     var count = 0;
@@ -119,13 +125,43 @@ void main() {
     expect(find.text('6,240 걸음'), findsOneWidget);
     expect(find.textContaining('km'), findsNothing);
     expect(find.textContaining('kcal'), findsNothing);
-    expect(find.text('주간'), findsOneWidget);
-    expect(find.text('월간'), findsOneWidget);
+  });
+
+  testWidgets('오늘 · 기록 두 탭 — 처음엔 오늘만, 그래프는 기록 탭에', (tester) async {
+    when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
+    await pump(tester);
+
+    expect(find.byType(TabBar), findsOneWidget);
+    expect(
+      find.byKey(const Key('walk-today-steps')).hitTestable(),
+      findsOneWidget,
+    );
+    expect(find.text('주간').hitTestable(), findsNothing);
+
+    await openHistory(tester);
+
+    expect(find.byType(PeriodSection), findsOneWidget);
+    expect(find.text('주간').hitTestable(), findsOneWidget);
+    expect(find.text('월간').hitTestable(), findsOneWidget);
+    expect(
+      find.byKey(const Key('walk-today-steps')).hitTestable(),
+      findsNothing,
+    );
+  });
+
+  testWidgets('권한이 없으면 탭 없이 안내만', (tester) async {
+    when(
+      () => useCase.access(),
+    ).thenAnswer((_) async => HealthAccess.permissionDenied);
+    await pump(tester);
+
+    expect(find.byType(TabBar), findsNothing);
   });
 
   testWidgets('현재 기간이면 다음 버튼이 꺼져 있다', (tester) async {
     when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
     await pump(tester);
+    await openHistory(tester);
 
     final next = tester.widget<IconButton>(
       find.byKey(const Key('walk-period-next')),
@@ -136,6 +172,7 @@ void main() {
   testWidgets('월간 탭을 누르면 월간 기간을 보여준다', (tester) async {
     when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
     await pump(tester);
+    await openHistory(tester);
     expect(find.text('9월 21일 – 9월 27일'), findsOneWidget);
 
     await tester.tap(find.text('월간'));
@@ -159,15 +196,16 @@ void main() {
     final pending = Completer<Result<ActivityPeriod>>();
     when(() => useCase.period(any(), any())).thenAnswer((_) => pending.future);
     await pump(tester);
+    await openHistory(tester);
 
-    expect(find.byType(WalkSkeleton), findsOneWidget);
-    expect(find.byKey(const Key('walk-today-steps')), findsOneWidget);
+    expect(find.byType(WalkSkeleton).hitTestable(), findsOneWidget);
     expect(find.byKey(const Key('walk-goal-days')), findsNothing);
   });
 
   testWidgets('기간 스켈레톤은 불러온 기간 영역과 높이가 비슷하다', (tester) async {
     when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
     await pump(tester);
+    await openHistory(tester);
 
     final loaded = tester.getSize(find.byType(PeriodSection)).height;
     expect(PeriodSection.loadingHeight, closeTo(loaded, AppSpacing.sm));
@@ -176,9 +214,9 @@ void main() {
   testWidgets('주간 | 월간 세그먼트로 전환', (tester) async {
     when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
     await pump(tester);
+    await openHistory(tester);
 
     expect(find.byType(SegmentedButton<PeriodKind>), findsOneWidget);
-    expect(find.byType(TabBar), findsNothing);
 
     await tester.tap(find.text('월간'));
     await tester.pumpAndSettle();

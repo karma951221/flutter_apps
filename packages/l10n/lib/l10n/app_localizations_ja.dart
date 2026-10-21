@@ -1403,6 +1403,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkTabMonth => '月間';
 
   @override
+  String get walkTabHistory => '記録';
+
+  @override
   String get walkTotalSteps => '合計';
 
   @override

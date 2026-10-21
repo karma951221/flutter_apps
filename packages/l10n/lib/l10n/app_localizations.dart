@@ -2756,6 +2756,12 @@ abstract class AppLocalizations {
   /// **'월간'**
   String get walkTabMonth;
 
+  /// 걷기 탭 안의 둘째 탭 — 주간 · 월간 그래프. 첫 탭은 walkToday
+  ///
+  /// In ko, this message translates to:
+  /// **'기록'**
+  String get walkTabHistory;
+
   /// 기간 합계 걸음 수 라벨
   ///
   /// In ko, this message translates to:

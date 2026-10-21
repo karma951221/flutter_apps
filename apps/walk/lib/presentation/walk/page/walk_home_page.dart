@@ -23,7 +23,7 @@ import '../widget/period_section.dart';
 import '../widget/today_goal_card.dart';
 import '../widget/walk_skeleton.dart';
 
-/// 한 화면짜리 앱의 홈. 시작할 때 접근을 확인하고(권한이 없으면 이번 세션에 한 번
+/// 걷기 탭. 시작할 때 접근을 확인하고(권한이 없으면 이번 세션에 한 번
 /// 요청 화면이 뜬다), 접근 상태가 granted 가 되는 순간 세 cubit 을 읽고,
 /// 백그라운드에서 돌아올 때마다 접근을 다시 확인한 뒤 새로 읽는다
 /// (자정을 넘겨 돌아오면 use case 가 새 "오늘"로 계산한다).
@@ -193,82 +193,107 @@ class _WalkHomePageState extends State<WalkHomePage> {
     );
   }
 
+  /// 권한이 있을 때 — 오늘(목표 링) · 기록(주간 · 월간 그래프) 두 탭. 한 화면에 다 두면
+  /// 정보가 많아 나눴다(2026-10-21 사용자 결정).
   Widget _dashboard(AppLocalizations l10n) => BlocListener<StepGoalCubit, int>(
-    // 목표를 낮춰 새로 달성해도 축하한다. 목록 바깥에 두어 카드가 화면 밖이어도 듣는다.
+    // 목표를 낮춰 새로 달성해도 축하한다. 탭 바깥에 두어 기록 탭을 보는 중에도 듣는다.
     listener: (context, goal) {
       if (_today.state case TodayActivityLoaded(:final activity)) {
         _judgeCelebration(activity, goal);
       }
     },
-    child: RefreshIndicator(
-      onRefresh: _refresh,
-      child: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
+    child: DefaultTabController(
+      length: 2,
+      child: Column(
         children: [
-          BlocBuilder<TodayActivityCubit, TodayActivityState>(
-            bloc: _today,
-            builder: (context, state) => switch (state) {
-              TodayActivityLoading() => const WalkSkeleton(
-                height: AppSpacing.xl * 9,
-              ),
-              TodayActivityFailure() => AppPlaceholder(
-                message: l10n.walkLoadFailed,
-                actionLabel: l10n.commonRetry,
-                onAction: _today.load,
-              ),
-              TodayActivityLoaded(:final activity) => TodayGoalCard(
-                activity: activity,
-                goal: context.select((StepGoalCubit c) => c.state),
-                celebrate: _celebrateFor == DateUtils.dateOnly(activity.date),
-                // 연출 중 build 에서 불리므로 setState 없이 비운다 — 다음 build 부터 false.
-                onCelebrated: () => _celebrateFor = null,
-              ),
-            },
+          TabBar(
+            tabs: [
+              Tab(text: l10n.walkToday),
+              Tab(text: l10n.walkTabHistory),
+            ],
           ),
-          const SizedBox(height: AppSpacing.md),
-          Center(
-            child: SegmentedButton<PeriodKind>(
-              segments: [
-                ButtonSegment(
-                  value: PeriodKind.week,
-                  label: Text(l10n.walkTabWeek),
-                ),
-                ButtonSegment(
-                  value: PeriodKind.month,
-                  label: Text(l10n.walkTabMonth),
-                ),
-              ],
-              selected: {_kind},
-              showSelectedIcon: false,
-              onSelectionChanged: (selected) =>
-                  setState(() => _kind = selected.first),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          AnimatedSwitcher(
-            duration: WalkMotion.off(context)
-                ? Duration.zero
-                : WalkMotion.medium,
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween(
-                  begin: const Offset(0, 0.04),
-                  end: Offset.zero,
-                ).animate(animation),
-                child: child,
-              ),
-            ),
-            child: PeriodSection(
-              key: ValueKey(_kind),
-              cubit: switch (_kind) {
-                PeriodKind.week => _week,
-                PeriodKind.month => _month,
-              },
-            ),
+          Expanded(
+            child: TabBarView(children: [_todayTab(l10n), _historyTab(l10n)]),
           ),
         ],
       ),
+    ),
+  );
+
+  Widget _todayTab(AppLocalizations l10n) => RefreshIndicator(
+    onRefresh: _refresh,
+    child: ListView(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      children: [
+        BlocBuilder<TodayActivityCubit, TodayActivityState>(
+          bloc: _today,
+          builder: (context, state) => switch (state) {
+            TodayActivityLoading() => const WalkSkeleton(
+              height: AppSpacing.xl * 9,
+            ),
+            TodayActivityFailure() => AppPlaceholder(
+              message: l10n.walkLoadFailed,
+              actionLabel: l10n.commonRetry,
+              onAction: _today.load,
+            ),
+            TodayActivityLoaded(:final activity) => TodayGoalCard(
+              activity: activity,
+              goal: context.select((StepGoalCubit c) => c.state),
+              celebrate: _celebrateFor == DateUtils.dateOnly(activity.date),
+              // 연출 중 build 에서 불리므로 setState 없이 비운다 — 다음 build 부터 false.
+              onCelebrated: () => _celebrateFor = null,
+            ),
+          },
+        ),
+      ],
+    ),
+  );
+
+  Widget _historyTab(AppLocalizations l10n) => RefreshIndicator(
+    onRefresh: _refresh,
+    child: ListView(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      children: [
+        Center(
+          child: SegmentedButton<PeriodKind>(
+            segments: [
+              ButtonSegment(
+                value: PeriodKind.week,
+                label: Text(l10n.walkTabWeek),
+              ),
+              ButtonSegment(
+                value: PeriodKind.month,
+                label: Text(l10n.walkTabMonth),
+              ),
+            ],
+            selected: {_kind},
+            showSelectedIcon: false,
+            onSelectionChanged: (selected) =>
+                setState(() => _kind = selected.first),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        AnimatedSwitcher(
+          duration: WalkMotion.off(context) ? Duration.zero : WalkMotion.medium,
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween(
+                begin: const Offset(0, 0.04),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          ),
+          child: PeriodSection(
+            key: ValueKey(_kind),
+            cubit: switch (_kind) {
+              PeriodKind.week => _week,
+              PeriodKind.month => _month,
+            },
+          ),
+        ),
+      ],
     ),
   );
 }

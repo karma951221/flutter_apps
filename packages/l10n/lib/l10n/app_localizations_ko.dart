@@ -1404,6 +1404,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkTabMonth => '월간';
 
   @override
+  String get walkTabHistory => '기록';
+
+  @override
   String get walkTotalSteps => '합계';
 
   @override

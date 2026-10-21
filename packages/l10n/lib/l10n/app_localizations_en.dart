@@ -1489,6 +1489,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkTabMonth => 'Month';
 
   @override
+  String get walkTabHistory => 'History';
+
+  @override
   String get walkTotalSteps => 'Total';
 
   @override
