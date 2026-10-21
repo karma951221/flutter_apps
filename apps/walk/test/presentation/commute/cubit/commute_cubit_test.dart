@@ -243,4 +243,65 @@ void main() {
     expect(await cubit.searchAddress('q'), [c]);
     await cubit.close();
   });
+
+  test('setDirection during query drops the stale result', () async {
+    final stale = Completer<CommuteResult>();
+    when(
+      () => useCase.query(CommuteDirection.toWork),
+    ).thenAnswer((_) => stale.future);
+    when(
+      () => useCase.query(CommuteDirection.toHome),
+    ).thenAnswer((_) async => _result);
+    final cubit = build();
+    final first = cubit.query();
+    cubit.setDirection(CommuteDirection.toHome);
+    await cubit.query(); // 옛 요청이 새 조회를 막지 않는다.
+    expect(cubit.state.status, CommuteStatus.loaded(_result));
+    stale.complete(_result.copyWith(etaFromRealtime: true));
+    await first;
+    expect(cubit.state.direction, CommuteDirection.toHome);
+    expect(cubit.state.status, CommuteStatus.loaded(_result));
+    await cubit.close();
+  });
+
+  test('setDirection during query drops a stale failure', () async {
+    final stale = Completer<CommuteResult>();
+    when(() => useCase.query(any())).thenAnswer((_) => stale.future);
+    final cubit = build();
+    final first = cubit.query();
+    cubit.setDirection(CommuteDirection.toHome);
+    stale.completeError(const CommuteFailure.network());
+    await first;
+    expect(cubit.state.status, const CommuteStatus.idle());
+    await cubit.close();
+  });
+
+  test('useCurrentLocation returns false when the source throws', () async {
+    when(() => source.current()).thenThrow(StateError('gps'));
+    final cubit = build();
+    expect(await cubit.useCurrentLocation(PlaceKind.home), isFalse);
+    expect(cubit.state.locating, isFalse);
+    await cubit.close();
+  });
+
+  test('useCurrentLocation returns false when saving throws', () async {
+    when(
+      () => source.current(),
+    ).thenAnswer((_) async => const EntryLocation(lat: 1, lng: 2));
+    when(() => useCase.savePlace(any())).thenThrow(StateError('disk'));
+    final cubit = build();
+    expect(await cubit.useCurrentLocation(PlaceKind.home), isFalse);
+    expect(cubit.state.locating, isFalse);
+    await cubit.close();
+  });
+
+  test('completing after close does not emit or throw', () async {
+    final pending = Completer<CommuteResult>();
+    when(() => useCase.query(any())).thenAnswer((_) => pending.future);
+    final cubit = build();
+    final run = cubit.query();
+    await cubit.close();
+    pending.complete(_result);
+    await run;
+  });
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/commute/commute_failure.dart';
 import '../../../domain/commute/entity/commute_direction.dart';
+import '../../../domain/commute/entity/commute_result.dart';
 import '../../../domain/commute/entity/place.dart';
 import '../../../domain/commute/entity/transit_route.dart';
 import '../../../domain/commute/repository/address_search.dart';
@@ -28,8 +29,14 @@ class CommuteCubit extends Cubit<CommuteState> {
   /// 조회 · 경로 바꾸기가 진행 중이면 연타를 무시한다.
   bool _busy = false;
 
-  /// 방향을 바꾸고 이전 결과를 비운다.
+  /// 요청 번호. 방향을 바꾸면 올려서 진행 중이던 요청의 결과를 버린다.
+  int _token = 0;
+
+  /// 방향을 바꾸고 이전 결과를 비운다. 진행 중이던 요청은 결과를 버리고,
+  /// 새 방향의 조회를 막지 않는다.
   void setDirection(CommuteDirection direction) {
+    _token++;
+    _busy = false;
     emit(
       state.copyWith(direction: direction, status: const CommuteStatus.idle()),
     );
@@ -37,39 +44,34 @@ class CommuteCubit extends Cubit<CommuteState> {
 
   Future<void> query() async {
     if (_busy) return;
-    _busy = true;
-    emit(state.copyWith(status: const CommuteStatus.loading()));
-    try {
-      final result = await _useCase.query(state.direction);
-      if (!isClosed) {
-        emit(state.copyWith(status: CommuteStatus.loaded(result)));
-      }
-    } on Object catch (e) {
-      if (!isClosed) {
-        emit(state.copyWith(status: CommuteStatus.failure(_wrap(e))));
-      }
-    } finally {
-      _busy = false;
-    }
+    await _run(() => _useCase.query(state.direction), showLoading: true);
   }
 
   /// 결과가 있을 때만 동작한다. 실패하면 `failure` — 다시 조회할 수 있다.
   Future<void> selectRoute(TransitRoute route) async {
     final current = state.status;
     if (_busy || current is! CommuteLoaded) return;
+    await _run(() => _useCase.selectRoute(current.result, route));
+  }
+
+  Future<void> _run(
+    Future<CommuteResult> Function() call, {
+    bool showLoading = false,
+  }) async {
     _busy = true;
-    try {
-      final result = await _useCase.selectRoute(current.result, route);
-      if (!isClosed) {
-        emit(state.copyWith(status: CommuteStatus.loaded(result)));
-      }
-    } on Object catch (e) {
-      if (!isClosed) {
-        emit(state.copyWith(status: CommuteStatus.failure(_wrap(e))));
-      }
-    } finally {
-      _busy = false;
+    final token = ++_token;
+    if (showLoading) {
+      emit(state.copyWith(status: const CommuteStatus.loading()));
     }
+    CommuteStatus next;
+    try {
+      next = CommuteStatus.loaded(await call());
+    } on Object catch (e) {
+      next = CommuteStatus.failure(_wrap(e));
+    }
+    if (token != _token) return; // 방향이 바뀌었다 — 옛 요청의 결과는 버린다.
+    _busy = false;
+    if (!isClosed) emit(state.copyWith(status: next));
   }
 
   /// 현재 위치를 [kind] 로 저장한다. 위치를 못 얻으면 false(저장 없음).
@@ -86,6 +88,8 @@ class CommuteCubit extends Cubit<CommuteState> {
           '${lat.toStringAsFixed(5)}, ${lng.toStringAsFixed(5)}';
       await _save(Place(kind: kind, lat: lat, lng: lng, label: label));
       return true;
+    } on Object {
+      return false;
     } finally {
       if (!isClosed) {
         emit(state.copyWith(locating: false));
