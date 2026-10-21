@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import 'package:core/core.dart';
 import 'package:http/http.dart' as http;
+import 'package:injectable/injectable.dart';
 import 'package:walk/core/config/commute_api_keys.dart';
 import 'package:walk/data/commute/subway_line_codes.dart';
 import 'package:walk/domain/commute/commute_failure.dart';
@@ -12,12 +13,13 @@ import 'package:walk/domain/commute/entity/train_arrival.dart';
 import 'package:walk/domain/commute/repository/subway_arrival_source.dart';
 
 /// 서울 열린데이터광장 `realtimeStationArrival` 로 도착 정보를 읽는다.
+@LazySingleton(as: SubwayArrivalSource)
 class SeoulSubwayArrivalSource implements SubwayArrivalSource {
   SeoulSubwayArrivalSource(
     this._client,
     this._keys,
     this._clock, {
-    Duration timeout = const Duration(seconds: 8),
+    @ignoreParam Duration timeout = const Duration(seconds: 8),
   }) : _timeout = timeout;
 
   final http.Client _client;

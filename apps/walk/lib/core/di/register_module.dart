@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:core/core.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:location/location.dart';
@@ -10,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../config/commute_api_keys.dart';
 import '../../data/diary/database/diary_database.dart';
 import '../../data/diary/location/current_place_source.dart';
 import '../../data/diary/location/geocoding_place_namer.dart';
@@ -73,4 +75,12 @@ abstract class RegisterModule {
     LocationGateway gateway,
     PlaceNamer namer,
   ) => CurrentPlaceSource(access, gateway, namer);
+
+  /// 통근 탭의 ODsay · 서울 실시간 도착 호출이 함께 쓴다.
+  @lazySingleton
+  http.Client get httpClient => http.Client();
+
+  /// `--dart-define-from-file=config/commute_keys.json` 으로 주입한 키. 비면 "키 없음".
+  @lazySingleton
+  CommuteApiKeys get commuteApiKeys => CommuteApiKeys.fromEnvironment();
 }

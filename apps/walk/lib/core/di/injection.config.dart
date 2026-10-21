@@ -14,6 +14,7 @@ import 'dart:io' as _i497;
 
 import 'package:core/core.dart' as _i494;
 import 'package:get_it/get_it.dart' as _i174;
+import 'package:http/http.dart' as _i519;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:local_auth/local_auth.dart' as _i152;
 import 'package:location/location.dart' as _i645;
@@ -30,6 +31,11 @@ import '../../data/alarm/channel_ring_log_source.dart' as _i879;
 import '../../data/alarm/holiday_module.dart' as _i183;
 import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
+import '../../data/commute/geocoding_address_search.dart' as _i667;
+import '../../data/commute/odsay_route_finder.dart' as _i132;
+import '../../data/commute/prefs_place_repository.dart' as _i265;
+import '../../data/commute/prefs_route_preference_repository.dart' as _i644;
+import '../../data/commute/seoul_subway_arrival_source.dart' as _i960;
 import '../../data/diary/database/diary_database.dart' as _i611;
 import '../../data/diary/drift_diary_repository.dart' as _i1049;
 import '../../data/diary/media/file_media_store.dart' as _i928;
@@ -53,6 +59,13 @@ import '../../domain/alarm/scheduler/reminder_scheduler.dart' as _i297;
 import '../../domain/alarm/sound/alarm_sound_source.dart' as _i344;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
+import '../../domain/commute/repository/address_search.dart' as _i63;
+import '../../domain/commute/repository/place_repository.dart' as _i142;
+import '../../domain/commute/repository/route_finder.dart' as _i488;
+import '../../domain/commute/repository/route_preference_repository.dart'
+    as _i130;
+import '../../domain/commute/repository/subway_arrival_source.dart' as _i960;
+import '../../domain/commute/usecase/commute_use_case.dart' as _i453;
 import '../../domain/diary/location/place_source.dart' as _i693;
 import '../../domain/diary/media/media_processor.dart' as _i674;
 import '../../domain/diary/media/media_store.dart' as _i870;
@@ -67,6 +80,7 @@ import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
 import '../../presentation/diary/media_picker.dart' as _i287;
 import '../../presentation/lock/media_pick_guard.dart' as _i488;
+import '../config/commute_api_keys.dart' as _i546;
 import 'register_module.dart' as _i291;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -92,6 +106,8 @@ extension GetItInjectableX on _i174.GetIt {
       () => registerModule.localAuthentication,
     );
     gh.lazySingleton<_i693.PlaceNamer>(() => registerModule.placeNamer);
+    gh.lazySingleton<_i519.Client>(() => registerModule.httpClient);
+    gh.lazySingleton<_i546.CommuteApiKeys>(() => registerModule.commuteApiKeys);
     gh.lazySingleton<_i933.AlarmPermissions>(
       () => alarmPermissionModule.alarmPermissions,
     );
@@ -118,7 +134,16 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i702.AlarmScheduler>(() => _i238.PackageAlarmScheduler());
     gh.lazySingleton<_i674.MediaProcessor>(() => _i17.PluginMediaProcessor());
+    gh.lazySingleton<_i488.RouteFinder>(
+      () => _i132.OdsayRouteFinder(
+        gh<_i519.Client>(),
+        gh<_i546.CommuteApiKeys>(),
+      ),
+    );
     gh.lazySingleton<_i332.HealthGateway>(() => _i332.HealthPluginGateway());
+    gh.lazySingleton<_i63.AddressSearch>(
+      () => _i667.GeocodingAddressSearch(gh<_i693.PlaceNamer>()),
+    );
     gh.lazySingleton<_i77.DeviceHolidaySource>(
       () => const _i279.ChannelDeviceHolidaySource(),
     );
@@ -147,6 +172,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i300.DiaryPreferences>(
       () => _i383.PrefsDiaryPreferences(gh<_i460.SharedPreferences>()),
     );
+    gh.lazySingleton<_i142.PlaceRepository>(
+      () => _i265.PrefsPlaceRepository(gh<_i460.SharedPreferences>()),
+    );
     gh.lazySingleton<_i645.LocationAccess>(
       () => registerModule.locationAccess(gh<_i645.LocationGateway>()),
     );
@@ -155,6 +183,13 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i645.LocationAccess>(),
         gh<_i645.LocationGateway>(),
         gh<_i693.PlaceNamer>(),
+      ),
+    );
+    gh.lazySingleton<_i960.SubwayArrivalSource>(
+      () => _i960.SeoulSubwayArrivalSource(
+        gh<_i519.Client>(),
+        gh<_i546.CommuteApiKeys>(),
+        gh<_i494.Clock>(),
       ),
     );
     gh.lazySingleton<_i961.HolidayCalendar>(
@@ -173,6 +208,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i91.SettingsRepository>(),
       ),
     );
+    gh.lazySingleton<_i130.RoutePreferenceRepository>(
+      () => _i644.PrefsRoutePreferenceRepository(gh<_i460.SharedPreferences>()),
+    );
     gh.lazySingleton<_i296.AlarmRepository>(
       () => _i1.PrefsAlarmRepository(gh<_i460.SharedPreferences>()),
     );
@@ -189,6 +227,16 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i5.WalkUseCase>(
       () => _i5.DefaultWalkUseCase(
         gh<_i204.ActivityRepository>(),
+        gh<_i494.Clock>(),
+      ),
+    );
+    gh.lazySingleton<_i453.CommuteUseCase>(
+      () => _i453.CommuteUseCase(
+        gh<_i142.PlaceRepository>(),
+        gh<_i130.RoutePreferenceRepository>(),
+        gh<_i488.RouteFinder>(),
+        gh<_i960.SubwayArrivalSource>(),
+        gh<_i546.CommuteApiKeys>(),
         gh<_i494.Clock>(),
       ),
     );
