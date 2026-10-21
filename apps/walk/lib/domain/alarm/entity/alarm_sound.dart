@@ -14,10 +14,8 @@ sealed class AlarmSound with _$AlarmSound {
   const factory AlarmSound.bundled(String asset) = BundledAlarmSound;
 
   /// 기기 알람음을 앱 저장소로 복사한 것. [title] 은 기기 목록의 이름, [path] 는 복사본의 절대 경로.
-  const factory AlarmSound.device({
-    required String title,
-    required String path,
-  }) = DeviceAlarmSound;
+  const factory AlarmSound.device({required String title, required String path}) =
+      DeviceAlarmSound;
 
   Map<String, Object?> toJson() => switch (this) {
     SystemAlarmSound() => const {'type': 'system'},
@@ -32,14 +30,8 @@ sealed class AlarmSound with _$AlarmSound {
   /// 절대 던지지 않는다 — 값이 없거나 형식을 모르면 [AlarmSound.system].
   /// (Freezed 가 factory 를 union 으로 오해하지 않게 static 으로 둔다.)
   static AlarmSound fromJson(Object? json) => switch (json) {
-    {'type': 'bundled', 'asset': final String asset} => AlarmSound.bundled(
-      asset,
-    ),
-    {
-      'type': 'device',
-      'title': final String title,
-      'path': final String path,
-    } =>
+    {'type': 'bundled', 'asset': final String asset} => AlarmSound.bundled(asset),
+    {'type': 'device', 'title': final String title, 'path': final String path} =>
       AlarmSound.device(title: title, path: path),
     _ => const AlarmSound.system(),
   };

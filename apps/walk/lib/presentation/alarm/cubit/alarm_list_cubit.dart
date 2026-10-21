@@ -63,8 +63,7 @@ class AlarmListCubit extends Cubit<AlarmListState> {
     AlarmPause? pause,
   ) => {
     for (final alarm in alarms)
-      if (!nextAt.containsKey(alarm.id) &&
-          AlarmSaveResult.of(alarm, now, pause) is AlarmPausedOut)
+      if (!nextAt.containsKey(alarm.id) && AlarmSaveResult.of(alarm, now, pause) is AlarmPausedOut)
         alarm.id,
   };
 
@@ -73,19 +72,11 @@ class AlarmListCubit extends Cubit<AlarmListState> {
   /// 회차는 `skipNext` 가 고르는 것과 같게 건너뛰기를 빼고, 쉬는 기간([pause])의 회차도 뺀다 —
   /// 울리지 않을 회차를 건너뛰라고 권하지 않는다. 걸린 예약(`nextAt`)은 보지 않는다 —
   /// 스누즈된 울림은 건너뛰기 대상이 아니라, 그것으로 정하면 칩과 다른 날을 건너뛴다.
-  Map<int, String> _holidaysOf(
-    List<Alarm> alarms,
-    DateTime now,
-    AlarmPause? pause,
-  ) {
+  Map<int, String> _holidaysOf(List<Alarm> alarms, DateTime now, AlarmPause? pause) {
     final names = <int, String>{};
     for (final alarm in alarms) {
       if (alarm.isOneShot) continue;
-      final at = upcomingTriggers(
-        alarm.copyWith(skippedAt: null),
-        now,
-        pause: pause,
-      ).firstOrNull;
+      final at = upcomingTriggers(alarm.copyWith(skippedAt: null), now, pause: pause).firstOrNull;
       if (at == null || at.difference(now) > alarmHolidayLead) continue;
       if (_holidays.nameOf(at) case final name?) names[alarm.id] = name;
     }
@@ -104,8 +95,7 @@ class AlarmListCubit extends Cubit<AlarmListState> {
   /// 지났으면 대신 [load] 해 다음 회차로 넘긴다. 쉬는 기간이 끝났으면(앱을 띄운 채 자정을 넘김)
   /// sync 해 기간을 지우고 그동안 빠졌던 회차를 다시 건 뒤 [load] 한다(sync 실패는 삼킨다).
   Future<void> tick() async {
-    if (state
-        case AlarmListLoaded(:final nextAt, :final pause) && final loaded) {
+    if (state case AlarmListLoaded(:final nextAt, :final pause) && final loaded) {
       final now = _clock.now();
       if (pause != null && pause.isOver(now)) {
         await _orElse<void>(_useCase.sync, null);
@@ -123,15 +113,13 @@ class AlarmListCubit extends Cubit<AlarmListState> {
   }
 
   /// 반복 알람의 다음 회차 하나를 건너뛴다(알람 메뉴 시트). 실패하면 다시 읽은 뒤 던진다.
-  Future<void> skipNext(int alarmId) =>
-      _thenLoad(() => _useCase.skipNext(alarmId));
+  Future<void> skipNext(int alarmId) => _thenLoad(() => _useCase.skipNext(alarmId));
 
   /// 건너뛰기를 취소한다. 실패하면 다시 읽은 뒤 던진다.
   Future<void> unskip(int alarmId) => _thenLoad(() => _useCase.unskip(alarmId));
 
   /// 쉬는 기간을 정한다(null 이면 그만 쉰다). 실패하면 다시 읽은 뒤 던진다.
-  Future<void> setPause(AlarmPause? pause) =>
-      _thenLoad(() => _useCase.setPause(pause));
+  Future<void> setPause(AlarmPause? pause) => _thenLoad(() => _useCase.setPause(pause));
 
   /// 알람을 지운다(알람 메뉴 — 확인은 화면이 받았다). 실패하면 다시 읽은 뒤 던진다.
   Future<void> delete(int alarmId) => _thenLoad(() => _useCase.delete(alarmId));
@@ -151,10 +139,7 @@ class AlarmListCubit extends Cubit<AlarmListState> {
     if (state case AlarmListLoaded(:final alarms) && final loaded) {
       emit(
         loaded.copyWith(
-          alarms: [
-            for (final a in alarms)
-              a.id == alarm.id ? a.copyWith(enabled: enabled) : a,
-          ],
+          alarms: [for (final a in alarms) a.id == alarm.id ? a.copyWith(enabled: enabled) : a],
         ),
       );
     }

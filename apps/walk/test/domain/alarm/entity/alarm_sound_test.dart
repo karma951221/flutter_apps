@@ -20,10 +20,7 @@ void main() {
     test('bundled', () {
       const sound = AlarmSound.bundled(BundledAlarmSounds.chime);
 
-      expect(sound.toJson(), {
-        'type': 'bundled',
-        'asset': 'assets/alarm/chime.wav',
-      });
+      expect(sound.toJson(), {'type': 'bundled', 'asset': 'assets/alarm/chime.wav'});
       expect(roundTrip(sound), sound);
     });
 
@@ -50,17 +47,11 @@ void main() {
     });
 
     test('모르는 type', () {
-      expect(
-        AlarmSound.fromJson(const {'type': 'music', 'path': '/sdcard/a.mp3'}),
-        system,
-      );
+      expect(AlarmSound.fromJson(const {'type': 'music', 'path': '/sdcard/a.mp3'}), system);
     });
 
     test('type 이 없다', () {
-      expect(
-        AlarmSound.fromJson(const {'asset': BundledAlarmSounds.chime}),
-        system,
-      );
+      expect(AlarmSound.fromJson(const {'asset': BundledAlarmSounds.chime}), system);
     });
 
     test('맵이 아니다', () {
@@ -70,29 +61,13 @@ void main() {
 
     test('bundled 의 asset 이 없거나 문자열이 아니다', () {
       expect(AlarmSound.fromJson(const {'type': 'bundled'}), system);
-      expect(
-        AlarmSound.fromJson(const {'type': 'bundled', 'asset': 3}),
-        system,
-      );
+      expect(AlarmSound.fromJson(const {'type': 'bundled', 'asset': 3}), system);
     });
 
     test('device 의 title · path 가 없거나 문자열이 아니다', () {
-      expect(
-        AlarmSound.fromJson(const {'type': 'device', 'title': 'A'}),
-        system,
-      );
-      expect(
-        AlarmSound.fromJson(const {'type': 'device', 'path': '/a.ogg'}),
-        system,
-      );
-      expect(
-        AlarmSound.fromJson(const {
-          'type': 'device',
-          'title': 1,
-          'path': '/a.ogg',
-        }),
-        system,
-      );
+      expect(AlarmSound.fromJson(const {'type': 'device', 'title': 'A'}), system);
+      expect(AlarmSound.fromJson(const {'type': 'device', 'path': '/a.ogg'}), system);
+      expect(AlarmSound.fromJson(const {'type': 'device', 'title': 1, 'path': '/a.ogg'}), system);
     });
   });
 
@@ -130,17 +105,11 @@ class _WavHeader {
   final int bitsPerSample;
   final double seconds;
 
-  const _WavHeader(
-    this.channels,
-    this.sampleRate,
-    this.bitsPerSample,
-    this.seconds,
-  );
+  const _WavHeader(this.channels, this.sampleRate, this.bitsPerSample, this.seconds);
 
   static _WavHeader parse(ByteData bytes) {
-    String tag(int offset) => String.fromCharCodes([
-      for (var i = 0; i < 4; i++) bytes.getUint8(offset + i),
-    ]);
+    String tag(int offset) =>
+        String.fromCharCodes([for (var i = 0; i < 4; i++) bytes.getUint8(offset + i)]);
 
     expect(tag(0), 'RIFF');
     expect(tag(8), 'WAVE');
@@ -161,11 +130,6 @@ class _WavHeader {
       offset = body + size + size % 2;
     }
     final frameBytes = channels! * bitsPerSample! ~/ 8;
-    return _WavHeader(
-      channels,
-      sampleRate!,
-      bitsPerSample,
-      dataSize! / frameBytes / sampleRate,
-    );
+    return _WavHeader(channels, sampleRate!, bitsPerSample, dataSize! / frameBytes / sampleRate);
   }
 }

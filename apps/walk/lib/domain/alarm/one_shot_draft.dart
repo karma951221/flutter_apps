@@ -36,9 +36,7 @@ class OneShotDraft with _$OneShotDraft {
   /// (Freezed 가 factory 를 union 으로 오해하지 않게 static 으로 둔다.)
   static OneShotDraft fromAlarm(Alarm alarm, DateTime now) {
     final at = alarm.oneShotAt;
-    return at != null && at.isAfter(now)
-        ? OneShotDraft(fixedAt: at)
-        : const OneShotDraft();
+    return at != null && at.isAfter(now) ? OneShotDraft(fixedAt: at) : const OneShotDraft();
   }
 
   OneShotDraft add(Duration step) {
@@ -58,9 +56,7 @@ class OneShotDraft with _$OneShotDraft {
       );
     }
     final next = offset + step;
-    return OneShotDraft(
-      offset: next > oneShotMaxOffset ? oneShotMaxOffset : next,
-    );
+    return OneShotDraft(offset: next > oneShotMaxOffset ? oneShotMaxOffset : next);
   }
 
   OneShotDraft reset() => const OneShotDraft();
@@ -76,11 +72,9 @@ class OneShotDraft with _$OneShotDraft {
     final at = fixedAt;
     if (at != null) return at;
     // 벽시계 산술 — 생성자가 자정 · 월말을 넘긴다.
-    DateTime plus(int minutes) =>
-        DateTime(now.year, now.month, now.day, now.hour, now.minute + minutes);
+    DateTime plus(int minutes) => DateTime(now.year, now.month, now.day, now.hour, now.minute + minutes);
     final ring = plus(offset.inMinutes);
-    if (offset >= const Duration(minutes: 1) &&
-        ring.difference(now) < const Duration(minutes: 1)) {
+    if (offset >= const Duration(minutes: 1) && ring.difference(now) < const Duration(minutes: 1)) {
       return plus(offset.inMinutes + 1);
     }
     return ring;

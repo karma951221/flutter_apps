@@ -19,24 +19,15 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   const prefix = 'dev.flutter.pigeon.alarm.AlarmApi.';
-  const methods = [
-    'getPendingAlarmEvents',
-    'setAlarm',
-    'stopAlarm',
-    'isRinging',
-  ];
+  const methods = ['getPendingAlarmEvents', 'setAlarm', 'stopAlarm', 'isRinging'];
   late List<String> calls;
   late Set<int> ringing;
 
   void install() {
-    final messenger =
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     for (final name in methods) {
       messenger.setMockDecodedMessageHandler<Object?>(
-        BasicMessageChannel<Object?>(
-          '$prefix$name',
-          AlarmApi.pigeonChannelCodec,
-        ),
+        BasicMessageChannel<Object?>('$prefix$name', AlarmApi.pigeonChannelCodec),
         (message) async {
           calls.add(name);
           final args = message as List<Object?>?;
@@ -56,14 +47,10 @@ void main() {
   }
 
   void remove() {
-    final messenger =
-        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     for (final name in methods) {
       messenger.setMockDecodedMessageHandler<Object?>(
-        BasicMessageChannel<Object?>(
-          '$prefix$name',
-          AlarmApi.pigeonChannelCodec,
-        ),
+        BasicMessageChannel<Object?>('$prefix$name', AlarmApi.pigeonChannelCodec),
         null,
       );
     }
@@ -98,9 +85,7 @@ void main() {
 
   test('울리는 알람을 같은 id 로 다시 걸면 stopAlarm 없이 네이티브 교체에 맡긴다', () async {
     final now = DateTime.now();
-    await AlarmStorage.saveAlarm(
-      alarm(42, now.subtract(const Duration(minutes: 1))),
-    );
+    await AlarmStorage.saveAlarm(alarm(42, now.subtract(const Duration(minutes: 1))));
     ringing.add(42);
     final snoozedTo = now.add(const Duration(minutes: 5));
 
@@ -116,9 +101,7 @@ void main() {
     final now = DateTime.now();
     await AlarmStorage.saveAlarm(alarm(42, now.add(const Duration(hours: 1))));
 
-    await Alarm.set(
-      alarmSettings: alarm(42, now.add(const Duration(hours: 2))),
-    );
+    await Alarm.set(alarmSettings: alarm(42, now.add(const Duration(hours: 2))));
 
     expect(calls, containsAllInOrder(['stopAlarm', 'setAlarm']));
   });

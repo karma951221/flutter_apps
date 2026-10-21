@@ -52,8 +52,7 @@ class _NoHolidays implements HolidayRefresher, HolidayCalendar {
   String? nameOf(DateTime date) => null;
 
   @override
-  HolidaySource get source =>
-      const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
+  HolidaySource get source => const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
 }
 
 void main() {
@@ -71,15 +70,9 @@ void main() {
     setUpAll(() => registerFallbackValue(const EntryFilter.all()));
     setUp(() async {
       // 네이티브 디스패처 자리: 헤드리스 일이 없어 셸의 awaitIdle 에 바로 답한다.
-      final messenger =
-          TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger;
-      messenger.setMockMethodCallHandler(
-        backgroundChannel,
-        (call) async => null,
-      );
-      addTearDown(
-        () => messenger.setMockMethodCallHandler(backgroundChannel, null),
-      );
+      final messenger = TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger;
+      messenger.setMockMethodCallHandler(backgroundChannel, (call) async => null);
+      addTearDown(() => messenger.setMockMethodCallHandler(backgroundChannel, null));
       final alarms = _MockAlarmUseCase();
       final walk = _MockWalk();
       final requester = _MockRequester();
@@ -97,9 +90,7 @@ void main() {
       when(diary.cleanOrphans).thenAnswer((_) async {});
       final diaryRepo = _MockDiaryRepo();
       when(diaryRepo.watchStories).thenAnswer((_) => Stream.value(const []));
-      when(
-        () => diaryRepo.watchEntries(any()),
-      ).thenAnswer((_) => Stream.value(const []));
+      when(() => diaryRepo.watchEntries(any())).thenAnswer((_) => Stream.value(const []));
       getIt
         ..registerSingleton<DiaryUseCase>(diary)
         ..registerSingleton<DiaryRepository>(diaryRepo)
@@ -117,11 +108,7 @@ void main() {
         ..registerSingleton<HolidayRefresher>(_NoHolidays())
         ..registerSingleton<HolidayCalendar>(_NoHolidays())
         ..registerSingleton<HolidayCalendarAccess>(
-          HolidayCalendarAccess(
-            calendar: requester,
-            refresher: _NoHolidays(),
-            settings: settings,
-          ),
+          HolidayCalendarAccess(calendar: requester, refresher: _NoHolidays(), settings: settings),
         )
         ..registerSingleton<AlarmPermissions>(
           AlarmPermissions(
@@ -137,9 +124,7 @@ void main() {
       // 기기는 라이트 — 시스템 테마로 떴다면 밝게 보인다.
       tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
-      when(
-        settings.load,
-      ).thenReturn(const AppSettings(themeMode: AppThemeMode.dark));
+      when(settings.load).thenReturn(const AppSettings(themeMode: AppThemeMode.dark));
 
       await tester.pumpWidget(const WalkApp());
 

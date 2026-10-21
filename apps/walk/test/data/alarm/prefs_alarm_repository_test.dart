@@ -8,9 +8,7 @@ import 'package:walk/domain/alarm/entity/alarm.dart';
 void main() {
   test('저장한 적이 없으면 빈 목록', () async {
     SharedPreferences.setMockInitialValues({});
-    final repository = PrefsAlarmRepository(
-      await SharedPreferences.getInstance(),
-    );
+    final repository = PrefsAlarmRepository(await SharedPreferences.getInstance());
 
     expect(await repository.load(), isEmpty);
   });
@@ -19,20 +17,8 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final alarms = [
-      const Alarm(
-        id: 1,
-        hour: 6,
-        minute: 30,
-        repeat: {Weekday.mon, Weekday.wed},
-        label: '운동',
-      ),
-      Alarm(
-        id: 2,
-        hour: 22,
-        minute: 0,
-        silentWhenRingerMuted: true,
-        oneShotAt: DateTime(2026, 9, 28, 22),
-      ),
+      const Alarm(id: 1, hour: 6, minute: 30, repeat: {Weekday.mon, Weekday.wed}, label: '운동'),
+      Alarm(id: 2, hour: 22, minute: 0, silentWhenRingerMuted: true, oneShotAt: DateTime(2026, 9, 28, 22)),
     ];
 
     await PrefsAlarmRepository(prefs).save(alarms);
@@ -64,9 +50,7 @@ void main() {
 
   test('빈 목록으로 저장하면 비운다', () async {
     SharedPreferences.setMockInitialValues({});
-    final repository = PrefsAlarmRepository(
-      await SharedPreferences.getInstance(),
-    );
+    final repository = PrefsAlarmRepository(await SharedPreferences.getInstance());
     await repository.save([const Alarm(id: 1, hour: 7, minute: 0)]);
 
     await repository.save([]);
@@ -77,9 +61,7 @@ void main() {
   group('저장값이 깨져 있으면', () {
     test('깨진 JSON 이면 빈 목록 · 원본은 백업 키에', () async {
       const broken = '[{"id": 1, "hour": 7,';
-      SharedPreferences.setMockInitialValues({
-        PrefsAlarmRepository.key: broken,
-      });
+      SharedPreferences.setMockInitialValues({PrefsAlarmRepository.key: broken});
       final prefs = await SharedPreferences.getInstance();
 
       expect(await PrefsAlarmRepository(prefs).load(), isEmpty);
@@ -88,9 +70,7 @@ void main() {
 
     test('배열이 아닌 JSON 이어도 빈 목록 · 원본은 백업 키에', () async {
       const notList = '{"id": 1}';
-      SharedPreferences.setMockInitialValues({
-        PrefsAlarmRepository.key: notList,
-      });
+      SharedPreferences.setMockInitialValues({PrefsAlarmRepository.key: notList});
       final prefs = await SharedPreferences.getInstance();
 
       expect(await PrefsAlarmRepository(prefs).load(), isEmpty);
@@ -100,12 +80,7 @@ void main() {
     test('항목 하나가 깨져도 나머지 알람은 읽는다', () async {
       final raw = jsonEncode([
         const Alarm(id: 1, hour: 6, minute: 30, repeat: {Weekday.mon}).toJson(),
-        {
-          'id': 2,
-          'hour': 7,
-          'minute': 0,
-          'repeat': ['funday'],
-        }, // 모르는 요일
+        {'id': 2, 'hour': 7, 'minute': 0, 'repeat': ['funday']}, // 모르는 요일
         {'hour': 8, 'minute': 0}, // id 없음
         {'id': 4, 'minute': 0}, // hour 없음
         {'id': 5, 'hour': 9, 'minute': 0, 'oneShotAt': 'not-a-date'}, // 시각 깨짐
@@ -138,26 +113,20 @@ void main() {
     });
 
     test('다음 저장은 원래 키를 정상으로 덮어쓰고 백업은 남긴다', () async {
-      SharedPreferences.setMockInitialValues({
-        PrefsAlarmRepository.key: 'broken',
-      });
+      SharedPreferences.setMockInitialValues({PrefsAlarmRepository.key: 'broken'});
       final prefs = await SharedPreferences.getInstance();
       final repository = PrefsAlarmRepository(prefs);
       await repository.load();
 
       await repository.save([const Alarm(id: 1, hour: 7, minute: 0)]);
 
-      expect(await PrefsAlarmRepository(prefs).load(), [
-        const Alarm(id: 1, hour: 7, minute: 0),
-      ]);
+      expect(await PrefsAlarmRepository(prefs).load(), [const Alarm(id: 1, hour: 7, minute: 0)]);
       expect(prefs.getString(PrefsAlarmRepository.corruptKey), 'broken');
     });
 
     test('문자열이 아닌 값이 저장돼 있어도 던지지 않고 빈 목록', () async {
       SharedPreferences.setMockInitialValues({PrefsAlarmRepository.key: 42});
-      final repository = PrefsAlarmRepository(
-        await SharedPreferences.getInstance(),
-      );
+      final repository = PrefsAlarmRepository(await SharedPreferences.getInstance());
 
       expect(await repository.load(), isEmpty);
     });
@@ -165,9 +134,7 @@ void main() {
     test('깨지지 않았으면 백업 키를 건드리지 않는다', () async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
-      await PrefsAlarmRepository(
-        prefs,
-      ).save([const Alarm(id: 1, hour: 7, minute: 0)]);
+      await PrefsAlarmRepository(prefs).save([const Alarm(id: 1, hour: 7, minute: 0)]);
 
       await PrefsAlarmRepository(prefs).load();
 

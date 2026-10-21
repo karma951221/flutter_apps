@@ -21,9 +21,7 @@ void main() {
       silentWhenRingerMuted: true,
     );
 
-    final decoded = Alarm.fromJson(
-      jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>,
-    );
+    final decoded = Alarm.fromJson(jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>);
 
     expect(decoded, alarm);
     expect(alarm.toJson()['repeat'], ['mon', 'fri']); // 요일 순서로 저장
@@ -38,18 +36,15 @@ void main() {
       oneShotAt: DateTime(2026, 9, 28, 7),
     );
 
-    final decoded = Alarm.fromJson(
-      jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>,
-    );
+    final decoded = Alarm.fromJson(jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>);
 
     expect(decoded, alarm);
     expect(decoded.oneShotAt!.isUtc, isFalse);
   });
 
   group('sound', () {
-    Alarm roundTrip(Alarm alarm) => Alarm.fromJson(
-      jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>,
-    );
+    Alarm roundTrip(Alarm alarm) =>
+        Alarm.fromJson(jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>);
 
     test('기본은 시스템 기본 알람음', () {
       expect(const Alarm(hour: 7, minute: 0).sound, const AlarmSound.system());
@@ -60,10 +55,7 @@ void main() {
       const sounds = [
         AlarmSound.system(),
         AlarmSound.bundled(BundledAlarmSounds.rising),
-        AlarmSound.device(
-          title: 'Morning Glory',
-          path: '/data/app_flutter/alarm_sounds/1a2b.ogg',
-        ),
+        AlarmSound.device(title: 'Morning Glory', path: '/data/app_flutter/alarm_sounds/1a2b.ogg'),
       ];
       for (final sound in sounds) {
         final alarm = Alarm(id: 2, hour: 6, minute: 30, sound: sound);
@@ -74,12 +66,7 @@ void main() {
     });
 
     test('sound 키가 없는 기존 알람은 시스템 기본으로 읽는다', () {
-      final alarm = Alarm.fromJson(const {
-        'id': 1,
-        'hour': 7,
-        'minute': 0,
-        'enabled': true,
-      });
+      final alarm = Alarm.fromJson(const {'id': 1, 'hour': 7, 'minute': 0, 'enabled': true});
 
       expect(alarm.sound, const AlarmSound.system());
     });
@@ -98,30 +85,17 @@ void main() {
 
   group('silentWhenRingerMuted', () {
     test('JSON 에 silentWhenRingerMuted 로 저장하고 vibrate 키는 쓰지 않는다', () {
-      const alarm = Alarm(
-        id: 1,
-        hour: 7,
-        minute: 0,
-        silentWhenRingerMuted: true,
-      );
+      const alarm = Alarm(id: 1, hour: 7, minute: 0, silentWhenRingerMuted: true);
 
       final json = alarm.toJson();
 
       expect(json['silentWhenRingerMuted'], isTrue);
       expect(json.containsKey('vibrate'), isFalse);
-      expect(
-        Alarm.fromJson(jsonDecode(jsonEncode(json)) as Map<String, Object?>),
-        alarm,
-      );
+      expect(Alarm.fromJson(jsonDecode(jsonEncode(json)) as Map<String, Object?>), alarm);
     });
 
     test('옛 vibrate 키는 읽고 버린다', () {
-      final alarm = Alarm.fromJson(const {
-        'id': 1,
-        'hour': 7,
-        'minute': 0,
-        'vibrate': false,
-      });
+      final alarm = Alarm.fromJson(const {'id': 1, 'hour': 7, 'minute': 0, 'vibrate': false});
 
       expect(alarm, const Alarm(id: 1, hour: 7, minute: 0, enabled: false));
     });
@@ -157,71 +131,39 @@ void main() {
     });
 
     test('id · hour · minute 가 없으면 던진다', () {
-      expect(
-        () => Alarm.fromJson(const {'hour': 7, 'minute': 0}),
-        throwsA(anything),
-      );
-      expect(
-        () => Alarm.fromJson(const {'id': 1, 'minute': 0}),
-        throwsA(anything),
-      );
-      expect(
-        () => Alarm.fromJson(const {'id': 1, 'hour': 7}),
-        throwsA(anything),
-      );
+      expect(() => Alarm.fromJson(const {'hour': 7, 'minute': 0}), throwsA(anything));
+      expect(() => Alarm.fromJson(const {'id': 1, 'minute': 0}), throwsA(anything));
+      expect(() => Alarm.fromJson(const {'id': 1, 'hour': 7}), throwsA(anything));
     });
 
     test('oneShotAt 이 날짜가 아니면 던진다', () {
       expect(
-        () => Alarm.fromJson(const {
-          'id': 1,
-          'hour': 7,
-          'minute': 0,
-          'oneShotAt': 'nope',
-        }),
+        () => Alarm.fromJson(const {'id': 1, 'hour': 7, 'minute': 0, 'oneShotAt': 'nope'}),
         throwsA(anything),
       );
     });
   });
 
   group('울림 세부 · 건너뛰기', () {
-    Alarm roundTrip(Alarm alarm) => Alarm.fromJson(
-      jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>,
-    );
+    Alarm roundTrip(Alarm alarm) =>
+        Alarm.fromJson(jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>);
 
-    test(
-      '기본은 볼륨 80 · 점점 커지기 끔 · 스누즈 5분 무제한 · 자동 멈춤 없음 · 미리 알림 끔 · 건너뛰기 없음',
-      () {
-        const alarm = Alarm(hour: 7, minute: 0);
+    test('기본은 볼륨 80 · 점점 커지기 끔 · 스누즈 5분 무제한 · 자동 멈춤 없음 · 미리 알림 끔 · 건너뛰기 없음', () {
+      const alarm = Alarm(hour: 7, minute: 0);
 
-        expect(alarm.volumePercent, 80);
-        expect(alarm.fadeSeconds, 0);
-        expect(alarm.snoozeMinutes, 5);
-        expect(alarm.snoozeLimit, isNull);
-        expect(alarm.autoStopMinutes, isNull);
-        expect(alarm.remindBefore, isFalse);
-        expect(alarm.skippedAt, isNull);
-        expect(Alarm.draft(), const Alarm(hour: 7, minute: 0));
-      },
-    );
+      expect(alarm.volumePercent, 80);
+      expect(alarm.fadeSeconds, 0);
+      expect(alarm.snoozeMinutes, 5);
+      expect(alarm.snoozeLimit, isNull);
+      expect(alarm.autoStopMinutes, isNull);
+      expect(alarm.remindBefore, isFalse);
+      expect(alarm.skippedAt, isNull);
+      expect(Alarm.draft(), const Alarm(hour: 7, minute: 0));
+    });
 
     test('기본값은 선택지 안에 있다', () {
-      expect(
-        AlarmOptions.volumePercents,
-        contains(AlarmOptions.defaultVolumePercent),
-      );
-      expect(AlarmOptions.volumePercents, [
-        10,
-        20,
-        30,
-        40,
-        50,
-        60,
-        70,
-        80,
-        90,
-        100,
-      ]);
+      expect(AlarmOptions.volumePercents, contains(AlarmOptions.defaultVolumePercent));
+      expect(AlarmOptions.volumePercents, [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]);
       expect(AlarmOptions.fadeSeconds, [0, 30, 60]);
       expect(AlarmOptions.snoozeMinutes, [5, 10, 15]);
       expect(AlarmOptions.snoozeLimits, [null, 3]);
@@ -258,25 +200,14 @@ void main() {
     });
 
     test('null 값(무제한 · 안 함 · 건너뛰기 없음)도 왕복한다', () {
-      const alarm = Alarm(
-        id: 2,
-        hour: 7,
-        minute: 0,
-        snoozeMinutes: 10,
-        autoStopMinutes: null,
-      );
+      const alarm = Alarm(id: 2, hour: 7, minute: 0, snoozeMinutes: 10, autoStopMinutes: null);
 
       expect(roundTrip(alarm), alarm);
       expect(roundTrip(alarm).snoozeLimit, isNull);
     });
 
     test('키가 없는 기존 알람은 기본값으로 읽는다', () {
-      final alarm = Alarm.fromJson(const {
-        'id': 1,
-        'hour': 7,
-        'minute': 0,
-        'enabled': true,
-      });
+      final alarm = Alarm.fromJson(const {'id': 1, 'hour': 7, 'minute': 0, 'enabled': true});
 
       expect(alarm, const Alarm(id: 1, hour: 7, minute: 0));
     });
@@ -300,19 +231,8 @@ void main() {
     });
 
     test('볼륨은 10 단위만 받는다', () {
-      for (final (raw, read) in [
-        (10, 10),
-        (100, 100),
-        (55, 80),
-        (110, 80),
-        ('80', 80),
-      ]) {
-        final alarm = Alarm.fromJson({
-          'id': 1,
-          'hour': 7,
-          'minute': 0,
-          'volumePercent': raw,
-        });
+      for (final (raw, read) in [(10, 10), (100, 100), (55, 80), (110, 80), ('80', 80)]) {
+        final alarm = Alarm.fromJson({'id': 1, 'hour': 7, 'minute': 0, 'volumePercent': raw});
         expect(alarm.volumePercent, read, reason: '$raw');
       }
     });

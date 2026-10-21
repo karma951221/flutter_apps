@@ -41,8 +41,7 @@ class ActivityPeriod with _$ActivityPeriod {
         .round();
   }
 
-  double? get totalDistanceMeters =>
-      _sumPresent(days.map((d) => d.distanceMeters));
+  double? get totalDistanceMeters => _sumPresent(days.map((d) => d.distanceMeters));
 
   double? get totalActiveKcal => _sumPresent(days.map((d) => d.activeKcal));
 

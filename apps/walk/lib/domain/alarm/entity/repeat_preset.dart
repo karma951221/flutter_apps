@@ -21,9 +21,7 @@ enum RepeatPreset {
   /// [repeat] 가 어느 묶음과 같으면 그 묶음, 아니면 null.
   static RepeatPreset? of(Set<Weekday> repeat) {
     for (final preset in values) {
-      if (preset.days.length == repeat.length &&
-          preset.days.containsAll(repeat))
-        return preset;
+      if (preset.days.length == repeat.length && preset.days.containsAll(repeat)) return preset;
     }
     return null;
   }

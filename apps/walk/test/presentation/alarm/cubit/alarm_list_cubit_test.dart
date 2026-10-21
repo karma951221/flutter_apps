@@ -21,12 +21,10 @@ class _FakeHolidays implements HolidayCalendar {
   final days = <DateTime, String>{};
 
   @override
-  String? nameOf(DateTime date) =>
-      days[DateTime(date.year, date.month, date.day)];
+  String? nameOf(DateTime date) => days[DateTime(date.year, date.month, date.day)];
 
   @override
-  HolidaySource get source =>
-      const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
+  HolidaySource get source => const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
 }
 
 class _MutableClock extends Clock {
@@ -48,8 +46,7 @@ void main() {
   late _FakeHolidays holidays;
   final sevenAt = DateTime(2026, 9, 28, 7);
 
-  AlarmListCubit build() =>
-      AlarmListCubit(useCase, permissions, clock, holidays);
+  AlarmListCubit build() => AlarmListCubit(useCase, permissions, clock, holidays);
 
   AlarmListState loaded(
     List<Alarm> alarms, {
@@ -80,18 +77,10 @@ void main() {
     );
     when(() => useCase.list()).thenAnswer((_) async => [seven, off]);
     when(() => useCase.nextRings()).thenAnswer((_) async => {1: sevenAt});
-    when(
-      () => notification.check(),
-    ).thenAnswer((_) async => PermissionStatus.granted);
-    when(
-      () => exactAlarm.check(),
-    ).thenAnswer((_) async => PermissionStatus.granted);
-    when(
-      () => notification.ensure(),
-    ).thenAnswer((_) async => PermissionStatus.granted);
-    when(
-      () => exactAlarm.ensure(),
-    ).thenAnswer((_) async => PermissionStatus.granted);
+    when(() => notification.check()).thenAnswer((_) async => PermissionStatus.granted);
+    when(() => exactAlarm.check()).thenAnswer((_) async => PermissionStatus.granted);
+    when(() => notification.ensure()).thenAnswer((_) async => PermissionStatus.granted);
+    when(() => exactAlarm.ensure()).thenAnswer((_) async => PermissionStatus.granted);
   });
 
   test('처음은 loading', () {
@@ -111,9 +100,7 @@ void main() {
     '켜진 알람이 없으면 nextAt 은 비고, 권한이 없으면 canRing false',
     build: () {
       when(() => useCase.nextRings()).thenAnswer((_) async => {});
-      when(
-        () => exactAlarm.check(),
-      ).thenAnswer((_) async => PermissionStatus.denied);
+      when(() => exactAlarm.check()).thenAnswer((_) async => PermissionStatus.denied);
       return build();
     },
     act: (cubit) => cubit.load(),
@@ -139,9 +126,7 @@ void main() {
       '24시간보다 멀면 담지 않고, 다가오면 tick 에서 담는다',
       build: () {
         holidays.days[DateTime(2026, 10, 5)] = '공휴일';
-        when(
-          () => useCase.nextRings(),
-        ).thenAnswer((_) async => {1: DateTime(2026, 10, 5, 7)});
+        when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 10, 5, 7)});
         return build();
       },
       act: (cubit) async {
@@ -164,14 +149,9 @@ void main() {
       'tick 도 쉬는 기간을 보고 — 기간 안 공휴일 회차는 다가와도 담지 않는다',
       build: () {
         holidays.days[DateTime(2026, 10, 5)] = '공휴일';
-        when(
-          () => useCase.nextRings(),
-        ).thenAnswer((_) async => {1: DateTime(2026, 10, 12, 7)});
+        when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 10, 12, 7)});
         when(() => useCase.pause()).thenAnswer(
-          (_) async => AlarmPause(
-            from: DateTime(2026, 10, 5),
-            until: DateTime(2026, 10, 5),
-          ),
+          (_) async => AlarmPause(from: DateTime(2026, 10, 5), until: DateTime(2026, 10, 5)),
         );
         return build();
       },
@@ -184,19 +164,13 @@ void main() {
         loaded(
           [seven, off],
           nextAt: {1: DateTime(2026, 10, 12, 7)},
-          pause: AlarmPause(
-            from: DateTime(2026, 10, 5),
-            until: DateTime(2026, 10, 5),
-          ),
+          pause: AlarmPause(from: DateTime(2026, 10, 5), until: DateTime(2026, 10, 5)),
         ),
         loaded(
           [seven, off],
           nextAt: {1: DateTime(2026, 10, 12, 7)},
           at: DateTime(2026, 10, 4, 7),
-          pause: AlarmPause(
-            from: DateTime(2026, 10, 5),
-            until: DateTime(2026, 10, 5),
-          ),
+          pause: AlarmPause(from: DateTime(2026, 10, 5), until: DateTime(2026, 10, 5)),
         ),
       ],
     );
@@ -207,9 +181,7 @@ void main() {
         // 월요일(공휴일) 07:00 을 07:10 으로 스누즈했다. 규칙의 다음 회차는 다음 주 월요일.
         clock.value = DateTime(2026, 9, 28, 7, 2);
         holidays.days[DateTime(2026, 9, 28)] = '추석';
-        when(
-          () => useCase.nextRings(),
-        ).thenAnswer((_) async => {1: DateTime(2026, 9, 28, 7, 10)});
+        when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 9, 28, 7, 10)});
         return build();
       },
       act: (cubit) => cubit.load(),
@@ -229,9 +201,7 @@ void main() {
         when(
           () => useCase.list(),
         ).thenAnswer((_) async => [seven.copyWith(skippedAt: sevenAt), off]);
-        when(
-          () => useCase.nextRings(),
-        ).thenAnswer((_) async => {1: DateTime(2026, 10, 5, 7)});
+        when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 10, 5, 7)});
         return build();
       },
       act: (cubit) => cubit.load(),
@@ -248,20 +218,13 @@ void main() {
       '한 번 알람은 공휴일 칩이 없다(공휴일 미리 알림도 건너뛰기도 반복 알람만)',
       build: () {
         holidays.days[DateTime(2026, 9, 28)] = '대체공휴일';
-        when(
-          () => useCase.list(),
-        ).thenAnswer((_) async => [off.copyWith(enabled: true)]);
-        when(
-          () => useCase.nextRings(),
-        ).thenAnswer((_) async => {2: DateTime(2026, 9, 28, 8)});
+        when(() => useCase.list()).thenAnswer((_) async => [off.copyWith(enabled: true)]);
+        when(() => useCase.nextRings()).thenAnswer((_) async => {2: DateTime(2026, 9, 28, 8)});
         return build();
       },
       act: (cubit) => cubit.load(),
       expect: () => [
-        loaded(
-          [off.copyWith(enabled: true)],
-          nextAt: {2: DateTime(2026, 9, 28, 8)},
-        ),
+        loaded([off.copyWith(enabled: true)], nextAt: {2: DateTime(2026, 9, 28, 8)}),
       ],
     );
   });
@@ -273,9 +236,7 @@ void main() {
         final skipped = seven.copyWith(skippedAt: sevenAt);
         when(() => useCase.skipNext(1)).thenAnswer((_) async {
           when(() => useCase.list()).thenAnswer((_) async => [skipped, off]);
-          when(
-            () => useCase.nextRings(),
-          ).thenAnswer((_) async => {1: DateTime(2026, 10, 5, 7)});
+          when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 10, 5, 7)});
           return skipped;
         });
         return build();
@@ -283,10 +244,7 @@ void main() {
       seed: () => loaded([seven, off]),
       act: (cubit) => cubit.skipNext(1),
       expect: () => [
-        loaded(
-          [seven.copyWith(skippedAt: sevenAt), off],
-          nextAt: {1: DateTime(2026, 10, 5, 7)},
-        ),
+        loaded([seven.copyWith(skippedAt: sevenAt), off], nextAt: {1: DateTime(2026, 10, 5, 7)}),
       ],
     );
 
@@ -353,10 +311,7 @@ void main() {
   });
 
   group('쉬는 기간', () {
-    final pause = AlarmPause(
-      from: DateTime(2026, 9, 28),
-      until: DateTime(2026, 9, 30),
-    );
+    final pause = AlarmPause(from: DateTime(2026, 9, 28), until: DateTime(2026, 9, 30));
 
     blocTest<AlarmListCubit, AlarmListState>(
       'load 는 쉬는 기간을 담는다',
@@ -384,13 +339,7 @@ void main() {
     );
 
     test('쉬는 중에 켜면 남은 시간은 기간 뒤 첫 회차까지다', () async {
-      const daily = Alarm(
-        id: 3,
-        hour: 7,
-        minute: 0,
-        repeat: {...Weekday.values},
-        enabled: false,
-      );
+      const daily = Alarm(id: 3, hour: 7, minute: 0, repeat: {...Weekday.values}, enabled: false);
       when(() => useCase.pause()).thenAnswer((_) async => pause);
       when(
         () => useCase.toggle(3, enabled: true),
@@ -508,12 +457,8 @@ void main() {
         minute: 58,
         oneShotAt: DateTime(2026, 9, 27, 23, 58),
       );
-      when(
-        () => useCase.list(),
-      ).thenAnswer((_) async => [seven, off, pausedOneShot]);
-      when(
-        () => useCase.pause(),
-      ).thenAnswer((_) async => AlarmPause.today(now));
+      when(() => useCase.list()).thenAnswer((_) async => [seven, off, pausedOneShot]);
+      when(() => useCase.pause()).thenAnswer((_) async => AlarmPause.today(now));
       return build();
     },
     act: (cubit) => cubit.load(),
@@ -544,9 +489,7 @@ void main() {
     blocTest<AlarmListCubit, AlarmListState>(
       '울릴 시각이 지났으면 다시 읽어 다음 회차로 넘긴다',
       build: () {
-        when(
-          () => useCase.nextRings(),
-        ).thenAnswer((_) async => {1: DateTime(2026, 10, 5, 7)});
+        when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 10, 5, 7)});
         return build();
       },
       seed: () => loaded([seven, off]),
@@ -555,11 +498,7 @@ void main() {
         return cubit.tick();
       },
       expect: () => [
-        loaded(
-          [seven, off],
-          nextAt: {1: DateTime(2026, 10, 5, 7)},
-          at: sevenAt,
-        ),
+        loaded([seven, off], nextAt: {1: DateTime(2026, 10, 5, 7)}, at: sevenAt),
       ],
       verify: (_) => verify(() => useCase.nextRings()).called(1),
     );
@@ -611,11 +550,7 @@ void main() {
         return cubit.tick();
       },
       expect: () => [
-        loaded(
-          [seven, off],
-          at: DateTime(2026, 9, 27, 23, 59),
-          pause: AlarmPause.today(now),
-        ),
+        loaded([seven, off], at: DateTime(2026, 9, 27, 23, 59), pause: AlarmPause.today(now)),
       ],
       verify: (_) => verifyNever(() => useCase.sync()),
     );
@@ -631,10 +566,7 @@ void main() {
   blocTest<AlarmListCubit, AlarmListState>(
     '켜면 먼저 스위치를 반영하고, 저장 뒤 권한을 확인하고 남은 시간을 돌려준다',
     build: () {
-      final on = off.copyWith(
-        enabled: true,
-        oneShotAt: DateTime(2026, 9, 28, 8),
-      );
+      final on = off.copyWith(enabled: true, oneShotAt: DateTime(2026, 9, 28, 8));
       when(() => useCase.toggle(2, enabled: true)).thenAnswer((_) async {
         when(() => useCase.list()).thenAnswer((_) async => [seven, on]);
         when(
@@ -647,19 +579,13 @@ void main() {
     seed: () => loaded([seven, off]),
     act: (cubit) async {
       final untilRing = await cubit.toggle(off, enabled: true);
-      expect(
-        untilRing,
-        const AlarmSaveResult.ringsIn(Duration(hours: 8, minutes: 12)),
-      );
+      expect(untilRing, const AlarmSaveResult.ringsIn(Duration(hours: 8, minutes: 12)));
     },
     expect: () => [
       // 스위치만 먼저 움직이고, 남은 시간(nextAt)은 저장 뒤 다시 읽을 때 바뀐다.
       loaded([seven, off.copyWith(enabled: true)]),
       loaded(
-        [
-          seven,
-          off.copyWith(enabled: true, oneShotAt: DateTime(2026, 9, 28, 8)),
-        ],
+        [seven, off.copyWith(enabled: true, oneShotAt: DateTime(2026, 9, 28, 8))],
         nextAt: {1: sevenAt, 2: DateTime(2026, 9, 28, 8)},
       ),
     ],
@@ -675,10 +601,7 @@ void main() {
   blocTest<AlarmListCubit, AlarmListState>(
     '켠 뒤 권한 확인이 예외여도 토글은 성공으로 끝난다',
     build: () {
-      final on = off.copyWith(
-        enabled: true,
-        oneShotAt: DateTime(2026, 9, 28, 8),
-      );
+      final on = off.copyWith(enabled: true, oneShotAt: DateTime(2026, 9, 28, 8));
       when(() => useCase.toggle(2, enabled: true)).thenAnswer((_) async {
         when(() => useCase.list()).thenAnswer((_) async => [seven, on]);
         when(
@@ -699,10 +622,7 @@ void main() {
     expect: () => [
       loaded([seven, off.copyWith(enabled: true)]),
       loaded(
-        [
-          seven,
-          off.copyWith(enabled: true, oneShotAt: DateTime(2026, 9, 28, 8)),
-        ],
+        [seven, off.copyWith(enabled: true, oneShotAt: DateTime(2026, 9, 28, 8))],
         nextAt: {1: sevenAt, 2: DateTime(2026, 9, 28, 8)},
       ),
     ],
@@ -712,17 +632,14 @@ void main() {
     '끄면 권한을 묻지 않고 null',
     build: () {
       when(() => useCase.toggle(1, enabled: false)).thenAnswer((_) async {
-        when(
-          () => useCase.list(),
-        ).thenAnswer((_) async => [seven.copyWith(enabled: false), off]);
+        when(() => useCase.list()).thenAnswer((_) async => [seven.copyWith(enabled: false), off]);
         when(() => useCase.nextRings()).thenAnswer((_) async => {});
         return seven.copyWith(enabled: false);
       });
       return build();
     },
     seed: () => loaded([seven, off]),
-    act: (cubit) async =>
-        expect(await cubit.toggle(seven, enabled: false), isNull),
+    act: (cubit) async => expect(await cubit.toggle(seven, enabled: false), isNull),
     expect: () => [
       loaded([seven.copyWith(enabled: false), off]),
       loaded([seven.copyWith(enabled: false), off], nextAt: {}),

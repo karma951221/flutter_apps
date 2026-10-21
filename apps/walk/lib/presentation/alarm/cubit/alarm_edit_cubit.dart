@@ -24,14 +24,14 @@ class AlarmEditCubit extends Cubit<AlarmEditState> {
     required HolidayCalendarAccess holidayCalendar,
   }) : _holidayCalendar = holidayCalendar,
        _oneShot = initial.isOneShot,
-       super(
-         AlarmEditState(
-           alarm: initial,
-           draft: initial.isOneShot
-               ? OneShotDraft.fromAlarm(initial, _clock.now())
-               : const OneShotDraft(),
-         ),
-       );
+      super(
+        AlarmEditState(
+          alarm: initial,
+          draft: initial.isOneShot
+              ? OneShotDraft.fromAlarm(initial, _clock.now())
+              : const OneShotDraft(),
+        ),
+      );
 
   final AlarmUseCase _useCase;
   final AlarmPermissions _permissions;
@@ -52,13 +52,11 @@ class AlarmEditCubit extends Cubit<AlarmEditState> {
   void fixOneShotAt(int hour, int minute) =>
       _updateDraft(state.draft.fixAt(hour, minute, _clock.now()));
 
-  void applyPreset(RepeatPreset preset) =>
-      _update(state.alarm.copyWith(repeat: preset.days));
+  void applyPreset(RepeatPreset preset) => _update(state.alarm.copyWith(repeat: preset.days));
 
   /// 예전 1회성 울릴 시각은 버린다 — save 가 새 시각의 다음 회차로 정한다.
-  void setTime(int hour, int minute) => _update(
-    state.alarm.copyWith(hour: hour, minute: minute, oneShotAt: null),
-  );
+  void setTime(int hour, int minute) =>
+      _update(state.alarm.copyWith(hour: hour, minute: minute, oneShotAt: null));
 
   void toggleDay(Weekday day) {
     final repeat = {...state.alarm.repeat};
@@ -66,36 +64,29 @@ class AlarmEditCubit extends Cubit<AlarmEditState> {
     _update(state.alarm.copyWith(repeat: repeat));
   }
 
-  void setLabel(String label) =>
-      _update(state.alarm.copyWith(label: label.trim()));
+  void setLabel(String label) => _update(state.alarm.copyWith(label: label.trim()));
 
   void setSilentWhenRingerMuted(bool value) =>
       _update(state.alarm.copyWith(silentWhenRingerMuted: value));
 
-  void setSound(AlarmSound sound) =>
-      _update(state.alarm.copyWith(sound: sound));
+  void setSound(AlarmSound sound) => _update(state.alarm.copyWith(sound: sound));
 
   // 울림 설정. 값은 화면이 `AlarmOptions` 의 선택지에서 고른다.
 
-  void setVolumePercent(int percent) =>
-      _update(state.alarm.copyWith(volumePercent: percent));
+  void setVolumePercent(int percent) => _update(state.alarm.copyWith(volumePercent: percent));
 
-  void setFadeSeconds(int seconds) =>
-      _update(state.alarm.copyWith(fadeSeconds: seconds));
+  void setFadeSeconds(int seconds) => _update(state.alarm.copyWith(fadeSeconds: seconds));
 
-  void setSnoozeMinutes(int minutes) =>
-      _update(state.alarm.copyWith(snoozeMinutes: minutes));
+  void setSnoozeMinutes(int minutes) => _update(state.alarm.copyWith(snoozeMinutes: minutes));
 
   /// null 이면 무제한.
-  void setSnoozeLimit(int? limit) =>
-      _update(state.alarm.copyWith(snoozeLimit: limit));
+  void setSnoozeLimit(int? limit) => _update(state.alarm.copyWith(snoozeLimit: limit));
 
   /// null 이면 자동 멈춤 안 함.
   void setAutoStopMinutes(int? minutes) =>
       _update(state.alarm.copyWith(autoStopMinutes: minutes));
 
-  void setRemindBefore(bool value) =>
-      _update(state.alarm.copyWith(remindBefore: value));
+  void setRemindBefore(bool value) => _update(state.alarm.copyWith(remindBefore: value));
 
   /// 켠 상태로 저장하고(예약까지) 권한을 확인한다 — 거부되거나 확인이 실패해도 저장은
   /// 이미 끝났다(목록 경고 배너가 남은 길). 반복 알람이면 공휴일 미리 알림용 캘린더 권한도
@@ -108,11 +99,7 @@ class AlarmEditCubit extends Cubit<AlarmEditState> {
     if (!canSave(now)) throw StateError('alarm cannot be saved yet');
     final ringAt = state.draft.ringAt(now);
     final alarm = _oneShot
-        ? state.alarm.copyWith(
-            hour: ringAt.hour,
-            minute: ringAt.minute,
-            oneShotAt: ringAt,
-          )
+        ? state.alarm.copyWith(hour: ringAt.hour, minute: ringAt.minute, oneShotAt: ringAt)
         : state.alarm;
     final saved = await _useCase.save(alarm);
     await ensureForAlarmQuietly(_permissions);

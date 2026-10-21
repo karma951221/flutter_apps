@@ -26,9 +26,8 @@ void main() {
   setUpAll(() => registerFallbackValue(PeriodKind.week));
   setUp(() {
     useCase = _MockUseCase();
-    when(
-      () => useCase.period(PeriodKind.week, any()),
-    ).thenAnswer((i) async => Ok(_period(i.positionalArguments[1] as int)));
+    when(() => useCase.period(PeriodKind.week, any()))
+        .thenAnswer((i) async => Ok(_period(i.positionalArguments[1] as int)));
   });
 
   blocTest<PeriodActivityCubit, PeriodActivityState>(
@@ -72,9 +71,7 @@ void main() {
     '늦게 온 이전 요청 응답은 버린다',
     build: () {
       final slow = Completer<Result<ActivityPeriod>>();
-      when(
-        () => useCase.period(PeriodKind.week, 0),
-      ).thenAnswer((_) => slow.future);
+      when(() => useCase.period(PeriodKind.week, 0)).thenAnswer((_) => slow.future);
       addTearDown(() => slow.complete(Ok(_period(0))));
       return PeriodActivityCubit(useCase, PeriodKind.week);
     },
@@ -92,9 +89,8 @@ void main() {
   blocTest<PeriodActivityCubit, PeriodActivityState>(
     '실패해도 offset 을 지킨다',
     build: () {
-      when(
-        () => useCase.period(PeriodKind.week, -1),
-      ).thenAnswer((_) async => const Err(Failure.unknown()));
+      when(() => useCase.period(PeriodKind.week, -1))
+          .thenAnswer((_) async => const Err(Failure.unknown()));
       return PeriodActivityCubit(useCase, PeriodKind.week);
     },
     seed: () => PeriodActivityState.loaded(0, _period(0)),

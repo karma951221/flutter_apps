@@ -11,12 +11,10 @@ class _Holidays implements HolidayCalendar {
   final Map<DateTime, String> days;
 
   @override
-  String? nameOf(DateTime date) =>
-      days[DateTime(date.year, date.month, date.day)];
+  String? nameOf(DateTime date) => days[DateTime(date.year, date.month, date.day)];
 
   @override
-  HolidaySource get source =>
-      const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
+  HolidaySource get source => const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
 }
 
 const _everyDay = {...Weekday.values};
@@ -28,11 +26,8 @@ void main() {
   final holidays = _Holidays({hangul: '한글날'});
   final none = _Holidays({});
 
-  AlarmTrigger trigger(int alarmId, DateTime at) => AlarmTrigger(
-    packageId: packageId(alarmId, triggerIndex(at)),
-    alarmId: alarmId,
-    at: at,
-  );
+  AlarmTrigger trigger(int alarmId, DateTime at) =>
+      AlarmTrigger(packageId: packageId(alarmId, triggerIndex(at)), alarmId: alarmId, at: at);
 
   List<AlarmReminder> remind(
     Alarm alarm,
@@ -66,10 +61,7 @@ void main() {
         packageId(Alarm.maxId, packageIdsPerAlarm - 1),
         ReminderKind.holiday,
       );
-      expect(
-        smallest,
-        greaterThan(packageId(Alarm.maxId, packageIdsPerAlarm - 1)),
-      );
+      expect(smallest, greaterThan(packageId(Alarm.maxId, packageIdsPerAlarm - 1)));
       expect(smallest, greaterThan(973422));
       // 안드로이드 요청 코드 · 알림 id 는 int32.
       expect(largest, lessThan(1 << 31));
@@ -80,22 +72,11 @@ void main() {
     final ring = DateTime(2026, 10, 8, 7);
 
     test('remindBefore 가 꺼져 있으면 없다', () {
-      expect(
-        remind(const Alarm(id: 3, hour: 7, minute: 0, repeat: _everyDay), [
-          ring,
-        ]),
-        isEmpty,
-      );
+      expect(remind(const Alarm(id: 3, hour: 7, minute: 0, repeat: _everyDay), [ring]), isEmpty);
     });
 
     test('켜져 있으면 회차마다 30분 전', () {
-      const alarm = Alarm(
-        id: 3,
-        hour: 7,
-        minute: 0,
-        repeat: _everyDay,
-        remindBefore: true,
-      );
+      const alarm = Alarm(id: 3, hour: 7, minute: 0, repeat: _everyDay, remindBefore: true);
       final next = DateTime(2026, 10, 10, 7);
 
       expect(remind(alarm, [ring, next]), [
@@ -119,24 +100,12 @@ void main() {
     });
 
     test('1회성도 받는다', () {
-      final alarm = Alarm(
-        id: 3,
-        hour: 7,
-        minute: 0,
-        remindBefore: true,
-        oneShotAt: ring,
-      );
+      final alarm = Alarm(id: 3, hour: 7, minute: 0, remindBefore: true, oneShotAt: ring);
       expect(remind(alarm, [ring]).single.kind, ReminderKind.soon);
     });
 
     test('울릴 시각이 30분 이내면 만들지 않는다(경계 포함)', () {
-      const alarm = Alarm(
-        id: 3,
-        hour: 12,
-        minute: 30,
-        repeat: _everyDay,
-        remindBefore: true,
-      );
+      const alarm = Alarm(id: 3, hour: 12, minute: 30, repeat: _everyDay, remindBefore: true);
       expect(remind(alarm, [DateTime(2026, 10, 7, 12, 30)]), isEmpty);
       expect(remind(alarm, [DateTime(2026, 10, 7, 12, 10)]), isEmpty);
       expect(
@@ -146,13 +115,7 @@ void main() {
     });
 
     test('리드 시간을 바꿀 수 있다', () {
-      const alarm = Alarm(
-        id: 3,
-        hour: 7,
-        minute: 0,
-        repeat: _everyDay,
-        remindBefore: true,
-      );
+      const alarm = Alarm(id: 3, hour: 7, minute: 0, repeat: _everyDay, remindBefore: true);
       final reminders = remindersOf(
         alarm,
         [trigger(3, ring)],
@@ -170,33 +133,22 @@ void main() {
     final holidayRing = DateTime(2026, 10, 9, 7);
 
     test('반복 알람의 공휴일 회차는 24시간 전에 이름과 함께', () {
-      expect(
-        remind(alarm, [
-          DateTime(2026, 10, 8, 7),
-          holidayRing,
-        ], calendar: holidays),
-        [
-          AlarmReminder(
-            id: reminderId(
-              packageId(4, triggerIndex(holidayRing)),
-              ReminderKind.holiday,
-            ),
-            packageId: packageId(4, triggerIndex(holidayRing)),
-            alarmId: 4,
-            kind: ReminderKind.holiday,
-            at: DateTime(2026, 10, 8, 7),
-            ringAt: holidayRing,
-            holidayName: '한글날',
-          ),
-        ],
-      );
+      expect(remind(alarm, [DateTime(2026, 10, 8, 7), holidayRing], calendar: holidays), [
+        AlarmReminder(
+          id: reminderId(packageId(4, triggerIndex(holidayRing)), ReminderKind.holiday),
+          packageId: packageId(4, triggerIndex(holidayRing)),
+          alarmId: 4,
+          kind: ReminderKind.holiday,
+          at: DateTime(2026, 10, 8, 7),
+          ringAt: holidayRing,
+          holidayName: '한글날',
+        ),
+      ]);
     });
 
     test('24시간 전이 이미 지났으면 지금 띄운다', () {
       final soonHoliday = _Holidays({DateTime(2026, 10, 8): '임시공휴일'});
-      final reminder = remind(alarm, [
-        DateTime(2026, 10, 8, 7),
-      ], calendar: soonHoliday).single;
+      final reminder = remind(alarm, [DateTime(2026, 10, 8, 7)], calendar: soonHoliday).single;
       expect(reminder.at, now);
       expect(reminder.ringAt, DateTime(2026, 10, 8, 7));
     });
@@ -207,29 +159,16 @@ void main() {
     });
 
     test('설정을 끄면 없다', () {
-      expect(
-        remind(
-          alarm,
-          [holidayRing],
-          calendar: holidays,
-          holidayReminder: false,
-        ),
-        isEmpty,
-      );
+      expect(remind(alarm, [holidayRing], calendar: holidays, holidayReminder: false), isEmpty);
     });
 
     test('지난 회차는 없다', () {
       final past = _Holidays({DateTime(2026, 10, 7): '가짜'});
-      expect(
-        remind(alarm, [DateTime(2026, 10, 7, 7)], calendar: past),
-        isEmpty,
-      );
+      expect(remind(alarm, [DateTime(2026, 10, 7, 7)], calendar: past), isEmpty);
     });
 
     test('soon 과 함께 켜지면 둘 다', () {
-      final both = remind(alarm.copyWith(remindBefore: true), [
-        holidayRing,
-      ], calendar: holidays);
+      final both = remind(alarm.copyWith(remindBefore: true), [holidayRing], calendar: holidays);
       expect(both.map((r) => r.kind), unorderedEquals(ReminderKind.values));
       expect(both.map((r) => r.id).toSet(), hasLength(2));
     });

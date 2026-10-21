@@ -21,8 +21,7 @@ void main() {
 
   test('raw/keep.xml 이 릴리스 리소스 축소에서 그 drawable 을 남긴다', () {
     final keep = File('$_res/raw/keep.xml').readAsStringSync();
-    final kept =
-        RegExp(r'tools:keep="([^"]*)"').firstMatch(keep)?.group(1) ?? '';
+    final kept = RegExp(r'tools:keep="([^"]*)"').firstMatch(keep)?.group(1) ?? '';
 
     expect(kept.split(',').map((e) => e.trim()), contains('@drawable/$icon'));
   });

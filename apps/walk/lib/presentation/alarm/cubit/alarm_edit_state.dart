@@ -19,11 +19,7 @@ class AlarmEditState with _$AlarmEditState {
   @override
   final bool busy;
 
-  const AlarmEditState({
-    required this.alarm,
-    this.draft = const OneShotDraft(),
-    this.busy = false,
-  });
+  const AlarmEditState({required this.alarm, this.draft = const OneShotDraft(), this.busy = false});
 
   bool get isNew => alarm.id == Alarm.unsavedId;
 }

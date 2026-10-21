@@ -42,9 +42,7 @@ class _AlarmHistoryPageState extends State<AlarmHistoryPage> {
       body: BlocBuilder<AlarmHistoryCubit, AlarmHistoryState>(
         bloc: _cubit,
         builder: (context, state) => switch (state) {
-          AlarmHistoryLoading() => const Center(
-            child: CircularProgressIndicator(),
-          ),
+          AlarmHistoryLoading() => const Center(child: CircularProgressIndicator()),
           AlarmHistoryFailure() => Center(
             child: AppPlaceholder(
               icon: Icons.error_outline,
@@ -96,9 +94,7 @@ class _DayHeader extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: theme.textTheme.titleSmall?.copyWith(
-          color: theme.colorScheme.primary,
-        ),
+        style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary),
       ),
     );
   }
@@ -126,9 +122,7 @@ class _GroupRow extends StatelessWidget {
             if (group.snoozes > 0) l10n.walkAlarmHistorySnoozes(group.snoozes),
             if (endedAt != null)
               switch (group.end) {
-                RingLogKind.autoStopped => l10n.walkAlarmHistoryAutoStopped(
-                  time(endedAt),
-                ),
+                RingLogKind.autoStopped => l10n.walkAlarmHistoryAutoStopped(time(endedAt)),
                 _ => l10n.walkAlarmHistoryStopped(time(endedAt)),
               },
           ].join(' · ');

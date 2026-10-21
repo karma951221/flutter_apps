@@ -22,8 +22,7 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) => TextButton(
-            onPressed: () async =>
-                results.add(await AlarmKindSheet.show(context)),
+            onPressed: () async => results.add(await AlarmKindSheet.show(context)),
             child: const Text('open'),
           ),
         ),
@@ -37,10 +36,7 @@ void main() {
   testWidgets('손잡이 · 제목 · 두 행(제목 · 설명)', (tester) async {
     await pump(tester);
 
-    expect(
-      tester.widget<BottomSheet>(find.byType(BottomSheet)).showDragHandle,
-      isTrue,
-    );
+    expect(tester.widget<BottomSheet>(find.byType(BottomSheet)).showDragHandle, isTrue);
     expect(find.text('어떤 알람을 만들까요'), findsOneWidget);
     expect(find.text('한 번'), findsOneWidget);
     expect(find.text('지금부터 얼마 뒤에 울려요'), findsOneWidget);

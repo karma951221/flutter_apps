@@ -52,9 +52,7 @@ class RingSettingsSection extends StatelessWidget {
         l10n.walkAlarmRingSummary(
           alarm.volumePercent,
           l10n.walkAlarmMinutes(alarm.snoozeMinutes),
-          autoStop == null
-              ? l10n.walkAlarmAutoStopNone
-              : l10n.walkAlarmMinutes(autoStop),
+          autoStop == null ? l10n.walkAlarmAutoStopNone : l10n.walkAlarmMinutes(autoStop),
         ),
       ),
       children: [
@@ -62,12 +60,7 @@ class RingSettingsSection extends StatelessWidget {
         ExcludeSemantics(
           child: Row(
             children: [
-              Expanded(
-                child: Text(
-                  l10n.walkAlarmVolume,
-                  style: theme.textTheme.titleSmall,
-                ),
-              ),
+              Expanded(child: Text(l10n.walkAlarmVolume, style: theme.textTheme.titleSmall)),
               Text(l10n.walkAlarmPercent(alarm.volumePercent)),
             ],
           ),
@@ -76,9 +69,7 @@ class RingSettingsSection extends StatelessWidget {
         // (10–100 에서 78%)가 겹쳐 "80%, 78%" 로 읽힌다 — 이름표는 "볼륨", 값은 지금 퍼센트로
         // 읽게 하고 말풍선은 끈다(끌어 옮기는 동안 위 줄의 퍼센트가 바로 바뀐다).
         SliderTheme(
-          data: SliderTheme.of(
-            context,
-          ).copyWith(showValueIndicator: ShowValueIndicator.never),
+          data: SliderTheme.of(context).copyWith(showValueIndicator: ShowValueIndicator.never),
           child: Slider(
             key: const Key('ring-volume'),
             min: volume.first.toDouble(),
@@ -86,11 +77,8 @@ class RingSettingsSection extends StatelessWidget {
             divisions: volume.length - 1,
             value: alarm.volumePercent.toDouble(),
             label: l10n.walkAlarmVolume,
-            semanticFormatterCallback: (value) =>
-                l10n.walkAlarmPercent(value.round()),
-            onChanged: enabled
-                ? (value) => onVolumePercent(value.round())
-                : null,
+            semanticFormatterCallback: (value) => l10n.walkAlarmPercent(value.round()),
+            onChanged: enabled ? (value) => onVolumePercent(value.round()) : null,
           ),
         ),
         _Choice<int>(
@@ -98,8 +86,7 @@ class RingSettingsSection extends StatelessWidget {
           title: l10n.walkAlarmFade,
           options: AlarmOptions.fadeSeconds,
           value: alarm.fadeSeconds,
-          labelOf: (s) =>
-              s == 0 ? l10n.walkAlarmFadeOff : l10n.walkAlarmSeconds(s),
+          labelOf: (s) => s == 0 ? l10n.walkAlarmFadeOff : l10n.walkAlarmSeconds(s),
           onChanged: enabled ? onFadeSeconds : null,
         ),
         _Choice<int>(
@@ -115,9 +102,7 @@ class RingSettingsSection extends StatelessWidget {
           title: l10n.walkAlarmSnoozeLimit,
           options: AlarmOptions.snoozeLimits,
           value: alarm.snoozeLimit,
-          labelOf: (n) => n == null
-              ? l10n.walkAlarmSnoozeUnlimited
-              : l10n.walkAlarmTimes(n),
+          labelOf: (n) => n == null ? l10n.walkAlarmSnoozeUnlimited : l10n.walkAlarmTimes(n),
           onChanged: enabled ? onSnoozeLimit : null,
         ),
         _Choice<int?>(
@@ -125,9 +110,7 @@ class RingSettingsSection extends StatelessWidget {
           title: l10n.walkAlarmAutoStop,
           options: AlarmOptions.autoStopMinutes,
           value: alarm.autoStopMinutes,
-          labelOf: (m) => m == null
-              ? l10n.walkAlarmAutoStopNever
-              : l10n.walkAlarmMinutes(m),
+          labelOf: (m) => m == null ? l10n.walkAlarmAutoStopNever : l10n.walkAlarmMinutes(m),
           onChanged: enabled ? onAutoStopMinutes : null,
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -187,9 +170,7 @@ class _Choice<T> extends StatelessWidget {
             showSelectedIcon: false,
             style: const ButtonStyle(
               visualDensity: VisualDensity.compact,
-              padding: WidgetStatePropertyAll(
-                EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-              ),
+              padding: WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: AppSpacing.xs)),
             ),
             onSelectionChanged: onChanged == null
                 ? null

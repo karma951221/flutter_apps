@@ -10,21 +10,18 @@ void main() {
 
   setUp(() => changes = []);
 
-  Future<void> pump(
-    WidgetTester tester,
-    TimeOfDay initial, {
-    Locale locale = const Locale('ko'),
-  }) => tester.pumpWidget(
-    MaterialApp(
-      theme: AppTheme.light(),
-      locale: locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(
-        body: AlarmTimeWheel(initial: initial, onChanged: changes.add),
-      ),
-    ),
-  );
+  Future<void> pump(WidgetTester tester, TimeOfDay initial, {Locale locale = const Locale('ko')}) =>
+      tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          locale: locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: AlarmTimeWheel(initial: initial, onChanged: changes.add),
+          ),
+        ),
+      );
 
   String? hourLabel(WidgetTester tester, String hour) =>
       tester.widget<Text>(find.text(hour).first).semanticsLabel;
@@ -77,9 +74,7 @@ void main() {
       ),
     );
 
-    final picker = tester.widget<CupertinoDatePicker>(
-      find.byType(CupertinoDatePicker),
-    );
+    final picker = tester.widget<CupertinoDatePicker>(find.byType(CupertinoDatePicker));
     expect(picker.maximumDate, DateTime(2000, 1, 1, 9, 30));
   });
 }

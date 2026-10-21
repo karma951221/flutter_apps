@@ -17,38 +17,18 @@ void main() {
 
   group('of', () {
     test('요일 집합이 묶음과 같으면 그 묶음(순서 상관없음)', () {
+      expect(RepeatPreset.of(Weekday.values.reversed.toSet()), RepeatPreset.everyday);
       expect(
-        RepeatPreset.of(Weekday.values.reversed.toSet()),
-        RepeatPreset.everyday,
-      );
-      expect(
-        RepeatPreset.of(const {
-          Weekday.fri,
-          Weekday.thu,
-          Weekday.wed,
-          Weekday.tue,
-          Weekday.mon,
-        }),
+        RepeatPreset.of(const {Weekday.fri, Weekday.thu, Weekday.wed, Weekday.tue, Weekday.mon}),
         RepeatPreset.weekdays,
       );
-      expect(
-        RepeatPreset.of(const {Weekday.sun, Weekday.sat}),
-        RepeatPreset.weekend,
-      );
+      expect(RepeatPreset.of(const {Weekday.sun, Weekday.sat}), RepeatPreset.weekend);
     });
 
     test('그 밖(빈 집합 · 일부 · 넘침)은 null', () {
       expect(RepeatPreset.of(const {}), isNull);
       expect(RepeatPreset.of(const {Weekday.sat}), isNull);
-      expect(
-        RepeatPreset.of(const {
-          Weekday.mon,
-          Weekday.tue,
-          Weekday.wed,
-          Weekday.thu,
-        }),
-        isNull,
-      );
+      expect(RepeatPreset.of(const {Weekday.mon, Weekday.tue, Weekday.wed, Weekday.thu}), isNull);
       expect(
         RepeatPreset.of(const {
           Weekday.mon,

@@ -11,21 +11,19 @@ class PermissionHandlerSource implements PermissionSource {
   Future<PermissionStatus> check() async => statusOf(await permission.status);
 
   @override
-  Future<PermissionStatus> request() async =>
-      statusOf(await permission.request());
+  Future<PermissionStatus> request() async => statusOf(await permission.request());
 
   @override
   Future<void> openSettings() async {
     await ph.openAppSettings();
   }
 
-  static PermissionStatus statusOf(ph.PermissionStatus status) =>
-      switch (status) {
-        ph.PermissionStatus.granted ||
-        ph.PermissionStatus.limited ||
-        ph.PermissionStatus.provisional => PermissionStatus.granted,
-        ph.PermissionStatus.permanentlyDenied ||
-        ph.PermissionStatus.restricted => PermissionStatus.permanentlyDenied,
-        ph.PermissionStatus.denied => PermissionStatus.denied,
-      };
+  static PermissionStatus statusOf(ph.PermissionStatus status) => switch (status) {
+    ph.PermissionStatus.granted ||
+    ph.PermissionStatus.limited ||
+    ph.PermissionStatus.provisional => PermissionStatus.granted,
+    ph.PermissionStatus.permanentlyDenied ||
+    ph.PermissionStatus.restricted => PermissionStatus.permanentlyDenied,
+    ph.PermissionStatus.denied => PermissionStatus.denied,
+  };
 }

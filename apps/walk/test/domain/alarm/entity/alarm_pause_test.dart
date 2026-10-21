@@ -6,10 +6,7 @@ void main() {
   final wednesdayNoon = DateTime(2026, 10, 7, 12);
 
   group('contains', () {
-    final pause = AlarmPause(
-      from: DateTime(2026, 10, 8),
-      until: DateTime(2026, 10, 10),
-    );
+    final pause = AlarmPause(from: DateTime(2026, 10, 8), until: DateTime(2026, 10, 10));
 
     test('시작 날 0시 · 끝 날 23:59 는 포함한다', () {
       expect(pause.contains(DateTime(2026, 10, 8)), isTrue);
@@ -23,20 +20,14 @@ void main() {
     });
 
     test('시각이 붙은 from · until 도 날짜로 본다', () {
-      final timed = AlarmPause(
-        from: DateTime(2026, 10, 8, 15),
-        until: DateTime(2026, 10, 8, 9),
-      );
+      final timed = AlarmPause(from: DateTime(2026, 10, 8, 15), until: DateTime(2026, 10, 8, 9));
       expect(timed.contains(DateTime(2026, 10, 8, 7)), isTrue);
       expect(timed.contains(DateTime(2026, 10, 8, 20)), isTrue);
     });
   });
 
   group('isOver', () {
-    final pause = AlarmPause(
-      from: DateTime(2026, 10, 6),
-      until: DateTime(2026, 10, 7),
-    );
+    final pause = AlarmPause(from: DateTime(2026, 10, 6), until: DateTime(2026, 10, 7));
 
     test('끝 날이 오늘이면 아직이다', () {
       expect(pause.isOver(DateTime(2026, 10, 7, 23, 59)), isFalse);

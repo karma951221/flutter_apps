@@ -18,9 +18,8 @@ void main() {
   });
   tearDown(() => db.close());
 
-  Future<void> insertEntry(String id, {String storyId = 'daily'}) => db
-      .into(db.entries)
-      .insert(
+  Future<void> insertEntry(String id, {String storyId = 'daily'}) =>
+      db.into(db.entries).insert(
         EntriesCompanion.insert(
           id: id,
           storyId: storyId,
@@ -78,43 +77,41 @@ void main() {
   });
 
   test('tags.name 중복은 예외', () async {
-    Future<void> add(String id) => db
-        .into(db.tags)
-        .insert(TagsCompanion.insert(id: id, name: 'jeju', createdAt: fixed));
+    Future<void> add(String id) => db.into(db.tags).insert(
+      TagsCompanion.insert(id: id, name: 'jeju', createdAt: fixed),
+    );
     await add('1');
     await expectLater(add('2'), throwsA(isA<Exception>()));
   });
 
   test('places.name 중복은 예외', () async {
-    Future<void> add(String id) => db
-        .into(db.places)
-        .insert(PlacesCompanion.insert(id: id, name: '제주', createdAt: fixed));
+    Future<void> add(String id) => db.into(db.places).insert(
+      PlacesCompanion.insert(id: id, name: '제주', createdAt: fixed),
+    );
     await add('1');
     await expectLater(add('2'), throwsA(isA<Exception>()));
   });
 
   test('기록을 지우면 media · entry_tags 가 연쇄로 지워진다', () async {
     await insertEntry('e1');
-    await db
-        .into(db.tags)
-        .insert(TagsCompanion.insert(id: 't1', name: 'a', createdAt: fixed));
-    await db
-        .into(db.entryTags)
-        .insert(EntryTagsCompanion.insert(entryId: 'e1', tagId: 't1'));
-    await db
-        .into(db.media)
-        .insert(
-          MediaCompanion.insert(
-            id: 'm1',
-            entryId: 'e1',
-            kind: MediaKind.photo,
-            path: 'p',
-            sortOrder: 0,
-            width: 1,
-            height: 1,
-            bytes: 1,
-          ),
-        );
+    await db.into(db.tags).insert(
+      TagsCompanion.insert(id: 't1', name: 'a', createdAt: fixed),
+    );
+    await db.into(db.entryTags).insert(
+      EntryTagsCompanion.insert(entryId: 'e1', tagId: 't1'),
+    );
+    await db.into(db.media).insert(
+      MediaCompanion.insert(
+        id: 'm1',
+        entryId: 'e1',
+        kind: MediaKind.photo,
+        path: 'p',
+        sortOrder: 0,
+        width: 1,
+        height: 1,
+        bytes: 1,
+      ),
+    );
     await (db.delete(db.entries)..where((e) => e.id.equals('e1'))).go();
     expect(await db.select(db.media).get(), isEmpty);
     expect(await db.select(db.entryTags).get(), isEmpty);

@@ -86,9 +86,7 @@ class AlarmTile extends StatelessWidget {
                         summary,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: dimmed,
-                        ),
+                        style: theme.textTheme.bodyMedium?.copyWith(color: dimmed),
                       ),
                     const SizedBox(height: AppSpacing.xs),
                     if (alarm.isOneShot)
@@ -104,20 +102,11 @@ class AlarmTile extends StatelessWidget {
                         runSpacing: AppSpacing.xs,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          WeekdayDots(
-                            days: alarm.repeat,
-                            dimmed: !alarm.enabled,
-                          ),
+                          WeekdayDots(days: alarm.repeat, dimmed: !alarm.enabled),
                           if (pausedOut)
-                            _TileChip(
-                              label: l10n.walkAlarmPausedOutRow,
-                              icon: Icons.bedtime,
-                            ),
+                            _TileChip(label: l10n.walkAlarmPausedOutRow, icon: Icons.bedtime),
                           if (alarm.enabled && alarm.skippedAt != null)
-                            _TileChip(
-                              label: l10n.walkAlarmSkipped,
-                              icon: Icons.skip_next,
-                            ),
+                            _TileChip(label: l10n.walkAlarmSkipped, icon: Icons.skip_next),
                           if (alarm.enabled && holidayName != null)
                             _TileChip(
                               label: l10n.walkAlarmHolidayChip,
@@ -147,12 +136,7 @@ class AlarmTile extends StatelessWidget {
 
 /// 행 안의 작은 칩. [onPressed] 가 있으면 누를 수 있다.
 class _TileChip extends StatelessWidget {
-  const _TileChip({
-    required this.label,
-    required this.icon,
-    this.tooltip,
-    this.onPressed,
-  });
+  const _TileChip({required this.label, required this.icon, this.tooltip, this.onPressed});
 
   final String label;
   final IconData icon;
@@ -203,9 +187,7 @@ class _Time extends StatelessWidget {
     final period = alarm.hour < 12
         ? localizations.anteMeridiemAbbreviation
         : localizations.postMeridiemAbbreviation;
-    final at = MediaQuery.alwaysUse24HourFormatOf(context)
-        ? -1
-        : full.indexOf(period);
+    final at = MediaQuery.alwaysUse24HourFormatOf(context) ? -1 : full.indexOf(period);
     final small = theme.textTheme.titleMedium?.copyWith(color: color);
     final spans = at < 0
         ? [TextSpan(text: full)]
@@ -218,10 +200,7 @@ class _Time extends StatelessWidget {
     return Text.rich(
       TextSpan(children: spans),
       maxLines: 1,
-      style: theme.textTheme.headlineMedium?.copyWith(
-        fontWeight: FontWeight.w600,
-        color: color,
-      ),
+      style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w600, color: color),
     );
   }
 }
@@ -229,11 +208,7 @@ class _Time extends StatelessWidget {
 /// 한 번 알람의 종류 줄 — 모래시계 + `한 번 · N 뒤`(쉬는 기간 때문에 예약이 없으면 `한 번 · 쉬는 중`,
 /// 남은 시간을 모르면 `한 번`).
 class _OneShotLine extends StatelessWidget {
-  const _OneShotLine({
-    required this.untilRing,
-    required this.pausedOut,
-    required this.color,
-  });
+  const _OneShotLine({required this.untilRing, required this.pausedOut, required this.color});
 
   final Duration? untilRing;
   final bool pausedOut;
@@ -242,9 +217,7 @@ class _OneShotLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final style = Theme.of(
-      context,
-    ).textTheme.bodyMedium?.copyWith(color: color);
+    final style = Theme.of(context).textTheme.bodyMedium?.copyWith(color: color);
     final untilRing = this.untilRing;
     return Row(
       children: [

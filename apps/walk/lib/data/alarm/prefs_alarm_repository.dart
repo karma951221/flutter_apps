@@ -66,9 +66,6 @@ class PrefsAlarmRepository implements AlarmRepository {
 
   @override
   Future<void> save(List<Alarm> alarms) async {
-    await _prefs.setString(
-      key,
-      jsonEncode([for (final a in alarms) a.toJson()]),
-    );
+    await _prefs.setString(key, jsonEncode([for (final a in alarms) a.toJson()]));
   }
 }

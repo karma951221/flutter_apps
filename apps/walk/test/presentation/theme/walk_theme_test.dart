@@ -13,17 +13,13 @@ void main() {
 
   testWidgets('애니메이션 끄기를 읽는다', (tester) async {
     late bool off;
-    await tester.pumpWidget(
-      MediaQuery(
-        data: const MediaQueryData(disableAnimations: true),
-        child: Builder(
-          builder: (context) {
-            off = WalkMotion.off(context);
-            return const SizedBox();
-          },
-        ),
-      ),
-    );
+    await tester.pumpWidget(MediaQuery(
+      data: const MediaQueryData(disableAnimations: true),
+      child: Builder(builder: (context) {
+        off = WalkMotion.off(context);
+        return const SizedBox();
+      }),
+    ));
     expect(off, isTrue);
   });
 }

@@ -50,13 +50,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
   void initState() {
     super.initState();
     final now = _clock.now();
-    final nextMinute = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      now.hour,
-      now.minute + 1,
-    );
+    final nextMinute = DateTime(now.year, now.month, now.day, now.hour, now.minute + 1);
     _align = Timer(nextMinute.difference(now), () {
       _tick();
       _ticker = Timer.periodic(const Duration(minutes: 1), (_) => _tick());
@@ -85,9 +79,9 @@ class _AlarmListPageState extends State<AlarmListPage> {
   }
 
   Future<void> _open(BuildContext context, Alarm alarm) async {
-    final result = await Navigator.of(context).push<AlarmSaveResult>(
-      MaterialPageRoute(builder: (_) => AlarmEditPage(initial: alarm)),
-    );
+    final result = await Navigator.of(
+      context,
+    ).push<AlarmSaveResult>(MaterialPageRoute(builder: (_) => AlarmEditPage(initial: alarm)));
     if (result != null && context.mounted) _showSaved(context, result);
   }
 
@@ -97,9 +91,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
     if (kind == null || !context.mounted) return;
     final draft = switch (kind) {
       AlarmKind.oneShot => Alarm.draft(),
-      AlarmKind.repeating => Alarm.draft().copyWith(
-        repeat: RepeatPreset.weekdays.days,
-      ),
+      AlarmKind.repeating => Alarm.draft().copyWith(repeat: RepeatPreset.weekdays.days),
     };
     await _open(context, draft);
   }
@@ -107,18 +99,11 @@ class _AlarmListPageState extends State<AlarmListPage> {
   Future<void> _toggle(BuildContext context, Alarm alarm, bool enabled) async {
     final l10n = AppLocalizations.of(context);
     try {
-      final result = await context.read<AlarmListCubit>().toggle(
-        alarm,
-        enabled: enabled,
-      );
+      final result = await context.read<AlarmListCubit>().toggle(alarm, enabled: enabled);
       if (result != null && context.mounted) _showSaved(context, result);
     } on Object {
       if (!context.mounted) return;
-      AppSnackBar.show(
-        context,
-        message: l10n.walkAlarmSaveFailed,
-        type: AppSnackBarType.error,
-      );
+      AppSnackBar.show(context, message: l10n.walkAlarmSaveFailed, type: AppSnackBarType.error);
     }
   }
 
@@ -157,11 +142,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
       }
     } on Object {
       if (!context.mounted) return;
-      AppSnackBar.show(
-        context,
-        message: l10n.walkAlarmSaveFailed,
-        type: AppSnackBarType.error,
-      );
+      AppSnackBar.show(context, message: l10n.walkAlarmSaveFailed, type: AppSnackBarType.error);
     }
   }
 
@@ -174,20 +155,13 @@ class _AlarmListPageState extends State<AlarmListPage> {
   }
 
   /// 쉬기 저장 · 그만 쉬기. 실패하면 오류 스낵바.
-  Future<void> _savePause(
-    BuildContext context,
-    Future<void> Function() change,
-  ) async {
+  Future<void> _savePause(BuildContext context, Future<void> Function() change) async {
     final l10n = AppLocalizations.of(context);
     try {
       await change();
     } on Object {
       if (!context.mounted) return;
-      AppSnackBar.show(
-        context,
-        message: l10n.walkAlarmSaveFailed,
-        type: AppSnackBarType.error,
-      );
+      AppSnackBar.show(context, message: l10n.walkAlarmSaveFailed, type: AppSnackBarType.error);
     }
   }
 
@@ -222,9 +196,9 @@ class _AlarmListPageState extends State<AlarmListPage> {
               IconButton(
                 tooltip: l10n.walkAlarmHistory,
                 icon: const Icon(Icons.history),
-                onPressed: () => Navigator.of(context).push<void>(
-                  MaterialPageRoute(builder: (_) => const AlarmHistoryPage()),
-                ),
+                onPressed: () => Navigator.of(
+                  context,
+                ).push<void>(MaterialPageRoute(builder: (_) => const AlarmHistoryPage())),
               ),
             ],
           ),
@@ -235,9 +209,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
           ),
           body: BlocBuilder<AlarmListCubit, AlarmListState>(
             builder: (context, state) => switch (state) {
-              AlarmListLoading() => const Center(
-                child: CircularProgressIndicator(),
-              ),
+              AlarmListLoading() => const Center(child: CircularProgressIndicator()),
               AlarmListFailure() => Center(
                 child: AppPlaceholder(
                   icon: Icons.error_outline,
@@ -267,9 +239,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
                           AppSpacing.md,
                           0,
                         ),
-                        child: AlarmPermissionBanner(
-                          onTap: widget.onOpenSettings,
-                        ),
+                        child: AlarmPermissionBanner(onTap: widget.onOpenSettings),
                       ),
                     if (pause != null)
                       Padding(
@@ -327,8 +297,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
                             alarm: alarm,
                             untilRing: nextAt[alarm.id]?.difference(now),
                             onTap: () => _open(context, alarm),
-                            onToggle: (enabled) =>
-                                _toggle(context, alarm, enabled),
+                            onToggle: (enabled) => _toggle(context, alarm, enabled),
                             onLongPress: () => _menu(context, alarm),
                             holidayName: holidays[alarm.id],
                             pausedOut: pausedOut.contains(alarm.id),
