@@ -176,7 +176,9 @@ class _ActivityBarChartState extends State<ActivityBarChart>
                 Expanded(
                   // 월간 칸은 두 자리 날짜보다 좁다 — 꺾지 않고 칸 가운데에서 양옆으로 넘친다.
                   // 라벨은 5일마다라 이웃과 겹치지 않는다.
+                  // minWidth 0 — 아니면 칸 폭을 그대로 받아 글자가 왼쪽에 붙는다.
                   child: OverflowBox(
+                    minWidth: 0,
                     maxWidth: double.infinity,
                     maxHeight: double.infinity,
                     child: Text(

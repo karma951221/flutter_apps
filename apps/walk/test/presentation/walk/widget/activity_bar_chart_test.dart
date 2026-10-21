@@ -1,5 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:walk/domain/walk/entity/activity_period.dart';
@@ -303,6 +304,22 @@ void main() {
       for (final day in ['10', '15', '20', '25', '30']) {
         expect(tester.getSize(find.text(day)).height, one, reason: day);
       }
+    });
+
+    testWidgets('날짜 라벨은 막대 가운데 아래에 있다', (tester) async {
+      await narrow(tester);
+      await _pump(tester, full, 10000);
+      await tester.pumpAndSettle();
+
+      final bar = tester.getRect(find.byKey(const Key('walk-bar-2026-09-21')));
+      // 글자 자체의 가로 가운데 — Text 상자가 칸을 꽉 채우고 왼쪽 정렬이면 여기서 드러난다.
+      final paragraph = tester.renderObject<RenderParagraph>(find.text('월'));
+      final glyphs = paragraph.getBoxesForSelection(
+        const TextSelection(baseOffset: 0, extentOffset: 1),
+      );
+      final left = paragraph.localToGlobal(Offset(glyphs.first.left, 0)).dx;
+      final right = paragraph.localToGlobal(Offset(glyphs.first.right, 0)).dx;
+      expect((left + right) / 2, closeTo(bar.center.dx, 1));
     });
 
     testWidgets('목표 높이에서 마지막 막대를 눌러도 선택된다', (tester) async {
