@@ -2569,6 +2569,28 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryEntryTrashFailed => '휴지통으로 옮기지 못했어요. 다시 시도해 주세요';
 
   @override
+  String get walkDiaryEntryMove => '스토리 옮기기';
+
+  @override
+  String walkDiaryEntryMoved(String story) {
+    return '$story 스토리로 옮겼어요';
+  }
+
+  @override
+  String get walkDiaryEntryMoveFailed => '옮기지 못했어요. 다시 시도해 주세요';
+
+  @override
+  String get walkDiaryUndo => '되돌리기';
+
+  @override
+  String walkDiaryDayNumber(int n) {
+    return '$n일차';
+  }
+
+  @override
+  String get walkDiaryViewerClose => '닫기';
+
+  @override
   String walkDiaryEntryDateTime(String date, String time) {
     return '$date $time';
   }

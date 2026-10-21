@@ -2566,6 +2566,28 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryEntryTrashFailed => 'ゴミ箱に移動できませんでした。もう一度お試しください';
 
   @override
+  String get walkDiaryEntryMove => 'ストーリーを移動';
+
+  @override
+  String walkDiaryEntryMoved(String story) {
+    return '$storyに移動しました';
+  }
+
+  @override
+  String get walkDiaryEntryMoveFailed => '移動できませんでした。もう一度お試しください';
+
+  @override
+  String get walkDiaryUndo => '元に戻す';
+
+  @override
+  String walkDiaryDayNumber(int n) {
+    return '$n日目';
+  }
+
+  @override
+  String get walkDiaryViewerClose => '閉じる';
+
+  @override
   String walkDiaryEntryDateTime(String date, String time) {
     return '$date $time';
   }

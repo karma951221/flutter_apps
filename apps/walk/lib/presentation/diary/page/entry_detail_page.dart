@@ -8,13 +8,12 @@ import 'package:l10n/l10n.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/entity/story.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
-import '../../../domain/diary/usecase/diary_use_case.dart';
 import '../format/diary_format.dart';
 import '../widget/entry_media_view.dart';
 import '../widget/entry_meta.dart';
 import '../widget/story_bar.dart';
 import 'diary_route.dart';
-import 'entry_editor_page.dart';
+import 'entry_actions.dart';
 
 /// 기록 상세를 연다. 일기 잠금에 묶인 화면([pushDiaryRoute])이라 다시 잠기면 가려진다.
 Future<void> openEntryDetail(BuildContext context, String entryId) =>
@@ -23,9 +22,10 @@ Future<void> openEntryDetail(BuildContext context, String entryId) =>
       page: (_) => EntryDetailPage(entryId: entryId),
     );
 
-enum _EntryAction { edit, delete }
+enum _EntryAction { edit, move, delete }
 
-/// 기록 하나를 크게 본다: 미디어 · 날짜 시각 · 장소 · 글 · 태그. ⋮ 로 수정 · 삭제(휴지통).
+/// 기록 하나를 크게 본다: 미디어 · 날짜 시각 · 장소 · 글 · 태그. ⋮ 로 수정 · 옮기기 · 삭제(휴지통) —
+/// 동작은 `entry_actions.dart` 가 한다.
 ///
 /// 수정 화면을 닫고 돌아오면 기록을 다시 읽는다. 휴지통 · 영구 삭제된 기록이면 없다고 안내한다.
 class EntryDetailPage extends StatefulWidget {
@@ -71,42 +71,21 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   }
 
   Future<void> _onAction(_EntryAction action) async {
+    final entry = _entry;
+    if (entry == null) return;
     switch (action) {
       case _EntryAction.edit:
-        await openEntryEditor(context, editingId: widget.entryId);
+        await editEntry(context, entry);
+        if (mounted) await _load();
+      case _EntryAction.move:
+        await moveEntry(context, entry);
         if (mounted) await _load();
       case _EntryAction.delete:
-        await _delete();
-    }
-  }
-
-  Future<void> _delete() async {
-    final l10n = AppLocalizations.of(context);
-    final confirmed = await AppConfirmDialog.show(
-      context,
-      title: l10n.walkDiaryEntryDeleteTitle,
-      content: l10n.walkDiaryEntryDeleteContent,
-      confirmLabel: l10n.walkDiaryEntryDelete,
-    );
-    if (!confirmed || !mounted) return;
-    setState(() => _busy = true);
-    final result = await getIt<DiaryUseCase>().trash(widget.entryId);
-    if (!mounted) return;
-    setState(() => _busy = false);
-    switch (result) {
-      case Ok():
-        AppSnackBar.show(
-          context,
-          message: l10n.walkDiaryEntryTrashed,
-          type: AppSnackBarType.success,
-        );
-        Navigator.of(context).pop();
-      case Err():
-        AppSnackBar.show(
-          context,
-          message: l10n.walkDiaryEntryTrashFailed,
-          type: AppSnackBarType.error,
-        );
+        setState(() => _busy = true);
+        final trashed = await trashEntry(context, entry);
+        if (!mounted) return;
+        setState(() => _busy = false);
+        if (trashed) Navigator.of(context).pop();
     }
   }
 
@@ -138,6 +117,11 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                   value: _EntryAction.edit,
                   label: l10n.walkDiaryEntryEdit,
                   icon: Icons.edit_outlined,
+                ),
+                AppOverflowMenuItem(
+                  value: _EntryAction.move,
+                  label: l10n.walkDiaryEntryMove,
+                  icon: Icons.drive_file_move_outline,
                 ),
                 AppOverflowMenuItem(
                   value: _EntryAction.delete,

@@ -4856,6 +4856,42 @@ abstract class AppLocalizations {
   /// **'휴지통으로 옮기지 못했어요. 다시 시도해 주세요'**
   String get walkDiaryEntryTrashFailed;
 
+  /// 일기 기록 ⋮ 메뉴의 다른 스토리로 옮기기 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'스토리 옮기기'**
+  String get walkDiaryEntryMove;
+
+  /// 일기 기록을 다른 스토리로 옮긴 뒤 알림
+  ///
+  /// In ko, this message translates to:
+  /// **'{story} 스토리로 옮겼어요'**
+  String walkDiaryEntryMoved(String story);
+
+  /// 일기 기록을 다른 스토리로 옮기지 못했을 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'옮기지 못했어요. 다시 시도해 주세요'**
+  String get walkDiaryEntryMoveFailed;
+
+  /// 일기 기록 휴지통 · 옮기기 스낵바의 되돌리기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'되돌리기'**
+  String get walkDiaryUndo;
+
+  /// 스토리 뷰어 머리 — 스토리 시작일 기준 며칠째
+  ///
+  /// In ko, this message translates to:
+  /// **'{n}일차'**
+  String walkDiaryDayNumber(int n);
+
+  /// 스토리 뷰어의 ✕ 닫기 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'닫기'**
+  String get walkDiaryViewerClose;
+
   /// 일기 기록 상세의 날짜와 시각
   ///
   /// In ko, this message translates to:

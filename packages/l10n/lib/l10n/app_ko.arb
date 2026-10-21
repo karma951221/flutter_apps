@@ -3680,6 +3680,40 @@
   "@walkDiaryEntryTrashFailed": {
     "description": "일기 기록을 휴지통으로 보내지 못했을 때 오류"
   },
+  "walkDiaryEntryMove": "스토리 옮기기",
+  "@walkDiaryEntryMove": {
+    "description": "일기 기록 ⋮ 메뉴의 다른 스토리로 옮기기 항목"
+  },
+  "walkDiaryEntryMoved": "{story} 스토리로 옮겼어요",
+  "@walkDiaryEntryMoved": {
+    "description": "일기 기록을 다른 스토리로 옮긴 뒤 알림",
+    "placeholders": {
+      "story": {
+        "type": "String"
+      }
+    }
+  },
+  "walkDiaryEntryMoveFailed": "옮기지 못했어요. 다시 시도해 주세요",
+  "@walkDiaryEntryMoveFailed": {
+    "description": "일기 기록을 다른 스토리로 옮기지 못했을 때 오류"
+  },
+  "walkDiaryUndo": "되돌리기",
+  "@walkDiaryUndo": {
+    "description": "일기 기록 휴지통 · 옮기기 스낵바의 되돌리기 버튼"
+  },
+  "walkDiaryDayNumber": "{n}일차",
+  "@walkDiaryDayNumber": {
+    "description": "스토리 뷰어 머리 — 스토리 시작일 기준 며칠째",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "walkDiaryViewerClose": "닫기",
+  "@walkDiaryViewerClose": {
+    "description": "스토리 뷰어의 ✕ 닫기 버튼 툴팁"
+  },
   "walkDiaryEntryDateTime": "{date} {time}",
   "@walkDiaryEntryDateTime": {
     "description": "일기 기록 상세의 날짜와 시각",

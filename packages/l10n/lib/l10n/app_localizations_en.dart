@@ -2707,6 +2707,28 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t move to the trash. Please try again';
 
   @override
+  String get walkDiaryEntryMove => 'Move to story';
+
+  @override
+  String walkDiaryEntryMoved(String story) {
+    return 'Moved to $story';
+  }
+
+  @override
+  String get walkDiaryEntryMoveFailed => 'Couldn\'t move it. Please try again';
+
+  @override
+  String get walkDiaryUndo => 'Undo';
+
+  @override
+  String walkDiaryDayNumber(int n) {
+    return 'Day $n';
+  }
+
+  @override
+  String get walkDiaryViewerClose => 'Close';
+
+  @override
   String walkDiaryEntryDateTime(String date, String time) {
     return '$date $time';
   }
