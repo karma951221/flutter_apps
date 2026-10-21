@@ -43,56 +43,53 @@ class TodayGoalCard extends StatelessWidget {
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
+        // 제목은 두지 않는다 — 위 탭 이름이 "오늘"이다. 달성 배지는 오른쪽 위에 겹쳐 그려
+        // 나타나도 링이 밀리지 않는다.
+        child: Stack(
           children: [
-            Row(
+            Column(
               children: [
-                Text(
-                  l10n.walkToday,
-                  style: theme.textTheme.titleMedium?.copyWith(color: onCard),
-                ),
-                const Spacer(),
-                if (progress.reached) const _ReachedBadge(),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Semantics(
-              label: l10n.walkGoalRingSemantics(
-                steps(activity.steps),
-                steps(goal),
-                (progress.ratio * 100).round(),
-              ),
-              excludeSemantics: true,
-              child: GoalCelebration(
-                // 날이 바뀌면 새 연출 상태로 — 어제 연출한 채 오늘 달성 값이 바로 와도 놓치지 않는다.
-                key: ValueKey(DateUtils.dateOnly(activity.date)),
-                play: celebrate,
-                onPlayed: onCelebrated,
-                child: StepGoalRing(
-                  ratio: progress.ratio,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _CountUp(
-                        steps: activity.steps,
-                        format: steps,
-                        style: theme.textTheme.displaySmall?.copyWith(
-                          color: onCard,
-                        ),
+                Semantics(
+                  label: l10n.walkGoalRingSemantics(
+                    steps(activity.steps),
+                    steps(goal),
+                    (progress.ratio * 100).round(),
+                  ),
+                  excludeSemantics: true,
+                  child: GoalCelebration(
+                    // 날이 바뀌면 새 연출 상태로 — 어제 연출한 채 오늘 달성 값이 바로 와도 놓치지 않는다.
+                    key: ValueKey(DateUtils.dateOnly(activity.date)),
+                    play: celebrate,
+                    onPlayed: onCelebrated,
+                    child: StepGoalRing(
+                      ratio: progress.ratio,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _CountUp(
+                            steps: activity.steps,
+                            format: steps,
+                            style: theme.textTheme.displaySmall?.copyWith(
+                              color: onCard,
+                            ),
+                          ),
+                          Text(
+                            l10n.walkGoalOf(steps(goal)),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: onCard,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        l10n.walkGoalOf(steps(goal)),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: onCard,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(height: AppSpacing.md),
+                TodayGoalFooter(activity: activity, goal: goal),
+              ],
             ),
-            const SizedBox(height: AppSpacing.md),
-            TodayGoalFooter(activity: activity, goal: goal),
+            if (progress.reached)
+              const Positioned(top: 0, right: 0, child: _ReachedBadge()),
           ],
         ),
       ),

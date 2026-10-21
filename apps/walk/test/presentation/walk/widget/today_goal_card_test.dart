@@ -35,6 +35,12 @@ void main() {
     expect(find.text('달성'), findsNothing);
   });
 
+  testWidgets('카드에 "오늘" 제목이 없다 — 위 탭 이름과 겹친다', (tester) async {
+    await _pump(tester, TodayGoalCard(activity: _activity(), goal: 10000));
+
+    expect(find.text('오늘'), findsNothing);
+  });
+
   testWidgets('아래 줄은 늘 남은 걸음 — 거리 · 칼로리는 없다', (tester) async {
     await _pump(tester, TodayGoalCard(activity: _activity(), goal: 10000));
 
