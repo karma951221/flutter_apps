@@ -21,6 +21,7 @@ class StoryRingRow extends StatelessWidget {
     required this.onSeeAll,
     this.selectedId,
     this.showSeeAll = true,
+    this.maxClosed = 10,
     super.key,
   });
 
@@ -36,10 +37,13 @@ class StoryRingRow extends StatelessWidget {
   final String? selectedId;
   final bool showSeeAll;
 
+  /// 닫힌 스토리를 몇 개까지 보일지([ringOrder]). 작성 화면(고치기)은 모두 보인다.
+  final int maxClosed;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final stories = ringOrder(open, archived);
+    final stories = ringOrder(open, archived, maxClosed: maxClosed);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),

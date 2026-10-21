@@ -163,7 +163,7 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
     final pick = widget.initialPick?.take();
     if (pick != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) unawaited(_addMedia(pick));
+        if (mounted) unawaited(_addMedia(pick, waitForDraft: true));
       });
     }
   }
@@ -191,7 +191,16 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
     if (mounted) Navigator.of(context).pop();
   }
 
-  Future<void> _addMedia(MediaSource source) async {
+  /// 새 기록의 `startNew` 가 첫 draft 를 내보냈는지 — 그 전에 넣은 미디어는 그 draft 에 덮인다.
+  /// 그 뒤로는 찾는 중(locating)이거나, 위치를 얻었거나 직접 입력으로 바뀐 상태다.
+  static bool _draftReady(EntryEditorState s) =>
+      s.isEditing || s.locating || s.manualPlace || s.draft.location != null;
+
+  /// [waitForDraft] 면(열자마자 하는 처음 고르기) 고른 뒤 draft 가 준비될 때까지 기다렸다 넣는다.
+  Future<void> _addMedia(
+    MediaSource source, {
+    bool waitForDraft = false,
+  }) async {
     if (_picking) return;
     _picking = true;
     try {
@@ -203,6 +212,9 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
         MediaSource.video => _picker.recordVideo(),
       };
       try {
+        if (waitForDraft && picked.isNotEmpty && !_draftReady(_cubit.state)) {
+          await _cubit.stream.firstWhere(_draftReady);
+        }
         await _cubit.addMedia(picked);
       } finally {
         // 압축 사본을 만들었든 못 만들었든, 피커가 캐시에 남긴 원본 복사본(GPS 포함)을 지운다.
@@ -417,6 +429,8 @@ class _StoryChoices extends StatelessWidget {
         covers: coverFiles(map),
         selectedId: state.draft.storyId,
         showSeeAll: false,
+        // 고치는 기록이 오래된 닫힌 스토리에 있어도 그 링이 보이고 고를 수 있게 자르지 않는다.
+        maxClosed: archived.length,
         onCreate: onCreate,
         onOpen: (story) => onPick(story.id),
         onLongPress: (story) => onPick(story.id),

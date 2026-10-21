@@ -662,6 +662,67 @@ void main() {
     });
   });
 
+  testWidgets('오래된 닫힌 스토리(11번째)의 기록을 고치면 그 링이 줄에 있고 체크된다', (tester) async {
+    stories = [
+      _story(Story.dailyId, ''),
+      // 더 최근에 닫힌 11개 + 가장 오래된 'oldest'.
+      for (var i = 0; i < 11; i++)
+        Story(
+          id: 'closed$i',
+          title: '지난 $i',
+          status: StoryStatus.closed,
+          startedAt: DateTime(2026, 9, 1),
+          endedAt: DateTime(2026, 9, 10 + i),
+          createdAt: DateTime(2026, 9, 1),
+        ),
+      Story(
+        id: 'oldest',
+        title: '아주 옛날',
+        status: StoryStatus.closed,
+        startedAt: DateTime(2026, 8, 1),
+        endedAt: DateTime(2026, 8, 2),
+        createdAt: DateTime(2026, 8, 1),
+      ),
+    ];
+    when(() => repo.entry('e1')).thenAnswer(
+      (_) async => Ok(
+        DiaryEntry(
+          id: 'e1',
+          storyId: 'oldest',
+          body: '옛 글',
+          occurredAt: DateTime(2026, 8, 1, 18),
+          createdAt: DateTime(2026, 8, 1, 18),
+          updatedAt: DateTime(2026, 8, 1, 18),
+          media: const [],
+          tags: const [],
+        ),
+      ),
+    );
+    await pump(tester, editingId: 'e1');
+
+    expect(ringIds(tester), contains('oldest'));
+    expect(selectedRings(tester), ['oldest']);
+  });
+
+  testWidgets('스토리 목록이 늦게 와도 처음 고른 미디어가 남는다', (tester) async {
+    when(repo.watchStories).thenAnswer((_) async* {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      yield stories;
+    });
+    when(
+      () => picker.pickGallery(limit: any(named: 'limit')),
+    ).thenAnswer((_) async => [(path: '/picked/a.jpg', kind: MediaKind.photo)]);
+    when(
+      () => store.importPhoto('/picked/a.jpg'),
+    ).thenAnswer((_) async => Ok(photoMedia('m1', path: 'tmp/m1.jpg')));
+    await pump(tester, initialPick: MediaSource.gallery);
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+
+    verify(() => picker.pickGallery(limit: 10)).called(1);
+    expect(find.byTooltip('빼기'), findsOneWidget);
+  });
+
   testWidgets('고치기: 기록 내용을 채우고 저장 버튼', (tester) async {
     when(() => repo.entry('e1')).thenAnswer(
       (_) async => Ok(
