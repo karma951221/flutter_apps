@@ -242,11 +242,11 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | 파일 | 확인 |
 |---|---|
 | `domain/commute/entity/transit_route_test` | 경로 · 구간(지하철/도보) 값, 첫 승차 구간 |
-| `domain/commute/commute_policy_test` | 탈 수 있나(탄다/서두르면/놓침) · 탈 열차 고르기 · 도착 예상 계산 |
+| `domain/commute/commute_policy_test` | 탈 수 있나(걷는 시간 기준: 걸어가면 이번 열차 / 다음 열차 기준 / 두 열차 모두 어려움) · 탈 열차 고르기 · 도착 예상 계산 |
 | `domain/commute/subway_line_codes_test` | 노선 → 서울 지하철 ID, 역 이름 정규화 |
 | `domain/commute/usecase/commute_use_case_test` | 조회 · 경로 선택(같은 승차역은 재조회 없이 판단만) · 장소 저장 |
-| `data/commute/seoul_subway_arrival_source_test` | 서울 실시간 응답 파싱 · 키 오류 · 데이터 없음 · 정렬 · 네트워크/타임아웃 |
-| `data/commute/odsay_route_finder_test` | ODsay 경로 파싱 · 키 오류 · 근처 없음 · 오류 분류 |
+| `data/commute/seoul_subway_arrival_source_test` | 서울 실시간 응답 파싱 · 키 오류 · 데이터 없음 · 정렬 · 서버 시각이 앞서도 분이 늘지 않음 · 네트워크(소켓 · TLS)/타임아웃 · 비 2xx → `HTTP <code>` |
+| `data/commute/odsay_route_finder_test` | ODsay 경로 파싱 · 키 오류 · 근처 없음 · 오류 분류 · TLS → 네트워크 · 비 2xx → `HTTP <code>` · 모든 경로 해석 실패 → `parse` |
 | `data/commute/prefs_place_repository_test` · `prefs_route_preference_repository_test` | 장소 · 경로 선호 저장/복원 |
 | `data/commute/geocoding_address_search_test` | 주소 검색 후보 · 실패 |
 | `core/config/commute_api_keys_test` · `convention/commute_network_config_test` | 키 주입(`fromEnvironment`) · http/인터넷 권한 설정 |
@@ -255,7 +255,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 
 | 파일 | 확인 |
 |---|---|
-| `presentation/commute/cubit/commute_cubit_test` | 방향 전환 시 옛 요청 버림 · 위치 예외 · 조회 · 경로 선택 · close |
+| `presentation/commute/cubit/commute_cubit_test` | 방향 전환 시 옛 요청 버림 · 위치 예외 · 조회 · 경로 선택 · 알 수 없는 예외는 타입 이름 · 장소 저장 시 결과 비움(진행 중 요청도 버림) · close |
 | `presentation/commute/page/commute_tab_test` | 상태별 화면(미설정 · 키 없음 · 오류 · 경로 없음 · 실시간 없음) · 장소 시트 · 위치 실패가 시트 안에 보임 |
 | `presentation/commute/widget/{arrival_card,verdict_banner,route_options_sheet,place_setup_sheet}_test` | 도착 카드 · 판단 배너 · 경로 고르기 · 장소 설정(검색 상태 정리) · 영어 복수형 |
 
