@@ -206,6 +206,7 @@ class ViewerHeader extends StatelessWidget {
     required this.onAction,
     required this.onClose,
     this.icon,
+    this.onTitleTap,
     super.key,
   });
 
@@ -220,6 +221,9 @@ class ViewerHeader extends StatelessWidget {
 
   /// 모아보기 그룹의 표지 아이콘(태그 · 장소). 스토리는 null(표지 사진 · 이니셜).
   final IconData? icon;
+
+  /// 표지 · 이름을 누를 때(스토리 그룹 → 스토리 페이지). null 이면 누를 수 없다.
+  final VoidCallback? onTitleTap;
 
   /// 표지 원 반지름. 시각 토큰이 아니라 이 위젯의 크기다.
   static const _avatarRadius = 16.0;
@@ -275,19 +279,25 @@ class ViewerHeader extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               Row(
                 children: [
-                  StoryCoverCircle(
-                    label: title,
-                    icon: icon,
-                    image: story == null ? null : _cover(group, story),
-                    radius: _avatarRadius,
+                  GestureDetector(
+                    onTap: onTitleTap,
+                    child: StoryCoverCircle(
+                      label: title,
+                      icon: icon,
+                      image: story == null ? null : _cover(group, story),
+                      radius: _avatarRadius,
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Flexible(
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleSmall,
+                    child: GestureDetector(
+                      onTap: onTitleTap,
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall,
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),

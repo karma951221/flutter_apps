@@ -3146,6 +3146,30 @@ abstract class AppLocalizations {
   /// **'모두 보기'**
   String get walkDiarySeeAll;
 
+  /// 모든 스토리 화면 제목 · 일기 탭 ⋮ 메뉴 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'모든 스토리'**
+  String get walkDiaryAllStories;
+
+  /// 모든 스토리 화면의 닫힌 스토리 구역 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'지난 스토리'**
+  String get walkDiaryPastStories;
+
+  /// 스토리 페이지 머리 — 첫날 첫 조각부터 스토리 뷰어를 연다
+  ///
+  /// In ko, this message translates to:
+  /// **'처음부터 보기'**
+  String get walkDiaryPlayFromStart;
+
+  /// 스토리 페이지 머리의 기록 수 · 사진 수
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 {entries} · 사진 {photos}'**
+  String walkDiaryStoryStats(int entries, int photos);
+
   /// 일기 스토리 바 끝 — 닫힌 스토리 모음. 누르면 목록 시트가 열린다
   ///
   /// In ko, this message translates to:

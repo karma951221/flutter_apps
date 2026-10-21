@@ -22,6 +22,7 @@ import 'package:walk/domain/diary/usecase/diary_use_case.dart';
 import 'package:walk/domain/lock/device_auth.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
+import 'package:walk/presentation/diary/page/story_page.dart';
 import 'package:walk/presentation/diary/viewer/story_progress_bar.dart';
 import 'package:walk/presentation/diary/viewer/story_viewer_page.dart';
 import 'package:walk/presentation/diary/viewer/viewer_slide_view.dart';
@@ -560,6 +561,48 @@ void main() {
     expect(current(tester), 'j3/p3');
     expect(find.text('10월 7일 (수)'), findsOneWidget);
   });
+  testWidgets('머리의 스토리 이름을 누르면 그 스토리 페이지가 열리고 뷰어는 멈춘다', (tester) async {
+    await open(tester);
+    expect(current(tester), 'j3/p3');
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(ViewerHeader),
+        matching: find.text('제주 여행'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(tester.widget<StoryPage>(find.byType(StoryPage)).storyId, 'jeju');
+    // 덮인 동안 넘어가지 않는다 — 돌아오면 같은 조각이다.
+    await wait(tester, const Duration(seconds: 10));
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byType(StoryPage), findsNothing);
+    expect(current(tester), 'j3/p3');
+  });
+
+  testWidgets('모아보기 머리의 이름은 스토리 페이지를 열지 않는다', (tester) async {
+    await open(
+      tester,
+      source: const ViewerSource.filter(EntryFilter.tag('제주'), '#제주'),
+      fromStart: true,
+    );
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(ViewerHeader),
+        matching: find.text('#제주'),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(StoryPage), findsNothing);
+  });
+
   testWidgets('남은 마지막 조각을 휴지통으로 보내면 닫힌다', (tester) async {
     await open(
       tester,

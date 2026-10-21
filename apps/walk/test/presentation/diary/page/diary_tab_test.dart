@@ -23,11 +23,12 @@ import 'package:walk/domain/diary/usecase/diary_use_case.dart';
 import 'package:walk/domain/lock/device_auth.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
+import 'package:walk/presentation/diary/page/all_stories_page.dart';
 import 'package:walk/presentation/diary/page/diary_search_page.dart';
 import 'package:walk/presentation/diary/page/diary_tab.dart';
 import 'package:walk/presentation/diary/page/entry_detail_page.dart';
 import 'package:walk/presentation/diary/page/entry_editor_page.dart';
-import 'package:walk/presentation/diary/page/story_manage_page.dart';
+
 import 'package:walk/presentation/diary/page/trash_page.dart';
 import 'package:walk/presentation/diary/widget/entry_media_view.dart';
 import 'package:walk/presentation/diary/widget/feed_view.dart';
@@ -474,15 +475,15 @@ void main() {
       expect(find.byType(EntryEditorPage), findsNothing);
     });
 
-    testWidgets('앱바 ⋮ → 스토리 관리', (tester) async {
+    testWidgets('앱바 ⋮ → 모든 스토리', (tester) async {
       await pump(tester);
 
       await tester.tap(find.byIcon(Icons.more_vert));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('스토리 관리'));
+      await tester.tap(find.text('모든 스토리'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(StoryManagePage), findsOneWidget);
+      expect(find.byType(AllStoriesPage), findsOneWidget);
     });
 
     testWidgets('앱바 ⋮ → 휴지통', (tester) async {
@@ -506,7 +507,7 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.more_vert));
       await tester.pumpAndSettle();
-      expect(find.text('스토리 관리'), findsOneWidget);
+      expect(find.text('모든 스토리'), findsOneWidget);
       await tester.tap(find.text('휴지통'));
       await tester.pumpAndSettle();
       expect(find.byType(TrashPage), findsOneWidget);

@@ -2291,6 +2291,30 @@
   "@walkDiarySeeAll": {
     "description": "일기 스토리 동그라미 줄 끝 — 스토리 전체 목록으로 가는 항목"
   },
+  "walkDiaryAllStories": "모든 스토리",
+  "@walkDiaryAllStories": {
+    "description": "모든 스토리 화면 제목 · 일기 탭 ⋮ 메뉴 항목"
+  },
+  "walkDiaryPastStories": "지난 스토리",
+  "@walkDiaryPastStories": {
+    "description": "모든 스토리 화면의 닫힌 스토리 구역 제목"
+  },
+  "walkDiaryPlayFromStart": "처음부터 보기",
+  "@walkDiaryPlayFromStart": {
+    "description": "스토리 페이지 머리 — 첫날 첫 조각부터 스토리 뷰어를 연다"
+  },
+  "walkDiaryStoryStats": "기록 {entries} · 사진 {photos}",
+  "@walkDiaryStoryStats": {
+    "description": "스토리 페이지 머리의 기록 수 · 사진 수",
+    "placeholders": {
+      "entries": {
+        "type": "int"
+      },
+      "photos": {
+        "type": "int"
+      }
+    }
+  },
   "walkDiaryArchive": "보관함",
   "@walkDiaryArchive": {
     "description": "일기 스토리 바 끝 — 닫힌 스토리 모음. 누르면 목록 시트가 열린다"

@@ -1624,6 +1624,20 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiarySeeAll => 'すべて見る';
 
   @override
+  String get walkDiaryAllStories => 'すべてのストーリー';
+
+  @override
+  String get walkDiaryPastStories => '過去のストーリー';
+
+  @override
+  String get walkDiaryPlayFromStart => '最初から見る';
+
+  @override
+  String walkDiaryStoryStats(int entries, int photos) {
+    return '記録 $entries · 写真 $photos';
+  }
+
+  @override
   String get walkDiaryArchive => 'アーカイブ';
 
   @override

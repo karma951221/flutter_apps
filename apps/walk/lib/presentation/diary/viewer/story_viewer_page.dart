@@ -15,6 +15,7 @@ import '../../../domain/diary/repository/diary_repository.dart';
 import '../../theme/walk_theme.dart';
 import '../page/diary_route.dart';
 import '../page/entry_actions.dart';
+import '../page/story_page.dart';
 import 'viewer_model.dart';
 import 'viewer_slide_view.dart';
 
@@ -690,6 +691,10 @@ class _StoryViewerPageState extends State<StoryViewerPage>
                 },
                 onAction: _onAction,
                 onClose: _close,
+                onTitleTap: switch (group.story) {
+                  final story? => () => openStoryPage(context, story.id),
+                  null => null,
+                },
               ),
             ),
             Positioned(

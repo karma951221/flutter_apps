@@ -1712,6 +1712,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiarySeeAll => 'See all';
 
   @override
+  String get walkDiaryAllStories => 'All stories';
+
+  @override
+  String get walkDiaryPastStories => 'Past stories';
+
+  @override
+  String get walkDiaryPlayFromStart => 'Play from start';
+
+  @override
+  String walkDiaryStoryStats(int entries, int photos) {
+    String _temp0 = intl.Intl.pluralLogic(
+      entries,
+      locale: localeName,
+      other: '$entries entries',
+      one: '1 entry',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      photos,
+      locale: localeName,
+      other: '$photos photos',
+      one: '1 photo',
+    );
+    return '$_temp0 · $_temp1';
+  }
+
+  @override
   String get walkDiaryArchive => 'Archive';
 
   @override

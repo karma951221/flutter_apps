@@ -22,10 +22,10 @@ import '../widget/diary_entries_view.dart';
 import '../widget/story_avatar.dart';
 import '../widget/story_bar.dart';
 import '../widget/story_header.dart';
+import 'all_stories_page.dart';
 import 'diary_search_page.dart';
 import 'entry_detail_page.dart';
 import 'entry_editor_page.dart';
-import 'story_manage_page.dart';
 import 'trash_page.dart';
 
 /// 셸의 일기 탭(스펙 §6.1). 위에서 `DiaryLockCubit` 를 받는다(셸이 소유).
@@ -168,7 +168,7 @@ class _SearchAction extends StatelessWidget {
 
 enum _DiaryMenuItem { stories, trash }
 
-/// 일기 탭 앱바 ⋮(스펙 §6.1): 스토리 관리 · 휴지통. 잠긴 동안은 두지 않는다.
+/// 일기 탭 앱바 ⋮(스펙 §6.1): 모든 스토리 · 휴지통. 잠긴 동안은 두지 않는다.
 /// 릴스에서는 앱바가 없어 위에 얹은 머리 옆에 같은 위젯을 둔다.
 /// 항목을 더하려면 [_DiaryMenuItem] 값과 [_items] · [_open] 의 한 줄씩.
 class _DiaryMenu extends StatelessWidget {
@@ -177,7 +177,7 @@ class _DiaryMenu extends StatelessWidget {
   List<AppOverflowMenuItem<_DiaryMenuItem>> _items(AppLocalizations l10n) => [
     AppOverflowMenuItem(
       value: _DiaryMenuItem.stories,
-      label: l10n.walkDiaryMenuStories,
+      label: l10n.walkDiaryAllStories,
       icon: Icons.auto_stories_outlined,
     ),
     AppOverflowMenuItem(
@@ -189,7 +189,7 @@ class _DiaryMenu extends StatelessWidget {
 
   Future<void> _open(BuildContext context, _DiaryMenuItem item) =>
       switch (item) {
-        _DiaryMenuItem.stories => openStoryManage(context),
+        _DiaryMenuItem.stories => openAllStories(context),
         _DiaryMenuItem.trash => openTrash(context),
       };
 
