@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:walk/data/commute/subway_line_codes.dart';
+import 'package:walk/domain/commute/subway_line_codes.dart';
 
 void main() {
   test('maps ODsay lane codes to Seoul subway ids', () {

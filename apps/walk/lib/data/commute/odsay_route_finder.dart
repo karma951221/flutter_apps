@@ -5,7 +5,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 import 'package:walk/core/config/commute_api_keys.dart';
-import 'package:walk/data/commute/subway_line_codes.dart';
+import 'package:walk/domain/commute/subway_line_codes.dart';
 import 'package:walk/domain/commute/commute_failure.dart';
 import 'package:walk/domain/commute/entity/place.dart';
 import 'package:walk/domain/commute/entity/transit_route.dart';

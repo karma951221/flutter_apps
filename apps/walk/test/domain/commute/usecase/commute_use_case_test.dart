@@ -327,6 +327,31 @@ void main() {
       expect(prefs.saved[CommuteDirection.toWork], b.signature);
     });
 
+    test('둘 다 지하철이 없으면 조회 시각을 바꾸지 않는다', () async {
+      const a = TransitRoute(
+        totalMinutes: 20,
+        transferCount: 0,
+        legs: [RouteLeg.walk(minutes: 20)],
+      );
+      const b = TransitRoute(
+        totalMinutes: 25,
+        transferCount: 0,
+        legs: [RouteLeg.walk(minutes: 25)],
+      );
+      routes.routes = [a, b];
+      final uc = useCase();
+      final first = await uc.query(CommuteDirection.toWork);
+      clock.value = t0.add(const Duration(minutes: 1));
+
+      final next = await uc.selectRoute(first, b);
+
+      expect(arrivals.calls, isEmpty);
+      expect(next.route, b);
+      expect(next.queriedAt, t0);
+      expect(next.eta, DateTime(2026, 10, 21, 8, 25));
+      expect(next.realtime, RealtimeStatus.unavailable);
+    });
+
     test('다른 방향(wayCode)이면 다시 부른다', () async {
       final a = _route(wayCode: 1);
       final b = _route(wayCode: 2, end: '양재');

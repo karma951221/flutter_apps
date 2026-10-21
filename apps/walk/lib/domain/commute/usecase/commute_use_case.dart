@@ -1,7 +1,7 @@
 import 'package:core/core.dart';
 import 'package:injectable/injectable.dart';
 import 'package:walk/core/config/commute_api_keys.dart';
-import 'package:walk/data/commute/subway_line_codes.dart';
+import 'package:walk/domain/commute/subway_line_codes.dart';
 import 'package:walk/domain/commute/commute_failure.dart';
 import 'package:walk/domain/commute/commute_policy.dart';
 import 'package:walk/domain/commute/entity/commute_direction.dart';
@@ -97,7 +97,9 @@ class CommuteUseCase {
     );
   }
 
+  /// 둘 다 지하철이 없으면 부를 실시간이 없으므로 같은 승차로 본다.
   static bool _sameBoarding(SubwayLeg? a, SubwayLeg? b) =>
+      (a == null && b == null) ||
       a != null &&
       b != null &&
       a.startStation == b.startStation &&
