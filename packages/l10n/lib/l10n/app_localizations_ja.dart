@@ -2940,4 +2940,126 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkSocialUpdateFailed => '記録は保存しましたが、共有した投稿は更新できませんでした';
+
+  @override
+  String get walkShellTabCommute => '通勤';
+
+  @override
+  String get walkCommuteToWork => '出勤';
+
+  @override
+  String get walkCommuteToHome => '退勤';
+
+  @override
+  String get walkCommuteQuery => '照会';
+
+  @override
+  String get walkCommuteVerdictCatchFirst => '歩いても間に合います';
+
+  @override
+  String get walkCommuteVerdictCatchSecond => '歩くと今の電車には間に合いません — 次の電車基準';
+
+  @override
+  String get walkCommuteVerdictMissBoth => '歩くと2本とも間に合いません';
+
+  @override
+  String walkCommuteTrainMinutes(int minutes) {
+    return '$minutes分後';
+  }
+
+  @override
+  String walkCommuteTrainMinutesEstimated(int minutes) {
+    return '約$minutes分後';
+  }
+
+  @override
+  String walkCommuteTrainStationsAway(int count) {
+    return '$count駅前';
+  }
+
+  @override
+  String get walkCommuteTrainArriving => 'まもなく到着';
+
+  @override
+  String walkCommuteWalkToStation(int minutes) {
+    return '駅まで徒歩$minutes分';
+  }
+
+  @override
+  String walkCommuteStationHeader(String station, String line, String way) {
+    return '$station · $line $way';
+  }
+
+  @override
+  String walkCommuteEta(String time) {
+    return '到着予定 $time';
+  }
+
+  @override
+  String get walkCommuteEtaEstimated => '(推定)';
+
+  @override
+  String walkCommuteSummary(int minutes, int count) {
+    return '合計$minutes分 · 乗換$count回';
+  }
+
+  @override
+  String walkCommuteLegWalk(int minutes) {
+    return '徒歩 $minutes';
+  }
+
+  @override
+  String walkCommuteLegSubway(
+    String line,
+    String from,
+    String to,
+    int minutes,
+  ) {
+    return '$line $from→$to $minutes';
+  }
+
+  @override
+  String walkCommuteAlternatives(int count) {
+    return '他のルート$count件';
+  }
+
+  @override
+  String walkCommuteQueriedAt(String time) {
+    return '$time 照会';
+  }
+
+  @override
+  String get walkCommuteStale => 'もう一度照会してください';
+
+  @override
+  String get walkCommuteRealtimeUnavailable => 'リアルタイム情報なし';
+
+  @override
+  String get walkCommuteRealtimeFailed => 'リアルタイム情報を読み込めませんでした';
+
+  @override
+  String get walkCommuteMissingPlaces => '先に自宅と会社を設定してください';
+
+  @override
+  String get walkCommuteMissingKey => 'APIキーがありません — config/commute_keys.json';
+
+  @override
+  String get walkCommuteNetwork => 'ネットワークに接続できません';
+
+  @override
+  String get walkCommuteNoRoute => 'この区間の地下鉄ルートがありません';
+
+  @override
+  String walkCommuteServer(String message) {
+    return 'サーバーエラー: $message';
+  }
+
+  @override
+  String get walkCommutePlaceHome => '自宅';
+
+  @override
+  String get walkCommutePlaceWork => '会社';
+
+  @override
+  String get walkCommutePlaceUnset => '設定';
 }

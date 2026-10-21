@@ -18,6 +18,10 @@ import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/alarm/widget/next_alarm_widget.dart';
+import 'package:walk/domain/commute/entity/place.dart';
+import 'package:walk/domain/commute/repository/address_search.dart';
+import 'package:walk/domain/commute/usecase/commute_use_case.dart';
+import 'package:walk/domain/diary/location/place_source.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
@@ -32,6 +36,7 @@ import 'package:walk/domain/walk/entity/health_access.dart';
 import 'package:walk/domain/walk/entity/period_kind.dart';
 import 'package:walk/domain/walk/usecase/walk_use_case.dart';
 import 'package:walk/presentation/alarm/page/alarm_list_page.dart';
+import 'package:walk/presentation/commute/page/commute_tab.dart';
 import 'package:walk/presentation/diary/page/diary_tab.dart';
 import 'package:walk/presentation/diary/widget/story_bar.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
@@ -60,6 +65,12 @@ class _MockAccess extends Mock implements HolidayCalendarAccess {}
 class _MockDiaryRepo extends Mock implements DiaryRepository {}
 
 class _MockDiaryUseCase extends Mock implements DiaryUseCase {}
+
+class _MockCommute extends Mock implements CommuteUseCase {}
+
+class _MockPlaceSource extends Mock implements PlaceSource {}
+
+class _MockAddressSearch extends Mock implements AddressSearch {}
 
 class _FakeCalendar implements HolidayCalendar {
   @override
@@ -117,6 +128,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(PeriodKind.week);
     registerFallbackValue(const EntryFilter.all());
+    registerFallbackValue(PlaceKind.home);
   });
   setUp(() async {
     // 네이티브 디스패처 자리: 헤드리스 일이 없어 awaitIdle 에 바로 답한다.
@@ -167,6 +179,12 @@ void main() {
       ..registerSingleton<LockRepository>(lockRepo)
       ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
       ..registerSingleton<MediaPickGuard>(MediaPickGuard());
+    final commute = _MockCommute();
+    when(() => commute.place(any())).thenReturn(null);
+    getIt
+      ..registerSingleton<CommuteUseCase>(commute)
+      ..registerSingleton<PlaceSource>(_MockPlaceSource())
+      ..registerSingleton<AddressSearch>(_MockAddressSearch());
     getIt
       ..registerSingleton<AlarmUseCase>(alarms)
       ..registerSingleton<WalkUseCase>(walk)
@@ -250,11 +268,13 @@ void main() {
     expect(destinations[1].selectedIcon, isNull);
     expect(icon(destinations[2].icon), Icons.book_outlined);
     expect(icon(destinations[2].selectedIcon), Icons.book);
-    expect(icon(destinations[3].icon), Icons.settings_outlined);
-    expect(icon(destinations[3].selectedIcon), Icons.settings);
+    expect(icon(destinations[3].icon), Icons.directions_subway_outlined);
+    expect(icon(destinations[3].selectedIcon), Icons.directions_subway);
+    expect(icon(destinations[4].icon), Icons.settings_outlined);
+    expect(icon(destinations[4].selectedIcon), Icons.settings);
   });
 
-  testWidgets('탭은 알람 · 걷기 · 일기 · 설정 순서', (tester) async {
+  testWidgets('탭은 알람 · 걷기 · 일기 · 통근 · 설정 순서', (tester) async {
     await pump(tester);
 
     final labels = [
@@ -263,11 +283,12 @@ void main() {
       ))
         d.label,
     ];
-    expect(labels, ['알람', '걷기', '일기', '설정']);
+    expect(labels, ['알람', '걷기', '일기', '통근', '설정']);
     expect(ShellTab.values, [
       ShellTab.alarm,
       ShellTab.walk,
       ShellTab.diary,
+      ShellTab.commute,
       ShellTab.settings,
     ]);
 
@@ -375,6 +396,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(onstage(SettingsPage), isTrue);
     expect(onstage(AlarmListPage), isFalse);
+
+    await tester.tap(find.byIcon(Icons.directions_subway_outlined));
+    await tester.pumpAndSettle();
+    expect(onstage(CommuteTab), isTrue);
+    expect(onstage(SettingsPage), isFalse);
   });
 
   testWidgets('복귀하면 다시 동기화한다', (tester) async {

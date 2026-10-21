@@ -5545,6 +5545,192 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'기록은 고쳤지만 공유한 글은 바꾸지 못했어요'**
   String get walkSocialUpdateFailed;
+
+  /// 하단 탭 — 통근
+  ///
+  /// In ko, this message translates to:
+  /// **'통근'**
+  String get walkShellTabCommute;
+
+  /// 통근 탭 방향 토글 — 집에서 회사로
+  ///
+  /// In ko, this message translates to:
+  /// **'출근'**
+  String get walkCommuteToWork;
+
+  /// 통근 탭 방향 토글 — 회사에서 집으로
+  ///
+  /// In ko, this message translates to:
+  /// **'퇴근'**
+  String get walkCommuteToHome;
+
+  /// 통근 탭 조회 버튼 — 누를 때만 경로 · 실시간 도착을 불러온다
+  ///
+  /// In ko, this message translates to:
+  /// **'조회'**
+  String get walkCommuteQuery;
+
+  /// 판단 배너 — 걸어서 첫 열차를 탈 수 있다
+  ///
+  /// In ko, this message translates to:
+  /// **'걸어가면 탈 수 있어요'**
+  String get walkCommuteVerdictCatchFirst;
+
+  /// 판단 배너 — 첫 열차는 놓치고 둘째 열차 기준으로 계산했다
+  ///
+  /// In ko, this message translates to:
+  /// **'걸어서는 이번 열차를 놓쳐요 — 다음 열차 기준'**
+  String get walkCommuteVerdictCatchSecond;
+
+  /// 판단 배너 — 걸어서는 앞 두 열차 모두 놓친다
+  ///
+  /// In ko, this message translates to:
+  /// **'걸어서는 두 열차 모두 어려워요'**
+  String get walkCommuteVerdictMissBoth;
+
+  /// 열차 도착까지 남은 분(실시간)
+  ///
+  /// In ko, this message translates to:
+  /// **'{minutes}분 후'**
+  String walkCommuteTrainMinutes(int minutes);
+
+  /// 열차 도착까지 남은 분 — 정거장 수로 추정한 값
+  ///
+  /// In ko, this message translates to:
+  /// **'약 {minutes}분 후'**
+  String walkCommuteTrainMinutesEstimated(int minutes);
+
+  /// 열차가 승차역에서 몇 정거장 앞에 있는지
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}번째 전역'**
+  String walkCommuteTrainStationsAway(int count);
+
+  /// 열차가 0분 뒤 — 곧 도착
+  ///
+  /// In ko, this message translates to:
+  /// **'곧 도착'**
+  String get walkCommuteTrainArriving;
+
+  /// 첫 승차역까지 걷는 시간
+  ///
+  /// In ko, this message translates to:
+  /// **'역까지 도보 {minutes}분'**
+  String walkCommuteWalkToStation(int minutes);
+
+  /// 첫 승차역 카드 제목 — 역 이름 · 노선 · 방면(예: 장승배기 · 7호선 장암 방면)
+  ///
+  /// In ko, this message translates to:
+  /// **'{station} · {line} {way}'**
+  String walkCommuteStationHeader(String station, String line, String way);
+
+  /// 목적지 도착 예상 시각
+  ///
+  /// In ko, this message translates to:
+  /// **'도착 예상 {time}'**
+  String walkCommuteEta(String time);
+
+  /// 도착 예상이 실시간 열차가 아니라 시간표 · 추정으로 계산됐다는 표시
+  ///
+  /// In ko, this message translates to:
+  /// **'(예상)'**
+  String get walkCommuteEtaEstimated;
+
+  /// 경로 총 시간과 환승 횟수
+  ///
+  /// In ko, this message translates to:
+  /// **'총 {minutes}분 · 환승 {count}회'**
+  String walkCommuteSummary(int minutes, int count);
+
+  /// 구간 줄 — 도보 구간(분)
+  ///
+  /// In ko, this message translates to:
+  /// **'도보 {minutes}'**
+  String walkCommuteLegWalk(int minutes);
+
+  /// 구간 줄 — 지하철 구간(노선 승차역→하차역 분)
+  ///
+  /// In ko, this message translates to:
+  /// **'{line} {from}→{to} {minutes}'**
+  String walkCommuteLegSubway(String line, String from, String to, int minutes);
+
+  /// 다른 경로 후보 개수 — 누르면 경로 후보 시트
+  ///
+  /// In ko, this message translates to:
+  /// **'다른 경로 {count}개'**
+  String walkCommuteAlternatives(int count);
+
+  /// 결과를 조회한 시각
+  ///
+  /// In ko, this message translates to:
+  /// **'{time} 조회'**
+  String walkCommuteQueriedAt(String time);
+
+  /// 조회 후 2분이 지나 결과가 오래됐다
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 조회하세요'**
+  String get walkCommuteStale;
+
+  /// 이 역 · 노선은 실시간 도착 정보를 지원하지 않는다
+  ///
+  /// In ko, this message translates to:
+  /// **'실시간 정보 없음'**
+  String get walkCommuteRealtimeUnavailable;
+
+  /// 실시간 도착 정보 요청이 실패했다
+  ///
+  /// In ko, this message translates to:
+  /// **'실시간을 불러오지 못했어요'**
+  String get walkCommuteRealtimeFailed;
+
+  /// 통근 탭 — 집 또는 회사가 정해지지 않았다
+  ///
+  /// In ko, this message translates to:
+  /// **'집과 회사를 먼저 정해 주세요'**
+  String get walkCommuteMissingPlaces;
+
+  /// 통근 탭 — 빌드에 API 키가 없다
+  ///
+  /// In ko, this message translates to:
+  /// **'API 키가 없어요 — config/commute_keys.json'**
+  String get walkCommuteMissingKey;
+
+  /// 통근 탭 — 네트워크 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'네트워크에 연결할 수 없어요'**
+  String get walkCommuteNetwork;
+
+  /// 통근 탭 — 경로 찾기 결과가 없다
+  ///
+  /// In ko, this message translates to:
+  /// **'이 구간의 지하철 경로가 없어요'**
+  String get walkCommuteNoRoute;
+
+  /// 통근 탭 — 경로 · 실시간 서버가 오류를 돌려줬다
+  ///
+  /// In ko, this message translates to:
+  /// **'서버 오류: {message}'**
+  String walkCommuteServer(String message);
+
+  /// 장소 줄 — 집
+  ///
+  /// In ko, this message translates to:
+  /// **'집'**
+  String get walkCommutePlaceHome;
+
+  /// 장소 줄 — 회사
+  ///
+  /// In ko, this message translates to:
+  /// **'회사'**
+  String get walkCommutePlaceWork;
+
+  /// 장소 줄 — 아직 정하지 않은 장소 자리. 누르면 장소 설정
+  ///
+  /// In ko, this message translates to:
+  /// **'정하기'**
+  String get walkCommutePlaceUnset;
 }
 
 class _AppLocalizationsDelegate

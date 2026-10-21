@@ -14,6 +14,9 @@ import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/alarm/widget/next_alarm_widget.dart';
+import 'package:walk/domain/commute/repository/address_search.dart';
+import 'package:walk/domain/commute/usecase/commute_use_case.dart';
+import 'package:walk/domain/diary/location/place_source.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
@@ -40,6 +43,12 @@ class _MockSettings extends Mock implements SettingsRepository {}
 class _MockDiaryRepo extends Mock implements DiaryRepository {}
 
 class _MockDiaryUseCase extends Mock implements DiaryUseCase {}
+
+class _MockCommute extends Mock implements CommuteUseCase {}
+
+class _MockPlaceSource extends Mock implements PlaceSource {}
+
+class _MockAddressSearch extends Mock implements AddressSearch {}
 
 class _NoHolidays implements HolidayRefresher, HolidayCalendar {
   @override
@@ -97,7 +106,11 @@ void main() {
         ..registerSingleton<DiaryPreferences>(PrefsDiaryPreferences(prefs))
         ..registerSingleton<LockRepository>(PrefsLockRepository(prefs))
         ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
-        ..registerSingleton<MediaPickGuard>(MediaPickGuard());
+        ..registerSingleton<MediaPickGuard>(MediaPickGuard())
+        // 통근 탭: 저장된 장소 없음.
+        ..registerSingleton<CommuteUseCase>(_MockCommute())
+        ..registerSingleton<PlaceSource>(_MockPlaceSource())
+        ..registerSingleton<AddressSearch>(_MockAddressSearch());
       getIt
         ..registerSingleton<AlarmUseCase>(alarms)
         ..registerSingleton<WalkUseCase>(walk)

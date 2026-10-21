@@ -3147,4 +3147,127 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkSocialUpdateFailed =>
       'Saved, but couldn\'t update the shared post';
+
+  @override
+  String get walkShellTabCommute => 'Commute';
+
+  @override
+  String get walkCommuteToWork => 'To work';
+
+  @override
+  String get walkCommuteToHome => 'To home';
+
+  @override
+  String get walkCommuteQuery => 'Check';
+
+  @override
+  String get walkCommuteVerdictCatchFirst => 'You can catch it walking';
+
+  @override
+  String get walkCommuteVerdictCatchSecond =>
+      'Walking, you\'ll miss this train — based on the next one';
+
+  @override
+  String get walkCommuteVerdictMissBoth => 'Walking, you\'ll miss both trains';
+
+  @override
+  String walkCommuteTrainMinutes(int minutes) {
+    return 'In $minutes min';
+  }
+
+  @override
+  String walkCommuteTrainMinutesEstimated(int minutes) {
+    return 'In about $minutes min';
+  }
+
+  @override
+  String walkCommuteTrainStationsAway(int count) {
+    return '$count stops away';
+  }
+
+  @override
+  String get walkCommuteTrainArriving => 'Arriving';
+
+  @override
+  String walkCommuteWalkToStation(int minutes) {
+    return '$minutes min walk to the station';
+  }
+
+  @override
+  String walkCommuteStationHeader(String station, String line, String way) {
+    return '$station · $line $way';
+  }
+
+  @override
+  String walkCommuteEta(String time) {
+    return 'Arrive around $time';
+  }
+
+  @override
+  String get walkCommuteEtaEstimated => '(est.)';
+
+  @override
+  String walkCommuteSummary(int minutes, int count) {
+    return '$minutes min total · $count transfers';
+  }
+
+  @override
+  String walkCommuteLegWalk(int minutes) {
+    return 'Walk $minutes';
+  }
+
+  @override
+  String walkCommuteLegSubway(
+    String line,
+    String from,
+    String to,
+    int minutes,
+  ) {
+    return '$line $from→$to $minutes';
+  }
+
+  @override
+  String walkCommuteAlternatives(int count) {
+    return '$count other routes';
+  }
+
+  @override
+  String walkCommuteQueriedAt(String time) {
+    return 'Checked at $time';
+  }
+
+  @override
+  String get walkCommuteStale => 'Check again';
+
+  @override
+  String get walkCommuteRealtimeUnavailable => 'No real-time info';
+
+  @override
+  String get walkCommuteRealtimeFailed => 'Couldn\'t load real-time info';
+
+  @override
+  String get walkCommuteMissingPlaces => 'Set your home and work first';
+
+  @override
+  String get walkCommuteMissingKey => 'No API key — config/commute_keys.json';
+
+  @override
+  String get walkCommuteNetwork => 'Can\'t connect to the network';
+
+  @override
+  String get walkCommuteNoRoute => 'No subway route for this trip';
+
+  @override
+  String walkCommuteServer(String message) {
+    return 'Server error: $message';
+  }
+
+  @override
+  String get walkCommutePlaceHome => 'Home';
+
+  @override
+  String get walkCommutePlaceWork => 'Work';
+
+  @override
+  String get walkCommutePlaceUnset => 'Set';
 }
