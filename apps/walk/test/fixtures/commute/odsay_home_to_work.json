@@ -1,0 +1,57 @@
+{
+  "result": {
+    "searchType": 0,
+    "path": [
+      {
+        "pathType": 1,
+        "info": {"totalTime": 41, "payment": 1650, "subwayTransitCount": 2},
+        "subPath": [
+          {"trafficType": 3, "distance": 420, "sectionTime": 6},
+          {
+            "trafficType": 1,
+            "distance": 9000,
+            "sectionTime": 16,
+            "stationCount": 8,
+            "lane": [{"name": "수도권 7호선", "subwayCode": 7}],
+            "way": "도봉산",
+            "wayCode": 1,
+            "startName": "장승배기",
+            "endName": "논현"
+          },
+          {"trafficType": 3, "distance": 200, "sectionTime": 3},
+          {
+            "trafficType": 1,
+            "distance": 1100,
+            "sectionTime": 2,
+            "stationCount": 1,
+            "lane": [{"name": "수도권 신분당선", "subwayCode": 109}],
+            "way": "강남",
+            "wayCode": 2,
+            "startName": "신논현역",
+            "endName": "강남"
+          },
+          {"trafficType": 3, "distance": 500, "sectionTime": 7}
+        ]
+      },
+      {
+        "pathType": 1,
+        "info": {"totalTime": 45, "payment": 1650, "subwayTransitCount": 1},
+        "subPath": [
+          {"trafficType": 3, "distance": 0, "sectionTime": 0},
+          {
+            "trafficType": 1,
+            "distance": 12000,
+            "sectionTime": 38,
+            "stationCount": 14,
+            "lane": [{"name": "수도권 7호선", "subwayCode": 7}],
+            "way": "도봉산",
+            "wayCode": 1,
+            "startName": "장승배기",
+            "endName": "학동"
+          },
+          {"trafficType": 3, "distance": 300, "sectionTime": 7}
+        ]
+      }
+    ]
+  }
+}
