@@ -12,7 +12,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/data/diary/prefs_diary_preferences.dart';
 import 'package:walk/data/lock/prefs_lock_repository.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
-import 'package:walk/domain/diary/entity/diary_view_mode.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/location/place_source.dart';
 import 'package:walk/domain/diary/media/media_store.dart';
@@ -26,17 +25,16 @@ import 'package:walk/domain/lock/lock_repository.dart';
 import 'package:walk/presentation/diary/page/all_stories_page.dart';
 import 'package:walk/presentation/diary/page/diary_search_page.dart';
 import 'package:walk/presentation/diary/page/diary_tab.dart';
-import 'package:walk/presentation/diary/page/entry_detail_page.dart';
 import 'package:walk/presentation/diary/page/entry_editor_page.dart';
-
+import 'package:walk/presentation/diary/page/story_form_sheet.dart';
+import 'package:walk/presentation/diary/page/story_page.dart';
 import 'package:walk/presentation/diary/page/trash_page.dart';
+import 'package:walk/presentation/diary/viewer/story_viewer_page.dart';
 import 'package:walk/presentation/diary/widget/entry_media_view.dart';
 import 'package:walk/presentation/diary/widget/feed_view.dart';
-import 'package:walk/presentation/diary/widget/prose_view.dart';
-import 'package:walk/presentation/diary/widget/reels_view.dart';
-import 'package:walk/presentation/diary/widget/story_avatar.dart';
-import 'package:walk/presentation/diary/widget/story_bar.dart';
-import 'package:walk/presentation/diary/widget/story_header.dart';
+import 'package:walk/presentation/diary/widget/story_ring.dart';
+import 'package:walk/presentation/diary/widget/story_ring_row.dart';
+import 'package:walk/presentation/diary/widget/view_mode_switch.dart';
 import 'package:walk/presentation/diary/media_picker.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
@@ -64,11 +62,15 @@ Story _story(String id, String title, {DateTime? lastPostedAt}) => Story(
   createdAt: diaryT0,
 );
 
-DiaryEntry _entry(String body, {String storyId = Story.dailyId}) => DiaryEntry(
+DiaryEntry _entry(
+  String body, {
+  String storyId = Story.dailyId,
+  DateTime? at,
+}) => DiaryEntry(
   id: body,
   storyId: storyId,
   body: body,
-  occurredAt: diaryT0,
+  occurredAt: at ?? diaryT0,
   createdAt: diaryT0,
   updatedAt: diaryT0,
   media: const [],
@@ -138,24 +140,45 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  List<String> barLabels(WidgetTester tester) {
-    final avatars =
-        tester.widgetList<StoryAvatar>(find.byType(StoryAvatar)).toList()..sort(
-          (a, b) => tester
-              .getTopLeft(find.byWidget(a))
-              .dx
-              .compareTo(tester.getTopLeft(find.byWidget(b)).dx),
-        );
-    return [for (final a in avatars) a.label];
+  /// 줄의 스토리 동그라미 이름, 왼쪽부터.
+  List<String> ringLabels(WidgetTester tester) {
+    final rings = tester.widgetList<StoryRing>(find.byType(StoryRing)).toList()
+      ..sort(
+        (a, b) => tester
+            .getTopLeft(find.byWidget(a))
+            .dx
+            .compareTo(tester.getTopLeft(find.byWidget(b)).dx),
+      );
+    return [for (final r in rings) r.story.id];
   }
 
-  testWidgets('잠긴 동안 타임라인 위젯이 트리에 없고, 풀면 스토리 바가 보인다', (tester) async {
+  Finder ring(String title) => find.widgetWithText(StoryRing, title);
+
+  /// 피드 카드 안의 글자(동그라미 줄도 피드 머리로 함께 스크롤해 FeedView 안에 있다).
+  Finder inFeed(String text) =>
+      find.descendant(of: find.byType(Card), matching: find.text(text));
+
+  Finder appBarMenu() => find.descendant(
+    of: find.byType(AppBar),
+    matching: find.byIcon(Icons.more_vert),
+  );
+
+  /// 뷰어가 열린 뒤 페이드가 끝날 만큼 흘린다(뷰어는 계속 돌아 pumpAndSettle 하지 않는다).
+  Future<void> settleViewer(WidgetTester tester) async {
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+  }
+
+  StoryViewerPage viewer(WidgetTester tester) =>
+      tester.widget<StoryViewerPage>(find.byType(StoryViewerPage));
+
+  testWidgets('잠긴 동안 타임라인 위젯 · ＋ 가 트리에 없고, 풀면 동그라미 줄이 보인다', (tester) async {
     await lockRepo.setSecret(LockMethod.pin, '1234');
     await lockRepo.saveConfig(const LockConfig(enabled: true));
     entries[const EntryFilter.all()] = [_entry('비밀 기록')];
     await pump(tester);
 
-    expect(find.byType(StoryBar, skipOffstage: false), findsNothing);
+    expect(find.byType(StoryRingRow, skipOffstage: false), findsNothing);
     expect(find.text('비밀 기록', skipOffstage: false), findsNothing);
     expect(find.byType(PinPad), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsNothing);
@@ -168,8 +191,9 @@ void main() {
     }
     await tester.pumpAndSettle();
 
-    expect(find.byType(StoryBar), findsOneWidget);
+    expect(find.byType(StoryRingRow), findsOneWidget);
     expect(find.text('비밀 기록'), findsOneWidget);
+    expect(find.byType(FloatingActionButton), findsOneWidget);
   });
 
   group('다시 잠기면(스펙 §7)', () {
@@ -197,11 +221,12 @@ void main() {
       ];
     });
 
-    testWidgets('보관함 시트가 닫혀 스토리 이름이 남지 않는다', (tester) async {
+    testWidgets('새 스토리 시트가 닫혀 스토리 이름이 남지 않는다', (tester) async {
       await pump(tester);
-      await tester.tap(find.text('보관함'));
-      await tester.pumpAndSettle();
       expect(find.text('부산 비밀 여행'), findsOneWidget);
+      await tester.tap(find.text('새 스토리'));
+      await tester.pumpAndSettle();
+      expect(find.byType(StoryFormSheet), findsOneWidget);
 
       await relock(tester);
 
@@ -227,9 +252,7 @@ void main() {
     });
   });
 
-  testWidgets('스토리 바: 전체 → 열린 스토리 lastPostedAt 순 → 보관함, 기본 스토리는 일상', (
-    tester,
-  ) async {
+  testWidgets('앱바 · 동그라미 줄 · 모든 스토리 기록 피드(최신순), 보기 모드 토글 없음', (tester) async {
     stories = [
       _story(Story.dailyId, '', lastPostedAt: diaryT0),
       _story(
@@ -246,184 +269,193 @@ void main() {
         createdAt: diaryT0,
       ),
     ];
+    entries[const EntryFilter.all()] = [
+      _entry('바다', storyId: 'jeju', at: diaryT0),
+      _entry('출근', at: diaryT0.subtract(const Duration(hours: 1))),
+    ];
     await pump(tester);
 
-    expect(barLabels(tester), ['전체', '제주 여행', '일상', '보관함']);
+    expect(
+      find.descendant(of: find.byType(AppBar), matching: find.text('일기')),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.search), findsOneWidget);
+    expect(appBarMenu(), findsOneWidget);
+    expect(ringLabels(tester), ['jeju', Story.dailyId, 'busan']);
+    expect(find.text('새 스토리'), findsOneWidget);
+    expect(find.text('모두 보기'), findsOneWidget);
+    expect(find.byType(FeedView), findsOneWidget);
+    expect(
+      tester.getTopLeft(inFeed('바다')).dy,
+      lessThan(tester.getTopLeft(inFeed('출근')).dy),
+    );
+    expect(find.byType(ViewModeSwitch), findsNothing);
+    expect(find.text('릴스'), findsNothing);
+    // 동그라미 줄이 피드 위에 있다.
+    expect(
+      tester.getBottomLeft(find.byType(StoryRingRow)).dy,
+      lessThanOrEqualTo(tester.getTopLeft(inFeed('바다')).dy),
+    );
   });
 
-  testWidgets('기록이 없으면 빈 상태 안내', (tester) async {
+  testWidgets('기록이 없으면 동그라미 줄 아래 빈 상태 안내', (tester) async {
     await pump(tester);
 
+    expect(find.byType(StoryRingRow), findsOneWidget);
     expect(find.widgetWithText(AppPlaceholder, '아직 기록이 없어요'), findsOneWidget);
   });
 
-  testWidgets('스토리를 누르면 그 스토리 기록으로 바뀐다', (tester) async {
-    stories = [_story(Story.dailyId, ''), _story('jeju', '제주 여행')];
-    entries[const EntryFilter.all()] = [_entry('출근'), _entry('바다')];
-    entries[const EntryFilter.story('jeju')] = [_entry('바다', storyId: 'jeju')];
-    await pump(tester);
-    expect(find.text('출근'), findsOneWidget);
-
-    await tester.tap(find.text('제주 여행'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('출근'), findsNothing);
-    expect(find.text('바다'), findsOneWidget);
-  });
-
-  Finder inHeader(String text) => find.descendant(
-    of: find.byType(StoryHeader),
-    matching: find.textContaining(text),
-  );
-
-  testWidgets('머리: 전체는 이름만, 스토리를 고르면 이름 · 기간', (tester) async {
-    stories = [
-      _story(Story.dailyId, ''),
-      _story('jeju', '제주 여행'),
-      Story(
-        id: 'busan',
-        title: '부산',
-        status: StoryStatus.closed,
-        startedAt: DateTime(2026, 10, 1),
-        endedAt: DateTime(2026, 10, 3),
-        createdAt: diaryT0,
-      ),
-    ];
-    await pump(tester);
-    expect(inHeader('전체'), findsOneWidget);
-    expect(inHeader('~'), findsNothing);
-
-    await tester.tap(find.text('제주 여행'));
-    await tester.pumpAndSettle();
-    expect(inHeader('제주 여행 · 10월 10일 ~ 진행 중'), findsOneWidget);
-
-    await tester.tap(find.text('보관함'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('부산'));
-    await tester.pumpAndSettle();
-    expect(inHeader('부산 · 10월 1일 ~ 10월 3일'), findsOneWidget);
-  });
-
-  testWidgets('보기 모드 토글로 줄글 · 피드 · 릴스를 바꾼다', (tester) async {
-    entries[const EntryFilter.all()] = [_entry('출근')];
-    await pump(tester);
-    expect(find.byType(ProseView), findsOneWidget);
-
-    await tester.tap(find.text('피드'));
-    await tester.pumpAndSettle();
-    expect(find.byType(FeedView), findsOneWidget);
-    expect(find.text('출근'), findsOneWidget);
-
-    await tester.tap(find.text('릴스'));
-    await tester.pumpAndSettle();
-    expect(find.byType(ReelsView), findsOneWidget);
-    expect(getIt<DiaryPreferences>().viewMode, DiaryViewMode.reels);
-  });
-
-  group('릴스', () {
-    setUp(() async {
-      await getIt<DiaryPreferences>().setViewMode(DiaryViewMode.reels);
+  group('뷰어 · 스토리 페이지', () {
+    setUp(() {
       final store = _MockStore();
       when(
         () => store.resolve(any()),
       ).thenAnswer((inv) => File('/fake/${inv.positionalArguments.single}'));
       getIt.registerSingleton<MediaStore>(store);
+      stories = [
+        _story(Story.dailyId, '', lastPostedAt: diaryT0),
+        _story(
+          'jeju',
+          '제주 여행',
+          lastPostedAt: diaryT0.subtract(const Duration(days: 1)),
+        ),
+        _story('busan', '부산 출장'),
+      ];
       entries[const EntryFilter.all()] = [
-        _entry('바다').copyWith(media: [photoMedia('p1')]),
+        _entry('출근', at: diaryT0),
+        _entry('어제 출근', at: diaryT0.subtract(const Duration(days: 1))),
+        _entry(
+          '바다',
+          storyId: 'jeju',
+          at: diaryT0.subtract(const Duration(days: 2)),
+        ),
       ];
     });
 
-    testWidgets('탭 몸통을 꽉 채우고, 스토리 바 · 앱바 대신 머리 · 토글을 위에 얹는다', (tester) async {
+    testWidgets('동그라미 탭 → 뷰어(그 스토리, 진행 중이면 마지막 날)', (tester) async {
       await pump(tester);
+      expect(ringLabels(tester), [Story.dailyId, 'jeju', 'busan']);
 
-      expect(find.byType(ReelsView), findsOneWidget);
-      expect(find.byType(StoryBar), findsNothing);
-      expect(find.byType(AppBar), findsNothing);
-      final body = tester.getRect(find.byType(DiaryTab));
-      expect(tester.getRect(find.byType(ReelsView)), body);
-      expect(inHeader('전체'), findsOneWidget);
+      await tester.tap(ring('일상'));
+      await settleViewer(tester);
+
       expect(
-        tester.getTopLeft(find.byType(StoryHeader)).dy,
-        lessThan(tester.getBottomLeft(find.byType(ReelsView)).dy),
+        viewer(tester).source,
+        const ViewerSource.stories([Story.dailyId, 'jeju', 'busan']),
       );
-
-      await tester.tap(find.text('줄글'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(ProseView), findsOneWidget);
-      expect(find.byType(StoryBar), findsOneWidget);
-      expect(find.byType(AppBar), findsOneWidget);
+      expect(viewer(tester).group, 0);
+      expect(viewer(tester).entryId, isNull);
+      final inViewer = find.byType(StoryViewerPage);
+      expect(
+        find.descendant(of: inViewer, matching: find.text('출근')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: inViewer, matching: find.text('어제 출근')),
+        findsNothing,
+      );
     });
 
-    testWidgets('탭이 가려지면 재생을 멈춘다', (tester) async {
+    testWidgets('두 번째 동그라미를 누르면 그 순번에서 시작한다', (tester) async {
       await pump(tester);
-      bool playing() =>
-          tester.widget<MediaPager>(find.byType(MediaPager)).playing;
-      expect(playing(), isTrue);
 
-      await tester.pumpWidget(app(active: false));
-      await tester.pumpAndSettle();
-      expect(playing(), isFalse);
+      await tester.tap(ring('제주 여행'));
+      await settleViewer(tester);
 
-      await tester.pumpWidget(app());
-      await tester.pumpAndSettle();
-      expect(playing(), isTrue);
+      expect(viewer(tester).group, 1);
     });
 
-    testWidgets('위에 화면이 얹히면 멈추고, 걷히면 다시 재생한다', (tester) async {
+    testWidgets('기록 없는 스토리 탭 → 스토리 페이지', (tester) async {
       await pump(tester);
-      bool playing() => tester
-          .widget<MediaPager>(find.byType(MediaPager, skipOffstage: false))
-          .playing;
-      expect(playing(), isTrue);
 
-      unawaited(
-        Navigator.of(
-          tester.element(find.byType(ReelsView)),
-        ).push(MaterialPageRoute<void>(builder: (_) => const Text('위 화면'))),
-      );
+      await tester.tap(ring('부산 출장'));
       await tester.pumpAndSettle();
-      expect(playing(), isFalse);
 
-      Navigator.of(tester.element(find.text('위 화면'))).pop();
-      await tester.pumpAndSettle();
-      expect(playing(), isTrue);
+      expect(find.byType(StoryViewerPage), findsNothing);
+      expect(tester.widget<StoryPage>(find.byType(StoryPage)).storyId, 'busan');
     });
 
-    testWidgets('위에 화면이 얹힌 채 다시 잠겼다 풀려도 재생하지 않고, 걷히면 재생한다(R29)', (
-      tester,
-    ) async {
+    testWidgets('동그라미 길게 누르기 → 스토리 페이지', (tester) async {
       await pump(tester);
-      bool playing() => tester
-          .widget<MediaPager>(find.byType(MediaPager, skipOffstage: false))
-          .playing;
-      expect(playing(), isTrue);
 
-      unawaited(
-        Navigator.of(
-          tester.element(find.byType(ReelsView)),
-        ).push(MaterialPageRoute<void>(builder: (_) => const Text('위 화면'))),
+      await tester.longPress(ring('제주 여행'));
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<StoryPage>(find.byType(StoryPage)).storyId, 'jeju');
+    });
+
+    testWidgets('모두 보기 → 모든 스토리', (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.text('모두 보기'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AllStoriesPage), findsOneWidget);
+    });
+
+    testWidgets('＋ 새 스토리 → 스토리 만들기 시트', (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.text('새 스토리'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(StoryFormSheet), findsOneWidget);
+    });
+
+    testWidgets('카드 탭 → 뷰어 그 기록', (tester) async {
+      await pump(tester);
+
+      await tester.tap(inFeed('어제 출근'));
+      await settleViewer(tester);
+
+      expect(
+        viewer(tester).source,
+        const ViewerSource.stories([Story.dailyId, 'jeju', 'busan']),
       );
-      await tester.pumpAndSettle();
-      expect(playing(), isFalse);
+      expect(viewer(tester).group, 0);
+      expect(viewer(tester).entryId, '어제 출근');
+    });
 
-      await lockRepo.setSecret(LockMethod.pin, '1234');
-      await lockRepo.saveConfig(const LockConfig(enabled: true));
-      final clock = getIt<Clock>() as MutableClock;
-      lock.onPaused();
-      clock.advance(const Duration(minutes: 5));
-      lock.onResumed();
-      await tester.pumpAndSettle();
-      expect(find.byType(ReelsView, skipOffstage: false), findsNothing);
+    testWidgets('다른 스토리의 카드 탭 → 그 스토리 순번에서', (tester) async {
+      await pump(tester);
 
-      await lock.submit('1234');
-      await tester.pumpAndSettle();
-      expect(find.byType(ReelsView, skipOffstage: false), findsOneWidget);
-      expect(playing(), isFalse);
+      await tester.scrollUntilVisible(
+        inFeed('바다'),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(inFeed('바다'));
+      await settleViewer(tester);
 
-      Navigator.of(tester.element(find.text('위 화면'))).pop();
+      expect(viewer(tester).group, 1);
+      expect(viewer(tester).entryId, '바다');
+    });
+
+    testWidgets('카드 머리 탭 → 스토리 페이지', (tester) async {
+      await pump(tester);
+
+      await tester.scrollUntilVisible(
+        inFeed('바다'),
+        300,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(inFeed('제주 여행'));
       await tester.pumpAndSettle();
-      expect(playing(), isTrue);
+
+      expect(tester.widget<StoryPage>(find.byType(StoryPage)).storyId, 'jeju');
+    });
+
+    testWidgets('피드 영상은 자동재생하지 않는다', (tester) async {
+      entries[const EntryFilter.all()] = [
+        _entry('바다').copyWith(media: [videoMedia('v1')]),
+      ];
+      await pump(tester);
+
+      expect(
+        tester.widget<MediaPager>(find.byType(MediaPager)).playing,
+        isFalse,
+      );
+      expect(find.byIcon(Icons.play_circle_outline), findsOneWidget);
     });
   });
 
@@ -459,26 +491,10 @@ void main() {
       expect(find.text('새 기록'), findsOneWidget);
     });
 
-    testWidgets('기록을 누르면 그 기록 상세(R18)', (tester) async {
-      final entry = _entry('출근');
-      entries[const EntryFilter.all()] = [entry];
-      when(() => repo.entry('출근')).thenAnswer((_) async => Ok(entry));
-      await pump(tester);
-
-      await tester.tap(find.text('출근'));
-      await tester.pumpAndSettle();
-
-      final detail = tester.widget<EntryDetailPage>(
-        find.byType(EntryDetailPage),
-      );
-      expect(detail.entryId, '출근');
-      expect(find.byType(EntryEditorPage), findsNothing);
-    });
-
     testWidgets('앱바 ⋮ → 모든 스토리', (tester) async {
       await pump(tester);
 
-      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.tap(appBarMenu());
       await tester.pumpAndSettle();
       await tester.tap(find.text('모든 스토리'));
       await tester.pumpAndSettle();
@@ -490,7 +506,7 @@ void main() {
       when(repo.watchTrash).thenAnswer((_) => Stream.value(const []));
       await pump(tester);
 
-      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.tap(appBarMenu());
       await tester.pumpAndSettle();
       await tester.tap(find.text('휴지통'));
       await tester.pumpAndSettle();
@@ -498,28 +514,7 @@ void main() {
       expect(find.byType(TrashPage), findsOneWidget);
     });
 
-    testWidgets('릴스에서도 🔍 · ⋮ 를 누를 수 있다(R25)', (tester) async {
-      when(repo.watchTrash).thenAnswer((_) => Stream.value(const []));
-      await getIt<DiaryPreferences>().setViewMode(DiaryViewMode.reels);
-      entries[const EntryFilter.all()] = [_entry('바다')];
-      await pump(tester);
-      expect(find.byType(AppBar), findsNothing);
-
-      await tester.tap(find.byIcon(Icons.more_vert));
-      await tester.pumpAndSettle();
-      expect(find.text('모든 스토리'), findsOneWidget);
-      await tester.tap(find.text('휴지통'));
-      await tester.pumpAndSettle();
-      expect(find.byType(TrashPage), findsOneWidget);
-
-      tester.state<NavigatorState>(find.byType(Navigator)).pop();
-      await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(Icons.search));
-      await tester.pumpAndSettle();
-      expect(find.byType(DiarySearchPage), findsOneWidget);
-    });
-
-    testWidgets('앱바 🔍 → 스토리 결과를 누르면 타임라인이 그 스토리를 고른다', (tester) async {
+    testWidgets('앱바 🔍 → 스토리 결과를 누르면 그 스토리 페이지', (tester) async {
       stories = [_story(Story.dailyId, ''), _story('jeju', '제주 여행')];
       entries[const EntryFilter.all()] = [_entry('출근')];
       entries[const EntryFilter.story('jeju')] = [
@@ -545,18 +540,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(DiarySearchPage), findsNothing);
-      expect(find.text('바다'), findsOneWidget);
-      expect(find.text('출근'), findsNothing);
-    });
-
-    testWidgets('릴스에서도 ＋ 가 있고 위의 머리 · 토글을 가리지 않는다', (tester) async {
-      await getIt<DiaryPreferences>().setViewMode(DiaryViewMode.reels);
-      entries[const EntryFilter.all()] = [_entry('바다')];
-      await pump(tester);
-
-      final fab = tester.getRect(find.byType(FloatingActionButton));
-      final header = tester.getRect(find.byType(StoryHeader));
-      expect(fab.overlaps(header), isFalse);
+      expect(tester.widget<StoryPage>(find.byType(StoryPage)).storyId, 'jeju');
     });
   });
 
@@ -633,10 +617,10 @@ void main() {
     await pump(tester);
 
     expect(tester.takeException(), isNull);
-    expect(find.byType(StoryBar), findsOneWidget);
+    expect(find.byType(StoryRingRow), findsOneWidget);
   });
 
-  testWidgets('스토리 바에 표지 사진을 보인다(R17)', (tester) async {
+  testWidgets('동그라미에 표지 사진을 보인다(R17)', (tester) async {
     final store = _MockStore();
     when(
       () => store.resolve(any()),
@@ -648,10 +632,10 @@ void main() {
     ];
     await pump(tester);
 
-    StoryAvatar avatar(String label) => tester.widget<StoryAvatar>(
-      find.byWidgetPredicate((w) => w is StoryAvatar && w.label == label),
+    StoryRing ringOf(String id) => tester.widget<StoryRing>(
+      find.byWidgetPredicate((w) => w is StoryRing && w.story.id == id),
     );
-    expect(avatar('제주 여행').image?.path, '/fake/media/v1.thumb.jpg');
-    expect(avatar('일상').image, isNull);
+    expect(ringOf('jeju').cover?.path, '/fake/media/v1.thumb.jpg');
+    expect(ringOf(Story.dailyId).cover, isNull);
   });
 }

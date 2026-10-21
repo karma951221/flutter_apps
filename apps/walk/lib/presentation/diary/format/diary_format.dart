@@ -54,6 +54,19 @@ abstract final class DiaryFormat {
     return time(context, at);
   }
 
+  /// 피드 카드의 상대 시각 — `지금`, `5분 전`, `2시간 전`, 하루가 넘거나 앞으로의 시각이면 [date].
+  static String relative(AppLocalizations l10n, DateTime at, DateTime now) {
+    final ago = now.difference(at);
+    if (ago.isNegative || ago >= const Duration(days: 1)) {
+      return date(l10n, at, now);
+    }
+    if (ago < nowWindow) return l10n.walkDiaryNow;
+    if (ago < const Duration(hours: 1)) {
+      return l10n.walkDiaryMinutesAgo(ago.inMinutes);
+    }
+    return l10n.walkDiaryHoursAgo(ago.inHours);
+  }
+
   /// 스토리 머리의 기간 — `10월 7일 ~ 진행 중`, `10월 7일 ~ 10월 9일`.
   static String storyPeriod(AppLocalizations l10n, Story story, DateTime now) {
     final end = story.endedAt;

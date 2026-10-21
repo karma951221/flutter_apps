@@ -3201,4 +3201,26 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkSocialUpdateFailed =>
       'Saved, but couldn\'t update the shared post';
+
+  @override
+  String walkDiaryMinutesAgo(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes minutes ago',
+      one: '1 minute ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkDiaryHoursAgo(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: '$hours hours ago',
+      one: '1 hour ago',
+    );
+    return '$_temp0';
+  }
 }

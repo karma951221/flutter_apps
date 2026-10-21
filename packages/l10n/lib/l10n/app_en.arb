@@ -938,5 +938,7 @@
   "walkSocialShareFailed": "Couldn't share the walk",
   "walkSocialLikeTooltip": "Like",
   "walkSocialUnshareOnDeleteFailed": "Deleted the walk, but couldn't stop sharing it",
-  "walkSocialUpdateFailed": "Saved, but couldn't update the shared post"
+  "walkSocialUpdateFailed": "Saved, but couldn't update the shared post",
+  "walkDiaryMinutesAgo": "{minutes, plural, =1{1 minute ago} other{{minutes} minutes ago}}",
+  "walkDiaryHoursAgo": "{hours, plural, =1{1 hour ago} other{{hours} hours ago}}"
 }

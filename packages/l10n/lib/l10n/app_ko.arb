@@ -4131,5 +4131,9 @@
   "walkSocialUnshareOnDeleteFailed": "산책은 지웠지만 공유를 취소하지 못했어요",
   "@walkSocialUnshareOnDeleteFailed": { "description": "공유한 산책을 지울 때 공유 취소가 실패한 스낵바(산책은 지워졌다)" },
   "walkSocialUpdateFailed": "기록은 고쳤지만 공유한 글은 바꾸지 못했어요",
-  "@walkSocialUpdateFailed": { "description": "산책을 고친 뒤 공유한 글 고치기가 실패한 스낵바(기록은 저장됐다)" }
+  "@walkSocialUpdateFailed": { "description": "산책을 고친 뒤 공유한 글 고치기가 실패한 스낵바(기록은 저장됐다)" },
+  "walkDiaryMinutesAgo": "{minutes}분 전",
+  "@walkDiaryMinutesAgo": { "description": "일기 피드 카드의 상대 시각(1시간 안)", "placeholders": { "minutes": { "type": "int" } } },
+  "walkDiaryHoursAgo": "{hours}시간 전",
+  "@walkDiaryHoursAgo": { "description": "일기 피드 카드의 상대 시각(하루 안)", "placeholders": { "hours": { "type": "int" } } }
 }

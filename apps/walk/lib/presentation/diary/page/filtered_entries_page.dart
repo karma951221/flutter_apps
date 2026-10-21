@@ -18,6 +18,7 @@ import '../widget/story_bar.dart';
 import '../widget/view_mode_switch.dart';
 import 'diary_route.dart';
 import 'entry_detail_page.dart';
+import 'story_page.dart';
 
 /// 태그 · 장소 모아보기를 연다. 일기 잠금에 묶인 화면([pushDiaryRoute])이라 다시 잠기면 가려진다.
 Future<void> openFilteredEntries(BuildContext context, EntryFilter filter) =>
@@ -163,7 +164,9 @@ class _Body extends StatelessWidget {
       storyTitles: {
         for (final s in state.stories) s.id: storyDisplayTitle(l10n, s),
       },
+      stories: {for (final s in state.stories) s.id: s},
       onOpen: (entry) => openEntryDetail(context, entry.id),
+      onOpenStory: (story) => openStoryPage(context, story.id),
     );
   }
 }

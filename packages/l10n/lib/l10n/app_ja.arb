@@ -938,5 +938,7 @@
   "walkSocialShareFailed": "共有できませんでした",
   "walkSocialLikeTooltip": "いいね",
   "walkSocialUnshareOnDeleteFailed": "散歩は削除しましたが、共有をやめられませんでした",
-  "walkSocialUpdateFailed": "記録は保存しましたが、共有した投稿は更新できませんでした"
+  "walkSocialUpdateFailed": "記録は保存しましたが、共有した投稿は更新できませんでした",
+  "walkDiaryMinutesAgo": "{minutes}分前",
+  "walkDiaryHoursAgo": "{hours}時間前"
 }

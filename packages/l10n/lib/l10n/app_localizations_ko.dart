@@ -2984,4 +2984,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkSocialUpdateFailed => '기록은 고쳤지만 공유한 글은 바꾸지 못했어요';
+
+  @override
+  String walkDiaryMinutesAgo(int minutes) {
+    return '$minutes분 전';
+  }
+
+  @override
+  String walkDiaryHoursAgo(int hours) {
+    return '$hours시간 전';
+  }
 }

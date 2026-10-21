@@ -2982,4 +2982,14 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkSocialUpdateFailed => '記録は保存しましたが、共有した投稿は更新できませんでした';
+
+  @override
+  String walkDiaryMinutesAgo(int minutes) {
+    return '$minutes分前';
+  }
+
+  @override
+  String walkDiaryHoursAgo(int hours) {
+    return '$hours時間前';
+  }
 }

@@ -27,11 +27,81 @@ import 'story_page.dart';
 Future<void> openAllStories(BuildContext context) =>
     pushDiaryRoute<void>(context, page: (_) => const AllStoriesPage());
 
+/// 스토리를 만든다(모든 스토리 앱바 ＋ · 일기 탭 동그라미 줄 `＋ 새 스토리`): 만들기 시트 →
+/// 만들기 → 오늘 전에 시작했으면 그 기간의 '일상' 기록을 골라 옮기도록 제안한다.
+/// 실패는 스낵바로 알린다.
+Future<void> createStory(BuildContext context) async {
+  final clock = getIt<Clock>();
+  final input = await StoryFormSheet.create(context, now: clock.now());
+  if (input == null || !context.mounted) return;
+  final cubit = StoryManageCubit(
+    getIt<DiaryRepository>(),
+    getIt<DiaryUseCase>(),
+    clock,
+  );
+  try {
+    await cubit.create(
+      title: input.title,
+      startedAt: input.startedAt,
+      endedAt: input.endedAt,
+    );
+    if (!context.mounted || _reportFailure(context, cubit.state)) return;
+    final created = cubit.state.created;
+    if (created == null) return;
+    await _suggestMove(context, cubit, created, clock.now());
+  } finally {
+    await cubit.close();
+  }
+}
+
+/// 마지막 동작이 실패했으면 오류 스낵바를 띄우고 true.
+bool _reportFailure(BuildContext context, StoryManageState state) {
+  final l10n = AppLocalizations.of(context);
+  final message = switch (state) {
+    StoryManageState(:final error?) => DiaryFormat.failure(l10n, error),
+    StoryManageState(actionFailed: true) => l10n.walkDiaryErrorSave,
+    _ => null,
+  };
+  if (message == null) return false;
+  AppSnackBar.show(context, message: message, type: AppSnackBarType.error);
+  return true;
+}
+
+/// 오늘 전에 시작한 스토리면 그 기간의 '일상' 기록을 골라 옮기게 한다.
+Future<void> _suggestMove(
+  BuildContext context,
+  StoryManageCubit cubit,
+  Story story,
+  DateTime now,
+) async {
+  if (!story.startedAt.isBefore(DateTime(now.year, now.month, now.day))) {
+    return;
+  }
+  final candidates = await cubit.dailyEntriesIn(
+    story.startedAt,
+    story.endedAt ?? now,
+  );
+  if (candidates.isEmpty || !context.mounted) return;
+  final ids = await showModalBottomSheet<List<String>>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (_) => _MoveSheet(entries: candidates, now: now),
+  );
+  if (ids == null || ids.isEmpty || !context.mounted) return;
+  await cubit.moveIn(ids, story.id);
+  if (!context.mounted || _reportFailure(context, cubit.state)) return;
+  AppSnackBar.show(
+    context,
+    message: AppLocalizations.of(context).walkDiaryStoryMoved(ids.length),
+    type: AppSnackBarType.success,
+  );
+}
+
 /// 모든 스토리(스펙 §3.4, 스토리 관리 목록을 대신한다): 앱바 ＋ 로 만들기, 구역
 /// **진행 중** · **지난 스토리**마다 2열 카드(정사각 표지 · 이름 · 기간 · 기록 n개).
 /// 카드를 누르면 스토리 페이지(§3.3)다 — 이름 · 표지 · 닫기 · 삭제는 거기서 한다.
-///
-/// 지난 기간으로 만들면 그 기간의 '일상' 기록을 골라 옮기도록 제안한다.
+/// 만들기는 [createStory].
 class AllStoriesPage extends StatefulWidget {
   const AllStoriesPage({super.key});
 
@@ -75,63 +145,6 @@ class _AllStoriesPageState extends State<AllStoriesPage> {
 
   DateTime get _now => getIt<Clock>().now();
 
-  /// 동작을 기다린 뒤 성공이면 true. 실패는 [_onState] 가 알린다.
-  bool get _succeeded =>
-      _cubit.state.error == null && !_cubit.state.actionFailed;
-
-  void _onState(BuildContext context, StoryManageState state) {
-    final l10n = AppLocalizations.of(context);
-    final message = switch (state) {
-      StoryManageState(:final error?) => DiaryFormat.failure(l10n, error),
-      StoryManageState(actionFailed: true) => l10n.walkDiaryErrorSave,
-      _ => null,
-    };
-    if (message != null) {
-      AppSnackBar.show(context, message: message, type: AppSnackBarType.error);
-    }
-  }
-
-  Future<void> _create() async {
-    final input = await StoryFormSheet.create(context, now: _now);
-    if (input == null || !mounted) return;
-    await _cubit.create(
-      title: input.title,
-      startedAt: input.startedAt,
-      endedAt: input.endedAt,
-    );
-    final created = _cubit.state.created;
-    if (created == null || !mounted) return;
-    await _suggestMove(created);
-  }
-
-  /// 오늘 전에 시작한 스토리면 그 기간의 '일상' 기록을 골라 옮기게 한다.
-  Future<void> _suggestMove(Story story) async {
-    final now = _now;
-    if (!story.startedAt.isBefore(DateTime(now.year, now.month, now.day))) {
-      return;
-    }
-    final candidates = await _cubit.dailyEntriesIn(
-      story.startedAt,
-      story.endedAt ?? now,
-    );
-    if (candidates.isEmpty || !mounted) return;
-    final ids = await showModalBottomSheet<List<String>>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (_) => _MoveSheet(entries: candidates, now: now),
-    );
-    if (ids == null || ids.isEmpty || !mounted) return;
-    await _cubit.moveIn(ids, story.id);
-    if (_succeeded && mounted) {
-      AppSnackBar.show(
-        context,
-        message: AppLocalizations.of(context).walkDiaryStoryMoved(ids.length),
-        type: AppSnackBarType.success,
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -147,15 +160,11 @@ class _AllStoriesPageState extends State<AllStoriesPage> {
             IconButton(
               icon: const Icon(Icons.add),
               tooltip: l10n.walkDiaryStoryNew,
-              onPressed: _create,
+              onPressed: () => createStory(context),
             ),
           ],
         ),
-        body: BlocConsumer<StoryManageCubit, StoryManageState>(
-          listenWhen: (a, b) =>
-              (a.error == null && b.error != null) ||
-              (!a.actionFailed && b.actionFailed),
-          listener: _onState,
+        body: BlocBuilder<StoryManageCubit, StoryManageState>(
           builder: (context, state) {
             if (state.failed) {
               return AppPlaceholder(

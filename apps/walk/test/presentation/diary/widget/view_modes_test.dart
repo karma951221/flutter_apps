@@ -340,7 +340,8 @@ void main() {
       ),
     ];
 
-    for (final mode in DiaryViewMode.values) {
+    // 피드 카드 머리는 feed_view_test 에서 본다.
+    for (final mode in [DiaryViewMode.prose, DiaryViewMode.reels]) {
       testWidgets('${mode.name}: 전체에서만 스토리 이름', (tester) async {
         await pump(tester, mode, trip, showStoryName: true);
         expect(find.textContaining('제주 여행'), findsOneWidget);
@@ -356,7 +357,9 @@ void main() {
         expect(find.widgetWithText(Chip, '#제주'), findsOneWidget);
         expect(find.widgetWithText(Chip, '#바다'), findsOneWidget);
       });
+    }
 
+    for (final mode in DiaryViewMode.values) {
       testWidgets('${mode.name}: 미디어 없는 기록', (tester) async {
         await pump(tester, mode, [_entry('a', body: '글만')]);
 
@@ -365,27 +368,6 @@ void main() {
         expect(find.textContaining('📍'), findsNothing);
       });
     }
-  });
-
-  testWidgets('피드: 1만 자 본문은 6줄로 접고 더 보기로 펼친다', (tester) async {
-    final long = List.filled(10000, '가').join();
-    await pump(tester, DiaryViewMode.feed, [_entry('a', body: long)]);
-
-    Text body() => tester.widget<Text>(find.text(long));
-    expect(body().maxLines, 6);
-    expect(find.text('더 보기'), findsOneWidget);
-
-    await tester.tap(find.text('더 보기'));
-    await tester.pumpAndSettle();
-
-    expect(body().maxLines, isNull);
-    expect(find.text('더 보기'), findsNothing);
-  });
-
-  testWidgets('피드: 짧은 본문엔 더 보기가 없다', (tester) async {
-    await pump(tester, DiaryViewMode.feed, [_entry('a', body: '짧은 글')]);
-
-    expect(find.text('더 보기'), findsNothing);
   });
 
   testWidgets('줄글: 1만 자 본문을 자르지 않는다', (tester) async {

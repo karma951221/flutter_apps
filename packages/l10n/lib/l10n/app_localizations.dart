@@ -5617,6 +5617,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'기록은 고쳤지만 공유한 글은 바꾸지 못했어요'**
   String get walkSocialUpdateFailed;
+
+  /// 일기 피드 카드의 상대 시각(1시간 안)
+  ///
+  /// In ko, this message translates to:
+  /// **'{minutes}분 전'**
+  String walkDiaryMinutesAgo(int minutes);
+
+  /// 일기 피드 카드의 상대 시각(하루 안)
+  ///
+  /// In ko, this message translates to:
+  /// **'{hours}시간 전'**
+  String walkDiaryHoursAgo(int hours);
 }
 
 class _AppLocalizationsDelegate

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/entity/diary_view_mode.dart';
+import '../../../domain/diary/entity/story.dart';
 import 'entry_media_view.dart';
 import 'feed_view.dart';
 import 'prose_view.dart';
@@ -16,6 +17,8 @@ class DiaryEntriesView extends StatelessWidget {
     required this.showStoryName,
     required this.storyTitles,
     required this.onOpen,
+    this.stories = const {},
+    this.onOpenStory,
     this.active = true,
     this.videoBuilder = videoSurface,
     super.key,
@@ -33,6 +36,12 @@ class DiaryEntriesView extends StatelessWidget {
   final Map<String, String> storyTitles;
 
   final ValueChanged<DiaryEntry> onOpen;
+
+  /// 스토리 id → 스토리. 피드 카드 머리(표지 원 · 이름)에 쓴다.
+  final Map<String, Story> stories;
+
+  /// 피드 카드 머리를 눌렀다.
+  final ValueChanged<Story>? onOpenStory;
 
   /// 이 보기가 화면에 보이는지. 셸의 `IndexedStack` 은 가려진 탭도 트리에 두고
   /// `video_player` 는 `TickerMode` 를 따르지 않으므로, false 면 릴스 영상을 멈춘다.
@@ -56,8 +65,9 @@ class DiaryEntriesView extends StatelessWidget {
       DiaryViewMode.feed => FeedView(
         entries: entries,
         now: now,
-        storyNameOf: storyNameOf,
+        stories: stories,
         onOpen: onOpen,
+        onOpenStory: onOpenStory,
       ),
       DiaryViewMode.reels => ReelsView(
         entries: entries,
