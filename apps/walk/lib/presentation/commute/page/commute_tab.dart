@@ -14,6 +14,8 @@ import '../../../domain/commute/entity/place.dart';
 import '../cubit/commute_cubit.dart';
 import '../cubit/commute_state.dart';
 import '../widget/arrival_card.dart';
+import '../widget/place_setup_sheet.dart';
+import '../widget/route_options_sheet.dart';
 import '../widget/place_row.dart';
 import '../widget/route_summary.dart';
 import '../widget/verdict_banner.dart';
@@ -29,7 +31,18 @@ class CommuteTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => CommuteCubit(getIt(), getIt(), getIt(), getIt<Clock>()),
-      child: CommuteView(active: active),
+      child: Builder(
+        builder: (context) => CommuteView(
+          active: active,
+          onEditPlace: (kind) => showPlaceSetupSheet(context, kind),
+          onShowRoutes: () {
+            final status = context.read<CommuteCubit>().state.status;
+            if (status is CommuteLoaded) {
+              showRouteOptionsSheet(context, status.result);
+            }
+          },
+        ),
+      ),
     );
   }
 }

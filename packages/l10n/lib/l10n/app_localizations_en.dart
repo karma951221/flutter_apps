@@ -3152,10 +3152,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkShellTabCommute => 'Commute';
 
   @override
-  String get walkCommuteToWork => 'To work';
+  String get walkCommuteToWork => 'Going to work';
 
   @override
-  String get walkCommuteToHome => 'To home';
+  String get walkCommuteToHome => 'Going home';
 
   @override
   String get walkCommuteQuery => 'Check';
@@ -3182,7 +3182,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkCommuteTrainStationsAway(int count) {
-    return '$count stops away';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count stops away',
+      one: '1 stop away',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -3208,7 +3214,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkCommuteSummary(int minutes, int count) {
-    return '$minutes min total · $count transfers';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transfers',
+      one: '1 transfer',
+    );
+    return '$minutes min total · $_temp0';
   }
 
   @override
@@ -3228,7 +3240,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkCommuteAlternatives(int count) {
-    return '$count other routes';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count other routes',
+      one: '1 other route',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -3270,4 +3288,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkCommutePlaceUnset => 'Set';
+
+  @override
+  String get walkCommutePlaceCurrent => 'Use current location';
+
+  @override
+  String get walkCommutePlaceSearchHint => 'Search address';
+
+  @override
+  String get walkCommutePlaceNoResults => 'No results';
+
+  @override
+  String get walkCommutePlaceLocateFailed => 'Couldn\'t get your location';
+
+  @override
+  String get walkCommuteRoutesTitle => 'Choose a route';
 }

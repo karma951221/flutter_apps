@@ -102,4 +102,20 @@ void main() {
     await _pump(tester, realtime: RealtimeStatus.failed);
     expect(find.text('실시간을 불러오지 못했어요'), findsOneWidget);
   });
+
+  testWidgets('실시간은 정상인데 열차가 없으면 실시간 정보 없음', (tester) async {
+    await _pump(tester);
+    expect(find.text('실시간 정보 없음'), findsOneWidget);
+  });
+
+  testWidgets('영어는 1일 때 단수형', (tester) async {
+    final en = lookupAppLocalizations(const Locale('en'));
+    expect(en.walkCommuteTrainStationsAway(1), '1 stop away');
+    expect(en.walkCommuteTrainStationsAway(3), '3 stops away');
+    expect(en.walkCommuteSummary(30, 1), '30 min total · 1 transfer');
+    expect(en.walkCommuteSummary(30, 2), '30 min total · 2 transfers');
+    expect(en.walkCommuteAlternatives(1), '1 other route');
+    expect(en.walkCommuteAlternatives(2), '2 other routes');
+    expect(en.walkCommuteToHome, 'Going home');
+  });
 }

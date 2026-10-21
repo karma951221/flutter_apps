@@ -4267,5 +4267,25 @@
   "walkCommutePlaceUnset": "정하기",
   "@walkCommutePlaceUnset": {
     "description": "장소 줄 — 아직 정하지 않은 장소 자리. 누르면 장소 설정"
+  },
+  "walkCommutePlaceCurrent": "현재 위치로",
+  "@walkCommutePlaceCurrent": {
+    "description": "장소 시트 — 현재 위치를 이 장소로 저장하는 버튼"
+  },
+  "walkCommutePlaceSearchHint": "주소 검색",
+  "@walkCommutePlaceSearchHint": {
+    "description": "장소 시트 — 주소 검색 입력칸 힌트"
+  },
+  "walkCommutePlaceNoResults": "검색 결과가 없어요",
+  "@walkCommutePlaceNoResults": {
+    "description": "장소 시트 — 주소 검색 결과가 0건"
+  },
+  "walkCommutePlaceLocateFailed": "위치를 가져오지 못했어요",
+  "@walkCommutePlaceLocateFailed": {
+    "description": "장소 시트 — 현재 위치를 얻지 못했다(스낵바)"
+  },
+  "walkCommuteRoutesTitle": "경로 선택",
+  "@walkCommuteRoutesTitle": {
+    "description": "경로 후보 시트 제목"
   }
 }

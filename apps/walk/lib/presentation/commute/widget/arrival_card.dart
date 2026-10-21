@@ -32,6 +32,8 @@ class ArrivalCard extends StatelessWidget {
       color: theme.colorScheme.onSurfaceVariant,
     );
     final notice = switch (realtime) {
+      RealtimeStatus.ok when arrivals.isEmpty =>
+        l10n.walkCommuteRealtimeUnavailable,
       RealtimeStatus.ok => null,
       RealtimeStatus.unavailable => l10n.walkCommuteRealtimeUnavailable,
       RealtimeStatus.failed => l10n.walkCommuteRealtimeFailed,

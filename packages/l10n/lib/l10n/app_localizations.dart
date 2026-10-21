@@ -5731,6 +5731,36 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'정하기'**
   String get walkCommutePlaceUnset;
+
+  /// 장소 시트 — 현재 위치를 이 장소로 저장하는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'현재 위치로'**
+  String get walkCommutePlaceCurrent;
+
+  /// 장소 시트 — 주소 검색 입력칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'주소 검색'**
+  String get walkCommutePlaceSearchHint;
+
+  /// 장소 시트 — 주소 검색 결과가 0건
+  ///
+  /// In ko, this message translates to:
+  /// **'검색 결과가 없어요'**
+  String get walkCommutePlaceNoResults;
+
+  /// 장소 시트 — 현재 위치를 얻지 못했다(스낵바)
+  ///
+  /// In ko, this message translates to:
+  /// **'위치를 가져오지 못했어요'**
+  String get walkCommutePlaceLocateFailed;
+
+  /// 경로 후보 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'경로 선택'**
+  String get walkCommuteRoutesTitle;
 }
 
 class _AppLocalizationsDelegate

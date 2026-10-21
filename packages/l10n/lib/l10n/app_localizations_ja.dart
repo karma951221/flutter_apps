@@ -3062,4 +3062,19 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkCommutePlaceUnset => '設定';
+
+  @override
+  String get walkCommutePlaceCurrent => '現在地を使う';
+
+  @override
+  String get walkCommutePlaceSearchHint => '住所を検索';
+
+  @override
+  String get walkCommutePlaceNoResults => '検索結果がありません';
+
+  @override
+  String get walkCommutePlaceLocateFailed => '位置を取得できませんでした';
+
+  @override
+  String get walkCommuteRoutesTitle => 'ルートを選ぶ';
 }

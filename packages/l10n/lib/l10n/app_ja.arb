@@ -957,5 +957,10 @@
   "walkCommuteServer": "サーバーエラー: {message}",
   "walkCommutePlaceHome": "自宅",
   "walkCommutePlaceWork": "会社",
-  "walkCommutePlaceUnset": "設定"
+  "walkCommutePlaceUnset": "設定",
+  "walkCommutePlaceCurrent": "現在地を使う",
+  "walkCommutePlaceSearchHint": "住所を検索",
+  "walkCommutePlaceNoResults": "検索結果がありません",
+  "walkCommutePlaceLocateFailed": "位置を取得できませんでした",
+  "walkCommuteRoutesTitle": "ルートを選ぶ"
 }

@@ -3064,4 +3064,19 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkCommutePlaceUnset => '정하기';
+
+  @override
+  String get walkCommutePlaceCurrent => '현재 위치로';
+
+  @override
+  String get walkCommutePlaceSearchHint => '주소 검색';
+
+  @override
+  String get walkCommutePlaceNoResults => '검색 결과가 없어요';
+
+  @override
+  String get walkCommutePlaceLocateFailed => '위치를 가져오지 못했어요';
+
+  @override
+  String get walkCommuteRoutesTitle => '경로 선택';
 }
