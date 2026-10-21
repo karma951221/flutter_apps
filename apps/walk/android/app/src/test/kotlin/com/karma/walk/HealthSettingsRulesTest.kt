@@ -5,12 +5,9 @@ import org.junit.Test
 
 class HealthSettingsRulesTest {
     @Test
-    fun `android 14 and later opens this app's page in the framework Health Connect`() {
+    fun `android 14 and later opens the framework Health Connect home that lists this app`() {
         assertEquals(
-            listOf(
-                HealthSettingsRules.Target("android.health.connect.action.MANAGE_HEALTH_PERMISSIONS", "com.karma.walk"),
-                HealthSettingsRules.Target("android.health.connect.action.HEALTH_HOME_SETTINGS", null),
-            ),
+            listOf(HealthSettingsRules.Target("android.health.connect.action.HEALTH_HOME_SETTINGS", null)),
             HealthSettingsRules.targets(sdkInt = 34, packageName = "com.karma.walk"),
         )
     }

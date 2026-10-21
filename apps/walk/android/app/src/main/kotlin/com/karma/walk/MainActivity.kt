@@ -61,6 +61,8 @@ class MainActivity : FlutterFragmentActivity() {
                         true
                     } catch (e: ActivityNotFoundException) {
                         false
+                    } catch (e: SecurityException) {
+                        false
                     }
                 }
                 if (opened) result.success(null) else result.error("unavailable", null, null)
