@@ -107,7 +107,7 @@ void main() {
     expect(
       find.descendant(
         of: tile('video'),
-        matching: find.byIcon(Icons.play_circle_outline),
+        matching: find.byIcon(Icons.play_arrow_rounded),
       ),
       findsOneWidget,
     );

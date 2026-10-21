@@ -8,6 +8,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../../domain/diary/entity/entry_media.dart';
 import '../../../domain/diary/media/media_store.dart';
+import '../../theme/walk_theme.dart';
 
 /// 기록의 사진 · 영상 한 장. 사진은 그릴 크기에 맞춰 줄여 읽고(`cacheWidth`),
 /// 영상은 썸네일 + 재생 표시만 그린다. 재생은 뷰어의 [VideoSurface] 가 한다.
@@ -43,12 +44,7 @@ class EntryMediaView extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         image,
-        Center(
-          child: Icon(
-            Icons.play_circle_outline,
-            color: Theme.of(context).colorScheme.onInverseSurface,
-          ),
-        ),
+        const Center(child: _PlayBadge()),
       ],
     );
   }
@@ -58,6 +54,31 @@ class EntryMediaView extends StatelessWidget {
     final width = constraints.maxWidth;
     if (!width.isFinite || width <= 0) return null;
     return (width * MediaQuery.devicePixelRatioOf(context)).round();
+  }
+}
+
+/// 영상 썸네일 위 재생 표시. 밝은 사진 위에서도 보이게 테마와 상관없이 어두운 원에 밝은 ▶ 를 그린다.
+class _PlayBadge extends StatelessWidget {
+  const _PlayBadge();
+
+  static const _scrimAlpha = 0.55;
+
+  @override
+  Widget build(BuildContext context) {
+    // 어두운 테마의 글자색이 늘 밝다 — 뷰어처럼 어두운 바탕 위 표시라 그 색을 쓴다.
+    final onDark = WalkTheme.dark().colorScheme.onSurface;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Theme.of(
+          context,
+        ).colorScheme.scrim.withValues(alpha: _scrimAlpha),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        child: Icon(Icons.play_arrow_rounded, color: onDark),
+      ),
+    );
   }
 }
 

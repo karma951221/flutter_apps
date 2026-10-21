@@ -451,7 +451,7 @@ void main() {
       ];
       await pump(tester);
 
-      expect(find.byIcon(Icons.play_circle_outline), findsOneWidget);
+      expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
     });
   });
 

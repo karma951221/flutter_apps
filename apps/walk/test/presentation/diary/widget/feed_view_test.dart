@@ -132,7 +132,7 @@ void main() {
       _entry('v', media: [videoMedia('v1')]),
     ]);
 
-    expect(find.byIcon(Icons.play_circle_outline), findsOneWidget);
+    expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
   });
 
   testWidgets('몸통 탭 → onOpen, 머리 탭 → onOpenStory, 태그 탭 → onTag', (
