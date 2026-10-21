@@ -249,6 +249,17 @@ void main() {
     expect(find.textContaining('기록 0 · 사진 0'), findsOneWidget);
   });
 
+  testWidgets('기록을 받기 전에는 기록 · 사진 수를 보이지 않는다', (tester) async {
+    when(
+      () => repo.watchEntries(any()),
+    ).thenAnswer((_) => StreamController<List<DiaryEntry>>().stream);
+    await open(tester, 'jeju');
+
+    expect(find.textContaining('10월 6일 ~ 진행 중'), findsOneWidget);
+    expect(find.textContaining('기록 0'), findsNothing);
+    expect(find.textContaining('사진 0'), findsNothing);
+  });
+
   testWidgets('일상은 닫기 · 삭제 없음', (tester) async {
     await open(tester, Story.dailyId);
 

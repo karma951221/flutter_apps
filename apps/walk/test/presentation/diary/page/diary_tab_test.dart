@@ -30,7 +30,6 @@ import 'package:walk/presentation/diary/page/story_form_sheet.dart';
 import 'package:walk/presentation/diary/page/story_page.dart';
 import 'package:walk/presentation/diary/page/trash_page.dart';
 import 'package:walk/presentation/diary/viewer/story_viewer_page.dart';
-import 'package:walk/presentation/diary/widget/entry_media_view.dart';
 import 'package:walk/presentation/diary/widget/feed_view.dart';
 import 'package:walk/presentation/diary/widget/story_ring.dart';
 import 'package:walk/presentation/diary/widget/story_ring_row.dart';
@@ -452,10 +451,6 @@ void main() {
       ];
       await pump(tester);
 
-      expect(
-        tester.widget<MediaPager>(find.byType(MediaPager)).playing,
-        isFalse,
-      );
       expect(find.byIcon(Icons.play_circle_outline), findsOneWidget);
     });
   });

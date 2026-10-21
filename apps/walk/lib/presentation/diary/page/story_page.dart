@@ -243,7 +243,7 @@ class _StoryPageState extends State<StoryPage> {
             builder: (context, covers) => _StoryHead(
               story: story,
               cover: coverFiles(covers)[story.id],
-              entries: entries,
+              entries: _entries,
               now: _now,
               onPlay: entries.isEmpty
                   ? null
@@ -299,7 +299,9 @@ class _StoryHead extends StatelessWidget {
 
   final Story story;
   final File? cover;
-  final List<DiaryEntry> entries;
+
+  /// 아직 받지 못했으면 null — 기록 · 사진 수는 보이지 않는다.
+  final List<DiaryEntry>? entries;
   final DateTime now;
   final VoidCallback? onPlay;
 
@@ -310,10 +312,17 @@ class _StoryHead extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final photos = entries
-        .expand((e) => e.media)
-        .where((m) => m.kind == MediaKind.photo)
-        .length;
+    final loaded = entries;
+    final period = DiaryFormat.storyPeriod(l10n, story, now);
+    final stats = loaded == null
+        ? null
+        : l10n.walkDiaryStoryStats(
+            loaded.length,
+            loaded
+                .expand((e) => e.media)
+                .where((m) => m.kind == MediaKind.photo)
+                .length,
+          );
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
@@ -325,8 +334,7 @@ class _StoryHead extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            '${DiaryFormat.storyPeriod(l10n, story, now)} · '
-            '${l10n.walkDiaryStoryStats(entries.length, photos)}',
+            stats == null ? period : '$period · $stats',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,

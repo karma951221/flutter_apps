@@ -123,7 +123,8 @@ class _AllStoriesPageState extends State<AllStoriesPage> {
   StreamSubscription<List<DiaryEntry>>? _entrySub;
 
   /// 스토리 id → 살아 있는 기록 수.
-  Map<String, int> _counts = const {};
+  /// 아직 받지 못했거나 읽기에 실패했으면 null — 기록 수는 보이지 않는다.
+  Map<String, int>? _counts;
 
   @override
   void initState() {
@@ -136,7 +137,7 @@ class _AllStoriesPageState extends State<AllStoriesPage> {
             counts[e.storyId] = (counts[e.storyId] ?? 0) + 1;
           }
           setState(() => _counts = counts);
-        }, onError: (Object _) {});
+        }, onError: (Object _) => setState(() => _counts = null));
   }
 
   @override
@@ -223,7 +224,7 @@ class _AllStoriesPageState extends State<AllStoriesPage> {
       key: ValueKey('story-card-${s.id}'),
       story: s,
       image: files[s.id],
-      count: _counts[s.id] ?? 0,
+      count: _counts == null ? null : (_counts![s.id] ?? 0),
       now: _now,
       onTap: () => openStoryPage(context, s.id),
     );
@@ -273,7 +274,7 @@ class _StoryCard extends StatelessWidget {
 
   final Story story;
   final File? image;
-  final int count;
+  final int? count;
   final DateTime now;
   final VoidCallback onTap;
 
@@ -333,7 +334,8 @@ class _StoryCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: caption,
           ),
-          Text(l10n.walkDiaryEntryCount(count), style: caption),
+          if (count != null)
+            Text(l10n.walkDiaryEntryCount(count!), style: caption),
         ],
       ),
     );

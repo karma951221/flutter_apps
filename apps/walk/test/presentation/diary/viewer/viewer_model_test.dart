@@ -109,19 +109,6 @@ void main() {
     final gs = [trip(open: false), empty('e'), trip(open: false)];
     expect(nextPos(gs, const ViewerPos(0, 1, 1)), const ViewerPos(2, 0, 0));
     expect(prevPos(gs, const ViewerPos(2, 0, 0)), const ViewerPos(0, 1, 1));
-    expect(
-      groupStep(gs, const ViewerPos(0, 0, 0), 1),
-      const ViewerPos(2, 0, 0),
-    );
-    expect(
-      groupStep(gs, const ViewerPos(2, 0, 0), -1),
-      const ViewerPos(0, 0, 0),
-    );
-    expect(groupStep(gs, const ViewerPos(2, 0, 0), 1), isNull);
-    expect(
-      groupStep([trip(), empty('e')], const ViewerPos(0, 0, 0), 1),
-      isNull,
-    );
   });
 
   test('dayNumber: 시작 10/6 이면 10/7 은 2, 일상 · 모아보기는 null', () {

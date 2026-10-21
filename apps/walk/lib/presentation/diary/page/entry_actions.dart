@@ -12,7 +12,7 @@ import '../widget/story_avatar.dart';
 import '../widget/story_picker_sheet.dart';
 import 'entry_editor_page.dart';
 
-/// 기록 ⋮ 메뉴의 동작(수정 · 스토리 옮기기 · 휴지통). 상세 · 스토리 뷰어 · 피드가 함께 쓴다.
+/// 기록 ⋮ 메뉴의 동작(수정 · 스토리 옮기기 · 휴지통). 스토리 뷰어 · 피드가 함께 쓴다.
 
 /// 그 기록의 고치기 화면을 열고, 닫히면 끝난다.
 Future<void> editEntry(BuildContext context, DiaryEntry entry) =>

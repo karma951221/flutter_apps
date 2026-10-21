@@ -2605,6 +2605,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryErrorSave => 'Couldn\'t save. Please try again';
 
   @override
+  String get walkDiaryStoryEndedNotSelectable =>
+      'That story has already ended, so you can\'t post a new entry to it';
+
+  @override
   String walkDiaryEditorTagSuggestion(String name, int count) {
     return '#$name $count';
   }

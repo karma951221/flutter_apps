@@ -132,7 +132,6 @@ void main() {
       _entry('v', media: [videoMedia('v1')]),
     ]);
 
-    expect(tester.widget<MediaPager>(find.byType(MediaPager)).playing, isFalse);
     expect(find.byIcon(Icons.play_circle_outline), findsOneWidget);
   });
 

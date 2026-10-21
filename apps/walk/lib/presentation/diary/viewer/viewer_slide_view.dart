@@ -41,7 +41,6 @@ typedef ViewerVideoBuilder =
 Widget viewerVideoSurface(BuildContext context, ViewerVideo video) =>
     VideoSurface(
       file: video.file,
-      loop: false,
       playing: video.playing,
       onReady: video.onReady,
       onEnded: video.onEnded,

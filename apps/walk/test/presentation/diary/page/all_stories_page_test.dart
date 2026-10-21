@@ -146,6 +146,17 @@ void main() {
 
   Finder card(String id) => find.byKey(ValueKey('story-card-$id'));
 
+  testWidgets('기록 수를 읽지 못하면 0개로 보이지 않고 수를 뺀다', (tester) async {
+    when(
+      () => repo.watchEntries(any()),
+    ).thenAnswer((_) => Stream.error(Exception('boom')));
+    await open(tester);
+
+    expect(card('jeju'), findsOneWidget);
+    expect(find.textContaining('기록 0개'), findsNothing);
+    expect(find.textContaining('기록 2개'), findsNothing);
+  });
+
   testWidgets('진행 중 · 지난 구역 카드, 탭 → 스토리 페이지', (tester) async {
     await open(tester);
 

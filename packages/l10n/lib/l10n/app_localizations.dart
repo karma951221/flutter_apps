@@ -4664,6 +4664,12 @@ abstract class AppLocalizations {
   /// **'저장하지 못했어요. 다시 시도해 주세요'**
   String get walkDiaryErrorSave;
 
+  /// 새 기록을 쓰다 만든 스토리의 기간이 이미 끝나 고를 수 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'끝난 스토리라 새 기록을 올릴 수 없어요'**
+  String get walkDiaryStoryEndedNotSelectable;
+
   /// 일기 작성 화면 태그 추천 — 태그 이름과 쓴 기록 수
   ///
   /// In ko, this message translates to:

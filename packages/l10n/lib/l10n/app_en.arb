@@ -760,6 +760,7 @@
   "walkDiaryErrorNotFound": "Couldn't find this entry",
   "walkDiaryErrorMediaProcessing": "Couldn't load the photo/video",
   "walkDiaryErrorSave": "Couldn't save. Please try again",
+  "walkDiaryStoryEndedNotSelectable": "That story has already ended, so you can't post a new entry to it",
   "walkDiaryEditorTagSuggestion": "#{name} {count}",
   "walkDiaryEditorPlaceSuggestion": "{name} {count}",
   "walkDiaryStoryNew": "New story",

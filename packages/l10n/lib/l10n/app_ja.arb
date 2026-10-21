@@ -760,6 +760,7 @@
   "walkDiaryErrorNotFound": "記録が見つかりません",
   "walkDiaryErrorMediaProcessing": "写真・動画を読み込めませんでした",
   "walkDiaryErrorSave": "保存できませんでした。もう一度お試しください",
+  "walkDiaryStoryEndedNotSelectable": "終了したストーリーには新しい記録を投稿できません",
   "walkDiaryEditorTagSuggestion": "#{name} {count}",
   "walkDiaryEditorPlaceSuggestion": "{name} {count}",
   "walkDiaryStoryNew": "新しいストーリー",

@@ -2457,6 +2457,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryErrorSave => '保存できませんでした。もう一度お試しください';
 
   @override
+  String get walkDiaryStoryEndedNotSelectable => '終了したストーリーには新しい記録を投稿できません';
+
+  @override
   String walkDiaryEditorTagSuggestion(String name, int count) {
     return '#$name $count';
   }

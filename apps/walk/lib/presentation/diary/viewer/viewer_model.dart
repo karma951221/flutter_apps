@@ -138,20 +138,6 @@ ViewerPos prevPos(List<ViewerGroup> g, ViewerPos p) {
   return p;
 }
 
-/// 가로 스와이프: [delta] 방향으로 날이 있는 가장 가까운 그룹의 시작 위치.
-/// 갈 곳이 없으면 null.
-ViewerPos? groupStep(List<ViewerGroup> g, ViewerPos p, int delta) {
-  if (delta == 0) return null;
-  final step = delta.sign;
-  var i = p.group + step * delta.abs();
-  // delta 가 1 이 아니어도 그 거리 이후 첫 비어 있지 않은 그룹을 찾는다.
-  for (; i >= 0 && i < g.length; i += step) {
-    final pos = startPos(g, i);
-    if (pos != null) return pos;
-  }
-  return null;
-}
-
 /// 스토리 시작일 기준 며칠째인지(1부터). 기본 스토리 · 모아보기는 null.
 int? dayNumber(ViewerGroup g, ViewerDay d) {
   final s = g.story;

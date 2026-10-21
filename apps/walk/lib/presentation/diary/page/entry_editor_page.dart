@@ -237,7 +237,15 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
   Future<void> _createStory() async {
     final created = await createStory(context, suggestMove: false);
     if (created == null || !mounted) return;
-    if (created.isOpen || _cubit.state.isEditing) _cubit.setStory(created.id);
+    if (created.isOpen || _cubit.state.isEditing) {
+      _cubit.setStory(created.id);
+      return;
+    }
+    AppSnackBar.show(
+      context,
+      message: AppLocalizations.of(context).walkDiaryStoryEndedNotSelectable,
+      type: AppSnackBarType.error,
+    );
   }
 
   void _onState(BuildContext context, EntryEditorState state) {

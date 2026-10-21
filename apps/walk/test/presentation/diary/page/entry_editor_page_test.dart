@@ -362,6 +362,50 @@ void main() {
     expect(selectedRings(tester), ['chuseok']);
   });
 
+  testWidgets('＋새 로 끝난 기간의 스토리를 만들면 못 고른다고 알린다', (tester) async {
+    final created = Story(
+      id: 'past',
+      title: '지난 여행',
+      status: StoryStatus.closed,
+      startedAt: diaryT0.subtract(const Duration(days: 10)),
+      endedAt: diaryT0.subtract(const Duration(days: 5)),
+      createdAt: diaryT0,
+    );
+    when(
+      () => repo.createStory(
+        title: any(named: 'title'),
+        startedAt: any(named: 'startedAt'),
+        endedAt: any(named: 'endedAt'),
+      ),
+    ).thenAnswer((_) async {
+      stories = [...stories, created];
+      storyUpdates.add(stories);
+      return Ok(created);
+    });
+    await pump(tester);
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(StoryRingRow),
+        matching: find.text('새 스토리'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.byType(TextField),
+      ),
+      '지난 여행',
+    );
+    await tester.pump();
+    await tester.tap(find.widgetWithText(AppButton, '만들기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('끝난 스토리라 새 기록을 올릴 수 없어요'), findsOneWidget);
+    expect(selectedRings(tester), isNot(contains('past')));
+  });
+
   testWidgets('올리면 스낵바 "제주 여행에 올렸어요"', (tester) async {
     when(
       () => useCase.save(any(), editingId: any(named: 'editingId')),

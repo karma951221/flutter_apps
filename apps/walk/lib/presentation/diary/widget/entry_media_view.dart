@@ -9,38 +9,22 @@ import 'package:video_player/video_player.dart';
 import '../../../domain/diary/entity/entry_media.dart';
 import '../../../domain/diary/media/media_store.dart';
 
-/// 재생 중인 영상 자리. 테스트는 `video_player` 대신 가짜 위젯을 넣는다.
-typedef VideoSurfaceBuilder = Widget Function(BuildContext context, File file);
-
-/// 기본 영상 자리 — [VideoSurface].
-Widget videoSurface(BuildContext context, File file) =>
-    VideoSurface(file: file);
-
 /// 기록의 사진 · 영상 한 장. 사진은 그릴 크기에 맞춰 줄여 읽고(`cacheWidth`),
-/// 영상은 [play] 일 때만 [videoBuilder] 로 재생하고 아니면 썸네일 + 재생 표시.
-///
-/// [play] 가 false 로 바뀌면 영상 자리가 트리에서 빠져 컨트롤러가 버려진다.
+/// 영상은 썸네일 + 재생 표시만 그린다. 재생은 뷰어의 [VideoSurface] 가 한다.
 class EntryMediaView extends StatelessWidget {
   const EntryMediaView({
     required this.media,
-    this.play = false,
     this.fit = BoxFit.cover,
-    this.videoBuilder = videoSurface,
     super.key,
   });
 
   final EntryMedia media;
-  final bool play;
   final BoxFit fit;
-  final VideoSurfaceBuilder videoBuilder;
 
   @override
   Widget build(BuildContext context) {
     final store = getIt<MediaStore>();
     final isVideo = media.kind == MediaKind.video;
-    if (isVideo && play) {
-      return videoBuilder(context, store.resolve(media.path));
-    }
     final imagePath = isVideo ? media.thumbPath : media.path;
     final image = imagePath == null
         ? const _Missing()
@@ -97,20 +81,11 @@ class _Missing extends StatelessWidget {
 }
 
 /// 한 기록의 미디어를 좌우로 넘긴다. 두 장 이상이면 `2/3` 처럼 순번을 보인다.
-/// [playing] 이면 지금 보이는 장의 영상만 재생한다.
 class MediaPager extends StatefulWidget {
-  const MediaPager({
-    required this.media,
-    this.playing = false,
-    this.fit = BoxFit.cover,
-    this.videoBuilder = videoSurface,
-    super.key,
-  });
+  const MediaPager({required this.media, this.fit = BoxFit.cover, super.key});
 
   final List<EntryMedia> media;
-  final bool playing;
   final BoxFit fit;
-  final VideoSurfaceBuilder videoBuilder;
 
   @override
   State<MediaPager> createState() => _MediaPagerState();
@@ -133,9 +108,7 @@ class _MediaPagerState extends State<MediaPager> {
           itemBuilder: (context, i) => EntryMediaView(
             key: ValueKey(media[i].id),
             media: media[i],
-            play: widget.playing && i == _index,
             fit: widget.fit,
-            videoBuilder: widget.videoBuilder,
           ),
         ),
         if (media.length > 1)
@@ -168,15 +141,14 @@ class _MediaPagerState extends State<MediaPager> {
   }
 }
 
-/// `video_player` 로 [file] 을 재생한다([loop] 면 반복). 트리에서 빠지면 컨트롤러를 버린다.
+/// `video_player` 로 [file] 을 한 번 재생한다. 트리에서 빠지면 컨트롤러를 버린다.
 ///
-/// [playing] 이 false 면 멈춰 둔다. 준비되면 [onReady] 로 길이를, 반복하지 않을 때 끝까지
+/// [playing] 이 false 면 멈춰 둔다. 준비되면 [onReady] 로 길이를, 끝까지
 /// 재생하면 [onEnded] 를 한 번 알린다. 열지 못하거나 길이를 모르면(0) [onFailed] 를 부르고
 /// 깨진 그림을 보인다.
 class VideoSurface extends StatefulWidget {
   const VideoSurface({
     required this.file,
-    this.loop = true,
     this.playing = true,
     this.onReady,
     this.onEnded,
@@ -185,7 +157,6 @@ class VideoSurface extends StatefulWidget {
   });
 
   final File file;
-  final bool loop;
   final bool playing;
   final ValueChanged<Duration>? onReady;
   final VoidCallback? onEnded;
@@ -210,7 +181,7 @@ class _VideoSurfaceState extends State<VideoSurface> {
   Future<void> _start() async {
     try {
       await _controller.initialize();
-      await _controller.setLooping(widget.loop);
+      await _controller.setLooping(false);
       if (widget.playing) await _controller.play();
     } on Object {
       if (!mounted) return;
@@ -231,10 +202,10 @@ class _VideoSurfaceState extends State<VideoSurface> {
     widget.onReady?.call(length);
   }
 
-  /// 반복하지 않을 때 끝까지 재생했으면 한 번 알린다.
+  /// 끝까지 재생했으면 한 번 알린다.
   void _watchEnd() {
     final value = _controller.value;
-    if (widget.loop || _ended) return;
+    if (_ended) return;
     final atEnd =
         !value.isPlaying &&
         value.duration > Duration.zero &&

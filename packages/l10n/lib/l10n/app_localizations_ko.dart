@@ -2460,6 +2460,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryErrorSave => '저장하지 못했어요. 다시 시도해 주세요';
 
   @override
+  String get walkDiaryStoryEndedNotSelectable => '끝난 스토리라 새 기록을 올릴 수 없어요';
+
+  @override
   String walkDiaryEditorTagSuggestion(String name, int count) {
     return '#$name $count';
   }
