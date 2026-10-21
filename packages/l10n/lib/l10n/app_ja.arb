@@ -510,6 +510,7 @@
   "walkDiaryAllStories": "すべてのストーリー",
   "walkDiaryPastStories": "過去のストーリー",
   "walkDiaryPlayFromStart": "最初から見る",
+  "walkDiaryPlay": "▶ 見る",
   "walkDiaryStoryStats": "記録 {entries} · 写真 {photos}",
   "walkDiaryArchive": "アーカイブ",
   "walkDiaryEmpty": "まだ記録がありません",

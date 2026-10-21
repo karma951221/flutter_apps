@@ -1721,6 +1721,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryPlayFromStart => 'Play from start';
 
   @override
+  String get walkDiaryPlay => '▶ Play';
+
+  @override
   String walkDiaryStoryStats(int entries, int photos) {
     String _temp0 = intl.Intl.pluralLogic(
       entries,

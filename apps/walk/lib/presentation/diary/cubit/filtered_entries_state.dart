@@ -1,7 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../domain/diary/entity/diary_entry.dart';
-import '../../../domain/diary/entity/diary_view_mode.dart';
 import '../../../domain/diary/entity/story.dart';
 
 part 'filtered_entries_state.freezed.dart';
@@ -17,9 +16,6 @@ class FilteredEntriesState with _$FilteredEntriesState {
   @override
   final List<Story> stories;
 
-  @override
-  final DiaryViewMode viewMode;
-
   /// 첫 기록 목록을 아직 받지 못했다.
   @override
   final bool loading;
@@ -31,7 +27,6 @@ class FilteredEntriesState with _$FilteredEntriesState {
   const FilteredEntriesState({
     this.entries = const [],
     this.stories = const [],
-    this.viewMode = DiaryViewMode.prose,
     this.loading = true,
     this.failed = false,
   });

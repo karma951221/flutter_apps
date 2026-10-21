@@ -1635,6 +1635,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryPlayFromStart => '처음부터 보기';
 
   @override
+  String get walkDiaryPlay => '▶ 보기';
+
+  @override
   String walkDiaryStoryStats(int entries, int photos) {
     return '기록 $entries · 사진 $photos';
   }

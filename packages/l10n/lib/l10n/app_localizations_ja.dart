@@ -1633,6 +1633,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryPlayFromStart => '最初から見る';
 
   @override
+  String get walkDiaryPlay => '▶ 見る';
+
+  @override
   String walkDiaryStoryStats(int entries, int photos) {
     return '記録 $entries · 写真 $photos';
   }

@@ -510,6 +510,7 @@
   "walkDiaryAllStories": "All stories",
   "walkDiaryPastStories": "Past stories",
   "walkDiaryPlayFromStart": "Play from start",
+  "walkDiaryPlay": "▶ Play",
   "walkDiaryStoryStats": "{entries, plural, =1{1 entry} other{{entries} entries}} · {photos, plural, =1{1 photo} other{{photos} photos}}",
   "walkDiaryArchive": "Archive",
   "walkDiaryEmpty": "No entries yet",

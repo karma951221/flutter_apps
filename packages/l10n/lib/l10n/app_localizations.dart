@@ -3164,6 +3164,12 @@ abstract class AppLocalizations {
   /// **'처음부터 보기'**
   String get walkDiaryPlayFromStart;
 
+  /// 태그 · 장소 모아보기 머리 — 모아보기 소스로 스토리 뷰어를 연다
+  ///
+  /// In ko, this message translates to:
+  /// **'▶ 보기'**
+  String get walkDiaryPlay;
+
   /// 스토리 페이지 머리의 기록 수 · 사진 수
   ///
   /// In ko, this message translates to:
