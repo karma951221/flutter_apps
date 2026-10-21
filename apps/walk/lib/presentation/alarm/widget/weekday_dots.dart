@@ -22,7 +22,8 @@ class WeekdayDots extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           for (final day in Weekday.values) ...[
-            if (day != Weekday.values.first) const SizedBox(width: AppSpacing.xs),
+            if (day != Weekday.values.first)
+              const SizedBox(width: AppSpacing.xs),
             DecoratedBox(
               key: ValueKey('weekday-dot-${day.name}'),
               decoration: BoxDecoration(

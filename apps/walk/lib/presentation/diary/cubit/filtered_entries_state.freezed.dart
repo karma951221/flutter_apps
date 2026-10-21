@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$FilteredEntriesState {
 
- List<DiaryEntry> get entries; List<Story> get stories; bool get loading; bool get failed;
+ List<DiaryEntry> get entries; bool get loading; bool get failed;
 /// Create a copy of FilteredEntriesState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $FilteredEntriesStateCopyWith<FilteredEntriesState> get copyWith => _$FilteredEn
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is FilteredEntriesState&&const DeepCollectionEquality().equals(other.entries, entries)&&const DeepCollectionEquality().equals(other.stories, stories)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.failed, failed) || other.failed == failed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FilteredEntriesState&&const DeepCollectionEquality().equals(other.entries, entries)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.failed, failed) || other.failed == failed));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(entries),const DeepCollectionEquality().hash(stories),loading,failed);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(entries),loading,failed);
 
 @override
 String toString() {
-  return 'FilteredEntriesState(entries: $entries, stories: $stories, loading: $loading, failed: $failed)';
+  return 'FilteredEntriesState(entries: $entries, loading: $loading, failed: $failed)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $FilteredEntriesStateCopyWith<$Res>  {
   factory $FilteredEntriesStateCopyWith(FilteredEntriesState value, $Res Function(FilteredEntriesState) _then) = _$FilteredEntriesStateCopyWithImpl;
 @useResult
 $Res call({
- List<DiaryEntry> entries, List<Story> stories, bool loading, bool failed
+ List<DiaryEntry> entries, bool loading, bool failed
 });
 
 
@@ -62,11 +62,10 @@ class _$FilteredEntriesStateCopyWithImpl<$Res>
 
 /// Create a copy of FilteredEntriesState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? entries = null,Object? stories = null,Object? loading = null,Object? failed = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? entries = null,Object? loading = null,Object? failed = null,}) {
   return _then(FilteredEntriesState(
 entries: null == entries ? _self.entries : entries // ignore: cast_nullable_to_non_nullable
-as List<DiaryEntry>,stories: null == stories ? _self.stories : stories // ignore: cast_nullable_to_non_nullable
-as List<Story>,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
+as List<DiaryEntry>,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
 as bool,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
 as bool,
   ));

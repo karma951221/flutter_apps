@@ -68,13 +68,19 @@ class _FakeScheduler implements AlarmScheduler {
   };
 
   @override
-  String signatureOf(Alarm alarm) => '${alarm.label}|${alarm.silentWhenRingerMuted}|${alarm.sound}';
+  String signatureOf(Alarm alarm) =>
+      '${alarm.label}|${alarm.silentWhenRingerMuted}|${alarm.sound}';
 
   @override
   Future<Set<int>> ringingIds() async => {...ringing};
 
   @override
-  Future<void> schedule(int packageId, DateTime at, Alarm alarm, {int snoozeCount = 0}) async {
+  Future<void> schedule(
+    int packageId,
+    DateTime at,
+    Alarm alarm, {
+    int snoozeCount = 0,
+  }) async {
     scheduleCalls.add(packageId);
     snoozeCounts[packageId] = snoozeCount;
     events.add('schedule');
@@ -85,7 +91,8 @@ class _FakeScheduler implements AlarmScheduler {
   }
 
   @override
-  Future<int> snoozeCountOf(int packageId) async => snoozeCounts[packageId] ?? 0;
+  Future<int> snoozeCountOf(int packageId) async =>
+      snoozeCounts[packageId] ?? 0;
 
   @override
   Future<void> cancel(int packageId) async {
@@ -146,10 +153,12 @@ class _Holidays implements HolidayCalendar {
   final Map<DateTime, String> days = {};
 
   @override
-  String? nameOf(DateTime date) => days[DateTime(date.year, date.month, date.day)];
+  String? nameOf(DateTime date) =>
+      days[DateTime(date.year, date.month, date.day)];
 
   @override
-  HolidaySource get source => const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
+  HolidaySource get source =>
+      const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
 }
 
 class _MemorySettings implements SettingsRepository {
@@ -243,9 +252,13 @@ void main() {
 
   group('save', () {
     test('새 알람은 최대+1 id 를 받고 켜진 채 저장된다', () async {
-      repository.alarms = [const Alarm(id: 4, hour: 6, minute: 0, enabled: false)];
+      repository.alarms = [
+        const Alarm(id: 4, hour: 6, minute: 0, enabled: false),
+      ];
 
-      final saved = await useCase.save(const Alarm(hour: 8, minute: 0, repeat: _everyDay, enabled: false));
+      final saved = await useCase.save(
+        const Alarm(hour: 8, minute: 0, repeat: _everyDay, enabled: false),
+      );
 
       expect(saved.id, 5);
       expect(saved.enabled, isTrue);
@@ -261,13 +274,17 @@ void main() {
       final saved = await useCase.save(const Alarm(hour: 7, minute: 0));
 
       expect(saved.oneShotAt, DateTime(2026, 9, 29, 7));
-      expect(scheduler.entries, {pid(1, DateTime(2026, 9, 29)): DateTime(2026, 9, 29, 7)});
+      expect(scheduler.entries, {
+        pid(1, DateTime(2026, 9, 29)): DateTime(2026, 9, 29, 7),
+      });
     });
 
     test('1회성에 미래 oneShotAt 이 넘어오면 초까지 그대로 쓰고 hour · minute 를 맞춘다', () async {
       final at = DateTime(2026, 9, 28, 13, 25, 30); // 정오 + 1시간 25분 30초
 
-      final saved = await useCase.save(Alarm(hour: 7, minute: 0, oneShotAt: at));
+      final saved = await useCase.save(
+        Alarm(hour: 7, minute: 0, oneShotAt: at),
+      );
 
       expect(saved.oneShotAt, at);
       expect((saved.hour, saved.minute), (13, 25));
@@ -285,14 +302,21 @@ void main() {
     });
 
     test('1회성 oneShotAt 이 지금과 같으면 지난 것으로 본다', () async {
-      final saved = await useCase.save(Alarm(hour: 12, minute: 0, oneShotAt: mondayNoon));
+      final saved = await useCase.save(
+        Alarm(hour: 12, minute: 0, oneShotAt: mondayNoon),
+      );
 
       expect(saved.oneShotAt, DateTime(2026, 9, 29, 12));
     });
 
     test('반복 알람은 넘어온 oneShotAt 을 버린다', () async {
       final saved = await useCase.save(
-        Alarm(hour: 7, minute: 0, repeat: _everyDay, oneShotAt: DateTime(2026, 9, 28, 13)),
+        Alarm(
+          hour: 7,
+          minute: 0,
+          repeat: _everyDay,
+          oneShotAt: DateTime(2026, 9, 28, 13),
+        ),
       );
 
       expect(saved.oneShotAt, isNull);
@@ -307,7 +331,9 @@ void main() {
     });
 
     test('수정하면 이 알람의 예전 회차를 지우고 새로 건다', () async {
-      final saved = await useCase.save(const Alarm(hour: 7, minute: 0, repeat: {Weekday.tue}));
+      final saved = await useCase.save(
+        const Alarm(hour: 7, minute: 0, repeat: {Weekday.tue}),
+      );
       final oldId = pid(saved.id, DateTime(2026, 9, 29));
       expect(scheduler.entries.keys, contains(oldId));
 
@@ -315,7 +341,10 @@ void main() {
 
       expect(scheduler.entries.keys, isNot(contains(oldId)));
       expect(scheduler.entries.values, contains(DateTime(2026, 9, 30, 7)));
-      expect(scheduler.alarms[pid(saved.id, DateTime(2026, 9, 30))]!.label, '회의');
+      expect(
+        scheduler.alarms[pid(saved.id, DateTime(2026, 9, 30))]!.label,
+        '회의',
+      );
       expect(repository.alarms, hasLength(1));
     });
   });
@@ -330,7 +359,9 @@ void main() {
   });
 
   test('delete 는 정의와 예약을 모두 지운다', () async {
-    final saved = await useCase.save(const Alarm(hour: 7, minute: 0, repeat: _everyDay));
+    final saved = await useCase.save(
+      const Alarm(hour: 7, minute: 0, repeat: _everyDay),
+    );
 
     await useCase.delete(saved.id);
 
@@ -359,8 +390,15 @@ void main() {
 
   group('sync', () {
     test('저장된 정의에 없는 예약은 취소하고 빠진 회차는 건다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: {Weekday.tue})];
-      scheduler.entries[pid(9, DateTime(2026, 9, 30))] = DateTime(2026, 9, 30, 7); // 지워진 알람
+      repository.alarms = [
+        const Alarm(id: 1, hour: 7, minute: 0, repeat: {Weekday.tue}),
+      ];
+      scheduler.entries[pid(9, DateTime(2026, 9, 30))] = DateTime(
+        2026,
+        9,
+        30,
+        7,
+      ); // 지워진 알람
 
       await useCase.sync();
 
@@ -371,7 +409,9 @@ void main() {
     });
 
     test('멱등이다 — 두 번째는 아무것도 바꾸지 않는다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay),
+      ];
       await useCase.sync();
       scheduler.scheduleCalls.clear();
 
@@ -382,7 +422,9 @@ void main() {
     });
 
     test('시각이 지난 1회성은 꺼진다', () async {
-      repository.alarms = [Alarm(id: 1, hour: 7, minute: 0, oneShotAt: DateTime(2026, 9, 28, 7))];
+      repository.alarms = [
+        Alarm(id: 1, hour: 7, minute: 0, oneShotAt: DateTime(2026, 9, 28, 7)),
+      ];
 
       await useCase.sync();
 
@@ -420,7 +462,9 @@ void main() {
     test('울리는 중인 회차는 건드리지 않고, 그 1회성도 울림이 끝날 때까지 켜 둔다', () async {
       final ringingAt = DateTime(2026, 9, 28, 11, 59);
       final ringingId = pid(1, ringingAt);
-      repository.alarms = [Alarm(id: 1, hour: 11, minute: 59, oneShotAt: ringingAt)];
+      repository.alarms = [
+        Alarm(id: 1, hour: 11, minute: 59, oneShotAt: ringingAt),
+      ];
       scheduler.entries[ringingId] = ringingAt;
       scheduler.ringing.add(ringingId);
       clock.current = DateTime(2026, 9, 28, 12, 30);
@@ -434,7 +478,9 @@ void main() {
     });
 
     test('스누즈된 회차는 원하는 목록에 없어도 남긴다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 11, minute: 58, repeat: _everyDay)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 11, minute: 58, repeat: _everyDay),
+      ];
       final todayId = pid(1, mondayNoon);
       // 11:58 에 울려 12:03 으로 스누즈됨
       scheduler.entries[todayId] = DateTime(2026, 9, 28, 12, 3);
@@ -446,7 +492,9 @@ void main() {
     });
 
     test('스누즈 간격보다 먼 원치 않는 회차는 취소한다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: {Weekday.tue})];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 7, minute: 0, repeat: {Weekday.tue}),
+      ];
       final staleId = pid(1, DateTime(2026, 9, 28));
       scheduler.entries[staleId] = DateTime(2026, 9, 28, 13);
 
@@ -472,7 +520,9 @@ void main() {
     });
 
     test('시각이 같아도 지문이 다르면 지금 설정으로 다시 건다', () async {
-      final changed = alarm.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.chime));
+      final changed = alarm.copyWith(
+        sound: const AlarmSound.bundled(BundledAlarmSounds.chime),
+      );
       repository.alarms = [changed];
       scheduler.entries[tuesdayId] = tuesdayAt;
       scheduler.signatures[tuesdayId] = scheduler.signatureOf(alarm);
@@ -512,7 +562,9 @@ void main() {
 
   group('울림 처리', () {
     test('snooze 는 같은 id 를 5분 뒤로 다시 걸고 sync 뒤에도 남는다', () async {
-      final saved = await useCase.save(const Alarm(hour: 12, minute: 0, repeat: _everyDay));
+      final saved = await useCase.save(
+        const Alarm(hour: 12, minute: 0, repeat: _everyDay),
+      );
       final firstAt = DateTime(2026, 9, 29, 12);
       final ringingId = pid(saved.id, firstAt);
       clock.current = firstAt;
@@ -520,7 +572,10 @@ void main() {
 
       await useCase.snooze(ringingId);
 
-      expect(scheduler.entries[ringingId], firstAt.add(const Duration(minutes: 5)));
+      expect(
+        scheduler.entries[ringingId],
+        firstAt.add(const Duration(minutes: 5)),
+      );
       expect(scheduler.ringing, isEmpty);
     });
 
@@ -557,7 +612,9 @@ void main() {
     });
 
     test('stop 도중 다시 읽어도 반복 알람은 켜진 채 다음 회차가 남는다', () async {
-      final saved = await useCase.save(const Alarm(hour: 13, minute: 0, repeat: _everyDay));
+      final saved = await useCase.save(
+        const Alarm(hour: 13, minute: 0, repeat: _everyDay),
+      );
       final at = DateTime(2026, 9, 29, 13);
       final ringingId = pid(saved.id, at);
       clock.current = at;
@@ -577,8 +634,12 @@ void main() {
     });
 
     test('findByPackageId 는 회차의 알람을 찾는다', () async {
-      final saved = await useCase.save(const Alarm(hour: 13, minute: 0, label: '약'));
-      final found = await useCase.findByPackageId(pid(saved.id, DateTime(2026, 9, 28)));
+      final saved = await useCase.save(
+        const Alarm(hour: 13, minute: 0, label: '약'),
+      );
+      final found = await useCase.findByPackageId(
+        pid(saved.id, DateTime(2026, 9, 28)),
+      );
       expect(found?.label, '약');
     });
   });
@@ -595,7 +656,9 @@ void main() {
     });
 
     test('스누즈된 회차를 포함한다 — 원래 규칙보다 이르면 그것이 다음 울림', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 11, minute: 58, repeat: _everyDay)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 11, minute: 58, repeat: _everyDay),
+      ];
       await useCase.sync();
       // 11:58 에 울려 12:03 으로 스누즈됨
       scheduler.entries[pid(1, mondayNoon)] = DateTime(2026, 9, 28, 12, 3);
@@ -604,7 +667,9 @@ void main() {
     });
 
     test('지금 이전(울리는 중 포함) 예약은 뺀다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 11, minute: 59, repeat: _everyDay)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 11, minute: 59, repeat: _everyDay),
+      ];
       await useCase.sync();
       final ringingId = pid(1, mondayNoon);
       scheduler.entries[ringingId] = DateTime(2026, 9, 28, 11, 59);
@@ -615,15 +680,28 @@ void main() {
 
     test('꺼진 알람은 예약이 남아 있어도 키가 없다', () async {
       repository.alarms = [
-        const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay, enabled: false),
+        const Alarm(
+          id: 1,
+          hour: 7,
+          minute: 0,
+          repeat: _everyDay,
+          enabled: false,
+        ),
       ];
-      scheduler.entries[pid(1, DateTime(2026, 9, 29))] = DateTime(2026, 9, 29, 7);
+      scheduler.entries[pid(1, DateTime(2026, 9, 29))] = DateTime(
+        2026,
+        9,
+        29,
+        7,
+      );
 
       expect(await useCase.nextRings(), isEmpty);
     });
 
     test('예약이 없으면(권한 문제 등) 켜진 알람도 키가 없다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay),
+      ];
 
       expect(await useCase.nextRings(), isEmpty);
     });
@@ -631,22 +709,36 @@ void main() {
 
   group('save · 예전 회차 정리', () {
     test('곧(5분 안) 울릴 예전 회차도 수정하면 지운다', () async {
-      final saved = await useCase.save(const Alarm(hour: 12, minute: 3, repeat: {Weekday.mon}));
+      final saved = await useCase.save(
+        const Alarm(hour: 12, minute: 3, repeat: {Weekday.mon}),
+      );
       final soonId = pid(saved.id, mondayNoon);
       expect(scheduler.entries[soonId], DateTime(2026, 9, 28, 12, 3));
 
       await useCase.save(saved.copyWith(minute: 30, repeat: {Weekday.tue}));
 
       expect(scheduler.entries.keys, isNot(contains(soonId)));
-      expect(scheduler.entries.values, isNot(contains(DateTime(2026, 9, 28, 12, 3))));
-      expect(scheduler.entries[pid(saved.id, DateTime(2026, 9, 29))], DateTime(2026, 9, 29, 12, 30));
+      expect(
+        scheduler.entries.values,
+        isNot(contains(DateTime(2026, 9, 28, 12, 3))),
+      );
+      expect(
+        scheduler.entries[pid(saved.id, DateTime(2026, 9, 29))],
+        DateTime(2026, 9, 29, 12, 30),
+      );
     });
 
     test('스누즈 중인 알람을 수정하면 스누즈 회차도 지운다', () async {
       const alarm = Alarm(id: 1, hour: 11, minute: 58, repeat: _everyDay);
       repository.alarms = [alarm];
       final snoozedId = pid(1, mondayNoon);
-      scheduler.entries[snoozedId] = DateTime(2026, 9, 28, 12, 3); // 11:58 → 12:03 스누즈
+      scheduler.entries[snoozedId] = DateTime(
+        2026,
+        9,
+        28,
+        12,
+        3,
+      ); // 11:58 → 12:03 스누즈
 
       await useCase.save(alarm.copyWith(hour: 7, minute: 0));
 
@@ -664,7 +756,9 @@ void main() {
 
     test('지운 알람의 id 가 울림 기록에 남아 있으면 다시 쓰지 않는다', () async {
       // 2 를 지웠다. 2 를 다시 주면 2 의 지난 기록이 새 알람의 라벨로 보인다.
-      repository.alarms = [const Alarm(id: 1, hour: 6, minute: 0, enabled: false)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 6, minute: 0, enabled: false),
+      ];
       ringLog.entries.add(rang(2));
 
       final saved = await useCase.save(Alarm.draft());
@@ -673,7 +767,9 @@ void main() {
     });
 
     test('울림 기록을 읽지 못하면 지금 알람의 최대+1', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 6, minute: 0, enabled: false)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 6, minute: 0, enabled: false),
+      ];
       ringLog
         ..entries.add(rang(2))
         ..failRead = true;
@@ -720,7 +816,8 @@ void main() {
 
     test('9999개가 모두 차면 StateError', () async {
       repository.alarms = [
-        for (var id = 1; id <= Alarm.maxId; id++) Alarm(id: id, hour: 6, minute: 0, enabled: false),
+        for (var id = 1; id <= Alarm.maxId; id++)
+          Alarm(id: id, hour: 6, minute: 0, enabled: false),
       ];
 
       await expectLater(useCase.save(Alarm.draft()), throwsStateError);
@@ -764,7 +861,13 @@ void main() {
 
     test('꺼진 알람의 울리는 회차를 snooze 하면 다시 걸지 않고 멈춘다', () async {
       repository.alarms = [
-        const Alarm(id: 1, hour: 11, minute: 59, repeat: _everyDay, enabled: false),
+        const Alarm(
+          id: 1,
+          hour: 11,
+          minute: 59,
+          repeat: _everyDay,
+          enabled: false,
+        ),
       ];
       final ringingId = pid(1, mondayNoon);
       scheduler.entries[ringingId] = DateTime(2026, 9, 28, 11, 59);
@@ -804,7 +907,13 @@ void main() {
 
     test('꺼진 알람의 곧 울릴 예약(5분 안)도 취소한다', () async {
       repository.alarms = [
-        const Alarm(id: 1, hour: 12, minute: 3, repeat: _everyDay, enabled: false),
+        const Alarm(
+          id: 1,
+          hour: 12,
+          minute: 3,
+          repeat: _everyDay,
+          enabled: false,
+        ),
       ];
       final soonId = pid(1, mondayNoon);
       scheduler.entries[soonId] = DateTime(2026, 9, 28, 12, 3);
@@ -815,28 +924,35 @@ void main() {
       expect(scheduler.entries, isEmpty);
     });
 
-    test('스누즈 보존 창 경계: now+5분은 남기고 넘으면 취소, now-1분(dueGrace)은 취소하고 그 안은 남긴다', () async {
-      final staleId = pid(1, mondayNoon);
-      final cases = {
-        DateTime(2026, 9, 28, 12, 5): true,
-        DateTime(2026, 9, 28, 12, 5, 1): false,
-        DateTime(2026, 9, 28, 11, 59): false,
-        DateTime(2026, 9, 28, 11, 59, 1): true,
-      };
-      for (final MapEntry(key: at, value: kept) in cases.entries) {
-        repository.alarms = [const Alarm(id: 1, hour: 11, minute: 58, repeat: _everyDay)];
-        scheduler.entries
-          ..clear()
-          ..[staleId] = at;
+    test(
+      '스누즈 보존 창 경계: now+5분은 남기고 넘으면 취소, now-1분(dueGrace)은 취소하고 그 안은 남긴다',
+      () async {
+        final staleId = pid(1, mondayNoon);
+        final cases = {
+          DateTime(2026, 9, 28, 12, 5): true,
+          DateTime(2026, 9, 28, 12, 5, 1): false,
+          DateTime(2026, 9, 28, 11, 59): false,
+          DateTime(2026, 9, 28, 11, 59, 1): true,
+        };
+        for (final MapEntry(key: at, value: kept) in cases.entries) {
+          repository.alarms = [
+            const Alarm(id: 1, hour: 11, minute: 58, repeat: _everyDay),
+          ];
+          scheduler.entries
+            ..clear()
+            ..[staleId] = at;
 
-        await useCase.sync();
+          await useCase.sync();
 
-        expect(scheduler.entries[staleId], kept ? at : isNull, reason: '$at');
-      }
-    });
+          expect(scheduler.entries[staleId], kept ? at : isNull, reason: '$at');
+        }
+      },
+    );
 
     test('같은 id 가 다른 시각으로 걸려 있으면 원하는 시각으로 다시 건다(시간대 변경)', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay),
+      ];
       final tomorrowId = pid(1, DateTime(2026, 9, 29));
       scheduler.entries[tomorrowId] = DateTime(2026, 9, 29, 8); // 한 시간 밀린 채 걸림
 
@@ -849,7 +965,9 @@ void main() {
     // 테스트 안에서 기기 시간대를 바꿀 수 없어 절대 시각으로 흉내 낸다 — 서울에서 걸어 둔
     // 내일 07:00(서울) 은 파리의 00:00 이다. 파리로 옮긴 뒤의 규칙은 파리 07:00 을 원한다.
     test('시간대가 바뀌면 옛 시간대의 절대 시각으로 걸린 회차를 같은 id 로 새 벽시계에 다시 건다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay),
+      ];
       final wanted = DateTime(2026, 9, 29, 7);
       final tomorrowId = pid(1, wanted);
       const seoulMinusParis = Duration(hours: 7);
@@ -863,7 +981,12 @@ void main() {
     });
 
     test('1회성 oneShotAt 은 오프셋 없이 저장돼 읽은 곳의 같은 벽시계 시각으로 걸린다', () async {
-      final json = Alarm(id: 1, hour: 7, minute: 0, oneShotAt: DateTime(2026, 9, 29, 7)).toJson();
+      final json = Alarm(
+        id: 1,
+        hour: 7,
+        minute: 0,
+        oneShotAt: DateTime(2026, 9, 29, 7),
+      ).toJson();
       expect(json['oneShotAt'], '2026-09-29T07:00:00.000');
       repository.alarms = [Alarm.fromJson(json)];
 
@@ -875,13 +998,18 @@ void main() {
     });
 
     test('timeZoneChanged 는 패키지 예약을 지금 시간대로 옮겨 건 뒤 sync 한다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay),
+      ];
 
       await useCase.timeZoneChanged();
 
       expect(scheduler.events.first, 'rearm');
       expect(scheduler.events.where((e) => e == 'rearm'), hasLength(1));
-      expect(scheduler.entries[pid(1, DateTime(2026, 9, 29))], DateTime(2026, 9, 29, 7));
+      expect(
+        scheduler.entries[pid(1, DateTime(2026, 9, 29))],
+        DateTime(2026, 9, 29, 7),
+      );
     });
 
     test('스누즈 · 울리는 회차가 있어도 두 번째 sync 는 아무것도 바꾸지 않는다', () async {
@@ -910,11 +1038,19 @@ void main() {
     });
 
     test('자정을 넘긴 스누즈 회차는 남기고, 오늘 회차는 다른 id 로 건다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 23, minute: 58, repeat: _everyDay)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 23, minute: 58, repeat: _everyDay),
+      ];
       clock.current = DateTime(2026, 9, 29, 0, 1);
       final yesterdayId = pid(1, DateTime(2026, 9, 28));
       final todayId = pid(1, DateTime(2026, 9, 29));
-      scheduler.entries[yesterdayId] = DateTime(2026, 9, 29, 0, 3); // 어제 23:58 → 00:03 스누즈
+      scheduler.entries[yesterdayId] = DateTime(
+        2026,
+        9,
+        29,
+        0,
+        3,
+      ); // 어제 23:58 → 00:03 스누즈
 
       await useCase.sync();
 
@@ -940,7 +1076,15 @@ void main() {
     }
 
     test('snooze 는 알람의 스누즈 간격 뒤로 다시 건다', () async {
-      await ring(const Alarm(id: 1, hour: 12, minute: 0, repeat: _everyDay, snoozeMinutes: 15));
+      await ring(
+        const Alarm(
+          id: 1,
+          hour: 12,
+          minute: 0,
+          repeat: _everyDay,
+          snoozeMinutes: 15,
+        ),
+      );
 
       await useCase.snooze(ringingId);
 
@@ -948,7 +1092,16 @@ void main() {
     });
 
     test('snooze 는 지금까지 센 횟수 + 1 을 넘긴다', () async {
-      await ring(const Alarm(id: 1, hour: 12, minute: 0, repeat: _everyDay, snoozeLimit: 3), count: 1);
+      await ring(
+        const Alarm(
+          id: 1,
+          hour: 12,
+          minute: 0,
+          repeat: _everyDay,
+          snoozeLimit: 3,
+        ),
+        count: 1,
+      );
 
       await useCase.snooze(ringingId);
 
@@ -956,7 +1109,16 @@ void main() {
     });
 
     test('한도를 다 쓴 회차는 snooze 해도 다시 걸지 않고 멈춘다', () async {
-      await ring(const Alarm(id: 1, hour: 12, minute: 0, repeat: _everyDay, snoozeLimit: 3), count: 3);
+      await ring(
+        const Alarm(
+          id: 1,
+          hour: 12,
+          minute: 0,
+          repeat: _everyDay,
+          snoozeLimit: 3,
+        ),
+        count: 3,
+      );
 
       await useCase.snooze(ringingId);
 
@@ -965,10 +1127,22 @@ void main() {
     });
 
     test('canSnooze — 무제한이면 true, 한도 전이면 true, 한도에 닿으면 false', () async {
-      await ring(const Alarm(id: 1, hour: 12, minute: 0, repeat: _everyDay), count: 50);
+      await ring(
+        const Alarm(id: 1, hour: 12, minute: 0, repeat: _everyDay),
+        count: 50,
+      );
       expect(await useCase.canSnooze(ringingId), isTrue);
 
-      await ring(const Alarm(id: 1, hour: 12, minute: 0, repeat: _everyDay, snoozeLimit: 3), count: 2);
+      await ring(
+        const Alarm(
+          id: 1,
+          hour: 12,
+          minute: 0,
+          repeat: _everyDay,
+          snoozeLimit: 3,
+        ),
+        count: 2,
+      );
       expect(await useCase.canSnooze(ringingId), isTrue);
 
       scheduler.snoozeCounts[ringingId] = 3;
@@ -976,7 +1150,15 @@ void main() {
     });
 
     test('canSnooze — 지워졌거나 꺼진 알람은 false', () async {
-      await ring(const Alarm(id: 1, hour: 12, minute: 0, repeat: _everyDay, enabled: false));
+      await ring(
+        const Alarm(
+          id: 1,
+          hour: 12,
+          minute: 0,
+          repeat: _everyDay,
+          enabled: false,
+        ),
+      );
       expect(await useCase.canSnooze(ringingId), isFalse);
 
       repository.alarms = [];
@@ -991,7 +1173,13 @@ void main() {
       };
       for (final MapEntry(key: at, value: kept) in cases.entries) {
         repository.alarms = [
-          const Alarm(id: 1, hour: 11, minute: 58, repeat: _everyDay, snoozeMinutes: 15),
+          const Alarm(
+            id: 1,
+            hour: 11,
+            minute: 58,
+            repeat: _everyDay,
+            snoozeMinutes: 15,
+          ),
         ];
         scheduler.entries
           ..clear()
@@ -1004,7 +1192,15 @@ void main() {
     });
 
     test('sync 가 새로 거는 회차는 스누즈 횟수 0 으로 건다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay, snoozeLimit: 3)];
+      repository.alarms = [
+        const Alarm(
+          id: 1,
+          hour: 7,
+          minute: 0,
+          repeat: _everyDay,
+          snoozeLimit: 3,
+        ),
+      ];
 
       await useCase.sync();
 
@@ -1032,7 +1228,9 @@ void main() {
     });
 
     test('skipNext 는 스누즈 보존 창 안의 곧 울릴 회차도 지운다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 12, minute: 3, repeat: _everyDay)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 12, minute: 3, repeat: _everyDay),
+      ];
       await useCase.sync();
       final soon = pid(1, mondayNoon);
       expect(scheduler.entries[soon], DateTime(2026, 9, 28, 12, 3));
@@ -1054,7 +1252,13 @@ void main() {
 
     test('skipNext 는 1회성 · 꺼진 알람을 바꾸지 않고, 없는 id 는 null', () async {
       final oneShot = Alarm(id: 1, hour: 7, minute: 0, oneShotAt: tuesday7);
-      const off = Alarm(id: 2, hour: 7, minute: 0, repeat: _everyDay, enabled: false);
+      const off = Alarm(
+        id: 2,
+        hour: 7,
+        minute: 0,
+        repeat: _everyDay,
+        enabled: false,
+      );
       repository.alarms = [oneShot, off];
 
       expect(await useCase.skipNext(1), oneShot);
@@ -1077,7 +1281,9 @@ void main() {
     });
 
     test('skipOccurrence — 반복이면 그 회차를 skippedAt 으로, 30분 안 회차도 지운다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 12, minute: 20, repeat: _everyDay)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 12, minute: 20, repeat: _everyDay),
+      ];
       await useCase.sync();
       final todayId = pid(1, mondayNoon);
       // 울리기 3분 전 — 스누즈 보존 창(5분) 안이라 sync 만으로는 지우지 않는다.
@@ -1189,12 +1395,16 @@ void main() {
     // 화 9-29 07:00 · 수 9-30 07:00 … (월 정오 기준)
     final tuesday7 = DateTime(2026, 9, 29, 7);
     final wednesday7 = DateTime(2026, 9, 30, 7);
-    int soonId(int alarmId, DateTime at) => reminderId(pid(alarmId, at), ReminderKind.soon);
-    int holidayId(int alarmId, DateTime at) => reminderId(pid(alarmId, at), ReminderKind.holiday);
+    int soonId(int alarmId, DateTime at) =>
+        reminderId(pid(alarmId, at), ReminderKind.soon);
+    int holidayId(int alarmId, DateTime at) =>
+        reminderId(pid(alarmId, at), ReminderKind.holiday);
     const weekdays = {Weekday.tue, Weekday.wed};
 
     test('remindBefore 알람은 회차마다 30분 전 미리 알림을 건다', () async {
-      await useCase.save(const Alarm(hour: 7, minute: 0, repeat: weekdays, remindBefore: true));
+      await useCase.save(
+        const Alarm(hour: 7, minute: 0, repeat: weekdays, remindBefore: true),
+      );
 
       expect(reminders.entries, {
         soonId(1, tuesday7): DateTime(2026, 9, 29, 6, 30),
@@ -1202,7 +1412,10 @@ void main() {
         soonId(1, DateTime(2026, 10, 6, 7)): DateTime(2026, 10, 6, 6, 30),
         soonId(1, DateTime(2026, 10, 7, 7)): DateTime(2026, 10, 7, 6, 30),
       });
-      expect(reminders.reminders[soonId(1, tuesday7)]!.packageId, pid(1, tuesday7));
+      expect(
+        reminders.reminders[soonId(1, tuesday7)]!.packageId,
+        pid(1, tuesday7),
+      );
     });
 
     test('remindBefore 가 꺼진 알람은 걸지 않는다', () async {
@@ -1211,7 +1424,15 @@ void main() {
     });
 
     test('멱등이다 — 같은 시각이면 다시 걸지 않는다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: weekdays, remindBefore: true)];
+      repository.alarms = [
+        const Alarm(
+          id: 1,
+          hour: 7,
+          minute: 0,
+          repeat: weekdays,
+          remindBefore: true,
+        ),
+      ];
       await useCase.sync();
       reminders.scheduleCalls.clear();
 
@@ -1233,7 +1454,12 @@ void main() {
 
     test('시각을 바꾸면 띄울 시각도 바꿔 건다', () async {
       final saved = await useCase.save(
-        const Alarm(hour: 7, minute: 0, repeat: {Weekday.tue}, remindBefore: true),
+        const Alarm(
+          hour: 7,
+          minute: 0,
+          repeat: {Weekday.tue},
+          remindBefore: true,
+        ),
       );
 
       await useCase.save(saved.copyWith(minute: 20));
@@ -1245,7 +1471,13 @@ void main() {
     });
 
     test('정의에 없는 미리 알림은 지운다', () async {
-      reminders.entries[soonId(9, tuesday7)] = DateTime(2026, 9, 29, 6, 30); // 지워진 알람
+      reminders.entries[soonId(9, tuesday7)] = DateTime(
+        2026,
+        9,
+        29,
+        6,
+        30,
+      ); // 지워진 알람
       reminders.ringAts[soonId(9, tuesday7)] = tuesday7;
 
       await useCase.sync();
@@ -1254,14 +1486,25 @@ void main() {
     });
 
     test('떠 있는(띄울 시각이 지난) 미리 알림은 다시 걸지도 지우지도 않는다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: weekdays, remindBefore: true)];
+      repository.alarms = [
+        const Alarm(
+          id: 1,
+          hour: 7,
+          minute: 0,
+          repeat: weekdays,
+          remindBefore: true,
+        ),
+      ];
       await useCase.sync();
       clock.current = DateTime(2026, 9, 29, 6, 40); // 화 6:30 미리 알림이 떠 있다
       reminders.scheduleCalls.clear();
 
       await useCase.sync();
 
-      expect(reminders.entries[soonId(1, tuesday7)], DateTime(2026, 9, 29, 6, 30));
+      expect(
+        reminders.entries[soonId(1, tuesday7)],
+        DateTime(2026, 9, 29, 6, 30),
+      );
       expect(reminders.scheduleCalls, isEmpty);
       expect(reminders.cancelCalls, isEmpty);
     });
@@ -1270,12 +1513,24 @@ void main() {
       final saved = await useCase.save(
         const Alarm(hour: 7, minute: 0, repeat: weekdays, remindBefore: true),
       );
-      clock.current = DateTime(2026, 9, 29, 6, 40); // 화 6:30 미리 알림("7:00")이 떠 있다
+      clock.current = DateTime(
+        2026,
+        9,
+        29,
+        6,
+        40,
+      ); // 화 6:30 미리 알림("7:00")이 떠 있다
 
       await useCase.save(saved.copyWith(hour: 8));
 
-      expect(reminders.entries[soonId(1, tuesday7)], DateTime(2026, 9, 29, 7, 30));
-      expect(reminders.reminders[soonId(1, tuesday7)]!.ringAt, DateTime(2026, 9, 29, 8));
+      expect(
+        reminders.entries[soonId(1, tuesday7)],
+        DateTime(2026, 9, 29, 7, 30),
+      );
+      expect(
+        reminders.reminders[soonId(1, tuesday7)]!.ringAt,
+        DateTime(2026, 9, 29, 8),
+      );
     });
 
     test('떠 있는 미리 알림은 새 시각이 리드 안이면 지운다(옛 시각을 보여 주지 않는다)', () async {
@@ -1291,7 +1546,15 @@ void main() {
     });
 
     test('떠 있는 미리 알림도 그 회차를 건너뛰면 지운다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: weekdays, remindBefore: true)];
+      repository.alarms = [
+        const Alarm(
+          id: 1,
+          hour: 7,
+          minute: 0,
+          repeat: weekdays,
+          remindBefore: true,
+        ),
+      ];
       await useCase.sync();
       clock.current = DateTime(2026, 9, 29, 6, 40);
 
@@ -1334,25 +1597,33 @@ void main() {
       test('24시간 전이 지났으면 지금 띄우고, 다음 sync 에서 다시 띄우지 않는다', () async {
         clock.current = DateTime(2026, 9, 29, 9);
         await useCase.save(const Alarm(hour: 7, minute: 0, repeat: weekdays));
-        expect(reminders.entries, {holidayId(1, wednesday7): DateTime(2026, 9, 29, 9)});
+        expect(reminders.entries, {
+          holidayId(1, wednesday7): DateTime(2026, 9, 29, 9),
+        });
 
         clock.current = DateTime(2026, 9, 29, 9, 5);
         reminders.scheduleCalls.clear();
         await useCase.sync();
 
         expect(reminders.scheduleCalls, isEmpty);
-        expect(reminders.entries, {holidayId(1, wednesday7): DateTime(2026, 9, 29, 9)});
+        expect(reminders.entries, {
+          holidayId(1, wednesday7): DateTime(2026, 9, 29, 9),
+        });
       });
 
       test('떠 있는 공휴일 알림도 울릴 시각이 바뀌면 새 문구로 다시 띄운다', () async {
         clock.current = DateTime(2026, 9, 29, 9);
-        final saved = await useCase.save(const Alarm(hour: 7, minute: 0, repeat: weekdays));
+        final saved = await useCase.save(
+          const Alarm(hour: 7, minute: 0, repeat: weekdays),
+        );
 
         clock.current = DateTime(2026, 9, 29, 10);
         await useCase.save(saved.copyWith(hour: 8));
 
         final wednesday8 = DateTime(2026, 9, 30, 8);
-        expect(reminders.entries, {holidayId(1, wednesday8): DateTime(2026, 9, 29, 10)});
+        expect(reminders.entries, {
+          holidayId(1, wednesday8): DateTime(2026, 9, 29, 10),
+        });
         expect(reminders.reminders.values.single.ringAt, wednesday8);
       });
 
@@ -1376,7 +1647,10 @@ void main() {
 
   group('쉬는 기간', () {
     // 월 9-28 정오 기준. 화 9-29 ~ 수 9-30 을 쉰다.
-    final pause = AlarmPause(from: DateTime(2026, 9, 29), until: DateTime(2026, 9, 30));
+    final pause = AlarmPause(
+      from: DateTime(2026, 9, 29),
+      until: DateTime(2026, 9, 30),
+    );
     final tuesday7 = DateTime(2026, 9, 29, 7);
     final wednesday7 = DateTime(2026, 9, 30, 7);
     final thursday7 = DateTime(2026, 10, 1, 7);
@@ -1397,7 +1671,9 @@ void main() {
     });
 
     test('1회성도 기간 안이면 예약하지 않고 켜 둔다', () async {
-      final saved = await useCase.save(Alarm(hour: 7, minute: 0, oneShotAt: tuesday7));
+      final saved = await useCase.save(
+        Alarm(hour: 7, minute: 0, oneShotAt: tuesday7),
+      );
 
       await useCase.setPause(pause);
 
@@ -1429,7 +1705,12 @@ void main() {
 
     test('기간 회차의 미리 알림도 지운다', () async {
       await useCase.save(
-        const Alarm(hour: 7, minute: 0, repeat: {Weekday.tue, Weekday.thu}, remindBefore: true),
+        const Alarm(
+          hour: 7,
+          minute: 0,
+          repeat: {Weekday.tue, Weekday.thu},
+          remindBefore: true,
+        ),
       );
       final soonTuesday = reminderId(pid(1, tuesday7), ReminderKind.soon);
       expect(reminders.entries, contains(soonTuesday));
@@ -1437,7 +1718,10 @@ void main() {
       await useCase.setPause(pause);
 
       expect(reminders.entries, isNot(contains(soonTuesday)));
-      expect(reminders.entries, contains(reminderId(pid(1, thursday7), ReminderKind.soon)));
+      expect(
+        reminders.entries,
+        contains(reminderId(pid(1, thursday7), ReminderKind.soon)),
+      );
     });
 
     test('setPause(null) 이면 기간 회차를 다시 건다', () async {
@@ -1452,7 +1736,9 @@ void main() {
     });
 
     test('sync 는 설정의 기간을 따른다(다른 엔진이 저장한 경우)', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay),
+      ];
       settings.value = AppSettings(pause: pause);
 
       await useCase.sync();
@@ -1464,7 +1750,10 @@ void main() {
     test('끝 날이 지난 기간은 sync 가 지운다', () async {
       settings.value = AppSettings(
         stepGoal: 8000,
-        pause: AlarmPause(from: DateTime(2026, 9, 26), until: DateTime(2026, 9, 27)),
+        pause: AlarmPause(
+          from: DateTime(2026, 9, 26),
+          until: DateTime(2026, 9, 27),
+        ),
       );
 
       await useCase.sync();
@@ -1473,7 +1762,10 @@ void main() {
     });
 
     test('끝 날이 오늘인 기간은 남긴다', () async {
-      final today = AlarmPause(from: DateTime(2026, 9, 28), until: DateTime(2026, 9, 28));
+      final today = AlarmPause(
+        from: DateTime(2026, 9, 28),
+        until: DateTime(2026, 9, 28),
+      );
       settings.value = AppSettings(pause: today);
 
       await useCase.sync();
@@ -1482,7 +1774,9 @@ void main() {
     });
 
     test('쉬는 중의 skipNext 는 기간 뒤 실제로 울릴 첫 회차를 건너뛴다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay)];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 7, minute: 0, repeat: _everyDay),
+      ];
       settings.value = AppSettings(pause: pause);
       await useCase.sync();
       expect(scheduler.entries[pid(1, thursday7)], thursday7);
@@ -1499,7 +1793,10 @@ void main() {
       expect(await useCase.pause(), pause);
 
       settings.value = AppSettings(
-        pause: AlarmPause(from: DateTime(2026, 9, 26), until: DateTime(2026, 9, 27)),
+        pause: AlarmPause(
+          from: DateTime(2026, 9, 26),
+          until: DateTime(2026, 9, 27),
+        ),
       );
       expect(await useCase.pause(), isNull);
     });
@@ -1551,7 +1848,13 @@ void main() {
     test('skipNext 가 바꾸지 않은 알람(1회성 · 꺼짐)은 기록하지 않는다', () async {
       repository.alarms = [
         Alarm(id: 1, hour: 7, minute: 0, oneShotAt: tuesday7),
-        const Alarm(id: 2, hour: 7, minute: 0, repeat: _everyDay, enabled: false),
+        const Alarm(
+          id: 2,
+          hour: 7,
+          minute: 0,
+          repeat: _everyDay,
+          enabled: false,
+        ),
       ];
 
       await useCase.skipNext(1);
@@ -1606,16 +1909,32 @@ void main() {
 
       clock.current = DateTime(2026, 9, 29, 7, 1);
       await useCase.sync();
-      expect(repository.alarms.single.skippedAt, isNull, reason: '기록이 실패해도 지난 건너뛰기는 지운다');
+      expect(
+        repository.alarms.single.skippedAt,
+        isNull,
+        reason: '기록이 실패해도 지난 건너뛰기는 지운다',
+      );
     });
   });
 
   group('홈 화면 위젯', () {
     test('sync 끝에 켜진 알람의 걸린 예약 중 지금 뒤의 것을 이른 순으로 (시각, 라벨) 보낸다', () async {
       repository.alarms = [
-        const Alarm(id: 1, hour: 7, minute: 0, repeat: {Weekday.tue}, label: '출근'),
+        const Alarm(
+          id: 1,
+          hour: 7,
+          minute: 0,
+          repeat: {Weekday.tue},
+          label: '출근',
+        ),
         Alarm(id: 2, hour: 13, minute: 0, oneShotAt: DateTime(2026, 9, 28, 13)),
-        const Alarm(id: 3, hour: 6, minute: 0, repeat: _everyDay, enabled: false),
+        const Alarm(
+          id: 3,
+          hour: 6,
+          minute: 0,
+          repeat: _everyDay,
+          enabled: false,
+        ),
       ];
       // 울리는 중인(지난) 회차는 빠진다.
       final ringingId = pid(4, mondayNoon);
@@ -1632,12 +1951,17 @@ void main() {
     });
 
     test('스누즈된 회차가 들어간다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 11, minute: 58, repeat: {Weekday.mon})];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 11, minute: 58, repeat: {Weekday.mon}),
+      ];
       scheduler.entries[pid(1, mondayNoon)] = DateTime(2026, 9, 28, 12, 3);
 
       await useCase.sync();
 
-      expect(widget.shown.last.first, (at: DateTime(2026, 9, 28, 12, 3), title: ''));
+      expect(widget.shown.last.first, (
+        at: DateTime(2026, 9, 28, 12, 3),
+        title: '',
+      ));
     });
 
     test('알람이 없으면 빈 목록을 보낸다', () async {
@@ -1663,15 +1987,24 @@ void main() {
     });
 
     test('바꾸는 동작(저장 · 쉬기)도 끝에 위젯을 갱신한다', () async {
-      await useCase.save(const Alarm(hour: 7, minute: 0, repeat: {Weekday.tue}));
-      expect(widget.shown.last.map((r) => r.at), [DateTime(2026, 9, 29, 7), DateTime(2026, 10, 6, 7)]);
+      await useCase.save(
+        const Alarm(hour: 7, minute: 0, repeat: {Weekday.tue}),
+      );
+      expect(widget.shown.last.map((r) => r.at), [
+        DateTime(2026, 9, 29, 7),
+        DateTime(2026, 10, 6, 7),
+      ]);
 
-      await useCase.setPause(AlarmPause(from: DateTime(2026, 9, 29), until: DateTime(2026, 9, 29)));
+      await useCase.setPause(
+        AlarmPause(from: DateTime(2026, 9, 29), until: DateTime(2026, 9, 29)),
+      );
       expect(widget.shown.last.map((r) => r.at), [DateTime(2026, 10, 6, 7)]);
     });
 
     test('위젯 실패는 삼킨다 — 예약은 그대로 걸린다', () async {
-      repository.alarms = [const Alarm(id: 1, hour: 7, minute: 0, repeat: {Weekday.tue})];
+      repository.alarms = [
+        const Alarm(id: 1, hour: 7, minute: 0, repeat: {Weekday.tue}),
+      ];
       widget.failShow = true;
 
       await useCase.sync();
@@ -1697,7 +2030,9 @@ void main() {
       await expectLater(useCase.save(Alarm.draft()), throwsStateError);
 
       expect(await useCase.list().timeout(const Duration(seconds: 1)), isEmpty);
-      final saved = await useCase.save(Alarm.draft()).timeout(const Duration(seconds: 1));
+      final saved = await useCase
+          .save(Alarm.draft())
+          .timeout(const Duration(seconds: 1));
       expect(saved.id, 1);
     });
   });

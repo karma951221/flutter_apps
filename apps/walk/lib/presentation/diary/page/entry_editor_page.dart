@@ -25,7 +25,6 @@ import '../widget/media_preview_pager.dart';
 import '../widget/media_source_sheet.dart';
 import '../widget/place_input.dart';
 import '../widget/story_avatar.dart';
-import '../widget/story_bar.dart';
 import '../widget/story_ring_row.dart';
 import '../widget/tag_chip_input.dart';
 import '../widget/time_row.dart';

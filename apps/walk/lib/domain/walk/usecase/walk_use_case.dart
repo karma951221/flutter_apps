@@ -53,7 +53,9 @@ class DefaultWalkUseCase implements WalkUseCase {
     final today = dateOnly(_clock.now());
     final result = await _repository.dailyActivities(today, today);
     return switch (result) {
-      Ok(value: final days) => Ok(days.isEmpty ? DailyActivity.empty(today) : days.first),
+      Ok(value: final days) => Ok(
+        days.isEmpty ? DailyActivity.empty(today) : days.first,
+      ),
       Err(:final failure) => Err(failure),
     };
   }

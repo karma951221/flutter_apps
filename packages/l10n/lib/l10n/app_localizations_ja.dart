@@ -1618,9 +1618,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryDailyStoryTitle => '日常';
 
   @override
-  String get walkDiaryAll => 'すべて';
-
-  @override
   String get walkDiarySeeAll => 'すべて見る';
 
   @override
@@ -1641,9 +1638,6 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get walkDiaryArchive => 'アーカイブ';
-
-  @override
   String get walkDiaryEmpty => 'まだ記録がありません';
 
   @override
@@ -1662,15 +1656,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String walkDiaryStoryPeriod(String start, String end) {
     return '$start〜$end';
   }
-
-  @override
-  String get walkDiaryViewProse => '文章';
-
-  @override
-  String get walkDiaryViewFeed => 'フィード';
-
-  @override
-  String get walkDiaryViewReels => 'リール';
 
   @override
   String get walkDiaryShowMore => 'もっと見る';
@@ -2480,9 +2465,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String walkDiaryEditorPlaceSuggestion(String name, int count) {
     return '$name $count';
   }
-
-  @override
-  String get walkDiaryMenuStories => 'ストーリー管理';
 
   @override
   String get walkDiaryStoryNew => '新しいストーリー';

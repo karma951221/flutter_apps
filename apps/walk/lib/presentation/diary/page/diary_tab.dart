@@ -145,22 +145,15 @@ class DiaryNewEntryButton extends StatelessWidget {
   }
 }
 
-/// 일기 탭 앱바 🔍(스펙 §6.4). 검색에서 스토리를 고르고 돌아오면 그 스토리 페이지를 연다.
+/// 일기 탭 앱바 🔍(스펙 §6.4). 검색 화면이 결과를 직접 연다.
 class _SearchAction extends StatelessWidget {
   const _SearchAction();
-
-  Future<void> _search(BuildContext context) async {
-    final storyId = await openDiarySearch(context);
-    if (storyId != null && context.mounted) {
-      await openStoryPage(context, storyId);
-    }
-  }
 
   @override
   Widget build(BuildContext context) => IconButton(
     icon: const Icon(Icons.search),
     tooltip: AppLocalizations.of(context).walkDiarySearch,
-    onPressed: () => unawaited(_search(context)),
+    onPressed: () => unawaited(openDiarySearch(context)),
   );
 }
 

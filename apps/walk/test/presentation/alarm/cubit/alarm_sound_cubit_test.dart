@@ -13,7 +13,10 @@ class _MockSoundSource extends Mock implements AlarmSoundSource {}
 void main() {
   const bell = (title: 'Bell', uri: 'content://media/1');
   const dawn = (title: 'Dawn', uri: 'content://media/2');
-  const copiedBell = AlarmSound.device(title: 'Bell', path: '/data/alarm_sounds/a.ogg');
+  const copiedBell = AlarmSound.device(
+    title: 'Bell',
+    path: '/data/alarm_sounds/a.ogg',
+  );
   late _MockSoundSource source;
 
   AlarmSoundCubit build([AlarmSound initial = const AlarmSound.system()]) =>
@@ -26,7 +29,9 @@ void main() {
   setUp(() {
     source = _MockSoundSource();
     when(() => source.deviceRingtones()).thenAnswer((_) async => [bell, dawn]);
-    when(() => source.preview(any(), uri: any(named: 'uri'))).thenAnswer((_) async {});
+    when(
+      () => source.preview(any(), uri: any(named: 'uri')),
+    ).thenAnswer((_) async {});
     when(() => source.stopPreview()).thenAnswer((_) async {});
   });
 
@@ -34,10 +39,15 @@ void main() {
     test('시스템 · 내장 · 기기', () {
       expect(build().state.selected, const AlarmSoundChoice.system());
       expect(
-        build(const AlarmSound.bundled(BundledAlarmSounds.chime)).state.selected,
+        build(
+          const AlarmSound.bundled(BundledAlarmSounds.chime),
+        ).state.selected,
         const AlarmSoundChoice.bundled(BundledAlarmSounds.chime),
       );
-      expect(build(copiedBell).state.selected, const AlarmSoundChoice.current(copiedBell));
+      expect(
+        build(copiedBell).state.selected,
+        const AlarmSoundChoice.current(copiedBell),
+      );
       expect(build().state.ringtones, const DeviceRingtones.loading());
       expect(build().state.importing, isFalse);
     });
@@ -56,11 +66,14 @@ void main() {
 
     blocTest<AlarmSoundCubit, AlarmSoundState>(
       '목록에 같은 제목이 없으면(원본 삭제) 현재 값 그대로',
-      build: () => build(const AlarmSound.device(title: 'Gone', path: '/x.ogg')),
+      build: () =>
+          build(const AlarmSound.device(title: 'Gone', path: '/x.ogg')),
       act: (cubit) => cubit.load(),
       expect: () => [
         const AlarmSoundState(
-          selected: AlarmSoundChoice.current(AlarmSound.device(title: 'Gone', path: '/x.ogg')),
+          selected: AlarmSoundChoice.current(
+            AlarmSound.device(title: 'Gone', path: '/x.ogg'),
+          ),
           ringtones: DeviceRingtones.loaded([bell, dawn]),
         ),
       ],
@@ -87,7 +100,9 @@ void main() {
   blocTest<AlarmSoundCubit, AlarmSoundState>(
     '기기 목록 읽기 실패 → failure',
     build: () {
-      when(() => source.deviceRingtones()).thenThrow(const AlarmSoundException('list'));
+      when(
+        () => source.deviceRingtones(),
+      ).thenThrow(const AlarmSoundException('list'));
       return build();
     },
     act: (cubit) => cubit.load(),
@@ -103,12 +118,17 @@ void main() {
     blocTest<AlarmSoundCubit, AlarmSoundState>(
       '내장음 → 에셋 미리 듣기',
       build: build,
-      act: (cubit) => cubit.select(const AlarmSoundChoice.bundled(BundledAlarmSounds.rising)),
+      act: (cubit) => cubit.select(
+        const AlarmSoundChoice.bundled(BundledAlarmSounds.rising),
+      ),
       expect: () => [
-        const AlarmSoundState(selected: AlarmSoundChoice.bundled(BundledAlarmSounds.rising)),
+        const AlarmSoundState(
+          selected: AlarmSoundChoice.bundled(BundledAlarmSounds.rising),
+        ),
       ],
       verify: (_) => verify(
-        () => source.preview(const AlarmSound.bundled(BundledAlarmSounds.rising)),
+        () =>
+            source.preview(const AlarmSound.bundled(BundledAlarmSounds.rising)),
       ).called(1),
     );
 
@@ -116,16 +136,22 @@ void main() {
       '시스템 기본 → 시스템 미리 듣기',
       build: () => build(const AlarmSound.bundled(BundledAlarmSounds.beep)),
       act: (cubit) => cubit.select(const AlarmSoundChoice.system()),
-      expect: () => [const AlarmSoundState(selected: AlarmSoundChoice.system())],
-      verify: (_) => verify(() => source.preview(const AlarmSound.system())).called(1),
+      expect: () => [
+        const AlarmSoundState(selected: AlarmSoundChoice.system()),
+      ],
+      verify: (_) =>
+          verify(() => source.preview(const AlarmSound.system())).called(1),
     );
 
     blocTest<AlarmSoundCubit, AlarmSoundState>(
       '기기 알람음 → 복사 전이므로 uri 로 미리 듣기',
       build: build,
       act: (cubit) => cubit.select(const AlarmSoundChoice.device(dawn)),
-      expect: () => [const AlarmSoundState(selected: AlarmSoundChoice.device(dawn))],
-      verify: (_) => verify(() => source.preview(any(), uri: dawn.uri)).called(1),
+      expect: () => [
+        const AlarmSoundState(selected: AlarmSoundChoice.device(dawn)),
+      ],
+      verify: (_) =>
+          verify(() => source.preview(any(), uri: dawn.uri)).called(1),
     );
 
     blocTest<AlarmSoundCubit, AlarmSoundState>(
@@ -136,17 +162,25 @@ void main() {
         ).thenThrow(const AlarmSoundException('preview'));
         return build();
       },
-      act: (cubit) => cubit.select(const AlarmSoundChoice.bundled(BundledAlarmSounds.chime)),
+      act: (cubit) => cubit.select(
+        const AlarmSoundChoice.bundled(BundledAlarmSounds.chime),
+      ),
       expect: () => [
-        const AlarmSoundState(selected: AlarmSoundChoice.bundled(BundledAlarmSounds.chime)),
+        const AlarmSoundState(
+          selected: AlarmSoundChoice.bundled(BundledAlarmSounds.chime),
+        ),
       ],
     );
   });
 
   group('선택(confirm)', () {
     test('시스템 · 내장음은 복사 없이 그대로 돌려준다', () async {
-      final cubit = build()..select(const AlarmSoundChoice.bundled(BundledAlarmSounds.chime));
-      expect(await cubit.confirm(), const AlarmSound.bundled(BundledAlarmSounds.chime));
+      final cubit = build()
+        ..select(const AlarmSoundChoice.bundled(BundledAlarmSounds.chime));
+      expect(
+        await cubit.confirm(),
+        const AlarmSound.bundled(BundledAlarmSounds.chime),
+      );
       cubit.select(const AlarmSoundChoice.system());
       expect(await cubit.confirm(), const AlarmSound.system());
       verifyNever(() => source.import(any()));
@@ -171,14 +205,20 @@ void main() {
 
     test('현재 소리와 다른 기기 줄을 고르면 복사한다', () async {
       when(() => source.import(dawn)).thenAnswer(
-        (_) async => const AlarmSound.device(title: 'Dawn', path: '/data/alarm_sounds/b.ogg'),
+        (_) async => const AlarmSound.device(
+          title: 'Dawn',
+          path: '/data/alarm_sounds/b.ogg',
+        ),
       );
       final cubit = build(copiedBell);
       await cubit.load();
       await cubit.select(const AlarmSoundChoice.device(dawn));
       expect(
         await cubit.confirm(),
-        const AlarmSound.device(title: 'Dawn', path: '/data/alarm_sounds/b.ogg'),
+        const AlarmSound.device(
+          title: 'Dawn',
+          path: '/data/alarm_sounds/b.ogg',
+        ),
       );
       verify(() => source.import(dawn)).called(1);
     });
@@ -201,7 +241,10 @@ void main() {
       },
       expect: () => [
         const AlarmSoundState(selected: AlarmSoundChoice.device(bell)),
-        const AlarmSoundState(selected: AlarmSoundChoice.device(bell), importing: true),
+        const AlarmSoundState(
+          selected: AlarmSoundChoice.device(bell),
+          importing: true,
+        ),
         const AlarmSoundState(selected: AlarmSoundChoice.device(bell)),
       ],
     );
@@ -209,7 +252,9 @@ void main() {
     blocTest<AlarmSoundCubit, AlarmSoundState>(
       '복사가 실패하면 던지고 importing 을 푼다',
       build: () {
-        when(() => source.import(bell)).thenThrow(const AlarmSoundException('import'));
+        when(
+          () => source.import(bell),
+        ).thenThrow(const AlarmSoundException('import'));
         return build();
       },
       act: (cubit) async {
@@ -218,7 +263,10 @@ void main() {
       },
       expect: () => [
         const AlarmSoundState(selected: AlarmSoundChoice.device(bell)),
-        const AlarmSoundState(selected: AlarmSoundChoice.device(bell), importing: true),
+        const AlarmSoundState(
+          selected: AlarmSoundChoice.device(bell),
+          importing: true,
+        ),
         const AlarmSoundState(selected: AlarmSoundChoice.device(bell)),
       ],
     );
@@ -237,7 +285,10 @@ void main() {
       },
       expect: () => [
         const AlarmSoundState(selected: AlarmSoundChoice.device(bell)),
-        const AlarmSoundState(selected: AlarmSoundChoice.device(bell), importing: true),
+        const AlarmSoundState(
+          selected: AlarmSoundChoice.device(bell),
+          importing: true,
+        ),
         const AlarmSoundState(selected: AlarmSoundChoice.device(bell)),
       ],
     );
@@ -245,10 +296,15 @@ void main() {
 
   test('pausePreview 는 선택은 두고 미리 듣기만 멈춘다', () async {
     final cubit = build();
-    await cubit.select(const AlarmSoundChoice.bundled(BundledAlarmSounds.chime));
+    await cubit.select(
+      const AlarmSoundChoice.bundled(BundledAlarmSounds.chime),
+    );
     await cubit.pausePreview();
     verify(() => source.stopPreview()).called(1);
-    expect(cubit.state.selected, const AlarmSoundChoice.bundled(BundledAlarmSounds.chime));
+    expect(
+      cubit.state.selected,
+      const AlarmSoundChoice.bundled(BundledAlarmSounds.chime),
+    );
   });
 
   test('닫으면 미리 듣기를 멈춘다', () async {

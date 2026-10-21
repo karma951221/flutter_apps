@@ -262,10 +262,9 @@ void main() {
     });
 
     test('키가 없는 옛 json 은 null', () {
-      final json = settings()
-          .copyWith(androidAutoStopAfter: () => tenMinutes)
-          .toJson()
-        ..remove('androidAutoStopAfter');
+      final json =
+          settings().copyWith(androidAutoStopAfter: () => tenMinutes).toJson()
+            ..remove('androidAutoStopAfter');
 
       expect(AlarmSettings.fromJson(json).androidAutoStopAfter, isNull);
     });

@@ -109,7 +109,11 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
       if (mounted) Navigator.of(context).pop(result);
     } on Object {
       if (!mounted) return;
-      AppSnackBar.show(context, message: l10n.walkAlarmSaveFailed, type: AppSnackBarType.error);
+      AppSnackBar.show(
+        context,
+        message: l10n.walkAlarmSaveFailed,
+        type: AppSnackBarType.error,
+      );
     }
   }
 
@@ -119,7 +123,9 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
     // 노드를 풀어야 이 화면 범위의 포커스 기록도 비워진다.
     FocusManager.instance.primaryFocus?.unfocus();
     final sound = await Navigator.of(context).push<AlarmSound>(
-      MaterialPageRoute(builder: (_) => AlarmSoundPage(initial: _cubit.state.alarm.sound)),
+      MaterialPageRoute(
+        builder: (_) => AlarmSoundPage(initial: _cubit.state.alarm.sound),
+      ),
     );
     if (sound != null) _cubit.setSound(sound);
   }
@@ -138,7 +144,11 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
       if (mounted) Navigator.of(context).pop();
     } on Object {
       if (!mounted) return;
-      AppSnackBar.show(context, message: l10n.walkAlarmSaveFailed, type: AppSnackBarType.error);
+      AppSnackBar.show(
+        context,
+        message: l10n.walkAlarmSaveFailed,
+        type: AppSnackBarType.error,
+      );
     }
   }
 
@@ -147,7 +157,10 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
   Future<void> _duplicate() async {
     FocusManager.instance.primaryFocus?.unfocus();
     final result = await Navigator.of(context).push<AlarmSaveResult>(
-      MaterialPageRoute(builder: (_) => AlarmEditPage(initial: widget.initial.duplicate(_clock.now()))),
+      MaterialPageRoute(
+        builder: (_) =>
+            AlarmEditPage(initial: widget.initial.duplicate(_clock.now())),
+      ),
     );
     if (result != null && mounted) Navigator.of(context).pop(result);
   }
@@ -197,7 +210,8 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
                     enabled: !state.busy,
                     onAdd: (step) => _editDraft(() => _cubit.addOffset(step)),
                     onReset: () => _editDraft(_cubit.resetOffset),
-                    onFixAt: (hour, minute) => _editDraft(() => _cubit.fixOneShotAt(hour, minute)),
+                    onFixAt: (hour, minute) =>
+                        _editDraft(() => _cubit.fixOneShotAt(hour, minute)),
                   )
                 else
                   RepeatSection(
@@ -221,7 +235,9 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
                 ),
                 AppListTile(
                   title: Text(l10n.walkAlarmSound),
-                  subtitle: Text(AlarmSoundFormat.name(l10n, state.alarm.sound)),
+                  subtitle: Text(
+                    AlarmSoundFormat.name(l10n, state.alarm.sound),
+                  ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: state.busy ? null : _pickSound,
                 ),
@@ -230,13 +246,16 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
                     value: state.alarm.silentWhenRingerMuted,
                     onChanged: state.busy
                         ? null
-                        : (value) => _cubit.setSilentWhenRingerMuted(value ?? false),
+                        : (value) =>
+                              _cubit.setSilentWhenRingerMuted(value ?? false),
                   ),
                   title: Text(l10n.walkAlarmSilentWhenMuted),
                   subtitle: Text(l10n.walkAlarmSilentWhenMutedHint),
                   onTap: state.busy
                       ? null
-                      : () => _cubit.setSilentWhenRingerMuted(!state.alarm.silentWhenRingerMuted),
+                      : () => _cubit.setSilentWhenRingerMuted(
+                          !state.alarm.silentWhenRingerMuted,
+                        ),
                 ),
                 RingSettingsSection(
                   alarm: state.alarm,
@@ -268,7 +287,9 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
                   const SizedBox(height: AppSpacing.sm),
                   AppButton.text(
                     label: l10n.commonDelete,
-                    style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
+                    style: TextButton.styleFrom(
+                      foregroundColor: theme.colorScheme.error,
+                    ),
                     onPressed: state.busy ? null : _delete,
                   ),
                 ],

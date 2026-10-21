@@ -7,7 +7,8 @@ import 'package:walk/domain/alarm/sound/alarm_sound_source.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const channel = MethodChannel(ChannelAlarmSoundSource.channelName);
-  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   late List<MethodCall> calls;
 
   void answer(Object? Function(MethodCall call) reply) {
@@ -19,7 +20,8 @@ void main() {
   }
 
   void fail(String method) => answer((call) {
-    if (call.method == method) throw PlatformException(code: 'failed', message: 'boom');
+    if (call.method == method)
+      throw PlatformException(code: 'failed', message: 'boom');
     return null;
   });
 
@@ -81,7 +83,10 @@ void main() {
       await ChannelAlarmSoundSource().preview(
         const AlarmSound.bundled(BundledAlarmSounds.chime),
       );
-      expect(calls.single.arguments, {'kind': 'asset', 'value': 'assets/alarm/chime.wav'});
+      expect(calls.single.arguments, {
+        'kind': 'asset',
+        'value': 'assets/alarm/chime.wav',
+      });
     });
 
     test('uri 를 주면 소리와 상관없이 kind uri', () async {
@@ -97,7 +102,10 @@ void main() {
 
     test('복사한 기기음은 파일 uri 로 튼다', () async {
       await ChannelAlarmSoundSource().preview(
-        const AlarmSound.device(title: 'Bell', path: '/data/app_flutter/alarm_sounds/a.ogg'),
+        const AlarmSound.device(
+          title: 'Bell',
+          path: '/data/app_flutter/alarm_sounds/a.ogg',
+        ),
       );
       expect(calls.single.arguments, {
         'kind': 'uri',
@@ -127,7 +135,10 @@ void main() {
   });
 
   group('import', () {
-    const ringtone = (title: 'Bell', uri: 'content://media/internal/audio/media/2');
+    const ringtone = (
+      title: 'Bell',
+      uri: 'content://media/internal/audio/media/2',
+    );
 
     test('uri 를 넘기고 돌려받은 경로로 AlarmSound.device', () async {
       answer((_) => '/data/app_flutter/alarm_sounds/abc.ogg');
@@ -135,21 +146,32 @@ void main() {
       final sound = await ChannelAlarmSoundSource().import(ringtone);
 
       expect(calls.single.method, 'import');
-      expect(calls.single.arguments, {'uri': 'content://media/internal/audio/media/2'});
+      expect(calls.single.arguments, {
+        'uri': 'content://media/internal/audio/media/2',
+      });
       expect(
         sound,
-        const AlarmSound.device(title: 'Bell', path: '/data/app_flutter/alarm_sounds/abc.ogg'),
+        const AlarmSound.device(
+          title: 'Bell',
+          path: '/data/app_flutter/alarm_sounds/abc.ogg',
+        ),
       );
     });
 
     test('오류는 AlarmSoundException', () async {
       fail('import');
-      expect(ChannelAlarmSoundSource().import(ringtone), throwsA(isA<AlarmSoundException>()));
+      expect(
+        ChannelAlarmSoundSource().import(ringtone),
+        throwsA(isA<AlarmSoundException>()),
+      );
     });
 
     test('경로가 비면 AlarmSoundException', () async {
       answer((_) => null);
-      expect(ChannelAlarmSoundSource().import(ringtone), throwsA(isA<AlarmSoundException>()));
+      expect(
+        ChannelAlarmSoundSource().import(ringtone),
+        throwsA(isA<AlarmSoundException>()),
+      );
     });
   });
 }

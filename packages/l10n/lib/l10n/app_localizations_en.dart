@@ -1706,9 +1706,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryDailyStoryTitle => 'Daily';
 
   @override
-  String get walkDiaryAll => 'All';
-
-  @override
   String get walkDiarySeeAll => 'See all';
 
   @override
@@ -1741,9 +1738,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get walkDiaryArchive => 'Archive';
-
-  @override
   String get walkDiaryEmpty => 'No entries yet';
 
   @override
@@ -1762,15 +1756,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String walkDiaryStoryPeriod(String start, String end) {
     return '$start – $end';
   }
-
-  @override
-  String get walkDiaryViewProse => 'Prose';
-
-  @override
-  String get walkDiaryViewFeed => 'Feed';
-
-  @override
-  String get walkDiaryViewReels => 'Reels';
 
   @override
   String get walkDiaryShowMore => 'More';
@@ -2628,9 +2613,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String walkDiaryEditorPlaceSuggestion(String name, int count) {
     return '$name $count';
   }
-
-  @override
-  String get walkDiaryMenuStories => 'Manage stories';
 
   @override
   String get walkDiaryStoryNew => 'New story';

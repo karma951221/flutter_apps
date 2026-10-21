@@ -14,10 +14,14 @@ import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/entity/named_count.dart';
 import 'package:walk/domain/diary/entity/story.dart';
+import 'package:walk/domain/diary/media/media_store.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
+import 'package:walk/domain/diary/usecase/diary_use_case.dart';
 import 'package:walk/presentation/diary/page/diary_search_page.dart';
 import 'package:walk/presentation/diary/page/filtered_entries_page.dart';
+import 'package:walk/presentation/diary/page/story_page.dart';
+import 'package:walk/presentation/diary/viewer/story_viewer_page.dart';
 import 'package:walk/presentation/diary/widget/highlighted_text.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
@@ -26,6 +30,10 @@ import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_device_auth.dart';
 
 class _MockRepo extends Mock implements DiaryRepository {}
+
+class _MockUseCase extends Mock implements DiaryUseCase {}
+
+class _MockStore extends Mock implements MediaStore {}
 
 DiaryEntry _entry(String id, String body) => DiaryEntry(
   id: id,
@@ -89,6 +97,8 @@ void main() {
     );
     getIt
       ..registerSingleton<DiaryRepository>(repo)
+      ..registerSingleton<DiaryUseCase>(_MockUseCase())
+      ..registerSingleton<MediaStore>(_MockStore())
       ..registerSingleton<DiaryPreferences>(PrefsDiaryPreferences(prefs))
       ..registerSingleton<Clock>(clock);
   });
@@ -98,9 +108,8 @@ void main() {
     await getIt.reset();
   });
 
-  /// 검색 화면을 띄우는 바탕. 닫힐 때 돌려준 값을 [picked] 에 담는다.
-  Future<List<String?>> pump(WidgetTester tester) async {
-    final picked = <String?>[];
+  /// 검색 화면을 띄우는 바탕.
+  Future<void> pump(WidgetTester tester) async {
     lock.start();
     await tester.pumpWidget(
       MaterialApp(
@@ -113,8 +122,7 @@ void main() {
           child: Builder(
             builder: (context) => Scaffold(
               body: TextButton(
-                onPressed: () async =>
-                    picked.add(await openDiarySearch(context)),
+                onPressed: () => unawaited(openDiarySearch(context)),
                 child: const Text('열기'),
               ),
             ),
@@ -125,7 +133,6 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('열기'));
     await tester.pumpAndSettle();
-    return picked;
   }
 
   Future<void> type(WidgetTester tester, String text) async {
@@ -209,17 +216,34 @@ void main() {
     expect(find.widgetWithText(AppPlaceholder, '찾는 결과가 없어요'), findsOneWidget);
   });
 
-  testWidgets('스토리 결과를 누르면 그 스토리 id 를 들고 닫힌다', (tester) async {
-    final picked = await pump(tester);
+  testWidgets('글 결과 탭 → 그 기록부터 뷰어', (tester) async {
+    final a = _entry('a', '아침 바다');
+    entries[const EntryFilter.body('바다')] = [a];
+    // 뷰어가 전체 기록을 읽는다.
+    entries[const EntryFilter.all()] = [a];
+    await pump(tester);
+
+    await type(tester, '바다');
+    await tester.tap(find.byType(HighlightedText));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final viewer = tester.widget<StoryViewerPage>(find.byType(StoryViewerPage));
+    expect(viewer.source, const ViewerSource.stories([Story.dailyId]));
+    expect(viewer.entryId, 'a');
+  });
+
+  testWidgets('스토리 결과 탭 → 스토리 페이지', (tester) async {
+    await pump(tester);
 
     await tab(tester, '스토리');
     await type(tester, '제주');
     expect(find.text('기록 4개'), findsOneWidget);
     await tester.tap(find.widgetWithText(AppListTile, '제주 여행'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
-    expect(picked, ['jeju']);
-    expect(find.byType(DiarySearchPage), findsNothing);
+    expect(tester.widget<StoryPage>(find.byType(StoryPage)).storyId, 'jeju');
   });
 
   testWidgets('태그 추천을 누르면 그 태그 모아보기가 열린다', (tester) async {

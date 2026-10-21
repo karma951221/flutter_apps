@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/entity/entry_filter.dart';
-import '../../../domain/diary/entity/story.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import 'filtered_entries_state.dart';
 
@@ -18,21 +17,15 @@ class FilteredEntriesCubit extends Cubit<FilteredEntriesState> {
   final EntryFilter filter;
 
   StreamSubscription<List<DiaryEntry>>? _entries;
-  StreamSubscription<List<Story>>? _stories;
 
   void start() {
     unawaited(_entries?.cancel());
-    unawaited(_stories?.cancel());
     _entries = _repo
         .watchEntries(filter)
         .listen(
           (entries) => emit(state.copyWith(entries: entries, loading: false)),
           onError: _onError,
         );
-    _stories = _repo.watchStories().listen(
-      (stories) => emit(state.copyWith(stories: stories)),
-      onError: _onError,
-    );
   }
 
   void _onError(Object _) => emit(state.copyWith(loading: false, failed: true));
@@ -40,7 +33,6 @@ class FilteredEntriesCubit extends Cubit<FilteredEntriesState> {
   @override
   Future<void> close() async {
     await _entries?.cancel();
-    await _stories?.cancel();
     return super.close();
   }
 }

@@ -52,4 +52,5 @@ class AlarmReminder with _$AlarmReminder {
 
 /// `1_000_000 + packageId * 2 + kind.index`. 패키지 id(최대 999_999) · 포크 자리표시 알림(973_422)과
 /// 겹치지 않고, 안드로이드 알림 id · 요청 코드(int32) 안이다.
-int reminderId(int packageId, ReminderKind kind) => 1000000 + packageId * 2 + kind.index;
+int reminderId(int packageId, ReminderKind kind) =>
+    1000000 + packageId * 2 + kind.index;

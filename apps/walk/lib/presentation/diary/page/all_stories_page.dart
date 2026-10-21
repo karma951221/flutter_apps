@@ -18,7 +18,6 @@ import '../cubit/story_manage_cubit.dart';
 import '../cubit/story_manage_state.dart';
 import '../format/diary_format.dart';
 import '../widget/story_avatar.dart';
-import '../widget/story_bar.dart';
 import 'diary_route.dart';
 import 'story_form_sheet.dart';
 import 'story_page.dart';

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/diary/entity/story.dart';
-import 'story_bar.dart';
+import 'story_avatar.dart';
 
 /// 작성 화면의 스토리 고르기. 받은 스토리(열린 것만 — `EntryEditorState.openStories`)를
 /// 보이고, 고르면 그 id 로 닫힌다.

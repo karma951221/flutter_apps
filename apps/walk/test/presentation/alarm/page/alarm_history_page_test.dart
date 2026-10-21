@@ -25,19 +25,31 @@ class _FixedClock extends Clock {
 void main() {
   // 2026-10-07 수요일 정오.
   final now = DateTime(2026, 10, 7, 12);
-  const work = Alarm(id: 1, hour: 7, minute: 0, label: '출근', repeat: {Weekday.wed});
+  const work = Alarm(
+    id: 1,
+    hour: 7,
+    minute: 0,
+    label: '출근',
+    repeat: {Weekday.wed},
+  );
   const plain = Alarm(id: 2, hour: 6, minute: 30, repeat: {Weekday.tue});
   late _MockUseCase useCase;
   late _MockRingLog ringLog;
 
   RingLogEntry entry(int alarmId, DateTime at, RingLogKind kind) =>
-      RingLogEntry(at: at, packageId: packageId(alarmId, triggerIndex(at)), kind: kind);
+      RingLogEntry(
+        at: at,
+        packageId: packageId(alarmId, triggerIndex(at)),
+        kind: kind,
+      );
 
   setUp(() {
     useCase = _MockUseCase();
     ringLog = _MockRingLog();
     when(() => useCase.list()).thenAnswer((_) async => [work, plain]);
-    when(() => ringLog.read(since: any(named: 'since'))).thenAnswer((_) async => []);
+    when(
+      () => ringLog.read(since: any(named: 'since')),
+    ).thenAnswer((_) async => []);
     getIt
       ..registerSingleton<AlarmUseCase>(useCase)
       ..registerSingleton<RingLogSource>(ringLog)
@@ -110,12 +122,16 @@ void main() {
   });
 
   testWidgets('읽기에 실패하면 오류 안내와 다시 시도', (tester) async {
-    when(() => ringLog.read(since: any(named: 'since'))).thenThrow(StateError('실패'));
+    when(
+      () => ringLog.read(since: any(named: 'since')),
+    ).thenThrow(StateError('실패'));
     await pump(tester);
 
     expect(find.text('기록을 불러오지 못했어요'), findsOneWidget);
 
-    when(() => ringLog.read(since: any(named: 'since'))).thenAnswer((_) async => []);
+    when(
+      () => ringLog.read(since: any(named: 'since')),
+    ).thenAnswer((_) async => []);
     await tester.tap(find.text('다시 시도'));
     await tester.pumpAndSettle();
 

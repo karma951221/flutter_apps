@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:l10n/l10n.dart';
 
 import '../../../domain/diary/entity/entry_media.dart';
+import '../../../domain/diary/entity/story.dart';
 import '../../../domain/diary/media/media_store.dart';
 import '../../../domain/diary/usecase/story_cover.dart';
 
@@ -157,3 +159,7 @@ Map<String, File> coverFiles(Map<String, StoryCover> covers) {
 
 String? _imagePath(EntryMedia media) =>
     media.kind == MediaKind.photo ? media.path : media.thumbPath;
+
+/// 스토리의 표시 이름. 기본 스토리처럼 title 이 비면 l10n 기본 제목.
+String storyDisplayTitle(AppLocalizations l10n, Story story) =>
+    story.title.isEmpty ? l10n.walkDiaryDailyStoryTitle : story.title;

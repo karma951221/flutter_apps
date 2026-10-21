@@ -40,10 +40,13 @@ class HealthConnectActivityRepository implements ActivityRepository {
   Future<HealthAccess> _checkAccess() async {
     try {
       return switch (await _gateway.sdkStatus()) {
-        HealthConnectSdkStatus.sdkAvailable => _toAccess(await _permission.ensure()),
+        HealthConnectSdkStatus.sdkAvailable => _toAccess(
+          await _permission.ensure(),
+        ),
         HealthConnectSdkStatus.sdkUnavailableProviderUpdateRequired =>
           HealthAccess.updateRequired,
-        HealthConnectSdkStatus.sdkUnavailable || null => HealthAccess.notInstalled,
+        HealthConnectSdkStatus.sdkUnavailable ||
+        null => HealthAccess.notInstalled,
       };
     } on Object {
       return HealthAccess.permissionDenied;

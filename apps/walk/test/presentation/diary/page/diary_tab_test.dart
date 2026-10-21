@@ -34,7 +34,6 @@ import 'package:walk/presentation/diary/widget/entry_media_view.dart';
 import 'package:walk/presentation/diary/widget/feed_view.dart';
 import 'package:walk/presentation/diary/widget/story_ring.dart';
 import 'package:walk/presentation/diary/widget/story_ring_row.dart';
-import 'package:walk/presentation/diary/widget/view_mode_switch.dart';
 import 'package:walk/presentation/diary/media_picker.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
@@ -292,7 +291,6 @@ void main() {
       tester.getTopLeft(inFeed('바다')).dy,
       lessThan(tester.getTopLeft(inFeed('출근')).dy),
     );
-    expect(find.byType(ViewModeSwitch), findsNothing);
     expect(find.text('릴스'), findsNothing);
     // 동그라미 줄이 피드 위에 있다.
     expect(

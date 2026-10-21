@@ -1620,9 +1620,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryDailyStoryTitle => '일상';
 
   @override
-  String get walkDiaryAll => '전체';
-
-  @override
   String get walkDiarySeeAll => '모두 보기';
 
   @override
@@ -1643,9 +1640,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get walkDiaryArchive => '보관함';
-
-  @override
   String get walkDiaryEmpty => '아직 기록이 없어요';
 
   @override
@@ -1664,15 +1658,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String walkDiaryStoryPeriod(String start, String end) {
     return '$start ~ $end';
   }
-
-  @override
-  String get walkDiaryViewProse => '줄글';
-
-  @override
-  String get walkDiaryViewFeed => '피드';
-
-  @override
-  String get walkDiaryViewReels => '릴스';
 
   @override
   String get walkDiaryShowMore => '더 보기';
@@ -2483,9 +2468,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String walkDiaryEditorPlaceSuggestion(String name, int count) {
     return '$name $count';
   }
-
-  @override
-  String get walkDiaryMenuStories => '스토리 관리';
 
   @override
   String get walkDiaryStoryNew => '새 스토리';

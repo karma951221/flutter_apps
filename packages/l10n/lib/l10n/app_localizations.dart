@@ -3134,12 +3134,6 @@ abstract class AppLocalizations {
   /// **'일상'**
   String get walkDiaryDailyStoryTitle;
 
-  /// 일기 스토리 바 — 모든 스토리의 기록을 함께 보는 항목
-  ///
-  /// In ko, this message translates to:
-  /// **'전체'**
-  String get walkDiaryAll;
-
   /// 일기 스토리 동그라미 줄 끝 — 스토리 전체 목록으로 가는 항목
   ///
   /// In ko, this message translates to:
@@ -3176,12 +3170,6 @@ abstract class AppLocalizations {
   /// **'기록 {entries} · 사진 {photos}'**
   String walkDiaryStoryStats(int entries, int photos);
 
-  /// 일기 스토리 바 끝 — 닫힌 스토리 모음. 누르면 목록 시트가 열린다
-  ///
-  /// In ko, this message translates to:
-  /// **'보관함'**
-  String get walkDiaryArchive;
-
   /// 일기 타임라인에 보일 기록이 없을 때 안내
   ///
   /// In ko, this message translates to:
@@ -3217,24 +3205,6 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{start} ~ {end}'**
   String walkDiaryStoryPeriod(String start, String end);
-
-  /// 일기 보기 모드 — 날짜별로 글이 이어지는 줄글
-  ///
-  /// In ko, this message translates to:
-  /// **'줄글'**
-  String get walkDiaryViewProse;
-
-  /// 일기 보기 모드 — 카드 세로 목록
-  ///
-  /// In ko, this message translates to:
-  /// **'피드'**
-  String get walkDiaryViewFeed;
-
-  /// 일기 보기 모드 — 전체 화면으로 한 기록씩 넘기는 릴스
-  ///
-  /// In ko, this message translates to:
-  /// **'릴스'**
-  String get walkDiaryViewReels;
 
   /// 일기 피드 카드 — 접힌 긴 본문을 펼치는 버튼
   ///
@@ -4705,12 +4675,6 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{name} {count}'**
   String walkDiaryEditorPlaceSuggestion(String name, int count);
-
-  /// 일기 탭 ⋮ 메뉴의 스토리 관리 항목 · 스토리 관리 화면 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'스토리 관리'**
-  String get walkDiaryMenuStories;
 
   /// 스토리 관리 화면의 새 스토리 만들기 버튼 · 만들기 시트 제목
   ///

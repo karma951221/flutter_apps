@@ -163,12 +163,16 @@ class Alarm with _$Alarm {
           _option(json['volumePercent'], AlarmOptions.volumePercents) ??
           AlarmOptions.defaultVolumePercent,
       fadeSeconds:
-          _option(json['fadeSeconds'], AlarmOptions.fadeSeconds) ?? AlarmOptions.defaultFadeSeconds,
+          _option(json['fadeSeconds'], AlarmOptions.fadeSeconds) ??
+          AlarmOptions.defaultFadeSeconds,
       snoozeMinutes:
           _option(json['snoozeMinutes'], AlarmOptions.snoozeMinutes) ??
           AlarmOptions.defaultSnoozeMinutes,
       snoozeLimit: _option(json['snoozeLimit'], AlarmOptions.snoozeLimits),
-      autoStopMinutes: _option(json['autoStopMinutes'], AlarmOptions.autoStopMinutes),
+      autoStopMinutes: _option(
+        json['autoStopMinutes'],
+        AlarmOptions.autoStopMinutes,
+      ),
       remindBefore: json['remindBefore'] == true,
       skippedAt: switch (json['skippedAt']) {
         final String raw => DateTime.tryParse(raw),

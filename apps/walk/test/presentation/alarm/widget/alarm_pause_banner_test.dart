@@ -9,21 +9,27 @@ void main() {
   // 2026-10-07 수요일.
   final now = DateTime(2026, 10, 7, 12);
 
-  Future<void> pump(WidgetTester tester, AlarmPause pause, {VoidCallback? onStop}) =>
-      tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(),
-          locale: const Locale('ko'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: AlarmPauseBanner(pause: pause, now: now, onStop: onStop ?? () {}),
-          ),
-        ),
-      );
+  Future<void> pump(
+    WidgetTester tester,
+    AlarmPause pause, {
+    VoidCallback? onStop,
+  }) => tester.pumpWidget(
+    MaterialApp(
+      theme: AppTheme.light(),
+      locale: const Locale('ko'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: AlarmPauseBanner(pause: pause, now: now, onStop: onStop ?? () {}),
+      ),
+    ),
+  );
 
   testWidgets('이미 쉬는 중이면 끝 날만', (tester) async {
-    await pump(tester, AlarmPause(from: DateTime(2026, 10, 6), until: DateTime(2026, 10, 12)));
+    await pump(
+      tester,
+      AlarmPause(from: DateTime(2026, 10, 6), until: DateTime(2026, 10, 12)),
+    );
     expect(find.text('10월 12일 (월)까지 알람을 쉬어요'), findsOneWidget);
   });
 

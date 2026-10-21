@@ -69,13 +69,16 @@ class SettingsPage extends StatelessWidget {
                       value: state.holidayReminder,
                       onChanged: cubit.setHolidayReminder,
                     ),
-                    onTap: () => cubit.setHolidayReminder(!state.holidayReminder),
+                    onTap: () =>
+                        cubit.setHolidayReminder(!state.holidayReminder),
                   ),
                   AppListTile(
                     key: const Key('settings-holiday-source'),
                     leading: const Icon(Icons.calendar_month_outlined),
                     title: Text(l10n.walkSettingsHolidaySource),
-                    subtitle: source == null ? null : Text(_sourceLabel(l10n, source)),
+                    subtitle: source == null
+                        ? null
+                        : Text(_sourceLabel(l10n, source)),
                     trailing: calendar == null
                         ? null
                         : Text(
@@ -155,12 +158,15 @@ class SettingsPage extends StatelessWidget {
   }
 
   /// "폰 캘린더: 대한민국의 휴일" · "내장 표 2026–2027".
-  static String _sourceLabel(AppLocalizations l10n, HolidaySource source) => switch (source) {
-    DeviceCalendarHolidays(calendarName: '') => l10n.walkSettingsHolidaySourceDeviceUnnamed,
-    DeviceCalendarHolidays(:final calendarName) => l10n.walkSettingsHolidaySourceDevice(calendarName),
-    BundledHolidays(:final firstYear, :final lastYear) =>
-      l10n.walkSettingsHolidaySourceBundled('$firstYear', '$lastYear'),
-  };
+  static String _sourceLabel(AppLocalizations l10n, HolidaySource source) =>
+      switch (source) {
+        DeviceCalendarHolidays(calendarName: '') =>
+          l10n.walkSettingsHolidaySourceDeviceUnnamed,
+        DeviceCalendarHolidays(:final calendarName) =>
+          l10n.walkSettingsHolidaySourceDevice(calendarName),
+        BundledHolidays(:final firstYear, :final lastYear) =>
+          l10n.walkSettingsHolidaySourceBundled('$firstYear', '$lastYear'),
+      };
 
   static _Status? _statusLabel(
     AppLocalizations l10n,

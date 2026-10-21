@@ -38,7 +38,11 @@ void main() {
     calendar = _MockRequester();
     refresher = _FakeRefresher();
     settings = _MemorySettings();
-    access = HolidayCalendarAccess(calendar: calendar, refresher: refresher, settings: settings);
+    access = HolidayCalendarAccess(
+      calendar: calendar,
+      refresher: refresher,
+      settings: settings,
+    );
   });
 
   test('ensure 로 새로 허용되면 그 자리에서 폰 캘린더를 다시 읽는다(force)', () async {
@@ -66,14 +70,18 @@ void main() {
   });
 
   test('check 는 요청기 상태 그대로', () async {
-    when(calendar.check).thenAnswer((_) async => PermissionStatus.permanentlyDenied);
+    when(
+      calendar.check,
+    ).thenAnswer((_) async => PermissionStatus.permanentlyDenied);
     expect(await access.check(), PermissionStatus.permanentlyDenied);
   });
 
   group('requestAgain (설정 탭에서 직접)', () {
     test('세션 기억과 상관없이 묻고, 새로 허용되면 바로 다시 읽는다', () async {
       when(calendar.check).thenAnswer((_) async => PermissionStatus.denied);
-      when(calendar.requestAgain).thenAnswer((_) async => PermissionStatus.granted);
+      when(
+        calendar.requestAgain,
+      ).thenAnswer((_) async => PermissionStatus.granted);
 
       expect(await access.requestAgain(), PermissionStatus.granted);
       expect(refresher.calls, [true]);
@@ -81,7 +89,9 @@ void main() {
 
     test('또 거부하면 다시 읽지 않는다', () async {
       when(calendar.check).thenAnswer((_) async => PermissionStatus.denied);
-      when(calendar.requestAgain).thenAnswer((_) async => PermissionStatus.denied);
+      when(
+        calendar.requestAgain,
+      ).thenAnswer((_) async => PermissionStatus.denied);
 
       expect(await access.requestAgain(), PermissionStatus.denied);
       expect(refresher.calls, isEmpty);

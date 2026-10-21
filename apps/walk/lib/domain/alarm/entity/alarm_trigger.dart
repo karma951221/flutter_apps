@@ -12,7 +12,11 @@ class AlarmTrigger with _$AlarmTrigger {
   @override
   final DateTime at;
 
-  const AlarmTrigger({required this.packageId, required this.alarmId, required this.at});
+  const AlarmTrigger({
+    required this.packageId,
+    required this.alarmId,
+    required this.at,
+  });
 }
 
 /// 알람 하나가 가질 수 있는 패키지 id 수.

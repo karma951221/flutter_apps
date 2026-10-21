@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/domain/diary/entity/entry_draft.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/entity/entry_location.dart';
-import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/presentation/diary/cubit/filtered_entries_cubit.dart';
 
 import '../../../support/diary_fixtures.dart';
@@ -84,7 +83,7 @@ void main() {
       expect(c.state.failed, isFalse);
     });
 
-    test('스토리를 넘나든다 — 스토리 이름표용 목록도 받는다', () async {
+    test('스토리를 넘나든다', () async {
       final trip = okValue(
         await h.repository.createStory(title: '제주', startedAt: diaryT0),
       );
@@ -94,7 +93,6 @@ void main() {
       final c = await opened(filter);
 
       expect(ids(c), [b, a]);
-      expect({for (final s in c.state.stories) s.id}, {Story.dailyId, trip.id});
     });
   }
 

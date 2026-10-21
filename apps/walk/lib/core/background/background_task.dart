@@ -19,7 +19,9 @@ const backgroundIdleTimeout = Duration(seconds: 10);
 ///
 /// [timeout] 안에 답이 없거나 채널이 없거나 오류면 그냥 끝난다(던지지 않는다) — 기다림이 sync 를
 /// 막지는 않는다.
-Future<void> awaitBackgroundIdle({Duration timeout = backgroundIdleTimeout}) async {
+Future<void> awaitBackgroundIdle({
+  Duration timeout = backgroundIdleTimeout,
+}) async {
   try {
     await backgroundChannel.invokeMethod<void>('awaitIdle').timeout(timeout);
   } on TimeoutException {

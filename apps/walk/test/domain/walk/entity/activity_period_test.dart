@@ -14,7 +14,11 @@ ActivityPeriod _week(List<DailyActivity> days, {DateTime? today}) =>
 
 void main() {
   final days = [
-    DailyActivity(date: DateTime(2026, 9, 21), steps: 1000, distanceMeters: 700),
+    DailyActivity(
+      date: DateTime(2026, 9, 21),
+      steps: 1000,
+      distanceMeters: 700,
+    ),
     DailyActivity(date: DateTime(2026, 9, 22), steps: 2000),
     DailyActivity(date: DateTime(2026, 9, 23), steps: 3001, activeKcal: 120),
     for (var d = 24; d <= 27; d++) DailyActivity.empty(DateTime(2026, 9, d)),
@@ -34,7 +38,9 @@ void main() {
   });
 
   test('값이 있는 날이 없으면 null', () {
-    final empty = [for (var d = 21; d <= 27; d++) DailyActivity.empty(DateTime(2026, 9, d))];
+    final empty = [
+      for (var d = 21; d <= 27; d++) DailyActivity.empty(DateTime(2026, 9, d)),
+    ];
     expect(_week(empty).totalDistanceMeters, isNull);
     expect(_week(empty).totalActiveKcal, isNull);
   });
@@ -45,6 +51,9 @@ void main() {
   });
 
   test('지난 기간은 7일 전부로 나눈다', () {
-    expect(_week(days, today: DateTime(2026, 10, 5)).averageSteps, 857); // 6001 / 7
+    expect(
+      _week(days, today: DateTime(2026, 10, 5)).averageSteps,
+      857,
+    ); // 6001 / 7
   });
 }

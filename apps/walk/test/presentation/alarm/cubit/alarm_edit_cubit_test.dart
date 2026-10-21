@@ -76,8 +76,12 @@ void main() {
       exactAlarm: exactAlarm,
       fullScreenIntent: _MockRequester(),
     );
-    when(() => notification.ensure()).thenAnswer((_) async => PermissionStatus.denied);
-    when(() => exactAlarm.ensure()).thenAnswer((_) async => PermissionStatus.granted);
+    when(
+      () => notification.ensure(),
+    ).thenAnswer((_) async => PermissionStatus.denied);
+    when(
+      () => exactAlarm.ensure(),
+    ).thenAnswer((_) async => PermissionStatus.granted);
     calendar = _MockCalendarAccess();
     when(() => calendar.ensureIfReminding()).thenAnswer((_) async {});
   });
@@ -101,11 +105,15 @@ void main() {
     },
     expect: () => [
       const AlarmEditState(alarm: Alarm(hour: 6, minute: 30)),
-      const AlarmEditState(alarm: Alarm(hour: 6, minute: 30, repeat: {Weekday.mon})),
+      const AlarmEditState(
+        alarm: Alarm(hour: 6, minute: 30, repeat: {Weekday.mon}),
+      ),
       const AlarmEditState(
         alarm: Alarm(hour: 6, minute: 30, repeat: {Weekday.mon, Weekday.fri}),
       ),
-      const AlarmEditState(alarm: Alarm(hour: 6, minute: 30, repeat: {Weekday.fri})),
+      const AlarmEditState(
+        alarm: Alarm(hour: 6, minute: 30, repeat: {Weekday.fri}),
+      ),
       const AlarmEditState(
         alarm: Alarm(hour: 6, minute: 30, repeat: {Weekday.fri}, label: '출근'),
       ),
@@ -124,10 +132,12 @@ void main() {
   blocTest<AlarmEditCubit, AlarmEditState>(
     '알람음을 바꾸면 저장할 알람에 실린다',
     build: () {
-      when(() => useCase.save(any())).thenAnswer(
-        (i) async => i.positionalArguments.single as Alarm,
+      when(
+        () => useCase.save(any()),
+      ).thenAnswer((i) async => i.positionalArguments.single as Alarm);
+      return build(
+        const Alarm(id: 3, hour: 6, minute: 30, repeat: {Weekday.mon}),
       );
-      return build(const Alarm(id: 3, hour: 6, minute: 30, repeat: {Weekday.mon}));
     },
     act: (cubit) async {
       cubit.setSound(const AlarmSound.bundled(BundledAlarmSounds.chime));
@@ -147,11 +157,15 @@ void main() {
     );
     // 월 9-28 을 쉬므로 다음 울림은 다음 주 월 10-5 07:00.
     when(() => useCase.pause()).thenAnswer(
-      (_) async => AlarmPause(from: DateTime(2026, 9, 28), until: DateTime(2026, 9, 28)),
+      (_) async =>
+          AlarmPause(from: DateTime(2026, 9, 28), until: DateTime(2026, 9, 28)),
     );
     final cubit = build(_monday);
 
-    expect(await cubit.save(), AlarmSaveResult.ringsIn(DateTime(2026, 10, 5, 7).difference(now)));
+    expect(
+      await cubit.save(),
+      AlarmSaveResult.ringsIn(DateTime(2026, 10, 5, 7).difference(now)),
+    );
     await cubit.close();
   });
 
@@ -173,7 +187,10 @@ void main() {
     when(() => useCase.pause()).thenThrow(StateError('prefs'));
     final cubit = build(_monday);
 
-    expect(await cubit.save(), const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)));
+    expect(
+      await cubit.save(),
+      const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)),
+    );
     await cubit.close();
   });
 
@@ -186,7 +203,10 @@ void main() {
       return build(_monday);
     },
     act: (cubit) async {
-      expect(await cubit.save(), const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)));
+      expect(
+        await cubit.save(),
+        const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)),
+      );
     },
     expect: () => const [
       AlarmEditState(alarm: _monday, busy: true),
@@ -212,7 +232,10 @@ void main() {
       return build(_monday);
     },
     act: (cubit) async {
-      expect(await cubit.save(), const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)));
+      expect(
+        await cubit.save(),
+        const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)),
+      );
     },
     skip: 2,
   );
@@ -220,7 +243,9 @@ void main() {
   blocTest<AlarmEditCubit, AlarmEditState>(
     '울림 설정(볼륨 · 점점 커지기 · 스누즈 간격 · 횟수 · 자동 멈춤 · 30분 전 알림)을 바꿔 저장한다',
     build: () {
-      when(() => useCase.save(any())).thenAnswer((i) async => i.positionalArguments.single as Alarm);
+      when(
+        () => useCase.save(any()),
+      ).thenAnswer((i) async => i.positionalArguments.single as Alarm);
       return build(_monday);
     },
     act: (cubit) async {
@@ -237,20 +262,41 @@ void main() {
         ..setAutoStopMinutes(null);
     },
     expect: () => [
-      const AlarmEditState(alarm: Alarm(hour: 7, minute: 0, repeat: {Weekday.mon}, volumePercent: 50)),
       const AlarmEditState(
-        alarm: Alarm(hour: 7, minute: 0, repeat: {Weekday.mon}, volumePercent: 50, fadeSeconds: 30),
+        alarm: Alarm(
+          hour: 7,
+          minute: 0,
+          repeat: {Weekday.mon},
+          volumePercent: 50,
+        ),
+      ),
+      const AlarmEditState(
+        alarm: Alarm(
+          hour: 7,
+          minute: 0,
+          repeat: {Weekday.mon},
+          volumePercent: 50,
+          fadeSeconds: 30,
+        ),
       ),
       AlarmEditState(
-        alarm: _tuned.copyWith(snoozeLimit: null, autoStopMinutes: null, remindBefore: false),
+        alarm: _tuned.copyWith(
+          snoozeLimit: null,
+          autoStopMinutes: null,
+          remindBefore: false,
+        ),
       ),
-      AlarmEditState(alarm: _tuned.copyWith(autoStopMinutes: null, remindBefore: false)),
+      AlarmEditState(
+        alarm: _tuned.copyWith(autoStopMinutes: null, remindBefore: false),
+      ),
       AlarmEditState(alarm: _tuned.copyWith(remindBefore: false)),
       const AlarmEditState(alarm: _tuned),
       const AlarmEditState(alarm: _tuned, busy: true),
       const AlarmEditState(alarm: _tuned),
       AlarmEditState(alarm: _tuned.copyWith(snoozeLimit: null)),
-      AlarmEditState(alarm: _tuned.copyWith(snoozeLimit: null, autoStopMinutes: null)),
+      AlarmEditState(
+        alarm: _tuned.copyWith(snoozeLimit: null, autoStopMinutes: null),
+      ),
     ],
     verify: (_) => verify(() => useCase.save(_tuned)).called(1),
   );
@@ -283,7 +329,10 @@ void main() {
       return build(_monday);
     },
     act: (cubit) async {
-      expect(await cubit.save(), const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)));
+      expect(
+        await cubit.save(),
+        const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)),
+      );
     },
     expect: () => const [
       AlarmEditState(alarm: _monday, busy: true),
@@ -340,14 +389,23 @@ void main() {
         ..fixOneShotAt(7, 30)
         ..addOffset(const Duration(minutes: 10)),
       expect: () => [
-        AlarmEditState(alarm: Alarm.draft(), draft: const OneShotDraft(offset: Duration(hours: 1))),
+        AlarmEditState(
+          alarm: Alarm.draft(),
+          draft: const OneShotDraft(offset: Duration(hours: 1)),
+        ),
         AlarmEditState(
           alarm: Alarm.draft(),
           draft: const OneShotDraft(offset: Duration(hours: 1, minutes: 5)),
         ),
         AlarmEditState(alarm: Alarm.draft()),
-        AlarmEditState(alarm: Alarm.draft(), draft: OneShotDraft(fixedAt: DateTime(2026, 9, 28, 7, 30))),
-        AlarmEditState(alarm: Alarm.draft(), draft: OneShotDraft(fixedAt: DateTime(2026, 9, 28, 7, 40))),
+        AlarmEditState(
+          alarm: Alarm.draft(),
+          draft: OneShotDraft(fixedAt: DateTime(2026, 9, 28, 7, 30)),
+        ),
+        AlarmEditState(
+          alarm: Alarm.draft(),
+          draft: OneShotDraft(fixedAt: DateTime(2026, 9, 28, 7, 40)),
+        ),
       ],
     );
 
@@ -368,28 +426,46 @@ void main() {
         cubit
           ..addOffset(const Duration(hours: 1))
           ..addOffset(const Duration(minutes: 10));
-        expect(await cubit.save(), const AlarmSaveResult.ringsIn(Duration(hours: 1, minutes: 10)));
+        expect(
+          await cubit.save(),
+          const AlarmSaveResult.ringsIn(Duration(hours: 1, minutes: 10)),
+        );
       },
       skip: 2,
       verify: (_) => verify(
-        () => useCase.save(Alarm(hour: 0, minute: 58, oneShotAt: DateTime(2026, 9, 28, 0, 58))),
+        () => useCase.save(
+          Alarm(hour: 0, minute: 58, oneShotAt: DateTime(2026, 9, 28, 0, 58)),
+        ),
       ).called(1),
     );
 
     blocTest<AlarmEditCubit, AlarmEditState>(
       '고정 모드: 기존 한 번 알람을 제목만 바꿔 저장하면 울릴 시각 · id 가 그대로 넘어간다',
       build: () {
-        when(() => useCase.save(any())).thenAnswer((i) async => i.positionalArguments.single as Alarm);
-        return build(Alarm(id: 3, hour: 7, minute: 0, oneShotAt: DateTime(2026, 9, 28, 7)));
+        when(
+          () => useCase.save(any()),
+        ).thenAnswer((i) async => i.positionalArguments.single as Alarm);
+        return build(
+          Alarm(id: 3, hour: 7, minute: 0, oneShotAt: DateTime(2026, 9, 28, 7)),
+        );
       },
       act: (cubit) async {
         cubit.setLabel('낮잠');
-        expect(await cubit.save(), const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)));
+        expect(
+          await cubit.save(),
+          const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)),
+        );
       },
       skip: 2,
       verify: (_) => verify(
         () => useCase.save(
-          Alarm(id: 3, hour: 7, minute: 0, label: '낮잠', oneShotAt: DateTime(2026, 9, 28, 7)),
+          Alarm(
+            id: 3,
+            hour: 7,
+            minute: 0,
+            label: '낮잠',
+            oneShotAt: DateTime(2026, 9, 28, 7),
+          ),
         ),
       ).called(1),
     );
@@ -404,11 +480,16 @@ void main() {
       },
       act: (cubit) async {
         cubit.fixOneShotAt(7, 30);
-        expect(await cubit.save(), const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 42)));
+        expect(
+          await cubit.save(),
+          const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 42)),
+        );
       },
       skip: 2,
       verify: (_) => verify(
-        () => useCase.save(Alarm(hour: 7, minute: 30, oneShotAt: DateTime(2026, 9, 28, 7, 30))),
+        () => useCase.save(
+          Alarm(hour: 7, minute: 30, oneShotAt: DateTime(2026, 9, 28, 7, 30)),
+        ),
       ).called(1),
     );
 
@@ -428,8 +509,12 @@ void main() {
         ..applyPreset(RepeatPreset.weekend)
         ..applyPreset(RepeatPreset.everyday),
       expect: () => [
-        AlarmEditState(alarm: _monday.copyWith(repeat: RepeatPreset.weekend.days)),
-        AlarmEditState(alarm: _monday.copyWith(repeat: RepeatPreset.everyday.days)),
+        AlarmEditState(
+          alarm: _monday.copyWith(repeat: RepeatPreset.weekend.days),
+        ),
+        AlarmEditState(
+          alarm: _monday.copyWith(repeat: RepeatPreset.everyday.days),
+        ),
       ],
     );
 

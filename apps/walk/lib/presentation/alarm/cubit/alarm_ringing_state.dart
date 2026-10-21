@@ -19,5 +19,9 @@ class AlarmRingingState with _$AlarmRingingState {
   @override
   final bool busy;
 
-  const AlarmRingingState({this.alarm, this.canSnooze = true, this.busy = false});
+  const AlarmRingingState({
+    this.alarm,
+    this.canSnooze = true,
+    this.busy = false,
+  });
 }

@@ -6,7 +6,10 @@ void main() {
   const calendar = KoreanHolidayCalendar();
 
   test('출처는 내장 표 2026–2027', () {
-    expect(calendar.source, const HolidaySource.bundled(firstYear: 2026, lastYear: 2027));
+    expect(
+      calendar.source,
+      const HolidaySource.bundled(firstYear: 2026, lastYear: 2027),
+    );
   });
 
   group('2026', () {

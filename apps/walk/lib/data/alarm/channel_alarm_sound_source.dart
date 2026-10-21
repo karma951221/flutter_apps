@@ -15,7 +15,8 @@ class ChannelAlarmSoundSource implements AlarmSoundSource {
     final rows = await _invoke<List<Object?>>('list');
     return [
       for (final row in rows ?? const <Object?>[])
-        if (row case {'title': final String title, 'uri': final String uri}) (title: title, uri: uri),
+        if (row case {'title': final String title, 'uri': final String uri})
+          (title: title, uri: uri),
     ];
   }
 

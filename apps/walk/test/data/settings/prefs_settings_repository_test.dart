@@ -151,7 +151,10 @@ void main() {
 
   group('쉬는 기간', () {
     late PrefsSettingsRepository repo;
-    final pause = AlarmPause(from: DateTime(2026, 10, 8), until: DateTime(2026, 10, 12));
+    final pause = AlarmPause(
+      from: DateTime(2026, 10, 8),
+      until: DateTime(2026, 10, 12),
+    );
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
@@ -164,10 +167,14 @@ void main() {
 
     test('날짜만 왕복한다', () async {
       await repo.save(AppSettings(pause: pause));
-      final reread = PrefsSettingsRepository(await SharedPreferences.getInstance());
+      final reread = PrefsSettingsRepository(
+        await SharedPreferences.getInstance(),
+      );
       expect(reread.load().pause, pause);
       expect(
-        (await SharedPreferences.getInstance()).getString(PrefsSettingsRepository.pauseFromKey),
+        (await SharedPreferences.getInstance()).getString(
+          PrefsSettingsRepository.pauseFromKey,
+        ),
         '2026-10-08',
       );
     });
@@ -189,7 +196,9 @@ void main() {
         PrefsSettingsRepository.pauseFromKey: '2026-10-08',
         PrefsSettingsRepository.pauseUntilKey: 7,
       });
-      final broken = PrefsSettingsRepository(await SharedPreferences.getInstance());
+      final broken = PrefsSettingsRepository(
+        await SharedPreferences.getInstance(),
+      );
       expect(broken.load().pause, isNull);
     });
   });

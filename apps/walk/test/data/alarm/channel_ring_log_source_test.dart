@@ -6,7 +6,8 @@ import 'package:walk/domain/alarm/entity/ring_log_entry.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const channel = MethodChannel(ChannelRingLogSource.channelName);
-  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   late List<MethodCall> calls;
   const source = ChannelRingLogSource();
 
@@ -75,7 +76,10 @@ void main() {
       expect(await source.read(since: monday7), isEmpty);
 
       answer((_) => throw PlatformException(code: 'failed'));
-      await expectLater(source.read(since: monday7), throwsA(isA<PlatformException>()));
+      await expectLater(
+        source.read(since: monday7),
+        throwsA(isA<PlatformException>()),
+      );
     });
   });
 
@@ -83,14 +87,22 @@ void main() {
     test('at(epoch millis) · packageId · kind 이름을 넘긴다', () async {
       answer((_) => null);
 
-      await source.append(RingLogEntry(at: monday7, packageId: 101, kind: RingLogKind.skipped));
+      await source.append(
+        RingLogEntry(at: monday7, packageId: 101, kind: RingLogKind.skipped),
+      );
 
       expect(calls.single.method, 'append');
-      expect(calls.single.arguments, {'at': ms, 'packageId': 101, 'kind': 'skipped'});
+      expect(calls.single.arguments, {
+        'at': ms,
+        'packageId': 101,
+        'kind': 'skipped',
+      });
     });
 
     test('채널이 없으면 무시한다', () async {
-      await source.append(RingLogEntry(at: monday7, packageId: 101, kind: RingLogKind.skipped));
+      await source.append(
+        RingLogEntry(at: monday7, packageId: 101, kind: RingLogKind.skipped),
+      );
     });
   });
 }

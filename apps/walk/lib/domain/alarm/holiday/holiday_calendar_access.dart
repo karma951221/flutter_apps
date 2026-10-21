@@ -26,10 +26,13 @@ class HolidayCalendarAccess {
   /// 새로 허용되면 [ensure] 처럼 바로 다시 읽는다.
   Future<PermissionStatus> requestAgain() => _asking(calendar.requestAgain);
 
-  Future<PermissionStatus> _asking(Future<PermissionStatus> Function() ask) async {
+  Future<PermissionStatus> _asking(
+    Future<PermissionStatus> Function() ask,
+  ) async {
     final before = await calendar.check();
     final after = await ask();
-    if (before != PermissionStatus.granted && after == PermissionStatus.granted) {
+    if (before != PermissionStatus.granted &&
+        after == PermissionStatus.granted) {
       await refresher.refresh(force: true);
     }
     return after;

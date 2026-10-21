@@ -35,7 +35,11 @@ class RingLogEntry with _$RingLogEntry {
   @override
   final RingLogKind kind;
 
-  const RingLogEntry({required this.at, required this.packageId, required this.kind});
+  const RingLogEntry({
+    required this.at,
+    required this.packageId,
+    required this.kind,
+  });
 
   int get alarmId => alarmIdOf(packageId);
 }

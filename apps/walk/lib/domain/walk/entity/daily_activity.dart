@@ -23,5 +23,6 @@ class DailyActivity with _$DailyActivity {
   });
 
   /// 기록 없는 날. (Freezed 가 factory 를 union 으로 오해하지 않게 static 으로 둔다.)
-  static DailyActivity empty(DateTime date) => DailyActivity(date: date, steps: 0);
+  static DailyActivity empty(DateTime date) =>
+      DailyActivity(date: date, steps: 0);
 }

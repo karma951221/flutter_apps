@@ -14,8 +14,14 @@ import 'holiday_settings_state.dart';
 /// 공휴일 미리 알림을 바꾸면 알람을 다시 맞춘다(sync 가 미리 알림을 걸거나 지운다). 캘린더
 /// 권한을 새로 받으면 오늘 이미 읽은 캐시(내장 표)를 버리고 폰 캘린더를 다시 읽은 뒤 맞춘다.
 class HolidaySettingsCubit extends Cubit<HolidaySettingsState> {
-  HolidaySettingsCubit(this._settings, this._holidays, this._access, this._alarms)
-    : super(HolidaySettingsState(holidayReminder: _settings.load().holidayReminder)) {
+  HolidaySettingsCubit(
+    this._settings,
+    this._holidays,
+    this._access,
+    this._alarms,
+  ) : super(
+        HolidaySettingsState(holidayReminder: _settings.load().holidayReminder),
+      ) {
     // 시작 · 하루 sync 의 캐시 갱신이 check 보다 늦게 끝나도 출처가 옛것으로 남지 않게 한다.
     _refreshed = _access.refresher.refreshed.listen((_) {
       if (!isClosed) emit(state.copyWith(source: _holidays.source));
@@ -51,11 +57,13 @@ class HolidaySettingsCubit extends Cubit<HolidaySettingsState> {
       await _syncQuietly();
     }
     if (isClosed) return;
-    emit(HolidaySettingsState(
-      holidayReminder: _settings.load().holidayReminder,
-      source: _holidays.source,
-      calendar: calendar,
-    ));
+    emit(
+      HolidaySettingsState(
+        holidayReminder: _settings.load().holidayReminder,
+        source: _holidays.source,
+        calendar: calendar,
+      ),
+    );
   }
 
   /// 스위치. 바로 반영해 저장하고, 켰으면 캘린더 권한을 묻는다(거부하면 내장 표). 알람을 맞춘다.

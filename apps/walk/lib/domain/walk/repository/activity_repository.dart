@@ -20,5 +20,8 @@ abstract interface class ActivityRepository {
   Future<void> openInstall();
 
   /// [from] 부터 [to] 까지(자정, 양 끝 포함) 모든 날. 기록 없는 날은 [DailyActivity.empty].
-  Future<Result<List<DailyActivity>>> dailyActivities(DateTime from, DateTime to);
+  Future<Result<List<DailyActivity>>> dailyActivities(
+    DateTime from,
+    DateTime to,
+  );
 }

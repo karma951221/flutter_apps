@@ -44,10 +44,13 @@ class PrefsSettingsRepository implements SettingsRepository {
   AlarmPause? _pause() {
     final from = _date(_prefs.get(pauseFromKey));
     final until = _date(_prefs.get(pauseUntilKey));
-    return from == null || until == null ? null : AlarmPause(from: from, until: until);
+    return from == null || until == null
+        ? null
+        : AlarmPause(from: from, until: until);
   }
 
-  static DateTime? _date(Object? value) => value is String ? DateTime.tryParse(value) : null;
+  static DateTime? _date(Object? value) =>
+      value is String ? DateTime.tryParse(value) : null;
 
   /// 날짜만 저장한다(yyyy-MM-dd). 읽으면 로컬 자정이 된다.
   static String _day(DateTime date) => date.toIso8601String().substring(0, 10);

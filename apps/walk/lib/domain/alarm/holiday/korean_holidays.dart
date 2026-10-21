@@ -81,8 +81,10 @@ class KoreanHolidayCalendar implements HolidayCalendar {
   static const lastYear = 2027;
 
   @override
-  String? nameOf(DateTime date) => koreanHolidays[date.year * 10000 + date.month * 100 + date.day];
+  String? nameOf(DateTime date) =>
+      koreanHolidays[date.year * 10000 + date.month * 100 + date.day];
 
   @override
-  HolidaySource get source => const HolidaySource.bundled(firstYear: firstYear, lastYear: lastYear);
+  HolidaySource get source =>
+      const HolidaySource.bundled(firstYear: firstYear, lastYear: lastYear);
 }

@@ -15,7 +15,10 @@ class ChannelDeviceHolidaySource implements DeviceHolidaySource {
 
   @override
   Future<List<DeviceHoliday>?> read(DateTime from, DateTime to) async {
-    final rows = await _invoke<List<Object?>>('read', {'from': _day(from), 'to': _day(to)});
+    final rows = await _invoke<List<Object?>>('read', {
+      'from': _day(from),
+      'to': _day(to),
+    });
     if (rows == null) return null;
     return [
       for (final row in rows)

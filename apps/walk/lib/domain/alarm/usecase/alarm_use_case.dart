@@ -129,10 +129,12 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   }
 
   @override
-  Future<List<Alarm>> list() => _serial(() async => _sorted(await _repository.load()));
+  Future<List<Alarm>> list() =>
+      _serial(() async => _sorted(await _repository.load()));
 
   @override
-  Future<Alarm?> find(int alarmId) => _serial(() async => _byId(await _repository.load(), alarmId));
+  Future<Alarm?> find(int alarmId) =>
+      _serial(() async => _byId(await _repository.load(), alarmId));
 
   @override
   Future<Alarm?> findByPackageId(int packageId) => find(alarmIdOf(packageId));
@@ -141,7 +143,9 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   Future<Alarm> save(Alarm alarm) => _serial(() async {
     final now = _clock.now();
     final alarms = await _repository.load();
-    final id = alarm.id == Alarm.unsavedId ? _newId(alarms, await _loggedAlarmIds()) : alarm.id;
+    final id = alarm.id == Alarm.unsavedId
+        ? _newId(alarms, await _loggedAlarmIds())
+        : alarm.id;
     // 1회성: 화면이 정한 oneShotAt 이 미래면 그대로(초까지), 없거나 지났으면 다음 hour:minute.
     // hour · minute 는 정해진 시각에 맞춘다(목록 표시용).
     final given = alarm.oneShotAt;
@@ -161,14 +165,18 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     // 건너뛰기는 새 정의에도 그 회차가 있을 때만 남긴다. 시각 · 요일을 바꿔 옛 회차가 없어지면
     // 지운다 — 남기면 아무것도 건너뛰지 않으면서 "건너뜀" 으로 보이고, 시각을 되돌리면 되살아난다.
     final skippedAt = alarm.skippedAt;
-    final saved = skippedAt != null &&
+    final saved =
+        skippedAt != null &&
             !defined.isOneShot &&
             upcomingTriggers(defined, now).any(skippedAt.isAtSameMomentAs)
         ? defined.copyWith(skippedAt: skippedAt)
         : defined;
     final index = alarms.indexWhere((a) => a.id == id);
     await _repository.save([
-      if (index < 0) ...[...alarms, saved] else
+      if (index < 0) ...[
+        ...alarms,
+        saved,
+      ] else
         for (final a in alarms) a.id == id ? saved : a,
     ]);
     // 시각 · 요일 · 라벨이 바뀌었을 수 있으니 이 알람의 예약을 비우고 다시 건다.
@@ -180,28 +188,34 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   @override
   Future<void> delete(int alarmId) => _serial(() async {
     final alarms = await _repository.load();
-    await _repository.save([for (final a in alarms) if (a.id != alarmId) a]);
+    await _repository.save([
+      for (final a in alarms)
+        if (a.id != alarmId) a,
+    ]);
     await _cancelAll(alarmId);
     await _sync();
   });
 
   @override
-  Future<Alarm?> toggle(int alarmId, {required bool enabled}) => _serial(() async {
-    final alarms = await _repository.load();
-    final alarm = _byId(alarms, alarmId);
-    if (alarm == null) return null;
-    final toggled = alarm.copyWith(
-      enabled: enabled,
-      oneShotAt: enabled && alarm.isOneShot
-          ? nextOccurrence(alarm.hour, alarm.minute, _clock.now())
-          : alarm.oneShotAt,
-    );
-    await _repository.save([for (final a in alarms) a.id == alarmId ? toggled : a]);
-    // 끌 때는 스누즈된 회차까지 지운다. sync 는 스누즈 회차를 남기기 때문이다.
-    await _cancelAll(alarmId);
-    await _sync();
-    return toggled;
-  });
+  Future<Alarm?> toggle(int alarmId, {required bool enabled}) =>
+      _serial(() async {
+        final alarms = await _repository.load();
+        final alarm = _byId(alarms, alarmId);
+        if (alarm == null) return null;
+        final toggled = alarm.copyWith(
+          enabled: enabled,
+          oneShotAt: enabled && alarm.isOneShot
+              ? nextOccurrence(alarm.hour, alarm.minute, _clock.now())
+              : alarm.oneShotAt,
+        );
+        await _repository.save([
+          for (final a in alarms) a.id == alarmId ? toggled : a,
+        ]);
+        // 끌 때는 스누즈된 회차까지 지운다. sync 는 스누즈 회차를 남기기 때문이다.
+        await _cancelAll(alarmId);
+        await _sync();
+        return toggled;
+      });
 
   @override
   Future<void> sync() => _serial(_sync);
@@ -234,7 +248,8 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   @override
   Future<bool> canSnooze(int packageId) => _serial(() async {
     final alarm = _byId(await _repository.load(), alarmIdOf(packageId));
-    return alarm != null && _snoozable(alarm, await _scheduler.snoozeCountOf(packageId));
+    return alarm != null &&
+        _snoozable(alarm, await _scheduler.snoozeCountOf(packageId));
   });
 
   static bool _snoozable(Alarm alarm, int count) {
@@ -275,7 +290,8 @@ class DefaultAlarmUseCase implements AlarmUseCase {
       return;
     }
     if (alarm.isOneShot) {
-      final at = (await _scheduler.scheduled())[packageId]?.at ?? alarm.oneShotAt;
+      final at =
+          (await _scheduler.scheduled())[packageId]?.at ?? alarm.oneShotAt;
       await _put(alarm.copyWith(enabled: false));
       await _cancelUnlessRinging(packageId);
       if (at != null) await _logSkip(packageId, at);
@@ -285,10 +301,10 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     // 규칙의 회차 시각. 이미 규칙에 없으면(건너뛴 뒤 · 지난 회차) 걸린 예약의 시각을 쓴다.
     final now = _clock.now();
     final at =
-        triggersOf(alarm.copyWith(skippedAt: null), now)
-            .where((t) => t.packageId == packageId)
-            .firstOrNull
-            ?.at ??
+        triggersOf(
+          alarm.copyWith(skippedAt: null),
+          now,
+        ).where((t) => t.packageId == packageId).firstOrNull?.at ??
         (await _scheduler.scheduled())[packageId]?.at;
     if (at == null || !at.isAfter(now)) {
       await _cancelUnlessRinging(packageId);
@@ -313,7 +329,9 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   /// 건너뛴 회차를 울림 기록에 남긴다. 실패는 삼킨다 — 기록 때문에 건너뛰기가 실패하면 안 된다.
   Future<void> _logSkip(int packageId, DateTime at) async {
     try {
-      await _ringLog.append(RingLogEntry(at: at, packageId: packageId, kind: RingLogKind.skipped));
+      await _ringLog.append(
+        RingLogEntry(at: at, packageId: packageId, kind: RingLogKind.skipped),
+      );
     } on Object {
       // 기록은 보조 기능이다.
     }
@@ -322,12 +340,15 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   /// 저장소의 같은 id 알람을 [alarm] 으로 바꾼다.
   Future<void> _put(Alarm alarm) async {
     final alarms = await _repository.load();
-    await _repository.save([for (final a in alarms) a.id == alarm.id ? alarm : a]);
+    await _repository.save([
+      for (final a in alarms) a.id == alarm.id ? alarm : a,
+    ]);
   }
 
   Future<void> _cancelUnlessRinging(int packageId) async {
     if ((await _scheduler.ringingIds()).contains(packageId)) return;
-    if ((await _scheduler.scheduled()).containsKey(packageId)) await _scheduler.cancel(packageId);
+    if ((await _scheduler.scheduled()).containsKey(packageId))
+      await _scheduler.cancel(packageId);
   }
 
   @override
@@ -337,7 +358,8 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   });
 
   @override
-  Future<AlarmPause?> pause() => _serial(() async => _activePause(_clock.now()));
+  Future<AlarmPause?> pause() =>
+      _serial(() async => _activePause(_clock.now()));
 
   /// 설정의 쉬는 기간. 끝 날이 지났으면 null(설정은 [_currentPause] 가 sync 에서 지운다).
   AlarmPause? _activePause(DateTime now) {
@@ -351,8 +373,10 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     if (pause != null) {
       // sync 는 스누즈 보존 창 안의 회차를 남기므로 기간 회차를 명시적으로 지운다.
       final ringing = await _scheduler.ringingIds();
-      for (final MapEntry(key: id, value: (:at, signature: _)) in (await _scheduler.scheduled()).entries) {
-        if (pause.contains(at) && !ringing.contains(id)) await _scheduler.cancel(id);
+      for (final MapEntry(key: id, value: (:at, signature: _))
+          in (await _scheduler.scheduled()).entries) {
+        if (pause.contains(at) && !ringing.contains(id))
+          await _scheduler.cancel(id);
       }
     }
     await _sync();
@@ -361,9 +385,13 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   @override
   Future<Map<int, DateTime>> nextRings() => _serial(() async {
     final now = _clock.now();
-    final enabled = {for (final a in await _repository.load()) if (a.enabled) a.id};
+    final enabled = {
+      for (final a in await _repository.load())
+        if (a.enabled) a.id,
+    };
     final next = <int, DateTime>{};
-    for (final MapEntry(key: id, value: (:at, signature: _)) in (await _scheduler.scheduled()).entries) {
+    for (final MapEntry(key: id, value: (:at, signature: _))
+        in (await _scheduler.scheduled()).entries) {
       final alarmId = alarmIdOf(id);
       if (!enabled.contains(alarmId) || !at.isAfter(now)) continue;
       final earliest = next[alarmId];
@@ -392,9 +420,13 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     };
     // 꺼진 알람의 회차는 곧 울릴 참이어도 남기지 않는다 — 꺼 둔 알람이 울리면 안 된다.
     // 켜진 알람은 스누즈 보존 창을 알람의 스누즈 간격으로 잡는다.
-    final enabled = {for (final a in alarms) if (a.enabled) a.id: a};
+    final enabled = {
+      for (final a in alarms)
+        if (a.enabled) a.id: a,
+    };
 
-    for (final MapEntry(key: id, value: (:at, signature: _)) in scheduled.entries) {
+    for (final MapEntry(key: id, value: (:at, signature: _))
+        in scheduled.entries) {
       if (desired.containsKey(id) || ringing.contains(id)) continue;
       // 스누즈된 회차(또는 막 울릴 참인 회차)는 원래 회차가 지나 원하는 목록에 없다.
       // 알람이 켜져 있고 시각이 스누즈 간격 안이면 둔다. 끄기 · 삭제 · 수정은 [_cancelAll] 로 지운다.
@@ -409,7 +441,9 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     // 시각이 같아도 지문이 다르면(설정이 바뀌었거나 지문 없는 옛 회차) 지금 설정으로 다시 건다.
     for (final MapEntry(key: id, value: (trigger, alarm)) in desired.entries) {
       if (ringing.contains(id)) continue;
-      if (scheduled[id] == (at: trigger.at, signature: _scheduler.signatureOf(alarm))) continue;
+      if (scheduled[id] ==
+          (at: trigger.at, signature: _scheduler.signatureOf(alarm)))
+        continue;
       await _scheduler.schedule(id, trigger.at, alarm);
     }
     await _syncReminders(alarms, now, pause);
@@ -425,10 +459,15 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   /// 알고 둔 한계다(웨이브 4 스펙 C5).
   Future<void> _showWidget(List<Alarm> alarms, DateTime now) async {
     try {
-      final enabled = {for (final a in alarms) if (a.enabled) a.id: a};
+      final enabled = {
+        for (final a in alarms)
+          if (a.enabled) a.id: a,
+      };
       final rings = <WidgetRing>[
-        for (final MapEntry(key: id, value: (:at, signature: _)) in (await _scheduler.scheduled()).entries)
-          if (enabled[alarmIdOf(id)] case final alarm? when at.isAfter(now)) (at: at, title: alarm.label),
+        for (final MapEntry(key: id, value: (:at, signature: _))
+            in (await _scheduler.scheduled()).entries)
+          if (enabled[alarmIdOf(id)] case final alarm? when at.isAfter(now))
+            (at: at, title: alarm.label),
       ]..sort((a, b) => a.at.compareTo(b.at));
       await _widget.show(rings.take(NextAlarmWidget.maxRings).toList());
     } on Object {
@@ -453,7 +492,11 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   /// 않는다) 거기서 빠지지만 지우면 사용자가 보던 알림이 사라진다. 다시 걸지도 않는다(같은 알림이
   /// 또 뜬다). id 는 회차(날짜)로만 정해지므로 알람 시각을 바꾸면 울릴 시각으로 가린다: 바뀌었으면
   /// 옛 시각을 보여 주는 알림을 지금 정의로 다시 걸거나(원하는 목록에 있을 때) 지운다.
-  Future<void> _syncReminders(List<Alarm> alarms, DateTime now, AlarmPause? pause) async {
+  Future<void> _syncReminders(
+    List<Alarm> alarms,
+    DateTime now,
+    AlarmPause? pause,
+  ) async {
     try {
       final holidayReminder = _settings.load().holidayReminder;
       final desired = <int, (AlarmReminder, Alarm)>{};
@@ -461,33 +504,38 @@ class DefaultAlarmUseCase implements AlarmUseCase {
       final alive = <int, DateTime>{};
       for (final alarm in alarms) {
         final triggers = triggersOf(alarm, now, pause: pause);
-        List<AlarmReminder> of({Duration soonLead = alarmSoonLead}) => remindersOf(
-          alarm,
-          triggers,
-          now,
-          holidays: _holidays,
-          holidayReminder: holidayReminder,
-          soonLead: soonLead,
-        );
+        List<AlarmReminder> of({Duration soonLead = alarmSoonLead}) =>
+            remindersOf(
+              alarm,
+              triggers,
+              now,
+              holidays: _holidays,
+              holidayReminder: holidayReminder,
+              soonLead: soonLead,
+            );
         for (final reminder in of()) {
           desired[reminder.id] = (reminder, alarm);
         }
         // 리드를 0 으로 두면 울릴 시각 전인 모든 회차 — 떠 있어도 되는 것.
         alive.addAll({
-          for (final reminder in of(soonLead: Duration.zero)) reminder.id: reminder.ringAt,
+          for (final reminder in of(soonLead: Duration.zero))
+            reminder.id: reminder.ringAt,
         });
       }
 
       final scheduled = await _reminders.scheduled();
       // 원하는 것은 아래에서 같은 id 로 덮어쓴다.
-      for (final MapEntry(key: id, value: (:at, :ringAt)) in scheduled.entries) {
+      for (final MapEntry(key: id, value: (:at, :ringAt))
+          in scheduled.entries) {
         final shown = !at.isAfter(now);
         if (desired.containsKey(id) || (shown && alive[id] == ringAt)) continue;
         await _reminders.cancel(id);
       }
-      for (final MapEntry(key: id, value: (reminder, alarm)) in desired.entries) {
+      for (final MapEntry(key: id, value: (reminder, alarm))
+          in desired.entries) {
         if (scheduled[id] case (:final at, :final ringAt)
-            when ringAt == reminder.ringAt && (at == reminder.at || !at.isAfter(now))) {
+            when ringAt == reminder.ringAt &&
+                (at == reminder.at || !at.isAfter(now))) {
           continue;
         }
         await _reminders.schedule(reminder, alarm);
@@ -510,8 +558,10 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     // 정리가 지우지 않고 두는 [dueGrace] 창과 같다. 여기서 끄면 울리는 동안 스위치가 꺼지고,
     // 스누즈한 뒤 다음 울림에서도 빠진다.
     final pending = {
-      for (final MapEntry(key: id, value: (:at, signature: _)) in scheduled.entries)
-        if (at.isAfter(now.subtract(dueGrace)) || ringing.contains(id)) alarmIdOf(id),
+      for (final MapEntry(key: id, value: (:at, signature: _))
+          in scheduled.entries)
+        if (at.isAfter(now.subtract(dueGrace)) || ringing.contains(id))
+          alarmIdOf(id),
     };
     bool expired(Alarm a) =>
         a.enabled &&
@@ -519,7 +569,9 @@ class DefaultAlarmUseCase implements AlarmUseCase {
         !(a.oneShotAt?.isAfter(now) ?? false) &&
         !pending.contains(a.id);
     if (!alarms.any(expired)) return alarms;
-    final updated = [for (final a in alarms) expired(a) ? a.copyWith(enabled: false) : a];
+    final updated = [
+      for (final a in alarms) expired(a) ? a.copyWith(enabled: false) : a,
+    ];
     await _repository.save(updated);
     return updated;
   }
@@ -533,7 +585,9 @@ class DefaultAlarmUseCase implements AlarmUseCase {
       final at = a.skippedAt!;
       await _logSkip(packageId(a.id, triggerIndex(at)), at);
     }
-    final updated = [for (final a in alarms) past(a) ? a.copyWith(skippedAt: null) : a];
+    final updated = [
+      for (final a in alarms) past(a) ? a.copyWith(skippedAt: null) : a,
+    ];
     await _repository.save(updated);
     return updated;
   }
@@ -543,7 +597,8 @@ class DefaultAlarmUseCase implements AlarmUseCase {
     final scheduled = await _scheduler.scheduled();
     final ringing = await _scheduler.ringingIds();
     for (final id in scheduled.keys) {
-      if (alarmIdOf(id) == alarmId && !ringing.contains(id)) await _scheduler.cancel(id);
+      if (alarmIdOf(id) == alarmId && !ringing.contains(id))
+        await _scheduler.cancel(id);
     }
   }
 
@@ -566,7 +621,10 @@ class DefaultAlarmUseCase implements AlarmUseCase {
   /// 울림 기록에 남은 알람 id. 읽지 못하면 비어 있다 — 기록 때문에 저장이 실패하면 안 된다.
   Future<Set<int>> _loggedAlarmIds() async {
     try {
-      return {for (final e in await _ringLog.read(since: DateTime(0))) alarmIdOf(e.packageId)};
+      return {
+        for (final e in await _ringLog.read(since: DateTime(0)))
+          alarmIdOf(e.packageId),
+      };
     } on Object {
       return const {};
     }

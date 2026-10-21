@@ -30,7 +30,8 @@ class PackageAlarmScheduler implements AlarmScheduler {
 
   @override
   Future<Map<int, ScheduledRing>> scheduled() async => {
-    for (final settings in await pkg.Alarm.getAlarms()) settings.id: ringOf(settings),
+    for (final settings in await pkg.Alarm.getAlarms())
+      settings.id: ringOf(settings),
   };
 
   @override
@@ -40,7 +41,10 @@ class PackageAlarmScheduler implements AlarmScheduler {
   static ScheduledRing ringOf(pkg.AlarmSettings settings) {
     final payload = settings.payload ?? '';
     final bar = payload.indexOf('|');
-    return (at: settings.dateTime, signature: bar < 0 ? '' : payload.substring(bar + 1));
+    return (
+      at: settings.dateTime,
+      signature: bar < 0 ? '' : payload.substring(bar + 1),
+    );
   }
 
   /// 울림에 영향을 주는 값(소리 · 대체음 · 무음 모드 체크 · 라벨 · 볼륨 · 페이드 · 스누즈 간격 · 한도 ·
@@ -86,14 +90,27 @@ class PackageAlarmScheduler implements AlarmScheduler {
     final now = DateTime.now();
     return {
       for (final settings in await pkg.Alarm.getAlarms())
-        if (!settings.dateTime.isAfter(now) && await pkg.Alarm.isRinging(settings.id)) settings.id,
+        if (!settings.dateTime.isAfter(now) &&
+            await pkg.Alarm.isRinging(settings.id))
+          settings.id,
     };
   }
 
   @override
-  Future<void> schedule(int packageId, DateTime at, Alarm alarm, {int snoozeCount = 0}) async {
+  Future<void> schedule(
+    int packageId,
+    DateTime at,
+    Alarm alarm, {
+    int snoozeCount = 0,
+  }) async {
     await pkg.Alarm.set(
-      alarmSettings: settingsFor(packageId, at, alarm, _texts(), snoozeCount: snoozeCount),
+      alarmSettings: settingsFor(
+        packageId,
+        at,
+        alarm,
+        _texts(),
+        snoozeCount: snoozeCount,
+      ),
     );
   }
 
@@ -157,7 +174,9 @@ class PackageAlarmScheduler implements AlarmScheduler {
       androidStopAlarmOnTermination: false,
       // 여러 알람이 같은 시각이어도 서로 지우지 않고 차례로 울린다.
       allowSameSecondScheduling: true,
-      androidSnoozeDuration: canSnooze ? Duration(minutes: alarm.snoozeMinutes) : null,
+      androidSnoozeDuration: canSnooze
+          ? Duration(minutes: alarm.snoozeMinutes)
+          : null,
       androidSnoozeLimit: limit,
       snoozeCount: snoozeCount,
       androidAutoStopAfter: switch (alarm.autoStopMinutes) {
@@ -168,7 +187,9 @@ class PackageAlarmScheduler implements AlarmScheduler {
         title: alarm.label.isEmpty ? texts.defaultTitle : alarm.label,
         body: _time(texts.locale, alarm.hour, alarm.minute),
         stopButton: texts.stop,
-        androidSnoozeButton: canSnooze ? texts.snooze(alarm.snoozeMinutes) : null,
+        androidSnoozeButton: canSnooze
+            ? texts.snooze(alarm.snoozeMinutes)
+            : null,
         // 적응형 런처 아이콘은 상태바에서 덩어리로 보인다.
         icon: notificationIcon,
       ),

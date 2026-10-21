@@ -13,7 +13,6 @@ import '../format/diary_format.dart';
 import '../widget/entry_media_view.dart';
 import '../widget/entry_meta.dart';
 import '../widget/story_avatar.dart';
-import '../widget/story_bar.dart';
 import 'story_progress_bar.dart';
 import 'viewer_model.dart';
 

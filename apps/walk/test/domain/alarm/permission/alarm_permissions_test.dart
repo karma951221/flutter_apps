@@ -21,8 +21,12 @@ void main() {
   });
 
   test('ensureForAlarm 은 알림 → 정확한 알람 순서로 확인한다', () async {
-    when(() => notification.ensure()).thenAnswer((_) async => PermissionStatus.denied);
-    when(() => exactAlarm.ensure()).thenAnswer((_) async => PermissionStatus.granted);
+    when(
+      () => notification.ensure(),
+    ).thenAnswer((_) async => PermissionStatus.denied);
+    when(
+      () => exactAlarm.ensure(),
+    ).thenAnswer((_) async => PermissionStatus.granted);
 
     await permissions.ensureForAlarm();
 
@@ -30,15 +34,25 @@ void main() {
   });
 
   test('canRing 은 둘 다 허용일 때만 true', () async {
-    when(() => notification.check()).thenAnswer((_) async => PermissionStatus.granted);
-    when(() => exactAlarm.check()).thenAnswer((_) async => PermissionStatus.granted);
+    when(
+      () => notification.check(),
+    ).thenAnswer((_) async => PermissionStatus.granted);
+    when(
+      () => exactAlarm.check(),
+    ).thenAnswer((_) async => PermissionStatus.granted);
     expect(await permissions.canRing(), isTrue);
 
-    when(() => exactAlarm.check()).thenAnswer((_) async => PermissionStatus.denied);
+    when(
+      () => exactAlarm.check(),
+    ).thenAnswer((_) async => PermissionStatus.denied);
     expect(await permissions.canRing(), isFalse);
 
-    when(() => exactAlarm.check()).thenAnswer((_) async => PermissionStatus.granted);
-    when(() => notification.check()).thenAnswer((_) async => PermissionStatus.permanentlyDenied);
+    when(
+      () => exactAlarm.check(),
+    ).thenAnswer((_) async => PermissionStatus.granted);
+    when(
+      () => notification.check(),
+    ).thenAnswer((_) async => PermissionStatus.permanentlyDenied);
     expect(await permissions.canRing(), isFalse);
   });
 }

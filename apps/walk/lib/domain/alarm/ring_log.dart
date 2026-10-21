@@ -57,7 +57,10 @@ class RingLogGroup with _$RingLogGroup {
 /// 스누즈 · 끔은 실제 시각으로 남아 자정을 넘길 수 있으니 기록 날짜로 나누지 않는다.
 /// packageId 의 index 는 회차 날짜로 정해 100일마다 돌아오므로, 그보다 짧은 창이면 다른 회차와
 /// 섞이지 않는다.
-List<RingLogGroup> ringLogGroups(List<RingLogEntry> entries, List<Alarm> alarms) {
+List<RingLogGroup> ringLogGroups(
+  List<RingLogEntry> entries,
+  List<Alarm> alarms,
+) {
   final byId = {for (final a in alarms) a.id: a};
   final buckets = <List<RingLogEntry>>[];
   final open = <int, List<RingLogEntry>>{};
@@ -71,7 +74,11 @@ List<RingLogGroup> ringLogGroups(List<RingLogEntry> entries, List<Alarm> alarms)
   }
   final groups = [
     for (final events in buckets)
-      _group(events.first.packageId, events, byId[alarmIdOf(events.first.packageId)]),
+      _group(
+        events.first.packageId,
+        events,
+        byId[alarmIdOf(events.first.packageId)],
+      ),
   ];
   return groups..sort((a, b) => b.at.compareTo(a.at));
 }
@@ -80,7 +87,8 @@ List<RingLogGroup> ringLogGroups(List<RingLogEntry> entries, List<Alarm> alarms)
 const occurrenceSpan = Duration(days: 1);
 
 RingLogGroup _group(int packageId, List<RingLogEntry> events, Alarm? alarm) {
-  DateTime? first(RingLogKind kind) => events.where((e) => e.kind == kind).firstOrNull?.at;
+  DateTime? first(RingLogKind kind) =>
+      events.where((e) => e.kind == kind).firstOrNull?.at;
   final ends = events.where(
     (e) => e.kind == RingLogKind.stopped || e.kind == RingLogKind.autoStopped,
   );

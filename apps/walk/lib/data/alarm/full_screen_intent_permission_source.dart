@@ -4,7 +4,9 @@ import 'package:permission/permission.dart';
 /// Android 14+ `USE_FULL_SCREEN_INTENT`. `permission_handler` 에 확인 API 가 없어
 /// MainActivity 의 채널로 `NotificationManager.canUseFullScreenIntent()` 를 읽는다.
 class FullScreenIntentPermissionSource implements PermissionSource {
-  FullScreenIntentPermissionSource([this._channel = const MethodChannel(channelName)]);
+  FullScreenIntentPermissionSource([
+    this._channel = const MethodChannel(channelName),
+  ]);
 
   final MethodChannel _channel;
 

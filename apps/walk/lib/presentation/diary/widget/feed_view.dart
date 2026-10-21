@@ -10,7 +10,6 @@ import '../format/diary_format.dart';
 import 'entry_media_view.dart';
 import 'entry_meta.dart';
 import 'story_avatar.dart';
-import 'story_bar.dart';
 
 /// 피드 카드 ⋮ 의 동작. 화면이 `entry_actions` 로 잇는다.
 enum FeedEntryAction { edit, move, trash }

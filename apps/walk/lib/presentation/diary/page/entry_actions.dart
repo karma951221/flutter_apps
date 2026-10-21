@@ -8,7 +8,7 @@ import '../../../domain/diary/entity/story.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
 import '../../../domain/diary/usecase/story_order.dart';
-import '../widget/story_bar.dart';
+import '../widget/story_avatar.dart';
 import '../widget/story_picker_sheet.dart';
 import 'entry_editor_page.dart';
 

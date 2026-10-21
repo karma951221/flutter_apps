@@ -11,7 +11,11 @@ void main() {
     });
 
     test('일요일에 열면 그 주 월요일부터다', () {
-      final range = periodRange(PeriodKind.week, 0, DateTime(2026, 9, 27, 23, 59));
+      final range = periodRange(
+        PeriodKind.week,
+        0,
+        DateTime(2026, 9, 27, 23, 59),
+      );
       expect(range.start, DateTime(2026, 9, 21));
     });
 

@@ -6,7 +6,6 @@ import 'package:l10n/l10n.dart';
 
 import '../../../domain/diary/entity/story.dart';
 import 'story_avatar.dart';
-import 'story_bar.dart';
 
 /// 줄에 보일 스토리 순서: 진행 중(기록 있는 것 `lastPostedAt` 최신순, 없는 것 뒤) +
 /// 닫힘(`endedAt` 최신순, 최대 [maxClosed]).

@@ -5,14 +5,34 @@ import 'package:walk/domain/alarm/entity/ring_log_entry.dart';
 import 'package:walk/domain/alarm/ring_log.dart';
 
 void main() {
-  const work = Alarm(id: 1, hour: 7, minute: 0, label: '출근', repeat: {Weekday.mon});
-  const gym = Alarm(id: 2, hour: 6, minute: 30, label: '운동', repeat: {Weekday.mon});
+  const work = Alarm(
+    id: 1,
+    hour: 7,
+    minute: 0,
+    label: '출근',
+    repeat: {Weekday.mon},
+  );
+  const gym = Alarm(
+    id: 2,
+    hour: 6,
+    minute: 30,
+    label: '운동',
+    repeat: {Weekday.mon},
+  );
   // 2026-10-05 월요일.
   final monday7 = DateTime(2026, 10, 5, 7);
   int pid(int alarmId, DateTime at) => packageId(alarmId, triggerIndex(at));
 
-  RingLogEntry entry(int alarmId, DateTime at, RingLogKind kind, {DateTime? occurrence}) =>
-      RingLogEntry(at: at, packageId: pid(alarmId, occurrence ?? at), kind: kind);
+  RingLogEntry entry(
+    int alarmId,
+    DateTime at,
+    RingLogKind kind, {
+    DateTime? occurrence,
+  }) => RingLogEntry(
+    at: at,
+    packageId: pid(alarmId, occurrence ?? at),
+    kind: kind,
+  );
 
   test('alarmId 는 packageId 에서 나온다', () {
     expect(entry(7, monday7, RingLogKind.rang).alarmId, 7);
@@ -60,14 +80,20 @@ void main() {
   });
 
   test('끔 기록이 없으면(울리는 중 · 앱이 죽음) 끝은 null', () {
-    final group = ringLogGroups([entry(1, monday7, RingLogKind.rang)], [work]).single;
+    final group = ringLogGroups(
+      [entry(1, monday7, RingLogKind.rang)],
+      [work],
+    ).single;
 
     expect(group.end, isNull);
     expect(group.endedAt, isNull);
   });
 
   test('건너뛴 회차는 그 회차 시각에 건너뜀으로 남는다', () {
-    final group = ringLogGroups([entry(1, monday7, RingLogKind.skipped)], [work]).single;
+    final group = ringLogGroups(
+      [entry(1, monday7, RingLogKind.skipped)],
+      [work],
+    ).single;
 
     expect(group.skipped, isTrue);
     expect(group.at, monday7);
@@ -89,7 +115,10 @@ void main() {
   });
 
   test('지운 알람의 회차는 alarm 이 null 이고 alarmId 는 남는다', () {
-    final group = ringLogGroups([entry(9, monday7, RingLogKind.rang)], [work]).single;
+    final group = ringLogGroups(
+      [entry(9, monday7, RingLogKind.rang)],
+      [work],
+    ).single;
 
     expect(group.alarm, isNull);
     expect(group.alarmId, 9);
@@ -130,13 +159,34 @@ void main() {
 
   test('자정을 넘긴 스누즈 · 끔도 같은 회차다', () {
     final sunday2355 = DateTime(2026, 10, 4, 23, 55);
-    final late = Alarm(id: 1, hour: 23, minute: 55, label: '약', repeat: const {Weekday.sun});
+    final late = Alarm(
+      id: 1,
+      hour: 23,
+      minute: 55,
+      label: '약',
+      repeat: const {Weekday.sun},
+    );
     final groups = ringLogGroups(
       [
         entry(1, sunday2355, RingLogKind.rang),
-        entry(1, DateTime(2026, 10, 4, 23, 56), RingLogKind.snoozed, occurrence: sunday2355),
-        entry(1, DateTime(2026, 10, 5, 0, 6), RingLogKind.rang, occurrence: sunday2355),
-        entry(1, DateTime(2026, 10, 5, 0, 7), RingLogKind.stopped, occurrence: sunday2355),
+        entry(
+          1,
+          DateTime(2026, 10, 4, 23, 56),
+          RingLogKind.snoozed,
+          occurrence: sunday2355,
+        ),
+        entry(
+          1,
+          DateTime(2026, 10, 5, 0, 6),
+          RingLogKind.rang,
+          occurrence: sunday2355,
+        ),
+        entry(
+          1,
+          DateTime(2026, 10, 5, 0, 7),
+          RingLogKind.stopped,
+          occurrence: sunday2355,
+        ),
       ],
       [late],
     );
