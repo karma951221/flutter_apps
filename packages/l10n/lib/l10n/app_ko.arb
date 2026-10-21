@@ -4134,9 +4134,9 @@
       }
     }
   },
-  "walkCommuteStationHeader": "{station} · {line} {way}",
+  "walkCommuteStationHeader": "{station} · {line} {way} 방면",
   "@walkCommuteStationHeader": {
-    "description": "첫 승차역 카드 제목 — 역 이름 · 노선 · 방면(예: 장승배기 · 7호선 장암 방면)",
+    "description": "첫 승차역 카드 제목 — 역 이름 · 노선 · 방면(예: 장승배기 · 7호선 장암 방면). way 는 방면 역 이름만(예: 장암)",
     "placeholders": {
       "station": {
         "type": "String"

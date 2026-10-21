@@ -14,7 +14,7 @@ const _leg = SubwayLeg(
   startStation: '장승배기',
   endStation: '논현',
   wayCode: 1,
-  wayName: '장암 방면',
+  wayName: '장암',
   stationCount: 8,
 );
 

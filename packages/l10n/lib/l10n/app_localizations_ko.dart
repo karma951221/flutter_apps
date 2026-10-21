@@ -2989,7 +2989,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String walkCommuteStationHeader(String station, String line, String way) {
-    return '$station · $line $way';
+    return '$station · $line $way 방면';
   }
 
   @override

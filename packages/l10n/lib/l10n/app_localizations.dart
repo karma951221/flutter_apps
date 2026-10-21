@@ -5618,10 +5618,10 @@ abstract class AppLocalizations {
   /// **'역까지 도보 {minutes}분'**
   String walkCommuteWalkToStation(int minutes);
 
-  /// 첫 승차역 카드 제목 — 역 이름 · 노선 · 방면(예: 장승배기 · 7호선 장암 방면)
+  /// 첫 승차역 카드 제목 — 역 이름 · 노선 · 방면(예: 장승배기 · 7호선 장암 방면). way 는 방면 역 이름만(예: 장암)
   ///
   /// In ko, this message translates to:
-  /// **'{station} · {line} {way}'**
+  /// **'{station} · {line} {way} 방면'**
   String walkCommuteStationHeader(String station, String line, String way);
 
   /// 목적지 도착 예상 시각

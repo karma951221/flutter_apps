@@ -939,7 +939,7 @@
   "walkCommuteTrainStationsAway": "{count}駅前",
   "walkCommuteTrainArriving": "まもなく到着",
   "walkCommuteWalkToStation": "駅まで徒歩{minutes}分",
-  "walkCommuteStationHeader": "{station} · {line} {way}",
+  "walkCommuteStationHeader": "{station} · {line} {way}方面",
   "walkCommuteEta": "到着予定 {time}",
   "walkCommuteEtaEstimated": "(推定)",
   "walkCommuteSummary": "合計{minutes}分 · 乗換{count}回",

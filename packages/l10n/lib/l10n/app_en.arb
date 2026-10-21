@@ -939,7 +939,7 @@
   "walkCommuteTrainStationsAway": "{count, plural, =1{1 stop away} other{{count} stops away}}",
   "walkCommuteTrainArriving": "Arriving",
   "walkCommuteWalkToStation": "{minutes} min walk to the station",
-  "walkCommuteStationHeader": "{station} · {line} {way}",
+  "walkCommuteStationHeader": "{station} · {line} toward {way}",
   "walkCommuteEta": "Arrive around {time}",
   "walkCommuteEtaEstimated": "(est.)",
   "walkCommuteSummary": "{minutes} min total · {count, plural, =1{1 transfer} other{{count} transfers}}",
