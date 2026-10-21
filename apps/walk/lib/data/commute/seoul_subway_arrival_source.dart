@@ -46,7 +46,8 @@ class SeoulSubwayArrivalSource implements SubwayArrivalSource {
     final http.Response response;
     try {
       response = await _client.get(uri).timeout(_timeout);
-    } on SocketException {
+    } on IOException {
+      // SocketException · HandshakeException · TlsException 등.
       throw const CommuteFailure.network();
     } on TimeoutException {
       throw const CommuteFailure.network();
@@ -65,6 +66,10 @@ class SeoulSubwayArrivalSource implements SubwayArrivalSource {
     }
 
     if (_isNoData(body)) return const [];
+    final status = response.statusCode;
+    if (status < 200 || status >= 300) {
+      throw CommuteFailure.server('HTTP $status');
+    }
 
     final list = body['realtimeArrivalList'];
     if (list is! List) return const [];
@@ -91,7 +96,8 @@ class SeoulSubwayArrivalSource implements SubwayArrivalSource {
     final Map<String, dynamic> error;
     if (nested is Map<String, dynamic>) {
       error = nested;
-    } else if (body.containsKey('code') && body['realtimeArrivalList'] == null) {
+    } else if (body.containsKey('code') &&
+        body['realtimeArrivalList'] == null) {
       error = body;
     } else {
       return false;
@@ -125,7 +131,9 @@ class SeoulSubwayArrivalSource implements SubwayArrivalSource {
 
     final minutes = _minutes(item, message, now);
     final line = '${item['trainLineNm'] ?? ''}';
-    final destination = line.contains(' - ') ? line.split(' - ').first.trim() : null;
+    final destination = line.contains(' - ')
+        ? line.split(' - ').first.trim()
+        : null;
 
     return _Row(
       sortKey: sortKey,
@@ -133,7 +141,9 @@ class SeoulSubwayArrivalSource implements SubwayArrivalSource {
         minutes: minutes,
         stationsAway: stationsAway,
         message: message,
-        destination: (destination == null || destination.isEmpty) ? null : destination,
+        destination: (destination == null || destination.isEmpty)
+            ? null
+            : destination,
       ),
     );
   }
@@ -150,7 +160,10 @@ class SeoulSubwayArrivalSource implements SubwayArrivalSource {
     final barvlDt = int.tryParse('${item['barvlDt'] ?? ''}') ?? 0;
     if (barvlDt > 0) {
       final received = _parseSeoulTime('${item['recptnDt'] ?? ''}');
-      final elapsed = received == null ? 0 : now.difference(received).inSeconds;
+      // 서버 시각이 폰보다 앞서도(음수) 분이 늘어나지 않게 0 아래로 내리지 않는다.
+      final elapsed = received == null
+          ? 0
+          : math.max(0, now.difference(received).inSeconds);
       return math.max(0, ((barvlDt - elapsed) / 60).ceil());
     }
     final m = RegExp(r'(\d+)분( (\d+)초)? 후').firstMatch(message);
@@ -166,17 +179,28 @@ class SeoulSubwayArrivalSource implements SubwayArrivalSource {
 
   /// `yyyy-MM-dd HH:mm:ss`(서울 현지, UTC+9)를 UTC 시각으로. 실패하면 null.
   DateTime? _parseSeoulTime(String text) {
-    final m = RegExp(r'^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})').firstMatch(text.trim());
+    final m = RegExp(
+      r'^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})',
+    ).firstMatch(text.trim());
     if (m == null) return null;
     final p = [for (var i = 1; i <= 6; i++) int.parse(m.group(i)!)];
-    return DateTime.utc(p[0], p[1], p[2], p[3], p[4], p[5]).subtract(const Duration(hours: 9));
+    return DateTime.utc(
+      p[0],
+      p[1],
+      p[2],
+      p[3],
+      p[4],
+      p[5],
+    ).subtract(const Duration(hours: 9));
   }
 
   static int _compare(_Row a, _Row b) {
     const big = 1 << 30;
     final byKey = (a.sortKey ?? big).compareTo(b.sortKey ?? big);
     if (byKey != 0) return byKey;
-    final byStations = (a.arrival.stationsAway ?? big).compareTo(b.arrival.stationsAway ?? big);
+    final byStations = (a.arrival.stationsAway ?? big).compareTo(
+      b.arrival.stationsAway ?? big,
+    );
     if (byStations != 0) return byStations;
     return (a.arrival.minutes ?? big).compareTo(b.arrival.minutes ?? big);
   }

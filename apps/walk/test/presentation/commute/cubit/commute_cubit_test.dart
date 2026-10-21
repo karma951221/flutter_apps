@@ -122,7 +122,7 @@ void main() {
     await cubit.query();
     expect(
       cubit.state.status,
-      const CommuteStatus.failure(CommuteFailure.server('')),
+      const CommuteStatus.failure(CommuteFailure.server('StateError')),
     );
     await cubit.close();
   });
@@ -233,6 +233,34 @@ void main() {
     const expected = Place(kind: PlaceKind.work, lat: 3, lng: 4, label: '판교');
     verify(() => useCase.savePlace(expected)).called(1);
     expect(cubit.state.work, expected);
+    await cubit.close();
+  });
+
+  test('saving a place clears the old result', () async {
+    when(() => useCase.query(any())).thenAnswer((_) async => _result);
+    final cubit = build();
+    await cubit.query();
+    expect(cubit.state.status, CommuteStatus.loaded(_result));
+    await cubit.choosePlace(
+      PlaceKind.work,
+      const PlaceCandidate(lat: 3, lng: 4, label: '판교'),
+    );
+    expect(cubit.state.status, const CommuteStatus.idle());
+    await cubit.close();
+  });
+
+  test('saving a place during query drops the stale result', () async {
+    final stale = Completer<CommuteResult>();
+    when(() => useCase.query(any())).thenAnswer((_) => stale.future);
+    final cubit = build();
+    final first = cubit.query();
+    await cubit.choosePlace(
+      PlaceKind.home,
+      const PlaceCandidate(lat: 1, lng: 2, label: '새 집'),
+    );
+    stale.complete(_result);
+    await first;
+    expect(cubit.state.status, const CommuteStatus.idle());
     await cubit.close();
   });
 

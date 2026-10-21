@@ -11,10 +11,14 @@ import 'package:walk/domain/commute/commute_failure.dart';
 import 'package:walk/domain/commute/entity/place.dart';
 import 'package:walk/domain/commute/entity/transit_route.dart';
 
-String _fixture(String name) => File('test/fixtures/commute/$name').readAsStringSync();
+String _fixture(String name) =>
+    File('test/fixtures/commute/$name').readAsStringSync();
 
-http.Response _json(String body) =>
-    http.Response.bytes(utf8.encode(body), 200, headers: {'content-type': 'application/json'});
+http.Response _json(String body) => http.Response.bytes(
+  utf8.encode(body),
+  200,
+  headers: {'content-type': 'application/json'},
+);
 
 const _home = Place(kind: PlaceKind.home, lat: 37.5, lng: 126.93, label: '집');
 const _work = Place(kind: PlaceKind.work, lat: 37.49, lng: 127.03, label: '회사');
@@ -25,15 +29,16 @@ void main() {
   OdsayRouteFinder build(
     Future<http.Response> Function(http.Request) handler, {
     Duration timeout = const Duration(seconds: 10),
-  }) =>
-      OdsayRouteFinder(MockClient(handler), keys, timeout: timeout);
+  }) => OdsayRouteFinder(MockClient(handler), keys, timeout: timeout);
 
   Future<void> expectFailure(Future<Object?> future, Matcher matcher) async {
     await expectLater(future, throwsA(matcher));
   }
 
   test('parses subway path legs', () async {
-    final finder = build((_) async => _json(_fixture('odsay_home_to_work.json')));
+    final finder = build(
+      (_) async => _json(_fixture('odsay_home_to_work.json')),
+    );
     final routes = await finder.find(from: _home, to: _work);
 
     expect(routes, hasLength(2));
@@ -91,7 +96,9 @@ void main() {
         ],
       },
     });
-    final routes = await build((_) async => _json(body)).find(from: _home, to: _work);
+    final routes = await build(
+      (_) async => _json(body),
+    ).find(from: _home, to: _work);
     expect(routes, hasLength(1));
     expect(routes.single.totalMinutes, 45);
   });
@@ -118,15 +125,23 @@ void main() {
   group('error body maps to noRoute/server', () {
     test('close distance object → noRoute', () async {
       await expectFailure(
-        build((_) async => _json(_fixture('odsay_error_close.json'))).find(from: _home, to: _work),
+        build(
+          (_) async => _json(_fixture('odsay_error_close.json')),
+        ).find(from: _home, to: _work),
         isA<CommuteNoRoute>(),
       );
     });
 
     test('key error array → server message', () async {
       await expectFailure(
-        build((_) async => _json(_fixture('odsay_error_key.json'))).find(from: _home, to: _work),
-        isA<CommuteServer>().having((e) => e.message, 'message', 'ApiKeyAuthFailed'),
+        build(
+          (_) async => _json(_fixture('odsay_error_key.json')),
+        ).find(from: _home, to: _work),
+        isA<CommuteServer>().having(
+          (e) => e.message,
+          'message',
+          'ApiKeyAuthFailed',
+        ),
       );
     });
 
@@ -155,14 +170,18 @@ void main() {
 
   test('empty path → noRoute', () async {
     await expectFailure(
-      build((_) async => _json('{"result":{"path":[]}}')).find(from: _home, to: _work),
+      build(
+        (_) async => _json('{"result":{"path":[]}}'),
+      ).find(from: _home, to: _work),
       isA<CommuteNoRoute>(),
     );
   });
 
   test('non-json body → server', () async {
     await expectFailure(
-      build((_) async => http.Response('<html>', 502)).find(from: _home, to: _work),
+      build(
+        (_) async => http.Response('<html>', 502),
+      ).find(from: _home, to: _work),
       isA<CommuteServer>(),
     );
   });
@@ -191,11 +210,53 @@ void main() {
       (_) => Completer<http.Response>().future,
       timeout: const Duration(milliseconds: 10),
     );
-    await expectFailure(finder.find(from: _home, to: _work), isA<CommuteNetwork>());
+    await expectFailure(
+      finder.find(from: _home, to: _work),
+      isA<CommuteNetwork>(),
+    );
+  });
+
+  test('handshake error → network', () async {
+    final finder = build((_) async => throw const HandshakeException('tls'));
+    await expectFailure(
+      finder.find(from: _home, to: _work),
+      isA<CommuteNetwork>(),
+    );
+  });
+
+  test('non-2xx without error object → server HTTP code', () async {
+    await expectFailure(
+      build(
+        (_) async => http.Response.bytes(utf8.encode('{}'), 503),
+      ).find(from: _home, to: _work),
+      isA<CommuteServer>().having((e) => e.message, 'message', 'HTTP 503'),
+    );
+  });
+
+  test('all paths unparsable → server parse', () async {
+    final body = jsonEncode({
+      'result': {
+        'path': [
+          {
+            'info': {'totalTime': 30},
+            'subPath': [
+              {'trafficType': 1, 'sectionTime': 'x'},
+            ],
+          },
+        ],
+      },
+    });
+    await expectFailure(
+      build((_) async => _json(body)).find(from: _home, to: _work),
+      isA<CommuteServer>().having((e) => e.message, 'message', 'parse'),
+    );
   });
 
   test('socket error → network', () async {
     final finder = build((_) async => throw const SocketException('down'));
-    await expectFailure(finder.find(from: _home, to: _work), isA<CommuteNetwork>());
+    await expectFailure(
+      finder.find(from: _home, to: _work),
+      isA<CommuteNetwork>(),
+    );
   });
 }

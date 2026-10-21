@@ -28,7 +28,10 @@ class OdsayRouteFinder implements RouteFinder {
   static const _noRouteCodes = {'-98', '-99', '3', '4', '5', '6'};
 
   @override
-  Future<List<TransitRoute>> find({required Place from, required Place to}) async {
+  Future<List<TransitRoute>> find({
+    required Place from,
+    required Place to,
+  }) async {
     final uri = Uri.parse(
       'https://api.odsay.com/v1/api/searchPubTransPathT'
       '?SX=${from.lng}&SY=${from.lat}&EX=${to.lng}&EY=${to.lat}'
@@ -38,7 +41,8 @@ class OdsayRouteFinder implements RouteFinder {
     final http.Response response;
     try {
       response = await _client.get(uri).timeout(_timeout);
-    } on SocketException {
+    } on IOException {
+      // SocketException · HandshakeException · TlsException 등.
       throw const CommuteFailure.network();
     } on TimeoutException {
       throw const CommuteFailure.network();
@@ -52,24 +56,38 @@ class OdsayRouteFinder implements RouteFinder {
     } on FormatException {
       throw CommuteFailure.server('HTTP ${response.statusCode}');
     }
-    if (body is! Map) throw CommuteFailure.server('HTTP ${response.statusCode}');
+    if (body is! Map) {
+      throw CommuteFailure.server('HTTP ${response.statusCode}');
+    }
 
     _throwIfError(body['error']);
+    final status = response.statusCode;
+    if (status < 200 || status >= 300) {
+      throw CommuteFailure.server('HTTP $status');
+    }
 
     final result = body['result'];
     final paths = result is Map ? result['path'] : null;
     if (paths is! List) throw const CommuteFailure.noRoute();
 
     final routes = <TransitRoute>[];
+    var unparsable = 0;
     for (final path in paths) {
       try {
         final route = _parsePath(path);
         if (route != null) routes.add(route);
       } catch (_) {
         // 해석 못 하는 경로는 버린다.
+        unparsable++;
       }
     }
-    if (routes.isEmpty) throw const CommuteFailure.noRoute();
+    if (routes.isEmpty) {
+      // 모든 경로가 해석 실패면 응답 형식 문제 — 경로 없음과 구분한다.
+      if (paths.isNotEmpty && unparsable == paths.length) {
+        throw const CommuteFailure.server('parse');
+      }
+      throw const CommuteFailure.noRoute();
+    }
     return routes;
   }
 
@@ -85,7 +103,7 @@ class OdsayRouteFinder implements RouteFinder {
 
   /// 버스 등 지하철 · 도보가 아닌 구간이 있으면 null.
   TransitRoute? _parsePath(Object? path) {
-    if (path is! Map) return null;
+    if (path is! Map) throw const FormatException('path');
     final info = path['info'] as Map;
     final subPath = path['subPath'] as List;
     final legs = <RouteLeg>[];

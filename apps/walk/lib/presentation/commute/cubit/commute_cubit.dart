@@ -109,15 +109,19 @@ class CommuteCubit extends Cubit<CommuteState> {
     ),
   );
 
+  /// 장소가 바뀌면 이전 결과는 맞지 않는다 — 진행 중이던 요청도 버리고 idle 로.
   Future<void> _save(Place place) async {
     await _useCase.savePlace(place);
     if (isClosed) return;
-    emit(switch (place.kind) {
+    _token++;
+    _busy = false;
+    final saved = switch (place.kind) {
       PlaceKind.home => state.copyWith(home: place),
       PlaceKind.work => state.copyWith(work: place),
-    });
+    };
+    emit(saved.copyWith(status: const CommuteStatus.idle()));
   }
 
   static CommuteFailure _wrap(Object e) =>
-      e is CommuteFailure ? e : const CommuteFailure.server('');
+      e is CommuteFailure ? e : CommuteFailure.server(e.runtimeType.toString());
 }
