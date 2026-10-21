@@ -95,11 +95,17 @@ void main() {
     expect(find.byIcon(Icons.check), findsOneWidget);
   });
 
-  testWidgets('현재 경로에만 체크 표시', (tester) async {
+  testWidgets('현재 경로 행에만 체크 표시', (tester) async {
     await open(tester);
-    final check = tester.getCenter(find.byIcon(Icons.check)).dy;
-    final currentRow = tester.getCenter(find.text('총 41분 · 환승 0회')).dy;
-    expect((check - currentRow).abs(), lessThan(40));
+    final row = find.ancestor(
+      of: find.text('총 41분 · 환승 0회'),
+      matching: find.byType(AppListTile),
+    );
+    expect(
+      find.descendant(of: row, matching: find.byIcon(Icons.check)),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.check), findsOneWidget);
   });
 
   testWidgets('누르면 selectRoute 하고 닫힌다', (tester) async {

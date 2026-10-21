@@ -36,6 +36,7 @@ class _PlaceSetupSheetState extends State<PlaceSetupSheet> {
   final _controller = TextEditingController();
   List<PlaceCandidate>? _results;
   bool _searching = false;
+  bool _locateFailed = false;
 
   @override
   void dispose() {
@@ -46,26 +47,36 @@ class _PlaceSetupSheetState extends State<PlaceSetupSheet> {
   Future<void> _useCurrent() async {
     final cubit = context.read<CommuteCubit>();
     final navigator = Navigator.of(context);
-    final failed = AppLocalizations.of(context).walkCommutePlaceLocateFailed;
+    setState(() => _locateFailed = false);
     final ok = await cubit.useCurrentLocation(widget.kind);
     if (!mounted) return;
     if (ok) {
       navigator.pop();
     } else {
-      AppSnackBar.show(context, message: failed, type: AppSnackBarType.error);
+      setState(() => _locateFailed = true);
     }
   }
 
   Future<void> _search(String query) async {
     if (_searching) return;
     final cubit = context.read<CommuteCubit>();
-    setState(() => _searching = true);
-    final found = await cubit.searchAddress(query);
-    if (!mounted) return;
     setState(() {
-      _searching = false;
-      _results = found;
+      _searching = true;
+      _results = null;
     });
+    var found = <PlaceCandidate>[];
+    try {
+      found = await cubit.searchAddress(query);
+    } on Object {
+      // 검색 실패는 결과 없음으로 다룬다.
+    } finally {
+      if (mounted) {
+        setState(() {
+          _searching = false;
+          _results = found;
+        });
+      }
+    }
   }
 
   Future<void> _choose(PlaceCandidate candidate) async {
@@ -122,6 +133,17 @@ class _PlaceSetupSheetState extends State<PlaceSetupSheet> {
                 onPressed: _useCurrent,
               ),
             ),
+            if (_locateFailed)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.xs),
+                child: Text(
+                  l10n.walkCommutePlaceLocateFailed,
+                  key: const Key('commute-locate-failed'),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
+                ),
+              ),
             const SizedBox(height: AppSpacing.md),
             TextField(
               controller: _controller,

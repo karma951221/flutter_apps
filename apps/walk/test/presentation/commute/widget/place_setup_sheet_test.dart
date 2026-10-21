@@ -84,14 +84,20 @@ void main() {
     expect(find.text('현재 위치로'), findsNothing);
   });
 
-  testWidgets('현재 위치 실패면 스낵바를 띄우고 시트는 남는다', (tester) async {
+  testWidgets('현재 위치 실패면 시트 안에 안내를 보이고 시트는 남는다', (tester) async {
     when(
       () => cubit.useCurrentLocation(PlaceKind.home),
     ).thenAnswer((_) async => false);
     await open(tester);
     await tester.tap(find.text('현재 위치로'));
     await tester.pumpAndSettle();
-    expect(find.text('위치를 가져오지 못했어요'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(PlaceSetupSheet),
+        matching: find.text('위치를 가져오지 못했어요'),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('현재 위치로'), findsOneWidget);
   });
 

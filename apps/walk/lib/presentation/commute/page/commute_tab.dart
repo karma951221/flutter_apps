@@ -14,9 +14,9 @@ import '../../../domain/commute/entity/place.dart';
 import '../cubit/commute_cubit.dart';
 import '../cubit/commute_state.dart';
 import '../widget/arrival_card.dart';
+import '../widget/place_row.dart';
 import '../widget/place_setup_sheet.dart';
 import '../widget/route_options_sheet.dart';
-import '../widget/place_row.dart';
 import '../widget/route_summary.dart';
 import '../widget/verdict_banner.dart';
 
