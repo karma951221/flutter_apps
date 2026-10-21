@@ -1,7 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.health.READ_STEPS" />
-    <uses-permission android:name="android.permission.health.READ_DISTANCE" />
-    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
     <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_HISTORY" />
     <!-- 알람: alarm 패키지 INSTALL-ANDROID.md Step 3 그대로 (패키지 매니페스트에도 있어 병합된다) -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

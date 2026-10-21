@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$DailyActivity {
 
- DateTime get date; int get steps; double? get distanceMeters; double? get activeKcal;
+ DateTime get date; int get steps;
 /// Create a copy of DailyActivity
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $DailyActivityCopyWith<DailyActivity> get copyWith => _$DailyActivityCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailyActivity&&(identical(other.date, date) || other.date == date)&&(identical(other.steps, steps) || other.steps == steps)&&(identical(other.distanceMeters, distanceMeters) || other.distanceMeters == distanceMeters)&&(identical(other.activeKcal, activeKcal) || other.activeKcal == activeKcal));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailyActivity&&(identical(other.date, date) || other.date == date)&&(identical(other.steps, steps) || other.steps == steps));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,date,steps,distanceMeters,activeKcal);
+int get hashCode => Object.hash(runtimeType,date,steps);
 
 @override
 String toString() {
-  return 'DailyActivity(date: $date, steps: $steps, distanceMeters: $distanceMeters, activeKcal: $activeKcal)';
+  return 'DailyActivity(date: $date, steps: $steps)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $DailyActivityCopyWith<$Res>  {
   factory $DailyActivityCopyWith(DailyActivity value, $Res Function(DailyActivity) _then) = _$DailyActivityCopyWithImpl;
 @useResult
 $Res call({
- DateTime date, int steps, double? distanceMeters, double? activeKcal
+ DateTime date, int steps
 });
 
 
@@ -62,13 +62,11 @@ class _$DailyActivityCopyWithImpl<$Res>
 
 /// Create a copy of DailyActivity
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? date = null,Object? steps = null,Object? distanceMeters = freezed,Object? activeKcal = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? date = null,Object? steps = null,}) {
   return _then(DailyActivity(
 date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,steps: null == steps ? _self.steps : steps // ignore: cast_nullable_to_non_nullable
-as int,distanceMeters: freezed == distanceMeters ? _self.distanceMeters : distanceMeters // ignore: cast_nullable_to_non_nullable
-as double?,activeKcal: freezed == activeKcal ? _self.activeKcal : activeKcal // ignore: cast_nullable_to_non_nullable
-as double?,
+as int,
   ));
 }
 

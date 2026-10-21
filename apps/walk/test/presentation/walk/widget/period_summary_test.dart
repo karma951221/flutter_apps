@@ -14,24 +14,9 @@ ActivityPeriod _week(DateTime today) => ActivityPeriod(
   end: DateTime(2026, 9, 27),
   today: today,
   days: [
-    DailyActivity(
-      date: DateTime(2026, 9, 21),
-      steps: 12000,
-      distanceMeters: 8000,
-      activeKcal: 300,
-    ),
-    DailyActivity(
-      date: DateTime(2026, 9, 22),
-      steps: 3000,
-      distanceMeters: 2000,
-      activeKcal: 100,
-    ),
-    DailyActivity(
-      date: DateTime(2026, 9, 23),
-      steps: 10000,
-      distanceMeters: 7000,
-      activeKcal: 250,
-    ),
+    DailyActivity(date: DateTime(2026, 9, 21), steps: 12000),
+    DailyActivity(date: DateTime(2026, 9, 22), steps: 3000),
+    DailyActivity(date: DateTime(2026, 9, 23), steps: 10000),
     for (var d = 24; d <= 27; d++) DailyActivity.empty(DateTime(2026, 9, d)),
   ],
 );
@@ -64,23 +49,20 @@ void main() {
     expect(tester.widget<Text>(_goalDays).data, '달성 2/7일');
   });
 
-  testWidgets('네 지표 타일', (tester) async {
+  testWidgets('합계 · 일평균 두 타일만 — 거리 · 칼로리는 없다', (tester) async {
     await _pump(tester, _week(DateTime(2026, 9, 23)));
 
-    for (final label in ['합계', '일평균', '거리', '활동 칼로리']) {
+    for (final label in ['합계', '일평균']) {
       expect(find.text(label), findsOneWidget);
     }
     expect(find.text('25,000 걸음'), findsOneWidget);
     expect(find.text('8,333 걸음'), findsOneWidget);
-    expect(find.text('17.0 km'), findsOneWidget);
-    expect(find.text('650 kcal'), findsOneWidget);
-    for (final icon in [
-      Icons.directions_walk,
-      Icons.calendar_today,
-      Icons.straighten,
-      Icons.local_fire_department,
-    ]) {
+    for (final icon in [Icons.directions_walk, Icons.calendar_today]) {
       expect(find.byIcon(icon), findsOneWidget);
     }
+    expect(find.text('거리'), findsNothing);
+    expect(find.text('활동 칼로리'), findsNothing);
+    expect(find.byIcon(Icons.straighten), findsNothing);
+    expect(find.byIcon(Icons.local_fire_department), findsNothing);
   });
 }

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
@@ -12,9 +10,8 @@ import 'goal_celebration.dart';
 import 'step_goal_ring.dart';
 import 'today_goal_footer.dart';
 
-/// 오늘 걸음을 목표 링으로 보여 주는 카드. 링을 누르면 아래 줄이 남은(넘친) 양으로 바뀌고,
-/// 3초 뒤 또는 다시 누르면 거리 · 칼로리로 돌아온다.
-class TodayGoalCard extends StatefulWidget {
+/// 오늘 걸음을 목표 링으로 보여 주는 카드. 아래 줄은 남은(넘친) 걸음이다.
+class TodayGoalCard extends StatelessWidget {
   const TodayGoalCard({
     required this.activity,
     required this.goal,
@@ -33,39 +30,12 @@ class TodayGoalCard extends StatefulWidget {
   final VoidCallback? onCelebrated;
 
   @override
-  State<TodayGoalCard> createState() => _TodayGoalCardState();
-}
-
-class _TodayGoalCardState extends State<TodayGoalCard> {
-  static const _remainingFor = Duration(seconds: 3);
-
-  bool _showRemaining = false;
-  Timer? _timer;
-
-  void _toggle() {
-    _timer?.cancel();
-    setState(() => _showRemaining = !_showRemaining);
-    if (_showRemaining) {
-      _timer = Timer(_remainingFor, () {
-        if (mounted) setState(() => _showRemaining = false);
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final locale = l10n.localeName;
     final theme = Theme.of(context);
     final onCard = theme.colorScheme.onPrimaryContainer;
-    final activity = widget.activity;
-    final progress = GoalProgress(steps: activity.steps, goal: widget.goal);
+    final progress = GoalProgress(steps: activity.steps, goal: goal);
     String steps(int n) => l10n.walkStepsCount(WalkFormat.steps(locale, n));
 
     return Card(
@@ -86,52 +56,43 @@ class _TodayGoalCardState extends State<TodayGoalCard> {
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
-            GestureDetector(
-              key: const Key('walk-goal-ring'),
-              behavior: HitTestBehavior.opaque,
-              onTap: _toggle,
-              child: Semantics(
-                label: l10n.walkGoalRingSemantics(
-                  steps(activity.steps),
-                  steps(widget.goal),
-                  (progress.ratio * 100).round(),
-                ),
-                excludeSemantics: true,
-                child: GoalCelebration(
-                  // 날이 바뀌면 새 연출 상태로 — 어제 연출한 채 오늘 달성 값이 바로 와도 놓치지 않는다.
-                  key: ValueKey(DateUtils.dateOnly(activity.date)),
-                  play: widget.celebrate,
-                  onPlayed: widget.onCelebrated,
-                  child: StepGoalRing(
-                    ratio: progress.ratio,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _CountUp(
-                          steps: activity.steps,
-                          format: steps,
-                          style: theme.textTheme.displaySmall?.copyWith(
-                            color: onCard,
-                          ),
+            Semantics(
+              label: l10n.walkGoalRingSemantics(
+                steps(activity.steps),
+                steps(goal),
+                (progress.ratio * 100).round(),
+              ),
+              excludeSemantics: true,
+              child: GoalCelebration(
+                // 날이 바뀌면 새 연출 상태로 — 어제 연출한 채 오늘 달성 값이 바로 와도 놓치지 않는다.
+                key: ValueKey(DateUtils.dateOnly(activity.date)),
+                play: celebrate,
+                onPlayed: onCelebrated,
+                child: StepGoalRing(
+                  ratio: progress.ratio,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _CountUp(
+                        steps: activity.steps,
+                        format: steps,
+                        style: theme.textTheme.displaySmall?.copyWith(
+                          color: onCard,
                         ),
-                        Text(
-                          l10n.walkGoalOf(steps(widget.goal)),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: onCard,
-                          ),
+                      ),
+                      Text(
+                        l10n.walkGoalOf(steps(goal)),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: onCard,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            TodayGoalFooter(
-              activity: activity,
-              goal: widget.goal,
-              showRemaining: _showRemaining,
-            ),
+            TodayGoalFooter(activity: activity, goal: goal),
           ],
         ),
       ),

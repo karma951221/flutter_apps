@@ -11,24 +11,22 @@ class HealthPermissionSource implements PermissionSource {
 
   final HealthGateway _gateway;
 
-  static const readTypes = [
-    HealthDataType.STEPS,
-    HealthDataType.DISTANCE_DELTA,
-    HealthDataType.ACTIVE_ENERGY_BURNED,
-  ];
+  static const readTypes = [HealthDataType.STEPS];
 
   @override
   Future<PermissionStatus> check() async =>
       await _gateway.hasPermission(HealthDataType.STEPS)
-          ? PermissionStatus.granted
-          : PermissionStatus.denied;
+      ? PermissionStatus.granted
+      : PermissionStatus.denied;
 
   @override
   Future<PermissionStatus> request() async {
     await _gateway.requestPermissions(readTypes);
     final status = await check();
     // 걸음을 허용한 사람에게만 30일 이전 기록을 묻는다. 거부하면 그 이전 기간이 0으로 보일 뿐이다.
-    if (status == PermissionStatus.granted) await _gateway.requestHistoryPermission();
+    if (status == PermissionStatus.granted) {
+      await _gateway.requestHistoryPermission();
+    }
     return status;
   }
 

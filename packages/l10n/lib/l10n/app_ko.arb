@@ -1874,18 +1874,6 @@
       }
     }
   },
-  "walkGoalRemainingWithDistance": "목표까지 {steps} · 약 {distance}",
-  "@walkGoalRemainingWithDistance": {
-    "description": "목표까지 남은 걸음 수와 거리",
-    "placeholders": {
-      "steps": {
-        "type": "String"
-      },
-      "distance": {
-        "type": "String"
-      }
-    }
-  },
   "walkGoalExceeded": "목표보다 {steps} 더 걸었어요",
   "@walkGoalExceeded": {
     "description": "목표를 넘긴 걸음 수",
@@ -1967,14 +1955,6 @@
   "@walkAverageSteps": {
     "description": "기간 일평균 걸음 수 라벨"
   },
-  "walkDistance": "거리",
-  "@walkDistance": {
-    "description": "이동 거리 라벨"
-  },
-  "walkActiveCalories": "활동 칼로리",
-  "@walkActiveCalories": {
-    "description": "활동 칼로리 라벨"
-  },
   "walkPreviousPeriod": "이전",
   "@walkPreviousPeriod": {
     "description": "이전 기간으로 이동하는 버튼 라벨"
@@ -2007,7 +1987,7 @@
   "@walkPermissionNeeded": {
     "description": "권한 요청 안내 제목"
   },
-  "walkPermissionDescription": "걸음 · 거리 · 활동 칼로리를 읽기만 하고 저장하거나 보내지 않아요",
+  "walkPermissionDescription": "걸음 수를 읽기만 하고 저장하거나 보내지 않아요",
   "@walkPermissionDescription": {
     "description": "권한 요청 안내 설명"
   },

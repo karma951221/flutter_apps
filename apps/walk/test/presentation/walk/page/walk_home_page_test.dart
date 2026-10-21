@@ -58,13 +58,7 @@ void main() {
       ..registerSingleton<SettingsRepository>(settings);
     when(() => useCase.permissionDeclinedThisSession).thenReturn(false);
     when(() => useCase.today()).thenAnswer(
-      (_) async => Ok(
-        DailyActivity(
-          date: DateTime(2026, 9, 23),
-          steps: 6240,
-          distanceMeters: 4310,
-        ),
-      ),
+      (_) async => Ok(DailyActivity(date: DateTime(2026, 9, 23), steps: 6240)),
     );
     when(() => useCase.period(any(), any())).thenAnswer(
       (i) async => Ok(_period(i.positionalArguments[0] as PeriodKind)),
@@ -118,13 +112,13 @@ void main() {
     return () => count;
   }
 
-  testWidgets('권한이 있으면 오늘 걸음 · 거리 · 없는 칼로리 – 를 보여준다', (tester) async {
+  testWidgets('권한이 있으면 오늘 걸음을 보여 주고 거리 · 칼로리는 없다', (tester) async {
     when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
     await pump(tester);
 
     expect(find.text('6,240 걸음'), findsOneWidget);
-    expect(find.text('4.3 km'), findsWidgets);
-    expect(find.text('–'), findsWidgets);
+    expect(find.textContaining('km'), findsNothing);
+    expect(find.textContaining('kcal'), findsNothing);
     expect(find.text('주간'), findsOneWidget);
     expect(find.text('월간'), findsOneWidget);
   });

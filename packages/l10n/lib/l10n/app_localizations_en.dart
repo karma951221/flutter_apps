@@ -1448,11 +1448,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String walkGoalRemainingWithDistance(String steps, String distance) {
-    return '$steps to go · about $distance';
-  }
-
-  @override
   String walkGoalExceeded(String steps) {
     return '$steps past your goal';
   }
@@ -1500,12 +1495,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkAverageSteps => 'Daily average';
 
   @override
-  String get walkDistance => 'Distance';
-
-  @override
-  String get walkActiveCalories => 'Active calories';
-
-  @override
   String get walkPreviousPeriod => 'Previous';
 
   @override
@@ -1532,7 +1521,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkPermissionDescription =>
-      'Walk only reads steps, distance and active calories. Nothing is stored or sent';
+      'Walk only reads your steps. Nothing is stored or sent';
 
   @override
   String get walkGrantPermission => 'Allow access';

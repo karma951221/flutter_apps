@@ -1363,11 +1363,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String walkGoalRemainingWithDistance(String steps, String distance) {
-    return '목표까지 $steps · 약 $distance';
-  }
-
-  @override
   String walkGoalExceeded(String steps) {
     return '목표보다 $steps 더 걸었어요';
   }
@@ -1415,12 +1410,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAverageSteps => '일평균';
 
   @override
-  String get walkDistance => '거리';
-
-  @override
-  String get walkActiveCalories => '활동 칼로리';
-
-  @override
   String get walkPreviousPeriod => '이전';
 
   @override
@@ -1446,8 +1435,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkPermissionNeeded => '걸음 기록을 읽을 권한이 필요해요';
 
   @override
-  String get walkPermissionDescription =>
-      '걸음 · 거리 · 활동 칼로리를 읽기만 하고 저장하거나 보내지 않아요';
+  String get walkPermissionDescription => '걸음 수를 읽기만 하고 저장하거나 보내지 않아요';
 
   @override
   String get walkGrantPermission => '권한 허용';

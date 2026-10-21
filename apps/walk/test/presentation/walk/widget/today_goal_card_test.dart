@@ -21,15 +21,8 @@ Future<void> _pump(WidgetTester tester, Widget child) async {
   await tester.pumpAndSettle();
 }
 
-DailyActivity _activity({int steps = 7240, double? distance = 5068}) =>
-    DailyActivity(
-      date: DateTime(2026, 10, 3),
-      steps: steps,
-      distanceMeters: distance,
-      activeKcal: 212,
-    );
-
-final _ring = find.byKey(const Key('walk-goal-ring'));
+DailyActivity _activity({int steps = 7240}) =>
+    DailyActivity(date: DateTime(2026, 10, 3), steps: steps);
 
 void main() {
   testWidgets('걸음 · 목표 문구와 링 접근성 비율', (tester) async {
@@ -42,54 +35,12 @@ void main() {
     expect(find.text('달성'), findsNothing);
   });
 
-  testWidgets('거리 · 칼로리 지표를 보여준다', (tester) async {
+  testWidgets('아래 줄은 늘 남은 걸음 — 거리 · 칼로리는 없다', (tester) async {
     await _pump(tester, TodayGoalCard(activity: _activity(), goal: 10000));
 
-    expect(find.text('5.1 km'), findsOneWidget);
-    expect(find.text('212 kcal'), findsOneWidget);
-  });
-
-  testWidgets('링을 누르면 남은 걸음 · 거리, 다시 누르면 지표로', (tester) async {
-    // 7240보 / 5068m → 보폭 0.7m, 남은 2760보 ≈ 1.9km
-    await _pump(tester, TodayGoalCard(activity: _activity(), goal: 10000));
-
-    await tester.tap(_ring);
-    await tester.pumpAndSettle();
-    expect(find.textContaining('목표까지 2,760 걸음'), findsOneWidget);
-    expect(find.textContaining('약 1.9'), findsOneWidget);
-    // 지표 행은 높이를 지키려 자리에 남지만 보이지도 눌리지도 않는다.
-    expect(find.text('212 kcal').hitTestable(), findsNothing);
-
-    await tester.tap(_ring);
-    await tester.pumpAndSettle();
-    expect(find.textContaining('목표까지'), findsNothing);
-    expect(find.text('212 kcal').hitTestable(), findsOneWidget);
-  });
-
-  testWidgets('링을 눌러 아래 줄이 바뀌어도 카드 높이는 그대로', (tester) async {
-    await _pump(tester, TodayGoalCard(activity: _activity(), goal: 10000));
-    final before = tester.getSize(find.byType(Card));
-
-    await tester.tap(_ring);
-    await tester.pumpAndSettle();
-    expect(find.textContaining('목표까지'), findsOneWidget);
-    expect(tester.getSize(find.byType(Card)), before);
-
-    await tester.tap(_ring);
-    await tester.pumpAndSettle();
-    expect(tester.getSize(find.byType(Card)), before);
-  });
-
-  testWidgets('거리가 없으면 남은 걸음만', (tester) async {
-    await _pump(
-      tester,
-      TodayGoalCard(activity: _activity(distance: null), goal: 10000),
-    );
-
-    await tester.tap(_ring);
-    await tester.pumpAndSettle();
     expect(find.text('목표까지 2,760 걸음'), findsOneWidget);
-    expect(find.textContaining('약'), findsNothing);
+    expect(find.textContaining('km'), findsNothing);
+    expect(find.textContaining('kcal'), findsNothing);
   });
 
   testWidgets('달성이면 배지와 초과 문구', (tester) async {
@@ -101,21 +52,6 @@ void main() {
     expect(find.text('달성'), findsOneWidget);
     expect(find.byIcon(Icons.check_circle), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('125%')), findsOneWidget);
-
-    await tester.tap(_ring);
-    await tester.pumpAndSettle();
     expect(find.text('목표보다 2,500 걸음 더 걸었어요'), findsOneWidget);
-  });
-
-  testWidgets('3초 뒤 지표로 돌아온다', (tester) async {
-    await _pump(tester, TodayGoalCard(activity: _activity(), goal: 10000));
-
-    await tester.tap(_ring);
-    await tester.pumpAndSettle();
-    expect(find.textContaining('목표까지'), findsOneWidget);
-
-    await tester.pump(const Duration(seconds: 3));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('목표까지'), findsNothing);
   });
 }
