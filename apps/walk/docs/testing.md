@@ -3,7 +3,7 @@
 > [테스트 가이드](../../../docs/testing/README.md) · [계획](plan.md) · [기록](history.md) · [진행 현황](status.md)
 
 ```bash
-cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-10-13 기준 1634건 통과 · 1건 skip)
+cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-10-22 기준 1794건 통과 · 1건 skip)
 ```
 
 백엔드가 없어 로컬 Supabase 없이 돈다. Health Connect 는 `HealthGateway` 를 mock 해서 본다
@@ -235,6 +235,32 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 
 굵은 항목은 확인하며 고친 버그의 회귀 테스트다([기록](history.md#알람--확인하며-고친-것)).
 
+### 통근 — 도메인 · 데이터
+
+픽스처(`test/fixtures/commute/*.json`)는 키가 없어 **문서 기준으로 손으로 만든 것**이다. 실제 응답 확인 때 교체하고 파서 · 매핑 테스트를 맞춘다([진행 현황](status.md#통근)).
+
+| 파일 | 확인 |
+|---|---|
+| `domain/commute/entity/transit_route_test` | 경로 · 구간(지하철/도보) 값, 첫 승차 구간 |
+| `domain/commute/commute_policy_test` | 탈 수 있나(탄다/서두르면/놓침) · 탈 열차 고르기 · 도착 예상 계산 |
+| `domain/commute/subway_line_codes_test` | 노선 → 서울 지하철 ID, 역 이름 정규화 |
+| `domain/commute/usecase/commute_use_case_test` | 조회 · 경로 선택(같은 승차역은 재조회 없이 판단만) · 장소 저장 |
+| `data/commute/seoul_subway_arrival_source_test` | 서울 실시간 응답 파싱 · 키 오류 · 데이터 없음 · 정렬 · 네트워크/타임아웃 |
+| `data/commute/odsay_route_finder_test` | ODsay 경로 파싱 · 키 오류 · 근처 없음 · 오류 분류 |
+| `data/commute/prefs_place_repository_test` · `prefs_route_preference_repository_test` | 장소 · 경로 선호 저장/복원 |
+| `data/commute/geocoding_address_search_test` | 주소 검색 후보 · 실패 |
+| `core/config/commute_api_keys_test` · `convention/commute_network_config_test` | 키 주입(`fromEnvironment`) · http/인터넷 권한 설정 |
+
+### 통근 — 화면
+
+| 파일 | 확인 |
+|---|---|
+| `presentation/commute/cubit/commute_cubit_test` | 방향 전환 시 옛 요청 버림 · 위치 예외 · 조회 · 경로 선택 · close |
+| `presentation/commute/page/commute_tab_test` | 상태별 화면(미설정 · 키 없음 · 오류 · 경로 없음 · 실시간 없음) · 장소 시트 · 위치 실패가 시트 안에 보임 |
+| `presentation/commute/widget/{arrival_card,verdict_banner,route_options_sheet,place_setup_sheet}_test` | 도착 카드 · 판단 배너 · 경로 고르기 · 장소 설정(검색 상태 정리) · 영어 복수형 |
+
+통근 테스트 중 네트워크 · 위치 · 키는 모두 가짜(`RouteFinder` · `SubwayArrivalSource` · `AddressSearch` · `Clock`)다. 실제 API 호출은 아래 시나리오로 본다.
+
 ## 테스트가 없는 것
 
 걷기: 당겨서 새로고침 · 이전 기간 넘기기(페이지 수준) · 업데이트 필요 화면 · 기간 읽기 실패 ·
@@ -324,3 +350,18 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | D13 | 세로로 찍은 영상 첨부 | 압축본이 세로 비율 그대로(눕지 않음) · 릴스 · 상세에서 비율 맞게 재생 | **부분 통과**(에뮬레이터, 2026-10-13): 화면 녹화 1080×2400 → 576×1280, 에뮬레이터 카메라 5초 → 720×1280 · 변환 행렬 단위(세로 그대로). 회전 메타데이터가 붙는 실제 폰 세로 영상은 미확인 |
 | D14 | `image_picker` 앨범 여러 장 고르기 · 카메라 사진 · 카메라 영상 | 고르기 화면이 뜨고 남은 칸만큼 들어옴, 카메라에 다녀와도 잠기지 않음 | **부분 통과**(에뮬레이터, 2026-10-13): 앨범 3장 다중 선택 · 카메라 사진 · 카메라 영상(5초) 모두 들어옴. 잠금 예외는 기기 화면 잠금이 없어 미확인(D4~D6 과 함께) |
 | D15 | 태그 · 장소 모아보기를 릴스로 보기 | 모아보기 화면 안에서 릴스가 화면을 채우고 넘기기 · 영상 재생 · 위 화면이 얹히면 멈춤 | **부분 통과**(에뮬레이터, 2026-10-13): 검색 해시태그 탭 `#jeju 기록 2개` → 모아보기 → 릴스, 세로 넘기기 동작. 머리줄 아래에 그려져 꽉 채우지는 않음 · 카메라 영상이 정지 장면이라 재생 여부는 화면 비교로 판정 못 함. **발견(경미)**: 밝은 영상 위 릴스 하단 시각 글자 대비 낮음 → **고침**(`a887c15`): 글 뒤 전체에 그늘 |
+
+## 통근 기기 시나리오 — 대기
+
+키(`config/commute_keys.json`)가 있어야 한다. 실행: `flutter run --dart-define-from-file=config/commute_keys.json`.
+
+| # | 시나리오 | 기대 | 결과 |
+|---|---|---|---|
+| C1 | curl 로 장승배기 실시간 · ODsay 장승배기 → 강남역 녹화 | `barvlDt`(7호선 · 신분당선) · `ordkey` · `updnLine`↔`wayCode` · `subwayCode` 109 · `way` · https 확인, 픽스처 교체 | 대기 |
+| C2 | 에뮬레이터에서 조회(Android 키) | ODsay 가 앱 키로 응답. 막히면 서버/웹 키 → 카카오 `publictraffic` | 대기 |
+| C3 | 장소 미설정 → 현재 위치/주소로 집 · 회사 설정 | 안내 → 설정 시트 → 저장 | 대기 |
+| C4 | 출근 조회 → 다른 경로 고르기 → 탭 재진입 | 판단 · 예상 표시, 같은 경로가 기본 | 대기 |
+| C5 | 퇴근 조회 | 방향이 바뀐 경로 · 도착 | 대기 |
+| C6 | 비행기 모드에서 조회 | 네트워크 오류 안내 | 대기 |
+| C7 | 조회 2분 뒤 | 낡음 표시 | 대기 |
+| C8 | 실제 폰으로 출근길 비교 | 도착 예상이 실제와 맞음 | 대기 |

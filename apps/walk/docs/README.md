@@ -2,7 +2,7 @@
 
 > [문서 허브](../../../docs/README.md) · [전체 진행 현황](../../../docs/status.md)
 
-생활 도구를 모은 앱 **Life Tool** 이다(폴더 · 패키지는 `walk`). 하단 탭 [알람 · 걷기 · 일기 · 설정].
+생활 도구를 모은 앱 **Life Tool** 이다(폴더 · 패키지는 `walk`). 하단 탭 [알람 · 걷기 · 일기 · 통근 · 설정].
 
 - **걷기** — 오늘 걸음을 **하루 목표** 링으로 보여주고 주간 · 월간 막대그래프(목표선)로 모아 본다. 걸음 · 거리 ·
   활동 칼로리는 폰의 헬스 앱이 **Health Connect** 에 기록한 값을 읽기만 한다.
@@ -11,6 +11,8 @@
 - **일기** — 짧은 기록을 **스토리**(여행 · 일상)로 묶어 쓰는 개인 일기장. 사진 · 30초 이하 영상(압축 사본) ·
   현재 위치의 장소 이름 · 해시태그를 붙이고, 줄글 · 피드 · 릴스로 돌아보며, 글 · 스토리 · 태그 · 장소로 찾는다.
   지우면 휴지통에 갔다가 기간이 지나면 사라진다. 탭을 PIN · 패턴으로 잠글 수 있다. 데이터는 폰 안(drift + 앱 폴더)에만.
+- **통근** — 집 ↔ 회사 지하철 출퇴근. 출근/퇴근 방향을 고르면 ODsay 경로와 서울 실시간 도착을 합쳐
+  "탄다 · 서두르면 · 놓침"과 도착 예상 시각을 보이고, 다른 경로를 고를 수 있다. API 키가 필요하다([아래](#통근-api-키)).
 - **설정** — 걷기(하루 목표) · 일기(잠금 · 다시 잠기는 시간 · 휴지통 기간 · 용량) · 권한 상태 · 테마 · 앱 정보.
 
 로그인 · 백엔드 없음, 안드로이드만. 아이콘과 시작 화면은 초록 바탕 흰 알람시계다
@@ -18,15 +20,30 @@
 
 코드는 전부 `apps/walk/` 에 있다. commute 와 같이 `lib/` 바로 아래가 계층이다 —
 `core/`(앱 셸: `app.dart` · `di/` · 울림 리스너 · 백그라운드 재설정) · `data/` · `domain/` ·
-`presentation/`. 계층 아래에 기능 폴더(`walk/` · `alarm/` · `diary/` · `lock/` · `settings/` · `shell/`)를 둔다. 테스트도
+`presentation/`. 계층 아래에 기능 폴더(`walk/` · `alarm/` · `diary/` · `commute/` · `lock/` · `settings/` · `shell/`)를 둔다. 테스트도
 `test/` 아래 같은 구조다.
+
+## 통근 API 키
+
+통근 탭은 두 키가 필요하다 — 서울 열린데이터광장(data.seoul.go.kr)의 **실시간 지하철 인증키**,
+ODsay LAB(lab.odsay.com)의 키(애플리케이션 등록: 플랫폼 Android, 패키지 `com.karma.walk`).
+키 파일은 저장소에 올리지 않는다.
+
+```bash
+cd apps/walk
+cp config/commute_keys.example.json config/commute_keys.json   # 두 키를 채운다
+flutter run --dart-define-from-file=config/commute_keys.json
+flutter build apk --release --dart-define-from-file=config/commute_keys.json
+```
+
+키 없이 실행하면 통근 탭이 키 안내만 보인다. 진행 상황은 [진행 현황](status.md#통근).
 
 ## 실제 폰에 설치
 
 스토어 배포 없이 APK 를 폰에 바로 깐다. release 빌드는 아직 이 맥의 디버그 키로 서명한다
 (`android/app/build.gradle.kts`).
 
-1. **빌드** — `cd apps/walk && flutter build apk --release` →
+1. **빌드** — `cd apps/walk && flutter build apk --release`(통근 탭을 쓰려면 `--dart-define-from-file=config/commute_keys.json` 추가) →
    `apps/walk/build/app/outputs/flutter-apk/app-release.apk`(약 56MB, 모든 ABI).
 2. **옮기기** — 카카오톡 나와의 채팅 · 구글 드라이브 · USB 파일 전송 중 편한 것.
 3. **설치** — 폰에서 파일을 연다. 처음 한 번은 그 파일을 연 앱(카카오톡 · 내 파일 · 드라이브)에
@@ -51,3 +68,4 @@
 | [설계 — 시간대](../../../docs/superpowers/specs/2026-09-30-walk-alarm-timezone-design.md) | 시간대 변경 수신기 · 재설정 |
 | [설계 — 시각 · 인터랙션 강화](../../../docs/superpowers/specs/2026-10-03-walk-visual-refresh-design.md) | 초록 테마 · 하루 목표 링 · 달성 축하 · 목표선 그래프 · 알람 톤 · 울림 파동 |
 | [설계 — 일기](../../../docs/superpowers/specs/2026-10-10-walk-diary-design.md) | 일기 결정 기록 · 스토리 · 휴지통 · 잠금 · 테스트 표 · 스파이크 결과 |
+| [설계 — 통근 ETA](../../../docs/superpowers/specs/2026-10-21-commute-eta-design.md) | 통근 탭 결정 기록 · 경로 · 실시간 · 판단 · 도착 예상 · 키 |
