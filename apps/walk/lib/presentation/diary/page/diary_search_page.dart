@@ -14,19 +14,19 @@ import '../cubit/diary_search_cubit.dart';
 import '../cubit/diary_search_state.dart';
 import '../format/diary_format.dart';
 import '../widget/highlighted_text.dart';
-import '../widget/story_bar.dart';
+import '../viewer/story_viewer_page.dart';
+import '../widget/story_avatar.dart';
 import 'diary_route.dart';
-import 'entry_detail_page.dart';
 import 'filtered_entries_page.dart';
+import 'story_page.dart';
 
-/// 일기 검색을 연다. 스토리 결과를 고르면 그 스토리 id 를 돌려준다(타임라인이 그 스토리를 고른다).
-/// 일기 잠금에 묶인 화면([pushDiaryRoute])이라 다시 잠기면 가려진다.
-Future<String?> openDiarySearch(BuildContext context) =>
-    pushDiaryRoute<String>(context, page: (_) => const DiarySearchPage());
+/// 일기 검색을 연다. 일기 잠금에 묶인 화면([pushDiaryRoute])이라 다시 잠기면 가려진다.
+Future<void> openDiarySearch(BuildContext context) =>
+    pushDiaryRoute<void>(context, page: (_) => const DiarySearchPage());
 
 /// 일기 검색(스펙 §6.4): 입력칸 하나 + 탭 [글 · 스토리 · 해시태그 · 장소].
 ///
-/// 글 결과는 기록 상세로, 스토리 결과는 그 id 를 들고 닫히고, 해시태그 · 장소 추천은 모아보기를 연다.
+/// 글 결과는 그 기록부터 뷰어로, 스토리 결과는 스토리 페이지로, 해시태그 · 장소 추천은 모아보기를 연다.
 class DiarySearchPage extends StatefulWidget {
   const DiarySearchPage({super.key});
 
@@ -151,7 +151,8 @@ class _Results extends StatelessWidget {
           leading: const Icon(Icons.auto_stories_outlined),
           title: Text(storyDisplayTitle(l10n, state.stories[i].story)),
           trailing: Text(l10n.walkDiaryEntryCount(state.stories[i].count)),
-          onTap: () => Navigator.of(context).pop(state.stories[i].story.id),
+          onTap: () =>
+              unawaited(openStoryPage(context, state.stories[i].story.id)),
         ),
         SearchScope.tag => _Suggestion(
           icon: Icons.tag,
@@ -170,7 +171,7 @@ class _Results extends StatelessWidget {
   }
 }
 
-/// 본문 결과 한 줄: 일치 부분이 보이는 조각(강조) + 날짜 시각. 누르면 기록 상세.
+/// 본문 결과 한 줄: 일치 부분이 보이는 조각(강조) + 날짜 시각. 누르면 그 기록부터 뷰어.
 class _BodyResult extends StatelessWidget {
   const _BodyResult({required this.entry, required this.query});
 
@@ -193,7 +194,13 @@ class _BodyResult extends StatelessWidget {
           DiaryFormat.time(context, at),
         ),
       ),
-      onTap: () => openEntryDetail(context, entry.id),
+      onTap: () => unawaited(
+        openStoryViewer(
+          context,
+          ViewerSource.stories([entry.storyId]),
+          entryId: entry.id,
+        ),
+      ),
     );
   }
 }

@@ -1620,10 +1620,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryDailyStoryTitle => '일상';
 
   @override
-  String get walkDiaryAll => '전체';
+  String get walkDiarySeeAll => '모두 보기';
 
   @override
-  String get walkDiaryArchive => '보관함';
+  String get walkDiaryAllStories => '모든 스토리';
+
+  @override
+  String get walkDiaryPastStories => '지난 스토리';
+
+  @override
+  String get walkDiaryPlayFromStart => '처음부터 보기';
+
+  @override
+  String get walkDiaryPlay => '▶ 보기';
+
+  @override
+  String walkDiaryStoryStats(int entries, int photos) {
+    return '기록 $entries · 사진 $photos';
+  }
 
   @override
   String get walkDiaryEmpty => '아직 기록이 없어요';
@@ -1644,15 +1658,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String walkDiaryStoryPeriod(String start, String end) {
     return '$start ~ $end';
   }
-
-  @override
-  String get walkDiaryViewProse => '줄글';
-
-  @override
-  String get walkDiaryViewFeed => '피드';
-
-  @override
-  String get walkDiaryViewReels => '릴스';
 
   @override
   String get walkDiaryShowMore => '더 보기';
@@ -2383,8 +2388,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryEditorPlaceHint => '장소 이름';
 
   @override
-  String walkDiaryEditorStory(String title) {
-    return '스토리: $title';
+  String get walkDiaryWhereToPost => '어디에 올릴까요?';
+
+  @override
+  String get walkDiaryTextOnly => '글만 쓰기';
+
+  @override
+  String walkDiaryPostedTo(String title) {
+    return '$title에 올렸어요';
   }
 
   @override
@@ -2449,6 +2460,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryErrorSave => '저장하지 못했어요. 다시 시도해 주세요';
 
   @override
+  String get walkDiaryStoryEndedNotSelectable => '끝난 스토리라 새 기록을 올릴 수 없어요';
+
+  @override
   String walkDiaryEditorTagSuggestion(String name, int count) {
     return '#$name $count';
   }
@@ -2457,9 +2471,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String walkDiaryEditorPlaceSuggestion(String name, int count) {
     return '$name $count';
   }
-
-  @override
-  String get walkDiaryMenuStories => '스토리 관리';
 
   @override
   String get walkDiaryStoryNew => '새 스토리';
@@ -2564,6 +2575,31 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkDiaryEntryTrashFailed => '휴지통으로 옮기지 못했어요. 다시 시도해 주세요';
+
+  @override
+  String get walkDiaryEntryTrash => '휴지통으로';
+
+  @override
+  String get walkDiaryEntryMove => '스토리 옮기기';
+
+  @override
+  String walkDiaryEntryMoved(String story) {
+    return '$story 스토리로 옮겼어요';
+  }
+
+  @override
+  String get walkDiaryEntryMoveFailed => '옮기지 못했어요. 다시 시도해 주세요';
+
+  @override
+  String get walkDiaryUndo => '되돌리기';
+
+  @override
+  String walkDiaryDayNumber(int n) {
+    return '$n일차';
+  }
+
+  @override
+  String get walkDiaryViewerClose => '닫기';
 
   @override
   String walkDiaryEntryDateTime(String date, String time) {
@@ -3079,4 +3115,14 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkCommuteRoutesTitle => '경로 선택';
+
+  @override
+  String walkDiaryMinutesAgo(int minutes) {
+    return '$minutes분 전';
+  }
+
+  @override
+  String walkDiaryHoursAgo(int hours) {
+    return '$hours시간 전';
+  }
 }

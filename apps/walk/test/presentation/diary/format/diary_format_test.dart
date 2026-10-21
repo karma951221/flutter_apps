@@ -130,6 +130,35 @@ void main() {
     expect(DiaryFormat.stamp(ctx, DateTime(2026, 10, 7, 9, 5), now), '오전 9:05');
   });
 
+  test('relative: 지금 · n분 전 · n시간 전, 하루가 넘으면 날짜', () {
+    expect(
+      DiaryFormat.relative(ko, now.subtract(const Duration(seconds: 30)), now),
+      '지금',
+    );
+    expect(
+      DiaryFormat.relative(ko, now.subtract(const Duration(minutes: 5)), now),
+      '5분 전',
+    );
+    expect(
+      DiaryFormat.relative(ko, now.subtract(const Duration(hours: 2)), now),
+      '2시간 전',
+    );
+    expect(
+      DiaryFormat.relative(en, now.subtract(const Duration(hours: 1)), now),
+      '1 hour ago',
+    );
+    expect(DiaryFormat.relative(ko, DateTime(2026, 10, 9, 9), now), '10월 9일');
+    expect(
+      DiaryFormat.relative(ko, DateTime(2025, 10, 9), now),
+      '2025년 10월 9일',
+    );
+    // 앞으로의 시각(기기 시계가 돌아감)은 날짜로.
+    expect(
+      DiaryFormat.relative(ko, now.add(const Duration(hours: 1)), now),
+      '10월 10일',
+    );
+  });
+
   group('storyPeriod', () {
     Story story({DateTime? endedAt}) => Story(
       id: 'jeju',

@@ -3134,17 +3134,41 @@ abstract class AppLocalizations {
   /// **'일상'**
   String get walkDiaryDailyStoryTitle;
 
-  /// 일기 스토리 바 — 모든 스토리의 기록을 함께 보는 항목
+  /// 일기 스토리 동그라미 줄 끝 — 스토리 전체 목록으로 가는 항목
   ///
   /// In ko, this message translates to:
-  /// **'전체'**
-  String get walkDiaryAll;
+  /// **'모두 보기'**
+  String get walkDiarySeeAll;
 
-  /// 일기 스토리 바 끝 — 닫힌 스토리 모음. 누르면 목록 시트가 열린다
+  /// 모든 스토리 화면 제목 · 일기 탭 ⋮ 메뉴 항목
   ///
   /// In ko, this message translates to:
-  /// **'보관함'**
-  String get walkDiaryArchive;
+  /// **'모든 스토리'**
+  String get walkDiaryAllStories;
+
+  /// 모든 스토리 화면의 닫힌 스토리 구역 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'지난 스토리'**
+  String get walkDiaryPastStories;
+
+  /// 스토리 페이지 머리 — 첫날 첫 조각부터 스토리 뷰어를 연다
+  ///
+  /// In ko, this message translates to:
+  /// **'처음부터 보기'**
+  String get walkDiaryPlayFromStart;
+
+  /// 태그 · 장소 모아보기 머리 — 모아보기 소스로 스토리 뷰어를 연다
+  ///
+  /// In ko, this message translates to:
+  /// **'▶ 보기'**
+  String get walkDiaryPlay;
+
+  /// 스토리 페이지 머리의 기록 수 · 사진 수
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 {entries} · 사진 {photos}'**
+  String walkDiaryStoryStats(int entries, int photos);
 
   /// 일기 타임라인에 보일 기록이 없을 때 안내
   ///
@@ -3181,24 +3205,6 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{start} ~ {end}'**
   String walkDiaryStoryPeriod(String start, String end);
-
-  /// 일기 보기 모드 — 날짜별로 글이 이어지는 줄글
-  ///
-  /// In ko, this message translates to:
-  /// **'줄글'**
-  String get walkDiaryViewProse;
-
-  /// 일기 보기 모드 — 카드 세로 목록
-  ///
-  /// In ko, this message translates to:
-  /// **'피드'**
-  String get walkDiaryViewFeed;
-
-  /// 일기 보기 모드 — 전체 화면으로 한 기록씩 넘기는 릴스
-  ///
-  /// In ko, this message translates to:
-  /// **'릴스'**
-  String get walkDiaryViewReels;
 
   /// 일기 피드 카드 — 접힌 긴 본문을 펼치는 버튼
   ///
@@ -4526,11 +4532,23 @@ abstract class AppLocalizations {
   /// **'장소 이름'**
   String get walkDiaryEditorPlaceHint;
 
-  /// 일기 작성 화면 스토리 행
+  /// 일기 작성 화면 스토리 동그라미 줄 제목
   ///
   /// In ko, this message translates to:
-  /// **'스토리: {title}'**
-  String walkDiaryEditorStory(String title);
+  /// **'어디에 올릴까요?'**
+  String get walkDiaryWhereToPost;
+
+  /// 일기 ＋ 시트의 미디어 없이 쓰기 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'글만 쓰기'**
+  String get walkDiaryTextOnly;
+
+  /// 일기 기록을 올린 뒤 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'{title}에 올렸어요'**
+  String walkDiaryPostedTo(String title);
 
   /// 일기 작성 화면 스토리 선택 시트 제목
   ///
@@ -4646,6 +4664,12 @@ abstract class AppLocalizations {
   /// **'저장하지 못했어요. 다시 시도해 주세요'**
   String get walkDiaryErrorSave;
 
+  /// 새 기록을 쓰다 만든 스토리의 기간이 이미 끝나 고를 수 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'끝난 스토리라 새 기록을 올릴 수 없어요'**
+  String get walkDiaryStoryEndedNotSelectable;
+
   /// 일기 작성 화면 태그 추천 — 태그 이름과 쓴 기록 수
   ///
   /// In ko, this message translates to:
@@ -4657,12 +4681,6 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{name} {count}'**
   String walkDiaryEditorPlaceSuggestion(String name, int count);
-
-  /// 일기 탭 ⋮ 메뉴의 스토리 관리 항목 · 스토리 관리 화면 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'스토리 관리'**
-  String get walkDiaryMenuStories;
 
   /// 스토리 관리 화면의 새 스토리 만들기 버튼 · 만들기 시트 제목
   ///
@@ -4849,6 +4867,48 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'휴지통으로 옮기지 못했어요. 다시 시도해 주세요'**
   String get walkDiaryEntryTrashFailed;
+
+  /// 스토리 뷰어 ⋮ 메뉴의 휴지통으로 보내기 항목(확인 없이, 되돌리기 스낵바)
+  ///
+  /// In ko, this message translates to:
+  /// **'휴지통으로'**
+  String get walkDiaryEntryTrash;
+
+  /// 일기 기록 ⋮ 메뉴의 다른 스토리로 옮기기 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'스토리 옮기기'**
+  String get walkDiaryEntryMove;
+
+  /// 일기 기록을 다른 스토리로 옮긴 뒤 알림
+  ///
+  /// In ko, this message translates to:
+  /// **'{story} 스토리로 옮겼어요'**
+  String walkDiaryEntryMoved(String story);
+
+  /// 일기 기록을 다른 스토리로 옮기지 못했을 때 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'옮기지 못했어요. 다시 시도해 주세요'**
+  String get walkDiaryEntryMoveFailed;
+
+  /// 일기 기록 휴지통 · 옮기기 스낵바의 되돌리기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'되돌리기'**
+  String get walkDiaryUndo;
+
+  /// 스토리 뷰어 머리 — 스토리 시작일 기준 며칠째
+  ///
+  /// In ko, this message translates to:
+  /// **'{n}일차'**
+  String walkDiaryDayNumber(int n);
+
+  /// 스토리 뷰어의 ✕ 닫기 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'닫기'**
+  String get walkDiaryViewerClose;
 
   /// 일기 기록 상세의 날짜와 시각
   ///
@@ -5761,6 +5821,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'경로 선택'**
   String get walkCommuteRoutesTitle;
+
+  /// 일기 피드 카드의 상대 시각(1시간 안)
+  ///
+  /// In ko, this message translates to:
+  /// **'{minutes}분 전'**
+  String walkDiaryMinutesAgo(int minutes);
+
+  /// 일기 피드 카드의 상대 시각(하루 안)
+  ///
+  /// In ko, this message translates to:
+  /// **'{hours}시간 전'**
+  String walkDiaryHoursAgo(int hours);
 }
 
 class _AppLocalizationsDelegate

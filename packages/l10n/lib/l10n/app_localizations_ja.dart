@@ -1618,10 +1618,24 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryDailyStoryTitle => '日常';
 
   @override
-  String get walkDiaryAll => 'すべて';
+  String get walkDiarySeeAll => 'すべて見る';
 
   @override
-  String get walkDiaryArchive => 'アーカイブ';
+  String get walkDiaryAllStories => 'すべてのストーリー';
+
+  @override
+  String get walkDiaryPastStories => '過去のストーリー';
+
+  @override
+  String get walkDiaryPlayFromStart => '最初から見る';
+
+  @override
+  String get walkDiaryPlay => '▶ 見る';
+
+  @override
+  String walkDiaryStoryStats(int entries, int photos) {
+    return '記録 $entries · 写真 $photos';
+  }
 
   @override
   String get walkDiaryEmpty => 'まだ記録がありません';
@@ -1642,15 +1656,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String walkDiaryStoryPeriod(String start, String end) {
     return '$start〜$end';
   }
-
-  @override
-  String get walkDiaryViewProse => '文章';
-
-  @override
-  String get walkDiaryViewFeed => 'フィード';
-
-  @override
-  String get walkDiaryViewReels => 'リール';
 
   @override
   String get walkDiaryShowMore => 'もっと見る';
@@ -2380,8 +2385,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryEditorPlaceHint => '場所の名前';
 
   @override
-  String walkDiaryEditorStory(String title) {
-    return 'ストーリー: $title';
+  String get walkDiaryWhereToPost => 'どこに投稿しますか？';
+
+  @override
+  String get walkDiaryTextOnly => '文章だけ書く';
+
+  @override
+  String walkDiaryPostedTo(String title) {
+    return '$titleに投稿しました';
   }
 
   @override
@@ -2446,6 +2457,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryErrorSave => '保存できませんでした。もう一度お試しください';
 
   @override
+  String get walkDiaryStoryEndedNotSelectable => '終了したストーリーには新しい記録を投稿できません';
+
+  @override
   String walkDiaryEditorTagSuggestion(String name, int count) {
     return '#$name $count';
   }
@@ -2454,9 +2468,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String walkDiaryEditorPlaceSuggestion(String name, int count) {
     return '$name $count';
   }
-
-  @override
-  String get walkDiaryMenuStories => 'ストーリー管理';
 
   @override
   String get walkDiaryStoryNew => '新しいストーリー';
@@ -2561,6 +2572,31 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkDiaryEntryTrashFailed => 'ゴミ箱に移動できませんでした。もう一度お試しください';
+
+  @override
+  String get walkDiaryEntryTrash => 'ゴミ箱へ';
+
+  @override
+  String get walkDiaryEntryMove => 'ストーリーを移動';
+
+  @override
+  String walkDiaryEntryMoved(String story) {
+    return '$storyに移動しました';
+  }
+
+  @override
+  String get walkDiaryEntryMoveFailed => '移動できませんでした。もう一度お試しください';
+
+  @override
+  String get walkDiaryUndo => '元に戻す';
+
+  @override
+  String walkDiaryDayNumber(int n) {
+    return '$n日目';
+  }
+
+  @override
+  String get walkDiaryViewerClose => '閉じる';
 
   @override
   String walkDiaryEntryDateTime(String date, String time) {
@@ -3077,4 +3113,14 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkCommuteRoutesTitle => 'ルートを選ぶ';
+
+  @override
+  String walkDiaryMinutesAgo(int minutes) {
+    return '$minutes分前';
+  }
+
+  @override
+  String walkDiaryHoursAgo(int hours) {
+    return '$hours時間前';
+  }
 }

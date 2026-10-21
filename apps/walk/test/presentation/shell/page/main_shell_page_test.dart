@@ -38,7 +38,7 @@ import 'package:walk/domain/walk/usecase/walk_use_case.dart';
 import 'package:walk/presentation/alarm/page/alarm_list_page.dart';
 import 'package:walk/presentation/commute/page/commute_tab.dart';
 import 'package:walk/presentation/diary/page/diary_tab.dart';
-import 'package:walk/presentation/diary/widget/story_bar.dart';
+import 'package:walk/presentation/diary/widget/story_ring_row.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
 import 'package:walk/presentation/lock/widget/pin_pad.dart';
 import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
@@ -295,7 +295,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.book_outlined));
     await tester.pumpAndSettle();
     expect(onstage(DiaryTab), isTrue);
-    expect(find.byType(StoryBar), findsOneWidget);
+    expect(find.byType(StoryRingRow), findsOneWidget);
   });
 
   testWidgets('일기 탭: 스낵바가 떠도 ＋ 를 가리지 않는다(＋ 가 위로 비킨다)', (tester) async {
@@ -307,7 +307,7 @@ void main() {
 
     // 휴지통으로 옮기기 · 되살리기처럼 위에 얹힌 화면에서 띄운 것과 같은(앱 전체) 메신저.
     AppSnackBar.show(
-      tester.element(find.byType(StoryBar)),
+      tester.element(find.byType(StoryRingRow)),
       message: '휴지통으로 옮겼어요',
       type: AppSnackBarType.success,
     );
@@ -339,14 +339,14 @@ void main() {
     await tester.tap(find.byIcon(Icons.book_outlined));
     await tester.pumpAndSettle();
     expect(find.byType(PinPad), findsOneWidget);
-    expect(find.byType(StoryBar, skipOffstage: false), findsNothing);
+    expect(find.byType(StoryRingRow, skipOffstage: false), findsNothing);
 
     for (final d in '1234'.split('')) {
       await tester.tap(find.widgetWithText(TextButton, d));
       await tester.pump();
     }
     await tester.pumpAndSettle();
-    expect(find.byType(StoryBar), findsOneWidget);
+    expect(find.byType(StoryRingRow), findsOneWidget);
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
@@ -357,7 +357,7 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpAndSettle();
 
-    expect(find.byType(StoryBar, skipOffstage: false), findsNothing);
+    expect(find.byType(StoryRingRow, skipOffstage: false), findsNothing);
     expect(find.byType(PinPad), findsOneWidget);
   });
 

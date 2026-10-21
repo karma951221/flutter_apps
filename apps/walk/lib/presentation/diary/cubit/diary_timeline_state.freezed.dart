@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$DiaryTimelineState {
 
- List<Story> get openStories; List<Story> get archived; String? get selectedStoryId; DiaryViewMode get viewMode; List<DiaryEntry> get entries; bool get loading; bool get failed;
+ List<Story> get openStories; List<Story> get archived; List<DiaryEntry> get entries; bool get loading; bool get failed;
 /// Create a copy of DiaryTimelineState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $DiaryTimelineStateCopyWith<DiaryTimelineState> get copyWith => _$DiaryTimelineS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiaryTimelineState&&const DeepCollectionEquality().equals(other.openStories, openStories)&&const DeepCollectionEquality().equals(other.archived, archived)&&(identical(other.selectedStoryId, selectedStoryId) || other.selectedStoryId == selectedStoryId)&&(identical(other.viewMode, viewMode) || other.viewMode == viewMode)&&const DeepCollectionEquality().equals(other.entries, entries)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.failed, failed) || other.failed == failed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiaryTimelineState&&const DeepCollectionEquality().equals(other.openStories, openStories)&&const DeepCollectionEquality().equals(other.archived, archived)&&const DeepCollectionEquality().equals(other.entries, entries)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.failed, failed) || other.failed == failed));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(openStories),const DeepCollectionEquality().hash(archived),selectedStoryId,viewMode,const DeepCollectionEquality().hash(entries),loading,failed);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(openStories),const DeepCollectionEquality().hash(archived),const DeepCollectionEquality().hash(entries),loading,failed);
 
 @override
 String toString() {
-  return 'DiaryTimelineState(openStories: $openStories, archived: $archived, selectedStoryId: $selectedStoryId, viewMode: $viewMode, entries: $entries, loading: $loading, failed: $failed)';
+  return 'DiaryTimelineState(openStories: $openStories, archived: $archived, entries: $entries, loading: $loading, failed: $failed)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $DiaryTimelineStateCopyWith<$Res>  {
   factory $DiaryTimelineStateCopyWith(DiaryTimelineState value, $Res Function(DiaryTimelineState) _then) = _$DiaryTimelineStateCopyWithImpl;
 @useResult
 $Res call({
- List<Story> openStories, List<Story> archived, String? selectedStoryId, DiaryViewMode viewMode, List<DiaryEntry> entries, bool loading, bool failed
+ List<Story> openStories, List<Story> archived, List<DiaryEntry> entries, bool loading, bool failed
 });
 
 
@@ -62,13 +62,11 @@ class _$DiaryTimelineStateCopyWithImpl<$Res>
 
 /// Create a copy of DiaryTimelineState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? openStories = null,Object? archived = null,Object? selectedStoryId = freezed,Object? viewMode = null,Object? entries = null,Object? loading = null,Object? failed = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? openStories = null,Object? archived = null,Object? entries = null,Object? loading = null,Object? failed = null,}) {
   return _then(DiaryTimelineState(
 openStories: null == openStories ? _self.openStories : openStories // ignore: cast_nullable_to_non_nullable
 as List<Story>,archived: null == archived ? _self.archived : archived // ignore: cast_nullable_to_non_nullable
-as List<Story>,selectedStoryId: freezed == selectedStoryId ? _self.selectedStoryId : selectedStoryId // ignore: cast_nullable_to_non_nullable
-as String?,viewMode: null == viewMode ? _self.viewMode : viewMode // ignore: cast_nullable_to_non_nullable
-as DiaryViewMode,entries: null == entries ? _self.entries : entries // ignore: cast_nullable_to_non_nullable
+as List<Story>,entries: null == entries ? _self.entries : entries // ignore: cast_nullable_to_non_nullable
 as List<DiaryEntry>,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
 as bool,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
 as bool,

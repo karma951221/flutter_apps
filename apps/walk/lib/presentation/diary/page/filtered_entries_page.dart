@@ -7,15 +7,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/diary/entity/entry_filter.dart';
-import '../../../domain/diary/repository/diary_preferences.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../cubit/filtered_entries_cubit.dart';
 import '../cubit/filtered_entries_state.dart';
-import '../widget/diary_entries_view.dart';
-import '../widget/story_bar.dart';
-import '../widget/view_mode_switch.dart';
+import '../viewer/story_viewer_page.dart';
+import '../widget/entry_grid.dart';
 import 'diary_route.dart';
-import 'entry_detail_page.dart';
 
 /// 태그 · 장소 모아보기를 연다. 일기 잠금에 묶인 화면([pushDiaryRoute])이라 다시 잠기면 가려진다.
 Future<void> openFilteredEntries(BuildContext context, EntryFilter filter) =>
@@ -24,7 +21,8 @@ Future<void> openFilteredEntries(BuildContext context, EntryFilter filter) =>
       page: (_) => FilteredEntriesPage(filter: filter),
     );
 
-/// 태그 · 장소 모아보기(스펙 §6.4): 스토리를 넘나들며 [filter] 의 기록을 보기 모드 3종으로.
+/// 태그 · 장소 모아보기(스펙 §3.5): 스토리를 넘나들며 [filter] 의 기록을 `기록 n개` · `▶ 보기` ·
+/// 3열 그리드로. `▶ 보기` 는 모아보기 소스 뷰어를 처음부터, 칸은 그 기록부터 연다.
 /// 열린 채로 기록이 추가 · 휴지통 · 복원되면 바로 따라간다.
 class FilteredEntriesPage extends StatefulWidget {
   const FilteredEntriesPage({required this.filter, super.key});
@@ -40,7 +38,6 @@ class _FilteredEntriesPageState extends State<FilteredEntriesPage> {
   late final _cubit = FilteredEntriesCubit(
     getIt<DiaryRepository>(),
     widget.filter,
-    getIt<DiaryPreferences>(),
   )..start();
 
   @override
@@ -57,53 +54,23 @@ class _FilteredEntriesPageState extends State<FilteredEntriesPage> {
   };
 
   @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(_title(l10n))),
-      body: BlocBuilder<FilteredEntriesCubit, FilteredEntriesState>(
+  Widget build(BuildContext context) =>
+      BlocBuilder<FilteredEntriesCubit, FilteredEntriesState>(
         bloc: _cubit,
-        builder: (context, state) => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.sm,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      state.loading || state.failed
-                          ? ''
-                          : l10n.walkDiaryEntryCount(state.entries.length),
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                  ),
-                  ViewModeSwitch(
-                    mode: state.viewMode,
-                    onChanged: _cubit.setViewMode,
-                  ),
-                ],
-              ),
-            ),
-            Expanded(child: _Body(state: state)),
-          ],
-        ),
-      ),
-    );
-  }
-}
+        builder: (context, state) {
+          final l10n = AppLocalizations.of(context);
+          return Scaffold(
+            appBar: AppBar(title: Text(_title(l10n))),
+            body: _body(context, state, l10n),
+          );
+        },
+      );
 
-class _Body extends StatelessWidget {
-  const _Body({required this.state});
-
-  final FilteredEntriesState state;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+  Widget _body(
+    BuildContext context,
+    FilteredEntriesState state,
+    AppLocalizations l10n,
+  ) {
     if (state.failed) {
       return AppPlaceholder(
         icon: Icons.error_outline,
@@ -117,15 +84,40 @@ class _Body extends StatelessWidget {
         message: l10n.walkDiaryCollectionEmpty,
       );
     }
-    return DiaryEntriesView(
-      mode: state.viewMode,
-      entries: state.entries,
-      // 스토리를 넘나들므로 기록마다 스토리 이름을 붙인다.
-      showStoryName: true,
-      storyTitles: {
-        for (final s in state.stories) s.id: storyDisplayTitle(l10n, s),
-      },
-      onOpen: (entry) => openEntryDetail(context, entry.id),
+    // 뷰어 소스 이름은 앱바 제목과 같다.
+    final source = ViewerSource.filter(widget.filter, _title(l10n));
+    final theme = Theme.of(context);
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.walkDiaryEntryCount(state.entries.length),
+                  style: theme.textTheme.labelLarge,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                AppButton.secondary(
+                  label: l10n.walkDiaryPlay,
+                  onPressed: () =>
+                      openStoryViewer(context, source, fromStart: true),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SliverEntryGrid(
+          entries: state.entries,
+          onOpen: (entry) =>
+              openStoryViewer(context, source, entryId: entry.id),
+        ),
+      ],
     );
   }
 }

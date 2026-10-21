@@ -1,29 +1,20 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:walk/data/diary/prefs_diary_preferences.dart';
-import 'package:walk/domain/diary/entity/diary_view_mode.dart';
 import 'package:walk/domain/diary/entity/entry_draft.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/entity/entry_location.dart';
-import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/presentation/diary/cubit/filtered_entries_cubit.dart';
 
 import '../../../support/diary_fixtures.dart';
 
 void main() {
   late DiaryHarness h;
-  late PrefsDiaryPreferences prefs;
 
-  setUp(() async {
-    SharedPreferences.setMockInitialValues({});
-    prefs = PrefsDiaryPreferences(await SharedPreferences.getInstance());
-    h = DiaryHarness();
-  });
+  setUp(() => h = DiaryHarness());
 
   tearDown(() => h.close());
 
   Future<FilteredEntriesCubit> opened(EntryFilter filter) async {
-    final cubit = FilteredEntriesCubit(h.repository, filter, prefs)..start();
+    final cubit = FilteredEntriesCubit(h.repository, filter)..start();
     addTearDown(cubit.close);
     await pumpEventQueue();
     return cubit;
@@ -92,7 +83,7 @@ void main() {
       expect(c.state.failed, isFalse);
     });
 
-    test('스토리를 넘나든다 — 스토리 이름표용 목록도 받는다', () async {
+    test('스토리를 넘나든다', () async {
       final trip = okValue(
         await h.repository.createStory(title: '제주', startedAt: diaryT0),
       );
@@ -102,7 +93,6 @@ void main() {
       final c = await opened(filter);
 
       expect(ids(c), [b, a]);
-      expect({for (final s in c.state.stories) s.id}, {Story.dailyId, trip.id});
     });
   }
 
@@ -126,18 +116,5 @@ void main() {
         location: const EntryLocation(placeName: '한림읍'),
       ),
     );
-  });
-
-  group('보기 모드', () {
-    test('저장된 보기 모드로 열고, 바꾸면 저장한다', () async {
-      await prefs.setViewMode(DiaryViewMode.feed);
-      final c = await opened(const EntryFilter.tag('제주'));
-      expect(c.state.viewMode, DiaryViewMode.feed);
-
-      c.setViewMode(DiaryViewMode.reels);
-
-      expect(c.state.viewMode, DiaryViewMode.reels);
-      expect(prefs.viewMode, DiaryViewMode.reels);
-    });
   });
 }

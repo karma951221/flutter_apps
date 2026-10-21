@@ -1706,10 +1706,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryDailyStoryTitle => 'Daily';
 
   @override
-  String get walkDiaryAll => 'All';
+  String get walkDiarySeeAll => 'See all';
 
   @override
-  String get walkDiaryArchive => 'Archive';
+  String get walkDiaryAllStories => 'All stories';
+
+  @override
+  String get walkDiaryPastStories => 'Past stories';
+
+  @override
+  String get walkDiaryPlayFromStart => 'Play from start';
+
+  @override
+  String get walkDiaryPlay => '▶ Play';
+
+  @override
+  String walkDiaryStoryStats(int entries, int photos) {
+    String _temp0 = intl.Intl.pluralLogic(
+      entries,
+      locale: localeName,
+      other: '$entries entries',
+      one: '1 entry',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      photos,
+      locale: localeName,
+      other: '$photos photos',
+      one: '1 photo',
+    );
+    return '$_temp0 · $_temp1';
+  }
 
   @override
   String get walkDiaryEmpty => 'No entries yet';
@@ -1730,15 +1756,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String walkDiaryStoryPeriod(String start, String end) {
     return '$start – $end';
   }
-
-  @override
-  String get walkDiaryViewProse => 'Prose';
-
-  @override
-  String get walkDiaryViewFeed => 'Feed';
-
-  @override
-  String get walkDiaryViewReels => 'Reels';
 
   @override
   String get walkDiaryShowMore => 'More';
@@ -2516,8 +2533,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryEditorPlaceHint => 'Place name';
 
   @override
-  String walkDiaryEditorStory(String title) {
-    return 'Story: $title';
+  String get walkDiaryWhereToPost => 'Where to post?';
+
+  @override
+  String get walkDiaryTextOnly => 'Text only';
+
+  @override
+  String walkDiaryPostedTo(String title) {
+    return 'Posted to $title';
   }
 
   @override
@@ -2582,6 +2605,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryErrorSave => 'Couldn\'t save. Please try again';
 
   @override
+  String get walkDiaryStoryEndedNotSelectable =>
+      'That story has already ended, so you can\'t post a new entry to it';
+
+  @override
   String walkDiaryEditorTagSuggestion(String name, int count) {
     return '#$name $count';
   }
@@ -2590,9 +2617,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String walkDiaryEditorPlaceSuggestion(String name, int count) {
     return '$name $count';
   }
-
-  @override
-  String get walkDiaryMenuStories => 'Manage stories';
 
   @override
   String get walkDiaryStoryNew => 'New story';
@@ -2702,6 +2726,31 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkDiaryEntryTrashFailed =>
       'Couldn\'t move to the trash. Please try again';
+
+  @override
+  String get walkDiaryEntryTrash => 'Move to trash';
+
+  @override
+  String get walkDiaryEntryMove => 'Move to story';
+
+  @override
+  String walkDiaryEntryMoved(String story) {
+    return 'Moved to $story';
+  }
+
+  @override
+  String get walkDiaryEntryMoveFailed => 'Couldn\'t move it. Please try again';
+
+  @override
+  String get walkDiaryUndo => 'Undo';
+
+  @override
+  String walkDiaryDayNumber(int n) {
+    return 'Day $n';
+  }
+
+  @override
+  String get walkDiaryViewerClose => 'Close';
 
   @override
   String walkDiaryEntryDateTime(String date, String time) {
@@ -3303,4 +3352,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkCommuteRoutesTitle => 'Choose a route';
+
+  @override
+  String walkDiaryMinutesAgo(int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      minutes,
+      locale: localeName,
+      other: '$minutes minutes ago',
+      one: '1 minute ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkDiaryHoursAgo(int hours) {
+    String _temp0 = intl.Intl.pluralLogic(
+      hours,
+      locale: localeName,
+      other: '$hours hours ago',
+      one: '1 hour ago',
+    );
+    return '$_temp0';
+  }
 }
