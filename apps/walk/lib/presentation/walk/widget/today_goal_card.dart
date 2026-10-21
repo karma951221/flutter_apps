@@ -46,6 +46,8 @@ class TodayGoalCard extends StatelessWidget {
         // 제목은 두지 않는다 — 위 탭 이름이 "오늘"이다. 달성 배지는 오른쪽 위에 겹쳐 그려
         // 나타나도 링이 밀리지 않는다.
         child: Stack(
+          // 겹친 배지 말고는 카드 폭을 꽉 채워 링 · 아래 줄이 가운데에 온다.
+          fit: StackFit.passthrough,
           children: [
             Column(
               children: [

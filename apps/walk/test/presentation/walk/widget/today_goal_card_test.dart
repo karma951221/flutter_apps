@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:walk/domain/walk/entity/daily_activity.dart';
+import 'package:walk/presentation/walk/widget/step_goal_ring.dart';
 import 'package:walk/presentation/walk/widget/today_goal_card.dart';
 
 Future<void> _pump(WidgetTester tester, Widget child) async {
@@ -39,6 +40,25 @@ void main() {
     await _pump(tester, TodayGoalCard(activity: _activity(), goal: 10000));
 
     expect(find.text('오늘'), findsNothing);
+  });
+
+  testWidgets('링과 아래 줄은 카드 가로 가운데에 있다', (tester) async {
+    // 화면에서처럼 카드 폭을 목록 폭으로 꽉 채운다.
+    await _pump(
+      tester,
+      SizedBox(
+        width: 400,
+        child: TodayGoalCard(activity: _activity(), goal: 10000),
+      ),
+    );
+
+    final card = tester.getRect(find.byType(Card));
+    final ring = tester.getRect(find.byType(StepGoalRing));
+    expect(ring.center.dx, closeTo(card.center.dx, 1));
+    expect(
+      tester.getCenter(find.text('목표까지 2,760 걸음')).dx,
+      closeTo(card.center.dx, 1),
+    );
   });
 
   testWidgets('아래 줄은 늘 남은 걸음 — 거리 · 칼로리는 없다', (tester) async {
