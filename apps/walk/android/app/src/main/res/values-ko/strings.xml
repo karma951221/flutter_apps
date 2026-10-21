@@ -6,4 +6,6 @@
     <string name="widget_today">오늘 %1$s</string>
     <string name="widget_tomorrow">내일 (%1$s) %2$s</string>
     <string name="widget_description">다음 알람을 보여 줘요</string>
+    <string name="health_privacy_title">Life Tool 의 건강 데이터 사용</string>
+    <string name="health_privacy_body">Life Tool 은 Health Connect 에서 걸음 수만 읽어 이 폰 화면에 보여 줘요. 저장하거나 어디에도 보내지 않아요.</string>
 </resources>
