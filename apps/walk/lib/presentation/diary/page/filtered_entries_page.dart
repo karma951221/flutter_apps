@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../../domain/diary/entity/diary_view_mode.dart';
 import '../../../domain/diary/entity/entry_filter.dart';
 import '../../../domain/diary/repository/diary_preferences.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../cubit/filtered_entries_cubit.dart';
 import '../cubit/filtered_entries_state.dart';
+import '../../theme/walk_theme.dart';
 import '../widget/diary_entries_view.dart';
 import '../widget/story_bar.dart';
 import '../widget/view_mode_switch.dart';
@@ -25,7 +27,8 @@ Future<void> openFilteredEntries(BuildContext context, EntryFilter filter) =>
     );
 
 /// 태그 · 장소 모아보기(스펙 §6.4): 스토리를 넘나들며 [filter] 의 기록을 보기 모드 3종으로.
-/// 열린 채로 기록이 추가 · 휴지통 · 복원되면 바로 따라간다.
+/// 열린 채로 기록이 추가 · 휴지통 · 복원되면 바로 따라간다. 릴스에서는 일기 탭처럼 기록이 화면을
+/// 채우고, 앱바 · 개수 · 토글을 어두운 반투명 바탕으로 위에 얹는다.
 class FilteredEntriesPage extends StatefulWidget {
   const FilteredEntriesPage({required this.filter, super.key});
 
@@ -56,44 +59,79 @@ class _FilteredEntriesPageState extends State<FilteredEntriesPage> {
     _ => '',
   };
 
+  /// 릴스 위 앱바 바탕의 불투명도 — 일기 탭 머리와 같다.
+  static const _overlayAlpha = 0.7;
+
   @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      appBar: AppBar(title: Text(_title(l10n))),
-      body: BlocBuilder<FilteredEntriesCubit, FilteredEntriesState>(
+  Widget build(BuildContext context) =>
+      BlocBuilder<FilteredEntriesCubit, FilteredEntriesState>(
         bloc: _cubit,
-        builder: (context, state) => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.sm,
-              ),
-              child: Row(
+        builder: (context, state) {
+          final l10n = AppLocalizations.of(context);
+          final reels = state.viewMode == DiaryViewMode.reels;
+          final countBar = Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    state.loading || state.failed
+                        ? ''
+                        : l10n.walkDiaryEntryCount(state.entries.length),
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                ),
+                ViewModeSwitch(
+                  mode: state.viewMode,
+                  onChanged: _cubit.setViewMode,
+                ),
+              ],
+            ),
+          );
+          if (!reels) {
+            return Scaffold(
+              appBar: AppBar(title: Text(_title(l10n))),
+              body: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: Text(
-                      state.loading || state.failed
-                          ? ''
-                          : l10n.walkDiaryEntryCount(state.entries.length),
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                  ),
-                  ViewModeSwitch(
-                    mode: state.viewMode,
-                    onChanged: _cubit.setViewMode,
-                  ),
+                  countBar,
+                  Expanded(child: _Body(state: state)),
                 ],
               ),
+            );
+          }
+          final body = _Body(state: state);
+          return Theme(
+            data: WalkTheme.dark(),
+            child: Builder(
+              builder: (context) {
+                final overlay = Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: _overlayAlpha);
+                return Scaffold(
+                  extendBodyBehindAppBar: true,
+                  appBar: AppBar(
+                    title: Text(_title(l10n)),
+                    backgroundColor: overlay,
+                    // 기록이 앱바 밑을 지나가도 색이 바뀌지 않게.
+                    scrolledUnderElevation: 0,
+                    bottom: PreferredSize(
+                      preferredSize: const Size.fromHeight(
+                        kMinInteractiveDimension + AppSpacing.sm * 2,
+                      ),
+                      child: countBar,
+                    ),
+                  ),
+                  body: body,
+                );
+              },
             ),
-            Expanded(child: _Body(state: state)),
-          ],
-        ),
-      ),
-    );
-  }
+          );
+        },
+      );
 }
 
 class _Body extends StatelessWidget {

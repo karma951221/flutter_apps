@@ -17,6 +17,8 @@ import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/presentation/diary/page/filtered_entries_page.dart';
 import 'package:walk/presentation/diary/widget/feed_view.dart';
 import 'package:walk/presentation/diary/widget/prose_view.dart';
+import 'package:walk/presentation/diary/widget/reels_view.dart';
+import 'package:walk/presentation/diary/widget/view_mode_switch.dart';
 
 import '../../../support/diary_fixtures.dart';
 
@@ -132,6 +134,31 @@ void main() {
 
     expect(find.byType(FeedView), findsOneWidget);
     expect(prefs.viewMode, DiaryViewMode.feed);
+  });
+
+  testWidgets('릴스는 화면을 꽉 채우고, 제목 · 개수 · 토글을 위에 얹는다(D15)', (tester) async {
+    await prefs.setViewMode(DiaryViewMode.reels);
+    await pump(tester, const EntryFilter.tag('제주'));
+    await emit(tester, [_entry('a', '한라산')]);
+
+    expect(find.byType(ReelsView), findsOneWidget);
+    final screen = tester.getRect(find.byType(FilteredEntriesPage));
+    expect(tester.getRect(find.byType(ReelsView)), screen);
+    expect(find.widgetWithText(AppBar, '#제주'), findsOneWidget);
+    expect(find.text('기록 1개'), findsOneWidget);
+    expect(
+      tester.getBottomLeft(find.byType(ViewModeSwitch)).dy,
+      lessThan(tester.getBottomLeft(find.byType(ReelsView)).dy),
+    );
+
+    await tester.tap(find.text('줄글'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ProseView), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.byType(ProseView)).dy,
+      greaterThan(tester.getBottomLeft(find.byType(ViewModeSwitch)).dy),
+    );
   });
 
   testWidgets('읽지 못하면 오류 안내', (tester) async {
