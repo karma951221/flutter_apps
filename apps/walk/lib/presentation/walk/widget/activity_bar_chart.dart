@@ -166,16 +166,24 @@ class _ActivityBarChartState extends State<ActivityBarChart>
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        Padding(
+        // 라벨이 칸 밖으로 넘쳐 그려지므로(OverflowBox) 줄 높이는 한 줄로 정해 둔다.
+        Container(
+          height: AppSpacing.md,
           padding: const EdgeInsets.only(right: _labelGutter),
           child: Row(
             children: [
               for (final day in period.days)
                 Expanded(
-                  child: Text(
-                    _label(locale, day.date),
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.labelSmall,
+                  // 월간 칸은 두 자리 날짜보다 좁다 — 꺾지 않고 칸 가운데에서 양옆으로 넘친다.
+                  // 라벨은 5일마다라 이웃과 겹치지 않는다.
+                  child: OverflowBox(
+                    maxWidth: double.infinity,
+                    maxHeight: double.infinity,
+                    child: Text(
+                      _label(locale, day.date),
+                      softWrap: false,
+                      style: theme.textTheme.labelSmall,
+                    ),
                   ),
                 ),
             ],

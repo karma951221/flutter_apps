@@ -294,6 +294,17 @@ void main() {
       expect(bar.right, lessThanOrEqualTo(tester.getRect(label).left + 0.01));
     });
 
+    testWidgets('좁은 폭 월간에서 두 자리 날짜도 한 줄이다', (tester) async {
+      await narrow(tester);
+      await _pump(tester, month, 10000);
+      await tester.pumpAndSettle();
+
+      final one = tester.getSize(find.text('5')).height;
+      for (final day in ['10', '15', '20', '25', '30']) {
+        expect(tester.getSize(find.text(day)).height, one, reason: day);
+      }
+    });
+
     testWidgets('목표 높이에서 마지막 막대를 눌러도 선택된다', (tester) async {
       await narrow(tester);
       await _pump(tester, full, 10000);
