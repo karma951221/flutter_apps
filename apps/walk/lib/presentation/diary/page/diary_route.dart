@@ -1,3 +1,4 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -12,26 +13,41 @@ typedef DiaryRouteScope = Widget Function(BuildContext context, Widget gated);
 ///
 /// [scope] 는 게이트 **바깥**에 둘 것(예: 쓰던 기록을 들고 있는 cubit 의 주인)을 감싼다 —
 /// 잠겼다 풀려도 그 상태는 메모리에 남는다. [context] 위에 [DiaryLockCubit] 가 있어야 한다.
+///
+/// [fade] 면 기본 넘김 대신 페이드로 열고 닫는다(스토리 뷰어 — 화면이 갑자기 바뀌지 않게).
 Future<T?> pushDiaryRoute<T>(
   BuildContext context, {
   required WidgetBuilder page,
   DiaryRouteScope? scope,
+  bool fade = false,
 }) {
   final lock = context.read<DiaryLockCubit>();
+  Widget build(BuildContext context) {
+    // 잠금 화면에는 바탕이 필요하다. 풀리면 [page] 가 자기 Scaffold 를 그린다.
+    final gated = Scaffold(
+      body: DiaryLockGate(child: Builder(builder: page)),
+    );
+    return BlocProvider.value(
+      value: lock,
+      child: scope == null
+          ? gated
+          : Builder(builder: (context) => scope(context, gated)),
+    );
+  }
+
+  if (!fade) {
+    return Navigator.of(context).push(MaterialPageRoute<T>(builder: build));
+  }
+  final duration = AppMotion.enabled(context)
+      ? AppMotion.medium
+      : Duration.zero;
   return Navigator.of(context).push(
-    MaterialPageRoute<T>(
-      builder: (context) {
-        // 잠금 화면에는 바탕이 필요하다. 풀리면 [page] 가 자기 Scaffold 를 그린다.
-        final gated = Scaffold(
-          body: DiaryLockGate(child: Builder(builder: page)),
-        );
-        return BlocProvider.value(
-          value: lock,
-          child: scope == null
-              ? gated
-              : Builder(builder: (context) => scope(context, gated)),
-        );
-      },
+    PageRouteBuilder<T>(
+      transitionDuration: duration,
+      reverseTransitionDuration: duration,
+      pageBuilder: (context, _, _) => build(context),
+      transitionsBuilder: (context, animation, _, child) =>
+          FadeTransition(opacity: animation, child: child),
     ),
   );
 }

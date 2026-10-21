@@ -168,11 +168,27 @@ class _MediaPagerState extends State<MediaPager> {
   }
 }
 
-/// `video_player` 로 [file] 을 반복 재생한다. 트리에서 빠지면 컨트롤러를 버린다.
+/// `video_player` 로 [file] 을 재생한다([loop] 면 반복). 트리에서 빠지면 컨트롤러를 버린다.
+///
+/// [playing] 이 false 면 멈춰 둔다. 준비되면 [onReady] 로 길이를, 반복하지 않을 때 끝까지
+/// 재생하면 [onEnded] 를 한 번 알린다. 열지 못하면 [onFailed] 를 부르고 깨진 그림을 보인다.
 class VideoSurface extends StatefulWidget {
-  const VideoSurface({required this.file, super.key});
+  const VideoSurface({
+    required this.file,
+    this.loop = true,
+    this.playing = true,
+    this.onReady,
+    this.onEnded,
+    this.onFailed,
+    super.key,
+  });
 
   final File file;
+  final bool loop;
+  final bool playing;
+  final ValueChanged<Duration>? onReady;
+  final VoidCallback? onEnded;
+  final VoidCallback? onFailed;
 
   @override
   State<VideoSurface> createState() => _VideoSurfaceState();
@@ -182,6 +198,7 @@ class _VideoSurfaceState extends State<VideoSurface> {
   late final _controller = VideoPlayerController.file(widget.file);
   var _ready = false;
   var _failed = false;
+  var _ended = false;
 
   @override
   void initState() {
@@ -192,18 +209,46 @@ class _VideoSurfaceState extends State<VideoSurface> {
   Future<void> _start() async {
     try {
       await _controller.initialize();
-      await _controller.setLooping(true);
-      await _controller.play();
+      await _controller.setLooping(widget.loop);
+      if (widget.playing) await _controller.play();
     } on Object {
-      if (mounted) setState(() => _failed = true);
+      if (!mounted) return;
+      setState(() => _failed = true);
+      widget.onFailed?.call();
       return;
     }
-    if (mounted) setState(() => _ready = true);
+    if (!mounted) return;
+    _controller.addListener(_watchEnd);
+    setState(() => _ready = true);
+    widget.onReady?.call(_controller.value.duration);
+  }
+
+  /// 반복하지 않을 때 끝까지 재생했으면 한 번 알린다.
+  void _watchEnd() {
+    final value = _controller.value;
+    if (widget.loop || _ended || value.isPlaying) return;
+    if (value.duration > Duration.zero && value.position >= value.duration) {
+      _ended = true;
+      widget.onEnded?.call();
+    }
+  }
+
+  @override
+  void didUpdateWidget(VideoSurface old) {
+    super.didUpdateWidget(old);
+    if (!_ready || old.playing == widget.playing) return;
+    if (widget.playing) {
+      _controller.play();
+    } else {
+      _controller.pause();
+    }
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _controller
+      ..removeListener(_watchEnd)
+      ..dispose();
     super.dispose();
   }
 

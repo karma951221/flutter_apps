@@ -164,10 +164,7 @@ void main() {
 
       verify(() => useCase.trash('e1')).called(1);
       expect(results, [true]);
-      expect(
-        find.widgetWithText(SnackBar, '기록을 휴지통으로 옮겼어요'),
-        findsOneWidget,
-      );
+      expect(find.widgetWithText(SnackBar, '기록을 휴지통으로 옮겼어요'), findsOneWidget);
 
       await tester.tap(find.widgetWithText(SnackBarAction, '되돌리기'));
       await tester.pumpAndSettle();
