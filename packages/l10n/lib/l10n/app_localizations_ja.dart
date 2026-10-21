@@ -1621,6 +1621,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryAll => 'すべて';
 
   @override
+  String get walkDiarySeeAll => 'すべて見る';
+
+  @override
   String get walkDiaryArchive => 'アーカイブ';
 
   @override

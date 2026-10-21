@@ -3140,6 +3140,12 @@ abstract class AppLocalizations {
   /// **'전체'**
   String get walkDiaryAll;
 
+  /// 일기 스토리 동그라미 줄 끝 — 스토리 전체 목록으로 가는 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'모두 보기'**
+  String get walkDiarySeeAll;
+
   /// 일기 스토리 바 끝 — 닫힌 스토리 모음. 누르면 목록 시트가 열린다
   ///
   /// In ko, this message translates to:

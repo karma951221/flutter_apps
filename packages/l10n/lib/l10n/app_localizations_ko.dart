@@ -1623,6 +1623,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryAll => '전체';
 
   @override
+  String get walkDiarySeeAll => '모두 보기';
+
+  @override
   String get walkDiaryArchive => '보관함';
 
   @override

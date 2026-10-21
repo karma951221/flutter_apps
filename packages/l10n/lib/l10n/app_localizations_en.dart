@@ -1709,6 +1709,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryAll => 'All';
 
   @override
+  String get walkDiarySeeAll => 'See all';
+
+  @override
   String get walkDiaryArchive => 'Archive';
 
   @override

@@ -2287,6 +2287,10 @@
   "@walkDiaryAll": {
     "description": "일기 스토리 바 — 모든 스토리의 기록을 함께 보는 항목"
   },
+  "walkDiarySeeAll": "모두 보기",
+  "@walkDiarySeeAll": {
+    "description": "일기 스토리 동그라미 줄 끝 — 스토리 전체 목록으로 가는 항목"
+  },
   "walkDiaryArchive": "보관함",
   "@walkDiaryArchive": {
     "description": "일기 스토리 바 끝 — 닫힌 스토리 모음. 누르면 목록 시트가 열린다"
