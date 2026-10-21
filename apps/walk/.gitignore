@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# 통근 탭 API 키(config/commute_keys.example.json 을 복사해 채운다)
+/config/commute_keys.json

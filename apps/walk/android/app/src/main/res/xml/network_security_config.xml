@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 서울 열린데이터 실시간 지하철 API 는 http 만 열려 있어 이 도메인 하나만 평문을 허용한다. -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">swopenapi.seoul.go.kr</domain>
+    </domain-config>
+</network-security-config>
