@@ -2690,12 +2690,6 @@ abstract class AppLocalizations {
   /// **'목표까지 {steps}'**
   String walkGoalRemaining(String steps);
 
-  /// 목표까지 남은 걸음 수와 거리
-  ///
-  /// In ko, this message translates to:
-  /// **'목표까지 {steps} · 약 {distance}'**
-  String walkGoalRemainingWithDistance(String steps, String distance);
-
   /// 목표를 넘긴 걸음 수
   ///
   /// In ko, this message translates to:
@@ -2762,6 +2756,12 @@ abstract class AppLocalizations {
   /// **'월간'**
   String get walkTabMonth;
 
+  /// 걷기 탭 안의 둘째 탭 — 주간 · 월간 그래프. 첫 탭은 walkToday
+  ///
+  /// In ko, this message translates to:
+  /// **'기록'**
+  String get walkTabHistory;
+
   /// 기간 합계 걸음 수 라벨
   ///
   /// In ko, this message translates to:
@@ -2773,18 +2773,6 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'일평균'**
   String get walkAverageSteps;
-
-  /// 이동 거리 라벨
-  ///
-  /// In ko, this message translates to:
-  /// **'거리'**
-  String get walkDistance;
-
-  /// 활동 칼로리 라벨
-  ///
-  /// In ko, this message translates to:
-  /// **'활동 칼로리'**
-  String get walkActiveCalories;
 
   /// 이전 기간으로 이동하는 버튼 라벨
   ///
@@ -2837,7 +2825,7 @@ abstract class AppLocalizations {
   /// 권한 요청 안내 설명
   ///
   /// In ko, this message translates to:
-  /// **'걸음 · 거리 · 활동 칼로리를 읽기만 하고 저장하거나 보내지 않아요'**
+  /// **'걸음 수를 읽기만 하고 저장하거나 보내지 않아요'**
   String get walkPermissionDescription;
 
   /// 권한 요청 버튼 라벨

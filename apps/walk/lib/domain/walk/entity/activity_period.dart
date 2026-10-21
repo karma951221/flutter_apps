@@ -41,15 +41,5 @@ class ActivityPeriod with _$ActivityPeriod {
         .round();
   }
 
-  double? get totalDistanceMeters => _sumPresent(days.map((d) => d.distanceMeters));
-
-  double? get totalActiveKcal => _sumPresent(days.map((d) => d.activeKcal));
-
   bool get isCurrent => !today.isBefore(start) && !today.isAfter(end);
-
-  static double? _sumPresent(Iterable<double?> values) {
-    final present = values.whereType<double>();
-    if (present.isEmpty) return null;
-    return present.fold<double>(0, (sum, v) => sum + v);
-  }
 }

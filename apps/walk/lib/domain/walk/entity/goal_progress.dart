@@ -16,14 +16,6 @@ class GoalProgress with _$GoalProgress {
   bool get reached => steps >= goal;
   int get remainingSteps => reached ? 0 : goal - steps;
   int get overSteps => reached ? steps - goal : 0;
-
-  /// 오늘 거리 ÷ 오늘 걸음을 보폭으로 남은 걸음에 곱한다. 걸음 0 · 거리 없음 · 0m 이면 null.
-  double? remainingMeters(double? distanceMeters) {
-    if (steps == 0 || distanceMeters == null || distanceMeters <= 0) {
-      return null;
-    }
-    return remainingSteps * distanceMeters / steps;
-  }
 }
 
 /// 달성했고 오늘 아직 축하하지 않았으면 참. 날짜는 자정 기준으로 비교한다.

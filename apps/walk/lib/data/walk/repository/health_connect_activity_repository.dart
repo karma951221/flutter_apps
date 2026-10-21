@@ -21,8 +21,6 @@ class HealthConnectActivityRepository implements ActivityRepository {
   final PermissionRequester _permission;
 
   static const _steps = HealthDataType.STEPS;
-  static const _distance = HealthDataType.DISTANCE_DELTA;
-  static const _kcal = HealthDataType.ACTIVE_ENERGY_BURNED;
 
   /// 진행 중인 확인 · 요청. 권한 화면이 앱을 멈췄다 되살리면 복귀 확인이 시작 확인과
   /// 겹친다 — 겹쳐 요청하면 화면이 두 번 뜨고, 플러그인은 대기 결과를 하나만 들고 있어
@@ -40,10 +38,13 @@ class HealthConnectActivityRepository implements ActivityRepository {
   Future<HealthAccess> _checkAccess() async {
     try {
       return switch (await _gateway.sdkStatus()) {
-        HealthConnectSdkStatus.sdkAvailable => _toAccess(await _permission.ensure()),
+        HealthConnectSdkStatus.sdkAvailable => _toAccess(
+          await _permission.ensure(),
+        ),
         HealthConnectSdkStatus.sdkUnavailableProviderUpdateRequired =>
           HealthAccess.updateRequired,
-        HealthConnectSdkStatus.sdkUnavailable || null => HealthAccess.notInstalled,
+        HealthConnectSdkStatus.sdkUnavailable ||
+        null => HealthAccess.notInstalled,
       };
     } on Object {
       return HealthAccess.permissionDenied;
@@ -75,21 +76,10 @@ class HealthConnectActivityRepository implements ActivityRepository {
     DateTime to,
   ) async {
     try {
-      // 거리 · 칼로리 권한만 거부됐으면 그 타입을 묻지 않는다 — 물으면 예외가 난다.
-      final types = [
-        _steps,
-        if (await _gateway.hasPermission(_distance)) _distance,
-        if (await _gateway.hasPermission(_kcal)) _kcal,
-      ];
-      final totals = await _gateway.dailyTotals(from, to, types);
+      final totals = await _gateway.dailyTotals(from, to, const [_steps]);
       return Ok([
         for (final day in daysBetween(from, to))
-          DailyActivity(
-            date: day,
-            steps: (totals[day]?[_steps] ?? 0).round(),
-            distanceMeters: totals[day]?[_distance],
-            activeKcal: totals[day]?[_kcal],
-          ),
+          DailyActivity(date: day, steps: (totals[day]?[_steps] ?? 0).round()),
       ]);
     } on Object catch (e) {
       return Err(Failure.unknown(message: '걸음 기록을 읽지 못했다: $e'));

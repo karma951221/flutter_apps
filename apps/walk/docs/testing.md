@@ -34,23 +34,24 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | 파일 | 대상 | 확인 |
 |---|---|---|
 | `domain/walk/entity/period_range_test.dart` | `periodRange` · `daysBetween` | 주는 월요일 시작 · 일요일에 연 이번 주 · 지난 주가 달을 넘음 · 윤년 2월 · 지난 달이 연도를 넘음 · 양 끝 포함 |
-| `domain/walk/entity/activity_period_test.dart` | `ActivityPeriod` | 합계 · 일평균은 오늘까지 지난 날로 나눔 · 거리/칼로리는 값 있는 날만, 없으면 null · `isCurrent` · 지난 기간은 전체 일수 |
+| `domain/walk/entity/activity_period_test.dart` | `ActivityPeriod` | 합계 · 일평균은 오늘까지 지난 날로 나눔 · `isCurrent` · 지난 기간은 전체 일수 |
 | `domain/walk/usecase/walk_use_case_test.dart` | `DefaultWalkUseCase` | 오늘 하루만 읽기 · 이번 주는 오늘까지 읽고 나머지 0보 · 지난 달 전체 · 실패 전파 |
-| `data/walk/health/health_permission_source_test.dart` | `HealthPermissionSource` | 걸음 권한 기준 granted/denied(permanentlyDenied 없음) · 세 타입 요청 · 걸음을 거부하면 기록 이력은 묻지 않음 · 설정 열기 |
-| `data/walk/repository/health_connect_activity_repository_test.dart` | `HealthConnectActivityRepository` | SDK 없음/모름/업데이트 필요 매핑 · 걸음 권한만으로 granted · **이번 세션에 한 번만 묻기** · 거부 후 다시 요청 · **동시 확인은 요청 한 번** · 모든 날 채우기 · 권한 없는 타입은 묻지 않음 · 예외 → `Err` |
-| `presentation/walk/format/walk_format_test.dart` | `WalkFormat` | `6,240` · `4.3 km` · `183 kcal` · 없으면 `–` · 주/월/요일/일 라벨 |
+| `data/walk/health/health_permission_source_test.dart` | `HealthPermissionSource` | 걸음 권한 기준 granted/denied(permanentlyDenied 없음) · 걸음만 요청 · 걸음을 거부하면 기록 이력은 묻지 않음 · 설정 열기 |
+| `data/walk/repository/health_connect_activity_repository_test.dart` | `HealthConnectActivityRepository` | SDK 없음/모름/업데이트 필요 매핑 · 걸음 권한만으로 granted · **이번 세션에 한 번만 묻기** · 거부 후 다시 요청 · **동시 확인은 요청 한 번** · 걸음만 묻고 모든 날 채우기 · 예외 → `Err` |
+| `presentation/walk/format/walk_format_test.dart` | `WalkFormat` | `6,240` · 주/월/요일/일 라벨 |
 | `presentation/walk/cubit/health_access_cubit_test.dart` | `HealthAccessCubit` | 확인 중(null) · 확인 결과와 `canOpenSettings` · 요청 · 설치/설정은 화면만 연다 |
 | `presentation/walk/cubit/today_activity_cubit_test.dart` | `TodayActivityCubit` | loading → loaded · failure · 새로고침은 로딩 없이 |
 | `presentation/walk/cubit/period_activity_cubit_test.dart` | `PeriodActivityCubit` | 현재 기간 · 이전 · 현재에서 다음 불가 · 새로고침은 같은 offset · 늦은 응답 버림 · 실패해도 offset 유지 |
-| `presentation/walk/widget/activity_bar_chart_test.dart` | `ActivityBarChart` | 요일 7개 · 최댓값 막대가 가장 높음 · 미래 날은 막대 없음 · 탭하면 그날 걸음 · **새로고침 뒤 선택 값 갱신** · 목표선 · 높이 기준 `max(최댓값, 목표)` · 달성일/미달일 색 · 오늘 테두리(**달성하면 `onPrimaryContainer`**) · 선택 줄의 목표 % · 막대 성장 · **마지막 막대와 라벨 겹침 없음(주간 · 월간) · 목표 높이의 마지막 막대 선택** |
-| `presentation/walk/page/walk_home_page_test.dart` | `WalkHomePage` | 오늘 걸음 · km · `–` · 현재 기간 다음 버튼 꺼짐 · 월간 탭 · 권한 요청 · 설정 열기 유무 · 설치 안내 · 오늘 실패 재시도 · **복귀 시 재확인 · 새로고침** · **복귀 중 허용되면 한 번만 읽기** · 값 읽는 동안 스켈레톤(오늘 · 기간, 높이 비슷) · 주간/월간 세그먼트 · **축하 날짜 1회**(처음 달성하면 저장 · 같은 날 재진입 무연출 · 미달이면 저장 안 함 · 목표 변경 · 실패 뒤 재시도 · 날이 바뀐 뒤 · 어제 값에서 오늘 값) · **숨은 탭이면 판정 · 저장 안 함, 보이게 되면 한 번**(달성 값 · 목표 낮춤) |
-| `domain/walk/entity/goal_progress_test.dart` | `GoalProgress` | 범위 밖 목표는 끝값 · 1,000 단위 반올림 · 0보 · 정확히 목표면 달성 · 초과 비율 · 남은 거리(오늘 보폭) · 축하 여부(기록 없음 / 어제 / 오늘 이미) |
+| `presentation/walk/widget/activity_bar_chart_test.dart` | `ActivityBarChart` | 요일 7개 · 최댓값 막대가 가장 높음 · 미래 날은 막대 없음 · 탭하면 그날 걸음 · **새로고침 뒤 선택 값 갱신** · 목표선 · 높이 기준 `max(최댓값, 목표)` · **목표의 1.5배를 넘는 날은 잘리고 물결선, 눌러도 실제 걸음** · 달성일/미달일 색 · 오늘 테두리(**달성하면 `onPrimaryContainer`**) · 선택 줄의 목표 % · 막대 성장 · **마지막 막대와 라벨 겹침 없음(주간 · 월간) · 목표 높이의 마지막 막대 선택 · 좁은 월간의 두 자리 날짜도 한 줄 · 날짜 글자가 막대 가운데** |
+| `presentation/walk/page/walk_home_page_test.dart` | `WalkHomePage` | 오늘 걸음(km · kcal 없음) · **오늘 · 기록 두 탭(그래프는 기록 탭), 권한이 없으면 탭 없음** · 현재 기간 다음 버튼 꺼짐 · 월간 탭 · 권한 요청 · 설정 열기 유무 · 설치 안내 · 오늘 실패 재시도 · **복귀 시 재확인 · 새로고침** · **복귀 중 허용되면 한 번만 읽기** · 값 읽는 동안 스켈레톤(오늘 · 기간, 높이 비슷) · 주간/월간 세그먼트 · **축하 날짜 1회**(처음 달성하면 저장 · 같은 날 재진입 무연출 · 미달이면 저장 안 함 · 목표 변경 · 실패 뒤 재시도 · 날이 바뀐 뒤 · 어제 값에서 오늘 값) · **숨은 탭이면 판정 · 저장 안 함, 보이게 되면 한 번**(달성 값 · 목표 낮춤) |
+| `domain/walk/entity/goal_progress_test.dart` | `GoalProgress` | 범위 밖 목표는 끝값 · 1,000 단위 반올림 · 0보 · 정확히 목표면 달성 · 초과 비율 · 축하 여부(기록 없음 / 어제 / 오늘 이미) |
 | `presentation/walk/cubit/step_goal_cubit_test.dart` | `StepGoalCubit` | 처음 값은 저장된 목표 · `select` 는 1,000 단위로 맞춰 반영 · 저장 · 다른 필드 유지 · 같은 값이면 무시 · **실제 SharedPreferences 에서 목표 변경 직후 축하일 저장해도 새 목표 유지** |
 | `presentation/walk/widget/step_goal_ring_test.dart` | `StepGoalRing` | 진입 시 0 → 비율, 바뀌면 직전 → 새 값 · 넘침은 1 에서 멈춤 · 애니메이션 끄기면 끝 값 · 트랙 · 진행 색 |
-| `presentation/walk/widget/today_goal_card_test.dart` | `TodayGoalCard` | 걸음 · 목표 문구 · 링 접근성 비율 · 거리/칼로리 지표 · 링 탭 → 남은 걸음 · 다시 탭 → 지표 · **탭해도 카드 높이 그대로** · 거리 없으면 남은 걸음만 · 달성 배지 · 3초 뒤 복귀 |
-| `presentation/walk/widget/period_summary_test.dart` | `PeriodSummary` | 달성 n/m일(오늘 이후 제외, 지난 기간은 전부) · 네 지표 타일 |
+| `presentation/walk/widget/today_goal_card_test.dart` | `TodayGoalCard` | 걸음 · 목표 문구 · 링 접근성 비율 · "오늘" 제목 없음 · 링 · 아래 줄이 카드 가운데 · 아래 줄은 늘 남은 걸음(km · kcal 없음) · 달성 배지와 초과 문구 |
+| `presentation/walk/widget/period_summary_test.dart` | `PeriodSummary` | 달성 n/m일(오늘 이후 제외, 지난 기간은 전부) · 합계 · 일평균 두 타일(거리 · 칼로리 없음) |
 | `convention/package_boundary_test.dart` | `pubspec.yaml` | `feature_*` · `supabase_flutter` 의존 없음 · `alarm` 은 `third_party/alarm` path 의존(FORK.md · LICENSE 있음) · 포크는 루트 workspace 멤버 아님 · walk 는 일기 위치에 workspace `location` 을 의존 |
 | `convention/android_icon_resources_test.dart` | `android/app/src/main/res` 알림 아이콘 | **`PackageAlarmScheduler.notificationIcon` 이름의 `drawable/<이름>.xml` 이 있고 `raw/keep.xml` 의 `tools:keep` 이 `@drawable/<이름>` 을 남긴다**(포크는 못 찾으면 조용히 대체 아이콘으로 넘어간다) |
+| `convention/android_health_privacy_test.dart` | `AndroidManifest.xml` · `strings.xml` | **Health Connect 권한 창의 개인정보(`VIEW_PERMISSION_USAGE`) · 이유 보기 인텐트는 MainActivity 가 아닌 `HealthPrivacyActivity` 가 받는다**(QA ⑦) · 안내 문구 ko/en/ja |
 | `convention/android_splash_resources_test.dart` | `android/app/src/main/res` 시작 화면 리소스 | 배경 색 라이트 #1D9E75 · 다크 #0F6E56 · **`splash_icon` 은 레이어 리스트가 아닌 288 뷰포트 벡터 하나 · 전경 경로 그대로 · 중심 (54,54)→(144,144) · 안전 원이 지름 192 원 안**(QA: 12+ 스플래시 확대 · 잘림) · `values(-night)-v31` `LaunchTheme` 의 스플래시 배경 · 아이콘(아이콘 배경 없음) · 12 미만 `launch_background`(drawable · v21 · night) 초록 바탕 가운데 아이콘 · `NormalTheme` 은 `?android:colorBackground` 유지 |
 
 걷기 표의 굵은 항목은 최종 리뷰에서 고친 것의 회귀 테스트다([기록](history.md#2026-09-27--최종-리뷰에서-고친-것)).
@@ -222,6 +223,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | `test/third_party/alarm/alarm_stopped_test.dart` | 포크 호스트 울림 · 끔 콜백과 Dart 대체 타이머(`PlatformTimers`) | **백그라운드에서 울리고 알림으로 끈 알람이 앱 복귀 뒤 다시 `ringing` 에 들지 않음 · 울림 소식 없이 끔만 받아도 같음** · 끄기 전에 돌아오면 울림은 한 번 |
 | `third_party/alarm/android/src/test/…/services/RingLogTest.kt` | 포크 `RingLog`(울림 기록 저장 형식) | 한 줄 JSON(at · packageId · kind) · 모든 종류의 wire 이름 · 덧붙이기 순서 · 최근 200줄만 · 빈 줄 버림 · 끔은 울리는 알람에만 |
 | `third_party/alarm/android/src/test/…/api/AlarmApiImplTest.kt` | 포크 같은 id 다시 걸기 | 이 프로세스가 건 알람 · 예전 프로세스가 건 울리는 알람은 지움 · 새 id 는 그대로 |
+| `android/app/src/test/…/HealthSettingsRulesTest.kt` | 앱 `HealthSettingsRules`(걸음 권한 "설정 열기") | **14 이상은 프레임워크 Health Connect 첫 화면 · 13 이하는 Health Connect 앱 설정**(QA ②) |
 | `android/app/src/test/…/NextAlarmWidgetRulesTest.kt` | 앱 `NextAlarmWidgetRules`(홈 화면 위젯) | `pick` 은 지금 뒤 가장 이른 회차(지금과 같으면 뺌) · `dayOf` 오늘 · 내일 · 그 뒤(시간대 따름) · `nextRefreshAt` 은 보이는 회차와 다음 자정 중 이른 것 |
 | `test/third_party/alarm/model/alarm_event_test.dart` | 포크 `AlarmMoved.applyTo` | 스누즈는 시각을 옮기고 횟수를 올림 · 한도에 닿으면 다음 울림의 스누즈를 끔 · 플랫폼 거부로 옮긴 것은 시각만 · **호스트가 센 횟수**(wire 값 그대로 · 표식 하나가 여러 번을 대신하면 호스트 값 · 한도 전이면 스누즈 남김 · 같은 표식 두 번 세지 않음 · 횟수 없는 옛 표식은 Dart 가 하나) |
 | `third_party/alarm/android/src/test/…/AudioFallbackTest.kt` | 포크 `audioCandidates` · 설정 저장 | 대체음 없음/있음 × 기본음/파일 · 1차와 같은 대체음은 한 번 · 저장 왕복 · 옛 저장값 · 명시적 null · 전달 |
@@ -285,27 +287,34 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 눌러 연 뒤 재개 시 `takeLaunch` 로 알람 탭 열기는 에뮬레이터 시나리오로 본다. 앱이 꺼진 채 알림에서 누른 스누즈는 다음
 sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 
-시각 강화(2026-10-03): `walk_theme` 다크 변형 · `WalkMotion.off` 의 거짓 경로, `WalkSkeleton` · `GoalCelebration` 의 애니메이션 켜진 경로와 햅틱 호출, 링 아래 줄 위젯 단독(`today_goal_footer`), 울림 파동의 런타임 `disableAnimations` 전환은 직접 테스트가 없다. 실제 폰에서 목표 달성 · 축하 · 파동을 확인한다.
+시각 강화(2026-10-03): `walk_theme` 다크 변형 · `WalkMotion.off` 의 거짓 경로, `WalkSkeleton` · `GoalCelebration` 의 애니메이션 켜진 경로와 햅틱 호출, 링 아래 줄 위젯 단독(`today_goal_footer`), 울림 파동의 런타임 `disableAnimations` 전환은 직접 테스트가 없다. 목표 달성 · 축하는 2026-10-21 에뮬레이터(시드한 걸음)에서 봤고, 햅틱 체감 · 울림 파동은 실제 폰 몫이다.
+
+걷기 네이티브(2026-10-21): `MainActivity` 의 "설정 열기" 채널 호출(시도 순서는 `HealthSettingsRules` JUnit) · `HealthPrivacyActivity` 대화상자(매니페스트 연결은 convention 테스트) 는 에뮬레이터 ② · ⑦ 로 본다.
 
 일기(2026-10-13): 실제 플러그인 호출 — `flutter_image_compress` · `video_compress`(처리기는 플랫폼 인스턴스를 가짜로) · `geolocator`
 (`location` 패키지) · `geocoding` · `local_auth`(채널 결과 매핑만) · `image_picker` · `video_player`(`videoSurface`, 테스트는 가짜 영상 면) —
 는 단위 테스트하지 않고 아래 [일기 기기 시나리오](#일기-기기-시나리오--대기)로 본다. drift 의 파일 DB · 실제 앱 문서 폴더도 기기 몫이다.
 상태 · 매퍼 · 표 정의처럼 테스트 파일이 따로 없는 `lib/` 파일은 쓰는 쪽(저장소 · cubit · 페이지) 테스트가 덮는다.
 
-## 걷기 기기 시나리오 — 대기
+## 걷기 기기 시나리오
 
-실제 폰(Health Connect 에 헬스 앱 기록이 있는)에서 볼 것. 에뮬레이터는 기록이 없어 ② · ⑥ · ⑦ 만 의미가 있다.
+2026-10-21 에뮬레이터 AVD Medium_Phone_2(API 37, `emulator-5556`). 걸음은 같은 AVD 에 설치한 일회용 시드 앱
+(`health` 13.3.2 로 오늘부터 40일 거슬러 STEPS 기록을 쓰고, 버튼마다 오늘 이른 시간대에 1,500보를 더 쓴다 —
+저장소 밖 스크래치)으로 넣었다. 같은 시간대에 다시 쓰면 Health Connect 집계가 겹침을 걸러 값이 늘지 않는다.
 
 | # | 시나리오 | 기대 | 결과 |
 |---|---|---|---|
-| ⓪ | 걸음 · 거리 · 활동 칼로리가 Health Connect 에 있는가 | 헬스 앱 숫자와 같음. 활동 칼로리가 없고 총 칼로리만 있으면 칼로리 타입을 다시 정한다 | 대기 |
-| ① | 첫 실행 → 권한 허용 | 오늘 걸음이 헬스 앱과 같은 숫자, 권한 창은 한 번만 | 대기 |
-| ② | 권한 거부 | 안내 + 권한 허용 + 설정 열기 → 풀림 | 대기 |
-| ③ | 주간 · 월간 탭, ‹ 로 지난 기간 | 막대 · 합계 · 일평균이 맞고 날짜가 밀리지 않음, 현재 기간에서 › 꺼짐 | 대기 |
-| ④ | 막대 선택 → 홈 → 조금 걷기 → 복귀 | 오늘 걸음 · 선택 줄 갱신 | 대기 |
-| ⑤ | 거리 · 칼로리 없는 날 | `–` | 대기 |
-| ⑥ | 다크 모드 | 대비 정상 | 대기 |
-| ⑦ | 권한 창의 개인정보/사용 내역 링크 | 앱이 두 번 뜨거나 권한 창이 겹치지 않음 | 대기 |
+| ⓪ | 걸음이 Health Connect 에 있는가 | 헬스 앱 숫자와 같음 | **실제 폰 대기**. 거리 · 칼로리는 폰에서 오지 않아 읽지 않기로 했다(사용자 확인, [기록](history.md#2026-10-21--걷기-기기-qa)) — 칼로리 타입 결정은 필요 없어졌다 |
+| ① | 첫 실행 → 권한 허용 | 오늘 걸음이 헬스 앱과 같은 숫자, 권한 창은 한 번만 | **실제 폰 대기**. 에뮬레이터에서는 권한 창에 걸음 한 항목만 뜨는 것을 봤다 |
+| ② | 권한 거부 | 안내 + 권한 허용 + 설정 열기 → 풀림 | **수정 후 통과**(에뮬레이터). "설정 열기"가 14+ 에서 아무 일도 안 하던 것을 Health Connect 첫 화면으로(`17f819e` `643ea05`). 거부 → 설정 열기 → Life Tool 연결 → 복귀하면 풀림 |
+| ③ | 주간 · 월간 탭, ‹ 로 지난 기간 | 막대 · 합계 · 일평균이 맞고 날짜가 밀리지 않음, 현재 기간에서 › 꺼짐 | **수정 후 통과**(에뮬레이터). 10/12–18 합계 79,200 · 일평균 11,314 · 달성 3/7, 10월 203,700 · 9,700 · 8/21 이 시드와 같다. 고친 것: 큰 날이 그래프를 다 차지 → 1.5배 물결선(`8453886`), 월간 두 자리 날짜가 두 줄(`0c07bc1` `7d545c7`) |
+| ④ | 막대 선택 → 홈 → 조금 걷기 → 복귀 | 오늘 걸음 · 선택 줄 갱신 | **통과**(에뮬레이터, 시드 앱으로 1,500보 추가 → 복귀하자 선택 줄 3,200 → 4,700 · 합계 갱신) |
+| ⑤ | 거리 · 칼로리 없는 날 | `–` | **해당 없음** — 거리 · 칼로리를 뺐다(`ec16aae`) |
+| ⑥ | 다크 모드 | 대비 정상 | **통과**(에뮬레이터, 오늘 · 주간 · 월간 · 물결 띠) |
+| ⑦ | 권한 창의 개인정보/사용 내역 링크 | 앱이 두 번 뜨거나 권한 창이 겹치지 않음 | **수정 후 통과**(에뮬레이터). 링크가 Flutter 앱을 하나 더 띄우고 그 앱이 권한 창을 또 띄웠다 → 대화상자 하나로 끝나는 `HealthPrivacyActivity`(`a7a48fd`) |
+
+그 밖에 에뮬레이터에서 본 것: 오늘 · 기록 두 탭(`2244dac`) · 목표 달성 축하(링 둘레 점 · 달성 배지 · 초과 문구).
+실제 폰 대기: ⓪ · ①(헬스 앱 숫자와 비교) · 햅틱 체감.
 
 ## 알람 기기 시나리오
 

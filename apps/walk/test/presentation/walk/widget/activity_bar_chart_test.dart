@@ -1,5 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:walk/domain/walk/entity/activity_period.dart';
@@ -128,19 +129,54 @@ void main() {
     );
   });
 
-  testWidgets('최댓값이 목표보다 크면 최댓값이 꽉 찬다', (tester) async {
-    await _pump(tester, _period, 4000);
+  testWidgets('최댓값이 목표보다 크되 1.5배 이하면 최댓값이 꽉 찬다', (tester) async {
+    await _pump(tester, _period, 6000);
     await tester.pumpAndSettle();
 
     final bar = tester.getSize(find.byKey(const Key('walk-bar-2026-09-22')));
     expect(bar.height, closeTo(ActivityBarChart.chartHeight, 1));
-    // 목표 4000 / 기준 8000 → 바닥에서 chartHeight × 0.5 = 4000 막대 꼭대기.
-    final half = tester.getRect(find.byKey(const Key('walk-bar-2026-09-21')));
+    // 목표 6000 / 기준 8000 → 바닥에서 chartHeight × 0.75.
     final line = tester.getRect(find.byKey(const Key('walk-goal-line')));
-    expect(line.center.dy, closeTo(half.top, 1));
     expect(
-      half.bottom - line.center.dy,
-      closeTo(ActivityBarChart.chartHeight * 0.5, 1),
+      tester.getRect(find.byKey(const Key('walk-bar-2026-09-22'))).bottom -
+          line.center.dy,
+      closeTo(ActivityBarChart.chartHeight * 0.75, 1),
+    );
+    expect(find.byKey(const Key('walk-bar-break-2026-09-22')), findsNothing);
+  });
+
+  testWidgets('목표의 1.5배를 넘는 날은 그 높이에서 잘리고 물결선이 붙는다', (tester) async {
+    // 8000 = 목표 4000 의 2배 → 기준은 6000(1.5배), 8000 막대는 꽉 차고 물결선.
+    await _pump(tester, _period, 4000);
+    await tester.pumpAndSettle();
+
+    final tall = tester.getRect(find.byKey(const Key('walk-bar-2026-09-22')));
+    expect(tall.height, closeTo(ActivityBarChart.chartHeight, 1));
+    expect(find.byKey(const Key('walk-bar-break-2026-09-22')), findsOneWidget);
+    expect(find.byKey(const Key('walk-bar-break-2026-09-21')), findsNothing);
+    // 목표선은 바닥에서 chartHeight × 4000/6000, 4000 막대 꼭대기와 같다.
+    final line = tester.getRect(find.byKey(const Key('walk-goal-line')));
+    final atGoal = tester.getRect(find.byKey(const Key('walk-bar-2026-09-21')));
+    expect(atGoal.top, closeTo(line.center.dy, 1));
+    expect(
+      tall.bottom - line.center.dy,
+      closeTo(ActivityBarChart.chartHeight * 2 / 3, 1),
+    );
+  });
+
+  testWidgets('잘린 막대를 눌러도 실제 걸음 수를 보여준다', (tester) async {
+    await _pump(tester, _period, 4000);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('walk-bar-2026-09-22')));
+    await tester.pump();
+
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('walk-bar-selection')),
+        matching: find.textContaining('8,000'),
+      ),
+      findsOneWidget,
     );
   });
 
@@ -257,6 +293,33 @@ void main() {
       final bar = tester.getRect(find.byKey(const Key('walk-bar-2026-09-30')));
       // 라벨은 막대 오른쪽 칸에만 — 맞닿는 것까지는 괜찮다(부동소수 오차 허용).
       expect(bar.right, lessThanOrEqualTo(tester.getRect(label).left + 0.01));
+    });
+
+    testWidgets('좁은 폭 월간에서 두 자리 날짜도 한 줄이다', (tester) async {
+      await narrow(tester);
+      await _pump(tester, month, 10000);
+      await tester.pumpAndSettle();
+
+      final one = tester.getSize(find.text('5')).height;
+      for (final day in ['10', '15', '20', '25', '30']) {
+        expect(tester.getSize(find.text(day)).height, one, reason: day);
+      }
+    });
+
+    testWidgets('날짜 라벨은 막대 가운데 아래에 있다', (tester) async {
+      await narrow(tester);
+      await _pump(tester, full, 10000);
+      await tester.pumpAndSettle();
+
+      final bar = tester.getRect(find.byKey(const Key('walk-bar-2026-09-21')));
+      // 글자 자체의 가로 가운데 — Text 상자가 칸을 꽉 채우고 왼쪽 정렬이면 여기서 드러난다.
+      final paragraph = tester.renderObject<RenderParagraph>(find.text('월'));
+      final glyphs = paragraph.getBoxesForSelection(
+        const TextSelection(baseOffset: 0, extentOffset: 1),
+      );
+      final left = paragraph.localToGlobal(Offset(glyphs.first.left, 0)).dx;
+      final right = paragraph.localToGlobal(Offset(glyphs.first.right, 0)).dx;
+      expect((left + right) / 2, closeTo(bar.center.dx, 1));
     });
 
     testWidgets('목표 높이에서 마지막 막대를 눌러도 선택된다', (tester) async {

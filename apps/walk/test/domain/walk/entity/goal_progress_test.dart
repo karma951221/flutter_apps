@@ -17,8 +17,6 @@ void main() {
       expect(p.ratio, 0);
       expect(p.reached, isFalse);
       expect(p.remainingSteps, 10000);
-      expect(p.remainingMeters(null), isNull);
-      expect(p.remainingMeters(0), isNull);
     });
     test('정확히 목표면 달성, 남은 0', () {
       const p = GoalProgress(steps: 10000, goal: 10000);
@@ -30,10 +28,6 @@ void main() {
       const p = GoalProgress(steps: 12500, goal: 10000);
       expect(p.ratio, 1.25);
       expect(p.overSteps, 2500);
-    });
-    test('남은 거리는 오늘 보폭으로', () {
-      const p = GoalProgress(steps: 5000, goal: 10000);
-      expect(p.remainingMeters(3500), closeTo(3500, 0.001)); // 0.7m × 5000
     });
   });
 

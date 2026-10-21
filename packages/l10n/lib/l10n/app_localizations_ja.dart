@@ -1362,11 +1362,6 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String walkGoalRemainingWithDistance(String steps, String distance) {
-    return '目標まで $steps · 約 $distance';
-  }
-
-  @override
   String walkGoalExceeded(String steps) {
     return '目標より $steps 多く歩きました';
   }
@@ -1408,16 +1403,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkTabMonth => '月間';
 
   @override
+  String get walkTabHistory => '記録';
+
+  @override
   String get walkTotalSteps => '合計';
 
   @override
   String get walkAverageSteps => '1日平均';
-
-  @override
-  String get walkDistance => '距離';
-
-  @override
-  String get walkActiveCalories => '活動カロリー';
 
   @override
   String get walkPreviousPeriod => '前へ';
@@ -1445,7 +1437,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkPermissionNeeded => '歩数を読み取る許可が必要です';
 
   @override
-  String get walkPermissionDescription => '歩数・距離・活動カロリーを読み取るだけで、保存や送信はしません';
+  String get walkPermissionDescription => '歩数を読み取るだけで、保存や送信はしません';
 
   @override
   String get walkGrantPermission => '許可する';

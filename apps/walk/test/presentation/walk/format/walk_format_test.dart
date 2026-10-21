@@ -9,16 +9,6 @@ void main() {
     expect(WalkFormat.steps('ko', 6240), '6,240');
   });
 
-  test('거리는 km 소수 한 자리, 없으면 –', () {
-    expect(WalkFormat.distance('ko', 4310.5), '4.3 km');
-    expect(WalkFormat.distance('ko', null), '–');
-  });
-
-  test('칼로리는 반올림한 정수 kcal, 없으면 –', () {
-    expect(WalkFormat.kcal('ko', 182.6), '183 kcal');
-    expect(WalkFormat.kcal('ko', null), '–');
-  });
-
   test('주 · 월 · 요일 · 일 라벨', () {
     expect(
       WalkFormat.weekRange('ko', DateTime(2026, 9, 21), DateTime(2026, 9, 27)),

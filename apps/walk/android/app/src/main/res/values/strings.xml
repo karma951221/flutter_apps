@@ -10,4 +10,7 @@
     <string name="widget_tomorrow">Tomorrow (%1$s) %2$s</string>
     <string name="widget_later" translatable="false">%1$s %2$s</string>
     <string name="widget_description">Shows your next alarm</string>
+    <!-- Health Connect 권한 창의 개인정보 링크가 여는 안내(HealthPrivacyActivity). -->
+    <string name="health_privacy_title">How Life Tool uses health data</string>
+    <string name="health_privacy_body">Life Tool reads only your step count from Health Connect to show it on this phone. It doesn\'t store or send it anywhere.</string>
 </resources>

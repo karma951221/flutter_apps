@@ -6,4 +6,6 @@
     <string name="widget_today">今日 %1$s</string>
     <string name="widget_tomorrow">明日 (%1$s) %2$s</string>
     <string name="widget_description">次のアラームを表示します</string>
+    <string name="health_privacy_title">Life Tool の健康データの使い方</string>
+    <string name="health_privacy_body">Life Tool は Health Connect から歩数だけを読み取り、このスマホの画面に表示します。保存や送信はしません。</string>
 </resources>

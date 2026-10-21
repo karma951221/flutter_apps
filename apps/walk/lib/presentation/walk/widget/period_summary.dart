@@ -5,7 +5,7 @@ import 'package:l10n/l10n.dart';
 import '../../../domain/walk/entity/activity_period.dart';
 import '../format/walk_format.dart';
 
-/// 기간 요약 — 맨 위 `달성 n/m일`(오늘까지 지난 날 기준), 아래 2×2 지표 타일.
+/// 기간 요약 — 맨 위 `달성 n/m일`(오늘까지 지난 날 기준), 아래 합계 · 일평균 타일.
 class PeriodSummary extends StatelessWidget {
   const PeriodSummary({required this.period, required this.goal, super.key});
 
@@ -30,16 +30,6 @@ class PeriodSummary extends StatelessWidget {
       value: l10n.walkStepsCount(WalkFormat.steps(locale, period.averageSteps)),
       label: l10n.walkAverageSteps,
     );
-    final distance = _MetricTile(
-      icon: Icons.straighten,
-      value: WalkFormat.distance(locale, period.totalDistanceMeters),
-      label: l10n.walkDistance,
-    );
-    final kcal = _MetricTile(
-      icon: Icons.local_fire_department,
-      value: WalkFormat.kcal(locale, period.totalActiveKcal),
-      label: l10n.walkActiveCalories,
-    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -53,8 +43,6 @@ class PeriodSummary extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         _row(total, average),
-        const SizedBox(height: AppSpacing.sm),
-        _row(distance, kcal),
       ],
     );
   }

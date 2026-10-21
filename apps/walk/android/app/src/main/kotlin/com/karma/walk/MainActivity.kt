@@ -53,12 +53,19 @@ class MainActivity : FlutterFragmentActivity() {
                     result.notImplemented()
                     return@setMethodCallHandler
                 }
-                try {
-                    startActivity(Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS"))
-                    result.success(null)
-                } catch (e: ActivityNotFoundException) {
-                    result.error("unavailable", e.message, null)
+                val opened = HealthSettingsRules.targets(Build.VERSION.SDK_INT, packageName).any { target ->
+                    val intent = Intent(target.action)
+                    target.packageName?.let { intent.putExtra(Intent.EXTRA_PACKAGE_NAME, it) }
+                    try {
+                        startActivity(intent)
+                        true
+                    } catch (e: ActivityNotFoundException) {
+                        false
+                    } catch (e: SecurityException) {
+                        false
+                    }
                 }
+                if (opened) result.success(null) else result.error("unavailable", null, null)
             }
         // 일기 잠금: 폰 화면 잠금이 없을 때 설정 화면으로 바로 보낸다.
         MethodChannel(messenger, "com.karma.walk/screen_lock")
