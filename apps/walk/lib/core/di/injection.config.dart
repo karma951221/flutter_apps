@@ -34,6 +34,7 @@ import '../../data/alarm/channel_ring_log_source.dart' as _i879;
 import '../../data/alarm/holiday_module.dart' as _i183;
 import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
+import '../../data/chat/anthropic_chat_model.dart' as _i645;
 import '../../data/chat/secure_chat_settings.dart' as _i1030;
 import '../../data/commute/geocoding_address_search.dart' as _i667;
 import '../../data/commute/odsay_route_finder.dart' as _i132;
@@ -65,6 +66,7 @@ import '../../domain/alarm/sound/alarm_sound_source.dart' as _i344;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
 import '../../domain/alarm/usecase/ring_archiver.dart' as _i626;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
+import '../../domain/chat/chat_model.dart' as _i1004;
 import '../../domain/chat/chat_settings.dart' as _i111;
 import '../../domain/commute/repository/address_search.dart' as _i63;
 import '../../domain/commute/repository/place_repository.dart' as _i142;
@@ -207,6 +209,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i645.LocationGateway>(),
         gh<_i693.PlaceNamer>(),
       ),
+    );
+    gh.lazySingleton<_i1004.ChatModel>(
+      () => _i645.AnthropicChatModel(gh<_i519.Client>()),
     );
     gh.lazySingleton<_i960.SubwayArrivalSource>(
       () => _i960.SeoulSubwayArrivalSource(
