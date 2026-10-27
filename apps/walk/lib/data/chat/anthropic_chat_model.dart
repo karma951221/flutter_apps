@@ -72,6 +72,7 @@ class AnthropicChatModel implements ChatModel {
     final blocks = <int, Map<String, Object?>>{};
     final jsonBuffers = <int, StringBuffer>{};
     String? stopReason;
+    var completed = false;
     String? event;
     final data = StringBuffer();
     var hasData = false;
@@ -140,6 +141,7 @@ class AnthropicChatModel implements ChatModel {
             stopReason = delta['stop_reason'] as String;
           }
         case 'message_stop':
+          completed = true;
           final indexes = blocks.keys.toList()..sort();
           yield ModelEvent.completed(
             content: [for (final i in indexes) blocks[i]!],
@@ -171,6 +173,9 @@ class AnthropicChatModel implements ChatModel {
         }
       }
       yield* Stream.fromIterable(dispatch().toList());
+      if (!completed) {
+        throw const ChatModelException(ChatModelErrorKind.network);
+      }
     } on ChatModelException {
       rethrow;
     } on SocketException {

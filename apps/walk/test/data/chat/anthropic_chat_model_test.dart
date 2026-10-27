@@ -309,6 +309,34 @@ void main() {
     );
   });
 
+  test('message_stop 없이 스트림이 끝나면 network 이고 completed 는 없다', () async {
+    final events = <ModelEvent>[];
+    final stream = AnthropicChatModel(
+      clientOf([
+        sse('content_block_start', {
+          'index': 0,
+          'content_block': {'type': 'text', 'text': ''},
+        }),
+        sse('content_block_delta', {
+          'index': 0,
+          'delta': {'type': 'text_delta', 'text': 'a'},
+        }),
+      ]),
+    ).stream(apiKey: 'k', system: 's', messages: const [], tools: const []);
+    await expectLater(
+      stream.forEach(events.add),
+      throwsA(
+        isA<ChatModelException>().having(
+          (e) => e.kind,
+          'kind',
+          ChatModelErrorKind.network,
+        ),
+      ),
+    );
+    expect(events.whereType<ModelCompleted>(), isEmpty);
+    expect(events.whereType<ModelTextDelta>(), hasLength(1));
+  });
+
   test('요청 단계 ClientException 도 network', () async {
     final client = MockClient.streaming((r, b) async {
       throw http.ClientException('down');
