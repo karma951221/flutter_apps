@@ -60,6 +60,19 @@ abstract interface class DiaryRepository {
     required String storyId,
   });
 
+  /// [from] ~ [to](양 끝 포함)에 든 기록(휴지통 제외, 모든 스토리), occurredAt 오름차순, 최대 [limit]개.
+  /// [query] 본문 포함 일치(대소문자 무시) · [tag] `TagName.searchKey` 로 다듬은 이름 일치 ·
+  /// [place] trim 한 장소 이름 일치 · [storyId] 그 스토리만. null 이면 조건 없음.
+  Future<List<DiaryEntry>> searchEntries({
+    required DateTime from,
+    required DateTime to,
+    String? query,
+    String? tag,
+    String? place,
+    String? storyId,
+    int limit = 50,
+  });
+
   // 휴지통
 
   /// deletedAt = now. updatedAt 은 그대로. 이미 휴지통이면 처음 deletedAt 을 유지한다.
