@@ -71,6 +71,7 @@ import '../../domain/chat/chat_model.dart' as _i1004;
 import '../../domain/chat/chat_settings.dart' as _i111;
 import '../../domain/chat/tool/chat_image_source.dart' as _i858;
 import '../../domain/chat/tool/life_tools.dart' as _i70;
+import '../../domain/chat/usecase/chat_session.dart' as _i502;
 import '../../domain/commute/repository/address_search.dart' as _i63;
 import '../../domain/commute/repository/place_repository.dart' as _i142;
 import '../../domain/commute/repository/route_finder.dart' as _i488;
@@ -316,6 +317,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i626.RingArchiver>(),
         gh<_i361.RingArchive>(),
         gh<_i858.ChatImageSource>(),
+      ),
+    );
+    gh.lazySingleton<_i502.ChatSession>(
+      () => _i502.ChatSession(
+        gh<_i1004.ChatModel>(),
+        gh<_i70.LifeTools>(),
+        gh<_i111.ChatSettings>(),
+        gh<_i494.Clock>(),
       ),
     );
     return this;
