@@ -35,6 +35,7 @@ import '../../data/alarm/holiday_module.dart' as _i183;
 import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
 import '../../data/chat/anthropic_chat_model.dart' as _i645;
+import '../../data/chat/compressed_chat_image_source.dart' as _i957;
 import '../../data/chat/secure_chat_settings.dart' as _i1030;
 import '../../data/commute/geocoding_address_search.dart' as _i667;
 import '../../data/commute/odsay_route_finder.dart' as _i132;
@@ -68,6 +69,8 @@ import '../../domain/alarm/usecase/ring_archiver.dart' as _i626;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
 import '../../domain/chat/chat_model.dart' as _i1004;
 import '../../domain/chat/chat_settings.dart' as _i111;
+import '../../domain/chat/tool/chat_image_source.dart' as _i858;
+import '../../domain/chat/tool/life_tools.dart' as _i70;
 import '../../domain/commute/repository/address_search.dart' as _i63;
 import '../../domain/commute/repository/place_repository.dart' as _i142;
 import '../../domain/commute/repository/route_finder.dart' as _i488;
@@ -268,6 +271,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.Clock>(),
       ),
     );
+    gh.lazySingleton<_i858.ChatImageSource>(
+      () => _i957.CompressedChatImageSource(gh<_i870.MediaStore>()),
+    );
     gh.lazySingleton<_i122.DiaryRepository>(
       () => _i1049.DriftDiaryRepository(
         gh<_i611.DiaryDatabase>(),
@@ -301,6 +307,15 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i353.RingLogSource>(),
         gh<_i361.RingArchive>(),
         gh<_i873.AlarmUseCase>(),
+      ),
+    );
+    gh.lazySingleton<_i70.LifeTools>(
+      () => _i70.LifeTools(
+        gh<_i122.DiaryRepository>(),
+        gh<_i204.ActivityRepository>(),
+        gh<_i626.RingArchiver>(),
+        gh<_i361.RingArchive>(),
+        gh<_i858.ChatImageSource>(),
       ),
     );
     return this;
