@@ -15,6 +15,7 @@ import 'package:walk/domain/chat/tool/tool_result.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_location.dart';
 import 'package:walk/domain/diary/entity/entry_media.dart';
+import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/walk/entity/health_access.dart';
 import 'package:walk/domain/walk/repository/activity_repository.dart';
@@ -35,11 +36,12 @@ class _Images implements ChatImageSource {
 
 DiaryEntry _entry(
   String id, {
+  String storyId = 'daily',
   List<EntryMedia> media = const [],
   String body = '본문',
 }) => DiaryEntry(
   id: id,
-  storyId: 'daily',
+  storyId: storyId,
   body: body,
   occurredAt: DateTime(2026, 10, 3, 9, 5),
   createdAt: DateTime(2026, 10, 3, 9, 5),
@@ -47,6 +49,14 @@ DiaryEntry _entry(
   location: const EntryLocation(placeName: '공원'),
   media: media,
   tags: const ['산책'],
+);
+
+Story _story(String id, String title) => Story(
+  id: id,
+  title: title,
+  status: StoryStatus.open,
+  startedAt: DateTime(2026),
+  createdAt: DateTime(2026),
 );
 
 EntryMedia _photo(int i) => EntryMedia(
@@ -74,6 +84,14 @@ void main() {
     activity = _Activity();
     archiver = _Archiver();
     rings = _Rings();
+    when(
+      () => diary.watchStoryMatches('', dailyTitle: any(named: 'dailyTitle')),
+    ).thenAnswer(
+      (_) => Stream.value([
+        (story: _story('daily', ''), count: 1),
+        (story: _story('trip', '제주 여행'), count: 1),
+      ]),
+    );
     when(() => archiver.archive()).thenAnswer((_) async {});
     tools = LifeTools(diary, activity, archiver, rings, _Images());
   });
@@ -138,6 +156,19 @@ void main() {
         storyId: null,
         limit: 51,
       ),
+    ).called(1);
+  });
+
+  test('search_diary 는 스토리 제목을 준다(기본 스토리는 일상)', () async {
+    stubSearch([_entry('a'), _entry('b', storyId: 'trip')]);
+    final r = await tools.run('search_diary', {
+      'from': '2026-10-01',
+      'to': '2026-10-05',
+    });
+    final entries = decode(r)['entries']! as List;
+    expect([for (final e in entries) (e as Map)['story']], ['일상', '제주 여행']);
+    verify(
+      () => diary.watchStoryMatches('', dailyTitle: any(named: 'dailyTitle')),
     ).called(1);
   });
 

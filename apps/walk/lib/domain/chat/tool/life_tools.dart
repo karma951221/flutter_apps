@@ -133,9 +133,10 @@ class LifeTools {
       limit: _maxEntries + 1,
     );
     final entries = found.take(_maxEntries).toList();
+    final titles = await _storyTitles();
     return ToolResult(
       json: jsonEncode({
-        'entries': [for (final e in entries) _entryJson(e)],
+        'entries': [for (final e in entries) _entryJson(e, titles)],
         'truncated': found.length > _maxEntries,
         ..._clamp(range),
       }),
@@ -187,7 +188,9 @@ class LifeTools {
   }
 
   Future<ToolResult> _index() async {
-    final stories = await _diary.watchStoryMatches('', dailyTitle: '일상').first;
+    final stories = await _diary
+        .watchStoryMatches('', dailyTitle: _dailyTitle)
+        .first;
     final tags = await _diary.watchTagCounts(limit: _indexLimit).first;
     final places = await _diary.watchPlaceCounts(limit: _indexLimit).first;
     return ToolResult(
@@ -196,7 +199,9 @@ class LifeTools {
           for (final s in stories)
             {
               'id': s.story.id,
-              'title': s.story.id == Story.dailyId ? '일상' : s.story.title,
+              'title': s.story.id == Story.dailyId
+                  ? _dailyTitle
+                  : s.story.title,
               'started': _day(s.story.startedAt),
               'ended': s.story.endedAt == null ? null : _day(s.story.endedAt!),
               'entries': s.count,
@@ -270,10 +275,24 @@ class LifeTools {
 
   // 도우미
 
-  Map<String, Object?> _entryJson(DiaryEntry e) => {
+  static const _dailyTitle = '일상';
+
+  /// 스토리 id → 제목. 기본 스토리는 "일상".
+  Future<Map<String, String>> _storyTitles() async {
+    final stories = await _diary
+        .watchStoryMatches('', dailyTitle: _dailyTitle)
+        .first;
+    return {
+      for (final s in stories)
+        s.story.id: s.story.id == Story.dailyId ? _dailyTitle : s.story.title,
+    };
+  }
+
+  Map<String, Object?> _entryJson(DiaryEntry e, Map<String, String> titles) => {
     'id': e.id,
     'at': '${_day(e.occurredAt)}T${_time(e.occurredAt)}',
-    'story': e.storyId,
+    'story':
+        titles[e.storyId] ?? (e.storyId == Story.dailyId ? _dailyTitle : null),
     'place': e.location?.placeName,
     'tags': e.tags,
     'text': e.body,
