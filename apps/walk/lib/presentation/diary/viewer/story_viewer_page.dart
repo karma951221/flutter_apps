@@ -30,6 +30,10 @@ sealed class ViewerSource with _$ViewerSource {
   /// 모아보기(태그 · 장소) 그룹 하나. [title] 은 머리에 그대로 쓴다(`#제주`).
   const factory ViewerSource.filter(EntryFilter filter, String title) =
       FilterSource;
+
+  /// 고른 기록들(채팅 인용 칩) 그룹 하나. 휴지통 · 없는 기록은 빠진다.
+  const factory ViewerSource.entries(List<String> entryIds, String title) =
+      EntriesSource;
 }
 
 /// 스토리 뷰어를 페이드로 연다(스펙 §3.2). 일기 잠금에 묶인 화면([pushDiaryRoute])이다.
@@ -190,6 +194,17 @@ class _StoryViewerPageState extends State<StoryViewerPage>
             _rebuild();
           }, onError: _onError),
         );
+      case EntriesSource(:final entryIds):
+        final ids = entryIds.toSet();
+        _subs.add(
+          _repo.watchEntries(const EntryFilter.all()).listen((entries) {
+            _entries = [
+              for (final e in entries)
+                if (ids.contains(e.id)) e,
+            ];
+            _rebuild();
+          }, onError: _onError),
+        );
     }
   }
 
@@ -257,7 +272,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
                 entries: byStory[id] ?? const [],
               ),
         ];
-      case FilterSource(:final title):
+      case FilterSource(:final title) || EntriesSource(:final title):
         all = [buildViewerGroup(id: '', title: title, entries: entries)];
     }
     final groups = [
@@ -687,6 +702,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
                 icon: switch (widget.source) {
                   FilterSource(filter: PlaceEntries()) => Icons.place_outlined,
                   FilterSource() => Icons.tag,
+                  EntriesSource() => Icons.chat_bubble_outline,
                   StoriesSource() => null,
                 },
                 onAction: _onAction,

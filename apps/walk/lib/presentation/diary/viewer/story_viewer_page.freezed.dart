@@ -55,12 +55,13 @@ extension ViewerSourcePatterns on ViewerSource {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( StoriesSource value)?  stories,TResult Function( FilterSource value)?  filter,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( StoriesSource value)?  stories,TResult Function( FilterSource value)?  filter,TResult Function( EntriesSource value)?  entries,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case StoriesSource() when stories != null:
 return stories(_that);case FilterSource() when filter != null:
-return filter(_that);case _:
+return filter(_that);case EntriesSource() when entries != null:
+return entries(_that);case _:
   return orElse();
 
 }
@@ -78,12 +79,13 @@ return filter(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( StoriesSource value)  stories,required TResult Function( FilterSource value)  filter,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( StoriesSource value)  stories,required TResult Function( FilterSource value)  filter,required TResult Function( EntriesSource value)  entries,}){
 final _that = this;
 switch (_that) {
 case StoriesSource():
 return stories(_that);case FilterSource():
-return filter(_that);}
+return filter(_that);case EntriesSource():
+return entries(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -97,12 +99,13 @@ return filter(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( StoriesSource value)?  stories,TResult? Function( FilterSource value)?  filter,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( StoriesSource value)?  stories,TResult? Function( FilterSource value)?  filter,TResult? Function( EntriesSource value)?  entries,}){
 final _that = this;
 switch (_that) {
 case StoriesSource() when stories != null:
 return stories(_that);case FilterSource() when filter != null:
-return filter(_that);case _:
+return filter(_that);case EntriesSource() when entries != null:
+return entries(_that);case _:
   return null;
 
 }
@@ -119,11 +122,12 @@ return filter(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( List<String> storyIds)?  stories,TResult Function( EntryFilter filter,  String title)?  filter,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( List<String> storyIds)?  stories,TResult Function( EntryFilter filter,  String title)?  filter,TResult Function( List<String> entryIds,  String title)?  entries,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case StoriesSource() when stories != null:
 return stories(_that.storyIds);case FilterSource() when filter != null:
-return filter(_that.filter,_that.title);case _:
+return filter(_that.filter,_that.title);case EntriesSource() when entries != null:
+return entries(_that.entryIds,_that.title);case _:
   return orElse();
 
 }
@@ -141,11 +145,12 @@ return filter(_that.filter,_that.title);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( List<String> storyIds)  stories,required TResult Function( EntryFilter filter,  String title)  filter,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( List<String> storyIds)  stories,required TResult Function( EntryFilter filter,  String title)  filter,required TResult Function( List<String> entryIds,  String title)  entries,}) {final _that = this;
 switch (_that) {
 case StoriesSource():
 return stories(_that.storyIds);case FilterSource():
-return filter(_that.filter,_that.title);}
+return filter(_that.filter,_that.title);case EntriesSource():
+return entries(_that.entryIds,_that.title);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -159,11 +164,12 @@ return filter(_that.filter,_that.title);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( List<String> storyIds)?  stories,TResult? Function( EntryFilter filter,  String title)?  filter,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( List<String> storyIds)?  stories,TResult? Function( EntryFilter filter,  String title)?  filter,TResult? Function( List<String> entryIds,  String title)?  entries,}) {final _that = this;
 switch (_that) {
 case StoriesSource() when stories != null:
 return stories(_that.storyIds);case FilterSource() when filter != null:
-return filter(_that.filter,_that.title);case _:
+return filter(_that.filter,_that.title);case EntriesSource() when entries != null:
+return entries(_that.entryIds,_that.title);case _:
   return null;
 
 }
@@ -318,6 +324,80 @@ $EntryFilterCopyWith<$Res> get filter {
     return _then(_self.copyWith(filter: value));
   });
 }
+}
+
+/// @nodoc
+
+
+class EntriesSource implements ViewerSource {
+  const EntriesSource(final  List<String> entryIds, this.title): _entryIds = entryIds;
+  
+
+ final  List<String> _entryIds;
+ List<String> get entryIds {
+  if (_entryIds is EqualUnmodifiableListView) return _entryIds;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_entryIds);
+}
+
+ final  String title;
+
+/// Create a copy of ViewerSource
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$EntriesSourceCopyWith<EntriesSource> get copyWith => _$EntriesSourceCopyWithImpl<EntriesSource>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is EntriesSource&&const DeepCollectionEquality().equals(other._entryIds, _entryIds)&&(identical(other.title, title) || other.title == title));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_entryIds),title);
+
+@override
+String toString() {
+  return 'ViewerSource.entries(entryIds: $entryIds, title: $title)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $EntriesSourceCopyWith<$Res> implements $ViewerSourceCopyWith<$Res> {
+  factory $EntriesSourceCopyWith(EntriesSource value, $Res Function(EntriesSource) _then) = _$EntriesSourceCopyWithImpl;
+@useResult
+$Res call({
+ List<String> entryIds, String title
+});
+
+
+
+
+}
+/// @nodoc
+class _$EntriesSourceCopyWithImpl<$Res>
+    implements $EntriesSourceCopyWith<$Res> {
+  _$EntriesSourceCopyWithImpl(this._self, this._then);
+
+  final EntriesSource _self;
+  final $Res Function(EntriesSource) _then;
+
+/// Create a copy of ViewerSource
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? entryIds = null,Object? title = null,}) {
+  return _then(EntriesSource(
+null == entryIds ? _self._entryIds : entryIds // ignore: cast_nullable_to_non_nullable
+as List<String>,null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
 }
 
 // dart format on

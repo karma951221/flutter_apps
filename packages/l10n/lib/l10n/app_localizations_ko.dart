@@ -3148,4 +3148,71 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get walkChatSettingsNotice =>
       '질문에 필요한 일기 · 사진 · 걸음 · 기상 기록이 Anthropic 으로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.';
+
+  @override
+  String get walkShellTabChat => '물어보기';
+
+  @override
+  String get walkChatNoKey => '설정에서 키를 넣어 주세요';
+
+  @override
+  String get walkChatOpenSettings => '설정 열기';
+
+  @override
+  String get walkChatConsentNotice =>
+      '질문에 필요한 일기 · 사진 · 걸음 · 기상 기록이 Anthropic 으로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.';
+
+  @override
+  String get walkChatConsentAccept => '동의하고 시작';
+
+  @override
+  String get walkChatExampleYesterday => '어제 뭐 했어?';
+
+  @override
+  String get walkChatExampleAte => '지난주에 뭐 먹었지?';
+
+  @override
+  String get walkChatExampleWake => '요즘 몇 시에 일어나?';
+
+  @override
+  String get walkChatEmptyPrompt => '내 기록에 대해 물어보세요';
+
+  @override
+  String get walkChatInputHint => '질문 입력';
+
+  @override
+  String get walkChatSend => '보내기';
+
+  @override
+  String get walkChatNewConversation => '새 대화';
+
+  @override
+  String get walkChatSearching => '기록을 찾는 중…';
+
+  @override
+  String get walkChatCitedTitle => '대화 속 기록';
+
+  @override
+  String get walkChatFailureNoKey => '설정에서 키를 넣어 주세요';
+
+  @override
+  String get walkChatFailureInvalidKey => '키를 확인해 주세요';
+
+  @override
+  String get walkChatFailureRateLimited => '요청이 많아요. 잠시 뒤 다시 물어봐 주세요';
+
+  @override
+  String get walkChatFailureOverloaded => 'Claude 가 바빠요. 잠시 뒤 다시 물어봐 주세요';
+
+  @override
+  String get walkChatFailureNetwork => '연결이 끊겼어요. 다시 물어봐 주세요';
+
+  @override
+  String get walkChatFailureRefused => '이 질문에는 답할 수 없어요';
+
+  @override
+  String get walkChatFailureTooManySteps => '기록을 찾다가 멈췄어요. 질문을 좁혀 주세요';
+
+  @override
+  String get walkChatFailureUnknown => '답을 받지 못했어요';
 }

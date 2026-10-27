@@ -39,7 +39,7 @@ import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
 
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_device_auth.dart';
-import '../cubit/chat_settings_cubit_test.dart' show FakeChatSettings;
+import '../../../support/fake_chat_settings.dart';
 
 class _MockRequester extends Mock implements PermissionRequester {}
 

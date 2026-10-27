@@ -1,30 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/presentation/settings/cubit/chat_settings_cubit.dart';
 
-class FakeChatSettings implements ChatSettings {
-  FakeChatSettings([this.key]);
-
-  String? key;
-
-  @override
-  Future<String?> apiKey() async => key;
-
-  @override
-  Future<void> saveApiKey(String value) async {
-    final t = value.trim();
-    key = t.isEmpty ? null : t;
-  }
-
-  @override
-  Future<void> deleteApiKey() async => key = null;
-
-  @override
-  bool consented = false;
-
-  @override
-  Future<void> setConsented() async => consented = true;
-}
+import '../../../support/fake_chat_settings.dart';
 
 void main() {
   test('키가 있으면 마지막 4자만 힌트로 보인다', () async {

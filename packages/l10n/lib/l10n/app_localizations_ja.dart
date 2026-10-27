@@ -3147,4 +3147,71 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get walkChatSettingsNotice =>
       '質問に必要な日記・写真・歩数・起床の記録がAnthropicへ送信されます。キーはこの端末のセキュアストレージにのみ保存されます。';
+
+  @override
+  String get walkShellTabChat => '質問';
+
+  @override
+  String get walkChatNoKey => '設定でキーを入れてください';
+
+  @override
+  String get walkChatOpenSettings => '設定を開く';
+
+  @override
+  String get walkChatConsentNotice =>
+      '質問に必要な日記・写真・歩数・起床の記録がAnthropicへ送信されます。キーはこの端末のセキュアストレージにのみ保存されます。';
+
+  @override
+  String get walkChatConsentAccept => '同意して始める';
+
+  @override
+  String get walkChatExampleYesterday => '昨日は何をした？';
+
+  @override
+  String get walkChatExampleAte => '先週は何を食べた？';
+
+  @override
+  String get walkChatExampleWake => '最近は何時に起きてる？';
+
+  @override
+  String get walkChatEmptyPrompt => '自分の記録について聞いてみましょう';
+
+  @override
+  String get walkChatInputHint => '質問を入力';
+
+  @override
+  String get walkChatSend => '送信';
+
+  @override
+  String get walkChatNewConversation => '新しい会話';
+
+  @override
+  String get walkChatSearching => '記録を探しています…';
+
+  @override
+  String get walkChatCitedTitle => '会話の記録';
+
+  @override
+  String get walkChatFailureNoKey => '設定でキーを入れてください';
+
+  @override
+  String get walkChatFailureInvalidKey => 'キーを確認してください';
+
+  @override
+  String get walkChatFailureRateLimited => 'リクエストが多すぎます。少し待ってからもう一度聞いてください';
+
+  @override
+  String get walkChatFailureOverloaded => 'Claudeが混み合っています。少し待ってからもう一度聞いてください';
+
+  @override
+  String get walkChatFailureNetwork => '接続が切れました。もう一度聞いてください';
+
+  @override
+  String get walkChatFailureRefused => 'この質問には答えられません';
+
+  @override
+  String get walkChatFailureTooManySteps => '記録を探す途中で止まりました。質問を絞ってください';
+
+  @override
+  String get walkChatFailureUnknown => '回答を受け取れませんでした';
 }

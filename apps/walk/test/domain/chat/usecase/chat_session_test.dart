@@ -10,8 +10,7 @@ import 'package:walk/domain/chat/tool/life_tools.dart';
 import 'package:walk/domain/chat/tool/tool_result.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 
-import '../../../presentation/settings/cubit/chat_settings_cubit_test.dart'
-    show FakeChatSettings;
+import '../../../support/fake_chat_settings.dart';
 
 class _MockLifeTools extends Mock implements LifeTools {}
 

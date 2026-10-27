@@ -6,7 +6,7 @@ import 'package:l10n/l10n.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/presentation/settings/widget/chat_settings_section.dart';
 
-import '../cubit/chat_settings_cubit_test.dart' show FakeChatSettings;
+import '../../../support/fake_chat_settings.dart';
 
 void main() {
   late FakeChatSettings settings;
