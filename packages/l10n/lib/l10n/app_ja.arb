@@ -972,5 +972,15 @@
   "walkCommutePlaceLocateFailed": "位置を取得できませんでした",
   "walkCommuteRoutesTitle": "ルートを選ぶ",
   "walkDiaryMinutesAgo": "{minutes}分前",
-  "walkDiaryHoursAgo": "{hours}時間前"
+  "walkDiaryHoursAgo": "{hours}時間前",
+  "walkChatSettings": "チャット",
+  "walkChatSettingsKey": "Anthropic APIキー",
+  "walkChatSettingsAddKey": "キーを入れる",
+  "walkChatSettingsChange": "変更",
+  "walkChatSettingsDelete": "キーを削除",
+  "walkChatSettingsDeleteTitle": "APIキーを削除しますか？",
+  "walkChatSettingsDeleteBody": "この端末に保存されたキーが消えます。再び使うにはキーを入れ直してください。",
+  "walkChatSettingsKeyDialogTitle": "APIキーを入力",
+  "walkChatSettingsSave": "保存",
+  "walkChatSettingsNotice": "質問に必要な日記・写真・歩数・起床の記録がAnthropicへ送信されます。キーはこの端末のセキュアストレージにのみ保存されます。"
 }

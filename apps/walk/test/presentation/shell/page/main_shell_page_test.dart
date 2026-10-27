@@ -50,6 +50,9 @@ import 'package:walk/presentation/walk/page/walk_home_page.dart';
 
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_device_auth.dart';
+import 'package:walk/domain/chat/chat_settings.dart';
+import '../../settings/cubit/chat_settings_cubit_test.dart'
+    show FakeChatSettings;
 
 class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
 
@@ -180,6 +183,7 @@ void main() {
     ).thenAnswer((_) => Stream.value(const []));
     getIt
       ..registerSingleton<DiaryUseCase>(diary)
+      ..registerSingleton<ChatSettings>(FakeChatSettings())
       ..registerSingleton<DiaryRepository>(diaryRepo)
       ..registerSingleton<DiaryPreferences>(PrefsDiaryPreferences(prefs))
       ..registerSingleton<LockRepository>(lockRepo)

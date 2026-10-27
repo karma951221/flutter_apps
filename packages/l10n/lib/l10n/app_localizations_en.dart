@@ -3366,4 +3366,36 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get walkChatSettings => 'Chat';
+
+  @override
+  String get walkChatSettingsKey => 'Anthropic API key';
+
+  @override
+  String get walkChatSettingsAddKey => 'Add key';
+
+  @override
+  String get walkChatSettingsChange => 'Change';
+
+  @override
+  String get walkChatSettingsDelete => 'Delete key';
+
+  @override
+  String get walkChatSettingsDeleteTitle => 'Delete the API key?';
+
+  @override
+  String get walkChatSettingsDeleteBody =>
+      'The key stored on this phone will be removed. You will need to enter it again to use chat.';
+
+  @override
+  String get walkChatSettingsKeyDialogTitle => 'Enter API key';
+
+  @override
+  String get walkChatSettingsSave => 'Save';
+
+  @override
+  String get walkChatSettingsNotice =>
+      'Diary, photo, step and wake-up records needed for your question are sent to Anthropic. The key stays in this phone\'s secure storage only.';
 }

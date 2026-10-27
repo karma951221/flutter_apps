@@ -3115,4 +3115,36 @@ class AppLocalizationsJa extends AppLocalizations {
   String walkDiaryHoursAgo(int hours) {
     return '$hours時間前';
   }
+
+  @override
+  String get walkChatSettings => 'チャット';
+
+  @override
+  String get walkChatSettingsKey => 'Anthropic APIキー';
+
+  @override
+  String get walkChatSettingsAddKey => 'キーを入れる';
+
+  @override
+  String get walkChatSettingsChange => '変更';
+
+  @override
+  String get walkChatSettingsDelete => 'キーを削除';
+
+  @override
+  String get walkChatSettingsDeleteTitle => 'APIキーを削除しますか？';
+
+  @override
+  String get walkChatSettingsDeleteBody =>
+      'この端末に保存されたキーが消えます。再び使うにはキーを入れ直してください。';
+
+  @override
+  String get walkChatSettingsKeyDialogTitle => 'APIキーを入力';
+
+  @override
+  String get walkChatSettingsSave => '保存';
+
+  @override
+  String get walkChatSettingsNotice =>
+      '質問に必要な日記・写真・歩数・起床の記録がAnthropicへ送信されます。キーはこの端末のセキュアストレージにのみ保存されます。';
 }

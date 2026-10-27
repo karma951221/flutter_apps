@@ -13,6 +13,7 @@
 import 'dart:io' as _i497;
 
 import 'package:core/core.dart' as _i494;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:http/http.dart' as _i519;
 import 'package:injectable/injectable.dart' as _i526;
@@ -33,6 +34,7 @@ import '../../data/alarm/channel_ring_log_source.dart' as _i879;
 import '../../data/alarm/holiday_module.dart' as _i183;
 import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
+import '../../data/chat/secure_chat_settings.dart' as _i1030;
 import '../../data/commute/geocoding_address_search.dart' as _i667;
 import '../../data/commute/odsay_route_finder.dart' as _i132;
 import '../../data/commute/prefs_place_repository.dart' as _i265;
@@ -63,6 +65,7 @@ import '../../domain/alarm/sound/alarm_sound_source.dart' as _i344;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
 import '../../domain/alarm/usecase/ring_archiver.dart' as _i626;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
+import '../../domain/chat/chat_settings.dart' as _i111;
 import '../../domain/commute/repository/address_search.dart' as _i63;
 import '../../domain/commute/repository/place_repository.dart' as _i142;
 import '../../domain/commute/repository/route_finder.dart' as _i488;
@@ -112,6 +115,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i693.PlaceNamer>(() => registerModule.placeNamer);
     gh.lazySingleton<_i519.Client>(() => registerModule.httpClient);
     gh.lazySingleton<_i546.CommuteApiKeys>(() => registerModule.commuteApiKeys);
+    gh.lazySingleton<_i558.FlutterSecureStorage>(
+      () => registerModule.secureStorage,
+    );
     gh.lazySingleton<_i869.RingArchiveDatabase>(
       () => registerModule.ringArchiveDatabase(),
       dispose: _i291.disposeRingArchiveDatabase,
@@ -144,6 +150,12 @@ extension GetItInjectableX on _i174.GetIt {
       () => const _i553.ChannelReminderScheduler(),
     );
     gh.lazySingleton<_i702.AlarmScheduler>(() => _i238.PackageAlarmScheduler());
+    gh.lazySingleton<_i111.ChatSettings>(
+      () => _i1030.SecureChatSettings(
+        gh<_i558.FlutterSecureStorage>(),
+        gh<_i460.SharedPreferences>(),
+      ),
+    );
     gh.lazySingleton<_i674.MediaProcessor>(() => _i17.PluginMediaProcessor());
     gh.lazySingleton<_i488.RouteFinder>(
       () => _i132.OdsayRouteFinder(

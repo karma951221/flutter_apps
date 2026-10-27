@@ -3116,4 +3116,36 @@ class AppLocalizationsKo extends AppLocalizations {
   String walkDiaryHoursAgo(int hours) {
     return '$hours시간 전';
   }
+
+  @override
+  String get walkChatSettings => '채팅';
+
+  @override
+  String get walkChatSettingsKey => 'Anthropic API 키';
+
+  @override
+  String get walkChatSettingsAddKey => '키 넣기';
+
+  @override
+  String get walkChatSettingsChange => '바꾸기';
+
+  @override
+  String get walkChatSettingsDelete => '키 삭제';
+
+  @override
+  String get walkChatSettingsDeleteTitle => 'API 키를 지울까요?';
+
+  @override
+  String get walkChatSettingsDeleteBody =>
+      '이 폰에 저장된 키가 지워져요. 다시 쓰려면 키를 새로 넣어야 해요.';
+
+  @override
+  String get walkChatSettingsKeyDialogTitle => 'API 키 넣기';
+
+  @override
+  String get walkChatSettingsSave => '저장';
+
+  @override
+  String get walkChatSettingsNotice =>
+      '질문에 필요한 일기 · 사진 · 걸음 · 기상 기록이 Anthropic 으로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.';
 }

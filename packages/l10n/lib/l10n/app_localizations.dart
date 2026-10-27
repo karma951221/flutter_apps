@@ -5821,6 +5821,66 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{hours}시간 전'**
   String walkDiaryHoursAgo(int hours);
+
+  /// 설정 탭 채팅 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'채팅'**
+  String get walkChatSettings;
+
+  /// API 키 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'Anthropic API 키'**
+  String get walkChatSettingsKey;
+
+  /// 키가 없을 때 행 오른쪽 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'키 넣기'**
+  String get walkChatSettingsAddKey;
+
+  /// 키가 있을 때 행 부제(눌러서 바꾸기)
+  ///
+  /// In ko, this message translates to:
+  /// **'바꾸기'**
+  String get walkChatSettingsChange;
+
+  /// 키 삭제 행 · 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'키 삭제'**
+  String get walkChatSettingsDelete;
+
+  /// 키 삭제 확인 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'API 키를 지울까요?'**
+  String get walkChatSettingsDeleteTitle;
+
+  /// 키 삭제 확인 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'이 폰에 저장된 키가 지워져요. 다시 쓰려면 키를 새로 넣어야 해요.'**
+  String get walkChatSettingsDeleteBody;
+
+  /// 키 입력 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'API 키 넣기'**
+  String get walkChatSettingsKeyDialogTitle;
+
+  /// 키 입력 다이얼로그 저장 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get walkChatSettingsSave;
+
+  /// 채팅 섹션 맨 아래 데이터 전송 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'질문에 필요한 일기 · 사진 · 걸음 · 기상 기록이 Anthropic 으로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.'**
+  String get walkChatSettingsNotice;
 }
 
 class _AppLocalizationsDelegate

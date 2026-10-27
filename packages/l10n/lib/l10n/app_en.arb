@@ -972,5 +972,15 @@
   "walkCommutePlaceLocateFailed": "Couldn't get your location",
   "walkCommuteRoutesTitle": "Choose a route",
   "walkDiaryMinutesAgo": "{minutes, plural, =1{1 minute ago} other{{minutes} minutes ago}}",
-  "walkDiaryHoursAgo": "{hours, plural, =1{1 hour ago} other{{hours} hours ago}}"
+  "walkDiaryHoursAgo": "{hours, plural, =1{1 hour ago} other{{hours} hours ago}}",
+  "walkChatSettings": "Chat",
+  "walkChatSettingsKey": "Anthropic API key",
+  "walkChatSettingsAddKey": "Add key",
+  "walkChatSettingsChange": "Change",
+  "walkChatSettingsDelete": "Delete key",
+  "walkChatSettingsDeleteTitle": "Delete the API key?",
+  "walkChatSettingsDeleteBody": "The key stored on this phone will be removed. You will need to enter it again to use chat.",
+  "walkChatSettingsKeyDialogTitle": "Enter API key",
+  "walkChatSettingsSave": "Save",
+  "walkChatSettingsNotice": "Diary, photo, step and wake-up records needed for your question are sent to Anthropic. The key stays in this phone's secure storage only."
 }

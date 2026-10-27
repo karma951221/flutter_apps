@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:core/core.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 import 'package:local_auth/local_auth.dart';
@@ -43,7 +44,8 @@ abstract class RegisterModule {
 
   /// 네이티브 200줄 울림 기록을 오래 남기는 보관소(채팅이 읽는다).
   @LazySingleton(dispose: disposeRingArchiveDatabase)
-  RingArchiveDatabase ringArchiveDatabase() => RingArchiveDatabase(driftDatabase(name: 'ring_archive'));
+  RingArchiveDatabase ringArchiveDatabase() =>
+      RingArchiveDatabase(driftDatabase(name: 'ring_archive'));
 
   /// 일기 미디어가 사는 폴더. DI 준비 중에 경로를 받아 둔다.
   @preResolve
@@ -90,4 +92,8 @@ abstract class RegisterModule {
   /// `--dart-define-from-file=config/commute_keys.json` 으로 주입한 키. 비면 "키 없음".
   @lazySingleton
   CommuteApiKeys get commuteApiKeys => CommuteApiKeys.fromEnvironment();
+
+  /// 채팅용 Anthropic API 키를 두는 보안 저장소.
+  @lazySingleton
+  FlutterSecureStorage get secureStorage => const FlutterSecureStorage();
 }
