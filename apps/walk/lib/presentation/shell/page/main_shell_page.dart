@@ -11,6 +11,7 @@ import '../../../domain/alarm/holiday/holiday_calendar.dart';
 import '../../../domain/alarm/holiday/holiday_calendar_access.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
+import '../../../domain/alarm/usecase/ring_archiver.dart';
 import '../../../domain/alarm/widget/next_alarm_widget.dart';
 import '../../../domain/diary/repository/diary_preferences.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
@@ -148,6 +149,8 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     await _openFromHomeWidget();
     await awaitBackgroundIdle();
     await _reload(_alarmUseCase.sync);
+    // 네이티브 울림 기록(200줄)을 앱 DB 로 옮긴다. 화면을 막지 않고, 실패해도 다음에 다시 한다.
+    unawaited(getIt<RingArchiver>().archive().catchError((Object _) {}));
   }
 
   Future<void> _reload(Future<void> Function() reschedule) async {

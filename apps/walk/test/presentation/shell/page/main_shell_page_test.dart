@@ -17,6 +17,7 @@ import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
+import 'package:walk/domain/alarm/usecase/ring_archiver.dart';
 import 'package:walk/domain/alarm/widget/next_alarm_widget.dart';
 import 'package:walk/domain/commute/entity/place.dart';
 import 'package:walk/domain/commute/repository/address_search.dart';
@@ -51,6 +52,8 @@ import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_device_auth.dart';
 
 class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
+
+class _MockArchiver extends Mock implements RingArchiver {}
 
 class _MockWalk extends Mock implements WalkUseCase {}
 
@@ -114,6 +117,7 @@ class _MemorySettings implements SettingsRepository {
 
 void main() {
   late _MockAlarmUseCase alarms;
+  late _MockArchiver archiver;
   late _MockWalk walk;
   late _MockRequester notification;
   late _MockHolidays holidays;
@@ -135,6 +139,8 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger
         .setMockMethodCallHandler(backgroundChannel, (call) async => null);
     alarms = _MockAlarmUseCase();
+    archiver = _MockArchiver();
+    when(() => archiver.archive()).thenAnswer((_) async {});
     walk = _MockWalk();
     notification = _MockRequester();
     holidays = _MockHolidays();
@@ -187,6 +193,7 @@ void main() {
       ..registerSingleton<AddressSearch>(_MockAddressSearch());
     getIt
       ..registerSingleton<AlarmUseCase>(alarms)
+      ..registerSingleton<RingArchiver>(archiver)
       ..registerSingleton<WalkUseCase>(walk)
       ..registerSingleton<Clock>(clock)
       ..registerSingleton<HolidayRefresher>(holidays)
@@ -401,6 +408,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(onstage(CommuteTab), isTrue);
     expect(onstage(SettingsPage), isFalse);
+  });
+
+  testWidgets('시작할 때와 앱이 돌아올 때 울림 기록을 옮겨 담는다', (tester) async {
+    await pump(tester);
+    verify(() => archiver.archive()).called(1);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+
+    verify(() => archiver.archive()).called(1);
   });
 
   testWidgets('복귀하면 다시 동기화한다', (tester) async {

@@ -6,8 +6,9 @@ import 'package:l10n/l10n.dart';
 
 import '../../../domain/alarm/entity/ring_log_entry.dart';
 import '../../../domain/alarm/ring_log.dart';
-import '../../../domain/alarm/ring_log/ring_log_source.dart';
+import '../../../domain/alarm/ring_log/ring_archive.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
+import '../../../domain/alarm/usecase/ring_archiver.dart';
 import '../cubit/alarm_history_cubit.dart';
 import '../cubit/alarm_history_state.dart';
 import '../format/alarm_format.dart';
@@ -23,7 +24,8 @@ class AlarmHistoryPage extends StatefulWidget {
 
 class _AlarmHistoryPageState extends State<AlarmHistoryPage> {
   late final _cubit = AlarmHistoryCubit(
-    getIt<RingLogSource>(),
+    getIt<RingArchiver>(),
+    getIt<RingArchive>(),
     getIt<AlarmUseCase>(),
     getIt<Clock>(),
   )..load();
@@ -110,8 +112,7 @@ class _GroupRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     String time(DateTime at) => AlarmFormat.time(context, at.hour, at.minute);
-    final alarm = group.alarm;
-    final label = alarm == null ? l10n.walkAlarmHistoryDeleted : alarm.label;
+    final label = group.alarm?.label ?? group.archivedLabel ?? l10n.walkAlarmHistoryDeleted;
     final title = [time(group.at), if (label.isNotEmpty) label].join(' · ');
     final rangAt = group.rangAt;
     final endedAt = group.endedAt;

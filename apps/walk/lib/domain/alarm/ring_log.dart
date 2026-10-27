@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'entity/alarm.dart';
 import 'entity/alarm_trigger.dart';
+import 'entity/archived_ring.dart';
 import 'entity/ring_log_entry.dart';
 
 part 'ring_log.freezed.dart';
@@ -15,6 +16,10 @@ class RingLogGroup with _$RingLogGroup {
   /// 지금 있는 알람. 지웠으면 null.
   @override
   final Alarm? alarm;
+
+  /// 옮겨 담을 때 적힌 라벨 중 비어 있지 않은 마지막 것. 지운 알람의 기록에서도 라벨을 보이려고 둔다.
+  @override
+  final String? archivedLabel;
 
   /// 회차 시각 — 처음 울린 시각, 울리지 않았으면 건너뛴 회차 시각(그것도 없으면 첫 기록).
   @override
@@ -40,6 +45,7 @@ class RingLogGroup with _$RingLogGroup {
   const RingLogGroup({
     required this.packageId,
     required this.alarm,
+    required this.archivedLabel,
     required this.at,
     required this.rangAt,
     required this.snoozes,
@@ -57,21 +63,21 @@ class RingLogGroup with _$RingLogGroup {
 /// 스누즈 · 끔은 실제 시각으로 남아 자정을 넘길 수 있으니 기록 날짜로 나누지 않는다.
 /// packageId 의 index 는 회차 날짜로 정해 100일마다 돌아오므로, 그보다 짧은 창이면 다른 회차와
 /// 섞이지 않는다.
-List<RingLogGroup> ringLogGroups(List<RingLogEntry> entries, List<Alarm> alarms) {
+List<RingLogGroup> ringLogGroups(List<ArchivedRing> rings, List<Alarm> alarms) {
   final byId = {for (final a in alarms) a.id: a};
-  final buckets = <List<RingLogEntry>>[];
-  final open = <int, List<RingLogEntry>>{};
-  for (final e in [...entries]..sort((a, b) => a.at.compareTo(b.at))) {
-    final bucket = open[e.packageId];
-    if (bucket != null && e.at.difference(bucket.first.at) < occurrenceSpan) {
+  final buckets = <List<ArchivedRing>>[];
+  final open = <int, List<ArchivedRing>>{};
+  for (final e in [...rings]..sort((a, b) => a.entry.at.compareTo(b.entry.at))) {
+    final bucket = open[e.entry.packageId];
+    if (bucket != null && e.entry.at.difference(bucket.first.entry.at) < occurrenceSpan) {
       bucket.add(e);
     } else {
-      buckets.add(open[e.packageId] = [e]);
+      buckets.add(open[e.entry.packageId] = [e]);
     }
   }
   final groups = [
     for (final events in buckets)
-      _group(events.first.packageId, events, byId[alarmIdOf(events.first.packageId)]),
+      _group(events.first.entry.packageId, events, byId[alarmIdOf(events.first.entry.packageId)]),
   ];
   return groups..sort((a, b) => b.at.compareTo(a.at));
 }
@@ -79,7 +85,8 @@ List<RingLogGroup> ringLogGroups(List<RingLogEntry> entries, List<Alarm> alarms)
 /// 한 회차의 기록이 걸칠 수 있는 최대 폭 — 첫 기록부터 이 안의 같은 packageId 는 같은 회차다.
 const occurrenceSpan = Duration(days: 1);
 
-RingLogGroup _group(int packageId, List<RingLogEntry> events, Alarm? alarm) {
+RingLogGroup _group(int packageId, List<ArchivedRing> rings, Alarm? alarm) {
+  final events = [for (final r in rings) r.entry];
   DateTime? first(RingLogKind kind) => events.where((e) => e.kind == kind).firstOrNull?.at;
   final ends = events.where(
     (e) => e.kind == RingLogKind.stopped || e.kind == RingLogKind.autoStopped,
@@ -89,6 +96,7 @@ RingLogGroup _group(int packageId, List<RingLogEntry> events, Alarm? alarm) {
   return RingLogGroup(
     packageId: packageId,
     alarm: alarm,
+    archivedLabel: rings.map((r) => r.label).where((l) => l != null && l.isNotEmpty).lastOrNull,
     at: rangAt ?? skippedAt ?? events.first.at,
     rangAt: rangAt,
     snoozes: events.where((e) => e.kind == RingLogKind.snoozed).length,
