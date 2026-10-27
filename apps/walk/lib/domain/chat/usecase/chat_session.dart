@@ -50,21 +50,31 @@ class ChatSession {
   final _messages = <Map<String, Object?>>[];
   bool _busy = false;
 
+  /// [reset] 마다 올린다. 진행 중인 질문은 자기 세대가 바뀌면 조용히 멈춘다.
+  int _generation = 0;
+
   /// 한 번에 하나. 진행 중에 부르면 [StateError].
   Stream<ChatEvent> ask(String question) {
     if (_busy) throw StateError('ChatSession.ask is already running');
     _busy = true;
-    return _run(question);
+    return _run(question, _generation);
   }
 
-  /// 대화 비우기.
-  void reset() => _messages.clear();
+  /// 대화 비우기. 진행 중이어도 부를 수 있다 — 그 질문은 더 덧붙이지도,
+  /// 이벤트를 내지도 않고 끝나며, 바로 다음 [ask] 를 받을 수 있다.
+  void reset() {
+    _generation++;
+    _messages.clear();
+    _busy = false;
+  }
 
-  Stream<ChatEvent> _run(String question) async* {
+  Stream<ChatEvent> _run(String question, int generation) async* {
+    bool stale() => generation != _generation;
     final start = _messages.length;
     var completed = false;
     try {
       final apiKey = await _settings.apiKey();
+      if (stale()) return;
       if (apiKey == null) {
         yield const ChatEvent.failed(ChatFailure.noKey);
         return;
@@ -82,6 +92,7 @@ class ChatSession {
           messages: List.unmodifiable(_messages),
           tools: tools,
         )) {
+          if (stale()) return;
           switch (event) {
             case ModelTextDelta(:final text):
               yield ChatEvent.text(text);
@@ -89,6 +100,7 @@ class ChatSession {
               done = event;
           }
         }
+        if (stale()) return;
         if (done == null) {
           throw const ChatModelException(ChatModelErrorKind.network);
         }
@@ -103,6 +115,7 @@ class ChatSession {
               yield ChatEvent.toolStarted(name);
               final input = (block['input'] as Map?)?.cast<String, Object?>();
               final result = await _tools.run(name, input ?? const {});
+              if (stale()) return;
               cited.addAll(result.entryIds);
               results.add(_toolResult(block['id']! as String, result));
             }
@@ -118,12 +131,17 @@ class ChatSession {
       }
       yield const ChatEvent.failed(ChatFailure.tooManySteps);
     } on ChatModelException catch (e) {
-      yield ChatEvent.failed(_failureOf(e.kind));
+      if (!stale()) yield ChatEvent.failed(_failureOf(e.kind));
     } catch (_) {
-      yield const ChatEvent.failed(ChatFailure.unknown);
+      if (!stale()) yield const ChatEvent.failed(ChatFailure.unknown);
     } finally {
-      if (!completed) _messages.removeRange(start, _messages.length);
-      _busy = false;
+      // 세대가 바뀌었으면 기록과 _busy 는 이미 새 세대의 것이다.
+      if (!stale()) {
+        _busy = false;
+        if (!completed && start <= _messages.length) {
+          _messages.removeRange(start, _messages.length);
+        }
+      }
     }
   }
 

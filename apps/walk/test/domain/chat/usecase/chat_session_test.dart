@@ -409,6 +409,54 @@ void main() {
     ]);
   });
 
+  group('진행 중 reset', () {
+    for (final outcome in ['성공', '실패']) {
+      test(
+        '라운드가 $outcome 으로 끝나도 이벤트 없이 멈추고, 다음 질문의 messages 는 [새 질문] 뿐이다',
+        () async {
+          final model = _CompleterModel();
+          final chat = ChatSession(model, tools, settings, clock);
+
+          final firstEvents = <ChatEvent>[];
+          final first = chat.ask('첫').listen(firstEvents.add).asFuture<void>();
+          await pumpEventQueue();
+          expect(model.calls, hasLength(1));
+
+          chat.reset();
+          final second = chat.ask('둘').toList();
+          await pumpEventQueue();
+
+          if (outcome == '성공') {
+            model.calls[0].complete(_done([_textBlock('늦은 답')], 'end_turn'));
+          } else {
+            model.calls[0].completeError(
+              const ChatModelException(ChatModelErrorKind.network),
+            );
+          }
+          await first;
+          model.calls[1].complete(_done([_textBlock('새 답')], 'end_turn'));
+
+          expect(firstEvents, isEmpty);
+          expect(await second, const [ChatEvent.finished(citedEntryIds: [])]);
+          expect(model.requests[1], [
+            {'role': 'user', 'content': '둘'},
+          ]);
+
+          unawaited(chat.ask('셋').toList());
+          await pumpEventQueue();
+          expect(model.requests[2], [
+            {'role': 'user', 'content': '둘'},
+            {
+              'role': 'assistant',
+              'content': [_textBlock('새 답')],
+            },
+            {'role': 'user', 'content': '셋'},
+          ]);
+        },
+      );
+    }
+  });
+
   test('이벤트와 실패에 API 키가 나오지 않는다', () async {
     final model = _FakeModel([
       [const ChatModelException(ChatModelErrorKind.invalidKey)],
@@ -436,5 +484,24 @@ class _GatedModel implements ChatModel {
     requests.add(messages);
     await gate;
     yield _done([_textBlock('ok')], 'end_turn');
+  }
+}
+
+/// 부를 때마다 Completer 하나를 만들고, 테스트가 그걸 끝낸다.
+class _CompleterModel implements ChatModel {
+  final calls = <Completer<ModelEvent>>[];
+  final requests = <List<Map<String, Object?>>>[];
+
+  @override
+  Stream<ModelEvent> stream({
+    required String apiKey,
+    required String system,
+    required List<Map<String, Object?>> messages,
+    required List<Map<String, Object?>> tools,
+  }) {
+    requests.add(messages);
+    final call = Completer<ModelEvent>();
+    calls.add(call);
+    return call.future.asStream();
   }
 }
