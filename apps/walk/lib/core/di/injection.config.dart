@@ -22,6 +22,8 @@ import 'package:shared_preferences/shared_preferences.dart' as _i460;
 import 'package:uuid/uuid.dart' as _i706;
 
 import '../../data/alarm/alarm_permission_module.dart' as _i343;
+import '../../data/alarm/archive/drift_ring_archive.dart' as _i380;
+import '../../data/alarm/archive/ring_archive_database.dart' as _i869;
 import '../../data/alarm/cached_holiday_calendar.dart' as _i93;
 import '../../data/alarm/channel_alarm_sound_source.dart' as _i793;
 import '../../data/alarm/channel_device_holiday_source.dart' as _i279;
@@ -53,11 +55,13 @@ import '../../domain/alarm/holiday/holiday_calendar.dart' as _i961;
 import '../../domain/alarm/holiday/holiday_calendar_access.dart' as _i227;
 import '../../domain/alarm/permission/alarm_permissions.dart' as _i933;
 import '../../domain/alarm/repository/alarm_repository.dart' as _i296;
+import '../../domain/alarm/ring_log/ring_archive.dart' as _i361;
 import '../../domain/alarm/ring_log/ring_log_source.dart' as _i353;
 import '../../domain/alarm/scheduler/alarm_scheduler.dart' as _i702;
 import '../../domain/alarm/scheduler/reminder_scheduler.dart' as _i297;
 import '../../domain/alarm/sound/alarm_sound_source.dart' as _i344;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
+import '../../domain/alarm/usecase/ring_archiver.dart' as _i626;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
 import '../../domain/commute/repository/address_search.dart' as _i63;
 import '../../domain/commute/repository/place_repository.dart' as _i142;
@@ -108,12 +112,19 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i693.PlaceNamer>(() => registerModule.placeNamer);
     gh.lazySingleton<_i519.Client>(() => registerModule.httpClient);
     gh.lazySingleton<_i546.CommuteApiKeys>(() => registerModule.commuteApiKeys);
+    gh.lazySingleton<_i869.RingArchiveDatabase>(
+      () => registerModule.ringArchiveDatabase(),
+      dispose: _i291.disposeRingArchiveDatabase,
+    );
     gh.lazySingleton<_i933.AlarmPermissions>(
       () => alarmPermissionModule.alarmPermissions,
     );
     gh.lazySingleton<_i488.MediaPickGuard>(() => _i488.MediaPickGuard());
     gh.lazySingleton<_i494.IdGenerator>(
       () => registerModule.idGenerator(gh<_i706.Uuid>()),
+    );
+    gh.lazySingleton<_i361.RingArchive>(
+      () => _i380.DriftRingArchive(gh<_i869.RingArchiveDatabase>()),
     );
     gh.lazySingleton<_i194.ScreenLockSettings>(
       () => _i952.ChannelScreenLockSettings(),
@@ -266,6 +277,13 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i693.PlaceSource>(),
         gh<_i300.DiaryPreferences>(),
         gh<_i494.Clock>(),
+      ),
+    );
+    gh.lazySingleton<_i626.RingArchiver>(
+      () => _i626.RingArchiver(
+        gh<_i353.RingLogSource>(),
+        gh<_i361.RingArchive>(),
+        gh<_i873.AlarmUseCase>(),
       ),
     );
     return this;

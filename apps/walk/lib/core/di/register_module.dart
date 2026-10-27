@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../config/commute_api_keys.dart';
+import '../../data/alarm/archive/ring_archive_database.dart';
 import '../../data/diary/database/diary_database.dart';
 import '../../data/diary/location/current_place_source.dart';
 import '../../data/diary/location/geocoding_place_namer.dart';
@@ -19,6 +20,8 @@ import '../../domain/diary/location/place_source.dart';
 
 /// getIt.reset · 테스트 해제 때 DB 를 닫는다.
 FutureOr<void> disposeDiaryDatabase(DiaryDatabase db) => db.close();
+
+FutureOr<void> disposeRingArchiveDatabase(RingArchiveDatabase db) => db.close();
 
 /// 직접 소유하지 않는 인스턴스 등록.
 @module
@@ -37,6 +40,10 @@ abstract class RegisterModule {
   @LazySingleton(dispose: disposeDiaryDatabase)
   DiaryDatabase diaryDatabase(Clock clock) =>
       DiaryDatabase(driftDatabase(name: 'diary'), now: clock.now);
+
+  /// 네이티브 200줄 울림 기록을 오래 남기는 보관소(채팅이 읽는다).
+  @LazySingleton(dispose: disposeRingArchiveDatabase)
+  RingArchiveDatabase ringArchiveDatabase() => RingArchiveDatabase(driftDatabase(name: 'ring_archive'));
 
   /// 일기 미디어가 사는 폴더. DI 준비 중에 경로를 받아 둔다.
   @preResolve
