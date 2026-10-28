@@ -213,6 +213,121 @@ void main() {
     ]);
   });
 
+  group('사진 한도(대화당 ${ChatSession.maxImagesPerConversation}장)', () {
+    ToolResult photos(int count) => ToolResult(
+      json: '{"photos":$count}',
+      images: [
+        for (var i = 0; i < count; i++)
+          ToolImage(mediaType: 'image/jpeg', bytes: Uint8List.fromList([i])),
+      ],
+    );
+
+    List<Object> photoRound(String id) => [
+      _done([_toolUse(id, 'view_entry_photos')], 'tool_use'),
+    ];
+
+    Map<String, Object?> resultOf(_Request request) =>
+        ((request.messages.last['content']! as List).single as Map)
+            .cast<String, Object?>();
+
+    int imageCount(Map<String, Object?> result) => (result['content']! as List)
+        .where((block) => (block as Map)['type'] == 'image')
+        .length;
+
+    setUp(() {
+      when(
+        () => tools.run('view_entry_photos', any()),
+      ).thenAnswer((_) async => photos(5));
+    });
+
+    test('한도 안이면 이미지를 붙인다', () async {
+      final model = _FakeModel([
+        photoRound('t1'),
+        photoRound('t2'),
+        _answer('끝'),
+      ]);
+
+      await session(model).ask('사진').toList();
+
+      expect(imageCount(resultOf(model.requests[1])), 5);
+      expect(imageCount(resultOf(model.requests[2])), 5);
+      expect(resultOf(model.requests[2])['is_error'], false);
+    });
+
+    test('한도를 넘기면 이미지 없이 is_error 와 photo_limit_reached 를 보낸다', () async {
+      final model = _FakeModel([
+        photoRound('t1'),
+        photoRound('t2'),
+        photoRound('t3'),
+        _answer('끝'),
+      ]);
+
+      await session(model).ask('사진').toList();
+
+      final over = resultOf(model.requests[3]);
+      expect(over['is_error'], true);
+      expect(imageCount(over), 0);
+      expect(over['content'], [
+        {
+          'type': 'text',
+          'text':
+              '{"error":"photo_limit_reached","hint":"새 대화를 시작하면 다시 사진을 볼 수 있어요"}',
+        },
+      ]);
+    });
+
+    test('한도는 질문을 넘어 대화 전체에 걸린다', () async {
+      final model = _FakeModel([
+        photoRound('t1'),
+        photoRound('t2'),
+        _answer('첫 답'),
+        photoRound('t3'),
+        _answer('둘째 답'),
+      ]);
+      final chat = session(model);
+
+      await chat.ask('첫').toList();
+      await chat.ask('둘').toList();
+
+      expect(imageCount(resultOf(model.requests[4])), 0);
+      expect(resultOf(model.requests[4])['is_error'], true);
+    });
+
+    test('reset 하면 한도가 다시 찬다', () async {
+      final model = _FakeModel([
+        photoRound('t1'),
+        photoRound('t2'),
+        _answer('첫 답'),
+        photoRound('t3'),
+        _answer('둘째 답'),
+      ]);
+      final chat = session(model);
+
+      await chat.ask('첫').toList();
+      chat.reset();
+      await chat.ask('둘').toList();
+
+      expect(imageCount(resultOf(model.requests[4])), 5);
+      expect(resultOf(model.requests[4])['is_error'], false);
+    });
+
+    test('되돌린 질문의 사진은 세지 않는다', () async {
+      final model = _FakeModel([
+        photoRound('t1'),
+        photoRound('t2'),
+        [const ChatModelException(ChatModelErrorKind.network)],
+        photoRound('t3'),
+        _answer('둘째 답'),
+      ]);
+      final chat = session(model);
+
+      await chat.ask('첫').toList();
+      await chat.ask('둘').toList();
+
+      expect(imageCount(resultOf(model.requests[4])), 5);
+    });
+  });
+
   test('assistant content(thinking 포함)를 바꾸지 않고 다음 요청에 보낸다', () async {
     when(
       () => tools.run(any(), any()),

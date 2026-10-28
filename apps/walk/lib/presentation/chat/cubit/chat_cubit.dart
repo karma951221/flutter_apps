@@ -31,8 +31,14 @@ class ChatCubit extends Cubit<ChatState> {
   int _generation = 0;
 
   /// 키 · 동의 상태를 다시 읽는다. 탭이 보이게 될 때 부른다.
+  /// 보안 저장소를 읽지 못하면 키가 없는 것으로 본다.
   Future<void> refresh() async {
-    final key = await _settings.apiKey();
+    String? key;
+    try {
+      key = await _settings.apiKey();
+    } on Object {
+      key = null;
+    }
     if (isClosed) return;
     final access = switch ((key, _settings.consented)) {
       (null, _) => ChatAccess.noKey,
@@ -47,11 +53,13 @@ class ChatCubit extends Cubit<ChatState> {
     await refresh();
   }
 
-  /// 질문을 보낸다. 빈 질문이거나 답하는 중이면 무시한다.
+  /// 질문을 보낸다. 쓸 수 있는 상태(ready)가 아니거나 빈 질문이거나 답하는 중이면 무시한다.
   /// 돌려주는 Future 는 답이 끝나거나(성공 · 실패) [newConversation] 으로 끊길 때 끝난다.
   Future<void> send(String question) {
     final text = question.trim();
-    if (text.isEmpty || state.busy) return Future.value();
+    if (state.access != ChatAccess.ready || text.isEmpty || state.busy) {
+      return Future.value();
+    }
     final Stream<ChatEvent> events;
     try {
       events = _session.ask(text);
@@ -164,6 +172,8 @@ class ChatCubit extends Cubit<ChatState> {
     _generation++;
     // 기다리지 않는다 — 응답을 기다리는 중인 세션 스트림은 취소가 늦게 끝날 수 있다.
     unawaited(_sub?.cancel());
+    // 세션은 싱글턴이다. 답하는 중에 닫혀도 다음 cubit 이 ask 할 수 있게 비운다.
+    _session.reset();
     _complete();
     return super.close();
   }

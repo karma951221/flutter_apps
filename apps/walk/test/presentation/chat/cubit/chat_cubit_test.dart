@@ -172,4 +172,38 @@ void main() {
     expect(events.hasListener, isFalse);
     await events.close();
   });
+
+  test('키를 읽다 실패하면 noKey 로 둔다', () async {
+    settings.failWith = Exception('keystore');
+
+    await cubit.refresh();
+
+    expect(cubit.state.access, ChatAccess.noKey);
+  });
+
+  test('ready 가 아니면 send 는 아무것도 하지 않는다', () async {
+    when(() => session.ask(any())).thenAnswer((_) => const Stream.empty());
+    settings.consented = false;
+    await cubit.refresh();
+    expect(cubit.state.access, ChatAccess.needsConsent);
+
+    await cubit.send('질문');
+
+    verifyNever(() => session.ask(any()));
+    expect(cubit.state.bubbles, isEmpty);
+    expect(cubit.state.busy, isFalse);
+  });
+
+  test('답하는 중에 닫으면 session.reset 을 불러 세션이 묶이지 않는다', () async {
+    final events = StreamController<ChatEvent>();
+    when(() => session.ask(any())).thenAnswer((_) => events.stream);
+    await cubit.refresh();
+    unawaited(cubit.send('질문'));
+    await pumpEventQueue();
+
+    await cubit.close();
+
+    verify(() => session.reset()).called(1);
+    await events.close();
+  });
 }

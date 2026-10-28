@@ -3145,6 +3145,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatSettingsSave => '保存';
 
   @override
+  String get walkChatSettingsSaveFailed => 'キーを保存できませんでした';
+
+  @override
   String get walkChatSettingsNotice =>
       '質問に必要な日記・写真・歩数・起床の記録がAnthropicへ送信されます。キーはこの端末のセキュアストレージにのみ保存されます。';
 

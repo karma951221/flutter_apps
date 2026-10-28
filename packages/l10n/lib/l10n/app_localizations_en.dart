@@ -3396,6 +3396,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatSettingsSave => 'Save';
 
   @override
+  String get walkChatSettingsSaveFailed => 'Couldn\'t save the key';
+
+  @override
   String get walkChatSettingsNotice =>
       'Diary, photo, step and wake-up records needed for your question are sent to Anthropic. The key stays in this phone\'s secure storage only.';
 

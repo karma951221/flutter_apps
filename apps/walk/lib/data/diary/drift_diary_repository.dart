@@ -273,6 +273,7 @@ class DriftDiaryRepository implements DiaryRepository {
     String? storyId,
     int limit = 50,
   }) async {
+    assert(limit > 0, 'searchEntries limit must be positive');
     final conditions = <String>[];
     final args = <Variable>[Variable<DateTime>(from), Variable<DateTime>(to)];
     if (storyId != null) {

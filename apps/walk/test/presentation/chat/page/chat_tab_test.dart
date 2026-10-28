@@ -98,6 +98,38 @@ void main() {
     expect(find.text('산책을 했어요'), findsOneWidget);
   });
 
+  testWidgets('키를 확인하는 동안 가운데에 로딩 표시를 보인다', (tester) async {
+    final pending = Completer<String?>();
+    getIt
+      ..unregister<ChatSettings>()
+      ..registerSingleton<ChatSettings>(_PendingSettings(pending.future));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: BlocProvider<DiaryLockCubit>.value(
+          value: lock,
+          child: ChatTab(active: true, onOpenSettings: () {}),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      find.descendant(
+        of: find.byType(Center),
+        matching: find.byType(CircularProgressIndicator),
+      ),
+      findsOneWidget,
+    );
+
+    pending.complete(null);
+    await tester.pumpAndSettle();
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+  });
+
   testWidgets('키가 없으면 설정으로 가는 버튼을 보인다', (tester) async {
     settings.key = null;
     var opened = 0;
@@ -234,4 +266,13 @@ void main() {
     // 뷰어의 조각 타이머가 남지 않게 닫는다.
     await tester.pumpWidget(const SizedBox.shrink());
   });
+}
+
+class _PendingSettings extends FakeChatSettings {
+  _PendingSettings(this.pending) : super('sk-ant-test');
+
+  final Future<String?> pending;
+
+  @override
+  Future<String?> apiKey() => pending;
 }

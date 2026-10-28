@@ -982,6 +982,7 @@
   "walkChatSettingsDeleteBody": "この端末に保存されたキーが消えます。再び使うにはキーを入れ直してください。",
   "walkChatSettingsKeyDialogTitle": "APIキーを入力",
   "walkChatSettingsSave": "保存",
+  "walkChatSettingsSaveFailed": "キーを保存できませんでした",
   "walkChatSettingsNotice": "質問に必要な日記・写真・歩数・起床の記録がAnthropicへ送信されます。キーはこの端末のセキュアストレージにのみ保存されます。",
   "walkShellTabChat": "質問",
   "walkChatNoKey": "設定でキーを入れてください",

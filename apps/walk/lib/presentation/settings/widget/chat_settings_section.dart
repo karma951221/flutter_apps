@@ -30,7 +30,17 @@ class _ChatSettingsView extends StatelessWidget {
       context: context,
       builder: (_) => const _KeyDialog(),
     );
-    if (key != null) await cubit.save(key);
+    if (key == null) return;
+    final saved = await cubit.save(key);
+    if (!saved && context.mounted) _showWriteFailed(context);
+  }
+
+  void _showWriteFailed(BuildContext context) {
+    AppSnackBar.show(
+      context,
+      message: AppLocalizations.of(context).walkChatSettingsSaveFailed,
+      type: AppSnackBarType.error,
+    );
   }
 
   Future<void> _deleteKey(BuildContext context) async {
@@ -42,7 +52,9 @@ class _ChatSettingsView extends StatelessWidget {
       content: l10n.walkChatSettingsDeleteBody,
       confirmLabel: l10n.walkChatSettingsDelete,
     );
-    if (ok) await cubit.delete();
+    if (!ok) return;
+    final deleted = await cubit.delete();
+    if (!deleted && context.mounted) _showWriteFailed(context);
   }
 
   @override

@@ -3146,6 +3146,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatSettingsSave => '저장';
 
   @override
+  String get walkChatSettingsSaveFailed => '키를 저장하지 못했어요';
+
+  @override
   String get walkChatSettingsNotice =>
       '질문에 필요한 일기 · 사진 · 걸음 · 기상 기록이 Anthropic 으로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.';
 

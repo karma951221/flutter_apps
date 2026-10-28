@@ -352,4 +352,96 @@ void main() {
       ),
     );
   });
+
+  final isNetwork = throwsA(
+    isA<ChatModelException>().having(
+      (e) => e.kind,
+      'kind',
+      ChatModelErrorKind.network,
+    ),
+  );
+
+  test('응답이 응답 대기 시간 안에 오지 않으면 network', () async {
+    final never = Completer<http.StreamedResponse>();
+    final client = MockClient.streaming((r, b) async {
+      await b.drain<void>();
+      return never.future;
+    });
+    await expectLater(
+      AnthropicChatModel.withTimeouts(
+            client,
+            responseTimeout: const Duration(milliseconds: 20),
+          )
+          .stream(apiKey: 'k', system: 's', messages: const [], tools: const [])
+          .toList(),
+      isNetwork,
+    );
+  });
+
+  test('SSE 줄 사이가 유휴 시간을 넘기면 network', () async {
+    final controller = StreamController<List<int>>();
+    final client = MockClient.streaming((r, b) async {
+      await b.drain<void>();
+      return http.StreamedResponse(controller.stream, 200);
+    });
+    controller.add(
+      utf8.encode(sse('message_start', {'type': 'message_start'})),
+    );
+    await expectLater(
+      AnthropicChatModel.withTimeouts(
+            client,
+            idleTimeout: const Duration(milliseconds: 20),
+          )
+          .stream(apiKey: 'k', system: 's', messages: const [], tools: const [])
+          .toList(),
+      isNetwork,
+    );
+    await controller.close();
+  });
+
+  test('기본 대기 시간은 응답 60초, SSE 유휴 90초', () {
+    final model = AnthropicChatModel(
+      MockClient((_) async => http.Response('', 200)),
+    );
+    expect(model.responseTimeout, const Duration(seconds: 60));
+    expect(model.idleTimeout, const Duration(seconds: 90));
+  });
+
+  test('이벤트 모양이 어긋나면(index 가 문자열) server', () async {
+    await expectLater(
+      run(
+        clientOf([
+          sse('content_block_start', {
+            'index': 0,
+            'content_block': {'type': 'text', 'text': ''},
+          }),
+          sse('content_block_delta', {
+            'index': '0',
+            'delta': {'type': 'text_delta', 'text': 'a'},
+          }),
+          sse('message_stop', {}),
+        ]),
+      ),
+      throwsA(
+        isA<ChatModelException>().having(
+          (e) => e.kind,
+          'kind',
+          ChatModelErrorKind.server,
+        ),
+      ),
+    );
+  });
+
+  test('data 가 객체가 아니면 server', () async {
+    await expectLater(
+      run(clientOf(['event: content_block_delta\ndata: [1,2]\n\n'])),
+      throwsA(
+        isA<ChatModelException>().having(
+          (e) => e.kind,
+          'kind',
+          ChatModelErrorKind.server,
+        ),
+      ),
+    );
+  });
 }

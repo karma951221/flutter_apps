@@ -214,9 +214,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i693.PlaceNamer>(),
       ),
     );
-    gh.lazySingleton<_i1004.ChatModel>(
-      () => _i645.AnthropicChatModel(gh<_i519.Client>()),
-    );
     gh.lazySingleton<_i960.SubwayArrivalSource>(
       () => _i960.SeoulSubwayArrivalSource(
         gh<_i519.Client>(),
@@ -229,6 +226,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i961.HolidayRefresher>(
       () => holidayModule.holidayRefresher(gh<_i93.CachedHolidayCalendar>()),
+    );
+    gh.lazySingleton<_i1004.ChatModel>(
+      () => _i645.AnthropicChatModel(gh<_i519.Client>()),
     );
     gh.lazySingleton<_i611.DiaryDatabase>(
       () => registerModule.diaryDatabase(gh<_i494.Clock>()),

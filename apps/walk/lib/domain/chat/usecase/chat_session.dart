@@ -47,8 +47,18 @@ class ChatSession {
 
   static const maxRounds = 8;
 
+  /// 한 대화에 보내는 사진 수 한도. 지난 메시지는 고치지 않으므로(thinking 서명이
+  /// 깨진다) 보낸 사진은 매 요청에 다시 실린다 — 대신 한도에서 막는다.
+  static const maxImagesPerConversation = 12;
+
+  static const _photoLimitJson =
+      '{"error":"photo_limit_reached","hint":"새 대화를 시작하면 다시 사진을 볼 수 있어요"}';
+
   final _messages = <Map<String, Object?>>[];
   bool _busy = false;
+
+  /// 이 대화에서 보낸 사진 수. 되돌린 질문의 사진은 세지 않는다.
+  int _imagesSent = 0;
 
   /// [reset] 마다 올린다. 진행 중인 질문은 자기 세대가 바뀌면 조용히 멈춘다.
   int _generation = 0;
@@ -65,12 +75,14 @@ class ChatSession {
   void reset() {
     _generation++;
     _messages.clear();
+    _imagesSent = 0;
     _busy = false;
   }
 
   Stream<ChatEvent> _run(String question, int generation) async* {
     bool stale() => generation != _generation;
     final start = _messages.length;
+    final imagesAtStart = _imagesSent;
     var completed = false;
     try {
       final apiKey = await _settings.apiKey();
@@ -117,7 +129,7 @@ class ChatSession {
               final result = await _tools.run(name, input ?? const {});
               if (stale()) return;
               cited.addAll(result.entryIds);
-              results.add(_toolResult(block['id']! as String, result));
+              results.add(_toolResult(block['id']! as String, _capped(result)));
             }
             _messages.add({'role': 'user', 'content': results});
           case 'refusal':
@@ -140,9 +152,21 @@ class ChatSession {
         _busy = false;
         if (!completed && start <= _messages.length) {
           _messages.removeRange(start, _messages.length);
+          _imagesSent = imagesAtStart;
         }
       }
     }
+  }
+
+  /// 사진이 한도를 넘기면 사진 없이 오류 결과로 바꾼다.
+  ToolResult _capped(ToolResult result) {
+    final count = result.images.length;
+    if (count == 0) return result;
+    if (_imagesSent + count > maxImagesPerConversation) {
+      return const ToolResult(json: _photoLimitJson, isError: true);
+    }
+    _imagesSent += count;
+    return result;
   }
 
   static Map<String, Object?> _toolResult(String id, ToolResult result) => {

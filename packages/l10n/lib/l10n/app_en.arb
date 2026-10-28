@@ -982,6 +982,7 @@
   "walkChatSettingsDeleteBody": "The key stored on this phone will be removed. You will need to enter it again to use chat.",
   "walkChatSettingsKeyDialogTitle": "Enter API key",
   "walkChatSettingsSave": "Save",
+  "walkChatSettingsSaveFailed": "Couldn't save the key",
   "walkChatSettingsNotice": "Diary, photo, step and wake-up records needed for your question are sent to Anthropic. The key stays in this phone's secure storage only.",
   "walkShellTabChat": "Ask",
   "walkChatNoKey": "Add your key in Settings",

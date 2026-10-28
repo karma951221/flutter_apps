@@ -4352,6 +4352,8 @@
   "@walkChatSettingsKeyDialogTitle": { "description": "키 입력 다이얼로그 제목" },
   "walkChatSettingsSave": "저장",
   "@walkChatSettingsSave": { "description": "키 입력 다이얼로그 저장 버튼" },
+  "walkChatSettingsSaveFailed": "키를 저장하지 못했어요",
+  "@walkChatSettingsSaveFailed": { "description": "보안 저장소에 키를 저장 · 삭제하지 못했을 때 스낵바" },
   "walkChatSettingsNotice": "질문에 필요한 일기 · 사진 · 걸음 · 기상 기록이 Anthropic 으로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.",
   "@walkChatSettingsNotice": { "description": "채팅 섹션 맨 아래 데이터 전송 안내" },
   "walkShellTabChat": "물어보기",

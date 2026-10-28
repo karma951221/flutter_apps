@@ -10,9 +10,22 @@ import '../../domain/chat/chat_model.dart';
 /// Anthropic Messages API 를 SSE 로 읽는다. 예외에는 키나 응답 본문을 담지 않는다.
 @LazySingleton(as: ChatModel)
 class AnthropicChatModel implements ChatModel {
-  AnthropicChatModel(this._client);
+  AnthropicChatModel(http.Client client) : this.withTimeouts(client);
+
+  /// 테스트가 짧은 대기 시간을 넣을 때 쓴다.
+  AnthropicChatModel.withTimeouts(
+    this._client, {
+    this.responseTimeout = const Duration(seconds: 60),
+    this.idleTimeout = const Duration(seconds: 90),
+  });
 
   final http.Client _client;
+
+  /// 요청을 보내고 응답(상태 줄)이 오기까지.
+  final Duration responseTimeout;
+
+  /// SSE 줄 사이 최대 간격. 서버는 오래 생각하는 동안에도 ping 이벤트를 보낸다.
+  final Duration idleTimeout;
 
   static final _endpoint = Uri.parse('https://api.anthropic.com/v1/messages');
 
@@ -42,7 +55,7 @@ class AnthropicChatModel implements ChatModel {
       });
 
     try {
-      final response = await _client.send(request);
+      final response = await _client.send(request).timeout(responseTimeout);
       final status = response.statusCode;
       if (status < 200 || status >= 300) {
         // 본문은 읽지도 담지도 않는다.
@@ -77,7 +90,10 @@ class AnthropicChatModel implements ChatModel {
     final data = StringBuffer();
     var hasData = false;
 
-    final lines = bytes.transform(utf8.decoder).transform(const LineSplitter());
+    final lines = bytes
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())
+        .timeout(idleTimeout);
 
     // 빈 줄을 만나면 모인 이벤트를 처리한다.
     Iterable<ModelEvent> dispatch() sync* {
@@ -90,7 +106,7 @@ class AnthropicChatModel implements ChatModel {
       if (name == null || !had) return;
       Map<String, Object?> json;
       try {
-        json = jsonDecode(payload) as Map<String, Object?>;
+        json = (jsonDecode(payload) as Map).cast<String, Object?>();
       } on FormatException {
         throw const ChatModelException(ChatModelErrorKind.server);
       }
@@ -184,6 +200,9 @@ class AnthropicChatModel implements ChatModel {
       throw const ChatModelException(ChatModelErrorKind.network);
     } on TimeoutException {
       throw const ChatModelException(ChatModelErrorKind.network);
+    } on TypeError {
+      // 이벤트 모양이 문서와 다르다(필드 타입이 어긋난 캐스트).
+      throw const ChatModelException(ChatModelErrorKind.server);
     }
   }
 }

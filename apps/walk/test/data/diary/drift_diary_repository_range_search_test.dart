@@ -113,5 +113,9 @@ void main() {
 
       expect(await bodies(limit: 3), ['e1', 'e2', 'e3']);
     });
+
+    test('limit 은 1 이상이어야 한다', () {
+      expect(() => bodies(limit: 0), throwsAssertionError);
+    });
   });
 }

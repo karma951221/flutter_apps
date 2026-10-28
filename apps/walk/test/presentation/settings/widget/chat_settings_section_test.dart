@@ -61,4 +61,34 @@ void main() {
     expect(settings.key, isNull);
     expect(find.text('키 넣기'), findsOneWidget);
   });
+
+  testWidgets('키를 저장하지 못하면 스낵바로 알린다', (tester) async {
+    await pump(tester);
+    settings.failWith = Exception('keystore');
+
+    await tester.tap(find.byKey(const Key('settings-chat-key')));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'sk-ant-xyz1234');
+    await tester.tap(find.byKey(const Key('chat-key-save')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('키를 저장하지 못했어요'), findsOneWidget);
+    expect(find.text('키 넣기'), findsOneWidget);
+  });
+
+  testWidgets('키를 지우지 못해도 스낵바로 알린다', (tester) async {
+    settings.key = 'sk-ant-xyz1234';
+    await pump(tester);
+    settings.failWith = Exception('keystore');
+
+    await tester.tap(find.byKey(const Key('settings-chat-delete')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('키 삭제').last);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('키를 저장하지 못했어요'), findsOneWidget);
+    expect(find.text('…1234'), findsOneWidget);
+  });
 }

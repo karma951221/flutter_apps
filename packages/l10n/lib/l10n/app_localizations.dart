@@ -5876,6 +5876,12 @@ abstract class AppLocalizations {
   /// **'저장'**
   String get walkChatSettingsSave;
 
+  /// 보안 저장소에 키를 저장 · 삭제하지 못했을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'키를 저장하지 못했어요'**
+  String get walkChatSettingsSaveFailed;
+
   /// 채팅 섹션 맨 아래 데이터 전송 안내
   ///
   /// In ko, this message translates to:

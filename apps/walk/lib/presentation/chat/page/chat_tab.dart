@@ -120,7 +120,7 @@ class _ChatBody extends StatelessWidget {
       final l10n = AppLocalizations.of(context);
       final cubit = context.read<ChatCubit>();
       return switch (state.access) {
-        ChatAccess.checking => const SizedBox.shrink(),
+        ChatAccess.checking => const Center(child: CircularProgressIndicator()),
         ChatAccess.noKey => AppPlaceholder(
           icon: Icons.key_outlined,
           message: l10n.walkChatNoKey,
