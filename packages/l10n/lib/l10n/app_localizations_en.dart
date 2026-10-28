@@ -3366,4 +3366,110 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0';
   }
+
+  @override
+  String get walkChatSettings => 'Chat';
+
+  @override
+  String get walkChatSettingsKey => 'Anthropic API key';
+
+  @override
+  String get walkChatSettingsAddKey => 'Add key';
+
+  @override
+  String get walkChatSettingsChange => 'Change';
+
+  @override
+  String get walkChatSettingsDelete => 'Delete key';
+
+  @override
+  String get walkChatSettingsDeleteTitle => 'Delete the API key?';
+
+  @override
+  String get walkChatSettingsDeleteBody =>
+      'The key stored on this phone will be removed. You will need to enter it again to use chat.';
+
+  @override
+  String get walkChatSettingsKeyDialogTitle => 'Enter API key';
+
+  @override
+  String get walkChatSettingsSave => 'Save';
+
+  @override
+  String get walkChatSettingsSaveFailed => 'Couldn\'t save the key';
+
+  @override
+  String get walkChatSettingsNotice =>
+      'Diary, photo, step and wake-up records needed for your question are sent to Anthropic. The key stays in this phone\'s secure storage only.';
+
+  @override
+  String get walkShellTabChat => 'Ask';
+
+  @override
+  String get walkChatNoKey => 'Add your key in Settings';
+
+  @override
+  String get walkChatOpenSettings => 'Open Settings';
+
+  @override
+  String get walkChatConsentNotice =>
+      'Diary, photo, step and wake-up records needed for your question are sent to Anthropic. The key stays in this phone\'s secure storage only.';
+
+  @override
+  String get walkChatConsentAccept => 'Agree and start';
+
+  @override
+  String get walkChatExampleYesterday => 'What did I do yesterday?';
+
+  @override
+  String get walkChatExampleAte => 'What did I eat last week?';
+
+  @override
+  String get walkChatExampleWake => 'What time do I wake up lately?';
+
+  @override
+  String get walkChatEmptyPrompt => 'Ask about your records';
+
+  @override
+  String get walkChatInputHint => 'Type a question';
+
+  @override
+  String get walkChatSend => 'Send';
+
+  @override
+  String get walkChatNewConversation => 'New chat';
+
+  @override
+  String get walkChatSearching => 'Searching your records…';
+
+  @override
+  String get walkChatCitedTitle => 'Records from chat';
+
+  @override
+  String get walkChatFailureNoKey => 'Add your key in Settings';
+
+  @override
+  String get walkChatFailureInvalidKey => 'Check your key';
+
+  @override
+  String get walkChatFailureRateLimited =>
+      'Too many requests. Please ask again in a moment';
+
+  @override
+  String get walkChatFailureOverloaded =>
+      'Claude is busy. Please ask again in a moment';
+
+  @override
+  String get walkChatFailureNetwork =>
+      'The connection dropped. Please ask again';
+
+  @override
+  String get walkChatFailureRefused => 'I can\'t answer this question';
+
+  @override
+  String get walkChatFailureTooManySteps =>
+      'Stopped while searching records. Please narrow your question';
+
+  @override
+  String get walkChatFailureUnknown => 'Couldn\'t get an answer';
 }

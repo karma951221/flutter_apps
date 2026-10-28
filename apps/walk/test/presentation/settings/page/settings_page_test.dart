@@ -13,6 +13,7 @@ import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
+import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/diary/entity/diary_usage.dart';
 import 'package:walk/domain/diary/entity/trash_retention.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
@@ -38,6 +39,7 @@ import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
 
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_device_auth.dart';
+import '../../../support/fake_chat_settings.dart';
 
 class _MockRequester extends Mock implements PermissionRequester {}
 
@@ -108,7 +110,8 @@ void main() {
     getIt
       ..registerSingleton<LockRepository>(lockRepo)
       ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
-      ..registerSingleton<Clock>(clock);
+      ..registerSingleton<Clock>(clock)
+      ..registerSingleton<ChatSettings>(FakeChatSettings());
     diaryLock = DiaryLockCubit(
       lockRepo,
       FakeDeviceAuth(),

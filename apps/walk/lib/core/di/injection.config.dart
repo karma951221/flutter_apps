@@ -13,6 +13,7 @@
 import 'dart:io' as _i497;
 
 import 'package:core/core.dart' as _i494;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:http/http.dart' as _i519;
 import 'package:injectable/injectable.dart' as _i526;
@@ -22,6 +23,8 @@ import 'package:shared_preferences/shared_preferences.dart' as _i460;
 import 'package:uuid/uuid.dart' as _i706;
 
 import '../../data/alarm/alarm_permission_module.dart' as _i343;
+import '../../data/alarm/archive/drift_ring_archive.dart' as _i380;
+import '../../data/alarm/archive/ring_archive_database.dart' as _i869;
 import '../../data/alarm/cached_holiday_calendar.dart' as _i93;
 import '../../data/alarm/channel_alarm_sound_source.dart' as _i793;
 import '../../data/alarm/channel_device_holiday_source.dart' as _i279;
@@ -31,6 +34,9 @@ import '../../data/alarm/channel_ring_log_source.dart' as _i879;
 import '../../data/alarm/holiday_module.dart' as _i183;
 import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
+import '../../data/chat/anthropic_chat_model.dart' as _i645;
+import '../../data/chat/compressed_chat_image_source.dart' as _i957;
+import '../../data/chat/secure_chat_settings.dart' as _i1030;
 import '../../data/commute/geocoding_address_search.dart' as _i667;
 import '../../data/commute/odsay_route_finder.dart' as _i132;
 import '../../data/commute/prefs_place_repository.dart' as _i265;
@@ -53,12 +59,19 @@ import '../../domain/alarm/holiday/holiday_calendar.dart' as _i961;
 import '../../domain/alarm/holiday/holiday_calendar_access.dart' as _i227;
 import '../../domain/alarm/permission/alarm_permissions.dart' as _i933;
 import '../../domain/alarm/repository/alarm_repository.dart' as _i296;
+import '../../domain/alarm/ring_log/ring_archive.dart' as _i361;
 import '../../domain/alarm/ring_log/ring_log_source.dart' as _i353;
 import '../../domain/alarm/scheduler/alarm_scheduler.dart' as _i702;
 import '../../domain/alarm/scheduler/reminder_scheduler.dart' as _i297;
 import '../../domain/alarm/sound/alarm_sound_source.dart' as _i344;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
+import '../../domain/alarm/usecase/ring_archiver.dart' as _i626;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
+import '../../domain/chat/chat_model.dart' as _i1004;
+import '../../domain/chat/chat_settings.dart' as _i111;
+import '../../domain/chat/tool/chat_image_source.dart' as _i858;
+import '../../domain/chat/tool/life_tools.dart' as _i70;
+import '../../domain/chat/usecase/chat_session.dart' as _i502;
 import '../../domain/commute/repository/address_search.dart' as _i63;
 import '../../domain/commute/repository/place_repository.dart' as _i142;
 import '../../domain/commute/repository/route_finder.dart' as _i488;
@@ -108,12 +121,22 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i693.PlaceNamer>(() => registerModule.placeNamer);
     gh.lazySingleton<_i519.Client>(() => registerModule.httpClient);
     gh.lazySingleton<_i546.CommuteApiKeys>(() => registerModule.commuteApiKeys);
+    gh.lazySingleton<_i558.FlutterSecureStorage>(
+      () => registerModule.secureStorage,
+    );
+    gh.lazySingleton<_i869.RingArchiveDatabase>(
+      () => registerModule.ringArchiveDatabase(),
+      dispose: _i291.disposeRingArchiveDatabase,
+    );
     gh.lazySingleton<_i933.AlarmPermissions>(
       () => alarmPermissionModule.alarmPermissions,
     );
     gh.lazySingleton<_i488.MediaPickGuard>(() => _i488.MediaPickGuard());
     gh.lazySingleton<_i494.IdGenerator>(
       () => registerModule.idGenerator(gh<_i706.Uuid>()),
+    );
+    gh.lazySingleton<_i361.RingArchive>(
+      () => _i380.DriftRingArchive(gh<_i869.RingArchiveDatabase>()),
     );
     gh.lazySingleton<_i194.ScreenLockSettings>(
       () => _i952.ChannelScreenLockSettings(),
@@ -133,6 +156,12 @@ extension GetItInjectableX on _i174.GetIt {
       () => const _i553.ChannelReminderScheduler(),
     );
     gh.lazySingleton<_i702.AlarmScheduler>(() => _i238.PackageAlarmScheduler());
+    gh.lazySingleton<_i111.ChatSettings>(
+      () => _i1030.SecureChatSettings(
+        gh<_i558.FlutterSecureStorage>(),
+        gh<_i460.SharedPreferences>(),
+      ),
+    );
     gh.lazySingleton<_i674.MediaProcessor>(() => _i17.PluginMediaProcessor());
     gh.lazySingleton<_i488.RouteFinder>(
       () => _i132.OdsayRouteFinder(
@@ -198,6 +227,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i961.HolidayRefresher>(
       () => holidayModule.holidayRefresher(gh<_i93.CachedHolidayCalendar>()),
     );
+    gh.lazySingleton<_i1004.ChatModel>(
+      () => _i645.AnthropicChatModel(gh<_i519.Client>()),
+    );
     gh.lazySingleton<_i611.DiaryDatabase>(
       () => registerModule.diaryDatabase(gh<_i494.Clock>()),
       dispose: _i291.disposeDiaryDatabase,
@@ -240,6 +272,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.Clock>(),
       ),
     );
+    gh.lazySingleton<_i858.ChatImageSource>(
+      () => _i957.CompressedChatImageSource(gh<_i870.MediaStore>()),
+    );
     gh.lazySingleton<_i122.DiaryRepository>(
       () => _i1049.DriftDiaryRepository(
         gh<_i611.DiaryDatabase>(),
@@ -265,6 +300,30 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i870.MediaStore>(),
         gh<_i693.PlaceSource>(),
         gh<_i300.DiaryPreferences>(),
+        gh<_i494.Clock>(),
+      ),
+    );
+    gh.lazySingleton<_i626.RingArchiver>(
+      () => _i626.RingArchiver(
+        gh<_i353.RingLogSource>(),
+        gh<_i361.RingArchive>(),
+        gh<_i873.AlarmUseCase>(),
+      ),
+    );
+    gh.lazySingleton<_i70.LifeTools>(
+      () => _i70.LifeTools(
+        gh<_i122.DiaryRepository>(),
+        gh<_i204.ActivityRepository>(),
+        gh<_i626.RingArchiver>(),
+        gh<_i361.RingArchive>(),
+        gh<_i858.ChatImageSource>(),
+      ),
+    );
+    gh.lazySingleton<_i502.ChatSession>(
+      () => _i502.ChatSession(
+        gh<_i1004.ChatModel>(),
+        gh<_i70.LifeTools>(),
+        gh<_i111.ChatSettings>(),
         gh<_i494.Clock>(),
       ),
     );

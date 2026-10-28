@@ -115,7 +115,7 @@
 **Interfaces:**
 - Produces:
   ```dart
-  /// [from] ~ [to](양 끝 포함)에 든 기록(휴지통 제외, 모든 스토리), occurredAt 오름차순, 최대 [limit]개.
+  /// [from] ~ [to] 사이(양 끝 포함)에 든 기록(휴지통 제외, 모든 스토리), occurredAt 오름차순, 최대 [limit]개.
   /// [query] 본문 포함 일치(대소문자 무시) · [tag] `TagName.searchKey` 로 다듬은 이름 일치 ·
   /// [place] trim 한 장소 이름 일치 · [storyId] 그 스토리만. null 이면 조건 없음.
   Future<List<DiaryEntry>> searchEntries({

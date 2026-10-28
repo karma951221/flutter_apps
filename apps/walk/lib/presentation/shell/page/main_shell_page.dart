@@ -11,6 +11,7 @@ import '../../../domain/alarm/holiday/holiday_calendar.dart';
 import '../../../domain/alarm/holiday/holiday_calendar_access.dart';
 import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
+import '../../../domain/alarm/usecase/ring_archiver.dart';
 import '../../../domain/alarm/widget/next_alarm_widget.dart';
 import '../../../domain/diary/repository/diary_preferences.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
@@ -21,7 +22,7 @@ import '../../../domain/settings/repository/settings_repository.dart';
 import '../../../domain/walk/usecase/walk_use_case.dart';
 import '../../alarm/cubit/alarm_list_cubit.dart';
 import '../../alarm/page/alarm_list_page.dart';
-import '../../commute/page/commute_tab.dart';
+import '../../chat/page/chat_tab.dart';
 import '../../diary/page/diary_tab.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/media_pick_guard.dart';
@@ -32,7 +33,7 @@ import '../../settings/page/settings_page.dart';
 import '../../walk/page/walk_home_page.dart';
 
 /// 하단 탭 순서. 첫 탭은 [walk] — 원래 한 화면짜리 앱이던 흐름을 지킨다.
-enum ShellTab { alarm, walk, diary, commute, settings }
+enum ShellTab { alarm, walk, diary, chat, settings }
 
 /// 하단 탭 셸. 탭마다 자기 `Scaffold` · `AppBar` 를 둔다.
 ///
@@ -148,6 +149,8 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     await _openFromHomeWidget();
     await awaitBackgroundIdle();
     await _reload(_alarmUseCase.sync);
+    // 네이티브 울림 기록(200줄)을 앱 DB 로 옮긴다. 화면을 막지 않고, 실패해도 다음에 다시 한다.
+    unawaited(getIt<RingArchiver>().archive().catchError((Object _) {}));
   }
 
   Future<void> _reload(Future<void> Function() reschedule) async {
@@ -233,7 +236,10 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
             AlarmListPage(onOpenSettings: () => _select(ShellTab.settings)),
             WalkHomePage(active: _tab == ShellTab.walk),
             DiaryTab(active: _tab == ShellTab.diary),
-            CommuteTab(active: _tab == ShellTab.commute),
+            ChatTab(
+              active: _tab == ShellTab.chat,
+              onOpenSettings: () => _select(ShellTab.settings),
+            ),
             SettingsPage(active: _tab == ShellTab.settings),
           ],
         ),
@@ -260,9 +266,9 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
               label: l10n.walkShellTabDiary,
             ),
             NavigationDestination(
-              icon: const Icon(Icons.directions_subway_outlined),
-              selectedIcon: const Icon(Icons.directions_subway),
-              label: l10n.walkShellTabCommute,
+              icon: const Icon(Icons.chat_bubble_outline),
+              selectedIcon: const Icon(Icons.chat_bubble),
+              label: l10n.walkShellTabChat,
             ),
             NavigationDestination(
               icon: const Icon(Icons.settings_outlined),

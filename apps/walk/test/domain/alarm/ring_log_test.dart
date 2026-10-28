@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
 import 'package:walk/domain/alarm/entity/alarm_trigger.dart';
+import 'package:walk/domain/alarm/entity/archived_ring.dart';
 import 'package:walk/domain/alarm/entity/ring_log_entry.dart';
 import 'package:walk/domain/alarm/ring_log.dart';
 
@@ -11,11 +12,19 @@ void main() {
   final monday7 = DateTime(2026, 10, 5, 7);
   int pid(int alarmId, DateTime at) => packageId(alarmId, triggerIndex(at));
 
-  RingLogEntry entry(int alarmId, DateTime at, RingLogKind kind, {DateTime? occurrence}) =>
-      RingLogEntry(at: at, packageId: pid(alarmId, occurrence ?? at), kind: kind);
+  ArchivedRing entry(
+    int alarmId,
+    DateTime at,
+    RingLogKind kind, {
+    DateTime? occurrence,
+    String? label,
+  }) => ArchivedRing(
+    entry: RingLogEntry(at: at, packageId: pid(alarmId, occurrence ?? at), kind: kind),
+    label: label,
+  );
 
   test('alarmId 는 packageId 에서 나온다', () {
-    expect(entry(7, monday7, RingLogKind.rang).alarmId, 7);
+    expect(entry(7, monday7, RingLogKind.rang).entry.alarmId, 7);
   });
 
   test('한 회차의 울림 · 스누즈 · 다시 울림 · 끔을 한 묶음으로 센다', () {
@@ -35,6 +44,7 @@ void main() {
       RingLogGroup(
         packageId: pid(1, monday7),
         alarm: work,
+        archivedLabel: null,
         at: monday7,
         rangAt: monday7,
         snoozes: 2,
@@ -95,6 +105,25 @@ void main() {
     expect(group.alarmId, 9);
   });
 
+  test('지운 알람의 회차는 archivedLabel 로 라벨을 가진다', () {
+    final group = ringLogGroups([
+      entry(9, monday7, RingLogKind.rang, label: '출근'),
+    ], const []).single;
+
+    expect(group.alarm, isNull);
+    expect(group.archivedLabel, '출근');
+  });
+
+  test('archivedLabel 은 비어 있지 않은 마지막 라벨이다', () {
+    final group = ringLogGroups([
+      entry(9, monday7, RingLogKind.rang, label: '출근'),
+      entry(9, DateTime(2026, 10, 5, 7, 1), RingLogKind.snoozed, label: ''),
+      entry(9, DateTime(2026, 10, 5, 7, 2), RingLogKind.stopped),
+    ], const []).single;
+
+    expect(group.archivedLabel, '출근');
+  });
+
   test('회차(packageId + 날짜)마다 나누고 최근 것이 먼저', () {
     final tuesday7 = DateTime(2026, 10, 6, 7);
     final monday630 = DateTime(2026, 10, 5, 6, 30);
@@ -145,6 +174,7 @@ void main() {
       RingLogGroup(
         packageId: pid(1, sunday2355),
         alarm: late,
+        archivedLabel: null,
         at: sunday2355,
         rangAt: sunday2355,
         snoozes: 1,

@@ -561,6 +561,25 @@ void main() {
     expect(current(tester), 'j3/p3');
     expect(find.text('10월 7일 (수)'), findsOneWidget);
   });
+  testWidgets('고른 기록 소스는 그 기록들만, 연 기록에서 시작한다', (tester) async {
+    await open(
+      tester,
+      source: const ViewerSource.entries(['b1', 'j3'], '대화 속 기록'),
+      entryId: 'b1',
+    );
+
+    expect(current(tester), 'b1/p9');
+    expect(find.text('대화 속 기록'), findsWidgets);
+
+    await wait(tester, const Duration(seconds: 5));
+    expect(current(tester), 'j3/p3');
+
+    // 고르지 않은 기록(j3 다음 조각 · 다른 스토리)으로 넘어가지 않고 닫힌다.
+    await wait(tester, const Duration(seconds: 5));
+    await settleClose(tester);
+    expect(viewerOpen(), isFalse);
+  });
+
   testWidgets('머리의 스토리 이름을 누르면 그 스토리 페이지가 열리고 뷰어는 멈춘다', (tester) async {
     await open(tester);
     expect(current(tester), 'j3/p3');

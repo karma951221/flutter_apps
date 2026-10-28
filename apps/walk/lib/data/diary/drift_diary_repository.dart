@@ -263,6 +263,57 @@ class DriftDiaryRepository implements DiaryRepository {
     return _assemble(rows);
   }
 
+  @override
+  Future<List<DiaryEntry>> searchEntries({
+    required DateTime from,
+    required DateTime to,
+    String? query,
+    String? tag,
+    String? place,
+    String? storyId,
+    int limit = 50,
+  }) async {
+    assert(limit > 0, 'searchEntries limit must be positive');
+    final conditions = <String>[];
+    final args = <Variable>[Variable<DateTime>(from), Variable<DateTime>(to)];
+    if (storyId != null) {
+      conditions.add('AND e.story_id = ?');
+      args.add(Variable.withString(storyId));
+    }
+    if (tag != null) {
+      conditions.add(
+        'AND EXISTS (SELECT 1 FROM entry_tags et '
+        'JOIN tags t ON t.id = et.tag_id '
+        'WHERE et.entry_id = e.id AND t.name = ?)',
+      );
+      args.add(Variable.withString(TagName.searchKey(tag)));
+    }
+    if (place != null) {
+      conditions.add(
+        'AND EXISTS (SELECT 1 FROM places p '
+        'WHERE p.id = e.place_id AND p.name = ?)',
+      );
+      args.add(Variable.withString(place.trim()));
+    }
+    if (query != null) {
+      conditions.add(r"AND e.body LIKE ? ESCAPE '\'");
+      args.add(Variable.withString('%${LikePattern.escape(query)}%'));
+    }
+    args.add(Variable.withInt(limit));
+    final rows = await _db
+        .customSelect(
+          'SELECT e.* FROM entries e '
+          'WHERE e.deleted_at IS NULL '
+          'AND julianday(e.occurred_at) BETWEEN julianday(?) AND julianday(?) '
+          '${conditions.join(' ')} '
+          'ORDER BY julianday(e.occurred_at) ASC, '
+          'julianday(e.created_at) ASC LIMIT ?',
+          variables: args,
+        )
+        .get();
+    return _assemble([for (final r in rows) _db.entries.map(r.data)]);
+  }
+
   // ---------------------------------------------------------------- 휴지통
 
   @override

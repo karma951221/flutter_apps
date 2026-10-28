@@ -5821,6 +5821,204 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{hours}시간 전'**
   String walkDiaryHoursAgo(int hours);
+
+  /// 설정 탭 채팅 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'채팅'**
+  String get walkChatSettings;
+
+  /// API 키 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'Anthropic API 키'**
+  String get walkChatSettingsKey;
+
+  /// 키가 없을 때 행 오른쪽 문구
+  ///
+  /// In ko, this message translates to:
+  /// **'키 넣기'**
+  String get walkChatSettingsAddKey;
+
+  /// 키가 있을 때 행 부제(눌러서 바꾸기)
+  ///
+  /// In ko, this message translates to:
+  /// **'바꾸기'**
+  String get walkChatSettingsChange;
+
+  /// 키 삭제 행 · 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'키 삭제'**
+  String get walkChatSettingsDelete;
+
+  /// 키 삭제 확인 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'API 키를 지울까요?'**
+  String get walkChatSettingsDeleteTitle;
+
+  /// 키 삭제 확인 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'이 폰에 저장된 키가 지워져요. 다시 쓰려면 키를 새로 넣어야 해요.'**
+  String get walkChatSettingsDeleteBody;
+
+  /// 키 입력 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'API 키 넣기'**
+  String get walkChatSettingsKeyDialogTitle;
+
+  /// 키 입력 다이얼로그 저장 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get walkChatSettingsSave;
+
+  /// 보안 저장소에 키를 저장 · 삭제하지 못했을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'키를 저장하지 못했어요'**
+  String get walkChatSettingsSaveFailed;
+
+  /// 채팅 섹션 맨 아래 데이터 전송 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'질문에 필요한 일기 · 사진 · 걸음 · 기상 기록이 Anthropic 으로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.'**
+  String get walkChatSettingsNotice;
+
+  /// 하단 탭: 내 기록에 묻는 채팅
+  ///
+  /// In ko, this message translates to:
+  /// **'물어보기'**
+  String get walkShellTabChat;
+
+  /// 채팅 탭: 키가 없을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'설정에서 키를 넣어 주세요'**
+  String get walkChatNoKey;
+
+  /// 채팅 탭: 키가 없을 때 설정으로 가는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'설정 열기'**
+  String get walkChatOpenSettings;
+
+  /// 채팅 탭: 처음 쓰기 전 데이터 전송 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'질문에 필요한 일기 · 사진 · 걸음 · 기상 기록이 Anthropic 으로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.'**
+  String get walkChatConsentNotice;
+
+  /// 채팅 탭: 전송 안내 동의 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'동의하고 시작'**
+  String get walkChatConsentAccept;
+
+  /// 채팅 탭: 예시 질문 칩 1
+  ///
+  /// In ko, this message translates to:
+  /// **'어제 뭐 했어?'**
+  String get walkChatExampleYesterday;
+
+  /// 채팅 탭: 예시 질문 칩 2
+  ///
+  /// In ko, this message translates to:
+  /// **'지난주에 뭐 먹었지?'**
+  String get walkChatExampleAte;
+
+  /// 채팅 탭: 예시 질문 칩 3
+  ///
+  /// In ko, this message translates to:
+  /// **'요즘 몇 시에 일어나?'**
+  String get walkChatExampleWake;
+
+  /// 채팅 탭: 대화가 비었을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'내 기록에 대해 물어보세요'**
+  String get walkChatEmptyPrompt;
+
+  /// 채팅 탭: 입력칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'질문 입력'**
+  String get walkChatInputHint;
+
+  /// 채팅 탭: 전송 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'보내기'**
+  String get walkChatSend;
+
+  /// 채팅 탭: 앱바 새 대화 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'새 대화'**
+  String get walkChatNewConversation;
+
+  /// 채팅 탭: 도구 실행 중 한 줄
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 찾는 중…'**
+  String get walkChatSearching;
+
+  /// 인용 칩으로 연 스토리 뷰어 머리 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'대화 속 기록'**
+  String get walkChatCitedTitle;
+
+  /// 채팅 실패: 키 없음
+  ///
+  /// In ko, this message translates to:
+  /// **'설정에서 키를 넣어 주세요'**
+  String get walkChatFailureNoKey;
+
+  /// 채팅 실패: 키가 잘못됨
+  ///
+  /// In ko, this message translates to:
+  /// **'키를 확인해 주세요'**
+  String get walkChatFailureInvalidKey;
+
+  /// 채팅 실패: 요청 한도
+  ///
+  /// In ko, this message translates to:
+  /// **'요청이 많아요. 잠시 뒤 다시 물어봐 주세요'**
+  String get walkChatFailureRateLimited;
+
+  /// 채팅 실패: 과부하
+  ///
+  /// In ko, this message translates to:
+  /// **'Claude 가 바빠요. 잠시 뒤 다시 물어봐 주세요'**
+  String get walkChatFailureOverloaded;
+
+  /// 채팅 실패: 네트워크
+  ///
+  /// In ko, this message translates to:
+  /// **'연결이 끊겼어요. 다시 물어봐 주세요'**
+  String get walkChatFailureNetwork;
+
+  /// 채팅 실패: 답변 거절
+  ///
+  /// In ko, this message translates to:
+  /// **'이 질문에는 답할 수 없어요'**
+  String get walkChatFailureRefused;
+
+  /// 채팅 실패: 도구 단계 초과
+  ///
+  /// In ko, this message translates to:
+  /// **'기록을 찾다가 멈췄어요. 질문을 좁혀 주세요'**
+  String get walkChatFailureTooManySteps;
+
+  /// 채팅 실패: 그 밖
+  ///
+  /// In ko, this message translates to:
+  /// **'답을 받지 못했어요'**
+  String get walkChatFailureUnknown;
 }
 
 class _AppLocalizationsDelegate

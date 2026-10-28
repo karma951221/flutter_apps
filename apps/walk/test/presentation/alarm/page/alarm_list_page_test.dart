@@ -11,8 +11,9 @@ import 'package:walk/domain/alarm/entity/alarm_pause.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
-import 'package:walk/domain/alarm/ring_log/ring_log_source.dart';
+import 'package:walk/domain/alarm/ring_log/ring_archive.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
+import 'package:walk/domain/alarm/usecase/ring_archiver.dart';
 import 'package:walk/presentation/alarm/cubit/alarm_list_cubit.dart';
 import 'package:walk/presentation/alarm/page/alarm_edit_page.dart';
 import 'package:walk/presentation/alarm/page/alarm_history_page.dart';
@@ -27,7 +28,9 @@ class _MockRequester extends Mock implements PermissionRequester {}
 
 class _MockCalendarAccess extends Mock implements HolidayCalendarAccess {}
 
-class _MockRingLog extends Mock implements RingLogSource {}
+class _MockRingArchive extends Mock implements RingArchive {}
+
+class _MockRingArchiver extends Mock implements RingArchiver {}
 
 /// [days] 의 날짜(자정)만 공휴일.
 class _FakeHolidays implements HolidayCalendar {
@@ -533,9 +536,18 @@ void main() {
 
   testWidgets('앱바 [울림 기록] 은 기록 화면을 연다', (tester) async {
     when(() => useCase.list()).thenAnswer((_) async => [weekday]);
-    final ringLog = _MockRingLog();
-    when(() => ringLog.read(since: any(named: 'since'))).thenAnswer((_) async => []);
-    getIt.registerSingleton<RingLogSource>(ringLog);
+    final archive = _MockRingArchive();
+    final archiver = _MockRingArchiver();
+    when(() => archiver.archive()).thenAnswer((_) async {});
+    when(
+      () => archive.read(
+        from: any(named: 'from'),
+        to: any(named: 'to'),
+      ),
+    ).thenAnswer((_) async => []);
+    getIt
+      ..registerSingleton<RingArchiver>(archiver)
+      ..registerSingleton<RingArchive>(archive);
     await pump(tester);
 
     await tester.tap(find.byTooltip('울림 기록'));

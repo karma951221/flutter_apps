@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$RingLogGroup {
 
- int get packageId; Alarm? get alarm; DateTime get at; DateTime? get rangAt; int get snoozes; RingLogKind? get end; DateTime? get endedAt; bool get skipped;
+ int get packageId; Alarm? get alarm; String? get archivedLabel; DateTime get at; DateTime? get rangAt; int get snoozes; RingLogKind? get end; DateTime? get endedAt; bool get skipped;
 /// Create a copy of RingLogGroup
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $RingLogGroupCopyWith<RingLogGroup> get copyWith => _$RingLogGroupCopyWithImpl<R
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RingLogGroup&&(identical(other.packageId, packageId) || other.packageId == packageId)&&(identical(other.alarm, alarm) || other.alarm == alarm)&&(identical(other.at, at) || other.at == at)&&(identical(other.rangAt, rangAt) || other.rangAt == rangAt)&&(identical(other.snoozes, snoozes) || other.snoozes == snoozes)&&(identical(other.end, end) || other.end == end)&&(identical(other.endedAt, endedAt) || other.endedAt == endedAt)&&(identical(other.skipped, skipped) || other.skipped == skipped));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RingLogGroup&&(identical(other.packageId, packageId) || other.packageId == packageId)&&(identical(other.alarm, alarm) || other.alarm == alarm)&&(identical(other.archivedLabel, archivedLabel) || other.archivedLabel == archivedLabel)&&(identical(other.at, at) || other.at == at)&&(identical(other.rangAt, rangAt) || other.rangAt == rangAt)&&(identical(other.snoozes, snoozes) || other.snoozes == snoozes)&&(identical(other.end, end) || other.end == end)&&(identical(other.endedAt, endedAt) || other.endedAt == endedAt)&&(identical(other.skipped, skipped) || other.skipped == skipped));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,packageId,alarm,at,rangAt,snoozes,end,endedAt,skipped);
+int get hashCode => Object.hash(runtimeType,packageId,alarm,archivedLabel,at,rangAt,snoozes,end,endedAt,skipped);
 
 @override
 String toString() {
-  return 'RingLogGroup(packageId: $packageId, alarm: $alarm, at: $at, rangAt: $rangAt, snoozes: $snoozes, end: $end, endedAt: $endedAt, skipped: $skipped)';
+  return 'RingLogGroup(packageId: $packageId, alarm: $alarm, archivedLabel: $archivedLabel, at: $at, rangAt: $rangAt, snoozes: $snoozes, end: $end, endedAt: $endedAt, skipped: $skipped)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $RingLogGroupCopyWith<$Res>  {
   factory $RingLogGroupCopyWith(RingLogGroup value, $Res Function(RingLogGroup) _then) = _$RingLogGroupCopyWithImpl;
 @useResult
 $Res call({
- int packageId, Alarm? alarm, DateTime at, DateTime? rangAt, int snoozes, RingLogKind? end, DateTime? endedAt, bool skipped
+ int packageId, Alarm? alarm, String? archivedLabel, DateTime at, DateTime? rangAt, int snoozes, RingLogKind? end, DateTime? endedAt, bool skipped
 });
 
 
@@ -62,11 +62,12 @@ class _$RingLogGroupCopyWithImpl<$Res>
 
 /// Create a copy of RingLogGroup
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? packageId = null,Object? alarm = freezed,Object? at = null,Object? rangAt = freezed,Object? snoozes = null,Object? end = freezed,Object? endedAt = freezed,Object? skipped = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? packageId = null,Object? alarm = freezed,Object? archivedLabel = freezed,Object? at = null,Object? rangAt = freezed,Object? snoozes = null,Object? end = freezed,Object? endedAt = freezed,Object? skipped = null,}) {
   return _then(RingLogGroup(
 packageId: null == packageId ? _self.packageId : packageId // ignore: cast_nullable_to_non_nullable
 as int,alarm: freezed == alarm ? _self.alarm : alarm // ignore: cast_nullable_to_non_nullable
-as Alarm?,at: null == at ? _self.at : at // ignore: cast_nullable_to_non_nullable
+as Alarm?,archivedLabel: freezed == archivedLabel ? _self.archivedLabel : archivedLabel // ignore: cast_nullable_to_non_nullable
+as String?,at: null == at ? _self.at : at // ignore: cast_nullable_to_non_nullable
 as DateTime,rangAt: freezed == rangAt ? _self.rangAt : rangAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,snoozes: null == snoozes ? _self.snoozes : snoozes // ignore: cast_nullable_to_non_nullable
 as int,end: freezed == end ? _self.end : end // ignore: cast_nullable_to_non_nullable
