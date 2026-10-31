@@ -129,6 +129,58 @@
 - **기상 기록 보관**: 네이티브 `RingLog`(최근 200줄)는 오래 못 가므로 앱 시작 · 복귀 때, 그리고 `wake_records` 가 돌 때
   drift 의 `ring_archive` 로 복사해 둔다. 알람 기록 화면도 이 보관소(최근 30일)를 읽고, 지워진 알람은 보관된 라벨로 보인다.
 
+#### Claude 와 주고받는 형식
+
+미리 만들어 둔 위키는 없다. 기록을 통째로 보내지 않고, 질문마다 Claude 가 도구로 **필요한 만큼만** 꺼내 읽는다.
+"지난주에 몇 시에 일어났어?" 한 번이 오가는 모습:
+
+1. **앱 → Claude** — Messages API 요청 하나. 이때 기록은 하나도 실리지 않는다.
+   ```json
+   { "model": "claude-opus-5-5",
+     "system": "너는 사용자의 개인 기록 앱 Life Tool 안의 도우미다. 오늘은 …",
+     "tools": [ { "name": "wake_records", "description": "…", "input_schema": { … } }, …5개 ],
+     "messages": [ { "role": "user", "content": "지난주에 몇 시에 일어났어?" } ] }
+   ```
+2. **Claude → 앱** — 답 대신 도구 호출을 돌려준다(`stop_reason: "tool_use"`).
+   ```json
+   { "type": "tool_use", "name": "wake_records", "input": { "from": "2026-10-26", "to": "2026-11-01" } }
+   ```
+3. **앱(폰 안)** — `LifeTools` 가 저장소를 읽어 JSON 텍스트를 만들고 `tool_result` 로 다음 요청에 붙인다.
+   ```json
+   { "rings": [ { "date": "2026-10-27", "alarm": "출근", "rang_at": "07:00", "ended_at": "07:12",
+                  "end": "stopped", "snoozes": 2, "skipped": false } ] }
+   ```
+   Claude 는 한 질문에 도구를 여러 번(최대 8라운드) 부를 수 있다 — 예: 일기를 찾고 그 사진을 본다.
+4. **Claude → 앱(답)** — 마크다운 없는 한국어 평문이 SSE 로 흘러와 말풍선에 그대로 보인다. 답 아래 **근거 칩은
+   Claude 의 문장이 아니라 3단계에서 앱이 돌려준 일기 id 로** 만든다(그래서 칩은 항상 실제 기록을 가리킨다).
+
+도구별로 Claude 에게 건네는 것(날짜는 `YYYY-MM-DD`, 기간은 양 끝 포함, 최대 366일):
+
+| 도구 | 읽는 곳 | 돌려주는 JSON |
+|---|---|---|
+| `search_diary` | 일기 DB `searchEntries` | 기록마다 `id` · `at` · `story`(제목) · `place` · `tags` · `text` · `photos` · `videos`, 최대 50개 + `truncated` |
+| `view_entry_photos` | 일기 미디어 파일 | `{entry_id, shown, total}` + 사진 최대 4장(1024px JPEG, base64 이미지 블록. 영상은 썸네일) |
+| `list_diary_index` | 일기 DB | 스토리(`id` · `title` · 기간 · 기록 수), 상위 30개 태그 · 장소와 개수 |
+| `daily_steps` | Health Connect | `{"days":[{"date","steps"}]}` — 하루 합계만 |
+| `wake_records` | `ring_archive` | 회차별 `date` · `alarm`(라벨) · `rang_at` · `ended_at` · `end` · `snoozes` · `skipped` |
+
+잘못된 날짜 · 권한 없음 · 사진 한도 같은 실패는 `is_error` 결과(`{"error":"invalid_range"}` 등)로 돌려줘
+Claude 가 지어내지 않고 그렇다고 말하게 한다.
+
+#### 규약(시스템 프롬프트 · 도구 설명)
+
+Claude 에게 주는 지시는 파일이 아니라 코드에 있다 — 고칠 때는 이 두 곳이 기준이다.
+
+- **시스템 프롬프트** — [chat_session.dart](../lib/domain/chat/usecase/chat_session.dart) `_systemPrompt`.
+  CLAUDE.md 에 해당한다: 오늘 날짜 · 시간대, "찾은 기록에 근거해서만 답하고 없으면 '기록에서 찾지 못했어요'",
+  "지난주 · 어제를 날짜로 바꿔 도구에 넘긴다", "한국어 · 마크다운 없는 짧은 평문".
+- **도구 설명** — [life_tools.dart](../lib/domain/chat/tool/life_tools.dart) `definitions` 의 `description` · `input_schema`.
+  Claude 는 이걸 읽고 언제 어떤 도구를 쓸지 정하므로 규약의 나머지 절반이다.
+
+따로 규약 파일이 필요해지는 때(아직 안 함): 사용자가 고치는 **'나에 대한 메모'**("출근 알람 라벨은 '출근'",
+"'동네 카페'는 집 앞 가게")를 설정에 두고 시스템 프롬프트 뒤에 붙일 때, 그리고 Claude 가 요약 페이지를 쓰고 고치는
+**LLM 위키**로 넘어갈 때(페이지 구조 · 만들기 · 합치기 규칙을 정한 문서가 필요하다).
+
 ## 완료 조건
 
 걷기
