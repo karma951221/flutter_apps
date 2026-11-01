@@ -1074,6 +1074,22 @@ void main() {
       expect(await _completedSoon(client.abortTrigger), isFalse);
     });
 
+    test('상태 줄이 응답 대기 시간 안에 오지 않으면 요청을 끊고 network', () async {
+      final trace = RecordingChatTrace();
+      final client = _HangingClient();
+      final future = AnthropicChatModel.withTimeouts(
+        client,
+        trace,
+        responseTimeout: const Duration(milliseconds: 20),
+      ).stream(request()).toList();
+
+      await expectLater(future, isNetwork);
+
+      expect(await _completedSoon(client.abortTrigger), isTrue);
+      // 사용자 취소가 아니다 — abort 표시는 찍지 않는다.
+      expect(trace.labels, isNot(contains(ChatTraceMark.abort)));
+    });
+
     test('취소하면 trace 에 abort 를 찍는다', () async {
       final trace = RecordingChatTrace();
       final client = _HangingClient();

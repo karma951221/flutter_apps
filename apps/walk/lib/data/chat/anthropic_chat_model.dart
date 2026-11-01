@@ -73,7 +73,7 @@ class AnthropicChatModel implements ChatModel {
     StreamSubscription<ModelEvent>? inner;
     late final StreamController<ModelEvent> out;
     out = StreamController<ModelEvent>(
-      onListen: () => inner = _run(request, abort.future).listen(
+      onListen: () => inner = _run(request, abort).listen(
         (e) {
           if (!cancelled) out.add(e);
         },
@@ -101,10 +101,9 @@ class AnthropicChatModel implements ChatModel {
     return out.stream;
   }
 
-  Stream<ModelEvent> _run(
-    ModelRequest request,
-    Future<void> abortTrigger,
-  ) async* {
+  /// [abort] 는 [stream] 의 것. 구독 취소 말고 상태 줄 시간 초과에서도 끝낸다.
+  Stream<ModelEvent> _run(ModelRequest request, Completer<void> abort) async* {
+    final abortTrigger = abort.future;
     try {
       if (_trace.enabled) {
         _trace.mark(ChatTraceMark.req, {
@@ -113,14 +112,23 @@ class AnthropicChatModel implements ChatModel {
           'fast': request.fastMode,
         });
       }
-      final response = await abortableSend(
-        _client,
-        method: 'POST',
-        url: _endpoint,
-        headers: _headers(request),
-        body: _body(request),
-        abortTrigger: abortTrigger,
-      ).timeout(responseTimeout);
+      final response =
+          await abortableSend(
+            _client,
+            method: 'POST',
+            url: _endpoint,
+            headers: _headers(request),
+            body: _body(request),
+            abortTrigger: abortTrigger,
+          ).timeout(
+            responseTimeout,
+            onTimeout: () {
+              // 버린 요청이 뒤에서 계속 돌지 않게 끊는다. 사용자 취소가 아니므로
+              // trace abort 는 찍지 않는다(시간 초과는 network 오류로 드러난다).
+              if (!abort.isCompleted) abort.complete();
+              throw TimeoutException('response', responseTimeout);
+            },
+          );
       if (_trace.enabled) _trace.mark(ChatTraceMark.head);
       final status = response.statusCode;
       if (status < 200 || status >= 300) {
