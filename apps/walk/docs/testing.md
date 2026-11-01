@@ -278,7 +278,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 |---|---|
 | 기상 기록 보관 | `data/alarm/archive/drift_ring_archive_test` · `domain/alarm/usecase/ring_archiver_test` · `domain/alarm/ring_log_test` · 알람 기록 `cubit` / `page` 테스트(보관소 읽기 · 지워진 알람 라벨) |
 | 일기 기간 검색 | `data/diary/drift_diary_repository_range_search_test` |
-| 키 · 동의 설정 | `data/chat/secure_chat_settings_test`(옛 키 이전 · 읽기 실패 정리 · 쓰기 순서(보안 저장소 먼저) · prefs 쓰기 실패면 상태 지움 · 저장된 키가 다르면 상태 안 씀) · `test/support/fake_chat_settings`(지난 키에 대한 상태 기록은 버림) · `presentation/settings/cubit/chat_settings_cubit_test` · `widget/chat_settings_section_test`(읽는 중에는 제목만 있는 중립 행) |
+| 키 · 동의 설정 | `data/chat/secure_chat_settings_test`(옛 키 이전 · 읽기 실패 정리 · 쓰기 순서(보안 저장소 먼저) · prefs 쓰기 실패면 벤더 · 상태 · 고른 모델 지움(다음 읽기가 키 접두사로 벤더를 다시 정함) · 저장된 키가 다르면 상태 안 씀) · `test/support/fake_chat_settings`(지난 키에 대한 상태 기록은 버림) · `presentation/settings/cubit/chat_settings_cubit_test`(쓸 모델이 없는 목록은 adopt 하지 않고 강제 갱신) · `widget/chat_settings_section_test`(읽는 중에는 제목만 있는 중립 행) |
 | 키 마스킹 · 연결 | `domain/chat/api_key_mask_test`(접두사 표 · 알 수 없는 접두사는 4글자까지) · `domain/chat/chat_connection_test` |
 | 키 확인 | `domain/chat/usecase/chat_key_verifier_test`(10초 상한 · 예외 → unreachable · 확인 전 재확인 · 키가 바뀌면 상태 안 씀) |
 | 키 대화상자 · 연결 행 | `presentation/settings/widget/chat_key_dialog_test`(치는 중 접두사 안내 · 확인 → 요금 경고 → 저장 · 쓰는 동안 잠금) · `chat_settings_section_test`(상태별 연결 행) · `page/chat_settings_page_test` |
@@ -290,12 +290,12 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | 세션 · cubit | `domain/chat/usecase/chat_session_test`(사용량 기록 · 멈춤 (a)~(f)) · `presentation/chat/cubit/chat_cubit_test`(멈춤 · 질문 되돌림 · ready 면 확인 전 키 재확인 · `recheck: false` 면 안 함) |
 | 입력 · 말풍선 | `presentation/chat/widget/chat_input_test`([■ 멈춤] 전환) · `chat_bubble_view_test`('멈춤' 표시 · 실패 말풍선 [설정 열기]) · `chat_failure_text_test`(크레딧 부족 · 모델 없음 문구 · 빈 문구 없음) |
 | 화면 · 셸 | `presentation/chat/page/chat_tab_test`(⋮ 는 잠긴 동안 앱 설정만, 풀리면 물어보기 설정 · 앱 설정 · 위에 얹힌 물어보기 설정에서 키를 넣고 돌아오면 `didPopNext` 로 키를 다시 읽음 · 키 확인 중 로딩 · 키 없으면 설정 버튼 · 실패 말풍선 [설정 열기] · 보이지 않는 탭은 돌아와도 다시 읽지 않고 앱 시작에 키 확인도 안 함, 보이게 되면 함) · `presentation/shell/page/main_shell_page_test`(탭 구성 · 잠금 · 물어보기 [설정 열기]로 연 연결 행 glow · ⋮ 로 열면 glow 없음 · 알람 권한 배너 → 거부된 알림 권한 행 glow) |
-| 모델 규칙 · 선택 | `domain/chat/chat_model_rules_test`(채팅용 거르기 · 최신순 · 추천 · 이미지 · effort · 빠른 출력 표 주입) · `domain/chat/usecase/chat_model_choice_test`(추천을 따라감 · 고른 모델 · 사라진 모델 알림 · 하루 1회 갱신 · 확인 전 24시간 무시 · 빈 목록은 `fetchedAt` 안 찍음) · `data/chat/prefs_chat_model_catalog_test`(벤더별 목록 · `chat.models.vendor` · `noImages` 가 갱신에 안 지워짐) · `data/chat/chat_model_registry_test`(벤더 → 어댑터 · 목록 받기) |
-| GPT 어댑터 | `data/chat/openai_chat_model_test`(`store: false` · 추론 항목 왕복 · 도구 호출 · 사진(뒤따르는 user 입력 / 배열) · 오류 `code` 매핑 · 취소 · 잘린 응답 정리 · 목록) · `data/chat/vendor_error_test`(벤더 오류 매핑) |
-| Claude 어댑터 추가 | `anthropic_chat_model_test`(목록 페이지 넘기기 · effort · 빠른 출력 상수 · 다른 모델 턴을 parts 로 다시 만들기 · 실제 모델 id) |
+| 모델 규칙 · 선택 | `domain/chat/chat_model_rules_test`(채팅용 거르기 · 최신순 · 추천 · 이미지 · effort(5.x · 4.6 이상 · Opus 4.5, 날짜 붙은 id) · fallbacks(Fable 5.1 · Opus 5 / 5.5 · Sonnet 5.5) · 빠른 출력 표 주입) · `domain/chat/usecase/chat_model_choice_test`(추천을 따라감 · 고른 모델 · 사라진 모델 알림 · 하루 1회 갱신 · 확인 전 24시간 무시 · 빈 목록은 `fetchedAt` 안 찍음(refresh · adopt)) · `data/chat/prefs_chat_model_catalog_test`(벤더별 목록 · `chat.models.vendor` · `noImages` 가 갱신에 안 지워짐) · `data/chat/chat_model_registry_test`(벤더 → 어댑터 · 목록 받기) |
+| GPT 어댑터 | `data/chat/openai_chat_model_test`(`store: false` · 추론 항목 왕복 · 도구 호출 · 사진(뒤따르는 user 입력 / 배열) · 오류 `code` 매핑 · 취소 · 잘린 응답 정리 · 목록) · `data/chat/vendor_error_test`(오류 본문에서 `type` · `code` 만 읽기 · 크기 · 시간 상한 · abort — 종류 매핑은 두 어댑터 테스트) |
+| Claude 어댑터 추가 | `anthropic_chat_model_test`(목록 페이지 넘기기 · effort · fallbacks · beta 헤더는 받는 모델에만(옛 모델엔 헤더 없음) · 빠른 출력 상수 · 다른 모델 턴을 parts 로 다시 만들기 · 실제 모델 id) |
 | 세션 — 모델 | `chat_session_test`(고른 모델 · 빠른 출력 · 사진 못 보는 모델에서 사진 빼기 · 이미지 거절 → 기록 후 한 번 재전송 · 접기는 벤더가 바뀔 때만 · 모델 바뀜 알림) |
-| 모델 칩 · 시트 | `presentation/chat/widget/model_chip_test` · `model_picker_sheet_test`(NEW · 추천 · 빠른 출력 스위치와 요금 안내) · `presentation/chat/cubit/model_picker_cubit_test` · `chat_tab_test`(목록 없음 · 사라진 모델 알림) |
-| 벤더 고르기 · 동의 | `presentation/settings/widget/vendor_picker_sheet_test` · `chat_key_dialog_test`(벤더 바꾸기 · GPT 힌트) · `chat_settings_section_test` · `presentation/chat/widget/chat_consent_view_test`(벤더별 문구 · 이어가는 대화 한 줄) · `chat_cubit_test`(벤더별 전송 동의) |
+| 모델 칩 · 시트 | `presentation/chat/widget/model_chip_test` · `model_picker_sheet_test`(NEW · 추천 · 빠른 출력 스위치와 요금 안내) · `presentation/chat/cubit/model_picker_cubit_test` · `chat_tab_test`(목록 없음 · 사라진 모델 알림) · `chat_cubit_test`(보이지 않게 시작한 뒤 처음 받는 동안 checking → ready / noModels · `modelReplaced` 면 칩 알림을 지워 말풍선만) |
+| 벤더 고르기 · 동의 | `presentation/settings/widget/vendor_picker_sheet_test` · `chat_key_dialog_test`(벤더 바꾸기 · 확인 못 하고 바꾸면 `switchedUnverified` · GPT 힌트) · `chat_settings_section_test`(확인 못 한 바꾸기 스낵바) · `presentation/chat/widget/chat_consent_view_test`(벤더별 문구 · 이어가는 대화 한 줄) · `chat_cubit_test`(벤더별 전송 동의) |
 | 대화 기록 — 도메인 · 저장소 | `domain/chat/entity/conversation_test`(제목 만들기 30자 · 공백 접기 · 말줄임 · toString 에 글 없음) · `data/chat/database/chat_database_test`(스키마 v1 · TEXT 날짜 · 외래 키 켜짐) · `drift_chat_history_repository_test`(목록 순서 · 턴 수 · appendTurn 롤백 · 턴 지우기 · 삭제 cascade · `deleteOlderThan` · `watchExists`, `deleteAll` · `deleteOlderThan` 로 지워져도 false) |
 | 사용량 기록 | `data/chat/database/drift_chat_usage_log_test`(요청마다 한 행 · 임시는 숫자만 · 월별 합 · 모델별 · 13개월 정리 · `fast_mode`) · `domain/chat/chat_usage_log_test` |
 | 보관 기간 · 정리 | `data/chat/prefs_chat_history_settings_test` · `domain/chat/usecase/chat_history_pruner_test`(기간 지난 대화 삭제 · 열린 대화 건너뜀 · 사용량 13개월 · 줄 세우기 · 설정 읽기가 던져도 다음 호출은 돈다) |
@@ -310,7 +310,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 ## 테스트가 없는 것
 
 물어보기: 실제 Messages API 호출(네트워크 · 키 · 서버 fallback) · 실제 사진을 모델에 보내기 · `RingLog` 네이티브가 채우는 실제 기록은
-테스트하지 않고 아래 [물어보기 기기 시나리오](#물어보기--기기-시나리오--대기)로 본다.
+테스트하지 않고 아래 [물어보기 기기 시나리오](#물어보기-기기-시나리오--대기)로 본다.
 
 걷기: 당겨서 새로고침 · 이전 기간 넘기기(페이지 수준) · 업데이트 필요 화면 · 기간 읽기 실패 ·
 월간 차트의 기간 전환. 코드 검토로는 맞지만 테스트는 없다.

@@ -579,24 +579,26 @@ Health Connect 에 넣었다(저장소 밖). 시나리오 결과는 [테스트](
 
 - **G3 가 기록 계획의 접기를 좁혔다.** 기록 1단계(`49d77cd5`/`9f439db9`)는 target(모델 포함)이 바뀌면 글로 접었다. 이 계획의 Task 4 가 벤더 바뀔 때만 접도록 바꾸고, 같은 벤더 다른 모델 턴은 어댑터가 parts 로 다시 만든다. H3 가 실제로 확인한다.
 - **다시 확인(recheck)은 `ChatModelChoice.refresh` 로 옮겼다.** `ChatKeyVerifier.recheckIfUnverified` 는 지웠고, 물어보기 탭이 열릴 때마다 목록을 받지 않고(매번 네트워크 호출은 회귀) 갱신 규칙을 따른다(`047b18d3`).
-- **필터링 뒤 빈 목록이면 `fetchedAt` 을 찍지 않는다.** 받은 목록이 비었는데 시각을 찍으면 하루 동안 다시 받지 않는다. `refresh()` 는 `connection()` 을 먼저 기다려 옛 prefs 도 읽는다.
+- **필터링 뒤 빈 목록이면 `fetchedAt` 을 찍지 않는다** — `refresh()` 와 키 저장 직후 `adopt()` 둘 다. 받은 목록이 비었는데 시각을 찍으면 하루 동안 다시 받지 않는다. `adopt` 가 넣지 않으면(false) 설정 connect 는 강제 갱신으로 넘어간다. `refresh()` 는 `connection()` 을 먼저 기다려 옛 prefs 도 읽는다.
+- **effort · fallbacks 는 받는 모델에만**(최종 리뷰): `output_config.effort` 는 5.x 이상 · 4.6 이상 · Opus 4.5 만(A3). `fallbacks: "default"` + server-side-fallback beta 는 문서에 적힌 Fable 5.1 · Opus 5 / 5.5 · Sonnet 5.5(과 그 뒤)만 — 규칙 `supportsFallbacksOf` 는 effort 옆(`chat_model_rules.dart`). 실을 beta 가 없으면 `anthropic-beta` 헤더를 보내지 않는다.
+- **최종 리뷰에서 고친 것**: 처음 목록을 받는 동안 채팅 탭은 확인 중("목록을 받지 못했어요"가 먼저 보이지 않음) · `modelReplaced` 는 말풍선만(칩 알림을 지움) · 키 저장 뒤 prefs 쓰기 실패면 벤더 · 고른 모델도 지워 키 접두사로 다시 정함 · 확인 못 하고 벤더를 바꾸면 "(으)로 바꿨어요. 키는 아직 확인하지 못했어요" 스낵바.
 - **O1 판정: `store: false` 여도 출력 항목(reasoning · function_call)을 id 째 그대로 되돌린다.** 문서화된 stateless 패턴. 실제 키 확인 대기.
 - **두 어댑터가 취소 흐름을 공유한다**(`656fe308`): `abortableStream` · `untilAbort` 한 곳. 잘린 응답(`response.incomplete` · 끊김)의 이어진 reasoning · function_call 을 정리해 다음 요청에 되돌리지 않는다.
 - `AnthropicTurnState.model` 은 요청한 id 가 아니라 `message_start` 의 실제 모델로 고쳤다(G3 가 이 값에 기댄다).
 
 ### 구현 전 확인
 
-모두 live 벤더 문서 · 실제 키가 필요한 항목이라 이 구현에서는 확인하지 못했다. 어느 것도 단위 테스트를 막지 않게 설계했고, 확인되면 아래 "넣을 곳"의 값만 바꾼다.
+A1~A4 는 최종 리뷰(2026-11-02)에서 Anthropic 문서로 확인했다 — 실제 키 · 기기 확인은 남았다. O · X 는 live 벤더 문서 · 실제 키가 필요해 아직 확인하지 못했다. 어느 것도 단위 테스트를 막지 않게 설계했고, 확인되면 아래 "넣을 곳"의 값만 바꾼다.
 
 | # | 확인할 것 | 결과 | 필요한 것 · 넣을 곳 |
 |---|---|---|---|
-| A1 | Anthropic `GET /v1/models` 페이지 넘기기(`limit` 상한 · `has_more` · `last_id` · `after_id`) · 별칭 · `created_at` 형식 | **대기 (live 문서 · 실제 키 미확인)** | 실제 응답. 필드가 다르면 첫 쪽만 쓴다(최대 5쪽). 손 픽스처 `anthropic/models_page*.json` 교체 |
-| A2 | Anthropic fast mode 필드 · 베타 헤더 · 지원 모델 · 가격 배수 | **대기 (live 문서 · 실제 키 미확인)** | 문서 확인. `AnthropicChatModel.fastModeFields` · `fastModeBeta` + `fastModeSpecs[anthropic]` 한 줄. 그 전엔 스위치가 안 보인다 |
-| A3 | `output_config.effort` 를 받지 않는 모델 | **대기 (live 문서 · 실제 키 미확인)** | 문서 + 옛 모델로 실제 호출. 확인 전 규칙: 메이저 4 이상만 effort. `supportsEffortOf` |
-| A4 | 다른 모델의 thinking 블록을 뺀 지난 턴을 보내도 400 이 없는지 | **대기 (live 문서 · 실제 키 미확인)** | 기기: 대화 중 모델 바꿔 이어 묻기(H3). 400 이면 G3 를 되돌려 글로 접는다 |
+| A1 | Anthropic `GET /v1/models` 페이지 넘기기(`limit` 상한 · `has_more` · `last_id` · `after_id`) · 별칭 · `created_at` 형식 | **문서 확인됨 · 기기 대기** — `after_id` · `has_more` · `last_id` 로 넘기는 모양이 구현과 같다 | 실제 응답. 필드가 다르면 첫 쪽만 쓴다(최대 5쪽). 손 픽스처 `anthropic/models_page*.json` 교체 |
+| A2 | Anthropic fast mode 필드 · 베타 헤더 · 지원 모델 · 가격 배수 | **문서 확인됨 · 기기 대기** — 본문 `speed: "fast"` + beta `fast-mode-2026-02-01`, Opus 5 / 5.5 / 4.8 만(Claude API 만), 요금 약 2배. 기기에서 확인하기 전까지 표는 일부러 비워 둔다 | 문서 확인. `AnthropicChatModel.fastModeFields` · `fastModeBeta` + `fastModeSpecs[anthropic]` 한 줄. 그 전엔 스위치가 안 보인다 |
+| A3 | `output_config.effort` 를 받지 않는 모델 | **문서 확인됨 · 기기 대기** — Sonnet 4.5 · Haiku 4.5(과 그 이전)는 오류, Opus 4.5 와 4.6 이상 · 5.x 는 받는다 | 규칙을 코드에 넣었다: 메이저 5 이상 · 4.6 이상 · Opus 4.5(`supportsEffortOf`, 날짜 붙은 id 도 읽음). 옛 모델 실제 호출은 기기에서 |
+| A4 | 다른 모델의 thinking 블록을 뺀 지난 턴을 보내도 400 이 없는지 | **문서 확인됨 · 기기 대기** — API 가 지금 모델이 읽지 못하는 thinking 블록을 (청구 없이) 버린다고 적혀 있어, 앱이 미리 빼도 안전하다 | 기기: 대화 중 모델 바꿔 이어 묻기(H3). 400 이면 G3 를 되돌려 글로 접는다 |
 | O1 | `store` 기본값 · `include: ["reasoning.encrypted_content"]` 가 비추론 모델에서 받아지는지 · reasoning 항목 되돌리는 모양 | **대기 (live 문서 · 실제 키 미확인)** | 실제 키. 비추론 모델이 400 이면 `supportsReasoning(openai, id)` 로 `include` 조건부 |
 | O2 | `function_call_output.output` 배열(`input_text` · `input_image`) 허용 | **대기 (live 문서 · 실제 키 미확인)** | 실제 키(사진 질문). 되면 `imagesInToolOutput` 기본값만 true |
-| O3 | `reasoning.effort` 를 받지 않는 모델 | **대기 (live 문서 · 실제 키 미확인)** | 문서 + 실제 호출. 확인 전 규칙: `^o\d` · gpt 메이저 5 이상 |
+| O3 | `reasoning.effort` 를 받지 않는 모델 | **대기 (live 문서 · 실제 키 미확인)** | 문서 + 실제 호출. 확인 전 규칙: `^o\d` · gpt 메이저 5 이상. 기기 QA 에서 함께 볼 것(둘 다 미확인): `gpt-N-pro` 는 effort `high` 만 받을 수 있다 · 추론 · 스트리밍에 OpenAI 조직 인증이 필요할 수 있다 |
 | O4 | OpenAI 제외 낱말 · 도구 미지원 · 이미지 미지원 모델 · 키 접두사 | **대기 (live 문서 · 실제 키 미확인)** | 실제 모델 목록. `chat_model_rules.dart` 의 const 표 세 개 · `api_key_mask.dart`. 지금 미지원 패턴은 추측 |
 | O5 | OpenAI 빠른 처리 등급(`service_tier: "priority"` 로 알려짐) · 지원 모델 · 배수 | **대기 (live 문서 · 실제 키 미확인)** | 문서. `OpenAiChatModel.fastModeFields` + `fastModeSpecs[openai]` |
 | O6 | OpenAI 오류 모양(401 · 429 쿼터 vs 레이트 · 404 · 이미지 400 `code` · 스트림 중 오류 위치) | **대기 (live 문서 · 실제 키 미확인)** | 실제 오류 응답. `imageUnsupportedCodes` 상수 · 픽스처 `openai/error_*.json` 교체. 틀려도 `server` 로 떨어질 뿐 |
@@ -615,6 +617,7 @@ Health Connect 에 넣었다(저장소 밖). 시나리오 결과는 [테스트](
 
 ### 막힌 것 · 남긴 것
 
-- 막힌 것: 위 확인 전부와 기기 확인(실제 Claude · GPT 키). Grok(⑤)은 아직.
-- 리뷰에서 미룬 작은 것: 벤더 값 `supportsTools: true` 가 OpenAI 도구 미지원 표를 건너뜀 테스트 · 동률 정렬 테스트 · 정규식 미리 컴파일 · `fastModeSpecs` 가 확인되면 채워졌는지 묶는 가드 테스트 · 이미지 거절 400 에서 이미 글이 흘러간 뒤에는 다시 보내지 않음 · 떨어진 사진을 "사진 못 봄" 결과로 알리기 · 모델 칩의 목록 받는 중 "목록을 받지 못했어요"가 잠깐 보일 수 있음 · `modelReplaced` 알림이 스낵바와 말풍선에 두 번 · 칩 아이콘 크기 · `ModelChipData` 를 위젯 파일 밖으로.
+- 막힌 것: 위 O · X 확인과 기기 확인(실제 Claude · GPT 키, A1~A4 포함). Grok(⑤)은 아직.
+- 최종 리뷰에서 미룬 것: 세션의 `markNoImages` 가드(세션 파일을 다른 작업이 고치는 중이라 다음에).
+- 리뷰에서 미룬 작은 것: 벤더 값 `supportsTools: true` 가 OpenAI 도구 미지원 표를 건너뜀 테스트 · 동률 정렬 테스트 · 정규식 미리 컴파일 · `fastModeSpecs` 가 확인되면 채워졌는지 묶는 가드 테스트 · 이미지 거절 400 에서 이미 글이 흘러간 뒤에는 다시 보내지 않음 · 떨어진 사진을 "사진 못 봄" 결과로 알리기 · 칩 아이콘 크기 · `ModelChipData` 를 위젯 파일 밖으로.
 - 진행 이벤트(생각 · 노트 · 도구 열림)는 `6ad2fb71` 에서 두 어댑터가 내기 시작했다(core P1 의 "정의만"을 넘어섬).
