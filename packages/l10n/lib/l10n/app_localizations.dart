@@ -6463,6 +6463,78 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'이 대화에서 빠지고, 다음 질문의 문맥에도 들어가지 않아요.'**
   String get walkChatTurnDeleteBody;
+
+  /// 물어보기 모델 고르기 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'모델 고르기'**
+  String get walkChatModelPickerTitle;
+
+  /// 물어보기 앱바 아래 모델 칩 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'모델 바꾸기'**
+  String get walkChatModelChipTooltip;
+
+  /// 모델 고르기 시트 — 추천 모델 배지
+  ///
+  /// In ko, this message translates to:
+  /// **'추천'**
+  String get walkChatModelRecommended;
+
+  /// 모델 고르기 시트 — 처음 보는 모델 배지(번역하지 않음)
+  ///
+  /// In ko, this message translates to:
+  /// **'NEW'**
+  String get walkChatModelNew;
+
+  /// 모델 고르기 시트 — 지금 쓰는 모델 체크 표시의 접근성 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'사용 중'**
+  String get walkChatModelInUse;
+
+  /// 모델 고르기 시트 — 사진 입력을 못 받는 모델 행 부제 덧붙임
+  ///
+  /// In ko, this message translates to:
+  /// **'사진은 못 봐요'**
+  String get walkChatModelNoImages;
+
+  /// 모델 칩 오른쪽 위 점의 접근성 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'새 모델이 있어요'**
+  String get walkChatModelNewerAvailable;
+
+  /// 모델 고르기 시트 — 빠른 출력 스위치 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'빠르게 답하기'**
+  String get walkChatFastMode;
+
+  /// 빠른 출력 스위치 부제 — 요금 배수(정수면 '2', 아니면 소수 한 자리)
+  ///
+  /// In ko, this message translates to:
+  /// **'답이 더 빨리 나오지만 요금이 더 들어요(약 {factor}배)'**
+  String walkChatFastModeSubtitle(String factor);
+
+  /// 빠른 출력을 처음 켤 때 요금 확인 창 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'빠르게 답하기를 켤까요?'**
+  String get walkChatFastModeConfirmTitle;
+
+  /// 빠른 출력 요금 확인 창 본문 — 벤더 회사 이름 · 요금 배수
+  ///
+  /// In ko, this message translates to:
+  /// **'이 모드로 답할 때마다 {company} 요금이 약 {factor}배 들어요.'**
+  String walkChatFastModeConfirmBody(String company, String factor);
+
+  /// 빠른 출력 요금 확인 창 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'켜기'**
+  String get walkChatFastModeConfirmAction;
 }
 
 class _AppLocalizationsDelegate

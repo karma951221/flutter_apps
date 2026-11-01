@@ -3463,4 +3463,44 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatTurnDeleteBody => 'この会話から削除され、次の質問の文脈にも使われません。';
+
+  @override
+  String get walkChatModelPickerTitle => 'モデルを選ぶ';
+
+  @override
+  String get walkChatModelChipTooltip => 'モデルを変更';
+
+  @override
+  String get walkChatModelRecommended => 'おすすめ';
+
+  @override
+  String get walkChatModelNew => 'NEW';
+
+  @override
+  String get walkChatModelInUse => '使用中';
+
+  @override
+  String get walkChatModelNoImages => '写真は見られません';
+
+  @override
+  String get walkChatModelNewerAvailable => '新しいモデルがあります';
+
+  @override
+  String get walkChatFastMode => '速く答える';
+
+  @override
+  String walkChatFastModeSubtitle(String factor) {
+    return '回答は速くなりますが料金が上がります（約$factor倍）';
+  }
+
+  @override
+  String get walkChatFastModeConfirmTitle => '速く答えるをオンにしますか？';
+
+  @override
+  String walkChatFastModeConfirmBody(String company, String factor) {
+    return 'このモードでは回答ごとに $company の料金が約$factor倍かかります。';
+  }
+
+  @override
+  String get walkChatFastModeConfirmAction => 'オンにする';
 }

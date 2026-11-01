@@ -3463,4 +3463,44 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatTurnDeleteBody => '이 대화에서 빠지고, 다음 질문의 문맥에도 들어가지 않아요.';
+
+  @override
+  String get walkChatModelPickerTitle => '모델 고르기';
+
+  @override
+  String get walkChatModelChipTooltip => '모델 바꾸기';
+
+  @override
+  String get walkChatModelRecommended => '추천';
+
+  @override
+  String get walkChatModelNew => 'NEW';
+
+  @override
+  String get walkChatModelInUse => '사용 중';
+
+  @override
+  String get walkChatModelNoImages => '사진은 못 봐요';
+
+  @override
+  String get walkChatModelNewerAvailable => '새 모델이 있어요';
+
+  @override
+  String get walkChatFastMode => '빠르게 답하기';
+
+  @override
+  String walkChatFastModeSubtitle(String factor) {
+    return '답이 더 빨리 나오지만 요금이 더 들어요(약 $factor배)';
+  }
+
+  @override
+  String get walkChatFastModeConfirmTitle => '빠르게 답하기를 켤까요?';
+
+  @override
+  String walkChatFastModeConfirmBody(String company, String factor) {
+    return '이 모드로 답할 때마다 $company 요금이 약 $factor배 들어요.';
+  }
+
+  @override
+  String get walkChatFastModeConfirmAction => '켜기';
 }

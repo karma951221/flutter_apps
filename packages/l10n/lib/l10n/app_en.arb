@@ -1079,5 +1079,17 @@
   "walkChatTemporaryBanner": "Temporary chat · Not saved on this phone. Your questions and the records found are sent to {vendor}, and the app can't control how long they keep them.",
   "walkChatTurnDelete": "Delete this question and answer",
   "walkChatTurnDeleteTitle": "Delete this question and answer?",
-  "walkChatTurnDeleteBody": "It will be removed from this conversation and won't be used as context for later questions."
+  "walkChatTurnDeleteBody": "It will be removed from this conversation and won't be used as context for later questions.",
+  "walkChatModelPickerTitle": "Choose a model",
+  "walkChatModelChipTooltip": "Change model",
+  "walkChatModelRecommended": "Recommended",
+  "walkChatModelNew": "NEW",
+  "walkChatModelInUse": "In use",
+  "walkChatModelNoImages": "Can't view photos",
+  "walkChatModelNewerAvailable": "A newer model is available",
+  "walkChatFastMode": "Faster answers",
+  "walkChatFastModeSubtitle": "Answers come faster but cost more (about {factor}×)",
+  "walkChatFastModeConfirmTitle": "Turn on faster answers?",
+  "walkChatFastModeConfirmBody": "Each answer in this mode costs about {factor}× from {company}.",
+  "walkChatFastModeConfirmAction": "Turn on"
 }

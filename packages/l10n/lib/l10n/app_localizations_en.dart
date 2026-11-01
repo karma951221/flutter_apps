@@ -3738,4 +3738,44 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkChatTurnDeleteBody =>
       'It will be removed from this conversation and won\'t be used as context for later questions.';
+
+  @override
+  String get walkChatModelPickerTitle => 'Choose a model';
+
+  @override
+  String get walkChatModelChipTooltip => 'Change model';
+
+  @override
+  String get walkChatModelRecommended => 'Recommended';
+
+  @override
+  String get walkChatModelNew => 'NEW';
+
+  @override
+  String get walkChatModelInUse => 'In use';
+
+  @override
+  String get walkChatModelNoImages => 'Can\'t view photos';
+
+  @override
+  String get walkChatModelNewerAvailable => 'A newer model is available';
+
+  @override
+  String get walkChatFastMode => 'Faster answers';
+
+  @override
+  String walkChatFastModeSubtitle(String factor) {
+    return 'Answers come faster but cost more (about $factor×)';
+  }
+
+  @override
+  String get walkChatFastModeConfirmTitle => 'Turn on faster answers?';
+
+  @override
+  String walkChatFastModeConfirmBody(String company, String factor) {
+    return 'Each answer in this mode costs about $factor× from $company.';
+  }
+
+  @override
+  String get walkChatFastModeConfirmAction => 'Turn on';
 }
