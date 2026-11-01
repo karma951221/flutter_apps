@@ -1011,5 +1011,9 @@
   "walkAppSettingsFeatures": "Feature settings",
   "walkShellTabTools": "Tools",
   "walkToolsTabAlarm": "Alarm",
-  "walkToolsTabWalk": "Walking"
+  "walkToolsTabWalk": "Walking",
+  "walkChatVendorClaude": "Claude",
+  "walkChatVendorAnthropic": "Anthropic",
+  "walkChatVendorGpt": "GPT",
+  "walkChatVendorOpenAi": "OpenAI"
 }

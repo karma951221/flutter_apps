@@ -4393,5 +4393,13 @@
   "walkToolsTabAlarm": "알람",
   "@walkToolsTabAlarm": { "description": "도구 탭 상단 탭 — 알람" },
   "walkToolsTabWalk": "걷기",
-  "@walkToolsTabWalk": { "description": "도구 탭 상단 탭 — 걷기" }
+  "@walkToolsTabWalk": { "description": "도구 탭 상단 탭 — 걷기" },
+  "walkChatVendorClaude": "Claude",
+  "@walkChatVendorClaude": { "description": "물어보기 벤더 — Anthropic 의 제품 이름(번역하지 않음)" },
+  "walkChatVendorAnthropic": "Anthropic",
+  "@walkChatVendorAnthropic": { "description": "물어보기 벤더 — Claude 를 만든 회사 이름(번역하지 않음)" },
+  "walkChatVendorGpt": "GPT",
+  "@walkChatVendorGpt": { "description": "물어보기 벤더 — OpenAI 의 제품 이름(번역하지 않음)" },
+  "walkChatVendorOpenAi": "OpenAI",
+  "@walkChatVendorOpenAi": { "description": "물어보기 벤더 — GPT 를 만든 회사 이름(번역하지 않음)" }
 }

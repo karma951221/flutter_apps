@@ -3236,4 +3236,16 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkToolsTabWalk => '걷기';
+
+  @override
+  String get walkChatVendorClaude => 'Claude';
+
+  @override
+  String get walkChatVendorAnthropic => 'Anthropic';
+
+  @override
+  String get walkChatVendorGpt => 'GPT';
+
+  @override
+  String get walkChatVendorOpenAi => 'OpenAI';
 }

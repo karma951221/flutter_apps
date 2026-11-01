@@ -3235,4 +3235,16 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkToolsTabWalk => 'ウォーキング';
+
+  @override
+  String get walkChatVendorClaude => 'Claude';
+
+  @override
+  String get walkChatVendorAnthropic => 'Anthropic';
+
+  @override
+  String get walkChatVendorGpt => 'GPT';
+
+  @override
+  String get walkChatVendorOpenAi => 'OpenAI';
 }

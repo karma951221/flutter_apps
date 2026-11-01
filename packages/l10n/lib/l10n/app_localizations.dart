@@ -6055,6 +6055,30 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'걷기'**
   String get walkToolsTabWalk;
+
+  /// 물어보기 벤더 — Anthropic 의 제품 이름(번역하지 않음)
+  ///
+  /// In ko, this message translates to:
+  /// **'Claude'**
+  String get walkChatVendorClaude;
+
+  /// 물어보기 벤더 — Claude 를 만든 회사 이름(번역하지 않음)
+  ///
+  /// In ko, this message translates to:
+  /// **'Anthropic'**
+  String get walkChatVendorAnthropic;
+
+  /// 물어보기 벤더 — OpenAI 의 제품 이름(번역하지 않음)
+  ///
+  /// In ko, this message translates to:
+  /// **'GPT'**
+  String get walkChatVendorGpt;
+
+  /// 물어보기 벤더 — GPT 를 만든 회사 이름(번역하지 않음)
+  ///
+  /// In ko, this message translates to:
+  /// **'OpenAI'**
+  String get walkChatVendorOpenAi;
 }
 
 class _AppLocalizationsDelegate
