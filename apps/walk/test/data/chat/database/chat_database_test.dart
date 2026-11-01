@@ -53,7 +53,7 @@ void main() {
     expect(db.chatUsageRows.actualTableName, 'chat_usage');
   });
 
-  test('schemaVersion 은 1', () {
-    expect(db.schemaVersion, 1);
+  test('schemaVersion 은 2', () {
+    expect(db.schemaVersion, 2);
   });
 }

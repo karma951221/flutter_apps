@@ -41,6 +41,7 @@ import '../../data/chat/compressed_chat_image_source.dart' as _i957;
 import '../../data/chat/database/chat_database.dart' as _i933;
 import '../../data/chat/database/drift_chat_history_repository.dart' as _i991;
 import '../../data/chat/database/drift_chat_usage_log.dart' as _i1028;
+import '../../data/chat/database/drift_wiki_repository.dart' as _i3;
 import '../../data/chat/openai_chat_model.dart' as _i442;
 import '../../data/chat/prefs_chat_history_settings.dart' as _i433;
 import '../../data/chat/prefs_chat_model_catalog.dart' as _i878;
@@ -83,6 +84,7 @@ import '../../domain/chat/chat_trace.dart' as _i825;
 import '../../domain/chat/chat_usage_log.dart' as _i520;
 import '../../domain/chat/repository/chat_history_repository.dart' as _i752;
 import '../../domain/chat/repository/chat_usage_repository.dart' as _i669;
+import '../../domain/chat/repository/wiki_repository.dart' as _i624;
 import '../../domain/chat/secure_window.dart' as _i555;
 import '../../domain/chat/tool/chat_image_source.dart' as _i858;
 import '../../domain/chat/tool/life_tools.dart' as _i70;
@@ -299,6 +301,10 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i520.ChatUsageLog>(
       () => _i1028.DriftChatUsageLog(gh<_i933.ChatDatabase>()),
+    );
+    gh.lazySingleton<_i624.WikiRepository>(
+      () =>
+          _i3.DriftWikiRepository(gh<_i933.ChatDatabase>(), gh<_i494.Clock>()),
     );
     gh.lazySingleton<_i439.DeviceAuth>(
       () => _i982.LocalAuthDeviceAuth(gh<_i152.LocalAuthentication>()),

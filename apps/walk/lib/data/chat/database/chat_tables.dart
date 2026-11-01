@@ -71,3 +71,20 @@ class ChatUsageRows extends Table {
   IntColumn get wikiIndexChars => integer().withDefault(const Constant(0))();
   IntColumn get readWikiCalls => integer().withDefault(const Constant(0))();
 }
+
+/// 위키 메모(D5). id 는 모델에게 보이는 짧은 정수. 출처 대화를 지우면 출처만 null.
+@DataClassName('WikiNoteRow')
+@TableIndex(name: 'wiki_notes_updated_at', columns: {#updatedAt})
+class WikiNotes extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get title => text()();
+  TextColumn get summary => text()();
+  TextColumn get body => text()();
+  TextColumn get sourceConversationId => text().nullable().references(
+    Conversations,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+}

@@ -1926,15 +1926,486 @@ class ChatUsageRowsCompanion extends UpdateCompanion<ChatUsageRow> {
   }
 }
 
+class $WikiNotesTable extends WikiNotes
+    with TableInfo<$WikiNotesTable, WikiNoteRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WikiNotesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _titleMeta = const VerificationMeta('title');
+  @override
+  late final GeneratedColumn<String> title = GeneratedColumn<String>(
+    'title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _summaryMeta = const VerificationMeta(
+    'summary',
+  );
+  @override
+  late final GeneratedColumn<String> summary = GeneratedColumn<String>(
+    'summary',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bodyMeta = const VerificationMeta('body');
+  @override
+  late final GeneratedColumn<String> body = GeneratedColumn<String>(
+    'body',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceConversationIdMeta =
+      const VerificationMeta('sourceConversationId');
+  @override
+  late final GeneratedColumn<String> sourceConversationId =
+      GeneratedColumn<String>(
+        'source_conversation_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES conversations (id) ON DELETE SET NULL',
+        ),
+      );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    title,
+    summary,
+    body,
+    sourceConversationId,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'wiki_notes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WikiNoteRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('title')) {
+      context.handle(
+        _titleMeta,
+        title.isAcceptableOrUnknown(data['title']!, _titleMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_titleMeta);
+    }
+    if (data.containsKey('summary')) {
+      context.handle(
+        _summaryMeta,
+        summary.isAcceptableOrUnknown(data['summary']!, _summaryMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_summaryMeta);
+    }
+    if (data.containsKey('body')) {
+      context.handle(
+        _bodyMeta,
+        body.isAcceptableOrUnknown(data['body']!, _bodyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bodyMeta);
+    }
+    if (data.containsKey('source_conversation_id')) {
+      context.handle(
+        _sourceConversationIdMeta,
+        sourceConversationId.isAcceptableOrUnknown(
+          data['source_conversation_id']!,
+          _sourceConversationIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WikiNoteRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WikiNoteRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      title: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}title'],
+      )!,
+      summary: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}summary'],
+      )!,
+      body: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}body'],
+      )!,
+      sourceConversationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_conversation_id'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $WikiNotesTable createAlias(String alias) {
+    return $WikiNotesTable(attachedDatabase, alias);
+  }
+}
+
+class WikiNoteRow extends DataClass implements Insertable<WikiNoteRow> {
+  final int id;
+  final String title;
+  final String summary;
+  final String body;
+  final String? sourceConversationId;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const WikiNoteRow({
+    required this.id,
+    required this.title,
+    required this.summary,
+    required this.body,
+    this.sourceConversationId,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['title'] = Variable<String>(title);
+    map['summary'] = Variable<String>(summary);
+    map['body'] = Variable<String>(body);
+    if (!nullToAbsent || sourceConversationId != null) {
+      map['source_conversation_id'] = Variable<String>(sourceConversationId);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  WikiNotesCompanion toCompanion(bool nullToAbsent) {
+    return WikiNotesCompanion(
+      id: Value(id),
+      title: Value(title),
+      summary: Value(summary),
+      body: Value(body),
+      sourceConversationId: sourceConversationId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sourceConversationId),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory WikiNoteRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WikiNoteRow(
+      id: serializer.fromJson<int>(json['id']),
+      title: serializer.fromJson<String>(json['title']),
+      summary: serializer.fromJson<String>(json['summary']),
+      body: serializer.fromJson<String>(json['body']),
+      sourceConversationId: serializer.fromJson<String?>(
+        json['sourceConversationId'],
+      ),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'title': serializer.toJson<String>(title),
+      'summary': serializer.toJson<String>(summary),
+      'body': serializer.toJson<String>(body),
+      'sourceConversationId': serializer.toJson<String?>(sourceConversationId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  WikiNoteRow copyWith({
+    int? id,
+    String? title,
+    String? summary,
+    String? body,
+    Value<String?> sourceConversationId = const Value.absent(),
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => WikiNoteRow(
+    id: id ?? this.id,
+    title: title ?? this.title,
+    summary: summary ?? this.summary,
+    body: body ?? this.body,
+    sourceConversationId: sourceConversationId.present
+        ? sourceConversationId.value
+        : this.sourceConversationId,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  WikiNoteRow copyWithCompanion(WikiNotesCompanion data) {
+    return WikiNoteRow(
+      id: data.id.present ? data.id.value : this.id,
+      title: data.title.present ? data.title.value : this.title,
+      summary: data.summary.present ? data.summary.value : this.summary,
+      body: data.body.present ? data.body.value : this.body,
+      sourceConversationId: data.sourceConversationId.present
+          ? data.sourceConversationId.value
+          : this.sourceConversationId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WikiNoteRow(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('summary: $summary, ')
+          ..write('body: $body, ')
+          ..write('sourceConversationId: $sourceConversationId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    title,
+    summary,
+    body,
+    sourceConversationId,
+    createdAt,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WikiNoteRow &&
+          other.id == this.id &&
+          other.title == this.title &&
+          other.summary == this.summary &&
+          other.body == this.body &&
+          other.sourceConversationId == this.sourceConversationId &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class WikiNotesCompanion extends UpdateCompanion<WikiNoteRow> {
+  final Value<int> id;
+  final Value<String> title;
+  final Value<String> summary;
+  final Value<String> body;
+  final Value<String?> sourceConversationId;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  const WikiNotesCompanion({
+    this.id = const Value.absent(),
+    this.title = const Value.absent(),
+    this.summary = const Value.absent(),
+    this.body = const Value.absent(),
+    this.sourceConversationId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  WikiNotesCompanion.insert({
+    this.id = const Value.absent(),
+    required String title,
+    required String summary,
+    required String body,
+    this.sourceConversationId = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+  }) : title = Value(title),
+       summary = Value(summary),
+       body = Value(body),
+       createdAt = Value(createdAt),
+       updatedAt = Value(updatedAt);
+  static Insertable<WikiNoteRow> custom({
+    Expression<int>? id,
+    Expression<String>? title,
+    Expression<String>? summary,
+    Expression<String>? body,
+    Expression<String>? sourceConversationId,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (title != null) 'title': title,
+      if (summary != null) 'summary': summary,
+      if (body != null) 'body': body,
+      if (sourceConversationId != null)
+        'source_conversation_id': sourceConversationId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  WikiNotesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? title,
+    Value<String>? summary,
+    Value<String>? body,
+    Value<String?>? sourceConversationId,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+  }) {
+    return WikiNotesCompanion(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      summary: summary ?? this.summary,
+      body: body ?? this.body,
+      sourceConversationId: sourceConversationId ?? this.sourceConversationId,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (title.present) {
+      map['title'] = Variable<String>(title.value);
+    }
+    if (summary.present) {
+      map['summary'] = Variable<String>(summary.value);
+    }
+    if (body.present) {
+      map['body'] = Variable<String>(body.value);
+    }
+    if (sourceConversationId.present) {
+      map['source_conversation_id'] = Variable<String>(
+        sourceConversationId.value,
+      );
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WikiNotesCompanion(')
+          ..write('id: $id, ')
+          ..write('title: $title, ')
+          ..write('summary: $summary, ')
+          ..write('body: $body, ')
+          ..write('sourceConversationId: $sourceConversationId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$ChatDatabase extends GeneratedDatabase {
   _$ChatDatabase(QueryExecutor e) : super(e);
   $ChatDatabaseManager get managers => $ChatDatabaseManager(this);
   late final $ConversationsTable conversations = $ConversationsTable(this);
   late final $ChatTurnsTable chatTurns = $ChatTurnsTable(this);
   late final $ChatUsageRowsTable chatUsageRows = $ChatUsageRowsTable(this);
+  late final $WikiNotesTable wikiNotes = $WikiNotesTable(this);
   late final Index chatUsageAt = Index(
     'chat_usage_at',
     'CREATE INDEX chat_usage_at ON chat_usage (at)',
+  );
+  late final Index wikiNotesUpdatedAt = Index(
+    'wiki_notes_updated_at',
+    'CREATE INDEX wiki_notes_updated_at ON wiki_notes (updated_at)',
   );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -1944,7 +2415,9 @@ abstract class _$ChatDatabase extends GeneratedDatabase {
     conversations,
     chatTurns,
     chatUsageRows,
+    wikiNotes,
     chatUsageAt,
+    wikiNotesUpdatedAt,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -1954,6 +2427,13 @@ abstract class _$ChatDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('chat_turns', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'conversations',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('wiki_notes', kind: UpdateKind.update)],
     ),
   ]);
   @override
@@ -2002,6 +2482,23 @@ final class $$ConversationsTableReferences
     ).filter((f) => f.conversationId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_chatTurnsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$WikiNotesTable, List<WikiNoteRow>>
+  _wikiNotesRefsTable(_$ChatDatabase db) => MultiTypedResultKey.fromTable(
+    db.wikiNotes,
+    aliasName: 'conversations__id__wiki_notes__source_conversation_id',
+  );
+
+  $$WikiNotesTableProcessedTableManager get wikiNotesRefs {
+    final manager = $$WikiNotesTableTableManager($_db, $_db.wikiNotes).filter(
+      (f) => f.sourceConversationId.id.sqlEquals($_itemColumn<String>('id')!),
+    );
+
+    final cache = $_typedResult.readTableOrNull(_wikiNotesRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2058,6 +2555,31 @@ class $$ConversationsTableFilterComposer
           }) => $$ChatTurnsTableFilterComposer(
             $db: $db,
             $table: $db.chatTurns,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> wikiNotesRefs(
+    Expression<bool> Function($$WikiNotesTableFilterComposer f) f,
+  ) {
+    final $$WikiNotesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.wikiNotes,
+      getReferencedColumn: (t) => t.sourceConversationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WikiNotesTableFilterComposer(
+            $db: $db,
+            $table: $db.wikiNotes,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -2153,6 +2675,31 @@ class $$ConversationsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> wikiNotesRefs<T extends Object>(
+    Expression<T> Function($$WikiNotesTableAnnotationComposer a) f,
+  ) {
+    final $$WikiNotesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.wikiNotes,
+      getReferencedColumn: (t) => t.sourceConversationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WikiNotesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.wikiNotes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ConversationsTableTableManager
@@ -2168,7 +2715,7 @@ class $$ConversationsTableTableManager
           $$ConversationsTableUpdateCompanionBuilder,
           (ConversationRow, $$ConversationsTableReferences),
           ConversationRow,
-          PrefetchHooks Function({bool chatTurnsRefs})
+          PrefetchHooks Function({bool chatTurnsRefs, bool wikiNotesRefs})
         > {
   $$ConversationsTableTableManager(_$ChatDatabase db, $ConversationsTable table)
     : super(
@@ -2221,38 +2768,63 @@ class $$ConversationsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({chatTurnsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (chatTurnsRefs) db.chatTurns],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (chatTurnsRefs)
-                    await $_getPrefetchedData<
-                      ConversationRow,
-                      $ConversationsTable,
-                      ChatTurnRow
-                    >(
-                      currentTable: table,
-                      referencedTable: $$ConversationsTableReferences
-                          ._chatTurnsRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$ConversationsTableReferences(
-                            db,
-                            table,
-                            p0,
-                          ).chatTurnsRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where(
-                            (e) => e.conversationId == item.id,
-                          ),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({chatTurnsRefs = false, wikiNotesRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (chatTurnsRefs) db.chatTurns,
+                    if (wikiNotesRefs) db.wikiNotes,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (chatTurnsRefs)
+                        await $_getPrefetchedData<
+                          ConversationRow,
+                          $ConversationsTable,
+                          ChatTurnRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ConversationsTableReferences
+                              ._chatTurnsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ConversationsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).chatTurnsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.conversationId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (wikiNotesRefs)
+                        await $_getPrefetchedData<
+                          ConversationRow,
+                          $ConversationsTable,
+                          WikiNoteRow
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ConversationsTableReferences
+                              ._wikiNotesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ConversationsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).wikiNotesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.sourceConversationId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -2269,7 +2841,7 @@ typedef $$ConversationsTableProcessedTableManager =
       $$ConversationsTableUpdateCompanionBuilder,
       (ConversationRow, $$ConversationsTableReferences),
       ConversationRow,
-      PrefetchHooks Function({bool chatTurnsRefs})
+      PrefetchHooks Function({bool chatTurnsRefs, bool wikiNotesRefs})
     >;
 typedef $$ChatTurnsTableCreateCompanionBuilder =
     ChatTurnsCompanion Function({
@@ -3112,6 +3684,358 @@ typedef $$ChatUsageRowsTableProcessedTableManager =
       ChatUsageRow,
       PrefetchHooks Function()
     >;
+typedef $$WikiNotesTableCreateCompanionBuilder =
+    WikiNotesCompanion Function({
+      Value<int> id,
+      required String title,
+      required String summary,
+      required String body,
+      Value<String?> sourceConversationId,
+      required DateTime createdAt,
+      required DateTime updatedAt,
+    });
+typedef $$WikiNotesTableUpdateCompanionBuilder =
+    WikiNotesCompanion Function({
+      Value<int> id,
+      Value<String> title,
+      Value<String> summary,
+      Value<String> body,
+      Value<String?> sourceConversationId,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+    });
+
+final class $$WikiNotesTableReferences
+    extends BaseReferences<_$ChatDatabase, $WikiNotesTable, WikiNoteRow> {
+  $$WikiNotesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ConversationsTable _sourceConversationIdTable(_$ChatDatabase db) => db
+      .conversations
+      .createAlias('wiki_notes__source_conversation_id__conversations__id');
+
+  $$ConversationsTableProcessedTableManager? get sourceConversationId {
+    final $_column = $_itemColumn<String>('source_conversation_id');
+    if ($_column == null) return null;
+    final manager = $$ConversationsTableTableManager(
+      $_db,
+      $_db.conversations,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(
+      _sourceConversationIdTable($_db),
+    );
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$WikiNotesTableFilterComposer
+    extends Composer<_$ChatDatabase, $WikiNotesTable> {
+  $$WikiNotesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get summary => $composableBuilder(
+    column: $table.summary,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ConversationsTableFilterComposer get sourceConversationId {
+    final $$ConversationsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceConversationId,
+      referencedTable: $db.conversations,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ConversationsTableFilterComposer(
+            $db: $db,
+            $table: $db.conversations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WikiNotesTableOrderingComposer
+    extends Composer<_$ChatDatabase, $WikiNotesTable> {
+  $$WikiNotesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get title => $composableBuilder(
+    column: $table.title,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get summary => $composableBuilder(
+    column: $table.summary,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get body => $composableBuilder(
+    column: $table.body,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ConversationsTableOrderingComposer get sourceConversationId {
+    final $$ConversationsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceConversationId,
+      referencedTable: $db.conversations,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ConversationsTableOrderingComposer(
+            $db: $db,
+            $table: $db.conversations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WikiNotesTableAnnotationComposer
+    extends Composer<_$ChatDatabase, $WikiNotesTable> {
+  $$WikiNotesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get title =>
+      $composableBuilder(column: $table.title, builder: (column) => column);
+
+  GeneratedColumn<String> get summary =>
+      $composableBuilder(column: $table.summary, builder: (column) => column);
+
+  GeneratedColumn<String> get body =>
+      $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$ConversationsTableAnnotationComposer get sourceConversationId {
+    final $$ConversationsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sourceConversationId,
+      referencedTable: $db.conversations,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ConversationsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.conversations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WikiNotesTableTableManager
+    extends
+        RootTableManager<
+          _$ChatDatabase,
+          $WikiNotesTable,
+          WikiNoteRow,
+          $$WikiNotesTableFilterComposer,
+          $$WikiNotesTableOrderingComposer,
+          $$WikiNotesTableAnnotationComposer,
+          $$WikiNotesTableCreateCompanionBuilder,
+          $$WikiNotesTableUpdateCompanionBuilder,
+          (WikiNoteRow, $$WikiNotesTableReferences),
+          WikiNoteRow,
+          PrefetchHooks Function({bool sourceConversationId})
+        > {
+  $$WikiNotesTableTableManager(_$ChatDatabase db, $WikiNotesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WikiNotesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WikiNotesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WikiNotesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> title = const Value.absent(),
+                Value<String> summary = const Value.absent(),
+                Value<String> body = const Value.absent(),
+                Value<String?> sourceConversationId = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => WikiNotesCompanion(
+                id: id,
+                title: title,
+                summary: summary,
+                body: body,
+                sourceConversationId: sourceConversationId,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String title,
+                required String summary,
+                required String body,
+                Value<String?> sourceConversationId = const Value.absent(),
+                required DateTime createdAt,
+                required DateTime updatedAt,
+              }) => WikiNotesCompanion.insert(
+                id: id,
+                title: title,
+                summary: summary,
+                body: body,
+                sourceConversationId: sourceConversationId,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$WikiNotesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({sourceConversationId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (sourceConversationId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.sourceConversationId,
+                                referencedTable: $$WikiNotesTableReferences
+                                    ._sourceConversationIdTable(db),
+                                referencedColumn: $$WikiNotesTableReferences
+                                    ._sourceConversationIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$WikiNotesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$ChatDatabase,
+      $WikiNotesTable,
+      WikiNoteRow,
+      $$WikiNotesTableFilterComposer,
+      $$WikiNotesTableOrderingComposer,
+      $$WikiNotesTableAnnotationComposer,
+      $$WikiNotesTableCreateCompanionBuilder,
+      $$WikiNotesTableUpdateCompanionBuilder,
+      (WikiNoteRow, $$WikiNotesTableReferences),
+      WikiNoteRow,
+      PrefetchHooks Function({bool sourceConversationId})
+    >;
 
 class $ChatDatabaseManager {
   final _$ChatDatabase _db;
@@ -3122,4 +4046,6 @@ class $ChatDatabaseManager {
       $$ChatTurnsTableTableManager(_db, _db.chatTurns);
   $$ChatUsageRowsTableTableManager get chatUsageRows =>
       $$ChatUsageRowsTableTableManager(_db, _db.chatUsageRows);
+  $$WikiNotesTableTableManager get wikiNotes =>
+      $$WikiNotesTableTableManager(_db, _db.wikiNotes);
 }
