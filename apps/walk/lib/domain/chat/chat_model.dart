@@ -126,6 +126,10 @@ class TokenUsage with _$TokenUsage {
 /// 순서 보장: 한 블록의 `toolCallStarted` 는 같은 id 의 `toolCallReady` 보다
 /// 먼저, 둘 다 `completed` 보다 먼저. 진행 이벤트는 기록(`completed.message` ·
 /// `vendorState`)을 바꾸지 않는다.
+///
+/// **프롬프트 캐시**: Claude 는 본문 top-level `cache_control: ephemeral` 로 켠다.
+/// GPT 는 벤더가 자동으로 캐시한다 — 요청에 더할 필드가 없다. 둘 다 세션의 system ·
+/// tools 접두부가 같은 날 바이트까지 같아야 맞는다(날짜 줄은 system 끝).
 @Freezed(toStringOverride: false)
 sealed class ModelEvent with _$ModelEvent {
   const factory ModelEvent.textDelta(String text) = ModelTextDelta;

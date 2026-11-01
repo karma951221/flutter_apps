@@ -176,6 +176,61 @@ void main() {
     }
   });
 
+  group('프롬프트 캐시', () {
+    Future<Map<String, dynamic>> bodyOf(ModelRequest req) async {
+      late Map<String, dynamic> body;
+      await run(
+        clientOf([
+          sse('message_start', {}),
+          sse('message_delta', {
+            'delta': {'stop_reason': 'end_turn'},
+          }),
+          sse('message_stop', {}),
+        ], onRequest: (_, b) => body = jsonDecode(b) as Map<String, dynamic>),
+        req,
+      );
+      return body;
+    }
+
+    bool hasCacheControl(Object? node) => switch (node) {
+      Map() =>
+        node.containsKey('cache_control') || node.values.any(hasCacheControl),
+      List() => node.any(hasCacheControl),
+      _ => false,
+    };
+
+    test('요청 본문에 top-level cache_control ephemeral 이 있다', () async {
+      final body = await bodyOf(
+        request(messages: const [ChatMessage.user('hi')]),
+      );
+      expect(body['cache_control'], {'type': 'ephemeral'});
+    });
+
+    test('messages · system · tools 블록에는 cache_control 이 없다', () async {
+      final body = await bodyOf(
+        request(
+          messages: [
+            const ChatMessage.user('q'),
+            const ChatMessage.assistant(
+              parts: [
+                AssistantPart.text('볼게요'),
+                AssistantPart.toolCall(id: 'tu_1', name: 't', input: {'a': 1}),
+              ],
+            ),
+            const ChatMessage.toolResults([
+              ToolResultPart(callId: 'tu_1', json: '{"steps":1}'),
+            ]),
+          ],
+          tools: const [ToolSpec(name: 't', description: 'd', parameters: {})],
+        ),
+      );
+      expect(body['messages'], hasLength(3));
+      expect(hasCacheControl(body['messages']), isFalse);
+      expect(hasCacheControl(body['system']), isFalse);
+      expect(hasCacheControl(body['tools']), isFalse);
+    });
+  });
+
   test('text_delta 를 차례로 흘리고 completed 에 전체 text 블록을 담는다', () async {
     final events = await run(
       clientOf([

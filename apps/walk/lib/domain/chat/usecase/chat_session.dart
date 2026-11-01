@@ -327,7 +327,7 @@ class ChatSession {
       // 이미지 거절(imagesUnsupported)을 받으면 이 질문의 남은 요청은 사진 없이.
       var images = _choice.supportsImages;
       var retriedWithoutImages = false;
-      final system = _systemPrompt();
+      final system = _systemPrompt(progressNotes: model.progressNotes);
       final questionKey = _ids.newId();
       _messages.add(ChatMessage.user(question));
 
@@ -569,15 +569,20 @@ class ChatSession {
     ChatModelErrorKind.imagesUnsupported => ChatFailure.unknown,
   };
 
-  String _systemPrompt() {
+  /// 도구 전 한 줄 안내. [ChatModel.progressNotes] 인 모델에만 넣는다(V5 결과로 빼기 쉽게 상수).
+  static const _noteHint = '도구를 쓰기 전에 무엇을 볼지 한 줄로 말해.';
+
+  /// 날짜 줄은 맨 끝 — 그 앞까지가 날마다 같은 캐시 접두부다.
+  String _systemPrompt({required bool progressNotes}) {
     final now = _clock.now();
     final today = DateFormat('yyyy-MM-dd (E)', 'ko').format(now);
-    return '너는 사용자의 개인 기록 앱 Life Tool 안의 도우미다. '
-        '오늘은 $today, 시간대는 ${now.timeZoneName} 이다.\n'
+    return '너는 사용자의 개인 기록 앱 Life Tool 안의 도우미다.\n'
         '사용자의 일기 · 걸음 수 · 알람 기상 기록을 도구로 찾아보고, 찾은 기록에 근거해서만 답한다.\n'
         '기록에서 찾지 못한 것은 추측하지 말고 "기록에서 찾지 못했어요"라고 말한다.\n'
         '날짜는 사용자의 말("지난주", "어제")을 오늘 기준으로 바꿔 도구에 넘긴다.\n'
         '사진 보기 도구가 없으면 사진은 볼 수 없다고 짧게 답한다.\n'
-        '한국어로, 마크다운 없이 짧은 평문으로 답한다.';
+        '한국어로, 마크다운 없이 짧은 평문으로 답한다.\n'
+        '${progressNotes ? '$_noteHint\n' : ''}'
+        '오늘은 $today, 시간대는 ${now.timeZoneName} 이다.';
   }
 }

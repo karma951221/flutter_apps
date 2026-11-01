@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:core/core.dart';
@@ -36,7 +37,7 @@ class _SeqIds implements IdGenerator {
 class _FixedClock extends Clock {
   _FixedClock(this.value);
 
-  final DateTime value;
+  DateTime value;
 
   @override
   DateTime now() => value;
@@ -45,7 +46,7 @@ class _FixedClock extends Clock {
 /// 한 번 부를 때마다 준비된 라운드 하나를 흘리고, 받은 요청을 기록한다.
 class _FakeModel implements ChatModel {
   @override
-  bool get progressNotes => false;
+  bool progressNotes = false;
 
   _FakeModel(this.rounds);
 
@@ -1065,6 +1066,59 @@ void main() {
     expect(system, contains('2026-10-27 (화)'));
     expect(system, contains(clock.value.timeZoneName));
     expect(system, startsWith('너는 사용자의 개인 기록 앱 Life Tool 안의 도우미다.'));
+  });
+
+  test('오늘 날짜 줄은 시스템 프롬프트의 마지막 줄이다', () async {
+    final model = _FakeModel([_answer('네')]);
+
+    await session(model).ask('오늘').toList();
+
+    final lines = model.requests.single.system.split('\n');
+    expect(
+      lines.last,
+      '오늘은 2026-10-27 (화), 시간대는 ${clock.value.timeZoneName} 이다.',
+    );
+    expect(lines.where((l) => l.contains('2026-10-27')), hasLength(1));
+  });
+
+  test('progressNotes 인 모델이면 도구 전 한 줄 안내가 있고, 아니면 없다', () async {
+    const hint = '도구를 쓰기 전에 무엇을 볼지 한 줄로 말해.';
+    final off = _FakeModel([_answer('네')]);
+    await session(off).ask('오늘').toList();
+    expect(off.requests.single.system, isNot(contains(hint)));
+
+    final on = _FakeModel([_answer('네')])..progressNotes = true;
+    await session(on).ask('오늘').toList();
+    final lines = on.requests.single.system.split('\n');
+    expect(lines, contains(hint));
+    // 안내는 날짜 줄 바로 앞 — 날짜 줄이 마지막이다.
+    expect(lines[lines.length - 2], hint);
+    expect(lines.last, startsWith('오늘은 '));
+  });
+
+  test('같은 날 두 질문의 system 은 바이트까지 같다', () async {
+    final model = _FakeModel([_answer('네'), _answer('또')]);
+    final dayClock = _FixedClock(DateTime(2026, 10, 27, 9));
+    final chat = ChatSession(
+      FakeChatModelRegistry({ChatVendor.anthropic: model}),
+      tools,
+      settings,
+      choice,
+      dayClock,
+      usage,
+      ids,
+      const NoopChatTrace(),
+    );
+
+    await chat.ask('하나').toList();
+    dayClock.value = DateTime(2026, 10, 27, 21, 30);
+    await chat.ask('둘').toList();
+
+    expect(model.requests, hasLength(2));
+    expect(
+      utf8.encode(model.requests[1].system),
+      utf8.encode(model.requests[0].system),
+    );
   });
 
   test('진행 중에 다시 부르면 StateError, reset 은 대화를 비운다', () async {

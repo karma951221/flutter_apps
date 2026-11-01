@@ -79,6 +79,9 @@ class AnthropicChatModel implements ChatModel {
   @override
   bool get progressNotes => _progressNotes;
 
+  /// 본문 top-level `cache_control`(자동 캐시, V4). 블록 단위 표시는 두지 않는다.
+  static const _promptCache = true;
+
   static const _fallbackBeta = 'server-side-fallback-2026-07-01';
   static const _notesBeta = 'thinking-display-updates-2026-08-18';
   static const _thinkingParam = {'type': 'adaptive', 'display': 'updates'};
@@ -312,6 +315,7 @@ class AnthropicChatModel implements ChatModel {
     if (_fast(request)) ...fastModeFields,
     if (_notes(request)) 'thinking': _thinkingParam,
     'fallbacks': 'default',
+    if (_promptCache) 'cache_control': {'type': 'ephemeral'},
     'system': request.system,
     'messages': [for (final m in request.messages) _message(m, request.model)],
     'tools': [for (final t in request.tools) _tool(t)],
