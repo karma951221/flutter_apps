@@ -3,7 +3,7 @@
 > [테스트 가이드](../../../docs/testing/README.md) · [계획](plan.md) · [기록](history.md) · [진행 현황](status.md)
 
 ```bash
-cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-11-02 기준 2280건 통과 · 1건 skip)
+cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-11-02 기준 2375건 통과 · 1건 skip)
 ```
 
 백엔드가 없어 로컬 Supabase 없이 돈다. Health Connect 는 `HealthGateway` 를 mock 해서 본다
@@ -290,6 +290,14 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | 세션 · cubit | `domain/chat/usecase/chat_session_test`(사용량 기록 · 멈춤 (a)~(f)) · `presentation/chat/cubit/chat_cubit_test`(멈춤 · 질문 되돌림 · ready 면 확인 전 키 재확인 · `recheck: false` 면 안 함) |
 | 입력 · 말풍선 | `presentation/chat/widget/chat_input_test`([■ 멈춤] 전환) · `chat_bubble_view_test`('멈춤' 표시 · 실패 말풍선 [설정 열기]) · `chat_failure_text_test`(크레딧 부족 · 모델 없음 문구 · 빈 문구 없음) |
 | 화면 · 셸 | `presentation/chat/page/chat_tab_test`(⋮ 는 잠긴 동안 앱 설정만, 풀리면 물어보기 설정 · 앱 설정 · 위에 얹힌 물어보기 설정에서 키를 넣고 돌아오면 `didPopNext` 로 키를 다시 읽음 · 키 확인 중 로딩 · 키 없으면 설정 버튼 · 실패 말풍선 [설정 열기] · 보이지 않는 탭은 돌아와도 다시 읽지 않고 앱 시작에 키 확인도 안 함, 보이게 되면 함) · `presentation/shell/page/main_shell_page_test`(탭 구성 · 잠금 · 물어보기 [설정 열기]로 연 연결 행 glow · ⋮ 로 열면 glow 없음 · 알람 권한 배너 → 거부된 알림 권한 행 glow) |
+| 대화 기록 — 도메인 · 저장소 | `domain/chat/entity/conversation_test`(제목 만들기 30자 · 공백 접기 · 말줄임 · toString 에 글 없음) · `data/chat/database/chat_database_test`(스키마 v1 · TEXT 날짜 · 외래 키 켜짐) · `drift_chat_history_repository_test`(목록 순서 · 턴 수 · appendTurn 롤백 · 턴 지우기 · 삭제 cascade · `deleteOlderThan` · `watchExists`) |
+| 사용량 기록 | `data/chat/database/drift_chat_usage_log_test`(요청마다 한 행 · 임시는 숫자만 · 월별 합 · 모델별 · 13개월 정리 · `fast_mode`) · `domain/chat/chat_usage_log_test` |
+| 보관 기간 · 정리 | `data/chat/prefs_chat_history_settings_test` · `domain/chat/usecase/chat_history_pruner_test`(기간 지난 대화 삭제 · 열린 대화 건너뜀 · 사용량 13개월 · 줄 세우기) |
+| 보안 창 | `data/chat/channel_secure_window_test`(`FLAG_SECURE` 채널 호출 · 채널 없으면 무시) |
+| 이어가기 · 접기 | `chat_session_test`(`resume` 글만 문맥 · 최근 20턴 · 멈춘 턴 `stoppedNote` · 사진 0부터 · 벤더/모델이 바뀌면 글로 접기(라운드 사이 빈 줄) · temporary) |
+| 저장 · 열기 cubit | `chat_cubit_test`(턴 끝 저장 · 멈춘 턴 저장 · 글 없는 멈춤/실패 저장 안 함 · 열기 · 열리는 동안 보낸 질문 무시 · 임시 대화 저장 0 · 턴 지우기 · 열린 대화가 밖에서 지워지면 새 대화) · `chat_history_cubit_test`(목록 · 이름 바꾸기 · 삭제 · 모두 지우기) |
+| 대화 목록 · 임시 배너 | `presentation/chat/page/chat_history_page_test` · `presentation/chat/widget/temporary_chat_banner_test`(회사 이름) · `chat_tab_test`(⋮ [대화 목록] · [임시 대화로 시작] 위치 · 잠긴 동안 앱 설정만 · 임시 배너 · 보이는 동안 보안 창 켬/끔 · 시트 · 턴 지우기 · [더보기] 선택 메뉴) |
+| 물어보기 설정 — 기록 · 사용량 | `presentation/settings/cubit/chat_history_settings_cubit_test` · `widget/chat_history_settings_section_test`(보관 기간 · 대화 모두 지우기 확인) · `cubit/chat_usage_cubit_test`(달 이동 · 13개월 범위 · 지우기) · `page/chat_usage_page_test` · `open_settings_test`(대화 기록 행은 잠금이 풀려야 보임) |
 
 ## 테스트가 없는 것
 
@@ -430,3 +438,14 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | Q12 | 백업 복원(K4): `adb shell bmgr backupnow` → 재설치 → 복원 | 연결 행이 미연결이다(키 · `flutter_secure_storage` 설정 prefs 파일이 복원되지 않는다) | 대기 |
 | Q13 | 물어보기에서 크레딧 부족 · 모델 없음 오류를 만났을 때(K2 · K3) | 문구가 맞고 [설정 열기]로 연결 행이 glow 한다. 오류 본문의 `error.type` 이 가정한 값(`billing_error` · `not_found_error`)인지 | 대기 |
 | Q14 | 로고(K1) | 브랜드 가이드 확인 뒤 공식 로고로 교체, 그 전엔 모노그램 | 대기 |
+
+### 대화 기록 (1단계)
+
+| # | 하는 일 | 기대 | 상태 |
+|---|---|---|---|
+| H1 | 실제 키로 질문 → 앱 강제 종료 → 다시 켜 목록에서 열기 → "아까 뭐라고 했지?" | 앞 대화를 안다(지난 대화 이어가기) | 대기 |
+| H2 | thinking 이 켜진 모델에 글만의 지난 assistant 턴(멈춘 턴 포함)을 보내기 — core 계획 C4 와 같은 질문, 결과를 함께 적는다 | 400 이 없다. 멈춘 답이 다음 문맥에 들어간다 | 대기 |
+| H3 | 대화 중 모델 · 벤더를 바꾼 뒤 이어 묻기 | 모델을 바꿔도 이어간다. 키 기획 ③ · ④ 가 들어온 뒤에만 가능, 그 전엔 단위 테스트로 갈음 | 대기(③ · ④ 후) |
+| H4 | 임시 대화에서 스크린샷 · 화면 녹화 · 최근 앱 썸네일 | 막히고 가려진다(`FLAG_SECURE`). 일기 탭으로 가거나 [새 대화]면 다시 찍힌다 | 대기 |
+| H5 | 보관 30일로 두고 기기 날짜를 31일 뒤로 → 앱 복귀 | 그 대화가 목록에서 사라진다(열려 있던 대화는 남음) | 대기 |
+| H6 | 이어간 대화에서 사진 질문 12장 넘게 | 한도가 0부터 다시 세고 안내 문구가 새 힌트 | 대기 |
