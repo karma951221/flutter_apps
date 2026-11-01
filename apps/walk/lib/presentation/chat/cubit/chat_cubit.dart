@@ -58,15 +58,15 @@ class ChatCubit extends Cubit<ChatState> {
   /// 키 · 동의 상태를 다시 읽는다. 탭이 보이게 될 때 부른다.
   /// 보안 저장소를 읽지 못하면 키가 없는 것으로 본다.
   Future<void> refresh() async {
-    String? key;
+    bool hasKey;
     try {
-      key = await _settings.apiKey();
+      hasKey = await _settings.hasApiKey();
     } on Object {
-      key = null;
+      hasKey = false;
     }
     if (isClosed) return;
-    final access = switch ((key, _settings.consented)) {
-      (null, _) => ChatAccess.noKey,
+    final access = switch ((hasKey, _settings.consented)) {
+      (false, _) => ChatAccess.noKey,
       (_, false) => ChatAccess.needsConsent,
       _ => ChatAccess.ready,
     };

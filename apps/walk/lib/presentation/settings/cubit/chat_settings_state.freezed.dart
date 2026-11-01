@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ChatSettingsState {
 
- bool get loading; String? get keyHint;
+ bool get loading; ChatConnection? get connection;
 /// Create a copy of ChatSettingsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ChatSettingsStateCopyWith<ChatSettingsState> get copyWith => _$ChatSettingsStat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatSettingsState&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.keyHint, keyHint) || other.keyHint == keyHint));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatSettingsState&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.connection, connection) || other.connection == connection));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,loading,keyHint);
+int get hashCode => Object.hash(runtimeType,loading,connection);
 
 @override
 String toString() {
-  return 'ChatSettingsState(loading: $loading, keyHint: $keyHint)';
+  return 'ChatSettingsState(loading: $loading, connection: $connection)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ChatSettingsStateCopyWith<$Res>  {
   factory $ChatSettingsStateCopyWith(ChatSettingsState value, $Res Function(ChatSettingsState) _then) = _$ChatSettingsStateCopyWithImpl;
 @useResult
 $Res call({
- bool loading, String? keyHint
+ bool loading, ChatConnection? connection
 });
 
 
@@ -62,11 +62,11 @@ class _$ChatSettingsStateCopyWithImpl<$Res>
 
 /// Create a copy of ChatSettingsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? loading = null,Object? keyHint = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? loading = null,Object? connection = freezed,}) {
   return _then(ChatSettingsState(
 loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
-as bool,keyHint: freezed == keyHint ? _self.keyHint : keyHint // ignore: cast_nullable_to_non_nullable
-as String?,
+as bool,connection: freezed == connection ? _self.connection : connection // ignore: cast_nullable_to_non_nullable
+as ChatConnection?,
   ));
 }
 

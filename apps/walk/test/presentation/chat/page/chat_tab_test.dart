@@ -383,5 +383,5 @@ class _PendingSettings extends FakeChatSettings {
   final Future<String?> pending;
 
   @override
-  Future<String?> apiKey() => pending;
+  Future<bool> hasApiKey() async => await pending != null;
 }

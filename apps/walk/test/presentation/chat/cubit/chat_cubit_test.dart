@@ -176,6 +176,18 @@ void main() {
     await events.close();
   });
 
+  test('refresh 는 hasApiKey 만 본다', () async {
+    settings.key = null;
+    await cubit.refresh();
+    expect(cubit.state.access, ChatAccess.noKey);
+
+    settings.key = 'sk-ant-test';
+    await cubit.refresh();
+    expect(cubit.state.access, ChatAccess.ready);
+
+    expect(settings.apiKeyCalls, 0);
+  });
+
   test('키를 읽다 실패하면 noKey 로 둔다', () async {
     settings.failWith = Exception('keystore');
 

@@ -63,7 +63,7 @@ class _ChatSettingsView extends StatelessWidget {
     final theme = Theme.of(context);
     return BlocBuilder<ChatSettingsCubit, ChatSettingsState>(
       builder: (context, state) {
-        final hint = state.keyHint;
+        final hint = state.connection?.keyPreview;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
