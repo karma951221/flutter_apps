@@ -58,6 +58,9 @@ class _DiaryTabState extends State<DiaryTab> {
   late final _timeline = DiaryTimelineCubit(getIt<DiaryRepository>())..start();
   late final _covers = StoryCoversCubit(getIt<DiaryRepository>())..start();
 
+  /// 앱바를 다시 펼칠 때 바깥(앱바) 스크롤을 맨 위로 되돌린다.
+  final _scroll = GlobalKey<NestedScrollViewState>();
+
   @override
   void initState() {
     super.initState();
@@ -67,7 +70,10 @@ class _DiaryTabState extends State<DiaryTab> {
   @override
   void didUpdateWidget(DiaryTab oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!oldWidget.active && widget.active && _unlocked) _maintain();
+    if (!oldWidget.active && widget.active) {
+      _expandAppBar();
+      if (_unlocked) _maintain();
+    }
   }
 
   @override
@@ -82,34 +88,59 @@ class _DiaryTabState extends State<DiaryTab> {
   /// 휴지통 기한 · 장소 이름 채우기. 화면을 막지 않는다 — 결과는 저장소 스트림으로 들어온다.
   void _maintain() => unawaited(_useCase.maintain().catchError((Object _) {}));
 
+  /// 스크롤로 숨은 앱바를 펼친다(탭으로 돌아올 때 · 다시 잠길 때). 아직 붙어 있지 않으면 그대로.
+  void _expandAppBar() {
+    final outer = _scroll.currentState?.outerController;
+    if (outer != null && outer.hasClients) outer.jumpTo(0);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final unlocked = context.select<DiaryLockCubit, bool>(
       (c) => c.state is LockUnlocked,
     );
-    return BlocListener<DiaryLockCubit, DiaryLockState>(
-      listenWhen: (a, b) => a is! LockUnlocked && b is LockUnlocked,
-      listener: (_, _) {
-        if (widget.active) _maintain();
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<DiaryLockCubit, DiaryLockState>(
+          listenWhen: (a, b) => a is! LockUnlocked && b is LockUnlocked,
+          listener: (_, _) {
+            if (widget.active) _maintain();
+          },
+        ),
+        // 잠금 화면에서는 앱바가 숨어 있을 까닭이 없다 — 잠긴 상태로 바뀌면 펼친다.
+        BlocListener<DiaryLockCubit, DiaryLockState>(
+          listenWhen: (a, b) => a is LockUnlocked && b is! LockUnlocked,
+          listener: (_, _) => _expandAppBar(),
+        ),
+      ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider.value(value: _timeline),
           BlocProvider.value(value: _covers),
         ],
         child: Scaffold(
-          appBar: AppBar(
-            title: Text(l10n.walkShellTabDiary),
-            actions: [
-              if (unlocked) const _SearchAction(),
-              _DiaryMenu(unlocked: unlocked),
+          // 앱바는 내리면 숨고 조금 올리면 다시 나온다(스펙 §5). 애니메이션 줄이기면 튀어나오는
+          // 전환(snap) 없이 손가락만 따라온다.
+          body: NestedScrollView(
+            key: _scroll,
+            floatHeaderSlivers: true,
+            headerSliverBuilder: (context, _) => [
+              SliverAppBar(
+                title: Text(l10n.walkShellTabDiary),
+                floating: true,
+                snap: AppMotion.enabled(context),
+                actions: [
+                  if (unlocked) const _SearchAction(),
+                  _DiaryMenu(unlocked: unlocked),
+                ],
+              ),
             ],
-          ),
-          // 다시 잠기면 이 탭에서 띄운 시트(새 스토리 등)를 닫는다 — 가려진 탭이면 위의 팝업은 다른 탭의 것.
-          body: DiaryLockGate(
-            dismissPopups: widget.active,
-            child: const _Timeline(),
+            // 다시 잠기면 이 탭에서 띄운 시트(새 스토리 등)를 닫는다 — 가려진 탭이면 위의 팝업은 다른 탭의 것.
+            body: DiaryLockGate(
+              dismissPopups: widget.active,
+              child: const _Timeline(),
+            ),
           ),
         ),
       ),
