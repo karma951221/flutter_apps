@@ -901,6 +901,297 @@ void main() {
     });
   });
 
+  group('멈춤', () {
+    late _HangingModel model;
+    late ChatSession chat;
+
+    setUp(() {
+      model = _HangingModel();
+      chat = ChatSession(
+        model,
+        tools,
+        settings,
+        clock,
+        usage,
+        ids,
+        const NoopChatTrace(),
+      );
+    });
+
+    /// 지금 열린 라운드를 [events] 로 끝낸다.
+    void finishRound(int index, List<ModelEvent> events) {
+      for (final e in events) {
+        model.rounds[index].add(e);
+      }
+      unawaited(model.rounds[index].close());
+    }
+
+    /// 한 질문을 처음부터 끝까지 정상으로 마친다.
+    Future<void> answered(
+      String question,
+      String answer, {
+      VendorTurnState? state,
+    }) async {
+      final done = chat.ask(question).toList();
+      await pumpEventQueue();
+      finishRound(model.rounds.length - 1, [
+        ModelEvent.textDelta(answer),
+        _done([_text(answer)], StopKind.endTurn, state: state),
+      ]);
+      await done;
+    }
+
+    test('(a) 생각 중(이벤트 전) 멈추면 dropped 이고 기록이 그대로이며 바로 다음 ask 를 받는다', () async {
+      await answered('앞', '앞 답');
+      final events = <ChatEvent>[];
+      chat.ask('첫').listen(events.add);
+      await pumpEventQueue();
+
+      expect(chat.stop(), const ChatStopResult.dropped());
+      await pumpEventQueue();
+      expect(events, isEmpty);
+      expect(model.cancelled[1], isTrue);
+
+      final next = chat.ask('둘').toList();
+      await pumpEventQueue();
+      finishRound(2, [
+        _done([_text('네')], StopKind.endTurn),
+      ]);
+      await next;
+      expect(model.requests[2], [
+        const ChatMessage.user('앞'),
+        _assistant('앞 답'),
+        const ChatMessage.user('둘'),
+      ]);
+    });
+
+    test('(b) 도구 실행 중 멈추면 늦게 끝난 도구 결과가 기록 · 이벤트에 없고 사진 수가 되돌아간다', () async {
+      ToolResult photos(int count) => ToolResult(
+        json: '{"photos":$count}',
+        entryIds: ['late-$count'],
+        images: [
+          for (var i = 0; i < count; i++)
+            ToolImage(mediaType: 'image/jpeg', bytes: Uint8List.fromList([i])),
+        ],
+      );
+      final hold = Completer<ToolResult>();
+      final answers = <Future<ToolResult>>[
+        Future.value(photos(5)),
+        hold.future,
+        Future.value(photos(10)),
+      ];
+      var call = 0;
+      when(
+        () => tools.run('view_entry_photos', any()),
+      ).thenAnswer((_) => answers[call++]);
+
+      final events = <ChatEvent>[];
+      chat.ask('첫').listen(events.add);
+      await pumpEventQueue();
+      finishRound(0, [
+        _done([_toolUse('t1', 'view_entry_photos')], StopKind.toolUse),
+      ]);
+      await pumpEventQueue();
+      finishRound(1, [
+        _done([_toolUse('t2', 'view_entry_photos')], StopKind.toolUse),
+      ]);
+      await pumpEventQueue();
+      expect(call, 2);
+
+      expect(chat.stop(), const ChatStopResult.dropped());
+      hold.complete(photos(3));
+      await pumpEventQueue();
+      expect(events, const [
+        ChatEvent.toolStarted('view_entry_photos'),
+        ChatEvent.toolStarted('view_entry_photos'),
+      ]);
+      expect(model.rounds, hasLength(2));
+
+      final next = chat.ask('둘').toList();
+      await pumpEventQueue();
+      expect(model.requests[2], const [ChatMessage.user('둘')]);
+      finishRound(2, [
+        _done([_toolUse('t3', 'view_entry_photos')], StopKind.toolUse),
+      ]);
+      await pumpEventQueue();
+      final result =
+          (model.requests[3].last as ToolResultsMessage).results.single;
+      expect(result.isError, isFalse);
+      expect(result.images, hasLength(10));
+      finishRound(3, [
+        _done([_text('네')], StopKind.endTurn),
+      ]);
+      await next;
+    });
+
+    test(
+      '(c) 1라운드 도구 뒤 2라운드 글 중간에 멈추면 꼬리가 user + assistant(글 + 표시) 하나로 바뀐다 · (d) 그 다음 질문의 요청 messages 에 부분 답이 들어 있다',
+      () async {
+        when(() => tools.run('search_diary', any())).thenAnswer(
+          (_) async => const ToolResult(json: '{}', entryIds: ['e1']),
+        );
+        await answered('앞', '앞 답', state: _FakeState());
+
+        chat.ask('질문').listen((_) {});
+        await pumpEventQueue();
+        finishRound(1, [
+          _done(
+            [_toolUse('t1', 'search_diary')],
+            StopKind.toolUse,
+            state: _FakeState(),
+          ),
+        ]);
+        await pumpEventQueue();
+        model.rounds[2]
+          ..add(const ModelEvent.textDelta('부분 '))
+          ..add(const ModelEvent.textDelta('글'));
+        await pumpEventQueue();
+
+        expect(
+          chat.stop(),
+          const ChatStopResult.kept(text: '부분 글', citedEntryIds: ['e1']),
+        );
+
+        final next = chat.ask('다음').toList();
+        await pumpEventQueue();
+        final sent = model.requests[3];
+        expect(sent, hasLength(5));
+        expect(sent[0], const ChatMessage.user('앞'));
+        expect(identical(sent[1], model.requests[1][1]), isTrue);
+        expect((sent[1] as AssistantMessage).vendorState, isA<_FakeState>());
+        expect(sent[2], const ChatMessage.user('질문'));
+        final tail = sent[3] as AssistantMessage;
+        expect(tail.vendorState, isNull);
+        expect(tail.parts, const [
+          AssistantPart.text('부분 글\n${ChatSession.stoppedNote}'),
+        ]);
+        expect(sent[4], const ChatMessage.user('다음'));
+        finishRound(3, [
+          _done([_text('네')], StopKind.endTurn),
+        ]);
+        await next;
+      },
+    );
+
+    test('(e) 멈춤 → 질문 → 멈춤 → 질문이 매번 정상이고 StateError 가 없다', () async {
+      for (var i = 0; i < 2; i++) {
+        chat.ask('멈출 $i').listen((_) {});
+        await pumpEventQueue();
+        model.rounds.last.add(ModelEvent.textDelta('글 $i'));
+        await pumpEventQueue();
+        expect(
+          chat.stop(),
+          ChatStopResult.kept(text: '글 $i', citedEntryIds: const []),
+        );
+
+        final events = chat.ask('질문 $i').toList();
+        await pumpEventQueue();
+        finishRound(model.rounds.length - 1, [
+          ModelEvent.textDelta('답 $i'),
+          _done([_text('답 $i')], StopKind.endTurn),
+        ]);
+        expect(await events, [
+          ChatEvent.text('답 $i'),
+          const ChatEvent.finished(citedEntryIds: []),
+        ]);
+      }
+      expect(model.requests.last, [
+        const ChatMessage.user('멈출 0'),
+        _assistant('글 0\n${ChatSession.stoppedNote}'),
+        const ChatMessage.user('질문 0'),
+        _assistant('답 0'),
+        const ChatMessage.user('멈출 1'),
+        _assistant('글 1\n${ChatSession.stoppedNote}'),
+        const ChatMessage.user('질문 1'),
+      ]);
+    });
+
+    test('(f) 멈춘 뒤 늦게 오는 모델 이벤트가 새 질문에 섞이지 않는다', () async {
+      final firstEvents = <ChatEvent>[];
+      chat.ask('첫').listen(firstEvents.add);
+      await pumpEventQueue();
+      model.rounds[0].add(const ModelEvent.textDelta('앞'));
+      await pumpEventQueue();
+
+      chat.stop();
+      final second = chat.ask('둘').toList();
+      await pumpEventQueue();
+      expect(model.cancelled[0], isTrue);
+
+      model.rounds[0]
+        ..add(const ModelEvent.textDelta('늦은 글'))
+        ..add(_done([_text('앞늦은 글')], StopKind.endTurn));
+      finishRound(1, [
+        const ModelEvent.textDelta('새 답'),
+        _done([_text('새 답')], StopKind.endTurn),
+      ]);
+
+      expect(await second, const [
+        ChatEvent.text('새 답'),
+        ChatEvent.finished(citedEntryIds: []),
+      ]);
+      expect(firstEvents, const [ChatEvent.text('앞')]);
+    });
+
+    test('진행 중이 아니면 stop 은 idle 이고 아무것도 바꾸지 않는다', () async {
+      expect(chat.stop(), const ChatStopResult.idle());
+      await answered('앞', '앞 답');
+
+      expect(chat.stop(), const ChatStopResult.idle());
+
+      unawaited(chat.ask('다음').toList());
+      await pumpEventQueue();
+      expect(model.requests.last, [
+        const ChatMessage.user('앞'),
+        _assistant('앞 답'),
+        const ChatMessage.user('다음'),
+      ]);
+    });
+
+    test('글이 공백뿐이면 dropped', () async {
+      chat.ask('첫').listen((_) {});
+      await pumpEventQueue();
+      model.rounds[0].add(const ModelEvent.textDelta(' \n '));
+      await pumpEventQueue();
+
+      expect(chat.stop(), const ChatStopResult.dropped());
+
+      unawaited(chat.ask('둘').toList());
+      await pumpEventQueue();
+      expect(model.requests.last, const [ChatMessage.user('둘')]);
+    });
+
+    test('kept.text 는 흘린 ChatEvent.text 를 이은 것과 같다', () async {
+      when(
+        () => tools.run('search_diary', any()),
+      ).thenAnswer((_) async => const ToolResult(json: '{}'));
+      final events = <ChatEvent>[];
+      chat.ask('첫').listen(events.add);
+      await pumpEventQueue();
+      finishRound(0, [
+        const ModelEvent.textDelta('찾아볼게요. '),
+        _done([
+          _text('찾아볼게요. '),
+          _toolUse('t1', 'search_diary'),
+        ], StopKind.toolUse),
+      ]);
+      await pumpEventQueue();
+      model.rounds[1]
+        ..add(const ModelEvent.textDelta('어제는 '))
+        ..add(const ModelEvent.textDelta('걸었어요'));
+      await pumpEventQueue();
+
+      final result = chat.stop() as ChatStopKept;
+
+      final streamed = [
+        for (final e in events)
+          if (e case ChatText(:final delta)) delta,
+      ].join();
+      expect(result.text, streamed);
+      expect(result.text, '찾아볼게요. 어제는 걸었어요');
+    });
+  });
+
   test('이벤트와 실패에 API 키가 나오지 않는다', () async {
     final model = _FakeModel([
       [const ChatModelException(ChatModelErrorKind.invalidKey)],

@@ -34,10 +34,27 @@ sealed class ChatEvent with _$ChatEvent {
   const factory ChatEvent.failed(ChatFailure failure) = ChatFailed;
 }
 
+/// [ChatSession.stop] 의 결과.
+@freezed
+sealed class ChatStopResult with _$ChatStopResult {
+  /// 진행 중인 질문이 없었다(이미 끝났거나 리셋됨). 아무것도 바꾸지 않았다.
+  const factory ChatStopResult.idle() = ChatStopIdle;
+
+  /// 받은 글을 남겼다. [text] 는 화면에 흘린 글과 같은 문자열, [citedEntryIds] 는 그때까지 도구가 찾은 일기 id.
+  const factory ChatStopResult.kept({
+    required String text,
+    required List<String> citedEntryIds,
+  }) = ChatStopKept;
+
+  /// 받은 글이 없어 질문까지 되돌렸다.
+  const factory ChatStopResult.dropped() = ChatStopDropped;
+}
+
 /// 한 대화. 질문마다 Claude 를 부르고, 도구를 요청하면 실행해 결과를 돌려준다.
 ///
 /// 대화 기록은 덧붙이기만 한다(assistant 턴의 vendorState 도 그대로).
 /// 질문이 실패하거나 중간에 구독이 끊기면 그 질문에서 덧붙인 메시지를 되돌린다.
+/// 멈춤은 꼬리만 글로 바꾼다 — 앞선 기록은 고치지 않는다.
 @lazySingleton
 class ChatSession {
   ChatSession(
@@ -68,6 +85,9 @@ class ChatSession {
   /// 깨진다) 보낸 사진은 매 요청에 다시 실린다 — 대신 한도에서 막는다.
   static const maxImagesPerConversation = 12;
 
+  /// 멈춘 답 끝에 붙여 다음 문맥에 넣는 표시. 기록 기획의 resume 도 같은 상수를 쓴다.
+  static const stoppedNote = '(사용자가 여기서 멈춤)';
+
   static const _photoLimitJson =
       '{"error":"photo_limit_reached","hint":"새 대화를 시작하면 다시 사진을 볼 수 있어요"}';
 
@@ -86,11 +106,48 @@ class ChatSession {
   StreamSubscription<ModelEvent>? _roundSub;
   StreamController<ModelEvent>? _roundRelay;
 
+  /// 진행 중인 질문의 시작점 · 질문 · 흘린 글 · 찾은 일기 id. [stop] 이 쓴다.
+  /// [ask] 에서 동기로 채운다 — [_run] 본문은 구독한 뒤에야 돈다.
+  int _turnStart = 0;
+  int _turnImagesAtStart = 0;
+  String _turnQuestion = '';
+  final _turnText = StringBuffer();
+  final _turnCited = <String>{};
+
   /// 한 번에 하나. 진행 중에 부르면 [StateError].
   Stream<ChatEvent> ask(String question) {
     if (_busy) throw StateError('ChatSession.ask is already running');
     _busy = true;
+    _turnStart = _messages.length;
+    _turnImagesAtStart = _imagesSent;
+    _turnQuestion = question;
+    _turnText.clear();
+    _turnCited.clear();
     return _run(question, _generation);
+  }
+
+  /// 진행 중인 질문을 멈춘다. [reset] 처럼 세대를 올리고 끊지만 대화는 비우지 않는다.
+  /// 이번 질문 몫을 지우고, 받은 글이 있으면 질문과 그 글(+ [stoppedNote])만 남긴다.
+  /// 이벤트는 내지 않는다 — 결과는 반환값으로.
+  ChatStopResult stop() {
+    if (!_busy) return const ChatStopResult.idle();
+    _generation++;
+    _cancelRound();
+    _busy = false;
+    if (_turnStart <= _messages.length) {
+      _messages.removeRange(_turnStart, _messages.length);
+    }
+    _imagesSent = _turnImagesAtStart;
+    final text = _turnText.toString();
+    if (text.trim().isEmpty) return const ChatStopResult.dropped();
+    _messages
+      ..add(ChatMessage.user(_turnQuestion))
+      ..add(
+        ChatMessage.assistant(
+          parts: [AssistantPart.text('$text\n$stoppedNote')],
+        ),
+      );
+    return ChatStopResult.kept(text: text, citedEntryIds: [..._turnCited]);
   }
 
   /// 대화 비우기. 진행 중이어도 부를 수 있다 — 그 질문은 더 덧붙이지도,
@@ -130,7 +187,6 @@ class ChatSession {
       }
       final system = _systemPrompt();
       final tools = _tools.definitions;
-      final cited = <String>{};
       final questionKey = _ids.newId();
       _messages.add(ChatMessage.user(question));
 
@@ -158,6 +214,7 @@ class ChatSession {
           if (stale()) return;
           switch (event) {
             case ModelTextDelta(:final text):
+              _turnText.write(text);
               yield ChatEvent.text(text);
             case ModelCompleted():
               done = event;
@@ -197,7 +254,7 @@ class ChatSession {
                 });
               }
               if (stale()) return;
-              cited.addAll(result.entryIds);
+              _turnCited.addAll(result.entryIds);
               final capped = _capped(result);
               results.add(
                 ToolResultPart(
@@ -214,7 +271,7 @@ class ChatSession {
             return;
           case StopKind.endTurn || StopKind.maxTokens || StopKind.other:
             completed = true;
-            yield ChatEvent.finished(citedEntryIds: List.of(cited));
+            yield ChatEvent.finished(citedEntryIds: List.of(_turnCited));
             return;
         }
       }

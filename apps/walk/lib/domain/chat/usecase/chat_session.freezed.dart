@@ -453,4 +453,308 @@ as ChatFailure,
 
 }
 
+/// @nodoc
+mixin _$ChatStopResult {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatStopResult);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'ChatStopResult()';
+}
+
+
+}
+
+/// @nodoc
+class $ChatStopResultCopyWith<$Res>  {
+$ChatStopResultCopyWith(ChatStopResult _, $Res Function(ChatStopResult) __);
+}
+
+
+/// Adds pattern-matching-related methods to [ChatStopResult].
+extension ChatStopResultPatterns on ChatStopResult {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ChatStopIdle value)?  idle,TResult Function( ChatStopKept value)?  kept,TResult Function( ChatStopDropped value)?  dropped,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case ChatStopIdle() when idle != null:
+return idle(_that);case ChatStopKept() when kept != null:
+return kept(_that);case ChatStopDropped() when dropped != null:
+return dropped(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ChatStopIdle value)  idle,required TResult Function( ChatStopKept value)  kept,required TResult Function( ChatStopDropped value)  dropped,}){
+final _that = this;
+switch (_that) {
+case ChatStopIdle():
+return idle(_that);case ChatStopKept():
+return kept(_that);case ChatStopDropped():
+return dropped(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ChatStopIdle value)?  idle,TResult? Function( ChatStopKept value)?  kept,TResult? Function( ChatStopDropped value)?  dropped,}){
+final _that = this;
+switch (_that) {
+case ChatStopIdle() when idle != null:
+return idle(_that);case ChatStopKept() when kept != null:
+return kept(_that);case ChatStopDropped() when dropped != null:
+return dropped(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function( String text,  List<String> citedEntryIds)?  kept,TResult Function()?  dropped,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case ChatStopIdle() when idle != null:
+return idle();case ChatStopKept() when kept != null:
+return kept(_that.text,_that.citedEntryIds);case ChatStopDropped() when dropped != null:
+return dropped();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function( String text,  List<String> citedEntryIds)  kept,required TResult Function()  dropped,}) {final _that = this;
+switch (_that) {
+case ChatStopIdle():
+return idle();case ChatStopKept():
+return kept(_that.text,_that.citedEntryIds);case ChatStopDropped():
+return dropped();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function( String text,  List<String> citedEntryIds)?  kept,TResult? Function()?  dropped,}) {final _that = this;
+switch (_that) {
+case ChatStopIdle() when idle != null:
+return idle();case ChatStopKept() when kept != null:
+return kept(_that.text,_that.citedEntryIds);case ChatStopDropped() when dropped != null:
+return dropped();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class ChatStopIdle implements ChatStopResult {
+  const ChatStopIdle();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatStopIdle);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'ChatStopResult.idle()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ChatStopKept implements ChatStopResult {
+  const ChatStopKept({required this.text, required final  List<String> citedEntryIds}): _citedEntryIds = citedEntryIds;
+  
+
+ final  String text;
+ final  List<String> _citedEntryIds;
+ List<String> get citedEntryIds {
+  if (_citedEntryIds is EqualUnmodifiableListView) return _citedEntryIds;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_citedEntryIds);
+}
+
+
+/// Create a copy of ChatStopResult
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatStopKeptCopyWith<ChatStopKept> get copyWith => _$ChatStopKeptCopyWithImpl<ChatStopKept>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatStopKept&&(identical(other.text, text) || other.text == text)&&const DeepCollectionEquality().equals(other._citedEntryIds, _citedEntryIds));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,text,const DeepCollectionEquality().hash(_citedEntryIds));
+
+@override
+String toString() {
+  return 'ChatStopResult.kept(text: $text, citedEntryIds: $citedEntryIds)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ChatStopKeptCopyWith<$Res> implements $ChatStopResultCopyWith<$Res> {
+  factory $ChatStopKeptCopyWith(ChatStopKept value, $Res Function(ChatStopKept) _then) = _$ChatStopKeptCopyWithImpl;
+@useResult
+$Res call({
+ String text, List<String> citedEntryIds
+});
+
+
+
+
+}
+/// @nodoc
+class _$ChatStopKeptCopyWithImpl<$Res>
+    implements $ChatStopKeptCopyWith<$Res> {
+  _$ChatStopKeptCopyWithImpl(this._self, this._then);
+
+  final ChatStopKept _self;
+  final $Res Function(ChatStopKept) _then;
+
+/// Create a copy of ChatStopResult
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? text = null,Object? citedEntryIds = null,}) {
+  return _then(ChatStopKept(
+text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
+as String,citedEntryIds: null == citedEntryIds ? _self._citedEntryIds : citedEntryIds // ignore: cast_nullable_to_non_nullable
+as List<String>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ChatStopDropped implements ChatStopResult {
+  const ChatStopDropped();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatStopDropped);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'ChatStopResult.dropped()';
+}
+
+
+}
+
+
+
+
 // dart format on
