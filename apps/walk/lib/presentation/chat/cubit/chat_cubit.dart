@@ -506,10 +506,17 @@ class ChatCubit extends Cubit<ChatState> {
               : _push(p, const ChatProgressStep.thinking()),
         );
       case ChatPhaseChanged(phase: ChatPhase.writing):
+        // 쓰기 단계는 한 번만 — 도구 뒤 다음 라운드에서 다시 쓰면 그 단계를 맨 뒤로 옮긴다.
         _updateProgress(
           (p) => p.current is StepWriting
               ? p
-              : _push(p, const ChatProgressStep.writing()),
+              : p.copyWith(
+                  steps: [
+                    for (final s in p.steps)
+                      if (s is! StepWriting) s,
+                    const ChatProgressStep.writing(),
+                  ],
+                ),
         );
       // 보내는 중은 send 가 이미 넣었다.
       case ChatPhaseChanged(phase: ChatPhase.sending):
@@ -525,6 +532,7 @@ class ChatCubit extends Cubit<ChatState> {
                 )
               : _push(p, ChatProgressStep.note(note)),
         );
+        if (_trace.enabled) _traceVisible();
       case ChatToolStarted(:final callId, :final name, :final input):
         _updateProgress(
           (p) => _moveTool(
@@ -901,9 +909,7 @@ class ChatCubit extends Cubit<ChatState> {
     if (progress == null || !progress.running) return;
     final next = update(progress);
     if (next == progress) return;
-    emit(
-      state.copyWith(bubbles: _withLast((b) => b.copyWith(progress: next))),
-    );
+    emit(state.copyWith(bubbles: _withLast((b) => b.copyWith(progress: next))));
   }
 
   static ChatProgress _push(ChatProgress progress, ChatProgressStep step) =>

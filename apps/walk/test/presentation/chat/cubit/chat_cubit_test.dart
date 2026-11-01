@@ -730,6 +730,28 @@ void main() {
       ]);
     });
 
+    test('진행 노트도 첫 프레임에 firstVisible 을 한 번', () async {
+      final events = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => events.stream);
+      final sent = traced.send('질문');
+
+      events
+        ..add(const ChatEvent.progress('볼게요'))
+        ..add(const ChatEvent.progress('볼게요, 지난주'));
+      await pumpEventQueue();
+      expect(trace.labels, ['begin', ChatTraceMark.send]);
+      pumpFrame();
+      expect(trace.labels, [
+        'begin',
+        ChatTraceMark.send,
+        ChatTraceMark.firstVisible,
+      ]);
+
+      events.add(const ChatEvent.finished(citedEntryIds: []));
+      await events.close();
+      await sent;
+    });
+
     test('글과 끝이 한 프레임 안에 오면 end 는 그 프레임 표시 뒤에', () async {
       when(() => session.ask(any())).thenAnswer(
         (_) => Stream.fromIterable(const [
@@ -1975,6 +1997,28 @@ void main() {
       });
     });
 
+    test('쓰기 → 도구 → 다시 쓰기면 쓰기 단계는 하나로, 맨 뒤로 옮긴다', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        unawaited(c.send('질문'));
+        events
+          ..add(const ChatEvent.phase(ChatPhase.writing))
+          ..add(const ChatEvent.text('먼저 '))
+          ..add(const ChatEvent.toolStarted(callId: 'a', name: 'search_diary'))
+          ..add(const ChatEvent.roundStarted(2))
+          ..add(const ChatEvent.phase(ChatPhase.writing));
+        async.flushMicrotasks();
+
+        expect(progressOf(c)!.steps, const [
+          ChatProgressStep.sending(),
+          ChatProgressStep.tool(callId: 'a', kind: ChatToolKind.searchDiary),
+          ChatProgressStep.writing(),
+        ]);
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
     test('같은 callId 의 toolStarted 두 번은 단계 하나로 합치고 input 을 채운다', () {
       fakeAsync((async) {
         final c = ready(async);
@@ -2203,9 +2247,9 @@ void main() {
     test('멈추면 1초여도 마지막 단계 stopped 로 남는다', () {
       fakeAsync((async) {
         final c = ready(async);
-        when(() => session.stop()).thenReturn(
-          const ChatStopResult.kept(text: '반', citedEntryIds: []),
-        );
+        when(
+          () => session.stop(),
+        ).thenReturn(const ChatStopResult.kept(text: '반', citedEntryIds: []));
         unawaited(c.send('질문'));
         events.add(const ChatEvent.text('반'));
         async.elapse(const Duration(seconds: 1));

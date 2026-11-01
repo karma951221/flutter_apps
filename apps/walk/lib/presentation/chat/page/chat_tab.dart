@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
@@ -24,6 +26,7 @@ import '../../lock/widget/diary_lock_gate.dart';
 import '../../settings/open_settings.dart';
 import '../../shell/widget/feature_menu.dart';
 import '../cubit/chat_cubit.dart';
+import '../cubit/chat_progress.dart';
 import '../cubit/chat_state.dart';
 import '../widget/bubble_actions_sheet.dart';
 import '../widget/chat_bubble_view.dart';
@@ -522,6 +525,14 @@ class _Conversation extends StatelessWidget {
 ///
 /// 위로 올려 둔 채(화면 높이의 ¼ 넘게) 답이 자라면 끌어내리지 않고 [ChatJumpToLatest] 를
 /// 띄운다(스펙 §3.5, Q8). 맨 아래로 돌아오거나 답이 끝나면 숨긴다.
+///
+/// 읽던 자리 지키기: `reverse` 목록에서 마지막 말풍선이 자라면 앞 말풍선이 위로 밀린다. 위로
+/// 올려 둔 동안엔 마지막 말풍선의 높이 변화([_HeightReporter])만큼 같은 레이아웃 안에서
+/// 스크롤 위치를 옮겨([_KeepReadingPhysics]) 읽던 말풍선이 그 자리에 있게 한다. 답하는 중에
+/// 올려 둔 뒤로 맨 아래로 돌아올 때까지 지킨다 — 끝난 뒤 진행 줄이 요약으로 접히는 것도 포함.
+///
+/// 말풍선 항목은 말풍선 번호로 키를 둔다 — 새 말풍선이 붙어도 펼친 요약 같은 화면 상태가
+/// 제 말풍선에 남는다.
 class _BubbleList extends StatefulWidget {
   const _BubbleList({required this.onOpenSettings});
 
@@ -534,7 +545,14 @@ class _BubbleList extends StatefulWidget {
 class _BubbleListState extends State<_BubbleList> {
   final _controller = ScrollController();
 
+  late final _growth = _Growth(onGrew: _onGrew);
+
+  late final _physics = _KeepReadingPhysics(_growth);
+
   bool _showJump = false;
+
+  /// 답하는 중에 위로 올려 둔 뒤 맨 아래로 돌아오기 전까지 — 마지막 말풍선의 높이 변화를 막는다.
+  bool _keep = false;
 
   /// 맨 아래에서 이만큼(화면 높이 대비) 넘게 올라가 있으면 "위로 올려 둔" 것으로 본다.
   static const _awayFraction = 4;
@@ -552,16 +570,30 @@ class _BubbleListState extends State<_BubbleList> {
 
   @override
   void dispose() {
+    _growth.onGrew = null;
     _controller.dispose();
     super.dispose();
   }
 
+  /// [_Growth.armed] 를 맞춘다. 레이아웃 전에(스크롤 · 상태가 바뀔 때) 부른다.
+  void _syncArm() {
+    final away = _away;
+    final busy = context.read<ChatCubit>().state.busy;
+    if (busy && away) _keep = true;
+    if (!away) _keep = false;
+    _growth.armed = _keep && away;
+  }
+
   void _onScroll() {
+    _syncArm();
     if (_showJump && !_away) setState(() => _showJump = false);
   }
 
   void _onGrew() {
-    if (!_showJump && _away) setState(() => _showJump = true);
+    if (!mounted) return;
+    if (!_showJump && _away && context.read<ChatCubit>().state.busy) {
+      setState(() => _showJump = true);
+    }
   }
 
   void _hide() {
@@ -590,6 +622,12 @@ class _BubbleListState extends State<_BubbleList> {
     return MultiBlocListener(
       listeners: [
         BlocListener<ChatCubit, ChatState>(
+          listenWhen: (a, b) => a.busy != b.busy,
+          listener: (_, _) => _syncArm(),
+        ),
+        // 글이 자랐다 — 마지막 말풍선이 그려지지 않을 만큼 올라가 있어도 알린다.
+        // 진행 줄처럼 글 없이 자라는 것은 [_HeightReporter] 가 알린다.
+        BlocListener<ChatCubit, ChatState>(
           listenWhen: (a, b) =>
               b.busy &&
               a.bubbles.lastOrNull?.text.length !=
@@ -605,14 +643,26 @@ class _BubbleListState extends State<_BubbleList> {
         children: [
           ListView.separated(
             controller: _controller,
+            physics: _physics,
             reverse: true,
             padding: const EdgeInsets.all(AppSpacing.md),
             itemCount: count,
+            findItemIndexCallback: (key) =>
+                count - 1 - (key as ValueKey<int>).value,
             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-            itemBuilder: (context, i) => _BubbleItem(
-              index: count - 1 - i,
-              onOpenSettings: widget.onOpenSettings,
-            ),
+            itemBuilder: (context, i) {
+              final index = count - 1 - i;
+              return _HeightReporter(
+                key: ValueKey(index),
+                growth: _growth,
+                index: index,
+                tracked: i == 0,
+                child: _BubbleItem(
+                  index: index,
+                  onOpenSettings: widget.onOpenSettings,
+                ),
+              );
+            },
           ),
           if (_showJump)
             PositionedDirectional(
@@ -623,6 +673,149 @@ class _BubbleListState extends State<_BubbleList> {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// 마지막 말풍선의 높이 변화를 모아 두는 곳. [_HeightReporter] 가 레이아웃 중에 쌓고,
+/// 같은 레이아웃의 [_KeepReadingPhysics] 가 꺼내 스크롤 위치에 더한다.
+class _Growth {
+  _Growth({this.onGrew});
+
+  /// 쌓을까 — 위로 올려 둔 동안만([_BubbleListState._syncArm]).
+  bool armed = false;
+
+  /// 아직 스크롤 위치에 더하지 않은 높이 변화.
+  double _pending = 0;
+
+  /// 자랐을 때(프레임 뒤에 한 번).
+  VoidCallback? onGrew;
+
+  bool _scheduled = false;
+  bool _grew = false;
+
+  void report(double delta) {
+    if (armed) _pending += delta;
+    if (delta > 0) _grew = true;
+    if (_scheduled) return;
+    _scheduled = true;
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _scheduled = false;
+      // 이 프레임에 쓰이지 않은 변화는 버린다 — 나중 레이아웃에 엉뚱하게 더하지 않게.
+      _pending = 0;
+      final grew = _grew;
+      _grew = false;
+      if (grew) onGrew?.call();
+    });
+  }
+
+  double take() {
+    final pending = _pending;
+    _pending = 0;
+    return pending;
+  }
+}
+
+/// 자식 높이가 바뀌면 [_Growth] 에 알린다. [tracked](마지막 말풍선)일 때만, 그리고 같은 말풍선
+/// ([index])의 두 번째 레이아웃부터 — 처음 그려지거나 다른 말풍선이 되면 기준만 잡는다.
+class _HeightReporter extends SingleChildRenderObjectWidget {
+  const _HeightReporter({
+    required this.growth,
+    required this.index,
+    required this.tracked,
+    required super.child,
+    super.key,
+  });
+
+  final _Growth growth;
+  final int index;
+  final bool tracked;
+
+  @override
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderHeightReporter(growth, index: index, tracked: tracked);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _RenderHeightReporter renderObject,
+  ) {
+    renderObject
+      ..growth = growth
+      ..index = index
+      ..tracked = tracked;
+  }
+}
+
+class _RenderHeightReporter extends RenderProxyBox {
+  _RenderHeightReporter(
+    this.growth, {
+    required int index,
+    required bool tracked,
+  }) : _index = index,
+       _tracked = tracked;
+
+  _Growth growth;
+
+  int _index;
+  set index(int value) {
+    if (value == _index) return;
+    _index = value;
+    _last = null;
+  }
+
+  bool _tracked;
+  set tracked(bool value) {
+    if (value == _tracked) return;
+    _tracked = value;
+    _last = null;
+  }
+
+  /// 지난 레이아웃의 높이. null 이면 기준이 없다.
+  double? _last;
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    final height = size.height;
+    final last = _last;
+    _last = height;
+    if (_tracked && last != null && height != last) {
+      growth.report(height - last);
+    }
+  }
+}
+
+/// 같은 레이아웃 안에서 [_Growth] 에 쌓인 높이 변화만큼 스크롤 위치를 옮긴다 — `reverse`
+/// 목록에서 마지막 말풍선이 자라도 앞 말풍선이 화면에서 움직이지 않는다. 쌓인 게 없으면 부모 그대로.
+class _KeepReadingPhysics extends ScrollPhysics {
+  const _KeepReadingPhysics(this.growth, {super.parent});
+
+  final _Growth growth;
+
+  @override
+  _KeepReadingPhysics applyTo(ScrollPhysics? ancestor) =>
+      _KeepReadingPhysics(growth, parent: buildParent(ancestor));
+
+  @override
+  double adjustPositionForNewDimensions({
+    required ScrollMetrics oldPosition,
+    required ScrollMetrics newPosition,
+    required bool isScrolling,
+    required double velocity,
+  }) {
+    final pending = growth.take();
+    if (pending != 0) {
+      return (newPosition.pixels + pending).clamp(
+        newPosition.minScrollExtent,
+        newPosition.maxScrollExtent,
+      );
+    }
+    return super.adjustPositionForNewDimensions(
+      oldPosition: oldPosition,
+      newPosition: newPosition,
+      isScrolling: isScrolling,
+      velocity: velocity,
     );
   }
 }
@@ -698,10 +891,15 @@ class _BubbleItem extends StatelessWidget {
         );
     if (bubble == null) return const SizedBox.shrink();
     final pending = busy && last;
+    // 커서는 답을 쓰는 단계에서만 — 글 뒤에 도구를 부르는 동안엔 깜빡이지 않는다.
+    final writing = switch (bubble.progress) {
+      null => true,
+      final p => p.current is StepWriting,
+    };
     return ChatBubbleView(
       bubble: bubble,
       pending: pending,
-      streaming: pending && bubble.text.isNotEmpty,
+      streaming: pending && bubble.text.isNotEmpty && writing,
       onOpenCited: (cited, entry) => _open(context, cited, entry),
       onOpenSettings: onOpenSettings,
       // 답하는 중엔 턴을 지우지 않는다.

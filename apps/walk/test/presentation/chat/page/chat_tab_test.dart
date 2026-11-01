@@ -4,6 +4,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
@@ -1542,6 +1543,182 @@ void main() {
       expect(list(tester).pixels, 0);
       expect(find.byType(ChatJumpToLatest), findsNothing);
       await finish(tester);
+    });
+
+    /// 한 프레임. 글은 0초 타이머로 모아 그리므로 시간을 조금 흘린다.
+    Future<void> frame(WidgetTester tester) =>
+        tester.pump(const Duration(milliseconds: 16));
+
+    /// [text] 를 품은 말풍선 안의 진행 줄에서 [f] 를 찾는다.
+    Finder progressIn(String text, Finder f) => find.descendant(
+      of: find.ancestor(
+        of: find.text(text),
+        matching: find.byType(ChatBubbleView),
+      ),
+      matching: inProgress(f),
+    );
+
+    testWidgets('펼친 요약은 새 답이 붙어도 제 말풍선에 남고, 새 요약은 접혀 있다', (tester) async {
+      await pump(tester);
+      await ask(tester);
+      await elapse(tester, 3);
+      events.add(const ChatEvent.text('첫 답'));
+      await finish(tester);
+      await tester.tap(progressIn('첫 답', find.text('▸')));
+      await tester.pumpAndSettle();
+      expect(progressIn('첫 답', find.text('▾')), findsOneWidget);
+
+      events = StreamController<ChatEvent>();
+      await ask(tester);
+      await elapse(tester, 3);
+      events.add(const ChatEvent.text('둘째 답'));
+      await finish(tester);
+
+      expect(progressIn('둘째 답', find.text('▸')), findsOneWidget);
+      expect(progressIn('둘째 답', find.text('▾')), findsNothing);
+      expect(progressIn('첫 답', find.text('▾')), findsOneWidget);
+    });
+
+    testWidgets('글 뒤에 도구를 부르는 동안엔 커서가 없고, 다시 쓰면 돌아온다', (tester) async {
+      final cursor = find.textContaining('▍', findRichText: true);
+      await pump(tester);
+      await ask(tester);
+      events
+        ..add(const ChatEvent.phase(ChatPhase.writing))
+        ..add(const ChatEvent.text('먼저 '));
+      await frame(tester);
+      expect(cursor, findsOneWidget);
+
+      events.add(
+        const ChatEvent.toolStarted(callId: 't1', name: 'search_diary'),
+      );
+      await frame(tester);
+      expect(cursor, findsNothing);
+
+      events
+        ..add(const ChatEvent.roundStarted(2))
+        ..add(const ChatEvent.phase(ChatPhase.writing))
+        ..add(const ChatEvent.text('이어서'));
+      await frame(tester);
+      expect(cursor, findsOneWidget);
+      await finish(tester);
+    });
+
+    group('읽던 자리', () {
+      /// 짧은 첫 턴을 끝내고, 둘째 질문의 답을 [lines] 줄 받는다(아직 답하는 중).
+      Future<void> twoTurns(WidgetTester tester, {int lines = 20}) async {
+        await pump(tester);
+        await ask(tester);
+        events.add(const ChatEvent.text('첫 답'));
+        await finish(tester);
+        events = StreamController<ChatEvent>();
+        await ask(tester);
+        events
+          ..add(const ChatEvent.phase(ChatPhase.writing))
+          ..add(ChatEvent.text(List.filled(lines, '산책했어요').join('\n')));
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      /// 첫 답 말풍선이 보이도록 위로 올린다(¼ 화면 넘게). 끝까지 당기면 늘어나는 오버스크롤
+      /// 효과가 말풍선을 움직이므로 맨 위 조금 아래까지만 끈다.
+      Future<void> scrollUp(WidgetTester tester) async {
+        final max = list(tester).maxScrollExtent;
+        // 멈춘 뒤 떼서 튕기지 않는다(fling 없음).
+        final gesture = await tester.startGesture(
+          tester.getCenter(find.byType(ListView)),
+        );
+        await gesture.moveBy(const Offset(0, kTouchSlop + 1));
+        await gesture.moveBy(Offset(0, max - 20));
+        await tester.pump(const Duration(milliseconds: 300));
+        await gesture.up();
+        await tester.pump(const Duration(milliseconds: 500));
+        final position = list(tester);
+        expect(position.pixels, greaterThan(position.viewportDimension / 4));
+        expect(position.pixels, lessThan(position.maxScrollExtent));
+        expect(find.text('첫 답').hitTestable(), findsOneWidget);
+      }
+
+      double top(WidgetTester tester) => tester.getTopLeft(find.text('첫 답')).dy;
+
+      testWidgets('위로 올려 둔 채 글 · 진행 줄이 자라고 요약으로 접혀도 앞 말풍선이 움직이지 않는다', (
+        tester,
+      ) async {
+        await twoTurns(tester);
+        await scrollUp(tester);
+        final before = top(tester);
+        final pixels = list(tester).pixels;
+
+        events.add(const ChatEvent.text('\n더 걸었어요\n또 걸었어요'));
+        await frame(tester);
+        expect(top(tester), moreOrLessEquals(before, epsilon: 0.5));
+        expect(list(tester).pixels, greaterThan(pixels));
+
+        // 진행 줄이 바뀐다(노트 → 도구, 문구가 페이드로 바뀌는 동안).
+        events.add(
+          ChatEvent.progress(List.filled(30, '지난주 일기를 볼게요').join(' ')),
+        );
+        await frame(tester);
+        expect(top(tester), moreOrLessEquals(before, epsilon: 0.5));
+        events.add(
+          const ChatEvent.toolStarted(callId: 't1', name: 'search_diary'),
+        );
+        await frame(tester);
+        expect(top(tester), moreOrLessEquals(before, epsilon: 0.5));
+        await elapse(tester, 3);
+        expect(top(tester), moreOrLessEquals(before, epsilon: 0.5));
+
+        // 3초 넘게 끝나 진행 줄이 접힌 요약으로 바뀐다(높이가 바뀌는 애니메이션 프레임마다).
+        final running = list(tester).pixels;
+        events.add(const ChatEvent.finished(citedEntryIds: []));
+        await frame(tester);
+        expect(top(tester), moreOrLessEquals(before, epsilon: 0.5));
+        for (var i = 0; i < 10; i++) {
+          await tester.pump(const Duration(milliseconds: 50));
+          expect(
+            top(tester),
+            moreOrLessEquals(before, epsilon: 0.5),
+            reason: 'frame $i',
+          );
+        }
+        await tester.pumpAndSettle();
+        expect(inProgress(find.text('▸')), findsOneWidget);
+        expect(top(tester), moreOrLessEquals(before, epsilon: 0.5));
+        // 요약 줄 높이만큼 위치를 옮겨 지켰다(옮길 게 없던 게 아니다).
+        expect(list(tester).pixels, isNot(moreOrLessEquals(running)));
+      });
+
+      testWidgets('맨 아래(offset 0)에 있으면 목록이 따라 내려간다', (tester) async {
+        await twoTurns(tester, lines: 5);
+        expect(list(tester).pixels, 0);
+        final before = top(tester);
+
+        events.add(const ChatEvent.text('\n더 걸었어요\n또 걸었어요'));
+        await frame(tester);
+
+        expect(list(tester).pixels, 0);
+        expect(top(tester), lessThan(before - 1));
+        await finish(tester);
+      });
+
+      testWidgets('맨 아래로 다시 내리면 [↓ 새 답]이 사라지고, 그 뒤엔 목록이 따라 내려간다', (
+        tester,
+      ) async {
+        await twoTurns(tester);
+        await scrollUp(tester);
+        events.add(const ChatEvent.text('\n더 걸었어요'));
+        await frame(tester);
+        expect(find.byType(ChatJumpToLatest), findsOneWidget);
+
+        await tester.drag(find.byType(ListView), const Offset(0, -2000));
+        await tester.pump(const Duration(seconds: 1));
+        expect(list(tester).pixels, 0);
+        expect(find.byType(ChatJumpToLatest), findsNothing);
+
+        events.add(const ChatEvent.text('\n마지막'));
+        await frame(tester);
+        expect(list(tester).pixels, 0);
+        await finish(tester);
+      });
     });
 
     testWidgets('경과 초가 올라도 사용자 말풍선과 입력칸은 다시 그리지 않는다', (tester) async {
