@@ -15,6 +15,8 @@ import '../entity/conversation.dart';
 import '../tool/life_tools.dart';
 import '../tool/tool_result.dart';
 import '../tool/tool_summary.dart';
+import '../tool/wiki_tools.dart';
+import '../wiki/wiki_context_policy.dart';
 import 'chat_model_choice.dart';
 
 part 'chat_session.freezed.dart';
@@ -115,6 +117,7 @@ typedef ChatTarget = ({ChatVendor vendor, String model});
 /// 예외는 벤더가 바뀔 때 — 다음 질문 전에 문맥을 글로 접는다([target]). 같은 벤더 안에서
 /// 모델만 바뀌면 그대로 보내고, 어댑터가 다른 모델의 턴을 다시 만든다.
 /// 사진 못 보는 모델에는 요청에서만 사진을 뺀다(메모리 문맥은 그대로).
+/// 질문마다 WikiContextPolicy 로 위키 색인 · read_wiki 를 붙인다 — 임시 대화는 붙이지 않는다.
 @lazySingleton
 class ChatSession {
   ChatSession(
@@ -126,6 +129,8 @@ class ChatSession {
     this._usage,
     this._ids,
     this._trace,
+    this._wiki,
+    this._wikiTools,
   );
 
   final ChatModelRegistry _registry;
@@ -136,6 +141,8 @@ class ChatSession {
   final ChatUsageLog _usage;
   final IdGenerator _ids;
   final ChatTrace _trace;
+  final WikiContextPolicy _wiki;
+  final WikiTools _wikiTools;
 
   static const maxRounds = 8;
 
@@ -366,13 +373,21 @@ class ChatSession {
         return;
       }
       requestTarget = target;
+      // 질문마다 한 번 — 이 질문의 라운드 동안 system · 도구가 고정된다.
+      final wiki = _temporary ? WikiContext.none : await _safeWiki(question);
+      if (stale()) return;
       final model = _registry.of(target.vendor);
       // 질문 동안 고정한다 — 그 사이 모델 · 빠른 출력을 바꾸면 다음 질문부터.
       final fastMode = _choice.fastModeOn;
       // 이미지 거절(imagesUnsupported)을 받으면 이 질문의 남은 요청은 사진 없이.
       var images = _choice.supportsImages;
       var retriedWithoutImages = false;
-      final system = _systemPrompt(progressNotes: model.progressNotes);
+      final system = _systemPrompt(
+        progressNotes: model.progressNotes,
+        wikiSection: wiki.systemSection,
+      );
+      // 위키 도구가 실린 질문에서만 read_wiki 를 WikiTools 로 보낸다.
+      final wikiOn = wiki.tools.isNotEmpty;
       final questionKey = _ids.newId();
       _messages.add(ChatMessage.user(question));
 
@@ -395,7 +410,7 @@ class ChatSession {
             fastMode: fastMode,
             system: system,
             messages: _requestMessages(images: images),
-            tools: _tools.definitionsFor(images: images),
+            tools: _toolsFor(images: images, wiki: wiki),
           );
           if (_trace.enabled) _trace.mark(ChatTraceMark.round, {'n': round});
           StreamSubscription<ModelEvent>? roundSub;
@@ -437,6 +452,8 @@ class ChatSession {
                     target,
                     request,
                     event.usage,
+                    wiki,
+                    _readWikiCalls(event.message),
                   );
                 case ModelThinking():
                   if (phase != ChatPhase.thinking) {
@@ -507,7 +524,11 @@ class ChatSession {
               }
             }
             final futures = [
-              for (final c in calls) _tools.run(c.name, c.input),
+              for (final c in calls)
+                if (wikiOn && c.name == WikiTools.readWikiName)
+                  _wikiTools.readWiki(c.input)
+                else
+                  _tools.run(c.name, c.input),
             ];
             final results = List<ToolResult?>.filled(calls.length, null);
             await for (final (i, result) in _inCompletionOrder(futures)) {
@@ -623,6 +644,8 @@ class ChatSession {
     ChatTarget requestTarget,
     ModelRequest request,
     TokenUsage? usage,
+    WikiContext wiki,
+    int readWikiCalls,
   ) {
     if (usage == null) return;
     final record = ChatUsageRecord(
@@ -639,10 +662,32 @@ class ChatSession {
       cacheReadTokens: usage.cacheReadTokens,
       cacheWriteTokens: usage.cacheWriteTokens,
       reasoningTokens: usage.reasoningTokens,
+      wikiIndexNotes: wiki.indexNotes,
+      wikiIndexChars: wiki.indexChars,
+      readWikiCalls: readWikiCalls,
     );
     unawaited(
       Future.sync(() => _usage.record(record)).catchError((Object _) {}),
     );
+  }
+
+  /// LifeTools 정의 뒤에 위키 도구. 위키가 없으면 LifeTools 정의 그대로.
+  List<ToolSpec> _toolsFor({required bool images, required WikiContext wiki}) {
+    final life = _tools.definitionsFor(images: images);
+    return wiki.tools.isEmpty ? life : [...life, ...wiki.tools];
+  }
+
+  static int _readWikiCalls(AssistantMessage message) => message.parts
+      .where((p) => p is ToolCallPart && p.name == WikiTools.readWikiName)
+      .length;
+
+  /// 정책이 던지면 위키 없이 — 질문은 계속한다.
+  Future<WikiContext> _safeWiki(String question) async {
+    try {
+      return await _wiki.build(question: question);
+    } catch (_) {
+      return WikiContext.none;
+    }
   }
 
   /// 키 상태를 남긴다(§7.3). 기다리지 않고, 실패해도 답에 영향을 주지 않는다.
@@ -712,16 +757,19 @@ class ChatSession {
   /// 도구 전 한 줄 안내. [ChatModel.progressNotes] 인 모델에만 넣는다(V5 결과로 빼기 쉽게 상수).
   static const _noteHint = '도구를 쓰기 전에 무엇을 볼지 한 줄로 말해.';
 
-  /// 날짜 줄은 맨 끝 — 그 앞까지가 날마다 같은 캐시 접두부다.
-  String _systemPrompt({required bool progressNotes}) {
+  /// 순서: 규약 → 위키 절(있을 때) → 도구 전 안내 → 날짜 줄. 날짜 줄은 맨 끝 —
+  /// 그 앞까지가 날마다(위키가 그대로면) 같은 캐시 접두부다.
+  String _systemPrompt({required bool progressNotes, String? wikiSection}) {
     final now = _clock.now();
     final today = DateFormat('yyyy-MM-dd (E)', 'ko').format(now);
+    final grounds = wikiSection == null ? '찾은 기록에' : '찾은 기록과 위키에';
     return '너는 사용자의 개인 기록 앱 Life Tool 안의 도우미다.\n'
-        '사용자의 일기 · 걸음 수 · 알람 기상 기록을 도구로 찾아보고, 찾은 기록에 근거해서만 답한다.\n'
+        '사용자의 일기 · 걸음 수 · 알람 기상 기록을 도구로 찾아보고, $grounds 근거해서만 답한다.\n'
         '기록에서 찾지 못한 것은 추측하지 말고 "기록에서 찾지 못했어요"라고 말한다.\n'
         '날짜는 사용자의 말("지난주", "어제")을 오늘 기준으로 바꿔 도구에 넘긴다.\n'
         '사진 보기 도구가 없으면 사진은 볼 수 없다고 짧게 답한다.\n'
         '한국어로, 마크다운 없이 짧은 평문으로 답한다.\n'
+        '${wikiSection == null ? '' : '\n$wikiSection\n\n'}'
         '${progressNotes ? '$_noteHint\n' : ''}'
         '오늘은 $today, 시간대는 ${now.timeZoneName} 이다.';
   }

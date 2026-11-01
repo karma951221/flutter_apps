@@ -426,6 +426,8 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i520.ChatUsageLog>(),
         gh<_i494.IdGenerator>(),
         gh<_i825.ChatTrace>(),
+        gh<_i795.WikiContextPolicy>(),
+        gh<_i268.WikiTools>(),
       ),
     );
     return this;

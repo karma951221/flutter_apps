@@ -15,9 +15,11 @@ import 'package:walk/domain/chat/entity/conversation.dart';
 import 'package:walk/domain/chat/tool/life_tools.dart';
 import 'package:walk/domain/chat/tool/tool_result.dart';
 import 'package:walk/domain/chat/tool/tool_summary.dart';
+import 'package:walk/domain/chat/tool/wiki_tools.dart';
 import 'package:walk/domain/chat/chat_model_rules.dart';
 import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
+import 'package:walk/domain/chat/wiki/wiki_context_policy.dart';
 
 import '../../../support/fake_chat_key_verifier.dart';
 import '../../../support/fake_chat_model_catalog.dart';
@@ -27,6 +29,23 @@ import '../../../support/fake_chat_usage_log.dart';
 import '../../../support/recording_chat_trace.dart';
 
 class _MockLifeTools extends Mock implements LifeTools {}
+
+class _MockWikiTools extends Mock implements WikiTools {}
+
+/// 받은 질문을 기록하고 [context] 를 돌려준다. [error] 가 있으면 던진다.
+class _FakeWikiPolicy implements WikiContextPolicy {
+  WikiContext context = WikiContext.none;
+  Object? error;
+  final questions = <String>[];
+
+  @override
+  Future<WikiContext> build({required String question}) async {
+    questions.add(question);
+    final e = error;
+    if (e != null) throw e;
+    return context;
+  }
+}
 
 class _SeqIds implements IdGenerator {
   int _n = 0;
@@ -158,6 +177,8 @@ void main() {
   late FakeChatModelCatalog catalog;
   late FakeChatKeyVerifier verifier;
   late ChatModelChoice choice;
+  late _FakeWikiPolicy wiki;
+  late _MockWikiTools wikiTools;
   final clock = _FixedClock(DateTime(2026, 10, 27, 9));
   const definitions = [
     ToolSpec(name: 'search_diary', description: 'd', parameters: {}),
@@ -174,6 +195,8 @@ void main() {
 
   setUp(() async {
     tools = _MockLifeTools();
+    wiki = _FakeWikiPolicy();
+    wikiTools = _MockWikiTools();
     when(() => tools.definitions).thenReturn(definitions);
     when(() => tools.definitionsFor(images: true)).thenReturn(definitions);
     when(
@@ -209,6 +232,8 @@ void main() {
     usage,
     ids,
     const NoopChatTrace(),
+    wiki,
+    wikiTools,
   );
 
   ChatSession session(_FakeModel model) => ChatSession(
@@ -220,6 +245,8 @@ void main() {
     usage,
     ids,
     const NoopChatTrace(),
+    wiki,
+    wikiTools,
   );
 
   group('사용량 기록', () {
@@ -714,6 +741,8 @@ void main() {
         usage,
         ids,
         const NoopChatTrace(),
+        wiki,
+        wikiTools,
       );
       final events = <ChatEvent>[];
       chat.ask('지난주').listen(events.add);
@@ -904,6 +933,8 @@ void main() {
       usage,
       ids,
       trace,
+      wiki,
+      wikiTools,
     ).ask('질문').toList();
 
     expect(trace.labels, [
@@ -940,6 +971,8 @@ void main() {
       usage,
       ids,
       trace,
+      wiki,
+      wikiTools,
     ).ask('질문').toList();
     expect(trace.marks, isEmpty);
   });
@@ -961,6 +994,8 @@ void main() {
         usage,
         ids,
         trace,
+        wiki,
+        wikiTools,
       );
 
       chat.ask('첫').listen((_) {});
@@ -996,6 +1031,8 @@ void main() {
         usage,
         ids,
         trace,
+        wiki,
+        wikiTools,
       );
 
       chat.ask('첫').listen((_) {});
@@ -1394,6 +1431,8 @@ void main() {
             usage,
             ids,
             const NoopChatTrace(),
+            wiki,
+            wikiTools,
           );
           final events = chat.ask('질문').toList();
           await pumpEventQueue();
@@ -1431,6 +1470,8 @@ void main() {
           usage,
           ids,
           const NoopChatTrace(),
+          wiki,
+          wikiTools,
         );
         final first = chat.ask('첫').toList();
         await pumpEventQueue();
@@ -1534,6 +1575,8 @@ void main() {
       usage,
       ids,
       const NoopChatTrace(),
+      wiki,
+      wikiTools,
     );
 
     await chat.ask('하나').toList();
@@ -1559,6 +1602,8 @@ void main() {
       usage,
       ids,
       const NoopChatTrace(),
+      wiki,
+      wikiTools,
     );
 
     final first = chat.ask('첫').toList();
@@ -1586,6 +1631,8 @@ void main() {
             usage,
             ids,
             const NoopChatTrace(),
+            wiki,
+            wikiTools,
           );
 
           final firstEvents = <ChatEvent>[];
@@ -1636,6 +1683,8 @@ void main() {
       usage,
       ids,
       const NoopChatTrace(),
+      wiki,
+      wikiTools,
     );
 
     test('라운드 중 reset 하면 모델 구독을 바로 취소한다', () async {
@@ -1716,6 +1765,262 @@ void main() {
     });
   });
 
+  group('위키', () {
+    const section = '위키 안내\n<wiki_index>\n[[1]] 메모1 — 요약1\n</wiki_index>';
+    const withWiki = WikiContext(
+      systemSection: section,
+      tools: [WikiTools.spec],
+      indexNotes: 3,
+      indexChars: 120,
+    );
+    const u1 = TokenUsage(inputTokens: 100, outputTokens: 20);
+    const u2 = TokenUsage(inputTokens: 150, outputTokens: 30);
+    final dateLine = '오늘은 2026-10-27 (화), 시간대는 ${clock.value.timeZoneName} 이다.';
+
+    String bodyOf(ModelRequest r) =>
+        '${r.system}\n${r.tools.map((t) => t.name).join(',')}';
+
+    setUp(() {
+      when(
+        () => wikiTools.readWiki(any()),
+      ).thenAnswer((_) async => const ToolResult(json: '{"notes":[]}'));
+      when(
+        () => tools.run('search_diary', any()),
+      ).thenAnswer((_) async => const ToolResult(json: '{}'));
+      when(() => tools.run('read_wiki', any())).thenAnswer(
+        (_) async =>
+            const ToolResult(json: '{"error":"unknown_tool"}', isError: true),
+      );
+    });
+
+    test('위키가 있으면 system 에 위키 절이, tools 끝에 read_wiki 가 붙는다', () async {
+      wiki.context = withWiki;
+      final model = _FakeModel([_answer('네')]);
+
+      await session(model).ask('질문').toList();
+
+      final request = model.requests.single;
+      expect(request.system, contains(section));
+      expect(request.system, contains('찾은 기록과 위키에 근거해서만 답한다.'));
+      expect(request.tools.map((t) => t.name), [
+        'search_diary',
+        'view_entry_photos',
+        WikiTools.readWikiName,
+      ]);
+    });
+
+    test('system 의 마지막 줄은 오늘 날짜이고 위키 절은 그 앞', () async {
+      wiki.context = withWiki;
+      final model = _FakeModel([_answer('네')])..progressNotes = true;
+
+      await session(model).ask('질문').toList();
+
+      final system = model.requests.single.system;
+      final lines = system.split('\n');
+      expect(lines.last, dateLine);
+      expect(
+        system.indexOf('</wiki_index>'),
+        lessThan(system.indexOf(dateLine)),
+      );
+      expect(
+        system.indexOf('</wiki_index>'),
+        lessThan(system.indexOf('도구를 쓰기 전에')),
+      );
+      expect(
+        system.indexOf('한국어로, 마크다운 없이'),
+        lessThan(system.indexOf('<wiki_index>')),
+      );
+    });
+
+    test('정책이 none 이면 위키 절 · read_wiki 가 없고 system 은 지금 문장과 같다', () async {
+      final model = _FakeModel([_answer('네')]);
+
+      await session(model).ask('질문').toList();
+
+      final request = model.requests.single;
+      expect(
+        request.system,
+        '너는 사용자의 개인 기록 앱 Life Tool 안의 도우미다.\n'
+        '사용자의 일기 · 걸음 수 · 알람 기상 기록을 도구로 찾아보고, 찾은 기록에 근거해서만 답한다.\n'
+        '기록에서 찾지 못한 것은 추측하지 말고 "기록에서 찾지 못했어요"라고 말한다.\n'
+        '날짜는 사용자의 말("지난주", "어제")을 오늘 기준으로 바꿔 도구에 넘긴다.\n'
+        '사진 보기 도구가 없으면 사진은 볼 수 없다고 짧게 답한다.\n'
+        '한국어로, 마크다운 없이 짧은 평문으로 답한다.\n'
+        '$dateLine',
+      );
+      expect(request.tools, definitions);
+    });
+
+    test(
+      '임시 대화(reset · resume temporary: true)는 정책을 부르지 않고 system · tools 에 위키가 없다',
+      () async {
+        wiki.context = withWiki;
+        final model = _FakeModel([_answer('네'), _answer('또')]);
+        final chat = session(model);
+
+        chat.reset(temporary: true);
+        await chat.ask('하나').toList();
+        chat.resume([
+          const ChatTurnText(question: '예전', answer: '답'),
+        ], temporary: true);
+        await chat.ask('둘').toList();
+
+        expect(wiki.questions, isEmpty);
+        expect(model.requests, hasLength(2));
+        for (final r in model.requests) {
+          expect(bodyOf(r), isNot(contains('<wiki_index>')));
+          expect(bodyOf(r), isNot(contains(WikiTools.readWikiName)));
+          expect(r.system, contains('찾은 기록에 근거해서만 답한다.'));
+        }
+        verifyNever(() => wikiTools.readWiki(any()));
+      },
+    );
+
+    test('정책이 던지면 위키 없이 답이 끝난다', () async {
+      wiki.error = StateError('wiki db');
+      final model = _FakeModel([_answer('네')]);
+
+      final events = await session(model).ask('질문').toList();
+
+      expect(events.last, isA<ChatFinished>());
+      expect(bodyOf(model.requests.single), isNot(contains('<wiki_index>')));
+      expect(model.requests.single.tools, definitions);
+    });
+
+    test('정책은 질문마다 한 번, 그 질문의 글로 부른다', () async {
+      wiki.context = withWiki;
+      final model = _FakeModel([
+        [
+          _done([_toolUse('t1', 'search_diary')], StopKind.toolUse),
+        ],
+        _answer('네'),
+        _answer('또'),
+      ]);
+      final chat = session(model);
+
+      await chat.ask('첫 질문').toList();
+      expect(wiki.questions, ['첫 질문']);
+      expect(model.requests, hasLength(2));
+      expect(model.requests[1].tools, model.requests[0].tools);
+
+      await chat.ask('둘째').toList();
+      expect(wiki.questions, ['첫 질문', '둘째']);
+    });
+
+    test('read_wiki 호출은 WikiTools 로, search_diary 는 LifeTools 로 간다', () async {
+      wiki.context = withWiki;
+      final model = _FakeModel([
+        [
+          _done([
+            _toolUse('t1', 'read_wiki', {
+              'ids': [3],
+            }),
+            _toolUse('t2', 'search_diary', {'query': '산책'}),
+          ], StopKind.toolUse),
+        ],
+        _answer('네'),
+      ]);
+
+      final events = await session(model).ask('질문').toList();
+
+      expect(events.last, isA<ChatFinished>());
+      verify(
+        () => wikiTools.readWiki({
+          'ids': [3],
+        }),
+      ).called(1);
+      verify(() => tools.run('search_diary', {'query': '산책'})).called(1);
+      verifyNever(() => tools.run('read_wiki', any()));
+      expect(
+        events.whereType<ChatToolStarted>().map((e) => e.name),
+        contains(WikiTools.readWikiName),
+      );
+      final results = model.requests[1].messages.last as ToolResultsMessage;
+      expect(results.results.map((r) => r.callId), ['t1', 't2']);
+      expect(results.results.first.json, '{"notes":[]}');
+    });
+
+    test(
+      '사용량 행에 색인 수 · 글자 수가 라운드마다, readWikiCalls 는 그 라운드의 read_wiki 호출 수',
+      () async {
+        wiki.context = withWiki;
+        final model = _FakeModel([
+          [
+            _done(
+              [
+                _toolUse('t1', 'read_wiki', {
+                  'ids': [1],
+                }),
+                _toolUse('t2', 'read_wiki', {
+                  'ids': [2],
+                }),
+                _toolUse('t3', 'search_diary'),
+              ],
+              StopKind.toolUse,
+              usage: u1,
+            ),
+          ],
+          _answerWith(u2),
+        ]);
+
+        await session(model).ask('질문').toList();
+
+        final [a, b] = usage.records;
+        expect([a.wikiIndexNotes, b.wikiIndexNotes], [3, 3]);
+        expect([a.wikiIndexChars, b.wikiIndexChars], [120, 120]);
+        expect([a.readWikiCalls, b.readWikiCalls], [2, 0]);
+      },
+    );
+
+    test('위키가 없으면 사용량 행의 위키 숫자는 0', () async {
+      final model = _FakeModel([_answerWith(u2)]);
+
+      await session(model).ask('질문').toList();
+
+      final r = usage.records.single;
+      expect([r.wikiIndexNotes, r.wikiIndexChars, r.readWikiCalls], [0, 0, 0]);
+    });
+
+    test('read_wiki 를 8라운드 내내 부르면 tooManySteps', () async {
+      wiki.context = withWiki;
+      final model = _FakeModel([])
+        ..repeat = [
+          _done([
+            _toolUse('t', 'read_wiki', {
+              'ids': [1],
+            }),
+          ], StopKind.toolUse),
+        ];
+
+      final events = await session(model).ask('질문').toList();
+
+      expect(events.last, const ChatEvent.failed(ChatFailure.tooManySteps));
+      expect(model.requests, hasLength(ChatSession.maxRounds));
+      verify(() => wikiTools.readWiki(any())).called(ChatSession.maxRounds);
+    });
+
+    test('위키가 없을 때 모델이 read_wiki 를 부르면 WikiTools 를 부르지 않는다', () async {
+      final model = _FakeModel([
+        [
+          _done([
+            _toolUse('t1', 'read_wiki', {
+              'ids': [1],
+            }),
+          ], StopKind.toolUse),
+        ],
+        _answer('네'),
+      ]);
+
+      final events = await session(model).ask('질문').toList();
+
+      expect(events.last, isA<ChatFinished>());
+      verifyNever(() => wikiTools.readWiki(any()));
+      verify(() => tools.run('read_wiki', any())).called(1);
+      final results = model.requests[1].messages.last as ToolResultsMessage;
+      expect(results.results.single.isError, isTrue);
+    });
+  });
+
   group('멈춤', () {
     late _HangingModel model;
     late ChatSession chat;
@@ -1731,6 +2036,8 @@ void main() {
         usage,
         ids,
         const NoopChatTrace(),
+        wiki,
+        wikiTools,
       );
     });
 
@@ -2075,6 +2382,8 @@ void main() {
         usage,
         ids,
         const NoopChatTrace(),
+        wiki,
+        wikiTools,
       );
     });
 
@@ -2277,6 +2586,8 @@ void main() {
         usage,
         ids,
         const NoopChatTrace(),
+        wiki,
+        wikiTools,
       );
       final events = <ChatEvent>[];
       var done = false;
@@ -2739,6 +3050,8 @@ void main() {
         usage,
         ids,
         const NoopChatTrace(),
+        wiki,
+        wikiTools,
       );
 
       // 1: 멈춘 턴
