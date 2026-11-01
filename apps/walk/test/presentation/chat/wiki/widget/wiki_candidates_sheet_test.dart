@@ -104,14 +104,18 @@ void main() {
     expect(inCard(0, find.text('기상 시간')), findsOneWidget);
     expect(inCard(0, find.text('평일 7시')), findsOneWidget);
     expect(inCard(1, find.text('[[3]] 고치기')), findsOneWidget);
-    // 링크 칩은 있지만 누를 수 없다.
-    final chip = tester.widget<ActionChip>(
-      find.descendant(
-        of: inCard(0, find.byKey(const Key('wiki-link-entry-e1'))),
-        matching: find.byType(ActionChip),
-      ),
+    // 링크 칩은 있지만 누를 수 없다 — 흐린(지워진) 칩 모양은 아니다.
+    final link = inCard(0, find.byKey(const Key('wiki-link-entry-e1')));
+    expect(
+      find.descendant(of: link, matching: find.byType(ActionChip)),
+      findsNothing,
     );
-    expect(chip.onPressed, isNull);
+    expect(
+      find.descendant(of: link, matching: find.byType(Chip)),
+      findsOneWidget,
+    );
+    expect(inCard(0, find.byIcon(Icons.link_off)), findsNothing);
+    expect(inCard(0, find.text('지워진 일기')), findsNothing);
   });
 
   testWidgets('[저장]한 것만 저장소에 남고 [버림]은 아무것도 안 쓴다', (tester) async {
@@ -289,5 +293,30 @@ void main() {
       find.byKey(const Key('wiki-candidate-1'), skipOffstage: false),
       findsNothing,
     );
+  });
+
+  testWidgets('지금 본문이 근거 아닌 살아 있는 일기를 가리켜도 보통 칩', (tester) async {
+    await setUp(result: const WikiDistillResult.candidates([updated]));
+    h.wiki.stored = [wikiNote(3, title: '수면', body: '예전 [[일기:e7]]')];
+    h.diary.entries['e7'] = wikiEntry('e7', body: '늦게 잤다');
+    await open(tester);
+
+    final link = inCard(0, find.byKey(const Key('wiki-link-entry-e7')));
+    expect(link, findsOneWidget);
+    expect(
+      find.descendant(of: link, matching: find.byType(Chip)),
+      findsOneWidget,
+    );
+    expect(inCard(0, find.text('지워진 일기')), findsNothing);
+    expect(inCard(0, find.byIcon(Icons.link_off)), findsNothing);
+  });
+
+  testWidgets("버린 카드는 '버렸어요' 한 줄", (tester) async {
+    await setUp(result: const WikiDistillResult.candidates([created, updated]));
+    await open(tester);
+
+    await tapIn(tester, 0, '버림');
+    expect(inCard(0, find.text('버렸어요')), findsOneWidget);
+    expect(inCard(0, find.text('저장')), findsNothing);
   });
 }

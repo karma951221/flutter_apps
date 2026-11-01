@@ -3896,5 +3896,5 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatWikiCandidateSavedLabel => '저장함';
 
   @override
-  String get walkChatWikiCandidateDiscardedLabel => '버림';
+  String get walkChatWikiCandidateDiscardedLabel => '버렸어요';
 }

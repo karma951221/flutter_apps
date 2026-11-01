@@ -3895,5 +3895,5 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatWikiCandidateSavedLabel => '保存済み';
 
   @override
-  String get walkChatWikiCandidateDiscardedLabel => '破棄済み';
+  String get walkChatWikiCandidateDiscardedLabel => '破棄しました';
 }

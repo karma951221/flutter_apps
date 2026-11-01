@@ -113,6 +113,57 @@ void main() {
     expect(state.notes.keys, [3]);
   });
 
+  test('그새 지워진 메모를 고치는 후보는 새 메모 후보로', () async {
+    distills(
+      const WikiDistillResult.candidates([
+        WikiCandidate.update(id: 9, title: '없는', summary: '요약', body: '본문'),
+      ]),
+    );
+    final state = await ready(build());
+    expect(
+      state.items.single.candidate,
+      const WikiCandidate.create(title: '없는', summary: '요약', body: '본문'),
+    );
+    expect(state.items.single.current, isNull);
+  });
+
+  test('후보 본문 · 지금 본문이 가리키는 살아 있는 일기도 entries 에', () async {
+    wiki.stored = [wikiNote(3, body: '예전 [[일기:e3]]')];
+    diary.entries['e3'] = wikiEntry('e3');
+    diary.entries['e4'] = wikiEntry('e4');
+    distills(
+      const WikiDistillResult.candidates([
+        WikiCandidate.create(title: 't', summary: 's', body: '[[일기:e4]]'),
+        updated,
+      ]),
+    );
+    final state = await ready(build());
+    expect(state.entries.keys.toSet(), {'e1', 'e3', 'e4'});
+    // 일기 고르기 위쪽은 대화의 근거만.
+    expect(state.citedEntryIds, ['e1', 'e2']);
+  });
+
+  test('저장 중인 카드는 discard · markSaved 를 받지 않는다', () async {
+    distills(const WikiDistillResult.candidates([created]));
+    final cubit = build();
+    await ready(cubit);
+
+    final saving = cubit.save(0);
+    cubit
+      ..discard(0)
+      ..markSaved(0);
+    expect(
+      (cubit.state as WikiDistillReady).items.single.status,
+      CandidateStatus.pending,
+    );
+    await saving;
+    expect(
+      (cubit.state as WikiDistillReady).items.single.status,
+      CandidateStatus.saved,
+    );
+    expect(wiki.created, hasLength(1));
+  });
+
   test('save(create) 는 출처를 이 대화로 create', () async {
     distills(const WikiDistillResult.candidates([created, updated]));
     final cubit = build();

@@ -13,7 +13,7 @@ class CitedEntryChip extends StatelessWidget {
 
   final DiaryEntry entry;
 
-  /// null 이면 누를 수 없다.
+  /// null 이면 누를 수 없는 칩(Chip) — 모양은 그대로다.
   final VoidCallback? onOpen;
 
   /// 칩에 보일 본문 글자 수.
@@ -34,18 +34,19 @@ class CitedEntryChip extends StatelessWidget {
     final photo = entry.media
         .where((m) => m.kind == MediaKind.photo)
         .firstOrNull;
-    return ActionChip(
-      avatar: photo == null
-          ? null
-          : ClipRRect(
-              borderRadius: AppRadius.smAll,
-              child: SizedBox.square(
-                dimension: AppSpacing.lg,
-                child: EntryMediaView(media: photo),
-              ),
+    final avatar = photo == null
+        ? null
+        : ClipRRect(
+            borderRadius: AppRadius.smAll,
+            child: SizedBox.square(
+              dimension: AppSpacing.lg,
+              child: EntryMediaView(media: photo),
             ),
-      label: Text(label(entry, locale)),
-      onPressed: onOpen,
-    );
+          );
+    final text = Text(label(entry, locale));
+    final open = onOpen;
+    // 누를 수 없을 때도 흐리지 않는다(비활성 ActionChip 대신 Chip) — 흐림은 지워진 대상만.
+    if (open == null) return Chip(avatar: avatar, label: text);
+    return ActionChip(avatar: avatar, label: text, onPressed: open);
   }
 }

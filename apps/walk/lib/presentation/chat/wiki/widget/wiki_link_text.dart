@@ -60,14 +60,20 @@ class WikiLinkText extends StatelessWidget {
         if (note == null) {
           return _MissingChip(label: l10n.walkChatWikiDeletedNote);
         }
+        final open = onOpenNote;
+        // 누를 수 없을 때도 살아 있는 링크는 흐리지 않는다 — 흐림은 지워진 대상만.
+        if (open == null) {
+          return Chip(
+            key: Key('wiki-link-note-$id'),
+            avatar: const Icon(Icons.description_outlined),
+            label: Text(note.title),
+          );
+        }
         return ActionChip(
           key: Key('wiki-link-note-$id'),
           avatar: const Icon(Icons.description_outlined),
           label: Text(note.title),
-          onPressed: switch (onOpenNote) {
-            final open? => () => open(id),
-            null => null,
-          },
+          onPressed: () => open(id),
         );
       case WikiDiaryLink(:final entryId):
         final entry = entries[entryId];

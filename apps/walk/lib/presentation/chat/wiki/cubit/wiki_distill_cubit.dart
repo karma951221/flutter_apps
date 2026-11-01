@@ -62,16 +62,40 @@ class WikiDistillCubit extends Cubit<WikiDistillState> {
     }
   }
 
-  /// 후보 + 링크 칩에 쓸 메모 · 근거 일기를 읽어 ready.
-  Future<void> _ready(List<WikiCandidate> candidates) async {
+  /// 후보 + 링크 칩에 쓸 메모 · 일기를 읽어 ready.
+  ///
+  /// 그새 지워진 메모를 고치는 후보는 새 메모 후보로 바꾼다(W8). 칩용 일기는 대화의 근거 일기 +
+  /// 후보 본문 · 지금 본문이 가리키는 일기 — 근거가 아닌 살아 있는 일기도 '지워진 일기'로 보이지 않게.
+  Future<void> _ready(List<WikiCandidate> raw) async {
     try {
       final notes = {for (final n in await _wiki.all()) n.id: n};
+      final candidates = [
+        for (final c in raw)
+          switch (c) {
+            WikiUpdateCandidate(
+              :final id,
+              :final title,
+              :final summary,
+              :final body,
+            )
+                when !notes.containsKey(id) =>
+              WikiCandidate.create(title: title, summary: summary, body: body),
+            _ => c,
+          },
+      ];
       final cited = <String>{
         for (final turn in await _history.turns(_conversationId))
           ...turn.citedEntryIds,
       }.toList();
+      final linked = <String>{
+        ...cited,
+        for (final c in candidates) ..._diaryIdsIn(c.body),
+        for (final c in candidates)
+          if (c case WikiUpdateCandidate(:final id))
+            ..._diaryIdsIn(notes[id]!.body),
+      };
       final entries = <String, DiaryEntry>{};
-      for (final id in cited) {
+      for (final id in linked) {
         if (await _diary.entry(id) case Ok(
           :final value,
         ) when !value.isTrashed) {
@@ -100,6 +124,11 @@ class WikiDistillCubit extends Cubit<WikiDistillState> {
       if (!isClosed) emit(const WikiDistillState.failed(ChatFailure.unknown));
     }
   }
+
+  static Iterable<String> _diaryIdsIn(String body) => [
+    for (final l in wikiLinksIn(body))
+      if (l case WikiDiaryLink(:final entryId)) entryId,
+  ];
 
   /// 대화 id — [고쳐서 저장] 편집 값의 출처.
   String get conversationId => _conversationId;
@@ -165,8 +194,9 @@ class WikiDistillCubit extends Cubit<WikiDistillState> {
     _ => null,
   };
 
+  /// 저장 중인 카드는 [discard] · [markSaved] 를 받지 않는다 — 저장이 끝나면 '저장함'.
   void _mark(int index, CandidateStatus status) {
-    if (isClosed) return;
+    if (isClosed || _saving.contains(index)) return;
     final s = state;
     if (s is! WikiDistillReady || _pending(index) == null) return;
     final items = [...s.items];

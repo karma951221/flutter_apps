@@ -7191,7 +7191,7 @@ abstract class AppLocalizations {
   /// 위키 후보 카드: 버린 뒤 접힌 줄
   ///
   /// In ko, this message translates to:
-  /// **'버림'**
+  /// **'버렸어요'**
   String get walkChatWikiCandidateDiscardedLabel;
 }
 

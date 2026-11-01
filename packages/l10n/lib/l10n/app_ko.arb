@@ -4870,6 +4870,6 @@
   "@walkChatWikiCandidateDiscard": {"description": "위키 후보 카드 버튼: 저장하지 않음"},
   "walkChatWikiCandidateSavedLabel": "저장함",
   "@walkChatWikiCandidateSavedLabel": {"description": "위키 후보 카드: 저장한 뒤 접힌 줄"},
-  "walkChatWikiCandidateDiscardedLabel": "버림",
+  "walkChatWikiCandidateDiscardedLabel": "버렸어요",
   "@walkChatWikiCandidateDiscardedLabel": {"description": "위키 후보 카드: 버린 뒤 접힌 줄"}
 }
