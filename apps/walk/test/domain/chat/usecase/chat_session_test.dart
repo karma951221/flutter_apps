@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/chat/chat_model.dart';
+import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/tool/life_tools.dart';
 import 'package:walk/domain/chat/tool/tool_result.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
@@ -29,20 +30,18 @@ class _FakeModel implements ChatModel {
 
   /// 라운드별 이벤트. Exception 이 들어 있으면 그 자리에서 스트림 오류를 낸다.
   final List<List<Object>> rounds;
-  final requests = <_Request>[];
+  final requests = <ModelRequest>[];
 
   /// 준비된 라운드를 다 쓰면 이 라운드를 되풀이한다.
   List<Object>? repeat;
 
   @override
-  Stream<ModelEvent> stream({
-    required String apiKey,
-    required String system,
-    required List<Map<String, Object?>> messages,
-    required List<Map<String, Object?>> tools,
-  }) async* {
+  ChatVendor get vendor => ChatVendor.anthropic;
+
+  @override
+  Stream<ModelEvent> stream(ModelRequest request) async* {
     final index = requests.length;
-    requests.add(_Request(apiKey, system, messages, tools));
+    requests.add(request);
     final round = index < rounds.length ? rounds[index] : repeat!;
     for (final item in round) {
       if (item is ModelEvent) {
@@ -54,38 +53,46 @@ class _FakeModel implements ChatModel {
   }
 }
 
-class _Request {
-  _Request(this.apiKey, this.system, this.messages, this.tools);
-
-  final String apiKey;
-  final String system;
-  final List<Map<String, Object?>> messages;
-  final List<Map<String, Object?>> tools;
+/// 어댑터가 만드는 불투명 상태 흉내. 세션은 들고만 다녀야 한다.
+class _FakeState implements VendorTurnState {
+  @override
+  ChatVendor get vendor => ChatVendor.anthropic;
+  @override
+  String get model => 'fake';
 }
 
-ModelEvent _done(List<Map<String, Object?>> content, String stop) =>
-    ModelEvent.completed(content: content, stopReason: stop);
+ModelEvent _done(
+  List<AssistantPart> parts,
+  StopKind stop, {
+  VendorTurnState? state,
+}) => ModelEvent.completed(
+  message: AssistantMessage(parts: parts, vendorState: state),
+  stop: stop,
+  usage: null,
+);
 
-Map<String, Object?> _textBlock(String text) => {'type': 'text', 'text': text};
+AssistantPart _text(String text) => AssistantPart.text(text);
 
-Map<String, Object?> _toolUse(String id, String name, [Map? input]) => {
-  'type': 'tool_use',
-  'id': id,
-  'name': name,
-  'input': input ?? <String, Object?>{},
-};
+AssistantPart _toolUse(
+  String id,
+  String name, [
+  Map<String, Object?> input = const {},
+]) => AssistantPart.toolCall(id: id, name: name, input: input);
+
+ChatMessage _assistant(String text) =>
+    ChatMessage.assistant(parts: [_text(text)]);
 
 List<Object> _answer(String text) => [
   ModelEvent.textDelta(text),
-  _done([_textBlock(text)], 'end_turn'),
+  _done([_text(text)], StopKind.endTurn),
 ];
 
 void main() {
   late _MockLifeTools tools;
   late FakeChatSettings settings;
   final clock = _FixedClock(DateTime(2026, 10, 27, 9));
-  final definitions = [
-    {'name': 'search_diary'},
+  const definitions = [
+    ToolSpec(name: 'search_diary', description: 'd', parameters: {}),
   ];
 
   setUpAll(() async {
@@ -107,7 +114,7 @@ void main() {
       [
         const ModelEvent.textDelta('안'),
         const ModelEvent.textDelta('녕'),
-        _done([_textBlock('안녕')], 'end_turn'),
+        _done([_text('안녕')], StopKind.endTurn),
       ],
     ]);
 
@@ -118,12 +125,73 @@ void main() {
       ChatEvent.text('녕'),
       ChatEvent.finished(citedEntryIds: []),
     ]);
-    expect(model.requests.single.messages, [
-      {'role': 'user', 'content': '하이'},
-    ]);
+    expect(model.requests.single.messages, const [ChatMessage.user('하이')]);
     expect(model.requests.single.apiKey, 'sk-ant-test-key');
-    expect(model.requests.single.tools, definitions);
   });
+
+  test(
+    '요청 model 은 interimModel, fastMode 는 false, tools 는 LifeTools.definitions 그대로',
+    () async {
+      final model = _FakeModel([_answer('네')]);
+
+      await session(model).ask('하이').toList();
+
+      final request = model.requests.single;
+      expect(ChatSession.interimModel, 'claude-opus-5-5');
+      expect(request.model, ChatSession.interimModel);
+      expect(request.fastMode, isFalse);
+      expect(identical(request.tools, definitions), isTrue);
+    },
+  );
+
+  test(
+    '진행 이벤트(thinking · progress · toolCallStarted · toolCallReady)는 ChatEvent 를 만들지 않는다',
+    () async {
+      final model = _FakeModel([
+        [
+          const ModelEvent.thinking(),
+          const ModelEvent.progress('찾는 중'),
+          const ModelEvent.toolCallStarted(id: 't', name: 'search_diary'),
+          const ModelEvent.toolCallReady(
+            id: 't',
+            name: 'search_diary',
+            input: {},
+          ),
+          const ModelEvent.textDelta('네'),
+          _done([_text('네')], StopKind.endTurn),
+        ],
+      ]);
+
+      final events = await session(model).ask('하이').toList();
+
+      expect(events, const [
+        ChatEvent.text('네'),
+        ChatEvent.finished(citedEntryIds: []),
+      ]);
+    },
+  );
+
+  for (final stop in [StopKind.maxTokens, StopKind.other]) {
+    test('${stop.name} 로 끝나도 finished', () async {
+      final model = _FakeModel([
+        [
+          _done([_text('잘린 답')], stop),
+        ],
+        _answer('다음'),
+      ]);
+      final chat = session(model);
+
+      final events = await chat.ask('질문').toList();
+      await chat.ask('다음 질문').toList();
+
+      expect(events, const [ChatEvent.finished(citedEntryIds: [])]);
+      expect(model.requests.last.messages, [
+        const ChatMessage.user('질문'),
+        _assistant('잘린 답'),
+        const ChatMessage.user('다음 질문'),
+      ]);
+    });
+  }
 
   test(
     'tool_use 면 도구를 실행해 tool_result 를 user 메시지 하나로 보내고 다음 라운드로 간다',
@@ -139,7 +207,7 @@ void main() {
           _done([
             _toolUse('tu_1', 'search_diary', {'query': '산책'}),
             _toolUse('tu_2', 'list_diary_index'),
-          ], 'tool_use'),
+          ], StopKind.toolUse),
         ],
         _answer('끝'),
       ]);
@@ -153,64 +221,40 @@ void main() {
         ChatEvent.finished(citedEntryIds: []),
       ]);
       expect(model.requests, hasLength(2));
-      final last = model.requests[1].messages.last;
-      expect(last['role'], 'user');
-      final results = last['content']! as List;
-      expect(results, [
-        {
-          'type': 'tool_result',
-          'tool_use_id': 'tu_1',
-          'is_error': false,
-          'content': [
-            {'type': 'text', 'text': '{"a":1}'},
-          ],
-        },
-        {
-          'type': 'tool_result',
-          'tool_use_id': 'tu_2',
-          'is_error': true,
-          'content': [
-            {'type': 'text', 'text': '{"error":"x"}'},
-          ],
-        },
-      ]);
+      expect(
+        model.requests[1].messages.last,
+        const ChatMessage.toolResults([
+          ToolResultPart(callId: 'tu_1', json: '{"a":1}'),
+          ToolResultPart(callId: 'tu_2', json: '{"error":"x"}', isError: true),
+        ]),
+      );
       expect(model.requests[1].messages, hasLength(3));
     },
   );
 
-  test('이미지가 있는 결과는 base64 image 블록을 붙인다', () async {
+  test('이미지가 있는 결과는 ToolResultPart.images 로 다음 요청에 실린다', () async {
+    final image = ToolImage(
+      mediaType: 'image/jpeg',
+      bytes: Uint8List.fromList([1, 2, 3]),
+    );
     when(() => tools.run('view_entry_photos', any())).thenAnswer(
-      (_) async => ToolResult(
-        json: '{"photos":1}',
-        images: [
-          ToolImage(
-            mediaType: 'image/jpeg',
-            bytes: Uint8List.fromList([1, 2, 3]),
-          ),
-        ],
-      ),
+      (_) async => ToolResult(json: '{"photos":1}', images: [image]),
     );
     final model = _FakeModel([
       [
-        _done([_toolUse('tu_1', 'view_entry_photos')], 'tool_use'),
+        _done([_toolUse('tu_1', 'view_entry_photos')], StopKind.toolUse),
       ],
       _answer('사진'),
     ]);
 
     await session(model).ask('사진').toList();
 
-    final result = (model.requests[1].messages.last['content']! as List).single;
-    expect((result as Map)['content'], [
-      {'type': 'text', 'text': '{"photos":1}'},
-      {
-        'type': 'image',
-        'source': {
-          'type': 'base64',
-          'media_type': 'image/jpeg',
-          'data': 'AQID',
-        },
-      },
-    ]);
+    expect(
+      model.requests[1].messages.last,
+      ChatMessage.toolResults([
+        ToolResultPart(callId: 'tu_1', json: '{"photos":1}', images: [image]),
+      ]),
+    );
   });
 
   group('사진 한도(대화당 ${ChatSession.maxImagesPerConversation}장)', () {
@@ -223,16 +267,13 @@ void main() {
     );
 
     List<Object> photoRound(String id) => [
-      _done([_toolUse(id, 'view_entry_photos')], 'tool_use'),
+      _done([_toolUse(id, 'view_entry_photos')], StopKind.toolUse),
     ];
 
-    Map<String, Object?> resultOf(_Request request) =>
-        ((request.messages.last['content']! as List).single as Map)
-            .cast<String, Object?>();
+    ToolResultPart resultOf(ModelRequest request) =>
+        (request.messages.last as ToolResultsMessage).results.single;
 
-    int imageCount(Map<String, Object?> result) => (result['content']! as List)
-        .where((block) => (block as Map)['type'] == 'image')
-        .length;
+    int imageCount(ToolResultPart result) => result.images.length;
 
     setUp(() {
       when(
@@ -251,7 +292,7 @@ void main() {
 
       expect(imageCount(resultOf(model.requests[1])), 5);
       expect(imageCount(resultOf(model.requests[2])), 5);
-      expect(resultOf(model.requests[2])['is_error'], false);
+      expect(resultOf(model.requests[2]).isError, false);
     });
 
     test('한도를 넘기면 이미지 없이 is_error 와 photo_limit_reached 를 보낸다', () async {
@@ -265,15 +306,12 @@ void main() {
       await session(model).ask('사진').toList();
 
       final over = resultOf(model.requests[3]);
-      expect(over['is_error'], true);
+      expect(over.isError, true);
       expect(imageCount(over), 0);
-      expect(over['content'], [
-        {
-          'type': 'text',
-          'text':
-              '{"error":"photo_limit_reached","hint":"새 대화를 시작하면 다시 사진을 볼 수 있어요"}',
-        },
-      ]);
+      expect(
+        over.json,
+        '{"error":"photo_limit_reached","hint":"새 대화를 시작하면 다시 사진을 볼 수 있어요"}',
+      );
     });
 
     test('한도는 질문을 넘어 대화 전체에 걸린다', () async {
@@ -290,7 +328,7 @@ void main() {
       await chat.ask('둘').toList();
 
       expect(imageCount(resultOf(model.requests[4])), 0);
-      expect(resultOf(model.requests[4])['is_error'], true);
+      expect(resultOf(model.requests[4]).isError, true);
     });
 
     test('reset 하면 한도가 다시 찬다', () async {
@@ -308,7 +346,7 @@ void main() {
       await chat.ask('둘').toList();
 
       expect(imageCount(resultOf(model.requests[4])), 5);
-      expect(resultOf(model.requests[4])['is_error'], false);
+      expect(resultOf(model.requests[4]).isError, false);
     });
 
     test('되돌린 질문의 사진은 세지 않는다', () async {
@@ -328,27 +366,32 @@ void main() {
     });
   });
 
-  test('assistant content(thinking 포함)를 바꾸지 않고 다음 요청에 보낸다', () async {
-    when(
-      () => tools.run(any(), any()),
-    ).thenAnswer((_) async => const ToolResult(json: '{}'));
-    final content = [
-      {'type': 'thinking', 'thinking': '생각', 'signature': 'sig=='},
-      _textBlock('찾아볼게요'),
-      _toolUse('tu_1', 'search_diary'),
-    ];
-    final model = _FakeModel([
-      [_done(content, 'tool_use')],
-      _answer('끝'),
-    ]);
+  test(
+    'completed.message(vendorState 포함)를 identical 로 다음 요청 messages 에 넣는다',
+    () async {
+      when(
+        () => tools.run(any(), any()),
+      ).thenAnswer((_) async => const ToolResult(json: '{}'));
+      final state = _FakeState();
+      final done =
+          _done(
+                [_text('찾아볼게요'), _toolUse('tu_1', 'search_diary')],
+                StopKind.toolUse,
+                state: state,
+              )
+              as ModelCompleted;
+      final model = _FakeModel([
+        [done],
+        _answer('끝'),
+      ]);
 
-    await session(model).ask('질문').toList();
+      await session(model).ask('질문').toList();
 
-    expect(model.requests[1].messages[1], {
-      'role': 'assistant',
-      'content': content,
-    });
-  });
+      final sent = model.requests[1].messages[1];
+      expect(identical(sent, done.message), isTrue);
+      expect(identical((sent as AssistantMessage).vendorState, state), isTrue);
+    },
+  );
 
   test('citedEntryIds 는 중복 없이 처음 나온 순서', () async {
     when(() => tools.run('a', any())).thenAnswer(
@@ -359,10 +402,10 @@ void main() {
     );
     final model = _FakeModel([
       [
-        _done([_toolUse('t1', 'a'), _toolUse('t2', 'b')], 'tool_use'),
+        _done([_toolUse('t1', 'a'), _toolUse('t2', 'b')], StopKind.toolUse),
       ],
       [
-        _done([_toolUse('t3', 'a')], 'tool_use'),
+        _done([_toolUse('t3', 'a')], StopKind.toolUse),
       ],
       _answer('끝'),
     ]);
@@ -394,7 +437,7 @@ void main() {
       final model = _FakeModel([
         _answer('첫 답'),
         [
-          _done([_toolUse('t1', 'search_diary')], 'tool_use'),
+          _done([_toolUse('t1', 'search_diary')], StopKind.toolUse),
         ],
         [const ChatModelException(ChatModelErrorKind.invalidKey)],
         _answer('둘째 답'),
@@ -409,12 +452,9 @@ void main() {
       expect(failed.last, const ChatEvent.failed(ChatFailure.invalidKey));
       expect(model.requests.last.apiKey, 'sk-ant-new-key');
       expect(model.requests.last.messages, [
-        {'role': 'user', 'content': '첫 질문'},
-        {
-          'role': 'assistant',
-          'content': [_textBlock('첫 답')],
-        },
-        {'role': 'user', 'content': '셋째 질문'},
+        const ChatMessage.user('첫 질문'),
+        _assistant('첫 답'),
+        const ChatMessage.user('셋째 질문'),
       ]);
     },
   );
@@ -438,33 +478,52 @@ void main() {
         ChatEvent.text('반쯤'),
         ChatEvent.failed(ChatFailure.network),
       ]);
-      expect(model.requests.last.messages, [
-        {'role': 'user', 'content': '다시 질문'},
-      ]);
+      expect(model.requests.last.messages, const [ChatMessage.user('다시 질문')]);
     },
   );
 
-  test('server 오류는 unknown, 그 밖의 예외도 unknown', () async {
+  test(
+    'server · quotaExceeded · modelUnavailable 오류는 unknown, 그 밖의 예외도 unknown',
+    () async {
+      final model = _FakeModel([
+        [const ChatModelException(ChatModelErrorKind.server)],
+        [const ChatModelException(ChatModelErrorKind.quotaExceeded)],
+        [const ChatModelException(ChatModelErrorKind.modelUnavailable)],
+        [StateError('boom')],
+      ]);
+      final chat = session(model);
+
+      for (final q in ['a', 'b', 'c', 'd']) {
+        expect(
+          (await chat.ask(q).toList()).last,
+          const ChatEvent.failed(ChatFailure.unknown),
+          reason: q,
+        );
+      }
+    },
+  );
+
+  test('오류 종류를 ChatFailure 로 옮긴다', () async {
     final model = _FakeModel([
-      [const ChatModelException(ChatModelErrorKind.server)],
-      [StateError('boom')],
+      [const ChatModelException(ChatModelErrorKind.rateLimited)],
+      [const ChatModelException(ChatModelErrorKind.overloaded)],
     ]);
     final chat = session(model);
 
     expect(
       (await chat.ask('a').toList()).last,
-      const ChatEvent.failed(ChatFailure.unknown),
+      const ChatEvent.failed(ChatFailure.rateLimited),
     );
     expect(
       (await chat.ask('b').toList()).last,
-      const ChatEvent.failed(ChatFailure.unknown),
+      const ChatEvent.failed(ChatFailure.overloaded),
     );
   });
 
   test('refusal 은 refused', () async {
     final model = _FakeModel([
       [
-        _done([_textBlock('')], 'refusal'),
+        _done([_text('')], StopKind.refusal),
       ],
       _answer('다음'),
     ]);
@@ -474,9 +533,7 @@ void main() {
     await chat.ask('다음 질문').toList();
 
     expect(events.last, const ChatEvent.failed(ChatFailure.refused));
-    expect(model.requests.last.messages, [
-      {'role': 'user', 'content': '다음 질문'},
-    ]);
+    expect(model.requests.last.messages, const [ChatMessage.user('다음 질문')]);
   });
 
   test('8라운드를 넘기면 tooManySteps', () async {
@@ -485,7 +542,7 @@ void main() {
     ).thenAnswer((_) async => const ToolResult(json: '{}'));
     final model = _FakeModel([])
       ..repeat = [
-        _done([_toolUse('t', 'search_diary')], 'tool_use'),
+        _done([_toolUse('t', 'search_diary')], StopKind.toolUse),
       ];
 
     final events = await session(model).ask('질문').toList();
@@ -518,9 +575,7 @@ void main() {
 
     chat.reset();
     await chat.ask('셋').toList();
-    expect(model.requests.last, [
-      {'role': 'user', 'content': '셋'},
-    ]);
+    expect(model.requests.last, const [ChatMessage.user('셋')]);
   });
 
   group('진행 중 reset', () {
@@ -541,30 +596,25 @@ void main() {
           await pumpEventQueue();
 
           if (outcome == '성공') {
-            model.calls[0].complete(_done([_textBlock('늦은 답')], 'end_turn'));
+            model.calls[0].complete(_done([_text('늦은 답')], StopKind.endTurn));
           } else {
             model.calls[0].completeError(
               const ChatModelException(ChatModelErrorKind.network),
             );
           }
           await first;
-          model.calls[1].complete(_done([_textBlock('새 답')], 'end_turn'));
+          model.calls[1].complete(_done([_text('새 답')], StopKind.endTurn));
 
           expect(firstEvents, isEmpty);
           expect(await second, const [ChatEvent.finished(citedEntryIds: [])]);
-          expect(model.requests[1], [
-            {'role': 'user', 'content': '둘'},
-          ]);
+          expect(model.requests[1], const [ChatMessage.user('둘')]);
 
           unawaited(chat.ask('셋').toList());
           await pumpEventQueue();
           expect(model.requests[2], [
-            {'role': 'user', 'content': '둘'},
-            {
-              'role': 'assistant',
-              'content': [_textBlock('새 답')],
-            },
-            {'role': 'user', 'content': '셋'},
+            const ChatMessage.user('둘'),
+            _assistant('새 답'),
+            const ChatMessage.user('셋'),
           ]);
         },
       );
@@ -586,34 +636,30 @@ class _GatedModel implements ChatModel {
   _GatedModel(this.gate);
 
   final Future<void> gate;
-  final requests = <List<Map<String, Object?>>>[];
+  final requests = <List<ChatMessage>>[];
 
   @override
-  Stream<ModelEvent> stream({
-    required String apiKey,
-    required String system,
-    required List<Map<String, Object?>> messages,
-    required List<Map<String, Object?>> tools,
-  }) async* {
-    requests.add(messages);
+  ChatVendor get vendor => ChatVendor.anthropic;
+
+  @override
+  Stream<ModelEvent> stream(ModelRequest request) async* {
+    requests.add(request.messages);
     await gate;
-    yield _done([_textBlock('ok')], 'end_turn');
+    yield _done([_text('ok')], StopKind.endTurn);
   }
 }
 
 /// 부를 때마다 Completer 하나를 만들고, 테스트가 그걸 끝낸다.
 class _CompleterModel implements ChatModel {
   final calls = <Completer<ModelEvent>>[];
-  final requests = <List<Map<String, Object?>>>[];
+  final requests = <List<ChatMessage>>[];
 
   @override
-  Stream<ModelEvent> stream({
-    required String apiKey,
-    required String system,
-    required List<Map<String, Object?>> messages,
-    required List<Map<String, Object?>> tools,
-  }) {
-    requests.add(messages);
+  ChatVendor get vendor => ChatVendor.anthropic;
+
+  @override
+  Stream<ModelEvent> stream(ModelRequest request) {
+    requests.add(request.messages);
     final call = Completer<ModelEvent>();
     calls.add(call);
     return call.future.asStream();

@@ -9,6 +9,7 @@ import 'package:walk/domain/alarm/entity/archived_ring.dart';
 import 'package:walk/domain/alarm/entity/ring_log_entry.dart';
 import 'package:walk/domain/alarm/ring_log/ring_archive.dart';
 import 'package:walk/domain/alarm/usecase/ring_archiver.dart';
+import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/tool/chat_image_source.dart';
 import 'package:walk/domain/chat/tool/life_tools.dart';
 import 'package:walk/domain/chat/tool/tool_result.dart';
@@ -113,9 +114,9 @@ void main() {
   Map<String, Object?> decode(ToolResult r) =>
       jsonDecode(r.json) as Map<String, Object?>;
 
-  test('definitions 에 다섯 도구가 있고 각자 input_schema 가 object 다', () {
-    final defs = tools.definitions;
-    expect(defs.map((d) => d['name']), [
+  test('definitions 는 ToolSpec 다섯 개이고 parameters 가 object 다', () {
+    final List<ToolSpec> defs = tools.definitions;
+    expect(defs.map((d) => d.name), [
       'search_diary',
       'view_entry_photos',
       'list_diary_index',
@@ -123,9 +124,17 @@ void main() {
       'wake_records',
     ]);
     for (final d in defs) {
-      expect((d['input_schema']! as Map)['type'], 'object');
-      expect(d['description'], isNotEmpty);
+      expect(d.parameters['type'], 'object');
+      expect(d.parameters['properties'], isA<Map>());
+      expect(d.description, isNotEmpty);
     }
+    expect(defs.map((d) => d.parameters['required']), [
+      ['from', 'to'],
+      ['entry_id'],
+      <String>[],
+      ['from', 'to'],
+      ['from', 'to'],
+    ]);
   });
 
   test('search_diary 는 기록을 JSON 으로 주고 entryIds 를 채운다', () async {

@@ -13,6 +13,7 @@ import '../../diary/entity/story.dart';
 import '../../diary/repository/diary_repository.dart';
 import '../../walk/entity/health_access.dart';
 import '../../walk/repository/activity_repository.dart';
+import '../chat_model.dart';
 import 'chat_image_source.dart';
 import 'tool_result.dart';
 
@@ -38,24 +39,24 @@ class LifeTools {
   static const _maxDays = 366;
   static const _indexLimit = 30;
 
-  static Map<String, Object?> _tool(
+  static ToolSpec _tool(
     String name,
     String description,
     Map<String, Object?> properties,
     List<String> required,
-  ) => {
-    'name': name,
-    'description': description,
-    'input_schema': {
+  ) => ToolSpec(
+    name: name,
+    description: description,
+    parameters: {
       'type': 'object',
       'properties': properties,
       'required': required,
     },
-  };
+  );
 
   static const _date = {'type': 'string', 'description': 'YYYY-MM-DD (로컬 날짜)'};
 
-  List<Map<String, Object?>> get definitions => [
+  List<ToolSpec> get definitions => [
     _tool(
       'search_diary',
       '기간 안의 일기를 찾는다. 양 끝 날짜를 포함하고 오래된 것부터 최대 50개를 준다. '

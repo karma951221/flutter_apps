@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:walk/data/chat/anthropic_chat_model.dart';
 import 'package:walk/domain/chat/chat_model.dart';
+import 'package:walk/domain/chat/chat_vendor.dart';
+import 'package:walk/domain/chat/tool/tool_result.dart';
 
 String sse(String event, Map<String, Object?> data) =>
     'event: $event\ndata: ${jsonEncode(data)}\n\n';
@@ -25,14 +28,59 @@ MockClient clientOf(
   });
 }
 
-Future<List<ModelEvent>> run(MockClient client) => AnthropicChatModel(client)
-    .stream(
-      apiKey: 'sk-test',
-      system: 'sys',
-      messages: const [],
-      tools: const [],
-    )
-    .toList();
+ModelRequest request({
+  String apiKey = 'sk-test',
+  String model = 'claude-opus-5-5',
+  List<ChatMessage> messages = const [],
+  List<ToolSpec> tools = const [],
+}) => ModelRequest(
+  apiKey: apiKey,
+  model: model,
+  system: 'sys',
+  messages: messages,
+  tools: tools,
+);
+
+Future<List<ModelEvent>> run(MockClient client, [ModelRequest? r]) =>
+    AnthropicChatModel(client).stream(r ?? request()).toList();
+
+/// 요청 본문을 잡는 끝난 응답 하나.
+MockClient capture(void Function(Map<String, dynamic> body) onBody) =>
+    clientOf([
+      sse('message_start', {'type': 'message_start'}),
+      sse('message_delta', {
+        'delta': {'stop_reason': 'end_turn'},
+      }),
+      sse('message_stop', {}),
+    ], onRequest: (_, b) => onBody(jsonDecode(b) as Map<String, dynamic>));
+
+/// 다른 벤더의 상태(어댑터가 모르는 타입).
+class _OtherState implements VendorTurnState {
+  @override
+  ChatVendor get vendor => ChatVendor.openai;
+  @override
+  String get model => 'gpt';
+}
+
+String _textEvents(String stop, {Map<String, Object?>? startUsage}) => [
+  sse('message_start', {
+    'type': 'message_start',
+    'message': {'usage': ?startUsage},
+  }),
+  sse('content_block_start', {
+    'index': 0,
+    'content_block': {'type': 'text', 'text': ''},
+  }),
+  sse('content_block_delta', {
+    'index': 0,
+    'delta': {'type': 'text_delta', 'text': 'a'},
+  }),
+  sse('content_block_stop', {'index': 0}),
+  sse('message_delta', {
+    'delta': {'stop_reason': stop},
+  }),
+  sse('message_stop', {}),
+].join();
 
 void main() {
   test('요청에 정해진 헤더와 본문 필드를 담는다', () async {
@@ -51,18 +99,13 @@ void main() {
         body = jsonDecode(b) as Map<String, dynamic>;
       },
     );
-    await AnthropicChatModel(client)
-        .stream(
-          apiKey: 'sk-test',
-          system: 'sys',
-          messages: [
-            {'role': 'user', 'content': 'hi'},
-          ],
-          tools: [
-            {'name': 't'},
-          ],
-        )
-        .toList();
+    await run(
+      client,
+      request(
+        messages: const [ChatMessage.user('hi')],
+        tools: const [ToolSpec(name: 't', description: 'd', parameters: {})],
+      ),
+    );
     expect(req.method, 'POST');
     expect(req.url.toString(), 'https://api.anthropic.com/v1/messages');
     expect(req.headers['x-api-key'], 'sk-test');
@@ -117,8 +160,9 @@ void main() {
       '하세요',
     ]);
     final done = events.last as ModelCompleted;
-    expect(done.stopReason, 'end_turn');
-    expect(done.content, [
+    expect(done.stop, StopKind.endTurn);
+    expect(done.message.parts, const [AssistantPart.text('안녕하세요')]);
+    expect((done.message.vendorState! as AnthropicTurnState).content, [
       {'type': 'text', 'text': '안녕하세요'},
     ]);
   });
@@ -148,49 +192,62 @@ void main() {
       );
     });
     final events = await run(client);
-    expect((events.last as ModelCompleted).content.single['text'], '한글');
-  });
-
-  test('thinking 블록을 서명과 함께 그대로 돌려준다', () async {
-    final events = await run(
-      clientOf([
-        sse('content_block_start', {
-          'index': 0,
-          'content_block': {'type': 'thinking', 'thinking': ''},
-        }),
-        sse('content_block_delta', {
-          'index': 0,
-          'delta': {'type': 'thinking_delta', 'thinking': '음'},
-        }),
-        sse('content_block_delta', {
-          'index': 0,
-          'delta': {'type': 'thinking_delta', 'thinking': '...'},
-        }),
-        sse('content_block_delta', {
-          'index': 0,
-          'delta': {'type': 'signature_delta', 'signature': 'SIG'},
-        }),
-        sse('content_block_stop', {'index': 0}),
-        sse('content_block_start', {
-          'index': 1,
-          'content_block': {'type': 'text', 'text': ''},
-        }),
-        sse('content_block_delta', {
-          'index': 1,
-          'delta': {'type': 'text_delta', 'text': 'a'},
-        }),
-        sse('content_block_stop', {'index': 1}),
-        sse('message_delta', {
-          'delta': {'stop_reason': 'end_turn'},
-        }),
-        sse('message_stop', {}),
-      ]),
-    );
-    expect((events.last as ModelCompleted).content, [
-      {'type': 'thinking', 'thinking': '음...', 'signature': 'SIG'},
-      {'type': 'text', 'text': 'a'},
+    expect((events.last as ModelCompleted).message.parts, const [
+      AssistantPart.text('한글'),
     ]);
   });
+
+  test(
+    'completed 는 parts(text · toolCall) 와 thinking 서명을 담은 vendorState 를 준다',
+    () async {
+      final events = await run(
+        clientOf([
+          sse('content_block_start', {
+            'index': 0,
+            'content_block': {'type': 'thinking', 'thinking': ''},
+          }),
+          sse('content_block_delta', {
+            'index': 0,
+            'delta': {'type': 'thinking_delta', 'thinking': '음'},
+          }),
+          sse('content_block_delta', {
+            'index': 0,
+            'delta': {'type': 'thinking_delta', 'thinking': '...'},
+          }),
+          sse('content_block_delta', {
+            'index': 0,
+            'delta': {'type': 'signature_delta', 'signature': 'SIG'},
+          }),
+          sse('content_block_stop', {'index': 0}),
+          sse('content_block_start', {
+            'index': 1,
+            'content_block': {'type': 'text', 'text': ''},
+          }),
+          sse('content_block_delta', {
+            'index': 1,
+            'delta': {'type': 'text_delta', 'text': 'a'},
+          }),
+          sse('content_block_stop', {'index': 1}),
+          sse('message_delta', {
+            'delta': {'stop_reason': 'end_turn'},
+          }),
+          sse('message_stop', {}),
+        ]),
+      );
+      final done = events.last as ModelCompleted;
+      expect(done.message.parts, const [AssistantPart.text('a')]);
+      final state = done.message.vendorState! as AnthropicTurnState;
+      expect(state.vendor, ChatVendor.anthropic);
+      expect(state.model, 'claude-opus-5-5');
+      expect(state.content, [
+        {'type': 'thinking', 'thinking': '음...', 'signature': 'SIG'},
+        {'type': 'text', 'text': 'a'},
+      ]);
+      expect(state.toString(), isNot(contains('SIG')));
+      expect(state.toString(), isNot(contains('음')));
+      expect(done.message.toString(), isNot(contains('SIG')));
+    },
+  );
 
   test('조각난 input_json_delta 를 모아 tool_use.input 으로 만든다', () async {
     final events = await run(
@@ -233,10 +290,15 @@ void main() {
       ]),
     );
     final done = events.last as ModelCompleted;
-    expect(done.stopReason, 'tool_use');
-    expect(done.content[0]['input'], {'from': '2026-10-01'});
-    expect(done.content[0]['id'], 'tu_1');
-    expect(done.content[1]['input'], <String, Object?>{});
+    expect(done.stop, StopKind.toolUse);
+    expect(done.message.parts, const [
+      AssistantPart.toolCall(
+        id: 'tu_1',
+        name: 'search',
+        input: {'from': '2026-10-01'},
+      ),
+      AssistantPart.toolCall(id: 'tu_2', name: 'none', input: {}),
+    ]);
   });
 
   test('401 은 invalidKey, 429 는 rateLimited, 529 는 overloaded', () async {
@@ -322,7 +384,7 @@ void main() {
           'delta': {'type': 'text_delta', 'text': 'a'},
         }),
       ]),
-    ).stream(apiKey: 'k', system: 's', messages: const [], tools: const []);
+    ).stream(request(apiKey: 'k'));
     await expectLater(
       stream.forEach(events.add),
       throwsA(
@@ -369,11 +431,9 @@ void main() {
     });
     await expectLater(
       AnthropicChatModel.withTimeouts(
-            client,
-            responseTimeout: const Duration(milliseconds: 20),
-          )
-          .stream(apiKey: 'k', system: 's', messages: const [], tools: const [])
-          .toList(),
+        client,
+        responseTimeout: const Duration(milliseconds: 20),
+      ).stream(request(apiKey: 'k')).toList(),
       isNetwork,
     );
   });
@@ -389,11 +449,9 @@ void main() {
     );
     await expectLater(
       AnthropicChatModel.withTimeouts(
-            client,
-            idleTimeout: const Duration(milliseconds: 20),
-          )
-          .stream(apiKey: 'k', system: 's', messages: const [], tools: const [])
-          .toList(),
+        client,
+        idleTimeout: const Duration(milliseconds: 20),
+      ).stream(request(apiKey: 'k')).toList(),
       isNetwork,
     );
     await controller.close();
@@ -443,5 +501,299 @@ void main() {
         ),
       ),
     );
+  });
+
+  test('vendor 는 anthropic', () {
+    final model = AnthropicChatModel(
+      MockClient((_) async => http.Response('', 200)),
+    );
+    expect(model.vendor, ChatVendor.anthropic);
+  });
+
+  test('요청 본문이 전환 전과 같다', () async {
+    late Map<String, dynamic> body;
+    final thinking = <String, Object?>{
+      'type': 'thinking',
+      'thinking': '생각',
+      'signature': 'sig==',
+    };
+    final toolUse = <String, Object?>{
+      'type': 'tool_use',
+      'id': 'tu_1',
+      'name': 'view_entry_photos',
+      'input': {'entry_id': 'e1'},
+    };
+    await run(
+      capture((b) => body = b),
+      request(
+        model: 'claude-opus-5-5',
+        messages: [
+          const ChatMessage.user('사진 보여줘'),
+          ChatMessage.assistant(
+            parts: const [
+              AssistantPart.text('볼게요'),
+              AssistantPart.toolCall(
+                id: 'tu_1',
+                name: 'view_entry_photos',
+                input: {'entry_id': 'e1'},
+              ),
+            ],
+            vendorState: AnthropicTurnState(
+              model: 'claude-opus-5-5',
+              content: [
+                thinking,
+                {'type': 'text', 'text': '볼게요'},
+                toolUse,
+              ],
+            ),
+          ),
+          ChatMessage.toolResults([
+            ToolResultPart(
+              callId: 'tu_1',
+              json: '{"photos":1}',
+              images: [
+                ToolImage(
+                  mediaType: 'image/jpeg',
+                  bytes: Uint8List.fromList([1, 2, 3]),
+                ),
+              ],
+            ),
+            const ToolResultPart(
+              callId: 'tu_2',
+              json: '{"error":"x"}',
+              isError: true,
+            ),
+          ]),
+        ],
+        tools: const [
+          ToolSpec(
+            name: 'view_entry_photos',
+            description: '사진을 본다.',
+            parameters: {
+              'type': 'object',
+              'properties': {
+                'entry_id': {'type': 'string', 'description': '일기 id'},
+              },
+              'required': ['entry_id'],
+            },
+          ),
+        ],
+      ),
+    );
+
+    expect(body['model'], 'claude-opus-5-5');
+    expect(body['messages'], [
+      {'role': 'user', 'content': '사진 보여줘'},
+      {
+        'role': 'assistant',
+        'content': [
+          {'type': 'thinking', 'thinking': '생각', 'signature': 'sig=='},
+          {'type': 'text', 'text': '볼게요'},
+          {
+            'type': 'tool_use',
+            'id': 'tu_1',
+            'name': 'view_entry_photos',
+            'input': {'entry_id': 'e1'},
+          },
+        ],
+      },
+      {
+        'role': 'user',
+        'content': [
+          {
+            'type': 'tool_result',
+            'tool_use_id': 'tu_1',
+            'is_error': false,
+            'content': [
+              {'type': 'text', 'text': '{"photos":1}'},
+              {
+                'type': 'image',
+                'source': {
+                  'type': 'base64',
+                  'media_type': 'image/jpeg',
+                  'data': 'AQID',
+                },
+              },
+            ],
+          },
+          {
+            'type': 'tool_result',
+            'tool_use_id': 'tu_2',
+            'is_error': true,
+            'content': [
+              {'type': 'text', 'text': '{"error":"x"}'},
+            ],
+          },
+        ],
+      },
+    ]);
+    expect(body['tools'], [
+      {
+        'name': 'view_entry_photos',
+        'description': '사진을 본다.',
+        'input_schema': {
+          'type': 'object',
+          'properties': {
+            'entry_id': {'type': 'string', 'description': '일기 id'},
+          },
+          'required': ['entry_id'],
+        },
+      },
+    ]);
+  });
+
+  test('요청 model 은 request.model 을 쓴다', () async {
+    late Map<String, dynamic> body;
+    await run(capture((b) => body = b), request(model: 'other-model'));
+    expect(body['model'], 'other-model');
+  });
+
+  test('vendorState 가 없는 assistant 턴은 text · tool_use 블록만으로 다시 만든다', () async {
+    for (final VendorTurnState? state in [null, _OtherState()]) {
+      late Map<String, dynamic> body;
+      await run(
+        capture((b) => body = b),
+        request(
+          messages: [
+            const ChatMessage.user('q'),
+            ChatMessage.assistant(
+              parts: const [
+                AssistantPart.text('찾아볼게요'),
+                AssistantPart.toolCall(
+                  id: 'tu_1',
+                  name: 'daily_steps',
+                  input: {'from': '2026-10-01', 'to': '2026-10-02'},
+                ),
+              ],
+              vendorState: state,
+            ),
+          ],
+        ),
+      );
+      expect((body['messages'] as List)[1], {
+        'role': 'assistant',
+        'content': [
+          {'type': 'text', 'text': '찾아볼게요'},
+          {
+            'type': 'tool_use',
+            'id': 'tu_1',
+            'name': 'daily_steps',
+            'input': {'from': '2026-10-01', 'to': '2026-10-02'},
+          },
+        ],
+      }, reason: '$state');
+    }
+  });
+
+  test('stop_reason 을 StopKind 로 바꾼다', () async {
+    Future<StopKind> stopFor(String? reason) async {
+      final events = await run(
+        clientOf([
+          sse('content_block_start', {
+            'index': 0,
+            'content_block': {'type': 'text', 'text': ''},
+          }),
+          sse('content_block_stop', {'index': 0}),
+          sse('message_delta', {
+            'delta': {'stop_reason': ?reason},
+          }),
+          sse('message_stop', {}),
+        ]),
+      );
+      return (events.last as ModelCompleted).stop;
+    }
+
+    expect(await stopFor('end_turn'), StopKind.endTurn);
+    expect(await stopFor(null), StopKind.endTurn);
+    expect(await stopFor('tool_use'), StopKind.toolUse);
+    expect(await stopFor('refusal'), StopKind.refusal);
+    expect(await stopFor('max_tokens'), StopKind.maxTokens);
+    expect(await stopFor('pause_turn'), StopKind.other);
+  });
+
+  test('usage 를 message_start 와 message_delta 에서 읽는다', () async {
+    final events = await run(
+      clientOf([
+        sse('message_start', {
+          'type': 'message_start',
+          'message': {
+            'usage': {
+              'input_tokens': 2310,
+              'cache_creation_input_tokens': 0,
+              'cache_read_input_tokens': 2100,
+              'output_tokens': 1,
+            },
+          },
+        }),
+        sse('content_block_start', {
+          'index': 0,
+          'content_block': {'type': 'text', 'text': ''},
+        }),
+        sse('content_block_stop', {'index': 0}),
+        sse('message_delta', {
+          'delta': {'stop_reason': 'end_turn'},
+          'usage': {'output_tokens': 90},
+        }),
+        sse('message_delta', {
+          'delta': <String, Object?>{},
+          'usage': {'output_tokens': 180},
+        }),
+        sse('message_stop', {}),
+      ]),
+    );
+    final done = events.last as ModelCompleted;
+    expect(
+      done.usage,
+      const TokenUsage(
+        inputTokens: 2310,
+        outputTokens: 180,
+        cacheReadTokens: 2100,
+        cacheWriteTokens: 0,
+      ),
+    );
+    expect(done.usage!.reasoningTokens, isNull);
+    expect(done.stop, StopKind.endTurn);
+  });
+
+  test('message_delta 에 usage 가 없으면 output 은 message_start 의 값', () async {
+    final events = await run(
+      clientOf([
+        _textEvents(
+          'end_turn',
+          startUsage: {'input_tokens': 10, 'output_tokens': 3},
+        ),
+      ]),
+    );
+    expect(
+      (events.last as ModelCompleted).usage,
+      const TokenUsage(inputTokens: 10, outputTokens: 3),
+    );
+  });
+
+  test('usage 가 없거나 모양이 어긋나면 null 이고 답은 끝난다', () async {
+    for (final startUsage in <Map<String, Object?>?>[
+      null,
+      {'input_tokens': '2310', 'output_tokens': 1},
+      {'input_tokens': 2310},
+      {
+        'input_tokens': 2310,
+        'output_tokens': 1,
+        'cache_read_input_tokens': 'x',
+      },
+    ]) {
+      final events = await run(
+        clientOf([_textEvents('end_turn', startUsage: startUsage)]),
+      );
+      final done = events.last as ModelCompleted;
+      expect(done.usage, isNull, reason: '$startUsage');
+      expect(done.message.parts, const [AssistantPart.text('a')]);
+    }
+  });
+
+  test('요청 본문에 서버 저장 관련 필드가 없다', () async {
+    late Map<String, dynamic> body;
+    await run(capture((b) => body = b));
+    expect(body.containsKey('store'), isFalse);
+    expect(body.containsKey('metadata'), isFalse);
   });
 }

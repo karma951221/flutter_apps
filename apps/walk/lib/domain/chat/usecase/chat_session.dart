@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:core/core.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -34,7 +32,7 @@ sealed class ChatEvent with _$ChatEvent {
 
 /// 한 대화. 질문마다 Claude 를 부르고, 도구를 요청하면 실행해 결과를 돌려준다.
 ///
-/// 대화 기록은 덧붙이기만 한다(assistant content 의 thinking 서명도 그대로).
+/// 대화 기록은 덧붙이기만 한다(assistant 턴의 vendorState 도 그대로).
 /// 질문이 실패하거나 중간에 구독이 끊기면 그 질문에서 덧붙인 메시지를 되돌린다.
 @lazySingleton
 class ChatSession {
@@ -47,6 +45,10 @@ class ChatSession {
 
   static const maxRounds = 8;
 
+  /// 키 기획 ① 동안 쓰는 모델 id. 요청마다 [ModelRequest.model] 로 넘긴다.
+  /// 키 기획 ③ 이 모델 카탈로그로 바꾸며 지운다.
+  static const interimModel = 'claude-opus-5-5';
+
   /// 한 대화에 보내는 사진 수 한도. 지난 메시지는 고치지 않으므로(thinking 서명이
   /// 깨진다) 보낸 사진은 매 요청에 다시 실린다 — 대신 한도에서 막는다.
   static const maxImagesPerConversation = 12;
@@ -54,7 +56,7 @@ class ChatSession {
   static const _photoLimitJson =
       '{"error":"photo_limit_reached","hint":"새 대화를 시작하면 다시 사진을 볼 수 있어요"}';
 
-  final _messages = <Map<String, Object?>>[];
+  final _messages = <ChatMessage>[];
   bool _busy = false;
 
   /// 이 대화에서 보낸 사진 수. 되돌린 질문의 사진은 세지 않는다.
@@ -94,15 +96,18 @@ class ChatSession {
       final system = _systemPrompt();
       final tools = _tools.definitions;
       final cited = <String>{};
-      _messages.add({'role': 'user', 'content': question});
+      _messages.add(ChatMessage.user(question));
 
       for (var round = 1; round <= maxRounds; round++) {
         ModelCompleted? done;
         await for (final event in _model.stream(
-          apiKey: apiKey,
-          system: system,
-          messages: List.unmodifiable(_messages),
-          tools: tools,
+          ModelRequest(
+            apiKey: apiKey,
+            model: interimModel,
+            system: system,
+            messages: List.unmodifiable(_messages),
+            tools: tools,
+          ),
         )) {
           if (stale()) return;
           switch (event) {
@@ -110,32 +115,43 @@ class ChatSession {
               yield ChatEvent.text(text);
             case ModelCompleted():
               done = event;
+            case ModelThinking() ||
+                ModelProgress() ||
+                ModelToolCallStarted() ||
+                ModelToolCallReady():
+              break;
           }
         }
         if (stale()) return;
         if (done == null) {
           throw const ChatModelException(ChatModelErrorKind.network);
         }
-        _messages.add({'role': 'assistant', 'content': done.content});
+        _messages.add(done.message);
 
-        switch (done.stopReason) {
-          case 'tool_use':
-            final results = <Map<String, Object?>>[];
-            for (final block in done.content) {
-              if (block['type'] != 'tool_use') continue;
-              final name = block['name']! as String;
-              yield ChatEvent.toolStarted(name);
-              final input = (block['input'] as Map?)?.cast<String, Object?>();
-              final result = await _tools.run(name, input ?? const {});
+        switch (done.stop) {
+          case StopKind.toolUse:
+            final results = <ToolResultPart>[];
+            for (final part in done.message.parts) {
+              if (part is! ToolCallPart) continue;
+              yield ChatEvent.toolStarted(part.name);
+              final result = await _tools.run(part.name, part.input);
               if (stale()) return;
               cited.addAll(result.entryIds);
-              results.add(_toolResult(block['id']! as String, _capped(result)));
+              final capped = _capped(result);
+              results.add(
+                ToolResultPart(
+                  callId: part.id,
+                  json: capped.json,
+                  isError: capped.isError,
+                  images: capped.images,
+                ),
+              );
             }
-            _messages.add({'role': 'user', 'content': results});
-          case 'refusal':
+            _messages.add(ChatMessage.toolResults(results));
+          case StopKind.refusal:
             yield const ChatEvent.failed(ChatFailure.refused);
             return;
-          default:
+          case StopKind.endTurn || StopKind.maxTokens || StopKind.other:
             completed = true;
             yield ChatEvent.finished(citedEntryIds: List.of(cited));
             return;
@@ -169,30 +185,14 @@ class ChatSession {
     return result;
   }
 
-  static Map<String, Object?> _toolResult(String id, ToolResult result) => {
-    'type': 'tool_result',
-    'tool_use_id': id,
-    'is_error': result.isError,
-    'content': [
-      {'type': 'text', 'text': result.json},
-      for (final image in result.images)
-        {
-          'type': 'image',
-          'source': {
-            'type': 'base64',
-            'media_type': image.mediaType,
-            'data': base64Encode(image.bytes),
-          },
-        },
-    ],
-  };
-
   static ChatFailure _failureOf(ChatModelErrorKind kind) => switch (kind) {
     ChatModelErrorKind.invalidKey => ChatFailure.invalidKey,
     ChatModelErrorKind.rateLimited => ChatFailure.rateLimited,
     ChatModelErrorKind.overloaded => ChatFailure.overloaded,
     ChatModelErrorKind.network => ChatFailure.network,
-    ChatModelErrorKind.server => ChatFailure.unknown,
+    ChatModelErrorKind.server ||
+    ChatModelErrorKind.quotaExceeded ||
+    ChatModelErrorKind.modelUnavailable => ChatFailure.unknown,
   };
 
   String _systemPrompt() {
