@@ -2549,6 +2549,9 @@ abstract class _$DiaryDatabase extends GeneratedDatabase {
       result: [TableUpdate('entry_tags', kind: UpdateKind.delete)],
     ),
   ]);
+  @override
+  DriftDatabaseOptions get options =>
+      const DriftDatabaseOptions(storeDateTimeAsText: true);
 }
 
 typedef $$StoriesTableCreateCompanionBuilder =

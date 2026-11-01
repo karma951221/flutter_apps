@@ -1956,6 +1956,9 @@ abstract class _$ChatDatabase extends GeneratedDatabase {
       result: [TableUpdate('chat_turns', kind: UpdateKind.delete)],
     ),
   ]);
+  @override
+  DriftDatabaseOptions get options =>
+      const DriftDatabaseOptions(storeDateTimeAsText: true);
 }
 
 typedef $$ConversationsTableCreateCompanionBuilder =

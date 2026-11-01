@@ -1,0 +1,8 @@
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          # 런타임 DriftDatabaseOptions(storeDateTimeAsText: true) 와 맞춘다 —
+          # 생성 코드와 drift_schemas/ 덤프가 날짜를 TEXT 로 기록하게.
+          store_date_time_values_as_text: true

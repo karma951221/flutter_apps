@@ -173,12 +173,16 @@ class DriftChatHistoryRepository implements ChatHistoryRepository {
   Future<int> deleteAll() => _db.delete(_db.conversations).go();
 
   @override
-  Future<int> deleteOlderThan(DateTime cutoff, {String? except}) =>
-      (_db.delete(_db.conversations)..where((c) {
-            final old = c.updatedAt.isSmallerThanValue(cutoff);
-            return except == null ? old : old & c.id.equals(except).not();
-          }))
-          .go();
+  Future<int> deleteOlderThan(DateTime cutoff, {String? except}) {
+    // 날짜는 TEXT(storeDateTimeAsText)로 저장되고 Clock.now() 의 로컬 시각이다.
+    // UTC cutoff 는 'Z' 접미사가 붙어 글자 비교가 어긋나므로 로컬 시각만 받는다.
+    assert(!cutoff.isUtc, 'deleteOlderThan 의 cutoff 는 로컬 시각이어야 한다');
+    return (_db.delete(_db.conversations)..where((c) {
+          final old = c.updatedAt.isSmallerThanValue(cutoff);
+          return except == null ? old : old & c.id.equals(except).not();
+        }))
+        .go();
+  }
 
   /// 턴은 foreign key cascade 로 함께 지워진다.
   Future<int> _deleteConversation(String id) =>
