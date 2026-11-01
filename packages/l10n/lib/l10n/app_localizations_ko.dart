@@ -3184,6 +3184,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatFailureInvalidKey => '키를 확인해 주세요';
 
   @override
+  String get walkChatFailureQuotaExceeded => '크레딧이 부족해요. 결제 상태를 확인해 주세요';
+
+  @override
+  String get walkChatFailureModelUnavailable =>
+      '지금 모델을 쓸 수 없어요. 잠시 뒤 다시 물어봐 주세요';
+
+  @override
   String get walkChatFailureRateLimited => '요청이 많아요. 잠시 뒤 다시 물어봐 주세요';
 
   @override

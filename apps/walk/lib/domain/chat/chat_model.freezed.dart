@@ -1769,4 +1769,497 @@ $TokenUsageCopyWith<$Res>? get usage {
 }
 }
 
+/// @nodoc
+mixin _$ModelInfo {
+
+ String get id; String get displayName; DateTime? get createdAt; bool? get supportsTools; bool? get supportsImages; bool get supportsFastMode; List<String> get aliases;
+/// Create a copy of ModelInfo
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ModelInfoCopyWith<ModelInfo> get copyWith => _$ModelInfoCopyWithImpl<ModelInfo>(this as ModelInfo, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ModelInfo&&(identical(other.id, id) || other.id == id)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.supportsTools, supportsTools) || other.supportsTools == supportsTools)&&(identical(other.supportsImages, supportsImages) || other.supportsImages == supportsImages)&&(identical(other.supportsFastMode, supportsFastMode) || other.supportsFastMode == supportsFastMode)&&const DeepCollectionEquality().equals(other.aliases, aliases));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,displayName,createdAt,supportsTools,supportsImages,supportsFastMode,const DeepCollectionEquality().hash(aliases));
+
+@override
+String toString() {
+  return 'ModelInfo(id: $id, displayName: $displayName, createdAt: $createdAt, supportsTools: $supportsTools, supportsImages: $supportsImages, supportsFastMode: $supportsFastMode, aliases: $aliases)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ModelInfoCopyWith<$Res>  {
+  factory $ModelInfoCopyWith(ModelInfo value, $Res Function(ModelInfo) _then) = _$ModelInfoCopyWithImpl;
+@useResult
+$Res call({
+ String id, String displayName, DateTime? createdAt, bool? supportsTools, bool? supportsImages, bool supportsFastMode, List<String> aliases
+});
+
+
+
+
+}
+/// @nodoc
+class _$ModelInfoCopyWithImpl<$Res>
+    implements $ModelInfoCopyWith<$Res> {
+  _$ModelInfoCopyWithImpl(this._self, this._then);
+
+  final ModelInfo _self;
+  final $Res Function(ModelInfo) _then;
+
+/// Create a copy of ModelInfo
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? displayName = null,Object? createdAt = freezed,Object? supportsTools = freezed,Object? supportsImages = freezed,Object? supportsFastMode = null,Object? aliases = null,}) {
+  return _then(ModelInfo(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
+as String,createdAt: freezed == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,supportsTools: freezed == supportsTools ? _self.supportsTools : supportsTools // ignore: cast_nullable_to_non_nullable
+as bool?,supportsImages: freezed == supportsImages ? _self.supportsImages : supportsImages // ignore: cast_nullable_to_non_nullable
+as bool?,supportsFastMode: null == supportsFastMode ? _self.supportsFastMode : supportsFastMode // ignore: cast_nullable_to_non_nullable
+as bool,aliases: null == aliases ? _self.aliases : aliases // ignore: cast_nullable_to_non_nullable
+as List<String>,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ModelInfo].
+extension ModelInfoPatterns on ModelInfo {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(){
+final _that = this;
+switch (_that) {
+case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(){
+final _that = this;
+switch (_that) {
+case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>() {final _that = this;
+switch (_that) {
+case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>() {final _that = this;
+switch (_that) {
+case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+mixin _$ModelListResult {
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ModelListResult);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'ModelListResult()';
+}
+
+
+}
+
+/// @nodoc
+class $ModelListResultCopyWith<$Res>  {
+$ModelListResultCopyWith(ModelListResult _, $Res Function(ModelListResult) __);
+}
+
+
+/// Adds pattern-matching-related methods to [ModelListResult].
+extension ModelListResultPatterns on ModelListResult {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ModelListOk value)?  ok,TResult Function( ModelListInvalidKey value)?  invalidKey,TResult Function( ModelListUnreachable value)?  unreachable,required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case ModelListOk() when ok != null:
+return ok(_that);case ModelListInvalidKey() when invalidKey != null:
+return invalidKey(_that);case ModelListUnreachable() when unreachable != null:
+return unreachable(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ModelListOk value)  ok,required TResult Function( ModelListInvalidKey value)  invalidKey,required TResult Function( ModelListUnreachable value)  unreachable,}){
+final _that = this;
+switch (_that) {
+case ModelListOk():
+return ok(_that);case ModelListInvalidKey():
+return invalidKey(_that);case ModelListUnreachable():
+return unreachable(_that);}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ModelListOk value)?  ok,TResult? Function( ModelListInvalidKey value)?  invalidKey,TResult? Function( ModelListUnreachable value)?  unreachable,}){
+final _that = this;
+switch (_that) {
+case ModelListOk() when ok != null:
+return ok(_that);case ModelListInvalidKey() when invalidKey != null:
+return invalidKey(_that);case ModelListUnreachable() when unreachable != null:
+return unreachable(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( List<ModelInfo> models)?  ok,TResult Function()?  invalidKey,TResult Function()?  unreachable,required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case ModelListOk() when ok != null:
+return ok(_that.models);case ModelListInvalidKey() when invalidKey != null:
+return invalidKey();case ModelListUnreachable() when unreachable != null:
+return unreachable();case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( List<ModelInfo> models)  ok,required TResult Function()  invalidKey,required TResult Function()  unreachable,}) {final _that = this;
+switch (_that) {
+case ModelListOk():
+return ok(_that.models);case ModelListInvalidKey():
+return invalidKey();case ModelListUnreachable():
+return unreachable();}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( List<ModelInfo> models)?  ok,TResult? Function()?  invalidKey,TResult? Function()?  unreachable,}) {final _that = this;
+switch (_that) {
+case ModelListOk() when ok != null:
+return ok(_that.models);case ModelListInvalidKey() when invalidKey != null:
+return invalidKey();case ModelListUnreachable() when unreachable != null:
+return unreachable();case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+
+
+class ModelListOk implements ModelListResult {
+  const ModelListOk(final  List<ModelInfo> models): _models = models;
+  
+
+ final  List<ModelInfo> _models;
+ List<ModelInfo> get models {
+  if (_models is EqualUnmodifiableListView) return _models;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_models);
+}
+
+
+/// Create a copy of ModelListResult
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ModelListOkCopyWith<ModelListOk> get copyWith => _$ModelListOkCopyWithImpl<ModelListOk>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ModelListOk&&const DeepCollectionEquality().equals(other._models, _models));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_models));
+
+@override
+String toString() {
+  return 'ModelListResult.ok(models: $models)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ModelListOkCopyWith<$Res> implements $ModelListResultCopyWith<$Res> {
+  factory $ModelListOkCopyWith(ModelListOk value, $Res Function(ModelListOk) _then) = _$ModelListOkCopyWithImpl;
+@useResult
+$Res call({
+ List<ModelInfo> models
+});
+
+
+
+
+}
+/// @nodoc
+class _$ModelListOkCopyWithImpl<$Res>
+    implements $ModelListOkCopyWith<$Res> {
+  _$ModelListOkCopyWithImpl(this._self, this._then);
+
+  final ModelListOk _self;
+  final $Res Function(ModelListOk) _then;
+
+/// Create a copy of ModelListResult
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? models = null,}) {
+  return _then(ModelListOk(
+null == models ? _self._models : models // ignore: cast_nullable_to_non_nullable
+as List<ModelInfo>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ModelListInvalidKey implements ModelListResult {
+  const ModelListInvalidKey();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ModelListInvalidKey);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'ModelListResult.invalidKey()';
+}
+
+
+}
+
+
+
+
+/// @nodoc
+
+
+class ModelListUnreachable implements ModelListResult {
+  const ModelListUnreachable();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ModelListUnreachable);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'ModelListResult.unreachable()';
+}
+
+
+}
+
+
+
+
 // dart format on

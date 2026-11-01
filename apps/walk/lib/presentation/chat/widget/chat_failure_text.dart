@@ -7,6 +7,8 @@ String chatFailureText(AppLocalizations l10n, ChatFailure failure) =>
     switch (failure) {
       ChatFailure.noKey => l10n.walkChatFailureNoKey,
       ChatFailure.invalidKey => l10n.walkChatFailureInvalidKey,
+      ChatFailure.quotaExceeded => l10n.walkChatFailureQuotaExceeded,
+      ChatFailure.modelUnavailable => l10n.walkChatFailureModelUnavailable,
       ChatFailure.rateLimited => l10n.walkChatFailureRateLimited,
       ChatFailure.overloaded => l10n.walkChatFailureOverloaded,
       ChatFailure.network => l10n.walkChatFailureNetwork,

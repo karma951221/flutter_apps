@@ -5,6 +5,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:intl/intl.dart';
 
+import '../chat_connection.dart';
 import '../chat_model.dart';
 import '../chat_settings.dart';
 import '../chat_trace.dart';
@@ -17,6 +18,8 @@ part 'chat_session.freezed.dart';
 enum ChatFailure {
   noKey,
   invalidKey,
+  quotaExceeded,
+  modelUnavailable,
   rateLimited,
   overloaded,
   network,
@@ -286,13 +289,20 @@ class ChatSession {
           case StopKind.endTurn || StopKind.maxTokens || StopKind.other:
             completed = true;
             _turnDone = true;
+            _recordKeyStatus(ChatKeyStatus.valid);
             yield ChatEvent.finished(citedEntryIds: List.of(_turnCited));
             return;
         }
       }
       yield const ChatEvent.failed(ChatFailure.tooManySteps);
     } on ChatModelException catch (e) {
-      if (!stale()) yield ChatEvent.failed(_failureOf(e.kind));
+      if (!stale()) {
+        final failure = _failureOf(e.kind);
+        if (failure == ChatFailure.invalidKey) {
+          _recordKeyStatus(ChatKeyStatus.invalid);
+        }
+        yield ChatEvent.failed(failure);
+      }
     } catch (_) {
       if (!stale()) yield const ChatEvent.failed(ChatFailure.unknown);
     } finally {
@@ -335,6 +345,14 @@ class ChatSession {
     );
   }
 
+  /// 키 상태를 남긴다(§7.3). 기다리지 않고, 실패해도 답에 영향을 주지 않는다.
+  /// stale 한 질문은 부르지 않는다(부르는 쪽이 확인).
+  void _recordKeyStatus(ChatKeyStatus status) {
+    unawaited(
+      Future.sync(() => _settings.setKeyStatus(status)).catchError((Object _) {}),
+    );
+  }
+
   /// 사진이 한도를 넘기면 사진 없이 오류 결과로 바꾼다.
   ToolResult _capped(ToolResult result) {
     final count = result.images.length;
@@ -351,9 +369,9 @@ class ChatSession {
     ChatModelErrorKind.rateLimited => ChatFailure.rateLimited,
     ChatModelErrorKind.overloaded => ChatFailure.overloaded,
     ChatModelErrorKind.network => ChatFailure.network,
-    ChatModelErrorKind.server ||
-    ChatModelErrorKind.quotaExceeded ||
-    ChatModelErrorKind.modelUnavailable => ChatFailure.unknown,
+    ChatModelErrorKind.quotaExceeded => ChatFailure.quotaExceeded,
+    ChatModelErrorKind.modelUnavailable => ChatFailure.modelUnavailable,
+    ChatModelErrorKind.server => ChatFailure.unknown,
   };
 
   String _systemPrompt() {

@@ -994,6 +994,8 @@
   "walkChatCitedTitle": "会話の記録",
   "walkChatFailureNoKey": "設定でキーを入れてください",
   "walkChatFailureInvalidKey": "キーを確認してください",
+  "walkChatFailureQuotaExceeded": "クレジットが不足しています。請求状況を確認してください",
+  "walkChatFailureModelUnavailable": "現在このモデルは使えません。しばらくしてからもう一度質問してください",
   "walkChatFailureRateLimited": "リクエストが多すぎます。少し待ってからもう一度聞いてください",
   "walkChatFailureOverloaded": "Claudeが混み合っています。少し待ってからもう一度聞いてください",
   "walkChatFailureNetwork": "接続が切れました。もう一度聞いてください",

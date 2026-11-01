@@ -5948,6 +5948,18 @@ abstract class AppLocalizations {
   /// **'키를 확인해 주세요'**
   String get walkChatFailureInvalidKey;
 
+  /// 채팅 실패 말풍선: 결제 · 크레딧 부족(키는 맞음)
+  ///
+  /// In ko, this message translates to:
+  /// **'크레딧이 부족해요. 결제 상태를 확인해 주세요'**
+  String get walkChatFailureQuotaExceeded;
+
+  /// 채팅 실패 말풍선: 모델 없음 · 권한 없음. ③ 에서 '모델을 바꿨어요' 로 바뀜
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 모델을 쓸 수 없어요. 잠시 뒤 다시 물어봐 주세요'**
+  String get walkChatFailureModelUnavailable;
+
   /// 채팅 실패: 요청 한도
   ///
   /// In ko, this message translates to:

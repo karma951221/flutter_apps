@@ -5,6 +5,7 @@ import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:walk/domain/chat/chat_connection.dart';
 import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/chat_usage_log.dart';
@@ -45,6 +46,10 @@ class _FakeModel implements ChatModel {
 
   /// 준비된 라운드를 다 쓰면 이 라운드를 되풀이한다.
   List<Object>? repeat;
+
+  @override
+  Future<ModelListResult> listModels(String apiKey) async =>
+      const ModelListResult.ok([]);
 
   @override
   ChatVendor get vendor => ChatVendor.anthropic;
@@ -755,17 +760,15 @@ void main() {
   );
 
   test(
-    'server · quotaExceeded · modelUnavailable 오류는 unknown, 그 밖의 예외도 unknown',
+    'server 오류는 unknown, 그 밖의 예외도 unknown',
     () async {
       final model = _FakeModel([
         [const ChatModelException(ChatModelErrorKind.server)],
-        [const ChatModelException(ChatModelErrorKind.quotaExceeded)],
-        [const ChatModelException(ChatModelErrorKind.modelUnavailable)],
         [StateError('boom')],
       ]);
       final chat = session(model);
 
-      for (final q in ['a', 'b', 'c', 'd']) {
+      for (final q in ['a', 'b']) {
         expect(
           (await chat.ask(q).toList()).last,
           const ChatEvent.failed(ChatFailure.unknown),
@@ -790,6 +793,118 @@ void main() {
       (await chat.ask('b').toList()).last,
       const ChatEvent.failed(ChatFailure.overloaded),
     );
+  });
+
+  test('quotaExceeded · modelUnavailable 예외는 같은 이름의 ChatFailure', () async {
+    final model = _FakeModel([
+      [const ChatModelException(ChatModelErrorKind.quotaExceeded)],
+      [const ChatModelException(ChatModelErrorKind.modelUnavailable)],
+    ]);
+    final chat = session(model);
+
+    expect(
+      (await chat.ask('a').toList()).last,
+      const ChatEvent.failed(ChatFailure.quotaExceeded),
+    );
+    expect(
+      (await chat.ask('b').toList()).last,
+      const ChatEvent.failed(ChatFailure.modelUnavailable),
+    );
+  });
+
+  group('키 상태 기록', () {
+    test('invalidKey 로 실패하면 키 상태를 invalid 로 기록한다', () async {
+      final model = _FakeModel([
+        [const ChatModelException(ChatModelErrorKind.invalidKey)],
+      ]);
+
+      final events = await session(model).ask('질문').toList();
+      await pumpEventQueue();
+
+      expect(events.last, const ChatEvent.failed(ChatFailure.invalidKey));
+      expect(settings.statusWrites, [ChatKeyStatus.invalid]);
+      expect(settings.status, ChatKeyStatus.invalid);
+    });
+
+    test('질문이 끝나면 valid 로 기록한다', () async {
+      settings.status = ChatKeyStatus.unverified;
+      final model = _FakeModel([_answer('네')]);
+
+      await session(model).ask('질문').toList();
+      await pumpEventQueue();
+
+      expect(settings.statusWrites, [ChatKeyStatus.valid]);
+      expect(settings.status, ChatKeyStatus.valid);
+    });
+
+    test('그 밖의 실패는 기록하지 않는다', () async {
+      final model = _FakeModel([
+        [const ChatModelException(ChatModelErrorKind.network)],
+        [const ChatModelException(ChatModelErrorKind.quotaExceeded)],
+      ]);
+      final chat = session(model);
+
+      await chat.ask('a').toList();
+      await chat.ask('b').toList();
+      await pumpEventQueue();
+
+      expect(settings.statusWrites, isEmpty);
+    });
+
+    test('상태 기록이 던져도 답은 그대로', () async {
+      settings.failSetKeyStatusWith = StateError('저장소');
+      final chat = session(
+        _FakeModel([
+          _answer('네'),
+          [const ChatModelException(ChatModelErrorKind.invalidKey)],
+        ]),
+      );
+
+      expect(
+        (await chat.ask('a').toList()).last,
+        const ChatEvent.finished(citedEntryIds: []),
+      );
+      expect(
+        (await chat.ask('b').toList()).last,
+        const ChatEvent.failed(ChatFailure.invalidKey),
+      );
+      await pumpEventQueue();
+      expect(settings.statusWrites, [
+        ChatKeyStatus.valid,
+        ChatKeyStatus.invalid,
+      ]);
+    });
+
+    test('리셋된 질문은 기록하지 않는다', () async {
+      for (final outcome in ['성공', 'invalidKey']) {
+        settings.statusWrites.clear();
+        final model = _CompleterModel();
+        final chat = ChatSession(
+          model,
+          tools,
+          settings,
+          clock,
+          usage,
+          ids,
+          const NoopChatTrace(),
+        );
+        final first = chat.ask('첫').toList();
+        await pumpEventQueue();
+
+        chat.reset();
+        if (outcome == '성공') {
+          model.calls[0].complete(_done([_text('늦은 답')], StopKind.endTurn));
+        } else {
+          model.calls[0].completeError(
+            const ChatModelException(ChatModelErrorKind.invalidKey),
+          );
+        }
+        await first;
+        await pumpEventQueue();
+
+        expect(settings.statusWrites, isEmpty, reason: outcome);
+      }
+    });
   });
 
   test('refusal 은 refused', () async {
@@ -1399,6 +1514,10 @@ class _GatedModel implements ChatModel {
   final requests = <List<ChatMessage>>[];
 
   @override
+  Future<ModelListResult> listModels(String apiKey) async =>
+      const ModelListResult.ok([]);
+
+  @override
   ChatVendor get vendor => ChatVendor.anthropic;
 
   @override
@@ -1413,6 +1532,10 @@ class _GatedModel implements ChatModel {
 class _CompleterModel implements ChatModel {
   final calls = <Completer<ModelEvent>>[];
   final requests = <List<ChatMessage>>[];
+
+  @override
+  Future<ModelListResult> listModels(String apiKey) async =>
+      const ModelListResult.ok([]);
 
   @override
   ChatVendor get vendor => ChatVendor.anthropic;
@@ -1431,6 +1554,10 @@ class _HangingModel implements ChatModel {
   final rounds = <StreamController<ModelEvent>>[];
   final cancelled = <bool>[];
   final requests = <List<ChatMessage>>[];
+
+  @override
+  Future<ModelListResult> listModels(String apiKey) async =>
+      const ModelListResult.ok([]);
 
   @override
   ChatVendor get vendor => ChatVendor.anthropic;

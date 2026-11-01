@@ -3434,6 +3434,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatFailureInvalidKey => 'Check your key';
 
   @override
+  String get walkChatFailureQuotaExceeded =>
+      'You\'re out of credits. Check your billing';
+
+  @override
+  String get walkChatFailureModelUnavailable =>
+      'This model isn\'t available right now. Try again later';
+
+  @override
   String get walkChatFailureRateLimited =>
       'Too many requests. Please ask again in a moment';
 

@@ -71,8 +71,17 @@ class FakeChatSettings implements ChatSettings {
     status = ChatKeyStatus.valid;
   }
 
+  /// [setKeyStatus] 로 받은 값들(연결 여부와 상관없이 부른 순서대로).
+  final statusWrites = <ChatKeyStatus>[];
+
+  /// null 이 아니면 [setKeyStatus] 가 이 오류를 던진다.
+  Object? failSetKeyStatusWith;
+
   @override
   Future<void> setKeyStatus(ChatKeyStatus status) async {
+    statusWrites.add(status);
+    final error = failSetKeyStatusWith;
+    if (error != null) throw error;
     if (key != null) this.status = status;
   }
 

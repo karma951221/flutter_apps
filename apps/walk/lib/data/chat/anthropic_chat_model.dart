@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
@@ -44,6 +45,7 @@ class AnthropicChatModel implements ChatModel {
     this._trace, {
     this.responseTimeout = const Duration(seconds: 60),
     this.idleTimeout = const Duration(seconds: 90),
+    this.listTimeout = const Duration(seconds: 10),
   });
 
   final http.Client _client;
@@ -55,10 +57,91 @@ class AnthropicChatModel implements ChatModel {
   /// SSE 줄 사이 최대 간격. 서버는 오래 생각하는 동안에도 ping 이벤트를 보낸다.
   final Duration idleTimeout;
 
+  /// [listModels] 의 요청부터 본문 끝까지.
+  final Duration listTimeout;
+
   static final _endpoint = Uri.parse('https://api.anthropic.com/v1/messages');
+  static final _modelsEndpoint = Uri.parse(
+    'https://api.anthropic.com/v1/models?limit=1000',
+  );
+  static const _apiVersion = '2026-10-21';
+
+  /// 오류 본문에서 `error.type` 을 읽을 때의 상한. 넘으면 상태 코드로만 판정한다.
+  static const _errorBodyLimit = 16 * 1024;
+  static const _errorBodyTimeout = Duration(seconds: 2);
 
   @override
   ChatVendor get vendor => ChatVendor.anthropic;
+
+  /// `GET /v1/models`. 판정은 상태 코드만(2xx ok · 401/403 invalidKey · 그 밖
+  /// unreachable). 오류 본문은 읽지 않는다. 목록은 관대하게 읽는다 — 모양이
+  /// 어긋난 항목은 건너뛰고, 본문을 못 읽으면 빈 목록(키는 맞다).
+  /// 페이지 넘기기(`has_more`)는 키 기획 ③.
+  @override
+  Future<ModelListResult> listModels(String apiKey) async {
+    final abort = Completer<void>();
+    try {
+      return await _list(apiKey, abort.future).timeout(
+        listTimeout,
+        onTimeout: () {
+          if (!abort.isCompleted) abort.complete();
+          return const ModelListResult.unreachable();
+        },
+      );
+    } catch (_) {
+      // SocketException · ClientException 등. 던지지 않는다.
+      return const ModelListResult.unreachable();
+    }
+  }
+
+  Future<ModelListResult> _list(String apiKey, Future<void> abort) async {
+    final request =
+        http.AbortableRequest('GET', _modelsEndpoint, abortTrigger: abort)
+          ..headers.addAll({
+            'x-api-key': apiKey,
+            'anthropic-version': _apiVersion,
+          });
+    final response = await _client.send(request);
+    final status = response.statusCode;
+    if (status < 200 || status >= 300) {
+      unawaited(response.stream.drain<void>().catchError((_) {}));
+      return status == 401 || status == 403
+          ? const ModelListResult.invalidKey()
+          : const ModelListResult.unreachable();
+    }
+    final body = await response.stream.toBytes();
+    return ModelListResult.ok(_modelsOf(body));
+  }
+
+  static List<ModelInfo> _modelsOf(Uint8List body) {
+    Object? json;
+    try {
+      json = jsonDecode(utf8.decode(body));
+    } on FormatException {
+      return const [];
+    }
+    if (json is! Map) return const [];
+    final data = json['data'];
+    if (data is! List) return const [];
+    return [
+      for (final item in data)
+        if (item is Map && item['id'] is String)
+          ModelInfo(
+            id: item['id'] as String,
+            displayName: switch (item['display_name']) {
+              final String name => name,
+              _ => item['id'] as String,
+            },
+            createdAt: switch (item['created_at']) {
+              final String at => DateTime.tryParse(at),
+              _ => null,
+            },
+            // §10.1: Claude 목록은 전부 채팅 · 도구 · 이미지.
+            supportsTools: true,
+            supportsImages: true,
+          ),
+    ];
+  }
 
   /// 구독을 끊으면 진행 중인 HTTP 요청 · 응답을 닫는다(abortTrigger). 끊은 뒤에는
   /// 이벤트도 오류도 내지 않는다. 정상 · 오류 종료로 끝난 뒤의 취소는 abort 가 아니다.
@@ -132,9 +215,10 @@ class AnthropicChatModel implements ChatModel {
       if (_trace.enabled) _trace.mark(ChatTraceMark.head);
       final status = response.statusCode;
       if (status < 200 || status >= 300) {
-        // 본문은 읽지도 담지도 않는다.
-        unawaited(response.stream.drain<void>().catchError((_) {}));
-        throw ChatModelException(_kindForStatus(status));
+        // 본문에서 error.type 하나만 읽고 나머지(message 등)는 버린다.
+        throw ChatModelException(
+          _kindFor(status, await _errorType(response, abortTrigger)),
+        );
       }
       yield* _parse(_untilAbort(response.stream, abortTrigger), request.model);
     } on ChatModelException {
@@ -150,7 +234,7 @@ class AnthropicChatModel implements ChatModel {
 
   static Map<String, String> _headers(ModelRequest request) => {
     'x-api-key': request.apiKey,
-    'anthropic-version': '2026-10-21',
+    'anthropic-version': _apiVersion,
     'anthropic-beta': 'server-side-fallback-2026-07-01',
     'content-type': 'application/json',
   };
@@ -248,12 +332,61 @@ class AnthropicChatModel implements ChatModel {
     'input_schema': tool.parameters,
   };
 
-  static ChatModelErrorKind _kindForStatus(int status) => switch (status) {
-    401 || 403 => ChatModelErrorKind.invalidKey,
-    429 => ChatModelErrorKind.rateLimited,
-    529 => ChatModelErrorKind.overloaded,
-    _ => ChatModelErrorKind.server,
-  };
+  /// 오류 응답에서 error.type 만 꺼낸다. [_errorBodyLimit] · [_errorBodyTimeout] 을
+  /// 넘거나 JSON 이 아니면 null. 나머지는 버린다. [abort] 가 끝나면 읽기를 멈춘다.
+  static Future<String?> _errorType(
+    http.StreamedResponse response, [
+    Future<void>? abort,
+  ]) async {
+    final buffer = BytesBuilder(copy: false);
+    final done = Completer<bool>();
+    void finish(bool complete) {
+      if (!done.isCompleted) done.complete(complete);
+    }
+
+    final sub = response.stream.listen(
+      (chunk) {
+        buffer.add(chunk);
+        if (buffer.length > _errorBodyLimit) finish(false);
+      },
+      onError: (Object _) => finish(false),
+      onDone: () => finish(true),
+      cancelOnError: true,
+    );
+    unawaited(abort?.whenComplete(() => finish(false)));
+    final complete = await done.future.timeout(
+      _errorBodyTimeout,
+      onTimeout: () => false,
+    );
+    unawaited(sub.cancel().catchError((_) {}));
+    if (!complete) return null;
+    try {
+      final json = jsonDecode(utf8.decode(buffer.takeBytes()));
+      if (json case {'error': {'type': final String type}}) return type;
+    } on FormatException {
+      // JSON 이 아니다 — 상태 코드로 판정한다.
+    }
+    return null;
+  }
+
+  /// [type](error.type)이 먼저, 모르면 상태 코드. SSE error 이벤트는 [status] 없이.
+  static ChatModelErrorKind _kindFor(int? status, String? type) =>
+      switch (type) {
+        'authentication_error' ||
+        'permission_error' => ChatModelErrorKind.invalidKey,
+        'billing_error' => ChatModelErrorKind.quotaExceeded, // K2
+        'not_found_error' => ChatModelErrorKind.modelUnavailable,
+        'rate_limit_error' => ChatModelErrorKind.rateLimited,
+        'overloaded_error' => ChatModelErrorKind.overloaded,
+        _ => switch (status) {
+          401 || 403 => ChatModelErrorKind.invalidKey,
+          402 => ChatModelErrorKind.quotaExceeded,
+          404 => ChatModelErrorKind.modelUnavailable,
+          429 => ChatModelErrorKind.rateLimited,
+          529 => ChatModelErrorKind.overloaded,
+          _ => ChatModelErrorKind.server,
+        },
+      };
 
   static StopKind _stopOf(String? reason) => switch (reason) {
     'end_turn' || null => StopKind.endTurn,
@@ -421,9 +554,7 @@ class AnthropicChatModel implements ChatModel {
           final error = json['error'];
           final type = error is Map ? error['type'] : null;
           throw ChatModelException(
-            type == 'overloaded_error'
-                ? ChatModelErrorKind.overloaded
-                : ChatModelErrorKind.server,
+            _kindFor(null, type is String ? type : null),
           );
       }
     }

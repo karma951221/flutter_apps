@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -1113,6 +1114,263 @@ void main() {
       ).stream(request()).toList();
 
       expect(trace.labels, isNot(contains(ChatTraceMark.abort)));
+    });
+  });
+
+  group('listModels', () {
+    MockClient listClient(
+      Object body, {
+      int status = 200,
+      void Function(http.BaseRequest)? onRequest,
+    }) => MockClient.streaming((r, b) async {
+      await b.drain<void>();
+      onRequest?.call(r);
+      return http.StreamedResponse(
+        Stream.value(utf8.encode(body is String ? body : jsonEncode(body))),
+        status,
+      );
+    });
+
+    AnthropicChatModel modelOf(http.Client client) =>
+        AnthropicChatModel(client, const NoopChatTrace());
+
+    test('listModels 200 은 ok 이고 id · 표시 이름 · 만든 시각을 읽는다', () async {
+      final result = await modelOf(
+        listClient({
+          'data': [
+            {
+              'id': 'claude-sonnet-x',
+              'display_name': 'Claude Sonnet X',
+              'created_at': '2026-10-01T00:00:00Z',
+            },
+          ],
+          'has_more': false,
+        }),
+      ).listModels('sk-test');
+
+      final models = (result as ModelListOk).models;
+      expect(models, [
+        ModelInfo(
+          id: 'claude-sonnet-x',
+          displayName: 'Claude Sonnet X',
+          createdAt: DateTime.utc(2026, 10),
+          supportsTools: true,
+          supportsImages: true,
+        ),
+      ]);
+      expect(models.single.supportsFastMode, isFalse);
+    });
+
+    test('listModels 는 GET /v1/models?limit=1000 에 키 헤더를 싣는다', () async {
+      late http.BaseRequest req;
+      await modelOf(
+        listClient({'data': []}, onRequest: (r) => req = r),
+      ).listModels('sk-test');
+
+      expect(req.method, 'GET');
+      expect(
+        req.url.toString(),
+        'https://api.anthropic.com/v1/models?limit=1000',
+      );
+      expect(req.headers['x-api-key'], 'sk-test');
+      expect(req.headers['anthropic-version'], '2026-10-21');
+    });
+
+    test('listModels 401 · 403 은 invalidKey', () async {
+      for (final status in [401, 403]) {
+        expect(
+          await modelOf(listClient('{}', status: status)).listModels('k'),
+          const ModelListResult.invalidKey(),
+          reason: '$status',
+        );
+      }
+    });
+
+    test('listModels 500 · 429 · 529 는 unreachable', () async {
+      for (final status in [500, 429, 529]) {
+        expect(
+          await modelOf(listClient('{}', status: status)).listModels('k'),
+          const ModelListResult.unreachable(),
+          reason: '$status',
+        );
+      }
+    });
+
+    test('listModels SocketException · 시간 초과는 unreachable', () async {
+      final socket = MockClient.streaming(
+        (r, b) async => throw const SocketException('down'),
+      );
+      expect(
+        await modelOf(socket).listModels('k'),
+        const ModelListResult.unreachable(),
+      );
+
+      final never = Completer<http.StreamedResponse>();
+      final hanging = MockClient.streaming((r, b) async {
+        await b.drain<void>();
+        return never.future;
+      });
+      expect(
+        await AnthropicChatModel.withTimeouts(
+          hanging,
+          const NoopChatTrace(),
+          listTimeout: const Duration(milliseconds: 10),
+        ).listModels('k'),
+        const ModelListResult.unreachable(),
+      );
+    });
+
+    test('기본 목록 대기 시간은 10초', () {
+      expect(
+        modelOf(MockClient((_) async => http.Response('', 200))).listTimeout,
+        const Duration(seconds: 10),
+      );
+    });
+
+    test('listModels 200 인데 본문이 JSON 이 아니면 ok(빈 목록)', () async {
+      expect(
+        await modelOf(listClient('<html>')).listModels('k'),
+        const ModelListResult.ok([]),
+      );
+      expect(
+        await modelOf(listClient({'nope': 1})).listModels('k'),
+        const ModelListResult.ok([]),
+      );
+    });
+
+    test('id 가 없는 항목은 건너뛴다', () async {
+      final result = await modelOf(
+        listClient({
+          'data': [
+            {'display_name': '이름만'},
+            {'id': 3},
+            'x',
+            {'id': 'claude-a'},
+          ],
+        }),
+      ).listModels('k');
+
+      final models = (result as ModelListOk).models;
+      expect(models.map((m) => m.id), ['claude-a']);
+      expect(models.single.displayName, 'claude-a');
+      expect(models.single.createdAt, isNull);
+    });
+  });
+
+  group('stream 오류 본문의 error.type', () {
+    Future<ChatModelException> errorOf(int status, String body) async {
+      try {
+        await run(clientOf([body], status: status));
+      } on ChatModelException catch (e) {
+        return e;
+      }
+      fail('no exception');
+    }
+
+    String typed(String type, [String message = 'm']) => jsonEncode({
+      'type': 'error',
+      'error': {'type': type, 'message': message},
+    });
+
+    test('stream 오류: error.type billing_error 는 quotaExceeded', () async {
+      expect(
+        (await errorOf(400, typed('billing_error'))).kind,
+        ChatModelErrorKind.quotaExceeded,
+      );
+    });
+
+    test('402 는 quotaExceeded', () async {
+      expect(
+        (await errorOf(402, '')).kind,
+        ChatModelErrorKind.quotaExceeded,
+      );
+    });
+
+    test('not_found_error · 404 는 modelUnavailable', () async {
+      expect(
+        (await errorOf(400, typed('not_found_error'))).kind,
+        ChatModelErrorKind.modelUnavailable,
+      );
+      expect(
+        (await errorOf(404, 'not json')).kind,
+        ChatModelErrorKind.modelUnavailable,
+      );
+    });
+
+    test('400 invalid_request_error 는 server', () async {
+      expect(
+        (await errorOf(400, typed('invalid_request_error'))).kind,
+        ChatModelErrorKind.server,
+      );
+    });
+
+    test('401 은 본문 없이도 invalidKey', () async {
+      expect((await errorOf(401, '')).kind, ChatModelErrorKind.invalidKey);
+    });
+
+    test('error.type 이 상태 코드보다 앞선다', () async {
+      expect(
+        (await errorOf(500, typed('rate_limit_error'))).kind,
+        ChatModelErrorKind.rateLimited,
+      );
+      expect(
+        (await errorOf(500, typed('overloaded_error'))).kind,
+        ChatModelErrorKind.overloaded,
+      );
+      expect(
+        (await errorOf(400, typed('authentication_error'))).kind,
+        ChatModelErrorKind.invalidKey,
+      );
+      expect(
+        (await errorOf(400, typed('permission_error'))).kind,
+        ChatModelErrorKind.invalidKey,
+      );
+    });
+
+    test('오류 본문의 message 는 예외에 없다', () async {
+      final e = await errorOf(
+        400,
+        typed('billing_error', 'sk-ant-secret 크레딧 없음'),
+      );
+      expect(e.kind, ChatModelErrorKind.quotaExceeded);
+      expect(e.toString(), isNot(contains('secret')));
+      expect(e.toString(), isNot(contains('message')));
+    });
+
+    test('오류 본문이 16KB 를 넘으면 type 을 읽지 않고 상태 코드로 판정한다', () async {
+      final big = jsonEncode({
+        'type': 'error',
+        'error': {'type': 'billing_error', 'message': 'x' * (17 * 1024)},
+      });
+      expect((await errorOf(500, big)).kind, ChatModelErrorKind.server);
+      expect((await errorOf(429, big)).kind, ChatModelErrorKind.rateLimited);
+    });
+
+    test('SSE error 이벤트도 error.type 으로 판정한다', () async {
+      Future<ChatModelErrorKind> kindFor(String type) async {
+        try {
+          await run(
+            clientOf([
+              sse('error', {
+                'type': 'error',
+                'error': {'type': type, 'message': 'm'},
+              }),
+            ]),
+          );
+        } on ChatModelException catch (e) {
+          return e.kind;
+        }
+        fail('no exception');
+      }
+
+      expect(
+        await kindFor('billing_error'),
+        ChatModelErrorKind.quotaExceeded,
+      );
+      expect(
+        await kindFor('rate_limit_error'),
+        ChatModelErrorKind.rateLimited,
+      );
     });
   });
 }

@@ -181,8 +181,54 @@ class ChatModelException implements Exception {
   String toString() => 'ChatModelException($kind)';
 }
 
+/// 벤더 모델 목록의 한 항목. 모르는 능력은 null.
+@freezed
+class ModelInfo with _$ModelInfo {
+  @override
+  final String id;
+
+  /// 벤더가 주지 않으면 [id].
+  @override
+  final String displayName;
+  @override
+  final DateTime? createdAt;
+  @override
+  final bool? supportsTools;
+  @override
+  final bool? supportsImages;
+
+  /// 키 기획 ② 에서는 늘 false(③ 에서 채운다).
+  @override
+  final bool supportsFastMode;
+  @override
+  final List<String> aliases;
+
+  const ModelInfo({
+    required this.id,
+    required this.displayName,
+    this.createdAt,
+    this.supportsTools,
+    this.supportsImages,
+    this.supportsFastMode = false,
+    this.aliases = const [],
+  });
+}
+
+/// [ChatModel.listModels] 의 결과. 키 확인 겸 목록.
+@freezed
+sealed class ModelListResult with _$ModelListResult {
+  const factory ModelListResult.ok(List<ModelInfo> models) = ModelListOk;
+  const factory ModelListResult.invalidKey() = ModelListInvalidKey;
+
+  /// 네트워크 · 시간 초과 · 그 밖의 상태 코드. 키가 맞는지 모른다.
+  const factory ModelListResult.unreachable() = ModelListUnreachable;
+}
+
 abstract interface class ChatModel {
   ChatVendor get vendor;
+
+  /// 키 확인 겸 목록(§4 · §6.3). 예외를 던지지 않는다 — 실패는 결과 값.
+  Future<ModelListResult> listModels(String apiKey);
 
   /// 실패는 스트림 오류 [ChatModelException] 으로 낸다.
   ///

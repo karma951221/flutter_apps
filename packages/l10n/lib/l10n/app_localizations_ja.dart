@@ -3183,6 +3183,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatFailureInvalidKey => 'キーを確認してください';
 
   @override
+  String get walkChatFailureQuotaExceeded => 'クレジットが不足しています。請求状況を確認してください';
+
+  @override
+  String get walkChatFailureModelUnavailable =>
+      '現在このモデルは使えません。しばらくしてからもう一度質問してください';
+
+  @override
   String get walkChatFailureRateLimited => 'リクエストが多すぎます。少し待ってからもう一度聞いてください';
 
   @override

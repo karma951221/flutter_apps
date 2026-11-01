@@ -74,6 +74,7 @@ import '../../domain/chat/chat_trace.dart' as _i825;
 import '../../domain/chat/chat_usage_log.dart' as _i520;
 import '../../domain/chat/tool/chat_image_source.dart' as _i858;
 import '../../domain/chat/tool/life_tools.dart' as _i70;
+import '../../domain/chat/usecase/chat_key_verifier.dart' as _i5;
 import '../../domain/chat/usecase/chat_session.dart' as _i502;
 import '../../domain/commute/repository/address_search.dart' as _i63;
 import '../../domain/commute/repository/place_repository.dart' as _i142;
@@ -279,6 +280,10 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i858.ChatImageSource>(
       () => _i957.CompressedChatImageSource(gh<_i870.MediaStore>()),
+    );
+    gh.factory<_i5.ChatKeyVerifier>(
+      () =>
+          _i5.ChatKeyVerifier(gh<_i1004.ChatModel>(), gh<_i111.ChatSettings>()),
     );
     gh.lazySingleton<_i122.DiaryRepository>(
       () => _i1049.DriftDiaryRepository(
