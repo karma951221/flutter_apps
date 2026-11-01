@@ -1014,6 +1014,8 @@ void main() {
         _done([_toolUse('t3', 'view_entry_photos')], StopKind.toolUse),
       ]);
       await pumpEventQueue();
+      // 멈춘 질문은 1라운드에서 사진 5장을 셌다. 되돌리지 않으면 5 + 10 > 12 로
+      // photo_limit 오류가 되므로, 10장이 그대로 실리면 수가 0 으로 돌아간 것이다.
       final result =
           (model.requests[3].last as ToolResultsMessage).results.single;
       expect(result.isError, isFalse);
@@ -1189,6 +1191,77 @@ void main() {
       ].join();
       expect(result.text, streamed);
       expect(result.text, '찾아볼게요. 어제는 걸었어요');
+    });
+  });
+
+  group('멈춤 호출 순서', () {
+    late _HangingModel model;
+    late ChatSession chat;
+
+    setUp(() {
+      model = _HangingModel();
+      chat = ChatSession(
+        model,
+        tools,
+        settings,
+        clock,
+        usage,
+        ids,
+        const NoopChatTrace(),
+      );
+    });
+
+    test('구독을 끊고 기다리지 않은 채 stop 하면 받은 글을 남긴다', () async {
+      final sub = chat.ask('첫').listen((_) {});
+      await pumpEventQueue();
+      model.rounds[0].add(const ModelEvent.textDelta('부분'));
+      await pumpEventQueue();
+
+      unawaited(sub.cancel());
+      expect(
+        chat.stop(),
+        const ChatStopResult.kept(text: '부분', citedEntryIds: []),
+      );
+    });
+
+    test('stop 뒤 await cancel 은 더 이벤트 없이 끝난다', () async {
+      final events = <ChatEvent>[];
+      final sub = chat.ask('첫').listen(events.add);
+      await pumpEventQueue();
+      model.rounds[0].add(const ModelEvent.textDelta('부분'));
+      await pumpEventQueue();
+
+      expect(
+        chat.stop(),
+        const ChatStopResult.kept(text: '부분', citedEntryIds: []),
+      );
+      await sub.cancel().timeout(const Duration(seconds: 1));
+      model.rounds[0].add(const ModelEvent.textDelta('늦은 글'));
+      await pumpEventQueue();
+
+      expect(events, const [ChatEvent.text('부분')]);
+    });
+
+    test('finished 를 받은 리스너가 바로 stop 해도 끝난 답을 지우지 않는다', () async {
+      ChatStopResult? result;
+      chat.ask('첫').listen((e) {
+        if (e is ChatFinished) result = chat.stop();
+      });
+      await pumpEventQueue();
+      model.rounds[0]
+        ..add(const ModelEvent.textDelta('답'))
+        ..add(_done([_text('답')], StopKind.endTurn));
+      unawaited(model.rounds[0].close());
+      await pumpEventQueue();
+
+      expect(result, const ChatStopResult.idle());
+      unawaited(chat.ask('다음').toList());
+      await pumpEventQueue();
+      expect(model.requests.last, [
+        const ChatMessage.user('첫'),
+        _assistant('답'),
+        const ChatMessage.user('다음'),
+      ]);
     });
   });
 

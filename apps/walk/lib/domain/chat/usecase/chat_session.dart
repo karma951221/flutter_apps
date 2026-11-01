@@ -114,6 +114,10 @@ class ChatSession {
   final _turnText = StringBuffer();
   final _turnCited = <String>{};
 
+  /// 이번 질문이 finished 를 냈다. 그 뒤 생성기가 마저 끝나기 전([_busy] 가 아직
+  /// true)에 [stop] 이 와도 끝난 답을 지우지 않게 한다.
+  bool _turnDone = false;
+
   /// 한 번에 하나. 진행 중에 부르면 [StateError].
   Stream<ChatEvent> ask(String question) {
     if (_busy) throw StateError('ChatSession.ask is already running');
@@ -123,14 +127,21 @@ class ChatSession {
     _turnQuestion = question;
     _turnText.clear();
     _turnCited.clear();
+    _turnDone = false;
     return _run(question, _generation);
   }
 
   /// 진행 중인 질문을 멈춘다. [reset] 처럼 세대를 올리고 끊지만 대화는 비우지 않는다.
   /// 이번 질문 몫을 지우고, 받은 글이 있으면 질문과 그 글(+ [stoppedNote])만 남긴다.
   /// 이벤트는 내지 않는다 — 결과는 반환값으로.
+  ///
+  /// 호출 순서: [stop] 을 먼저 부르는 것이 기본이다 — 루프가 stale() 을 보고 끝나므로
+  /// 그 뒤의 구독 취소는 바로 끝난다. 구독을 먼저 끊을 때는 취소를 기다리지 말고
+  /// 곧바로 [stop] 을 부른다. `await sub.cancel()` 뒤에 부르면 안 된다 — 취소가 모델의
+  /// 다음 이벤트까지 걸릴 수 있고, 그 사이 질문이 스스로 되돌려져 [stop] 은 idle 을
+  /// 돌려주며 받은 글을 잃는다.
   ChatStopResult stop() {
-    if (!_busy) return const ChatStopResult.idle();
+    if (!_busy || _turnDone) return const ChatStopResult.idle();
     _generation++;
     _cancelRound();
     _busy = false;
@@ -271,6 +282,7 @@ class ChatSession {
             return;
           case StopKind.endTurn || StopKind.maxTokens || StopKind.other:
             completed = true;
+            _turnDone = true;
             yield ChatEvent.finished(citedEntryIds: List.of(_turnCited));
             return;
         }
