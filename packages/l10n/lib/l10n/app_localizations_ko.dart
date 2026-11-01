@@ -3091,29 +3091,22 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get walkChatSettings => '채팅';
+  String get walkChatSettingsChange => '키 바꾸기';
 
   @override
-  String get walkChatSettingsKey => 'Anthropic API 키';
+  String get walkChatSettingsDelete => '연결 끊기';
 
   @override
-  String get walkChatSettingsAddKey => '키 넣기';
-
-  @override
-  String get walkChatSettingsChange => '바꾸기';
-
-  @override
-  String get walkChatSettingsDelete => '키 삭제';
-
-  @override
-  String get walkChatSettingsDeleteTitle => 'API 키를 지울까요?';
+  String get walkChatSettingsDeleteTitle => '연결을 끊을까요?';
 
   @override
   String get walkChatSettingsDeleteBody =>
       '이 폰에 저장된 키가 지워져요. 다시 쓰려면 키를 새로 넣어야 해요.';
 
   @override
-  String get walkChatSettingsKeyDialogTitle => 'API 키 넣기';
+  String walkChatSettingsKeyDialogTitle(String vendor) {
+    return '$vendor API 키 넣기';
+  }
 
   @override
   String get walkChatSettingsSave => '저장';
@@ -3255,4 +3248,65 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatVendorOpenAi => 'OpenAI';
+
+  @override
+  String get walkChatConnectTitle => 'AI 연결';
+
+  @override
+  String get walkChatConnectDescription => 'Claude API 키를 넣으면 물어보기를 쓸 수 있어요';
+
+  @override
+  String get walkChatConnectAction => '연결하기';
+
+  @override
+  String get walkChatKeyStatusValid => '연결됨';
+
+  @override
+  String get walkChatKeyStatusUnverified => '확인 전';
+
+  @override
+  String get walkChatKeyStatusInvalid => '키를 확인해 주세요';
+
+  @override
+  String get walkChatKeyShow => '키 보기';
+
+  @override
+  String get walkChatKeyHide => '키 숨기기';
+
+  @override
+  String walkChatKeyWrongPrefix(String vendor, String prefix) {
+    return '$vendor 키는 $prefix 로 시작해요';
+  }
+
+  @override
+  String walkChatKeyOtherVendor(String vendor) {
+    return '$vendor 키 같아요';
+  }
+
+  @override
+  String get walkChatKeyInvalid => '이 키로는 연결되지 않아요';
+
+  @override
+  String walkChatCostWarningTitle(String vendor) {
+    return '$vendor 키를 등록할까요?';
+  }
+
+  @override
+  String walkChatCostWarningBody(String company) {
+    return '이 API 를 쓰면 $company 에 요금이 청구될 수 있어요.';
+  }
+
+  @override
+  String get walkChatCostWarningConfirm => '확인';
+
+  @override
+  String walkChatConnected(String vendor) {
+    return '$vendor 에 연결했어요';
+  }
+
+  @override
+  String get walkChatSavedUnverified => '키를 저장했어요. 연결되면 확인할게요';
+
+  @override
+  String get walkChatDisconnected => '연결을 끊었어요';
 }

@@ -14,6 +14,7 @@ import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
+import 'package:walk/domain/chat/usecase/chat_key_verifier.dart';
 import 'package:walk/domain/diary/entity/diary_usage.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
@@ -33,6 +34,7 @@ import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
 import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
 
 import '../../support/diary_fixtures.dart';
+import '../../support/fake_chat_key_verifier.dart';
 import '../../support/fake_chat_settings.dart';
 import '../../support/fake_device_auth.dart';
 
@@ -117,7 +119,8 @@ class SettingsHarness {
       ..registerSingleton<LockRepository>(lockRepo)
       ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
       ..registerSingleton<Clock>(clock)
-      ..registerSingleton<ChatSettings>(FakeChatSettings());
+      ..registerSingleton<ChatSettings>(FakeChatSettings())
+      ..registerSingleton<ChatKeyVerifier>(FakeChatKeyVerifier());
     diaryLock = DiaryLockCubit(
       lockRepo,
       FakeDeviceAuth(),

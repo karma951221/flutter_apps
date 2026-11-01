@@ -3341,29 +3341,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get walkChatSettings => 'Chat';
+  String get walkChatSettingsChange => 'Change key';
 
   @override
-  String get walkChatSettingsKey => 'Anthropic API key';
+  String get walkChatSettingsDelete => 'Disconnect';
 
   @override
-  String get walkChatSettingsAddKey => 'Add key';
-
-  @override
-  String get walkChatSettingsChange => 'Change';
-
-  @override
-  String get walkChatSettingsDelete => 'Delete key';
-
-  @override
-  String get walkChatSettingsDeleteTitle => 'Delete the API key?';
+  String get walkChatSettingsDeleteTitle => 'Disconnect?';
 
   @override
   String get walkChatSettingsDeleteBody =>
       'The key stored on this phone will be removed. You will need to enter it again to use chat.';
 
   @override
-  String get walkChatSettingsKeyDialogTitle => 'Enter API key';
+  String walkChatSettingsKeyDialogTitle(String vendor) {
+    return 'Enter $vendor API key';
+  }
 
   @override
   String get walkChatSettingsSave => 'Save';
@@ -3510,4 +3503,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkChatVendorOpenAi => 'OpenAI';
+
+  @override
+  String get walkChatConnectTitle => 'Connect AI';
+
+  @override
+  String get walkChatConnectDescription => 'Add a Claude API key to use Ask';
+
+  @override
+  String get walkChatConnectAction => 'Connect';
+
+  @override
+  String get walkChatKeyStatusValid => 'Connected';
+
+  @override
+  String get walkChatKeyStatusUnverified => 'Not verified';
+
+  @override
+  String get walkChatKeyStatusInvalid => 'Check your key';
+
+  @override
+  String get walkChatKeyShow => 'Show key';
+
+  @override
+  String get walkChatKeyHide => 'Hide key';
+
+  @override
+  String walkChatKeyWrongPrefix(String vendor, String prefix) {
+    return '$vendor keys start with $prefix';
+  }
+
+  @override
+  String walkChatKeyOtherVendor(String vendor) {
+    return 'This looks like a $vendor key';
+  }
+
+  @override
+  String get walkChatKeyInvalid => 'This key couldn\'t connect';
+
+  @override
+  String walkChatCostWarningTitle(String vendor) {
+    return 'Add this $vendor key?';
+  }
+
+  @override
+  String walkChatCostWarningBody(String company) {
+    return 'Using this API may incur charges from $company.';
+  }
+
+  @override
+  String get walkChatCostWarningConfirm => 'OK';
+
+  @override
+  String walkChatConnected(String vendor) {
+    return 'Connected to $vendor';
+  }
+
+  @override
+  String get walkChatSavedUnverified =>
+      'Key saved. We\'ll verify it once you\'re online';
+
+  @override
+  String get walkChatDisconnected => 'Disconnected';
 }

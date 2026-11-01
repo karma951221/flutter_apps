@@ -5768,40 +5768,22 @@ abstract class AppLocalizations {
   /// **'{hours}시간 전'**
   String walkDiaryHoursAgo(int hours);
 
-  /// 물어보기 설정(물어보기 ⋮) 채팅 섹션 제목
+  /// 연결됨일 때 키 바꾸기 행
   ///
   /// In ko, this message translates to:
-  /// **'채팅'**
-  String get walkChatSettings;
-
-  /// API 키 행 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'Anthropic API 키'**
-  String get walkChatSettingsKey;
-
-  /// 키가 없을 때 행 오른쪽 문구
-  ///
-  /// In ko, this message translates to:
-  /// **'키 넣기'**
-  String get walkChatSettingsAddKey;
-
-  /// 키가 있을 때 행 부제(눌러서 바꾸기)
-  ///
-  /// In ko, this message translates to:
-  /// **'바꾸기'**
+  /// **'키 바꾸기'**
   String get walkChatSettingsChange;
 
-  /// 키 삭제 행 · 확인 버튼
+  /// 연결 끊기 행 · 확인 버튼
   ///
   /// In ko, this message translates to:
-  /// **'키 삭제'**
+  /// **'연결 끊기'**
   String get walkChatSettingsDelete;
 
-  /// 키 삭제 확인 제목
+  /// 연결 끊기 확인 제목
   ///
   /// In ko, this message translates to:
-  /// **'API 키를 지울까요?'**
+  /// **'연결을 끊을까요?'**
   String get walkChatSettingsDeleteTitle;
 
   /// 키 삭제 확인 본문
@@ -5810,11 +5792,11 @@ abstract class AppLocalizations {
   /// **'이 폰에 저장된 키가 지워져요. 다시 쓰려면 키를 새로 넣어야 해요.'**
   String get walkChatSettingsDeleteBody;
 
-  /// 키 입력 다이얼로그 제목
+  /// 키 입력 대화상자 제목 — 벤더 이름(Claude 등)
   ///
   /// In ko, this message translates to:
-  /// **'API 키 넣기'**
-  String get walkChatSettingsKeyDialogTitle;
+  /// **'{vendor} API 키 넣기'**
+  String walkChatSettingsKeyDialogTitle(String vendor);
 
   /// 키 입력 다이얼로그 저장 버튼
   ///
@@ -6091,6 +6073,108 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'OpenAI'**
   String get walkChatVendorOpenAi;
+
+  /// 물어보기 설정 — 미연결일 때 연결 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'AI 연결'**
+  String get walkChatConnectTitle;
+
+  /// 미연결일 때 연결 행 부제. ④(멀티 벤더)에서 "Claude · GPT 중 하나의 키를…"로 바뀐다
+  ///
+  /// In ko, this message translates to:
+  /// **'Claude API 키를 넣으면 물어보기를 쓸 수 있어요'**
+  String get walkChatConnectDescription;
+
+  /// 미연결일 때 연결 행 오른쪽 동작 문구(primary)
+  ///
+  /// In ko, this message translates to:
+  /// **'연결하기'**
+  String get walkChatConnectAction;
+
+  /// 연결 행 오른쪽 — 키 확인됨
+  ///
+  /// In ko, this message translates to:
+  /// **'연결됨'**
+  String get walkChatKeyStatusValid;
+
+  /// 연결 행 오른쪽 — 저장만 하고 아직 확인 못 함
+  ///
+  /// In ko, this message translates to:
+  /// **'확인 전'**
+  String get walkChatKeyStatusUnverified;
+
+  /// 연결 행 오른쪽 — 키가 거절됨(오류 색)
+  ///
+  /// In ko, this message translates to:
+  /// **'키를 확인해 주세요'**
+  String get walkChatKeyStatusInvalid;
+
+  /// 키 입력칸 보기 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'키 보기'**
+  String get walkChatKeyShow;
+
+  /// 키 입력칸 숨기기 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'키 숨기기'**
+  String get walkChatKeyHide;
+
+  /// 키 입력칸 — 이 벤더의 접두사가 아닐 때
+  ///
+  /// In ko, this message translates to:
+  /// **'{vendor} 키는 {prefix} 로 시작해요'**
+  String walkChatKeyWrongPrefix(String vendor, String prefix);
+
+  /// 키 입력칸 — 다른 벤더의 키 모양일 때
+  ///
+  /// In ko, this message translates to:
+  /// **'{vendor} 키 같아요'**
+  String walkChatKeyOtherVendor(String vendor);
+
+  /// 키 입력칸 — 확인 호출이 키를 거절했을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'이 키로는 연결되지 않아요'**
+  String get walkChatKeyInvalid;
+
+  /// 키 등록 전 요금 경고 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'{vendor} 키를 등록할까요?'**
+  String walkChatCostWarningTitle(String vendor);
+
+  /// 키 등록 전 요금 경고 본문 — 회사 이름(Anthropic 등)
+  ///
+  /// In ko, this message translates to:
+  /// **'이 API 를 쓰면 {company} 에 요금이 청구될 수 있어요.'**
+  String walkChatCostWarningBody(String company);
+
+  /// 요금 경고 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'확인'**
+  String get walkChatCostWarningConfirm;
+
+  /// 키 확인 · 등록 성공 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'{vendor} 에 연결했어요'**
+  String walkChatConnected(String vendor);
+
+  /// 확인 호출이 닿지 않아 확인 없이 저장했을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'키를 저장했어요. 연결되면 확인할게요'**
+  String get walkChatSavedUnverified;
+
+  /// 연결 끊기 성공 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'연결을 끊었어요'**
+  String get walkChatDisconnected;
 }
 
 class _AppLocalizationsDelegate

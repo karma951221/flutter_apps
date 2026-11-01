@@ -3090,29 +3090,22 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get walkChatSettings => 'チャット';
+  String get walkChatSettingsChange => 'キーを変更';
 
   @override
-  String get walkChatSettingsKey => 'Anthropic APIキー';
+  String get walkChatSettingsDelete => '接続を解除';
 
   @override
-  String get walkChatSettingsAddKey => 'キーを入れる';
-
-  @override
-  String get walkChatSettingsChange => '変更';
-
-  @override
-  String get walkChatSettingsDelete => 'キーを削除';
-
-  @override
-  String get walkChatSettingsDeleteTitle => 'APIキーを削除しますか？';
+  String get walkChatSettingsDeleteTitle => '接続を解除しますか？';
 
   @override
   String get walkChatSettingsDeleteBody =>
       'この端末に保存されたキーが消えます。再び使うにはキーを入れ直してください。';
 
   @override
-  String get walkChatSettingsKeyDialogTitle => 'APIキーを入力';
+  String walkChatSettingsKeyDialogTitle(String vendor) {
+    return '$vendor の API キーを入力';
+  }
 
   @override
   String get walkChatSettingsSave => '保存';
@@ -3254,4 +3247,65 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatVendorOpenAi => 'OpenAI';
+
+  @override
+  String get walkChatConnectTitle => 'AI を接続';
+
+  @override
+  String get walkChatConnectDescription => 'Claude の API キーを入れると質問を使えます';
+
+  @override
+  String get walkChatConnectAction => '接続する';
+
+  @override
+  String get walkChatKeyStatusValid => '接続済み';
+
+  @override
+  String get walkChatKeyStatusUnverified => '未確認';
+
+  @override
+  String get walkChatKeyStatusInvalid => 'キーを確認してください';
+
+  @override
+  String get walkChatKeyShow => 'キーを表示';
+
+  @override
+  String get walkChatKeyHide => 'キーを隠す';
+
+  @override
+  String walkChatKeyWrongPrefix(String vendor, String prefix) {
+    return '$vendor のキーは $prefix で始まります';
+  }
+
+  @override
+  String walkChatKeyOtherVendor(String vendor) {
+    return '$vendor のキーのようです';
+  }
+
+  @override
+  String get walkChatKeyInvalid => 'このキーでは接続できません';
+
+  @override
+  String walkChatCostWarningTitle(String vendor) {
+    return '$vendor のキーを登録しますか？';
+  }
+
+  @override
+  String walkChatCostWarningBody(String company) {
+    return 'この API を使うと $company から料金が請求されることがあります。';
+  }
+
+  @override
+  String get walkChatCostWarningConfirm => 'OK';
+
+  @override
+  String walkChatConnected(String vendor) {
+    return '$vendor に接続しました';
+  }
+
+  @override
+  String get walkChatSavedUnverified => 'キーを保存しました。接続できたら確認します';
+
+  @override
+  String get walkChatDisconnected => '接続を解除しました';
 }

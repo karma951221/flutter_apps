@@ -56,6 +56,8 @@ import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import '../../../support/fake_chat_settings.dart';
+import '../../../support/fake_chat_key_verifier.dart';
+import 'package:walk/domain/chat/usecase/chat_key_verifier.dart';
 
 class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
 
@@ -184,6 +186,7 @@ void main() {
     getIt
       ..registerSingleton<DiaryUseCase>(diary)
       ..registerSingleton<ChatSettings>(FakeChatSettings())
+      ..registerSingleton<ChatKeyVerifier>(FakeChatKeyVerifier())
       ..registerSingleton<DiaryRepository>(diaryRepo)
       ..registerSingleton<DiaryPreferences>(PrefsDiaryPreferences(prefs))
       ..registerSingleton<LockRepository>(lockRepo)
