@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:walk/data/chat/anthropic_chat_model.dart';
+import 'package:walk/data/chat/chat_request_limits.dart';
 import 'package:walk/data/chat/openai_chat_model.dart';
 import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_model_rules.dart';
@@ -186,7 +187,8 @@ void main() {
     );
     expect(body['stream'], isTrue);
     expect(body['model'], _model);
-    expect(body['max_output_tokens'], 16000);
+    expect(body['max_output_tokens'], chatMaxOutputTokens);
+    expect(chatMaxOutputTokens, 16000);
   });
 
   test('요청에 store false · include reasoning.encrypted_content 가 늘 있고 '
@@ -1102,5 +1104,125 @@ void main() {
         const ModelListResult.ok([]),
       );
     });
+  });
+
+  group('잘린 응답(incomplete)', () {
+    String incomplete(List<Map<String, Object?>> output) =>
+        sse('response.incomplete', {
+          'type': 'response.incomplete',
+          'response': {
+            'status': 'incomplete',
+            'incomplete_details': {'reason': 'max_output_tokens'},
+            'output': output,
+          },
+        });
+
+    test('끝나지 않은 function_call 은 parts · items 에서 빼고 maxTokens', () async {
+      final events = await run(
+        clientOf([
+          incomplete([
+            {
+              'type': 'message',
+              'status': 'completed',
+              'content': [
+                {'type': 'output_text', 'text': '찾아볼게요'},
+              ],
+            },
+            {
+              'type': 'function_call',
+              'status': 'incomplete',
+              'call_id': 'c1',
+              'name': 'search_diary',
+              'arguments': '{"query":"강',
+            },
+          ]),
+        ]),
+      );
+      final done = events.whereType<ModelCompleted>().single;
+      expect(done.stop, StopKind.maxTokens);
+      expect(done.message.parts, [const AssistantPart.text('찾아볼게요')]);
+      final state = done.message.vendorState! as OpenAiTurnState;
+      expect(state.items.map((i) => i['type']), ['message']);
+    });
+
+    test('뒤따르는 항목이 없는 끝의 reasoning 은 items 에서 뺀다', () async {
+      final events = await run(
+        clientOf([
+          incomplete([
+            {'type': 'reasoning', 'id': 'rs_1', 'encrypted_content': 'e1'},
+            {
+              'type': 'message',
+              'status': 'incomplete',
+              'content': [
+                {'type': 'output_text', 'text': 'a'},
+              ],
+            },
+            {'type': 'reasoning', 'id': 'rs_2', 'encrypted_content': 'e2'},
+          ]),
+        ]),
+      );
+      final done = events.whereType<ModelCompleted>().single;
+      expect(done.stop, StopKind.maxTokens);
+      final state = done.message.vendorState! as OpenAiTurnState;
+      expect(state.items.map((i) => i['id']), ['rs_1', null]);
+    });
+
+    test('추론만 하다 잘리면 items 가 비고 다음 요청에 아무것도 싣지 않는다', () async {
+      final events = await run(
+        clientOf([
+          incomplete([
+            {'type': 'reasoning', 'id': 'rs_1', 'encrypted_content': 'e1'},
+          ]),
+        ]),
+      );
+      final done = events.whereType<ModelCompleted>().single;
+      expect(done.stop, StopKind.maxTokens);
+      expect((done.message.vendorState! as OpenAiTurnState).items, isEmpty);
+      final body = await bodyOf(request(messages: [done.message]));
+      expect(body['input'], isEmpty);
+    });
+
+    test('completed 응답은 끝의 reasoning 도 그대로 둔다', () async {
+      final events = await run(
+        clientOf([
+          _completed(
+            output: [
+              {'type': 'reasoning', 'id': 'rs_1', 'encrypted_content': 'e1'},
+            ],
+          ),
+        ]),
+      );
+      final state =
+          events.whereType<ModelCompleted>().single.message.vendorState!
+              as OpenAiTurnState;
+      expect(state.items, hasLength(1));
+    });
+  });
+
+  test('event 줄이 없는 SSE 는 payload 의 type 으로 처리한다', () async {
+    String bare(Map<String, Object?> data) => 'data: ${jsonEncode(data)}\n\n';
+    final events = await run(
+      clientOf([
+        bare({'type': 'response.output_text.delta', 'delta': 'a'}),
+        bare({
+          'type': 'response.completed',
+          'response': {
+            'status': 'completed',
+            'output': [
+              {
+                'type': 'message',
+                'content': [
+                  {'type': 'output_text', 'text': 'a'},
+                ],
+              },
+            ],
+          },
+        }),
+      ]),
+    );
+    expect(events.whereType<ModelTextDelta>().single.text, 'a');
+    final done = events.whereType<ModelCompleted>().single;
+    expect(done.stop, StopKind.endTurn);
+    expect(done.message.parts, [const AssistantPart.text('a')]);
   });
 }

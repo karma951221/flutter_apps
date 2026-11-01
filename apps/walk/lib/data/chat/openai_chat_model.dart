@@ -11,6 +11,7 @@ import '../../domain/chat/chat_model_rules.dart';
 import '../../domain/chat/chat_trace.dart';
 import '../../domain/chat/chat_vendor.dart';
 import '../../domain/chat/tool/tool_result.dart';
+import 'chat_request_limits.dart';
 import 'sse_lines.dart';
 import 'vendor_error.dart';
 
@@ -168,45 +169,11 @@ class OpenAiChatModel implements ChatModel {
 
   // stream
 
-  /// 구독을 끊으면 진행 중인 HTTP 요청 · 응답을 닫는다(abortTrigger). 끊은 뒤에는
-  /// 이벤트도 오류도 내지 않는다. 정상 · 오류 종료로 끝난 뒤의 취소는 abort 가 아니다.
-  ///
-  /// `async*` 의 `finally` 에서 abort 하지 않는다 — `async*` 는 취소돼도 `send` 를
-  /// 기다리는 동안 `finally` 에 닿지 않는다.
+  /// 취소 계약은 [abortableStream] 이 지킨다 — 구독을 끊으면 요청 · 응답을 닫고
+  /// 그 뒤 아무것도 내지 않는다.
   @override
-  Stream<ModelEvent> stream(ModelRequest request) {
-    final abort = Completer<void>();
-    var cancelled = false;
-    var settled = false;
-    StreamSubscription<ModelEvent>? inner;
-    late final StreamController<ModelEvent> out;
-    out = StreamController<ModelEvent>(
-      onListen: () => inner = _run(request, abort).listen(
-        (e) {
-          if (!cancelled) out.add(e);
-        },
-        onError: (Object e, StackTrace s) {
-          // _run 의 오류는 마지막이다 — 요청은 이미 끝났다.
-          settled = true;
-          if (!cancelled) out.addError(e, s);
-        },
-        onDone: () {
-          settled = true;
-          if (!cancelled) unawaited(out.close());
-        },
-      ),
-      onCancel: () {
-        cancelled = true;
-        if (!settled && !abort.isCompleted) {
-          abort.complete();
-          if (_trace.enabled) _trace.mark(ChatTraceMark.abort);
-        }
-        // 기다리지 않는다. 취소 뒤 _run 이 던지는 오류는 버린다.
-        inner?.cancel().ignore();
-      },
-    );
-    return out.stream;
-  }
+  Stream<ModelEvent> stream(ModelRequest request) =>
+      abortableStream((abort) => _run(request, abort), trace: _trace);
 
   /// [abort] 는 [stream] 의 것. 구독 취소 말고 상태 줄 시간 초과에서도 끝낸다.
   Stream<ModelEvent> _run(ModelRequest request, Completer<void> abort) async* {
@@ -246,7 +213,7 @@ class OpenAiChatModel implements ChatModel {
           _kindFor(status, await readVendorError(response, abortTrigger)),
         );
       }
-      yield* _parse(_untilAbort(response.stream, abortTrigger), request.model);
+      yield* _parse(untilAbort(response.stream, abortTrigger), request.model);
     } on ChatModelException {
       rethrow;
     } on SocketException {
@@ -271,36 +238,10 @@ class OpenAiChatModel implements ChatModel {
     'stream': true,
     'store': false,
     'include': ['reasoning.encrypted_content'],
-    'max_output_tokens': 16000,
+    'max_output_tokens': chatMaxOutputTokens,
     if (supportsEffortOf(vendor, request.model)) 'reasoning': {'effort': 'low'},
     if (_fast(request)) ...fastModeFields,
   });
-
-  /// [abort] 가 끝나면 바이트 구독을 끊고 스트림을 닫는다(Anthropic 어댑터와 같다).
-  static Stream<List<int>> _untilAbort(
-    Stream<List<int>> bytes,
-    Future<void> abort,
-  ) {
-    StreamSubscription<List<int>>? sub;
-    late final StreamController<List<int>> out;
-    out = StreamController<List<int>>(
-      sync: true,
-      onListen: () {
-        sub = bytes.listen(out.add, onError: out.addError, onDone: out.close);
-        unawaited(
-          abort.whenComplete(() {
-            if (out.isClosed) return;
-            sub?.cancel().ignore();
-            unawaited(out.close());
-          }),
-        );
-      },
-      onPause: () => sub?.pause(),
-      onResume: () => sub?.resume(),
-      onCancel: () => sub?.cancel(),
-    );
-    return out.stream;
-  }
 
   // 중립 → Responses input
 
@@ -436,12 +377,31 @@ class OpenAiChatModel implements ChatModel {
     );
   }
 
+  /// 잘린(`incomplete`) 응답에서 다음 요청에 돌려보낼 수 없는 항목을 뺀다 —
+  /// 끝나지 않은 function_call(`arguments` 가 잘렸을 수 있다)과, 뒤따르는 항목이
+  /// 없는 끝의 reasoning(같은 모델의 다음 요청이 거절할 수 있다). 다른 상태면 그대로.
+  static List<Map<String, Object?>> _keptItems(
+    Object? status,
+    List<Map<String, Object?>> items,
+  ) {
+    if (status != 'incomplete') return items;
+    final kept = [
+      for (final item in items)
+        if (item['type'] != 'function_call' || item['status'] == 'completed')
+          item,
+    ];
+    while (kept.isNotEmpty && kept.last['type'] == 'reasoning') {
+      kept.removeLast();
+    }
+    return kept;
+  }
+
   /// 마지막 `response` 객체 → completed 이벤트.
   ModelEvent _completedOf(Map<String, Object?> response, String model) {
     final output = response['output'] as List? ?? const [];
-    final items = [
+    final items = _keptItems(response['status'], [
       for (final item in output) Map<String, Object?>.from(item as Map),
-    ];
+    ]);
     final parts = <AssistantPart>[];
     var refused = false;
     var called = false;
@@ -580,7 +540,12 @@ class OpenAiChatModel implements ChatModel {
 
     var firstSeen = false;
     try {
-      await for (final e in sseEvents(bytes, idleTimeout: idleTimeout)) {
+      await for (final e in sseEvents(
+        bytes,
+        idleTimeout: idleTimeout,
+        // O7: event 줄이 없으면 payload 의 type 으로.
+        typeFallback: true,
+      )) {
         if (!firstSeen) {
           firstSeen = true;
           if (_trace.enabled) _trace.mark(ChatTraceMark.first);

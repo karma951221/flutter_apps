@@ -43,6 +43,9 @@ class ToolResultPart with _$ToolResultPart {
   /// 결과 본문(JSON 글).
   @override
   final String json;
+
+  /// 실패한 결과. 참이면 [json] 에 `error` 키가 있어야 한다 — 오류 표시가 없는
+  /// 벤더(OpenAI `function_call_output`)는 [json] 만 보낸다.
   @override
   final bool isError;
   @override
