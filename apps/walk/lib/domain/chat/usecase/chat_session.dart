@@ -40,6 +40,19 @@ enum ChatFailure {
   unknown,
 }
 
+/// 모델 오류 → 화면 실패 종류. 물어보기와 위키 정리가 같이 쓴다.
+/// 이미지 거절은 세션이 사진 없이 한 번 다시 보낸다. 또 나면(또는 정리 요청이면) unknown.
+ChatFailure chatFailureOf(ChatModelErrorKind kind) => switch (kind) {
+  ChatModelErrorKind.invalidKey => ChatFailure.invalidKey,
+  ChatModelErrorKind.rateLimited => ChatFailure.rateLimited,
+  ChatModelErrorKind.overloaded => ChatFailure.overloaded,
+  ChatModelErrorKind.network => ChatFailure.network,
+  ChatModelErrorKind.quotaExceeded => ChatFailure.quotaExceeded,
+  ChatModelErrorKind.modelUnavailable => ChatFailure.modelUnavailable,
+  ChatModelErrorKind.server ||
+  ChatModelErrorKind.imagesUnsupported => ChatFailure.unknown,
+};
+
 /// 진행 줄의 단계. 도구 단계는 toolStarted 로 알린다.
 enum ChatPhase { sending, thinking, writing }
 
@@ -581,7 +594,7 @@ class ChatSession {
       yield const ChatEvent.failed(ChatFailure.tooManySteps);
     } on ChatModelException catch (e) {
       if (!stale()) {
-        var failure = _failureOf(e.kind);
+        var failure = chatFailureOf(e.kind);
         if (failure == ChatFailure.invalidKey) {
           _recordKeyStatus(ChatKeyStatus.invalid, requestKey);
         }
@@ -741,18 +754,6 @@ class ChatSession {
     _imagesSent += count;
     return result;
   }
-
-  static ChatFailure _failureOf(ChatModelErrorKind kind) => switch (kind) {
-    ChatModelErrorKind.invalidKey => ChatFailure.invalidKey,
-    ChatModelErrorKind.rateLimited => ChatFailure.rateLimited,
-    ChatModelErrorKind.overloaded => ChatFailure.overloaded,
-    ChatModelErrorKind.network => ChatFailure.network,
-    ChatModelErrorKind.quotaExceeded => ChatFailure.quotaExceeded,
-    ChatModelErrorKind.modelUnavailable => ChatFailure.modelUnavailable,
-    // 이미지 거절은 사진 없이 한 번 다시 보낸다([_run]). 또 나면 unknown.
-    ChatModelErrorKind.server ||
-    ChatModelErrorKind.imagesUnsupported => ChatFailure.unknown,
-  };
 
   /// 도구 전 한 줄 안내. [ChatModel.progressNotes] 인 모델에만 넣는다(V5 결과로 빼기 쉽게 상수).
   static const _noteHint = '도구를 쓰기 전에 무엇을 볼지 한 줄로 말해.';

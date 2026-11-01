@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../../diary/repository/diary_repository.dart';
 import '../chat_history_settings.dart';
+import '../chat_connection.dart';
 import '../chat_model.dart';
 import '../chat_settings.dart';
 import '../chat_usage_log.dart';
@@ -80,8 +81,8 @@ class WikiDistiller {
   /// 진행 중인 요청들. [cancel] 이 모두 끊는다.
   final _runs = <_Run>{};
 
-  /// 진행 중인 정리 요청을 모두 멈춘다. 그 [distill] 은 cancelled 로 끝나고
-  /// 모델 구독을 끊어 HTTP 를 닫는다(어댑터 몫).
+  /// 진행 중인 정리 요청을 **모두** 멈춘다(정리 요청을 내는 화면은 하나뿐이라 고르지 않는다).
+  /// 그 [distill] 들은 cancelled 로 끝나고, 모델 구독을 끊어 HTTP 를 닫는다(어댑터 몫).
   void cancel() {
     for (final run in [..._runs]) {
       run.cancel();
@@ -99,7 +100,18 @@ class WikiDistiller {
       return await _distill(conversationId, target, run);
     } on ChatModelException catch (e) {
       if (run.cancelled) return const WikiDistillResult.cancelled();
-      return WikiDistillResult.failed(_failureOf(e.kind));
+      var failure = chatFailureOf(e.kind);
+      final key = run.apiKey;
+      final model = run.model;
+      if (failure == ChatFailure.invalidKey && key != null) {
+        _recordInvalidKey(key);
+      } else if (failure == ChatFailure.modelUnavailable && model != null) {
+        // 세션과 같이 — 목록을 다시 받아 지금 모델이 바뀌었으면 다시 누르면 된다.
+        final replaced = await _recoverFromUnavailable(model);
+        if (run.cancelled) return const WikiDistillResult.cancelled();
+        if (replaced) failure = ChatFailure.modelReplaced;
+      }
+      return WikiDistillResult.failed(failure);
     } catch (_) {
       if (run.cancelled) return const WikiDistillResult.cancelled();
       return const WikiDistillResult.failed(ChatFailure.unknown);
@@ -119,10 +131,17 @@ class WikiDistiller {
     if (apiKey == null) {
       return const WikiDistillResult.failed(ChatFailure.noKey);
     }
+    // 연결된 벤더가 아닌 target 에는 키를 보내지 않는다 — 그 벤더의 키가 없다.
+    if (requested != null && requested.vendor != _settings.connectedVendor) {
+      return const WikiDistillResult.failed(ChatFailure.noKey);
+    }
     final target = requested ?? _currentTarget();
     if (target == null) {
       return const WikiDistillResult.failed(ChatFailure.noModels);
     }
+    run
+      ..apiKey = apiKey
+      ..model = target.model;
 
     final turns = await _history.turns(conversationId);
     if (run.cancelled) return cancelled;
@@ -206,6 +225,25 @@ class WikiDistiller {
       }
     }
     return const WikiDistillResult.failed(ChatFailure.tooManySteps);
+  }
+
+  /// 키 상태를 invalid 로(§7.3). 기다리지 않고 오류를 삼킨다. 그 사이 키를 바꿨으면
+  /// setKeyStatus 가 남기지 않는다([forKey]).
+  void _recordInvalidKey(String usedKey) {
+    unawaited(
+      Future.sync(
+        () => _settings.setKeyStatus(ChatKeyStatus.invalid, forKey: usedKey),
+      ).catchError((Object _) {}),
+    );
+  }
+
+  /// 던지지 않는다 — 갱신이 실패하면 false.
+  Future<bool> _recoverFromUnavailable(String model) async {
+    try {
+      return await _choice.recoverFromUnavailable(model);
+    } catch (_) {
+      return false;
+    }
   }
 
   ChatTarget? _currentTarget() {
@@ -415,23 +453,15 @@ class WikiDistiller {
       Future.sync(() => _usage.record(record)).catchError((Object _) {}),
     );
   }
-
-  /// ChatSession 과 같은 매핑. 사진은 보내지 않으므로 imagesUnsupported 는 unknown.
-  static ChatFailure _failureOf(ChatModelErrorKind kind) => switch (kind) {
-    ChatModelErrorKind.invalidKey => ChatFailure.invalidKey,
-    ChatModelErrorKind.rateLimited => ChatFailure.rateLimited,
-    ChatModelErrorKind.overloaded => ChatFailure.overloaded,
-    ChatModelErrorKind.network => ChatFailure.network,
-    ChatModelErrorKind.quotaExceeded => ChatFailure.quotaExceeded,
-    ChatModelErrorKind.modelUnavailable => ChatFailure.modelUnavailable,
-    ChatModelErrorKind.server ||
-    ChatModelErrorKind.imagesUnsupported => ChatFailure.unknown,
-  };
 }
 
 /// 진행 중인 [WikiDistiller.distill] 하나.
 class _Run {
   bool cancelled = false;
+
+  /// 이 요청이 쓴 키 · 모델. 오류 처리(키 상태 · 모델 복구)가 쓴다. 어디에도 싣지 않는다.
+  String? apiKey;
+  String? model;
 
   /// 진행 중인 라운드의 구독 끊기.
   void Function()? onCancel;

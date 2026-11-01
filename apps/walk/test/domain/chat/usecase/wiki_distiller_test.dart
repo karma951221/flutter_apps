@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:walk/domain/chat/chat_connection.dart';
 import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_usage_log.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
@@ -173,8 +174,10 @@ DiaryEntry _entry(String id, DateTime at, {DateTime? deletedAt}) => DiaryEntry(
 );
 
 const _rec = 'claude-sonnet-9-5';
+const _opus = 'claude-opus-9-9';
 
 final _models = [
+  ModelInfo(id: _opus, displayName: _opus, createdAt: DateTime.utc(2026, 1, 9)),
   ModelInfo(id: _rec, displayName: _rec, createdAt: DateTime.utc(2026, 1, 5)),
 ];
 
@@ -191,6 +194,7 @@ void main() {
   late _Diary diary;
   late FakeChatUsageLog usage;
   late _SeqIds ids;
+  late FakeChatKeyVerifier verifier;
 
   setUpAll(() => registerFallbackValue(<String, Object?>{}));
 
@@ -198,7 +202,7 @@ void main() {
     settings = FakeChatSettings('sk-ant-test-key');
     final catalog = FakeChatModelCatalog();
     await catalog.replace(ChatVendor.anthropic, _models, clock.value);
-    final verifier = FakeChatKeyVerifier()
+    verifier = FakeChatKeyVerifier()
       ..stored = (ChatVendor.anthropic, ModelListResult.ok(_models));
     choice = ChatModelChoice(settings, catalog, verifier, clock);
     historySettings = FakeChatHistorySettings();
@@ -368,6 +372,18 @@ void main() {
       );
 
       expect(model.requests.single.model, 'claude-x');
+    });
+
+    test('연결 벤더가 아닌 target 이면 failed(noKey), 모델을 부르지 않는다', () async {
+      final model = _FakeModel([_json([])]);
+
+      final r = await distillerOf(model).distill(
+        conversationId: 'c1',
+        target: (vendor: ChatVendor.openai, model: 'gpt-9'),
+      );
+
+      expect(r, const WikiDistillResult.failed(ChatFailure.noKey));
+      expect(model.requests, isEmpty);
     });
 
     test('키가 없으면 failed(noKey), 모델을 부르지 않는다', () async {
@@ -621,6 +637,72 @@ void main() {
       expect(
         await distill(model),
         const WikiDistillResult.failed(ChatFailure.invalidKey),
+      );
+    });
+
+    test('invalidKey 면 그 키의 상태를 invalid 로 남긴다', () async {
+      final model = _FakeModel([
+        [const ChatModelException(ChatModelErrorKind.invalidKey)],
+      ]);
+
+      await distill(model);
+      await pumpEventQueue();
+
+      expect(settings.statusWrites, [ChatKeyStatus.invalid]);
+    });
+
+    test('키 상태 기록이 실패해도 failed(invalidKey)', () async {
+      settings.failSetKeyStatusWith = StateError('prefs');
+      final model = _FakeModel([
+        [const ChatModelException(ChatModelErrorKind.invalidKey)],
+      ]);
+
+      expect(
+        await distill(model),
+        const WikiDistillResult.failed(ChatFailure.invalidKey),
+      );
+    });
+
+    test('modelUnavailable — 목록을 다시 받아 모델이 바뀌면 modelReplaced', () async {
+      settings.selectedModel = _opus;
+      verifier.stored = (
+        ChatVendor.anthropic,
+        ModelListResult.ok([_models.last]),
+      );
+      final model = _FakeModel([
+        [const ChatModelException(ChatModelErrorKind.modelUnavailable)],
+      ]);
+
+      final r = await distill(model);
+
+      expect(model.requests.single.model, _opus);
+      expect(r, const WikiDistillResult.failed(ChatFailure.modelReplaced));
+      expect(verifier.fetchStoredCalls, 1);
+      expect(choice.currentModel, _rec);
+    });
+
+    test('modelUnavailable — 다시 받아도 같은 모델이면 modelUnavailable', () async {
+      settings.selectedModel = _opus;
+      final model = _FakeModel([
+        [const ChatModelException(ChatModelErrorKind.modelUnavailable)],
+      ]);
+
+      expect(
+        await distill(model),
+        const WikiDistillResult.failed(ChatFailure.modelUnavailable),
+      );
+      expect(verifier.fetchStoredCalls, 1);
+    });
+
+    test('modelUnavailable — 다시 받다 던져도 modelUnavailable', () async {
+      verifier.fetchStoredError = StateError('boom');
+      final model = _FakeModel([
+        [const ChatModelException(ChatModelErrorKind.modelUnavailable)],
+      ]);
+
+      expect(
+        await distill(model),
+        const WikiDistillResult.failed(ChatFailure.modelUnavailable),
       );
     });
 
