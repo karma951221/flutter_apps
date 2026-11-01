@@ -10,7 +10,7 @@ import '../../../domain/chat/chat_settings.dart';
 import '../../../domain/chat/chat_trace.dart';
 import '../../../domain/chat/repository/chat_history_repository.dart';
 import '../../../domain/chat/secure_window.dart';
-import '../../../domain/chat/usecase/chat_key_verifier.dart';
+import '../../../domain/chat/usecase/chat_model_choice.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/chat/usecase/open_conversation.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
@@ -67,7 +67,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
     getIt<ChatSettings>(),
     getIt<DiaryRepository>(),
     getIt<ChatTrace>(),
-    getIt<ChatKeyVerifier>(),
+    getIt<ChatModelChoice>(),
     getIt<ChatHistoryRepository>(),
     getIt<OpenConversation>(),
   );

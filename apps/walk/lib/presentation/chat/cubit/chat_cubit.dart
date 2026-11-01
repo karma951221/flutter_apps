@@ -9,7 +9,7 @@ import '../../../domain/chat/chat_trace.dart';
 import '../../../domain/chat/chat_vendor.dart';
 import '../../../domain/chat/entity/conversation.dart';
 import '../../../domain/chat/repository/chat_history_repository.dart';
-import '../../../domain/chat/usecase/chat_key_verifier.dart';
+import '../../../domain/chat/usecase/chat_model_choice.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/chat/usecase/open_conversation.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
@@ -43,7 +43,7 @@ class ChatCubit extends Cubit<ChatState> {
     this._settings,
     this._diary,
     this._trace,
-    this._verifier,
+    this._choice,
     this._history,
     this._open, {
     void Function(VoidCallback) schedulePostFrame = _addPostFrame,
@@ -55,8 +55,9 @@ class ChatCubit extends Cubit<ChatState> {
   final DiaryRepository _diary;
   final ChatTrace _trace;
 
-  /// 확인 전(unverified) 키를 탭이 열릴 때 다시 확인한다(§4 끝 줄).
-  final ChatKeyVerifier _verifier;
+  /// 탭이 열릴 때 모델 목록을 규칙대로 다시 받는다 — 24시간이 지났거나 · 키가 확인 전
+  /// (unverified)이거나 · 목록 벤더가 연결 벤더와 다를 때만. 받으면 키 상태도 기록된다.
+  final ChatModelChoice _choice;
 
   final ChatHistoryRepository _history;
 
@@ -101,10 +102,10 @@ class ChatCubit extends Cubit<ChatState> {
   /// 키 · 동의 상태를 다시 읽는다. 탭이 보이게 될 때 · 위에 얹힌 화면이 걷힐 때 부른다.
   /// 보안 저장소를 읽지 못하면 키가 없는 것으로 본다.
   ///
-  /// [recheck] 가 true 이고 쓸 수 있으면(ready) 저장된 키로 목록을 뒤에서 받아 키 상태를
-  /// 기록한다(`ChatKeyVerifier.fetchStored`) — 결과는
-  /// 설정 화면이 보이므로 기다리지도, 화면에 쓰지도 않는다. 탭이 보이지 않을 때(앱 시작에
-  /// 다른 탭이 열려 있는 등) 읽기만 하려면 false.
+  /// [recheck] 가 true 이고 쓸 수 있으면(ready) 모델 목록 갱신을 뒤에서 부른다
+  /// (`ChatModelChoice.refresh` — 24시간 · unverified · 벤더 다름일 때만 받고, 받으면 키
+  /// 상태도 기록된다). 결과는 기다리지도, 화면에 쓰지도 않는다. 탭이 보이지 않을 때(앱
+  /// 시작에 다른 탭이 열려 있는 등) 읽기만 하려면 false.
   Future<void> refresh({bool recheck = true}) async {
     bool hasKey;
     try {
@@ -126,9 +127,7 @@ class ChatCubit extends Cubit<ChatState> {
     emit(state.copyWith(access: access, vendor: vendor));
     if (recheck && access == ChatAccess.ready) {
       unawaited(
-        Future.sync(
-          _verifier.fetchStored,
-        ).then<void>((_) {}, onError: (Object _) {}),
+        Future.sync(_choice.refresh).then<void>((_) {}, onError: (Object _) {}),
       );
     }
   }

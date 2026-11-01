@@ -4,10 +4,13 @@ import 'package:core/core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:walk/domain/chat/chat_connection.dart';
+import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/entity/conversation.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
+import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/domain/chat/usecase/open_conversation.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
@@ -17,6 +20,7 @@ import 'package:walk/presentation/chat/cubit/chat_state.dart';
 
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_chat_key_verifier.dart';
+import '../../../support/fake_chat_model_catalog.dart';
 import '../../../support/fake_chat_settings.dart';
 import '../../../support/recording_chat_trace.dart';
 
@@ -77,6 +81,8 @@ void main() {
   late OpenConversation open;
   late FakeChatSettings settings;
   late FakeChatKeyVerifier verifier;
+  late FakeChatModelCatalog catalog;
+  late ChatModelChoice choice;
   late ChatCubit cubit;
 
   /// appendTurn 이 받은 (conversationId, draft).
@@ -89,6 +95,8 @@ void main() {
     open = OpenConversation();
     settings = FakeChatSettings('sk-ant-test')..consented = true;
     verifier = FakeChatKeyVerifier();
+    catalog = FakeChatModelCatalog();
+    choice = ChatModelChoice(settings, catalog, verifier, const Clock());
     appended = [];
     when(() => session.target).thenReturn(_target);
     when(
@@ -110,7 +118,7 @@ void main() {
       settings,
       diary,
       const NoopChatTrace(),
-      verifier,
+      choice,
       history,
       open,
     );
@@ -151,6 +159,44 @@ void main() {
 
       expect(cubit.state.access, ChatAccess.needsConsent);
       expect(verifier.fetchStoredCalls, 0);
+    });
+
+    test('목록을 24시간 안에 받았고 키가 확인됐으면 다시 받지 않는다', () async {
+      await catalog.replace(ChatVendor.anthropic, [
+        const ModelInfo(id: 'claude-sonnet-9-5', displayName: 's'),
+      ], DateTime.now());
+
+      await cubit.refresh();
+      await cubit.refresh();
+      await pumpEventQueue();
+
+      expect(verifier.fetchStoredCalls, 0);
+    });
+
+    test('확인 전(unverified) 키면 24시간 안이어도 받는다', () async {
+      await catalog.replace(ChatVendor.anthropic, [
+        const ModelInfo(id: 'claude-sonnet-9-5', displayName: 's'),
+      ], DateTime.now());
+      settings.status = ChatKeyStatus.unverified;
+
+      await cubit.refresh();
+      await pumpEventQueue();
+
+      expect(verifier.fetchStoredCalls, 1);
+    });
+
+    test('받은 목록을 넣는다(ChatModelChoice.refresh 를 거친다)', () async {
+      verifier.stored = (
+        ChatVendor.anthropic,
+        const ModelListResult.ok([
+          ModelInfo(id: 'claude-sonnet-9-5', displayName: 's'),
+        ]),
+      );
+
+      await cubit.refresh();
+      await pumpEventQueue();
+
+      expect(choice.currentModel, 'claude-sonnet-9-5');
     });
 
     test('재확인이 던져도 refresh 는 끝난다', () async {
@@ -570,7 +616,7 @@ void main() {
         settings,
         diary,
         trace,
-        verifier,
+        choice,
         history,
         open,
         schedulePostFrame: frames.add,
@@ -740,7 +786,7 @@ void main() {
         settings,
         diary,
         off,
-        verifier,
+        choice,
         history,
         open,
         schedulePostFrame: frames.add,
