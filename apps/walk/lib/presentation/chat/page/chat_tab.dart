@@ -8,6 +8,7 @@ import 'package:l10n/l10n.dart';
 
 import '../../../domain/chat/chat_settings.dart';
 import '../../../domain/chat/chat_trace.dart';
+import '../../../domain/chat/usecase/chat_key_verifier.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
@@ -42,7 +43,7 @@ class ChatTab extends StatefulWidget {
   /// 셸에서 이 탭이 보이는지. 보이게 될 때 키 · 동의를 다시 읽는다.
   final bool active;
 
-  /// 키가 없을 때 [설정 열기] — 셸이 물어보기 설정 화면을 연다.
+  /// 키가 없을 때 · 키 문제로 답이 실패했을 때 [설정 열기] — 셸이 물어보기 설정 화면을 연다.
   final VoidCallback onOpenSettings;
 
   @override
@@ -55,6 +56,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
     getIt<ChatSettings>(),
     getIt<DiaryRepository>(),
     getIt<ChatTrace>(),
+    getIt<ChatKeyVerifier>(),
   );
 
   @override
@@ -82,9 +84,12 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
     if (!oldWidget.active && widget.active) unawaited(_cubit.refresh());
   }
 
-  /// 물어보기 설정에서 키를 넣거나 지우고 돌아왔을 수 있다.
+  /// 물어보기 설정(⋮ · [설정 열기] · 실패 말풍선 · 앱 설정)에서 키를 넣거나 지우고 돌아왔을 수 있다.
+  /// 탭이 가려져 있으면 읽지 않는다 — 보이게 될 때 [didUpdateWidget] 이 읽는다.
   @override
-  void didPopNext() => unawaited(_cubit.refresh());
+  void didPopNext() {
+    if (widget.active) unawaited(_cubit.refresh());
+  }
 
   @override
   void dispose() {
@@ -178,7 +183,7 @@ class _ChatBody extends StatelessWidget {
           Expanded(
             child: state.bubbles.isEmpty
                 ? ChatExamples(onAsk: (q) => unawaited(cubit.send(q)))
-                : _BubbleList(state: state),
+                : _BubbleList(state: state, onOpenSettings: onOpenSettings),
           ),
           if (state.activeTool != null)
             Padding(
@@ -208,9 +213,10 @@ class _ChatBody extends StatelessWidget {
 
 /// 말풍선 목록. 아래부터 쌓는다(`reverse`) — 새 말풍선 · 흘러나오는 글이 늘 아래에 보인다.
 class _BubbleList extends StatelessWidget {
-  const _BubbleList({required this.state});
+  const _BubbleList({required this.state, required this.onOpenSettings});
 
   final ChatState state;
+  final VoidCallback onOpenSettings;
 
   void _open(BuildContext context, List<DiaryEntry> cited, DiaryEntry entry) {
     final source = ViewerSource.entries([
@@ -233,6 +239,7 @@ class _BubbleList extends StatelessWidget {
           bubble: bubbles[index],
           pending: state.busy && i == 0,
           onOpenCited: (cited, entry) => _open(context, cited, entry),
+          onOpenSettings: onOpenSettings,
         );
       },
     );

@@ -36,8 +36,12 @@ class FakeChatSettings implements ChatSettings {
     );
   }
 
+  /// [hasApiKey] 가 불린 횟수 — 키 상태를 다시 읽었는지 확인한다.
+  int hasApiKeyCalls = 0;
+
   @override
   Future<bool> hasApiKey() async {
+    hasApiKeyCalls++;
     _maybeFail();
     return key != null;
   }

@@ -261,16 +261,18 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
               DiaryTab(active: _tab == ShellTab.diary),
               ChatTab(
                 active: _tab == ShellTab.chat,
-                onOpenSettings: () =>
-                    unawaited(openSettings(context, SettingsTarget.chat)),
+                onOpenSettings: () => unawaited(
+                  openSettings(context, SettingsTarget.chat, highlight: true),
+                ),
               ),
               ToolsTab(
                 active: _tab == ShellTab.tools && !_covered,
                 section: _toolsSection,
                 onSectionChanged: (section) =>
                     setState(() => _toolsSection = section),
-                onOpenAlarmSettings: () =>
-                    unawaited(openSettings(context, SettingsTarget.alarm)),
+                onOpenAlarmSettings: () => unawaited(
+                  openSettings(context, SettingsTarget.alarm, highlight: true),
+                ),
               ),
             ],
           ),

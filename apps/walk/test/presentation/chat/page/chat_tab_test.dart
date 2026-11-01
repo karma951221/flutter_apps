@@ -10,6 +10,7 @@ import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
+import 'package:walk/domain/chat/usecase/chat_key_verifier.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
@@ -21,6 +22,7 @@ import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_state.dart';
 
 import '../../../support/diary_fixtures.dart';
+import '../../../support/fake_chat_key_verifier.dart';
 import '../../../support/fake_chat_settings.dart';
 
 class _MockSession extends Mock implements ChatSession {}
@@ -53,6 +55,7 @@ void main() {
       ..registerSingleton<ChatSession>(session)
       ..registerSingleton<ChatTrace>(const NoopChatTrace())
       ..registerSingleton<ChatSettings>(settings)
+      ..registerSingleton<ChatKeyVerifier>(FakeChatKeyVerifier())
       ..registerSingleton<DiaryRepository>(diary)
       ..registerSingleton<Clock>(MutableClock(diaryT0));
   });
@@ -62,7 +65,11 @@ void main() {
     await getIt.reset();
   });
 
-  Future<void> pump(WidgetTester tester, {VoidCallback? onOpenSettings}) async {
+  Future<void> pump(
+    WidgetTester tester, {
+    VoidCallback? onOpenSettings,
+    bool active = true,
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
         navigatorObservers: [appRouteObserver],
@@ -72,11 +79,26 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         home: BlocProvider<DiaryLockCubit>.value(
           value: lock,
-          child: ChatTab(active: true, onOpenSettings: onOpenSettings ?? () {}),
+          child: ChatTab(
+            active: active,
+            onOpenSettings: onOpenSettings ?? () {},
+          ),
         ),
       ),
     );
     await tester.pumpAndSettle();
+  }
+
+  /// 탭 위에 빈 화면을 얹는다(물어보기 설정 자리).
+  Future<NavigatorState> pushCover(WidgetTester tester) async {
+    final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+    unawaited(
+      navigator.push(
+        MaterialPageRoute<void>(builder: (_) => const Text('chat settings')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    return navigator;
   }
 
   void answer(String text) {
@@ -161,6 +183,47 @@ void main() {
 
     expect(find.text('설정 열기'), findsNothing);
     expect(find.text('어제 뭐 했어?'), findsOneWidget);
+  });
+
+  testWidgets('설정 화면에서 돌아오면 키 상태를 다시 읽는다(noKey → ready)', (tester) async {
+    settings.key = null;
+    await pump(tester);
+    expect(find.byKey(const Key('chat-bubble-open-settings')), findsNothing);
+    expect(find.text('설정에서 키를 넣어 주세요'), findsOneWidget);
+    final navigator = await pushCover(tester);
+
+    settings.key = 'sk-ant-new';
+    navigator.pop();
+    await tester.pumpAndSettle();
+
+    expect(find.text('설정에서 키를 넣어 주세요'), findsNothing);
+    expect(find.text('어제 뭐 했어?'), findsOneWidget);
+  });
+
+  testWidgets('탭이 보이지 않을 때 돌아오면 다시 읽지 않는다', (tester) async {
+    await pump(tester, active: false);
+    final navigator = await pushCover(tester);
+    final before = settings.hasApiKeyCalls;
+
+    navigator.pop();
+    await tester.pumpAndSettle();
+
+    expect(settings.hasApiKeyCalls, before);
+  });
+
+  testWidgets('잘못된 키로 실패하면 말풍선의 [설정 열기]가 onOpenSettings 를 부른다', (tester) async {
+    when(() => session.ask(any())).thenAnswer(
+      (_) =>
+          Stream.fromIterable(const [ChatEvent.failed(ChatFailure.invalidKey)]),
+    );
+    var opened = 0;
+    await pump(tester, onOpenSettings: () => opened++);
+    await tester.tap(find.text('어제 뭐 했어?'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('키를 확인해 주세요'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('chat-bubble-open-settings')));
+    expect(opened, 1);
   });
 
   testWidgets('⋮ 는 잠긴 동안 앱 설정만, 풀리면 물어보기 설정 · 앱 설정', (tester) async {

@@ -2,7 +2,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
-/// 알림 · 정확한 알람 중 하나라도 거부됐을 때 목록 위 경고. 누르면 알람 설정 화면이 열린다.
+/// 알림 · 정확한 알람 중 하나라도 거부됐을 때 목록 위 경고. 누르면 알람 설정 화면을 열고 권한 행을 짚는다.
 class AlarmPermissionBanner extends StatelessWidget {
   const AlarmPermissionBanner({required this.onTap, super.key});
 

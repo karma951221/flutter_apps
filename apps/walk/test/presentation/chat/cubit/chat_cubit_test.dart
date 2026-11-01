@@ -12,6 +12,7 @@ import 'package:walk/presentation/chat/cubit/chat_cubit.dart';
 import 'package:walk/presentation/chat/cubit/chat_state.dart';
 
 import '../../../support/diary_fixtures.dart';
+import '../../../support/fake_chat_key_verifier.dart';
 import '../../../support/fake_chat_settings.dart';
 import '../../../support/recording_chat_trace.dart';
 
@@ -35,16 +36,61 @@ void main() {
   late _MockSession session;
   late _MockDiary diary;
   late FakeChatSettings settings;
+  late FakeChatKeyVerifier verifier;
   late ChatCubit cubit;
 
   setUp(() {
     session = _MockSession();
     diary = _MockDiary();
     settings = FakeChatSettings('sk-ant-test')..consented = true;
-    cubit = ChatCubit(session, settings, diary, const NoopChatTrace());
+    verifier = FakeChatKeyVerifier();
+    cubit = ChatCubit(
+      session,
+      settings,
+      diary,
+      const NoopChatTrace(),
+      verifier,
+    );
   });
 
   tearDown(() => cubit.close());
+
+  group('확인 전 키 재확인', () {
+    test('refresh 가 ready 면 확인 전 키 재확인을 부른다', () async {
+      await cubit.refresh();
+      await pumpEventQueue();
+
+      expect(cubit.state.access, ChatAccess.ready);
+      expect(verifier.recheckCalls, 1);
+    });
+
+    test('noKey 면 부르지 않는다', () async {
+      settings.key = null;
+      await cubit.refresh();
+      await pumpEventQueue();
+
+      expect(cubit.state.access, ChatAccess.noKey);
+      expect(verifier.recheckCalls, 0);
+    });
+
+    test('동의 전(needsConsent)이면 부르지 않는다', () async {
+      settings.consented = false;
+      await cubit.refresh();
+      await pumpEventQueue();
+
+      expect(cubit.state.access, ChatAccess.needsConsent);
+      expect(verifier.recheckCalls, 0);
+    });
+
+    test('재확인이 던져도 refresh 는 끝난다', () async {
+      verifier.recheckError = StateError('boom');
+      await cubit.refresh();
+      await pumpEventQueue();
+
+      expect(cubit.state.access, ChatAccess.ready);
+      expect(verifier.recheckCalls, 1);
+    });
+  });
 
   test('키가 없으면 noKey, 동의 전이면 needsConsent, 둘 다면 ready', () async {
     expect(cubit.state.access, ChatAccess.checking);
@@ -453,6 +499,7 @@ void main() {
         settings,
         diary,
         trace,
+        verifier,
         schedulePostFrame: frames.add,
       );
       await traced.refresh();
@@ -620,6 +667,7 @@ void main() {
         settings,
         diary,
         off,
+        verifier,
         schedulePostFrame: frames.add,
       );
       await quiet.refresh();

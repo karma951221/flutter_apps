@@ -22,6 +22,17 @@ class FakeChatKeyVerifier implements ChatKeyVerifier {
     return pending?.future ?? Future.value(result);
   }
 
+  /// [recheckIfUnverified] 가 불린 횟수.
+  int recheckCalls = 0;
+
+  /// null 이 아니면 [recheckIfUnverified] 가 이것을 던진다(계약 밖 실패를 흉내).
+  Object? recheckError;
+
   @override
-  Future<ChatKeyStatus?> recheckIfUnverified() async => null;
+  Future<ChatKeyStatus?> recheckIfUnverified() async {
+    recheckCalls++;
+    final error = recheckError;
+    if (error != null) throw error;
+    return null;
+  }
 }

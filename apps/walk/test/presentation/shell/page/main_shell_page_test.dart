@@ -45,6 +45,7 @@ import 'package:walk/presentation/settings/page/alarm_settings_page.dart';
 import 'package:walk/presentation/settings/page/app_settings_page.dart';
 import 'package:walk/presentation/settings/page/chat_settings_page.dart';
 import 'package:walk/presentation/settings/page/walk_settings_page.dart';
+import 'package:walk/presentation/settings/widget/row_highlight.dart';
 import 'package:walk/presentation/shell/page/main_shell_page.dart';
 import 'package:walk/presentation/shell/page/tools_tab.dart';
 import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
@@ -422,14 +423,86 @@ void main() {
     expect(onstage(AlarmListPage), isFalse);
   });
 
-  testWidgets('물어보기 [설정 열기] → 물어보기 설정 화면', (tester) async {
+  /// 3초 동안 잘게 넘기며 본, [finders] 각각의 glow 불투명도 최댓값(같은 순서).
+  Future<List<double>> peakGlows(
+    WidgetTester tester,
+    List<Finder> finders,
+  ) async {
+    final peaks = List.filled(finders.length, 0.0);
+    const step = Duration(milliseconds: 50);
+    for (var t = Duration.zero; t < const Duration(seconds: 3); t += step) {
+      await tester.pump(step);
+      for (var i = 0; i < finders.length; i++) {
+        for (final e in finders[i].evaluate()) {
+          final value = (e.widget as FadeTransition).opacity.value;
+          if (value > peaks[i]) peaks[i] = value;
+        }
+      }
+    }
+    return peaks;
+  }
+
+  Future<double> peakGlow(WidgetTester tester, Finder finder) async =>
+      (await peakGlows(tester, [finder])).single;
+
+  const glowKey = Key('row-highlight-glow');
+
+  /// 권한 행 [row] 를 감싼 RowHighlight 의 glow.
+  Finder permissionGlow(String row) => find.descendant(
+    of: find.ancestor(
+      of: find.byKey(Key('settings-permission-$row')),
+      matching: find.byType(RowHighlight),
+    ),
+    matching: find.byKey(glowKey),
+  );
+
+  testWidgets('물어보기 [설정 열기] → 물어보기 설정 화면이 열리고 연결 행이 glow', (tester) async {
     await pump(tester);
     await tapTab(tester, '물어보기');
 
     await tester.tap(find.text('설정 열기'));
+    final peak = await peakGlow(
+      tester,
+      find.descendant(
+        of: find.byType(ChatSettingsPage),
+        matching: find.byKey(glowKey),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.byType(ChatSettingsPage), findsOneWidget);
+    expect(
+      tester
+          .widget<ChatSettingsPage>(find.byType(ChatSettingsPage))
+          .highlightConnection,
+      isTrue,
+    );
+    expect(peak, greaterThan(0));
     expect(onstage(ChatTab), isFalse);
+  });
+
+  testWidgets('⋮ › 물어보기 설정으로 열면 glow 가 없다', (tester) async {
+    await pump(tester);
+    await tapTab(tester, '물어보기');
+
+    await tester.tap(find.byIcon(Icons.more_vert).hitTestable());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('menu-settings-chat')));
+    final peak = await peakGlow(
+      tester,
+      find.descendant(
+        of: find.byType(ChatSettingsPage),
+        matching: find.byKey(glowKey),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(ChatSettingsPage), findsOneWidget);
+    expect(
+      tester
+          .widget<ChatSettingsPage>(find.byType(ChatSettingsPage))
+          .highlightConnection,
+      isFalse,
+    );
+    expect(peak, 0);
   });
 
   testWidgets('일기 ⋮ 는 잠긴 동안 앱 설정만, 앱 설정 화면이 열린다', (tester) async {
@@ -552,15 +625,29 @@ void main() {
     expect(onstage(WalkHomePage), isTrue);
   });
 
-  testWidgets('알람 권한 배너 → 알람 설정 화면, 돌아오면 권한을 다시 읽는다', (tester) async {
+  testWidgets('알람 권한 배너 → 알람 설정 화면의 거부된 권한 행이 glow, 돌아오면 권한을 다시 읽는다', (
+    tester,
+  ) async {
     when(notification.check).thenAnswer((_) async => PermissionStatus.denied);
     await pump(tester);
     await tapTab(tester, '도구');
     expect(find.text('알람이 울리지 않을 수 있어요'), findsOneWidget);
 
     await tester.tap(find.text('알람이 울리지 않을 수 있어요'));
+    final [denied, granted] = await peakGlows(tester, [
+      permissionGlow('notification'),
+      permissionGlow('exact-alarm'),
+    ]);
     await tester.pumpAndSettle();
     expect(find.byType(AlarmSettingsPage), findsOneWidget);
+    expect(
+      tester
+          .widget<AlarmSettingsPage>(find.byType(AlarmSettingsPage))
+          .highlightPermissions,
+      isTrue,
+    );
+    expect(denied, greaterThan(0));
+    expect(granted, 0);
     expect(find.text('허용 필요 ›'), findsOneWidget);
 
     // 알람 설정 화면에서 시스템 설정으로 나가 알림을 허용하고 돌아왔다.

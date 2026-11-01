@@ -9,6 +9,7 @@ import '../cubit/holiday_settings_cubit.dart';
 import '../cubit/holiday_settings_state.dart';
 import '../cubit/settings_permissions_cubit.dart';
 import '../cubit/settings_permissions_state.dart';
+import '../widget/row_highlight.dart';
 import '../widget/settings_widgets.dart';
 
 /// 알람 설정 — 공휴일 미리 알림 · 공휴일 출처, 알람 권한(알림 · 정확한 알람 · 전체 화면).
@@ -16,7 +17,10 @@ import '../widget/settings_widgets.dart';
 /// [SettingsPermissionsCubit] · [HolidaySettingsCubit] 은 셸이 제공한다(`openSettings`).
 /// 열릴 때 둘을 다시 읽는다.
 class AlarmSettingsPage extends StatefulWidget {
-  const AlarmSettingsPage({super.key});
+  const AlarmSettingsPage({this.highlightPermissions = false, super.key});
+
+  /// true 면 조치가 필요한 첫 권한 행을 짚는다([AlarmPermissionTiles.highlight]).
+  final bool highlightPermissions;
 
   @override
   State<AlarmSettingsPage> createState() => _AlarmSettingsPageState();
@@ -39,7 +43,7 @@ class _AlarmSettingsPageState extends State<AlarmSettingsPage> {
         children: [
           const _HolidaySettingsTiles(),
           SettingsSectionHeader(l10n.walkSettingsPermissions),
-          const _AlarmPermissionTiles(),
+          AlarmPermissionTiles(highlight: widget.highlightPermissions),
         ],
       ),
     );
@@ -112,36 +116,65 @@ class _HolidaySettingsTiles extends StatelessWidget {
 }
 
 /// 알람이 쓰는 권한 행 — 알림 · 정확한 알람 · 전체 화면.
-class _AlarmPermissionTiles extends StatelessWidget {
-  const _AlarmPermissionTiles();
+class AlarmPermissionTiles extends StatelessWidget {
+  const AlarmPermissionTiles({this.highlight = false, super.key});
+
+  /// true 면 조치가 필요한(needs action) 첫 행 하나를 RowHighlight(play: true) 로. 순서: 알림 → 정확한 알람 → 전체 화면.
+  /// 상태를 아직 못 읽었으면 play false 로 두었다가 읽히면 true(RowHighlight 가 false → true 에서 재생). 모두 허용이면 없음.
+  final bool highlight;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final permissions = context.read<SettingsPermissionsCubit>();
     return BlocBuilder<SettingsPermissionsCubit, SettingsPermissionsState>(
-      builder: (context, state) => Column(
-        children: [
-          SettingsPermissionTile(
-            title: l10n.walkSettingsNotification,
-            description: l10n.walkSettingsNotificationDescription,
-            status: settingsStatusLabel(l10n, state.notification),
-            onTap: permissions.openNotification,
+      builder: (context, state) {
+        final rows = [
+          (
+            'notification',
+            l10n.walkSettingsNotification,
+            l10n.walkSettingsNotificationDescription,
+            settingsStatusLabel(l10n, state.notification),
+            permissions.openNotification,
           ),
-          SettingsPermissionTile(
-            title: l10n.walkSettingsExactAlarm,
-            description: l10n.walkSettingsExactAlarmDescription,
-            status: settingsStatusLabel(l10n, state.exactAlarm),
-            onTap: permissions.openExactAlarm,
+          (
+            'exact-alarm',
+            l10n.walkSettingsExactAlarm,
+            l10n.walkSettingsExactAlarmDescription,
+            settingsStatusLabel(l10n, state.exactAlarm),
+            permissions.openExactAlarm,
           ),
-          SettingsPermissionTile(
-            title: l10n.walkSettingsFullScreen,
-            description: l10n.walkSettingsFullScreenDescription,
-            status: settingsStatusLabel(l10n, state.fullScreenIntent),
-            onTap: permissions.openFullScreenIntent,
+          (
+            'full-screen',
+            l10n.walkSettingsFullScreen,
+            l10n.walkSettingsFullScreenDescription,
+            settingsStatusLabel(l10n, state.fullScreenIntent),
+            permissions.openFullScreenIntent,
           ),
-        ],
-      ),
+        ];
+        // 셋을 다 읽은 뒤에만 고른다 — 앞 행을 못 읽은 채 뒤 행을 짚지 않게.
+        final statuses = [for (final row in rows) row.$4];
+        final target = !highlight || statuses.contains(null)
+            ? null
+            : statuses.indexWhere((s) => s!.$2);
+        return Column(
+          children: [
+            for (final (i, (id, title, description, status, onTap))
+                in rows.indexed)
+              RowHighlight(
+                play: i == target,
+                announce: title,
+                child: SettingsPermissionTile(
+                  key: Key('settings-permission-$id'),
+                  title: title,
+                  description: description,
+                  status: status,
+                  onTap: onTap,
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/chat/chat_settings.dart';
 import '../../../domain/chat/chat_trace.dart';
+import '../../../domain/chat/usecase/chat_key_verifier.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
@@ -24,7 +25,8 @@ class ChatCubit extends Cubit<ChatState> {
     this._session,
     this._settings,
     this._diary,
-    this._trace, {
+    this._trace,
+    this._verifier, {
     void Function(VoidCallback) schedulePostFrame = _addPostFrame,
   }) : _schedulePostFrame = schedulePostFrame,
        super(const ChatState(access: ChatAccess.checking));
@@ -33,6 +35,9 @@ class ChatCubit extends Cubit<ChatState> {
   final ChatSettings _settings;
   final DiaryRepository _diary;
   final ChatTrace _trace;
+
+  /// 확인 전(unverified) 키를 탭이 열릴 때 다시 확인한다(§4 끝 줄).
+  final ChatKeyVerifier _verifier;
 
   /// 프레임 쪽 표시(firstVisible · firstGlyph)를 찍을 때 쓴다. 위젯은 계측을 모른다.
   final void Function(VoidCallback) _schedulePostFrame;
@@ -55,8 +60,11 @@ class ChatCubit extends Cubit<ChatState> {
   /// [newConversation] · [stop] 마다 올린다. 끊긴 질문의 늦은 결과(이벤트 · 인용 읽기)를 버린다.
   int _generation = 0;
 
-  /// 키 · 동의 상태를 다시 읽는다. 탭이 보이게 될 때 부른다.
+  /// 키 · 동의 상태를 다시 읽는다. 탭이 보이게 될 때 · 위에 얹힌 화면이 걷힐 때 부른다.
   /// 보안 저장소를 읽지 못하면 키가 없는 것으로 본다.
+  ///
+  /// 쓸 수 있으면(ready) 확인 전 키를 뒤에서 다시 확인한다 — 결과는 설정 화면이 보이므로
+  /// 기다리지도, 화면에 쓰지도 않는다.
   Future<void> refresh() async {
     bool hasKey;
     try {
@@ -71,6 +79,13 @@ class ChatCubit extends Cubit<ChatState> {
       _ => ChatAccess.ready,
     };
     emit(state.copyWith(access: access));
+    if (access == ChatAccess.ready) {
+      unawaited(
+        Future.sync(
+          _verifier.recheckIfUnverified,
+        ).then<void>((_) {}, onError: (Object _) {}),
+      );
+    }
   }
 
   Future<void> consent() async {

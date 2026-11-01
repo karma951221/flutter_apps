@@ -10,6 +10,7 @@ import 'package:permission/permission.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
 import 'package:walk/presentation/settings/page/alarm_settings_page.dart';
+import 'package:walk/presentation/settings/widget/row_highlight.dart';
 
 import '../settings_harness.dart';
 
@@ -99,6 +100,100 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(h.exactAlarm.openSettings).called(1);
+  });
+
+  group('권한 행 강조', () {
+    const glowKey = Key('row-highlight-glow');
+
+    Finder glowOf(String row) => find.descendant(
+      of: find.ancestor(
+        of: find.byKey(Key('settings-permission-$row')),
+        matching: find.byType(RowHighlight),
+      ),
+      matching: find.byKey(glowKey),
+    );
+
+    double opacity(WidgetTester tester, String row) {
+      final found = glowOf(row).evaluate();
+      if (found.isEmpty) return 0;
+      return (found.single.widget as FadeTransition).opacity.value;
+    }
+
+    /// 3초 동안 잘게 넘기며 본 행별 glow 최댓값.
+    Future<Map<String, double>> peaks(WidgetTester tester) async {
+      final result = {
+        'notification': 0.0,
+        'exact-alarm': 0.0,
+        'full-screen': 0.0,
+      };
+      const step = Duration(milliseconds: 50);
+      for (var t = Duration.zero; t < const Duration(seconds: 3); t += step) {
+        await tester.pump(step);
+        for (final row in result.keys.toList()) {
+          final value = opacity(tester, row);
+          if (value > result[row]!) result[row] = value;
+        }
+      }
+      return result;
+    }
+
+    testWidgets('권한 행 셋에 키가 있다', (tester) async {
+      await h.pump(tester, const AlarmSettingsPage());
+
+      for (final row in ['notification', 'exact-alarm', 'full-screen']) {
+        expect(find.byKey(Key('settings-permission-$row')), findsOneWidget);
+      }
+    });
+
+    testWidgets('권한을 읽기 전 열려도 읽힌 뒤 거부된 행이 glow', (tester) async {
+      final pending = Completer<PermissionStatus>();
+      when(h.exactAlarm.check).thenAnswer((_) => pending.future);
+      await h.pump(tester, const AlarmSettingsPage(highlightPermissions: true));
+
+      final before = await peaks(tester);
+      expect(before.values, everyElement(0));
+
+      pending.complete(PermissionStatus.denied);
+      final after = await peaks(tester);
+      expect(after['exact-alarm'], greaterThan(0));
+      expect(after['notification'], 0);
+      expect(after['full-screen'], 0);
+    });
+
+    testWidgets('알림 · 정확한 알람이 다 거부면 첫 행(알림)만 glow', (tester) async {
+      when(
+        h.notification.check,
+      ).thenAnswer((_) async => PermissionStatus.denied);
+      final pending = Completer<PermissionStatus>();
+      when(h.exactAlarm.check).thenAnswer((_) => pending.future);
+      await h.pump(tester, const AlarmSettingsPage(highlightPermissions: true));
+
+      pending.complete(PermissionStatus.denied);
+      final after = await peaks(tester);
+      expect(after['notification'], greaterThan(0));
+      expect(after['exact-alarm'], 0);
+      expect(after['full-screen'], 0);
+    });
+
+    testWidgets('highlightPermissions 기본 false — 거부된 행이 있어도 glow 없음', (
+      tester,
+    ) async {
+      const page = AlarmSettingsPage();
+      expect(page.highlightPermissions, isFalse);
+      final pending = Completer<PermissionStatus>();
+      when(h.exactAlarm.check).thenAnswer((_) => pending.future);
+      await h.pump(tester, page);
+      pending.complete(PermissionStatus.denied);
+
+      final after = await peaks(tester);
+      expect(after.values, everyElement(0));
+      expect(
+        tester
+            .widget<AlarmPermissionTiles>(find.byType(AlarmPermissionTiles))
+            .highlight,
+        isFalse,
+      );
+    });
   });
 
   group('공휴일', () {

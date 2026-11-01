@@ -23,7 +23,14 @@ enum SettingsTarget { app, diary, chat, alarm, walk }
 /// 다시 읽는다.
 ///
 /// 일기 · 물어보기 설정은 잠금 아래([pushDiaryRoute]) — 잠겨 있으면 잠금 화면이 먼저 보인다.
-Future<void> openSettings(BuildContext context, SettingsTarget target) {
+///
+/// [highlight] 가 true 면 열린 화면이 봐야 할 행을 glow 한다 — chat: 연결 행, alarm: 조치가
+/// 필요한 첫 권한 행. 다른 target 에서는 무시한다.
+Future<void> openSettings(
+  BuildContext context,
+  SettingsTarget target, {
+  bool highlight = false,
+}) {
   final permissions = context.read<SettingsPermissionsCubit>();
   final holiday = context.read<HolidaySettingsCubit>();
   final lock = context.read<DiaryLockCubit>();
@@ -50,9 +57,13 @@ Future<void> openSettings(BuildContext context, SettingsTarget target) {
 
   return switch (target) {
     SettingsTarget.app => push(const AppSettingsPage()),
-    SettingsTarget.alarm => push(const AlarmSettingsPage()),
+    SettingsTarget.alarm => push(
+      AlarmSettingsPage(highlightPermissions: highlight),
+    ),
     SettingsTarget.walk => push(const WalkSettingsPage()),
     SettingsTarget.diary => pushLocked(const DiarySettingsPage()),
-    SettingsTarget.chat => pushLocked(const ChatSettingsPage()),
+    SettingsTarget.chat => pushLocked(
+      ChatSettingsPage(highlightConnection: highlight),
+    ),
   };
 }
