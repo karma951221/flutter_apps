@@ -545,3 +545,76 @@ Health Connect 에 넣었다(저장소 밖). 시나리오 결과는 [테스트](
   - 사용량 기록(`DriftChatUsageLog.record`)은 자체 오류 처리 없이 세션의 `catchError` 에 기댄다. 같은 시각 행의 순서는 정하지 않았다.
   - 물어보기 설정의 대화 수 읽기 실패는 조용히 0 으로 둔다(모두 지우기 행이 꺼진다).
   - 저장이 실패한 턴은 다시 시도하지 않는다(P9).
+
+## 2026-11 — 물어보기 모델 칩 · GPT(키 기획 ③ · ④)
+
+[계획](../../../docs/superpowers/plans/2026-11-01-walk-chat-models-gpt.md) · [기획](../../../docs/superpowers/specs/2026-11-01-walk-chat-key-input.md) · 구현 `e3b51c30`~`0526b98a` · 진행 상태는 [진행 현황](status.md#모델-칩--gpt-2026-11-02).
+
+모델을 앱이 고정하지 않고 벤더 목록에서 고르게(칩 · 시트 · 추천 · NEW · 하루 1회 갱신) 하고, OpenAI(GPT) 어댑터와 벤더 고르기 · 바꾸기 · 벤더별 재동의를 더했다.
+
+### 결정
+
+| # | 결정 | 이유 |
+|---|---|---|
+| G1 | `ChatModelRegistry` 를 ④ 가 아니라 ③ 에서(Anthropic 하나로) 들인다. 계약은 domain, 구현 `VendorChatModelRegistry` 는 data | 스펙은 ④ 지만 ③ 에서 세션 · verifier · 카탈로그 배선을 바꾸므로 한 번에 바꿔야 같은 곳을 다시 고치지 않는다 |
+| G2 | `ChatSettings.connectedVendor` 동기 getter | `ChatSession.target` 이 동기 getter 이고 cubit 이 동기로 읽는다. prefs 는 이미 동기. `connection()` 은 보안 저장소라 비동기 |
+| G3 | 세션 접기는 **벤더가 바뀔 때만**. 모델만 바뀌면 어댑터가 `vendorState.model ≠ request.model` 인 턴을 parts 로 다시 만든다 | 스펙 §8.4 가 같은 벤더 · 다른 모델은 도구 기록을 남기고 `vendorState` 만 빼라고 했다. 기록 계획은 둘을 접었다 — 스펙 우선. A4 가 실패하면 되돌린다 |
+| G4 | 카탈로그는 키를 모르고 목록 받기는 `ChatKeyVerifier.fetchStored()` 하나. `recheckIfUnverified` 는 `ChatModelChoice.refresh`(unverified 면 24시간 무시)로 대신하고 지운다 | 원문 키를 읽는 곳이 셋이 되지 않게(key-ux D4 "둘"). 갱신 규칙은 domain 유스케이스가 묶는다 |
+| G5 | 키 저장 직전 `check` 가 받은 목록을 cubit 이 들고 있다가(키는 아님) 연결 성공 뒤 `adopt` | 스펙 §4 "한 번 호출로 키 확인과 목록". key-ux D5 가 ③ 으로 넘긴 몫 |
+| G6 | 고른 모델이 추천과 같으면 `chat.model = null` 로 저장(추천을 따라감) | 추천을 고른 사람은 "최신 Sonnet" 을 원한 것. 일부러 다른 모델을 고른 사람만 고정 |
+| G7 | `ChatFailure.modelReplaced`("모델을 바꿨어요…")와 `modelUnavailable`(② 문구)을 나눈다 | "바꿨다"는 사실이 있을 때만 맞는 문구. 일시적 404 에 거짓말을 하지 않는다(key-ux D8 마무리) |
+| G8 | "고른 모델이 없어져…" 알림 플래그는 메모리(`ChatModelChoice`, lazySingleton) | 한 번 보이면 그만. prefs 키를 늘리지 않는다 |
+| G9 | 빠른 출력 첫 켜기 확인은 `chat.fastMode.ack` 로 한 번만 | 스펙 §6.2 "처음 켤 때 한 번". 끄고 다시 켤 때 매번 묻지 않게 |
+| G10 | 빠른 출력 지원 · 배수는 domain 표 `fastModeSpecs`, 요청 필드는 어댑터 상수 한 곳. **확인 전 표는 비어 스위치가 안 보인다** | 지원 모델 · 필드 · 배수가 모두 확인 필요(A2 · O5). 확인 안 된 필드로 400 을 내느니 숨긴다. 단위 테스트는 표 주입으로 |
+| G11 | Claude · GPT 계열 규칙(거르기 · 추천 · 이미지 · effort)을 한 파일에 | 순수 함수라 한 곳이 읽기 쉽고 두 벤더 정렬 규칙을 같이 고정한다 |
+| G12 | 동의 문구에서 "위키" 낱말을 뺀다 | 스펙 §5.3 — 기록 1단계 계획에 위키가 없다(2단계) |
+| G13 | OpenAI 도구 결과 사진은 확인 전 기본으로 **뒤따르는 user 입력**에 싣고, `function_call_output` 배열은 생성자 인자로 둔다 | 스펙 §8.3 (O2). 확실히 되는 쪽을 기본으로, 두 경로 모두 테스트 |
+| G14 | OpenAI 어댑터는 `response.completed/incomplete/failed` 의 최종 `response.output` 으로 결과를 만들고 중간 이벤트는 글 조각 · 계측에만 쓴다 | SSE 이벤트 이름이 확인 전(O7)이어도 결과 · `vendorState` 가 맞게. 손 픽스처를 녹화로 바꿔도 깨지는 곳이 적다 |
+| G15 | 이미지 거절(400)은 `ChatModelErrorKind.imagesUnsupported` 로 받아 세션이 그 모델을 "사진 못 봄"으로 기록하고 한 번만 다시 보낸다 | 스펙 §6.4. 오류 모양이 확인 전(O6)이라 코드 표가 틀려도 `server` 로 떨어질 뿐 |
+| G16 | `ChatSession.target` 을 `ChatTarget?`(미연결 · 목록 없음이면 null)로 | 모델 id 를 고정하지 않으므로 "모델 없음"이 생긴다 |
+| G17 | 칩 · 시트 상태는 `ModelPickerCubit`(시트 전용)과 `ModelChipData`(탭 · 설정 공용)로 나누고, 시트는 어디서 열어도 같은 `ModelPickerSheet.show`. 빠른 출력 스위치는 시트에만 | 스펙 §6.2 "설정 화면 모델 행도 같은 시트". 설정 모델 행은 켜짐 여부만 — 사용자 결정이 재구성 설계 제안보다 우선 |
+| G18 | 카탈로그에 `chat.models.vendor` · `chat.models.noImages` 두 prefs 키를 스펙 §7.2 에 더한다 | 백업 복원 · 벤더 바꾸기 뒤 다른 벤더 목록을 쓰지 않게, 이미지 거절 기록이 갱신에 지워지지 않게 |
+
+### 구현 중 정한 것(컨트롤러 판정)
+
+- **G3 가 기록 계획의 접기를 좁혔다.** 기록 1단계(`49d77cd5`/`9f439db9`)는 target(모델 포함)이 바뀌면 글로 접었다. 이 계획의 Task 4 가 벤더 바뀔 때만 접도록 바꾸고, 같은 벤더 다른 모델 턴은 어댑터가 parts 로 다시 만든다. H3 가 실제로 확인한다.
+- **다시 확인(recheck)은 `ChatModelChoice.refresh` 로 옮겼다.** `ChatKeyVerifier.recheckIfUnverified` 는 지웠고, 물어보기 탭이 열릴 때마다 목록을 받지 않고(매번 네트워크 호출은 회귀) 갱신 규칙을 따른다(`047b18d3`).
+- **필터링 뒤 빈 목록이면 `fetchedAt` 을 찍지 않는다.** 받은 목록이 비었는데 시각을 찍으면 하루 동안 다시 받지 않는다. `refresh()` 는 `connection()` 을 먼저 기다려 옛 prefs 도 읽는다.
+- **O1 판정: `store: false` 여도 출력 항목(reasoning · function_call)을 id 째 그대로 되돌린다.** 문서화된 stateless 패턴. 실제 키 확인 대기.
+- **두 어댑터가 취소 흐름을 공유한다**(`656fe308`): `abortableStream` · `untilAbort` 한 곳. 잘린 응답(`response.incomplete` · 끊김)의 이어진 reasoning · function_call 을 정리해 다음 요청에 되돌리지 않는다.
+- `AnthropicTurnState.model` 은 요청한 id 가 아니라 `message_start` 의 실제 모델로 고쳤다(G3 가 이 값에 기댄다).
+
+### 구현 전 확인
+
+모두 live 벤더 문서 · 실제 키가 필요한 항목이라 이 구현에서는 확인하지 못했다. 어느 것도 단위 테스트를 막지 않게 설계했고, 확인되면 아래 "넣을 곳"의 값만 바꾼다.
+
+| # | 확인할 것 | 결과 | 필요한 것 · 넣을 곳 |
+|---|---|---|---|
+| A1 | Anthropic `GET /v1/models` 페이지 넘기기(`limit` 상한 · `has_more` · `last_id` · `after_id`) · 별칭 · `created_at` 형식 | **대기 (live 문서 · 실제 키 미확인)** | 실제 응답. 필드가 다르면 첫 쪽만 쓴다(최대 5쪽). 손 픽스처 `anthropic/models_page*.json` 교체 |
+| A2 | Anthropic fast mode 필드 · 베타 헤더 · 지원 모델 · 가격 배수 | **대기 (live 문서 · 실제 키 미확인)** | 문서 확인. `AnthropicChatModel.fastModeFields` · `fastModeBeta` + `fastModeSpecs[anthropic]` 한 줄. 그 전엔 스위치가 안 보인다 |
+| A3 | `output_config.effort` 를 받지 않는 모델 | **대기 (live 문서 · 실제 키 미확인)** | 문서 + 옛 모델로 실제 호출. 확인 전 규칙: 메이저 4 이상만 effort. `supportsEffortOf` |
+| A4 | 다른 모델의 thinking 블록을 뺀 지난 턴을 보내도 400 이 없는지 | **대기 (live 문서 · 실제 키 미확인)** | 기기: 대화 중 모델 바꿔 이어 묻기(H3). 400 이면 G3 를 되돌려 글로 접는다 |
+| O1 | `store` 기본값 · `include: ["reasoning.encrypted_content"]` 가 비추론 모델에서 받아지는지 · reasoning 항목 되돌리는 모양 | **대기 (live 문서 · 실제 키 미확인)** | 실제 키. 비추론 모델이 400 이면 `supportsReasoning(openai, id)` 로 `include` 조건부 |
+| O2 | `function_call_output.output` 배열(`input_text` · `input_image`) 허용 | **대기 (live 문서 · 실제 키 미확인)** | 실제 키(사진 질문). 되면 `imagesInToolOutput` 기본값만 true |
+| O3 | `reasoning.effort` 를 받지 않는 모델 | **대기 (live 문서 · 실제 키 미확인)** | 문서 + 실제 호출. 확인 전 규칙: `^o\d` · gpt 메이저 5 이상 |
+| O4 | OpenAI 제외 낱말 · 도구 미지원 · 이미지 미지원 모델 · 키 접두사 | **대기 (live 문서 · 실제 키 미확인)** | 실제 모델 목록. `chat_model_rules.dart` 의 const 표 세 개 · `api_key_mask.dart`. 지금 미지원 패턴은 추측 |
+| O5 | OpenAI 빠른 처리 등급(`service_tier: "priority"` 로 알려짐) · 지원 모델 · 배수 | **대기 (live 문서 · 실제 키 미확인)** | 문서. `OpenAiChatModel.fastModeFields` + `fastModeSpecs[openai]` |
+| O6 | OpenAI 오류 모양(401 · 429 쿼터 vs 레이트 · 404 · 이미지 400 `code` · 스트림 중 오류 위치) | **대기 (live 문서 · 실제 키 미확인)** | 실제 오류 응답. `imageUnsupportedCodes` 상수 · 픽스처 `openai/error_*.json` 교체. 틀려도 `server` 로 떨어질 뿐 |
+| O7 | Responses SSE 이벤트 이름 · 순서 · `usage` 위치 · 거절 모양 | **대기 (live 문서 · 실제 키 미확인)** | 실제 스트림 녹화. 픽스처 `stream_*.sse` 교체 |
+| O8 | OpenAI 브랜드 가이드(로고) | **대기 (브랜드 가이드 미확인)** | 가이드 확인 뒤 `ChatVendorIcon.confirmedLogos` 한 줄 + 자산. 그 전엔 모노그램 "G" |
+| X1 | 현재 도구 스키마 5개를 OpenAI 가 `strict: false` 에서 받는지, 다른 벤더 대화를 글로만 넘겨도 문제없는지 | **대기 (실제 키 · 기기 미확인)** | 기기: GPT 로 도구 질문 · 벤더 바꿔 이어 묻기 |
+
+### 남은 손 픽스처
+
+`test/fixtures/chat/` 아래 손으로 만든 것은 SSE 는 첫 줄 주석, 나머지는 `test/support/chat_fixtures.dart` 의 `handMadeFixtures`(경로 → 확인 번호)에 적혀 있다. 실제 응답으로 녹화하면 키 · 계정 id 를 지우고 표에서 뺀다.
+
+- `anthropic/models_page1.json` · `models_page2.json` (A1)
+- `openai/models.json` (O4)
+- `openai/error_insufficient_quota.json` · `error_rate_limit.json` · `error_invalid_key.json` · `error_model_not_found.json` · `error_image.json` (O6)
+- `openai/stream_text.sse` · `stream_tool_call.sse` · `stream_reasoning_tool.sse` · `stream_incomplete.sse` · `stream_refusal.sse` (O7, 첫 줄 주석)
+
+### 막힌 것 · 남긴 것
+
+- 막힌 것: 위 확인 전부와 기기 확인(실제 Claude · GPT 키). Grok(⑤)은 아직.
+- 리뷰에서 미룬 작은 것: 벤더 값 `supportsTools: true` 가 OpenAI 도구 미지원 표를 건너뜀 테스트 · 동률 정렬 테스트 · 정규식 미리 컴파일 · `fastModeSpecs` 가 확인되면 채워졌는지 묶는 가드 테스트 · 이미지 거절 400 에서 이미 글이 흘러간 뒤에는 다시 보내지 않음 · 떨어진 사진을 "사진 못 봄" 결과로 알리기 · 모델 칩의 목록 받는 중 "목록을 받지 못했어요"가 잠깐 보일 수 있음 · `modelReplaced` 알림이 스낵바와 말풍선에 두 번 · 칩 아이콘 크기 · `ModelChipData` 를 위젯 파일 밖으로.
+- 진행 이벤트(생각 · 노트 · 도구 열림)는 `6ad2fb71` 에서 두 어댑터가 내기 시작했다(core P1 의 "정의만"을 넘어섬).
