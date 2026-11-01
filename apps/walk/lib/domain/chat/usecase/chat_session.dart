@@ -191,8 +191,10 @@ class ChatSession {
     final start = _messages.length;
     final imagesAtStart = _imagesSent;
     var completed = false;
+    // 이 질문이 쓴 키. 키 상태 기록 직전 저장된 키와 비교만 한다(어디에도 싣지 않음).
+    String? requestKey;
     try {
-      final apiKey = await _settings.apiKey();
+      final apiKey = requestKey = await _settings.apiKey();
       // 표시보다 stale() 이 먼저 — 지난 질문의 늦은 표시가 다음 질문 기록에 섞이지 않게.
       if (stale()) return;
       if (_trace.enabled) _trace.mark(ChatTraceMark.key);
@@ -289,7 +291,7 @@ class ChatSession {
           case StopKind.endTurn || StopKind.maxTokens || StopKind.other:
             completed = true;
             _turnDone = true;
-            _recordKeyStatus(ChatKeyStatus.valid);
+            _recordKeyStatus(ChatKeyStatus.valid, apiKey);
             yield ChatEvent.finished(citedEntryIds: List.of(_turnCited));
             return;
         }
@@ -299,7 +301,7 @@ class ChatSession {
       if (!stale()) {
         final failure = _failureOf(e.kind);
         if (failure == ChatFailure.invalidKey) {
-          _recordKeyStatus(ChatKeyStatus.invalid);
+          _recordKeyStatus(ChatKeyStatus.invalid, requestKey);
         }
         yield ChatEvent.failed(failure);
       }
@@ -346,10 +348,15 @@ class ChatSession {
   }
 
   /// 키 상태를 남긴다(§7.3). 기다리지 않고, 실패해도 답에 영향을 주지 않는다.
-  /// stale 한 질문은 부르지 않는다(부르는 쪽이 확인).
-  void _recordKeyStatus(ChatKeyStatus status) {
+  /// stale 한 질문은 부르지 않는다(부르는 쪽이 확인). 질문 동안 키를 바꾸거나
+  /// 끊었으면([usedKey] 와 지금 저장된 키가 다르면) 지난 키의 판정을 남기지 않는다.
+  void _recordKeyStatus(ChatKeyStatus status, String? usedKey) {
+    if (usedKey == null) return;
     unawaited(
-      Future.sync(() => _settings.setKeyStatus(status)).catchError((Object _) {}),
+      Future.sync(() async {
+        if (await _settings.apiKey() != usedKey) return;
+        await _settings.setKeyStatus(status);
+      }).catchError((Object _) {}),
     );
   }
 

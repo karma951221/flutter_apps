@@ -95,12 +95,11 @@ class AnthropicChatModel implements ChatModel {
   }
 
   Future<ModelListResult> _list(String apiKey, Future<void> abort) async {
-    final request =
-        http.AbortableRequest('GET', _modelsEndpoint, abortTrigger: abort)
-          ..headers.addAll({
-            'x-api-key': apiKey,
-            'anthropic-version': _apiVersion,
-          });
+    final request = http.AbortableRequest(
+      'GET',
+      _modelsEndpoint,
+      abortTrigger: abort,
+    )..headers.addAll({'x-api-key': apiKey, 'anthropic-version': _apiVersion});
     final response = await _client.send(request);
     final status = response.statusCode;
     if (status < 200 || status >= 300) {
@@ -344,10 +343,15 @@ class AnthropicChatModel implements ChatModel {
       if (!done.isCompleted) done.complete(complete);
     }
 
-    final sub = response.stream.listen(
+    late final StreamSubscription<List<int>> sub;
+    sub = response.stream.listen(
       (chunk) {
         buffer.add(chunk);
-        if (buffer.length > _errorBodyLimit) finish(false);
+        if (buffer.length > _errorBodyLimit) {
+          // 더 받지 않는다 — 넘친 본문은 바로 끊는다.
+          unawaited(sub.cancel().catchError((_) {}));
+          finish(false);
+        }
       },
       onError: (Object _) => finish(false),
       onDone: () => finish(true),

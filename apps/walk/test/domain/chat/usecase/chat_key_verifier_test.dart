@@ -142,6 +142,34 @@ void main() {
       expect(settings.statusWrites, isEmpty);
     });
 
+    test('확인하는 동안 키를 바꾸거나 끊으면 기록하지 않고 null', () async {
+      for (final change in ['바꿈', '끊음']) {
+        settings
+          ..key = 'sk-ant-stored'
+          ..status = ChatKeyStatus.unverified
+          ..statusWrites.clear();
+        final gate = Completer<ModelListResult>();
+        final model = _ListModel(() => gate.future);
+        final pending = ChatKeyVerifier(model, settings).recheckIfUnverified();
+        await pumpEventQueue();
+        expect(model.keys, ['sk-ant-stored']);
+
+        if (change == '바꿈') {
+          await settings.connect(
+            ChatVendor.anthropic,
+            'sk-ant-other',
+            ChatKeyStatus.unverified,
+          );
+        } else {
+          await settings.disconnect();
+        }
+        gate.complete(const ModelListResult.invalidKey());
+
+        expect(await pending, isNull, reason: change);
+        expect(settings.statusWrites, isEmpty, reason: change);
+      }
+    });
+
     test('동시에 두 번 불러도 모델은 한 번', () async {
       final gate = Completer<ModelListResult>();
       final model = _ListModel(() => gate.future);

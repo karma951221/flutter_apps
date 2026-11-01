@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -1045,6 +1046,67 @@ void main() {
       expect(done, isFalse);
     });
 
+    test('오류 본문을 받는 중에 취소하면 abortTrigger 가 끝나고 그 뒤 아무것도 내지 않는다', () async {
+      for (final status in [400, 500]) {
+        final bytes = StreamController<List<int>>();
+        addTearDown(bytes.close);
+        final client = _HangingClient();
+        final events = <Object>[];
+        var done = false;
+        final sub = AnthropicChatModel(client, const NoopChatTrace())
+            .stream(request())
+            .listen(events.add, onError: events.add, onDone: () => done = true);
+        await pumpEventQueue();
+        client.respond(bytes.stream, status);
+        bytes.add(utf8.encode('{"error":{"type":"billing'));
+        await pumpEventQueue();
+
+        await sub.cancel();
+        expect(
+          await _completedSoon(client.abortTrigger),
+          isTrue,
+          reason: '$status',
+        );
+        bytes.add(utf8.encode('_error"}}'));
+        await pumpEventQueue();
+
+        expect(events, isEmpty, reason: '$status');
+        expect(done, isFalse, reason: '$status');
+      }
+    });
+
+    test('오류 본문이 2초 안에 끝나지 않으면 상태 코드로 판정한다', () {
+      fakeAsync((async) {
+        final bytes = StreamController<List<int>>();
+        final client = MockClient.streaming((r, b) async {
+          await b.drain<void>();
+          return http.StreamedResponse(bytes.stream, 429);
+        });
+        Object? error;
+        AnthropicChatModel(
+          client,
+          const NoopChatTrace(),
+        ).stream(request()).listen((_) {}, onError: (Object e) => error = e);
+        async.flushMicrotasks();
+        bytes.add(
+          utf8.encode('{"error":{"type":"billing_error","message":"m"}}'),
+        );
+        async.elapse(const Duration(milliseconds: 1900));
+        expect(error, isNull);
+        async.elapse(const Duration(milliseconds: 200));
+        expect(
+          error,
+          isA<ChatModelException>().having(
+            (e) => e.kind,
+            'kind',
+            ChatModelErrorKind.rateLimited,
+          ),
+        );
+        bytes.close();
+        async.flushMicrotasks();
+      });
+    });
+
     test('정상 종료면 abortTrigger 는 끝나지 않는다', () async {
       final client = _HangingClient();
       final future = AnthropicChatModel(
@@ -1280,10 +1342,7 @@ void main() {
     });
 
     test('402 는 quotaExceeded', () async {
-      expect(
-        (await errorOf(402, '')).kind,
-        ChatModelErrorKind.quotaExceeded,
-      );
+      expect((await errorOf(402, '')).kind, ChatModelErrorKind.quotaExceeded);
     });
 
     test('not_found_error · 404 는 modelUnavailable', () async {
@@ -1363,14 +1422,8 @@ void main() {
         fail('no exception');
       }
 
-      expect(
-        await kindFor('billing_error'),
-        ChatModelErrorKind.quotaExceeded,
-      );
-      expect(
-        await kindFor('rate_limit_error'),
-        ChatModelErrorKind.rateLimited,
-      );
+      expect(await kindFor('billing_error'), ChatModelErrorKind.quotaExceeded);
+      expect(await kindFor('rate_limit_error'), ChatModelErrorKind.rateLimited);
     });
   });
 }

@@ -11,7 +11,9 @@ import '../chat_vendor.dart';
 ///
 /// 키 기획 ② 는 목록 내용을 버리고 판정만 쓴다. 결과 값은 그대로 돌려줘 ③ 의
 /// 카탈로그가 받아 쓰게 한다.
-@injectable
+///
+/// 싱글턴 — 여러 화면이 동시에 [recheckIfUnverified] 를 불러도 확인은 하나.
+@lazySingleton
 class ChatKeyVerifier {
   ChatKeyVerifier(this._model, this._settings);
 
@@ -35,10 +37,9 @@ class ChatKeyVerifier {
 
   Future<ModelListResult> _list(String key) async {
     try {
-      return await Future.sync(() => _model.listModels(key)).timeout(
-        timeout,
-        onTimeout: () => const ModelListResult.unreachable(),
-      );
+      return await Future.sync(
+        () => _model.listModels(key),
+      ).timeout(timeout, onTimeout: () => const ModelListResult.unreachable());
     } catch (_) {
       return const ModelListResult.unreachable();
     }

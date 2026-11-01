@@ -759,24 +759,21 @@ void main() {
     },
   );
 
-  test(
-    'server 오류는 unknown, 그 밖의 예외도 unknown',
-    () async {
-      final model = _FakeModel([
-        [const ChatModelException(ChatModelErrorKind.server)],
-        [StateError('boom')],
-      ]);
-      final chat = session(model);
+  test('server 오류는 unknown, 그 밖의 예외도 unknown', () async {
+    final model = _FakeModel([
+      [const ChatModelException(ChatModelErrorKind.server)],
+      [StateError('boom')],
+    ]);
+    final chat = session(model);
 
-      for (final q in ['a', 'b']) {
-        expect(
-          (await chat.ask(q).toList()).last,
-          const ChatEvent.failed(ChatFailure.unknown),
-          reason: q,
-        );
-      }
-    },
-  );
+    for (final q in ['a', 'b']) {
+      expect(
+        (await chat.ask(q).toList()).last,
+        const ChatEvent.failed(ChatFailure.unknown),
+        reason: q,
+      );
+    }
+  });
 
   test('오류 종류를 ChatFailure 로 옮긴다', () async {
     final model = _FakeModel([
@@ -873,6 +870,45 @@ void main() {
         ChatKeyStatus.valid,
         ChatKeyStatus.invalid,
       ]);
+    });
+
+    test('질문 동안 키를 바꾸거나 끊으면 기록하지 않는다', () async {
+      for (final change in ['바꿈', '끊음']) {
+        for (final outcome in ['성공', 'invalidKey']) {
+          settings
+            ..key = 'sk-ant-test-key'
+            ..statusWrites.clear();
+          final model = _CompleterModel();
+          final chat = ChatSession(
+            model,
+            tools,
+            settings,
+            clock,
+            usage,
+            ids,
+            const NoopChatTrace(),
+          );
+          final events = chat.ask('질문').toList();
+          await pumpEventQueue();
+
+          if (change == '바꿈') {
+            settings.key = 'sk-ant-other-key';
+          } else {
+            settings.key = null;
+          }
+          if (outcome == '성공') {
+            model.calls[0].complete(_done([_text('답')], StopKind.endTurn));
+          } else {
+            model.calls[0].completeError(
+              const ChatModelException(ChatModelErrorKind.invalidKey),
+            );
+          }
+          await events;
+          await pumpEventQueue();
+
+          expect(settings.statusWrites, isEmpty, reason: '$change · $outcome');
+        }
+      }
     });
 
     test('리셋된 질문은 기록하지 않는다', () async {

@@ -281,7 +281,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i858.ChatImageSource>(
       () => _i957.CompressedChatImageSource(gh<_i870.MediaStore>()),
     );
-    gh.factory<_i5.ChatKeyVerifier>(
+    gh.lazySingleton<_i5.ChatKeyVerifier>(
       () =>
           _i5.ChatKeyVerifier(gh<_i1004.ChatModel>(), gh<_i111.ChatSettings>()),
     );
