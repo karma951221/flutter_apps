@@ -133,7 +133,7 @@
 **다른 화면에서 설정으로 보내던 길**
 
 - 알람 권한 배너(`AlarmListPage.onOpenSettings`) → **알람 설정** 화면을 바로 연다.
-- 물어보기 [설정 열기](`ChatTab.onOpenSettings`) → **물어보기 설정** 화면을 바로 연다.
+- 물어보기 [설정 열기] (`ChatTab.onOpenSettings`) → **물어보기 설정** 화면을 바로 연다.
 - 둘 다 이제 "탭 전환"이 아니라 "화면 push"다. 콜백 이름 · 모양은 builder 판단.
 
 **코드 위치(builder 판단, 제안)** — 기존 섹션 위젯(`DiarySettingsSection`, `ChatSettingsSection`, 걷기 · 알람 · 권한 블록)을
