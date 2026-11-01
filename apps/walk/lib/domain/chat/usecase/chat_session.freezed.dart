@@ -27,10 +27,6 @@ bool operator ==(Object other) {
 @override
 int get hashCode => runtimeType.hashCode;
 
-@override
-String toString() {
-  return 'ChatEvent()';
-}
 
 
 }
@@ -55,12 +51,16 @@ extension ChatEventPatterns on ChatEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ChatText value)?  text,TResult Function( ChatToolStarted value)?  toolStarted,TResult Function( ChatFinished value)?  finished,TResult Function( ChatFailed value)?  failed,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ChatPhaseChanged value)?  phase,TResult Function( ChatProgressNote value)?  progress,TResult Function( ChatToolStarted value)?  toolStarted,TResult Function( ChatToolFinished value)?  toolFinished,TResult Function( ChatRoundStarted value)?  roundStarted,TResult Function( ChatText value)?  text,TResult Function( ChatFinished value)?  finished,TResult Function( ChatFailed value)?  failed,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case ChatText() when text != null:
-return text(_that);case ChatToolStarted() when toolStarted != null:
-return toolStarted(_that);case ChatFinished() when finished != null:
+case ChatPhaseChanged() when phase != null:
+return phase(_that);case ChatProgressNote() when progress != null:
+return progress(_that);case ChatToolStarted() when toolStarted != null:
+return toolStarted(_that);case ChatToolFinished() when toolFinished != null:
+return toolFinished(_that);case ChatRoundStarted() when roundStarted != null:
+return roundStarted(_that);case ChatText() when text != null:
+return text(_that);case ChatFinished() when finished != null:
 return finished(_that);case ChatFailed() when failed != null:
 return failed(_that);case _:
   return orElse();
@@ -80,12 +80,16 @@ return failed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ChatText value)  text,required TResult Function( ChatToolStarted value)  toolStarted,required TResult Function( ChatFinished value)  finished,required TResult Function( ChatFailed value)  failed,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ChatPhaseChanged value)  phase,required TResult Function( ChatProgressNote value)  progress,required TResult Function( ChatToolStarted value)  toolStarted,required TResult Function( ChatToolFinished value)  toolFinished,required TResult Function( ChatRoundStarted value)  roundStarted,required TResult Function( ChatText value)  text,required TResult Function( ChatFinished value)  finished,required TResult Function( ChatFailed value)  failed,}){
 final _that = this;
 switch (_that) {
-case ChatText():
-return text(_that);case ChatToolStarted():
-return toolStarted(_that);case ChatFinished():
+case ChatPhaseChanged():
+return phase(_that);case ChatProgressNote():
+return progress(_that);case ChatToolStarted():
+return toolStarted(_that);case ChatToolFinished():
+return toolFinished(_that);case ChatRoundStarted():
+return roundStarted(_that);case ChatText():
+return text(_that);case ChatFinished():
 return finished(_that);case ChatFailed():
 return failed(_that);}
 }
@@ -101,12 +105,16 @@ return failed(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ChatText value)?  text,TResult? Function( ChatToolStarted value)?  toolStarted,TResult? Function( ChatFinished value)?  finished,TResult? Function( ChatFailed value)?  failed,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ChatPhaseChanged value)?  phase,TResult? Function( ChatProgressNote value)?  progress,TResult? Function( ChatToolStarted value)?  toolStarted,TResult? Function( ChatToolFinished value)?  toolFinished,TResult? Function( ChatRoundStarted value)?  roundStarted,TResult? Function( ChatText value)?  text,TResult? Function( ChatFinished value)?  finished,TResult? Function( ChatFailed value)?  failed,}){
 final _that = this;
 switch (_that) {
-case ChatText() when text != null:
-return text(_that);case ChatToolStarted() when toolStarted != null:
-return toolStarted(_that);case ChatFinished() when finished != null:
+case ChatPhaseChanged() when phase != null:
+return phase(_that);case ChatProgressNote() when progress != null:
+return progress(_that);case ChatToolStarted() when toolStarted != null:
+return toolStarted(_that);case ChatToolFinished() when toolFinished != null:
+return toolFinished(_that);case ChatRoundStarted() when roundStarted != null:
+return roundStarted(_that);case ChatText() when text != null:
+return text(_that);case ChatFinished() when finished != null:
 return finished(_that);case ChatFailed() when failed != null:
 return failed(_that);case _:
   return null;
@@ -125,11 +133,15 @@ return failed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String delta)?  text,TResult Function( String toolName)?  toolStarted,TResult Function( List<String> citedEntryIds)?  finished,TResult Function( ChatFailure failure)?  failed,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( ChatPhase phase)?  phase,TResult Function( String note)?  progress,TResult Function( String callId,  String name,  ToolInputSummary? input)?  toolStarted,TResult Function( String callId,  String name,  ToolSummary summary)?  toolFinished,TResult Function( int round)?  roundStarted,TResult Function( String delta)?  text,TResult Function( List<String> citedEntryIds)?  finished,TResult Function( ChatFailure failure)?  failed,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case ChatText() when text != null:
-return text(_that.delta);case ChatToolStarted() when toolStarted != null:
-return toolStarted(_that.toolName);case ChatFinished() when finished != null:
+case ChatPhaseChanged() when phase != null:
+return phase(_that.phase);case ChatProgressNote() when progress != null:
+return progress(_that.note);case ChatToolStarted() when toolStarted != null:
+return toolStarted(_that.callId,_that.name,_that.input);case ChatToolFinished() when toolFinished != null:
+return toolFinished(_that.callId,_that.name,_that.summary);case ChatRoundStarted() when roundStarted != null:
+return roundStarted(_that.round);case ChatText() when text != null:
+return text(_that.delta);case ChatFinished() when finished != null:
 return finished(_that.citedEntryIds);case ChatFailed() when failed != null:
 return failed(_that.failure);case _:
   return orElse();
@@ -149,11 +161,15 @@ return failed(_that.failure);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String delta)  text,required TResult Function( String toolName)  toolStarted,required TResult Function( List<String> citedEntryIds)  finished,required TResult Function( ChatFailure failure)  failed,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( ChatPhase phase)  phase,required TResult Function( String note)  progress,required TResult Function( String callId,  String name,  ToolInputSummary? input)  toolStarted,required TResult Function( String callId,  String name,  ToolSummary summary)  toolFinished,required TResult Function( int round)  roundStarted,required TResult Function( String delta)  text,required TResult Function( List<String> citedEntryIds)  finished,required TResult Function( ChatFailure failure)  failed,}) {final _that = this;
 switch (_that) {
-case ChatText():
-return text(_that.delta);case ChatToolStarted():
-return toolStarted(_that.toolName);case ChatFinished():
+case ChatPhaseChanged():
+return phase(_that.phase);case ChatProgressNote():
+return progress(_that.note);case ChatToolStarted():
+return toolStarted(_that.callId,_that.name,_that.input);case ChatToolFinished():
+return toolFinished(_that.callId,_that.name,_that.summary);case ChatRoundStarted():
+return roundStarted(_that.round);case ChatText():
+return text(_that.delta);case ChatFinished():
 return finished(_that.citedEntryIds);case ChatFailed():
 return failed(_that.failure);}
 }
@@ -169,11 +185,15 @@ return failed(_that.failure);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String delta)?  text,TResult? Function( String toolName)?  toolStarted,TResult? Function( List<String> citedEntryIds)?  finished,TResult? Function( ChatFailure failure)?  failed,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( ChatPhase phase)?  phase,TResult? Function( String note)?  progress,TResult? Function( String callId,  String name,  ToolInputSummary? input)?  toolStarted,TResult? Function( String callId,  String name,  ToolSummary summary)?  toolFinished,TResult? Function( int round)?  roundStarted,TResult? Function( String delta)?  text,TResult? Function( List<String> citedEntryIds)?  finished,TResult? Function( ChatFailure failure)?  failed,}) {final _that = this;
 switch (_that) {
-case ChatText() when text != null:
-return text(_that.delta);case ChatToolStarted() when toolStarted != null:
-return toolStarted(_that.toolName);case ChatFinished() when finished != null:
+case ChatPhaseChanged() when phase != null:
+return phase(_that.phase);case ChatProgressNote() when progress != null:
+return progress(_that.note);case ChatToolStarted() when toolStarted != null:
+return toolStarted(_that.callId,_that.name,_that.input);case ChatToolFinished() when toolFinished != null:
+return toolFinished(_that.callId,_that.name,_that.summary);case ChatRoundStarted() when roundStarted != null:
+return roundStarted(_that.round);case ChatText() when text != null:
+return text(_that.delta);case ChatFinished() when finished != null:
 return finished(_that.citedEntryIds);case ChatFailed() when failed != null:
 return failed(_that.failure);case _:
   return null;
@@ -186,8 +206,347 @@ return failed(_that.failure);case _:
 /// @nodoc
 
 
-class ChatText implements ChatEvent {
-  const ChatText(this.delta);
+class ChatPhaseChanged extends ChatEvent {
+  const ChatPhaseChanged(this.phase): super._();
+  
+
+ final  ChatPhase phase;
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatPhaseChangedCopyWith<ChatPhaseChanged> get copyWith => _$ChatPhaseChangedCopyWithImpl<ChatPhaseChanged>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatPhaseChanged&&(identical(other.phase, phase) || other.phase == phase));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,phase);
+
+
+
+}
+
+/// @nodoc
+abstract mixin class $ChatPhaseChangedCopyWith<$Res> implements $ChatEventCopyWith<$Res> {
+  factory $ChatPhaseChangedCopyWith(ChatPhaseChanged value, $Res Function(ChatPhaseChanged) _then) = _$ChatPhaseChangedCopyWithImpl;
+@useResult
+$Res call({
+ ChatPhase phase
+});
+
+
+
+
+}
+/// @nodoc
+class _$ChatPhaseChangedCopyWithImpl<$Res>
+    implements $ChatPhaseChangedCopyWith<$Res> {
+  _$ChatPhaseChangedCopyWithImpl(this._self, this._then);
+
+  final ChatPhaseChanged _self;
+  final $Res Function(ChatPhaseChanged) _then;
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? phase = null,}) {
+  return _then(ChatPhaseChanged(
+null == phase ? _self.phase : phase // ignore: cast_nullable_to_non_nullable
+as ChatPhase,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ChatProgressNote extends ChatEvent {
+  const ChatProgressNote(this.note): super._();
+  
+
+ final  String note;
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatProgressNoteCopyWith<ChatProgressNote> get copyWith => _$ChatProgressNoteCopyWithImpl<ChatProgressNote>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatProgressNote&&(identical(other.note, note) || other.note == note));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,note);
+
+
+
+}
+
+/// @nodoc
+abstract mixin class $ChatProgressNoteCopyWith<$Res> implements $ChatEventCopyWith<$Res> {
+  factory $ChatProgressNoteCopyWith(ChatProgressNote value, $Res Function(ChatProgressNote) _then) = _$ChatProgressNoteCopyWithImpl;
+@useResult
+$Res call({
+ String note
+});
+
+
+
+
+}
+/// @nodoc
+class _$ChatProgressNoteCopyWithImpl<$Res>
+    implements $ChatProgressNoteCopyWith<$Res> {
+  _$ChatProgressNoteCopyWithImpl(this._self, this._then);
+
+  final ChatProgressNote _self;
+  final $Res Function(ChatProgressNote) _then;
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? note = null,}) {
+  return _then(ChatProgressNote(
+null == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ChatToolStarted extends ChatEvent {
+  const ChatToolStarted({required this.callId, required this.name, this.input}): super._();
+  
+
+ final  String callId;
+ final  String name;
+ final  ToolInputSummary? input;
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatToolStartedCopyWith<ChatToolStarted> get copyWith => _$ChatToolStartedCopyWithImpl<ChatToolStarted>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatToolStarted&&(identical(other.callId, callId) || other.callId == callId)&&(identical(other.name, name) || other.name == name)&&(identical(other.input, input) || other.input == input));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,callId,name,input);
+
+
+
+}
+
+/// @nodoc
+abstract mixin class $ChatToolStartedCopyWith<$Res> implements $ChatEventCopyWith<$Res> {
+  factory $ChatToolStartedCopyWith(ChatToolStarted value, $Res Function(ChatToolStarted) _then) = _$ChatToolStartedCopyWithImpl;
+@useResult
+$Res call({
+ String callId, String name, ToolInputSummary? input
+});
+
+
+$ToolInputSummaryCopyWith<$Res>? get input;
+
+}
+/// @nodoc
+class _$ChatToolStartedCopyWithImpl<$Res>
+    implements $ChatToolStartedCopyWith<$Res> {
+  _$ChatToolStartedCopyWithImpl(this._self, this._then);
+
+  final ChatToolStarted _self;
+  final $Res Function(ChatToolStarted) _then;
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? callId = null,Object? name = null,Object? input = freezed,}) {
+  return _then(ChatToolStarted(
+callId: null == callId ? _self.callId : callId // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,input: freezed == input ? _self.input : input // ignore: cast_nullable_to_non_nullable
+as ToolInputSummary?,
+  ));
+}
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ToolInputSummaryCopyWith<$Res>? get input {
+    if (_self.input == null) {
+    return null;
+  }
+
+  return $ToolInputSummaryCopyWith<$Res>(_self.input!, (value) {
+    return _then(_self.copyWith(input: value));
+  });
+}
+}
+
+/// @nodoc
+
+
+class ChatToolFinished extends ChatEvent {
+  const ChatToolFinished({required this.callId, required this.name, required this.summary}): super._();
+  
+
+ final  String callId;
+ final  String name;
+ final  ToolSummary summary;
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatToolFinishedCopyWith<ChatToolFinished> get copyWith => _$ChatToolFinishedCopyWithImpl<ChatToolFinished>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatToolFinished&&(identical(other.callId, callId) || other.callId == callId)&&(identical(other.name, name) || other.name == name)&&(identical(other.summary, summary) || other.summary == summary));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,callId,name,summary);
+
+
+
+}
+
+/// @nodoc
+abstract mixin class $ChatToolFinishedCopyWith<$Res> implements $ChatEventCopyWith<$Res> {
+  factory $ChatToolFinishedCopyWith(ChatToolFinished value, $Res Function(ChatToolFinished) _then) = _$ChatToolFinishedCopyWithImpl;
+@useResult
+$Res call({
+ String callId, String name, ToolSummary summary
+});
+
+
+$ToolSummaryCopyWith<$Res> get summary;
+
+}
+/// @nodoc
+class _$ChatToolFinishedCopyWithImpl<$Res>
+    implements $ChatToolFinishedCopyWith<$Res> {
+  _$ChatToolFinishedCopyWithImpl(this._self, this._then);
+
+  final ChatToolFinished _self;
+  final $Res Function(ChatToolFinished) _then;
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? callId = null,Object? name = null,Object? summary = null,}) {
+  return _then(ChatToolFinished(
+callId: null == callId ? _self.callId : callId // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,summary: null == summary ? _self.summary : summary // ignore: cast_nullable_to_non_nullable
+as ToolSummary,
+  ));
+}
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ToolSummaryCopyWith<$Res> get summary {
+  
+  return $ToolSummaryCopyWith<$Res>(_self.summary, (value) {
+    return _then(_self.copyWith(summary: value));
+  });
+}
+}
+
+/// @nodoc
+
+
+class ChatRoundStarted extends ChatEvent {
+  const ChatRoundStarted(this.round): super._();
+  
+
+ final  int round;
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatRoundStartedCopyWith<ChatRoundStarted> get copyWith => _$ChatRoundStartedCopyWithImpl<ChatRoundStarted>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatRoundStarted&&(identical(other.round, round) || other.round == round));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,round);
+
+
+
+}
+
+/// @nodoc
+abstract mixin class $ChatRoundStartedCopyWith<$Res> implements $ChatEventCopyWith<$Res> {
+  factory $ChatRoundStartedCopyWith(ChatRoundStarted value, $Res Function(ChatRoundStarted) _then) = _$ChatRoundStartedCopyWithImpl;
+@useResult
+$Res call({
+ int round
+});
+
+
+
+
+}
+/// @nodoc
+class _$ChatRoundStartedCopyWithImpl<$Res>
+    implements $ChatRoundStartedCopyWith<$Res> {
+  _$ChatRoundStartedCopyWithImpl(this._self, this._then);
+
+  final ChatRoundStarted _self;
+  final $Res Function(ChatRoundStarted) _then;
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? round = null,}) {
+  return _then(ChatRoundStarted(
+null == round ? _self.round : round // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ChatText extends ChatEvent {
+  const ChatText(this.delta): super._();
   
 
  final  String delta;
@@ -209,10 +568,6 @@ bool operator ==(Object other) {
 @override
 int get hashCode => Object.hash(runtimeType,delta);
 
-@override
-String toString() {
-  return 'ChatEvent.text(delta: $delta)';
-}
 
 
 }
@@ -252,74 +607,8 @@ as String,
 /// @nodoc
 
 
-class ChatToolStarted implements ChatEvent {
-  const ChatToolStarted(this.toolName);
-  
-
- final  String toolName;
-
-/// Create a copy of ChatEvent
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$ChatToolStartedCopyWith<ChatToolStarted> get copyWith => _$ChatToolStartedCopyWithImpl<ChatToolStarted>(this, _$identity);
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatToolStarted&&(identical(other.toolName, toolName) || other.toolName == toolName));
-}
-
-
-@override
-int get hashCode => Object.hash(runtimeType,toolName);
-
-@override
-String toString() {
-  return 'ChatEvent.toolStarted(toolName: $toolName)';
-}
-
-
-}
-
-/// @nodoc
-abstract mixin class $ChatToolStartedCopyWith<$Res> implements $ChatEventCopyWith<$Res> {
-  factory $ChatToolStartedCopyWith(ChatToolStarted value, $Res Function(ChatToolStarted) _then) = _$ChatToolStartedCopyWithImpl;
-@useResult
-$Res call({
- String toolName
-});
-
-
-
-
-}
-/// @nodoc
-class _$ChatToolStartedCopyWithImpl<$Res>
-    implements $ChatToolStartedCopyWith<$Res> {
-  _$ChatToolStartedCopyWithImpl(this._self, this._then);
-
-  final ChatToolStarted _self;
-  final $Res Function(ChatToolStarted) _then;
-
-/// Create a copy of ChatEvent
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? toolName = null,}) {
-  return _then(ChatToolStarted(
-null == toolName ? _self.toolName : toolName // ignore: cast_nullable_to_non_nullable
-as String,
-  ));
-}
-
-
-}
-
-/// @nodoc
-
-
-class ChatFinished implements ChatEvent {
-  const ChatFinished({required final  List<String> citedEntryIds}): _citedEntryIds = citedEntryIds;
+class ChatFinished extends ChatEvent {
+  const ChatFinished({required final  List<String> citedEntryIds}): _citedEntryIds = citedEntryIds,super._();
   
 
  final  List<String> _citedEntryIds;
@@ -347,10 +636,6 @@ bool operator ==(Object other) {
 @override
 int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_citedEntryIds));
 
-@override
-String toString() {
-  return 'ChatEvent.finished(citedEntryIds: $citedEntryIds)';
-}
 
 
 }
@@ -390,8 +675,8 @@ as List<String>,
 /// @nodoc
 
 
-class ChatFailed implements ChatEvent {
-  const ChatFailed(this.failure);
+class ChatFailed extends ChatEvent {
+  const ChatFailed(this.failure): super._();
   
 
  final  ChatFailure failure;
@@ -413,10 +698,6 @@ bool operator ==(Object other) {
 @override
 int get hashCode => Object.hash(runtimeType,failure);
 
-@override
-String toString() {
-  return 'ChatEvent.failed(failure: $failure)';
-}
 
 
 }

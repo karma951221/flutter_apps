@@ -12,6 +12,7 @@ import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/entity/conversation.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
 import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
+import 'package:walk/domain/chat/tool/tool_summary.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/domain/chat/usecase/open_conversation.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
@@ -259,7 +260,7 @@ void main() {
       const ChatBubble(role: ChatRole.user, text: '어제 뭐 했어?'),
     );
 
-    events.add(const ChatEvent.toolStarted('search_diary'));
+    events.add(const ChatEvent.toolStarted(callId: 't1', name: 'search_diary'));
     await pumpEventQueue();
     expect(cubit.state.activeTool, 'search_diary');
 
@@ -278,6 +279,36 @@ void main() {
     expect(cubit.state.busy, isFalse);
     expect(cubit.state.bubbles, hasLength(2));
   });
+
+  test(
+    '진행 이벤트(phase · progress · toolFinished · roundStarted)는 아직 상태를 바꾸지 않는다',
+    () async {
+      final events = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => events.stream);
+      await cubit.refresh();
+
+      final sent = cubit.send('질문');
+      await pumpEventQueue();
+      final before = cubit.state;
+      events
+        ..add(const ChatEvent.phase(ChatPhase.thinking))
+        ..add(const ChatEvent.progress('볼게요'))
+        ..add(
+          const ChatEvent.toolFinished(
+            callId: 't1',
+            name: 'search_diary',
+            summary: ToolSummary(kind: ChatToolKind.searchDiary, count: 3),
+          ),
+        )
+        ..add(const ChatEvent.roundStarted(2));
+      await pumpEventQueue();
+      expect(cubit.state, before);
+
+      events.add(const ChatEvent.finished(citedEntryIds: []));
+      await events.close();
+      await sent;
+    },
+  );
 
   test('빈 질문이나 답하는 중의 질문은 무시한다', () async {
     final events = StreamController<ChatEvent>();
@@ -341,7 +372,7 @@ void main() {
     await cubit.refresh();
     final sent = cubit.send('질문');
     events
-      ..add(const ChatEvent.toolStarted('search_diary'))
+      ..add(const ChatEvent.toolStarted(callId: 't1', name: 'search_diary'))
       ..add(const ChatEvent.text('답하는 중'));
     await pumpEventQueue();
 
@@ -428,7 +459,7 @@ void main() {
 
     final phases = <String, List<ChatEvent>>{
       '보내는 중': const [],
-      '도구 중': const [ChatEvent.toolStarted('search_diary')],
+      '도구 중': const [ChatEvent.toolStarted(callId: 't1', name: 'search_diary')],
       '글 쓰는 중': const [ChatEvent.text('반쯤')],
     };
     for (final MapEntry(key: name, value: phase) in phases.entries) {
@@ -523,7 +554,9 @@ void main() {
 
     test('글이 없으면 말풍선 둘이 사라지고 restoredDraft 가 질문이다', () async {
       when(() => session.stop()).thenReturn(const ChatStopResult.dropped());
-      await start(const [ChatEvent.toolStarted('search_diary')]);
+      await start(const [
+        ChatEvent.toolStarted(callId: 't1', name: 'search_diary'),
+      ]);
 
       cubit.stop();
 
@@ -675,7 +708,9 @@ void main() {
       when(() => session.ask(any())).thenAnswer((_) => events.stream);
       final sent = traced.send('질문');
 
-      events.add(const ChatEvent.toolStarted('search_diary'));
+      events.add(
+        const ChatEvent.toolStarted(callId: 't1', name: 'search_diary'),
+      );
       await pumpEventQueue();
       expect(trace.labels, ['begin', ChatTraceMark.send]);
       pumpFrame();

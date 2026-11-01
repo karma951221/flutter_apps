@@ -14,6 +14,7 @@ import '../chat_vendor.dart';
 import '../entity/conversation.dart';
 import '../tool/life_tools.dart';
 import '../tool/tool_result.dart';
+import '../tool/tool_summary.dart';
 import 'chat_model_choice.dart';
 
 part 'chat_session.freezed.dart';
@@ -37,13 +38,53 @@ enum ChatFailure {
   unknown,
 }
 
+/// 진행 줄의 단계. 도구 단계는 toolStarted 로 알린다.
+enum ChatPhase { sending, thinking, writing }
+
 @freezed
 sealed class ChatEvent with _$ChatEvent {
+  const ChatEvent._();
+
+  const factory ChatEvent.phase(ChatPhase phase) = ChatPhaseChanged;
+
+  /// 모델의 진행 노트(누적 글 — 바꿔 끼운다). 0번이 정상.
+  const factory ChatEvent.progress(String note) = ChatProgressNote;
+
+  /// 도구 블록이 열림([input] null) → 입력 완성([input] 있음). 같은 [callId] 로 두 번 올 수 있다.
+  const factory ChatEvent.toolStarted({
+    required String callId,
+    required String name,
+    ToolInputSummary? input,
+  }) = ChatToolStarted;
+  const factory ChatEvent.toolFinished({
+    required String callId,
+    required String name,
+    required ToolSummary summary,
+  }) = ChatToolFinished;
+
+  /// 2라운드부터. 1라운드는 phase(sending) 가 시작이다.
+  const factory ChatEvent.roundStarted(int round) = ChatRoundStarted;
   const factory ChatEvent.text(String delta) = ChatText;
-  const factory ChatEvent.toolStarted(String toolName) = ChatToolStarted;
   const factory ChatEvent.finished({required List<String> citedEntryIds}) =
       ChatFinished;
   const factory ChatEvent.failed(ChatFailure failure) = ChatFailed;
+
+  /// 진행 노트는 글 길이만 — 모델이 쓴 노트를 로그에 남기지 않는다.
+  /// toolStarted 는 [ToolInputSummary.toString] 이라 검색어가 없다.
+  @override
+  String toString() => switch (this) {
+    ChatPhaseChanged(:final phase) => 'ChatEvent.phase($phase)',
+    ChatProgressNote(:final note) => 'ChatEvent.progress(${note.length} chars)',
+    ChatToolStarted(:final callId, :final name, :final input) =>
+      'ChatEvent.toolStarted(callId: $callId, name: $name, input: $input)',
+    ChatToolFinished(:final callId, :final name, :final summary) =>
+      'ChatEvent.toolFinished(callId: $callId, name: $name, summary: $summary)',
+    ChatRoundStarted(:final round) => 'ChatEvent.roundStarted($round)',
+    ChatText(:final delta) => 'ChatEvent.text(delta: $delta)',
+    ChatFinished(:final citedEntryIds) =>
+      'ChatEvent.finished(citedEntryIds: $citedEntryIds)',
+    ChatFailed(:final failure) => 'ChatEvent.failed($failure)',
+  };
 }
 
 /// [ChatSession.stop] 의 결과. toString 에 받은 글을 남기지 않는다.
@@ -307,6 +348,9 @@ class ChatSession {
     String? requestKey;
     // 요청을 보낸 벤더 · 모델. 오류 처리(modelUnavailable)가 쓴다.
     ChatTarget? requestTarget;
+    // 지금 진행 단계. thinking 이 연달아 와도 한 번만 알린다.
+    ChatPhase? phase = ChatPhase.sending;
+    yield const ChatEvent.phase(ChatPhase.sending);
     try {
       final apiKey = requestKey = await _settings.apiKey();
       // 표시보다 stale() 이 먼저 — 지난 질문의 늦은 표시가 다음 질문 기록에 섞이지 않게.
@@ -333,6 +377,12 @@ class ChatSession {
 
       for (var round = 1; round <= maxRounds; round++) {
         ModelCompleted? done;
+        if (round >= 2) {
+          phase = null;
+          yield ChatEvent.roundStarted(round);
+        }
+        // 이 라운드에 아직 글이 없다 — 첫 조각 앞에 경계 줄바꿈을 넣을지 본다.
+        var firstText = true;
         // 이미지 거절이면 같은 라운드를 사진 없이 한 번만 다시 보낸다.
         while (true) {
           final request = ModelRequest(
@@ -359,8 +409,18 @@ class ChatSession {
               if (stale()) return;
               switch (event) {
                 case ModelTextDelta(:final text):
-                  _turnText.write(text);
-                  yield ChatEvent.text(text);
+                  if (phase != ChatPhase.writing) {
+                    phase = ChatPhase.writing;
+                    yield const ChatEvent.phase(ChatPhase.writing);
+                  }
+                  // 라운드 경계: 이 질문에 이미 글이 있으면 새 라운드 첫 조각 앞에
+                  // 줄바꿈 하나 — 흘린 글과 _turnText 가 같은 문자열이 되게 여기서 넣는다.
+                  final delta = firstText && _turnText.isNotEmpty
+                      ? '\n$text'
+                      : text;
+                  firstText = false;
+                  _turnText.write(delta);
+                  yield ChatEvent.text(delta);
                 case ModelCompleted():
                   done = event;
                   // 받는 즉시 남긴다 — 청구된 라운드는 HTTP 가 닫히기 전에 멈추거나
@@ -372,11 +432,23 @@ class ChatSession {
                     request,
                     event.usage,
                   );
-                case ModelThinking() ||
-                    ModelProgress() ||
-                    ModelToolCallStarted() ||
-                    ModelToolCallReady():
-                  break;
+                case ModelThinking():
+                  if (phase != ChatPhase.thinking) {
+                    phase = ChatPhase.thinking;
+                    yield const ChatEvent.phase(ChatPhase.thinking);
+                  }
+                case ModelProgress(:final text):
+                  yield ChatEvent.progress(text);
+                case ModelToolCallStarted(:final id, :final name):
+                  phase = null;
+                  yield ChatEvent.toolStarted(callId: id, name: name);
+                case ModelToolCallReady(:final id, :final name, :final input):
+                  phase = null;
+                  yield ChatEvent.toolStarted(
+                    callId: id,
+                    name: name,
+                    input: _tools.inputSummary(name, input),
+                  );
               }
             }
           } on ChatModelException catch (e) {
@@ -406,34 +478,56 @@ class ChatSession {
 
         switch (done.stop) {
           case StopKind.toolUse:
-            final results = <ToolResultPart>[];
-            for (final part in done.message.parts) {
-              if (part is! ToolCallPart) continue;
-              yield ChatEvent.toolStarted(part.name);
-              if (_trace.enabled) {
-                _trace.mark(ChatTraceMark.toolStart, {'tool': part.name});
+            // 도구는 모두 바로 시작하고(병렬), 끝나는 대로 toolFinished 를 낸다.
+            // 기록 · 사진 한도 · 인용 정리는 호출 순서로 한 번에(R7).
+            final calls = [
+              for (final p in done.message.parts)
+                if (p case ToolCallPart c) c,
+            ];
+            if (_trace.enabled) {
+              for (final c in calls) {
+                _trace.mark(ChatTraceMark.toolStart, {'tool': c.name});
               }
-              final result = await _tools.run(part.name, part.input);
+            }
+            final futures = [
+              for (final c in calls) _tools.run(c.name, c.input),
+            ];
+            final results = List<ToolResult?>.filled(calls.length, null);
+            await for (final (i, result) in _inCompletionOrder(futures)) {
               if (stale()) return;
+              results[i] = result;
+              final call = calls[i];
               if (_trace.enabled) {
                 // 개수만 — 결과 본문 · 입력값은 찍지 않는다.
                 _trace.mark(ChatTraceMark.toolEnd, {
-                  'tool': part.name,
+                  'tool': call.name,
                   'n': result.entryIds.length + result.images.length,
                 });
               }
+              yield ChatEvent.toolFinished(
+                callId: call.id,
+                name: call.name,
+                summary:
+                    result.summary ??
+                    ToolSummary(kind: chatToolKindOf(call.name), count: 0),
+              );
+            }
+            if (stale()) return;
+            final parts = <ToolResultPart>[];
+            for (var i = 0; i < calls.length; i++) {
+              final result = results[i]!;
               _turnCited.addAll(result.entryIds);
               final capped = _capped(result, images: images);
-              results.add(
+              parts.add(
                 ToolResultPart(
-                  callId: part.id,
+                  callId: calls[i].id,
                   json: capped.json,
                   isError: capped.isError,
                   images: capped.images,
                 ),
               );
             }
-            _messages.add(ChatMessage.toolResults(results));
+            _messages.add(ChatMessage.toolResults(parts));
           case StopKind.refusal:
             yield const ChatEvent.failed(ChatFailure.refused);
             return;
@@ -474,6 +568,35 @@ class ChatSession {
         }
       }
     }
+  }
+
+  /// [futures] 의 결과를 끝나는 순서대로 (자리, 결과) 로 낸다. 하나가 던지면 그 자리는
+  /// tool_failed 오류 결과 — [LifeTools.run] 이 이미 잡지만 방어로.
+  static Stream<(int, ToolResult)> _inCompletionOrder(
+    List<Future<ToolResult>> futures,
+  ) {
+    final controller = StreamController<(int, ToolResult)>();
+    if (futures.isEmpty) {
+      unawaited(controller.close());
+      return controller.stream;
+    }
+    var left = futures.length;
+    for (final (i, future) in futures.indexed) {
+      future
+          .then(
+            (r) => r,
+            onError: (Object _) => const ToolResult(
+              json: '{"error":"tool_failed"}',
+              isError: true,
+            ),
+          )
+          .then((r) {
+            if (controller.isClosed) return;
+            controller.add((i, r));
+            if (--left == 0) unawaited(controller.close());
+          });
+    }
+    return controller.stream;
   }
 
   /// 라운드 하나의 사용량을 넘긴다. 기다리지 않고, 실패해도 답에 영향을 주지 않는다.

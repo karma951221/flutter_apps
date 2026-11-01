@@ -463,9 +463,15 @@ class ChatCubit extends Cubit<ChatState> {
             _markAfterFrame(ChatTraceMark.firstGlyph);
           }
         }
-      case ChatToolStarted(:final toolName):
-        emit(state.copyWith(activeTool: toolName));
+      case ChatToolStarted(:final name):
+        emit(state.copyWith(activeTool: name));
         if (_trace.enabled) _traceVisible();
+      // 진행 줄은 다음 단계(Task 5)에서 그린다 — 지금은 무시.
+      case ChatPhaseChanged() ||
+          ChatProgressNote() ||
+          ChatToolFinished() ||
+          ChatRoundStarted():
+        break;
       case ChatFinished(:final citedEntryIds):
         _finishing = true;
         final running = _running;

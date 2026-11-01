@@ -14,6 +14,7 @@ import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/entity/conversation.dart';
 import 'package:walk/domain/chat/tool/life_tools.dart';
 import 'package:walk/domain/chat/tool/tool_result.dart';
+import 'package:walk/domain/chat/tool/tool_summary.dart';
 import 'package:walk/domain/chat/chat_model_rules.dart';
 import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
@@ -178,6 +179,11 @@ void main() {
     when(
       () => tools.definitionsFor(images: false),
     ).thenReturn(noImageDefinitions);
+    when(() => tools.inputSummary(any(), any())).thenAnswer(
+      (i) => ToolInputSummary(
+        kind: chatToolKindOf(i.positionalArguments[0] as String),
+      ),
+    );
     settings = FakeChatSettings('sk-ant-test-key');
     usage = FakeChatUsageLog();
     ids = _SeqIds();
@@ -294,7 +300,10 @@ void main() {
         [const ChatModelException(ChatModelErrorKind.network)],
       ]);
       final events = await session(failing).ask('질문').toList();
-      expect(events, const [ChatEvent.failed(ChatFailure.network)]);
+      expect(events, const [
+        ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.failed(ChatFailure.network),
+      ]);
       expect(usage.records, isEmpty);
     });
 
@@ -345,6 +354,8 @@ void main() {
     final events = await session(model).ask('하이').toList();
 
     expect(events, const [
+      ChatEvent.phase(ChatPhase.sending),
+      ChatEvent.phase(ChatPhase.writing),
       ChatEvent.text('안'),
       ChatEvent.text('녕'),
       ChatEvent.finished(citedEntryIds: []),
@@ -364,19 +375,111 @@ void main() {
     expect(identical(request.tools, definitions), isTrue);
   });
 
-  test(
-    '진행 이벤트(thinking · progress · toolCallStarted · toolCallReady)는 ChatEvent 를 만들지 않는다',
-    () async {
+  group('진행 ChatEvent', () {
+    const range = {'from': '2026-10-19', 'to': '2026-10-25'};
+    final rangeSummary = ToolInputSummary(
+      kind: ChatToolKind.searchDiary,
+      from: DateTime(2026, 10, 19),
+      to: DateTime(2026, 10, 25),
+    );
+    const found = ToolResult(
+      json: '{}',
+      summary: ToolSummary(kind: ChatToolKind.searchDiary, count: 5),
+    );
+
+    setUp(() {
+      when(
+        () => tools.inputSummary('search_diary', range),
+      ).thenReturn(rangeSummary);
+      when(
+        () => tools.run('search_diary', any()),
+      ).thenAnswer((_) async => found);
+    });
+
+    List<Object> toolRound({bool note = true}) => [
+      const ModelEvent.thinking(),
+      if (note) const ModelEvent.progress('지난주 일기를 볼게요'),
+      const ModelEvent.toolCallStarted(id: 't1', name: 'search_diary'),
+      const ModelEvent.toolCallReady(
+        id: 't1',
+        name: 'search_diary',
+        input: range,
+      ),
+      _done([_toolUse('t1', 'search_diary', range)], StopKind.toolUse),
+    ];
+
+    test('이벤트 순서', () async {
+      final model = _FakeModel([toolRound(), _answer('지난주에는')]);
+
+      final events = await session(model).ask('지난주').toList();
+
+      expect(events, [
+        const ChatEvent.phase(ChatPhase.sending),
+        const ChatEvent.phase(ChatPhase.thinking),
+        const ChatEvent.progress('지난주 일기를 볼게요'),
+        const ChatEvent.toolStarted(callId: 't1', name: 'search_diary'),
+        ChatEvent.toolStarted(
+          callId: 't1',
+          name: 'search_diary',
+          input: rangeSummary,
+        ),
+        const ChatEvent.toolFinished(
+          callId: 't1',
+          name: 'search_diary',
+          summary: ToolSummary(kind: ChatToolKind.searchDiary, count: 5),
+        ),
+        const ChatEvent.roundStarted(2),
+        const ChatEvent.phase(ChatPhase.writing),
+        const ChatEvent.text('지난주에는'),
+        const ChatEvent.finished(citedEntryIds: []),
+      ]);
+    });
+
+    test('진행 노트가 0개여도 같은 순서에서 progress 만 빠진다', () async {
+      final model = _FakeModel([toolRound(note: false), _answer('지난주에는')]);
+
+      final events = await session(model).ask('지난주').toList();
+
+      expect(events, [
+        const ChatEvent.phase(ChatPhase.sending),
+        const ChatEvent.phase(ChatPhase.thinking),
+        const ChatEvent.toolStarted(callId: 't1', name: 'search_diary'),
+        ChatEvent.toolStarted(
+          callId: 't1',
+          name: 'search_diary',
+          input: rangeSummary,
+        ),
+        const ChatEvent.toolFinished(
+          callId: 't1',
+          name: 'search_diary',
+          summary: ToolSummary(kind: ChatToolKind.searchDiary, count: 5),
+        ),
+        const ChatEvent.roundStarted(2),
+        const ChatEvent.phase(ChatPhase.writing),
+        const ChatEvent.text('지난주에는'),
+        const ChatEvent.finished(citedEntryIds: []),
+      ]);
+    });
+
+    test('결과에 요약이 없으면 toolFinished 는 그 종류의 0개', () async {
+      when(
+        () => tools.run('search_diary', any()),
+      ).thenAnswer((_) async => const ToolResult(json: '{}'));
+      final model = _FakeModel([toolRound(), _answer('네')]);
+
+      final events = await session(model).ask('지난주').toList();
+
+      expect(
+        events.whereType<ChatToolFinished>().single.summary,
+        const ToolSummary(kind: ChatToolKind.searchDiary, count: 0),
+      );
+    });
+
+    test('thinking 이 연달아 와도 phase(thinking) 는 한 번', () async {
       final model = _FakeModel([
         [
           const ModelEvent.thinking(),
-          const ModelEvent.progress('찾는 중'),
-          const ModelEvent.toolCallStarted(id: 't', name: 'search_diary'),
-          const ModelEvent.toolCallReady(
-            id: 't',
-            name: 'search_diary',
-            input: {},
-          ),
+          const ModelEvent.thinking(),
           const ModelEvent.textDelta('네'),
           _done([_text('네')], StopKind.endTurn),
         ],
@@ -385,11 +488,231 @@ void main() {
       final events = await session(model).ask('하이').toList();
 
       expect(events, const [
+        ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.phase(ChatPhase.thinking),
+        ChatEvent.phase(ChatPhase.writing),
         ChatEvent.text('네'),
         ChatEvent.finished(citedEntryIds: []),
       ]);
-    },
-  );
+    });
+
+    test('ChatEvent.progress · toolStarted 의 toString 에 노트 · 검색어가 없다', () {
+      expect(
+        const ChatEvent.progress('비밀 노트').toString(),
+        isNot(contains('비밀')),
+      );
+      expect(
+        const ChatEvent.toolStarted(
+          callId: 't1',
+          name: 'search_diary',
+          input: ToolInputSummary(
+            kind: ChatToolKind.searchDiary,
+            query: '비밀 검색어',
+          ),
+        ).toString(),
+        isNot(contains('비밀')),
+      );
+    });
+  });
+
+  group('도구 병렬', () {
+    List<Object> twoTools() => [
+      _done([_toolUse('t1', 'a'), _toolUse('t2', 'b')], StopKind.toolUse),
+    ];
+
+    test('도구 둘은 동시에 시작한다', () async {
+      final holdA = Completer<ToolResult>();
+      final holdB = Completer<ToolResult>();
+      when(() => tools.run('a', any())).thenAnswer((_) => holdA.future);
+      when(() => tools.run('b', any())).thenAnswer((_) => holdB.future);
+      final model = _FakeModel([twoTools(), _answer('끝')]);
+
+      final done = session(model).ask('질문').toList();
+      await pumpEventQueue();
+
+      verify(() => tools.run('a', any())).called(1);
+      verify(() => tools.run('b', any())).called(1);
+      holdA.complete(const ToolResult(json: '{}'));
+      holdB.complete(const ToolResult(json: '{}'));
+      await done;
+    });
+
+    test('toolFinished 는 끝난 순서, 다음 요청의 ToolResultsMessage 는 호출 순서다', () async {
+      final holdA = Completer<ToolResult>();
+      final holdB = Completer<ToolResult>();
+      when(() => tools.run('a', any())).thenAnswer((_) => holdA.future);
+      when(() => tools.run('b', any())).thenAnswer((_) => holdB.future);
+      final model = _FakeModel([twoTools(), _answer('끝')]);
+
+      final done = session(model).ask('질문').toList();
+      await pumpEventQueue();
+      holdB.complete(const ToolResult(json: '{"b":1}'));
+      await pumpEventQueue();
+      holdA.complete(const ToolResult(json: '{"a":1}'));
+      final events = await done;
+
+      expect(
+        [for (final e in events.whereType<ChatToolFinished>()) e.callId],
+        ['t2', 't1'],
+      );
+      expect(
+        model.requests[1].messages.last,
+        const ChatMessage.toolResults([
+          ToolResultPart(callId: 't1', json: '{"a":1}'),
+          ToolResultPart(callId: 't2', json: '{"b":1}'),
+        ]),
+      );
+    });
+
+    test('사진 한도는 호출 순서로 판정한다', () async {
+      ToolResult photos(int count) => ToolResult(
+        json: '{"photos":$count}',
+        images: [
+          for (var i = 0; i < count; i++)
+            ToolImage(mediaType: 'image/jpeg', bytes: Uint8List.fromList([i])),
+        ],
+      );
+      final holdA = Completer<ToolResult>();
+      final holdB = Completer<ToolResult>();
+      when(
+        () => tools.run('view_entry_photos', {'id': 'p0'}),
+      ).thenAnswer((_) async => photos(10));
+      when(
+        () => tools.run('view_entry_photos', {'id': 'p1'}),
+      ).thenAnswer((_) => holdA.future);
+      when(
+        () => tools.run('view_entry_photos', {'id': 'p2'}),
+      ).thenAnswer((_) => holdB.future);
+      final model = _FakeModel([
+        [
+          _done([
+            _toolUse('t0', 'view_entry_photos', {'id': 'p0'}),
+          ], StopKind.toolUse),
+        ],
+        [
+          _done([
+            _toolUse('t1', 'view_entry_photos', {'id': 'p1'}),
+            _toolUse('t2', 'view_entry_photos', {'id': 'p2'}),
+          ], StopKind.toolUse),
+        ],
+        _answer('끝'),
+      ]);
+
+      final done = session(model).ask('사진').toList();
+      await pumpEventQueue();
+      holdB.complete(photos(2));
+      await pumpEventQueue();
+      holdA.complete(photos(2));
+      await done;
+
+      final [first, second] =
+          (model.requests[2].messages.last as ToolResultsMessage).results;
+      expect(first.callId, 't1');
+      expect(first.images, hasLength(2));
+      expect(first.isError, isFalse);
+      expect(second.callId, 't2');
+      expect(second.images, isEmpty);
+      expect(second.isError, isTrue);
+      expect(second.json, contains('photo_limit_reached'));
+    });
+
+    test('도구 실행 중 stop 하면 늦게 끝난 도구의 toolFinished · 결과가 없다', () async {
+      final holdA = Completer<ToolResult>();
+      when(() => tools.run('a', any())).thenAnswer((_) => holdA.future);
+      when(
+        () => tools.run('b', any()),
+      ).thenAnswer((_) async => const ToolResult(json: '{}'));
+      final model = _FakeModel([twoTools(), _answer('새 답')]);
+      final chat = session(model);
+
+      final events = <ChatEvent>[];
+      chat.ask('첫').listen(events.add);
+      await pumpEventQueue();
+      expect(chat.stop(), const ChatStopResult.dropped());
+      holdA.complete(const ToolResult(json: '{"late":1}'));
+      await pumpEventQueue();
+
+      expect(events, const [
+        ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.toolFinished(
+          callId: 't2',
+          name: 'b',
+          summary: ToolSummary(kind: ChatToolKind.other, count: 0),
+        ),
+      ]);
+      expect(model.requests, hasLength(1));
+
+      await chat.ask('둘').toList();
+      expect(model.requests[1].messages, const [ChatMessage.user('둘')]);
+    });
+  });
+
+  group('라운드 경계 줄바꿈', () {
+    setUp(() {
+      when(
+        () => tools.run('search_diary', any()),
+      ).thenAnswer((_) async => const ToolResult(json: '{}'));
+    });
+
+    test('라운드 경계의 첫 글 앞에 줄바꿈을 넣는다', () async {
+      final model = _HangingModel();
+      final chat = ChatSession(
+        FakeChatModelRegistry({ChatVendor.anthropic: model}),
+        tools,
+        settings,
+        choice,
+        clock,
+        usage,
+        ids,
+        const NoopChatTrace(),
+      );
+      final events = <ChatEvent>[];
+      chat.ask('지난주').listen(events.add);
+      await pumpEventQueue();
+      model.rounds[0]
+        ..add(const ModelEvent.textDelta('볼게요.'))
+        ..add(
+          _done([
+            _text('볼게요.'),
+            _toolUse('t1', 'search_diary'),
+          ], StopKind.toolUse),
+        );
+      unawaited(model.rounds[0].close());
+      await pumpEventQueue();
+      model.rounds[1]
+        ..add(const ModelEvent.textDelta('지난주에는'))
+        ..add(const ModelEvent.textDelta('…'));
+      await pumpEventQueue();
+
+      final streamed = [
+        for (final e in events)
+          if (e case ChatText(:final delta)) delta,
+      ].join();
+      expect(streamed, '볼게요.\n지난주에는…');
+      final result = chat.stop() as ChatStopKept;
+      expect(result.text, '볼게요.\n지난주에는…');
+    });
+
+    test('1라운드에 글이 없으면 2라운드 첫 글 앞에 줄바꿈이 없다', () async {
+      final model = _FakeModel([
+        [
+          _done([_toolUse('t1', 'search_diary')], StopKind.toolUse),
+        ],
+        [
+          const ModelEvent.textDelta('지난주에는'),
+          const ModelEvent.textDelta('…'),
+          _done([_text('지난주에는…')], StopKind.endTurn),
+        ],
+      ]);
+
+      final events = await session(model).ask('지난주').toList();
+
+      expect(events.whereType<ChatText>().toList(), const [
+        ChatEvent.text('지난주에는'),
+        ChatEvent.text('…'),
+      ]);
+    });
+  });
 
   for (final stop in [StopKind.maxTokens, StopKind.other]) {
     test('${stop.name} 로 끝나도 finished', () async {
@@ -404,7 +727,10 @@ void main() {
       final events = await chat.ask('질문').toList();
       await chat.ask('다음 질문').toList();
 
-      expect(events, const [ChatEvent.finished(citedEntryIds: [])]);
+      expect(events, const [
+        ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.finished(citedEntryIds: []),
+      ]);
       expect(model.requests.last.messages, [
         const ChatMessage.user('질문'),
         _assistant('잘린 답'),
@@ -435,8 +761,19 @@ void main() {
       final events = await session(model).ask('산책 기록').toList();
 
       expect(events, const [
-        ChatEvent.toolStarted('search_diary'),
-        ChatEvent.toolStarted('list_diary_index'),
+        ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.toolFinished(
+          callId: 'tu_1',
+          name: 'search_diary',
+          summary: ToolSummary(kind: ChatToolKind.searchDiary, count: 0),
+        ),
+        ChatEvent.toolFinished(
+          callId: 'tu_2',
+          name: 'list_diary_index',
+          summary: ToolSummary(kind: ChatToolKind.diaryIndex, count: 0),
+        ),
+        ChatEvent.roundStarted(2),
+        ChatEvent.phase(ChatPhase.writing),
         ChatEvent.text('끝'),
         ChatEvent.finished(citedEntryIds: []),
       ]);
@@ -781,7 +1118,10 @@ void main() {
 
     final events = await session(model).ask('질문').toList();
 
-    expect(events, const [ChatEvent.failed(ChatFailure.noKey)]);
+    expect(events, const [
+      ChatEvent.phase(ChatPhase.sending),
+      ChatEvent.failed(ChatFailure.noKey),
+    ]);
     expect(model.requests, isEmpty);
   });
 
@@ -832,6 +1172,8 @@ void main() {
       await chat.ask('다시 질문').toList();
 
       expect(events, const [
+        ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.phase(ChatPhase.writing),
         ChatEvent.text('반쯤'),
         ChatEvent.failed(ChatFailure.network),
       ]);
@@ -1181,8 +1523,11 @@ void main() {
           await first;
           model.calls[1].complete(_done([_text('새 답')], StopKind.endTurn));
 
-          expect(firstEvents, isEmpty);
-          expect(await second, const [ChatEvent.finished(citedEntryIds: [])]);
+          expect(firstEvents, const [ChatEvent.phase(ChatPhase.sending)]);
+          expect(await second, const [
+            ChatEvent.phase(ChatPhase.sending),
+            ChatEvent.finished(citedEntryIds: []),
+          ]);
           expect(model.requests[1], const [ChatMessage.user('둘')]);
 
           unawaited(chat.ask('셋').toList());
@@ -1223,7 +1568,7 @@ void main() {
       await pumpEventQueue();
 
       expect(model.cancelled.single, isTrue);
-      expect(events, isEmpty);
+      expect(events, const [ChatEvent.phase(ChatPhase.sending)]);
       expect(done, isTrue);
     });
 
@@ -1231,7 +1576,9 @@ void main() {
       final model = _HangingModel();
       final chat = hanging(model);
       late StreamSubscription<ChatEvent> sub;
-      sub = chat.ask('첫').listen((_) => unawaited(sub.cancel()));
+      sub = chat.ask('첫').listen((e) {
+        if (e is ChatText) unawaited(sub.cancel());
+      });
       await pumpEventQueue();
       model.rounds[0].add(const ModelEvent.textDelta('a'));
       await pumpEventQueue();
@@ -1256,10 +1603,12 @@ void main() {
       unawaited(model.rounds[1].close());
 
       expect(await second, const [
+        ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.phase(ChatPhase.writing),
         ChatEvent.text('새 답'),
         ChatEvent.finished(citedEntryIds: []),
       ]);
-      expect(firstEvents, isEmpty);
+      expect(firstEvents, const [ChatEvent.phase(ChatPhase.sending)]);
       expect(model.cancelled, [isTrue, isFalse]);
       expect(model.requests[1], const [ChatMessage.user('둘')]);
     });
@@ -1314,7 +1663,7 @@ void main() {
 
       expect(chat.stop(), const ChatStopResult.dropped());
       await pumpEventQueue();
-      expect(events, isEmpty);
+      expect(events, const [ChatEvent.phase(ChatPhase.sending)]);
       expect(model.cancelled[1], isTrue);
 
       final next = chat.ask('둘').toList();
@@ -1367,8 +1716,13 @@ void main() {
       hold.complete(photos(3));
       await pumpEventQueue();
       expect(events, const [
-        ChatEvent.toolStarted('view_entry_photos'),
-        ChatEvent.toolStarted('view_entry_photos'),
+        ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.toolFinished(
+          callId: 't1',
+          name: 'view_entry_photos',
+          summary: ToolSummary(kind: ChatToolKind.viewPhotos, count: 0),
+        ),
+        ChatEvent.roundStarted(2),
       ]);
       expect(model.rounds, hasLength(2));
 
@@ -1458,6 +1812,8 @@ void main() {
           _done([_text('답 $i')], StopKind.endTurn),
         ]);
         expect(await events, [
+          const ChatEvent.phase(ChatPhase.sending),
+          const ChatEvent.phase(ChatPhase.writing),
           ChatEvent.text('답 $i'),
           const ChatEvent.finished(citedEntryIds: []),
         ]);
@@ -1494,10 +1850,16 @@ void main() {
       ]);
 
       expect(await second, const [
+        ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.phase(ChatPhase.writing),
         ChatEvent.text('새 답'),
         ChatEvent.finished(citedEntryIds: []),
       ]);
-      expect(firstEvents, const [ChatEvent.text('앞')]);
+      expect(firstEvents, const [
+        ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.phase(ChatPhase.writing),
+        ChatEvent.text('앞'),
+      ]);
     });
 
     test('completed 를 받고 스트림이 닫히기 전에 멈춰도 그 라운드 사용량은 기록한다', () async {
@@ -1582,7 +1944,7 @@ void main() {
           if (e case ChatText(:final delta)) delta,
       ].join();
       expect(result.text, streamed);
-      expect(result.text, '찾아볼게요. 어제는 걸었어요');
+      expect(result.text, '찾아볼게요. \n어제는 걸었어요');
     });
   });
 
@@ -1632,7 +1994,11 @@ void main() {
       model.rounds[0].add(const ModelEvent.textDelta('늦은 글'));
       await pumpEventQueue();
 
-      expect(events, const [ChatEvent.text('부분')]);
+      expect(events, const [
+        ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.phase(ChatPhase.writing),
+        ChatEvent.text('부분'),
+      ]);
     });
 
     test('finished 를 받은 리스너가 바로 stop 해도 끝난 답을 지우지 않는다', () async {
@@ -1820,7 +2186,10 @@ void main() {
       await pumpEventQueue();
       model.rounds[1].add(_done([_text('새 답')], StopKind.endTurn));
       unawaited(model.rounds[1].close());
-      expect(await second, const [ChatEvent.finished(citedEntryIds: [])]);
+      expect(await second, const [
+        ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.finished(citedEntryIds: []),
+      ]);
       expect(model.requests[1], [
         const ChatMessage.user('예전'),
         _assistant('예전 답'),
@@ -1919,12 +2288,14 @@ void main() {
       final chat = session(model);
 
       expect(await chat.ask('하이').toList(), const [
+        ChatEvent.phase(ChatPhase.sending),
         ChatEvent.failed(ChatFailure.noModels),
       ]);
       expect(model.requests, isEmpty);
 
       settings.key = null;
       expect(await chat.ask('하이').toList(), const [
+        ChatEvent.phase(ChatPhase.sending),
         ChatEvent.failed(ChatFailure.noKey),
       ]);
 
@@ -2101,6 +2472,7 @@ void main() {
         final chat = session(model);
 
         expect(await chat.ask('하나').toList(), const [
+          ChatEvent.phase(ChatPhase.sending),
           ChatEvent.failed(ChatFailure.modelReplaced),
         ]);
         expect(verifier.fetchStoredCalls, 1);
@@ -2118,6 +2490,7 @@ void main() {
         ]);
 
         expect(await session(model).ask('하나').toList(), const [
+          ChatEvent.phase(ChatPhase.sending),
           ChatEvent.failed(ChatFailure.modelUnavailable),
         ]);
         expect(verifier.fetchStoredCalls, 1);
@@ -2133,6 +2506,7 @@ void main() {
         ]);
 
         expect(await session(model).ask('하나').toList(), const [
+          ChatEvent.phase(ChatPhase.sending),
           ChatEvent.failed(ChatFailure.modelUnavailable),
         ]);
       });

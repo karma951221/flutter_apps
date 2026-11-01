@@ -421,7 +421,7 @@ void main() {
     await tester.enterText(find.byType(TextField), '지난 주말?');
     await tester.tap(find.byTooltip('보내기'));
     await tester.pump();
-    events.add(const ChatEvent.toolStarted('search_diary'));
+    events.add(const ChatEvent.toolStarted(callId: 't1', name: 'search_diary'));
     await tester.pump();
 
     expect(find.text('기록을 찾는 중…'), findsOneWidget);
