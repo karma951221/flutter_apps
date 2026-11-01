@@ -1474,9 +1474,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkGoalLine => 'Goal';
 
   @override
-  String get walkSettingsWalk => 'Walking';
-
-  @override
   String get walkSettingsStepGoal => 'Daily goal';
 
   @override
@@ -1651,9 +1648,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkAlarmHolidayChip => 'Holiday';
 
   @override
-  String get walkSettingsAlarm => 'Alarms';
-
-  @override
   String get walkSettingsHolidayReminder => 'Holiday reminder';
 
   @override
@@ -1681,15 +1675,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkSettingsCalendarNeedsPermission => 'Allow calendar ›';
-
-  @override
-  String get walkShellTabAlarm => 'Alarms';
-
-  @override
-  String get walkShellTabWalk => 'Walk';
-
-  @override
-  String get walkShellTabSettings => 'Settings';
 
   @override
   String get walkShellTabDiary => 'Diary';
@@ -1859,7 +1844,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkAlarmPermissionWarningAction =>
-      'Check permissions in Settings';
+      'Check permissions in Alarm settings';
 
   @override
   String get walkAlarmRepeatDaily => 'Every day';
@@ -2086,9 +2071,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get walkSettingsTitle => 'Settings';
-
-  @override
   String get walkSettingsPermissions => 'Permissions';
 
   @override
@@ -2128,9 +2110,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkSettingsNeedsUpdate => 'Update ›';
-
-  @override
-  String get walkSettingsTheme => 'Theme';
 
   @override
   String get walkSettingsThemeSystem => 'System default';
@@ -2855,9 +2834,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkDiaryTrashDeleteFailed => 'Couldn\'t delete. Please try again';
-
-  @override
-  String get walkDiarySettings => 'Diary';
 
   @override
   String get walkDiarySettingsLock => 'Lock';

@@ -41,8 +41,12 @@ import 'package:walk/presentation/diary/widget/story_ring_row.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
 import 'package:walk/presentation/lock/widget/pin_pad.dart';
 import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
-import 'package:walk/presentation/settings/page/settings_page.dart';
+import 'package:walk/presentation/settings/page/alarm_settings_page.dart';
+import 'package:walk/presentation/settings/page/app_settings_page.dart';
+import 'package:walk/presentation/settings/page/chat_settings_page.dart';
+import 'package:walk/presentation/settings/page/walk_settings_page.dart';
 import 'package:walk/presentation/shell/page/main_shell_page.dart';
+import 'package:walk/presentation/shell/page/tools_tab.dart';
 import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
 import 'package:walk/presentation/walk/page/walk_home_page.dart';
 
@@ -220,7 +224,6 @@ void main() {
       when(mock.load).thenReturn(const AppSettings());
       settings = mock;
     }
-    // 설정 탭의 일기 섹션이 길어 권한 행이 기본 화면 밖으로 밀린다.
     await tester.binding.setSurfaceSize(const Size(800, 1800));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final theme = ThemeCubit(settings);
@@ -250,11 +253,43 @@ void main() {
   bool onstage(Type page) =>
       find.byType(page).hitTestable().evaluate().isNotEmpty;
 
-  testWidgets('첫 탭은 걷기, 시작할 때 예약을 동기화한다', (tester) async {
+  /// 하단 탭을 이름으로 누른다(일기 빈 상태 안내도 같은 책 아이콘을 쓴다).
+  Future<void> tapTab(WidgetTester tester, String label) async {
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text(label),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  /// 도구 탭의 상단 탭을 이름으로 누른다.
+  Future<void> tapToolsTab(WidgetTester tester, String label) async {
+    await tester.tap(
+      find.descendant(of: find.byType(TabBar), matching: find.text(label)),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  ToolsSection toolsSection(WidgetTester tester) => tester
+      .widget<ToolsTab>(find.byType(ToolsTab, skipOffstage: false))
+      .section;
+
+  /// 보이는 앱바의 ⋮ 를 열고 [key] 항목을 누른다.
+  Future<void> openMenu(WidgetTester tester, String key) async {
+    await tester.tap(find.byIcon(Icons.more_vert).hitTestable());
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(Key(key)));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('첫 탭은 일기, 시작할 때 예약을 동기화한다', (tester) async {
     await pump(tester);
 
-    expect(onstage(WalkHomePage), isTrue);
+    expect(onstage(DiaryTab), isTrue);
     expect(onstage(AlarmListPage), isFalse);
+    expect(onstage(WalkHomePage), isFalse);
     verify(alarms.sync).called(1);
   });
 
@@ -265,19 +300,15 @@ void main() {
         .widgetList<NavigationDestination>(find.byType(NavigationDestination))
         .toList();
     IconData icon(Widget? w) => (w! as Icon).icon!;
-    expect(icon(destinations[0].icon), Icons.alarm_outlined);
-    expect(icon(destinations[0].selectedIcon), Icons.alarm);
-    expect(icon(destinations[1].icon), Icons.directions_walk);
-    expect(destinations[1].selectedIcon, isNull);
-    expect(icon(destinations[2].icon), Icons.book_outlined);
-    expect(icon(destinations[2].selectedIcon), Icons.book);
-    expect(icon(destinations[3].icon), Icons.chat_bubble_outline);
-    expect(icon(destinations[3].selectedIcon), Icons.chat_bubble);
-    expect(icon(destinations[4].icon), Icons.settings_outlined);
-    expect(icon(destinations[4].selectedIcon), Icons.settings);
+    expect(icon(destinations[0].icon), Icons.menu_book_outlined);
+    expect(icon(destinations[0].selectedIcon), Icons.menu_book);
+    expect(icon(destinations[1].icon), Icons.chat_bubble_outline);
+    expect(icon(destinations[1].selectedIcon), Icons.chat_bubble);
+    expect(icon(destinations[2].icon), Icons.handyman_outlined);
+    expect(icon(destinations[2].selectedIcon), Icons.handyman);
   });
 
-  testWidgets('하단 탭은 알람 · 걷기 · 일기 · 물어보기 · 설정이고 통근은 없다', (tester) async {
+  testWidgets('하단 탭은 일기 · 물어보기 · 도구 셋이고 통근 · 설정 탭은 없다', (tester) async {
     await pump(tester);
 
     final labels = [
@@ -286,26 +317,15 @@ void main() {
       ))
         d.label,
     ];
-    expect(labels, ['알람', '걷기', '일기', '물어보기', '설정']);
+    expect(labels, ['일기', '물어보기', '도구']);
     expect(find.byType(CommuteTab, skipOffstage: false), findsNothing);
-    expect(ShellTab.values, [
-      ShellTab.alarm,
-      ShellTab.walk,
-      ShellTab.diary,
-      ShellTab.chat,
-      ShellTab.settings,
-    ]);
-
-    await tester.tap(find.byIcon(Icons.book_outlined));
-    await tester.pumpAndSettle();
+    expect(ShellTab.values, [ShellTab.diary, ShellTab.chat, ShellTab.tools]);
     expect(onstage(DiaryTab), isTrue);
     expect(find.byType(StoryRingRow), findsOneWidget);
   });
 
   testWidgets('일기 탭: 스낵바가 떠도 ＋ 를 가리지 않는다(＋ 가 위로 비킨다)', (tester) async {
     await pump(tester);
-    await tester.tap(find.byIcon(Icons.book_outlined));
-    await tester.pumpAndSettle();
     final fab = find.byTooltip('새 기록');
     final before = tester.getRect(fab);
 
@@ -329,7 +349,7 @@ void main() {
 
     verify(diary.cleanOrphans).called(1);
     expect(tester.takeException(), isNull);
-    expect(onstage(WalkHomePage), isTrue);
+    expect(onstage(DiaryTab), isTrue);
   });
 
   Future<void> enableDiaryLock() async {
@@ -340,8 +360,6 @@ void main() {
   testWidgets('일기는 잠긴 채 시작하고, 풀었다가 백그라운드에 오래 있다 돌아오면 다시 잠긴다', (tester) async {
     await enableDiaryLock();
     await pump(tester);
-    await tester.tap(find.byIcon(Icons.book_outlined));
-    await tester.pumpAndSettle();
     expect(find.byType(PinPad), findsOneWidget);
     expect(find.byType(StoryRingRow, skipOffstage: false), findsNothing);
 
@@ -368,8 +386,6 @@ void main() {
   testWidgets('일기가 잠겨 있어도 알람 울림 화면(셸 바깥 라우트)은 보인다', (tester) async {
     await enableDiaryLock();
     await pump(tester);
-    await tester.tap(find.byIcon(Icons.book_outlined));
-    await tester.pumpAndSettle();
     expect(find.byType(PinPad), findsOneWidget);
 
     final navigator = tester.state<NavigatorState>(
@@ -388,34 +404,40 @@ void main() {
     expect(find.byType(PinPad), findsNothing);
   });
 
-  testWidgets('탭을 누르면 해당 화면으로 바뀐다', (tester) async {
+  testWidgets('탭을 누르면 해당 화면으로 바뀐다 — 도구는 알람 상단 탭부터', (tester) async {
     await pump(tester);
 
-    await tester.tap(find.byIcon(Icons.alarm_outlined));
-    await tester.pumpAndSettle();
+    await tapTab(tester, '도구');
     expect(onstage(AlarmListPage), isTrue);
     expect(find.text('알람이 없어요'), findsOneWidget);
+    expect(onstage(DiaryTab), isFalse);
 
-    await tester.tap(find.byIcon(Icons.settings_outlined));
-    await tester.pumpAndSettle();
-    expect(onstage(SettingsPage), isTrue);
-    expect(onstage(AlarmListPage), isFalse);
-
-    await tester.tap(find.byIcon(Icons.chat_bubble_outline));
-    await tester.pumpAndSettle();
+    await tapTab(tester, '물어보기');
     expect(onstage(ChatTab), isTrue);
-    expect(onstage(SettingsPage), isFalse);
+    expect(onstage(AlarmListPage), isFalse);
   });
 
-  testWidgets('물어보기 탭에 키가 없으면 [설정 열기]가 설정 탭으로 바꾼다', (tester) async {
+  testWidgets('물어보기 [설정 열기] → 물어보기 설정 화면', (tester) async {
     await pump(tester);
-    await tester.tap(find.byIcon(Icons.chat_bubble_outline));
-    await tester.pumpAndSettle();
+    await tapTab(tester, '물어보기');
 
     await tester.tap(find.text('설정 열기'));
     await tester.pumpAndSettle();
-    expect(onstage(SettingsPage), isTrue);
+    expect(find.byType(ChatSettingsPage), findsOneWidget);
     expect(onstage(ChatTab), isFalse);
+  });
+
+  testWidgets('일기 ⋮ 는 잠긴 동안 앱 설정만, 앱 설정 화면이 열린다', (tester) async {
+    await enableDiaryLock();
+    await pump(tester);
+
+    await tester.tap(find.byIcon(Icons.more_vert).hitTestable());
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('menu-settings-diary')), findsNothing);
+    await tester.tap(find.byKey(const Key('menu-settings-app')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AppSettingsPage), findsOneWidget);
   });
 
   testWidgets('시작할 때와 앱이 돌아올 때 울림 기록을 옮겨 담는다', (tester) async {
@@ -480,60 +502,95 @@ void main() {
     }
   }
 
-  testWidgets('홈 화면 위젯을 눌러 열면 알람 탭으로 시작한다', (tester) async {
+  testWidgets('홈 화면 위젯을 눌러 열면 도구 탭의 알람으로 시작한다', (tester) async {
     homeWidget.launches = 1;
     await pump(tester);
 
     expect(onstage(AlarmListPage), isTrue);
-    expect(onstage(WalkHomePage), isFalse);
+    expect(onstage(DiaryTab), isFalse);
+    expect(toolsSection(tester), ToolsSection.alarm);
   });
 
-  testWidgets('떠 있던 앱을 위젯으로 다시 열면(복귀) 알람 탭으로 바꾼다', (tester) async {
+  testWidgets('걷기 상단 탭을 보던 앱을 위젯으로 다시 열면(복귀) 도구 › 알람으로 바꾼다', (tester) async {
     await pump(tester);
-    await tester.tap(find.byIcon(Icons.settings_outlined));
-    await tester.pumpAndSettle();
+    await tapTab(tester, '도구');
+    await tapToolsTab(tester, '걷기');
+    expect(toolsSection(tester), ToolsSection.walk);
+    await tapTab(tester, '일기');
 
     homeWidget.launches = 1;
     resume(tester);
     await tester.pumpAndSettle();
 
     expect(onstage(AlarmListPage), isTrue);
+    expect(toolsSection(tester), ToolsSection.alarm);
   });
 
   testWidgets('위젯으로 열지 않은 복귀는 탭을 그대로 둔다', (tester) async {
     await pump(tester);
-    await tester.tap(find.byIcon(Icons.settings_outlined));
-    await tester.pumpAndSettle();
+    await tapTab(tester, '물어보기');
 
     resume(tester);
     await tester.pumpAndSettle();
 
-    expect(onstage(SettingsPage), isTrue);
+    expect(onstage(ChatTab), isTrue);
   });
 
-  testWidgets('복귀하면 설정 권한 행을 다시 읽는다', (tester) async {
+  testWidgets('도구에서 고른 상단 탭은 다른 탭에 다녀와도 그대로다', (tester) async {
+    await pump(tester);
+    await tapTab(tester, '도구');
+    await tapToolsTab(tester, '걷기');
+    await tapTab(tester, '일기');
+    await tapTab(tester, '도구');
+
+    expect(toolsSection(tester), ToolsSection.walk);
+    expect(onstage(WalkHomePage), isTrue);
+  });
+
+  testWidgets('알람 권한 배너 → 알람 설정 화면, 돌아오면 권한을 다시 읽는다', (tester) async {
     when(notification.check).thenAnswer((_) async => PermissionStatus.denied);
     await pump(tester);
-    await tester.tap(find.byIcon(Icons.settings_outlined));
+    await tapTab(tester, '도구');
+    expect(find.text('알람이 울리지 않을 수 있어요'), findsOneWidget);
+
+    await tester.tap(find.text('알람이 울리지 않을 수 있어요'));
     await tester.pumpAndSettle();
-    // 알림 · Health Connect 가 허용 필요.
-    expect(find.text('허용 필요 ›'), findsNWidgets(2));
+    expect(find.byType(AlarmSettingsPage), findsOneWidget);
+    expect(find.text('허용 필요 ›'), findsOneWidget);
+
+    // 알람 설정 화면에서 시스템 설정으로 나가 알림을 허용하고 돌아왔다.
+    when(notification.check).thenAnswer((_) async => PermissionStatus.granted);
+    clearInteractions(alarms);
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await tester.pumpAndSettle();
+
+    verifyInOrder([alarms.sync, alarms.list]);
+    expect(onstage(AlarmListPage), isTrue);
+    expect(find.text('알람이 울리지 않을 수 있어요'), findsNothing);
+  });
+
+  testWidgets('알람 설정 화면을 연 채 복귀하면 권한 행을 다시 읽는다', (tester) async {
+    when(notification.check).thenAnswer((_) async => PermissionStatus.denied);
+    await pump(tester);
+    await tapTab(tester, '도구');
+    await openMenu(tester, 'menu-settings-alarm');
+    expect(find.text('허용 필요 ›'), findsOneWidget);
 
     // 시스템 설정에서 알림을 허용하고 돌아왔다.
     when(notification.check).thenAnswer((_) async => PermissionStatus.granted);
     resume(tester);
     await tester.pumpAndSettle();
 
-    expect(find.text('허용 필요 ›'), findsOneWidget);
+    expect(find.text('허용 필요 ›'), findsNothing);
     expect(find.text('허용됨'), findsNWidgets(3));
   });
 
-  testWidgets('설정 탭 알람 섹션: 시작 때 출처 · 캘린더 권한을 읽고, 시스템 설정에서 허용하고 돌아오면 다시 읽는다', (
+  testWidgets('알람 설정 화면: 출처 · 캘린더 권한을 읽고, 시스템 설정에서 허용하고 돌아오면 다시 읽는다', (
     tester,
   ) async {
     await pump(tester);
-    await tester.tap(find.byIcon(Icons.settings_outlined));
-    await tester.pumpAndSettle();
+    await tapTab(tester, '도구');
+    await openMenu(tester, 'menu-settings-alarm');
     expect(find.text('내장 표 2026–2027'), findsOneWidget);
     expect(find.text('캘린더 허용 필요 ›'), findsOneWidget);
     clearInteractions(alarms);
@@ -580,8 +637,7 @@ void main() {
     when(alarms.sync).thenThrow(Exception('scheduler'));
     await pump(tester);
 
-    await tester.tap(find.byIcon(Icons.alarm_outlined));
-    await tester.pumpAndSettle();
+    await tapTab(tester, '도구');
 
     expect(find.text('알람이 없어요'), findsOneWidget);
   });
@@ -705,7 +761,7 @@ void main() {
     expect(const StandardMethodCodec().decodeEnvelope(envelope!), isFalse);
   });
 
-  testWidgets('설정 탭에서 목표를 낮춰 달성해도 걷기 탭을 열 때 한 번만 축하한다', (tester) async {
+  testWidgets('걸음 목표를 낮춰 달성해도 걷기를 열 때 한 번만 축하한다', (tester) async {
     final settings = memorySettings;
     when(walk.access).thenAnswer((_) async => HealthAccess.granted);
     when(walk.today).thenAnswer(
@@ -732,10 +788,14 @@ void main() {
       ),
     );
     final goal = await pump(tester, settings: settings);
-    await tester.tap(find.byIcon(Icons.settings_outlined));
+    // 도구 › 알람 ⋮ › 앱 설정 › 걷기 설정 — 걷기 화면은 가려져 있다.
+    await tapTab(tester, '도구');
+    await openMenu(tester, 'menu-settings-app');
+    await tester.tap(find.byKey(const Key('app-settings-open-walk')));
     await tester.pumpAndSettle();
+    expect(find.byType(WalkSettingsPage), findsOneWidget);
 
-    // 설정 탭의 목표 시트가 고른 값을 반영한 것과 같다.
+    // 걷기 설정의 목표 시트가 고른 값을 반영한 것과 같다.
     await goal.select(6000);
     await tester.pumpAndSettle();
 
@@ -743,8 +803,15 @@ void main() {
     expect(settings.value.goalCelebratedOn, isNull);
     expect(settings.value.stepGoal, 6000);
 
-    await tester.tap(find.byIcon(Icons.directions_walk));
+    final navigator = tester.state<NavigatorState>(
+      find.byType(Navigator).first,
+    );
+    navigator
+      ..pop()
+      ..pop();
     await tester.pumpAndSettle();
+    expect(celebrations, 0);
+    await tapToolsTab(tester, '걷기');
 
     expect(celebrations, 1);
     expect(settings.value.goalCelebratedOn, DateTime(2026, 9, 23));

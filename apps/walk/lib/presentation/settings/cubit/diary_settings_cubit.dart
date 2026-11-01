@@ -8,8 +8,8 @@ import '../../../domain/lock/lock_config.dart';
 import '../../../domain/lock/lock_repository.dart';
 import 'diary_settings_state.dart';
 
-/// 설정 탭 "일기" 섹션(스펙 §8). 셸이 소유하고, 섹션이 처음 그려질 때와 설정 탭이 다시
-/// 보일 때 [load] 한다. 잠금 켜기 · 끄기 · 방식 변경은 `LockSetupPage` 가 맡는다 — 그 뒤
+/// 잠금 · 휴지통 보관 기간 · 저장 공간(스펙 §8). 셸이 소유하고, 앱 설정 · 일기 설정 화면이
+/// 열릴 때 [load] 한다. 잠금 켜기 · 끄기 · 방식 변경은 `LockSetupPage` 가 맡는다 — 그 뒤
 /// 부르는 쪽이 [load] 로 다시 읽는다.
 class DiarySettingsCubit extends Cubit<DiarySettingsState> {
   DiarySettingsCubit(this._lock, this._prefs, this._repo)

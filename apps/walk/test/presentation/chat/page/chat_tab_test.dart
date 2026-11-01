@@ -63,6 +63,7 @@ void main() {
   Future<void> pump(WidgetTester tester, {VoidCallback? onOpenSettings}) async {
     await tester.pumpWidget(
       MaterialApp(
+        navigatorObservers: [appRouteObserver],
         theme: AppTheme.light(),
         locale: const Locale('ko'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -138,6 +139,59 @@ void main() {
     expect(find.text('설정에서 키를 넣어 주세요'), findsOneWidget);
     await tester.tap(find.text('설정 열기'));
     expect(opened, 1);
+  });
+
+  testWidgets('위에 얹힌 화면(물어보기 설정)에서 키를 넣고 돌아오면 키를 다시 읽는다', (tester) async {
+    settings.key = null;
+    await pump(tester);
+    expect(find.text('설정 열기'), findsOneWidget);
+    final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+    unawaited(
+      navigator.push(
+        MaterialPageRoute<void>(builder: (_) => const Text('chat settings')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    settings.key = 'sk-ant-new';
+    navigator.pop();
+    await tester.pumpAndSettle();
+
+    expect(find.text('설정 열기'), findsNothing);
+    expect(find.text('어제 뭐 했어?'), findsOneWidget);
+  });
+
+  testWidgets('⋮ 는 잠긴 동안 앱 설정만, 풀리면 물어보기 설정 · 앱 설정', (tester) async {
+    whenListen(
+      lock,
+      lockStates.stream,
+      initialState: const DiaryLockState.locked(method: LockMethod.pin),
+    );
+    await pump(tester);
+    Finder menu() => find.descendant(
+      of: find.byType(AppBar),
+      matching: find.byIcon(Icons.more_vert),
+    );
+
+    await tester.tap(menu());
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
+    expect(find.byKey(const Key('menu-settings-chat')), findsNothing);
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    lockStates.add(const DiaryLockState.unlocked());
+    await tester.pumpAndSettle();
+    await tester.tap(menu());
+    await tester.pumpAndSettle();
+
+    double top(Finder f) => tester.getTopLeft(f).dy;
+    final chat = find.byKey(const Key('menu-settings-chat'));
+    expect(chat, findsOneWidget);
+    expect(
+      top(chat),
+      lessThan(top(find.byKey(const Key('menu-settings-app')))),
+    );
   });
 
   testWidgets('동의 전이면 전송 안내와 동의 버튼을 보이고, 동의하면 시작한다', (tester) async {

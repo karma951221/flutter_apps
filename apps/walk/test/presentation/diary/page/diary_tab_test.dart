@@ -183,7 +183,6 @@ void main() {
     expect(find.text('비밀 기록', skipOffstage: false), findsNothing);
     expect(find.byType(PinPad), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsNothing);
-    expect(find.byIcon(Icons.more_vert), findsNothing);
     expect(find.byIcon(Icons.search), findsNothing);
 
     for (final d in '1234'.split('')) {
@@ -195,6 +194,40 @@ void main() {
     expect(find.byType(StoryRingRow), findsOneWidget);
     expect(find.text('비밀 기록'), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsOneWidget);
+  });
+
+  testWidgets('⋮ 는 잠긴 동안 앱 설정만, 풀리면 모든 스토리 · 휴지통 · 일기 설정 · 앱 설정', (
+    tester,
+  ) async {
+    await lockRepo.setSecret(LockMethod.pin, '1234');
+    await lockRepo.saveConfig(const LockConfig(enabled: true));
+    await pump(tester);
+
+    await tester.tap(appBarMenu());
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
+    expect(find.byKey(const Key('menu-settings-diary')), findsNothing);
+    expect(find.text('모든 스토리'), findsNothing);
+    expect(find.text('휴지통'), findsNothing);
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    for (final d in '1234'.split('')) {
+      await tester.tap(find.widgetWithText(TextButton, d));
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+    await tester.tap(appBarMenu());
+    await tester.pumpAndSettle();
+
+    double top(Finder f) => tester.getTopLeft(f).dy;
+    final stories = find.text('모든 스토리').last;
+    final trash = find.text('휴지통').last;
+    final diary = find.byKey(const Key('menu-settings-diary'));
+    final app = find.byKey(const Key('menu-settings-app'));
+    expect(top(stories), lessThan(top(trash)));
+    expect(top(trash), lessThan(top(diary)));
+    expect(top(diary), lessThan(top(app)));
   });
 
   group('다시 잠기면(스펙 §7)', () {

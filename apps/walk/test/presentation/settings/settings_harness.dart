@@ -42,11 +42,11 @@ class MockWalkUseCase extends Mock implements WalkUseCase {}
 
 class MockSettingsRepository extends Mock implements SettingsRepository {}
 
-class _MockAccess extends Mock implements HolidayCalendarAccess {}
+class MockHolidayAccess extends Mock implements HolidayCalendarAccess {}
 
-class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
+class MockAlarmUseCase extends Mock implements AlarmUseCase {}
 
-class _MockDiaryRepo extends Mock implements DiaryRepository {}
+class MockDiaryRepository extends Mock implements DiaryRepository {}
 
 class _NoRefresh implements HolidayRefresher {
   @override
@@ -56,12 +56,11 @@ class _NoRefresh implements HolidayRefresher {
   Stream<void> get refreshed => const Stream.empty();
 }
 
-class _FakeHolidays implements HolidayCalendar {
+class FakeHolidays implements HolidayCalendar {
+  static const bundled = HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
+
   @override
-  HolidaySource source = const HolidaySource.bundled(
-    firstYear: 2026,
-    lastYear: 2027,
-  );
+  HolidaySource source = bundled;
 
   @override
   String? nameOf(DateTime date) => null;
@@ -75,6 +74,10 @@ class SettingsHarness {
   final fullScreen = MockRequester();
   final walk = MockWalkUseCase();
   final settings = MockSettingsRepository();
+  final diaryRepo = MockDiaryRepository();
+  final holidays = FakeHolidays();
+  final holidayAccess = MockHolidayAccess();
+  final alarms = MockAlarmUseCase();
   late PrefsLockRepository lockRepo;
   late DiaryPreferences diaryPrefs;
   late SettingsPermissionsCubit permissions;
@@ -87,11 +90,24 @@ class SettingsHarness {
   static void registerFallbacks() => registerFallbackValue(const AppSettings());
 
   Future<void> setUp() async {
+    // 한 파일의 테스트가 같은 목을 쓰므로 앞 테스트의 응답 · 호출 기록을 지운다.
+    for (final mock in <Mock>[
+      notification,
+      exactAlarm,
+      fullScreen,
+      walk,
+      settings,
+      diaryRepo,
+      holidayAccess,
+      alarms,
+    ]) {
+      reset(mock);
+    }
+    holidays.source = FakeHolidays.bundled;
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     lockRepo = PrefsLockRepository(prefs);
     diaryPrefs = PrefsDiaryPreferences(prefs);
-    final diaryRepo = _MockDiaryRepo();
     when(diaryRepo.usage).thenAnswer(
       (_) async =>
           const DiaryUsage(photos: 1, videos: 0, bytes: 2048, trashBytes: 0),
@@ -125,12 +141,10 @@ class SettingsHarness {
     );
     theme = ThemeCubit(settings);
     goal = StepGoalCubit(settings);
-    final access = _MockAccess();
-    final alarms = _MockAlarmUseCase();
-    when(access.check).thenAnswer((_) async => PermissionStatus.denied);
+    when(holidayAccess.check).thenAnswer((_) async => PermissionStatus.denied);
     when(alarms.sync).thenAnswer((_) async {});
-    when(() => access.refresher).thenReturn(_NoRefresh());
-    holiday = HolidaySettingsCubit(settings, _FakeHolidays(), access, alarms);
+    when(() => holidayAccess.refresher).thenReturn(_NoRefresh());
+    holiday = HolidaySettingsCubit(settings, holidays, holidayAccess, alarms);
   }
 
   Future<void> tearDown() async {

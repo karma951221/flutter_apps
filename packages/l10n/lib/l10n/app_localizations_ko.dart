@@ -1389,9 +1389,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkGoalLine => '목표';
 
   @override
-  String get walkSettingsWalk => '걷기';
-
-  @override
   String get walkSettingsStepGoal => '하루 목표';
 
   @override
@@ -1564,9 +1561,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAlarmHolidayChip => '공휴일';
 
   @override
-  String get walkSettingsAlarm => '알람';
-
-  @override
   String get walkSettingsHolidayReminder => '공휴일 미리 알림';
 
   @override
@@ -1594,15 +1588,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkSettingsCalendarNeedsPermission => '캘린더 허용 필요 ›';
-
-  @override
-  String get walkShellTabAlarm => '알람';
-
-  @override
-  String get walkShellTabWalk => '걷기';
-
-  @override
-  String get walkShellTabSettings => '설정';
 
   @override
   String get walkShellTabDiary => '일기';
@@ -1746,7 +1731,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAlarmPermissionWarning => '알람이 울리지 않을 수 있어요';
 
   @override
-  String get walkAlarmPermissionWarningAction => '설정 탭에서 권한을 확인하세요';
+  String get walkAlarmPermissionWarningAction => '알람 설정에서 권한을 확인하세요';
 
   @override
   String get walkAlarmRepeatDaily => '매일';
@@ -1956,9 +1941,6 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get walkSettingsTitle => '설정';
-
-  @override
   String get walkSettingsPermissions => '권한';
 
   @override
@@ -1996,9 +1978,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkSettingsNeedsUpdate => '업데이트 필요 ›';
-
-  @override
-  String get walkSettingsTheme => '테마';
 
   @override
   String get walkSettingsThemeSystem => '시스템 설정';
@@ -2683,9 +2662,6 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkDiaryTrashDeleteFailed => '삭제하지 못했어요. 다시 시도해 주세요';
-
-  @override
-  String get walkDiarySettings => '일기';
 
   @override
   String get walkDiarySettingsLock => '잠금';

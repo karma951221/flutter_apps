@@ -15,6 +15,8 @@ import '../../../domain/diary/usecase/story_cover.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/cubit/diary_lock_state.dart';
 import '../../lock/widget/diary_lock_gate.dart';
+import '../../settings/open_settings.dart';
+import '../../shell/widget/feature_menu.dart';
 import '../cubit/diary_timeline_cubit.dart';
 import '../cubit/diary_timeline_state.dart';
 import '../cubit/story_covers_cubit.dart';
@@ -33,7 +35,8 @@ import 'story_page.dart';
 import 'trash_page.dart';
 
 /// 셸의 일기 탭(스펙 §3.1, 인스타 홈): 앱바(일기 🔍 ⋮) + 스토리 동그라미 줄 + 모든 스토리
-/// 기록 피드. 위에서 `DiaryLockCubit` 를 받는다(셸이 소유).
+/// 기록 피드. 위에서 `DiaryLockCubit` 를 받는다(셸이 소유). ⋮ 의 설정 항목은 셸의 설정 cubit
+/// 아래에서 연다([openSettings]).
 /// ＋ 는 셸이 이 탭일 때 [DiaryNewEntryButton] 으로 둔다.
 ///
 /// 타임라인은 [DiaryLockGate] 안쪽에 있어 잠긴 동안 트리에 없다. 탭이 보이고 잠금이 풀려 있게
@@ -99,7 +102,8 @@ class _DiaryTabState extends State<DiaryTab> {
           appBar: AppBar(
             title: Text(l10n.walkShellTabDiary),
             actions: [
-              if (unlocked) ...[const _SearchAction(), const _DiaryMenu()],
+              if (unlocked) const _SearchAction(),
+              _DiaryMenu(unlocked: unlocked),
             ],
           ),
           // 다시 잠기면 이 탭에서 띄운 시트(새 스토리 등)를 닫는다 — 가려진 탭이면 위의 팝업은 다른 탭의 것.
@@ -157,37 +161,40 @@ class _SearchAction extends StatelessWidget {
   );
 }
 
-enum _DiaryMenuItem { stories, trash }
-
-/// 일기 탭 앱바 ⋮(스펙 §3.1): 모든 스토리 · 휴지통. 잠긴 동안은 두지 않는다.
-/// 항목을 더하려면 [_DiaryMenuItem] 값과 [_items] · [_open] 의 한 줄씩.
+/// 일기 탭 앱바 ⋮(스펙 §3.1): 모든 스토리 · 휴지통 · 일기 설정 · 앱 설정.
+/// 잠긴 동안은 앱 설정만 — 나머지는 잠금 아래다.
 class _DiaryMenu extends StatelessWidget {
-  const _DiaryMenu();
+  const _DiaryMenu({required this.unlocked});
 
-  List<AppOverflowMenuItem<_DiaryMenuItem>> _items(AppLocalizations l10n) => [
-    AppOverflowMenuItem(
-      value: _DiaryMenuItem.stories,
-      label: l10n.walkDiaryAllStories,
-      icon: Icons.auto_stories_outlined,
-    ),
-    AppOverflowMenuItem(
-      value: _DiaryMenuItem.trash,
-      label: l10n.walkDiaryMenuTrash,
-      icon: Icons.delete_outline,
-    ),
-  ];
-
-  Future<void> _open(BuildContext context, _DiaryMenuItem item) =>
-      switch (item) {
-        _DiaryMenuItem.stories => openAllStories(context),
-        _DiaryMenuItem.trash => openTrash(context),
-      };
+  final bool unlocked;
 
   @override
-  Widget build(BuildContext context) => AppOverflowMenu<_DiaryMenuItem>(
-    items: _items(AppLocalizations.of(context)),
-    onSelected: (item) => unawaited(_open(context, item)),
-  );
+  Widget build(BuildContext context) {
+    if (!unlocked) {
+      return const FeatureMenu(
+        settings: SettingsTarget.diary,
+        showFeatureSettings: false,
+      );
+    }
+    final l10n = AppLocalizations.of(context);
+    return FeatureMenu(
+      settings: SettingsTarget.diary,
+      entries: [
+        FeatureMenuEntry(
+          key: const Key('menu-diary-stories'),
+          label: l10n.walkDiaryAllStories,
+          icon: Icons.auto_stories_outlined,
+          onTap: () => unawaited(openAllStories(context)),
+        ),
+        FeatureMenuEntry(
+          key: const Key('menu-diary-trash'),
+          label: l10n.walkDiaryMenuTrash,
+          icon: Icons.delete_outline,
+          onTap: () => unawaited(openTrash(context)),
+        ),
+      ],
+    );
+  }
 }
 
 /// 동그라미 줄 + 피드. 동그라미 · 카드가 여는 뷰어는 줄 순서([ringOrder])로 스토리를 넘긴다.

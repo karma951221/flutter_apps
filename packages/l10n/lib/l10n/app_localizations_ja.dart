@@ -1388,9 +1388,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkGoalLine => '目標';
 
   @override
-  String get walkSettingsWalk => 'ウォーキング';
-
-  @override
   String get walkSettingsStepGoal => '1日の目標';
 
   @override
@@ -1563,9 +1560,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAlarmHolidayChip => '祝日';
 
   @override
-  String get walkSettingsAlarm => 'アラーム';
-
-  @override
   String get walkSettingsHolidayReminder => '祝日のお知らせ';
 
   @override
@@ -1593,15 +1587,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkSettingsCalendarNeedsPermission => 'カレンダーの許可が必要 ›';
-
-  @override
-  String get walkShellTabAlarm => 'アラーム';
-
-  @override
-  String get walkShellTabWalk => 'ウォーク';
-
-  @override
-  String get walkShellTabSettings => '設定';
 
   @override
   String get walkShellTabDiary => '日記';
@@ -1745,7 +1730,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAlarmPermissionWarning => 'アラームが鳴らない可能性があります';
 
   @override
-  String get walkAlarmPermissionWarningAction => '設定タブで権限を確認してください';
+  String get walkAlarmPermissionWarningAction => 'アラーム設定で権限を確認してください';
 
   @override
   String get walkAlarmRepeatDaily => '毎日';
@@ -1955,9 +1940,6 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get walkSettingsTitle => '設定';
-
-  @override
   String get walkSettingsPermissions => '権限';
 
   @override
@@ -1995,9 +1977,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkSettingsNeedsUpdate => 'アップデートが必要 ›';
-
-  @override
-  String get walkSettingsTheme => 'テーマ';
 
   @override
   String get walkSettingsThemeSystem => 'システム設定';
@@ -2681,9 +2660,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkDiaryTrashDeleteFailed => '削除できませんでした。もう一度お試しください';
-
-  @override
-  String get walkDiarySettings => '日記';
 
   @override
   String get walkDiarySettingsLock => 'ロック';

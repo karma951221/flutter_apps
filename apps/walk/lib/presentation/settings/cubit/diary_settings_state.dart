@@ -6,7 +6,7 @@ import '../../../domain/lock/lock_config.dart';
 
 part 'diary_settings_state.freezed.dart';
 
-/// 설정 탭 "일기" 섹션 — 잠금 설정 · 휴지통 보관 기간 · 저장 공간.
+/// 일기 관련 설정 — 잠금 설정 · 휴지통 보관 기간 · 저장 공간.
 @freezed
 class DiarySettingsState with _$DiarySettingsState {
   /// 잠금 설정. null = 아직 읽지 않음.

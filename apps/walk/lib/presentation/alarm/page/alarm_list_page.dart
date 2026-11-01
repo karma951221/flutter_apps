@@ -31,7 +31,7 @@ import 'alarm_history_page.dart';
 class AlarmListPage extends StatefulWidget {
   const AlarmListPage({required this.onOpenSettings, super.key});
 
-  /// 권한 경고를 눌렀을 때 — 설정 탭으로.
+  /// 권한 경고를 눌렀을 때 — 알람 설정 화면으로.
   final VoidCallback onOpenSettings;
 
   @override

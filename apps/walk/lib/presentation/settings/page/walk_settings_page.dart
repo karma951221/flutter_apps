@@ -35,9 +35,9 @@ class _WalkSettingsPageState extends State<WalkSettingsPage> {
       appBar: AppBar(title: Text(l10n.walkWalkSettingsTitle)),
       body: ListView(
         children: [
-          const StepGoalTile(),
+          const _StepGoalTile(),
           SettingsSectionHeader(l10n.walkSettingsPermissions),
-          const HealthPermissionTile(),
+          const _HealthPermissionTile(),
         ],
       ),
     );
@@ -45,8 +45,8 @@ class _WalkSettingsPageState extends State<WalkSettingsPage> {
 }
 
 /// 하루 걸음 목표 행. 누르면 [StepGoalSheet].
-class StepGoalTile extends StatelessWidget {
-  const StepGoalTile({super.key});
+class _StepGoalTile extends StatelessWidget {
+  const _StepGoalTile();
 
   @override
   Widget build(BuildContext context) {
@@ -70,8 +70,8 @@ class StepGoalTile extends StatelessWidget {
 }
 
 /// Health Connect 권한 행.
-class HealthPermissionTile extends StatelessWidget {
-  const HealthPermissionTile({super.key});
+class _HealthPermissionTile extends StatelessWidget {
+  const _HealthPermissionTile();
 
   @override
   Widget build(BuildContext context) {

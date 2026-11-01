@@ -49,7 +49,7 @@ class _ToolsTabState extends State<ToolsTab>
     vsync: this,
   )..addListener(_onTabChanged);
 
-  /// 사용자가 상단 탭을 눌렀거나 밀었다. 셸이 바꾼 것([didUpdateWidget])이면 이미 같다.
+  /// 사용자가 상단 탭을 눌렀다. 셸이 바꾼 것([didUpdateWidget])이면 이미 같다.
   void _onTabChanged() {
     final index = _controller.index;
     if (index != widget.section.index) {

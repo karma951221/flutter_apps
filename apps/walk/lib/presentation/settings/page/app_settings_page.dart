@@ -38,7 +38,7 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
           SettingsSectionHeader(l10n.walkAppSettingsLock),
           const LockSettingsSection(),
           SettingsSectionHeader(l10n.walkAppSettingsDisplay),
-          const ThemeSettingsRadios(),
+          const _ThemeSettingsRadios(),
           SettingsSectionHeader(l10n.walkAppSettingsFeatures),
           for (final (target, icon, title) in [
             (
@@ -76,8 +76,8 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
 }
 
 /// 테마 라디오 — 시스템 · 라이트 · 다크.
-class ThemeSettingsRadios extends StatelessWidget {
-  const ThemeSettingsRadios({super.key});
+class _ThemeSettingsRadios extends StatelessWidget {
+  const _ThemeSettingsRadios();
 
   @override
   Widget build(BuildContext context) {

@@ -22,7 +22,7 @@ class HolidayCalendarAccess {
   /// 버리고 바로 폰 캘린더를 다시 읽는다.
   Future<PermissionStatus> ensure() => _asking(calendar.ensure);
 
-  /// 설정 탭에서 사용자가 직접 허용을 눌렀을 때 — 세션 기억과 상관없이 묻는다.
+  /// 알람 설정에서 사용자가 직접 허용을 눌렀을 때 — 세션 기억과 상관없이 묻는다.
   /// 새로 허용되면 [ensure] 처럼 바로 다시 읽는다.
   Future<PermissionStatus> requestAgain() => _asking(calendar.requestAgain);
 

@@ -14,6 +14,8 @@ import '../../diary/viewer/story_viewer_page.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/cubit/diary_lock_state.dart';
 import '../../lock/widget/diary_lock_gate.dart';
+import '../../settings/open_settings.dart';
+import '../../shell/widget/feature_menu.dart';
 import '../cubit/chat_cubit.dart';
 import '../cubit/chat_state.dart';
 import '../widget/chat_bubble_view.dart';
@@ -25,7 +27,10 @@ import '../widget/chat_input.dart';
 ///
 /// 대화 내용은 일기에서 나오므로 [DiaryLockGate] 안쪽에 둔다 — 잠긴 동안 트리에 없다.
 /// cubit 은 게이트 바깥(이 State)이 소유해 다시 잠겼다 풀려도 대화가 남는다.
-/// 위에서 `DiaryLockCubit` 를 받는다(셸이 소유).
+/// 위에서 `DiaryLockCubit` 를 받는다(셸이 소유). 앱바 ⋮ 는 물어보기 설정 · 앱 설정(잠긴 동안은
+/// 앱 설정만)이고, 셸의 설정 cubit 아래에서 연다([openSettings]).
+///
+/// 키 · 동의는 탭이 보이게 될 때와 위에 얹힌 화면(물어보기 설정 등)이 걷힐 때 다시 읽는다.
 class ChatTab extends StatefulWidget {
   const ChatTab({
     required this.active,
@@ -36,14 +41,14 @@ class ChatTab extends StatefulWidget {
   /// 셸에서 이 탭이 보이는지. 보이게 될 때 키 · 동의를 다시 읽는다.
   final bool active;
 
-  /// 키가 없을 때 [설정 열기].
+  /// 키가 없을 때 [설정 열기] — 셸이 물어보기 설정 화면을 연다.
   final VoidCallback onOpenSettings;
 
   @override
   State<ChatTab> createState() => _ChatTabState();
 }
 
-class _ChatTabState extends State<ChatTab> {
+class _ChatTabState extends State<ChatTab> with RouteAware {
   late final _cubit = ChatCubit(
     getIt<ChatSession>(),
     getIt<ChatSettings>(),
@@ -56,15 +61,32 @@ class _ChatTabState extends State<ChatTab> {
     unawaited(_cubit.refresh());
   }
 
+  ModalRoute<void>? _route;
+
   @override
-  void didUpdateWidget(ChatTab oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // 설정 탭에서 키를 넣고 돌아왔을 수 있다.
-    if (!oldWidget.active && widget.active) unawaited(_cubit.refresh());
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null && route != _route) {
+      if (_route != null) appRouteObserver.unsubscribe(this);
+      _route = route;
+      appRouteObserver.subscribe(this, route);
+    }
   }
 
   @override
+  void didUpdateWidget(ChatTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.active && widget.active) unawaited(_cubit.refresh());
+  }
+
+  /// 물어보기 설정에서 키를 넣거나 지우고 돌아왔을 수 있다.
+  @override
+  void didPopNext() => unawaited(_cubit.refresh());
+
+  @override
   void dispose() {
+    appRouteObserver.unsubscribe(this);
     unawaited(_cubit.close());
     super.dispose();
   }
@@ -80,7 +102,16 @@ class _ChatTabState extends State<ChatTab> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.walkShellTabChat),
-          actions: [if (unlocked) const _NewConversationAction()],
+          actions: [
+            if (unlocked) ...[
+              const _NewConversationAction(),
+              const FeatureMenu(settings: SettingsTarget.chat),
+            ] else
+              const FeatureMenu(
+                settings: SettingsTarget.chat,
+                showFeatureSettings: false,
+              ),
+          ],
         ),
         body: DiaryLockGate(
           dismissPopups: widget.active,

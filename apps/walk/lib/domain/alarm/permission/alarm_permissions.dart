@@ -18,7 +18,7 @@ class AlarmPermissions {
   final PermissionRequester fullScreenIntent;
 
   /// 알람 저장 · 켜기 뒤에 부른다. 이번 세션에 이미 거부했으면 다시 묻지 않는다.
-  /// 거부돼도 알람은 이미 저장돼 있다 — 설정 탭 · 목록 경고가 남은 길이다.
+  /// 거부돼도 알람은 이미 저장돼 있다 — 알람 설정 · 목록 경고가 남은 길이다.
   Future<void> ensureForAlarm() async {
     await notification.ensure();
     await exactAlarm.ensure();

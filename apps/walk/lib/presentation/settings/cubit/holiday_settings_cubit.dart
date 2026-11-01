@@ -9,7 +9,7 @@ import '../../../domain/alarm/usecase/alarm_use_case.dart';
 import '../../../domain/settings/repository/settings_repository.dart';
 import 'holiday_settings_state.dart';
 
-/// 설정 탭 "알람" 섹션(웨이브 3 스펙 §3.4 · §5). 셸이 소유하고, 시작 · 복귀 때 [check] 한다.
+/// 알람 설정의 공휴일 행(웨이브 3 스펙 §3.4 · §5). 셸이 소유하고, 시작 · 복귀 때 [check] 한다.
 ///
 /// 공휴일 미리 알림을 바꾸면 알람을 다시 맞춘다(sync 가 미리 알림을 걸거나 지운다). 캘린더
 /// 권한을 새로 받으면 오늘 이미 읽은 캐시(내장 표)를 버리고 폰 캘린더를 다시 읽은 뒤 맞춘다.

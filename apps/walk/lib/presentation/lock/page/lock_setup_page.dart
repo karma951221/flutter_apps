@@ -14,7 +14,7 @@ import '../cubit/lock_setup_cubit.dart';
 import '../cubit/lock_setup_state.dart';
 import '../widget/lock_secret_input.dart';
 
-/// 일기 잠금 켜기 · 끄기 · 방식 변경(스펙 §7 · §8). 설정 탭이 push 한다.
+/// 일기 잠금 켜기 · 끄기 · 방식 변경(스펙 §7 · §8). 앱 설정이 push 한다.
 /// 마치면 알리고 `true` 로 닫힌다. 뒤로 가면 결과는 null.
 class LockSetupPage extends StatefulWidget {
   const LockSetupPage({super.key});

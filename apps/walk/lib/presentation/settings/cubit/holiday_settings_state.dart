@@ -5,7 +5,7 @@ import '../../../domain/alarm/holiday/holiday_calendar.dart';
 
 part 'holiday_settings_state.freezed.dart';
 
-/// 설정 탭 "알람" 섹션 — 공휴일 미리 알림 스위치와 공휴일 출처 · 캘린더 권한.
+/// 알람 설정의 공휴일 행 — 공휴일 미리 알림 스위치와 공휴일 출처 · 캘린더 권한.
 @freezed
 class HolidaySettingsState with _$HolidaySettingsState {
   /// 공휴일 미리 알림(`AppSettings.holidayReminder`).

@@ -6,7 +6,7 @@ import '../../../domain/walk/entity/health_access.dart';
 import '../../../domain/walk/usecase/walk_use_case.dart';
 import 'settings_permissions_state.dart';
 
-/// 설정 탭 "권한" 모아보기. 시스템 설정으로 나갔다 오면 셸의 resumed 가 [check] 를 부른다.
+/// 알람 · 걷기 설정의 권한 행. 시스템 설정으로 나갔다 오면 셸의 resumed 가 [check] 를 부른다.
 class SettingsPermissionsCubit extends Cubit<SettingsPermissionsState> {
   SettingsPermissionsCubit(this._permissions, this._walk)
     : super(const SettingsPermissionsState());

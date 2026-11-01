@@ -2726,12 +2726,6 @@ abstract class AppLocalizations {
   /// **'목표'**
   String get walkGoalLine;
 
-  /// 설정의 걷기 섹션 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'걷기'**
-  String get walkSettingsWalk;
-
   /// 하루 걸음 목표 설정 항목
   ///
   /// In ko, this message translates to:
@@ -3038,12 +3032,6 @@ abstract class AppLocalizations {
   /// **'공휴일'**
   String get walkAlarmHolidayChip;
 
-  /// 설정 탭 — 알람 섹션 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'알람'**
-  String get walkSettingsAlarm;
-
   /// 설정 탭 — 반복 알람이 공휴일에 울리면 하루 전에 알리는 스위치
   ///
   /// In ko, this message translates to:
@@ -3091,24 +3079,6 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'캘린더 허용 필요 ›'**
   String get walkSettingsCalendarNeedsPermission;
-
-  /// 하단 탭 — 알람
-  ///
-  /// In ko, this message translates to:
-  /// **'알람'**
-  String get walkShellTabAlarm;
-
-  /// 하단 탭 — 걸음
-  ///
-  /// In ko, this message translates to:
-  /// **'걷기'**
-  String get walkShellTabWalk;
-
-  /// 하단 탭 — 설정
-  ///
-  /// In ko, this message translates to:
-  /// **'설정'**
-  String get walkShellTabSettings;
 
   /// 하단 탭 — 일기
   ///
@@ -3344,10 +3314,10 @@ abstract class AppLocalizations {
   /// **'알람이 울리지 않을 수 있어요'**
   String get walkAlarmPermissionWarning;
 
-  /// 권한 경고의 보조 설명 — 누르면 설정 탭으로 간다
+  /// 권한 경고의 보조 설명 — 누르면 알람 설정 화면이 열린다
   ///
   /// In ko, this message translates to:
-  /// **'설정 탭에서 권한을 확인하세요'**
+  /// **'알람 설정에서 권한을 확인하세요'**
   String get walkAlarmPermissionWarningAction;
 
   /// 반복 요약 — 7일 모두
@@ -3716,12 +3686,6 @@ abstract class AppLocalizations {
   /// **'한 번 · {remaining}'**
   String walkAlarmOneShotRow(String remaining);
 
-  /// 설정 화면 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'설정'**
-  String get walkSettingsTitle;
-
   /// 설정 — 권한 섹션 제목
   ///
   /// In ko, this message translates to:
@@ -3799,12 +3763,6 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'업데이트 필요 ›'**
   String get walkSettingsNeedsUpdate;
-
-  /// 설정 — 테마 섹션 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'테마'**
-  String get walkSettingsTheme;
 
   /// 테마 — 기기 설정을 따름
   ///
@@ -5065,12 +5023,6 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'삭제하지 못했어요. 다시 시도해 주세요'**
   String get walkDiaryTrashDeleteFailed;
-
-  /// 설정 탭 일기 섹션 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'일기'**
-  String get walkDiarySettings;
 
   /// 앱 설정 잠금 행 제목(일기와 물어보기를 함께 잠근다)
   ///

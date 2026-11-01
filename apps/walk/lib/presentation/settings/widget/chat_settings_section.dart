@@ -8,7 +8,7 @@ import '../../../domain/chat/chat_settings.dart';
 import '../cubit/chat_settings_cubit.dart';
 import '../cubit/chat_settings_state.dart';
 
-/// 설정 탭 "채팅" 섹션 — Anthropic API 키(보안 저장소)와 데이터 전송 안내.
+/// 물어보기 설정의 섹션 — Anthropic API 키(보안 저장소)와 데이터 전송 안내.
 class ChatSettingsSection extends StatelessWidget {
   const ChatSettingsSection({super.key});
 

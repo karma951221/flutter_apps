@@ -1927,10 +1927,6 @@
   "@walkGoalLine": {
     "description": "차트의 목표선 라벨"
   },
-  "walkSettingsWalk": "걷기",
-  "@walkSettingsWalk": {
-    "description": "설정의 걷기 섹션 제목"
-  },
   "walkSettingsStepGoal": "하루 목표",
   "@walkSettingsStepGoal": {
     "description": "하루 걸음 목표 설정 항목"
@@ -2198,10 +2194,6 @@
   "@walkAlarmHolidayChip": {
     "description": "다음 울림이 24시간 안 공휴일인 반복 알람 행의 칩(누르면 건너뛰기 시트)"
   },
-  "walkSettingsAlarm": "알람",
-  "@walkSettingsAlarm": {
-    "description": "설정 탭 — 알람 섹션 제목"
-  },
   "walkSettingsHolidayReminder": "공휴일 미리 알림",
   "@walkSettingsHolidayReminder": {
     "description": "설정 탭 — 반복 알람이 공휴일에 울리면 하루 전에 알리는 스위치"
@@ -2246,18 +2238,6 @@
   "walkSettingsCalendarNeedsPermission": "캘린더 허용 필요 ›",
   "@walkSettingsCalendarNeedsPermission": {
     "description": "공휴일 출처 행 — 캘린더 읽기 권한이 없어 내장 표를 쓴다. 누르면 권한을 묻는다"
-  },
-  "walkShellTabAlarm": "알람",
-  "@walkShellTabAlarm": {
-    "description": "하단 탭 — 알람"
-  },
-  "walkShellTabWalk": "걷기",
-  "@walkShellTabWalk": {
-    "description": "하단 탭 — 걸음"
-  },
-  "walkShellTabSettings": "설정",
-  "@walkShellTabSettings": {
-    "description": "하단 탭 — 설정"
   },
   "walkShellTabDiary": "일기",
   "@walkShellTabDiary": {
@@ -2490,9 +2470,9 @@
   "@walkAlarmPermissionWarning": {
     "description": "알림 · 정확한 알람 권한이 없을 때 목록 위 경고"
   },
-  "walkAlarmPermissionWarningAction": "설정 탭에서 권한을 확인하세요",
+  "walkAlarmPermissionWarningAction": "알람 설정에서 권한을 확인하세요",
   "@walkAlarmPermissionWarningAction": {
-    "description": "권한 경고의 보조 설명 — 누르면 설정 탭으로 간다"
+    "description": "권한 경고의 보조 설명 — 누르면 알람 설정 화면이 열린다"
   },
   "walkAlarmRepeatDaily": "매일",
   "@walkAlarmRepeatDaily": {
@@ -2805,10 +2785,6 @@
       }
     }
   },
-  "walkSettingsTitle": "설정",
-  "@walkSettingsTitle": {
-    "description": "설정 화면 제목"
-  },
   "walkSettingsPermissions": "권한",
   "@walkSettingsPermissions": {
     "description": "설정 — 권한 섹션 제목"
@@ -2860,10 +2836,6 @@
   "walkSettingsNeedsUpdate": "업데이트 필요 ›",
   "@walkSettingsNeedsUpdate": {
     "description": "Health Connect 상태 — 업데이트 필요"
-  },
-  "walkSettingsTheme": "테마",
-  "@walkSettingsTheme": {
-    "description": "설정 — 테마 섹션 제목"
   },
   "walkSettingsThemeSystem": "시스템 설정",
   "@walkSettingsThemeSystem": {
@@ -3852,10 +3824,6 @@
   "walkDiaryTrashDeleteFailed": "삭제하지 못했어요. 다시 시도해 주세요",
   "@walkDiaryTrashDeleteFailed": {
     "description": "휴지통 기록을 영구 삭제하거나 휴지통을 비우지 못했을 때 오류"
-  },
-  "walkDiarySettings": "일기",
-  "@walkDiarySettings": {
-    "description": "설정 탭 일기 섹션 제목"
   },
   "walkDiarySettingsLock": "잠금",
   "@walkDiarySettingsLock": {

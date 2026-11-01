@@ -37,9 +37,9 @@ class _AlarmSettingsPageState extends State<AlarmSettingsPage> {
       appBar: AppBar(title: Text(l10n.walkAlarmSettingsTitle)),
       body: ListView(
         children: [
-          const HolidaySettingsTiles(),
+          const _HolidaySettingsTiles(),
           SettingsSectionHeader(l10n.walkSettingsPermissions),
-          const AlarmPermissionTiles(),
+          const _AlarmPermissionTiles(),
         ],
       ),
     );
@@ -47,8 +47,8 @@ class _AlarmSettingsPageState extends State<AlarmSettingsPage> {
 }
 
 /// 공휴일 미리 알림 스위치 · 공휴일 출처(캘린더 권한) 행.
-class HolidaySettingsTiles extends StatelessWidget {
-  const HolidaySettingsTiles({super.key});
+class _HolidaySettingsTiles extends StatelessWidget {
+  const _HolidaySettingsTiles();
 
   @override
   Widget build(BuildContext context) {
@@ -112,8 +112,8 @@ class HolidaySettingsTiles extends StatelessWidget {
 }
 
 /// 알람이 쓰는 권한 행 — 알림 · 정확한 알람 · 전체 화면.
-class AlarmPermissionTiles extends StatelessWidget {
-  const AlarmPermissionTiles({super.key});
+class _AlarmPermissionTiles extends StatelessWidget {
+  const _AlarmPermissionTiles();
 
   @override
   Widget build(BuildContext context) {

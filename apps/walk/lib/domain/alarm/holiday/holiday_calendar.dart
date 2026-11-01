@@ -8,7 +8,7 @@ abstract interface class HolidayCalendar {
   /// [date] 의 날짜(시각은 무시)가 공휴일이면 그 이름, 아니면 null.
   String? nameOf(DateTime date);
 
-  /// 지금 답하는 출처. 설정 탭이 사용자에게 보여 준다.
+  /// 지금 답하는 출처. 알람 설정이 사용자에게 보여 준다.
   HolidaySource get source;
 }
 

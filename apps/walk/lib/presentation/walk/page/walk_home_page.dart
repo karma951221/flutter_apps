@@ -115,7 +115,7 @@ class _WalkHomePageState extends State<WalkHomePage> {
   @override
   void didUpdateWidget(WalkHomePage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // 숨은 동안 달성했거나 목표를 낮췄다면(설정 탭) 탭이 보이는 지금 축하한다.
+    // 숨은 동안 달성했거나 목표를 낮췄다면(걷기 설정) 탭이 보이는 지금 축하한다.
     if (!oldWidget.active && widget.active) {
       if (_today.state case TodayActivityLoaded(:final activity)) {
         final today = _claimCelebration(

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/chat/chat_settings.dart';
 import 'chat_settings_state.dart';
 
-/// 설정 탭 "채팅" 섹션 — API 키 넣기 · 바꾸기 · 지우기.
+/// 물어보기 설정 — API 키 넣기 · 바꾸기 · 지우기.
 class ChatSettingsCubit extends Cubit<ChatSettingsState> {
   ChatSettingsCubit(this._settings) : super(const ChatSettingsState());
 

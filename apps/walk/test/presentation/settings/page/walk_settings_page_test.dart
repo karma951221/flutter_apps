@@ -46,4 +46,20 @@ void main() {
 
     verify(h.walk.openInstall).called(1);
   });
+
+  testWidgets('걸음 목표 시트를 저장하지 않고 닫으면 그대로다', (tester) async {
+    await h.pump(tester, const WalkSettingsPage());
+
+    await tester.tap(find.byKey(const Key('settings-step-goal')));
+    await tester.pumpAndSettle();
+    tester.widget<Slider>(find.byKey(const Key('step-goal-slider'))).onChanged!(
+      8000,
+    );
+    await tester.pump();
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    expect(h.goal.state, 10000);
+    expect(find.text('10,000 걸음'), findsOneWidget);
+  });
 }
