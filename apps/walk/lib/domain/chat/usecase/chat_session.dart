@@ -14,14 +14,21 @@ import '../chat_vendor.dart';
 import '../entity/conversation.dart';
 import '../tool/life_tools.dart';
 import '../tool/tool_result.dart';
+import 'chat_model_choice.dart';
 
 part 'chat_session.freezed.dart';
 
 enum ChatFailure {
   noKey,
+
+  /// 연결은 됐지만 모델 목록이 없다(받지 못함) — 보낼 모델이 없어 요청하지 않았다.
+  noModels,
   invalidKey,
   quotaExceeded,
   modelUnavailable,
+
+  /// 쓰던 모델이 없어져 목록을 다시 받아 다른 모델로 바꿨다. 다시 물으면 된다.
+  modelReplaced,
   rateLimited,
   overloaded,
   network,
@@ -55,7 +62,7 @@ sealed class ChatStopResult with _$ChatStopResult {
   const factory ChatStopResult.dropped() = ChatStopDropped;
 }
 
-/// 지금 질문에 쓸 벤더 · 모델. ② · ③ 이 설정 · 카탈로그에서 읽도록 [ChatSession.target] 만 바꾼다.
+/// 질문에 쓸 벤더 · 모델. [ChatSession.target] 이 설정 · 모델 목록에서 읽는다.
 typedef ChatTarget = ({ChatVendor vendor, String model});
 
 /// 한 대화. 질문마다 Claude 를 부르고, 도구를 요청하면 실행해 결과를 돌려준다.
@@ -64,13 +71,16 @@ typedef ChatTarget = ({ChatVendor vendor, String model});
 /// 질문이 실패하거나 중간에 구독이 끊기면 그 질문에서 덧붙인 메시지를 되돌린다.
 /// 멈춤은 꼬리만 글로 바꾼다.
 /// 메모리의 지금 대화는 고치지 않는다 · 저장 · 복원 · 벤더 교체는 글만.
-/// 예외는 벤더 · 모델이 바뀔 때 — 다음 질문 전에 문맥을 글로 접는다([target]).
+/// 예외는 벤더가 바뀔 때 — 다음 질문 전에 문맥을 글로 접는다([target]). 같은 벤더 안에서
+/// 모델만 바뀌면 그대로 보내고, 어댑터가 다른 모델의 턴을 다시 만든다.
+/// 사진 못 보는 모델에는 요청에서만 사진을 뺀다(메모리 문맥은 그대로).
 @lazySingleton
 class ChatSession {
   ChatSession(
     this._registry,
     this._tools,
     this._settings,
+    this._choice,
     this._clock,
     this._usage,
     this._ids,
@@ -80,16 +90,13 @@ class ChatSession {
   final ChatModelRegistry _registry;
   final LifeTools _tools;
   final ChatSettings _settings;
+  final ChatModelChoice _choice;
   final Clock _clock;
   final ChatUsageLog _usage;
   final IdGenerator _ids;
   final ChatTrace _trace;
 
   static const maxRounds = 8;
-
-  /// 키 기획 ① 동안 쓰는 모델 id. 요청마다 [ModelRequest.model] 로 넘긴다.
-  /// 키 기획 ③ 이 모델 카탈로그로 바꾸며 지운다.
-  static const interimModel = 'claude-opus-5-5';
 
   /// 한 대화에 보내는 사진 수 한도. 메모리의 지금 대화는 고치지 않으므로(thinking
   /// 서명이 깨진다) 보낸 사진은 매 요청에 다시 실린다 — 대신 한도에서 막는다.
@@ -111,15 +118,17 @@ class ChatSession {
 
   /// 메모리 문맥(vendorState 포함)을 만든 벤더 · 모델. 라운드가 끝날 때(completed)
   /// 그 요청의 target 으로 둔다. 글만의 문맥([reset] · [resume] · 접은 뒤)은 null —
-  /// 어디로든 보낼 수 있다.
+  /// 어디로든 보낼 수 있다. 벤더가 다를 때만 접는다(모델만 다르면 어댑터 몫).
   ChatTarget? _contextTarget;
 
-  /// 지금 쓰는 어댑터. 모델 카탈로그로 바꾸기 전까지(계획 Task 4) Claude 하나.
-  ChatModel get _model => _registry.of(ChatVendor.anthropic);
-
-  /// 지금(다음 질문)의 벤더 · 모델. 모델 카탈로그로 바꾸기 전까지(계획 Task 4)
-  /// 어댑터의 벤더와 [interimModel].
-  ChatTarget get target => (vendor: _model.vendor, model: interimModel);
+  /// 다음 질문의 벤더 · 모델. 미연결이거나 모델 목록이 없으면 null.
+  /// = (연결 벤더, 고른 모델 또는 추천).
+  ChatTarget? get target {
+    final vendor = _settings.connectedVendor;
+    final model = _choice.currentModel;
+    if (vendor == null || model == null) return null;
+    return (vendor: vendor, model: model);
+  }
 
   /// 임시 대화인가. 사용량 기록의 temporary 로 간다.
   bool get temporary => _temporary;
@@ -153,7 +162,10 @@ class ChatSession {
     if (_busy) throw StateError('ChatSession.ask is already running');
     _busy = true;
     final requestTarget = target;
-    if (_contextTarget != null && _contextTarget != requestTarget) {
+    final context = _contextTarget;
+    if (context != null &&
+        requestTarget != null &&
+        context.vendor != requestTarget.vendor) {
       _foldToText();
     }
     _turnStart = _messages.length;
@@ -228,7 +240,7 @@ class ChatSession {
     }
   }
 
-  /// 메모리 문맥을 질문 단위의 글로 접는다 — 다른 벤더 · 모델은 vendorState ·
+  /// 메모리 문맥을 질문 단위의 글로 접는다 — 다른 벤더는 vendorState ·
   /// 도구 호출 · 도구 결과를 읽지 못한다. 질문마다 assistant 메시지(라운드)별 글을
   /// 빈 줄로 이어 하나로 두고, 글이 비면 그 질문째 버린다. 접은 글은 모델에만 가고
   /// 화면에는 나오지 않는다. 사진도 함께 빠지므로 사진 수는 0.
@@ -285,7 +297,7 @@ class ChatSession {
   Stream<ChatEvent> _run(
     String question,
     int generation,
-    ChatTarget requestTarget,
+    ChatTarget? target,
   ) async* {
     bool stale() => generation != _generation;
     final start = _messages.length;
@@ -293,6 +305,8 @@ class ChatSession {
     var completed = false;
     // 이 질문이 쓴 키. 키 상태 기록 직전 저장된 키와 비교만 한다(어디에도 싣지 않음).
     String? requestKey;
+    // 요청을 보낸 벤더 · 모델. 오류 처리(modelUnavailable)가 쓴다.
+    ChatTarget? requestTarget;
     try {
       final apiKey = requestKey = await _settings.apiKey();
       // 표시보다 stale() 이 먼저 — 지난 질문의 늦은 표시가 다음 질문 기록에 섞이지 않게.
@@ -302,58 +316,87 @@ class ChatSession {
         yield const ChatEvent.failed(ChatFailure.noKey);
         return;
       }
+      if (target == null) {
+        yield const ChatEvent.failed(ChatFailure.noModels);
+        return;
+      }
+      requestTarget = target;
+      final model = _registry.of(target.vendor);
+      // 질문 동안 고정한다 — 그 사이 모델 · 빠른 출력을 바꾸면 다음 질문부터.
+      final fastMode = _choice.fastModeOn;
+      // 이미지 거절(imagesUnsupported)을 받으면 이 질문의 남은 요청은 사진 없이.
+      var images = _choice.supportsImages;
+      var retriedWithoutImages = false;
       final system = _systemPrompt();
-      final tools = _tools.definitions;
       final questionKey = _ids.newId();
       _messages.add(ChatMessage.user(question));
 
       for (var round = 1; round <= maxRounds; round++) {
         ModelCompleted? done;
-        final request = ModelRequest(
-          apiKey: apiKey,
-          model: requestTarget.model,
-          system: system,
-          messages: List.unmodifiable(_messages),
-          tools: tools,
-        );
-        if (_trace.enabled) _trace.mark(ChatTraceMark.round, {'n': round});
-        StreamSubscription<ModelEvent>? roundSub;
-        // 이 질문의 구독자가 떠나 await for 가 끝나도 모델 구독을 끊는다.
-        final relay = StreamController<ModelEvent>(
-          sync: true,
-          onCancel: () => roundSub?.cancel().ignore(),
-        );
-        _roundRelay = relay;
-        _roundSub = roundSub = _model
-            .stream(request)
-            .listen(relay.add, onError: relay.addError, onDone: relay.close);
-        await for (final event in relay.stream) {
-          if (stale()) return;
-          switch (event) {
-            case ModelTextDelta(:final text):
-              _turnText.write(text);
-              yield ChatEvent.text(text);
-            case ModelCompleted():
-              done = event;
-              // 받는 즉시 남긴다 — 청구된 라운드는 HTTP 가 닫히기 전에 멈추거나
-              // 비워도, 뒤 라운드가 실패해도 기록에 남아야 한다.
-              _recordUsage(
-                questionKey,
-                round,
-                requestTarget,
-                request,
-                event.usage,
-              );
-            case ModelThinking() ||
-                ModelProgress() ||
-                ModelToolCallStarted() ||
-                ModelToolCallReady():
-              break;
+        // 이미지 거절이면 같은 라운드를 사진 없이 한 번만 다시 보낸다.
+        while (true) {
+          final request = ModelRequest(
+            apiKey: apiKey,
+            model: target.model,
+            fastMode: fastMode,
+            system: system,
+            messages: _requestMessages(images: images),
+            tools: _tools.definitionsFor(images: images),
+          );
+          if (_trace.enabled) _trace.mark(ChatTraceMark.round, {'n': round});
+          StreamSubscription<ModelEvent>? roundSub;
+          // 이 질문의 구독자가 떠나 await for 가 끝나도 모델 구독을 끊는다.
+          final relay = StreamController<ModelEvent>(
+            sync: true,
+            onCancel: () => roundSub?.cancel().ignore(),
+          );
+          _roundRelay = relay;
+          _roundSub = roundSub = model
+              .stream(request)
+              .listen(relay.add, onError: relay.addError, onDone: relay.close);
+          try {
+            await for (final event in relay.stream) {
+              if (stale()) return;
+              switch (event) {
+                case ModelTextDelta(:final text):
+                  _turnText.write(text);
+                  yield ChatEvent.text(text);
+                case ModelCompleted():
+                  done = event;
+                  // 받는 즉시 남긴다 — 청구된 라운드는 HTTP 가 닫히기 전에 멈추거나
+                  // 비워도, 뒤 라운드가 실패해도 기록에 남아야 한다.
+                  _recordUsage(
+                    questionKey,
+                    round,
+                    target,
+                    request,
+                    event.usage,
+                  );
+                case ModelThinking() ||
+                    ModelProgress() ||
+                    ModelToolCallStarted() ||
+                    ModelToolCallReady():
+                  break;
+              }
+            }
+          } on ChatModelException catch (e) {
+            if (e.kind != ChatModelErrorKind.imagesUnsupported ||
+                !images ||
+                retriedWithoutImages ||
+                stale()) {
+              rethrow;
+            }
+            retriedWithoutImages = true;
+            images = false;
+            await _choice.markNoImages(target.model);
+            if (stale()) return;
+            continue;
           }
-        }
-        if (identical(_roundRelay, relay)) {
-          _roundRelay = null;
-          _roundSub = null;
+          if (identical(_roundRelay, relay)) {
+            _roundRelay = null;
+            _roundSub = null;
+          }
+          break;
         }
         if (stale()) return;
         if (done == null) {
@@ -380,7 +423,7 @@ class ChatSession {
                 });
               }
               _turnCited.addAll(result.entryIds);
-              final capped = _capped(result);
+              final capped = _capped(result, images: images);
               results.add(
                 ToolResultPart(
                   callId: part.id,
@@ -397,7 +440,7 @@ class ChatSession {
           case StopKind.endTurn || StopKind.maxTokens || StopKind.other:
             completed = true;
             _turnDone = true;
-            _contextTarget = requestTarget;
+            _contextTarget = target;
             _recordKeyStatus(ChatKeyStatus.valid, apiKey);
             yield ChatEvent.finished(citedEntryIds: List.of(_turnCited));
             return;
@@ -406,9 +449,16 @@ class ChatSession {
       yield const ChatEvent.failed(ChatFailure.tooManySteps);
     } on ChatModelException catch (e) {
       if (!stale()) {
-        final failure = _failureOf(e.kind);
+        var failure = _failureOf(e.kind);
         if (failure == ChatFailure.invalidKey) {
           _recordKeyStatus(ChatKeyStatus.invalid, requestKey);
+        }
+        final failed = requestTarget;
+        if (failure == ChatFailure.modelUnavailable && failed != null) {
+          // 목록을 다시 받아 지금 모델이 바뀌었으면 다시 물으면 된다(§6.3 끝).
+          final replaced = await _recoverFromUnavailable(failed.model);
+          if (stale()) return;
+          if (replaced) failure = ChatFailure.modelReplaced;
         }
         yield ChatEvent.failed(failure);
       }
@@ -467,10 +517,39 @@ class ChatSession {
     );
   }
 
-  /// 사진이 한도를 넘기면 사진 없이 오류 결과로 바꾼다.
-  ToolResult _capped(ToolResult result) {
+  /// 던지지 않는다 — 갱신이 실패하면 false(modelUnavailable 그대로).
+  Future<bool> _recoverFromUnavailable(String model) async {
+    try {
+      return await _choice.recoverFromUnavailable(model);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// 요청에 실을 문맥. [images] 가 false 면 도구 결과의 사진을 비운 사본 —
+  /// 메모리 문맥([_messages])은 그대로라 사진 되는 모델로 돌아오면 다시 실린다.
+  List<ChatMessage> _requestMessages({required bool images}) {
+    if (images) return List.unmodifiable(_messages);
+    return List.unmodifiable([
+      for (final message in _messages)
+        switch (message) {
+          ToolResultsMessage(:final results)
+              when results.any((r) => r.images.isNotEmpty) =>
+            ChatMessage.toolResults([
+              for (final r in results)
+                r.images.isEmpty ? r : r.copyWith(images: const []),
+            ]),
+          _ => message,
+        },
+    ]);
+  }
+
+  /// 사진이 한도를 넘기면 사진 없이 오류 결과로 바꾼다. [images] 가 false(사진 못 보는
+  /// 모델)면 사진을 싣지도, 세지도 않는다 — 실제로 보낸 사진만 센다.
+  ToolResult _capped(ToolResult result, {required bool images}) {
     final count = result.images.length;
     if (count == 0) return result;
+    if (!images) return result.copyWith(images: const []);
     if (_imagesSent + count > maxImagesPerConversation) {
       return const ToolResult(json: _photoLimitJson, isError: true);
     }
@@ -485,7 +564,7 @@ class ChatSession {
     ChatModelErrorKind.network => ChatFailure.network,
     ChatModelErrorKind.quotaExceeded => ChatFailure.quotaExceeded,
     ChatModelErrorKind.modelUnavailable => ChatFailure.modelUnavailable,
-    // 이미지 미지원 안내는 사진 거르기(계획 Task 4 이후) 몫. 그 전에는 unknown.
+    // 이미지 거절은 사진 없이 한 번 다시 보낸다([_run]). 또 나면 unknown.
     ChatModelErrorKind.server ||
     ChatModelErrorKind.imagesUnsupported => ChatFailure.unknown,
   };
@@ -498,6 +577,7 @@ class ChatSession {
         '사용자의 일기 · 걸음 수 · 알람 기상 기록을 도구로 찾아보고, 찾은 기록에 근거해서만 답한다.\n'
         '기록에서 찾지 못한 것은 추측하지 말고 "기록에서 찾지 못했어요"라고 말한다.\n'
         '날짜는 사용자의 말("지난주", "어제")을 오늘 기준으로 바꿔 도구에 넘긴다.\n'
+        '사진 보기 도구가 없으면 사진은 볼 수 없다고 짧게 답한다.\n'
         '한국어로, 마크다운 없이 짧은 평문으로 답한다.';
   }
 }

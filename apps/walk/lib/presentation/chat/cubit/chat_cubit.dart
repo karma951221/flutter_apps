@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/chat/chat_settings.dart';
 import '../../../domain/chat/chat_trace.dart';
+import '../../../domain/chat/chat_vendor.dart';
 import '../../../domain/chat/entity/conversation.dart';
 import '../../../domain/chat/repository/chat_history_repository.dart';
 import '../../../domain/chat/usecase/chat_key_verifier.dart';
@@ -92,7 +93,8 @@ class ChatCubit extends Cubit<ChatState> {
   /// 지금 열린 대화가 있는지 지켜본다. 밖에서 지워지면 빈 새 대화가 된다.
   StreamSubscription<bool>? _existsSub;
 
-  /// 진행 중인 질문 — 끝나거나 멈출 때 저장에 쓴다.
+  /// 진행 중인 질문 — 끝나거나 멈출 때 저장에 쓴다. [_turnTarget] 이 null 이면(모델 목록
+  /// 없음) 그 질문은 noModels 로 끝나 저장하지 않는다.
   String _turnQuestion = '';
   ChatTarget? _turnTarget;
 
@@ -116,7 +118,12 @@ class ChatCubit extends Cubit<ChatState> {
       (_, false) => ChatAccess.needsConsent,
       _ => ChatAccess.ready,
     };
-    emit(state.copyWith(access: access, vendor: _session.target.vendor));
+    // 모델 목록이 없어도(target null) 배너는 연결 벤더로.
+    final vendor =
+        _session.target?.vendor ??
+        _settings.connectedVendor ??
+        ChatVendor.anthropic;
+    emit(state.copyWith(access: access, vendor: vendor));
     if (recheck && access == ChatAccess.ready) {
       unawaited(
         Future.sync(

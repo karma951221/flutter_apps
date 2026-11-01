@@ -993,6 +993,8 @@
   "walkChatFailureInvalidKey": "Check your key",
   "walkChatFailureQuotaExceeded": "You're out of credits. Check your billing",
   "walkChatFailureModelUnavailable": "This model isn't available right now. Try again later",
+  "walkChatFailureNoModels": "Couldn't load the model list. Check your connection",
+  "walkChatFailureModelReplaced": "We switched the model. Please ask again",
   "walkChatFailureRateLimited": "Too many requests. Please ask again in a moment",
   "walkChatFailureOverloaded": "Claude is busy. Please ask again in a moment",
   "walkChatFailureNetwork": "The connection dropped. Please ask again",

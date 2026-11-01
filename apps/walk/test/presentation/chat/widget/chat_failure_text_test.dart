@@ -18,6 +18,19 @@ void main() {
     );
   });
 
+  test('모델 목록 없음 · 모델 바꿈 문구(ko)', () async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+
+    expect(
+      chatFailureText(l10n, ChatFailure.noModels),
+      '모델 목록을 받지 못했어요. 연결을 확인해 주세요',
+    );
+    expect(
+      chatFailureText(l10n, ChatFailure.modelReplaced),
+      '모델을 바꿨어요. 다시 물어봐 주세요',
+    );
+  });
+
   test('모든 실패에 빈 문구가 없다', () async {
     final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
     for (final failure in ChatFailure.values) {

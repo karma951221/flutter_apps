@@ -3183,6 +3183,12 @@ class AppLocalizationsJa extends AppLocalizations {
       '現在このモデルは使えません。しばらくしてからもう一度質問してください';
 
   @override
+  String get walkChatFailureNoModels => 'モデル一覧を取得できませんでした。接続を確認してください';
+
+  @override
+  String get walkChatFailureModelReplaced => 'モデルを切り替えました。もう一度質問してください';
+
+  @override
   String get walkChatFailureRateLimited => 'リクエストが多すぎます。少し待ってからもう一度聞いてください';
 
   @override

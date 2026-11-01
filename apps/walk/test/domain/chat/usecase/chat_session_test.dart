@@ -13,8 +13,12 @@ import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/entity/conversation.dart';
 import 'package:walk/domain/chat/tool/life_tools.dart';
 import 'package:walk/domain/chat/tool/tool_result.dart';
+import 'package:walk/domain/chat/chat_model_rules.dart';
+import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 
+import '../../../support/fake_chat_key_verifier.dart';
+import '../../../support/fake_chat_model_catalog.dart';
 import '../../../support/fake_chat_model_registry.dart';
 import '../../../support/fake_chat_settings.dart';
 import '../../../support/fake_chat_usage_log.dart';
@@ -111,13 +115,50 @@ List<Object> _answerWith(TokenUsage usage) => [
   _done([_text('네')], StopKind.endTurn, usage: usage),
 ];
 
+ModelInfo _info(String id, int day, {bool? images}) => ModelInfo(
+  id: id,
+  displayName: id,
+  createdAt: DateTime.utc(2026, 1, day),
+  supportsImages: images,
+);
+
+/// 추천(지금 목록의 sonnet). 사진 · 빠른 출력 둘 다 안 됨.
+const _rec = 'claude-sonnet-9-5';
+
+/// 빠른 출력 지원(테스트 표).
+const _opus = 'claude-opus-9-9';
+
+/// 사진을 못 보는 모델.
+const _haiku = 'claude-haiku-9-1';
+
+const _gpt = 'gpt-9';
+
+final _anthropicModels = [
+  _info(_opus, 9),
+  _info(_rec, 5),
+  _info(_haiku, 1, images: false),
+];
+
+final _fastSpecs = {
+  ChatVendor.anthropic: [
+    FastModeSpec(pattern: RegExp(r'^claude-opus-'), priceFactor: 6),
+  ],
+};
+
 void main() {
   late _MockLifeTools tools;
   late FakeChatSettings settings;
   late FakeChatUsageLog usage;
   late _SeqIds ids;
+  late FakeChatModelCatalog catalog;
+  late FakeChatKeyVerifier verifier;
+  late ChatModelChoice choice;
   final clock = _FixedClock(DateTime(2026, 10, 27, 9));
   const definitions = [
+    ToolSpec(name: 'search_diary', description: 'd', parameters: {}),
+    ToolSpec(name: 'view_entry_photos', description: 'd', parameters: {}),
+  ];
+  const noImageDefinitions = [
     ToolSpec(name: 'search_diary', description: 'd', parameters: {}),
   ];
 
@@ -126,18 +167,45 @@ void main() {
     registerFallbackValue(<String, Object?>{});
   });
 
-  setUp(() {
+  setUp(() async {
     tools = _MockLifeTools();
     when(() => tools.definitions).thenReturn(definitions);
+    when(() => tools.definitionsFor(images: true)).thenReturn(definitions);
+    when(
+      () => tools.definitionsFor(images: false),
+    ).thenReturn(noImageDefinitions);
     settings = FakeChatSettings('sk-ant-test-key');
     usage = FakeChatUsageLog();
     ids = _SeqIds();
+    catalog = FakeChatModelCatalog();
+    await catalog.replace(ChatVendor.anthropic, _anthropicModels, clock.value);
+    verifier = FakeChatKeyVerifier()
+      ..stored = (ChatVendor.anthropic, ModelListResult.ok(_anthropicModels));
+    choice = ChatModelChoice(
+      settings,
+      catalog,
+      verifier,
+      clock,
+      fastModeSpecs: _fastSpecs,
+    );
   });
+
+  ChatSession sessionOf(Map<ChatVendor, ChatModel> models) => ChatSession(
+    FakeChatModelRegistry(models),
+    tools,
+    settings,
+    choice,
+    clock,
+    usage,
+    ids,
+    const NoopChatTrace(),
+  );
 
   ChatSession session(_FakeModel model) => ChatSession(
     FakeChatModelRegistry({ChatVendor.anthropic: model}),
     tools,
     settings,
+    choice,
     clock,
     usage,
     ids,
@@ -181,7 +249,7 @@ void main() {
       expect(a.questionKey, b.questionKey);
       for (final r in usage.records) {
         expect(r.vendor, ChatVendor.anthropic);
-        expect(r.model, ChatSession.interimModel);
+        expect(r.model, _rec);
         expect(r.fastMode, isFalse);
         expect(r.purpose, ChatUsagePurpose.chat);
         expect(r.temporary, isFalse);
@@ -281,20 +349,16 @@ void main() {
     expect(model.requests.single.apiKey, 'sk-ant-test-key');
   });
 
-  test(
-    '요청 model 은 interimModel, fastMode 는 false, tools 는 LifeTools.definitions 그대로',
-    () async {
-      final model = _FakeModel([_answer('네')]);
+  test('요청 model 은 추천, fastMode 는 false, tools 는 사진 되는 모델의 정의 그대로', () async {
+    final model = _FakeModel([_answer('네')]);
 
-      await session(model).ask('하이').toList();
+    await session(model).ask('하이').toList();
 
-      final request = model.requests.single;
-      expect(ChatSession.interimModel, 'claude-opus-5-5');
-      expect(request.model, ChatSession.interimModel);
-      expect(request.fastMode, isFalse);
-      expect(identical(request.tools, definitions), isTrue);
-    },
-  );
+    final request = model.requests.single;
+    expect(request.model, _rec);
+    expect(request.fastMode, isFalse);
+    expect(identical(request.tools, definitions), isTrue);
+  });
 
   test(
     '진행 이벤트(thinking · progress · toolCallStarted · toolCallReady)는 ChatEvent 를 만들지 않는다',
@@ -410,6 +474,7 @@ void main() {
       FakeChatModelRegistry({ChatVendor.anthropic: model}),
       tools,
       settings,
+      choice,
       clock,
       usage,
       ids,
@@ -445,6 +510,7 @@ void main() {
       }),
       tools,
       settings,
+      choice,
       clock,
       usage,
       ids,
@@ -465,6 +531,7 @@ void main() {
         }),
         tools,
         slow,
+        choice,
         clock,
         usage,
         ids,
@@ -499,6 +566,7 @@ void main() {
         }),
         tools,
         settings,
+        choice,
         clock,
         usage,
         ids,
@@ -891,6 +959,7 @@ void main() {
             FakeChatModelRegistry({ChatVendor.anthropic: model}),
             tools,
             settings,
+            choice,
             clock,
             usage,
             ids,
@@ -927,6 +996,7 @@ void main() {
           FakeChatModelRegistry({ChatVendor.anthropic: model}),
           tools,
           settings,
+          choice,
           clock,
           usage,
           ids,
@@ -1001,6 +1071,7 @@ void main() {
       FakeChatModelRegistry({ChatVendor.anthropic: model}),
       tools,
       settings,
+      choice,
       clock,
       usage,
       ids,
@@ -1027,6 +1098,7 @@ void main() {
             FakeChatModelRegistry({ChatVendor.anthropic: model}),
             tools,
             settings,
+            choice,
             clock,
             usage,
             ids,
@@ -1073,6 +1145,7 @@ void main() {
       FakeChatModelRegistry({ChatVendor.anthropic: model}),
       tools,
       settings,
+      choice,
       clock,
       usage,
       ids,
@@ -1145,6 +1218,7 @@ void main() {
         FakeChatModelRegistry({ChatVendor.anthropic: model}),
         tools,
         settings,
+        choice,
         clock,
         usage,
         ids,
@@ -1465,6 +1539,7 @@ void main() {
         FakeChatModelRegistry({ChatVendor.anthropic: model}),
         tools,
         settings,
+        choice,
         clock,
         usage,
         ids,
@@ -1662,6 +1737,7 @@ void main() {
         FakeChatModelRegistry({ChatVendor.anthropic: model}),
         tools,
         settings,
+        choice,
         clock,
         usage,
         ids,
@@ -1726,19 +1802,294 @@ void main() {
   });
 
   group('벤더 · 모델 변경', () {
-    test('target 은 모델 vendor 와 interimModel', () {
-      final model = _FakeModel([]);
+    /// openai 로 연결하고 openai 목록을 받아 둔 상태로 바꾼다.
+    Future<void> switchToOpenAi() async {
+      settings.vendor = ChatVendor.openai;
+      await catalog.replace(ChatVendor.openai, [_info(_gpt, 3)], clock.value);
+    }
+
+    test('target 은 연결 벤더 · currentModel, 목록이 없으면 null', () async {
+      final chat = session(_FakeModel([]));
+
+      expect(chat.target, (vendor: ChatVendor.anthropic, model: _rec));
+      settings.selectedModel = _opus;
+      expect(chat.target, (vendor: ChatVendor.anthropic, model: _opus));
+
+      await switchToOpenAi();
+      expect(chat.target, (vendor: ChatVendor.openai, model: _gpt));
+
+      await catalog.clear();
+      expect(chat.target, isNull);
+
+      settings.key = null;
+      expect(chat.target, isNull);
+    });
+
+    test('요청 model 은 choice.currentModel, 어댑터는 연결 벤더의 것', () async {
+      const u = TokenUsage(inputTokens: 1, outputTokens: 1);
+      final claude = _FakeModel([]);
+      final gpt = _FakeModel([_answerWith(u)])..vendor = ChatVendor.openai;
+      await switchToOpenAi();
+
+      await sessionOf({
+        ChatVendor.anthropic: claude,
+        ChatVendor.openai: gpt,
+      }).ask('하이').toList();
+
+      expect(claude.requests, isEmpty);
+      expect(gpt.requests.single.model, _gpt);
+      expect(usage.records.single.vendor, ChatVendor.openai);
+      expect(usage.records.single.model, _gpt);
+    });
+
+    test('고른 모델이 없으면 추천 모델로 보낸다', () async {
+      final model = _FakeModel([])..repeat = _answer('네');
       final chat = session(model);
 
-      expect(chat.target, (
-        vendor: ChatVendor.anthropic,
-        model: ChatSession.interimModel,
-      ));
-      model.vendor = ChatVendor.openai;
-      expect(chat.target, (
-        vendor: ChatVendor.openai,
-        model: ChatSession.interimModel,
-      ));
+      await chat.ask('하나').toList();
+      settings.selectedModel = _opus;
+      await chat.ask('둘').toList();
+      // 목록에 없는 고른 모델 → 추천.
+      settings.selectedModel = 'claude-gone-1';
+      await chat.ask('셋').toList();
+
+      expect(model.requests.map((r) => r.model), [_rec, _opus, _rec]);
+    });
+
+    test('목록이 없으면 요청 없이 noModels, 키가 없으면 noKey 가 먼저', () async {
+      await catalog.clear();
+      final model = _FakeModel([])..repeat = _answer('네');
+      final chat = session(model);
+
+      expect(await chat.ask('하이').toList(), const [
+        ChatEvent.failed(ChatFailure.noModels),
+      ]);
+      expect(model.requests, isEmpty);
+
+      settings.key = null;
+      expect(await chat.ask('하이').toList(), const [
+        ChatEvent.failed(ChatFailure.noKey),
+      ]);
+
+      // 질문은 문맥에 남지 않는다.
+      settings.key = 'sk-ant-test-key';
+      await catalog.replace(
+        ChatVendor.anthropic,
+        _anthropicModels,
+        clock.value,
+      );
+      await chat.ask('다음').toList();
+      expect(model.requests.single.messages, const [ChatMessage.user('다음')]);
+    });
+
+    test('fastMode 는 choice.fastModeOn 그대로', () async {
+      const u = TokenUsage(inputTokens: 1, outputTokens: 1);
+      final model = _FakeModel([])..repeat = _answerWith(u);
+      final chat = session(model);
+      settings.fastMode = true;
+
+      // 켜짐 + 지원 안 함(추천 sonnet) → false.
+      await chat.ask('하나').toList();
+      // 켜짐 + 지원(opus) → true.
+      settings.selectedModel = _opus;
+      await chat.ask('둘').toList();
+      // 꺼짐 + 지원 → false.
+      settings.fastMode = false;
+      await chat.ask('셋').toList();
+
+      expect(model.requests.map((r) => r.fastMode), [false, true, false]);
+      expect(usage.records.map((r) => r.fastMode), [false, true, false]);
+    });
+
+    group('사진 못 보는 모델', () {
+      ToolResult photos(int count) => ToolResult(
+        json: '{"photos":$count}',
+        images: [
+          for (var i = 0; i < count; i++)
+            ToolImage(mediaType: 'image/jpeg', bytes: Uint8List.fromList([i])),
+        ],
+      );
+
+      List<Object> photoRound(String id) => [
+        _done([_toolUse(id, 'view_entry_photos')], StopKind.toolUse),
+      ];
+
+      List<ToolResultsMessage> resultsOf(ModelRequest request) =>
+          request.messages.whereType<ToolResultsMessage>().toList();
+
+      test(
+        'tools 에 view_entry_photos 가 없고 이전 사진이 요청에서 빠졌다가, 사진 되는 모델로 돌아오면 다시 실린다',
+        () async {
+          when(
+            () => tools.run('view_entry_photos', any()),
+          ).thenAnswer((_) async => photos(2));
+          final model = _FakeModel([photoRound('t1'), _answer('사진 답')])
+            ..repeat = _answer('네');
+          final chat = session(model);
+
+          await chat.ask('하나').toList();
+          settings.selectedModel = _haiku;
+          await chat.ask('둘').toList();
+          settings.selectedModel = null;
+          await chat.ask('셋').toList();
+
+          expect(
+            resultsOf(model.requests[1]).single.results.single.images,
+            hasLength(2),
+          );
+
+          final second = model.requests[2];
+          expect(second.model, _haiku);
+          expect(identical(second.tools, noImageDefinitions), isTrue);
+          final stripped = resultsOf(second).single.results.single;
+          expect(stripped.images, isEmpty);
+          expect(stripped.json, '{"photos":2}');
+          expect(stripped.callId, 't1');
+
+          final third = model.requests[3];
+          expect(third.model, _rec);
+          expect(identical(third.tools, definitions), isTrue);
+          expect(resultsOf(third).single.results.single.images, hasLength(2));
+        },
+      );
+
+      test('사진 못 보는 모델에선 사진 수가 늘지 않는다', () async {
+        when(
+          () => tools.run('view_entry_photos', any()),
+        ).thenAnswer((_) async => photos(6));
+        settings.selectedModel = _haiku;
+        final model = _FakeModel([
+          // 못 보는 모델이 그래도 부른 사진(18장) — 세지도, 싣지도 않는다.
+          photoRound('a1'),
+          photoRound('a2'),
+          photoRound('a3'),
+          _answer('하나 답'),
+          // 사진 되는 모델로 12장 — 한도 안.
+          photoRound('b1'),
+          photoRound('b2'),
+          _answer('둘 답'),
+        ]);
+        final chat = session(model);
+
+        await chat.ask('하나').toList();
+        for (final i in [1, 2, 3]) {
+          final result = resultsOf(model.requests[i]).last.results.single;
+          expect(result.isError, isFalse);
+          expect(result.images, isEmpty);
+        }
+
+        settings.selectedModel = null;
+        await chat.ask('둘').toList();
+        for (final i in [5, 6]) {
+          final result = resultsOf(model.requests[i]).last.results.single;
+          expect(result.isError, isFalse, reason: '$i');
+          expect(result.images, hasLength(6));
+        }
+      });
+
+      test('imagesUnsupported 면 markNoImages 하고 사진 없이 한 번 다시 보낸다', () async {
+        when(
+          () => tools.run('view_entry_photos', any()),
+        ).thenAnswer((_) async => photos(2));
+        final model = _FakeModel([
+          photoRound('t1'),
+          [const ChatModelException(ChatModelErrorKind.imagesUnsupported)],
+          _answer('사진 없이 답'),
+        ]);
+
+        final events = await session(model).ask('사진').toList();
+
+        expect(events.last, const ChatEvent.finished(citedEntryIds: []));
+        expect(catalog.noImages, {_rec});
+        expect(model.requests, hasLength(3));
+        expect(
+          resultsOf(model.requests[1]).single.results.single.images,
+          hasLength(2),
+        );
+        final retry = model.requests[2];
+        expect(retry.model, _rec);
+        expect(identical(retry.tools, noImageDefinitions), isTrue);
+        expect(resultsOf(retry).single.results.single.images, isEmpty);
+      });
+
+      test('다시 보낸 것도 imagesUnsupported 면 unknown', () async {
+        when(
+          () => tools.run('view_entry_photos', any()),
+        ).thenAnswer((_) async => photos(2));
+        final model = _FakeModel([
+          photoRound('t1'),
+          [const ChatModelException(ChatModelErrorKind.imagesUnsupported)],
+          [const ChatModelException(ChatModelErrorKind.imagesUnsupported)],
+          _answer('안 옴'),
+        ]);
+
+        final events = await session(model).ask('사진').toList();
+
+        expect(events.last, const ChatEvent.failed(ChatFailure.unknown));
+        expect(model.requests, hasLength(3));
+      });
+    });
+
+    group('modelUnavailable', () {
+      test('목록을 다시 받아 모델이 바뀌면 modelReplaced', () async {
+        settings.selectedModel = _opus;
+        verifier.stored = (
+          ChatVendor.anthropic,
+          ModelListResult.ok([_info(_rec, 5), _info(_haiku, 1)]),
+        );
+        final model = _FakeModel([
+          [const ChatModelException(ChatModelErrorKind.modelUnavailable)],
+          _answer('네'),
+        ]);
+        final chat = session(model);
+
+        expect(await chat.ask('하나').toList(), const [
+          ChatEvent.failed(ChatFailure.modelReplaced),
+        ]);
+        expect(verifier.fetchStoredCalls, 1);
+        expect(chat.target?.model, _rec);
+
+        await chat.ask('둘').toList();
+        expect(model.requests[1].model, _rec);
+        expect(model.requests[1].messages, const [ChatMessage.user('둘')]);
+      });
+
+      test('다시 받아도 같은 모델이면 modelUnavailable', () async {
+        settings.selectedModel = _opus;
+        final model = _FakeModel([
+          [const ChatModelException(ChatModelErrorKind.modelUnavailable)],
+        ]);
+
+        expect(await session(model).ask('하나').toList(), const [
+          ChatEvent.failed(ChatFailure.modelUnavailable),
+        ]);
+        expect(verifier.fetchStoredCalls, 1);
+      });
+
+      test('다시 받지 못하면 modelUnavailable', () async {
+        verifier.stored = (
+          ChatVendor.anthropic,
+          const ModelListResult.unreachable(),
+        );
+        final model = _FakeModel([
+          [const ChatModelException(ChatModelErrorKind.modelUnavailable)],
+        ]);
+
+        expect(await session(model).ask('하나').toList(), const [
+          ChatEvent.failed(ChatFailure.modelUnavailable),
+        ]);
+      });
+    });
+
+    test('시스템 프롬프트에 사진 도구가 없을 때의 안내 줄이 있다', () async {
+      final model = _FakeModel([_answer('네')]);
+
+      await session(model).ask('하이').toList();
+
+      expect(
+        model.requests.single.system,
+        contains('사진 보기 도구가 없으면 사진은 볼 수 없다고 짧게 답한다'),
+      );
     });
 
     test('벤더가 바뀌면 다음 ask 전에 메모리 문맥을 글로 접는다', () async {
@@ -1746,7 +2097,7 @@ void main() {
         () => tools.run('search_diary', any()),
       ).thenAnswer((_) async => const ToolResult(json: '{}'));
       const u = TokenUsage(inputTokens: 1, outputTokens: 1);
-      final model = _FakeModel([
+      final claude = _FakeModel([
         [
           const ModelEvent.textDelta('찾아볼게요.'),
           _done(
@@ -1759,16 +2110,18 @@ void main() {
           const ModelEvent.textDelta('답'),
           _done([_text('답')], StopKind.endTurn, state: _FakeState()),
         ],
-        _answerWith(u),
       ]);
-      final chat = session(model);
+      final gpt = _FakeModel([_answerWith(u)])..vendor = ChatVendor.openai;
+      final chat = sessionOf({
+        ChatVendor.anthropic: claude,
+        ChatVendor.openai: gpt,
+      });
 
       await chat.ask('q1').toList();
-      model.vendor = ChatVendor.openai;
+      await switchToOpenAi();
       await chat.ask('q2').toList();
 
-      final messages = model.requests[2].messages;
-      expect(messages, [
+      expect(gpt.requests.single.messages, [
         const ChatMessage.user('q1'),
         _assistant('찾아볼게요.\n\n답'),
         const ChatMessage.user('q2'),
@@ -1795,12 +2148,50 @@ void main() {
       );
     });
 
+    test('모델만 바뀌면 문맥을 접지 않는다', () async {
+      when(
+        () => tools.run('search_diary', any()),
+      ).thenAnswer((_) async => const ToolResult(json: '{}'));
+      final toolTurn =
+          _done(
+                [_text('찾아볼게요.'), _toolUse('t1', 'search_diary')],
+                StopKind.toolUse,
+                state: _FakeState(),
+              )
+              as ModelCompleted;
+      final answer =
+          _done([_text('답')], StopKind.endTurn, state: _FakeState())
+              as ModelCompleted;
+      final model = _FakeModel([
+        [toolTurn],
+        [const ModelEvent.textDelta('답'), answer],
+        _answer('둘 답'),
+      ]);
+      final chat = session(model);
+
+      await chat.ask('q1').toList();
+      settings.selectedModel = _opus;
+      await chat.ask('q2').toList();
+
+      final second = model.requests[2];
+      expect(second.model, _opus);
+      expect(second.messages, hasLength(5));
+      expect(identical(second.messages[1], toolTurn.message), isTrue);
+      expect(second.messages[2], isA<ToolResultsMessage>());
+      expect(identical(second.messages[3], answer.message), isTrue);
+    });
+
     test('멈춘 턴이 있는 문맥을 접어도 멈춤 표시가 남는다', () async {
       final model = _HangingModel();
+      final gpt = _FakeModel([_answer('셋 답')])..vendor = ChatVendor.openai;
       final chat = ChatSession(
-        FakeChatModelRegistry({ChatVendor.anthropic: model}),
+        FakeChatModelRegistry({
+          ChatVendor.anthropic: model,
+          ChatVendor.openai: gpt,
+        }),
         tools,
         settings,
+        choice,
         clock,
         usage,
         ids,
@@ -1823,11 +2214,10 @@ void main() {
       unawaited(model.rounds[1].close());
       await second;
 
-      model.vendor = ChatVendor.openai;
-      unawaited(chat.ask('q3').toList());
-      await pumpEventQueue();
+      await switchToOpenAi();
+      await chat.ask('q3').toList();
 
-      expect(model.requests[2], [
+      expect(gpt.requests.single.messages, [
         const ChatMessage.user('q1'),
         _assistant('받은 글\n${ChatSession.stoppedNote}'),
         const ChatMessage.user('q2'),

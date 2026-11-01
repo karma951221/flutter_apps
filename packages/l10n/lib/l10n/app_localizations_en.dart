@@ -3435,6 +3435,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'This model isn\'t available right now. Try again later';
 
   @override
+  String get walkChatFailureNoModels =>
+      'Couldn\'t load the model list. Check your connection';
+
+  @override
+  String get walkChatFailureModelReplaced =>
+      'We switched the model. Please ask again';
+
+  @override
   String get walkChatFailureRateLimited =>
       'Too many requests. Please ask again in a moment';
 

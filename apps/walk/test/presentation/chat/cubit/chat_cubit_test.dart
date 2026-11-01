@@ -792,6 +792,15 @@ void main() {
       verifyNever(() => history.delete(any()));
     }
 
+    test('target 이 null(모델 목록 없음)이면 저장하지 않는다', () async {
+      when(() => session.target).thenReturn(null);
+
+      await turn('질문', '답');
+
+      expect(appended, isEmpty);
+      verifyNoWrites();
+    });
+
     test('답이 끝나면 첫 턴에서 대화를 만들고 conversationId · 두 말풍선 seq 가 생긴다', () async {
       when(() => diary.entry('e1')).thenAnswer((_) async => Ok(_entry('e1')));
 
@@ -1436,6 +1445,18 @@ void main() {
 
       await cubit.refresh(recheck: false);
 
+      expect(cubit.state.vendor, ChatVendor.anthropic);
+    });
+
+    test('target 이 null 이면 배너 벤더는 연결 벤더, 미연결이면 anthropic', () async {
+      when(() => session.target).thenReturn(null);
+      settings.vendor = ChatVendor.openai;
+
+      await cubit.refresh(recheck: false);
+      expect(cubit.state.vendor, ChatVendor.openai);
+
+      settings.key = null;
+      await cubit.refresh(recheck: false);
       expect(cubit.state.vendor, ChatVendor.anthropic);
     });
   });

@@ -56,7 +56,19 @@ class LifeTools {
 
   static const _date = {'type': 'string', 'description': 'YYYY-MM-DD (로컬 날짜)'};
 
-  List<ToolSpec> get definitions => [
+  /// 사진 보기 도구 이름. 사진 못 보는 모델에는 이 도구를 주지 않는다(§6.4).
+  static const viewPhotosTool = 'view_entry_photos';
+
+  /// 모든 도구 = `definitionsFor(images: true)`.
+  List<ToolSpec> get definitions => definitionsFor(images: true);
+
+  /// [images] 가 false 면 사진 보기 도구([viewPhotosTool])를 뺀 넷.
+  List<ToolSpec> definitionsFor({required bool images}) => [
+    for (final spec in _all)
+      if (images || spec.name != viewPhotosTool) spec,
+  ];
+
+  List<ToolSpec> get _all => [
     _tool(
       'search_diary',
       '기간 안의 일기를 찾는다. 양 끝 날짜를 포함하고 오래된 것부터 최대 50개를 준다. '
@@ -72,7 +84,7 @@ class LifeTools {
       ['from', 'to'],
     ),
     _tool(
-      'view_entry_photos',
+      viewPhotosTool,
       '일기 하나의 사진(최대 4장, 영상은 썸네일)을 이미지로 본다.',
       {
         'entry_id': {'type': 'string', 'description': '일기 id'},
@@ -103,7 +115,7 @@ class LifeTools {
     try {
       return switch (name) {
         'search_diary' => await _searchDiary(input),
-        'view_entry_photos' => await _viewPhotos(input),
+        viewPhotosTool => await _viewPhotos(input),
         'list_diary_index' => await _index(),
         'daily_steps' => await _dailySteps(input),
         'wake_records' => await _wakeRecords(input),

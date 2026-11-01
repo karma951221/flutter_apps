@@ -394,6 +394,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1004.ChatModelRegistry>(),
         gh<_i70.LifeTools>(),
         gh<_i111.ChatSettings>(),
+        gh<_i317.ChatModelChoice>(),
         gh<_i494.Clock>(),
         gh<_i520.ChatUsageLog>(),
         gh<_i494.IdGenerator>(),

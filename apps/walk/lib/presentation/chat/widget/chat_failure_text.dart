@@ -6,9 +6,11 @@ import '../../../domain/chat/usecase/chat_session.dart';
 String chatFailureText(AppLocalizations l10n, ChatFailure failure) =>
     switch (failure) {
       ChatFailure.noKey => l10n.walkChatFailureNoKey,
+      ChatFailure.noModels => l10n.walkChatFailureNoModels,
       ChatFailure.invalidKey => l10n.walkChatFailureInvalidKey,
       ChatFailure.quotaExceeded => l10n.walkChatFailureQuotaExceeded,
       ChatFailure.modelUnavailable => l10n.walkChatFailureModelUnavailable,
+      ChatFailure.modelReplaced => l10n.walkChatFailureModelReplaced,
       ChatFailure.rateLimited => l10n.walkChatFailureRateLimited,
       ChatFailure.overloaded => l10n.walkChatFailureOverloaded,
       ChatFailure.network => l10n.walkChatFailureNetwork,

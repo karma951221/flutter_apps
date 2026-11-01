@@ -102,13 +102,19 @@ class ChatModelChoice {
   }
 
   /// force 거나 fetchedAt 이 maxAge 를 넘었거나 · 목록 벤더가 연결 벤더와 다르거나 · 키 상태가 unverified 면 받는다.
-  /// 실패는 조용히(캐시 유지). 받은 목록에 selectedModel 이 없으면 selectModel(null) + 알림 표시를 세운다.
+  /// 실패는 조용히(캐시 유지). 거른 목록이 비면 unreachable(캐시 · fetchedAt 그대로). 받은 목록에 selectedModel 이 없으면 selectModel(null) + 알림 표시를 세운다.
   /// 던지지 않는다.
   Future<ModelsRefresh> refresh({bool force = false}) async {
     try {
+      // 연결을 먼저 읽는다 — 옛 설정(복원 · 이전 버전)을 옮긴 뒤 동기 값을 본다.
+      final connection = await _settings.connection();
       final vendor = _settings.connectedVendor;
-      if (vendor == null) return const ModelsRefresh.skipped();
-      if (!force && !await _due(vendor)) return const ModelsRefresh.skipped();
+      if (connection == null || vendor == null) {
+        return const ModelsRefresh.skipped();
+      }
+      if (!force && !_due(vendor, connection.status)) {
+        return const ModelsRefresh.skipped();
+      }
 
       final fetched = await _verifier.fetchStored();
       if (fetched == null) return const ModelsRefresh.skipped();
@@ -119,10 +125,9 @@ class ChatModelChoice {
         case ModelListUnreachable():
           return const ModelsRefresh.unreachable();
         case ModelListOk(:final models):
-          // 거른 목록이 비면(본문을 못 읽은 경우 등) 쓰던 목록을 지우지 않는다.
-          if (chatModelsOf(listed, models).isEmpty &&
-              _catalog.vendor == listed &&
-              _catalog.models.isNotEmpty) {
+          // 거른 목록이 비면(본문을 못 읽은 경우 등) 받지 못한 것으로 본다 — 쓰던 목록을
+          // 지우지 않고, fetchedAt 을 찍지 않아 다음에 다시 받는다.
+          if (chatModelsOf(listed, models).isEmpty) {
             return const ModelsRefresh.unreachable();
           }
           await _catalog.replace(listed, models, _clock.now());
@@ -139,15 +144,14 @@ class ChatModelChoice {
     }
   }
 
-  Future<bool> _due(ChatVendor vendor) async {
+  bool _due(ChatVendor vendor, ChatKeyStatus status) {
     if (_catalog.vendor != vendor) return true;
     final fetchedAt = _catalog.fetchedAt;
     if (fetchedAt == null) return true;
     final age = _clock.now().difference(fetchedAt);
     // 시계를 되돌렸으면(받은 시각이 미래) 오래된 것으로 본다.
     if (age.isNegative || age >= maxAge) return true;
-    final connection = await _settings.connection();
-    return connection?.status == ChatKeyStatus.unverified;
+    return status == ChatKeyStatus.unverified;
   }
 
   /// 키 저장 직후 check 결과 목록을 그대로 넣는다(§4 한 번 호출로 두 가지, 결정 G5).

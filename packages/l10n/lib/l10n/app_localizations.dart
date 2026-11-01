@@ -5936,11 +5936,23 @@ abstract class AppLocalizations {
   /// **'크레딧이 부족해요. 결제 상태를 확인해 주세요'**
   String get walkChatFailureQuotaExceeded;
 
-  /// 채팅 실패 말풍선: 모델 없음 · 권한 없음. ③ 에서 '모델을 바꿨어요' 로 바뀜
+  /// 채팅 실패 말풍선: 모델 없음 · 권한 없음(목록을 다시 받아도 바꿀 모델이 없음). 바꿨으면 walkChatFailureModelReplaced
   ///
   /// In ko, this message translates to:
   /// **'지금 모델을 쓸 수 없어요. 잠시 뒤 다시 물어봐 주세요'**
   String get walkChatFailureModelUnavailable;
+
+  /// 채팅 실패 말풍선: 연결은 됐지만 모델 목록이 없어 보낼 모델이 없음
+  ///
+  /// In ko, this message translates to:
+  /// **'모델 목록을 받지 못했어요. 연결을 확인해 주세요'**
+  String get walkChatFailureNoModels;
+
+  /// 채팅 실패 말풍선: 쓰던 모델이 없어져 목록을 다시 받아 다른 모델로 바꿈(질문은 입력칸으로 돌아감)
+  ///
+  /// In ko, this message translates to:
+  /// **'모델을 바꿨어요. 다시 물어봐 주세요'**
+  String get walkChatFailureModelReplaced;
 
   /// 채팅 실패: 요청 한도
   ///

@@ -137,6 +137,23 @@ void main() {
     ]);
   });
 
+  test('definitionsFor(images: false) 에 view_entry_photos 가 없고 나머지 넷은 같다', () {
+    final all = tools.definitionsFor(images: true);
+    final noImages = tools.definitionsFor(images: false);
+
+    expect(all, tools.definitions);
+    expect(noImages.map((d) => d.name), [
+      'search_diary',
+      'list_diary_index',
+      'daily_steps',
+      'wake_records',
+    ]);
+    expect(noImages, [
+      for (final d in all)
+        if (d.name != 'view_entry_photos') d,
+    ]);
+  });
+
   test('search_diary 는 기록을 JSON 으로 주고 entryIds 를 채운다', () async {
     stubSearch([
       _entry('a', media: [_photo(1)]),

@@ -3184,6 +3184,12 @@ class AppLocalizationsKo extends AppLocalizations {
       '지금 모델을 쓸 수 없어요. 잠시 뒤 다시 물어봐 주세요';
 
   @override
+  String get walkChatFailureNoModels => '모델 목록을 받지 못했어요. 연결을 확인해 주세요';
+
+  @override
+  String get walkChatFailureModelReplaced => '모델을 바꿨어요. 다시 물어봐 주세요';
+
+  @override
   String get walkChatFailureRateLimited => '요청이 많아요. 잠시 뒤 다시 물어봐 주세요';
 
   @override

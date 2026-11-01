@@ -244,6 +244,47 @@ void main() {
       expect(catalog.models, [_haiku]);
     });
 
+    test('거른 목록이 비고 쓸 캐시가 없으면 unreachable · fetchedAt 을 찍지 않는다', () async {
+      verifier.stored = (
+        ChatVendor.anthropic,
+        ModelListResult.ok([_m('not-a-claude', 1)]),
+      );
+
+      expect(await choice.refresh(), const ModelsRefresh.unreachable());
+      expect(catalog.fetchedAt, isNull);
+      expect(catalog.vendor, isNull);
+
+      // 다음에도 다시 받는다(24시간 기다리지 않는다).
+      clock.advance(const Duration(minutes: 1));
+      await choice.refresh();
+      expect(verifier.fetchStoredCalls, 2);
+    });
+
+    test('다른 벤더 캐시만 있을 때 거른 목록이 비어도 unreachable · 캐시 그대로', () async {
+      await seed(models: [_m('gpt-9', 1)], vendor: ChatVendor.openai);
+      verifier.stored = (
+        ChatVendor.anthropic,
+        ModelListResult.ok([_m('not-a-claude', 1)]),
+      );
+
+      expect(await choice.refresh(), const ModelsRefresh.unreachable());
+      expect(catalog.vendor, ChatVendor.openai);
+      expect(catalog.fetchedAt, t0.toUtc());
+    });
+
+    test('연결을 먼저 읽은 뒤 연결 벤더를 본다(옛 설정 옮기기)', () async {
+      final legacy = _LegacySettings('sk-ant-stored');
+      settings = legacy;
+      choice = build();
+
+      expect(
+        await choice.refresh(),
+        const ModelsRefresh.updated(replacedSelection: false),
+      );
+      expect(legacy.connectionCalls, greaterThan(0));
+      expect(verifier.fetchStoredCalls, 1);
+    });
+
     test('받은 목록에 고른 모델이 없으면 추천으로 되돌리고 알림을 한 번 세운다', () async {
       await seed(models: [_opus, _sonnet, _haiku, _m('claude-old-1', 0)]);
       settings.selectedModel = 'claude-old-1';
@@ -358,4 +399,22 @@ void main() {
       expect(choice.currentModel, isNull);
     });
   });
+}
+
+/// connection() 을 읽기 전에는 connectedVendor 가 null 인 설정 — 옛 prefs 를 connection()
+/// 이 옮기는 실제 저장소를 흉내 낸다.
+class _LegacySettings extends FakeChatSettings {
+  _LegacySettings(super.key);
+
+  int connectionCalls = 0;
+
+  @override
+  Future<ChatConnection?> connection() {
+    connectionCalls++;
+    return super.connection();
+  }
+
+  @override
+  ChatVendor? get connectedVendor =>
+      connectionCalls == 0 ? null : super.connectedVendor;
 }
