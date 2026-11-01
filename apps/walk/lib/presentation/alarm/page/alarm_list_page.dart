@@ -22,7 +22,9 @@ import '../widget/alarm_tile.dart';
 import 'alarm_edit_page.dart';
 import 'alarm_history_page.dart';
 
-/// 알람 탭. [AlarmListCubit] 은 셸이 제공한다.
+/// 알람 화면(도구 탭 › 알람). [AlarmListCubit] 은 셸이 제공한다.
+///
+/// 앱바는 도구 탭이 그린다 — 쉬기는 [AlarmPauseAction], 기록은 [openAlarmHistory].
 ///
 /// 스낵바("N시간 M분 뒤에 울려요")는 이 탭의 `Scaffold` 에 띄운다 — 탭 `Scaffold` 가
 /// 셸 `Scaffold` 안에 중첩돼 있어, 앱 전체 메신저로 띄우면 셸 쪽에 떠서 FAB 를 가린다.
@@ -146,25 +148,6 @@ class _AlarmListPageState extends State<AlarmListPage> {
     }
   }
 
-  /// 앱바 [알람 쉬기] — 기간을 고르면 모든 알람을 그 기간 쉰다.
-  Future<void> _pause(BuildContext context) async {
-    final cubit = context.read<AlarmListCubit>();
-    final pause = await AlarmPauseSheet.show(context, now: _clock.now());
-    if (pause == null || !context.mounted) return;
-    await _savePause(context, () => cubit.setPause(pause));
-  }
-
-  /// 쉬기 저장 · 그만 쉬기. 실패하면 오류 스낵바.
-  Future<void> _savePause(BuildContext context, Future<void> Function() change) async {
-    final l10n = AppLocalizations.of(context);
-    try {
-      await change();
-    } on Object {
-      if (!context.mounted) return;
-      AppSnackBar.show(context, message: l10n.walkAlarmSaveFailed, type: AppSnackBarType.error);
-    }
-  }
-
   /// 저장 · 켜기 뒤 스낵바 — 남은 시간, 또는 쉬는 기간이라 울리지 않는다는 안내.
   void _showSaved(BuildContext context, AlarmSaveResult result) {
     final l10n = AppLocalizations.of(context);
@@ -185,23 +168,6 @@ class _AlarmListPageState extends State<AlarmListPage> {
     return ScaffoldMessenger(
       child: Builder(
         builder: (context) => Scaffold(
-          appBar: AppBar(
-            title: Text(l10n.walkAlarmListTitle),
-            actions: [
-              IconButton(
-                tooltip: l10n.walkAlarmPause,
-                icon: const Icon(Icons.bedtime_outlined),
-                onPressed: () => _pause(context),
-              ),
-              IconButton(
-                tooltip: l10n.walkAlarmHistory,
-                icon: const Icon(Icons.history),
-                onPressed: () => Navigator.of(
-                  context,
-                ).push<void>(MaterialPageRoute(builder: (_) => const AlarmHistoryPage())),
-              ),
-            ],
-          ),
           floatingActionButton: FloatingActionButton(
             tooltip: l10n.walkAlarmAdd,
             onPressed: () => _add(context),
@@ -311,5 +277,40 @@ class _AlarmListPageState extends State<AlarmListPage> {
         ),
       ),
     );
+  }
+}
+
+/// 앱바 [알람 쉬기] — 기간을 고르면 모든 알람을 그 기간 쉰다. [AlarmListCubit] 아래에 둔다.
+class AlarmPauseAction extends StatelessWidget {
+  const AlarmPauseAction({super.key});
+
+  Future<void> _pause(BuildContext context) async {
+    final cubit = context.read<AlarmListCubit>();
+    final pause = await AlarmPauseSheet.show(context, now: getIt<Clock>().now());
+    if (pause == null || !context.mounted) return;
+    await _savePause(context, () => cubit.setPause(pause));
+  }
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+    tooltip: AppLocalizations.of(context).walkAlarmPause,
+    icon: const Icon(Icons.bedtime_outlined),
+    onPressed: () => _pause(context),
+  );
+}
+
+/// 알람 울림 기록 화면을 연다.
+Future<void> openAlarmHistory(BuildContext context) => Navigator.of(
+  context,
+).push<void>(MaterialPageRoute(builder: (_) => const AlarmHistoryPage()));
+
+/// 쉬기 저장 · 그만 쉬기. 실패하면 오류 스낵바.
+Future<void> _savePause(BuildContext context, Future<void> Function() change) async {
+  final l10n = AppLocalizations.of(context);
+  try {
+    await change();
+  } on Object {
+    if (!context.mounted) return;
+    AppSnackBar.show(context, message: l10n.walkAlarmSaveFailed, type: AppSnackBarType.error);
   }
 }

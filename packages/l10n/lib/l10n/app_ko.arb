@@ -4417,5 +4417,11 @@
   "walkAppSettingsDisplay": "화면",
   "@walkAppSettingsDisplay": { "description": "앱 설정 화면(테마) 섹션 제목" },
   "walkAppSettingsFeatures": "기능별 설정",
-  "@walkAppSettingsFeatures": { "description": "앱 설정 기능별 설정 바로가기 섹션 제목" }
+  "@walkAppSettingsFeatures": { "description": "앱 설정 기능별 설정 바로가기 섹션 제목" },
+  "walkShellTabTools": "도구",
+  "@walkShellTabTools": { "description": "하단 탭 — 도구(알람 · 걷기를 묶는다). 도구 탭 앱바 제목" },
+  "walkToolsTabAlarm": "알람",
+  "@walkToolsTabAlarm": { "description": "도구 탭 상단 탭 — 알람" },
+  "walkToolsTabWalk": "걷기",
+  "@walkToolsTabWalk": { "description": "도구 탭 상단 탭 — 걷기" }
 }

@@ -131,8 +131,8 @@ class _WalkHomePageState extends State<WalkHomePage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // 앱바는 도구 탭이 그린다.
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.walkShellTabWalk)),
       // 오늘 값은 대시보드가 그려지기 전에 도착할 수 있어 화면 맨 위에서 듣는다.
       body: BlocListener<TodayActivityCubit, TodayActivityState>(
         bloc: _today,

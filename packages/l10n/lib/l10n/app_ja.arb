@@ -1014,5 +1014,8 @@
   "walkAppSettingsLock": "ロック",
   "walkAppSettingsLockDescription": "日記と質問をまとめてロックします",
   "walkAppSettingsDisplay": "表示",
-  "walkAppSettingsFeatures": "機能別の設定"
+  "walkAppSettingsFeatures": "機能別の設定",
+  "walkShellTabTools": "ツール",
+  "walkToolsTabAlarm": "アラーム",
+  "walkToolsTabWalk": "ウォーキング"
 }

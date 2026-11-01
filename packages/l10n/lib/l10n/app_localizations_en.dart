@@ -3499,4 +3499,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkAppSettingsFeatures => 'Feature settings';
+
+  @override
+  String get walkShellTabTools => 'Tools';
+
+  @override
+  String get walkToolsTabAlarm => 'Alarm';
+
+  @override
+  String get walkToolsTabWalk => 'Walking';
 }

@@ -3245,4 +3245,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkAppSettingsFeatures => '기능별 설정';
+
+  @override
+  String get walkShellTabTools => '도구';
+
+  @override
+  String get walkToolsTabAlarm => '알람';
+
+  @override
+  String get walkToolsTabWalk => '걷기';
 }

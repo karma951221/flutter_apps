@@ -118,9 +118,24 @@ void main() {
         locale: const Locale('ko'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
+        // 앱바는 도구 탭이 그린다 — 같은 행동(쉬기 · 기록)을 얹은 앱바로 감싼다.
         home: BlocProvider.value(
           value: cubit,
-          child: AlarmListPage(onOpenSettings: onOpenSettings ?? () {}),
+          child: Scaffold(
+            appBar: AppBar(
+              actions: [
+                const AlarmPauseAction(),
+                Builder(
+                  builder: (context) => IconButton(
+                    tooltip: '울림 기록',
+                    icon: const Icon(Icons.history),
+                    onPressed: () => openAlarmHistory(context),
+                  ),
+                ),
+              ],
+            ),
+            body: AlarmListPage(onOpenSettings: onOpenSettings ?? () {}),
+          ),
         ),
       ),
     );
@@ -534,7 +549,7 @@ void main() {
     });
   });
 
-  testWidgets('앱바 [울림 기록] 은 기록 화면을 연다', (tester) async {
+  testWidgets('openAlarmHistory 는 기록 화면을 연다', (tester) async {
     when(() => useCase.list()).thenAnswer((_) async => [weekday]);
     final archive = _MockRingArchive();
     final archiver = _MockRingArchiver();
@@ -561,7 +576,7 @@ void main() {
     // 기준 시각은 일 9-27 23:48.
     final today = AlarmPause(from: DateTime(2026, 9, 27), until: DateTime(2026, 9, 27));
 
-    testWidgets('앱바 [알람 쉬기] → 시트 → 오늘만 → 저장 · 카드 위 배너', (tester) async {
+    testWidgets('[알람 쉬기](AlarmPauseAction) → 시트 → 오늘만 → 저장 · 카드 위 배너', (tester) async {
       when(() => useCase.list()).thenAnswer((_) async => [weekday]);
       when(() => useCase.setPause(today)).thenAnswer((_) async {
         when(() => useCase.pause()).thenAnswer((_) async => today);

@@ -6073,6 +6073,24 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'기능별 설정'**
   String get walkAppSettingsFeatures;
+
+  /// 하단 탭 — 도구(알람 · 걷기를 묶는다). 도구 탭 앱바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'도구'**
+  String get walkShellTabTools;
+
+  /// 도구 탭 상단 탭 — 알람
+  ///
+  /// In ko, this message translates to:
+  /// **'알람'**
+  String get walkToolsTabAlarm;
+
+  /// 도구 탭 상단 탭 — 걷기
+  ///
+  /// In ko, this message translates to:
+  /// **'걷기'**
+  String get walkToolsTabWalk;
 }
 
 class _AppLocalizationsDelegate

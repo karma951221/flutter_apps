@@ -1014,5 +1014,8 @@
   "walkAppSettingsLock": "Lock",
   "walkAppSettingsLockDescription": "Locks Diary and Ask together",
   "walkAppSettingsDisplay": "Display",
-  "walkAppSettingsFeatures": "Feature settings"
+  "walkAppSettingsFeatures": "Feature settings",
+  "walkShellTabTools": "Tools",
+  "walkToolsTabAlarm": "Alarm",
+  "walkToolsTabWalk": "Walking"
 }
