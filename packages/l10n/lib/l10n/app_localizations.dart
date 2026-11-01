@@ -5837,7 +5837,7 @@ abstract class AppLocalizations {
   /// 채팅 탭: 전송 동의 안내 — 연결한 벤더 이름
   ///
   /// In ko, this message translates to:
-  /// **'질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI({vendor})로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.'**
+  /// **'질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI({vendor})로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요. 정리해 둔 위키의 제목 · 요약도 질문마다 함께 보내져요.'**
   String walkChatConsentNotice(String vendor);
 
   /// 채팅 탭: 전송 안내 동의 버튼
@@ -6465,7 +6465,7 @@ abstract class AppLocalizations {
   /// 대화 목록: 모두 지우기 확인 본문 — 지울 대화 수
   ///
   /// In ko, this message translates to:
-  /// **'대화 {count}개를 지워요. 사용량 기록은 남아요.'**
+  /// **'대화 {count}개를 지워요. 위키와 사용량 기록은 남아요.'**
   String walkChatHistoryDeleteAllBody(int count);
 
   /// 대화 목록: 모두 지우기 확인 버튼
@@ -6893,6 +6893,108 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'메모를 지우지 못했어요'**
   String get walkChatWikiDeleteFailed;
+
+  /// 물어보기 설정 · 색인 크기 시트: 위키 색인 크기 행 · 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'위키 색인 크기'**
+  String get walkChatWikiIndexSize;
+
+  /// 위키 색인 크기: 작게 단계
+  ///
+  /// In ko, this message translates to:
+  /// **'작게'**
+  String get walkChatWikiIndexSizeSmall;
+
+  /// 위키 색인 크기: 기본 단계
+  ///
+  /// In ko, this message translates to:
+  /// **'기본'**
+  String get walkChatWikiIndexSizeStandard;
+
+  /// 위키 색인 크기: 크게 단계
+  ///
+  /// In ko, this message translates to:
+  /// **'크게'**
+  String get walkChatWikiIndexSizeLarge;
+
+  /// 위키 색인 크기: 모두 단계
+  ///
+  /// In ko, this message translates to:
+  /// **'모두'**
+  String get walkChatWikiIndexSizeAll;
+
+  /// 색인 크기 시트: 단계 상한 — 자리 구분한 숫자 글
+  ///
+  /// In ko, this message translates to:
+  /// **'최근 {notes}개 · {chars}자까지'**
+  String walkChatWikiIndexSizeDetail(String notes, String chars);
+
+  /// 색인 크기 시트: 모두 단계 상한 — 자리 구분한 숫자 글
+  ///
+  /// In ko, this message translates to:
+  /// **'개수 제한 없음 · {chars}자까지'**
+  String walkChatWikiIndexSizeAllDetail(String chars);
+
+  /// 색인 크기 시트: 작게 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'질문마다 보내는 양이 가장 적어요'**
+  String get walkChatWikiIndexSizeSmallNote;
+
+  /// 색인 크기 시트: 크게 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'메모가 많을 때. 질문마다 토큰이 늘어요'**
+  String get walkChatWikiIndexSizeLargeNote;
+
+  /// 색인 크기 시트: 모두 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'안전 상한을 넘는 부분은 잘려요'**
+  String get walkChatWikiIndexSizeAllNote;
+
+  /// 색인 크기 시트 위쪽: 지금 위키 수 · 지금 크기 색인 글자 수
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 위키 {count}개 · 색인 약 {chars}자'**
+  String walkChatWikiIndexSizeCurrent(int count, String chars);
+
+  /// 물어보기 설정 · 위키 화면: 색인 크기 저장 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'색인 크기를 바꾸지 못했어요'**
+  String get walkChatWikiIndexSizeFailed;
+
+  /// 사용량 화면: 위키 절 헤더
+  ///
+  /// In ko, this message translates to:
+  /// **'위키'**
+  String get walkChatUsageWiki;
+
+  /// 사용량 화면: 질문당 평균 색인 줄
+  ///
+  /// In ko, this message translates to:
+  /// **'질문당 평균 색인'**
+  String get walkChatUsageWikiIndexAvg;
+
+  /// 사용량 화면: 평균 색인 값 — 자리 구분한 숫자 글
+  ///
+  /// In ko, this message translates to:
+  /// **'{notes}개 · {chars}자'**
+  String walkChatUsageWikiIndexAvgValue(String notes, String chars);
+
+  /// 사용량 화면: read_wiki 를 부른 질문 줄
+  ///
+  /// In ko, this message translates to:
+  /// **'read_wiki 를 부른 질문'**
+  String get walkChatUsageWikiReadRatio;
+
+  /// 사용량 화면: read_wiki 질문 수 / 전체 질문 수 — 자리 구분한 숫자 글
+  ///
+  /// In ko, this message translates to:
+  /// **'{count} / {questions}'**
+  String walkChatUsageWikiReadRatioValue(String count, String questions);
 }
 
 class _AppLocalizationsDelegate

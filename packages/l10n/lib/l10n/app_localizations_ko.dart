@@ -3130,7 +3130,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String walkChatConsentNotice(String vendor) {
-    return '질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI($vendor)로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.';
+    return '질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI($vendor)로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요. 정리해 둔 위키의 제목 · 요약도 질문마다 함께 보내져요.';
   }
 
   @override
@@ -3499,7 +3499,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String walkChatHistoryDeleteAllBody(int count) {
-    return '대화 $count개를 지워요. 사용량 기록은 남아요.';
+    return '대화 $count개를 지워요. 위키와 사용량 기록은 남아요.';
   }
 
   @override
@@ -3733,4 +3733,65 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatWikiDeleteFailed => '메모를 지우지 못했어요';
+
+  @override
+  String get walkChatWikiIndexSize => '위키 색인 크기';
+
+  @override
+  String get walkChatWikiIndexSizeSmall => '작게';
+
+  @override
+  String get walkChatWikiIndexSizeStandard => '기본';
+
+  @override
+  String get walkChatWikiIndexSizeLarge => '크게';
+
+  @override
+  String get walkChatWikiIndexSizeAll => '모두';
+
+  @override
+  String walkChatWikiIndexSizeDetail(String notes, String chars) {
+    return '최근 $notes개 · $chars자까지';
+  }
+
+  @override
+  String walkChatWikiIndexSizeAllDetail(String chars) {
+    return '개수 제한 없음 · $chars자까지';
+  }
+
+  @override
+  String get walkChatWikiIndexSizeSmallNote => '질문마다 보내는 양이 가장 적어요';
+
+  @override
+  String get walkChatWikiIndexSizeLargeNote => '메모가 많을 때. 질문마다 토큰이 늘어요';
+
+  @override
+  String get walkChatWikiIndexSizeAllNote => '안전 상한을 넘는 부분은 잘려요';
+
+  @override
+  String walkChatWikiIndexSizeCurrent(int count, String chars) {
+    return '지금 위키 $count개 · 색인 약 $chars자';
+  }
+
+  @override
+  String get walkChatWikiIndexSizeFailed => '색인 크기를 바꾸지 못했어요';
+
+  @override
+  String get walkChatUsageWiki => '위키';
+
+  @override
+  String get walkChatUsageWikiIndexAvg => '질문당 평균 색인';
+
+  @override
+  String walkChatUsageWikiIndexAvgValue(String notes, String chars) {
+    return '$notes개 · $chars자';
+  }
+
+  @override
+  String get walkChatUsageWikiReadRatio => 'read_wiki 를 부른 질문';
+
+  @override
+  String walkChatUsageWikiReadRatioValue(String count, String questions) {
+    return '$count / $questions';
+  }
 }

@@ -7,12 +7,14 @@ import 'package:walk/domain/chat/chat_history_settings.dart';
 import 'package:walk/domain/chat/chat_model_catalog.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
+import 'package:walk/domain/chat/repository/wiki_repository.dart';
 import 'package:walk/domain/chat/usecase/chat_key_verifier.dart';
 import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
 import 'package:walk/presentation/settings/page/chat_settings_page.dart';
 import 'package:walk/presentation/settings/widget/chat_settings_section.dart';
 
 import '../../../support/fake_chat_history.dart';
+import '../../../support/fake_wiki_repository.dart';
 import '../../../support/fake_chat_key_verifier.dart';
 import '../../../support/fake_chat_model_catalog.dart';
 import '../../../support/fake_chat_settings.dart';
@@ -30,7 +32,8 @@ void main() {
         ChatModelChoice(settings, catalog, verifier, const Clock()),
       )
       ..registerSingleton<ChatHistorySettings>(FakeChatHistorySettings())
-      ..registerSingleton<ChatHistoryRepository>(FakeChatHistoryCount());
+      ..registerSingleton<ChatHistoryRepository>(FakeChatHistoryCount())
+      ..registerSingleton<WikiRepository>(FakeWikiRepository());
   });
   tearDown(() => getIt.reset());
 

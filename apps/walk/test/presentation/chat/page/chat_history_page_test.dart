@@ -284,7 +284,7 @@ void main() {
     await tester.tap(find.text('대화 모두 지우기'));
     await tester.pumpAndSettle();
     expect(find.text('대화를 모두 지울까요?'), findsOneWidget);
-    expect(find.text('대화 2개를 지워요. 사용량 기록은 남아요.'), findsOneWidget);
+    expect(find.text('대화 2개를 지워요. 위키와 사용량 기록은 남아요.'), findsOneWidget);
     await tester.tap(find.widgetWithText(AppButton, '취소'));
     await tester.pumpAndSettle();
     expect(row('today'), findsOneWidget);

@@ -390,9 +390,197 @@ case _:
 }
 
 /// @nodoc
+mixin _$ChatUsageWikiStats {
+
+ int get questions; double get avgIndexNotes; double get avgIndexChars; int get questionsWithReadWiki;
+/// Create a copy of ChatUsageWikiStats
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatUsageWikiStatsCopyWith<ChatUsageWikiStats> get copyWith => _$ChatUsageWikiStatsCopyWithImpl<ChatUsageWikiStats>(this as ChatUsageWikiStats, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatUsageWikiStats&&(identical(other.questions, questions) || other.questions == questions)&&(identical(other.avgIndexNotes, avgIndexNotes) || other.avgIndexNotes == avgIndexNotes)&&(identical(other.avgIndexChars, avgIndexChars) || other.avgIndexChars == avgIndexChars)&&(identical(other.questionsWithReadWiki, questionsWithReadWiki) || other.questionsWithReadWiki == questionsWithReadWiki));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,questions,avgIndexNotes,avgIndexChars,questionsWithReadWiki);
+
+@override
+String toString() {
+  return 'ChatUsageWikiStats(questions: $questions, avgIndexNotes: $avgIndexNotes, avgIndexChars: $avgIndexChars, questionsWithReadWiki: $questionsWithReadWiki)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ChatUsageWikiStatsCopyWith<$Res>  {
+  factory $ChatUsageWikiStatsCopyWith(ChatUsageWikiStats value, $Res Function(ChatUsageWikiStats) _then) = _$ChatUsageWikiStatsCopyWithImpl;
+@useResult
+$Res call({
+ int questions, double avgIndexNotes, double avgIndexChars, int questionsWithReadWiki
+});
+
+
+
+
+}
+/// @nodoc
+class _$ChatUsageWikiStatsCopyWithImpl<$Res>
+    implements $ChatUsageWikiStatsCopyWith<$Res> {
+  _$ChatUsageWikiStatsCopyWithImpl(this._self, this._then);
+
+  final ChatUsageWikiStats _self;
+  final $Res Function(ChatUsageWikiStats) _then;
+
+/// Create a copy of ChatUsageWikiStats
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? questions = null,Object? avgIndexNotes = null,Object? avgIndexChars = null,Object? questionsWithReadWiki = null,}) {
+  return _then(ChatUsageWikiStats(
+questions: null == questions ? _self.questions : questions // ignore: cast_nullable_to_non_nullable
+as int,avgIndexNotes: null == avgIndexNotes ? _self.avgIndexNotes : avgIndexNotes // ignore: cast_nullable_to_non_nullable
+as double,avgIndexChars: null == avgIndexChars ? _self.avgIndexChars : avgIndexChars // ignore: cast_nullable_to_non_nullable
+as double,questionsWithReadWiki: null == questionsWithReadWiki ? _self.questionsWithReadWiki : questionsWithReadWiki // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ChatUsageWikiStats].
+extension ChatUsageWikiStatsPatterns on ChatUsageWikiStats {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(){
+final _that = this;
+switch (_that) {
+case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(){
+final _that = this;
+switch (_that) {
+case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>() {final _that = this;
+switch (_that) {
+case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>() {final _that = this;
+switch (_that) {
+case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
 mixin _$ChatUsageMonth {
 
- int get year; int get month; ChatUsageTotals get totals; List<ChatUsageModelRow> get rows;
+ int get year; int get month; ChatUsageTotals get totals; List<ChatUsageModelRow> get rows; ChatUsageWikiStats get wiki;
 /// Create a copy of ChatUsageMonth
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -403,16 +591,16 @@ $ChatUsageMonthCopyWith<ChatUsageMonth> get copyWith => _$ChatUsageMonthCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatUsageMonth&&(identical(other.year, year) || other.year == year)&&(identical(other.month, month) || other.month == month)&&(identical(other.totals, totals) || other.totals == totals)&&const DeepCollectionEquality().equals(other.rows, rows));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatUsageMonth&&(identical(other.year, year) || other.year == year)&&(identical(other.month, month) || other.month == month)&&(identical(other.totals, totals) || other.totals == totals)&&const DeepCollectionEquality().equals(other.rows, rows)&&(identical(other.wiki, wiki) || other.wiki == wiki));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,year,month,totals,const DeepCollectionEquality().hash(rows));
+int get hashCode => Object.hash(runtimeType,year,month,totals,const DeepCollectionEquality().hash(rows),wiki);
 
 @override
 String toString() {
-  return 'ChatUsageMonth(year: $year, month: $month, totals: $totals, rows: $rows)';
+  return 'ChatUsageMonth(year: $year, month: $month, totals: $totals, rows: $rows, wiki: $wiki)';
 }
 
 
@@ -423,7 +611,7 @@ abstract mixin class $ChatUsageMonthCopyWith<$Res>  {
   factory $ChatUsageMonthCopyWith(ChatUsageMonth value, $Res Function(ChatUsageMonth) _then) = _$ChatUsageMonthCopyWithImpl;
 @useResult
 $Res call({
- int year, int month, ChatUsageTotals totals, List<ChatUsageModelRow> rows
+ int year, int month, ChatUsageTotals totals, List<ChatUsageModelRow> rows, ChatUsageWikiStats wiki
 });
 
 
@@ -440,13 +628,14 @@ class _$ChatUsageMonthCopyWithImpl<$Res>
 
 /// Create a copy of ChatUsageMonth
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? year = null,Object? month = null,Object? totals = null,Object? rows = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? year = null,Object? month = null,Object? totals = null,Object? rows = null,Object? wiki = null,}) {
   return _then(ChatUsageMonth(
 year: null == year ? _self.year : year // ignore: cast_nullable_to_non_nullable
 as int,month: null == month ? _self.month : month // ignore: cast_nullable_to_non_nullable
 as int,totals: null == totals ? _self.totals : totals // ignore: cast_nullable_to_non_nullable
 as ChatUsageTotals,rows: null == rows ? _self.rows : rows // ignore: cast_nullable_to_non_nullable
-as List<ChatUsageModelRow>,
+as List<ChatUsageModelRow>,wiki: null == wiki ? _self.wiki : wiki // ignore: cast_nullable_to_non_nullable
+as ChatUsageWikiStats,
   ));
 }
 

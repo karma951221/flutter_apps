@@ -17,6 +17,7 @@ import 'package:walk/domain/chat/chat_history_settings.dart';
 import 'package:walk/domain/chat/chat_model_catalog.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
+import 'package:walk/domain/chat/repository/wiki_repository.dart';
 import 'package:walk/domain/chat/repository/chat_usage_repository.dart';
 import 'package:walk/domain/chat/usecase/chat_key_verifier.dart';
 import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
@@ -40,6 +41,7 @@ import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
 
 import '../../support/diary_fixtures.dart';
 import '../../support/fake_chat_history.dart';
+import '../../support/fake_wiki_repository.dart';
 import '../../support/fake_chat_key_verifier.dart';
 import '../../support/fake_chat_model_catalog.dart';
 import '../../support/fake_chat_settings.dart';
@@ -137,6 +139,7 @@ class SettingsHarness {
       )
       ..registerSingleton<ChatHistorySettings>(FakeChatHistorySettings())
       ..registerSingleton<ChatHistoryRepository>(FakeChatHistoryCount())
+      ..registerSingleton<WikiRepository>(FakeWikiRepository())
       ..registerSingleton<ChatUsageRepository>(FakeChatUsageRepository());
     diaryLock = DiaryLockCubit(
       lockRepo,

@@ -139,6 +139,42 @@ class _ChatUsageView extends StatelessWidget {
         ),
       SettingsSectionHeader(l10n.walkChatUsageByModel),
       for (final row in usage.rows) _ModelRow(row: row, number: number),
+      ..._wiki(usage.wiki, l10n, number),
+    ];
+  }
+
+  /// 위키 절 — 질문당 평균 색인, read_wiki 를 부른 질문 비율. 질문이 없으면 없다.
+  List<Widget> _wiki(
+    ChatUsageWikiStats wiki,
+    AppLocalizations l10n,
+    NumberFormat number,
+  ) {
+    if (wiki.questions == 0) return const [];
+    // 평균 메모 수는 소수 한 자리까지("23.5"), 정수면 소수점 없이.
+    final notes = NumberFormat.decimalPattern(l10n.localeName)
+      ..maximumFractionDigits = 1;
+    return [
+      SettingsSectionHeader(l10n.walkChatUsageWiki),
+      AppListTile(
+        key: const Key('chat-usage-wiki-index'),
+        title: Text(l10n.walkChatUsageWikiIndexAvg),
+        trailing: Text(
+          l10n.walkChatUsageWikiIndexAvgValue(
+            notes.format(wiki.avgIndexNotes),
+            number.format(wiki.avgIndexChars.round()),
+          ),
+        ),
+      ),
+      AppListTile(
+        key: const Key('chat-usage-wiki-read'),
+        title: Text(l10n.walkChatUsageWikiReadRatio),
+        trailing: Text(
+          l10n.walkChatUsageWikiReadRatioValue(
+            number.format(wiki.questionsWithReadWiki),
+            number.format(wiki.questions),
+          ),
+        ),
+      ),
     ];
   }
 }

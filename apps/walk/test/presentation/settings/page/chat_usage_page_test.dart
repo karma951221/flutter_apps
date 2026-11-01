@@ -39,6 +39,12 @@ final _november = ChatUsageMonth(
       outputTokens: 890,
     ),
   ],
+  wiki: const ChatUsageWikiStats(
+    questions: 12,
+    avgIndexNotes: 23.5,
+    avgIndexChars: 1234.4,
+    questionsWithReadWiki: 5,
+  ),
 );
 
 final _october = ChatUsageMonth(
@@ -191,5 +197,25 @@ void main() {
 
     expect(find.text('사용량 기록을 지우지 못했어요'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+  testWidgets("위키 절에 평균 색인 · 'n / m'", (tester) async {
+    await pump(tester);
+
+    expect(find.text('위키'), findsOneWidget);
+    expect(find.text('질문당 평균 색인'), findsOneWidget);
+    expect(trailingOf(tester, 'wiki-index'), '23.5개 · 1,234자');
+    expect(find.text('read_wiki 를 부른 질문'), findsOneWidget);
+    expect(trailingOf(tester, 'wiki-read'), '5 / 12');
+  });
+
+  testWidgets('질문이 없으면 위키 절이 없다', (tester) async {
+    await pump(tester);
+    await tester.tap(find.byKey(const Key('chat-usage-prev')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('2026년 10월'), findsOneWidget);
+    expect(find.text('위키'), findsNothing);
+    expect(find.byKey(const Key('chat-usage-wiki-index')), findsNothing);
+    expect(find.byKey(const Key('chat-usage-wiki-read')), findsNothing);
   });
 }

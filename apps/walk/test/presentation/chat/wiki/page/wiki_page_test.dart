@@ -107,8 +107,30 @@ void main() {
     expect(tester.widget<Icon>(hidden).semanticLabel, '색인에 안 실림');
   });
 
+  testWidgets("'색인에 안 실린 메모' 행을 누르면 크기 시트, '크게'를 고르면 행이 사라진다", (tester) async {
+    await h.setUp(
+      notes: [for (var id = 51; id >= 1; id--) wikiNote(id)],
+      size: WikiIndexSize.small,
+    );
+    await h.pump(tester, openWikiPage);
+
+    await tester.tap(find.byKey(const Key('wiki-not-indexed')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('wiki-size-large')), findsOneWidget);
+    expect(find.textContaining('지금 위키 51개'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('wiki-size-large')));
+    await tester.pumpAndSettle();
+
+    expect(h.settings.wikiIndexSize, WikiIndexSize.large);
+    expect(find.byKey(const Key('wiki-not-indexed')), findsNothing);
+    expect(find.byIcon(Icons.visibility_off_outlined), findsNothing);
+  });
+
   testWidgets('행을 누르면 그 메모 화면', (tester) async {
-    await h.setUp(notes: [wikiNote(1, title: '수면 패턴', summary: '주말은 늦게')]);
+    await h.setUp(
+      notes: [wikiNote(1, title: '수면 패턴', summary: '주말은 늦게')],
+    );
     await h.pump(tester, openWikiPage);
 
     await tester.tap(row(1));

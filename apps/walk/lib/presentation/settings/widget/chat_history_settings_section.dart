@@ -6,15 +6,18 @@ import 'package:l10n/l10n.dart';
 
 import '../../../domain/chat/chat_history_settings.dart';
 import '../../../domain/chat/repository/chat_history_repository.dart';
+import '../../../domain/chat/repository/wiki_repository.dart';
 import '../../diary/page/diary_route.dart';
 import '../cubit/chat_history_settings_cubit.dart';
 import '../cubit/chat_history_settings_state.dart';
 import '../page/chat_usage_page.dart';
 import 'settings_widgets.dart';
+import 'wiki_index_size_sheet.dart';
 
-/// 물어보기 설정 화면에서 ChatSettingsSection 아래. 2단계가 위키 색인 크기 · 위키 모두 지우기 행을 더한다.
+/// 물어보기 설정 화면에서 ChatSettingsSection 아래.
 ///
-/// 대화 보관 기간 · 사용량 화면 바로가기 · 대화 모두 지우기. cubit 은 이 섹션이 소유한다.
+/// 대화 보관 기간 · 사용량 화면 바로가기 · 대화 모두 지우기 · 위키 색인 크기 · 위키 모두 지우기.
+/// cubit 은 이 섹션이 소유한다.
 class ChatHistorySettingsSection extends StatelessWidget {
   const ChatHistorySettingsSection({super.key});
 
@@ -23,6 +26,7 @@ class ChatHistorySettingsSection extends StatelessWidget {
     create: (_) => ChatHistorySettingsCubit(
       getIt<ChatHistorySettings>(),
       getIt<ChatHistoryRepository>(),
+      getIt<WikiRepository>(),
     )..load(),
     child: const _ChatHistorySettingsView(),
   );
@@ -80,6 +84,53 @@ class _ChatHistorySettingsView extends StatelessWidget {
     }
   }
 
+  Future<void> _pickWikiIndexSize(
+    BuildContext context,
+    ChatHistorySettingsState state,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final cubit = context.read<ChatHistorySettingsCubit>();
+    final picked = await showWikiIndexSizeSheet(
+      context,
+      current: state.wikiIndexSize,
+      noteCount: state.wikiCount,
+      indexChars: state.wikiIndexChars,
+    );
+    if (picked == null || cubit.isClosed) return;
+    try {
+      await cubit.setWikiIndexSize(picked);
+    } on Object {
+      if (!context.mounted) return;
+      AppSnackBar.show(
+        context,
+        message: l10n.walkChatWikiIndexSizeFailed,
+        type: AppSnackBarType.error,
+      );
+    }
+  }
+
+  Future<void> _deleteAllWiki(BuildContext context, int count) async {
+    final l10n = AppLocalizations.of(context);
+    final cubit = context.read<ChatHistorySettingsCubit>();
+    final confirmed = await AppConfirmDialog.show(
+      context,
+      title: l10n.walkChatWikiDeleteAllTitle,
+      content: l10n.walkChatWikiDeleteAllBody(count),
+      confirmLabel: l10n.walkChatWikiDeleteAllConfirm,
+    );
+    if (!confirmed || cubit.isClosed) return;
+    try {
+      await cubit.deleteAllWiki();
+    } on Object {
+      if (!context.mounted) return;
+      AppSnackBar.show(
+        context,
+        message: l10n.walkChatWikiDeleteFailed,
+        type: AppSnackBarType.error,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -87,6 +138,7 @@ class _ChatHistorySettingsView extends StatelessWidget {
     return BlocBuilder<ChatHistorySettingsCubit, ChatHistorySettingsState>(
       builder: (context, state) {
         final count = state.conversationCount;
+        final wikiCount = state.wikiCount;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -127,6 +179,22 @@ class _ChatHistorySettingsView extends StatelessWidget {
               title: Text(l10n.walkChatHistoryDeleteAll),
               enabled: count > 0,
               onTap: count > 0 ? () => _deleteAll(context, count) : null,
+            ),
+            AppListTile(
+              key: const Key('chat-history-wiki-size'),
+              leading: const Icon(Icons.format_list_numbered_outlined),
+              title: Text(l10n.walkChatWikiIndexSize),
+              trailing: Text(wikiIndexSizeLabel(l10n, state.wikiIndexSize)),
+              onTap: () => _pickWikiIndexSize(context, state),
+            ),
+            AppListTile(
+              key: const Key('chat-history-wiki-delete-all'),
+              leading: const Icon(Icons.delete_sweep_outlined),
+              title: Text(l10n.walkChatWikiDeleteAll),
+              enabled: wikiCount > 0,
+              onTap: wikiCount > 0
+                  ? () => _deleteAllWiki(context, wikiCount)
+                  : null,
             ),
           ],
         );

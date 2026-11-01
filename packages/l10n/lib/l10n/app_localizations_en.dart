@@ -3380,7 +3380,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkChatConsentNotice(String vendor) {
-    return 'Your questions and the diary entries, photos, steps and wake-up records needed to answer are sent to the AI you connected ($vendor). Your key stays only in this phone\'s secure storage.';
+    return 'Your questions and the diary entries, photos, steps and wake-up records needed to answer are sent to the AI you connected ($vendor). Your key stays only in this phone\'s secure storage. Titles and summaries from your wiki are also sent with each question.';
   }
 
   @override
@@ -3817,7 +3817,7 @@ class AppLocalizationsEn extends AppLocalizations {
       other: '$count conversations will be deleted.',
       one: '1 conversation will be deleted.',
     );
-    return '$_temp0 Usage records are kept.';
+    return '$_temp0 Your wiki and usage records are kept.';
   }
 
   @override
@@ -4071,4 +4071,68 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkChatWikiDeleteFailed => 'Couldn\'t delete the note';
+
+  @override
+  String get walkChatWikiIndexSize => 'Wiki index size';
+
+  @override
+  String get walkChatWikiIndexSizeSmall => 'Small';
+
+  @override
+  String get walkChatWikiIndexSizeStandard => 'Default';
+
+  @override
+  String get walkChatWikiIndexSizeLarge => 'Large';
+
+  @override
+  String get walkChatWikiIndexSizeAll => 'All';
+
+  @override
+  String walkChatWikiIndexSizeDetail(String notes, String chars) {
+    return 'Up to $notes recent notes · $chars characters';
+  }
+
+  @override
+  String walkChatWikiIndexSizeAllDetail(String chars) {
+    return 'No note limit · up to $chars characters';
+  }
+
+  @override
+  String get walkChatWikiIndexSizeSmallNote =>
+      'Sends the least with each question';
+
+  @override
+  String get walkChatWikiIndexSizeLargeNote =>
+      'For many notes. Uses more tokens per question';
+
+  @override
+  String get walkChatWikiIndexSizeAllNote =>
+      'Anything past the safety limit is cut off';
+
+  @override
+  String walkChatWikiIndexSizeCurrent(int count, String chars) {
+    return 'Wiki now: $count notes · index about $chars characters';
+  }
+
+  @override
+  String get walkChatWikiIndexSizeFailed => 'Couldn\'t change the index size';
+
+  @override
+  String get walkChatUsageWiki => 'Wiki';
+
+  @override
+  String get walkChatUsageWikiIndexAvg => 'Average index per question';
+
+  @override
+  String walkChatUsageWikiIndexAvgValue(String notes, String chars) {
+    return '$notes notes · $chars chars';
+  }
+
+  @override
+  String get walkChatUsageWikiReadRatio => 'Questions that opened wiki notes';
+
+  @override
+  String walkChatUsageWikiReadRatioValue(String count, String questions) {
+    return '$count / $questions';
+  }
 }

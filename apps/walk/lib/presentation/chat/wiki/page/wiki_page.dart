@@ -11,6 +11,8 @@ import '../../../../domain/chat/chat_vendor.dart';
 import '../../../../domain/chat/entity/wiki_note.dart';
 import '../../../../domain/chat/repository/wiki_repository.dart';
 import '../../../../domain/chat/usecase/chat_session.dart';
+import '../../../../domain/chat/wiki/wiki_index.dart';
+import '../../../settings/widget/wiki_index_size_sheet.dart';
 import '../../widget/chat_vendor_icon.dart';
 import '../cubit/wiki_cubit.dart';
 import '../cubit/wiki_state.dart';
@@ -85,11 +87,39 @@ class WikiPage extends StatelessWidget {
           AppListTile(
             key: const Key('wiki-not-indexed'),
             title: Text(l10n.walkChatWikiNotIndexed(notIndexed)),
+            onTap: () => _pickSize(context, state),
           ),
         for (final note in state.notes)
           _NoteRow(note: note, indexed: state.indexedIds.contains(note.id)),
       ],
     );
+  }
+
+  /// 색인 크기 시트 — 고르면 저장하고, 돌아오면 색인 표시를 다시 계산한다.
+  Future<void> _pickSize(BuildContext context, WikiState state) async {
+    final l10n = AppLocalizations.of(context);
+    final cubit = context.read<WikiCubit>();
+    final settings = getIt<ChatHistorySettings>();
+    final picked = await showWikiIndexSizeSheet(
+      context,
+      current: state.size,
+      noteCount: state.notes.length,
+      indexChars: buildWikiIndex(state.notes, state.size).chars,
+    );
+    if (picked != null) {
+      try {
+        await settings.setWikiIndexSize(picked);
+      } on Object {
+        if (context.mounted) {
+          AppSnackBar.show(
+            context,
+            message: l10n.walkChatWikiIndexSizeFailed,
+            type: AppSnackBarType.error,
+          );
+        }
+      }
+    }
+    if (!cubit.isClosed) cubit.refreshSize();
   }
 
   Future<void> _deleteAll(BuildContext context, int count) async {

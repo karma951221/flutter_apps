@@ -17,7 +17,8 @@ WikiNote wikiNote(
   updatedAt: updatedAt ?? DateTime(2026, 10, 1).add(Duration(minutes: id)),
 );
 
-/// 읽기만 하는 메모리 위키. [stored] 는 이미 최근 순이라고 본다.
+/// 메모리 위키(읽기 · 모두 지우기). [stored] 는 이미 최근 순이라고 본다.
+/// [failDeleteAll] 이면 모두 지우기가 던진다.
 class FakeWikiRepository implements WikiRepository {
   FakeWikiRepository([List<WikiNote> notes = const []]) : stored = [...notes];
 
@@ -40,6 +41,18 @@ class FakeWikiRepository implements WikiRepository {
 
   @override
   Future<int> count() async => stored.length;
+
+  bool failDeleteAll = false;
+  int deleteAllCalls = 0;
+
+  @override
+  Future<int> deleteAll() async {
+    deleteAllCalls++;
+    if (failDeleteAll) throw StateError('delete failed');
+    final n = stored.length;
+    stored = [];
+    return n;
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

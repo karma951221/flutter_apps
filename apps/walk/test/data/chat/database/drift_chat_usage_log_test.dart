@@ -17,6 +17,9 @@ ChatUsageRecord _rec({
   int output = 5,
   int cacheRead = 2,
   int? reasoning,
+  int indexNotes = 0,
+  int indexChars = 0,
+  int readWiki = 0,
 }) => ChatUsageRecord(
   at: at ?? DateTime(2026, 10, 15, 12),
   questionKey: key,
@@ -31,6 +34,9 @@ ChatUsageRecord _rec({
   cacheReadTokens: cacheRead,
   cacheWriteTokens: 1,
   reasoningTokens: reasoning,
+  wikiIndexNotes: indexNotes,
+  wikiIndexChars: indexChars,
+  readWikiCalls: readWiki,
 );
 
 void main() {
@@ -172,5 +178,62 @@ void main() {
     await repo.deleteAll();
     expect(await db.select(db.chatUsageRows).get(), isEmpty);
     expect(await db.select(db.conversations).get(), hasLength(1));
+  });
+  group('위키 숫자', () {
+    test('질문별 1라운드 색인 값의 평균, read_wiki 를 한 번이라도 부른 질문 수', () async {
+      // a: 1라운드 10개 · 400자, 2라운드에서 read_wiki 2번.
+      await log.record(_rec(key: 'a', indexNotes: 10, indexChars: 400));
+      await log.record(
+        _rec(key: 'a', round: 2, indexNotes: 99, indexChars: 9999, readWiki: 2),
+      );
+      // b: 20개 · 800자, read_wiki 없음.
+      await log.record(_rec(key: 'b', indexNotes: 20, indexChars: 800));
+      // c: 0개, 1라운드에서 read_wiki 1번.
+      await log.record(_rec(key: 'c', readWiki: 1));
+      final w = (await repo.month(2026, 10)).wiki;
+      expect(w.questions, 3);
+      expect(w.avgIndexNotes, 10);
+      expect(w.avgIndexChars, 400);
+      expect(w.questionsWithReadWiki, 2);
+    });
+
+    test('wikiDistill · 임시 대화 행은 위키 숫자에서 빠진다', () async {
+      await log.record(_rec(key: 'a', indexNotes: 4, indexChars: 100));
+      await log.record(
+        _rec(
+          key: 'w',
+          purpose: ChatUsagePurpose.wikiDistill,
+          indexNotes: 50,
+          indexChars: 5000,
+          readWiki: 3,
+        ),
+      );
+      await log.record(
+        _rec(
+          key: 't',
+          temporary: true,
+          indexNotes: 50,
+          indexChars: 5000,
+          readWiki: 3,
+        ),
+      );
+      await log.record(
+        _rec(key: 'next', at: DateTime(2026, 11, 1), readWiki: 1),
+      );
+      final w = (await repo.month(2026, 10)).wiki;
+      expect(w.questions, 1);
+      expect(w.avgIndexNotes, 4);
+      expect(w.avgIndexChars, 100);
+      expect(w.questionsWithReadWiki, 0);
+    });
+
+    test('질문이 없으면 0', () async {
+      await log.record(_rec(key: 'w', purpose: ChatUsagePurpose.wikiDistill));
+      final w = (await repo.month(2026, 10)).wiki;
+      expect(w.questions, 0);
+      expect(w.avgIndexNotes, 0);
+      expect(w.avgIndexChars, 0);
+      expect(w.questionsWithReadWiki, 0);
+    });
   });
 }

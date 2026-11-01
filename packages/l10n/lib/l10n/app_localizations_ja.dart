@@ -3129,7 +3129,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String walkChatConsentNotice(String vendor) {
-    return '質問と、回答に必要な日記・写真・歩数・起床記録が接続した AI（$vendor）に送信されます。キーはこの端末の安全な保管領域にだけ保存されます。';
+    return '質問と、回答に必要な日記・写真・歩数・起床記録が接続した AI（$vendor）に送信されます。キーはこの端末の安全な保管領域にだけ保存されます。整理したWikiのタイトル・要約も質問ごとに送信されます。';
   }
 
   @override
@@ -3497,7 +3497,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String walkChatHistoryDeleteAllBody(int count) {
-    return '$count件の会話を削除します。使用量の記録は残ります。';
+    return '$count件の会話を削除します。Wikiと使用量の記録は残ります。';
   }
 
   @override
@@ -3732,4 +3732,65 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatWikiDeleteFailed => 'メモを削除できませんでした';
+
+  @override
+  String get walkChatWikiIndexSize => 'Wiki索引のサイズ';
+
+  @override
+  String get walkChatWikiIndexSizeSmall => '小';
+
+  @override
+  String get walkChatWikiIndexSizeStandard => '標準';
+
+  @override
+  String get walkChatWikiIndexSizeLarge => '大';
+
+  @override
+  String get walkChatWikiIndexSizeAll => 'すべて';
+
+  @override
+  String walkChatWikiIndexSizeDetail(String notes, String chars) {
+    return '最近の$notes件・$chars文字まで';
+  }
+
+  @override
+  String walkChatWikiIndexSizeAllDetail(String chars) {
+    return '件数制限なし・$chars文字まで';
+  }
+
+  @override
+  String get walkChatWikiIndexSizeSmallNote => '質問ごとの送信量が最も少ない';
+
+  @override
+  String get walkChatWikiIndexSizeLargeNote => 'メモが多いとき。質問ごとのトークンが増えます';
+
+  @override
+  String get walkChatWikiIndexSizeAllNote => '安全上限を超えた分は省かれます';
+
+  @override
+  String walkChatWikiIndexSizeCurrent(int count, String chars) {
+    return '現在のWiki $count件・索引 約$chars文字';
+  }
+
+  @override
+  String get walkChatWikiIndexSizeFailed => '索引のサイズを変更できませんでした';
+
+  @override
+  String get walkChatUsageWiki => 'Wiki';
+
+  @override
+  String get walkChatUsageWikiIndexAvg => '質問あたりの平均索引';
+
+  @override
+  String walkChatUsageWikiIndexAvgValue(String notes, String chars) {
+    return '$notes件・$chars文字';
+  }
+
+  @override
+  String get walkChatUsageWikiReadRatio => 'Wikiを開いた質問';
+
+  @override
+  String walkChatUsageWikiReadRatioValue(String count, String questions) {
+    return '$count / $questions';
+  }
 }

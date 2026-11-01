@@ -100,7 +100,48 @@ class DriftChatUsageRepository implements ChatUsageRepository {
           outputTokens: r.read(rowOutput) ?? 0,
         ),
     ];
-    return ChatUsageMonth(year: year, month: month, totals: totals, rows: rows);
+    return ChatUsageMonth(
+      year: year,
+      month: month,
+      totals: totals,
+      rows: rows,
+      wiki: await _wikiStats(inRange),
+    );
+  }
+
+  /// 일반 대화(chat · 임시 아님) 질문별로 묶어 1라운드 색인 값과 read_wiki 여부를 모은다.
+  Future<ChatUsageWikiStats> _wikiStats(Expression<bool> inRange) async {
+    final u = _db.chatUsageRows;
+    final isFirst = u.round.equals(1);
+    final notes = u.wikiIndexNotes.sum(filter: isFirst);
+    final chars = u.wikiIndexChars.sum(filter: isFirst);
+    final reads = u.readWikiCalls.sum();
+    final perQuestion =
+        await (_db.selectOnly(u)
+              ..addColumns([u.questionKey, notes, chars, reads])
+              ..where(
+                inRange &
+                    u.purpose.equalsValue(ChatUsagePurpose.chat) &
+                    u.temporary.equals(false),
+              )
+              ..groupBy([u.questionKey]))
+            .get();
+    final questions = perQuestion.length;
+    if (questions == 0) return ChatUsageWikiStats.empty;
+    var totalNotes = 0;
+    var totalChars = 0;
+    var withRead = 0;
+    for (final r in perQuestion) {
+      totalNotes += r.read(notes) ?? 0;
+      totalChars += r.read(chars) ?? 0;
+      if ((r.read(reads) ?? 0) >= 1) withRead++;
+    }
+    return ChatUsageWikiStats(
+      questions: questions,
+      avgIndexNotes: totalNotes / questions,
+      avgIndexChars: totalChars / questions,
+      questionsWithReadWiki: withRead,
+    );
   }
 
   @override

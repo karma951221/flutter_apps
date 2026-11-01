@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ChatHistorySettingsState {
 
- ChatRetention get retention; int get conversationCount;
+ ChatRetention get retention; int get conversationCount; WikiIndexSize get wikiIndexSize; int get wikiCount; int get wikiIndexChars;
 /// Create a copy of ChatHistorySettingsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ChatHistorySettingsStateCopyWith<ChatHistorySettingsState> get copyWith => _$Ch
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatHistorySettingsState&&(identical(other.retention, retention) || other.retention == retention)&&(identical(other.conversationCount, conversationCount) || other.conversationCount == conversationCount));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatHistorySettingsState&&(identical(other.retention, retention) || other.retention == retention)&&(identical(other.conversationCount, conversationCount) || other.conversationCount == conversationCount)&&(identical(other.wikiIndexSize, wikiIndexSize) || other.wikiIndexSize == wikiIndexSize)&&(identical(other.wikiCount, wikiCount) || other.wikiCount == wikiCount)&&(identical(other.wikiIndexChars, wikiIndexChars) || other.wikiIndexChars == wikiIndexChars));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,retention,conversationCount);
+int get hashCode => Object.hash(runtimeType,retention,conversationCount,wikiIndexSize,wikiCount,wikiIndexChars);
 
 @override
 String toString() {
-  return 'ChatHistorySettingsState(retention: $retention, conversationCount: $conversationCount)';
+  return 'ChatHistorySettingsState(retention: $retention, conversationCount: $conversationCount, wikiIndexSize: $wikiIndexSize, wikiCount: $wikiCount, wikiIndexChars: $wikiIndexChars)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ChatHistorySettingsStateCopyWith<$Res>  {
   factory $ChatHistorySettingsStateCopyWith(ChatHistorySettingsState value, $Res Function(ChatHistorySettingsState) _then) = _$ChatHistorySettingsStateCopyWithImpl;
 @useResult
 $Res call({
- ChatRetention retention, int conversationCount
+ ChatRetention retention, int conversationCount, WikiIndexSize wikiIndexSize, int wikiCount, int wikiIndexChars
 });
 
 
@@ -62,10 +62,13 @@ class _$ChatHistorySettingsStateCopyWithImpl<$Res>
 
 /// Create a copy of ChatHistorySettingsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? retention = null,Object? conversationCount = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? retention = null,Object? conversationCount = null,Object? wikiIndexSize = null,Object? wikiCount = null,Object? wikiIndexChars = null,}) {
   return _then(ChatHistorySettingsState(
 retention: null == retention ? _self.retention : retention // ignore: cast_nullable_to_non_nullable
 as ChatRetention,conversationCount: null == conversationCount ? _self.conversationCount : conversationCount // ignore: cast_nullable_to_non_nullable
+as int,wikiIndexSize: null == wikiIndexSize ? _self.wikiIndexSize : wikiIndexSize // ignore: cast_nullable_to_non_nullable
+as WikiIndexSize,wikiCount: null == wikiCount ? _self.wikiCount : wikiCount // ignore: cast_nullable_to_non_nullable
+as int,wikiIndexChars: null == wikiIndexChars ? _self.wikiIndexChars : wikiIndexChars // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }

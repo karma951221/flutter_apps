@@ -60,12 +60,14 @@ import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
+import 'package:walk/domain/chat/repository/wiki_repository.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/domain/chat/usecase/open_conversation.dart';
 import '../../../support/fake_chat_history.dart';
 import '../../../support/fake_chat_settings.dart';
 import '../../../support/fake_chat_key_verifier.dart';
 import '../../../support/fake_chat_model_catalog.dart';
+import '../../../support/fake_wiki_repository.dart';
 import 'package:walk/domain/chat/usecase/chat_key_verifier.dart';
 import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
 
@@ -226,6 +228,7 @@ void main() {
     getIt
       ..registerSingleton<ChatSession>(_MockChatSession())
       ..registerSingleton<ChatHistoryRepository>(_MockChatHistory())
+      ..registerSingleton<WikiRepository>(FakeWikiRepository())
       ..registerSingleton<OpenConversation>(OpenConversation())
       ..registerSingleton<ChatTrace>(const NoopChatTrace())
       ..registerSingleton<PlaceSource>(_MockPlaceSource());
