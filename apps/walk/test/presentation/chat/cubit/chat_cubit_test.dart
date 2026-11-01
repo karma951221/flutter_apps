@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core/core.dart';
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -18,6 +19,7 @@ import 'package:walk/domain/chat/usecase/open_conversation.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/presentation/chat/cubit/chat_cubit.dart';
+import 'package:walk/presentation/chat/cubit/chat_progress.dart';
 import 'package:walk/presentation/chat/cubit/chat_state.dart';
 import 'package:walk/presentation/chat/widget/model_chip.dart';
 
@@ -32,6 +34,14 @@ class _MockSession extends Mock implements ChatSession {}
 class _MockDiary extends Mock implements DiaryRepository {}
 
 class _MockHistory extends Mock implements ChatHistoryRepository {}
+
+/// fakeAsync 의 흐른 시간을 따르는 시계. [async] 를 넣기 전엔 [diaryT0] 에 멈춰 있다.
+class _FakeAsyncClock extends Clock {
+  FakeAsync? async;
+
+  @override
+  DateTime now() => diaryT0.add(async?.elapsed ?? Duration.zero);
+}
 
 const _target = (vendor: ChatVendor.openai, model: 'gpt-test');
 
@@ -139,6 +149,7 @@ void main() {
       choice,
       history,
       open,
+      const Clock(),
     );
   });
 
@@ -262,7 +273,7 @@ void main() {
 
     events.add(const ChatEvent.toolStarted(callId: 't1', name: 'search_diary'));
     await pumpEventQueue();
-    expect(cubit.state.activeTool, 'search_diary');
+    expect(cubit.state.bubbles.last.progress?.current, isA<StepTool>());
 
     events
       ..add(const ChatEvent.text('산책을 '))
@@ -270,7 +281,6 @@ void main() {
     await pumpEventQueue();
     expect(cubit.state.bubbles.last.role, ChatRole.assistant);
     expect(cubit.state.bubbles.last.text, '산책을 했어요');
-    expect(cubit.state.activeTool, isNull);
     expect(cubit.state.busy, isTrue);
 
     events.add(const ChatEvent.finished(citedEntryIds: []));
@@ -279,36 +289,6 @@ void main() {
     expect(cubit.state.busy, isFalse);
     expect(cubit.state.bubbles, hasLength(2));
   });
-
-  test(
-    '진행 이벤트(phase · progress · toolFinished · roundStarted)는 아직 상태를 바꾸지 않는다',
-    () async {
-      final events = StreamController<ChatEvent>();
-      when(() => session.ask(any())).thenAnswer((_) => events.stream);
-      await cubit.refresh();
-
-      final sent = cubit.send('질문');
-      await pumpEventQueue();
-      final before = cubit.state;
-      events
-        ..add(const ChatEvent.phase(ChatPhase.thinking))
-        ..add(const ChatEvent.progress('볼게요'))
-        ..add(
-          const ChatEvent.toolFinished(
-            callId: 't1',
-            name: 'search_diary',
-            summary: ToolSummary(kind: ChatToolKind.searchDiary, count: 3),
-          ),
-        )
-        ..add(const ChatEvent.roundStarted(2));
-      await pumpEventQueue();
-      expect(cubit.state, before);
-
-      events.add(const ChatEvent.finished(citedEntryIds: []));
-      await events.close();
-      await sent;
-    },
-  );
 
   test('빈 질문이나 답하는 중의 질문은 무시한다', () async {
     final events = StreamController<ChatEvent>();
@@ -382,7 +362,6 @@ void main() {
     verify(() => session.reset()).called(1);
     expect(cubit.state.bubbles, isEmpty);
     expect(cubit.state.busy, isFalse);
-    expect(cubit.state.activeTool, isNull);
     expect(cubit.state.access, ChatAccess.ready);
     // 끊긴 질문의 이벤트는 더 들어오지 않는다.
     expect(events.hasListener, isFalse);
@@ -477,7 +456,10 @@ void main() {
         await pumpEventQueue();
 
         expect(emitted.first.busy, isFalse);
-        expect(emitted.first.activeTool, isNull);
+        expect(
+          emitted.first.bubbles.lastOrNull?.progress?.running ?? false,
+          isFalse,
+        );
         expect(cubit.state.busy, isFalse);
         await listening.cancel();
       });
@@ -671,6 +653,7 @@ void main() {
         choice,
         history,
         open,
+        const Clock(),
         schedulePostFrame: frames.add,
       );
       await traced.refresh();
@@ -843,6 +826,7 @@ void main() {
         choice,
         history,
         open,
+        const Clock(),
         schedulePostFrame: frames.add,
       );
       await quiet.refresh();
@@ -1569,6 +1553,7 @@ void main() {
       choice,
       history,
       open,
+      const Clock(),
     );
 
     test('목록이 있으면 ready 와 칩(이름 · 벤더 · 번개 · 점)', () async {
@@ -1877,6 +1862,421 @@ void main() {
 
       expect(cubit.state.access, ChatAccess.ready);
       expect(settings.consentedVendor, ChatVendor.anthropic);
+    });
+  });
+
+  group('진행', () {
+    late _FakeAsyncClock clock;
+    late StreamController<ChatEvent> events;
+
+    /// fakeAsync 안에서 cubit 을 만들어 ready 로 둔다 — 타이머가 가짜 시간을 탄다.
+    ChatCubit ready(FakeAsync async) {
+      clock = _FakeAsyncClock()..async = async;
+      events = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => events.stream);
+      final c = ChatCubit(
+        session,
+        settings,
+        diary,
+        const NoopChatTrace(),
+        choice,
+        history,
+        open,
+        clock,
+      );
+      unawaited(c.refresh());
+      async.flushMicrotasks();
+      expect(c.state.access, ChatAccess.ready);
+      return c;
+    }
+
+    ChatProgress? progressOf(ChatCubit c) => c.state.bubbles.last.progress;
+
+    test('send 직후 같은 emit 에 progress=[sending], running', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        final emitted = <ChatState>[];
+        c.stream.listen(emitted.add);
+
+        unawaited(c.send('질문'));
+        async.flushMicrotasks();
+
+        final first = emitted.first;
+        expect(first.busy, isTrue);
+        final progress = first.bubbles.last.progress!;
+        expect(progress.steps, const [ChatProgressStep.sending()]);
+        expect(progress.running, isTrue);
+        expect(progress.startedAt, diaryT0);
+        expect(first.bubbles.first.progress, isNull);
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('단계 전이', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        unawaited(c.send('질문'));
+        const input = ToolInputSummary(kind: ChatToolKind.searchDiary);
+        const summary = ToolSummary(kind: ChatToolKind.searchDiary, count: 3);
+        events
+          ..add(const ChatEvent.phase(ChatPhase.sending))
+          ..add(const ChatEvent.phase(ChatPhase.thinking))
+          ..add(const ChatEvent.phase(ChatPhase.thinking))
+          ..add(const ChatEvent.progress('볼게요'))
+          ..add(const ChatEvent.toolStarted(callId: 'a', name: 'search_diary'))
+          ..add(const ChatEvent.toolStarted(callId: 'b', name: 'daily_steps'))
+          ..add(
+            const ChatEvent.toolStarted(
+              callId: 'a',
+              name: 'search_diary',
+              input: input,
+            ),
+          )
+          ..add(
+            const ChatEvent.toolFinished(
+              callId: 'b',
+              name: 'daily_steps',
+              summary: ToolSummary(kind: ChatToolKind.dailySteps, count: 7),
+            ),
+          )
+          ..add(
+            const ChatEvent.toolFinished(
+              callId: 'a',
+              name: 'search_diary',
+              summary: summary,
+            ),
+          )
+          ..add(const ChatEvent.roundStarted(2))
+          ..add(const ChatEvent.phase(ChatPhase.writing))
+          ..add(const ChatEvent.phase(ChatPhase.writing));
+        async.flushMicrotasks();
+
+        expect(progressOf(c)!.steps, const [
+          ChatProgressStep.sending(),
+          ChatProgressStep.thinking(),
+          ChatProgressStep.note('볼게요'),
+          ChatProgressStep.tool(
+            callId: 'b',
+            kind: ChatToolKind.dailySteps,
+            result: ToolSummary(kind: ChatToolKind.dailySteps, count: 7),
+          ),
+          ChatProgressStep.tool(
+            callId: 'a',
+            kind: ChatToolKind.searchDiary,
+            input: input,
+            result: summary,
+          ),
+          ChatProgressStep.writing(),
+        ]);
+        expect(progressOf(c)!.toolCalls, 2);
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('같은 callId 의 toolStarted 두 번은 단계 하나로 합치고 input 을 채운다', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        unawaited(c.send('질문'));
+        const input = ToolInputSummary(kind: ChatToolKind.searchDiary);
+        events
+          ..add(const ChatEvent.toolStarted(callId: 'a', name: 'search_diary'))
+          ..add(const ChatEvent.phase(ChatPhase.thinking))
+          ..add(
+            const ChatEvent.toolStarted(
+              callId: 'a',
+              name: 'search_diary',
+              input: input,
+            ),
+          );
+        async.flushMicrotasks();
+
+        expect(progressOf(c)!.steps, const [
+          ChatProgressStep.sending(),
+          ChatProgressStep.thinking(),
+          ChatProgressStep.tool(
+            callId: 'a',
+            kind: ChatToolKind.searchDiary,
+            input: input,
+          ),
+        ]);
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('toolFinished 는 result 를 채운다', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        unawaited(c.send('질문'));
+        const summary = ToolSummary(kind: ChatToolKind.wakeRecords, count: 2);
+        events
+          ..add(const ChatEvent.toolStarted(callId: 'a', name: 'wake_records'))
+          ..add(
+            const ChatEvent.toolFinished(
+              callId: 'a',
+              name: 'wake_records',
+              summary: summary,
+            ),
+          );
+        async.flushMicrotasks();
+
+        expect(
+          progressOf(c)!.current,
+          const ChatProgressStep.tool(
+            callId: 'a',
+            kind: ChatToolKind.wakeRecords,
+            result: summary,
+          ),
+        );
+        expect(progressOf(c)!.steps, hasLength(2));
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('노트는 누적 글로 바꿔 끼운다', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        unawaited(c.send('질문'));
+        events
+          ..add(const ChatEvent.progress('기록을'))
+          ..add(const ChatEvent.progress('기록을 볼게요'));
+        async.flushMicrotasks();
+
+        expect(progressOf(c)!.steps, const [
+          ChatProgressStep.sending(),
+          ChatProgressStep.note('기록을 볼게요'),
+        ]);
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('경과 초는 1초마다 오르고 끝나면 멈춘다', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        final sent = c.send('질문');
+        async.elapse(const Duration(seconds: 1));
+        expect(progressOf(c)!.elapsedSeconds, 1);
+        async.elapse(const Duration(seconds: 2));
+        expect(progressOf(c)!.elapsedSeconds, 3);
+
+        events.add(const ChatEvent.finished(citedEntryIds: []));
+        async.flushMicrotasks();
+        var done = false;
+        unawaited(sent.then((_) => done = true));
+        async.flushMicrotasks();
+        expect(done, isTrue);
+        expect(progressOf(c)!.running, isFalse);
+        async.elapse(const Duration(seconds: 5));
+        expect(progressOf(c)!.elapsedSeconds, 3);
+        expect(async.pendingTimers, isEmpty);
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('한 바퀴 안의 글 조각 셋은 emit 하나', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        unawaited(c.send('질문'));
+        async.flushMicrotasks();
+        final emitted = <ChatState>[];
+        c.stream.listen(emitted.add);
+
+        events
+          ..add(const ChatEvent.text('산책을 '))
+          ..add(const ChatEvent.text('했'))
+          ..add(const ChatEvent.text('어요'));
+        async.flushMicrotasks();
+        async.elapse(Duration.zero);
+
+        expect(emitted, hasLength(1));
+        expect(c.state.bubbles.last.text, '산책을 했어요');
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('글 버퍼는 다른 이벤트 앞에서 먼저 비운다', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        unawaited(c.send('질문'));
+        async.flushMicrotasks();
+        final emitted = <ChatState>[];
+        c.stream.listen(emitted.add);
+
+        events
+          ..add(const ChatEvent.text('a'))
+          ..add(const ChatEvent.toolStarted(callId: 't', name: 'search_diary'));
+        async.flushMicrotasks();
+
+        final withTool = emitted.firstWhere(
+          (s) => s.bubbles.last.progress?.current is StepTool,
+        );
+        expect(withTool.bubbles.last.text, 'a');
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('stop 은 남은 글 버퍼를 먼저 반영한다', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        when(() => session.stop()).thenReturn(
+          const ChatStopResult.kept(text: '반쯤 남음', citedEntryIds: []),
+        );
+        unawaited(c.send('질문'));
+        async.flushMicrotasks();
+        events.add(const ChatEvent.text('반쯤'));
+        async.flushMicrotasks();
+        events.add(const ChatEvent.text(' 남음'));
+        // 이벤트는 microtask 로 전달된다 — 버퍼에 쌓이고 flush 타이머 전에 멈춘다.
+        async.flushMicrotasks();
+
+        c.stop();
+
+        expect(c.state.bubbles.last.text, '반쯤 남음');
+        expect(c.state.bubbles.last.stopped, isTrue);
+        async.elapse(Duration.zero);
+        expect(c.state.bubbles.last.text, '반쯤 남음');
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('3초 미만으로 끝나면 progress 가 null', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        unawaited(c.send('질문'));
+        async.elapse(const Duration(seconds: 2));
+        events
+          ..add(const ChatEvent.text('답'))
+          ..add(const ChatEvent.finished(citedEntryIds: []));
+        async.flushMicrotasks();
+
+        expect(c.state.busy, isFalse);
+        expect(progressOf(c), isNull);
+        expect(c.state.bubbles.last.text, '답');
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('3초 이상이면 running false 로 남는다', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        unawaited(c.send('질문'));
+        events.add(const ChatEvent.phase(ChatPhase.writing));
+        async.elapse(const Duration(seconds: 4));
+        events.add(const ChatEvent.finished(citedEntryIds: []));
+        async.flushMicrotasks();
+
+        final progress = progressOf(c)!;
+        expect(progress.running, isFalse);
+        expect(progress.elapsedSeconds, 4);
+        expect(progress.current, const ChatProgressStep.writing());
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('실패해도 3초 이상이면 남는다', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        unawaited(c.send('질문'));
+        async.elapse(const Duration(seconds: 3));
+        events.add(const ChatEvent.failed(ChatFailure.network));
+        async.flushMicrotasks();
+
+        expect(c.state.bubbles.last.failure, ChatFailure.network);
+        expect(progressOf(c)!.running, isFalse);
+        expect(progressOf(c)!.elapsedSeconds, 3);
+        expect(async.pendingTimers, isEmpty);
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('멈추면 1초여도 마지막 단계 stopped 로 남는다', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        when(() => session.stop()).thenReturn(
+          const ChatStopResult.kept(text: '반', citedEntryIds: []),
+        );
+        unawaited(c.send('질문'));
+        events.add(const ChatEvent.text('반'));
+        async.elapse(const Duration(seconds: 1));
+
+        c.stop();
+
+        final progress = progressOf(c)!;
+        expect(progress.current, const ChatProgressStep.stopped());
+        expect(progress.running, isFalse);
+        expect(progress.elapsedSeconds, 1);
+        expect(progress.keepSummary, isTrue);
+        expect(async.pendingTimers, isEmpty);
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('newConversation · close 는 타이머를 멈춘다', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        unawaited(c.send('질문'));
+        events.add(const ChatEvent.text('a'));
+        async.flushMicrotasks();
+        expect(async.pendingTimers, isNotEmpty);
+
+        c.newConversation();
+        expect(async.pendingTimers, isEmpty);
+
+        final next = StreamController<ChatEvent>();
+        when(() => session.ask(any())).thenAnswer((_) => next.stream);
+        unawaited(c.send('다시'));
+        next.add(const ChatEvent.text('b'));
+        async.flushMicrotasks();
+        expect(async.pendingTimers, isNotEmpty);
+
+        unawaited(c.close());
+        async.flushMicrotasks();
+        expect(async.pendingTimers, isEmpty);
+      });
+    });
+
+    test('저장된 턴의 seq 는 진행이 바뀌어도 붙는다', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        unawaited(c.send('질문'));
+        async.elapse(const Duration(seconds: 4));
+        events
+          ..add(const ChatEvent.text('답'))
+          ..add(const ChatEvent.finished(citedEntryIds: []));
+        async.flushMicrotasks();
+
+        expect(appended, hasLength(1));
+        expect(c.state.bubbles.last.seq, 1);
+        expect(progressOf(c), isNotNull);
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
+    });
+
+    test('toString 에 진행 노트 글이 없다', () {
+      fakeAsync((async) {
+        final c = ready(async);
+        unawaited(c.send('질문'));
+        events.add(const ChatEvent.progress('비밀 노트'));
+        async.flushMicrotasks();
+
+        expect(c.state.toString(), isNot(contains('비밀')));
+        expect(c.state.bubbles.last.toString(), contains('progress'));
+        unawaited(c.close());
+        async.flushMicrotasks();
+      });
     });
   });
 }

@@ -4,6 +4,7 @@ import '../../../domain/chat/chat_vendor.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../widget/model_chip.dart';
+import 'chat_progress.dart';
 
 part 'chat_state.freezed.dart';
 
@@ -38,6 +39,11 @@ class ChatBubble with _$ChatBubble {
   @override
   final int? seq;
 
+  /// 답의 진행 단계 · 경과 초(assistant 말풍선만). 저장하지 않는다 — 연 대화 · 짧게 끝난
+  /// 답(요약을 남기지 않을 때)은 null.
+  @override
+  final ChatProgress? progress;
+
   const ChatBubble({
     required this.role,
     required this.text,
@@ -45,13 +51,15 @@ class ChatBubble with _$ChatBubble {
     this.failure,
     this.stopped = false,
     this.seq,
+    this.progress,
   });
 
-  /// 글은 남기지 않는다 — 길이와 표시만.
+  /// 글은 남기지 않는다 — 길이와 표시만. 진행 노트도 [ChatProgressStep.toString] 이 글을 뺀다.
   @override
   String toString() =>
       'ChatBubble(role: ${role.name}, textLength: ${text.length}, '
-      'cited: ${cited.length}, failure: $failure, stopped: $stopped, seq: $seq)';
+      'cited: ${cited.length}, failure: $failure, stopped: $stopped, seq: $seq, '
+      'progress: $progress)';
 }
 
 @freezed
@@ -65,10 +73,6 @@ class ChatState with _$ChatState {
   /// 답을 받는 중.
   @override
   final bool busy;
-
-  /// 지금 실행 중인 기록 도구 이름. 글이 다시 흘러나오면 비운다.
-  @override
-  final String? activeTool;
 
   /// 글 없이 멈춰 입력칸에 되돌릴 질문. 화면이 채운 뒤 consumeRestoredDraft 로 비운다.
   @override
@@ -106,7 +110,6 @@ class ChatState with _$ChatState {
     required this.access,
     this.bubbles = const [],
     this.busy = false,
-    this.activeTool,
     this.restoredDraft,
     this.conversationId,
     this.temporary = false,
@@ -121,7 +124,7 @@ class ChatState with _$ChatState {
   @override
   String toString() =>
       'ChatState(access: ${access.name}, bubbles: $bubbles, busy: $busy, '
-      'activeTool: $activeTool, restoredDraftLength: ${restoredDraft?.length}, '
+      'restoredDraftLength: ${restoredDraft?.length}, '
       'conversationId: $conversationId, temporary: $temporary, '
       'vendor: ${vendor.name}, loading: $loading, model: $model, '
       'modelsInvalidKey: $modelsInvalidKey, '

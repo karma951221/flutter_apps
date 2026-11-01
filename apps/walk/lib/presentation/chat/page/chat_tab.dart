@@ -23,6 +23,7 @@ import '../../lock/widget/diary_lock_gate.dart';
 import '../../settings/open_settings.dart';
 import '../../shell/widget/feature_menu.dart';
 import '../cubit/chat_cubit.dart';
+import '../cubit/chat_progress.dart';
 import '../cubit/chat_state.dart';
 import '../widget/bubble_actions_sheet.dart';
 import '../widget/chat_bubble_view.dart';
@@ -72,6 +73,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
     getIt<ChatModelChoice>(),
     getIt<ChatHistoryRepository>(),
     getIt<OpenConversation>(),
+    getIt<Clock>(),
   );
 
   late final _secure = getIt<SecureWindow>();
@@ -334,7 +336,11 @@ class _ChatBody extends StatelessWidget {
                 ? ChatExamples(onAsk: (q) => unawaited(cubit.send(q)))
                 : _BubbleList(state: state, onOpenSettings: onOpenSettings),
           ),
-          if (state.activeTool != null)
+          // 옛 "기록을 찾는 중…" 줄 — 진행 줄(Task 7)이 대신한다.
+          if (state.bubbles.lastOrNull?.progress case ChatProgress(
+            running: true,
+            current: StepTool(),
+          ))
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.md,

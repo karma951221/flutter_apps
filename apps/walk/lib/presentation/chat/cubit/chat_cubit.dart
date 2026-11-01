@@ -9,12 +9,14 @@ import '../../../domain/chat/chat_trace.dart';
 import '../../../domain/chat/chat_vendor.dart';
 import '../../../domain/chat/entity/conversation.dart';
 import '../../../domain/chat/repository/chat_history_repository.dart';
+import '../../../domain/chat/tool/tool_summary.dart';
 import '../../../domain/chat/usecase/chat_model_choice.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/chat/usecase/open_conversation.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../widget/model_chip.dart';
+import 'chat_progress.dart';
 import 'chat_state.dart';
 
 /// 다음 프레임이 그려진 뒤 [callback] 을 부른다.
@@ -36,6 +38,9 @@ class _Thread {
 /// 대화는 [ChatSession](싱글턴)이 들고, 이 cubit 은 화면에 보일 말풍선만 들고 있다.
 /// 탭이 소유한다(잠금 게이트 바깥) — 다시 잠겼다 풀려도 대화가 남는다.
 ///
+/// 답 말풍선마다 [ChatProgress](진행 단계 · 경과 초)를 든다 — 세션 이벤트로 단계를 갱신하고
+/// [_tick] 마다 경과 초를 올린다. 글 조각은 한 바퀴(이벤트 루프) 동안 모아 한 번에 그린다.
+///
 /// 임시 대화가 아니면 턴이 끝날 때(답 끝 · 글이 있는 멈춤)마다 [ChatHistoryRepository] 에
 /// 저장한다. 임시 대화는 저장소에 한 행도 쓰지 않는다.
 class ChatCubit extends Cubit<ChatState> {
@@ -46,9 +51,12 @@ class ChatCubit extends Cubit<ChatState> {
     this._trace,
     this._choice,
     this._history,
-    this._open, {
+    this._open,
+    this._clock, {
     void Function(VoidCallback) schedulePostFrame = _addPostFrame,
+    Duration tick = const Duration(seconds: 1),
   }) : _schedulePostFrame = schedulePostFrame,
+       _tick = tick,
        super(const ChatState(access: ChatAccess.checking));
 
   final ChatSession _session;
@@ -64,6 +72,19 @@ class ChatCubit extends Cubit<ChatState> {
 
   /// 지금 열린 저장 대화 id. 보관 정리가 이 대화를 건너뛴다.
   final OpenConversation _open;
+
+  /// 진행의 시작 시각 · 경과 초.
+  final Clock _clock;
+
+  /// 경과 초를 다시 재는 간격.
+  final Duration _tick;
+
+  /// 답하는 동안 경과 초를 올린다. 끝 · 실패 · 멈춤 · 새 대화 · 닫기에서 멈춘다.
+  Timer? _ticker;
+
+  /// 아직 그리지 않은 글 조각. 비어 있다 차면 [_textTimer] 하나가 다음 바퀴에 비운다.
+  final StringBuffer _pendingText = StringBuffer();
+  Timer? _textTimer;
 
   /// 프레임 쪽 표시(firstVisible · firstGlyph)를 찍을 때 쓴다. 위젯은 계측을 모른다.
   final void Function(VoidCallback) _schedulePostFrame;
@@ -274,12 +295,19 @@ class ChatCubit extends Cubit<ChatState> {
         bubbles: [
           ...state.bubbles,
           ChatBubble(role: ChatRole.user, text: text),
-          const ChatBubble(role: ChatRole.assistant, text: ''),
+          ChatBubble(
+            role: ChatRole.assistant,
+            text: '',
+            progress: ChatProgress(
+              startedAt: _clock.now(),
+              steps: const [ChatProgressStep.sending()],
+            ),
+          ),
         ],
         busy: true,
-        activeTool: null,
       ),
     );
+    _startTicker();
     _sub = events.listen(
       (event) => unawaited(_onEvent(event, generation)),
       onError: (Object _) => _fail(ChatFailure.unknown, generation),
@@ -380,6 +408,8 @@ class ChatCubit extends Cubit<ChatState> {
   /// 글이 없으면 질문 · 답 말풍선을 지우고 질문을 [ChatState.restoredDraft] 로 돌려준다.
   void stop() {
     if (!state.busy || _finishing) return;
+    // 남은 글 조각을 먼저 — 멈춤 글과 화면 순서가 어긋나지 않게.
+    _flushText();
     _generation++;
     // 세션을 먼저 멈춘다 — 구독 취소를 기다린 뒤 부르면 그 사이 질문이 스스로 되돌려져
     // 받은 글을 잃는다. 취소는 기다리지 않는다(세션 루프는 stop 으로 이미 끝났다).
@@ -390,8 +420,11 @@ class ChatCubit extends Cubit<ChatState> {
     switch (result) {
       case ChatStopKept(:final text, :final citedEntryIds):
         // 세션이 남긴 글이 기준이다 — 다음 문맥에 들어가는 것과 화면이 같게.
-        final bubbles = _withLast((b) => b.copyWith(text: text, stopped: true));
-        emit(state.copyWith(bubbles: bubbles, busy: false, activeTool: null));
+        final bubbles = _settled(
+          _withLast((b) => b.copyWith(text: text, stopped: true)),
+          stopped: true,
+        );
+        emit(state.copyWith(bubbles: bubbles, busy: false));
         if (citedEntryIds.isNotEmpty && bubbles.isNotEmpty) {
           unawaited(
             _attachCited(
@@ -404,6 +437,8 @@ class ChatCubit extends Cubit<ChatState> {
         }
         unawaited(_saveLastTurn(citedEntryIds, stopped: true));
       case ChatStopDropped():
+        // 말풍선이 사라지므로 진행도 함께 사라진다.
+        _stopTicker();
         final bubbles = state.bubbles;
         final question = bubbles.length >= 2
             ? bubbles[bubbles.length - 2].text
@@ -414,7 +449,6 @@ class ChatCubit extends Cubit<ChatState> {
                 ? bubbles.sublist(0, bubbles.length - 2)
                 : const [],
             busy: false,
-            activeTool: null,
             restoredDraft: question,
           ),
         );
@@ -456,32 +490,74 @@ class ChatCubit extends Cubit<ChatState> {
 
   Future<void> _onEvent(ChatEvent event, int generation) async {
     if (generation != _generation || isClosed) return;
+    if (event case ChatText(:final delta)) {
+      _bufferText(delta);
+      return;
+    }
+    // 다른 이벤트 앞에서 모아 둔 글을 먼저 그린다 — 글과 진행 순서가 어긋나지 않게.
+    _flushText();
     switch (event) {
-      case ChatText(:final delta):
-        emit(
-          state.copyWith(
-            bubbles: _withLast((b) => b.copyWith(text: b.text + delta)),
-            activeTool: null,
+      case ChatText():
+        break;
+      case ChatPhaseChanged(phase: ChatPhase.thinking):
+        _updateProgress(
+          (p) => p.current is StepThinking
+              ? p
+              : _push(p, const ChatProgressStep.thinking()),
+        );
+      case ChatPhaseChanged(phase: ChatPhase.writing):
+        _updateProgress(
+          (p) => p.current is StepWriting
+              ? p
+              : _push(p, const ChatProgressStep.writing()),
+        );
+      // 보내는 중은 send 가 이미 넣었다.
+      case ChatPhaseChanged(phase: ChatPhase.sending):
+        break;
+      case ChatProgressNote(:final note):
+        _updateProgress(
+          (p) => p.current is StepNote
+              ? p.copyWith(
+                  steps: [
+                    ...p.steps.sublist(0, p.steps.length - 1),
+                    ChatProgressStep.note(note),
+                  ],
+                )
+              : _push(p, ChatProgressStep.note(note)),
+        );
+      case ChatToolStarted(:final callId, :final name, :final input):
+        _updateProgress(
+          (p) => _moveTool(
+            p,
+            callId,
+            update: (t) => t.copyWith(input: input ?? t.input),
+            create: () => ChatProgressStep.tool(
+              callId: callId,
+              kind: chatToolKindOf(name),
+              input: input,
+            ),
           ),
         );
-        if (_trace.enabled && delta.isNotEmpty) {
-          _traceVisible();
-          if (!_sawGlyph) {
-            _sawGlyph = true;
-            _markAfterFrame(ChatTraceMark.firstGlyph);
-          }
-        }
-      case ChatToolStarted(:final name):
-        emit(state.copyWith(activeTool: name));
         if (_trace.enabled) _traceVisible();
-      // 진행 줄은 다음 단계(Task 5)에서 그린다 — 지금은 무시.
-      case ChatPhaseChanged() ||
-          ChatProgressNote() ||
-          ChatToolFinished() ||
-          ChatRoundStarted():
+      case ChatToolFinished(:final callId, :final name, :final summary):
+        _updateProgress(
+          (p) => _moveTool(
+            p,
+            callId,
+            update: (t) => t.copyWith(result: summary),
+            create: () => ChatProgressStep.tool(
+              callId: callId,
+              kind: chatToolKindOf(name),
+              result: summary,
+            ),
+          ),
+        );
+      case ChatRoundStarted():
         break;
       case ChatFinished(:final citedEntryIds):
         _finishing = true;
+        // 경과 초는 답이 끝난 때로 고정한다(인용을 읽는 시간은 넣지 않는다).
+        emit(state.copyWith(bubbles: _settled(state.bubbles)));
         final running = _running;
         // 인용을 읽기 전에 지금 대화(thread)로 저장을 줄 세운다 — 읽는 사이 [새 대화] · open 해도
         // 끝난 답은 저장된다(화면에 붙일지는 _write 가 thread 로 가린다).
@@ -500,6 +576,7 @@ class ChatCubit extends Cubit<ChatState> {
 
   void _fail(ChatFailure failure, int generation) {
     if (generation != _generation || isClosed) return;
+    _flushText();
     _end(_withLast((b) => b.copyWith(failure: failure)));
     // 세션이 목록을 다시 받아 지금 모델이 바뀌었다 — 칩도 새 모델로. 말풍선이 이미
     // 바뀐 것을 알리므로 "고른 모델이 없어져…" 알림은 함께 보이지 않게 지운다.
@@ -512,11 +589,12 @@ class ChatCubit extends Cubit<ChatState> {
   /// 끝 이벤트 없이 스트림이 닫혔다(세션이 조용히 멈춤). 인용을 읽는 중이면 그쪽이 끝낸다.
   void _settle(int generation) {
     if (generation != _generation || isClosed) return;
+    _flushText();
     if (state.busy && !_finishing) _end(state.bubbles);
   }
 
   void _end(List<ChatBubble> bubbles, {bool complete = true}) {
-    emit(state.copyWith(bubbles: bubbles, busy: false, activeTool: null));
+    emit(state.copyWith(bubbles: _settled(bubbles), busy: false));
     _traceDone();
     if (complete) _complete();
   }
@@ -531,6 +609,8 @@ class ChatCubit extends Cubit<ChatState> {
     bool loading = false,
     String? openId,
   }) {
+    _flushText();
+    _stopTicker();
     _generation++;
     _thread = _Thread(temporary: temporary);
     unawaited(_sub?.cancel());
@@ -543,7 +623,6 @@ class ChatCubit extends Cubit<ChatState> {
       state.copyWith(
         bubbles: keepScreen ? state.bubbles : const [],
         busy: false,
-        activeTool: null,
         temporary: temporary,
         loading: loading,
       ),
@@ -702,10 +781,11 @@ class ChatCubit extends Cubit<ChatState> {
   }
 
   /// 저장 · 인용 붙이기가 바꾸는 seq · cited 를 빼고 같은 말풍선인가.
+  /// 진행(경과 초 · 끝맺음)도 빼고 본다 — 저장 뒤에 바뀐다.
   static bool _same(ChatBubble a, ChatBubble b) =>
       identical(a, b) ||
-      a.copyWith(seq: null, cited: const []) ==
-          b.copyWith(seq: null, cited: const []);
+      a.copyWith(seq: null, cited: const [], progress: null) ==
+          b.copyWith(seq: null, cited: const [], progress: null);
 
   void _traceBegin() {
     if (!_trace.enabled) return;
@@ -769,6 +849,105 @@ class ChatCubit extends Cubit<ChatState> {
     return [...bubbles.sublist(0, bubbles.length - 1), update(bubbles.last)];
   }
 
+  /// 글 조각을 모은다. 버퍼가 비어 있다 차면 다음 바퀴에 비울 타이머 하나를 건다.
+  void _bufferText(String delta) {
+    if (delta.isEmpty) return;
+    final wasEmpty = _pendingText.isEmpty;
+    _pendingText.write(delta);
+    if (wasEmpty) _textTimer = Timer(Duration.zero, _flushText);
+  }
+
+  /// 모은 글을 마지막 말풍선에 붙여 한 번 emit 한다. 첫 글이면 그 프레임 뒤에 firstGlyph.
+  void _flushText() {
+    _textTimer?.cancel();
+    _textTimer = null;
+    if (_pendingText.isEmpty) return;
+    final delta = _pendingText.toString();
+    _pendingText.clear();
+    if (isClosed) return;
+    emit(
+      state.copyWith(
+        bubbles: _withLast((b) => b.copyWith(text: b.text + delta)),
+      ),
+    );
+    if (_trace.enabled) {
+      _traceVisible();
+      if (!_sawGlyph) {
+        _sawGlyph = true;
+        _markAfterFrame(ChatTraceMark.firstGlyph);
+      }
+    }
+  }
+
+  void _startTicker() {
+    _ticker?.cancel();
+    _ticker = Timer.periodic(_tick, (_) {
+      if (isClosed) return;
+      _updateProgress((p) => p.copyWith(elapsedSeconds: _elapsed(p)));
+    });
+  }
+
+  void _stopTicker() {
+    _ticker?.cancel();
+    _ticker = null;
+  }
+
+  int _elapsed(ChatProgress progress) =>
+      _clock.now().difference(progress.startedAt).inSeconds;
+
+  /// 진행 중인 마지막 말풍선의 진행을 바꾼다. 같으면 emit 하지 않는다.
+  void _updateProgress(ChatProgress Function(ChatProgress) update) {
+    final progress = state.bubbles.lastOrNull?.progress;
+    if (progress == null || !progress.running) return;
+    final next = update(progress);
+    if (next == progress) return;
+    emit(
+      state.copyWith(bubbles: _withLast((b) => b.copyWith(progress: next))),
+    );
+  }
+
+  static ChatProgress _push(ChatProgress progress, ChatProgressStep step) =>
+      progress.copyWith(steps: [...progress.steps, step]);
+
+  /// 같은 [callId] 의 도구 단계를 [update] 해 맨 뒤(지금 단계)로 옮긴다. 없으면 [create] 를 붙인다.
+  static ChatProgress _moveTool(
+    ChatProgress progress,
+    String callId, {
+    required StepTool Function(StepTool) update,
+    required ChatProgressStep Function() create,
+  }) {
+    final steps = progress.steps;
+    final index = steps.indexWhere((s) => s is StepTool && s.callId == callId);
+    if (index < 0) return _push(progress, create());
+    return progress.copyWith(
+      steps: [
+        ...steps.sublist(0, index),
+        ...steps.sublist(index + 1),
+        update(steps[index] as StepTool),
+      ],
+    );
+  }
+
+  /// 마지막 말풍선의 진행을 끝맺는다 — 경과 초를 고정하고, 요약을 남기지 않으면(3초 미만 ·
+  /// 멈추지 않음) 지운다. [stopped] 면 멈춤 단계를 붙인다. 경과 초 타이머도 멈춘다.
+  List<ChatBubble> _settled(List<ChatBubble> bubbles, {bool stopped = false}) {
+    _stopTicker();
+    final last = bubbles.lastOrNull;
+    final progress = last?.progress;
+    if (last == null || progress == null || !progress.running) return bubbles;
+    final done = progress.copyWith(
+      running: false,
+      elapsedSeconds: _elapsed(progress),
+      steps: stopped
+          ? [...progress.steps, const ChatProgressStep.stopped()]
+          : progress.steps,
+    );
+    return [
+      ...bubbles.sublist(0, bubbles.length - 1),
+      last.copyWith(progress: done.keepSummary ? done : null),
+    ];
+  }
+
   void _complete() {
     final running = _running;
     _running = null;
@@ -777,6 +956,8 @@ class ChatCubit extends Cubit<ChatState> {
 
   @override
   Future<void> close() async {
+    _flushText();
+    _stopTicker();
     _generation++;
     unawaited(_existsSub?.cancel());
     _existsSub = null;
