@@ -88,6 +88,39 @@ String _textEvents(String stop, {Map<String, Object?>? startUsage}) => [
   sse('message_stop', {}),
 ].join();
 
+/// `send` 가 받은 요청을 잡아 두는 손 가짜. 응답은 테스트가 [respond] 로 준다.
+/// 실제 IOClient 처럼 abortTrigger 가 끝나면 아직 안 끝난 send 를
+/// RequestAbortedException 으로 끝낸다.
+class _HangingClient extends http.BaseClient {
+  http.BaseRequest? request;
+  final _response = Completer<http.StreamedResponse>();
+
+  Future<void> get abortTrigger => (request! as http.Abortable).abortTrigger!;
+
+  void respond(Stream<List<int>> bytes, [int status = 200]) =>
+      _response.complete(http.StreamedResponse(bytes, status));
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) {
+    this.request = request;
+    if (request case http.Abortable(:final abortTrigger?)) {
+      unawaited(
+        abortTrigger.whenComplete(() {
+          if (!_response.isCompleted) {
+            _response.completeError(http.RequestAbortedException(request.url));
+          }
+        }),
+      );
+    }
+    return _response.future;
+  }
+}
+
+/// 끝났는지 지금 바로 본다(1ms 안).
+Future<bool> _completedSoon(Future<void> f) => f
+    .timeout(const Duration(milliseconds: 1))
+    .then((_) => true, onError: (Object _) => false);
+
 void main() {
   test('요청에 정해진 헤더와 본문 필드를 담는다', () async {
     late http.BaseRequest req;
@@ -928,6 +961,142 @@ void main() {
         trace,
       ).stream(request()).toList();
       expect(trace.marks, isEmpty);
+    });
+  });
+
+  group('취소', () {
+    test('상태 줄을 기다리는 중에 취소하면 abortTrigger 가 바로 끝난다', () async {
+      final client = _HangingClient();
+      final events = <Object>[];
+      final sub = AnthropicChatModel(
+        client,
+        const NoopChatTrace(),
+      ).stream(request()).listen(events.add, onError: events.add);
+      await pumpEventQueue();
+      expect(client.request, isA<http.Abortable>());
+
+      await sub.cancel();
+
+      expect(await _completedSoon(client.abortTrigger), isTrue);
+      await pumpEventQueue();
+      expect(events, isEmpty);
+    });
+
+    test('SSE 를 받는 중에 취소하면 abortTrigger 가 끝나고 응답 바이트 구독이 끊긴다', () async {
+      var bytesCancelled = false;
+      final bytes = StreamController<List<int>>(
+        onCancel: () => bytesCancelled = true,
+      );
+      addTearDown(bytes.close);
+      final client = _HangingClient();
+      final events = <Object>[];
+      final sub = AnthropicChatModel(
+        client,
+        const NoopChatTrace(),
+      ).stream(request()).listen(events.add, onError: events.add);
+      await pumpEventQueue();
+      client.respond(bytes.stream);
+      bytes.add(utf8.encode(sse('message_start', {'type': 'message_start'})));
+      await pumpEventQueue();
+
+      await sub.cancel();
+
+      expect(await _completedSoon(client.abortTrigger), isTrue);
+      await pumpEventQueue();
+      expect(bytesCancelled, isTrue);
+    });
+
+    test('취소 뒤에는 이벤트도 오류도 내지 않는다', () async {
+      final bytes = StreamController<List<int>>();
+      addTearDown(bytes.close);
+      final client = _HangingClient();
+      final events = <Object>[];
+      var done = false;
+      final sub = AnthropicChatModel(client, const NoopChatTrace())
+          .stream(request())
+          .listen(events.add, onError: events.add, onDone: () => done = true);
+      await pumpEventQueue();
+      client.respond(bytes.stream);
+      bytes.add(
+        utf8.encode(
+          sse('content_block_start', {
+            'index': 0,
+            'content_block': {'type': 'text', 'text': ''},
+          }),
+        ),
+      );
+      await pumpEventQueue();
+
+      await sub.cancel();
+      bytes
+        ..add(
+          utf8.encode(
+            sse('content_block_delta', {
+              'index': 0,
+              'delta': {'type': 'text_delta', 'text': 'late'},
+            }),
+          ),
+        )
+        ..addError(http.ClientException('x'));
+      await pumpEventQueue();
+
+      expect(events, isEmpty);
+      expect(done, isFalse);
+    });
+
+    test('정상 종료면 abortTrigger 는 끝나지 않는다', () async {
+      final client = _HangingClient();
+      final future = AnthropicChatModel(
+        client,
+        const NoopChatTrace(),
+      ).stream(request()).toList();
+      await pumpEventQueue();
+      client.respond(Stream.value(utf8.encode(_textEvents('end_turn'))));
+
+      final events = await future;
+
+      expect(events.last, isA<ModelCompleted>());
+      await pumpEventQueue();
+      expect(await _completedSoon(client.abortTrigger), isFalse);
+    });
+
+    test('오류로 끝나도 abortTrigger 는 끝나지 않는다', () async {
+      final client = _HangingClient();
+      final future = AnthropicChatModel(
+        client,
+        const NoopChatTrace(),
+      ).stream(request()).toList();
+      await pumpEventQueue();
+      client.respond(const Stream.empty(), 500);
+
+      await expectLater(future, throwsA(isA<ChatModelException>()));
+      await pumpEventQueue();
+      expect(await _completedSoon(client.abortTrigger), isFalse);
+    });
+
+    test('취소하면 trace 에 abort 를 찍는다', () async {
+      final trace = RecordingChatTrace();
+      final client = _HangingClient();
+      final sub = AnthropicChatModel(
+        client,
+        trace,
+      ).stream(request()).listen((_) {}, onError: (Object _) {});
+      await pumpEventQueue();
+
+      await sub.cancel();
+      await pumpEventQueue();
+
+      expect(trace.labels, [ChatTraceMark.req, ChatTraceMark.abort]);
+    });
+
+    test('정상 종료면 trace 에 abort 가 없다', () async {
+      final trace = RecordingChatTrace();
+      await AnthropicChatModel(
+        clientOf([_textEvents('end_turn')]),
+        trace,
+      ).stream(request()).toList();
+
+      expect(trace.labels, isNot(contains(ChatTraceMark.abort)));
     });
   });
 }

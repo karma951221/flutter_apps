@@ -2,9 +2,21 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:walk/data/chat/sse_lines.dart';
 
 Stream<List<int>> _bytes(String text) => Stream.value(utf8.encode(text));
+
+/// 받은 요청을 잡아 두고 빈 200 응답을 돌려준다.
+class _CapturingClient extends http.BaseClient {
+  http.BaseRequest? request;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    this.request = request;
+    return http.StreamedResponse(const Stream.empty(), 200);
+  }
+}
 
 Future<List<SseEvent>> _read(Stream<List<int>> bytes) =>
     sseEvents(bytes, idleTimeout: const Duration(seconds: 5)).toList();
@@ -57,5 +69,31 @@ void main() {
       ).toList(),
       throwsA(isA<TimeoutException>()),
     );
+  });
+
+  test('abortableSend 는 AbortableRequest 에 trigger · 헤더 · 본문을 담는다', () async {
+    final client = _CapturingClient();
+    final trigger = Completer<void>();
+    final url = Uri.parse('https://example.test/v1');
+
+    final response = await abortableSend(
+      client,
+      method: 'POST',
+      url: url,
+      headers: const {'x-a': '1', 'content-type': 'application/json'},
+      body: '{"k":1}',
+      abortTrigger: trigger.future,
+    );
+
+    expect(response.statusCode, 200);
+    final request = client.request;
+    expect(request, isA<http.Abortable>());
+    expect(request, isA<http.Request>());
+    expect((request! as http.Abortable).abortTrigger, same(trigger.future));
+    expect(request.method, 'POST');
+    expect(request.url, url);
+    expect(request.headers['x-a'], '1');
+    expect(request.headers['content-type'], contains('application/json'));
+    expect((request as http.Request).body, '{"k":1}');
   });
 }

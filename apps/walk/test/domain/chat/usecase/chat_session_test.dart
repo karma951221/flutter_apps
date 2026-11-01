@@ -834,6 +834,73 @@ void main() {
     }
   });
 
+  group('라운드 취소', () {
+    ChatSession hanging(_HangingModel model) => ChatSession(
+      model,
+      tools,
+      settings,
+      clock,
+      usage,
+      ids,
+      const NoopChatTrace(),
+    );
+
+    test('라운드 중 reset 하면 모델 구독을 바로 취소한다', () async {
+      final model = _HangingModel();
+      final chat = hanging(model);
+      final events = <ChatEvent>[];
+      var done = false;
+      chat.ask('첫').listen(events.add, onDone: () => done = true);
+      await pumpEventQueue();
+      expect(model.rounds, hasLength(1));
+      expect(model.cancelled.single, isFalse);
+
+      chat.reset();
+      await pumpEventQueue();
+
+      expect(model.cancelled.single, isTrue);
+      expect(events, isEmpty);
+      expect(done, isTrue);
+    });
+
+    test('질문 구독을 끊으면 모델 구독도 끊는다', () async {
+      final model = _HangingModel();
+      final chat = hanging(model);
+      late StreamSubscription<ChatEvent> sub;
+      sub = chat.ask('첫').listen((_) => unawaited(sub.cancel()));
+      await pumpEventQueue();
+      model.rounds[0].add(const ModelEvent.textDelta('a'));
+      await pumpEventQueue();
+
+      expect(model.cancelled.single, isTrue);
+    });
+
+    test('reset 뒤 바로 ask 하면 새 질문이 정상으로 끝난다', () async {
+      final model = _HangingModel();
+      final chat = hanging(model);
+      final firstEvents = <ChatEvent>[];
+      chat.ask('첫').listen(firstEvents.add);
+      await pumpEventQueue();
+
+      chat.reset();
+      final second = chat.ask('둘').toList();
+      await pumpEventQueue();
+      expect(model.rounds, hasLength(2));
+      model.rounds[1]
+        ..add(const ModelEvent.textDelta('새 답'))
+        ..add(_done([_text('새 답')], StopKind.endTurn));
+      unawaited(model.rounds[1].close());
+
+      expect(await second, const [
+        ChatEvent.text('새 답'),
+        ChatEvent.finished(citedEntryIds: []),
+      ]);
+      expect(firstEvents, isEmpty);
+      expect(model.cancelled, [isTrue, isFalse]);
+      expect(model.requests[1], const [ChatMessage.user('둘')]);
+    });
+  });
+
   test('이벤트와 실패에 API 키가 나오지 않는다', () async {
     final model = _FakeModel([
       [const ChatModelException(ChatModelErrorKind.invalidKey)],
@@ -876,5 +943,31 @@ class _CompleterModel implements ChatModel {
     final call = Completer<ModelEvent>();
     calls.add(call);
     return call.future.asStream();
+  }
+}
+
+/// 부를 때마다 테스트가 쥐는 컨트롤러 라운드를 만들고, 끝나기 전의 구독 취소를 기록한다.
+class _HangingModel implements ChatModel {
+  final rounds = <StreamController<ModelEvent>>[];
+  final cancelled = <bool>[];
+  final requests = <List<ChatMessage>>[];
+
+  @override
+  ChatVendor get vendor => ChatVendor.anthropic;
+
+  @override
+  Stream<ModelEvent> stream(ModelRequest request) {
+    requests.add(request.messages);
+    final index = rounds.length;
+    cancelled.add(false);
+    late final StreamController<ModelEvent> round;
+    // 닫은 뒤의 onCancel(정상 종료)은 취소로 세지 않는다.
+    round = StreamController<ModelEvent>(
+      onCancel: () {
+        if (!round.isClosed) cancelled[index] = true;
+      },
+    );
+    rounds.add(round);
+    return round.stream;
   }
 }

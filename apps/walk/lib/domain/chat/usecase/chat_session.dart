@@ -80,6 +80,12 @@ class ChatSession {
   /// [reset] 마다 올린다. 진행 중인 질문은 자기 세대가 바뀌면 조용히 멈춘다.
   int _generation = 0;
 
+  /// 진행 중인 라운드의 모델 구독과 그 이벤트를 [_run] 에 넘기는 relay.
+  /// `await for` 로 모델 스트림을 바로 돌면 세션 구독 취소가 다음 이벤트까지
+  /// 모델에 닿지 않는다 — 그래서 구독을 직접 쥐고 [reset] 에서 끊는다.
+  StreamSubscription<ModelEvent>? _roundSub;
+  StreamController<ModelEvent>? _roundRelay;
+
   /// 한 번에 하나. 진행 중에 부르면 [StateError].
   Stream<ChatEvent> ask(String question) {
     if (_busy) throw StateError('ChatSession.ask is already running');
@@ -94,6 +100,19 @@ class ChatSession {
     _messages.clear();
     _imagesSent = 0;
     _busy = false;
+    // 세대를 올린 뒤에 끊는다 — 닫힌 relay 로 루프가 끝나면 stale() 로 조용히 나간다.
+    _cancelRound();
+  }
+
+  /// 진행 중인 라운드의 모델 구독을 끊고 relay 를 닫아 _run 의 await for 를 끝낸다.
+  void _cancelRound() {
+    final sub = _roundSub;
+    final relay = _roundRelay;
+    _roundSub = null;
+    _roundRelay = null;
+    // 기다리지 않는다 — 모델 쪽 정리가 reset 을 묶지 않게.
+    sub?.cancel().ignore();
+    if (relay != null && !relay.isClosed) unawaited(relay.close());
   }
 
   Stream<ChatEvent> _run(String question, int generation) async* {
@@ -125,7 +144,17 @@ class ChatSession {
           tools: tools,
         );
         if (_trace.enabled) _trace.mark(ChatTraceMark.round, {'n': round});
-        await for (final event in _model.stream(request)) {
+        StreamSubscription<ModelEvent>? roundSub;
+        // 이 질문의 구독자가 떠나 await for 가 끝나도 모델 구독을 끊는다.
+        final relay = StreamController<ModelEvent>(
+          sync: true,
+          onCancel: () => roundSub?.cancel().ignore(),
+        );
+        _roundRelay = relay;
+        _roundSub = roundSub = _model
+            .stream(request)
+            .listen(relay.add, onError: relay.addError, onDone: relay.close);
+        await for (final event in relay.stream) {
           if (stale()) return;
           switch (event) {
             case ModelTextDelta(:final text):
@@ -138,6 +167,10 @@ class ChatSession {
                 ModelToolCallReady():
               break;
           }
+        }
+        if (identical(_roundRelay, relay)) {
+          _roundRelay = null;
+          _roundSub = null;
         }
         if (stale()) return;
         if (done == null) {

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:http/http.dart' as http;
 
 part 'sse_lines.freezed.dart';
 
@@ -60,4 +61,22 @@ Stream<SseEvent> sseEvents(
   }
   final last = take();
   if (last != null) yield last;
+}
+
+/// [abortTrigger] 가 끝나면 요청 · 응답 스트림을 닫는다(package:http AbortableRequest).
+///
+/// 이미 받은 응답의 바이트 스트림도 닫히며, 그때 [http.RequestAbortedException]
+/// (= [http.ClientException]) 이 나올 수 있다.
+Future<http.StreamedResponse> abortableSend(
+  http.Client client, {
+  required String method,
+  required Uri url,
+  required Map<String, String> headers,
+  required String body,
+  required Future<void> abortTrigger,
+}) {
+  final request = http.AbortableRequest(method, url, abortTrigger: abortTrigger)
+    ..headers.addAll(headers)
+    ..body = body;
+  return client.send(request);
 }

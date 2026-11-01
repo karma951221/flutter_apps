@@ -60,8 +60,51 @@ class AnthropicChatModel implements ChatModel {
   @override
   ChatVendor get vendor => ChatVendor.anthropic;
 
+  /// 구독을 끊으면 진행 중인 HTTP 요청 · 응답을 닫는다(abortTrigger). 끊은 뒤에는
+  /// 이벤트도 오류도 내지 않는다. 정상 · 오류 종료로 끝난 뒤의 취소는 abort 가 아니다.
+  ///
+  /// `async*` 의 `finally` 에서 abort 하지 않는다 — `async*` 는 취소돼도 `send` 를
+  /// 기다리는 동안 `finally` 에 닿지 않는다.
   @override
-  Stream<ModelEvent> stream(ModelRequest request) async* {
+  Stream<ModelEvent> stream(ModelRequest request) {
+    final abort = Completer<void>();
+    var cancelled = false;
+    var settled = false;
+    StreamSubscription<ModelEvent>? inner;
+    late final StreamController<ModelEvent> out;
+    out = StreamController<ModelEvent>(
+      onListen: () => inner = _run(request, abort.future).listen(
+        (e) {
+          if (!cancelled) out.add(e);
+        },
+        onError: (Object e, StackTrace s) {
+          // _run 의 오류는 마지막이다 — 요청은 이미 끝났다.
+          settled = true;
+          if (!cancelled) out.addError(e, s);
+        },
+        onDone: () {
+          settled = true;
+          if (!cancelled) unawaited(out.close());
+        },
+      ),
+      onCancel: () {
+        cancelled = true;
+        if (!settled && !abort.isCompleted) {
+          abort.complete();
+          if (_trace.enabled) _trace.mark(ChatTraceMark.abort);
+        }
+        // 기다리지 않는다 — 구독자 cancel 이 묶이지 않게. 취소 뒤 _run 이 던지는
+        // 오류(RequestAbortedException 등)는 버린다.
+        inner?.cancel().ignore();
+      },
+    );
+    return out.stream;
+  }
+
+  Stream<ModelEvent> _run(
+    ModelRequest request,
+    Future<void> abortTrigger,
+  ) async* {
     try {
       if (_trace.enabled) {
         _trace.mark(ChatTraceMark.req, {
@@ -70,9 +113,14 @@ class AnthropicChatModel implements ChatModel {
           'fast': request.fastMode,
         });
       }
-      final response = await _client
-          .send(_httpRequest(request))
-          .timeout(responseTimeout);
+      final response = await abortableSend(
+        _client,
+        method: 'POST',
+        url: _endpoint,
+        headers: _headers(request),
+        body: _body(request),
+        abortTrigger: abortTrigger,
+      ).timeout(responseTimeout);
       if (_trace.enabled) _trace.mark(ChatTraceMark.head);
       final status = response.statusCode;
       if (status < 200 || status >= 300) {
@@ -80,7 +128,7 @@ class AnthropicChatModel implements ChatModel {
         unawaited(response.stream.drain<void>().catchError((_) {}));
         throw ChatModelException(_kindForStatus(status));
       }
-      yield* _parse(response.stream, request.model);
+      yield* _parse(_untilAbort(response.stream, abortTrigger), request.model);
     } on ChatModelException {
       rethrow;
     } on SocketException {
@@ -92,24 +140,51 @@ class AnthropicChatModel implements ChatModel {
     }
   }
 
-  http.Request _httpRequest(ModelRequest request) =>
-      http.Request('POST', _endpoint)
-        ..headers.addAll({
-          'x-api-key': request.apiKey,
-          'anthropic-version': '2026-10-21',
-          'anthropic-beta': 'server-side-fallback-2026-07-01',
-          'content-type': 'application/json',
-        })
-        ..body = jsonEncode({
-          'model': request.model,
-          'max_tokens': 16000,
-          'stream': true,
-          'output_config': {'effort': 'low'},
-          'fallbacks': 'default',
-          'system': request.system,
-          'messages': [for (final m in request.messages) _message(m)],
-          'tools': [for (final t in request.tools) _tool(t)],
-        });
+  static Map<String, String> _headers(ModelRequest request) => {
+    'x-api-key': request.apiKey,
+    'anthropic-version': '2026-10-21',
+    'anthropic-beta': 'server-side-fallback-2026-07-01',
+    'content-type': 'application/json',
+  };
+
+  static String _body(ModelRequest request) => jsonEncode({
+    'model': request.model,
+    'max_tokens': 16000,
+    'stream': true,
+    'output_config': {'effort': 'low'},
+    'fallbacks': 'default',
+    'system': request.system,
+    'messages': [for (final m in request.messages) _message(m)],
+    'tools': [for (final t in request.tools) _tool(t)],
+  });
+
+  /// [abort] 가 끝나면 바이트 구독을 끊고 스트림을 닫는다. `async*` 는 `await for`
+  /// 로 다음 바이트를 기다리는 동안 취소를 알아채지 못하므로, 클라이언트가
+  /// abortTrigger 를 따르지 않아도 여기서 끊는다.
+  static Stream<List<int>> _untilAbort(
+    Stream<List<int>> bytes,
+    Future<void> abort,
+  ) {
+    StreamSubscription<List<int>>? sub;
+    late final StreamController<List<int>> out;
+    out = StreamController<List<int>>(
+      sync: true,
+      onListen: () {
+        sub = bytes.listen(out.add, onError: out.addError, onDone: out.close);
+        unawaited(
+          abort.whenComplete(() {
+            if (out.isClosed) return;
+            sub?.cancel().ignore();
+            unawaited(out.close());
+          }),
+        );
+      },
+      onPause: () => sub?.pause(),
+      onResume: () => sub?.resume(),
+      onCancel: () => sub?.cancel(),
+    );
+    return out.stream;
+  }
 
   // 중립 → Messages API
 
