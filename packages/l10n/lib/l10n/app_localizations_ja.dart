@@ -3664,4 +3664,72 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatSettingsModelsUnavailable => '一覧を取得できませんでした・再試行';
+
+  @override
+  String get walkChatWikiTitle => 'Wiki';
+
+  @override
+  String get walkChatWikiEmpty => '会話で[Wikiに整理]を押すと、残したい内容を選んで保存できます';
+
+  @override
+  String walkChatWikiNotice(String vendor) {
+    return 'Wikiの索引（タイトル・要約）は質問のたびに、本文はモデルが必要なときに$vendorへ送信されます。一時的な会話では送信しません。';
+  }
+
+  @override
+  String walkChatWikiNotIndexed(int count) {
+    return '索引に含まれていないメモ$count件・索引サイズを変更';
+  }
+
+  @override
+  String get walkChatWikiNotIndexedRow => '索引外';
+
+  @override
+  String get walkChatWikiAdd => 'メモを追加';
+
+  @override
+  String get walkChatWikiDeleteAll => 'Wikiをすべて削除';
+
+  @override
+  String get walkChatWikiDeleteAllTitle => 'Wikiをすべて削除しますか？';
+
+  @override
+  String walkChatWikiDeleteAllBody(int count) {
+    return 'メモ$count件を削除します。会話と使用量の記録は残ります。';
+  }
+
+  @override
+  String get walkChatWikiDeleteAllConfirm => 'すべて削除';
+
+  @override
+  String get walkChatWikiNoteDeleteTitle => 'このメモを削除しますか？';
+
+  @override
+  String get walkChatWikiNoteDeleteBody => '他のメモのリンクは「削除されたメモ」として残ります。';
+
+  @override
+  String get walkChatWikiBacklinks => 'このメモを参照しているメモ';
+
+  @override
+  String get walkChatWikiOpenConversation => '会話を見る';
+
+  @override
+  String get walkChatWikiDeletedNote => '削除されたメモ';
+
+  @override
+  String get walkChatWikiDeletedEntry => '削除された日記';
+
+  @override
+  String get walkChatWikiDiaryTitle => 'このメモの日記';
+
+  @override
+  String walkChatWikiUpdated(String date) {
+    return '$date 更新';
+  }
+
+  @override
+  String get walkChatWikiLoadFailed => 'Wikiを読み込めませんでした';
+
+  @override
+  String get walkChatWikiDeleteFailed => 'メモを削除できませんでした';
 }

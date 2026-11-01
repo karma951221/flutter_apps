@@ -3665,4 +3665,72 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatSettingsModelsUnavailable => '목록을 받지 못했어요 · 다시 시도';
+
+  @override
+  String get walkChatWikiTitle => '위키';
+
+  @override
+  String get walkChatWikiEmpty => '대화에서 [위키로 정리]를 누르면 남길 내용을 골라 저장할 수 있어요';
+
+  @override
+  String walkChatWikiNotice(String vendor) {
+    return '위키 색인(제목 · 요약)은 질문할 때마다, 본문은 모델이 필요할 때 $vendor로 보내져요. 임시 대화에는 보내지 않아요.';
+  }
+
+  @override
+  String walkChatWikiNotIndexed(int count) {
+    return '색인에 안 실린 메모 $count개 · 색인 크기 바꾸기';
+  }
+
+  @override
+  String get walkChatWikiNotIndexedRow => '색인에 안 실림';
+
+  @override
+  String get walkChatWikiAdd => '메모 추가';
+
+  @override
+  String get walkChatWikiDeleteAll => '위키 모두 지우기';
+
+  @override
+  String get walkChatWikiDeleteAllTitle => '위키를 모두 지울까요?';
+
+  @override
+  String walkChatWikiDeleteAllBody(int count) {
+    return '메모 $count개를 지워요. 대화와 사용량 기록은 남아요.';
+  }
+
+  @override
+  String get walkChatWikiDeleteAllConfirm => '모두 지우기';
+
+  @override
+  String get walkChatWikiNoteDeleteTitle => '이 메모를 지울까요?';
+
+  @override
+  String get walkChatWikiNoteDeleteBody => '다른 메모의 링크는 \'지워진 메모\'로 남아요.';
+
+  @override
+  String get walkChatWikiBacklinks => '이 메모를 가리키는 메모';
+
+  @override
+  String get walkChatWikiOpenConversation => '대화 보기';
+
+  @override
+  String get walkChatWikiDeletedNote => '지워진 메모';
+
+  @override
+  String get walkChatWikiDeletedEntry => '지워진 일기';
+
+  @override
+  String get walkChatWikiDiaryTitle => '위키의 일기';
+
+  @override
+  String walkChatWikiUpdated(String date) {
+    return '$date 수정';
+  }
+
+  @override
+  String get walkChatWikiLoadFailed => '위키를 불러오지 못했어요';
+
+  @override
+  String get walkChatWikiDeleteFailed => '메모를 지우지 못했어요';
 }

@@ -6773,6 +6773,126 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'목록을 받지 못했어요 · 다시 시도'**
   String get walkChatSettingsModelsUnavailable;
+
+  /// 위키 화면 앱바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'위키'**
+  String get walkChatWikiTitle;
+
+  /// 위키 화면: 메모가 없을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'대화에서 [위키로 정리]를 누르면 남길 내용을 골라 저장할 수 있어요'**
+  String get walkChatWikiEmpty;
+
+  /// 위키 화면 맨 위 안내 — 색인 · 본문이 가는 벤더 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'위키 색인(제목 · 요약)은 질문할 때마다, 본문은 모델이 필요할 때 {vendor}로 보내져요. 임시 대화에는 보내지 않아요.'**
+  String walkChatWikiNotice(String vendor);
+
+  /// 위키 화면: 색인 상한에 걸려 빠진 메모 수 행(누르면 색인 크기 시트)
+  ///
+  /// In ko, this message translates to:
+  /// **'색인에 안 실린 메모 {count}개 · 색인 크기 바꾸기'**
+  String walkChatWikiNotIndexed(int count);
+
+  /// 위키 화면: 색인 밖 메모 행 아이콘의 읽기 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'색인에 안 실림'**
+  String get walkChatWikiNotIndexedRow;
+
+  /// 위키 화면 앱바: 메모 직접 추가
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 추가'**
+  String get walkChatWikiAdd;
+
+  /// 위키 화면 ⋮: 모두 지우기 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'위키 모두 지우기'**
+  String get walkChatWikiDeleteAll;
+
+  /// 위키 모두 지우기 확인 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'위키를 모두 지울까요?'**
+  String get walkChatWikiDeleteAllTitle;
+
+  /// 위키 모두 지우기 확인 본문 — 지울 메모 수
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 {count}개를 지워요. 대화와 사용량 기록은 남아요.'**
+  String walkChatWikiDeleteAllBody(int count);
+
+  /// 위키 모두 지우기 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'모두 지우기'**
+  String get walkChatWikiDeleteAllConfirm;
+
+  /// 메모 화면: 삭제 확인 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'이 메모를 지울까요?'**
+  String get walkChatWikiNoteDeleteTitle;
+
+  /// 메모 화면: 삭제 확인 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'다른 메모의 링크는 \'지워진 메모\'로 남아요.'**
+  String get walkChatWikiNoteDeleteBody;
+
+  /// 메모 화면: 역링크 목록 머리
+  ///
+  /// In ko, this message translates to:
+  /// **'이 메모를 가리키는 메모'**
+  String get walkChatWikiBacklinks;
+
+  /// 메모 화면: 출처 대화 열기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'대화 보기'**
+  String get walkChatWikiOpenConversation;
+
+  /// 메모 본문: 없는 메모를 가리키는 흐린 링크 칩
+  ///
+  /// In ko, this message translates to:
+  /// **'지워진 메모'**
+  String get walkChatWikiDeletedNote;
+
+  /// 메모 본문: 휴지통 · 삭제된 일기를 가리키는 흐린 링크 칩
+  ///
+  /// In ko, this message translates to:
+  /// **'지워진 일기'**
+  String get walkChatWikiDeletedEntry;
+
+  /// 메모 본문의 일기 칩으로 연 스토리 뷰어 머리
+  ///
+  /// In ko, this message translates to:
+  /// **'위키의 일기'**
+  String get walkChatWikiDiaryTitle;
+
+  /// 위키 메모 수정일 — 날짜
+  ///
+  /// In ko, this message translates to:
+  /// **'{date} 수정'**
+  String walkChatWikiUpdated(String date);
+
+  /// 위키 화면 · 메모 화면: 읽기 실패 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'위키를 불러오지 못했어요'**
+  String get walkChatWikiLoadFailed;
+
+  /// 위키 화면 · 메모 화면: 삭제 · 모두 지우기 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'메모를 지우지 못했어요'**
+  String get walkChatWikiDeleteFailed;
 }
 
 class _AppLocalizationsDelegate

@@ -3989,4 +3989,86 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkChatSettingsModelsUnavailable =>
       'Couldn\'t load the list · Try again';
+
+  @override
+  String get walkChatWikiTitle => 'Wiki';
+
+  @override
+  String get walkChatWikiEmpty =>
+      'Tap [Save to wiki] in a conversation to pick what to keep';
+
+  @override
+  String walkChatWikiNotice(String vendor) {
+    return 'The wiki index (titles and summaries) is sent to $vendor with every question, and note bodies only when the model needs them. Nothing is sent in temporary chats.';
+  }
+
+  @override
+  String walkChatWikiNotIndexed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes aren\'t in the index',
+      one: '1 note isn\'t in the index',
+    );
+    return '$_temp0 · Change index size';
+  }
+
+  @override
+  String get walkChatWikiNotIndexedRow => 'Not in index';
+
+  @override
+  String get walkChatWikiAdd => 'Add note';
+
+  @override
+  String get walkChatWikiDeleteAll => 'Delete entire wiki';
+
+  @override
+  String get walkChatWikiDeleteAllTitle => 'Delete the entire wiki?';
+
+  @override
+  String walkChatWikiDeleteAllBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count notes will be deleted.',
+      one: '1 note will be deleted.',
+    );
+    return '$_temp0 Conversations and usage records are kept.';
+  }
+
+  @override
+  String get walkChatWikiDeleteAllConfirm => 'Delete all';
+
+  @override
+  String get walkChatWikiNoteDeleteTitle => 'Delete this note?';
+
+  @override
+  String get walkChatWikiNoteDeleteBody =>
+      'Links from other notes will show as \"Deleted note\".';
+
+  @override
+  String get walkChatWikiBacklinks => 'Notes linking here';
+
+  @override
+  String get walkChatWikiOpenConversation => 'View conversation';
+
+  @override
+  String get walkChatWikiDeletedNote => 'Deleted note';
+
+  @override
+  String get walkChatWikiDeletedEntry => 'Deleted entry';
+
+  @override
+  String get walkChatWikiDiaryTitle => 'Entries in this note';
+
+  @override
+  String walkChatWikiUpdated(String date) {
+    return 'Edited $date';
+  }
+
+  @override
+  String get walkChatWikiLoadFailed => 'Couldn\'t load the wiki';
+
+  @override
+  String get walkChatWikiDeleteFailed => 'Couldn\'t delete the note';
 }
