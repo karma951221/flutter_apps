@@ -178,6 +178,14 @@ class ChatCubit extends Cubit<ChatState> {
     }
     var result = fetched;
     if (result == null && recheck) {
+      // 처음 받는 동안 "목록을 받지 못했어요" 가 보이지 않게 — 확인 중으로 둔다.
+      emit(
+        state.copyWith(
+          access: ChatAccess.checking,
+          vendor: _vendor(),
+          model: null,
+        ),
+      );
       try {
         result = await _choice.refresh();
       } on Object {
@@ -493,8 +501,12 @@ class ChatCubit extends Cubit<ChatState> {
   void _fail(ChatFailure failure, int generation) {
     if (generation != _generation || isClosed) return;
     _end(_withLast((b) => b.copyWith(failure: failure)));
-    // 세션이 목록을 다시 받아 지금 모델이 바뀌었다 — 칩도 새 모델로.
-    if (failure == ChatFailure.modelReplaced) _emitModel();
+    // 세션이 목록을 다시 받아 지금 모델이 바뀌었다 — 칩도 새 모델로. 말풍선이 이미
+    // 바뀐 것을 알리므로 "고른 모델이 없어져…" 알림은 함께 보이지 않게 지운다.
+    if (failure == ChatFailure.modelReplaced) {
+      _choice.consumeSelectionReplacedNotice();
+      _emitModel();
+    }
   }
 
   /// 끝 이벤트 없이 스트림이 닫혔다(세션이 조용히 멈춤). 인용을 읽는 중이면 그쪽이 끝낸다.

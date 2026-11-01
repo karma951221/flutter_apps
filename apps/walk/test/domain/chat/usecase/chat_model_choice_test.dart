@@ -389,6 +389,21 @@ void main() {
       expect(verifier.fetchStoredCalls, 0);
     });
 
+    test('adopt 는 거른 목록이 비면 넣지 않고 false — fetchedAt 을 찍지 않는다', () async {
+      final adopted = await choice.adopt(ChatVendor.anthropic, const [
+        ModelInfo(id: 'not-a-chat-model', displayName: 'x'),
+      ]);
+
+      expect(adopted, isFalse);
+      expect(catalog.fetchedAt, isNull);
+      expect(catalog.models, isEmpty);
+      expect(choice.currentModel, isNull);
+    });
+
+    test('adopt 가 넣으면 true', () async {
+      expect(await choice.adopt(ChatVendor.anthropic, [_sonnet]), isTrue);
+    });
+
     test('forget 은 비운다', () async {
       await seed();
 

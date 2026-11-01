@@ -3602,6 +3602,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String walkChatSwitchedUnverified(String vendor) {
+    return 'Switched to $vendor. The key isn\'t verified yet.';
+  }
+
+  @override
   String walkChatConsentContinues(String vendor) {
     return 'Earlier messages in this conversation will also be sent to $vendor.';
   }

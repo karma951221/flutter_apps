@@ -1039,6 +1039,7 @@
   "walkChatSwitchVendorBody": "Using this API may incur charges from {company}. Your current {oldVendor} key will be removed from this phone, and we'll ask for your consent again before the next question. This conversation continues with {vendor}.",
   "walkChatSwitchVendorAction": "Switch",
   "walkChatSwitchedVendor": "Switched to {vendor}",
+  "walkChatSwitchedUnverified": "Switched to {vendor}. The key isn't verified yet.",
   "walkChatConsentContinues": "Earlier messages in this conversation will also be sent to {vendor}.",
   "walkChatDisconnected": "Disconnected",
   "walkChatKeyNotApiKey": "This isn't an API key. Use a key from API Keys in the Console.",

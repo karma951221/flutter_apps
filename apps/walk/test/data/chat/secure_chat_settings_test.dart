@@ -323,6 +323,52 @@ void main() {
     verifyNever(() => mockPrefs.setString('chat.keyStatus', any()));
   });
 
+  test('connect 의 prefs 쓰기가 실패하면 벤더 · 고른 모델도 지워 키 접두사로 다시 정한다', () async {
+    // 지난 연결: anthropic · 고른 모델. 새 키는 openai 인데 상태 쓰기에서 실패한다.
+    SharedPreferences.setMockInitialValues({
+      'chat.vendor': 'anthropic',
+      'chat.keyStatus': 'valid',
+      'chat.model': 'claude-opus-9-9',
+    });
+    final real = await SharedPreferences.getInstance();
+    final mockPrefs = _MockPrefs();
+    when(() => mockPrefs.getString(any())).thenAnswer(
+      (inv) => real.getString(inv.positionalArguments.first as String),
+    );
+    when(
+      () => mockPrefs.get(any()),
+    ).thenAnswer((inv) => real.get(inv.positionalArguments.first as String));
+    when(() => mockPrefs.containsKey(any())).thenAnswer(
+      (inv) => real.containsKey(inv.positionalArguments.first as String),
+    );
+    when(() => mockPrefs.setString(any(), any())).thenAnswer((inv) {
+      final name = inv.positionalArguments[0] as String;
+      if (name == 'chat.keyStatus') throw Exception('prefs');
+      return real.setString(name, inv.positionalArguments[1] as String);
+    });
+    when(
+      () => mockPrefs.remove(any()),
+    ).thenAnswer((inv) => real.remove(inv.positionalArguments.first as String));
+    final failing = SecureChatSettings(secure, mockPrefs);
+    const openAiKey = 'sk-proj-Ab3xQRSTuvwzSECRET';
+
+    await expectLater(
+      failing.connect(ChatVendor.openai, openAiKey, ChatKeyStatus.valid),
+      throwsException,
+    );
+
+    expect(real.containsKey('chat.vendor'), isFalse);
+    expect(real.containsKey('chat.keyStatus'), isFalse);
+    expect(real.containsKey('chat.model'), isFalse);
+
+    // 다음 읽기는 키 접두사로 벤더를 정하고 unverified 로 본다.
+    final healthy = SecureChatSettings(secure, real);
+    final connection = await healthy.connection();
+    expect(connection?.vendor, ChatVendor.openai);
+    expect(connection?.status, ChatKeyStatus.unverified);
+    expect(healthy.selectedModel, isNull);
+  });
+
   test('connect 의 prefs 쓰기 실패 뒤 상태 지우기도 실패하면 원래 예외를 던진다', () async {
     final mockPrefs = _MockPrefs();
     when(

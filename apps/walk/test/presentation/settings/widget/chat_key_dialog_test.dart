@@ -478,7 +478,7 @@ void main() {
       expect(settings.status, ChatKeyStatus.valid);
     });
 
-    testWidgets('확인 못 함으로 바꾸면 savedUnverified', (tester) async {
+    testWidgets('확인 못 함으로 바꾸면 switchedUnverified', (tester) async {
       verifier.result = const ModelListResult.unreachable();
       await show(
         tester,
@@ -490,7 +490,7 @@ void main() {
       await tester.tap(find.text('바꾸기'));
       await tester.pumpAndSettle();
 
-      expect(result, ChatKeyDialogResult.savedUnverified);
+      expect(result, ChatKeyDialogResult.switchedUnverified);
       expect(settings.vendor, ChatVendor.openai);
       expect(settings.status, ChatKeyStatus.unverified);
     });

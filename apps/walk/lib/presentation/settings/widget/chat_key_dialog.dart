@@ -9,8 +9,14 @@ import '../../chat/widget/chat_vendor_icon.dart';
 import '../cubit/chat_settings_cubit.dart';
 
 /// 대화상자가 닫힌 이유. 취소면 null.
-/// [switched] 는 다른 벤더로 바꿔 확인까지 됐다 — 확인 못 하고 바꿨으면 [savedUnverified].
-enum ChatKeyDialogResult { connected, savedUnverified, switched }
+/// [switched] 는 다른 벤더로 바꿔 확인까지 됐다 — 확인 못 하고 바꿨으면 [switchedUnverified].
+/// [savedUnverified] 는 벤더를 바꾸지 않고(처음 연결 · 키 바꾸기) 확인 없이 저장했다.
+enum ChatKeyDialogResult {
+  connected,
+  savedUnverified,
+  switched,
+  switchedUnverified,
+}
 
 /// API 키 입력 대화상자(스펙 §1.2 · §5.2). 접두사를 보고, [저장]이면 확인 호출 → 요금 경고
 /// (벤더를 바꾸는 중이면 바꾸기 확인 창 하나) → 등록까지 이 안에서 끝낸다. 키가 거절되거나
@@ -147,7 +153,8 @@ class _ChatKeyDialogState extends State<ChatKeyDialog> {
     Navigator.of(context).pop(switch ((check, widget.switchingFrom)) {
       (ChatKeyCheck.valid, null) => ChatKeyDialogResult.connected,
       (ChatKeyCheck.valid, _) => ChatKeyDialogResult.switched,
-      _ => ChatKeyDialogResult.savedUnverified,
+      (_, null) => ChatKeyDialogResult.savedUnverified,
+      _ => ChatKeyDialogResult.switchedUnverified,
     });
     return null;
   }

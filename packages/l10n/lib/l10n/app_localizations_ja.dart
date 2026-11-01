@@ -3343,6 +3343,11 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String walkChatSwitchedUnverified(String vendor) {
+    return '$vendor に切り替えました。キーはまだ確認できていません。';
+  }
+
+  @override
   String walkChatConsentContinues(String vendor) {
     return 'この会話のこれまでの内容も $vendor に送られます。';
   }

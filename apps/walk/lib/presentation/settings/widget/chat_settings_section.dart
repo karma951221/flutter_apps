@@ -97,6 +97,11 @@ class _ChatSettingsViewState extends State<_ChatSettingsView> {
         );
       case ChatKeyDialogResult.savedUnverified:
         AppSnackBar.show(context, message: l10n.walkChatSavedUnverified);
+      case ChatKeyDialogResult.switchedUnverified:
+        AppSnackBar.show(
+          context,
+          message: l10n.walkChatSwitchedUnverified(name),
+        );
     }
     setState(() => _replay++);
   }

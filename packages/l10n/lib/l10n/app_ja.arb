@@ -1039,6 +1039,7 @@
   "walkChatSwitchVendorBody": "この API を使うと {company} から料金が請求されることがあります。今の {oldVendor} のキーはこの端末から削除され、次の質問の前に送信への同意をもう一度確認します。今の会話は {vendor} で続きます。",
   "walkChatSwitchVendorAction": "切り替える",
   "walkChatSwitchedVendor": "{vendor} に切り替えました",
+  "walkChatSwitchedUnverified": "{vendor} に切り替えました。キーはまだ確認できていません。",
   "walkChatConsentContinues": "この会話のこれまでの内容も {vendor} に送られます。",
   "walkChatDisconnected": "接続を解除しました",
   "walkChatKeyNotApiKey": "API キーではありません。Console の API Keys で作ったキーを入れてください",

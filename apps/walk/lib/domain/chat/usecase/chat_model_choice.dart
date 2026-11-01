@@ -6,12 +6,14 @@ import '../chat_connection.dart';
 import '../chat_model.dart';
 import '../chat_model_catalog.dart';
 import '../chat_model_rules.dart';
-import '../chat_model_rules.dart' as rules show fastModeSpecs;
 import '../chat_settings.dart';
 import '../chat_vendor.dart';
 import 'chat_key_verifier.dart';
 
 part 'chat_model_choice.freezed.dart';
+
+/// 생성자 인자 [ChatModelChoice.new] 의 fastModeSpecs 가 같은 이름의 표를 가리므로 따로 둔다.
+const _defaultFastModeSpecs = fastModeSpecs;
 
 /// [ChatModelChoice.refresh] 의 결과.
 @freezed
@@ -42,7 +44,7 @@ class ChatModelChoice {
     @ignoreParam
     @visibleForTesting
     Map<ChatVendor, List<FastModeSpec>>? fastModeSpecs,
-  }) : _fastModeSpecs = fastModeSpecs ?? rules.fastModeSpecs;
+  }) : _fastModeSpecs = fastModeSpecs ?? _defaultFastModeSpecs;
 
   final ChatSettings _settings;
   final ChatModelCatalog _catalog;
@@ -158,8 +160,12 @@ class ChatModelChoice {
   }
 
   /// 키 저장 직후 check 결과 목록을 그대로 넣는다(§4 한 번 호출로 두 가지, 결정 G5).
-  Future<void> adopt(ChatVendor vendor, List<ModelInfo> raw) =>
-      _catalog.replace(vendor, raw, _clock.now());
+  /// 거른 목록이 비면 넣지 않고 false — fetchedAt 을 찍지 않아 다음 갱신이 다시 받는다(refresh 와 같다).
+  Future<bool> adopt(ChatVendor vendor, List<ModelInfo> raw) async {
+    if (chatModelsOf(vendor, raw).isEmpty) return false;
+    await _catalog.replace(vendor, raw, _clock.now());
+    return true;
+  }
 
   /// 끊기 → 목록을 비운다.
   Future<void> forget() => _catalog.clear();

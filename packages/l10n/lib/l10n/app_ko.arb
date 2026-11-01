@@ -4448,6 +4448,8 @@
   "@walkChatSwitchVendorAction": { "description": "벤더 바꾸기 확인 버튼" },
   "walkChatSwitchedVendor": "{vendor} 로 바꿨어요",
   "@walkChatSwitchedVendor": { "description": "벤더 바꾸기 성공 스낵바", "placeholders": { "vendor": { "type": "String" } } },
+  "walkChatSwitchedUnverified": "{vendor}(으)로 바꿨어요. 키는 아직 확인하지 못했어요",
+  "@walkChatSwitchedUnverified": { "description": "벤더 바꾸기 — 확인 호출이 닿지 않아 확인 없이 바꿨을 때 스낵바", "placeholders": { "vendor": { "type": "String" } } },
   "walkChatConsentContinues": "지금 대화의 이전 내용도 {vendor} 로 보내져요.",
   "@walkChatConsentContinues": { "description": "채팅 탭 전송 동의: 벤더를 바꿔 대화를 이어 갈 때 더하는 한 줄", "placeholders": { "vendor": { "type": "String" } } },
   "walkChatDisconnected": "연결을 끊었어요",

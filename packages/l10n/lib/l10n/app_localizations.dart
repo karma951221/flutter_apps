@@ -6222,6 +6222,12 @@ abstract class AppLocalizations {
   /// **'{vendor} 로 바꿨어요'**
   String walkChatSwitchedVendor(String vendor);
 
+  /// 벤더 바꾸기 — 확인 호출이 닿지 않아 확인 없이 바꿨을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'{vendor}(으)로 바꿨어요. 키는 아직 확인하지 못했어요'**
+  String walkChatSwitchedUnverified(String vendor);
+
   /// 채팅 탭 전송 동의: 벤더를 바꿔 대화를 이어 갈 때 더하는 한 줄
   ///
   /// In ko, this message translates to:

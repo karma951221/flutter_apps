@@ -524,5 +524,35 @@ void main() {
         expect(find.textContaining('연결한 AI(GPT)로 전송돼요'), findsOneWidget);
       },
     );
+
+    testWidgets("확인 못 함으로 바꾸면 'GPT(으)로 바꿨어요. 키는 아직 확인하지 못했어요' 스낵바", (
+      tester,
+    ) async {
+      settings.key = _savedKey;
+      verifier.result = const ModelListResult.unreachable();
+      await pump(tester);
+
+      await tester.tap(find.byKey(_switch));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('vendor-row-openai')));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const Key('chat-key-input')), gptKey);
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('chat-key-save')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('바꾸기'));
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('GPT(으)로 바꿨어요. 키는 아직 확인하지 못했어요'), findsOneWidget);
+      expect(find.text('키를 저장했어요. 연결되면 확인할게요'), findsNothing);
+      expect(
+        tester.widget<SnackBar>(find.byType(SnackBar)).backgroundColor,
+        isNull,
+      );
+      await tester.pumpAndSettle();
+      expect(settings.vendor, ChatVendor.openai);
+      expect(settings.status, ChatKeyStatus.unverified);
+    });
   });
 }

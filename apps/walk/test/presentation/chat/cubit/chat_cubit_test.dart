@@ -1726,6 +1726,71 @@ void main() {
       expect(cubit.state.model?.label, 'Claude Sonnet 9.5');
     });
 
+    test('modelReplaced 로 끝나면 말풍선만 — 칩 알림(selectionReplaced)은 지운다', () async {
+      await catalog.replace(ChatVendor.anthropic, [
+        _sonnet,
+        _opus,
+      ], DateTime.now());
+      await settings.selectModel(_opus.id);
+      await cubit.refresh();
+      expect(cubit.state.model?.label, 'Claude Opus 9.9');
+
+      when(() => session.ask(any())).thenAnswer((_) async* {
+        // 세션이 강제 갱신 — 고른 모델이 사라져 알림 표시가 선다.
+        await choice.recoverFromUnavailable(_opus.id);
+        expect(choice.selectionReplacedNotice, isTrue);
+        yield const ChatEvent.failed(ChatFailure.modelReplaced);
+      });
+      await cubit.send('질문');
+
+      expect(cubit.state.bubbles.last.failure, ChatFailure.modelReplaced);
+      expect(cubit.state.model?.label, 'Claude Sonnet 9.5');
+      expect(cubit.state.selectionReplaced, isFalse);
+      expect(choice.selectionReplacedNotice, isFalse);
+    });
+
+    group('보이지 않게 시작한 뒤 보이면', () {
+      test('처음 받는 동안 checking, 받으면 ready', () async {
+        await cubit.refresh(recheck: false);
+        expect(cubit.state.access, ChatAccess.noModels);
+        expect(verifier.fetchStoredCalls, 0);
+
+        final pending = Completer<(ChatVendor, ModelListResult)?>();
+        verifier.storedPending = pending;
+        final states = <ChatAccess>[];
+        final sub = cubit.stream.listen((s) => states.add(s.access));
+        addTearDown(sub.cancel);
+
+        final done = cubit.refresh();
+        await pumpEventQueue();
+        expect(cubit.state.access, ChatAccess.checking);
+
+        pending.complete(_storedOk);
+        await done;
+
+        expect(cubit.state.access, ChatAccess.ready);
+        expect(states, isNot(contains(ChatAccess.noModels)));
+      });
+
+      test('받지 못하면 checking 뒤 noModels', () async {
+        await cubit.refresh(recheck: false);
+        final pending = Completer<(ChatVendor, ModelListResult)?>();
+        verifier.storedPending = pending;
+
+        final done = cubit.refresh();
+        await pumpEventQueue();
+        expect(cubit.state.access, ChatAccess.checking);
+
+        pending.complete((
+          ChatVendor.anthropic,
+          const ModelListResult.unreachable(),
+        ));
+        await done;
+
+        expect(cubit.state.access, ChatAccess.noModels);
+      });
+    });
+
     test('modelChanged 는 칩을 다시 읽는다', () async {
       await catalog.replace(ChatVendor.anthropic, [
         _sonnet,

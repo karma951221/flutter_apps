@@ -3345,6 +3345,11 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String walkChatSwitchedUnverified(String vendor) {
+    return '$vendor(으)로 바꿨어요. 키는 아직 확인하지 못했어요';
+  }
+
+  @override
   String walkChatConsentContinues(String vendor) {
     return '지금 대화의 이전 내용도 $vendor 로 보내져요.';
   }

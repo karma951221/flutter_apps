@@ -288,6 +288,31 @@ void main() {
       await cubit.close();
     });
 
+    test('ok 확인이어도 쓸 모델이 없으면 adopt 하지 않고 강제 갱신한다', () async {
+      final settings = FakeChatSettings();
+      final cubit = cubitOf(settings);
+      await cubit.load();
+      // 채팅용이 아닌 id 뿐 — 거르면 빈 목록.
+      verifier
+        ..result = const ModelListResult.ok([
+          ModelInfo(id: 'not-a-chat-model', displayName: 'x'),
+        ])
+        ..stored = (ChatVendor.anthropic, const ModelListResult.ok([sonnet]));
+
+      final check = await cubit.check(
+        ChatVendor.anthropic,
+        'sk-ant-api03-abcd5678',
+      );
+      await cubit.connect(ChatVendor.anthropic, 'sk-ant-api03-abcd5678', check);
+      await pumpEventQueue();
+
+      // adopt 는 넣지 않았고, 강제 갱신이 받은 목록 하나만 들어갔다.
+      expect(catalog.replaceCalls, [(ChatVendor.anthropic, 1)]);
+      expect(verifier.fetchStoredCalls, 1);
+      expect(cubit.state.model?.label, 'Claude Sonnet 9.5');
+      await cubit.close();
+    });
+
     test('unreachable 로 connect 하면 강제 갱신을 요청한다', () async {
       final settings = FakeChatSettings();
       final cubit = cubitOf(settings);

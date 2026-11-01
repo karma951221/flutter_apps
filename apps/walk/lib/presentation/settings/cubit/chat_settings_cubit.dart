@@ -108,8 +108,8 @@ class ChatSettingsCubit extends Cubit<ChatSettingsState> {
   /// unverified, invalid 면 ArgumentError. 쓰지 못하면 false(기존 연결 그대로). 성공하면
   /// 다시 읽는다. 다른 벤더면 저장소가 키를 덮어쓰고 고른 모델을 지운다.
   ///
-  /// 확인 때 같은 벤더로 받은 목록이 있으면 그대로 넣어 목록 캐시를 바꾸고, 없으면
-  /// (unreachable) 목록 강제 갱신을 뒤에서 요청한다 — 기다리지 않고, 끝나면 모델 행을 다시 읽는다.
+  /// 확인 때 같은 벤더로 받은 목록이 있으면 그대로 넣어 목록 캐시를 바꾸고, 없거나
+  /// (unreachable) 거른 목록이 비었으면 목록 강제 갱신을 뒤에서 요청한다 — 기다리지 않고, 끝나면 모델 행을 다시 읽는다.
   Future<bool> connect(
     ChatVendor vendor,
     String key,
@@ -132,13 +132,18 @@ class ChatSettingsCubit extends Cubit<ChatSettingsState> {
       return false;
     }
     if (checked != null) {
+      bool adopted;
       try {
-        await _choice.adopt(checked.$1, checked.$2);
+        adopted = await _choice.adopt(checked.$1, checked.$2);
       } on Object {
         // 넣지 못하면 다음 갱신이 받는다.
+        adopted = true;
       }
-      await _load(refreshModels: false);
-      return true;
+      if (adopted) {
+        await _load(refreshModels: false);
+        return true;
+      }
+      // 쓸 모델이 하나도 없었다(본문을 못 읽은 경우 등) — 아래에서 강제로 다시 받는다.
     }
     await _load(refreshModels: false, pending: true);
     unawaited(

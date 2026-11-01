@@ -151,11 +151,14 @@ class SecureChatSettings implements ChatSettings {
       // 고른 모델은 벤더의 것 — 다른 벤더로 바뀌면 추천으로 돌아간다.
       if (previousVendor != vendor) await _prefs.remove(modelKey);
     } on Object {
-      // 키는 새것인데 상태는 지난 키의 것일 수 있다. 상태를 지워 다음 읽기가 unverified 로 보게 한다.
-      try {
-        await _prefs.remove(keyStatusKey);
-      } on Object {
-        // 지우지도 못하면 그대로 둔다 — 원래 예외를 던진다.
+      // 키는 새것인데 벤더 · 상태 · 고른 모델은 지난 키의 것일 수 있다. 셋 다 지워 다음
+      // 읽기(_readKey)가 키 접두사로 벤더를 다시 정하고 unverified 로 보게 한다.
+      for (final name in const [vendorKey, keyStatusKey, modelKey]) {
+        try {
+          await _prefs.remove(name);
+        } on Object {
+          // 지우지도 못하면 그대로 둔다 — 원래 예외를 던진다.
+        }
       }
       rethrow;
     }
