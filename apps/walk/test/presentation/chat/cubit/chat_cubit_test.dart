@@ -64,6 +64,14 @@ void main() {
       expect(verifier.recheckCalls, 1);
     });
 
+    test('recheck: false 면 상태만 읽고 부르지 않는다', () async {
+      await cubit.refresh(recheck: false);
+      await pumpEventQueue();
+
+      expect(cubit.state.access, ChatAccess.ready);
+      expect(verifier.recheckCalls, 0);
+    });
+
     test('noKey 면 부르지 않는다', () async {
       settings.key = null;
       await cubit.refresh();

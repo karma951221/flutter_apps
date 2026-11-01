@@ -349,14 +349,13 @@ class ChatSession {
 
   /// 키 상태를 남긴다(§7.3). 기다리지 않고, 실패해도 답에 영향을 주지 않는다.
   /// stale 한 질문은 부르지 않는다(부르는 쪽이 확인). 질문 동안 키를 바꾸거나
-  /// 끊었으면([usedKey] 와 지금 저장된 키가 다르면) 지난 키의 판정을 남기지 않는다.
+  /// 끊었으면([usedKey] 와 지금 저장된 키가 다르면) setKeyStatus 가 남기지 않는다.
   void _recordKeyStatus(ChatKeyStatus status, String? usedKey) {
     if (usedKey == null) return;
     unawaited(
-      Future.sync(() async {
-        if (await _settings.apiKey() != usedKey) return;
-        await _settings.setKeyStatus(status);
-      }).catchError((Object _) {}),
+      Future.sync(
+        () => _settings.setKeyStatus(status, forKey: usedKey),
+      ).catchError((Object _) {}),
     );
   }
 

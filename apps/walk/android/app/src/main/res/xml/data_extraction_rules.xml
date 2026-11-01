@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- API 31+ 클라우드 백업 · 기기 이전. backup_rules.xml 과 같은 이유로 보안 저장소만 뺀다. -->
+<!-- API 31+ 클라우드 백업 · 기기 이전. backup_rules.xml 과 같은 이유로 보안 저장소와 그 설정 파일만 뺀다. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
         <exclude domain="sharedpref" path="FlutterSecureKeyStorage.xml" />
+        <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration.xml" />
+        <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration:FlutterSecureStorage.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
         <exclude domain="sharedpref" path="FlutterSecureKeyStorage.xml" />
+        <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration.xml" />
+        <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration:FlutterSecureStorage.xml" />
     </device-transfer>
 </data-extraction-rules>

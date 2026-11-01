@@ -39,12 +39,14 @@ void main() {
   late FakeChatSettings settings;
   late _MockLock lock;
   late StreamController<DiaryLockState> lockStates;
+  late FakeChatKeyVerifier verifier;
 
   setUp(() {
     session = _MockSession();
     diary = _MockDiary();
     settings = FakeChatSettings('sk-ant-test')..consented = true;
     lock = _MockLock();
+    verifier = FakeChatKeyVerifier();
     lockStates = StreamController<DiaryLockState>.broadcast();
     whenListen(
       lock,
@@ -55,7 +57,7 @@ void main() {
       ..registerSingleton<ChatSession>(session)
       ..registerSingleton<ChatTrace>(const NoopChatTrace())
       ..registerSingleton<ChatSettings>(settings)
-      ..registerSingleton<ChatKeyVerifier>(FakeChatKeyVerifier())
+      ..registerSingleton<ChatKeyVerifier>(verifier)
       ..registerSingleton<DiaryRepository>(diary)
       ..registerSingleton<Clock>(MutableClock(diaryT0));
   });
@@ -165,31 +167,13 @@ void main() {
     expect(opened, 1);
   });
 
-  testWidgets('위에 얹힌 화면(물어보기 설정)에서 키를 넣고 돌아오면 키를 다시 읽는다', (tester) async {
+  testWidgets('위에 얹힌 화면(물어보기 설정)에서 키를 넣고 돌아오면 키를 다시 읽는다(noKey → ready)', (
+    tester,
+  ) async {
     settings.key = null;
     await pump(tester);
-    expect(find.text('설정 열기'), findsOneWidget);
-    final navigator = tester.state<NavigatorState>(find.byType(Navigator));
-    unawaited(
-      navigator.push(
-        MaterialPageRoute<void>(builder: (_) => const Text('chat settings')),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    settings.key = 'sk-ant-new';
-    navigator.pop();
-    await tester.pumpAndSettle();
-
-    expect(find.text('설정 열기'), findsNothing);
-    expect(find.text('어제 뭐 했어?'), findsOneWidget);
-  });
-
-  testWidgets('설정 화면에서 돌아오면 키 상태를 다시 읽는다(noKey → ready)', (tester) async {
-    settings.key = null;
-    await pump(tester);
-    expect(find.byKey(const Key('chat-bubble-open-settings')), findsNothing);
     expect(find.text('설정에서 키를 넣어 주세요'), findsOneWidget);
+    expect(find.text('설정 열기'), findsOneWidget);
     final navigator = await pushCover(tester);
 
     settings.key = 'sk-ant-new';
@@ -197,10 +181,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('설정에서 키를 넣어 주세요'), findsNothing);
+    expect(find.text('설정 열기'), findsNothing);
     expect(find.text('어제 뭐 했어?'), findsOneWidget);
+    // 돌아와서 ready 가 되면 키를 다시 확인한다.
+    expect(verifier.recheckCalls, 1);
   });
 
-  testWidgets('탭이 보이지 않을 때 돌아오면 다시 읽지 않는다', (tester) async {
+  testWidgets('탭이 보이지 않을 때 돌아오면 다시 읽지 않고, 보이게 되면 읽는다', (tester) async {
     await pump(tester, active: false);
     final navigator = await pushCover(tester);
     final before = settings.hasApiKeyCalls;
@@ -209,6 +196,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(settings.hasApiKeyCalls, before);
+
+    await pump(tester, active: true);
+
+    expect(settings.hasApiKeyCalls, before + 1);
+    expect(verifier.recheckCalls, 1);
+  });
+
+  testWidgets('앱 시작에 탭이 보이지 않으면 상태만 읽고 키 확인은 보이게 될 때 한다', (tester) async {
+    await pump(tester, active: false);
+
+    expect(settings.hasApiKeyCalls, 1);
+    expect(verifier.recheckCalls, 0);
+
+    await pump(tester, active: true);
+
+    expect(verifier.recheckCalls, 1);
+  });
+
+  testWidgets('앱 시작에 탭이 보이면 곧바로 키를 확인한다', (tester) async {
+    await pump(tester);
+
+    expect(verifier.recheckCalls, 1);
   });
 
   testWidgets('잘못된 키로 실패하면 말풍선의 [설정 열기]가 onOpenSettings 를 부른다', (tester) async {

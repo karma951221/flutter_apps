@@ -297,7 +297,9 @@ void main() {
     expect(stack.children.first, isA<Positioned>());
   });
 
-  testWidgets('읽는 중에는 연결 행을 누를 수 없다', (tester) async {
+  testWidgets("읽는 중에는 연결 행이 제목만 보이고 누를 수 없다 — '연결하기'를 미리 보이지 않는다", (
+    tester,
+  ) async {
     getIt
       ..unregister<ChatSettings>()
       ..registerSingleton<ChatSettings>(_LoadingSettings());
@@ -308,6 +310,9 @@ void main() {
       find.descendant(of: find.byKey(_row), matching: find.byType(ListTile)),
     );
     expect(tile.onTap, isNull);
+    expect(tile.subtitle, isNull);
+    expect(tile.trailing, isNull);
     expect(find.text('AI 연결'), findsOneWidget);
+    expect(find.text('연결하기'), findsNothing);
   });
 }

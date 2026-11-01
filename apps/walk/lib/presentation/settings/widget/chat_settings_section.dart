@@ -97,9 +97,14 @@ class _ChatSettingsViewState extends State<_ChatSettingsView> {
     return BlocBuilder<ChatSettingsCubit, ChatSettingsState>(
       builder: (context, state) {
         final connection = state.connection;
-        final row = connection == null
-            ? _ConnectRow(onTap: state.loading ? null : _openKeyDialog)
-            : _ConnectedRow(connection: connection, onTap: _openKeyDialog);
+        final Widget row = switch ((state.loading, connection)) {
+          (true, _) => const _LoadingRow(),
+          (false, null) => _ConnectRow(onTap: _openKeyDialog),
+          (false, final ChatConnection c) => _ConnectedRow(
+            connection: c,
+            onTap: _openKeyDialog,
+          ),
+        };
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -146,11 +151,25 @@ class _ChatSettingsViewState extends State<_ChatSettingsView> {
   }
 }
 
-/// 미연결(또는 읽는 중) 연결 행. 읽는 중이면 [onTap] 이 null.
+/// 읽는 중 연결 행 — 제목만. 연결돼 있을 수도 있어 '연결하기'를 미리 보이지 않는다.
+class _LoadingRow extends StatelessWidget {
+  const _LoadingRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppListTile(
+      key: const Key('settings-chat-key'),
+      leading: const Icon(Icons.power_outlined),
+      title: Text(AppLocalizations.of(context).walkChatConnectTitle),
+    );
+  }
+}
+
+/// 미연결 연결 행.
 class _ConnectRow extends StatelessWidget {
   const _ConnectRow({required this.onTap});
 
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {

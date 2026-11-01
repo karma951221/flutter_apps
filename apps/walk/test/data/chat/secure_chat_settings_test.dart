@@ -262,11 +262,11 @@ void main() {
 
   test('setKeyStatus 는 연결돼 있을 때만, 같은 값이면 prefs 를 쓰지 않는다', () async {
     // 미연결 — 쓰지 않는다.
-    await settings.setKeyStatus(ChatKeyStatus.invalid);
+    await settings.setKeyStatus(ChatKeyStatus.invalid, forKey: key);
     expect(prefs.containsKey('chat.keyStatus'), isFalse);
 
     await settings.connect(ChatVendor.anthropic, key, ChatKeyStatus.unverified);
-    await settings.setKeyStatus(ChatKeyStatus.valid);
+    await settings.setKeyStatus(ChatKeyStatus.valid, forKey: key);
     expect((await settings.connection())?.status, ChatKeyStatus.valid);
 
     // 같은 값이면 prefs 쓰기가 없다.
@@ -275,9 +275,66 @@ void main() {
     when(() => mockPrefs.getString('chat.keyStatus')).thenReturn('valid');
     final quiet = SecureChatSettings(secure, mockPrefs);
 
-    await quiet.setKeyStatus(ChatKeyStatus.valid);
+    await quiet.setKeyStatus(ChatKeyStatus.valid, forKey: key);
 
     verifyNever(() => mockPrefs.setString(any(), any()));
+  });
+
+  test('setKeyStatus 는 저장된 키가 forKey 와 다르면 쓰지 않는다', () async {
+    await settings.connect(ChatVendor.anthropic, key, ChatKeyStatus.unverified);
+
+    await settings.setKeyStatus(
+      ChatKeyStatus.invalid,
+      forKey: 'sk-ant-api03-OldKeyBeforeChange',
+    );
+    expect(prefs.getString('chat.keyStatus'), 'unverified');
+
+    // 앞뒤 공백은 같은 키로 본다.
+    await settings.setKeyStatus(ChatKeyStatus.valid, forKey: ' $key ');
+    expect(prefs.getString('chat.keyStatus'), 'valid');
+  });
+
+  test('setKeyStatus 는 키를 읽지 못하면 쓰지 않고 던지지 않는다', () async {
+    await settings.connect(ChatVendor.anthropic, key, ChatKeyStatus.unverified);
+    when(
+      () => secure.read(key: 'chat.apiKey'),
+    ).thenThrow(Exception('keystore'));
+
+    await settings.setKeyStatus(ChatKeyStatus.valid, forKey: key);
+
+    expect(prefs.getString('chat.keyStatus'), isNot('valid'));
+  });
+
+  test('connect 가 키를 쓴 뒤 prefs 쓰기에 실패하면 상태를 지우고 던진다', () async {
+    final mockPrefs = _MockPrefs();
+    when(
+      () => mockPrefs.setString('chat.vendor', any()),
+    ).thenThrow(Exception('prefs'));
+    when(() => mockPrefs.remove(any())).thenAnswer((_) async => true);
+    final failing = SecureChatSettings(secure, mockPrefs);
+
+    await expectLater(
+      failing.connect(ChatVendor.anthropic, key, ChatKeyStatus.valid),
+      throwsException,
+    );
+
+    expect(stored['chat.apiKey'], key);
+    verify(() => mockPrefs.remove('chat.keyStatus')).called(1);
+    verifyNever(() => mockPrefs.setString('chat.keyStatus', any()));
+  });
+
+  test('connect 의 prefs 쓰기 실패 뒤 상태 지우기도 실패하면 원래 예외를 던진다', () async {
+    final mockPrefs = _MockPrefs();
+    when(
+      () => mockPrefs.setString(any(), any()),
+    ).thenThrow(StateError('prefs'));
+    when(() => mockPrefs.remove(any())).thenThrow(Exception('remove'));
+    final failing = SecureChatSettings(secure, mockPrefs);
+
+    await expectLater(
+      failing.connect(ChatVendor.anthropic, key, ChatKeyStatus.valid),
+      throwsStateError,
+    );
   });
 
   test('동의는 prefs 에 남는다', () async {

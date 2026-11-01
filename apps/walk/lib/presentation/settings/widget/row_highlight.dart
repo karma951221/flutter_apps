@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 /// 행 하나(AppListTile)를 감싸 "여기를 보세요"를 두 번 짚는다.
 ///
 /// 재생 조건: [play] 가 처음부터 true 이거나 false → true 로 바뀌면 한 번, [replayToken] 이 바뀔 때마다 한 번.
+/// [play] 가 true → false 로 바뀌면(짚을 행이 다른 행으로 옮겨 감) 예약을 거두고, 재생 중이면 지금 값에서 꺼 내린다.
 /// 재생은 둘러싼 라우트의 push 전환이 끝난 뒤(ModalRoute.animation 완료) 다음 프레임에 시작한다.
 /// 애니메이션 줄이기(AppMotion.enabled == false)면 그리지 않는다.
 class RowHighlight extends StatefulWidget {
@@ -21,7 +22,7 @@ class RowHighlight extends StatefulWidget {
   final bool play;
   final int replayToken;
 
-  /// 재생을 시작할 때 SemanticsService.announce 로 한 번 읽을 글(보통 행 제목). null 이면 읽지 않음.
+  /// 재생을 시작할 때 SemanticsService.sendAnnouncement 로 한 번 읽을 글(보통 행 제목). null 이면 읽지 않음.
   final String? announce;
 
   /// 한 번 = 켜짐 medium → 유지 long → 꺼짐 medium(= 900ms). 두 번 반복.
@@ -105,7 +106,18 @@ class _RowHighlightState extends State<RowHighlight>
     super.didUpdateWidget(oldWidget);
     final turnedOn = widget.play && !oldWidget.play;
     final replay = widget.replayToken != oldWidget.replayToken;
-    if (turnedOn || replay) _request();
+    if (turnedOn || replay) {
+      _request();
+    } else if (oldWidget.play && !widget.play) {
+      _cancel();
+    }
+  }
+
+  /// 예약 · 대기 중인 재생을 거두고, 재생 중이면 꺼 내린다. 빌드 중에 불리므로 setState 하지 않는다.
+  void _cancel() {
+    _generation++;
+    _stopWaitingForRoute();
+    _fadeOutRunning();
   }
 
   @override
@@ -208,15 +220,19 @@ class _RowHighlightState extends State<RowHighlight>
   /// 재생 중 누르거나 스크롤하면 지금 값에서 0 으로 내리고 멈춘다.
   void _dismiss() {
     if (!_blink.isAnimating) return;
+    setState(_fadeOutRunning);
+  }
+
+  /// 본 재생 중이면 지금 값에서 0 으로 내리는 재생으로 바꾼다(AppMotion.medium).
+  void _fadeOutRunning() {
+    if (!_blink.isAnimating) return;
     _stopWatching();
     final from = _blinkOpacity.value;
     _blink.stop();
-    setState(() {
-      _opacity = Tween<double>(
-        begin: from,
-        end: 0,
-      ).animate(CurvedAnimation(parent: _fadeOut, curve: AppMotion.standard));
-    });
+    _opacity = Tween<double>(
+      begin: from,
+      end: 0,
+    ).animate(CurvedAnimation(parent: _fadeOut, curve: AppMotion.standard));
     _fadeOut.forward(from: 0);
   }
 

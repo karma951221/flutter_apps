@@ -67,12 +67,13 @@ class ChatKeyVerifier {
         ModelListUnreachable() => null,
       };
       if (status == null) return null;
-      // 확인하는 동안 키를 바꿨거나 끊었으면 지난 키의 판정을 기록하지 않는다.
+      // 그사이 다른 쪽(질문 등)이 이미 판정했으면 덮지 않는다.
       final now = await _settings.connection();
       if (now == null || now.status != ChatKeyStatus.unverified) return null;
-      if (await _settings.apiKey() != key) return null;
-      await _settings.setKeyStatus(status);
-      return status;
+      // 확인하는 동안 키를 바꿨거나 끊었으면 setKeyStatus 가 기록하지 않는다.
+      await _settings.setKeyStatus(status, forKey: key);
+      final after = await _settings.connection();
+      return after?.status == status ? status : null;
     } catch (_) {
       return null;
     }

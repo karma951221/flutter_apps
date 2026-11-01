@@ -133,8 +133,18 @@ class SecureChatSettings implements ChatSettings {
     if (trimmed.isEmpty) throw ArgumentError.value(key, 'key', 'empty');
     await _migrated();
     await _secure.write(key: apiKeyName, value: trimmed);
-    await _prefs.setString(vendorKey, vendor.name);
-    await _prefs.setString(keyStatusKey, status.name);
+    try {
+      await _prefs.setString(vendorKey, vendor.name);
+      await _prefs.setString(keyStatusKey, status.name);
+    } on Object {
+      // 키는 새것인데 상태는 지난 키의 것일 수 있다. 상태를 지워 다음 읽기가 unverified 로 보게 한다.
+      try {
+        await _prefs.remove(keyStatusKey);
+      } on Object {
+        // 지우지도 못하면 그대로 둔다 — 원래 예외를 던진다.
+      }
+      rethrow;
+    }
   }
 
   @override
@@ -146,11 +156,15 @@ class SecureChatSettings implements ChatSettings {
     await _forgetPrefs();
   }
 
-  /// "연결돼 있음"은 prefs 의 벤더로만 판단한다(보안 저장소를 다시 읽지 않는다).
-  /// 복원으로 prefs 만 남은 상태라면 여기서 써도 다음 읽기가 정리한다.
+  /// 저장된 키를 다시 읽어 [forKey] 와 같을 때만 쓴다(읽지 못하면 미연결로 보고 쓰지 않는다).
   @override
-  Future<void> setKeyStatus(ChatKeyStatus status) async {
-    if (_storedVendor == null || _storedStatus == status) return;
+  Future<void> setKeyStatus(
+    ChatKeyStatus status, {
+    required String forKey,
+  }) async {
+    final current = await _readKey();
+    if (current == null || current != forKey.trim()) return;
+    if (_storedStatus == status) return;
     await _prefs.setString(keyStatusKey, status.name);
   }
 

@@ -62,7 +62,8 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
   @override
   void initState() {
     super.initState();
-    unawaited(_cubit.refresh());
+    // 보이지 않는 탭은 상태만 읽는다 — 키 확인(네트워크)은 탭이 보일 때.
+    unawaited(_cubit.refresh(recheck: widget.active));
   }
 
   ModalRoute<void>? _route;

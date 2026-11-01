@@ -151,6 +151,38 @@ void main() {
     await expectStaysOff(tester, const Duration(seconds: 1));
   });
 
+  testWidgets('재생 중 play 가 true → false 로 바뀌면 지금 값에서 꺼 내린다', (tester) async {
+    await pushPage(tester);
+    await finishTransition(tester);
+    await tester.pump(AppMotion.medium);
+    expect(opacity(tester), greaterThan(0.95));
+
+    config.value = (play: false, token: 0);
+    await tester.pump();
+    // 곧바로 0 이 되지 않고 내려간다.
+    await tester.pump(AppMotion.medium ~/ 2);
+    final mid = opacity(tester);
+    expect(mid, greaterThan(0));
+    expect(mid, lessThan(0.95));
+    await tester.pump(AppMotion.medium);
+    expect(opacity(tester), 0);
+
+    // 두 번째 깜빡임도 오지 않는다.
+    await expectStaysOff(tester, RowHighlight.cycle * RowHighlight.repeats);
+    expect(tester.hasRunningAnimations, isFalse);
+  });
+
+  testWidgets('재생 전에 play 가 false 로 바뀌면 재생하지 않는다', (tester) async {
+    await pushPage(tester);
+    // push 전환 중 — 재생은 아직 예약 상태.
+    await tester.pump(route(tester).transitionDuration ~/ 3);
+    config.value = (play: false, token: 0);
+    await tester.pump();
+
+    await finishTransition(tester);
+    await expectStaysOff(tester, const Duration(seconds: 2));
+  });
+
   testWidgets('replayToken 이 바뀌면 다시 재생한다', (tester) async {
     await pushPage(tester);
     await finishTransition(tester);
