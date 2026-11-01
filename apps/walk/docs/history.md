@@ -443,3 +443,59 @@ Health Connect 에 넣었다(저장소 밖). 시나리오 결과는 [테스트](
 - 기기 측정 셋(기준선 · C3 · C4)은 실제 키 + 기기가 필요해 대기([진행 현황](status.md#중립-계약--계측--멈춤-2026-11-02)).
 - 리뷰에서 미룬 작은 것: `AnthropicTurnState.model` 은 요청한 id(실제 응답 모델 아님 — ③ 전에 기록) · `message_start` 에 output 이 없으면 delta 가 있어도 usage null · 어댑터가 `fastMode` 를 무시(③ 에서 주석 · 테스트) · 보류 중인 trace `end()` 는 새 질문이 시작되면 버려짐(디버그 전용) · 릴레이가 pause/resume 을 넘기지 않음 · 사용량 기록 객체를 `Future.sync` 보호 밖에서 만든다(이론상) · reset 뒤 늦은 ask 의 stale 경로 테스트 없음(Task 3) · 생각 중(thinking) 단계 멈춤 테스트 없음 · `newConversation` 이 `restoredDraft` 를 비우지 않음 · 질문을 되돌리지 못해도 '멈췄어요' 스낵바가 뜸(Task 7).
 - 다음 계획에서 챙길 것: `AnthropicTurnState.model` 은 요청한 id 다 — ③ 이 쓰기 전에 `message_start` 의 실제 모델로 고친다. `ChatState.restoredDraft`(되돌린 질문 글)가 `ChatState` 의 toString 에 찍힌다 — 상태 toString 을 가리는 정리 때 함께 막는다.
+
+## 2026-11 — 물어보기 키 UX(키 기획 ②)
+
+[계획](../../../docs/superpowers/plans/2026-11-01-walk-chat-key-ux.md) · [기획](../../../docs/superpowers/specs/2026-11-01-walk-chat-key-input.md) · 구현 `ac48388c`~`389ca99b`
+
+키를 넣어도 화면이 안 바뀌던 것을 고쳤다. 키는 연결 정보(벤더 · 상태)로 다루고, 저장 전에 `GET /v1/models` 로 확인한 뒤 요금 경고를 거쳐 등록하며, 화면에는 앞부분만 보인다. 물어보기 · 알람 배너에서 설정을 열면 봐야 할 행이 한 번 glow 한다.
+
+### 결정
+
+계획을 쓰며 정한 것(스펙끼리 어긋나거나 스펙이 비워 둔 곳).
+
+| # | 결정 | 이유 |
+|---|---|---|
+| D1 | ② 에서는 벤더 시트 없이 [연결하기]가 곧바로 Claude 키 대화상자를 연다. 미연결 설명은 "Claude API 키를 넣으면…"(④ 에서 "Claude · GPT 중 하나…"로) | 스펙 §5.1 의 벤더 시트는 ④ 범위. 한 벤더뿐인 시트는 단계만 하나 늘린다 |
+| D2 | `ChatSettings` 는 §7.1 중 ② 몫(`connection` · `hasApiKey` · `apiKey` · `connect` · `disconnect` · `setKeyStatus`)만. `consented` 는 bool 그대로, `selectedModel` · `fastMode` 는 ③, `consentedVendor` 는 ④ | 단계마다 계약을 그 단계가 쓰는 만큼만 넓힌다. 저장 키 이전도 ② 몫(`anthropic_api_key` → `chat.apiKey`)만 |
+| D3 | `ChatConnection` · `ChatKeyStatus` 는 `chat_settings.dart` 가 아니라 `lib/domain/chat/chat_connection.dart` | 중립 계약 계획이 `ChatVendor` 를 따로 둔 것(P7)과 맞춤. 테스트 · 화면이 계약 전체를 끌어오지 않게 |
+| D4 | 키 확인은 새 domain 유스케이스 `ChatKeyVerifier`(10초 상한 · 예외 → unreachable · 확인 전 재확인)로 한 곳에 | 스펙은 "모델 목록 호출로 확인"만 정했다. 원문 키를 읽는 곳을 `ChatSession` · 이것 둘로 묶고(스펙 §2.2), ③ 의 카탈로그 갱신 · ④ 의 벤더 레지스트리가 같은 자리에 붙는다 |
+| D5 | ② 의 `listModels` 는 판정만 쓰고 목록은 버린다(캐시 · 페이지 넘기기 · 기본 모델은 ③) | 스펙 §4 "한 번 호출로 두 가지"의 두 번째는 ③ 이 카탈로그를 만들 때 붙인다 |
+| D6 | 저장 전 확인 결과를 화면 쪽 enum `ChatKeyCheck`(valid · invalid · unreachable)로 줄이고, 키 문자열은 cubit 메서드 인자로만 지나간다 | 대화상자 → 경고 → 저장 사이에 원문을 상태(`toString` 에 찍힘)로 들고 있지 않기 위해 |
+| D7 | 마스킹 접두사: Anthropic 은 `sk-ant-api<숫자>-` 정규식, `sk-ant-` 의 다른 종류(관리 키 등)는 "Claude 키 아님" | 스펙 §10.1 "`sk-ant-<종류><번호>-` 모양" + OpenAI 옛 `sk-` 접두사와 겹치지 않게. 본문 4글자 미만이면 접두사 + `••••` |
+| D8 | 모델 없음 문구는 ② 에서 "지금 모델을 쓸 수 없어요. 잠시 뒤…", ③ 에서 "모델을 바꿨어요. 다시 물어봐 주세요"로 바꾼다 | 스펙 §6.3 문구는 카탈로그가 기본 모델로 되돌린다는 전제(③). ② 는 모델 id 가 고정이라 바꿔 줄 수 없다 |
+| D9 | Anthropic 오류 매핑은 `error.type` 우선 · 상태 코드 보조, 본문은 16KB · 2초 상한으로 `type` 한 필드만 | 스펙 §10.2 원칙 고침을 Anthropic 에도 적용. 크레딧 부족 모양이 확인 안 됐으므로(K2) `billing_error` · 402 둘 다 받는다 |
+| D10 | 알람 권한 glow 대상은 "조치가 필요한 첫 권한 행 하나"(알림 → 정확한 알람 → 전체 화면) | Q7 "행 하나"인데 알람 권한 행은 셋이다. 배너가 뜨는 이유인 거부된 행을 짚는 게 맞다 |
+| D11 | `RowHighlight` 는 `play`(첫 진입) 외에 `replayToken`(저장 성공 뒤 다시) 인자를 둔다. `play` 가 false → true 로 바뀌어도 재생 | 스펙 §1.2 "성공 뒤 연결 행 glow" 와 §3.2 "`play: bool`" 을 한 위젯으로. 알람 권한 상태가 늦게 읽혀도 짚을 수 있게 |
+| D12 | 물어보기 탭은 `RouteAware`(`appRouteObserver`)의 `didPopNext` 로 설정에서 돌아올 때 다시 읽는다. `onOpenSettings` 는 `VoidCallback` 그대로 | 설정이 push 화면이 되며 탭 전환이 없어져 지금의 "보일 때 다시 읽기"가 불리지 않는다. 콜백을 `Future` 로 바꾸면 ⋮ 경로를 못 덮고 스펙 §3.2 와도 어긋난다. (이 구독은 이미 재구성 Task 3 에 있어 재사용만 했다) |
+| D13 | 로고는 K1 확인 전까지 모노그램. 자산 경로 · 단색화 여부는 `ChatVendorIcon.confirmedLogos` 한 곳, 자산 파일과 pubspec 항목은 확인 뒤에만 | Q9 "공식 로고"와 §10.3-3 "가이드 확인 먼저"를 둘 다 지키면서 코드가 막히지 않게. 확인 안 된 로고를 커밋하지 않는다 |
+| D14 | 연결 행 미리보기는 고정폭 글꼴 없이 `bodyMedium` | 스펙 §6.1 "(고정폭)"을 따르려면 글꼴 이름을 하드코딩해야 하는데 타이포 토큰에 고정폭이 없다. 필요하면 토큰을 먼저 만든다 |
+| D15 | 연결 끊기 확인 창은 `isDestructive: true`(기본) 그대로, 요금 경고만 `false` | 키를 지우면 다시 넣어야 하므로 되돌리기 어렵다(CLAUDE.md). 요금 경고는 진행을 확인하는 창(스펙 §1.2) |
+
+### 구현 중 정한 것(컨트롤러 판정)
+
+- **마스킹은 접두사를 모르면 4글자까지만** 보인다(8글자가 아니라). 틀리면 숫자 하나.
+- **치는 중에는 접두사 안내를 하지 않는다.** 입력이 아직 Claude 키 모양의 앞부분(`s` · `sk-` · `sk-ant-` · `sk-ant-api` · `sk-ant-api03`)이면 조용하고, `sk-ant-` 인데 API 키가 아니면(관리 키 등) 전용 문구 "API 키가 아니에요", 다른 벤더 모양이면 "GPT 키 같아요". 스펙의 즉시 안내 의도는 살리고 오탐을 없앴다.
+- **[저장]은 `vendorOfKey(key) == vendor` 일 때만** 켠다(치는 중이라 안내가 없어도 꺼져 있다).
+- **섹션 머리글 "AI 연결"을 뺐다.** 미연결 행 제목이 같은 "AI 연결" 이라 겹친다. 스펙 §6.1 에 구현 메모를 달았고, ④ 에서 모델 섹션 등을 더하며 다시 정한다.
+- `ChatKeyVerifier` 는 `lazySingleton` — 세션 · cubit 이 같은 인스턴스를 본다.
+- 세션은 오류 때 키가 그사이 바뀌었으면 키 상태를 쓰지 않는다(옛 키의 실패가 새 키를 `invalid` 로 만들지 않게).
+- 쓰기 실패는 스낵바와 입력칸 오류를 같이 보인다. 확인 · 경고 · 쓰기 내내 입력칸 · [취소] · 뒤로가기를 막는다.
+- 옛 키 이전이 실패해도 지운 키가 돌아오지 않는다(`9cb92702`).
+
+### 구현 전 확인
+
+| # | 확인 | 결과 |
+|---|---|---|
+| K1 | Anthropic 브랜드 가이드(로고 사용 · 단색화 · 다크 반전 · 공식 SVG) | **대기 (live 문서 · 기기 미확인)** — 모노그램 "C" 로 대신 중. 확인되면 `assets/chat/vendors/anthropic.svg` + `confirmedLogos` 한 줄 + pubspec 자산. 쓸 수 없으면 사용자에게 다시 묻는다. 그때 비동기 SVG 로드 실패 방어와 자산 경로 검사 테스트를 함께 더한다 |
+| K2 | 오류 모양 — 크레딧 부족이 `402 billing_error` 인지 `400 invalid_request_error`(메시지로만 구분)인지, 모르는 모델이 `404 not_found_error` 인지 | **대기 (live 문서 · 기기 미확인)** — `error.type` 우선 · 상태 코드 보조(`billing_error` · 402, `not_found_error` · 404). 메시지로만 구분되면 `unknown` 으로 남는다. 필요: 크레딧 0 계정이나 모르는 모델 id 로 실제 응답 본문을 한 번 보기 |
+| K3 | `GET /v1/models` — `limit` 상한, 응답 필드, 401 · 403 구분, 크레딧 0 인 키도 200 인지 | **대기 (live 문서 · 기기 미확인)** — ② 는 상태 코드만 쓴다(2xx valid · 401/403 invalid · 그 밖 unreachable). 목록은 관대하게 파싱하고 버린다. 필요: 실제 키(정상 · 잘못된 · 크레딧 0)로 호출 |
+| K4 | 보안 저장소 파일 이름 · 백업 복원 | **절반** — 출처: 로컬 pub cache 의 `FlutterSecureStorageConfig`(`flutter_secure_storage` 11.1.1): `shared_prefs/FlutterSecureStorage.xml`(데이터) · `FlutterSecureKeyStorage.xml`(감싼 키), `resetOnError` 기본 true. 두 파일을 백업 규칙에서 뺐고 복원 뒤 읽기 예외 · 키 없는 prefs 는 미연결로 정리(단위 테스트). **대기**: 실기기 `bmgr backupnow` → 재설치 → 복원 뒤 미연결인지, 설정 prefs 파일이 정말 제외됐는지 |
+| K5 | 재구성 · 중립 계약의 실제 이름 | **확인함** (2026-11-02, 코드 `grep`) — `ToolsTab.onOpenAlarmSettings`, `ChatTab` 앱바 `FeatureMenu`, `AnthropicChatModel(http.Client, ChatTrace)`, `ChatTab` 의 `RouteAware`(`didPopNext`)는 이미 있었다 |
+
+### 막힌 것 · 남은 것
+
+- **Anthropic 이 키 접두사를 바꾸면** `lib/domain/chat/api_key_mask.dart` 의 정규식을 고쳐야 한다. 고치기 전에는 새 모양의 키가 "Claude 키 아님"으로 막혀 저장되지 않는다.
+- 기기 확인 전부(실제 키 연결 · 잘못된 키 · 비행기 모드 · 백업 복원 · glow 모양 · 로고 · 오류 모양)는 대기 — [진행 현황](status.md#키-ux--키-기획--2026-11-02).
+- 리뷰에서 미룬 작은 것: 마스킹 정규식을 호출마다 컴파일 · `RowHighlight` 자식이 줄인 움직임 토글 때 다시 만들어짐 · 전환 기다리는 중 탭이 닫지 않음 · `play` true→false 가 멈추지 않음 · 성공 뒤 pop 직후 [저장] 로딩이 한 번 깜박일 수 있음 · 로고 로드 실패 방어(K1 때) · 알람 권한 강조는 상태 기반이라 화면을 연 채 권한이 바뀌면 새 첫 행이 한 번 더 재생됨 · 접두사 안내는 `errorText`(빨강).
+- 다음 단계: 키 기획 ③(모델 목록 · 칩). `ChatSession.interimModel` 은 그때 지운다.
