@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/chat/chat_model.dart';
+import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/chat_usage_log.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/tool/life_tools.dart';
@@ -14,6 +15,7 @@ import 'package:walk/domain/chat/usecase/chat_session.dart';
 
 import '../../../support/fake_chat_settings.dart';
 import '../../../support/fake_chat_usage_log.dart';
+import '../../../support/recording_chat_trace.dart';
 
 class _MockLifeTools extends Mock implements LifeTools {}
 
@@ -125,8 +127,15 @@ void main() {
     ids = _SeqIds();
   });
 
-  ChatSession session(_FakeModel model) =>
-      ChatSession(model, tools, settings, clock, usage, ids);
+  ChatSession session(_FakeModel model) => ChatSession(
+    model,
+    tools,
+    settings,
+    clock,
+    usage,
+    ids,
+    const NoopChatTrace(),
+  );
 
   group('사용량 기록', () {
     const u1 = TokenUsage(
@@ -352,6 +361,73 @@ void main() {
       expect(model.requests[1].messages, hasLength(3));
     },
   );
+
+  test('key · round(n) · tool.start/end 를 찍고 도구 입력값은 data 에 없다', () async {
+    final image = ToolImage(
+      mediaType: 'image/jpeg',
+      bytes: Uint8List.fromList([1, 2, 3]),
+    );
+    when(() => tools.run('search_diary', any())).thenAnswer(
+      (_) async => ToolResult(
+        json: '{"a":1}',
+        entryIds: const ['e1', 'e2'],
+        images: [image],
+      ),
+    );
+    final model = _FakeModel([
+      [
+        _done([
+          _toolUse('tu_1', 'search_diary', {'query': '비밀 검색어'}),
+        ], StopKind.toolUse),
+      ],
+      _answer('답'),
+    ]);
+    final trace = RecordingChatTrace();
+
+    await ChatSession(
+      model,
+      tools,
+      settings,
+      clock,
+      usage,
+      ids,
+      trace,
+    ).ask('질문').toList();
+
+    expect(trace.labels, [
+      ChatTraceMark.key,
+      ChatTraceMark.round,
+      ChatTraceMark.toolStart,
+      ChatTraceMark.toolEnd,
+      ChatTraceMark.round,
+    ]);
+    expect(trace.dataOf(ChatTraceMark.round), [
+      {'n': 1},
+      {'n': 2},
+    ]);
+    expect(trace.dataOf(ChatTraceMark.toolStart).single, {
+      'tool': 'search_diary',
+    });
+    expect(trace.dataOf(ChatTraceMark.toolEnd).single, {
+      'tool': 'search_diary',
+      'n': 3,
+    });
+    expect(trace.marks.map((m) => '${m.$2}').join(), isNot(contains('비밀')));
+  });
+
+  test('trace 가 꺼져 있으면 세션은 mark 를 부르지 않는다', () async {
+    final trace = RecordingChatTrace(enabled: false);
+    await ChatSession(
+      _FakeModel([_answer('답')]),
+      tools,
+      settings,
+      clock,
+      usage,
+      ids,
+      trace,
+    ).ask('질문').toList();
+    expect(trace.marks, isEmpty);
+  });
 
   test('이미지가 있는 결과는 ToolResultPart.images 로 다음 요청에 실린다', () async {
     final image = ToolImage(
@@ -687,7 +763,15 @@ void main() {
   test('진행 중에 다시 부르면 StateError, reset 은 대화를 비운다', () async {
     final gate = Completer<void>();
     final model = _GatedModel(gate.future);
-    final chat = ChatSession(model, tools, settings, clock, usage, ids);
+    final chat = ChatSession(
+      model,
+      tools,
+      settings,
+      clock,
+      usage,
+      ids,
+      const NoopChatTrace(),
+    );
 
     final first = chat.ask('첫').toList();
     expect(() => chat.ask('둘'), throwsStateError);
@@ -705,7 +789,15 @@ void main() {
         '라운드가 $outcome 으로 끝나도 이벤트 없이 멈추고, 다음 질문의 messages 는 [새 질문] 뿐이다',
         () async {
           final model = _CompleterModel();
-          final chat = ChatSession(model, tools, settings, clock, usage, ids);
+          final chat = ChatSession(
+            model,
+            tools,
+            settings,
+            clock,
+            usage,
+            ids,
+            const NoopChatTrace(),
+          );
 
           final firstEvents = <ChatEvent>[];
           final first = chat.ask('첫').listen(firstEvents.add).asFuture<void>();

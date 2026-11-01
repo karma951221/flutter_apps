@@ -7,8 +7,11 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:walk/data/chat/anthropic_chat_model.dart';
 import 'package:walk/domain/chat/chat_model.dart';
+import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/tool/tool_result.dart';
+
+import '../../support/recording_chat_trace.dart';
 
 String sse(String event, Map<String, Object?> data) =>
     'event: $event\ndata: ${jsonEncode(data)}\n\n';
@@ -42,7 +45,10 @@ ModelRequest request({
 );
 
 Future<List<ModelEvent>> run(MockClient client, [ModelRequest? r]) =>
-    AnthropicChatModel(client).stream(r ?? request()).toList();
+    AnthropicChatModel(
+      client,
+      const NoopChatTrace(),
+    ).stream(r ?? request()).toList();
 
 /// 요청 본문을 잡는 끝난 응답 하나.
 MockClient capture(void Function(Map<String, dynamic> body) onBody) =>
@@ -384,6 +390,7 @@ void main() {
           'delta': {'type': 'text_delta', 'text': 'a'},
         }),
       ]),
+      const NoopChatTrace(),
     ).stream(request(apiKey: 'k'));
     await expectLater(
       stream.forEach(events.add),
@@ -432,6 +439,7 @@ void main() {
     await expectLater(
       AnthropicChatModel.withTimeouts(
         client,
+        const NoopChatTrace(),
         responseTimeout: const Duration(milliseconds: 20),
       ).stream(request(apiKey: 'k')).toList(),
       isNetwork,
@@ -450,6 +458,7 @@ void main() {
     await expectLater(
       AnthropicChatModel.withTimeouts(
         client,
+        const NoopChatTrace(),
         idleTimeout: const Duration(milliseconds: 20),
       ).stream(request(apiKey: 'k')).toList(),
       isNetwork,
@@ -460,6 +469,7 @@ void main() {
   test('기본 대기 시간은 응답 60초, SSE 유휴 90초', () {
     final model = AnthropicChatModel(
       MockClient((_) async => http.Response('', 200)),
+      const NoopChatTrace(),
     );
     expect(model.responseTimeout, const Duration(seconds: 60));
     expect(model.idleTimeout, const Duration(seconds: 90));
@@ -506,6 +516,7 @@ void main() {
   test('vendor 는 anthropic', () {
     final model = AnthropicChatModel(
       MockClient((_) async => http.Response('', 200)),
+      const NoopChatTrace(),
     );
     expect(model.vendor, ChatVendor.anthropic);
   });
@@ -795,5 +806,128 @@ void main() {
     await run(capture((b) => body = b));
     expect(body.containsKey('store'), isFalse);
     expect(body.containsKey('metadata'), isFalse);
+  });
+
+  group('trace', () {
+    List<String> toolRound() => [
+      sse('message_start', {
+        'type': 'message_start',
+        'message': {
+          'usage': {
+            'input_tokens': 2310,
+            'output_tokens': 1,
+            'cache_read_input_tokens': 7,
+            'cache_creation_input_tokens': 3,
+          },
+        },
+      }),
+      sse('content_block_start', {
+        'index': 0,
+        'content_block': {'type': 'thinking', 'thinking': ''},
+      }),
+      sse('content_block_delta', {
+        'index': 0,
+        'delta': {'type': 'thinking_delta', 'thinking': '비밀 생각'},
+      }),
+      sse('content_block_stop', {'index': 0}),
+      sse('content_block_start', {
+        'index': 1,
+        'content_block': {'type': 'text', 'text': ''},
+      }),
+      sse('content_block_delta', {
+        'index': 1,
+        'delta': {'type': 'text_delta', 'text': '찾아볼게요'},
+      }),
+      sse('content_block_stop', {'index': 1}),
+      sse('content_block_start', {
+        'index': 2,
+        'content_block': {
+          'type': 'tool_use',
+          'id': 'tu1',
+          'name': 'search_diary',
+          'input': {},
+        },
+      }),
+      sse('content_block_delta', {
+        'index': 2,
+        'delta': {
+          'type': 'input_json_delta',
+          'partial_json': '{"query":"비밀 검색어"}',
+        },
+      }),
+      sse('content_block_stop', {'index': 2}),
+      sse('message_delta', {
+        'delta': {'stop_reason': 'tool_use'},
+        'usage': {'output_tokens': 180},
+      }),
+      sse('message_stop', {}),
+    ];
+
+    test(
+      'trace 가 켜져 있으면 req · head · first · block · textDelta · msgStop 을 차례로 찍는다',
+      () async {
+        final trace = RecordingChatTrace();
+        await AnthropicChatModel(
+          clientOf(toolRound()),
+          trace,
+        ).stream(request(apiKey: 'sk-ant-secret')).toList();
+
+        expect(trace.labels, [
+          ChatTraceMark.req,
+          ChatTraceMark.head,
+          ChatTraceMark.first,
+          ChatTraceMark.blockStart,
+          ChatTraceMark.blockStop,
+          ChatTraceMark.blockStart,
+          ChatTraceMark.textDelta,
+          ChatTraceMark.blockStop,
+          ChatTraceMark.blockStart,
+          ChatTraceMark.blockStop,
+          ChatTraceMark.msgStop,
+        ]);
+        expect(trace.dataOf(ChatTraceMark.req).single, {
+          'vendor': 'anthropic',
+          'model': 'claude-opus-5-5',
+          'fast': false,
+        });
+        expect(trace.dataOf(ChatTraceMark.blockStart), [
+          {'kind': 'thinking'},
+          {'kind': 'text'},
+          {'kind': 'tool_use', 'tool': 'search_diary'},
+        ]);
+        expect(trace.dataOf(ChatTraceMark.textDelta).single, {'chars': 5});
+        expect(trace.dataOf(ChatTraceMark.msgStop).single, {
+          'stop': 'toolUse',
+          'in': 2310,
+          'out': 180,
+          'cacheRead': 7,
+          'cacheWrite': 3,
+        });
+        final all = trace.marks.map((m) => '${m.$2}').join();
+        expect(all, isNot(contains('비밀')));
+        expect(all, isNot(contains('sk-')));
+      },
+    );
+
+    test('오류 상태면 req · head 까지만 찍는다', () async {
+      final trace = RecordingChatTrace();
+      await expectLater(
+        AnthropicChatModel(
+          clientOf(const [], status: 401),
+          trace,
+        ).stream(request()).toList(),
+        throwsA(isA<ChatModelException>()),
+      );
+      expect(trace.labels, [ChatTraceMark.req, ChatTraceMark.head]);
+    });
+
+    test('trace 가 꺼져 있으면 mark 를 부르지 않는다', () async {
+      final trace = RecordingChatTrace(enabled: false);
+      await AnthropicChatModel(
+        clientOf(toolRound()),
+        trace,
+      ).stream(request()).toList();
+      expect(trace.marks, isEmpty);
+    });
   });
 }

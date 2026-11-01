@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 
 import '../../domain/chat/chat_model.dart';
+import '../../domain/chat/chat_trace.dart';
 import '../../domain/chat/chat_vendor.dart';
 import 'sse_lines.dart';
 
@@ -34,16 +35,19 @@ final class AnthropicTurnState implements VendorTurnState {
 /// (C2). 그래서 본문에 `store` · `metadata` 를 넣지 않는다.
 @LazySingleton(as: ChatModel)
 class AnthropicChatModel implements ChatModel {
-  AnthropicChatModel(http.Client client) : this.withTimeouts(client);
+  AnthropicChatModel(http.Client client, ChatTrace trace)
+    : this.withTimeouts(client, trace);
 
   /// 테스트가 짧은 대기 시간을 넣을 때 쓴다.
   AnthropicChatModel.withTimeouts(
-    this._client, {
+    this._client,
+    this._trace, {
     this.responseTimeout = const Duration(seconds: 60),
     this.idleTimeout = const Duration(seconds: 90),
   });
 
   final http.Client _client;
+  final ChatTrace _trace;
 
   /// 요청을 보내고 응답(상태 줄)이 오기까지.
   final Duration responseTimeout;
@@ -59,9 +63,17 @@ class AnthropicChatModel implements ChatModel {
   @override
   Stream<ModelEvent> stream(ModelRequest request) async* {
     try {
+      if (_trace.enabled) {
+        _trace.mark(ChatTraceMark.req, {
+          'vendor': vendor.name,
+          'model': request.model,
+          'fast': request.fastMode,
+        });
+      }
       final response = await _client
           .send(_httpRequest(request))
           .timeout(responseTimeout);
+      if (_trace.enabled) _trace.mark(ChatTraceMark.head);
       final status = response.statusCode;
       if (status < 200 || status >= 300) {
         // 본문은 읽지도 담지도 않는다.
@@ -231,6 +243,12 @@ class AnthropicChatModel implements ChatModel {
           final index = json['index'] as int;
           final block = Map<String, Object?>.from(json['content_block'] as Map);
           blocks[index] = block;
+          if (_trace.enabled) {
+            _trace.mark(ChatTraceMark.blockStart, {
+              'kind': block['type'],
+              if (block['type'] == 'tool_use') 'tool': block['name'],
+            });
+          }
           if (block['type'] == 'tool_use') jsonBuffers[index] = StringBuffer();
         case 'content_block_delta':
           final index = json['index'] as int;
@@ -241,6 +259,9 @@ class AnthropicChatModel implements ChatModel {
             case 'text_delta':
               final text = delta['text'] as String? ?? '';
               block['text'] = '${block['text'] ?? ''}$text';
+              if (_trace.enabled) {
+                _trace.mark(ChatTraceMark.textDelta, {'chars': text.length});
+              }
               yield ModelEvent.textDelta(text);
             case 'thinking_delta':
               block['thinking'] =
@@ -257,6 +278,9 @@ class AnthropicChatModel implements ChatModel {
           final index = json['index'] as int;
           final buffer = jsonBuffers.remove(index);
           final block = blocks[index];
+          if (_trace.enabled) {
+            _trace.mark(ChatTraceMark.blockStop, {'kind': block?['type']});
+          }
           if (buffer != null && block != null) {
             final text = buffer.toString();
             try {
@@ -281,20 +305,34 @@ class AnthropicChatModel implements ChatModel {
           final indexes = blocks.keys.toList()..sort();
           final content = [for (final i in indexes) blocks[i]!];
           final start = usage;
+          final stop = _stopOf(stopReason);
+          final finalUsage = start == null || lastOutputTokens == null
+              ? start
+              : TokenUsage(
+                  inputTokens: start.inputTokens,
+                  outputTokens: lastOutputTokens!,
+                  cacheReadTokens: start.cacheReadTokens,
+                  cacheWriteTokens: start.cacheWriteTokens,
+                );
+          if (_trace.enabled) {
+            _trace.mark(ChatTraceMark.msgStop, {
+              'stop': stop.name,
+              if (finalUsage != null) ...{
+                'in': finalUsage.inputTokens,
+                'out': finalUsage.outputTokens,
+                'cacheRead': finalUsage.cacheReadTokens,
+                'cacheWrite': finalUsage.cacheWriteTokens,
+                'reasoning': ?finalUsage.reasoningTokens,
+              },
+            });
+          }
           yield ModelEvent.completed(
             message: AssistantMessage(
               parts: _partsOf(content),
               vendorState: AnthropicTurnState(model: model, content: content),
             ),
-            stop: _stopOf(stopReason),
-            usage: start == null || lastOutputTokens == null
-                ? start
-                : TokenUsage(
-                    inputTokens: start.inputTokens,
-                    outputTokens: lastOutputTokens!,
-                    cacheReadTokens: start.cacheReadTokens,
-                    cacheWriteTokens: start.cacheWriteTokens,
-                  ),
+            stop: stop,
+            usage: finalUsage,
           );
         case 'error':
           final error = json['error'];
@@ -307,8 +345,13 @@ class AnthropicChatModel implements ChatModel {
       }
     }
 
+    var firstSeen = false;
     try {
       await for (final e in sseEvents(bytes, idleTimeout: idleTimeout)) {
+        if (!firstSeen) {
+          firstSeen = true;
+          if (_trace.enabled) _trace.mark(ChatTraceMark.first);
+        }
         yield* Stream.fromIterable(dispatch(e.event, e.data).toList());
       }
       if (!completed) {

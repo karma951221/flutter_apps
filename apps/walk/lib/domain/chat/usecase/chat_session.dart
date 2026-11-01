@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../chat_model.dart';
 import '../chat_settings.dart';
+import '../chat_trace.dart';
 import '../chat_usage_log.dart';
 import '../tool/life_tools.dart';
 import '../tool/tool_result.dart';
@@ -46,6 +47,7 @@ class ChatSession {
     this._clock,
     this._usage,
     this._ids,
+    this._trace,
   );
 
   final ChatModel _model;
@@ -54,6 +56,7 @@ class ChatSession {
   final Clock _clock;
   final ChatUsageLog _usage;
   final IdGenerator _ids;
+  final ChatTrace _trace;
 
   static const maxRounds = 8;
 
@@ -100,6 +103,7 @@ class ChatSession {
     var completed = false;
     try {
       final apiKey = await _settings.apiKey();
+      if (_trace.enabled) _trace.mark(ChatTraceMark.key);
       if (stale()) return;
       if (apiKey == null) {
         yield const ChatEvent.failed(ChatFailure.noKey);
@@ -120,6 +124,7 @@ class ChatSession {
           messages: List.unmodifiable(_messages),
           tools: tools,
         );
+        if (_trace.enabled) _trace.mark(ChatTraceMark.round, {'n': round});
         await for (final event in _model.stream(request)) {
           if (stale()) return;
           switch (event) {
@@ -147,7 +152,17 @@ class ChatSession {
             for (final part in done.message.parts) {
               if (part is! ToolCallPart) continue;
               yield ChatEvent.toolStarted(part.name);
+              if (_trace.enabled) {
+                _trace.mark(ChatTraceMark.toolStart, {'tool': part.name});
+              }
               final result = await _tools.run(part.name, part.input);
+              if (_trace.enabled) {
+                // 개수만 — 결과 본문 · 입력값은 찍지 않는다.
+                _trace.mark(ChatTraceMark.toolEnd, {
+                  'tool': part.name,
+                  'n': result.entryIds.length + result.images.length,
+                });
+              }
               if (stale()) return;
               cited.addAll(result.entryIds);
               final capped = _capped(result);

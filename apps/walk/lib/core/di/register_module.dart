@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:core/core.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
@@ -14,9 +15,11 @@ import 'package:uuid/uuid.dart';
 
 import '../config/commute_api_keys.dart';
 import '../../data/alarm/archive/ring_archive_database.dart';
+import '../../data/chat/dev_chat_trace.dart';
 import '../../data/diary/database/diary_database.dart';
 import '../../data/diary/location/current_place_source.dart';
 import '../../data/diary/location/geocoding_place_namer.dart';
+import '../../domain/chat/chat_trace.dart';
 import '../../domain/diary/location/place_source.dart';
 
 /// getIt.reset · 테스트 해제 때 DB 를 닫는다.
@@ -96,4 +99,9 @@ abstract class RegisterModule {
   /// 채팅용 Anthropic API 키를 두는 보안 저장소.
   @lazySingleton
   FlutterSecureStorage get secureStorage => const FlutterSecureStorage();
+
+  /// 물어보기 질문 하나의 시간 흐름. 릴리스 빌드에는 아무것도 남지 않는다.
+  @lazySingleton
+  ChatTrace get chatTrace =>
+      kReleaseMode ? const NoopChatTrace() : DevChatTrace();
 }

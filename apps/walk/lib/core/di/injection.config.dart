@@ -70,6 +70,7 @@ import '../../domain/alarm/usecase/ring_archiver.dart' as _i626;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
 import '../../domain/chat/chat_model.dart' as _i1004;
 import '../../domain/chat/chat_settings.dart' as _i111;
+import '../../domain/chat/chat_trace.dart' as _i825;
 import '../../domain/chat/chat_usage_log.dart' as _i520;
 import '../../domain/chat/tool/chat_image_source.dart' as _i858;
 import '../../domain/chat/tool/life_tools.dart' as _i70;
@@ -126,6 +127,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i558.FlutterSecureStorage>(
       () => registerModule.secureStorage,
     );
+    gh.lazySingleton<_i825.ChatTrace>(() => registerModule.chatTrace);
     gh.lazySingleton<_i869.RingArchiveDatabase>(
       () => registerModule.ringArchiveDatabase(),
       dispose: _i291.disposeRingArchiveDatabase,
@@ -198,6 +200,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i91.SettingsRepository>(
       () => _i724.PrefsSettingsRepository(gh<_i460.SharedPreferences>()),
     );
+    gh.lazySingleton<_i1004.ChatModel>(
+      () => _i645.AnthropicChatModel(gh<_i519.Client>(), gh<_i825.ChatTrace>()),
+    );
     gh.lazySingleton<_i43.LockRepository>(
       () => _i691.PrefsLockRepository(gh<_i460.SharedPreferences>()),
     );
@@ -229,9 +234,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i961.HolidayRefresher>(
       () => holidayModule.holidayRefresher(gh<_i93.CachedHolidayCalendar>()),
-    );
-    gh.lazySingleton<_i1004.ChatModel>(
-      () => _i645.AnthropicChatModel(gh<_i519.Client>()),
     );
     gh.lazySingleton<_i611.DiaryDatabase>(
       () => registerModule.diaryDatabase(gh<_i494.Clock>()),
@@ -330,6 +332,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.Clock>(),
         gh<_i520.ChatUsageLog>(),
         gh<_i494.IdGenerator>(),
+        gh<_i825.ChatTrace>(),
       ),
     );
     return this;

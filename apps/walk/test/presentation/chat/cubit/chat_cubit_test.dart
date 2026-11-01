@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:core/core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
@@ -11,6 +13,7 @@ import 'package:walk/presentation/chat/cubit/chat_state.dart';
 
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_chat_settings.dart';
+import '../../../support/recording_chat_trace.dart';
 
 class _MockSession extends Mock implements ChatSession {}
 
@@ -38,7 +41,7 @@ void main() {
     session = _MockSession();
     diary = _MockDiary();
     settings = FakeChatSettings('sk-ant-test')..consented = true;
-    cubit = ChatCubit(session, settings, diary);
+    cubit = ChatCubit(session, settings, diary, const NoopChatTrace());
   });
 
   tearDown(() => cubit.close());
@@ -205,5 +208,174 @@ void main() {
 
     verify(() => session.reset()).called(1);
     await events.close();
+  });
+
+  group('trace', () {
+    late RecordingChatTrace trace;
+    late List<VoidCallback> frames;
+    late ChatCubit traced;
+
+    setUp(() async {
+      trace = RecordingChatTrace();
+      frames = [];
+      traced = ChatCubit(
+        session,
+        settings,
+        diary,
+        trace,
+        schedulePostFrame: frames.add,
+      );
+      await traced.refresh();
+    });
+
+    tearDown(() => traced.close());
+
+    /// 쌓인 프레임 콜백을 돌린다(프레임 하나가 지나간 셈).
+    void pumpFrame() {
+      final pending = List.of(frames);
+      frames.clear();
+      for (final cb in pending) {
+        cb();
+      }
+    }
+
+    test('send 는 begin · send, 끝나면 done · end', () async {
+      when(() => session.ask(any())).thenAnswer(
+        (_) =>
+            Stream.fromIterable(const [ChatEvent.finished(citedEntryIds: [])]),
+      );
+
+      await traced.send('질문');
+
+      expect(trace.labels, [
+        'begin',
+        ChatTraceMark.send,
+        ChatTraceMark.done,
+        'end',
+      ]);
+    });
+
+    test('첫 글 emit 뒤 프레임에 firstGlyph 를 한 번만', () async {
+      final events = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => events.stream);
+      final sent = traced.send('질문');
+
+      events.add(const ChatEvent.toolStarted('search_diary'));
+      await pumpEventQueue();
+      expect(trace.labels, ['begin', ChatTraceMark.send]);
+      pumpFrame();
+      expect(trace.labels.last, ChatTraceMark.firstVisible);
+
+      events
+        ..add(const ChatEvent.text('산책을 '))
+        ..add(const ChatEvent.text('했어요'));
+      await pumpEventQueue();
+      pumpFrame();
+      events.add(const ChatEvent.text('.'));
+      await pumpEventQueue();
+      pumpFrame();
+
+      expect(
+        trace.labels.where((l) => l == ChatTraceMark.firstGlyph),
+        hasLength(1),
+      );
+      expect(
+        trace.labels.where((l) => l == ChatTraceMark.firstVisible),
+        hasLength(1),
+      );
+
+      events.add(const ChatEvent.finished(citedEntryIds: []));
+      await events.close();
+      await sent;
+      expect(trace.labels, [
+        'begin',
+        ChatTraceMark.send,
+        ChatTraceMark.firstVisible,
+        ChatTraceMark.firstGlyph,
+        ChatTraceMark.done,
+        'end',
+      ]);
+    });
+
+    test('글과 끝이 한 프레임 안에 오면 end 는 그 프레임 표시 뒤에', () async {
+      when(() => session.ask(any())).thenAnswer(
+        (_) => Stream.fromIterable(const [
+          ChatEvent.text('짧은 답'),
+          ChatEvent.finished(citedEntryIds: []),
+        ]),
+      );
+
+      await traced.send('질문');
+      expect(trace.labels, ['begin', ChatTraceMark.send, ChatTraceMark.done]);
+      pumpFrame();
+
+      expect(trace.labels, [
+        'begin',
+        ChatTraceMark.send,
+        ChatTraceMark.done,
+        ChatTraceMark.firstVisible,
+        ChatTraceMark.firstGlyph,
+        'end',
+      ]);
+    });
+
+    test('답하는 중에 newConversation 하면 done · end', () async {
+      final events = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => events.stream);
+      unawaited(traced.send('질문'));
+      await pumpEventQueue();
+
+      traced.newConversation();
+      traced.newConversation();
+
+      expect(trace.labels, [
+        'begin',
+        ChatTraceMark.send,
+        ChatTraceMark.done,
+        'end',
+      ]);
+      await events.close();
+    });
+
+    test('답하는 중에 닫히면 done · end', () async {
+      final events = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => events.stream);
+      unawaited(traced.send('질문'));
+      await pumpEventQueue();
+
+      await traced.close();
+
+      expect(trace.labels, [
+        'begin',
+        ChatTraceMark.send,
+        ChatTraceMark.done,
+        'end',
+      ]);
+      await events.close();
+    });
+
+    test('trace 가 꺼져 있으면 아무것도 찍지 않고 프레임도 예약하지 않는다', () async {
+      final off = RecordingChatTrace(enabled: false);
+      final quiet = ChatCubit(
+        session,
+        settings,
+        diary,
+        off,
+        schedulePostFrame: frames.add,
+      );
+      await quiet.refresh();
+      when(() => session.ask(any())).thenAnswer(
+        (_) => Stream.fromIterable(const [
+          ChatEvent.text('답'),
+          ChatEvent.finished(citedEntryIds: []),
+        ]),
+      );
+
+      await quiet.send('질문');
+      await quiet.close();
+
+      expect(off.marks, isEmpty);
+      expect(frames, isEmpty);
+    });
   });
 }

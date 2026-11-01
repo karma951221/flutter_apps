@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/chat/chat_settings.dart';
+import '../../../domain/chat/chat_trace.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
@@ -53,6 +54,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
     getIt<ChatSession>(),
     getIt<ChatSettings>(),
     getIt<DiaryRepository>(),
+    getIt<ChatTrace>(),
   );
 
   @override

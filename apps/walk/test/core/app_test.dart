@@ -30,6 +30,7 @@ import 'package:walk/presentation/shell/page/main_shell_page.dart';
 
 import '../support/fake_device_auth.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
+import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import '../support/fake_chat_settings.dart';
 
@@ -120,6 +121,7 @@ void main() {
         ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
         ..registerSingleton<MediaPickGuard>(MediaPickGuard())
         ..registerSingleton<ChatSession>(_MockChatSession())
+        ..registerSingleton<ChatTrace>(const NoopChatTrace())
         ..registerSingleton<PlaceSource>(_MockPlaceSource());
       getIt
         ..registerSingleton<AlarmUseCase>(alarms)

@@ -53,6 +53,7 @@ import 'package:walk/presentation/walk/page/walk_home_page.dart';
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_device_auth.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
+import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import '../../../support/fake_chat_settings.dart';
 
@@ -190,6 +191,7 @@ void main() {
       ..registerSingleton<MediaPickGuard>(MediaPickGuard());
     getIt
       ..registerSingleton<ChatSession>(_MockChatSession())
+      ..registerSingleton<ChatTrace>(const NoopChatTrace())
       ..registerSingleton<PlaceSource>(_MockPlaceSource());
     getIt
       ..registerSingleton<AlarmUseCase>(alarms)

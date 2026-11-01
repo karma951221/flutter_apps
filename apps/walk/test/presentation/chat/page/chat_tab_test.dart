@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
+import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
@@ -50,6 +51,7 @@ void main() {
     );
     getIt
       ..registerSingleton<ChatSession>(session)
+      ..registerSingleton<ChatTrace>(const NoopChatTrace())
       ..registerSingleton<ChatSettings>(settings)
       ..registerSingleton<DiaryRepository>(diary)
       ..registerSingleton<Clock>(MutableClock(diaryT0));

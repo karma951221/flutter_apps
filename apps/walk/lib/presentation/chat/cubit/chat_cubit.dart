@@ -1,25 +1,50 @@
 import 'dart:async';
 
 import 'package:core/core.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/chat/chat_settings.dart';
+import '../../../domain/chat/chat_trace.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import 'chat_state.dart';
+
+/// 다음 프레임이 그려진 뒤 [callback] 을 부른다.
+void _addPostFrame(VoidCallback callback) =>
+    SchedulerBinding.instance.addPostFrameCallback((_) => callback());
 
 /// 채팅 탭 상태. 질문 하나에 user 말풍선과 흘러나오는 assistant 말풍선 하나를 붙인다.
 ///
 /// 대화는 [ChatSession](싱글턴)이 들고, 이 cubit 은 화면에 보일 말풍선만 들고 있다.
 /// 탭이 소유한다(잠금 게이트 바깥) — 다시 잠겼다 풀려도 대화가 남는다.
 class ChatCubit extends Cubit<ChatState> {
-  ChatCubit(this._session, this._settings, this._diary)
-    : super(const ChatState(access: ChatAccess.checking));
+  ChatCubit(
+    this._session,
+    this._settings,
+    this._diary,
+    this._trace, {
+    void Function(VoidCallback) schedulePostFrame = _addPostFrame,
+  }) : _schedulePostFrame = schedulePostFrame,
+       super(const ChatState(access: ChatAccess.checking));
 
   final ChatSession _session;
   final ChatSettings _settings;
   final DiaryRepository _diary;
+  final ChatTrace _trace;
+
+  /// 프레임 쪽 표시(firstVisible · firstGlyph)를 찍을 때 쓴다. 위젯은 계측을 모른다.
+  final void Function(VoidCallback) _schedulePostFrame;
+
+  // 계측 — 질문 하나 동안의 상태. trace 가 꺼져 있으면 쓰지 않는다.
+  int _traceToken = 0;
+  bool _tracing = false;
+  bool _sawVisible = false;
+  bool _sawGlyph = false;
+
+  /// 아직 그려지지 않은 프레임 표시 수. 0 이 될 때까지 end 를 미룬다.
+  int _pendingFrames = 0;
 
   StreamSubscription<ChatEvent>? _sub;
   Completer<void>? _running;
@@ -67,6 +92,7 @@ class ChatCubit extends Cubit<ChatState> {
       // 세션이 아직 이전 질문을 돌리는 중 — 이 cubit 이 모르는 질문이다. 보내지 않는다.
       return Future.value();
     }
+    _traceBegin();
     final generation = _generation;
     final running = _running = Completer<void>();
     _finishing = false;
@@ -91,6 +117,7 @@ class ChatCubit extends Cubit<ChatState> {
 
   /// 대화를 비운다. 답하는 중이면 끊는다 — 세션은 그 질문의 이벤트를 더 내지 않는다.
   void newConversation() {
+    if (state.busy) _traceDone();
     _generation++;
     unawaited(_sub?.cancel());
     _sub = null;
@@ -109,8 +136,16 @@ class ChatCubit extends Cubit<ChatState> {
             activeTool: null,
           ),
         );
+        if (_trace.enabled && delta.isNotEmpty) {
+          _traceVisible();
+          if (!_sawGlyph) {
+            _sawGlyph = true;
+            _markAfterFrame(ChatTraceMark.firstGlyph);
+          }
+        }
       case ChatToolStarted(:final toolName):
         emit(state.copyWith(activeTool: toolName));
+        if (_trace.enabled) _traceVisible();
       case ChatFinished(:final citedEntryIds):
         _finishing = true;
         final cited = await _resolve(citedEntryIds);
@@ -134,7 +169,46 @@ class ChatCubit extends Cubit<ChatState> {
 
   void _end(List<ChatBubble> bubbles) {
     emit(state.copyWith(bubbles: bubbles, busy: false, activeTool: null));
+    _traceDone();
     _complete();
+  }
+
+  void _traceBegin() {
+    if (!_trace.enabled) return;
+    _traceToken++;
+    _tracing = true;
+    _sawVisible = false;
+    _sawGlyph = false;
+    _pendingFrames = 0;
+    _trace
+      ..begin()
+      ..mark(ChatTraceMark.send);
+  }
+
+  void _traceVisible() {
+    if (_sawVisible) return;
+    _sawVisible = true;
+    _markAfterFrame(ChatTraceMark.firstVisible);
+  }
+
+  /// emit 이 그려진 프레임 뒤에 찍는다. 그 사이 질문이 끝났으면 end 는 이 표시 뒤로 미뤄져 있다.
+  void _markAfterFrame(String label) {
+    final token = _traceToken;
+    _pendingFrames++;
+    _schedulePostFrame(() {
+      if (token != _traceToken) return;
+      _pendingFrames--;
+      _trace.mark(label);
+      if (!_tracing && _pendingFrames == 0) _trace.end();
+    });
+  }
+
+  /// done 을 찍고, 그려지지 않은 프레임 표시가 없으면 바로 요약을 낸다.
+  void _traceDone() {
+    if (!_trace.enabled || !_tracing) return;
+    _tracing = false;
+    _trace.mark(ChatTraceMark.done);
+    if (_pendingFrames == 0) _trace.end();
   }
 
   /// 인용 id 를 기록으로. 휴지통 · 없는 기록 · 읽기 실패는 뺀다.
@@ -169,6 +243,7 @@ class ChatCubit extends Cubit<ChatState> {
 
   @override
   Future<void> close() async {
+    if (state.busy) _traceDone();
     _generation++;
     // 기다리지 않는다 — 응답을 기다리는 중인 세션 스트림은 취소가 늦게 끝날 수 있다.
     unawaited(_sub?.cancel());
