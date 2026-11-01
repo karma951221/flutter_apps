@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ChatSettingsState {
 
- bool get loading; ChatConnection? get connection;
+ bool get loading; ChatConnection? get connection; ModelChipData? get model; bool get fastMode; bool get modelsUnavailable;
 /// Create a copy of ChatSettingsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ChatSettingsStateCopyWith<ChatSettingsState> get copyWith => _$ChatSettingsStat
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatSettingsState&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.connection, connection) || other.connection == connection));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatSettingsState&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.connection, connection) || other.connection == connection)&&(identical(other.model, model) || other.model == model)&&(identical(other.fastMode, fastMode) || other.fastMode == fastMode)&&(identical(other.modelsUnavailable, modelsUnavailable) || other.modelsUnavailable == modelsUnavailable));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,loading,connection);
+int get hashCode => Object.hash(runtimeType,loading,connection,model,fastMode,modelsUnavailable);
 
 @override
 String toString() {
-  return 'ChatSettingsState(loading: $loading, connection: $connection)';
+  return 'ChatSettingsState(loading: $loading, connection: $connection, model: $model, fastMode: $fastMode, modelsUnavailable: $modelsUnavailable)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ChatSettingsStateCopyWith<$Res>  {
   factory $ChatSettingsStateCopyWith(ChatSettingsState value, $Res Function(ChatSettingsState) _then) = _$ChatSettingsStateCopyWithImpl;
 @useResult
 $Res call({
- bool loading, ChatConnection? connection
+ bool loading, ChatConnection? connection, ModelChipData? model, bool fastMode, bool modelsUnavailable
 });
 
 
@@ -62,11 +62,14 @@ class _$ChatSettingsStateCopyWithImpl<$Res>
 
 /// Create a copy of ChatSettingsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? loading = null,Object? connection = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? loading = null,Object? connection = freezed,Object? model = freezed,Object? fastMode = null,Object? modelsUnavailable = null,}) {
   return _then(ChatSettingsState(
 loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
 as bool,connection: freezed == connection ? _self.connection : connection // ignore: cast_nullable_to_non_nullable
-as ChatConnection?,
+as ChatConnection?,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
+as ModelChipData?,fastMode: null == fastMode ? _self.fastMode : fastMode // ignore: cast_nullable_to_non_nullable
+as bool,modelsUnavailable: null == modelsUnavailable ? _self.modelsUnavailable : modelsUnavailable // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

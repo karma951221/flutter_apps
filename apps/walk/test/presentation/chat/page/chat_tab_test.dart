@@ -8,6 +8,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:walk/domain/chat/chat_model.dart';
+import 'package:walk/domain/chat/chat_model_catalog.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
@@ -41,6 +43,15 @@ class _MockHistory extends Mock implements ChatHistoryRepository {}
 
 class _MockLock extends MockCubit<DiaryLockState> implements DiaryLockCubit {}
 
+const _sonnet = ModelInfo(
+  id: 'claude-sonnet-9-5',
+  displayName: 'Claude Sonnet 9.5',
+);
+
+const _opus = ModelInfo(id: 'claude-opus-9-9', displayName: 'Claude Opus 9.9');
+
+const _storedOk = (ChatVendor.anthropic, ModelListResult.ok([_sonnet]));
+
 void main() {
   setUpAll(() {
     registerFallbackValue(const EntryFilter.all());
@@ -63,13 +74,16 @@ void main() {
   late FakeChatKeyVerifier verifier;
   late _MockHistory history;
   late FakeSecureWindow secure;
+  late FakeChatModelCatalog catalog;
 
   setUp(() {
     session = _MockSession();
     diary = _MockDiary();
     settings = FakeChatSettings('sk-ant-test')..consented = true;
     lock = _MockLock();
-    verifier = FakeChatKeyVerifier();
+    // 목록이 비어 있으면 탭이 보일 때 받아 온다 — 받을 목록 하나를 둔다.
+    verifier = FakeChatKeyVerifier()..stored = _storedOk;
+    catalog = FakeChatModelCatalog();
     lockStates = StreamController<DiaryLockState>.broadcast();
     history = _MockHistory();
     secure = FakeSecureWindow();
@@ -94,13 +108,9 @@ void main() {
       ..registerSingleton<ChatSession>(session)
       ..registerSingleton<ChatTrace>(const NoopChatTrace())
       ..registerSingleton<ChatSettings>(settings)
+      ..registerSingleton<ChatModelCatalog>(catalog)
       ..registerSingleton<ChatModelChoice>(
-        ChatModelChoice(
-          settings,
-          FakeChatModelCatalog(),
-          verifier,
-          const Clock(),
-        ),
+        ChatModelChoice(settings, catalog, verifier, const Clock()),
       )
       ..registerSingleton<DiaryRepository>(diary)
       ..registerSingleton<ChatHistoryRepository>(history)
@@ -845,6 +855,145 @@ void main() {
       events.add(const ChatEvent.finished(citedEntryIds: []));
       await events.close();
       await tester.pumpAndSettle();
+    });
+  });
+
+  group('모델', () {
+    const chip = Key('chat-model-chip');
+
+    testWidgets('ready 면 앱바 아래 모델 칩', (tester) async {
+      await pump(tester);
+
+      expect(find.byKey(chip), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(chip),
+          matching: find.text('Claude Sonnet 9.5'),
+        ),
+        findsOneWidget,
+      );
+      // 칩은 앱바 아래, 예시 질문(대화) 위.
+      final appBar = tester.getRect(find.byType(AppBar));
+      final chipRect = tester.getRect(find.byKey(chip));
+      expect(chipRect.top, greaterThanOrEqualTo(appBar.bottom));
+      expect(
+        chipRect.bottom,
+        lessThanOrEqualTo(tester.getRect(find.text('어제 뭐 했어?')).top),
+      );
+    });
+
+    testWidgets('칩 → 시트 → 다른 모델을 고르면 칩 이름이 바뀐다', (tester) async {
+      verifier.stored = (
+        ChatVendor.anthropic,
+        const ModelListResult.ok([_sonnet, _opus]),
+      );
+      await pump(tester);
+
+      await tester.tap(find.byKey(chip));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(Key('model-row-${_opus.id}')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byKey(chip),
+          matching: find.text('Claude Opus 9.9'),
+        ),
+        findsOneWidget,
+      );
+      expect(settings.selectedModel, _opus.id);
+    });
+
+    testWidgets('답하는 중엔 칩이 비활성', (tester) async {
+      final events = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => events.stream);
+      await pump(tester);
+
+      await tester.tap(find.text('어제 뭐 했어?'));
+      await tester.pump();
+
+      expect(tester.widget<ActionChip>(find.byKey(chip)).onPressed, isNull);
+
+      events.add(const ChatEvent.finished(citedEntryIds: []));
+      await events.close();
+      await tester.pumpAndSettle();
+      expect(tester.widget<ActionChip>(find.byKey(chip)).onPressed, isNotNull);
+    });
+
+    testWidgets("noModels 면 '모델 목록을 받지 못했어요' + [다시 시도]", (tester) async {
+      verifier.stored = (
+        ChatVendor.anthropic,
+        const ModelListResult.unreachable(),
+      );
+      await pump(tester);
+
+      expect(find.text('모델 목록을 받지 못했어요'), findsOneWidget);
+      expect(find.byKey(chip), findsNothing);
+
+      verifier.stored = _storedOk;
+      await tester.tap(find.text('다시 시도'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('모델 목록을 받지 못했어요'), findsNothing);
+      expect(find.byKey(chip), findsOneWidget);
+    });
+
+    testWidgets('잘못된 키면 [설정 열기]', (tester) async {
+      verifier.stored = (
+        ChatVendor.anthropic,
+        const ModelListResult.invalidKey(),
+      );
+      var opened = 0;
+      await pump(tester, onOpenSettings: () => opened++);
+
+      expect(find.text('모델 목록을 받지 못했어요'), findsOneWidget);
+      expect(find.text('다시 시도'), findsNothing);
+      await tester.tap(find.text('설정 열기'));
+      expect(opened, 1);
+    });
+
+    testWidgets('고른 모델이 사라졌으면 탭이 보일 때 스낵바 한 번(보이지 않는 동안은 없음)', (tester) async {
+      const notice = '고른 모델이 없어져 추천 모델로 바꿨어요';
+      await catalog.replace(ChatVendor.anthropic, [
+        _sonnet,
+        _opus,
+      ], DateTime(2000));
+      await settings.selectModel(_opus.id);
+      // 보이지 않는 동안 다른 곳(설정 화면 등)이 갱신해 고른 모델이 사라졌다.
+      await pump(tester, active: false);
+      await getIt<ChatModelChoice>().refresh();
+      await tester.pumpAndSettle();
+      expect(find.text(notice), findsNothing);
+
+      await pump(tester, active: true);
+      expect(find.text(notice), findsOneWidget);
+
+      // 한 번만 — 스낵바가 사라진 뒤 다시 보이게 돼도 없다.
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pumpAndSettle();
+      await pump(tester, active: false);
+      await pump(tester, active: true);
+      expect(find.text(notice), findsNothing);
+    });
+
+    testWidgets('보이는 동안 갱신이 고른 모델을 지우면 곧바로 스낵바 한 번', (tester) async {
+      const notice = '고른 모델이 없어져 추천 모델로 바꿨어요';
+      await catalog.replace(ChatVendor.anthropic, [
+        _sonnet,
+        _opus,
+      ], DateTime(2000));
+      await settings.selectModel(_opus.id);
+
+      await pump(tester);
+
+      expect(find.text(notice), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(chip),
+          matching: find.text('Claude Sonnet 9.5'),
+        ),
+        findsOneWidget,
+      );
     });
   });
 }

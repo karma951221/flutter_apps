@@ -60,6 +60,9 @@ class ChatModelChoice {
     return vendor != null && _catalog.vendor == vendor ? vendor : null;
   }
 
+  /// 지금 모델의 벤더(연결 벤더와 목록 벤더가 같을 때). 칩의 벤더 로고에 쓴다.
+  ChatVendor? get vendor => _listedVendor;
+
   /// 다음 질문에 쓸 모델: 고른 모델이 목록에 있으면 그것, 아니면 추천. 목록이 없거나 벤더가 다르면 null.
   String? get currentModel {
     if (_listedVendor == null) return null;

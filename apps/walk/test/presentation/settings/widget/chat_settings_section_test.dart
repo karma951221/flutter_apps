@@ -7,11 +7,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:walk/domain/chat/chat_connection.dart';
 import 'package:walk/domain/chat/chat_model.dart';
+import 'package:walk/domain/chat/chat_model_catalog.dart';
+import 'package:walk/domain/chat/chat_model_rules.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
+import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/usecase/chat_key_verifier.dart';
+import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
 import 'package:walk/presentation/settings/widget/chat_settings_section.dart';
 
 import '../../../support/fake_chat_key_verifier.dart';
+import '../../../support/fake_chat_model_catalog.dart';
 import '../../../support/fake_chat_settings.dart';
 
 const _row = Key('settings-chat-key');
@@ -20,6 +25,12 @@ const _delete = Key('settings-chat-delete');
 const _glow = Key('row-highlight-glow');
 const _savedKey = 'sk-ant-api03-xyz1234';
 const _typedKey = 'sk-ant-api03-abcd5678';
+const _model = Key('settings-chat-model');
+const _sonnet = ModelInfo(
+  id: 'claude-sonnet-9-5',
+  displayName: 'Claude Sonnet 9.5',
+);
+const _opus = ModelInfo(id: 'claude-opus-9-9', displayName: 'Claude Opus 9.9');
 
 /// 연결 정보를 끝내 돌려주지 않는 설정 — 읽는 중 모습.
 class _LoadingSettings extends FakeChatSettings {
@@ -32,13 +43,29 @@ class _LoadingSettings extends FakeChatSettings {
 void main() {
   late FakeChatSettings settings;
   late FakeChatKeyVerifier verifier;
+  late FakeChatModelCatalog catalog;
 
   setUp(() {
     settings = FakeChatSettings();
     verifier = FakeChatKeyVerifier();
+    catalog = FakeChatModelCatalog();
     getIt
       ..registerSingleton<ChatSettings>(settings)
-      ..registerSingleton<ChatKeyVerifier>(verifier);
+      ..registerSingleton<ChatKeyVerifier>(verifier)
+      ..registerSingleton<ChatModelCatalog>(catalog)
+      ..registerSingleton<ChatModelChoice>(
+        ChatModelChoice(
+          settings,
+          catalog,
+          verifier,
+          const Clock(),
+          fastModeSpecs: {
+            ChatVendor.anthropic: [
+              FastModeSpec(pattern: RegExp('sonnet'), priceFactor: 2),
+            ],
+          },
+        ),
+      );
   });
   tearDown(() => getIt.reset());
 
@@ -314,5 +341,92 @@ void main() {
     expect(tile.trailing, isNull);
     expect(find.text('AI 연결'), findsOneWidget);
     expect(find.text('연결하기'), findsNothing);
+  });
+  group('모델 행', () {
+    String? subtitleOf(WidgetTester tester) {
+      final tile = tester.widget<ListTile>(
+        find.descendant(
+          of: find.byKey(_model),
+          matching: find.byType(ListTile),
+        ),
+      );
+      return (tile.subtitle as Text?)?.data;
+    }
+
+    testWidgets('연결되면 모델 행에 지금 모델 이름', (tester) async {
+      settings.key = _savedKey;
+      await catalog.replace(ChatVendor.anthropic, [_sonnet], DateTime.now());
+      await pump(tester);
+
+      expect(find.byKey(_model), findsOneWidget);
+      expect(
+        find.descendant(of: find.byKey(_model), matching: find.text('모델')),
+        findsOneWidget,
+      );
+      expect(subtitleOf(tester), 'Claude Sonnet 9.5');
+      // 연결 행 바로 아래.
+      expect(
+        tester.getRect(find.byKey(_model)).top,
+        tester.getRect(find.byKey(_row)).bottom,
+      );
+    });
+
+    testWidgets("빠른 출력이면 '이름 · 빠르게'", (tester) async {
+      settings
+        ..key = _savedKey
+        ..fastMode = true;
+      await catalog.replace(ChatVendor.anthropic, [_sonnet], DateTime.now());
+      await pump(tester);
+
+      expect(subtitleOf(tester), 'Claude Sonnet 9.5 · 빠르게');
+    });
+
+    testWidgets("목록이 없으면 '목록을 받지 못했어요 · 다시 시도', 누르면 다시 받음", (tester) async {
+      settings
+        ..key = _savedKey
+        ..status = ChatKeyStatus.unverified;
+      verifier.stored = (
+        ChatVendor.anthropic,
+        const ModelListResult.unreachable(),
+      );
+      await pump(tester);
+
+      expect(subtitleOf(tester), '목록을 받지 못했어요 · 다시 시도');
+      final before = verifier.fetchStoredCalls;
+
+      verifier.stored = (
+        ChatVendor.anthropic,
+        const ModelListResult.ok([_sonnet]),
+      );
+      await tester.tap(find.byKey(_model));
+      await tester.pumpAndSettle();
+
+      expect(verifier.fetchStoredCalls, before + 1);
+      expect(subtitleOf(tester), 'Claude Sonnet 9.5');
+    });
+
+    testWidgets('미연결이면 모델 행 없음', (tester) async {
+      await pump(tester);
+
+      expect(find.byKey(_model), findsNothing);
+    });
+
+    testWidgets('모델 행 → 시트, 고르면 행이 바뀐다', (tester) async {
+      settings.key = _savedKey;
+      await catalog.replace(ChatVendor.anthropic, [
+        _sonnet,
+        _opus,
+      ], DateTime.now());
+      await pump(tester);
+
+      await tester.tap(find.byKey(_model));
+      await tester.pumpAndSettle();
+      expect(find.text('모델 고르기'), findsOneWidget);
+
+      await tester.tap(find.byKey(Key('model-row-${_opus.id}')));
+      await tester.pumpAndSettle();
+
+      expect(subtitleOf(tester), 'Claude Opus 9.9');
+    });
   });
 }

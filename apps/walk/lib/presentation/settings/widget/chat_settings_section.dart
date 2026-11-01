@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +9,10 @@ import 'package:l10n/l10n.dart';
 import '../../../domain/chat/chat_connection.dart';
 import '../../../domain/chat/chat_settings.dart';
 import '../../../domain/chat/usecase/chat_key_verifier.dart';
+import '../../../domain/chat/usecase/chat_model_choice.dart';
 import '../../chat/widget/chat_vendor_icon.dart';
+import '../../chat/widget/model_chip.dart';
+import '../../chat/widget/model_picker_sheet.dart';
 import '../cubit/chat_settings_cubit.dart';
 import '../cubit/chat_settings_state.dart';
 import 'chat_key_dialog.dart';
@@ -26,9 +31,11 @@ class ChatSettingsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) =>
-          ChatSettingsCubit(getIt<ChatSettings>(), getIt<ChatKeyVerifier>())
-            ..load(),
+      create: (_) => ChatSettingsCubit(
+        getIt<ChatSettings>(),
+        getIt<ChatKeyVerifier>(),
+        getIt<ChatModelChoice>(),
+      )..load(),
       child: _ChatSettingsView(highlightConnection: highlightConnection),
     );
   }
@@ -90,6 +97,12 @@ class _ChatSettingsViewState extends State<_ChatSettingsView> {
     );
   }
 
+  /// 모델 행 → 물어보기 탭 칩과 같은 시트. 바뀐 게 있으면 행을 다시 읽는다.
+  Future<void> _pickModel() async {
+    final cubit = context.read<ChatSettingsCubit>();
+    if (await ModelPickerSheet.show(context)) cubit.modelChanged();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -117,6 +130,12 @@ class _ChatSettingsViewState extends State<_ChatSettingsView> {
               child: row,
             ),
             if (connection != null) ...[
+              _ModelRow(
+                state: state,
+                onPick: () => unawaited(_pickModel()),
+                onRetry: () =>
+                    unawaited(context.read<ChatSettingsCubit>().retryModels()),
+              ),
               AppListTile(
                 key: const Key('settings-chat-change-key'),
                 leading: const Icon(Icons.key_outlined),
@@ -147,6 +166,42 @@ class _ChatSettingsViewState extends State<_ChatSettingsView> {
           ],
         );
       },
+    );
+  }
+}
+
+/// 모델 행(스펙 §6.1) — 지금 모델 이름(빠른 출력이면 표시). 누르면 모델 고르기 시트.
+/// 목록을 받지 못했으면 "목록을 받지 못했어요 · 다시 시도", 누르면 다시 받는다.
+/// 목록을 받는 중엔 제목만(누를 수 없다).
+class _ModelRow extends StatelessWidget {
+  const _ModelRow({
+    required this.state,
+    required this.onPick,
+    required this.onRetry,
+  });
+
+  final ChatSettingsState state;
+  final VoidCallback onPick;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final model = state.model;
+    final (subtitle, onTap) = switch ((model, state.modelsUnavailable)) {
+      (final ModelChipData m, _) => (
+        state.fastMode ? l10n.walkChatSettingsModelFast(m.label) : m.label,
+        onPick,
+      ),
+      (null, true) => (l10n.walkChatSettingsModelsUnavailable, onRetry),
+      (null, false) => (null, null),
+    };
+    return AppListTile(
+      key: const Key('settings-chat-model'),
+      leading: const Icon(Icons.tune),
+      title: Text(l10n.walkChatSettingsModel),
+      subtitle: subtitle == null ? null : Text(subtitle),
+      onTap: onTap,
     );
   }
 }

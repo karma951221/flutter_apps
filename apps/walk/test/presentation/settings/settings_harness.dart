@@ -14,10 +14,12 @@ import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/chat/chat_history_settings.dart';
+import 'package:walk/domain/chat/chat_model_catalog.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
 import 'package:walk/domain/chat/repository/chat_usage_repository.dart';
 import 'package:walk/domain/chat/usecase/chat_key_verifier.dart';
+import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
 import 'package:walk/domain/diary/entity/diary_usage.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
@@ -39,6 +41,7 @@ import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
 import '../../support/diary_fixtures.dart';
 import '../../support/fake_chat_history.dart';
 import '../../support/fake_chat_key_verifier.dart';
+import '../../support/fake_chat_model_catalog.dart';
 import '../../support/fake_chat_settings.dart';
 import '../../support/fake_device_auth.dart';
 
@@ -119,12 +122,19 @@ class SettingsHarness {
           const DiaryUsage(photos: 1, videos: 0, bytes: 2048, trashBytes: 0),
     );
     final clock = MutableClock(diaryT0);
+    final chatSettings = FakeChatSettings();
+    final chatVerifier = FakeChatKeyVerifier();
+    final chatCatalog = FakeChatModelCatalog();
     getIt
       ..registerSingleton<LockRepository>(lockRepo)
       ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
       ..registerSingleton<Clock>(clock)
-      ..registerSingleton<ChatSettings>(FakeChatSettings())
-      ..registerSingleton<ChatKeyVerifier>(FakeChatKeyVerifier())
+      ..registerSingleton<ChatSettings>(chatSettings)
+      ..registerSingleton<ChatKeyVerifier>(chatVerifier)
+      ..registerSingleton<ChatModelCatalog>(chatCatalog)
+      ..registerSingleton<ChatModelChoice>(
+        ChatModelChoice(chatSettings, chatCatalog, chatVerifier, clock),
+      )
       ..registerSingleton<ChatHistorySettings>(FakeChatHistorySettings())
       ..registerSingleton<ChatHistoryRepository>(FakeChatHistoryCount())
       ..registerSingleton<ChatUsageRepository>(FakeChatUsageRepository());

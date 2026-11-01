@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,10 +9,12 @@ import 'package:l10n/l10n.dart';
 import 'package:walk/domain/chat/chat_connection.dart';
 import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
+import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
 import 'package:walk/presentation/settings/cubit/chat_settings_cubit.dart';
 import 'package:walk/presentation/settings/widget/chat_key_dialog.dart';
 
 import '../../../support/fake_chat_key_verifier.dart';
+import '../../../support/fake_chat_model_catalog.dart';
 import '../../../support/fake_chat_settings.dart';
 
 const _input = Key('chat-key-input');
@@ -46,7 +49,16 @@ void main() {
   setUp(() async {
     settings = FakeChatSettings();
     verifier = FakeChatKeyVerifier();
-    cubit = ChatSettingsCubit(settings, verifier);
+    cubit = ChatSettingsCubit(
+      settings,
+      verifier,
+      ChatModelChoice(
+        settings,
+        FakeChatModelCatalog(),
+        verifier,
+        const Clock(),
+      ),
+    );
     await cubit.load();
     result = open;
   });
@@ -288,7 +300,11 @@ void main() {
   testWidgets('쓰는 동안에도 저장 · 취소 · 입력칸 · 뒤로가 꺼진다', (tester) async {
     final slow = _SlowWriteSettings();
     await cubit.close();
-    cubit = ChatSettingsCubit(slow, verifier);
+    cubit = ChatSettingsCubit(
+      slow,
+      verifier,
+      ChatModelChoice(slow, FakeChatModelCatalog(), verifier, const Clock()),
+    );
     await cubit.load();
     await show(tester);
     await enterAndSave(tester, _goodKey);

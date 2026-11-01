@@ -1091,5 +1091,10 @@
   "walkChatFastModeSubtitle": "Answers come faster but cost more (about {factor}×)",
   "walkChatFastModeConfirmTitle": "Turn on faster answers?",
   "walkChatFastModeConfirmBody": "Each answer in this mode costs about {factor}× from {company}.",
-  "walkChatFastModeConfirmAction": "Turn on"
+  "walkChatFastModeConfirmAction": "Turn on",
+  "walkChatNoModelsTitle": "Couldn't load the model list",
+  "walkChatModelReplacedNotice": "Your chosen model is gone, so we switched to the recommended one",
+  "walkChatSettingsModel": "Model",
+  "walkChatSettingsModelFast": "{model} · Fast",
+  "walkChatSettingsModelsUnavailable": "Couldn't load the list · Try again"
 }

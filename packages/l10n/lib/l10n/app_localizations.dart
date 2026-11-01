@@ -6535,6 +6535,36 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'켜기'**
   String get walkChatFastModeConfirmAction;
+
+  /// 물어보기 탭 — 모델 목록이 없어 물을 수 없을 때(noModels) 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'모델 목록을 받지 못했어요'**
+  String get walkChatNoModelsTitle;
+
+  /// 물어보기 탭 스낵바 — 고른 모델이 목록에서 사라져 추천으로 되돌림(한 번)
+  ///
+  /// In ko, this message translates to:
+  /// **'고른 모델이 없어져 추천 모델로 바꿨어요'**
+  String get walkChatModelReplacedNotice;
+
+  /// 물어보기 설정 — 모델 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'모델'**
+  String get walkChatSettingsModel;
+
+  /// 물어보기 설정 모델 행 부제 — 빠른 출력이 켜져 있을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'{model} · 빠르게'**
+  String walkChatSettingsModelFast(String model);
+
+  /// 물어보기 설정 모델 행 부제 — 모델 목록이 없을 때(누르면 다시 받음)
+  ///
+  /// In ko, this message translates to:
+  /// **'목록을 받지 못했어요 · 다시 시도'**
+  String get walkChatSettingsModelsUnavailable;
 }
 
 class _AppLocalizationsDelegate

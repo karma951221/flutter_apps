@@ -3503,4 +3503,21 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatFastModeConfirmAction => 'オンにする';
+
+  @override
+  String get walkChatNoModelsTitle => 'モデル一覧を取得できませんでした';
+
+  @override
+  String get walkChatModelReplacedNotice => '選んだモデルがなくなったため、おすすめのモデルに切り替えました';
+
+  @override
+  String get walkChatSettingsModel => 'モデル';
+
+  @override
+  String walkChatSettingsModelFast(String model) {
+    return '$model · 高速';
+  }
+
+  @override
+  String get walkChatSettingsModelsUnavailable => '一覧を取得できませんでした・再試行';
 }

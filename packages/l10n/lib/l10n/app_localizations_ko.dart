@@ -3503,4 +3503,21 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatFastModeConfirmAction => '켜기';
+
+  @override
+  String get walkChatNoModelsTitle => '모델 목록을 받지 못했어요';
+
+  @override
+  String get walkChatModelReplacedNotice => '고른 모델이 없어져 추천 모델로 바꿨어요';
+
+  @override
+  String get walkChatSettingsModel => '모델';
+
+  @override
+  String walkChatSettingsModelFast(String model) {
+    return '$model · 빠르게';
+  }
+
+  @override
+  String get walkChatSettingsModelsUnavailable => '목록을 받지 못했어요 · 다시 시도';
 }

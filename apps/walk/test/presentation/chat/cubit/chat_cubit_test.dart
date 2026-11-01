@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/chat/chat_connection.dart';
 import 'package:walk/domain/chat/chat_model.dart';
+import 'package:walk/domain/chat/chat_model_rules.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/entity/conversation.dart';
@@ -17,6 +18,7 @@ import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/presentation/chat/cubit/chat_cubit.dart';
 import 'package:walk/presentation/chat/cubit/chat_state.dart';
+import 'package:walk/presentation/chat/widget/model_chip.dart';
 
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_chat_key_verifier.dart';
@@ -31,6 +33,19 @@ class _MockDiary extends Mock implements DiaryRepository {}
 class _MockHistory extends Mock implements ChatHistoryRepository {}
 
 const _target = (vendor: ChatVendor.openai, model: 'gpt-test');
+
+const _sonnet = ModelInfo(
+  id: 'claude-sonnet-9-5',
+  displayName: 'Claude Sonnet 9.5',
+);
+
+const _storedOk = (ChatVendor.anthropic, ModelListResult.ok([_sonnet]));
+
+final _opus = ModelInfo(
+  id: 'claude-opus-9-9',
+  displayName: 'Claude Opus 9.9',
+  createdAt: DateTime(2030),
+);
 
 ChatTurnRecord _record(
   int seq, {
@@ -94,7 +109,8 @@ void main() {
     history = _MockHistory();
     open = OpenConversation();
     settings = FakeChatSettings('sk-ant-test')..consented = true;
-    verifier = FakeChatKeyVerifier();
+    // 목록이 비어 있으면 첫 refresh 가 받아 온다 — 받을 목록 하나를 둔다.
+    verifier = FakeChatKeyVerifier()..stored = _storedOk;
     catalog = FakeChatModelCatalog();
     choice = ChatModelChoice(settings, catalog, verifier, const Clock());
     appended = [];
@@ -136,6 +152,7 @@ void main() {
     });
 
     test('recheck: false 면 상태만 읽고 부르지 않는다', () async {
+      await catalog.replace(ChatVendor.anthropic, [_sonnet], DateTime(2000));
       await cubit.refresh(recheck: false);
       await pumpEventQueue();
 
@@ -200,6 +217,7 @@ void main() {
     });
 
     test('재확인이 던져도 refresh 는 끝난다', () async {
+      await catalog.replace(ChatVendor.anthropic, [_sonnet], DateTime(2000));
       verifier.fetchStoredError = StateError('boom');
       await cubit.refresh();
       await pumpEventQueue();
@@ -1504,6 +1522,186 @@ void main() {
       settings.key = null;
       await cubit.refresh(recheck: false);
       expect(cubit.state.vendor, ChatVendor.anthropic);
+    });
+  });
+  group('모델', () {
+    ChatCubit cubitWith(ChatModelChoice choice) => ChatCubit(
+      session,
+      settings,
+      diary,
+      const NoopChatTrace(),
+      choice,
+      history,
+      open,
+    );
+
+    test('목록이 있으면 ready 와 칩(이름 · 벤더 · 번개 · 점)', () async {
+      final sonnet = ModelInfo(
+        id: 'claude-sonnet-9-5',
+        displayName: 'Claude Sonnet 9.5',
+        createdAt: DateTime(2029),
+      );
+      await catalog.replace(ChatVendor.anthropic, [sonnet], DateTime.now());
+      // 처음 받은 목록은 모두 본 것 — 그 뒤 늦게 나온 모델이 더해졌다.
+      catalog.models = [_opus, sonnet];
+      settings.fastMode = true;
+      final fast = ChatModelChoice(
+        settings,
+        catalog,
+        verifier,
+        const Clock(),
+        fastModeSpecs: {
+          ChatVendor.anthropic: [
+            FastModeSpec(pattern: RegExp('sonnet'), priceFactor: 2),
+          ],
+        },
+      );
+      final c = cubitWith(fast);
+      addTearDown(c.close);
+
+      await c.refresh();
+
+      expect(c.state.access, ChatAccess.ready);
+      expect(
+        c.state.model,
+        const ModelChipData(
+          vendor: ChatVendor.anthropic,
+          label: 'Claude Sonnet 9.5',
+          fastMode: true,
+          hasNewer: true,
+        ),
+      );
+    });
+
+    test('목록이 없고 받기 실패면 noModels', () async {
+      verifier.stored = (
+        ChatVendor.anthropic,
+        const ModelListResult.unreachable(),
+      );
+
+      await cubit.refresh();
+
+      expect(cubit.state.access, ChatAccess.noModels);
+      expect(cubit.state.modelsInvalidKey, isFalse);
+      expect(cubit.state.model, isNull);
+    });
+
+    test('invalidKey 면 modelsInvalidKey', () async {
+      verifier.stored = (
+        ChatVendor.anthropic,
+        const ModelListResult.invalidKey(),
+      );
+
+      await cubit.refresh();
+
+      expect(cubit.state.access, ChatAccess.noModels);
+      expect(cubit.state.modelsInvalidKey, isTrue);
+    });
+
+    test('retryModels 가 성공하면 ready', () async {
+      verifier.stored = (
+        ChatVendor.anthropic,
+        const ModelListResult.unreachable(),
+      );
+      await cubit.refresh();
+      expect(cubit.state.access, ChatAccess.noModels);
+      final before = verifier.fetchStoredCalls;
+
+      verifier.stored = _storedOk;
+      await cubit.retryModels();
+
+      expect(cubit.state.access, ChatAccess.ready);
+      expect(cubit.state.model?.label, 'Claude Sonnet 9.5');
+      // 강제로 한 번만 받는다.
+      expect(verifier.fetchStoredCalls, before + 1);
+    });
+
+    test('ready 에서 갱신은 기다리지 않고 끝나면 칩을 바꾼다', () async {
+      await catalog.replace(ChatVendor.anthropic, [_sonnet], DateTime(2000));
+      final pending = Completer<(ChatVendor, ModelListResult)?>();
+      verifier.storedPending = pending;
+
+      await cubit.refresh();
+
+      expect(cubit.state.access, ChatAccess.ready);
+      expect(cubit.state.model?.label, 'Claude Sonnet 9.5');
+
+      pending.complete((
+        ChatVendor.anthropic,
+        const ModelListResult.ok([
+          ModelInfo(id: 'claude-sonnet-9-5', displayName: 'Sonnet 새 이름'),
+        ]),
+      ));
+      await pumpEventQueue();
+
+      expect(cubit.state.model?.label, 'Sonnet 새 이름');
+    });
+
+    test('동의 전이면 noModels 보다 needsConsent 가 먼저', () async {
+      settings.consented = false;
+      verifier.stored = (
+        ChatVendor.anthropic,
+        const ModelListResult.unreachable(),
+      );
+
+      await cubit.refresh();
+
+      expect(cubit.state.access, ChatAccess.needsConsent);
+      expect(verifier.fetchStoredCalls, 0);
+    });
+
+    test('selectionReplaced 를 한 번 세우고 consume 하면 내린다', () async {
+      await catalog.replace(ChatVendor.anthropic, [
+        _sonnet,
+        _opus,
+      ], DateTime(2000));
+      await settings.selectModel(_opus.id);
+
+      await cubit.refresh();
+      expect(cubit.state.model?.label, 'Claude Opus 9.9');
+      await pumpEventQueue();
+
+      expect(cubit.state.selectionReplaced, isTrue);
+      expect(cubit.state.model?.label, 'Claude Sonnet 9.5');
+
+      cubit.consumeSelectionReplaced();
+      expect(cubit.state.selectionReplaced, isFalse);
+      expect(choice.selectionReplacedNotice, isFalse);
+    });
+
+    test('modelReplaced 로 끝나면 칩이 새 모델', () async {
+      await catalog.replace(ChatVendor.anthropic, [
+        _sonnet,
+        _opus,
+      ], DateTime.now());
+      await settings.selectModel(_opus.id);
+      await cubit.refresh();
+      expect(cubit.state.model?.label, 'Claude Opus 9.9');
+
+      when(() => session.ask(any())).thenAnswer((_) async* {
+        // 세션이 강제 갱신해 고른 모델이 사라졌다.
+        catalog.models = [_sonnet];
+        await settings.selectModel(null);
+        yield const ChatEvent.failed(ChatFailure.modelReplaced);
+      });
+      await cubit.send('질문');
+
+      expect(cubit.state.bubbles.last.failure, ChatFailure.modelReplaced);
+      expect(cubit.state.model?.label, 'Claude Sonnet 9.5');
+    });
+
+    test('modelChanged 는 칩을 다시 읽는다', () async {
+      await catalog.replace(ChatVendor.anthropic, [
+        _sonnet,
+        _opus,
+      ], DateTime.now());
+      await cubit.refresh();
+      expect(cubit.state.model?.label, 'Claude Sonnet 9.5');
+
+      await choice.select(_opus.id);
+      cubit.modelChanged();
+
+      expect(cubit.state.model?.label, 'Claude Opus 9.9');
     });
   });
 }

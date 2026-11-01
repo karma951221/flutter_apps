@@ -200,7 +200,7 @@ case _:
 /// @nodoc
 mixin _$ChatState {
 
- ChatAccess get access; List<ChatBubble> get bubbles; bool get busy; String? get activeTool; String? get restoredDraft; String? get conversationId; bool get temporary; ChatVendor get vendor; bool get loading;
+ ChatAccess get access; List<ChatBubble> get bubbles; bool get busy; String? get activeTool; String? get restoredDraft; String? get conversationId; bool get temporary; ChatVendor get vendor; bool get loading; ModelChipData? get model; bool get modelsInvalidKey; bool get selectionReplaced;
 /// Create a copy of ChatState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -211,12 +211,12 @@ $ChatStateCopyWith<ChatState> get copyWith => _$ChatStateCopyWithImpl<ChatState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatState&&(identical(other.access, access) || other.access == access)&&const DeepCollectionEquality().equals(other.bubbles, bubbles)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.activeTool, activeTool) || other.activeTool == activeTool)&&(identical(other.restoredDraft, restoredDraft) || other.restoredDraft == restoredDraft)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.temporary, temporary) || other.temporary == temporary)&&(identical(other.vendor, vendor) || other.vendor == vendor)&&(identical(other.loading, loading) || other.loading == loading));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatState&&(identical(other.access, access) || other.access == access)&&const DeepCollectionEquality().equals(other.bubbles, bubbles)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.activeTool, activeTool) || other.activeTool == activeTool)&&(identical(other.restoredDraft, restoredDraft) || other.restoredDraft == restoredDraft)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.temporary, temporary) || other.temporary == temporary)&&(identical(other.vendor, vendor) || other.vendor == vendor)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.model, model) || other.model == model)&&(identical(other.modelsInvalidKey, modelsInvalidKey) || other.modelsInvalidKey == modelsInvalidKey)&&(identical(other.selectionReplaced, selectionReplaced) || other.selectionReplaced == selectionReplaced));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,access,const DeepCollectionEquality().hash(bubbles),busy,activeTool,restoredDraft,conversationId,temporary,vendor,loading);
+int get hashCode => Object.hash(runtimeType,access,const DeepCollectionEquality().hash(bubbles),busy,activeTool,restoredDraft,conversationId,temporary,vendor,loading,model,modelsInvalidKey,selectionReplaced);
 
 
 
@@ -227,7 +227,7 @@ abstract mixin class $ChatStateCopyWith<$Res>  {
   factory $ChatStateCopyWith(ChatState value, $Res Function(ChatState) _then) = _$ChatStateCopyWithImpl;
 @useResult
 $Res call({
- ChatAccess access, List<ChatBubble> bubbles, bool busy, String? activeTool, String? restoredDraft, String? conversationId, bool temporary, ChatVendor vendor, bool loading
+ ChatAccess access, List<ChatBubble> bubbles, bool busy, String? activeTool, String? restoredDraft, String? conversationId, bool temporary, ChatVendor vendor, bool loading, ModelChipData? model, bool modelsInvalidKey, bool selectionReplaced
 });
 
 
@@ -244,7 +244,7 @@ class _$ChatStateCopyWithImpl<$Res>
 
 /// Create a copy of ChatState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? access = null,Object? bubbles = null,Object? busy = null,Object? activeTool = freezed,Object? restoredDraft = freezed,Object? conversationId = freezed,Object? temporary = null,Object? vendor = null,Object? loading = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? access = null,Object? bubbles = null,Object? busy = null,Object? activeTool = freezed,Object? restoredDraft = freezed,Object? conversationId = freezed,Object? temporary = null,Object? vendor = null,Object? loading = null,Object? model = freezed,Object? modelsInvalidKey = null,Object? selectionReplaced = null,}) {
   return _then(ChatState(
 access: null == access ? _self.access : access // ignore: cast_nullable_to_non_nullable
 as ChatAccess,bubbles: null == bubbles ? _self.bubbles : bubbles // ignore: cast_nullable_to_non_nullable
@@ -255,6 +255,9 @@ as String?,conversationId: freezed == conversationId ? _self.conversationId : co
 as String?,temporary: null == temporary ? _self.temporary : temporary // ignore: cast_nullable_to_non_nullable
 as bool,vendor: null == vendor ? _self.vendor : vendor // ignore: cast_nullable_to_non_nullable
 as ChatVendor,loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
+as bool,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
+as ModelChipData?,modelsInvalidKey: null == modelsInvalidKey ? _self.modelsInvalidKey : modelsInvalidKey // ignore: cast_nullable_to_non_nullable
+as bool,selectionReplaced: null == selectionReplaced ? _self.selectionReplaced : selectionReplaced // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

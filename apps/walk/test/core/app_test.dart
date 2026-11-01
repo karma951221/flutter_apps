@@ -14,6 +14,7 @@ import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/alarm/widget/next_alarm_widget.dart';
+import 'package:walk/domain/chat/chat_model_catalog.dart';
 import 'package:walk/domain/diary/location/place_source.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
@@ -127,15 +128,19 @@ void main() {
       when(
         () => diaryRepo.watchEntries(any()),
       ).thenAnswer((_) => Stream.value(const []));
+      final chatSettings = FakeChatSettings();
+      final chatVerifier = FakeChatKeyVerifier();
+      final chatCatalog = FakeChatModelCatalog();
       getIt
         ..registerSingleton<DiaryUseCase>(diary)
-        ..registerSingleton<ChatSettings>(FakeChatSettings())
-        ..registerSingleton<ChatKeyVerifier>(FakeChatKeyVerifier())
+        ..registerSingleton<ChatSettings>(chatSettings)
+        ..registerSingleton<ChatKeyVerifier>(chatVerifier)
+        ..registerSingleton<ChatModelCatalog>(chatCatalog)
         ..registerSingleton<ChatModelChoice>(
           ChatModelChoice(
-            FakeChatSettings(),
-            FakeChatModelCatalog(),
-            FakeChatKeyVerifier(),
+            chatSettings,
+            chatCatalog,
+            chatVerifier,
             const Clock(),
           ),
         )

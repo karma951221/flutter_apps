@@ -14,6 +14,7 @@ import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/chat/usecase/open_conversation.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
+import '../widget/model_chip.dart';
 import 'chat_state.dart';
 
 /// 다음 프레임이 그려진 뒤 [callback] 을 부른다.
@@ -55,8 +56,8 @@ class ChatCubit extends Cubit<ChatState> {
   final DiaryRepository _diary;
   final ChatTrace _trace;
 
-  /// 탭이 열릴 때 모델 목록을 규칙대로 다시 받는다 — 24시간이 지났거나 · 키가 확인 전
-  /// (unverified)이거나 · 목록 벤더가 연결 벤더와 다를 때만. 받으면 키 상태도 기록된다.
+  /// 칩에 보일 지금 모델 · 탭이 열릴 때의 목록 갱신(24시간이 지났거나 · 키가 확인 전
+  /// (unverified)이거나 · 목록 벤더가 연결 벤더와 다를 때만) · 사라진 모델 알림.
   final ChatModelChoice _choice;
 
   final ChatHistoryRepository _history;
@@ -99,14 +100,42 @@ class ChatCubit extends Cubit<ChatState> {
   String _turnQuestion = '';
   ChatTarget? _turnTarget;
 
-  /// 키 · 동의 상태를 다시 읽는다. 탭이 보이게 될 때 · 위에 얹힌 화면이 걷힐 때 부른다.
+  /// 키 · 동의 · 모델 상태를 다시 읽는다. 탭이 보이게 될 때 · 위에 얹힌 화면이 걷힐 때 부른다.
   /// 보안 저장소를 읽지 못하면 키가 없는 것으로 본다.
   ///
-  /// [recheck] 가 true 이고 쓸 수 있으면(ready) 모델 목록 갱신을 뒤에서 부른다
-  /// (`ChatModelChoice.refresh` — 24시간 · unverified · 벤더 다름일 때만 받고, 받으면 키
-  /// 상태도 기록된다). 결과는 기다리지도, 화면에 쓰지도 않는다. 탭이 보이지 않을 때(앱
-  /// 시작에 다른 탭이 열려 있는 등) 읽기만 하려면 false.
-  Future<void> refresh({bool recheck = true}) async {
+  /// 키 · 동의가 있으면 모델을 본다(`ChatModelChoice` — 24시간 · unverified · 벤더 다름일
+  /// 때만 받고, 받으면 키 상태도 기록된다).
+  /// - 지금 모델이 있으면 곧바로 ready 를 내고 갱신은 뒤에서 — 끝나면 칩을 다시 읽는다.
+  /// - 없으면 갱신을 기다린 뒤에도 없을 때 noModels(인증 오류면 [ChatState.modelsInvalidKey]).
+  ///
+  /// [recheck] 가 false 면 목록을 받지 않는다(탭이 보이지 않을 때 — 앱 시작에 다른 탭이
+  /// 열려 있는 등). 그때 모델이 없으면 noModels 로 두고, 보이게 될 때 다시 부른다.
+  Future<void> refresh({bool recheck = true}) =>
+      _read(recheck: recheck, fetched: null);
+
+  /// noModels 의 [다시 시도] — 목록을 강제로 받은 뒤 다시 읽는다.
+  Future<void> retryModels() async {
+    final result = await _choice.refresh(force: true);
+    if (isClosed) return;
+    await _read(recheck: false, fetched: result);
+  }
+
+  /// 모델 고르기 시트가 바꾼 뒤 칩을 다시 읽는다.
+  void modelChanged() => _emitModel();
+
+  /// 화면이 "고른 모델이 없어져…" 알림을 보였다.
+  void consumeSelectionReplaced() {
+    _choice.consumeSelectionReplacedNotice();
+    if (state.selectionReplaced) {
+      emit(state.copyWith(selectionReplaced: false));
+    }
+  }
+
+  /// [fetched] 는 방금 받은 결과(retryModels) — 모델이 없어도 다시 받지 않는다.
+  Future<void> _read({
+    required bool recheck,
+    required ModelsRefresh? fetched,
+  }) async {
     bool hasKey;
     try {
       hasKey = await _settings.hasApiKey();
@@ -119,18 +148,73 @@ class ChatCubit extends Cubit<ChatState> {
       (_, false) => ChatAccess.needsConsent,
       _ => ChatAccess.ready,
     };
-    // 모델 목록이 없어도(target null) 배너는 연결 벤더로.
-    final vendor =
-        _session.target?.vendor ??
-        _settings.connectedVendor ??
-        ChatVendor.anthropic;
-    emit(state.copyWith(access: access, vendor: vendor));
-    if (recheck && access == ChatAccess.ready) {
-      unawaited(
-        Future.sync(_choice.refresh).then<void>((_) {}, onError: (Object _) {}),
-      );
+    if (access != ChatAccess.ready) {
+      emit(state.copyWith(access: access, vendor: _vendor(), model: null));
+      return;
     }
+    if (_choice.currentModel != null) {
+      _emitReady();
+      if (recheck) {
+        unawaited(
+          Future.sync(
+            _choice.refresh,
+          ).then<void>((_) => _emitModel(), onError: (Object _) {}),
+        );
+      }
+      return;
+    }
+    var result = fetched;
+    if (result == null && recheck) {
+      try {
+        result = await _choice.refresh();
+      } on Object {
+        result = const ModelsRefresh.unreachable();
+      }
+      if (isClosed) return;
+    }
+    if (_choice.currentModel != null) {
+      _emitReady();
+      return;
+    }
+    emit(
+      state.copyWith(
+        access: ChatAccess.noModels,
+        vendor: _vendor(),
+        model: null,
+        modelsInvalidKey: result is ModelsInvalidKey,
+      ),
+    );
   }
+
+  void _emitReady() => emit(
+    state.copyWith(
+      access: ChatAccess.ready,
+      vendor: _vendor(),
+      model: ModelChipData.of(_choice),
+      modelsInvalidKey: false,
+      selectionReplaced: _choice.selectionReplacedNotice,
+    ),
+  );
+
+  /// 칩 · 알림 표시를 [ChatModelChoice] 에서 다시 읽는다. ready 가 아니면 칩은 두지 않는다.
+  void _emitModel() {
+    if (isClosed) return;
+    emit(
+      state.copyWith(
+        vendor: _vendor(),
+        model: state.access == ChatAccess.ready
+            ? ModelChipData.of(_choice)
+            : null,
+        selectionReplaced: _choice.selectionReplacedNotice,
+      ),
+    );
+  }
+
+  /// 배너 벤더 — 모델 목록이 없어도(target null) 연결 벤더로.
+  ChatVendor _vendor() =>
+      _session.target?.vendor ??
+      _settings.connectedVendor ??
+      ChatVendor.anthropic;
 
   Future<void> consent() async {
     await _settings.setConsented();
@@ -388,6 +472,8 @@ class ChatCubit extends Cubit<ChatState> {
   void _fail(ChatFailure failure, int generation) {
     if (generation != _generation || isClosed) return;
     _end(_withLast((b) => b.copyWith(failure: failure)));
+    // 세션이 목록을 다시 받아 지금 모델이 바뀌었다 — 칩도 새 모델로.
+    if (failure == ChatFailure.modelReplaced) _emitModel();
   }
 
   /// 끝 이벤트 없이 스트림이 닫혔다(세션이 조용히 멈춤). 인용을 읽는 중이면 그쪽이 끝낸다.

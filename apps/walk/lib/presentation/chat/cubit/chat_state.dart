@@ -3,11 +3,13 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../../domain/chat/chat_vendor.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
+import '../widget/model_chip.dart';
 
 part 'chat_state.freezed.dart';
 
-/// 채팅을 쓸 수 있는가. 키 · 동의를 읽기 전은 [checking].
-enum ChatAccess { checking, noKey, needsConsent, ready }
+/// 채팅을 쓸 수 있는가. 키 · 동의를 읽기 전은 [checking]. [noModels] 는 키 · 동의는
+/// 있는데 모델 목록을 한 번도 받지 못해 물을 모델을 정할 수 없다(스펙 §6.3).
+enum ChatAccess { checking, noKey, needsConsent, noModels, ready }
 
 enum ChatRole { user, assistant }
 
@@ -88,6 +90,18 @@ class ChatState with _$ChatState {
   @override
   final bool loading;
 
+  /// 앱바 아래 모델 칩. ready 가 아니거나 모델이 없으면 null.
+  @override
+  final ModelChipData? model;
+
+  /// noModels 의 원인이 잘못된 키 — [다시 시도] 대신 [설정 열기].
+  @override
+  final bool modelsInvalidKey;
+
+  /// 고른 모델이 없어져 추천으로 바꿨다 — 탭이 보일 때 한 번 알리고 consume 한다.
+  @override
+  final bool selectionReplaced;
+
   const ChatState({
     required this.access,
     this.bubbles = const [],
@@ -98,6 +112,9 @@ class ChatState with _$ChatState {
     this.temporary = false,
     this.vendor = ChatVendor.anthropic,
     this.loading = false,
+    this.model,
+    this.modelsInvalidKey = false,
+    this.selectionReplaced = false,
   });
 
   /// 질문 · 답 글(말풍선 · 되돌린 질문)은 남기지 않는다.
@@ -106,5 +123,7 @@ class ChatState with _$ChatState {
       'ChatState(access: ${access.name}, bubbles: $bubbles, busy: $busy, '
       'activeTool: $activeTool, restoredDraftLength: ${restoredDraft?.length}, '
       'conversationId: $conversationId, temporary: $temporary, '
-      'vendor: ${vendor.name}, loading: $loading)';
+      'vendor: ${vendor.name}, loading: $loading, model: $model, '
+      'modelsInvalidKey: $modelsInvalidKey, '
+      'selectionReplaced: $selectionReplaced)';
 }

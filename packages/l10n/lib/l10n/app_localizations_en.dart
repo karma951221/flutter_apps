@@ -3778,4 +3778,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkChatFastModeConfirmAction => 'Turn on';
+
+  @override
+  String get walkChatNoModelsTitle => 'Couldn\'t load the model list';
+
+  @override
+  String get walkChatModelReplacedNotice =>
+      'Your chosen model is gone, so we switched to the recommended one';
+
+  @override
+  String get walkChatSettingsModel => 'Model';
+
+  @override
+  String walkChatSettingsModelFast(String model) {
+    return '$model · Fast';
+  }
+
+  @override
+  String get walkChatSettingsModelsUnavailable =>
+      'Couldn\'t load the list · Try again';
 }

@@ -29,6 +29,8 @@ import '../widget/chat_bubble_view.dart';
 import '../widget/chat_consent_view.dart';
 import '../widget/chat_examples.dart';
 import '../widget/chat_input.dart';
+import '../widget/model_chip.dart';
+import '../widget/model_picker_sheet.dart';
 import '../widget/temporary_chat_banner.dart';
 import 'chat_history_page.dart';
 
@@ -117,8 +119,27 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
   @override
   void didUpdateWidget(ChatTab oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!oldWidget.active && widget.active) unawaited(_cubit.refresh());
+    if (!oldWidget.active && widget.active) {
+      unawaited(_cubit.refresh());
+      // 보이지 않는 동안 세워진 "고른 모델이 없어져…" 알림은 보이게 될 때 한 번.
+      // 빌드 중이라 다음 프레임에 띄운다.
+      if (_cubit.state.selectionReplaced) {
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _showSelectionReplaced(),
+        );
+      }
+    }
     if (oldWidget.active != widget.active) _syncSecure();
+  }
+
+  /// "고른 모델이 없어져 추천 모델로 바꿨어요"(스펙 §6.3) — 탭이 보일 때만, 한 번.
+  void _showSelectionReplaced() {
+    if (!mounted || !widget.active || !_cubit.state.selectionReplaced) return;
+    AppSnackBar.show(
+      context,
+      message: AppLocalizations.of(context).walkChatModelReplacedNotice,
+    );
+    _cubit.consumeSelectionReplaced();
   }
 
   /// 물어보기 설정(⋮ · [설정 열기] · 실패 말풍선 · 앱 설정)에서 키를 넣거나 지우고 돌아왔을 수 있다.
@@ -145,9 +166,18 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
     return BlocProvider.value(
       value: _cubit,
       // 게이트 바깥 — 잠겨 있어도 임시 대화가 바뀌면 창 보안을 맞춘다.
-      child: BlocListener<ChatCubit, ChatState>(
-        listenWhen: (a, b) => a.temporary != b.temporary,
-        listener: (_, _) => _syncSecure(),
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<ChatCubit, ChatState>(
+            listenWhen: (a, b) => a.temporary != b.temporary,
+            listener: (_, _) => _syncSecure(),
+          ),
+          BlocListener<ChatCubit, ChatState>(
+            listenWhen: (a, b) =>
+                !a.selectionReplaced && b.selectionReplaced && widget.active,
+            listener: (_, _) => _showSelectionReplaced(),
+          ),
+        ],
         child: Scaffold(
           appBar: AppBar(
             title: Text(l10n.walkShellTabChat),
@@ -247,6 +277,12 @@ class _ChatBody extends StatelessWidget {
     child: BlocBuilder<ChatCubit, ChatState>(builder: _build),
   );
 
+  /// 칩 → 모델 고르기 시트. 바뀐 게 있으면 칩을 다시 읽는다.
+  static Future<void> _pickModel(BuildContext context) async {
+    final cubit = context.read<ChatCubit>();
+    if (await ModelPickerSheet.show(context)) cubit.modelChanged();
+  }
+
   Widget _build(BuildContext context, ChatState state) {
     final l10n = AppLocalizations.of(context);
     final cubit = context.read<ChatCubit>();
@@ -261,9 +297,36 @@ class _ChatBody extends StatelessWidget {
       ChatAccess.needsConsent => ChatConsentView(
         onAccept: () => unawaited(cubit.consent()),
       ),
+      // 키가 잘못됐으면 다시 받아도 같다 — 설정에서 키를 고치게 한다.
+      ChatAccess.noModels => AppPlaceholder(
+        icon: Icons.cloud_off_outlined,
+        message: l10n.walkChatNoModelsTitle,
+        actionLabel: state.modelsInvalidKey
+            ? l10n.walkChatOpenSettings
+            : l10n.commonRetry,
+        onAction: state.modelsInvalidKey
+            ? onOpenSettings
+            : () => unawaited(cubit.retryModels()),
+      ),
       ChatAccess.ready => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (state.model case final model?)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.xs,
+              ),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: ModelChip(
+                  data: model,
+                  onPressed: state.busy
+                      ? null
+                      : () => unawaited(_pickModel(context)),
+                ),
+              ),
+            ),
           Expanded(
             child: state.bubbles.isEmpty
                 ? ChatExamples(onAsk: (q) => unawaited(cubit.send(q)))

@@ -1091,5 +1091,10 @@
   "walkChatFastModeSubtitle": "回答は速くなりますが料金が上がります（約{factor}倍）",
   "walkChatFastModeConfirmTitle": "速く答えるをオンにしますか？",
   "walkChatFastModeConfirmBody": "このモードでは回答ごとに {company} の料金が約{factor}倍かかります。",
-  "walkChatFastModeConfirmAction": "オンにする"
+  "walkChatFastModeConfirmAction": "オンにする",
+  "walkChatNoModelsTitle": "モデル一覧を取得できませんでした",
+  "walkChatModelReplacedNotice": "選んだモデルがなくなったため、おすすめのモデルに切り替えました",
+  "walkChatSettingsModel": "モデル",
+  "walkChatSettingsModelFast": "{model} · 高速",
+  "walkChatSettingsModelsUnavailable": "一覧を取得できませんでした・再試行"
 }
