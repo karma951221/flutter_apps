@@ -466,7 +466,8 @@ class ChatSession {
                     request,
                     event.usage,
                     wiki,
-                    _readWikiCalls(event.message),
+                    // 위키 도구가 없던 질문의 read_wiki 는 실행하지 않으니 세지 않는다.
+                    wikiOn ? _readWikiCalls(event.message) : 0,
                   );
                 case ModelThinking():
                   if (phase != ChatPhase.thinking) {

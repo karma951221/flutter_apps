@@ -2008,6 +2008,27 @@ void main() {
       expect([r.wikiIndexNotes, r.wikiIndexChars, r.readWikiCalls], [0, 0, 0]);
     });
 
+    test('위키가 없던 질문에서 모델이 read_wiki 를 불러도 readWikiCalls 는 0', () async {
+      final model = _FakeModel([
+        [
+          _done(
+            [
+              _toolUse('t1', 'read_wiki', {
+                'ids': [1],
+              }),
+            ],
+            StopKind.toolUse,
+            usage: u1,
+          ),
+        ],
+        _answerWith(u2),
+      ]);
+
+      await session(model).ask('질문').toList();
+
+      expect(usage.records.map((r) => r.readWikiCalls), [0, 0]);
+    });
+
     test('read_wiki 를 8라운드 내내 부르면 tooManySteps', () async {
       wiki.context = withWiki;
       final model = _FakeModel([])

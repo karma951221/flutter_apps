@@ -67,8 +67,18 @@ class _WikiNoteEditPageState extends State<WikiNoteEditPage> {
     final sel = value.selection;
     final start = sel.isValid ? sel.start : text.length;
     final end = sel.isValid ? sel.end : text.length;
+    final next = text.replaceRange(start, end, link);
+    // 본문 칸의 maxLength 는 붙여 넣은 값을 막지 않는다 — 넘으면 넣지 않고 알린다.
+    if (next.characters.length > wikiBodyMax) {
+      AppSnackBar.show(
+        context,
+        message: AppLocalizations.of(context).walkChatWikiLinkTooLong,
+        type: AppSnackBarType.error,
+      );
+      return;
+    }
     _body.value = TextEditingValue(
-      text: text.replaceRange(start, end, link),
+      text: next,
       selection: TextSelection.collapsed(offset: start + link.length),
     );
     _cubit.changed(body: _body.text);

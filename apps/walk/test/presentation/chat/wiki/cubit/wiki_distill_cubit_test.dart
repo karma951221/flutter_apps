@@ -201,6 +201,42 @@ void main() {
     );
   });
 
+  test('save(update) 때 그 메모가 그새 지워졌으면 출처를 이 대화로 create', () async {
+    distills(const WikiDistillResult.candidates([updated]));
+    final cubit = build();
+    await ready(cubit);
+    await wiki.delete(3);
+
+    await cubit.save(0);
+    expect(wiki.updated, isEmpty);
+    expect(wiki.created, [
+      const WikiNoteDraft(
+        title: '수면',
+        summary: '늦게 잔다',
+        body: '자정 넘어 잔다',
+        sourceConversationId: 'c1',
+      ),
+    ]);
+    expect(
+      (cubit.state as WikiDistillReady).items.single.status,
+      CandidateStatus.saved,
+    );
+  });
+
+  test('save(update) 가 메모가 있는데 실패하면 create 하지 않고 던진다', () async {
+    distills(const WikiDistillResult.candidates([updated]));
+    final cubit = build();
+    await ready(cubit);
+    wiki.failWrites = true;
+
+    await expectLater(cubit.save(0), throwsA(isA<StateError>()));
+    expect(wiki.created, isEmpty);
+    expect(
+      (cubit.state as WikiDistillReady).items.single.status,
+      CandidateStatus.pending,
+    );
+  });
+
   test('저장이 실패하면 던지고 후보는 그대로', () async {
     distills(const WikiDistillResult.candidates([created]));
     final cubit = build();

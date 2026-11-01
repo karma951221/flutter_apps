@@ -254,6 +254,26 @@ void main() {
     expect(sheet, findsOneWidget);
   });
 
+  testWidgets('[고쳐서 저장]은 상한을 넘는 후보 글을 각 상한에서 잘라 연다', (tester) async {
+    await setUp(
+      result: WikiDistillResult.candidates([
+        WikiCandidate.create(
+          title: '제' * (wikiTitleMax + 10),
+          summary: '요' * (wikiSummaryMax + 10),
+          body: '본' * (wikiBodyMax + 10),
+        ),
+      ]),
+    );
+    await open(tester);
+
+    await tapIn(tester, 0, '고쳐서 저장');
+    String text(String key) =>
+        tester.widget<TextField>(find.byKey(Key(key))).controller!.text;
+    expect(text('wiki-edit-title'), '제' * wikiTitleMax);
+    expect(text('wiki-edit-summary'), '요' * wikiSummaryMax);
+    expect(text('wiki-edit-body'), '본' * wikiBodyMax);
+  });
+
   testWidgets('update 의 [고쳐서 저장]은 그 메모를 고친다', (tester) async {
     await setUp(result: const WikiDistillResult.candidates([updated]));
     await open(tester);

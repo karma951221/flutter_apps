@@ -57,36 +57,51 @@ class DriftWikiRepository implements WikiRepository {
   Future<int> create(WikiNoteDraft draft) async {
     final clean = _clean(draft);
     final now = _clock.now();
-    return _db
-        .into(_db.wikiNotes)
-        .insert(
-          WikiNotesCompanion.insert(
-            title: clean.title,
-            summary: clean.summary,
-            body: clean.body,
-            sourceConversationId: Value(draft.sourceConversationId),
-            createdAt: now,
-            updatedAt: now,
+    return _db.transaction(
+      () async => _db
+          .into(_db.wikiNotes)
+          .insert(
+            WikiNotesCompanion.insert(
+              title: clean.title,
+              summary: clean.summary,
+              body: clean.body,
+              sourceConversationId: Value(
+                await _liveSource(draft.sourceConversationId),
+              ),
+              createdAt: now,
+              updatedAt: now,
+            ),
           ),
-        );
+    );
+  }
+
+  /// 출처 대화가 그새 지워졌으면 null — FK 로 저장이 실패하지 않게(대화를 지울 때와 같은 결과).
+  Future<String?> _liveSource(String? id) async {
+    if (id == null) return null;
+    final row = await (_db.select(
+      _db.conversations,
+    )..where((c) => c.id.equals(id))).getSingleOrNull();
+    return row == null ? null : id;
   }
 
   @override
   Future<void> update(int id, WikiNoteDraft draft) async {
     final clean = _clean(draft);
     final source = draft.sourceConversationId;
-    final updated =
-        await (_db.update(_db.wikiNotes)..where((w) => w.id.equals(id))).write(
-          WikiNotesCompanion(
-            title: Value(clean.title),
-            summary: Value(clean.summary),
-            body: Value(clean.body),
-            sourceConversationId: source == null
-                ? const Value.absent()
-                : Value(source),
-            updatedAt: Value(_clock.now()),
+    final updated = await _db.transaction(
+      () async =>
+          (_db.update(_db.wikiNotes)..where((w) => w.id.equals(id))).write(
+            WikiNotesCompanion(
+              title: Value(clean.title),
+              summary: Value(clean.summary),
+              body: Value(clean.body),
+              sourceConversationId: source == null
+                  ? const Value.absent()
+                  : Value(await _liveSource(source)),
+              updatedAt: Value(_clock.now()),
+            ),
           ),
-        );
+    );
     if (updated == 0) {
       throw StateError('위키 메모 $id 가 없다');
     }

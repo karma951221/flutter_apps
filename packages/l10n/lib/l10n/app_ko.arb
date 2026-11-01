@@ -4762,6 +4762,8 @@
   "@walkChatWikiErrorEmptySummary": {"description": "메모 편집: 요약이 비었을 때 칸 아래 오류"},
   "walkChatWikiErrorSave": "저장하지 못했어요",
   "@walkChatWikiErrorSave": {"description": "메모 편집: 저장 실패 스낵바"},
+  "walkChatWikiLinkTooLong": "본문이 길어 링크를 넣지 못했어요",
+  "@walkChatWikiLinkTooLong": {"description": "메모 편집: 링크를 넣으면 본문 상한을 넘을 때 스낵바"},
   "walkChatWikiLinkNote": "메모 링크",
   "@walkChatWikiLinkNote": {"description": "메모 편집: 본문에 메모 링크 넣기 버튼"},
   "walkChatWikiLinkEntry": "일기 링크",

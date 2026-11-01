@@ -1146,6 +1146,7 @@
   "walkChatWikiErrorEmptyTitle": "Enter a title",
   "walkChatWikiErrorEmptySummary": "Enter a summary",
   "walkChatWikiErrorSave": "Couldn't save",
+  "walkChatWikiLinkTooLong": "The body is too long to add a link.",
   "walkChatWikiLinkNote": "Link note",
   "walkChatWikiLinkEntry": "Link entry",
   "walkChatWikiPickNoteTitle": "Choose a note",

@@ -3715,6 +3715,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatWikiErrorSave => '保存できませんでした';
 
   @override
+  String get walkChatWikiLinkTooLong => '本文が長いためリンクを追加できません。';
+
+  @override
   String get walkChatWikiLinkNote => 'メモをリンク';
 
   @override

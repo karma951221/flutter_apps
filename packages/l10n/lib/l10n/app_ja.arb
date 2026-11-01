@@ -1146,6 +1146,7 @@
   "walkChatWikiErrorEmptyTitle": "タイトルを入力してください",
   "walkChatWikiErrorEmptySummary": "要約を入力してください",
   "walkChatWikiErrorSave": "保存できませんでした",
+  "walkChatWikiLinkTooLong": "本文が長いためリンクを追加できません。",
   "walkChatWikiLinkNote": "メモをリンク",
   "walkChatWikiLinkEntry": "日記をリンク",
   "walkChatWikiPickNoteTitle": "メモを選ぶ",

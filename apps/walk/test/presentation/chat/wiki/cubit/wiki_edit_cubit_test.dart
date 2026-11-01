@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/domain/chat/entity/wiki_note.dart';
 import 'package:walk/presentation/chat/wiki/cubit/wiki_edit_cubit.dart';
@@ -103,6 +104,36 @@ void main() {
     );
     expect(long.summary, '가' * wikiSummaryMax);
     expect(long.sourceConversationId, isNull);
+  });
+
+  test('fromBubble 은 제목 · 요약 · 본문을 각 상한에서 자르고 끝 공백을 지운다', () {
+    final seed = WikiEditSeed.fromBubble(
+      question: '물' * 200,
+      text: '${'가' * (wikiSummaryMax - 1)} 나다\n${'라' * wikiBodyMax}',
+      conversationId: 'c1',
+      citedEntryIds: const [],
+    );
+    expect(seed.title.characters.length, lessThanOrEqualTo(wikiTitleMax));
+    expect(seed.summary, '가' * (wikiSummaryMax - 1));
+    expect(seed.body.characters.length, wikiBodyMax);
+  });
+
+  test('capped 는 grapheme 단위로 자르고 상한 안이면 그대로', () {
+    const family = '👨‍👩‍👧';
+    final seed = WikiEditSeed.capped(
+      id: 3,
+      title: family * (wikiTitleMax + 5),
+      summary: '요약',
+      body: '${'가' * (wikiBodyMax - 1)}  나',
+      sourceConversationId: 'c1',
+      suggestedEntryIds: const ['e1'],
+    );
+    expect(seed.title, family * wikiTitleMax);
+    expect(seed.summary, '요약');
+    expect(seed.body, '가' * (wikiBodyMax - 1));
+    expect(seed.id, 3);
+    expect(seed.sourceConversationId, 'c1');
+    expect(seed.suggestedEntryIds, ['e1']);
   });
 
   test('fromNote 는 메모 값을 그대로, toString 에 글이 없다', () {

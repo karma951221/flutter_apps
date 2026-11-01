@@ -222,7 +222,7 @@ class _CandidateCard extends StatelessWidget {
     final cubit = context.read<WikiDistillCubit>();
     final seed = switch (state.items[index].candidate) {
       WikiCreateCandidate(:final title, :final summary, :final body) =>
-        WikiEditSeed(
+        WikiEditSeed.capped(
           title: title,
           summary: summary,
           body: body,
@@ -235,7 +235,7 @@ class _CandidateCard extends StatelessWidget {
         :final summary,
         :final body,
       ) =>
-        WikiEditSeed(
+        WikiEditSeed.capped(
           id: id,
           title: title,
           summary: summary,

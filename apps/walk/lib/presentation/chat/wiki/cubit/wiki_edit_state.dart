@@ -45,8 +45,31 @@ class WikiEditSeed with _$WikiEditSeed {
     sourceConversationId: note.sourceConversationId,
   );
 
-  /// [위키에 추가] — 제목 = conversationTitleFrom(질문), 요약 = 말풍선 글 첫 줄
-  /// ([wikiSummaryMax] 에서 자름), 본문 = 말풍선 글 전체, 출처 = 지금 대화, 근거 일기 = 그 턴의 인용 id.
+  /// 편집 화면의 입력 상한(maxLength)을 넘지 않게 제목 · 요약 · 본문을 각 상한에서
+  /// grapheme 단위로 자르고 끝 공백을 지운 값. 말풍선 · 정리 후보처럼 밖에서 온 글을 열 때 쓴다.
+  static WikiEditSeed capped({
+    int? id,
+    required String title,
+    required String summary,
+    required String body,
+    String? sourceConversationId,
+    List<String> suggestedEntryIds = const [],
+  }) => WikiEditSeed(
+    id: id,
+    title: _cap(title, wikiTitleMax),
+    summary: _cap(summary, wikiSummaryMax),
+    body: _cap(body, wikiBodyMax),
+    sourceConversationId: sourceConversationId,
+    suggestedEntryIds: suggestedEntryIds,
+  );
+
+  static String _cap(String s, int max) {
+    final chars = s.characters;
+    return chars.length <= max ? s : chars.take(max).string.trimRight();
+  }
+
+  /// [위키에 추가] — 제목 = conversationTitleFrom(질문), 요약 = 말풍선 글 첫 줄,
+  /// 본문 = 말풍선 글 전체(각 상한에서 자름 — [capped]), 출처 = 지금 대화, 근거 일기 = 그 턴의 인용 id.
   static WikiEditSeed fromBubble({
     required String question,
     required String text,
@@ -54,10 +77,9 @@ class WikiEditSeed with _$WikiEditSeed {
     required List<String> citedEntryIds,
   }) {
     final body = text.trim();
-    final firstLine = body.split('\n').first.trim().characters;
-    return WikiEditSeed(
+    return capped(
       title: conversationTitleFrom(question),
-      summary: firstLine.take(wikiSummaryMax).string,
+      summary: body.split('\n').first.trim(),
       body: body,
       sourceConversationId: conversationId,
       suggestedEntryIds: [...citedEntryIds],

@@ -6864,6 +6864,12 @@ abstract class AppLocalizations {
   /// **'저장하지 못했어요'**
   String get walkChatWikiErrorSave;
 
+  /// 메모 편집: 링크를 넣으면 본문 상한을 넘을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'본문이 길어 링크를 넣지 못했어요'**
+  String get walkChatWikiLinkTooLong;
+
   /// 메모 편집: 본문에 메모 링크 넣기 버튼
   ///
   /// In ko, this message translates to:

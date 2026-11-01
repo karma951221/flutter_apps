@@ -3716,6 +3716,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatWikiErrorSave => '저장하지 못했어요';
 
   @override
+  String get walkChatWikiLinkTooLong => '본문이 길어 링크를 넣지 못했어요';
+
+  @override
   String get walkChatWikiLinkNote => '메모 링크';
 
   @override

@@ -134,6 +134,7 @@ class WikiDistillCubit extends Cubit<WikiDistillState> {
   String get conversationId => _conversationId;
 
   /// [저장] — create 는 출처 = 이 대화, update 는 출처 그대로(draft 의 출처 null).
+  /// 시트를 띄운 뒤 update 할 메모가 지워졌으면 create 로 저장한다.
   /// 저장소가 던지면 그대로 던진다(후보는 pending 그대로) — 화면이 알린다.
   Future<void> save(int index) async {
     final item = _pending(index);
@@ -155,10 +156,23 @@ class WikiDistillCubit extends Cubit<WikiDistillState> {
           :final summary,
           :final body,
         ):
-          await _wiki.update(
-            id,
-            WikiNoteDraft(title: title, summary: summary, body: body),
-          );
+          try {
+            await _wiki.update(
+              id,
+              WikiNoteDraft(title: title, summary: summary, body: body),
+            );
+          } on StateError {
+            // 시트를 띄운 뒤 그 메모가 지워졌다 — 새 메모로 남긴다(ready 때의 W8 과 같게).
+            if ((await _wiki.byIds([id])).isNotEmpty) rethrow;
+            await _wiki.create(
+              WikiNoteDraft(
+                title: title,
+                summary: summary,
+                body: body,
+                sourceConversationId: _conversationId,
+              ),
+            );
+          }
       }
     } finally {
       _saving.remove(index);

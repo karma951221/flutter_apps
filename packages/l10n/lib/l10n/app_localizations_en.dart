@@ -4048,6 +4048,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatWikiErrorSave => 'Couldn\'t save';
 
   @override
+  String get walkChatWikiLinkTooLong => 'The body is too long to add a link.';
+
+  @override
   String get walkChatWikiLinkNote => 'Link note';
 
   @override

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/entity/conversation.dart';
+import 'package:walk/domain/chat/entity/wiki_note.dart';
 import 'package:walk/presentation/chat/wiki/cubit/wiki_edit_state.dart';
 import 'package:walk/presentation/chat/wiki/open_wiki.dart';
 import 'package:walk/presentation/chat/wiki/page/wiki_note_edit_page.dart';
@@ -114,6 +115,34 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(text(tester, 'wiki-edit-body'), '[[3]]뒤');
+  });
+
+  testWidgets('링크를 넣으면 본문 상한을 넘을 때는 넣지 않고 스낵바', (tester) async {
+    await h.setUp(notes: [wikiNote(3)]);
+    final full = '가' * (wikiBodyMax - 2);
+    await h.pump(
+      tester,
+      (context) => openWikiEditor(context, seed.copyWith(body: full)),
+    );
+
+    final link = find.byKey(const Key('wiki-edit-link-note'));
+    await tester.scrollUntilVisible(
+      link,
+      300,
+      scrollable: find
+          .descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.tap(link);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('wiki-pick-note-3')));
+    await tester.pumpAndSettle();
+
+    expect(text(tester, 'wiki-edit-body'), full);
+    expect(find.text('본문이 길어 링크를 넣지 못했어요'), findsOneWidget);
   });
 
   testWidgets('[일기 링크] → 근거 일기를 고르면 [[일기:id]]', (tester) async {

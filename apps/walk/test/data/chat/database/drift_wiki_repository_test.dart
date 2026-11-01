@@ -109,6 +109,21 @@ void main() {
     expect((await only(id)).sourceConversationId, ref.conversationId);
   });
 
+  test('출처 대화가 그새 지워졌으면 create · update 는 출처 없이 저장한다', () async {
+    final gone = (await history.appendTurn(turn: _turn)).conversationId;
+    final kept = (await history.appendTurn(turn: _turn)).conversationId;
+    final id = await repo.create(_draft('가', source: kept));
+    await history.delete(gone);
+
+    final fresh = await repo.create(_draft('나', source: gone));
+    await repo.update(id, _draft('다', source: gone));
+
+    expect((await only(fresh)).sourceConversationId, isNull);
+    expect((await only(fresh)).title, '나');
+    expect((await only(id)).sourceConversationId, isNull);
+    expect((await only(id)).title, '다');
+  });
+
   test('없는 id 를 update 하면 StateError', () async {
     expect(() => repo.update(99, _draft('가')), throwsStateError);
   });

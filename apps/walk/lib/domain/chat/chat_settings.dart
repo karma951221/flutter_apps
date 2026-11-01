@@ -9,7 +9,7 @@ abstract interface class ChatSettings {
   /// 키가 있는가(Q5). 물어보기 탭이 쓴다.
   Future<bool> hasApiKey();
 
-  /// 원문 키. ChatSession · ChatKeyVerifier 만 부른다.
+  /// 원문 키. ChatSession · ChatKeyVerifier · WikiDistiller 만 부른다.
   Future<String?> apiKey();
 
   /// [key] 를 trim 해 연결한다. 빈 문자열이면 ArgumentError.
