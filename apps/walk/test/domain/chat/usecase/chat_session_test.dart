@@ -6,14 +6,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/chat/chat_model.dart';
+import 'package:walk/domain/chat/chat_usage_log.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/tool/life_tools.dart';
 import 'package:walk/domain/chat/tool/tool_result.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 
 import '../../../support/fake_chat_settings.dart';
+import '../../../support/fake_chat_usage_log.dart';
 
 class _MockLifeTools extends Mock implements LifeTools {}
+
+class _SeqIds implements IdGenerator {
+  int _n = 0;
+
+  @override
+  String newId() => 'id-${++_n}';
+}
 
 class _FixedClock extends Clock {
   _FixedClock(this.value);
@@ -65,10 +74,11 @@ ModelEvent _done(
   List<AssistantPart> parts,
   StopKind stop, {
   VendorTurnState? state,
+  TokenUsage? usage,
 }) => ModelEvent.completed(
   message: AssistantMessage(parts: parts, vendorState: state),
   stop: stop,
-  usage: null,
+  usage: usage,
 );
 
 AssistantPart _text(String text) => AssistantPart.text(text);
@@ -87,9 +97,16 @@ List<Object> _answer(String text) => [
   _done([_text(text)], StopKind.endTurn),
 ];
 
+List<Object> _answerWith(TokenUsage usage) => [
+  ModelEvent.textDelta('네'),
+  _done([_text('네')], StopKind.endTurn, usage: usage),
+];
+
 void main() {
   late _MockLifeTools tools;
   late FakeChatSettings settings;
+  late FakeChatUsageLog usage;
+  late _SeqIds ids;
   final clock = _FixedClock(DateTime(2026, 10, 27, 9));
   const definitions = [
     ToolSpec(name: 'search_diary', description: 'd', parameters: {}),
@@ -104,10 +121,114 @@ void main() {
     tools = _MockLifeTools();
     when(() => tools.definitions).thenReturn(definitions);
     settings = FakeChatSettings('sk-ant-test-key');
+    usage = FakeChatUsageLog();
+    ids = _SeqIds();
   });
 
   ChatSession session(_FakeModel model) =>
-      ChatSession(model, tools, settings, clock);
+      ChatSession(model, tools, settings, clock, usage, ids);
+
+  group('사용량 기록', () {
+    const u1 = TokenUsage(
+      inputTokens: 100,
+      outputTokens: 20,
+      cacheReadTokens: 7,
+      cacheWriteTokens: 3,
+      reasoningTokens: 4,
+    );
+    const u2 = TokenUsage(inputTokens: 150, outputTokens: 30);
+
+    List<List<Object>> twoRounds() => [
+      [
+        _done([_toolUse('t1', 'search_diary')], StopKind.toolUse, usage: u1),
+      ],
+      [
+        const ModelEvent.textDelta('네'),
+        _done([_text('네')], StopKind.endTurn, usage: u2),
+      ],
+    ];
+
+    setUp(() {
+      when(
+        () => tools.run('search_diary', any()),
+      ).thenAnswer((_) async => const ToolResult(json: '{}'));
+    });
+
+    test('라운드마다 usage 를 하나씩 기록한다', () async {
+      final model = _FakeModel(twoRounds());
+
+      await session(model).ask('질문').toList();
+
+      expect(usage.records, hasLength(2));
+      final [a, b] = usage.records;
+      expect([a.round, b.round], [1, 2]);
+      expect(a.questionKey, b.questionKey);
+      for (final r in usage.records) {
+        expect(r.vendor, ChatVendor.anthropic);
+        expect(r.model, ChatSession.interimModel);
+        expect(r.fastMode, isFalse);
+        expect(r.purpose, ChatUsagePurpose.chat);
+        expect(r.temporary, isFalse);
+        expect(r.at, clock.value);
+        expect(
+          [r.wikiIndexNotes, r.wikiIndexChars, r.readWikiCalls],
+          [0, 0, 0],
+        );
+      }
+      expect(
+        [a.inputTokens, a.outputTokens, a.cacheReadTokens, a.cacheWriteTokens],
+        [100, 20, 7, 3],
+      );
+      expect(a.reasoningTokens, 4);
+      expect([b.inputTokens, b.outputTokens], [150, 30]);
+      expect(b.reasoningTokens, isNull);
+    });
+
+    test('질문이 바뀌면 questionKey 가 바뀐다', () async {
+      final model = _FakeModel(twoRounds())..repeat = _answerWith(u2);
+      final chat = session(model);
+
+      await chat.ask('하나').toList();
+      await chat.ask('둘').toList();
+
+      final keys = usage.records.map((r) => r.questionKey).toList();
+      expect(keys, hasLength(3));
+      expect(keys[0], keys[1]);
+      expect(keys[2], isNot(keys[0]));
+    });
+
+    test('usage 가 null 인 라운드 · 실패한 라운드는 기록하지 않는다', () async {
+      final nullUsage = _FakeModel([_answer('네')]);
+      await session(nullUsage).ask('질문').toList();
+      expect(usage.records, isEmpty);
+
+      final failing = _FakeModel([
+        [const ChatModelException(ChatModelErrorKind.network)],
+      ]);
+      final events = await session(failing).ask('질문').toList();
+      expect(events, const [ChatEvent.failed(ChatFailure.network)]);
+      expect(usage.records, isEmpty);
+    });
+
+    test('기록이 던져도 답은 finished', () async {
+      usage.failWith = StateError('디스크 가득');
+      final model = _FakeModel(twoRounds());
+
+      final events = await session(model).ask('질문').toList();
+
+      expect(events.last, const ChatEvent.finished(citedEntryIds: []));
+      expect(usage.records, hasLength(2));
+    });
+
+    test('기록이 끝나지 않아도 답은 finished', () async {
+      usage.hangOn = Completer<void>().future;
+      final model = _FakeModel(twoRounds());
+
+      final events = await session(model).ask('질문').toList();
+
+      expect(events.last, const ChatEvent.finished(citedEntryIds: []));
+    });
+  });
 
   test('도구 없이 끝나면 text 를 흘리고 finished', () async {
     final model = _FakeModel([
@@ -566,7 +687,7 @@ void main() {
   test('진행 중에 다시 부르면 StateError, reset 은 대화를 비운다', () async {
     final gate = Completer<void>();
     final model = _GatedModel(gate.future);
-    final chat = ChatSession(model, tools, settings, clock);
+    final chat = ChatSession(model, tools, settings, clock, usage, ids);
 
     final first = chat.ask('첫').toList();
     expect(() => chat.ask('둘'), throwsStateError);
@@ -584,7 +705,7 @@ void main() {
         '라운드가 $outcome 으로 끝나도 이벤트 없이 멈추고, 다음 질문의 messages 는 [새 질문] 뿐이다',
         () async {
           final model = _CompleterModel();
-          final chat = ChatSession(model, tools, settings, clock);
+          final chat = ChatSession(model, tools, settings, clock, usage, ids);
 
           final firstEvents = <ChatEvent>[];
           final first = chat.ask('첫').listen(firstEvents.add).asFuture<void>();

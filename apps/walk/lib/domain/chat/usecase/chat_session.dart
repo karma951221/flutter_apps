@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
@@ -5,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../chat_model.dart';
 import '../chat_settings.dart';
+import '../chat_usage_log.dart';
 import '../tool/life_tools.dart';
 import '../tool/tool_result.dart';
 
@@ -36,12 +39,21 @@ sealed class ChatEvent with _$ChatEvent {
 /// 질문이 실패하거나 중간에 구독이 끊기면 그 질문에서 덧붙인 메시지를 되돌린다.
 @lazySingleton
 class ChatSession {
-  ChatSession(this._model, this._tools, this._settings, this._clock);
+  ChatSession(
+    this._model,
+    this._tools,
+    this._settings,
+    this._clock,
+    this._usage,
+    this._ids,
+  );
 
   final ChatModel _model;
   final LifeTools _tools;
   final ChatSettings _settings;
   final Clock _clock;
+  final ChatUsageLog _usage;
+  final IdGenerator _ids;
 
   static const maxRounds = 8;
 
@@ -96,19 +108,19 @@ class ChatSession {
       final system = _systemPrompt();
       final tools = _tools.definitions;
       final cited = <String>{};
+      final questionKey = _ids.newId();
       _messages.add(ChatMessage.user(question));
 
       for (var round = 1; round <= maxRounds; round++) {
         ModelCompleted? done;
-        await for (final event in _model.stream(
-          ModelRequest(
-            apiKey: apiKey,
-            model: interimModel,
-            system: system,
-            messages: List.unmodifiable(_messages),
-            tools: tools,
-          ),
-        )) {
+        final request = ModelRequest(
+          apiKey: apiKey,
+          model: interimModel,
+          system: system,
+          messages: List.unmodifiable(_messages),
+          tools: tools,
+        );
+        await for (final event in _model.stream(request)) {
           if (stale()) return;
           switch (event) {
             case ModelTextDelta(:final text):
@@ -126,6 +138,7 @@ class ChatSession {
         if (done == null) {
           throw const ChatModelException(ChatModelErrorKind.network);
         }
+        _recordUsage(questionKey, round, request, done.usage);
         _messages.add(done.message);
 
         switch (done.stop) {
@@ -172,6 +185,34 @@ class ChatSession {
         }
       }
     }
+  }
+
+  /// 라운드 하나의 사용량을 넘긴다. 기다리지 않고, 실패해도 답에 영향을 주지 않는다.
+  void _recordUsage(
+    String questionKey,
+    int round,
+    ModelRequest request,
+    TokenUsage? usage,
+  ) {
+    if (usage == null) return;
+    final record = ChatUsageRecord(
+      at: _clock.now(),
+      questionKey: questionKey,
+      vendor: _model.vendor,
+      model: request.model,
+      fastMode: request.fastMode,
+      purpose: ChatUsagePurpose.chat,
+      round: round,
+      temporary: false,
+      inputTokens: usage.inputTokens,
+      outputTokens: usage.outputTokens,
+      cacheReadTokens: usage.cacheReadTokens,
+      cacheWriteTokens: usage.cacheWriteTokens,
+      reasoningTokens: usage.reasoningTokens,
+    );
+    unawaited(
+      Future.sync(() => _usage.record(record)).catchError((Object _) {}),
+    );
   }
 
   /// 사진이 한도를 넘기면 사진 없이 오류 결과로 바꾼다.
