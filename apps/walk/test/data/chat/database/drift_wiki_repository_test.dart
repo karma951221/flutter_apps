@@ -138,6 +138,21 @@ void main() {
     expect((await only(id)).title, family * wikiTitleMax);
   });
 
+  test('자른 끝의 공백은 지운다', () async {
+    final id = await repo.create(
+      WikiNoteDraft(
+        title: '${'가' * 59} 나',
+        summary: '${'요' * 119} 약',
+        body: '${'본' * 3999} 문',
+      ),
+    );
+
+    final note = await only(id);
+    expect(note.title, '가' * 59);
+    expect(note.summary, '요' * 119);
+    expect(note.body, '본' * 3999);
+  });
+
   test('본문은 trim 만 — 안쪽 줄바꿈은 둔다', () async {
     final id = await repo.create(_draft('가', body: '\n 첫 줄\n\n둘째 줄 \n'));
 

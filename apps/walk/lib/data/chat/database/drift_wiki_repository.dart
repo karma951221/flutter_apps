@@ -149,8 +149,8 @@ final _whitespace = RegExp(r'\s+');
   );
 }
 
-/// 자른 끝에 남은 공백은 둔다 — 상한이 넘친 경우에만 생긴다.
+/// 상한에서 자르고, 자른 끝에 남은 공백을 지운다.
 String _cut(String s, int max) {
   final chars = s.characters;
-  return chars.length <= max ? s : chars.take(max).string;
+  return chars.length <= max ? s : chars.take(max).string.trimRight();
 }

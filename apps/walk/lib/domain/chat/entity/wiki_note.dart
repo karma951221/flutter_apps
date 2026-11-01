@@ -120,9 +120,10 @@ const wikiBodyMax = 4000;
 
 const _diaryPrefix = '일기:';
 
-final _linkPattern = RegExp(r'\[\[(?:(\d+)|일기:([^\s\]]+))\]\]');
+/// 숫자는 앞자리 0 없이(`[[012]]` 는 글) — 저장소의 backlinks LIKE 와 같은 글자.
+final _linkPattern = RegExp(r'\[\[(?:(0|[1-9]\d*)|일기:([^\s\[\]]+))\]\]');
 
-/// `[[숫자]]` · `[[일기:id]]`(id 는 공백 · `]` 없는 글자). 그 밖의 `[[…]]` 는 글로 둔다.
+/// `[[숫자]]` · `[[일기:id]]`(id 는 공백 · `[` · `]` 없는 글자). 그 밖의 `[[…]]` 는 글로 둔다.
 List<WikiSegment> parseWikiBody(String body) {
   final segments = <WikiSegment>[];
   var textStart = 0;
@@ -167,6 +168,7 @@ final _leadingSpaces = RegExp(r'^[ \t]+');
 /// 지운 자리 양쪽의 공백 · 탭은 하나로 줄이고, 줄 처음 · 끝이면 없앤다. 줄바꿈은 둔다.
 String stripWikiLinks(String body, bool Function(WikiLink link) keep) {
   final out = StringBuffer();
+  // 링크를 지운 뒤 아직 이어 붙일 글이 안 나왔다. 공백뿐인 조각은 이 상태를 이어 간다.
   var removed = false;
   for (final s in parseWikiBody(body)) {
     final String piece;
@@ -184,15 +186,15 @@ String stripWikiLinks(String body, bool Function(WikiLink link) keep) {
       out.write(piece);
       continue;
     }
+    final after = piece.replaceFirst(_leadingSpaces, '');
+    if (after.isEmpty) continue;
     removed = false;
     final before = out.toString().replaceFirst(_trailingSpaces, '');
-    final after = piece.replaceFirst(_leadingSpaces, '');
     out
       ..clear()
       ..write(before);
     if (before.isNotEmpty &&
         !before.endsWith('\n') &&
-        after.isNotEmpty &&
         !after.startsWith('\n')) {
       out.write(' ');
     }

@@ -56,6 +56,26 @@ void main() {
     expect(out, '첫 줄\n둘째 줄');
   });
 
+  test('지운 링크 뒤가 공백뿐이면 다음 조각과 공백 하나로 잇는다', () {
+    bool drop9(WikiLink link) => link != const WikiLink.note(9);
+
+    expect(stripWikiLinks('a [[9]] [[3]] b', drop9), 'a [[3]] b');
+    expect(stripWikiLinks('a [[9]] \nb', drop9), 'a\nb');
+    expect(stripWikiLinks('a [[9]][[9]] b', drop9), 'a b');
+    expect(stripWikiLinks('a [[9]] [[9]] b', drop9), 'a b');
+    expect(stripWikiLinks('[[9]] [[9]] a', drop9), 'a');
+    expect(stripWikiLinks('a [[9]] [[9]] ', drop9), 'a');
+  });
+
+  test('[[일기:x[[3]] 의 일기 id 는 [ 를 품지 않아 [[3]] 이 링크로 남는다', () {
+    expect(wikiLinksIn('[[일기:x[[3]]'), [const WikiLink.note(3)]);
+  });
+
+  test('앞자리가 0 인 [[012]] 는 글로 둔다 — [[0]] 은 링크', () {
+    expect(wikiLinksIn('[[012]] [[00]]'), isEmpty);
+    expect(wikiLinksIn('[[0]]'), [const WikiLink.note(0)]);
+  });
+
   test('wikiNoteLinkText · wikiDiaryLinkText 를 parseWikiBody 가 되읽는다', () {
     expect(wikiNoteLinkText(12), '[[12]]');
     expect(wikiDiaryLinkText('abc'), '[[일기:abc]]');

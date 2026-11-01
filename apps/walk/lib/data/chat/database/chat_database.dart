@@ -41,8 +41,11 @@ class ChatDatabase extends _$ChatDatabase {
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
       if (from < 2) {
-        await m.createTable(wikiNotes);
-        await m.createIndex(wikiNotesUpdatedAt);
+        // 둘 사이에서 앱이 죽어도 반쯤 올라간 채로 남지 않게 한 트랜잭션.
+        await transaction(() async {
+          await m.createTable(wikiNotes);
+          await m.createIndex(wikiNotesUpdatedAt);
+        });
       }
     },
     // 꺼져 있으면 대화를 지울 때 턴이 cascade 로 지워지지 않는다.
