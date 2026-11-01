@@ -3,7 +3,7 @@
 > [테스트 가이드](../../../docs/testing/README.md) · [계획](plan.md) · [기록](history.md) · [진행 현황](status.md)
 
 ```bash
-cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-11-02 기준 2671건 통과 · 1건 skip)
+cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-11-02 기준 2936건 통과 · 1건 skip)
 ```
 
 백엔드가 없어 로컬 Supabase 없이 돈다. Health Connect 는 `HealthGateway` 를 mock 해서 본다
@@ -289,6 +289,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | 기록 도구 5개 | `domain/chat/tool/life_tools_test` |
 | 세션 · cubit | `domain/chat/usecase/chat_session_test`(사용량 기록 · 멈춤 (a)~(f)) · `presentation/chat/cubit/chat_cubit_test`(멈춤 · 질문 되돌림 · ready 면 확인 전 키 재확인 · `recheck: false` 면 안 함) |
 | 입력 · 말풍선 | `presentation/chat/widget/chat_input_test`([■ 멈춤] 전환) · `chat_bubble_view_test`('멈춤' 표시 · 실패 말풍선 [설정 열기]) · `chat_failure_text_test`(크레딧 부족 · 모델 없음 문구 · 빈 문구 없음) |
+| 진행 표시 · 지연 줄이기 | `domain/chat/tool/tool_summary_test`(도구 입력 · 결과 요약 · 검색어 20자 · `toString` 에 값 없음) · `data/chat/anthropic_chat_model_test`(진행 이벤트 · `display` 파라미터 · beta 헤더 · 목록 밖 모델이면 `thinking` 없음 · 중단 문구 걸러내기 · 누적 노트 · top-level `cache_control`) · `domain/chat/usecase/chat_session_test`(진행 순서 · 안 알린 도구 호출도 `toolStarted` · 도구 병렬 · 결과 호출 순서 · 라운드 경계 줄바꿈 · `phase(sending)` 이 try 안) · `presentation/chat/cubit/chat_cubit_test`(단계 · 경과 초 · 글 모으기) · `presentation/chat/cubit/chat_progress_test` · `presentation/chat/widget/chat_progress_view_test` · `chat_progress_text_test` · `chat_jump_to_latest_test` · `chat_bubble_view_test`(커서 두 쪽 가드) · `presentation/chat/page/chat_tab_test`(진행 줄 자리 · [↓ 새 답] · 마지막 항목만 다시 그리기) |
 | 화면 · 셸 | `presentation/chat/page/chat_tab_test`(⋮ 는 잠긴 동안 앱 설정만, 풀리면 물어보기 설정 · 앱 설정 · 위에 얹힌 물어보기 설정에서 키를 넣고 돌아오면 `didPopNext` 로 키를 다시 읽음 · 키 확인 중 로딩 · 키 없으면 설정 버튼 · 실패 말풍선 [설정 열기] · 보이지 않는 탭은 돌아와도 다시 읽지 않고 앱 시작에 키 확인도 안 함, 보이게 되면 함) · `presentation/shell/page/main_shell_page_test`(탭 구성 · 잠금 · 물어보기 [설정 열기]로 연 연결 행 glow · ⋮ 로 열면 glow 없음 · 알람 권한 배너 → 거부된 알림 권한 행 glow) |
 | 모델 규칙 · 선택 | `domain/chat/chat_model_rules_test`(채팅용 거르기 · 최신순 · 추천 · 이미지 · effort(5.x · 4.6 이상 · Opus 4.5, 날짜 붙은 id) · fallbacks(Fable 5.1 · Opus 5 / 5.5 · Sonnet 5.5) · 빠른 출력 표 주입) · `domain/chat/usecase/chat_model_choice_test`(추천을 따라감 · 고른 모델 · 사라진 모델 알림 · 하루 1회 갱신 · 확인 전 24시간 무시 · 빈 목록은 `fetchedAt` 안 찍음(refresh · adopt)) · `data/chat/prefs_chat_model_catalog_test`(벤더별 목록 · `chat.models.vendor` · `noImages` 가 갱신에 안 지워짐) · `data/chat/chat_model_registry_test`(벤더 → 어댑터 · 목록 받기) |
 | GPT 어댑터 | `data/chat/openai_chat_model_test`(`store: false` · 추론 항목 왕복 · 도구 호출 · 사진(뒤따르는 user 입력 / 배열) · 오류 `code` 매핑 · 취소 · 잘린 응답 정리 · 목록) · `data/chat/vendor_error_test`(오류 본문에서 `type` · `code` 만 읽기 · 크기 · 시간 상한 · abort — 종류 매핑은 두 어댑터 테스트) |
@@ -462,6 +463,22 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | M7 | 고른 모델이 목록에서 사라진 경우 · 목록을 못 받은 경우 | 추천으로 돌아가고 알림 / 목록 없음 화면 | 대기 |
 | M8 | 대화 중 모델 바꿔 이어 묻기(H3 · A4), 벤더 바꿔 이어 묻기 | 400 이 없고 이어진다 | 대기 |
 | M9 | 빠른 출력 스위치 | A2 · O5 가 채워지기 전엔 스위치가 보이지 않는다 | 대기 |
+
+### 진행 표시 · 지연 줄이기 (5단계 재측정)
+
+실제 키 · 실기기 · Wi-Fi · 프로필 빌드 · 기본 모델, 질문 5개 × 3회 중앙값, `chat.trace` 로 판정([절차](../../../docs/superpowers/specs/2026-11-01-walk-chat-streaming-ux.md#23-측정-절차) · 기준 §10).
+
+| # | 하는 일 | 기대 | 상태 |
+|---|---|---|---|
+| P1 | 질문을 보낸다 | 0.3초 안에 진행 줄 "보내는 중" | 대기 |
+| P2 | 첫 의미 있는 표시(노트 · 도구 라벨 · 본문 중 먼저 = `firstVisible`) | 기준선 대비 절반 이하 그리고 3초 이하 | 대기 |
+| P3 | 도구를 쓰는 질문 | 진행 줄이 3초 넘게 같은 문구인 구간 없음(경과 초 제외) | 대기 |
+| P4 | 2라운드 이상 질문 | 라운드 2 `cacheRead > 0` | 대기 |
+| P5 | 한 응답에 도구 둘 이상 | 도구 구간 ≤ 가장 느린 도구 + 50ms | 대기 |
+| P6 | 라운드 사이에 짧은 글이 있는 답 | 짧은 글과 최종 답이 붙어 보이지 않음 | 대기 |
+| P7 | '애니메이션 줄이기' 켜고 위 질문들 | 전환 · 깜빡임 없이 같은 정보 | 대기 |
+| P8 | V2 청구 비교(`omitted`/`updates` 각 3회 `out` 중앙값) · V5 안내 줄 비용 | 늘지 않으면 `progressNotesDefault = true`. 결과는 스펙 "측정 기록"에 | 대기 |
+| P9 | GPT 로 같은 세트 한 번 | 노트 없이도 P1 · P3 · P7 통과 | 대기 |
 
 ### 대화 기록 (1단계)
 
