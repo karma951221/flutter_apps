@@ -2,7 +2,7 @@
 
 > 작성 2026-11-01 · 결정 반영 2026-11-01(2차) · 앱: [Life Tool(walk)](../../../apps/walk/docs/README.md) · 계획: [walk 계획](../../../apps/walk/docs/plan.md)
 > 앞선 설계: [물어보기 설계](2026-10-27-walk-life-chat-design.md) · 함께 보는 기획: [키 입력 · 멀티 벤더](2026-11-01-walk-chat-key-input.md) · [체감 속도](2026-11-01-walk-chat-streaming-ux.md)
-> 상태: **1단계(대화 기록 · 임시 대화 · 사용량) 구현됨 · 2단계(위키) 기획** — 구현 기록은 [walk 기록](../../../apps/walk/docs/history.md#2026-11--물어보기-대화-기록--임시-대화--사용량)
+> 상태: **1 · 2단계 구현됨(기기 QA 대기)** — 구현 기록은 [1단계](../../../apps/walk/docs/history.md#2026-11--물어보기-대화-기록--임시-대화--사용량) · [2단계 위키](../../../apps/walk/docs/history.md#2026-11--물어보기-위키2단계)
 > 화면 구성은 [하단 탭 재구성 · 설정 분산](2026-11-01-walk-nav-regroup-design.md)을 전제한다 — 설정 탭이 없고, 이 기획의 설정 행은
 > **물어보기 설정 화면**(화면 전체가 잠금 아래)에 들어간다. 재구성이 먼저 들어간다(→ [겹치는 곳](#다른-기획과-겹치는-곳)).
 
@@ -91,7 +91,7 @@
 | 위키를 요청에 붙이는 정책 | `WikiContextPolicy`, 기본 구현 `IndexAndReadPolicy`, 임시 대화용 `NoWikiPolicy` |
 | 위키 도구 | `read_wiki` (`lib/domain/chat/tool/wiki_tools.dart`) |
 | 정리 유스케이스 | `WikiDistiller` |
-| 화면 | `WikiPage`(목록) · `WikiNotePage`(보기 · 편집) · `WikiCandidatesSheet` |
+| 화면 | `WikiPage`(목록) · `WikiNotePage`(보기) · `WikiNoteEditPage`(편집) · `WikiCandidatesSheet` |
 | 대화 | `Conversation` · `ChatTurnRecord`, 테이블 `conversations` · `chat_turns` |
 | 임시 대화 | 상태 플래그 `temporary`, l10n `walkChatTemporary*` |
 | 사용량 기록 | 계약 `ChatUsageLog` · `ChatUsageRecord`(키 입력 기획), 구현 `DriftChatUsageLog`, 테이블 `chat_usage`, 화면 `ChatUsagePage` |
@@ -332,6 +332,7 @@ wiki_notes                            -- 2단계(migration 2)
   사용자가 정리해 둔 위키가 있다. 아래는 색인(id · 제목 · 한 줄 요약)이다.
   질문에 도움이 될 때만 read_wiki 로 본문을 열고, 본문의 [[id]] 링크를 따라 더 열 수 있다.
   위키와 기록 도구로 찾은 내용이 다르면 기록을 우선하고 다르다고 말한다.
+  [[일기:<id>]] 는 read_wiki 가 날짜를 주니, 원본이 필요하면 그 날짜로 search_diary 를 부른다.
   <wiki_index>
   [[3]] 출근 알람 — 평일 07:00 '출근' 라벨이 기상 알람이다.
   …

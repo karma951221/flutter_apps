@@ -3,7 +3,7 @@
 > [테스트 가이드](../../../docs/testing/README.md) · [계획](plan.md) · [기록](history.md) · [진행 현황](status.md)
 
 ```bash
-cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-11-02 기준 2936건 통과 · 1건 skip)
+cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-11-02 기준 3008건 통과 · 1건 skip)
 ```
 
 백엔드가 없어 로컬 Supabase 없이 돈다. Health Connect 는 `HealthGateway` 를 mock 해서 본다
@@ -305,6 +305,11 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | 저장 · 열기 cubit | `chat_cubit_test`(턴 끝 저장 · 멈춘 턴 저장 · 글 없는 멈춤/실패 저장 안 함 · 열기 · 열리는 동안 보낸 질문 무시 · 임시 대화 저장 0 · 턴 지우기 · 열린 대화가 밖에서 지워지면 새 대화 · 열거나 턴을 지워 다시 읽는 동안에도 `OpenConversation.id` 는 그 대화, 턴이 없으면 비움 · 인용을 읽는 사이 새 대화여도 끝난 답 저장 · 줄 선 저장 뒤 같은 대화를 다시 열면 그 턴까지) · `chat_history_cubit_test`(목록 · 이름 바꾸기 · 삭제 · 모두 지우기 · 목록 스트림 오류면 failed · 실패는 false) |
 | 대화 목록 · 임시 배너 | `presentation/chat/page/chat_history_page_test`(이름 바꾸기 취소 · 같은 이름이면 저장소 안 부름 · 실패 스낵바 셋 · 목록 오류 안내) · `presentation/chat/widget/temporary_chat_banner_test`(회사 이름) · `chat_tab_test`(⋮ [대화 목록] · [임시 대화로 시작] 위치 · 잠긴 동안 앱 설정만 · 임시 배너 · 보이는 동안 보안 창 켬/끔 · 임시 대화에서 지난 대화를 열면 끔 · 키 없음 · 동의 전엔 [대화 목록]도 없음 · 시트 · 턴 지우기 · [더보기] 선택 메뉴) |
 | 물어보기 설정 — 기록 · 사용량 | `presentation/settings/cubit/chat_history_settings_cubit_test` · `widget/chat_history_settings_section_test`(보관 기간 · 대화 모두 지우기 확인 · 보관 기간 저장 실패 스낵바 · 지운 뒤 수 읽기 실패는 0 · 실패 스낵바 없음) · `cubit/chat_usage_cubit_test`(달 이동 · 13개월 범위 · 지우기) · `page/chat_usage_page_test` · `open_settings_test`(대화 기록 행은 잠금이 풀려야 보임) |
+| 위키 — 도메인 · 저장소 | `domain/chat/entity/wiki_note_test`(링크 파싱 · `stripWikiLinks` 이음 · 상한) · `data/chat/database/chat_database_migration_test`(v1 → v2 `PRAGMA` 열 · 색인 · 한 트랜잭션) · `drift_wiki_repository_test` · `domain/chat/wiki/wiki_index_test`(상한 · 처음 안 맞는 메모에서 멈춤 · 한 줄 개행 접기) · `wiki_context_policy_test` |
+| 위키 — 도구 · 세션 | `domain/chat/tool/wiki_tools_test`(ids 배열 · 숫자 문자열 · 없는 id · links · 일기 날짜 · 중복 id) · `chat_session_test`(위키 정책 · 임시 대화는 색인 · `read_wiki` 없음 · 정책 실패 시 위키 없이 · 사용량 숫자) · 두 어댑터의 array 스키마 |
+| 위키 정리 | `domain/chat/usecase/wiki_distiller_test`(후보 8개 · 파싱 · 링크 normalize · update → create · 잘못된 키 기록 · `modelUnavailable` 복구 · 벤더 불일치 → noKey · 취소 · `toString` 에 글 없음) |
+| 위키 — 화면 | `presentation/chat/wiki/**`(cubit 넷: 목록 · 보기 · 편집 · 정리 / 화면 셋: `wiki_page` · `wiki_note_page` · `wiki_note_edit_page` / 위젯 넷: `wiki_link_text` · 메모 · 일기 고르기 시트 · 후보 시트) · `chat_tab_test`(⋮ [위키] · [위키로 정리] · 말풍선 [위키에 추가]) |
+| 위키 — 설정 · 사용량 | `presentation/settings/…`(색인 크기 시트 · 위키 모두 지우기 · 대화 모두 지우기 문구 · 사용량의 위키 절) |
 
 **픽스처**: 벤더 응답은 `test/fixtures/chat/<벤더>/` 에 있고 `chatFixture(path)`(`test/support/chat_fixtures.dart`)로 읽는다. 손으로 만든 것은 SSE 는 첫 줄 주석으로, 나머지는 `handMadeFixtures`(경로 → 확인 번호)로 표시한다. 실제 응답을 녹화하면 키 · 계정 id 를 지우고 표에서 뺀다 — 목록은 [기록](history.md#남은-손-픽스처).
 
@@ -490,3 +495,16 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | H4 | 임시 대화에서 스크린샷 · 화면 녹화 · 최근 앱 썸네일 | 막히고 가려진다(`FLAG_SECURE`). 일기 탭으로 가거나 [새 대화]면 다시 찍힌다 | 대기 |
 | H5 | 보관 30일로 두고 기기 날짜를 31일 뒤로 → 앱 복귀 | 그 대화가 목록에서 사라진다(열려 있던 대화는 남음) | 대기 |
 | H6 | 이어간 대화에서 사진 질문 12장 넘게 | 한도가 0부터 다시 세고 안내 문구가 새 힌트 | 대기 |
+
+### 물어보기 위키 (2단계)
+
+실제 키가 필요하다. 계획의 기기 QA 목록 그대로.
+
+| # | 하는 일 | 기대 | 상태 |
+|---|---|---|---|
+| W-QA1 | 실제 키로 "출근 알람은 '출근' 라벨이야"가 든 대화 → [위키로 정리] → 후보 저장 → [새 대화] → "출근 알람 몇 시에 울렸어?" | 라벨 설명 없이 답한다. `read_wiki` 를 불렀는지 사용량 · 계측으로 확인 | 대기 |
+| W-QA2 | "안녕" · "고마워" 같은 일상 질문 5번 | 사용량 화면 "read_wiki 를 부른 질문" 비율이 오르지 않는다 | 대기 |
+| W-QA3 | 링크가 있는 메모 둘(`[[a]]` → `[[b]]`, b 에 `[[일기:…]]`)을 두고 b 내용을 묻는다 | 모델이 a → b 를 열고, 일기 날짜로 `search_diary` 를 부른다(계측의 도구 순서) | 대기 |
+| W-QA4 | [위키로 정리] — 근거 일기가 있는 대화 | 후보가 8개 이하이고 본문에 `[[일기:…]]` 칩이 붙어 나온다 | 대기 |
+| W-QA5 | thinking 이 켜진 모델에서 [위키로 정리] | 400 없이 끝나고 JSON 이 파싱된다(코드 펜스로 감싸 와도) | 대기 |
+| W-QA6 | 메모 200개(디버그 시드) · 기본 크기에서 질문 1번 | 입력 토큰이 위키 0개 때보다 대략 색인 글자 수만큼만 는다 | 대기 |
