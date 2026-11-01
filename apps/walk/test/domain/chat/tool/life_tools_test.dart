@@ -13,11 +13,13 @@ import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/tool/chat_image_source.dart';
 import 'package:walk/domain/chat/tool/life_tools.dart';
 import 'package:walk/domain/chat/tool/tool_result.dart';
+import 'package:walk/domain/chat/tool/tool_summary.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_location.dart';
 import 'package:walk/domain/diary/entity/entry_media.dart';
 import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
+import 'package:walk/domain/walk/entity/daily_activity.dart';
 import 'package:walk/domain/walk/entity/health_access.dart';
 import 'package:walk/domain/walk/repository/activity_repository.dart';
 
@@ -314,5 +316,160 @@ void main() {
     final r = await tools.run('nope', {});
     expect(r.isError, isTrue);
     expect(decode(r), {'error': 'unknown_tool'});
+  });
+
+  group('summary', () {
+    test('search_diary 는 보낸 일기 수를 센다', () async {
+      stubSearch([for (var i = 0; i < 5; i++) _entry('e$i')]);
+      final r = await tools.run('search_diary', {
+        'from': '2026-10-01',
+        'to': '2026-10-05',
+      });
+      expect(r.summary?.kind, ChatToolKind.searchDiary);
+      expect(r.summary?.count, 5);
+      expect(r.summary?.isError, isFalse);
+    });
+
+    test('search_diary 가 50개를 넘어도 보낸 50개를 센다', () async {
+      stubSearch([for (var i = 0; i < 51; i++) _entry('e$i')]);
+      final r = await tools.run('search_diary', {
+        'from': '2026-10-01',
+        'to': '2026-10-05',
+      });
+      expect(r.summary?.count, 50);
+    });
+
+    test('0개면 count 0 이고 isError 아님', () async {
+      stubSearch([]);
+      final r = await tools.run('search_diary', {
+        'from': '2026-10-01',
+        'to': '2026-10-05',
+      });
+      expect(r.summary?.count, 0);
+      expect(r.summary?.isError, isFalse);
+    });
+
+    test('view_entry_photos 는 붙인 사진 수', () async {
+      when(
+        () => diary.entry('a'),
+      ).thenAnswer((_) async => Ok(_entry('a', media: [_photo(1), _photo(2)])));
+      final r = await tools.run('view_entry_photos', {'entry_id': 'a'});
+      expect(r.summary?.kind, ChatToolKind.viewPhotos);
+      expect(r.summary?.count, 2);
+    });
+
+    test('list_diary_index 는 스토리 수', () async {
+      when(
+        () => diary.watchStoryMatches('', dailyTitle: any(named: 'dailyTitle')),
+      ).thenAnswer(
+        (_) => Stream.value([
+          for (var i = 0; i < 4; i++) (story: _story('s$i', 't$i'), count: 1),
+        ]),
+      );
+      when(
+        () => diary.watchTagCounts(limit: any(named: 'limit')),
+      ).thenAnswer((_) => Stream.value([]));
+      when(
+        () => diary.watchPlaceCounts(limit: any(named: 'limit')),
+      ).thenAnswer((_) => Stream.value([]));
+      final r = await tools.run('list_diary_index', {});
+      expect(r.summary?.kind, ChatToolKind.diaryIndex);
+      expect(r.summary?.count, 4);
+    });
+
+    test('daily_steps 는 날 수', () async {
+      when(
+        () => activity.access(),
+      ).thenAnswer((_) async => HealthAccess.granted);
+      when(() => activity.dailyActivities(any(), any())).thenAnswer(
+        (_) async => Ok([
+          for (var i = 1; i <= 7; i++)
+            DailyActivity(date: DateTime(2026, 10, i), steps: 100),
+        ]),
+      );
+      final r = await tools.run('daily_steps', {
+        'from': '2026-10-01',
+        'to': '2026-10-07',
+      });
+      expect(r.summary?.kind, ChatToolKind.dailySteps);
+      expect(r.summary?.count, 7);
+    });
+
+    test('wake_records 는 회차 수', () async {
+      when(
+        () => rings.read(
+          from: any(named: 'from'),
+          to: any(named: 'to'),
+        ),
+      ).thenAnswer(
+        (_) async => [
+          for (var d = 1; d <= 3; d++)
+            ArchivedRing(
+              entry: RingLogEntry(
+                at: DateTime(2026, 10, d, 7),
+                packageId: packageId(5, triggerIndex(DateTime(2026, 10, d))),
+                kind: RingLogKind.rang,
+              ),
+              label: '출근',
+            ),
+        ],
+      );
+      final r = await tools.run('wake_records', {
+        'from': '2026-10-01',
+        'to': '2026-10-03',
+      });
+      expect(r.summary?.kind, ChatToolKind.wakeRecords);
+      expect(r.summary?.count, 3);
+    });
+
+    test('잘못된 기간이면 isError', () async {
+      final r = await tools.run('search_diary', {
+        'from': '2026-10-05',
+        'to': '2026-10-01',
+      });
+      expect(r.summary?.isError, isTrue);
+      expect(r.summary?.count, 0);
+      expect(r.summary?.kind, ChatToolKind.searchDiary);
+    });
+
+    test('모르는 도구의 오류 요약은 other', () async {
+      final r = await tools.run('nope', {});
+      expect(r.summary?.kind, ChatToolKind.other);
+      expect(r.summary?.isError, isTrue);
+    });
+  });
+
+  group('inputSummary', () {
+    test('from · to 를 날짜로, query 를 trim 해 20자로 자른다', () {
+      final s = tools.inputSummary('search_diary', {
+        'from': '2026-10-01',
+        'to': '2026-10-05',
+        'query': '  ${'가' * 25}  ',
+      });
+      expect(s.kind, ChatToolKind.searchDiary);
+      expect(s.from, DateTime(2026, 10, 1));
+      expect(s.to, DateTime(2026, 10, 5));
+      expect(s.query, '${'가' * 20}…');
+      expect(tools.inputSummary('search_diary', {'query': ' 짧음 '}).query, '짧음');
+    });
+
+    test('날짜가 잘못이면 from · to 가 null', () {
+      final s = tools.inputSummary('daily_steps', {
+        'from': '2026-13-45',
+        'to': 3,
+      });
+      expect(s.from, isNull);
+      expect(s.to, isNull);
+    });
+
+    test('search_diary 가 아니면 query 가 null', () {
+      final s = tools.inputSummary('daily_steps', {
+        'from': '2026-10-01',
+        'to': '2026-10-05',
+        'query': '글자',
+      });
+      expect(s.query, isNull);
+      expect(s.kind, ChatToolKind.dailySteps);
+    });
   });
 }

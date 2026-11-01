@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'tool_summary.dart';
+
 part 'tool_result.freezed.dart';
 
 /// tool_result 에 붙는 이미지 한 장.
@@ -32,10 +34,15 @@ class ToolResult with _$ToolResult {
   @override
   final bool isError;
 
+  /// 진행 줄에 쓰는 결과 개수. 없으면 null.
+  @override
+  final ToolSummary? summary;
+
   const ToolResult({
     required this.json,
     this.images = const [],
     this.entryIds = const [],
     this.isError = false,
+    this.summary,
   });
 }

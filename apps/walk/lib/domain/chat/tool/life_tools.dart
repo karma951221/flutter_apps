@@ -16,6 +16,7 @@ import '../../walk/repository/activity_repository.dart';
 import '../chat_model.dart';
 import 'chat_image_source.dart';
 import 'tool_result.dart';
+import 'tool_summary.dart';
 
 /// Claude 가 사용자의 일기 · 걸음 · 기상 기록을 읽는 도구들.
 @lazySingleton
@@ -112,6 +113,7 @@ class LifeTools {
   ];
 
   Future<ToolResult> run(String name, Map<String, Object?> input) async {
+    final kind = chatToolKindOf(name);
     try {
       return switch (name) {
         'search_diary' => await _searchDiary(input),
@@ -119,18 +121,40 @@ class LifeTools {
         'list_diary_index' => await _index(),
         'daily_steps' => await _dailySteps(input),
         'wake_records' => await _wakeRecords(input),
-        _ => _error('unknown_tool'),
+        _ => _error('unknown_tool', kind),
       };
     } catch (_) {
-      return _error('tool_failed');
+      return _error('tool_failed', kind);
     }
+  }
+
+  /// 진행 줄 라벨용 입력 요약. 검색어는 화면용으로만 20자까지 담는다.
+  ToolInputSummary inputSummary(String name, Map<String, Object?> input) {
+    final kind = chatToolKindOf(name);
+    String? query;
+    if (kind == ChatToolKind.searchDiary) {
+      final q = input['query'];
+      if (q is String && q.trim().isNotEmpty) {
+        final t = q.trim();
+        final runes = t.runes.toList();
+        query = runes.length > 20
+            ? '${String.fromCharCodes(runes.take(20))}…'
+            : t;
+      }
+    }
+    return ToolInputSummary(
+      kind: kind,
+      from: _parse(input['from']),
+      to: _parse(input['to']),
+      query: query,
+    );
   }
 
   // 도구
 
   Future<ToolResult> _searchDiary(Map<String, Object?> input) async {
     final range = _range(input);
-    if (range == null) return _error('invalid_range');
+    if (range == null) return _error('invalid_range', ChatToolKind.searchDiary);
     String? text(String key) {
       final v = input[key];
       return v is String && v.trim().isNotEmpty ? v : null;
@@ -154,19 +178,23 @@ class LifeTools {
         ..._clamp(range),
       }),
       entryIds: [for (final e in entries) e.id],
+      summary: ToolSummary(
+        kind: ChatToolKind.searchDiary,
+        count: entries.length,
+      ),
     );
   }
 
   Future<ToolResult> _viewPhotos(Map<String, Object?> input) async {
     final id = input['entry_id'];
-    if (id is! String) return _error('invalid_input');
+    if (id is! String) return _error('invalid_input', ChatToolKind.viewPhotos);
     final result = await _diary.entry(id);
     final DiaryEntry entry;
     switch (result) {
       case Ok(:final value):
         entry = value;
       case Err():
-        return _error('not_found');
+        return _error('not_found', ChatToolKind.viewPhotos);
     }
     final images = <ToolImage>[];
     for (final m in entry.media) {
@@ -197,6 +225,7 @@ class LifeTools {
       }),
       images: images,
       entryIds: [entry.id],
+      summary: ToolSummary(kind: ChatToolKind.viewPhotos, count: images.length),
     );
   }
 
@@ -227,14 +256,20 @@ class LifeTools {
           for (final p in places) {'name': p.name, 'count': p.count},
         ],
       }),
+      summary: ToolSummary(
+        kind: ChatToolKind.diaryIndex,
+        count: stories.length,
+      ),
     );
   }
 
   Future<ToolResult> _dailySteps(Map<String, Object?> input) async {
     final range = _range(input);
-    if (range == null) return _error('invalid_range');
+    if (range == null) {
+      return _error('invalid_range', ChatToolKind.dailySteps);
+    }
     if (await _activity.access() != HealthAccess.granted) {
-      return _error('health_connect_unavailable');
+      return _error('health_connect_unavailable', ChatToolKind.dailySteps);
     }
     final result = await _activity.dailyActivities(range.from, range.to);
     return switch (result) {
@@ -245,14 +280,20 @@ class LifeTools {
           ],
           ..._clamp(range),
         }),
+        summary: ToolSummary(
+          kind: ChatToolKind.dailySteps,
+          count: value.length,
+        ),
       ),
-      Err() => _error('health_connect_unavailable'),
+      Err() => _error('health_connect_unavailable', ChatToolKind.dailySteps),
     };
   }
 
   Future<ToolResult> _wakeRecords(Map<String, Object?> input) async {
     final range = _range(input);
-    if (range == null) return _error('invalid_range');
+    if (range == null) {
+      return _error('invalid_range', ChatToolKind.wakeRecords);
+    }
     try {
       await _archiver.archive();
     } catch (_) {
@@ -283,6 +324,10 @@ class LifeTools {
         ],
         ..._clamp(range),
       }),
+      summary: ToolSummary(
+        kind: ChatToolKind.wakeRecords,
+        count: groups.length,
+      ),
     );
   }
 
@@ -313,8 +358,11 @@ class LifeTools {
     'videos': e.media.where((m) => m.kind == MediaKind.video).length,
   };
 
-  static ToolResult _error(String code) =>
-      ToolResult(json: jsonEncode({'error': code}), isError: true);
+  static ToolResult _error(String code, ChatToolKind kind) => ToolResult(
+    json: jsonEncode({'error': code}),
+    isError: true,
+    summary: ToolSummary(kind: kind, count: 0, isError: true),
+  );
 
   static Map<String, Object?> _clamp(_Range r) =>
       r.clamped ? {'clamped': true} : {};

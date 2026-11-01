@@ -200,7 +200,7 @@ case _:
 /// @nodoc
 mixin _$ToolResult {
 
- String get json; List<ToolImage> get images; List<String> get entryIds; bool get isError;
+ String get json; List<ToolImage> get images; List<String> get entryIds; bool get isError; ToolSummary? get summary;
 /// Create a copy of ToolResult
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -211,16 +211,16 @@ $ToolResultCopyWith<ToolResult> get copyWith => _$ToolResultCopyWithImpl<ToolRes
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ToolResult&&(identical(other.json, json) || other.json == json)&&const DeepCollectionEquality().equals(other.images, images)&&const DeepCollectionEquality().equals(other.entryIds, entryIds)&&(identical(other.isError, isError) || other.isError == isError));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ToolResult&&(identical(other.json, json) || other.json == json)&&const DeepCollectionEquality().equals(other.images, images)&&const DeepCollectionEquality().equals(other.entryIds, entryIds)&&(identical(other.isError, isError) || other.isError == isError)&&(identical(other.summary, summary) || other.summary == summary));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,json,const DeepCollectionEquality().hash(images),const DeepCollectionEquality().hash(entryIds),isError);
+int get hashCode => Object.hash(runtimeType,json,const DeepCollectionEquality().hash(images),const DeepCollectionEquality().hash(entryIds),isError,summary);
 
 @override
 String toString() {
-  return 'ToolResult(json: $json, images: $images, entryIds: $entryIds, isError: $isError)';
+  return 'ToolResult(json: $json, images: $images, entryIds: $entryIds, isError: $isError, summary: $summary)';
 }
 
 
@@ -231,7 +231,7 @@ abstract mixin class $ToolResultCopyWith<$Res>  {
   factory $ToolResultCopyWith(ToolResult value, $Res Function(ToolResult) _then) = _$ToolResultCopyWithImpl;
 @useResult
 $Res call({
- String json, List<ToolImage> images, List<String> entryIds, bool isError
+ String json, List<ToolImage> images, List<String> entryIds, bool isError, ToolSummary? summary
 });
 
 
@@ -248,13 +248,14 @@ class _$ToolResultCopyWithImpl<$Res>
 
 /// Create a copy of ToolResult
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? json = null,Object? images = null,Object? entryIds = null,Object? isError = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? json = null,Object? images = null,Object? entryIds = null,Object? isError = null,Object? summary = freezed,}) {
   return _then(ToolResult(
 json: null == json ? _self.json : json // ignore: cast_nullable_to_non_nullable
 as String,images: null == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
 as List<ToolImage>,entryIds: null == entryIds ? _self.entryIds : entryIds // ignore: cast_nullable_to_non_nullable
 as List<String>,isError: null == isError ? _self.isError : isError // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,summary: freezed == summary ? _self.summary : summary // ignore: cast_nullable_to_non_nullable
+as ToolSummary?,
   ));
 }
 
