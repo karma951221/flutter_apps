@@ -1218,6 +1218,108 @@ void main() {
       expect(open.id, isNull);
     });
 
+    test('open 이 대화를 읽는 동안 보낸 질문은 무시하고 읽은 말풍선이 남는다', () async {
+      final reading = Completer<List<ChatTurnRecord>>();
+      when(() => history.turns('c1')).thenAnswer((_) => reading.future);
+      when(() => session.ask(any())).thenAnswer((_) => const Stream.empty());
+
+      final opening = cubit.open('c1');
+      expect(cubit.state.loading, isTrue);
+      await cubit.send('사이에 보낸 질문');
+      reading.complete([_record(1)]);
+      await opening;
+
+      verifyNever(() => session.ask(any()));
+      expect(cubit.state.loading, isFalse);
+      expect([for (final b in cubit.state.bubbles) b.text], ['질문1', '답1']);
+    });
+
+    test('저장된 턴을 지우는 동안 보낸 질문은 무시하고 다시 읽은 말풍선이 남는다', () async {
+      await turn('질문1', '답1');
+      await turn('질문2', '답2');
+      final deleting = Completer<void>();
+      when(
+        () => history.deleteTurn('c1', 1),
+      ).thenAnswer((_) => deleting.future);
+      when(() => history.turns('c1')).thenAnswer((_) async => [_record(2)]);
+      clearInteractions(session);
+
+      final removing = cubit.deleteTurn(0);
+      await pumpEventQueue();
+      expect(cubit.state.loading, isTrue);
+      await cubit.send('사이에 보낸 질문');
+      deleting.complete();
+      await removing;
+
+      verifyNever(() => session.ask(any()));
+      expect(cubit.state.loading, isFalse);
+      expect([for (final b in cubit.state.bubbles) b.text], ['질문2', '답2']);
+    });
+
+    test('저장 전 턴을 지우고 나면 loading 이 내려간다', () async {
+      cubit.startTemporary();
+      await turn('하나', '답1');
+
+      await cubit.deleteTurn(0);
+
+      expect(cubit.state.loading, isFalse);
+      expect(cubit.state.bubbles, isEmpty);
+    });
+
+    test('멈춘 말풍선의 인용을 읽는 사이 대화를 바꾸면 붙이지 않는다', () async {
+      final events = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => events.stream);
+      when(() => session.stop()).thenReturn(
+        const ChatStopResult.kept(text: '반쯤', citedEntryIds: ['e1']),
+      );
+      final read = Completer<Result<DiaryEntry>>();
+      when(() => diary.entry('e1')).thenAnswer((_) => read.future);
+      // 다시 연 대화의 같은 자리에 글까지 같은 멈춘 말풍선이 있어도 붙이지 않는다.
+      when(() => history.turns('c1')).thenAnswer(
+        (_) async => [
+          ChatTurnRecord(
+            conversationId: 'c1',
+            seq: 1,
+            question: '질문',
+            answer: '반쯤',
+            citedEntryIds: const [],
+            stopped: true,
+            vendor: ChatVendor.anthropic,
+            model: 'm',
+            askedAt: diaryT0,
+          ),
+        ],
+      );
+      unawaited(cubit.send('질문'));
+      events.add(const ChatEvent.text('반쯤'));
+      await pumpEventQueue();
+      cubit.stop();
+      await pumpEventQueue();
+
+      await cubit.open('c1');
+      read.complete(Ok(_entry('e1')));
+      await pumpEventQueue();
+
+      expect(cubit.state.bubbles.every((b) => b.cited.isEmpty), isTrue);
+      unawaited(events.close());
+    });
+
+    test('toString 에 질문 · 답 글이 없다', () {
+      const bubble = ChatBubble(role: ChatRole.user, text: '비밀 질문', seq: 3);
+      const state = ChatState(
+        access: ChatAccess.ready,
+        bubbles: [
+          bubble,
+          ChatBubble(role: ChatRole.assistant, text: '비밀 답'),
+        ],
+        restoredDraft: '되돌린 비밀',
+      );
+
+      expect(bubble.toString(), isNot(contains('비밀')));
+      expect(bubble.toString(), contains('textLength: 5'));
+      expect(state.toString(), isNot(contains('비밀')));
+    });
+
     test('refresh 는 세션 target 의 vendor 를 state 에 둔다', () async {
       expect(cubit.state.vendor, ChatVendor.openai);
       when(

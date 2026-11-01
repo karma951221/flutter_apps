@@ -44,6 +44,12 @@ class ChatBubble with _$ChatBubble {
     this.stopped = false,
     this.seq,
   });
+
+  /// 글은 남기지 않는다 — 길이와 표시만.
+  @override
+  String toString() =>
+      'ChatBubble(role: ${role.name}, textLength: ${text.length}, '
+      'cited: ${cited.length}, failure: $failure, stopped: $stopped, seq: $seq)';
 }
 
 @freezed
@@ -78,6 +84,10 @@ class ChatState with _$ChatState {
   @override
   final ChatVendor vendor;
 
+  /// 저장된 대화를 읽어 들이는 중(열기 · 저장된 턴 지우기). 이 동안 send 는 무시한다.
+  @override
+  final bool loading;
+
   const ChatState({
     required this.access,
     this.bubbles = const [],
@@ -87,5 +97,14 @@ class ChatState with _$ChatState {
     this.conversationId,
     this.temporary = false,
     this.vendor = ChatVendor.anthropic,
+    this.loading = false,
   });
+
+  /// 질문 · 답 글(말풍선 · 되돌린 질문)은 남기지 않는다.
+  @override
+  String toString() =>
+      'ChatState(access: ${access.name}, bubbles: $bubbles, busy: $busy, '
+      'activeTool: $activeTool, restoredDraftLength: ${restoredDraft?.length}, '
+      'conversationId: $conversationId, temporary: $temporary, '
+      'vendor: ${vendor.name}, loading: $loading)';
 }
