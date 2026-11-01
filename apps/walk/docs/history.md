@@ -432,8 +432,8 @@ Health Connect 에 넣었다(저장소 밖). 시나리오 결과는 [테스트](
 
 | # | 확인 | 결과 |
 |---|---|---|
-| C1 | Anthropic 사용량 위치 | 계획 시점 확인: `message_start.message.usage` 의 입력 · 캐시 필드 + `message_delta.usage.output_tokens`. 필드가 없거나 타입이 다르면 `usage: null`(답은 실패시키지 않고 기록은 건너뜀). 어댑터 테스트로 고정 |
-| C2 | Messages API 의 요청 단위 "서버 저장" 옵션 | 요청 본문에 `store` · `metadata` 류 필드를 보내지 않는다. 어댑터 주석 + 테스트로 명시. 생기면 그때 추가 |
+| C1 | Anthropic 사용량 위치 | **대기 (live 문서 미확인)** — 출처: 2026-11-01 계획 작성 때 정리한 필드 위치(확인한 문서 기록 없음). 구현은 그 위치대로: `message_start.message.usage` 의 입력 · 캐시 필드 + `message_delta.usage.output_tokens`. 필드가 없거나 타입이 다르면 `usage: null`(답은 실패시키지 않고 기록은 건너뜀). 어댑터 테스트로 고정 |
+| C2 | Messages API 의 요청 단위 "서버 저장" 옵션 | **대기 (live 문서 미확인)** — 출처: claude-api 스킬 참조 자료(2026-11-01, Task 2. 요청 단위 저장 옵션 없음, 보존은 조직 설정 · ZDR). 요청 본문에 `store` · `metadata` 류 필드를 보내지 않는다. 어댑터 주석 + 테스트로 명시. 생기면 그때 추가 |
 | C3 | `AbortableRequest` abort 가 소켓을 실제로 닫고 청구가 멈추는지 | **대기**(기기) — 단위 테스트는 "abort 트리거 완료 · 이후 이벤트 없음"까지. 실제 닫힘은 `chat.trace` 의 `abort` + 콘솔 usage 로 |
 | C4 | thinking 블록 없는 글만의 assistant 턴을 넣어도 400 이 안 나는지 | **대기**(기기) — 단위 테스트는 중립 형식까지. 400 이면 대안은 멈춘 턴을 user 쪽 메모로 넣기 |
 | C5 | `MockClient` 가 `AbortableRequest` 를 넘기는지 | 쓰지 않는다 — 테스트는 `BaseClient` 를 상속한 손 가짜로 요청 객체를 직접 잡는다. `package:http` 는 `^1.5.0` 으로 올렸다(잠금은 이미 1.6.0) |
@@ -441,4 +441,5 @@ Health Connect 에 넣었다(저장소 밖). 시나리오 결과는 [테스트](
 ### 막힌 것 · 남은 것
 
 - 기기 측정 셋(기준선 · C3 · C4)은 실제 키 + 기기가 필요해 대기([진행 현황](status.md#중립-계약--계측--멈춤-2026-11-02)).
-- 리뷰에서 미룬 작은 것: `AnthropicTurnState.model` 은 요청한 id(실제 응답 모델 아님 — ③ 전에 기록) · `message_start` 에 output 이 없으면 delta 가 있어도 usage null · 어댑터가 `fastMode` 를 무시(③ 에서 주석 · 테스트) · 보류 중인 trace `end()` 는 새 질문이 시작되면 버려짐(디버그 전용) · 릴레이가 pause/resume 을 넘기지 않음.
+- 리뷰에서 미룬 작은 것: `AnthropicTurnState.model` 은 요청한 id(실제 응답 모델 아님 — ③ 전에 기록) · `message_start` 에 output 이 없으면 delta 가 있어도 usage null · 어댑터가 `fastMode` 를 무시(③ 에서 주석 · 테스트) · 보류 중인 trace `end()` 는 새 질문이 시작되면 버려짐(디버그 전용) · 릴레이가 pause/resume 을 넘기지 않음 · 사용량 기록 객체를 `Future.sync` 보호 밖에서 만든다(이론상) · reset 뒤 늦은 ask 의 stale 경로 테스트 없음(Task 3) · 생각 중(thinking) 단계 멈춤 테스트 없음 · `newConversation` 이 `restoredDraft` 를 비우지 않음 · 질문을 되돌리지 못해도 '멈췄어요' 스낵바가 뜸(Task 7).
+- 다음 계획에서 챙길 것: `AnthropicTurnState.model` 은 요청한 id 다 — ③ 이 쓰기 전에 `message_start` 의 실제 모델로 고친다. `ChatState.restoredDraft`(되돌린 질문 글)가 `ChatState` 의 toString 에 찍힌다 — 상태 toString 을 가리는 정리 때 함께 막는다.
