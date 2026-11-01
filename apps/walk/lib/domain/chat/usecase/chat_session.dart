@@ -10,6 +10,8 @@ import '../chat_model.dart';
 import '../chat_settings.dart';
 import '../chat_trace.dart';
 import '../chat_usage_log.dart';
+import '../chat_vendor.dart';
+import '../entity/conversation.dart';
 import '../tool/life_tools.dart';
 import '../tool/tool_result.dart';
 
@@ -53,11 +55,15 @@ sealed class ChatStopResult with _$ChatStopResult {
   const factory ChatStopResult.dropped() = ChatStopDropped;
 }
 
+/// 지금 질문에 쓸 벤더 · 모델. ② · ③ 이 설정 · 카탈로그에서 읽도록 [ChatSession.target] 만 바꾼다.
+typedef ChatTarget = ({ChatVendor vendor, String model});
+
 /// 한 대화. 질문마다 Claude 를 부르고, 도구를 요청하면 실행해 결과를 돌려준다.
 ///
 /// 대화 기록은 덧붙이기만 한다(assistant 턴의 vendorState 도 그대로).
 /// 질문이 실패하거나 중간에 구독이 끊기면 그 질문에서 덧붙인 메시지를 되돌린다.
-/// 멈춤은 꼬리만 글로 바꾼다 — 앞선 기록은 고치지 않는다.
+/// 멈춤은 꼬리만 글로 바꾼다.
+/// 메모리의 지금 대화는 고치지 않는다 · 저장 · 복원 · 벤더 교체는 글만.
 @lazySingleton
 class ChatSession {
   ChatSession(
@@ -84,18 +90,35 @@ class ChatSession {
   /// 키 기획 ③ 이 모델 카탈로그로 바꾸며 지운다.
   static const interimModel = 'claude-opus-5-5';
 
-  /// 한 대화에 보내는 사진 수 한도. 지난 메시지는 고치지 않으므로(thinking 서명이
-  /// 깨진다) 보낸 사진은 매 요청에 다시 실린다 — 대신 한도에서 막는다.
+  /// 한 대화에 보내는 사진 수 한도. 메모리의 지금 대화는 고치지 않으므로(thinking
+  /// 서명이 깨진다) 보낸 사진은 매 요청에 다시 실린다 — 대신 한도에서 막는다.
   static const maxImagesPerConversation = 12;
 
   /// 멈춘 답 끝에 붙여 다음 문맥에 넣는 표시. 기록 기획의 resume 도 같은 상수를 쓴다.
   static const stoppedNote = '(사용자가 여기서 멈춤)';
 
+  /// 지난 대화를 이어갈 때 문맥에 싣는 최근 턴 수.
+  static const resumeTurns = 20;
+
   static const _photoLimitJson =
-      '{"error":"photo_limit_reached","hint":"새 대화를 시작하면 다시 사진을 볼 수 있어요"}';
+      '{"error":"photo_limit_reached",'
+      '"hint":"대화를 다시 열거나 새 대화를 시작하면 다시 사진을 볼 수 있어요"}';
 
   final _messages = <ChatMessage>[];
   bool _busy = false;
+  bool _temporary = false;
+
+  /// 메모리 문맥(vendorState 포함)을 만든 벤더 · 모델. 라운드가 끝날 때(completed)
+  /// 그 요청의 target 으로 둔다. 글만의 문맥([reset] · [resume] · 접은 뒤)은 null —
+  /// 어디로든 보낼 수 있다.
+  ChatTarget? _contextTarget;
+
+  /// 지금(다음 질문)의 벤더 · 모델. 키 기획 ③ 이 카탈로그로 바꾸기 전까지
+  /// 모델 어댑터의 벤더와 [interimModel].
+  ChatTarget get target => (vendor: _model.vendor, model: interimModel);
+
+  /// 임시 대화인가. 사용량 기록의 temporary 로 간다.
+  bool get temporary => _temporary;
 
   /// 이 대화에서 보낸 사진 수. 되돌린 질문의 사진은 세지 않는다.
   int _imagesSent = 0;
@@ -125,13 +148,17 @@ class ChatSession {
   Stream<ChatEvent> ask(String question) {
     if (_busy) throw StateError('ChatSession.ask is already running');
     _busy = true;
+    final requestTarget = target;
+    if (_contextTarget != null && _contextTarget != requestTarget) {
+      _foldToText();
+    }
     _turnStart = _messages.length;
     _turnImagesAtStart = _imagesSent;
     _turnQuestion = question;
     _turnText.clear();
     _turnCited.clear();
     _turnDone = false;
-    return _run(question, _generation);
+    return _run(question, _generation, requestTarget);
   }
 
   /// 진행 중인 질문을 멈춘다. [reset] 처럼 세대를 올리고 끊지만 대화는 비우지 않는다.
@@ -166,13 +193,78 @@ class ChatSession {
 
   /// 대화 비우기. 진행 중이어도 부를 수 있다 — 그 질문은 더 덧붙이지도,
   /// 이벤트를 내지도 않고 끝나며, 바로 다음 [ask] 를 받을 수 있다.
-  void reset() {
+  /// [temporary] 는 새 대화가 임시 대화인지 — 사용량 기록에 남는다.
+  void reset({bool temporary = false}) {
     _generation++;
     _messages.clear();
     _imagesSent = 0;
     _busy = false;
+    _temporary = temporary;
+    _contextTarget = null;
     // 세대를 올린 뒤에 끊는다 — 닫힌 relay 로 루프가 끝나면 stale() 로 조용히 나간다.
     _cancelRound();
+  }
+
+  /// 지난 대화를 이어간다. [reset] 처럼 세대를 올리고 진행 중인 라운드를 끊은 뒤,
+  /// [turns] 의 마지막 [resumeTurns] 개로 문맥을 글로만 채운다. 멈춘 턴은 답 뒤에
+  /// [stoppedNote] 줄을 붙이고, 답이 빈 턴은 싣지 않는다. 사진 수는 0부터 다시 센다.
+  void resume(List<ChatTurnText> turns, {required bool temporary}) {
+    reset(temporary: temporary);
+    final recent = turns.length > resumeTurns
+        ? turns.sublist(turns.length - resumeTurns)
+        : turns;
+    for (final turn in recent) {
+      if (turn.answer.trim().isEmpty) continue;
+      final answer = turn.stopped
+          ? '${turn.answer}\n$stoppedNote'
+          : turn.answer;
+      _messages
+        ..add(ChatMessage.user(turn.question))
+        ..add(ChatMessage.assistant(parts: [AssistantPart.text(answer)]));
+    }
+  }
+
+  /// 메모리 문맥을 질문 단위의 글로 접는다 — 다른 벤더 · 모델은 vendorState ·
+  /// 도구 호출 · 도구 결과를 읽지 못한다. 질문마다 assistant 글을 이어 하나로 두고,
+  /// 글이 비면 그 질문째 버린다. 사진도 함께 빠지므로 사진 수는 0.
+  void _foldToText() {
+    final folded = <ChatMessage>[];
+    String? question;
+    final answer = StringBuffer();
+    void flush() {
+      final q = question;
+      if (q != null && answer.toString().trim().isNotEmpty) {
+        folded
+          ..add(ChatMessage.user(q))
+          ..add(
+            ChatMessage.assistant(
+              parts: [AssistantPart.text(answer.toString())],
+            ),
+          );
+      }
+      question = null;
+      answer.clear();
+    }
+
+    for (final message in _messages) {
+      switch (message) {
+        case UserMessage(:final text):
+          flush();
+          question = text;
+        case AssistantMessage(:final parts):
+          for (final part in parts) {
+            if (part is TextPart) answer.write(part.text);
+          }
+        case ToolResultsMessage():
+          break;
+      }
+    }
+    flush();
+    _messages
+      ..clear()
+      ..addAll(folded);
+    _imagesSent = 0;
+    _contextTarget = null;
   }
 
   /// 진행 중인 라운드의 모델 구독을 끊고 relay 를 닫아 _run 의 await for 를 끝낸다.
@@ -186,7 +278,11 @@ class ChatSession {
     if (relay != null && !relay.isClosed) unawaited(relay.close());
   }
 
-  Stream<ChatEvent> _run(String question, int generation) async* {
+  Stream<ChatEvent> _run(
+    String question,
+    int generation,
+    ChatTarget requestTarget,
+  ) async* {
     bool stale() => generation != _generation;
     final start = _messages.length;
     final imagesAtStart = _imagesSent;
@@ -211,7 +307,7 @@ class ChatSession {
         ModelCompleted? done;
         final request = ModelRequest(
           apiKey: apiKey,
-          model: interimModel,
+          model: requestTarget.model,
           system: system,
           messages: List.unmodifiable(_messages),
           tools: tools,
@@ -237,7 +333,13 @@ class ChatSession {
               done = event;
               // 받는 즉시 남긴다 — 청구된 라운드는 HTTP 가 닫히기 전에 멈추거나
               // 비워도, 뒤 라운드가 실패해도 기록에 남아야 한다.
-              _recordUsage(questionKey, round, request, event.usage);
+              _recordUsage(
+                questionKey,
+                round,
+                requestTarget,
+                request,
+                event.usage,
+              );
             case ModelThinking() ||
                 ModelProgress() ||
                 ModelToolCallStarted() ||
@@ -291,6 +393,7 @@ class ChatSession {
           case StopKind.endTurn || StopKind.maxTokens || StopKind.other:
             completed = true;
             _turnDone = true;
+            _contextTarget = requestTarget;
             _recordKeyStatus(ChatKeyStatus.valid, apiKey);
             yield ChatEvent.finished(citedEntryIds: List.of(_turnCited));
             return;
@@ -323,6 +426,7 @@ class ChatSession {
   void _recordUsage(
     String questionKey,
     int round,
+    ChatTarget requestTarget,
     ModelRequest request,
     TokenUsage? usage,
   ) {
@@ -330,12 +434,12 @@ class ChatSession {
     final record = ChatUsageRecord(
       at: _clock.now(),
       questionKey: questionKey,
-      vendor: _model.vendor,
-      model: request.model,
+      vendor: requestTarget.vendor,
+      model: requestTarget.model,
       fastMode: request.fastMode,
       purpose: ChatUsagePurpose.chat,
       round: round,
-      temporary: false,
+      temporary: _temporary,
       inputTokens: usage.inputTokens,
       outputTokens: usage.outputTokens,
       cacheReadTokens: usage.cacheReadTokens,

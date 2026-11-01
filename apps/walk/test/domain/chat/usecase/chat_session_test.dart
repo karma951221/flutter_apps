@@ -10,6 +10,7 @@ import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/chat_usage_log.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
+import 'package:walk/domain/chat/entity/conversation.dart';
 import 'package:walk/domain/chat/tool/life_tools.dart';
 import 'package:walk/domain/chat/tool/tool_result.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
@@ -52,7 +53,7 @@ class _FakeModel implements ChatModel {
       const ModelListResult.ok([]);
 
   @override
-  ChatVendor get vendor => ChatVendor.anthropic;
+  var vendor = ChatVendor.anthropic;
 
   @override
   Stream<ModelEvent> stream(ModelRequest request) async* {
@@ -587,7 +588,7 @@ void main() {
       expect(imageCount(over), 0);
       expect(
         over.json,
-        '{"error":"photo_limit_reached","hint":"새 대화를 시작하면 다시 사진을 볼 수 있어요"}',
+        '{"error":"photo_limit_reached","hint":"대화를 다시 열거나 새 대화를 시작하면 다시 사진을 볼 수 있어요"}',
       );
     });
 
@@ -1527,6 +1528,339 @@ void main() {
 
     expect(events.toString(), isNot(contains('sk-ant')));
   });
+
+  group('이어가기(resume)', () {
+    ChatTurnText turn(String q, String a, {bool stopped = false}) =>
+        ChatTurnText(question: q, answer: a, stopped: stopped);
+
+    void expectTextOnly(List<ChatMessage> messages) {
+      for (final m in messages) {
+        switch (m) {
+          case UserMessage():
+            break;
+          case AssistantMessage(:final parts, :final vendorState):
+            expect(vendorState, isNull);
+            expect(parts, hasLength(1));
+            expect(parts.single, isA<TextPart>());
+          case ToolResultsMessage():
+            fail('도구 결과가 실리면 안 된다');
+        }
+      }
+    }
+
+    test('resume 뒤 첫 요청의 messages 는 user · assistant 글만이고 그 뒤 새 질문', () async {
+      final model = _FakeModel([_answer('셋 답')]);
+      final chat = session(model)
+        ..resume([turn('하나', '하나 답'), turn('둘', '둘 답')], temporary: false);
+
+      await chat.ask('셋').toList();
+
+      final messages = model.requests.single.messages;
+      expect(messages, [
+        const ChatMessage.user('하나'),
+        _assistant('하나 답'),
+        const ChatMessage.user('둘'),
+        _assistant('둘 답'),
+        const ChatMessage.user('셋'),
+      ]);
+      expectTextOnly(messages);
+    });
+
+    test('멈춘 턴은 답 뒤에 stoppedNote 줄을 붙인다', () async {
+      final model = _FakeModel([_answer('네')]);
+      final chat = session(model)
+        ..resume([turn('하나', '받은 글', stopped: true)], temporary: false);
+
+      await chat.ask('둘').toList();
+
+      expect(model.requests.single.messages, [
+        const ChatMessage.user('하나'),
+        _assistant('받은 글\n${ChatSession.stoppedNote}'),
+        const ChatMessage.user('둘'),
+      ]);
+    });
+
+    test('25턴을 넘기면 마지막 20턴만 싣는다', () async {
+      expect(ChatSession.resumeTurns, 20);
+      final model = _FakeModel([_answer('네')]);
+      final chat = session(model)
+        ..resume([
+          for (var i = 0; i < 25; i++) turn('q$i', 'a$i'),
+        ], temporary: false);
+
+      await chat.ask('새').toList();
+
+      final messages = model.requests.single.messages;
+      expect(messages, hasLength(41));
+      expect(messages.first, const ChatMessage.user('q5'));
+      expect(messages[39], _assistant('a24'));
+    });
+
+    test('답이 빈 턴은 싣지 않는다', () async {
+      final model = _FakeModel([_answer('네')]);
+      final chat = session(model)
+        ..resume([turn('하나', '  \n'), turn('둘', '둘 답')], temporary: false);
+
+      await chat.ask('셋').toList();
+
+      expect(model.requests.single.messages, [
+        const ChatMessage.user('둘'),
+        _assistant('둘 답'),
+        const ChatMessage.user('셋'),
+      ]);
+    });
+
+    test('resume 뒤 사진 수는 0부터 센다', () async {
+      when(() => tools.run('view_entry_photos', any())).thenAnswer(
+        (_) async => ToolResult(
+          json: '{"photos":6}',
+          images: [
+            for (var i = 0; i < 6; i++)
+              ToolImage(
+                mediaType: 'image/jpeg',
+                bytes: Uint8List.fromList([i]),
+              ),
+          ],
+        ),
+      );
+      List<Object> photoRound(String id) => [
+        _done([_toolUse(id, 'view_entry_photos')], StopKind.toolUse),
+      ];
+      final model = _FakeModel([
+        photoRound('t1'),
+        photoRound('t2'),
+        _answer('첫 답'),
+        photoRound('t3'),
+        photoRound('t4'),
+        _answer('둘째 답'),
+      ]);
+      final chat = session(model);
+
+      await chat.ask('첫').toList();
+      chat.resume([turn('첫', '첫 답')], temporary: false);
+      await chat.ask('둘').toList();
+
+      for (final i in [4, 5]) {
+        final result = (model.requests[i].messages.last as ToolResultsMessage)
+            .results
+            .single;
+        expect(result.isError, isFalse);
+        expect(result.images, hasLength(6));
+      }
+    });
+
+    test("사진 한도 안내는 '대화를 다시 열거나 새 대화를 시작하면…'", () async {
+      when(() => tools.run('view_entry_photos', any())).thenAnswer(
+        (_) async => ToolResult(
+          json: '{"photos":13}',
+          images: [
+            for (var i = 0; i < 13; i++)
+              ToolImage(
+                mediaType: 'image/jpeg',
+                bytes: Uint8List.fromList([i]),
+              ),
+          ],
+        ),
+      );
+      final model = _FakeModel([
+        [
+          _done([_toolUse('t1', 'view_entry_photos')], StopKind.toolUse),
+        ],
+        _answer('끝'),
+      ]);
+
+      await session(model).ask('사진').toList();
+
+      final result = (model.requests[1].messages.last as ToolResultsMessage)
+          .results
+          .single;
+      expect(
+        result.json,
+        '{"error":"photo_limit_reached",'
+        '"hint":"대화를 다시 열거나 새 대화를 시작하면 다시 사진을 볼 수 있어요"}',
+      );
+    });
+
+    test('답하는 중 resume 하면 그 질문은 조용히 멈추고 모델 구독이 취소된다', () async {
+      final model = _HangingModel();
+      final chat = ChatSession(
+        model,
+        tools,
+        settings,
+        clock,
+        usage,
+        ids,
+        const NoopChatTrace(),
+      );
+      final events = <ChatEvent>[];
+      var done = false;
+      chat.ask('첫').listen(events.add, onDone: () => done = true);
+      await pumpEventQueue();
+      model.rounds[0].add(const ModelEvent.textDelta('늦은'));
+      await pumpEventQueue();
+      events.clear();
+
+      chat.resume([turn('예전', '예전 답')], temporary: false);
+      await pumpEventQueue();
+
+      expect(model.cancelled.single, isTrue);
+      expect(events, isEmpty);
+      expect(done, isTrue);
+      expect(chat.stop(), const ChatStopResult.idle());
+
+      final second = chat.ask('둘').toList();
+      await pumpEventQueue();
+      model.rounds[1].add(_done([_text('새 답')], StopKind.endTurn));
+      unawaited(model.rounds[1].close());
+      expect(await second, const [ChatEvent.finished(citedEntryIds: [])]);
+      expect(model.requests[1], [
+        const ChatMessage.user('예전'),
+        _assistant('예전 답'),
+        const ChatMessage.user('둘'),
+      ]);
+    });
+
+    test(
+      'resume(temporary: true) · reset(temporary: true) 뒤 사용량 기록은 temporary true · reset() 뒤엔 false',
+      () async {
+        const u = TokenUsage(inputTokens: 1, outputTokens: 1);
+        final model = _FakeModel([])..repeat = _answerWith(u);
+        final chat = session(model);
+
+        expect(chat.temporary, isFalse);
+        chat.resume([turn('하나', '답')], temporary: true);
+        expect(chat.temporary, isTrue);
+        await chat.ask('a').toList();
+        chat.reset();
+        expect(chat.temporary, isFalse);
+        await chat.ask('b').toList();
+        chat.reset(temporary: true);
+        expect(chat.temporary, isTrue);
+        await chat.ask('c').toList();
+        chat.resume([turn('하나', '답')], temporary: false);
+        await chat.ask('d').toList();
+
+        expect(usage.records.map((r) => r.temporary), [
+          true,
+          false,
+          true,
+          false,
+        ]);
+      },
+    );
+  });
+
+  group('벤더 · 모델 변경', () {
+    test('target 은 모델 vendor 와 interimModel', () {
+      final model = _FakeModel([]);
+      final chat = session(model);
+
+      expect(chat.target, (
+        vendor: ChatVendor.anthropic,
+        model: ChatSession.interimModel,
+      ));
+      model.vendor = ChatVendor.openai;
+      expect(chat.target, (
+        vendor: ChatVendor.openai,
+        model: ChatSession.interimModel,
+      ));
+    });
+
+    test('벤더가 바뀌면 다음 ask 전에 메모리 문맥을 글로 접는다', () async {
+      when(
+        () => tools.run('search_diary', any()),
+      ).thenAnswer((_) async => const ToolResult(json: '{}'));
+      const u = TokenUsage(inputTokens: 1, outputTokens: 1);
+      final model = _FakeModel([
+        [
+          const ModelEvent.textDelta('찾아볼게요. '),
+          _done(
+            [_text('찾아볼게요. '), _toolUse('t1', 'search_diary')],
+            StopKind.toolUse,
+            state: _FakeState(),
+          ),
+        ],
+        [
+          const ModelEvent.textDelta('답'),
+          _done([_text('답')], StopKind.endTurn, state: _FakeState()),
+        ],
+        _answerWith(u),
+      ]);
+      final chat = session(model);
+
+      await chat.ask('q1').toList();
+      model.vendor = ChatVendor.openai;
+      await chat.ask('q2').toList();
+
+      final messages = model.requests[2].messages;
+      expect(messages, [
+        const ChatMessage.user('q1'),
+        _assistant('찾아볼게요. 답'),
+        const ChatMessage.user('q2'),
+      ]);
+      expect(usage.records.single.vendor, ChatVendor.openai);
+    });
+
+    test('벤더 · 모델이 그대로면 문맥을 접지 않는다', () async {
+      final completed =
+          _done([_text('답')], StopKind.endTurn, state: _FakeState())
+              as ModelCompleted;
+      final model = _FakeModel([
+        [const ModelEvent.textDelta('답'), completed],
+        _answer('둘 답'),
+      ]);
+      final chat = session(model);
+
+      await chat.ask('q1').toList();
+      await chat.ask('q2').toList();
+
+      expect(
+        identical(model.requests[1].messages[1], completed.message),
+        isTrue,
+      );
+    });
+
+    test('멈춘 턴이 있는 문맥을 접어도 멈춤 표시가 남는다', () async {
+      final model = _HangingModel();
+      final chat = ChatSession(
+        model,
+        tools,
+        settings,
+        clock,
+        usage,
+        ids,
+        const NoopChatTrace(),
+      );
+
+      // 1: 멈춘 턴
+      chat.ask('q1').listen((_) {});
+      await pumpEventQueue();
+      model.rounds[0].add(const ModelEvent.textDelta('받은 글'));
+      await pumpEventQueue();
+      expect(chat.stop(), isA<ChatStopKept>());
+
+      // 2: 끝난 턴(vendorState 있음)
+      final second = chat.ask('q2').toList();
+      await pumpEventQueue();
+      model.rounds[1]
+        ..add(const ModelEvent.textDelta('둘 답'))
+        ..add(_done([_text('둘 답')], StopKind.endTurn, state: _FakeState()));
+      unawaited(model.rounds[1].close());
+      await second;
+
+      model.vendor = ChatVendor.openai;
+      unawaited(chat.ask('q3').toList());
+      await pumpEventQueue();
+
+      expect(model.requests[2], [
+        const ChatMessage.user('q1'),
+        _assistant('받은 글\n${ChatSession.stoppedNote}'),
+        const ChatMessage.user('q2'),
+        _assistant('둘 답'),
+        const ChatMessage.user('q3'),
+      ]);
+    });
+  });
 }
 
 /// [gate] 가 있으면 키 읽기가 그 future 를 기다린다.
@@ -1596,7 +1930,7 @@ class _HangingModel implements ChatModel {
       const ModelListResult.ok([]);
 
   @override
-  ChatVendor get vendor => ChatVendor.anthropic;
+  var vendor = ChatVendor.anthropic;
 
   @override
   Stream<ModelEvent> stream(ModelRequest request) {
