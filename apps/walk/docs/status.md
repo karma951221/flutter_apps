@@ -208,8 +208,8 @@
 - [x] 키 UX(키 기획 ②): 저장 시 키 확인(`GET /v1/models`) · 요금 경고(확인 못 함 포함) · 마스킹 미리보기 · 연결 상태(연결됨 · 확인 전 · 키 확인) · 연결 행 glow · 강조 열기(물어보기 설정 · 실패 말풍선 [설정 열기] · 알람 배너) · 크레딧 부족 · 모델 없음 문구 · 키를 보안 저장소 `chat.apiKey` 에만 두고 백업에서 제외
 - [ ] Anthropic 로고 자산(K1) — 브랜드 가이드 확인 전이라 모노그램("C")으로 대신 중. 확인되면 `ChatVendorIcon.confirmedLogos` 한 줄 + SVG 자산
 - [ ] **기기 확인**: 실제 키로 연결 · 잘못된 키 · 비행기 모드 저장(확인 전 → 다음 탭 열 때 연결됨) · 요금 경고 문구 · 연결 행 glow 가 실제로 보이는지(라이트 · 다크) · 로고(K1) · 크레딧 부족 · 모델 없음 오류 모양(K2 · K3)
-- [ ] **백업 복원 뒤 미연결(K4)** — `adb shell bmgr backupnow` → 재설치 → 복원 뒤 연결 행이 미연결인지. `flutter_secure_storage` 가 남기는 설정 prefs 파일(`FlutterSecureKeyStorage.xml` 등)이 백업 규칙에서 빠졌는지도 같이 본다
-- 검증(2026-11-02): `flutter analyze` 0 · `flutter test` 2224건 통과(1 skip).
+- [ ] **백업 복원 뒤 미연결(K4)** — `adb shell bmgr backupnow` → 재설치 → 복원 뒤 연결 행이 미연결인지. 백업 규칙에서 빠졌던 `flutter_secure_storage` 설정 파일(`FlutterSecureStorageConfiguration*.xml`)도 이제 뺀다 — 기기 복원 확인은 아직
+- 검증(2026-11-02, 최종 리뷰 반영 뒤): `flutter analyze` 0 · `flutter test` 2280건 통과(1 skip).
 - 알아 둘 것: Anthropic 이 키 접두사를 바꾸면 `api_key_mask.dart` 정규식을 고쳐야 한다(고치기 전에는 새 키가 저장되지 않는다).
 
 ## 하단 탭 재구성 · 설정 분산

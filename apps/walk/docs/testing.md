@@ -3,7 +3,7 @@
 > [테스트 가이드](../../../docs/testing/README.md) · [계획](plan.md) · [기록](history.md) · [진행 현황](status.md)
 
 ```bash
-cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-11-02 기준 2224건 통과 · 1건 skip)
+cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-11-02 기준 2280건 통과 · 1건 skip)
 ```
 
 백엔드가 없어 로컬 Supabase 없이 돈다. Health Connect 는 `HealthGateway` 를 mock 해서 본다
@@ -278,18 +278,18 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 |---|---|
 | 기상 기록 보관 | `data/alarm/archive/drift_ring_archive_test` · `domain/alarm/usecase/ring_archiver_test` · `domain/alarm/ring_log_test` · 알람 기록 `cubit` / `page` 테스트(보관소 읽기 · 지워진 알람 라벨) |
 | 일기 기간 검색 | `data/diary/drift_diary_repository_range_search_test` |
-| 키 · 동의 설정 | `data/chat/secure_chat_settings_test`(옛 키 이전 · 읽기 실패 정리 · 원자적 connect) · `presentation/settings/cubit/chat_settings_cubit_test` · `widget/chat_settings_section_test` |
+| 키 · 동의 설정 | `data/chat/secure_chat_settings_test`(옛 키 이전 · 읽기 실패 정리 · 쓰기 순서(보안 저장소 먼저) · prefs 쓰기 실패면 상태 지움 · 저장된 키가 다르면 상태 안 씀) · `test/support/fake_chat_settings`(지난 키에 대한 상태 기록은 버림) · `presentation/settings/cubit/chat_settings_cubit_test` · `widget/chat_settings_section_test`(읽는 중에는 제목만 있는 중립 행) |
 | 키 마스킹 · 연결 | `domain/chat/api_key_mask_test`(접두사 표 · 알 수 없는 접두사는 4글자까지) · `domain/chat/chat_connection_test` |
 | 키 확인 | `domain/chat/usecase/chat_key_verifier_test`(10초 상한 · 예외 → unreachable · 확인 전 재확인 · 키가 바뀌면 상태 안 씀) |
 | 키 대화상자 · 연결 행 | `presentation/settings/widget/chat_key_dialog_test`(치는 중 접두사 안내 · 확인 → 요금 경고 → 저장 · 쓰는 동안 잠금) · `chat_settings_section_test`(상태별 연결 행) · `page/chat_settings_page_test` |
-| 로고 · 강조 | `presentation/chat/widget/chat_vendor_icon_test`(모노그램) · `presentation/settings/widget/row_highlight_test`(glow 두 번 · 줄인 움직임) · `open_settings_test` · `page/alarm_settings_page_test`(권한 행 강조) |
+| 로고 · 강조 | `presentation/chat/widget/chat_vendor_icon_test`(모노그램) · `presentation/settings/widget/row_highlight_test`(glow 두 번 · 줄인 움직임 · `play` 가 꺼지면 재생 중 glow 를 내리고 예약을 거둠) · `open_settings_test` · `page/alarm_settings_page_test`(권한 행 강조) |
 | API 클라이언트 | `data/chat/anthropic_chat_model_test`(스트리밍 · `message_stop` 없는 종료 · 오류 · 중립 ↔ Messages 변환 · usage · 취소 시 abort · `listModels` · 오류 `type` 매핑) |
 | SSE 줄 · 취소 | `data/chat/sse_lines_test`(SSE 줄 · 대기 시간 · `abortableSend`) |
 | 계측 | `data/chat/dev_chat_trace_test`(요약 줄 · 허용 키) |
 | 기록 도구 5개 | `domain/chat/tool/life_tools_test` |
-| 세션 · cubit | `domain/chat/usecase/chat_session_test`(사용량 기록 · 멈춤 (a)~(f)) · `presentation/chat/cubit/chat_cubit_test`(멈춤 · 질문 되돌림) |
-| 입력 · 말풍선 | `presentation/chat/widget/chat_input_test`([■ 멈춤] 전환) · `chat_bubble_view_test`('멈춤' 표시 · 실패 말풍선 [설정 열기]) |
-| 화면 · 셸 | `presentation/chat/page/chat_tab_test`(⋮ 는 잠긴 동안 앱 설정만, 풀리면 물어보기 설정 · 앱 설정 · 위에 얹힌 물어보기 설정에서 키를 넣고 돌아오면 `didPopNext` 로 키를 다시 읽음 · 키 확인 중 로딩 · 키 없으면 설정 버튼) · `presentation/shell/page/main_shell_page_test`(탭 구성 · 잠금 · 물어보기 [설정 열기]) |
+| 세션 · cubit | `domain/chat/usecase/chat_session_test`(사용량 기록 · 멈춤 (a)~(f)) · `presentation/chat/cubit/chat_cubit_test`(멈춤 · 질문 되돌림 · ready 면 확인 전 키 재확인 · `recheck: false` 면 안 함) |
+| 입력 · 말풍선 | `presentation/chat/widget/chat_input_test`([■ 멈춤] 전환) · `chat_bubble_view_test`('멈춤' 표시 · 실패 말풍선 [설정 열기]) · `chat_failure_text_test`(크레딧 부족 · 모델 없음 문구 · 빈 문구 없음) |
+| 화면 · 셸 | `presentation/chat/page/chat_tab_test`(⋮ 는 잠긴 동안 앱 설정만, 풀리면 물어보기 설정 · 앱 설정 · 위에 얹힌 물어보기 설정에서 키를 넣고 돌아오면 `didPopNext` 로 키를 다시 읽음 · 키 확인 중 로딩 · 키 없으면 설정 버튼 · 실패 말풍선 [설정 열기] · 보이지 않는 탭은 돌아와도 다시 읽지 않고 앱 시작에 키 확인도 안 함, 보이게 되면 함) · `presentation/shell/page/main_shell_page_test`(탭 구성 · 잠금 · 물어보기 [설정 열기]로 연 연결 행 glow · ⋮ 로 열면 glow 없음 · 알람 권한 배너 → 거부된 알림 권한 행 glow) |
 
 ## 테스트가 없는 것
 
@@ -425,7 +425,7 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | Q7 | 키 없음 · 비행기 모드 | 설정 안내 · 네트워크 오류 안내 | 대기 |
 | Q8 | 답하는 중 [■ 멈춤] 누르기 — 보내는 중 · 도구 호출 · thinking · 글 흐르는 중 네 단계 모두 | 받은 글은 '멈춤' 표시로 남고 글이 없으면 질문이 입력칸으로 돌아온다. 다음 질문이 이어진다(C4: 400 없음). 콘솔 usage 로 청구가 멈췄는지(C3) | 대기 |
 | Q9 | 디버그 · 프로필 빌드에서 질문 하나 보내고 `flutter logs` | `chat.trace` 요약 한 줄이 찍힌다. 릴리스 빌드에는 없다 | 대기 |
-| Q10 | 설정에서 실제 키 저장 → 요금 경고 → 확인 | 연결 행이 "연결됨" + 마스킹 키(`sk-ant-api03-abcd••••`)로 바뀌고 행이 한 번 glow 한다(라이트 · 다크) | 대기 |
+| Q10 | 설정에서 실제 키 저장 → 요금 경고 → 확인 | 연결 행이 "연결됨" + 마스킹 키(`sk-ant-api03-abcd••••`)로 바뀌고 행이 두 번 깜빡인다(glow, 라이트 · 다크) | 대기 |
 | Q11 | 잘못된 키 저장 · 비행기 모드에서 저장 | 잘못된 키는 "이 키로는 연결되지 않아요"(저장 안 됨). 비행기 모드는 경고 뒤 "확인 전"으로 저장되고 네트워크가 돌아온 뒤 물어보기 탭을 열면 "연결됨"으로 바뀐다 | 대기 |
 | Q12 | 백업 복원(K4): `adb shell bmgr backupnow` → 재설치 → 복원 | 연결 행이 미연결이다(키 · `flutter_secure_storage` 설정 prefs 파일이 복원되지 않는다) | 대기 |
 | Q13 | 물어보기에서 크레딧 부족 · 모델 없음 오류를 만났을 때(K2 · K3) | 문구가 맞고 [설정 열기]로 연결 행이 glow 한다. 오류 본문의 `error.type` 이 가정한 값(`billing_error` · `not_found_error`)인지 | 대기 |
