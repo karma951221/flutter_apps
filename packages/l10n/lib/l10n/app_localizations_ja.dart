@@ -3315,4 +3315,41 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatSettingsDisconnectFailed => '接続を解除できませんでした';
+
+  @override
+  String get walkChatHistoryTitle => '会話一覧';
+
+  @override
+  String get walkChatHistoryEmpty => '保存された会話はありません';
+
+  @override
+  String walkChatHistoryTurns(int count) {
+    return '質問$count件';
+  }
+
+  @override
+  String get walkChatHistoryRename => '名前を変更';
+
+  @override
+  String get walkChatHistoryRenameHint => '会話の名前';
+
+  @override
+  String get walkChatHistoryDeleteTitle => 'この会話を削除しますか？';
+
+  @override
+  String get walkChatHistoryDeleteBody => '質問と回答がこの端末から削除されます。';
+
+  @override
+  String get walkChatHistoryDeleteAll => 'すべての会話を削除';
+
+  @override
+  String get walkChatHistoryDeleteAllTitle => 'すべての会話を削除しますか？';
+
+  @override
+  String walkChatHistoryDeleteAllBody(int count) {
+    return '$count件の会話を削除します。使用量の記録は残ります。';
+  }
+
+  @override
+  String get walkChatHistoryDeleteAllConfirm => 'すべて削除';
 }

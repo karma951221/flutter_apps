@@ -3316,4 +3316,41 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatSettingsDisconnectFailed => '연결을 끊지 못했어요';
+
+  @override
+  String get walkChatHistoryTitle => '대화 목록';
+
+  @override
+  String get walkChatHistoryEmpty => '저장된 대화가 없어요';
+
+  @override
+  String walkChatHistoryTurns(int count) {
+    return '질문 $count개';
+  }
+
+  @override
+  String get walkChatHistoryRename => '이름 바꾸기';
+
+  @override
+  String get walkChatHistoryRenameHint => '대화 이름';
+
+  @override
+  String get walkChatHistoryDeleteTitle => '이 대화를 지울까요?';
+
+  @override
+  String get walkChatHistoryDeleteBody => '질문과 답이 이 폰에서 지워져요.';
+
+  @override
+  String get walkChatHistoryDeleteAll => '대화 모두 지우기';
+
+  @override
+  String get walkChatHistoryDeleteAllTitle => '대화를 모두 지울까요?';
+
+  @override
+  String walkChatHistoryDeleteAllBody(int count) {
+    return '대화 $count개를 지워요. 사용량 기록은 남아요.';
+  }
+
+  @override
+  String get walkChatHistoryDeleteAllConfirm => '모두 지우기';
 }

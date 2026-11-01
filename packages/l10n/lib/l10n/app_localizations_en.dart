@@ -3572,4 +3572,54 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkChatSettingsDisconnectFailed => 'Couldn\'t disconnect';
+
+  @override
+  String get walkChatHistoryTitle => 'Conversations';
+
+  @override
+  String get walkChatHistoryEmpty => 'No saved conversations';
+
+  @override
+  String walkChatHistoryTurns(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count questions',
+      one: '1 question',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get walkChatHistoryRename => 'Rename';
+
+  @override
+  String get walkChatHistoryRenameHint => 'Conversation name';
+
+  @override
+  String get walkChatHistoryDeleteTitle => 'Delete this conversation?';
+
+  @override
+  String get walkChatHistoryDeleteBody =>
+      'The questions and answers will be removed from this phone.';
+
+  @override
+  String get walkChatHistoryDeleteAll => 'Delete all conversations';
+
+  @override
+  String get walkChatHistoryDeleteAllTitle => 'Delete all conversations?';
+
+  @override
+  String walkChatHistoryDeleteAllBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count conversations will be deleted.',
+      one: '1 conversation will be deleted.',
+    );
+    return '$_temp0 Usage records are kept.';
+  }
+
+  @override
+  String get walkChatHistoryDeleteAllConfirm => 'Delete all';
 }

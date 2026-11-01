@@ -6187,6 +6187,72 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'연결을 끊지 못했어요'**
   String get walkChatSettingsDisconnectFailed;
+
+  /// 대화 목록: 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'대화 목록'**
+  String get walkChatHistoryTitle;
+
+  /// 대화 목록: 저장된 대화가 없을 때 빈 상태
+  ///
+  /// In ko, this message translates to:
+  /// **'저장된 대화가 없어요'**
+  String get walkChatHistoryEmpty;
+
+  /// 대화 목록: 행 부제의 질문 수
+  ///
+  /// In ko, this message translates to:
+  /// **'질문 {count}개'**
+  String walkChatHistoryTurns(int count);
+
+  /// 대화 목록: 행 메뉴 — 대화 이름 바꾸기
+  ///
+  /// In ko, this message translates to:
+  /// **'이름 바꾸기'**
+  String get walkChatHistoryRename;
+
+  /// 대화 목록: 이름 바꾸기 입력칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'대화 이름'**
+  String get walkChatHistoryRenameHint;
+
+  /// 대화 목록: 대화 하나 삭제 확인 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'이 대화를 지울까요?'**
+  String get walkChatHistoryDeleteTitle;
+
+  /// 대화 목록: 대화 하나 삭제 확인 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'질문과 답이 이 폰에서 지워져요.'**
+  String get walkChatHistoryDeleteBody;
+
+  /// 대화 목록: 앱바 메뉴 — 모든 대화 삭제
+  ///
+  /// In ko, this message translates to:
+  /// **'대화 모두 지우기'**
+  String get walkChatHistoryDeleteAll;
+
+  /// 대화 목록: 모두 지우기 확인 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'대화를 모두 지울까요?'**
+  String get walkChatHistoryDeleteAllTitle;
+
+  /// 대화 목록: 모두 지우기 확인 본문 — 지울 대화 수
+  ///
+  /// In ko, this message translates to:
+  /// **'대화 {count}개를 지워요. 사용량 기록은 남아요.'**
+  String walkChatHistoryDeleteAllBody(int count);
+
+  /// 대화 목록: 모두 지우기 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'모두 지우기'**
+  String get walkChatHistoryDeleteAllConfirm;
 }
 
 class _AppLocalizationsDelegate

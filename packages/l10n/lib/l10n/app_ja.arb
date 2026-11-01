@@ -1033,5 +1033,16 @@
   "walkChatSavedUnverified": "キーを保存しました。接続できたら確認します",
   "walkChatDisconnected": "接続を解除しました",
   "walkChatKeyNotApiKey": "API キーではありません。Console の API Keys で作ったキーを入れてください",
-  "walkChatSettingsDisconnectFailed": "接続を解除できませんでした"
+  "walkChatSettingsDisconnectFailed": "接続を解除できませんでした",
+  "walkChatHistoryTitle": "会話一覧",
+  "walkChatHistoryEmpty": "保存された会話はありません",
+  "walkChatHistoryTurns": "質問{count}件",
+  "walkChatHistoryRename": "名前を変更",
+  "walkChatHistoryRenameHint": "会話の名前",
+  "walkChatHistoryDeleteTitle": "この会話を削除しますか？",
+  "walkChatHistoryDeleteBody": "質問と回答がこの端末から削除されます。",
+  "walkChatHistoryDeleteAll": "すべての会話を削除",
+  "walkChatHistoryDeleteAllTitle": "すべての会話を削除しますか？",
+  "walkChatHistoryDeleteAllBody": "{count}件の会話を削除します。使用量の記録は残ります。",
+  "walkChatHistoryDeleteAllConfirm": "すべて削除"
 }

@@ -1033,5 +1033,16 @@
   "walkChatSavedUnverified": "Key saved. We'll verify it once you're online",
   "walkChatDisconnected": "Disconnected",
   "walkChatKeyNotApiKey": "This isn't an API key. Use a key from API Keys in the Console.",
-  "walkChatSettingsDisconnectFailed": "Couldn't disconnect"
+  "walkChatSettingsDisconnectFailed": "Couldn't disconnect",
+  "walkChatHistoryTitle": "Conversations",
+  "walkChatHistoryEmpty": "No saved conversations",
+  "walkChatHistoryTurns": "{count, plural, =1{1 question} other{{count} questions}}",
+  "walkChatHistoryRename": "Rename",
+  "walkChatHistoryRenameHint": "Conversation name",
+  "walkChatHistoryDeleteTitle": "Delete this conversation?",
+  "walkChatHistoryDeleteBody": "The questions and answers will be removed from this phone.",
+  "walkChatHistoryDeleteAll": "Delete all conversations",
+  "walkChatHistoryDeleteAllTitle": "Delete all conversations?",
+  "walkChatHistoryDeleteAllBody": "{count, plural, =1{1 conversation will be deleted.} other{{count} conversations will be deleted.}} Usage records are kept.",
+  "walkChatHistoryDeleteAllConfirm": "Delete all"
 }
