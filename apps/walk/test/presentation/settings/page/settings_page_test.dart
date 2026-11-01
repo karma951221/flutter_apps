@@ -501,7 +501,7 @@ void main() {
       double top(String text) => tester.getTopLeft(find.text(text)).dy;
       expect(top('알람'), lessThan(top('일기')));
       expect(top('일기'), lessThan(top('권한')));
-      expect(find.text('일기 잠금'), findsOneWidget);
+      expect(inLock('잠금'), findsOneWidget);
       expect(inLock('꺼짐'), findsOneWidget);
       expect(find.text('기록은 이 폰에만 저장돼요. 앱을 지우면 함께 사라져요.'), findsOneWidget);
     });

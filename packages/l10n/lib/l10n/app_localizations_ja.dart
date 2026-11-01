@@ -2689,7 +2689,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiarySettings => '日記';
 
   @override
-  String get walkDiarySettingsLock => '日記のロック';
+  String get walkDiarySettingsLock => 'ロック';
 
   @override
   String get walkDiarySettingsLockOff => 'オフ';
@@ -3217,4 +3217,31 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatFailureUnknown => '回答を受け取れませんでした';
+
+  @override
+  String get walkAppSettingsTitle => 'アプリ設定';
+
+  @override
+  String get walkAlarmSettingsTitle => 'アラーム設定';
+
+  @override
+  String get walkWalkSettingsTitle => 'ウォーキング設定';
+
+  @override
+  String get walkDiarySettingsTitle => '日記設定';
+
+  @override
+  String get walkChatSettingsTitle => '質問の設定';
+
+  @override
+  String get walkAppSettingsLock => 'ロック';
+
+  @override
+  String get walkAppSettingsLockDescription => '日記と質問をまとめてロックします';
+
+  @override
+  String get walkAppSettingsDisplay => '表示';
+
+  @override
+  String get walkAppSettingsFeatures => '機能別の設定';
 }

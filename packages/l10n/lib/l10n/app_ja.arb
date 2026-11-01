@@ -829,7 +829,7 @@
   "walkDiaryTrashRestoreFailed": "復元できませんでした。もう一度お試しください",
   "walkDiaryTrashDeleteFailed": "削除できませんでした。もう一度お試しください",
   "walkDiarySettings": "日記",
-  "walkDiarySettingsLock": "日記のロック",
+  "walkDiarySettingsLock": "ロック",
   "walkDiarySettingsLockOff": "オフ",
   "walkDiarySettingsRelock": "再ロックまでの時間",
   "walkDiarySettingsRelockImmediate": "すぐ",
@@ -1005,5 +1005,14 @@
   "walkChatFailureNetwork": "接続が切れました。もう一度聞いてください",
   "walkChatFailureRefused": "この質問には答えられません",
   "walkChatFailureTooManySteps": "記録を探す途中で止まりました。質問を絞ってください",
-  "walkChatFailureUnknown": "回答を受け取れませんでした"
+  "walkChatFailureUnknown": "回答を受け取れませんでした",
+  "walkAppSettingsTitle": "アプリ設定",
+  "walkAlarmSettingsTitle": "アラーム設定",
+  "walkWalkSettingsTitle": "ウォーキング設定",
+  "walkDiarySettingsTitle": "日記設定",
+  "walkChatSettingsTitle": "質問の設定",
+  "walkAppSettingsLock": "ロック",
+  "walkAppSettingsLockDescription": "日記と質問をまとめてロックします",
+  "walkAppSettingsDisplay": "表示",
+  "walkAppSettingsFeatures": "機能別の設定"
 }

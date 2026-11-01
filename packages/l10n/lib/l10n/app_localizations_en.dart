@@ -2863,7 +2863,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiarySettings => 'Diary';
 
   @override
-  String get walkDiarySettingsLock => 'Diary lock';
+  String get walkDiarySettingsLock => 'Lock';
 
   @override
   String get walkDiarySettingsLockOff => 'Off';
@@ -3472,4 +3472,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkChatFailureUnknown => 'Couldn\'t get an answer';
+
+  @override
+  String get walkAppSettingsTitle => 'App settings';
+
+  @override
+  String get walkAlarmSettingsTitle => 'Alarm settings';
+
+  @override
+  String get walkWalkSettingsTitle => 'Walking settings';
+
+  @override
+  String get walkDiarySettingsTitle => 'Diary settings';
+
+  @override
+  String get walkChatSettingsTitle => 'Ask settings';
+
+  @override
+  String get walkAppSettingsLock => 'Lock';
+
+  @override
+  String get walkAppSettingsLockDescription => 'Locks Diary and Ask together';
+
+  @override
+  String get walkAppSettingsDisplay => 'Display';
+
+  @override
+  String get walkAppSettingsFeatures => 'Feature settings';
 }

@@ -3861,9 +3861,9 @@
   "@walkDiarySettings": {
     "description": "설정 탭 일기 섹션 제목"
   },
-  "walkDiarySettingsLock": "일기 잠금",
+  "walkDiarySettingsLock": "잠금",
   "@walkDiarySettingsLock": {
-    "description": "설정 탭 일기 잠금 행 제목"
+    "description": "앱 설정 잠금 행 제목(일기와 물어보기를 함께 잠근다)"
   },
   "walkDiarySettingsLockOff": "꺼짐",
   "@walkDiarySettingsLockOff": {
@@ -4399,5 +4399,23 @@
   "walkChatFailureTooManySteps": "기록을 찾다가 멈췄어요. 질문을 좁혀 주세요",
   "@walkChatFailureTooManySteps": { "description": "채팅 실패: 도구 단계 초과" },
   "walkChatFailureUnknown": "답을 받지 못했어요",
-  "@walkChatFailureUnknown": { "description": "채팅 실패: 그 밖" }
+  "@walkChatFailureUnknown": { "description": "채팅 실패: 그 밖" },
+  "walkAppSettingsTitle": "앱 설정",
+  "@walkAppSettingsTitle": { "description": "앱 설정 화면 제목" },
+  "walkAlarmSettingsTitle": "알람 설정",
+  "@walkAlarmSettingsTitle": { "description": "알람 설정 화면 제목 · 앱 설정 바로가기" },
+  "walkWalkSettingsTitle": "걷기 설정",
+  "@walkWalkSettingsTitle": { "description": "걷기 설정 화면 제목 · 앱 설정 바로가기" },
+  "walkDiarySettingsTitle": "일기 설정",
+  "@walkDiarySettingsTitle": { "description": "일기 설정 화면 제목 · 앱 설정 바로가기" },
+  "walkChatSettingsTitle": "물어보기 설정",
+  "@walkChatSettingsTitle": { "description": "물어보기 설정 화면 제목 · 앱 설정 바로가기" },
+  "walkAppSettingsLock": "잠금",
+  "@walkAppSettingsLock": { "description": "앱 설정 잠금 섹션 제목" },
+  "walkAppSettingsLockDescription": "일기와 물어보기를 함께 잠급니다",
+  "@walkAppSettingsLockDescription": { "description": "앱 설정 잠금 섹션 설명" },
+  "walkAppSettingsDisplay": "화면",
+  "@walkAppSettingsDisplay": { "description": "앱 설정 화면(테마) 섹션 제목" },
+  "walkAppSettingsFeatures": "기능별 설정",
+  "@walkAppSettingsFeatures": { "description": "앱 설정 기능별 설정 바로가기 섹션 제목" }
 }

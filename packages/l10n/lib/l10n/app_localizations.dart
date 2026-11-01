@@ -5078,10 +5078,10 @@ abstract class AppLocalizations {
   /// **'일기'**
   String get walkDiarySettings;
 
-  /// 설정 탭 일기 잠금 행 제목
+  /// 앱 설정 잠금 행 제목(일기와 물어보기를 함께 잠근다)
   ///
   /// In ko, this message translates to:
-  /// **'일기 잠금'**
+  /// **'잠금'**
   String get walkDiarySettingsLock;
 
   /// 일기 잠금이 꺼져 있을 때 행 오른쪽 문구
@@ -6019,6 +6019,60 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'답을 받지 못했어요'**
   String get walkChatFailureUnknown;
+
+  /// 앱 설정 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'앱 설정'**
+  String get walkAppSettingsTitle;
+
+  /// 알람 설정 화면 제목 · 앱 설정 바로가기
+  ///
+  /// In ko, this message translates to:
+  /// **'알람 설정'**
+  String get walkAlarmSettingsTitle;
+
+  /// 걷기 설정 화면 제목 · 앱 설정 바로가기
+  ///
+  /// In ko, this message translates to:
+  /// **'걷기 설정'**
+  String get walkWalkSettingsTitle;
+
+  /// 일기 설정 화면 제목 · 앱 설정 바로가기
+  ///
+  /// In ko, this message translates to:
+  /// **'일기 설정'**
+  String get walkDiarySettingsTitle;
+
+  /// 물어보기 설정 화면 제목 · 앱 설정 바로가기
+  ///
+  /// In ko, this message translates to:
+  /// **'물어보기 설정'**
+  String get walkChatSettingsTitle;
+
+  /// 앱 설정 잠금 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'잠금'**
+  String get walkAppSettingsLock;
+
+  /// 앱 설정 잠금 섹션 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'일기와 물어보기를 함께 잠급니다'**
+  String get walkAppSettingsLockDescription;
+
+  /// 앱 설정 화면(테마) 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'화면'**
+  String get walkAppSettingsDisplay;
+
+  /// 앱 설정 기능별 설정 바로가기 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'기능별 설정'**
+  String get walkAppSettingsFeatures;
 }
 
 class _AppLocalizationsDelegate

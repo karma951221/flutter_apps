@@ -829,7 +829,7 @@
   "walkDiaryTrashRestoreFailed": "Couldn't restore. Please try again",
   "walkDiaryTrashDeleteFailed": "Couldn't delete. Please try again",
   "walkDiarySettings": "Diary",
-  "walkDiarySettingsLock": "Diary lock",
+  "walkDiarySettingsLock": "Lock",
   "walkDiarySettingsLockOff": "Off",
   "walkDiarySettingsRelock": "Lock again after",
   "walkDiarySettingsRelockImmediate": "Immediately",
@@ -1005,5 +1005,14 @@
   "walkChatFailureNetwork": "The connection dropped. Please ask again",
   "walkChatFailureRefused": "I can't answer this question",
   "walkChatFailureTooManySteps": "Stopped while searching records. Please narrow your question",
-  "walkChatFailureUnknown": "Couldn't get an answer"
+  "walkChatFailureUnknown": "Couldn't get an answer",
+  "walkAppSettingsTitle": "App settings",
+  "walkAlarmSettingsTitle": "Alarm settings",
+  "walkWalkSettingsTitle": "Walking settings",
+  "walkDiarySettingsTitle": "Diary settings",
+  "walkChatSettingsTitle": "Ask settings",
+  "walkAppSettingsLock": "Lock",
+  "walkAppSettingsLockDescription": "Locks Diary and Ask together",
+  "walkAppSettingsDisplay": "Display",
+  "walkAppSettingsFeatures": "Feature settings"
 }

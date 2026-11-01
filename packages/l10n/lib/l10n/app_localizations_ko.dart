@@ -2691,7 +2691,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiarySettings => '일기';
 
   @override
-  String get walkDiarySettingsLock => '일기 잠금';
+  String get walkDiarySettingsLock => '잠금';
 
   @override
   String get walkDiarySettingsLockOff => '꺼짐';
@@ -3218,4 +3218,31 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatFailureUnknown => '답을 받지 못했어요';
+
+  @override
+  String get walkAppSettingsTitle => '앱 설정';
+
+  @override
+  String get walkAlarmSettingsTitle => '알람 설정';
+
+  @override
+  String get walkWalkSettingsTitle => '걷기 설정';
+
+  @override
+  String get walkDiarySettingsTitle => '일기 설정';
+
+  @override
+  String get walkChatSettingsTitle => '물어보기 설정';
+
+  @override
+  String get walkAppSettingsLock => '잠금';
+
+  @override
+  String get walkAppSettingsLockDescription => '일기와 물어보기를 함께 잠급니다';
+
+  @override
+  String get walkAppSettingsDisplay => '화면';
+
+  @override
+  String get walkAppSettingsFeatures => '기능별 설정';
 }

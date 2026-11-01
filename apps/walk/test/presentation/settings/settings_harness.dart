@@ -1,0 +1,182 @@
+import 'package:core/core.dart';
+import 'package:design_system/design_system.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:l10n/l10n.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:permission/permission.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:walk/data/diary/prefs_diary_preferences.dart';
+import 'package:walk/data/lock/prefs_lock_repository.dart';
+import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
+import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
+import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
+import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
+import 'package:walk/domain/chat/chat_settings.dart';
+import 'package:walk/domain/diary/entity/diary_usage.dart';
+import 'package:walk/domain/diary/repository/diary_preferences.dart';
+import 'package:walk/domain/diary/repository/diary_repository.dart';
+import 'package:walk/domain/lock/device_auth.dart';
+import 'package:walk/domain/lock/lock_config.dart';
+import 'package:walk/domain/lock/lock_repository.dart';
+import 'package:walk/domain/settings/entity/app_settings.dart';
+import 'package:walk/domain/settings/repository/settings_repository.dart';
+import 'package:walk/domain/walk/entity/health_access.dart';
+import 'package:walk/domain/walk/usecase/walk_use_case.dart';
+import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
+import 'package:walk/presentation/lock/media_pick_guard.dart';
+import 'package:walk/presentation/settings/cubit/diary_settings_cubit.dart';
+import 'package:walk/presentation/settings/cubit/holiday_settings_cubit.dart';
+import 'package:walk/presentation/settings/cubit/settings_permissions_cubit.dart';
+import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
+import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
+
+import '../../support/diary_fixtures.dart';
+import '../../support/fake_chat_settings.dart';
+import '../../support/fake_device_auth.dart';
+
+class MockRequester extends Mock implements PermissionRequester {}
+
+class MockWalkUseCase extends Mock implements WalkUseCase {}
+
+class MockSettingsRepository extends Mock implements SettingsRepository {}
+
+class _MockAccess extends Mock implements HolidayCalendarAccess {}
+
+class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
+
+class _MockDiaryRepo extends Mock implements DiaryRepository {}
+
+class _NoRefresh implements HolidayRefresher {
+  @override
+  Future<void> refresh({bool force = false}) async {}
+
+  @override
+  Stream<void> get refreshed => const Stream.empty();
+}
+
+class _FakeHolidays implements HolidayCalendar {
+  @override
+  HolidaySource source = const HolidaySource.bundled(
+    firstYear: 2026,
+    lastYear: 2027,
+  );
+
+  @override
+  String? nameOf(DateTime date) => null;
+}
+
+/// 설정 화면 테스트 공용 — 셸이 내리는 cubit 넷과 앱이 내리는 테마 · 걸음 목표를 만든다.
+/// [setUp] 은 테스트의 `setUp` 에서, [tearDown] 은 `tearDown` 에서 부른다.
+class SettingsHarness {
+  final notification = MockRequester();
+  final exactAlarm = MockRequester();
+  final fullScreen = MockRequester();
+  final walk = MockWalkUseCase();
+  final settings = MockSettingsRepository();
+  late PrefsLockRepository lockRepo;
+  late DiaryPreferences diaryPrefs;
+  late SettingsPermissionsCubit permissions;
+  late ThemeCubit theme;
+  late StepGoalCubit goal;
+  late HolidaySettingsCubit holiday;
+  late DiaryLockCubit diaryLock;
+  late DiarySettingsCubit diarySettings;
+
+  static void registerFallbacks() => registerFallbackValue(const AppSettings());
+
+  Future<void> setUp() async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    lockRepo = PrefsLockRepository(prefs);
+    diaryPrefs = PrefsDiaryPreferences(prefs);
+    final diaryRepo = _MockDiaryRepo();
+    when(diaryRepo.usage).thenAnswer(
+      (_) async =>
+          const DiaryUsage(photos: 1, videos: 0, bytes: 2048, trashBytes: 0),
+    );
+    final clock = MutableClock(diaryT0);
+    getIt
+      ..registerSingleton<LockRepository>(lockRepo)
+      ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
+      ..registerSingleton<Clock>(clock)
+      ..registerSingleton<ChatSettings>(FakeChatSettings());
+    diaryLock = DiaryLockCubit(
+      lockRepo,
+      FakeDeviceAuth(),
+      clock,
+      MediaPickGuard(),
+    )..start();
+    diarySettings = DiarySettingsCubit(lockRepo, diaryPrefs, diaryRepo);
+    when(notification.check).thenAnswer((_) async => PermissionStatus.granted);
+    when(exactAlarm.check).thenAnswer((_) async => PermissionStatus.denied);
+    when(fullScreen.check).thenAnswer((_) async => PermissionStatus.granted);
+    when(walk.access).thenAnswer((_) async => HealthAccess.notInstalled);
+    when(settings.load).thenReturn(const AppSettings());
+    when(() => settings.save(any())).thenAnswer((_) async {});
+    permissions = SettingsPermissionsCubit(
+      AlarmPermissions(
+        notification: notification,
+        exactAlarm: exactAlarm,
+        fullScreenIntent: fullScreen,
+      ),
+      walk,
+    );
+    theme = ThemeCubit(settings);
+    goal = StepGoalCubit(settings);
+    final access = _MockAccess();
+    final alarms = _MockAlarmUseCase();
+    when(access.check).thenAnswer((_) async => PermissionStatus.denied);
+    when(alarms.sync).thenAnswer((_) async {});
+    when(() => access.refresher).thenReturn(_NoRefresh());
+    holiday = HolidaySettingsCubit(settings, _FakeHolidays(), access, alarms);
+  }
+
+  Future<void> tearDown() async {
+    await permissions.close();
+    await theme.close();
+    await goal.close();
+    await holiday.close();
+    await diaryLock.close();
+    await diarySettings.close();
+    await getIt.reset();
+  }
+
+  /// 잠금(PIN 1234)을 켜고 일기를 잠근다.
+  Future<void> lockWithPin() async {
+    await lockRepo.setSecret(LockMethod.pin, '1234');
+    await lockRepo.saveConfig(const LockConfig(enabled: true));
+    diaryLock.start();
+  }
+
+  /// 셸과 같은 자리에 cubit 을 둔 앱. [home] 은 그 아래.
+  Future<void> pump(WidgetTester tester, Widget home) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: theme),
+          BlocProvider.value(value: goal),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          locale: const Locale('ko'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: permissions),
+              BlocProvider.value(value: holiday),
+              BlocProvider.value(value: diaryLock),
+              BlocProvider.value(value: diarySettings),
+            ],
+            child: home,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+}
