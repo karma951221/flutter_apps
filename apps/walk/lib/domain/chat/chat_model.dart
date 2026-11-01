@@ -111,12 +111,26 @@ class TokenUsage with _$TokenUsage {
   });
 }
 
+/// 어댑터가 내는 스트림 이벤트.
+///
+/// **어댑터 방출 규칙**(체감 속도 기획 §5.1 — 모든 어댑터가 따른다):
+///
+/// | 이벤트 | 언제 · 몇 번 | Claude | GPT(Responses) |
+/// |---|---|---|---|
+/// | `thinking()` | 생각 구간이 열릴 때마다(라운드에 0~여러 번). 내용 없음 | `content_block_start` 의 `thinking` · `redacted_thinking` | reasoning 항목 추가 |
+/// | `progress(text)` | 사용자에게 보일 노트. **같은 블록이면 지금까지 모인 글 전체**(누적)를 다시 낸다 — 받는 쪽은 바꿔 끼운다. 앞뒤 공백 trim, 빈 글은 안 냄. **0번이 정상** | `progressNotes` 일 때 비어 있지 않은 `thinking_delta`. 중단 문구는 안 냄(V3) | 추론 요약 delta(청구 확인 뒤, V6). 못 주면 안 냄 |
+/// | `toolCallStarted(id, name)` | 도구 호출 블록이 열리는 순간, 입력 완성 전 | `content_block_start(tool_use)` | 함수 호출 항목 추가 |
+/// | `toolCallReady(id, name, input)` | 그 블록의 입력이 완성된 순간. `completed.message` 의 `ToolCallPart` 와 **중복으로** 낸다 | `content_block_stop`(tool_use) | 함수 인자 완료 |
+/// | `textDelta(text)` | 그대로 | 그대로 | 그대로 |
+///
+/// 순서 보장: 한 블록의 `toolCallStarted` 는 같은 id 의 `toolCallReady` 보다
+/// 먼저, 둘 다 `completed` 보다 먼저. 진행 이벤트는 기록(`completed.message` ·
+/// `vendorState`)을 바꾸지 않는다.
 @Freezed(toStringOverride: false)
 sealed class ModelEvent with _$ModelEvent {
   const factory ModelEvent.textDelta(String text) = ModelTextDelta;
 
-  // 진행 이벤트 — 이름 · 모양은 체감 속도 기획 §5.1. 지금 어댑터는 아직 내지
-  // 않는다(진행 줄 단계에서 낸다).
+  // 진행 이벤트 — 이름 · 모양은 체감 속도 기획 §5.1, 방출 규칙은 위 표.
   const factory ModelEvent.thinking() = ModelThinking;
   const factory ModelEvent.progress(String text) = ModelProgress;
   const factory ModelEvent.toolCallStarted({
@@ -232,6 +246,10 @@ sealed class ModelListResult with _$ModelListResult {
 
 abstract interface class ChatModel {
   ChatVendor get vendor;
+
+  /// 이 어댑터가 사용자에게 보일 진행 노트([ModelProgress])를 낼 수 있게 설정됐는가.
+  /// false 면 세션은 시스템 프롬프트의 "도구 전 한 줄 안내"를 넣지 않는다(체감 속도 §3.1 대체 경로).
+  bool get progressNotes;
 
   /// 키 확인 겸 목록(§4 · §6.3). 예외를 던지지 않는다 — 실패는 결과 값.
   Future<ModelListResult> listModels(String apiKey);

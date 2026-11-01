@@ -1781,4 +1781,358 @@ void main() {
       expect(await kindFor('rate_limit_error'), ChatModelErrorKind.rateLimited);
     });
   });
+
+  group('진행 이벤트', () {
+    AnthropicChatModel model(
+      http.Client client, {
+      bool? progressNotes,
+      ChatTrace trace = const NoopChatTrace(),
+    }) => AnthropicChatModel.withTimeouts(
+      client,
+      trace,
+      progressNotes: progressNotes,
+    );
+
+    Future<List<ModelEvent>> runWith(
+      List<String> chunks, {
+      bool progressNotes = true,
+      ChatTrace trace = const NoopChatTrace(),
+    }) => model(
+      clientOf(chunks),
+      progressNotes: progressNotes,
+      trace: trace,
+    ).stream(request()).toList();
+
+    /// thinking 블록 하나(조각 [deltas] · 서명 SIG) + 끝.
+    List<String> thinkingRound(List<String> deltas) => [
+      sse('message_start', {'type': 'message_start'}),
+      sse('content_block_start', {
+        'index': 0,
+        'content_block': {'type': 'thinking', 'thinking': ''},
+      }),
+      for (final d in deltas)
+        sse('content_block_delta', {
+          'index': 0,
+          'delta': {'type': 'thinking_delta', 'thinking': d},
+        }),
+      sse('content_block_delta', {
+        'index': 0,
+        'delta': {'type': 'signature_delta', 'signature': 'SIG'},
+      }),
+      sse('content_block_stop', {'index': 0}),
+      sse('message_delta', {
+        'delta': {'stop_reason': 'end_turn'},
+      }),
+      sse('message_stop', {}),
+    ];
+
+    List<String> progressOf(List<ModelEvent> events) =>
+        events.whereType<ModelProgress>().map((e) => e.text).toList();
+
+    test('progressNotesDefault 는 false 이고 기본 생성자는 그것을 따른다', () {
+      expect(AnthropicChatModel.progressNotesDefault, isFalse);
+      expect(
+        AnthropicChatModel(
+          clientOf(const []),
+          const NoopChatTrace(),
+        ).progressNotes,
+        AnthropicChatModel.progressNotesDefault,
+      );
+      expect(
+        model(clientOf(const []), progressNotes: true).progressNotes,
+        isTrue,
+      );
+    });
+
+    test(
+      'progressNotes 가 켜지면 thinking.display=updates 와 beta 헤더 둘을 보낸다',
+      () async {
+        late http.BaseRequest req;
+        late Map<String, dynamic> body;
+        await model(
+          clientOf(
+            thinkingRound(const []),
+            onRequest: (r, b) {
+              req = r;
+              body = jsonDecode(b) as Map<String, dynamic>;
+            },
+          ),
+          progressNotes: true,
+        ).stream(request()).toList();
+        expect(body['thinking'], {'type': 'adaptive', 'display': 'updates'});
+        expect(
+          req.headers['anthropic-beta'],
+          'server-side-fallback-2026-07-01,thinking-display-updates-2026-08-18',
+        );
+      },
+    );
+
+    test('progressNotes 가 꺼지면 thinking 키가 없고 beta 헤더는 fallback 하나다 — '
+        '본문이 기본 생성자와 같다', () async {
+      final requests = <(String?, String)>[];
+      MockClient recording() => clientOf(
+        thinkingRound(const []),
+        onRequest: (r, b) => requests.add((r.headers['anthropic-beta'], b)),
+      );
+      await model(
+        recording(),
+        progressNotes: false,
+      ).stream(request(messages: const [ChatMessage.user('hi')])).toList();
+      await AnthropicChatModel(
+        recording(),
+        const NoopChatTrace(),
+      ).stream(request(messages: const [ChatMessage.user('hi')])).toList();
+      final (beta, body) = requests.first;
+      expect(beta, 'server-side-fallback-2026-07-01');
+      expect((jsonDecode(body) as Map).containsKey('thinking'), isFalse);
+      expect(requests.last, requests.first);
+    });
+
+    test('노트를 받지 않는 모델이면 켜져 있어도 thinking 키를 보내지 않는다', () async {
+      late http.BaseRequest req;
+      late Map<String, dynamic> body;
+      await model(
+        clientOf(
+          thinkingRound(const []),
+          onRequest: (r, b) {
+            req = r;
+            body = jsonDecode(b) as Map<String, dynamic>;
+          },
+        ),
+        progressNotes: true,
+      ).stream(request(model: 'claude-haiku-x')).toList();
+      expect(body.containsKey('thinking'), isFalse);
+      expect(req.headers['anthropic-beta'], 'server-side-fallback-2026-07-01');
+    });
+
+    test('노트를 받는 모델 접두사는 opus-5 · sonnet-5 다', () async {
+      for (final (id, expected) in const [
+        ('claude-opus-5-5', true),
+        ('claude-sonnet-5', true),
+        ('claude-sonnet-5-1', true),
+        ('claude-opus-4-7', false),
+        ('claude-haiku-4-5', false),
+      ]) {
+        late Map<String, dynamic> body;
+        await model(
+          clientOf(
+            thinkingRound(const []),
+            onRequest: (_, b) => body = jsonDecode(b) as Map<String, dynamic>,
+          ),
+          progressNotes: true,
+        ).stream(request(model: id)).toList();
+        expect(body.containsKey('thinking'), expected, reason: id);
+      }
+    });
+
+    test('thinking 블록이 열리면 thinking() 을 낸다', () async {
+      final events = await runWith(thinkingRound(const []));
+      expect(events.first, isA<ModelThinking>());
+      expect(events.last, isA<ModelCompleted>());
+      expect(events.whereType<ModelProgress>(), isEmpty);
+    });
+
+    test('redacted_thinking 블록도 thinking() 을 낸다', () async {
+      final events = await runWith([
+        sse('content_block_start', {
+          'index': 0,
+          'content_block': {'type': 'redacted_thinking', 'data': 'X'},
+        }),
+        sse('content_block_stop', {'index': 0}),
+        sse('message_delta', {
+          'delta': {'stop_reason': 'end_turn'},
+        }),
+        sse('message_stop', {}),
+      ], progressNotes: false);
+      expect(events.first, isA<ModelThinking>());
+      expect(events, hasLength(2));
+    });
+
+    test('비어 있지 않은 thinking_delta 는 누적 글로 progress 를 낸다', () async {
+      final events = await runWith(
+        thinkingRound(const ['  ', '지난주 기상 ', '기록을 볼게요']),
+      );
+      expect(progressOf(events), ['지난주 기상', '지난주 기상 기록을 볼게요']);
+      expect(events.first, isA<ModelThinking>());
+      expect(events.last, isA<ModelCompleted>());
+    });
+
+    test(
+      'progressNotes 가 꺼지면 thinking_delta 에 글이 있어도 progress 를 내지 않는다',
+      () async {
+        final events = await runWith(
+          thinkingRound(const ['지난주 기상 ', '기록을 볼게요']),
+          progressNotes: false,
+        );
+        expect(events.whereType<ModelProgress>(), isEmpty);
+        expect(events.first, isA<ModelThinking>());
+      },
+    );
+
+    test('중단 문구는 progress 로 내지 않는다', () async {
+      final events = await runWith(
+        thinkingRound(const [
+          'This part of the ',
+          'response was interrupted ',
+          'before it finished.',
+        ]),
+      );
+      expect(events.whereType<ModelProgress>(), isEmpty);
+    });
+
+    test('중단 문구의 접두사로 시작했지만 다른 글이면 그 글을 하나만 낸다', () async {
+      final events = await runWith(
+        thinkingRound(const ['This part', ' of my plan']),
+      );
+      expect(progressOf(events), ['This part of my plan']);
+    });
+
+    test('접두사인 채로 블록이 닫히면 그때 낸다', () async {
+      final chunks = thinkingRound(const ['This part', ' of the']);
+      final events = await runWith(chunks);
+      expect(progressOf(events), ['This part of the']);
+      expect(events.last, isA<ModelCompleted>());
+    });
+
+    test(
+      'tool_use 블록 시작에 toolCallStarted, 정지에 toolCallReady(input) 를 낸다',
+      () async {
+        final events = <ModelEvent>[];
+        final order = <String>[];
+        final client = MockClient.streaming((r, b) async {
+          await b.drain<void>();
+          final controller = StreamController<List<int>>();
+          void push(String chunk, String tag) {
+            order.add(tag);
+            controller.add(utf8.encode(chunk));
+          }
+
+          unawaited(() async {
+            push(
+              sse('content_block_start', {
+                'index': 0,
+                'content_block': {
+                  'type': 'tool_use',
+                  'id': 'tu1',
+                  'name': 'search_diary',
+                  'input': {},
+                },
+              }),
+              'start',
+            );
+            await Future<void>.delayed(Duration.zero);
+            push(
+              sse('content_block_delta', {
+                'index': 0,
+                'delta': {
+                  'type': 'input_json_delta',
+                  'partial_json': '{"from":"2026-06-01"}',
+                },
+              }),
+              'delta',
+            );
+            await Future<void>.delayed(Duration.zero);
+            push(sse('content_block_stop', {'index': 0}), 'stop');
+            push(
+              sse('message_delta', {
+                'delta': {'stop_reason': 'tool_use'},
+              }),
+              'md',
+            );
+            push(sse('message_stop', {}), 'ms');
+            await controller.close();
+          }());
+          return http.StreamedResponse(controller.stream, 200);
+        });
+        await for (final e in model(
+          client,
+          progressNotes: false,
+        ).stream(request())) {
+          events.add(e);
+          if (e is ModelToolCallStarted) order.add('event:started');
+        }
+        // 입력 조각이 오기 전에 이미 toolCallStarted 를 냈다.
+        expect(
+          order.indexOf('event:started'),
+          lessThan(order.indexOf('delta')),
+        );
+        expect(events, hasLength(3));
+        final started = events[0] as ModelToolCallStarted;
+        expect((started.id, started.name), ('tu1', 'search_diary'));
+        final ready = events[1] as ModelToolCallReady;
+        expect((ready.id, ready.name), ('tu1', 'search_diary'));
+        expect(ready.input, {'from': '2026-06-01'});
+        final done = events[2] as ModelCompleted;
+        expect(done.message.parts, const [
+          AssistantPart.toolCall(
+            id: 'tu1',
+            name: 'search_diary',
+            input: {'from': '2026-06-01'},
+          ),
+        ]);
+      },
+    );
+
+    test('tool_use 의 id · name 이 문자열이 아니면 진행 이벤트를 건너뛴다(블록 처리는 지금대로)', () async {
+      final events = <ModelEvent>[];
+      Object? error;
+      await model(
+            clientOf([
+              sse('content_block_start', {
+                'index': 0,
+                'content_block': {'type': 'tool_use', 'id': 1, 'name': null},
+              }),
+              sse('content_block_stop', {'index': 0}),
+              sse('message_delta', {
+                'delta': {'stop_reason': 'tool_use'},
+              }),
+              sse('message_stop', {}),
+            ]),
+            progressNotes: true,
+          )
+          .stream(request())
+          .handleError((Object e) => error = e)
+          .forEach(events.add);
+      expect(events.whereType<ModelToolCallStarted>(), isEmpty);
+      expect(events.whereType<ModelToolCallReady>(), isEmpty);
+      // 모양이 어긋난 tool_use 는 지금처럼 completed 에서 server 로 끝난다.
+      expect(
+        error,
+        isA<ChatModelException>().having(
+          (e) => e.kind,
+          'kind',
+          ChatModelErrorKind.server,
+        ),
+      );
+    });
+
+    test(
+      '노트를 내도 completed 의 vendorState thinking 블록(글 · 서명)은 받은 그대로다',
+      () async {
+        final events = await runWith(thinkingRound(const ['  지난주 ', '기록  ']));
+        final state =
+            (events.last as ModelCompleted).message.vendorState!
+                as AnthropicTurnState;
+        expect(
+          state.content,
+          equals([
+            {'type': 'thinking', 'thinking': '  지난주 기록  ', 'signature': 'SIG'},
+          ]),
+        );
+        expect((events.last as ModelCompleted).message.parts, isEmpty);
+      },
+    );
+
+    test('trace 에 progress(chars) 를 찍고 노트 글은 data 에 없다', () async {
+      final trace = RecordingChatTrace();
+      await runWith(thinkingRound(const ['비밀 ', '노트']), trace: trace);
+      expect(trace.dataOf(ChatTraceMark.progress), [
+        {'chars': 2},
+        {'chars': 5},
+      ]);
+      final all = trace.marks.map((m) => '${m.$2}').join();
+      expect(all, isNot(contains('비밀')));
+      expect(all, isNot(contains('노트')));
+    });
+  });
 }

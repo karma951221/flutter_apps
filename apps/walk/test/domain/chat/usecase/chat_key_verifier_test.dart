@@ -12,6 +12,9 @@ import '../../../support/fake_chat_settings.dart';
 
 /// [listModels] 가 [next] 를 돌려준다(함수면 불러서). 받은 키를 기록한다.
 class _ListModel implements ChatModel {
+  @override
+  bool get progressNotes => false;
+
   _ListModel(this.next, {this.vendor = ChatVendor.anthropic});
 
   FutureOr<ModelListResult> Function() next;

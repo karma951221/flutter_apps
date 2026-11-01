@@ -103,6 +103,10 @@ class OpenAiChatModel implements ChatModel {
   @override
   ChatVendor get vendor => ChatVendor.openai;
 
+  /// 추론 요약을 노트로 내는 것은 청구 확인 뒤(V6) — 지금은 내지 않는다.
+  @override
+  bool get progressNotes => false;
+
   // listModels
 
   /// `GET /v1/models`. 판정은 상태 코드만(2xx ok · 401/403 invalidKey · 그 밖
@@ -475,6 +479,34 @@ class OpenAiChatModel implements ChatModel {
     );
   }
 
+  /// 끝난 함수 호출 항목 → toolCallReady. 끝나지 않았거나(잘림) 인자를 못 읽으면
+  /// null — 결과 판정은 completed 가 한다.
+  static ModelEvent? _readyOf(Object? item) {
+    if (item case {
+      'type': 'function_call',
+      'status': 'completed',
+      'call_id': final String id,
+      'name': final String name,
+      'arguments': final String arguments,
+    }) {
+      try {
+        final input = arguments.isEmpty
+            ? const <String, Object?>{}
+            : jsonDecode(arguments);
+        if (input is Map) {
+          return ModelEvent.toolCallReady(
+            id: id,
+            name: name,
+            input: Map<String, Object?>.from(input),
+          );
+        }
+      } on FormatException {
+        return null;
+      }
+    }
+    return null;
+  }
+
   /// 계측용 항목 종류 이름.
   static Object? _kindOfItem(Object? type) => switch (type) {
     'reasoning' => 'thinking',
@@ -501,21 +533,34 @@ class OpenAiChatModel implements ChatModel {
           }
           yield ModelEvent.textDelta(text);
         case 'response.output_item.added':
+          final item = json['item'];
+          final type = item is Map ? item['type'] : null;
           if (_trace.enabled) {
-            final item = json['item'];
-            final type = item is Map ? item['type'] : null;
             _trace.mark(ChatTraceMark.blockStart, {
               'kind': _kindOfItem(type),
               if (type == 'function_call' && item is Map) 'tool': item['name'],
             });
           }
+          // 진행 이벤트(ModelEvent 방출 규칙). 결과는 completed 에서 다시 읽으므로
+          // 모양이 어긋나면 이벤트만 건너뛴다.
+          switch (item) {
+            case {'type': 'reasoning'}:
+              yield const ModelEvent.thinking();
+            case {
+              'type': 'function_call',
+              'call_id': final String id,
+              'name': final String name,
+            }:
+              yield ModelEvent.toolCallStarted(id: id, name: name);
+          }
         case 'response.output_item.done':
+          final item = json['item'];
           if (_trace.enabled) {
-            final item = json['item'];
             _trace.mark(ChatTraceMark.blockStop, {
               'kind': _kindOfItem(item is Map ? item['type'] : null),
             });
           }
+          if (_readyOf(item) case final ready?) yield ready;
         case 'response.completed' || 'response.incomplete':
           completed = true;
           final response = (json['response']! as Map).cast<String, Object?>();

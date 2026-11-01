@@ -146,6 +146,8 @@ final class _Question {
       case ChatTraceMark.textDelta:
         final chars = data['chars'];
         _roundOrNew().deltas.add((now, chars is int ? chars : 0));
+      case ChatTraceMark.progress:
+        _roundOrNew().firstProgress ??= now;
       case ChatTraceMark.msgStop:
         final round = _roundOrNew()
           ..stop = now
@@ -230,6 +232,9 @@ final class _Round {
   final int number;
   int? head;
   int? first;
+
+  /// 첫 진행 노트(`progress`) 시각.
+  int? firstProgress;
   int? stop;
   Object? stopKind;
   final blocks = <_Span>[];
@@ -246,6 +251,7 @@ final class _Round {
       if (first != null) 'first=$first',
       for (final block in blocks)
         if (block.name != null) block.summary(),
+      if (firstProgress != null) 'firstProgress=$firstProgress',
       ..._deltaParts(),
       if (stop != null) 'stop=$stop${_unusualStop()}',
       for (final key in const ['in', 'out'])

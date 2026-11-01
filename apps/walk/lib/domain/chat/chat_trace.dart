@@ -46,6 +46,9 @@ abstract final class ChatTraceMark {
   static const blockStart = 'block.start';
   static const blockStop = 'block.stop';
   static const textDelta = 'textDelta';
+
+  /// 진행 노트 하나를 냈다. data 는 `chars`(글 길이)만 — 노트 글은 찍지 않는다.
+  static const progress = 'progress';
   static const msgStop = 'msgStop';
 
   // session

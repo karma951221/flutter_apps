@@ -108,6 +108,28 @@ void main() {
     ]);
   });
 
+  test('라운드 요약에 firstProgress 가 들어간다', () {
+    trace.begin();
+    at(0, ChatTraceMark.round, {'n': 1});
+    at(10, ChatTraceMark.head);
+    at(20, ChatTraceMark.blockStart, {'kind': 'thinking'});
+    at(450, ChatTraceMark.progress, {'chars': 6});
+    at(700, ChatTraceMark.progress, {'chars': 14});
+    at(900, ChatTraceMark.blockStop, {'kind': 'thinking'});
+    at(950, ChatTraceMark.msgStop, {'stop': 'toolUse'});
+    at(1000, ChatTraceMark.round, {'n': 2});
+    at(1010, ChatTraceMark.head);
+    at(1500, ChatTraceMark.msgStop, {'stop': 'endTurn'});
+    trace.end();
+
+    expect(
+      lines.single,
+      'chat.trace q=1 rounds=2 '
+      'r1{head=10 think=20-900 firstProgress=450 stop=950} '
+      'r2{head=1010 stop=1500}',
+    );
+  });
+
   test('textDelta 개수 · 첫~마지막 간격 · 최대 조각 · 간격 중앙값을 계산한다', () {
     trace.begin();
     at(0, ChatTraceMark.round, {'n': 1});

@@ -1225,4 +1225,49 @@ void main() {
     expect(done.stop, StopKind.endTurn);
     expect(done.message.parts, [const AssistantPart.text('a')]);
   });
+
+  group('진행 이벤트', () {
+    test('progressNotes 는 false(노트를 아직 내지 않는다)', () {
+      expect(modelOf(clientOf(const [])).progressNotes, isFalse);
+    });
+
+    test('reasoning 항목 추가에 thinking(), 함수 호출 항목 추가에 toolCallStarted, '
+        '완료에 toolCallReady 를 낸다', () async {
+      final events = await run(fixtureClient('stream_reasoning_tool.sse'));
+      expect(events, hasLength(5));
+      expect(events[0], isA<ModelThinking>());
+      expect(events[1], isA<ModelTextDelta>());
+      final started = events[2] as ModelToolCallStarted;
+      expect((started.id, started.name), ('call_r1', 'search_diary'));
+      final ready = events[3] as ModelToolCallReady;
+      expect((ready.id, ready.name), ('call_r1', 'search_diary'));
+      expect(ready.input, {'query': '강아지'});
+      final done = events[4] as ModelCompleted;
+      expect(done.message.parts.whereType<ToolCallPart>().single.id, 'call_r1');
+      expect(events.whereType<ModelProgress>(), isEmpty);
+    });
+
+    test('끝나지 않았거나 인자를 못 읽는 함수 호출은 toolCallReady 를 내지 않는다', () async {
+      Map<String, Object?> call(String status, String arguments) => {
+        'id': 'fc',
+        'type': 'function_call',
+        'status': status,
+        'call_id': 'c1',
+        'name': 'search_diary',
+        'arguments': arguments,
+      };
+      final events = await run(
+        clientOf([
+          sse('response.output_item.done', {'item': call('incomplete', '{"q')}),
+          sse('response.output_item.done', {'item': call('completed', '{"q')}),
+          sse('response.output_item.done', {
+            'item': {'type': 'function_call', 'call_id': 1, 'name': 'x'},
+          }),
+          _completed(),
+        ]),
+      );
+      expect(events.whereType<ModelToolCallReady>(), isEmpty);
+      expect(events.single, isA<ModelCompleted>());
+    });
+  });
 }

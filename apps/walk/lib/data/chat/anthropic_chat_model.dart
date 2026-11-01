@@ -53,7 +53,8 @@ class AnthropicChatModel implements ChatModel {
     this.idleTimeout = const Duration(seconds: 90),
     this.listTimeout = const Duration(seconds: 10),
     @visibleForTesting this.fastSpecs = fastModeSpecs,
-  });
+    @visibleForTesting bool? progressNotes,
+  }) : _progressNotes = progressNotes ?? progressNotesDefault;
 
   final http.Client _client;
   final ChatTrace _trace;
@@ -69,6 +70,25 @@ class AnthropicChatModel implements ChatModel {
 
   /// 빠른 출력 지원 표. 테스트가 바꿔 넣는다.
   final Map<ChatVendor, List<FastModeSpec>> fastSpecs;
+
+  final bool _progressNotes;
+
+  /// V2 청구 확인 전에는 false. true 면 thinking.display=updates + beta 헤더 + 노트 방출.
+  static const progressNotesDefault = false;
+
+  @override
+  bool get progressNotes => _progressNotes;
+
+  static const _fallbackBeta = 'server-side-fallback-2026-07-01';
+  static const _notesBeta = 'thinking-display-updates-2026-08-18';
+  static const _thinkingParam = {'type': 'adaptive', 'display': 'updates'};
+
+  /// V1: thinking.display 를 받는 모델 접두사. 밖이면 thinking 키를 보내지 않는다.
+  static const _progressNoteModels = ['claude-opus-5', 'claude-sonnet-5'];
+
+  /// 끊긴 응답의 마지막 thinking 블록에 서버가 넣는 문구(V3). 노트로 보이지 않는다.
+  static const _interruptedNote =
+      'This part of the response was interrupted before it finished.';
 
   /// fast mode 요청 필드 · 베타 헤더(A2). 확인 전 값은 문서 기억에 따른
   /// 자리표시이고 지원 표([fastModeSpecs])가 비어 있어 실리지 않는다.
@@ -247,7 +267,11 @@ class AnthropicChatModel implements ChatModel {
           ),
         );
       }
-      yield* _parse(untilAbort(response.stream, abortTrigger), request.model);
+      yield* _parse(
+        untilAbort(response.stream, abortTrigger),
+        request.model,
+        notes: _notes(request),
+      );
     } on ChatModelException {
       rethrow;
     } on SocketException {
@@ -264,11 +288,16 @@ class AnthropicChatModel implements ChatModel {
       request.fastMode &&
       fastModeOf(vendor, request.model, specs: fastSpecs) != null;
 
+  /// 이 요청에서 노트를 받는가 — 켰고 그 모델이 thinking.display 를 받는다(R4).
+  bool _notes(ModelRequest request) =>
+      _progressNotes && _progressNoteModels.any(request.model.startsWith);
+
   Map<String, String> _headers(ModelRequest request) => {
     'x-api-key': request.apiKey,
     'anthropic-version': _apiVersion,
     'anthropic-beta': [
-      'server-side-fallback-2026-07-01',
+      _fallbackBeta,
+      if (_notes(request)) _notesBeta,
       if (_fast(request)) ?fastModeBeta,
     ].join(','),
     'content-type': 'application/json',
@@ -281,6 +310,7 @@ class AnthropicChatModel implements ChatModel {
     if (supportsEffortOf(vendor, request.model))
       'output_config': {'effort': 'low'},
     if (_fast(request)) ...fastModeFields,
+    if (_notes(request)) 'thinking': _thinkingParam,
     'fallbacks': 'default',
     'system': request.system,
     'messages': [for (final m in request.messages) _message(m, request.model)],
@@ -410,9 +440,33 @@ class AnthropicChatModel implements ChatModel {
         ),
   ];
 
-  Stream<ModelEvent> _parse(Stream<List<int>> bytes, String model) async* {
+  /// 진행 노트 하나 + 계측(글자 수만).
+  Iterable<ModelEvent> _note(String text) sync* {
+    if (_trace.enabled) {
+      _trace.mark(ChatTraceMark.progress, {'chars': text.length});
+    }
+    yield ModelEvent.progress(text);
+  }
+
+  /// 노트로 낼 글. 비었거나 중단 문구면 null.
+  static String? _noteOf(String raw) {
+    final text = raw.trim();
+    return text.isEmpty || text == _interruptedNote ? null : text;
+  }
+
+  /// [notes] 면 thinking 블록 글을 진행 노트로 낸다.
+  Stream<ModelEvent> _parse(
+    Stream<List<int>> bytes,
+    String model, {
+    required bool notes,
+  }) async* {
     final blocks = <int, Map<String, Object?>>{};
     final jsonBuffers = <int, StringBuffer>{};
+    // thinking 블록마다 아직 내지 않은 누적 노트가 있는가(중단 문구의 접두사라
+    // 보류한 경우).
+    final heldNotes = <int>{};
+    // thinking 블록마다 마지막으로 낸 노트(공백만 더한 delta 로 같은 글을 다시 내지 않게).
+    final lastNotes = <int, String>{};
     String? stopReason;
     TokenUsage? usage;
     int? lastOutputTokens;
@@ -445,7 +499,18 @@ class AnthropicChatModel implements ChatModel {
               if (block['type'] == 'tool_use') 'tool': block['name'],
             });
           }
-          if (block['type'] == 'tool_use') jsonBuffers[index] = StringBuffer();
+          switch (block) {
+            case {'type': 'thinking' || 'redacted_thinking'}:
+              yield const ModelEvent.thinking();
+            case {'type': 'tool_use'}:
+              jsonBuffers[index] = StringBuffer();
+              if (block case {
+                'id': final String id,
+                'name': final String name,
+              }) {
+                yield ModelEvent.toolCallStarted(id: id, name: name);
+              }
+          }
         case 'content_block_delta':
           final index = json['index'] as int;
           final delta = json['delta'] as Map;
@@ -460,8 +525,20 @@ class AnthropicChatModel implements ChatModel {
               }
               yield ModelEvent.textDelta(text);
             case 'thinking_delta':
-              block['thinking'] =
+              final thinking =
                   '${block['thinking'] ?? ''}${delta['thinking'] ?? ''}';
+              block['thinking'] = thinking;
+              if (!notes) break;
+              final text = thinking.trim();
+              if (text.isEmpty) break;
+              if (_interruptedNote.startsWith(text)) {
+                heldNotes.add(index);
+                break;
+              }
+              heldNotes.remove(index);
+              if (lastNotes[index] == text) break;
+              lastNotes[index] = text;
+              yield* _note(text);
             case 'signature_delta':
               block['signature'] =
                   '${block['signature'] ?? ''}${delta['signature'] ?? ''}';
@@ -477,6 +554,10 @@ class AnthropicChatModel implements ChatModel {
           if (_trace.enabled) {
             _trace.mark(ChatTraceMark.blockStop, {'kind': block?['type']});
           }
+          if (heldNotes.remove(index) && block != null) {
+            final note = _noteOf('${block['thinking'] ?? ''}');
+            if (note != null) yield* _note(note);
+          }
           if (buffer != null && block != null) {
             final text = buffer.toString();
             try {
@@ -485,6 +566,17 @@ class AnthropicChatModel implements ChatModel {
                   : jsonDecode(text);
             } on FormatException {
               throw const ChatModelException(ChatModelErrorKind.server);
+            }
+            if (block case {
+              'id': final String id,
+              'name': final String name,
+              'input': final Map<Object?, Object?> input,
+            }) {
+              yield ModelEvent.toolCallReady(
+                id: id,
+                name: name,
+                input: Map<String, Object?>.from(input),
+              );
             }
           }
         case 'message_delta':

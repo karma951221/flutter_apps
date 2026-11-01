@@ -44,6 +44,9 @@ class _FixedClock extends Clock {
 
 /// 한 번 부를 때마다 준비된 라운드 하나를 흘리고, 받은 요청을 기록한다.
 class _FakeModel implements ChatModel {
+  @override
+  bool get progressNotes => false;
+
   _FakeModel(this.rounds);
 
   /// 라운드별 이벤트. Exception 이 들어 있으면 그 자리에서 스트림 오류를 낸다.
@@ -2243,6 +2246,9 @@ class _GatedKeySettings extends FakeChatSettings {
 }
 
 class _GatedModel implements ChatModel {
+  @override
+  bool get progressNotes => false;
+
   _GatedModel(this.gate);
 
   final Future<void> gate;
@@ -2265,6 +2271,9 @@ class _GatedModel implements ChatModel {
 
 /// 부를 때마다 Completer 하나를 만들고, 테스트가 그걸 끝낸다.
 class _CompleterModel implements ChatModel {
+  @override
+  bool get progressNotes => false;
+
   final calls = <Completer<ModelEvent>>[];
   final requests = <List<ChatMessage>>[];
 
@@ -2286,6 +2295,9 @@ class _CompleterModel implements ChatModel {
 
 /// 부를 때마다 테스트가 쥐는 컨트롤러 라운드를 만들고, 끝나기 전의 구독 취소를 기록한다.
 class _HangingModel implements ChatModel {
+  @override
+  bool get progressNotes => false;
+
   final rounds = <StreamController<ModelEvent>>[];
   final cancelled = <bool>[];
   final requests = <List<ChatMessage>>[];
