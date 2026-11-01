@@ -186,9 +186,18 @@ class ChatCubit extends Cubit<ChatState> {
   /// 그 턴들로 이어간다. 그 대화가 없으면(사이에 지워짐) 빈 새 대화.
   ///
   /// 읽는 동안 [ChatState.loading] — 그 사이 보낸 질문은 무시한다(곧 다시 그려 잃게 되므로).
+  /// 읽는 동안에도 [OpenConversation.id] 는 [conversationId] 다 — 보관 정리가 건너뛰게.
+  /// 줄 선 저장(지난 턴)이 끝난 뒤 읽는다 — 같은 대화를 다시 열어도 그 턴이 보이게.
   Future<void> open(String conversationId) async {
-    _startFresh(temporary: false, loading: true);
-    await _load(conversationId, _thread);
+    _startFresh(temporary: false, loading: true, openId: conversationId);
+    final thread = _thread;
+    try {
+      await _saveTail;
+    } on Object {
+      // 저장 실패는 _write 가 삼킨다. 여기선 읽기만 이어간다.
+    }
+    if (isClosed || !identical(thread, _thread)) return;
+    await _load(conversationId, thread);
   }
 
   /// [userIndex] 의 질문과 그 답 말풍선을 지운다. 답하는 중이면 무시한다.
@@ -226,7 +235,12 @@ class ChatCubit extends Cubit<ChatState> {
         }
         if (isClosed || !identical(thread, _thread)) return;
         // 새 thread 가 loading 을 이어받고 _load 가 끝에 내린다.
-        _startFresh(temporary: false, keepScreen: true, loading: true);
+        _startFresh(
+          temporary: false,
+          keepScreen: true,
+          loading: true,
+          openId: id,
+        );
         await _load(id, _thread);
         return;
       }
@@ -350,11 +364,14 @@ class ChatCubit extends Cubit<ChatState> {
       case ChatFinished(:final citedEntryIds):
         _finishing = true;
         final running = _running;
+        // 인용을 읽기 전에 지금 대화(thread)로 저장을 줄 세운다 — 읽는 사이 [새 대화] · open 해도
+        // 끝난 답은 저장된다(화면에 붙일지는 _write 가 thread 로 가린다).
+        final saved = _saveLastTurn(citedEntryIds, stopped: false);
         final cited = await _resolve(citedEntryIds);
         if (generation != _generation || isClosed) return;
         _end(_withLast((b) => b.copyWith(cited: cited)), complete: false);
         // send 의 Future 는 저장 시도까지 끝난 뒤에 끝난다.
-        await _saveLastTurn(citedEntryIds, stopped: false);
+        await saved;
         if (running != null && !running.isCompleted) running.complete();
         if (identical(_running, running)) _running = null;
       case ChatFailed(:final failure):
@@ -381,11 +398,13 @@ class ChatCubit extends Cubit<ChatState> {
 
   /// 대화를 끊고 빈 새 대화(또는 임시 대화)로 둔다. [keepScreen] 이면 말풍선은 그대로 두고
   /// (곧 [_load] 가 다시 그린다) 세션 · 저장 위치만 바꾼다. [loading] 은 곧 [_load] 가 이어
-  /// 읽을 때 true.
+  /// 읽을 때 true. [openId] 는 곧 [_load] 가 읽을 대화 — 읽는 동안 [OpenConversation.id] 를
+  /// 그 id 로 둬서 보관 정리가 지우지 않게 한다(턴이 없으면 [_load] 가 비운다).
   void _startFresh({
     required bool temporary,
     bool keepScreen = false,
     bool loading = false,
+    String? openId,
   }) {
     _generation++;
     _thread = _Thread(temporary: temporary);
@@ -405,6 +424,7 @@ class ChatCubit extends Cubit<ChatState> {
       ),
     );
     _setConversation(null);
+    if (openId != null) _open.id = openId;
   }
 
   /// 저장된 [id] 의 턴으로 화면과 세션을 채운다. 그 사이 다른 대화로 바뀌었으면([thread]) 버린다.
@@ -419,6 +439,7 @@ class ChatCubit extends Cubit<ChatState> {
     if (isClosed || !identical(thread, _thread)) return;
     if (turns.isEmpty) {
       emit(state.copyWith(bubbles: const [], loading: false));
+      _open.id = null;
       return;
     }
     final citedByTurn = await Future.wait([

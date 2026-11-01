@@ -15,5 +15,13 @@ class ChatHistoryState with _$ChatHistoryState {
   @override
   final List<Conversation> conversations;
 
-  const ChatHistoryState({this.loading = true, this.conversations = const []});
+  /// 목록을 읽지 못했다(스트림 오류).
+  @override
+  final bool failed;
+
+  const ChatHistoryState({
+    this.loading = true,
+    this.conversations = const [],
+    this.failed = false,
+  });
 }

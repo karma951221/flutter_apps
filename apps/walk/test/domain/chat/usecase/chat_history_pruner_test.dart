@@ -18,13 +18,27 @@ import 'package:walk/domain/chat/usecase/open_conversation.dart';
 import '../../../support/diary_fixtures.dart' show MutableClock;
 
 class _MemorySettings implements ChatHistorySettings {
-  _MemorySettings(this.retention);
+  _MemorySettings(this._retention);
+
+  ChatRetention _retention;
+
+  /// 설정하면 retention 을 읽을 때 한 번 던진다.
+  Object? readError;
 
   @override
-  ChatRetention retention;
+  ChatRetention get retention {
+    final error = readError;
+    if (error != null) {
+      readError = null;
+      throw error;
+    }
+    return _retention;
+  }
+
+  set retention(ChatRetention value) => _retention = value;
 
   @override
-  Future<void> setRetention(ChatRetention value) async => retention = value;
+  Future<void> setRetention(ChatRetention value) async => _retention = value;
 }
 
 /// deleteOlderThan 에 받은 값만 기록한다. 나머지는 쓰지 않는다.
@@ -202,5 +216,19 @@ void main() {
 
     expect(history.calls, hasLength(2));
     expect(history.maxRunning, 1);
+  });
+
+  test('설정 읽기가 던져도 prune 은 던지지 않고 다음 호출은 돈다', () async {
+    settings
+      ..retention = ChatRetention.day30
+      ..readError = StateError('prefs');
+    final p = pruner();
+
+    await expectLater(p.prune(), completes);
+    expect(history.calls, isEmpty);
+
+    await expectLater(p.prune(), completes);
+    expect(history.calls, hasLength(1));
+    expect(usage.cutoffs, hasLength(1));
   });
 }

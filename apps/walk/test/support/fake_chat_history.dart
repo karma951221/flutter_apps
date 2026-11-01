@@ -3,27 +3,37 @@ import 'package:walk/domain/chat/entity/chat_usage_summary.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
 import 'package:walk/domain/chat/repository/chat_usage_repository.dart';
 
-/// 메모리 위의 대화 보관 기간.
+/// 메모리 위의 대화 보관 기간. [failSet] 이면 setRetention 이 던진다.
 class FakeChatHistorySettings implements ChatHistorySettings {
   FakeChatHistorySettings([this.retention = ChatRetention.fallback]);
 
   @override
   ChatRetention retention;
 
+  bool failSet = false;
+
   @override
-  Future<void> setRetention(ChatRetention value) async => retention = value;
+  Future<void> setRetention(ChatRetention value) async {
+    if (failSet) throw StateError('prefs');
+    retention = value;
+  }
 }
 
-/// 대화 수와 모두 지우기만 쓰는 대화 저장소. [failDeleteAll] 이면 모두 지우기가 던진다.
+/// 대화 수와 모두 지우기만 쓰는 대화 저장소. [failDeleteAll] 이면 모두 지우기가,
+/// [failCount] 면 대화 수 읽기가 던진다.
 class FakeChatHistoryCount implements ChatHistoryRepository {
   FakeChatHistoryCount([this.stored = 0]);
 
   int stored;
   bool failDeleteAll = false;
+  bool failCount = false;
   int deleteAllCalls = 0;
 
   @override
-  Future<int> count() async => stored;
+  Future<int> count() async {
+    if (failCount) throw StateError('count failed');
+    return stored;
+  }
 
   @override
   Future<int> deleteAll() async {

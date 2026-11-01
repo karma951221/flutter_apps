@@ -31,10 +31,15 @@ class ChatHistorySettingsCubit extends Cubit<ChatHistorySettingsState> {
     emit(state.copyWith(retention: value));
   }
 
-  /// 지운 대화 수. 뒤에 대화 수를 다시 읽는다.
+  /// 지운 대화 수. 뒤에 대화 수를 다시 읽는다 — 다시 읽지 못하면 0 으로 둔다(지우기는 됐다).
   Future<int> deleteAllConversations() async {
     final deleted = await _history.deleteAll();
-    final count = await _history.count();
+    int count;
+    try {
+      count = await _history.count();
+    } on Object {
+      count = 0;
+    }
     if (!isClosed) emit(state.copyWith(conversationCount: count));
     return deleted;
   }

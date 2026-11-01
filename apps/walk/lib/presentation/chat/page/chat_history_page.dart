@@ -59,6 +59,12 @@ class ChatHistoryPage extends StatelessWidget {
     if (state.loading) {
       return const Center(child: CircularProgressIndicator());
     }
+    if (state.failed && state.conversations.isEmpty) {
+      return AppPlaceholder(
+        icon: Icons.error_outline,
+        message: l10n.walkChatHistoryLoadFailed,
+      );
+    }
     if (state.conversations.isEmpty) {
       return AppPlaceholder(
         icon: Icons.forum_outlined,
@@ -83,7 +89,10 @@ class ChatHistoryPage extends StatelessWidget {
       confirmLabel: l10n.walkChatHistoryDeleteAllConfirm,
     );
     if (!confirmed) return;
-    await cubit.deleteAll();
+    final ok = await cubit.deleteAll();
+    if (!ok && context.mounted) {
+      _showFailure(context, l10n.walkChatHistoryDeleteAllFailed);
+    }
   }
 }
 
@@ -150,7 +159,13 @@ class _ConversationRow extends StatelessWidget {
       current: conversation.title,
     );
     if (title == null || title == conversation.title) return;
-    await cubit.rename(conversation.id, title);
+    final ok = await cubit.rename(conversation.id, title);
+    if (!ok && context.mounted) {
+      _showFailure(
+        context,
+        AppLocalizations.of(context).walkChatHistoryRenameFailed,
+      );
+    }
   }
 
   Future<void> _delete(BuildContext context) async {
@@ -163,6 +178,12 @@ class _ConversationRow extends StatelessWidget {
       confirmLabel: l10n.commonDelete,
     );
     if (!confirmed) return;
-    await cubit.delete(conversation.id);
+    final ok = await cubit.delete(conversation.id);
+    if (!ok && context.mounted) {
+      _showFailure(context, l10n.walkChatHistoryDeleteFailed);
+    }
   }
 }
+
+void _showFailure(BuildContext context, String message) =>
+    AppSnackBar.show(context, message: message, type: AppSnackBarType.error);

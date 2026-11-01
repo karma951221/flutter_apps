@@ -298,4 +298,33 @@ void main() {
 
     expect(emitted, [true, false]);
   });
+
+  test(
+    'deleteAll · deleteOlderThan 으로 지워져도 watchExists 는 false 를 낸다',
+    () async {
+      await repo.appendTurn(turn: _draft('a')); // c1 @ t0
+      clock.advance(const Duration(days: 10));
+      await repo.appendTurn(turn: _draft('b')); // c2 @ t0+10d
+      final c1 = <bool>[];
+      final c2 = <bool>[];
+      final subs = [
+        repo.watchExists('c1').listen(c1.add),
+        repo.watchExists('c2').listen(c2.add),
+      ];
+      await pumpEventQueue();
+
+      await repo.deleteOlderThan(t0.add(const Duration(days: 1)));
+      await pumpEventQueue();
+      expect(c1, [true, false]);
+      expect(c2, [true]);
+
+      await repo.deleteAll();
+      await pumpEventQueue();
+      for (final sub in subs) {
+        await sub.cancel();
+      }
+
+      expect(c2, [true, false]);
+    },
+  );
 }

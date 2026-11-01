@@ -3424,6 +3424,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatHistoryDeleteAllFailed => '대화를 지우지 못했어요';
 
   @override
+  String get walkChatHistoryLoadFailed => '대화 목록을 불러오지 못했어요';
+
+  @override
+  String get walkChatHistoryDeleteFailed => '대화를 지우지 못했어요';
+
+  @override
+  String get walkChatHistoryRenameFailed => '이름을 바꾸지 못했어요';
+
+  @override
+  String get walkChatHistoryRetentionFailed => '보관 기간을 바꾸지 못했어요';
+
+  @override
   String get walkChatUsageLoadFailed => '사용량을 불러오지 못했어요';
 
   @override

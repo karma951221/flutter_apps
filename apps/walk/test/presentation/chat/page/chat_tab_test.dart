@@ -547,12 +547,22 @@ void main() {
       expect(find.byKey(const Key('menu-settings-chat')), findsNothing);
     });
 
-    testWidgets('키가 없으면 임시 대화로 시작이 없다', (tester) async {
+    testWidgets('키가 없으면 대화 목록 · 임시 대화로 시작이 없다', (tester) async {
       settings.key = null;
       await pump(tester);
       await openMenu(tester);
 
-      expect(find.byKey(const Key('chat-menu-history')), findsOneWidget);
+      expect(find.byKey(const Key('chat-menu-history')), findsNothing);
+      expect(find.byKey(const Key('chat-menu-temporary')), findsNothing);
+      expect(find.byKey(const Key('menu-settings-chat')), findsOneWidget);
+    });
+
+    testWidgets('동의 전이면 대화 목록 · 임시 대화로 시작이 없다', (tester) async {
+      settings.consented = false;
+      await pump(tester);
+      await openMenu(tester);
+
+      expect(find.byKey(const Key('chat-menu-history')), findsNothing);
       expect(find.byKey(const Key('chat-menu-temporary')), findsNothing);
     });
   });
@@ -706,6 +716,47 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
 
       expect(secure.calls, isEmpty);
+    });
+
+    testWidgets('임시 대화에서 지난 대화를 열면 끈다', (tester) async {
+      when(() => history.conversations()).thenAnswer(
+        (_) => Stream.value([
+          Conversation(
+            id: 'c9',
+            title: '지난 주말?',
+            titleEdited: false,
+            createdAt: diaryT0,
+            updatedAt: diaryT0,
+            turnCount: 1,
+          ),
+        ]),
+      );
+      when(() => history.turns('c9')).thenAnswer(
+        (_) async => [
+          ChatTurnRecord(
+            conversationId: 'c9',
+            seq: 1,
+            question: '지난 주말?',
+            answer: '한강을 걸었어요',
+            citedEntryIds: const [],
+            stopped: false,
+            vendor: ChatVendor.anthropic,
+            model: 'claude-test',
+            askedAt: diaryT0,
+          ),
+        ],
+      );
+      await pump(tester);
+      await tapMenu(tester, 'chat-menu-temporary');
+      expect(secure.calls, [true]);
+
+      await tapMenu(tester, 'chat-menu-history');
+      await tester.tap(find.byKey(const Key('chat-history-c9')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(banner), findsNothing);
+      expect(find.text('한강을 걸었어요'), findsOneWidget);
+      expect(secure.calls, [true, false]);
     });
 
     testWidgets('같은 값을 두 번 보내지 않는다', (tester) async {

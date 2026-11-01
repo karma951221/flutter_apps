@@ -46,7 +46,16 @@ class _ChatHistorySettingsView extends StatelessWidget {
       ],
     );
     if (picked == null || cubit.isClosed) return;
-    await cubit.setRetention(picked);
+    try {
+      await cubit.setRetention(picked);
+    } on Object {
+      if (!context.mounted) return;
+      AppSnackBar.show(
+        context,
+        message: l10n.walkChatHistoryRetentionFailed,
+        type: AppSnackBarType.error,
+      );
+    }
   }
 
   Future<void> _deleteAll(BuildContext context, int count) async {

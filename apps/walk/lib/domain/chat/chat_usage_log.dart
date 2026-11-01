@@ -29,7 +29,7 @@ class ChatUsageRecord with _$ChatUsageRecord {
   @override
   final int round;
 
-  /// 임시 대화 여부. 지금은 늘 false.
+  /// 임시 대화 여부.
   @override
   final bool temporary;
   @override

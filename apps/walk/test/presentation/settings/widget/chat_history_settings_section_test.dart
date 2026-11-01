@@ -139,6 +139,47 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('모두 지운 뒤 대화 수를 못 읽어도 실패 스낵바는 없고 행이 꺼진다', (tester) async {
+    await pump(tester);
+    history.failCount = true;
+
+    await tester.tap(find.byKey(deleteAllRow));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('모두 지우기'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('대화를 지우지 못했어요'), findsNothing);
+    expect(
+      tester.widget<AppListTile>(find.byKey(deleteAllRow)).enabled,
+      isFalse,
+    );
+  });
+
+  testWidgets('보관 기간 저장이 실패하면 오류 스낵바, 행은 그대로', (tester) async {
+    settings.failSet = true;
+    await pump(tester);
+
+    await tester.tap(find.byKey(retentionRow));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('30일'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('보관 기간을 바꾸지 못했어요'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    expect(
+      find.descendant(
+        of: find.byKey(retentionRow),
+        matching: find.text('지우지 않음'),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('대화가 없으면 모두 지우기 행이 꺼진다', (tester) async {
     history.stored = 0;
     await pump(tester);

@@ -3424,6 +3424,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatHistoryDeleteAllFailed => '会話を削除できませんでした';
 
   @override
+  String get walkChatHistoryLoadFailed => '会話一覧を読み込めませんでした';
+
+  @override
+  String get walkChatHistoryDeleteFailed => '会話を削除できませんでした';
+
+  @override
+  String get walkChatHistoryRenameFailed => '名前を変更できませんでした';
+
+  @override
+  String get walkChatHistoryRetentionFailed => '保存期間を変更できませんでした';
+
+  @override
   String get walkChatUsageLoadFailed => '使用量を読み込めませんでした';
 
   @override

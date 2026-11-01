@@ -91,7 +91,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
       context,
       page: (_) => const ChatHistoryPage(),
     );
-    if (id != null) await _cubit.open(id);
+    if (id != null && mounted) await _cubit.open(id);
   }
 
   @override
@@ -175,7 +175,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
   }
 }
 
-/// 풀린 동안의 ⋮ — 대화 목록 · 임시 대화로 시작(키가 있을 때) 아래에 물어보기 설정 · 앱 설정.
+/// 풀린 동안의 ⋮ — 대화 목록 · 임시 대화로 시작(둘 다 쓸 수 있을 때) 아래에 물어보기 설정 · 앱 설정.
 class _ChatMenu extends StatelessWidget {
   const _ChatMenu({required this.onHistory, required this.onTemporary});
 
@@ -191,12 +191,14 @@ class _ChatMenu extends StatelessWidget {
     return FeatureMenu(
       settings: SettingsTarget.chat,
       entries: [
-        FeatureMenuEntry(
-          key: const Key('chat-menu-history'),
-          label: l10n.walkChatHistoryTitle,
-          icon: Icons.history,
-          onTap: onHistory,
-        ),
+        // 키 · 동의 전엔 고른 대화를 열어도 보이지 않는다 — 임시 대화처럼 숨긴다.
+        if (ready)
+          FeatureMenuEntry(
+            key: const Key('chat-menu-history'),
+            label: l10n.walkChatHistoryTitle,
+            icon: Icons.history,
+            onTap: onHistory,
+          ),
         if (ready)
           FeatureMenuEntry(
             key: const Key('chat-menu-temporary'),

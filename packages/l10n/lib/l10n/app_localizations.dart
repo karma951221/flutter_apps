@@ -6386,6 +6386,30 @@ abstract class AppLocalizations {
   /// **'대화를 지우지 못했어요'**
   String get walkChatHistoryDeleteAllFailed;
 
+  /// 대화 목록: 목록 읽기 실패 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'대화 목록을 불러오지 못했어요'**
+  String get walkChatHistoryLoadFailed;
+
+  /// 대화 목록: 대화 하나 삭제 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'대화를 지우지 못했어요'**
+  String get walkChatHistoryDeleteFailed;
+
+  /// 대화 목록: 이름 바꾸기 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'이름을 바꾸지 못했어요'**
+  String get walkChatHistoryRenameFailed;
+
+  /// 물어보기 설정: 대화 보관 기간 저장 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'보관 기간을 바꾸지 못했어요'**
+  String get walkChatHistoryRetentionFailed;
+
   /// 사용량 화면: 읽기 실패 안내
   ///
   /// In ko, this message translates to:

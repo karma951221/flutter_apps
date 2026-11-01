@@ -56,12 +56,37 @@ void main() {
     final cubit = ChatHistoryCubit(history);
     addTearDown(cubit.close);
 
-    await cubit.rename('a', '새 이름');
-    await cubit.delete('b');
-    expect(await cubit.deleteAll(), 3);
+    expect(await cubit.rename('a', '새 이름'), isTrue);
+    expect(await cubit.delete('b'), isTrue);
+    expect(await cubit.deleteAll(), isTrue);
 
     verify(() => history.rename('a', '새 이름')).called(1);
     verify(() => history.delete('b')).called(1);
     verify(history.deleteAll).called(1);
+  });
+
+  test('목록 스트림이 던지면 loading false · failed', () async {
+    final cubit = ChatHistoryCubit(history);
+    addTearDown(cubit.close);
+
+    feed.addError(StateError('db'));
+    await pumpEventQueue();
+
+    expect(cubit.state.loading, isFalse);
+    expect(cubit.state.failed, isTrue);
+  });
+
+  test('rename · delete · deleteAll 이 던지면 false 를 돌려준다(던지지 않는다)', () async {
+    when(() => history.rename(any(), any())).thenThrow(StateError('db'));
+    when(
+      () => history.delete(any()),
+    ).thenAnswer((_) async => throw StateError('db'));
+    when(history.deleteAll).thenAnswer((_) async => throw StateError('db'));
+    final cubit = ChatHistoryCubit(history);
+    addTearDown(cubit.close);
+
+    expect(await cubit.rename('a', '새 이름'), isFalse);
+    expect(await cubit.delete('b'), isFalse);
+    expect(await cubit.deleteAll(), isFalse);
   });
 }

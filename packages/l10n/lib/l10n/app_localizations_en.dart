@@ -3695,6 +3695,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatHistoryDeleteAllFailed => 'Couldn\'t delete conversations';
 
   @override
+  String get walkChatHistoryLoadFailed => 'Couldn\'t load conversations';
+
+  @override
+  String get walkChatHistoryDeleteFailed => 'Couldn\'t delete the conversation';
+
+  @override
+  String get walkChatHistoryRenameFailed => 'Couldn\'t rename the conversation';
+
+  @override
+  String get walkChatHistoryRetentionFailed =>
+      'Couldn\'t change how long conversations are kept';
+
+  @override
   String get walkChatUsageLoadFailed => 'Couldn\'t load usage';
 
   @override

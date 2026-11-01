@@ -45,4 +45,12 @@ void main() {
     await expectLater(cubit.deleteAllConversations(), throwsStateError);
     expect(cubit.state.conversationCount, 3);
   });
+
+  test('모두 지운 뒤 대화 수를 못 읽으면 0 으로 두고 던지지 않는다', () async {
+    await cubit.load();
+    history.failCount = true;
+
+    expect(await cubit.deleteAllConversations(), 3);
+    expect(cubit.state.conversationCount, 0);
+  });
 }

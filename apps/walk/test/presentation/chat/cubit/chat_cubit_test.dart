@@ -1304,6 +1304,114 @@ void main() {
       unawaited(events.close());
     });
 
+    test('open 이 대화를 읽는 동안에도 OpenConversation.id 는 그 대화다', () async {
+      final reading = Completer<List<ChatTurnRecord>>();
+      when(() => history.turns('c1')).thenAnswer((_) => reading.future);
+
+      final opening = cubit.open('c1');
+      await pumpEventQueue();
+      expect(cubit.state.loading, isTrue);
+      expect(open.id, 'c1');
+
+      reading.complete([_record(1)]);
+      await opening;
+      expect(open.id, 'c1');
+    });
+
+    test('open 한 대화에 턴이 없으면 OpenConversation.id 를 비운다', () async {
+      final reading = Completer<List<ChatTurnRecord>>();
+      when(() => history.turns('gone')).thenAnswer((_) => reading.future);
+
+      final opening = cubit.open('gone');
+      await pumpEventQueue();
+      expect(open.id, 'gone');
+
+      reading.complete(const []);
+      await opening;
+      expect(open.id, isNull);
+    });
+
+    test('저장된 턴을 지우고 다시 읽는 동안에도 OpenConversation.id 는 그 대화다', () async {
+      await turn('질문1', '답1');
+      await turn('질문2', '답2');
+      when(() => history.deleteTurn('c1', 1)).thenAnswer((_) async {});
+      final reading = Completer<List<ChatTurnRecord>>();
+      when(() => history.turns('c1')).thenAnswer((_) => reading.future);
+
+      final removing = cubit.deleteTurn(0);
+      await pumpEventQueue();
+      expect(cubit.state.loading, isTrue);
+      expect(open.id, 'c1');
+
+      reading.complete([_record(2)]);
+      await removing;
+      expect(open.id, 'c1');
+      expect(cubit.state.conversationId, 'c1');
+    });
+
+    test('인용을 읽는 사이 새 대화를 시작해도 끝난 답은 저장한다', () async {
+      final read = Completer<Result<DiaryEntry>>();
+      when(() => diary.entry('e1')).thenAnswer((_) => read.future);
+
+      final sent = turn('질문', '답', cited: ['e1']);
+      await pumpEventQueue();
+      cubit.newConversation();
+      read.complete(Ok(_entry('e1')));
+      await sent;
+      await pumpEventQueue();
+
+      expect(appended, hasLength(1));
+      expect(appended.single.$2.question, '질문');
+      expect(appended.single.$2.citedEntryIds, ['e1']);
+      expect(cubit.state.bubbles, isEmpty);
+      expect(cubit.state.conversationId, isNull);
+      expect(open.id, isNull);
+    });
+
+    test('저장이 줄 선 채 같은 대화를 다시 열면 그 턴까지 보인다', () async {
+      final stored = [_record(1)];
+      when(() => history.turns('c1')).thenAnswer((_) async => [...stored]);
+      await cubit.open('c1');
+      final saving = Completer<void>();
+      when(
+        () => history.appendTurn(
+          conversationId: any(named: 'conversationId'),
+          turn: any(named: 'turn'),
+        ),
+      ).thenAnswer((invocation) async {
+        await saving.future;
+        final draft = invocation.namedArguments[#turn] as ChatTurnDraft;
+        stored.add(
+          ChatTurnRecord(
+            conversationId: 'c1',
+            seq: 2,
+            question: draft.question,
+            answer: draft.answer,
+            citedEntryIds: const [],
+            stopped: false,
+            vendor: draft.vendor,
+            model: draft.model,
+            askedAt: diaryT0,
+          ),
+        );
+        return (conversationId: 'c1', seq: 2);
+      });
+
+      unawaited(turn('질문2', '답2'));
+      await pumpEventQueue();
+      final opening = cubit.open('c1');
+      await pumpEventQueue();
+      expect(open.id, 'c1');
+      saving.complete();
+      await opening;
+
+      expect(
+        [for (final b in cubit.state.bubbles) b.text],
+        ['질문1', '답1', '질문2', '답2'],
+      );
+      expect([for (final b in cubit.state.bubbles) b.seq], [1, 1, 2, 2]);
+    });
+
     test('toString 에 질문 · 답 글이 없다', () {
       const bubble = ChatBubble(role: ChatRole.user, text: '비밀 질문', seq: 3);
       const state = ChatState(

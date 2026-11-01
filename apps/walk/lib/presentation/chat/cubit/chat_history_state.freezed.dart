@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ChatHistoryState {
 
- bool get loading; List<Conversation> get conversations;
+ bool get loading; List<Conversation> get conversations; bool get failed;
 /// Create a copy of ChatHistoryState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ChatHistoryStateCopyWith<ChatHistoryState> get copyWith => _$ChatHistoryStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatHistoryState&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other.conversations, conversations));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatHistoryState&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other.conversations, conversations)&&(identical(other.failed, failed) || other.failed == failed));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,loading,const DeepCollectionEquality().hash(conversations));
+int get hashCode => Object.hash(runtimeType,loading,const DeepCollectionEquality().hash(conversations),failed);
 
 @override
 String toString() {
-  return 'ChatHistoryState(loading: $loading, conversations: $conversations)';
+  return 'ChatHistoryState(loading: $loading, conversations: $conversations, failed: $failed)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ChatHistoryStateCopyWith<$Res>  {
   factory $ChatHistoryStateCopyWith(ChatHistoryState value, $Res Function(ChatHistoryState) _then) = _$ChatHistoryStateCopyWithImpl;
 @useResult
 $Res call({
- bool loading, List<Conversation> conversations
+ bool loading, List<Conversation> conversations, bool failed
 });
 
 
@@ -62,11 +62,12 @@ class _$ChatHistoryStateCopyWithImpl<$Res>
 
 /// Create a copy of ChatHistoryState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? loading = null,Object? conversations = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? loading = null,Object? conversations = null,Object? failed = null,}) {
   return _then(ChatHistoryState(
 loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
 as bool,conversations: null == conversations ? _self.conversations : conversations // ignore: cast_nullable_to_non_nullable
-as List<Conversation>,
+as List<Conversation>,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

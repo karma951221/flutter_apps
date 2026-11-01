@@ -30,16 +30,27 @@ class _FakeHistory implements ChatHistoryRepository {
   final List<Conversation> _items;
   final _changes = StreamController<List<Conversation>>.broadcast();
 
+  /// 설정하면 rename · delete · deleteAll 이 던진다.
+  bool failWrites = false;
+
+  /// 설정하면 목록 스트림이 첫 값 대신 오류를 낸다.
+  bool failList = false;
+
+  int renameCalls = 0;
+
   void _emit() => _changes.add(List.unmodifiable(_items));
 
   @override
   Stream<List<Conversation>> conversations() async* {
+    if (failList) throw StateError('db');
     yield List.unmodifiable(_items);
     yield* _changes.stream;
   }
 
   @override
   Future<void> rename(String id, String title) async {
+    renameCalls++;
+    if (failWrites) throw StateError('db');
     final i = _items.indexWhere((c) => c.id == id);
     _items[i] = _items[i].copyWith(title: title.trim(), titleEdited: true);
     _emit();
@@ -47,12 +58,14 @@ class _FakeHistory implements ChatHistoryRepository {
 
   @override
   Future<void> delete(String id) async {
+    if (failWrites) throw StateError('db');
     _items.removeWhere((c) => c.id == id);
     _emit();
   }
 
   @override
   Future<int> deleteAll() async {
+    if (failWrites) throw StateError('db');
     final n = _items.length;
     _items.clear();
     _emit();
@@ -316,5 +329,93 @@ void main() {
     await lock.submit('1234');
     await tester.pumpAndSettle();
     expect(row('today'), findsOneWidget);
+  });
+
+  testWidgets('이름 바꾸기 — 취소하거나 같은 이름이면 저장소를 부르지 않는다', (tester) async {
+    await setUpWith([today, older]);
+    await pump(tester);
+
+    await openRowMenu(tester, 'older');
+    await tester.tap(find.text('이름 바꾸기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(AppButton, '취소'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsNothing);
+
+    await openRowMenu(tester, 'older');
+    await tester.tap(find.text('이름 바꾸기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(AppButton, '저장'));
+    await tester.pumpAndSettle();
+
+    expect(history.renameCalls, 0);
+    expect(
+      find.descendant(of: row('older'), matching: find.text('제주 여행 정리')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('이름 바꾸기 · 삭제 · 모두 지우기가 실패하면 스낵바로 알리고 목록은 그대로', (tester) async {
+    await setUpWith([today, older]);
+    history.failWrites = true;
+    await pump(tester);
+
+    await openRowMenu(tester, 'older');
+    await tester.tap(find.text('이름 바꾸기'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.byType(TextField),
+      ),
+      '새 이름',
+    );
+    await tester.tap(find.widgetWithText(AppButton, '저장'));
+    await tester.pumpAndSettle();
+    expect(find.text('이름을 바꾸지 못했어요'), findsOneWidget);
+    ScaffoldMessenger.of(tester.element(row('older'))).clearSnackBars();
+    await tester.pumpAndSettle();
+
+    await openRowMenu(tester, 'today');
+    await tester.tap(find.text('삭제'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.widgetWithText(AppButton, '삭제'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('대화를 지우지 못했어요'), findsOneWidget);
+    expect(row('today'), findsOneWidget);
+    ScaffoldMessenger.of(tester.element(row('older'))).clearSnackBars();
+    await tester.pumpAndSettle();
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byIcon(Icons.more_vert),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('대화 모두 지우기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(AppButton, '모두 지우기'));
+    await tester.pumpAndSettle();
+    expect(find.text('대화를 지우지 못했어요'), findsOneWidget);
+    expect(row('today'), findsOneWidget);
+    expect(row('older'), findsOneWidget);
+  });
+
+  testWidgets('목록을 읽지 못하면 도는 표시 대신 오류 안내', (tester) async {
+    await setUpWith([today]);
+    history.failList = true;
+    await pump(tester);
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(
+      find.widgetWithText(AppPlaceholder, '대화 목록을 불러오지 못했어요'),
+      findsOneWidget,
+    );
   });
 }

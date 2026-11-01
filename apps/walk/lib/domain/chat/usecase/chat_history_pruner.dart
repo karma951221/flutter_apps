@@ -32,14 +32,22 @@ class ChatHistoryPruner {
   /// 보관 기간이 지난 대화(열린 대화 제외)와 13개월 전 사용량을 지운다. 겹쳐 부르면 차례로.
   /// 한쪽이 던져도 다른 쪽은 한다. 던지지 않는다.
   Future<void> prune() {
-    final result = _tail.then((_) => _prune());
+    // 어느 단계가 던져도 줄([_tail])은 성공으로 끝난다 — 다음 호출이 막히지 않게.
+    final result = _tail.then((_) => _prune()).catchError((Object _) {});
     _tail = result;
     return result;
   }
 
   Future<void> _prune() async {
-    final now = _clock.now();
-    final period = _settings.retention.period;
+    final DateTime now;
+    final Duration? period;
+    try {
+      now = _clock.now();
+      period = _settings.retention.period;
+    } on Object {
+      // 시계 · 설정을 읽지 못하면 이번엔 건너뛴다.
+      return;
+    }
     if (period != null) {
       try {
         await _history.deleteOlderThan(now.subtract(period), except: _open.id);
