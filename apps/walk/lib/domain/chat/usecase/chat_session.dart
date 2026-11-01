@@ -84,7 +84,7 @@ sealed class ChatEvent with _$ChatEvent {
       ChatFinished;
   const factory ChatEvent.failed(ChatFailure failure) = ChatFailed;
 
-  /// 진행 노트는 글 길이만 — 모델이 쓴 노트를 로그에 남기지 않는다.
+  /// 진행 노트 · 답 글은 길이만 — 모델이 쓴 글을 로그에 남기지 않는다.
   /// toolStarted 는 [ToolInputSummary.toString] 이라 검색어가 없다.
   @override
   String toString() => switch (this) {
@@ -95,7 +95,7 @@ sealed class ChatEvent with _$ChatEvent {
     ChatToolFinished(:final callId, :final name, :final summary) =>
       'ChatEvent.toolFinished(callId: $callId, name: $name, summary: $summary)',
     ChatRoundStarted(:final round) => 'ChatEvent.roundStarted($round)',
-    ChatText(:final delta) => 'ChatEvent.text(delta: $delta)',
+    ChatText(:final delta) => 'ChatEvent.text(${delta.length} chars)',
     ChatFinished(:final citedEntryIds) =>
       'ChatEvent.finished(citedEntryIds: $citedEntryIds)',
     ChatFailed(:final failure) => 'ChatEvent.failed($failure)',
@@ -412,8 +412,8 @@ class ChatSession {
         }
         // 이 라운드에 아직 글이 없다 — 첫 조각 앞에 경계 줄바꿈을 넣을지 본다.
         var firstText = true;
-        // 모델이 toolCallStarted/Ready 로 알린 도구 호출 id. 알리지 않은 호출은
-        // 실행 전에 세션이 toolStarted 를 낸다(그런 이벤트가 없는 어댑터 대비).
+        // 모델이 toolCallReady(입력 완성)로 알린 도구 호출 id. 알리지 않은 호출은
+        // 실행 전에 세션이 입력과 함께 toolStarted 를 낸다(그런 이벤트가 없는 어댑터 대비).
         final announced = <String>{};
         // 이미지 거절이면 같은 라운드를 사진 없이 한 번만 다시 보낸다.
         while (true) {
@@ -476,8 +476,8 @@ class ChatSession {
                 case ModelProgress(:final text):
                   yield ChatEvent.progress(text);
                 case ModelToolCallStarted(:final id, :final name):
+                  // 입력 없는 알림 — ready 가 오지 않으면 실행 전에 세션이 입력과 함께 다시 낸다.
                   phase = null;
-                  announced.add(id);
                   yield ChatEvent.toolStarted(callId: id, name: name);
                 case ModelToolCallReady(:final id, :final name, :final input):
                   phase = null;
@@ -498,7 +498,10 @@ class ChatSession {
             }
             retriedWithoutImages = true;
             images = false;
-            await _choice.markNoImages(target.model);
+            // 표시 저장이 실패해도 이 질문은 사진 없이 다시 보낸다.
+            try {
+              await _choice.markNoImages(target.model);
+            } on Object catch (_) {}
             if (stale()) return;
             continue;
           }

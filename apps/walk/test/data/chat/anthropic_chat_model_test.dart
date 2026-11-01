@@ -2035,6 +2035,8 @@ void main() {
         ('claude-sonnet-5-1', true),
         ('claude-opus-4-7', false),
         ('claude-haiku-4-5', false),
+        ('claude-sonnet-50', false),
+        ('claude-opus-55', false),
       ]) {
         late Map<String, dynamic> body;
         await model(

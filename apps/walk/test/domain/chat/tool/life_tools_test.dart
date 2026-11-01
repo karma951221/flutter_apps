@@ -453,6 +453,36 @@ void main() {
       expect(tools.inputSummary('search_diary', {'query': ' 짧음 '}).query, '짧음');
     });
 
+    test('query 는 grapheme 으로 센다 — 20자는 그대로, 21자는 20자 + …', () {
+      // 가족 이모지(ZWJ 로 이은 한 글자)와 결합 문자 'é'(e + U+0301)를 가르지 않는다.
+      const family = '👨‍👩‍👧';
+      const accent = 'é';
+      final twenty = '$family$accent${'가' * 18}';
+      expect(
+        tools.inputSummary('search_diary', {'query': twenty}).query,
+        twenty,
+      );
+      expect(
+        tools.inputSummary('search_diary', {'query': '$twenty나'}).query,
+        '$twenty…',
+      );
+      expect(
+        tools.inputSummary('search_diary', {'query': family * 21}).query,
+        '${family * 20}…',
+      );
+    });
+
+    test('공백뿐인 query 는 null', () {
+      expect(
+        tools.inputSummary('search_diary', {'query': '   '}).query,
+        isNull,
+      );
+      expect(
+        tools.inputSummary('search_diary', {'query': '\n\t'}).query,
+        isNull,
+      );
+    });
+
     test('날짜가 잘못이면 from · to 가 null', () {
       final s = tools.inputSummary('daily_steps', {
         'from': '2026-13-45',

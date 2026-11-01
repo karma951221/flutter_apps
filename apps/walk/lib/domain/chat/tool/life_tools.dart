@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:characters/characters.dart';
 import 'package:core/core.dart';
 import 'package:injectable/injectable.dart';
 
@@ -128,18 +129,21 @@ class LifeTools {
     }
   }
 
-  /// 진행 줄 라벨용 입력 요약. 검색어는 화면용으로만 20자까지 담는다.
+  /// 진행 줄 라벨용 검색어 최대 글자 수(grapheme).
+  static const _queryMaxChars = 20;
+
+  /// 진행 줄 라벨용 입력 요약. 검색어는 화면용으로만 20자(grapheme — 이모지 · 결합 문자를
+  /// 가르지 않는다)까지 담는다.
   ToolInputSummary inputSummary(String name, Map<String, Object?> input) {
     final kind = chatToolKindOf(name);
     String? query;
     if (kind == ChatToolKind.searchDiary) {
       final q = input['query'];
       if (q is String && q.trim().isNotEmpty) {
-        final t = q.trim();
-        final runes = t.runes.toList();
-        query = runes.length > 20
-            ? '${String.fromCharCodes(runes.take(20))}…'
-            : t;
+        final chars = q.trim().characters;
+        query = chars.length > _queryMaxChars
+            ? '${chars.take(_queryMaxChars).string}…'
+            : chars.string;
       }
     }
     return ToolInputSummary(

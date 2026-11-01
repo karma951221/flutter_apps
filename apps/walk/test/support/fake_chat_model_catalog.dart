@@ -84,8 +84,14 @@ class FakeChatModelCatalog implements ChatModelCatalog {
     });
   }
 
+  /// 있으면 [markNoImages] 가 이것을 던진다(저장 실패 흉내).
+  Object? markNoImagesError;
+
   @override
-  Future<void> markNoImages(String id) async => noImages.add(id);
+  Future<void> markNoImages(String id) async {
+    if (markNoImagesError case final e?) throw e;
+    noImages.add(id);
+  }
 
   @override
   bool supportsImages(String id) {

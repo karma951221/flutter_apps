@@ -488,6 +488,27 @@ void main() {
       ]);
     });
 
+    test('toolCallStarted 만 오고 ready 가 없으면 실행 전에 세션이 입력과 함께 다시 낸다', () async {
+      final model = _FakeModel([
+        [
+          const ModelEvent.toolCallStarted(id: 't1', name: 'search_diary'),
+          _done([_toolUse('t1', 'search_diary', range)], StopKind.toolUse),
+        ],
+        _answer('네'),
+      ]);
+
+      final events = await session(model).ask('지난주').toList();
+
+      expect(events.whereType<ChatToolStarted>(), [
+        const ChatEvent.toolStarted(callId: 't1', name: 'search_diary'),
+        ChatEvent.toolStarted(
+          callId: 't1',
+          name: 'search_diary',
+          input: rangeSummary,
+        ),
+      ]);
+    });
+
     test('모델이 알리지 않은 도구 호출은 실행 전에 세션이 toolStarted 를 낸다', () async {
       final model = _FakeModel([
         [
@@ -560,6 +581,12 @@ void main() {
         ChatEvent.text('네'),
         ChatEvent.finished(citedEntryIds: []),
       ]);
+    });
+
+    test('ChatEvent.text 의 toString 은 글 길이만', () {
+      final printed = const ChatEvent.text('비밀 답').toString();
+      expect(printed, isNot(contains('비밀')));
+      expect(printed, contains('4 chars'));
     });
 
     test('ChatEvent.progress · toolStarted 의 toString 에 노트 · 검색어가 없다', () {
@@ -2859,6 +2886,26 @@ void main() {
         );
         final retry = model.requests[2];
         expect(retry.model, _rec);
+        expect(identical(retry.tools, noImageDefinitions), isTrue);
+        expect(resultsOf(retry).single.results.single.images, isEmpty);
+      });
+
+      test('markNoImages 가 던져도 사진 없이 한 번 다시 보낸다', () async {
+        when(
+          () => tools.run('view_entry_photos', any()),
+        ).thenAnswer((_) async => photos(2));
+        catalog.markNoImagesError = StateError('disk');
+        final model = _FakeModel([
+          photoRound('t1'),
+          [const ChatModelException(ChatModelErrorKind.imagesUnsupported)],
+          _answer('사진 없이 답'),
+        ]);
+
+        final events = await session(model).ask('사진').toList();
+
+        expect(events.last, const ChatEvent.finished(citedEntryIds: []));
+        expect(model.requests, hasLength(3));
+        final retry = model.requests[2];
         expect(identical(retry.tools, noImageDefinitions), isTrue);
         expect(resultsOf(retry).single.results.single.images, isEmpty);
       });

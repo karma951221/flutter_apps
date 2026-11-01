@@ -87,6 +87,7 @@ class AnthropicChatModel implements ChatModel {
   static const _thinkingParam = {'type': 'adaptive', 'display': 'updates'};
 
   /// V1: thinking.display 를 받는 모델 접두사. 밖이면 thinking 키를 보내지 않는다.
+  /// 같은 이름이거나 `접두사-` 로 이어질 때만 — `claude-sonnet-50` 은 아니다.
   static const _progressNoteModels = ['claude-opus-5', 'claude-sonnet-5'];
 
   /// 끊긴 응답의 마지막 thinking 블록에 서버가 넣는 문구(V3). 노트로 보이지 않는다.
@@ -293,7 +294,10 @@ class AnthropicChatModel implements ChatModel {
 
   /// 이 요청에서 노트를 받는가 — 켰고 그 모델이 thinking.display 를 받는다(R4).
   bool _notes(ModelRequest request) =>
-      _progressNotes && _progressNoteModels.any(request.model.startsWith);
+      _progressNotes &&
+      _progressNoteModels.any(
+        (p) => request.model == p || request.model.startsWith('$p-'),
+      );
 
   Map<String, String> _headers(ModelRequest request) {
     final betas = [
