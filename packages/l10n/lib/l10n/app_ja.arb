@@ -987,7 +987,7 @@
   "walkChatStopped": "停止",
   "walkChatStoppedSnack": "停止しました",
   "walkChatNewConversation": "新しい会話",
-  "walkChatSearching": "記録を探しています…",
+  "walkChatJumpToLatest": "新しい回答",
   "walkChatPhaseSending": "送信中",
   "walkChatPhaseThinking": "考え中",
   "walkChatPhaseWriting": "回答を作成中",

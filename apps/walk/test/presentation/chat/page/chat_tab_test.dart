@@ -17,6 +17,7 @@ import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/entity/conversation.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
 import 'package:walk/domain/chat/secure_window.dart';
+import 'package:walk/domain/chat/tool/tool_summary.dart';
 import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/domain/chat/usecase/open_conversation.dart';
@@ -26,6 +27,10 @@ import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/presentation/chat/page/chat_history_page.dart';
 import 'package:walk/presentation/chat/page/chat_tab.dart';
+import 'package:walk/presentation/chat/widget/chat_bubble_view.dart';
+import 'package:walk/presentation/chat/widget/chat_input.dart';
+import 'package:walk/presentation/chat/widget/chat_jump_to_latest.dart';
+import 'package:walk/presentation/chat/widget/chat_progress_view.dart';
 import 'package:walk/presentation/diary/viewer/story_viewer_page.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_state.dart';
@@ -130,11 +135,18 @@ void main() {
     WidgetTester tester, {
     VoidCallback? onOpenSettings,
     bool active = true,
+    bool reduceMotion = false,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
         navigatorObservers: [appRouteObserver],
         theme: AppTheme.light(),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(disableAnimations: reduceMotion),
+          child: child!,
+        ),
         locale: const Locale('ko'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
@@ -424,14 +436,13 @@ void main() {
     events.add(const ChatEvent.toolStarted(callId: 't1', name: 'search_diary'));
     await tester.pump();
 
-    expect(find.text('기록을 찾는 중…'), findsOneWidget);
     expect(find.byTooltip('답 멈추기'), findsOneWidget);
     expect(find.byIcon(Icons.send), findsNothing);
 
     events.add(const ChatEvent.finished(citedEntryIds: []));
     await events.close();
     await tester.pumpAndSettle();
-    expect(find.text('기록을 찾는 중…'), findsNothing);
+    expect(find.byTooltip('보내기'), findsOneWidget);
   });
 
   testWidgets("멈춤을 누르면 부분 답에 '멈춤' 표시가 남고 전송 버튼이 돌아온다", (tester) async {
@@ -1032,6 +1043,247 @@ void main() {
         ),
         findsOneWidget,
       );
+    });
+  });
+
+  group('진행 줄 · 다시 그리기 · [↓ 새 답]', () {
+    late StreamController<ChatEvent> events;
+    MutableClock clock() => getIt<Clock>() as MutableClock;
+
+    setUp(() {
+      events = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => events.stream);
+    });
+
+    tearDown(() async {
+      ChatTabDebug.reset();
+      unawaited(events.close());
+    });
+
+    /// 질문을 보내고 한 프레임. 진행 줄의 스피너가 돌아 pumpAndSettle 은 쓰지 않는다.
+    Future<void> ask(WidgetTester tester) async {
+      await tester.enterText(find.byType(TextField), '지난 주말?');
+      await tester.tap(find.byTooltip('보내기'));
+      await tester.pump();
+    }
+
+    /// 경과 초를 [seconds] 만큼 올린다(시계 + 1초 타이머).
+    Future<void> elapse(WidgetTester tester, int seconds) async {
+      for (var i = 0; i < seconds; i++) {
+        clock().advance(const Duration(seconds: 1));
+        await tester.pump(const Duration(seconds: 1));
+      }
+    }
+
+    Future<void> finish(WidgetTester tester) async {
+      events.add(const ChatEvent.finished(citedEntryIds: []));
+      await tester.pumpAndSettle();
+    }
+
+    Finder inProgress(Finder f) =>
+        find.descendant(of: find.byType(ChatProgressView), matching: f);
+
+    testWidgets("입력칸 위 옛 '기록을 찾는 중…' 줄이 없다", (tester) async {
+      await pump(tester);
+      await ask(tester);
+      events.add(
+        const ChatEvent.toolStarted(callId: 't1', name: 'search_diary'),
+      );
+      await tester.pump();
+
+      expect(find.text('기록을 찾는 중…'), findsNothing);
+      await finish(tester);
+    });
+
+    testWidgets("보내면 답 말풍선 위에 '보내는 중'이 보인다", (tester) async {
+      await pump(tester);
+      await ask(tester);
+
+      final line = inProgress(find.text('보내는 중'));
+      expect(line, findsOneWidget);
+      // 답 말풍선(아직 글 없는 '…') 안쪽 — 그 위에 있고, 입력칸에 붙은 줄이 아니다.
+      expect(
+        find.descendant(of: find.byType(ChatBubbleView), matching: line),
+        findsOneWidget,
+      );
+      final answer = find.text('…');
+      expect(
+        tester.getTopLeft(line).dy,
+        lessThan(tester.getTopLeft(answer).dy),
+      );
+      expect(
+        tester.getBottomLeft(answer).dy,
+        lessThan(tester.getTopLeft(find.byType(ChatInput)).dy),
+      );
+      await finish(tester);
+    });
+
+    testWidgets("도구 단계에서 '일기 찾는 중(…)', 결과에서 '일기 5개 찾음'", (tester) async {
+      await pump(tester);
+      await ask(tester);
+      events.add(
+        const ChatEvent.toolStarted(
+          callId: 't1',
+          name: 'search_diary',
+          input: ToolInputSummary(kind: ChatToolKind.searchDiary, query: '산책'),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(inProgress(find.text("일기 찾는 중('산책')")), findsOneWidget);
+
+      events.add(
+        const ChatEvent.toolFinished(
+          callId: 't1',
+          name: 'search_diary',
+          summary: ToolSummary(kind: ChatToolKind.searchDiary, count: 5),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(inProgress(find.text('일기 5개 찾음')), findsOneWidget);
+      await finish(tester);
+    });
+
+    testWidgets('3초 넘게 끝나면 접힌 요약 한 줄이 남고, 2초면 없다', (tester) async {
+      await pump(tester);
+      await ask(tester);
+      await elapse(tester, 3);
+      events.add(const ChatEvent.text('산책을 했어요'));
+      await finish(tester);
+
+      expect(inProgress(find.text('3초')), findsOneWidget);
+      expect(inProgress(find.text('▸')), findsOneWidget);
+
+      await tester.tap(find.byTooltip('새 대화'));
+      await tester.pumpAndSettle();
+      events = StreamController<ChatEvent>();
+      await ask(tester);
+      await elapse(tester, 2);
+      events.add(const ChatEvent.text('걸었어요'));
+      await finish(tester);
+
+      expect(find.text('걸었어요'), findsOneWidget);
+      expect(find.byType(ChatProgressView), findsNothing);
+    });
+
+    testWidgets("멈추면 진행 줄이 '멈춤'으로, 부분 답에 '멈춤' 표시", (tester) async {
+      when(
+        () => session.stop(),
+      ).thenReturn(const ChatStopResult.kept(text: '산책을 ', citedEntryIds: []));
+      await pump(tester);
+      await ask(tester);
+      events.add(const ChatEvent.text('산책을 '));
+      await tester.pump();
+
+      await tester.tap(find.byTooltip('답 멈추기'));
+      await tester.pumpAndSettle();
+
+      expect(
+        inProgress(find.byIcon(Icons.stop_circle_outlined)),
+        findsOneWidget,
+      );
+      expect(inProgress(find.textContaining('멈춤')), findsOneWidget);
+      // 말풍선 안쪽 표시(진행 줄 바깥).
+      expect(find.text('멈춤'), findsOneWidget);
+    });
+
+    /// 긴 답을 받아 목록을 스크롤할 수 있게 한다.
+    Future<void> longAnswer(WidgetTester tester) async {
+      events.add(ChatEvent.text(List.filled(60, '산책했어요').join('\n')));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    /// 말풍선 목록의 스크롤 위치(말풍선 글도 안에 Scrollable 이 있어 목록 컨트롤러로 찾는다).
+    ScrollPosition list(WidgetTester tester) =>
+        tester.widget<ListView>(find.byType(ListView)).controller!.position;
+
+    testWidgets('위로 스크롤한 채 답이 자라면 [↓ 새 답]이 뜨고, 누르면 맨 아래로 가며 사라진다', (
+      tester,
+    ) async {
+      await pump(tester);
+      await ask(tester);
+      await longAnswer(tester);
+      expect(find.byType(ChatJumpToLatest), findsNothing);
+
+      await tester.drag(find.byType(ListView), const Offset(0, 400));
+      await tester.pump(const Duration(milliseconds: 100));
+      final position = list(tester);
+      expect(position.pixels, greaterThan(position.viewportDimension / 4));
+      // 자라기 전에는 뜨지 않는다.
+      expect(find.byType(ChatJumpToLatest), findsNothing);
+
+      events.add(const ChatEvent.text('\n더 걸었어요'));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(ChatJumpToLatest), findsOneWidget);
+      expect(find.text('↓ 새 답'), findsOneWidget);
+
+      await tester.tap(find.byType(ChatJumpToLatest));
+      await tester.pump();
+      // 애니메이션으로 내려간다 — 한 프레임에 바로 가지 않는다.
+      expect(list(tester).pixels, greaterThan(0));
+      await tester.pump(AppMotion.medium);
+      await tester.pump();
+      expect(list(tester).pixels, 0);
+      expect(find.byType(ChatJumpToLatest), findsNothing);
+      await finish(tester);
+    });
+
+    testWidgets('맨 아래에 있으면 뜨지 않는다', (tester) async {
+      await pump(tester);
+      await ask(tester);
+      await longAnswer(tester);
+      events.add(const ChatEvent.text('\n더 걸었어요'));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(list(tester).pixels, 0);
+      expect(find.byType(ChatJumpToLatest), findsNothing);
+      await finish(tester);
+    });
+
+    testWidgets('답이 끝나면 [↓ 새 답]이 사라진다', (tester) async {
+      await pump(tester);
+      await ask(tester);
+      await longAnswer(tester);
+      await tester.drag(find.byType(ListView), const Offset(0, 400));
+      await tester.pump(const Duration(milliseconds: 100));
+      events.add(const ChatEvent.text('\n더 걸었어요'));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(ChatJumpToLatest), findsOneWidget);
+
+      await finish(tester);
+      expect(find.byType(ChatJumpToLatest), findsNothing);
+    });
+
+    testWidgets('줄이기 모드면 [↓ 새 답]이 바로 jumpTo', (tester) async {
+      await pump(tester, reduceMotion: true);
+      await ask(tester);
+      await longAnswer(tester);
+      await tester.drag(find.byType(ListView), const Offset(0, 400));
+      await tester.pump(const Duration(milliseconds: 100));
+      events.add(const ChatEvent.text('\n더 걸었어요'));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.tap(find.byType(ChatJumpToLatest));
+      await tester.pump();
+      expect(list(tester).pixels, 0);
+      expect(find.byType(ChatJumpToLatest), findsNothing);
+      await finish(tester);
+    });
+
+    testWidgets('경과 초가 올라도 사용자 말풍선과 입력칸은 다시 그리지 않는다', (tester) async {
+      await pump(tester);
+      await ask(tester);
+      events.add(const ChatEvent.text('산책을 '));
+      await tester.pump();
+      ChatTabDebug.reset();
+
+      await elapse(tester, 4);
+
+      expect(inProgress(find.text('4초')), findsOneWidget);
+      // 질문(0번)은 그대로, 답(1번)만 다시 그린다.
+      expect(ChatTabDebug.bubbleBuilds[0] ?? 0, 0);
+      expect(ChatTabDebug.bubbleBuilds[1], greaterThan(0));
+      expect(ChatTabDebug.inputBuilds, 0);
+      await finish(tester);
     });
   });
 }

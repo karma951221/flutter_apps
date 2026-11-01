@@ -5906,11 +5906,11 @@ abstract class AppLocalizations {
   /// **'새 대화'**
   String get walkChatNewConversation;
 
-  /// 채팅 탭: 도구 실행 중 한 줄
+  /// 채팅 탭: 위로 올려 둔 채 답이 자랄 때 맨 아래로 가는 버튼
   ///
   /// In ko, this message translates to:
-  /// **'기록을 찾는 중…'**
-  String get walkChatSearching;
+  /// **'새 답'**
+  String get walkChatJumpToLatest;
 
   /// 채팅 탭 진행 줄: 보낸 직후 단계
   ///

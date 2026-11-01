@@ -3167,7 +3167,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatNewConversation => '새 대화';
 
   @override
-  String get walkChatSearching => '기록을 찾는 중…';
+  String get walkChatJumpToLatest => '새 답';
 
   @override
   String get walkChatPhaseSending => '보내는 중';

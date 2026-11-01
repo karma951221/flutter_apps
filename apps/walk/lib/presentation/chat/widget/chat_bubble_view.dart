@@ -6,6 +6,7 @@ import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../cubit/chat_state.dart';
 import 'chat_failure_text.dart';
+import 'chat_progress_view.dart';
 import 'cited_entry_chip.dart';
 
 /// 말풍선 하나. 내 질문은 오른쪽, 답은 왼쪽. 글은 마크다운 없이 고를 수 있는 평문으로 보인다.
@@ -13,6 +14,7 @@ import 'cited_entry_chip.dart';
 /// 답이 실패했으면 이미 받은 글 아래에 실패 문구, 멈췄으면 같은 자리에 '멈춤' 표시,
 /// 인용 기록이 있으면 그 아래에 칩을 둔다. 키 · 크레딧 문제로 실패했고 [onOpenSettings] 가 있으면
 /// 실패 문구 아래에 [설정 열기]를 둔다. [streaming] 이면 글 끝에 커서 `▍` 가 깜빡인다.
+/// 답에 진행([ChatBubble.progress])이 있으면 말풍선 위에 진행 줄 · 접힌 요약을 둔다(스펙 §3.2).
 class ChatBubbleView extends StatelessWidget {
   const ChatBubbleView({
     required this.bubble,
@@ -80,6 +82,10 @@ class ChatBubbleView extends StatelessWidget {
               ? CrossAxisAlignment.end
               : CrossAxisAlignment.start,
           children: [
+            if (bubble.progress case final progress? when !mine) ...[
+              ChatProgressView(progress: progress),
+              const SizedBox(height: AppSpacing.xs),
+            ],
             if (text.isNotEmpty || failure != null || stopped)
               GestureDetector(
                 onLongPress: onLongPress,

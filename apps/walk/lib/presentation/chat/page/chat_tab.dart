@@ -8,6 +8,7 @@ import 'package:l10n/l10n.dart';
 
 import '../../../domain/chat/chat_settings.dart';
 import '../../../domain/chat/chat_trace.dart';
+import '../../../domain/chat/chat_vendor.dart';
 import '../../../domain/chat/repository/chat_history_repository.dart';
 import '../../../domain/chat/secure_window.dart';
 import '../../../domain/chat/usecase/chat_model_choice.dart';
@@ -23,13 +24,13 @@ import '../../lock/widget/diary_lock_gate.dart';
 import '../../settings/open_settings.dart';
 import '../../shell/widget/feature_menu.dart';
 import '../cubit/chat_cubit.dart';
-import '../cubit/chat_progress.dart';
 import '../cubit/chat_state.dart';
 import '../widget/bubble_actions_sheet.dart';
 import '../widget/chat_bubble_view.dart';
 import '../widget/chat_consent_view.dart';
 import '../widget/chat_examples.dart';
 import '../widget/chat_input.dart';
+import '../widget/chat_jump_to_latest.dart';
 import '../widget/model_chip.dart';
 import '../widget/model_picker_sheet.dart';
 import '../widget/temporary_chat_banner.dart';
@@ -263,6 +264,23 @@ class _NewConversationAction extends StatelessWidget {
   }
 }
 
+/// 테스트 전용 build 횟수. `assert` 안에서만 올린다 — 릴리스에서는 늘 0.
+@visibleForTesting
+abstract final class ChatTabDebug {
+  /// 말풍선 항목(index → build 횟수).
+  static final bubbleBuilds = <int, int>{};
+
+  /// 입력칸 자리 build 횟수.
+  static int inputBuilds = 0;
+
+  static void reset() {
+    bubbleBuilds.clear();
+    inputBuilds = 0;
+  }
+}
+
+/// 물어보기 본문. 한 [BlocBuilder] 로 다 그리지 않고 조각마다 필요한 값만 고른다(스펙 §4.1) —
+/// 경과 초가 오를 때는 마지막 답 말풍선만, 글이 자랄 때도 그 말풍선만 다시 그린다.
 class _ChatBody extends StatelessWidget {
   const _ChatBody({required this.onOpenSettings});
 
@@ -276,19 +294,21 @@ class _ChatBody extends StatelessWidget {
       context,
       message: AppLocalizations.of(context).walkChatStoppedSnack,
     ),
-    child: BlocBuilder<ChatCubit, ChatState>(builder: _build),
+    child: _AccessSwitch(onOpenSettings: onOpenSettings),
   );
+}
 
-  /// 칩 → 모델 고르기 시트. 바뀐 게 있으면 칩을 다시 읽는다.
-  static Future<void> _pickModel(BuildContext context) async {
-    final cubit = context.read<ChatCubit>();
-    if (await ModelPickerSheet.show(context)) cubit.modelChanged();
-  }
+/// 키 · 동의 · 모델 목록 상태로 갈래만 고른다.
+class _AccessSwitch extends StatelessWidget {
+  const _AccessSwitch({required this.onOpenSettings});
 
-  Widget _build(BuildContext context, ChatState state) {
+  final VoidCallback onOpenSettings;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final cubit = context.read<ChatCubit>();
-    return switch (state.access) {
+    final access = context.select<ChatCubit, ChatAccess>((c) => c.state.access);
+    return switch (access) {
       ChatAccess.checking => const Center(child: CircularProgressIndicator()),
       ChatAccess.noKey => AppPlaceholder(
         icon: Icons.key_outlined,
@@ -296,84 +316,275 @@ class _ChatBody extends StatelessWidget {
         actionLabel: l10n.walkChatOpenSettings,
         onAction: onOpenSettings,
       ),
-      ChatAccess.needsConsent => ChatConsentView(
-        vendor: state.vendor,
-        continuing: state.bubbles.isNotEmpty,
-        onAccept: () => unawaited(cubit.consent()),
-      ),
-      // 키가 잘못됐으면 다시 받아도 같다 — 설정에서 키를 고치게 한다.
-      ChatAccess.noModels => AppPlaceholder(
-        icon: Icons.cloud_off_outlined,
-        message: l10n.walkChatNoModelsTitle,
-        actionLabel: state.modelsInvalidKey
-            ? l10n.walkChatOpenSettings
-            : l10n.commonRetry,
-        onAction: state.modelsInvalidKey
-            ? onOpenSettings
-            : () => unawaited(cubit.retryModels()),
-      ),
-      ChatAccess.ready => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (state.model case final model?)
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.xs,
-              ),
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: ModelChip(
-                  data: model,
-                  onPressed: state.busy
-                      ? null
-                      : () => unawaited(_pickModel(context)),
-                ),
-              ),
-            ),
-          Expanded(
-            child: state.bubbles.isEmpty
-                ? ChatExamples(onAsk: (q) => unawaited(cubit.send(q)))
-                : _BubbleList(state: state, onOpenSettings: onOpenSettings),
-          ),
-          // 옛 "기록을 찾는 중…" 줄 — 진행 줄(Task 7)이 대신한다.
-          if (state.bubbles.lastOrNull?.progress case ChatProgress(
-            running: true,
-            current: StepTool(),
-          ))
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.xs,
-              ),
-              child: Text(
-                l10n.walkChatSearching,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          if (state.temporary) TemporaryChatBanner(vendor: state.vendor),
-          ChatInput(
-            busy: state.busy,
-            // 저장된 대화를 읽는 동안 보낸 질문은 cubit 이 버린다 — 꺼져 보이게 한다.
-            enabled: !state.loading,
-            onSend: (q) => unawaited(cubit.send(q)),
-            onStop: cubit.stop,
-            restoredDraft: state.restoredDraft,
-            onDraftRestored: cubit.consumeRestoredDraft,
-          ),
-        ],
-      ),
+      ChatAccess.needsConsent => const _ConsentBody(),
+      ChatAccess.noModels => _NoModelsBody(onOpenSettings: onOpenSettings),
+      ChatAccess.ready => _ReadyBody(onOpenSettings: onOpenSettings),
     };
   }
 }
 
-/// 말풍선 목록. 아래부터 쌓는다(`reverse`) — 새 말풍선 · 흘러나오는 글이 늘 아래에 보인다.
-class _BubbleList extends StatelessWidget {
-  const _BubbleList({required this.state, required this.onOpenSettings});
+class _ConsentBody extends StatelessWidget {
+  const _ConsentBody();
 
-  final ChatState state;
+  @override
+  Widget build(BuildContext context) {
+    final (vendor, continuing) = context.select<ChatCubit, (ChatVendor, bool)>(
+      (c) => (c.state.vendor, c.state.bubbles.isNotEmpty),
+    );
+    return ChatConsentView(
+      vendor: vendor,
+      continuing: continuing,
+      onAccept: () => unawaited(context.read<ChatCubit>().consent()),
+    );
+  }
+}
+
+/// 키가 잘못됐으면 다시 받아도 같다 — 설정에서 키를 고치게 한다.
+class _NoModelsBody extends StatelessWidget {
+  const _NoModelsBody({required this.onOpenSettings});
+
+  final VoidCallback onOpenSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final invalidKey = context.select<ChatCubit, bool>(
+      (c) => c.state.modelsInvalidKey,
+    );
+    return AppPlaceholder(
+      icon: Icons.cloud_off_outlined,
+      message: l10n.walkChatNoModelsTitle,
+      actionLabel: invalidKey ? l10n.walkChatOpenSettings : l10n.commonRetry,
+      onAction: invalidKey
+          ? onOpenSettings
+          : () => unawaited(context.read<ChatCubit>().retryModels()),
+    );
+  }
+}
+
+class _ReadyBody extends StatelessWidget {
+  const _ReadyBody({required this.onOpenSettings});
+
+  final VoidCallback onOpenSettings;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const _ModelChipRow(),
+      Expanded(child: _Conversation(onOpenSettings: onOpenSettings)),
+      const _TemporaryBanner(),
+      const _InputArea(),
+    ],
+  );
+}
+
+/// 본문 맨 위 모델 칩. 답하는 중엔 꺼진다.
+class _ModelChipRow extends StatelessWidget {
+  const _ModelChipRow();
+
+  /// 칩 → 모델 고르기 시트. 바뀐 게 있으면 칩을 다시 읽는다.
+  static Future<void> _pickModel(BuildContext context) async {
+    final cubit = context.read<ChatCubit>();
+    if (await ModelPickerSheet.show(context)) cubit.modelChanged();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final (model, busy) = context.select<ChatCubit, (ModelChipData?, bool)>(
+      (c) => (c.state.model, c.state.busy),
+    );
+    if (model == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.xs,
+      ),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: ModelChip(
+          data: model,
+          onPressed: busy ? null : () => unawaited(_pickModel(context)),
+        ),
+      ),
+    );
+  }
+}
+
+class _TemporaryBanner extends StatelessWidget {
+  const _TemporaryBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final (temporary, vendor) = context.select<ChatCubit, (bool, ChatVendor)>(
+      (c) => (c.state.temporary, c.state.vendor),
+    );
+    return temporary
+        ? TemporaryChatBanner(vendor: vendor)
+        : const SizedBox.shrink();
+  }
+}
+
+class _InputArea extends StatelessWidget {
+  const _InputArea();
+
+  @override
+  Widget build(BuildContext context) {
+    assert(() {
+      ChatTabDebug.inputBuilds++;
+      return true;
+    }());
+    final cubit = context.read<ChatCubit>();
+    final (busy, loading, restoredDraft) = context
+        .select<ChatCubit, (bool, bool, String?)>(
+          (c) => (c.state.busy, c.state.loading, c.state.restoredDraft),
+        );
+    return ChatInput(
+      busy: busy,
+      // 저장된 대화를 읽는 동안 보낸 질문은 cubit 이 버린다 — 꺼져 보이게 한다.
+      enabled: !loading,
+      onSend: (q) => unawaited(cubit.send(q)),
+      onStop: cubit.stop,
+      restoredDraft: restoredDraft,
+      onDraftRestored: cubit.consumeRestoredDraft,
+    );
+  }
+}
+
+/// 대화가 비었으면 예시 질문, 아니면 말풍선 목록.
+class _Conversation extends StatelessWidget {
+  const _Conversation({required this.onOpenSettings});
+
+  final VoidCallback onOpenSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    final empty = context.select<ChatCubit, bool>(
+      (c) => c.state.bubbles.isEmpty,
+    );
+    if (empty) {
+      final cubit = context.read<ChatCubit>();
+      return ChatExamples(onAsk: (q) => unawaited(cubit.send(q)));
+    }
+    return _BubbleList(onOpenSettings: onOpenSettings);
+  }
+}
+
+/// 말풍선 목록. 아래부터 쌓는다(`reverse`) — 새 말풍선 · 흘러나오는 글이 늘 아래에 보인다.
+///
+/// 위로 올려 둔 채(화면 높이의 ¼ 넘게) 답이 자라면 끌어내리지 않고 [ChatJumpToLatest] 를
+/// 띄운다(스펙 §3.5, Q8). 맨 아래로 돌아오거나 답이 끝나면 숨긴다.
+class _BubbleList extends StatefulWidget {
+  const _BubbleList({required this.onOpenSettings});
+
+  final VoidCallback onOpenSettings;
+
+  @override
+  State<_BubbleList> createState() => _BubbleListState();
+}
+
+class _BubbleListState extends State<_BubbleList> {
+  final _controller = ScrollController();
+
+  bool _showJump = false;
+
+  /// 맨 아래에서 이만큼(화면 높이 대비) 넘게 올라가 있으면 "위로 올려 둔" 것으로 본다.
+  static const _awayFraction = 4;
+
+  bool get _away =>
+      _controller.hasClients &&
+      _controller.offset >
+          _controller.position.viewportDimension / _awayFraction;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_showJump && !_away) setState(() => _showJump = false);
+  }
+
+  void _onGrew() {
+    if (!_showJump && _away) setState(() => _showJump = true);
+  }
+
+  void _hide() {
+    if (_showJump) setState(() => _showJump = false);
+  }
+
+  void _jump() {
+    _hide();
+    if (!_controller.hasClients) return;
+    if (AppMotion.enabled(context)) {
+      unawaited(
+        _controller.animateTo(
+          0,
+          duration: AppMotion.medium,
+          curve: AppMotion.standard,
+        ),
+      );
+    } else {
+      _controller.jumpTo(0);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final count = context.select<ChatCubit, int>((c) => c.state.bubbles.length);
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ChatCubit, ChatState>(
+          listenWhen: (a, b) =>
+              b.busy &&
+              a.bubbles.lastOrNull?.text.length !=
+                  b.bubbles.lastOrNull?.text.length,
+          listener: (_, _) => _onGrew(),
+        ),
+        BlocListener<ChatCubit, ChatState>(
+          listenWhen: (a, b) => a.busy && !b.busy,
+          listener: (_, _) => _hide(),
+        ),
+      ],
+      child: Stack(
+        children: [
+          ListView.separated(
+            controller: _controller,
+            reverse: true,
+            padding: const EdgeInsets.all(AppSpacing.md),
+            itemCount: count,
+            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
+            itemBuilder: (context, i) => _BubbleItem(
+              index: count - 1 - i,
+              onOpenSettings: widget.onOpenSettings,
+            ),
+          ),
+          if (_showJump)
+            PositionedDirectional(
+              start: 0,
+              end: 0,
+              bottom: AppSpacing.sm,
+              child: Center(child: ChatJumpToLatest(onPressed: _jump)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 말풍선 하나. 자기 말풍선 · 답하는 중인지만 골라 다시 그린다 — 마지막 답의 경과 초 · 글이
+/// 바뀌어도 앞의 말풍선은 그대로다.
+class _BubbleItem extends StatelessWidget {
+  const _BubbleItem({required this.index, required this.onOpenSettings});
+
+  final int index;
   final VoidCallback onOpenSettings;
 
   void _open(BuildContext context, List<DiaryEntry> cited, DiaryEntry entry) {
@@ -384,9 +595,8 @@ class _BubbleList extends StatelessWidget {
   }
 
   /// 말풍선 길게 누르기 → 시트 → [지우기] → 확인 뒤에 그 턴(질문 · 답)을 지운다.
-  Future<void> _actions(BuildContext context, int index) async {
+  Future<void> _actions(BuildContext context, ChatRole role) async {
     final cubit = context.read<ChatCubit>();
-    final role = state.bubbles[index].role;
     final action = await showBubbleActions(context);
     if (action == null || !context.mounted) return;
     switch (action) {
@@ -405,25 +615,30 @@ class _BubbleList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bubbles = state.bubbles;
-    return ListView.separated(
-      reverse: true,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      itemCount: bubbles.length,
-      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-      itemBuilder: (context, i) {
-        final index = bubbles.length - 1 - i;
-        return ChatBubbleView(
-          bubble: bubbles[index],
-          pending: state.busy && i == 0,
-          onOpenCited: (cited, entry) => _open(context, cited, entry),
-          onOpenSettings: onOpenSettings,
-          // 답하는 중엔 턴을 지우지 않는다.
-          onLongPress: state.busy
-              ? null
-              : () => unawaited(_actions(context, index)),
+    assert(() {
+      ChatTabDebug.bubbleBuilds.update(index, (n) => n + 1, ifAbsent: () => 1);
+      return true;
+    }());
+    final (bubble, busy, last) = context
+        .select<ChatCubit, (ChatBubble?, bool, bool)>(
+          (c) => (
+            c.state.bubbles.elementAtOrNull(index),
+            c.state.busy,
+            index == c.state.bubbles.length - 1,
+          ),
         );
-      },
+    if (bubble == null) return const SizedBox.shrink();
+    final pending = busy && last;
+    return ChatBubbleView(
+      bubble: bubble,
+      pending: pending,
+      streaming: pending && bubble.text.isNotEmpty,
+      onOpenCited: (cited, entry) => _open(context, cited, entry),
+      onOpenSettings: onOpenSettings,
+      // 답하는 중엔 턴을 지우지 않는다.
+      onLongPress: busy
+          ? null
+          : () => unawaited(_actions(context, bubble.role)),
     );
   }
 }

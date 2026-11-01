@@ -3166,7 +3166,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatNewConversation => '新しい会話';
 
   @override
-  String get walkChatSearching => '記録を探しています…';
+  String get walkChatJumpToLatest => '新しい回答';
 
   @override
   String get walkChatPhaseSending => '送信中';

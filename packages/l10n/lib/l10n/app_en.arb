@@ -987,7 +987,7 @@
   "walkChatStopped": "Stopped",
   "walkChatStoppedSnack": "Stopped",
   "walkChatNewConversation": "New chat",
-  "walkChatSearching": "Searching your records…",
+  "walkChatJumpToLatest": "New reply",
   "walkChatPhaseSending": "Sending",
   "walkChatPhaseThinking": "Thinking",
   "walkChatPhaseWriting": "Writing",

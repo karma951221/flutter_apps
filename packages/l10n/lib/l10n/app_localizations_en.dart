@@ -3417,7 +3417,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatNewConversation => 'New chat';
 
   @override
-  String get walkChatSearching => 'Searching your records…';
+  String get walkChatJumpToLatest => 'New reply';
 
   @override
   String get walkChatPhaseSending => 'Sending';
