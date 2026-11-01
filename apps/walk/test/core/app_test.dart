@@ -76,7 +76,10 @@ void main() {
   group('WalkApp', () {
     late _MockSettings settings;
 
-    setUpAll(() => registerFallbackValue(const EntryFilter.all()));
+    setUpAll(() {
+      registerFallbackValue(const EntryFilter.all());
+      registerFallbackValue(const AppSettings());
+    });
     setUp(() async {
       // 네이티브 디스패처 자리: 헤드리스 일이 없어 셸의 awaitIdle 에 바로 답한다.
       final messenger =
@@ -158,6 +161,36 @@ void main() {
       expect(Theme.of(context).brightness, Brightness.dark);
 
       await tester.pumpAndSettle();
+    });
+
+    testWidgets('앱 설정에서 다크를 고르면 바로 어두워진다', (tester) async {
+      tester.platformDispatcher.platformBrightnessTestValue = Brightness.light;
+      addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
+      when(settings.load).thenReturn(const AppSettings());
+      when(() => settings.save(any())).thenAnswer((_) async {});
+
+      await tester.pumpWidget(const WalkApp());
+      await tester.pumpAndSettle();
+      // 앱 설정이 위에 얹혀도 아래 셸까지 같은 테마다.
+      Brightness brightness() => Theme.of(
+        tester.element(find.byType(MainShellPage, skipOffstage: false)),
+      ).brightness;
+      expect(brightness(), Brightness.light);
+
+      // 일기 탭 ⋮ → 앱 설정 → 다크.
+      await tester.tap(find.byIcon(Icons.more_vert).hitTestable().first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('menu-settings-app')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byWidgetPredicate(
+          (w) =>
+              w is RadioListTile<AppThemeMode> && w.value == AppThemeMode.dark,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(brightness(), Brightness.dark);
     });
   });
 }

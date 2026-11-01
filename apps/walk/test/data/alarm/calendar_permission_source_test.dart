@@ -82,7 +82,7 @@ void main() {
     await source.openSettings();
   });
 
-  test('거부 상태에서 다시 묻고 허용되면 공휴일 캐시를 새로 읽는다(설정 탭 출처 행)', () async {
+  test('거부 상태에서 다시 묻고 허용되면 공휴일 캐시를 새로 읽는다(알람 설정 출처 행)', () async {
     calls = [];
     var granted = false;
     messenger.setMockMethodCallHandler(channel, (call) async {

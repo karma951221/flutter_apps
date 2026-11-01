@@ -216,7 +216,7 @@ void main() {
       expect(calendar().source, bundled);
     });
 
-    test('권한이 없어 캐시를 버리면 refreshed 로 알린다(설정 탭이 다시 읽는다)', () async {
+    test('권한이 없어 캐시를 버리면 refreshed 로 알린다(알람 설정이 다시 읽는다)', () async {
       final c = calendar();
       await c.refresh();
       final events = <void>[];

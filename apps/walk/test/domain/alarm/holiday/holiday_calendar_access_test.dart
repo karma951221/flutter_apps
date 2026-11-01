@@ -70,7 +70,7 @@ void main() {
     expect(await access.check(), PermissionStatus.permanentlyDenied);
   });
 
-  group('requestAgain (설정 탭에서 직접)', () {
+  group('requestAgain (알람 설정에서 직접)', () {
     test('세션 기억과 상관없이 묻고, 새로 허용되면 바로 다시 읽는다', () async {
       when(calendar.check).thenAnswer((_) async => PermissionStatus.denied);
       when(calendar.requestAgain).thenAnswer((_) async => PermissionStatus.granted);

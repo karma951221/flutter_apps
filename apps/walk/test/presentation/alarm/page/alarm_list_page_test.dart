@@ -847,7 +847,7 @@ void main() {
     expect(find.text('출근 · 평일'), findsOneWidget);
   });
 
-  testWidgets('권한이 없으면 경고 배너, 누르면 설정 탭으로', (tester) async {
+  testWidgets('권한이 없으면 경고 배너, 누르면 알람 설정으로', (tester) async {
     when(() => useCase.list()).thenAnswer((_) async => [weekday]);
     when(exactAlarm.check).thenAnswer((_) async => PermissionStatus.denied);
     var opened = false;
