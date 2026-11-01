@@ -5,7 +5,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
+import 'package:walk/domain/chat/chat_vendor.dart';
+import 'package:walk/domain/chat/entity/conversation.dart';
+import 'package:walk/domain/chat/repository/chat_history_repository.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
+import 'package:walk/domain/chat/usecase/open_conversation.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/presentation/chat/cubit/chat_cubit.dart';
@@ -20,6 +24,27 @@ class _MockSession extends Mock implements ChatSession {}
 
 class _MockDiary extends Mock implements DiaryRepository {}
 
+class _MockHistory extends Mock implements ChatHistoryRepository {}
+
+const _target = (vendor: ChatVendor.openai, model: 'gpt-test');
+
+ChatTurnRecord _record(
+  int seq, {
+  String conversationId = 'c1',
+  List<String> cited = const [],
+  bool stopped = false,
+}) => ChatTurnRecord(
+  conversationId: conversationId,
+  seq: seq,
+  question: '질문$seq',
+  answer: '답$seq',
+  citedEntryIds: cited,
+  stopped: stopped,
+  vendor: ChatVendor.anthropic,
+  model: 'm',
+  askedAt: diaryT0,
+);
+
 DiaryEntry _entry(String id, {bool trashed = false}) => DiaryEntry(
   id: id,
   storyId: 's1',
@@ -33,23 +58,61 @@ DiaryEntry _entry(String id, {bool trashed = false}) => DiaryEntry(
 );
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(
+      const ChatTurnDraft(
+        question: '',
+        answer: '',
+        citedEntryIds: [],
+        vendor: ChatVendor.anthropic,
+        model: '',
+      ),
+    );
+    registerFallbackValue(<ChatTurnText>[]);
+  });
+
   late _MockSession session;
   late _MockDiary diary;
+  late _MockHistory history;
+  late OpenConversation open;
   late FakeChatSettings settings;
   late FakeChatKeyVerifier verifier;
   late ChatCubit cubit;
 
+  /// appendTurn 이 받은 (conversationId, draft).
+  late List<(String?, ChatTurnDraft)> appended;
+
   setUp(() {
     session = _MockSession();
     diary = _MockDiary();
+    history = _MockHistory();
+    open = OpenConversation();
     settings = FakeChatSettings('sk-ant-test')..consented = true;
     verifier = FakeChatKeyVerifier();
+    appended = [];
+    when(() => session.target).thenReturn(_target);
+    when(
+      () => history.watchExists(any()),
+    ).thenAnswer((_) => const Stream.empty());
+    when(
+      () => history.appendTurn(
+        conversationId: any(named: 'conversationId'),
+        turn: any(named: 'turn'),
+      ),
+    ).thenAnswer((invocation) async {
+      final id = invocation.namedArguments[#conversationId] as String?;
+      final turn = invocation.namedArguments[#turn] as ChatTurnDraft;
+      appended.add((id, turn));
+      return (conversationId: id ?? 'c1', seq: appended.length);
+    });
     cubit = ChatCubit(
       session,
       settings,
       diary,
       const NoopChatTrace(),
       verifier,
+      history,
+      open,
     );
   });
 
@@ -508,6 +571,8 @@ void main() {
         diary,
         trace,
         verifier,
+        history,
+        open,
         schedulePostFrame: frames.add,
       );
       await traced.refresh();
@@ -676,6 +741,8 @@ void main() {
         diary,
         off,
         verifier,
+        history,
+        open,
         schedulePostFrame: frames.add,
       );
       await quiet.refresh();
@@ -691,6 +758,475 @@ void main() {
 
       expect(off.marks, isEmpty);
       expect(frames, isEmpty);
+    });
+  });
+
+  group('대화 기록', () {
+    setUp(() async {
+      await cubit.refresh();
+    });
+
+    /// 답이 [answer] 로 끝나는 질문 하나를 보낸다.
+    Future<void> turn(
+      String question,
+      String answer, {
+      List<String> cited = const [],
+    }) {
+      when(() => session.ask(question)).thenAnswer(
+        (_) => Stream.fromIterable([
+          if (answer.isNotEmpty) ChatEvent.text(answer),
+          ChatEvent.finished(citedEntryIds: cited),
+        ]),
+      );
+      return cubit.send(question);
+    }
+
+    void verifyNoWrites() {
+      verifyNever(
+        () => history.appendTurn(
+          conversationId: any(named: 'conversationId'),
+          turn: any(named: 'turn'),
+        ),
+      );
+      verifyNever(() => history.deleteTurn(any(), any()));
+      verifyNever(() => history.delete(any()));
+    }
+
+    test('답이 끝나면 첫 턴에서 대화를 만들고 conversationId · 두 말풍선 seq 가 생긴다', () async {
+      when(() => diary.entry('e1')).thenAnswer((_) async => Ok(_entry('e1')));
+
+      await turn('질문', '답', cited: ['e1']);
+
+      expect(appended, hasLength(1));
+      final (id, draft) = appended.single;
+      expect(id, isNull);
+      expect(
+        draft,
+        const ChatTurnDraft(
+          question: '질문',
+          answer: '답',
+          citedEntryIds: ['e1'],
+          stopped: false,
+          vendor: ChatVendor.openai,
+          model: 'gpt-test',
+        ),
+      );
+      expect(cubit.state.conversationId, 'c1');
+      expect([for (final b in cubit.state.bubbles) b.seq], [1, 1]);
+      expect([for (final e in cubit.state.bubbles.last.cited) e.id], ['e1']);
+    });
+
+    test('두 번째 턴은 같은 conversationId 로 저장한다', () async {
+      await turn('하나', '답1');
+      await turn('둘', '답2');
+
+      expect([for (final (id, _) in appended) id], [null, 'c1']);
+      expect([for (final b in cubit.state.bubbles) b.seq], [1, 1, 2, 2]);
+    });
+
+    test('앞 저장이 끝나기 전 다음 턴이 끝나도 같은 대화에 순서대로 저장한다', () async {
+      final first = Completer<ChatTurnRef>();
+      var calls = 0;
+      final ids = <String?>[];
+      when(
+        () => history.appendTurn(
+          conversationId: any(named: 'conversationId'),
+          turn: any(named: 'turn'),
+        ),
+      ).thenAnswer((invocation) {
+        calls++;
+        ids.add(invocation.namedArguments[#conversationId] as String?);
+        if (calls == 1) return first.future;
+        return Future.value((conversationId: 'c1', seq: 2));
+      });
+
+      unawaited(turn('하나', '답1'));
+      await pumpEventQueue();
+      final second = turn('둘', '답2');
+      await pumpEventQueue();
+      expect(calls, 1);
+
+      first.complete((conversationId: 'c1', seq: 1));
+      await second;
+
+      expect(ids, [null, 'c1']);
+      expect([for (final b in cubit.state.bubbles) b.seq], [1, 1, 2, 2]);
+    });
+
+    group('멈춤', () {
+      late StreamController<ChatEvent> events;
+
+      setUp(() {
+        events = StreamController<ChatEvent>();
+        when(() => session.ask(any())).thenAnswer((_) => events.stream);
+      });
+
+      tearDown(() => unawaited(events.close()));
+
+      test('글이 온 뒤 멈추면 stopped true 로 저장한다', () async {
+        when(() => session.stop()).thenReturn(
+          const ChatStopResult.kept(text: '반쯤', citedEntryIds: ['e1']),
+        );
+        when(
+          () => diary.entry('e1'),
+        ).thenAnswer((_) async => const Err(Failure.notFound()));
+        unawaited(cubit.send('질문'));
+        events.add(const ChatEvent.text('반쯤'));
+        await pumpEventQueue();
+
+        cubit.stop();
+        await pumpEventQueue();
+
+        final (id, draft) = appended.single;
+        expect(id, isNull);
+        expect(draft.stopped, isTrue);
+        expect(draft.answer, '반쯤');
+        expect(draft.question, '질문');
+        expect(draft.citedEntryIds, ['e1']);
+        expect(cubit.state.bubbles.last.stopped, isTrue);
+        expect([for (final b in cubit.state.bubbles) b.seq], [1, 1]);
+      });
+
+      test('글 없이 멈추면 저장하지 않는다', () async {
+        when(() => session.stop()).thenReturn(const ChatStopResult.dropped());
+        unawaited(cubit.send('질문'));
+        await pumpEventQueue();
+
+        cubit.stop();
+        await pumpEventQueue();
+
+        verifyNoWrites();
+      });
+    });
+
+    test('실패한 질문은 저장하지 않는다', () async {
+      when(() => session.ask(any())).thenAnswer(
+        (_) => Stream.fromIterable(const [
+          ChatEvent.text('반쯤'),
+          ChatEvent.failed(ChatFailure.network),
+        ]),
+      );
+
+      await cubit.send('질문');
+
+      verifyNoWrites();
+      expect(cubit.state.conversationId, isNull);
+    });
+
+    test('답 글이 비면 저장하지 않는다', () async {
+      await turn('질문', '');
+      await turn('질문2', '  ');
+
+      verifyNoWrites();
+    });
+
+    test('임시 대화는 끝 · 멈춤 · 턴 지우기 어디서도 저장소에 쓰지 않는다', () async {
+      cubit.startTemporary();
+      await turn('하나', '답1');
+
+      final events = StreamController<ChatEvent>();
+      when(() => session.ask('둘')).thenAnswer((_) => events.stream);
+      when(
+        () => session.stop(),
+      ).thenReturn(const ChatStopResult.kept(text: '반쯤', citedEntryIds: []));
+      unawaited(cubit.send('둘'));
+      events.add(const ChatEvent.text('반쯤'));
+      await pumpEventQueue();
+      cubit.stop();
+      await pumpEventQueue();
+
+      await cubit.deleteTurn(0);
+
+      verifyNoWrites();
+      expect(cubit.state.temporary, isTrue);
+      expect(cubit.state.conversationId, isNull);
+      expect(open.id, isNull);
+      expect([for (final b in cubit.state.bubbles) b.seq], [null, null]);
+      unawaited(events.close());
+    });
+
+    test('저장이 던져도 답은 끝나고 busy false', () async {
+      when(
+        () => history.appendTurn(
+          conversationId: any(named: 'conversationId'),
+          turn: any(named: 'turn'),
+        ),
+      ).thenThrow(StateError('db'));
+
+      await turn('질문', '답');
+
+      expect(cubit.state.busy, isFalse);
+      expect(cubit.state.bubbles, hasLength(2));
+      expect(cubit.state.bubbles.last.text, '답');
+      expect(cubit.state.conversationId, isNull);
+    });
+
+    test('저장이 끝나기 전에 새 대화를 시작하면 conversationId 가 붙지 않는다', () async {
+      final saving = Completer<ChatTurnRef>();
+      when(
+        () => history.appendTurn(
+          conversationId: any(named: 'conversationId'),
+          turn: any(named: 'turn'),
+        ),
+      ).thenAnswer((_) => saving.future);
+
+      final sent = turn('질문', '답');
+      await pumpEventQueue();
+      cubit.newConversation();
+      saving.complete((conversationId: 'c1', seq: 1));
+      await sent;
+      await pumpEventQueue();
+
+      expect(cubit.state.conversationId, isNull);
+      expect(cubit.state.bubbles, isEmpty);
+      expect(open.id, isNull);
+    });
+
+    test(
+      'open 은 말풍선 · 근거 칩 · stopped · seq 를 복원하고 session.resume(turns 의 text, temporary: false)',
+      () async {
+        when(
+          () => diary.entry('live'),
+        ).thenAnswer((_) async => Ok(_entry('live')));
+        when(
+          () => diary.entry('trashed'),
+        ).thenAnswer((_) async => Ok(_entry('trashed', trashed: true)));
+        final records = [
+          _record(1, cited: ['trashed', 'live']),
+          _record(3, stopped: true),
+        ];
+        when(() => history.turns('c1')).thenAnswer((_) async => records);
+
+        await cubit.open('c1');
+
+        final bubbles = cubit.state.bubbles;
+        expect([for (final b in bubbles) b.text], ['질문1', '답1', '질문3', '답3']);
+        expect(
+          [for (final b in bubbles) b.role],
+          [
+            ChatRole.user,
+            ChatRole.assistant,
+            ChatRole.user,
+            ChatRole.assistant,
+          ],
+        );
+        expect([for (final b in bubbles) b.seq], [1, 1, 3, 3]);
+        expect([for (final e in bubbles[1].cited) e.id], ['live']);
+        expect(bubbles[3].stopped, isTrue);
+        expect(bubbles[1].stopped, isFalse);
+        expect(cubit.state.conversationId, 'c1');
+        expect(cubit.state.temporary, isFalse);
+        expect(open.id, 'c1');
+        verify(
+          () => session.resume([
+            for (final r in records) r.text,
+          ], temporary: false),
+        ).called(1);
+      },
+    );
+
+    test('열린 대화에서 이어 묻는 턴은 그 대화에 저장한다', () async {
+      when(
+        () => history.turns('c9'),
+      ).thenAnswer((_) async => [_record(1, conversationId: 'c9')]);
+      await cubit.open('c9');
+
+      await turn('이어서', '답');
+
+      expect(appended.single.$1, 'c9');
+    });
+
+    test('답하는 중 open 하면 끊고 연다', () async {
+      final events = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => events.stream);
+      when(() => history.turns('c1')).thenAnswer((_) async => [_record(1)]);
+      final sent = cubit.send('질문');
+      events.add(const ChatEvent.text('답하는 중'));
+      await pumpEventQueue();
+
+      await cubit.open('c1');
+      await sent;
+
+      expect(events.hasListener, isFalse);
+      expect(cubit.state.busy, isFalse);
+      expect([for (final b in cubit.state.bubbles) b.text], ['질문1', '답1']);
+      verifyNoWrites();
+      await events.close();
+    });
+
+    test('임시 대화 중 open 하면 temporary false', () async {
+      when(() => history.turns('c1')).thenAnswer((_) async => [_record(1)]);
+      cubit.startTemporary();
+
+      await cubit.open('c1');
+
+      expect(cubit.state.temporary, isFalse);
+      expect(cubit.state.conversationId, 'c1');
+    });
+
+    test('없는 대화를 open 하면 빈 새 대화', () async {
+      when(() => history.turns('gone')).thenAnswer((_) async => const []);
+      await turn('질문', '답');
+
+      await cubit.open('gone');
+
+      expect(cubit.state.bubbles, isEmpty);
+      expect(cubit.state.conversationId, isNull);
+      expect(cubit.state.temporary, isFalse);
+      expect(open.id, isNull);
+      verifyNever(
+        () => session.resume(any(), temporary: any(named: 'temporary')),
+      );
+    });
+
+    test(
+      'startTemporary 는 말풍선을 비우고 temporary true, session.reset(temporary: true)',
+      () async {
+        await turn('질문', '답');
+
+        cubit.startTemporary();
+
+        expect(cubit.state.bubbles, isEmpty);
+        expect(cubit.state.temporary, isTrue);
+        expect(cubit.state.conversationId, isNull);
+        expect(open.id, isNull);
+        verify(() => session.reset(temporary: true)).called(1);
+      },
+    );
+
+    test('newConversation 은 temporary false', () {
+      cubit.startTemporary();
+
+      cubit.newConversation();
+
+      expect(cubit.state.temporary, isFalse);
+      verify(() => session.reset(temporary: false)).called(1);
+    });
+
+    test(
+      'deleteTurn(저장된 턴) 은 deleteTurn 뒤 남은 턴으로 resume 하고 말풍선을 다시 그린다',
+      () async {
+        await turn('질문1', '답1');
+        await turn('질문2', '답2');
+        when(() => history.deleteTurn('c1', 1)).thenAnswer((_) async {});
+        final left = [_record(2)];
+        when(() => history.turns('c1')).thenAnswer((_) async => left);
+
+        await cubit.deleteTurn(0);
+
+        verify(() => history.deleteTurn('c1', 1)).called(1);
+        verify(
+          () => session.resume([left.single.text], temporary: false),
+        ).called(1);
+        expect([for (final b in cubit.state.bubbles) b.text], ['질문2', '답2']);
+        expect([for (final b in cubit.state.bubbles) b.seq], [2, 2]);
+        expect(cubit.state.conversationId, 'c1');
+      },
+    );
+
+    test('deleteTurn(저장된 마지막 턴) 이면 빈 새 대화', () async {
+      await turn('질문', '답');
+      when(() => history.deleteTurn('c1', 1)).thenAnswer((_) async {});
+      when(() => history.turns('c1')).thenAnswer((_) async => const []);
+
+      await cubit.deleteTurn(0);
+
+      expect(cubit.state.bubbles, isEmpty);
+      expect(cubit.state.conversationId, isNull);
+      expect(open.id, isNull);
+    });
+
+    test(
+      'deleteTurn(임시 대화) 은 화면에서 빼고 남은 쌍으로 resume(temporary: true)',
+      () async {
+        cubit.startTemporary();
+        await turn('하나', '답1');
+        await turn('둘', '답2');
+
+        await cubit.deleteTurn(0);
+
+        expect([for (final b in cubit.state.bubbles) b.text], ['둘', '답2']);
+        verify(
+          () => session.resume(const [
+            ChatTurnText(question: '둘', answer: '답2'),
+          ], temporary: true),
+        ).called(1);
+        verifyNoWrites();
+      },
+    );
+
+    test('deleteTurn 실패 쌍은 화면에서만 뺀다(resume 안 부름)', () async {
+      await turn('하나', '답1');
+      when(() => session.ask('둘')).thenAnswer(
+        (_) =>
+            Stream.fromIterable(const [ChatEvent.failed(ChatFailure.network)]),
+      );
+      await cubit.send('둘');
+
+      await cubit.deleteTurn(2);
+
+      expect([for (final b in cubit.state.bubbles) b.text], ['하나', '답1']);
+      verifyNever(
+        () => session.resume(any(), temporary: any(named: 'temporary')),
+      );
+      verifyNever(() => history.deleteTurn(any(), any()));
+    });
+
+    test('deleteTurn 은 답하는 중이면 무시한다', () async {
+      await turn('하나', '답1');
+      final events = StreamController<ChatEvent>();
+      when(() => session.ask('둘')).thenAnswer((_) => events.stream);
+      unawaited(cubit.send('둘'));
+      await pumpEventQueue();
+
+      await cubit.deleteTurn(0);
+
+      expect(cubit.state.bubbles, hasLength(4));
+      verifyNever(() => history.deleteTurn(any(), any()));
+      unawaited(events.close());
+    });
+
+    test('열린 대화가 밖에서 지워지면(watchExists false) 빈 새 대화가 된다', () async {
+      final exists = StreamController<bool>();
+      when(() => history.watchExists('c1')).thenAnswer((_) => exists.stream);
+      await turn('질문', '답');
+      exists.add(true);
+      await pumpEventQueue();
+      expect(cubit.state.conversationId, 'c1');
+
+      exists.add(false);
+      await pumpEventQueue();
+
+      expect(cubit.state.bubbles, isEmpty);
+      expect(cubit.state.conversationId, isNull);
+      expect(open.id, isNull);
+      verify(() => session.reset()).called(1);
+      await exists.close();
+    });
+
+    test('conversationId 가 바뀌면 OpenConversation.id 도, close 하면 null', () async {
+      when(
+        () => history.turns('c2'),
+      ).thenAnswer((_) async => [_record(1, conversationId: 'c2')]);
+      await turn('질문', '답');
+      expect(open.id, 'c1');
+
+      await cubit.open('c2');
+      expect(open.id, 'c2');
+
+      await cubit.close();
+      expect(open.id, isNull);
+    });
+
+    test('refresh 는 세션 target 의 vendor 를 state 에 둔다', () async {
+      expect(cubit.state.vendor, ChatVendor.openai);
+      when(
+        () => session.target,
+      ).thenReturn((vendor: ChatVendor.anthropic, model: 'claude'));
+
+      await cubit.refresh(recheck: false);
+
+      expect(cubit.state.vendor, ChatVendor.anthropic);
     });
   });
 }

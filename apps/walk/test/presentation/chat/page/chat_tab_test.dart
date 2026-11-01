@@ -10,8 +10,12 @@ import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
+import 'package:walk/domain/chat/chat_vendor.dart';
+import 'package:walk/domain/chat/entity/conversation.dart';
+import 'package:walk/domain/chat/repository/chat_history_repository.dart';
 import 'package:walk/domain/chat/usecase/chat_key_verifier.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
+import 'package:walk/domain/chat/usecase/open_conversation.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
@@ -29,10 +33,23 @@ class _MockSession extends Mock implements ChatSession {}
 
 class _MockDiary extends Mock implements DiaryRepository {}
 
+class _MockHistory extends Mock implements ChatHistoryRepository {}
+
 class _MockLock extends MockCubit<DiaryLockState> implements DiaryLockCubit {}
 
 void main() {
-  setUpAll(() => registerFallbackValue(const EntryFilter.all()));
+  setUpAll(() {
+    registerFallbackValue(const EntryFilter.all());
+    registerFallbackValue(
+      const ChatTurnDraft(
+        question: '',
+        answer: '',
+        citedEntryIds: [],
+        vendor: ChatVendor.anthropic,
+        model: '',
+      ),
+    );
+  });
 
   late _MockSession session;
   late _MockDiary diary;
@@ -48,6 +65,19 @@ void main() {
     lock = _MockLock();
     verifier = FakeChatKeyVerifier();
     lockStates = StreamController<DiaryLockState>.broadcast();
+    final history = _MockHistory();
+    when(
+      () => history.watchExists(any()),
+    ).thenAnswer((_) => const Stream.empty());
+    when(
+      () => history.appendTurn(
+        conversationId: any(named: 'conversationId'),
+        turn: any(named: 'turn'),
+      ),
+    ).thenAnswer((_) async => (conversationId: 'c1', seq: 1));
+    when(
+      () => session.target,
+    ).thenReturn((vendor: ChatVendor.anthropic, model: 'claude-test'));
     whenListen(
       lock,
       lockStates.stream,
@@ -59,6 +89,8 @@ void main() {
       ..registerSingleton<ChatSettings>(settings)
       ..registerSingleton<ChatKeyVerifier>(verifier)
       ..registerSingleton<DiaryRepository>(diary)
+      ..registerSingleton<ChatHistoryRepository>(history)
+      ..registerSingleton<OpenConversation>(OpenConversation())
       ..registerSingleton<Clock>(MutableClock(diaryT0));
   });
 

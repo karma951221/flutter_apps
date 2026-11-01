@@ -6,8 +6,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/chat/chat_settings.dart';
 import '../../../domain/chat/chat_trace.dart';
+import '../../../domain/chat/entity/conversation.dart';
+import '../../../domain/chat/repository/chat_history_repository.dart';
 import '../../../domain/chat/usecase/chat_key_verifier.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
+import '../../../domain/chat/usecase/open_conversation.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import 'chat_state.dart';
@@ -16,17 +19,32 @@ import 'chat_state.dart';
 void _addPostFrame(VoidCallback callback) =>
     SchedulerBinding.instance.addPostFrameCallback((_) => callback());
 
+/// 한 대화(새 대화 · 연 대화 · 임시 대화) 동안의 저장 위치. [ChatCubit.newConversation] ·
+/// [ChatCubit.open] · [ChatCubit.startTemporary] 마다 새로 만든다 — 늦게 끝난 저장이 지난
+/// 대화의 것인지 이 객체로 가린다. 지난 대화 몫으로 줄 선 저장은 [id] 로 그 대화에 이어 쓴다.
+class _Thread {
+  _Thread({required this.temporary});
+
+  final bool temporary;
+  String? id;
+}
+
 /// 채팅 탭 상태. 질문 하나에 user 말풍선과 흘러나오는 assistant 말풍선 하나를 붙인다.
 ///
 /// 대화는 [ChatSession](싱글턴)이 들고, 이 cubit 은 화면에 보일 말풍선만 들고 있다.
 /// 탭이 소유한다(잠금 게이트 바깥) — 다시 잠겼다 풀려도 대화가 남는다.
+///
+/// 임시 대화가 아니면 턴이 끝날 때(답 끝 · 글이 있는 멈춤)마다 [ChatHistoryRepository] 에
+/// 저장한다. 임시 대화는 저장소에 한 행도 쓰지 않는다.
 class ChatCubit extends Cubit<ChatState> {
   ChatCubit(
     this._session,
     this._settings,
     this._diary,
     this._trace,
-    this._verifier, {
+    this._verifier,
+    this._history,
+    this._open, {
     void Function(VoidCallback) schedulePostFrame = _addPostFrame,
   }) : _schedulePostFrame = schedulePostFrame,
        super(const ChatState(access: ChatAccess.checking));
@@ -38,6 +56,11 @@ class ChatCubit extends Cubit<ChatState> {
 
   /// 확인 전(unverified) 키를 탭이 열릴 때 다시 확인한다(§4 끝 줄).
   final ChatKeyVerifier _verifier;
+
+  final ChatHistoryRepository _history;
+
+  /// 지금 열린 저장 대화 id. 보관 정리가 이 대화를 건너뛴다.
+  final OpenConversation _open;
 
   /// 프레임 쪽 표시(firstVisible · firstGlyph)를 찍을 때 쓴다. 위젯은 계측을 모른다.
   final void Function(VoidCallback) _schedulePostFrame;
@@ -60,6 +83,19 @@ class ChatCubit extends Cubit<ChatState> {
   /// [newConversation] · [stop] 마다 올린다. 끊긴 질문의 늦은 결과(이벤트 · 인용 읽기)를 버린다.
   int _generation = 0;
 
+  /// 지금 대화의 저장 위치.
+  _Thread _thread = _Thread(temporary: false);
+
+  /// 저장을 한 줄로 세운다 — 첫 턴이 만든 대화 id 를 다음 턴이 쓰고, seq 순서가 지켜진다.
+  Future<void> _saveTail = Future.value();
+
+  /// 지금 열린 대화가 있는지 지켜본다. 밖에서 지워지면 빈 새 대화가 된다.
+  StreamSubscription<bool>? _existsSub;
+
+  /// 진행 중인 질문 — 끝나거나 멈출 때 저장에 쓴다.
+  String _turnQuestion = '';
+  ChatTarget? _turnTarget;
+
   /// 키 · 동의 상태를 다시 읽는다. 탭이 보이게 될 때 · 위에 얹힌 화면이 걷힐 때 부른다.
   /// 보안 저장소를 읽지 못하면 키가 없는 것으로 본다.
   ///
@@ -79,7 +115,7 @@ class ChatCubit extends Cubit<ChatState> {
       (_, false) => ChatAccess.needsConsent,
       _ => ChatAccess.ready,
     };
-    emit(state.copyWith(access: access));
+    emit(state.copyWith(access: access, vendor: _session.target.vendor));
     if (recheck && access == ChatAccess.ready) {
       unawaited(
         Future.sync(
@@ -96,6 +132,7 @@ class ChatCubit extends Cubit<ChatState> {
 
   /// 질문을 보낸다. 쓸 수 있는 상태(ready)가 아니거나 빈 질문이거나 답하는 중이면 무시한다.
   /// 돌려주는 Future 는 답이 끝나거나(성공 · 실패) [newConversation] 으로 끊길 때 끝난다.
+  /// 답이 끝났으면 그 턴의 저장 시도까지 끝난 뒤다.
   Future<void> send(String question) {
     final text = question.trim();
     if (state.access != ChatAccess.ready || text.isEmpty || state.busy) {
@@ -108,6 +145,8 @@ class ChatCubit extends Cubit<ChatState> {
       // 세션이 아직 이전 질문을 돌리는 중 — 이 cubit 이 모르는 질문이다. 보내지 않는다.
       return Future.value();
     }
+    _turnQuestion = text;
+    _turnTarget = _session.target;
     _traceBegin();
     final generation = _generation;
     final running = _running = Completer<void>();
@@ -132,15 +171,59 @@ class ChatCubit extends Cubit<ChatState> {
   }
 
   /// 대화를 비운다. 답하는 중이면 끊는다 — 세션은 그 질문의 이벤트를 더 내지 않는다.
-  void newConversation() {
-    _generation++;
-    unawaited(_sub?.cancel());
-    _sub = null;
-    _session.reset();
-    // reset 뒤에 닫는다 — 어댑터가 끊으며 찍는 abort 가 이번 질문 기록에 들어가게.
-    if (state.busy) _traceDone();
-    _complete();
-    emit(state.copyWith(bubbles: const [], busy: false, activeTool: null));
+  void newConversation() => _startFresh(temporary: false);
+
+  /// 지금 대화를 닫고 빈 임시 대화를 연다. 임시 대화는 저장소에 아무것도 쓰지 않는다.
+  void startTemporary() => _startFresh(temporary: true);
+
+  /// 저장된 대화를 연다. 답하는 중이면 끊는다([newConversation] 과 같은 규칙). 임시 대화였으면
+  /// 사라진다. 말풍선 · 근거 칩(휴지통 · 없는 기록 빼고) · stopped · seq 를 복원하고 세션을
+  /// 그 턴들로 이어간다. 그 대화가 없으면(사이에 지워짐) 빈 새 대화.
+  Future<void> open(String conversationId) async {
+    _startFresh(temporary: false);
+    await _load(conversationId, _thread);
+  }
+
+  /// [userIndex] 의 질문과 그 답 말풍선을 지운다. 답하는 중이면 무시한다.
+  ///
+  /// 저장된 턴이면 저장소에서 지우고 남은 턴으로 다시 연다(남은 턴이 없으면 빈 새 대화).
+  /// 임시 대화 · 저장 전 턴은 화면에서 빼고 남은 쌍으로 세션을 이어간다. 실패한 쌍은
+  /// 화면에서만 뺀다(세션은 그 질문을 이미 되돌렸다).
+  Future<void> deleteTurn(int userIndex) async {
+    if (state.busy) return;
+    final target = _bubbleAt(userIndex);
+    if (target == null || target.role != ChatRole.user) return;
+    // 줄 선 저장이 끝나야 seq 가 붙는다 — 그 뒤 같은 말풍선을 다시 찾는다.
+    final thread = _thread;
+    await _saveTail;
+    if (isClosed || !identical(thread, _thread) || state.busy) return;
+    final index = _indexOf(target, near: userIndex);
+    if (index == null) return;
+    final user = state.bubbles[index];
+    final answer = _bubbleAt(index + 1);
+    final pairEnd = answer?.role == ChatRole.assistant ? index + 2 : index + 1;
+    final seq = user.seq;
+    final id = state.conversationId;
+
+    if (seq != null && id != null && !thread.temporary) {
+      try {
+        await _history.deleteTurn(id, seq);
+      } on Object {
+        return;
+      }
+      if (isClosed || !identical(thread, _thread)) return;
+      _startFresh(temporary: false, keepScreen: true);
+      await _load(id, _thread);
+      return;
+    }
+
+    final bubbles = [
+      ...state.bubbles.sublist(0, index),
+      ...state.bubbles.sublist(pairEnd),
+    ];
+    emit(state.copyWith(bubbles: bubbles));
+    if (answer?.failure != null) return;
+    _session.resume(_turnsOf(bubbles), temporary: thread.temporary);
   }
 
   /// 답하는 중이면 멈춘다. 같은 emit 에서 busy: false. 인용을 읽는 중(_finishing)이면
@@ -167,6 +250,7 @@ class ChatCubit extends Cubit<ChatState> {
             _attachCited(citedEntryIds, bubbles.length - 1, bubbles.last),
           );
         }
+        unawaited(_saveLastTurn(citedEntryIds, stopped: true));
       case ChatStopDropped():
         final bubbles = state.bubbles;
         final question = bubbles.length >= 2
@@ -206,7 +290,7 @@ class ChatCubit extends Cubit<ChatState> {
     final cited = await _resolve(ids);
     if (isClosed) return;
     final bubbles = state.bubbles;
-    if (index >= bubbles.length || !identical(bubbles[index], stopped)) return;
+    if (index >= bubbles.length || !_same(bubbles[index], stopped)) return;
     emit(
       state.copyWith(
         bubbles: [
@@ -239,9 +323,14 @@ class ChatCubit extends Cubit<ChatState> {
         if (_trace.enabled) _traceVisible();
       case ChatFinished(:final citedEntryIds):
         _finishing = true;
+        final running = _running;
         final cited = await _resolve(citedEntryIds);
         if (generation != _generation || isClosed) return;
-        _end(_withLast((b) => b.copyWith(cited: cited)));
+        _end(_withLast((b) => b.copyWith(cited: cited)), complete: false);
+        // send 의 Future 는 저장 시도까지 끝난 뒤에 끝난다.
+        await _saveLastTurn(citedEntryIds, stopped: false);
+        if (running != null && !running.isCompleted) running.complete();
+        if (identical(_running, running)) _running = null;
       case ChatFailed(:final failure):
         _fail(failure, generation);
     }
@@ -258,11 +347,186 @@ class ChatCubit extends Cubit<ChatState> {
     if (state.busy && !_finishing) _end(state.bubbles);
   }
 
-  void _end(List<ChatBubble> bubbles) {
+  void _end(List<ChatBubble> bubbles, {bool complete = true}) {
     emit(state.copyWith(bubbles: bubbles, busy: false, activeTool: null));
     _traceDone();
-    _complete();
+    if (complete) _complete();
   }
+
+  /// 대화를 끊고 빈 새 대화(또는 임시 대화)로 둔다. [keepScreen] 이면 말풍선은 그대로 두고
+  /// (곧 [_load] 가 다시 그린다) 세션 · 저장 위치만 바꾼다.
+  void _startFresh({required bool temporary, bool keepScreen = false}) {
+    _generation++;
+    _thread = _Thread(temporary: temporary);
+    unawaited(_sub?.cancel());
+    _sub = null;
+    _session.reset(temporary: temporary);
+    // reset 뒤에 닫는다 — 어댑터가 끊으며 찍는 abort 가 이번 질문 기록에 들어가게.
+    if (state.busy) _traceDone();
+    _complete();
+    emit(
+      state.copyWith(
+        bubbles: keepScreen ? state.bubbles : const [],
+        busy: false,
+        activeTool: null,
+        temporary: temporary,
+      ),
+    );
+    _setConversation(null);
+  }
+
+  /// 저장된 [id] 의 턴으로 화면과 세션을 채운다. 그 사이 다른 대화로 바뀌었으면([thread]) 버린다.
+  /// 턴이 없거나 읽지 못하면 빈 새 대화로 둔다.
+  Future<void> _load(String id, _Thread thread) async {
+    List<ChatTurnRecord> turns;
+    try {
+      turns = await _history.turns(id);
+    } on Object {
+      turns = const [];
+    }
+    if (isClosed || !identical(thread, _thread)) return;
+    if (turns.isEmpty) {
+      emit(state.copyWith(bubbles: const []));
+      return;
+    }
+    final bubbles = <ChatBubble>[];
+    for (final turn in turns) {
+      final cited = await _resolve(turn.citedEntryIds);
+      bubbles
+        ..add(
+          ChatBubble(role: ChatRole.user, text: turn.question, seq: turn.seq),
+        )
+        ..add(
+          ChatBubble(
+            role: ChatRole.assistant,
+            text: turn.answer,
+            cited: cited,
+            stopped: turn.stopped,
+            seq: turn.seq,
+          ),
+        );
+    }
+    if (isClosed || !identical(thread, _thread)) return;
+    thread.id = id;
+    _session.resume([for (final t in turns) t.text], temporary: false);
+    emit(state.copyWith(bubbles: bubbles));
+    _setConversation(id);
+  }
+
+  /// 마지막 턴(질문 · 답 말풍선)을 저장한다. 임시 대화 · 빈 답 · 실패는 저장하지 않는다.
+  /// 저장이 던지면 조용히 넘어간다 — 말풍선은 남고 다음 턴이 다시 시도한다.
+  Future<void> _saveLastTurn(
+    List<String> citedEntryIds, {
+    required bool stopped,
+  }) {
+    final thread = _thread;
+    final target = _turnTarget;
+    final bubbles = state.bubbles;
+    if (thread.temporary || target == null || bubbles.length < 2) {
+      return Future.value();
+    }
+    final userIndex = bubbles.length - 2;
+    final user = bubbles[userIndex];
+    final answer = bubbles.last;
+    if (answer.failure != null || answer.text.trim().isEmpty) {
+      return Future.value();
+    }
+    final draft = ChatTurnDraft(
+      question: _turnQuestion,
+      answer: answer.text,
+      citedEntryIds: citedEntryIds,
+      stopped: stopped,
+      vendor: target.vendor,
+      model: target.model,
+    );
+    final saved = _saveTail.then(
+      (_) => _write(thread, draft, userIndex, user, answer),
+    );
+    _saveTail = saved;
+    return saved;
+  }
+
+  Future<void> _write(
+    _Thread thread,
+    ChatTurnDraft draft,
+    int userIndex,
+    ChatBubble user,
+    ChatBubble answer,
+  ) async {
+    final ChatTurnRef ref;
+    try {
+      ref = await _history.appendTurn(conversationId: thread.id, turn: draft);
+    } on Object {
+      return;
+    }
+    thread.id = ref.conversationId;
+    // 그 사이 새 대화 · 다른 대화 · 임시 대화로 바뀌었으면 화면에 붙이지 않는다(행은 목록에 있다).
+    if (isClosed || !identical(thread, _thread)) return;
+    final bubbles = state.bubbles;
+    final matches =
+        userIndex + 1 < bubbles.length &&
+        _same(bubbles[userIndex], user) &&
+        _same(bubbles[userIndex + 1], answer);
+    if (matches) {
+      emit(
+        state.copyWith(
+          bubbles: [
+            for (final (i, b) in bubbles.indexed)
+              i == userIndex || i == userIndex + 1
+                  ? b.copyWith(seq: ref.seq)
+                  : b,
+          ],
+        ),
+      );
+    }
+    _setConversation(ref.conversationId);
+  }
+
+  /// 열린 대화를 바꾼다 — 상태 · [OpenConversation] · 지워짐 감시를 함께.
+  void _setConversation(String? id) {
+    if (isClosed) return;
+    if (state.conversationId != id) emit(state.copyWith(conversationId: id));
+    if (_open.id == id && (id == null || _existsSub != null)) return;
+    _open.id = id;
+    unawaited(_existsSub?.cancel());
+    _existsSub = null;
+    if (id == null) return;
+    _existsSub = _history.watchExists(id).listen((exists) {
+      if (!exists && !isClosed && state.conversationId == id) {
+        newConversation();
+      }
+    }, onError: (Object _) {});
+  }
+
+  /// 남은 말풍선에서 세션에 넘길 턴. 실패한 쌍 · 답 없는 질문은 뺀다.
+  List<ChatTurnText> _turnsOf(List<ChatBubble> bubbles) => [
+    for (var i = 0; i + 1 < bubbles.length; i++)
+      if (bubbles[i].role == ChatRole.user &&
+          bubbles[i + 1].role == ChatRole.assistant &&
+          bubbles[i + 1].failure == null)
+        ChatTurnText(
+          question: bubbles[i].text,
+          answer: bubbles[i + 1].text,
+          stopped: bubbles[i + 1].stopped,
+        ),
+  ];
+
+  ChatBubble? _bubbleAt(int index) =>
+      index >= 0 && index < state.bubbles.length ? state.bubbles[index] : null;
+
+  /// [bubble] 의 지금 index. 처음 본 자리([near])를 먼저 본다(저장이 seq 를 붙였을 수 있다).
+  int? _indexOf(ChatBubble bubble, {required int near}) {
+    final at = _bubbleAt(near);
+    if (at != null && _same(at, bubble)) return near;
+    final i = state.bubbles.indexWhere((b) => _same(b, bubble));
+    return i < 0 ? null : i;
+  }
+
+  /// 저장 · 인용 붙이기가 바꾸는 seq · cited 를 빼고 같은 말풍선인가.
+  static bool _same(ChatBubble a, ChatBubble b) =>
+      identical(a, b) ||
+      a.copyWith(seq: null, cited: const []) ==
+          b.copyWith(seq: null, cited: const []);
 
   void _traceBegin() {
     if (!_trace.enabled) return;
@@ -335,6 +599,9 @@ class ChatCubit extends Cubit<ChatState> {
   @override
   Future<void> close() async {
     _generation++;
+    unawaited(_existsSub?.cancel());
+    _existsSub = null;
+    _open.id = null;
     // 기다리지 않는다 — 응답을 기다리는 중인 세션 스트림은 취소가 늦게 끝날 수 있다.
     unawaited(_sub?.cancel());
     // 세션은 싱글턴이다. 답하는 중에 닫혀도 다음 cubit 이 ask 할 수 있게 비운다.

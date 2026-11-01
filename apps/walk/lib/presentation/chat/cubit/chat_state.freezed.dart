@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ChatBubble {
 
- ChatRole get role; String get text; List<DiaryEntry> get cited; ChatFailure? get failure; bool get stopped;
+ ChatRole get role; String get text; List<DiaryEntry> get cited; ChatFailure? get failure; bool get stopped; int? get seq;
 /// Create a copy of ChatBubble
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $ChatBubbleCopyWith<ChatBubble> get copyWith => _$ChatBubbleCopyWithImpl<ChatBub
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatBubble&&(identical(other.role, role) || other.role == role)&&(identical(other.text, text) || other.text == text)&&const DeepCollectionEquality().equals(other.cited, cited)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.stopped, stopped) || other.stopped == stopped));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatBubble&&(identical(other.role, role) || other.role == role)&&(identical(other.text, text) || other.text == text)&&const DeepCollectionEquality().equals(other.cited, cited)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.stopped, stopped) || other.stopped == stopped)&&(identical(other.seq, seq) || other.seq == seq));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,role,text,const DeepCollectionEquality().hash(cited),failure,stopped);
+int get hashCode => Object.hash(runtimeType,role,text,const DeepCollectionEquality().hash(cited),failure,stopped,seq);
 
 @override
 String toString() {
-  return 'ChatBubble(role: $role, text: $text, cited: $cited, failure: $failure, stopped: $stopped)';
+  return 'ChatBubble(role: $role, text: $text, cited: $cited, failure: $failure, stopped: $stopped, seq: $seq)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $ChatBubbleCopyWith<$Res>  {
   factory $ChatBubbleCopyWith(ChatBubble value, $Res Function(ChatBubble) _then) = _$ChatBubbleCopyWithImpl;
 @useResult
 $Res call({
- ChatRole role, String text, List<DiaryEntry> cited, ChatFailure? failure, bool stopped
+ ChatRole role, String text, List<DiaryEntry> cited, ChatFailure? failure, bool stopped, int? seq
 });
 
 
@@ -62,14 +62,15 @@ class _$ChatBubbleCopyWithImpl<$Res>
 
 /// Create a copy of ChatBubble
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? role = null,Object? text = null,Object? cited = null,Object? failure = freezed,Object? stopped = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? role = null,Object? text = null,Object? cited = null,Object? failure = freezed,Object? stopped = null,Object? seq = freezed,}) {
   return _then(ChatBubble(
 role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as ChatRole,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String,cited: null == cited ? _self.cited : cited // ignore: cast_nullable_to_non_nullable
 as List<DiaryEntry>,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
 as ChatFailure?,stopped: null == stopped ? _self.stopped : stopped // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,seq: freezed == seq ? _self.seq : seq // ignore: cast_nullable_to_non_nullable
+as int?,
   ));
 }
 
@@ -203,7 +204,7 @@ case _:
 /// @nodoc
 mixin _$ChatState {
 
- ChatAccess get access; List<ChatBubble> get bubbles; bool get busy; String? get activeTool; String? get restoredDraft;
+ ChatAccess get access; List<ChatBubble> get bubbles; bool get busy; String? get activeTool; String? get restoredDraft; String? get conversationId; bool get temporary; ChatVendor get vendor;
 /// Create a copy of ChatState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -214,16 +215,16 @@ $ChatStateCopyWith<ChatState> get copyWith => _$ChatStateCopyWithImpl<ChatState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatState&&(identical(other.access, access) || other.access == access)&&const DeepCollectionEquality().equals(other.bubbles, bubbles)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.activeTool, activeTool) || other.activeTool == activeTool)&&(identical(other.restoredDraft, restoredDraft) || other.restoredDraft == restoredDraft));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatState&&(identical(other.access, access) || other.access == access)&&const DeepCollectionEquality().equals(other.bubbles, bubbles)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.activeTool, activeTool) || other.activeTool == activeTool)&&(identical(other.restoredDraft, restoredDraft) || other.restoredDraft == restoredDraft)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.temporary, temporary) || other.temporary == temporary)&&(identical(other.vendor, vendor) || other.vendor == vendor));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,access,const DeepCollectionEquality().hash(bubbles),busy,activeTool,restoredDraft);
+int get hashCode => Object.hash(runtimeType,access,const DeepCollectionEquality().hash(bubbles),busy,activeTool,restoredDraft,conversationId,temporary,vendor);
 
 @override
 String toString() {
-  return 'ChatState(access: $access, bubbles: $bubbles, busy: $busy, activeTool: $activeTool, restoredDraft: $restoredDraft)';
+  return 'ChatState(access: $access, bubbles: $bubbles, busy: $busy, activeTool: $activeTool, restoredDraft: $restoredDraft, conversationId: $conversationId, temporary: $temporary, vendor: $vendor)';
 }
 
 
@@ -234,7 +235,7 @@ abstract mixin class $ChatStateCopyWith<$Res>  {
   factory $ChatStateCopyWith(ChatState value, $Res Function(ChatState) _then) = _$ChatStateCopyWithImpl;
 @useResult
 $Res call({
- ChatAccess access, List<ChatBubble> bubbles, bool busy, String? activeTool, String? restoredDraft
+ ChatAccess access, List<ChatBubble> bubbles, bool busy, String? activeTool, String? restoredDraft, String? conversationId, bool temporary, ChatVendor vendor
 });
 
 
@@ -251,14 +252,17 @@ class _$ChatStateCopyWithImpl<$Res>
 
 /// Create a copy of ChatState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? access = null,Object? bubbles = null,Object? busy = null,Object? activeTool = freezed,Object? restoredDraft = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? access = null,Object? bubbles = null,Object? busy = null,Object? activeTool = freezed,Object? restoredDraft = freezed,Object? conversationId = freezed,Object? temporary = null,Object? vendor = null,}) {
   return _then(ChatState(
 access: null == access ? _self.access : access // ignore: cast_nullable_to_non_nullable
 as ChatAccess,bubbles: null == bubbles ? _self.bubbles : bubbles // ignore: cast_nullable_to_non_nullable
 as List<ChatBubble>,busy: null == busy ? _self.busy : busy // ignore: cast_nullable_to_non_nullable
 as bool,activeTool: freezed == activeTool ? _self.activeTool : activeTool // ignore: cast_nullable_to_non_nullable
 as String?,restoredDraft: freezed == restoredDraft ? _self.restoredDraft : restoredDraft // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,conversationId: freezed == conversationId ? _self.conversationId : conversationId // ignore: cast_nullable_to_non_nullable
+as String?,temporary: null == temporary ? _self.temporary : temporary // ignore: cast_nullable_to_non_nullable
+as bool,vendor: null == vendor ? _self.vendor : vendor // ignore: cast_nullable_to_non_nullable
+as ChatVendor,
   ));
 }
 

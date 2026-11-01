@@ -56,7 +56,10 @@ import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_device_auth.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
+import 'package:walk/domain/chat/chat_vendor.dart';
+import 'package:walk/domain/chat/repository/chat_history_repository.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
+import 'package:walk/domain/chat/usecase/open_conversation.dart';
 import '../../../support/fake_chat_settings.dart';
 import '../../../support/fake_chat_key_verifier.dart';
 import 'package:walk/domain/chat/usecase/chat_key_verifier.dart';
@@ -83,7 +86,15 @@ class _MockDiaryUseCase extends Mock implements DiaryUseCase {}
 
 class _MockPlaceSource extends Mock implements PlaceSource {}
 
-class _MockChatSession extends Mock implements ChatSession {}
+class _MockChatSession extends Mock implements ChatSession {
+  _MockChatSession() {
+    when(
+      () => target,
+    ).thenReturn((vendor: ChatVendor.anthropic, model: 'claude-test'));
+  }
+}
+
+class _MockChatHistory extends Mock implements ChatHistoryRepository {}
 
 class _FakeCalendar implements HolidayCalendar {
   @override
@@ -201,6 +212,8 @@ void main() {
       ..registerSingleton<MediaPickGuard>(MediaPickGuard());
     getIt
       ..registerSingleton<ChatSession>(_MockChatSession())
+      ..registerSingleton<ChatHistoryRepository>(_MockChatHistory())
+      ..registerSingleton<OpenConversation>(OpenConversation())
       ..registerSingleton<ChatTrace>(const NoopChatTrace())
       ..registerSingleton<PlaceSource>(_MockPlaceSource());
     getIt

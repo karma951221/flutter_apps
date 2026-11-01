@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../domain/chat/chat_vendor.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 
@@ -31,12 +32,17 @@ class ChatBubble with _$ChatBubble {
   @override
   final bool stopped;
 
+  /// 저장된 턴의 seq. 저장 전 · 임시 대화 · 실패한 말풍선은 null. 한 턴의 질문 · 답 말풍선이 같은 값.
+  @override
+  final int? seq;
+
   const ChatBubble({
     required this.role,
     required this.text,
     this.cited = const [],
     this.failure,
     this.stopped = false,
+    this.seq,
   });
 }
 
@@ -60,11 +66,26 @@ class ChatState with _$ChatState {
   @override
   final String? restoredDraft;
 
+  /// 지금 열린 저장 대화. 첫 턴을 저장하기 전 · 임시 대화면 null.
+  @override
+  final String? conversationId;
+
+  /// 임시 대화 중(D4).
+  @override
+  final bool temporary;
+
+  /// 배너에 쓰는 지금 벤더. refresh 때 세션 target 에서 읽는다.
+  @override
+  final ChatVendor vendor;
+
   const ChatState({
     required this.access,
     this.bubbles = const [],
     this.busy = false,
     this.activeTool,
     this.restoredDraft,
+    this.conversationId,
+    this.temporary = false,
+    this.vendor = ChatVendor.anthropic,
   });
 }
