@@ -3170,6 +3170,110 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatSearching => '기록을 찾는 중…';
 
   @override
+  String get walkChatPhaseSending => '보내는 중';
+
+  @override
+  String get walkChatPhaseThinking => '생각하는 중';
+
+  @override
+  String get walkChatPhaseWriting => '답 쓰는 중';
+
+  @override
+  String get walkChatPhaseWritingDone => '답 쓰기';
+
+  @override
+  String get walkChatToolSearchDiary => '일기 찾는 중';
+
+  @override
+  String get walkChatToolViewPhotos => '사진 보는 중';
+
+  @override
+  String get walkChatToolDiaryIndex => '일기 목록 보는 중';
+
+  @override
+  String get walkChatToolDailySteps => '걸음 수 보는 중';
+
+  @override
+  String get walkChatToolWakeRecords => '알람 기록 보는 중';
+
+  @override
+  String get walkChatToolReadWiki => '위키 읽는 중';
+
+  @override
+  String get walkChatToolOther => '기록 보는 중';
+
+  @override
+  String walkChatToolDetail(String label, String detail) {
+    return '$label($detail)';
+  }
+
+  @override
+  String walkChatToolRange(String from, String to) {
+    return '$from~$to';
+  }
+
+  @override
+  String walkChatToolQuery(String query) {
+    return '\'$query\'';
+  }
+
+  @override
+  String walkChatToolDays(int count) {
+    return '$count일';
+  }
+
+  @override
+  String walkChatToolFoundEntries(int count) {
+    return '일기 $count개 찾음';
+  }
+
+  @override
+  String walkChatToolFoundSteps(int count) {
+    return '걸음 $count일치';
+  }
+
+  @override
+  String walkChatToolFoundWake(int count) {
+    return '기상 기록 $count회';
+  }
+
+  @override
+  String walkChatToolFoundPhotos(int count) {
+    return '사진 $count장';
+  }
+
+  @override
+  String walkChatToolFoundIndex(int count) {
+    return '스토리 $count개';
+  }
+
+  @override
+  String walkChatToolFoundWiki(int count) {
+    return '위키 $count개';
+  }
+
+  @override
+  String get walkChatToolFoundNone => '찾은 기록 없음';
+
+  @override
+  String walkChatProgressElapsed(int seconds) {
+    return '$seconds초';
+  }
+
+  @override
+  String walkChatProgressLookups(int count) {
+    return '기록 $count번 찾아봄';
+  }
+
+  @override
+  String walkChatProgressJoin(String a, String b) {
+    return '$a · $b';
+  }
+
+  @override
+  String get walkChatProgressExpand => '진행 과정 펼치기';
+
+  @override
   String get walkChatCitedTitle => '대화 속 기록';
 
   @override

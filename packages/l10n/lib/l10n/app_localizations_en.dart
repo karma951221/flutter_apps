@@ -3420,6 +3420,158 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatSearching => 'Searching your records…';
 
   @override
+  String get walkChatPhaseSending => 'Sending';
+
+  @override
+  String get walkChatPhaseThinking => 'Thinking';
+
+  @override
+  String get walkChatPhaseWriting => 'Writing';
+
+  @override
+  String get walkChatPhaseWritingDone => 'Answer';
+
+  @override
+  String get walkChatToolSearchDiary => 'Searching diary';
+
+  @override
+  String get walkChatToolViewPhotos => 'Viewing photos';
+
+  @override
+  String get walkChatToolDiaryIndex => 'Viewing diary index';
+
+  @override
+  String get walkChatToolDailySteps => 'Checking steps';
+
+  @override
+  String get walkChatToolWakeRecords => 'Checking alarm log';
+
+  @override
+  String get walkChatToolReadWiki => 'Reading wiki';
+
+  @override
+  String get walkChatToolOther => 'Checking records';
+
+  @override
+  String walkChatToolDetail(String label, String detail) {
+    return '$label ($detail)';
+  }
+
+  @override
+  String walkChatToolRange(String from, String to) {
+    return '$from–$to';
+  }
+
+  @override
+  String walkChatToolQuery(String query) {
+    return '\"$query\"';
+  }
+
+  @override
+  String walkChatToolDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkChatToolFoundEntries(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Found $count entries',
+      one: 'Found 1 entry',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkChatToolFoundSteps(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days of steps',
+      one: '1 day of steps',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkChatToolFoundWake(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count wake records',
+      one: '1 wake record',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkChatToolFoundPhotos(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count photos',
+      one: '1 photo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkChatToolFoundIndex(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count stories',
+      one: '1 story',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkChatToolFoundWiki(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count wiki notes',
+      one: '1 wiki note',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get walkChatToolFoundNone => 'No records found';
+
+  @override
+  String walkChatProgressElapsed(int seconds) {
+    return '${seconds}s';
+  }
+
+  @override
+  String walkChatProgressLookups(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Checked records $count times',
+      one: 'Checked records once',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkChatProgressJoin(String a, String b) {
+    return '$a · $b';
+  }
+
+  @override
+  String get walkChatProgressExpand => 'Show steps';
+
+  @override
   String get walkChatCitedTitle => 'Records from chat';
 
   @override

@@ -12,9 +12,15 @@ void main() {
     ChatBubble bubble, {
     VoidCallback? onOpenSettings,
     VoidCallback? onLongPress,
+    bool streaming = false,
+    bool reduceMotion = false,
   }) => tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light(),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(disableAnimations: reduceMotion),
+        child: child!,
+      ),
       locale: const Locale('ko'),
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -24,10 +30,95 @@ void main() {
           onOpenCited: (_, _) {},
           onOpenSettings: onOpenSettings,
           onLongPress: onLongPress,
+          streaming: streaming,
         ),
       ),
     ),
   );
+
+  group('흐르는 중 커서', () {
+    const answer = ChatBubble(role: ChatRole.assistant, text: '지난주에는');
+    final cursor = find.textContaining('▍', findRichText: true);
+
+    double opacity(WidgetTester tester) => tester
+        .widget<FadeTransition>(
+          find
+              .ancestor(of: cursor, matching: find.byType(FadeTransition))
+              .first,
+        )
+        .opacity
+        .value;
+
+    testWidgets('streaming 이면 커서가 보이고 SelectableText 글에는 없다', (tester) async {
+      await pump(tester, answer, streaming: true);
+
+      expect(cursor, findsOneWidget);
+      final selectable = tester.widget<SelectableText>(
+        find.byType(SelectableText),
+      );
+      expect(selectable.data, '지난주에는');
+      expect(selectable.data, isNot(contains('▍')));
+      // 커서는 글 끝에 붙는다 — 글과 같은 줄에서 시작한다.
+      expect(
+        tester.getTopLeft(cursor).dy,
+        tester.getTopLeft(find.byType(SelectableText)).dy,
+      );
+    });
+
+    testWidgets('여러 줄이어도 투명 글이 같은 자리에서 줄을 나눈다', (tester) async {
+      // 캐럿 자리 몇 픽셀 차이로 한 줄 글자 수가 갈리는 너비 — 0.85 × 1010 − 좌우 여백 32
+      // = 826.5 는 테스트 글꼴 한 글자(16.5)의 50배보다 1.5 넓다.
+      tester.view
+        ..physicalSize = const Size(1010, 800)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      // 길이를 바꿔 가며 — 투명 글이 더 넓게 줄을 나누면 줄 수가 줄어 높이가 낮아진다.
+      for (var n = 1; n <= 60; n++) {
+        await pump(
+          tester,
+          ChatBubble(role: ChatRole.assistant, text: '바다가' * n),
+          streaming: true,
+        );
+        final selectable = tester.getRect(find.byType(SelectableText));
+        final overlay = tester.getRect(cursor);
+        expect(overlay.top, selectable.top);
+        expect(overlay.height, greaterThanOrEqualTo(selectable.height - 1));
+      }
+    });
+
+    testWidgets('깜빡인다 — AppMotion.long 뒤 불투명도가 바뀐다', (tester) async {
+      await pump(tester, answer, streaming: true);
+      final before = opacity(tester);
+      await tester.pump(AppMotion.long);
+      expect(opacity(tester), isNot(before));
+    });
+
+    testWidgets('줄이기 모드면 커서가 깜빡이지 않는다', (tester) async {
+      await pump(tester, answer, streaming: true, reduceMotion: true);
+
+      expect(cursor, findsOneWidget);
+      final before = opacity(tester);
+      await tester.pump(AppMotion.long);
+      expect(opacity(tester), before);
+      expect(before, 1);
+    });
+
+    testWidgets('streaming 이 아니면 커서 없음', (tester) async {
+      await pump(tester, answer);
+
+      expect(cursor, findsNothing);
+    });
+
+    testWidgets('streaming 이어도 글이 없으면 커서 없음', (tester) async {
+      await pump(
+        tester,
+        const ChatBubble(role: ChatRole.assistant, text: ''),
+        streaming: true,
+      );
+
+      expect(cursor, findsNothing);
+    });
+  });
 
   testWidgets("stopped 면 글 아래에 '멈춤'과 정지 아이콘, 오류 색이 아니다", (tester) async {
     await pump(

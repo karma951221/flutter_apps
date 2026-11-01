@@ -4346,6 +4346,158 @@
   "@walkChatNewConversation": { "description": "채팅 탭: 앱바 새 대화 버튼" },
   "walkChatSearching": "기록을 찾는 중…",
   "@walkChatSearching": { "description": "채팅 탭: 도구 실행 중 한 줄" },
+  "walkChatPhaseSending": "보내는 중",
+  "@walkChatPhaseSending": { "description": "채팅 탭 진행 줄: 보낸 직후 단계" },
+  "walkChatPhaseThinking": "생각하는 중",
+  "@walkChatPhaseThinking": { "description": "채팅 탭 진행 줄: 모델이 생각하는 단계" },
+  "walkChatPhaseWriting": "답 쓰는 중",
+  "@walkChatPhaseWriting": { "description": "채팅 탭 진행 줄: 답 글이 흐르는 단계" },
+  "walkChatPhaseWritingDone": "답 쓰기",
+  "@walkChatPhaseWritingDone": { "description": "채팅 탭 진행 줄: 펼친 단계 목록 끝의 답 쓰기 항목" },
+  "walkChatToolSearchDiary": "일기 찾는 중",
+  "@walkChatToolSearchDiary": { "description": "채팅 탭 진행 줄: search_diary 도구 라벨" },
+  "walkChatToolViewPhotos": "사진 보는 중",
+  "@walkChatToolViewPhotos": { "description": "채팅 탭 진행 줄: view_entry_photos 도구 라벨" },
+  "walkChatToolDiaryIndex": "일기 목록 보는 중",
+  "@walkChatToolDiaryIndex": { "description": "채팅 탭 진행 줄: list_diary_index 도구 라벨" },
+  "walkChatToolDailySteps": "걸음 수 보는 중",
+  "@walkChatToolDailySteps": { "description": "채팅 탭 진행 줄: daily_steps 도구 라벨" },
+  "walkChatToolWakeRecords": "알람 기록 보는 중",
+  "@walkChatToolWakeRecords": { "description": "채팅 탭 진행 줄: wake_records 도구 라벨" },
+  "walkChatToolReadWiki": "위키 읽는 중",
+  "@walkChatToolReadWiki": { "description": "채팅 탭 진행 줄: read_wiki 도구 라벨" },
+  "walkChatToolOther": "기록 보는 중",
+  "@walkChatToolOther": { "description": "채팅 탭 진행 줄: 알 수 없는 도구 라벨" },
+  "walkChatToolDetail": "{label}({detail})",
+  "@walkChatToolDetail": {
+    "description": "채팅 탭 진행 줄: 도구 라벨 + 자세히(기간 · 검색어 · 날 수)",
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "walkChatToolRange": "{from}~{to}",
+  "@walkChatToolRange": {
+    "description": "채팅 탭 진행 줄: 도구 입력 기간. from · to 는 월일 날짜",
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "walkChatToolQuery": "'{query}'",
+  "@walkChatToolQuery": {
+    "description": "채팅 탭 진행 줄: 도구 입력 검색어",
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "walkChatToolDays": "{count}일",
+  "@walkChatToolDays": {
+    "description": "채팅 탭 진행 줄: 걸음 수 도구의 날 수",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "walkChatToolFoundEntries": "일기 {count}개 찾음",
+  "@walkChatToolFoundEntries": {
+    "description": "채팅 탭 진행 줄: 일기 찾기 결과 개수",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "walkChatToolFoundSteps": "걸음 {count}일치",
+  "@walkChatToolFoundSteps": {
+    "description": "채팅 탭 진행 줄: 걸음 수 결과 날 수",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "walkChatToolFoundWake": "기상 기록 {count}회",
+  "@walkChatToolFoundWake": {
+    "description": "채팅 탭 진행 줄: 알람 기록 결과 개수",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "walkChatToolFoundPhotos": "사진 {count}장",
+  "@walkChatToolFoundPhotos": {
+    "description": "채팅 탭 진행 줄: 사진 결과 장 수",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "walkChatToolFoundIndex": "스토리 {count}개",
+  "@walkChatToolFoundIndex": {
+    "description": "채팅 탭 진행 줄: 일기 목록 결과 개수",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "walkChatToolFoundWiki": "위키 {count}개",
+  "@walkChatToolFoundWiki": {
+    "description": "채팅 탭 진행 줄: 위키 읽기 결과 개수",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "walkChatToolFoundNone": "찾은 기록 없음",
+  "@walkChatToolFoundNone": { "description": "채팅 탭 진행 줄: 도구 결과 0개" },
+  "walkChatProgressElapsed": "{seconds}초",
+  "@walkChatProgressElapsed": {
+    "description": "채팅 탭 진행 줄: 경과 초",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "walkChatProgressLookups": "기록 {count}번 찾아봄",
+  "@walkChatProgressLookups": {
+    "description": "채팅 탭 진행 줄: 접힌 요약의 도구 호출 수",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "walkChatProgressJoin": "{a} · {b}",
+  "@walkChatProgressJoin": {
+    "description": "채팅 탭 진행 줄: 두 조각 잇기(요약 · 경과 초)",
+    "placeholders": {
+      "a": {
+        "type": "String"
+      },
+      "b": {
+        "type": "String"
+      }
+    }
+  },
+  "walkChatProgressExpand": "진행 과정 펼치기",
+  "@walkChatProgressExpand": { "description": "채팅 탭 진행 줄: 접힌 요약을 눌러 펼치는 동작 안내" },
   "walkChatCitedTitle": "대화 속 기록",
   "@walkChatCitedTitle": { "description": "인용 칩으로 연 스토리 뷰어 머리 제목" },
   "walkChatFailureNoKey": "설정에서 키를 넣어 주세요",

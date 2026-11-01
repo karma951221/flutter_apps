@@ -5912,6 +5912,162 @@ abstract class AppLocalizations {
   /// **'기록을 찾는 중…'**
   String get walkChatSearching;
 
+  /// 채팅 탭 진행 줄: 보낸 직후 단계
+  ///
+  /// In ko, this message translates to:
+  /// **'보내는 중'**
+  String get walkChatPhaseSending;
+
+  /// 채팅 탭 진행 줄: 모델이 생각하는 단계
+  ///
+  /// In ko, this message translates to:
+  /// **'생각하는 중'**
+  String get walkChatPhaseThinking;
+
+  /// 채팅 탭 진행 줄: 답 글이 흐르는 단계
+  ///
+  /// In ko, this message translates to:
+  /// **'답 쓰는 중'**
+  String get walkChatPhaseWriting;
+
+  /// 채팅 탭 진행 줄: 펼친 단계 목록 끝의 답 쓰기 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'답 쓰기'**
+  String get walkChatPhaseWritingDone;
+
+  /// 채팅 탭 진행 줄: search_diary 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'일기 찾는 중'**
+  String get walkChatToolSearchDiary;
+
+  /// 채팅 탭 진행 줄: view_entry_photos 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 보는 중'**
+  String get walkChatToolViewPhotos;
+
+  /// 채팅 탭 진행 줄: list_diary_index 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'일기 목록 보는 중'**
+  String get walkChatToolDiaryIndex;
+
+  /// 채팅 탭 진행 줄: daily_steps 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'걸음 수 보는 중'**
+  String get walkChatToolDailySteps;
+
+  /// 채팅 탭 진행 줄: wake_records 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'알람 기록 보는 중'**
+  String get walkChatToolWakeRecords;
+
+  /// 채팅 탭 진행 줄: read_wiki 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'위키 읽는 중'**
+  String get walkChatToolReadWiki;
+
+  /// 채팅 탭 진행 줄: 알 수 없는 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 보는 중'**
+  String get walkChatToolOther;
+
+  /// 채팅 탭 진행 줄: 도구 라벨 + 자세히(기간 · 검색어 · 날 수)
+  ///
+  /// In ko, this message translates to:
+  /// **'{label}({detail})'**
+  String walkChatToolDetail(String label, String detail);
+
+  /// 채팅 탭 진행 줄: 도구 입력 기간. from · to 는 월일 날짜
+  ///
+  /// In ko, this message translates to:
+  /// **'{from}~{to}'**
+  String walkChatToolRange(String from, String to);
+
+  /// 채팅 탭 진행 줄: 도구 입력 검색어
+  ///
+  /// In ko, this message translates to:
+  /// **'\'{query}\''**
+  String walkChatToolQuery(String query);
+
+  /// 채팅 탭 진행 줄: 걸음 수 도구의 날 수
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}일'**
+  String walkChatToolDays(int count);
+
+  /// 채팅 탭 진행 줄: 일기 찾기 결과 개수
+  ///
+  /// In ko, this message translates to:
+  /// **'일기 {count}개 찾음'**
+  String walkChatToolFoundEntries(int count);
+
+  /// 채팅 탭 진행 줄: 걸음 수 결과 날 수
+  ///
+  /// In ko, this message translates to:
+  /// **'걸음 {count}일치'**
+  String walkChatToolFoundSteps(int count);
+
+  /// 채팅 탭 진행 줄: 알람 기록 결과 개수
+  ///
+  /// In ko, this message translates to:
+  /// **'기상 기록 {count}회'**
+  String walkChatToolFoundWake(int count);
+
+  /// 채팅 탭 진행 줄: 사진 결과 장 수
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 {count}장'**
+  String walkChatToolFoundPhotos(int count);
+
+  /// 채팅 탭 진행 줄: 일기 목록 결과 개수
+  ///
+  /// In ko, this message translates to:
+  /// **'스토리 {count}개'**
+  String walkChatToolFoundIndex(int count);
+
+  /// 채팅 탭 진행 줄: 위키 읽기 결과 개수
+  ///
+  /// In ko, this message translates to:
+  /// **'위키 {count}개'**
+  String walkChatToolFoundWiki(int count);
+
+  /// 채팅 탭 진행 줄: 도구 결과 0개
+  ///
+  /// In ko, this message translates to:
+  /// **'찾은 기록 없음'**
+  String get walkChatToolFoundNone;
+
+  /// 채팅 탭 진행 줄: 경과 초
+  ///
+  /// In ko, this message translates to:
+  /// **'{seconds}초'**
+  String walkChatProgressElapsed(int seconds);
+
+  /// 채팅 탭 진행 줄: 접힌 요약의 도구 호출 수
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 {count}번 찾아봄'**
+  String walkChatProgressLookups(int count);
+
+  /// 채팅 탭 진행 줄: 두 조각 잇기(요약 · 경과 초)
+  ///
+  /// In ko, this message translates to:
+  /// **'{a} · {b}'**
+  String walkChatProgressJoin(String a, String b);
+
+  /// 채팅 탭 진행 줄: 접힌 요약을 눌러 펼치는 동작 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'진행 과정 펼치기'**
+  String get walkChatProgressExpand;
+
   /// 인용 칩으로 연 스토리 뷰어 머리 제목
   ///
   /// In ko, this message translates to:

@@ -12,7 +12,7 @@ import 'cited_entry_chip.dart';
 ///
 /// 답이 실패했으면 이미 받은 글 아래에 실패 문구, 멈췄으면 같은 자리에 '멈춤' 표시,
 /// 인용 기록이 있으면 그 아래에 칩을 둔다. 키 · 크레딧 문제로 실패했고 [onOpenSettings] 가 있으면
-/// 실패 문구 아래에 [설정 열기]를 둔다.
+/// 실패 문구 아래에 [설정 열기]를 둔다. [streaming] 이면 글 끝에 커서 `▍` 가 깜빡인다.
 class ChatBubbleView extends StatelessWidget {
   const ChatBubbleView({
     required this.bubble,
@@ -20,6 +20,7 @@ class ChatBubbleView extends StatelessWidget {
     this.pending = false,
     this.onOpenSettings,
     this.onLongPress,
+    this.streaming = false,
     super.key,
   });
 
@@ -36,6 +37,9 @@ class ChatBubbleView extends StatelessWidget {
 
   /// 말풍선을 길게 눌렀다(턴 지우기 시트). null 이면 길게 누르기를 받지 않는다.
   final VoidCallback? onLongPress;
+
+  /// 답 글이 흐르는 중 — 글 끝에 커서를 둔다.
+  final bool streaming;
 
   /// 설정에서 고칠 수 있는 실패 — 키 없음 · 잘못된 키 · 크레딧 부족.
   static const _settingsFailures = {
@@ -62,6 +66,9 @@ class ChatBubbleView extends StatelessWidget {
       color: scheme.onSurfaceVariant,
     );
     final text = bubble.text.isEmpty && pending ? _pendingText : bubble.text;
+    final bodyStyle = theme.textTheme.bodyLarge?.copyWith(
+      color: mine ? scheme.onPrimaryContainer : scheme.onSurface,
+    );
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
       child: ConstrainedBox(
@@ -93,19 +100,19 @@ class ChatBubbleView extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (text.isNotEmpty)
-                          SelectableText(
-                            text,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: mine
-                                  ? scheme.onPrimaryContainer
-                                  : scheme.onSurface,
+                          _withCursor(
+                            text: text,
+                            style: bodyStyle,
+                            child: SelectableText(
+                              text,
+                              style: bodyStyle,
+                              contextMenuBuilder: onLongPress == null
+                                  ? _defaultMenu
+                                  : (context, state) => _menuWithMore(
+                                      state,
+                                      l10n.commonMoreActions,
+                                    ),
                             ),
-                            contextMenuBuilder: onLongPress == null
-                                ? _defaultMenu
-                                : (context, state) => _menuWithMore(
-                                    state,
-                                    l10n.commonMoreActions,
-                                  ),
                           ),
                         if (text.isNotEmpty && failure != null)
                           const SizedBox(height: AppSpacing.xs),
@@ -168,6 +175,25 @@ class ChatBubbleView extends StatelessWidget {
     );
   }
 
+  /// 흐르는 중이고 받은 글이 있으면(자리 표시 `…` 가 아니면) 글 위에 커서를 겹친다.
+  Widget _withCursor({
+    required String text,
+    required TextStyle? style,
+    required Widget child,
+  }) {
+    if (!streaming || bubble.text.isEmpty) return child;
+    return Stack(
+      children: [
+        child,
+        IgnorePointer(
+          child: ExcludeSemantics(
+            child: _StreamingCursor(text: text, style: style),
+          ),
+        ),
+      ],
+    );
+  }
+
   static Widget _defaultMenu(BuildContext context, EditableTextState state) =>
       AdaptiveTextSelectionToolbar.editableText(editableTextState: state);
 
@@ -186,4 +212,78 @@ class ChatBubbleView extends StatelessWidget {
           ),
         ],
       );
+}
+
+/// 글 끝 커서. 커서는 [SelectableText] 의 글에 넣지 않는다 — 복사하면 딸려 오지 않게,
+/// 같은 글을 투명하게 깐 [Text.rich] 의 별도 span 으로 글 끝 자리에 그린다.
+/// 깜빡임은 [AppMotion.long] 주기, '애니메이션 줄이기'면 고정.
+class _StreamingCursor extends StatefulWidget {
+  const _StreamingCursor({required this.text, required this.style});
+
+  final String text;
+  final TextStyle? style;
+
+  @override
+  State<_StreamingCursor> createState() => _StreamingCursorState();
+}
+
+class _StreamingCursorState extends State<_StreamingCursor>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _blink = AnimationController(
+    vsync: this,
+    duration: AppMotion.long,
+    value: 1,
+  );
+
+  /// 커서 글자. 앞의 폭 없는 빈칸은 마지막 낱말과 커서 사이 줄바꿈을 허락해
+  /// 투명 글의 줄바꿈이 [SelectableText] 와 같게 한다.
+  static const _cursor = '\u200B▍';
+
+  /// [SelectableText](RenderEditable)가 오른쪽에 비워 두는 캐럿 자리 —
+  /// 간격 1 + 기본 cursorWidth 2. 같은 너비로 줄을 나눠야 커서가 글 끝에 붙는다.
+  static const _caretMargin = 3.0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.enabled(context)) {
+      if (!_blink.isAnimating) _blink.repeat(reverse: true);
+    } else {
+      _blink
+        ..stop()
+        ..value = 1;
+    }
+  }
+
+  @override
+  void dispose() {
+    _blink.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = widget.style?.color;
+    return FadeTransition(
+      opacity: _blink,
+      child: Padding(
+        padding: const EdgeInsetsDirectional.only(end: _caretMargin),
+        child: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: widget.text,
+                style: TextStyle(color: color?.withAlpha(0)),
+              ),
+              TextSpan(
+                text: _cursor,
+                style: TextStyle(color: color),
+              ),
+            ],
+          ),
+          style: widget.style,
+        ),
+      ),
+    );
+  }
 }

@@ -3169,6 +3169,110 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatSearching => '記録を探しています…';
 
   @override
+  String get walkChatPhaseSending => '送信中';
+
+  @override
+  String get walkChatPhaseThinking => '考え中';
+
+  @override
+  String get walkChatPhaseWriting => '回答を作成中';
+
+  @override
+  String get walkChatPhaseWritingDone => '回答';
+
+  @override
+  String get walkChatToolSearchDiary => '日記を検索中';
+
+  @override
+  String get walkChatToolViewPhotos => '写真を確認中';
+
+  @override
+  String get walkChatToolDiaryIndex => '日記の一覧を確認中';
+
+  @override
+  String get walkChatToolDailySteps => '歩数を確認中';
+
+  @override
+  String get walkChatToolWakeRecords => 'アラーム記録を確認中';
+
+  @override
+  String get walkChatToolReadWiki => 'Wikiを確認中';
+
+  @override
+  String get walkChatToolOther => '記録を確認中';
+
+  @override
+  String walkChatToolDetail(String label, String detail) {
+    return '$label（$detail）';
+  }
+
+  @override
+  String walkChatToolRange(String from, String to) {
+    return '$from〜$to';
+  }
+
+  @override
+  String walkChatToolQuery(String query) {
+    return '「$query」';
+  }
+
+  @override
+  String walkChatToolDays(int count) {
+    return '$count日';
+  }
+
+  @override
+  String walkChatToolFoundEntries(int count) {
+    return '日記$count件';
+  }
+
+  @override
+  String walkChatToolFoundSteps(int count) {
+    return '歩数$count日分';
+  }
+
+  @override
+  String walkChatToolFoundWake(int count) {
+    return '起床記録$count回';
+  }
+
+  @override
+  String walkChatToolFoundPhotos(int count) {
+    return '写真$count枚';
+  }
+
+  @override
+  String walkChatToolFoundIndex(int count) {
+    return 'ストーリー$count件';
+  }
+
+  @override
+  String walkChatToolFoundWiki(int count) {
+    return 'Wiki$count件';
+  }
+
+  @override
+  String get walkChatToolFoundNone => '記録なし';
+
+  @override
+  String walkChatProgressElapsed(int seconds) {
+    return '$seconds秒';
+  }
+
+  @override
+  String walkChatProgressLookups(int count) {
+    return '記録を$count回確認';
+  }
+
+  @override
+  String walkChatProgressJoin(String a, String b) {
+    return '$a・$b';
+  }
+
+  @override
+  String get walkChatProgressExpand => '経過を表示';
+
+  @override
   String get walkChatCitedTitle => '会話の記録';
 
   @override
