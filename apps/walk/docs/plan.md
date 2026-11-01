@@ -197,7 +197,7 @@ Claude 에게 주는 지시는 파일이 아니라 코드에 있다 — 고칠 �
 - **도구 설명** — [life_tools.dart](../lib/domain/chat/tool/life_tools.dart) `definitions` 의 `description` · `input_schema`.
   Claude 는 이걸 읽고 언제 어떤 도구를 쓸지 정하므로 규약의 나머지 절반이다.
 
-**위키(2단계)** — 사용자가 [위키로 정리]를 눌러 후보를 [저장] · [고쳐서 저장]한 것만 메모가 된다(그 전에는 위키가 없다). 시스템 프롬프트에는 위키 **색인**(id · 제목 · 한 줄 요약)만 싣고, 본문은 모델이 `read_wiki({ids})` 로 필요할 때 연다. 본문의 `[[id]]` 링크를 따라 더 열 수 있고 `[[일기:id]]` 는 날짜를 주므로 원본은 그 날짜로 `search_diary` 를 부른다. 어떤 메모를 어떻게 실을지는 `WikiContextPolicy` 하나가 정해서 바꿔 끼울 수 있고, **임시 대화에는 색인도 `read_wiki` 도 없다.** 색인 크기는 물어보기 설정에서 고른다. 설계는 [기획 2단계](../../../docs/superpowers/specs/2026-11-01-walk-chat-history-wiki.md), 정리 요청 지시는 [wiki_distiller.dart](../lib/domain/chat/usecase/wiki_distiller.dart) 에 있다.
+**위키(2단계)** — 메모는 사용자가 만든 것만 있다: 물어보기 ⋮ [위키로 정리]의 후보를 [저장] · [고쳐서 저장]하거나, 말풍선 [위키에 추가] · 위키 화면 [추가]로 쓴 것(그 전에는 위키가 없다). 시스템 프롬프트에는 위키 **색인**(id · 제목 · 한 줄 요약)만 싣고, 본문은 모델이 `read_wiki({ids})` 로 필요할 때 연다. 본문의 `[[id]]` 링크를 따라 더 열 수 있고 `[[일기:id]]` 는 날짜를 주므로 원본은 그 날짜로 `search_diary` 를 부른다. 어떤 메모를 어떻게 실을지는 `WikiContextPolicy` 하나가 정해서 바꿔 끼울 수 있고, **임시 대화에는 색인도 `read_wiki` 도 없다.** 색인 크기는 물어보기 설정에서 고른다. 설계는 [기획 2단계](../../../docs/superpowers/specs/2026-11-01-walk-chat-history-wiki.md), 정리 요청 지시는 [wiki_distiller.dart](../lib/domain/chat/usecase/wiki_distiller.dart) 에 있다.
 
 따로 규약 파일이 필요해지는 때(아직 안 함): 요약 페이지를 Claude 가 스스로 쓰고 합치는 **자동 위키**로 넘어갈 때(페이지 구조 · 합치기 규칙을 정한 문서가 필요하다).
 
