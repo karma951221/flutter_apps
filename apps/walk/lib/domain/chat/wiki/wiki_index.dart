@@ -37,7 +37,8 @@ class WikiIndex with _$WikiIndex {
       'chars: $chars)';
 }
 
-/// [notes] 는 updatedAt 최근 순. 한 줄 = '[[id]] 제목 — 요약'. 앞에서부터 개수 < maxNotes 이고
+/// [notes] 는 updatedAt 최근 순. 제목 · 요약의 공백 · 줄바꿈은 공백 하나로 접어 메모 하나 = 한 줄.
+/// 한 줄 = '[[id]] 제목 — 요약'. 앞에서부터 개수 < maxNotes 이고
 /// (지금 글자 + 줄 + 줄바꿈) <= maxChars 인 동안 넣고, 처음 안 맞는 메모에서 멈춘다(뒤의 짧은 메모로 건너뛰지 않음).
 /// omitted > 0 이면 끝 줄 '(오래된 메모 n개 생략)'(이 줄은 상한 계산 밖).
 WikiIndex buildWikiIndex(List<WikiNote> notes, WikiIndexSize size) {
@@ -48,7 +49,9 @@ WikiIndex buildWikiIndex(List<WikiNote> notes, WikiIndexSize size) {
   var used = 0;
   for (final note in notes) {
     if (maxNotes != null && ids.length >= maxNotes) break;
-    final line = '${wikiNoteLinkText(note.id)} ${note.title} — ${note.summary}';
+    final line =
+        '${wikiNoteLinkText(note.id)} ${_oneLine(note.title)} — '
+        '${_oneLine(note.summary)}';
     final cost = line.length + 1;
     if (used + cost > size.maxChars) break;
     lines.add(line);
@@ -59,3 +62,7 @@ WikiIndex buildWikiIndex(List<WikiNote> notes, WikiIndexSize size) {
   if (omitted > 0) lines.add('(오래된 메모 $omitted개 생략)');
   return WikiIndex(lines: lines.join('\n'), includedIds: ids, omitted: omitted);
 }
+
+final _spaces = RegExp(r'\s+');
+
+String _oneLine(String text) => text.replaceAll(_spaces, ' ').trim();

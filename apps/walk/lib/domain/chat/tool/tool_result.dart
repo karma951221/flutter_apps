@@ -45,4 +45,11 @@ class ToolResult with _$ToolResult {
     this.isError = false,
     this.summary,
   });
+
+  /// json(메모 본문 · 일기 글)과 entryIds 는 찍지 않는다.
+  @override
+  String toString() =>
+      'ToolResult(jsonLength: ${json.length}, images: ${images.length}, '
+      'entryIds: ${entryIds.length}, isError: $isError, '
+      'kind: ${summary?.kind.name})';
 }

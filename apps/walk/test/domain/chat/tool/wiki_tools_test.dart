@@ -124,6 +124,27 @@ void main() {
     expect([for (final n in _json(single.json)['notes'] as List) n['id']], [4]);
   });
 
+  test('겹친 id 는 한 번만 — [3,3,7] 은 [3,7]', () async {
+    final r = await tools.readWiki({
+      'ids': [3, 3, 7],
+    });
+
+    expect([for (final n in _json(r.json)['notes'] as List) n['id']], [3, 7]);
+  });
+
+  test('무한대 · NaN 같은 수는 던지지 않고 invalid_ids', () async {
+    for (final bad in <Object?>[
+      double.infinity,
+      [double.nan],
+      [1e400],
+      double.negativeInfinity,
+    ]) {
+      final r = await tools.readWiki({'ids': bad});
+      expect(r.isError, isTrue, reason: '$bad');
+      expect(_json(r.json), {'error': 'invalid_ids'}, reason: '$bad');
+    }
+  });
+
   test('빈 ids · 숫자 아님은 isError invalid_ids', () async {
     for (final input in <Map<String, Object?>>[
       {'ids': <Object?>[]},

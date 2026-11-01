@@ -41,9 +41,9 @@ class WikiTools {
 
   /// input['ids'] — 정수 · 숫자 문자열 · "3,7" 문자열을 받아 앞 5개만. 결과는 entryIds 없음(인용 칩 아님).
   Future<ToolResult> readWiki(Map<String, Object?> input) async {
-    final ids = _ids(input['ids']);
-    if (ids == null || ids.isEmpty) return _error('invalid_ids');
     try {
+      final ids = _ids(input['ids']);
+      if (ids == null || ids.isEmpty) return _error('invalid_ids');
       final read = ids.take(maxIdsPerCall).toList();
       final skipped = ids.skip(maxIdsPerCall).toList();
       final found = {for (final n in await _wiki.byIds(read)) n.id: n};
@@ -84,6 +84,7 @@ class WikiTools {
         summary: ToolSummary(kind: ChatToolKind.wiki, count: found.length),
       );
     } catch (_) {
+      // 이 계층에는 ChatTrace 가 없다(LifeTools 와 같음). 기록은 세션이 결과의 isError 로 한다.
       return _error('tool_failed');
     }
   }
@@ -132,7 +133,8 @@ class WikiTools {
       switch (part) {
         case int value:
           ids.add(value);
-        case double value when value == value.truncateToDouble():
+        case double value
+            when value.isFinite && value == value.truncateToDouble():
           ids.add(value.toInt());
         case String value:
           for (final piece in value.split(',')) {
