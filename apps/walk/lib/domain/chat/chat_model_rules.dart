@@ -59,9 +59,12 @@ const List<String> _openAiNoImages = [
 /// 이미지 입력을 받지 않는 Anthropic 모델. 지금 목록은 모두 받는다.
 const List<String> _anthropicNoImages = [];
 
-/// 생각 수준(effort)을 받는 계열과 최소 메이저(A3 · O3, 확인 전 규칙).
-const String _anthropicEffortPattern = r'^claude-(?:opus|sonnet|haiku)-(\d+)';
-const int _anthropicEffortMinMajor = 4;
+/// Anthropic 모델 id 의 계열 · 메이저 · 마이너. `claude-sonnet-4-5-20250929` →
+/// (sonnet, 4, 5), `claude-sonnet-4-20250514` → (sonnet, 4, 0) — 날짜는 마이너가 아니다.
+/// 옛 이름(`claude-3-5-sonnet-…`)은 맞지 않는다.
+final RegExp _anthropicVersion = RegExp(
+  r'^claude-([a-z]+)-(\d+)(?:-(\d{1,2}))?(?!\d)',
+);
 const String _openAiReasoningPattern = r'^o\d';
 const String _openAiEffortGptPattern = r'^gpt-(\d+)';
 const int _openAiEffortMinMajor = 5;
@@ -203,13 +206,45 @@ bool supportsEffortOf(ChatVendor vendor, String modelId) {
 
   switch (vendor) {
     case ChatVendor.anthropic:
-      final major = majorOf(_anthropicEffortPattern);
-      return major != null && major >= _anthropicEffortMinMajor;
+      // A3(문서 확인됨): 4.6 이상 · 5.x 이상과 Opus 4.5 만 받는다. Sonnet 4.5 ·
+      // Haiku 4.5 와 그 이전은 오류를 낸다.
+      final v = _anthropicVersionOf(modelId);
+      if (v == null) return false;
+      final (family, major, minor) = v;
+      return major >= 5 ||
+          (major == 4 && minor >= 6) ||
+          (major == 4 && minor == 5 && family == 'opus');
     case ChatVendor.openai:
       if (RegExp(_openAiReasoningPattern).hasMatch(modelId)) return true;
       final major = majorOf(_openAiEffortGptPattern);
       return major != null && major >= _openAiEffortMinMajor;
   }
+}
+
+/// 서버 쪽 대체(`fallbacks: "default"` + server-side-fallback beta)를 받는가.
+/// 문서에 적힌 계열만: Fable 5.1 · Opus 5 / 5.5 · Sonnet 5.5(과 그 뒤 버전). 그 밖은
+/// 필드도 beta 헤더도 보내지 않는다. Anthropic 전용.
+bool supportsFallbacksOf(String modelId) {
+  final v = _anthropicVersionOf(modelId);
+  if (v == null) return false;
+  final (family, major, minor) = v;
+  final (minMajor, minMinor) = switch (family) {
+    'fable' => (5, 1),
+    'opus' => (5, 0),
+    'sonnet' => (5, 5),
+    _ => (null, null),
+  };
+  if (minMajor == null || minMinor == null) return false;
+  return major > minMajor || (major == minMajor && minor >= minMinor);
+}
+
+(String, int, int)? _anthropicVersionOf(String modelId) {
+  final match = _anthropicVersion.firstMatch(modelId);
+  if (match == null) return null;
+  final major = int.tryParse(match.group(2)!);
+  if (major == null) return null;
+  final minor = int.tryParse(match.group(3) ?? '0') ?? 0;
+  return (match.group(1)!, major, minor);
 }
 
 /// 빠른 출력 지원이면 그 spec, 아니면 null. [specs] 는 테스트 주입용.

@@ -295,16 +295,20 @@ class AnthropicChatModel implements ChatModel {
   bool _notes(ModelRequest request) =>
       _progressNotes && _progressNoteModels.any(request.model.startsWith);
 
-  Map<String, String> _headers(ModelRequest request) => {
-    'x-api-key': request.apiKey,
-    'anthropic-version': _apiVersion,
-    'anthropic-beta': [
-      _fallbackBeta,
+  Map<String, String> _headers(ModelRequest request) {
+    final betas = [
+      if (supportsFallbacksOf(request.model)) _fallbackBeta,
       if (_notes(request)) _notesBeta,
       if (_fast(request)) ?fastModeBeta,
-    ].join(','),
-    'content-type': 'application/json',
-  };
+    ];
+    return {
+      'x-api-key': request.apiKey,
+      'anthropic-version': _apiVersion,
+      // 실을 beta 가 없으면(옛 모델) 헤더도 보내지 않는다.
+      if (betas.isNotEmpty) 'anthropic-beta': betas.join(','),
+      'content-type': 'application/json',
+    };
+  }
 
   String _body(ModelRequest request) => jsonEncode({
     'model': request.model,
@@ -314,7 +318,7 @@ class AnthropicChatModel implements ChatModel {
       'output_config': {'effort': 'low'},
     if (_fast(request)) ...fastModeFields,
     if (_notes(request)) 'thinking': _thinkingParam,
-    'fallbacks': 'default',
+    if (supportsFallbacksOf(request.model)) 'fallbacks': 'default',
     if (_promptCache) 'cache_control': {'type': 'ephemeral'},
     'system': request.system,
     'messages': [for (final m in request.messages) _message(m, request.model)],

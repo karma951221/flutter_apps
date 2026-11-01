@@ -793,6 +793,49 @@ void main() {
       expect(no['model'], unsupported);
     });
 
+    test('옛 Claude 모델에는 effort · fallbacks · beta 헤더를 싣지 않는다', () async {
+      for (final id in const [
+        'claude-sonnet-4-5-20250929',
+        'claude-haiku-4-5',
+        'claude-opus-4-1',
+      ]) {
+        final (headers, body) = await sent(request(model: id));
+        expect(body.containsKey('output_config'), isFalse, reason: id);
+        expect(body.containsKey('fallbacks'), isFalse, reason: id);
+        expect(headers.containsKey('anthropic-beta'), isFalse, reason: id);
+      }
+    });
+
+    test('Opus 4.5 · 4.6 은 effort 만, fallbacks 는 없다', () async {
+      for (final id in const ['claude-opus-4-5', 'claude-sonnet-4-6']) {
+        final (headers, body) = await sent(request(model: id));
+        expect(body['output_config'], {'effort': 'low'}, reason: id);
+        expect(body.containsKey('fallbacks'), isFalse, reason: id);
+        expect(headers.containsKey('anthropic-beta'), isFalse, reason: id);
+      }
+    });
+
+    test(
+      'Fable 5.1 · Opus 5 / 5.5 · Sonnet 5.5 는 fallbacks · beta 를 그대로 싣는다',
+      () async {
+        for (final id in const [
+          'claude-fable-5-1',
+          'claude-opus-5',
+          'claude-opus-5-5',
+          'claude-sonnet-5-5',
+        ]) {
+          final (headers, body) = await sent(request(model: id));
+          expect(body['fallbacks'], 'default', reason: id);
+          expect(body['output_config'], {'effort': 'low'}, reason: id);
+          expect(
+            headers['anthropic-beta'],
+            'server-side-fallback-2026-07-01',
+            reason: id,
+          );
+        }
+      },
+    );
+
     test('fastMode 면 fastModeFields 를 싣고 아니면 싣지 않는다', () async {
       const id = 'claude-sonnet-9-9';
       final specs = {
@@ -1957,7 +2000,8 @@ void main() {
         progressNotes: true,
       ).stream(request(model: 'claude-haiku-x')).toList();
       expect(body.containsKey('thinking'), isFalse);
-      expect(req.headers['anthropic-beta'], 'server-side-fallback-2026-07-01');
+      // 대체(fallbacks)도 받지 않는 모델이라 beta 헤더가 없다.
+      expect(req.headers.containsKey('anthropic-beta'), isFalse);
     });
 
     test('노트를 받는 모델 접두사는 opus-5 · sonnet-5 다', () async {
