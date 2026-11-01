@@ -3,7 +3,7 @@
 > [테스트 가이드](../../../docs/testing/README.md) · [계획](plan.md) · [기록](history.md) · [진행 현황](status.md)
 
 ```bash
-cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-10-27 기준 1912건 통과 · 1건 skip)
+cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-11-01 기준 1994건 통과 · 1건 skip)
 ```
 
 백엔드가 없어 로컬 Supabase 없이 돈다. Health Connect 는 `HealthGateway` 를 mock 해서 본다
@@ -98,7 +98,7 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `presentation/alarm/cubit/alarm_sound_cubit_test.dart` | `AlarmSoundCubit` | 처음 선택(시스템 · 내장 · 기기) · 목록을 읽으면 같은 제목 줄로 표시 이동, 없으면 현재 값 · **목록을 읽는 동안 고른 선택 유지**(Completer) · 목록 실패 · 탭하면 미리 듣기(기기는 uri) · 미리 듣기 실패 무시 · confirm(시스템 · 내장 그대로 · 기기는 import, 그동안 importing · 실패면 던짐 · 복사 중 선택 무시) · **현재 기기 소리 줄을 그대로(또는 돌아와) 고르면 import 없이 원래 값** · `pausePreview` · 닫으면 미리 듣기 멈춤 |
 | `presentation/alarm/format/alarm_sound_format_test.dart` | `AlarmSoundFormat` | 시스템 기본 · 내장음은 에셋 경로로 이름(`default.wav` 는 "비프") · 모르는 에셋은 파일 이름 · 기기는 제목 |
 | `presentation/alarm/cubit/alarm_ringing_cubit_test.dart` | `AlarmRingingCubit` | 회차의 알람 찾기 · `canSnooze`(한도를 다 쓰면 false · 읽기 실패면 남김 · 처리 중에도 그대로) · snooze · stop |
-| `presentation/alarm/page/alarm_list_page_test.dart` | `AlarmListPage` | 빈 상태(카드 숨김) · 요약 카드(가장 이른 알람 · 동률 · 모두 꺼짐 · **켜졌는데 예약 없음 → 예약 없음 · 권한 안내, 배너가 위**) · 행(켜진 것만 남은 시간 · 꺼진 행 흐림) · 스위치 켜기/끄기 → 카드 · 행 갱신 · 실패 되돌림 + 스낵바 · 자정 tick · 행 탭 → 편집 → 스낵바 · 카드 누를 수 없음 · 분 경계 타이머(0초 · 가려지면 건너뜀) · 읽기 실패 → 다시 시도 · 권한 배너 → 설정 탭 · FAB · 길게 누르기 → 건너뛰기 시트 → 건너뜀 칩 · 건너뛴 알람은 취소 · 한 번/꺼진 반복은 길게 누르기 없음(남은 값은 취소 가능) · 시트 그냥 닫기 · 실패 스낵바 · 공휴일 칩 → 시트 · **알람 메뉴**(모든 행 길게 누름 · [복제] → 저장 전 편집 · 한 번 알람의 지난 시각은 0분 뒤 · **아직 오지 않은 한 번 알람은 같은 날짜 · 시각** · [삭제] 확인 · 취소 · 실패) · **쉬는 기간**(앱바 [알람 쉬기] → 시트 → 배너가 카드 위 · 시작 · 끝 문구 · 알람이 없어도 배너 · [그만 쉬기] · **기간이 회차를 덮으면 카드에 권한 안내 없음** · **기간 때문에 예약이 없는 행에 `쉬는 중`(한 번은 `한 번 · 쉬는 중`) · 쉬는 중에 기간 안의 한 번 알람을 저장하면 `쉬는 기간이라 울리지 않아요` 스낵바**) · 앱바 [울림 기록] |
+| `presentation/alarm/page/alarm_list_page_test.dart` | `AlarmListPage` | 빈 상태(카드 숨김) · 요약 카드(가장 이른 알람 · 동률 · 모두 꺼짐 · **켜졌는데 예약 없음 → 예약 없음 · 권한 안내, 배너가 위**) · 행(켜진 것만 남은 시간 · 꺼진 행 흐림) · 스위치 켜기/끄기 → 카드 · 행 갱신 · 실패 되돌림 + 스낵바 · 자정 tick · 행 탭 → 편집 → 스낵바 · 카드 누를 수 없음 · 분 경계 타이머(0초 · 가려지면 건너뜀) · 읽기 실패 → 다시 시도 · 권한 배너 → 알람 설정(`onOpenSettings`) · FAB · 길게 누르기 → 건너뛰기 시트 → 건너뜀 칩 · 건너뛴 알람은 취소 · 한 번/꺼진 반복은 길게 누르기 없음(남은 값은 취소 가능) · 시트 그냥 닫기 · 실패 스낵바 · 공휴일 칩 → 시트 · **알람 메뉴**(모든 행 길게 누름 · [복제] → 저장 전 편집 · 한 번 알람의 지난 시각은 0분 뒤 · **아직 오지 않은 한 번 알람은 같은 날짜 · 시각** · [삭제] 확인 · 취소 · 실패) · **쉬는 기간**(도구 탭 앱바 `AlarmPauseAction` → 시트 → 배너가 카드 위 · 시작 · 끝 문구 · 알람이 없어도 배너 · [그만 쉬기] · **기간이 회차를 덮으면 카드에 권한 안내 없음** · **기간 때문에 예약이 없는 행에 `쉬는 중`(한 번은 `한 번 · 쉬는 중`) · 쉬는 중에 기간 안의 한 번 알람을 저장하면 `쉬는 기간이라 울리지 않아요` 스낵바**) · 앱바 [울림 기록](`openAlarmHistory` — 실제 앱에서는 도구 탭 ⋮) |
 | `presentation/alarm/page/alarm_edit_page_test.dart` | `AlarmEditPage` | **한 번**: 0분 뒤 · 저장 잠금 + 안내 · 더하기 · 초기화 · 시각 칩 → 휠 시트 고정 · 상대 모드는 분이 지나도 N 뒤 그대로 · 기존 알람은 그 시각으로 열고 저장 · 칩으로 고정한 시각으로 저장 · **연 초와 상관없이 다음 분 0초에 맞춰 갱신 · 그 뒤 매분** · **고정 모드 남은 시간이 줄고 1분 밑으로 내려가는 순간 잠금 · 안내** · **기준 시각이 늦어도 저장 때 다시 보고 오류 대신 잠금 · 안내** · **칩으로 고정하면 기준 시각을 새로 읽음** · **분 중간에 저장해도 칩에 보인 분(초 0)으로 저장** · **오늘이 아니면 칩에 날짜(`내일 (월) 오전 12:08에 울림`)** / **반복**: 휠 · 빠른 버튼 ↔ 요일 · 요일 없으면 잠금 + 안내(**요약 줄 자리 유지 — 제목 칸이 뛰지 않음**) · 저장 흐름 · 기존 알람 id · 라벨 유지 / 공통: 제목 · 알람음 · 무음 모드 체크 줄 순서(진동 토글 없음) · 체크 값 저장 · 실패 스낵바 · **권한 실패여도 닫히고 중복 저장 없음** · 저장 중 잠금 · 알람음 선택 반영 · **제목 입력 중 알람음 줄을 누르면 포커스를 풀고 돌아와도(뒤로 · 선택) 다시 잡지 않음** · 삭제 확인 · 320dp(요일 한 줄 · ko/en/ja) / **울림 설정**: 체크 줄 아래 · 저장 위에 접힘 · 요약 · 펼쳐 고른 값으로 저장 · 한 번 알람도 있고 캘린더 권한은 안 물음 · **앱바 [복제]**(새 알람엔 메뉴 없음 · 복제 편집을 위에 열고 저장하면 두 화면이 닫힘 · 그냥 닫으면 돌아옴) |
 | `presentation/alarm/cubit/alarm_history_cubit_test.dart` | `AlarmHistoryCubit` | 최근 30일을 회차로 묶음(앞날 회차는 뺌) · **회차가 지났지만 아직 sync 전인 `skippedAt` 도 건너뜀** · 실패 → 다시 읽기 |
 | `presentation/alarm/page/alarm_history_page_test.dart` | `AlarmHistoryPage` | 날짜 머리 · 회차 한 줄(울림 · 스누즈 · 끔) · 건너뜀 · 지운 알람 · 빈 상태 · 오류와 다시 시도 |
@@ -118,11 +118,12 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `presentation/alarm/widget/weekday_dots_test.dart` | `WeekdayDots` | 월~일 7개 · 켜진 요일 primary, 나머지 outlineVariant · 흐리게면 onSurfaceVariant |
 | `presentation/alarm/widget/ringing_ripple_test.dart` | `RingingRipple` | 켜면 위상이 변함 · 애니메이션 제거면 정지 |
 | `presentation/settings/widget/step_goal_sheet_test.dart` | `StepGoalSheet` | 슬라이더 2,000~30,000 · 1,000 단위 · 저장하면 값 반환 |
-| `presentation/settings/page/{app,alarm,walk,diary,chat}_settings_page_test.dart` · `settings/widget/lock_settings_section_test.dart` | 설정 화면 다섯 개 · 잠금 섹션 | 앱 설정(잠금 · 테마 선택 · 기능별 바로가기 → 해당 설정, 일기 · 물어보기는 잠금 게이트) · 알람 설정(공휴일 그룹 · 권한 행 동작 · 확인 중 문구) · 걷기 설정(하루 목표 시트 저장/취소 · Health Connect 권한) · 일기 설정(용량 문구 · 보관 기간 · 열 때마다 다시 읽기 · 잠기면 열리지 않음) · 잠금(재잠금 시간 · 잠금 꺼짐이면 재잠금 행 닫힘 · 패턴 표시) |
+| `presentation/settings/page/{app,alarm,walk,diary}_settings_page_test.dart` · `settings/widget/lock_settings_section_test.dart` | 설정 화면 넷 · 잠금 섹션 | 앱 설정(잠금 · 테마 선택 · 기능별 바로가기 → 해당 설정, 일기 · 물어보기는 잠금 게이트) · 알람 설정(공휴일 그룹 · 권한 행 동작 · 확인 중 문구) · 걷기 설정(하루 목표 시트 저장/취소 · Health Connect 권한) · 일기 설정(용량 문구 · 보관 기간 · 열 때마다 다시 읽기 · 잠기면 열리지 않음) · 잠금(재잠금 시간 · 잠금 꺼짐이면 재잠금 행 닫힘 · 패턴 표시). 물어보기 설정 화면은 아래 `open_settings_test` 가 본다 |
+| `presentation/settings/open_settings_test.dart` | `openSettings` · `SettingsTarget` | 기능별 설정 화면 구성: 알람(공휴일 · 알람 권한, 걷기 항목 없음) · 걷기(걸음 목표 · Health Connect, 공휴일 없음) · 일기(풀리면 보관 기간 · 저장 공간, 잠기면 잠금 화면 먼저) · 물어보기(풀리면 키 행, 잠기면 잠금 화면 먼저) · 앱 설정(잠금 · 테마 · 기능별 바로가기 넷) · 앱 설정 › 알람 설정에서 뒤로 가면 앱 설정 · 앱 설정 › 일기 설정은 잠겨 있으면 잠금 화면을 거침 |
 | `presentation/shell/page/tools_tab_test.dart` · `shell/widget/feature_menu_test.dart` | `ToolsTab` · `FeatureMenu` | 도구: 처음 알람 · 걷기 탭 전환 · 가로로 밀어도 안 넘어감 · 선택별 ⋮ · 걷기 화면 active 전달 / ⋮ 메뉴: 항목 순서(기능 항목 → "○○ 설정" → "앱 설정") · 잠기면 앱 설정만 |
-| `presentation/shell/page/main_shell_page_test.dart` | `MainShellPage` | 첫 탭 걷기 · 초록 컨테이너 · 선택 탭 채움 아이콘 · 탭 전환 · 시작/복귀 때 sync 뒤 목록 · 복귀 때 권한 행 · **울림 화면이 걷히면 sync** · **sync 실패해도 목록** · 네이티브 `resync` → 재설정 · 목록 · 응답(실패해도) · 사라지면 핸들러 해제 · **설정 탭에서 목표를 낮춰 달성해도 걷기 탭을 열 때 한 번 축하** · 설정 탭 공휴일 출처 · 권한 읽기(허용하고 돌아오면 다시) · 시작 · resync 때 공휴일 캐시 갱신 → 예약(갱신 실패해도 예약) · 네이티브 `reminderAction` → 건너뛰고 목록 · true(실패면 false, 알림 남김) · **헤드리스 기다리기: 시작 · 복귀 sync 는 네이티브 `awaitIdle` 응답 뒤(그 전엔 공휴일 갱신 · sync 없음) · 응답이 없으면 10초 뒤 그냥 sync · 네이티브 `resync` 는 `awaitIdle` 을 묻지 않음** · **일기**: 탭 순서 알람 · 걷기 · 일기 · 설정 · 시작 때 고아 청소 한 번(실패해도 화면) · 잠긴 채 시작, 풀었다 백그라운드에 오래 있으면 다시 잠김 · 일기가 잠겨 있어도 알람 울림 화면 |
+| `presentation/shell/page/main_shell_page_test.dart` | `MainShellPage` | **탭 구성**: 첫 탭 일기 · 시작할 때 sync · 선택 탭 채움 아이콘 · 하단 탭은 일기 · 물어보기 · 도구 셋(통근 · 설정 탭 없음) · 탭 전환(도구는 알람 상단 탭부터) · 도구에서 고른 상단 탭은 다른 탭에 다녀와도 그대로 · 일기 탭 스낵바가 ＋ 를 가리지 않음 · **설정 진입**: 물어보기 [설정 열기] → 물어보기 설정 · 일기 ⋮ 는 잠긴 동안 앱 설정만 · 알람 권한 배너 → 알람 설정(돌아오면 권한 다시 읽기) · 알람 설정을 연 채 복귀하면 권한 행 다시 읽기 · 알람 설정의 공휴일 출처 · 캘린더 권한(시스템 설정에서 허용하고 돌아오면 다시 읽기) · **알람 동기화**: 시작 · 복귀 때 울림 기록 옮기기 · 복귀 sync · 울림 화면이 걷히면 sync 뒤 목록 · sync 뒤 목록 · sync 실패해도 목록(시작 때 빈 목록) · 네이티브 `resync` → 재설정 · 목록 · 응답(실패해도) · 사라지면 핸들러 해제 · 시작 · resync 때 공휴일 캐시 갱신 → 예약(갱신 실패해도 예약) · 네이티브 `reminderAction` → 건너뛰고 목록 · true(실패면 false, 알림 남김) · **홈 화면 위젯**: 눌러 열면 도구 › 알람 · 걷기를 보던 앱을 위젯으로 다시 열면 도구 › 알람 · 위젯이 아닌 복귀는 탭 그대로 · **축하**: 앱 설정 › 걷기 설정에서 목표를 낮춰 달성해도 도구 › 걷기를 열 때 한 번 · **도구 › 걷기 ⋮ › 걷기 설정에서 목표를 낮춰 달성하면 설정이 덮는 동안 0번, 돌아오면 한 번** · **헤드리스 기다리기**: 시작 · 복귀 sync 는 네이티브 `awaitIdle` 응답 뒤 · 응답이 없으면 10초 뒤 그냥 sync · 네이티브 `resync` 는 `awaitIdle` 을 묻지 않음 · **일기**: 시작 때 고아 청소 한 번(실패해도 화면) · 잠긴 채 시작, 풀었다 백그라운드에 오래 있으면 다시 잠김 · 일기가 잠겨 있어도 알람 울림 화면 |
 | `core/alarm_ring_listener_test.dart` | `AlarmRingListener` | 한 번만 띄움 · 밖에서 끄면 걷음 · 화면이 먼저 닫힘 · 스누즈 뒤 다시 띄움 · 가려진 화면만 걷음 · 내비게이터 전 값 · 첫 프레임 전 시작→끝이면 안 띄움 · 중복 start · dispose · **앱 복귀 안전망: 플랫폼이 안 울린다는 화면을 걷음 · 아직 울리면 둠 · 걷은 뒤 늦은 같은 울림 값으로 다시 띄우지 않음(끝 값 뒤 다시 울리면 띄움)** |
-| `core/app_test.dart` | `WalkApp` · `themeModeOf` | 테마 매핑 · 저장된 다크로 첫 프레임 · 일기 의존을 등록한 앱 시작 |
+| `core/app_test.dart` | `WalkApp` · `themeModeOf` | 테마 매핑 · 저장된 다크로 첫 프레임 · **앱 설정에서 다크를 고르면 바로 어두워짐** |
 | `core/background/background_task_test.dart` | `runBackgroundTask` · `resyncTask` · `reminderActionPackageId` | init → task → done(true) · init 실패면 task 건너뛰고 done(false) · task 실패면 done(false) · done 실패도 삼킴 · done 한 번 · 공휴일 갱신 → sync(갱신 실패해도 sync) · 진입점 인자 `["skip", id]` · **`awaitBackgroundIdle`: `awaitIdle` 을 부르고 응답까지 기다림 · 시간 한도(10초) 뒤 그냥 끝남 · 채널 없음/오류면 바로 끝남** |
 
 ### 일기 — 도메인 · 데이터
@@ -172,7 +173,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | `presentation/diary/cubit/trash_cubit_test.dart` (12) | `TrashCubit` | 최신순 · 살아 있는 기록 안 보임 · 남은 일수(올림 · 0 아래 없음 · 안 함 null · 30일) · 복원 · 영구 삭제 · 비우기 · 실패 표시 |
 | `presentation/diary/format/diary_format_test.dart` (10) | `DiaryFormat` | 오늘 · 어제 · 올해 · 지난해 날짜 머리 · 1월 1일의 어제 · 규칙 위반 문구 · 같은 날 · 1분 안이면 지금 · 스토리 기간 |
 | `presentation/diary/media_picker_test.dart` (2) | `MediaPicker` | 앨범 · 카메라 고르기가 잠금 예외(`MediaPickGuard`) 안에서 · 남은 칸만큼 · 취소면 빈 목록 |
-| `presentation/diary/page/diary_tab_test.dart` (28) | `DiaryTab` | **잠긴 동안 타임라인 · ＋ 가 트리에 없고 풀면 동그라미 줄 · 새 스토리 시트가 닫힘 · 가려진 탭은 다른 탭 팝업을 안 닫음** · 앱바 · 동그라미 줄 · 모든 스토리 피드(보기 모드 토글 없음) · 빈 상태 · 동그라미 탭 → 뷰어(진행 중은 마지막 날) · 순번 시작 · 기록 없는 스토리 → 스토리 페이지 · 길게 누르기 · 모두 보기 · ＋ 새 스토리 · 카드 탭 → 뷰어 그 기록 · 카드 머리 → 스토리 페이지 · 피드 영상 자동재생 안 함 · ＋ 시트 4항목(앨범 · 글만 쓰기) · 앱바 ⋮ 모든 스토리 · 휴지통 · 🔍 · 오류 · 보일 때 정리 한 번 · 잠긴 동안 정리 안 함 |
+| `presentation/diary/page/diary_tab_test.dart` (34) | `DiaryTab` | **잠긴 동안 타임라인 · ＋ 가 트리에 없고 풀면 동그라미 줄 · 새 스토리 시트가 닫힘 · 가려진 탭은 다른 탭 팝업을 안 닫음** · 앱바 · 동그라미 줄 · 모든 스토리 피드(보기 모드 토글 없음) · 빈 상태 · 동그라미 탭 → 뷰어(진행 중은 마지막 날) · 순번 시작 · 기록 없는 스토리 → 스토리 페이지 · 길게 누르기 · 모두 보기 · ＋ 새 스토리 · 카드 탭 → 뷰어 그 기록 · 카드 머리 → 스토리 페이지 · 피드 영상 자동재생 안 함 · ＋ 시트 4항목(앨범 · 글만 쓰기) · 앱바 ⋮ 모든 스토리 · 휴지통 · 🔍 · **⋮ 는 잠긴 동안 앱 설정만, 풀리면 모든 스토리 · 휴지통 · 일기 설정 · 앱 설정** · 오류 · 보일 때 정리 한 번 · 잠긴 동안 정리 안 함(가려진 탭에서 풀려도 보일 때) · 정리 실패해도 화면 · 표지 사진 · **스크롤로 숨는 앱바**(내리면 숨고 조금 올리면 다시 · 탭을 떠났다 돌아오면 펼침 · 다시 잠기면 펼침 · 보통은 floating · snap, 애니메이션 줄이기면 snap 없이 손가락만) |
 | `presentation/diary/page/entry_editor_page_test.dart` (26) | `EntryEditorPage` | 시각 행 · 스토리 시트(열린 것만) · 칩 · 추천 · 위치 ✕ → 직접 입력 · 올리기 · **칩으로 안 만든 태그 글자도 넣음** · 규칙 위반 안내 · 닫기 전 확인 · 앨범에서 남은 칸만큼 · 고치기 · **다시 잠기면 트리에서 빠지고 풀면 쓰던 글 그대로 · 잠금 화면 뒤로 가기 무시 · 스토리 시트 닫힘** · 화면이 사라져도 임시 사본 정리 |
 | `presentation/diary/page/entry_actions_test.dart` (8) | `entry_actions` | 휴지통(확인 → 되돌리기 스낵바 · 실패 · `confirm: false` 면 바로 · 취소) · 스토리 옮기기(스낵바 · 되돌리기 · 같은 스토리 · 실패) · 고치기 화면 |
 | `presentation/diary/page/story_page_test.dart` (15) | `StoryPage` | 머리 통계 · 처음부터 보기 → 뷰어 · 칸 탭 → 그 기록 · 기록 없는 스토리 · ⋮ 메뉴(일상 · 열린 · 닫힌) · 이름 · 닫기 · 다시 열기 · 삭제 확인 · 규칙 위반 스낵바 · 표지 시트(그 스토리 사진만) · **다시 잠기면 표지 시트 · 삭제 다이얼로그가 닫히고 지우지 않음** |
@@ -212,7 +213,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | `presentation/lock/widget/lock_secret_input_test.dart` (4) | `lockBlockedMessage` · 패턴 입력 | 차단 아님 null · 30초 올림 · 24시간 시간 · 분 · 패턴은 `-` 로 이어 넘김 |
 | `presentation/lock/page/lock_setup_page_test.dart` (6) | `LockSetupPage` | 화면 잠금 없음 안내 · PIN 두 번 → true · 불일치 문구 · **PIN 길이는 PIN 문구** · 패턴 입력 · 현재 PIN 확인 뒤 끄기 |
 
-설정 · 셸 · 앱 시작의 일기 · 잠금 연결은 위 "알람 · 설정 · 셸 — 화면" 표의 `settings_page_test` · `main_shell_page_test` ·
+설정 · 셸 · 앱 시작의 일기 · 잠금 연결은 위 "알람 · 설정 · 셸 — 화면" 표의 `*_settings_page_test` · `open_settings_test` · `main_shell_page_test` ·
 `app_test` 행에, `location` 의존은 걷기 표의 `package_boundary_test` 행에 있다.
 
 ### 포크 · 네이티브(JUnit)
@@ -281,7 +282,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | API 클라이언트 | `data/chat/anthropic_chat_model_test`(스트리밍 · `message_stop` 없는 종료 · 오류) |
 | 기록 도구 5개 | `domain/chat/tool/life_tools_test` |
 | 세션 · cubit | `domain/chat/usecase/chat_session_test` · `presentation/chat/cubit/chat_cubit_test` |
-| 화면 · 셸 | `presentation/chat/page/chat_tab_test` · `presentation/shell/page/main_shell_page_test`(탭 구성 · 잠금) |
+| 화면 · 셸 | `presentation/chat/page/chat_tab_test`(⋮ 는 잠긴 동안 앱 설정만, 풀리면 물어보기 설정 · 앱 설정 · 위에 얹힌 물어보기 설정에서 키를 넣고 돌아오면 `didPopNext` 로 키를 다시 읽음 · 키 확인 중 로딩 · 키 없으면 설정 버튼) · `presentation/shell/page/main_shell_page_test`(탭 구성 · 잠금 · 물어보기 [설정 열기]) |
 
 ## 테스트가 없는 것
 
@@ -302,7 +303,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 웨이브 4 네이티브도 규칙만 JUnit 이다: 포크 `AlarmService` 의 울림 기록 호출 지점(울림 · 끔 · 자동 멈춤 · 스누즈 — 형식은
 `RingLogTest`) · `RingLogChannel` · `WidgetChannel` · `NextAlarmWidgetProvider`(그리기 · 날짜 변경 수신 · 다시 그리기 알람이
 `setWindow` 10분 창으로 걸리는지 — `AlarmManager` 호출이라 JUnit 으로 지킬 수 없다) · 위젯 미리보기 레이아웃 · 위젯을
-눌러 연 뒤 재개 시 `takeLaunch` 로 알람 탭 열기는 에뮬레이터 시나리오로 본다. 앱이 꺼진 채 알림에서 누른 스누즈는 다음
+눌러 연 뒤 재개 시 `takeLaunch` 로 도구 › 알람 열기는 에뮬레이터 시나리오로 본다. 앱이 꺼진 채 알림에서 누른 스누즈는 다음
 sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 
 시각 강화(2026-10-03): `walk_theme` 다크 변형 · `WalkMotion.off` 의 거짓 경로, `WalkSkeleton` · `GoalCelebration` 의 애니메이션 켜진 경로와 햅틱 호출, 링 아래 줄 위젯 단독(`today_goal_footer`), 울림 파동의 런타임 `disableAnimations` 전환은 직접 테스트가 없다. 목표 달성 · 축하는 2026-10-21 에뮬레이터(시드한 걸음)에서 봤고, 햅틱 체감 · 울림 파동은 실제 폰 몫이다.

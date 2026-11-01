@@ -2196,7 +2196,7 @@
   },
   "walkSettingsHolidayReminder": "공휴일 미리 알림",
   "@walkSettingsHolidayReminder": {
-    "description": "설정 탭 — 반복 알람이 공휴일에 울리면 하루 전에 알리는 스위치"
+    "description": "알람 설정(도구 › 알람 ⋮) — 반복 알람이 공휴일에 울리면 하루 전에 알리는 스위치"
   },
   "walkSettingsHolidayReminderDescription": "반복 알람이 공휴일에 울리면 하루 전에 알려요",
   "@walkSettingsHolidayReminderDescription": {
@@ -2204,7 +2204,7 @@
   },
   "walkSettingsHolidaySource": "공휴일 출처",
   "@walkSettingsHolidaySource": {
-    "description": "설정 탭 — 공휴일을 어디서 읽는지 보이는 행 제목"
+    "description": "알람 설정(도구 › 알람 ⋮) — 공휴일을 어디서 읽는지 보이는 행 제목"
   },
   "walkSettingsHolidaySourceDevice": "폰 캘린더: {name}",
   "@walkSettingsHolidaySourceDevice": {
@@ -4299,7 +4299,7 @@
   "walkDiaryHoursAgo": "{hours}시간 전",
   "@walkDiaryHoursAgo": { "description": "일기 피드 카드의 상대 시각(하루 안)", "placeholders": { "hours": { "type": "int" } } },
   "walkChatSettings": "채팅",
-  "@walkChatSettings": { "description": "설정 탭 채팅 섹션 제목" },
+  "@walkChatSettings": { "description": "물어보기 설정(물어보기 ⋮) 채팅 섹션 제목" },
   "walkChatSettingsKey": "Anthropic API 키",
   "@walkChatSettingsKey": { "description": "API 키 행 제목" },
   "walkChatSettingsAddKey": "키 넣기",

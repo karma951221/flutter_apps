@@ -3032,7 +3032,7 @@ abstract class AppLocalizations {
   /// **'공휴일'**
   String get walkAlarmHolidayChip;
 
-  /// 설정 탭 — 반복 알람이 공휴일에 울리면 하루 전에 알리는 스위치
+  /// 알람 설정(도구 › 알람 ⋮) — 반복 알람이 공휴일에 울리면 하루 전에 알리는 스위치
   ///
   /// In ko, this message translates to:
   /// **'공휴일 미리 알림'**
@@ -3044,7 +3044,7 @@ abstract class AppLocalizations {
   /// **'반복 알람이 공휴일에 울리면 하루 전에 알려요'**
   String get walkSettingsHolidayReminderDescription;
 
-  /// 설정 탭 — 공휴일을 어디서 읽는지 보이는 행 제목
+  /// 알람 설정(도구 › 알람 ⋮) — 공휴일을 어디서 읽는지 보이는 행 제목
   ///
   /// In ko, this message translates to:
   /// **'공휴일 출처'**
@@ -5768,7 +5768,7 @@ abstract class AppLocalizations {
   /// **'{hours}시간 전'**
   String walkDiaryHoursAgo(int hours);
 
-  /// 설정 탭 채팅 섹션 제목
+  /// 물어보기 설정(물어보기 ⋮) 채팅 섹션 제목
   ///
   /// In ko, this message translates to:
   /// **'채팅'**
