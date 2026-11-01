@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 
 import '../../domain/chat/chat_model.dart';
+import 'sse_lines.dart';
 
 /// Anthropic Messages API 를 SSE 로 읽는다. 예외에는 키나 응답 본문을 담지 않는다.
 @LazySingleton(as: ChatModel)
@@ -86,24 +87,9 @@ class AnthropicChatModel implements ChatModel {
     final jsonBuffers = <int, StringBuffer>{};
     String? stopReason;
     var completed = false;
-    String? event;
-    final data = StringBuffer();
-    var hasData = false;
 
-    final lines = bytes
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .timeout(idleTimeout);
-
-    // 빈 줄을 만나면 모인 이벤트를 처리한다.
-    Iterable<ModelEvent> dispatch() sync* {
-      final name = event;
-      final payload = data.toString();
-      event = null;
-      data.clear();
-      final had = hasData;
-      hasData = false;
-      if (name == null || !had) return;
+    // 이벤트 하나를 처리한다.
+    Iterable<ModelEvent> dispatch(String name, String payload) sync* {
       Map<String, Object?> json;
       try {
         json = (jsonDecode(payload) as Map).cast<String, Object?>();
@@ -175,20 +161,9 @@ class AnthropicChatModel implements ChatModel {
     }
 
     try {
-      await for (final line in lines) {
-        if (line.isEmpty) {
-          yield* Stream.fromIterable(dispatch().toList());
-        } else if (line.startsWith('event:')) {
-          event = line.substring(6).trim();
-        } else if (line.startsWith('data:')) {
-          if (hasData) data.write('\n');
-          var value = line.substring(5);
-          if (value.startsWith(' ')) value = value.substring(1);
-          data.write(value);
-          hasData = true;
-        }
+      await for (final e in sseEvents(bytes, idleTimeout: idleTimeout)) {
+        yield* Stream.fromIterable(dispatch(e.event, e.data).toList());
       }
-      yield* Stream.fromIterable(dispatch().toList());
       if (!completed) {
         throw const ChatModelException(ChatModelErrorKind.network);
       }
