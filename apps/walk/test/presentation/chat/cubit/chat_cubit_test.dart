@@ -210,6 +210,211 @@ void main() {
     await events.close();
   });
 
+  group('stop', () {
+    late StreamController<ChatEvent> events;
+
+    setUp(() async {
+      events = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => events.stream);
+      await cubit.refresh();
+    });
+
+    // 구독되지 않은 채 닫으면 close 의 Future 는 끝나지 않는다 — 기다리지 않는다.
+    tearDown(() => unawaited(events.close()));
+
+    /// send 가 돌려준 Future.
+    late Future<void> sent;
+
+    /// 질문 하나를 보내고 [phase] 까지 흘린다.
+    Future<void> start(List<ChatEvent> phase) async {
+      sent = cubit.send('질문');
+      phase.forEach(events.add);
+      await pumpEventQueue();
+    }
+
+    final phases = <String, List<ChatEvent>>{
+      '보내는 중': const [],
+      '도구 중': const [ChatEvent.toolStarted('search_diary')],
+      '글 쓰는 중': const [ChatEvent.text('반쯤')],
+    };
+    for (final MapEntry(key: name, value: phase) in phases.entries) {
+      test('$name stop 하면 같은 emit 에서 busy false', () async {
+        when(() => session.stop()).thenReturn(
+          phase.any((e) => e is ChatText)
+              ? const ChatStopResult.kept(text: '반쯤', citedEntryIds: [])
+              : const ChatStopResult.dropped(),
+        );
+        await start(phase);
+        final emitted = <ChatState>[];
+        final listening = cubit.stream.listen(emitted.add);
+
+        cubit.stop();
+        await pumpEventQueue();
+
+        expect(emitted.first.busy, isFalse);
+        expect(emitted.first.activeTool, isNull);
+        expect(cubit.state.busy, isFalse);
+        await listening.cancel();
+      });
+    }
+
+    test('session.stop 을 구독을 끊기 전에 부른다 — 끊고 나면 받은 글을 잃을 수 있다', () async {
+      bool? listeningAtStop;
+      when(() => session.stop()).thenAnswer((_) {
+        listeningAtStop = events.hasListener;
+        return const ChatStopResult.kept(text: '반쯤', citedEntryIds: []);
+      });
+      await start(const [ChatEvent.text('반쯤')]);
+
+      cubit.stop();
+
+      expect(listeningAtStop, isTrue);
+      expect(events.hasListener, isFalse);
+    });
+
+    test('글이 있으면 stopped 말풍선이 남고 그때까지의 인용이 붙는다', () async {
+      final read = Completer<Result<DiaryEntry>>();
+      when(() => diary.entry('e1')).thenAnswer((_) => read.future);
+      when(() => session.stop()).thenReturn(
+        const ChatStopResult.kept(text: '반쯤', citedEntryIds: ['e1']),
+      );
+      await start(const [ChatEvent.text('반쯤')]);
+
+      cubit.stop();
+
+      expect(cubit.state.bubbles, hasLength(2));
+      expect(cubit.state.bubbles.last.text, '반쯤');
+      expect(cubit.state.bubbles.last.stopped, isTrue);
+      expect(cubit.state.bubbles.last.cited, isEmpty);
+      expect(cubit.state.busy, isFalse);
+
+      read.complete(Ok(_entry('e1')));
+      await pumpEventQueue();
+      expect([for (final e in cubit.state.bubbles.last.cited) e.id], ['e1']);
+      expect(cubit.state.bubbles.last.stopped, isTrue);
+    });
+
+    test('인용을 읽는 사이 다음 질문을 보내도 인용은 멈춘 말풍선에 붙는다', () async {
+      final read = Completer<Result<DiaryEntry>>();
+      when(() => diary.entry('e1')).thenAnswer((_) => read.future);
+      when(() => session.stop()).thenReturn(
+        const ChatStopResult.kept(text: '반쯤', citedEntryIds: ['e1']),
+      );
+      await start(const [ChatEvent.text('반쯤')]);
+      cubit.stop();
+      final next = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => next.stream);
+      unawaited(cubit.send('다음'));
+
+      read.complete(Ok(_entry('e1')));
+      await pumpEventQueue();
+
+      expect([for (final e in cubit.state.bubbles[1].cited) e.id], ['e1']);
+      expect(cubit.state.bubbles.last.cited, isEmpty);
+      await next.close();
+    });
+
+    test('글이 없으면 말풍선 둘이 사라지고 restoredDraft 가 질문이다', () async {
+      when(() => session.stop()).thenReturn(const ChatStopResult.dropped());
+      await start(const [ChatEvent.toolStarted('search_diary')]);
+
+      cubit.stop();
+
+      expect(cubit.state.bubbles, isEmpty);
+      expect(cubit.state.restoredDraft, '질문');
+      expect(cubit.state.busy, isFalse);
+
+      cubit.consumeRestoredDraft();
+      expect(cubit.state.restoredDraft, isNull);
+    });
+
+    test('멈춘 뒤 늦은 이벤트는 무시한다', () async {
+      when(
+        () => session.stop(),
+      ).thenReturn(const ChatStopResult.kept(text: '반쯤', citedEntryIds: []));
+      await start(const [ChatEvent.text('반쯤')]);
+
+      cubit.stop();
+      events
+        ..add(const ChatEvent.text(' 늦은 글'))
+        ..add(const ChatEvent.failed(ChatFailure.overloaded));
+      await pumpEventQueue();
+
+      expect(cubit.state.bubbles.last.text, '반쯤');
+      expect(cubit.state.bubbles.last.failure, isNull);
+      expect(cubit.state.busy, isFalse);
+    });
+
+    test('멈춘 직후 send 가 성공한다', () async {
+      when(
+        () => session.stop(),
+      ).thenReturn(const ChatStopResult.kept(text: '반쯤', citedEntryIds: []));
+      await start(const [ChatEvent.text('반쯤')]);
+      cubit.stop();
+      when(() => session.ask(any())).thenAnswer(
+        (_) => Stream.fromIterable(const [
+          ChatEvent.text('새 답'),
+          ChatEvent.finished(citedEntryIds: []),
+        ]),
+      );
+
+      await expectLater(cubit.send('다음'), completes);
+
+      expect(cubit.state.bubbles, hasLength(4));
+      expect(cubit.state.bubbles[2].text, '다음');
+      expect(cubit.state.bubbles[3].text, '새 답');
+      expect(cubit.state.bubbles[3].stopped, isFalse);
+    });
+
+    test('인용을 읽는 중(finished 뒤) stop 은 아무것도 바꾸지 않는다', () async {
+      final read = Completer<Result<DiaryEntry>>();
+      when(() => diary.entry('e1')).thenAnswer((_) => read.future);
+      when(() => session.stop()).thenReturn(const ChatStopResult.idle());
+      await start(const [
+        ChatEvent.text('다 됐어요'),
+        ChatEvent.finished(citedEntryIds: ['e1']),
+      ]);
+      final before = cubit.state;
+
+      cubit.stop();
+
+      expect(cubit.state, before);
+      verifyNever(() => session.stop());
+      read.complete(Ok(_entry('e1')));
+      await events.close();
+      await sent;
+      expect(cubit.state.bubbles.last.stopped, isFalse);
+      expect([for (final e in cubit.state.bubbles.last.cited) e.id], ['e1']);
+    });
+
+    test('세션이 이미 끝났으면(idle) 화면만 정리한다', () async {
+      when(() => session.stop()).thenReturn(const ChatStopResult.idle());
+      await start(const [ChatEvent.text('반쯤')]);
+
+      cubit.stop();
+
+      expect(cubit.state.busy, isFalse);
+      expect(cubit.state.bubbles.last.text, '반쯤');
+      expect(cubit.state.bubbles.last.stopped, isFalse);
+    });
+
+    test('stop 하면 send 가 돌려준 Future 가 끝난다', () async {
+      when(() => session.stop()).thenReturn(const ChatStopResult.dropped());
+      await start(const []);
+
+      cubit.stop();
+
+      await expectLater(sent, completes);
+    });
+
+    test('답하는 중이 아니면 stop 은 무시한다', () {
+      cubit.stop();
+
+      verifyNever(() => session.stop());
+      expect(cubit.state.busy, isFalse);
+    });
+  });
+
   group('trace', () {
     late RecordingChatTrace trace;
     late List<VoidCallback> frames;
@@ -348,6 +553,25 @@ void main() {
       expect(trace.labels, [
         'begin',
         ChatTraceMark.send,
+        ChatTraceMark.done,
+        'end',
+      ]);
+      await events.close();
+    });
+
+    test('답하는 중에 멈추면 userStop · done · end', () async {
+      final events = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => events.stream);
+      when(() => session.stop()).thenReturn(const ChatStopResult.dropped());
+      unawaited(traced.send('질문'));
+      await pumpEventQueue();
+
+      traced.stop();
+
+      expect(trace.labels, [
+        'begin',
+        ChatTraceMark.send,
+        ChatTraceMark.userStop,
         ChatTraceMark.done,
         'end',
       ]);

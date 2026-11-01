@@ -3410,6 +3410,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatSend => 'Send';
 
   @override
+  String get walkChatStop => 'Stop answer';
+
+  @override
+  String get walkChatStopped => 'Stopped';
+
+  @override
+  String get walkChatStoppedSnack => 'Stopped';
+
+  @override
   String get walkChatNewConversation => 'New chat';
 
   @override

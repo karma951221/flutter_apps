@@ -3160,6 +3160,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatSend => '보내기';
 
   @override
+  String get walkChatStop => '답 멈추기';
+
+  @override
+  String get walkChatStopped => '멈춤';
+
+  @override
+  String get walkChatStoppedSnack => '멈췄어요';
+
+  @override
   String get walkChatNewConversation => '새 대화';
 
   @override

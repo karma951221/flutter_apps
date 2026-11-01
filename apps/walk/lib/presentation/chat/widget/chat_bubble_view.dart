@@ -9,7 +9,8 @@ import 'cited_entry_chip.dart';
 
 /// 말풍선 하나. 내 질문은 오른쪽, 답은 왼쪽. 글은 마크다운 없이 고를 수 있는 평문으로 보인다.
 ///
-/// 답이 실패했으면 이미 받은 글 아래에 실패 문구, 인용 기록이 있으면 그 아래에 칩을 둔다.
+/// 답이 실패했으면 이미 받은 글 아래에 실패 문구, 멈췄으면 같은 자리에 '멈춤' 표시,
+/// 인용 기록이 있으면 그 아래에 칩을 둔다.
 class ChatBubbleView extends StatelessWidget {
   const ChatBubbleView({
     required this.bubble,
@@ -39,6 +40,10 @@ class ChatBubbleView extends StatelessWidget {
     final scheme = theme.colorScheme;
     final mine = bubble.role == ChatRole.user;
     final failure = bubble.failure;
+    final stopped = bubble.stopped;
+    final noteStyle = theme.textTheme.bodySmall?.copyWith(
+      color: scheme.onSurfaceVariant,
+    );
     final text = bubble.text.isEmpty && pending ? _pendingText : bubble.text;
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
@@ -51,7 +56,7 @@ class ChatBubbleView extends StatelessWidget {
               ? CrossAxisAlignment.end
               : CrossAxisAlignment.start,
           children: [
-            if (text.isNotEmpty || failure != null)
+            if (text.isNotEmpty || failure != null || stopped)
               DecoratedBox(
                 decoration: BoxDecoration(
                   color: mine
@@ -86,6 +91,22 @@ class ChatBubbleView extends StatelessWidget {
                             color: scheme.error,
                           ),
                         ),
+                      if (stopped) ...[
+                        if (text.isNotEmpty || failure != null)
+                          const SizedBox(height: AppSpacing.xs),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.stop_circle_outlined,
+                              size: noteStyle?.fontSize,
+                              color: noteStyle?.color,
+                            ),
+                            const SizedBox(width: AppSpacing.xs),
+                            Text(l10n.walkChatStopped, style: noteStyle),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

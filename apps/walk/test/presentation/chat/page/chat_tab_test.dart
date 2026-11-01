@@ -246,7 +246,7 @@ void main() {
     expect(find.text('키를 확인해 주세요'), findsOneWidget);
   });
 
-  testWidgets('답하는 동안 기록을 찾으면 안내 한 줄을 보이고 전송 버튼을 끈다', (tester) async {
+  testWidgets('답하는 중이면 멈춤 버튼이 보이고 전송 버튼이 없다', (tester) async {
     final events = StreamController<ChatEvent>();
     when(() => session.ask(any())).thenAnswer((_) => events.stream);
     await pump(tester);
@@ -258,15 +258,68 @@ void main() {
     await tester.pump();
 
     expect(find.text('기록을 찾는 중…'), findsOneWidget);
-    final send = tester.widget<IconButton>(
-      find.widgetWithIcon(IconButton, Icons.send),
-    );
-    expect(send.onPressed, isNull);
+    expect(find.byTooltip('답 멈추기'), findsOneWidget);
+    expect(find.byIcon(Icons.send), findsNothing);
 
     events.add(const ChatEvent.finished(citedEntryIds: []));
     await events.close();
     await tester.pumpAndSettle();
     expect(find.text('기록을 찾는 중…'), findsNothing);
+  });
+
+  testWidgets("멈춤을 누르면 부분 답에 '멈춤' 표시가 남고 전송 버튼이 돌아온다", (tester) async {
+    final events = StreamController<ChatEvent>();
+    when(() => session.ask(any())).thenAnswer((_) => events.stream);
+    when(
+      () => session.stop(),
+    ).thenReturn(const ChatStopResult.kept(text: '산책을 ', citedEntryIds: []));
+    await pump(tester);
+    await tester.tap(find.text('어제 뭐 했어?'));
+    await tester.pump();
+    events.add(const ChatEvent.text('산책을 '));
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('답 멈추기'));
+    await tester.pumpAndSettle();
+
+    verify(() => session.stop()).called(1);
+    expect(find.text('산책을 '), findsOneWidget);
+    expect(find.text('멈춤'), findsOneWidget);
+    expect(find.byTooltip('보내기'), findsOneWidget);
+    expect(find.byTooltip('답 멈추기'), findsNothing);
+    expect(find.text('멈췄어요'), findsNothing);
+    // 멈춤이 구독을 끊었다 — 닫힘은 기다리지 않는다.
+    unawaited(events.close());
+  });
+
+  testWidgets("글 없이 멈추면 입력칸에 질문이 돌아오고 '멈췄어요' 스낵바가 한 번 뜬다", (tester) async {
+    final events = StreamController<ChatEvent>();
+    when(() => session.ask(any())).thenAnswer((_) => events.stream);
+    when(() => session.stop()).thenReturn(const ChatStopResult.dropped());
+    await pump(tester);
+    await tester.enterText(find.byType(TextField), '지난 주말?');
+    await tester.tap(find.byTooltip('보내기'));
+    await tester.pump();
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller!.text,
+      isEmpty,
+    );
+
+    await tester.tap(find.byTooltip('답 멈추기'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).controller!.text,
+      '지난 주말?',
+    );
+    expect(find.text('멈췄어요'), findsOneWidget);
+    // 말풍선 둘이 사라지고 예시 질문으로 돌아간다.
+    expect(find.text('어제 뭐 했어?'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('멈췄어요'), findsOneWidget);
+    // 멈춤이 구독을 끊었다 — 닫힘은 기다리지 않는다.
+    unawaited(events.close());
   });
 
   testWidgets('새 대화는 대화를 비우고 예시 질문으로 돌아간다', (tester) async {

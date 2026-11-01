@@ -52,7 +52,7 @@ class ChatCubit extends Cubit<ChatState> {
   /// 지금 질문의 끝(ChatFinished)을 받아 인용을 읽는 중.
   bool _finishing = false;
 
-  /// [newConversation] 마다 올린다. 끊긴 질문의 늦은 결과(인용 읽기)를 버린다.
+  /// [newConversation] · [stop] 마다 올린다. 끊긴 질문의 늦은 결과(이벤트 · 인용 읽기)를 버린다.
   int _generation = 0;
 
   /// 키 · 동의 상태를 다시 읽는다. 탭이 보이게 될 때 부른다.
@@ -124,6 +124,79 @@ class ChatCubit extends Cubit<ChatState> {
     _session.reset();
     _complete();
     emit(state.copyWith(bubbles: const [], busy: false, activeTool: null));
+  }
+
+  /// 답하는 중이면 멈춘다. 같은 emit 에서 busy: false. 인용을 읽는 중(_finishing)이면
+  /// 무시한다(답은 이미 끝났다).
+  ///
+  /// 받은 글이 있으면 그 말풍선을 [ChatBubble.stopped] 로 남기고 그때까지의 인용을 붙인다.
+  /// 글이 없으면 질문 · 답 말풍선을 지우고 질문을 [ChatState.restoredDraft] 로 돌려준다.
+  void stop() {
+    if (!state.busy || _finishing) return;
+    _generation++;
+    // 세션을 먼저 멈춘다 — 구독 취소를 기다린 뒤 부르면 그 사이 질문이 스스로 되돌려져
+    // 받은 글을 잃는다. 취소는 기다리지 않는다(세션 루프는 stop 으로 이미 끝났다).
+    final result = _session.stop();
+    unawaited(_sub?.cancel());
+    _sub = null;
+    if (_trace.enabled && _tracing) _trace.mark(ChatTraceMark.userStop);
+    switch (result) {
+      case ChatStopKept(:final citedEntryIds):
+        final bubbles = _withLast((b) => b.copyWith(stopped: true));
+        emit(state.copyWith(bubbles: bubbles, busy: false, activeTool: null));
+        if (citedEntryIds.isNotEmpty && bubbles.isNotEmpty) {
+          unawaited(
+            _attachCited(citedEntryIds, bubbles.length - 1, bubbles.last),
+          );
+        }
+      case ChatStopDropped():
+        final bubbles = state.bubbles;
+        final question = bubbles.length >= 2
+            ? bubbles[bubbles.length - 2].text
+            : null;
+        emit(
+          state.copyWith(
+            bubbles: bubbles.length >= 2
+                ? bubbles.sublist(0, bubbles.length - 2)
+                : const [],
+            busy: false,
+            activeTool: null,
+            restoredDraft: question,
+          ),
+        );
+      case ChatStopIdle():
+        // 세션은 이미 끝났다 — 화면만 정리한다.
+        _end(state.bubbles);
+    }
+    _traceDone();
+    _complete();
+  }
+
+  /// 화면이 [ChatState.restoredDraft] 를 입력칸에 채웠다.
+  void consumeRestoredDraft() {
+    if (state.restoredDraft == null) return;
+    emit(state.copyWith(restoredDraft: null));
+  }
+
+  /// 멈춘 말풍선([index] 의 [stopped])에 인용을 붙인다. 그 사이 다음 질문을 보냈어도
+  /// 같은 말풍선이다. 대화를 비웠으면(그 자리에 다른 말풍선 · 없음) 버린다.
+  Future<void> _attachCited(
+    List<String> ids,
+    int index,
+    ChatBubble stopped,
+  ) async {
+    final cited = await _resolve(ids);
+    if (isClosed) return;
+    final bubbles = state.bubbles;
+    if (index >= bubbles.length || !identical(bubbles[index], stopped)) return;
+    emit(
+      state.copyWith(
+        bubbles: [
+          for (final (i, b) in bubbles.indexed)
+            i == index ? b.copyWith(cited: cited) : b,
+        ],
+      ),
+    );
   }
 
   Future<void> _onEvent(ChatEvent event, int generation) async {

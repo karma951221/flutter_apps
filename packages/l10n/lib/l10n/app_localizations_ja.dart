@@ -3159,6 +3159,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatSend => '送信';
 
   @override
+  String get walkChatStop => '回答を止める';
+
+  @override
+  String get walkChatStopped => '停止';
+
+  @override
+  String get walkChatStoppedSnack => '停止しました';
+
+  @override
   String get walkChatNewConversation => '新しい会話';
 
   @override

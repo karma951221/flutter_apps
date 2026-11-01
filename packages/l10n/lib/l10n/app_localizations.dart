@@ -5900,6 +5900,24 @@ abstract class AppLocalizations {
   /// **'보내기'**
   String get walkChatSend;
 
+  /// 채팅 탭: 답하는 중 전송 자리의 멈춤 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'답 멈추기'**
+  String get walkChatStop;
+
+  /// 채팅 탭: 멈춘 답 말풍선 끝 표시
+  ///
+  /// In ko, this message translates to:
+  /// **'멈춤'**
+  String get walkChatStopped;
+
+  /// 채팅 탭: 글 없이 멈춰 질문을 입력칸에 되돌렸을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'멈췄어요'**
+  String get walkChatStoppedSnack;
+
   /// 채팅 탭: 앱바 새 대화 버튼
   ///
   /// In ko, this message translates to:

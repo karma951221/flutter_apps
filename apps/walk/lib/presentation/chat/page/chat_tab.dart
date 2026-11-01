@@ -148,51 +148,62 @@ class _ChatBody extends StatelessWidget {
   final VoidCallback onOpenSettings;
 
   @override
-  Widget build(BuildContext context) => BlocBuilder<ChatCubit, ChatState>(
-    builder: (context, state) {
-      final l10n = AppLocalizations.of(context);
-      final cubit = context.read<ChatCubit>();
-      return switch (state.access) {
-        ChatAccess.checking => const Center(child: CircularProgressIndicator()),
-        ChatAccess.noKey => AppPlaceholder(
-          icon: Icons.key_outlined,
-          message: l10n.walkChatNoKey,
-          actionLabel: l10n.walkChatOpenSettings,
-          onAction: onOpenSettings,
-        ),
-        ChatAccess.needsConsent => ChatConsentView(
-          onAccept: () => unawaited(cubit.consent()),
-        ),
-        ChatAccess.ready => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: state.bubbles.isEmpty
-                  ? ChatExamples(onAsk: (q) => unawaited(cubit.send(q)))
-                  : _BubbleList(state: state),
-            ),
-            if (state.activeTool != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.xs,
-                ),
-                child: Text(
-                  l10n.walkChatSearching,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+  Widget build(BuildContext context) => BlocListener<ChatCubit, ChatState>(
+    // 글 없이 멈춰 질문을 입력칸에 되돌렸다.
+    listenWhen: (a, b) => a.restoredDraft == null && b.restoredDraft != null,
+    listener: (context, _) => AppSnackBar.show(
+      context,
+      message: AppLocalizations.of(context).walkChatStoppedSnack,
+    ),
+    child: BlocBuilder<ChatCubit, ChatState>(builder: _build),
+  );
+
+  Widget _build(BuildContext context, ChatState state) {
+    final l10n = AppLocalizations.of(context);
+    final cubit = context.read<ChatCubit>();
+    return switch (state.access) {
+      ChatAccess.checking => const Center(child: CircularProgressIndicator()),
+      ChatAccess.noKey => AppPlaceholder(
+        icon: Icons.key_outlined,
+        message: l10n.walkChatNoKey,
+        actionLabel: l10n.walkChatOpenSettings,
+        onAction: onOpenSettings,
+      ),
+      ChatAccess.needsConsent => ChatConsentView(
+        onAccept: () => unawaited(cubit.consent()),
+      ),
+      ChatAccess.ready => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: state.bubbles.isEmpty
+                ? ChatExamples(onAsk: (q) => unawaited(cubit.send(q)))
+                : _BubbleList(state: state),
+          ),
+          if (state.activeTool != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.xs,
+              ),
+              child: Text(
+                l10n.walkChatSearching,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
-            ChatInput(
-              enabled: !state.busy,
-              onSend: (q) => unawaited(cubit.send(q)),
             ),
-          ],
-        ),
-      };
-    },
-  );
+          ChatInput(
+            busy: state.busy,
+            onSend: (q) => unawaited(cubit.send(q)),
+            onStop: cubit.stop,
+            restoredDraft: state.restoredDraft,
+            onDraftRestored: cubit.consumeRestoredDraft,
+          ),
+        ],
+      ),
+    };
+  }
 }
 
 /// 말풍선 목록. 아래부터 쌓는다(`reverse`) — 새 말풍선 · 흘러나오는 글이 늘 아래에 보인다.

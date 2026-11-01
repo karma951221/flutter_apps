@@ -27,11 +27,16 @@ class ChatBubble with _$ChatBubble {
   @override
   final ChatFailure? failure;
 
+  /// [■ 멈춤]으로 끊긴 답. 받은 [text] 는 그대로 남는다.
+  @override
+  final bool stopped;
+
   const ChatBubble({
     required this.role,
     required this.text,
     this.cited = const [],
     this.failure,
+    this.stopped = false,
   });
 }
 
@@ -51,10 +56,15 @@ class ChatState with _$ChatState {
   @override
   final String? activeTool;
 
+  /// 글 없이 멈춰 입력칸에 되돌릴 질문. 화면이 채운 뒤 consumeRestoredDraft 로 비운다.
+  @override
+  final String? restoredDraft;
+
   const ChatState({
     required this.access,
     this.bubbles = const [],
     this.busy = false,
     this.activeTool,
+    this.restoredDraft,
   });
 }
