@@ -520,7 +520,6 @@
   "walkDiaryTag": "#{name}",
   "walkDiaryMediaPosition": "{index}/{count}",
   "walkDiaryLoadError": "Couldn't load entries",
-  "walkAlarmListTitle": "Alarms",
   "walkAlarmEmpty": "No alarms yet",
   "walkAlarmEmptyDescription": "Tap + to add a wake-up alarm",
   "walkAlarmAdd": "Add alarm",

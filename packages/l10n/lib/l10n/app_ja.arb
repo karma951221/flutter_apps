@@ -520,7 +520,6 @@
   "walkDiaryTag": "#{name}",
   "walkDiaryMediaPosition": "{index}/{count}",
   "walkDiaryLoadError": "記録を読み込めませんでした",
-  "walkAlarmListTitle": "アラーム",
   "walkAlarmEmpty": "アラームがありません",
   "walkAlarmEmptyDescription": "＋をタップして目覚ましを追加しましょう",
   "walkAlarmAdd": "アラームを追加",

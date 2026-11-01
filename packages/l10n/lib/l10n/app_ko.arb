@@ -2369,10 +2369,6 @@
   "@walkDiaryLoadError": {
     "description": "일기 타임라인을 읽지 못했을 때 안내"
   },
-  "walkAlarmListTitle": "알람",
-  "@walkAlarmListTitle": {
-    "description": "알람 목록 화면 제목"
-  },
   "walkAlarmEmpty": "알람이 없어요",
   "@walkAlarmEmpty": {
     "description": "알람 목록이 비었을 때 안내"

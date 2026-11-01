@@ -114,6 +114,17 @@ void main() {
     expect(find.byIcon(Icons.bedtime_outlined), findsNothing);
   });
 
+  testWidgets('알람 화면을 가로로 밀어도 걷기로 넘어가지 않는다', (tester) async {
+    final shell = await pump(tester);
+
+    await tester.fling(find.text('알람이 없어요'), const Offset(-600, 0), 2000);
+    await tester.pumpAndSettle();
+
+    expect(shell.changes, isEmpty);
+    expect(find.byIcon(Icons.bedtime_outlined), findsOneWidget);
+    expect(find.byType(AlarmListPage).hitTestable(), findsOneWidget);
+  });
+
   testWidgets('셸이 알람으로 다시 그리면 알람 상단 탭으로 돌아간다', (tester) async {
     final shell = await pump(tester, initial: ToolsSection.walk);
     expect(find.byIcon(Icons.bedtime_outlined), findsNothing);

@@ -1672,9 +1672,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryLoadError => '기록을 불러오지 못했어요';
 
   @override
-  String get walkAlarmListTitle => '알람';
-
-  @override
   String get walkAlarmEmpty => '알람이 없어요';
 
   @override

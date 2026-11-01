@@ -11,6 +11,8 @@ enum ToolsSection { alarm, walk }
 
 /// 도구 탭 — 알람 · 걷기를 앱바 아래 상단 탭으로 묶는다.
 ///
+/// 상단 탭은 눌러서만 바꾼다(밀기 없음).
+///
 /// 앱바는 하나라 actions 와 ⋮ 가 [section] 에 따라 바뀐다 — 알람이면 [AlarmPauseAction] 과
 /// 알람 기록 · 알람 설정, 걷기면 걷기 설정만. 고른 상단 탭은 셸이 쥐고([section]) 사용자가
 /// 바꾸면 [onSectionChanged] 로 알린다. 셸이 바꾸면(알람 울림으로 켜짐) 그쪽으로 넘어간다.
@@ -102,8 +104,10 @@ class _ToolsTabState extends State<ToolsTab>
           ],
         ),
       ),
+      // 밀기로는 넘기지 않는다 — 걷기 화면 안에 자기 상단 탭(오늘 | 기록)이 있어 가로 밀기가 겹친다.
       body: TabBarView(
         controller: _controller,
+        physics: const NeverScrollableScrollPhysics(),
         children: [
           _KeepAlive(
             child: AlarmListPage(onOpenSettings: widget.onOpenAlarmSettings),

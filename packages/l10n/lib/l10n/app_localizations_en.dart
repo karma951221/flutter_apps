@@ -1771,9 +1771,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryLoadError => 'Couldn\'t load entries';
 
   @override
-  String get walkAlarmListTitle => 'Alarms';
-
-  @override
   String get walkAlarmEmpty => 'No alarms yet';
 
   @override

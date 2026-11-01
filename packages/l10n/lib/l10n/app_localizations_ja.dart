@@ -1671,9 +1671,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryLoadError => '記録を読み込めませんでした';
 
   @override
-  String get walkAlarmListTitle => 'アラーム';
-
-  @override
   String get walkAlarmEmpty => 'アラームがありません';
 
   @override

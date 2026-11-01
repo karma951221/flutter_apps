@@ -3224,12 +3224,6 @@ abstract class AppLocalizations {
   /// **'기록을 불러오지 못했어요'**
   String get walkDiaryLoadError;
 
-  /// 알람 목록 화면 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'알람'**
-  String get walkAlarmListTitle;
-
   /// 알람 목록이 비었을 때 안내
   ///
   /// In ko, this message translates to:
