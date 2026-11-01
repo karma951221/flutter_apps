@@ -9,10 +9,12 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:walk/data/chat/anthropic_chat_model.dart';
 import 'package:walk/domain/chat/chat_model.dart';
+import 'package:walk/domain/chat/chat_model_rules.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/tool/tool_result.dart';
 
+import '../../support/chat_fixtures.dart';
 import '../../support/recording_chat_trace.dart';
 
 String sse(String event, Map<String, Object?> data) =>
@@ -36,11 +38,13 @@ MockClient clientOf(
 ModelRequest request({
   String apiKey = 'sk-test',
   String model = 'claude-opus-5-5',
+  bool fastMode = false,
   List<ChatMessage> messages = const [],
   List<ToolSpec> tools = const [],
 }) => ModelRequest(
   apiKey: apiKey,
   model: model,
+  fastMode: fastMode,
   system: 'sys',
   messages: messages,
   tools: tools,
@@ -688,10 +692,238 @@ void main() {
     ]);
   });
 
-  test('요청 model 은 request.model 을 쓴다', () async {
+  test('요청 model 은 ModelRequest.model 이다', () async {
     late Map<String, dynamic> body;
-    await run(capture((b) => body = b), request(model: 'other-model'));
-    expect(body['model'], 'other-model');
+    await run(capture((b) => body = b), request(model: 'claude-sonnet-9-9'));
+    expect(body['model'], 'claude-sonnet-9-9');
+  });
+
+  group('모델별 필드', () {
+    /// 요청 하나를 보내고 (헤더, 본문) 을 돌려준다.
+    Future<(Map<String, String>, Map<String, dynamic>)> sent(
+      ModelRequest r, {
+      Map<ChatVendor, List<FastModeSpec>> specs = fastModeSpecs,
+    }) async {
+      late http.BaseRequest req;
+      late Map<String, dynamic> body;
+      final client = clientOf(
+        [
+          sse('message_start', {'type': 'message_start'}),
+          sse('message_stop', {}),
+        ],
+        onRequest: (q, b) {
+          req = q;
+          body = jsonDecode(b) as Map<String, dynamic>;
+        },
+      );
+      await AnthropicChatModel.withTimeouts(
+        client,
+        const NoopChatTrace(),
+        fastSpecs: specs,
+      ).stream(r).toList();
+      return (req.headers, body);
+    }
+
+    test('effort 는 supportsEffortOf 가 참일 때만 싣는다', () async {
+      const supported = 'claude-sonnet-9-9';
+      const unsupported = 'claude-3-haiku-x';
+      expect(supportsEffortOf(ChatVendor.anthropic, supported), isTrue);
+      expect(supportsEffortOf(ChatVendor.anthropic, unsupported), isFalse);
+
+      final (_, yes) = await sent(request(model: supported));
+      expect(yes['output_config'], {'effort': 'low'});
+
+      final (_, no) = await sent(request(model: unsupported));
+      expect(no.containsKey('output_config'), isFalse);
+      expect(no['model'], unsupported);
+    });
+
+    test('fastMode 면 fastModeFields 를 싣고 아니면 싣지 않는다', () async {
+      const id = 'claude-sonnet-9-9';
+      final specs = {
+        ChatVendor.anthropic: [
+          FastModeSpec(pattern: RegExp('^claude-sonnet-'), priceFactor: 2),
+        ],
+        ChatVendor.openai: const <FastModeSpec>[],
+      };
+      final (offHeaders, off) = await sent(request(model: id), specs: specs);
+      final (onHeaders, on) = await sent(
+        request(model: id, fastMode: true),
+        specs: specs,
+      );
+
+      for (final MapEntry(:key, :value)
+          in AnthropicChatModel.fastModeFields.entries) {
+        expect(on[key], value, reason: key);
+        expect(off.containsKey(key), isFalse, reason: key);
+      }
+      expect(on, {...off, ...AnthropicChatModel.fastModeFields});
+      expect(
+        onHeaders['anthropic-beta'],
+        [
+          'server-side-fallback-2026-07-01',
+          ?AnthropicChatModel.fastModeBeta,
+        ].join(','),
+      );
+      expect(offHeaders['anthropic-beta'], 'server-side-fallback-2026-07-01');
+    });
+
+    test('지원 표가 비어 있으면 fastMode 여도 본문 · 헤더가 꺼졌을 때와 같다', () async {
+      const id = 'claude-sonnet-9-9';
+      expect(fastModeOf(ChatVendor.anthropic, id), isNull);
+      final (offHeaders, off) = await sent(request(model: id));
+      final (onHeaders, on) = await sent(request(model: id, fastMode: true));
+      expect(on, off);
+      expect(onHeaders, offHeaders);
+    });
+
+    test('fastMode 여도 지원하지 않는 모델이면 싣지 않는다', () async {
+      final specs = {
+        ChatVendor.anthropic: [
+          FastModeSpec(pattern: RegExp('^claude-opus-'), priceFactor: 2),
+        ],
+        ChatVendor.openai: const <FastModeSpec>[],
+      };
+      const id = 'claude-sonnet-9-9';
+      final (offHeaders, off) = await sent(request(model: id), specs: specs);
+      final (onHeaders, on) = await sent(
+        request(model: id, fastMode: true),
+        specs: specs,
+      );
+      expect(on, off);
+      expect(onHeaders, offHeaders);
+    });
+  });
+
+  test(
+    '다른 모델의 AnthropicTurnState 는 thinking 없이 text · tool_use 로 다시 만든다',
+    () async {
+      late Map<String, dynamic> body;
+      await run(
+        capture((b) => body = b),
+        request(
+          model: 'claude-sonnet-9-9',
+          messages: [
+            const ChatMessage.user('q'),
+            ChatMessage.assistant(
+              parts: const [
+                AssistantPart.text('찾아볼게요'),
+                AssistantPart.toolCall(
+                  id: 'tu_1',
+                  name: 'daily_steps',
+                  input: {'from': '2026-10-01'},
+                ),
+              ],
+              vendorState: AnthropicTurnState(
+                model: 'claude-opus-9-9',
+                content: [
+                  {'type': 'thinking', 'thinking': '생각', 'signature': 'sig=='},
+                  {'type': 'text', 'text': '찾아볼게요'},
+                  {
+                    'type': 'tool_use',
+                    'id': 'tu_1',
+                    'name': 'daily_steps',
+                    'input': {'from': '2026-10-01'},
+                  },
+                ],
+              ),
+            ),
+            const ChatMessage.toolResults([
+              ToolResultPart(callId: 'tu_1', json: '{"steps":1}'),
+            ]),
+          ],
+        ),
+      );
+      final messages = body['messages'] as List;
+      expect(messages[1], {
+        'role': 'assistant',
+        'content': [
+          {'type': 'text', 'text': '찾아볼게요'},
+          {
+            'type': 'tool_use',
+            'id': 'tu_1',
+            'name': 'daily_steps',
+            'input': {'from': '2026-10-01'},
+          },
+        ],
+      });
+      expect(messages[2], {
+        'role': 'user',
+        'content': [
+          {
+            'type': 'tool_result',
+            'tool_use_id': 'tu_1',
+            'is_error': false,
+            'content': [
+              {'type': 'text', 'text': '{"steps":1}'},
+            ],
+          },
+        ],
+      });
+      expect(jsonEncode(body), isNot(contains('sig==')));
+    },
+  );
+
+  test('같은 모델이면 원본 블록 그대로', () async {
+    late Map<String, dynamic> body;
+    final content = <Map<String, Object?>>[
+      {'type': 'thinking', 'thinking': '생각', 'signature': 'sig=='},
+      {'type': 'text', 'text': '네'},
+    ];
+    await run(
+      capture((b) => body = b),
+      request(
+        model: 'claude-sonnet-9-9',
+        messages: [
+          const ChatMessage.user('q'),
+          ChatMessage.assistant(
+            parts: const [AssistantPart.text('네')],
+            vendorState: AnthropicTurnState(
+              model: 'claude-sonnet-9-9',
+              content: content,
+            ),
+          ),
+        ],
+      ),
+    );
+    expect((body['messages'] as List)[1], {
+      'role': 'assistant',
+      'content': content,
+    });
+  });
+
+  test('vendorState.model 은 message_start 의 실제 모델이다(대체 모델이 답해도)', () async {
+    final events = await run(
+      clientOf([
+        sse('message_start', {
+          'type': 'message_start',
+          'message': {'model': 'claude-sonnet-9-8'},
+        }),
+        sse('message_stop', {}),
+      ]),
+      request(model: 'claude-opus-9-9'),
+    );
+    final state =
+        (events.last as ModelCompleted).message.vendorState!
+            as AnthropicTurnState;
+    expect(state.model, 'claude-sonnet-9-8');
+  });
+
+  test('message_start 에 모델이 없으면 vendorState.model 은 요청한 모델', () async {
+    final events = await run(
+      clientOf([
+        sse('message_start', {
+          'type': 'message_start',
+          'message': {'model': 7},
+        }),
+        sse('message_stop', {}),
+      ]),
+      request(model: 'claude-opus-9-9'),
+    );
+    final state =
+        (events.last as ModelCompleted).message.vendorState!
+            as AnthropicTurnState;
+    expect(state.model, 'claude-opus-9-9');
   });
 
   test('vendorState 가 없는 assistant 턴은 text · tool_use 블록만으로 다시 만든다', () async {
@@ -1236,6 +1468,129 @@ void main() {
       );
       expect(req.headers['x-api-key'], 'sk-test');
       expect(req.headers['anthropic-version'], '2026-10-21');
+    });
+
+    group('페이지', () {
+      const base = 'https://api.anthropic.com/v1/models?limit=1000';
+
+      /// 요청 URL 마다 [respond] 로 응답한다. 받은 URL 을 [urls] 에 남긴다.
+      MockClient pagedClient(
+        List<String> urls,
+        Future<http.StreamedResponse> Function(Uri url, int index) respond,
+      ) => MockClient.streaming((r, b) async {
+        await b.drain<void>();
+        urls.add(r.url.toString());
+        return respond(r.url, urls.length - 1);
+      });
+
+      http.StreamedResponse ok(String body) =>
+          http.StreamedResponse(Stream.value(utf8.encode(body)), 200);
+
+      test('픽스처는 손으로 만든 것(A1)으로 적혀 있다', () {
+        expect(handMadeFixtures['anthropic/models_page1.json'], 'A1');
+        expect(handMadeFixtures['anthropic/models_page2.json'], 'A1');
+      });
+
+      test('listModels 는 has_more 면 after_id 로 다음 쪽을 받아 합친다', () async {
+        final urls = <String>[];
+        final result = await modelOf(
+          pagedClient(
+            urls,
+            (_, i) async =>
+                ok(chatFixture('anthropic/models_page${i + 1}.json')),
+          ),
+        ).listModels('sk-test');
+
+        expect(urls, [base, '$base&after_id=claude-sonnet-9-9']);
+        expect((result as ModelListOk).models.map((m) => m.id), [
+          'claude-opus-9-9',
+          'claude-sonnet-9-9',
+          'claude-haiku-9-8',
+        ]);
+      });
+
+      test('has_more 가 true 여도 last_id 가 String 이 아니면 첫 쪽만', () async {
+        final urls = <String>[];
+        final result = await modelOf(
+          pagedClient(
+            urls,
+            (_, _) async => ok(
+              jsonEncode({
+                'data': [
+                  {'id': 'claude-a'},
+                ],
+                'has_more': true,
+                'last_id': 3,
+              }),
+            ),
+          ),
+        ).listModels('k');
+        expect(urls, [base]);
+        expect((result as ModelListOk).models.map((m) => m.id), ['claude-a']);
+      });
+
+      test('둘째 쪽이 실패하면 첫 쪽만 ok', () async {
+        for (final failure in ['500', '401', 'socket', 'timeout']) {
+          final urls = <String>[];
+          final result = await AnthropicChatModel.withTimeouts(
+            pagedClient(urls, (_, i) async {
+              if (i == 0) return ok(chatFixture('anthropic/models_page1.json'));
+              return switch (failure) {
+                '500' => http.StreamedResponse(const Stream.empty(), 500),
+                '401' => http.StreamedResponse(const Stream.empty(), 401),
+                'socket' => throw const SocketException('down'),
+                _ => Completer<http.StreamedResponse>().future,
+              };
+            }),
+            const NoopChatTrace(),
+            listTimeout: const Duration(milliseconds: 50),
+          ).listModels('k');
+
+          expect(urls, hasLength(2), reason: failure);
+          expect((result as ModelListOk).models.map((m) => m.id), [
+            'claude-opus-9-9',
+            'claude-sonnet-9-9',
+          ], reason: failure);
+        }
+      });
+
+      test('5쪽에서 멈춘다', () async {
+        final urls = <String>[];
+        final result = await modelOf(
+          pagedClient(
+            urls,
+            (_, i) async => ok(
+              jsonEncode({
+                'data': [
+                  {'id': 'claude-p$i'},
+                ],
+                'has_more': true,
+                'last_id': 'claude-p$i',
+              }),
+            ),
+          ),
+        ).listModels('k');
+
+        expect(urls, [
+          base,
+          for (var i = 0; i < 4; i++) '$base&after_id=claude-p$i',
+        ]);
+        expect((result as ModelListOk).models.map((m) => m.id), [
+          for (var i = 0; i < 5; i++) 'claude-p$i',
+        ]);
+      });
+
+      test('쪽마다 키 헤더를 싣는다', () async {
+        final keys = <String?>[];
+        await modelOf(
+          MockClient.streaming((r, b) async {
+            await b.drain<void>();
+            keys.add(r.headers['x-api-key']);
+            return ok(chatFixture('anthropic/models_page${keys.length}.json'));
+          }),
+        ).listModels('sk-test');
+        expect(keys, ['sk-test', 'sk-test']);
+      });
     });
 
     test('listModels 401 · 403 은 invalidKey', () async {

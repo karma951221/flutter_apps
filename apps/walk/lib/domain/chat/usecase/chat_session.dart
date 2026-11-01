@@ -68,7 +68,7 @@ typedef ChatTarget = ({ChatVendor vendor, String model});
 @lazySingleton
 class ChatSession {
   ChatSession(
-    this._model,
+    this._registry,
     this._tools,
     this._settings,
     this._clock,
@@ -77,7 +77,7 @@ class ChatSession {
     this._trace,
   );
 
-  final ChatModel _model;
+  final ChatModelRegistry _registry;
   final LifeTools _tools;
   final ChatSettings _settings;
   final Clock _clock;
@@ -114,8 +114,11 @@ class ChatSession {
   /// 어디로든 보낼 수 있다.
   ChatTarget? _contextTarget;
 
-  /// 지금(다음 질문)의 벤더 · 모델. 키 기획 ③ 이 카탈로그로 바꾸기 전까지
-  /// 모델 어댑터의 벤더와 [interimModel].
+  /// 지금 쓰는 어댑터. 모델 카탈로그로 바꾸기 전까지(계획 Task 4) Claude 하나.
+  ChatModel get _model => _registry.of(ChatVendor.anthropic);
+
+  /// 지금(다음 질문)의 벤더 · 모델. 모델 카탈로그로 바꾸기 전까지(계획 Task 4)
+  /// 어댑터의 벤더와 [interimModel].
   ChatTarget get target => (vendor: _model.vendor, model: interimModel);
 
   /// 임시 대화인가. 사용량 기록의 temporary 로 간다.
@@ -482,7 +485,9 @@ class ChatSession {
     ChatModelErrorKind.network => ChatFailure.network,
     ChatModelErrorKind.quotaExceeded => ChatFailure.quotaExceeded,
     ChatModelErrorKind.modelUnavailable => ChatFailure.modelUnavailable,
-    ChatModelErrorKind.server => ChatFailure.unknown,
+    // 이미지 미지원 안내는 사진 거르기(계획 Task 4 이후) 몫. 그 전에는 unknown.
+    ChatModelErrorKind.server ||
+    ChatModelErrorKind.imagesUnsupported => ChatFailure.unknown,
   };
 
   String _systemPrompt() {

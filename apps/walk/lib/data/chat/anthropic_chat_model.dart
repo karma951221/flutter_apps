@@ -3,10 +3,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 
 import '../../domain/chat/chat_model.dart';
+import '../../domain/chat/chat_model_rules.dart';
 import '../../domain/chat/chat_trace.dart';
 import '../../domain/chat/chat_vendor.dart';
 import 'sse_lines.dart';
@@ -16,7 +18,8 @@ import 'sse_lines.dart';
 final class AnthropicTurnState implements VendorTurnState {
   const AnthropicTurnState({required this.model, required this.content});
 
-  /// 요청한 모델 id.
+  /// 이 턴을 실제로 답한 모델 id(`message_start.message.model`). 대체 모델
+  /// (`fallbacks`)이 답했을 수 있다. 응답에 없으면 요청한 id.
   @override
   final String model;
 
@@ -34,7 +37,9 @@ final class AnthropicTurnState implements VendorTurnState {
 /// 중립 [ChatMessage] ↔ Messages API 변환도 여기서 한다. 요청 단위 "서버 저장"
 /// 옵션(OpenAI `store` 같은 것)은 Messages API 에 없다 — 보존은 조직 설정이다
 /// (C2). 그래서 본문에 `store` · `metadata` 를 넣지 않는다.
-@LazySingleton(as: ChatModel)
+///
+/// 구체 타입으로 등록한다 — domain 은 [ChatModelRegistry] 로만 받는다.
+@lazySingleton
 class AnthropicChatModel implements ChatModel {
   AnthropicChatModel(http.Client client, ChatTrace trace)
     : this.withTimeouts(client, trace);
@@ -46,6 +51,7 @@ class AnthropicChatModel implements ChatModel {
     this.responseTimeout = const Duration(seconds: 60),
     this.idleTimeout = const Duration(seconds: 90),
     this.listTimeout = const Duration(seconds: 10),
+    @visibleForTesting this.fastSpecs = fastModeSpecs,
   });
 
   final http.Client _client;
@@ -57,12 +63,25 @@ class AnthropicChatModel implements ChatModel {
   /// SSE 줄 사이 최대 간격. 서버는 오래 생각하는 동안에도 ping 이벤트를 보낸다.
   final Duration idleTimeout;
 
-  /// [listModels] 의 요청부터 본문 끝까지.
+  /// [listModels] 한 쪽의 요청부터 본문 끝까지.
   final Duration listTimeout;
+
+  /// 빠른 출력 지원 표. 테스트가 바꿔 넣는다.
+  final Map<ChatVendor, List<FastModeSpec>> fastSpecs;
+
+  /// fast mode 요청 필드 · 베타 헤더(A2). 확인 전 값은 문서 기억에 따른
+  /// 자리표시이고 지원 표([fastModeSpecs])가 비어 있어 실리지 않는다.
+  @visibleForTesting
+  static const Map<String, Object?> fastModeFields = {'speed': 'fast'};
+  @visibleForTesting
+  static const String? fastModeBeta = null; // A2
+
+  /// 목록을 받는 최대 쪽 수.
+  static const _maxModelPages = 5;
 
   static final _endpoint = Uri.parse('https://api.anthropic.com/v1/messages');
   static final _modelsEndpoint = Uri.parse(
-    'https://api.anthropic.com/v1/models?limit=1000',
+    'https://api.anthropic.com/v1/models',
   );
   static const _apiVersion = '2026-10-21';
 
@@ -76,52 +95,96 @@ class AnthropicChatModel implements ChatModel {
   /// `GET /v1/models`. 판정은 상태 코드만(2xx ok · 401/403 invalidKey · 그 밖
   /// unreachable). 오류 본문은 읽지 않는다. 목록은 관대하게 읽는다 — 모양이
   /// 어긋난 항목은 건너뛰고, 본문을 못 읽으면 빈 목록(키는 맞다).
-  /// 페이지 넘기기(`has_more`)는 키 기획 ③.
+  ///
+  /// `has_more == true` 이고 `last_id` 가 String 이면 `after_id` 로 다음 쪽을
+  /// 받는다(최대 [_maxModelPages] 쪽, 쪽마다 [listTimeout]). 둘째 쪽부터는 실패해도
+  /// 받은 쪽까지 ok(A1).
   @override
   Future<ModelListResult> listModels(String apiKey) async {
+    final models = <ModelInfo>[];
+    String? after;
+    for (var page = 0; page < _maxModelPages; page++) {
+      final result = await _listPage(apiKey, after);
+      switch (result) {
+        case (ModelListOk(models: final got), final next):
+          models.addAll(got);
+          if (next == null) return ModelListResult.ok(models);
+          after = next;
+        case (final failed, _):
+          return page == 0 ? failed : ModelListResult.ok(models);
+      }
+    }
+    return ModelListResult.ok(models);
+  }
+
+  /// 한 쪽. (결과, 다음 쪽 after_id). 던지지 않는다.
+  Future<(ModelListResult, String?)> _listPage(
+    String apiKey,
+    String? after,
+  ) async {
+    const unreachable = (ModelListResult.unreachable(), null);
     final abort = Completer<void>();
     try {
-      return await _list(apiKey, abort.future).timeout(
+      return await _list(apiKey, after, abort.future).timeout(
         listTimeout,
         onTimeout: () {
           if (!abort.isCompleted) abort.complete();
-          return const ModelListResult.unreachable();
+          return unreachable;
         },
       );
     } catch (_) {
       // SocketException · ClientException 등. 던지지 않는다.
-      return const ModelListResult.unreachable();
+      return unreachable;
     }
   }
 
-  Future<ModelListResult> _list(String apiKey, Future<void> abort) async {
+  Future<(ModelListResult, String?)> _list(
+    String apiKey,
+    String? after,
+    Future<void> abort,
+  ) async {
     final request = http.AbortableRequest(
       'GET',
-      _modelsEndpoint,
+      _modelsEndpoint.replace(
+        queryParameters: {'limit': '1000', 'after_id': ?after},
+      ),
       abortTrigger: abort,
     )..headers.addAll({'x-api-key': apiKey, 'anthropic-version': _apiVersion});
     final response = await _client.send(request);
     final status = response.statusCode;
     if (status < 200 || status >= 300) {
       unawaited(response.stream.drain<void>().catchError((_) {}));
-      return status == 401 || status == 403
-          ? const ModelListResult.invalidKey()
-          : const ModelListResult.unreachable();
+      return (
+        status == 401 || status == 403
+            ? const ModelListResult.invalidKey()
+            : const ModelListResult.unreachable(),
+        null,
+      );
     }
     final body = await response.stream.toBytes();
-    return ModelListResult.ok(_modelsOf(body));
+    final (models, next) = _pageOf(body);
+    return (ModelListResult.ok(models), next);
   }
 
-  static List<ModelInfo> _modelsOf(Uint8List body) {
+  /// 한 쪽의 (모델, 다음 쪽 after_id).
+  static (List<ModelInfo>, String?) _pageOf(Uint8List body) {
     Object? json;
     try {
       json = jsonDecode(utf8.decode(body));
     } on FormatException {
-      return const [];
+      return (const [], null);
     }
-    if (json is! Map) return const [];
+    if (json is! Map) return (const [], null);
+    final next = switch ((json['has_more'], json['last_id'])) {
+      (true, final String last) => last,
+      _ => null,
+    };
     final data = json['data'];
-    if (data is! List) return const [];
+    if (data is! List) return (const [], next);
+    return (_modelsOf(data), next);
+  }
+
+  static List<ModelInfo> _modelsOf(List<Object?> data) {
     return [
       for (final item in data)
         if (item is Map && item['id'] is String)
@@ -231,21 +294,31 @@ class AnthropicChatModel implements ChatModel {
     }
   }
 
-  static Map<String, String> _headers(ModelRequest request) => {
+  /// 빠른 출력을 이 요청에 싣는가 — 켰고 지원 표가 그 모델을 안다(A2).
+  bool _fast(ModelRequest request) =>
+      request.fastMode &&
+      fastModeOf(vendor, request.model, specs: fastSpecs) != null;
+
+  Map<String, String> _headers(ModelRequest request) => {
     'x-api-key': request.apiKey,
     'anthropic-version': _apiVersion,
-    'anthropic-beta': 'server-side-fallback-2026-07-01',
+    'anthropic-beta': [
+      'server-side-fallback-2026-07-01',
+      if (_fast(request)) ?fastModeBeta,
+    ].join(','),
     'content-type': 'application/json',
   };
 
-  static String _body(ModelRequest request) => jsonEncode({
+  String _body(ModelRequest request) => jsonEncode({
     'model': request.model,
     'max_tokens': 16000,
     'stream': true,
-    'output_config': {'effort': 'low'},
+    if (supportsEffortOf(vendor, request.model))
+      'output_config': {'effort': 'low'},
+    if (_fast(request)) ...fastModeFields,
     'fallbacks': 'default',
     'system': request.system,
-    'messages': [for (final m in request.messages) _message(m)],
+    'messages': [for (final m in request.messages) _message(m, request.model)],
     'tools': [for (final t in request.tools) _tool(t)],
   });
 
@@ -279,14 +352,16 @@ class AnthropicChatModel implements ChatModel {
 
   // 중립 → Messages API
 
-  static Map<String, Object?> _message(ChatMessage message) =>
+  /// [model] 은 이번 요청의 모델. 같은 모델이 만든 턴만 원본 블록(thinking 서명
+  /// 포함)을 그대로 돌려보낸다.
+  static Map<String, Object?> _message(ChatMessage message, String model) =>
       switch (message) {
         UserMessage(:final text) => {'role': 'user', 'content': text},
-        AssistantMessage(vendorState: final AnthropicTurnState state) => {
-          'role': 'assistant',
-          'content': state.content,
-        },
-        // 상태가 없거나(멈춘 턴) 다른 벤더의 것이면 parts 로 다시 만든다(thinking 없음).
+        AssistantMessage(vendorState: final AnthropicTurnState state)
+            when state.model == model =>
+          {'role': 'assistant', 'content': state.content},
+        // 상태가 없거나(멈춘 턴) 다른 벤더 · 다른 모델의 것이면 parts 로 다시
+        // 만든다(thinking 없음, A4).
         AssistantMessage(:final parts) => {
           'role': 'assistant',
           'content': [for (final p in parts) _part(p)],
@@ -447,6 +522,8 @@ class AnthropicChatModel implements ChatModel {
     TokenUsage? usage;
     int? lastOutputTokens;
     var completed = false;
+    // 실제로 답한 모델. 대체 모델이면 요청한 [model] 과 다르다.
+    var answeredBy = model;
 
     // 이벤트 하나를 처리한다.
     Iterable<ModelEvent> dispatch(String name, String payload) sync* {
@@ -458,7 +535,11 @@ class AnthropicChatModel implements ChatModel {
       }
       switch (name) {
         case 'message_start':
-          usage = _startUsage(json['message']);
+          final message = json['message'];
+          usage = _startUsage(message);
+          if (message is Map && message['model'] is String) {
+            answeredBy = message['model'] as String;
+          }
         case 'content_block_start':
           final index = json['index'] as int;
           final block = Map<String, Object?>.from(json['content_block'] as Map);
@@ -549,7 +630,10 @@ class AnthropicChatModel implements ChatModel {
           yield ModelEvent.completed(
             message: AssistantMessage(
               parts: _partsOf(content),
-              vendorState: AnthropicTurnState(model: model, content: content),
+              vendorState: AnthropicTurnState(
+                model: answeredBy,
+                content: content,
+              ),
             ),
             stop: stop,
             usage: finalUsage,

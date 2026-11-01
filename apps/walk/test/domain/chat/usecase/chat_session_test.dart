@@ -15,6 +15,7 @@ import 'package:walk/domain/chat/tool/life_tools.dart';
 import 'package:walk/domain/chat/tool/tool_result.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 
+import '../../../support/fake_chat_model_registry.dart';
 import '../../../support/fake_chat_settings.dart';
 import '../../../support/fake_chat_usage_log.dart';
 import '../../../support/recording_chat_trace.dart';
@@ -134,7 +135,7 @@ void main() {
   });
 
   ChatSession session(_FakeModel model) => ChatSession(
-    model,
+    FakeChatModelRegistry({ChatVendor.anthropic: model}),
     tools,
     settings,
     clock,
@@ -406,7 +407,7 @@ void main() {
     final trace = RecordingChatTrace();
 
     await ChatSession(
-      model,
+      FakeChatModelRegistry({ChatVendor.anthropic: model}),
       tools,
       settings,
       clock,
@@ -439,7 +440,9 @@ void main() {
   test('trace 가 꺼져 있으면 세션은 mark 를 부르지 않는다', () async {
     final trace = RecordingChatTrace(enabled: false);
     await ChatSession(
-      _FakeModel([_answer('답')]),
+      FakeChatModelRegistry({
+        ChatVendor.anthropic: _FakeModel([_answer('답')]),
+      }),
       tools,
       settings,
       clock,
@@ -457,7 +460,9 @@ void main() {
       slow.gate = gate.future;
       final trace = RecordingChatTrace();
       final chat = ChatSession(
-        _FakeModel([_answer('답')]),
+        FakeChatModelRegistry({
+          ChatVendor.anthropic: _FakeModel([_answer('답')]),
+        }),
         tools,
         slow,
         clock,
@@ -485,11 +490,13 @@ void main() {
       ).thenAnswer((_) => hold.future);
       final trace = RecordingChatTrace();
       final chat = ChatSession(
-        _FakeModel([
-          [
-            _done([_toolUse('t1', 'search_diary')], StopKind.toolUse),
-          ],
-        ]),
+        FakeChatModelRegistry({
+          ChatVendor.anthropic: _FakeModel([
+            [
+              _done([_toolUse('t1', 'search_diary')], StopKind.toolUse),
+            ],
+          ]),
+        }),
         tools,
         settings,
         clock,
@@ -881,7 +888,7 @@ void main() {
             ..statusWrites.clear();
           final model = _CompleterModel();
           final chat = ChatSession(
-            model,
+            FakeChatModelRegistry({ChatVendor.anthropic: model}),
             tools,
             settings,
             clock,
@@ -917,7 +924,7 @@ void main() {
         settings.statusWrites.clear();
         final model = _CompleterModel();
         final chat = ChatSession(
-          model,
+          FakeChatModelRegistry({ChatVendor.anthropic: model}),
           tools,
           settings,
           clock,
@@ -991,7 +998,7 @@ void main() {
     final gate = Completer<void>();
     final model = _GatedModel(gate.future);
     final chat = ChatSession(
-      model,
+      FakeChatModelRegistry({ChatVendor.anthropic: model}),
       tools,
       settings,
       clock,
@@ -1017,7 +1024,7 @@ void main() {
         () async {
           final model = _CompleterModel();
           final chat = ChatSession(
-            model,
+            FakeChatModelRegistry({ChatVendor.anthropic: model}),
             tools,
             settings,
             clock,
@@ -1063,7 +1070,7 @@ void main() {
 
   group('라운드 취소', () {
     ChatSession hanging(_HangingModel model) => ChatSession(
-      model,
+      FakeChatModelRegistry({ChatVendor.anthropic: model}),
       tools,
       settings,
       clock,
@@ -1135,7 +1142,7 @@ void main() {
     setUp(() {
       model = _HangingModel();
       chat = ChatSession(
-        model,
+        FakeChatModelRegistry({ChatVendor.anthropic: model}),
         tools,
         settings,
         clock,
@@ -1455,7 +1462,7 @@ void main() {
     setUp(() {
       model = _HangingModel();
       chat = ChatSession(
-        model,
+        FakeChatModelRegistry({ChatVendor.anthropic: model}),
         tools,
         settings,
         clock,
@@ -1652,7 +1659,7 @@ void main() {
     test('답하는 중 resume 하면 그 질문은 조용히 멈추고 모델 구독이 취소된다', () async {
       final model = _HangingModel();
       final chat = ChatSession(
-        model,
+        FakeChatModelRegistry({ChatVendor.anthropic: model}),
         tools,
         settings,
         clock,
@@ -1791,7 +1798,7 @@ void main() {
     test('멈춘 턴이 있는 문맥을 접어도 멈춤 표시가 남는다', () async {
       final model = _HangingModel();
       final chat = ChatSession(
-        model,
+        FakeChatModelRegistry({ChatVendor.anthropic: model}),
         tools,
         settings,
         clock,

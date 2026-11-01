@@ -7,17 +7,18 @@ import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/usecase/chat_key_verifier.dart';
 
+import '../../../support/fake_chat_model_registry.dart';
 import '../../../support/fake_chat_settings.dart';
 
 /// [listModels] 가 [next] 를 돌려준다(함수면 불러서). 받은 키를 기록한다.
 class _ListModel implements ChatModel {
-  _ListModel(this.next);
+  _ListModel(this.next, {this.vendor = ChatVendor.anthropic});
 
   FutureOr<ModelListResult> Function() next;
   final keys = <String>[];
 
   @override
-  ChatVendor get vendor => ChatVendor.anthropic;
+  final ChatVendor vendor;
 
   @override
   Stream<ModelEvent> stream(ModelRequest request) => const Stream.empty();
@@ -28,6 +29,9 @@ class _ListModel implements ChatModel {
     return next();
   }
 }
+
+ChatModelRegistry _registry(ChatModel model) =>
+    FakeChatModelRegistry({model.vendor: model});
 
 void main() {
   late FakeChatSettings settings;
@@ -47,7 +51,7 @@ void main() {
         final model = _ListModel(() => result);
         expect(
           await ChatKeyVerifier(
-            model,
+            _registry(model),
             settings,
           ).verify(ChatVendor.anthropic, 'sk-new'),
           result,
@@ -61,7 +65,7 @@ void main() {
       final model = _ListModel(() => throw StateError('boom'));
       expect(
         await ChatKeyVerifier(
-          model,
+          _registry(model),
           settings,
         ).verify(ChatVendor.anthropic, 'k'),
         const ModelListResult.unreachable(),
@@ -73,7 +77,7 @@ void main() {
         final model = _ListModel(() => Completer<ModelListResult>().future);
         ModelListResult? result;
         ChatKeyVerifier(
-          model,
+          _registry(model),
           settings,
         ).verify(ChatVendor.anthropic, 'k').then((r) => result = r);
 
@@ -84,11 +88,42 @@ void main() {
       });
     });
 
-    test('verify 는 다른 벤더면 ArgumentError', () {
+    test('verify 는 그 벤더 어댑터의 listModels 를 부른다', () async {
+      final claude = _ListModel(() => const ModelListResult.invalidKey());
+      final gpt = _ListModel(
+        () => const ModelListResult.ok([]),
+        vendor: ChatVendor.openai,
+      );
+      final verifier = ChatKeyVerifier(
+        FakeChatModelRegistry({
+          ChatVendor.anthropic: claude,
+          ChatVendor.openai: gpt,
+        }),
+        settings,
+      );
+
+      expect(
+        await verifier.verify(ChatVendor.openai, 'sk-gpt'),
+        const ModelListResult.ok([]),
+      );
+      expect(gpt.keys, ['sk-gpt']);
+      expect(claude.keys, isEmpty);
+
+      expect(
+        await verifier.verify(ChatVendor.anthropic, 'sk-ant'),
+        const ModelListResult.invalidKey(),
+      );
+      expect(claude.keys, ['sk-ant']);
+    });
+
+    test('verify 는 어댑터가 없는 벤더면 unreachable', () async {
       final model = _ListModel(() => const ModelListResult.ok([]));
       expect(
-        () => ChatKeyVerifier(model, settings).verify(ChatVendor.openai, 'k'),
-        throwsArgumentError,
+        await ChatKeyVerifier(
+          FakeChatModelRegistry({ChatVendor.anthropic: model}),
+          settings,
+        ).verify(ChatVendor.openai, 'k'),
+        const ModelListResult.unreachable(),
       );
       expect(model.keys, isEmpty);
     });
@@ -98,7 +133,7 @@ void main() {
     test('unverified + ok 면 valid 를 기록한다', () async {
       final model = _ListModel(() => const ModelListResult.ok([]));
       expect(
-        await ChatKeyVerifier(model, settings).recheckIfUnverified(),
+        await ChatKeyVerifier(_registry(model), settings).recheckIfUnverified(),
         ChatKeyStatus.valid,
       );
       expect(model.keys, ['sk-ant-stored']);
@@ -108,7 +143,7 @@ void main() {
     test('unverified + invalidKey 면 invalid 를 기록한다', () async {
       final model = _ListModel(() => const ModelListResult.invalidKey());
       expect(
-        await ChatKeyVerifier(model, settings).recheckIfUnverified(),
+        await ChatKeyVerifier(_registry(model), settings).recheckIfUnverified(),
         ChatKeyStatus.invalid,
       );
       expect(settings.status, ChatKeyStatus.invalid);
@@ -117,7 +152,7 @@ void main() {
     test('unverified + unreachable 이면 그대로 두고 null', () async {
       final model = _ListModel(() => const ModelListResult.unreachable());
       expect(
-        await ChatKeyVerifier(model, settings).recheckIfUnverified(),
+        await ChatKeyVerifier(_registry(model), settings).recheckIfUnverified(),
         isNull,
       );
       expect(settings.status, ChatKeyStatus.unverified);
@@ -126,7 +161,7 @@ void main() {
 
     test('valid · invalid · 미연결이면 모델을 부르지 않고 null', () async {
       final model = _ListModel(() => const ModelListResult.ok([]));
-      final verifier = ChatKeyVerifier(model, settings);
+      final verifier = ChatKeyVerifier(_registry(model), settings);
 
       for (final status in [ChatKeyStatus.valid, ChatKeyStatus.invalid]) {
         settings.status = status;
@@ -150,7 +185,10 @@ void main() {
           ..statusWrites.clear();
         final gate = Completer<ModelListResult>();
         final model = _ListModel(() => gate.future);
-        final pending = ChatKeyVerifier(model, settings).recheckIfUnverified();
+        final pending = ChatKeyVerifier(
+          _registry(model),
+          settings,
+        ).recheckIfUnverified();
         await pumpEventQueue();
         expect(model.keys, ['sk-ant-stored']);
 
@@ -173,7 +211,7 @@ void main() {
     test('동시에 두 번 불러도 모델은 한 번', () async {
       final gate = Completer<ModelListResult>();
       final model = _ListModel(() => gate.future);
-      final verifier = ChatKeyVerifier(model, settings);
+      final verifier = ChatKeyVerifier(_registry(model), settings);
 
       final a = verifier.recheckIfUnverified();
       final b = verifier.recheckIfUnverified();

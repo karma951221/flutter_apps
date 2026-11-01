@@ -36,6 +36,7 @@ import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
 import '../../data/chat/anthropic_chat_model.dart' as _i645;
 import '../../data/chat/channel_secure_window.dart' as _i241;
+import '../../data/chat/chat_model_registry.dart' as _i1037;
 import '../../data/chat/compressed_chat_image_source.dart' as _i957;
 import '../../data/chat/database/chat_database.dart' as _i933;
 import '../../data/chat/database/drift_chat_history_repository.dart' as _i991;
@@ -223,7 +224,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i91.SettingsRepository>(
       () => _i724.PrefsSettingsRepository(gh<_i460.SharedPreferences>()),
     );
-    gh.lazySingleton<_i1004.ChatModel>(
+    gh.lazySingleton<_i645.AnthropicChatModel>(
       () => _i645.AnthropicChatModel(gh<_i519.Client>(), gh<_i825.ChatTrace>()),
     );
     gh.lazySingleton<_i43.LockRepository>(
@@ -271,6 +272,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i31.ChatHistorySettings>(
       () => _i433.PrefsChatHistorySettings(gh<_i460.SharedPreferences>()),
     );
+    gh.lazySingleton<_i1004.ChatModelRegistry>(
+      () => _i1037.VendorChatModelRegistry(gh<_i645.AnthropicChatModel>()),
+    );
     gh.lazySingleton<_i130.RoutePreferenceRepository>(
       () => _i644.PrefsRoutePreferenceRepository(gh<_i460.SharedPreferences>()),
     );
@@ -309,12 +313,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.Clock>(),
       ),
     );
+    gh.lazySingleton<_i5.ChatKeyVerifier>(
+      () => _i5.ChatKeyVerifier(
+        gh<_i1004.ChatModelRegistry>(),
+        gh<_i111.ChatSettings>(),
+      ),
+    );
     gh.lazySingleton<_i858.ChatImageSource>(
       () => _i957.CompressedChatImageSource(gh<_i870.MediaStore>()),
-    );
-    gh.lazySingleton<_i5.ChatKeyVerifier>(
-      () =>
-          _i5.ChatKeyVerifier(gh<_i1004.ChatModel>(), gh<_i111.ChatSettings>()),
     );
     gh.lazySingleton<_i122.DiaryRepository>(
       () => _i1049.DriftDiaryRepository(
@@ -371,7 +377,7 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i502.ChatSession>(
       () => _i502.ChatSession(
-        gh<_i1004.ChatModel>(),
+        gh<_i1004.ChatModelRegistry>(),
         gh<_i70.LifeTools>(),
         gh<_i111.ChatSettings>(),
         gh<_i494.Clock>(),

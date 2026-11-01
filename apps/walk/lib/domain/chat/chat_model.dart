@@ -169,6 +169,9 @@ enum ChatModelErrorKind {
   server,
   quotaExceeded,
   modelUnavailable,
+
+  /// 모델이 이미지 입력을 거절했다(§6.4). Anthropic 은 내지 않는다.
+  imagesUnsupported,
 }
 
 /// 키나 응답 본문을 담지 않는다.
@@ -235,4 +238,9 @@ abstract interface class ChatModel {
   /// 취소 계약: 구독을 cancel 하면 어댑터는 진행 중인 HTTP 요청을 즉시 닫고, 그 뒤
   /// 이벤트 · 오류를 내지 않는다.
   Stream<ModelEvent> stream(ModelRequest request);
+}
+
+/// 벤더 → 어댑터. domain 은 이 계약만 안다.
+abstract interface class ChatModelRegistry {
+  ChatModel of(ChatVendor vendor);
 }

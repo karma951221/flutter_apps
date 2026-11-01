@@ -15,9 +15,9 @@ import '../chat_vendor.dart';
 /// 싱글턴 — 여러 화면이 동시에 [recheckIfUnverified] 를 불러도 확인은 하나.
 @lazySingleton
 class ChatKeyVerifier {
-  ChatKeyVerifier(this._model, this._settings);
+  ChatKeyVerifier(this._registry, this._settings);
 
-  final ChatModel _model;
+  final ChatModelRegistry _registry;
   final ChatSettings _settings;
 
   static const timeout = Duration(seconds: 10);
@@ -25,20 +25,15 @@ class ChatKeyVerifier {
   /// 진행 중인 [recheckIfUnverified]. 동시에 불리면 이것을 같이 기다린다.
   Future<ChatKeyStatus?>? _recheck;
 
-  /// 저장 전 확인. 던지지 않는다 — 예외 · [timeout] 초과는 unreachable.
-  /// [vendor] 가 모델 어댑터의 벤더와 다르면 ArgumentError(② 는 Claude 하나,
-  /// ④ 에서 레지스트리로).
-  Future<ModelListResult> verify(ChatVendor vendor, String key) {
-    if (vendor != _model.vendor) {
-      throw ArgumentError.value(vendor, 'vendor', 'no adapter');
-    }
-    return _list(key);
-  }
+  /// 저장 전 확인 — [vendor] 어댑터의 목록을 부른다. 던지지 않는다 — 예외(어댑터가
+  /// 없는 벤더 포함) · [timeout] 초과는 unreachable.
+  Future<ModelListResult> verify(ChatVendor vendor, String key) =>
+      _list(vendor, key);
 
-  Future<ModelListResult> _list(String key) async {
+  Future<ModelListResult> _list(ChatVendor vendor, String key) async {
     try {
       return await Future.sync(
-        () => _model.listModels(key),
+        () => _registry.of(vendor).listModels(key),
       ).timeout(timeout, onTimeout: () => const ModelListResult.unreachable());
     } catch (_) {
       return const ModelListResult.unreachable();
@@ -54,14 +49,12 @@ class ChatKeyVerifier {
   Future<ChatKeyStatus?> _recheckOnce() async {
     try {
       final connection = await _settings.connection();
-      if (connection == null ||
-          connection.status != ChatKeyStatus.unverified ||
-          connection.vendor != _model.vendor) {
+      if (connection == null || connection.status != ChatKeyStatus.unverified) {
         return null;
       }
       final key = await _settings.apiKey();
       if (key == null) return null;
-      final status = switch (await _list(key)) {
+      final status = switch (await _list(connection.vendor, key)) {
         ModelListOk() => ChatKeyStatus.valid,
         ModelListInvalidKey() => ChatKeyStatus.invalid,
         ModelListUnreachable() => null,
