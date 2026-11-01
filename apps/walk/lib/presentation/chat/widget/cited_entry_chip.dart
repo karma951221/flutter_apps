@@ -12,7 +12,9 @@ class CitedEntryChip extends StatelessWidget {
   const CitedEntryChip({required this.entry, required this.onOpen, super.key});
 
   final DiaryEntry entry;
-  final VoidCallback onOpen;
+
+  /// null 이면 누를 수 없다.
+  final VoidCallback? onOpen;
 
   /// 칩에 보일 본문 글자 수.
   static const snippetLength = 20;

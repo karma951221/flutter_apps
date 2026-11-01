@@ -4194,4 +4194,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String walkChatUsageWikiReadRatioValue(String count, String questions) {
     return '$count / $questions';
   }
+
+  @override
+  String get walkChatWikiDistill => 'Save to wiki';
+
+  @override
+  String get walkChatWikiDistilling =>
+      'Picking what to keep from this conversation…';
+
+  @override
+  String get walkChatWikiDistillNone => 'Nothing worth keeping was found';
+
+  @override
+  String get walkChatWikiDistillUnparsable => 'Couldn\'t summarize. Try again';
+
+  @override
+  String walkChatWikiDistillDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Saved $count notes',
+      one: 'Saved 1 note',
+      zero: 'No notes saved',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get walkChatWikiDistillClose => 'Close';
+
+  @override
+  String get walkChatWikiCandidateNew => 'New note';
+
+  @override
+  String walkChatWikiCandidateUpdate(int id) {
+    return 'Update [[$id]]';
+  }
+
+  @override
+  String get walkChatWikiCandidateCurrent => 'Current';
+
+  @override
+  String get walkChatWikiCandidateProposed => 'Proposed';
+
+  @override
+  String get walkChatWikiCandidateEdit => 'Edit and save';
+
+  @override
+  String get walkChatWikiCandidateDiscard => 'Discard';
+
+  @override
+  String get walkChatWikiCandidateSavedLabel => 'Saved';
+
+  @override
+  String get walkChatWikiCandidateDiscardedLabel => 'Discarded';
 }

@@ -1186,5 +1186,19 @@
   "walkChatUsageWikiIndexAvg": "Average index per question",
   "walkChatUsageWikiIndexAvgValue": "{notes} notes · {chars} chars",
   "walkChatUsageWikiReadRatio": "Questions that opened wiki notes",
-  "walkChatUsageWikiReadRatioValue": "{count} / {questions}"
+  "walkChatUsageWikiReadRatioValue": "{count} / {questions}",
+  "walkChatWikiDistill": "Save to wiki",
+  "walkChatWikiDistilling": "Picking what to keep from this conversation…",
+  "walkChatWikiDistillNone": "Nothing worth keeping was found",
+  "walkChatWikiDistillUnparsable": "Couldn't summarize. Try again",
+  "walkChatWikiDistillDone": "{count, plural, =0{No notes saved} =1{Saved 1 note} other{Saved {count} notes}}",
+  "walkChatWikiDistillClose": "Close",
+  "walkChatWikiCandidateNew": "New note",
+  "walkChatWikiCandidateUpdate": "Update [[{id}]]",
+  "walkChatWikiCandidateCurrent": "Current",
+  "walkChatWikiCandidateProposed": "Proposed",
+  "walkChatWikiCandidateEdit": "Edit and save",
+  "walkChatWikiCandidateDiscard": "Discard",
+  "walkChatWikiCandidateSavedLabel": "Saved",
+  "walkChatWikiCandidateDiscardedLabel": "Discarded"
 }

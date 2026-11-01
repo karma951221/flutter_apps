@@ -3851,4 +3851,50 @@ class AppLocalizationsKo extends AppLocalizations {
   String walkChatUsageWikiReadRatioValue(String count, String questions) {
     return '$count / $questions';
   }
+
+  @override
+  String get walkChatWikiDistill => '위키로 정리';
+
+  @override
+  String get walkChatWikiDistilling => '이 대화에서 남길 내용을 고르는 중…';
+
+  @override
+  String get walkChatWikiDistillNone => '남길 만한 내용을 찾지 못했어요';
+
+  @override
+  String get walkChatWikiDistillUnparsable => '정리하지 못했어요. 다시 해 보세요';
+
+  @override
+  String walkChatWikiDistillDone(int count) {
+    return '메모 $count개를 저장했어요';
+  }
+
+  @override
+  String get walkChatWikiDistillClose => '닫기';
+
+  @override
+  String get walkChatWikiCandidateNew => '새 메모';
+
+  @override
+  String walkChatWikiCandidateUpdate(int id) {
+    return '[[$id]] 고치기';
+  }
+
+  @override
+  String get walkChatWikiCandidateCurrent => '지금';
+
+  @override
+  String get walkChatWikiCandidateProposed => '바뀔 내용';
+
+  @override
+  String get walkChatWikiCandidateEdit => '고쳐서 저장';
+
+  @override
+  String get walkChatWikiCandidateDiscard => '버림';
+
+  @override
+  String get walkChatWikiCandidateSavedLabel => '저장함';
+
+  @override
+  String get walkChatWikiCandidateDiscardedLabel => '버림';
 }

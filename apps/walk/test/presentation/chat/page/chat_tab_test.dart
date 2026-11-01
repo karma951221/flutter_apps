@@ -16,6 +16,7 @@ import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/entity/conversation.dart';
+import 'package:walk/domain/chat/entity/wiki_note.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
 import 'package:walk/domain/chat/repository/wiki_repository.dart';
 import 'package:walk/domain/chat/secure_window.dart';
@@ -23,6 +24,7 @@ import 'package:walk/domain/chat/tool/tool_summary.dart';
 import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/domain/chat/usecase/open_conversation.dart';
+import 'package:walk/domain/chat/usecase/wiki_distiller.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
@@ -55,6 +57,8 @@ class _MockDiary extends Mock implements DiaryRepository {}
 class _MockHistory extends Mock implements ChatHistoryRepository {}
 
 class _MockLock extends MockCubit<DiaryLockState> implements DiaryLockCubit {}
+
+class _MockDistiller extends Mock implements WikiDistiller {}
 
 const _sonnet = ModelInfo(
   id: 'claude-sonnet-9-5',
@@ -89,9 +93,11 @@ void main() {
   late FakeSecureWindow secure;
   late FakeChatModelCatalog catalog;
   late MemoryWikiRepository wiki;
+  late _MockDistiller distiller;
 
   setUp(() {
     wiki = MemoryWikiRepository();
+    distiller = _MockDistiller();
     session = _MockSession();
     diary = _MockDiary();
     settings = FakeChatSettings('sk-ant-test')
@@ -133,6 +139,7 @@ void main() {
       ..registerSingleton<OpenConversation>(OpenConversation())
       ..registerSingleton<SecureWindow>(secure)
       ..registerSingleton<WikiRepository>(wiki)
+      ..registerSingleton<WikiDistiller>(distiller)
       ..registerSingleton<ChatHistorySettings>(FakeChatHistorySettings())
       ..registerSingleton<Clock>(MutableClock(diaryT0));
   });
@@ -1051,6 +1058,127 @@ void main() {
       await longPressBubble(tester, '반쯤');
       expect(find.text('이 질문과 답 지우기'), findsOneWidget);
       expect(find.text('위키에 추가'), findsNothing);
+    });
+  });
+
+  group('위키로 정리', () {
+    const distill = Key('chat-menu-distill');
+    const candidate = WikiCandidate.create(
+      title: '기상 시간',
+      summary: '평일 7시',
+      body: '평일엔 7시에 일어난다',
+    );
+
+    setUp(() {
+      when(() => history.turns(any())).thenAnswer((_) async => const []);
+      when(
+        () => distiller.distill(
+          conversationId: any(named: 'conversationId'),
+          target: any(named: 'target'),
+        ),
+      ).thenAnswer(
+        (_) async => const WikiDistillResult.candidates([candidate]),
+      );
+    });
+
+    /// 질문 하나를 보내 답을 받는다 — 대화가 저장돼 c1 이 열린다.
+    Future<void> saved(WidgetTester tester) async {
+      answer('산책을 했어요');
+      await pump(tester);
+      await tester.tap(find.text('어제 뭐 했어?'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('저장된 대화가 열려 있으면 ⋮ 에 [위키로 정리]가 [위키]와 [임시 대화로 시작] 사이에', (
+      tester,
+    ) async {
+      await saved(tester);
+      await openMenu(tester);
+
+      final keys = [
+        'chat-menu-history',
+        'chat-menu-wiki',
+        'chat-menu-distill',
+        'chat-menu-temporary',
+      ];
+      final tops = [
+        for (final k in keys) tester.getTopLeft(find.byKey(Key(k))).dy,
+      ];
+      expect(tops, [...tops]..sort());
+      expect(tops.toSet(), hasLength(4));
+      expect(find.text('위키로 정리'), findsOneWidget);
+      // 누르기 전에는 위키가 생기지 않는다 — 답이 끝나도 정리 요청 · 저장이 없다.
+      verifyNever(
+        () => distiller.distill(
+          conversationId: any(named: 'conversationId'),
+          target: any(named: 'target'),
+        ),
+      );
+      expect(wiki.created, isEmpty);
+      expect(wiki.updated, isEmpty);
+    });
+
+    testWidgets('빈 대화면 없다', (tester) async {
+      await pump(tester);
+      await openMenu(tester);
+      expect(find.byKey(const Key('chat-menu-wiki')), findsOneWidget);
+      expect(find.byKey(distill), findsNothing);
+    });
+
+    testWidgets('임시 대화면 없다', (tester) async {
+      answer('산책을 했어요');
+      await pump(tester);
+      await tapMenu(tester, 'chat-menu-temporary');
+      await tester.tap(find.text('어제 뭐 했어?'));
+      await tester.pumpAndSettle();
+
+      await openMenu(tester);
+      expect(find.byKey(distill), findsNothing);
+    });
+
+    testWidgets('답하는 중이면 없다', (tester) async {
+      await saved(tester);
+      final pending = StreamController<ChatEvent>();
+      addTearDown(pending.close);
+      when(() => session.ask(any())).thenAnswer((_) => pending.stream);
+      await tester.enterText(find.byType(TextField), '또?');
+      await tester.tap(find.byTooltip('보내기'));
+      await tester.pump();
+      expect(find.byTooltip('답 멈추기'), findsOneWidget);
+
+      await tester.tap(menu());
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.byKey(const Key('chat-menu-wiki')), findsOneWidget);
+      expect(find.byKey(distill), findsNothing);
+    });
+
+    testWidgets('키가 없으면 없다', (tester) async {
+      await saved(tester);
+      settings.key = null;
+      final navigator = await pushCover(tester);
+      navigator.pop();
+      await tester.pumpAndSettle();
+
+      await openMenu(tester);
+      expect(find.byKey(const Key('menu-settings-chat')), findsOneWidget);
+      expect(find.byKey(distill), findsNothing);
+    });
+
+    testWidgets('누르면 후보 시트', (tester) async {
+      await saved(tester);
+      await tapMenu(tester, 'chat-menu-distill');
+
+      expect(find.byType(BottomSheet), findsOneWidget);
+      expect(find.byKey(const Key('wiki-candidate-0')), findsOneWidget);
+      expect(find.text('기상 시간'), findsOneWidget);
+      verify(
+        () => distiller.distill(
+          conversationId: 'c1',
+          target: (vendor: ChatVendor.anthropic, model: 'claude-test'),
+        ),
+      ).called(1);
+      expect(wiki.created, isEmpty);
     });
   });
 

@@ -25,8 +25,9 @@ class WikiLinkText extends StatelessWidget {
   /// 본문이 가리키는 일기 중 살아 있는 것(휴지통 제외).
   final Map<String, DiaryEntry> entries;
 
-  final ValueChanged<int> onOpenNote;
-  final ValueChanged<String> onOpenEntry;
+  /// null 이면 칩을 누를 수 없다(후보 시트 — 시트 위에서 다른 화면을 열지 않는다).
+  final ValueChanged<int>? onOpenNote;
+  final ValueChanged<String>? onOpenEntry;
 
   /// 지워진 대상 칩의 흐림 — Material 의 비활성 글자와 같은 값.
   static const missingOpacity = 0.38;
@@ -56,12 +57,17 @@ class WikiLinkText extends StatelessWidget {
     switch (link) {
       case WikiNoteLink(:final id):
         final note = notes[id];
-        if (note == null) return _MissingChip(label: l10n.walkChatWikiDeletedNote);
+        if (note == null) {
+          return _MissingChip(label: l10n.walkChatWikiDeletedNote);
+        }
         return ActionChip(
           key: Key('wiki-link-note-$id'),
           avatar: const Icon(Icons.description_outlined),
           label: Text(note.title),
-          onPressed: () => onOpenNote(id),
+          onPressed: switch (onOpenNote) {
+            final open? => () => open(id),
+            null => null,
+          },
         );
       case WikiDiaryLink(:final entryId):
         final entry = entries[entryId];
@@ -71,7 +77,10 @@ class WikiLinkText extends StatelessWidget {
         return CitedEntryChip(
           key: Key('wiki-link-entry-$entryId'),
           entry: entry,
-          onOpen: () => onOpenEntry(entryId),
+          onOpen: switch (onOpenEntry) {
+            final open? => () => open(entryId),
+            null => null,
+          },
         );
     }
   }

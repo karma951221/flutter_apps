@@ -1186,5 +1186,19 @@
   "walkChatUsageWikiIndexAvg": "質問あたりの平均索引",
   "walkChatUsageWikiIndexAvgValue": "{notes}件・{chars}文字",
   "walkChatUsageWikiReadRatio": "Wikiを開いた質問",
-  "walkChatUsageWikiReadRatioValue": "{count} / {questions}"
+  "walkChatUsageWikiReadRatioValue": "{count} / {questions}",
+  "walkChatWikiDistill": "Wikiに整理",
+  "walkChatWikiDistilling": "この会話から残す内容を選んでいます…",
+  "walkChatWikiDistillNone": "残す内容が見つかりませんでした",
+  "walkChatWikiDistillUnparsable": "整理できませんでした。もう一度お試しください",
+  "walkChatWikiDistillDone": "メモを{count}件保存しました",
+  "walkChatWikiDistillClose": "閉じる",
+  "walkChatWikiCandidateNew": "新しいメモ",
+  "walkChatWikiCandidateUpdate": "[[{id}]]を更新",
+  "walkChatWikiCandidateCurrent": "現在",
+  "walkChatWikiCandidateProposed": "変更後",
+  "walkChatWikiCandidateEdit": "編集して保存",
+  "walkChatWikiCandidateDiscard": "破棄",
+  "walkChatWikiCandidateSavedLabel": "保存済み",
+  "walkChatWikiCandidateDiscardedLabel": "破棄済み"
 }

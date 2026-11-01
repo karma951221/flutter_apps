@@ -3850,4 +3850,50 @@ class AppLocalizationsJa extends AppLocalizations {
   String walkChatUsageWikiReadRatioValue(String count, String questions) {
     return '$count / $questions';
   }
+
+  @override
+  String get walkChatWikiDistill => 'Wikiに整理';
+
+  @override
+  String get walkChatWikiDistilling => 'この会話から残す内容を選んでいます…';
+
+  @override
+  String get walkChatWikiDistillNone => '残す内容が見つかりませんでした';
+
+  @override
+  String get walkChatWikiDistillUnparsable => '整理できませんでした。もう一度お試しください';
+
+  @override
+  String walkChatWikiDistillDone(int count) {
+    return 'メモを$count件保存しました';
+  }
+
+  @override
+  String get walkChatWikiDistillClose => '閉じる';
+
+  @override
+  String get walkChatWikiCandidateNew => '新しいメモ';
+
+  @override
+  String walkChatWikiCandidateUpdate(int id) {
+    return '[[$id]]を更新';
+  }
+
+  @override
+  String get walkChatWikiCandidateCurrent => '現在';
+
+  @override
+  String get walkChatWikiCandidateProposed => '変更後';
+
+  @override
+  String get walkChatWikiCandidateEdit => '編集して保存';
+
+  @override
+  String get walkChatWikiCandidateDiscard => '破棄';
+
+  @override
+  String get walkChatWikiCandidateSavedLabel => '保存済み';
+
+  @override
+  String get walkChatWikiCandidateDiscardedLabel => '破棄済み';
 }

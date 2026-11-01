@@ -7109,6 +7109,90 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{count} / {questions}'**
   String walkChatUsageWikiReadRatioValue(String count, String questions);
+
+  /// 물어보기 ⋮: 지금 대화에서 위키 후보를 뽑는 항목
+  ///
+  /// In ko, this message translates to:
+  /// **'위키로 정리'**
+  String get walkChatWikiDistill;
+
+  /// 위키로 정리 시트: 후보를 뽑는 동안
+  ///
+  /// In ko, this message translates to:
+  /// **'이 대화에서 남길 내용을 고르는 중…'**
+  String get walkChatWikiDistilling;
+
+  /// 위키로 정리 시트: 후보가 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'남길 만한 내용을 찾지 못했어요'**
+  String get walkChatWikiDistillNone;
+
+  /// 위키로 정리 시트: 응답을 후보로 읽지 못했을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'정리하지 못했어요. 다시 해 보세요'**
+  String get walkChatWikiDistillUnparsable;
+
+  /// 위키로 정리 시트: 후보를 모두 처리하고 닫을 때 스낵바 — 저장한 수
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 {count}개를 저장했어요'**
+  String walkChatWikiDistillDone(int count);
+
+  /// 위키로 정리 시트: 실패 · 빈 결과 안내의 닫기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'닫기'**
+  String get walkChatWikiDistillClose;
+
+  /// 위키 후보 카드 라벨: 새 메모
+  ///
+  /// In ko, this message translates to:
+  /// **'새 메모'**
+  String get walkChatWikiCandidateNew;
+
+  /// 위키 후보 카드 라벨: 기존 메모 고치기 — 메모 id
+  ///
+  /// In ko, this message translates to:
+  /// **'[[{id}]] 고치기'**
+  String walkChatWikiCandidateUpdate(int id);
+
+  /// 위키 후보 카드(고치기): 지금 본문 머리
+  ///
+  /// In ko, this message translates to:
+  /// **'지금'**
+  String get walkChatWikiCandidateCurrent;
+
+  /// 위키 후보 카드(고치기): 바뀔 본문 머리
+  ///
+  /// In ko, this message translates to:
+  /// **'바뀔 내용'**
+  String get walkChatWikiCandidateProposed;
+
+  /// 위키 후보 카드 버튼: 편집 화면으로 열어 저장
+  ///
+  /// In ko, this message translates to:
+  /// **'고쳐서 저장'**
+  String get walkChatWikiCandidateEdit;
+
+  /// 위키 후보 카드 버튼: 저장하지 않음
+  ///
+  /// In ko, this message translates to:
+  /// **'버림'**
+  String get walkChatWikiCandidateDiscard;
+
+  /// 위키 후보 카드: 저장한 뒤 접힌 줄
+  ///
+  /// In ko, this message translates to:
+  /// **'저장함'**
+  String get walkChatWikiCandidateSavedLabel;
+
+  /// 위키 후보 카드: 버린 뒤 접힌 줄
+  ///
+  /// In ko, this message translates to:
+  /// **'버림'**
+  String get walkChatWikiCandidateDiscardedLabel;
 }
 
 class _AppLocalizationsDelegate

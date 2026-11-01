@@ -36,15 +36,16 @@ import '../widget/model_picker_sheet.dart';
 import '../widget/temporary_chat_banner.dart';
 import '../wiki/cubit/wiki_edit_state.dart';
 import '../wiki/open_wiki.dart';
+import '../wiki/widget/wiki_candidates_sheet.dart';
 import 'chat_history_page.dart';
 
 /// 셸의 물어보기 탭: 내 일기 · 걸음 · 기상 기록에 묻는 채팅.
 ///
 /// 대화 내용은 일기에서 나오므로 [DiaryLockGate] 안쪽에 둔다 — 잠긴 동안 트리에 없다.
 /// cubit 은 게이트 바깥(이 State)이 소유해 다시 잠겼다 풀려도 대화가 남는다.
-/// 위에서 `DiaryLockCubit` 를 받는다(셸이 소유). 앱바 ⋮ 는 대화 목록 · 위키 · 임시 대화로 시작(키가
-/// 있을 때) · 물어보기 설정 · 앱 설정(잠긴 동안은 앱 설정만)이고, 셸의 설정 cubit 아래에서
-/// 연다([openSettings]).
+/// 위에서 `DiaryLockCubit` 를 받는다(셸이 소유). 앱바 ⋮ 는 대화 목록 · 위키 · 위키로 정리(저장된
+/// 대화가 열려 있고 답하는 중이 아닐 때) · 임시 대화로 시작(키가 있을 때) · 물어보기 설정 ·
+/// 앱 설정(잠긴 동안은 앱 설정만)이고, 셸의 설정 cubit 아래에서 연다([openSettings]).
 ///
 /// 임시 대화가 열려 있고 탭이 보이는 동안 창 캡처를 막는다([SecureWindow]). 잠겨 있어도 ·
 /// 위에 화면이 얹혀도 켠 채 둔다(스펙 §2).
@@ -105,6 +106,17 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
   Future<void> _openWiki() async {
     final id = await openWikiPage(context);
     if (id != null && mounted) await _cubit.open(id);
+  }
+
+  /// ⋮ [위키로 정리]. 후보 시트는 잠기면 스스로 닫힌다.
+  Future<void> _distill() async {
+    final id = _cubit.state.conversationId;
+    if (id == null || _cubit.state.temporary) return;
+    await showWikiCandidatesSheet(
+      context,
+      conversationId: id,
+      target: getIt<ChatSession>().target,
+    );
   }
 
   @override
@@ -198,6 +210,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
                 _ChatMenu(
                   onHistory: () => unawaited(_openHistory()),
                   onWiki: () => unawaited(_openWiki()),
+                  onDistill: () => unawaited(_distill()),
                   onTemporary: _cubit.startTemporary,
                 ),
               ] else
@@ -217,23 +230,30 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
   }
 }
 
-/// 풀린 동안의 ⋮ — 대화 목록 · 위키 · 임시 대화로 시작(쓸 수 있을 때) 아래에 물어보기 설정 · 앱 설정.
+/// 풀린 동안의 ⋮ — 대화 목록 · 위키 · 위키로 정리 · 임시 대화로 시작(쓸 수 있을 때) 아래에
+/// 물어보기 설정 · 앱 설정.
 class _ChatMenu extends StatelessWidget {
   const _ChatMenu({
     required this.onHistory,
     required this.onWiki,
+    required this.onDistill,
     required this.onTemporary,
   });
 
   final VoidCallback onHistory;
   final VoidCallback onWiki;
+  final VoidCallback onDistill;
   final VoidCallback onTemporary;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final ready = context.select<ChatCubit, bool>(
-      (c) => c.state.access == ChatAccess.ready,
+    final (ready, distillable) = context.select<ChatCubit, (bool, bool)>(
+      (c) => (
+        c.state.access == ChatAccess.ready,
+        // 저장된 대화(턴이 있는 것)만 — 임시 대화 · 빈 대화 · 답하는 중엔 없다.
+        c.state.conversationId != null && !c.state.temporary && !c.state.busy,
+      ),
     );
     return FeatureMenu(
       settings: SettingsTarget.chat,
@@ -252,6 +272,13 @@ class _ChatMenu extends StatelessWidget {
             label: l10n.walkChatWikiTitle,
             icon: Icons.menu_book_outlined,
             onTap: onWiki,
+          ),
+        if (ready && distillable)
+          FeatureMenuEntry(
+            key: const Key('chat-menu-distill'),
+            label: l10n.walkChatWikiDistill,
+            icon: Icons.auto_awesome_outlined,
+            onTap: onDistill,
           ),
         if (ready)
           FeatureMenuEntry(
