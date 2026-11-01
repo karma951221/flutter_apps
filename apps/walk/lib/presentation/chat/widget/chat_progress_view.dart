@@ -29,9 +29,8 @@ class _ChatProgressViewState extends State<ChatProgressView> {
   /// 펼친 단계 목록이 보이는가.
   bool _expanded = false;
 
-  /// 마지막으로 알린 단계 종류와 그때의 문구(R13).
-  String? _announcedKind;
-  String _announced = '';
+  /// liveRegion 이 마지막으로 알린 단계 — 단계 단위([_unitOf])가 바뀔 때만 바꾼다(R13).
+  late ChatProgressStep _announced = _currentOf(widget.progress);
 
   /// 접힌 요약 화살표.
   static const _collapsedMark = '▸';
@@ -42,6 +41,16 @@ class _ChatProgressViewState extends State<ChatProgressView> {
 
   /// 스피너 굵기 — 글자 크기 대비.
   static const _strokeRatio = 0.12;
+
+  @override
+  void didUpdateWidget(ChatProgressView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final current = _currentOf(widget.progress);
+    if (_unitOf(current) != _unitOf(_announced)) _announced = current;
+  }
+
+  static ChatProgressStep _currentOf(ChatProgress progress) =>
+      progress.current ?? const ChatProgressStep.sending();
 
   @override
   Widget build(BuildContext context) {
@@ -76,13 +85,13 @@ class _ChatProgressViewState extends State<ChatProgressView> {
     double? size,
     Color color,
   ) {
-    final step = progress.current ?? const ChatProgressStep.sending();
+    final step = _currentOf(progress);
     final text = chatProgressStepText(l10n, l10n.localeName, step);
-    final kind = _kindOf(step);
-    if (kind != _announcedKind) {
-      _announcedKind = kind;
-      _announced = text;
-    }
+    // 노트는 글자 단위로 자란다 — 반쪽 문장을 읽지 않게 고정 문구로 알린다(스펙 §3.5).
+    final announced = switch (_announced) {
+      StepNote() => l10n.walkChatPhaseThinking,
+      final other => chatProgressStepText(l10n, l10n.localeName, other),
+    };
     return Row(
       key: const ValueKey('running'),
       mainAxisSize: MainAxisSize.min,
@@ -91,7 +100,8 @@ class _ChatProgressViewState extends State<ChatProgressView> {
           SizedBox.square(
             dimension: size,
             child: CircularProgressIndicator(
-              strokeWidth: (size ?? AppSpacing.md) * _strokeRatio,
+              strokeWidth:
+                  (size ?? IconTheme.of(context).size ?? 0) * _strokeRatio,
               color: color,
             ),
           )
@@ -103,7 +113,7 @@ class _ChatProgressViewState extends State<ChatProgressView> {
             key: ChatProgressView.liveRegionKey,
             container: true,
             liveRegion: true,
-            label: _announced,
+            label: announced,
             child: ExcludeSemantics(
               child: AnimatedSwitcher(
                 duration: motion ? AppMotion.short : Duration.zero,
@@ -113,9 +123,11 @@ class _ChatProgressViewState extends State<ChatProgressView> {
                   alignment: AlignmentDirectional.centerStart,
                   children: [...previous, ?current],
                 ),
+                // 단계 단위로 키를 준다 — 같은 노트가 자라면 제자리에서 바뀌고,
+                // 단위가 바뀔 때만 페이드한다.
                 child: Text(
                   text,
-                  key: ValueKey(text),
+                  key: ValueKey(_unitOf(step)),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -125,11 +137,14 @@ class _ChatProgressViewState extends State<ChatProgressView> {
         ),
         if (progress.elapsedSeconds >= ChatProgress.elapsedVisibleFrom)
           ExcludeSemantics(
-            child: Text(
-              l10n.walkChatProgressJoin(
-                '',
-                l10n.walkChatProgressElapsed(progress.elapsedSeconds),
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(width: AppSpacing.xs),
+                const Text(_bullet),
+                const SizedBox(width: AppSpacing.xs),
+                Text(l10n.walkChatProgressElapsed(progress.elapsedSeconds)),
+              ],
             ),
           ),
       ],
@@ -189,8 +204,8 @@ class _ChatProgressViewState extends State<ChatProgressView> {
     );
   }
 
-  /// liveRegion 라벨을 바꿀 단계 단위. 노트는 이어져도 한 단위, 도구는 호출마다.
-  static String _kindOf(ChatProgressStep step) => switch (step) {
+  /// 단계 단위 — liveRegion 라벨 · 문구 전환 키. 노트는 이어지거나 자라도 한 단위, 도구는 호출마다.
+  static String _unitOf(ChatProgressStep step) => switch (step) {
     StepSending() => 'sending',
     StepThinking() => 'thinking',
     StepNote() => 'note',

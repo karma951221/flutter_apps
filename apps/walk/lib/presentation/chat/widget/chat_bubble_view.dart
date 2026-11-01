@@ -239,8 +239,9 @@ class _StreamingCursorState extends State<_StreamingCursor>
   /// 투명 글의 줄바꿈이 [SelectableText] 와 같게 한다.
   static const _cursor = '\u200B▍';
 
-  /// [SelectableText](RenderEditable)가 오른쪽에 비워 두는 캐럿 자리 —
-  /// 간격 1 + 기본 cursorWidth 2. 같은 너비로 줄을 나눠야 커서가 글 끝에 붙는다.
+  /// [SelectableText] 가 오른쪽에 비워 두는 캐럿 자리. Flutter 의
+  /// `RenderEditable._caretMargin`(= `_kCaretGap` 1 + `cursorWidth`, [SelectableText] 기본 2)과
+  /// 같아야 한다 — 같은 너비로 줄을 나눠야 커서가 글 끝에 붙는다. 테스트가 양쪽(더 작음 · 더 큼)을 잡는다.
   static const _caretMargin = 3.0;
 
   @override
@@ -282,6 +283,10 @@ class _StreamingCursorState extends State<_StreamingCursor>
             ],
           ),
           style: widget.style,
+          // EditableText 처럼 글꼴 strut 을 둬 줄 높이를 [SelectableText] 와 맞춘다.
+          strutStyle: widget.style == null
+              ? null
+              : StrutStyle.fromTextStyle(widget.style!),
         ),
       ),
     );

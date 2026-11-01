@@ -149,35 +149,84 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('노트가 이어지면 라벨은 처음 노트 그대로, 도구로 바뀌면 바뀐다', (tester) async {
+  SemanticsNode live(WidgetTester tester) =>
+      tester.getSemantics(find.byKey(ChatProgressView.liveRegionKey));
+
+  testWidgets('자라는 노트는 제자리에서 바뀌고 페이드하지 않는다', (tester) async {
+    await tester.pumpWidget(app(running(const [ChatProgressStep.note('지')])));
+    await tester.pump(AppMotion.short);
+    await tester.pumpWidget(
+      app(running(const [ChatProgressStep.note('지난주 기록을')])),
+    );
+
+    final texts = find.descendant(
+      of: find.byType(AnimatedSwitcher),
+      matching: find.byType(Text),
+    );
+    expect(texts, findsOneWidget);
+    expect(find.text('지난주 기록을'), findsOneWidget);
+    expect(tester.hasRunningAnimations, isTrue); // 스피너만 돈다
+    final fades = tester.widgetList<FadeTransition>(
+      find.descendant(
+        of: find.byType(AnimatedSwitcher),
+        matching: find.byType(FadeTransition),
+      ),
+    );
+    for (final fade in fades) {
+      expect(fade.opacity.value, 1);
+    }
+  });
+
+  testWidgets('노트는 자라도 이어져도 라벨이 생각하는 중, 도구로 바뀌면 바뀐다', (tester) async {
     final handle = tester.ensureSemantics();
-    await tester.pumpWidget(app(running(const [ChatProgressStep.note('하나')])));
+    await tester.pumpWidget(app(running(const [ChatProgressStep.note('지')])));
+    expect(live(tester).label, '생각하는 중');
+
+    await tester.pumpWidget(
+      app(running(const [ChatProgressStep.note('지난주 기록을 볼게요')])),
+    );
     await tester.pumpWidget(
       app(
         running(const [
-          ChatProgressStep.note('하나'),
+          ChatProgressStep.note('지난주 기록을 볼게요'),
           ChatProgressStep.note('둘'),
         ]),
       ),
     );
     await tester.pump(AppMotion.short);
-
-    SemanticsNode live() =>
-        tester.getSemantics(find.byKey(ChatProgressView.liveRegionKey));
-    expect(live().label, '하나');
+    expect(live(tester).label, '생각하는 중');
     expect(find.text('둘'), findsOneWidget);
 
     await tester.pumpWidget(
       app(
         running(const [
-          ChatProgressStep.note('하나'),
           ChatProgressStep.note('둘'),
           ChatProgressStep.tool(callId: 'a', kind: ChatToolKind.viewPhotos),
         ]),
       ),
     );
     await tester.pump(AppMotion.short);
-    expect(live().label, '사진 보는 중');
+    expect(live(tester).label, '사진 보는 중');
+
+    // 같은 도구 호출에 결과가 붙어도 라벨은 그대로, 다음 단위(답 쓰는 중)에서 바뀐다.
+    await tester.pumpWidget(
+      app(
+        running(const [
+          ChatProgressStep.tool(
+            callId: 'a',
+            kind: ChatToolKind.viewPhotos,
+            result: ToolSummary(kind: ChatToolKind.viewPhotos, count: 2),
+          ),
+        ]),
+      ),
+    );
+    await tester.pump(AppMotion.short);
+    expect(find.text('사진 2장'), findsOneWidget);
+    expect(live(tester).label, '사진 보는 중');
+
+    await tester.pumpWidget(app(running(const [ChatProgressStep.writing()])));
+    await tester.pump(AppMotion.short);
+    expect(live(tester).label, '답 쓰는 중');
     handle.dispose();
   });
 

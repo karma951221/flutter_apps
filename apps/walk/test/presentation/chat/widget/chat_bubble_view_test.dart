@@ -1,5 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
@@ -65,26 +66,60 @@ void main() {
       );
     });
 
-    testWidgets('여러 줄이어도 투명 글이 같은 자리에서 줄을 나눈다', (tester) async {
-      // 캐럿 자리 몇 픽셀 차이로 한 줄 글자 수가 갈리는 너비 — 0.85 × 1010 − 좌우 여백 32
-      // = 826.5 는 테스트 글꼴 한 글자(16.5)의 50배보다 1.5 넓다.
-      tester.view
-        ..physicalSize = const Size(1010, 800)
-        ..devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
-      // 길이를 바꿔 가며 — 투명 글이 더 넓게 줄을 나누면 줄 수가 줄어 높이가 낮아진다.
-      for (var n = 1; n <= 60; n++) {
-        await pump(
-          tester,
-          ChatBubble(role: ChatRole.assistant, text: '바다가' * n),
-          streaming: true,
-        );
-        final selectable = tester.getRect(find.byType(SelectableText));
-        final overlay = tester.getRect(cursor);
-        expect(overlay.top, selectable.top);
-        expect(overlay.height, greaterThanOrEqualTo(selectable.height - 1));
-      }
-    });
+    // 캐럿 자리 몇 픽셀 차이로 한 줄 글자 수가 갈리는 너비들. 글 너비 = 0.85 × 화면 − 좌우 여백 32,
+    // 테스트 글꼴 한 글자 16.5.
+    //  - 1010 → 826.5 = 16.5 × 50 + 1.5: 캐럿 자리가 3 보다 작으면(예: 0) 한 줄 글자 수가 늘어난다.
+    //  - 1012 → 828.2 = 16.5 × 50 + 3.2: 캐럿 자리가 3 보다 크면(예: 4) 한 줄 글자 수가 줄어든다.
+    const testGlyph = 16.5;
+    // RenderEditable._caretMargin = _kCaretGap(1) + cursorWidth(기본 2).
+    const caretMargin = 3.0;
+    for (final width in [1010.0, 1012.0]) {
+      testWidgets('여러 줄이어도 투명 글이 같은 자리에서 줄을 나눈다(너비 $width)', (tester) async {
+        tester.view
+          ..physicalSize = Size(width, 800)
+          ..devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        for (var n = 1; n <= 60; n++) {
+          final text = '바다가' * n;
+          await pump(
+            tester,
+            ChatBubble(role: ChatRole.assistant, text: text),
+            streaming: true,
+          );
+          final whole = TextSelection(baseOffset: 0, extentOffset: text.length);
+          final editable = tester
+              .state<EditableTextState>(find.byType(EditableText))
+              .renderEditable;
+          final paragraph = tester.renderObject<RenderParagraph>(cursor);
+          final expected = editable.getBoxesForSelection(whole).last;
+          final actual = paragraph
+              .getBoxesForSelection(
+                whole,
+                boxHeightStyle: editable.selectionHeightStyle,
+                boxWidthStyle: editable.selectionWidthStyle,
+              )
+              .last;
+          // 글이 줄 끝을 꽉 채운 경우는 뺀다 — 테스트 글꼴은 폭 없는 빈칸(U+200B)에도 글자
+          // 폭을 줘서 마지막 글자까지 커서와 함께 넘긴다(실제 글꼴에서는 폭 0).
+          if (expected.right + testGlyph > editable.size.width - caretMargin) {
+            continue;
+          }
+          // 투명 글의 끝(= 커서 자리)이 보이는 글의 끝과 같다 — 같은 줄(한 줄 높이 차이가 아님),
+          // 같은 가로 자리. 글이 줄 끝을 꽉 채워 커서만 다음 줄로 넘기면 줄 간격 몫으로
+          // 아래 끝이 몇 픽셀 달라질 수 있다.
+          expect(actual.right, expected.right, reason: 'n=$n');
+          expect(
+            actual.bottom,
+            closeTo(expected.bottom, (expected.bottom - expected.top) / 2),
+            reason: 'n=$n',
+          );
+          expect(
+            tester.getTopLeft(cursor),
+            tester.getTopLeft(find.byType(SelectableText)),
+          );
+        }
+      });
+    }
 
     testWidgets('깜빡인다 — AppMotion.long 뒤 불투명도가 바뀐다', (tester) async {
       await pump(tester, answer, streaming: true);
