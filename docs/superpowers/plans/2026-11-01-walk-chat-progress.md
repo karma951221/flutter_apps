@@ -478,7 +478,7 @@ live 문서 · 실제 키가 필요한 항목. 어느 것도 단위 테스트를
   - 목록: `context.select((c) => c.state.bubbles.length)` 로 `ListView.separated(itemCount)` 만 다시 그림. 항목은 `_BubbleItem(index)` — `context.select((c) => c.state.bubbles.elementAtOrNull(index))` + `busy && index == last` 로 `pending`. 비었으면 `ChatExamples`.
   - 입력칸: `context.select((c) => (c.state.busy, c.state.restoredDraft))` 의 `ChatInput`(core 모양 그대로).
   - 옛 "기록을 찾는 중…" `Padding` 블록을 지운다.
-- [↓ 새 답](스펙 §3.5, Q8): `_BubbleList` 를 `StatefulWidget` 으로, 자기 `ScrollController`. `reverse: true` 그대로. 마지막 말풍선이 바뀌는 `BlocListener`(`listenWhen: 마지막 말풍선 text 길이 변화 && busy`)에서 `controller.offset > position.viewportDimension / 4` 이면 `_showJump = true`. 스크롤이 `offset <= viewport/4` 로 돌아오면(스크롤 리스너) 또는 답이 끝나면 숨김. 버튼은 `Stack` 으로 목록 아래쪽 가운데(`Positioned(bottom: AppSpacing.sm)`), 누르면 `AppMotion.enabled` 면 `animateTo(0, duration: AppMotion.medium, curve: AppMotion.standard)`, 아니면 `jumpTo(0)`. 맨 아래면 아무것도 하지 않음(지금처럼 `reverse` 가 아래를 보여 줌).
+- [↓ 새 답] (스펙 §3.5, Q8): `_BubbleList` 를 `StatefulWidget` 으로, 자기 `ScrollController`. `reverse: true` 그대로. 마지막 말풍선이 바뀌는 `BlocListener`(`listenWhen: 마지막 말풍선 text 길이 변화 && busy`)에서 `controller.offset > position.viewportDimension / 4` 이면 `_showJump = true`. 스크롤이 `offset <= viewport/4` 로 돌아오면(스크롤 리스너) 또는 답이 끝나면 숨김. 버튼은 `Stack` 으로 목록 아래쪽 가운데(`Positioned(bottom: AppSpacing.sm)`), 누르면 `AppMotion.enabled` 면 `animateTo(0, duration: AppMotion.medium, curve: AppMotion.standard)`, 아니면 `jumpTo(0)`. 맨 아래면 아무것도 하지 않음(지금처럼 `reverse` 가 아래를 보여 줌).
 - l10n: `walkChatJumpToLatest` — 새 답 / New reply / 新しい回答(`@` "채팅 탭: 위로 올려 둔 채 답이 자랄 때 맨 아래로 가는 버튼"). `walkChatSearching` 은 세 arb 에서 지운다(`grep -rn walkChatSearching apps/walk` 결과 0).
 
 - [ ] **Step 1: 실패하는 테스트**
