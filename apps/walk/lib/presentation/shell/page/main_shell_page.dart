@@ -13,6 +13,7 @@ import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
 import '../../../domain/alarm/usecase/ring_archiver.dart';
 import '../../../domain/alarm/widget/next_alarm_widget.dart';
+import '../../../domain/chat/usecase/chat_history_pruner.dart';
 import '../../../domain/diary/repository/diary_preferences.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
@@ -169,6 +170,8 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     await _reload(_alarmUseCase.sync);
     // 네이티브 울림 기록(200줄)을 앱 DB 로 옮긴다. 화면을 막지 않고, 실패해도 다음에 다시 한다.
     unawaited(getIt<RingArchiver>().archive().catchError((Object _) {}));
+    // 보관 기간이 지난 대화 · 13개월 지난 사용량을 지운다. 화면을 막지 않는다.
+    unawaited(getIt<ChatHistoryPruner>().prune());
   }
 
   Future<void> _reload(Future<void> Function() reschedule) async {

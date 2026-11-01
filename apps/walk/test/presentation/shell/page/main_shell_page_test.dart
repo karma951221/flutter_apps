@@ -19,6 +19,7 @@ import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/alarm/usecase/ring_archiver.dart';
 import 'package:walk/domain/alarm/widget/next_alarm_widget.dart';
+import 'package:walk/domain/chat/usecase/chat_history_pruner.dart';
 import 'package:walk/domain/diary/location/place_source.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
@@ -63,6 +64,8 @@ import 'package:walk/domain/chat/usecase/chat_key_verifier.dart';
 class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
 
 class _MockArchiver extends Mock implements RingArchiver {}
+
+class _MockPruner extends Mock implements ChatHistoryPruner {}
 
 class _MockWalk extends Mock implements WalkUseCase {}
 
@@ -125,6 +128,7 @@ class _MemorySettings implements SettingsRepository {
 void main() {
   late _MockAlarmUseCase alarms;
   late _MockArchiver archiver;
+  late _MockPruner pruner;
   late _MockWalk walk;
   late _MockRequester notification;
   late _MockHolidays holidays;
@@ -147,6 +151,8 @@ void main() {
     alarms = _MockAlarmUseCase();
     archiver = _MockArchiver();
     when(() => archiver.archive()).thenAnswer((_) async {});
+    pruner = _MockPruner();
+    when(() => pruner.prune()).thenAnswer((_) => Future.value());
     walk = _MockWalk();
     notification = _MockRequester();
     holidays = _MockHolidays();
@@ -200,6 +206,7 @@ void main() {
     getIt
       ..registerSingleton<AlarmUseCase>(alarms)
       ..registerSingleton<RingArchiver>(archiver)
+      ..registerSingleton<ChatHistoryPruner>(pruner)
       ..registerSingleton<WalkUseCase>(walk)
       ..registerSingleton<Clock>(clock)
       ..registerSingleton<HolidayRefresher>(holidays)
@@ -531,6 +538,12 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => archiver.archive()).called(1);
+  });
+
+  testWidgets('시작하면 대화 정리를 부른다', (tester) async {
+    await pump(tester);
+
+    verify(() => pruner.prune()).called(greaterThanOrEqualTo(1));
   });
 
   testWidgets('복귀하면 다시 동기화한다', (tester) async {

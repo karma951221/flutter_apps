@@ -39,6 +39,7 @@ import '../../data/chat/compressed_chat_image_source.dart' as _i957;
 import '../../data/chat/database/chat_database.dart' as _i933;
 import '../../data/chat/database/drift_chat_history_repository.dart' as _i991;
 import '../../data/chat/database/drift_chat_usage_log.dart' as _i1028;
+import '../../data/chat/prefs_chat_history_settings.dart' as _i433;
 import '../../data/chat/secure_chat_settings.dart' as _i1030;
 import '../../data/commute/geocoding_address_search.dart' as _i667;
 import '../../data/commute/odsay_route_finder.dart' as _i132;
@@ -70,6 +71,7 @@ import '../../domain/alarm/sound/alarm_sound_source.dart' as _i344;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
 import '../../domain/alarm/usecase/ring_archiver.dart' as _i626;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
+import '../../domain/chat/chat_history_settings.dart' as _i31;
 import '../../domain/chat/chat_model.dart' as _i1004;
 import '../../domain/chat/chat_settings.dart' as _i111;
 import '../../domain/chat/chat_trace.dart' as _i825;
@@ -78,8 +80,10 @@ import '../../domain/chat/repository/chat_history_repository.dart' as _i752;
 import '../../domain/chat/repository/chat_usage_repository.dart' as _i669;
 import '../../domain/chat/tool/chat_image_source.dart' as _i858;
 import '../../domain/chat/tool/life_tools.dart' as _i70;
+import '../../domain/chat/usecase/chat_history_pruner.dart' as _i539;
 import '../../domain/chat/usecase/chat_key_verifier.dart' as _i5;
 import '../../domain/chat/usecase/chat_session.dart' as _i502;
+import '../../domain/chat/usecase/open_conversation.dart' as _i306;
 import '../../domain/commute/repository/address_search.dart' as _i63;
 import '../../domain/commute/repository/place_repository.dart' as _i142;
 import '../../domain/commute/repository/route_finder.dart' as _i488;
@@ -144,6 +148,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i933.AlarmPermissions>(
       () => alarmPermissionModule.alarmPermissions,
     );
+    gh.lazySingleton<_i306.OpenConversation>(() => _i306.OpenConversation());
     gh.lazySingleton<_i488.MediaPickGuard>(() => _i488.MediaPickGuard());
     gh.lazySingleton<_i494.IdGenerator>(
       () => registerModule.idGenerator(gh<_i706.Uuid>()),
@@ -260,6 +265,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i91.SettingsRepository>(),
       ),
     );
+    gh.lazySingleton<_i31.ChatHistorySettings>(
+      () => _i433.PrefsChatHistorySettings(gh<_i460.SharedPreferences>()),
+    );
     gh.lazySingleton<_i130.RoutePreferenceRepository>(
       () => _i644.PrefsRoutePreferenceRepository(gh<_i460.SharedPreferences>()),
     );
@@ -309,6 +317,15 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i1049.DriftDiaryRepository(
         gh<_i611.DiaryDatabase>(),
         gh<_i494.IdGenerator>(),
+        gh<_i494.Clock>(),
+      ),
+    );
+    gh.lazySingleton<_i539.ChatHistoryPruner>(
+      () => _i539.ChatHistoryPruner(
+        gh<_i752.ChatHistoryRepository>(),
+        gh<_i669.ChatUsageRepository>(),
+        gh<_i31.ChatHistorySettings>(),
+        gh<_i306.OpenConversation>(),
         gh<_i494.Clock>(),
       ),
     );
