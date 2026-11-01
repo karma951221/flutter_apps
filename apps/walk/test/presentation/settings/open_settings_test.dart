@@ -203,12 +203,26 @@ void main() {
     expect(find.byKey(const Key('settings-chat-key')), findsOneWidget);
   });
 
+  testWidgets('물어보기 설정에 키 섹션 아래 대화 기록 섹션이 있다', (tester) async {
+    await open(tester, SettingsTarget.chat);
+
+    final key = find.byKey(const Key('settings-chat-key'));
+    final retention = find.byKey(const Key('chat-history-retention'));
+    expect(retention, findsOneWidget);
+    expect(find.text('대화 기록'), findsOneWidget);
+    expect(
+      tester.getTopLeft(retention).dy,
+      greaterThan(tester.getTopLeft(key).dy),
+    );
+  });
+
   testWidgets('물어보기 설정 — 잠겨 있으면 잠금 화면이 먼저', (tester) async {
     await h.lockWithPin();
     await open(tester, SettingsTarget.chat);
 
     expect(find.byType(LockSecretInput), findsOneWidget);
     expect(find.byKey(const Key('settings-chat-key')), findsNothing);
+    expect(find.byKey(const Key('chat-history-retention')), findsNothing);
   });
 
   testWidgets('앱 설정 — 잠금 · 테마 · 기능별 설정 바로가기 넷', (tester) async {

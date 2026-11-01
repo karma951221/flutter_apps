@@ -3355,6 +3355,81 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatHistoryDeleteAllConfirm => '모두 지우기';
 
   @override
+  String get walkChatHistorySettingsHeader => '대화 기록';
+
+  @override
+  String get walkChatHistoryRetention => '대화 보관 기간';
+
+  @override
+  String get walkChatHistoryRetentionNever => '지우지 않음';
+
+  @override
+  String get walkChatHistoryRetention30d => '30일';
+
+  @override
+  String get walkChatHistoryRetention90d => '90일';
+
+  @override
+  String get walkChatHistoryRetentionNote =>
+      '보관 기간이 지난 대화는 다음에 앱을 열 때 지워져요. 사용량 기록은 13개월 동안 남아요.';
+
+  @override
+  String get walkChatUsageTitle => '사용량';
+
+  @override
+  String get walkChatUsagePrevMonth => '지난 달';
+
+  @override
+  String get walkChatUsageNextMonth => '다음 달';
+
+  @override
+  String get walkChatUsageQuestions => '질문';
+
+  @override
+  String get walkChatUsageInput => '입력 토큰';
+
+  @override
+  String get walkChatUsageOutput => '출력 토큰';
+
+  @override
+  String get walkChatUsageCacheRead => '캐시 읽기 토큰';
+
+  @override
+  String get walkChatUsageByModel => '모델별';
+
+  @override
+  String get walkChatUsageWikiDistill => '위키 정리';
+
+  @override
+  String walkChatUsageModelLine(String questions, String input, String output) {
+    return '질문 $questions · 입력 $input · 출력 $output';
+  }
+
+  @override
+  String get walkChatUsageEmpty => '이 달에는 사용 기록이 없어요';
+
+  @override
+  String get walkChatUsageCostNote => '요금은 각 벤더 콘솔에서 확인하세요. 임시 대화도 숫자만 함께 세요.';
+
+  @override
+  String get walkChatUsageClear => '사용량 기록 지우기';
+
+  @override
+  String get walkChatUsageClearTitle => '사용량 기록을 모두 지울까요?';
+
+  @override
+  String get walkChatUsageClearBody => '토큰 숫자 기록만 지워지고 대화는 남아요.';
+
+  @override
+  String get walkChatHistoryDeleteAllFailed => '대화를 지우지 못했어요';
+
+  @override
+  String get walkChatUsageLoadFailed => '사용량을 불러오지 못했어요';
+
+  @override
+  String get walkChatUsageClearFailed => '사용량 기록을 지우지 못했어요';
+
+  @override
   String get walkChatTemporaryStart => '임시 대화로 시작';
 
   @override

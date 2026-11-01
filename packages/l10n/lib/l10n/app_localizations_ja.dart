@@ -3354,6 +3354,82 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatHistoryDeleteAllConfirm => 'すべて削除';
 
   @override
+  String get walkChatHistorySettingsHeader => '会話の記録';
+
+  @override
+  String get walkChatHistoryRetention => '会話の保存期間';
+
+  @override
+  String get walkChatHistoryRetentionNever => '削除しない';
+
+  @override
+  String get walkChatHistoryRetention30d => '30日';
+
+  @override
+  String get walkChatHistoryRetention90d => '90日';
+
+  @override
+  String get walkChatHistoryRetentionNote =>
+      '保存期間を過ぎた会話は次にアプリを開いたときに削除されます。使用量の記録は13か月残ります。';
+
+  @override
+  String get walkChatUsageTitle => '使用量';
+
+  @override
+  String get walkChatUsagePrevMonth => '前の月';
+
+  @override
+  String get walkChatUsageNextMonth => '次の月';
+
+  @override
+  String get walkChatUsageQuestions => '質問';
+
+  @override
+  String get walkChatUsageInput => '入力トークン';
+
+  @override
+  String get walkChatUsageOutput => '出力トークン';
+
+  @override
+  String get walkChatUsageCacheRead => 'キャッシュ読み取りトークン';
+
+  @override
+  String get walkChatUsageByModel => 'モデル別';
+
+  @override
+  String get walkChatUsageWikiDistill => 'Wiki整理';
+
+  @override
+  String walkChatUsageModelLine(String questions, String input, String output) {
+    return '質問 $questions · 入力 $input · 出力 $output';
+  }
+
+  @override
+  String get walkChatUsageEmpty => 'この月の使用記録はありません';
+
+  @override
+  String get walkChatUsageCostNote =>
+      '料金は各ベンダーのコンソールで確認してください。一時的な会話も数値のみ集計します。';
+
+  @override
+  String get walkChatUsageClear => '使用量の記録を削除';
+
+  @override
+  String get walkChatUsageClearTitle => '使用量の記録をすべて削除しますか？';
+
+  @override
+  String get walkChatUsageClearBody => 'トークン数の記録だけが削除され、会話は残ります。';
+
+  @override
+  String get walkChatHistoryDeleteAllFailed => '会話を削除できませんでした';
+
+  @override
+  String get walkChatUsageLoadFailed => '使用量を読み込めませんでした';
+
+  @override
+  String get walkChatUsageClearFailed => '使用量の記録を削除できませんでした';
+
+  @override
   String get walkChatTemporaryStart => '一時的な会話を始める';
 
   @override

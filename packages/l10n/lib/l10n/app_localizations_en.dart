@@ -3624,6 +3624,83 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatHistoryDeleteAllConfirm => 'Delete all';
 
   @override
+  String get walkChatHistorySettingsHeader => 'Conversation history';
+
+  @override
+  String get walkChatHistoryRetention => 'Keep conversations';
+
+  @override
+  String get walkChatHistoryRetentionNever => 'Forever';
+
+  @override
+  String get walkChatHistoryRetention30d => '30 days';
+
+  @override
+  String get walkChatHistoryRetention90d => '90 days';
+
+  @override
+  String get walkChatHistoryRetentionNote =>
+      'Conversations older than this are deleted the next time you open the app. Usage records are kept for 13 months.';
+
+  @override
+  String get walkChatUsageTitle => 'Usage';
+
+  @override
+  String get walkChatUsagePrevMonth => 'Previous month';
+
+  @override
+  String get walkChatUsageNextMonth => 'Next month';
+
+  @override
+  String get walkChatUsageQuestions => 'Questions';
+
+  @override
+  String get walkChatUsageInput => 'Input tokens';
+
+  @override
+  String get walkChatUsageOutput => 'Output tokens';
+
+  @override
+  String get walkChatUsageCacheRead => 'Cached input tokens';
+
+  @override
+  String get walkChatUsageByModel => 'By model';
+
+  @override
+  String get walkChatUsageWikiDistill => 'Wiki summary';
+
+  @override
+  String walkChatUsageModelLine(String questions, String input, String output) {
+    return '$questions questions · $input in · $output out';
+  }
+
+  @override
+  String get walkChatUsageEmpty => 'No usage this month';
+
+  @override
+  String get walkChatUsageCostNote =>
+      'Check charges in each provider\'s console. Temporary chats are counted too (numbers only).';
+
+  @override
+  String get walkChatUsageClear => 'Clear usage records';
+
+  @override
+  String get walkChatUsageClearTitle => 'Clear all usage records?';
+
+  @override
+  String get walkChatUsageClearBody =>
+      'Only token counts are removed. Conversations stay.';
+
+  @override
+  String get walkChatHistoryDeleteAllFailed => 'Couldn\'t delete conversations';
+
+  @override
+  String get walkChatUsageLoadFailed => 'Couldn\'t load usage';
+
+  @override
+  String get walkChatUsageClearFailed => 'Couldn\'t clear usage records';
+
+  @override
   String get walkChatTemporaryStart => 'Start temporary chat';
 
   @override

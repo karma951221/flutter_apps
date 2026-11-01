@@ -6254,6 +6254,150 @@ abstract class AppLocalizations {
   /// **'모두 지우기'**
   String get walkChatHistoryDeleteAllConfirm;
 
+  /// 물어보기 설정: 대화 기록 섹션 머리글
+  ///
+  /// In ko, this message translates to:
+  /// **'대화 기록'**
+  String get walkChatHistorySettingsHeader;
+
+  /// 물어보기 설정: 대화 보관 기간 행 · 고르기 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'대화 보관 기간'**
+  String get walkChatHistoryRetention;
+
+  /// 물어보기 설정: 대화 보관 기간 — 지우지 않음
+  ///
+  /// In ko, this message translates to:
+  /// **'지우지 않음'**
+  String get walkChatHistoryRetentionNever;
+
+  /// 물어보기 설정: 대화 보관 기간 — 30일
+  ///
+  /// In ko, this message translates to:
+  /// **'30일'**
+  String get walkChatHistoryRetention30d;
+
+  /// 물어보기 설정: 대화 보관 기간 — 90일
+  ///
+  /// In ko, this message translates to:
+  /// **'90일'**
+  String get walkChatHistoryRetention90d;
+
+  /// 물어보기 설정: 대화 보관 기간 아래 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'보관 기간이 지난 대화는 다음에 앱을 열 때 지워져요. 사용량 기록은 13개월 동안 남아요.'**
+  String get walkChatHistoryRetentionNote;
+
+  /// 물어보기 설정: 사용량 행 · 사용량 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'사용량'**
+  String get walkChatUsageTitle;
+
+  /// 사용량 화면: 이전 달 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'지난 달'**
+  String get walkChatUsagePrevMonth;
+
+  /// 사용량 화면: 다음 달 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 달'**
+  String get walkChatUsageNextMonth;
+
+  /// 사용량 화면: 합계 — 질문 수
+  ///
+  /// In ko, this message translates to:
+  /// **'질문'**
+  String get walkChatUsageQuestions;
+
+  /// 사용량 화면: 합계 — 입력 토큰
+  ///
+  /// In ko, this message translates to:
+  /// **'입력 토큰'**
+  String get walkChatUsageInput;
+
+  /// 사용량 화면: 합계 — 출력 토큰
+  ///
+  /// In ko, this message translates to:
+  /// **'출력 토큰'**
+  String get walkChatUsageOutput;
+
+  /// 사용량 화면: 합계 — 캐시 읽기 토큰
+  ///
+  /// In ko, this message translates to:
+  /// **'캐시 읽기 토큰'**
+  String get walkChatUsageCacheRead;
+
+  /// 사용량 화면: 모델별 섹션 머리글
+  ///
+  /// In ko, this message translates to:
+  /// **'모델별'**
+  String get walkChatUsageByModel;
+
+  /// 사용량 화면: 위키 정리 쓰임 줄 꼬리표
+  ///
+  /// In ko, this message translates to:
+  /// **'위키 정리'**
+  String get walkChatUsageWikiDistill;
+
+  /// 사용량 화면: 모델 한 줄 부제 — 자리 구분한 숫자 글
+  ///
+  /// In ko, this message translates to:
+  /// **'질문 {questions} · 입력 {input} · 출력 {output}'**
+  String walkChatUsageModelLine(String questions, String input, String output);
+
+  /// 사용량 화면: 빈 달 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'이 달에는 사용 기록이 없어요'**
+  String get walkChatUsageEmpty;
+
+  /// 사용량 화면: 맨 아래 요금 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'요금은 각 벤더 콘솔에서 확인하세요. 임시 대화도 숫자만 함께 세요.'**
+  String get walkChatUsageCostNote;
+
+  /// 사용량 화면 ⋮: 사용량 기록 지우기
+  ///
+  /// In ko, this message translates to:
+  /// **'사용량 기록 지우기'**
+  String get walkChatUsageClear;
+
+  /// 사용량 화면: 지우기 확인 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'사용량 기록을 모두 지울까요?'**
+  String get walkChatUsageClearTitle;
+
+  /// 사용량 화면: 지우기 확인 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'토큰 숫자 기록만 지워지고 대화는 남아요.'**
+  String get walkChatUsageClearBody;
+
+  /// 물어보기 설정: 대화 모두 지우기 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'대화를 지우지 못했어요'**
+  String get walkChatHistoryDeleteAllFailed;
+
+  /// 사용량 화면: 읽기 실패 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'사용량을 불러오지 못했어요'**
+  String get walkChatUsageLoadFailed;
+
+  /// 사용량 화면: 지우기 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'사용량 기록을 지우지 못했어요'**
+  String get walkChatUsageClearFailed;
+
   /// 물어보기 ⋮: 임시 대화로 시작
   ///
   /// In ko, this message translates to:
