@@ -3,7 +3,7 @@
 > [테스트 가이드](../../../docs/testing/README.md) · [계획](plan.md) · [기록](history.md) · [진행 현황](status.md)
 
 ```bash
-cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-11-01 기준 1994건 통과 · 1건 skip)
+cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-11-02 기준 2064건 통과 · 1건 skip)
 ```
 
 백엔드가 없어 로컬 Supabase 없이 돈다. Health Connect 는 `HealthGateway` 를 mock 해서 본다
@@ -279,9 +279,12 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | 기상 기록 보관 | `data/alarm/archive/drift_ring_archive_test` · `domain/alarm/usecase/ring_archiver_test` · `domain/alarm/ring_log_test` · 알람 기록 `cubit` / `page` 테스트(보관소 읽기 · 지워진 알람 라벨) |
 | 일기 기간 검색 | `data/diary/drift_diary_repository_range_search_test` |
 | 키 · 동의 설정 | `data/chat/secure_chat_settings_test` · `presentation/settings/cubit/chat_settings_cubit_test` · `widget/chat_settings_section_test` |
-| API 클라이언트 | `data/chat/anthropic_chat_model_test`(스트리밍 · `message_stop` 없는 종료 · 오류) |
+| API 클라이언트 | `data/chat/anthropic_chat_model_test`(스트리밍 · `message_stop` 없는 종료 · 오류 · 중립 ↔ Messages 변환 · usage · 취소 시 abort) |
+| SSE 줄 · 취소 | `data/chat/sse_lines_test`(SSE 줄 · 대기 시간 · `abortableSend`) |
+| 계측 | `data/chat/dev_chat_trace_test`(요약 줄 · 허용 키) |
 | 기록 도구 5개 | `domain/chat/tool/life_tools_test` |
-| 세션 · cubit | `domain/chat/usecase/chat_session_test` · `presentation/chat/cubit/chat_cubit_test` |
+| 세션 · cubit | `domain/chat/usecase/chat_session_test`(사용량 기록 · 멈춤 (a)~(f)) · `presentation/chat/cubit/chat_cubit_test`(멈춤 · 질문 되돌림) |
+| 입력 · 말풍선 | `presentation/chat/widget/chat_input_test`([■ 멈춤] 전환) · `chat_bubble_view_test`('멈춤' 표시) |
 | 화면 · 셸 | `presentation/chat/page/chat_tab_test`(⋮ 는 잠긴 동안 앱 설정만, 풀리면 물어보기 설정 · 앱 설정 · 위에 얹힌 물어보기 설정에서 키를 넣고 돌아오면 `didPopNext` 로 키를 다시 읽음 · 키 확인 중 로딩 · 키 없으면 설정 버튼) · `presentation/shell/page/main_shell_page_test`(탭 구성 · 잠금 · 물어보기 [설정 열기]) |
 
 ## 테스트가 없는 것
@@ -416,3 +419,5 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | Q5 | "요즘 몇 시에 일어났어?" | `wake_records` 로 답하고, 앱을 닫았다 열어도 기록이 보관소에 남아 있다 | 대기 |
 | Q6 | 일기 잠금이 켜진 채 탭 열기 · 백그라운드 후 복귀 | 잠금 입력이 나오고, 풀면 전에 하던 대화가 그대로 보인다 | 대기 |
 | Q7 | 키 없음 · 비행기 모드 | 설정 안내 · 네트워크 오류 안내 | 대기 |
+| Q8 | 답하는 중 [■ 멈춤] 누르기 — 도구 호출 · thinking · 글 흐르는 중 · 네 단계 모두 | 받은 글은 '멈춤' 표시로 남고 글이 없으면 질문이 입력칸으로 돌아온다. 다음 질문이 이어진다(C4: 400 없음). 콘솔 usage 로 청구가 멈췄는지(C3) | 대기 |
+| Q9 | 디버그 · 프로필 빌드에서 질문 하나 보내고 `flutter logs` | `chat.trace` 요약 한 줄이 찍힌다. 릴리스 빌드에는 없다 | 대기 |

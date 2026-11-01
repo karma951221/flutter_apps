@@ -398,3 +398,47 @@ Health Connect 에 넣었다(저장소 밖). 시나리오 결과는 [테스트](
 - **일기 앱바는 스크롤을 내리면 숨고 올리면 나온다.**
 - **알려진 한계(기기 확인 대기)**: 앱바가 숨은 동안 상태바 아이콘 가독성, 알람 일시정지 저장 실패 스낵바가 앱바 밖 루트 메신저로 뜨는 위치,
   걷기 설정에서 목표를 낮출 때 축하 햅틱이 설정 화면 뒤에서 울릴 수 있음, 검색 · 뷰어에서 돌아온 뒤 앱바가 다시 펼쳐지지 않을 수 있음.
+
+## 2026-11 — 물어보기 중립 계약 · 계측 · 멈춤
+
+[계획](../../../docs/superpowers/plans/2026-11-01-walk-chat-core.md) · [체감 속도 기획](../../../docs/superpowers/specs/2026-11-01-walk-chat-streaming-ux.md) · 구현 `17cda1cd`~`6fa2455b`
+
+모델 계약을 벤더 중립으로 바꾸고(동작은 그대로), 질문 하나의 시간 흐름을 디버그 빌드에서 찍고, 답하는 중 [■ 멈춤]을 더했다.
+
+### 결정
+
+| # | 결정 | 이유 |
+|---|---|---|
+| P1 | 진행 이벤트 4종(`thinking` · `progress` · `toolCallStarted` · `toolCallReady`)을 **정의만** 하고 어댑터는 내지 않는다 | 계약이 진행 표시 단계에서 다시 흔들리지 않게 하면서, 아무도 쓰지 않는 방출 코드 · 테스트를 미리 만들지 않는다 |
+| P2 | 멈춤 결과는 `ChatEvent.stopped` 가 아니라 `ChatSession.stop()` 의 반환값 `ChatStopResult`(idle · kept · dropped) | cubit 이 구독을 먼저 끊으므로 이벤트가 닿을 곳이 없다. `idle` 은 "이미 끝난 답을 지우는" 경쟁을 막는다 |
+| P3 | 멈춘 턴 문맥 표시는 상수 `ChatSession.stoppedNote = '(사용자가 여기서 멈춤)'` 하나 | 체감 속도 기획은 "(사용자가 여기서 멈춤)", 기록 기획은 "(사용자가 답을 중간에 멈춤)"로 어긋났다. 앞의 것으로 맞추고, 기록 기획의 `resume` 이 같은 상수를 쓰게 한다 |
+| P4 | 취소는 어댑터 `StreamController.onCancel` 에서 abort, 세션은 라운드 구독을 직접 쥐고 `reset()`/`stop()` 에서 끊는다 | 스펙의 "`async*` 의 `try/finally`" 는 `send` 를 기다리는 동안 · 다음 이벤트 전에는 실행되지 않아 "0.5초 안에 연결 닫힘"을 못 지킨다 |
+| P5 | `ModelRequest` 는 Freezed 가 아닌 손 클래스, toString 에 키 없음 | Freezed 가 만드는 toString 이 apiKey 를 찍는다 |
+| P6 | 모델 id 는 ① 동안 `ChatSession.interimModel = 'claude-opus-5-5'` 로 세션이 넘긴다 | 키 기획 ① "모델 id 그대로" + ③ "어댑터는 `ModelRequest.model` 을 쓴다"를 둘 다 지키는 가장 작은 자리. ③ 이 카탈로그로 바꾸며 지운다 |
+| P7 | `ChatVendor` 는 `lib/domain/chat/chat_vendor.dart` 에 따로 | 키 기획 §7.1 은 `chat_settings.dart` 에 두지만 ① 에서 이미 `ChatModel.vendor` · 사용량이 쓴다 |
+| P8 | `ChatModelErrorKind.quotaExceeded` · `modelUnavailable` 는 계약에만 더하고 어댑터 매핑 · `ChatFailure` · 문구는 ② | ① 은 "화면 변화 없음"이 조건이다. 새 실패 문구 없이 매핑만 바꾸면 사용자에게는 똑같이 "알 수 없는 오류"다 |
+| P9 | 답하는 중에도 입력칸 글자는 쓸 수 있게 둔다(전송 자리만 [■ 멈춤]) · 되돌린 질문은 입력칸이 비었을 때만 채운다 | 체감 속도 §6.2 는 "지금처럼 꺼 둔다"고 썼지만 지금 코드는 전송만 끈다. 동작을 바꾸지 않고, 쓰던 글을 덮지 않는다 |
+| P10 | 사용량 기록은 기다리지 않고(fire-and-forget) 오류를 삼킨다 | 기록이 느리거나 실패해도 답 흐름 · 라운드 사이 지연이 늘지 않게 |
+| P11 | `ChatUsageRecord` 는 기록 기획의 요청(`questionKey` · `temporary` · `wikiIndexNotes` · `wikiIndexChars` · `readWikiCalls`, `purpose` 는 `chat` · `wikiDistill`)을 ① 에서 다 넣는다 | 계약을 한 번만 바꾼다. 지금은 `temporary=false`, 위키 숫자 0 |
+| P12 | 계측 `ChatTrace` 에 `enabled` 를 두고 data 는 허용 키만 남긴다 · 사용자 멈춤은 `userStop`, 연결 닫힘은 `abort` 로 이름을 나눈다 | 릴리스에서 delta 마다 맵을 만들지 않게. 스펙의 `stop` 표시는 `message_stop` 과 겹친다 |
+
+### 구현 중 정한 것(컨트롤러 판정)
+
+- **cubit 은 `stop()` 먼저, 그다음 구독 `cancel()` 을 기다리지 않는다.** 세션 `stop()` 이 받은 글을 먼저 붙잡아야 하고, cancel 을 기다리면 멈춘 채 부분 답을 잃을 수 있다. `ChatSession.stop()` 의 호출 순서 계약은 문서와 테스트로 묶었다(`b5ea42b7`).
+- **응답 헤더 대기 시간 초과도 요청을 끊는다**(`6d47bcb8`). 헤더를 기다리다 시간 초과되면 요청이 서버에서 계속 돌며 요금이 걸리는 기존 누수라, 작게 막았다. 상태 줄(60초) 시간 초과가 abort 를 완료한다.
+- 어댑터 `onCancel` 은 정상 · 오류 종료 뒤에도 불리므로 `settled` 플래그로 그때는 abort · trace 를 찍지 않는다.
+
+### 구현 전 확인
+
+| # | 확인 | 결과 |
+|---|---|---|
+| C1 | Anthropic 사용량 위치 | 계획 시점 확인: `message_start.message.usage` 의 입력 · 캐시 필드 + `message_delta.usage.output_tokens`. 필드가 없거나 타입이 다르면 `usage: null`(답은 실패시키지 않고 기록은 건너뜀). 어댑터 테스트로 고정 |
+| C2 | Messages API 의 요청 단위 "서버 저장" 옵션 | 요청 본문에 `store` · `metadata` 류 필드를 보내지 않는다. 어댑터 주석 + 테스트로 명시. 생기면 그때 추가 |
+| C3 | `AbortableRequest` abort 가 소켓을 실제로 닫고 청구가 멈추는지 | **대기**(기기) — 단위 테스트는 "abort 트리거 완료 · 이후 이벤트 없음"까지. 실제 닫힘은 `chat.trace` 의 `abort` + 콘솔 usage 로 |
+| C4 | thinking 블록 없는 글만의 assistant 턴을 넣어도 400 이 안 나는지 | **대기**(기기) — 단위 테스트는 중립 형식까지. 400 이면 대안은 멈춘 턴을 user 쪽 메모로 넣기 |
+| C5 | `MockClient` 가 `AbortableRequest` 를 넘기는지 | 쓰지 않는다 — 테스트는 `BaseClient` 를 상속한 손 가짜로 요청 객체를 직접 잡는다. `package:http` 는 `^1.5.0` 으로 올렸다(잠금은 이미 1.6.0) |
+
+### 막힌 것 · 남은 것
+
+- 기기 측정 셋(기준선 · C3 · C4)은 실제 키 + 기기가 필요해 대기([진행 현황](status.md#중립-계약--계측--멈춤-2026-11-02)).
+- 리뷰에서 미룬 작은 것: `AnthropicTurnState.model` 은 요청한 id(실제 응답 모델 아님 — ③ 전에 기록) · `message_start` 에 output 이 없으면 delta 가 있어도 usage null · 어댑터가 `fastMode` 를 무시(③ 에서 주석 · 테스트) · 보류 중인 trace `end()` 는 새 질문이 시작되면 버려짐(디버그 전용) · 릴레이가 pause/resume 을 넘기지 않음.

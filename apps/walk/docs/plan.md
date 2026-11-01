@@ -118,6 +118,7 @@
 
 설계 판단은 [물어보기 설계](../../../docs/superpowers/specs/2026-10-27-walk-life-chat-design.md), 구현 기록은 [기록](history.md#2026-10-27--물어보기-채팅).
 
+- 모델 계약은 벤더 중립(`ChatMessage` · `ModelEvent` · `VendorTurnState`)이고 Anthropic 모양은 `AnthropicChatModel` 안에만 있다.
 - 모델은 Claude(`claude-opus-5-5`, effort low, 스트리밍, 서버 쪽 fallback). 대화는 메모리에만 있고 저장하지 않는다.
 - 답하려고 **도구 5개**를 쓴다: `search_diary`(기간 · 글 검색) · `view_entry_photos`(기록 사진 보기) ·
   `list_diary_index`(스토리 · 태그 · 장소 목록) · `daily_steps`(날짜별 걸음) · `wake_records`(알람 울림 · 끔 기록).
@@ -166,6 +167,11 @@
 
 잘못된 날짜 · 권한 없음 · 사진 한도 같은 실패는 `is_error` 결과(`{"error":"invalid_range"}` 등)로 돌려줘
 Claude 가 지어내지 않고 그렇다고 말하게 한다.
+
+#### 멈춤 · 사용량
+
+- **멈춤** — 답하는 중 [■ 멈춤]. 구독 취소 = HTTP 닫기. 멈춘 턴은 `받은 글 + "\n(사용자가 여기서 멈춤)"` 글만으로 다음 문맥에 들어가고(도구 호출 · thinking 은 버림), 받은 글이 없으면 질문까지 되돌려 입력칸에 채운다.
+- **사용량** — 요청(라운드)마다 토큰 사용량을 `ChatUsageLog` 로 넘긴다. 저장은 아직 안 한다(`NoopChatUsageLog`). `display: updates` · 캐시는 진행 표시 단계에서 적는다.
 
 #### 규약(시스템 프롬프트 · 도구 설명)
 

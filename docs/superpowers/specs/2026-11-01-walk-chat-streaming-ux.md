@@ -442,3 +442,5 @@ ChatCubit.send ─▶ ChatSession.ask ─▶ (라운드 1..8) AnthropicChatModel
 ## 측정 기록
 
 (구현 1단계에서 채운다 — 모델별 · 질문별 `firstVisible` · `firstGlyph` · `done` 중앙값, 라운드 수, 라운드별 TTFT · thinking · 도구 · 틈, 마지막 라운드 delta 수 · 간격, 토큰, `omitted`/`updates` 청구 비교, 멈춤 후 연결 닫힘 시간.)
+
+기기 측정 대기 — 계측은 들어감(`chat.trace`, 2026-11-02). 측정값은 실제 키 + 기기에서 채운다.
