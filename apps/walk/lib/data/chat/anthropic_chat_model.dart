@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -12,6 +11,7 @@ import '../../domain/chat/chat_model_rules.dart';
 import '../../domain/chat/chat_trace.dart';
 import '../../domain/chat/chat_vendor.dart';
 import 'sse_lines.dart';
+import 'vendor_error.dart';
 
 /// 한 Anthropic 턴의 원본 content 블록(thinking · 서명 포함). 다음 요청에 그대로
 /// 돌려보내야 서명이 깨지지 않는다. toString 은 블록 개수만.
@@ -84,10 +84,6 @@ class AnthropicChatModel implements ChatModel {
     'https://api.anthropic.com/v1/models',
   );
   static const _apiVersion = '2026-10-21';
-
-  /// 오류 본문에서 `error.type` 을 읽을 때의 상한. 넘으면 상태 코드로만 판정한다.
-  static const _errorBodyLimit = 16 * 1024;
-  static const _errorBodyTimeout = Duration(seconds: 2);
 
   @override
   ChatVendor get vendor => ChatVendor.anthropic;
@@ -279,7 +275,10 @@ class AnthropicChatModel implements ChatModel {
       if (status < 200 || status >= 300) {
         // 본문에서 error.type 하나만 읽고 나머지(message 등)는 버린다.
         throw ChatModelException(
-          _kindFor(status, await _errorType(response, abortTrigger)),
+          _kindFor(
+            status,
+            (await readVendorError(response, abortTrigger)).type,
+          ),
         );
       }
       yield* _parse(_untilAbort(response.stream, abortTrigger), request.model);
@@ -405,48 +404,6 @@ class AnthropicChatModel implements ChatModel {
     'description': tool.description,
     'input_schema': tool.parameters,
   };
-
-  /// 오류 응답에서 error.type 만 꺼낸다. [_errorBodyLimit] · [_errorBodyTimeout] 을
-  /// 넘거나 JSON 이 아니면 null. 나머지는 버린다. [abort] 가 끝나면 읽기를 멈춘다.
-  static Future<String?> _errorType(
-    http.StreamedResponse response, [
-    Future<void>? abort,
-  ]) async {
-    final buffer = BytesBuilder(copy: false);
-    final done = Completer<bool>();
-    void finish(bool complete) {
-      if (!done.isCompleted) done.complete(complete);
-    }
-
-    late final StreamSubscription<List<int>> sub;
-    sub = response.stream.listen(
-      (chunk) {
-        buffer.add(chunk);
-        if (buffer.length > _errorBodyLimit) {
-          // 더 받지 않는다 — 넘친 본문은 바로 끊는다.
-          unawaited(sub.cancel().catchError((_) {}));
-          finish(false);
-        }
-      },
-      onError: (Object _) => finish(false),
-      onDone: () => finish(true),
-      cancelOnError: true,
-    );
-    unawaited(abort?.whenComplete(() => finish(false)));
-    final complete = await done.future.timeout(
-      _errorBodyTimeout,
-      onTimeout: () => false,
-    );
-    unawaited(sub.cancel().catchError((_) {}));
-    if (!complete) return null;
-    try {
-      final json = jsonDecode(utf8.decode(buffer.takeBytes()));
-      if (json case {'error': {'type': final String type}}) return type;
-    } on FormatException {
-      // JSON 이 아니다 — 상태 코드로 판정한다.
-    }
-    return null;
-  }
 
   /// [type](error.type)이 먼저, 모르면 상태 코드. SSE error 이벤트는 [status] 없이.
   static ChatModelErrorKind _kindFor(int? status, String? type) =>

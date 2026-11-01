@@ -1,0 +1,11 @@
+{
+  "object": "list",
+  "data": [
+    {"id": "gpt-5.5", "object": "model", "created": 1790000000, "owned_by": "system"},
+    {"id": "gpt-5.5-2026-09-01", "object": "model", "created": 1788000000, "owned_by": "system"},
+    {"id": "o5-mini", "object": "model", "created": 1785000000, "owned_by": "system"},
+    {"id": "text-embedding-4", "object": "model", "created": 1780000000, "owned_by": "system"},
+    {"object": "model", "created": 1780000000, "owned_by": "system"},
+    {"id": "gpt-no-created", "object": "model", "owned_by": "system"}
+  ]
+}

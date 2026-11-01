@@ -6,6 +6,12 @@ import 'dart:io';
 const Map<String, String> handMadeFixtures = {
   'anthropic/models_page1.json': 'A1',
   'anthropic/models_page2.json': 'A1',
+  'openai/models.json': 'O4',
+  'openai/error_insufficient_quota.json': 'O6',
+  'openai/error_rate_limit.json': 'O6',
+  'openai/error_invalid_key.json': 'O6',
+  'openai/error_model_not_found.json': 'O6',
+  'openai/error_image.json': 'O6',
 };
 
 /// `test/fixtures/chat/<path>` 의 글.

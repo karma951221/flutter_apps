@@ -1,0 +1,1 @@
+{"error": {"message": "Invalid content type. input_image is not supported by this model.", "type": "invalid_request_error", "param": "input", "code": "unsupported_image_input"}}

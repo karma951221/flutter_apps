@@ -41,6 +41,7 @@ import '../../data/chat/compressed_chat_image_source.dart' as _i957;
 import '../../data/chat/database/chat_database.dart' as _i933;
 import '../../data/chat/database/drift_chat_history_repository.dart' as _i991;
 import '../../data/chat/database/drift_chat_usage_log.dart' as _i1028;
+import '../../data/chat/openai_chat_model.dart' as _i442;
 import '../../data/chat/prefs_chat_history_settings.dart' as _i433;
 import '../../data/chat/prefs_chat_model_catalog.dart' as _i878;
 import '../../data/chat/secure_chat_settings.dart' as _i1030;
@@ -230,6 +231,15 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i645.AnthropicChatModel>(
       () => _i645.AnthropicChatModel(gh<_i519.Client>(), gh<_i825.ChatTrace>()),
     );
+    gh.lazySingleton<_i442.OpenAiChatModel>(
+      () => _i442.OpenAiChatModel(gh<_i519.Client>(), gh<_i825.ChatTrace>()),
+    );
+    gh.lazySingleton<_i1004.ChatModelRegistry>(
+      () => _i1037.VendorChatModelRegistry(
+        gh<_i645.AnthropicChatModel>(),
+        gh<_i442.OpenAiChatModel>(),
+      ),
+    );
     gh.lazySingleton<_i43.LockRepository>(
       () => _i691.PrefsLockRepository(gh<_i460.SharedPreferences>()),
     );
@@ -277,9 +287,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i31.ChatHistorySettings>(
       () => _i433.PrefsChatHistorySettings(gh<_i460.SharedPreferences>()),
-    );
-    gh.lazySingleton<_i1004.ChatModelRegistry>(
-      () => _i1037.VendorChatModelRegistry(gh<_i645.AnthropicChatModel>()),
     );
     gh.lazySingleton<_i130.RoutePreferenceRepository>(
       () => _i644.PrefsRoutePreferenceRepository(gh<_i460.SharedPreferences>()),
