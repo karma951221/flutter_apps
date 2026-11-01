@@ -124,7 +124,7 @@ void main() {
       await pumpEventQueue();
 
       expect(cubit.state.access, ChatAccess.ready);
-      expect(verifier.recheckCalls, 1);
+      expect(verifier.fetchStoredCalls, 1);
     });
 
     test('recheck: false 면 상태만 읽고 부르지 않는다', () async {
@@ -132,7 +132,7 @@ void main() {
       await pumpEventQueue();
 
       expect(cubit.state.access, ChatAccess.ready);
-      expect(verifier.recheckCalls, 0);
+      expect(verifier.fetchStoredCalls, 0);
     });
 
     test('noKey 면 부르지 않는다', () async {
@@ -141,7 +141,7 @@ void main() {
       await pumpEventQueue();
 
       expect(cubit.state.access, ChatAccess.noKey);
-      expect(verifier.recheckCalls, 0);
+      expect(verifier.fetchStoredCalls, 0);
     });
 
     test('동의 전(needsConsent)이면 부르지 않는다', () async {
@@ -150,16 +150,16 @@ void main() {
       await pumpEventQueue();
 
       expect(cubit.state.access, ChatAccess.needsConsent);
-      expect(verifier.recheckCalls, 0);
+      expect(verifier.fetchStoredCalls, 0);
     });
 
     test('재확인이 던져도 refresh 는 끝난다', () async {
-      verifier.recheckError = StateError('boom');
+      verifier.fetchStoredError = StateError('boom');
       await cubit.refresh();
       await pumpEventQueue();
 
       expect(cubit.state.access, ChatAccess.ready);
-      expect(verifier.recheckCalls, 1);
+      expect(verifier.fetchStoredCalls, 1);
     });
   });
 

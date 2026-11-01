@@ -17,13 +17,32 @@ abstract interface class ChatSettings {
   /// 키를 쓴 뒤 벤더 · 상태 쓰기가 실패하면 상태를 지워(다음 읽기는 unverified) 예외를 던진다.
   Future<void> connect(ChatVendor vendor, String key, ChatKeyStatus status);
 
-  /// 키 · 벤더 · 상태를 지운다. 동의는 그대로.
+  /// 키 · 벤더 · 상태 · 고른 모델을 지운다. 동의 · 빠른 출력은 그대로.
   Future<void> disconnect();
 
   /// 지금 저장된 키가 [forKey](trim 해 비교)일 때만 기록한다 — 확인하는 동안 키를 바꾸거나
   /// 끊었으면 지난 키의 판정을 남기지 않는다. 같은 값이면 쓰지 않는다.
   /// 키를 로그에 남기거나 예외 메시지에 담지 않는다.
   Future<void> setKeyStatus(ChatKeyStatus status, {required String forKey});
+
+  /// 연결된 벤더(prefs, 동기). 미연결이면 null. ChatSession.target 이 쓴다 — 키 존재는 보장하지 않는다(hasApiKey 로 확인).
+  ChatVendor? get connectedVendor;
+
+  /// 고른 모델 id(`chat.model`). 없으면 null(= 추천).
+  /// [connect] 가 다른 벤더로 바뀌거나 [disconnect] 하면 지워진다.
+  String? get selectedModel;
+
+  Future<void> selectModel(String? id);
+
+  /// 빠른 출력(`chat.fastMode`, 기본 false). 모델이 지원하지 않으면 값은 남고 요청에만 안 실린다.
+  bool get fastMode;
+
+  Future<void> setFastMode(bool on);
+
+  /// 빠른 출력 요금 안내를 확인했는가(`chat.fastMode.ack`). 처음 켤 때 한 번만 묻는다.
+  bool get fastModeAcknowledged;
+
+  Future<void> acknowledgeFastMode();
 
   /// 전송 안내에 동의했는가.
   bool get consented;

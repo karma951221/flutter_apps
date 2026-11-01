@@ -344,4 +344,75 @@ void main() {
     expect(settings.consented, isTrue);
     expect(prefs.getBool('chat.consented'), isTrue);
   });
+
+  group('모델 · 빠른 출력', () {
+    test('connectedVendor 는 prefs 벤더를 동기로 준다', () async {
+      expect(settings.connectedVendor, isNull);
+      await settings.connect(
+        ChatVendor.openai,
+        'sk-proj-x',
+        ChatKeyStatus.valid,
+      );
+      expect(settings.connectedVendor, ChatVendor.openai);
+      await settings.disconnect();
+      expect(settings.connectedVendor, isNull);
+    });
+
+    test('selectModel · fastMode · acknowledgeFastMode 왕복', () async {
+      expect(settings.selectedModel, isNull);
+      expect(settings.fastMode, isFalse);
+      expect(settings.fastModeAcknowledged, isFalse);
+
+      await settings.selectModel('claude-sonnet-9-9');
+      await settings.setFastMode(true);
+      await settings.acknowledgeFastMode();
+
+      final reader = SecureChatSettings(secure, prefs);
+      expect(reader.selectedModel, 'claude-sonnet-9-9');
+      expect(reader.fastMode, isTrue);
+      expect(reader.fastModeAcknowledged, isTrue);
+      expect(prefs.getString('chat.model'), 'claude-sonnet-9-9');
+      expect(prefs.getBool('chat.fastMode'), isTrue);
+      expect(prefs.getBool('chat.fastMode.ack'), isTrue);
+
+      await settings.selectModel(null);
+      await settings.setFastMode(false);
+      expect(settings.selectedModel, isNull);
+      expect(prefs.containsKey('chat.model'), isFalse);
+      expect(settings.fastMode, isFalse);
+    });
+
+    test('다른 벤더로 connect 하면 chat.model 을 지운다, 같은 벤더면 남긴다', () async {
+      await settings.connect(ChatVendor.anthropic, key, ChatKeyStatus.valid);
+      await settings.selectModel('claude-opus-9-9');
+
+      await settings.connect(
+        ChatVendor.anthropic,
+        'sk-ant-other',
+        ChatKeyStatus.valid,
+      );
+      expect(settings.selectedModel, 'claude-opus-9-9');
+
+      await settings.connect(
+        ChatVendor.openai,
+        'sk-proj-x',
+        ChatKeyStatus.valid,
+      );
+      expect(settings.selectedModel, isNull);
+      expect(prefs.containsKey('chat.model'), isFalse);
+    });
+
+    test('disconnect 는 chat.model 을 지우고 fastMode 는 남긴다', () async {
+      await settings.connect(ChatVendor.anthropic, key, ChatKeyStatus.valid);
+      await settings.selectModel('claude-opus-9-9');
+      await settings.setFastMode(true);
+      await settings.acknowledgeFastMode();
+
+      await settings.disconnect();
+
+      expect(settings.selectedModel, isNull);
+      expect(settings.fastMode, isTrue);
+      expect(settings.fastModeAcknowledged, isTrue);
+    });
+  });
 }

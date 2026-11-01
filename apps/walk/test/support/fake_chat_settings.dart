@@ -62,6 +62,7 @@ class FakeChatSettings implements ChatSettings {
     final trimmed = key.trim();
     if (trimmed.isEmpty) throw ArgumentError.value(key, 'key', 'empty');
     _maybeFail();
+    if (this.key == null || this.vendor != vendor) selectedModel = null;
     this.key = trimmed;
     this.vendor = vendor;
     this.status = status;
@@ -73,7 +74,31 @@ class FakeChatSettings implements ChatSettings {
     key = null;
     vendor = ChatVendor.anthropic;
     status = ChatKeyStatus.valid;
+    selectedModel = null;
   }
+
+  /// 키가 있을 때만 [vendor]. 실제 저장소처럼 키 존재를 보장하지는 않지만, 테스트에선
+  /// 미연결(키 없음)이면 null 로 본다.
+  @override
+  ChatVendor? get connectedVendor => key == null ? null : vendor;
+
+  @override
+  String? selectedModel;
+
+  @override
+  Future<void> selectModel(String? id) async => selectedModel = id;
+
+  @override
+  bool fastMode = false;
+
+  @override
+  Future<void> setFastMode(bool on) async => fastMode = on;
+
+  @override
+  bool fastModeAcknowledged = false;
+
+  @override
+  Future<void> acknowledgeFastMode() async => fastModeAcknowledged = true;
 
   /// [setKeyStatus] 로 받은 값들 중 지금 키에 대한 것(부른 순서대로). 지난 키에 대한 기록은
   /// 실제 저장소처럼 버려 여기 남지 않는다.

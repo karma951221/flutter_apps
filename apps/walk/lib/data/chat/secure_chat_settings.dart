@@ -7,7 +7,8 @@ import '../../domain/chat/chat_connection.dart';
 import '../../domain/chat/chat_settings.dart';
 import '../../domain/chat/chat_vendor.dart';
 
-/// 원문 키는 보안 저장소에만 둔다. SharedPreferences 에는 벤더 · 확인 상태 · 동의만 남는다
+/// 원문 키는 보안 저장소에만 둔다. SharedPreferences 에는 벤더 · 확인 상태 · 동의 · 고른 모델 ·
+/// 빠른 출력만 남는다
 /// (키 미리보기도 저장하지 않고 읽을 때마다 가린다).
 ///
 /// 보안 저장소 항목은 백업에서 빠진다(android res/xml 의 백업 규칙). 복원돼 prefs 만 남으면
@@ -26,6 +27,9 @@ class SecureChatSettings implements ChatSettings {
   static const vendorKey = 'chat.vendor';
   static const keyStatusKey = 'chat.keyStatus';
   static const consentedKey = 'chat.consented';
+  static const modelKey = 'chat.model';
+  static const fastModeKey = 'chat.fastMode';
+  static const fastModeAckKey = 'chat.fastMode.ack';
 
   /// 옛 키 이전. 성공하면 메모하고, 실패하면 비워 다음 접근 때 다시 한다.
   Future<void>? _migration;
@@ -63,9 +67,11 @@ class SecureChatSettings implements ChatSettings {
     }
   }
 
+  /// 연결을 잊는다 — 벤더 · 상태 · 고른 모델. 빠른 출력 · 동의는 남긴다.
   Future<void> _forgetPrefs() async {
     await _prefs.remove(vendorKey);
     await _prefs.remove(keyStatusKey);
+    await _prefs.remove(modelKey);
   }
 
   ChatVendor? get _storedVendor =>
@@ -132,10 +138,13 @@ class SecureChatSettings implements ChatSettings {
     final trimmed = key.trim();
     if (trimmed.isEmpty) throw ArgumentError.value(key, 'key', 'empty');
     await _migrated();
+    final previousVendor = _storedVendor;
     await _secure.write(key: apiKeyName, value: trimmed);
     try {
       await _prefs.setString(vendorKey, vendor.name);
       await _prefs.setString(keyStatusKey, status.name);
+      // 고른 모델은 벤더의 것 — 다른 벤더로 바뀌면 추천으로 돌아간다.
+      if (previousVendor != vendor) await _prefs.remove(modelKey);
     } on Object {
       // 키는 새것인데 상태는 지난 키의 것일 수 있다. 상태를 지워 다음 읽기가 unverified 로 보게 한다.
       try {
@@ -167,6 +176,36 @@ class SecureChatSettings implements ChatSettings {
     if (_storedStatus == status) return;
     await _prefs.setString(keyStatusKey, status.name);
   }
+
+  @override
+  ChatVendor? get connectedVendor => _storedVendor;
+
+  @override
+  String? get selectedModel => switch (_prefs.get(modelKey)) {
+    final String id when id.isNotEmpty => id,
+    _ => null,
+  };
+
+  @override
+  Future<void> selectModel(String? id) async {
+    if (id == null || id.isEmpty) {
+      await _prefs.remove(modelKey);
+    } else {
+      await _prefs.setString(modelKey, id);
+    }
+  }
+
+  @override
+  bool get fastMode => _prefs.get(fastModeKey) == true;
+
+  @override
+  Future<void> setFastMode(bool on) => _prefs.setBool(fastModeKey, on);
+
+  @override
+  bool get fastModeAcknowledged => _prefs.get(fastModeAckKey) == true;
+
+  @override
+  Future<void> acknowledgeFastMode() => _prefs.setBool(fastModeAckKey, true);
 
   @override
   bool get consented => _prefs.get(consentedKey) == true;

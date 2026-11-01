@@ -129,55 +129,95 @@ void main() {
     });
   });
 
-  group('recheckIfUnverified', () {
-    test('unverified + ok 면 valid 를 기록한다', () async {
-      final model = _ListModel(() => const ModelListResult.ok([]));
+  group('fetchStored', () {
+    const listed = [ModelInfo(id: 'claude-sonnet-9-9', displayName: 'S')];
+
+    test('미연결이면 null · 모델을 부르지 않음', () async {
+      settings.key = null;
+      final model = _ListModel(() => const ModelListResult.ok(listed));
+
       expect(
-        await ChatKeyVerifier(_registry(model), settings).recheckIfUnverified(),
-        ChatKeyStatus.valid,
+        await ChatKeyVerifier(_registry(model), settings).fetchStored(),
+        isNull,
       );
+      expect(model.keys, isEmpty);
+      expect(settings.apiKeyCalls, 0);
+    });
+
+    test('ok → valid 기록하고 (vendor, ok)', () async {
+      final model = _ListModel(() => const ModelListResult.ok(listed));
+
+      expect(await ChatKeyVerifier(_registry(model), settings).fetchStored(), (
+        ChatVendor.anthropic,
+        const ModelListResult.ok(listed),
+      ));
       expect(model.keys, ['sk-ant-stored']);
       expect(settings.status, ChatKeyStatus.valid);
     });
 
-    test('unverified + invalidKey 면 invalid 를 기록한다', () async {
-      final model = _ListModel(() => const ModelListResult.invalidKey());
-      expect(
-        await ChatKeyVerifier(_registry(model), settings).recheckIfUnverified(),
-        ChatKeyStatus.invalid,
+    test('연결된 벤더의 어댑터를 부른다', () async {
+      settings.vendor = ChatVendor.openai;
+      final claude = _ListModel(() => const ModelListResult.ok([]));
+      final gpt = _ListModel(
+        () => const ModelListResult.ok(listed),
+        vendor: ChatVendor.openai,
       );
+
+      final got = await ChatKeyVerifier(
+        FakeChatModelRegistry({
+          ChatVendor.anthropic: claude,
+          ChatVendor.openai: gpt,
+        }),
+        settings,
+      ).fetchStored();
+
+      expect(got?.$1, ChatVendor.openai);
+      expect(gpt.keys, ['sk-ant-stored']);
+      expect(claude.keys, isEmpty);
+    });
+
+    test('invalidKey → invalid', () async {
+      settings.status = ChatKeyStatus.valid;
+      final model = _ListModel(() => const ModelListResult.invalidKey());
+
+      expect(await ChatKeyVerifier(_registry(model), settings).fetchStored(), (
+        ChatVendor.anthropic,
+        const ModelListResult.invalidKey(),
+      ));
       expect(settings.status, ChatKeyStatus.invalid);
     });
 
-    test('unverified + unreachable 이면 그대로 두고 null', () async {
+    test('unreachable → 상태 그대로', () async {
       final model = _ListModel(() => const ModelListResult.unreachable());
-      expect(
-        await ChatKeyVerifier(_registry(model), settings).recheckIfUnverified(),
-        isNull,
-      );
+
+      expect(await ChatKeyVerifier(_registry(model), settings).fetchStored(), (
+        ChatVendor.anthropic,
+        const ModelListResult.unreachable(),
+      ));
       expect(settings.status, ChatKeyStatus.unverified);
       expect(settings.statusWrites, isEmpty);
     });
 
-    test('valid · invalid · 미연결이면 모델을 부르지 않고 null', () async {
-      final model = _ListModel(() => const ModelListResult.ok([]));
-      final verifier = ChatKeyVerifier(_registry(model), settings);
+    test('30초를 넘기면 unreachable(10초 상한이 아니다)', () {
+      fakeAsync((async) {
+        final model = _ListModel(() => Completer<ModelListResult>().future);
+        (ChatVendor, ModelListResult)? got;
+        ChatKeyVerifier(
+          _registry(model),
+          settings,
+        ).fetchStored().then((r) => got = r);
 
-      for (final status in [ChatKeyStatus.valid, ChatKeyStatus.invalid]) {
-        settings.status = status;
-        expect(await verifier.recheckIfUnverified(), isNull);
-      }
-      settings
-        ..key = null
-        ..status = ChatKeyStatus.unverified;
-      expect(await verifier.recheckIfUnverified(), isNull);
-
-      expect(model.keys, isEmpty);
-      expect(settings.apiKeyCalls, 0);
-      expect(settings.statusWrites, isEmpty);
+        async.elapse(const Duration(seconds: 29));
+        expect(got, isNull);
+        async.elapse(const Duration(seconds: 2));
+        expect(got, (
+          ChatVendor.anthropic,
+          const ModelListResult.unreachable(),
+        ));
+      });
     });
 
-    test('확인하는 동안 키를 바꾸거나 끊으면 기록하지 않고 null', () async {
+    test('받는 동안 키를 바꾸거나 끊으면 기록하지 않고 null', () async {
       for (final change in ['바꿈', '끊음']) {
         settings
           ..key = 'sk-ant-stored'
@@ -188,7 +228,7 @@ void main() {
         final pending = ChatKeyVerifier(
           _registry(model),
           settings,
-        ).recheckIfUnverified();
+        ).fetchStored();
         await pumpEventQueue();
         expect(model.keys, ['sk-ant-stored']);
 
@@ -208,23 +248,38 @@ void main() {
       }
     });
 
-    test('동시에 두 번 불러도 모델은 한 번', () async {
+    test('설정을 읽지 못하면 null · 상태 기록이 실패해도 결과는 준다', () async {
+      final model = _ListModel(() => const ModelListResult.ok(listed));
+      final verifier = ChatKeyVerifier(_registry(model), settings);
+
+      settings.failSetKeyStatusWith = StateError('prefs');
+      expect(await verifier.fetchStored(), (
+        ChatVendor.anthropic,
+        const ModelListResult.ok(listed),
+      ));
+
+      settings.failWith = StateError('keystore');
+      expect(await verifier.fetchStored(), isNull);
+    });
+
+    test('동시에 두 번이면 listModels 한 번', () async {
       final gate = Completer<ModelListResult>();
       final model = _ListModel(() => gate.future);
       final verifier = ChatKeyVerifier(_registry(model), settings);
 
-      final a = verifier.recheckIfUnverified();
-      final b = verifier.recheckIfUnverified();
+      final a = verifier.fetchStored();
+      final b = verifier.fetchStored();
       await pumpEventQueue();
-      gate.complete(const ModelListResult.ok([]));
+      gate.complete(const ModelListResult.ok(listed));
 
-      expect(await a, ChatKeyStatus.valid);
-      expect(await b, ChatKeyStatus.valid);
+      expect(await a, (ChatVendor.anthropic, const ModelListResult.ok(listed)));
+      expect(await b, await a);
       expect(model.keys, hasLength(1));
 
-      // 끝난 뒤에는 다시 부를 수 있다(이제 valid 라 모델은 부르지 않는다).
-      expect(await verifier.recheckIfUnverified(), isNull);
-      expect(model.keys, hasLength(1));
+      // 끝난 뒤에는 다시 부른다.
+      model.next = () => const ModelListResult.ok([]);
+      await verifier.fetchStored();
+      expect(model.keys, hasLength(2));
     });
   });
 }

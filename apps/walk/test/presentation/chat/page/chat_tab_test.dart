@@ -223,7 +223,7 @@ void main() {
     expect(find.text('설정 열기'), findsNothing);
     expect(find.text('어제 뭐 했어?'), findsOneWidget);
     // 돌아와서 ready 가 되면 키를 다시 확인한다.
-    expect(verifier.recheckCalls, 1);
+    expect(verifier.fetchStoredCalls, 1);
   });
 
   testWidgets('탭이 보이지 않을 때 돌아오면 다시 읽지 않고, 보이게 되면 읽는다', (tester) async {
@@ -239,24 +239,24 @@ void main() {
     await pump(tester, active: true);
 
     expect(settings.hasApiKeyCalls, before + 1);
-    expect(verifier.recheckCalls, 1);
+    expect(verifier.fetchStoredCalls, 1);
   });
 
   testWidgets('앱 시작에 탭이 보이지 않으면 상태만 읽고 키 확인은 보이게 될 때 한다', (tester) async {
     await pump(tester, active: false);
 
     expect(settings.hasApiKeyCalls, 1);
-    expect(verifier.recheckCalls, 0);
+    expect(verifier.fetchStoredCalls, 0);
 
     await pump(tester, active: true);
 
-    expect(verifier.recheckCalls, 1);
+    expect(verifier.fetchStoredCalls, 1);
   });
 
   testWidgets('앱 시작에 탭이 보이면 곧바로 키를 확인한다', (tester) async {
     await pump(tester);
 
-    expect(verifier.recheckCalls, 1);
+    expect(verifier.fetchStoredCalls, 1);
   });
 
   testWidgets('잘못된 키로 실패하면 말풍선의 [설정 열기]가 onOpenSettings 를 부른다', (tester) async {

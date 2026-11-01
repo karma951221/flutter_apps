@@ -42,6 +42,7 @@ import '../../data/chat/database/chat_database.dart' as _i933;
 import '../../data/chat/database/drift_chat_history_repository.dart' as _i991;
 import '../../data/chat/database/drift_chat_usage_log.dart' as _i1028;
 import '../../data/chat/prefs_chat_history_settings.dart' as _i433;
+import '../../data/chat/prefs_chat_model_catalog.dart' as _i878;
 import '../../data/chat/secure_chat_settings.dart' as _i1030;
 import '../../data/commute/geocoding_address_search.dart' as _i667;
 import '../../data/commute/odsay_route_finder.dart' as _i132;
@@ -75,6 +76,7 @@ import '../../domain/alarm/usecase/ring_archiver.dart' as _i626;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
 import '../../domain/chat/chat_history_settings.dart' as _i31;
 import '../../domain/chat/chat_model.dart' as _i1004;
+import '../../domain/chat/chat_model_catalog.dart' as _i880;
 import '../../domain/chat/chat_settings.dart' as _i111;
 import '../../domain/chat/chat_trace.dart' as _i825;
 import '../../domain/chat/chat_usage_log.dart' as _i520;
@@ -85,6 +87,7 @@ import '../../domain/chat/tool/chat_image_source.dart' as _i858;
 import '../../domain/chat/tool/life_tools.dart' as _i70;
 import '../../domain/chat/usecase/chat_history_pruner.dart' as _i539;
 import '../../domain/chat/usecase/chat_key_verifier.dart' as _i5;
+import '../../domain/chat/usecase/chat_model_choice.dart' as _i317;
 import '../../domain/chat/usecase/chat_session.dart' as _i502;
 import '../../domain/chat/usecase/open_conversation.dart' as _i306;
 import '../../domain/commute/repository/address_search.dart' as _i63;
@@ -239,6 +242,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i645.LocationAccess>(
       () => registerModule.locationAccess(gh<_i645.LocationGateway>()),
     );
+    gh.lazySingleton<_i880.ChatModelCatalog>(
+      () => _i878.PrefsChatModelCatalog(gh<_i460.SharedPreferences>()),
+    );
     gh.lazySingleton<_i693.PlaceSource>(
       () => registerModule.placeSource(
         gh<_i645.LocationAccess>(),
@@ -356,6 +362,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i870.MediaStore>(),
         gh<_i693.PlaceSource>(),
         gh<_i300.DiaryPreferences>(),
+        gh<_i494.Clock>(),
+      ),
+    );
+    gh.lazySingleton<_i317.ChatModelChoice>(
+      () => _i317.ChatModelChoice(
+        gh<_i111.ChatSettings>(),
+        gh<_i880.ChatModelCatalog>(),
+        gh<_i5.ChatKeyVerifier>(),
         gh<_i494.Clock>(),
       ),
     );

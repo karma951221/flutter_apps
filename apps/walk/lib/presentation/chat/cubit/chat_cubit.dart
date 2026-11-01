@@ -99,7 +99,8 @@ class ChatCubit extends Cubit<ChatState> {
   /// 키 · 동의 상태를 다시 읽는다. 탭이 보이게 될 때 · 위에 얹힌 화면이 걷힐 때 부른다.
   /// 보안 저장소를 읽지 못하면 키가 없는 것으로 본다.
   ///
-  /// [recheck] 가 true 이고 쓸 수 있으면(ready) 확인 전 키를 뒤에서 다시 확인한다 — 결과는
+  /// [recheck] 가 true 이고 쓸 수 있으면(ready) 저장된 키로 목록을 뒤에서 받아 키 상태를
+  /// 기록한다(`ChatKeyVerifier.fetchStored`) — 결과는
   /// 설정 화면이 보이므로 기다리지도, 화면에 쓰지도 않는다. 탭이 보이지 않을 때(앱 시작에
   /// 다른 탭이 열려 있는 등) 읽기만 하려면 false.
   Future<void> refresh({bool recheck = true}) async {
@@ -119,7 +120,7 @@ class ChatCubit extends Cubit<ChatState> {
     if (recheck && access == ChatAccess.ready) {
       unawaited(
         Future.sync(
-          _verifier.recheckIfUnverified,
+          _verifier.fetchStored,
         ).then<void>((_) {}, onError: (Object _) {}),
       );
     }
