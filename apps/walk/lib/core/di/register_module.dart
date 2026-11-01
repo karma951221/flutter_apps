@@ -15,6 +15,7 @@ import 'package:uuid/uuid.dart';
 
 import '../config/commute_api_keys.dart';
 import '../../data/alarm/archive/ring_archive_database.dart';
+import '../../data/chat/database/chat_database.dart';
 import '../../data/chat/dev_chat_trace.dart';
 import '../../data/diary/database/diary_database.dart';
 import '../../data/diary/location/current_place_source.dart';
@@ -26,6 +27,8 @@ import '../../domain/diary/location/place_source.dart';
 FutureOr<void> disposeDiaryDatabase(DiaryDatabase db) => db.close();
 
 FutureOr<void> disposeRingArchiveDatabase(RingArchiveDatabase db) => db.close();
+
+FutureOr<void> disposeChatDatabase(ChatDatabase db) => db.close();
 
 /// 직접 소유하지 않는 인스턴스 등록.
 @module
@@ -49,6 +52,10 @@ abstract class RegisterModule {
   @LazySingleton(dispose: disposeRingArchiveDatabase)
   RingArchiveDatabase ringArchiveDatabase() =>
       RingArchiveDatabase(driftDatabase(name: 'ring_archive'));
+
+  /// 물어보기 대화 · 사용량(2단계에 위키). 일기 DB 와 따로 — 백업 · 휴지통 · 스키마 버전과 엮이지 않게.
+  @LazySingleton(dispose: disposeChatDatabase)
+  ChatDatabase chatDatabase() => ChatDatabase(driftDatabase(name: 'chat'));
 
   /// 일기 미디어가 사는 폴더. DI 준비 중에 경로를 받아 둔다.
   @preResolve

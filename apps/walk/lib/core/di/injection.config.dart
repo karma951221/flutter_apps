@@ -36,6 +36,8 @@ import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
 import '../../data/chat/anthropic_chat_model.dart' as _i645;
 import '../../data/chat/compressed_chat_image_source.dart' as _i957;
+import '../../data/chat/database/chat_database.dart' as _i933;
+import '../../data/chat/database/drift_chat_history_repository.dart' as _i991;
 import '../../data/chat/noop_chat_usage_log.dart' as _i719;
 import '../../data/chat/secure_chat_settings.dart' as _i1030;
 import '../../data/commute/geocoding_address_search.dart' as _i667;
@@ -72,6 +74,7 @@ import '../../domain/chat/chat_model.dart' as _i1004;
 import '../../domain/chat/chat_settings.dart' as _i111;
 import '../../domain/chat/chat_trace.dart' as _i825;
 import '../../domain/chat/chat_usage_log.dart' as _i520;
+import '../../domain/chat/repository/chat_history_repository.dart' as _i752;
 import '../../domain/chat/tool/chat_image_source.dart' as _i858;
 import '../../domain/chat/tool/life_tools.dart' as _i70;
 import '../../domain/chat/usecase/chat_key_verifier.dart' as _i5;
@@ -133,6 +136,10 @@ extension GetItInjectableX on _i174.GetIt {
       () => registerModule.ringArchiveDatabase(),
       dispose: _i291.disposeRingArchiveDatabase,
     );
+    gh.lazySingleton<_i933.ChatDatabase>(
+      () => registerModule.chatDatabase(),
+      dispose: _i291.disposeChatDatabase,
+    );
     gh.lazySingleton<_i933.AlarmPermissions>(
       () => alarmPermissionModule.alarmPermissions,
     );
@@ -146,6 +153,13 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i194.ScreenLockSettings>(
       () => _i952.ChannelScreenLockSettings(),
+    );
+    gh.lazySingleton<_i752.ChatHistoryRepository>(
+      () => _i991.DriftChatHistoryRepository(
+        gh<_i933.ChatDatabase>(),
+        gh<_i494.IdGenerator>(),
+        gh<_i494.Clock>(),
+      ),
     );
     await gh.factoryAsync<_i497.Directory>(
       () => registerModule.diaryRoot,
