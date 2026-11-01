@@ -36,7 +36,14 @@ class SecureChatSettings implements ChatSettings {
   );
 
   Future<void> _migrateLegacy() async {
-    final legacy = (await _secure.read(key: legacyApiKeyName))?.trim();
+    String? legacy;
+    try {
+      legacy = (await _secure.read(key: legacyApiKeyName))?.trim();
+    } on Object {
+      // 옛 항목을 읽을 수 없다 — 다시 시도해도 같으니 지우고 끝낸다.
+      await _deleteQuietly(legacyApiKeyName);
+      return;
+    }
     if (legacy == null) return;
     final current = (await _secure.read(key: apiKeyName))?.trim();
     if (legacy.isNotEmpty && (current == null || current.isEmpty)) {
@@ -45,6 +52,15 @@ class SecureChatSettings implements ChatSettings {
       await _prefs.setString(keyStatusKey, ChatKeyStatus.unverified.name);
     }
     await _secure.delete(key: legacyApiKeyName);
+  }
+
+  /// 지우기를 시도한다. 실패는 삼킨다.
+  Future<void> _deleteQuietly(String name) async {
+    try {
+      await _secure.delete(key: name);
+    } on Object {
+      // 지우지 못해도 미연결로 본다.
+    }
   }
 
   Future<void> _forgetPrefs() async {
@@ -66,11 +82,7 @@ class SecureChatSettings implements ChatSettings {
       raw = await _secure.read(key: apiKeyName);
     } on Object {
       // 키스토어가 깨졌다(복원 · 기기 이전 등). 항목을 지우고 미연결로 둔다.
-      try {
-        await _secure.delete(key: apiKeyName);
-      } on Object {
-        // 지우지 못해도 미연결로 본다.
-      }
+      await _deleteQuietly(apiKeyName);
       await _forgetPrefs();
       return null;
     }
@@ -129,9 +141,13 @@ class SecureChatSettings implements ChatSettings {
   Future<void> disconnect() async {
     await _migrated();
     await _secure.delete(key: apiKeyName);
+    // 이전이 실패해 옛 항목이 남아 있으면 다음 접근 때 지운 키가 되살아난다.
+    await _deleteQuietly(legacyApiKeyName);
     await _forgetPrefs();
   }
 
+  /// "연결돼 있음"은 prefs 의 벤더로만 판단한다(보안 저장소를 다시 읽지 않는다).
+  /// 복원으로 prefs 만 남은 상태라면 여기서 써도 다음 읽기가 정리한다.
   @override
   Future<void> setKeyStatus(ChatKeyStatus status) async {
     if (_storedVendor == null || _storedStatus == status) return;

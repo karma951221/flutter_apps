@@ -163,6 +163,43 @@ void main() {
     expect(stored.containsKey('anthropic_api_key'), isFalse);
   });
 
+  test('옛 항목을 읽지 못하면 지우고 다시 시도하지 않는다', () async {
+    stored['anthropic_api_key'] = key;
+    when(
+      () => secure.read(key: 'anthropic_api_key'),
+    ).thenThrow(Exception('bad padding'));
+
+    expect(await settings.connection(), isNull);
+    expect(await settings.hasApiKey(), isFalse);
+
+    verify(() => secure.read(key: 'anthropic_api_key')).called(1);
+    verify(() => secure.delete(key: 'anthropic_api_key')).called(1);
+    expect(stored.containsKey('anthropic_api_key'), isFalse);
+  });
+
+  test('disconnect 는 이전 못 한 옛 키도 지워 되살아나지 않는다', () async {
+    await settings.connect(ChatVendor.anthropic, key, ChatKeyStatus.valid);
+    // 이전이 끝난 뒤 옛 항목이 남은 경우(예: 이전 실패 뒤 다시 연결).
+    stored['anthropic_api_key'] = 'sk-ant-api03-OldKeyValue';
+
+    await settings.disconnect();
+
+    expect(stored.containsKey('anthropic_api_key'), isFalse);
+    expect(await SecureChatSettings(secure, prefs).connection(), isNull);
+  });
+
+  test('disconnect 는 옛 키 지우기가 실패해도 끝난다', () async {
+    await settings.connect(ChatVendor.anthropic, key, ChatKeyStatus.valid);
+    when(
+      () => secure.delete(key: 'anthropic_api_key'),
+    ).thenThrow(Exception('keystore'));
+
+    await settings.disconnect();
+
+    expect(stored.containsKey('chat.apiKey'), isFalse);
+    expect(prefs.containsKey('chat.vendor'), isFalse);
+  });
+
   test('읽기가 던지면 항목을 지우고 미연결', () async {
     await settings.connect(ChatVendor.anthropic, key, ChatKeyStatus.valid);
     when(

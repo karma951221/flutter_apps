@@ -31,8 +31,12 @@ void main() {
       expect(masked, isNot(contains('QRST')));
     });
 
-    test('접두사가 안 맞으면 앞 8글자 + 점', () {
-      expect(maskApiKey(ChatVendor.anthropic, 'abcdefghijkl'), 'abcdefgh••••');
+    test('접두사가 안 맞으면 앞 4글자 + 점', () {
+      expect(maskApiKey(ChatVendor.anthropic, 'abcdefghijkl'), 'abcd••••');
+      expect(
+        maskApiKey(ChatVendor.anthropic, 'sk-ant-admin01-QRST'),
+        'sk-a••••',
+      );
     });
 
     test('8글자 미만이면 점만', () {

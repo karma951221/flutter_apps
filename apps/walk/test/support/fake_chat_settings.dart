@@ -67,6 +67,8 @@ class FakeChatSettings implements ChatSettings {
   Future<void> disconnect() async {
     _maybeFail();
     key = null;
+    vendor = ChatVendor.anthropic;
+    status = ChatKeyStatus.valid;
   }
 
   @override

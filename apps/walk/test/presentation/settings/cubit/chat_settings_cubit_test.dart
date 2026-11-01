@@ -22,7 +22,8 @@ void main() {
     final cubit = ChatSettingsCubit(FakeChatSettings(key));
     await cubit.load();
 
-    expect(cubit.state.toString(), isNot(contains('234SECRET')));
+    // 본문 5번째(`2`) 이후 글자는 없다.
+    expect(cubit.state.toString(), isNot(contains('234')));
     expect(cubit.state.toString(), isNot(contains(key)));
     await cubit.close();
   });
