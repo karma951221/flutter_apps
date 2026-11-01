@@ -108,7 +108,8 @@ void main() {
     diary = _MockDiary();
     history = _MockHistory();
     open = OpenConversation();
-    settings = FakeChatSettings('sk-ant-test')..consented = true;
+    settings = FakeChatSettings('sk-ant-test')
+      ..consentedVendor = ChatVendor.anthropic;
     // 목록이 비어 있으면 첫 refresh 가 받아 온다 — 받을 목록 하나를 둔다.
     verifier = FakeChatKeyVerifier()..stored = _storedOk;
     catalog = FakeChatModelCatalog();
@@ -170,7 +171,7 @@ void main() {
     });
 
     test('동의 전(needsConsent)이면 부르지 않는다', () async {
-      settings.consented = false;
+      settings.consentedVendor = null;
       await cubit.refresh();
       await pumpEventQueue();
 
@@ -232,7 +233,7 @@ void main() {
 
     settings
       ..key = null
-      ..consented = false;
+      ..consentedVendor = null;
     await cubit.refresh();
     expect(cubit.state.access, ChatAccess.noKey);
 
@@ -241,7 +242,7 @@ void main() {
     expect(cubit.state.access, ChatAccess.needsConsent);
 
     await cubit.consent();
-    expect(settings.consented, isTrue);
+    expect(settings.consentedVendor, ChatVendor.anthropic);
     expect(cubit.state.access, ChatAccess.ready);
   });
 
@@ -379,7 +380,7 @@ void main() {
 
   test('ready 가 아니면 send 는 아무것도 하지 않는다', () async {
     when(() => session.ask(any())).thenAnswer((_) => const Stream.empty());
-    settings.consented = false;
+    settings.consentedVendor = null;
     await cubit.refresh();
     expect(cubit.state.access, ChatAccess.needsConsent);
 
@@ -1638,7 +1639,7 @@ void main() {
     });
 
     test('동의 전이면 noModels 보다 needsConsent 가 먼저', () async {
-      settings.consented = false;
+      settings.consentedVendor = null;
       verifier.stored = (
         ChatVendor.anthropic,
         const ModelListResult.unreachable(),
@@ -1702,6 +1703,80 @@ void main() {
       cubit.modelChanged();
 
       expect(cubit.state.model?.label, 'Claude Opus 9.9');
+    });
+  });
+
+  group('벤더별 전송 동의', () {
+    const gpt = ModelInfo(id: 'gpt-9', displayName: 'GPT-9');
+
+    /// 질문 하나를 끝까지 주고받아 말풍선 두 개를 만든다.
+    Future<void> talk() async {
+      when(() => session.ask(any())).thenAnswer(
+        (_) => Stream.fromIterable(const [
+          ChatEvent.text('답'),
+          ChatEvent.finished(citedEntryIds: []),
+        ]),
+      );
+      await cubit.refresh();
+      await cubit.send('질문');
+      expect(cubit.state.bubbles, hasLength(2));
+    }
+
+    /// 설정에서 GPT 로 바꾼 것처럼 — 키 · 벤더를 바꾸고 고른 모델을 지운다.
+    Future<void> switchToGpt() async {
+      await settings.connect(
+        ChatVendor.openai,
+        'sk-proj-new',
+        ChatKeyStatus.valid,
+      );
+      await catalog.replace(ChatVendor.openai, [gpt], DateTime.now());
+      when(
+        () => session.target,
+      ).thenReturn((vendor: ChatVendor.openai, model: gpt.id));
+    }
+
+    test('동의 벤더가 연결 벤더와 다르면 needsConsent, 말풍선은 남는다', () async {
+      await talk();
+      await switchToGpt();
+
+      await cubit.refresh();
+
+      expect(cubit.state.access, ChatAccess.needsConsent);
+      expect(cubit.state.vendor, ChatVendor.openai);
+      expect(cubit.state.bubbles, hasLength(2));
+    });
+
+    test('accept 는 연결 벤더로 기록하고 ready, 대화 그대로', () async {
+      await talk();
+      await switchToGpt();
+      await cubit.refresh();
+
+      await cubit.consent();
+
+      expect(settings.consentedVendor, ChatVendor.openai);
+      expect(cubit.state.access, ChatAccess.ready);
+      expect(cubit.state.bubbles, hasLength(2));
+      expect(cubit.state.bubbles.first.text, '질문');
+    });
+
+    test('같은 벤더 키 교체 · 모델 변경 뒤엔 다시 묻지 않는다', () async {
+      await catalog.replace(ChatVendor.anthropic, [
+        _sonnet,
+        _opus,
+      ], DateTime.now());
+      await cubit.refresh();
+      expect(cubit.state.access, ChatAccess.ready);
+
+      await settings.connect(
+        ChatVendor.anthropic,
+        'sk-ant-api03-other',
+        ChatKeyStatus.valid,
+      );
+      await choice.select(_opus.id);
+      await cubit.refresh();
+
+      expect(cubit.state.access, ChatAccess.ready);
+      expect(settings.consentedVendor, ChatVendor.anthropic);
     });
   });
 }

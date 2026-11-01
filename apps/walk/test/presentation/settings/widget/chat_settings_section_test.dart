@@ -22,6 +22,7 @@ import '../../../support/fake_chat_settings.dart';
 const _row = Key('settings-chat-key');
 const _change = Key('settings-chat-change-key');
 const _delete = Key('settings-chat-delete');
+const _switch = Key('settings-chat-switch-vendor');
 const _glow = Key('row-highlight-glow');
 const _savedKey = 'sk-ant-api03-xyz1234';
 const _typedKey = 'sk-ant-api03-abcd5678';
@@ -115,9 +116,11 @@ void main() {
   ThemeData theme(WidgetTester tester) =>
       Theme.of(tester.element(find.byKey(_row)));
 
-  /// 연결 행을 눌러 대화상자를 열고 키를 넣어 저장 · 요금 경고 [확인]까지.
+  /// 연결 행 → 벤더 시트에서 Claude → 키를 넣어 저장 · 요금 경고 [확인]까지.
   Future<void> connectThroughDialog(WidgetTester tester) async {
     await tester.tap(find.byKey(_row));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('vendor-row-anthropic')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('chat-key-input')), _typedKey);
     await tester.pump();
@@ -137,13 +140,18 @@ void main() {
       find.descendant(of: find.byKey(_row), matching: find.text('AI 연결')),
       findsOneWidget,
     );
-    expect(find.text('Claude API 키를 넣으면 물어보기를 쓸 수 있어요'), findsOneWidget);
+    expect(
+      find.text('Claude · GPT 중 하나의 키를 넣으면 물어보기를 쓸 수 있어요'),
+      findsOneWidget,
+    );
     expect(find.text('연결하기'), findsOneWidget);
     expect(colorOf(tester, '연결하기'), theme(tester).colorScheme.primary);
     expect(find.byIcon(Icons.power_outlined), findsOneWidget);
     expect(find.byKey(_change), findsNothing);
     expect(find.byKey(_delete), findsNothing);
-    expect(find.textContaining('Anthropic 으로 전송돼요'), findsOneWidget);
+    expect(find.byKey(_switch), findsNothing);
+    // 보낼 곳이 정해지지 않았다 — 전송 안내는 연결된 뒤에.
+    expect(find.textContaining('전송돼요'), findsNothing);
   });
 
   testWidgets("섹션 머리글을 따로 두지 않는다 — 'AI 연결'은 연결 행 제목 하나", (tester) async {
@@ -165,7 +173,7 @@ void main() {
     expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
     expect(find.byKey(_change), findsOneWidget);
     expect(find.byKey(_delete), findsOneWidget);
-    expect(find.textContaining('Anthropic 으로 전송돼요'), findsOneWidget);
+    expect(find.textContaining('연결한 AI(Claude)로 전송돼요'), findsOneWidget);
   });
 
   testWidgets("unverified 면 '확인 전'", (tester) async {
@@ -428,5 +436,93 @@ void main() {
 
       expect(subtitleOf(tester), 'Claude Opus 9.9');
     });
+  });
+
+  group('벤더', () {
+    const gptKey = 'sk-proj-abcdEFGH5678';
+
+    testWidgets("미연결 [연결하기] → 벤더 시트 → GPT → 'GPT API 키 넣기'", (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.byKey(_row));
+      await tester.pumpAndSettle();
+      expect(find.text('AI 고르기'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('vendor-row-openai')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('GPT API 키 넣기'), findsOneWidget);
+    });
+
+    testWidgets("연결됨이면 '다른 AI 로 바꾸기' 행", (tester) async {
+      settings.key = _savedKey;
+      await pump(tester);
+
+      expect(
+        find.descendant(
+          of: find.byKey(_switch),
+          matching: find.text('다른 AI 로 바꾸기'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(_switch));
+      await tester.pumpAndSettle();
+      // 지금 벤더는 체크 · 누를 수 없다.
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('vendor-row-anthropic')),
+          matching: find.byIcon(Icons.check),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+      "바꾸면 'GPT 로 바꿨어요' 스낵바 · 연결 행 모노그램 G · 'GPT' · sk-proj-…•••• · glow",
+      (tester) async {
+        settings.key = _savedKey;
+        await pump(tester);
+        expect(glow(tester), 0);
+
+        await tester.tap(find.byKey(_switch));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('vendor-row-openai')));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byKey(const Key('chat-key-input')), gptKey);
+        await tester.pump();
+        await tester.tap(find.byKey(const Key('chat-key-save')));
+        await tester.pumpAndSettle();
+        expect(find.text('GPT 로 바꿀까요?'), findsOneWidget);
+        await tester.tap(find.text('바꾸기'));
+        await tester.pump();
+        await tester.pump();
+
+        expect(find.text('GPT 로 바꿨어요'), findsOneWidget);
+        expect(
+          tester.widget<SnackBar>(find.byType(SnackBar)).backgroundColor,
+          theme(tester).colorScheme.primaryContainer,
+        );
+        expect(await peakGlow(tester), greaterThan(0));
+        await tester.pumpAndSettle();
+        expect(
+          find.descendant(of: find.byKey(_row), matching: find.text('G')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: find.byKey(_row), matching: find.text('GPT')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: find.byKey(_row),
+            matching: find.textContaining(RegExp(r'^sk-proj-.*••••$')),
+          ),
+          findsOneWidget,
+        );
+        expect(settings.vendor, ChatVendor.openai);
+        expect(find.textContaining('연결한 AI(GPT)로 전송돼요'), findsOneWidget);
+      },
+    );
   });
 }

@@ -3115,8 +3115,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatSettingsSaveFailed => '키를 저장하지 못했어요';
 
   @override
-  String get walkChatSettingsNotice =>
-      '질문에 필요한 일기 · 사진 · 걸음 · 기상 기록이 Anthropic 으로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.';
+  String walkChatSettingsNotice(String vendor) {
+    return '질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI($vendor)로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.';
+  }
 
   @override
   String get walkShellTabChat => '물어보기';
@@ -3128,8 +3129,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatOpenSettings => '설정 열기';
 
   @override
-  String get walkChatConsentNotice =>
-      '질문에 필요한 일기 · 사진 · 걸음 · 기상 기록이 Anthropic 으로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.';
+  String walkChatConsentNotice(String vendor) {
+    return '질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI($vendor)로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.';
+  }
 
   @override
   String get walkChatConsentAccept => '동의하고 시작';
@@ -3259,7 +3261,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatConnectTitle => 'AI 연결';
 
   @override
-  String get walkChatConnectDescription => 'Claude API 키를 넣으면 물어보기를 쓸 수 있어요';
+  String get walkChatConnectDescription =>
+      'Claude · GPT 중 하나의 키를 넣으면 물어보기를 쓸 수 있어요';
 
   @override
   String get walkChatConnectAction => '연결하기';
@@ -3312,6 +3315,39 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatSavedUnverified => '키를 저장했어요. 연결되면 확인할게요';
+
+  @override
+  String get walkChatVendorSheetTitle => 'AI 고르기';
+
+  @override
+  String get walkChatSettingsSwitchVendor => '다른 AI 로 바꾸기';
+
+  @override
+  String walkChatSwitchVendorTitle(String vendor) {
+    return '$vendor 로 바꿀까요?';
+  }
+
+  @override
+  String walkChatSwitchVendorBody(
+    String company,
+    String oldVendor,
+    String vendor,
+  ) {
+    return '이 API 를 쓰면 $company 에 요금이 청구될 수 있어요. 지금 연결된 $oldVendor 키는 이 폰에서 지워지고, 다음 질문 때 전송 동의를 다시 받아요. 지금 대화는 $vendor 로 이어져요.';
+  }
+
+  @override
+  String get walkChatSwitchVendorAction => '바꾸기';
+
+  @override
+  String walkChatSwitchedVendor(String vendor) {
+    return '$vendor 로 바꿨어요';
+  }
+
+  @override
+  String walkChatConsentContinues(String vendor) {
+    return '지금 대화의 이전 내용도 $vendor 로 보내져요.';
+  }
 
   @override
   String get walkChatDisconnected => '연결을 끊었어요';

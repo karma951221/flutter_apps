@@ -3365,8 +3365,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatSettingsSaveFailed => 'Couldn\'t save the key';
 
   @override
-  String get walkChatSettingsNotice =>
-      'Diary, photo, step and wake-up records needed for your question are sent to Anthropic. The key stays in this phone\'s secure storage only.';
+  String walkChatSettingsNotice(String vendor) {
+    return 'Your questions and the diary entries, photos, steps and wake-up records needed to answer are sent to the AI you connected ($vendor). Your key stays only in this phone\'s secure storage.';
+  }
 
   @override
   String get walkShellTabChat => 'Ask';
@@ -3378,8 +3379,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatOpenSettings => 'Open Settings';
 
   @override
-  String get walkChatConsentNotice =>
-      'Diary, photo, step and wake-up records needed for your question are sent to Anthropic. The key stays in this phone\'s secure storage only.';
+  String walkChatConsentNotice(String vendor) {
+    return 'Your questions and the diary entries, photos, steps and wake-up records needed to answer are sent to the AI you connected ($vendor). Your key stays only in this phone\'s secure storage.';
+  }
 
   @override
   String get walkChatConsentAccept => 'Agree and start';
@@ -3516,7 +3518,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatConnectTitle => 'Connect AI';
 
   @override
-  String get walkChatConnectDescription => 'Add a Claude API key to use Ask';
+  String get walkChatConnectDescription => 'Add a Claude or GPT key to use Ask';
 
   @override
   String get walkChatConnectAction => 'Connect';
@@ -3570,6 +3572,39 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkChatSavedUnverified =>
       'Key saved. We\'ll verify it once you\'re online';
+
+  @override
+  String get walkChatVendorSheetTitle => 'Choose an AI';
+
+  @override
+  String get walkChatSettingsSwitchVendor => 'Switch to another AI';
+
+  @override
+  String walkChatSwitchVendorTitle(String vendor) {
+    return 'Switch to $vendor?';
+  }
+
+  @override
+  String walkChatSwitchVendorBody(
+    String company,
+    String oldVendor,
+    String vendor,
+  ) {
+    return 'Using this API may incur charges from $company. Your current $oldVendor key will be removed from this phone, and we\'ll ask for your consent again before the next question. This conversation continues with $vendor.';
+  }
+
+  @override
+  String get walkChatSwitchVendorAction => 'Switch';
+
+  @override
+  String walkChatSwitchedVendor(String vendor) {
+    return 'Switched to $vendor';
+  }
+
+  @override
+  String walkChatConsentContinues(String vendor) {
+    return 'Earlier messages in this conversation will also be sent to $vendor.';
+  }
 
   @override
   String get walkChatDisconnected => 'Disconnected';

@@ -3114,8 +3114,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatSettingsSaveFailed => 'キーを保存できませんでした';
 
   @override
-  String get walkChatSettingsNotice =>
-      '質問に必要な日記・写真・歩数・起床の記録がAnthropicへ送信されます。キーはこの端末のセキュアストレージにのみ保存されます。';
+  String walkChatSettingsNotice(String vendor) {
+    return '質問と、回答に必要な日記・写真・歩数・起床記録が接続した AI（$vendor）に送信されます。キーはこの端末の安全な保管領域にだけ保存されます。';
+  }
 
   @override
   String get walkShellTabChat => '質問';
@@ -3127,8 +3128,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatOpenSettings => '設定を開く';
 
   @override
-  String get walkChatConsentNotice =>
-      '質問に必要な日記・写真・歩数・起床の記録がAnthropicへ送信されます。キーはこの端末のセキュアストレージにのみ保存されます。';
+  String walkChatConsentNotice(String vendor) {
+    return '質問と、回答に必要な日記・写真・歩数・起床記録が接続した AI（$vendor）に送信されます。キーはこの端末の安全な保管領域にだけ保存されます。';
+  }
 
   @override
   String get walkChatConsentAccept => '同意して始める';
@@ -3258,7 +3260,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatConnectTitle => 'AI を接続';
 
   @override
-  String get walkChatConnectDescription => 'Claude の API キーを入れると質問を使えます';
+  String get walkChatConnectDescription => 'Claude か GPT のキーを入れると質問を使えます';
 
   @override
   String get walkChatConnectAction => '接続する';
@@ -3311,6 +3313,39 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatSavedUnverified => 'キーを保存しました。接続できたら確認します';
+
+  @override
+  String get walkChatVendorSheetTitle => 'AI を選ぶ';
+
+  @override
+  String get walkChatSettingsSwitchVendor => '別の AI に切り替える';
+
+  @override
+  String walkChatSwitchVendorTitle(String vendor) {
+    return '$vendor に切り替えますか？';
+  }
+
+  @override
+  String walkChatSwitchVendorBody(
+    String company,
+    String oldVendor,
+    String vendor,
+  ) {
+    return 'この API を使うと $company から料金が請求されることがあります。今の $oldVendor のキーはこの端末から削除され、次の質問の前に送信への同意をもう一度確認します。今の会話は $vendor で続きます。';
+  }
+
+  @override
+  String get walkChatSwitchVendorAction => '切り替える';
+
+  @override
+  String walkChatSwitchedVendor(String vendor) {
+    return '$vendor に切り替えました';
+  }
+
+  @override
+  String walkChatConsentContinues(String vendor) {
+    return 'この会話のこれまでの内容も $vendor に送られます。';
+  }
 
   @override
   String get walkChatDisconnected => '接続を解除しました';

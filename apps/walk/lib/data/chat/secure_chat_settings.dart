@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,7 +28,10 @@ class SecureChatSettings implements ChatSettings {
   static const legacyApiKeyName = 'anthropic_api_key';
   static const vendorKey = 'chat.vendor';
   static const keyStatusKey = 'chat.keyStatus';
-  static const consentedKey = 'chat.consented';
+  static const consentedVendorKey = 'chat.consentedVendor';
+
+  /// 벤더별 동의 이전의 저장 키(bool). 첫 접근 때 [consentedVendorKey] 로 옮기고 지운다.
+  static const legacyConsentedKey = 'chat.consented';
   static const modelKey = 'chat.model';
   static const fastModeKey = 'chat.fastMode';
   static const fastModeAckKey = 'chat.fastMode.ack';
@@ -207,9 +212,35 @@ class SecureChatSettings implements ChatSettings {
   @override
   Future<void> acknowledgeFastMode() => _prefs.setBool(fastModeAckKey, true);
 
+  /// 옛 `chat.consented` 는 Claude 하나뿐이던 때의 동의 — true 면 anthropic 으로 옮긴다.
+  /// prefs 는 메모리 캐시를 곧바로 바꾸므로 쓰기를 기다리지 않아도 다음 읽기는 새 값을 본다.
   @override
-  bool get consented => _prefs.get(consentedKey) == true;
+  ChatVendor? get consentedVendor {
+    if (_prefs.containsKey(legacyConsentedKey)) {
+      final legacy = _prefs.get(legacyConsentedKey) == true;
+      if (legacy && !_prefs.containsKey(consentedVendorKey)) {
+        unawaited(
+          _prefs
+              .setString(consentedVendorKey, ChatVendor.anthropic.name)
+              .then<void>(
+                (_) => _prefs.remove(legacyConsentedKey),
+                onError: (Object _) {},
+              ),
+        );
+        return ChatVendor.anthropic;
+      }
+      unawaited(
+        _prefs
+            .remove(legacyConsentedKey)
+            .then<void>((_) {}, onError: (Object _) {}),
+      );
+    }
+    return ChatVendor.values.asNameMap()[_prefs.get(consentedVendorKey)];
+  }
 
   @override
-  Future<void> setConsented() => _prefs.setBool(consentedKey, true);
+  Future<void> setConsented(ChatVendor vendor) async {
+    await _prefs.setString(consentedVendorKey, vendor.name);
+    await _prefs.remove(legacyConsentedKey);
+  }
 }

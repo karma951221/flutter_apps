@@ -248,7 +248,7 @@ void main() {
   });
 
   test('disconnect 는 키 · 벤더 · 상태를 지우고 동의는 남긴다', () async {
-    await settings.setConsented();
+    await settings.setConsented(ChatVendor.anthropic);
     await settings.connect(ChatVendor.anthropic, key, ChatKeyStatus.valid);
 
     await settings.disconnect();
@@ -256,7 +256,7 @@ void main() {
     expect(stored.containsKey('chat.apiKey'), isFalse);
     expect(prefs.containsKey('chat.vendor'), isFalse);
     expect(prefs.containsKey('chat.keyStatus'), isFalse);
-    expect(settings.consented, isTrue);
+    expect(settings.consentedVendor, ChatVendor.anthropic);
     expect(await settings.connection(), isNull);
   });
 
@@ -337,12 +337,52 @@ void main() {
     );
   });
 
-  test('동의는 prefs 에 남는다', () async {
-    expect(settings.consented, isFalse);
-    await settings.setConsented();
+  group('전송 동의', () {
+    test('setConsented(openai) 왕복', () async {
+      expect(settings.consentedVendor, isNull);
+      await settings.setConsented(ChatVendor.openai);
 
-    expect(settings.consented, isTrue);
-    expect(prefs.getBool('chat.consented'), isTrue);
+      expect(settings.consentedVendor, ChatVendor.openai);
+      expect(prefs.getString('chat.consentedVendor'), 'openai');
+      expect(
+        SecureChatSettings(secure, prefs).consentedVendor,
+        ChatVendor.openai,
+      );
+    });
+
+    test('옛 chat.consented true 는 consentedVendor anthropic 으로 옮긴다', () async {
+      SharedPreferences.setMockInitialValues({'chat.consented': true});
+      final legacyPrefs = await SharedPreferences.getInstance();
+      final legacy = SecureChatSettings(secure, legacyPrefs);
+
+      expect(legacy.consentedVendor, ChatVendor.anthropic);
+      await pumpEventQueue();
+      expect(legacyPrefs.getString('chat.consentedVendor'), 'anthropic');
+      expect(legacyPrefs.containsKey('chat.consented'), isFalse);
+    });
+
+    test('옛 chat.consented 가 false 면 동의 없음으로 보고 지운다', () async {
+      SharedPreferences.setMockInitialValues({'chat.consented': false});
+      final legacyPrefs = await SharedPreferences.getInstance();
+      final legacy = SecureChatSettings(secure, legacyPrefs);
+
+      expect(legacy.consentedVendor, isNull);
+      await pumpEventQueue();
+      expect(legacyPrefs.containsKey('chat.consented'), isFalse);
+    });
+
+    test('disconnect 뒤에도 consentedVendor 는 남는다', () async {
+      await settings.connect(
+        ChatVendor.openai,
+        'sk-proj-abc',
+        ChatKeyStatus.valid,
+      );
+      await settings.setConsented(ChatVendor.openai);
+
+      await settings.disconnect();
+
+      expect(settings.consentedVendor, ChatVendor.openai);
+    });
   });
 
   group('모델 · 빠른 출력', () {

@@ -5810,11 +5810,11 @@ abstract class AppLocalizations {
   /// **'키를 저장하지 못했어요'**
   String get walkChatSettingsSaveFailed;
 
-  /// 물어보기 설정 맨 아래 데이터 전송 안내
+  /// 물어보기 설정 맨 아래 데이터 전송 안내 — 연결한 벤더 이름
   ///
   /// In ko, this message translates to:
-  /// **'질문에 필요한 일기 · 사진 · 걸음 · 기상 기록이 Anthropic 으로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.'**
-  String get walkChatSettingsNotice;
+  /// **'질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI({vendor})로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.'**
+  String walkChatSettingsNotice(String vendor);
 
   /// 하단 탭: 내 기록에 묻는 채팅
   ///
@@ -5834,11 +5834,11 @@ abstract class AppLocalizations {
   /// **'설정 열기'**
   String get walkChatOpenSettings;
 
-  /// 채팅 탭: 처음 쓰기 전 데이터 전송 안내
+  /// 채팅 탭: 전송 동의 안내 — 연결한 벤더 이름
   ///
   /// In ko, this message translates to:
-  /// **'질문에 필요한 일기 · 사진 · 걸음 · 기상 기록이 Anthropic 으로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.'**
-  String get walkChatConsentNotice;
+  /// **'질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI({vendor})로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.'**
+  String walkChatConsentNotice(String vendor);
 
   /// 채팅 탭: 전송 안내 동의 버튼
   ///
@@ -6092,10 +6092,10 @@ abstract class AppLocalizations {
   /// **'AI 연결'**
   String get walkChatConnectTitle;
 
-  /// 미연결일 때 연결 행 부제. ④(멀티 벤더)에서 "Claude · GPT 중 하나의 키를…"로 바뀐다
+  /// 미연결일 때 연결 행 부제
   ///
   /// In ko, this message translates to:
-  /// **'Claude API 키를 넣으면 물어보기를 쓸 수 있어요'**
+  /// **'Claude · GPT 중 하나의 키를 넣으면 물어보기를 쓸 수 있어요'**
   String get walkChatConnectDescription;
 
   /// 미연결일 때 연결 행 오른쪽 동작 문구(primary)
@@ -6181,6 +6181,52 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'키를 저장했어요. 연결되면 확인할게요'**
   String get walkChatSavedUnverified;
+
+  /// 벤더 고르기 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'AI 고르기'**
+  String get walkChatVendorSheetTitle;
+
+  /// 물어보기 설정: 연결됨일 때 벤더 바꾸기 행
+  ///
+  /// In ko, this message translates to:
+  /// **'다른 AI 로 바꾸기'**
+  String get walkChatSettingsSwitchVendor;
+
+  /// 벤더 바꾸기 확인 창 제목 — 새 벤더
+  ///
+  /// In ko, this message translates to:
+  /// **'{vendor} 로 바꿀까요?'**
+  String walkChatSwitchVendorTitle(String vendor);
+
+  /// 벤더 바꾸기 확인 창 본문 — 새 벤더 회사 · 지금 벤더 · 새 벤더
+  ///
+  /// In ko, this message translates to:
+  /// **'이 API 를 쓰면 {company} 에 요금이 청구될 수 있어요. 지금 연결된 {oldVendor} 키는 이 폰에서 지워지고, 다음 질문 때 전송 동의를 다시 받아요. 지금 대화는 {vendor} 로 이어져요.'**
+  String walkChatSwitchVendorBody(
+    String company,
+    String oldVendor,
+    String vendor,
+  );
+
+  /// 벤더 바꾸기 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'바꾸기'**
+  String get walkChatSwitchVendorAction;
+
+  /// 벤더 바꾸기 성공 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'{vendor} 로 바꿨어요'**
+  String walkChatSwitchedVendor(String vendor);
+
+  /// 채팅 탭 전송 동의: 벤더를 바꿔 대화를 이어 갈 때 더하는 한 줄
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 대화의 이전 내용도 {vendor} 로 보내져요.'**
+  String walkChatConsentContinues(String vendor);
 
   /// 연결 끊기 성공 스낵바
   ///

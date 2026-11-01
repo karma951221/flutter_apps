@@ -56,12 +56,18 @@ void main() {
       final cubit = cubitOf(FakeChatSettings());
 
       verifier.result = const ModelListResult.ok([]);
-      expect(await cubit.check('  sk-ant-api03-abcd5678 '), ChatKeyCheck.valid);
+      expect(
+        await cubit.check(ChatVendor.anthropic, '  sk-ant-api03-abcd5678 '),
+        ChatKeyCheck.valid,
+      );
       verifier.result = const ModelListResult.invalidKey();
-      expect(await cubit.check('sk-ant-api03-abcd5678'), ChatKeyCheck.invalid);
+      expect(
+        await cubit.check(ChatVendor.anthropic, 'sk-ant-api03-abcd5678'),
+        ChatKeyCheck.invalid,
+      );
       verifier.result = const ModelListResult.unreachable();
       expect(
-        await cubit.check('sk-ant-api03-abcd5678'),
+        await cubit.check(ChatVendor.anthropic, 'sk-ant-api03-abcd5678'),
         ChatKeyCheck.unreachable,
       );
 
@@ -77,7 +83,7 @@ void main() {
       final cubit = cubitOf(settings);
       await cubit.load();
 
-      await cubit.check('sk-ant-api03-abcd5678');
+      await cubit.check(ChatVendor.anthropic, 'sk-ant-api03-abcd5678');
 
       expect(settings.key, isNull);
       expect(cubit.state.connection, isNull);
@@ -94,7 +100,11 @@ void main() {
         await cubit.load();
 
         expect(
-          await cubit.connect(' sk-ant-api03-abcd5678 ', ChatKeyCheck.valid),
+          await cubit.connect(
+            ChatVendor.anthropic,
+            ' sk-ant-api03-abcd5678 ',
+            ChatKeyCheck.valid,
+          ),
           isTrue,
         );
         expect(settings.key, 'sk-ant-api03-abcd5678');
@@ -103,6 +113,7 @@ void main() {
 
         expect(
           await cubit.connect(
+            ChatVendor.anthropic,
             'sk-ant-api03-efgh9999',
             ChatKeyCheck.unreachable,
           ),
@@ -119,7 +130,11 @@ void main() {
       final cubit = cubitOf(settings);
 
       expect(
-        () => cubit.connect('sk-ant-api03-abcd5678', ChatKeyCheck.invalid),
+        () => cubit.connect(
+          ChatVendor.anthropic,
+          'sk-ant-api03-abcd5678',
+          ChatKeyCheck.invalid,
+        ),
         throwsArgumentError,
       );
       expect(settings.key, isNull);
@@ -133,7 +148,11 @@ void main() {
       settings.failWith = Exception('keystore');
 
       expect(
-        await cubit.connect('sk-ant-api03-new00000', ChatKeyCheck.valid),
+        await cubit.connect(
+          ChatVendor.anthropic,
+          'sk-ant-api03-new00000',
+          ChatKeyCheck.valid,
+        ),
         isFalse,
       );
       expect(cubit.state.loading, isFalse);
@@ -171,8 +190,11 @@ void main() {
     final settings = FakeChatSettings();
     final cubit = cubitOf(settings);
     await cubit.load();
-    final check = await cubit.check('sk-ant-api03-abcd5678');
-    await cubit.connect('sk-ant-api03-abcd5678', check);
+    final check = await cubit.check(
+      ChatVendor.anthropic,
+      'sk-ant-api03-abcd5678',
+    );
+    await cubit.connect(ChatVendor.anthropic, 'sk-ant-api03-abcd5678', check);
     await cubit.disconnect();
 
     expect(settings.apiKeyCalls, 0);
@@ -188,7 +210,11 @@ void main() {
     expect(cubit.state.toString(), isNot(contains(key)));
 
     const typed = 'sk-ant-api03-wxyz9876TYPED';
-    await cubit.connect(typed, await cubit.check(typed));
+    await cubit.connect(
+      ChatVendor.anthropic,
+      typed,
+      await cubit.check(ChatVendor.anthropic, typed),
+    );
     expect(cubit.state.toString(), isNot(contains('9876')));
     expect(cubit.state.toString(), isNot(contains(typed)));
     await cubit.close();
@@ -248,8 +274,11 @@ void main() {
       await cubit.load();
       verifier.result = const ModelListResult.ok([sonnet]);
 
-      final check = await cubit.check('sk-ant-api03-abcd5678');
-      await cubit.connect('sk-ant-api03-abcd5678', check);
+      final check = await cubit.check(
+        ChatVendor.anthropic,
+        'sk-ant-api03-abcd5678',
+      );
+      await cubit.connect(ChatVendor.anthropic, 'sk-ant-api03-abcd5678', check);
       await pumpEventQueue();
 
       expect(catalog.replaceCalls, [(ChatVendor.anthropic, 1)]);
@@ -267,8 +296,11 @@ void main() {
         ..result = const ModelListResult.unreachable()
         ..stored = (ChatVendor.anthropic, const ModelListResult.ok([sonnet]));
 
-      final check = await cubit.check('sk-ant-api03-abcd5678');
-      await cubit.connect('sk-ant-api03-abcd5678', check);
+      final check = await cubit.check(
+        ChatVendor.anthropic,
+        'sk-ant-api03-abcd5678',
+      );
+      await cubit.connect(ChatVendor.anthropic, 'sk-ant-api03-abcd5678', check);
       await pumpEventQueue();
 
       expect(verifier.fetchStoredCalls, 1);
@@ -281,11 +313,14 @@ void main() {
       final cubit = cubitOf(settings);
       await cubit.load();
       verifier.result = const ModelListResult.ok([sonnet]);
-      await cubit.check('sk-ant-api03-abcd5678');
+      await cubit.check(ChatVendor.anthropic, 'sk-ant-api03-abcd5678');
       verifier.result = const ModelListResult.unreachable();
 
-      final check = await cubit.check('sk-ant-api03-efgh9999');
-      await cubit.connect('sk-ant-api03-efgh9999', check);
+      final check = await cubit.check(
+        ChatVendor.anthropic,
+        'sk-ant-api03-efgh9999',
+      );
+      await cubit.connect(ChatVendor.anthropic, 'sk-ant-api03-efgh9999', check);
       await pumpEventQueue();
 
       expect(catalog.replaceCalls, isEmpty);
@@ -313,6 +348,57 @@ void main() {
 
       // 지원 표가 비어 있다(A2) — 켜 둬도 요청에 실리지 않는다.
       expect(cubit.state.fastMode, isFalse);
+      await cubit.close();
+    });
+  });
+
+  group('벤더', () {
+    const gpt = ModelInfo(id: 'gpt-9', displayName: 'GPT-9');
+    const gptKey = 'sk-proj-abcdEFGH5678';
+
+    test('check 는 고른 벤더의 verifier 로', () async {
+      final cubit = cubitOf(FakeChatSettings());
+
+      await cubit.check(ChatVendor.openai, ' $gptKey ');
+
+      expect(verifier.calls.single, (ChatVendor.openai, gptKey));
+      await cubit.close();
+    });
+
+    test('다른 벤더로 connect 하면 벤더가 바뀌고 모델 캐시를 그 벤더 목록으로 바꾼다', () async {
+      final settings = FakeChatSettings(key);
+      await catalog.replace(ChatVendor.anthropic, [sonnet], DateTime.now());
+      await settings.selectModel(sonnet.id);
+      final cubit = cubitOf(settings);
+      await cubit.load();
+      verifier.result = const ModelListResult.ok([gpt]);
+
+      final check = await cubit.check(ChatVendor.openai, gptKey);
+      expect(await cubit.connect(ChatVendor.openai, gptKey, check), isTrue);
+      await pumpEventQueue();
+
+      expect(settings.vendor, ChatVendor.openai);
+      expect(settings.selectedModel, isNull);
+      expect(catalog.vendor, ChatVendor.openai);
+      expect(catalog.replaceCalls.last, (ChatVendor.openai, 1));
+      expect(cubit.state.connection?.vendor, ChatVendor.openai);
+      expect(cubit.state.connection?.keyPreview, startsWith('sk-proj-'));
+      expect(cubit.state.model?.label, 'GPT-9');
+      await cubit.close();
+    });
+
+    test('쓰기 실패면 기존 벤더 · 키 미리보기 그대로', () async {
+      final settings = FakeChatSettings(key);
+      final cubit = cubitOf(settings);
+      await cubit.load();
+      final check = await cubit.check(ChatVendor.openai, gptKey);
+      settings.failWith = Exception('keystore');
+
+      expect(await cubit.connect(ChatVendor.openai, gptKey, check), isFalse);
+
+      expect(settings.vendor, ChatVendor.anthropic);
+      expect(cubit.state.connection?.vendor, ChatVendor.anthropic);
+      expect(cubit.state.connection?.keyPreview, 'sk-ant-api03-xyz1••••');
       await cubit.close();
     });
   });

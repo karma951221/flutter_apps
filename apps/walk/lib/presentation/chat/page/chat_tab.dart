@@ -295,6 +295,8 @@ class _ChatBody extends StatelessWidget {
         onAction: onOpenSettings,
       ),
       ChatAccess.needsConsent => ChatConsentView(
+        vendor: state.vendor,
+        continuing: state.bubbles.isNotEmpty,
         onAccept: () => unawaited(cubit.consent()),
       ),
       // 키가 잘못됐으면 다시 받아도 같다 — 설정에서 키를 고치게 한다.

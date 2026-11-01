@@ -24,9 +24,6 @@ class ChatSettingsCubit extends Cubit<ChatSettingsState> {
   final ChatKeyVerifier _verifier;
   final ChatModelChoice _choice;
 
-  /// ② 는 Claude 하나. ④ 가 벤더 시트에서 고른 값으로 바꾼다.
-  static const vendor = ChatVendor.anthropic;
-
   /// 마지막 [check] 가 받은 목록(벤더 · 목록, 키 아님). 등록 뒤 다시 받지 않고 넣는다(결정 G5).
   /// ok 가 아닌 확인이면 비운다.
   (ChatVendor, List<ModelInfo>)? _checkedModels;
@@ -92,9 +89,9 @@ class ChatSettingsCubit extends Cubit<ChatSettingsState> {
     );
   }
 
-  /// 입력한 키를 확인만 한다(저장 안 함). trim 해서 보낸다. ok 면 받은 목록을 들고 있다가
-  /// [connect] 가 넣는다.
-  Future<ChatKeyCheck> check(String key) async {
+  /// [vendor] 의 키로 확인만 한다(저장 안 함). trim 해서 보낸다. ok 면 받은 목록을 들고
+  /// 있다가 [connect] 가 넣는다.
+  Future<ChatKeyCheck> check(ChatVendor vendor, String key) async {
     final result = await _verifier.verify(vendor, key.trim());
     _checkedModels = switch (result) {
       ModelListOk(:final models) => (vendor, models),
@@ -107,12 +104,17 @@ class ChatSettingsCubit extends Cubit<ChatSettingsState> {
     };
   }
 
-  /// [check] 결과로 등록한다. valid → [ChatKeyStatus.valid], unreachable → unverified,
-  /// invalid 면 ArgumentError. 쓰지 못하면 false(기존 연결 그대로). 성공하면 다시 읽는다.
+  /// [check] 결과로 [vendor] 에 등록한다. valid → [ChatKeyStatus.valid], unreachable →
+  /// unverified, invalid 면 ArgumentError. 쓰지 못하면 false(기존 연결 그대로). 성공하면
+  /// 다시 읽는다. 다른 벤더면 저장소가 키를 덮어쓰고 고른 모델을 지운다.
   ///
-  /// 확인 때 받은 목록이 있으면 그대로 넣고, 없으면(unreachable) 목록 강제 갱신을 뒤에서
-  /// 요청한다 — 기다리지 않고, 끝나면 모델 행을 다시 읽는다.
-  Future<bool> connect(String key, ChatKeyCheck check) async {
+  /// 확인 때 같은 벤더로 받은 목록이 있으면 그대로 넣어 목록 캐시를 바꾸고, 없으면
+  /// (unreachable) 목록 강제 갱신을 뒤에서 요청한다 — 기다리지 않고, 끝나면 모델 행을 다시 읽는다.
+  Future<bool> connect(
+    ChatVendor vendor,
+    String key,
+    ChatKeyCheck check,
+  ) async {
     final status = switch (check) {
       ChatKeyCheck.valid => ChatKeyStatus.valid,
       ChatKeyCheck.unreachable => ChatKeyStatus.unverified,
@@ -122,7 +124,9 @@ class ChatSettingsCubit extends Cubit<ChatSettingsState> {
         'invalid key',
       ),
     };
-    final checked = check == ChatKeyCheck.valid ? _checkedModels : null;
+    final checked = check == ChatKeyCheck.valid && _checkedModels?.$1 == vendor
+        ? _checkedModels
+        : null;
     _checkedModels = null;
     if (!await _write(() => _settings.connect(vendor, key, status))) {
       return false;

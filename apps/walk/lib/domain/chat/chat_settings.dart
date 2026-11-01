@@ -17,7 +17,7 @@ abstract interface class ChatSettings {
   /// 키를 쓴 뒤 벤더 · 상태 쓰기가 실패하면 상태를 지워(다음 읽기는 unverified) 예외를 던진다.
   Future<void> connect(ChatVendor vendor, String key, ChatKeyStatus status);
 
-  /// 키 · 벤더 · 상태 · 고른 모델을 지운다. 동의 · 빠른 출력은 그대로.
+  /// 키 · 벤더 · 상태 · 고른 모델을 지운다. 동의(벤더) · 빠른 출력은 그대로.
   Future<void> disconnect();
 
   /// 지금 저장된 키가 [forKey](trim 해 비교)일 때만 기록한다 — 확인하는 동안 키를 바꾸거나
@@ -44,8 +44,9 @@ abstract interface class ChatSettings {
 
   Future<void> acknowledgeFastMode();
 
-  /// 전송 안내에 동의했는가.
-  bool get consented;
+  /// 전송에 동의한 벤더(`chat.consentedVendor`). 연결 벤더와 다르면 needsConsent.
+  /// [disconnect] 해도 남는다 — 같은 벤더로 다시 연결하면 묻지 않는다.
+  ChatVendor? get consentedVendor;
 
-  Future<void> setConsented();
+  Future<void> setConsented(ChatVendor vendor);
 }

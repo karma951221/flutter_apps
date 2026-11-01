@@ -64,7 +64,11 @@ void main() {
   });
   tearDown(() => cubit.close());
 
-  Future<void> show(WidgetTester tester) async {
+  Future<void> show(
+    WidgetTester tester, {
+    ChatVendor vendor = ChatVendor.anthropic,
+    ChatVendor? switchingFrom,
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
@@ -79,7 +83,8 @@ void main() {
                 onPressed: () async {
                   result = await ChatKeyDialog.show(
                     context,
-                    vendor: ChatVendor.anthropic,
+                    vendor: vendor,
+                    switchingFrom: switchingFrom,
                   );
                 },
                 child: const Text('open'),
@@ -410,5 +415,97 @@ void main() {
     expect(find.byType(ChatKeyDialog), findsNothing);
     expect(result, isNull);
     expect(verifier.calls, isEmpty);
+  });
+
+  group('벤더 바꾸기', () {
+    const gptKey = 'sk-proj-abcd5678';
+
+    setUp(() => settings.key = _goodKey);
+
+    testWidgets(
+      "switchingFrom 이 있으면 요금 경고 대신 '{GPT} 로 바꿀까요?' 한 창, 본문에 OpenAI · Claude · '이어져요'",
+      (tester) async {
+        await show(
+          tester,
+          vendor: ChatVendor.openai,
+          switchingFrom: ChatVendor.anthropic,
+        );
+        await enterAndSave(tester, gptKey);
+
+        expect(find.text('GPT 로 바꿀까요?'), findsOneWidget);
+        expect(find.text('GPT 키를 등록할까요?'), findsNothing);
+        expect(find.textContaining('OpenAI 에 요금이'), findsOneWidget);
+        expect(find.textContaining('지금 연결된 Claude 키는'), findsOneWidget);
+        expect(find.textContaining('GPT 로 이어져요'), findsOneWidget);
+        expect(verifier.calls.single, (ChatVendor.openai, gptKey));
+      },
+    );
+
+    testWidgets('[취소]면 아무것도 바뀌지 않고 입력 대화상자로', (tester) async {
+      await show(
+        tester,
+        vendor: ChatVendor.openai,
+        switchingFrom: ChatVendor.anthropic,
+      );
+      await enterAndSave(tester, gptKey);
+
+      await tester.tap(find.text('취소').last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('GPT 로 바꿀까요?'), findsNothing);
+      expect(find.byType(ChatKeyDialog), findsOneWidget);
+      expect(field(tester).controller!.text, gptKey);
+      expect(settings.key, _goodKey);
+      expect(settings.vendor, ChatVendor.anthropic);
+      expect(result, open);
+    });
+
+    testWidgets('[바꾸기]면 switched 로 닫힌다', (tester) async {
+      await show(
+        tester,
+        vendor: ChatVendor.openai,
+        switchingFrom: ChatVendor.anthropic,
+      );
+      await enterAndSave(tester, gptKey);
+
+      await tester.tap(find.text('바꾸기'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ChatKeyDialog), findsNothing);
+      expect(result, ChatKeyDialogResult.switched);
+      expect(settings.vendor, ChatVendor.openai);
+      expect(settings.key, gptKey);
+      expect(settings.status, ChatKeyStatus.valid);
+    });
+
+    testWidgets('확인 못 함으로 바꾸면 savedUnverified', (tester) async {
+      verifier.result = const ModelListResult.unreachable();
+      await show(
+        tester,
+        vendor: ChatVendor.openai,
+        switchingFrom: ChatVendor.anthropic,
+      );
+      await enterAndSave(tester, gptKey);
+
+      await tester.tap(find.text('바꾸기'));
+      await tester.pumpAndSettle();
+
+      expect(result, ChatKeyDialogResult.savedUnverified);
+      expect(settings.vendor, ChatVendor.openai);
+      expect(settings.status, ChatKeyStatus.unverified);
+    });
+  });
+
+  testWidgets("GPT 키 대화상자는 sk- 힌트, sk-ant- 키면 'Claude 키 같아요'", (tester) async {
+    await show(tester, vendor: ChatVendor.openai);
+
+    expect(find.text('GPT API 키 넣기'), findsOneWidget);
+    expect(field(tester).decoration?.hintText, 'sk-…');
+
+    await tester.enterText(find.byKey(_input), _goodKey);
+    await tester.pump();
+
+    expect(field(tester).decoration?.errorText, 'Claude 키 같아요');
+    expect(saveEnabled(tester), isFalse);
   });
 }

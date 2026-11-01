@@ -8,6 +8,7 @@ import 'package:l10n/l10n.dart';
 
 import '../../../domain/chat/chat_connection.dart';
 import '../../../domain/chat/chat_settings.dart';
+import '../../../domain/chat/chat_vendor.dart';
 import '../../../domain/chat/usecase/chat_key_verifier.dart';
 import '../../../domain/chat/usecase/chat_model_choice.dart';
 import '../../chat/widget/chat_vendor_icon.dart';
@@ -17,6 +18,7 @@ import '../cubit/chat_settings_cubit.dart';
 import '../cubit/chat_settings_state.dart';
 import 'chat_key_dialog.dart';
 import 'row_highlight.dart';
+import 'vendor_picker_sheet.dart';
 
 /// 물어보기 설정의 섹션 — AI 연결 행(스펙 §6.1)과 데이터 전송 안내.
 ///
@@ -54,20 +56,43 @@ class _ChatSettingsViewState extends State<_ChatSettingsView> {
   /// 등록에 성공할 때마다 올려 연결 행 glow 를 한 번 더 재생한다.
   int _replay = 0;
 
-  Future<void> _openKeyDialog() async {
+  /// 미연결 [연결하기] → 벤더 시트 → 키 대화상자.
+  Future<void> _connect() async {
+    final vendor = await VendorPickerSheet.show(context);
+    if (vendor == null || !mounted) return;
+    await _openKeyDialog(vendor);
+  }
+
+  /// [다른 AI 로 바꾸기] → 벤더 시트(지금 벤더는 체크) → 키 대화상자(바꾸기 확인).
+  Future<void> _switchVendor(ChatVendor current) async {
+    final vendor = await VendorPickerSheet.show(context, current: current);
+    if (vendor == null || vendor == current || !mounted) return;
+    await _openKeyDialog(vendor, switchingFrom: current);
+  }
+
+  Future<void> _openKeyDialog(
+    ChatVendor vendor, {
+    ChatVendor? switchingFrom,
+  }) async {
     final l10n = AppLocalizations.of(context);
     final result = await ChatKeyDialog.show(
       context,
-      vendor: ChatSettingsCubit.vendor,
+      vendor: vendor,
+      switchingFrom: switchingFrom,
     );
     if (result == null || !mounted) return;
+    final name = chatVendorName(l10n, vendor);
     switch (result) {
       case ChatKeyDialogResult.connected:
         AppSnackBar.show(
           context,
-          message: l10n.walkChatConnected(
-            chatVendorName(l10n, ChatSettingsCubit.vendor),
-          ),
+          message: l10n.walkChatConnected(name),
+          type: AppSnackBarType.success,
+        );
+      case ChatKeyDialogResult.switched:
+        AppSnackBar.show(
+          context,
+          message: l10n.walkChatSwitchedVendor(name),
           type: AppSnackBarType.success,
         );
       case ChatKeyDialogResult.savedUnverified:
@@ -112,10 +137,10 @@ class _ChatSettingsViewState extends State<_ChatSettingsView> {
         final connection = state.connection;
         final Widget row = switch ((state.loading, connection)) {
           (true, _) => const _LoadingRow(),
-          (false, null) => _ConnectRow(onTap: _openKeyDialog),
+          (false, null) => _ConnectRow(onTap: _connect),
           (false, final ChatConnection c) => _ConnectedRow(
             connection: c,
-            onTap: _openKeyDialog,
+            onTap: () => _openKeyDialog(c.vendor),
           ),
         };
         return Column(
@@ -129,7 +154,7 @@ class _ChatSettingsViewState extends State<_ChatSettingsView> {
                   : chatVendorName(l10n, connection.vendor),
               child: row,
             ),
-            if (connection != null) ...[
+            if (connection case final c?) ...[
               _ModelRow(
                 state: state,
                 onPick: () => unawaited(_pickModel()),
@@ -140,7 +165,13 @@ class _ChatSettingsViewState extends State<_ChatSettingsView> {
                 key: const Key('settings-chat-change-key'),
                 leading: const Icon(Icons.key_outlined),
                 title: Text(l10n.walkChatSettingsChange),
-                onTap: _openKeyDialog,
+                onTap: () => _openKeyDialog(c.vendor),
+              ),
+              AppListTile(
+                key: const Key('settings-chat-switch-vendor'),
+                leading: const Icon(Icons.swap_horiz),
+                title: Text(l10n.walkChatSettingsSwitchVendor),
+                onTap: () => _switchVendor(c.vendor),
               ),
               AppListTile(
                 key: const Key('settings-chat-delete'),
@@ -148,21 +179,22 @@ class _ChatSettingsViewState extends State<_ChatSettingsView> {
                 title: Text(l10n.walkChatSettingsDelete),
                 onTap: _disconnect,
               ),
-            ],
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.xs,
-                AppSpacing.md,
-                AppSpacing.xs,
-              ),
-              child: Text(
-                l10n.walkChatSettingsNotice,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              // 보낼 곳(연결한 벤더)이 정해진 뒤에만 안내한다.
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.xs,
+                  AppSpacing.md,
+                  AppSpacing.xs,
+                ),
+                child: Text(
+                  l10n.walkChatSettingsNotice(chatVendorName(l10n, c.vendor)),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
         );
       },

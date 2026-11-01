@@ -121,8 +121,9 @@ class FakeChatSettings implements ChatSettings {
   }
 
   @override
-  bool consented = false;
+  ChatVendor? consentedVendor;
 
   @override
-  Future<void> setConsented() async => consented = true;
+  Future<void> setConsented(ChatVendor vendor) async =>
+      consentedVendor = vendor;
 }

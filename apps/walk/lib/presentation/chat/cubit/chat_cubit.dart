@@ -143,13 +143,26 @@ class ChatCubit extends Cubit<ChatState> {
       hasKey = false;
     }
     if (isClosed) return;
-    final access = switch ((hasKey, _settings.consented)) {
+    // 동의는 벤더별 — 연결 벤더가 동의한 벤더와 다르면(벤더를 바꿨으면) 다시 묻는다.
+    // 같은 벤더 키 교체 · 모델 변경은 묻지 않는다.
+    final connected = _settings.connectedVendor;
+    final access = switch ((hasKey, _settings.consentedVendor)) {
       (false, _) => ChatAccess.noKey,
-      (_, false) => ChatAccess.needsConsent,
+      (_, final consented) when consented == null || consented != connected =>
+        ChatAccess.needsConsent,
       _ => ChatAccess.ready,
     };
     if (access != ChatAccess.ready) {
-      emit(state.copyWith(access: access, vendor: _vendor(), model: null));
+      // 말풍선은 그대로 둔다 — 동의 뒤 ready 에서 대화를 잇는다.
+      emit(
+        state.copyWith(
+          access: access,
+          vendor: access == ChatAccess.needsConsent
+              ? connected ?? _vendor()
+              : _vendor(),
+          model: null,
+        ),
+      );
       return;
     }
     if (_choice.currentModel != null) {
@@ -216,8 +229,10 @@ class ChatCubit extends Cubit<ChatState> {
       _settings.connectedVendor ??
       ChatVendor.anthropic;
 
+  /// 전송 동의 — 지금 연결된 벤더로 기록한다. 미연결이면 기록하지 않는다.
   Future<void> consent() async {
-    await _settings.setConsented();
+    final vendor = _settings.connectedVendor;
+    if (vendor != null) await _settings.setConsented(vendor);
     await refresh();
   }
 

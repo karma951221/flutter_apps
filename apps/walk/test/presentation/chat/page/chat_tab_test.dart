@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:walk/domain/chat/chat_connection.dart';
 import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_model_catalog.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
@@ -79,7 +80,8 @@ void main() {
   setUp(() {
     session = _MockSession();
     diary = _MockDiary();
-    settings = FakeChatSettings('sk-ant-test')..consented = true;
+    settings = FakeChatSettings('sk-ant-test')
+      ..consentedVendor = ChatVendor.anthropic;
     lock = _MockLock();
     // 목록이 비어 있으면 탭이 보일 때 받아 온다 — 받을 목록 하나를 둔다.
     verifier = FakeChatKeyVerifier()..stored = _storedOk;
@@ -326,12 +328,12 @@ void main() {
   });
 
   testWidgets('동의 전이면 전송 안내와 동의 버튼을 보이고, 동의하면 시작한다', (tester) async {
-    settings.consented = false;
+    settings.consentedVendor = null;
     await pump(tester);
 
     expect(
       find.text(
-        '질문에 필요한 일기 · 사진 · 걸음 · 기상 기록이 Anthropic 으로 전송돼요. '
+        '질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI(Claude)로 전송돼요. '
         '키는 이 폰의 보안 저장소에만 있어요.',
       ),
       findsOneWidget,
@@ -339,8 +341,44 @@ void main() {
     await tester.tap(find.text('동의하고 시작'));
     await tester.pumpAndSettle();
 
-    expect(settings.consented, isTrue);
+    expect(settings.consentedVendor, ChatVendor.anthropic);
     expect(find.text('어제 뭐 했어?'), findsOneWidget);
+  });
+
+  testWidgets('벤더를 바꾸고 돌아오면 동의 화면, 동의하면 이전 말풍선이 그대로 보인다', (tester) async {
+    answer('산책을 했어요');
+    await pump(tester);
+    await tester.tap(find.text('어제 뭐 했어?'));
+    await tester.pumpAndSettle();
+    expect(find.text('산책을 했어요'), findsOneWidget);
+    final navigator = await pushCover(tester);
+
+    // 설정에서 GPT 로 바꿨다.
+    const gpt = ModelInfo(id: 'gpt-9', displayName: 'GPT-9');
+    await settings.connect(
+      ChatVendor.openai,
+      'sk-proj-new',
+      ChatKeyStatus.valid,
+    );
+    await catalog.replace(ChatVendor.openai, [gpt], DateTime.now());
+    when(
+      () => session.target,
+    ).thenReturn((vendor: ChatVendor.openai, model: gpt.id));
+    navigator.pop();
+    await tester.pumpAndSettle();
+
+    expect(find.text('동의하고 시작'), findsOneWidget);
+    expect(find.textContaining('연결한 AI(GPT)로 전송돼요'), findsOneWidget);
+    expect(find.textContaining('지금 대화의 이전 내용도 GPT 로 보내져요.'), findsOneWidget);
+    expect(find.text('산책을 했어요'), findsNothing);
+
+    await tester.tap(find.text('동의하고 시작'));
+    await tester.pumpAndSettle();
+
+    expect(settings.consentedVendor, ChatVendor.openai);
+    expect(find.text('동의하고 시작'), findsNothing);
+    expect(find.text('어제 뭐 했어?'), findsOneWidget);
+    expect(find.text('산책을 했어요'), findsOneWidget);
   });
 
   testWidgets('잠겨 있으면 대화 내용이 트리에 없고, 풀면 그대로 있다', (tester) async {
@@ -576,7 +614,7 @@ void main() {
     });
 
     testWidgets('동의 전이면 대화 목록 · 임시 대화로 시작이 없다', (tester) async {
-      settings.consented = false;
+      settings.consentedVendor = null;
       await pump(tester);
       await openMenu(tester);
 
