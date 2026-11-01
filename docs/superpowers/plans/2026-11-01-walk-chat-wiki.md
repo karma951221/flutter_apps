@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 사용자가 고른 사실만 "위키 메모"(제목 · 한 줄 요약 · 본문, `[[id]]` · `[[일기:<entryId>]]` 링크)로 `chat` DB 에 남기고, 다음 질문마다 시스템 프롬프트에 색인(제목 + 요약)만 싣고 본문은 모델이 `read_wiki` 로 필요할 때 연다. 위키는 [위키로 정리](정리 요청 한 번 → 후보 최대 8개를 저장 / 고쳐서 저장 / 버림) · 말풍선 [위키에 추가] · 위키 화면 [추가] 세 경로로만 생기고, 위키 화면(목록 · 보기 · 편집 · 링크 넣기 · 역링크 · 흐린 링크 · 모두 지우기), 색인 크기 설정, 사용량 화면의 위키 숫자를 더한다. 임시 대화에는 위키가 한 글자도 나가지 않는다.
+**Goal:** 사용자가 고른 사실만 "위키 메모"(제목 · 한 줄 요약 · 본문, `[[id]]` · `[[일기:<entryId>]]` 링크)로 `chat` DB 에 남기고, 다음 질문마다 시스템 프롬프트에 색인(제목 + 요약)만 싣고 본문은 모델이 `read_wiki` 로 필요할 때 연다. 위키는 [위키로 정리] (정리 요청 한 번 → 후보 최대 8개를 저장 / 고쳐서 저장 / 버림) · 말풍선 [위키에 추가] · 위키 화면 [추가] 세 경로로만 생기고, 위키 화면(목록 · 보기 · 편집 · 링크 넣기 · 역링크 · 흐린 링크 · 모두 지우기), 색인 크기 설정, 사용량 화면의 위키 숫자를 더한다. 임시 대화에는 위키가 한 글자도 나가지 않는다.
 
 **Architecture:** `ChatDatabase` 를 schemaVersion 2 로 올려 `wiki_notes` 를 더하고(`source_conversation_id` 는 FK `on delete set null`), domain `WikiRepository` 뒤에 `DriftWikiRepository` 를 둔다. 색인 만들기는 순수 함수 `buildWikiIndex(notes, size)` 하나를 정책(`IndexAndReadPolicy`)과 위키 화면이 같이 쓴다. `ChatSession` 은 질문마다 `WikiContextPolicy.build` 를 불러(임시 대화면 `NoWikiPolicy`) 시스템 프롬프트를 "규약 → 위키 색인 → 오늘 날짜" 순으로 만들고, `read_wiki` 호출은 `WikiTools` 로, 나머지는 `LifeTools` 로 보낸다. 사용량 행에 색인 크기 · `read_wiki` 수를 채운다. [위키로 정리]는 세션과 따로 도는 유스케이스 `WikiDistiller`(일기 도구 없이 `read_wiki` 만, purpose `wikiDistill`)가 맡고, 결과 후보는 화면이 거른 뒤 `WikiCandidatesSheet` 에서 하나씩 처리한다.
 
@@ -495,14 +495,14 @@ Task 9 가 walk `testing.md` "물어보기 기기 시나리오"에 "대기"로 �
   /// 메모 고르기(제목 · 요약 포함 검색, 대소문자 무시). 고른 id 또는 null. [exclude] 는 지금 메모.
   Future<int?> showWikiNotePicker(BuildContext context, {int? exclude});
 
-  /// 일기 고르기. 위쪽 = [suggested](출처 대화의 근거 일기, 휴지통 제외), 아래 = 날짜를 골라
+  /// 일기 고르기. 위쪽 = [suggested] (출처 대화의 근거 일기, 휴지통 제외), 아래 = 날짜를 골라
   /// DiaryRepository.searchEntries(from: 그날 00:00, to: 그날 끝) 결과. 고른 entryId 또는 null.
   Future<String?> showDiaryEntryPicker(BuildContext context, {required List<String> suggested});
   ```
 - 편집 화면 `WikiNoteEditPage`:
   - 앱바: 제목 `walkChatWikiEditTitle`(새 메모면 `walkChatWikiNewTitle`), 액션 `AppButton.text(commonSave, key: Key('wiki-edit-save'))`.
   - 칸 셋 — `TextField`(테마 `InputDecorationTheme`): 제목(`maxLength: wikiTitleMax`), 한 줄 요약(`maxLength: wikiSummaryMax`, `maxLines: 1`), 본문(`maxLength: wikiBodyMax`, 여러 줄). 비어 저장하면 칸 아래 오류 문구.
-  - 본문 칸 아래 두 버튼 `AppButton.secondary` — [메모 링크](`Key('wiki-edit-link-note')`) · [일기 링크](`Key('wiki-edit-link-entry')`): 고른 값을 본문 커서 자리에 `wikiNoteLinkText` · `wikiDiaryLinkText` 로 넣는다(선택 영역이 있으면 바꿔 넣음).
+  - 본문 칸 아래 두 버튼 `AppButton.secondary` — [메모 링크] (`Key('wiki-edit-link-note')`) · [일기 링크] (`Key('wiki-edit-link-entry')`): 고른 값을 본문 커서 자리에 `wikiNoteLinkText` · `wikiDiaryLinkText` 로 넣는다(선택 영역이 있으면 바꿔 넣음).
   - 일기 고르기의 `suggested` = seed 의 `suggestedEntryIds` + 출처 대화가 있으면 그 대화 턴들의 인용 id(중복 제거).
   - 저장 성공 → `AppSnackBar.show(walkChatWikiSaved)` 후 pop(id).
 - 진입:
