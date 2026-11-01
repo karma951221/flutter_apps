@@ -19,6 +19,7 @@ class ChatBubbleView extends StatelessWidget {
     required this.onOpenCited,
     this.pending = false,
     this.onOpenSettings,
+    this.onLongPress,
     super.key,
   });
 
@@ -32,6 +33,9 @@ class ChatBubbleView extends StatelessWidget {
 
   /// 실패 말풍선의 [설정 열기] — 셸이 물어보기 설정 화면을 연다. null 이면 버튼이 없다.
   final VoidCallback? onOpenSettings;
+
+  /// 말풍선을 길게 눌렀다(턴 지우기 시트). null 이면 길게 누르기를 받지 않는다.
+  final VoidCallback? onLongPress;
 
   /// 설정에서 고칠 수 있는 실패 — 키 없음 · 잘못된 키 · 크레딧 부족.
   static const _settingsFailures = {
@@ -70,67 +74,76 @@ class ChatBubbleView extends StatelessWidget {
               : CrossAxisAlignment.start,
           children: [
             if (text.isNotEmpty || failure != null || stopped)
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: mine
-                      ? scheme.primaryContainer
-                      : scheme.surfaceContainerHigh,
-                  borderRadius: AppRadius.lgAll,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
+              GestureDetector(
+                onLongPress: onLongPress,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: mine
+                        ? scheme.primaryContainer
+                        : scheme.surfaceContainerHigh,
+                    borderRadius: AppRadius.lgAll,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (text.isNotEmpty)
-                        SelectableText(
-                          text,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: mine
-                                ? scheme.onPrimaryContainer
-                                : scheme.onSurface,
-                          ),
-                        ),
-                      if (text.isNotEmpty && failure != null)
-                        const SizedBox(height: AppSpacing.xs),
-                      if (failure != null)
-                        Text(
-                          chatFailureText(l10n, failure),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: scheme.error,
-                          ),
-                        ),
-                      if (failure != null &&
-                          onOpenSettings != null &&
-                          _settingsFailures.contains(failure)) ...[
-                        const SizedBox(height: AppSpacing.xs),
-                        AppButton.text(
-                          key: const Key('chat-bubble-open-settings'),
-                          label: l10n.walkChatOpenSettings,
-                          onPressed: onOpenSettings,
-                        ),
-                      ],
-                      if (stopped) ...[
-                        if (text.isNotEmpty || failure != null)
-                          const SizedBox(height: AppSpacing.xs),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.stop_circle_outlined,
-                              size: noteStyle?.fontSize,
-                              color: noteStyle?.color,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (text.isNotEmpty)
+                          SelectableText(
+                            text,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: mine
+                                  ? scheme.onPrimaryContainer
+                                  : scheme.onSurface,
                             ),
-                            const SizedBox(width: AppSpacing.xs),
-                            Text(l10n.walkChatStopped, style: noteStyle),
-                          ],
-                        ),
+                            contextMenuBuilder: onLongPress == null
+                                ? _defaultMenu
+                                : (context, state) => _menuWithMore(
+                                    state,
+                                    l10n.commonMoreActions,
+                                  ),
+                          ),
+                        if (text.isNotEmpty && failure != null)
+                          const SizedBox(height: AppSpacing.xs),
+                        if (failure != null)
+                          Text(
+                            chatFailureText(l10n, failure),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: scheme.error,
+                            ),
+                          ),
+                        if (failure != null &&
+                            onOpenSettings != null &&
+                            _settingsFailures.contains(failure)) ...[
+                          const SizedBox(height: AppSpacing.xs),
+                          AppButton.text(
+                            key: const Key('chat-bubble-open-settings'),
+                            label: l10n.walkChatOpenSettings,
+                            onPressed: onOpenSettings,
+                          ),
+                        ],
+                        if (stopped) ...[
+                          if (text.isNotEmpty || failure != null)
+                            const SizedBox(height: AppSpacing.xs),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.stop_circle_outlined,
+                                size: noteStyle?.fontSize,
+                                color: noteStyle?.color,
+                              ),
+                              const SizedBox(width: AppSpacing.xs),
+                              Text(l10n.walkChatStopped, style: noteStyle),
+                            ],
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -154,4 +167,23 @@ class ChatBubbleView extends StatelessWidget {
       ),
     );
   }
+
+  static Widget _defaultMenu(BuildContext context, EditableTextState state) =>
+      AdaptiveTextSelectionToolbar.editableText(editableTextState: state);
+
+  /// 글을 길게 누르면 글 고르기가 이긴다 — 고르기 메뉴 끝의 [더보기]가 [onLongPress] 를 대신한다.
+  Widget _menuWithMore(EditableTextState state, String label) =>
+      AdaptiveTextSelectionToolbar.buttonItems(
+        anchors: state.contextMenuAnchors,
+        buttonItems: [
+          ...state.contextMenuButtonItems,
+          ContextMenuButtonItem(
+            label: label,
+            onPressed: () {
+              state.hideToolbar();
+              onLongPress?.call();
+            },
+          ),
+        ],
+      );
 }

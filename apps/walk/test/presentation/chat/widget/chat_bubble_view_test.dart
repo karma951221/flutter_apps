@@ -11,6 +11,7 @@ void main() {
     WidgetTester tester,
     ChatBubble bubble, {
     VoidCallback? onOpenSettings,
+    VoidCallback? onLongPress,
   }) => tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light(),
@@ -22,6 +23,7 @@ void main() {
           bubble: bubble,
           onOpenCited: (_, _) {},
           onOpenSettings: onOpenSettings,
+          onLongPress: onLongPress,
         ),
       ),
     ),
@@ -115,5 +117,49 @@ void main() {
 
       expect(find.byKey(openSettings), findsNothing);
     });
+  });
+
+  testWidgets('말풍선 여백을 길게 누르면 onLongPress', (tester) async {
+    var pressed = 0;
+    await pump(
+      tester,
+      const ChatBubble(role: ChatRole.user, text: '어제 뭐 했어?'),
+      onLongPress: () => pressed++,
+    );
+
+    // 글 바깥(말풍선 안쪽 여백).
+    final text = tester.getRect(find.text('어제 뭐 했어?'));
+    await tester.longPressAt(text.topLeft + const Offset(-4, -4));
+    await tester.pumpAndSettle();
+
+    expect(pressed, 1);
+  });
+
+  testWidgets('글을 길게 누르면 고르기 메뉴 끝의 [더보기]가 onLongPress 를 부른다', (tester) async {
+    var pressed = 0;
+    await pump(
+      tester,
+      const ChatBubble(role: ChatRole.user, text: '어제 뭐 했어?'),
+      onLongPress: () => pressed++,
+    );
+
+    await tester.longPress(find.text('어제 뭐 했어?'));
+    await tester.pumpAndSettle();
+    expect(find.text('복사'), findsOneWidget);
+    await tester.tap(find.text('더보기'));
+    await tester.pumpAndSettle();
+
+    expect(pressed, 1);
+    expect(find.text('더보기'), findsNothing);
+  });
+
+  testWidgets('onLongPress 가 없으면 고르기 메뉴에 [더보기]가 없다', (tester) async {
+    await pump(tester, const ChatBubble(role: ChatRole.user, text: '어제 뭐 했어?'));
+
+    await tester.longPress(find.text('어제 뭐 했어?'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('복사'), findsOneWidget);
+    expect(find.text('더보기'), findsNothing);
   });
 }

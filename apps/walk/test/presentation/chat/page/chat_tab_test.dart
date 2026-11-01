@@ -13,6 +13,7 @@ import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/entity/conversation.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
+import 'package:walk/domain/chat/secure_window.dart';
 import 'package:walk/domain/chat/usecase/chat_key_verifier.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/domain/chat/usecase/open_conversation.dart';
@@ -20,6 +21,7 @@ import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/lock/lock_config.dart';
+import 'package:walk/presentation/chat/page/chat_history_page.dart';
 import 'package:walk/presentation/chat/page/chat_tab.dart';
 import 'package:walk/presentation/diary/viewer/story_viewer_page.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
@@ -28,6 +30,7 @@ import 'package:walk/presentation/lock/cubit/diary_lock_state.dart';
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_chat_key_verifier.dart';
 import '../../../support/fake_chat_settings.dart';
+import '../../../support/fake_secure_window.dart';
 
 class _MockSession extends Mock implements ChatSession {}
 
@@ -57,6 +60,8 @@ void main() {
   late _MockLock lock;
   late StreamController<DiaryLockState> lockStates;
   late FakeChatKeyVerifier verifier;
+  late _MockHistory history;
+  late FakeSecureWindow secure;
 
   setUp(() {
     session = _MockSession();
@@ -65,7 +70,8 @@ void main() {
     lock = _MockLock();
     verifier = FakeChatKeyVerifier();
     lockStates = StreamController<DiaryLockState>.broadcast();
-    final history = _MockHistory();
+    history = _MockHistory();
+    secure = FakeSecureWindow();
     when(
       () => history.watchExists(any()),
     ).thenAnswer((_) => const Stream.empty());
@@ -91,6 +97,7 @@ void main() {
       ..registerSingleton<DiaryRepository>(diary)
       ..registerSingleton<ChatHistoryRepository>(history)
       ..registerSingleton<OpenConversation>(OpenConversation())
+      ..registerSingleton<SecureWindow>(secure)
       ..registerSingleton<Clock>(MutableClock(diaryT0));
   });
 
@@ -478,6 +485,308 @@ void main() {
     expect((viewer.source as EntriesSource).entryIds, ['e1']);
     // 뷰어의 조각 타이머가 남지 않게 닫는다.
     await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  Finder menu() => find.descendant(
+    of: find.byType(AppBar),
+    matching: find.byIcon(Icons.more_vert),
+  );
+
+  Future<void> openMenu(WidgetTester tester) async {
+    await tester.tap(menu());
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> tapMenu(WidgetTester tester, String key) async {
+    await openMenu(tester);
+    await tester.tap(find.byKey(Key(key)));
+    await tester.pumpAndSettle();
+  }
+
+  const banner = Key('chat-temporary-banner');
+
+  /// 말풍선 안쪽 여백을 길게 누른다(글 위는 글 고르기가 받는다).
+  Future<void> longPressBubble(WidgetTester tester, String text) async {
+    final rect = tester.getRect(find.text(text));
+    await tester.longPressAt(rect.topLeft + const Offset(-4, -4));
+    await tester.pumpAndSettle();
+  }
+
+  group('⋮ 항목', () {
+    testWidgets('⋮ 순서는 대화 목록 · 임시 대화로 시작 · 물어보기 설정 · 앱 설정', (tester) async {
+      await pump(tester);
+      await openMenu(tester);
+
+      final keys = [
+        'chat-menu-history',
+        'chat-menu-temporary',
+        'menu-settings-chat',
+        'menu-settings-app',
+      ];
+      final tops = [
+        for (final k in keys) tester.getTopLeft(find.byKey(Key(k))).dy,
+      ];
+      expect(tops, [...tops]..sort());
+      expect(tops.toSet(), hasLength(4));
+      expect(find.text('대화 목록'), findsOneWidget);
+      expect(find.text('임시 대화로 시작'), findsOneWidget);
+    });
+
+    testWidgets('잠긴 동안 ⋮ 에는 앱 설정만', (tester) async {
+      whenListen(
+        lock,
+        lockStates.stream,
+        initialState: const DiaryLockState.locked(method: LockMethod.pin),
+      );
+      await pump(tester);
+      await openMenu(tester);
+
+      expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
+      expect(find.byKey(const Key('chat-menu-history')), findsNothing);
+      expect(find.byKey(const Key('chat-menu-temporary')), findsNothing);
+      expect(find.byKey(const Key('menu-settings-chat')), findsNothing);
+    });
+
+    testWidgets('키가 없으면 임시 대화로 시작이 없다', (tester) async {
+      settings.key = null;
+      await pump(tester);
+      await openMenu(tester);
+
+      expect(find.byKey(const Key('chat-menu-history')), findsOneWidget);
+      expect(find.byKey(const Key('chat-menu-temporary')), findsNothing);
+    });
+  });
+
+  group('대화 목록', () {
+    final conversation = Conversation(
+      id: 'c9',
+      title: '지난 주말?',
+      titleEdited: false,
+      createdAt: diaryT0,
+      updatedAt: diaryT0,
+      turnCount: 1,
+    );
+
+    setUp(() {
+      when(
+        () => history.conversations(),
+      ).thenAnswer((_) => Stream.value([conversation]));
+      when(() => history.turns('c9')).thenAnswer(
+        (_) async => [
+          ChatTurnRecord(
+            conversationId: 'c9',
+            seq: 1,
+            question: '지난 주말?',
+            answer: '한강을 걸었어요',
+            citedEntryIds: const [],
+            stopped: false,
+            vendor: ChatVendor.anthropic,
+            model: 'claude-test',
+            askedAt: diaryT0,
+          ),
+        ],
+      );
+    });
+
+    testWidgets('대화 목록에서 행을 고르면 그 대화가 열린다', (tester) async {
+      await pump(tester);
+      await tapMenu(tester, 'chat-menu-history');
+      expect(find.byType(ChatHistoryPage), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('chat-history-c9')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ChatHistoryPage), findsNothing);
+      expect(find.text('지난 주말?'), findsOneWidget);
+      expect(find.text('한강을 걸었어요'), findsOneWidget);
+    });
+
+    testWidgets('목록 화면이 떠 있는 중 잠기면 목록이 트리에서 빠진다', (tester) async {
+      await pump(tester);
+      await tapMenu(tester, 'chat-menu-history');
+      expect(find.byType(ChatHistoryPage), findsOneWidget);
+
+      lockStates.add(const DiaryLockState.locked(method: LockMethod.pin));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ChatHistoryPage, skipOffstage: false), findsNothing);
+      expect(find.text('지난 주말?', skipOffstage: false), findsNothing);
+    });
+  });
+
+  testWidgets('임시 대화로 시작하면 배너가 보이고 [새 대화]를 누르면 배너가 사라진다', (tester) async {
+    await pump(tester);
+    expect(find.byKey(banner), findsNothing);
+    expect(find.byTooltip('새 대화'), findsNothing);
+
+    await tapMenu(tester, 'chat-menu-temporary');
+
+    expect(find.byKey(banner), findsOneWidget);
+    expect(find.textContaining('Anthropic에 전송되고'), findsOneWidget);
+    // 말풍선이 없어도 임시 대화면 [새 대화]로 나갈 수 있다.
+    await tester.tap(find.byTooltip('새 대화'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(banner), findsNothing);
+    expect(find.byTooltip('새 대화'), findsNothing);
+  });
+
+  testWidgets('저장된 대화를 읽는 동안 입력칸이 꺼진다', (tester) async {
+    final turns = Completer<List<ChatTurnRecord>>();
+    when(() => history.conversations()).thenAnswer(
+      (_) => Stream.value([
+        Conversation(
+          id: 'c9',
+          title: '지난 주말?',
+          titleEdited: false,
+          createdAt: diaryT0,
+          updatedAt: diaryT0,
+          turnCount: 1,
+        ),
+      ]),
+    );
+    when(() => history.turns('c9')).thenAnswer((_) => turns.future);
+    await pump(tester);
+    await tapMenu(tester, 'chat-menu-history');
+    await tester.tap(find.byKey(const Key('chat-history-c9')));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
+
+    turns.complete(const []);
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(find.byType(TextField)).enabled, isTrue);
+  });
+
+  group('화면 캡처 차단', () {
+    testWidgets('임시 대화 + 탭이 보이면 켜고, 안 보이면 · [새 대화] · dispose 면 끈다', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tapMenu(tester, 'chat-menu-temporary');
+      expect(secure.calls, [true]);
+
+      await pump(tester, active: false);
+      expect(secure.calls, [true, false]);
+
+      await pump(tester);
+      expect(secure.calls, [true, false, true]);
+
+      await tester.tap(find.byTooltip('새 대화'));
+      await tester.pumpAndSettle();
+      expect(secure.calls, [true, false, true, false]);
+
+      await tapMenu(tester, 'chat-menu-temporary');
+      expect(secure.calls, [true, false, true, false, true]);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      expect(secure.calls, [true, false, true, false, true, false]);
+    });
+
+    testWidgets('잠겨 있어도 · 위에 화면이 얹혀도 켠 채 둔다', (tester) async {
+      await pump(tester);
+      await tapMenu(tester, 'chat-menu-temporary');
+
+      lockStates.add(const DiaryLockState.locked(method: LockMethod.pin));
+      await tester.pumpAndSettle();
+      final navigator = await pushCover(tester);
+      navigator.pop();
+      await tester.pumpAndSettle();
+
+      expect(secure.calls, [true]);
+    });
+
+    testWidgets('일반 대화에서는 setSecure 를 부르지 않는다', (tester) async {
+      answer('산책을 했어요');
+      await pump(tester);
+      await tester.tap(find.text('어제 뭐 했어?'));
+      await tester.pumpAndSettle();
+      await pump(tester, active: false);
+      await pump(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+
+      expect(secure.calls, isEmpty);
+    });
+
+    testWidgets('같은 값을 두 번 보내지 않는다', (tester) async {
+      await pump(tester);
+      await tapMenu(tester, 'chat-menu-temporary');
+      await tapMenu(tester, 'chat-menu-temporary');
+      await pump(tester);
+
+      expect(secure.calls, [true]);
+    });
+  });
+
+  group('턴 지우기', () {
+    setUp(() {
+      when(() => history.deleteTurn(any(), any())).thenAnswer((_) async {});
+      when(() => history.turns(any())).thenAnswer((_) async => const []);
+    });
+
+    testWidgets('말풍선을 길게 누르면 시트 → 지우기 → 확인 뒤에만 턴이 사라진다', (tester) async {
+      answer('산책을 했어요');
+      await pump(tester);
+      await tester.tap(find.text('어제 뭐 했어?'));
+      await tester.pumpAndSettle();
+
+      // 취소면 그대로.
+      await longPressBubble(tester, '산책을 했어요');
+      await tester.tap(find.text('이 질문과 답 지우기'));
+      await tester.pumpAndSettle();
+      expect(find.text('이 질문과 답을 지울까요?'), findsOneWidget);
+      await tester.tap(find.text('취소'));
+      await tester.pumpAndSettle();
+      expect(find.text('산책을 했어요'), findsOneWidget);
+      verifyNever(() => history.deleteTurn(any(), any()));
+
+      // 답 말풍선에서 열어도 그 질문의 턴을 지운다.
+      await longPressBubble(tester, '산책을 했어요');
+      await tester.tap(find.text('이 질문과 답 지우기'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('삭제'));
+      await tester.pumpAndSettle();
+
+      verify(() => history.deleteTurn('c1', 1)).called(1);
+      expect(find.text('산책을 했어요'), findsNothing);
+      expect(find.text('지난주에 뭐 먹었지?'), findsOneWidget);
+    });
+
+    testWidgets('시트를 닫으면 아무것도 지우지 않는다', (tester) async {
+      answer('산책을 했어요');
+      await pump(tester);
+      await tester.tap(find.text('어제 뭐 했어?'));
+      await tester.pumpAndSettle();
+
+      await longPressBubble(tester, '어제 뭐 했어?');
+      expect(find.text('이 질문과 답 지우기'), findsOneWidget);
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      expect(find.text('이 질문과 답 지우기'), findsNothing);
+      expect(find.text('이 질문과 답을 지울까요?'), findsNothing);
+      expect(find.text('산책을 했어요'), findsOneWidget);
+    });
+
+    testWidgets('답하는 중엔 시트가 뜨지 않는다', (tester) async {
+      final events = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => events.stream);
+      await pump(tester);
+      await tester.tap(find.text('어제 뭐 했어?'));
+      await tester.pump();
+      events.add(const ChatEvent.text('산책을 '));
+      await tester.pump();
+
+      final rect = tester.getRect(find.text('어제 뭐 했어?'));
+      await tester.longPressAt(rect.topLeft + const Offset(-4, -4));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('이 질문과 답 지우기'), findsNothing);
+
+      events.add(const ChatEvent.finished(citedEntryIds: []));
+      await events.close();
+      await tester.pumpAndSettle();
+    });
   });
 }
 

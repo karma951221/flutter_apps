@@ -6253,6 +6253,36 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'모두 지우기'**
   String get walkChatHistoryDeleteAllConfirm;
+
+  /// 물어보기 ⋮: 임시 대화로 시작
+  ///
+  /// In ko, this message translates to:
+  /// **'임시 대화로 시작'**
+  String get walkChatTemporaryStart;
+
+  /// 물어보기: 임시 대화 배너 — 벤더(회사) 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'임시 대화 · 이 폰에 저장되지 않아요. 질문과 찾은 기록은 {vendor}에 전송되고, 그곳의 보관 정책은 앱이 정할 수 없어요.'**
+  String walkChatTemporaryBanner(String vendor);
+
+  /// 물어보기: 말풍선 길게 누르기 시트 — 턴 지우기
+  ///
+  /// In ko, this message translates to:
+  /// **'이 질문과 답 지우기'**
+  String get walkChatTurnDelete;
+
+  /// 물어보기: 턴 지우기 확인 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'이 질문과 답을 지울까요?'**
+  String get walkChatTurnDeleteTitle;
+
+  /// 물어보기: 턴 지우기 확인 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'이 대화에서 빠지고, 다음 질문의 문맥에도 들어가지 않아요.'**
+  String get walkChatTurnDeleteBody;
 }
 
 class _AppLocalizationsDelegate

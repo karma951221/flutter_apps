@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
 /// 질문 입력칸 + 전송 버튼. [busy](답하는 중)면 전송 자리에 [■ 멈춤] — 입력은 계속 할 수 있다.
+/// [enabled] 가 false 면(저장된 대화를 읽는 중) 입력칸과 전송이 꺼져 보인다.
 ///
 /// [restoredDraft] 가 새로 오면(글 없이 멈춰 되돌린 질문) 비어 있는 입력칸만 채우고
 /// [onDraftRestored] 를 부른다. 쓰던 글이 있으면 덮어쓰지 않는다.
@@ -13,10 +14,14 @@ class ChatInput extends StatefulWidget {
     required this.onStop,
     this.restoredDraft,
     this.onDraftRestored,
+    this.enabled = true,
     super.key,
   });
 
   final bool busy;
+
+  /// false 면 입력 · 전송을 받지 않는다.
+  final bool enabled;
   final ValueChanged<String> onSend;
   final VoidCallback onStop;
 
@@ -71,7 +76,7 @@ class _ChatInputState extends State<ChatInput> {
   }
 
   void _submit() {
-    if (widget.busy) return;
+    if (widget.busy || !widget.enabled) return;
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     widget.onSend(text);
@@ -93,6 +98,7 @@ class _ChatInputState extends State<ChatInput> {
           Expanded(
             child: TextField(
               controller: _controller,
+              enabled: widget.enabled,
               minLines: 1,
               maxLines: _maxLines,
               textInputAction: TextInputAction.send,
@@ -110,7 +116,7 @@ class _ChatInputState extends State<ChatInput> {
             IconButton(
               icon: const Icon(Icons.send),
               tooltip: l10n.walkChatSend,
-              onPressed: _submit,
+              onPressed: widget.enabled ? _submit : null,
             ),
         ],
       ),

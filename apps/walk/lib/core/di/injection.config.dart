@@ -35,6 +35,7 @@ import '../../data/alarm/holiday_module.dart' as _i183;
 import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
 import '../../data/chat/anthropic_chat_model.dart' as _i645;
+import '../../data/chat/channel_secure_window.dart' as _i241;
 import '../../data/chat/compressed_chat_image_source.dart' as _i957;
 import '../../data/chat/database/chat_database.dart' as _i933;
 import '../../data/chat/database/drift_chat_history_repository.dart' as _i991;
@@ -78,6 +79,7 @@ import '../../domain/chat/chat_trace.dart' as _i825;
 import '../../domain/chat/chat_usage_log.dart' as _i520;
 import '../../domain/chat/repository/chat_history_repository.dart' as _i752;
 import '../../domain/chat/repository/chat_usage_repository.dart' as _i669;
+import '../../domain/chat/secure_window.dart' as _i555;
 import '../../domain/chat/tool/chat_image_source.dart' as _i858;
 import '../../domain/chat/tool/life_tools.dart' as _i70;
 import '../../domain/chat/usecase/chat_history_pruner.dart' as _i539;
@@ -153,6 +155,7 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i494.IdGenerator>(
       () => registerModule.idGenerator(gh<_i706.Uuid>()),
     );
+    gh.lazySingleton<_i555.SecureWindow>(() => _i241.ChannelSecureWindow());
     gh.lazySingleton<_i361.RingArchive>(
       () => _i380.DriftRingArchive(gh<_i869.RingArchiveDatabase>()),
     );

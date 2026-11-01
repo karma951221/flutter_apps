@@ -4459,5 +4459,15 @@
   "walkChatHistoryDeleteAllBody": "대화 {count}개를 지워요. 사용량 기록은 남아요.",
   "@walkChatHistoryDeleteAllBody": { "description": "대화 목록: 모두 지우기 확인 본문 — 지울 대화 수", "placeholders": { "count": { "type": "int" } } },
   "walkChatHistoryDeleteAllConfirm": "모두 지우기",
-  "@walkChatHistoryDeleteAllConfirm": { "description": "대화 목록: 모두 지우기 확인 버튼" }
+  "@walkChatHistoryDeleteAllConfirm": { "description": "대화 목록: 모두 지우기 확인 버튼" },
+  "walkChatTemporaryStart": "임시 대화로 시작",
+  "@walkChatTemporaryStart": { "description": "물어보기 ⋮: 임시 대화로 시작" },
+  "walkChatTemporaryBanner": "임시 대화 · 이 폰에 저장되지 않아요. 질문과 찾은 기록은 {vendor}에 전송되고, 그곳의 보관 정책은 앱이 정할 수 없어요.",
+  "@walkChatTemporaryBanner": { "description": "물어보기: 임시 대화 배너 — 벤더(회사) 이름", "placeholders": { "vendor": { "type": "String" } } },
+  "walkChatTurnDelete": "이 질문과 답 지우기",
+  "@walkChatTurnDelete": { "description": "물어보기: 말풍선 길게 누르기 시트 — 턴 지우기" },
+  "walkChatTurnDeleteTitle": "이 질문과 답을 지울까요?",
+  "@walkChatTurnDeleteTitle": { "description": "물어보기: 턴 지우기 확인 제목" },
+  "walkChatTurnDeleteBody": "이 대화에서 빠지고, 다음 질문의 문맥에도 들어가지 않아요.",
+  "@walkChatTurnDeleteBody": { "description": "물어보기: 턴 지우기 확인 본문" }
 }

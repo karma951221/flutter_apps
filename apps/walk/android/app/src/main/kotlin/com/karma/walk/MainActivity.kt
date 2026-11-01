@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.WindowManager
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -85,6 +86,20 @@ class MainActivity : FlutterFragmentActivity() {
                         result.error("unavailable", e2.message, null)
                     }
                 }
+            }
+        // 물어보기 임시 대화: 보이는 동안 스크린샷 · 녹화 · 최근 앱 썸네일을 막는다.
+        MethodChannel(messenger, "com.karma.walk/secure_window")
+            .setMethodCallHandler { call, result ->
+                if (call.method != "setSecure") {
+                    result.notImplemented()
+                    return@setMethodCallHandler
+                }
+                if (call.arguments == true) {
+                    window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                } else {
+                    window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                }
+                result.success(null)
             }
         alarmSounds = AlarmSoundsChannel(applicationContext, messenger)
         HolidayCalendarChannel.attach(applicationContext, flutterEngine)

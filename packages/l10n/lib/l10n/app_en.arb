@@ -1044,5 +1044,10 @@
   "walkChatHistoryDeleteAll": "Delete all conversations",
   "walkChatHistoryDeleteAllTitle": "Delete all conversations?",
   "walkChatHistoryDeleteAllBody": "{count, plural, =1{1 conversation will be deleted.} other{{count} conversations will be deleted.}} Usage records are kept.",
-  "walkChatHistoryDeleteAllConfirm": "Delete all"
+  "walkChatHistoryDeleteAllConfirm": "Delete all",
+  "walkChatTemporaryStart": "Start temporary chat",
+  "walkChatTemporaryBanner": "Temporary chat · Not saved on this phone. Your questions and the records found are sent to {vendor}, and the app can't control how long they keep them.",
+  "walkChatTurnDelete": "Delete this question and answer",
+  "walkChatTurnDeleteTitle": "Delete this question and answer?",
+  "walkChatTurnDeleteBody": "It will be removed from this conversation and won't be used as context for later questions."
 }

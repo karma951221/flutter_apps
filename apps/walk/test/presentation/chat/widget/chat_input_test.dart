@@ -102,4 +102,19 @@ void main() {
       expect(restored, 1);
     });
   });
+
+  testWidgets('enabled 가 false 면 입력칸과 전송 버튼이 꺼진다', (tester) async {
+    final sent = <String>[];
+    await tester.pumpWidget(
+      host(
+        ChatInput(busy: false, enabled: false, onSend: sent.add, onStop: () {}),
+      ),
+    );
+
+    expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
+    final send = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.send),
+    );
+    expect(send.onPressed, isNull);
+  });
 }

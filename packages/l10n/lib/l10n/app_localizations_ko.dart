@@ -3353,4 +3353,21 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatHistoryDeleteAllConfirm => '모두 지우기';
+
+  @override
+  String get walkChatTemporaryStart => '임시 대화로 시작';
+
+  @override
+  String walkChatTemporaryBanner(String vendor) {
+    return '임시 대화 · 이 폰에 저장되지 않아요. 질문과 찾은 기록은 $vendor에 전송되고, 그곳의 보관 정책은 앱이 정할 수 없어요.';
+  }
+
+  @override
+  String get walkChatTurnDelete => '이 질문과 답 지우기';
+
+  @override
+  String get walkChatTurnDeleteTitle => '이 질문과 답을 지울까요?';
+
+  @override
+  String get walkChatTurnDeleteBody => '이 대화에서 빠지고, 다음 질문의 문맥에도 들어가지 않아요.';
 }

@@ -3352,4 +3352,21 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatHistoryDeleteAllConfirm => 'すべて削除';
+
+  @override
+  String get walkChatTemporaryStart => '一時的な会話を始める';
+
+  @override
+  String walkChatTemporaryBanner(String vendor) {
+    return '一時的な会話・この端末には保存されません。質問と見つかった記録は$vendorに送信され、その保存方針はアプリでは決められません。';
+  }
+
+  @override
+  String get walkChatTurnDelete => 'この質問と回答を削除';
+
+  @override
+  String get walkChatTurnDeleteTitle => 'この質問と回答を削除しますか？';
+
+  @override
+  String get walkChatTurnDeleteBody => 'この会話から削除され、次の質問の文脈にも使われません。';
 }

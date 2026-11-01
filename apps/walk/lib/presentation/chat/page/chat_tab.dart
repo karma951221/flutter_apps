@@ -9,11 +9,13 @@ import 'package:l10n/l10n.dart';
 import '../../../domain/chat/chat_settings.dart';
 import '../../../domain/chat/chat_trace.dart';
 import '../../../domain/chat/repository/chat_history_repository.dart';
+import '../../../domain/chat/secure_window.dart';
 import '../../../domain/chat/usecase/chat_key_verifier.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/chat/usecase/open_conversation.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
+import '../../diary/page/diary_route.dart';
 import '../../diary/viewer/story_viewer_page.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/cubit/diary_lock_state.dart';
@@ -22,17 +24,24 @@ import '../../settings/open_settings.dart';
 import '../../shell/widget/feature_menu.dart';
 import '../cubit/chat_cubit.dart';
 import '../cubit/chat_state.dart';
+import '../widget/bubble_actions_sheet.dart';
 import '../widget/chat_bubble_view.dart';
 import '../widget/chat_consent_view.dart';
 import '../widget/chat_examples.dart';
 import '../widget/chat_input.dart';
+import '../widget/temporary_chat_banner.dart';
+import 'chat_history_page.dart';
 
 /// 셸의 물어보기 탭: 내 일기 · 걸음 · 기상 기록에 묻는 채팅.
 ///
 /// 대화 내용은 일기에서 나오므로 [DiaryLockGate] 안쪽에 둔다 — 잠긴 동안 트리에 없다.
 /// cubit 은 게이트 바깥(이 State)이 소유해 다시 잠겼다 풀려도 대화가 남는다.
-/// 위에서 `DiaryLockCubit` 를 받는다(셸이 소유). 앱바 ⋮ 는 물어보기 설정 · 앱 설정(잠긴 동안은
-/// 앱 설정만)이고, 셸의 설정 cubit 아래에서 연다([openSettings]).
+/// 위에서 `DiaryLockCubit` 를 받는다(셸이 소유). 앱바 ⋮ 는 대화 목록 · 임시 대화로 시작(키가
+/// 있을 때) · 물어보기 설정 · 앱 설정(잠긴 동안은 앱 설정만)이고, 셸의 설정 cubit 아래에서
+/// 연다([openSettings]).
+///
+/// 임시 대화가 열려 있고 탭이 보이는 동안 창 캡처를 막는다([SecureWindow]). 잠겨 있어도 ·
+/// 위에 화면이 얹혀도 켠 채 둔다(스펙 §2).
 ///
 /// 키 · 동의는 탭이 보이게 될 때와 위에 얹힌 화면(물어보기 설정 등)이 걷힐 때 다시 읽는다.
 class ChatTab extends StatefulWidget {
@@ -63,6 +72,28 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
     getIt<OpenConversation>(),
   );
 
+  late final _secure = getIt<SecureWindow>();
+
+  /// 마지막으로 [SecureWindow] 에 보낸 값. 같은 값은 다시 보내지 않는다.
+  bool _secureOn = false;
+
+  /// 탭이 보이고 임시 대화일 때만 창 캡처를 막는다.
+  void _syncSecure() {
+    final want = widget.active && _cubit.state.temporary;
+    if (want == _secureOn) return;
+    _secureOn = want;
+    unawaited(_secure.setSecure(want));
+  }
+
+  /// ⋮ [대화 목록]. 행을 고르면 그 대화를 연다. 잠금 아래 화면이다.
+  Future<void> _openHistory() async {
+    final id = await pushDiaryRoute<String>(
+      context,
+      page: (_) => const ChatHistoryPage(),
+    );
+    if (id != null) await _cubit.open(id);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -87,6 +118,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
   void didUpdateWidget(ChatTab oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.active && widget.active) unawaited(_cubit.refresh());
+    if (oldWidget.active != widget.active) _syncSecure();
   }
 
   /// 물어보기 설정(⋮ · [설정 열기] · 실패 말풍선 · 앱 설정)에서 키를 넣거나 지우고 돌아왔을 수 있다.
@@ -99,6 +131,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
   @override
   void dispose() {
     appRouteObserver.unsubscribe(this);
+    if (_secureOn) unawaited(_secure.setSecure(false));
     unawaited(_cubit.close());
     super.dispose();
   }
@@ -111,37 +144,81 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
     );
     return BlocProvider.value(
       value: _cubit,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.walkShellTabChat),
-          actions: [
-            if (unlocked) ...[
-              const _NewConversationAction(),
-              const FeatureMenu(settings: SettingsTarget.chat),
-            ] else
-              const FeatureMenu(
-                settings: SettingsTarget.chat,
-                showFeatureSettings: false,
-              ),
-          ],
-        ),
-        body: DiaryLockGate(
-          dismissPopups: widget.active,
-          child: _ChatBody(onOpenSettings: widget.onOpenSettings),
+      // 게이트 바깥 — 잠겨 있어도 임시 대화가 바뀌면 창 보안을 맞춘다.
+      child: BlocListener<ChatCubit, ChatState>(
+        listenWhen: (a, b) => a.temporary != b.temporary,
+        listener: (_, _) => _syncSecure(),
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(l10n.walkShellTabChat),
+            actions: [
+              if (unlocked) ...[
+                const _NewConversationAction(),
+                _ChatMenu(
+                  onHistory: () => unawaited(_openHistory()),
+                  onTemporary: _cubit.startTemporary,
+                ),
+              ] else
+                const FeatureMenu(
+                  settings: SettingsTarget.chat,
+                  showFeatureSettings: false,
+                ),
+            ],
+          ),
+          body: DiaryLockGate(
+            dismissPopups: widget.active,
+            child: _ChatBody(onOpenSettings: widget.onOpenSettings),
+          ),
         ),
       ),
     );
   }
 }
 
-/// 앱바 [새 대화]. 대화가 있을 때만.
+/// 풀린 동안의 ⋮ — 대화 목록 · 임시 대화로 시작(키가 있을 때) 아래에 물어보기 설정 · 앱 설정.
+class _ChatMenu extends StatelessWidget {
+  const _ChatMenu({required this.onHistory, required this.onTemporary});
+
+  final VoidCallback onHistory;
+  final VoidCallback onTemporary;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final ready = context.select<ChatCubit, bool>(
+      (c) => c.state.access == ChatAccess.ready,
+    );
+    return FeatureMenu(
+      settings: SettingsTarget.chat,
+      entries: [
+        FeatureMenuEntry(
+          key: const Key('chat-menu-history'),
+          label: l10n.walkChatHistoryTitle,
+          icon: Icons.history,
+          onTap: onHistory,
+        ),
+        if (ready)
+          FeatureMenuEntry(
+            key: const Key('chat-menu-temporary'),
+            label: l10n.walkChatTemporaryStart,
+            icon: Icons.visibility_off_outlined,
+            onTap: onTemporary,
+          ),
+      ],
+    );
+  }
+}
+
+/// 앱바 [새 대화]. 대화가 있거나 임시 대화일 때만.
 class _NewConversationAction extends StatelessWidget {
   const _NewConversationAction();
 
   @override
   Widget build(BuildContext context) {
     final show = context.select<ChatCubit, bool>(
-      (c) => c.state.access == ChatAccess.ready && c.state.bubbles.isNotEmpty,
+      (c) =>
+          c.state.access == ChatAccess.ready &&
+          (c.state.bubbles.isNotEmpty || c.state.temporary),
     );
     if (!show) return const SizedBox.shrink();
     return IconButton(
@@ -203,8 +280,11 @@ class _ChatBody extends StatelessWidget {
                 ),
               ),
             ),
+          if (state.temporary) TemporaryChatBanner(vendor: state.vendor),
           ChatInput(
             busy: state.busy,
+            // 저장된 대화를 읽는 동안 보낸 질문은 cubit 이 버린다 — 꺼져 보이게 한다.
+            enabled: !state.loading,
             onSend: (q) => unawaited(cubit.send(q)),
             onStop: cubit.stop,
             restoredDraft: state.restoredDraft,
@@ -230,6 +310,26 @@ class _BubbleList extends StatelessWidget {
     unawaited(openStoryViewer(context, source, entryId: entry.id));
   }
 
+  /// 말풍선 길게 누르기 → 시트 → [지우기] → 확인 뒤에 그 턴(질문 · 답)을 지운다.
+  Future<void> _actions(BuildContext context, int index) async {
+    final cubit = context.read<ChatCubit>();
+    final role = state.bubbles[index].role;
+    final action = await showBubbleActions(context);
+    if (action == null || !context.mounted) return;
+    switch (action) {
+      case BubbleAction.deleteTurn:
+        final l10n = AppLocalizations.of(context);
+        final confirmed = await AppConfirmDialog.show(
+          context,
+          title: l10n.walkChatTurnDeleteTitle,
+          content: l10n.walkChatTurnDeleteBody,
+          confirmLabel: l10n.commonDelete,
+        );
+        if (!confirmed) return;
+        await cubit.deleteTurn(role == ChatRole.user ? index : index - 1);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bubbles = state.bubbles;
@@ -245,6 +345,10 @@ class _BubbleList extends StatelessWidget {
           pending: state.busy && i == 0,
           onOpenCited: (cited, entry) => _open(context, cited, entry),
           onOpenSettings: onOpenSettings,
+          // 답하는 중엔 턴을 지우지 않는다.
+          onLongPress: state.busy
+              ? null
+              : () => unawaited(_actions(context, index)),
         );
       },
     );

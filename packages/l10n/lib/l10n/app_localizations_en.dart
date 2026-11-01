@@ -3622,4 +3622,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkChatHistoryDeleteAllConfirm => 'Delete all';
+
+  @override
+  String get walkChatTemporaryStart => 'Start temporary chat';
+
+  @override
+  String walkChatTemporaryBanner(String vendor) {
+    return 'Temporary chat · Not saved on this phone. Your questions and the records found are sent to $vendor, and the app can\'t control how long they keep them.';
+  }
+
+  @override
+  String get walkChatTurnDelete => 'Delete this question and answer';
+
+  @override
+  String get walkChatTurnDeleteTitle => 'Delete this question and answer?';
+
+  @override
+  String get walkChatTurnDeleteBody =>
+      'It will be removed from this conversation and won\'t be used as context for later questions.';
 }
