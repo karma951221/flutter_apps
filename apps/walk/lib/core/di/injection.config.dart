@@ -94,6 +94,7 @@ import '../../domain/chat/usecase/chat_key_verifier.dart' as _i5;
 import '../../domain/chat/usecase/chat_model_choice.dart' as _i317;
 import '../../domain/chat/usecase/chat_session.dart' as _i502;
 import '../../domain/chat/usecase/open_conversation.dart' as _i306;
+import '../../domain/chat/usecase/wiki_distiller.dart' as _i870;
 import '../../domain/chat/wiki/wiki_context_policy.dart' as _i795;
 import '../../domain/commute/repository/address_search.dart' as _i63;
 import '../../domain/commute/repository/place_repository.dart' as _i142;
@@ -405,6 +406,21 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i353.RingLogSource>(),
         gh<_i361.RingArchive>(),
         gh<_i873.AlarmUseCase>(),
+      ),
+    );
+    gh.lazySingleton<_i870.WikiDistiller>(
+      () => _i870.WikiDistiller(
+        gh<_i1004.ChatModelRegistry>(),
+        gh<_i111.ChatSettings>(),
+        gh<_i317.ChatModelChoice>(),
+        gh<_i31.ChatHistorySettings>(),
+        gh<_i752.ChatHistoryRepository>(),
+        gh<_i624.WikiRepository>(),
+        gh<_i268.WikiTools>(),
+        gh<_i122.DiaryRepository>(),
+        gh<_i520.ChatUsageLog>(),
+        gh<_i494.IdGenerator>(),
+        gh<_i494.Clock>(),
       ),
     );
     gh.lazySingleton<_i70.LifeTools>(
