@@ -350,8 +350,9 @@ class ChatSession {
     ChatTarget? requestTarget;
     // 지금 진행 단계. thinking 이 연달아 와도 한 번만 알린다.
     ChatPhase? phase = ChatPhase.sending;
-    yield const ChatEvent.phase(ChatPhase.sending);
     try {
+      // try 안에서 — 첫 이벤트에서 구독을 끊어도 finally 가 돌아 _busy 가 풀린다.
+      yield const ChatEvent.phase(ChatPhase.sending);
       final apiKey = requestKey = await _settings.apiKey();
       // 표시보다 stale() 이 먼저 — 지난 질문의 늦은 표시가 다음 질문 기록에 섞이지 않게.
       if (stale()) return;
@@ -383,6 +384,9 @@ class ChatSession {
         }
         // 이 라운드에 아직 글이 없다 — 첫 조각 앞에 경계 줄바꿈을 넣을지 본다.
         var firstText = true;
+        // 모델이 toolCallStarted/Ready 로 알린 도구 호출 id. 알리지 않은 호출은
+        // 실행 전에 세션이 toolStarted 를 낸다(그런 이벤트가 없는 어댑터 대비).
+        final announced = <String>{};
         // 이미지 거절이면 같은 라운드를 사진 없이 한 번만 다시 보낸다.
         while (true) {
           final request = ModelRequest(
@@ -415,10 +419,12 @@ class ChatSession {
                   }
                   // 라운드 경계: 이 질문에 이미 글이 있으면 새 라운드 첫 조각 앞에
                   // 줄바꿈 하나 — 흘린 글과 _turnText 가 같은 문자열이 되게 여기서 넣는다.
-                  final delta = firstText && _turnText.isNotEmpty
+                  // 빈 조각은 첫 조각으로 치지 않는다 — 줄바꿈만 흘리지 않게.
+                  final delta =
+                      firstText && text.isNotEmpty && _turnText.isNotEmpty
                       ? '\n$text'
                       : text;
-                  firstText = false;
+                  if (text.isNotEmpty) firstText = false;
                   _turnText.write(delta);
                   yield ChatEvent.text(delta);
                 case ModelCompleted():
@@ -441,9 +447,11 @@ class ChatSession {
                   yield ChatEvent.progress(text);
                 case ModelToolCallStarted(:final id, :final name):
                   phase = null;
+                  announced.add(id);
                   yield ChatEvent.toolStarted(callId: id, name: name);
                 case ModelToolCallReady(:final id, :final name, :final input):
                   phase = null;
+                  announced.add(id);
                   yield ChatEvent.toolStarted(
                     callId: id,
                     name: name,
@@ -484,6 +492,15 @@ class ChatSession {
               for (final p in done.message.parts)
                 if (p case ToolCallPart c) c,
             ];
+            for (final c in calls) {
+              if (announced.contains(c.id)) continue;
+              yield ChatEvent.toolStarted(
+                callId: c.id,
+                name: c.name,
+                input: _tools.inputSummary(c.name, c.input),
+              );
+            }
+            if (stale()) return;
             if (_trace.enabled) {
               for (final c in calls) {
                 _trace.mark(ChatTraceMark.toolStart, {'tool': c.name});

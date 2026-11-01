@@ -461,6 +461,45 @@ void main() {
       ]);
     });
 
+    test('모델이 알리지 않은 도구 호출은 실행 전에 세션이 toolStarted 를 낸다', () async {
+      final model = _FakeModel([
+        [
+          _done([
+            _toolUse('t1', 'search_diary', range),
+            _toolUse('t2', 'list_diary_index'),
+          ], StopKind.toolUse),
+        ],
+        _answer('네'),
+      ]);
+      when(
+        () => tools.run('list_diary_index', any()),
+      ).thenAnswer((_) async => const ToolResult(json: '{}'));
+
+      final events = await session(model).ask('지난주').toList();
+
+      expect(events.take(3).toList(), [
+        const ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.toolStarted(
+          callId: 't1',
+          name: 'search_diary',
+          input: rangeSummary,
+        ),
+        const ChatEvent.toolStarted(
+          callId: 't2',
+          name: 'list_diary_index',
+          input: ToolInputSummary(kind: ChatToolKind.diaryIndex),
+        ),
+      ]);
+    });
+
+    test('모델이 알린 호출은 세션이 다시 알리지 않는다', () async {
+      final model = _FakeModel([toolRound(), _answer('네')]);
+
+      final events = await session(model).ask('지난주').toList();
+
+      expect(events.whereType<ChatToolStarted>(), hasLength(2));
+    });
+
     test('결과에 요약이 없으면 toolFinished 는 그 종류의 0개', () async {
       when(
         () => tools.run('search_diary', any()),
@@ -634,6 +673,16 @@ void main() {
 
       expect(events, const [
         ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.toolStarted(
+          callId: 't1',
+          name: 'a',
+          input: ToolInputSummary(kind: ChatToolKind.other),
+        ),
+        ChatEvent.toolStarted(
+          callId: 't2',
+          name: 'b',
+          input: ToolInputSummary(kind: ChatToolKind.other),
+        ),
         ChatEvent.toolFinished(
           callId: 't2',
           name: 'b',
@@ -691,6 +740,31 @@ void main() {
       expect(streamed, '볼게요.\n지난주에는…');
       final result = chat.stop() as ChatStopKept;
       expect(result.text, '볼게요.\n지난주에는…');
+    });
+
+    test('빈 첫 조각은 줄바꿈을 쓰지 않고 다음 조각 앞에 넣는다', () async {
+      final model = _FakeModel([
+        [
+          const ModelEvent.textDelta('볼게요.'),
+          _done([
+            _text('볼게요.'),
+            _toolUse('t1', 'search_diary'),
+          ], StopKind.toolUse),
+        ],
+        [
+          const ModelEvent.textDelta(''),
+          const ModelEvent.textDelta('지난주에는'),
+          _done([_text('지난주에는')], StopKind.endTurn),
+        ],
+      ]);
+
+      final events = await session(model).ask('지난주').toList();
+
+      expect(events.whereType<ChatText>().toList(), const [
+        ChatEvent.text('볼게요.'),
+        ChatEvent.text(''),
+        ChatEvent.text('\n지난주에는'),
+      ]);
     });
 
     test('1라운드에 글이 없으면 2라운드 첫 글 앞에 줄바꿈이 없다', () async {
@@ -762,6 +836,16 @@ void main() {
 
       expect(events, const [
         ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.toolStarted(
+          callId: 'tu_1',
+          name: 'search_diary',
+          input: ToolInputSummary(kind: ChatToolKind.searchDiary),
+        ),
+        ChatEvent.toolStarted(
+          callId: 'tu_2',
+          name: 'list_diary_index',
+          input: ToolInputSummary(kind: ChatToolKind.diaryIndex),
+        ),
         ChatEvent.toolFinished(
           callId: 'tu_1',
           name: 'search_diary',
@@ -1572,7 +1656,25 @@ void main() {
       expect(done, isTrue);
     });
 
-    test('질문 구독을 끊으면 모델 구독도 끊는다', () async {
+    test('질문 구독을 첫 이벤트에서 끊어도 세션이 풀려 다음 ask 를 받는다', () async {
+      final model = _HangingModel();
+      final chat = hanging(model);
+      late StreamSubscription<ChatEvent> sub;
+      sub = chat.ask('첫').listen((_) => unawaited(sub.cancel()));
+      await pumpEventQueue();
+
+      final next = chat.ask('둘').toList();
+      await pumpEventQueue();
+      final round = model.rounds.last;
+      round
+        ..add(const ModelEvent.textDelta('네'))
+        ..add(_done([_text('네')], StopKind.endTurn));
+      unawaited(round.close());
+      expect((await next).last, const ChatEvent.finished(citedEntryIds: []));
+      expect(model.requests.last.last, const ChatMessage.user('둘'));
+    });
+
+    test('질문 구독을 글 도중에 끊으면 모델 구독도 끊는다', () async {
       final model = _HangingModel();
       final chat = hanging(model);
       late StreamSubscription<ChatEvent> sub;
@@ -1717,12 +1819,22 @@ void main() {
       await pumpEventQueue();
       expect(events, const [
         ChatEvent.phase(ChatPhase.sending),
+        ChatEvent.toolStarted(
+          callId: 't1',
+          name: 'view_entry_photos',
+          input: ToolInputSummary(kind: ChatToolKind.viewPhotos),
+        ),
         ChatEvent.toolFinished(
           callId: 't1',
           name: 'view_entry_photos',
           summary: ToolSummary(kind: ChatToolKind.viewPhotos, count: 0),
         ),
         ChatEvent.roundStarted(2),
+        ChatEvent.toolStarted(
+          callId: 't2',
+          name: 'view_entry_photos',
+          input: ToolInputSummary(kind: ChatToolKind.viewPhotos),
+        ),
       ]);
       expect(model.rounds, hasLength(2));
 
