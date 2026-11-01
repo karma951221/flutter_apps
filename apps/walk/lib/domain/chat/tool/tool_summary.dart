@@ -9,6 +9,9 @@ enum ChatToolKind {
   diaryIndex,
   dailySteps,
   wakeRecords,
+
+  /// read_wiki
+  wiki,
   other,
 }
 
@@ -18,6 +21,7 @@ ChatToolKind chatToolKindOf(String name) => switch (name) {
   'list_diary_index' => ChatToolKind.diaryIndex,
   'daily_steps' => ChatToolKind.dailySteps,
   'wake_records' => ChatToolKind.wakeRecords,
+  'read_wiki' => ChatToolKind.wiki,
   _ => ChatToolKind.other,
 };
 

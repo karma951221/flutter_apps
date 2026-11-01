@@ -88,11 +88,13 @@ import '../../domain/chat/repository/wiki_repository.dart' as _i624;
 import '../../domain/chat/secure_window.dart' as _i555;
 import '../../domain/chat/tool/chat_image_source.dart' as _i858;
 import '../../domain/chat/tool/life_tools.dart' as _i70;
+import '../../domain/chat/tool/wiki_tools.dart' as _i268;
 import '../../domain/chat/usecase/chat_history_pruner.dart' as _i539;
 import '../../domain/chat/usecase/chat_key_verifier.dart' as _i5;
 import '../../domain/chat/usecase/chat_model_choice.dart' as _i317;
 import '../../domain/chat/usecase/chat_session.dart' as _i502;
 import '../../domain/chat/usecase/open_conversation.dart' as _i306;
+import '../../domain/chat/wiki/wiki_context_policy.dart' as _i795;
 import '../../domain/commute/repository/address_search.dart' as _i63;
 import '../../domain/commute/repository/place_repository.dart' as _i142;
 import '../../domain/commute/repository/route_finder.dart' as _i488;
@@ -338,6 +340,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i111.ChatSettings>(),
       ),
     );
+    gh.lazySingleton<_i795.WikiContextPolicy>(
+      () => _i795.IndexAndReadPolicy(
+        gh<_i624.WikiRepository>(),
+        gh<_i31.ChatHistorySettings>(),
+      ),
+    );
     gh.lazySingleton<_i858.ChatImageSource>(
       () => _i957.CompressedChatImageSource(gh<_i870.MediaStore>()),
     );
@@ -384,6 +392,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i880.ChatModelCatalog>(),
         gh<_i5.ChatKeyVerifier>(),
         gh<_i494.Clock>(),
+      ),
+    );
+    gh.lazySingleton<_i268.WikiTools>(
+      () => _i268.WikiTools(
+        gh<_i624.WikiRepository>(),
+        gh<_i122.DiaryRepository>(),
       ),
     );
     gh.lazySingleton<_i626.RingArchiver>(

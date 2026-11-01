@@ -271,6 +271,36 @@ void main() {
     ]);
   });
 
+  test('배열 스키마(items)도 parameters 에 그대로 실린다', () async {
+    const arrayTool = ToolSpec(
+      name: 'read_wiki',
+      description: '위키 읽기',
+      parameters: {
+        'type': 'object',
+        'properties': {
+          'ids': {
+            'type': 'array',
+            'items': {'type': 'integer'},
+            'description': '메모 id',
+          },
+        },
+        'required': ['ids'],
+      },
+    );
+    final body = await bodyOf(request(tools: [arrayTool]));
+    expect((body['tools'] as List).single['parameters'], {
+      'type': 'object',
+      'properties': {
+        'ids': {
+          'type': 'array',
+          'items': {'type': 'integer'},
+          'description': '메모 id',
+        },
+      },
+      'required': ['ids'],
+    });
+  });
+
   group('모델별 필드', () {
     test('effort 는 supportsEffortOf 가 참일 때만', () async {
       const unsupported = 'gpt-4.1';

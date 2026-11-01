@@ -37,4 +37,53 @@ void main() {
     final number = await _settings({PrefsChatHistorySettings.retentionKey: 30});
     expect(number.retention, ChatRetention.never);
   });
+
+  group('색인 크기', () {
+    test('색인 크기는 처음엔 standard', () async {
+      final settings = await _settings();
+
+      expect(settings.wikiIndexSize, WikiIndexSize.standard);
+    });
+
+    test('저장한 값을 읽는다', () async {
+      final writer = await _settings();
+
+      await writer.setWikiIndexSize(WikiIndexSize.large);
+
+      final reader = PrefsChatHistorySettings(
+        await SharedPreferences.getInstance(),
+      );
+      expect(reader.wikiIndexSize, WikiIndexSize.large);
+      expect(
+        (await SharedPreferences.getInstance()).getString(
+          'walk.chat.wikiIndexSize',
+        ),
+        'large',
+      );
+    });
+
+    test('모르는 값이면 standard', () async {
+      final unknown = await _settings({
+        PrefsChatHistorySettings.wikiIndexSizeKey: 'huge',
+      });
+      expect(unknown.wikiIndexSize, WikiIndexSize.standard);
+
+      final number = await _settings({
+        PrefsChatHistorySettings.wikiIndexSizeKey: 3,
+      });
+      expect(number.wikiIndexSize, WikiIndexSize.standard);
+    });
+
+    test('상한 값', () {
+      expect(WikiIndexSize.small.maxNotes, 50);
+      expect(WikiIndexSize.small.maxChars, 2000);
+      expect(WikiIndexSize.standard.maxNotes, 150);
+      expect(WikiIndexSize.standard.maxChars, 6000);
+      expect(WikiIndexSize.large.maxNotes, 300);
+      expect(WikiIndexSize.large.maxChars, 12000);
+      expect(WikiIndexSize.all.maxNotes, isNull);
+      expect(WikiIndexSize.all.maxChars, 30000);
+      expect(WikiIndexSize.fallback, WikiIndexSize.standard);
+    });
+  });
 }

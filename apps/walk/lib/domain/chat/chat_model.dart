@@ -60,7 +60,8 @@ class ToolResultPart with _$ToolResultPart {
 }
 
 /// 모델에 알려 줄 도구 하나.
-/// JSON Schema 는 벤더 공통 부분집합(object · string · integer · enum · required)만.
+/// JSON Schema 는 벤더 공통 부분집합(object · string · integer · enum · required ·
+/// array(items 하나))만. 어댑터는 parameters 를 고치지 않고 그대로 싣는다.
 @freezed
 class ToolSpec with _$ToolSpec {
   @override

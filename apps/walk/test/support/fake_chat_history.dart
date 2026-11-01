@@ -3,12 +3,15 @@ import 'package:walk/domain/chat/entity/chat_usage_summary.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
 import 'package:walk/domain/chat/repository/chat_usage_repository.dart';
 
-/// 메모리 위의 대화 보관 기간. [failSet] 이면 setRetention 이 던진다.
+/// 메모리 위의 대화 보관 기간 · 색인 크기. [failSet] 이면 set 들이 던진다.
 class FakeChatHistorySettings implements ChatHistorySettings {
   FakeChatHistorySettings([this.retention = ChatRetention.fallback]);
 
   @override
   ChatRetention retention;
+
+  @override
+  WikiIndexSize wikiIndexSize = WikiIndexSize.fallback;
 
   bool failSet = false;
 
@@ -16,6 +19,12 @@ class FakeChatHistorySettings implements ChatHistorySettings {
   Future<void> setRetention(ChatRetention value) async {
     if (failSet) throw StateError('prefs');
     retention = value;
+  }
+
+  @override
+  Future<void> setWikiIndexSize(WikiIndexSize value) async {
+    if (failSet) throw StateError('prefs');
+    wikiIndexSize = value;
   }
 }
 

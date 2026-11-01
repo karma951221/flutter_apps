@@ -39,6 +39,12 @@ class _MemorySettings implements ChatHistorySettings {
 
   @override
   Future<void> setRetention(ChatRetention value) async => _retention = value;
+
+  @override
+  WikiIndexSize get wikiIndexSize => WikiIndexSize.fallback;
+
+  @override
+  Future<void> setWikiIndexSize(WikiIndexSize value) async {}
 }
 
 /// deleteOlderThan 에 받은 값만 기록한다. 나머지는 쓰지 않는다.

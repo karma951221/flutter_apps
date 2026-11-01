@@ -11,6 +11,7 @@ class PrefsChatHistorySettings implements ChatHistorySettings {
   final SharedPreferences _prefs;
 
   static const retentionKey = 'walk.chat.retention';
+  static const wikiIndexSizeKey = 'walk.chat.wikiIndexSize';
 
   // getString 은 문자열이 아닌 값에서 던지므로 get 으로 읽고 타입을 확인한다.
   String? _string(String key) => switch (_prefs.get(key)) {
@@ -26,4 +27,13 @@ class PrefsChatHistorySettings implements ChatHistorySettings {
   @override
   Future<void> setRetention(ChatRetention value) =>
       _prefs.setString(retentionKey, value.name);
+
+  @override
+  WikiIndexSize get wikiIndexSize =>
+      WikiIndexSize.values.asNameMap()[_string(wikiIndexSizeKey)] ??
+      WikiIndexSize.fallback;
+
+  @override
+  Future<void> setWikiIndexSize(WikiIndexSize value) =>
+      _prefs.setString(wikiIndexSizeKey, value.name);
 }

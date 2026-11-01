@@ -747,6 +747,30 @@ void main() {
     ]);
   });
 
+  test('배열 스키마(items)도 input_schema 에 그대로 실린다', () async {
+    const schema = {
+      'type': 'object',
+      'properties': {
+        'ids': {
+          'type': 'array',
+          'items': {'type': 'integer'},
+          'description': '메모 id',
+        },
+      },
+      'required': ['ids'],
+    };
+    late Map<String, dynamic> body;
+    await run(
+      capture((b) => body = b),
+      request(
+        tools: const [
+          ToolSpec(name: 'read_wiki', description: '위키 읽기', parameters: schema),
+        ],
+      ),
+    );
+    expect((body['tools'] as List).single['input_schema'], schema);
+  });
+
   test('요청 model 은 ModelRequest.model 이다', () async {
     late Map<String, dynamic> body;
     await run(capture((b) => body = b), request(model: 'claude-sonnet-9-9'));
