@@ -290,14 +290,14 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | 세션 · cubit | `domain/chat/usecase/chat_session_test`(사용량 기록 · 멈춤 (a)~(f)) · `presentation/chat/cubit/chat_cubit_test`(멈춤 · 질문 되돌림 · ready 면 확인 전 키 재확인 · `recheck: false` 면 안 함) |
 | 입력 · 말풍선 | `presentation/chat/widget/chat_input_test`([■ 멈춤] 전환) · `chat_bubble_view_test`('멈춤' 표시 · 실패 말풍선 [설정 열기]) · `chat_failure_text_test`(크레딧 부족 · 모델 없음 문구 · 빈 문구 없음) |
 | 화면 · 셸 | `presentation/chat/page/chat_tab_test`(⋮ 는 잠긴 동안 앱 설정만, 풀리면 물어보기 설정 · 앱 설정 · 위에 얹힌 물어보기 설정에서 키를 넣고 돌아오면 `didPopNext` 로 키를 다시 읽음 · 키 확인 중 로딩 · 키 없으면 설정 버튼 · 실패 말풍선 [설정 열기] · 보이지 않는 탭은 돌아와도 다시 읽지 않고 앱 시작에 키 확인도 안 함, 보이게 되면 함) · `presentation/shell/page/main_shell_page_test`(탭 구성 · 잠금 · 물어보기 [설정 열기]로 연 연결 행 glow · ⋮ 로 열면 glow 없음 · 알람 권한 배너 → 거부된 알림 권한 행 glow) |
-| 대화 기록 — 도메인 · 저장소 | `domain/chat/entity/conversation_test`(제목 만들기 30자 · 공백 접기 · 말줄임 · toString 에 글 없음) · `data/chat/database/chat_database_test`(스키마 v1 · TEXT 날짜 · 외래 키 켜짐) · `drift_chat_history_repository_test`(목록 순서 · 턴 수 · appendTurn 롤백 · 턴 지우기 · 삭제 cascade · `deleteOlderThan` · `watchExists`) |
+| 대화 기록 — 도메인 · 저장소 | `domain/chat/entity/conversation_test`(제목 만들기 30자 · 공백 접기 · 말줄임 · toString 에 글 없음) · `data/chat/database/chat_database_test`(스키마 v1 · TEXT 날짜 · 외래 키 켜짐) · `drift_chat_history_repository_test`(목록 순서 · 턴 수 · appendTurn 롤백 · 턴 지우기 · 삭제 cascade · `deleteOlderThan` · `watchExists`, `deleteAll` · `deleteOlderThan` 로 지워져도 false) |
 | 사용량 기록 | `data/chat/database/drift_chat_usage_log_test`(요청마다 한 행 · 임시는 숫자만 · 월별 합 · 모델별 · 13개월 정리 · `fast_mode`) · `domain/chat/chat_usage_log_test` |
-| 보관 기간 · 정리 | `data/chat/prefs_chat_history_settings_test` · `domain/chat/usecase/chat_history_pruner_test`(기간 지난 대화 삭제 · 열린 대화 건너뜀 · 사용량 13개월 · 줄 세우기) |
+| 보관 기간 · 정리 | `data/chat/prefs_chat_history_settings_test` · `domain/chat/usecase/chat_history_pruner_test`(기간 지난 대화 삭제 · 열린 대화 건너뜀 · 사용량 13개월 · 줄 세우기 · 설정 읽기가 던져도 다음 호출은 돈다) |
 | 보안 창 | `data/chat/channel_secure_window_test`(`FLAG_SECURE` 채널 호출 · 채널 없으면 무시) |
 | 이어가기 · 접기 | `chat_session_test`(`resume` 글만 문맥 · 최근 20턴 · 멈춘 턴 `stoppedNote` · 사진 0부터 · 벤더/모델이 바뀌면 글로 접기(라운드 사이 빈 줄) · temporary) |
-| 저장 · 열기 cubit | `chat_cubit_test`(턴 끝 저장 · 멈춘 턴 저장 · 글 없는 멈춤/실패 저장 안 함 · 열기 · 열리는 동안 보낸 질문 무시 · 임시 대화 저장 0 · 턴 지우기 · 열린 대화가 밖에서 지워지면 새 대화) · `chat_history_cubit_test`(목록 · 이름 바꾸기 · 삭제 · 모두 지우기) |
-| 대화 목록 · 임시 배너 | `presentation/chat/page/chat_history_page_test` · `presentation/chat/widget/temporary_chat_banner_test`(회사 이름) · `chat_tab_test`(⋮ [대화 목록] · [임시 대화로 시작] 위치 · 잠긴 동안 앱 설정만 · 임시 배너 · 보이는 동안 보안 창 켬/끔 · 시트 · 턴 지우기 · [더보기] 선택 메뉴) |
-| 물어보기 설정 — 기록 · 사용량 | `presentation/settings/cubit/chat_history_settings_cubit_test` · `widget/chat_history_settings_section_test`(보관 기간 · 대화 모두 지우기 확인) · `cubit/chat_usage_cubit_test`(달 이동 · 13개월 범위 · 지우기) · `page/chat_usage_page_test` · `open_settings_test`(대화 기록 행은 잠금이 풀려야 보임) |
+| 저장 · 열기 cubit | `chat_cubit_test`(턴 끝 저장 · 멈춘 턴 저장 · 글 없는 멈춤/실패 저장 안 함 · 열기 · 열리는 동안 보낸 질문 무시 · 임시 대화 저장 0 · 턴 지우기 · 열린 대화가 밖에서 지워지면 새 대화 · 열거나 턴을 지워 다시 읽는 동안에도 `OpenConversation.id` 는 그 대화, 턴이 없으면 비움 · 인용을 읽는 사이 새 대화여도 끝난 답 저장 · 줄 선 저장 뒤 같은 대화를 다시 열면 그 턴까지) · `chat_history_cubit_test`(목록 · 이름 바꾸기 · 삭제 · 모두 지우기 · 목록 스트림 오류면 failed · 실패는 false) |
+| 대화 목록 · 임시 배너 | `presentation/chat/page/chat_history_page_test`(이름 바꾸기 취소 · 같은 이름이면 저장소 안 부름 · 실패 스낵바 셋 · 목록 오류 안내) · `presentation/chat/widget/temporary_chat_banner_test`(회사 이름) · `chat_tab_test`(⋮ [대화 목록] · [임시 대화로 시작] 위치 · 잠긴 동안 앱 설정만 · 임시 배너 · 보이는 동안 보안 창 켬/끔 · 임시 대화에서 지난 대화를 열면 끔 · 키 없음 · 동의 전엔 [대화 목록]도 없음 · 시트 · 턴 지우기 · [더보기] 선택 메뉴) |
+| 물어보기 설정 — 기록 · 사용량 | `presentation/settings/cubit/chat_history_settings_cubit_test` · `widget/chat_history_settings_section_test`(보관 기간 · 대화 모두 지우기 확인 · 보관 기간 저장 실패 스낵바 · 지운 뒤 수 읽기 실패는 0 · 실패 스낵바 없음) · `cubit/chat_usage_cubit_test`(달 이동 · 13개월 범위 · 지우기) · `page/chat_usage_page_test` · `open_settings_test`(대화 기록 행은 잠금이 풀려야 보임) |
 
 ## 테스트가 없는 것
 
