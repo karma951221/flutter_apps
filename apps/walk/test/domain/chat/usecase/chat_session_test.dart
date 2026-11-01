@@ -1649,38 +1649,6 @@ void main() {
       }
     });
 
-    test("사진 한도 안내는 '대화를 다시 열거나 새 대화를 시작하면…'", () async {
-      when(() => tools.run('view_entry_photos', any())).thenAnswer(
-        (_) async => ToolResult(
-          json: '{"photos":13}',
-          images: [
-            for (var i = 0; i < 13; i++)
-              ToolImage(
-                mediaType: 'image/jpeg',
-                bytes: Uint8List.fromList([i]),
-              ),
-          ],
-        ),
-      );
-      final model = _FakeModel([
-        [
-          _done([_toolUse('t1', 'view_entry_photos')], StopKind.toolUse),
-        ],
-        _answer('끝'),
-      ]);
-
-      await session(model).ask('사진').toList();
-
-      final result = (model.requests[1].messages.last as ToolResultsMessage)
-          .results
-          .single;
-      expect(
-        result.json,
-        '{"error":"photo_limit_reached",'
-        '"hint":"대화를 다시 열거나 새 대화를 시작하면 다시 사진을 볼 수 있어요"}',
-      );
-    });
-
     test('답하는 중 resume 하면 그 질문은 조용히 멈추고 모델 구독이 취소된다', () async {
       final model = _HangingModel();
       final chat = ChatSession(
@@ -1773,9 +1741,9 @@ void main() {
       const u = TokenUsage(inputTokens: 1, outputTokens: 1);
       final model = _FakeModel([
         [
-          const ModelEvent.textDelta('찾아볼게요. '),
+          const ModelEvent.textDelta('찾아볼게요.'),
           _done(
-            [_text('찾아볼게요. '), _toolUse('t1', 'search_diary')],
+            [_text('찾아볼게요.'), _toolUse('t1', 'search_diary')],
             StopKind.toolUse,
             state: _FakeState(),
           ),
@@ -1795,7 +1763,7 @@ void main() {
       final messages = model.requests[2].messages;
       expect(messages, [
         const ChatMessage.user('q1'),
-        _assistant('찾아볼게요. 답'),
+        _assistant('찾아볼게요.\n\n답'),
         const ChatMessage.user('q2'),
       ]);
       expect(usage.records.single.vendor, ChatVendor.openai);

@@ -64,6 +64,7 @@ typedef ChatTarget = ({ChatVendor vendor, String model});
 /// 질문이 실패하거나 중간에 구독이 끊기면 그 질문에서 덧붙인 메시지를 되돌린다.
 /// 멈춤은 꼬리만 글로 바꾼다.
 /// 메모리의 지금 대화는 고치지 않는다 · 저장 · 복원 · 벤더 교체는 글만.
+/// 예외는 벤더 · 모델이 바뀔 때 — 다음 질문 전에 문맥을 글로 접는다([target]).
 @lazySingleton
 class ChatSession {
   ChatSession(
@@ -225,25 +226,26 @@ class ChatSession {
   }
 
   /// 메모리 문맥을 질문 단위의 글로 접는다 — 다른 벤더 · 모델은 vendorState ·
-  /// 도구 호출 · 도구 결과를 읽지 못한다. 질문마다 assistant 글을 이어 하나로 두고,
-  /// 글이 비면 그 질문째 버린다. 사진도 함께 빠지므로 사진 수는 0.
+  /// 도구 호출 · 도구 결과를 읽지 못한다. 질문마다 assistant 메시지(라운드)별 글을
+  /// 빈 줄로 이어 하나로 두고, 글이 비면 그 질문째 버린다. 접은 글은 모델에만 가고
+  /// 화면에는 나오지 않는다. 사진도 함께 빠지므로 사진 수는 0.
   void _foldToText() {
     final folded = <ChatMessage>[];
     String? question;
-    final answer = StringBuffer();
+    final rounds = <String>[];
     void flush() {
       final q = question;
-      if (q != null && answer.toString().trim().isNotEmpty) {
+      if (q != null && rounds.isNotEmpty) {
         folded
           ..add(ChatMessage.user(q))
           ..add(
             ChatMessage.assistant(
-              parts: [AssistantPart.text(answer.toString())],
+              parts: [AssistantPart.text(rounds.join('\n\n'))],
             ),
           );
       }
       question = null;
-      answer.clear();
+      rounds.clear();
     }
 
     for (final message in _messages) {
@@ -252,9 +254,8 @@ class ChatSession {
           flush();
           question = text;
         case AssistantMessage(:final parts):
-          for (final part in parts) {
-            if (part is TextPart) answer.write(part.text);
-          }
+          final text = parts.whereType<TextPart>().map((p) => p.text).join();
+          if (text.trim().isNotEmpty) rounds.add(text);
         case ToolResultsMessage():
           break;
       }
