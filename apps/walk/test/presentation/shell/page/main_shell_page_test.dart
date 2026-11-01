@@ -818,6 +818,58 @@ void main() {
     expect(settings.value.stepGoal, 6000);
   });
 
+  testWidgets('도구 › 걷기 ⋮ › 걷기 설정에서 목표를 낮춰 달성하면 돌아왔을 때 한 번 축하한다', (
+    tester,
+  ) async {
+    final settings = memorySettings;
+    when(walk.access).thenAnswer((_) async => HealthAccess.granted);
+    when(walk.today).thenAnswer(
+      (_) async => Ok(DailyActivity(date: DateTime(2026, 9, 23), steps: 6240)),
+    );
+    when(
+      () => walk.period(any(), any()),
+    ).thenAnswer((_) async => const Err(Failure.unknown()));
+    var celebrations = 0;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'HapticFeedback.vibrate' &&
+            call.arguments == 'HapticFeedbackType.mediumImpact') {
+          celebrations++;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    final goal = await pump(tester, settings: settings);
+    // 걷기 화면을 보고 있다 — 아직 목표에 못 미친다.
+    await tapTab(tester, '도구');
+    await tapToolsTab(tester, '걷기');
+    expect(celebrations, 0);
+
+    // 그 화면 ⋮ › 걷기 설정 — 셸 위에 얹혀 걷기 화면을 가린다.
+    await openMenu(tester, 'menu-settings-walk');
+    expect(find.byType(WalkSettingsPage), findsOneWidget);
+
+    // 걷기 설정의 목표 시트가 고른 값을 반영한 것과 같다.
+    await goal.select(6000);
+    await tester.pumpAndSettle();
+
+    expect(celebrations, 0);
+    expect(settings.value.goalCelebratedOn, isNull);
+
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await tester.pumpAndSettle();
+
+    expect(celebrations, 1);
+    expect(settings.value.goalCelebratedOn, DateTime(2026, 9, 23));
+  });
+
   group('헤드리스 작업 기다리기(awaitIdle)', () {
     late List<String> calls;
     late Completer<void> idle;

@@ -93,6 +93,14 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   ToolsSection _toolsSection = ToolsSection.alarm;
   ModalRoute<void>? _route;
 
+  /// 셸 위에 다른 라우트(설정 · 편집 · 시트 등)가 얹혀 있는지. 걷기 화면은 가려진 동안 달성을
+  /// 판정하지 않는다 — 걷기 설정에서 목표를 낮춰도 돌아왔을 때 축하한다.
+  ///
+  /// 일기 · 물어보기 탭의 `active` 에는 섞지 않는다 — 그 탭은 `active` 로 잠길 때 자기 시트를
+  /// 닫을지 정하고(`DiaryLockGate.dismissPopups`), 위에 얹힌 화면이 걷힐 때 앱바를 펼치거나
+  /// 다시 읽지 않아야 한다(물어보기는 자기 `didPopNext` 로 다시 읽는다).
+  bool _covered = false;
+
   @override
   void initState() {
     super.initState();
@@ -137,10 +145,16 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     super.dispose();
   }
 
+  @override
+  void didPushNext() => setState(() => _covered = true);
+
   /// 편집 · 울림 · 설정 화면이 닫혔다 — 알람이 바뀌었거나 권한을 허용했을 수 있다.
   /// 알림 버튼으로 울림을 끈 경우에도 여기로 오므로 예약부터 다시 채운다.
   @override
-  void didPopNext() => _refresh();
+  void didPopNext() {
+    setState(() => _covered = false);
+    unawaited(_refresh());
+  }
 
   /// 시작 · 복귀. 예약을 채운 뒤(지난 1회성이 꺼진 뒤) 목록을 읽는다.
   ///
@@ -251,7 +265,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
                     unawaited(openSettings(context, SettingsTarget.chat)),
               ),
               ToolsTab(
-                active: _tab == ShellTab.tools,
+                active: _tab == ShellTab.tools && !_covered,
                 section: _toolsSection,
                 onSectionChanged: (section) =>
                     setState(() => _toolsSection = section),

@@ -30,8 +30,9 @@ import '../widget/walk_skeleton.dart';
 class WalkHomePage extends StatefulWidget {
   const WalkHomePage({super.key, this.active = true});
 
-  /// 셸에서 이 탭이 보이는지. 숨은 동안은 달성을 판정하지 않는다 —
-  /// `IndexedStack` 이 숨은 탭도 살려 두어 화면 밖에서 축하를 써 버리지 않게 한다.
+  /// 셸에서 이 화면이 보이는지 — 도구 탭 › 걷기가 골라져 있고 셸 위에 다른 라우트(걷기 설정 등)가
+  /// 얹혀 있지 않을 때. 숨은 동안은 달성을 판정하지 않는다 — `IndexedStack` 이 숨은 탭도 살려 두고
+  /// 가려진 셸도 살아 있어, 화면 밖에서 축하를 써 버리지 않게 한다.
   final bool active;
 
   @override
@@ -115,7 +116,8 @@ class _WalkHomePageState extends State<WalkHomePage> {
   @override
   void didUpdateWidget(WalkHomePage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // 숨은 동안 달성했거나 목표를 낮췄다면(걷기 설정) 탭이 보이는 지금 축하한다.
+    // 숨은 동안 달성했거나 걷기 설정에서 목표를 낮췄다면 화면이 다시 보이는 지금 축하한다 —
+    // 다른 탭에서 돌아올 때와, 걷기 설정처럼 셸 위에 얹힌 화면이 걷힐 때.
     if (!oldWidget.active && widget.active) {
       if (_today.state case TodayActivityLoaded(:final activity)) {
         final today = _claimCelebration(

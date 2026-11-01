@@ -27,7 +27,7 @@ class ToolsTab extends StatefulWidget {
     super.key,
   });
 
-  /// 셸에서 도구 탭이 보이는지.
+  /// 셸에서 도구 탭이 보이는지. 셸 위에 다른 라우트가 얹혀 있으면 false 다.
   final bool active;
 
   /// 고른 상단 탭. 셸이 소유한다.

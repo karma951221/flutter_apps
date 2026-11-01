@@ -89,9 +89,14 @@ class _DiaryTabState extends State<DiaryTab> {
   void _maintain() => unawaited(_useCase.maintain().catchError((Object _) {}));
 
   /// 스크롤로 숨은 앱바를 펼친다(탭으로 돌아올 때 · 다시 잠길 때). 아직 붙어 있지 않으면 그대로.
+  ///
+  /// 빌드 중(`didUpdateWidget`)에 스크롤을 옮기지 않도록 프레임이 끝난 뒤에 한다.
   void _expandAppBar() {
-    final outer = _scroll.currentState?.outerController;
-    if (outer != null && outer.hasClients) outer.jumpTo(0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final outer = _scroll.currentState?.outerController;
+      if (outer != null && outer.hasClients) outer.jumpTo(0);
+    });
   }
 
   @override
@@ -163,7 +168,7 @@ class DiaryNewEntryButton extends StatelessWidget {
     );
     if (!unlocked) return const SizedBox.shrink();
     return FloatingActionButton(
-      // 셸의 IndexedStack 에 알람 탭 ＋ 도 있다 — 기본 Hero 태그가 겹치지 않게 끈다.
+      // 셸의 IndexedStack 에 도구 › 알람의 ＋ 도 있다 — 기본 Hero 태그가 겹치지 않게 끈다.
       heroTag: null,
       tooltip: AppLocalizations.of(context).walkDiaryEditorNewTitle,
       onPressed: () => unawaited(_post(context)),
