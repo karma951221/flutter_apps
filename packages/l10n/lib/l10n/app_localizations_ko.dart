@@ -3689,6 +3689,63 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatWikiAdd => '메모 추가';
 
   @override
+  String get walkChatWikiNewTitle => '새 메모';
+
+  @override
+  String get walkChatWikiEditTitle => '메모 편집';
+
+  @override
+  String get walkChatWikiFieldTitle => '제목';
+
+  @override
+  String get walkChatWikiFieldSummary => '한 줄 요약';
+
+  @override
+  String get walkChatWikiFieldSummaryHelp => '질문할 때마다 모델에게 보여요';
+
+  @override
+  String get walkChatWikiFieldBody => '본문';
+
+  @override
+  String get walkChatWikiErrorEmptyTitle => '제목을 적어 주세요';
+
+  @override
+  String get walkChatWikiErrorEmptySummary => '한 줄 요약을 적어 주세요';
+
+  @override
+  String get walkChatWikiErrorSave => '저장하지 못했어요';
+
+  @override
+  String get walkChatWikiLinkNote => '메모 링크';
+
+  @override
+  String get walkChatWikiLinkEntry => '일기 링크';
+
+  @override
+  String get walkChatWikiPickNoteTitle => '메모 고르기';
+
+  @override
+  String get walkChatWikiPickNoteSearch => '제목으로 찾기';
+
+  @override
+  String get walkChatWikiPickEntryTitle => '일기 고르기';
+
+  @override
+  String get walkChatWikiPickEntrySuggested => '이 대화의 근거 일기';
+
+  @override
+  String get walkChatWikiPickEntryByDate => '날짜로 찾기';
+
+  @override
+  String get walkChatWikiPickEntryNone => '그날 기록이 없어요';
+
+  @override
+  String get walkChatWikiSaved => '위키에 저장했어요';
+
+  @override
+  String get walkChatWikiAddFromBubble => '위키에 추가';
+
+  @override
   String get walkChatWikiDeleteAll => '위키 모두 지우기';
 
   @override

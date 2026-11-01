@@ -34,13 +34,15 @@ import '../widget/chat_jump_to_latest.dart';
 import '../widget/model_chip.dart';
 import '../widget/model_picker_sheet.dart';
 import '../widget/temporary_chat_banner.dart';
+import '../wiki/cubit/wiki_edit_state.dart';
+import '../wiki/open_wiki.dart';
 import 'chat_history_page.dart';
 
 /// 셸의 물어보기 탭: 내 일기 · 걸음 · 기상 기록에 묻는 채팅.
 ///
 /// 대화 내용은 일기에서 나오므로 [DiaryLockGate] 안쪽에 둔다 — 잠긴 동안 트리에 없다.
 /// cubit 은 게이트 바깥(이 State)이 소유해 다시 잠겼다 풀려도 대화가 남는다.
-/// 위에서 `DiaryLockCubit` 를 받는다(셸이 소유). 앱바 ⋮ 는 대화 목록 · 임시 대화로 시작(키가
+/// 위에서 `DiaryLockCubit` 를 받는다(셸이 소유). 앱바 ⋮ 는 대화 목록 · 위키 · 임시 대화로 시작(키가
 /// 있을 때) · 물어보기 설정 · 앱 설정(잠긴 동안은 앱 설정만)이고, 셸의 설정 cubit 아래에서
 /// 연다([openSettings]).
 ///
@@ -96,6 +98,12 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
       context,
       page: (_) => const ChatHistoryPage(),
     );
+    if (id != null && mounted) await _cubit.open(id);
+  }
+
+  /// ⋮ [위키]. 메모에서 [대화 보기]를 고르면 그 대화를 연다. 잠금 아래 화면이다.
+  Future<void> _openWiki() async {
+    final id = await openWikiPage(context);
     if (id != null && mounted) await _cubit.open(id);
   }
 
@@ -189,6 +197,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
                 const _NewConversationAction(),
                 _ChatMenu(
                   onHistory: () => unawaited(_openHistory()),
+                  onWiki: () => unawaited(_openWiki()),
                   onTemporary: _cubit.startTemporary,
                 ),
               ] else
@@ -208,11 +217,16 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
   }
 }
 
-/// 풀린 동안의 ⋮ — 대화 목록 · 임시 대화로 시작(둘 다 쓸 수 있을 때) 아래에 물어보기 설정 · 앱 설정.
+/// 풀린 동안의 ⋮ — 대화 목록 · 위키 · 임시 대화로 시작(쓸 수 있을 때) 아래에 물어보기 설정 · 앱 설정.
 class _ChatMenu extends StatelessWidget {
-  const _ChatMenu({required this.onHistory, required this.onTemporary});
+  const _ChatMenu({
+    required this.onHistory,
+    required this.onWiki,
+    required this.onTemporary,
+  });
 
   final VoidCallback onHistory;
+  final VoidCallback onWiki;
   final VoidCallback onTemporary;
 
   @override
@@ -231,6 +245,13 @@ class _ChatMenu extends StatelessWidget {
             label: l10n.walkChatHistoryTitle,
             icon: Icons.history,
             onTap: onHistory,
+          ),
+        if (ready)
+          FeatureMenuEntry(
+            key: const Key('chat-menu-wiki'),
+            label: l10n.walkChatWikiTitle,
+            icon: Icons.menu_book_outlined,
+            onTap: onWiki,
           ),
         if (ready)
           FeatureMenuEntry(
@@ -594,12 +615,20 @@ class _BubbleItem extends StatelessWidget {
     unawaited(openStoryViewer(context, source, entryId: entry.id));
   }
 
-  /// 말풍선 길게 누르기 → 시트 → [지우기] → 확인 뒤에 그 턴(질문 · 답)을 지운다.
-  Future<void> _actions(BuildContext context, ChatRole role) async {
+  /// 말풍선 길게 누르기 → 시트. [위키에 추가]는 그 턴으로 편집 화면을 연다(요청 없음),
+  /// [지우기]는 확인 뒤에 그 턴(질문 · 답)을 지운다.
+  Future<void> _actions(BuildContext context, ChatBubble bubble) async {
     final cubit = context.read<ChatCubit>();
-    final action = await showBubbleActions(context);
+    final role = bubble.role;
+    final canAddToWiki =
+        !cubit.state.temporary &&
+        bubble.failure == null &&
+        bubble.text.trim().isNotEmpty;
+    final action = await showBubbleActions(context, canAddToWiki: canAddToWiki);
     if (action == null || !context.mounted) return;
     switch (action) {
+      case BubbleAction.addToWiki:
+        await openWikiEditor(context, _seed(cubit.state, bubble));
       case BubbleAction.deleteTurn:
         final l10n = AppLocalizations.of(context);
         final confirmed = await AppConfirmDialog.show(
@@ -611,6 +640,19 @@ class _BubbleItem extends StatelessWidget {
         if (!confirmed) return;
         await cubit.deleteTurn(role == ChatRole.user ? index : index - 1);
     }
+  }
+
+  /// 그 턴(질문 · 답 말풍선 쌍)으로 [위키에 추가] 편집 값을 만든다. 글은 누른 말풍선의 글.
+  WikiEditSeed _seed(ChatState state, ChatBubble bubble) {
+    final user = bubble.role == ChatRole.user;
+    final question = user ? bubble : state.bubbles.elementAtOrNull(index - 1);
+    final answer = user ? state.bubbles.elementAtOrNull(index + 1) : bubble;
+    return WikiEditSeed.fromBubble(
+      question: question?.text ?? bubble.text,
+      text: bubble.text,
+      conversationId: state.conversationId,
+      citedEntryIds: [for (final e in answer?.cited ?? const []) e.id],
+    );
   }
 
   @override
@@ -636,9 +678,7 @@ class _BubbleItem extends StatelessWidget {
       onOpenCited: (cited, entry) => _open(context, cited, entry),
       onOpenSettings: onOpenSettings,
       // 답하는 중엔 턴을 지우지 않는다.
-      onLongPress: busy
-          ? null
-          : () => unawaited(_actions(context, bubble.role)),
+      onLongPress: busy ? null : () => unawaited(_actions(context, bubble)),
     );
   }
 }

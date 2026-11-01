@@ -4020,6 +4020,65 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatWikiAdd => 'Add note';
 
   @override
+  String get walkChatWikiNewTitle => 'New note';
+
+  @override
+  String get walkChatWikiEditTitle => 'Edit note';
+
+  @override
+  String get walkChatWikiFieldTitle => 'Title';
+
+  @override
+  String get walkChatWikiFieldSummary => 'One-line summary';
+
+  @override
+  String get walkChatWikiFieldSummaryHelp =>
+      'Shown to the model with every question';
+
+  @override
+  String get walkChatWikiFieldBody => 'Body';
+
+  @override
+  String get walkChatWikiErrorEmptyTitle => 'Enter a title';
+
+  @override
+  String get walkChatWikiErrorEmptySummary => 'Enter a summary';
+
+  @override
+  String get walkChatWikiErrorSave => 'Couldn\'t save';
+
+  @override
+  String get walkChatWikiLinkNote => 'Link note';
+
+  @override
+  String get walkChatWikiLinkEntry => 'Link entry';
+
+  @override
+  String get walkChatWikiPickNoteTitle => 'Choose a note';
+
+  @override
+  String get walkChatWikiPickNoteSearch => 'Search by title';
+
+  @override
+  String get walkChatWikiPickEntryTitle => 'Choose an entry';
+
+  @override
+  String get walkChatWikiPickEntrySuggested =>
+      'Entries cited in this conversation';
+
+  @override
+  String get walkChatWikiPickEntryByDate => 'Find by date';
+
+  @override
+  String get walkChatWikiPickEntryNone => 'No entries that day';
+
+  @override
+  String get walkChatWikiSaved => 'Saved to wiki';
+
+  @override
+  String get walkChatWikiAddFromBubble => 'Add to wiki';
+
+  @override
   String get walkChatWikiDeleteAll => 'Delete entire wiki';
 
   @override

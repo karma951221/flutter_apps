@@ -2,6 +2,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/presentation/chat/wiki/open_wiki.dart';
+import 'package:walk/presentation/chat/wiki/page/wiki_note_edit_page.dart';
 import 'package:walk/presentation/chat/wiki/page/wiki_note_page.dart';
 import 'package:walk/presentation/chat/wiki/page/wiki_page.dart';
 
@@ -143,5 +144,25 @@ void main() {
     await h.pump(tester, (context) => openWikiNote(context, 5));
 
     expect(find.text('대화 보기'), findsNothing);
+  });
+
+  testWidgets('[편집] → 메모 값이 채워진 편집, 저장하면 메모 화면이 바뀐다', (tester) async {
+    await h.setUp(notes: [sleep, alarm]);
+    await h.pump(tester, (context) => openWikiNote(context, 5));
+
+    await tester.tap(find.byKey(const Key('wiki-note-edit')));
+    await tester.pumpAndSettle();
+    expect(find.byType(WikiNoteEditPage), findsOneWidget);
+    expect(find.text('메모 편집'), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('wiki-edit-summary')),
+      '주말엔 9시',
+    );
+    await tester.tap(find.byKey(const Key('wiki-edit-save')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(WikiNoteEditPage), findsNothing);
+    expect(find.text('주말엔 9시'), findsOneWidget);
+    expect(h.wiki.updated.single.$1, 5);
   });
 }

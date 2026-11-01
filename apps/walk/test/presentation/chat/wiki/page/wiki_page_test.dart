@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:walk/domain/chat/chat_history_settings.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/presentation/chat/wiki/open_wiki.dart';
+import 'package:walk/presentation/chat/wiki/page/wiki_note_edit_page.dart';
 import 'package:walk/presentation/chat/wiki/page/wiki_note_page.dart';
 import 'package:walk/presentation/chat/wiki/page/wiki_page.dart';
 import 'package:walk/presentation/lock/widget/lock_secret_input.dart';
@@ -215,5 +216,24 @@ void main() {
     await h.lock.submit('1234');
     await tester.pumpAndSettle();
     expect(row(1), findsOneWidget);
+  });
+
+  testWidgets('[추가] → 빈 새 메모 편집, 저장하면 목록에 보인다', (tester) async {
+    await h.setUp(notes: [wikiNote(1)]);
+    await h.pump(tester, openWikiPage);
+
+    await tester.tap(find.byKey(const Key('wiki-add')));
+    await tester.pumpAndSettle();
+    expect(find.byType(WikiNoteEditPage), findsOneWidget);
+    expect(find.text('새 메모'), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('wiki-edit-title')), '새 제목');
+    await tester.enterText(find.byKey(const Key('wiki-edit-summary')), '새 요약');
+    await tester.tap(find.byKey(const Key('wiki-edit-save')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(WikiNoteEditPage), findsNothing);
+    expect(row(2), findsOneWidget);
+    expect(h.wiki.created.single.sourceConversationId, isNull);
   });
 }

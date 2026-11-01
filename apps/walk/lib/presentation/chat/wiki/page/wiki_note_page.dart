@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +12,7 @@ import '../../../../domain/chat/repository/chat_history_repository.dart';
 import '../../../../domain/chat/repository/wiki_repository.dart';
 import '../../../../domain/diary/repository/diary_repository.dart';
 import '../../../diary/viewer/story_viewer_page.dart';
+import '../cubit/wiki_edit_state.dart';
 import '../cubit/wiki_note_cubit.dart';
 import '../cubit/wiki_note_state.dart';
 import '../open_wiki.dart';
@@ -47,6 +50,15 @@ class WikiNotePage extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             actions: [
+              if (note != null)
+                IconButton(
+                  key: const Key('wiki-note-edit'),
+                  icon: const Icon(Icons.edit_outlined),
+                  tooltip: l10n.walkChatWikiEditTitle,
+                  onPressed: () => unawaited(
+                    openWikiEditor(context, WikiEditSeed.fromNote(note)),
+                  ),
+                ),
               AppOverflowMenu<_NoteAction>(
                 items: [
                   if (note != null)

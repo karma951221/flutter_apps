@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +17,7 @@ import '../../../../domain/chat/wiki/wiki_index.dart';
 import '../../../settings/widget/wiki_index_size_sheet.dart';
 import '../../widget/chat_vendor_icon.dart';
 import '../cubit/wiki_cubit.dart';
+import '../cubit/wiki_edit_state.dart';
 import '../cubit/wiki_state.dart';
 import '../open_wiki.dart';
 
@@ -36,6 +39,17 @@ class WikiPage extends StatelessWidget {
           appBar: AppBar(
             title: Text(l10n.walkChatWikiTitle),
             actions: [
+              IconButton(
+                key: const Key('wiki-add'),
+                icon: const Icon(Icons.add),
+                tooltip: l10n.walkChatWikiAdd,
+                onPressed: () => unawaited(
+                  openWikiEditor(
+                    context,
+                    const WikiEditSeed(title: '', summary: '', body: ''),
+                  ),
+                ),
+              ),
               AppOverflowMenu<_PageAction>(
                 items: [
                   if (state.notes.isNotEmpty)

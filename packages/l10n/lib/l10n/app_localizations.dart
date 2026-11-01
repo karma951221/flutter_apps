@@ -6810,6 +6810,120 @@ abstract class AppLocalizations {
   /// **'메모 추가'**
   String get walkChatWikiAdd;
 
+  /// 메모 편집 화면 앱바: 새 메모
+  ///
+  /// In ko, this message translates to:
+  /// **'새 메모'**
+  String get walkChatWikiNewTitle;
+
+  /// 메모 편집 화면 앱바 · 메모 화면 [편집] 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 편집'**
+  String get walkChatWikiEditTitle;
+
+  /// 메모 편집: 제목 칸
+  ///
+  /// In ko, this message translates to:
+  /// **'제목'**
+  String get walkChatWikiFieldTitle;
+
+  /// 메모 편집: 한 줄 요약 칸
+  ///
+  /// In ko, this message translates to:
+  /// **'한 줄 요약'**
+  String get walkChatWikiFieldSummary;
+
+  /// 메모 편집: 한 줄 요약 칸 아래 도움말
+  ///
+  /// In ko, this message translates to:
+  /// **'질문할 때마다 모델에게 보여요'**
+  String get walkChatWikiFieldSummaryHelp;
+
+  /// 메모 편집: 본문 칸
+  ///
+  /// In ko, this message translates to:
+  /// **'본문'**
+  String get walkChatWikiFieldBody;
+
+  /// 메모 편집: 제목이 비었을 때 칸 아래 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'제목을 적어 주세요'**
+  String get walkChatWikiErrorEmptyTitle;
+
+  /// 메모 편집: 요약이 비었을 때 칸 아래 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'한 줄 요약을 적어 주세요'**
+  String get walkChatWikiErrorEmptySummary;
+
+  /// 메모 편집: 저장 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 못했어요'**
+  String get walkChatWikiErrorSave;
+
+  /// 메모 편집: 본문에 메모 링크 넣기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 링크'**
+  String get walkChatWikiLinkNote;
+
+  /// 메모 편집: 본문에 일기 링크 넣기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'일기 링크'**
+  String get walkChatWikiLinkEntry;
+
+  /// 메모 고르기 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 고르기'**
+  String get walkChatWikiPickNoteTitle;
+
+  /// 메모 고르기 시트: 검색 칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'제목으로 찾기'**
+  String get walkChatWikiPickNoteSearch;
+
+  /// 일기 고르기 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'일기 고르기'**
+  String get walkChatWikiPickEntryTitle;
+
+  /// 일기 고르기 시트: 출처 대화가 인용한 일기 머리
+  ///
+  /// In ko, this message translates to:
+  /// **'이 대화의 근거 일기'**
+  String get walkChatWikiPickEntrySuggested;
+
+  /// 일기 고르기 시트: 날짜 고르기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'날짜로 찾기'**
+  String get walkChatWikiPickEntryByDate;
+
+  /// 일기 고르기 시트: 고른 날에 기록이 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'그날 기록이 없어요'**
+  String get walkChatWikiPickEntryNone;
+
+  /// 메모 편집: 저장 성공 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'위키에 저장했어요'**
+  String get walkChatWikiSaved;
+
+  /// 말풍선 길게 누르기 시트: 이 말풍선으로 위키 메모 만들기
+  ///
+  /// In ko, this message translates to:
+  /// **'위키에 추가'**
+  String get walkChatWikiAddFromBubble;
+
   /// 위키 화면 ⋮: 모두 지우기 항목
   ///
   /// In ko, this message translates to:

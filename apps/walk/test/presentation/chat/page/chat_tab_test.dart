@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/chat/chat_connection.dart';
+import 'package:walk/domain/chat/chat_history_settings.dart';
 import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_model_catalog.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
@@ -16,6 +17,7 @@ import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/entity/conversation.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
+import 'package:walk/domain/chat/repository/wiki_repository.dart';
 import 'package:walk/domain/chat/secure_window.dart';
 import 'package:walk/domain/chat/tool/tool_summary.dart';
 import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
@@ -31,15 +33,20 @@ import 'package:walk/presentation/chat/widget/chat_bubble_view.dart';
 import 'package:walk/presentation/chat/widget/chat_input.dart';
 import 'package:walk/presentation/chat/widget/chat_jump_to_latest.dart';
 import 'package:walk/presentation/chat/widget/chat_progress_view.dart';
+import 'package:walk/presentation/chat/wiki/page/wiki_note_edit_page.dart';
+import 'package:walk/presentation/chat/wiki/page/wiki_page.dart';
 import 'package:walk/presentation/diary/viewer/story_viewer_page.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_state.dart';
 
 import '../../../support/diary_fixtures.dart';
+import '../../../support/fake_chat_history.dart';
 import '../../../support/fake_chat_key_verifier.dart';
 import '../../../support/fake_chat_model_catalog.dart';
 import '../../../support/fake_chat_settings.dart';
 import '../../../support/fake_secure_window.dart';
+import '../../../support/fake_wiki_repository.dart';
+import '../wiki/wiki_fakes.dart';
 
 class _MockSession extends Mock implements ChatSession {}
 
@@ -81,8 +88,10 @@ void main() {
   late _MockHistory history;
   late FakeSecureWindow secure;
   late FakeChatModelCatalog catalog;
+  late MemoryWikiRepository wiki;
 
   setUp(() {
+    wiki = MemoryWikiRepository();
     session = _MockSession();
     diary = _MockDiary();
     settings = FakeChatSettings('sk-ant-test')
@@ -123,10 +132,13 @@ void main() {
       ..registerSingleton<ChatHistoryRepository>(history)
       ..registerSingleton<OpenConversation>(OpenConversation())
       ..registerSingleton<SecureWindow>(secure)
+      ..registerSingleton<WikiRepository>(wiki)
+      ..registerSingleton<ChatHistorySettings>(FakeChatHistorySettings())
       ..registerSingleton<Clock>(MutableClock(diaryT0));
   });
 
   tearDown(() async {
+    await wiki.close();
     await lockStates.close();
     await getIt.reset();
   });
@@ -581,12 +593,15 @@ void main() {
   }
 
   group('⋮ 항목', () {
-    testWidgets('⋮ 순서는 대화 목록 · 임시 대화로 시작 · 물어보기 설정 · 앱 설정', (tester) async {
+    testWidgets('⋮ 순서는 대화 목록 · 위키 · 임시 대화로 시작 · 물어보기 설정 · 앱 설정', (
+      tester,
+    ) async {
       await pump(tester);
       await openMenu(tester);
 
       final keys = [
         'chat-menu-history',
+        'chat-menu-wiki',
         'chat-menu-temporary',
         'menu-settings-chat',
         'menu-settings-app',
@@ -595,8 +610,9 @@ void main() {
         for (final k in keys) tester.getTopLeft(find.byKey(Key(k))).dy,
       ];
       expect(tops, [...tops]..sort());
-      expect(tops.toSet(), hasLength(4));
+      expect(tops.toSet(), hasLength(5));
       expect(find.text('대화 목록'), findsOneWidget);
+      expect(find.text('위키'), findsOneWidget);
       expect(find.text('임시 대화로 시작'), findsOneWidget);
     });
 
@@ -612,6 +628,7 @@ void main() {
       expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
       expect(find.byKey(const Key('chat-menu-history')), findsNothing);
       expect(find.byKey(const Key('chat-menu-temporary')), findsNothing);
+      expect(find.byKey(const Key('chat-menu-wiki')), findsNothing);
       expect(find.byKey(const Key('menu-settings-chat')), findsNothing);
     });
 
@@ -622,6 +639,7 @@ void main() {
 
       expect(find.byKey(const Key('chat-menu-history')), findsNothing);
       expect(find.byKey(const Key('chat-menu-temporary')), findsNothing);
+      expect(find.byKey(const Key('chat-menu-wiki')), findsNothing);
       expect(find.byKey(const Key('menu-settings-chat')), findsOneWidget);
     });
 
@@ -905,6 +923,134 @@ void main() {
       events.add(const ChatEvent.finished(citedEntryIds: []));
       await events.close();
       await tester.pumpAndSettle();
+    });
+  });
+
+  group('위키', () {
+    setUp(() {
+      when(() => history.turns(any())).thenAnswer((_) async => const []);
+    });
+
+    testWidgets('[위키] → 위키 화면, [대화 보기]로 끝나면 그 대화가 열린다', (tester) async {
+      wiki.stored = [
+        wikiNote(5, title: '수면 패턴').copyWith(sourceConversationId: 'c9'),
+      ];
+      when(
+        () => history.watchExists('c9'),
+      ).thenAnswer((_) => Stream.value(true));
+      when(() => history.turns('c9')).thenAnswer(
+        (_) async => [
+          ChatTurnRecord(
+            conversationId: 'c9',
+            seq: 1,
+            question: '지난 주말?',
+            answer: '한강을 걸었어요',
+            citedEntryIds: const [],
+            stopped: false,
+            vendor: ChatVendor.anthropic,
+            model: 'claude-test',
+            askedAt: diaryT0,
+          ),
+        ],
+      );
+      await pump(tester);
+
+      await tapMenu(tester, 'chat-menu-wiki');
+      expect(find.byType(WikiPage), findsOneWidget);
+      await tester.tap(find.byKey(const Key('wiki-note-5')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('대화 보기'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WikiPage), findsNothing);
+      expect(find.text('지난 주말?'), findsOneWidget);
+      expect(find.text('한강을 걸었어요'), findsOneWidget);
+    });
+
+    testWidgets('[위키]에서 그냥 돌아오면 대화는 그대로', (tester) async {
+      answer('산책을 했어요');
+      await pump(tester);
+      await tester.tap(find.text('어제 뭐 했어?'));
+      await tester.pumpAndSettle();
+
+      await tapMenu(tester, 'chat-menu-wiki');
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('산책을 했어요'), findsOneWidget);
+      verifyNever(() => history.turns(any()));
+    });
+
+    testWidgets('답 말풍선 길게 누르기 → [위키에 추가] → 답 글이 채워진 편집 화면', (tester) async {
+      answer('평일엔 7시에 일어나요.\n주말엔 늦어요.');
+      await pump(tester);
+      await tester.tap(find.text('요즘 몇 시에 일어나?'));
+      await tester.pumpAndSettle();
+
+      await longPressBubble(tester, '평일엔 7시에 일어나요.\n주말엔 늦어요.');
+      await tester.tap(find.text('위키에 추가'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WikiNoteEditPage), findsOneWidget);
+      String text(String key) =>
+          tester.widget<TextField>(find.byKey(Key(key))).controller!.text;
+      expect(text('wiki-edit-title'), '요즘 몇 시에 일어나?');
+      expect(text('wiki-edit-summary'), '평일엔 7시에 일어나요.');
+      expect(text('wiki-edit-body'), '평일엔 7시에 일어나요.\n주말엔 늦어요.');
+      // 요청은 없다 — 질문은 한 번만.
+      verify(() => session.ask(any())).called(1);
+
+      await tester.tap(find.byKey(const Key('wiki-edit-save')));
+      await tester.pumpAndSettle();
+      expect(find.byType(WikiNoteEditPage), findsNothing);
+      expect(wiki.created.single.sourceConversationId, 'c1');
+    });
+
+    testWidgets('질문 말풍선이면 본문은 질문', (tester) async {
+      answer('산책을 했어요');
+      await pump(tester);
+      await tester.tap(find.text('어제 뭐 했어?'));
+      await tester.pumpAndSettle();
+
+      await longPressBubble(tester, '어제 뭐 했어?');
+      await tester.tap(find.text('위키에 추가'));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const Key('wiki-edit-body')))
+            .controller!
+            .text,
+        '어제 뭐 했어?',
+      );
+    });
+
+    testWidgets('임시 대화에선 시트에 [위키에 추가]가 없다', (tester) async {
+      answer('산책을 했어요');
+      await pump(tester);
+      await tapMenu(tester, 'chat-menu-temporary');
+      await tester.tap(find.text('어제 뭐 했어?'));
+      await tester.pumpAndSettle();
+
+      await longPressBubble(tester, '산책을 했어요');
+      expect(find.text('이 질문과 답 지우기'), findsOneWidget);
+      expect(find.text('위키에 추가'), findsNothing);
+    });
+
+    testWidgets('실패 말풍선엔 [위키에 추가]가 없다', (tester) async {
+      when(() => session.ask(any())).thenAnswer(
+        (_) => Stream.fromIterable(const [
+          ChatEvent.text('반쯤'),
+          ChatEvent.failed(ChatFailure.network),
+        ]),
+      );
+      await pump(tester);
+      await tester.tap(find.text('어제 뭐 했어?'));
+      await tester.pumpAndSettle();
+
+      await longPressBubble(tester, '반쯤');
+      expect(find.text('이 질문과 답 지우기'), findsOneWidget);
+      expect(find.text('위키에 추가'), findsNothing);
     });
   });
 

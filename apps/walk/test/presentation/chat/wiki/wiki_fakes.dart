@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:core/core.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
+import 'package:walk/domain/chat/entity/conversation.dart';
 import 'package:walk/domain/chat/entity/wiki_note.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
 import 'package:walk/domain/chat/repository/wiki_repository.dart';
@@ -17,7 +18,7 @@ class MemoryWikiRepository implements WikiRepository {
   List<WikiNote> stored;
   final _changes = StreamController<void>.broadcast();
 
-  /// 설정하면 delete · deleteAll 이 던진다.
+  /// 설정하면 create · update · delete · deleteAll 이 던진다.
   bool failWrites = false;
 
   /// 설정하면 목록 스트림이 첫 값 대신 오류를 낸다.
@@ -72,6 +73,54 @@ class MemoryWikiRepository implements WikiRepository {
   @override
   Future<int> count() async => stored.length;
 
+  /// create · update 에 넘어온 내용(순서대로).
+  final List<WikiNoteDraft> created = [];
+  final List<(int, WikiNoteDraft)> updated = [];
+
+  /// 새 메모 id 는 지금 가장 큰 id + 1.
+  @override
+  Future<int> create(WikiNoteDraft draft) async {
+    if (failWrites) throw StateError('db');
+    created.add(draft);
+    final id =
+        [for (final n in stored) n.id].fold(0, (a, b) => a > b ? a : b) + 1;
+    final now = DateTime(2026, 11, 2, 9);
+    stored = [
+      WikiNote(
+        id: id,
+        title: draft.title,
+        summary: draft.summary,
+        body: draft.body,
+        sourceConversationId: draft.sourceConversationId,
+        createdAt: now,
+        updatedAt: now,
+      ),
+      ...stored,
+    ];
+    changed();
+    return id;
+  }
+
+  @override
+  Future<void> update(int id, WikiNoteDraft draft) async {
+    if (failWrites) throw StateError('db');
+    final old = _find(id);
+    if (old == null) throw StateError('no note $id');
+    updated.add((id, draft));
+    stored = [
+      old.copyWith(
+        title: draft.title,
+        summary: draft.summary,
+        body: draft.body,
+        sourceConversationId:
+            draft.sourceConversationId ?? old.sourceConversationId,
+      ),
+      for (final n in stored)
+        if (n.id != id) n,
+    ];
+    changed();
+  }
+
   @override
   Future<void> delete(int id) async {
     if (failWrites) throw StateError('db');
@@ -102,12 +151,15 @@ class MemoryWikiRepository implements WikiRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-/// 기록 하나 읽기만 하는 일기 저장소. 없는 id 는 notFound.
+/// 기록 하나 읽기 · 기간 찾기만 하는 일기 저장소. 없는 id 는 notFound.
 class EntryOnlyDiary implements DiaryRepository {
   EntryOnlyDiary([List<DiaryEntry> entries = const []])
     : entries = {for (final e in entries) e.id: e};
 
   final Map<String, DiaryEntry> entries;
+
+  /// searchEntries 에 넘어온 (from, to).
+  final List<(DateTime, DateTime)> searches = [];
 
   @override
   Future<Result<DiaryEntry>> entry(String id) async => switch (entries[id]) {
@@ -115,18 +167,45 @@ class EntryOnlyDiary implements DiaryRepository {
     null => const Err(Failure.notFound()),
   };
 
+  /// 양 끝 포함, 휴지통 제외, occurredAt 오름차순. 다른 조건은 보지 않는다.
+  @override
+  Future<List<DiaryEntry>> searchEntries({
+    required DateTime from,
+    required DateTime to,
+    String? query,
+    String? tag,
+    String? place,
+    String? storyId,
+    int limit = 50,
+  }) async {
+    searches.add((from, to));
+    return [
+      for (final e in entries.values)
+        if (e.deletedAt == null &&
+            !e.occurredAt.isBefore(from) &&
+            !e.occurredAt.isAfter(to))
+          e,
+    ]..sort((a, b) => a.occurredAt.compareTo(b.occurredAt));
+  }
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-/// 대화가 있는지만 답하는 대화 저장소.
+/// 대화가 있는지 · 그 턴들만 답하는 대화 저장소.
 class ExistsOnlyHistory implements ChatHistoryRepository {
-  ExistsOnlyHistory([Set<String> ids = const {}]) : ids = {...ids};
+  ExistsOnlyHistory([Set<String> ids = const {}, this.turnsById = const {}])
+    : ids = {...ids};
 
   final Set<String> ids;
+  final Map<String, List<ChatTurnRecord>> turnsById;
 
   @override
   Stream<bool> watchExists(String id) => Stream.value(ids.contains(id));
+
+  @override
+  Future<List<ChatTurnRecord>> turns(String conversationId) async =>
+      turnsById[conversationId] ?? const [];
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

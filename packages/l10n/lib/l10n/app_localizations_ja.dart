@@ -3688,6 +3688,63 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatWikiAdd => 'メモを追加';
 
   @override
+  String get walkChatWikiNewTitle => '新しいメモ';
+
+  @override
+  String get walkChatWikiEditTitle => 'メモを編集';
+
+  @override
+  String get walkChatWikiFieldTitle => 'タイトル';
+
+  @override
+  String get walkChatWikiFieldSummary => '一行要約';
+
+  @override
+  String get walkChatWikiFieldSummaryHelp => '質問のたびにモデルに表示されます';
+
+  @override
+  String get walkChatWikiFieldBody => '本文';
+
+  @override
+  String get walkChatWikiErrorEmptyTitle => 'タイトルを入力してください';
+
+  @override
+  String get walkChatWikiErrorEmptySummary => '要約を入力してください';
+
+  @override
+  String get walkChatWikiErrorSave => '保存できませんでした';
+
+  @override
+  String get walkChatWikiLinkNote => 'メモをリンク';
+
+  @override
+  String get walkChatWikiLinkEntry => '日記をリンク';
+
+  @override
+  String get walkChatWikiPickNoteTitle => 'メモを選ぶ';
+
+  @override
+  String get walkChatWikiPickNoteSearch => 'タイトルで検索';
+
+  @override
+  String get walkChatWikiPickEntryTitle => '日記を選ぶ';
+
+  @override
+  String get walkChatWikiPickEntrySuggested => 'この会話の根拠の日記';
+
+  @override
+  String get walkChatWikiPickEntryByDate => '日付で探す';
+
+  @override
+  String get walkChatWikiPickEntryNone => 'その日の記録はありません';
+
+  @override
+  String get walkChatWikiSaved => 'Wikiに保存しました';
+
+  @override
+  String get walkChatWikiAddFromBubble => 'Wikiに追加';
+
+  @override
   String get walkChatWikiDeleteAll => 'Wikiをすべて削除';
 
   @override

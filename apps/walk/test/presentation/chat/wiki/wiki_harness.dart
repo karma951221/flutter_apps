@@ -7,6 +7,7 @@ import 'package:l10n/l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/data/lock/prefs_lock_repository.dart';
 import 'package:walk/domain/chat/chat_history_settings.dart';
+import 'package:walk/domain/chat/entity/conversation.dart';
 import 'package:walk/domain/chat/entity/wiki_note.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
 import 'package:walk/domain/chat/repository/wiki_repository.dart';
@@ -14,6 +15,7 @@ import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/lock/device_auth.dart';
+import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
@@ -30,21 +32,25 @@ class WikiHarness {
   late FakeChatHistorySettings settings;
   late DiaryLockCubit lock;
   late PrefsLockRepository lockRepo;
-  final results = <String?>[];
+  late MutableClock clock;
+  late EntryOnlyDiary diary;
+  final results = <Object?>[];
 
   Future<void> setUp({
     List<WikiNote> notes = const [],
     List<DiaryEntry> entries = const [],
     Set<String> conversations = const {},
+    Map<String, List<ChatTurnRecord>> turns = const {},
     WikiIndexSize size = WikiIndexSize.fallback,
   }) async {
     SharedPreferences.setMockInitialValues({});
     lockRepo = PrefsLockRepository(await SharedPreferences.getInstance());
-    final clock = MutableClock(DateTime(2026, 11, 2, 9));
+    clock = MutableClock(DateTime(2026, 11, 2, 9));
     lock = DiaryLockCubit(lockRepo, FakeDeviceAuth(), clock, MediaPickGuard())
       ..start();
     wiki = MemoryWikiRepository(notes);
     settings = FakeChatHistorySettings()..wikiIndexSize = size;
+    diary = EntryOnlyDiary(entries);
     getIt
       ..registerSingleton<Clock>(clock)
       ..registerSingleton<LockRepository>(lockRepo)
@@ -52,9 +58,9 @@ class WikiHarness {
       ..registerSingleton<WikiRepository>(wiki)
       ..registerSingleton<ChatHistorySettings>(settings)
       ..registerSingleton<ChatSession>(TargetOnlySession(claudeTarget))
-      ..registerSingleton<DiaryRepository>(EntryOnlyDiary(entries))
+      ..registerSingleton<DiaryRepository>(diary)
       ..registerSingleton<ChatHistoryRepository>(
-        ExistsOnlyHistory(conversations),
+        ExistsOnlyHistory(conversations, turns),
       );
   }
 
@@ -64,10 +70,25 @@ class WikiHarness {
     await getIt.reset();
   }
 
+  /// 잠금을 켜고 백그라운드에 오래 둔 것처럼 다시 잠근다.
+  Future<void> relock(WidgetTester tester) async {
+    await lockRepo.setSecret(LockMethod.pin, '1234');
+    await lockRepo.saveConfig(const LockConfig(enabled: true));
+    lock.onPaused();
+    clock.advance(const Duration(minutes: 5));
+    lock.onResumed();
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> unlock(WidgetTester tester) async {
+    await lock.submit('1234');
+    await tester.pumpAndSettle();
+  }
+
   /// 첫 화면의 'home' 을 누르면 [open] 이 불린다.
   Future<void> pump(
     WidgetTester tester,
-    Future<String?> Function(BuildContext context) open,
+    Future<Object?> Function(BuildContext context) open,
   ) async {
     tester.view
       ..physicalSize = const Size(1080, 2400)
