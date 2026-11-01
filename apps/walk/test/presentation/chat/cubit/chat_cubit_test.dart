@@ -306,6 +306,19 @@ void main() {
       expect(cubit.state.bubbles.last.stopped, isTrue);
     });
 
+    test('멈춘 말풍선의 글은 세션이 남긴 kept.text 다', () async {
+      when(() => session.stop()).thenReturn(
+        const ChatStopResult.kept(text: '반쯤 받은 글', citedEntryIds: []),
+      );
+      await start(const [ChatEvent.text('반쯤')]);
+      expect(cubit.state.bubbles.last.text, '반쯤');
+
+      cubit.stop();
+
+      expect(cubit.state.bubbles.last.text, '반쯤 받은 글');
+      expect(cubit.state.bubbles.last.stopped, isTrue);
+    });
+
     test('인용을 읽는 사이 다음 질문을 보내도 인용은 멈춘 말풍선에 붙는다', () async {
       final read = Completer<Result<DiaryEntry>>();
       when(() => diary.entry('e1')).thenAnswer((_) => read.future);
@@ -536,35 +549,45 @@ void main() {
       ]);
     });
 
-    test('답하는 중에 newConversation 하면 done · end', () async {
+    test('답하는 중에 newConversation 하면 abort · done · end', () async {
       final events = StreamController<ChatEvent>();
       when(() => session.ask(any())).thenAnswer((_) => events.stream);
       unawaited(traced.send('질문'));
       await pumpEventQueue();
+      // 어댑터는 reset 이 모델 구독을 끊을 때 abort 를 찍는다.
+      when(() => session.reset()).thenAnswer((_) {
+        trace.mark(ChatTraceMark.abort);
+      });
 
       traced.newConversation();
+      when(() => session.reset()).thenReturn(null);
       traced.newConversation();
 
       expect(trace.labels, [
         'begin',
         ChatTraceMark.send,
+        ChatTraceMark.abort,
         ChatTraceMark.done,
         'end',
       ]);
       await events.close();
     });
 
-    test('답하는 중에 닫히면 done · end', () async {
+    test('답하는 중에 닫히면 abort · done · end', () async {
       final events = StreamController<ChatEvent>();
       when(() => session.ask(any())).thenAnswer((_) => events.stream);
       unawaited(traced.send('질문'));
       await pumpEventQueue();
+      when(() => session.reset()).thenAnswer((_) {
+        trace.mark(ChatTraceMark.abort);
+      });
 
       await traced.close();
 
       expect(trace.labels, [
         'begin',
         ChatTraceMark.send,
+        ChatTraceMark.abort,
         ChatTraceMark.done,
         'end',
       ]);

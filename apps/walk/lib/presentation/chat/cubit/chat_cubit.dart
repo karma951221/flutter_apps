@@ -117,11 +117,12 @@ class ChatCubit extends Cubit<ChatState> {
 
   /// 대화를 비운다. 답하는 중이면 끊는다 — 세션은 그 질문의 이벤트를 더 내지 않는다.
   void newConversation() {
-    if (state.busy) _traceDone();
     _generation++;
     unawaited(_sub?.cancel());
     _sub = null;
     _session.reset();
+    // reset 뒤에 닫는다 — 어댑터가 끊으며 찍는 abort 가 이번 질문 기록에 들어가게.
+    if (state.busy) _traceDone();
     _complete();
     emit(state.copyWith(bubbles: const [], busy: false, activeTool: null));
   }
@@ -141,8 +142,9 @@ class ChatCubit extends Cubit<ChatState> {
     _sub = null;
     if (_trace.enabled && _tracing) _trace.mark(ChatTraceMark.userStop);
     switch (result) {
-      case ChatStopKept(:final citedEntryIds):
-        final bubbles = _withLast((b) => b.copyWith(stopped: true));
+      case ChatStopKept(:final text, :final citedEntryIds):
+        // 세션이 남긴 글이 기준이다 — 다음 문맥에 들어가는 것과 화면이 같게.
+        final bubbles = _withLast((b) => b.copyWith(text: text, stopped: true));
         emit(state.copyWith(bubbles: bubbles, busy: false, activeTool: null));
         if (citedEntryIds.isNotEmpty && bubbles.isNotEmpty) {
           unawaited(
@@ -316,12 +318,13 @@ class ChatCubit extends Cubit<ChatState> {
 
   @override
   Future<void> close() async {
-    if (state.busy) _traceDone();
     _generation++;
     // 기다리지 않는다 — 응답을 기다리는 중인 세션 스트림은 취소가 늦게 끝날 수 있다.
     unawaited(_sub?.cancel());
     // 세션은 싱글턴이다. 답하는 중에 닫혀도 다음 cubit 이 ask 할 수 있게 비운다.
     _session.reset();
+    // reset 뒤에 닫는다 — 어댑터가 끊으며 찍는 abort 가 이번 질문 기록에 들어가게.
+    if (state.busy) _traceDone();
     _complete();
     return super.close();
   }

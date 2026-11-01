@@ -469,10 +469,6 @@ bool operator ==(Object other) {
 @override
 int get hashCode => runtimeType.hashCode;
 
-@override
-String toString() {
-  return 'ChatStopResult()';
-}
 
 
 }
@@ -640,10 +636,6 @@ bool operator ==(Object other) {
 @override
 int get hashCode => runtimeType.hashCode;
 
-@override
-String toString() {
-  return 'ChatStopResult.idle()';
-}
 
 
 }
@@ -684,10 +676,6 @@ bool operator ==(Object other) {
 @override
 int get hashCode => Object.hash(runtimeType,text,const DeepCollectionEquality().hash(_citedEntryIds));
 
-@override
-String toString() {
-  return 'ChatStopResult.kept(text: $text, citedEntryIds: $citedEntryIds)';
-}
 
 
 }
@@ -746,10 +734,6 @@ bool operator ==(Object other) {
 @override
 int get hashCode => runtimeType.hashCode;
 
-@override
-String toString() {
-  return 'ChatStopResult.dropped()';
-}
 
 
 }

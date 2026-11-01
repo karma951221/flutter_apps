@@ -7,7 +7,8 @@ import 'package:http/http.dart' as http;
 part 'sse_lines.freezed.dart';
 
 /// SSE 이벤트 하나. `event:` 가 없거나 data 가 없는 덩어리는 내지 않는다.
-@freezed
+/// toString 에 payload 를 남기지 않는다.
+@Freezed(toStringOverride: false)
 class SseEvent with _$SseEvent {
   @override
   final String event;

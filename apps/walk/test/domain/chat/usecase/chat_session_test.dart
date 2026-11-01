@@ -219,6 +219,21 @@ void main() {
       expect(usage.records, isEmpty);
     });
 
+    test('1라운드를 기록한 뒤 2라운드가 실패해도 1라운드 기록은 남는다', () async {
+      final model = _FakeModel([
+        [
+          _done([_toolUse('t1', 'search_diary')], StopKind.toolUse, usage: u1),
+        ],
+        [const ChatModelException(ChatModelErrorKind.network)],
+      ]);
+
+      final events = await session(model).ask('질문').toList();
+
+      expect(events.last, const ChatEvent.failed(ChatFailure.network));
+      expect(usage.records.single.round, 1);
+      expect(usage.records.single.inputTokens, 100);
+    });
+
     test('기록이 던져도 답은 finished', () async {
       usage.failWith = StateError('디스크 가득');
       final model = _FakeModel(twoRounds());
@@ -427,6 +442,66 @@ void main() {
       trace,
     ).ask('질문').toList();
     expect(trace.marks, isEmpty);
+  });
+
+  group('trace 표시는 stale() 뒤에 찍는다', () {
+    test('키를 읽는 중 reset 하면 늦게 끝난 지난 질문은 key 를 찍지 않는다', () async {
+      final slow = _GatedKeySettings('sk-ant-test-key');
+      final gate = Completer<void>();
+      slow.gate = gate.future;
+      final trace = RecordingChatTrace();
+      final chat = ChatSession(
+        _FakeModel([_answer('답')]),
+        tools,
+        slow,
+        clock,
+        usage,
+        ids,
+        trace,
+      );
+
+      chat.ask('첫').listen((_) {});
+      await pumpEventQueue();
+      chat.reset();
+      slow.gate = null;
+      await chat.ask('둘').toList();
+      expect(trace.labels, [ChatTraceMark.key, ChatTraceMark.round]);
+
+      gate.complete();
+      await pumpEventQueue();
+      expect(trace.labels, [ChatTraceMark.key, ChatTraceMark.round]);
+    });
+
+    test('도구 실행 중 reset 하면 늦게 끝난 도구는 tool.end 를 찍지 않는다', () async {
+      final hold = Completer<ToolResult>();
+      when(
+        () => tools.run('search_diary', any()),
+      ).thenAnswer((_) => hold.future);
+      final trace = RecordingChatTrace();
+      final chat = ChatSession(
+        _FakeModel([
+          [
+            _done([_toolUse('t1', 'search_diary')], StopKind.toolUse),
+          ],
+        ]),
+        tools,
+        settings,
+        clock,
+        usage,
+        ids,
+        trace,
+      );
+
+      chat.ask('첫').listen((_) {});
+      await pumpEventQueue();
+      expect(trace.labels.last, ChatTraceMark.toolStart);
+
+      chat.reset();
+      hold.complete(const ToolResult(json: '{}'));
+      await pumpEventQueue();
+
+      expect(trace.labels, isNot(contains(ChatTraceMark.toolEnd)));
+    });
   });
 
   test('이미지가 있는 결과는 ToolResultPart.images 로 다음 요청에 실린다', () async {
@@ -1135,6 +1210,33 @@ void main() {
       expect(firstEvents, const [ChatEvent.text('앞')]);
     });
 
+    test('completed 를 받고 스트림이 닫히기 전에 멈춰도 그 라운드 사용량은 기록한다', () async {
+      chat.ask('첫').listen((_) {});
+      await pumpEventQueue();
+      model.rounds[0]
+        ..add(const ModelEvent.textDelta('글'))
+        ..add(
+          _done(
+            [_text('글')],
+            StopKind.endTurn,
+            usage: const TokenUsage(inputTokens: 40, outputTokens: 5),
+          ),
+        );
+      await pumpEventQueue();
+
+      expect(
+        chat.stop(),
+        const ChatStopResult.kept(text: '글', citedEntryIds: []),
+      );
+      expect(usage.records.single.inputTokens, 40);
+      expect(usage.records.single.round, 1);
+    });
+
+    test('kept 결과의 toString 에 받은 글이 없다', () {
+      const result = ChatStopResult.kept(text: '비밀 답', citedEntryIds: ['e1']);
+      expect(result.toString(), isNot(contains('비밀')));
+    });
+
     test('진행 중이 아니면 stop 은 idle 이고 아무것도 바꾸지 않는다', () async {
       expect(chat.stop(), const ChatStopResult.idle());
       await answered('앞', '앞 답');
@@ -1274,6 +1376,20 @@ void main() {
 
     expect(events.toString(), isNot(contains('sk-ant')));
   });
+}
+
+/// [gate] 가 있으면 키 읽기가 그 future 를 기다린다.
+class _GatedKeySettings extends FakeChatSettings {
+  _GatedKeySettings(super.key);
+
+  Future<void>? gate;
+
+  @override
+  Future<String?> apiKey() async {
+    final wait = gate;
+    if (wait != null) await wait;
+    return super.apiKey();
+  }
 }
 
 class _GatedModel implements ChatModel {

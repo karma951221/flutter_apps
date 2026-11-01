@@ -34,8 +34,8 @@ sealed class ChatEvent with _$ChatEvent {
   const factory ChatEvent.failed(ChatFailure failure) = ChatFailed;
 }
 
-/// [ChatSession.stop] 의 결과.
-@freezed
+/// [ChatSession.stop] 의 결과. toString 에 받은 글을 남기지 않는다.
+@Freezed(toStringOverride: false)
 sealed class ChatStopResult with _$ChatStopResult {
   /// 진행 중인 질문이 없었다(이미 끝났거나 리셋됨). 아무것도 바꾸지 않았다.
   const factory ChatStopResult.idle() = ChatStopIdle;
@@ -190,8 +190,9 @@ class ChatSession {
     var completed = false;
     try {
       final apiKey = await _settings.apiKey();
-      if (_trace.enabled) _trace.mark(ChatTraceMark.key);
+      // 표시보다 stale() 이 먼저 — 지난 질문의 늦은 표시가 다음 질문 기록에 섞이지 않게.
       if (stale()) return;
+      if (_trace.enabled) _trace.mark(ChatTraceMark.key);
       if (apiKey == null) {
         yield const ChatEvent.failed(ChatFailure.noKey);
         return;
@@ -229,6 +230,9 @@ class ChatSession {
               yield ChatEvent.text(text);
             case ModelCompleted():
               done = event;
+              // 받는 즉시 남긴다 — 청구된 라운드는 HTTP 가 닫히기 전에 멈추거나
+              // 비워도, 뒤 라운드가 실패해도 기록에 남아야 한다.
+              _recordUsage(questionKey, round, request, event.usage);
             case ModelThinking() ||
                 ModelProgress() ||
                 ModelToolCallStarted() ||
@@ -244,7 +248,6 @@ class ChatSession {
         if (done == null) {
           throw const ChatModelException(ChatModelErrorKind.network);
         }
-        _recordUsage(questionKey, round, request, done.usage);
         _messages.add(done.message);
 
         switch (done.stop) {
@@ -257,6 +260,7 @@ class ChatSession {
                 _trace.mark(ChatTraceMark.toolStart, {'tool': part.name});
               }
               final result = await _tools.run(part.name, part.input);
+              if (stale()) return;
               if (_trace.enabled) {
                 // 개수만 — 결과 본문 · 입력값은 찍지 않는다.
                 _trace.mark(ChatTraceMark.toolEnd, {
@@ -264,7 +268,6 @@ class ChatSession {
                   'n': result.entryIds.length + result.images.length,
                 });
               }
-              if (stale()) return;
               _turnCited.addAll(result.entryIds);
               final capped = _capped(result);
               results.add(

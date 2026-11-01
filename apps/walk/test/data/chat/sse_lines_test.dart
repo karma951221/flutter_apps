@@ -22,6 +22,11 @@ Future<List<SseEvent>> _read(Stream<List<int>> bytes) =>
     sseEvents(bytes, idleTimeout: const Duration(seconds: 5)).toList();
 
 void main() {
+  test('toString 에 payload 가 없다', () {
+    const event = SseEvent(event: 'content_block_delta', data: '{"text":"비밀"}');
+    expect(event.toString(), isNot(contains('비밀')));
+  });
+
   test('한 이벤트의 event 와 data 를 낸다', () async {
     final events = await _read(_bytes('event: a\ndata: {"x":1}\n\n'));
     expect(events, [const SseEvent(event: 'a', data: '{"x":1}')]);

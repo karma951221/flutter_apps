@@ -32,10 +32,6 @@ bool operator ==(Object other) {
 @override
 int get hashCode => Object.hash(runtimeType,event,data);
 
-@override
-String toString() {
-  return 'SseEvent(event: $event, data: $data)';
-}
 
 
 }
