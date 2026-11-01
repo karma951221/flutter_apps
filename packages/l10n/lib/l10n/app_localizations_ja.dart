@@ -3308,4 +3308,11 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatDisconnected => '接続を解除しました';
+
+  @override
+  String get walkChatKeyNotApiKey =>
+      'API キーではありません。Console の API Keys で作ったキーを入れてください';
+
+  @override
+  String get walkChatSettingsDisconnectFailed => '接続を解除できませんでした';
 }

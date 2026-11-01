@@ -40,10 +40,15 @@ class ChatKeyDialog extends StatefulWidget {
 class _ChatKeyDialogState extends State<ChatKeyDialog> {
   final _controller = TextEditingController();
   bool _obscure = true;
+
+  /// 확인 호출 중인가 — [저장] 로딩.
   bool _checking = false;
 
-  /// 확인 호출이 키를 거절했는가. 글을 고치면 지운다.
-  bool _rejected = false;
+  /// 확인 · 요금 경고 · 쓰기 중 어디쯤이든 저장이 진행 중인가. 입력칸 · 버튼 · 뒤로를 막는다.
+  bool _busy = false;
+
+  /// 입력칸 아래에 붙인 저장 결과 오류(키 거절 · 쓰기 실패). 글을 고치면 지운다.
+  String? _saveError;
 
   /// 마지막으로 본 입력 — 선택 · 커서 이동만으로는 오류 문구를 지우지 않는다.
   String _lastText = '';
@@ -63,17 +68,29 @@ class _ChatKeyDialogState extends State<ChatKeyDialog> {
   void _onChanged() {
     if (_controller.text == _lastText) return;
     _lastText = _controller.text;
-    setState(() => _rejected = false);
+    setState(() => _saveError = null);
   }
 
   String get _key => _controller.text.trim();
 
-  /// 접두사 안내. 비었거나 이 벤더의 키 모양이면 null.
+  /// 이 벤더의 키를 아직 치는 중일 수 있는가 — 안내를 미룬다.
+  /// anthropic: `sk-ant-api` 의 앞부분이거나 `sk-ant-api` + 숫자까지.
+  bool _maybeTyping(String key) => switch (widget.vendor) {
+    ChatVendor.anthropic =>
+      'sk-ant-api'.startsWith(key) || RegExp(r'^sk-ant-api\d*$').hasMatch(key),
+    ChatVendor.openai => 'sk-'.startsWith(key),
+  };
+
+  /// 접두사 안내. 비었거나, 이 벤더의 키 모양이거나, 아직 그 모양을 치는 중이면 null.
   String? _prefixProblem(AppLocalizations l10n) {
     final key = _key;
-    if (key.isEmpty) return null;
+    if (key.isEmpty || _maybeTyping(key)) return null;
     final guessed = vendorOfKey(key);
     if (guessed == widget.vendor) return null;
+    // sk-ant- 로 시작하지만 API 키가 아닌 것(관리 키 등).
+    if (widget.vendor == ChatVendor.anthropic && key.startsWith('sk-ant-')) {
+      return l10n.walkChatKeyNotApiKey;
+    }
     if (guessed != null) {
       return l10n.walkChatKeyOtherVendor(chatVendorName(l10n, guessed));
     }
@@ -84,17 +101,30 @@ class _ChatKeyDialogState extends State<ChatKeyDialog> {
   }
 
   Future<void> _save() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _checking = true;
+    });
+    final error = await _checkAndConnect();
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _checking = false;
+      if (error != null) _saveError = error;
+    });
+  }
+
+  /// 확인 → 요금 경고 → 등록. 성공이면 닫고 null, 입력칸에 붙일 오류가 있으면 그 글,
+  /// 경고를 취소했으면 null.
+  Future<String?> _checkAndConnect() async {
     final l10n = AppLocalizations.of(context);
     final cubit = context.read<ChatSettingsCubit>();
     final key = _key;
-    setState(() => _checking = true);
     final check = await cubit.check(key);
-    if (!mounted) return;
+    if (!mounted) return null;
+    if (check == ChatKeyCheck.invalid) return l10n.walkChatKeyInvalid;
     setState(() => _checking = false);
-    if (check == ChatKeyCheck.invalid) {
-      setState(() => _rejected = true);
-      return;
-    }
     final confirmed = await AppConfirmDialog.show(
       context,
       title: l10n.walkChatCostWarningTitle(chatVendorName(l10n, widget.vendor)),
@@ -104,31 +134,34 @@ class _ChatKeyDialogState extends State<ChatKeyDialog> {
       confirmLabel: l10n.walkChatCostWarningConfirm,
       isDestructive: false,
     );
-    if (!confirmed || !mounted) return;
+    if (!confirmed || !mounted) return null;
+    setState(() => _checking = true);
     final saved = await cubit.connect(key, check);
-    if (!mounted) return;
+    if (!mounted) return null;
     if (!saved) {
       AppSnackBar.show(
         context,
         message: l10n.walkChatSettingsSaveFailed,
         type: AppSnackBarType.error,
       );
-      return;
+      return l10n.walkChatSettingsSaveFailed;
     }
     Navigator.of(context).pop(
       check == ChatKeyCheck.valid
           ? ChatKeyDialogResult.connected
           : ChatKeyDialogResult.savedUnverified,
     );
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final problem = _prefixProblem(l10n);
-    final canSave = !_checking && _key.isNotEmpty && problem == null;
+    // 아직 치는 중(안내 없음)이어도 이 벤더의 키 모양이 될 때까지 저장은 끈다.
+    final canSave = !_busy && vendorOfKey(_key) == widget.vendor;
     return PopScope<Object?>(
-      canPop: !_checking,
+      canPop: !_busy,
       child: AlertDialog(
         title: Text(
           l10n.walkChatSettingsKeyDialogTitle(
@@ -138,14 +171,14 @@ class _ChatKeyDialogState extends State<ChatKeyDialog> {
         content: TextField(
           key: const Key('chat-key-input'),
           controller: _controller,
-          enabled: !_checking,
+          enabled: !_busy,
           obscureText: _obscure,
           autofocus: true,
           autocorrect: false,
           enableSuggestions: false,
           decoration: InputDecoration(
             hintText: '${chatKeyPrefixHint(widget.vendor)}…',
-            errorText: _rejected ? l10n.walkChatKeyInvalid : problem,
+            errorText: _saveError ?? problem,
             suffixIcon: IconButton(
               key: const Key('chat-key-visibility'),
               tooltip: _obscure ? l10n.walkChatKeyShow : l10n.walkChatKeyHide,
@@ -161,7 +194,7 @@ class _ChatKeyDialogState extends State<ChatKeyDialog> {
         actions: [
           AppButton.text(
             label: l10n.commonCancel,
-            onPressed: _checking ? null : () => Navigator.of(context).pop(),
+            onPressed: _busy ? null : () => Navigator.of(context).pop(),
           ),
           AppButton.primary(
             key: const Key('chat-key-save'),

@@ -85,7 +85,7 @@ class _ChatSettingsViewState extends State<_ChatSettingsView> {
       context,
       message: done
           ? l10n.walkChatDisconnected
-          : l10n.walkChatSettingsSaveFailed,
+          : l10n.walkChatSettingsDisconnectFailed,
       type: done ? AppSnackBarType.info : AppSnackBarType.error,
     );
   }

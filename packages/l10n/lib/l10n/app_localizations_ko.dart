@@ -3309,4 +3309,11 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatDisconnected => '연결을 끊었어요';
+
+  @override
+  String get walkChatKeyNotApiKey =>
+      'API 키가 아니에요. Console 의 API Keys 에서 만든 키를 넣어 주세요';
+
+  @override
+  String get walkChatSettingsDisconnectFailed => '연결을 끊지 못했어요';
 }

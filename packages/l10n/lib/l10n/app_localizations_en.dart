@@ -3565,4 +3565,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkChatDisconnected => 'Disconnected';
+
+  @override
+  String get walkChatKeyNotApiKey =>
+      'This isn\'t an API key. Use a key from API Keys in the Console.';
+
+  @override
+  String get walkChatSettingsDisconnectFailed => 'Couldn\'t disconnect';
 }

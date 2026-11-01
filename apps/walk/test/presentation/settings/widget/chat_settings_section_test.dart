@@ -242,7 +242,13 @@ void main() {
 
     await connectThroughDialog(tester);
 
-    expect(find.text('키를 저장하지 못했어요'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(SnackBar),
+        matching: find.text('키를 저장하지 못했어요'),
+      ),
+      findsOneWidget,
+    );
     expect(settings.key, isNull);
   });
 
@@ -257,7 +263,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('키를 저장하지 못했어요'), findsOneWidget);
+    expect(find.text('연결을 끊지 못했어요'), findsOneWidget);
     expect(find.text('sk-ant-api03-xyz1••••'), findsOneWidget);
   });
 

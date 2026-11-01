@@ -1031,5 +1031,7 @@
   "walkChatCostWarningConfirm": "OK",
   "walkChatConnected": "Connected to {vendor}",
   "walkChatSavedUnverified": "Key saved. We'll verify it once you're online",
-  "walkChatDisconnected": "Disconnected"
+  "walkChatDisconnected": "Disconnected",
+  "walkChatKeyNotApiKey": "This isn't an API key. Use a key from API Keys in the Console.",
+  "walkChatSettingsDisconnectFailed": "Couldn't disconnect"
 }

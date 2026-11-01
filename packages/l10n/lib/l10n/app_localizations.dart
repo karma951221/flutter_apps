@@ -5786,7 +5786,7 @@ abstract class AppLocalizations {
   /// **'연결을 끊을까요?'**
   String get walkChatSettingsDeleteTitle;
 
-  /// 키 삭제 확인 본문
+  /// 연결 끊기 확인 본문
   ///
   /// In ko, this message translates to:
   /// **'이 폰에 저장된 키가 지워져요. 다시 쓰려면 키를 새로 넣어야 해요.'**
@@ -5810,7 +5810,7 @@ abstract class AppLocalizations {
   /// **'키를 저장하지 못했어요'**
   String get walkChatSettingsSaveFailed;
 
-  /// 채팅 섹션 맨 아래 데이터 전송 안내
+  /// 물어보기 설정 맨 아래 데이터 전송 안내
   ///
   /// In ko, this message translates to:
   /// **'질문에 필요한 일기 · 사진 · 걸음 · 기상 기록이 Anthropic 으로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.'**
@@ -6175,6 +6175,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'연결을 끊었어요'**
   String get walkChatDisconnected;
+
+  /// 키 입력칸 — sk-ant- 로 시작하지만 API 키가 아닐 때(관리 키 등)
+  ///
+  /// In ko, this message translates to:
+  /// **'API 키가 아니에요. Console 의 API Keys 에서 만든 키를 넣어 주세요'**
+  String get walkChatKeyNotApiKey;
+
+  /// 보안 저장소에서 키를 지우지 못해 연결을 끊지 못했을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'연결을 끊지 못했어요'**
+  String get walkChatSettingsDisconnectFailed;
 }
 
 class _AppLocalizationsDelegate

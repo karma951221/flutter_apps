@@ -19,6 +19,21 @@ const _save = Key('chat-key-save');
 const _visibility = Key('chat-key-visibility');
 const _goodKey = 'sk-ant-api03-abcd5678';
 
+/// 연결(쓰기)이 [gate] 가 끝날 때까지 기다리는 설정 — 쓰는 동안의 화면 확인용.
+class _SlowWriteSettings extends FakeChatSettings {
+  final gate = Completer<void>();
+
+  @override
+  Future<void> connect(
+    ChatVendor vendor,
+    String key,
+    ChatKeyStatus status,
+  ) async {
+    await gate.future;
+    return super.connect(vendor, key, status);
+  }
+}
+
 void main() {
   late FakeChatSettings settings;
   late FakeChatKeyVerifier verifier;
@@ -243,7 +258,7 @@ void main() {
     expect(result, open);
   });
 
-  testWidgets("쓰기가 실패하면 닫지 않고 '키를 저장하지 못했어요'", (tester) async {
+  testWidgets("쓰기가 실패하면 닫지 않고 스낵바와 입력칸 오류 '키를 저장하지 못했어요'", (tester) async {
     await show(tester);
     await enterAndSave(tester, _goodKey);
     settings.failWith = Exception('keystore');
@@ -252,9 +267,123 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('키를 저장하지 못했어요'), findsOneWidget);
     expect(find.byType(ChatKeyDialog), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(SnackBar),
+        matching: find.text('키를 저장하지 못했어요'),
+      ),
+      findsOneWidget,
+    );
+    expect(field(tester).decoration?.errorText, '키를 저장하지 못했어요');
+    expect(field(tester).controller!.text, _goodKey);
+    expect(field(tester).enabled, isNot(false));
     expect(result, open);
+
+    await tester.enterText(find.byKey(_input), '${_goodKey}9');
+    await tester.pump();
+    expect(field(tester).decoration?.errorText, isNull);
+  });
+
+  testWidgets('쓰는 동안에도 저장 · 취소 · 입력칸 · 뒤로가 꺼진다', (tester) async {
+    final slow = _SlowWriteSettings();
+    await cubit.close();
+    cubit = ChatSettingsCubit(slow, verifier);
+    await cubit.load();
+    await show(tester);
+    await enterAndSave(tester, _goodKey);
+
+    await tester.tap(find.text('확인'));
+    // 요금 경고가 다 닫힐 때까지(쓰기는 gate 에 걸려 있다).
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(
+      find.descendant(
+        of: find.byKey(_save),
+        matching: find.byType(CircularProgressIndicator),
+      ),
+      findsOneWidget,
+    );
+    expect(field(tester).enabled, isFalse);
+    expect(
+      tester
+          .widget<TextButton>(
+            find.ancestor(
+              of: find.text('취소'),
+              matching: find.byType(TextButton),
+            ),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester.widget<PopScope<Object?>>(find.byType(PopScope<Object?>)).canPop,
+      isFalse,
+    );
+
+    slow.gate.complete();
+    await tester.pumpAndSettle();
+    expect(result, ChatKeyDialogResult.connected);
+    expect(slow.key, _goodKey);
+  });
+
+  testWidgets('저장을 두 번 눌러도 확인은 한 번만 한다', (tester) async {
+    final pending = verifier.pending = Completer<ModelListResult>();
+    await show(tester);
+    await tester.enterText(find.byKey(_input), _goodKey);
+    await tester.pump();
+
+    await tester.tap(find.byKey(_save));
+    await tester.tap(find.byKey(_save), warnIfMissed: false);
+    await tester.pump();
+    await tester.tap(find.byKey(_save), warnIfMissed: false);
+    await tester.pump();
+
+    expect(verifier.calls, hasLength(1));
+    pending.complete(const ModelListResult.invalidKey());
+    await tester.pumpAndSettle();
+  });
+
+  for (final typing in [
+    's',
+    'sk-',
+    'sk-ant',
+    'sk-ant-',
+    'sk-ant-api',
+    'sk-ant-api03',
+  ]) {
+    testWidgets("'$typing' 처럼 Claude 키를 치는 중이면 안내가 없고 저장은 꺼져 있다", (
+      tester,
+    ) async {
+      await show(tester);
+      await tester.enterText(find.byKey(_input), typing);
+      await tester.pump();
+
+      expect(field(tester).decoration?.errorText, isNull);
+      expect(saveEnabled(tester), isFalse);
+    });
+  }
+
+  testWidgets("sk-ant- 관리 키면 'API 키가 아니에요' 안내와 저장 꺼짐", (tester) async {
+    await show(tester);
+    await tester.enterText(find.byKey(_input), 'sk-ant-admin01-x');
+    await tester.pump();
+
+    expect(
+      field(tester).decoration?.errorText,
+      'API 키가 아니에요. Console 의 API Keys 에서 만든 키를 넣어 주세요',
+    );
+    expect(saveEnabled(tester), isFalse);
+  });
+
+  testWidgets("옛 형식 sk- 키도 'GPT 키 같아요'", (tester) async {
+    await show(tester);
+    await tester.enterText(find.byKey(_input), 'sk-abc123def456');
+    await tester.pump();
+
+    expect(field(tester).decoration?.errorText, 'GPT 키 같아요');
+    expect(saveEnabled(tester), isFalse);
   });
 
   testWidgets('취소하면 null 로 닫힌다', (tester) async {

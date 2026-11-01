@@ -1031,5 +1031,7 @@
   "walkChatCostWarningConfirm": "OK",
   "walkChatConnected": "{vendor} に接続しました",
   "walkChatSavedUnverified": "キーを保存しました。接続できたら確認します",
-  "walkChatDisconnected": "接続を解除しました"
+  "walkChatDisconnected": "接続を解除しました",
+  "walkChatKeyNotApiKey": "API キーではありません。Console の API Keys で作ったキーを入れてください",
+  "walkChatSettingsDisconnectFailed": "接続を解除できませんでした"
 }
