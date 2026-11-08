@@ -1,4 +1,5 @@
 import 'package:core/core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
@@ -41,11 +42,16 @@ class MapViewCubit extends Cubit<MapViewState> {
   Future<void> show(MapPeriod period) => _load(period, showLoading: true);
 
   /// 네이티브 inbox 를 먼저 수거한 뒤 현재 기간을 다시 읽는다.
+  /// 수거가 실패해도 저장된 데이터로 읽는다.
   Future<void> refresh() async {
     final period = _period;
     if (period == null) return;
-    await _sync.run();
-    if (isClosed) return;
+    try {
+      await _sync.run();
+    } catch (e, s) {
+      debugPrint('map sync failed: $e\n$s');
+    }
+    if (isClosed || _period != period) return;
     await _load(period, showLoading: false);
   }
 
@@ -53,7 +59,18 @@ class MapViewCubit extends Cubit<MapViewState> {
     _period = period;
     final generation = ++_generation;
     if (showLoading) emit(MapViewState.loading(period));
+    try {
+      final next = await _read(period, generation);
+      if (next == null || isClosed || generation != _generation) return;
+      emit(next);
+    } catch (e, s) {
+      debugPrint('map load failed: $e\n$s');
+      if (isClosed || generation != _generation) return;
+      emit(MapViewState.failure(period));
+    }
+  }
 
+  Future<MapViewState?> _read(MapPeriod period, int generation) async {
     final bounds = period.bounds(_clock.now());
     final points = await _locations.pointsBetween(
       bounds.from.toUtc(),
@@ -62,10 +79,6 @@ class MapViewCubit extends Cubit<MapViewState> {
     final found = await _diary.searchEntries(
       from: bounds.from,
       to: bounds.to,
-      storyId: switch (period) {
-        StoryPeriod(:final story) => story.id,
-        _ => null,
-      },
       limit: entryLimit,
     );
     final entries = [
@@ -94,28 +107,24 @@ class MapViewCubit extends Cubit<MapViewState> {
 
     final names = <String, String>{};
     if (period is DayPeriod) {
+      final tried = <String>{};
       for (final stay in track.stays) {
+        if (isClosed || generation != _generation) return null;
         final key = gridKey(stay.lat, stay.lng);
-        if (names.containsKey(key)) continue;
+        if (!tried.add(key)) continue;
         final name = await _namer.nameFor(stay.lat, stay.lng);
         if (name != null) names[key] = name;
       }
     }
 
-    if (isClosed || generation != _generation) return;
-    if (track.isEmpty && entries.isEmpty) {
-      emit(MapViewState.empty(period));
-      return;
-    }
-    emit(
-      MapViewState.ready(
-        MapViewData(
-          period: period,
-          track: track,
-          frequent: frequent,
-          entries: entries,
-          stayNames: names,
-        ),
+    if (track.isEmpty && entries.isEmpty) return MapViewState.empty(period);
+    return MapViewState.ready(
+      MapViewData(
+        period: period,
+        track: track,
+        frequent: frequent,
+        entries: entries,
+        stayNames: names,
       ),
     );
   }

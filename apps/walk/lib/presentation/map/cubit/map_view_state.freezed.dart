@@ -55,13 +55,14 @@ extension MapViewStatePatterns on MapViewState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( MapViewLoading value)?  loading,TResult Function( MapViewReady value)?  ready,TResult Function( MapViewEmpty value)?  empty,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( MapViewLoading value)?  loading,TResult Function( MapViewReady value)?  ready,TResult Function( MapViewEmpty value)?  empty,TResult Function( MapViewFailure value)?  failure,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case MapViewLoading() when loading != null:
 return loading(_that);case MapViewReady() when ready != null:
 return ready(_that);case MapViewEmpty() when empty != null:
-return empty(_that);case _:
+return empty(_that);case MapViewFailure() when failure != null:
+return failure(_that);case _:
   return orElse();
 
 }
@@ -79,13 +80,14 @@ return empty(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( MapViewLoading value)  loading,required TResult Function( MapViewReady value)  ready,required TResult Function( MapViewEmpty value)  empty,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( MapViewLoading value)  loading,required TResult Function( MapViewReady value)  ready,required TResult Function( MapViewEmpty value)  empty,required TResult Function( MapViewFailure value)  failure,}){
 final _that = this;
 switch (_that) {
 case MapViewLoading():
 return loading(_that);case MapViewReady():
 return ready(_that);case MapViewEmpty():
-return empty(_that);}
+return empty(_that);case MapViewFailure():
+return failure(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -99,13 +101,14 @@ return empty(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( MapViewLoading value)?  loading,TResult? Function( MapViewReady value)?  ready,TResult? Function( MapViewEmpty value)?  empty,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( MapViewLoading value)?  loading,TResult? Function( MapViewReady value)?  ready,TResult? Function( MapViewEmpty value)?  empty,TResult? Function( MapViewFailure value)?  failure,}){
 final _that = this;
 switch (_that) {
 case MapViewLoading() when loading != null:
 return loading(_that);case MapViewReady() when ready != null:
 return ready(_that);case MapViewEmpty() when empty != null:
-return empty(_that);case _:
+return empty(_that);case MapViewFailure() when failure != null:
+return failure(_that);case _:
   return null;
 
 }
@@ -122,12 +125,13 @@ return empty(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( MapPeriod period)?  loading,TResult Function( MapViewData data)?  ready,TResult Function( MapPeriod period)?  empty,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( MapPeriod period)?  loading,TResult Function( MapViewData data)?  ready,TResult Function( MapPeriod period)?  empty,TResult Function( MapPeriod period)?  failure,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case MapViewLoading() when loading != null:
 return loading(_that.period);case MapViewReady() when ready != null:
 return ready(_that.data);case MapViewEmpty() when empty != null:
-return empty(_that.period);case _:
+return empty(_that.period);case MapViewFailure() when failure != null:
+return failure(_that.period);case _:
   return orElse();
 
 }
@@ -145,12 +149,13 @@ return empty(_that.period);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( MapPeriod period)  loading,required TResult Function( MapViewData data)  ready,required TResult Function( MapPeriod period)  empty,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( MapPeriod period)  loading,required TResult Function( MapViewData data)  ready,required TResult Function( MapPeriod period)  empty,required TResult Function( MapPeriod period)  failure,}) {final _that = this;
 switch (_that) {
 case MapViewLoading():
 return loading(_that.period);case MapViewReady():
 return ready(_that.data);case MapViewEmpty():
-return empty(_that.period);}
+return empty(_that.period);case MapViewFailure():
+return failure(_that.period);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -164,12 +169,13 @@ return empty(_that.period);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( MapPeriod period)?  loading,TResult? Function( MapViewData data)?  ready,TResult? Function( MapPeriod period)?  empty,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( MapPeriod period)?  loading,TResult? Function( MapViewData data)?  ready,TResult? Function( MapPeriod period)?  empty,TResult? Function( MapPeriod period)?  failure,}) {final _that = this;
 switch (_that) {
 case MapViewLoading() when loading != null:
 return loading(_that.period);case MapViewReady() when ready != null:
 return ready(_that.data);case MapViewEmpty() when empty != null:
-return empty(_that.period);case _:
+return empty(_that.period);case MapViewFailure() when failure != null:
+return failure(_that.period);case _:
   return null;
 
 }
@@ -385,6 +391,81 @@ class _$MapViewEmptyCopyWithImpl<$Res>
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? period = null,}) {
   return _then(MapViewEmpty(
+null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
+as MapPeriod,
+  ));
+}
+
+/// Create a copy of MapViewState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$MapPeriodCopyWith<$Res> get period {
+  
+  return $MapPeriodCopyWith<$Res>(_self.period, (value) {
+    return _then(_self.copyWith(period: value));
+  });
+}
+}
+
+/// @nodoc
+
+
+class MapViewFailure implements MapViewState {
+  const MapViewFailure(this.period);
+  
+
+ final  MapPeriod period;
+
+/// Create a copy of MapViewState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$MapViewFailureCopyWith<MapViewFailure> get copyWith => _$MapViewFailureCopyWithImpl<MapViewFailure>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MapViewFailure&&(identical(other.period, period) || other.period == period));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,period);
+
+@override
+String toString() {
+  return 'MapViewState.failure(period: $period)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $MapViewFailureCopyWith<$Res> implements $MapViewStateCopyWith<$Res> {
+  factory $MapViewFailureCopyWith(MapViewFailure value, $Res Function(MapViewFailure) _then) = _$MapViewFailureCopyWithImpl;
+@useResult
+$Res call({
+ MapPeriod period
+});
+
+
+$MapPeriodCopyWith<$Res> get period;
+
+}
+/// @nodoc
+class _$MapViewFailureCopyWithImpl<$Res>
+    implements $MapViewFailureCopyWith<$Res> {
+  _$MapViewFailureCopyWithImpl(this._self, this._then);
+
+  final MapViewFailure _self;
+  final $Res Function(MapViewFailure) _then;
+
+/// Create a copy of MapViewState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? period = null,}) {
+  return _then(MapViewFailure(
 null == period ? _self.period : period // ignore: cast_nullable_to_non_nullable
 as MapPeriod,
   ));

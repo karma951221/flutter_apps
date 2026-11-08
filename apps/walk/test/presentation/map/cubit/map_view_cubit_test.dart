@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -55,7 +57,6 @@ void main() {
   Future<List<DiaryEntry>> search() => diary.searchEntries(
     from: any(named: 'from'),
     to: any(named: 'to'),
-    storyId: any(named: 'storyId'),
     limit: any(named: 'limit'),
   );
 
@@ -151,7 +152,6 @@ void main() {
       () => diary.searchEntries(
         from: any(named: 'from'),
         to: any(named: 'to'),
-        storyId: any(named: 'storyId'),
         limit: 300,
       ),
     ).called(1);
@@ -165,5 +165,68 @@ void main() {
       () => sync.run(),
       () => locations.pointsBetween(any(), any()),
     ]);
+  });
+
+  test('month view keeps frequent from unsimplified stays', () async {
+    final base = DateTime(2026, 11, 3, 8);
+    // 이틀 같은 곳에 머묾 + 사이에 직선 이동(단순화 대상)
+    final pts = <LocationPoint>[];
+    for (var d = 0; d < 2; d++) {
+      for (var i = 0; i < 6; i++) {
+        pts.add(_p(base.add(Duration(days: d, minutes: 3 * i)), 37.5, 127.0));
+      }
+    }
+    for (var i = 0; i < 50; i++) {
+      pts.add(
+        _p(base.add(Duration(days: 3, minutes: i)), 37.6 + i * 0.0005, 127.1),
+      );
+    }
+    when(
+      () => locations.pointsBetween(any(), any()),
+    ).thenAnswer((_) async => pts);
+
+    await cubit.show(const MapPeriod.month(2026, 11));
+
+    final data = (cubit.state as MapViewReady).data;
+    expect(data.frequent, isNotEmpty);
+    expect(data.frequent.first.visits, 2);
+    expect(data.track.stays, hasLength(2));
+    final drawn = data.track.segments.fold<int>(
+      0,
+      (a, s) => a + s.points.length,
+    );
+    expect(drawn, lessThan(pts.length));
+  });
+
+  test('repository error becomes failure', () async {
+    when(
+      () => locations.pointsBetween(any(), any()),
+    ).thenThrow(Exception('db'));
+    await cubit.show(day);
+    expect(cubit.state, MapViewState.failure(day));
+  });
+
+  test('sync error still loads stored data', () async {
+    when(() => sync.run()).thenThrow(Exception('sync'));
+    when(search).thenAnswer(
+      (_) async => [
+        _entry('a', at, location: const EntryLocation(lat: 37.5, lng: 127.0)),
+      ],
+    );
+    await cubit.show(day);
+    await cubit.refresh();
+    expect(cubit.state, isA<MapViewReady>());
+  });
+
+  test('show during slow sync wins over refresh', () async {
+    final other = MapPeriod.day(DateTime(2026, 11, 7));
+    await cubit.show(day);
+    final gate = Completer<int>();
+    when(() => sync.run()).thenAnswer((_) => gate.future);
+    final refreshing = cubit.refresh();
+    await cubit.show(other);
+    gate.complete(0);
+    await refreshing;
+    expect(cubit.state, MapViewState.empty(other));
   });
 }

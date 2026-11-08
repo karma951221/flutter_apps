@@ -12,6 +12,7 @@ sealed class MapViewState with _$MapViewState {
   const factory MapViewState.loading(MapPeriod period) = MapViewLoading;
   const factory MapViewState.ready(MapViewData data) = MapViewReady;
   const factory MapViewState.empty(MapPeriod period) = MapViewEmpty;
+  const factory MapViewState.failure(MapPeriod period) = MapViewFailure;
 }
 
 /// 한 기간의 지도 데이터. [stayNames] 의 키는 `gridKey`(오늘 보기에서만 채운다).
