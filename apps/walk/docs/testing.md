@@ -326,14 +326,17 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | `domain/location/usecase/location_sync_test.dart` | `LocationSync` | 비워질 때까지 수거 · 마지막 id 로 ack · ack 실패 뒤 다시 돌려도 중복 없음 · 보관 기간으로 정리 · 동시 실행은 한 번 |
 | `data/location/drift_location_repository_test.dart` | `DriftLocationRepository` | `insertAll` 중복 무시 · 기간 읽기 · 장소 이름 캐시 · 정리 · `hasAnyPoint` · 모두 지우기 |
 | `data/location/prefs_location_preferences_test.dart` | 보관 기간 설정 | 기본 지우지 않음 · 깨진 값 |
-| `data/location/channel_location_recorder_test.dart` | `ChannelLocationRecorder` | 채널 호출 모양 · 상태 매핑(off / running / blocked) · 시각 UTC · 모르는 값 폴백 · 배터리 화면 |
-| `presentation/map/cubit/map_record_cubit_test.dart` | `MapRecordCubit` | 켜기 순서(권한) · 거부 / 설정 필요 · 항상 허용 회수 → blocked · 실제 권한 읽기 · 촘촘 · 보관 기간 · 모두 지우기 · 처음 안내 판정(`hasPoints`) |
-| `presentation/map/cubit/map_view_cubit_test.dart` | `MapViewCubit` | 하루 · 한 달 · 스토리 · 일기 핀 · 이름 붙이기 · 실패 variant · sync 실패해도 저장분 · 느린 sync 중 새 기간 우선 |
-| `presentation/map/page/map_tab_test.dart` | `MapTab` | 잠기면 PIN · 열면 읽기 · 처음 안내 · 기간 전환 · 스토리 고르기 · ‹ › · 칩 · 핀 → 뷰어 · 가까운 핀 묶기 · 빈 · 실패 [다시 시도] · 다시 잠기면 시트 닫기 |
-| `presentation/settings/page/map_settings_page_test.dart` | `MapSettingsPage` | 켜기 · 끄기 · 권한 행 · 배터리 · 보관 기간 · 모두 지우기 |
-| `presentation/shell/page/tools_tab_test.dart` · `main_shell_page_test.dart` | 도구 셋째 탭 · 셸 | 탭 3개 · 지도 ⋮ · 잠긴 ⋮ · 다시 잠길 때 팝업 닫기 · 재개 시 새로 읽기 · 뷰어 › 지도 요청으로 탭 이동 |
+| `data/location/channel_location_recorder_test.dart` | `ChannelLocationRecorder` | 채널 호출 모양 · 상태 매핑(off / running / blocked) · 시각 UTC · 모르는 값 폴백 · 배터리 화면 · `clearInbox` |
+| `presentation/map/cubit/map_record_cubit_test.dart` | `MapRecordCubit` | 켜기 순서(권한) · 거부 / 설정 필요 · 항상 허용 회수 → blocked · 실제 권한 읽기 · 촘촘 · 보관 기간 · 모두 지우기(inbox 를 먼저 비움 · 비우기 실패면 저장소 그대로) · 처음 안내 판정(`hasPoints`) |
+| `presentation/map/cubit/map_view_cubit_test.dart` | `MapViewCubit` | 하루 · 한 달 · 스토리 · 일기 핀(`locatedEntriesBetween`, 기간 경계) · 이름 붙이기(오늘은 묻고, 한 달 · 스토리는 캐시만 · 같은 격자 한 번) · 긴 스토리(이틀 넘음 · 진행 중은 지금까지) 단순화 · 짧은 스토리 그대로 · 실패 variant · **처음 show 도 수거 뒤 읽기(로딩 유지)** · sync 실패해도 저장분 · 느린 sync 중 새 기간 우선 |
+| `presentation/map/widget/track_map_test.dart` | `TrackMap` | 같은 이동선이면 선 좌표 재사용 · 바뀌면 다시 만듦 |
+| `presentation/map/page/map_tab_test.dart` | `MapTab` | 잠기면 PIN · 열면 읽기 · 처음 안내 · 켜기 실패 오류 스낵바 · 기록이 켜지면 다시 읽기(첫 load 는 제외) · 기간 전환 · 스토리 고르기 · ‹ › · 칩 · 핀 → 뷰어 · 가까운 핀 묶기 · 빈 · 실패 [다시 시도] · 다시 잠기면 시트 닫기 |
+| `presentation/settings/page/map_settings_page_test.dart` | `MapSettingsPage` | 켜기 · 끄기 · 권한 행 · 배터리 · 보관 기간 · 모두 지우기(inbox → 저장소 순) |
+| `presentation/settings/open_settings_test.dart` | 앱 설정 › 지도 설정 | 잠금 화면을 거쳐 지도 설정이 열린다(지도 기록 cubit 을 다시 건다) |
+| `data/diary/drift_diary_repository_range_search_test.dart` | `locatedEntriesBetween` | 좌표 있는 기록만 · 양 끝 포함 오래된 순 · 휴지통 제외 · limit 은 좌표 있는 기록에 · 기본 1000 |
+| `presentation/shell/page/tools_tab_test.dart` · `main_shell_page_test.dart` | 도구 셋째 탭 · 셸 | 탭 3개 · 지도 ⋮ · 잠긴 ⋮ · 다시 잠길 때 팝업 닫기 · 재개 시 새로 읽기 · 뷰어 › 지도 요청으로 탭 이동 · 셸 위에 얹힌 화면에서 온 요청이면 걷어 내고 지도 |
 | `presentation/diary/viewer/story_viewer_page_test.dart` | 스토리 뷰어 ⋮ | 스토리 기간이 있으면 "지도로 보기" |
-| `android/app/.../LocationRecordRulesTest.kt` | `LocationRecordRules`(JUnit, 16건) | 평소 · 촘촘 요청 값(우선순위 · 간격 · 최소 이동 · 최대 지연) · 모르는 모드는 평소 · 부팅 재시작 판단(`shouldRestartOnBoot`) · 상태 계산(off / running / blocked) · 정지 전환(진입 → 멈춤, 이탈 → 재개 + 한 점, 같은 단계 반복은 무시, 촘촘 · 정지 감지 없음이면 늘 MOVING) · 되살리기 판단(`shouldRevive`) · 새 인스턴스는 MOVING(같은 인스턴스는 저장 단계 유지) · 5분 안의 lastLocation 대체만 허용 |
+| `android/app/.../LocationRecordRulesTest.kt` | `LocationRecordRules`(JUnit, 22건) | 평소 · 촘촘 요청 값(우선순위 · 간격 · 최소 이동 · 최대 지연) · 모르는 모드는 평소 · 부팅 재시작 판단(`shouldRestartOnBoot`) · 상태 계산(off / running / blocked) · 정지 전환(진입 → 멈춤, 이탈 → 재개 + 한 점, 같은 단계 반복은 무시, 촘촘 · 정지 감지 없음이면 늘 MOVING) · 되살리기 판단(`shouldRevive`) · 새 인스턴스는 MOVING(같은 인스턴스는 저장 단계 유지) · 5분 안의 lastLocation 대체만 허용 · 정지 중 감시 요청(passive · 15분) · 감시 위치가 100m 넘으면 재개 · 6시간 넘은 정지(미래 · 모르는 시각 포함) · 요청 실패 재시도(60초, 같은 세대 · 살아 있을 때만) |
 
 서비스 자체(`LocationRecordService` · inbox · 전환 리시버 · 부트 리시버 · 채널)는 규칙만 JUnit 이고 나머지는 아래 기기 시나리오 몫이다.
 
@@ -456,6 +459,12 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | L11 | 상시 알림 [끄기] | 앱을 열지 않고 바로 꺼지고 지도 칩이 "기록 꺼짐" | 대기 |
 | L12 | 알림 권한을 거부한 채 기록 켜기 | 알림 없이도 기록이 돈다(켜기 흐름은 막히지 않음) | 대기 |
 | L13 | 기록 중 시스템 설정에서 위치 "항상 허용" 회수 | 서비스가 멈추고 칩이 "기록 꺼짐 · 권한 필요", 설정 행도 같은 상태 | 대기 |
+| L14 | 평소 모드로 STILL 에 들어간 뒤(책상 10분+) 폰을 그대로 들고 차 · 버스로 이동(걷지 않아 STILL 이탈을 놓치기 쉬움) | 이탈 전환이 오지 않아도 감시(passive · 15분)가 100m 넘는 이동을 보면 다시 점이 찍힌다. `adb logcat -s LocationRecord` 에 "watchdog saw movement" — 다른 앱(지도 등)이 위치를 받지 않으면 감시 위치가 안 올 수 있으니 그때는 L15 경로로 복구되는지 기록 | 대기 |
+| L15 | STILL 인 채로 6시간 넘게 둔 뒤 앱(지도)을 연다 | `status` 가 `ACTION_RESUME` 을 보내 위치 요청이 다시 걸리고 한 점이 찍힌다(로그 · 다음 수거에 새 점) | 대기 |
+| L16 | 기록 중 지도 설정 › 기록 모두 지우기 → 지도로 돌아오기 → 앱을 백그라운드에 뒀다 다시 열기 | 지도가 비고, 돌아오거나 다시 열어도 지운 동선이 되살아나지 않는다(inbox 를 먼저 비움). 지운 뒤 새로 받은 점만 보인다 | 대기 |
+| L17 | 일기 탭 ⋮ › 앱 설정 › 지도 설정(잠금 켜 둠) | 잠금을 묻고, 풀면 지도 설정이 열린다(오류 없음) | 대기 |
+| L18 | 스토리 페이지(또는 검색 · 모아 보기)에서 뷰어 → ⋮ › 지도로 보기 | 뷰어와 그 아래 화면이 걷히고 도구 › 지도에 그 스토리 기간이 보인다 | 대기 |
+| L19 | 기록을 처음 켠 직후 · 앱을 닫아 둔 사이 쌓인 점이 있을 때 지도를 처음 연다 | 열자마자(로딩 표시 뒤) inbox 의 점까지 보인다 | 대기 |
 
 ## 통근 기기 시나리오 — 대기
 

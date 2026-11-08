@@ -286,7 +286,9 @@
 - [x] **T8 스토리 뷰어 › 지도로 보기** (`f45832e7`)
 - [x] **T9 문서 · 전체 검증**
 - 구현 중 정한 것은 [스펙 맨 아래](../../../docs/superpowers/specs/2026-11-08-walk-location-map-design.md#구현-중-정한-것) · [기록](history.md#2026-11--지도--위치-기록).
-- 검증(2026-11-08): `flutter analyze` 0 · `flutter test` 3144건 통과(1 skip) · `apps/trader` `flutter test test/convention` 통과 · `./gradlew :app:testDebugUnitTest` 통과(위치 규칙 `LocationRecordRulesTest` 16건 포함).
+- [x] **최종 리뷰 수정** (2026-11-08) — 앱 설정 › 지도 설정 오류 · 처음 열 때 수거 · 지우기 뒤 inbox 비우기 · 얹힌 화면 위 지도로 보기 · 켜기 오류 스낵바(`f3bbaaef`), 정지 중 감시 · 긴 정지 되살리기 · 위치 요청 재시도(`e7a89735`), 긴 스토리 단순화 · 선 좌표 재사용 · 일기 핀 SQL 거르기 · 한 달 · 스토리 장소 이름(`06c3114a`)
+- 검증(2026-11-08, 최종 리뷰 수정 뒤): `flutter analyze` 0 · `flutter test` 3167건 통과(1 skip) · `apps/trader` `flutter test test/convention` 통과 · `./gradlew :app:testDebugUnitTest` 88건 통과(위치 규칙 `LocationRecordRulesTest` 22건 포함) · 디버그 APK 빌드.
+- 이전 검증(2026-11-08): `flutter test` 3144건 통과(1 skip) · 위치 규칙 JUnit 16건.
 - [ ] **기기 QA L-QA1~7** — 모두 **대기** ([시나리오](testing.md#지도--위치-기록-기기-시나리오--대기))
   - [ ] L-QA1 켜기 흐름(앱 사용 중 → 항상 허용 → 알림, 상시 알림)
   - [ ] L-QA2 앱을 밀어 닫고 30분 걸은 뒤 동선이 보임
@@ -296,6 +298,7 @@
   - [ ] L-QA6 장소 태그 사진 일기 핀 · 뷰어 · 잠그면 가려짐
   - [ ] L-QA7 정지 감지(책상에 1시간 → 점이 늘지 않고 머문 곳 하나)
   - [ ] 그 밖의 기기 확인 L8~L13 — 프로세스가 죽어도 STILL 에서 이어짐 · 서비스를 죽인 뒤 앱을 열면 되살아남 · Android 12+/14+ sticky 재시작 · 알림 [끄기] · 알림 권한 거부 상태 기록 · 항상 허용 회수 → blocked
+  - [ ] 최종 리뷰 수정분 L14~L19 — STILL 감시로 이탈을 놓쳐도 재개 · 6시간 넘은 정지는 앱을 열면 재개 · 모두 지우기 뒤 되살아나지 않음 · 앱 설정 › 지도 설정 · 스토리 페이지 위 뷰어 › 지도로 보기 · 처음 열 때 inbox 점까지 보임
 - 후속(스펙 "열어 둔 것"): 평소 모드 간격 · 머문 곳 반경 · 시간을 기기 QA 뒤 조정 · 걸음 수와 지도 연결 · 물어보기 `search_places`.
 
 ## 하단 탭 재구성 · 설정 분산
