@@ -13,4 +13,9 @@
     <!-- Health Connect 권한 창의 개인정보 링크가 여는 안내(HealthPrivacyActivity). -->
     <string name="health_privacy_title">How Life Tool uses health data</string>
     <string name="health_privacy_body">Life Tool reads only your step count from Health Connect to show it on this phone. It doesn\'t store or send it anywhere.</string>
+    <!-- 상시 위치 기록(LocationRecordService) 알림. 채널 이름은 시스템 알림 설정에 보인다. -->
+    <string name="location_record_channel_name">Location recording</string>
+    <string name="location_record_notification_normal">Recording location · Normal</string>
+    <string name="location_record_notification_dense">Recording location · Detailed</string>
+    <string name="location_record_stop">Turn off</string>
 </resources>

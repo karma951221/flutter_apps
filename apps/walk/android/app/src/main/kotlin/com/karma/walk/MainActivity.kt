@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.WindowManager
+import com.karma.walk.location.LocationRecordChannel
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -106,6 +107,8 @@ class MainActivity : FlutterFragmentActivity() {
         ReminderChannel.attach(applicationContext, messenger)
         RingLogChannel.attach(applicationContext, messenger)
         WidgetChannel.attach(applicationContext, messenger)
+        // 지도: 상시 위치 기록 켜기 · 끄기 · 상태 · inbox 수거.
+        LocationRecordChannel.attach(applicationContext, messenger)
         // 시작 · 복귀 sync 가 헤드리스 일(미리 알림 건너뛰기)이 끝나기를 기다린다(`awaitIdle`).
         BackgroundDispatcher.attachMainEngine(messenger)
         // permission_handler 의 캘린더 권한은 READ + WRITE 를 함께 요구한다 — 읽기만 묻는다.
