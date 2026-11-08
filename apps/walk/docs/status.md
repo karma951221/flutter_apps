@@ -286,7 +286,7 @@
 - [x] **T8 스토리 뷰어 › 지도로 보기** (`f45832e7`)
 - [x] **T9 문서 · 전체 검증**
 - 구현 중 정한 것은 [스펙 맨 아래](../../../docs/superpowers/specs/2026-11-08-walk-location-map-design.md#구현-중-정한-것) · [기록](history.md#2026-11--지도--위치-기록).
-- 검증(2026-11-08): `flutter analyze` 0 · `flutter test` 3144건 통과(1 skip) · `apps/trader` `flutter test test/convention` 통과 · `./gradlew :app:testDebugUnitTest` 통과(위치 규칙 `LocationRecordRulesTest` 12건 포함).
+- 검증(2026-11-08): `flutter analyze` 0 · `flutter test` 3144건 통과(1 skip) · `apps/trader` `flutter test test/convention` 통과 · `./gradlew :app:testDebugUnitTest` 통과(위치 규칙 `LocationRecordRulesTest` 16건 포함).
 - [ ] **기기 QA L-QA1~7** — 모두 **대기** ([시나리오](testing.md#지도--위치-기록-기기-시나리오--대기))
   - [ ] L-QA1 켜기 흐름(앱 사용 중 → 항상 허용 → 알림, 상시 알림)
   - [ ] L-QA2 앱을 밀어 닫고 30분 걸은 뒤 동선이 보임

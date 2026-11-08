@@ -333,7 +333,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | `presentation/settings/page/map_settings_page_test.dart` | `MapSettingsPage` | 켜기 · 끄기 · 권한 행 · 배터리 · 보관 기간 · 모두 지우기 |
 | `presentation/shell/page/tools_tab_test.dart` · `main_shell_page_test.dart` | 도구 셋째 탭 · 셸 | 탭 3개 · 지도 ⋮ · 잠긴 ⋮ · 다시 잠길 때 팝업 닫기 · 재개 시 새로 읽기 · 뷰어 › 지도 요청으로 탭 이동 |
 | `presentation/diary/viewer/story_viewer_page_test.dart` | 스토리 뷰어 ⋮ | 스토리 기간이 있으면 "지도로 보기" |
-| `android/app/.../LocationRecordRulesTest.kt` | `LocationRecordRules`(JUnit) | 우선순위 · 부팅 재시작 판단 · 모드 정규화 · 새 인스턴스는 MOVING |
+| `android/app/.../LocationRecordRulesTest.kt` | `LocationRecordRules`(JUnit, 16건) | 평소 · 촘촘 요청 값(우선순위 · 간격 · 최소 이동 · 최대 지연) · 모르는 모드는 평소 · 부팅 재시작 판단(`shouldRestartOnBoot`) · 상태 계산(off / running / blocked) · 정지 전환(진입 → 멈춤, 이탈 → 재개 + 한 점, 같은 단계 반복은 무시, 촘촘 · 정지 감지 없음이면 늘 MOVING) · 되살리기 판단(`shouldRevive`) · 새 인스턴스는 MOVING(같은 인스턴스는 저장 단계 유지) · 5분 안의 lastLocation 대체만 허용 |
 
 서비스 자체(`LocationRecordService` · inbox · 전환 리시버 · 부트 리시버 · 채널)는 규칙만 JUnit 이고 나머지는 아래 기기 시나리오 몫이다.
 
