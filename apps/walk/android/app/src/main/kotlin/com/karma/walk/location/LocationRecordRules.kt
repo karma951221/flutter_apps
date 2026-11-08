@@ -18,6 +18,9 @@ object LocationRecordRules {
     /** `Priority.PRIORITY_BALANCED_POWER_ACCURACY` */
     private const val PRIORITY_BALANCED_POWER_ACCURACY = 102
 
+    /** `Priority.PRIORITY_PASSIVE` — 스스로 위치를 켜지 않고 다른 앱이 받은 위치만 얻는다. */
+    private const val PRIORITY_PASSIVE = 105
+
     data class Request(
         val priority: Int,
         val intervalMs: Long,
@@ -30,6 +33,31 @@ object LocationRecordRules {
 
     /** 모르는 모드는 평소로 본다. */
     fun normalizeMode(mode: String?): String = if (mode == MODE_DENSE) MODE_DENSE else MODE_NORMAL
+
+    /**
+     * 정지(`STILL`) 중에 거는 감시 요청. 저전력(passive) · 15분 — STILL 이탈 전환을 놓쳐도 움직임을
+     * 알아챈다([watchdogShouldResume]).
+     */
+    val watchdogRequest = Request(PRIORITY_PASSIVE, 900_000L, 0f, 0L)
+
+    /** 감시 위치가 정지 시작 점에서 이만큼 넘게 떨어지면 STILL 이탈로 본다. */
+    const val WATCHDOG_RESUME_DISTANCE_M = 100.0
+
+    fun watchdogShouldResume(distanceM: Double): Boolean = distanceM > WATCHDOG_RESUME_DISTANCE_M
+
+    /** 정지가 이보다 길면 다음 `status`(앱이 앞에 올 때) 에 위치 요청을 다시 건다. */
+    const val STILL_MAX_MS = 6 * 60 * 60_000L
+
+    /** 시작 시각이 미래(시계가 뒤로 감)거나 모르면(0) 너무 오래된 것으로 본다 — 갇히지 않는 쪽. */
+    fun stillTooLong(sinceMs: Long, nowMs: Long): Boolean =
+        sinceMs <= 0L || sinceMs > nowMs || nowMs - sinceMs > STILL_MAX_MS
+
+    /** 위치 요청(`requestLocationUpdates`)이 권한 밖의 이유로 실패하면 이만큼 뒤에 다시 건다. */
+    const val UPDATES_RETRY_MS = 60_000L
+
+    /** 재시도는 실패한 그 요청이 아직 최신이고(그 사이 멈추거나 다시 걸지 않음) 서비스가 살아 있을 때만. */
+    fun shouldRetryUpdates(gen: Int, currentGen: Int, destroyed: Boolean): Boolean =
+        !destroyed && gen == currentGen
 
     fun requestFor(mode: String): Request = if (normalizeMode(mode) == MODE_DENSE) dense else normal
 

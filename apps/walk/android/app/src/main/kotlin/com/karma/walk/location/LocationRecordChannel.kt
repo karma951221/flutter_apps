@@ -22,7 +22,8 @@ import java.util.concurrent.Executors
  * - `stop`: 켜짐을 끄고 서비스를 끝낸다.
  * - `setMode` ← `{mode}`: 저장하고, 서비스가 떠 있으면 모드를 바꾼다.
  * - `status` → `{state: "off"|"running"|"blocked", mode, stillDetection}`. `stillDetection` 은 평소
- *   모드이고 활동 인식 권한이 있어 정지 감지가 도는지.
+ *   모드이고 활동 인식 권한이 있어 정지 감지가 도는지. 부를 때 죽은 서비스를 되살리고, 정지가
+ *   6시간을 넘었으면 위치 요청을 다시 걸게 한다([LocationRecordRules.stillTooLong]).
  * - `drain` ← `{limit}` → `[{id, t, lat, lng, acc?, mode, still}]` (id 오름차순, 지우지 않음)
  * - `ack` ← `{upToId}`: 그 id 이하를 inbox 에서 지운다.
  * - `clearInbox`: inbox 를 모두 지운다(기록 모두 지우기 — drift 를 지우기 전에).
@@ -139,6 +140,19 @@ internal class LocationRecordChannel private constructor(private val context: Co
         }
     }
 
+    /** 정지가 너무 길면(STILL 이탈을 놓쳤을 수 있다) 떠 있는 서비스에 다시 움직이는 중으로 보낸다. */
+    private fun resumeIfStillTooLong() {
+        if (!LocationRecordService.running) return
+        if (LocationRecordPrefs.phase(context) != LocationRecordRules.Phase.STILL) return
+        val since = LocationRecordPrefs.stillSince(context)
+        if (!LocationRecordRules.stillTooLong(since, System.currentTimeMillis())) return
+        try {
+            LocationRecordService.send(context, LocationRecordService.ACTION_RESUME)
+        } catch (e: Exception) {
+            Log.w("LocationRecord", "resume after long still failed", e)
+        }
+    }
+
     private fun setMode(mode: String) {
         LocationRecordPrefs.setMode(context, mode)
         if (LocationRecordService.running) {
@@ -148,6 +162,7 @@ internal class LocationRecordChannel private constructor(private val context: Co
 
     private fun status(): Map<String, Any> {
         reviveIfDead()
+        resumeIfStillTooLong()
         val mode = LocationRecordPrefs.mode(context)
         return mapOf(
             "state" to LocationRecordRules.stateOf(

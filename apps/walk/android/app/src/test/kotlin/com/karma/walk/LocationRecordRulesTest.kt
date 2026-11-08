@@ -151,4 +151,55 @@ class LocationRecordRulesTest {
         assertFalse(LocationRecordRules.isFreshFallback(now - 300_001L, now))
         assertFalse(LocationRecordRules.isFreshFallback(now + 1L, now))
     }
+
+    // ── 정지 중 감시(watchdog) ──
+
+    @Test
+    fun `watchdog request is passive every 15 minutes`() {
+        val request = LocationRecordRules.watchdogRequest
+
+        assertEquals(105, request.priority) // Priority.PRIORITY_PASSIVE
+        assertEquals(900_000L, request.intervalMs)
+        assertEquals(0f, request.minDistanceM)
+        assertEquals(0L, request.maxDelayMs)
+    }
+
+    @Test
+    fun `watchdog resumes only beyond 100m from the still point`() {
+        assertFalse(LocationRecordRules.watchdogShouldResume(0.0))
+        assertFalse(LocationRecordRules.watchdogShouldResume(100.0))
+        assertTrue(LocationRecordRules.watchdogShouldResume(100.1))
+        assertTrue(LocationRecordRules.watchdogShouldResume(2_000.0))
+    }
+
+    @Test
+    fun `still for more than 6 hours is too long`() {
+        val since = 1_000_000_000L
+        val sixHours = 6 * 60 * 60_000L
+        assertFalse(LocationRecordRules.stillTooLong(since, since))
+        assertFalse(LocationRecordRules.stillTooLong(since, since + sixHours))
+        assertTrue(LocationRecordRules.stillTooLong(since, since + sixHours + 1))
+    }
+
+    @Test
+    fun `still since in the future or unknown counts as too long`() {
+        // 시계가 뒤로 갔거나 시작 시각을 모르면 갇히지 않게 다시 건다.
+        val now = 1_000_000_000L
+        assertTrue(LocationRecordRules.stillTooLong(now + 1, now))
+        assertTrue(LocationRecordRules.stillTooLong(0L, now))
+    }
+
+    // ── 위치 요청 실패 재시도 ──
+
+    @Test
+    fun `failed location request retries after 60 seconds`() {
+        assertEquals(60_000L, LocationRecordRules.UPDATES_RETRY_MS)
+    }
+
+    @Test
+    fun `retry runs only for the same generation of a live service`() {
+        assertTrue(LocationRecordRules.shouldRetryUpdates(gen = 3, currentGen = 3, destroyed = false))
+        assertFalse(LocationRecordRules.shouldRetryUpdates(gen = 2, currentGen = 3, destroyed = false))
+        assertFalse(LocationRecordRules.shouldRetryUpdates(gen = 3, currentGen = 3, destroyed = true))
+    }
 }

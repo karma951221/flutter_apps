@@ -12,6 +12,7 @@ internal object LocationRecordPrefs {
     private const val KEY_ENABLED = "enabled"
     private const val KEY_MODE = "mode"
     private const val KEY_PHASE = "phase"
+    private const val KEY_STILL_SINCE = "stillSince"
 
     private fun prefs(context: Context): SharedPreferences =
         context.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
@@ -38,5 +39,12 @@ internal object LocationRecordPrefs {
 
     fun setPhase(context: Context, phase: LocationRecordRules.Phase) {
         prefs(context).edit().putString(KEY_PHASE, phase.name).apply()
+    }
+
+    /** 지금 정지(`STILL`)에 들어간 시각(epoch millis). 모르면 0. 채널 `status` 가 너무 긴 정지를 본다. */
+    fun stillSince(context: Context): Long = prefs(context).getLong(KEY_STILL_SINCE, 0L)
+
+    fun setStillSince(context: Context, ms: Long) {
+        prefs(context).edit().putLong(KEY_STILL_SINCE, ms).apply()
     }
 }

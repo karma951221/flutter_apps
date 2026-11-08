@@ -17,6 +17,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
@@ -42,8 +43,11 @@ import java.util.concurrent.Executor
  *
  * - 시작: 채널 `start` · 부팅 리시버가 `startForegroundService(ACTION_START)`, 시스템이 죽였다 다시
  *   띄우면(START_STICKY) 인텐트 없이 온다 — 어느 쪽이든 prefs 의 모드로 기록한다.
- * - 정지 감지(평소 + 활동 인식 권한): `STILL` 진입이면 한 점을 `still` 로 남기고 위치 요청을 멈추고,
- *   이탈이면 요청을 다시 걸고 한 점을 잡는다. 단계는 prefs 에 둬서 재시작 뒤에도 이어 간다.
+ * - 정지 감지(평소 + 활동 인식 권한): `STILL` 진입이면 한 점을 `still` 로 남기고 위치 요청을 저전력
+ *   감시(watchdog: passive · 15분)로 바꾸고, 이탈이면 요청을 다시 걸고 한 점을 잡는다. 이탈 전환을
+ *   놓쳐도 감시 위치가 정지 점에서 100m 넘게 떨어지거나, 정지가 6시간을 넘긴 뒤 앱이 앞에 오면
+ *   (`status` → [ACTION_RESUME]) 이탈로 본다. 단계 · 정지 시각은 prefs 에 둔다.
+ * - 위치 요청이 권한 밖의 이유로 실패하면 60초 뒤 다시 건다(그 사이 멈추거나 다시 걸었으면 버린다).
  * - 백그라운드 위치 권한이 사라지면 멈추고 끝난다. prefs 의 켜짐은 그대로라 `status` 는 `blocked`.
  */
 class LocationRecordService : Service() {
@@ -53,6 +57,9 @@ class LocationRecordService : Service() {
         const val ACTION_STOP = "com.karma.walk.location.STOP"
         const val ACTION_SET_MODE = "com.karma.walk.location.SET_MODE"
         const val ACTION_TRANSITION = "com.karma.walk.location.TRANSITION"
+
+        /** 정지가 너무 길다 — 이탈 전환을 놓쳤다고 보고 다시 움직이는 중으로. 채널 `status` 가 보낸다. */
+        const val ACTION_RESUME = "com.karma.walk.location.RESUME"
         const val EXTRA_ENTERED_STILL = "enteredStill"
 
         private const val CHANNEL_ID = "location_record"
@@ -116,6 +123,7 @@ class LocationRecordService : Service() {
     private lateinit var executor: Executor
 
     private lateinit var mainExecutor: Executor
+    private lateinit var mainHandler: Handler
 
     // 상태는 메인 스레드에서만 바꾼다(Task 리스너도 mainExecutor). 점 저장 · 위치 콜백은 worker 스레드라
     // 읽는 값에 @Volatile 을 붙인다.
@@ -124,6 +132,15 @@ class LocationRecordService : Service() {
 
     @Volatile
     private var updating = false
+
+    /** 위치 요청을 걸고 멈출 때마다 올린다. 늦게 온 옛 요청의 실패 · 예약된 재시도를 버린다. 메인 스레드. */
+    private var updatesGen = 0
+
+    /** 정지 중 감시 요청이 걸려 있는지. 메인 스레드. */
+    private var watching = false
+
+    /** 지금 정지의 시작 점. 감시 위치와 거리를 잰다. 정지 점을 못 잡았으면 첫 감시 위치로 채운다. */
+    private var stillAnchor: Location? = null
 
     /** 전환 구독이 성공으로 확인됐는지. 요청 중이거나 실패하면 false. */
     @Volatile
@@ -142,6 +159,13 @@ class LocationRecordService : Service() {
         }
     }
 
+    /** 감시 위치는 드물어 메인 루퍼로 받는다. 정지 점과 비교만 하고 inbox 에는 쓰지 않는다. */
+    private val watchdogCallback = object : LocationCallback() {
+        override fun onLocationResult(result: LocationResult) {
+            result.lastLocation?.let(::onWatchdogFix)
+        }
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
@@ -151,6 +175,7 @@ class LocationRecordService : Service() {
         handler = Handler(worker.looper)
         executor = Executor { handler.post(it) }
         mainExecutor = ContextCompat.getMainExecutor(this)
+        mainHandler = Handler(Looper.getMainLooper())
         // 새 인스턴스는 움직이는 중으로 시작한다 — 죽어 있던 사이의 전환은 버려졌다. 다시 멈추는 건
         // 새 STILL 진입이 한다.
         LocationRecordPrefs.setPhase(
@@ -176,6 +201,10 @@ class LocationRecordService : Service() {
                 if (!ensureForeground()) return START_NOT_STICKY
                 apply()
             }
+            ACTION_RESUME -> {
+                if (!ensureForeground()) return START_NOT_STICKY
+                if (LocationRecordPrefs.phase(this) == Phase.STILL) resumeFromStill()
+            }
             // ACTION_START · START_STICKY 재시작(intent == null)
             else -> {
                 if (!ensureForeground()) return START_NOT_STICKY
@@ -188,7 +217,9 @@ class LocationRecordService : Service() {
     override fun onDestroy() {
         destroyed = true
         running = false
+        mainHandler.removeCallbacksAndMessages(null)
         stopUpdates()
+        stopWatchdog()
         stopTransitions()
         worker.quitSafely()
         super.onDestroy()
@@ -216,6 +247,7 @@ class LocationRecordService : Service() {
             }
         }
         stopUpdates()
+        stopWatchdog()
         stopTransitions()
         stopSelf()
         return false
@@ -227,7 +259,12 @@ class LocationRecordService : Service() {
         if (stillDetection) startTransitions() else stopTransitions()
         if (!stillDetection) LocationRecordPrefs.setPhase(this, Phase.MOVING)
         stopUpdates()
-        if (LocationRecordPrefs.phase(this) == Phase.MOVING) startUpdates()
+        if (LocationRecordPrefs.phase(this) == Phase.MOVING) {
+            stopWatchdog()
+            startUpdates()
+        } else {
+            startWatchdog()
+        }
     }
 
     /** 정지 감지를 쓰려는지(평소 + 활동 인식 권한). 구독 성공 여부는 [transitionsOn]. */
@@ -245,14 +282,71 @@ class LocationRecordService : Service() {
         when (action) {
             Action.Pause -> {
                 stopUpdates()
+                LocationRecordPrefs.setStillSince(this, System.currentTimeMillis())
+                stillAnchor = null
                 fixOnce(still = true)
+                startWatchdog()
             }
             Action.ResumeAndFix -> {
+                stopWatchdog()
                 startUpdates()
                 fixOnce(still = false)
             }
             Action.None -> Unit
         }
+    }
+
+    /** 이탈 전환 없이 정지를 끝낸다(감시가 움직임을 봤거나 정지가 너무 길다). */
+    private fun resumeFromStill() {
+        LocationRecordPrefs.setPhase(this, Phase.MOVING)
+        stopWatchdog()
+        startUpdates()
+        fixOnce(still = false)
+    }
+
+    /** 메인 스레드(watchdogCallback 은 메인 루퍼). */
+    private fun onWatchdogFix(location: Location) {
+        if (destroyed || !watching || LocationRecordPrefs.phase(this) != Phase.STILL) return
+        val anchor = stillAnchor
+        if (anchor == null) {
+            stillAnchor = location
+            return
+        }
+        if (LocationRecordRules.watchdogShouldResume(anchor.distanceTo(location).toDouble())) {
+            Log.i(TAG, "watchdog saw movement while still, resuming")
+            resumeFromStill()
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun startWatchdog() {
+        if (watching) return
+        val rules = LocationRecordRules.watchdogRequest
+        val request = LocationRequest.Builder(rules.priority, rules.intervalMs)
+            .setMinUpdateDistanceMeters(rules.minDistanceM)
+            .setMaxUpdateDelayMillis(rules.maxDelayMs)
+            .build()
+        try {
+            watching = true
+            fused.requestLocationUpdates(request, watchdogCallback, Looper.getMainLooper())
+                .addOnFailureListener(mainExecutor) { e ->
+                    // 감시가 없어도 이탈 전환 · 6시간 규칙이 남는다.
+                    Log.w(TAG, "watchdog request failed", e)
+                    if (destroyed || !watching) return@addOnFailureListener
+                    fused.removeLocationUpdates(watchdogCallback)
+                    watching = false
+                    if (e is SecurityException) onPermissionLost(e)
+                }
+        } catch (e: SecurityException) {
+            watching = false
+            onPermissionLost(e)
+        }
+    }
+
+    private fun stopWatchdog() {
+        if (!watching) return
+        fused.removeLocationUpdates(watchdogCallback)
+        watching = false
     }
 
     @SuppressLint("MissingPermission")
@@ -263,15 +357,23 @@ class LocationRecordService : Service() {
             .setMinUpdateDistanceMeters(rules.minDistanceM)
             .setMaxUpdateDelayMillis(rules.maxDelayMs)
             .build()
+        val gen = ++updatesGen
         try {
             updating = true
             fused.requestLocationUpdates(request, callback, worker.looper)
                 .addOnFailureListener(mainExecutor) { e ->
                     Log.w(TAG, "location updates failed", e)
-                    if (destroyed) return@addOnFailureListener
+                    // 그 사이 멈췄거나 다시 걸었으면 옛 요청의 실패다. 지금 요청을 건드리지 않는다.
+                    if (!LocationRecordRules.shouldRetryUpdates(gen, updatesGen, destroyed)) {
+                        return@addOnFailureListener
+                    }
                     fused.removeLocationUpdates(callback)
                     updating = false
-                    if (e is SecurityException) onPermissionLost(e)
+                    if (e is SecurityException) {
+                        onPermissionLost(e)
+                    } else {
+                        scheduleUpdatesRetry(gen)
+                    }
                 }
         } catch (e: SecurityException) {
             updating = false
@@ -279,7 +381,18 @@ class LocationRecordService : Service() {
         }
     }
 
+    /** [gen] 요청이 실패했다. 그대로 최신이고 아직 움직이는 중이면 60초 뒤 다시 건다. */
+    private fun scheduleUpdatesRetry(gen: Int) {
+        mainHandler.postDelayed({
+            if (!LocationRecordRules.shouldRetryUpdates(gen, updatesGen, destroyed)) return@postDelayed
+            if (updating || LocationRecordPrefs.phase(this) != Phase.MOVING) return@postDelayed
+            Log.i(TAG, "retrying location updates")
+            startUpdates()
+        }, LocationRecordRules.UPDATES_RETRY_MS)
+    }
+
     private fun stopUpdates() {
+        updatesGen++
         if (!updating) return
         fused.removeLocationUpdates(callback)
         updating = false
@@ -294,6 +407,7 @@ class LocationRecordService : Service() {
                 .addOnSuccessListener(mainExecutor) { location ->
                     if (destroyed) return@addOnSuccessListener
                     if (location != null) {
+                        if (still) stillAnchor = location
                         saveAsync(location, still)
                     } else {
                         lastKnown(still)
@@ -316,8 +430,10 @@ class LocationRecordService : Service() {
                     if (destroyed) return@addOnSuccessListener
                     when {
                         location == null -> Log.w(TAG, "no fix: current and last location both empty")
-                        LocationRecordRules.isFreshFallback(location.time, System.currentTimeMillis()) ->
+                        LocationRecordRules.isFreshFallback(location.time, System.currentTimeMillis()) -> {
+                            if (still) stillAnchor = location
                             saveAsync(location, still)
+                        }
                         else -> Log.w(TAG, "no fix: last location older than 5 minutes, skipped")
                     }
                 }
@@ -390,6 +506,7 @@ class LocationRecordService : Service() {
         transitionsPending = false
         transitionsOn = false
         LocationRecordPrefs.setPhase(this, Phase.MOVING)
+        stopWatchdog()
         startUpdates()
     }
 
@@ -421,6 +538,7 @@ class LocationRecordService : Service() {
     private fun onPermissionLost(e: SecurityException) {
         Log.w(TAG, "location permission lost", e)
         stopUpdates()
+        stopWatchdog()
         stopTransitions()
         stopSelf()
     }
