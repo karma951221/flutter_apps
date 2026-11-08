@@ -22,10 +22,7 @@ LocationPoint _p(
 /// 1분 간격 [n]점, 위도 0.0001도(약 11m)씩 흔들린다.
 List<LocationPoint> _stayPoints(DateTime start, int n) => [
   for (var i = 0; i < n; i++)
-    _p(
-      start.add(Duration(minutes: i)),
-      lat: 37.5663 + (i.isEven ? 0 : 0.0001),
-    ),
+    _p(start.add(Duration(minutes: i)), lat: 37.5663 + (i.isEven ? 0 : 0.0001)),
 ];
 
 void main() {
@@ -106,5 +103,48 @@ void main() {
     ]);
     expect(t.stays, isEmpty);
     expect(t.segments.length, 2);
+  });
+
+  test('stillStart then far point within 30 minutes still closes the stay', () {
+    final next = DateTime.utc(2026, 11, 8, 9, 25);
+    final t = analyzer.analyze([
+      ..._stayPoints(_t0, 4), // 09:00~09:03
+      _p(DateTime.utc(2026, 11, 8, 9, 3), lat: 37.5663, still: true),
+      _p(next, lat: 37.5663 + 0.018),
+    ]);
+    expect(t.segments.length, 2);
+    expect(t.stays.single.end, next.subtract(const Duration(milliseconds: 1)));
+  });
+
+  test('multi-point group ending in stillStart closes only the last stay', () {
+    final next = DateTime.utc(2026, 11, 8, 11);
+    final t = analyzer.analyze([
+      ..._stayPoints(_t0, 13), // A: 09:00~09:12
+      _p(DateTime.utc(2026, 11, 8, 9, 15), lat: 37.5663 + 0.009), // 짧은 외출
+      _p(DateTime.utc(2026, 11, 8, 9, 18), lat: 37.5663 + 0.018),
+      _p(DateTime.utc(2026, 11, 8, 9, 19), lat: 37.5663 + 0.018),
+      _p(DateTime.utc(2026, 11, 8, 9, 20), lat: 37.5663 + 0.018, still: true),
+      _p(next, lat: 37.5663 + 0.05),
+    ]);
+    expect(t.stays.length, 2);
+    expect(t.stays.first.start, _t0);
+    expect(t.stays.first.end, DateTime.utc(2026, 11, 8, 9, 12));
+    expect(t.stays.last.start, DateTime.utc(2026, 11, 8, 9, 18));
+    expect(t.stays.last.end, next.subtract(const Duration(milliseconds: 1)));
+  });
+
+  test('segment points outside the clip window are filtered', () {
+    final from = DateTime.utc(2026, 11, 8, 9, 2);
+    final to = DateTime.utc(2026, 11, 8, 9, 4);
+    final t = analyzer.analyze(
+      [
+        ..._stayPoints(_t0, 6), // 09:00~09:05 (한 구간)
+        ..._stayPoints(DateTime.utc(2026, 11, 8, 12), 3), // 창 밖 구간
+      ],
+      clipFrom: from,
+      clipTo: to,
+    );
+    expect(t.segments.length, 1);
+    expect(t.segments.single.points.map((p) => p.recordedAt.minute), [2, 3, 4]);
   });
 }

@@ -57,16 +57,15 @@ class TrackAnalyzer {
         continue;
       }
       final far =
-          haversineMeters(prev.lat, prev.lng, next.lat, next.lng) >
-          stayRadiusM;
-      final gapped = next.recordedAt.difference(prev.recordedAt) > gap;
+          haversineMeters(prev.lat, prev.lng, next.lat, next.lng) > stayRadiusM;
       if (prev.stillStart && !far) {
         current.points.add(next); // 정지 중 공백 — 같은 자리에 머문 것
       } else if (prev.stillStart && far) {
-        // 정지 감지로 비었던 시간은 머문 곳, 뒤 점 직전까지. 선은 잇지 않는다.
-        if (gapped) current.endOverride = next.recordedAt.subtract(_oneMs);
+        // 정지 감지 뒤엔 위치 요청이 멈춰 있으니 빈 시간은 공백 길이와 무관하게
+        // 머문 곳, 뒤 점 직전까지. 선은 잇지 않는다.
+        current.endOverride = next.recordedAt.subtract(_oneMs);
         groups.add(_Group([next]));
-      } else if (gapped) {
+      } else if (next.recordedAt.difference(prev.recordedAt) > gap) {
         groups.add(_Group([next]));
       } else {
         current.points.add(next);
