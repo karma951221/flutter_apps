@@ -4958,6 +4958,8 @@
   "@walkMapLoadFailed": {"description": "지도 — 읽기 실패 안내"},
   "walkMapRetry": "다시 시도",
   "@walkMapRetry": {"description": "지도 — 읽기 실패 안내의 다시 시도 버튼"},
+  "walkMapViewStoryOnMap": "지도로 보기",
+  "@walkMapViewStoryOnMap": {"description": "스토리 뷰어 ⋮ 메뉴 — 이 스토리를 도구 › 지도로 열기"},
   "walkMapChipDense": "촘촘 기록",
   "@walkMapChipDense": {"description": "지도 — 촘촘 기록 칩(꺼짐)"},
   "walkMapChipDenseOn": "촘촘 기록 중",

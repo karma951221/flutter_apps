@@ -129,6 +129,7 @@ import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
 import '../../presentation/diary/media_picker.dart' as _i287;
 import '../../presentation/lock/media_pick_guard.dart' as _i488;
 import '../../presentation/map/cubit/map_view_cubit.dart' as _i276;
+import '../../presentation/map/map_open_requests.dart' as _i98;
 import '../config/commute_api_keys.dart' as _i546;
 import 'register_module.dart' as _i291;
 
@@ -179,6 +180,10 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i306.OpenConversation>(() => _i306.OpenConversation());
     gh.lazySingleton<_i488.MediaPickGuard>(() => _i488.MediaPickGuard());
+    gh.lazySingleton<_i98.MapOpenRequests>(
+      () => _i98.MapOpenRequests(),
+      dispose: (i) => i.dispose(),
+    );
     gh.lazySingleton<_i494.IdGenerator>(
       () => registerModule.idGenerator(gh<_i706.Uuid>()),
     );

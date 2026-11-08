@@ -32,6 +32,9 @@ import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/cubit/diary_lock_state.dart';
 import '../../map/cubit/map_record_cubit.dart';
 import '../../map/cubit/map_view_cubit.dart';
+import '../../map/map_open_requests.dart';
+import '../../../domain/location/entity/map_period.dart';
+import '../../../domain/diary/entity/story.dart';
 import '../../lock/media_pick_guard.dart';
 import '../../settings/cubit/diary_settings_cubit.dart';
 import '../../settings/cubit/holiday_settings_cubit.dart';
@@ -105,6 +108,10 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   /// 도구 탭에서 고른 상단 탭. 앱이 떠 있는 동안 기억하고, 새로 켜면 알람이다.
   ToolsSection _toolsSection = ToolsSection.alarm;
   ModalRoute<void>? _route;
+  StreamSubscription<Story>? _mapRequests;
+
+  /// 지도 cubit 들이 있는 아래 context — 스토리 뷰어의 요청(`MapOpenRequests`)이 cubit 을 만들며 읽는다.
+  BuildContext? _providerContext;
 
   /// 셸 위에 다른 라우트(설정 · 편집 · 시트 등)가 얹혀 있는지. 걷기 화면은 가려진 동안 달성을
   /// 판정하지 않는다 — 걷기 설정에서 목표를 낮춰도 돌아왔을 때 축하한다.
@@ -124,10 +131,24 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     );
     backgroundChannel.setMethodCallHandler(_onBackgroundCall);
     _diaryLock.start();
+    _mapRequests = getIt<MapOpenRequests>().requests.listen(_openMapForStory);
     // 앱 시작 청소는 화면을 막지 않는다. 실패해도 다음 시작에 다시 한다.
     unawaited(getIt<DiaryUseCase>().cleanOrphans().catchError((Object _) {}));
     _alarms.load();
     _refresh();
+  }
+
+  /// 스토리 뷰어의 "지도로 보기". 잠겨 있어도 옮겨 간다 — 지도의 잠금 게이트가 PIN 을 묻고,
+  /// 풀리면 지도 탭이 이 기간을 이어 읽는다.
+  void _openMapForStory(Story story) {
+    if (!mounted) return;
+    setState(() {
+      _tab = ShellTab.tools;
+      _toolsSection = ToolsSection.map;
+    });
+    final context = _providerContext;
+    if (context == null) return;
+    unawaited(context.read<MapViewCubit>().show(MapPeriod.story(story)));
   }
 
   void _onResume() {
@@ -163,6 +184,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   @override
   void dispose() {
     backgroundChannel.setMethodCallHandler(null);
+    unawaited(_mapRequests?.cancel());
     appRouteObserver.unsubscribe(this);
     _lifecycle.dispose();
     _alarms.close();
@@ -297,28 +319,35 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
       child: Scaffold(
         // 설정 화면은 셸 cubit 을 읽어 다시 건다 — 그 cubit 아래 context 가 필요하다.
         body: Builder(
-          builder: (context) => IndexedStack(
-            index: _tab.index,
-            children: [
-              DiaryTab(active: _tab == ShellTab.diary),
-              ChatTab(
-                active: _tab == ShellTab.chat,
-                onOpenSettings: () => unawaited(
-                  openSettings(context, SettingsTarget.chat, highlight: true),
+          builder: (context) {
+            _providerContext = context;
+            return IndexedStack(
+              index: _tab.index,
+              children: [
+                DiaryTab(active: _tab == ShellTab.diary),
+                ChatTab(
+                  active: _tab == ShellTab.chat,
+                  onOpenSettings: () => unawaited(
+                    openSettings(context, SettingsTarget.chat, highlight: true),
+                  ),
                 ),
-              ),
-              ToolsTab(
-                active: _tab == ShellTab.tools && !_covered,
-                selected: _tab == ShellTab.tools,
-                section: _toolsSection,
-                onSectionChanged: (section) =>
-                    setState(() => _toolsSection = section),
-                onOpenAlarmSettings: () => unawaited(
-                  openSettings(context, SettingsTarget.alarm, highlight: true),
+                ToolsTab(
+                  active: _tab == ShellTab.tools && !_covered,
+                  selected: _tab == ShellTab.tools,
+                  section: _toolsSection,
+                  onSectionChanged: (section) =>
+                      setState(() => _toolsSection = section),
+                  onOpenAlarmSettings: () => unawaited(
+                    openSettings(
+                      context,
+                      SettingsTarget.alarm,
+                      highlight: true,
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            );
+          },
         ),
         // 일기 ＋ 는 탭이 아니라 여기 둔다 — 스낵바가 뜨는 이 Scaffold 에 있어야 위로 비킨다.
         floatingActionButton: _tab == ShellTab.diary

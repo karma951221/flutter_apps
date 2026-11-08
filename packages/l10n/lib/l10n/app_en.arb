@@ -1244,6 +1244,7 @@
   "walkMapEmptyStory": "Nothing recorded during this story",
   "walkMapLoadFailed": "Could not load your map",
   "walkMapRetry": "Try again",
+  "walkMapViewStoryOnMap": "View on map",
   "walkMapChipDense": "Detailed",
   "walkMapChipDenseOn": "Recording in detail",
   "walkMapChipOff": "Recording off",

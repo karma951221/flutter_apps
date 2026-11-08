@@ -27,6 +27,7 @@ import 'package:walk/domain/settings/repository/settings_repository.dart';
 import 'package:walk/domain/walk/entity/health_access.dart';
 import 'package:walk/domain/walk/usecase/walk_use_case.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
+import 'package:walk/presentation/map/map_open_requests.dart';
 import 'package:walk/presentation/shell/page/main_shell_page.dart';
 
 import '../support/fake_device_auth.dart';
@@ -149,6 +150,7 @@ void main() {
         ..registerSingleton<LockRepository>(PrefsLockRepository(prefs))
         ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
         ..registerSingleton<MediaPickGuard>(MediaPickGuard())
+        ..registerSingleton<MapOpenRequests>(MapOpenRequests())
         ..registerSingleton<ChatSession>(_MockChatSession())
         ..registerSingleton<ChatHistoryRepository>(_MockChatHistory())
         ..registerSingleton<OpenConversation>(OpenConversation())

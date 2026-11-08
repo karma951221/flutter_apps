@@ -4030,6 +4030,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapRetry => '다시 시도';
 
   @override
+  String get walkMapViewStoryOnMap => '지도로 보기';
+
+  @override
   String get walkMapChipDense => '촘촘 기록';
 
   @override

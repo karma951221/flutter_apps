@@ -28,6 +28,7 @@ import 'package:walk/presentation/diary/viewer/story_viewer_page.dart';
 import 'package:walk/presentation/diary/viewer/viewer_slide_view.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
+import 'package:walk/presentation/map/map_open_requests.dart';
 
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_device_auth.dart';
@@ -219,6 +220,7 @@ void main() {
       ..registerSingleton<DiaryUseCase>(useCase)
       ..registerSingleton<MediaStore>(store)
       ..registerSingleton<Clock>(clock)
+      ..registerSingleton<MapOpenRequests>(MapOpenRequests())
       ..registerSingleton<LockRepository>(lockRepo)
       ..registerSingleton<DeviceAuth>(FakeDeviceAuth());
   });
@@ -637,6 +639,62 @@ void main() {
     verify(() => useCase.trash('j4')).called(1);
     expect(viewerOpen(), isFalse);
     expect(find.widgetWithText(SnackBar, '기록을 휴지통으로 옮겼어요'), findsOneWidget);
+  });
+
+  group('지도로 보기', () {
+    testWidgets('스토리 소스의 일반 스토리면 ⋮ 에 항목이 있다', (tester) async {
+      await open(tester);
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+
+      expect(find.text('지도로 보기'), findsOneWidget);
+    });
+
+    testWidgets('일상 스토리에는 없다', (tester) async {
+      await open(tester, group: 1);
+      expect(current(tester), 'd1/p8');
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+
+      expect(find.text('휴지통으로'), findsOneWidget);
+      expect(find.text('지도로 보기'), findsNothing);
+    });
+
+    testWidgets('모아보기(필터) 소스에는 없다', (tester) async {
+      await open(
+        tester,
+        source: const ViewerSource.filter(EntryFilter.tag('영상'), '#영상'),
+      );
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+
+      expect(find.text('휴지통으로'), findsOneWidget);
+      expect(find.text('지도로 보기'), findsNothing);
+    });
+
+    testWidgets('기록 목록(entries) 소스에는 없다', (tester) async {
+      await open(tester, source: const ViewerSource.entries(['j4'], '검색'));
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+
+      expect(find.text('휴지통으로'), findsOneWidget);
+      expect(find.text('지도로 보기'), findsNothing);
+    });
+
+    testWidgets('누르면 뷰어를 닫고 그 스토리를 지도 요청으로 보낸다', (tester) async {
+      final requested = <Story>[];
+      final sub = getIt<MapOpenRequests>().requests.listen(requested.add);
+      addTearDown(sub.cancel);
+      await open(tester);
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('지도로 보기'));
+      await settleClose(tester);
+
+      expect(viewerOpen(), isFalse);
+      expect(requested.map((s) => s.id), ['jeju']);
+    });
   });
 
   testWidgets('기록이 모두 사라지면 닫힌다', (tester) async {

@@ -12,6 +12,7 @@ import '../../../domain/diary/entity/entry_filter.dart';
 import '../../../domain/diary/entity/entry_media.dart';
 import '../../../domain/diary/entity/story.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
+import '../../map/map_open_requests.dart';
 import '../../theme/walk_theme.dart';
 import '../page/diary_route.dart';
 import '../page/entry_actions.dart';
@@ -537,6 +538,14 @@ class _StoryViewerPageState extends State<StoryViewerPage>
   Future<void> _onAction(ViewerEntryAction action) async {
     final pos = _pos;
     if (pos == null) return;
+    if (action == ViewerEntryAction.map) {
+      final story = _groups[pos.group].story;
+      if (story == null || story.isDefault) return;
+      // 뷰어는 셸 바깥 라우트다 — 닫고, 셸이 듣는 통로로 알린다.
+      _close();
+      getIt<MapOpenRequests>().open(story);
+      return;
+    }
     final entry = _slideAt(_groups, pos).entry;
     final next = _nextOutside(entry.id);
     _fallback = next == null ? null : _keyAt(_groups, next);
@@ -545,6 +554,8 @@ class _StoryViewerPageState extends State<StoryViewerPage>
         await editEntry(context, entry);
       case ViewerEntryAction.move:
         await moveEntry(context, entry);
+      case ViewerEntryAction.map:
+        break;
       case ViewerEntryAction.trash:
         final trashed = await trashEntry(context, entry, confirm: false);
         if (!trashed || !mounted) return;

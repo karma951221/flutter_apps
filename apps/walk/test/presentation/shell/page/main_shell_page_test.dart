@@ -57,6 +57,8 @@ import 'package:walk/presentation/map/cubit/map_view_state.dart';
 import 'package:walk/presentation/map/page/map_tab.dart';
 import 'package:walk/presentation/map/widget/story_picker_sheet.dart';
 import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
+import 'package:walk/presentation/map/map_open_requests.dart';
+import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/presentation/settings/page/alarm_settings_page.dart';
 import 'package:walk/presentation/settings/page/app_settings_page.dart';
 import 'package:walk/presentation/settings/page/chat_settings_page.dart';
@@ -177,6 +179,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(PeriodKind.week);
     registerFallbackValue(const EntryFilter.all());
+    registerFallbackValue(MapPeriod.day(DateTime(2026)));
   });
   setUp(() async {
     // 네이티브 디스패처 자리: 헤드리스 일이 없어 awaitIdle 에 바로 답한다.
@@ -242,6 +245,7 @@ void main() {
       ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
       ..registerSingleton<MediaPickGuard>(MediaPickGuard());
     getIt
+      ..registerSingleton<MapOpenRequests>(MapOpenRequests())
       ..registerSingleton<ChatSession>(_MockChatSession())
       ..registerSingleton<ChatHistoryRepository>(_MockChatHistory())
       ..registerSingleton<WikiRepository>(FakeWikiRepository())
@@ -1125,6 +1129,7 @@ void main() {
         initialState: MapViewState.empty(MapPeriod.day(DateTime(2026, 10, 10))),
       );
       when(mapView.refresh).thenAnswer((_) async {});
+      when(() => mapView.show(any())).thenAnswer((_) async {});
       when(
         () => recorder.status(),
       ).thenAnswer((_) async => const RecorderStatus.off());
@@ -1230,6 +1235,36 @@ void main() {
       expect(onstage(MapTab), isTrue);
       verify(mapView.refresh).called(1);
       verify(() => recorder.status()).called(1);
+    });
+
+    final trip = Story(
+      id: 'jeju',
+      title: '제주 여행',
+      status: StoryStatus.open,
+      startedAt: DateTime(2026, 10, 6),
+      createdAt: DateTime(2026, 10, 6),
+    );
+
+    testWidgets('스토리 뷰어의 지도 요청이 오면 도구 › 지도로 가서 그 스토리를 읽는다', (tester) async {
+      await pump(tester);
+      expect(onstage(MapTab), isFalse);
+
+      getIt<MapOpenRequests>().open(trip);
+      await tester.pumpAndSettle();
+
+      expect(onstage(MapTab), isTrue);
+      verify(() => mapView.show(MapPeriod.story(trip))).called(1);
+    });
+
+    testWidgets('잠겨 있어도 도구 › 지도로 옮겨 가고 PIN 을 묻는다', (tester) async {
+      await enableDiaryLock();
+      await pump(tester);
+
+      getIt<MapOpenRequests>().open(trip);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PinPad).hitTestable(), findsOneWidget);
+      verify(() => mapView.show(MapPeriod.story(trip))).called(1);
     });
 
     testWidgets('다른 상단 탭을 보던 중 복귀하면 지도는 읽지 않는다', (tester) async {

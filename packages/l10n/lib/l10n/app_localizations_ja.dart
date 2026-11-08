@@ -4027,6 +4027,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkMapRetry => '再試行';
 
   @override
+  String get walkMapViewStoryOnMap => '地図で見る';
+
+  @override
   String get walkMapChipDense => '詳細記録';
 
   @override

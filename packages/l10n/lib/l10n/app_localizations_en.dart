@@ -4390,6 +4390,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkMapRetry => 'Try again';
 
   @override
+  String get walkMapViewStoryOnMap => 'View on map';
+
+  @override
   String get walkMapChipDense => 'Detailed';
 
   @override

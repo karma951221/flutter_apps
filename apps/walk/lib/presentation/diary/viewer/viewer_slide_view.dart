@@ -192,7 +192,7 @@ class ViewerCaption extends StatelessWidget {
 }
 
 /// 뷰어 조각의 ⋮ 동작.
-enum ViewerEntryAction { edit, move, trash }
+enum ViewerEntryAction { edit, move, map, trash }
 
 /// 뷰어 머리: 그날 진행 막대, 표지 원 · 그룹 이름 · `n일차 · 날짜`(일차는 스토리만), ⋮ · ✕.
 class ViewerHeader extends StatelessWidget {
@@ -318,6 +318,12 @@ class ViewerHeader extends StatelessWidget {
                         label: l10n.walkDiaryEntryMove,
                         icon: Icons.drive_file_move_outline,
                       ),
+                      if (story != null && !story.isDefault)
+                        AppOverflowMenuItem(
+                          value: ViewerEntryAction.map,
+                          label: l10n.walkMapViewStoryOnMap,
+                          icon: Icons.map_outlined,
+                        ),
                       AppOverflowMenuItem(
                         value: ViewerEntryAction.trash,
                         label: l10n.walkDiaryEntryTrash,

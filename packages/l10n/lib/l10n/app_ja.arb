@@ -1244,6 +1244,7 @@
   "walkMapEmptyStory": "このストーリーの期間の記録はありません",
   "walkMapLoadFailed": "地図の記録を読み込めませんでした",
   "walkMapRetry": "再試行",
+  "walkMapViewStoryOnMap": "地図で見る",
   "walkMapChipDense": "詳細記録",
   "walkMapChipDenseOn": "詳細記録中",
   "walkMapChipOff": "記録オフ",

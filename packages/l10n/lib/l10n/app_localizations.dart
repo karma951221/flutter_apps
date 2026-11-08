@@ -7452,6 +7452,12 @@ abstract class AppLocalizations {
   /// **'다시 시도'**
   String get walkMapRetry;
 
+  /// 스토리 뷰어 ⋮ 메뉴 — 이 스토리를 도구 › 지도로 열기
+  ///
+  /// In ko, this message translates to:
+  /// **'지도로 보기'**
+  String get walkMapViewStoryOnMap;
+
   /// 지도 — 촘촘 기록 칩(꺼짐)
   ///
   /// In ko, this message translates to:
