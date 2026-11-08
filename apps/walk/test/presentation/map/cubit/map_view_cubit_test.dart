@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_location.dart';
+import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/location/entity/location_point.dart';
 import 'package:walk/domain/location/entity/map_period.dart';
@@ -54,10 +55,25 @@ void main() {
   final day = MapPeriod.day(DateTime(2026, 11, 8));
   final at = DateTime(2026, 11, 8, 9);
 
-  Future<List<DiaryEntry>> search() => diary.searchEntries(
-    from: any(named: 'from'),
-    to: any(named: 'to'),
-    limit: any(named: 'limit'),
+  Future<List<DiaryEntry>> search() =>
+      diary.locatedEntriesBetween(any(), any(), limit: any(named: 'limit'));
+
+  /// [from] 부터 1분 간격으로 [count] 개, 직선으로 이동한 점(단순화 대상).
+  List<LocationPoint> line(DateTime from, int count) => [
+    for (var i = 0; i < count; i++)
+      _p(from.add(Duration(minutes: i)), 37.5 + i * 0.0005, 127.0),
+  ];
+
+  int drawn(MapViewData data) =>
+      data.track.segments.fold<int>(0, (a, s) => a + s.points.length);
+
+  Story story(DateTime start, DateTime? end) => Story(
+    id: 'trip',
+    title: '여행',
+    status: end == null ? StoryStatus.open : StoryStatus.closed,
+    startedAt: start,
+    endedAt: end,
+    createdAt: start,
   );
 
   setUpAll(() {
@@ -75,11 +91,12 @@ void main() {
     when(search).thenAnswer((_) async => []);
     when(() => sync.run()).thenAnswer((_) async => 0);
     when(() => namer.nameFor(any(), any())).thenAnswer((_) async => '집');
+    when(() => locations.placeName(any())).thenAnswer((_) async => null);
     cubit = MapViewCubit(locations, diary, sync, namer, const _FixedClock());
   });
   tearDown(() => cubit.close());
 
-  test('show day loads points, stays and entries with coordinates', () async {
+  test('show day loads points, stays and located entries', () async {
     when(() => locations.pointsBetween(any(), any())).thenAnswer(
       (_) async => [
         for (var i = 0; i < 6; i++)
@@ -89,8 +106,6 @@ void main() {
     when(search).thenAnswer(
       (_) async => [
         _entry('a', at, location: const EntryLocation(lat: 37.5, lng: 127.0)),
-        _entry('b', at, location: const EntryLocation(placeName: '이름만')),
-        _entry('c', at),
       ],
     );
 
@@ -102,7 +117,7 @@ void main() {
     expect(state.data.stayNames, {'37.500,127.000': '집'});
   });
 
-  test('month view simplifies points and skips stay names', () async {
+  test('month view simplifies points and never asks the network', () async {
     final start = DateTime(2026, 11, 3, 8);
     when(() => locations.pointsBetween(any(), any())).thenAnswer(
       (_) async => [
@@ -146,15 +161,100 @@ void main() {
     expect(cubit.state, MapViewState.empty(day));
   });
 
-  test('entries limit is 300 per period', () async {
+  test('pins come from located entries in the period bounds', () async {
     await cubit.show(day);
     verify(
-      () => diary.searchEntries(
-        from: any(named: 'from'),
-        to: any(named: 'to'),
-        limit: 300,
+      () => diary.locatedEntriesBetween(
+        DateTime(2026, 11, 8),
+        DateTime(2026, 11, 8, 23, 59, 59, 999),
       ),
     ).called(1);
+  });
+
+  test('long story (over 2 days) simplifies drawn points', () async {
+    final start = DateTime(2026, 11, 1, 8);
+    when(
+      () => locations.pointsBetween(any(), any()),
+    ).thenAnswer((_) async => line(start, 1000));
+
+    await cubit.show(MapPeriod.story(story(start, DateTime(2026, 11, 4, 8))));
+
+    expect(drawn((cubit.state as MapViewReady).data), lessThan(10));
+  });
+
+  test('open story counts its span up to now', () async {
+    // 시계는 11-08 12시 — 11-01 에 시작한 진행 중 스토리는 이틀이 넘는다.
+    final start = DateTime(2026, 11, 1, 8);
+    when(
+      () => locations.pointsBetween(any(), any()),
+    ).thenAnswer((_) async => line(start, 1000));
+
+    await cubit.show(MapPeriod.story(story(start, null)));
+
+    expect(drawn((cubit.state as MapViewReady).data), lessThan(10));
+  });
+
+  test('short story (2 days or less) is not simplified', () async {
+    final start = DateTime(2026, 11, 6, 8);
+    when(
+      () => locations.pointsBetween(any(), any()),
+    ).thenAnswer((_) async => line(start, 100));
+
+    await cubit.show(MapPeriod.story(story(start, DateTime(2026, 11, 8, 8))));
+
+    expect(drawn((cubit.state as MapViewReady).data), 100);
+  });
+
+  /// 같은 곳에 이틀 머문 점(11-03 · 11-04, 각 6점).
+  List<LocationPoint> twoStays() => [
+    for (var d = 0; d < 2; d++)
+      for (var i = 0; i < 6; i++)
+        _p(DateTime(2026, 11, 3 + d, 8, 3 * i), 37.5, 127.0),
+  ];
+
+  test('month fills frequent and stay names from cache only', () async {
+    when(
+      () => locations.pointsBetween(any(), any()),
+    ).thenAnswer((_) async => twoStays());
+    when(
+      () => locations.placeName('37.500,127.000'),
+    ).thenAnswer((_) async => '집');
+
+    await cubit.show(const MapPeriod.month(2026, 11));
+
+    final data = (cubit.state as MapViewReady).data;
+    expect(data.frequent.single.gridKey, '37.500,127.000');
+    expect(data.stayNames, {'37.500,127.000': '집'});
+    verifyNever(() => namer.nameFor(any(), any()));
+    // 같은 격자는 한 번만 묻는다.
+    verify(() => locations.placeName('37.500,127.000')).called(1);
+  });
+
+  test('story fills stay names from cache only', () async {
+    when(
+      () => locations.pointsBetween(any(), any()),
+    ).thenAnswer((_) async => twoStays());
+    when(
+      () => locations.placeName('37.500,127.000'),
+    ).thenAnswer((_) async => '숙소');
+
+    await cubit.show(
+      MapPeriod.story(story(DateTime(2026, 11, 3), DateTime(2026, 11, 5))),
+    );
+
+    final data = (cubit.state as MapViewReady).data;
+    expect(data.stayNames, {'37.500,127.000': '숙소'});
+    verifyNever(() => namer.nameFor(any(), any()));
+  });
+
+  test('cache miss leaves the name out', () async {
+    when(
+      () => locations.pointsBetween(any(), any()),
+    ).thenAnswer((_) async => twoStays());
+
+    await cubit.show(const MapPeriod.month(2026, 11));
+
+    expect((cubit.state as MapViewReady).data.stayNames, isEmpty);
   });
 
   test('first show runs sync before read', () async {

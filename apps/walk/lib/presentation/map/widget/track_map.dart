@@ -16,6 +16,9 @@ import 'entry_pin.dart';
 /// 선: 촘촘 구간은 굵고 진하게, 평소 구간은 얇고 옅게(같은 색). [faint] 면(한 달) 모든 선을
 /// 옅게 겹쳐 그려 자주 다닌 길이 진해진다.
 ///
+/// 이동선의 좌표 목록은 [track] 인스턴스가 바뀔 때만 다시 만든다 — 한 달 · 긴 스토리는 점이 많고,
+/// 시트를 끌거나 칩 상태가 바뀌는 다시 그리기마다 만들면 버벅인다.
+///
 /// [fitKey] 가 바뀌고(다른 기간) 그릴 좌표가 생기면 카메라를 그 좌표들에 맞춘다. 같은 기간을
 /// 다시 읽어도(복귀 · 새로고침) 카메라는 그대로 둔다. [TrackMapState.moveTo] 로 한 점에 간다.
 class TrackMap extends StatefulWidget {
@@ -71,6 +74,34 @@ class TrackMapState extends State<TrackMap> {
 
   Object? _fitted;
 
+  /// [_segmentPoints] · [_trackCoordinates] 를 만든 이동선. 같은 인스턴스면 다시 쓴다.
+  DayTrack? _memoTrack;
+  List<List<LatLng>> _memoSegments = const [];
+  List<LatLng> _memoCoordinates = const [];
+
+  void _memoize() {
+    final track = widget.track;
+    if (identical(track, _memoTrack)) return;
+    _memoTrack = track;
+    _memoSegments = [
+      for (final s in track.segments)
+        List.unmodifiable([for (final p in s.points) LatLng(p.lat, p.lng)]),
+    ];
+    _memoCoordinates = List.unmodifiable([for (final s in _memoSegments) ...s]);
+  }
+
+  /// 구간별 선 좌표([DayTrack.segments] 와 같은 순서).
+  List<List<LatLng>> get _segmentPoints {
+    _memoize();
+    return _memoSegments;
+  }
+
+  /// 이동선의 모든 좌표.
+  List<LatLng> get _trackCoordinates {
+    _memoize();
+    return _memoCoordinates;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -103,8 +134,7 @@ class TrackMapState extends State<TrackMap> {
   );
 
   List<LatLng> _coordinates() => [
-    for (final s in widget.track.segments)
-      for (final p in s.points) LatLng(p.lat, p.lng),
+    ..._trackCoordinates,
     ...widget.spots,
     for (final e in widget.entries)
       if (e.location case final l? when l.hasCoordinates)
@@ -155,10 +185,10 @@ class TrackMapState extends State<TrackMap> {
         ),
         PolylineLayer(
           polylines: [
-            for (final s in widget.track.segments)
+            for (final (i, s) in widget.track.segments.indexed)
               if (s.points.length > 1)
                 Polyline(
-                  points: [for (final p in s.points) LatLng(p.lat, p.lng)],
+                  points: _segmentPoints[i],
                   strokeWidth: !widget.faint && s.mode == RecordMode.dense
                       ? _denseStroke
                       : _normalStroke,

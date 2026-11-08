@@ -60,6 +60,15 @@ abstract interface class DiaryRepository {
     required String storyId,
   });
 
+  /// [from] ~ [to](양 끝 포함)에 든 좌표(lat · lng)가 있는 기록(휴지통 제외, 모든 스토리),
+  /// occurredAt 오름차순, 최대 [limit]개. 좌표 거르기는 SQL 에서 해 [limit] 을 좌표 있는 기록에만 쓴다.
+  /// 지도의 일기 핀이 쓴다.
+  Future<List<DiaryEntry>> locatedEntriesBetween(
+    DateTime from,
+    DateTime to, {
+    int limit = 1000,
+  });
+
   /// [from] ~ [to](양 끝 포함)에 든 기록(휴지통 제외, 모든 스토리), occurredAt 오름차순, 최대 [limit]개.
   /// [query] 본문 포함 일치(대소문자 무시) · [tag] `TagName.searchKey` 로 다듬은 이름 일치 ·
   /// [place] trim 한 장소 이름 일치 · [storyId] 그 스토리만. null 이면 조건 없음.

@@ -314,6 +314,31 @@ class DriftDiaryRepository implements DiaryRepository {
     return _assemble([for (final r in rows) _db.entries.map(r.data)]);
   }
 
+  @override
+  Future<List<DiaryEntry>> locatedEntriesBetween(
+    DateTime from,
+    DateTime to, {
+    int limit = 1000,
+  }) async {
+    assert(limit > 0, 'locatedEntriesBetween limit must be positive');
+    final rows = await _db
+        .customSelect(
+          'SELECT e.* FROM entries e '
+          'WHERE e.deleted_at IS NULL '
+          'AND e.lat IS NOT NULL AND e.lng IS NOT NULL '
+          'AND julianday(e.occurred_at) BETWEEN julianday(?) AND julianday(?) '
+          'ORDER BY julianday(e.occurred_at) ASC, '
+          'julianday(e.created_at) ASC LIMIT ?',
+          variables: [
+            Variable<DateTime>(from),
+            Variable<DateTime>(to),
+            Variable.withInt(limit),
+          ],
+        )
+        .get();
+    return _assemble([for (final r in rows) _db.entries.map(r.data)]);
+  }
+
   // ---------------------------------------------------------------- 휴지통
 
   @override

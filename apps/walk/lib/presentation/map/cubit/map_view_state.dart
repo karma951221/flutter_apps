@@ -15,7 +15,8 @@ sealed class MapViewState with _$MapViewState {
   const factory MapViewState.failure(MapPeriod period) = MapViewFailure;
 }
 
-/// 한 기간의 지도 데이터. [stayNames] 의 키는 `gridKey`(오늘 보기에서만 채운다).
+/// 한 기간의 지도 데이터. [stayNames] 의 키는 `gridKey` — 오늘 보기는 이름을 물어 채우고, 한 달 ·
+/// 스토리는 격자 캐시에 있는 것만 채운다(자주 간 곳 · 머문 곳).
 @freezed
 class MapViewData with _$MapViewData {
   @override

@@ -6,6 +6,7 @@ import 'package:injectable/injectable.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/location/entity/day_track.dart';
 import '../../../domain/location/entity/map_period.dart';
+import '../../../domain/location/entity/stay.dart';
 import '../../../domain/location/entity/track_segment.dart';
 import '../../../domain/location/geo/geo_math.dart';
 import '../../../domain/location/repository/location_repository.dart';
@@ -27,8 +28,11 @@ class MapViewCubit extends Cubit<MapViewState> {
     this._clock,
   ) : super(MapViewState.loading(MapPeriod.day(_clock.now())));
 
-  static const entryLimit = 300;
-  static const _monthToleranceM = 30.0;
+  /// 한 달 · 긴 스토리에서 그리는 선의 단순화 허용 오차.
+  static const _simplifyToleranceM = 30.0;
+
+  /// 스토리 기간이 이보다 길면 그리는 선을 단순화한다(끝나지 않은 스토리는 지금까지).
+  static const _longStory = Duration(days: 2);
 
   final LocationRepository _locations;
   final DiaryRepository _diary;
@@ -79,28 +83,26 @@ class MapViewCubit extends Cubit<MapViewState> {
       bounds.from.toUtc(),
       bounds.to.toUtc(),
     );
-    final found = await _diary.searchEntries(
-      from: bounds.from,
-      to: bounds.to,
-      limit: entryLimit,
-    );
-    final entries = [
-      for (final e in found)
-        if (e.location?.hasCoordinates ?? false) e,
-    ];
+    final entries = await _diary.locatedEntriesBetween(bounds.from, bounds.to);
 
     var track = TrackAnalyzer().analyze(
       points,
       clipFrom: bounds.from.toUtc(),
       clipTo: bounds.to.toUtc(),
     );
+    // 자주 간 곳 · 머문 곳은 단순화 전 점으로 구한다 — 단순화는 그리는 선만.
     final frequent = frequentPlaces(track.stays);
-    if (period is MonthPeriod) {
+    final simplified = switch (period) {
+      MonthPeriod() => true,
+      StoryPeriod() => bounds.to.difference(bounds.from) > _longStory,
+      DayPeriod() => false,
+    };
+    if (simplified) {
       track = DayTrack(
         segments: [
           for (final s in track.segments)
             TrackSegment(
-              points: simplify(s.points, toleranceM: _monthToleranceM),
+              points: simplify(s.points, toleranceM: _simplifyToleranceM),
               mode: s.mode,
             ),
         ],
@@ -108,17 +110,14 @@ class MapViewCubit extends Cubit<MapViewState> {
       );
     }
 
-    final names = <String, String>{};
-    if (period is DayPeriod) {
-      final tried = <String>{};
-      for (final stay in track.stays) {
-        if (isClosed || generation != _generation) return null;
-        final key = gridKey(stay.lat, stay.lng);
-        if (!tried.add(key)) continue;
-        final name = await _namer.nameFor(stay.lat, stay.lng);
-        if (name != null) names[key] = name;
-      }
-    }
+    final names = switch (period) {
+      DayPeriod() => await _lookupNames(track.stays, generation),
+      MonthPeriod() || StoryPeriod() => await _cachedNames([
+        for (final f in frequent) f.gridKey,
+        for (final s in track.stays) gridKey(s.lat, s.lng),
+      ], generation),
+    };
+    if (names == null) return null;
 
     if (track.isEmpty && entries.isEmpty) return MapViewState.empty(period);
     return MapViewState.ready(
@@ -130,5 +129,36 @@ class MapViewCubit extends Cubit<MapViewState> {
         stayNames: names,
       ),
     );
+  }
+
+  /// 오늘 보기: 캐시에 없으면 이름을 묻는다(네트워크). 더 새 읽기가 시작되면 null.
+  Future<Map<String, String>?> _lookupNames(
+    List<Stay> stays,
+    int generation,
+  ) async {
+    final names = <String, String>{};
+    final tried = <String>{};
+    for (final stay in stays) {
+      if (isClosed || generation != _generation) return null;
+      final key = gridKey(stay.lat, stay.lng);
+      if (!tried.add(key)) continue;
+      final name = await _namer.nameFor(stay.lat, stay.lng);
+      if (name != null) names[key] = name;
+    }
+    return names;
+  }
+
+  /// 한 달 · 스토리: 격자 캐시에 있는 이름만(네트워크 없음). 더 새 읽기가 시작되면 null.
+  Future<Map<String, String>?> _cachedNames(
+    List<String> keys,
+    int generation,
+  ) async {
+    final names = <String, String>{};
+    for (final key in keys.toSet()) {
+      if (isClosed || generation != _generation) return null;
+      final name = await _locations.placeName(key);
+      if (name != null) names[key] = name;
+    }
+    return names;
   }
 }

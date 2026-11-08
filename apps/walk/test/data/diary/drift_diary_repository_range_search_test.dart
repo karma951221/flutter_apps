@@ -118,4 +118,79 @@ void main() {
       expect(() => bodies(limit: 0), throwsAssertionError);
     });
   });
+
+  group('locatedEntriesBetween', () {
+    Future<String> located({
+      required DateTime at,
+      required String body,
+      EntryLocation? location = const EntryLocation(lat: 37.5, lng: 127.0),
+    }) async => okValue(
+      await h.repository.createEntry(
+        entryDraft(body: body, occurredAt: at, location: location),
+      ),
+    ).id;
+
+    Future<List<String>> locatedBodies({int limit = 1000}) async => [
+      for (final e in await h.repository.locatedEntriesBetween(
+        from,
+        to,
+        limit: limit,
+      ))
+        e.body,
+    ];
+
+    test('좌표가 있는 기록만, 양 끝 포함 오래된 순', () async {
+      await located(at: DateTime(2026, 10, 5), body: 'c');
+      await located(at: from, body: 'a');
+      await located(at: to, body: 'd');
+      await located(at: DateTime(2026, 10, 3), body: 'b');
+      await located(
+        at: DateTime(2026, 10, 4),
+        body: '이름만',
+        location: const EntryLocation(placeName: '성산'),
+      );
+      await located(at: DateTime(2026, 10, 4), body: '위치 없음', location: null);
+      await located(at: DateTime(2026, 9, 30), body: '범위 밖');
+
+      expect(await locatedBodies(), ['a', 'b', 'c', 'd']);
+    });
+
+    test('휴지통 기록은 빠진다', () async {
+      final trashed = await located(at: DateTime(2026, 10, 2), body: '버림');
+      await located(at: DateTime(2026, 10, 3), body: '남김');
+      okValue(await h.repository.trashEntry(trashed));
+
+      expect(await locatedBodies(), ['남김']);
+    });
+
+    test('좌표 없는 기록이 많아도 limit 은 좌표 있는 기록에 쓴다', () async {
+      // Dart 에서 거르면 앞의 좌표 없는 기록이 limit 을 먹는다.
+      for (var i = 0; i < 5; i++) {
+        await located(
+          at: DateTime(2026, 10, 1, 10, i),
+          body: '없음$i',
+          location: null,
+        );
+      }
+      await located(at: DateTime(2026, 10, 2), body: 'p1');
+      await located(at: DateTime(2026, 10, 3), body: 'p2');
+      await located(at: DateTime(2026, 10, 4), body: 'p3');
+
+      expect(await locatedBodies(limit: 2), ['p1', 'p2']);
+    });
+
+    test('기본 limit 은 1000', () async {
+      for (var i = 0; i < 1001; i++) {
+        await located(
+          at: DateTime(2026, 10, 2).add(Duration(minutes: i)),
+          body: 'e$i',
+        );
+      }
+
+      expect(
+        await h.repository.locatedEntriesBetween(from, to),
+        hasLength(1000),
+      );
+    });
+  });
 }
