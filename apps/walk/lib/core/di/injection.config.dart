@@ -56,6 +56,9 @@ import '../../data/diary/drift_diary_repository.dart' as _i1049;
 import '../../data/diary/media/file_media_store.dart' as _i928;
 import '../../data/diary/media/plugin_media_processor.dart' as _i17;
 import '../../data/diary/prefs_diary_preferences.dart' as _i383;
+import '../../data/location/database/location_database.dart' as _i121;
+import '../../data/location/drift_location_repository.dart' as _i192;
+import '../../data/location/prefs_location_preferences.dart' as _i630;
 import '../../data/lock/channel_screen_lock_settings.dart' as _i952;
 import '../../data/lock/local_auth_device_auth.dart' as _i982;
 import '../../data/lock/prefs_lock_repository.dart' as _i691;
@@ -109,6 +112,8 @@ import '../../domain/diary/media/media_store.dart' as _i870;
 import '../../domain/diary/repository/diary_preferences.dart' as _i300;
 import '../../domain/diary/repository/diary_repository.dart' as _i122;
 import '../../domain/diary/usecase/diary_use_case.dart' as _i567;
+import '../../domain/location/repository/location_preferences.dart' as _i279;
+import '../../domain/location/repository/location_repository.dart' as _i379;
 import '../../domain/lock/device_auth.dart' as _i439;
 import '../../domain/lock/lock_repository.dart' as _i43;
 import '../../domain/lock/screen_lock_settings.dart' as _i194;
@@ -156,6 +161,10 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i933.ChatDatabase>(
       () => registerModule.chatDatabase(),
       dispose: _i291.disposeChatDatabase,
+    );
+    gh.lazySingleton<_i121.LocationDatabase>(
+      () => registerModule.locationDatabase(),
+      dispose: _i291.disposeLocationDatabase,
     );
     gh.lazySingleton<_i933.AlarmPermissions>(
       () => alarmPermissionModule.alarmPermissions,
@@ -267,6 +276,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i693.PlaceNamer>(),
       ),
     );
+    gh.lazySingleton<_i379.LocationRepository>(
+      () => _i192.DriftLocationRepository(
+        gh<_i121.LocationDatabase>(),
+        gh<_i494.Clock>(),
+      ),
+    );
     gh.lazySingleton<_i960.SubwayArrivalSource>(
       () => _i960.SeoulSubwayArrivalSource(
         gh<_i519.Client>(),
@@ -295,6 +310,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i130.RoutePreferenceRepository>(
       () => _i644.PrefsRoutePreferenceRepository(gh<_i460.SharedPreferences>()),
+    );
+    gh.lazySingleton<_i279.LocationPreferences>(
+      () => _i630.PrefsLocationPreferences(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i669.ChatUsageRepository>(
       () => _i1028.DriftChatUsageRepository(gh<_i933.ChatDatabase>()),

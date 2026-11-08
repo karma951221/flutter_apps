@@ -1,3 +1,4 @@
+import 'package:core/core.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/data/location/database/location_database.dart';
@@ -25,7 +26,7 @@ void main() {
 
   setUp(() {
     db = LocationDatabase(NativeDatabase.memory());
-    repo = DriftLocationRepository(db);
+    repo = DriftLocationRepository(db, const Clock());
   });
   tearDown(() => db.close());
 

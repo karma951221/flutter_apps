@@ -1,3 +1,4 @@
+import 'package:core/core.dart';
 import 'package:drift/drift.dart';
 import 'package:injectable/injectable.dart';
 
@@ -8,28 +9,31 @@ import 'database/location_database.dart';
 /// 시각은 UTC 로 저장하고 현지로 돌려준다.
 @LazySingleton(as: LocationRepository)
 class DriftLocationRepository implements LocationRepository {
-  DriftLocationRepository(this._db);
+  DriftLocationRepository(this._db, this._clock);
 
   final LocationDatabase _db;
+  final Clock _clock;
 
   @override
   Future<int> insertAll(List<LocationPoint> points) async {
     if (points.isEmpty) return 0;
-    final before = await _count();
-    await _db.batch((b) {
-      b.insertAll(_db.locationPoints, [
-        for (final p in points)
-          LocationPointsCompanion.insert(
-            recordedAt: p.recordedAt.toUtc(),
-            lat: p.lat,
-            lng: p.lng,
-            accuracyM: Value(p.accuracyM),
-            mode: p.mode,
-            stillStart: Value(p.stillStart),
-          ),
-      ], mode: InsertMode.insertOrIgnore);
+    return _db.transaction(() async {
+      final before = await _count();
+      await _db.batch((b) {
+        b.insertAll(_db.locationPoints, [
+          for (final p in points)
+            LocationPointsCompanion.insert(
+              recordedAt: p.recordedAt.toUtc(),
+              lat: p.lat,
+              lng: p.lng,
+              accuracyM: Value(p.accuracyM),
+              mode: p.mode,
+              stillStart: Value(p.stillStart),
+            ),
+        ], mode: InsertMode.insertOrIgnore);
+      });
+      return await _count() - before;
     });
-    return await _count() - before;
   }
 
   Future<int> _count() async {
@@ -94,7 +98,7 @@ class DriftLocationRepository implements LocationRepository {
         PlaceNamesCompanion.insert(
           gridKey: gridKey,
           name: name,
-          updatedAt: DateTime.now().toUtc(),
+          updatedAt: _clock.now().toUtc(),
         ),
       );
 }
