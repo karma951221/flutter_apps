@@ -1,7 +1,7 @@
 # walk — 위치 기록 · 지도 설계
 
 > 작성 2026-11-08 · 앱: [Life Tool(walk)](../../../apps/walk/docs/README.md) · 계획: [walk 계획](../../../apps/walk/docs/plan.md)
-> 상태: **설계 합의(2026-11-08)** · 이어지는 기획: [하단 탭 재구성](2026-11-01-walk-nav-regroup-design.md) · [일기 화면 재기획](2026-10-21-walk-diary-story-redesign-design.md)
+> 상태: **구현됨(2026-11-08)** · 기기 QA 대기 · 구현 중 정한 것은 맨 아래 [구현 중 정한 것](#구현-중-정한-것) · 이어지는 기획: [하단 탭 재구성](2026-11-01-walk-nav-regroup-design.md) · [일기 화면 재기획](2026-10-21-walk-diary-story-redesign-design.md)
 
 경로는 모두 `apps/walk/` 기준이다.
 
@@ -101,7 +101,7 @@
 - **점 저장**: 서비스는 Flutter 없이 돌아야 하므로 앱 전용 SQLite 파일 하나(`location_inbox.db`, 테이블 `points`)에
   바로 쓴다. Flutter 는 앱이 앞에 올 때 · 지도를 열 때 inbox 를 읽어 drift 로 옮기고 inbox 에서 지운다(수거).
   수거는 트랜잭션 · 멱등(같은 점 두 번 들어와도 시각 + 좌표로 중복 제거).
-- Flutter ↔ 네이티브는 `MethodChannel('walk/location_record')`: `start(mode)` · `stop()` · `setMode(mode)` · `status()`.
+- Flutter ↔ 네이티브는 `MethodChannel('com.karma.walk/location_record')`: `start(mode)` · `stop()` · `setMode(mode)` · `status()`.
   Dart 쪽은 `LocationRecorder` 인터페이스 뒤에 숨겨 테스트에서 가짜로 바꾼다.
 
 ## 데이터 — *Claude 판단*
@@ -141,3 +141,19 @@ pawlog 와 같은 `flutter_map` + OSM 타일. OSM 사용 정책에 맞게 User-A
 - 평소 모드 간격 · 머문 곳 반경 · 시간은 기기 QA 후 조정.
 - 걷기(걸음 수)와 지도의 연결(오늘 걸음 + 오늘 동선 같이 보기)은 다음에.
 - 물어보기 도구에 위치 기록(`search_places`)을 붙이는 건 다음에.
+
+## 구현 중 정한 것
+
+구현하며 스펙 본문과 달라졌거나 스펙이 비워 둔 곳(2026-11-08). 위 본문 중 이것과 어긋나는 문장은 이 목록이 이긴다.
+
+- **채널 이름**은 `com.karma.walk/location_record`(본문 `walk/location_record` 정정). 채널 메서드는 start · stop · setMode · status · drain · ack · openBatterySettings.
+- **새 서비스 인스턴스는 늘 MOVING 으로 시작한다.** sticky 재시작 · 앱 업데이트 · 되살리기 뒤에도 위치 요청을 건 채 뜨고, 다시 멈추는 건 새 `STILL` 진입이다(저장된 STILL 에 갇히지 않게). `status` · `start` 는 켜짐 + 항상 허용이면 죽은 서비스를 되살린다.
+- **`fixOnce` 의 lastLocation 대체**는 5분보다 어린 것만 쓴다.
+- **`stillStart` 뒤에 먼 점**이 오면 30분 간격과 상관없이 머문 곳을 다음 점 −1ms 에서 닫는다(본문 예외 규칙의 보강).
+- **배터리 행**은 시스템의 배터리 최적화 목록 화면(`ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS`)을 연다. 앱이 직접 바꾸는 것은 없다(권한 추가 없음).
+- **스토리 보기 핀**은 그 스토리 기간 안의 좌표 있는 기록 전부다(`storyId` 로 거르지 않는다 — 기간 기준).
+- **`MapViewState.failure`** 변형이 있고 [다시 시도]가 있다(읽기 실패가 빈 상태로 보이지 않게).
+- **첫 안내 카드**는 기록이 꺼져 있고 저장된 위치 점이 하나도 없을 때만 뜬다(`MapRecordState.hasPoints`). 점이 있는데 기간만 비면 빈 상태 + "기록 꺼짐" 칩.
+- **스토리 뷰어 ⋮ › 지도로 보기**는 DI 싱글턴 `MapOpenRequests` 스트림으로 셸에 요청한다(뷰어는 도구 탭 밖의 위에 얹힌 화면이라 직접 닿지 않음). 잠겨 있어도 탭은 옮겨 가고 게이트가 PIN 을 묻는다.
+- **설정의 "항상 허용" 행**은 서비스 상태가 아니라 실제 권한(`check()`)을 읽는다. 켠 뒤 시스템에서 빼앗기면 `blocked` 가 우선한다.
+- 지도 팝업(스토리 고르기 · ⋮)은 다시 잠길 때 닫힌다 — `ToolsTab.selected`(아래 탭이 도구인가)로 `DiaryLockGate.dismissPopups` 를 구동한다.

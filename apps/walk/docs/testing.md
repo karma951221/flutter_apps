@@ -3,7 +3,7 @@
 > [테스트 가이드](../../../docs/testing/README.md) · [계획](plan.md) · [기록](history.md) · [진행 현황](status.md)
 
 ```bash
-cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-11-02 기준 3021건 통과 · 1건 skip)
+cd apps/walk && flutter test   # 도메인 · 데이터 · cubit · 위젯 · 경계 (2026-11-08 기준 3144건 통과 · 1건 skip)
 ```
 
 백엔드가 없어 로컬 Supabase 없이 돈다. Health Connect 는 `HealthGateway` 를 mock 해서 본다
@@ -313,6 +313,30 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 
 **픽스처**: 벤더 응답은 `test/fixtures/chat/<벤더>/` 에 있고 `chatFixture(path)`(`test/support/chat_fixtures.dart`)로 읽는다. 손으로 만든 것은 SSE 는 첫 줄 주석으로, 나머지는 `handMadeFixtures`(경로 → 확인 번호)로 표시한다. 실제 응답을 녹화하면 키 · 계정 id 를 지우고 표에서 뺀다 — 목록은 [기록](history.md#남은-손-픽스처).
 
+### 지도 · 위치 기록
+
+| 파일 | 대상 | 확인 |
+|---|---|---|
+| `domain/location/entity/map_period_test.dart` | `MapPeriod` | 하루 경계는 현지 자정 · 월 · 스토리 기간 · 앞뒤 기간 |
+| `domain/location/geo/geo_math_test.dart` | 거리 · 격자 키 | 하버사인 · 격자 키 소수 3자리 |
+| `domain/location/usecase/track_analyzer_test.dart` | `TrackAnalyzer` | 머문 곳(반경 100m · 10분) · 30분 넘는 빈 구간 끊기 · `stillStart` 뒤 가까운 점은 한 번의 머문 곳 · 뒤 점이 멀면 다음 점 −1ms 에서 닫기 · 자정을 걸친 머문 곳은 하루 경계로 자름 · 촘촘 구간 구분 |
+| `domain/location/usecase/frequent_places_test.dart` | `FrequentPlaces` | 격자 묶기 · 방문 횟수 순 · 같으면 머문 시간 · 상위 10 |
+| `domain/location/usecase/track_simplifier_test.dart` | `TrackSimplifier` | 한 달 선 단순화 · 끝점 유지 |
+| `domain/location/usecase/stay_namer_test.dart` | `StayNamer` | 격자 캐시 먼저 · 없으면 `PlaceNamer` · 오프라인이면 이름 없음(저장 안 함) |
+| `domain/location/usecase/location_sync_test.dart` | `LocationSync` | 비워질 때까지 수거 · 마지막 id 로 ack · ack 실패 뒤 다시 돌려도 중복 없음 · 보관 기간으로 정리 · 동시 실행은 한 번 |
+| `data/location/drift_location_repository_test.dart` | `DriftLocationRepository` | `insertAll` 중복 무시 · 기간 읽기 · 장소 이름 캐시 · 정리 · `hasAnyPoint` · 모두 지우기 |
+| `data/location/prefs_location_preferences_test.dart` | 보관 기간 설정 | 기본 지우지 않음 · 깨진 값 |
+| `data/location/channel_location_recorder_test.dart` | `ChannelLocationRecorder` | 채널 호출 모양 · 상태 매핑(off / running / blocked) · 시각 UTC · 모르는 값 폴백 · 배터리 화면 |
+| `presentation/map/cubit/map_record_cubit_test.dart` | `MapRecordCubit` | 켜기 순서(권한) · 거부 / 설정 필요 · 항상 허용 회수 → blocked · 실제 권한 읽기 · 촘촘 · 보관 기간 · 모두 지우기 · 처음 안내 판정(`hasPoints`) |
+| `presentation/map/cubit/map_view_cubit_test.dart` | `MapViewCubit` | 하루 · 한 달 · 스토리 · 일기 핀 · 이름 붙이기 · 실패 variant · sync 실패해도 저장분 · 느린 sync 중 새 기간 우선 |
+| `presentation/map/page/map_tab_test.dart` | `MapTab` | 잠기면 PIN · 열면 읽기 · 처음 안내 · 기간 전환 · 스토리 고르기 · ‹ › · 칩 · 핀 → 뷰어 · 가까운 핀 묶기 · 빈 · 실패 [다시 시도] · 다시 잠기면 시트 닫기 |
+| `presentation/settings/page/map_settings_page_test.dart` | `MapSettingsPage` | 켜기 · 끄기 · 권한 행 · 배터리 · 보관 기간 · 모두 지우기 |
+| `presentation/shell/page/tools_tab_test.dart` · `main_shell_page_test.dart` | 도구 셋째 탭 · 셸 | 탭 3개 · 지도 ⋮ · 잠긴 ⋮ · 다시 잠길 때 팝업 닫기 · 재개 시 새로 읽기 · 뷰어 › 지도 요청으로 탭 이동 |
+| `presentation/diary/viewer/story_viewer_page_test.dart` | 스토리 뷰어 ⋮ | 스토리 기간이 있으면 "지도로 보기" |
+| `android/app/.../LocationRecordRulesTest.kt` | `LocationRecordRules`(JUnit) | 우선순위 · 부팅 재시작 판단 · 모드 정규화 · 새 인스턴스는 MOVING |
+
+서비스 자체(`LocationRecordService` · inbox · 전환 리시버 · 부트 리시버 · 채널)는 규칙만 JUnit 이고 나머지는 아래 기기 시나리오 몫이다.
+
 ## 테스트가 없는 것
 
 물어보기: 실제 Messages API 호출(네트워크 · 키 · 서버 fallback) · 실제 사진을 모델에 보내기 · `RingLog` 네이티브가 채우는 실제 기록은
@@ -412,6 +436,26 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | D13 | 세로로 찍은 영상 첨부 | 압축본이 세로 비율 그대로(눕지 않음) · 뷰어에서 비율 맞게 재생 | **부분 통과**(에뮬레이터, 2026-10-13): 화면 녹화 1080×2400 → 576×1280, 에뮬레이터 카메라 5초 → 720×1280 · 변환 행렬 단위(세로 그대로). 회전 메타데이터가 붙는 실제 폰 세로 영상은 미확인 |
 | D14 | `image_picker` 앨범 여러 장 고르기 · 카메라 사진 · 카메라 영상 | 고르기 화면이 뜨고 남은 칸만큼 들어옴, 카메라에 다녀와도 잠기지 않음 | **부분 통과**(에뮬레이터, 2026-10-13): 앨범 3장 다중 선택 · 카메라 사진 · 카메라 영상(5초) 모두 들어옴. 잠금 예외는 기기 화면 잠금이 없어 미확인(D4~D6 과 함께) |
 | D15 | 태그 · 장소 모아보기를 릴스로 보기 | 모아보기 화면 안에서 릴스가 화면을 채우고 넘기기 · 영상 재생 · 위 화면이 얹히면 멈춤 | **부분 통과**(에뮬레이터, 2026-10-13): 검색 해시태그 탭 `#jeju 기록 2개` → 모아보기 → 릴스, 세로 넘기기 동작. 머리줄 아래에 그려져 꽉 채우지는 않음 · 카메라 영상이 정지 장면이라 재생 여부는 화면 비교로 판정 못 함. **발견(경미)**: 밝은 영상 위 릴스 하단 시각 글자 대비 낮음 → **고침**(`a887c15`): 글 뒤 전체에 그늘 |
+
+## 지도 · 위치 기록 기기 시나리오 — 대기
+
+스펙: [위치 기록 · 지도](../../../docs/superpowers/specs/2026-11-08-walk-location-map-design.md). 서비스 · 정지 감지 · 재부팅은 에뮬레이터로 믿기 어려워 **실제 폰**에서 본다(`adb shell dumpsys deviceidle` 로 시뮬한 Doze 는 참고만).
+
+| # | 시나리오 | 기대 | 결과 |
+|---|---|---|---|
+| L-QA1 | 지도 › 위치 기록 켜기 → 앱 사용 중 허용 → 항상 허용(설정 화면으로 이동) → 신체 활동 → 알림 | 이유가 먼저 설명되고 단계마다 넘어간다. 켜면 상시 알림 "위치 기록 중 · 평소"가 뜬다 | 대기 |
+| L-QA2 | 기록 켠 채 앱을 최근 앱에서 밀어 닫고 30분 걷기 → 앱 다시 열기 | 상시 알림이 그대로고, 지도에 그 동선이 보인다 | 대기 |
+| L-QA3 | 기록 켠 채 재부팅 → 앱을 열지 않고 이동 → 나중에 앱 열기 | 재부팅 직후 알림이 다시 뜨고, 이동한 구간이 기록돼 있다 | 대기 |
+| L-QA4 | 평소 모드로 하루 지낸 뒤 설정 › 배터리 | Life Tool 사용 비율을 기록한다(수치로 간격 · 정지 감지 조정 근거) | 대기 |
+| L-QA5 | 지도 칩 "촘촘 기록" 켜고 걷기 → 끄기 | 선이 길을 따라가고(진하고 굵게) 알림이 "촘촘"으로 바뀐다. 끄면 성긴 점으로 돌아가고 알림이 "평소" | 대기 |
+| L-QA6 | 장소가 태그된 사진 일기를 쓴다 → 지도 하루 보기 → 핀 누르기 → 일기 잠그기 | 핀이 보이고(가까운 핀은 묶여 개수 배지) 누르면 뷰어가 열린다. 잠그면 지도가 가려진다 | 대기 |
+| L-QA7 | 평소 모드에서 책상에 폰을 두고 1시간 → 들고 걷기 | 그 사이 inbox 점이 늘지 않고(디버그 로그) 지도에는 머문 곳 하나로 보인다. 들고 걸으면 몇 분 안에 다시 점이 찍힌다 | 대기 |
+| L8 | 기록 중 프로세스를 죽인다(`adb shell am kill` · STILL 인 채로) | 서비스가 다시 떠서 STILL 에 갇히지 않고 기록을 이어간다 | 대기 |
+| L9 | 서비스를 죽인 뒤 앱을 연다 | `status` 가 죽은 서비스를 되살린다(알림 다시 뜸) | 대기 |
+| L10 | Android 12+ · 14+ 에서 sticky 재시작(서비스를 시스템이 죽였다 다시 띄움) | 전경 승격이 막혀 기록이 조용히 멈추지 않는다. 막히면 어떤 경로로 복구되는지 기록 | 대기 |
+| L11 | 상시 알림 [끄기] | 앱을 열지 않고 바로 꺼지고 지도 칩이 "기록 꺼짐" | 대기 |
+| L12 | 알림 권한을 거부한 채 기록 켜기 | 알림 없이도 기록이 돈다(켜기 흐름은 막히지 않음) | 대기 |
+| L13 | 기록 중 시스템 설정에서 위치 "항상 허용" 회수 | 서비스가 멈추고 칩이 "기록 꺼짐 · 권한 필요", 설정 행도 같은 상태 | 대기 |
 
 ## 통근 기기 시나리오 — 대기
 
