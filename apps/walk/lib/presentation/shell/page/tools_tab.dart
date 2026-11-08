@@ -26,6 +26,7 @@ enum ToolsSection { alarm, walk, map }
 class ToolsTab extends StatefulWidget {
   const ToolsTab({
     required this.active,
+    required this.selected,
     required this.section,
     required this.onSectionChanged,
     required this.onOpenAlarmSettings,
@@ -34,6 +35,10 @@ class ToolsTab extends StatefulWidget {
 
   /// 셸에서 도구 탭이 보이는지. 셸 위에 다른 라우트가 얹혀 있으면 false 다.
   final bool active;
+
+  /// 하단 탭이 도구인지 — 위에 얹힌 라우트와 무관하다. 지도는 이것으로 다시 잠길 때 자기
+  /// 팝업(스토리 고르기 · ⋮)을 닫을지 정한다. 팝업도 셸에는 얹힌 라우트라 [active] 를 끈다.
+  final bool selected;
 
   /// 고른 상단 탭. 셸이 소유한다.
   final ToolsSection section;
@@ -135,7 +140,7 @@ class _ToolsTabState extends State<ToolsTab>
           ),
           _KeepAlive(
             child: MapTab(
-              active: widget.active && widget.section == ToolsSection.map,
+              active: widget.selected && widget.section == ToolsSection.map,
             ),
           ),
         ],

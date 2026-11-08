@@ -57,10 +57,23 @@ class _MockStore extends Mock implements MediaStore {}
 /// diaryT0(2026-10-10 09:00) 하루.
 final _today = MapPeriod.day(DateTime(2026, 10, 10));
 
-const _off = MapRecordState(status: RecorderStatus.off(), busy: false);
+/// 꺼져 있고 저장된 점도 없다 — 처음.
+const _firstRun = MapRecordState(
+  status: RecorderStatus.off(),
+  busy: false,
+  hasPoints: false,
+);
+
+/// 꺼져 있지만 예전 점이 있다.
+const _off = MapRecordState(
+  status: RecorderStatus.off(),
+  busy: false,
+  hasPoints: true,
+);
 const _running = MapRecordState(
   status: RecorderStatus.running(RecordMode.normal, stillDetection: true),
   busy: false,
+  hasPoints: true,
 );
 
 Story _story(String id, String title, {bool open = true, int day = 1}) => Story(
@@ -270,7 +283,11 @@ void main() {
   });
 
   testWidgets('first run shows placeholder with enable button', (tester) async {
-    await pump(tester, state: MapViewState.empty(_today), recordState: _off);
+    await pump(
+      tester,
+      state: MapViewState.empty(_today),
+      recordState: _firstRun,
+    );
 
     expect(
       find.widgetWithText(AppPlaceholder, '다닌 길을 지도에 남겨요'),
@@ -358,6 +375,7 @@ void main() {
       const MapRecordState(
         status: RecorderStatus.running(RecordMode.dense, stillDetection: true),
         busy: false,
+        hasPoints: true,
       ),
     );
     await tester.pumpAndSettle();
@@ -374,6 +392,7 @@ void main() {
         status: RecorderStatus.blocked(RecordMode.normal),
         busy: false,
         access: AlwaysAccess.denied,
+        hasPoints: true,
       ),
     );
 
@@ -383,6 +402,37 @@ void main() {
     await tester.tap(find.text('기록 꺼짐 · 권한 필요'));
     await tester.pumpAndSettle();
     verify(record.enable).called(1);
+  });
+
+  testWidgets('off with stored points and empty period is not first run', (
+    tester,
+  ) async {
+    await pump(tester, state: MapViewState.empty(_today), recordState: _off);
+
+    expect(find.widgetWithText(AppPlaceholder, '이 날은 기록이 없어요'), findsOneWidget);
+    expect(find.text('다닌 길을 지도에 남겨요'), findsNothing);
+    expect(find.text('기록 꺼짐'), findsOneWidget);
+  });
+
+  testWidgets('before record status loads: no first-run card, no chip', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      state: MapViewState.empty(_today),
+      recordState: const MapRecordState(
+        status: RecorderStatus.off(),
+        busy: false,
+      ),
+    );
+
+    expect(find.text('다닌 길을 지도에 남겨요'), findsNothing);
+    expect(find.byType(RecordChip), findsNothing);
+    expect(find.widgetWithText(AppPlaceholder, '이 날은 기록이 없어요'), findsOneWidget);
+
+    records.add(_firstRun);
+    await tester.pumpAndSettle();
+    expect(find.text('다닌 길을 지도에 남겨요'), findsOneWidget);
   });
 
   testWidgets('off with records shows record-off chip', (tester) async {
@@ -439,6 +489,8 @@ void main() {
     clearInteractions(view);
     await tester.tap(find.text('다시 시도'));
     await tester.pumpAndSettle();
-    verify(view.refresh).called(1);
+    // 로딩 표시가 보이도록 show 로 다시 읽는다.
+    verify(() => view.show(_today)).called(1);
+    verifyNever(view.refresh);
   });
 }

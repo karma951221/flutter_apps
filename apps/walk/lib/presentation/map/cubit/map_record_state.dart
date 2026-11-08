@@ -32,6 +32,11 @@ class MapRecordState with _$MapRecordState {
   @override
   final bool? notification;
 
+  /// 저장된 위치 점이 하나라도 있는지. [MapRecordCubit.load] 전이면 null — 지도는 이것으로
+  /// 처음 안내(기록을 켠 적 없음)를 고르고, 읽기 전엔 칩도 안내도 띄우지 않는다.
+  @override
+  final bool? hasPoints;
+
   const MapRecordState({
     required this.status,
     required this.busy,
@@ -39,5 +44,9 @@ class MapRecordState with _$MapRecordState {
     this.retention = RecordRetention.never,
     this.activityRecognition,
     this.notification,
+    this.hasPoints,
   });
+
+  /// [MapRecordCubit.load] 가 한 번 끝났다.
+  bool get loaded => hasPoints != null;
 }

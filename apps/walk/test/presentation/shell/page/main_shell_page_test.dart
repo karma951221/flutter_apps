@@ -55,6 +55,7 @@ import 'package:walk/presentation/lock/widget/pin_pad.dart';
 import 'package:walk/presentation/map/cubit/map_view_cubit.dart';
 import 'package:walk/presentation/map/cubit/map_view_state.dart';
 import 'package:walk/presentation/map/page/map_tab.dart';
+import 'package:walk/presentation/map/widget/story_picker_sheet.dart';
 import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
 import 'package:walk/presentation/settings/page/alarm_settings_page.dart';
 import 'package:walk/presentation/settings/page/app_settings_page.dart';
@@ -1130,12 +1131,14 @@ void main() {
       when(access.hasActivityRecognition).thenAnswer((_) async => false);
       when(access.hasNotification).thenAnswer((_) async => false);
       when(() => prefs.retention).thenReturn(RecordRetention.never);
+      final locations = _MockLocationRepository();
+      when(locations.hasAnyPoint).thenAnswer((_) async => true);
       getIt
         ..registerFactory<MapViewCubit>(() => mapView)
         ..registerSingleton<LocationRecorder>(recorder)
         ..registerSingleton<BackgroundLocationAccess>(access)
         ..registerSingleton<LocationPreferences>(prefs)
-        ..registerSingleton<LocationRepository>(_MockLocationRepository())
+        ..registerSingleton<LocationRepository>(locations)
         ..registerFactory<TileProvider>(StubTileProvider.new);
     });
 
@@ -1152,6 +1155,63 @@ void main() {
 
       verify(mapView.refresh).called(1);
       verify(() => recorder.status()).called(1);
+    });
+
+    /// 일기 탭에서 잠금을 푼 뒤 도구 › 지도로 간다.
+    Future<void> openMapUnlocked(WidgetTester tester) async {
+      await enableDiaryLock();
+      await pump(tester);
+      for (final d in '1234'.split('')) {
+        await tester.tap(find.widgetWithText(TextButton, d));
+        await tester.pump();
+      }
+      await tester.pumpAndSettle();
+      await tapTab(tester, '도구');
+      await tapToolsTab(tester, '지도');
+    }
+
+    /// 백그라운드에 오래 있다 돌아와 다시 잠근다.
+    Future<void> relockByBackground(WidgetTester tester) async {
+      for (final state in [
+        AppLifecycleState.inactive,
+        AppLifecycleState.hidden,
+        AppLifecycleState.paused,
+      ]) {
+        tester.binding.handleAppLifecycleStateChanged(state);
+      }
+      clock.advance(const Duration(minutes: 2));
+      for (final state in [
+        AppLifecycleState.hidden,
+        AppLifecycleState.inactive,
+        AppLifecycleState.resumed,
+      ]) {
+        tester.binding.handleAppLifecycleStateChanged(state);
+      }
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('스토리 고르기를 연 채 다시 잠기면 시트가 닫힌다', (tester) async {
+      await openMapUnlocked(tester);
+      await tester.tap(find.text('스토리'));
+      await tester.pumpAndSettle();
+      expect(find.byType(StoryPickerSheet), findsOneWidget);
+
+      await relockByBackground(tester);
+
+      expect(find.byType(StoryPickerSheet, skipOffstage: false), findsNothing);
+      expect(find.byType(PinPad).hitTestable(), findsOneWidget);
+    });
+
+    testWidgets('지도 ⋮ 를 연 채 다시 잠기면 메뉴가 닫힌다', (tester) async {
+      await openMapUnlocked(tester);
+      await tester.tap(find.byIcon(Icons.more_vert).hitTestable());
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('menu-settings-map')), findsOneWidget);
+
+      await relockByBackground(tester);
+
+      expect(find.byKey(const Key('menu-settings-map')), findsNothing);
+      expect(find.byKey(const Key('menu-settings-app')), findsNothing);
     });
 
     testWidgets('다른 상단 탭을 보던 중 복귀하면 지도는 읽지 않는다', (tester) async {

@@ -11,9 +11,6 @@ import '../../../domain/location/entity/day_track.dart';
 import '../../../domain/location/entity/record_mode.dart';
 import 'entry_pin.dart';
 
-/// 타일 층을 만든다. 테스트는 네트워크 없는 층을 넣는다.
-typedef TileLayerBuilder = Widget Function(BuildContext context);
-
 /// 한 기간의 동선 지도 — 이동선 · 머문 곳 원 · 일기 핀.
 ///
 /// 선: 촘촘 구간은 굵고 진하게, 평소 구간은 얇고 옅게(같은 색). [faint] 면(한 달) 모든 선을
@@ -30,7 +27,6 @@ class TrackMap extends StatefulWidget {
     required this.onOpenEntry,
     this.faint = false,
     this.bottomInset = 0,
-    this.tileLayerBuilder,
     super.key,
   });
 
@@ -48,9 +44,6 @@ class TrackMap extends StatefulWidget {
 
   /// 지도 아래쪽을 덮는 시트 높이. 카메라 맞춤과 출처 표시를 그만큼 위로 올린다.
   final double bottomInset;
-
-  /// null 이면 OSM 타일(`getIt<TileProvider>()`).
-  final TileLayerBuilder? tileLayerBuilder;
 
   @override
   State<TrackMap> createState() => TrackMapState();
@@ -72,8 +65,8 @@ class TrackMapState extends State<TrackMap> {
 
   final _controller = MapController();
 
-  /// TileLayer 가 dispose 할 때까지 같은 것을 쓴다 — build 마다 새로 받으면 바뀐 provider 는
-  /// dispose 되지 않는다.
+  /// OSM 타일. getIt 에서 받아 테스트가 stub 으로 바꾼다. TileLayer 가 dispose 할 때까지 같은 것을
+  /// 쓴다 — build 마다 새로 받으면 바뀐 provider 는 dispose 되지 않는다.
   late final TileProvider _tileProvider = getIt<TileProvider>();
 
   Object? _fitted;
@@ -155,12 +148,11 @@ class TrackMapState extends State<TrackMap> {
         ),
       ),
       children: [
-        widget.tileLayerBuilder?.call(context) ??
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.karma.walk',
-              tileProvider: _tileProvider,
-            ),
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.karma.walk',
+          tileProvider: _tileProvider,
+        ),
         PolylineLayer(
           polylines: [
             for (final s in widget.track.segments)

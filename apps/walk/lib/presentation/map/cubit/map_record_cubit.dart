@@ -31,13 +31,14 @@ class MapRecordCubit extends Cubit<MapRecordState> {
   final LocationPreferences _preferences;
   final LocationRepository _repository;
 
-  /// 서비스 상태(죽었으면 되살아난다) · 권한 · 보관 기간을 읽는다.
+  /// 서비스 상태(죽었으면 되살아난다) · 권한 · 보관 기간 · 저장된 점이 있는지를 읽는다.
   Future<void> load() async {
     if (state.busy) return;
     final status = await _recorder.status();
     final always = await _access.check();
     final activity = await _access.hasActivityRecognition();
     final notification = await _access.hasNotification();
+    final hasPoints = await _repository.hasAnyPoint();
     if (isClosed) return;
     emit(
       state.copyWith(
@@ -46,6 +47,7 @@ class MapRecordCubit extends Cubit<MapRecordState> {
         retention: _preferences.retention,
         activityRecognition: activity,
         notification: notification,
+        hasPoints: hasPoints,
       ),
     );
   }
@@ -119,6 +121,7 @@ class MapRecordCubit extends Cubit<MapRecordState> {
     emit(state.copyWith(busy: true));
     try {
       await _repository.deleteAll();
+      if (!isClosed) emit(state.copyWith(hasPoints: false));
     } finally {
       if (!isClosed) emit(state.copyWith(busy: false));
     }

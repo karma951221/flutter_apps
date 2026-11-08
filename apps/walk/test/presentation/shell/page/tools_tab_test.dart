@@ -118,6 +118,7 @@ void main() {
           valueListenable: section,
           builder: (context, value, _) => ToolsTab(
             active: active,
+            selected: active,
             section: value,
             onSectionChanged: (next) {
               changes.add(next);

@@ -19,6 +19,7 @@ import '../cubit/map_view_cubit.dart';
 import '../cubit/map_view_state.dart';
 import '../widget/frequent_sheet.dart';
 import '../widget/period_header.dart';
+import '../widget/enable_location_record.dart';
 import '../widget/record_chip.dart';
 import '../widget/story_picker_sheet.dart';
 import '../widget/timeline_sheet.dart';
@@ -27,14 +28,16 @@ import '../widget/track_map.dart';
 /// 도구 › 지도. 오늘 · 한 달 · 스토리 기간의 동선과 일기 핀.
 ///
 /// 일기 잠금 아래다 — 잠긴 동안 지도 · 칩 · 시트는 트리에 없고, 다시 잠기면 이 탭에서 띄운
-/// 팝업(스토리 고르기)을 닫는다. 가려진 탭([active] 거짓)이면 팝업은 다른 탭의 것이라 두고 간다.
+/// 팝업(스토리 고르기 · ⋮)을 닫는다. 가려진 탭([active] 거짓)이면 팝업은 다른 탭의 것이라 두고 간다.
 ///
 /// 셸의 [MapRecordCubit] · [MapViewCubit] 아래에 둔다. 열릴 때(잠금이 풀려 처음 그려질 때 ·
 /// 탭이 다시 보일 때) 기록 상태를 읽고 inbox 를 수거해 다시 읽는다. 앱이 앞에 올 때는 셸이 한다.
 class MapTab extends StatelessWidget {
   const MapTab({required this.active, super.key});
 
-  /// 도구 탭이 보이고 지도 상단 탭이며 위에 다른 화면이 없다.
+  /// 하단 탭이 도구이고 상단 탭이 지도다. 위에 얹힌 화면(시트 · 메뉴 · 설정)과는 무관하다 —
+  /// 이 탭에서 띄운 팝업도 셸에는 "얹힌 화면"이라, 그것까지 섞으면 다시 잠길 때 팝업을 닫지
+  /// 못한다(일기 · 물어보기 탭과 같은 규칙). 앱 복귀 때 다시 읽기는 셸이 가려졌는지까지 본다.
   final bool active;
 
   @override
@@ -179,7 +182,12 @@ class _MapBodyState extends State<_MapBody> {
       MapViewReady(:final data) => data,
       _ => null,
     };
-    final firstRun = record.status is RecorderOff && view is MapViewEmpty;
+    // 처음 안내는 기록이 꺼져 있고 저장된 점이 하나도 없을 때만(읽기 전엔 띄우지 않는다).
+    // 꺼져 있어도 예전 점이 있으면 빈 기간 안내 + "기록 꺼짐" 칩이다.
+    final firstRun =
+        record.hasPoints == false &&
+        record.status is RecorderOff &&
+        view is MapViewEmpty;
     final month = period is MonthPeriod;
     final spots = switch (data) {
       null => const <LatLng>[],
@@ -209,7 +217,8 @@ class _MapBodyState extends State<_MapBody> {
         icon: Icons.error_outline,
         message: l10n.walkMapLoadFailed,
         actionLabel: l10n.walkMapRetry,
-        onAction: () => unawaited(context.read<MapViewCubit>().refresh()),
+        // 로딩 표시를 보이며 그 기간을 다시 읽는다.
+        onAction: () => unawaited(context.read<MapViewCubit>().show(period)),
       ),
       MapViewLoading() || MapViewReady() => null,
     };
@@ -243,7 +252,7 @@ class _MapBodyState extends State<_MapBody> {
               child: overlay,
             ),
           ),
-        if (!firstRun)
+        if (record.loaded && !firstRun)
           Positioned(
             top: AppSpacing.sm,
             right: AppSpacing.sm,

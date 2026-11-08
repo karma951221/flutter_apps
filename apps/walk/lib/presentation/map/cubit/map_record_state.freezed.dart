@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$MapRecordState {
 
- RecorderStatus get status; bool get busy; AlwaysAccess? get access; RecordRetention get retention; bool? get activityRecognition; bool? get notification;
+ RecorderStatus get status; bool get busy; AlwaysAccess? get access; RecordRetention get retention; bool? get activityRecognition; bool? get notification; bool? get hasPoints;
 /// Create a copy of MapRecordState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $MapRecordStateCopyWith<MapRecordState> get copyWith => _$MapRecordStateCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MapRecordState&&(identical(other.status, status) || other.status == status)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.access, access) || other.access == access)&&(identical(other.retention, retention) || other.retention == retention)&&(identical(other.activityRecognition, activityRecognition) || other.activityRecognition == activityRecognition)&&(identical(other.notification, notification) || other.notification == notification));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MapRecordState&&(identical(other.status, status) || other.status == status)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.access, access) || other.access == access)&&(identical(other.retention, retention) || other.retention == retention)&&(identical(other.activityRecognition, activityRecognition) || other.activityRecognition == activityRecognition)&&(identical(other.notification, notification) || other.notification == notification)&&(identical(other.hasPoints, hasPoints) || other.hasPoints == hasPoints));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,status,busy,access,retention,activityRecognition,notification);
+int get hashCode => Object.hash(runtimeType,status,busy,access,retention,activityRecognition,notification,hasPoints);
 
 @override
 String toString() {
-  return 'MapRecordState(status: $status, busy: $busy, access: $access, retention: $retention, activityRecognition: $activityRecognition, notification: $notification)';
+  return 'MapRecordState(status: $status, busy: $busy, access: $access, retention: $retention, activityRecognition: $activityRecognition, notification: $notification, hasPoints: $hasPoints)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $MapRecordStateCopyWith<$Res>  {
   factory $MapRecordStateCopyWith(MapRecordState value, $Res Function(MapRecordState) _then) = _$MapRecordStateCopyWithImpl;
 @useResult
 $Res call({
- RecorderStatus status, bool busy, AlwaysAccess? access, RecordRetention retention, bool? activityRecognition, bool? notification
+ RecorderStatus status, bool busy, AlwaysAccess? access, RecordRetention retention, bool? activityRecognition, bool? notification, bool? hasPoints
 });
 
 
@@ -62,7 +62,7 @@ class _$MapRecordStateCopyWithImpl<$Res>
 
 /// Create a copy of MapRecordState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? busy = null,Object? access = freezed,Object? retention = null,Object? activityRecognition = freezed,Object? notification = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? busy = null,Object? access = freezed,Object? retention = null,Object? activityRecognition = freezed,Object? notification = freezed,Object? hasPoints = freezed,}) {
   return _then(MapRecordState(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as RecorderStatus,busy: null == busy ? _self.busy : busy // ignore: cast_nullable_to_non_nullable
@@ -70,6 +70,7 @@ as bool,access: freezed == access ? _self.access : access // ignore: cast_nullab
 as AlwaysAccess?,retention: null == retention ? _self.retention : retention // ignore: cast_nullable_to_non_nullable
 as RecordRetention,activityRecognition: freezed == activityRecognition ? _self.activityRecognition : activityRecognition // ignore: cast_nullable_to_non_nullable
 as bool?,notification: freezed == notification ? _self.notification : notification // ignore: cast_nullable_to_non_nullable
+as bool?,hasPoints: freezed == hasPoints ? _self.hasPoints : hasPoints // ignore: cast_nullable_to_non_nullable
 as bool?,
   ));
 }

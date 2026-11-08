@@ -55,6 +55,7 @@ void main() {
     when(access.hasNotification).thenAnswer((_) async => true);
     when(access.openAppSettings).thenAnswer((_) async {});
     when(repository.deleteAll).thenAnswer((_) async {});
+    when(repository.hasAnyPoint).thenAnswer((_) async => true);
     cubit = MapRecordCubit(recorder, access, prefs, repository);
   });
 

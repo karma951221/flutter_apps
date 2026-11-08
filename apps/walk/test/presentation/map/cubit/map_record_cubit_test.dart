@@ -47,6 +47,7 @@ void main() {
     when(() => access.hasActivityRecognition()).thenAnswer((_) async => true);
     when(() => access.hasNotification()).thenAnswer((_) async => true);
     when(() => repository.deleteAll()).thenAnswer((_) async {});
+    when(() => repository.hasAnyPoint()).thenAnswer((_) async => true);
     cubit = MapRecordCubit(recorder, access, prefs, repository);
   });
 
@@ -178,8 +179,23 @@ void main() {
     expect(cubit.state.retention, RecordRetention.oneYear);
   });
 
+  test('load reports whether any point is stored', () async {
+    expect(cubit.state.loaded, isFalse);
+    when(() => repository.hasAnyPoint()).thenAnswer((_) async => false);
+
+    await cubit.load();
+
+    expect(cubit.state.loaded, isTrue);
+    expect(cubit.state.hasPoints, isFalse);
+  });
+
   test('deleteAll clears the repository', () async {
+    await cubit.load();
+    expect(cubit.state.hasPoints, isTrue);
+
     await cubit.deleteAll();
+
+    expect(cubit.state.hasPoints, isFalse);
 
     verify(() => repository.deleteAll()).called(1);
     expect(cubit.state.busy, isFalse);
