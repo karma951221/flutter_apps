@@ -1230,6 +1230,7 @@
   "walkMapSettingsBlocked": "Recording is paused until permission is granted",
   "walkMapSettingsOpenSettings": "Open settings",
   "walkMapSettingsDenied": "Could not turn on recording without location permission",
+  "walkMapEnableFailed": "Could not turn on location recording. Please try again later",
   "walkToolsTabMap": "Map",
   "walkMapSegmentDay": "Today",
   "walkMapSegmentMonth": "Month",

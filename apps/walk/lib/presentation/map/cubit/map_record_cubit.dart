@@ -126,10 +126,13 @@ class MapRecordCubit extends Cubit<MapRecordState> {
     }
   }
 
+  /// 네이티브 inbox 를 먼저 비우고 저장소를 지운다 — 거꾸로면 돌아올 때(`didPopNext`)의 수거가
+  /// 아직 inbox 에 남은 점을 다시 들여온다. inbox 비우기가 실패하면 저장소는 그대로 두고 던진다.
   Future<void> deleteAll() async {
     if (state.busy) return;
     emit(state.copyWith(busy: true));
     try {
+      await _recorder.clearInbox();
       await _repository.deleteAll();
       if (!isClosed) emit(state.copyWith(hasPoints: false));
     } finally {

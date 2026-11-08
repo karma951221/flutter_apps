@@ -1230,6 +1230,7 @@
   "walkMapSettingsBlocked": "権限が必要なため記録が停止しています",
   "walkMapSettingsOpenSettings": "設定を開く",
   "walkMapSettingsDenied": "位置情報の権限がないため記録をオンにできませんでした",
+  "walkMapEnableFailed": "位置情報の記録をオンにできませんでした。しばらくしてからもう一度お試しください",
   "walkToolsTabMap": "地図",
   "walkMapSegmentDay": "今日",
   "walkMapSegmentMonth": "1か月",

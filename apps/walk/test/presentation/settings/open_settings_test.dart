@@ -9,6 +9,7 @@ import 'package:walk/presentation/settings/page/alarm_settings_page.dart';
 import 'package:walk/presentation/settings/page/app_settings_page.dart';
 import 'package:walk/presentation/settings/page/chat_settings_page.dart';
 import 'package:walk/presentation/settings/page/diary_settings_page.dart';
+import 'package:walk/presentation/settings/page/map_settings_page.dart';
 import 'package:walk/presentation/settings/page/walk_settings_page.dart';
 import 'package:walk/presentation/settings/widget/row_highlight.dart';
 
@@ -271,5 +272,23 @@ void main() {
 
     expect(find.byType(LockSecretInput), findsOneWidget);
     expect(find.byKey(const Key('settings-diary-retention')), findsNothing);
+  });
+
+  testWidgets('앱 설정 › 지도 설정은 잠금 화면을 거쳐 열린다', (tester) async {
+    await h.lockWithPin();
+    await open(tester, SettingsTarget.app);
+
+    await tester.tap(find.byKey(const Key('app-settings-open-map')));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(LockSecretInput), findsOneWidget);
+    expect(find.byType(MapSettingsPage), findsNothing);
+
+    await h.diaryLock.submit('1234');
+    await tester.pumpAndSettle();
+
+    expect(find.byType(MapSettingsPage), findsOneWidget);
+    expect(find.byKey(const Key('map-settings-record-switch')), findsOneWidget);
   });
 }

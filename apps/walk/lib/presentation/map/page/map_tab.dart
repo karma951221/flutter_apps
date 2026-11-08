@@ -32,6 +32,7 @@ import '../widget/track_map.dart';
 ///
 /// 셸의 [MapRecordCubit] · [MapViewCubit] 아래에 둔다. 열릴 때(잠금이 풀려 처음 그려질 때 ·
 /// 탭이 다시 보일 때) 기록 상태를 읽고 inbox 를 수거해 다시 읽는다. 앱이 앞에 올 때는 셸이 한다.
+/// 기록이 꺼짐 · 막힘에서 켜짐으로 바뀌면(칩 · 처음 안내 · 설정에서 켬) 지도도 다시 읽는다.
 class MapTab extends StatelessWidget {
   const MapTab({required this.active, super.key});
 
@@ -140,6 +141,19 @@ class _MapBodyState extends State<_MapBody> {
     final view = context.watch<MapViewCubit>().state;
     final record = context.watch<MapRecordCubit>().state;
     final period = _periodOf(view);
+    return BlocListener<MapRecordCubit, MapRecordState>(
+      // 첫 load 는 지도가 열리며 이미 읽는 중이라 건너뛴다.
+      listenWhen: (previous, current) =>
+          previous.loaded &&
+          previous.status is! RecorderRunning &&
+          current.status is RecorderRunning,
+      listener: (context, _) =>
+          unawaited(context.read<MapViewCubit>().refresh()),
+      child: _layout(view, record, period),
+    );
+  }
+
+  Widget _layout(MapViewState view, MapRecordState record, MapPeriod period) {
     return Column(
       children: [
         Padding(

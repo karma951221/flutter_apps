@@ -14,6 +14,7 @@ import '../../domain/location/recorder/recorder_status.dart';
 /// - `status` → `{state: "off"|"running"|"blocked", mode, stillDetection: bool}`
 /// - `drain` ← `{limit}` → `[{id, t: epoch millis UTC, lat, lng, acc: double?, mode, still}]` (id 오름차순)
 /// - `ack` ← `{upToId}`
+/// - `clearInbox` → null (inbox 의 점을 모두 지운다)
 /// - `openBatterySettings` → null (시스템 배터리 최적화 화면)
 @LazySingleton(as: LocationRecorder)
 class ChannelLocationRecorder implements LocationRecorder {
@@ -81,6 +82,9 @@ class ChannelLocationRecorder implements LocationRecorder {
   @override
   Future<void> ack(int upToId) =>
       _channel.invokeMethod<void>('ack', {'upToId': upToId});
+
+  @override
+  Future<void> clearInbox() => _channel.invokeMethod<void>('clearInbox');
 
   static RecordMode _mode(Object? name) =>
       name == 'dense' ? RecordMode.dense : RecordMode.normal;

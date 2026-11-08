@@ -55,6 +55,7 @@ void main() {
     when(access.hasNotification).thenAnswer((_) async => true);
     when(access.openAppSettings).thenAnswer((_) async {});
     when(repository.deleteAll).thenAnswer((_) async {});
+    when(recorder.clearInbox).thenAnswer((_) async {});
     when(repository.hasAnyPoint).thenAnswer((_) async => true);
     cubit = MapRecordCubit(recorder, access, prefs, repository);
   });
@@ -199,7 +200,7 @@ void main() {
     await tester.tap(find.text('삭제'));
     await tester.pumpAndSettle();
 
-    verify(repository.deleteAll).called(1);
+    verifyInOrder([recorder.clearInbox, repository.deleteAll]);
     expect(find.text('위치 기록을 지웠어요'), findsOneWidget);
   });
 

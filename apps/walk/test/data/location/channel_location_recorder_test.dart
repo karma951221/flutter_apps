@@ -132,6 +132,13 @@ void main() {
       expect(calls.single.arguments, {'upToId': 7});
     });
 
+    test('clearInbox 는 인자 없이 채널을 부른다', () async {
+      answer((_) => null);
+      await recorder.clearInbox();
+      expect(calls.single.method, 'clearInbox');
+      expect(calls.single.arguments, isNull);
+    });
+
     test('openBatterySettings 는 인자 없이 채널을 부른다', () async {
       answer((_) => null);
       await recorder.openBatterySettings();

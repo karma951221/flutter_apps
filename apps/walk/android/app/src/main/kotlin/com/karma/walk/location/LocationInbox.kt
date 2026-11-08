@@ -96,4 +96,9 @@ internal class LocationInbox private constructor(context: Context) :
     fun ack(upToId: Long) {
         writableDatabase.delete(TABLE, "id <= ?", arrayOf(upToId.toString()))
     }
+
+    /** 모두 지운다(아직 수거하지 않은 점까지). 기록 모두 지우기가 drift 보다 먼저 부른다. */
+    fun clear() {
+        writableDatabase.delete(TABLE, null, null)
+    }
 }

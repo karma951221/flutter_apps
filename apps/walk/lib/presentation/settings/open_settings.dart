@@ -20,11 +20,10 @@ enum SettingsTarget { app, diary, chat, alarm, walk, map }
 /// [target] 설정 화면을 [context] 의 Navigator 에 push 한다.
 ///
 /// [context] 위에 셸의 [SettingsPermissionsCubit] · [HolidaySettingsCubit] · [DiaryLockCubit] ·
-/// [DiarySettingsCubit] 가 있어야 한다 — 넷을 새 라우트에 다시 건다(`ThemeCubit` ·
-/// `StepGoalCubit` 은 앱 위라 그대로 보인다). 같은 Navigator 라 셸의 `didPopNext` 가 돌아올 때
+/// [DiarySettingsCubit] · [MapRecordCubit] 가 있어야 한다 — 다섯을 새 라우트에 다시 건다
+/// (`ThemeCubit` · `StepGoalCubit` 은 앱 위라 그대로 보인다). 앱 설정에서 다시 여는 지도 설정도
+/// 이 다섯을 읽으므로 모든 화면에 함께 건다. 같은 Navigator 라 셸의 `didPopNext` 가 돌아올 때
 /// 다시 읽는다.
-///
-/// 지도 설정([SettingsTarget.map])은 셸의 [MapRecordCubit] 도 새 라우트에 건다.
 ///
 /// 일기 · 물어보기 · 지도 설정은 잠금 아래([pushDiaryRoute]) — 잠겨 있으면 잠금 화면이 먼저 보인다.
 ///
@@ -39,12 +38,14 @@ Future<void> openSettings(
   final holiday = context.read<HolidaySettingsCubit>();
   final lock = context.read<DiaryLockCubit>();
   final diary = context.read<DiarySettingsCubit>();
+  final record = context.read<MapRecordCubit>();
   Widget provide(Widget child) => MultiBlocProvider(
     providers: [
       BlocProvider.value(value: permissions),
       BlocProvider.value(value: holiday),
       BlocProvider.value(value: lock),
       BlocProvider.value(value: diary),
+      BlocProvider.value(value: record),
     ],
     child: child,
   );
@@ -59,23 +60,13 @@ Future<void> openSettings(
     scope: (_, gated) => provide(gated),
   );
 
-  Future<void> pushMap() {
-    final record = context.read<MapRecordCubit>();
-    return pushDiaryRoute<void>(
-      context,
-      page: (_) => const MapSettingsPage(),
-      scope: (_, gated) =>
-          BlocProvider.value(value: record, child: provide(gated)),
-    );
-  }
-
   return switch (target) {
     SettingsTarget.app => push(const AppSettingsPage()),
     SettingsTarget.alarm => push(
       AlarmSettingsPage(highlightPermissions: highlight),
     ),
     SettingsTarget.walk => push(const WalkSettingsPage()),
-    SettingsTarget.map => pushMap(),
+    SettingsTarget.map => pushLocked(const MapSettingsPage()),
     SettingsTarget.diary => pushLocked(const DiarySettingsPage()),
     SettingsTarget.chat => pushLocked(
       ChatSettingsPage(highlightConnection: highlight),

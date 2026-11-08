@@ -25,6 +25,7 @@ import java.util.concurrent.Executors
  *   모드이고 활동 인식 권한이 있어 정지 감지가 도는지.
  * - `drain` ← `{limit}` → `[{id, t, lat, lng, acc?, mode, still}]` (id 오름차순, 지우지 않음)
  * - `ack` ← `{upToId}`: 그 id 이하를 inbox 에서 지운다.
+ * - `clearInbox`: inbox 를 모두 지운다(기록 모두 지우기 — drift 를 지우기 전에).
  * - `openBatterySettings`: 시스템 배터리 최적화 목록 화면을 연다(앱은 아무것도 바꾸지 않는다).
  *   열 수 없으면 앱 정보 설정으로 대신한다.
  */
@@ -85,6 +86,10 @@ internal class LocationRecordChannel private constructor(private val context: Co
                             null
                         }
                     }
+                }
+                "clearInbox" -> background(result) {
+                    LocationInbox.get(context).clear()
+                    null
                 }
                 "openBatterySettings" -> {
                     openBatterySettings()

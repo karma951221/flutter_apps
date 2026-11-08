@@ -7368,6 +7368,12 @@ abstract class AppLocalizations {
   /// **'위치 권한이 없어 기록을 켜지 못했어요'**
   String get walkMapSettingsDenied;
 
+  /// 지도 — 권한 흐름 · 서비스 시작이 오류로 실패했을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 기록을 켜지 못했어요. 잠시 뒤 다시 시도해 주세요'**
+  String get walkMapEnableFailed;
+
   /// 도구 탭 상단 탭 — 지도
   ///
   /// In ko, this message translates to:

@@ -39,26 +39,29 @@ class MapViewCubit extends Cubit<MapViewState> {
   MapPeriod? _period;
   int _generation = 0;
 
+  /// 로딩 표시를 내고, 네이티브 inbox 를 먼저 수거한 뒤 [period] 를 읽는다(지도를 열 때 · 기간을
+  /// 바꿀 때 · 다시 시도). 수거는 [LocationSync.run] 이 겹치지 않게 하나로 묶는다.
   Future<void> show(MapPeriod period) => _load(period, showLoading: true);
 
-  /// 네이티브 inbox 를 먼저 수거한 뒤 현재 기간을 다시 읽는다.
-  /// 수거가 실패해도 저장된 데이터로 읽는다.
+  /// 로딩 표시 없이, 네이티브 inbox 를 먼저 수거한 뒤 현재 기간을 다시 읽는다(앱 복귀 ·
+  /// 위에 얹힌 화면이 걷힐 때 · 기록을 켠 뒤).
   Future<void> refresh() async {
     final period = _period;
     if (period == null) return;
+    await _load(period, showLoading: false);
+  }
+
+  /// 수거가 실패해도 저장된 데이터로 읽는다. 더 늦게 부른 show · refresh 가 이긴다.
+  Future<void> _load(MapPeriod period, {required bool showLoading}) async {
+    _period = period;
+    final generation = ++_generation;
+    if (showLoading) emit(MapViewState.loading(period));
     try {
       await _sync.run();
     } catch (e, s) {
       debugPrint('map sync failed: $e\n$s');
     }
-    if (isClosed || _period != period) return;
-    await _load(period, showLoading: false);
-  }
-
-  Future<void> _load(MapPeriod period, {required bool showLoading}) async {
-    _period = period;
-    final generation = ++_generation;
-    if (showLoading) emit(MapViewState.loading(period));
+    if (isClosed || generation != _generation) return;
     try {
       final next = await _read(period, generation);
       if (next == null || isClosed || generation != _generation) return;

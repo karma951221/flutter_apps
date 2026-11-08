@@ -24,6 +24,12 @@ import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
 import 'package:walk/domain/diary/entity/diary_usage.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
+import 'package:walk/domain/location/entity/record_retention.dart';
+import 'package:walk/domain/location/recorder/location_recorder.dart';
+import 'package:walk/domain/location/recorder/recorder_status.dart';
+import 'package:walk/domain/location/repository/location_preferences.dart';
+import 'package:walk/domain/location/repository/location_repository.dart';
+import 'package:walk/data/location/background_location_access.dart';
 import 'package:walk/domain/lock/device_auth.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
@@ -33,6 +39,7 @@ import 'package:walk/domain/walk/entity/health_access.dart';
 import 'package:walk/domain/walk/usecase/walk_use_case.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
+import 'package:walk/presentation/map/cubit/map_record_cubit.dart';
 import 'package:walk/presentation/settings/cubit/diary_settings_cubit.dart';
 import 'package:walk/presentation/settings/cubit/holiday_settings_cubit.dart';
 import 'package:walk/presentation/settings/cubit/settings_permissions_cubit.dart';
@@ -59,6 +66,15 @@ class MockAlarmUseCase extends Mock implements AlarmUseCase {}
 
 class MockDiaryRepository extends Mock implements DiaryRepository {}
 
+class MockLocationRecorder extends Mock implements LocationRecorder {}
+
+class MockBackgroundLocationAccess extends Mock
+    implements BackgroundLocationAccess {}
+
+class MockLocationPreferences extends Mock implements LocationPreferences {}
+
+class MockLocationRepository extends Mock implements LocationRepository {}
+
 class _NoRefresh implements HolidayRefresher {
   @override
   Future<void> refresh({bool force = false}) async {}
@@ -77,7 +93,7 @@ class FakeHolidays implements HolidayCalendar {
   String? nameOf(DateTime date) => null;
 }
 
-/// 설정 화면 테스트 공용 — 셸이 내리는 cubit 넷과 앱이 내리는 테마 · 걸음 목표를 만든다.
+/// 설정 화면 테스트 공용 — 셸이 내리는 cubit 다섯(지도 기록 포함)과 앱이 내리는 테마 · 걸음 목표를 만든다.
 /// [setUp] 은 테스트의 `setUp` 에서, [tearDown] 은 `tearDown` 에서 부른다.
 class SettingsHarness {
   final notification = MockRequester();
@@ -89,6 +105,10 @@ class SettingsHarness {
   final holidays = FakeHolidays();
   final holidayAccess = MockHolidayAccess();
   final alarms = MockAlarmUseCase();
+  final locationRecorder = MockLocationRecorder();
+  final locationAccess = MockBackgroundLocationAccess();
+  final locationPrefs = MockLocationPreferences();
+  final locations = MockLocationRepository();
   late PrefsLockRepository lockRepo;
   late DiaryPreferences diaryPrefs;
   late SettingsPermissionsCubit permissions;
@@ -97,6 +117,7 @@ class SettingsHarness {
   late HolidaySettingsCubit holiday;
   late DiaryLockCubit diaryLock;
   late DiarySettingsCubit diarySettings;
+  late MapRecordCubit mapRecord;
 
   static void registerFallbacks() => registerFallbackValue(const AppSettings());
 
@@ -111,6 +132,10 @@ class SettingsHarness {
       diaryRepo,
       holidayAccess,
       alarms,
+      locationRecorder,
+      locationAccess,
+      locationPrefs,
+      locations,
     ]) {
       reset(mock);
     }
@@ -168,6 +193,20 @@ class SettingsHarness {
     when(alarms.sync).thenAnswer((_) async {});
     when(() => holidayAccess.refresher).thenReturn(_NoRefresh());
     holiday = HolidaySettingsCubit(settings, holidays, holidayAccess, alarms);
+    when(() => locationPrefs.retention).thenReturn(RecordRetention.never);
+    when(
+      locationRecorder.status,
+    ).thenAnswer((_) async => const RecorderStatus.off());
+    when(locationAccess.check).thenAnswer((_) async => AlwaysAccess.denied);
+    when(locationAccess.hasActivityRecognition).thenAnswer((_) async => true);
+    when(locationAccess.hasNotification).thenAnswer((_) async => true);
+    when(locations.hasAnyPoint).thenAnswer((_) async => false);
+    mapRecord = MapRecordCubit(
+      locationRecorder,
+      locationAccess,
+      locationPrefs,
+      locations,
+    );
   }
 
   Future<void> tearDown() async {
@@ -177,6 +216,7 @@ class SettingsHarness {
     await holiday.close();
     await diaryLock.close();
     await diarySettings.close();
+    await mapRecord.close();
     await getIt.reset();
   }
 
@@ -208,6 +248,7 @@ class SettingsHarness {
               BlocProvider.value(value: holiday),
               BlocProvider.value(value: diaryLock),
               BlocProvider.value(value: diarySettings),
+              BlocProvider.value(value: mapRecord),
             ],
             child: home,
           ),

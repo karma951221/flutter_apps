@@ -20,6 +20,11 @@ import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/diary/usecase/diary_use_case.dart';
+import 'package:walk/data/location/background_location_access.dart';
+import 'package:walk/domain/location/entity/record_retention.dart';
+import 'package:walk/domain/location/recorder/location_recorder.dart';
+import 'package:walk/domain/location/repository/location_preferences.dart';
+import 'package:walk/domain/location/repository/location_repository.dart';
 import 'package:walk/domain/lock/device_auth.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
 import 'package:walk/domain/settings/entity/app_settings.dart';
@@ -56,6 +61,14 @@ class _MockDiaryRepo extends Mock implements DiaryRepository {}
 class _MockDiaryUseCase extends Mock implements DiaryUseCase {}
 
 class _MockPlaceSource extends Mock implements PlaceSource {}
+
+class _MockRecorder extends Mock implements LocationRecorder {}
+
+class _MockAlwaysAccess extends Mock implements BackgroundLocationAccess {}
+
+class _MockLocationPrefs extends Mock implements LocationPreferences {}
+
+class _MockLocations extends Mock implements LocationRepository {}
 
 class _MockChatSession extends Mock implements ChatSession {
   _MockChatSession() {
@@ -156,6 +169,14 @@ void main() {
         ..registerSingleton<OpenConversation>(OpenConversation())
         ..registerSingleton<ChatTrace>(const NoopChatTrace())
         ..registerSingleton<PlaceSource>(_MockPlaceSource());
+      // 설정 화면을 열면 셸의 지도 기록 cubit 을 만든다 — 만들 때 보관 기간만 읽는다.
+      final locationPrefs = _MockLocationPrefs();
+      when(() => locationPrefs.retention).thenReturn(RecordRetention.never);
+      getIt
+        ..registerSingleton<LocationRecorder>(_MockRecorder())
+        ..registerSingleton<BackgroundLocationAccess>(_MockAlwaysAccess())
+        ..registerSingleton<LocationPreferences>(locationPrefs)
+        ..registerSingleton<LocationRepository>(_MockLocations());
       getIt
         ..registerSingleton<AlarmUseCase>(alarms)
         ..registerSingleton<WalkUseCase>(walk)

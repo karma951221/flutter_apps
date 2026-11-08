@@ -52,6 +52,9 @@ class _Recorder implements LocationRecorder {
   }
 
   @override
+  Future<void> clearInbox() async => inbox.clear();
+
+  @override
   Future<void> ack(int upToId) async {
     if (failNextAck) {
       failNextAck = false;

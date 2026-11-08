@@ -140,8 +140,15 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
 
   /// 스토리 뷰어의 "지도로 보기". 잠겨 있어도 옮겨 간다 — 지도의 잠금 게이트가 PIN 을 묻고,
   /// 풀리면 지도 탭이 이 기간을 이어 읽는다.
+  ///
+  /// 뷰어는 스스로 닫히지만 스토리 페이지 · 검색 · 모아 보기 · 위키 노트에서 열렸으면 그 화면이
+  /// 셸을 가리고 있다 — 셸 라우트가 맨 위가 될 때까지 걷어 낸다.
   void _openMapForStory(Story story) {
     if (!mounted) return;
+    final shellRoute = _route;
+    if (shellRoute != null) {
+      Navigator.of(this.context).popUntil((route) => route == shellRoute);
+    }
     setState(() {
       _tab = ShellTab.tools;
       _toolsSection = ToolsSection.map;

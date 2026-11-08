@@ -3985,6 +3985,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkMapSettingsDenied => '位置情報の権限がないため記録をオンにできませんでした';
 
   @override
+  String get walkMapEnableFailed => '位置情報の記録をオンにできませんでした。しばらくしてからもう一度お試しください';
+
+  @override
   String get walkToolsTabMap => '地図';
 
   @override

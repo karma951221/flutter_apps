@@ -47,6 +47,7 @@ void main() {
     when(() => access.hasActivityRecognition()).thenAnswer((_) async => true);
     when(() => access.hasNotification()).thenAnswer((_) async => true);
     when(() => repository.deleteAll()).thenAnswer((_) async {});
+    when(() => recorder.clearInbox()).thenAnswer((_) async {});
     when(() => repository.hasAnyPoint()).thenAnswer((_) async => true);
     cubit = MapRecordCubit(recorder, access, prefs, repository);
   });
@@ -210,4 +211,25 @@ void main() {
     verify(() => repository.deleteAll()).called(1);
     expect(cubit.state.busy, isFalse);
   });
+
+  test('deleteAll clears the native inbox before the repository', () async {
+    await cubit.deleteAll();
+
+    // 순서가 거꾸로면 지운 뒤 다음 수거가 inbox 의 점을 다시 들여온다.
+    verifyInOrder([() => recorder.clearInbox(), () => repository.deleteAll()]);
+  });
+
+  test(
+    'deleteAll keeps the repository when clearing the inbox fails',
+    () async {
+      when(() => recorder.clearInbox()).thenThrow(Exception('inbox'));
+      await cubit.load();
+
+      await expectLater(cubit.deleteAll(), throwsException);
+
+      verifyNever(() => repository.deleteAll());
+      expect(cubit.state.hasPoints, isTrue);
+      expect(cubit.state.busy, isFalse);
+    },
+  );
 }

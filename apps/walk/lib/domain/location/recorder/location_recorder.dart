@@ -18,4 +18,8 @@ abstract interface class LocationRecorder {
 
   /// [upToId] 이하 점을 inbox 에서 지운다.
   Future<void> ack(int upToId);
+
+  /// inbox 를 모두 비운다(아직 수거하지 않은 점까지). 기록 모두 지우기가 저장소보다 먼저 부른다 —
+  /// 남겨 두면 다음 수거가 지운 기록을 다시 들여온다.
+  Future<void> clearInbox();
 }

@@ -244,6 +244,14 @@ void main() {
       ..registerSingleton<LockRepository>(lockRepo)
       ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
       ..registerSingleton<MediaPickGuard>(MediaPickGuard());
+    // 설정 화면을 열면 셸의 지도 기록 cubit 을 다시 걸어 만든다 — 만들 때 보관 기간만 읽는다.
+    final locationPrefs = _MockLocationPrefs();
+    when(() => locationPrefs.retention).thenReturn(RecordRetention.never);
+    getIt
+      ..registerSingleton<LocationRecorder>(_MockRecorder())
+      ..registerSingleton<BackgroundLocationAccess>(_MockAlwaysAccess())
+      ..registerSingleton<LocationPreferences>(locationPrefs)
+      ..registerSingleton<LocationRepository>(_MockLocationRepository());
     getIt
       ..registerSingleton<MapOpenRequests>(MapOpenRequests())
       ..registerSingleton<ChatSession>(_MockChatSession())
@@ -1140,6 +1148,11 @@ void main() {
       final locations = _MockLocationRepository();
       when(locations.hasAnyPoint).thenAnswer((_) async => true);
       getIt
+        ..unregister<LocationRecorder>()
+        ..unregister<BackgroundLocationAccess>()
+        ..unregister<LocationPreferences>()
+        ..unregister<LocationRepository>();
+      getIt
         ..registerFactory<MapViewCubit>(() => mapView)
         ..registerSingleton<LocationRecorder>(recorder)
         ..registerSingleton<BackgroundLocationAccess>(access)
@@ -1252,6 +1265,32 @@ void main() {
       getIt<MapOpenRequests>().open(trip);
       await tester.pumpAndSettle();
 
+      expect(onstage(MapTab), isTrue);
+      verify(() => mapView.show(MapPeriod.story(trip))).called(1);
+    });
+
+    testWidgets('셸 위에 얹힌 화면(스토리 페이지 등)에서 온 요청이면 그 화면을 닫고 지도를 보인다', (
+      tester,
+    ) async {
+      await pump(tester);
+      // 스토리 페이지 → 뷰어 순서로 얹혔다. 뷰어는 스스로 닫고 요청한다.
+      final navigator = tester.state<NavigatorState>(
+        find.byType(Navigator).first,
+      );
+      unawaited(
+        navigator.push(
+          MaterialPageRoute<void>(
+            builder: (_) => const Scaffold(body: Text('스토리 페이지')),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('스토리 페이지'), findsOneWidget);
+
+      getIt<MapOpenRequests>().open(trip);
+      await tester.pumpAndSettle();
+
+      expect(find.text('스토리 페이지'), findsNothing);
       expect(onstage(MapTab), isTrue);
       verify(() => mapView.show(MapPeriod.story(trip))).called(1);
     });

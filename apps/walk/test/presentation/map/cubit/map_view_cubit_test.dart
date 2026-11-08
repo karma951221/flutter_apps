@@ -157,6 +157,37 @@ void main() {
     ).called(1);
   });
 
+  test('first show runs sync before read', () async {
+    await cubit.show(day);
+    verifyInOrder([
+      () => sync.run(),
+      () => locations.pointsBetween(any(), any()),
+    ]);
+  });
+
+  test('show keeps loading while sync runs', () async {
+    final gate = Completer<int>();
+    when(() => sync.run()).thenAnswer((_) => gate.future);
+    final showing = cubit.show(day);
+    await Future<void>.delayed(Duration.zero);
+    expect(cubit.state, MapViewState.loading(day));
+    verifyNever(() => locations.pointsBetween(any(), any()));
+    gate.complete(0);
+    await showing;
+    expect(cubit.state, MapViewState.empty(day));
+  });
+
+  test('show still reads stored data when sync fails', () async {
+    when(() => sync.run()).thenThrow(Exception('sync'));
+    when(search).thenAnswer(
+      (_) async => [
+        _entry('a', at, location: const EntryLocation(lat: 37.5, lng: 127.0)),
+      ],
+    );
+    await cubit.show(day);
+    expect(cubit.state, isA<MapViewReady>());
+  });
+
   test('refresh runs sync before reload', () async {
     await cubit.show(day);
     await cubit.refresh();
@@ -224,9 +255,10 @@ void main() {
     final gate = Completer<int>();
     when(() => sync.run()).thenAnswer((_) => gate.future);
     final refreshing = cubit.refresh();
-    await cubit.show(other);
+    final showing = cubit.show(other);
     gate.complete(0);
     await refreshing;
+    await showing;
     expect(cubit.state, MapViewState.empty(other));
   });
 }

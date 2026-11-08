@@ -3987,6 +3987,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapSettingsDenied => '위치 권한이 없어 기록을 켜지 못했어요';
 
   @override
+  String get walkMapEnableFailed => '위치 기록을 켜지 못했어요. 잠시 뒤 다시 시도해 주세요';
+
+  @override
   String get walkToolsTabMap => '지도';
 
   @override

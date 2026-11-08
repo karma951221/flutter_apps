@@ -5,6 +5,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -303,6 +304,48 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(record.enable).called(1);
+  });
+
+  testWidgets('enable failure shows an error snackbar', (tester) async {
+    when(record.enable).thenThrow(PlatformException(code: 'failed'));
+    await pump(
+      tester,
+      state: MapViewState.empty(_today),
+      recordState: _firstRun,
+    );
+
+    await tester.tap(find.text('위치 기록 켜기'));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('위치 기록을 켜지 못했어요. 잠시 뒤 다시 시도해 주세요'), findsOneWidget);
+  });
+
+  testWidgets('recording turning on refreshes the map', (tester) async {
+    await pump(tester, state: MapViewState.empty(_today), recordState: _off);
+    clearInteractions(view);
+
+    records.add(_running);
+    await tester.pumpAndSettle();
+
+    verify(view.refresh).called(1);
+  });
+
+  testWidgets('first record load does not refresh the map', (tester) async {
+    await pump(
+      tester,
+      state: MapViewState.empty(_today),
+      recordState: const MapRecordState(
+        status: RecorderStatus.off(),
+        busy: false,
+      ),
+    );
+    clearInteractions(view);
+
+    records.add(_running);
+    await tester.pumpAndSettle();
+
+    verifyNever(view.refresh);
   });
 
   testWidgets('segment switches period', (tester) async {

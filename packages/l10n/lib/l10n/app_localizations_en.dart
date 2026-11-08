@@ -4347,6 +4347,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not turn on recording without location permission';
 
   @override
+  String get walkMapEnableFailed =>
+      'Could not turn on location recording. Please try again later';
+
+  @override
   String get walkToolsTabMap => 'Map';
 
   @override
