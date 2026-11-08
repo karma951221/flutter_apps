@@ -1227,5 +1227,7 @@
   "walkMapSettingsDeleteBody": "削除した記録は元に戻せません。",
   "walkMapSettingsDeleted": "位置の記録を削除しました",
   "walkMapSettingsNeedsAlways": "位置情報を「常に許可」に変更してください",
-  "walkMapSettingsBlocked": "権限が必要なため記録が停止しています"
+  "walkMapSettingsBlocked": "権限が必要なため記録が停止しています",
+  "walkMapSettingsOpenSettings": "設定を開く",
+  "walkMapSettingsDenied": "位置情報の権限がないため記録をオンにできませんでした"
 }

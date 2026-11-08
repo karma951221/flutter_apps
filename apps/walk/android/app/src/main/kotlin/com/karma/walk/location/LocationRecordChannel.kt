@@ -1,6 +1,10 @@
 package com.karma.walk.location
 
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -21,6 +25,8 @@ import java.util.concurrent.Executors
  *   모드이고 활동 인식 권한이 있어 정지 감지가 도는지.
  * - `drain` ← `{limit}` → `[{id, t, lat, lng, acc?, mode, still}]` (id 오름차순, 지우지 않음)
  * - `ack` ← `{upToId}`: 그 id 이하를 inbox 에서 지운다.
+ * - `openBatterySettings`: 시스템 배터리 최적화 목록 화면을 연다(앱은 아무것도 바꾸지 않는다).
+ *   열 수 없으면 앱 정보 설정으로 대신한다.
  */
 internal class LocationRecordChannel private constructor(private val context: Context) :
     MethodChannel.MethodCallHandler {
@@ -80,10 +86,27 @@ internal class LocationRecordChannel private constructor(private val context: Co
                         }
                     }
                 }
+                "openBatterySettings" -> {
+                    openBatterySettings()
+                    result.success(null)
+                }
                 else -> result.notImplemented()
             }
         } catch (e: Exception) {
             result.error("failed", e.message, null)
+        }
+    }
+
+    private fun openBatterySettings() {
+        val list = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            context.startActivity(list)
+        } catch (e: ActivityNotFoundException) {
+            val details = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                .setData(Uri.parse("package:${context.packageName}"))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(details)
         }
     }
 

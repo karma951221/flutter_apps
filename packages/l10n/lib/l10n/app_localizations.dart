@@ -7355,6 +7355,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'권한이 필요해 기록이 꺼져 있어요'**
   String get walkMapSettingsBlocked;
+
+  /// 지도 설정 — 항상 허용 안내 스낵바의 설정 열기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'설정 열기'**
+  String get walkMapSettingsOpenSettings;
+
+  /// 지도 설정 — 위치 권한이 거부돼 기록을 켜지 못했을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 권한이 없어 기록을 켜지 못했어요'**
+  String get walkMapSettingsDenied;
 }
 
 class _AppLocalizationsDelegate

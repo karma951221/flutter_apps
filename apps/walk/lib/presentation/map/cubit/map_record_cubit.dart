@@ -33,13 +33,16 @@ class MapRecordCubit extends Cubit<MapRecordState> {
 
   /// 서비스 상태(죽었으면 되살아난다) · 권한 · 보관 기간을 읽는다.
   Future<void> load() async {
+    if (state.busy) return;
     final status = await _recorder.status();
+    final always = await _access.check();
     final activity = await _access.hasActivityRecognition();
     final notification = await _access.hasNotification();
     if (isClosed) return;
     emit(
       state.copyWith(
         status: status,
+        access: always,
         retention: _preferences.retention,
         activityRecognition: activity,
         notification: notification,
@@ -87,17 +90,28 @@ class MapRecordCubit extends Cubit<MapRecordState> {
 
   /// 촘촘(true) · 평소(false). 기록 중이 아니면 아무것도 하지 않는다.
   Future<void> setDense(bool dense) async {
-    if (state.status is RecorderOff) return;
-    await _recorder.setMode(dense ? RecordMode.dense : RecordMode.normal);
-    final status = await _recorder.status();
-    if (isClosed) return;
-    emit(state.copyWith(status: status));
+    if (state.busy || state.status is RecorderOff) return;
+    emit(state.copyWith(busy: true));
+    try {
+      await _recorder.setMode(dense ? RecordMode.dense : RecordMode.normal);
+      final status = await _recorder.status();
+      if (isClosed) return;
+      emit(state.copyWith(status: status));
+    } finally {
+      if (!isClosed) emit(state.copyWith(busy: false));
+    }
   }
 
   Future<void> setRetention(RecordRetention value) async {
-    await _preferences.setRetention(value);
-    if (isClosed) return;
-    emit(state.copyWith(retention: value));
+    if (state.busy) return;
+    emit(state.copyWith(busy: true));
+    try {
+      await _preferences.setRetention(value);
+      if (isClosed) return;
+      emit(state.copyWith(retention: value));
+    } finally {
+      if (!isClosed) emit(state.copyWith(busy: false));
+    }
   }
 
   Future<void> deleteAll() async {
@@ -112,5 +126,5 @@ class MapRecordCubit extends Cubit<MapRecordState> {
 
   Future<void> openAppSettings() => _access.openAppSettings();
 
-  Future<void> openBatterySettings() => _access.openBatterySettings();
+  Future<void> openBatterySettings() => _recorder.openBatterySettings();
 }

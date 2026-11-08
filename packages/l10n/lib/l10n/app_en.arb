@@ -1227,5 +1227,7 @@
   "walkMapSettingsDeleteBody": "Deleted records cannot be restored.",
   "walkMapSettingsDeleted": "Location records deleted",
   "walkMapSettingsNeedsAlways": "Set location to \"Always allow\" in settings to record",
-  "walkMapSettingsBlocked": "Recording is paused until permission is granted"
+  "walkMapSettingsBlocked": "Recording is paused until permission is granted",
+  "walkMapSettingsOpenSettings": "Open settings",
+  "walkMapSettingsDenied": "Could not turn on recording without location permission"
 }

@@ -114,8 +114,22 @@ class _RecordTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     await cubit.enable();
     if (!context.mounted) return;
-    if (cubit.state.access == AlwaysAccess.needsSettings) {
-      AppSnackBar.show(context, message: l10n.walkMapSettingsNeedsAlways);
+    switch (cubit.state.access) {
+      case AlwaysAccess.needsSettings:
+        AppSnackBar.show(
+          context,
+          message: l10n.walkMapSettingsNeedsAlways,
+          actionLabel: l10n.walkMapSettingsOpenSettings,
+          onAction: cubit.openAppSettings,
+        );
+      case AlwaysAccess.denied:
+        AppSnackBar.show(
+          context,
+          message: l10n.walkMapSettingsDenied,
+          type: AppSnackBarType.error,
+        );
+      case AlwaysAccess.granted || null:
+        break;
     }
   }
 }
@@ -205,16 +219,15 @@ class _PermissionRows extends StatelessWidget {
       true => (l10n.walkSettingsGranted, false),
       false => (l10n.walkSettingsNeedsPermission, true),
     };
-    // 항상 허용은 서비스 상태에서 읽는다 — 권한을 잃으면 blocked.
-    final SettingsStatus? always = switch (state.status) {
-      RecorderBlocked() => (l10n.walkSettingsNeedsPermission, true),
-      RecorderRunning() => (l10n.walkSettingsGranted, false),
-      RecorderOff() => switch (state.access) {
-        AlwaysAccess.granted => (l10n.walkSettingsGranted, false),
-        AlwaysAccess.needsSettings ||
-        AlwaysAccess.denied => (l10n.walkSettingsNeedsPermission, true),
-        null => null,
-      },
+    // 항상 허용은 load() 가 읽은 실제 권한이다. 권한을 잃어 멈춘(blocked) 상태가 우선한다.
+    final SettingsStatus? always = switch ((state.status, state.access)) {
+      (RecorderBlocked(), _) => (l10n.walkSettingsNeedsPermission, true),
+      (_, AlwaysAccess.granted) => (l10n.walkSettingsGranted, false),
+      (_, AlwaysAccess.needsSettings || AlwaysAccess.denied) => (
+        l10n.walkSettingsNeedsPermission,
+        true,
+      ),
+      (_, null) => null,
     };
     final SettingsStatus? activity = switch (state.activityRecognition) {
       null => null,

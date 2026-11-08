@@ -3979,4 +3979,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkMapSettingsBlocked => '권한이 필요해 기록이 꺼져 있어요';
+
+  @override
+  String get walkMapSettingsOpenSettings => '설정 열기';
+
+  @override
+  String get walkMapSettingsDenied => '위치 권한이 없어 기록을 켜지 못했어요';
 }

@@ -14,6 +14,7 @@ import '../../domain/location/recorder/recorder_status.dart';
 /// - `status` → `{state: "off"|"running"|"blocked", mode, stillDetection: bool}`
 /// - `drain` ← `{limit}` → `[{id, t: epoch millis UTC, lat, lng, acc: double?, mode, still}]` (id 오름차순)
 /// - `ack` ← `{upToId}`
+/// - `openBatterySettings` → null (시스템 배터리 최적화 화면)
 @LazySingleton(as: LocationRecorder)
 class ChannelLocationRecorder implements LocationRecorder {
   const ChannelLocationRecorder();
@@ -45,6 +46,10 @@ class ChannelLocationRecorder implements LocationRecorder {
   @override
   Future<void> setMode(RecordMode mode) =>
       _channel.invokeMethod<void>('setMode', {'mode': mode.name});
+
+  @override
+  Future<void> openBatterySettings() =>
+      _channel.invokeMethod<void>('openBatterySettings');
 
   @override
   Future<List<({int id, LocationPoint point})>> drain({

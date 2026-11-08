@@ -30,7 +30,6 @@ abstract interface class BackgroundLocationAccess {
   Future<bool> hasNotification();
 
   Future<void> openAppSettings();
-  Future<void> openBatterySettings();
 }
 
 @LazySingleton(as: BackgroundLocationAccess)
@@ -69,10 +68,5 @@ class PermissionHandlerBackgroundLocationAccess
   @override
   Future<void> openAppSettings() async {
     await ph.openAppSettings();
-  }
-
-  @override
-  Future<void> openBatterySettings() async {
-    await ph.Permission.ignoreBatteryOptimizations.request();
   }
 }

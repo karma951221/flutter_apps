@@ -4338,4 +4338,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkMapSettingsBlocked =>
       'Recording is paused until permission is granted';
+
+  @override
+  String get walkMapSettingsOpenSettings => 'Open settings';
+
+  @override
+  String get walkMapSettingsDenied =>
+      'Could not turn on recording without location permission';
 }

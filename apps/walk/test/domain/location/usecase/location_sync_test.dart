@@ -69,6 +69,8 @@ class _Recorder implements LocationRecorder {
   Future<void> stop() async {}
   @override
   Future<void> setMode(RecordMode mode) async {}
+  @override
+  Future<void> openBatterySettings() async {}
 }
 
 class _Repo implements LocationRepository {

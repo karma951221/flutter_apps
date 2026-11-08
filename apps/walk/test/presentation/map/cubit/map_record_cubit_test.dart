@@ -42,6 +42,7 @@ void main() {
     when(() => recorder.start(any())).thenAnswer((_) async {});
     when(() => recorder.stop()).thenAnswer((_) async {});
     when(() => recorder.setMode(any())).thenAnswer((_) async {});
+    when(() => access.check()).thenAnswer((_) async => AlwaysAccess.denied);
     when(() => access.request()).thenAnswer((_) async => AlwaysAccess.granted);
     when(() => access.hasActivityRecognition()).thenAnswer((_) async => true);
     when(() => access.hasNotification()).thenAnswer((_) async => true);
@@ -142,6 +143,32 @@ void main() {
     await cubit.load();
 
     expect(cubit.state.status, const RecorderStatus.blocked(RecordMode.normal));
+  });
+
+  test('load reads the checked always permission when never enabled', () async {
+    when(() => access.check()).thenAnswer((_) async => AlwaysAccess.granted);
+
+    await cubit.load();
+
+    expect(cubit.state.access, AlwaysAccess.granted);
+  });
+
+  test('load refreshes access after it changes in system settings', () async {
+    await cubit.load();
+    expect(cubit.state.access, AlwaysAccess.denied);
+
+    when(() => access.check()).thenAnswer((_) async => AlwaysAccess.granted);
+    await cubit.load();
+
+    expect(cubit.state.access, AlwaysAccess.granted);
+  });
+
+  test('openBatterySettings goes through the recorder channel', () async {
+    when(() => recorder.openBatterySettings()).thenAnswer((_) async {});
+
+    await cubit.openBatterySettings();
+
+    verify(() => recorder.openBatterySettings()).called(1);
   });
 
   test('setRetention saves and updates state', () async {

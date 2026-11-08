@@ -48,11 +48,12 @@ void main() {
     when(() => recorder.start(any())).thenAnswer((_) async {});
     when(recorder.stop).thenAnswer((_) async {});
     when(() => recorder.setMode(any())).thenAnswer((_) async {});
+    when(access.check).thenAnswer((_) async => AlwaysAccess.denied);
+    when(recorder.openBatterySettings).thenAnswer((_) async {});
     when(access.request).thenAnswer((_) async => AlwaysAccess.granted);
     when(access.hasActivityRecognition).thenAnswer((_) async => true);
     when(access.hasNotification).thenAnswer((_) async => true);
     when(access.openAppSettings).thenAnswer((_) async {});
-    when(access.openBatterySettings).thenAnswer((_) async {});
     when(repository.deleteAll).thenAnswer((_) async {});
     cubit = MapRecordCubit(recorder, access, prefs, repository);
   });
@@ -153,13 +154,37 @@ void main() {
     expect(find.text('허용 필요 ›'), findsOneWidget);
   });
 
+  testWidgets('항상 허용 행은 실제 권한을 읽어 보인다', (tester) async {
+    when(access.check).thenAnswer((_) async => AlwaysAccess.granted);
+    await pump(tester);
+
+    expect(find.text('허용됨'), findsWidgets);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('map-settings-permission-always')),
+        matching: find.text('허용됨'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('권한이 거부되면 켜지 못했다는 안내를 보인다', (tester) async {
+    when(access.request).thenAnswer((_) async => AlwaysAccess.denied);
+    await pump(tester);
+
+    await tester.tap(find.byKey(const Key('map-settings-record-switch')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('위치 권한이 없어 기록을 켜지 못했어요'), findsOneWidget);
+  });
+
   testWidgets('배터리 행은 배터리 설정을 연다', (tester) async {
     await pump(tester);
 
     await tester.tap(find.byKey(const Key('map-settings-battery')));
     await tester.pumpAndSettle();
 
-    verify(access.openBatterySettings).called(1);
+    verify(recorder.openBatterySettings).called(1);
   });
 
   testWidgets('모두 지우기: 확인해야 지운다', (tester) async {

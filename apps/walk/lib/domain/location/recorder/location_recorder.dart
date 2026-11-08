@@ -10,6 +10,9 @@ abstract interface class LocationRecorder {
   Future<void> stop();
   Future<void> setMode(RecordMode mode);
 
+  /// 시스템 배터리 최적화 화면을 연다. 앱은 아무것도 바꾸지 않는다.
+  Future<void> openBatterySettings();
+
   /// inbox 의 오래된 점부터 최대 [limit] 개. 비우지는 않는다.
   Future<List<({int id, LocationPoint point})>> drain({int limit = 2000});
 

@@ -3977,4 +3977,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkMapSettingsBlocked => '権限が必要なため記録が停止しています';
+
+  @override
+  String get walkMapSettingsOpenSettings => '設定を開く';
+
+  @override
+  String get walkMapSettingsDenied => '位置情報の権限がないため記録をオンにできませんでした';
 }
