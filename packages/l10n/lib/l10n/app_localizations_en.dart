@@ -4251,4 +4251,91 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkChatWikiCandidateDiscardedLabel => 'Discarded';
+
+  @override
+  String get walkMapSettingsTitle => 'Map settings';
+
+  @override
+  String get walkMapSettingsRecord => 'Record location';
+
+  @override
+  String get walkMapSettingsRecordDescription =>
+      'Stays on this phone and is never sent to a server';
+
+  @override
+  String get walkMapSettingsDense => 'Detailed recording';
+
+  @override
+  String get walkMapSettingsDenseDescription =>
+      'Records every 5 seconds, like on a walk. Uses more battery';
+
+  @override
+  String get walkMapSettingsRetention => 'Keep records for';
+
+  @override
+  String get walkMapSettingsRetentionThreeMonths => '3 months';
+
+  @override
+  String get walkMapSettingsRetentionOneYear => '1 year';
+
+  @override
+  String get walkMapSettingsRetentionNever => 'Never delete';
+
+  @override
+  String get walkMapSettingsBattery => 'Exclude from battery optimization';
+
+  @override
+  String get walkMapSettingsBatteryDescription =>
+      'Keeps recording from being cut off';
+
+  @override
+  String get walkMapSettingsPermissions => 'Permissions';
+
+  @override
+  String get walkMapSettingsLocationAlways => 'Location: always allow';
+
+  @override
+  String get walkMapSettingsLocationAlwaysDescription =>
+      'Needed to record while the app is closed';
+
+  @override
+  String get walkMapSettingsActivity => 'Physical activity';
+
+  @override
+  String get walkMapSettingsActivityDescription =>
+      'Detects when you are still to save battery';
+
+  @override
+  String get walkMapSettingsStillOff => 'Still detection off ›';
+
+  @override
+  String get walkMapSettingsNotification => 'Notifications';
+
+  @override
+  String get walkMapSettingsNotificationDescription =>
+      'Shows that recording is on';
+
+  @override
+  String get walkMapSettingsDeleteAll => 'Delete all records';
+
+  @override
+  String get walkMapSettingsDeleteAllDescription =>
+      'Deletes the location records on this phone';
+
+  @override
+  String get walkMapSettingsDeleteTitle => 'Delete all location records?';
+
+  @override
+  String get walkMapSettingsDeleteBody => 'Deleted records cannot be restored.';
+
+  @override
+  String get walkMapSettingsDeleted => 'Location records deleted';
+
+  @override
+  String get walkMapSettingsNeedsAlways =>
+      'Set location to \"Always allow\" in settings to record';
+
+  @override
+  String get walkMapSettingsBlocked =>
+      'Recording is paused until permission is granted';
 }

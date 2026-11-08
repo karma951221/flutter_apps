@@ -17,6 +17,10 @@ import '../../../domain/chat/usecase/chat_history_pruner.dart';
 import '../../../domain/diary/repository/diary_preferences.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
+import '../../../data/location/background_location_access.dart';
+import '../../../domain/location/recorder/location_recorder.dart';
+import '../../../domain/location/repository/location_preferences.dart';
+import '../../../domain/location/repository/location_repository.dart';
 import '../../../domain/lock/device_auth.dart';
 import '../../../domain/lock/lock_repository.dart';
 import '../../../domain/settings/repository/settings_repository.dart';
@@ -25,6 +29,7 @@ import '../../alarm/cubit/alarm_list_cubit.dart';
 import '../../chat/page/chat_tab.dart';
 import '../../diary/page/diary_tab.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
+import '../../map/cubit/map_record_cubit.dart';
 import '../../lock/media_pick_guard.dart';
 import '../../settings/cubit/diary_settings_cubit.dart';
 import '../../settings/cubit/holiday_settings_cubit.dart';
@@ -254,6 +259,15 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
         BlocProvider.value(value: _holidaySettings),
         BlocProvider.value(value: _diaryLock),
         BlocProvider.value(value: _diarySettings),
+        // 지도 탭(Task 7)과 지도 설정이 같은 기록 상태를 본다. 처음 읽을 때 만든다.
+        BlocProvider(
+          create: (_) => MapRecordCubit(
+            getIt<LocationRecorder>(),
+            getIt<BackgroundLocationAccess>(),
+            getIt<LocationPreferences>(),
+            getIt<LocationRepository>(),
+          ),
+        ),
       ],
       child: Scaffold(
         // 설정 화면은 셸 cubit 을 읽어 다시 건다 — 그 cubit 아래 context 가 필요하다.

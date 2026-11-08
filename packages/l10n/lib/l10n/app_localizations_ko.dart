@@ -3900,4 +3900,83 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatWikiCandidateDiscardedLabel => '버렸어요';
+
+  @override
+  String get walkMapSettingsTitle => '지도 설정';
+
+  @override
+  String get walkMapSettingsRecord => '위치 기록';
+
+  @override
+  String get walkMapSettingsRecordDescription => '이 폰에만 쌓이고 서버로 보내지 않아요';
+
+  @override
+  String get walkMapSettingsDense => '촘촘하게 기록';
+
+  @override
+  String get walkMapSettingsDenseDescription => '산책할 때처럼 5초마다 기록해요. 배터리를 더 써요';
+
+  @override
+  String get walkMapSettingsRetention => '보관 기간';
+
+  @override
+  String get walkMapSettingsRetentionThreeMonths => '3개월';
+
+  @override
+  String get walkMapSettingsRetentionOneYear => '1년';
+
+  @override
+  String get walkMapSettingsRetentionNever => '지우지 않음';
+
+  @override
+  String get walkMapSettingsBattery => '배터리 최적화 제외';
+
+  @override
+  String get walkMapSettingsBatteryDescription => '제외하면 기록이 끊기지 않아요';
+
+  @override
+  String get walkMapSettingsPermissions => '권한';
+
+  @override
+  String get walkMapSettingsLocationAlways => '위치 항상 허용';
+
+  @override
+  String get walkMapSettingsLocationAlwaysDescription => '앱을 닫아도 기록하려면 필요해요';
+
+  @override
+  String get walkMapSettingsActivity => '신체 활동';
+
+  @override
+  String get walkMapSettingsActivityDescription => '멈춰 있는 걸 알아채 배터리를 아껴요';
+
+  @override
+  String get walkMapSettingsStillOff => '정지 감지 꺼짐 ›';
+
+  @override
+  String get walkMapSettingsNotification => '알림';
+
+  @override
+  String get walkMapSettingsNotificationDescription => '기록 중임을 알려요';
+
+  @override
+  String get walkMapSettingsDeleteAll => '기록 모두 지우기';
+
+  @override
+  String get walkMapSettingsDeleteAllDescription => '이 폰에 쌓인 위치 기록을 지워요';
+
+  @override
+  String get walkMapSettingsDeleteTitle => '위치 기록을 모두 지울까요?';
+
+  @override
+  String get walkMapSettingsDeleteBody => '지운 기록은 되돌릴 수 없어요.';
+
+  @override
+  String get walkMapSettingsDeleted => '위치 기록을 지웠어요';
+
+  @override
+  String get walkMapSettingsNeedsAlways =>
+      '위치를 \"항상 허용\"으로 바꿔야 기록할 수 있어요. 설정에서 바꿔 주세요';
+
+  @override
+  String get walkMapSettingsBlocked => '권한이 필요해 기록이 꺼져 있어요';
 }

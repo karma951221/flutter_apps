@@ -7199,6 +7199,162 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'버렸어요'**
   String get walkChatWikiCandidateDiscardedLabel;
+
+  /// 지도 설정 화면 제목 · 앱 설정 바로가기
+  ///
+  /// In ko, this message translates to:
+  /// **'지도 설정'**
+  String get walkMapSettingsTitle;
+
+  /// 지도 설정 — 위치 기록 스위치 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 기록'**
+  String get walkMapSettingsRecord;
+
+  /// 지도 설정 — 위치 기록 스위치 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'이 폰에만 쌓이고 서버로 보내지 않아요'**
+  String get walkMapSettingsRecordDescription;
+
+  /// 지도 설정 — 촘촘 기록 스위치 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'촘촘하게 기록'**
+  String get walkMapSettingsDense;
+
+  /// 지도 설정 — 촘촘 기록 스위치 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'산책할 때처럼 5초마다 기록해요. 배터리를 더 써요'**
+  String get walkMapSettingsDenseDescription;
+
+  /// 지도 설정 — 보관 기간 행 제목 · 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'보관 기간'**
+  String get walkMapSettingsRetention;
+
+  /// 지도 설정 — 보관 기간 선택지
+  ///
+  /// In ko, this message translates to:
+  /// **'3개월'**
+  String get walkMapSettingsRetentionThreeMonths;
+
+  /// 지도 설정 — 보관 기간 선택지
+  ///
+  /// In ko, this message translates to:
+  /// **'1년'**
+  String get walkMapSettingsRetentionOneYear;
+
+  /// 지도 설정 — 보관 기간 선택지(기본)
+  ///
+  /// In ko, this message translates to:
+  /// **'지우지 않음'**
+  String get walkMapSettingsRetentionNever;
+
+  /// 지도 설정 — 배터리 최적화 안내 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'배터리 최적화 제외'**
+  String get walkMapSettingsBattery;
+
+  /// 지도 설정 — 배터리 최적화 안내 행 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'제외하면 기록이 끊기지 않아요'**
+  String get walkMapSettingsBatteryDescription;
+
+  /// 지도 설정 — 권한 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'권한'**
+  String get walkMapSettingsPermissions;
+
+  /// 지도 설정 — 위치 항상 허용 권한 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 항상 허용'**
+  String get walkMapSettingsLocationAlways;
+
+  /// 지도 설정 — 위치 항상 허용 권한 행 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'앱을 닫아도 기록하려면 필요해요'**
+  String get walkMapSettingsLocationAlwaysDescription;
+
+  /// 지도 설정 — 신체 활동 권한 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'신체 활동'**
+  String get walkMapSettingsActivity;
+
+  /// 지도 설정 — 신체 활동 권한 행 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'멈춰 있는 걸 알아채 배터리를 아껴요'**
+  String get walkMapSettingsActivityDescription;
+
+  /// 지도 설정 — 신체 활동 권한이 없어 정지 감지가 꺼진 상태(누르면 설정을 연다)
+  ///
+  /// In ko, this message translates to:
+  /// **'정지 감지 꺼짐 ›'**
+  String get walkMapSettingsStillOff;
+
+  /// 지도 설정 — 알림 권한 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'알림'**
+  String get walkMapSettingsNotification;
+
+  /// 지도 설정 — 알림 권한 행 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 중임을 알려요'**
+  String get walkMapSettingsNotificationDescription;
+
+  /// 지도 설정 — 모두 지우기 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 모두 지우기'**
+  String get walkMapSettingsDeleteAll;
+
+  /// 지도 설정 — 모두 지우기 행 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'이 폰에 쌓인 위치 기록을 지워요'**
+  String get walkMapSettingsDeleteAllDescription;
+
+  /// 지도 설정 — 모두 지우기 확인 대화상자 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 기록을 모두 지울까요?'**
+  String get walkMapSettingsDeleteTitle;
+
+  /// 지도 설정 — 모두 지우기 확인 대화상자 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'지운 기록은 되돌릴 수 없어요.'**
+  String get walkMapSettingsDeleteBody;
+
+  /// 지도 설정 — 모두 지운 뒤 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 기록을 지웠어요'**
+  String get walkMapSettingsDeleted;
+
+  /// 지도 설정 — 항상 허용을 대화상자로 못 받았을 때 안내 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'위치를 \"항상 허용\"으로 바꿔야 기록할 수 있어요. 설정에서 바꿔 주세요'**
+  String get walkMapSettingsNeedsAlways;
+
+  /// 지도 설정 — 켜 두었지만 권한을 잃어 기록하지 못할 때 행 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'권한이 필요해 기록이 꺼져 있어요'**
+  String get walkMapSettingsBlocked;
 }
 
 class _AppLocalizationsDelegate

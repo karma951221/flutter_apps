@@ -56,6 +56,7 @@ import '../../data/diary/drift_diary_repository.dart' as _i1049;
 import '../../data/diary/media/file_media_store.dart' as _i928;
 import '../../data/diary/media/plugin_media_processor.dart' as _i17;
 import '../../data/diary/prefs_diary_preferences.dart' as _i383;
+import '../../data/location/background_location_access.dart' as _i159;
 import '../../data/location/channel_location_recorder.dart' as _i620;
 import '../../data/location/database/location_database.dart' as _i121;
 import '../../data/location/drift_location_repository.dart' as _i192;
@@ -223,6 +224,9 @@ extension GetItInjectableX on _i174.GetIt {
       ),
     );
     gh.lazySingleton<_i332.HealthGateway>(() => _i332.HealthPluginGateway());
+    gh.lazySingleton<_i159.BackgroundLocationAccess>(
+      () => const _i159.PermissionHandlerBackgroundLocationAccess(),
+    );
     gh.lazySingleton<_i63.AddressSearch>(
       () => _i667.GeocodingAddressSearch(gh<_i693.PlaceNamer>()),
     );

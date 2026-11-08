@@ -3899,4 +3899,82 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatWikiCandidateDiscardedLabel => '破棄しました';
+
+  @override
+  String get walkMapSettingsTitle => '地図の設定';
+
+  @override
+  String get walkMapSettingsRecord => '位置の記録';
+
+  @override
+  String get walkMapSettingsRecordDescription => 'この端末にだけ保存され、サーバーには送りません';
+
+  @override
+  String get walkMapSettingsDense => '細かく記録';
+
+  @override
+  String get walkMapSettingsDenseDescription => '散歩のように5秒ごとに記録します。電池を多く使います';
+
+  @override
+  String get walkMapSettingsRetention => '保管期間';
+
+  @override
+  String get walkMapSettingsRetentionThreeMonths => '3か月';
+
+  @override
+  String get walkMapSettingsRetentionOneYear => '1年';
+
+  @override
+  String get walkMapSettingsRetentionNever => '削除しない';
+
+  @override
+  String get walkMapSettingsBattery => '電池の最適化から除外';
+
+  @override
+  String get walkMapSettingsBatteryDescription => '除外すると記録が途切れません';
+
+  @override
+  String get walkMapSettingsPermissions => '権限';
+
+  @override
+  String get walkMapSettingsLocationAlways => '位置情報を常に許可';
+
+  @override
+  String get walkMapSettingsLocationAlwaysDescription => 'アプリを閉じても記録するために必要です';
+
+  @override
+  String get walkMapSettingsActivity => '身体活動';
+
+  @override
+  String get walkMapSettingsActivityDescription => '静止を検知して電池を節約します';
+
+  @override
+  String get walkMapSettingsStillOff => '静止検知オフ ›';
+
+  @override
+  String get walkMapSettingsNotification => '通知';
+
+  @override
+  String get walkMapSettingsNotificationDescription => '記録中であることをお知らせします';
+
+  @override
+  String get walkMapSettingsDeleteAll => '記録をすべて削除';
+
+  @override
+  String get walkMapSettingsDeleteAllDescription => 'この端末の位置記録を削除します';
+
+  @override
+  String get walkMapSettingsDeleteTitle => '位置の記録をすべて削除しますか？';
+
+  @override
+  String get walkMapSettingsDeleteBody => '削除した記録は元に戻せません。';
+
+  @override
+  String get walkMapSettingsDeleted => '位置の記録を削除しました';
+
+  @override
+  String get walkMapSettingsNeedsAlways => '位置情報を「常に許可」に変更してください';
+
+  @override
+  String get walkMapSettingsBlocked => '権限が必要なため記録が停止しています';
 }

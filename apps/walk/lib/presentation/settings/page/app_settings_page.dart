@@ -61,6 +61,11 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
               Icons.directions_walk,
               l10n.walkWalkSettingsTitle,
             ),
+            (
+              SettingsTarget.map,
+              Icons.map_outlined,
+              l10n.walkMapSettingsTitle,
+            ),
           ])
             AppListTile(
               key: Key('app-settings-open-${target.name}'),

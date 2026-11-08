@@ -81,5 +81,6 @@ class FeatureMenu extends StatelessWidget {
         SettingsTarget.chat => l10n.walkChatSettingsTitle,
         SettingsTarget.alarm => l10n.walkAlarmSettingsTitle,
         SettingsTarget.walk => l10n.walkWalkSettingsTitle,
+        SettingsTarget.map => l10n.walkMapSettingsTitle,
       };
 }
