@@ -62,6 +62,7 @@ const _firstRun = MapRecordState(
   status: RecorderStatus.off(),
   busy: false,
   hasPoints: false,
+  loaded: true,
 );
 
 /// 꺼져 있지만 예전 점이 있다.
@@ -69,11 +70,13 @@ const _off = MapRecordState(
   status: RecorderStatus.off(),
   busy: false,
   hasPoints: true,
+  loaded: true,
 );
 const _running = MapRecordState(
   status: RecorderStatus.running(RecordMode.normal, stillDetection: true),
   busy: false,
   hasPoints: true,
+  loaded: true,
 );
 
 Story _story(String id, String title, {bool open = true, int day = 1}) => Story(
@@ -376,6 +379,7 @@ void main() {
         status: RecorderStatus.running(RecordMode.dense, stillDetection: true),
         busy: false,
         hasPoints: true,
+        loaded: true,
       ),
     );
     await tester.pumpAndSettle();
@@ -393,6 +397,7 @@ void main() {
         busy: false,
         access: AlwaysAccess.denied,
         hasPoints: true,
+        loaded: true,
       ),
     );
 

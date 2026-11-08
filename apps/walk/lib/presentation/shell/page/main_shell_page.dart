@@ -182,6 +182,8 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   void didPopNext() {
     setState(() => _covered = false);
     unawaited(_refresh());
+    // 지도 설정(모두 지우기 · 기록 켜기) · 스토리 뷰어에서 돌아왔다 — 지도가 보이면 다시 읽는다.
+    _refreshMap();
   }
 
   /// 시작 · 복귀. 예약을 채운 뒤(지난 1회성이 꺼진 뒤) 목록을 읽는다.

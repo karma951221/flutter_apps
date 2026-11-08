@@ -60,6 +60,7 @@ import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
 import 'package:walk/presentation/settings/page/alarm_settings_page.dart';
 import 'package:walk/presentation/settings/page/app_settings_page.dart';
 import 'package:walk/presentation/settings/page/chat_settings_page.dart';
+import 'package:walk/presentation/settings/page/map_settings_page.dart';
 import 'package:walk/presentation/settings/page/walk_settings_page.dart';
 import 'package:walk/presentation/settings/widget/row_highlight.dart';
 import 'package:walk/presentation/shell/page/main_shell_page.dart';
@@ -1212,6 +1213,23 @@ void main() {
 
       expect(find.byKey(const Key('menu-settings-map')), findsNothing);
       expect(find.byKey(const Key('menu-settings-app')), findsNothing);
+    });
+
+    testWidgets('지도 설정에서 돌아오면 기록 상태와 지도를 다시 읽는다', (tester) async {
+      await pump(tester);
+      await tapTab(tester, '도구');
+      await tapToolsTab(tester, '지도');
+      await openMenu(tester, 'menu-settings-map');
+      expect(find.byType(MapSettingsPage), findsOneWidget);
+      clearInteractions(mapView);
+      clearInteractions(recorder);
+
+      tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+      await tester.pumpAndSettle();
+
+      expect(onstage(MapTab), isTrue);
+      verify(mapView.refresh).called(1);
+      verify(() => recorder.status()).called(1);
     });
 
     testWidgets('다른 상단 탭을 보던 중 복귀하면 지도는 읽지 않는다', (tester) async {

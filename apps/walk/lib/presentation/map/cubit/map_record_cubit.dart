@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../data/location/background_location_access.dart';
@@ -32,24 +33,33 @@ class MapRecordCubit extends Cubit<MapRecordState> {
   final LocationRepository _repository;
 
   /// 서비스 상태(죽었으면 되살아난다) · 권한 · 보관 기간 · 저장된 점이 있는지를 읽는다.
+  ///
+  /// 던지지 않는다 — 부르는 쪽(지도 탭 · 셸 복귀)이 기다리지 않는다. 실패하면 남겨 두고
+  /// [MapRecordState.loaded] 만 켜서 지도가 지금 상태로 칩을 보이게 한다(다음 복귀에 다시 읽는다).
   Future<void> load() async {
     if (state.busy) return;
-    final status = await _recorder.status();
-    final always = await _access.check();
-    final activity = await _access.hasActivityRecognition();
-    final notification = await _access.hasNotification();
-    final hasPoints = await _repository.hasAnyPoint();
-    if (isClosed) return;
-    emit(
-      state.copyWith(
-        status: status,
-        access: always,
-        retention: _preferences.retention,
-        activityRecognition: activity,
-        notification: notification,
-        hasPoints: hasPoints,
-      ),
-    );
+    try {
+      final status = await _recorder.status();
+      final always = await _access.check();
+      final activity = await _access.hasActivityRecognition();
+      final notification = await _access.hasNotification();
+      final hasPoints = await _repository.hasAnyPoint();
+      if (isClosed) return;
+      emit(
+        state.copyWith(
+          status: status,
+          access: always,
+          retention: _preferences.retention,
+          activityRecognition: activity,
+          notification: notification,
+          hasPoints: hasPoints,
+          loaded: true,
+        ),
+      );
+    } catch (e, s) {
+      debugPrint('map record load failed: $e\n$s');
+      if (!isClosed) emit(state.copyWith(loaded: true));
+    }
   }
 
   /// 권한을 받고 평소 모드로 켠다. 항상 허용이 아니면 켜지 않고 [MapRecordState.access] 만 남긴다.

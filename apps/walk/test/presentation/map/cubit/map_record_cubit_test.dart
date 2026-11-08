@@ -189,6 +189,16 @@ void main() {
     expect(cubit.state.hasPoints, isFalse);
   });
 
+  test('load failure still marks loaded and keeps state', () async {
+    when(() => recorder.status()).thenThrow(Exception('channel'));
+
+    await cubit.load();
+
+    expect(cubit.state.loaded, isTrue);
+    expect(cubit.state.hasPoints, isNull);
+    expect(cubit.state.status, const RecorderStatus.off());
+  });
+
   test('deleteAll clears the repository', () async {
     await cubit.load();
     expect(cubit.state.hasPoints, isTrue);
