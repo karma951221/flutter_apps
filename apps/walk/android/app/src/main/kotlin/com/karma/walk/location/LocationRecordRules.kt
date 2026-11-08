@@ -44,7 +44,29 @@ object LocationRecordRules {
         else -> STATE_BLOCKED
     }
 
+    /**
+     * 앱이 앞에 올 때(`status` · `start`) 켜짐 + 권한인데 서비스가 죽어 있으면(sticky 재시작 실패 ·
+     * 제조사 정리) 다시 띄운다.
+     */
+    fun shouldRevive(enabled: Boolean, hasBackgroundPermission: Boolean, serviceRunning: Boolean): Boolean =
+        enabled && hasBackgroundPermission && !serviceRunning
+
+    /** `lastLocation` 대체 점으로 쓸 수 있는 최대 나이. */
+    const val FALLBACK_MAX_AGE_MS = 5 * 60_000L
+
+    /** 지금 위치를 못 잡았을 때 마지막 위치는 5분 안의 것만 쓴다(시계가 뒤로 간 미래 시각도 버린다). */
+    fun isFreshFallback(fixTimeMs: Long, nowMs: Long): Boolean =
+        fixTimeMs <= nowMs && nowMs - fixTimeMs <= FALLBACK_MAX_AGE_MS
+
     enum class Phase { MOVING, STILL }
+
+    /**
+     * 서비스 인스턴스가 시작할 때의 단계. 새 인스턴스는 늘 움직이는 중으로 시작한다 — 프로세스가 죽은
+     * 사이의 전환 이벤트는 버려지므로 저장된 STILL 을 믿으면 위치 요청 없이 갇힌다. 다시 멈추는 건
+     * 새 `STILL` 진입이 한다. 같은 인스턴스 안에서는 저장된 단계를 이어 간다.
+     */
+    fun phaseOnServiceStart(newInstance: Boolean, saved: Phase): Phase =
+        if (newInstance) Phase.MOVING else saved
 
     sealed interface Action {
         /** 지금 위치 한 점을 `still = 1` 로 남기고 위치 요청을 멈춘다. */

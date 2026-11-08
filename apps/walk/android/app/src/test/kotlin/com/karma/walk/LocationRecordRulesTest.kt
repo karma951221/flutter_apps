@@ -119,4 +119,36 @@ class LocationRecordRulesTest {
             }
         }
     }
+
+    // ── 서비스 되살리기 · 새 인스턴스 ──
+
+    @Test
+    fun `revive only when enabled with permission and service dead`() {
+        assertTrue(LocationRecordRules.shouldRevive(true, hasBackgroundPermission = true, serviceRunning = false))
+        assertFalse(LocationRecordRules.shouldRevive(true, hasBackgroundPermission = true, serviceRunning = true))
+        assertFalse(LocationRecordRules.shouldRevive(true, hasBackgroundPermission = false, serviceRunning = false))
+        assertFalse(LocationRecordRules.shouldRevive(false, hasBackgroundPermission = true, serviceRunning = false))
+    }
+
+    @Test
+    fun `new service instance starts moving even if still was saved`() {
+        assertEquals(Phase.MOVING, LocationRecordRules.phaseOnServiceStart(newInstance = true, saved = Phase.STILL))
+        assertEquals(Phase.MOVING, LocationRecordRules.phaseOnServiceStart(newInstance = true, saved = Phase.MOVING))
+    }
+
+    @Test
+    fun `same instance keeps the saved phase`() {
+        assertEquals(Phase.STILL, LocationRecordRules.phaseOnServiceStart(newInstance = false, saved = Phase.STILL))
+    }
+
+    // ── lastLocation 대체 ──
+
+    @Test
+    fun `fallback fix is used only within 5 minutes`() {
+        val now = 1_000_000_000L
+        assertTrue(LocationRecordRules.isFreshFallback(now, now))
+        assertTrue(LocationRecordRules.isFreshFallback(now - 300_000L, now))
+        assertFalse(LocationRecordRules.isFreshFallback(now - 300_001L, now))
+        assertFalse(LocationRecordRules.isFreshFallback(now + 1L, now))
+    }
 }

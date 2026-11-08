@@ -3,6 +3,7 @@ package com.karma.walk.location
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -89,12 +90,24 @@ internal class LocationRecordChannel private constructor(private val context: Co
     private fun start(mode: String) {
         LocationRecordPrefs.setMode(context, mode)
         LocationRecordPrefs.setEnabled(context, true)
-        // 새로 켜면 움직이는 중으로 시작한다. 전환 구독이 곧 지금 상태를 알려 준다.
-        if (!LocationRecordService.running) {
-            LocationRecordPrefs.setPhase(context, LocationRecordRules.Phase.MOVING)
-        }
+        // 떠 있으면 새 모드를 적용하고, 죽어 있으면 되살린다(새 인스턴스는 움직이는 중으로 시작).
         if (LocationRecordService.hasBackgroundPermission(context)) {
             LocationRecordService.start(context)
+        }
+    }
+
+    /** 앱이 앞에 있는 지금, 켜짐 + 권한인데 서비스가 죽어 있으면 다시 띄운다. */
+    private fun reviveIfDead() {
+        val revive = LocationRecordRules.shouldRevive(
+            enabled = LocationRecordPrefs.enabled(context),
+            hasBackgroundPermission = LocationRecordService.hasBackgroundPermission(context),
+            serviceRunning = LocationRecordService.running,
+        )
+        if (!revive) return
+        try {
+            LocationRecordService.start(context)
+        } catch (e: Exception) {
+            Log.w("LocationRecord", "revive failed", e)
         }
     }
 
@@ -106,6 +119,7 @@ internal class LocationRecordChannel private constructor(private val context: Co
     }
 
     private fun status(): Map<String, Any> {
+        reviveIfDead()
         val mode = LocationRecordPrefs.mode(context)
         return mapOf(
             "state" to LocationRecordRules.stateOf(

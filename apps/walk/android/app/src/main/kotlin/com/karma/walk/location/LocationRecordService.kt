@@ -115,9 +115,26 @@ class LocationRecordService : Service() {
     private lateinit var handler: Handler
     private lateinit var executor: Executor
 
+    private lateinit var mainExecutor: Executor
+
+    // 상태는 메인 스레드에서만 바꾼다(Task 리스너도 mainExecutor). 점 저장 · 위치 콜백은 worker 스레드라
+    // 읽는 값에 @Volatile 을 붙인다.
+    @Volatile
     private var mode: String = LocationRecordRules.MODE_NORMAL
+
+    @Volatile
     private var updating = false
+
+    /** 전환 구독이 성공으로 확인됐는지. 요청 중이거나 실패하면 false. */
+    @Volatile
     private var transitionsOn = false
+
+    /** 구독 요청 · 해제마다 올린다. 늦게 온 옛 요청의 결과를 버린다. */
+    private var transitionGen = 0
+    private var transitionsPending = false
+
+    @Volatile
+    private var destroyed = false
 
     private val callback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -133,6 +150,13 @@ class LocationRecordService : Service() {
         worker = HandlerThread("location-record").also { it.start() }
         handler = Handler(worker.looper)
         executor = Executor { handler.post(it) }
+        mainExecutor = ContextCompat.getMainExecutor(this)
+        // 새 인스턴스는 움직이는 중으로 시작한다 — 죽어 있던 사이의 전환은 버려졌다. 다시 멈추는 건
+        // 새 STILL 진입이 한다.
+        LocationRecordPrefs.setPhase(
+            this,
+            LocationRecordRules.phaseOnServiceStart(newInstance = true, saved = LocationRecordPrefs.phase(this)),
+        )
         running = true
     }
 
@@ -162,6 +186,7 @@ class LocationRecordService : Service() {
     }
 
     override fun onDestroy() {
+        destroyed = true
         running = false
         stopUpdates()
         stopTransitions()
@@ -205,6 +230,7 @@ class LocationRecordService : Service() {
         if (LocationRecordPrefs.phase(this) == Phase.MOVING) startUpdates()
     }
 
+    /** 정지 감지를 쓰려는지(평소 + 활동 인식 권한). 구독 성공 여부는 [transitionsOn]. */
     private fun stillDetection(): Boolean =
         mode == LocationRecordRules.MODE_NORMAL && hasActivityRecognition(this)
 
@@ -213,7 +239,7 @@ class LocationRecordService : Service() {
             mode,
             LocationRecordPrefs.phase(this),
             enteredStill,
-            stillDetection(),
+            stillDetection() && transitionsOn,
         )
         LocationRecordPrefs.setPhase(this, next)
         when (action) {
@@ -238,9 +264,17 @@ class LocationRecordService : Service() {
             .setMaxUpdateDelayMillis(rules.maxDelayMs)
             .build()
         try {
-            fused.requestLocationUpdates(request, callback, worker.looper)
             updating = true
+            fused.requestLocationUpdates(request, callback, worker.looper)
+                .addOnFailureListener(mainExecutor) { e ->
+                    Log.w(TAG, "location updates failed", e)
+                    if (destroyed) return@addOnFailureListener
+                    fused.removeLocationUpdates(callback)
+                    updating = false
+                    if (e is SecurityException) onPermissionLost(e)
+                }
         } catch (e: SecurityException) {
+            updating = false
             onPermissionLost(e)
         }
     }
@@ -251,20 +285,24 @@ class LocationRecordService : Service() {
         updating = false
     }
 
-    /** 지금 위치 한 점. 못 잡으면 마지막으로 알려진 위치로 대신한다. */
+    /** 지금 위치 한 점. 못 잡으면 5분 안의 마지막 위치로 대신하고, 그것도 없으면 건너뛴다. */
     @SuppressLint("MissingPermission")
     private fun fixOnce(still: Boolean) {
         val priority = LocationRecordRules.requestFor(mode).priority
         try {
             fused.getCurrentLocation(priority, CancellationTokenSource().token)
-                .addOnSuccessListener(executor) { location ->
+                .addOnSuccessListener(mainExecutor) { location ->
+                    if (destroyed) return@addOnSuccessListener
                     if (location != null) {
-                        save(location, still)
+                        saveAsync(location, still)
                     } else {
                         lastKnown(still)
                     }
                 }
-                .addOnFailureListener(executor) { lastKnown(still) }
+                .addOnFailureListener(mainExecutor) { e ->
+                    Log.w(TAG, "current location failed", e)
+                    if (!destroyed) lastKnown(still)
+                }
         } catch (e: SecurityException) {
             onPermissionLost(e)
         }
@@ -273,12 +311,27 @@ class LocationRecordService : Service() {
     @SuppressLint("MissingPermission")
     private fun lastKnown(still: Boolean) {
         try {
-            fused.lastLocation.addOnSuccessListener(executor) { location ->
-                if (location != null) save(location, still)
-            }
+            fused.lastLocation
+                .addOnSuccessListener(mainExecutor) { location ->
+                    if (destroyed) return@addOnSuccessListener
+                    when {
+                        location == null -> Log.w(TAG, "no fix: current and last location both empty")
+                        LocationRecordRules.isFreshFallback(location.time, System.currentTimeMillis()) ->
+                            saveAsync(location, still)
+                        else -> Log.w(TAG, "no fix: last location older than 5 minutes, skipped")
+                    }
+                }
+                .addOnFailureListener(mainExecutor) { e ->
+                    Log.w(TAG, "no fix: current and last location both failed", e)
+                }
         } catch (e: SecurityException) {
             onPermissionLost(e)
         }
+    }
+
+    /** inbox 쓰기는 worker 스레드에서. */
+    private fun saveAsync(location: Location, still: Boolean) {
+        executor.execute { save(location, still) }
     }
 
     private fun save(location: Location, still: Boolean) {
@@ -298,7 +351,7 @@ class LocationRecordService : Service() {
 
     @SuppressLint("MissingPermission")
     private fun startTransitions() {
-        if (transitionsOn) return
+        if (transitionsOn || transitionsPending) return
         val request = ActivityTransitionRequest(
             listOf(
                 ActivityTransition.Builder()
@@ -311,19 +364,40 @@ class LocationRecordService : Service() {
                     .build(),
             ),
         )
+        val gen = ++transitionGen
+        transitionsPending = true
         try {
             ActivityRecognition.getClient(this)
                 .requestActivityTransitionUpdates(request, transitionIntent())
-                .addOnFailureListener { Log.w(TAG, "transition updates failed", it) }
-            transitionsOn = true
+                .addOnSuccessListener(mainExecutor) {
+                    if (destroyed || gen != transitionGen) return@addOnSuccessListener
+                    transitionsPending = false
+                    transitionsOn = true
+                }
+                .addOnFailureListener(mainExecutor) { e ->
+                    Log.w(TAG, "transition updates failed", e)
+                    if (destroyed || gen != transitionGen) return@addOnFailureListener
+                    onTransitionsFailed()
+                }
         } catch (e: SecurityException) {
             Log.w(TAG, "activity recognition denied", e)
+            onTransitionsFailed()
         }
+    }
+
+    /** 정지 감지 없이 평소 간격으로 돈다 — 멈춰 있었다면 요청을 다시 건다. */
+    private fun onTransitionsFailed() {
+        transitionsPending = false
+        transitionsOn = false
+        LocationRecordPrefs.setPhase(this, Phase.MOVING)
+        startUpdates()
     }
 
     /** 이전 서비스 인스턴스가 건 구독도 지우도록 늘 해제를 보낸다(같은 PendingIntent 라 멱등). */
     @SuppressLint("MissingPermission")
     private fun stopTransitions() {
+        transitionGen++
+        transitionsPending = false
         try {
             ActivityRecognition.getClient(this).removeActivityTransitionUpdates(transitionIntent())
         } catch (e: SecurityException) {
@@ -343,6 +417,7 @@ class LocationRecordService : Service() {
         )
     }
 
+    /** 메인 스레드에서만 불린다(동기 호출 · mainExecutor 리스너). */
     private fun onPermissionLost(e: SecurityException) {
         Log.w(TAG, "location permission lost", e)
         stopUpdates()
