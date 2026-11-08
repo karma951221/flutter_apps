@@ -56,6 +56,7 @@ import '../../data/diary/drift_diary_repository.dart' as _i1049;
 import '../../data/diary/media/file_media_store.dart' as _i928;
 import '../../data/diary/media/plugin_media_processor.dart' as _i17;
 import '../../data/diary/prefs_diary_preferences.dart' as _i383;
+import '../../data/location/channel_location_recorder.dart' as _i620;
 import '../../data/location/database/location_database.dart' as _i121;
 import '../../data/location/drift_location_repository.dart' as _i192;
 import '../../data/location/prefs_location_preferences.dart' as _i630;
@@ -112,8 +113,10 @@ import '../../domain/diary/media/media_store.dart' as _i870;
 import '../../domain/diary/repository/diary_preferences.dart' as _i300;
 import '../../domain/diary/repository/diary_repository.dart' as _i122;
 import '../../domain/diary/usecase/diary_use_case.dart' as _i567;
+import '../../domain/location/recorder/location_recorder.dart' as _i993;
 import '../../domain/location/repository/location_preferences.dart' as _i279;
 import '../../domain/location/repository/location_repository.dart' as _i379;
+import '../../domain/location/usecase/location_sync.dart' as _i638;
 import '../../domain/lock/device_auth.dart' as _i439;
 import '../../domain/lock/lock_repository.dart' as _i43;
 import '../../domain/lock/screen_lock_settings.dart' as _i194;
@@ -173,6 +176,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i488.MediaPickGuard>(() => _i488.MediaPickGuard());
     gh.lazySingleton<_i494.IdGenerator>(
       () => registerModule.idGenerator(gh<_i706.Uuid>()),
+    );
+    gh.lazySingleton<_i993.LocationRecorder>(
+      () => const _i620.ChannelLocationRecorder(),
     );
     gh.lazySingleton<_i555.SecureWindow>(() => _i241.ChannelSecureWindow());
     gh.lazySingleton<_i361.RingArchive>(
@@ -367,6 +373,14 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i858.ChatImageSource>(
       () => _i957.CompressedChatImageSource(gh<_i870.MediaStore>()),
+    );
+    gh.factory<_i638.LocationSync>(
+      () => _i638.LocationSync(
+        gh<_i993.LocationRecorder>(),
+        gh<_i379.LocationRepository>(),
+        gh<_i279.LocationPreferences>(),
+        gh<_i494.Clock>(),
+      ),
     );
     gh.lazySingleton<_i122.DiaryRepository>(
       () => _i1049.DriftDiaryRepository(
