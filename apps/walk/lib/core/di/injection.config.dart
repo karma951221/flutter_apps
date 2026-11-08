@@ -118,6 +118,7 @@ import '../../domain/location/recorder/location_recorder.dart' as _i993;
 import '../../domain/location/repository/location_preferences.dart' as _i279;
 import '../../domain/location/repository/location_repository.dart' as _i379;
 import '../../domain/location/usecase/location_sync.dart' as _i638;
+import '../../domain/location/usecase/stay_namer.dart' as _i673;
 import '../../domain/lock/device_auth.dart' as _i439;
 import '../../domain/lock/lock_repository.dart' as _i43;
 import '../../domain/lock/screen_lock_settings.dart' as _i194;
@@ -126,6 +127,7 @@ import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
 import '../../presentation/diary/media_picker.dart' as _i287;
 import '../../presentation/lock/media_pick_guard.dart' as _i488;
+import '../../presentation/map/cubit/map_view_cubit.dart' as _i276;
 import '../config/commute_api_keys.dart' as _i546;
 import 'register_module.dart' as _i291;
 
@@ -305,6 +307,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i961.HolidayRefresher>(
       () => holidayModule.holidayRefresher(gh<_i93.CachedHolidayCalendar>()),
     );
+    gh.factory<_i673.StayNamer>(
+      () => _i673.StayNamer(
+        gh<_i379.LocationRepository>(),
+        gh<_i693.PlaceNamer>(),
+      ),
+    );
     gh.lazySingleton<_i611.DiaryDatabase>(
       () => registerModule.diaryDatabase(gh<_i494.Clock>()),
       dispose: _i291.disposeDiaryDatabase,
@@ -420,6 +428,15 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i870.MediaStore>(),
         gh<_i693.PlaceSource>(),
         gh<_i300.DiaryPreferences>(),
+        gh<_i494.Clock>(),
+      ),
+    );
+    gh.factory<_i276.MapViewCubit>(
+      () => _i276.MapViewCubit(
+        gh<_i379.LocationRepository>(),
+        gh<_i122.DiaryRepository>(),
+        gh<_i638.LocationSync>(),
+        gh<_i673.StayNamer>(),
         gh<_i494.Clock>(),
       ),
     );
