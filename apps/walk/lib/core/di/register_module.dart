@@ -20,6 +20,7 @@ import '../../data/chat/dev_chat_trace.dart';
 import '../../data/diary/database/diary_database.dart';
 import '../../data/diary/location/current_place_source.dart';
 import '../../data/diary/location/geocoding_place_namer.dart';
+import '../../data/location/database/location_database.dart';
 import '../../domain/chat/chat_trace.dart';
 import '../../domain/diary/location/place_source.dart';
 
@@ -29,6 +30,8 @@ FutureOr<void> disposeDiaryDatabase(DiaryDatabase db) => db.close();
 FutureOr<void> disposeRingArchiveDatabase(RingArchiveDatabase db) => db.close();
 
 FutureOr<void> disposeChatDatabase(ChatDatabase db) => db.close();
+
+FutureOr<void> disposeLocationDatabase(LocationDatabase db) => db.close();
 
 /// 직접 소유하지 않는 인스턴스 등록.
 @module
@@ -56,6 +59,11 @@ abstract class RegisterModule {
   /// 물어보기 대화 · 사용량(2단계에 위키). 일기 DB 와 따로 — 백업 · 휴지통 · 스키마 버전과 엮이지 않게.
   @LazySingleton(dispose: disposeChatDatabase)
   ChatDatabase chatDatabase() => ChatDatabase(driftDatabase(name: 'chat'));
+
+  /// 위치 기록 점. 일기 DB 와 따로 — 이 폰에만 쌓이고 보관 기간으로 따로 지운다.
+  @LazySingleton(dispose: disposeLocationDatabase)
+  LocationDatabase locationDatabase() =>
+      LocationDatabase(driftDatabase(name: 'location'));
 
   /// 일기 미디어가 사는 폴더. DI 준비 중에 경로를 받아 둔다.
   @preResolve
