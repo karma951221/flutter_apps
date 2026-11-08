@@ -1,21 +1,35 @@
+import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
+import 'package:walk/domain/location/entity/map_period.dart';
+import 'package:walk/domain/location/recorder/recorder_status.dart';
 import 'package:walk/domain/settings/repository/settings_repository.dart';
 import 'package:walk/domain/walk/usecase/walk_use_case.dart';
 import 'package:walk/presentation/alarm/cubit/alarm_list_cubit.dart';
 import 'package:walk/presentation/alarm/page/alarm_list_page.dart';
+import 'package:walk/presentation/map/cubit/map_record_cubit.dart';
+import 'package:walk/presentation/map/cubit/map_record_state.dart';
+import 'package:walk/presentation/map/cubit/map_view_cubit.dart';
+import 'package:walk/presentation/map/cubit/map_view_state.dart';
+import 'package:walk/presentation/map/page/map_tab.dart';
 import 'package:walk/presentation/shell/page/tools_tab.dart';
 import 'package:walk/presentation/walk/page/walk_home_page.dart';
 
+import '../../../support/stub_tile_provider.dart';
 import '../../settings/settings_harness.dart';
 
 class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
+
+class _MockRecord extends MockCubit<MapRecordState> implements MapRecordCubit {}
+
+class _MockView extends MockCubit<MapViewState> implements MapViewCubit {}
 
 class _NoHolidays implements HolidayCalendar {
   @override
@@ -29,8 +43,13 @@ class _NoHolidays implements HolidayCalendar {
 void main() {
   final h = SettingsHarness();
   late AlarmListCubit alarms;
+  late _MockRecord record;
+  late _MockView view;
 
-  setUpAll(SettingsHarness.registerFallbacks);
+  setUpAll(() {
+    SettingsHarness.registerFallbacks();
+    registerFallbackValue(MapPeriod.day(DateTime(2026)));
+  });
   setUp(() async {
     await h.setUp();
     final useCase = _MockAlarmUseCase();
@@ -40,7 +59,26 @@ void main() {
     when(() => h.walk.permissionDeclinedThisSession).thenReturn(false);
     getIt
       ..registerSingleton<WalkUseCase>(h.walk)
-      ..registerSingleton<SettingsRepository>(h.settings);
+      ..registerSingleton<SettingsRepository>(h.settings)
+      ..registerFactory<TileProvider>(StubTileProvider.new);
+    record = _MockRecord();
+    view = _MockView();
+    whenListen(
+      record,
+      const Stream<MapRecordState>.empty(),
+      initialState: const MapRecordState(
+        status: RecorderStatus.off(),
+        busy: false,
+      ),
+    );
+    whenListen(
+      view,
+      const Stream<MapViewState>.empty(),
+      initialState: MapViewState.empty(MapPeriod.day(DateTime(2026, 10, 10))),
+    );
+    when(record.load).thenAnswer((_) async {});
+    when(view.refresh).thenAnswer((_) async {});
+    when(() => view.show(any())).thenAnswer((_) async {});
     alarms = AlarmListCubit(
       useCase,
       AlarmPermissions(
@@ -70,8 +108,12 @@ void main() {
     final changes = <ToolsSection>[];
     await h.pump(
       tester,
-      BlocProvider.value(
-        value: alarms,
+      MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: alarms),
+          BlocProvider<MapRecordCubit>.value(value: record),
+          BlocProvider<MapViewCubit>.value(value: view),
+        ],
         child: ValueListenableBuilder(
           valueListenable: section,
           builder: (context, value, _) => ToolsTab(
@@ -175,5 +217,43 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(walkActive(tester), isFalse);
+  });
+
+  testWidgets('상단 탭이 3개이고 지도 탭 ⋮ 에 지도 설정 · 앱 설정', (tester) async {
+    final shell = await pump(tester);
+    expect(find.byType(Tab), findsNWidgets(3));
+
+    await tester.tap(find.text('지도'));
+    await tester.pumpAndSettle();
+
+    expect(shell.changes, [ToolsSection.map]);
+    expect(find.byType(MapTab), findsOneWidget);
+    expect(find.byIcon(Icons.bedtime_outlined), findsNothing);
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('menu-settings-map')), findsOneWidget);
+    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
+  });
+
+  testWidgets('잠긴 동안 지도 ⋮ 는 앱 설정만', (tester) async {
+    await h.lockWithPin();
+    await pump(tester, initial: ToolsSection.map);
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('menu-settings-map')), findsNothing);
+    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
+  });
+
+  testWidgets('지도 상단 탭일 때만 MapTab.active', (tester) async {
+    await pump(tester, initial: ToolsSection.map);
+    expect(tester.widget<MapTab>(find.byType(MapTab)).active, isTrue);
+
+    await tester.tap(find.text('알람'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<MapTab>(find.byType(MapTab, skipOffstage: false)).active,
+      isFalse,
+    );
   });
 }

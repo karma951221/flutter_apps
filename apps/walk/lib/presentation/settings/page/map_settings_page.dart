@@ -9,6 +9,7 @@ import '../../../domain/location/entity/record_retention.dart';
 import '../../../domain/location/recorder/recorder_status.dart';
 import '../../map/cubit/map_record_cubit.dart';
 import '../../map/cubit/map_record_state.dart';
+import '../../map/widget/record_chip.dart';
 import '../widget/settings_widgets.dart';
 
 /// 지도 설정 — 위치 기록 켜기 · 촘촘 기록 · 보관 기간 · 권한 · 모두 지우기.
@@ -111,26 +112,7 @@ class _RecordTile extends StatelessWidget {
     bool on,
   ) async {
     if (!on) return cubit.disable();
-    final l10n = AppLocalizations.of(context);
-    await cubit.enable();
-    if (!context.mounted) return;
-    switch (cubit.state.access) {
-      case AlwaysAccess.needsSettings:
-        AppSnackBar.show(
-          context,
-          message: l10n.walkMapSettingsNeedsAlways,
-          actionLabel: l10n.walkMapSettingsOpenSettings,
-          onAction: cubit.openAppSettings,
-        );
-      case AlwaysAccess.denied:
-        AppSnackBar.show(
-          context,
-          message: l10n.walkMapSettingsDenied,
-          type: AppSnackBarType.error,
-        );
-      case AlwaysAccess.granted || null:
-        break;
-    }
+    await enableLocationRecord(context, cubit);
   }
 }
 

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:core/core.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
@@ -95,6 +96,13 @@ abstract class RegisterModule {
 
   @lazySingleton
   PlaceNamer get placeNamer => GeocodingPlaceNamer();
+
+  /// 지도 타일(OSM). 지도 위젯이 getIt 에서 받아 가므로 테스트가 대체할 수 있다.
+  ///
+  /// 싱글턴이면 안 된다 — TileLayer 가 사라질 때 provider 를 dispose 하고,
+  /// NetworkTileProvider 는 그때 자기 http client 를 닫아 다음 지도가 회색이 된다.
+  @injectable
+  TileProvider get tileProvider => NetworkTileProvider();
 
   @lazySingleton
   PlaceSource placeSource(

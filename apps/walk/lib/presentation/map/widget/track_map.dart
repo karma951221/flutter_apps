@@ -1,0 +1,207 @@
+import 'dart:math' as math;
+
+import 'package:core/core.dart';
+import 'package:design_system/design_system.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+
+import '../../../domain/diary/entity/diary_entry.dart';
+import '../../../domain/location/entity/day_track.dart';
+import '../../../domain/location/entity/record_mode.dart';
+import 'entry_pin.dart';
+
+/// 타일 층을 만든다. 테스트는 네트워크 없는 층을 넣는다.
+typedef TileLayerBuilder = Widget Function(BuildContext context);
+
+/// 한 기간의 동선 지도 — 이동선 · 머문 곳 원 · 일기 핀.
+///
+/// 선: 촘촘 구간은 굵고 진하게, 평소 구간은 얇고 옅게(같은 색). [faint] 면(한 달) 모든 선을
+/// 옅게 겹쳐 그려 자주 다닌 길이 진해진다.
+///
+/// [fitKey] 가 바뀌고(다른 기간) 그릴 좌표가 생기면 카메라를 그 좌표들에 맞춘다. 같은 기간을
+/// 다시 읽어도(복귀 · 새로고침) 카메라는 그대로 둔다. [TrackMapState.moveTo] 로 한 점에 간다.
+class TrackMap extends StatefulWidget {
+  const TrackMap({
+    required this.track,
+    required this.spots,
+    required this.entries,
+    required this.fitKey,
+    required this.onOpenEntry,
+    this.faint = false,
+    this.bottomInset = 0,
+    this.tileLayerBuilder,
+    super.key,
+  });
+
+  /// 비어 있으면 선 없이 지도만.
+  final DayTrack track;
+
+  /// 원으로 찍을 곳(머문 곳 · 자주 간 곳).
+  final List<LatLng> spots;
+
+  /// 핀으로 찍을 일기(좌표 있는 것).
+  final List<DiaryEntry> entries;
+  final Object fitKey;
+  final ValueChanged<DiaryEntry> onOpenEntry;
+  final bool faint;
+
+  /// 지도 아래쪽을 덮는 시트 높이. 카메라 맞춤과 출처 표시를 그만큼 위로 올린다.
+  final double bottomInset;
+
+  /// null 이면 OSM 타일(`getIt<TileProvider>()`).
+  final TileLayerBuilder? tileLayerBuilder;
+
+  @override
+  State<TrackMap> createState() => TrackMapState();
+}
+
+class TrackMapState extends State<TrackMap> {
+  /// 좌표가 없을 때 보이는 곳(서울시청)과 줌.
+  static const _fallbackCenter = LatLng(37.5665, 126.9780);
+  static const _fallbackZoom = 11.0;
+  static const _placeZoom = 16.0;
+
+  /// 선 굵기 · 원 크기. 시각 토큰이 아니라 이 지도의 모양이다.
+  static const _denseStroke = 5.0;
+  static const _normalStroke = 3.0;
+  static const _normalAlpha = 0.5;
+  static const _faintAlpha = 0.3;
+  static const _spotRadius = 7.0;
+  static const _spotRing = 2.0;
+
+  final _controller = MapController();
+
+  /// TileLayer 가 dispose 할 때까지 같은 것을 쓴다 — build 마다 새로 받으면 바뀐 provider 는
+  /// dispose 되지 않는다.
+  late final TileProvider _tileProvider = getIt<TileProvider>();
+
+  Object? _fitted;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_coordinates().isNotEmpty) _fitted = widget.fitKey;
+  }
+
+  @override
+  void didUpdateWidget(TrackMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.fitKey == _fitted) return;
+    final coordinates = _coordinates();
+    if (coordinates.isEmpty) return;
+    _fitted = widget.fitKey;
+    // 빌드 중에 카메라를 옮기지 않는다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _fit(coordinates);
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  /// 지도를 한 점으로 옮긴다(타임라인 · 자주 간 곳 행).
+  void moveTo(double lat, double lng) => _controller.move(
+    LatLng(lat, lng),
+    math.max(_controller.camera.zoom, _placeZoom),
+  );
+
+  List<LatLng> _coordinates() => [
+    for (final s in widget.track.segments)
+      for (final p in s.points) LatLng(p.lat, p.lng),
+    ...widget.spots,
+    for (final e in widget.entries)
+      if (e.location case final l? when l.hasCoordinates)
+        LatLng(l.lat!, l.lng!),
+  ];
+
+  EdgeInsets get _fitPadding => const EdgeInsets.all(
+    AppSpacing.xl,
+  ).copyWith(bottom: AppSpacing.xl + widget.bottomInset);
+
+  void _fit(List<LatLng> coordinates) {
+    if (_isSinglePlace(coordinates)) {
+      _controller.move(coordinates.first, _placeZoom);
+    } else {
+      _controller.fitCamera(
+        CameraFit.coordinates(coordinates: coordinates, padding: _fitPadding),
+      );
+    }
+  }
+
+  static bool _isSinglePlace(List<LatLng> c) => c.every((p) => p == c.first);
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final coordinates = _coordinates();
+    final single = coordinates.isNotEmpty && _isSinglePlace(coordinates);
+    return FlutterMap(
+      mapController: _controller,
+      options: MapOptions(
+        initialCenter: coordinates.firstOrNull ?? _fallbackCenter,
+        initialZoom: coordinates.isEmpty ? _fallbackZoom : _placeZoom,
+        initialCameraFit: coordinates.isEmpty || single
+            ? null
+            : CameraFit.coordinates(
+                coordinates: coordinates,
+                padding: _fitPadding,
+              ),
+        interactionOptions: const InteractionOptions(
+          flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+        ),
+      ),
+      children: [
+        widget.tileLayerBuilder?.call(context) ??
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.karma.walk',
+              tileProvider: _tileProvider,
+            ),
+        PolylineLayer(
+          polylines: [
+            for (final s in widget.track.segments)
+              if (s.points.length > 1)
+                Polyline(
+                  points: [for (final p in s.points) LatLng(p.lat, p.lng)],
+                  strokeWidth: !widget.faint && s.mode == RecordMode.dense
+                      ? _denseStroke
+                      : _normalStroke,
+                  color: scheme.primary.withValues(
+                    alpha: widget.faint
+                        ? _faintAlpha
+                        : s.mode == RecordMode.dense
+                        ? 1
+                        : _normalAlpha,
+                  ),
+                  strokeCap: StrokeCap.round,
+                  strokeJoin: StrokeJoin.round,
+                ),
+          ],
+        ),
+        CircleLayer(
+          circles: [
+            for (final spot in widget.spots)
+              CircleMarker(
+                point: spot,
+                radius: _spotRadius,
+                color: scheme.primary,
+                borderColor: scheme.surface,
+                borderStrokeWidth: _spotRing,
+              ),
+          ],
+        ),
+        EntryPinLayer(entries: widget.entries, onOpen: widget.onOpenEntry),
+        Padding(
+          padding: EdgeInsets.only(bottom: widget.bottomInset),
+          child: const SimpleAttributionWidget(
+            source: Text('OpenStreetMap contributors'),
+          ),
+        ),
+      ],
+    );
+  }
+}

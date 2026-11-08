@@ -4345,4 +4345,110 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkMapSettingsDenied =>
       'Could not turn on recording without location permission';
+
+  @override
+  String get walkToolsTabMap => 'Map';
+
+  @override
+  String get walkMapSegmentDay => 'Today';
+
+  @override
+  String get walkMapSegmentMonth => 'Month';
+
+  @override
+  String get walkMapSegmentStory => 'Story';
+
+  @override
+  String get walkMapPrevious => 'Previous';
+
+  @override
+  String get walkMapNext => 'Next';
+
+  @override
+  String get walkMapFirstRunTitle => 'Keep the places you go on a map';
+
+  @override
+  String get walkMapFirstRunBody =>
+      'Locations stay on this phone only. Look back by day, month, or story';
+
+  @override
+  String get walkMapEnable => 'Turn on location history';
+
+  @override
+  String get walkMapEmptyDay => 'Nothing recorded on this day';
+
+  @override
+  String get walkMapEmptyMonth => 'Nothing recorded this month';
+
+  @override
+  String get walkMapEmptyStory => 'Nothing recorded during this story';
+
+  @override
+  String get walkMapLoadFailed => 'Could not load your map';
+
+  @override
+  String get walkMapRetry => 'Try again';
+
+  @override
+  String get walkMapChipDense => 'Detailed';
+
+  @override
+  String get walkMapChipDenseOn => 'Recording in detail';
+
+  @override
+  String get walkMapChipOff => 'Recording off';
+
+  @override
+  String get walkMapChipBlocked => 'Recording off · permission needed';
+
+  @override
+  String get walkMapTimelineTitle => 'Timeline';
+
+  @override
+  String get walkMapTimelineEmpty => 'No stops yet';
+
+  @override
+  String get walkMapFrequentTitle => 'Frequent places';
+
+  @override
+  String get walkMapUnnamedPlace => 'Unnamed place';
+
+  @override
+  String walkMapFrequentRank(int rank) {
+    return 'Place #$rank';
+  }
+
+  @override
+  String walkMapFrequentVisits(int count, String duration) {
+    return '$count visits · $duration';
+  }
+
+  @override
+  String walkMapDurationMinutes(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String walkMapDurationHours(int hours) {
+    return '$hours h';
+  }
+
+  @override
+  String walkMapDurationHoursMinutes(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String get walkMapStoryPickerTitle => 'Choose a story';
+
+  @override
+  String get walkMapStoryPickerEmpty => 'No stories to choose';
+
+  @override
+  String get walkMapStoryOpen => 'Ongoing';
+
+  @override
+  String walkMapPinCount(int count) {
+    return '$count entries';
+  }
 }

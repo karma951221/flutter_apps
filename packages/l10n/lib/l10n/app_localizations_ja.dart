@@ -3983,4 +3983,109 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkMapSettingsDenied => '位置情報の権限がないため記録をオンにできませんでした';
+
+  @override
+  String get walkToolsTabMap => '地図';
+
+  @override
+  String get walkMapSegmentDay => '今日';
+
+  @override
+  String get walkMapSegmentMonth => '1か月';
+
+  @override
+  String get walkMapSegmentStory => 'ストーリー';
+
+  @override
+  String get walkMapPrevious => '前へ';
+
+  @override
+  String get walkMapNext => '次へ';
+
+  @override
+  String get walkMapFirstRunTitle => '歩いた道を地図に残します';
+
+  @override
+  String get walkMapFirstRunBody => '位置はこの端末にだけ保存され、日・月・ストーリーごとに振り返れます';
+
+  @override
+  String get walkMapEnable => '位置記録をオンにする';
+
+  @override
+  String get walkMapEmptyDay => 'この日の記録はありません';
+
+  @override
+  String get walkMapEmptyMonth => 'この月の記録はありません';
+
+  @override
+  String get walkMapEmptyStory => 'このストーリーの期間の記録はありません';
+
+  @override
+  String get walkMapLoadFailed => '地図の記録を読み込めませんでした';
+
+  @override
+  String get walkMapRetry => '再試行';
+
+  @override
+  String get walkMapChipDense => '詳細記録';
+
+  @override
+  String get walkMapChipDenseOn => '詳細記録中';
+
+  @override
+  String get walkMapChipOff => '記録オフ';
+
+  @override
+  String get walkMapChipBlocked => '記録オフ・権限が必要';
+
+  @override
+  String get walkMapTimelineTitle => 'タイムライン';
+
+  @override
+  String get walkMapTimelineEmpty => '滞在した場所はありません';
+
+  @override
+  String get walkMapFrequentTitle => 'よく行く場所';
+
+  @override
+  String get walkMapUnnamedPlace => '名前のない場所';
+
+  @override
+  String walkMapFrequentRank(int rank) {
+    return '$rank位の場所';
+  }
+
+  @override
+  String walkMapFrequentVisits(int count, String duration) {
+    return '$count回・$duration';
+  }
+
+  @override
+  String walkMapDurationMinutes(int minutes) {
+    return '$minutes分';
+  }
+
+  @override
+  String walkMapDurationHours(int hours) {
+    return '$hours時間';
+  }
+
+  @override
+  String walkMapDurationHoursMinutes(int hours, int minutes) {
+    return '$hours時間$minutes分';
+  }
+
+  @override
+  String get walkMapStoryPickerTitle => 'ストーリーを選ぶ';
+
+  @override
+  String get walkMapStoryPickerEmpty => '選べるストーリーがありません';
+
+  @override
+  String get walkMapStoryOpen => '進行中';
+
+  @override
+  String walkMapPinCount(int count) {
+    return '記録$count件';
+  }
 }

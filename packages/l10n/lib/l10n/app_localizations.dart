@@ -7367,6 +7367,192 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'위치 권한이 없어 기록을 켜지 못했어요'**
   String get walkMapSettingsDenied;
+
+  /// 도구 탭 상단 탭 — 지도
+  ///
+  /// In ko, this message translates to:
+  /// **'지도'**
+  String get walkToolsTabMap;
+
+  /// 지도 — 기간 세그먼트: 하루 보기
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘'**
+  String get walkMapSegmentDay;
+
+  /// 지도 — 기간 세그먼트: 한 달 보기
+  ///
+  /// In ko, this message translates to:
+  /// **'한 달'**
+  String get walkMapSegmentMonth;
+
+  /// 지도 — 기간 세그먼트: 스토리 기간 보기
+  ///
+  /// In ko, this message translates to:
+  /// **'스토리'**
+  String get walkMapSegmentStory;
+
+  /// 지도 — 기간 머리 ‹ 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'이전'**
+  String get walkMapPrevious;
+
+  /// 지도 — 기간 머리 › 버튼 툴팁(미래로는 못 감)
+  ///
+  /// In ko, this message translates to:
+  /// **'다음'**
+  String get walkMapNext;
+
+  /// 지도 — 기록을 켠 적 없을 때 안내 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'다닌 길을 지도에 남겨요'**
+  String get walkMapFirstRunTitle;
+
+  /// 지도 — 기록을 켠 적 없을 때 안내 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'켜 두면 위치가 이 폰에만 쌓이고, 하루 · 한 달 · 스토리별로 다시 볼 수 있어요'**
+  String get walkMapFirstRunBody;
+
+  /// 지도 — 처음 안내의 켜기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 기록 켜기'**
+  String get walkMapEnable;
+
+  /// 지도 — 하루 보기에 점 · 일기가 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'이 날은 기록이 없어요'**
+  String get walkMapEmptyDay;
+
+  /// 지도 — 한 달 보기에 점 · 일기가 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'이 달은 기록이 없어요'**
+  String get walkMapEmptyMonth;
+
+  /// 지도 — 스토리 보기에 점 · 일기가 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'이 스토리 기간엔 기록이 없어요'**
+  String get walkMapEmptyStory;
+
+  /// 지도 — 읽기 실패 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'지도 기록을 불러오지 못했어요'**
+  String get walkMapLoadFailed;
+
+  /// 지도 — 읽기 실패 안내의 다시 시도 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 시도'**
+  String get walkMapRetry;
+
+  /// 지도 — 촘촘 기록 칩(꺼짐)
+  ///
+  /// In ko, this message translates to:
+  /// **'촘촘 기록'**
+  String get walkMapChipDense;
+
+  /// 지도 — 촘촘 기록 칩(켜짐)
+  ///
+  /// In ko, this message translates to:
+  /// **'촘촘 기록 중'**
+  String get walkMapChipDenseOn;
+
+  /// 지도 — 기록이 꺼져 있을 때 칩(누르면 켜기)
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 꺼짐'**
+  String get walkMapChipOff;
+
+  /// 지도 — 권한을 잃어 기록하지 못할 때 칩(누르면 켜기)
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 꺼짐 · 권한 필요'**
+  String get walkMapChipBlocked;
+
+  /// 지도 — 하루 · 스토리 보기 시트 제목(머문 곳 시간순)
+  ///
+  /// In ko, this message translates to:
+  /// **'타임라인'**
+  String get walkMapTimelineTitle;
+
+  /// 지도 — 타임라인 시트에 머문 곳이 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'머문 곳이 없어요'**
+  String get walkMapTimelineEmpty;
+
+  /// 지도 — 한 달 보기 시트 제목(방문 순위)
+  ///
+  /// In ko, this message translates to:
+  /// **'자주 간 곳'**
+  String get walkMapFrequentTitle;
+
+  /// 지도 — 이름을 얻지 못한 머문 곳
+  ///
+  /// In ko, this message translates to:
+  /// **'이름 없는 곳'**
+  String get walkMapUnnamedPlace;
+
+  /// 지도 — 이름 없는 자주 간 곳의 순위 표기
+  ///
+  /// In ko, this message translates to:
+  /// **'{rank}위 장소'**
+  String walkMapFrequentRank(int rank);
+
+  /// 지도 — 자주 간 곳 행 설명(방문 횟수 · 머문 시간 합)
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}번 · {duration}'**
+  String walkMapFrequentVisits(int count, String duration);
+
+  /// 지도 — 1시간 미만 머문 시간
+  ///
+  /// In ko, this message translates to:
+  /// **'{minutes}분'**
+  String walkMapDurationMinutes(int minutes);
+
+  /// 지도 — 분이 0인 머문 시간
+  ///
+  /// In ko, this message translates to:
+  /// **'{hours}시간'**
+  String walkMapDurationHours(int hours);
+
+  /// 지도 — 1시간 이상 머문 시간
+  ///
+  /// In ko, this message translates to:
+  /// **'{hours}시간 {minutes}분'**
+  String walkMapDurationHoursMinutes(int hours, int minutes);
+
+  /// 지도 — 스토리 고르기 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'스토리 고르기'**
+  String get walkMapStoryPickerTitle;
+
+  /// 지도 — 고를 스토리(기본 스토리 제외)가 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'고를 스토리가 없어요'**
+  String get walkMapStoryPickerEmpty;
+
+  /// 지도 — 스토리 고르기에서 진행 중인 스토리 표시
+  ///
+  /// In ko, this message translates to:
+  /// **'진행 중'**
+  String get walkMapStoryOpen;
+
+  /// 지도 — 일기 핀 접근성 라벨(같은 자리 묶음 수)
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 {count}개'**
+  String walkMapPinCount(int count);
 }
 
 class _AppLocalizationsDelegate

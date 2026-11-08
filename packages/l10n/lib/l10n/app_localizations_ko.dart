@@ -3985,4 +3985,110 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkMapSettingsDenied => '위치 권한이 없어 기록을 켜지 못했어요';
+
+  @override
+  String get walkToolsTabMap => '지도';
+
+  @override
+  String get walkMapSegmentDay => '오늘';
+
+  @override
+  String get walkMapSegmentMonth => '한 달';
+
+  @override
+  String get walkMapSegmentStory => '스토리';
+
+  @override
+  String get walkMapPrevious => '이전';
+
+  @override
+  String get walkMapNext => '다음';
+
+  @override
+  String get walkMapFirstRunTitle => '다닌 길을 지도에 남겨요';
+
+  @override
+  String get walkMapFirstRunBody =>
+      '켜 두면 위치가 이 폰에만 쌓이고, 하루 · 한 달 · 스토리별로 다시 볼 수 있어요';
+
+  @override
+  String get walkMapEnable => '위치 기록 켜기';
+
+  @override
+  String get walkMapEmptyDay => '이 날은 기록이 없어요';
+
+  @override
+  String get walkMapEmptyMonth => '이 달은 기록이 없어요';
+
+  @override
+  String get walkMapEmptyStory => '이 스토리 기간엔 기록이 없어요';
+
+  @override
+  String get walkMapLoadFailed => '지도 기록을 불러오지 못했어요';
+
+  @override
+  String get walkMapRetry => '다시 시도';
+
+  @override
+  String get walkMapChipDense => '촘촘 기록';
+
+  @override
+  String get walkMapChipDenseOn => '촘촘 기록 중';
+
+  @override
+  String get walkMapChipOff => '기록 꺼짐';
+
+  @override
+  String get walkMapChipBlocked => '기록 꺼짐 · 권한 필요';
+
+  @override
+  String get walkMapTimelineTitle => '타임라인';
+
+  @override
+  String get walkMapTimelineEmpty => '머문 곳이 없어요';
+
+  @override
+  String get walkMapFrequentTitle => '자주 간 곳';
+
+  @override
+  String get walkMapUnnamedPlace => '이름 없는 곳';
+
+  @override
+  String walkMapFrequentRank(int rank) {
+    return '$rank위 장소';
+  }
+
+  @override
+  String walkMapFrequentVisits(int count, String duration) {
+    return '$count번 · $duration';
+  }
+
+  @override
+  String walkMapDurationMinutes(int minutes) {
+    return '$minutes분';
+  }
+
+  @override
+  String walkMapDurationHours(int hours) {
+    return '$hours시간';
+  }
+
+  @override
+  String walkMapDurationHoursMinutes(int hours, int minutes) {
+    return '$hours시간 $minutes분';
+  }
+
+  @override
+  String get walkMapStoryPickerTitle => '스토리 고르기';
+
+  @override
+  String get walkMapStoryPickerEmpty => '고를 스토리가 없어요';
+
+  @override
+  String get walkMapStoryOpen => '진행 중';
+
+  @override
+  String walkMapPinCount(int count) {
+    return '기록 $count개';
+  }
 }

@@ -1,16 +1,20 @@
 import 'dart:async';
 
+import 'package:bloc_test/bloc_test.dart';
+
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/core/background/background_task.dart';
+import 'package:walk/data/location/background_location_access.dart';
 import 'package:walk/data/diary/prefs_diary_preferences.dart';
 import 'package:walk/data/lock/prefs_lock_repository.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
@@ -26,6 +30,12 @@ import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/diary/usecase/diary_use_case.dart';
+import 'package:walk/domain/location/entity/map_period.dart';
+import 'package:walk/domain/location/entity/record_retention.dart';
+import 'package:walk/domain/location/recorder/location_recorder.dart';
+import 'package:walk/domain/location/recorder/recorder_status.dart';
+import 'package:walk/domain/location/repository/location_preferences.dart';
+import 'package:walk/domain/location/repository/location_repository.dart';
 import 'package:walk/domain/lock/device_auth.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
@@ -42,6 +52,9 @@ import 'package:walk/presentation/diary/page/diary_tab.dart';
 import 'package:walk/presentation/diary/widget/story_ring_row.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
 import 'package:walk/presentation/lock/widget/pin_pad.dart';
+import 'package:walk/presentation/map/cubit/map_view_cubit.dart';
+import 'package:walk/presentation/map/cubit/map_view_state.dart';
+import 'package:walk/presentation/map/page/map_tab.dart';
 import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
 import 'package:walk/presentation/settings/page/alarm_settings_page.dart';
 import 'package:walk/presentation/settings/page/app_settings_page.dart';
@@ -55,6 +68,7 @@ import 'package:walk/presentation/walk/page/walk_home_page.dart';
 
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_device_auth.dart';
+import '../../../support/stub_tile_provider.dart';
 import 'package:walk/domain/chat/chat_history_settings.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
@@ -1093,4 +1107,74 @@ void main() {
       expect(await reply, isNotNull);
     });
   });
+
+  group('지도 상단 탭', () {
+    late _MockMapView mapView;
+    late _MockRecorder recorder;
+
+    setUp(() {
+      mapView = _MockMapView();
+      recorder = _MockRecorder();
+      final access = _MockAlwaysAccess();
+      final prefs = _MockLocationPrefs();
+      whenListen(
+        mapView,
+        const Stream<MapViewState>.empty(),
+        initialState: MapViewState.empty(MapPeriod.day(DateTime(2026, 10, 10))),
+      );
+      when(mapView.refresh).thenAnswer((_) async {});
+      when(
+        () => recorder.status(),
+      ).thenAnswer((_) async => const RecorderStatus.off());
+      when(access.check).thenAnswer((_) async => AlwaysAccess.denied);
+      when(access.hasActivityRecognition).thenAnswer((_) async => false);
+      when(access.hasNotification).thenAnswer((_) async => false);
+      when(() => prefs.retention).thenReturn(RecordRetention.never);
+      getIt
+        ..registerFactory<MapViewCubit>(() => mapView)
+        ..registerSingleton<LocationRecorder>(recorder)
+        ..registerSingleton<BackgroundLocationAccess>(access)
+        ..registerSingleton<LocationPreferences>(prefs)
+        ..registerSingleton<LocationRepository>(_MockLocationRepository())
+        ..registerFactory<TileProvider>(StubTileProvider.new);
+    });
+
+    testWidgets('지도를 보던 중 복귀하면 기록 상태와 지도를 다시 읽는다', (tester) async {
+      await pump(tester);
+      await tapTab(tester, '도구');
+      await tapToolsTab(tester, '지도');
+      expect(onstage(MapTab), isTrue);
+      clearInteractions(mapView);
+      clearInteractions(recorder);
+
+      resume(tester);
+      await tester.pumpAndSettle();
+
+      verify(mapView.refresh).called(1);
+      verify(() => recorder.status()).called(1);
+    });
+
+    testWidgets('다른 상단 탭을 보던 중 복귀하면 지도는 읽지 않는다', (tester) async {
+      await pump(tester);
+      await tapTab(tester, '도구');
+      await tapToolsTab(tester, '지도');
+      await tapToolsTab(tester, '알람');
+      clearInteractions(mapView);
+
+      resume(tester);
+      await tester.pumpAndSettle();
+
+      verifyNever(mapView.refresh);
+    });
+  });
 }
+
+class _MockMapView extends MockCubit<MapViewState> implements MapViewCubit {}
+
+class _MockRecorder extends Mock implements LocationRecorder {}
+
+class _MockAlwaysAccess extends Mock implements BackgroundLocationAccess {}
+
+class _MockLocationPrefs extends Mock implements LocationPreferences {}
+
+class _MockLocationRepository extends Mock implements LocationRepository {}

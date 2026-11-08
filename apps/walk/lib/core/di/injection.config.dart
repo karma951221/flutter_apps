@@ -13,6 +13,7 @@
 import 'dart:io' as _i497;
 
 import 'package:core/core.dart' as _i494;
+import 'package:flutter_map/flutter_map.dart' as _i525;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart' as _i558;
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:http/http.dart' as _i519;
@@ -145,6 +146,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => registerModule.sharedPreferences,
       preResolve: true,
     );
+    gh.factory<_i525.TileProvider>(() => registerModule.tileProvider);
     gh.lazySingleton<_i494.Clock>(() => registerModule.clock);
     gh.lazySingleton<_i706.Uuid>(() => registerModule.uuid);
     gh.lazySingleton<_i645.LocationGateway>(

@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../alarm/page/alarm_list_page.dart';
+import '../../lock/cubit/diary_lock_cubit.dart';
+import '../../lock/cubit/diary_lock_state.dart';
+import '../../map/page/map_tab.dart';
 import '../../settings/open_settings.dart';
 import '../../walk/page/walk_home_page.dart';
 import '../widget/feature_menu.dart';
 
 /// 도구 탭의 상단 탭. 순서가 `TabBar` 순서다.
-enum ToolsSection { alarm, walk }
+enum ToolsSection { alarm, walk, map }
 
-/// 도구 탭 — 알람 · 걷기를 앱바 아래 상단 탭으로 묶는다.
+/// 도구 탭 — 알람 · 걷기 · 지도를 앱바 아래 상단 탭으로 묶는다.
 ///
 /// 상단 탭은 눌러서만 바꾼다(밀기 없음).
 ///
 /// 앱바는 하나라 actions 와 ⋮ 가 [section] 에 따라 바뀐다 — 알람이면 [AlarmPauseAction] 과
-/// 알람 기록 · 알람 설정, 걷기면 걷기 설정만. 고른 상단 탭은 셸이 쥐고([section]) 사용자가
+/// 알람 기록 · 알람 설정, 걷기면 걷기 설정, 지도면 지도 설정(일기 잠금 아래라 잠긴 동안은
+/// 앱 설정만). 고른 상단 탭은 셸이 쥐고([section]) 사용자가
 /// 바꾸면 [onSectionChanged] 로 알린다. 셸이 바꾸면(홈 화면 위젯으로 열림) 그쪽으로 넘어간다.
 ///
-/// 셸의 `AlarmListCubit` 과 설정 cubit 넷([openSettings]) 아래에 둔다.
+/// 셸의 `AlarmListCubit` · 설정 cubit 넷([openSettings]) · `DiaryLockCubit` · 지도 cubit 둘 아래에 둔다.
 class ToolsTab extends StatefulWidget {
   const ToolsTab({
     required this.active,
@@ -74,6 +79,9 @@ class _ToolsTabState extends State<ToolsTab>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final unlocked = context.select<DiaryLockCubit, bool>(
+      (c) => c.state is LockUnlocked,
+    );
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.walkShellTabTools),
@@ -95,16 +103,24 @@ class _ToolsTabState extends State<ToolsTab>
           ToolsSection.walk => [
             const FeatureMenu(settings: SettingsTarget.walk),
           ],
+          ToolsSection.map => [
+            FeatureMenu(
+              settings: SettingsTarget.map,
+              showFeatureSettings: unlocked,
+            ),
+          ],
         },
         bottom: TabBar(
           controller: _controller,
           tabs: [
             Tab(text: l10n.walkToolsTabAlarm),
             Tab(text: l10n.walkToolsTabWalk),
+            Tab(text: l10n.walkToolsTabMap),
           ],
         ),
       ),
-      // 밀기로는 넘기지 않는다 — 걷기 화면 안에 자기 상단 탭(오늘 | 기록)이 있어 가로 밀기가 겹친다.
+      // 밀기로는 넘기지 않는다 — 걷기 화면 안에 자기 상단 탭(오늘 | 기록)이 있고 지도는 끌어 움직여
+      // 가로 밀기가 겹친다.
       body: TabBarView(
         controller: _controller,
         physics: const NeverScrollableScrollPhysics(),
@@ -115,6 +131,11 @@ class _ToolsTabState extends State<ToolsTab>
           _KeepAlive(
             child: WalkHomePage(
               active: widget.active && widget.section == ToolsSection.walk,
+            ),
+          ),
+          _KeepAlive(
+            child: MapTab(
+              active: widget.active && widget.section == ToolsSection.map,
             ),
           ),
         ],

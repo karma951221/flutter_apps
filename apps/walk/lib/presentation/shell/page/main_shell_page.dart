@@ -29,7 +29,9 @@ import '../../alarm/cubit/alarm_list_cubit.dart';
 import '../../chat/page/chat_tab.dart';
 import '../../diary/page/diary_tab.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
+import '../../lock/cubit/diary_lock_state.dart';
 import '../../map/cubit/map_record_cubit.dart';
+import '../../map/cubit/map_view_cubit.dart';
 import '../../lock/media_pick_guard.dart';
 import '../../settings/cubit/diary_settings_cubit.dart';
 import '../../settings/cubit/holiday_settings_cubit.dart';
@@ -37,7 +39,7 @@ import '../../settings/cubit/settings_permissions_cubit.dart';
 import '../../settings/open_settings.dart';
 import 'tools_tab.dart';
 
-/// 하단 탭 순서. 첫 탭은 [diary] — 이 앱의 중심은 일기 · 물어보기다. 알람 · 걷기는 [tools]
+/// 하단 탭 순서. 첫 탭은 [diary] — 이 앱의 중심은 일기 · 물어보기다. 알람 · 걷기 · 지도는 [tools]
 /// 의 상단 탭([ToolsSection])이다.
 enum ShellTab { diary, chat, tools }
 
@@ -93,6 +95,11 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     getIt<DiaryRepository>(),
   );
   late final AppLifecycleListener _lifecycle;
+
+  /// 지도 cubit 둘. 지도 탭 · 지도 설정이 처음 읽을 때 만들어지고(`BlocProvider.create`) 닫는 것도
+  /// 그 provider 가 한다. 앱이 앞에 올 때 다시 읽으려고 잡아 둔다.
+  MapRecordCubit? _mapRecord;
+  MapViewCubit? _mapView;
   ShellTab _tab = ShellTab.diary;
 
   /// 도구 탭에서 고른 상단 탭. 앱이 떠 있는 동안 기억하고, 새로 켜면 알람이다.
@@ -125,6 +132,20 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   void _onResume() {
     _diaryLock.onResumed();
     _refresh();
+    _refreshMap();
+  }
+
+  /// 지도 상단 탭이 보이면 기록 상태(권한을 뺏겼을 수 있다)를 읽고 inbox 를 수거해 다시 그린다.
+  /// 잠긴 동안은 지도가 트리에 없다 — 풀리면 지도 탭이 직접 읽는다.
+  void _refreshMap() {
+    final visible =
+        _tab == ShellTab.tools &&
+        _toolsSection == ToolsSection.map &&
+        !_covered &&
+        _diaryLock.state is LockUnlocked;
+    if (!visible) return;
+    unawaited(_mapRecord?.load());
+    unawaited(_mapView?.refresh());
   }
 
   @override
@@ -259,15 +280,16 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
         BlocProvider.value(value: _holidaySettings),
         BlocProvider.value(value: _diaryLock),
         BlocProvider.value(value: _diarySettings),
-        // 지도 탭(Task 7)과 지도 설정이 같은 기록 상태를 본다. 처음 읽을 때 만든다.
+        // 지도 탭과 지도 설정이 같은 기록 상태를 본다. 처음 읽을 때 만든다.
         BlocProvider(
-          create: (_) => MapRecordCubit(
+          create: (_) => _mapRecord = MapRecordCubit(
             getIt<LocationRecorder>(),
             getIt<BackgroundLocationAccess>(),
             getIt<LocationPreferences>(),
             getIt<LocationRepository>(),
           ),
         ),
+        BlocProvider(create: (_) => _mapView = getIt<MapViewCubit>()),
       ],
       child: Scaffold(
         // 설정 화면은 셸 cubit 을 읽어 다시 건다 — 그 cubit 아래 context 가 필요하다.
