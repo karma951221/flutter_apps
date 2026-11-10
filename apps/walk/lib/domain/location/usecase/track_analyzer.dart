@@ -13,16 +13,24 @@ class TrackAnalyzer {
   static const _oneMs = Duration(milliseconds: 1);
 
   /// [clipFrom] · [clipTo] 가 있으면 그 안으로 머문 곳을 자르고 구간 점도 거른다.
+  /// [openEnd](보통 지금)가 있고 마지막 점이 정지 감지 점이면 아직 이어지는 머문 곳으로 보고
+  /// `min(openEnd, clipTo)` 에 닫는다.
   DayTrack analyze(
     List<LocationPoint> points, {
     DateTime? clipFrom,
     DateTime? clipTo,
+    DateTime? openEnd,
   }) {
     if (points.isEmpty) return const DayTrack(segments: [], stays: []);
     final sorted = [...points]
       ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
 
     final groups = _split(sorted);
+    if (openEnd != null && sorted.last.stillStart) {
+      groups.last.endOverride = clipTo != null && clipTo.isBefore(openEnd)
+          ? clipTo
+          : openEnd;
+    }
     final stays = <Stay>[];
     final segments = <TrackSegment>[];
     for (final g in groups) {
@@ -52,22 +60,24 @@ class TrackAnalyzer {
       final prev = sorted[i - 1];
       final next = sorted[i];
       final current = groups.last;
-      if (next.mode != prev.mode) {
-        groups.add(_Group([next]));
-        continue;
-      }
       final far =
           haversineMeters(prev.lat, prev.lng, next.lat, next.lng) > stayRadiusM;
-      if (prev.stillStart && !far) {
-        current.points.add(next); // 정지 중 공백 — 같은 자리에 머문 것
-      } else if (prev.stillStart && far) {
-        // 정지 감지 뒤엔 위치 요청이 멈춰 있으니 빈 시간은 공백 길이와 무관하게
-        // 머문 곳, 뒤 점 직전까지. 선은 잇지 않는다.
-        current.endOverride = next.recordedAt.subtract(_oneMs);
+      if (prev.stillStart) {
+        if (!far && next.mode == prev.mode) {
+          current.points.add(next); // 정지 중 공백 — 같은 자리에 머문 것
+        } else {
+          // 정지 감지 뒤엔 위치 요청이 멈춰 있으니 빈 시간은 공백 길이와 무관하게
+          // 머문 곳, 뒤 점 직전까지. 멀리 갔거나 모드가 바뀌었으면 선은 잇지 않는다.
+          current.endOverride = next.recordedAt.subtract(_oneMs);
+          groups.add(_Group([next]));
+        }
+      } else if (next.mode != prev.mode) {
         groups.add(_Group([next]));
-      } else if (next.recordedAt.difference(prev.recordedAt) > gap) {
+      } else if (far && next.recordedAt.difference(prev.recordedAt) > gap) {
         groups.add(_Group([next]));
       } else {
+        // 긴 공백이어도 같은 자리면 머문 것 — 정지 감지가 꺼져 있으면(활동 인식 거부 ·
+        // 정밀 모드) 최소 이동 거리 때문에 가만히 있는 동안 점이 안 남는다.
         current.points.add(next);
       }
     }

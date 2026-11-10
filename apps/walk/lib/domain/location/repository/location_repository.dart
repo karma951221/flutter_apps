@@ -8,6 +8,10 @@ abstract interface class LocationRepository {
   /// [from] ~ [to] 양끝 포함, 시각 오름차순.
   Future<List<LocationPoint>> pointsBetween(DateTime from, DateTime to);
 
+  /// [pointsBetween] 에 [from] 직전 점 하나와 [to] 직후 점 하나(있으면)를 더한다. 시각 오름차순.
+  /// 기간 경계를 넘거나 아직 이어지는 머문 곳을 그 기간에서도 보기 위해서다.
+  Future<List<LocationPoint>> pointsAround(DateTime from, DateTime to);
+
   Future<bool> hasAnyPoint();
 
   /// [cutoff] 보다 이전 점을 지운다. 지운 개수.

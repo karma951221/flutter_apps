@@ -24,6 +24,21 @@ class _MockSync extends Mock implements LocationSync {}
 
 class _MockNamer extends Mock implements StayNamer {}
 
+class _ClockAt extends Clock {
+  const _ClockAt(this.at);
+  final DateTime at;
+  @override
+  DateTime now() => at;
+}
+
+LocationPoint _still(DateTime at, double lat, double lng) => LocationPoint(
+  recordedAt: at,
+  lat: lat,
+  lng: lng,
+  mode: RecordMode.normal,
+  stillStart: true,
+);
+
 class _FixedClock extends Clock {
   const _FixedClock();
   @override
@@ -86,7 +101,7 @@ void main() {
     sync = _MockSync();
     namer = _MockNamer();
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => []);
     when(search).thenAnswer((_) async => []);
     when(() => sync.run()).thenAnswer((_) async => 0);
@@ -97,7 +112,7 @@ void main() {
   tearDown(() => cubit.close());
 
   test('show day loads points, stays and located entries', () async {
-    when(() => locations.pointsBetween(any(), any())).thenAnswer(
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
       (_) async => [
         for (var i = 0; i < 6; i++)
           _p(at.add(Duration(minutes: 3 * i)), 37.5, 127.0),
@@ -119,7 +134,7 @@ void main() {
 
   test('month view simplifies points and never asks the network', () async {
     final start = DateTime(2026, 11, 3, 8);
-    when(() => locations.pointsBetween(any(), any())).thenAnswer(
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
       (_) async => [
         for (var i = 0; i < 1000; i++)
           _p(start.add(Duration(minutes: i)), 37.5 + i * 0.0005, 127.0),
@@ -139,7 +154,7 @@ void main() {
 
   test('day view does not simplify', () async {
     final start = DateTime(2026, 11, 8, 8);
-    when(() => locations.pointsBetween(any(), any())).thenAnswer(
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
       (_) async => [
         for (var i = 0; i < 100; i++)
           _p(start.add(Duration(minutes: i)), 37.5 + i * 0.0005, 127.0),
@@ -174,7 +189,7 @@ void main() {
   test('long story (over 2 days) simplifies drawn points', () async {
     final start = DateTime(2026, 11, 1, 8);
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => line(start, 1000));
 
     await cubit.show(MapPeriod.story(story(start, DateTime(2026, 11, 4, 8))));
@@ -186,7 +201,7 @@ void main() {
     // 시계는 11-08 12시 — 11-01 에 시작한 진행 중 스토리는 이틀이 넘는다.
     final start = DateTime(2026, 11, 1, 8);
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => line(start, 1000));
 
     await cubit.show(MapPeriod.story(story(start, null)));
@@ -197,7 +212,7 @@ void main() {
   test('short story (2 days or less) is not simplified', () async {
     final start = DateTime(2026, 11, 6, 8);
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => line(start, 100));
 
     await cubit.show(MapPeriod.story(story(start, DateTime(2026, 11, 8, 8))));
@@ -205,16 +220,18 @@ void main() {
     expect(drawn((cubit.state as MapViewReady).data), 100);
   });
 
-  /// 같은 곳에 이틀 머문 점(11-03 · 11-04, 각 6점).
+  /// 같은 곳에 이틀 머문 점(11-03 · 11-04, 각 6점). 사이에 다른 곳에 간 점이 있다.
   List<LocationPoint> twoStays() => [
-    for (var d = 0; d < 2; d++)
+    for (var d = 0; d < 2; d++) ...[
       for (var i = 0; i < 6; i++)
         _p(DateTime(2026, 11, 3 + d, 8, 3 * i), 37.5, 127.0),
+      _p(DateTime(2026, 11, 3 + d, 9), 37.6, 127.1),
+    ],
   ];
 
   test('month fills frequent and stay names from cache only', () async {
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => twoStays());
     when(
       () => locations.placeName('37.500,127.000'),
@@ -232,7 +249,7 @@ void main() {
 
   test('story fills stay names from cache only', () async {
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => twoStays());
     when(
       () => locations.placeName('37.500,127.000'),
@@ -249,7 +266,7 @@ void main() {
 
   test('cache miss leaves the name out', () async {
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => twoStays());
 
     await cubit.show(const MapPeriod.month(2026, 11));
@@ -261,7 +278,7 @@ void main() {
     await cubit.show(day);
     verifyInOrder([
       () => sync.run(),
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ]);
   });
 
@@ -271,7 +288,7 @@ void main() {
     final showing = cubit.show(day);
     await Future<void>.delayed(Duration.zero);
     expect(cubit.state, MapViewState.loading(day));
-    verifyNever(() => locations.pointsBetween(any(), any()));
+    verifyNever(() => locations.pointsAround(any(), any()));
     gate.complete(0);
     await showing;
     expect(cubit.state, MapViewState.empty(day));
@@ -292,9 +309,9 @@ void main() {
     await cubit.show(day);
     await cubit.refresh();
     verifyInOrder([
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
       () => sync.run(),
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ]);
   });
 
@@ -306,6 +323,7 @@ void main() {
       for (var i = 0; i < 6; i++) {
         pts.add(_p(base.add(Duration(days: d, minutes: 3 * i)), 37.5, 127.0));
       }
+      pts.add(_p(base.add(Duration(days: d, hours: 1)), 37.7, 127.2));
     }
     for (var i = 0; i < 50; i++) {
       pts.add(
@@ -313,7 +331,7 @@ void main() {
       );
     }
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => pts);
 
     await cubit.show(const MapPeriod.month(2026, 11));
@@ -330,9 +348,7 @@ void main() {
   });
 
   test('repository error becomes failure', () async {
-    when(
-      () => locations.pointsBetween(any(), any()),
-    ).thenThrow(Exception('db'));
+    when(() => locations.pointsAround(any(), any())).thenThrow(Exception('db'));
     await cubit.show(day);
     expect(cubit.state, MapViewState.failure(day));
   });
@@ -360,5 +376,56 @@ void main() {
     await refreshing;
     await showing;
     expect(cubit.state, MapViewState.empty(other));
+  });
+
+  test('day view reads points around the day bounds', () async {
+    await cubit.show(day);
+    verify(
+      () => locations.pointsAround(
+        DateTime(2026, 11, 8).toUtc(),
+        DateTime(2026, 11, 8, 23, 59, 59, 999).toUtc(),
+      ),
+    ).called(1);
+  });
+
+  test('overnight still stay shows on both days', () async {
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
+      (_) async => [
+        _still(DateTime(2026, 11, 7, 19, 5), 37.5, 127.0),
+        _p(DateTime(2026, 11, 8, 7, 30), 37.6, 127.1),
+      ],
+    );
+
+    await cubit.show(day);
+
+    final stay = (cubit.state as MapViewReady).data.track.stays.single;
+    expect(stay.start.toUtc(), DateTime(2026, 11, 8).toUtc());
+    expect(stay.end.toUtc(), DateTime(2026, 11, 8, 7, 29, 59, 999).toUtc());
+    // 창 앞 이웃(어제 19:05)은 그리지 않는다.
+    final drawn = [
+      for (final s in (cubit.state as MapViewReady).data.track.segments)
+        ...s.points,
+    ];
+    expect(drawn.map((p) => p.recordedAt), [DateTime(2026, 11, 8, 7, 30)]);
+  });
+
+  test('ongoing still stay shows up to now', () async {
+    final at15 = MapViewCubit(
+      locations,
+      diary,
+      sync,
+      namer,
+      _ClockAt(DateTime(2026, 11, 8, 15)),
+    );
+    addTearDown(at15.close);
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
+      (_) async => [_still(DateTime(2026, 11, 8, 9, 3), 37.5, 127.0)],
+    );
+
+    await at15.show(day);
+
+    final stay = (at15.state as MapViewReady).data.track.stays.single;
+    expect(stay.start.toUtc(), DateTime(2026, 11, 8, 9, 3).toUtc());
+    expect(stay.end.toUtc(), DateTime(2026, 11, 8, 15).toUtc());
   });
 }

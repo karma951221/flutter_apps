@@ -51,18 +51,40 @@ class DriftLocationRepository implements LocationRepository {
               )
               ..orderBy([(t) => OrderingTerm.asc(t.recordedAt)]))
             .get();
-    return [
-      for (final r in rows)
-        LocationPoint(
-          recordedAt: r.recordedAt.toLocal(),
-          lat: r.lat,
-          lng: r.lng,
-          accuracyM: r.accuracyM,
-          mode: r.mode,
-          stillStart: r.stillStart,
-        ),
-    ];
+    return [for (final r in rows) _toPoint(r)];
   }
+
+  @override
+  Future<List<LocationPoint>> pointsAround(DateTime from, DateTime to) =>
+      _db.transaction(() async {
+        final before =
+            await (_db.select(_db.locationPoints)
+                  ..where((t) => t.recordedAt.isSmallerThanValue(from.toUtc()))
+                  ..orderBy([(t) => OrderingTerm.desc(t.recordedAt)])
+                  ..limit(1))
+                .getSingleOrNull();
+        final inside = await pointsBetween(from, to);
+        final after =
+            await (_db.select(_db.locationPoints)
+                  ..where((t) => t.recordedAt.isBiggerThanValue(to.toUtc()))
+                  ..orderBy([(t) => OrderingTerm.asc(t.recordedAt)])
+                  ..limit(1))
+                .getSingleOrNull();
+        return [
+          if (before != null) _toPoint(before),
+          ...inside,
+          if (after != null) _toPoint(after),
+        ];
+      });
+
+  LocationPoint _toPoint(LocationPointRow r) => LocationPoint(
+    recordedAt: r.recordedAt.toLocal(),
+    lat: r.lat,
+    lng: r.lng,
+    accuracyM: r.accuracyM,
+    mode: r.mode,
+    stillStart: r.stillStart,
+  );
 
   @override
   Future<bool> hasAnyPoint() async {

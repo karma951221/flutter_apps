@@ -78,8 +78,10 @@ class MapViewCubit extends Cubit<MapViewState> {
   }
 
   Future<MapViewState?> _read(MapPeriod period, int generation) async {
-    final bounds = period.bounds(_clock.now());
-    final points = await _locations.pointsBetween(
+    final now = _clock.now();
+    final bounds = period.bounds(now);
+    // 경계 바깥 이웃 점까지 읽어야 기간을 넘는 · 아직 이어지는 머문 곳이 보인다.
+    final points = await _locations.pointsAround(
       bounds.from.toUtc(),
       bounds.to.toUtc(),
     );
@@ -89,6 +91,7 @@ class MapViewCubit extends Cubit<MapViewState> {
       points,
       clipFrom: bounds.from.toUtc(),
       clipTo: bounds.to.toUtc(),
+      openEnd: now.toUtc(),
     );
     // 자주 간 곳 · 머문 곳은 단순화 전 점으로 구한다 — 단순화는 그리는 선만.
     final frequent = frequentPlaces(track.stays);

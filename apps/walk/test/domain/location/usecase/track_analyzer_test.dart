@@ -40,10 +40,11 @@ void main() {
     expect(t.stays, isEmpty);
   });
 
-  test('gap over 30 minutes splits segments', () {
+  test('gap over 30 minutes to a far point splits segments', () {
     final t = analyzer.analyze([
       ..._stayPoints(_t0, 3),
-      ..._stayPoints(_t0.add(const Duration(minutes: 33)), 3),
+      for (var i = 0; i < 3; i++)
+        _p(_t0.add(Duration(minutes: 33 + i)), lat: 37.5663 + 0.018),
     ]);
     expect(t.segments.length, 2);
   });
@@ -96,13 +97,23 @@ void main() {
     expect(t.stays.single.end, next.subtract(const Duration(milliseconds: 1)));
   });
 
-  test('gap without stillStart still splits', () {
+  test('gap without stillStart to a far point still splits', () {
     final t = analyzer.analyze([
       _p(_t0),
-      _p(_t0.add(const Duration(minutes: 31))),
+      _p(_t0.add(const Duration(minutes: 31)), lat: 37.5663 + 0.018),
     ]);
     expect(t.stays, isEmpty);
     expect(t.segments.length, 2);
+  });
+
+  test('gap without stillStart at the same spot is a stay (AR denied)', () {
+    final t = analyzer.analyze([
+      _p(DateTime.utc(2026, 11, 8, 8, 58)),
+      _p(DateTime.utc(2026, 11, 8, 18, 1), lat: 37.5664),
+    ]);
+    expect(t.segments.length, 1);
+    expect(t.stays.single.start, DateTime.utc(2026, 11, 8, 8, 58));
+    expect(t.stays.single.end, DateTime.utc(2026, 11, 8, 18, 1));
   });
 
   test('stillStart then far point within 30 minutes still closes the stay', () {
@@ -146,5 +157,96 @@ void main() {
     );
     expect(t.segments.length, 1);
     expect(t.segments.single.points.map((p) => p.recordedAt.minute), [2, 3, 4]);
+  });
+
+  test('overnight still stay shows on both days, clipped to each', () {
+    final points = [
+      _p(DateTime.utc(2026, 11, 8, 19, 5), still: true),
+      _p(DateTime.utc(2026, 11, 9, 7, 30), lat: 37.5663 + 0.018),
+    ];
+    final day1 = analyzer.analyze(
+      points,
+      clipFrom: DateTime.utc(2026, 11, 8),
+      clipTo: DateTime.utc(2026, 11, 8, 23, 59, 59, 999),
+    );
+    expect(day1.stays.single.start, DateTime.utc(2026, 11, 8, 19, 5));
+    expect(day1.stays.single.end, DateTime.utc(2026, 11, 8, 23, 59, 59, 999));
+    final day2 = analyzer.analyze(
+      points,
+      clipFrom: DateTime.utc(2026, 11, 9),
+      clipTo: DateTime.utc(2026, 11, 9, 23, 59, 59, 999),
+    );
+    expect(day2.stays.single.start, DateTime.utc(2026, 11, 9));
+    expect(day2.stays.single.end, DateTime.utc(2026, 11, 9, 7, 29, 59, 999));
+  });
+
+  test('ongoing still stay is closed at openEnd', () {
+    final now = DateTime.utc(2026, 11, 8, 15);
+    final t = analyzer.analyze(
+      [
+        ..._stayPoints(DateTime.utc(2026, 11, 8, 8, 40), 3),
+        _p(DateTime.utc(2026, 11, 8, 9, 3), lat: 37.5663 + 0.018, still: true),
+      ],
+      clipFrom: DateTime.utc(2026, 11, 8),
+      clipTo: DateTime.utc(2026, 11, 8, 23, 59, 59, 999),
+      openEnd: now,
+    );
+    expect(t.stays.single.start, DateTime.utc(2026, 11, 8, 9, 3));
+    expect(t.stays.single.end, now);
+  });
+
+  test('ongoing still stay is closed at clipTo when openEnd is later', () {
+    final t = analyzer.analyze(
+      [_p(DateTime.utc(2026, 11, 8, 19, 5), still: true)],
+      clipFrom: DateTime.utc(2026, 11, 8),
+      clipTo: DateTime.utc(2026, 11, 8, 23, 59, 59, 999),
+      openEnd: DateTime.utc(2026, 11, 9, 10),
+    );
+    expect(t.stays.single.end, DateTime.utc(2026, 11, 8, 23, 59, 59, 999));
+  });
+
+  test('without openEnd a trailing stillStart alone is not a stay', () {
+    final t = analyzer.analyze([_p(_t0, still: true)]);
+    expect(t.stays, isEmpty);
+  });
+
+  test('boundary neighbours outside the window are not drawn', () {
+    final from = DateTime.utc(2026, 11, 8, 10);
+    final to = DateTime.utc(2026, 11, 8, 11);
+    final t = analyzer.analyze(
+      [
+        _p(DateTime.utc(2026, 11, 8, 9, 50)), // 창 앞 이웃
+        _p(DateTime.utc(2026, 11, 8, 10, 5), lat: 37.5663 + 0.002),
+        _p(DateTime.utc(2026, 11, 8, 10, 10), lat: 37.5663 + 0.004),
+        _p(DateTime.utc(2026, 11, 8, 11, 10), lat: 37.5663 + 0.006), // 창 뒤 이웃
+      ],
+      clipFrom: from,
+      clipTo: to,
+    );
+    final drawn = [for (final s in t.segments) ...s.points];
+    expect(drawn.map((p) => p.recordedAt.minute), [5, 10]);
+  });
+
+  test('heartbeat still point keeps one continuous stay', () {
+    final t = analyzer.analyze([
+      _p(DateTime.utc(2026, 11, 8, 9, 3), still: true),
+      _p(DateTime.utc(2026, 11, 8, 15, 3), lat: 37.5664, still: true),
+      _p(DateTime.utc(2026, 11, 8, 18), lat: 37.5663 + 0.018),
+    ]);
+    expect(t.stays.single.start, DateTime.utc(2026, 11, 8, 9, 3));
+    expect(t.stays.single.end, DateTime.utc(2026, 11, 8, 17, 59, 59, 999));
+  });
+
+  test('switching to dense after stillStart keeps the stay', () {
+    final t = analyzer.analyze([
+      _p(DateTime.utc(2026, 11, 8, 23), still: true),
+      _p(DateTime.utc(2026, 11, 9, 8), lat: 37.5664, mode: RecordMode.dense),
+    ]);
+    expect(t.stays.single.start, DateTime.utc(2026, 11, 8, 23));
+    expect(t.stays.single.end, DateTime.utc(2026, 11, 9, 7, 59, 59, 999));
+    expect(t.segments.map((s) => s.mode), [
+      RecordMode.normal,
+      RecordMode.dense,
+    ]);
   });
 }
