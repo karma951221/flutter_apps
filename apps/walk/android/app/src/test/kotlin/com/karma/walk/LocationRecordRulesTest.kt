@@ -185,11 +185,49 @@ class LocationRecordRulesTest {
     }
 
     @Test
-    fun `still resume fix within 100m means still there`() {
-        assertTrue(LocationRecordRules.stillResumeIsStillThere(0f))
-        assertTrue(LocationRecordRules.stillResumeIsStillThere(100f))
-        assertFalse(LocationRecordRules.stillResumeIsStillThere(100.1f))
-        assertFalse(LocationRecordRules.stillResumeIsStillThere(2_000f))
+    fun `still resume fix within 100m plus accuracy means still there`() {
+        assertTrue(LocationRecordRules.stillResumeIsStillThere(0f, null, null))
+        assertTrue(LocationRecordRules.stillResumeIsStillThere(100f, null, null))
+        assertFalse(LocationRecordRules.stillResumeIsStillThere(100.1f, null, null))
+        assertFalse(LocationRecordRules.stillResumeIsStillThere(2_000f, 20f, 15f))
+        // 실내 확인 점이 150m 튀어도 정확도 80m 면 아직 그 자리
+        assertTrue(LocationRecordRules.stillResumeIsStillThere(150f, 80f, null))
+        assertTrue(LocationRecordRules.stillResumeIsStillThere(300f, 150f, 50f))
+        assertFalse(LocationRecordRules.stillResumeIsStillThere(300.1f, 150f, 50f))
+    }
+
+    @Test
+    fun `watchdog and still resume share one margin`() {
+        for (d in listOf(0f, 99f, 100f, 170f, 171f, 500f)) {
+            assertEquals(
+                !LocationRecordRules.stillResumeIsStillThere(d, 50f, 20f),
+                LocationRecordRules.watchdogShouldResume(d, 50f, 20f),
+            )
+        }
+    }
+
+    // ── 기록 끝 표시 ──
+
+    @Test
+    fun `stop marker repeats the last saved point at now`() {
+        val last = LocationRecordRules.SavedPoint(timeMs = 1_000L, lat = 37.5, lng = 127.0, accuracyM = 12.0)
+
+        val marker = LocationRecordRules.stopMarker(last, nowMs = 5_000L)
+
+        assertEquals(LocationRecordRules.SavedPoint(5_000L, 37.5, 127.0, 12.0), marker)
+    }
+
+    @Test
+    fun `no stop marker without a previous point`() {
+        assertEquals(null, LocationRecordRules.stopMarker(null, nowMs = 5_000L))
+    }
+
+    @Test
+    fun `no stop marker when the clock is not after the last point`() {
+        val last = LocationRecordRules.SavedPoint(5_000L, 37.5, 127.0, null)
+
+        assertEquals(null, LocationRecordRules.stopMarker(last, nowMs = 5_000L))
+        assertEquals(null, LocationRecordRules.stopMarker(last, nowMs = 4_000L))
     }
 
     @Test

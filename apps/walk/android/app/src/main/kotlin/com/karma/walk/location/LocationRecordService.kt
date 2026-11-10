@@ -90,6 +90,32 @@ class LocationRecordService : Service() {
             context.stopService(Intent(context, LocationRecordService::class.java))
         }
 
+        /**
+         * 기록이 끝날 때(채널 `stop` · 알림 [끄기] · 권한을 잃음) 마지막 점 자리에 지금 시각 점
+         * (`still = 0`)을 남긴다. 앞 점이 없거나 이미 남겼으면 건너뛴다([LocationRecordRules.stopMarker]).
+         */
+        @Synchronized
+        fun writeStopMarker(context: Context) {
+            val marker = LocationRecordRules.stopMarker(
+                LocationRecordPrefs.lastSaved(context),
+                System.currentTimeMillis(),
+            )
+            LocationRecordPrefs.clearLastSaved(context)
+            if (marker == null) return
+            try {
+                LocationInbox.get(context).insert(
+                    t = marker.timeMs,
+                    lat = marker.lat,
+                    lng = marker.lng,
+                    acc = marker.accuracyM,
+                    mode = LocationRecordPrefs.mode(context),
+                    still = false,
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "stop marker insert failed", e)
+            }
+        }
+
         /** 10 미만은 위치 권한이 곧 백그라운드 권한이다. */
         fun hasBackgroundPermission(context: Context): Boolean {
             val foreground = granted(context, Manifest.permission.ACCESS_FINE_LOCATION) ||
@@ -194,6 +220,7 @@ class LocationRecordService : Service() {
             ACTION_STOP -> {
                 // 알림의 [끄기]: 확인 없이 바로 끈다(다시 켜기 쉬움).
                 LocationRecordPrefs.setEnabled(this, false)
+                writeStopMarker(this)
                 stopSelf()
                 return START_NOT_STICKY
             }
@@ -250,6 +277,8 @@ class LocationRecordService : Service() {
                 Log.w(TAG, "startForeground failed", e)
             }
         }
+        // 켜짐인데 권한을 잃었으면 기록 끝을 남긴다(꺼짐이면 끌 때 이미 남겼다).
+        if (LocationRecordPrefs.enabled(this)) writeStopMarker(this)
         stopUpdates()
         stopWatchdog()
         stopTransitions()
@@ -318,7 +347,11 @@ class LocationRecordService : Service() {
             }
             val anchor = stillAnchor
             if (anchor == null ||
-                LocationRecordRules.stillResumeIsStillThere(anchor.distanceTo(location))
+                LocationRecordRules.stillResumeIsStillThere(
+                    anchor.distanceTo(location),
+                    accuracyOf(location),
+                    accuracyOf(anchor),
+                )
             ) {
                 // 정지 점을 못 잡았던 정지면 이 점을 정지 점으로 삼는다.
                 if (anchor == null) stillAnchor = location
@@ -512,6 +545,15 @@ class LocationRecordService : Service() {
                 mode = mode,
                 still = still,
             )
+            LocationRecordPrefs.setLastSaved(
+                this,
+                LocationRecordRules.SavedPoint(
+                    timeMs = location.time,
+                    lat = location.latitude,
+                    lng = location.longitude,
+                    accuracyM = if (location.hasAccuracy()) location.accuracy.toDouble() else null,
+                ),
+            )
         } catch (e: Exception) {
             Log.w(TAG, "inbox insert failed", e)
         }
@@ -589,6 +631,7 @@ class LocationRecordService : Service() {
     /** 메인 스레드에서만 불린다(동기 호출 · mainExecutor 리스너). */
     private fun onPermissionLost(e: SecurityException) {
         Log.w(TAG, "location permission lost", e)
+        writeStopMarker(this)
         stopUpdates()
         stopWatchdog()
         stopTransitions()

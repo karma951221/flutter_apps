@@ -56,6 +56,7 @@ internal class LocationRecordChannel private constructor(private val context: Co
                 }
                 "stop" -> {
                     LocationRecordPrefs.setEnabled(context, false)
+                    LocationRecordService.writeStopMarker(context)
                     LocationRecordService.stop(context)
                     result.success(null)
                 }
@@ -90,6 +91,8 @@ internal class LocationRecordChannel private constructor(private val context: Co
                 }
                 "clearInbox" -> background(result) {
                     LocationInbox.get(context).clear()
+                    // 지운 기록의 자리가 기록 끝 표시로 되살아나지 않게.
+                    LocationRecordPrefs.clearLastSaved(context)
                     null
                 }
                 "openBatterySettings" -> {

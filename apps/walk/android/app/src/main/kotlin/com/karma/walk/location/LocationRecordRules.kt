@@ -44,17 +44,34 @@ object LocationRecordRules {
     const val STILL_RADIUS_M = 100f
 
     /**
-     * 감시 위치가 정지 점에서 100m + 두 점의 정확도(모르면 0)보다 멀면 STILL 이탈일 수 있다. passive
-     * 위치는 기지국 · 와이파이로 수백 m 튈 수 있어 정확도만큼은 봐준다. 확인은 [stillResumeIsStillThere].
+     * 정지 점에서 100m + 두 점의 정확도(모르면 0) 안이면 같은 자리. 위치는 기지국 · 와이파이로 수백 m
+     * 튈 수 있어 정확도만큼은 봐준다. 감시([watchdogShouldResume]) · 확인([stillResumeIsStillThere])이
+     * 같은 여유를 쓴다.
      */
+    private fun withinStillRadius(distanceM: Float, accuracyM: Float?, anchorAccuracyM: Float?): Boolean =
+        distanceM <= STILL_RADIUS_M + (accuracyM ?: 0f) + (anchorAccuracyM ?: 0f)
+
+    /** 감시 위치가 같은 자리 밖이면 STILL 이탈일 수 있다. 확인은 [stillResumeIsStillThere]. */
     fun watchdogShouldResume(distanceM: Float, accuracyM: Float?, anchorAccuracyM: Float?): Boolean =
-        distanceM > STILL_RADIUS_M + (accuracyM ?: 0f) + (anchorAccuracyM ?: 0f)
+        !withinStillRadius(distanceM, accuracyM, anchorAccuracyM)
 
     /**
-     * 정지를 끝내려 할 때(감시가 움직임을 봤거나 정지가 6시간을 넘김) 새로 잡은 점이 정지 점에서 100m
-     * 안이면 아직 그 자리 — `still` 점(심장박동)으로 남기고 정지를 이어 간다.
+     * 정지를 끝내려 할 때(감시가 움직임을 봤거나 정지가 6시간을 넘김) 새로 잡은 점이 같은 자리면
+     * 아직 그 자리 — `still` 점(심장박동)으로 남기고 정지를 이어 간다.
      */
-    fun stillResumeIsStillThere(distanceM: Float): Boolean = distanceM <= STILL_RADIUS_M
+    fun stillResumeIsStillThere(distanceM: Float, accuracyM: Float?, anchorAccuracyM: Float?): Boolean =
+        withinStillRadius(distanceM, accuracyM, anchorAccuracyM)
+
+    /** inbox 에 마지막으로 남긴 점. 기록 끝 표시([stopMarker])에 쓴다. */
+    data class SavedPoint(val timeMs: Long, val lat: Double, val lng: Double, val accuracyM: Double?)
+
+    /**
+     * 기록이 끝날 때(사용자가 끔 · 권한을 잃음) 남기는 점 — 마지막 점 자리 · 지금 시각 · `still = 0`.
+     * 정지 중에 꺼도 머문 곳이 여기서 닫히고, 다시 켤 때까지의 빈 시간이 머문 곳으로 보이지 않는다.
+     * 앞 점이 없거나 시계가 그 점보다 뒤가 아니면 남기지 않는다.
+     */
+    fun stopMarker(last: SavedPoint?, nowMs: Long): SavedPoint? =
+        if (last == null || nowMs <= last.timeMs) null else last.copy(timeMs = nowMs)
 
     /** 정지가 이보다 길면 다음 `status`(앱이 앞에 올 때) 에 위치 요청을 다시 건다. */
     const val STILL_MAX_MS = 6 * 60 * 60_000L

@@ -13,6 +13,10 @@ internal object LocationRecordPrefs {
     private const val KEY_MODE = "mode"
     private const val KEY_PHASE = "phase"
     private const val KEY_STILL_SINCE = "stillSince"
+    private const val KEY_LAST_T = "lastT"
+    private const val KEY_LAST_LAT = "lastLat"
+    private const val KEY_LAST_LNG = "lastLng"
+    private const val KEY_LAST_ACC = "lastAcc"
 
     private fun prefs(context: Context): SharedPreferences =
         context.applicationContext.getSharedPreferences(FILE, Context.MODE_PRIVATE)
@@ -46,5 +50,34 @@ internal object LocationRecordPrefs {
 
     fun setStillSince(context: Context, ms: Long) {
         prefs(context).edit().putLong(KEY_STILL_SINCE, ms).apply()
+    }
+
+    /**
+     * inbox 에 마지막으로 남긴 점. 서비스가 다시 떠도 기록 끝 표시를 남길 수 있게 prefs 에 둔다
+     * (SharedPreferences 가 메모리에도 들고 있다). 끝 표시를 남기면 지운다 — 한 번만 남긴다.
+     */
+    fun lastSaved(context: Context): LocationRecordRules.SavedPoint? {
+        val p = prefs(context)
+        if (!p.contains(KEY_LAST_T)) return null
+        return LocationRecordRules.SavedPoint(
+            timeMs = p.getLong(KEY_LAST_T, 0L),
+            lat = Double.fromBits(p.getLong(KEY_LAST_LAT, 0L)),
+            lng = Double.fromBits(p.getLong(KEY_LAST_LNG, 0L)),
+            accuracyM = if (p.contains(KEY_LAST_ACC)) Double.fromBits(p.getLong(KEY_LAST_ACC, 0L)) else null,
+        )
+    }
+
+    fun setLastSaved(context: Context, point: LocationRecordRules.SavedPoint) {
+        prefs(context).edit().apply {
+            putLong(KEY_LAST_T, point.timeMs)
+            putLong(KEY_LAST_LAT, point.lat.toRawBits())
+            putLong(KEY_LAST_LNG, point.lng.toRawBits())
+            if (point.accuracyM == null) remove(KEY_LAST_ACC) else putLong(KEY_LAST_ACC, point.accuracyM.toRawBits())
+        }.apply()
+    }
+
+    fun clearLastSaved(context: Context) {
+        prefs(context).edit().remove(KEY_LAST_T).remove(KEY_LAST_LAT).remove(KEY_LAST_LNG).remove(KEY_LAST_ACC)
+            .apply()
     }
 }
