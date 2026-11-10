@@ -65,13 +65,27 @@ object LocationRecordRules {
     /** inbox 에 마지막으로 남긴 점. 기록 끝 표시([stopMarker])에 쓴다. */
     data class SavedPoint(val timeMs: Long, val lat: Double, val lng: Double, val accuracyM: Double?)
 
+    /** 움직이는 중에 마지막 점이 이보다 오래됐으면 기록 끝 표시를 남기지 않는다. */
+    const val STOP_MARKER_MAX_AGE_MS = 30 * 60_000L
+
     /**
      * 기록이 끝날 때(사용자가 끔 · 권한을 잃음) 남기는 점 — 마지막 점 자리 · 지금 시각 · `still = 0`.
      * 정지 중에 꺼도 머문 곳이 여기서 닫히고, 다시 켤 때까지의 빈 시간이 머문 곳으로 보이지 않는다.
-     * 앞 점이 없거나 시계가 그 점보다 뒤가 아니면 남기지 않는다.
+     * 앞 점이 없거나 시계가 그 점보다 뒤가 아니면 남기지 않는다. 움직이는 중인데 마지막 점이 30분보다
+     * 오래됐으면(기록이 조용히 멈춰 있었다) 옛 자리에 지금 시각을 찍지 않는다.
      */
-    fun stopMarker(last: SavedPoint?, nowMs: Long): SavedPoint? =
-        if (last == null || nowMs <= last.timeMs) null else last.copy(timeMs = nowMs)
+    fun stopMarker(last: SavedPoint?, nowMs: Long, phase: Phase): SavedPoint? = when {
+        last == null || nowMs <= last.timeMs -> null
+        phase == Phase.MOVING && nowMs - last.timeMs > STOP_MARKER_MAX_AGE_MS -> null
+        else -> last.copy(timeMs = nowMs)
+    }
+
+    /**
+     * 채널 `status` 가 싣는 기록 시작 시각. 서비스가 살아 있을 때만(죽어 있다가 이번 `status` 가
+     * 되살리면 그 사이는 끊긴 것) — 지도는 이 시각 뒤의 마지막 점만 지금까지 잇는다.
+     */
+    fun recordingSinceForStatus(serviceRunning: Boolean, sinceMs: Long): Long? =
+        if (serviceRunning && sinceMs > 0L) sinceMs else null
 
     /** 정지가 이보다 길면 다음 `status`(앱이 앞에 올 때) 에 위치 요청을 다시 건다. */
     const val STILL_MAX_MS = 6 * 60 * 60_000L

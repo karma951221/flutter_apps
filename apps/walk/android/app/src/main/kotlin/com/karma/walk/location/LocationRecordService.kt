@@ -91,14 +91,16 @@ class LocationRecordService : Service() {
         }
 
         /**
-         * 기록이 끝날 때(채널 `stop` · 알림 [끄기] · 권한을 잃음) 마지막 점 자리에 지금 시각 점
-         * (`still = 0`)을 남긴다. 앞 점이 없거나 이미 남겼으면 건너뛴다([LocationRecordRules.stopMarker]).
+         * 기록이 끝날 때(채널 `stop` · 알림 [끄기] · 백그라운드 위치 권한이 실제로 없어짐) 마지막 점
+         * 자리에 지금 시각 점(`still = 0`)을 남긴다. 앞 점이 없거나 이미 남겼거나, 움직이는 중에 마지막
+         * 점이 30분보다 오래됐으면 건너뛴다([LocationRecordRules.stopMarker]).
          */
         @Synchronized
         fun writeStopMarker(context: Context) {
             val marker = LocationRecordRules.stopMarker(
                 LocationRecordPrefs.lastSaved(context),
                 System.currentTimeMillis(),
+                LocationRecordPrefs.phase(context),
             )
             LocationRecordPrefs.clearLastSaved(context)
             if (marker == null) return
@@ -183,6 +185,9 @@ class LocationRecordService : Service() {
     @Volatile
     private var destroyed = false
 
+    /** 이 인스턴스가 기록 시작 시각(`recordingSince`)을 남겼는지. 메인 스레드. */
+    private var recordingMarked = false
+
     private val callback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             for (location in result.locations) save(location, still = false)
@@ -248,6 +253,7 @@ class LocationRecordService : Service() {
     override fun onDestroy() {
         destroyed = true
         running = false
+        LocationRecordPrefs.clearRecordingSince(this)
         mainHandler.removeCallbacksAndMessages(null)
         stopUpdates()
         stopWatchdog()
@@ -271,14 +277,20 @@ class LocationRecordService : Service() {
                     0
                 }
                 ServiceCompat.startForeground(this, NOTIFICATION_ID, notification(), type)
+                if (!recordingMarked) {
+                    // 새 인스턴스(sticky 재시작 · 부팅 · 되살리기 포함)마다 기록 시작 시각을 새로 둔다.
+                    LocationRecordPrefs.setRecordingSince(this, System.currentTimeMillis())
+                    recordingMarked = true
+                }
                 return true
             } catch (e: Exception) {
                 // Android 12+ 백그라운드 시작 제한 · 14+ 위치 권한 확인 실패.
                 Log.w(TAG, "startForeground failed", e)
             }
         }
-        // 켜짐인데 권한을 잃었으면 기록 끝을 남긴다(꺼짐이면 끌 때 이미 남겼다).
-        if (LocationRecordPrefs.enabled(this)) writeStopMarker(this)
+        // 켜짐인데 백그라운드 위치 권한이 실제로 없으면 기록 끝을 남긴다. 꺼짐이면 끌 때 이미 남겼고,
+        // startForeground 예외(권한은 있음)는 기록이 끝난 게 아니다.
+        if (LocationRecordPrefs.enabled(this) && !hasBackgroundPermission(this)) writeStopMarker(this)
         stopUpdates()
         stopWatchdog()
         stopTransitions()
@@ -631,7 +643,7 @@ class LocationRecordService : Service() {
     /** 메인 스레드에서만 불린다(동기 호출 · mainExecutor 리스너). */
     private fun onPermissionLost(e: SecurityException) {
         Log.w(TAG, "location permission lost", e)
-        writeStopMarker(this)
+        if (!hasBackgroundPermission(this)) writeStopMarker(this)
         stopUpdates()
         stopWatchdog()
         stopTransitions()

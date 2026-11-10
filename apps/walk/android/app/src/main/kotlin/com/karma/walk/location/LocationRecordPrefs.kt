@@ -14,6 +14,7 @@ internal object LocationRecordPrefs {
     private const val KEY_PHASE = "phase"
     private const val KEY_STILL_SINCE = "stillSince"
     private const val KEY_LAST_T = "lastT"
+    private const val KEY_RECORDING_SINCE = "recordingSince"
     private const val KEY_LAST_LAT = "lastLat"
     private const val KEY_LAST_LNG = "lastLng"
     private const val KEY_LAST_ACC = "lastAcc"
@@ -79,5 +80,16 @@ internal object LocationRecordPrefs {
     fun clearLastSaved(context: Context) {
         prefs(context).edit().remove(KEY_LAST_T).remove(KEY_LAST_LAT).remove(KEY_LAST_LNG).remove(KEY_LAST_ACC)
             .apply()
+    }
+
+    /** 지금 서비스 인스턴스가 기록을 시작한 시각(epoch millis). 없으면 0. 서비스가 끝날 때 지운다. */
+    fun recordingSince(context: Context): Long = prefs(context).getLong(KEY_RECORDING_SINCE, 0L)
+
+    fun setRecordingSince(context: Context, ms: Long) {
+        prefs(context).edit().putLong(KEY_RECORDING_SINCE, ms).apply()
+    }
+
+    fun clearRecordingSince(context: Context) {
+        prefs(context).edit().remove(KEY_RECORDING_SINCE).apply()
     }
 }
