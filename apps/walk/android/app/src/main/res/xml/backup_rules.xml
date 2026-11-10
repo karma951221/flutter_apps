@@ -1,9 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- API 30 이하 자동 백업. 물어보기 API 키를 담는 보안 저장소(flutter_secure_storage)와 그 설정 파일만 뺀다 —
-     복원하면 키스토어 키가 없어 읽을 수 없다. 다른 데이터의 백업은 그대로. -->
+<!-- API 30 이하 자동 백업. 두 가지를 뺀다.
+     1) 물어보기 API 키를 담는 보안 저장소(flutter_secure_storage)와 그 설정 파일 — 복원하면 키스토어 키가
+        없어 읽을 수 없다.
+     2) 위치 기록(drift DB · 네이티브 inbox · 네이티브 설정) — 위치 기록은 이 폰에만 남긴다(지도 설계).
+        DB 는 -journal · -wal · -shm 짝 파일까지 뺀다.
+     다른 데이터의 백업은 그대로. data_extraction_rules.xml 과 목록을 같게 둔다. -->
 <full-backup-content>
     <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
     <exclude domain="sharedpref" path="FlutterSecureKeyStorage.xml" />
     <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration.xml" />
     <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration:FlutterSecureStorage.xml" />
+    <!-- 위치 기록: drift DB (driftDatabase(name: 'location') → getDir("flutter")/location.sqlite) -->
+    <exclude domain="root" path="app_flutter/location.sqlite" />
+    <exclude domain="root" path="app_flutter/location.sqlite-journal" />
+    <exclude domain="root" path="app_flutter/location.sqlite-wal" />
+    <exclude domain="root" path="app_flutter/location.sqlite-shm" />
+    <!-- 위치 기록: 네이티브 inbox (SQLiteOpenHelper → databases/location_inbox.db) -->
+    <exclude domain="database" path="location_inbox.db" />
+    <exclude domain="database" path="location_inbox.db-journal" />
+    <exclude domain="database" path="location_inbox.db-wal" />
+    <exclude domain="database" path="location_inbox.db-shm" />
+    <!-- 위치 기록: 네이티브 설정 (켜짐 · 모드 · 정지 단계) -->
+    <exclude domain="sharedpref" path="location_record.xml" />
 </full-backup-content>

@@ -1,16 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- API 31+ 클라우드 백업 · 기기 이전. backup_rules.xml 과 같은 이유로 보안 저장소와 그 설정 파일만 뺀다. -->
+<!-- API 31+ 클라우드 백업 · 기기 이전. backup_rules.xml 과 같은 이유로 보안 저장소와 그 설정 파일,
+     위치 기록(drift DB · 네이티브 inbox · 네이티브 설정)을 뺀다. 두 파일의 목록을 같게 둔다. -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
         <exclude domain="sharedpref" path="FlutterSecureKeyStorage.xml" />
         <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration.xml" />
         <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration:FlutterSecureStorage.xml" />
+        <!-- 위치 기록: drift DB (driftDatabase(name: 'location') → getDir("flutter")/location.sqlite) -->
+        <exclude domain="root" path="app_flutter/location.sqlite" />
+        <exclude domain="root" path="app_flutter/location.sqlite-journal" />
+        <exclude domain="root" path="app_flutter/location.sqlite-wal" />
+        <exclude domain="root" path="app_flutter/location.sqlite-shm" />
+        <!-- 위치 기록: 네이티브 inbox (SQLiteOpenHelper → databases/location_inbox.db) -->
+        <exclude domain="database" path="location_inbox.db" />
+        <exclude domain="database" path="location_inbox.db-journal" />
+        <exclude domain="database" path="location_inbox.db-wal" />
+        <exclude domain="database" path="location_inbox.db-shm" />
+        <!-- 위치 기록: 네이티브 설정 (켜짐 · 모드 · 정지 단계) -->
+        <exclude domain="sharedpref" path="location_record.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
         <exclude domain="sharedpref" path="FlutterSecureKeyStorage.xml" />
         <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration.xml" />
         <exclude domain="sharedpref" path="FlutterSecureStorageConfiguration:FlutterSecureStorage.xml" />
+        <!-- 위치 기록: drift DB (driftDatabase(name: 'location') → getDir("flutter")/location.sqlite) -->
+        <exclude domain="root" path="app_flutter/location.sqlite" />
+        <exclude domain="root" path="app_flutter/location.sqlite-journal" />
+        <exclude domain="root" path="app_flutter/location.sqlite-wal" />
+        <exclude domain="root" path="app_flutter/location.sqlite-shm" />
+        <!-- 위치 기록: 네이티브 inbox (SQLiteOpenHelper → databases/location_inbox.db) -->
+        <exclude domain="database" path="location_inbox.db" />
+        <exclude domain="database" path="location_inbox.db-journal" />
+        <exclude domain="database" path="location_inbox.db-wal" />
+        <exclude domain="database" path="location_inbox.db-shm" />
+        <!-- 위치 기록: 네이티브 설정 (켜짐 · 모드 · 정지 단계) -->
+        <exclude domain="sharedpref" path="location_record.xml" />
     </device-transfer>
 </data-extraction-rules>
