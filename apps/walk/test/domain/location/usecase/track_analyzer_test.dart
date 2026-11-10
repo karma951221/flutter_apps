@@ -353,4 +353,56 @@ void main() {
     expect(t.stays.single.start, DateTime.utc(2026, 11, 8, 9));
     expect(t.stays.single.end, DateTime.utc(2026, 11, 8, 17, 59, 59, 999));
   });
+
+  // ── 3차 리뷰 ──
+
+  test('still heartbeat beyond 100m (native vouched) keeps one stay', () {
+    // 네이티브가 정확도 80m 여유로 같은 자리라 본 150m 심장박동.
+    final t = analyzer.analyze([
+      _p(DateTime.utc(2026, 11, 8, 9, 3), still: true),
+      _p(DateTime.utc(2026, 11, 8, 15, 3), lat: 37.5663 + 0.00135, still: true),
+      _p(DateTime.utc(2026, 11, 8, 18), lat: 37.5663 + 0.018),
+    ]);
+    expect(t.stays.single.start, DateTime.utc(2026, 11, 8, 9, 3));
+    expect(t.stays.single.end, DateTime.utc(2026, 11, 8, 17, 59, 59, 999));
+  });
+
+  test('arrival point before the still chain keeps the whole dwell', () {
+    final t = analyzer.analyze([
+      _p(DateTime.utc(2026, 11, 8, 8, 50), lng: 126.9779 - 0.00068), // 서 60m
+      _p(DateTime.utc(2026, 11, 8, 9, 3), still: true),
+      _p(DateTime.utc(2026, 11, 8, 12), lng: 126.9779 + 0.001, still: true),
+      _p(DateTime.utc(2026, 11, 8, 18), lat: 37.5663 + 0.018),
+    ]);
+    expect(t.stays.single.start, DateTime.utc(2026, 11, 8, 8, 50));
+    expect(t.stays.single.end, DateTime.utc(2026, 11, 8, 17, 59, 59, 999));
+  });
+
+  test('before-neighbour heartbeat and in-window heartbeat are one stay', () {
+    final t = analyzer.analyze(
+      [
+        _p(DateTime.utc(2026, 11, 7, 22), lng: 126.9779 + 0.001, still: true),
+        _p(DateTime.utc(2026, 11, 8, 4), lng: 126.9779 - 0.001, still: true),
+        _p(DateTime.utc(2026, 11, 8, 9), lat: 37.5663 + 0.018),
+      ],
+      clipFrom: DateTime.utc(2026, 11, 8),
+      clipTo: DateTime.utc(2026, 11, 8, 23, 59, 59, 999),
+    );
+    expect(t.stays.single.start, DateTime.utc(2026, 11, 8));
+    expect(t.stays.single.end, DateTime.utc(2026, 11, 8, 8, 59, 59, 999));
+  });
+
+  test(
+    'run broken right after a stillStart ends just before the next point',
+    () {
+      // 도착 A(서 60m) → 정지 S → 정지 점 동 90m 의 일반 점 N(A 와는 150m) 이 같은 구간.
+      final t = analyzer.analyze([
+        _p(DateTime.utc(2026, 11, 8, 8, 50), lng: 126.9779 - 0.00068),
+        _p(DateTime.utc(2026, 11, 8, 9, 3), still: true),
+        _p(DateTime.utc(2026, 11, 8, 12), lng: 126.9779 + 0.001),
+      ]);
+      expect(t.stays.first.start, DateTime.utc(2026, 11, 8, 8, 50));
+      expect(t.stays.first.end, DateTime.utc(2026, 11, 8, 11, 59, 59, 999));
+    },
+  );
 }

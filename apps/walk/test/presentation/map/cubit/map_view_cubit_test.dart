@@ -442,8 +442,11 @@ void main() {
   test('ongoing still stay shows up to now', () async {
     final at15 = cubitAt(DateTime(2026, 11, 8, 15));
     when(() => recorder.status()).thenAnswer(
-      (_) async =>
-          const RecorderStatus.running(RecordMode.normal, stillDetection: true),
+      (_) async => RecorderStatus.running(
+        RecordMode.normal,
+        stillDetection: true,
+        recordingSince: DateTime(2026, 11, 8, 8),
+      ),
     );
     when(() => locations.pointsAround(any(), any())).thenAnswer(
       (_) async => [_still(DateTime(2026, 11, 8, 9, 3), 37.5, 127.0)],
@@ -490,9 +493,10 @@ void main() {
     expect((off.state as MapViewReady).data.track.stays, isEmpty);
 
     when(() => recorder.status()).thenAnswer(
-      (_) async => const RecorderStatus.running(
+      (_) async => RecorderStatus.running(
         RecordMode.normal,
         stillDetection: false,
+        recordingSince: DateTime(2026, 11, 8, 8),
       ),
     );
     final running = cubitAt(DateTime(2026, 11, 8, 15));
@@ -501,4 +505,71 @@ void main() {
     expect(stay.start.toUtc(), DateTime(2026, 11, 8, 8, 58).toUtc());
     expect(stay.end.toUtc(), DateTime(2026, 11, 8, 15).toUtc());
   });
+
+  void running({required bool stillDetection, DateTime? since}) {
+    when(() => recorder.status()).thenAnswer(
+      (_) async => RecorderStatus.running(
+        RecordMode.normal,
+        stillDetection: stillDetection,
+        recordingSince: since,
+      ),
+    );
+  }
+
+  test('recording turned on after the last point does not extend', () async {
+    // 12:00 에 끄며 남긴 끝 표시 점 뒤 15:00 에 다시 켬. 16:00 지도.
+    final c = cubitAt(DateTime(2026, 11, 8, 16));
+    running(stillDetection: false, since: DateTime(2026, 11, 8, 15));
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
+      (_) async => [
+        _still(DateTime(2026, 11, 8, 9, 3), 37.5, 127.0),
+        _p(DateTime(2026, 11, 8, 12), 37.5, 127.0),
+      ],
+    );
+
+    await c.show(day);
+
+    final stay = (c.state as MapViewReady).data.track.stays.single;
+    expect(stay.end.toUtc(), DateTime(2026, 11, 8, 12).toUtc());
+  });
+
+  test('service that was dead (no recordingSince) does not extend', () async {
+    final c = cubitAt(DateTime(2026, 11, 8, 15));
+    running(stillDetection: true, since: null);
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
+      (_) async => [_still(DateTime(2026, 11, 8, 9, 3), 37.5, 127.0)],
+    );
+
+    await c.show(day);
+
+    expect((c.state as MapViewReady).data.track.stays, isEmpty);
+  });
+
+  test('alive since before the last still point extends to now', () async {
+    final c = cubitAt(DateTime(2026, 11, 8, 15));
+    running(stillDetection: true, since: DateTime(2026, 11, 8, 8));
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
+      (_) async => [_still(DateTime(2026, 11, 8, 9, 3), 37.5, 127.0)],
+    );
+
+    await c.show(day);
+
+    final stay = (c.state as MapViewReady).data.track.stays.single;
+    expect(stay.end.toUtc(), DateTime(2026, 11, 8, 15).toUtc());
+  });
+
+  test(
+    'non-still last point is not extended while still detection is on',
+    () async {
+      final c = cubitAt(DateTime(2026, 11, 8, 15));
+      running(stillDetection: true, since: DateTime(2026, 11, 8, 8));
+      when(() => locations.pointsAround(any(), any())).thenAnswer(
+        (_) async => [_p(DateTime(2026, 11, 8, 8, 58), 37.5, 127.0)],
+      );
+
+      await c.show(day);
+
+      expect((c.state as MapViewReady).data.track.stays, isEmpty);
+    },
+  );
 }

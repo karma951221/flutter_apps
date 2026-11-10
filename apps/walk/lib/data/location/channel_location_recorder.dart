@@ -11,7 +11,8 @@ import '../../domain/location/recorder/recorder_status.dart';
 ///
 /// 채널 약속:
 /// - `start`/`setMode` ← `{mode: "normal"|"dense"}`, `stop` → null
-/// - `status` → `{state: "off"|"running"|"blocked", mode, stillDetection: bool}`
+/// - `status` → `{state: "off"|"running"|"blocked", mode, stillDetection: bool,
+///   recordingSince: epoch millis UTC?}` (지금 서비스 인스턴스가 기록을 시작한 시각, 되살렸으면 null)
 /// - `drain` ← `{limit}` → `[{id, t: epoch millis UTC, lat, lng, acc: double?, mode, still}]` (id 오름차순)
 /// - `ack` ← `{upToId}`
 /// - `clearInbox` → null (inbox 의 점을 모두 지운다)
@@ -31,6 +32,13 @@ class ChannelLocationRecorder implements LocationRecorder {
       'running' => RecorderStatus.running(
         mode,
         stillDetection: map?['stillDetection'] == true,
+        recordingSince: switch (map?['recordingSince']) {
+          final num ms => DateTime.fromMillisecondsSinceEpoch(
+            ms.toInt(),
+            isUtc: true,
+          ),
+          _ => null,
+        },
       ),
       'blocked' => RecorderStatus.blocked(mode),
       _ => const RecorderStatus.off(),

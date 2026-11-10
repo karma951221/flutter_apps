@@ -5,6 +5,7 @@ import 'package:injectable/injectable.dart';
 
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/location/entity/day_track.dart';
+import '../../../domain/location/entity/location_point.dart';
 import '../../../domain/location/entity/map_period.dart';
 import '../../../domain/location/entity/stay.dart';
 import '../../../domain/location/entity/track_segment.dart';
@@ -90,14 +91,13 @@ class MapViewCubit extends Cubit<MapViewState> {
       bounds.to.toUtc(),
     );
     final entries = await _diary.locatedEntriesBetween(bounds.from, bounds.to);
-    // 기록 중일 때만 마지막 머문 곳을 지금까지 잇는다 — 꺼져 있던 시간을 머문 곳으로 지어내지 않게.
-    final recording = await _isRecording();
+    final openEnd = await _openEnd(points, now);
 
     var track = TrackAnalyzer().analyze(
       points,
       clipFrom: bounds.from.toUtc(),
       clipTo: bounds.to.toUtc(),
-      openEnd: recording ? now.toUtc() : null,
+      openEnd: openEnd,
     );
     // 자주 간 곳 · 머문 곳은 단순화 전 점으로 구한다 — 단순화는 그리는 선만.
     final frequent = frequentPlaces(track.stays);
@@ -140,14 +140,28 @@ class MapViewCubit extends Cubit<MapViewState> {
     );
   }
 
-  /// 상태를 못 읽으면 기록 중이 아닌 것으로 본다.
-  Future<bool> _isRecording() async {
+  /// 마지막 머문 곳을 지금까지 이을 때만 지금(UTC) — 꺼져 있던 시간을 머문 곳으로 지어내지 않게.
+  /// 기록 중이고, 지금 서비스가 마지막 점 이전부터 끊김 없이 살아 있고, 마지막 점이 정지 감지 점이거나
+  /// 정지 감지가 꺼져 있을 때(꺼져 있으면 가만히 있는 동안 점이 안 남는다). 상태를 못 읽으면 잇지 않는다.
+  Future<DateTime?> _openEnd(List<LocationPoint> points, DateTime now) async {
+    if (points.isEmpty) return null;
+    final RecorderStatus status;
     try {
-      return await _recorder.status() is RecorderRunning;
+      status = await _recorder.status();
     } catch (e, s) {
       debugPrint('map recorder status failed: $e\n$s');
-      return false;
+      return null;
     }
+    if (status case RecorderRunning(
+      :final stillDetection,
+      recordingSince: final since?,
+    )) {
+      final last = points.last;
+      if (last.recordedAt.isBefore(since)) return null;
+      if (!last.stillStart && stillDetection) return null;
+      return now.toUtc();
+    }
+    return null;
   }
 
   /// 오늘 보기: 캐시에 없으면 이름을 묻는다(네트워크). 더 새 읽기가 시작되면 null.

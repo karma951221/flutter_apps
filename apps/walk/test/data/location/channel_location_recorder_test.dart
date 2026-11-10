@@ -47,6 +47,41 @@ void main() {
       );
     });
 
+    test('running 은 recordingSince(epoch millis)를 싣는다', () async {
+      answer(
+        (_) => {
+          'state': 'running',
+          'mode': 'normal',
+          'stillDetection': true,
+          'recordingSince': 1762560000000,
+        },
+      );
+      expect(
+        await recorder.status(),
+        RecorderStatus.running(
+          RecordMode.normal,
+          stillDetection: true,
+          recordingSince: DateTime.fromMillisecondsSinceEpoch(
+            1762560000000,
+            isUtc: true,
+          ),
+        ),
+      );
+    });
+
+    test('recordingSince 가 없으면 null', () async {
+      answer(
+        (_) => {
+          'state': 'running',
+          'mode': 'normal',
+          'stillDetection': true,
+          'recordingSince': null,
+        },
+      );
+      final status = await recorder.status() as RecorderRunning;
+      expect(status.recordingSince, isNull);
+    });
+
     test('blocked', () async {
       answer(
         (_) => {'state': 'blocked', 'mode': 'normal', 'stillDetection': false},

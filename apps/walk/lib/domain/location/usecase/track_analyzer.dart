@@ -75,7 +75,10 @@ class TrackAnalyzer {
       final current = groups.last;
       final groupsBefore = groups.length;
       final pause = next.recordedAt.difference(prev.recordedAt);
-      if (prev.stillStart) {
+      if (prev.stillStart && next.stillStart && next.mode == prev.mode) {
+        // 정지 감지 점 사이(심장박동)는 늘 잇는다 — 네이티브가 정확도 여유로 같은 자리라 봤다.
+        current.points.add(next);
+      } else if (prev.stillStart) {
         final ref = anchor ?? prev;
         final far =
             haversineMeters(ref.lat, ref.lng, next.lat, next.lng) > stayRadiusM;
@@ -114,22 +117,29 @@ class TrackAnalyzer {
     return groups;
   }
 
-  /// 앞 점에서 반경 안에 머무는 최장 연속이 최소 시간 이상이면 머문 곳.
+  /// 앞 점에서 반경 안에 머무는 최장 연속이 최소 시간 이상이면 머문 곳. 정지 감지 점이 든
+  /// 연속은 뒤이은 정지 감지 점(심장박동)을 거리와 상관없이 품는다. 정지 감지 점 바로 뒤에서
+  /// 끊기면 머문 곳은 다음 점 직전까지다.
   List<Stay> _stays(_Group g) {
     final pts = g.points;
     final result = <Stay>[];
     var i = 0;
     while (i < pts.length) {
       var j = i + 1;
+      var hasStill = pts[i].stillStart;
       while (j < pts.length &&
-          haversineMeters(pts[i].lat, pts[i].lng, pts[j].lat, pts[j].lng) <=
-              stayRadiusM) {
+          ((hasStill && pts[j].stillStart) ||
+              haversineMeters(pts[i].lat, pts[i].lng, pts[j].lat, pts[j].lng) <=
+                  stayRadiusM)) {
+        if (pts[j].stillStart) hasStill = true;
         j++;
       }
       final isLast = j == pts.length;
       final start = pts[i].recordedAt;
       final end = isLast && g.endOverride != null
           ? g.endOverride!
+          : !isLast && pts[j - 1].stillStart
+          ? pts[j].recordedAt.subtract(_oneMs)
           : pts[j - 1].recordedAt;
       if (end.difference(start) >= stayMinDuration) {
         final run = pts.sublist(i, j);
