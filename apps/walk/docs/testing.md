@@ -469,6 +469,8 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | L21 | 신체 활동 권한을 거부한 채(정지 감지 꺼짐) 출근해 사무실에 하루(08:58~18:01) 있다가 퇴근 | 지도 오늘 보기에 사무실이 머문 곳 하나(약 9시간)로 보인다 | 대기 |
 | L22 | 기록을 켜 점이 쌓인 뒤 백업 제외 확인(루트 가능한 에뮬레이터): `adb shell bmgr enable true` → `adb shell bmgr transport com.android.localtransport/.LocalTransport` → `adb shell bmgr backupnow com.karma.walk` → `adb shell ls -R /data/cache/backup` 로 백업 묶음의 파일 목록 확인 | 백업 묶음에 `app_flutter/location.sqlite*` · `databases/location_inbox.db*` · `shared_prefs/location_record.xml` 이 없다(일기 DB 등 다른 파일은 있다) | 대기 |
 | L23 | 밤새 집에서 정지(19시쯤) → 다음 날 07:30 출근 → 낮에 지도 › 오늘 · 어제 | 어제는 19시~자정, 오늘은 자정~07:29 까지 집이 머문 곳으로 보인다. 사무실에 아직 있으면 오늘 시트에 "지금까지"로 이어진 사무실이 보인다 | 대기 |
+| L24 | 평소 모드로 책상에 STILL(10분+) 둔 뒤 지도 › 위치 기록 끄기(또는 알림 [끄기]) → 1시간 뒤 지도 › 오늘 | 머문 곳이 끈 시각에서 끝나고 지금까지 늘어나지 않는다. 다음 수거에 끈 시각의 점이 하나 들어온다(`still = 0`, 마지막 점 자리) | 대기 |
+| L25 | 금요일 저녁 집에서 기록을 끄고 주말 동안 꺼 둔 채 월요일 아침 집에서 다시 켬 → 지도 › 토요일 · 일요일 | 토 · 일에 머문 곳이 없다(꺼 둔 시간을 집 머묾으로 짓지 않음). 금요일은 끈 시각까지 | 대기 |
 
 ## 통근 기기 시나리오 — 대기
 
