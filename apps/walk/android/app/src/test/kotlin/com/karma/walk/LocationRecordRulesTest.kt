@@ -165,11 +165,31 @@ class LocationRecordRulesTest {
     }
 
     @Test
-    fun `watchdog resumes only beyond 100m from the still point`() {
-        assertFalse(LocationRecordRules.watchdogShouldResume(0.0))
-        assertFalse(LocationRecordRules.watchdogShouldResume(100.0))
-        assertTrue(LocationRecordRules.watchdogShouldResume(100.1))
-        assertTrue(LocationRecordRules.watchdogShouldResume(2_000.0))
+    fun `watchdog with unknown accuracy resumes only beyond 100m`() {
+        assertFalse(LocationRecordRules.watchdogShouldResume(0f, null, null))
+        assertFalse(LocationRecordRules.watchdogShouldResume(100f, null, null))
+        assertTrue(LocationRecordRules.watchdogShouldResume(100.1f, null, null))
+        assertTrue(LocationRecordRules.watchdogShouldResume(2_000f, null, null))
+    }
+
+    @Test
+    fun `watchdog resumes on an accurate far fix`() {
+        assertTrue(LocationRecordRules.watchdogShouldResume(300f, 20f, 15f))
+    }
+
+    @Test
+    fun `watchdog ignores a far fix whose accuracy covers the distance`() {
+        assertFalse(LocationRecordRules.watchdogShouldResume(300f, 500f, null))
+        assertFalse(LocationRecordRules.watchdogShouldResume(300f, 150f, 50f))
+        assertTrue(LocationRecordRules.watchdogShouldResume(300.1f, 150f, 50f))
+    }
+
+    @Test
+    fun `still resume fix within 100m means still there`() {
+        assertTrue(LocationRecordRules.stillResumeIsStillThere(0f))
+        assertTrue(LocationRecordRules.stillResumeIsStillThere(100f))
+        assertFalse(LocationRecordRules.stillResumeIsStillThere(100.1f))
+        assertFalse(LocationRecordRules.stillResumeIsStillThere(2_000f))
     }
 
     @Test

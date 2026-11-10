@@ -40,10 +40,21 @@ object LocationRecordRules {
      */
     val watchdogRequest = Request(PRIORITY_PASSIVE, 900_000L, 0f, 0L)
 
-    /** 감시 위치가 정지 시작 점에서 이만큼 넘게 떨어지면 STILL 이탈로 본다. */
-    const val WATCHDOG_RESUME_DISTANCE_M = 100.0
+    /** 정지 점에서 이만큼까지는 같은 자리로 본다(Dart `TrackAnalyzer.stayRadiusM` 과 같다). */
+    const val STILL_RADIUS_M = 100f
 
-    fun watchdogShouldResume(distanceM: Double): Boolean = distanceM > WATCHDOG_RESUME_DISTANCE_M
+    /**
+     * 감시 위치가 정지 점에서 100m + 두 점의 정확도(모르면 0)보다 멀면 STILL 이탈일 수 있다. passive
+     * 위치는 기지국 · 와이파이로 수백 m 튈 수 있어 정확도만큼은 봐준다. 확인은 [stillResumeIsStillThere].
+     */
+    fun watchdogShouldResume(distanceM: Float, accuracyM: Float?, anchorAccuracyM: Float?): Boolean =
+        distanceM > STILL_RADIUS_M + (accuracyM ?: 0f) + (anchorAccuracyM ?: 0f)
+
+    /**
+     * 정지를 끝내려 할 때(감시가 움직임을 봤거나 정지가 6시간을 넘김) 새로 잡은 점이 정지 점에서 100m
+     * 안이면 아직 그 자리 — `still` 점(심장박동)으로 남기고 정지를 이어 간다.
+     */
+    fun stillResumeIsStillThere(distanceM: Float): Boolean = distanceM <= STILL_RADIUS_M
 
     /** 정지가 이보다 길면 다음 `status`(앱이 앞에 올 때) 에 위치 요청을 다시 건다. */
     const val STILL_MAX_MS = 6 * 60 * 60_000L
