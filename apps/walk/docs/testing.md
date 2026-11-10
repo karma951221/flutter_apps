@@ -465,6 +465,10 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | L17 | 일기 탭 ⋮ › 앱 설정 › 지도 설정(잠금 켜 둠) | 잠금을 묻고, 풀면 지도 설정이 열린다(오류 없음) | 대기 |
 | L18 | 스토리 페이지(또는 검색 · 모아 보기)에서 뷰어 → ⋮ › 지도로 보기 | 뷰어와 그 아래 화면이 걷히고 도구 › 지도에 그 스토리 기간이 보인다 | 대기 |
 | L19 | 기록을 처음 켠 직후 · 앱을 닫아 둔 사이 쌓인 점이 있을 때 지도를 처음 연다 | 열자마자(로딩 표시 뒤) inbox 의 점까지 보인다 | 대기 |
+| L20 | 평소 모드로 책상에 STILL(10분+) 둔 채 실내에서 몇 시간 — 다른 앱이 위치를 받아 감시 위치가 튀는 환경 | 정확도가 나쁜 감시 위치로는 정지가 풀리지 않는다. 풀릴 후보가 와도 확인 점이 100m 안이면 `adb logcat -s LocationRecord` 에 "still there, keeping still" — 지도에 머문 곳 하나가 끊기지 않는다 | 대기 |
+| L21 | 신체 활동 권한을 거부한 채(정지 감지 꺼짐) 출근해 사무실에 하루(08:58~18:01) 있다가 퇴근 | 지도 오늘 보기에 사무실이 머문 곳 하나(약 9시간)로 보인다 | 대기 |
+| L22 | 기록을 켜 점이 쌓인 뒤 백업 제외 확인(루트 가능한 에뮬레이터): `adb shell bmgr enable true` → `adb shell bmgr transport com.android.localtransport/.LocalTransport` → `adb shell bmgr backupnow com.karma.walk` → `adb shell ls -R /data/cache/backup` 로 백업 묶음의 파일 목록 확인 | 백업 묶음에 `app_flutter/location.sqlite*` · `databases/location_inbox.db*` · `shared_prefs/location_record.xml` 이 없다(일기 DB 등 다른 파일은 있다) | 대기 |
+| L23 | 밤새 집에서 정지(19시쯤) → 다음 날 07:30 출근 → 낮에 지도 › 오늘 · 어제 | 어제는 19시~자정, 오늘은 자정~07:29 까지 집이 머문 곳으로 보인다. 사무실에 아직 있으면 오늘 시트에 "지금까지"로 이어진 사무실이 보인다 | 대기 |
 
 ## 통근 기기 시나리오 — 대기
 
