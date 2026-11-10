@@ -9,6 +9,8 @@ import '../../../domain/location/entity/map_period.dart';
 import '../../../domain/location/entity/stay.dart';
 import '../../../domain/location/entity/track_segment.dart';
 import '../../../domain/location/geo/geo_math.dart';
+import '../../../domain/location/recorder/location_recorder.dart';
+import '../../../domain/location/recorder/recorder_status.dart';
 import '../../../domain/location/repository/location_repository.dart';
 import '../../../domain/location/usecase/frequent_places.dart';
 import '../../../domain/location/usecase/location_sync.dart';
@@ -25,6 +27,7 @@ class MapViewCubit extends Cubit<MapViewState> {
     this._diary,
     this._sync,
     this._namer,
+    this._recorder,
     this._clock,
   ) : super(MapViewState.loading(MapPeriod.day(_clock.now())));
 
@@ -38,6 +41,7 @@ class MapViewCubit extends Cubit<MapViewState> {
   final DiaryRepository _diary;
   final LocationSync _sync;
   final StayNamer _namer;
+  final LocationRecorder _recorder;
   final Clock _clock;
 
   MapPeriod? _period;
@@ -86,12 +90,14 @@ class MapViewCubit extends Cubit<MapViewState> {
       bounds.to.toUtc(),
     );
     final entries = await _diary.locatedEntriesBetween(bounds.from, bounds.to);
+    // 기록 중일 때만 마지막 머문 곳을 지금까지 잇는다 — 꺼져 있던 시간을 머문 곳으로 지어내지 않게.
+    final recording = await _isRecording();
 
     var track = TrackAnalyzer().analyze(
       points,
       clipFrom: bounds.from.toUtc(),
       clipTo: bounds.to.toUtc(),
-      openEnd: now.toUtc(),
+      openEnd: recording ? now.toUtc() : null,
     );
     // 자주 간 곳 · 머문 곳은 단순화 전 점으로 구한다 — 단순화는 그리는 선만.
     final frequent = frequentPlaces(track.stays);
@@ -132,6 +138,16 @@ class MapViewCubit extends Cubit<MapViewState> {
         stayNames: names,
       ),
     );
+  }
+
+  /// 상태를 못 읽으면 기록 중이 아닌 것으로 본다.
+  Future<bool> _isRecording() async {
+    try {
+      return await _recorder.status() is RecorderRunning;
+    } catch (e, s) {
+      debugPrint('map recorder status failed: $e\n$s');
+      return false;
+    }
   }
 
   /// 오늘 보기: 캐시에 없으면 이름을 묻는다(네트워크). 더 새 읽기가 시작되면 null.

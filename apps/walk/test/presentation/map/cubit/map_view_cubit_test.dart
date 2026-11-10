@@ -10,6 +10,8 @@ import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/location/entity/location_point.dart';
 import 'package:walk/domain/location/entity/map_period.dart';
 import 'package:walk/domain/location/entity/record_mode.dart';
+import 'package:walk/domain/location/recorder/location_recorder.dart';
+import 'package:walk/domain/location/recorder/recorder_status.dart';
 import 'package:walk/domain/location/repository/location_repository.dart';
 import 'package:walk/domain/location/usecase/location_sync.dart';
 import 'package:walk/domain/location/usecase/stay_namer.dart';
@@ -23,6 +25,8 @@ class _MockDiary extends Mock implements DiaryRepository {}
 class _MockSync extends Mock implements LocationSync {}
 
 class _MockNamer extends Mock implements StayNamer {}
+
+class _MockRecorder extends Mock implements LocationRecorder {}
 
 class _ClockAt extends Clock {
   const _ClockAt(this.at);
@@ -66,6 +70,7 @@ void main() {
   late _MockDiary diary;
   late _MockSync sync;
   late _MockNamer namer;
+  late _MockRecorder recorder;
   late MapViewCubit cubit;
   final day = MapPeriod.day(DateTime(2026, 11, 8));
   final at = DateTime(2026, 11, 8, 9);
@@ -100,6 +105,10 @@ void main() {
     diary = _MockDiary();
     sync = _MockSync();
     namer = _MockNamer();
+    recorder = _MockRecorder();
+    when(
+      () => recorder.status(),
+    ).thenAnswer((_) async => const RecorderStatus.off());
     when(
       () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => []);
@@ -107,9 +116,30 @@ void main() {
     when(() => sync.run()).thenAnswer((_) async => 0);
     when(() => namer.nameFor(any(), any())).thenAnswer((_) async => '집');
     when(() => locations.placeName(any())).thenAnswer((_) async => null);
-    cubit = MapViewCubit(locations, diary, sync, namer, const _FixedClock());
+    cubit = MapViewCubit(
+      locations,
+      diary,
+      sync,
+      namer,
+      recorder,
+      const _FixedClock(),
+    );
   });
   tearDown(() => cubit.close());
+
+  /// 시계가 [now] 인 cubit.
+  MapViewCubit cubitAt(DateTime now) {
+    final c = MapViewCubit(
+      locations,
+      diary,
+      sync,
+      namer,
+      recorder,
+      _ClockAt(now),
+    );
+    addTearDown(c.close);
+    return c;
+  }
 
   test('show day loads points, stays and located entries', () async {
     when(() => locations.pointsAround(any(), any())).thenAnswer(
@@ -410,14 +440,11 @@ void main() {
   });
 
   test('ongoing still stay shows up to now', () async {
-    final at15 = MapViewCubit(
-      locations,
-      diary,
-      sync,
-      namer,
-      _ClockAt(DateTime(2026, 11, 8, 15)),
+    final at15 = cubitAt(DateTime(2026, 11, 8, 15));
+    when(() => recorder.status()).thenAnswer(
+      (_) async =>
+          const RecorderStatus.running(RecordMode.normal, stillDetection: true),
     );
-    addTearDown(at15.close);
     when(() => locations.pointsAround(any(), any())).thenAnswer(
       (_) async => [_still(DateTime(2026, 11, 8, 9, 3), 37.5, 127.0)],
     );
@@ -426,6 +453,52 @@ void main() {
 
     final stay = (at15.state as MapViewReady).data.track.stays.single;
     expect(stay.start.toUtc(), DateTime(2026, 11, 8, 9, 3).toUtc());
+    expect(stay.end.toUtc(), DateTime(2026, 11, 8, 15).toUtc());
+  });
+
+  test('recorder off does not extend a trailing still stay', () async {
+    final at15 = cubitAt(DateTime(2026, 11, 8, 15));
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
+      (_) async => [_still(DateTime(2026, 11, 8, 9, 3), 37.5, 127.0)],
+    );
+
+    await at15.show(day);
+
+    expect(at15.state, isA<MapViewReady>());
+    expect((at15.state as MapViewReady).data.track.stays, isEmpty);
+  });
+
+  test('recorder status error counts as not running', () async {
+    final at15 = cubitAt(DateTime(2026, 11, 8, 15));
+    when(() => recorder.status()).thenThrow(Exception('channel'));
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
+      (_) async => [_still(DateTime(2026, 11, 8, 9, 3), 37.5, 127.0)],
+    );
+
+    await at15.show(day);
+
+    expect((at15.state as MapViewReady).data.track.stays, isEmpty);
+  });
+
+  test('AR-denied office stay extends to now only while recording', () async {
+    when(
+      () => locations.pointsAround(any(), any()),
+    ).thenAnswer((_) async => [_p(DateTime(2026, 11, 8, 8, 58), 37.5, 127.0)]);
+
+    final off = cubitAt(DateTime(2026, 11, 8, 15));
+    await off.show(day);
+    expect((off.state as MapViewReady).data.track.stays, isEmpty);
+
+    when(() => recorder.status()).thenAnswer(
+      (_) async => const RecorderStatus.running(
+        RecordMode.normal,
+        stillDetection: false,
+      ),
+    );
+    final running = cubitAt(DateTime(2026, 11, 8, 15));
+    await running.show(day);
+    final stay = (running.state as MapViewReady).data.track.stays.single;
+    expect(stay.start.toUtc(), DateTime(2026, 11, 8, 8, 58).toUtc());
     expect(stay.end.toUtc(), DateTime(2026, 11, 8, 15).toUtc());
   });
 }

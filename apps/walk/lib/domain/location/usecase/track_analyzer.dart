@@ -10,11 +10,16 @@ class TrackAnalyzer {
   static const stayMinDuration = Duration(minutes: 10);
   static const gap = Duration(minutes: 30);
 
+  /// 정지 감지 점 없이 같은 자리 공백을 머문 것으로 잇는 최대 길이. 더 길면 기록이 꺼져 있던
+  /// 것일 수 있어 끊는다(정지 감지 점 뒤는 제한 없음).
+  static const sameSpotMaxGap = Duration(hours: 12);
+
   static const _oneMs = Duration(milliseconds: 1);
 
   /// [clipFrom] · [clipTo] 가 있으면 그 안으로 머문 곳을 자르고 구간 점도 거른다.
-  /// [openEnd](보통 지금)가 있고 마지막 점이 정지 감지 점이면 아직 이어지는 머문 곳으로 보고
-  /// `min(openEnd, clipTo)` 에 닫는다.
+  /// [openEnd](기록 중일 때의 지금)가 마지막 점보다 뒤면 마지막 머문 곳이 아직 이어지는 것으로 보고
+  /// [openEnd] 에 닫는다 — 마지막 점이 정지 감지 점이면 언제나, 아니면 그 점이 창 안이고
+  /// [sameSpotMaxGap] 안일 때만. 창 밖은 자르기가 다듬는다.
   DayTrack analyze(
     List<LocationPoint> points, {
     DateTime? clipFrom,
@@ -26,10 +31,15 @@ class TrackAnalyzer {
       ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
 
     final groups = _split(sorted);
-    if (openEnd != null && sorted.last.stillStart) {
-      groups.last.endOverride = clipTo != null && clipTo.isBefore(openEnd)
-          ? clipTo
-          : openEnd;
+    final last = sorted.last.recordedAt;
+    if (openEnd != null && openEnd.isAfter(last)) {
+      final inWindow =
+          (clipFrom == null || !last.isBefore(clipFrom)) &&
+          (clipTo == null || !last.isAfter(clipTo));
+      if (sorted.last.stillStart ||
+          (inWindow && openEnd.difference(last) <= sameSpotMaxGap)) {
+        groups.last.endOverride = openEnd;
+      }
     }
     final stays = <Stay>[];
     final segments = <TrackSegment>[];
@@ -56,13 +66,19 @@ class TrackAnalyzer {
     final groups = <_Group>[
       _Group([sorted.first]),
     ];
+    // 정지 감지 점으로 시작한 머묾의 기준 점. 심장박동(이어진 정지 감지 점)도 이 점과 잰다 —
+    // 네이티브가 정지 점과 재는 것과 같게.
+    var anchor = sorted.first.stillStart ? sorted.first : null;
     for (var i = 1; i < sorted.length; i++) {
       final prev = sorted[i - 1];
       final next = sorted[i];
       final current = groups.last;
-      final far =
-          haversineMeters(prev.lat, prev.lng, next.lat, next.lng) > stayRadiusM;
+      final groupsBefore = groups.length;
+      final pause = next.recordedAt.difference(prev.recordedAt);
       if (prev.stillStart) {
+        final ref = anchor ?? prev;
+        final far =
+            haversineMeters(ref.lat, ref.lng, next.lat, next.lng) > stayRadiusM;
         if (!far && next.mode == prev.mode) {
           current.points.add(next); // 정지 중 공백 — 같은 자리에 머문 것
         } else {
@@ -71,14 +87,28 @@ class TrackAnalyzer {
           current.endOverride = next.recordedAt.subtract(_oneMs);
           groups.add(_Group([next]));
         }
-      } else if (next.mode != prev.mode) {
-        groups.add(_Group([next]));
-      } else if (far && next.recordedAt.difference(prev.recordedAt) > gap) {
-        groups.add(_Group([next]));
       } else {
-        // 긴 공백이어도 같은 자리면 머문 것 — 정지 감지가 꺼져 있으면(활동 인식 거부 ·
-        // 정밀 모드) 최소 이동 거리 때문에 가만히 있는 동안 점이 안 남는다.
-        current.points.add(next);
+        final far =
+            haversineMeters(prev.lat, prev.lng, next.lat, next.lng) >
+            stayRadiusM;
+        if (next.mode != prev.mode) {
+          // 같은 자리에서 모드만 바뀌었으면 머문 곳을 그 점 직전까지로 닫는다.
+          if (!far && pause <= sameSpotMaxGap) {
+            current.endOverride = next.recordedAt.subtract(_oneMs);
+          }
+          groups.add(_Group([next]));
+        } else if (far ? pause > gap : pause > sameSpotMaxGap) {
+          groups.add(_Group([next]));
+        } else {
+          // 긴 공백이어도 같은 자리면(12시간까지) 머문 것 — 정지 감지가 꺼져 있으면(활동 인식
+          // 거부 · 정밀 모드) 최소 이동 거리 때문에 가만히 있는 동안 점이 안 남는다.
+          current.points.add(next);
+        }
+      }
+      if (!next.stillStart) {
+        anchor = null;
+      } else if (anchor == null || groups.length != groupsBefore) {
+        anchor = next;
       }
     }
     return groups;

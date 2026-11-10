@@ -444,6 +444,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i122.DiaryRepository>(),
         gh<_i638.LocationSync>(),
         gh<_i673.StayNamer>(),
+        gh<_i993.LocationRecorder>(),
         gh<_i494.Clock>(),
       ),
     );

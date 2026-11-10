@@ -249,4 +249,108 @@ void main() {
       RecordMode.dense,
     ]);
   });
+
+  // ── 2차 리뷰 ──
+
+  test('same-spot gap over 12 hours without stillStart splits', () {
+    final points = [
+      _p(DateTime.utc(2026, 11, 6, 19)), // 금 19:00 기록 끔
+      _p(DateTime.utc(2026, 11, 9, 8), lat: 37.5664), // 월 08:00 다시 켬
+    ];
+    expect(analyzer.analyze(points).stays, isEmpty);
+    final saturday = analyzer.analyze(
+      points,
+      clipFrom: DateTime.utc(2026, 11, 7),
+      clipTo: DateTime.utc(2026, 11, 7, 23, 59, 59, 999),
+    );
+    expect(saturday.stays, isEmpty);
+  });
+
+  test('same-spot gap of exactly 12 hours still joins', () {
+    final t = analyzer.analyze([
+      _p(DateTime.utc(2026, 11, 8, 8)),
+      _p(DateTime.utc(2026, 11, 8, 20), lat: 37.5664),
+    ]);
+    expect(t.stays.single.end, DateTime.utc(2026, 11, 8, 20));
+  });
+
+  test('stillStart same-spot join has no upper bound', () {
+    final t = analyzer.analyze([
+      _p(DateTime.utc(2026, 11, 6, 19), still: true),
+      _p(DateTime.utc(2026, 11, 9, 8), lat: 37.5664),
+    ]);
+    expect(t.stays.single.start, DateTime.utc(2026, 11, 6, 19));
+    expect(t.stays.single.end, DateTime.utc(2026, 11, 9, 8));
+  });
+
+  test('ongoing stay without stillStart extends to openEnd', () {
+    final t = analyzer.analyze(
+      [_p(DateTime.utc(2026, 11, 8, 8, 58))],
+      clipFrom: DateTime.utc(2026, 11, 8),
+      clipTo: DateTime.utc(2026, 11, 8, 23, 59, 59, 999),
+      openEnd: DateTime.utc(2026, 11, 8, 15),
+    );
+    expect(t.stays.single.start, DateTime.utc(2026, 11, 8, 8, 58));
+    expect(t.stays.single.end, DateTime.utc(2026, 11, 8, 15));
+  });
+
+  test('ongoing stay without stillStart is not extended past 12 hours', () {
+    final t = analyzer.analyze(
+      [_p(DateTime.utc(2026, 11, 8, 8, 58))],
+      clipFrom: DateTime.utc(2026, 11, 8),
+      clipTo: DateTime.utc(2026, 11, 8, 23, 59, 59, 999),
+      openEnd: DateTime.utc(2026, 11, 8, 21),
+    );
+    expect(t.stays, isEmpty);
+  });
+
+  test('non-still last point outside the window is not extended', () {
+    final t = analyzer.analyze(
+      [_p(DateTime.utc(2026, 11, 7, 20))], // 어제 20:00 — 창 앞 이웃
+      clipFrom: DateTime.utc(2026, 11, 8),
+      clipTo: DateTime.utc(2026, 11, 8, 23, 59, 59, 999),
+      openEnd: DateTime.utc(2026, 11, 8, 7),
+    );
+    expect(t.stays, isEmpty);
+  });
+
+  test('mode change at the same spot without stillStart closes the stay', () {
+    final t = analyzer.analyze([
+      _p(DateTime.utc(2026, 11, 8, 8, 58)),
+      _p(DateTime.utc(2026, 11, 8, 12), lat: 37.5664, mode: RecordMode.dense),
+    ]);
+    expect(t.stays.single.start, DateTime.utc(2026, 11, 8, 8, 58));
+    expect(t.stays.single.end, DateTime.utc(2026, 11, 8, 11, 59, 59, 999));
+    expect(t.segments.map((s) => s.mode), [
+      RecordMode.normal,
+      RecordMode.dense,
+    ]);
+  });
+
+  test('stillStart after-neighbour extends to openEnd and is clipped', () {
+    // 어제 보기: 창 안 P 23:55, 창 뒤 이웃 S 00:10(정지 감지). 그 뒤 점은 pointsAround 에 없다.
+    final t = analyzer.analyze(
+      [
+        _p(DateTime.utc(2026, 11, 8, 23, 55)),
+        _p(DateTime.utc(2026, 11, 9, 0, 10), lat: 37.5664, still: true),
+      ],
+      clipFrom: DateTime.utc(2026, 11, 8),
+      clipTo: DateTime.utc(2026, 11, 8, 23, 59, 59, 999),
+      openEnd: DateTime.utc(2026, 11, 9, 15),
+    );
+    expect(t.stays.single.start, DateTime.utc(2026, 11, 8, 23, 55));
+    expect(t.stays.single.end, DateTime.utc(2026, 11, 8, 23, 59, 59, 999));
+  });
+
+  test('heartbeats are measured against the still anchor, not prev', () {
+    // 정지 점에서 동쪽 약 88m · 서쪽 약 88m — 둘 사이는 약 176m.
+    final t = analyzer.analyze([
+      _p(DateTime.utc(2026, 11, 8, 9), still: true),
+      _p(DateTime.utc(2026, 11, 8, 12), lng: 126.9779 + 0.001, still: true),
+      _p(DateTime.utc(2026, 11, 8, 15), lng: 126.9779 - 0.001, still: true),
+      _p(DateTime.utc(2026, 11, 8, 18), lat: 37.5663 + 0.018),
+    ]);
+    expect(t.stays.single.start, DateTime.utc(2026, 11, 8, 9));
+    expect(t.stays.single.end, DateTime.utc(2026, 11, 8, 17, 59, 59, 999));
+  });
 }
