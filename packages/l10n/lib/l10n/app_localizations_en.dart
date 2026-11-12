@@ -3961,6 +3961,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatTurnDelete => 'Delete this question and answer';
 
   @override
+  String get walkChatSaveToFile => 'Save as file';
+
+  @override
+  String get walkChatSavedToWorkspace => 'Saved to the workspace';
+
+  @override
+  String get walkChatSaveFailed => 'Couldn\'t save';
+
+  @override
   String get walkChatTurnDeleteTitle => 'Delete this question and answer?';
 
   @override

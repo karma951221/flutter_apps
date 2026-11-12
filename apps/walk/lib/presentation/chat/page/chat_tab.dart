@@ -887,7 +887,7 @@ class _BubbleItem extends StatelessWidget {
   }
 
   /// 말풍선 길게 누르기 → 시트. [위키에 추가]는 그 턴으로 편집 화면을 연다(요청 없음),
-  /// [지우기]는 확인 뒤에 그 턴(질문 · 답)을 지운다.
+  /// [파일로 저장]은 답을 작업 폴더에 쓴다, [지우기]는 확인 뒤에 그 턴(질문 · 답)을 지운다.
   Future<void> _actions(BuildContext context, ChatBubble bubble) async {
     final cubit = context.read<ChatCubit>();
     final role = bubble.role;
@@ -895,9 +895,27 @@ class _BubbleItem extends StatelessWidget {
         !cubit.state.temporary &&
         bubble.failure == null &&
         bubble.text.trim().isNotEmpty;
-    final action = await showBubbleActions(context, canAddToWiki: canAddToWiki);
+    final canSaveToFile =
+        role == ChatRole.assistant &&
+        bubble.failure == null &&
+        bubble.text.trim().isNotEmpty;
+    final action = await showBubbleActions(
+      context,
+      canAddToWiki: canAddToWiki,
+      canSaveToFile: canSaveToFile,
+    );
     if (action == null || !context.mounted) return;
     switch (action) {
+      case BubbleAction.saveToFile:
+        final l10n = AppLocalizations.of(context);
+        final path = await cubit.saveAnswer(index);
+        if (!context.mounted) return;
+        AppSnackBar.show(
+          context,
+          message: path == null
+              ? l10n.walkChatSaveFailed
+              : l10n.walkChatSavedToWorkspace,
+        );
       case BubbleAction.addToWiki:
         await openWikiEditor(context, _seed(cubit.state, bubble));
       case BubbleAction.deleteTurn:

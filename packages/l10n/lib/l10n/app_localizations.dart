@@ -6714,6 +6714,24 @@ abstract class AppLocalizations {
   /// **'이 질문과 답 지우기'**
   String get walkChatTurnDelete;
 
+  /// 물어보기: 말풍선 길게 누르기 시트 — 답을 작업 폴더에 파일로 저장
+  ///
+  /// In ko, this message translates to:
+  /// **'파일로 저장'**
+  String get walkChatSaveToFile;
+
+  /// 물어보기: 답을 작업 폴더에 저장한 뒤 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'작업 폴더에 저장했어요'**
+  String get walkChatSavedToWorkspace;
+
+  /// 물어보기: 답 파일 저장 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 못했어요'**
+  String get walkChatSaveFailed;
+
   /// 물어보기: 턴 지우기 확인 제목
   ///
   /// In ko, this message translates to:

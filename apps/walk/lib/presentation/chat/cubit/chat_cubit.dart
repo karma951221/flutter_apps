@@ -5,6 +5,7 @@ import 'package:core/core.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../domain/chat/attachment/answer_file.dart';
 import '../../../domain/chat/attachment/attachment_loader.dart';
 import '../../../domain/chat/attachment/attachment_rules.dart';
 import '../../../domain/chat/attachment/chat_attachment.dart';
@@ -598,6 +599,38 @@ class ChatCubit extends Cubit<ChatState> {
     }
     if (isClosed || !identical(thread, _thread)) return;
     await _load(conversationId, thread);
+  }
+
+  /// [assistantIndex] 의 답을 작업 폴더 out/ 에 `.md` 로 저장하고 상대 경로를 돌려준다.
+  /// 글이 없는 말풍선 · 실패 · 쓰기 오류면 null. 임시 대화에서도 저장한다(사용자가 직접 고른 동작).
+  /// 모델은 마지막으로 묻은 턴의 모델(없으면 지금 고른 모델) — 열어 본 옛 대화는 정확하지 않을 수 있다.
+  Future<String?> saveAnswer(int assistantIndex) async {
+    final answer = _bubbleAt(assistantIndex);
+    if (answer == null ||
+        answer.role != ChatRole.assistant ||
+        answer.failure != null ||
+        answer.text.trim().isEmpty) {
+      return null;
+    }
+    final question = _bubbleAt(assistantIndex - 1);
+    final questionText = question?.role == ChatRole.user ? question!.text : '';
+    final at = _clock.now();
+    try {
+      return await _workspace.writeOut(
+        AnswerFile.fileName(at, questionText),
+        AnswerFile.markdown(
+          question: questionText,
+          answer: answer.text,
+          model: _turnTarget?.model ?? _session.target?.model ?? '',
+          at: at,
+          attachmentNames: [
+            for (final a in question?.attachments ?? const []) a.name,
+          ],
+        ),
+      );
+    } on Object {
+      return null;
+    }
   }
 
   /// [userIndex] 의 질문과 그 답 말풍선을 지운다. 답하는 중이면 무시한다.

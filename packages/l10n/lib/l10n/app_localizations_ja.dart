@@ -3636,6 +3636,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatTurnDelete => 'この質問と回答を削除';
 
   @override
+  String get walkChatSaveToFile => 'ファイルに保存';
+
+  @override
+  String get walkChatSavedToWorkspace => '作業フォルダに保存しました';
+
+  @override
+  String get walkChatSaveFailed => '保存できませんでした';
+
+  @override
   String get walkChatTurnDeleteTitle => 'この質問と回答を削除しますか？';
 
   @override

@@ -34,6 +34,7 @@ class _MockHistory extends Mock implements ChatHistoryRepository {}
 /// inbox 에 넣은 (이름, 바이트)를 적는다. [fail] 이면 던진다.
 class _FakeWorkspace implements Workspace {
   final imported = <(String, Uint8List)>[];
+  final written = <(String, String)>[];
   bool fail = false;
 
   /// 있으면 넣기 전에 기다린다(넣는 사이 대화를 바꾸는 테스트).
@@ -45,6 +46,13 @@ class _FakeWorkspace implements Workspace {
     if (fail) throw const FileSystemExceptionLike();
     imported.add((name, bytes));
     return 'inbox/20261113-120000-$name';
+  }
+
+  @override
+  Future<String> writeOut(String fileName, String content) async {
+    if (fail) throw const FileSystemExceptionLike();
+    written.add((fileName, content));
+    return 'out/$fileName';
   }
 
   @override
@@ -303,6 +311,38 @@ void main() {
         'c.jpg',
       ]);
       expect(cubit.state.canAttach, isTrue);
+    });
+  });
+
+  group('saveAnswer', () {
+    test('답을 질문 · 모델 · 첨부와 함께 out 에 쓰고 상대 경로를 돌려준다', () async {
+      await cubit.addFiles([_picked('a.pdf')]);
+      await finish(cubit.send('봐 줘'));
+
+      final path = await cubit.saveAnswer(1);
+
+      final (name, content) = workspace.written.single;
+      expect(name, matches(RegExp(r'^\d{8}-\d{4}-봐-줘\.md$')));
+      expect(path, 'out/$name');
+      expect(content, startsWith('# 봐 줘\n'));
+      expect(content, contains('- 모델: claude-x\n'));
+      expect(content, contains('- 첨부: a.pdf\n'));
+      expect(content, endsWith('---\n\n봤어요\n'));
+    });
+
+    test('질문 말풍선이나 없는 자리는 null — 쓰지 않는다', () async {
+      await finish(cubit.send('봐 줘'));
+
+      expect(await cubit.saveAnswer(0), isNull);
+      expect(await cubit.saveAnswer(5), isNull);
+      expect(workspace.written, isEmpty);
+    });
+
+    test('쓰기가 던지면 null', () async {
+      await finish(cubit.send('봐 줘'));
+      workspace.fail = true;
+
+      expect(await cubit.saveAnswer(1), isNull);
     });
   });
 

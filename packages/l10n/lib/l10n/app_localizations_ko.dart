@@ -3638,6 +3638,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatTurnDelete => '이 질문과 답 지우기';
 
   @override
+  String get walkChatSaveToFile => '파일로 저장';
+
+  @override
+  String get walkChatSavedToWorkspace => '작업 폴더에 저장했어요';
+
+  @override
+  String get walkChatSaveFailed => '저장하지 못했어요';
+
+  @override
   String get walkChatTurnDeleteTitle => '이 질문과 답을 지울까요?';
 
   @override
