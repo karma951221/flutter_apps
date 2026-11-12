@@ -47,6 +47,7 @@ import '../../data/chat/openai_chat_model.dart' as _i442;
 import '../../data/chat/prefs_chat_history_settings.dart' as _i433;
 import '../../data/chat/prefs_chat_model_catalog.dart' as _i878;
 import '../../data/chat/secure_chat_settings.dart' as _i1030;
+import '../../data/chat/workspace/file_workspace.dart' as _i373;
 import '../../data/commute/geocoding_address_search.dart' as _i667;
 import '../../data/commute/odsay_route_finder.dart' as _i132;
 import '../../data/commute/prefs_place_repository.dart' as _i265;
@@ -102,6 +103,7 @@ import '../../domain/chat/usecase/chat_session.dart' as _i502;
 import '../../domain/chat/usecase/open_conversation.dart' as _i306;
 import '../../domain/chat/usecase/wiki_distiller.dart' as _i870;
 import '../../domain/chat/wiki/wiki_context_policy.dart' as _i795;
+import '../../domain/chat/workspace/workspace.dart' as _i1060;
 import '../../domain/commute/repository/address_search.dart' as _i63;
 import '../../domain/commute/repository/place_repository.dart' as _i142;
 import '../../domain/commute/repository/route_finder.dart' as _i488;
@@ -319,6 +321,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i379.LocationRepository>(),
         gh<_i693.PlaceNamer>(),
       ),
+    );
+    gh.lazySingleton<_i1060.Workspace>(
+      () => _i373.FileWorkspace.standard(gh<_i494.Clock>()),
     );
     gh.lazySingleton<_i611.DiaryDatabase>(
       () => registerModule.diaryDatabase(gh<_i494.Clock>()),
