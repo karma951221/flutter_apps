@@ -1,6 +1,7 @@
 import 'package:characters/characters.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../attachment/chat_attachment.dart';
 import '../chat_vendor.dart';
 
 part 'conversation.freezed.dart';
@@ -62,6 +63,10 @@ class ChatTurnRecord with _$ChatTurnRecord {
   @override
   final DateTime askedAt;
 
+  /// 이 질문에 붙은 파일(본문 없음).
+  @override
+  final List<ChatAttachmentRef> attachments;
+
   const ChatTurnRecord({
     required this.conversationId,
     required this.seq,
@@ -72,15 +77,21 @@ class ChatTurnRecord with _$ChatTurnRecord {
     required this.vendor,
     required this.model,
     required this.askedAt,
+    this.attachments = const [],
   });
 
-  ChatTurnText get text =>
-      ChatTurnText(question: question, answer: answer, stopped: stopped);
+  ChatTurnText get text => ChatTurnText(
+    question: question,
+    answer: answer,
+    stopped: stopped,
+    attachmentNames: [for (final a in attachments) a.name],
+  );
 
   @override
   String toString() =>
       'ChatTurnRecord(conversationId: $conversationId, seq: $seq, '
-      'answerLength: ${answer.length}, stopped: $stopped)';
+      'answerLength: ${answer.length}, stopped: $stopped, '
+      'attachments: ${attachments.length})';
 }
 
 /// cubit 이 저장소에 넘기는 새 턴.
@@ -99,6 +110,10 @@ class ChatTurnDraft with _$ChatTurnDraft {
   @override
   final String model;
 
+  /// 이 질문에 붙은 파일(본문 없음).
+  @override
+  final List<ChatAttachmentRef> attachments;
+
   const ChatTurnDraft({
     required this.question,
     required this.answer,
@@ -106,12 +121,14 @@ class ChatTurnDraft with _$ChatTurnDraft {
     this.stopped = false,
     required this.vendor,
     required this.model,
+    this.attachments = const [],
   });
 
   @override
   String toString() =>
       'ChatTurnDraft(questionLength: ${question.length}, '
-      'answerLength: ${answer.length}, stopped: $stopped)';
+      'answerLength: ${answer.length}, stopped: $stopped, '
+      'attachments: ${attachments.length})';
 }
 
 /// 세션이 문맥을 다시 채울 때 쓰는 글만의 턴(Task 4).
@@ -124,16 +141,22 @@ class ChatTurnText with _$ChatTurnText {
   @override
   final bool stopped;
 
+  /// 이 질문에 붙었던 파일 이름(문맥을 다시 채울 때 질문 끝 줄에 붙인다).
+  @override
+  final List<String> attachmentNames;
+
   const ChatTurnText({
     required this.question,
     required this.answer,
     this.stopped = false,
+    this.attachmentNames = const [],
   });
 
   @override
   String toString() =>
       'ChatTurnText(questionLength: ${question.length}, '
-      'answerLength: ${answer.length}, stopped: $stopped)';
+      'answerLength: ${answer.length}, stopped: $stopped, '
+      'attachments: ${attachmentNames.length})';
 }
 
 /// appendTurn 이 돌려주는 저장 위치.

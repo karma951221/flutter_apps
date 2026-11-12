@@ -118,10 +118,10 @@ return toolResults(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String text)?  user,TResult Function( List<AssistantPart> parts,  VendorTurnState? vendorState)?  assistant,TResult Function( List<ToolResultPart> results)?  toolResults,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String text,  List<ChatAttachment> attachments)?  user,TResult Function( List<AssistantPart> parts,  VendorTurnState? vendorState)?  assistant,TResult Function( List<ToolResultPart> results)?  toolResults,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case UserMessage() when user != null:
-return user(_that.text);case AssistantMessage() when assistant != null:
+return user(_that.text,_that.attachments);case AssistantMessage() when assistant != null:
 return assistant(_that.parts,_that.vendorState);case ToolResultsMessage() when toolResults != null:
 return toolResults(_that.results);case _:
   return orElse();
@@ -141,10 +141,10 @@ return toolResults(_that.results);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String text)  user,required TResult Function( List<AssistantPart> parts,  VendorTurnState? vendorState)  assistant,required TResult Function( List<ToolResultPart> results)  toolResults,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String text,  List<ChatAttachment> attachments)  user,required TResult Function( List<AssistantPart> parts,  VendorTurnState? vendorState)  assistant,required TResult Function( List<ToolResultPart> results)  toolResults,}) {final _that = this;
 switch (_that) {
 case UserMessage():
-return user(_that.text);case AssistantMessage():
+return user(_that.text,_that.attachments);case AssistantMessage():
 return assistant(_that.parts,_that.vendorState);case ToolResultsMessage():
 return toolResults(_that.results);}
 }
@@ -160,10 +160,10 @@ return toolResults(_that.results);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String text)?  user,TResult? Function( List<AssistantPart> parts,  VendorTurnState? vendorState)?  assistant,TResult? Function( List<ToolResultPart> results)?  toolResults,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String text,  List<ChatAttachment> attachments)?  user,TResult? Function( List<AssistantPart> parts,  VendorTurnState? vendorState)?  assistant,TResult? Function( List<ToolResultPart> results)?  toolResults,}) {final _that = this;
 switch (_that) {
 case UserMessage() when user != null:
-return user(_that.text);case AssistantMessage() when assistant != null:
+return user(_that.text,_that.attachments);case AssistantMessage() when assistant != null:
 return assistant(_that.parts,_that.vendorState);case ToolResultsMessage() when toolResults != null:
 return toolResults(_that.results);case _:
   return null;
@@ -177,10 +177,17 @@ return toolResults(_that.results);case _:
 
 
 class UserMessage implements ChatMessage {
-  const UserMessage(this.text);
+  const UserMessage(this.text, {final  List<ChatAttachment> attachments = const <ChatAttachment>[]}): _attachments = attachments;
   
 
  final  String text;
+ final  List<ChatAttachment> _attachments;
+@JsonKey() List<ChatAttachment> get attachments {
+  if (_attachments is EqualUnmodifiableListView) return _attachments;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_attachments);
+}
+
 
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
@@ -192,12 +199,12 @@ $UserMessageCopyWith<UserMessage> get copyWith => _$UserMessageCopyWithImpl<User
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserMessage&&(identical(other.text, text) || other.text == text));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is UserMessage&&(identical(other.text, text) || other.text == text)&&const DeepCollectionEquality().equals(other._attachments, _attachments));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,text);
+int get hashCode => Object.hash(runtimeType,text,const DeepCollectionEquality().hash(_attachments));
 
 
 
@@ -208,7 +215,7 @@ abstract mixin class $UserMessageCopyWith<$Res> implements $ChatMessageCopyWith<
   factory $UserMessageCopyWith(UserMessage value, $Res Function(UserMessage) _then) = _$UserMessageCopyWithImpl;
 @useResult
 $Res call({
- String text
+ String text, List<ChatAttachment> attachments
 });
 
 
@@ -225,10 +232,11 @@ class _$UserMessageCopyWithImpl<$Res>
 
 /// Create a copy of ChatMessage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? text = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? text = null,Object? attachments = null,}) {
   return _then(UserMessage(
 null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
-as String,
+as String,attachments: null == attachments ? _self._attachments : attachments // ignore: cast_nullable_to_non_nullable
+as List<ChatAttachment>,
   ));
 }
 

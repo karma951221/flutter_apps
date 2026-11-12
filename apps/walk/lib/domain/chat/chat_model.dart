@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'attachment/chat_attachment.dart';
 import 'chat_vendor.dart';
 import 'tool/tool_result.dart';
 
@@ -11,7 +12,11 @@ part 'chat_model.freezed.dart';
 /// 생성 toString 을 끈다 — 질문 · 답 · 도구 입력값이 로그에 찍히지 않게.
 @Freezed(toStringOverride: false)
 sealed class ChatMessage with _$ChatMessage {
-  const factory ChatMessage.user(String text) = UserMessage;
+  /// [attachments] 는 이 질문에 붙은 파일(본문 포함). 어댑터가 벤더 형식으로 바꾼다.
+  const factory ChatMessage.user(
+    String text, {
+    @Default(<ChatAttachment>[]) List<ChatAttachment> attachments,
+  }) = UserMessage;
 
   /// [vendorState] 는 어댑터만 읽는 불투명 값. domain 은 만들지도 읽지도 않고
   /// 들고만 다닌다. 저장하지 않는다.

@@ -200,7 +200,7 @@ case _:
 /// @nodoc
 mixin _$ChatTurnRecord {
 
- String get conversationId; int get seq; String get question; String get answer; List<String> get citedEntryIds; bool get stopped; ChatVendor get vendor; String get model; DateTime get askedAt;
+ String get conversationId; int get seq; String get question; String get answer; List<String> get citedEntryIds; bool get stopped; ChatVendor get vendor; String get model; DateTime get askedAt; List<ChatAttachmentRef> get attachments;
 /// Create a copy of ChatTurnRecord
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -211,12 +211,12 @@ $ChatTurnRecordCopyWith<ChatTurnRecord> get copyWith => _$ChatTurnRecordCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatTurnRecord&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.seq, seq) || other.seq == seq)&&(identical(other.question, question) || other.question == question)&&(identical(other.answer, answer) || other.answer == answer)&&const DeepCollectionEquality().equals(other.citedEntryIds, citedEntryIds)&&(identical(other.stopped, stopped) || other.stopped == stopped)&&(identical(other.vendor, vendor) || other.vendor == vendor)&&(identical(other.model, model) || other.model == model)&&(identical(other.askedAt, askedAt) || other.askedAt == askedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatTurnRecord&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.seq, seq) || other.seq == seq)&&(identical(other.question, question) || other.question == question)&&(identical(other.answer, answer) || other.answer == answer)&&const DeepCollectionEquality().equals(other.citedEntryIds, citedEntryIds)&&(identical(other.stopped, stopped) || other.stopped == stopped)&&(identical(other.vendor, vendor) || other.vendor == vendor)&&(identical(other.model, model) || other.model == model)&&(identical(other.askedAt, askedAt) || other.askedAt == askedAt)&&const DeepCollectionEquality().equals(other.attachments, attachments));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,conversationId,seq,question,answer,const DeepCollectionEquality().hash(citedEntryIds),stopped,vendor,model,askedAt);
+int get hashCode => Object.hash(runtimeType,conversationId,seq,question,answer,const DeepCollectionEquality().hash(citedEntryIds),stopped,vendor,model,askedAt,const DeepCollectionEquality().hash(attachments));
 
 
 
@@ -227,7 +227,7 @@ abstract mixin class $ChatTurnRecordCopyWith<$Res>  {
   factory $ChatTurnRecordCopyWith(ChatTurnRecord value, $Res Function(ChatTurnRecord) _then) = _$ChatTurnRecordCopyWithImpl;
 @useResult
 $Res call({
- String conversationId, int seq, String question, String answer, List<String> citedEntryIds, bool stopped, ChatVendor vendor, String model, DateTime askedAt
+ String conversationId, int seq, String question, String answer, List<String> citedEntryIds, bool stopped, ChatVendor vendor, String model, DateTime askedAt, List<ChatAttachmentRef> attachments
 });
 
 
@@ -244,7 +244,7 @@ class _$ChatTurnRecordCopyWithImpl<$Res>
 
 /// Create a copy of ChatTurnRecord
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? conversationId = null,Object? seq = null,Object? question = null,Object? answer = null,Object? citedEntryIds = null,Object? stopped = null,Object? vendor = null,Object? model = null,Object? askedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? conversationId = null,Object? seq = null,Object? question = null,Object? answer = null,Object? citedEntryIds = null,Object? stopped = null,Object? vendor = null,Object? model = null,Object? askedAt = null,Object? attachments = null,}) {
   return _then(ChatTurnRecord(
 conversationId: null == conversationId ? _self.conversationId : conversationId // ignore: cast_nullable_to_non_nullable
 as String,seq: null == seq ? _self.seq : seq // ignore: cast_nullable_to_non_nullable
@@ -255,7 +255,8 @@ as List<String>,stopped: null == stopped ? _self.stopped : stopped // ignore: ca
 as bool,vendor: null == vendor ? _self.vendor : vendor // ignore: cast_nullable_to_non_nullable
 as ChatVendor,model: null == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
 as String,askedAt: null == askedAt ? _self.askedAt : askedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,attachments: null == attachments ? _self.attachments : attachments // ignore: cast_nullable_to_non_nullable
+as List<ChatAttachmentRef>,
   ));
 }
 
@@ -389,7 +390,7 @@ case _:
 /// @nodoc
 mixin _$ChatTurnDraft {
 
- String get question; String get answer; List<String> get citedEntryIds; bool get stopped; ChatVendor get vendor; String get model;
+ String get question; String get answer; List<String> get citedEntryIds; bool get stopped; ChatVendor get vendor; String get model; List<ChatAttachmentRef> get attachments;
 /// Create a copy of ChatTurnDraft
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -400,12 +401,12 @@ $ChatTurnDraftCopyWith<ChatTurnDraft> get copyWith => _$ChatTurnDraftCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatTurnDraft&&(identical(other.question, question) || other.question == question)&&(identical(other.answer, answer) || other.answer == answer)&&const DeepCollectionEquality().equals(other.citedEntryIds, citedEntryIds)&&(identical(other.stopped, stopped) || other.stopped == stopped)&&(identical(other.vendor, vendor) || other.vendor == vendor)&&(identical(other.model, model) || other.model == model));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatTurnDraft&&(identical(other.question, question) || other.question == question)&&(identical(other.answer, answer) || other.answer == answer)&&const DeepCollectionEquality().equals(other.citedEntryIds, citedEntryIds)&&(identical(other.stopped, stopped) || other.stopped == stopped)&&(identical(other.vendor, vendor) || other.vendor == vendor)&&(identical(other.model, model) || other.model == model)&&const DeepCollectionEquality().equals(other.attachments, attachments));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,question,answer,const DeepCollectionEquality().hash(citedEntryIds),stopped,vendor,model);
+int get hashCode => Object.hash(runtimeType,question,answer,const DeepCollectionEquality().hash(citedEntryIds),stopped,vendor,model,const DeepCollectionEquality().hash(attachments));
 
 
 
@@ -416,7 +417,7 @@ abstract mixin class $ChatTurnDraftCopyWith<$Res>  {
   factory $ChatTurnDraftCopyWith(ChatTurnDraft value, $Res Function(ChatTurnDraft) _then) = _$ChatTurnDraftCopyWithImpl;
 @useResult
 $Res call({
- String question, String answer, List<String> citedEntryIds, bool stopped, ChatVendor vendor, String model
+ String question, String answer, List<String> citedEntryIds, bool stopped, ChatVendor vendor, String model, List<ChatAttachmentRef> attachments
 });
 
 
@@ -433,7 +434,7 @@ class _$ChatTurnDraftCopyWithImpl<$Res>
 
 /// Create a copy of ChatTurnDraft
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? question = null,Object? answer = null,Object? citedEntryIds = null,Object? stopped = null,Object? vendor = null,Object? model = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? question = null,Object? answer = null,Object? citedEntryIds = null,Object? stopped = null,Object? vendor = null,Object? model = null,Object? attachments = null,}) {
   return _then(ChatTurnDraft(
 question: null == question ? _self.question : question // ignore: cast_nullable_to_non_nullable
 as String,answer: null == answer ? _self.answer : answer // ignore: cast_nullable_to_non_nullable
@@ -441,7 +442,8 @@ as String,citedEntryIds: null == citedEntryIds ? _self.citedEntryIds : citedEntr
 as List<String>,stopped: null == stopped ? _self.stopped : stopped // ignore: cast_nullable_to_non_nullable
 as bool,vendor: null == vendor ? _self.vendor : vendor // ignore: cast_nullable_to_non_nullable
 as ChatVendor,model: null == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
-as String,
+as String,attachments: null == attachments ? _self.attachments : attachments // ignore: cast_nullable_to_non_nullable
+as List<ChatAttachmentRef>,
   ));
 }
 
@@ -575,7 +577,7 @@ case _:
 /// @nodoc
 mixin _$ChatTurnText {
 
- String get question; String get answer; bool get stopped;
+ String get question; String get answer; bool get stopped; List<String> get attachmentNames;
 /// Create a copy of ChatTurnText
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -586,12 +588,12 @@ $ChatTurnTextCopyWith<ChatTurnText> get copyWith => _$ChatTurnTextCopyWithImpl<C
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatTurnText&&(identical(other.question, question) || other.question == question)&&(identical(other.answer, answer) || other.answer == answer)&&(identical(other.stopped, stopped) || other.stopped == stopped));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatTurnText&&(identical(other.question, question) || other.question == question)&&(identical(other.answer, answer) || other.answer == answer)&&(identical(other.stopped, stopped) || other.stopped == stopped)&&const DeepCollectionEquality().equals(other.attachmentNames, attachmentNames));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,question,answer,stopped);
+int get hashCode => Object.hash(runtimeType,question,answer,stopped,const DeepCollectionEquality().hash(attachmentNames));
 
 
 
@@ -602,7 +604,7 @@ abstract mixin class $ChatTurnTextCopyWith<$Res>  {
   factory $ChatTurnTextCopyWith(ChatTurnText value, $Res Function(ChatTurnText) _then) = _$ChatTurnTextCopyWithImpl;
 @useResult
 $Res call({
- String question, String answer, bool stopped
+ String question, String answer, bool stopped, List<String> attachmentNames
 });
 
 
@@ -619,12 +621,13 @@ class _$ChatTurnTextCopyWithImpl<$Res>
 
 /// Create a copy of ChatTurnText
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? question = null,Object? answer = null,Object? stopped = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? question = null,Object? answer = null,Object? stopped = null,Object? attachmentNames = null,}) {
   return _then(ChatTurnText(
 question: null == question ? _self.question : question // ignore: cast_nullable_to_non_nullable
 as String,answer: null == answer ? _self.answer : answer // ignore: cast_nullable_to_non_nullable
 as String,stopped: null == stopped ? _self.stopped : stopped // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,attachmentNames: null == attachmentNames ? _self.attachmentNames : attachmentNames // ignore: cast_nullable_to_non_nullable
+as List<String>,
   ));
 }
 

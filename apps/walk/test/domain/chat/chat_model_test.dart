@@ -3,6 +3,10 @@ import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 
 void main() {
+  test('ChatMessage.user 의 첨부는 기본이 빈 목록', () {
+    expect(const UserMessage('q').attachments, isEmpty);
+  });
+
   test('ModelRequest.toString 에 키 · system · 메시지 글이 없다', () {
     const request = ModelRequest(
       apiKey: 'sk-ant-secret-key',
