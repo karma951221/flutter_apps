@@ -200,7 +200,7 @@ case _:
 /// @nodoc
 mixin _$ChatBubble {
 
- ChatRole get role; String get text; List<DiaryEntry> get cited; ChatFailure? get failure; bool get stopped; int? get seq; ChatProgress? get progress; List<ChatAttachmentRef> get attachments;
+ ChatRole get role; String get text; List<DiaryEntry> get cited; ChatFailure? get failure; bool get stopped; int? get seq; ChatProgress? get progress; List<ChatAttachmentRef> get attachments; String? get model;
 /// Create a copy of ChatBubble
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -211,12 +211,12 @@ $ChatBubbleCopyWith<ChatBubble> get copyWith => _$ChatBubbleCopyWithImpl<ChatBub
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatBubble&&(identical(other.role, role) || other.role == role)&&(identical(other.text, text) || other.text == text)&&const DeepCollectionEquality().equals(other.cited, cited)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.stopped, stopped) || other.stopped == stopped)&&(identical(other.seq, seq) || other.seq == seq)&&(identical(other.progress, progress) || other.progress == progress)&&const DeepCollectionEquality().equals(other.attachments, attachments));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatBubble&&(identical(other.role, role) || other.role == role)&&(identical(other.text, text) || other.text == text)&&const DeepCollectionEquality().equals(other.cited, cited)&&(identical(other.failure, failure) || other.failure == failure)&&(identical(other.stopped, stopped) || other.stopped == stopped)&&(identical(other.seq, seq) || other.seq == seq)&&(identical(other.progress, progress) || other.progress == progress)&&const DeepCollectionEquality().equals(other.attachments, attachments)&&(identical(other.model, model) || other.model == model));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,role,text,const DeepCollectionEquality().hash(cited),failure,stopped,seq,progress,const DeepCollectionEquality().hash(attachments));
+int get hashCode => Object.hash(runtimeType,role,text,const DeepCollectionEquality().hash(cited),failure,stopped,seq,progress,const DeepCollectionEquality().hash(attachments),model);
 
 
 
@@ -227,7 +227,7 @@ abstract mixin class $ChatBubbleCopyWith<$Res>  {
   factory $ChatBubbleCopyWith(ChatBubble value, $Res Function(ChatBubble) _then) = _$ChatBubbleCopyWithImpl;
 @useResult
 $Res call({
- ChatRole role, String text, List<DiaryEntry> cited, ChatFailure? failure, bool stopped, int? seq, ChatProgress? progress, List<ChatAttachmentRef> attachments
+ ChatRole role, String text, List<DiaryEntry> cited, ChatFailure? failure, bool stopped, int? seq, ChatProgress? progress, List<ChatAttachmentRef> attachments, String? model
 });
 
 
@@ -244,7 +244,7 @@ class _$ChatBubbleCopyWithImpl<$Res>
 
 /// Create a copy of ChatBubble
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? role = null,Object? text = null,Object? cited = null,Object? failure = freezed,Object? stopped = null,Object? seq = freezed,Object? progress = freezed,Object? attachments = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? role = null,Object? text = null,Object? cited = null,Object? failure = freezed,Object? stopped = null,Object? seq = freezed,Object? progress = freezed,Object? attachments = null,Object? model = freezed,}) {
   return _then(ChatBubble(
 role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as ChatRole,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
@@ -254,7 +254,8 @@ as ChatFailure?,stopped: null == stopped ? _self.stopped : stopped // ignore: ca
 as bool,seq: freezed == seq ? _self.seq : seq // ignore: cast_nullable_to_non_nullable
 as int?,progress: freezed == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
 as ChatProgress?,attachments: null == attachments ? _self.attachments : attachments // ignore: cast_nullable_to_non_nullable
-as List<ChatAttachmentRef>,
+as List<ChatAttachmentRef>,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

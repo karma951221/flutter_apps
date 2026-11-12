@@ -543,6 +543,7 @@ class ChatCubit extends Cubit<ChatState> {
           ChatBubble(
             role: ChatRole.assistant,
             text: '',
+            model: _turnTarget?.model,
             progress: ChatProgress(
               startedAt: _clock.now(),
               steps: const [ChatProgressStep.sending()],
@@ -603,7 +604,7 @@ class ChatCubit extends Cubit<ChatState> {
 
   /// [assistantIndex] 의 답을 작업 폴더 out/ 에 `.md` 로 저장하고 상대 경로를 돌려준다.
   /// 글이 없는 말풍선 · 실패 · 쓰기 오류면 null. 임시 대화에서도 저장한다(사용자가 직접 고른 동작).
-  /// 모델은 마지막으로 묻은 턴의 모델(없으면 지금 고른 모델) — 열어 본 옛 대화는 정확하지 않을 수 있다.
+  /// 모델은 말풍선이 든, 그 답을 낸 모델이다.
   Future<String?> saveAnswer(int assistantIndex) async {
     final answer = _bubbleAt(assistantIndex);
     if (answer == null ||
@@ -621,7 +622,7 @@ class ChatCubit extends Cubit<ChatState> {
         AnswerFile.markdown(
           question: questionText,
           answer: answer.text,
-          model: _turnTarget?.model ?? _session.target?.model ?? '',
+          model: answer.model ?? '',
           at: at,
           attachmentNames: [
             for (final a in question?.attachments ?? const []) a.name,
@@ -978,6 +979,7 @@ class ChatCubit extends Cubit<ChatState> {
             cited: cited,
             stopped: turn.stopped,
             seq: turn.seq,
+            model: turn.model,
           ),
         );
     }

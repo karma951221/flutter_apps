@@ -65,6 +65,10 @@ class ChatBubble with _$ChatBubble {
   @override
   final List<ChatAttachmentRef> attachments;
 
+  /// 이 답을 낸 모델 id(assistant 말풍선만) — 저장되는 턴의 model 과 같은 값. 파일로 저장할 때 쓴다.
+  @override
+  final String? model;
+
   const ChatBubble({
     required this.role,
     required this.text,
@@ -74,6 +78,7 @@ class ChatBubble with _$ChatBubble {
     this.seq,
     this.progress,
     this.attachments = const [],
+    this.model,
   });
 
   /// 글은 남기지 않는다 — 길이와 표시만. 진행 노트도 [ChatProgressStep.toString] 이 글을 뺀다.

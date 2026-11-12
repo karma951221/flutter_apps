@@ -338,6 +338,47 @@ void main() {
       expect(workspace.written, isEmpty);
     });
 
+    test('연 대화의 답은 저장된 턴의 모델로 쓴다', () async {
+      await finish(cubit.send('봐 줘'));
+      when(() => history.turns('c9')).thenAnswer(
+        (_) async => [
+          ChatTurnRecord(
+            conversationId: 'c9',
+            seq: 1,
+            question: '옛 질문',
+            answer: '옛 답',
+            citedEntryIds: const [],
+            stopped: false,
+            vendor: ChatVendor.openai,
+            model: 'stored-model',
+            askedAt: diaryT0,
+          ),
+        ],
+      );
+      when(() => session.resume(any(), temporary: false)).thenReturn(null);
+      await cubit.open('c9');
+
+      await cubit.saveAnswer(1);
+
+      expect(workspace.written.single.$2, contains('- 모델: stored-model\n'));
+      expect(workspace.written.single.$2, isNot(contains('claude-x')));
+    });
+
+    test('새 대화에서 받은 답은 앞 대화의 모델이 아니라 제 모델로 쓴다', () async {
+      await finish(cubit.send('봐 줘'));
+      cubit.newConversation();
+      when(
+        () => session.target,
+      ).thenReturn((vendor: ChatVendor.openai, model: 'gpt-z'));
+      events = StreamController<ChatEvent>();
+      await finish(cubit.send('다시'));
+
+      await cubit.saveAnswer(1);
+
+      expect(workspace.written.single.$2, contains('- 모델: gpt-z\n'));
+      expect(workspace.written.single.$2, isNot(contains('claude-x')));
+    });
+
     test('쓰기가 던지면 null', () async {
       await finish(cubit.send('봐 줘'));
       workspace.fail = true;
