@@ -92,8 +92,8 @@ class LocationRecordService : Service() {
 
         /**
          * 기록이 끝날 때(채널 `stop` · 알림 [끄기] · 백그라운드 위치 권한이 실제로 없어짐) 마지막 점
-         * 자리에 지금 시각 점(`still = 0`)을 남긴다. 앞 점이 없거나 이미 남겼거나, 움직이는 중에 마지막
-         * 점이 30분보다 오래됐으면 건너뛴다([LocationRecordRules.stopMarker]).
+         * 자리에 지금 시각 점(`still = 0`)을 남긴다. 앞 점이 없거나 이미 남겼거나, 마지막 점이 너무
+         * 오래됐으면(정지 감지 중 움직임 30분 · 정지 감지 꺼짐 12시간) 건너뛴다([LocationRecordRules.stopMarker]).
          */
         @Synchronized
         fun writeStopMarker(context: Context) {
@@ -101,6 +101,8 @@ class LocationRecordService : Service() {
                 LocationRecordPrefs.lastSaved(context),
                 System.currentTimeMillis(),
                 LocationRecordPrefs.phase(context),
+                stillDetection = LocationRecordPrefs.mode(context) == LocationRecordRules.MODE_NORMAL &&
+                    hasActivityRecognition(context),
             )
             LocationRecordPrefs.clearLastSaved(context)
             if (marker == null) return
@@ -205,6 +207,8 @@ class LocationRecordService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        // 이 인스턴스가 포그라운드에 오르기 전까지 옛 기록 시작 시각이 남아 있지 않게 먼저 지운다.
+        LocationRecordPrefs.clearRecordingSince(this)
         fused = LocationServices.getFusedLocationProviderClient(this)
         worker = HandlerThread("location-record").also { it.start() }
         handler = Handler(worker.looper)

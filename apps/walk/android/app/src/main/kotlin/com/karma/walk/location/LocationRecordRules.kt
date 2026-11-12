@@ -65,18 +65,26 @@ object LocationRecordRules {
     /** inbox 에 마지막으로 남긴 점. 기록 끝 표시([stopMarker])에 쓴다. */
     data class SavedPoint(val timeMs: Long, val lat: Double, val lng: Double, val accuracyM: Double?)
 
-    /** 움직이는 중에 마지막 점이 이보다 오래됐으면 기록 끝 표시를 남기지 않는다. */
+    /** 정지 감지를 쓰는데 움직이는 중에 마지막 점이 이보다 오래됐으면 기록 끝 표시를 남기지 않는다. */
     const val STOP_MARKER_MAX_AGE_MS = 30 * 60_000L
+
+    /**
+     * 정지 감지가 꺼져 있으면(활동 인식 권한 없음 · 정밀) 가만히 있는 동안 점이 안 남으니 이만큼까지
+     * 기록 끝 표시를 남긴다 — 지도가 정지 감지 점 없이 같은 자리를 잇는 상한(`sameSpotMaxGap`)과 같다.
+     */
+    const val STOP_MARKER_NO_STILL_MAX_AGE_MS = 12 * 60 * 60_000L
 
     /**
      * 기록이 끝날 때(사용자가 끔 · 권한을 잃음) 남기는 점 — 마지막 점 자리 · 지금 시각 · `still = 0`.
      * 정지 중에 꺼도 머문 곳이 여기서 닫히고, 다시 켤 때까지의 빈 시간이 머문 곳으로 보이지 않는다.
-     * 앞 점이 없거나 시계가 그 점보다 뒤가 아니면 남기지 않는다. 움직이는 중인데 마지막 점이 30분보다
-     * 오래됐으면(기록이 조용히 멈춰 있었다) 옛 자리에 지금 시각을 찍지 않는다.
+     * 앞 점이 없거나 시계가 그 점보다 뒤가 아니면 남기지 않는다. 정지 감지를 쓰는데 움직이는 중이고
+     * 마지막 점이 30분보다 오래됐으면(기록이 조용히 멈춰 있었다) 옛 자리에 지금 시각을 찍지 않는다.
+     * 정지 감지가 꺼져 있으면 12시간까지 남긴다.
      */
-    fun stopMarker(last: SavedPoint?, nowMs: Long, phase: Phase): SavedPoint? = when {
+    fun stopMarker(last: SavedPoint?, nowMs: Long, phase: Phase, stillDetection: Boolean): SavedPoint? = when {
         last == null || nowMs <= last.timeMs -> null
-        phase == Phase.MOVING && nowMs - last.timeMs > STOP_MARKER_MAX_AGE_MS -> null
+        !stillDetection && nowMs - last.timeMs > STOP_MARKER_NO_STILL_MAX_AGE_MS -> null
+        stillDetection && phase == Phase.MOVING && nowMs - last.timeMs > STOP_MARKER_MAX_AGE_MS -> null
         else -> last.copy(timeMs = nowMs)
     }
 
