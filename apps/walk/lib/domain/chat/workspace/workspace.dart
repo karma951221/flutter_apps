@@ -60,9 +60,7 @@ abstract interface class Workspace {
   /// 지웠으면 true, 없었으면 false.
   Future<bool> delete(String path);
 
-  /// 공유 · 로더용 절대 경로. 경계 밖이면 [WorkspacePathException].
-  ///
-  /// 동기라서, 작업 폴더가 한 번이라도 열린 뒤(list · import · read 등)에만
-  /// 안쪽 경로를 돌려준다. 경계 밖 판정은 언제나 먼저 한다.
-  String absolutePath(String path);
+  /// 공유 · 로더용 절대 경로. 경계 밖(링크가 밖을 가리키는 경우 포함)이면
+  /// [WorkspacePathException].
+  Future<String> absolutePath(String path);
 }

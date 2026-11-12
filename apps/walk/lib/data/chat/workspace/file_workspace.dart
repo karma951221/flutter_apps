@@ -31,15 +31,12 @@ class FileWorkspace implements Workspace {
   static const _inbox = 'inbox';
   static const _out = 'out';
 
-  /// 마지막으로 연 root 의 실경로. 동기 [absolutePath] 가 쓴다.
-  String? _knownRoot;
-
   /// root 를 만들고 실경로(링크 해소)를 돌려준다. root 자체가 링크여도
   /// (예: macOS `/var` → `/private/var`) 비교가 맞는다.
   Future<String> _open() async {
     final dir = await _root();
     await dir.create(recursive: true);
-    return _knownRoot = await dir.resolveSymbolicLinks();
+    return dir.resolveSymbolicLinks();
   }
 
   /// 상대 경로를 접어 절대 경로로. 밖이면 예외(글자 수준 판정).
@@ -71,18 +68,7 @@ class FileWorkspace implements Workspace {
   }
 
   @override
-  String absolutePath(String path) {
-    if (p.isAbsolute(path)) throw WorkspacePathException(path);
-    final root = _knownRoot;
-    if (root == null) {
-      // root 를 모르면 글자 수준으로만 밖 여부를 가린다.
-      if (p.isWithin('/w', p.normalize(p.join('/w', path)))) {
-        throw StateError('작업 폴더가 아직 열리지 않았다');
-      }
-      throw WorkspacePathException(path);
-    }
-    return _check(root, path);
-  }
+  Future<String> absolutePath(String path) => _safe(path);
 
   @override
   Future<List<WorkspaceFile>> list(WorkspaceArea area) async {
@@ -133,6 +119,10 @@ class FileWorkspace implements Workspace {
     final root = await _open();
     final dir = Directory(p.join(root, area));
     await dir.create(recursive: true);
+    // inbox/out 이 밖을 가리키는 링크면 쓰기가 밖으로 샌다 — 실경로를 확인한다.
+    if (!p.isWithin(root, await dir.resolveSymbolicLinks())) {
+      throw WorkspacePathException(area);
+    }
     final stem = p.basenameWithoutExtension(fileName);
     final ext = p.extension(fileName);
     var candidate = fileName;

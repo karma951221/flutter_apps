@@ -109,20 +109,41 @@ void main() {
         ws.delete('inbox/../../x'),
         throwsA(isA<WorkspacePathException>()),
       );
-      expect(
-        () => ws.absolutePath('out/../../x'),
+      await expectLater(
+        ws.absolutePath('out/../../x'),
         throwsA(isA<WorkspacePathException>()),
       );
     });
 
-    test('열린 뒤 absolutePath 는 root 안 절대 경로', () async {
-      final path = await ws.writeOut('a.md', 'x');
-      final abs = ws.absolutePath(path);
-      expect(File(abs).existsSync(), isTrue);
-      expect(
-        () => ws.absolutePath('../x'),
+    test('처음 부르는 absolutePath 도 root 안 절대 경로', () async {
+      final abs = await ws.absolutePath('out/a.md');
+      expect(p.isWithin(await rootDir.resolveSymbolicLinks(), abs), isTrue);
+      await expectLater(
+        ws.absolutePath('../x'),
         throwsA(isA<WorkspacePathException>()),
       );
+    });
+
+    test('밖을 가리키는 심볼릭 링크의 absolutePath 는 예외', () async {
+      final outside = File(p.join(tmp.path, 'secret.txt'))
+        ..writeAsStringSync('비밀');
+      await Directory(p.join(rootDir.path, 'inbox')).create(recursive: true);
+      Link(p.join(rootDir.path, 'inbox', 'link')).createSync(outside.path);
+      await expectLater(
+        ws.absolutePath('inbox/link'),
+        throwsA(isA<WorkspacePathException>()),
+      );
+    });
+
+    test('inbox 가 밖을 가리키는 링크면 쓰기를 거부한다', () async {
+      final elsewhere = Directory(p.join(tmp.path, 'elsewhere'))..createSync();
+      await rootDir.create(recursive: true);
+      Link(p.join(rootDir.path, 'inbox')).createSync(elsewhere.path);
+      await expectLater(
+        ws.importToInbox('a.txt', bytes('x')),
+        throwsA(isA<WorkspacePathException>()),
+      );
+      expect(elsewhere.listSync(), isEmpty);
     });
 
     test('밖을 가리키는 심볼릭 링크는 예외', () async {
