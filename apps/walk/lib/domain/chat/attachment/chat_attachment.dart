@@ -44,6 +44,10 @@ extension ChatAttachmentX on ChatAttachment {
       ChatAttachmentRef(name: name, kind: kind, workspacePath: workspacePath);
 }
 
+/// 텍스트 파일을 모델에 보낼 때의 본문 블록. 두 벤더가 같은 모양을 쓴다.
+String textAttachmentBlock(TextAttachment attachment) =>
+    '<file name="${attachment.name}">\n${attachment.text}\n</file>';
+
 /// 저장 · 말풍선용 첨부(본문 없음).
 @freezed
 class ChatAttachmentRef with _$ChatAttachmentRef {

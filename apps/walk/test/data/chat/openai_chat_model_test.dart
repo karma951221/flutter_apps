@@ -9,6 +9,7 @@ import 'package:http/testing.dart';
 import 'package:walk/data/chat/anthropic_chat_model.dart';
 import 'package:walk/data/chat/chat_request_limits.dart';
 import 'package:walk/data/chat/openai_chat_model.dart';
+import 'package:walk/domain/chat/attachment/chat_attachment.dart';
 import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_model_rules.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
@@ -1298,6 +1299,57 @@ void main() {
       );
       expect(events.whereType<ModelToolCallReady>(), isEmpty);
       expect(events.single, isA<ModelCompleted>());
+    });
+  });
+
+  group('첨부', () {
+    final image = ChatAttachment.image(
+      name: 'a.jpg',
+      mediaType: 'image/jpeg',
+      bytes: Uint8List.fromList([1, 2, 3]),
+    );
+    final pdf = ChatAttachment.pdf(
+      name: 'a.pdf',
+      bytes: Uint8List.fromList([4, 5, 6]),
+    );
+    const text = ChatAttachment.text(name: 'n.md', text: 'hi');
+
+    test('input_image · input_file · input_text 뒤에 질문이 온다', () async {
+      final body = await bodyOf(
+        request(
+          messages: [
+            ChatMessage.user('요약', attachments: [image, pdf, text]),
+          ],
+        ),
+      );
+      expect(body['input'], [
+        {
+          'role': 'user',
+          'content': [
+            {
+              'type': 'input_image',
+              'image_url': 'data:image/jpeg;base64,${base64Encode([1, 2, 3])}',
+            },
+            {
+              'type': 'input_file',
+              'filename': 'a.pdf',
+              'file_data':
+                  'data:application/pdf;base64,${base64Encode([4, 5, 6])}',
+            },
+            {'type': 'input_text', 'text': '<file name="n.md">\nhi\n</file>'},
+            {'type': 'input_text', 'text': '요약'},
+          ],
+        },
+      ]);
+    });
+
+    test('첨부가 없으면 content 는 문자열 그대로', () async {
+      final body = await bodyOf(
+        request(messages: const [ChatMessage.user('요약')]),
+      );
+      expect(body['input'], [
+        {'role': 'user', 'content': '요약'},
+      ]);
     });
   });
 }

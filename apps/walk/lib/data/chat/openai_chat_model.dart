@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 
+import '../../domain/chat/attachment/chat_attachment.dart';
 import '../../domain/chat/chat_model.dart';
 import '../../domain/chat/chat_model_rules.dart';
 import '../../domain/chat/chat_trace.dart';
@@ -253,8 +254,17 @@ class OpenAiChatModel implements ChatModel {
   /// 포함)을 그대로 돌려보낸다.
   List<Map<String, Object?>> _input(ChatMessage message, String model) =>
       switch (message) {
-        UserMessage(:final text) => [
-          {'role': 'user', 'content': text},
+        // 첨부가 없으면 문자열 그대로(프롬프트 캐시 접두 보존).
+        UserMessage(:final text, :final attachments) => [
+          {
+            'role': 'user',
+            'content': attachments.isEmpty
+                ? text
+                : [
+                    for (final a in attachments) _attachment(a),
+                    {'type': 'input_text', 'text': text},
+                  ],
+          },
         ],
         AssistantMessage(vendorState: final OpenAiTurnState state)
             when state.model == model =>
@@ -263,6 +273,23 @@ class OpenAiChatModel implements ChatModel {
         // 만든다(reasoning 없음).
         AssistantMessage(:final parts) => [for (final p in parts) _part(p)],
         ToolResultsMessage(:final results) => _toolResults(results),
+      };
+
+  static Map<String, Object?> _attachment(ChatAttachment attachment) =>
+      switch (attachment) {
+        ImageAttachment(:final mediaType, :final bytes) => {
+          'type': 'input_image',
+          'image_url': 'data:$mediaType;base64,${base64Encode(bytes)}',
+        },
+        PdfAttachment(:final name, :final bytes) => {
+          'type': 'input_file',
+          'filename': name,
+          'file_data': 'data:application/pdf;base64,${base64Encode(bytes)}',
+        },
+        TextAttachment() => {
+          'type': 'input_text',
+          'text': textAttachmentBlock(attachment),
+        },
       };
 
   static Map<String, Object?> _part(AssistantPart part) => switch (part) {

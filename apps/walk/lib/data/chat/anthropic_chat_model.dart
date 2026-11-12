@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:injectable/injectable.dart';
 
+import '../../domain/chat/attachment/chat_attachment.dart';
 import '../../domain/chat/chat_model.dart';
 import '../../domain/chat/chat_model_rules.dart';
 import '../../domain/chat/chat_trace.dart';
@@ -335,7 +336,16 @@ class AnthropicChatModel implements ChatModel {
   /// 포함)을 그대로 돌려보낸다.
   static Map<String, Object?> _message(ChatMessage message, String model) =>
       switch (message) {
-        UserMessage(:final text) => {'role': 'user', 'content': text},
+        // 첨부가 없으면 문자열 그대로(프롬프트 캐시 접두 보존).
+        UserMessage(:final text, :final attachments) => {
+          'role': 'user',
+          'content': attachments.isEmpty
+              ? text
+              : [
+                  for (final a in attachments) _attachment(a),
+                  {'type': 'text', 'text': text},
+                ],
+        },
         AssistantMessage(vendorState: final AnthropicTurnState state)
             when state.model == model =>
           {'role': 'assistant', 'content': state.content},
@@ -348,6 +358,30 @@ class AnthropicChatModel implements ChatModel {
         ToolResultsMessage(:final results) => {
           'role': 'user',
           'content': [for (final r in results) _toolResult(r)],
+        },
+      };
+
+  static Map<String, Object?> _attachment(ChatAttachment attachment) =>
+      switch (attachment) {
+        ImageAttachment(:final mediaType, :final bytes) => {
+          'type': 'image',
+          'source': {
+            'type': 'base64',
+            'media_type': mediaType,
+            'data': base64Encode(bytes),
+          },
+        },
+        PdfAttachment(:final bytes) => {
+          'type': 'document',
+          'source': {
+            'type': 'base64',
+            'media_type': 'application/pdf',
+            'data': base64Encode(bytes),
+          },
+        },
+        TextAttachment() => {
+          'type': 'text',
+          'text': textAttachmentBlock(attachment),
         },
       };
 

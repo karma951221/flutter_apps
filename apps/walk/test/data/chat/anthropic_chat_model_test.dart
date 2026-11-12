@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:walk/data/chat/anthropic_chat_model.dart';
+import 'package:walk/domain/chat/attachment/chat_attachment.dart';
 import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_model_rules.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
@@ -2258,6 +2259,69 @@ void main() {
       final all = trace.marks.map((m) => '${m.$2}').join();
       expect(all, isNot(contains('비밀')));
       expect(all, isNot(contains('노트')));
+    });
+  });
+
+  group('첨부', () {
+    final image = ChatAttachment.image(
+      name: 'a.jpg',
+      mediaType: 'image/jpeg',
+      bytes: Uint8List.fromList([1, 2, 3]),
+    );
+    final pdf = ChatAttachment.pdf(
+      name: 'a.pdf',
+      bytes: Uint8List.fromList([4, 5, 6]),
+    );
+    const text = ChatAttachment.text(name: 'n.md', text: 'hi');
+
+    Future<Map<String, dynamic>> bodyOf(ModelRequest req) async {
+      late Map<String, dynamic> body;
+      await run(capture((b) => body = b), req);
+      return body;
+    }
+
+    test('이미지 · PDF · 텍스트 블록 뒤에 질문 text 가 온다', () async {
+      final body = await bodyOf(
+        request(
+          messages: [
+            ChatMessage.user('요약', attachments: [image, pdf, text]),
+          ],
+        ),
+      );
+      expect(body['messages'], [
+        {
+          'role': 'user',
+          'content': [
+            {
+              'type': 'image',
+              'source': {
+                'type': 'base64',
+                'media_type': 'image/jpeg',
+                'data': base64Encode([1, 2, 3]),
+              },
+            },
+            {
+              'type': 'document',
+              'source': {
+                'type': 'base64',
+                'media_type': 'application/pdf',
+                'data': base64Encode([4, 5, 6]),
+              },
+            },
+            {'type': 'text', 'text': '<file name="n.md">\nhi\n</file>'},
+            {'type': 'text', 'text': '요약'},
+          ],
+        },
+      ]);
+    });
+
+    test('첨부가 없으면 content 는 문자열 그대로', () async {
+      final body = await bodyOf(
+        request(messages: const [ChatMessage.user('요약')]),
+      );
+      expect(body['messages'], [
+        {'role': 'user', 'content': '요약'},
+      ]);
     });
   });
 }
