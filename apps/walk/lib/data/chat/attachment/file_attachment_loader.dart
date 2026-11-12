@@ -72,11 +72,12 @@ class FileAttachmentLoader implements AttachmentLoader {
           );
       }
       return AttachmentLoad.ok(attachment);
-    } on FileSystemException {
-      return reject(AttachmentRejection.unsupportedType);
-    } on Exception {
-      // 플러그인(사진 줄이기) 오류 등.
+    } on Object {
+      // 파일 읽기 · 플러그인(사진 줄이기) 오류 — Error 도 화면 밖으로 새지 않게 모두 거절로.
       return reject(AttachmentRejection.unsupportedType);
     }
   }
+
+  @override
+  Future<Uint8List> readOriginal(String path) => File(path).readAsBytes();
 }

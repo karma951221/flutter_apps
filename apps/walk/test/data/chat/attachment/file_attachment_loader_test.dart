@@ -69,6 +69,27 @@ void main() {
     );
   });
 
+  test('사진 줄이기가 Error 를 던져도 unsupportedType', () async {
+    loader = FileAttachmentLoader.withCompressor(
+      (_) async => throw StateError('plugin'),
+    );
+    final file = await write('a.heic', [1]);
+
+    expect(
+      await loader.load(file),
+      const AttachmentLoad.rejected(
+        'a.heic',
+        AttachmentRejection.unsupportedType,
+      ),
+    );
+  });
+
+  test('readOriginal 은 원본 바이트 그대로', () async {
+    final file = await write('a.png', [7, 8, 9]);
+
+    expect(await loader.readOriginal(file.path), [7, 8, 9]);
+  });
+
   test('pdf 는 바이트 그대로, workspacePath 를 옮긴다', () async {
     final file = await write('b.PDF', [
       37,

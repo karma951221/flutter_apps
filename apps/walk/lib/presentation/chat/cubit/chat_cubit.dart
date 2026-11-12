@@ -98,6 +98,9 @@ class ChatCubit extends Cubit<ChatState> {
   /// 진행 중인 질문의 첨부(본문 포함) — 글 없이 멈추면 입력칸에 되돌린다.
   List<ChatAttachment> _turnAttachments = const [];
 
+  /// 담긴 첨부(객체) → 고른 원본 파일 경로. inbox 사본은 줄인 본문이 아니라 원본으로 넣는다.
+  final _sources = Expando<String>('attachment source');
+
   /// 경과 초를 다시 재는 간격.
   final Duration _tick;
 
@@ -201,6 +204,7 @@ class ChatCubit extends Cubit<ChatState> {
             // 읽는 사이 담긴 것이 바뀌었을 수 있다 — 자리를 다시 본다.
             why = _noRoomFor(file.name);
             if (why == null) {
+              _sources[attachment] = file.path;
               emit(
                 state.copyWith(
                   pendingAttachments: [...state.pendingAttachments, attachment],
@@ -409,14 +413,19 @@ class ChatCubit extends Cubit<ChatState> {
     final asked = text.isEmpty ? AttachmentRules.emptyQuestion : text;
     final needsCopy =
         !_thread.temporary && attachments.any((a) => a.workspacePath == null);
-    if (!needsCopy) return _ask(asked, attachments, sent: attachments);
-    return _copyThenAsk(asked, attachments);
+    if (!needsCopy) {
+      return _ask(asked, attachments, sent: attachments, draft: text);
+    }
+    return _copyThenAsk(asked, attachments, draft: text);
   }
 
+  /// 사본을 넣는 사이 대화가 바뀌었으면 보내지 않는다 — 입력칸이 이미 비운 글은 [draft] 로
+  /// 되돌리고, 넣은 사본 경로는 입력칸 첨부에 달아 둔다(다시 보낼 때 또 넣지 않게).
   Future<void> _copyThenAsk(
     String question,
-    List<ChatAttachment> attachments,
-  ) async {
+    List<ChatAttachment> attachments, {
+    required String draft,
+  }) async {
     final thread = _thread;
     final generation = _generation;
     _preparing = true;
@@ -428,25 +437,31 @@ class ChatCubit extends Cubit<ChatState> {
     } finally {
       _preparing = false;
     }
-    if (isClosed ||
-        !identical(thread, _thread) ||
+    if (isClosed) return;
+    if (!identical(thread, _thread) ||
         generation != _generation ||
         state.access != ChatAccess.ready ||
         state.busy ||
         state.loading) {
+      _abandon(sent: attachments, stored: stored, draft: draft);
       return;
     }
-    await _ask(question, stored, sent: attachments);
+    await _ask(question, stored, sent: attachments, draft: draft);
   }
 
-  /// inbox 에 사본을 넣고 그 경로를 단다. 이미 경로가 있거나 넣지 못하면 그대로.
+  /// inbox 에 원본 사본을 넣고 그 경로를 단다. 이미 경로가 있거나 넣지 못하면 그대로.
+  /// 원본 경로를 모르면(고른 파일이 아닌 첨부) 지금 본문을 넣는다.
   Future<ChatAttachment> _copyToInbox(ChatAttachment attachment) async {
     if (attachment.workspacePath != null) return attachment;
-    final bytes = switch (attachment) {
-      ImageAttachment(:final bytes) || PdfAttachment(:final bytes) => bytes,
-      TextAttachment(:final text) => utf8.encode(text),
-    };
+    final source = _sources[attachment];
     try {
+      final bytes = source != null
+          ? await _loader.readOriginal(source)
+          : switch (attachment) {
+              ImageAttachment(:final bytes) ||
+              PdfAttachment(:final bytes) => bytes,
+              TextAttachment(:final text) => utf8.encode(text),
+            };
       final path = await _workspace.importToInbox(attachment.name, bytes);
       return attachment.copyWith(workspacePath: path);
     } on Object {
@@ -454,11 +469,36 @@ class ChatCubit extends Cubit<ChatState> {
     }
   }
 
-  /// [sent] 는 입력칸에서 빼낼 원래 첨부(사본 경로를 달기 전). 그 사이 새로 담긴 것은 남는다.
+  /// 보내지 못한 질문 — [draft](글이 있으면)를 입력칸에 되돌리고, 입력칸 첨부 중 [sent] 를
+  /// 사본 경로를 단 [stored] 로 바꾼다. [notice] 가 있으면 함께 알린다.
+  void _abandon({
+    required List<ChatAttachment> sent,
+    required List<ChatAttachment> stored,
+    required String draft,
+    AttachmentNotice? notice,
+  }) {
+    emit(
+      state.copyWith(
+        restoredDraft: draft.isEmpty ? state.restoredDraft : draft,
+        pendingAttachments: [
+          for (final a in state.pendingAttachments)
+            switch (sent.indexWhere((s) => identical(s, a))) {
+              -1 => a,
+              final i => stored[i],
+            },
+        ],
+        attachmentNotice: notice ?? state.attachmentNotice,
+      ),
+    );
+  }
+
+  /// [sent] 는 입력칸에서 빼낼 원래 첨부(사본 경로를 달기 전, [attachments] 와 같은 순서).
+  /// 그 사이 새로 담긴 것은 남는다. [draft] 는 입력칸에 쓴 글 — 보내지 못하면 되돌린다.
   Future<void> _ask(
     String question,
     List<ChatAttachment> attachments, {
     required List<ChatAttachment> sent,
+    required String draft,
   }) {
     final Stream<ChatEvent> events;
     try {
@@ -469,13 +509,15 @@ class ChatCubit extends Cubit<ChatState> {
       // 세션이 아직 이전 질문을 돌리는 중 — 이 cubit 이 모르는 질문이다. 보내지 않는다.
       return Future.value();
     } on ArgumentError {
-      // 화면이 먼저 막지만 그 사이 자리가 줄었을 수 있다 — 이유를 알리고 첨부는 남긴다.
-      emit(
-        state.copyWith(
-          attachmentNotice: AttachmentNotice(
-            name: attachments.first.name,
-            reason: _limitOf(attachments),
-          ),
+      // 화면이 먼저 막지만 그 사이 자리가 줄었을 수 있다(이어 연 대화 등) — 이유를 알리고
+      // 글 · 첨부는 입력칸에 남긴다.
+      _abandon(
+        sent: sent,
+        stored: attachments,
+        draft: draft,
+        notice: AttachmentNotice(
+          name: attachments.first.name,
+          reason: _limitOf(attachments),
         ),
       );
       return Future.value();

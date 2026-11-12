@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'attachment_rules.dart';
@@ -37,4 +39,7 @@ sealed class AttachmentLoad with _$AttachmentLoad {
 /// 고른 파일을 형식 · 크기 규칙대로 읽어 첨부로 만든다(사진은 줄인다).
 abstract interface class AttachmentLoader {
   Future<AttachmentLoad> load(PickedFile file);
+
+  /// 고른 원본 파일([PickedFile.path])의 바이트 그대로 — 작업 폴더 inbox 사본용. 읽지 못하면 던진다.
+  Future<Uint8List> readOriginal(String path);
 }

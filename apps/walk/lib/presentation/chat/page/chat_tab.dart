@@ -348,9 +348,10 @@ class _ChatBody extends StatelessWidget {
   Widget build(BuildContext context) => MultiBlocListener(
     listeners: [
       BlocListener<ChatCubit, ChatState>(
-        // 글 없이 멈춰 질문을 입력칸에 되돌렸다.
+        // 글 없이 멈춰 질문을 입력칸에 되돌렸다(답하는 중이던 것만 — 보내지 못한 질문을
+        // 되돌릴 때는 알리지 않는다).
         listenWhen: (a, b) =>
-            a.restoredDraft == null && b.restoredDraft != null,
+            a.busy && a.restoredDraft == null && b.restoredDraft != null,
         listener: (context, _) => AppSnackBar.show(
           context,
           message: AppLocalizations.of(context).walkChatStoppedSnack,

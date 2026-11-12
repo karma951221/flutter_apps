@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:walk/domain/chat/attachment/attachment_loader.dart';
 import 'package:walk/domain/chat/workspace/workspace.dart';
 
@@ -16,4 +18,8 @@ class UnusedAttachmentLoader implements AttachmentLoader {
   @override
   Future<AttachmentLoad> load(PickedFile file) =>
       throw UnimplementedError('AttachmentLoader.load');
+
+  @override
+  Future<Uint8List> readOriginal(String path) =>
+      throw UnimplementedError('AttachmentLoader.readOriginal');
 }

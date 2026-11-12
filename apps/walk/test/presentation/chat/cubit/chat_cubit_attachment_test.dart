@@ -36,8 +36,12 @@ class _FakeWorkspace implements Workspace {
   final imported = <(String, Uint8List)>[];
   bool fail = false;
 
+  /// 있으면 넣기 전에 기다린다(넣는 사이 대화를 바꾸는 테스트).
+  Completer<void>? gate;
+
   @override
   Future<String> importToInbox(String name, Uint8List bytes) async {
+    await gate?.future;
     if (fail) throw const FileSystemExceptionLike();
     imported.add((name, bytes));
     return 'inbox/20261113-120000-$name';
@@ -89,7 +93,15 @@ class _FakeLoader implements AttachmentLoader {
       ),
     };
   }
+
+  /// 원본은 줄인 본문([1, 2, 3])과 다르다 — 경로를 담은 바이트.
+  @override
+  Future<Uint8List> readOriginal(String path) async =>
+      Uint8List.fromList([9, ...path.codeUnits]);
 }
+
+Uint8List _original(String name) =>
+    Uint8List.fromList([9, ...'/picked/$name'.codeUnits]);
 
 const _target = (vendor: ChatVendor.anthropic, model: 'claude-x');
 
@@ -330,6 +342,20 @@ void main() {
       ]);
     });
 
+    test('inbox 에는 줄인 본문이 아니라 원본 파일을 원래 이름으로 넣는다', () async {
+      await cubit.addFiles([_picked('c.jpg'), _picked('a.pdf')]);
+
+      final sent = cubit.send('봐 줘');
+      await pumpEventQueue();
+
+      expect(workspace.imported.map((e) => e.$1), ['c.jpg', 'a.pdf']);
+      expect(workspace.imported[0].$2, _original('c.jpg'));
+      expect(workspace.imported[1].$2, _original('a.pdf'));
+      // 모델에는 줄인 본문을 보낸다.
+      expect((asked.single.$2.first as ImageAttachment).bytes, [1, 2, 3]);
+      await finish(sent);
+    });
+
     test('이미 작업 폴더에 있는 첨부는 다시 넣지 않는다', () async {
       await cubit.addFiles([
         _picked('a.pdf', workspacePath: 'inbox/a.pdf'),
@@ -391,6 +417,48 @@ void main() {
       expect(
         cubit.state.attachmentNotice?.reason,
         AttachmentRejection.conversationDocLimit,
+      );
+      // 입력칸이 비운 글을 되돌리고, 넣은 사본 경로를 달아 둔다.
+      expect(cubit.state.restoredDraft, '봐 줘');
+      expect(
+        cubit.state.pendingAttachments.single.workspacePath,
+        'inbox/20261113-120000-a.pdf',
+      );
+
+      // 다시 보내도 사본을 또 넣지 않는다.
+      cubit.consumeRestoredDraft();
+      await cubit.send('봐 줘');
+      expect(workspace.imported, hasLength(1));
+    });
+
+    test('글 없이 첨부만 보내다 한도로 거절되면 되돌릴 글은 없다', () async {
+      await cubit.addFiles([_picked('a.pdf')]);
+      when(
+        () => session.ask(any(), attachments: any(named: 'attachments')),
+      ).thenThrow(ArgumentError('document limit reached'));
+
+      await cubit.send('');
+
+      expect(cubit.state.restoredDraft, isNull);
+      expect(cubit.state.pendingAttachments, hasLength(1));
+    });
+
+    test('사본을 넣는 사이 새 대화로 바뀌면 보내지 않고 글 · 경로 단 첨부를 남긴다', () async {
+      await cubit.addFiles([_picked('a.pdf')]);
+      workspace.gate = Completer<void>();
+
+      final sent = cubit.send('봐 줘');
+      await pumpEventQueue();
+      cubit.newConversation();
+      workspace.gate!.complete();
+      await sent;
+
+      expect(asked, isEmpty);
+      expect(cubit.state.bubbles, isEmpty);
+      expect(cubit.state.restoredDraft, '봐 줘');
+      expect(
+        cubit.state.pendingAttachments.single.workspacePath,
+        'inbox/20261113-120000-a.pdf',
       );
     });
   });
