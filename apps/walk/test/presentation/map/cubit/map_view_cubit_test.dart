@@ -572,4 +572,36 @@ void main() {
       expect((c.state as MapViewReady).data.track.stays, isEmpty);
     },
   );
+
+  test(
+    'cached first fix up to 5 minutes before recordingSince extends',
+    () async {
+      // 10:00 에 켰고 첫 위치가 캐시라 09:58 로 찍혔다.
+      final c = cubitAt(DateTime(2026, 11, 8, 15));
+      running(stillDetection: true, since: DateTime(2026, 11, 8, 10));
+      when(() => locations.pointsAround(any(), any())).thenAnswer(
+        (_) async => [_still(DateTime(2026, 11, 8, 9, 58), 37.5, 127.0)],
+      );
+
+      await c.show(day);
+
+      final stay = (c.state as MapViewReady).data.track.stays.single;
+      expect(stay.end.toUtc(), DateTime(2026, 11, 8, 15).toUtc());
+    },
+  );
+
+  test(
+    'last point over 5 minutes before recordingSince does not extend',
+    () async {
+      final c = cubitAt(DateTime(2026, 11, 8, 15));
+      running(stillDetection: true, since: DateTime(2026, 11, 8, 10));
+      when(() => locations.pointsAround(any(), any())).thenAnswer(
+        (_) async => [_still(DateTime(2026, 11, 8, 9, 50), 37.5, 127.0)],
+      );
+
+      await c.show(day);
+
+      expect((c.state as MapViewReady).data.track.stays, isEmpty);
+    },
+  );
 }

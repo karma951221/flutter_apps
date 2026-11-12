@@ -405,4 +405,22 @@ void main() {
       expect(t.stays.first.end, DateTime.utc(2026, 11, 8, 11, 59, 59, 999));
     },
   );
+
+  // ── 4차 리뷰 ──
+
+  test('still points over 1 km apart do not merge into a midpoint stay', () {
+    // 정지 08:00(0m) → 정지 09:30(5km 북) → 멀리 12:00. 사이 점이 없어도 두 머문 곳.
+    final t = analyzer.analyze([
+      _p(DateTime.utc(2026, 11, 8, 8), still: true),
+      _p(DateTime.utc(2026, 11, 8, 9, 30), lat: 37.5663 + 0.045, still: true),
+      _p(DateTime.utc(2026, 11, 8, 12), lng: 126.9779 + 0.1),
+    ]);
+    expect(t.stays.length, 2);
+    expect(t.stays[0].start, DateTime.utc(2026, 11, 8, 8));
+    expect(t.stays[0].end, DateTime.utc(2026, 11, 8, 9, 29, 59, 999));
+    expect(t.stays[0].lat, closeTo(37.5663, 1e-9));
+    expect(t.stays[1].start, DateTime.utc(2026, 11, 8, 9, 30));
+    expect(t.stays[1].end, DateTime.utc(2026, 11, 8, 11, 59, 59, 999));
+    expect(t.stays[1].lat, closeTo(37.5663 + 0.045, 1e-9));
+  });
 }

@@ -14,6 +14,9 @@ class TrackAnalyzer {
   /// 것일 수 있어 끊는다(정지 감지 점 뒤는 제한 없음).
   static const sameSpotMaxGap = Duration(hours: 12);
 
+  /// 정지 감지 점끼리 거리와 상관없이 잇는 상한. 더 멀면 사이 점이 없어도 다른 자리다.
+  static const stillJoinMaxM = 1000.0;
+
   static const _oneMs = Duration(milliseconds: 1);
 
   /// [clipFrom] · [clipTo] 가 있으면 그 안으로 머문 곳을 자르고 구간 점도 거른다.
@@ -75,8 +78,11 @@ class TrackAnalyzer {
       final current = groups.last;
       final groupsBefore = groups.length;
       final pause = next.recordedAt.difference(prev.recordedAt);
-      if (prev.stillStart && next.stillStart && next.mode == prev.mode) {
-        // 정지 감지 점 사이(심장박동)는 늘 잇는다 — 네이티브가 정확도 여유로 같은 자리라 봤다.
+      if (prev.stillStart &&
+          next.stillStart &&
+          next.mode == prev.mode &&
+          _meters(anchor ?? prev, next) <= stillJoinMaxM) {
+        // 정지 감지 점 사이(심장박동)는 1km 안이면 잇는다 — 네이티브가 정확도 여유로 같은 자리라 봤다.
         current.points.add(next);
       } else if (prev.stillStart) {
         final ref = anchor ?? prev;
@@ -118,7 +124,7 @@ class TrackAnalyzer {
   }
 
   /// 앞 점에서 반경 안에 머무는 최장 연속이 최소 시간 이상이면 머문 곳. 정지 감지 점이 든
-  /// 연속은 뒤이은 정지 감지 점(심장박동)을 거리와 상관없이 품는다. 정지 감지 점 바로 뒤에서
+  /// 연속은 뒤이은 정지 감지 점(심장박동)을 [stillJoinMaxM] 안이면 품는다. 정지 감지 점 바로 뒤에서
   /// 끊기면 머문 곳은 다음 점 직전까지다.
   List<Stay> _stays(_Group g) {
     final pts = g.points;
@@ -126,12 +132,14 @@ class TrackAnalyzer {
     var i = 0;
     while (i < pts.length) {
       var j = i + 1;
-      var hasStill = pts[i].stillStart;
+      // 연속의 첫 정지 감지 점 — 뒤이은 정지 감지 점은 이 점에서 1km 안이면 품는다.
+      var still = pts[i].stillStart ? pts[i] : null;
       while (j < pts.length &&
-          ((hasStill && pts[j].stillStart) ||
-              haversineMeters(pts[i].lat, pts[i].lng, pts[j].lat, pts[j].lng) <=
-                  stayRadiusM)) {
-        if (pts[j].stillStart) hasStill = true;
+          ((still != null &&
+                  pts[j].stillStart &&
+                  _meters(still, pts[j]) <= stillJoinMaxM) ||
+              _meters(pts[i], pts[j]) <= stayRadiusM)) {
+        if (pts[j].stillStart) still ??= pts[j];
         j++;
       }
       final isLast = j == pts.length;
@@ -159,6 +167,9 @@ class TrackAnalyzer {
     }
     return result;
   }
+
+  static double _meters(LocationPoint a, LocationPoint b) =>
+      haversineMeters(a.lat, a.lng, b.lat, b.lng);
 
   Stay? _clip(Stay s, DateTime? from, DateTime? to) {
     final start = from != null && s.start.isBefore(from) ? from : s.start;
