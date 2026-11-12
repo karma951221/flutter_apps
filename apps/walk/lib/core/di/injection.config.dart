@@ -131,6 +131,7 @@ import '../../domain/settings/repository/settings_repository.dart' as _i91;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
 import '../../presentation/chat/attachment/chat_file_picker.dart' as _i211;
+import '../../presentation/chat/workspace/workspace_share.dart' as _i835;
 import '../../presentation/diary/media_picker.dart' as _i287;
 import '../../presentation/lock/media_pick_guard.dart' as _i488;
 import '../../presentation/map/cubit/map_view_cubit.dart' as _i276;
@@ -235,6 +236,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i558.FlutterSecureStorage>(),
         gh<_i460.SharedPreferences>(),
       ),
+    );
+    gh.lazySingleton<_i835.WorkspaceShare>(
+      () => _i835.SharePlusWorkspaceShare(gh<_i488.MediaPickGuard>()),
     );
     gh.lazySingleton<_i674.MediaProcessor>(() => _i17.PluginMediaProcessor());
     gh.lazySingleton<_i488.RouteFinder>(

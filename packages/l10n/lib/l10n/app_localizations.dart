@@ -7637,6 +7637,114 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'기록 {count}개'**
   String walkMapPinCount(int count);
+
+  /// 물어보기: ⋮ 메뉴 · 작업 폴더 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'작업 폴더'**
+  String get walkWorkspaceTitle;
+
+  /// 작업 폴더: out 구역 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'저장한 결과'**
+  String get walkWorkspaceOutSection;
+
+  /// 작업 폴더: inbox 구역 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'첨부한 파일'**
+  String get walkWorkspaceInboxSection;
+
+  /// 작업 폴더: 목록 위 전체 사용량
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}개 · {size}'**
+  String walkWorkspaceUsage(int count, String size);
+
+  /// 작업 폴더: 빈 상태
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 파일이 없어요'**
+  String get walkWorkspaceEmpty;
+
+  /// 작업 폴더: 빈 상태 보조 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'물어보기에서 📎 로 첨부하거나 답을 파일로 저장해 보세요.'**
+  String get walkWorkspaceEmptyHint;
+
+  /// 작업 폴더: 목록 읽기 실패
+  ///
+  /// In ko, this message translates to:
+  /// **'작업 폴더를 읽지 못했어요'**
+  String get walkWorkspaceLoadFailed;
+
+  /// 작업 폴더: 행 메뉴 — 입력칸에 첨부
+  ///
+  /// In ko, this message translates to:
+  /// **'물어보기에 첨부'**
+  String get walkWorkspaceAttach;
+
+  /// 작업 폴더: 행 메뉴 · 보기 화면 — 공유 시트
+  ///
+  /// In ko, this message translates to:
+  /// **'공유'**
+  String get walkWorkspaceShare;
+
+  /// 작업 폴더: 행 메뉴 · 확인 버튼 — 파일 지우기
+  ///
+  /// In ko, this message translates to:
+  /// **'지우기'**
+  String get walkWorkspaceDelete;
+
+  /// 작업 폴더: 지우기 확인 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 지우기'**
+  String get walkWorkspaceDeleteTitle;
+
+  /// 작업 폴더: 지우기 확인 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'{name} 을(를) 지울까요? 되돌릴 수 없어요.'**
+  String walkWorkspaceDeleteBody(String name);
+
+  /// 작업 폴더: 지우기 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'지우지 못했어요'**
+  String get walkWorkspaceDeleteFailed;
+
+  /// 작업 폴더: 공유 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'공유하지 못했어요'**
+  String get walkWorkspaceShareFailed;
+
+  /// 작업 폴더: 열려는 파일이 없을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'지운 파일이에요'**
+  String get walkWorkspaceFileMissing;
+
+  /// 물어보기: 작업 폴더에 없는 첨부 칩 표시
+  ///
+  /// In ko, this message translates to:
+  /// **'지운 파일'**
+  String get walkWorkspaceDeletedChip;
+
+  /// 물어보기: 저장 스낵바의 [보기] — 저장한 파일을 연다
+  ///
+  /// In ko, this message translates to:
+  /// **'보기'**
+  String get walkWorkspaceView;
+
+  /// 작업 폴더: 사진을 그리지 못했을 때 보기 화면 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'이 사진은 앱에서 열 수 없어요'**
+  String get walkWorkspaceImageUnreadable;
 }
 
 class _AppLocalizationsDelegate

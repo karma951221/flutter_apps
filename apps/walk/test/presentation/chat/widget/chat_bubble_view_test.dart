@@ -17,6 +17,8 @@ void main() {
     VoidCallback? onLongPress,
     bool streaming = false,
     bool reduceMotion = false,
+    Future<bool> Function(String path)? attachmentExists,
+    ValueChanged<String>? onOpenAttachment,
   }) => tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light(),
@@ -34,6 +36,8 @@ void main() {
           onOpenSettings: onOpenSettings,
           onLongPress: onLongPress,
           streaming: streaming,
+          attachmentExists: attachmentExists,
+          onOpenAttachment: onOpenAttachment,
         ),
       ),
     ),
@@ -309,5 +313,79 @@ void main() {
     expect(find.byIcon(Icons.picture_as_pdf_outlined), findsOneWidget);
     expect(find.byIcon(Icons.image_outlined), findsOneWidget);
     expect(find.byTooltip('첨부 빼기'), findsNothing);
+  });
+
+  group('기록 말풍선 첨부 칩', () {
+    const bubble = ChatBubble(
+      role: ChatRole.user,
+      text: '봐 줘',
+      attachments: [
+        ChatAttachmentRef(
+          name: 'a.pdf',
+          kind: AttachmentKind.pdf,
+          workspacePath: 'inbox/a.pdf',
+        ),
+        ChatAttachmentRef(
+          name: 'gone.md',
+          kind: AttachmentKind.text,
+          workspacePath: 'inbox/gone.md',
+        ),
+        ChatAttachmentRef(name: 'temp.jpg', kind: AttachmentKind.image),
+      ],
+    );
+
+    testWidgets('있는 파일은 누르면 그 경로를 연다', (tester) async {
+      final opened = <String>[];
+      await pump(
+        tester,
+        bubble,
+        attachmentExists: (path) async => path == 'inbox/a.pdf',
+        onOpenAttachment: opened.add,
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('a.pdf'));
+      await tester.pumpAndSettle();
+
+      expect(opened, ['inbox/a.pdf']);
+    });
+
+    testWidgets('없거나 경로가 없는 파일은 회색 "지운 파일" — 눌러도 열지 않는다', (tester) async {
+      final opened = <String>[];
+      await pump(
+        tester,
+        bubble,
+        attachmentExists: (path) async => path == 'inbox/a.pdf',
+        onOpenAttachment: opened.add,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('지운 파일'), findsNWidgets(2));
+      expect(find.textContaining('a.pdf · 지운 파일'), findsNothing);
+      final gone = tester.widget<InputChip>(
+        find.ancestor(
+          of: find.textContaining('gone.md'),
+          matching: find.byType(InputChip),
+        ),
+      );
+      expect(gone.isEnabled, isFalse);
+
+      await tester.tap(find.textContaining('gone.md'), warnIfMissed: false);
+      await tester.tap(find.textContaining('temp.jpg'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(opened, isEmpty);
+    });
+
+    testWidgets('있는지 묻다 실패하면 지운 파일로 본다', (tester) async {
+      await pump(
+        tester,
+        bubble,
+        attachmentExists: (path) => throw StateError('boundary'),
+        onOpenAttachment: (_) {},
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('지운 파일'), findsNWidgets(3));
+    });
   });
 }

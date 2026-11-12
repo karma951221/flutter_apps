@@ -2,6 +2,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../../domain/chat/attachment/chat_attachment.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../cubit/chat_state.dart';
@@ -24,6 +25,8 @@ class ChatBubbleView extends StatelessWidget {
     this.onOpenSettings,
     this.onLongPress,
     this.streaming = false,
+    this.attachmentExists,
+    this.onOpenAttachment,
     super.key,
   });
 
@@ -43,6 +46,13 @@ class ChatBubbleView extends StatelessWidget {
 
   /// 답 글이 흐르는 중 — 글 끝에 커서를 둔다.
   final bool streaming;
+
+  /// 첨부가 작업 폴더에 있는지. null 이면 칩은 표시만 한다(눌리지 않고 확인하지 않는다).
+  /// 있으면 경로가 없거나 없는 파일 · 확인 실패는 회색 '지운 파일'.
+  final Future<bool> Function(String path)? attachmentExists;
+
+  /// 있는 첨부 칩을 눌렀다 — 작업 폴더 상대 경로.
+  final ValueChanged<String>? onOpenAttachment;
 
   /// 설정에서 고칠 수 있는 실패 — 키 없음 · 잘못된 키 · 크레딧 부족.
   static const _settingsFailures = {
@@ -95,7 +105,18 @@ class ChatBubbleView extends StatelessWidget {
                 runSpacing: AppSpacing.xs,
                 children: [
                   for (final (i, a) in bubble.attachments.indexed)
-                    AttachmentChip.of(a, key: ValueKey('bubble-attachment-$i')),
+                    switch (attachmentExists) {
+                      null => AttachmentChip.of(
+                        a,
+                        key: ValueKey('bubble-attachment-$i'),
+                      ),
+                      final exists => _WorkspaceChip(
+                        key: ValueKey('bubble-attachment-$i'),
+                        attachment: a,
+                        exists: exists,
+                        onOpen: onOpenAttachment,
+                      ),
+                    },
                 ],
               ),
               const SizedBox(height: AppSpacing.xs),
@@ -311,4 +332,67 @@ class _StreamingCursorState extends State<_StreamingCursor>
       ),
     );
   }
+}
+
+/// 말풍선의 첨부 칩 — 작업 폴더에 있는지 한 번 묻고, 없으면 회색 '지운 파일'.
+/// 묻는 동안은 보통 칩으로 그리되 누르지 않는다.
+class _WorkspaceChip extends StatefulWidget {
+  const _WorkspaceChip({
+    required this.attachment,
+    required this.exists,
+    required this.onOpen,
+    super.key,
+  });
+
+  final ChatAttachmentRef attachment;
+  final Future<bool> Function(String path) exists;
+  final ValueChanged<String>? onOpen;
+
+  @override
+  State<_WorkspaceChip> createState() => _WorkspaceChipState();
+}
+
+class _WorkspaceChipState extends State<_WorkspaceChip> {
+  late Future<bool> _there;
+
+  @override
+  void initState() {
+    super.initState();
+    _there = _check();
+  }
+
+  @override
+  void didUpdateWidget(_WorkspaceChip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.attachment.workspacePath != widget.attachment.workspacePath) {
+      _there = _check();
+    }
+  }
+
+  /// 경로가 없거나(임시 대화 · 사본 실패) 묻다 실패하면(경계 밖 등) 없는 것으로 본다.
+  Future<bool> _check() async {
+    final path = widget.attachment.workspacePath;
+    if (path == null) return false;
+    try {
+      return await widget.exists(path);
+    } on Object {
+      return false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => FutureBuilder<bool>(
+    future: _there,
+    builder: (context, snapshot) {
+      final path = widget.attachment.workspacePath;
+      final open = widget.onOpen;
+      return AttachmentChip.of(
+        widget.attachment,
+        missing: snapshot.data == false,
+        onTap: snapshot.data == true && path != null && open != null
+            ? () => open(path)
+            : null,
+      );
+    },
+  );
 }

@@ -4503,4 +4503,70 @@ class AppLocalizationsEn extends AppLocalizations {
   String walkMapPinCount(int count) {
     return '$count entries';
   }
+
+  @override
+  String get walkWorkspaceTitle => 'Workspace';
+
+  @override
+  String get walkWorkspaceOutSection => 'Saved results';
+
+  @override
+  String get walkWorkspaceInboxSection => 'Attached files';
+
+  @override
+  String walkWorkspaceUsage(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$_temp0 · $size';
+  }
+
+  @override
+  String get walkWorkspaceEmpty => 'No files yet';
+
+  @override
+  String get walkWorkspaceEmptyHint =>
+      'Attach a file with 📎 in Ask, or save an answer as a file.';
+
+  @override
+  String get walkWorkspaceLoadFailed => 'Couldn\'t read the workspace';
+
+  @override
+  String get walkWorkspaceAttach => 'Attach to Ask';
+
+  @override
+  String get walkWorkspaceShare => 'Share';
+
+  @override
+  String get walkWorkspaceDelete => 'Delete';
+
+  @override
+  String get walkWorkspaceDeleteTitle => 'Delete file';
+
+  @override
+  String walkWorkspaceDeleteBody(String name) {
+    return 'Delete $name? This can\'t be undone.';
+  }
+
+  @override
+  String get walkWorkspaceDeleteFailed => 'Couldn\'t delete';
+
+  @override
+  String get walkWorkspaceShareFailed => 'Couldn\'t share';
+
+  @override
+  String get walkWorkspaceFileMissing => 'This file was deleted';
+
+  @override
+  String get walkWorkspaceDeletedChip => 'Deleted';
+
+  @override
+  String get walkWorkspaceView => 'View';
+
+  @override
+  String get walkWorkspaceImageUnreadable =>
+      'This photo can\'t be shown in the app';
 }

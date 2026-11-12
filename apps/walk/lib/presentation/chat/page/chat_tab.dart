@@ -44,6 +44,7 @@ import '../widget/model_picker_sheet.dart';
 import '../widget/temporary_chat_banner.dart';
 import '../wiki/cubit/wiki_edit_state.dart';
 import '../wiki/open_wiki.dart';
+import '../workspace/open_workspace.dart';
 import '../wiki/widget/wiki_candidates_sheet.dart';
 import 'chat_history_page.dart';
 
@@ -116,6 +117,28 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
   Future<void> _openWiki() async {
     final id = await openWikiPage(context);
     if (id != null && mounted) await _cubit.open(id);
+  }
+
+  /// ⋮ [작업 폴더]. [물어보기에 첨부]로 고른 파일은 다시 넣지 않게 상대 경로를 달아 입력칸에 담는다.
+  /// 잠금 아래 화면이다.
+  Future<void> _openWorkspace() async {
+    final file = await openWorkspace(context);
+    if (file == null || !mounted) return;
+    final String absolute;
+    try {
+      absolute = await getIt<Workspace>().absolutePath(file.path);
+    } on Object {
+      return;
+    }
+    if (!mounted) return;
+    await _cubit.addFiles([
+      PickedFile(
+        name: file.name,
+        path: absolute,
+        sizeBytes: file.sizeBytes,
+        workspacePath: file.path,
+      ),
+    ]);
   }
 
   /// ⋮ [위키로 정리]. 후보 시트는 잠기면 스스로 닫힌다.
@@ -220,6 +243,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
                 _ChatMenu(
                   onHistory: () => unawaited(_openHistory()),
                   onWiki: () => unawaited(_openWiki()),
+                  onWorkspace: () => unawaited(_openWorkspace()),
                   onDistill: () => unawaited(_distill()),
                   onTemporary: _cubit.startTemporary,
                 ),
@@ -240,18 +264,20 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
   }
 }
 
-/// 풀린 동안의 ⋮ — 대화 목록 · 위키 · 위키로 정리 · 임시 대화로 시작(쓸 수 있을 때) 아래에
+/// 풀린 동안의 ⋮ — 대화 목록 · 위키 · 작업 폴더 · 위키로 정리 · 임시 대화로 시작(쓸 수 있을 때) 아래에
 /// 물어보기 설정 · 앱 설정.
 class _ChatMenu extends StatelessWidget {
   const _ChatMenu({
     required this.onHistory,
     required this.onWiki,
+    required this.onWorkspace,
     required this.onDistill,
     required this.onTemporary,
   });
 
   final VoidCallback onHistory;
   final VoidCallback onWiki;
+  final VoidCallback onWorkspace;
   final VoidCallback onDistill;
   final VoidCallback onTemporary;
 
@@ -282,6 +308,13 @@ class _ChatMenu extends StatelessWidget {
             label: l10n.walkChatWikiTitle,
             icon: Icons.menu_book_outlined,
             onTap: onWiki,
+          ),
+        if (ready)
+          FeatureMenuEntry(
+            key: const Key('chat-menu-workspace'),
+            label: l10n.walkWorkspaceTitle,
+            icon: Icons.folder_outlined,
+            onTap: onWorkspace,
           ),
         if (ready && distillable)
           FeatureMenuEntry(
@@ -910,11 +943,17 @@ class _BubbleItem extends StatelessWidget {
         final l10n = AppLocalizations.of(context);
         final path = await cubit.saveAnswer(index);
         if (!context.mounted) return;
+        if (path == null) {
+          AppSnackBar.show(context, message: l10n.walkChatSaveFailed);
+          return;
+        }
         AppSnackBar.show(
           context,
-          message: path == null
-              ? l10n.walkChatSaveFailed
-              : l10n.walkChatSavedToWorkspace,
+          message: l10n.walkChatSavedToWorkspace,
+          actionLabel: l10n.walkWorkspaceView,
+          onAction: () {
+            if (context.mounted) unawaited(openWorkspaceFile(context, path));
+          },
         );
       case BubbleAction.addToWiki:
         await openWikiEditor(context, _seed(cubit.state, bubble));
@@ -971,6 +1010,8 @@ class _BubbleItem extends StatelessWidget {
       streaming: pending && bubble.text.isNotEmpty && writing,
       onOpenCited: (cited, entry) => _open(context, cited, entry),
       onOpenSettings: onOpenSettings,
+      attachmentExists: getIt<Workspace>().exists,
+      onOpenAttachment: (path) => unawaited(openWorkspaceFile(context, path)),
       // 답하는 중엔 턴을 지우지 않는다.
       onLongPress: busy ? null : () => unawaited(_actions(context, bubble)),
     );

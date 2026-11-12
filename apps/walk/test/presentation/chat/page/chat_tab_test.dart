@@ -1,3 +1,6 @@
+import 'package:walk/domain/chat/attachment/chat_attachment.dart';
+import 'dart:typed_data';
+import 'dart:convert';
 import 'dart:async';
 import 'package:walk/domain/chat/attachment/attachment_loader.dart';
 import 'package:walk/domain/chat/workspace/workspace.dart';
@@ -41,6 +44,8 @@ import 'package:walk/presentation/chat/widget/chat_jump_to_latest.dart';
 import 'package:walk/presentation/chat/widget/chat_progress_view.dart';
 import 'package:walk/presentation/chat/wiki/page/wiki_note_edit_page.dart';
 import 'package:walk/presentation/chat/wiki/page/wiki_page.dart';
+import 'package:walk/presentation/chat/workspace/page/workspace_file_view_page.dart';
+import 'package:walk/presentation/chat/workspace/page/workspace_page.dart';
 import 'package:walk/presentation/diary/viewer/story_viewer_page.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_state.dart';
@@ -53,6 +58,7 @@ import '../../../support/fake_chat_settings.dart';
 import '../../../support/fake_secure_window.dart';
 import '../../../support/fake_wiki_repository.dart';
 import '../wiki/wiki_fakes.dart';
+import '../workspace/workspace_fakes.dart';
 
 class _MockSession extends Mock implements ChatSession {}
 
@@ -607,7 +613,7 @@ void main() {
   }
 
   group('⋮ 항목', () {
-    testWidgets('⋮ 순서는 대화 목록 · 위키 · 임시 대화로 시작 · 물어보기 설정 · 앱 설정', (
+    testWidgets('⋮ 순서는 대화 목록 · 위키 · 작업 폴더 · 임시 대화로 시작 · 물어보기 설정 · 앱 설정', (
       tester,
     ) async {
       await pump(tester);
@@ -616,6 +622,7 @@ void main() {
       final keys = [
         'chat-menu-history',
         'chat-menu-wiki',
+        'chat-menu-workspace',
         'chat-menu-temporary',
         'menu-settings-chat',
         'menu-settings-app',
@@ -624,7 +631,8 @@ void main() {
         for (final k in keys) tester.getTopLeft(find.byKey(Key(k))).dy,
       ];
       expect(tops, [...tops]..sort());
-      expect(tops.toSet(), hasLength(5));
+      expect(tops.toSet(), hasLength(6));
+      expect(find.text('작업 폴더'), findsOneWidget);
       expect(find.text('대화 목록'), findsOneWidget);
       expect(find.text('위키'), findsOneWidget);
       expect(find.text('임시 대화로 시작'), findsOneWidget);
@@ -1744,6 +1752,69 @@ void main() {
       await finish(tester);
     });
   });
+
+  group('작업 폴더', () {
+    late MemoryWorkspace ws;
+    late _RecordingLoader loader;
+
+    setUp(() {
+      ws = MemoryWorkspace();
+      loader = _RecordingLoader();
+      getIt
+        ..unregister<Workspace>()
+        ..registerSingleton<Workspace>(ws)
+        ..unregister<AttachmentLoader>()
+        ..registerSingleton<AttachmentLoader>(loader);
+    });
+
+    testWidgets('⋮ [작업 폴더] → [물어보기에 첨부] 면 상대 경로를 단 채 입력칸에 담긴다', (tester) async {
+      final file = workspaceFile('out/20261113-1405-a.md');
+      ws.add(file, Uint8List.fromList(utf8.encode('답')));
+      await pump(tester);
+
+      await tapMenu(tester, 'chat-menu-workspace');
+      expect(find.byType(WorkspacePage), findsOneWidget);
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(Key('workspace-file-${file.path}')),
+          matching: find.byIcon(Icons.more_vert),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('물어보기에 첨부'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WorkspacePage), findsNothing);
+      expect(loader.loaded, hasLength(1));
+      expect(loader.loaded.single.path, '/ws/${file.path}');
+      expect(loader.loaded.single.workspacePath, file.path);
+      expect(loader.loaded.single.name, file.name);
+      expect(find.text(file.name), findsOneWidget);
+    });
+
+    testWidgets('답을 파일로 저장하면 스낵바 [보기] 가 그 파일을 연다', (tester) async {
+      answer('산책을 했어요');
+      await pump(tester);
+      await tester.tap(find.text('어제 뭐 했어?'));
+      await tester.pumpAndSettle();
+
+      await longPressBubble(tester, '산책을 했어요');
+      await tester.tap(find.text('파일로 저장'));
+      await tester.pumpAndSettle();
+      expect(find.text('작업 폴더에 저장했어요'), findsOneWidget);
+      await tester.tap(find.text('보기'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WorkspaceFileViewPage), findsOneWidget);
+      final text = tester.widget<SelectableText>(
+        find.descendant(
+          of: find.byType(WorkspaceFileViewPage),
+          matching: find.byType(SelectableText),
+        ),
+      );
+      expect(text.data, contains('산책을 했어요'));
+    });
+  });
 }
 
 class _PendingSettings extends FakeChatSettings {
@@ -1753,4 +1824,24 @@ class _PendingSettings extends FakeChatSettings {
 
   @override
   Future<bool> hasApiKey() async => await pending != null;
+}
+
+/// 받은 PickedFile 을 적고 글 첨부로 받아 준다.
+class _RecordingLoader implements AttachmentLoader {
+  final loaded = <PickedFile>[];
+
+  @override
+  Future<AttachmentLoad> load(PickedFile file) async {
+    loaded.add(file);
+    return AttachmentLoad.ok(
+      ChatAttachment.text(
+        name: file.name,
+        text: '답',
+        workspacePath: file.workspacePath,
+      ),
+    );
+  }
+
+  @override
+  Future<Uint8List> readOriginal(String path) async => Uint8List(0);
 }

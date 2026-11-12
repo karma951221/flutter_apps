@@ -4136,4 +4136,62 @@ class AppLocalizationsJa extends AppLocalizations {
   String walkMapPinCount(int count) {
     return '記録$count件';
   }
+
+  @override
+  String get walkWorkspaceTitle => '作業フォルダ';
+
+  @override
+  String get walkWorkspaceOutSection => '保存した結果';
+
+  @override
+  String get walkWorkspaceInboxSection => '添付したファイル';
+
+  @override
+  String walkWorkspaceUsage(int count, String size) {
+    return '$count件 · $size';
+  }
+
+  @override
+  String get walkWorkspaceEmpty => 'まだファイルがありません';
+
+  @override
+  String get walkWorkspaceEmptyHint => '質問で📎から添付するか、回答をファイルに保存してみてください。';
+
+  @override
+  String get walkWorkspaceLoadFailed => '作業フォルダを読み込めませんでした';
+
+  @override
+  String get walkWorkspaceAttach => '質問に添付';
+
+  @override
+  String get walkWorkspaceShare => '共有';
+
+  @override
+  String get walkWorkspaceDelete => '削除';
+
+  @override
+  String get walkWorkspaceDeleteTitle => 'ファイルを削除';
+
+  @override
+  String walkWorkspaceDeleteBody(String name) {
+    return '$nameを削除しますか？元に戻せません。';
+  }
+
+  @override
+  String get walkWorkspaceDeleteFailed => '削除できませんでした';
+
+  @override
+  String get walkWorkspaceShareFailed => '共有できませんでした';
+
+  @override
+  String get walkWorkspaceFileMissing => '削除されたファイルです';
+
+  @override
+  String get walkWorkspaceDeletedChip => '削除済み';
+
+  @override
+  String get walkWorkspaceView => '表示';
+
+  @override
+  String get walkWorkspaceImageUnreadable => 'この写真はアプリで表示できません';
 }

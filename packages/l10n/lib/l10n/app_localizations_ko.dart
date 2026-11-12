@@ -4140,4 +4140,62 @@ class AppLocalizationsKo extends AppLocalizations {
   String walkMapPinCount(int count) {
     return '기록 $count개';
   }
+
+  @override
+  String get walkWorkspaceTitle => '작업 폴더';
+
+  @override
+  String get walkWorkspaceOutSection => '저장한 결과';
+
+  @override
+  String get walkWorkspaceInboxSection => '첨부한 파일';
+
+  @override
+  String walkWorkspaceUsage(int count, String size) {
+    return '$count개 · $size';
+  }
+
+  @override
+  String get walkWorkspaceEmpty => '아직 파일이 없어요';
+
+  @override
+  String get walkWorkspaceEmptyHint => '물어보기에서 📎 로 첨부하거나 답을 파일로 저장해 보세요.';
+
+  @override
+  String get walkWorkspaceLoadFailed => '작업 폴더를 읽지 못했어요';
+
+  @override
+  String get walkWorkspaceAttach => '물어보기에 첨부';
+
+  @override
+  String get walkWorkspaceShare => '공유';
+
+  @override
+  String get walkWorkspaceDelete => '지우기';
+
+  @override
+  String get walkWorkspaceDeleteTitle => '파일 지우기';
+
+  @override
+  String walkWorkspaceDeleteBody(String name) {
+    return '$name 을(를) 지울까요? 되돌릴 수 없어요.';
+  }
+
+  @override
+  String get walkWorkspaceDeleteFailed => '지우지 못했어요';
+
+  @override
+  String get walkWorkspaceShareFailed => '공유하지 못했어요';
+
+  @override
+  String get walkWorkspaceFileMissing => '지운 파일이에요';
+
+  @override
+  String get walkWorkspaceDeletedChip => '지운 파일';
+
+  @override
+  String get walkWorkspaceView => '보기';
+
+  @override
+  String get walkWorkspaceImageUnreadable => '이 사진은 앱에서 열 수 없어요';
 }
