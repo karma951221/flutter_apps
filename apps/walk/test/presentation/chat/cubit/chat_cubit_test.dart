@@ -28,6 +28,7 @@ import '../../../support/fake_chat_key_verifier.dart';
 import '../../../support/fake_chat_model_catalog.dart';
 import '../../../support/fake_chat_settings.dart';
 import '../../../support/recording_chat_trace.dart';
+import '../../../support/unused_chat_attachments.dart';
 
 class _MockSession extends Mock implements ChatSession {}
 
@@ -127,6 +128,7 @@ void main() {
     choice = ChatModelChoice(settings, catalog, verifier, const Clock());
     appended = [];
     when(() => session.target).thenReturn(_target);
+    when(() => session.attachmentRoom).thenReturn((images: 12, docs: 5));
     when(
       () => history.watchExists(any()),
     ).thenAnswer((_) => const Stream.empty());
@@ -150,6 +152,8 @@ void main() {
       history,
       open,
       const Clock(),
+      const UnusedWorkspace(),
+      const UnusedAttachmentLoader(),
     );
   });
 
@@ -654,6 +658,8 @@ void main() {
         history,
         open,
         const Clock(),
+        const UnusedWorkspace(),
+        const UnusedAttachmentLoader(),
         schedulePostFrame: frames.add,
       );
       await traced.refresh();
@@ -849,6 +855,8 @@ void main() {
         history,
         open,
         const Clock(),
+        const UnusedWorkspace(),
+        const UnusedAttachmentLoader(),
         schedulePostFrame: frames.add,
       );
       await quiet.refresh();
@@ -1576,6 +1584,8 @@ void main() {
       history,
       open,
       const Clock(),
+      const UnusedWorkspace(),
+      const UnusedAttachmentLoader(),
     );
 
     test('목록이 있으면 ready 와 칩(이름 · 벤더 · 번개 · 점)', () async {
@@ -1905,6 +1915,8 @@ void main() {
         history,
         open,
         clock,
+        const UnusedWorkspace(),
+        const UnusedAttachmentLoader(),
       );
       unawaited(c.refresh());
       async.flushMicrotasks();

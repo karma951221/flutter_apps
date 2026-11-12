@@ -6,6 +6,7 @@ import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../cubit/chat_state.dart';
 import 'chat_failure_text.dart';
+import 'attachment_chip.dart';
 import 'chat_progress_view.dart';
 import 'cited_entry_chip.dart';
 
@@ -84,6 +85,19 @@ class ChatBubbleView extends StatelessWidget {
           children: [
             if (bubble.progress case final progress? when !mine) ...[
               ChatProgressView(progress: progress),
+              const SizedBox(height: AppSpacing.xs),
+            ],
+            // 질문에 붙인 파일 — 질문 글 위(보낸 순서와 같게).
+            if (mine && bubble.attachments.isNotEmpty) ...[
+              Wrap(
+                alignment: WrapAlignment.end,
+                spacing: AppSpacing.sm,
+                runSpacing: AppSpacing.xs,
+                children: [
+                  for (final (i, a) in bubble.attachments.indexed)
+                    AttachmentChip.of(a, key: ValueKey('bubble-attachment-$i')),
+                ],
+              ),
               const SizedBox(height: AppSpacing.xs),
             ],
             if (text.isNotEmpty || failure != null || stopped)

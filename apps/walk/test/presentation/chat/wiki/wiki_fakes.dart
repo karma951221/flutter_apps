@@ -219,6 +219,9 @@ class TargetOnlySession implements ChatSession {
   final ChatTarget? target;
 
   @override
+  ({int images, int docs}) get attachmentRoom => (images: 12, docs: 5);
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

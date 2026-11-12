@@ -3163,6 +3163,39 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatStoppedSnack => '停止しました';
 
   @override
+  String get walkChatAttach => 'ファイルを添付';
+
+  @override
+  String get walkChatAttachRemove => '添付を外す';
+
+  @override
+  String get walkChatAttachUnsupported => 'この形式は添付できません(写真・PDF・テキストのみ)';
+
+  @override
+  String walkChatAttachTooLarge(String name) {
+    return '$name が大きすぎます(写真30MB・PDF 10MB・テキスト200KBまで)';
+  }
+
+  @override
+  String walkChatAttachNotUtf8(String name) {
+    return '$name を文字として読めませんでした(UTF-8のみ)';
+  }
+
+  @override
+  String get walkChatAttachPerQuestionLimit => '一度に添付できるのは3つまでです';
+
+  @override
+  String get walkChatAttachDocLimit =>
+      'この会話ではPDF・テキストをこれ以上送れません。[新しい会話]で送り直してください';
+
+  @override
+  String get walkChatAttachImageLimit => 'この会話では写真をこれ以上送れません。[新しい会話]で送り直してください';
+
+  @override
+  String get walkChatAttachConversationFull =>
+      'この会話ではファイルをこれ以上送れません。[新しい会話]で送り直してください';
+
+  @override
   String get walkChatNewConversation => '新しい会話';
 
   @override

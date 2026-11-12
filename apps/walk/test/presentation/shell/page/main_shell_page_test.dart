@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'package:walk/domain/chat/attachment/attachment_loader.dart';
+import 'package:walk/domain/chat/workspace/workspace.dart';
+import '../../../support/unused_chat_attachments.dart';
 
 import 'package:bloc_test/bloc_test.dart';
 
@@ -116,6 +119,7 @@ class _MockChatSession extends Mock implements ChatSession {
     when(
       () => target,
     ).thenReturn((vendor: ChatVendor.anthropic, model: 'claude-test'));
+    when(() => attachmentRoom).thenReturn((images: 12, docs: 5));
   }
 }
 
@@ -254,6 +258,8 @@ void main() {
       ..registerSingleton<LocationRepository>(_MockLocationRepository());
     getIt
       ..registerSingleton<MapOpenRequests>(MapOpenRequests())
+      ..registerSingleton<Workspace>(const UnusedWorkspace())
+      ..registerSingleton<AttachmentLoader>(const UnusedAttachmentLoader())
       ..registerSingleton<ChatSession>(_MockChatSession())
       ..registerSingleton<ChatHistoryRepository>(_MockChatHistory())
       ..registerSingleton<WikiRepository>(FakeWikiRepository())

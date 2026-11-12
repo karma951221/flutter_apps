@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'package:walk/domain/chat/attachment/attachment_loader.dart';
+import 'package:walk/domain/chat/workspace/workspace.dart';
+import '../../../support/unused_chat_attachments.dart';
 
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
@@ -100,6 +103,7 @@ void main() {
     wiki = MemoryWikiRepository();
     distiller = _MockDistiller();
     session = _MockSession();
+    when(() => session.attachmentRoom).thenReturn((images: 12, docs: 5));
     diary = _MockDiary();
     settings = FakeChatSettings('sk-ant-test')
       ..consentedVendor = ChatVendor.anthropic;
@@ -128,6 +132,8 @@ void main() {
       initialState: const DiaryLockState.unlocked(),
     );
     getIt
+      ..registerSingleton<Workspace>(const UnusedWorkspace())
+      ..registerSingleton<AttachmentLoader>(const UnusedAttachmentLoader())
       ..registerSingleton<ChatSession>(session)
       ..registerSingleton<ChatTrace>(const NoopChatTrace())
       ..registerSingleton<ChatSettings>(settings)

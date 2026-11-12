@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../domain/chat/attachment/attachment_rules.dart';
+import '../../../domain/chat/attachment/chat_attachment.dart';
 import '../../../domain/chat/chat_vendor.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
@@ -13,6 +15,21 @@ part 'chat_state.freezed.dart';
 enum ChatAccess { checking, noKey, needsConsent, noModels, ready }
 
 enum ChatRole { user, assistant }
+
+/// [📎] 를 막는 이유. 한 질문에 다 찼거나([perQuestion]) 이 대화의 사진 · 문서 자리가
+/// 모두 없다([conversation]).
+enum AttachBlock { perQuestion, conversation }
+
+/// 첨부하지 못한 파일 하나와 그 이유. 화면이 스낵바로 보이고 consumeAttachmentNotice 로 비운다.
+@freezed
+class AttachmentNotice with _$AttachmentNotice {
+  @override
+  final String name;
+  @override
+  final AttachmentRejection reason;
+
+  const AttachmentNotice({required this.name, required this.reason});
+}
 
 /// 말풍선 하나. assistant 말풍선은 답이 흘러나오는 동안 [text] 가 자란다.
 @freezed
@@ -44,6 +61,10 @@ class ChatBubble with _$ChatBubble {
   @override
   final ChatProgress? progress;
 
+  /// 질문에 붙은 파일(user 말풍선만). 본문은 없다.
+  @override
+  final List<ChatAttachmentRef> attachments;
+
   const ChatBubble({
     required this.role,
     required this.text,
@@ -52,6 +73,7 @@ class ChatBubble with _$ChatBubble {
     this.stopped = false,
     this.seq,
     this.progress,
+    this.attachments = const [],
   });
 
   /// 글은 남기지 않는다 — 길이와 표시만. 진행 노트도 [ChatProgressStep.toString] 이 글을 뺀다.
@@ -59,7 +81,7 @@ class ChatBubble with _$ChatBubble {
   String toString() =>
       'ChatBubble(role: ${role.name}, textLength: ${text.length}, '
       'cited: ${cited.length}, failure: $failure, stopped: $stopped, seq: $seq, '
-      'progress: $progress)';
+      'progress: $progress, attachments: ${attachments.length})';
 }
 
 @freezed
@@ -106,6 +128,20 @@ class ChatState with _$ChatState {
   @override
   final bool selectionReplaced;
 
+  /// 입력칸에 담긴, 다음 질문과 함께 보낼 첨부.
+  @override
+  final List<ChatAttachment> pendingAttachments;
+
+  /// 첨부하지 못한 이유 — 화면이 한 번 알리고 비운다.
+  @override
+  final AttachmentNotice? attachmentNotice;
+
+  /// [📎] 를 막는 이유. null 이면 더 붙일 수 있다. cubit 이 emit 마다 다시 센다.
+  @override
+  final AttachBlock? attachBlock;
+
+  bool get canAttach => attachBlock == null;
+
   const ChatState({
     required this.access,
     this.bubbles = const [],
@@ -118,6 +154,9 @@ class ChatState with _$ChatState {
     this.model,
     this.modelsInvalidKey = false,
     this.selectionReplaced = false,
+    this.pendingAttachments = const [],
+    this.attachmentNotice,
+    this.attachBlock,
   });
 
   /// 질문 · 답 글(말풍선 · 되돌린 질문)은 남기지 않는다.
@@ -128,5 +167,8 @@ class ChatState with _$ChatState {
       'conversationId: $conversationId, temporary: $temporary, '
       'vendor: ${vendor.name}, loading: $loading, model: $model, '
       'modelsInvalidKey: $modelsInvalidKey, '
-      'selectionReplaced: $selectionReplaced)';
+      'selectionReplaced: $selectionReplaced, '
+      'pendingAttachments: ${pendingAttachments.length}, '
+      'attachmentNotice: ${attachmentNotice?.reason.name}, '
+      'attachBlock: ${attachBlock?.name})';
 }

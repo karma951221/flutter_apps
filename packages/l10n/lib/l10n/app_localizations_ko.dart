@@ -3164,6 +3164,40 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatStoppedSnack => '멈췄어요';
 
   @override
+  String get walkChatAttach => '파일 첨부';
+
+  @override
+  String get walkChatAttachRemove => '첨부 빼기';
+
+  @override
+  String get walkChatAttachUnsupported => '이 형식은 첨부할 수 없어요(사진 · PDF · 텍스트만)';
+
+  @override
+  String walkChatAttachTooLarge(String name) {
+    return '$name 이(가) 너무 커요(사진 30MB · PDF 10MB · 텍스트 200KB까지)';
+  }
+
+  @override
+  String walkChatAttachNotUtf8(String name) {
+    return '$name 을(를) 글자로 읽지 못했어요(UTF-8만)';
+  }
+
+  @override
+  String get walkChatAttachPerQuestionLimit => '한 번에 3개까지 첨부할 수 있어요';
+
+  @override
+  String get walkChatAttachDocLimit =>
+      '이 대화에서는 PDF · 텍스트를 더 보낼 수 없어요. [새 대화]에서 다시 보내 주세요';
+
+  @override
+  String get walkChatAttachImageLimit =>
+      '이 대화에서는 사진을 더 보낼 수 없어요. [새 대화]에서 다시 보내 주세요';
+
+  @override
+  String get walkChatAttachConversationFull =>
+      '이 대화에서는 파일을 더 보낼 수 없어요. [새 대화]에서 다시 보내 주세요';
+
+  @override
   String get walkChatNewConversation => '새 대화';
 
   @override

@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
+import 'package:walk/domain/chat/attachment/chat_attachment.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/presentation/chat/cubit/chat_state.dart';
+import 'package:walk/presentation/chat/widget/attachment_chip.dart';
 import 'package:walk/presentation/chat/widget/chat_bubble_view.dart';
 
 void main() {
@@ -287,5 +289,25 @@ void main() {
 
     expect(find.text('복사'), findsOneWidget);
     expect(find.text('더보기'), findsNothing);
+  });
+
+  testWidgets('질문 말풍선은 첨부를 칩(이름 · 종류 아이콘)으로 보이고 ✕ 는 없다', (tester) async {
+    await pump(
+      tester,
+      const ChatBubble(
+        role: ChatRole.user,
+        text: '봐 줘',
+        attachments: [
+          ChatAttachmentRef(name: 'a.pdf', kind: AttachmentKind.pdf),
+          ChatAttachmentRef(name: 'b.jpg', kind: AttachmentKind.image),
+        ],
+      ),
+    );
+
+    expect(find.byType(AttachmentChip), findsNWidgets(2));
+    expect(find.text('a.pdf'), findsOneWidget);
+    expect(find.byIcon(Icons.picture_as_pdf_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.image_outlined), findsOneWidget);
+    expect(find.byTooltip('첨부 빼기'), findsNothing);
   });
 }

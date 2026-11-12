@@ -3414,6 +3414,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatStoppedSnack => 'Stopped';
 
   @override
+  String get walkChatAttach => 'Attach file';
+
+  @override
+  String get walkChatAttachRemove => 'Remove attachment';
+
+  @override
+  String get walkChatAttachUnsupported =>
+      'This file type can\'t be attached (photos, PDF, text only)';
+
+  @override
+  String walkChatAttachTooLarge(String name) {
+    return '$name is too large (photos 30MB, PDF 10MB, text 200KB)';
+  }
+
+  @override
+  String walkChatAttachNotUtf8(String name) {
+    return 'Couldn\'t read $name as text (UTF-8 only)';
+  }
+
+  @override
+  String get walkChatAttachPerQuestionLimit =>
+      'You can attach up to 3 files at a time';
+
+  @override
+  String get walkChatAttachDocLimit =>
+      'No more PDFs or text files in this chat. Send them again in a [New chat]';
+
+  @override
+  String get walkChatAttachImageLimit =>
+      'No more photos in this chat. Send them again in a [New chat]';
+
+  @override
+  String get walkChatAttachConversationFull =>
+      'No more files in this chat. Send them again in a [New chat]';
+
+  @override
   String get walkChatNewConversation => 'New chat';
 
   @override

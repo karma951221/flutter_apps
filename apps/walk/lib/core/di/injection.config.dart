@@ -36,6 +36,7 @@ import '../../data/alarm/holiday_module.dart' as _i183;
 import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
 import '../../data/chat/anthropic_chat_model.dart' as _i645;
+import '../../data/chat/attachment/file_attachment_loader.dart' as _i255;
 import '../../data/chat/channel_secure_window.dart' as _i241;
 import '../../data/chat/chat_model_registry.dart' as _i1037;
 import '../../data/chat/compressed_chat_image_source.dart' as _i957;
@@ -83,6 +84,7 @@ import '../../domain/alarm/sound/alarm_sound_source.dart' as _i344;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
 import '../../domain/alarm/usecase/ring_archiver.dart' as _i626;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
+import '../../domain/chat/attachment/attachment_loader.dart' as _i695;
 import '../../domain/chat/chat_history_settings.dart' as _i31;
 import '../../domain/chat/chat_model.dart' as _i1004;
 import '../../domain/chat/chat_model_catalog.dart' as _i880;
@@ -128,6 +130,7 @@ import '../../domain/lock/screen_lock_settings.dart' as _i194;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
+import '../../presentation/chat/attachment/chat_file_picker.dart' as _i211;
 import '../../presentation/diary/media_picker.dart' as _i287;
 import '../../presentation/lock/media_pick_guard.dart' as _i488;
 import '../../presentation/map/cubit/map_view_cubit.dart' as _i276;
@@ -186,6 +189,9 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i98.MapOpenRequests(),
       dispose: (i) => i.dispose(),
     );
+    gh.factory<_i211.ChatFilePicker>(
+      () => _i211.ChatFilePicker(gh<_i488.MediaPickGuard>()),
+    );
     gh.lazySingleton<_i494.IdGenerator>(
       () => registerModule.idGenerator(gh<_i706.Uuid>()),
     );
@@ -219,6 +225,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i297.ReminderScheduler>(
       () => const _i553.ChannelReminderScheduler(),
+    );
+    gh.lazySingleton<_i695.AttachmentLoader>(
+      () => _i255.FileAttachmentLoader(),
     );
     gh.lazySingleton<_i702.AlarmScheduler>(() => _i238.PackageAlarmScheduler());
     gh.lazySingleton<_i111.ChatSettings>(

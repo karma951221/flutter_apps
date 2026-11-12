@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:core/core.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../domain/chat/attachment/attachment_loader.dart';
+import '../../../domain/chat/attachment/attachment_rules.dart';
+import '../../../domain/chat/attachment/chat_attachment.dart';
 import '../../../domain/chat/chat_settings.dart';
 import '../../../domain/chat/chat_trace.dart';
 import '../../../domain/chat/chat_vendor.dart';
@@ -13,6 +17,7 @@ import '../../../domain/chat/tool/tool_summary.dart';
 import '../../../domain/chat/usecase/chat_model_choice.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/chat/usecase/open_conversation.dart';
+import '../../../domain/chat/workspace/workspace.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../widget/model_chip.dart';
@@ -43,6 +48,9 @@ class _Thread {
 ///
 /// 임시 대화가 아니면 턴이 끝날 때(답 끝 · 글이 있는 멈춤)마다 [ChatHistoryRepository] 에
 /// 저장한다. 임시 대화는 저장소에 한 행도 쓰지 않는다.
+///
+/// 입력칸 첨부([ChatState.pendingAttachments])는 [addFiles] 가 읽어 담고 [send] 가 질문과 함께
+/// 보낸다. 일반 대화면 보내기 전에 작업 폴더 inbox 에 사본을 넣는다(임시 대화는 넣지 않는다).
 class ChatCubit extends Cubit<ChatState> {
   ChatCubit(
     this._session,
@@ -52,7 +60,9 @@ class ChatCubit extends Cubit<ChatState> {
     this._choice,
     this._history,
     this._open,
-    this._clock, {
+    this._clock,
+    this._workspace,
+    this._loader, {
     void Function(VoidCallback) schedulePostFrame = _addPostFrame,
     Duration tick = const Duration(seconds: 1),
   }) : _schedulePostFrame = schedulePostFrame,
@@ -75,6 +85,18 @@ class ChatCubit extends Cubit<ChatState> {
 
   /// 진행의 시작 시각 · 경과 초.
   final Clock _clock;
+
+  /// 보낼 첨부의 inbox 사본.
+  final Workspace _workspace;
+
+  /// 고른 파일 → 첨부.
+  final AttachmentLoader _loader;
+
+  /// 보내기 전 inbox 사본을 넣는 중. 그동안 다른 send · removePending 은 무시한다.
+  bool _preparing = false;
+
+  /// 진행 중인 질문의 첨부(본문 포함) — 글 없이 멈추면 입력칸에 되돌린다.
+  List<ChatAttachment> _turnAttachments = const [];
 
   /// 경과 초를 다시 재는 간격.
   final Duration _tick;
@@ -120,6 +142,106 @@ class ChatCubit extends Cubit<ChatState> {
   /// 없음) 그 질문은 noModels 로 끝나 저장하지 않는다.
   String _turnQuestion = '';
   ChatTarget? _turnTarget;
+
+  /// 모든 emit 에서 [ChatState.attachBlock] 을 다시 센다 — 세션의 남은 자리(질문 · 되돌림 ·
+  /// 새 대화 · 이어 열기마다 바뀐다)와 담긴 첨부로.
+  @override
+  void emit(ChatState state) =>
+      super.emit(state.copyWith(attachBlock: _attachBlockOf(state)));
+
+  AttachBlock? _attachBlockOf(ChatState state) {
+    final pending = state.pendingAttachments;
+    if (pending.length >= AttachmentRules.maxPerQuestion) {
+      return AttachBlock.perQuestion;
+    }
+    final (:images, :docs) = _roomLeft(pending);
+    return images <= 0 && docs <= 0 ? AttachBlock.conversation : null;
+  }
+
+  /// 이 대화의 남은 사진 · 문서 자리에서 담긴 첨부를 뺀 것.
+  ({int images, int docs}) _roomLeft(List<ChatAttachment> pending) {
+    final room = _session.attachmentRoom;
+    final images = pending.whereType<ImageAttachment>().length;
+    return (
+      images: room.images - images,
+      docs: room.docs - (pending.length - images),
+    );
+  }
+
+  /// [name] 을 더 담을 자리가 없으면 그 이유. 형식은 로더가 본다.
+  AttachmentRejection? _noRoomFor(String name) {
+    final pending = state.pendingAttachments;
+    if (pending.length >= AttachmentRules.maxPerQuestion) {
+      return AttachmentRejection.perQuestionLimit;
+    }
+    final kind = AttachmentRules.kindOf(name);
+    if (kind == null) return null;
+    final (:images, :docs) = _roomLeft(pending);
+    return switch (kind) {
+      AttachmentKind.image when images <= 0 =>
+        AttachmentRejection.conversationImageLimit,
+      AttachmentKind.pdf || AttachmentKind.text when docs <= 0 =>
+        AttachmentRejection.conversationDocLimit,
+      _ => null,
+    };
+  }
+
+  /// 고른 파일을 차례로 읽어 입력칸 첨부에 담는다. 자리가 없거나 로더가 거절한 파일은
+  /// 빼고, 처음 거절한 것 하나를 [ChatState.attachmentNotice] 로 알린다.
+  Future<void> addFiles(List<PickedFile> files) async {
+    var noticed = false;
+    for (final file in files) {
+      if (isClosed) return;
+      var why = _noRoomFor(file.name);
+      if (why == null) {
+        final load = await _loader.load(file);
+        if (isClosed) return;
+        switch (load) {
+          case AttachmentLoaded(:final attachment):
+            // 읽는 사이 담긴 것이 바뀌었을 수 있다 — 자리를 다시 본다.
+            why = _noRoomFor(file.name);
+            if (why == null) {
+              emit(
+                state.copyWith(
+                  pendingAttachments: [...state.pendingAttachments, attachment],
+                ),
+              );
+              continue;
+            }
+          case AttachmentRejected(why: final rejected):
+            why = rejected;
+        }
+      }
+      if (!noticed) {
+        noticed = true;
+        emit(
+          state.copyWith(
+            attachmentNotice: AttachmentNotice(name: file.name, reason: why),
+          ),
+        );
+      }
+    }
+  }
+
+  /// 입력칸의 [index] 첨부를 뺀다. 보내려고 사본을 넣는 중이면 무시한다.
+  void removePending(int index) {
+    final pending = state.pendingAttachments;
+    if (_preparing || index < 0 || index >= pending.length) return;
+    emit(
+      state.copyWith(
+        pendingAttachments: [
+          ...pending.sublist(0, index),
+          ...pending.sublist(index + 1),
+        ],
+      ),
+    );
+  }
+
+  /// 화면이 [ChatState.attachmentNotice] 를 알렸다.
+  void consumeAttachmentNotice() {
+    if (state.attachmentNotice == null) return;
+    emit(state.copyWith(attachmentNotice: null));
+  }
 
   /// 키 · 동의 · 모델 상태를 다시 읽는다. 탭이 보이게 될 때 · 위에 얹힌 화면이 걷힐 때 부른다.
   /// 보안 저장소를 읽지 못하면 키가 없는 것으로 본다.
@@ -265,26 +387,102 @@ class ChatCubit extends Cubit<ChatState> {
     await refresh();
   }
 
-  /// 질문을 보낸다. 쓸 수 있는 상태(ready)가 아니거나 빈 질문이거나 답하는 중 · 대화를
-  /// 읽어 들이는 중([ChatState.loading])이면 무시한다.
+  /// 질문을 보낸다. 쓸 수 있는 상태(ready)가 아니거나 글 · 첨부가 다 비었거나 답하는 중 ·
+  /// 대화를 읽어 들이는 중([ChatState.loading])이면 무시한다.
   /// 돌려주는 Future 는 답이 끝나거나(성공 · 실패) [newConversation] 으로 끊길 때 끝난다.
   /// 답이 끝났으면 그 턴의 저장 시도까지 끝난 뒤다.
+  ///
+  /// 입력칸 첨부를 함께 보내고 비운다. 글 없이 첨부만이면 질문은 [AttachmentRules.emptyQuestion].
+  /// 일반 대화면 작업 폴더에 없는 첨부를 먼저 inbox 에 넣는다 — 넣지 못해도 보내고, 그 첨부는
+  /// 경로 없이 저장된다. 넣는 사이 대화가 바뀌면 보내지 않는다(첨부는 입력칸에 남는다).
+  /// 세션이 한도로 거절하면 보내지 않고 이유를 알린다.
   Future<void> send(String question) {
     final text = question.trim();
+    final attachments = state.pendingAttachments;
     if (state.access != ChatAccess.ready ||
-        text.isEmpty ||
+        (text.isEmpty && attachments.isEmpty) ||
         state.busy ||
-        state.loading) {
+        state.loading ||
+        _preparing) {
       return Future.value();
     }
+    final asked = text.isEmpty ? AttachmentRules.emptyQuestion : text;
+    final needsCopy =
+        !_thread.temporary && attachments.any((a) => a.workspacePath == null);
+    if (!needsCopy) return _ask(asked, attachments, sent: attachments);
+    return _copyThenAsk(asked, attachments);
+  }
+
+  Future<void> _copyThenAsk(
+    String question,
+    List<ChatAttachment> attachments,
+  ) async {
+    final thread = _thread;
+    final generation = _generation;
+    _preparing = true;
+    final stored = <ChatAttachment>[];
+    try {
+      for (final a in attachments) {
+        stored.add(await _copyToInbox(a));
+      }
+    } finally {
+      _preparing = false;
+    }
+    if (isClosed ||
+        !identical(thread, _thread) ||
+        generation != _generation ||
+        state.access != ChatAccess.ready ||
+        state.busy ||
+        state.loading) {
+      return;
+    }
+    await _ask(question, stored, sent: attachments);
+  }
+
+  /// inbox 에 사본을 넣고 그 경로를 단다. 이미 경로가 있거나 넣지 못하면 그대로.
+  Future<ChatAttachment> _copyToInbox(ChatAttachment attachment) async {
+    if (attachment.workspacePath != null) return attachment;
+    final bytes = switch (attachment) {
+      ImageAttachment(:final bytes) || PdfAttachment(:final bytes) => bytes,
+      TextAttachment(:final text) => utf8.encode(text),
+    };
+    try {
+      final path = await _workspace.importToInbox(attachment.name, bytes);
+      return attachment.copyWith(workspacePath: path);
+    } on Object {
+      return attachment;
+    }
+  }
+
+  /// [sent] 는 입력칸에서 빼낼 원래 첨부(사본 경로를 달기 전). 그 사이 새로 담긴 것은 남는다.
+  Future<void> _ask(
+    String question,
+    List<ChatAttachment> attachments, {
+    required List<ChatAttachment> sent,
+  }) {
     final Stream<ChatEvent> events;
     try {
-      events = _session.ask(text);
+      events = attachments.isEmpty
+          ? _session.ask(question)
+          : _session.ask(question, attachments: attachments);
     } on StateError {
       // 세션이 아직 이전 질문을 돌리는 중 — 이 cubit 이 모르는 질문이다. 보내지 않는다.
       return Future.value();
+    } on ArgumentError {
+      // 화면이 먼저 막지만 그 사이 자리가 줄었을 수 있다 — 이유를 알리고 첨부는 남긴다.
+      emit(
+        state.copyWith(
+          attachmentNotice: AttachmentNotice(
+            name: attachments.first.name,
+            reason: _limitOf(attachments),
+          ),
+        ),
+      );
+      return Future.value();
     }
+    final text = question;
     _turnQuestion = text;
+    _turnAttachments = attachments;
     _turnTarget = _session.target;
     _traceBegin();
     final generation = _generation;
@@ -294,7 +492,11 @@ class ChatCubit extends Cubit<ChatState> {
       state.copyWith(
         bubbles: [
           ...state.bubbles,
-          ChatBubble(role: ChatRole.user, text: text),
+          ChatBubble(
+            role: ChatRole.user,
+            text: text,
+            attachments: [for (final a in attachments) a.ref],
+          ),
           ChatBubble(
             role: ChatRole.assistant,
             text: '',
@@ -305,6 +507,10 @@ class ChatCubit extends Cubit<ChatState> {
           ),
         ],
         busy: true,
+        pendingAttachments: [
+          for (final a in state.pendingAttachments)
+            if (!sent.any((s) => identical(s, a))) a,
+        ],
       ),
     );
     _startTicker();
@@ -314,6 +520,17 @@ class ChatCubit extends Cubit<ChatState> {
       onDone: () => _settle(generation),
     );
     return running.future;
+  }
+
+  /// 세션이 거절한 첨부 한도 — 개수 · 사진 · 문서 중 무엇에 걸렸나.
+  AttachmentRejection _limitOf(List<ChatAttachment> attachments) {
+    if (attachments.length > AttachmentRules.maxPerQuestion) {
+      return AttachmentRejection.perQuestionLimit;
+    }
+    final images = attachments.whereType<ImageAttachment>().length;
+    return images > _session.attachmentRoom.images
+        ? AttachmentRejection.conversationImageLimit
+        : AttachmentRejection.conversationDocLimit;
   }
 
   /// 대화를 비운다. 답하는 중이면 끊는다 — 세션은 그 질문의 이벤트를 더 내지 않는다.
@@ -440,9 +657,14 @@ class ChatCubit extends Cubit<ChatState> {
         // 말풍선이 사라지므로 진행도 함께 사라진다.
         _stopTicker();
         final bubbles = state.bubbles;
-        final question = bubbles.length >= 2
-            ? bubbles[bubbles.length - 2].text
-            : null;
+        final user = bubbles.length >= 2 ? bubbles[bubbles.length - 2] : null;
+        // 글 없이 첨부만 보낸 질문이면 채운 문구는 입력칸에 되돌리지 않는다.
+        final question =
+            user != null &&
+                user.attachments.isNotEmpty &&
+                user.text == AttachmentRules.emptyQuestion
+            ? ''
+            : user?.text;
         emit(
           state.copyWith(
             bubbles: bubbles.length >= 2
@@ -450,6 +672,11 @@ class ChatCubit extends Cubit<ChatState> {
                 : const [],
             busy: false,
             restoredDraft: question,
+            // 첨부도 입력칸에 되돌린다(넣은 사본 경로째 — 다시 넣지 않는다).
+            pendingAttachments: [
+              ..._turnAttachments,
+              ...state.pendingAttachments,
+            ].take(AttachmentRules.maxPerQuestion).toList(),
           ),
         );
       case ChatStopIdle():
@@ -662,7 +889,12 @@ class ChatCubit extends Cubit<ChatState> {
       final cited = citedByTurn[i];
       bubbles
         ..add(
-          ChatBubble(role: ChatRole.user, text: turn.question, seq: turn.seq),
+          ChatBubble(
+            role: ChatRole.user,
+            text: turn.question,
+            seq: turn.seq,
+            attachments: turn.attachments,
+          ),
         )
         ..add(
           ChatBubble(
@@ -706,6 +938,7 @@ class ChatCubit extends Cubit<ChatState> {
       stopped: stopped,
       vendor: target.vendor,
       model: target.model,
+      attachments: user.attachments,
     );
     final saved = _saveTail.then(
       (_) => _write(thread, draft, userIndex, user, answer),
@@ -776,6 +1009,7 @@ class ChatCubit extends Cubit<ChatState> {
           question: bubbles[i].text,
           answer: bubbles[i + 1].text,
           stopped: bubbles[i + 1].stopped,
+          attachmentNames: [for (final a in bubbles[i].attachments) a.name],
         ),
   ];
 

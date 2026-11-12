@@ -34,6 +34,9 @@ import 'package:walk/domain/walk/usecase/walk_use_case.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
 import 'package:walk/presentation/map/map_open_requests.dart';
 import 'package:walk/presentation/shell/page/main_shell_page.dart';
+import 'package:walk/domain/chat/attachment/attachment_loader.dart';
+import 'package:walk/domain/chat/workspace/workspace.dart';
+import '../support/unused_chat_attachments.dart';
 
 import '../support/fake_device_auth.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
@@ -75,6 +78,7 @@ class _MockChatSession extends Mock implements ChatSession {
     when(
       () => target,
     ).thenReturn((vendor: ChatVendor.anthropic, model: 'claude-test'));
+    when(() => attachmentRoom).thenReturn((images: 12, docs: 5));
   }
 }
 
@@ -164,6 +168,8 @@ void main() {
         ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
         ..registerSingleton<MediaPickGuard>(MediaPickGuard())
         ..registerSingleton<MapOpenRequests>(MapOpenRequests())
+        ..registerSingleton<Workspace>(const UnusedWorkspace())
+        ..registerSingleton<AttachmentLoader>(const UnusedAttachmentLoader())
         ..registerSingleton<ChatSession>(_MockChatSession())
         ..registerSingleton<ChatHistoryRepository>(_MockChatHistory())
         ..registerSingleton<OpenConversation>(OpenConversation())

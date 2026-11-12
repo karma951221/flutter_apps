@@ -5900,6 +5900,60 @@ abstract class AppLocalizations {
   /// **'멈췄어요'**
   String get walkChatStoppedSnack;
 
+  /// 채팅 탭: 입력칸 왼쪽 첨부 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 첨부'**
+  String get walkChatAttach;
+
+  /// 채팅 탭: 첨부 칩의 ✕ 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'첨부 빼기'**
+  String get walkChatAttachRemove;
+
+  /// 채팅 탭: 받지 않는 형식을 골랐을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'이 형식은 첨부할 수 없어요(사진 · PDF · 텍스트만)'**
+  String get walkChatAttachUnsupported;
+
+  /// 채팅 탭: 첨부 크기 한도를 넘었을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'{name} 이(가) 너무 커요(사진 30MB · PDF 10MB · 텍스트 200KB까지)'**
+  String walkChatAttachTooLarge(String name);
+
+  /// 채팅 탭: 텍스트 첨부가 UTF-8 이 아닐 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'{name} 을(를) 글자로 읽지 못했어요(UTF-8만)'**
+  String walkChatAttachNotUtf8(String name);
+
+  /// 채팅 탭: 한 질문 첨부 개수 한도 스낵바 · 📎 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'한 번에 3개까지 첨부할 수 있어요'**
+  String get walkChatAttachPerQuestionLimit;
+
+  /// 채팅 탭: 한 대화 PDF · 텍스트 한도 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'이 대화에서는 PDF · 텍스트를 더 보낼 수 없어요. [새 대화]에서 다시 보내 주세요'**
+  String get walkChatAttachDocLimit;
+
+  /// 채팅 탭: 한 대화 사진 한도 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'이 대화에서는 사진을 더 보낼 수 없어요. [새 대화]에서 다시 보내 주세요'**
+  String get walkChatAttachImageLimit;
+
+  /// 채팅 탭: 사진 · 문서 자리가 모두 없을 때 📎 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'이 대화에서는 파일을 더 보낼 수 없어요. [새 대화]에서 다시 보내 주세요'**
+  String get walkChatAttachConversationFull;
+
   /// 채팅 탭: 앱바 새 대화 버튼
   ///
   /// In ko, this message translates to:

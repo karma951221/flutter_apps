@@ -8,6 +8,8 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../../domain/chat/attachment/attachment_loader.dart';
+import '../../../domain/chat/attachment/chat_attachment.dart';
 import '../../../domain/chat/chat_settings.dart';
 import '../../../domain/chat/chat_trace.dart';
 import '../../../domain/chat/chat_vendor.dart';
@@ -16,6 +18,7 @@ import '../../../domain/chat/secure_window.dart';
 import '../../../domain/chat/usecase/chat_model_choice.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/chat/usecase/open_conversation.dart';
+import '../../../domain/chat/workspace/workspace.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../diary/page/diary_route.dart';
@@ -24,6 +27,8 @@ import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/cubit/diary_lock_state.dart';
 import '../../lock/widget/diary_lock_gate.dart';
 import '../../settings/open_settings.dart';
+import '../attachment/attachment_notice_text.dart';
+import '../attachment/chat_file_picker.dart';
 import '../../shell/widget/feature_menu.dart';
 import '../cubit/chat_cubit.dart';
 import '../cubit/chat_progress.dart';
@@ -81,6 +86,8 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
     getIt<ChatHistoryRepository>(),
     getIt<OpenConversation>(),
     getIt<Clock>(),
+    getIt<Workspace>(),
+    getIt<AttachmentLoader>(),
   );
 
   late final _secure = getIt<SecureWindow>();
@@ -338,13 +345,34 @@ class _ChatBody extends StatelessWidget {
   final VoidCallback onOpenSettings;
 
   @override
-  Widget build(BuildContext context) => BlocListener<ChatCubit, ChatState>(
-    // 글 없이 멈춰 질문을 입력칸에 되돌렸다.
-    listenWhen: (a, b) => a.restoredDraft == null && b.restoredDraft != null,
-    listener: (context, _) => AppSnackBar.show(
-      context,
-      message: AppLocalizations.of(context).walkChatStoppedSnack,
-    ),
+  Widget build(BuildContext context) => MultiBlocListener(
+    listeners: [
+      BlocListener<ChatCubit, ChatState>(
+        // 글 없이 멈춰 질문을 입력칸에 되돌렸다.
+        listenWhen: (a, b) =>
+            a.restoredDraft == null && b.restoredDraft != null,
+        listener: (context, _) => AppSnackBar.show(
+          context,
+          message: AppLocalizations.of(context).walkChatStoppedSnack,
+        ),
+      ),
+      BlocListener<ChatCubit, ChatState>(
+        // 첨부하지 못한 파일 — 알리고 비운다.
+        listenWhen: (a, b) =>
+            b.attachmentNotice != null &&
+            a.attachmentNotice != b.attachmentNotice,
+        listener: (context, state) {
+          AppSnackBar.show(
+            context,
+            message: attachmentNoticeText(
+              AppLocalizations.of(context),
+              state.attachmentNotice!,
+            ),
+          );
+          context.read<ChatCubit>().consumeAttachmentNotice();
+        },
+      ),
+    ],
     child: _AccessSwitch(onOpenSettings: onOpenSettings),
   );
 }
@@ -485,10 +513,15 @@ class _InputArea extends StatelessWidget {
       ChatTabDebug.inputBuilds++;
       return true;
     }());
+    final l10n = AppLocalizations.of(context);
     final cubit = context.read<ChatCubit>();
     final (busy, loading, restoredDraft) = context
         .select<ChatCubit, (bool, bool, String?)>(
           (c) => (c.state.busy, c.state.loading, c.state.restoredDraft),
+        );
+    final (pending, block) = context
+        .select<ChatCubit, (List<ChatAttachment>, AttachBlock?)>(
+          (c) => (c.state.pendingAttachments, c.state.attachBlock),
         );
     return ChatInput(
       busy: busy,
@@ -498,7 +531,24 @@ class _InputArea extends StatelessWidget {
       onStop: cubit.stop,
       restoredDraft: restoredDraft,
       onDraftRestored: cubit.consumeRestoredDraft,
+      attachments: [for (final a in pending) a.ref],
+      onRemoveAttachment: cubit.removePending,
+      onAttach: () => unawaited(_pick(cubit)),
+      canAttach: block == null,
+      attachBlockedReason: block == null ? null : attachBlockText(l10n, block),
     );
+  }
+
+  /// 시스템 파일 선택기 → 고른 파일을 읽어 담는다. 선택기를 열지 못하면 조용히 넘어간다.
+  static Future<void> _pick(ChatCubit cubit) async {
+    final List<PickedFile> files;
+    try {
+      files = await getIt<ChatFilePicker>().pick();
+    } on Object {
+      return;
+    }
+    if (files.isEmpty || cubit.isClosed) return;
+    await cubit.addFiles(files);
   }
 }
 

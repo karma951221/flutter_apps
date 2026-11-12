@@ -2,6 +2,8 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
+import 'package:walk/domain/chat/attachment/chat_attachment.dart';
+import 'package:walk/presentation/chat/widget/attachment_chip.dart';
 import 'package:walk/presentation/chat/widget/chat_input.dart';
 
 void main() {
@@ -116,5 +118,107 @@ void main() {
       find.widgetWithIcon(IconButton, Icons.send),
     );
     expect(send.onPressed, isNull);
+  });
+
+  group('첨부', () {
+    const pending = [
+      ChatAttachmentRef(name: 'a.pdf', kind: AttachmentKind.pdf),
+      ChatAttachmentRef(name: 'b.jpg', kind: AttachmentKind.image),
+    ];
+
+    testWidgets('첨부 2개면 칩 2개, ✕ 를 누르면 그 index 로 onRemoveAttachment', (
+      tester,
+    ) async {
+      final removed = <int>[];
+      await tester.pumpWidget(
+        host(
+          ChatInput(
+            busy: false,
+            onSend: (_) {},
+            onStop: () {},
+            attachments: pending,
+            onRemoveAttachment: removed.add,
+          ),
+        ),
+      );
+
+      expect(find.byType(AttachmentChip), findsNWidgets(2));
+      expect(find.text('a.pdf'), findsOneWidget);
+      expect(find.text('b.jpg'), findsOneWidget);
+      await tester.tap(find.byTooltip('첨부 빼기').first);
+
+      expect(removed, [0]);
+    });
+
+    testWidgets('글이 비어도 첨부가 있으면 보낸다', (tester) async {
+      final sent = <String>[];
+      await tester.pumpWidget(
+        host(
+          ChatInput(
+            busy: false,
+            onSend: sent.add,
+            onStop: () {},
+            attachments: pending,
+            onRemoveAttachment: (_) {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byTooltip('보내기'));
+
+      expect(sent, ['']);
+    });
+
+    testWidgets('글도 첨부도 없으면 보내지 않는다', (tester) async {
+      final sent = <String>[];
+      await tester.pumpWidget(
+        host(ChatInput(busy: false, onSend: sent.add, onStop: () {})),
+      );
+
+      await tester.tap(find.byTooltip('보내기'));
+
+      expect(sent, isEmpty);
+    });
+
+    testWidgets('📎 를 누르면 onAttach', (tester) async {
+      var attached = 0;
+      await tester.pumpWidget(
+        host(
+          ChatInput(
+            busy: false,
+            onSend: (_) {},
+            onStop: () {},
+            onAttach: () => attached++,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byTooltip('파일 첨부'));
+
+      expect(attached, 1);
+    });
+
+    testWidgets('canAttach 가 false 면 📎 가 꺼지고 툴팁이 이유', (tester) async {
+      var attached = 0;
+      await tester.pumpWidget(
+        host(
+          ChatInput(
+            busy: false,
+            onSend: (_) {},
+            onStop: () {},
+            onAttach: () => attached++,
+            canAttach: false,
+            attachBlockedReason: '한 번에 3개까지 첨부할 수 있어요',
+          ),
+        ),
+      );
+
+      final button = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, Icons.attach_file),
+      );
+      expect(button.onPressed, isNull);
+      expect(button.tooltip, '한 번에 3개까지 첨부할 수 있어요');
+      expect(attached, 0);
+    });
   });
 }
