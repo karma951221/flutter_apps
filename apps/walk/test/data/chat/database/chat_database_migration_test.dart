@@ -7,11 +7,12 @@ import 'package:walk/data/chat/database/chat_database.dart';
 
 import 'generated/schema.dart';
 import 'generated/schema_v1.dart' as v1;
+import 'generated/schema_v2.dart' as v2;
 
 /// drift_dev 의 SchemaVerifier(api/migrations_native.dart)는 저장소의 drift 2.34.4 와
 /// 컴파일되지 않는다(chat_database.dart 의 schemaVersion 주석). 그래서 같은 생성 도우미
 /// (generated/, drift_schemas/chat/ 에서 만듦)로 v1 DB 를 파일에 만들고, ChatDatabase 로
-/// 열어 올린 뒤 sqlite_master 를 도우미의 v2 DB 와 비교한다.
+/// 열어 올린 뒤 sqlite_master 를 도우미의 v3 DB 와 비교한다.
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   final helper = GeneratedHelper();
@@ -63,8 +64,8 @@ void main() {
     };
   }
 
-  Future<Map<String, Object>> expectedV2() async {
-    final db = helper.databaseForVersion(NativeDatabase.memory(), 2);
+  Future<Map<String, Object>> expectedV3() async {
+    final db = helper.databaseForVersion(NativeDatabase.memory(), 3);
     try {
       return await schemaOf(db);
     } finally {
@@ -80,7 +81,7 @@ void main() {
     await db.close();
   }
 
-  test('v1 → v2 가 스키마 v2 와 같다', () async {
+  test('v1 → v3 가 스키마 v3 와 같다', () async {
     await createV1(null);
 
     final db = ChatDatabase(NativeDatabase(file));
@@ -88,24 +89,24 @@ void main() {
     final version = await db.customSelect('PRAGMA user_version').getSingle();
     await db.close();
 
-    final expected = await expectedV2();
+    final expected = await expectedV3();
     expect(expected.keys, contains('wiki_notes'));
     expect((expected['wiki_notes']! as Map)['indexes'], {
       'wiki_notes_updated_at': [0, 'updated_at'],
     });
     expect(migrated, expected);
-    expect(version.data.values.single, 2);
+    expect(version.data.values.single, 3);
   });
 
-  test('새로 만든 v2 도 스키마 v2 와 같다', () async {
+  test('새로 만든 v3 도 스키마 v3 와 같다', () async {
     final db = ChatDatabase(NativeDatabase.memory());
     final created = await schemaOf(db);
     await db.close();
 
-    expect(created, await expectedV2());
+    expect(created, await expectedV3());
   });
 
-  test('v1 의 대화 · 턴 · 사용량 행이 v2 에 그대로 남는다', () async {
+  test('v1 의 대화 · 턴 · 사용량 행이 v3 에 그대로 남는다', () async {
     final askedAt = DateTime(2026, 11, 1, 9);
     // v1 이 저장하던 모양(로컬 시각 + 오프셋 글).
     final mapper = ChatDatabase(NativeDatabase.memory());
@@ -172,5 +173,51 @@ void main() {
     expect(usage.single.inputTokens, 10);
     expect(usage.single.questionKey, 'k');
     expect(notes, isEmpty);
+  });
+
+  test('v2 의 턴이 v3 으로 올라도 남고 attachments 는 빈 목록이다', () async {
+    final askedAt = DateTime(2026, 11, 1, 9);
+    final mapper = ChatDatabase(NativeDatabase.memory());
+    final at = mapper.typeMapping.mapToSqlVariable(askedAt)! as String;
+    await mapper.close();
+    final old =
+        helper.databaseForVersion(NativeDatabase(file), 2) as v2.DatabaseAtV2;
+    await old.customSelect('SELECT 1').get();
+    await old
+        .into(old.conversations)
+        .insert(
+          v2.ConversationsCompanion.insert(
+            id: 'c1',
+            title: '제목',
+            createdAt: at,
+            updatedAt: at,
+          ),
+        );
+    await old
+        .into(old.chatTurns)
+        .insert(
+          v2.ChatTurnsCompanion.insert(
+            conversationId: 'c1',
+            seq: 1,
+            question: 'q',
+            answer: 'a',
+            citedEntryIds: '[]',
+            vendor: 'anthropic',
+            model: 'm',
+            askedAt: at,
+          ),
+        );
+    await old.close();
+
+    final db = ChatDatabase(NativeDatabase(file));
+    final turns = await db.select(db.chatTurns).get();
+    final schema = await schemaOf(db);
+    final version = await db.customSelect('PRAGMA user_version').getSingle();
+    await db.close();
+
+    expect(turns.single.question, 'q');
+    expect(turns.single.attachments, '[]');
+    expect(schema, await expectedV3());
+    expect(version.data.values.single, 3);
   });
 }

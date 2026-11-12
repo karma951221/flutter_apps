@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:core/core.dart';
 import 'package:drift/drift.dart';
 import 'package:injectable/injectable.dart';
 
+import '../../../domain/chat/attachment/chat_attachment.dart';
 import '../../../domain/chat/entity/conversation.dart';
 import '../../../domain/chat/repository/chat_history_repository.dart';
 import 'chat_database.dart';
@@ -117,6 +120,9 @@ class DriftChatHistoryRepository implements ChatHistoryRepository {
             vendor: turn.vendor,
             model: turn.model,
             askedAt: now,
+            attachments: Value(
+              jsonEncode([for (final a in turn.attachments) a.toJson()]),
+            ),
           ),
         );
     return (conversationId: id, seq: seq);
@@ -208,5 +214,28 @@ class DriftChatHistoryRepository implements ChatHistoryRepository {
     vendor: r.vendor,
     model: r.model,
     askedAt: r.askedAt,
+    attachments: _attachmentsFrom(r.attachments),
   );
+
+  /// 깨진 열은 빈 목록, 못 읽는 항목(모르는 kind · name 없음 등)은 그 항목만 건너뛴다.
+  /// 한 첨부 때문에 대화 전체가 안 열리면 안 된다.
+  List<ChatAttachmentRef> _attachmentsFrom(String raw) {
+    final Object? decoded;
+    try {
+      decoded = jsonDecode(raw);
+    } on FormatException {
+      return const [];
+    }
+    if (decoded is! List<Object?>) return const [];
+    final refs = <ChatAttachmentRef>[];
+    for (final item in decoded) {
+      if (item is! Map<String, Object?>) continue;
+      try {
+        refs.add(ChatAttachmentRef.fromJson(item));
+      } on Object {
+        continue;
+      }
+    }
+    return refs;
+  }
 }

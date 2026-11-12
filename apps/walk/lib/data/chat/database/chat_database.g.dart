@@ -471,6 +471,18 @@ class $ChatTurnsTable extends ChatTurns
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _attachmentsMeta = const VerificationMeta(
+    'attachments',
+  );
+  @override
+  late final GeneratedColumn<String> attachments = GeneratedColumn<String>(
+    'attachments',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('[]'),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     conversationId,
@@ -482,6 +494,7 @@ class $ChatTurnsTable extends ChatTurns
     vendor,
     model,
     askedAt,
+    attachments,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -552,6 +565,15 @@ class $ChatTurnsTable extends ChatTurns
     } else if (isInserting) {
       context.missing(_askedAtMeta);
     }
+    if (data.containsKey('attachments')) {
+      context.handle(
+        _attachmentsMeta,
+        attachments.isAcceptableOrUnknown(
+          data['attachments']!,
+          _attachmentsMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -601,6 +623,10 @@ class $ChatTurnsTable extends ChatTurns
         DriftSqlType.dateTime,
         data['${effectivePrefix}asked_at'],
       )!,
+      attachments: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}attachments'],
+      )!,
     );
   }
 
@@ -625,6 +651,9 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
   final ChatVendor vendor;
   final String model;
   final DateTime askedAt;
+
+  /// 첨부 ref(이름 · 종류 · 작업 폴더 경로) JSON 배열. 본문은 두지 않는다.
+  final String attachments;
   const ChatTurnRow({
     required this.conversationId,
     required this.seq,
@@ -635,6 +664,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
     required this.vendor,
     required this.model,
     required this.askedAt,
+    required this.attachments,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -656,6 +686,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
     }
     map['model'] = Variable<String>(model);
     map['asked_at'] = Variable<DateTime>(askedAt);
+    map['attachments'] = Variable<String>(attachments);
     return map;
   }
 
@@ -670,6 +701,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
       vendor: Value(vendor),
       model: Value(model),
       askedAt: Value(askedAt),
+      attachments: Value(attachments),
     );
   }
 
@@ -690,6 +722,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
       ),
       model: serializer.fromJson<String>(json['model']),
       askedAt: serializer.fromJson<DateTime>(json['askedAt']),
+      attachments: serializer.fromJson<String>(json['attachments']),
     );
   }
   @override
@@ -707,6 +740,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
       ),
       'model': serializer.toJson<String>(model),
       'askedAt': serializer.toJson<DateTime>(askedAt),
+      'attachments': serializer.toJson<String>(attachments),
     };
   }
 
@@ -720,6 +754,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
     ChatVendor? vendor,
     String? model,
     DateTime? askedAt,
+    String? attachments,
   }) => ChatTurnRow(
     conversationId: conversationId ?? this.conversationId,
     seq: seq ?? this.seq,
@@ -730,6 +765,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
     vendor: vendor ?? this.vendor,
     model: model ?? this.model,
     askedAt: askedAt ?? this.askedAt,
+    attachments: attachments ?? this.attachments,
   );
   ChatTurnRow copyWithCompanion(ChatTurnsCompanion data) {
     return ChatTurnRow(
@@ -746,6 +782,9 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
       vendor: data.vendor.present ? data.vendor.value : this.vendor,
       model: data.model.present ? data.model.value : this.model,
       askedAt: data.askedAt.present ? data.askedAt.value : this.askedAt,
+      attachments: data.attachments.present
+          ? data.attachments.value
+          : this.attachments,
     );
   }
 
@@ -760,7 +799,8 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
           ..write('stopped: $stopped, ')
           ..write('vendor: $vendor, ')
           ..write('model: $model, ')
-          ..write('askedAt: $askedAt')
+          ..write('askedAt: $askedAt, ')
+          ..write('attachments: $attachments')
           ..write(')'))
         .toString();
   }
@@ -776,6 +816,7 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
     vendor,
     model,
     askedAt,
+    attachments,
   );
   @override
   bool operator ==(Object other) =>
@@ -789,7 +830,8 @@ class ChatTurnRow extends DataClass implements Insertable<ChatTurnRow> {
           other.stopped == this.stopped &&
           other.vendor == this.vendor &&
           other.model == this.model &&
-          other.askedAt == this.askedAt);
+          other.askedAt == this.askedAt &&
+          other.attachments == this.attachments);
 }
 
 class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
@@ -802,6 +844,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
   final Value<ChatVendor> vendor;
   final Value<String> model;
   final Value<DateTime> askedAt;
+  final Value<String> attachments;
   final Value<int> rowid;
   const ChatTurnsCompanion({
     this.conversationId = const Value.absent(),
@@ -813,6 +856,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
     this.vendor = const Value.absent(),
     this.model = const Value.absent(),
     this.askedAt = const Value.absent(),
+    this.attachments = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ChatTurnsCompanion.insert({
@@ -825,6 +869,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
     required ChatVendor vendor,
     required String model,
     required DateTime askedAt,
+    this.attachments = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : conversationId = Value(conversationId),
        seq = Value(seq),
@@ -844,6 +889,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
     Expression<String>? vendor,
     Expression<String>? model,
     Expression<DateTime>? askedAt,
+    Expression<String>? attachments,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -856,6 +902,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
       if (vendor != null) 'vendor': vendor,
       if (model != null) 'model': model,
       if (askedAt != null) 'asked_at': askedAt,
+      if (attachments != null) 'attachments': attachments,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -870,6 +917,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
     Value<ChatVendor>? vendor,
     Value<String>? model,
     Value<DateTime>? askedAt,
+    Value<String>? attachments,
     Value<int>? rowid,
   }) {
     return ChatTurnsCompanion(
@@ -882,6 +930,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
       vendor: vendor ?? this.vendor,
       model: model ?? this.model,
       askedAt: askedAt ?? this.askedAt,
+      attachments: attachments ?? this.attachments,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -920,6 +969,9 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
     if (askedAt.present) {
       map['asked_at'] = Variable<DateTime>(askedAt.value);
     }
+    if (attachments.present) {
+      map['attachments'] = Variable<String>(attachments.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -938,6 +990,7 @@ class ChatTurnsCompanion extends UpdateCompanion<ChatTurnRow> {
           ..write('vendor: $vendor, ')
           ..write('model: $model, ')
           ..write('askedAt: $askedAt, ')
+          ..write('attachments: $attachments, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2854,6 +2907,7 @@ typedef $$ChatTurnsTableCreateCompanionBuilder =
       required ChatVendor vendor,
       required String model,
       required DateTime askedAt,
+      Value<String> attachments,
       Value<int> rowid,
     });
 typedef $$ChatTurnsTableUpdateCompanionBuilder =
@@ -2867,6 +2921,7 @@ typedef $$ChatTurnsTableUpdateCompanionBuilder =
       Value<ChatVendor> vendor,
       Value<String> model,
       Value<DateTime> askedAt,
+      Value<String> attachments,
       Value<int> rowid,
     });
 
@@ -2944,6 +2999,11 @@ class $$ChatTurnsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get attachments => $composableBuilder(
+    column: $table.attachments,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$ConversationsTableFilterComposer get conversationId {
     final $$ConversationsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -3017,6 +3077,11 @@ class $$ChatTurnsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get attachments => $composableBuilder(
+    column: $table.attachments,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$ConversationsTableOrderingComposer get conversationId {
     final $$ConversationsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3076,6 +3141,11 @@ class $$ChatTurnsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get askedAt =>
       $composableBuilder(column: $table.askedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get attachments => $composableBuilder(
+    column: $table.attachments,
+    builder: (column) => column,
+  );
 
   $$ConversationsTableAnnotationComposer get conversationId {
     final $$ConversationsTableAnnotationComposer composer = $composerBuilder(
@@ -3138,6 +3208,7 @@ class $$ChatTurnsTableTableManager
                 Value<ChatVendor> vendor = const Value.absent(),
                 Value<String> model = const Value.absent(),
                 Value<DateTime> askedAt = const Value.absent(),
+                Value<String> attachments = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChatTurnsCompanion(
                 conversationId: conversationId,
@@ -3149,6 +3220,7 @@ class $$ChatTurnsTableTableManager
                 vendor: vendor,
                 model: model,
                 askedAt: askedAt,
+                attachments: attachments,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3162,6 +3234,7 @@ class $$ChatTurnsTableTableManager
                 required ChatVendor vendor,
                 required String model,
                 required DateTime askedAt,
+                Value<String> attachments = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChatTurnsCompanion.insert(
                 conversationId: conversationId,
@@ -3173,6 +3246,7 @@ class $$ChatTurnsTableTableManager
                 vendor: vendor,
                 model: model,
                 askedAt: askedAt,
+                attachments: attachments,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

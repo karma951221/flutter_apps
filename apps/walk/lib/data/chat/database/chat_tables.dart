@@ -42,6 +42,9 @@ class ChatTurns extends Table {
   TextColumn get model => text()();
   DateTimeColumn get askedAt => dateTime()();
 
+  /// 첨부 ref(이름 · 종류 · 작업 폴더 경로) JSON 배열. 본문은 두지 않는다.
+  TextColumn get attachments => text().withDefault(const Constant('[]'))();
+
   @override
   Set<Column<Object>> get primaryKey => {conversationId, seq};
 }

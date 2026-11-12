@@ -11,6 +11,7 @@ class ChatDatabase extends _$ChatDatabase {
   ChatDatabase(super.e);
 
   /// 1: conversations · chat_turns · chat_usage. 2(위키 단계): wiki_notes 를 더한다.
+  /// 3(첨부): chat_turns.attachments(첨부 ref JSON)를 더한다.
   /// drift_schemas/chat/ 에 버전마다 덤프를 두고, 그 덤프에서 만든
   /// test/data/chat/database/generated/ 의 도우미로 migration 테스트를 한다.
   ///
@@ -30,7 +31,7 @@ class ChatDatabase extends _$ChatDatabase {
   /// migration 테스트는 도우미로 옛 DB 를 만들고 PRAGMA 로 스키마를 비교한다.
   /// (임시 패키지에서는 SchemaVerifier.migrateAndValidate 로도 한 번 확인한다.)
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   DriftDatabaseOptions get options =>
@@ -46,6 +47,9 @@ class ChatDatabase extends _$ChatDatabase {
           await m.createTable(wikiNotes);
           await m.createIndex(wikiNotesUpdatedAt);
         });
+      }
+      if (from < 3) {
+        await m.addColumn(chatTurns, chatTurns.attachments);
       }
     },
     // 꺼져 있으면 대화를 지울 때 턴이 cascade 로 지워지지 않는다.

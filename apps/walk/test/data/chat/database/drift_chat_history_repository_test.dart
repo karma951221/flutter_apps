@@ -1,9 +1,11 @@
 import 'package:core/core.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:uuid/uuid.dart';
 import 'package:walk/data/chat/database/chat_database.dart';
 import 'package:walk/data/chat/database/drift_chat_history_repository.dart';
+import 'package:walk/domain/chat/attachment/chat_attachment.dart';
 import 'package:walk/domain/chat/chat_usage_log.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/entity/conversation.dart';
@@ -27,6 +29,7 @@ ChatTurnDraft _draft(
   bool stopped = false,
   ChatVendor vendor = ChatVendor.anthropic,
   String model = 'claude-test',
+  List<ChatAttachmentRef> attachments = const [],
 }) => ChatTurnDraft(
   question: question,
   answer: answer,
@@ -34,6 +37,7 @@ ChatTurnDraft _draft(
   stopped: stopped,
   vendor: vendor,
   model: model,
+  attachments: attachments,
 );
 
 void main() {
@@ -327,4 +331,63 @@ void main() {
       expect(c2, [true, false]);
     },
   );
+
+  group('첨부 목록', () {
+    const refs = [
+      ChatAttachmentRef(
+        name: 'a.png',
+        kind: AttachmentKind.image,
+        workspacePath: 'inbox/a.png',
+      ),
+      ChatAttachmentRef(name: 'b.txt', kind: AttachmentKind.text),
+    ];
+
+    Future<void> writeRaw(String json) => (db.update(
+      db.chatTurns,
+    )).write(ChatTurnsCompanion(attachments: Value(json)));
+
+    test('draft 의 첨부를 저장하고 turns() 가 같은 ref 로 돌려준다', () async {
+      await repo.appendTurn(turn: _draft('q', attachments: refs));
+
+      final turn = (await repo.turns('c1')).single;
+      expect(turn.attachments, refs);
+      expect(turn.text.attachmentNames, ['a.png', 'b.txt']);
+    });
+
+    test('첨부가 없으면 빈 목록', () async {
+      await repo.appendTurn(turn: _draft('q'));
+
+      expect((await repo.turns('c1')).single.attachments, isEmpty);
+    });
+
+    test('깨진 JSON 은 빈 목록', () async {
+      await repo.appendTurn(turn: _draft('q', attachments: refs));
+      await writeRaw('{깨짐');
+      expect((await repo.turns('c1')).single.attachments, isEmpty);
+
+      await writeRaw('{"a":1}');
+      expect((await repo.turns('c1')).single.attachments, isEmpty);
+    });
+
+    test('잘못된 항목만 건너뛰고 나머지는 남긴다', () async {
+      await repo.appendTurn(turn: _draft('q'));
+      await writeRaw(
+        '[{"name":"ok.pdf","kind":"pdf"},'
+        '{"name":"x","kind":"video"},'
+        '{"kind":"text"},'
+        '"문자열",'
+        '{"name":"c.txt","kind":"text","workspacePath":"inbox/c.txt"}]',
+      );
+
+      final turn = (await repo.turns('c1')).single;
+      expect(turn.attachments, [
+        const ChatAttachmentRef(name: 'ok.pdf', kind: AttachmentKind.pdf),
+        const ChatAttachmentRef(
+          name: 'c.txt',
+          kind: AttachmentKind.text,
+          workspacePath: 'inbox/c.txt',
+        ),
+      ]);
+    });
+  });
 }
