@@ -48,7 +48,8 @@ class ChatBubbleView extends StatelessWidget {
   final bool streaming;
 
   /// 첨부가 작업 폴더에 있는지. null 이면 칩은 표시만 한다(눌리지 않고 확인하지 않는다).
-  /// 있으면 경로가 없거나 없는 파일 · 확인 실패는 회색 '지운 파일'.
+  /// 있으면 경로가 있는 첨부만 묻고, 없는 파일 · 확인 실패는 회색 '지운 파일'.
+  /// 경로가 없는 첨부(임시 대화 · 사본 실패)는 늘 표시만.
   final Future<bool> Function(String path)? attachmentExists;
 
   /// 있는 첨부 칩을 눌렀다 — 작업 폴더 상대 경로.
@@ -105,16 +106,18 @@ class ChatBubbleView extends StatelessWidget {
                 runSpacing: AppSpacing.xs,
                 children: [
                   for (final (i, a) in bubble.attachments.indexed)
-                    switch (attachmentExists) {
-                      null => AttachmentChip.of(
-                        a,
-                        key: ValueKey('bubble-attachment-$i'),
-                      ),
-                      final exists => _WorkspaceChip(
+                    // 작업 폴더 경로가 없는 첨부(임시 대화 · 사본 실패)는 표시만.
+                    switch ((attachmentExists, a.workspacePath)) {
+                      (final exists?, final path?) => _WorkspaceChip(
                         key: ValueKey('bubble-attachment-$i'),
                         attachment: a,
+                        path: path,
                         exists: exists,
                         onOpen: onOpenAttachment,
+                      ),
+                      _ => AttachmentChip.of(
+                        a,
+                        key: ValueKey('bubble-attachment-$i'),
                       ),
                     },
                 ],
@@ -335,16 +338,20 @@ class _StreamingCursorState extends State<_StreamingCursor>
 }
 
 /// 말풍선의 첨부 칩 — 작업 폴더에 있는지 한 번 묻고, 없으면 회색 '지운 파일'.
-/// 묻는 동안은 보통 칩으로 그리되 누르지 않는다.
+/// 묻는 동안은 보통 칩으로 그리되 누르지 않는다. 경로가 있는 첨부에만 쓴다.
 class _WorkspaceChip extends StatefulWidget {
   const _WorkspaceChip({
     required this.attachment,
+    required this.path,
     required this.exists,
     required this.onOpen,
     super.key,
   });
 
   final ChatAttachmentRef attachment;
+
+  /// [attachment] 의 작업 폴더 상대 경로.
+  final String path;
   final Future<bool> Function(String path) exists;
   final ValueChanged<String>? onOpen;
 
@@ -364,17 +371,15 @@ class _WorkspaceChipState extends State<_WorkspaceChip> {
   @override
   void didUpdateWidget(_WorkspaceChip oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.attachment.workspacePath != widget.attachment.workspacePath) {
+    if (oldWidget.path != widget.path) {
       _there = _check();
     }
   }
 
-  /// 경로가 없거나(임시 대화 · 사본 실패) 묻다 실패하면(경계 밖 등) 없는 것으로 본다.
+  /// 묻다 실패하면(경계 밖 등) 없는 것으로 본다.
   Future<bool> _check() async {
-    final path = widget.attachment.workspacePath;
-    if (path == null) return false;
     try {
-      return await widget.exists(path);
+      return await widget.exists(widget.path);
     } on Object {
       return false;
     }
@@ -384,13 +389,12 @@ class _WorkspaceChipState extends State<_WorkspaceChip> {
   Widget build(BuildContext context) => FutureBuilder<bool>(
     future: _there,
     builder: (context, snapshot) {
-      final path = widget.attachment.workspacePath;
       final open = widget.onOpen;
       return AttachmentChip.of(
         widget.attachment,
         missing: snapshot.data == false,
-        onTap: snapshot.data == true && path != null && open != null
-            ? () => open(path)
+        onTap: snapshot.data == true && open != null
+            ? () => open(widget.path)
             : null,
       );
     },

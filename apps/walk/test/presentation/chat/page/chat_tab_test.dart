@@ -1792,6 +1792,28 @@ void main() {
       expect(find.text(file.name), findsOneWidget);
     });
 
+    testWidgets('[물어보기에 첨부] 한 파일의 경로를 못 구하면 담지 않고 알린다', (tester) async {
+      final file = workspaceFile('inbox/20261113-100000-b.md');
+      ws
+        ..add(file, Uint8List.fromList(utf8.encode('글')))
+        ..failAbsolute = true;
+      await pump(tester);
+
+      await tapMenu(tester, 'chat-menu-workspace');
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(Key('workspace-file-${file.path}')),
+          matching: find.byIcon(Icons.more_vert),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('물어보기에 첨부'));
+      await tester.pumpAndSettle();
+
+      expect(loader.loaded, isEmpty);
+      expect(find.text('지운 파일이에요'), findsOneWidget);
+    });
+
     testWidgets('답을 파일로 저장하면 스낵바 [보기] 가 그 파일을 연다', (tester) async {
       answer('산책을 했어요');
       await pump(tester);

@@ -46,8 +46,14 @@ class MemoryWorkspace implements Workspace {
     return _files.remove(path) != null;
   }
 
+  /// 설정하면 absolutePath 가 던진다.
+  bool failAbsolute = false;
+
   @override
-  Future<String> absolutePath(String path) async => '/ws/$path';
+  Future<String> absolutePath(String path) async {
+    if (failAbsolute) throw WorkspacePathException(path);
+    return '/ws/$path';
+  }
 
   /// out 에 UTF-8 로 넣는다(이름 겹침은 다루지 않는다).
   @override

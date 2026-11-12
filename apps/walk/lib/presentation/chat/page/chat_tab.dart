@@ -128,6 +128,13 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
     try {
       absolute = await getIt<Workspace>().absolutePath(file.path);
     } on Object {
+      // 그 사이 지워졌거나 경계 밖 — 조용히 사라지지 않게 알린다.
+      if (mounted) {
+        AppSnackBar.show(
+          context,
+          message: AppLocalizations.of(context).walkWorkspaceFileMissing,
+        );
+      }
       return;
     }
     if (!mounted) return;
@@ -139,6 +146,11 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
         workspacePath: file.path,
       ),
     ]);
+  }
+
+  /// 저장 스낵바의 [보기]. 말풍선은 목록에서 스크롤로 빠질 수 있어 탭의 context 로 연다.
+  void _openSaved(String path) {
+    if (mounted) unawaited(openWorkspaceFile(context, path));
   }
 
   /// ⋮ [위키로 정리]. 후보 시트는 잠기면 스스로 닫힌다.
@@ -941,6 +953,7 @@ class _BubbleItem extends StatelessWidget {
     switch (action) {
       case BubbleAction.saveToFile:
         final l10n = AppLocalizations.of(context);
+        final tab = context.findAncestorStateOfType<_ChatTabState>();
         final path = await cubit.saveAnswer(index);
         if (!context.mounted) return;
         if (path == null) {
@@ -951,9 +964,7 @@ class _BubbleItem extends StatelessWidget {
           context,
           message: l10n.walkChatSavedToWorkspace,
           actionLabel: l10n.walkWorkspaceView,
-          onAction: () {
-            if (context.mounted) unawaited(openWorkspaceFile(context, path));
-          },
+          onAction: () => tab?._openSaved(path),
         );
       case BubbleAction.addToWiki:
         await openWikiEditor(context, _seed(cubit.state, bubble));

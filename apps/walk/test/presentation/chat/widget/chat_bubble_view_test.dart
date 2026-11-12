@@ -350,7 +350,7 @@ void main() {
       expect(opened, ['inbox/a.pdf']);
     });
 
-    testWidgets('없거나 경로가 없는 파일은 회색 "지운 파일" — 눌러도 열지 않는다', (tester) async {
+    testWidgets('없는 파일은 회색 "지운 파일" — 눌러도 열지 않는다', (tester) async {
       final opened = <String>[];
       await pump(
         tester,
@@ -360,8 +360,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('지운 파일'), findsNWidgets(2));
-      expect(find.textContaining('a.pdf · 지운 파일'), findsNothing);
+      expect(find.textContaining('지운 파일'), findsOneWidget);
+      expect(find.text('gone.md · 지운 파일'), findsOneWidget);
       final gone = tester.widget<InputChip>(
         find.ancestor(
           of: find.textContaining('gone.md'),
@@ -371,7 +371,37 @@ void main() {
       expect(gone.isEnabled, isFalse);
 
       await tester.tap(find.textContaining('gone.md'), warnIfMissed: false);
-      await tester.tap(find.textContaining('temp.jpg'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+      expect(opened, isEmpty);
+    });
+
+    testWidgets('경로가 없는 첨부(임시 대화)는 표시만 — 회색 · "지운 파일" · 누르기 없음', (
+      tester,
+    ) async {
+      final asked = <String>[];
+      final opened = <String>[];
+      await pump(
+        tester,
+        bubble,
+        attachmentExists: (path) async {
+          asked.add(path);
+          return true;
+        },
+        onOpenAttachment: opened.add,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('temp.jpg'), findsOneWidget);
+      final chip = tester.widget<InputChip>(
+        find.ancestor(
+          of: find.text('temp.jpg'),
+          matching: find.byType(InputChip),
+        ),
+      );
+      expect(chip.isEnabled, isTrue);
+      expect(chip.onPressed, isNull);
+      expect(asked, hasLength(2)); // a.pdf · gone.md 만 묻는다
+      await tester.tap(find.text('temp.jpg'));
       await tester.pumpAndSettle();
       expect(opened, isEmpty);
     });
@@ -385,7 +415,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('지운 파일'), findsNWidgets(3));
+      // 경로가 있는 둘만 — 경로 없는 temp.jpg 는 묻지 않는다.
+      expect(find.textContaining('지운 파일'), findsNWidgets(2));
+      expect(find.text('temp.jpg'), findsOneWidget);
     });
   });
 }
