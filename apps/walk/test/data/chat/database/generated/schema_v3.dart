@@ -2017,7 +2017,7 @@ class DatabaseAtV3 extends GeneratedDatabase {
     ),
   ]);
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
   @override
   DriftDatabaseOptions get options =>
       const DriftDatabaseOptions(storeDateTimeAsText: true);

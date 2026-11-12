@@ -212,8 +212,6 @@
             "moor_type": "string",
             "nullable": false,
             "customConstraints": null,
-            "defaultConstraints": null,
-            "dialectAwareDefaultConstraints": null,
             "default_dart": "const CustomExpression('\\'[]\\'')",
             "default_client_dart": null,
             "dsl_features": []
@@ -596,7 +594,7 @@
       "sql": [
         {
           "dialect": "sqlite",
-          "sql": "CREATE TABLE IF NOT EXISTS \"chat_turns\" (\"conversation_id\" TEXT NOT NULL REFERENCES conversations (id) ON DELETE CASCADE, \"seq\" INTEGER NOT NULL, \"question\" TEXT NOT NULL, \"answer\" TEXT NOT NULL, \"cited_entry_ids\" TEXT NOT NULL, \"stopped\" INTEGER NOT NULL DEFAULT 0 CHECK (\"stopped\" IN (0, 1)), \"vendor\" TEXT NOT NULL, \"model\" TEXT NOT NULL, \"asked_at\" TEXT NOT NULL, PRIMARY KEY (\"conversation_id\", \"seq\"));"
+          "sql": "CREATE TABLE IF NOT EXISTS \"chat_turns\" (\"conversation_id\" TEXT NOT NULL REFERENCES conversations (id) ON DELETE CASCADE, \"seq\" INTEGER NOT NULL, \"question\" TEXT NOT NULL, \"answer\" TEXT NOT NULL, \"cited_entry_ids\" TEXT NOT NULL, \"stopped\" INTEGER NOT NULL DEFAULT 0 CHECK (\"stopped\" IN (0, 1)), \"vendor\" TEXT NOT NULL, \"model\" TEXT NOT NULL, \"asked_at\" TEXT NOT NULL, \"attachments\" TEXT NOT NULL DEFAULT '[]', PRIMARY KEY (\"conversation_id\", \"seq\"));"
         }
       ]
     },
