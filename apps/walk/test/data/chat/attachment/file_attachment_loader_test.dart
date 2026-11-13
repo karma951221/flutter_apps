@@ -138,6 +138,20 @@ void main() {
     expect((load.attachment as TextAttachment).text, '# 안녕');
   });
 
+  // dart:convert 의 utf8.decode 가 맨 앞 BOM 을 뗀다 — 그 동작을 고정해 둔다.
+  test('맨 앞 UTF-8 BOM 은 떼고 읽는다(가운데 것은 그대로)', () async {
+    final file = await write('bom.csv', [
+      0xef,
+      0xbb,
+      0xbf,
+      ...utf8.encode('a,b﻿'),
+    ]);
+
+    final load = await loader.load(file) as AttachmentLoaded;
+
+    expect((load.attachment as TextAttachment).text, 'a,b﻿');
+  });
+
   test('0xff 0xfe 바이트 .txt 는 notUtf8', () async {
     final file = await write('bad.txt', [0xff, 0xfe, 0x41, 0x00]);
 

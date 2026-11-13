@@ -145,6 +145,11 @@ class ChatState with _$ChatState {
   @override
   final AttachBlock? attachBlock;
 
+  /// 보내기 전 첨부의 inbox 사본을 넣는 중. 그동안 전송 · 첨부 빼기는 꺼진다(입력칸이
+  /// 글을 비운 뒤 cubit 이 무시해 글을 잃지 않게).
+  @override
+  final bool preparing;
+
   bool get canAttach => attachBlock == null;
 
   const ChatState({
@@ -162,6 +167,7 @@ class ChatState with _$ChatState {
     this.pendingAttachments = const [],
     this.attachmentNotice,
     this.attachBlock,
+    this.preparing = false,
   });
 
   /// 질문 · 답 글(말풍선 · 되돌린 질문)은 남기지 않는다.
@@ -175,5 +181,5 @@ class ChatState with _$ChatState {
       'selectionReplaced: $selectionReplaced, '
       'pendingAttachments: ${pendingAttachments.length}, '
       'attachmentNotice: ${attachmentNotice?.reason.name}, '
-      'attachBlock: ${attachBlock?.name})';
+      'attachBlock: ${attachBlock?.name}, preparing: $preparing)';
 }

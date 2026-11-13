@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:walk/domain/chat/attachment/attachment_loader.dart';
+import 'package:walk/domain/chat/attachment/attachment_rules.dart';
 import 'package:walk/domain/chat/workspace/workspace.dart';
 import '../../../support/unused_chat_attachments.dart';
 
@@ -49,6 +50,7 @@ import 'package:walk/domain/walk/entity/health_access.dart';
 import 'package:walk/domain/walk/entity/period_kind.dart';
 import 'package:walk/domain/walk/usecase/walk_use_case.dart';
 import 'package:walk/presentation/alarm/page/alarm_list_page.dart';
+import 'package:walk/presentation/chat/attachment/chat_file_picker.dart';
 import 'package:walk/presentation/chat/page/chat_tab.dart';
 import 'package:walk/presentation/commute/page/commute_tab.dart';
 import 'package:walk/presentation/diary/page/diary_tab.dart';
@@ -119,7 +121,11 @@ class _MockChatSession extends Mock implements ChatSession {
     when(
       () => target,
     ).thenReturn((vendor: ChatVendor.anthropic, model: 'claude-test'));
-    when(() => attachmentRoom).thenReturn((images: 12, docs: 5));
+    when(() => attachmentRoom).thenReturn((
+      images: 12,
+      docs: 5,
+      docBytes: AttachmentRules.maxDocBytesPerConversation,
+    ));
   }
 }
 
@@ -260,6 +266,7 @@ void main() {
       ..registerSingleton<MapOpenRequests>(MapOpenRequests())
       ..registerSingleton<Workspace>(const UnusedWorkspace())
       ..registerSingleton<AttachmentLoader>(const UnusedAttachmentLoader())
+      ..registerSingleton<ChatFilePicker>(const NoopChatFilePicker())
       ..registerSingleton<ChatSession>(_MockChatSession())
       ..registerSingleton<ChatHistoryRepository>(_MockChatHistory())
       ..registerSingleton<WikiRepository>(FakeWikiRepository())

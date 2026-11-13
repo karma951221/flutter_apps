@@ -57,6 +57,39 @@ void main() {
     expect(sent, isEmpty);
   });
 
+  testWidgets('preparing 이면 전송 · ✕ 가 꺼지고 글은 남는다(키보드 전송도 무시)', (tester) async {
+    final sent = <String>[];
+    await tester.pumpWidget(
+      host(
+        ChatInput(
+          busy: false,
+          preparing: true,
+          onSend: sent.add,
+          onStop: () {},
+          attachments: const [
+            ChatAttachmentRef(name: 'a.pdf', kind: AttachmentKind.pdf),
+          ],
+          onRemoveAttachment: (_) {},
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextField), '하나 더');
+    final send = tester.widget<IconButton>(
+      find.ancestor(
+        of: find.byIcon(Icons.send),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(send.onPressed, isNull);
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pump();
+
+    expect(sent, isEmpty);
+    expect(find.text('하나 더'), findsOneWidget);
+    expect(find.byTooltip('첨부 빼기'), findsNothing);
+  });
+
   group('restoredDraft', () {
     Future<void> restore(
       WidgetTester tester, {

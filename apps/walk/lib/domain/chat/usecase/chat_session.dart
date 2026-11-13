@@ -202,10 +202,14 @@ class ChatSession {
   /// 이 대화에서 보낸 PDF · 텍스트 첨부 수. 되돌린 질문의 첨부는 세지 않는다.
   int _docsSent = 0;
 
-  /// 남은 사진 · 문서 첨부 수. UI 가 [ask] 전에 막는 데 쓴다.
-  ({int images, int docs}) get attachmentRoom => (
+  /// 이 대화에서 보낸 PDF · 텍스트 첨부의 바이트 합계. [_docsSent] 와 같은 규칙으로 센다.
+  int _docBytesSent = 0;
+
+  /// 남은 사진 · 문서 첨부 수와 문서 바이트. UI 가 [ask] 전에 막는 데 쓴다.
+  ({int images, int docs, int docBytes}) get attachmentRoom => (
     images: maxImagesPerConversation - _imagesSent,
     docs: AttachmentRules.maxDocsPerConversation - _docsSent,
+    docBytes: AttachmentRules.maxDocBytesPerConversation - _docBytesSent,
   );
 
   /// [reset] 마다 올린다. 진행 중인 질문은 자기 세대가 바뀌면 조용히 멈춘다.
@@ -222,6 +226,7 @@ class ChatSession {
   int _turnStart = 0;
   int _turnImagesAtStart = 0;
   int _turnDocsAtStart = 0;
+  int _turnDocBytesAtStart = 0;
 
   /// 이번 질문의 user 메시지(첨부 포함, 사진 못 보는 모델이면 바꾼 뒤). 이미지 거절
   /// 재시도가 사진을 빼면 그것으로 바꾼다.
@@ -235,7 +240,7 @@ class ChatSession {
 
   /// 한 번에 하나. 진행 중에 부르면 [StateError].
   ///
-  /// [attachments] 는 질문에 붙는 파일. 한 질문 · 한 대화 한도를 넘으면 [ArgumentError]
+  /// [attachments] 는 질문에 붙는 파일. 한 질문 · 한 대화 한도(문서 바이트 합계 포함)를 넘으면 [ArgumentError]
   /// (UI 가 먼저 막는다). 사진 못 보는 모델이면 사진 첨부를 질문 앞 줄로 바꾸고 세지 않는다.
   /// 첨부 수는 질문을 문맥에 넣을 때 세고, 질문이 되돌려지면 함께 되돌린다.
   Stream<ChatEvent> ask(
@@ -262,17 +267,25 @@ class ChatSession {
         : _withoutImages(
             UserMessage(question, attachments: List.unmodifiable(attachments)),
           );
-    final (:images, :docs) = _countsOf(user);
+    final (:images, :docs, :docBytes) = _countsOf(user);
     if (_imagesSent + images > maxImagesPerConversation) {
       throw ArgumentError.value(images, 'attachments', 'photo limit reached');
     }
     if (_docsSent + docs > AttachmentRules.maxDocsPerConversation) {
       throw ArgumentError.value(docs, 'attachments', 'document limit reached');
     }
+    if (_docBytesSent + docBytes > AttachmentRules.maxDocBytesPerConversation) {
+      throw ArgumentError.value(
+        docBytes,
+        'attachments',
+        'document size limit reached',
+      );
+    }
     _busy = true;
     _turnStart = _messages.length;
     _turnImagesAtStart = _imagesSent;
     _turnDocsAtStart = _docsSent;
+    _turnDocBytesAtStart = _docBytesSent;
     _turnUser = user;
     _turnText.clear();
     _turnCited.clear();
@@ -299,12 +312,14 @@ class ChatSession {
     }
     _imagesSent = _turnImagesAtStart;
     _docsSent = _turnDocsAtStart;
+    _docBytesSent = _turnDocBytesAtStart;
     final text = _turnText.toString();
     if (text.trim().isEmpty) return const ChatStopResult.dropped();
     // 질문은 첨부와 함께 남기고, 그 첨부 수도 다시 센다.
-    final (:images, :docs) = _countsOf(_turnUser);
+    final (:images, :docs, :docBytes) = _countsOf(_turnUser);
     _imagesSent += images;
     _docsSent += docs;
+    _docBytesSent += docBytes;
     _messages
       ..add(_turnUser)
       ..add(
@@ -323,6 +338,7 @@ class ChatSession {
     _messages.clear();
     _imagesSent = 0;
     _docsSent = 0;
+    _docBytesSent = 0;
     _busy = false;
     _temporary = temporary;
     _contextTarget = null;
@@ -399,11 +415,13 @@ class ChatSession {
       ..addAll(folded);
     _imagesSent = 0;
     _docsSent = 0;
+    _docBytesSent = 0;
     for (final message in folded) {
       if (message is! UserMessage) continue;
-      final (:images, :docs) = _countsOf(message);
+      final (:images, :docs, :docBytes) = _countsOf(message);
       _imagesSent += images;
       _docsSent += docs;
+      _docBytesSent += docBytes;
     }
     _contextTarget = null;
   }
@@ -428,6 +446,7 @@ class ChatSession {
     final start = _messages.length;
     final imagesAtStart = _imagesSent;
     final docsAtStart = _docsSent;
+    final docBytesAtStart = _docBytesSent;
     var completed = false;
     // 이 질문이 쓴 키. 키 상태 기록 직전 저장된 키와 비교만 한다(어디에도 싣지 않음).
     String? requestKey;
@@ -469,10 +488,17 @@ class ChatSession {
       final questionKey = _ids.newId();
       // 첨부 수는 문맥에 넣을 때 센다 — 실패하면 finally 가 되돌린다.
       final user = _turnUser;
-      final (images: questionImages, docs: questionDocs) = _countsOf(user);
+      final (
+        images: questionImages,
+        docs: questionDocs,
+        docBytes: questionDocBytes,
+      ) = _countsOf(
+        user,
+      );
       _messages.add(user);
       _imagesSent += questionImages;
       _docsSent += questionDocs;
+      _docBytesSent += questionDocBytes;
 
       for (var round = 1; round <= maxRounds; round++) {
         ModelCompleted? done;
@@ -699,6 +725,7 @@ class ChatSession {
           _messages.removeRange(start, _messages.length);
           _imagesSent = imagesAtStart;
           _docsSent = docsAtStart;
+          _docBytesSent = docBytesAtStart;
         }
       }
     }
@@ -840,10 +867,14 @@ class ChatSession {
     return result;
   }
 
-  /// [message] 의 사진 · 문서 첨부 수.
-  static ({int images, int docs}) _countsOf(UserMessage message) {
+  /// [message] 의 사진 · 문서 첨부 수와 문서 바이트 합계.
+  static ({int images, int docs, int docBytes}) _countsOf(UserMessage message) {
     final images = message.attachments.whereType<ImageAttachment>().length;
-    return (images: images, docs: message.attachments.length - images);
+    return (
+      images: images,
+      docs: message.attachments.length - images,
+      docBytes: AttachmentRules.docBytesOf(message.attachments),
+    );
   }
 
   /// 사진 첨부를 빼고 질문 앞에 사진마다 한 줄을 붙인다. 사진이 없으면 [message] 그대로.

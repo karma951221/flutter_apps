@@ -7,6 +7,7 @@ import 'attachment_chip.dart';
 
 /// 질문 입력칸 + 전송 버튼. [busy](답하는 중)면 전송 자리에 [■ 멈춤] — 입력은 계속 할 수 있다.
 /// [enabled] 가 false 면(저장된 대화를 읽는 중) 입력칸과 전송이 꺼져 보인다.
+/// [preparing] 이면(보내기 전 첨부 사본을 넣는 중) 전송 · 첨부 빼기만 꺼진다 — 글은 계속 쓴다.
 ///
 /// [restoredDraft] 가 새로 오면(글 없이 멈춰 되돌린 질문) 비어 있는 입력칸만 채우고
 /// [onDraftRestored] 를 부른다. 쓰던 글이 있으면 덮어쓰지 않는다.
@@ -22,6 +23,7 @@ class ChatInput extends StatefulWidget {
     this.restoredDraft,
     this.onDraftRestored,
     this.enabled = true,
+    this.preparing = false,
     this.attachments = const [],
     this.onRemoveAttachment,
     this.onAttach,
@@ -34,6 +36,9 @@ class ChatInput extends StatefulWidget {
 
   /// false 면 입력 · 전송을 받지 않는다.
   final bool enabled;
+
+  /// true 면 전송 · 첨부 빼기를 받지 않는다(입력칸 글은 비우지 않는다).
+  final bool preparing;
   final ValueChanged<String> onSend;
   final VoidCallback onStop;
 
@@ -102,7 +107,7 @@ class _ChatInputState extends State<ChatInput> {
   }
 
   void _submit() {
-    if (widget.busy || !widget.enabled) return;
+    if (widget.busy || !widget.enabled || widget.preparing) return;
     final text = _controller.text.trim();
     if (text.isEmpty && widget.attachments.isEmpty) return;
     widget.onSend(text);
@@ -145,7 +150,7 @@ class _ChatInputState extends State<ChatInput> {
           IconButton(
             icon: const Icon(Icons.send),
             tooltip: l10n.walkChatSend,
-            onPressed: widget.enabled ? _submit : null,
+            onPressed: widget.enabled && !widget.preparing ? _submit : null,
           ),
       ],
     );
@@ -174,7 +179,10 @@ class _ChatInputState extends State<ChatInput> {
                         AttachmentChip.of(
                           a,
                           key: ValueKey('pending-attachment-$i'),
-                          onRemove: onRemove == null || !widget.enabled
+                          onRemove:
+                              onRemove == null ||
+                                  !widget.enabled ||
+                                  widget.preparing
                               ? null
                               : () => onRemove(i),
                         ),

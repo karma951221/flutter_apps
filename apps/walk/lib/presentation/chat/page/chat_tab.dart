@@ -89,6 +89,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
     getIt<Clock>(),
     getIt<Workspace>(),
     getIt<AttachmentLoader>(),
+    getIt<ChatFilePicker>(),
   );
 
   late final _secure = getIt<SecureWindow>();
@@ -565,14 +566,20 @@ class _InputArea extends StatelessWidget {
         .select<ChatCubit, (bool, bool, String?)>(
           (c) => (c.state.busy, c.state.loading, c.state.restoredDraft),
         );
-    final (pending, block) = context
-        .select<ChatCubit, (List<ChatAttachment>, AttachBlock?)>(
-          (c) => (c.state.pendingAttachments, c.state.attachBlock),
-        );
+    final (
+      pending,
+      block,
+      preparing,
+    ) = context.select<ChatCubit, (List<ChatAttachment>, AttachBlock?, bool)>(
+      (c) =>
+          (c.state.pendingAttachments, c.state.attachBlock, c.state.preparing),
+    );
     return ChatInput(
       busy: busy,
       // 저장된 대화를 읽는 동안 보낸 질문은 cubit 이 버린다 — 꺼져 보이게 한다.
       enabled: !loading,
+      // 첨부 사본을 넣는 동안 보낸 질문은 cubit 이 버린다 — 전송을 꺼 둔다.
+      preparing: preparing,
       onSend: (q) => unawaited(cubit.send(q)),
       onStop: cubit.stop,
       restoredDraft: restoredDraft,

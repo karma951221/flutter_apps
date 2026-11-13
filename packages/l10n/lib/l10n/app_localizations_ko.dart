@@ -3190,6 +3190,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '이 대화에서는 PDF · 텍스트를 더 보낼 수 없어요. [새 대화]에서 다시 보내 주세요';
 
   @override
+  String get walkChatAttachSizeLimit =>
+      '이 대화에서 보낸 파일이 너무 커요(PDF · 텍스트 합계 18MB까지). [새 대화]에서 다시 보내 주세요';
+
+  @override
   String get walkChatAttachImageLimit =>
       '이 대화에서는 사진을 더 보낼 수 없어요. [새 대화]에서 다시 보내 주세요';
 

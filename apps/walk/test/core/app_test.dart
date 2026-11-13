@@ -14,6 +14,7 @@ import 'package:walk/domain/alarm/holiday/holiday_calendar_access.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/alarm/widget/next_alarm_widget.dart';
+import 'package:walk/domain/chat/attachment/attachment_rules.dart';
 import 'package:walk/domain/chat/chat_model_catalog.dart';
 import 'package:walk/domain/diary/location/place_source.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
@@ -31,6 +32,7 @@ import 'package:walk/domain/settings/entity/app_settings.dart';
 import 'package:walk/domain/settings/repository/settings_repository.dart';
 import 'package:walk/domain/walk/entity/health_access.dart';
 import 'package:walk/domain/walk/usecase/walk_use_case.dart';
+import 'package:walk/presentation/chat/attachment/chat_file_picker.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
 import 'package:walk/presentation/map/map_open_requests.dart';
 import 'package:walk/presentation/shell/page/main_shell_page.dart';
@@ -78,7 +80,11 @@ class _MockChatSession extends Mock implements ChatSession {
     when(
       () => target,
     ).thenReturn((vendor: ChatVendor.anthropic, model: 'claude-test'));
-    when(() => attachmentRoom).thenReturn((images: 12, docs: 5));
+    when(() => attachmentRoom).thenReturn((
+      images: 12,
+      docs: 5,
+      docBytes: AttachmentRules.maxDocBytesPerConversation,
+    ));
   }
 }
 
@@ -170,6 +176,7 @@ void main() {
         ..registerSingleton<MapOpenRequests>(MapOpenRequests())
         ..registerSingleton<Workspace>(const UnusedWorkspace())
         ..registerSingleton<AttachmentLoader>(const UnusedAttachmentLoader())
+        ..registerSingleton<ChatFilePicker>(const NoopChatFilePicker())
         ..registerSingleton<ChatSession>(_MockChatSession())
         ..registerSingleton<ChatHistoryRepository>(_MockChatHistory())
         ..registerSingleton<OpenConversation>(OpenConversation())

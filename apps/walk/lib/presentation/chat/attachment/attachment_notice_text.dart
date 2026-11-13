@@ -14,6 +14,7 @@ String attachmentNoticeText(
   AttachmentRejection.perQuestionLimit => l10n.walkChatAttachPerQuestionLimit,
   AttachmentRejection.conversationDocLimit => l10n.walkChatAttachDocLimit,
   AttachmentRejection.conversationImageLimit => l10n.walkChatAttachImageLimit,
+  AttachmentRejection.conversationSizeLimit => l10n.walkChatAttachSizeLimit,
 };
 
 /// [📎] 가 꺼진 이유의 툴팁 문구.

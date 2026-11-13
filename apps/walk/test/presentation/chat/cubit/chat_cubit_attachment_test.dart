@@ -24,6 +24,7 @@ import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_chat_key_verifier.dart';
 import '../../../support/fake_chat_model_catalog.dart';
 import '../../../support/fake_chat_settings.dart';
+import '../../../support/unused_chat_attachments.dart';
 
 class _MockSession extends Mock implements ChatSession {}
 
@@ -111,6 +112,8 @@ class _FakeLoader implements AttachmentLoader {
 Uint8List _original(String name) =>
     Uint8List.fromList([9, ...'/picked/$name'.codeUnits]);
 
+const _docBudget = AttachmentRules.maxDocBytesPerConversation;
+
 const _target = (vendor: ChatVendor.anthropic, model: 'claude-x');
 
 const _sonnet = ModelInfo(
@@ -144,9 +147,10 @@ void main() {
   late _MockHistory history;
   late _FakeWorkspace workspace;
   late _FakeLoader loader;
+  late FakePickedFileCache cache;
   late ChatCubit cubit;
   late StreamController<ChatEvent> events;
-  late ({int images, int docs}) room;
+  late ({int images, int docs, int docBytes}) room;
 
   /// ask 가 받은 (질문, 첨부).
   late List<(String, List<ChatAttachment>)> asked;
@@ -157,8 +161,9 @@ void main() {
     history = _MockHistory();
     workspace = _FakeWorkspace();
     loader = _FakeLoader();
+    cache = FakePickedFileCache();
     events = StreamController<ChatEvent>();
-    room = (images: 12, docs: 5);
+    room = (images: 12, docs: 5, docBytes: _docBudget);
     asked = [];
     appended = [];
     final settings = FakeChatSettings('sk-ant-test')
@@ -209,6 +214,7 @@ void main() {
       const Clock(),
       workspace,
       loader,
+      cache,
     );
     await cubit.refresh();
     expect(cubit.state.access, ChatAccess.ready);
@@ -266,7 +272,7 @@ void main() {
     });
 
     test('대화의 문서 자리가 담긴 것만큼 줄어 차면 conversationDocLimit — 읽지 않는다', () async {
-      room = (images: 12, docs: 1);
+      room = (images: 12, docs: 1, docBytes: _docBudget);
       await cubit.addFiles([_picked('a.pdf'), _picked('b.txt')]);
 
       expect(cubit.state.pendingAttachments.map((a) => a.name), ['a.pdf']);
@@ -278,7 +284,7 @@ void main() {
     });
 
     test('사진 자리가 없으면 conversationImageLimit', () async {
-      room = (images: 0, docs: 5);
+      room = (images: 0, docs: 5, docBytes: _docBudget);
       await cubit.addFiles([_picked('c.jpg')]);
 
       expect(cubit.state.pendingAttachments, isEmpty);
@@ -289,7 +295,7 @@ void main() {
     });
 
     test('사진 · 문서 자리가 모두 없으면 canAttach false (대화 한도)', () async {
-      room = (images: 0, docs: 0);
+      room = (images: 0, docs: 0, docBytes: _docBudget);
       cubit.newConversation();
 
       expect(cubit.state.canAttach, isFalse);
@@ -541,6 +547,266 @@ void main() {
         cubit.state.pendingAttachments.single.workspacePath,
         'inbox/20261113-120000-a.pdf',
       );
+    });
+  });
+
+  group('문서 바이트 합계', () {
+    test('남은 바이트보다 큰 PDF · 텍스트는 읽지 않고 conversationSizeLimit', () async {
+      room = (images: 12, docs: 5, docBytes: 4);
+      await cubit.addFiles([_picked('a.pdf'), _picked('b.txt')]);
+
+      // a.pdf(3바이트)는 담기고, 남은 1바이트에 b.txt(3바이트)는 들지 않는다.
+      expect(cubit.state.pendingAttachments.map((a) => a.name), ['a.pdf']);
+      expect(
+        cubit.state.attachmentNotice?.reason,
+        AttachmentRejection.conversationSizeLimit,
+      );
+      expect(loader.loaded, ['a.pdf']);
+    });
+
+    test('사진 자리도 문서 바이트도 없으면 대화 한도로 막힌다', () async {
+      room = (images: 0, docs: 5, docBytes: 0);
+      cubit.newConversation();
+
+      expect(cubit.state.attachBlock, AttachBlock.conversation);
+    });
+
+    test('세션이 바이트 한도로 거절하면 conversationSizeLimit 을 알린다', () async {
+      await cubit.addFiles([_picked('a.pdf')]);
+      room = (images: 12, docs: 5, docBytes: 2);
+      when(
+        () => session.ask(any(), attachments: any(named: 'attachments')),
+      ).thenThrow(ArgumentError('document size limit reached'));
+
+      await cubit.send('봐 줘');
+
+      expect(
+        cubit.state.attachmentNotice?.reason,
+        AttachmentRejection.conversationSizeLimit,
+      );
+    });
+  });
+
+  group('선택기 캐시 사본', () {
+    test('로더 · 자리 때문에 뺀 파일은 바로 지운다', () async {
+      room = (images: 0, docs: 5, docBytes: _docBudget);
+      await cubit.addFiles([_picked('x.docx'), _picked('c.jpg')]);
+
+      expect(cache.released, ['/picked/x.docx', '/picked/c.jpg']);
+    });
+
+    test('작업 폴더에서 고른 파일은 뺄 때도 지우지 않는다', () async {
+      await cubit.addFiles([
+        _picked('a.pdf', workspacePath: 'inbox/a.pdf'),
+        _picked('x.docx', workspacePath: 'inbox/x.docx'),
+      ]);
+      cubit.removePending(0);
+
+      expect(cache.released, isEmpty);
+    });
+
+    test('입력칸에서 빼면 지운다', () async {
+      await cubit.addFiles([_picked('a.pdf'), _picked('b.txt')]);
+      expect(cache.released, isEmpty);
+
+      cubit.removePending(1);
+
+      expect(cache.released, ['/picked/b.txt']);
+    });
+
+    test('일반 대화는 inbox 사본을 넣은 뒤에 지운다', () async {
+      await cubit.addFiles([_picked('a.pdf')]);
+      workspace.gate = Completer<void>();
+
+      final sent = cubit.send('봐 줘');
+      await pumpEventQueue();
+      expect(cache.released, isEmpty);
+
+      workspace.gate!.complete();
+      await pumpEventQueue();
+      expect(workspace.imported, hasLength(1));
+      expect(cache.released, ['/picked/a.pdf']);
+      await finish(sent);
+      expect(cache.released, ['/picked/a.pdf']);
+    });
+
+    test('임시 대화는 보내면 지운다', () async {
+      cubit.startTemporary();
+      await cubit.addFiles([_picked('a.pdf')]);
+      expect(cache.released, isEmpty);
+
+      final sent = cubit.send('봐 줘');
+      await pumpEventQueue();
+
+      expect(cache.released, ['/picked/a.pdf']);
+      await finish(sent);
+    });
+
+    test('inbox 사본을 못 넣은 첨부는 답이 끝날 때까지 원본을 남긴다', () async {
+      workspace.fail = true;
+      await cubit.addFiles([_picked('a.pdf')]);
+
+      final sent = cubit.send('봐 줘');
+      await pumpEventQueue();
+      expect(cubit.state.busy, isTrue);
+      expect(cache.released, isEmpty);
+
+      await finish(sent);
+      expect(cache.released, ['/picked/a.pdf']);
+    });
+
+    test('inbox 사본을 못 넣은 채 실패하면 입력칸에 돌아오고 원본도 남는다', () async {
+      workspace.fail = true;
+      await cubit.addFiles([_picked('a.pdf')]);
+
+      final sent = cubit.send('봐 줘');
+      await pumpEventQueue();
+      events.add(const ChatEvent.failed(ChatFailure.network));
+      await pumpEventQueue();
+
+      expect(cubit.state.pendingAttachments.single.workspacePath, isNull);
+      expect(cache.released, isEmpty);
+
+      // 다시 보내면 그 원본으로 사본을 넣는다.
+      workspace.fail = false;
+      unawaited(events.close());
+      await sent;
+      events = StreamController<ChatEvent>();
+      final again = cubit.send('봐 줘');
+      await pumpEventQueue();
+      expect(workspace.imported.single.$2, _original('a.pdf'));
+      expect(cache.released, ['/picked/a.pdf']);
+      await finish(again);
+    });
+
+    test('새 대화 · 임시 대화 · 닫기는 원본이 필요 없으면 캐시를 통째로 비운다', () async {
+      cubit.newConversation();
+      expect(cache.cleared, 1);
+
+      await cubit.addFiles([_picked('a.pdf')]);
+      cubit.startTemporary();
+      // 입력칸 첨부가 아직 원본을 쓴다.
+      expect(cache.cleared, 1);
+
+      cubit.removePending(0);
+      cubit.newConversation();
+      expect(cache.cleared, 2);
+
+      await cubit.close();
+      expect(cache.cleared, 3);
+    });
+  });
+
+  group('실패한 질문', () {
+    test('첨부를 사본 경로째 입력칸에 되돌린다 — 다시 보내도 또 넣지 않는다', () async {
+      await cubit.addFiles([_picked('a.pdf'), _picked('b.txt')]);
+
+      final sent = cubit.send('봐 줘');
+      await pumpEventQueue();
+      events.add(const ChatEvent.failed(ChatFailure.network));
+      await pumpEventQueue();
+
+      expect(cubit.state.busy, isFalse);
+      expect(cubit.state.bubbles.last.failure, ChatFailure.network);
+      expect(cubit.state.pendingAttachments.map((a) => a.workspacePath), [
+        'inbox/20261113-120000-a.pdf',
+        'inbox/20261113-120000-b.txt',
+      ]);
+      // 실패는 '멈췄어요' 와 달리 글을 되돌리지 않는다.
+      expect(cubit.state.restoredDraft, isNull);
+
+      unawaited(events.close());
+      await sent;
+      events = StreamController<ChatEvent>();
+      final again = cubit.send('봐 줘');
+      await pumpEventQueue();
+
+      expect(workspace.imported, hasLength(2));
+      expect(asked.last.$2.map((a) => a.workspacePath), [
+        'inbox/20261113-120000-a.pdf',
+        'inbox/20261113-120000-b.txt',
+      ]);
+      await finish(again);
+    });
+  });
+
+  group('글 없이 멈춤(dropped)', () {
+    setUp(() {
+      when(() => session.stop()).thenReturn(const ChatStopResult.dropped());
+    });
+
+    test('첨부만 보낸 질문은 빈 글과 첨부(사본 경로째)를 되돌리고 멈춤 알림 조건이 선다', () async {
+      final states = <ChatState>[];
+      final sub = cubit.stream.listen(states.add);
+      await cubit.addFiles([_picked('a.pdf')]);
+      final sent = cubit.send('');
+      await pumpEventQueue();
+      final before = cubit.state;
+
+      cubit.stop();
+      await sent;
+      await pumpEventQueue();
+      await sub.cancel();
+
+      final after = cubit.state;
+      expect(after.bubbles, isEmpty);
+      expect(after.restoredDraft, '');
+      expect(
+        after.pendingAttachments.single.workspacePath,
+        'inbox/20261113-120000-a.pdf',
+      );
+      // 탭의 '멈췄어요' 스낵바 조건(답하던 중 · 되돌린 글 없음 → 있음).
+      expect(before.busy, isTrue);
+      expect(before.restoredDraft, isNull);
+      expect(states.last.restoredDraft, isNotNull);
+      unawaited(events.close());
+    });
+
+    test('답하는 사이 담은 첨부와 합쳐 한 질문 한도(3)까지만 되돌린다', () async {
+      await cubit.addFiles([_picked('a.pdf'), _picked('b.txt')]);
+      final sent = cubit.send('봐 줘');
+      await pumpEventQueue();
+      await cubit.addFiles([_picked('c.jpg'), _picked('d.md')]);
+      expect(cubit.state.pendingAttachments, hasLength(2));
+
+      cubit.stop();
+      await sent;
+
+      expect(cubit.state.restoredDraft, '봐 줘');
+      expect(cubit.state.pendingAttachments.map((a) => a.name), [
+        'a.pdf',
+        'b.txt',
+        'c.jpg',
+      ]);
+      // 넘쳐 빠진 d.md 의 원본은 지우고, 되돌린 c.jpg 의 원본은 남긴다(a · b 는 사본을
+      // 넣을 때 이미 지웠다).
+      expect(cache.released, [
+        '/picked/a.pdf',
+        '/picked/b.txt',
+        '/picked/d.md',
+      ]);
+      unawaited(events.close());
+    });
+  });
+
+  group('사본을 넣는 동안', () {
+    test('preparing 이 켜지고 그동안 send · removePending 은 무시한다', () async {
+      await cubit.addFiles([_picked('a.pdf')]);
+      workspace.gate = Completer<void>();
+
+      final sent = cubit.send('봐 줘');
+      await pumpEventQueue();
+      expect(cubit.state.preparing, isTrue);
+
+      await cubit.send('또');
+      cubit.removePending(0);
+      expect(cubit.state.pendingAttachments, hasLength(1));
+
+      workspace.gate!.complete();
+      await pumpEventQueue();
+      expect(cubit.state.preparing, isFalse);
+      expect(asked.map((a) => a.$1), ['봐 줘']);
+      await finish(sent);
     });
   });
 

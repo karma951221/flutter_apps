@@ -28,6 +28,18 @@ class PickedFile with _$PickedFile {
   });
 }
 
+/// 파일 선택기가 고른 파일을 앱 캐시에 복사해 둔 사본([PickedFile.path])의 수명.
+/// 첨부를 다 쓰면(거절 · 빼기 · 사본을 넣었거나 보냄) 지운다 — 임시 대화의 원본이 기기에
+/// 남지 않게. 선택기 캐시 안의 경로만 지우고, 작업 폴더 파일은 건드리지 않는다.
+abstract interface class PickedFileCache {
+  /// [path] 의 캐시 사본(과 비게 된 상위 폴더)을 지운다. 캐시 밖이거나 없으면 아무것도 하지
+  /// 않는다. 던지지 않는다.
+  Future<void> release(String path);
+
+  /// 선택기 캐시를 모두 비운다. 던지지 않는다.
+  Future<void> clearAll();
+}
+
 /// 파일 하나를 첨부로 읽은 결과.
 @freezed
 sealed class AttachmentLoad with _$AttachmentLoad {

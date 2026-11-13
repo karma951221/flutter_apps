@@ -5942,6 +5942,12 @@ abstract class AppLocalizations {
   /// **'이 대화에서는 PDF · 텍스트를 더 보낼 수 없어요. [새 대화]에서 다시 보내 주세요'**
   String get walkChatAttachDocLimit;
 
+  /// 채팅 탭: 한 대화 PDF · 텍스트 바이트 합계 한도 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'이 대화에서 보낸 파일이 너무 커요(PDF · 텍스트 합계 18MB까지). [새 대화]에서 다시 보내 주세요'**
+  String get walkChatAttachSizeLimit;
+
   /// 채팅 탭: 한 대화 사진 한도 스낵바
   ///
   /// In ko, this message translates to:

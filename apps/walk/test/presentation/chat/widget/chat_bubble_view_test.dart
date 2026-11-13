@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -375,7 +377,7 @@ void main() {
       expect(opened, isEmpty);
     });
 
-    testWidgets('경로가 없는 첨부(임시 대화)는 표시만 — 회색 · "지운 파일" · 누르기 없음', (
+    testWidgets('경로가 없는 첨부(임시 대화)는 표시만 — 흐리지 않은 Chip · "지운 파일" 없음 · 누르기 없음', (
       tester,
     ) async {
       final asked = <String>[];
@@ -392,18 +394,45 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('temp.jpg'), findsOneWidget);
-      final chip = tester.widget<InputChip>(
+      // 비활성 InputChip 이 아니라 보통 Chip — 지운 파일처럼 흐려 보이지 않는다.
+      expect(
         find.ancestor(
           of: find.text('temp.jpg'),
           matching: find.byType(InputChip),
         ),
+        findsNothing,
       );
-      expect(chip.isEnabled, isTrue);
-      expect(chip.onPressed, isNull);
+      expect(
+        find.ancestor(of: find.text('temp.jpg'), matching: find.byType(Chip)),
+        findsOneWidget,
+      );
       expect(asked, hasLength(2)); // a.pdf · gone.md 만 묻는다
       await tester.tap(find.text('temp.jpg'));
       await tester.pumpAndSettle();
       expect(opened, isEmpty);
+    });
+
+    testWidgets('있는지 묻는 동안은 흐리지 않은 Chip — 지운 파일로 번쩍이지 않는다', (tester) async {
+      final answer = Completer<bool>();
+      await pump(
+        tester,
+        bubble,
+        attachmentExists: (path) => answer.future,
+        onOpenAttachment: (_) {},
+      );
+      await tester.pump();
+
+      expect(find.textContaining('지운 파일'), findsNothing);
+      expect(find.byType(InputChip), findsNothing);
+      expect(find.byType(Chip), findsNWidgets(3));
+
+      answer.complete(true);
+      await tester.pumpAndSettle();
+      // 있다고 답하면 누를 수 있는 칩이 된다.
+      expect(
+        find.ancestor(of: find.text('a.pdf'), matching: find.byType(InputChip)),
+        findsOneWidget,
+      );
     });
 
     testWidgets('있는지 묻다 실패하면 지운 파일로 본다', (tester) async {

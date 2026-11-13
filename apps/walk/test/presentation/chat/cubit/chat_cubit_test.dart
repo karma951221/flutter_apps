@@ -5,6 +5,7 @@ import 'package:fake_async/fake_async.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:walk/domain/chat/attachment/attachment_rules.dart';
 import 'package:walk/domain/chat/chat_connection.dart';
 import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_model_rules.dart';
@@ -128,7 +129,11 @@ void main() {
     choice = ChatModelChoice(settings, catalog, verifier, const Clock());
     appended = [];
     when(() => session.target).thenReturn(_target);
-    when(() => session.attachmentRoom).thenReturn((images: 12, docs: 5));
+    when(() => session.attachmentRoom).thenReturn((
+      images: 12,
+      docs: 5,
+      docBytes: AttachmentRules.maxDocBytesPerConversation,
+    ));
     when(
       () => history.watchExists(any()),
     ).thenAnswer((_) => const Stream.empty());
@@ -154,6 +159,7 @@ void main() {
       const Clock(),
       const UnusedWorkspace(),
       const UnusedAttachmentLoader(),
+      FakePickedFileCache(),
     );
   });
 
@@ -660,6 +666,7 @@ void main() {
         const Clock(),
         const UnusedWorkspace(),
         const UnusedAttachmentLoader(),
+        FakePickedFileCache(),
         schedulePostFrame: frames.add,
       );
       await traced.refresh();
@@ -857,6 +864,7 @@ void main() {
         const Clock(),
         const UnusedWorkspace(),
         const UnusedAttachmentLoader(),
+        FakePickedFileCache(),
         schedulePostFrame: frames.add,
       );
       await quiet.refresh();
@@ -1586,6 +1594,7 @@ void main() {
       const Clock(),
       const UnusedWorkspace(),
       const UnusedAttachmentLoader(),
+      FakePickedFileCache(),
     );
 
     test('목록이 있으면 ready 와 칩(이름 · 벤더 · 번개 · 점)', () async {
@@ -1917,6 +1926,7 @@ void main() {
         clock,
         const UnusedWorkspace(),
         const UnusedAttachmentLoader(),
+        FakePickedFileCache(),
       );
       unawaited(c.refresh());
       async.flushMicrotasks();

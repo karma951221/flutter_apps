@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -76,6 +77,10 @@ class FileWorkspace implements Workspace {
     final name = area == WorkspaceArea.inbox ? _inbox : _out;
     final dir = Directory(p.join(root, name));
     if (!await dir.exists()) return const [];
+    // inbox/out 이 밖을 가리키는 링크면 밖의 파일을 보이게 된다 — 쓰기([_save])와 같은 판정.
+    if (!p.isWithin(root, await dir.resolveSymbolicLinks())) {
+      throw WorkspacePathException(name);
+    }
     final files = <WorkspaceFile>[];
     await for (final e in dir.list(followLinks: false)) {
       if (e is! File) continue;
@@ -157,11 +162,35 @@ class FileWorkspace implements Workspace {
     return true;
   }
 
+  /// [sanitizeName] 결과의 최대 바이트(UTF-8). inbox 시각 접두사(`yyyyMMdd-HHmmss-`, 16바이트)를
+  /// 붙여도 200바이트 안 — 파일 시스템 이름 한도(255)에 겹침 번호(`-2`)까지 들어간다.
+  static const maxNameBytes = 200 - 16;
+
+  /// 이 바이트(점 포함)보다 긴 확장자는 확장자로 보지 않고 이름째 자른다.
+  static const _maxExtensionBytes = 16;
+
   /// 파일 이름으로 못 쓰는 문자를 `_` 로 바꾸고 앞뒤 공백 · 점을 뗀다. 비면 `file`.
+  /// [maxNameBytes] 를 넘으면 확장자를 남기고 이름 끝을 글자 단위로 자른다.
   static String sanitizeName(String name) {
     final cleaned = name
         .replaceAll(RegExp(r'[/\\:*?"<>|\x00-\x1f\x7f]'), '_')
         .replaceAll(RegExp(r'^[\s.]+|[\s.]+$'), '');
-    return cleaned.isEmpty ? 'file' : cleaned;
+    if (cleaned.isEmpty) return 'file';
+    if (utf8.encode(cleaned).length <= maxNameBytes) return cleaned;
+    var ext = p.extension(cleaned);
+    if (utf8.encode(ext).length > _maxExtensionBytes) ext = '';
+    final stem = cleaned.substring(0, cleaned.length - ext.length);
+    final budget = maxNameBytes - utf8.encode(ext).length;
+    final kept = StringBuffer();
+    var used = 0;
+    for (final rune in stem.runes) {
+      final char = String.fromCharCode(rune);
+      final size = utf8.encode(char).length;
+      if (used + size > budget) break;
+      kept.write(char);
+      used += size;
+    }
+    final cut = kept.toString().replaceAll(RegExp(r'[\s.]+$'), '');
+    return '${cut.isEmpty ? 'file' : cut}$ext';
   }
 }

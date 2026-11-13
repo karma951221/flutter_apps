@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core/core.dart';
+import 'package:walk/domain/chat/attachment/attachment_rules.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/entity/conversation.dart';
 import 'package:walk/domain/chat/entity/wiki_note.dart';
@@ -219,7 +220,11 @@ class TargetOnlySession implements ChatSession {
   final ChatTarget? target;
 
   @override
-  ({int images, int docs}) get attachmentRoom => (images: 12, docs: 5);
+  ({int images, int docs, int docBytes}) get attachmentRoom => (
+    images: 12,
+    docs: 5,
+    docBytes: AttachmentRules.maxDocBytesPerConversation,
+  );
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

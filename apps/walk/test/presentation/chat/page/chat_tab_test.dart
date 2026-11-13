@@ -1,3 +1,4 @@
+import 'package:walk/domain/chat/attachment/attachment_rules.dart';
 import 'package:walk/domain/chat/attachment/chat_attachment.dart';
 import 'dart:typed_data';
 import 'dart:convert';
@@ -36,6 +37,7 @@ import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/lock/lock_config.dart';
+import 'package:walk/presentation/chat/attachment/chat_file_picker.dart';
 import 'package:walk/presentation/chat/page/chat_history_page.dart';
 import 'package:walk/presentation/chat/page/chat_tab.dart';
 import 'package:walk/presentation/chat/widget/chat_bubble_view.dart';
@@ -109,7 +111,11 @@ void main() {
     wiki = MemoryWikiRepository();
     distiller = _MockDistiller();
     session = _MockSession();
-    when(() => session.attachmentRoom).thenReturn((images: 12, docs: 5));
+    when(() => session.attachmentRoom).thenReturn((
+      images: 12,
+      docs: 5,
+      docBytes: AttachmentRules.maxDocBytesPerConversation,
+    ));
     diary = _MockDiary();
     settings = FakeChatSettings('sk-ant-test')
       ..consentedVendor = ChatVendor.anthropic;
@@ -140,6 +146,7 @@ void main() {
     getIt
       ..registerSingleton<Workspace>(const UnusedWorkspace())
       ..registerSingleton<AttachmentLoader>(const UnusedAttachmentLoader())
+      ..registerSingleton<ChatFilePicker>(const NoopChatFilePicker())
       ..registerSingleton<ChatSession>(session)
       ..registerSingleton<ChatTrace>(const NoopChatTrace())
       ..registerSingleton<ChatSettings>(settings)

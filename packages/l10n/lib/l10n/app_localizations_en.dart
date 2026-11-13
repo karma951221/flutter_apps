@@ -3442,6 +3442,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'No more PDFs or text files in this chat. Send them again in a [New chat]';
 
   @override
+  String get walkChatAttachSizeLimit =>
+      'The files sent in this chat are too large (PDF and text up to 18MB in total). Send them again in a [New chat]';
+
+  @override
   String get walkChatAttachImageLimit =>
       'No more photos in this chat. Send them again in a [New chat]';
 

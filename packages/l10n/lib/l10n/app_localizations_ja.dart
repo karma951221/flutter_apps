@@ -3189,6 +3189,10 @@ class AppLocalizationsJa extends AppLocalizations {
       'この会話ではPDF・テキストをこれ以上送れません。[新しい会話]で送り直してください';
 
   @override
+  String get walkChatAttachSizeLimit =>
+      'この会話で送ったファイルが大きすぎます(PDF・テキストは合計18MBまで)。[新しい会話]で送り直してください';
+
+  @override
   String get walkChatAttachImageLimit => 'この会話では写真をこれ以上送れません。[新しい会話]で送り直してください';
 
   @override

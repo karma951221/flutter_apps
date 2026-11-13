@@ -993,6 +993,7 @@
   "walkChatAttachNotUtf8": "{name} を文字として読めませんでした(UTF-8のみ)",
   "walkChatAttachPerQuestionLimit": "一度に添付できるのは3つまでです",
   "walkChatAttachDocLimit": "この会話ではPDF・テキストをこれ以上送れません。[新しい会話]で送り直してください",
+  "walkChatAttachSizeLimit": "この会話で送ったファイルが大きすぎます(PDF・テキストは合計18MBまで)。[新しい会話]で送り直してください",
   "walkChatAttachImageLimit": "この会話では写真をこれ以上送れません。[新しい会話]で送り直してください",
   "walkChatAttachConversationFull": "この会話ではファイルをこれ以上送れません。[新しい会話]で送り直してください",
   "walkChatNewConversation": "新しい会話",

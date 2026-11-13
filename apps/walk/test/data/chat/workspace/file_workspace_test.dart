@@ -43,6 +43,25 @@ void main() {
       expect(path, endsWith('-a_b_c.txt'));
     });
 
+    test('긴 이름은 시각 접두사 포함 200바이트(UTF-8) 안으로 자르고 확장자는 남긴다', () async {
+      final path = await ws.importToInbox('${'가' * 150}.pdf', bytes('x'));
+      final base = p.basename(path);
+
+      expect(utf8.encode(base).length, lessThanOrEqualTo(200));
+      expect(base, startsWith('20261113-140509-가가'));
+      expect(base, endsWith('가.pdf'));
+      expect(await ws.readBytes(path), bytes('x'));
+    });
+
+    test('sanitizeName 은 짧은 이름을 그대로 두고, 긴 확장자는 이름째 자른다', () {
+      expect(FileWorkspace.sanitizeName('보고서.pdf'), '보고서.pdf');
+      final long = FileWorkspace.sanitizeName('a.${'b' * 300}');
+      expect(utf8.encode(long).length, FileWorkspace.maxNameBytes);
+      final emoji = FileWorkspace.sanitizeName('${'😀' * 100}.md');
+      expect(utf8.encode(emoji).length, lessThanOrEqualTo(184));
+      expect(emoji, endsWith('😀.md'));
+    });
+
     test('빈 이름은 file', () async {
       final path = await ws.importToInbox(' .. ', bytes('x'));
       expect(path, endsWith('-file'));
@@ -81,6 +100,18 @@ void main() {
 
     test('폴더가 없으면 빈 목록', () async {
       expect(await ws.list(WorkspaceArea.out), isEmpty);
+    });
+
+    test('inbox 가 밖을 가리키는 링크면 목록도 예외(쓰기와 같은 판정)', () async {
+      final elsewhere = Directory(p.join(tmp.path, 'elsewhere'))..createSync();
+      File(p.join(elsewhere.path, 'secret.txt')).writeAsStringSync('비밀');
+      await rootDir.create(recursive: true);
+      Link(p.join(rootDir.path, 'inbox')).createSync(elsewhere.path);
+
+      await expectLater(
+        ws.list(WorkspaceArea.inbox),
+        throwsA(isA<WorkspacePathException>()),
+      );
     });
   });
 

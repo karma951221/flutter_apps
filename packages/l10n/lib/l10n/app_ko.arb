@@ -4356,6 +4356,8 @@
   "@walkChatAttachPerQuestionLimit": { "description": "채팅 탭: 한 질문 첨부 개수 한도 스낵바 · 📎 툴팁" },
   "walkChatAttachDocLimit": "이 대화에서는 PDF · 텍스트를 더 보낼 수 없어요. [새 대화]에서 다시 보내 주세요",
   "@walkChatAttachDocLimit": { "description": "채팅 탭: 한 대화 PDF · 텍스트 한도 스낵바" },
+  "walkChatAttachSizeLimit": "이 대화에서 보낸 파일이 너무 커요(PDF · 텍스트 합계 18MB까지). [새 대화]에서 다시 보내 주세요",
+  "@walkChatAttachSizeLimit": { "description": "채팅 탭: 한 대화 PDF · 텍스트 바이트 합계 한도 스낵바" },
   "walkChatAttachImageLimit": "이 대화에서는 사진을 더 보낼 수 없어요. [새 대화]에서 다시 보내 주세요",
   "@walkChatAttachImageLimit": { "description": "채팅 탭: 한 대화 사진 한도 스낵바" },
   "walkChatAttachConversationFull": "이 대화에서는 파일을 더 보낼 수 없어요. [새 대화]에서 다시 보내 주세요",

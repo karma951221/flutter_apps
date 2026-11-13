@@ -5,6 +5,7 @@ import '../../../domain/chat/attachment/chat_attachment.dart';
 
 /// 첨부 하나: 종류 아이콘 + 이름. [onRemove] 가 있으면 ✕(입력칸), [onTap] 이 있으면 눌러 연다
 /// (말풍선). [missing] 이면 작업 폴더에 없는 파일 — 회색 + '지운 파일' 이고 눌리지 않는다.
+/// 둘 다 없으면(경로 없는 첨부 · 있는지 묻는 중) 흐리지 않은 보통 칩으로 표시만 한다.
 class AttachmentChip extends StatelessWidget {
   const AttachmentChip({
     required this.name,
@@ -45,6 +46,14 @@ class AttachmentChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // 누를 것도 뺄 것도 없으면 Chip — 비활성 InputChip 처럼 흐려 보이지 않게(흐림은 지운
+    // 파일만. CitedEntryChip 과 같은 규칙).
+    if (!missing && onTap == null && onRemove == null) {
+      return Chip(
+        avatar: Icon(iconOf(kind)),
+        label: Text(name, overflow: TextOverflow.ellipsis),
+      );
+    }
     return InputChip(
       avatar: Icon(iconOf(kind)),
       label: Text(

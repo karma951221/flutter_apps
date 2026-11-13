@@ -17,6 +17,7 @@ import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/lock/device_auth.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
+import 'package:walk/presentation/chat/attachment/chat_file_picker.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
 import 'package:walk/domain/chat/attachment/attachment_loader.dart';
@@ -62,6 +63,7 @@ class WikiHarness {
       ..registerSingleton<ChatHistorySettings>(settings)
       ..registerSingleton<Workspace>(const UnusedWorkspace())
       ..registerSingleton<AttachmentLoader>(const UnusedAttachmentLoader())
+      ..registerSingleton<ChatFilePicker>(const NoopChatFilePicker())
       ..registerSingleton<ChatSession>(TargetOnlySession(claudeTarget))
       ..registerSingleton<DiaryRepository>(diary)
       ..registerSingleton<ChatHistoryRepository>(

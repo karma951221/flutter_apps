@@ -55,6 +55,12 @@ class WorkspaceFileViewPage extends StatelessWidget {
           child: Center(
             child: Image.memory(
               bytes,
+              // 원본을 그대로 풀면 큰 사진이 메모리를 크게 쓴다 — 화면 폭(물리 픽셀)으로 줄여
+              // 푼다. 작은 사진은 키우지 않는다.
+              cacheWidth:
+                  (MediaQuery.sizeOf(context).width *
+                          MediaQuery.devicePixelRatioOf(context))
+                      .round(),
               errorBuilder: (context, _, _) => AppPlaceholder(
                 icon: Icons.broken_image_outlined,
                 message: l10n.walkWorkspaceImageUnreadable,
