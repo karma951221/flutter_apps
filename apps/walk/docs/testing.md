@@ -316,6 +316,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | 첨부 — 세션 | `domain/chat/usecase/chat_session_attachment_test`(사진 · 문서 · 18MB 세기 · 실패 · 멈춤 되돌림 · 한도 넘으면 `ArgumentError` · 사진 못 보는 모델은 글 줄 · 도구 사진과 12장 공유 · `resume` 첨부 이름 줄 · 시스템 프롬프트 줄 위치 · 접기에서 첨부 유지) |
 | 첨부 — 기록 | `data/chat/database/drift_chat_history_repository_test`(첨부 ref 왕복 · 깨진 JSON · 잘못된 항목 건너뜀) · `chat_database_migration_test`(v2 → v3) |
 | 첨부 — 읽기 · 입력 | `data/chat/attachment/file_attachment_loader_test`(사진 압축 · 크기 거절 · UTF-8 · BOM · 원본 읽기 · 압축기 오류) · `presentation/chat/cubit/chat_cubit_attachment_test`(한도 · 알림 · inbox 원본 사본 · 임시 대화 사본 없음 · 사본 실패에도 보냄 · 보내지 못한 질문 되돌림 · 실패 · 멈춤 뒤 첨부 되돌림 · 선택기 캐시 정리 · 답 저장과 모델) · `widget/chat_input_test`(칩 · ✕ · 첨부만으로 보내기 · 준비 중 보내기 막힘) · `widget/chat_bubble_view_test`(경로 없는 칩은 표시만 · 지운 파일) · `widget/bubble_actions_sheet_test`([파일로 저장]) |
+| 작업 폴더 읽기 도구(2단계) | `domain/chat/tool/workspace_tools_test`(목록 최신순 · 100개 · `area` · 글 20,000자 · `next_offset` · 서로게이트 경계 · 사진 · PDF · 오류 코드 · 실제 폴더에서 `..` / 절대 경로 / 밖 링크 / 디렉터리 링크 · inbox · out 밖 · 숨김 이름) · `domain/chat/usecase/chat_session_workspace_tools_test`(기록 켜짐에만 도구 · 꺼짐이면 실행 안 함 · PDF 문서 한도 · 18MB · 글 120,000자 · 실패 · 멈춤 · 접기 되돌림 · `images_unsupported` · 프롬프트 줄) · 두 어댑터 테스트(tool_result 안 document · 결과 뒤 `input_file` · `imagesInToolOutput`) · `presentation/chat/widget/chat_progress_text_test`(작업 폴더 라벨 · 빈 폴더) |
 | 작업 폴더 화면 | `presentation/chat/workspace/cubit/workspace_cubit_test` · `page/workspace_page_test`(구역 순서 · 사용량 줄 · 빈 상태 · 지우기 확인 · [물어보기에 첨부] · [공유] · 보기: 글 · 사진 · 그 밖은 공유) · `chat_tab_test`(⋮ [작업 폴더] · 작업 폴더에서 첨부 · 저장 → [보기]) |
 
 **픽스처**: 벤더 응답은 `test/fixtures/chat/<벤더>/` 에 있고 `chatFixture(path)`(`test/support/chat_fixtures.dart`)로 읽는다. 손으로 만든 것은 SSE 는 첫 줄 주석으로, 나머지는 `handMadeFixtures`(경로 → 확인 번호)로 표시한다. 실제 응답을 녹화하면 키 · 계정 id 를 지우고 표에서 뺀다 — 목록은 [기록](history.md#남은-손-픽스처).
@@ -609,3 +610,16 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | F-QA7 | 저장한 대화를 다시 열어 첨부 칩 누르기 · 그 파일을 지운 뒤 다시 열기 | 칩이 파일을 연다. 지운 뒤에는 회색 "지운 파일" | 대기 |
 | F-QA8 | 10MB PDF 하나를 모바일 데이터로 보내기 | 60초 응답 대기 안에 답이 시작된다. 넘으면 기록하고 대기 시간 · 한도를 다시 정한다 | 대기 |
 | F-QA9 | HEIC 사진 첨부 · 작업 폴더에서 보기 | 보낼 때 JPEG 로 바뀌어 답한다. 보기는 앱 안에서 열리거나(디코딩 가능) 공유 시트로 넘어간다 | 대기 |
+
+### 작업 폴더 읽기 도구 (2단계)
+
+실제 키(Claude · GPT 각각)와 실기기가 필요하다. 아직 한 번도 돌려 보지 않았다.
+
+| # | 하는 일 | 기대 | 상태 |
+|---|---|---|---|
+| R-QA1 | 지난 대화에서 첨부한 PDF 가 inbox 에 있는 상태로 새 대화에서 "지난번에 올린 PDF 요약해 줘" | 진행 줄 "작업 폴더 보는 중" → "파일 읽는 중 · NAME", PDF 내용으로 답한다(Claude: tool_result 안 document 블록이 400 없이 받아들여짐) | 대기 |
+| R-QA2 | 같은 질문을 GPT 로 | 결과 뒤 `input_file` 이 받아들여지고 내용으로 답한다 | 대기 |
+| R-QA3 | 50,000자 넘는 md 를 out 에 두고 "전체를 요약해 줘" | `next_offset` 으로 이어 읽고, 120,000자를 넘으면 그 이상 읽지 않는다고 답한다 | 대기 |
+| R-QA4 | "내 기록 참고"를 끄고 같은 질문 | 도구를 부르지 않고 파일을 못 본다고 답한다 | 대기 |
+| R-QA5 | 파일을 첨부하면서 "이 파일이랑 저번 요약 비교해 줘" | 첨부 파일은 다시 읽지 않고(진행 줄에 그 이름 없음) out 의 요약만 읽는다 | 대기 |
+| R-QA6 | 작업 폴더가 빈 새 설치에서 "내 파일 뭐 있어?" | 진행 줄 "작업 폴더에 파일 없음", 없다고 답한다 | 대기 |
