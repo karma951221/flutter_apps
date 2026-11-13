@@ -310,6 +310,13 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | 위키 정리 | `domain/chat/usecase/wiki_distiller_test`(후보 8개 · 파싱 · 링크 normalize · update → create · 잘못된 키 기록 · `modelUnavailable` 복구 · 벤더 불일치 → noKey · 취소 · `toString` 에 글 없음) |
 | 위키 — 화면 | `presentation/chat/wiki/**`(cubit 넷: 목록 · 보기 · 편집 · 정리 / 화면 셋: `wiki_page` · `wiki_note_page` · `wiki_note_edit_page` / 위젯 넷: `wiki_link_text` · 메모 · 일기 고르기 시트 · 후보 시트) · `chat_tab_test`(⋮ [위키] · [위키로 정리] · 말풍선 [위키에 추가]) |
 | 위키 — 설정 · 사용량 | `presentation/settings/…`(색인 크기 시트 · 위키 모두 지우기 · 대화 모두 지우기 문구 · 사용량의 위키 절) |
+| 첨부 — 규칙 · 모델 | `domain/chat/attachment/attachment_rules_test`(형식 · 크기 경계 · `(첨부: …)` 줄 · ref JSON) · `answer_file_test`(파일 이름 · 슬러그 · 마크다운 모양) · `domain/chat/chat_model_test`(user 첨부 기본 빈 목록) |
+| 작업 폴더 | `data/chat/workspace/file_workspace_test`(inbox 이름 · 겹치면 `-2` · out 쓰기 · 최신순 · 이름 정리 · 길이 상한 · `..` / 절대 경로 / 밖을 가리키는 링크 / 링크된 inbox 거부 · 처음 부르는 `absolutePath`) |
+| 첨부 — 어댑터 | `anthropic_chat_model_test` · `openai_chat_model_test`(사진 · PDF · 글 블록과 순서 · 첨부 없으면 본문 그대로) |
+| 첨부 — 세션 | `domain/chat/usecase/chat_session_attachment_test`(사진 · 문서 · 18MB 세기 · 실패 · 멈춤 되돌림 · 한도 넘으면 `ArgumentError` · 사진 못 보는 모델은 글 줄 · 도구 사진과 12장 공유 · `resume` 첨부 이름 줄 · 시스템 프롬프트 줄 위치 · 접기에서 첨부 유지) |
+| 첨부 — 기록 | `data/chat/database/drift_chat_history_repository_test`(첨부 ref 왕복 · 깨진 JSON · 잘못된 항목 건너뜀) · `chat_database_migration_test`(v2 → v3) |
+| 첨부 — 읽기 · 입력 | `data/chat/attachment/file_attachment_loader_test`(사진 압축 · 크기 거절 · UTF-8 · BOM · 원본 읽기 · 압축기 오류) · `presentation/chat/cubit/chat_cubit_attachment_test`(한도 · 알림 · inbox 원본 사본 · 임시 대화 사본 없음 · 사본 실패에도 보냄 · 보내지 못한 질문 되돌림 · 실패 · 멈춤 뒤 첨부 되돌림 · 선택기 캐시 정리 · 답 저장과 모델) · `widget/chat_input_test`(칩 · ✕ · 첨부만으로 보내기 · 준비 중 보내기 막힘) · `widget/chat_bubble_view_test`(경로 없는 칩은 표시만 · 지운 파일) · `widget/bubble_actions_sheet_test`([파일로 저장]) |
+| 작업 폴더 화면 | `presentation/chat/workspace/cubit/workspace_cubit_test` · `page/workspace_page_test`(구역 순서 · 사용량 줄 · 빈 상태 · 지우기 확인 · [물어보기에 첨부] · [공유] · 보기: 글 · 사진 · 그 밖은 공유) · `chat_tab_test`(⋮ [작업 폴더] · 작업 폴더에서 첨부 · 저장 → [보기]) |
 
 **픽스처**: 벤더 응답은 `test/fixtures/chat/<벤더>/` 에 있고 `chatFixture(path)`(`test/support/chat_fixtures.dart`)로 읽는다. 손으로 만든 것은 SSE 는 첫 줄 주석으로, 나머지는 `handMadeFixtures`(경로 → 확인 번호)로 표시한다. 실제 응답을 녹화하면 키 · 계정 id 를 지우고 표에서 뺀다 — 목록은 [기록](history.md#남은-손-픽스처).
 
@@ -561,3 +568,19 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | W-QA4 | [위키로 정리] — 근거 일기가 있는 대화 | 후보가 8개 이하이고 본문에 `[[일기:…]]` 칩이 붙어 나온다 | 대기 |
 | W-QA5 | thinking 이 켜진 모델에서 [위키로 정리] | 400 없이 끝나고 JSON 이 파싱된다(코드 펜스로 감싸 와도) | 대기 |
 | W-QA6 | 메모 200개(직접 만들거나 시드를 추가한 뒤) · 기본 크기에서 질문 1번 | 입력 토큰이 위키 0개 때보다 대략 색인 글자 수만큼만 는다 | 대기 |
+
+### 파일 첨부 · 작업 폴더 (1단계)
+
+실제 키(Claude · GPT 각각)와 실기기가 필요하다. 아직 한 번도 돌려 보지 않았다.
+
+| # | 하는 일 | 기대 | 상태 |
+|---|---|---|---|
+| F-QA1 | 입력칸 [📎] → 사진 · PDF · md 하나씩 골라 "요약해 줘" | 칩 셋이 보이고, 답이 세 파일 내용을 다룬다. 고르는 동안 일기 잠금이 걸리지 않는다 | 대기 |
+| F-QA2 | 같은 질문을 GPT 로 | PDF(`input_file`)가 거절되지 않는다. 거절되면 [기록](history.md#2026-11--물어보기-파일-첨부--작업-폴더1단계)에 적고 대체 처리를 정한다 | 대기 |
+| F-QA3 | 일반 대화에서 보낸 뒤 ⋮ [작업 폴더] | "첨부한 파일"에 원본 크기 그대로 셋. 사진은 원본(줄인 JPEG 아님) | 대기 |
+| F-QA4 | 임시 대화에서 첨부해 보낸 뒤 `adb shell run-as <패키지> ls -R files/workspace cache/file_picker` | inbox 에 새 파일 없음 · `cache/file_picker` 에 사본 없음 | 대기 |
+| F-QA5 | 답 말풍선 길게 누르기 → [파일로 저장] → 스낵바 [보기] | 저장한 `.md` 가 열리고 제목 · 날짜 · 모델 · 첨부 줄이 맞다 | 대기 |
+| F-QA6 | 작업 폴더에서 파일 [공유] · [지우기] · [물어보기에 첨부] | 공유 시트로 다른 앱에 넘어가고(돌아와도 잠금 안 걸림), 지우면 목록에서 빠지고, 첨부하면 입력칸 칩으로 들어온다(inbox 에 또 복사되지 않음) | 대기 |
+| F-QA7 | 저장한 대화를 다시 열어 첨부 칩 누르기 · 그 파일을 지운 뒤 다시 열기 | 칩이 파일을 연다. 지운 뒤에는 회색 "지운 파일" | 대기 |
+| F-QA8 | 10MB PDF 하나를 모바일 데이터로 보내기 | 60초 응답 대기 안에 답이 시작된다. 넘으면 기록하고 대기 시간 · 한도를 다시 정한다 | 대기 |
+| F-QA9 | HEIC 사진 첨부 · 작업 폴더에서 보기 | 보낼 때 JPEG 로 바뀌어 답한다. 보기는 앱 안에서 열리거나(디코딩 가능) 공유 시트로 넘어간다 | 대기 |
