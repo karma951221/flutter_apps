@@ -294,7 +294,7 @@
 - [x] 최종 리뷰 수정 — 선택기 캐시 · 실패한 질문의 첨부 되돌리기 · 문서 18MB 한도 · 표시 전용 칩 · 이름 길이 · 준비 중 보내기 막힘. [기록](history.md#2026-11--물어보기-파일-첨부--작업-폴더1단계)
 - [ ] **기기 QA F-QA1~9** — 실제 키(Claude · GPT) + 실기기. 모두 **대기** ([시나리오](testing.md#파일-첨부--작업-폴더-1단계))
 - [ ] 2단계: 읽기 도구(`list_files` · `read_file`) — 다음. 3단계: 쓰기 도구 + 승인 UI
-- 검증(2026-11-13, 최종 리뷰 수정 뒤): `flutter analyze` 0 · `flutter test` 3308건 통과(1 skip). 브랜치 `walk-chat-files`(main 병합 전).
+- 검증(2026-11-13, 최종 리뷰 수정 뒤): `flutter analyze` 0 · `flutter test` 3308건 통과(1 skip). main(일반 질문 · 웹 검색 토글) 병합 뒤(2026-11-14): `flutter analyze` 0 · `flutter test` 3377건 통과(1 skip).
 
 ## 지도 · 위치 기록
 
