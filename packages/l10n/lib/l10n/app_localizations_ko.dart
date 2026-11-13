@@ -3203,6 +3203,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatToolOther => '기록 보는 중';
 
   @override
+  String get walkChatToolWebSearch => '웹 검색 중';
+
+  @override
   String walkChatToolDetail(String label, String detail) {
     return '$label($detail)';
   }
@@ -3614,6 +3617,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatModelChipTooltip => '모델 바꾸기';
+
+  @override
+  String get walkChatUseRecords => '내 기록 참고';
+
+  @override
+  String get walkChatUseRecordsTooltip => '켜면 일기 · 걸음 · 알람 기상 · 위키를 찾아보고 답해요';
 
   @override
   String get walkChatModelRecommended => '추천';

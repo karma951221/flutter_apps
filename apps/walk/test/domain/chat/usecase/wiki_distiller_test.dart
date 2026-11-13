@@ -329,6 +329,13 @@ void main() {
       expect(withNotes.requests.single.tools, [WikiTools.spec]);
     });
 
+    test('정리 요청에는 웹 검색을 붙이지 않는다', () async {
+      wiki.stored = [wikiNote(3)];
+      final model = _FakeModel([_json([])]);
+      await distill(model);
+      expect(model.requests.single.webSearch, isFalse);
+    });
+
     test('system 에 지금 위키 색인과 출력 형식이 있다', () async {
       wiki.stored = [wikiNote(3, title: '출근 알람', summary: '평일 7시')];
       final model = _FakeModel([_json([])]);

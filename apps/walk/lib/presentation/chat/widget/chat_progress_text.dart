@@ -34,6 +34,7 @@ String chatProgressTimelineText(
 };
 
 /// 접힌 요약 — "기록 3번 찾아봄 · 9초" · "9초" · "멈춤 · 기록 1번 찾아봄 · 4초".
+/// 웹 검색은 기록을 찾아본 수에 넣지 않는다([ChatProgress.toolCalls]).
 String chatProgressSummaryText(AppLocalizations l10n, ChatProgress progress) {
   final calls = progress.toolCalls;
   final parts = [
@@ -52,6 +53,7 @@ String _toolLabel(AppLocalizations l10n, String locale, StepTool step) {
     ChatToolKind.dailySteps => l10n.walkChatToolDailySteps,
     ChatToolKind.wakeRecords => l10n.walkChatToolWakeRecords,
     ChatToolKind.wiki => l10n.walkChatToolReadWiki,
+    ChatToolKind.webSearch => l10n.walkChatToolWebSearch,
     ChatToolKind.other => l10n.walkChatToolOther,
   };
   final detail = _detail(l10n, locale, step.kind, step.input);
@@ -106,8 +108,8 @@ String? _resultText(AppLocalizations l10n, ToolSummary? result) {
     ChatToolKind.dailySteps => l10n.walkChatToolFoundSteps(count),
     ChatToolKind.wakeRecords => l10n.walkChatToolFoundWake(count),
     ChatToolKind.wiki => l10n.walkChatToolFoundWiki(count),
-    // 알 수 없는 도구는 개수 단위를 모른다 — 라벨 그대로.
-    ChatToolKind.other => null,
+    // 웹 검색은 결과를 세지 않는다 · 알 수 없는 도구는 개수 단위를 모른다 — 라벨 그대로.
+    ChatToolKind.webSearch || ChatToolKind.other => null,
   };
 }
 

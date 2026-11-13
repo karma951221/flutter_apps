@@ -137,7 +137,8 @@ class LifeTools {
   ToolInputSummary inputSummary(String name, Map<String, Object?> input) {
     final kind = chatToolKindOf(name);
     String? query;
-    if (kind == ChatToolKind.searchDiary) {
+    // 웹 검색(벤더 서버 도구)도 같은 모양으로 — 세션이 진행 표시에 쓴다.
+    if (kind == ChatToolKind.searchDiary || kind == ChatToolKind.webSearch) {
       final q = input['query'];
       if (q is String && q.trim().isNotEmpty) {
         final chars = q.trim().characters;

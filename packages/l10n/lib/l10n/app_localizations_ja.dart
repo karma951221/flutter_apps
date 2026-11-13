@@ -3202,6 +3202,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatToolOther => '記録を確認中';
 
   @override
+  String get walkChatToolWebSearch => 'ウェブ検索中';
+
+  @override
   String walkChatToolDetail(String label, String detail) {
     return '$label（$detail）';
   }
@@ -3613,6 +3616,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatModelChipTooltip => 'モデルを変更';
+
+  @override
+  String get walkChatUseRecords => '自分の記録を参照';
+
+  @override
+  String get walkChatUseRecordsTooltip => 'オンにすると日記・歩数・起床・ウィキを調べて答えます';
 
   @override
   String get walkChatModelRecommended => 'おすすめ';

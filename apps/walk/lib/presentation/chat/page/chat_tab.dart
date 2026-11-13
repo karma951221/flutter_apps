@@ -8,6 +8,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../../domain/chat/chat_history_settings.dart';
 import '../../../domain/chat/chat_settings.dart';
 import '../../../domain/chat/chat_trace.dart';
 import '../../../domain/chat/chat_vendor.dart';
@@ -42,7 +43,8 @@ import '../wiki/open_wiki.dart';
 import '../wiki/widget/wiki_candidates_sheet.dart';
 import 'chat_history_page.dart';
 
-/// 셸의 물어보기 탭: 내 일기 · 걸음 · 기상 기록에 묻는 채팅.
+/// 셸의 물어보기 탭: 무엇이든 묻는 채팅(웹 검색 포함). [내 기록 참고]를 켜면 일기 · 걸음 ·
+/// 기상 기록 · 위키도 찾아본다.
 ///
 /// 대화 내용은 일기에서 나오므로 [DiaryLockGate] 안쪽에 둔다 — 잠긴 동안 트리에 없다.
 /// cubit 은 게이트 바깥(이 State)이 소유해 다시 잠겼다 풀려도 대화가 남는다.
@@ -81,6 +83,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
     getIt<ChatHistoryRepository>(),
     getIt<OpenConversation>(),
     getIt<Clock>(),
+    historySettings: getIt<ChatHistorySettings>(),
   );
 
   late final _secure = getIt<SecureWindow>();
@@ -430,7 +433,7 @@ class _ReadyBody extends StatelessWidget {
   );
 }
 
-/// 본문 맨 위 모델 칩. 답하는 중엔 꺼진다.
+/// 본문 맨 위 모델 칩 + [내 기록 참고] 토글. 답하는 중엔 둘 다 꺼진다.
 class _ModelChipRow extends StatelessWidget {
   const _ModelChipRow();
 
@@ -451,13 +454,43 @@ class _ModelChipRow extends StatelessWidget {
         horizontal: AppSpacing.md,
         vertical: AppSpacing.xs,
       ),
-      child: Align(
-        alignment: AlignmentDirectional.centerStart,
-        child: ModelChip(
-          data: model,
-          onPressed: busy ? null : () => unawaited(_pickModel(context)),
-        ),
+      child: Wrap(
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.xs,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          ModelChip(
+            data: model,
+            onPressed: busy ? null : () => unawaited(_pickModel(context)),
+          ),
+          _UseRecordsChip(enabled: !busy),
+        ],
       ),
+    );
+  }
+}
+
+/// [내 기록 참고] 토글 칩. 끄면 다음 질문부터 기록 도구 · 위키 없이 일반 도우미로 묻는다.
+/// 같은 줄의 모델 칩(ActionChip)과 모양을 맞춘 Material 칩 — 공통 위젯에 켬/끔 칩이 없다.
+class _UseRecordsChip extends StatelessWidget {
+  const _UseRecordsChip({required this.enabled});
+
+  /// false 면 비활성(답을 받는 중).
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final on = context.select<ChatCubit, bool>((c) => c.state.useRecords);
+    return FilterChip(
+      key: const Key('chat-use-records-chip'),
+      tooltip: l10n.walkChatUseRecordsTooltip,
+      visualDensity: VisualDensity.compact,
+      label: Text(l10n.walkChatUseRecords),
+      selected: on,
+      onSelected: enabled
+          ? (value) => unawaited(context.read<ChatCubit>().setUseRecords(value))
+          : null,
     );
   }
 }

@@ -12,6 +12,9 @@ enum ChatToolKind {
 
   /// read_wiki
   wiki,
+
+  /// 벤더 서버의 웹 검색(web_search). 세션이 실행하지 않고 결과 개수도 없다.
+  webSearch,
   other,
 }
 
@@ -22,6 +25,7 @@ ChatToolKind chatToolKindOf(String name) => switch (name) {
   'daily_steps' => ChatToolKind.dailySteps,
   'wake_records' => ChatToolKind.wakeRecords,
   'read_wiki' => ChatToolKind.wiki,
+  'web_search' => ChatToolKind.webSearch,
   _ => ChatToolKind.other,
 };
 
@@ -36,7 +40,7 @@ class ToolInputSummary with _$ToolInputSummary {
   @override
   final DateTime? to;
 
-  /// search_diary 의 query(앞뒤 trim, 20자 넘으면 20자 + '…').
+  /// search_diary · web_search 의 query(앞뒤 trim, 20자 넘으면 20자 + '…').
   @override
   final String? query;
 

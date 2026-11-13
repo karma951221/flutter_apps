@@ -4,6 +4,7 @@ import 'package:core/core.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../domain/chat/chat_history_settings.dart';
 import '../../../domain/chat/chat_settings.dart';
 import '../../../domain/chat/chat_trace.dart';
 import '../../../domain/chat/chat_vendor.dart';
@@ -53,11 +54,18 @@ class ChatCubit extends Cubit<ChatState> {
     this._history,
     this._open,
     this._clock, {
+    ChatHistorySettings? historySettings,
     void Function(VoidCallback) schedulePostFrame = _addPostFrame,
     Duration tick = const Duration(seconds: 1),
-  }) : _schedulePostFrame = schedulePostFrame,
+  }) : _historySettings = historySettings,
+       _schedulePostFrame = schedulePostFrame,
        _tick = tick,
-       super(const ChatState(access: ChatAccess.checking));
+       super(
+         ChatState(
+           access: ChatAccess.checking,
+           useRecords: historySettings?.useRecords ?? true,
+         ),
+       );
 
   final ChatSession _session;
   final ChatSettings _settings;
@@ -75,6 +83,9 @@ class ChatCubit extends Cubit<ChatState> {
 
   /// 진행의 시작 시각 · 경과 초.
   final Clock _clock;
+
+  /// [내 기록 참고] 선택을 기억하는 곳. 없으면 늘 켬으로 시작하고 저장하지 않는다.
+  final ChatHistorySettings? _historySettings;
 
   /// 경과 초를 다시 재는 간격.
   final Duration _tick;
@@ -265,6 +276,16 @@ class ChatCubit extends Cubit<ChatState> {
     await refresh();
   }
 
+  /// [내 기록 참고] 토글. 다음 질문부터 적용된다 — 답하는 중인 질문은 그대로.
+  /// 저장이 실패해도 화면 값은 바꾼다(다음 실행에서 지난 값으로 돌아갈 뿐).
+  Future<void> setUseRecords(bool value) async {
+    if (value == state.useRecords) return;
+    emit(state.copyWith(useRecords: value));
+    try {
+      await _historySettings?.setUseRecords(value);
+    } on Object catch (_) {}
+  }
+
   /// 질문을 보낸다. 쓸 수 있는 상태(ready)가 아니거나 빈 질문이거나 답하는 중 · 대화를
   /// 읽어 들이는 중([ChatState.loading])이면 무시한다.
   /// 돌려주는 Future 는 답이 끝나거나(성공 · 실패) [newConversation] 으로 끊길 때 끝난다.
@@ -279,6 +300,8 @@ class ChatCubit extends Cubit<ChatState> {
     }
     final Stream<ChatEvent> events;
     try {
+      // 질문마다 지금 토글 값을 넘긴다 — 세션은 ask 에서 한 번 읽는다.
+      _session.useRecords = state.useRecords;
       events = _session.ask(text);
     } on StateError {
       // 세션이 아직 이전 질문을 돌리는 중 — 이 cubit 이 모르는 질문이다. 보내지 않는다.

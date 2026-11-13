@@ -3453,6 +3453,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatToolOther => 'Checking records';
 
   @override
+  String get walkChatToolWebSearch => 'Searching the web';
+
+  @override
   String walkChatToolDetail(String label, String detail) {
     return '$label ($detail)';
   }
@@ -3936,6 +3939,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkChatModelChipTooltip => 'Change model';
+
+  @override
+  String get walkChatUseRecords => 'Use my records';
+
+  @override
+  String get walkChatUseRecordsTooltip =>
+      'When on, answers can look up your diary, steps, wake-ups and wiki';
 
   @override
   String get walkChatModelRecommended => 'Recommended';

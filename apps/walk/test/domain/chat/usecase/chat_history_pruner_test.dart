@@ -44,6 +44,12 @@ class _MemorySettings implements ChatHistorySettings {
   WikiIndexSize get wikiIndexSize => WikiIndexSize.fallback;
 
   @override
+  bool get useRecords => true;
+
+  @override
+  Future<void> setUseRecords(bool value) async {}
+
+  @override
   Future<void> setWikiIndexSize(WikiIndexSize value) async {}
 }
 

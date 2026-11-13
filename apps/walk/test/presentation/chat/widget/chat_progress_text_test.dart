@@ -59,6 +59,25 @@ void main() {
       expect(chatProgressStepText(en, 'en', step), 'Searching diary ("바다")');
     });
 
+    test("웹 검색은 '웹 검색 중('검색어')', 결과 문구 없음", () {
+      final step = tool(ChatToolKind.webSearch, query: '오늘 날씨');
+      expect(chatProgressStepText(ko, 'ko', step), "웹 검색 중('오늘 날씨')");
+      expect(
+        chatProgressStepText(en, 'en', step),
+        'Searching the web ("오늘 날씨")',
+      );
+      expect(
+        chatProgressStepText(ko, 'ko', tool(ChatToolKind.webSearch)),
+        '웹 검색 중',
+      );
+      final searched = tool(
+        ChatToolKind.webSearch,
+        query: '오늘 날씨',
+        result: const ToolSummary(kind: ChatToolKind.webSearch, count: 3),
+      );
+      expect(chatProgressTimelineText(ko, 'ko', searched), "웹 검색 중('오늘 날씨')");
+    });
+
     test('걸음은 날 수', () {
       final step = tool(
         ChatToolKind.dailySteps,

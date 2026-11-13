@@ -726,6 +726,26 @@ A1~A4 는 최종 리뷰(2026-11-02)에서 Anthropic 문서로 확인했다 — �
 - 기기 QA W-QA1~6 은 대기 — [시나리오](testing.md#물어보기-위키-2단계).
 - 후속 판단(`search_wiki` · 미리 골라 붙이기 · 라우팅)은 사용량의 위키 숫자를 모아 본 뒤.
 
+## 2026-11-13 — 물어보기 일반 질문 · 웹 검색 · 내 기록 참고 토글
+
+### 왜
+
+시스템 프롬프트가 "찾은 기록에 근거해서만 답한다"여서 기록과 무관한 질문은 "기록에서 찾지 못했어요"로 끝났고, 검색 도구도 없었다. 써 보니 갑자기 궁금한 것을 묻거나 검색할 수 없어 불편했다. 사용자는 기록을 참고할지 토글로 고르고, 그 밖에는 모바일 ChatGPT · Claude 앱처럼 쓰기를 원했다.
+
+### 판단
+
+- **벤더 호스팅 검색** — 직접 검색 API 를 붙이지 않고 Claude `web_search` · GPT Responses `web_search` 를 쓴다. 키가 하나로 끝나고 출처 · 필터링을 벤더가 한다. 대신 검색마다 요금이 따로 붙는다.
+- **Claude 도구 버전은 모델로 고른다** — 동적 필터링 `web_search_20260209` 는 Fable/Mythos 5 이상 · Opus/Sonnet 4.6 이상만, 나머지(Haiku 포함)는 `web_search_20250305`(`anthropicWebSearchToolOf`).
+- **서버 도구 블록은 로컬 도구로 오인하지 않는다** — 전에는 JSON 버퍼가 있는 모든 블록을 `toolCallReady` 로 냈다. `type == 'tool_use'` 만 내도록 고쳤고, `server_tool_use` 는 `ModelEvent.webSearch` 로 진행 표시에만 쓴다. 서버 블록 · `citations` 는 같은 모델 재전송을 위해 원본에 남긴다.
+- **GPT `web_search_call` 은 재전송에 남긴다** — reasoning 항목이 뒤따르는 항목 없이 오면 거절되므로 빼는 쪽이 더 위험하다고 봤다(`store:false`, 기기 확인 필요).
+- **`pause_turn`** — 사용자 메시지 없이 그대로 다시 보낸다. 라운드 한도(8)에 함께 센다.
+- **토글은 `ChatSession.useRecords` 속성** — `ask` 인자로 넣으면 기존 스텁이 모두 깨져서 속성으로 두고 질문마다 읽는다. 끄면 기록 도구 · 위키 정책을 부르지 않고, 혹시 온 도구 호출엔 `records_off` 오류 결과를 준다.
+- **검색 횟수 사용량은 기록하지 않는다** — `TokenUsage` · 사용량 DB 에 자리가 없어 이번엔 뺐다.
+
+### 검증
+
+`flutter analyze` 0 · `flutter test` 3236건 통과(1 skip). 실제 API 이벤트 모양은 기기 확인 전 가정이다([W1~W6](testing.md#일반-질문--웹-검색--내-기록-참고-토글)).
+
 ## 2026-11 — 지도 · 위치 기록
 
 [설계](../../../docs/superpowers/specs/2026-11-08-walk-location-map-design.md) · [계획](../../../docs/superpowers/plans/2026-11-08-walk-location-map.md) · 진행 상태는 [진행 현황](status.md#지도--위치-기록).

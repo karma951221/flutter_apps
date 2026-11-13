@@ -106,6 +106,10 @@ class ChatState with _$ChatState {
   @override
   final bool selectionReplaced;
 
+  /// [내 기록 참고] — 켜면 질문에 기록 도구 · 위키를 붙인다. 다음 질문부터 적용된다.
+  @override
+  final bool useRecords;
+
   const ChatState({
     required this.access,
     this.bubbles = const [],
@@ -118,6 +122,7 @@ class ChatState with _$ChatState {
     this.model,
     this.modelsInvalidKey = false,
     this.selectionReplaced = false,
+    this.useRecords = true,
   });
 
   /// 질문 · 답 글(말풍선 · 되돌린 질문)은 남기지 않는다.
@@ -128,5 +133,5 @@ class ChatState with _$ChatState {
       'conversationId: $conversationId, temporary: $temporary, '
       'vendor: ${vendor.name}, loading: $loading, model: $model, '
       'modelsInvalidKey: $modelsInvalidKey, '
-      'selectionReplaced: $selectionReplaced)';
+      'selectionReplaced: $selectionReplaced, useRecords: $useRecords)';
 }

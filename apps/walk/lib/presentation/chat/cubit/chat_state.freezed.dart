@@ -201,7 +201,7 @@ case _:
 /// @nodoc
 mixin _$ChatState {
 
- ChatAccess get access; List<ChatBubble> get bubbles; bool get busy; String? get restoredDraft; String? get conversationId; bool get temporary; ChatVendor get vendor; bool get loading; ModelChipData? get model; bool get modelsInvalidKey; bool get selectionReplaced;
+ ChatAccess get access; List<ChatBubble> get bubbles; bool get busy; String? get restoredDraft; String? get conversationId; bool get temporary; ChatVendor get vendor; bool get loading; ModelChipData? get model; bool get modelsInvalidKey; bool get selectionReplaced; bool get useRecords;
 /// Create a copy of ChatState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -212,12 +212,12 @@ $ChatStateCopyWith<ChatState> get copyWith => _$ChatStateCopyWithImpl<ChatState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatState&&(identical(other.access, access) || other.access == access)&&const DeepCollectionEquality().equals(other.bubbles, bubbles)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.restoredDraft, restoredDraft) || other.restoredDraft == restoredDraft)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.temporary, temporary) || other.temporary == temporary)&&(identical(other.vendor, vendor) || other.vendor == vendor)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.model, model) || other.model == model)&&(identical(other.modelsInvalidKey, modelsInvalidKey) || other.modelsInvalidKey == modelsInvalidKey)&&(identical(other.selectionReplaced, selectionReplaced) || other.selectionReplaced == selectionReplaced));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatState&&(identical(other.access, access) || other.access == access)&&const DeepCollectionEquality().equals(other.bubbles, bubbles)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.restoredDraft, restoredDraft) || other.restoredDraft == restoredDraft)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.temporary, temporary) || other.temporary == temporary)&&(identical(other.vendor, vendor) || other.vendor == vendor)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.model, model) || other.model == model)&&(identical(other.modelsInvalidKey, modelsInvalidKey) || other.modelsInvalidKey == modelsInvalidKey)&&(identical(other.selectionReplaced, selectionReplaced) || other.selectionReplaced == selectionReplaced)&&(identical(other.useRecords, useRecords) || other.useRecords == useRecords));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,access,const DeepCollectionEquality().hash(bubbles),busy,restoredDraft,conversationId,temporary,vendor,loading,model,modelsInvalidKey,selectionReplaced);
+int get hashCode => Object.hash(runtimeType,access,const DeepCollectionEquality().hash(bubbles),busy,restoredDraft,conversationId,temporary,vendor,loading,model,modelsInvalidKey,selectionReplaced,useRecords);
 
 
 
@@ -228,7 +228,7 @@ abstract mixin class $ChatStateCopyWith<$Res>  {
   factory $ChatStateCopyWith(ChatState value, $Res Function(ChatState) _then) = _$ChatStateCopyWithImpl;
 @useResult
 $Res call({
- ChatAccess access, List<ChatBubble> bubbles, bool busy, String? restoredDraft, String? conversationId, bool temporary, ChatVendor vendor, bool loading, ModelChipData? model, bool modelsInvalidKey, bool selectionReplaced
+ ChatAccess access, List<ChatBubble> bubbles, bool busy, String? restoredDraft, String? conversationId, bool temporary, ChatVendor vendor, bool loading, ModelChipData? model, bool modelsInvalidKey, bool selectionReplaced, bool useRecords
 });
 
 
@@ -245,7 +245,7 @@ class _$ChatStateCopyWithImpl<$Res>
 
 /// Create a copy of ChatState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? access = null,Object? bubbles = null,Object? busy = null,Object? restoredDraft = freezed,Object? conversationId = freezed,Object? temporary = null,Object? vendor = null,Object? loading = null,Object? model = freezed,Object? modelsInvalidKey = null,Object? selectionReplaced = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? access = null,Object? bubbles = null,Object? busy = null,Object? restoredDraft = freezed,Object? conversationId = freezed,Object? temporary = null,Object? vendor = null,Object? loading = null,Object? model = freezed,Object? modelsInvalidKey = null,Object? selectionReplaced = null,Object? useRecords = null,}) {
   return _then(ChatState(
 access: null == access ? _self.access : access // ignore: cast_nullable_to_non_nullable
 as ChatAccess,bubbles: null == bubbles ? _self.bubbles : bubbles // ignore: cast_nullable_to_non_nullable
@@ -258,6 +258,7 @@ as ChatVendor,loading: null == loading ? _self.loading : loading // ignore: cast
 as bool,model: freezed == model ? _self.model : model // ignore: cast_nullable_to_non_nullable
 as ModelChipData?,modelsInvalidKey: null == modelsInvalidKey ? _self.modelsInvalidKey : modelsInvalidKey // ignore: cast_nullable_to_non_nullable
 as bool,selectionReplaced: null == selectionReplaced ? _self.selectionReplaced : selectionReplaced // ignore: cast_nullable_to_non_nullable
+as bool,useRecords: null == useRecords ? _self.useRecords : useRecords // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

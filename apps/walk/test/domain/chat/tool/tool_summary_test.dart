@@ -2,13 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/domain/chat/tool/tool_summary.dart';
 
 void main() {
-  test('chatToolKindOf 는 여섯 이름과 그 밖을 나눈다', () {
+  test('chatToolKindOf 는 일곱 이름과 그 밖을 나눈다', () {
     expect(chatToolKindOf('search_diary'), ChatToolKind.searchDiary);
     expect(chatToolKindOf('view_entry_photos'), ChatToolKind.viewPhotos);
     expect(chatToolKindOf('list_diary_index'), ChatToolKind.diaryIndex);
     expect(chatToolKindOf('daily_steps'), ChatToolKind.dailySteps);
     expect(chatToolKindOf('wake_records'), ChatToolKind.wakeRecords);
     expect(chatToolKindOf('read_wiki'), ChatToolKind.wiki);
+    expect(chatToolKindOf('web_search'), ChatToolKind.webSearch);
     expect(chatToolKindOf('nope'), ChatToolKind.other);
   });
 

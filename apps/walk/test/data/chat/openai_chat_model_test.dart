@@ -48,6 +48,7 @@ ModelRequest request({
   bool fastMode = false,
   List<ChatMessage> messages = const [],
   List<ToolSpec> tools = const [],
+  bool webSearch = false,
 }) => ModelRequest(
   apiKey: apiKey,
   model: model,
@@ -55,6 +56,7 @@ ModelRequest request({
   system: 'sys',
   messages: messages,
   tools: tools,
+  webSearch: webSearch,
 );
 
 OpenAiChatModel modelOf(
@@ -1298,6 +1300,129 @@ void main() {
       );
       expect(events.whereType<ModelToolCallReady>(), isEmpty);
       expect(events.single, isA<ModelCompleted>());
+    });
+  });
+
+  group('웹 검색', () {
+    test('켜면 tools 끝에 web_search, 끄면 없다', () async {
+      final on = await bodyOf(request(tools: const [_tool], webSearch: true));
+      expect(on['tools'], hasLength(2));
+      expect((on['tools'] as List).last, {'type': 'web_search'});
+
+      final off = await bodyOf(request(tools: const [_tool]));
+      expect(off['tools'], hasLength(1));
+
+      final none = await bodyOf(request());
+      expect(none.containsKey('tools'), isFalse);
+
+      final onlySearch = await bodyOf(request(webSearch: true));
+      expect(onlySearch['tools'], [
+        {'type': 'web_search'},
+      ]);
+    });
+
+    test('웹 검색을 받지 않는 모델에는 붙이지 않는다', () async {
+      final body = await bodyOf(
+        request(model: 'gpt-4.1-nano', tools: const [_tool], webSearch: true),
+      );
+      expect(body['tools'], hasLength(1));
+    });
+
+    test('web_search_call 은 도구 호출이 아니고 검색어를 진행으로 내며 항목은 남긴다', () async {
+      final searchItem = {
+        'id': 'ws_1',
+        'type': 'web_search_call',
+        'status': 'completed',
+        'action': {'type': 'search', 'query': '오늘 날씨'},
+      };
+      final message = {
+        'id': 'msg_1',
+        'type': 'message',
+        'role': 'assistant',
+        'status': 'completed',
+        'content': [
+          {
+            'type': 'output_text',
+            'text': '맑아요',
+            'annotations': [
+              {
+                'type': 'url_citation',
+                'url': 'https://example.com',
+                'title': '예시',
+                'start_index': 0,
+                'end_index': 3,
+              },
+            ],
+          },
+        ],
+      };
+      final events = await run(
+        clientOf([
+          sse('response.output_item.added', {
+            'item': {
+              'id': 'ws_1',
+              'type': 'web_search_call',
+              'status': 'in_progress',
+            },
+          }),
+          sse('response.web_search_call.searching', {'item_id': 'ws_1'}),
+          sse('response.output_item.done', {'item': searchItem}),
+          sse('response.output_text.delta', {'delta': '맑아요'}),
+          _completed(output: [searchItem, message]),
+        ]),
+      );
+
+      expect(events.whereType<ModelToolCallStarted>(), isEmpty);
+      expect(events.whereType<ModelToolCallReady>(), isEmpty);
+      expect(events.whereType<ModelWebSearch>().toList(), const [
+        ModelEvent.webSearch(id: 'ws_1'),
+        ModelEvent.webSearch(id: 'ws_1', query: '오늘 날씨'),
+      ]);
+      final done = events.last as ModelCompleted;
+      expect(done.stop, StopKind.endTurn);
+      expect(done.message.parts, const [AssistantPart.text('맑아요')]);
+      final state = done.message.vendorState! as OpenAiTurnState;
+      expect(state.items, [searchItem, message]);
+
+      // 같은 모델의 다음 요청엔 web_search_call 항목째 돌려보낸다.
+      final body = await bodyOf(
+        request(messages: [const ChatMessage.user('날씨'), done.message]),
+      );
+      expect(body['input'], [
+        {'role': 'user', 'content': '날씨'},
+        searchItem,
+        message,
+      ]);
+    });
+
+    test('queries 배열만 있으면 첫 검색어, 페이지 열기는 검색어 없음', () async {
+      final events = await run(
+        clientOf([
+          sse('response.output_item.done', {
+            'item': {
+              'id': 'ws_1',
+              'type': 'web_search_call',
+              'status': 'completed',
+              'action': {
+                'type': 'search',
+                'queries': ['첫 검색', '둘째'],
+              },
+            },
+          }),
+          sse('response.output_item.done', {
+            'item': {
+              'id': 'ws_2',
+              'type': 'web_search_call',
+              'status': 'completed',
+              'action': {'type': 'open_page', 'url': 'https://example.com'},
+            },
+          }),
+          _completed(),
+        ]),
+      );
+      expect(events.whereType<ModelWebSearch>().toList(), const [
+        ModelEvent.webSearch(id: 'ws_1', query: '첫 검색'),
+      ]);
     });
   });
 }

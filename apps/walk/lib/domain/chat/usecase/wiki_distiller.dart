@@ -184,6 +184,8 @@ class WikiDistiller {
         system: system,
         messages: List.unmodifiable(messages),
         tools: tools,
+        // 정리는 대화 글만 근거로 — 웹 검색을 붙이지 않는다.
+        webSearch: false,
       );
       final done = await _round(model, request, run, (event) {
         _recordUsage(questionKey, round, target, fastMode, index, event);
@@ -214,6 +216,9 @@ class WikiDistiller {
           }
           if (run.cancelled) return cancelled;
           messages.add(ChatMessage.toolResults(results));
+        case StopKind.pauseTurn:
+          // 서버 도구를 싣지 않아 오지 않는다 — 와도 그 턴을 덧붙여 이어 보낸다.
+          continue;
         case StopKind.refusal:
           return const WikiDistillResult.failed(ChatFailure.refused);
         case StopKind.endTurn || StopKind.maxTokens || StopKind.other:

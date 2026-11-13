@@ -202,6 +202,17 @@
 - [ ] **C4 기기 확인** — thinking 이 기본인 Opus 5.5 대화에서 멈춘 턴(글만 있는 assistant 턴)을 넣고 다음 질문을 보내도 400 이 나지 않는지. 나면 [기록](history.md#2026-11--물어보기-중립-계약--계측--멈춤)에 적고 사용자에게 묻는다
 - 검증(2026-11-02): `flutter analyze` 0 · `flutter test` 2064건 통과(1 skip).
 
+### 일반 질문 · 웹 검색 · 내 기록 참고 토글 (2026-11-13)
+
+[계획](plan.md#규약시스템-프롬프트--도구-설명) · [기록](history.md#2026-11-13--물어보기-일반-질문--웹-검색--내-기록-참고-토글) · [시나리오](testing.md#일반-질문--웹-검색--내-기록-참고-토글)
+
+- [x] 시스템 프롬프트 완화 — 기록 질문은 도구로, 그 밖의 질문은 아는 대로, 최근 · 불확실한 사실은 웹 검색 + 출처
+- [x] 웹 검색 — Claude `web_search`(모델별 `20260209` / `20250305`, `max_uses` 5) · GPT Responses `web_search` · 진행 표시 "웹 검색 중('검색어')" · `pause_turn` 이어 보내기 · 위키 정리 요청엔 없음
+- [x] [내 기록 참고] 칩 — 끄면 기록 도구 · 위키 · 기록 규칙 없는 일반 도우미. 마지막 선택 저장(처음 켜짐), 질문마다 읽음
+- [x] 에뮬레이터에서 앱 실행 확인(2026-11-13, Medium_Phone). 공간이 모자라 에뮬레이터의 통근 앱을 지웠고, `flutter run` 의 재설치로 walk 데이터가 초기화됐다
+- [ ] **실제 키로 W1~W6 확인** — 서버 이벤트 모양(`server_tool_use` · `web_search_tool_result` · `citations_delta` · GPT `web_search_call`)은 문서 기준 가정이다
+- 검증(2026-11-13): `flutter analyze` 0 · `flutter test` 3236건 통과(1 skip, 서브에이전트 전체 실행) · 채팅 테스트 1012건 재실행 통과.
+
 ### 키 UX — 키 기획 ② (2026-11-02)
 
 [계획](../../../docs/superpowers/plans/2026-11-01-walk-chat-key-ux.md) · [기획](../../../docs/superpowers/specs/2026-11-01-walk-chat-key-input.md) · [기록](history.md#2026-11--물어보기-키-ux키-기획-) · [테스트](testing.md#물어보기--채팅--기상-기록-보관)

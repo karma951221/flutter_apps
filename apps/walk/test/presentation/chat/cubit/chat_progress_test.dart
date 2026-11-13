@@ -21,6 +21,18 @@ void main() {
     expect(progress.current, isA<StepTool>());
   });
 
+  test('toolCalls 는 웹 검색을 세지 않는다(기록을 찾아본 수)', () {
+    final progress = ChatProgress(
+      startedAt: t0,
+      steps: const [
+        ChatProgressStep.tool(callId: 'a', kind: ChatToolKind.searchDiary),
+        ChatProgressStep.tool(callId: 'w', kind: ChatToolKind.webSearch),
+      ],
+    );
+
+    expect(progress.toolCalls, 1);
+  });
+
   test('keepSummary — 2초 끝남 false · 3초 true · 1초 멈춤 true', () {
     ChatProgress done(int seconds, {bool stopped = false}) => ChatProgress(
       startedAt: t0,
