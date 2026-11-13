@@ -6044,6 +6044,30 @@ abstract class AppLocalizations {
   /// **'웹 검색 중'**
   String get walkChatToolWebSearch;
 
+  /// 채팅 탭 진행 줄: list_files 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'작업 폴더 보는 중'**
+  String get walkChatToolListFiles;
+
+  /// 채팅 탭 진행 줄: read_file 도구 라벨(파일 이름 없을 때)
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 읽는 중'**
+  String get walkChatToolReadFile;
+
+  /// 채팅 탭 진행 줄: read_file 도구 라벨. name 은 path 마지막 부분(20자 넘으면 줄임)
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 읽는 중 · {name}'**
+  String walkChatToolReadFileNamed(String name);
+
+  /// 채팅 탭 진행 줄: 작업 폴더 목록 결과 개수
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 {count}개'**
+  String walkChatToolFoundFiles(int count);
+
   /// 채팅 탭 진행 줄: 도구 라벨 + 자세히(기간 · 검색어 · 날 수)
   ///
   /// In ko, this message translates to:

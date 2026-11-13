@@ -478,6 +478,22 @@ void main() {
       expect(s.query, '${'가' * 20}…');
     });
 
+    test('read_file 은 path 마지막 부분을 이름으로, 20자 넘으면 20자 + …', () {
+      final s = tools.inputSummary('read_file', {'path': 'inbox/메모.md'});
+      expect(s.kind, ChatToolKind.readFile);
+      expect(s.name, '메모.md');
+      expect(s.query, isNull);
+      final long = '${'가' * 22}.md';
+      expect(
+        tools.inputSummary('read_file', {'path': 'out/$long'}).name,
+        '${'가' * 20}…',
+      );
+      expect(tools.inputSummary('read_file', {'path': '메모.md'}).name, '메모.md');
+      expect(tools.inputSummary('read_file', {'path': ' '}).name, isNull);
+      expect(tools.inputSummary('read_file', {'path': 3}).name, isNull);
+      expect(tools.inputSummary('list_files', {'path': 'a.md'}).name, isNull);
+    });
+
     test('공백뿐인 query 는 null', () {
       expect(
         tools.inputSummary('search_diary', {'query': '   '}).query,

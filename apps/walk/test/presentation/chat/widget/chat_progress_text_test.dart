@@ -22,11 +22,18 @@ void main() {
     DateTime? from,
     DateTime? to,
     String? query,
+    String? name,
     ToolSummary? result,
   }) => ChatProgressStep.tool(
     callId: 'c1',
     kind: kind,
-    input: ToolInputSummary(kind: kind, from: from, to: to, query: query),
+    input: ToolInputSummary(
+      kind: kind,
+      from: from,
+      to: to,
+      query: query,
+      name: name,
+    ),
     result: result,
   );
 
@@ -86,6 +93,42 @@ void main() {
       );
       expect(chatProgressStepText(ko, 'ko', step), '걸음 수 보는 중(7일)');
       expect(chatProgressStepText(en, 'en', step), 'Checking steps (7 days)');
+    });
+
+    test('작업 폴더 — 보는 중 · 파일 개수, 파일 읽는 중 · 이름', () {
+      expect(
+        chatProgressStepText(ko, 'ko', tool(ChatToolKind.listFiles)),
+        '작업 폴더 보는 중',
+      );
+      expect(
+        chatProgressStepText(en, 'en', tool(ChatToolKind.listFiles)),
+        'Viewing workspace',
+      );
+      final listed = tool(
+        ChatToolKind.listFiles,
+        result: const ToolSummary(kind: ChatToolKind.listFiles, count: 3),
+      );
+      expect(chatProgressStepText(ko, 'ko', listed), '파일 3개');
+      expect(chatProgressStepText(en, 'en', listed), '3 files');
+      expect(chatProgressTimelineText(ko, 'ko', listed), '작업 폴더 보는 중 — 파일 3개');
+      final reading = tool(ChatToolKind.readFile, name: '메모.md');
+      expect(chatProgressStepText(ko, 'ko', reading), '파일 읽는 중 · 메모.md');
+      expect(chatProgressStepText(en, 'en', reading), 'Reading file · 메모.md');
+      expect(
+        chatProgressStepText(ko, 'ko', tool(ChatToolKind.readFile)),
+        '파일 읽는 중',
+      );
+      // 읽은 뒤에도 이름 라벨 그대로 — 개수 문구 없음.
+      final read = tool(
+        ChatToolKind.readFile,
+        name: '${'가' * 20}…',
+        result: const ToolSummary(kind: ChatToolKind.readFile, count: 1),
+      );
+      expect(chatProgressStepText(ko, 'ko', read), '파일 읽는 중 · ${'가' * 20}…');
+      expect(
+        chatProgressTimelineText(ko, 'ko', read),
+        '파일 읽는 중 · ${'가' * 20}…',
+      );
     });
 
     test('입력이 없으면 라벨만 — 위키 · 기타 포함', () {

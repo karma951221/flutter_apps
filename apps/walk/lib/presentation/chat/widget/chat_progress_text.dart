@@ -54,9 +54,12 @@ String _toolLabel(AppLocalizations l10n, String locale, StepTool step) {
     ChatToolKind.wakeRecords => l10n.walkChatToolWakeRecords,
     ChatToolKind.wiki => l10n.walkChatToolReadWiki,
     ChatToolKind.webSearch => l10n.walkChatToolWebSearch,
-    // 라벨 문구는 Task 3.
-    ChatToolKind.listFiles ||
-    ChatToolKind.readFile ||
+    ChatToolKind.listFiles => l10n.walkChatToolListFiles,
+    // "파일 읽는 중 · 이름" — 이름이 라벨에 붙으므로 자세히(괄호)는 없다.
+    ChatToolKind.readFile => switch (step.input?.name) {
+      final name? => l10n.walkChatToolReadFileNamed(name),
+      null => l10n.walkChatToolReadFile,
+    },
     ChatToolKind.other => l10n.walkChatToolOther,
   };
   final detail = _detail(l10n, locale, step.kind, step.input);
@@ -111,9 +114,10 @@ String? _resultText(AppLocalizations l10n, ToolSummary? result) {
     ChatToolKind.dailySteps => l10n.walkChatToolFoundSteps(count),
     ChatToolKind.wakeRecords => l10n.walkChatToolFoundWake(count),
     ChatToolKind.wiki => l10n.walkChatToolFoundWiki(count),
-    // 웹 검색은 결과를 세지 않는다 · 알 수 없는 도구는 개수 단위를 모른다 — 라벨 그대로.
+    ChatToolKind.listFiles => l10n.walkChatToolFoundFiles(count),
+    // 웹 검색은 결과를 세지 않는다 · 파일 읽기는 늘 한 건이라 이름 라벨 그대로 ·
+    // 알 수 없는 도구는 개수 단위를 모른다 — 라벨 그대로.
     ChatToolKind.webSearch ||
-    ChatToolKind.listFiles ||
     ChatToolKind.readFile ||
     ChatToolKind.other => null,
   };

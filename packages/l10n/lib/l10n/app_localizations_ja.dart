@@ -3242,6 +3242,22 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatToolWebSearch => 'ウェブ検索中';
 
   @override
+  String get walkChatToolListFiles => '作業フォルダを確認中';
+
+  @override
+  String get walkChatToolReadFile => 'ファイルを読み込み中';
+
+  @override
+  String walkChatToolReadFileNamed(String name) {
+    return 'ファイルを読み込み中・$name';
+  }
+
+  @override
+  String walkChatToolFoundFiles(int count) {
+    return 'ファイル$count件';
+  }
+
+  @override
   String walkChatToolDetail(String label, String detail) {
     return '$label（$detail）';
   }

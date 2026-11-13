@@ -38,7 +38,7 @@ ChatToolKind chatToolKindOf(String name) => switch (name) {
 };
 
 /// 도구 입력에서 라벨용으로 꺼낸 것만. 잘못된 날짜는 null.
-/// toString 은 kind · 날짜 유무만 — 검색어(query)는 찍지 않는다.
+/// toString 은 kind · 날짜 유무만 — 검색어(query) · 파일 이름(name)은 찍지 않는다.
 @freezed
 class ToolInputSummary with _$ToolInputSummary {
   @override
@@ -52,7 +52,17 @@ class ToolInputSummary with _$ToolInputSummary {
   @override
   final String? query;
 
-  const ToolInputSummary({required this.kind, this.from, this.to, this.query});
+  /// read_file 의 파일 이름(path 마지막 부분, 20자 넘으면 20자 + '…').
+  @override
+  final String? name;
+
+  const ToolInputSummary({
+    required this.kind,
+    this.from,
+    this.to,
+    this.query,
+    this.name,
+  });
 
   @override
   String toString() => 'ToolInputSummary($kind, range: ${from != null})';

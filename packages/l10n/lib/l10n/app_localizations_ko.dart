@@ -3244,6 +3244,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatToolWebSearch => '웹 검색 중';
 
   @override
+  String get walkChatToolListFiles => '작업 폴더 보는 중';
+
+  @override
+  String get walkChatToolReadFile => '파일 읽는 중';
+
+  @override
+  String walkChatToolReadFileNamed(String name) {
+    return '파일 읽는 중 · $name';
+  }
+
+  @override
+  String walkChatToolFoundFiles(int count) {
+    return '파일 $count개';
+  }
+
+  @override
   String walkChatToolDetail(String label, String detail) {
     return '$label($detail)';
   }

@@ -3496,6 +3496,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatToolWebSearch => 'Searching the web';
 
   @override
+  String get walkChatToolListFiles => 'Viewing workspace';
+
+  @override
+  String get walkChatToolReadFile => 'Reading file';
+
+  @override
+  String walkChatToolReadFileNamed(String name) {
+    return 'Reading file · $name';
+  }
+
+  @override
+  String walkChatToolFoundFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String walkChatToolDetail(String label, String detail) {
     return '$label ($detail)';
   }

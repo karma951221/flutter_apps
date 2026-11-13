@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ToolInputSummary {
 
- ChatToolKind get kind; DateTime? get from; DateTime? get to; String? get query;
+ ChatToolKind get kind; DateTime? get from; DateTime? get to; String? get query; String? get name;
 /// Create a copy of ToolInputSummary
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,12 +25,12 @@ $ToolInputSummaryCopyWith<ToolInputSummary> get copyWith => _$ToolInputSummaryCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ToolInputSummary&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.from, from) || other.from == from)&&(identical(other.to, to) || other.to == to)&&(identical(other.query, query) || other.query == query));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ToolInputSummary&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.from, from) || other.from == from)&&(identical(other.to, to) || other.to == to)&&(identical(other.query, query) || other.query == query)&&(identical(other.name, name) || other.name == name));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,kind,from,to,query);
+int get hashCode => Object.hash(runtimeType,kind,from,to,query,name);
 
 
 
@@ -41,7 +41,7 @@ abstract mixin class $ToolInputSummaryCopyWith<$Res>  {
   factory $ToolInputSummaryCopyWith(ToolInputSummary value, $Res Function(ToolInputSummary) _then) = _$ToolInputSummaryCopyWithImpl;
 @useResult
 $Res call({
- ChatToolKind kind, DateTime? from, DateTime? to, String? query
+ ChatToolKind kind, DateTime? from, DateTime? to, String? query, String? name
 });
 
 
@@ -58,12 +58,13 @@ class _$ToolInputSummaryCopyWithImpl<$Res>
 
 /// Create a copy of ToolInputSummary
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? kind = null,Object? from = freezed,Object? to = freezed,Object? query = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? kind = null,Object? from = freezed,Object? to = freezed,Object? query = freezed,Object? name = freezed,}) {
   return _then(ToolInputSummary(
 kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as ChatToolKind,from: freezed == from ? _self.from : from // ignore: cast_nullable_to_non_nullable
 as DateTime?,to: freezed == to ? _self.to : to // ignore: cast_nullable_to_non_nullable
 as DateTime?,query: freezed == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
+as String?,name: freezed == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

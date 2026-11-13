@@ -132,19 +132,20 @@ class LifeTools {
   /// 진행 줄 라벨용 검색어 최대 글자 수(grapheme).
   static const _queryMaxChars = 20;
 
-  /// 진행 줄 라벨용 입력 요약. 검색어는 화면용으로만 20자(grapheme — 이모지 · 결합 문자를
-  /// 가르지 않는다)까지 담는다.
+  /// 진행 줄 라벨용 입력 요약. 검색어 · read_file 의 파일 이름(path 마지막 부분)은
+  /// 화면용으로만 20자(grapheme — 이모지 · 결합 문자를 가르지 않는다)까지 담는다.
   ToolInputSummary inputSummary(String name, Map<String, Object?> input) {
     final kind = chatToolKindOf(name);
     String? query;
     // 웹 검색(벤더 서버 도구)도 같은 모양으로 — 세션이 진행 표시에 쓴다.
     if (kind == ChatToolKind.searchDiary || kind == ChatToolKind.webSearch) {
-      final q = input['query'];
-      if (q is String && q.trim().isNotEmpty) {
-        final chars = q.trim().characters;
-        query = chars.length > _queryMaxChars
-            ? '${chars.take(_queryMaxChars).string}…'
-            : chars.string;
+      query = _shortened(input['query']);
+    }
+    String? fileName;
+    if (kind == ChatToolKind.readFile) {
+      final path = input['path'];
+      if (path is String) {
+        fileName = _shortened(path.substring(path.lastIndexOf('/') + 1));
       }
     }
     return ToolInputSummary(
@@ -152,7 +153,17 @@ class LifeTools {
       from: _parse(input['from']),
       to: _parse(input['to']),
       query: query,
+      name: fileName,
     );
+  }
+
+  /// 앞뒤 trim 해 20자(grapheme)까지, 넘으면 + '…'. 글이 아니거나 비면 null.
+  static String? _shortened(Object? value) {
+    if (value is! String || value.trim().isEmpty) return null;
+    final chars = value.trim().characters;
+    return chars.length > _queryMaxChars
+        ? '${chars.take(_queryMaxChars).string}…'
+        : chars.string;
   }
 
   // 도구
