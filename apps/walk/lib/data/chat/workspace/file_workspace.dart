@@ -13,7 +13,8 @@ import '../../../domain/chat/workspace/workspace.dart';
 /// 문서 폴더 아래 `workspace/` 를 작업 폴더로 쓴다.
 ///
 /// 경계 판정은 두 단계다. 먼저 `p.normalize` 로 `..` 를 접은 경로가 root 안인지
-/// 보고, 이미 있는 항목은 `resolveSymbolicLinks()` 결과도 root 안인지 한 번 더 본다.
+/// 보고, 그 항목(없으면 가장 가까운 있는 조상)의 `resolveSymbolicLinks()` 결과도 root
+/// 안인지 한 번 더 본다.
 @LazySingleton(as: Workspace)
 class FileWorkspace implements Workspace {
   /// 테스트는 임시 폴더 · 고정 시계를 넘긴다.
@@ -48,17 +49,26 @@ class FileWorkspace implements Workspace {
     return abs;
   }
 
-  /// 이미 있는 항목이면 링크를 풀어 한 번 더 경계를 본다.
+  /// 링크를 풀어 한 번 더 경계를 본다. 없는 항목이면 가장 가까운 있는 조상을 본다 —
+  /// 밖을 가리키는 폴더 링크 아래(`inbox/<링크>/x`)는 x 가 있든 없든 밖이다(존재 여부를
+  /// 흘리지 않는다). [_check] 를 지난 [abs] 라 조상은 늦어도 root 에서 멈춘다.
   Future<void> _checkReal(String root, String path, String abs) async {
-    final type = await FileSystemEntity.type(abs, followLinks: false);
-    if (type == FileSystemEntityType.notFound) return;
+    var target = abs;
+    while (await FileSystemEntity.type(target, followLinks: false) ==
+        FileSystemEntityType.notFound) {
+      final parent = p.dirname(target);
+      if (parent == target) return;
+      target = parent;
+    }
     final String real;
     try {
-      real = await File(abs).resolveSymbolicLinks();
+      real = await File(target).resolveSymbolicLinks();
     } on FileSystemException {
       throw WorkspacePathException(path); // 끊어진 링크
     }
-    if (!p.isWithin(root, real)) throw WorkspacePathException(path);
+    if (real != root && !p.isWithin(root, real)) {
+      throw WorkspacePathException(path);
+    }
   }
 
   Future<String> _safe(String path) async {

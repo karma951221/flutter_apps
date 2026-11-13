@@ -111,6 +111,17 @@ void main() {
       expect(chatProgressStepText(ko, 'ko', listed), '파일 3개');
       expect(chatProgressStepText(en, 'en', listed), '3 files');
       expect(chatProgressTimelineText(ko, 'ko', listed), '작업 폴더 보는 중 — 파일 3개');
+      // 0개는 "찾은 기록 없음" 이 아니라 폴더가 비었다는 문구.
+      final empty = tool(
+        ChatToolKind.listFiles,
+        result: const ToolSummary(kind: ChatToolKind.listFiles, count: 0),
+      );
+      expect(chatProgressStepText(ko, 'ko', empty), '작업 폴더에 파일 없음');
+      expect(chatProgressStepText(en, 'en', empty), 'No files in workspace');
+      expect(
+        chatProgressTimelineText(ko, 'ko', empty),
+        '작업 폴더 보는 중 — 작업 폴더에 파일 없음',
+      );
       final reading = tool(ChatToolKind.readFile, name: '메모.md');
       expect(chatProgressStepText(ko, 'ko', reading), '파일 읽는 중 · 메모.md');
       expect(chatProgressStepText(en, 'en', reading), 'Reading file · 메모.md');

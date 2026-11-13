@@ -31,6 +31,10 @@ abstract final class AttachmentRules {
   /// base64 로 늘어도 벤더 요청 한도(Anthropic 32MB) 안에 들게 둔다.
   static const maxDocBytesPerConversation = 18 * 1024 * 1024;
 
+  /// 한 대화에서 read_file 이 돌려주는 글(`text`, 코드 포인트)의 합계. 도구 결과는 매 요청에
+  /// 다시 실린다 — 큰 글을 여러 번 읽어 문맥이 끝없이 늘지 않게 막는다.
+  static const maxToolTextCharsPerConversation = 120000;
+
   /// 글 없이 첨부만 보낼 때의 질문.
   static const emptyQuestion = '첨부한 파일을 봐 줘.';
 

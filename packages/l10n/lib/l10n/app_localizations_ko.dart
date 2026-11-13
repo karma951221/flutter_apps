@@ -3313,6 +3313,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatToolFoundNone => '찾은 기록 없음';
 
   @override
+  String get walkChatToolNoFiles => '작업 폴더에 파일 없음';
+
+  @override
   String walkChatProgressElapsed(int seconds) {
     return '$seconds초';
   }

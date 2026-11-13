@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:core/core.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -189,6 +190,7 @@ class ChatSession {
 
   static const _documentLimitJson = '{"error":"document_limit_reached"}';
   static const _imagesUnsupportedJson = '{"error":"images_unsupported"}';
+  static const _readLimitJson = '{"error":"read_limit_reached"}';
 
   final _messages = <ChatMessage>[];
   bool _busy = false;
@@ -225,6 +227,10 @@ class ChatSession {
   /// 이 대화에서 보낸 PDF · 텍스트 첨부의 바이트 합계. [_docsSent] 와 같은 규칙으로 센다.
   int _docBytesSent = 0;
 
+  /// 이 대화에서 read_file 이 돌려준 글(`text`)의 글자(코드 포인트) 수. 도구 결과가 문맥에
+  /// 남는 동안만 센다 — 되돌린 질문 · 멈춤 · 글로 접기에서 빠진 결과는 세지 않는다.
+  int _toolTextChars = 0;
+
   /// 남은 사진 · 문서 첨부 수와 문서 바이트. UI 가 [ask] 전에 막는 데 쓴다.
   ({int images, int docs, int docBytes}) get attachmentRoom => (
     images: maxImagesPerConversation - _imagesSent,
@@ -247,6 +253,7 @@ class ChatSession {
   int _turnImagesAtStart = 0;
   int _turnDocsAtStart = 0;
   int _turnDocBytesAtStart = 0;
+  int _turnToolTextAtStart = 0;
 
   /// 이번 질문의 user 메시지(첨부 포함, 사진 못 보는 모델이면 바꾼 뒤). 이미지 거절
   /// 재시도가 사진을 빼면 그것으로 바꾼다.
@@ -306,6 +313,7 @@ class ChatSession {
     _turnImagesAtStart = _imagesSent;
     _turnDocsAtStart = _docsSent;
     _turnDocBytesAtStart = _docBytesSent;
+    _turnToolTextAtStart = _toolTextChars;
     _turnUser = user;
     _turnText.clear();
     _turnCited.clear();
@@ -333,6 +341,8 @@ class ChatSession {
     _imagesSent = _turnImagesAtStart;
     _docsSent = _turnDocsAtStart;
     _docBytesSent = _turnDocBytesAtStart;
+    // 남기는 턴은 질문과 글뿐 — 도구 결과의 글은 다시 세지 않는다.
+    _toolTextChars = _turnToolTextAtStart;
     final text = _turnText.toString();
     if (text.trim().isEmpty) return const ChatStopResult.dropped();
     // 질문은 첨부와 함께 남기고, 그 첨부 수도 다시 센다.
@@ -359,6 +369,7 @@ class ChatSession {
     _imagesSent = 0;
     _docsSent = 0;
     _docBytesSent = 0;
+    _toolTextChars = 0;
     _busy = false;
     _temporary = temporary;
     _contextTarget = null;
@@ -436,6 +447,8 @@ class ChatSession {
     _imagesSent = 0;
     _docsSent = 0;
     _docBytesSent = 0;
+    // 접은 문맥에는 도구 결과가 없다 — 도구로 읽은 글은 0 에서 다시 센다.
+    _toolTextChars = 0;
     for (final message in folded) {
       if (message is! UserMessage) continue;
       final (:images, :docs, :docBytes) = _countsOf(message);
@@ -468,6 +481,7 @@ class ChatSession {
     final imagesAtStart = _imagesSent;
     final docsAtStart = _docsSent;
     final docBytesAtStart = _docBytesSent;
+    final toolTextAtStart = _toolTextChars;
     var completed = false;
     // 이 질문이 쓴 키. 키 상태 기록 직전 저장된 키와 비교만 한다(어디에도 싣지 않음).
     String? requestKey;
@@ -715,7 +729,10 @@ class ChatSession {
                 // 개수만 — 결과 본문 · 입력값은 찍지 않는다.
                 _trace.mark(ChatTraceMark.toolEnd, {
                   'tool': call.name,
-                  'n': result.entryIds.length + result.images.length,
+                  'n':
+                      result.entryIds.length +
+                      result.images.length +
+                      result.documents.length,
                 });
               }
               yield ChatEvent.toolFinished(
@@ -731,8 +748,11 @@ class ChatSession {
             for (var i = 0; i < calls.length; i++) {
               final result = results[i]!;
               _turnCited.addAll(result.entryIds);
-              final capped = _cappedDocs(
-                _capped(result, images: images, name: calls[i].name),
+              final capped = _cappedText(
+                _cappedDocs(
+                  _capped(result, images: images, name: calls[i].name),
+                ),
+                name: calls[i].name,
               );
               parts.add(
                 ToolResultPart(
@@ -788,6 +808,7 @@ class ChatSession {
           _imagesSent = imagesAtStart;
           _docsSent = docsAtStart;
           _docBytesSent = docBytesAtStart;
+          _toolTextChars = toolTextAtStart;
         }
       }
     }
@@ -963,6 +984,34 @@ class ChatSession {
     return result;
   }
 
+  /// read_file 글 결과의 `text` 글자(코드 포인트) 수를 대화 한도
+  /// ([AttachmentRules.maxToolTextCharsPerConversation])에 더한다. 넘기면 글 없이
+  /// read_limit_reached 오류 결과. 되돌리기는 문서와 같다(질문 시작 스냅숏).
+  ToolResult _cappedText(ToolResult result, {required String name}) {
+    if (name != WorkspaceTools.readFileName || result.isError) return result;
+    final chars = _readTextChars(result.json);
+    if (chars == 0) return result;
+    if (_toolTextChars + chars >
+        AttachmentRules.maxToolTextCharsPerConversation) {
+      return _errorResult(_readLimitJson, ChatToolKind.readFile);
+    }
+    _toolTextChars += chars;
+    return result;
+  }
+
+  /// read_file 결과 json 의 `text` 글자(코드 포인트) 수. 글 결과가 아니면 0.
+  static int _readTextChars(String json) {
+    try {
+      final decoded = jsonDecode(json);
+      if (decoded is Map<String, Object?>) {
+        if (decoded['text'] case final String text) return text.runes.length;
+      }
+    } on FormatException {
+      return 0;
+    }
+    return 0;
+  }
+
   static ToolResult _errorResult(String json, ChatToolKind kind) => ToolResult(
     json: json,
     isError: true,
@@ -1002,7 +1051,8 @@ class ChatSession {
   /// 작업 폴더 도구 안내. 기록을 참고하는 질문(작업 폴더 도구가 실린 질문)에만 넣는다.
   static const _workspaceRule =
       '작업 폴더(inbox: 사용자가 첨부한 파일, out: 저장한 답)에 있는 파일은 list_files 로 '
-      '찾고 read_file 로 읽는다. 사용자가 파일을 말하면 먼저 list_files 로 경로를 확인한다.';
+      '찾고 read_file 로 읽는다. 사용자가 파일을 말하면 먼저 list_files 로 경로를 확인한다. '
+      '이번 질문에 첨부된 파일은 이미 보고 있으니 다시 읽지 않는다.';
 
   /// 도구 전 한 줄 안내. [ChatModel.progressNotes] 인 모델에만 넣는다(V5 결과로 빼기 쉽게 상수).
   static const _noteHint = '도구를 쓰기 전에 무엇을 볼지 한 줄로 말해.';

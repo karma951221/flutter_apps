@@ -45,12 +45,15 @@ extension ChatAttachmentX on ChatAttachment {
 }
 
 /// 텍스트 파일을 모델에 보낼 때의 본문 블록. 두 벤더가 같은 모양을 쓴다.
-/// 이름의 `"` 는 `'` 로, 본문의 `</file>` 은 `<\/file>` 로 바꿔 블록이 깨지지 않게 한다.
+/// 이름의 `"` 는 `'` 로, 본문의 닫는 태그(`</file` — 대소문자 · `/` 뒤 공백 무관)는
+/// `<\/file` 로 바꿔 블록이 깨지지 않게 한다.
 String textAttachmentBlock(TextAttachment attachment) {
   final name = attachment.name.replaceAll('"', "'");
-  final text = attachment.text.replaceAll('</file>', r'<\/file>');
+  final text = attachment.text.replaceAll(_closingFileTag, r'<\/file');
   return '<file name="$name">\n$text\n</file>';
 }
+
+final _closingFileTag = RegExp(r'</\s*file', caseSensitive: false);
 
 /// 저장 · 말풍선용 첨부(본문 없음).
 @freezed

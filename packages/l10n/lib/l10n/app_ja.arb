@@ -1025,6 +1025,7 @@
   "walkChatToolFoundIndex": "ストーリー{count}件",
   "walkChatToolFoundWiki": "Wiki{count}件",
   "walkChatToolFoundNone": "記録なし",
+  "walkChatToolNoFiles": "作業フォルダにファイルなし",
   "walkChatProgressElapsed": "{seconds}秒",
   "walkChatProgressLookups": "記録を{count}回確認",
   "walkChatProgressJoin": "{a}・{b}",

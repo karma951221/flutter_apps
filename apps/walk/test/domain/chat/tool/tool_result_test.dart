@@ -24,4 +24,18 @@ void main() {
     expect(text, contains('wiki'));
     expect(text, contains('images: 1'));
   });
+
+  test('ToolDocument · ToolImage toString 은 길이만 — 이름 · 바이트 없음', () {
+    final doc = ToolDocument(
+      name: '비밀문서.pdf',
+      bytes: Uint8List.fromList([7, 8, 9]),
+    );
+    expect(doc.toString(), 'ToolDocument(length: 3)');
+
+    final image = ToolImage(
+      mediaType: 'image/png',
+      bytes: Uint8List.fromList([11, 12]),
+    );
+    expect(image.toString(), 'ToolImage(mediaType: image/png, length: 2)');
+  });
 }

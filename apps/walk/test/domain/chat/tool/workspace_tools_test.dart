@@ -56,7 +56,7 @@ void main() {
   setUp(() {
     ws = MemoryWorkspace();
     loader = _Loader();
-    tools = WorkspaceTools(ws, loader, const Clock());
+    tools = WorkspaceTools(ws, loader);
   });
 
   Uint8List b(String s) => Uint8List.fromList(utf8.encode(s));
@@ -136,6 +136,20 @@ void main() {
       expect((j['files'] as List).map((f) => (f as Map)['path']), [
         'out/b.txt',
       ]);
+    });
+
+    test('모르는 area 값은 all 로 본다', () async {
+      ws.add(workspaceFile('inbox/a.txt'), b('x'));
+      ws.add(workspaceFile('out/b.txt'), b('x'));
+      for (final area in ['wiki', 3, null]) {
+        final r = await tools.run('list_files', {'area': area});
+        expect(r.isError, isFalse, reason: '$area');
+        final files = _json(r.json)['files'] as List;
+        expect(files.map((f) => (f as Map)['path']).toSet(), {
+          'inbox/a.txt',
+          'out/b.txt',
+        }, reason: '$area');
+      }
     });
 
     test('Workspace 가 던져도 던지지 않는다', () async {
@@ -276,6 +290,24 @@ void main() {
       await expectError({'path': '  '}, 'invalid_path');
     });
 
+    test('inbox/ · out/ 아래의 숨김 아닌 경로만 — 나머지는 invalid_path', () async {
+      ws.add(workspaceFile('inbox/.x.md'), b('x'));
+      ws.add(workspaceFile('x.md'), b('x'));
+      ws.add(workspaceFile('out/.hidden/a.md'), b('x'));
+      ws.add(workspaceFile('out/a.md'), b('ok'));
+      await expectError({'path': 'inbox/.x.md'}, 'invalid_path');
+      await expectError({'path': 'x.md'}, 'invalid_path');
+      await expectError({'path': 'out/.hidden/a.md'}, 'invalid_path');
+      await expectError({'path': 'wiki/a.md'}, 'invalid_path');
+      // 구역 이름만은 파일이 아니다.
+      await expectError({'path': 'inbox'}, 'invalid_path');
+      await expectError({'path': 'inbox/'}, 'invalid_path');
+      expect(loader.loaded, isEmpty);
+
+      final ok = await tools.run('read_file', {'path': 'out/a.md'});
+      expect(ok.isError, isFalse, reason: ok.json);
+    });
+
     test('받지 않는 확장자는 unsupported_type', () async {
       ws.add(workspaceFile('inbox/a.docx'), b('x'));
       await expectError({'path': 'inbox/a.docx'}, 'unsupported_type');
@@ -330,7 +362,7 @@ void main() {
         '${tmp.path}/workspace/inbox/link.txt',
       ).create('${outside.path}/secret.txt', recursive: true);
       realLoader = _Loader();
-      real = WorkspaceTools(workspace, realLoader, const Clock());
+      real = WorkspaceTools(workspace, realLoader);
     });
 
     tearDown(() async {
@@ -352,6 +384,27 @@ void main() {
       final r = await real.run('read_file', {'path': 'inbox/link.txt'});
       expect(_json(r.json), {'error': 'outside_workspace'});
       expect(r.json, isNot(contains('SECRET')));
+      expect(realLoader.loaded, isEmpty);
+    });
+
+    test('폴더 경로는 not_found — 로더까지 가지 않는다', () async {
+      await Directory(
+        '${tmp.path}/workspace/inbox/sub.txt',
+      ).create(recursive: true);
+      final r = await real.run('read_file', {'path': 'inbox/sub.txt'});
+      expect(_json(r.json), {'error': 'not_found'});
+      expect(realLoader.loaded, isEmpty);
+    });
+
+    test('밖을 가리키는 폴더 링크 아래는 있든 없든 outside_workspace', () async {
+      await Link(
+        '${tmp.path}/workspace/inbox/dir',
+      ).create(outside.path, recursive: true);
+      for (final path in ['inbox/dir/secret.txt', 'inbox/dir/missing.txt']) {
+        final r = await real.run('read_file', {'path': path});
+        expect(_json(r.json), {'error': 'outside_workspace'}, reason: path);
+        expect(r.json, isNot(contains('SECRET')));
+      }
       expect(realLoader.loaded, isEmpty);
     });
 

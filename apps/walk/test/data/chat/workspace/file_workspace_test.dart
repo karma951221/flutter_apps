@@ -189,5 +189,35 @@ void main() {
         throwsA(isA<WorkspacePathException>()),
       );
     });
+
+    test('밖을 가리키는 폴더 링크 아래는 파일이 있든 없든 예외(존재 여부를 흘리지 않는다)', () async {
+      final elsewhere = Directory(p.join(tmp.path, 'elsewhere'))..createSync();
+      File(p.join(elsewhere.path, 'secret.txt')).writeAsStringSync('비밀');
+      await Directory(p.join(rootDir.path, 'inbox')).create(recursive: true);
+      Link(p.join(rootDir.path, 'inbox', 'dir')).createSync(elsewhere.path);
+
+      for (final path in [
+        'inbox/dir/secret.txt',
+        'inbox/dir/missing.txt',
+        'inbox/dir/sub/missing.txt',
+      ]) {
+        await expectLater(
+          ws.absolutePath(path),
+          throwsA(isA<WorkspacePathException>()),
+          reason: path,
+        );
+        await expectLater(
+          ws.exists(path),
+          throwsA(isA<WorkspacePathException>()),
+          reason: path,
+        );
+      }
+    });
+
+    test('안쪽의 없는 파일 · 없는 폴더 아래는 예외 없이 없음', () async {
+      await ws.writeOut('seed.md', 'x');
+      expect(await ws.exists('out/missing.md'), isFalse);
+      expect(await ws.exists('inbox/sub/missing.md'), isFalse);
+    });
   });
 }

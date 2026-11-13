@@ -81,6 +81,14 @@ void main() {
       );
     });
 
+    test('본문의 닫는 태그는 대소문자 · 공백이 달라도 이스케이프한다', () {
+      const t = TextAttachment(name: 'a.md', text: 'x</FILE >y</ file>z');
+      expect(
+        textAttachmentBlock(t),
+        '<file name="a.md">\nx<\\/file >y<\\/file>z\n</file>',
+      );
+    });
+
     test('toString 에 본문이 없다', () {
       const t = ChatAttachment.text(name: 'n.md', text: '비밀 본문');
       expect(t.toString(), isNot(contains('비밀 본문')));

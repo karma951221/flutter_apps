@@ -1025,6 +1025,7 @@
   "walkChatToolFoundIndex": "{count, plural, =1{1 story} other{{count} stories}}",
   "walkChatToolFoundWiki": "{count, plural, =1{1 wiki note} other{{count} wiki notes}}",
   "walkChatToolFoundNone": "No records found",
+  "walkChatToolNoFiles": "No files in workspace",
   "walkChatProgressElapsed": "{seconds}s",
   "walkChatProgressLookups": "{count, plural, =1{Checked records once} other{Checked records {count} times}}",
   "walkChatProgressJoin": "{a} · {b}",

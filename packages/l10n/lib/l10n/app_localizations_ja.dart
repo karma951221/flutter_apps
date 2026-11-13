@@ -3311,6 +3311,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatToolFoundNone => '記録なし';
 
   @override
+  String get walkChatToolNoFiles => '作業フォルダにファイルなし';
+
+  @override
   String walkChatProgressElapsed(int seconds) {
     return '$seconds秒';
   }

@@ -106,6 +106,10 @@ String? _detail(
 String? _resultText(AppLocalizations l10n, ToolSummary? result) {
   if (result == null || result.isError) return null;
   final count = result.count;
+  // 빈 작업 폴더는 "찾은 기록 없음" 이 아니라 폴더가 비었다고 말한다.
+  if (count == 0 && result.kind == ChatToolKind.listFiles) {
+    return l10n.walkChatToolNoFiles;
+  }
   if (count == 0) return l10n.walkChatToolFoundNone;
   return switch (result.kind) {
     ChatToolKind.searchDiary => l10n.walkChatToolFoundEntries(count),

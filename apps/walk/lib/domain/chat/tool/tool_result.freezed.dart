@@ -32,10 +32,6 @@ bool operator ==(Object other) {
 @override
 int get hashCode => Object.hash(runtimeType,mediaType,const DeepCollectionEquality().hash(bytes));
 
-@override
-String toString() {
-  return 'ToolImage(mediaType: $mediaType, bytes: $bytes)';
-}
 
 
 }

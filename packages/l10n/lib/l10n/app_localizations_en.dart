@@ -3613,6 +3613,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatToolFoundNone => 'No records found';
 
   @override
+  String get walkChatToolNoFiles => 'No files in workspace';
+
+  @override
   String walkChatProgressElapsed(int seconds) {
     return '${seconds}s';
   }

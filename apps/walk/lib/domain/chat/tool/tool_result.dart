@@ -6,8 +6,8 @@ import 'tool_summary.dart';
 
 part 'tool_result.freezed.dart';
 
-/// tool_result 에 붙는 이미지 한 장.
-@freezed
+/// tool_result 에 붙는 이미지 한 장. 본문(bytes)은 toString 에 찍지 않는다.
+@Freezed(toStringOverride: false)
 class ToolImage with _$ToolImage {
   @override
   final String mediaType;
@@ -15,9 +15,13 @@ class ToolImage with _$ToolImage {
   final Uint8List bytes;
 
   const ToolImage({required this.mediaType, required this.bytes});
+
+  @override
+  String toString() =>
+      'ToolImage(mediaType: $mediaType, length: ${bytes.length})';
 }
 
-/// tool_result 에 붙는 PDF 한 건. 본문(bytes)은 toString 에 찍지 않는다.
+/// tool_result 에 붙는 PDF 한 건. 이름 · 본문(bytes)은 toString 에 찍지 않는다.
 @Freezed(toStringOverride: false)
 class ToolDocument with _$ToolDocument {
   @override
@@ -28,7 +32,7 @@ class ToolDocument with _$ToolDocument {
   const ToolDocument({required this.name, required this.bytes});
 
   @override
-  String toString() => 'ToolDocument(name: $name, length: ${bytes.length})';
+  String toString() => 'ToolDocument(length: ${bytes.length})';
 }
 
 /// 도구 한 번의 결과.

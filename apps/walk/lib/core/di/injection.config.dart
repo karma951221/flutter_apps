@@ -436,6 +436,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.Clock>(),
       ),
     );
+    gh.lazySingleton<_i215.WorkspaceTools>(
+      () => _i215.WorkspaceTools(
+        gh<_i1060.Workspace>(),
+        gh<_i695.AttachmentLoader>(),
+      ),
+    );
     gh.lazySingleton<_i873.AlarmUseCase>(
       () => _i873.DefaultAlarmUseCase(
         gh<_i296.AlarmRepository>(),
@@ -446,13 +452,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i91.SettingsRepository>(),
         gh<_i353.RingLogSource>(),
         gh<_i920.NextAlarmWidget>(),
-      ),
-    );
-    gh.lazySingleton<_i215.WorkspaceTools>(
-      () => _i215.WorkspaceTools(
-        gh<_i1060.Workspace>(),
-        gh<_i695.AttachmentLoader>(),
-        gh<_i494.Clock>(),
       ),
     );
     gh.lazySingleton<_i567.DiaryUseCase>(

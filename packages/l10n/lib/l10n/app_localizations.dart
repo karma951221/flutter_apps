@@ -6134,6 +6134,12 @@ abstract class AppLocalizations {
   /// **'찾은 기록 없음'**
   String get walkChatToolFoundNone;
 
+  /// 채팅 탭 진행 줄: 작업 폴더 목록 결과 0개
+  ///
+  /// In ko, this message translates to:
+  /// **'작업 폴더에 파일 없음'**
+  String get walkChatToolNoFiles;
+
   /// 채팅 탭 진행 줄: 경과 초
   ///
   /// In ko, this message translates to:

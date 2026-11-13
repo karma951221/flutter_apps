@@ -633,6 +633,62 @@ void main() {
         {'type': 'function_call_output', 'call_id': 'c2', 'output': '{"b":2}'},
       ]);
     });
+
+    test(
+      'imagesInToolOutput 이면 PDF 도 output 배열에 input_file — 문서만 · 사진과 함께',
+      () async {
+        final pdf = ToolDocument(
+          name: 'a.pdf',
+          bytes: Uint8List.fromList([7, 8]),
+        );
+        final body = await bodyOf(
+          request(
+            messages: [
+              ChatMessage.toolResults([
+                ToolResultPart(callId: 'c1', json: '{"a":1}', documents: [pdf]),
+                ToolResultPart(
+                  callId: 'c2',
+                  json: '{"b":2}',
+                  images: [_image],
+                  documents: [pdf],
+                ),
+              ]),
+            ],
+          ),
+          make: (c) => OpenAiChatModel.withTimeouts(
+            c,
+            const NoopChatTrace(),
+            imagesInToolOutput: true,
+          ),
+        );
+        final url = 'data:image/jpeg;base64,${base64Encode([1, 2, 3])}';
+        final file = {
+          'type': 'input_file',
+          'filename': 'a.pdf',
+          'file_data': 'data:application/pdf;base64,${base64Encode([7, 8])}',
+        };
+        // 뒤따르는 user 입력은 없다 — 결과마다 output 배열에 싣는다.
+        expect(body['input'], [
+          {
+            'type': 'function_call_output',
+            'call_id': 'c1',
+            'output': [
+              {'type': 'input_text', 'text': '{"a":1}'},
+              file,
+            ],
+          },
+          {
+            'type': 'function_call_output',
+            'call_id': 'c2',
+            'output': [
+              {'type': 'input_text', 'text': '{"b":2}'},
+              {'type': 'input_image', 'image_url': url},
+              file,
+            ],
+          },
+        ]);
+      },
+    );
   });
 
   group('usage', () {

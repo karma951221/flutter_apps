@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:core/core.dart';
 import 'package:injectable/injectable.dart';
 
 import '../attachment/attachment_loader.dart';
@@ -15,8 +14,7 @@ import 'tool_summary.dart';
 /// [run] 은 던지지 않는다 — 실패는 `{"error": 코드}` 결과로 돌려준다.
 @lazySingleton
 class WorkspaceTools {
-  /// [clock] 은 DI 시그니처를 맞추려고 받는다 — 수정 시각은 파일이 가진 값을 쓴다.
-  WorkspaceTools(this._workspace, this._loader, Clock clock);
+  WorkspaceTools(this._workspace, this._loader);
 
   final Workspace _workspace;
   final AttachmentLoader _loader;
@@ -124,6 +122,8 @@ class WorkspaceTools {
     } on WorkspacePathException {
       return _readError('outside_workspace');
     }
+    // 존재 여부보다 먼저 — 구역 밖 · 숨김 경로는 있는지도 알려 주지 않는다.
+    if (!isReadablePath(path)) return _readError('invalid_path');
     if (!await _workspace.exists(path)) return _readError('not_found');
 
     final name = path.substring(path.lastIndexOf('/') + 1);
@@ -182,6 +182,15 @@ class WorkspaceTools {
             );
         }
     }
+  }
+
+  /// 도구가 다룰 수 있는 경로 — `inbox/` 또는 `out/` 아래이고 어느 부분도 `.` 으로
+  /// 시작하지 않는다(숨김 · `.` · `..` 없음). 구역 이름만(`inbox`)은 아니다.
+  static bool isReadablePath(String path) {
+    final segments = path.split('/');
+    if (segments.length < 2) return false;
+    if (segments.first != 'inbox' && segments.first != 'out') return false;
+    return segments.every((s) => s.isNotEmpty && !s.startsWith('.'));
   }
 
   static String _kindName(String fileName) =>
