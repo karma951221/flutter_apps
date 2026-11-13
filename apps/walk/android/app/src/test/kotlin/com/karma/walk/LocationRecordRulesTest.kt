@@ -165,11 +165,115 @@ class LocationRecordRulesTest {
     }
 
     @Test
-    fun `watchdog resumes only beyond 100m from the still point`() {
-        assertFalse(LocationRecordRules.watchdogShouldResume(0.0))
-        assertFalse(LocationRecordRules.watchdogShouldResume(100.0))
-        assertTrue(LocationRecordRules.watchdogShouldResume(100.1))
-        assertTrue(LocationRecordRules.watchdogShouldResume(2_000.0))
+    fun `watchdog with unknown accuracy resumes only beyond 100m`() {
+        assertFalse(LocationRecordRules.watchdogShouldResume(0f, null, null))
+        assertFalse(LocationRecordRules.watchdogShouldResume(100f, null, null))
+        assertTrue(LocationRecordRules.watchdogShouldResume(100.1f, null, null))
+        assertTrue(LocationRecordRules.watchdogShouldResume(2_000f, null, null))
+    }
+
+    @Test
+    fun `watchdog resumes on an accurate far fix`() {
+        assertTrue(LocationRecordRules.watchdogShouldResume(300f, 20f, 15f))
+    }
+
+    @Test
+    fun `watchdog ignores a far fix whose accuracy covers the distance`() {
+        assertFalse(LocationRecordRules.watchdogShouldResume(300f, 500f, null))
+        assertFalse(LocationRecordRules.watchdogShouldResume(300f, 150f, 50f))
+        assertTrue(LocationRecordRules.watchdogShouldResume(300.1f, 150f, 50f))
+    }
+
+    @Test
+    fun `still resume fix within 100m plus accuracy means still there`() {
+        assertTrue(LocationRecordRules.stillResumeIsStillThere(0f, null, null))
+        assertTrue(LocationRecordRules.stillResumeIsStillThere(100f, null, null))
+        assertFalse(LocationRecordRules.stillResumeIsStillThere(100.1f, null, null))
+        assertFalse(LocationRecordRules.stillResumeIsStillThere(2_000f, 20f, 15f))
+        // 실내 확인 점이 150m 튀어도 정확도 80m 면 아직 그 자리
+        assertTrue(LocationRecordRules.stillResumeIsStillThere(150f, 80f, null))
+        assertTrue(LocationRecordRules.stillResumeIsStillThere(300f, 150f, 50f))
+        assertFalse(LocationRecordRules.stillResumeIsStillThere(300.1f, 150f, 50f))
+    }
+
+    @Test
+    fun `watchdog and still resume share one margin`() {
+        for (d in listOf(0f, 99f, 100f, 170f, 171f, 500f)) {
+            assertEquals(
+                !LocationRecordRules.stillResumeIsStillThere(d, 50f, 20f),
+                LocationRecordRules.watchdogShouldResume(d, 50f, 20f),
+            )
+        }
+    }
+
+    // ── 기록 끝 표시 ──
+
+    @Test
+    fun `with still detection no stop marker when moving and the last point is older than 30 minutes`() {
+        val last = LocationRecordRules.SavedPoint(1_000L, 37.5, 127.0, null)
+        val thirtyMin = 30 * 60_000L
+
+        assertEquals(null, LocationRecordRules.stopMarker(last, 1_000L + thirtyMin + 1, Phase.MOVING, stillDetection = true))
+        assertEquals(
+            last.copy(timeMs = 1_000L + thirtyMin),
+            LocationRecordRules.stopMarker(last, 1_000L + thirtyMin, Phase.MOVING, stillDetection = true),
+        )
+    }
+
+    @Test
+    fun `stop marker while still is written however old the last point`() {
+        val last = LocationRecordRules.SavedPoint(1_000L, 37.5, 127.0, null)
+        val day = 24 * 60 * 60_000L
+
+        assertEquals(last.copy(timeMs = 1_000L + day), LocationRecordRules.stopMarker(last, 1_000L + day, Phase.STILL, stillDetection = true))
+    }
+
+    @Test
+    fun `without still detection stop marker is written up to 12 hours old`() {
+        // 정지 감지가 꺼져 있으면 가만히 있는 동안 점이 안 남는다 — 30분은 기록이 멈춘 신호가 아니다.
+        val last = LocationRecordRules.SavedPoint(1_000L, 37.5, 127.0, null)
+        val twelveHours = 12 * 60 * 60_000L
+
+        assertEquals(
+            last.copy(timeMs = 1_000L + twelveHours),
+            LocationRecordRules.stopMarker(last, 1_000L + twelveHours, Phase.MOVING, stillDetection = false),
+        )
+        assertEquals(
+            null,
+            LocationRecordRules.stopMarker(last, 1_000L + twelveHours + 1, Phase.MOVING, stillDetection = false),
+        )
+    }
+
+    // ── 기록 시작 시각 ──
+
+    @Test
+    fun `status reports recordingSince only for a live service`() {
+        assertEquals(5_000L, LocationRecordRules.recordingSinceForStatus(serviceRunning = true, sinceMs = 5_000L))
+        assertEquals(null, LocationRecordRules.recordingSinceForStatus(serviceRunning = false, sinceMs = 5_000L))
+        assertEquals(null, LocationRecordRules.recordingSinceForStatus(serviceRunning = true, sinceMs = 0L))
+    }
+
+
+    @Test
+    fun `stop marker repeats the last saved point at now`() {
+        val last = LocationRecordRules.SavedPoint(timeMs = 1_000L, lat = 37.5, lng = 127.0, accuracyM = 12.0)
+
+        val marker = LocationRecordRules.stopMarker(last, nowMs = 5_000L, phase = Phase.MOVING, stillDetection = true)
+
+        assertEquals(LocationRecordRules.SavedPoint(5_000L, 37.5, 127.0, 12.0), marker)
+    }
+
+    @Test
+    fun `no stop marker without a previous point`() {
+        assertEquals(null, LocationRecordRules.stopMarker(null, nowMs = 5_000L, phase = Phase.MOVING, stillDetection = true))
+    }
+
+    @Test
+    fun `no stop marker when the clock is not after the last point`() {
+        val last = LocationRecordRules.SavedPoint(5_000L, 37.5, 127.0, null)
+
+        assertEquals(null, LocationRecordRules.stopMarker(last, nowMs = 5_000L, phase = Phase.MOVING, stillDetection = true))
+        assertEquals(null, LocationRecordRules.stopMarker(last, nowMs = 4_000L, phase = Phase.MOVING, stillDetection = true))
     }
 
     @Test

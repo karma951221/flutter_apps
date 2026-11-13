@@ -5,10 +5,13 @@ import 'package:injectable/injectable.dart';
 
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/location/entity/day_track.dart';
+import '../../../domain/location/entity/location_point.dart';
 import '../../../domain/location/entity/map_period.dart';
 import '../../../domain/location/entity/stay.dart';
 import '../../../domain/location/entity/track_segment.dart';
 import '../../../domain/location/geo/geo_math.dart';
+import '../../../domain/location/recorder/location_recorder.dart';
+import '../../../domain/location/recorder/recorder_status.dart';
 import '../../../domain/location/repository/location_repository.dart';
 import '../../../domain/location/usecase/frequent_places.dart';
 import '../../../domain/location/usecase/location_sync.dart';
@@ -25,6 +28,7 @@ class MapViewCubit extends Cubit<MapViewState> {
     this._diary,
     this._sync,
     this._namer,
+    this._recorder,
     this._clock,
   ) : super(MapViewState.loading(MapPeriod.day(_clock.now())));
 
@@ -34,10 +38,15 @@ class MapViewCubit extends Cubit<MapViewState> {
   /// 스토리 기간이 이보다 길면 그리는 선을 단순화한다(끝나지 않은 스토리는 지금까지).
   static const _longStory = Duration(days: 2);
 
+  /// 켤 때 받은 첫 위치가 캐시라 [RecorderRunning.recordingSince] 보다 조금 앞설 수 있는 여유
+  /// (네이티브 `isFreshFallback` 과 같은 5분).
+  static const _cachedFixTolerance = Duration(minutes: 5);
+
   final LocationRepository _locations;
   final DiaryRepository _diary;
   final LocationSync _sync;
   final StayNamer _namer;
+  final LocationRecorder _recorder;
   final Clock _clock;
 
   MapPeriod? _period;
@@ -78,17 +87,21 @@ class MapViewCubit extends Cubit<MapViewState> {
   }
 
   Future<MapViewState?> _read(MapPeriod period, int generation) async {
-    final bounds = period.bounds(_clock.now());
-    final points = await _locations.pointsBetween(
+    final now = _clock.now();
+    final bounds = period.bounds(now);
+    // 경계 바깥 이웃 점까지 읽어야 기간을 넘는 · 아직 이어지는 머문 곳이 보인다.
+    final points = await _locations.pointsAround(
       bounds.from.toUtc(),
       bounds.to.toUtc(),
     );
     final entries = await _diary.locatedEntriesBetween(bounds.from, bounds.to);
+    final openEnd = await _openEnd(points, now);
 
     var track = TrackAnalyzer().analyze(
       points,
       clipFrom: bounds.from.toUtc(),
       clipTo: bounds.to.toUtc(),
+      openEnd: openEnd,
     );
     // 자주 간 곳 · 머문 곳은 단순화 전 점으로 구한다 — 단순화는 그리는 선만.
     final frequent = frequentPlaces(track.stays);
@@ -129,6 +142,32 @@ class MapViewCubit extends Cubit<MapViewState> {
         stayNames: names,
       ),
     );
+  }
+
+  /// 마지막 머문 곳을 지금까지 이을 때만 지금(UTC) — 꺼져 있던 시간을 머문 곳으로 지어내지 않게.
+  /// 기록 중이고, 지금 서비스가 마지막 점 이전부터(캐시 첫 위치 5분 여유) 끊김 없이 살아 있고,
+  /// 마지막 점이 정지 감지 점이거나 정지 감지가 꺼져 있을 때(꺼져 있으면 가만히 있는 동안 점이 안 남는다). 상태를 못 읽으면 잇지 않는다.
+  Future<DateTime?> _openEnd(List<LocationPoint> points, DateTime now) async {
+    if (points.isEmpty) return null;
+    final RecorderStatus status;
+    try {
+      status = await _recorder.status();
+    } catch (e, s) {
+      debugPrint('map recorder status failed: $e\n$s');
+      return null;
+    }
+    if (status case RecorderRunning(
+      :final stillDetection,
+      recordingSince: final since?,
+    )) {
+      final last = points.last;
+      if (last.recordedAt.isBefore(since.subtract(_cachedFixTolerance))) {
+        return null;
+      }
+      if (!last.stillStart && stillDetection) return null;
+      return now.toUtc();
+    }
+    return null;
   }
 
   /// 오늘 보기: 캐시에 없으면 이름을 묻는다(네트워크). 더 새 읽기가 시작되면 null.

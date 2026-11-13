@@ -56,6 +56,7 @@ internal class LocationRecordChannel private constructor(private val context: Co
                 }
                 "stop" -> {
                     LocationRecordPrefs.setEnabled(context, false)
+                    LocationRecordService.writeStopMarker(context)
                     LocationRecordService.stop(context)
                     result.success(null)
                 }
@@ -90,6 +91,8 @@ internal class LocationRecordChannel private constructor(private val context: Co
                 }
                 "clearInbox" -> background(result) {
                     LocationInbox.get(context).clear()
+                    // 지운 기록의 자리가 기록 끝 표시로 되살아나지 않게.
+                    LocationRecordPrefs.clearLastSaved(context)
                     null
                 }
                 "openBatterySettings" -> {
@@ -160,7 +163,12 @@ internal class LocationRecordChannel private constructor(private val context: Co
         }
     }
 
-    private fun status(): Map<String, Any> {
+    private fun status(): Map<String, Any?> {
+        // 되살리기 전에 읽는다 — 죽어 있던 서비스를 이번에 되살리면 그 사이는 끊긴 것(null).
+        val recordingSince = LocationRecordRules.recordingSinceForStatus(
+            LocationRecordService.running,
+            LocationRecordPrefs.recordingSince(context),
+        )
         reviveIfDead()
         resumeIfStillTooLong()
         val mode = LocationRecordPrefs.mode(context)
@@ -175,6 +183,7 @@ internal class LocationRecordChannel private constructor(private val context: Co
                 mode == LocationRecordRules.MODE_NORMAL &&
                     LocationRecordService.hasActivityRecognition(context)
                 ),
+            "recordingSince" to recordingSince,
         )
     }
 

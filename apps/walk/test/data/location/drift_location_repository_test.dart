@@ -71,6 +71,40 @@ void main() {
     expect(got.map((p) => p.recordedAt.toUtc().minute), [10, 20, 30]);
   });
 
+  test('pointsAround adds one neighbour before and after the window', () async {
+    await repo.insertAll([_p(0), _p(5), _p(10), _p(20), _p(30), _p(40)]);
+
+    final got = await repo.pointsAround(
+      DateTime.utc(2026, 11, 8, 9, 10),
+      DateTime.utc(2026, 11, 8, 9, 30),
+    );
+
+    expect(got.map((p) => p.recordedAt.toUtc().minute), [5, 10, 20, 30, 40]);
+  });
+
+  test('pointsAround returns neighbours even with nothing inside', () async {
+    await repo.insertAll([_p(0, stillStart: true), _p(50)]);
+
+    final got = await repo.pointsAround(
+      DateTime.utc(2026, 11, 8, 9, 10),
+      DateTime.utc(2026, 11, 8, 9, 30),
+    );
+
+    expect(got.map((p) => p.recordedAt.toUtc().minute), [0, 50]);
+    expect(got.first.stillStart, isTrue);
+  });
+
+  test('pointsAround without neighbours is just the window', () async {
+    await repo.insertAll([_p(10), _p(20)]);
+
+    final got = await repo.pointsAround(
+      DateTime.utc(2026, 11, 8, 9, 10),
+      DateTime.utc(2026, 11, 8, 9, 20),
+    );
+
+    expect(got.map((p) => p.recordedAt.toUtc().minute), [10, 20]);
+  });
+
   test('purgeBefore deletes older points only', () async {
     await repo.insertAll([_p(0), _p(10), _p(20)]);
 

@@ -101,6 +101,9 @@ class _Repo implements LocationRepository {
   Future<List<LocationPoint>> pointsBetween(DateTime from, DateTime to) async =>
       const [];
   @override
+  Future<List<LocationPoint>> pointsAround(DateTime from, DateTime to) async =>
+      const [];
+  @override
   Future<bool> hasAnyPoint() async => stored.isNotEmpty;
   @override
   Future<void> deleteAll() async {}

@@ -10,6 +10,8 @@ import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/location/entity/location_point.dart';
 import 'package:walk/domain/location/entity/map_period.dart';
 import 'package:walk/domain/location/entity/record_mode.dart';
+import 'package:walk/domain/location/recorder/location_recorder.dart';
+import 'package:walk/domain/location/recorder/recorder_status.dart';
 import 'package:walk/domain/location/repository/location_repository.dart';
 import 'package:walk/domain/location/usecase/location_sync.dart';
 import 'package:walk/domain/location/usecase/stay_namer.dart';
@@ -23,6 +25,23 @@ class _MockDiary extends Mock implements DiaryRepository {}
 class _MockSync extends Mock implements LocationSync {}
 
 class _MockNamer extends Mock implements StayNamer {}
+
+class _MockRecorder extends Mock implements LocationRecorder {}
+
+class _ClockAt extends Clock {
+  const _ClockAt(this.at);
+  final DateTime at;
+  @override
+  DateTime now() => at;
+}
+
+LocationPoint _still(DateTime at, double lat, double lng) => LocationPoint(
+  recordedAt: at,
+  lat: lat,
+  lng: lng,
+  mode: RecordMode.normal,
+  stillStart: true,
+);
 
 class _FixedClock extends Clock {
   const _FixedClock();
@@ -51,6 +70,7 @@ void main() {
   late _MockDiary diary;
   late _MockSync sync;
   late _MockNamer namer;
+  late _MockRecorder recorder;
   late MapViewCubit cubit;
   final day = MapPeriod.day(DateTime(2026, 11, 8));
   final at = DateTime(2026, 11, 8, 9);
@@ -85,19 +105,44 @@ void main() {
     diary = _MockDiary();
     sync = _MockSync();
     namer = _MockNamer();
+    recorder = _MockRecorder();
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => recorder.status(),
+    ).thenAnswer((_) async => const RecorderStatus.off());
+    when(
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => []);
     when(search).thenAnswer((_) async => []);
     when(() => sync.run()).thenAnswer((_) async => 0);
     when(() => namer.nameFor(any(), any())).thenAnswer((_) async => '집');
     when(() => locations.placeName(any())).thenAnswer((_) async => null);
-    cubit = MapViewCubit(locations, diary, sync, namer, const _FixedClock());
+    cubit = MapViewCubit(
+      locations,
+      diary,
+      sync,
+      namer,
+      recorder,
+      const _FixedClock(),
+    );
   });
   tearDown(() => cubit.close());
 
+  /// 시계가 [now] 인 cubit.
+  MapViewCubit cubitAt(DateTime now) {
+    final c = MapViewCubit(
+      locations,
+      diary,
+      sync,
+      namer,
+      recorder,
+      _ClockAt(now),
+    );
+    addTearDown(c.close);
+    return c;
+  }
+
   test('show day loads points, stays and located entries', () async {
-    when(() => locations.pointsBetween(any(), any())).thenAnswer(
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
       (_) async => [
         for (var i = 0; i < 6; i++)
           _p(at.add(Duration(minutes: 3 * i)), 37.5, 127.0),
@@ -119,7 +164,7 @@ void main() {
 
   test('month view simplifies points and never asks the network', () async {
     final start = DateTime(2026, 11, 3, 8);
-    when(() => locations.pointsBetween(any(), any())).thenAnswer(
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
       (_) async => [
         for (var i = 0; i < 1000; i++)
           _p(start.add(Duration(minutes: i)), 37.5 + i * 0.0005, 127.0),
@@ -139,7 +184,7 @@ void main() {
 
   test('day view does not simplify', () async {
     final start = DateTime(2026, 11, 8, 8);
-    when(() => locations.pointsBetween(any(), any())).thenAnswer(
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
       (_) async => [
         for (var i = 0; i < 100; i++)
           _p(start.add(Duration(minutes: i)), 37.5 + i * 0.0005, 127.0),
@@ -174,7 +219,7 @@ void main() {
   test('long story (over 2 days) simplifies drawn points', () async {
     final start = DateTime(2026, 11, 1, 8);
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => line(start, 1000));
 
     await cubit.show(MapPeriod.story(story(start, DateTime(2026, 11, 4, 8))));
@@ -186,7 +231,7 @@ void main() {
     // 시계는 11-08 12시 — 11-01 에 시작한 진행 중 스토리는 이틀이 넘는다.
     final start = DateTime(2026, 11, 1, 8);
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => line(start, 1000));
 
     await cubit.show(MapPeriod.story(story(start, null)));
@@ -197,7 +242,7 @@ void main() {
   test('short story (2 days or less) is not simplified', () async {
     final start = DateTime(2026, 11, 6, 8);
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => line(start, 100));
 
     await cubit.show(MapPeriod.story(story(start, DateTime(2026, 11, 8, 8))));
@@ -205,16 +250,18 @@ void main() {
     expect(drawn((cubit.state as MapViewReady).data), 100);
   });
 
-  /// 같은 곳에 이틀 머문 점(11-03 · 11-04, 각 6점).
+  /// 같은 곳에 이틀 머문 점(11-03 · 11-04, 각 6점). 사이에 다른 곳에 간 점이 있다.
   List<LocationPoint> twoStays() => [
-    for (var d = 0; d < 2; d++)
+    for (var d = 0; d < 2; d++) ...[
       for (var i = 0; i < 6; i++)
         _p(DateTime(2026, 11, 3 + d, 8, 3 * i), 37.5, 127.0),
+      _p(DateTime(2026, 11, 3 + d, 9), 37.6, 127.1),
+    ],
   ];
 
   test('month fills frequent and stay names from cache only', () async {
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => twoStays());
     when(
       () => locations.placeName('37.500,127.000'),
@@ -232,7 +279,7 @@ void main() {
 
   test('story fills stay names from cache only', () async {
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => twoStays());
     when(
       () => locations.placeName('37.500,127.000'),
@@ -249,7 +296,7 @@ void main() {
 
   test('cache miss leaves the name out', () async {
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => twoStays());
 
     await cubit.show(const MapPeriod.month(2026, 11));
@@ -261,7 +308,7 @@ void main() {
     await cubit.show(day);
     verifyInOrder([
       () => sync.run(),
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ]);
   });
 
@@ -271,7 +318,7 @@ void main() {
     final showing = cubit.show(day);
     await Future<void>.delayed(Duration.zero);
     expect(cubit.state, MapViewState.loading(day));
-    verifyNever(() => locations.pointsBetween(any(), any()));
+    verifyNever(() => locations.pointsAround(any(), any()));
     gate.complete(0);
     await showing;
     expect(cubit.state, MapViewState.empty(day));
@@ -292,9 +339,9 @@ void main() {
     await cubit.show(day);
     await cubit.refresh();
     verifyInOrder([
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
       () => sync.run(),
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ]);
   });
 
@@ -306,6 +353,7 @@ void main() {
       for (var i = 0; i < 6; i++) {
         pts.add(_p(base.add(Duration(days: d, minutes: 3 * i)), 37.5, 127.0));
       }
+      pts.add(_p(base.add(Duration(days: d, hours: 1)), 37.7, 127.2));
     }
     for (var i = 0; i < 50; i++) {
       pts.add(
@@ -313,7 +361,7 @@ void main() {
       );
     }
     when(
-      () => locations.pointsBetween(any(), any()),
+      () => locations.pointsAround(any(), any()),
     ).thenAnswer((_) async => pts);
 
     await cubit.show(const MapPeriod.month(2026, 11));
@@ -330,9 +378,7 @@ void main() {
   });
 
   test('repository error becomes failure', () async {
-    when(
-      () => locations.pointsBetween(any(), any()),
-    ).thenThrow(Exception('db'));
+    when(() => locations.pointsAround(any(), any())).thenThrow(Exception('db'));
     await cubit.show(day);
     expect(cubit.state, MapViewState.failure(day));
   });
@@ -361,4 +407,201 @@ void main() {
     await showing;
     expect(cubit.state, MapViewState.empty(other));
   });
+
+  test('day view reads points around the day bounds', () async {
+    await cubit.show(day);
+    verify(
+      () => locations.pointsAround(
+        DateTime(2026, 11, 8).toUtc(),
+        DateTime(2026, 11, 8, 23, 59, 59, 999).toUtc(),
+      ),
+    ).called(1);
+  });
+
+  test('overnight still stay shows on both days', () async {
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
+      (_) async => [
+        _still(DateTime(2026, 11, 7, 19, 5), 37.5, 127.0),
+        _p(DateTime(2026, 11, 8, 7, 30), 37.6, 127.1),
+      ],
+    );
+
+    await cubit.show(day);
+
+    final stay = (cubit.state as MapViewReady).data.track.stays.single;
+    expect(stay.start.toUtc(), DateTime(2026, 11, 8).toUtc());
+    expect(stay.end.toUtc(), DateTime(2026, 11, 8, 7, 29, 59, 999).toUtc());
+    // 창 앞 이웃(어제 19:05)은 그리지 않는다.
+    final drawn = [
+      for (final s in (cubit.state as MapViewReady).data.track.segments)
+        ...s.points,
+    ];
+    expect(drawn.map((p) => p.recordedAt), [DateTime(2026, 11, 8, 7, 30)]);
+  });
+
+  test('ongoing still stay shows up to now', () async {
+    final at15 = cubitAt(DateTime(2026, 11, 8, 15));
+    when(() => recorder.status()).thenAnswer(
+      (_) async => RecorderStatus.running(
+        RecordMode.normal,
+        stillDetection: true,
+        recordingSince: DateTime(2026, 11, 8, 8),
+      ),
+    );
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
+      (_) async => [_still(DateTime(2026, 11, 8, 9, 3), 37.5, 127.0)],
+    );
+
+    await at15.show(day);
+
+    final stay = (at15.state as MapViewReady).data.track.stays.single;
+    expect(stay.start.toUtc(), DateTime(2026, 11, 8, 9, 3).toUtc());
+    expect(stay.end.toUtc(), DateTime(2026, 11, 8, 15).toUtc());
+  });
+
+  test('recorder off does not extend a trailing still stay', () async {
+    final at15 = cubitAt(DateTime(2026, 11, 8, 15));
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
+      (_) async => [_still(DateTime(2026, 11, 8, 9, 3), 37.5, 127.0)],
+    );
+
+    await at15.show(day);
+
+    expect(at15.state, isA<MapViewReady>());
+    expect((at15.state as MapViewReady).data.track.stays, isEmpty);
+  });
+
+  test('recorder status error counts as not running', () async {
+    final at15 = cubitAt(DateTime(2026, 11, 8, 15));
+    when(() => recorder.status()).thenThrow(Exception('channel'));
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
+      (_) async => [_still(DateTime(2026, 11, 8, 9, 3), 37.5, 127.0)],
+    );
+
+    await at15.show(day);
+
+    expect((at15.state as MapViewReady).data.track.stays, isEmpty);
+  });
+
+  test('AR-denied office stay extends to now only while recording', () async {
+    when(
+      () => locations.pointsAround(any(), any()),
+    ).thenAnswer((_) async => [_p(DateTime(2026, 11, 8, 8, 58), 37.5, 127.0)]);
+
+    final off = cubitAt(DateTime(2026, 11, 8, 15));
+    await off.show(day);
+    expect((off.state as MapViewReady).data.track.stays, isEmpty);
+
+    when(() => recorder.status()).thenAnswer(
+      (_) async => RecorderStatus.running(
+        RecordMode.normal,
+        stillDetection: false,
+        recordingSince: DateTime(2026, 11, 8, 8),
+      ),
+    );
+    final running = cubitAt(DateTime(2026, 11, 8, 15));
+    await running.show(day);
+    final stay = (running.state as MapViewReady).data.track.stays.single;
+    expect(stay.start.toUtc(), DateTime(2026, 11, 8, 8, 58).toUtc());
+    expect(stay.end.toUtc(), DateTime(2026, 11, 8, 15).toUtc());
+  });
+
+  void running({required bool stillDetection, DateTime? since}) {
+    when(() => recorder.status()).thenAnswer(
+      (_) async => RecorderStatus.running(
+        RecordMode.normal,
+        stillDetection: stillDetection,
+        recordingSince: since,
+      ),
+    );
+  }
+
+  test('recording turned on after the last point does not extend', () async {
+    // 12:00 에 끄며 남긴 끝 표시 점 뒤 15:00 에 다시 켬. 16:00 지도.
+    final c = cubitAt(DateTime(2026, 11, 8, 16));
+    running(stillDetection: false, since: DateTime(2026, 11, 8, 15));
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
+      (_) async => [
+        _still(DateTime(2026, 11, 8, 9, 3), 37.5, 127.0),
+        _p(DateTime(2026, 11, 8, 12), 37.5, 127.0),
+      ],
+    );
+
+    await c.show(day);
+
+    final stay = (c.state as MapViewReady).data.track.stays.single;
+    expect(stay.end.toUtc(), DateTime(2026, 11, 8, 12).toUtc());
+  });
+
+  test('service that was dead (no recordingSince) does not extend', () async {
+    final c = cubitAt(DateTime(2026, 11, 8, 15));
+    running(stillDetection: true, since: null);
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
+      (_) async => [_still(DateTime(2026, 11, 8, 9, 3), 37.5, 127.0)],
+    );
+
+    await c.show(day);
+
+    expect((c.state as MapViewReady).data.track.stays, isEmpty);
+  });
+
+  test('alive since before the last still point extends to now', () async {
+    final c = cubitAt(DateTime(2026, 11, 8, 15));
+    running(stillDetection: true, since: DateTime(2026, 11, 8, 8));
+    when(() => locations.pointsAround(any(), any())).thenAnswer(
+      (_) async => [_still(DateTime(2026, 11, 8, 9, 3), 37.5, 127.0)],
+    );
+
+    await c.show(day);
+
+    final stay = (c.state as MapViewReady).data.track.stays.single;
+    expect(stay.end.toUtc(), DateTime(2026, 11, 8, 15).toUtc());
+  });
+
+  test(
+    'non-still last point is not extended while still detection is on',
+    () async {
+      final c = cubitAt(DateTime(2026, 11, 8, 15));
+      running(stillDetection: true, since: DateTime(2026, 11, 8, 8));
+      when(() => locations.pointsAround(any(), any())).thenAnswer(
+        (_) async => [_p(DateTime(2026, 11, 8, 8, 58), 37.5, 127.0)],
+      );
+
+      await c.show(day);
+
+      expect((c.state as MapViewReady).data.track.stays, isEmpty);
+    },
+  );
+
+  test(
+    'cached first fix up to 5 minutes before recordingSince extends',
+    () async {
+      // 10:00 에 켰고 첫 위치가 캐시라 09:58 로 찍혔다.
+      final c = cubitAt(DateTime(2026, 11, 8, 15));
+      running(stillDetection: true, since: DateTime(2026, 11, 8, 10));
+      when(() => locations.pointsAround(any(), any())).thenAnswer(
+        (_) async => [_still(DateTime(2026, 11, 8, 9, 58), 37.5, 127.0)],
+      );
+
+      await c.show(day);
+
+      final stay = (c.state as MapViewReady).data.track.stays.single;
+      expect(stay.end.toUtc(), DateTime(2026, 11, 8, 15).toUtc());
+    },
+  );
+
+  test(
+    'last point over 5 minutes before recordingSince does not extend',
+    () async {
+      final c = cubitAt(DateTime(2026, 11, 8, 15));
+      running(stillDetection: true, since: DateTime(2026, 11, 8, 10));
+      when(() => locations.pointsAround(any(), any())).thenAnswer(
+        (_) async => [_still(DateTime(2026, 11, 8, 9, 50), 37.5, 127.0)],
+      );
+
+      await c.show(day);
+
+      expect((c.state as MapViewReady).data.track.stays, isEmpty);
+    },
+  );
 }

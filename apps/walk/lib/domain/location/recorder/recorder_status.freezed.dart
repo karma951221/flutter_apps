@@ -122,11 +122,11 @@ return blocked(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  off,TResult Function( RecordMode mode,  bool stillDetection)?  running,TResult Function( RecordMode mode)?  blocked,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  off,TResult Function( RecordMode mode,  bool stillDetection,  DateTime? recordingSince)?  running,TResult Function( RecordMode mode)?  blocked,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case RecorderOff() when off != null:
 return off();case RecorderRunning() when running != null:
-return running(_that.mode,_that.stillDetection);case RecorderBlocked() when blocked != null:
+return running(_that.mode,_that.stillDetection,_that.recordingSince);case RecorderBlocked() when blocked != null:
 return blocked(_that.mode);case _:
   return orElse();
 
@@ -145,11 +145,11 @@ return blocked(_that.mode);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  off,required TResult Function( RecordMode mode,  bool stillDetection)  running,required TResult Function( RecordMode mode)  blocked,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  off,required TResult Function( RecordMode mode,  bool stillDetection,  DateTime? recordingSince)  running,required TResult Function( RecordMode mode)  blocked,}) {final _that = this;
 switch (_that) {
 case RecorderOff():
 return off();case RecorderRunning():
-return running(_that.mode,_that.stillDetection);case RecorderBlocked():
+return running(_that.mode,_that.stillDetection,_that.recordingSince);case RecorderBlocked():
 return blocked(_that.mode);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -164,11 +164,11 @@ return blocked(_that.mode);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  off,TResult? Function( RecordMode mode,  bool stillDetection)?  running,TResult? Function( RecordMode mode)?  blocked,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  off,TResult? Function( RecordMode mode,  bool stillDetection,  DateTime? recordingSince)?  running,TResult? Function( RecordMode mode)?  blocked,}) {final _that = this;
 switch (_that) {
 case RecorderOff() when off != null:
 return off();case RecorderRunning() when running != null:
-return running(_that.mode,_that.stillDetection);case RecorderBlocked() when blocked != null:
+return running(_that.mode,_that.stillDetection,_that.recordingSince);case RecorderBlocked() when blocked != null:
 return blocked(_that.mode);case _:
   return null;
 
@@ -213,11 +213,12 @@ String toString() {
 
 
 class RecorderRunning implements RecorderStatus {
-  const RecorderRunning(this.mode, {required this.stillDetection});
+  const RecorderRunning(this.mode, {required this.stillDetection, this.recordingSince});
   
 
  final  RecordMode mode;
  final  bool stillDetection;
+ final  DateTime? recordingSince;
 
 /// Create a copy of RecorderStatus
 /// with the given fields replaced by the non-null parameter values.
@@ -229,16 +230,16 @@ $RecorderRunningCopyWith<RecorderRunning> get copyWith => _$RecorderRunningCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecorderRunning&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.stillDetection, stillDetection) || other.stillDetection == stillDetection));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is RecorderRunning&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.stillDetection, stillDetection) || other.stillDetection == stillDetection)&&(identical(other.recordingSince, recordingSince) || other.recordingSince == recordingSince));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,mode,stillDetection);
+int get hashCode => Object.hash(runtimeType,mode,stillDetection,recordingSince);
 
 @override
 String toString() {
-  return 'RecorderStatus.running(mode: $mode, stillDetection: $stillDetection)';
+  return 'RecorderStatus.running(mode: $mode, stillDetection: $stillDetection, recordingSince: $recordingSince)';
 }
 
 
@@ -249,7 +250,7 @@ abstract mixin class $RecorderRunningCopyWith<$Res> implements $RecorderStatusCo
   factory $RecorderRunningCopyWith(RecorderRunning value, $Res Function(RecorderRunning) _then) = _$RecorderRunningCopyWithImpl;
 @useResult
 $Res call({
- RecordMode mode, bool stillDetection
+ RecordMode mode, bool stillDetection, DateTime? recordingSince
 });
 
 
@@ -266,11 +267,12 @@ class _$RecorderRunningCopyWithImpl<$Res>
 
 /// Create a copy of RecorderStatus
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? mode = null,Object? stillDetection = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? mode = null,Object? stillDetection = null,Object? recordingSince = freezed,}) {
   return _then(RecorderRunning(
 null == mode ? _self.mode : mode // ignore: cast_nullable_to_non_nullable
 as RecordMode,stillDetection: null == stillDetection ? _self.stillDetection : stillDetection // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,recordingSince: freezed == recordingSince ? _self.recordingSince : recordingSince // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 

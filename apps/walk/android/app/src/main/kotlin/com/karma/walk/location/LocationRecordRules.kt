@@ -40,10 +40,60 @@ object LocationRecordRules {
      */
     val watchdogRequest = Request(PRIORITY_PASSIVE, 900_000L, 0f, 0L)
 
-    /** 감시 위치가 정지 시작 점에서 이만큼 넘게 떨어지면 STILL 이탈로 본다. */
-    const val WATCHDOG_RESUME_DISTANCE_M = 100.0
+    /** 정지 점에서 이만큼까지는 같은 자리로 본다(Dart `TrackAnalyzer.stayRadiusM` 과 같다). */
+    const val STILL_RADIUS_M = 100f
 
-    fun watchdogShouldResume(distanceM: Double): Boolean = distanceM > WATCHDOG_RESUME_DISTANCE_M
+    /**
+     * 정지 점에서 100m + 두 점의 정확도(모르면 0) 안이면 같은 자리. 위치는 기지국 · 와이파이로 수백 m
+     * 튈 수 있어 정확도만큼은 봐준다. 감시([watchdogShouldResume]) · 확인([stillResumeIsStillThere])이
+     * 같은 여유를 쓴다.
+     */
+    private fun withinStillRadius(distanceM: Float, accuracyM: Float?, anchorAccuracyM: Float?): Boolean =
+        distanceM <= STILL_RADIUS_M + (accuracyM ?: 0f) + (anchorAccuracyM ?: 0f)
+
+    /** 감시 위치가 같은 자리 밖이면 STILL 이탈일 수 있다. 확인은 [stillResumeIsStillThere]. */
+    fun watchdogShouldResume(distanceM: Float, accuracyM: Float?, anchorAccuracyM: Float?): Boolean =
+        !withinStillRadius(distanceM, accuracyM, anchorAccuracyM)
+
+    /**
+     * 정지를 끝내려 할 때(감시가 움직임을 봤거나 정지가 6시간을 넘김) 새로 잡은 점이 같은 자리면
+     * 아직 그 자리 — `still` 점(심장박동)으로 남기고 정지를 이어 간다.
+     */
+    fun stillResumeIsStillThere(distanceM: Float, accuracyM: Float?, anchorAccuracyM: Float?): Boolean =
+        withinStillRadius(distanceM, accuracyM, anchorAccuracyM)
+
+    /** inbox 에 마지막으로 남긴 점. 기록 끝 표시([stopMarker])에 쓴다. */
+    data class SavedPoint(val timeMs: Long, val lat: Double, val lng: Double, val accuracyM: Double?)
+
+    /** 정지 감지를 쓰는데 움직이는 중에 마지막 점이 이보다 오래됐으면 기록 끝 표시를 남기지 않는다. */
+    const val STOP_MARKER_MAX_AGE_MS = 30 * 60_000L
+
+    /**
+     * 정지 감지가 꺼져 있으면(활동 인식 권한 없음 · 정밀) 가만히 있는 동안 점이 안 남으니 이만큼까지
+     * 기록 끝 표시를 남긴다 — 지도가 정지 감지 점 없이 같은 자리를 잇는 상한(`sameSpotMaxGap`)과 같다.
+     */
+    const val STOP_MARKER_NO_STILL_MAX_AGE_MS = 12 * 60 * 60_000L
+
+    /**
+     * 기록이 끝날 때(사용자가 끔 · 권한을 잃음) 남기는 점 — 마지막 점 자리 · 지금 시각 · `still = 0`.
+     * 정지 중에 꺼도 머문 곳이 여기서 닫히고, 다시 켤 때까지의 빈 시간이 머문 곳으로 보이지 않는다.
+     * 앞 점이 없거나 시계가 그 점보다 뒤가 아니면 남기지 않는다. 정지 감지를 쓰는데 움직이는 중이고
+     * 마지막 점이 30분보다 오래됐으면(기록이 조용히 멈춰 있었다) 옛 자리에 지금 시각을 찍지 않는다.
+     * 정지 감지가 꺼져 있으면 12시간까지 남긴다.
+     */
+    fun stopMarker(last: SavedPoint?, nowMs: Long, phase: Phase, stillDetection: Boolean): SavedPoint? = when {
+        last == null || nowMs <= last.timeMs -> null
+        !stillDetection && nowMs - last.timeMs > STOP_MARKER_NO_STILL_MAX_AGE_MS -> null
+        stillDetection && phase == Phase.MOVING && nowMs - last.timeMs > STOP_MARKER_MAX_AGE_MS -> null
+        else -> last.copy(timeMs = nowMs)
+    }
+
+    /**
+     * 채널 `status` 가 싣는 기록 시작 시각. 서비스가 살아 있을 때만(죽어 있다가 이번 `status` 가
+     * 되살리면 그 사이는 끊긴 것) — 지도는 이 시각 뒤의 마지막 점만 지금까지 잇는다.
+     */
+    fun recordingSinceForStatus(serviceRunning: Boolean, sinceMs: Long): Long? =
+        if (serviceRunning && sinceMs > 0L) sinceMs else null
 
     /** 정지가 이보다 길면 다음 `status`(앱이 앞에 올 때) 에 위치 요청을 다시 건다. */
     const val STILL_MAX_MS = 6 * 60 * 60_000L
