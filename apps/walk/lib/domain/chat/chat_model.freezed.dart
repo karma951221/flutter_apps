@@ -1271,7 +1271,7 @@ extension ModelEventPatterns on ModelEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ModelTextDelta value)?  textDelta,TResult Function( ModelThinking value)?  thinking,TResult Function( ModelProgress value)?  progress,TResult Function( ModelToolCallStarted value)?  toolCallStarted,TResult Function( ModelToolCallReady value)?  toolCallReady,TResult Function( ModelCompleted value)?  completed,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ModelTextDelta value)?  textDelta,TResult Function( ModelThinking value)?  thinking,TResult Function( ModelProgress value)?  progress,TResult Function( ModelToolCallStarted value)?  toolCallStarted,TResult Function( ModelToolCallReady value)?  toolCallReady,TResult Function( ModelWebSearch value)?  webSearch,TResult Function( ModelCompleted value)?  completed,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ModelTextDelta() when textDelta != null:
@@ -1279,7 +1279,8 @@ return textDelta(_that);case ModelThinking() when thinking != null:
 return thinking(_that);case ModelProgress() when progress != null:
 return progress(_that);case ModelToolCallStarted() when toolCallStarted != null:
 return toolCallStarted(_that);case ModelToolCallReady() when toolCallReady != null:
-return toolCallReady(_that);case ModelCompleted() when completed != null:
+return toolCallReady(_that);case ModelWebSearch() when webSearch != null:
+return webSearch(_that);case ModelCompleted() when completed != null:
 return completed(_that);case _:
   return orElse();
 
@@ -1298,7 +1299,7 @@ return completed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ModelTextDelta value)  textDelta,required TResult Function( ModelThinking value)  thinking,required TResult Function( ModelProgress value)  progress,required TResult Function( ModelToolCallStarted value)  toolCallStarted,required TResult Function( ModelToolCallReady value)  toolCallReady,required TResult Function( ModelCompleted value)  completed,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ModelTextDelta value)  textDelta,required TResult Function( ModelThinking value)  thinking,required TResult Function( ModelProgress value)  progress,required TResult Function( ModelToolCallStarted value)  toolCallStarted,required TResult Function( ModelToolCallReady value)  toolCallReady,required TResult Function( ModelWebSearch value)  webSearch,required TResult Function( ModelCompleted value)  completed,}){
 final _that = this;
 switch (_that) {
 case ModelTextDelta():
@@ -1306,7 +1307,8 @@ return textDelta(_that);case ModelThinking():
 return thinking(_that);case ModelProgress():
 return progress(_that);case ModelToolCallStarted():
 return toolCallStarted(_that);case ModelToolCallReady():
-return toolCallReady(_that);case ModelCompleted():
+return toolCallReady(_that);case ModelWebSearch():
+return webSearch(_that);case ModelCompleted():
 return completed(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -1321,7 +1323,7 @@ return completed(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ModelTextDelta value)?  textDelta,TResult? Function( ModelThinking value)?  thinking,TResult? Function( ModelProgress value)?  progress,TResult? Function( ModelToolCallStarted value)?  toolCallStarted,TResult? Function( ModelToolCallReady value)?  toolCallReady,TResult? Function( ModelCompleted value)?  completed,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ModelTextDelta value)?  textDelta,TResult? Function( ModelThinking value)?  thinking,TResult? Function( ModelProgress value)?  progress,TResult? Function( ModelToolCallStarted value)?  toolCallStarted,TResult? Function( ModelToolCallReady value)?  toolCallReady,TResult? Function( ModelWebSearch value)?  webSearch,TResult? Function( ModelCompleted value)?  completed,}){
 final _that = this;
 switch (_that) {
 case ModelTextDelta() when textDelta != null:
@@ -1329,7 +1331,8 @@ return textDelta(_that);case ModelThinking() when thinking != null:
 return thinking(_that);case ModelProgress() when progress != null:
 return progress(_that);case ModelToolCallStarted() when toolCallStarted != null:
 return toolCallStarted(_that);case ModelToolCallReady() when toolCallReady != null:
-return toolCallReady(_that);case ModelCompleted() when completed != null:
+return toolCallReady(_that);case ModelWebSearch() when webSearch != null:
+return webSearch(_that);case ModelCompleted() when completed != null:
 return completed(_that);case _:
   return null;
 
@@ -1347,14 +1350,15 @@ return completed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String text)?  textDelta,TResult Function()?  thinking,TResult Function( String text)?  progress,TResult Function( String id,  String name)?  toolCallStarted,TResult Function( String id,  String name,  Map<String, Object?> input)?  toolCallReady,TResult Function( AssistantMessage message,  StopKind stop,  TokenUsage? usage)?  completed,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String text)?  textDelta,TResult Function()?  thinking,TResult Function( String text)?  progress,TResult Function( String id,  String name)?  toolCallStarted,TResult Function( String id,  String name,  Map<String, Object?> input)?  toolCallReady,TResult Function( String id,  String? query)?  webSearch,TResult Function( AssistantMessage message,  StopKind stop,  TokenUsage? usage)?  completed,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ModelTextDelta() when textDelta != null:
 return textDelta(_that.text);case ModelThinking() when thinking != null:
 return thinking();case ModelProgress() when progress != null:
 return progress(_that.text);case ModelToolCallStarted() when toolCallStarted != null:
 return toolCallStarted(_that.id,_that.name);case ModelToolCallReady() when toolCallReady != null:
-return toolCallReady(_that.id,_that.name,_that.input);case ModelCompleted() when completed != null:
+return toolCallReady(_that.id,_that.name,_that.input);case ModelWebSearch() when webSearch != null:
+return webSearch(_that.id,_that.query);case ModelCompleted() when completed != null:
 return completed(_that.message,_that.stop,_that.usage);case _:
   return orElse();
 
@@ -1373,14 +1377,15 @@ return completed(_that.message,_that.stop,_that.usage);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String text)  textDelta,required TResult Function()  thinking,required TResult Function( String text)  progress,required TResult Function( String id,  String name)  toolCallStarted,required TResult Function( String id,  String name,  Map<String, Object?> input)  toolCallReady,required TResult Function( AssistantMessage message,  StopKind stop,  TokenUsage? usage)  completed,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String text)  textDelta,required TResult Function()  thinking,required TResult Function( String text)  progress,required TResult Function( String id,  String name)  toolCallStarted,required TResult Function( String id,  String name,  Map<String, Object?> input)  toolCallReady,required TResult Function( String id,  String? query)  webSearch,required TResult Function( AssistantMessage message,  StopKind stop,  TokenUsage? usage)  completed,}) {final _that = this;
 switch (_that) {
 case ModelTextDelta():
 return textDelta(_that.text);case ModelThinking():
 return thinking();case ModelProgress():
 return progress(_that.text);case ModelToolCallStarted():
 return toolCallStarted(_that.id,_that.name);case ModelToolCallReady():
-return toolCallReady(_that.id,_that.name,_that.input);case ModelCompleted():
+return toolCallReady(_that.id,_that.name,_that.input);case ModelWebSearch():
+return webSearch(_that.id,_that.query);case ModelCompleted():
 return completed(_that.message,_that.stop,_that.usage);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -1395,14 +1400,15 @@ return completed(_that.message,_that.stop,_that.usage);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String text)?  textDelta,TResult? Function()?  thinking,TResult? Function( String text)?  progress,TResult? Function( String id,  String name)?  toolCallStarted,TResult? Function( String id,  String name,  Map<String, Object?> input)?  toolCallReady,TResult? Function( AssistantMessage message,  StopKind stop,  TokenUsage? usage)?  completed,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String text)?  textDelta,TResult? Function()?  thinking,TResult? Function( String text)?  progress,TResult? Function( String id,  String name)?  toolCallStarted,TResult? Function( String id,  String name,  Map<String, Object?> input)?  toolCallReady,TResult? Function( String id,  String? query)?  webSearch,TResult? Function( AssistantMessage message,  StopKind stop,  TokenUsage? usage)?  completed,}) {final _that = this;
 switch (_that) {
 case ModelTextDelta() when textDelta != null:
 return textDelta(_that.text);case ModelThinking() when thinking != null:
 return thinking();case ModelProgress() when progress != null:
 return progress(_that.text);case ModelToolCallStarted() when toolCallStarted != null:
 return toolCallStarted(_that.id,_that.name);case ModelToolCallReady() when toolCallReady != null:
-return toolCallReady(_that.id,_that.name,_that.input);case ModelCompleted() when completed != null:
+return toolCallReady(_that.id,_that.name,_that.input);case ModelWebSearch() when webSearch != null:
+return webSearch(_that.id,_that.query);case ModelCompleted() when completed != null:
 return completed(_that.message,_that.stop,_that.usage);case _:
   return null;
 
@@ -1693,6 +1699,70 @@ id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
 as String,input: null == input ? _self._input : input // ignore: cast_nullable_to_non_nullable
 as Map<String, Object?>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class ModelWebSearch implements ModelEvent {
+  const ModelWebSearch({required this.id, this.query});
+  
+
+ final  String id;
+ final  String? query;
+
+/// Create a copy of ModelEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ModelWebSearchCopyWith<ModelWebSearch> get copyWith => _$ModelWebSearchCopyWithImpl<ModelWebSearch>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ModelWebSearch&&(identical(other.id, id) || other.id == id)&&(identical(other.query, query) || other.query == query));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,id,query);
+
+
+
+}
+
+/// @nodoc
+abstract mixin class $ModelWebSearchCopyWith<$Res> implements $ModelEventCopyWith<$Res> {
+  factory $ModelWebSearchCopyWith(ModelWebSearch value, $Res Function(ModelWebSearch) _then) = _$ModelWebSearchCopyWithImpl;
+@useResult
+$Res call({
+ String id, String? query
+});
+
+
+
+
+}
+/// @nodoc
+class _$ModelWebSearchCopyWithImpl<$Res>
+    implements $ModelWebSearchCopyWith<$Res> {
+  _$ModelWebSearchCopyWithImpl(this._self, this._then);
+
+  final ModelWebSearch _self;
+  final $Res Function(ModelWebSearch) _then;
+
+/// Create a copy of ModelEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? id = null,Object? query = freezed,}) {
+  return _then(ModelWebSearch(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,query: freezed == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

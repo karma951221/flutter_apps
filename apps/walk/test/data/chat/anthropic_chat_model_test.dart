@@ -42,6 +42,7 @@ ModelRequest request({
   bool fastMode = false,
   List<ChatMessage> messages = const [],
   List<ToolSpec> tools = const [],
+  bool webSearch = false,
 }) => ModelRequest(
   apiKey: apiKey,
   model: model,
@@ -49,6 +50,7 @@ ModelRequest request({
   system: 'sys',
   messages: messages,
   tools: tools,
+  webSearch: webSearch,
 );
 
 Future<List<ModelEvent>> run(MockClient client, [ModelRequest? r]) =>
@@ -1086,6 +1088,255 @@ void main() {
     }
   });
 
+  group('웹 검색', () {
+    const spec = ToolSpec(
+      name: 'search_diary',
+      description: 'd',
+      parameters: {'type': 'object'},
+    );
+
+    test('켜면 tools 끝에 모델에 맞는 web_search 버전을 붙인다', () async {
+      for (final (model, type) in const [
+        ('claude-opus-5-5', 'web_search_20260209'),
+        ('claude-sonnet-4-6', 'web_search_20260209'),
+        ('claude-haiku-4-5-20251001', 'web_search_20250305'),
+        ('claude-sonnet-4-5-20250929', 'web_search_20250305'),
+      ]) {
+        late Map<String, dynamic> body;
+        await run(
+          capture((b) => body = b),
+          request(model: model, tools: const [spec], webSearch: true),
+        );
+        final tools = body['tools'] as List;
+        expect(tools, hasLength(2), reason: model);
+        expect((tools.first as Map)['name'], 'search_diary');
+        expect(tools.last, {
+          'type': type,
+          'name': 'web_search',
+          'max_uses': 5,
+        }, reason: model);
+      }
+    });
+
+    test('끄면 붙이지 않고, 도구가 하나도 없으면 tools 키를 뺀다', () async {
+      late Map<String, dynamic> body;
+      await run(capture((b) => body = b), request(tools: const [spec]));
+      expect(body['tools'], hasLength(1));
+
+      await run(capture((b) => body = b), request());
+      expect(body.containsKey('tools'), isFalse);
+
+      await run(capture((b) => body = b), request(webSearch: true));
+      expect(body['tools'], [
+        {'type': 'web_search_20260209', 'name': 'web_search', 'max_uses': 5},
+      ]);
+    });
+
+    String searchStream({String stop = 'end_turn'}) => [
+      sse('message_start', {'type': 'message_start'}),
+      sse('content_block_start', {
+        'index': 0,
+        'content_block': {
+          'type': 'server_tool_use',
+          'id': 'srvtoolu_1',
+          'name': 'web_search',
+          'input': <String, Object?>{},
+        },
+      }),
+      sse('content_block_delta', {
+        'index': 0,
+        'delta': {'type': 'input_json_delta', 'partial_json': '{"query": "오늘'},
+      }),
+      sse('content_block_delta', {
+        'index': 0,
+        'delta': {'type': 'input_json_delta', 'partial_json': ' 날씨"}'},
+      }),
+      sse('content_block_stop', {'index': 0}),
+      sse('content_block_start', {
+        'index': 1,
+        'content_block': {
+          'type': 'web_search_tool_result',
+          'tool_use_id': 'srvtoolu_1',
+          'content': [
+            {
+              'type': 'web_search_result',
+              'url': 'https://example.com',
+              'title': '예시',
+              'encrypted_content': 'enc==',
+            },
+          ],
+        },
+      }),
+      sse('content_block_stop', {'index': 1}),
+      sse('content_block_start', {
+        'index': 2,
+        'content_block': {'type': 'text', 'text': '', 'citations': null},
+      }),
+      sse('content_block_delta', {
+        'index': 2,
+        'delta': {
+          'type': 'citations_delta',
+          'citation': {
+            'type': 'web_search_result_location',
+            'url': 'https://example.com',
+            'title': '예시',
+            'encrypted_index': 'idx==',
+            'cited_text': '맑음',
+          },
+        },
+      }),
+      sse('content_block_delta', {
+        'index': 2,
+        'delta': {'type': 'text_delta', 'text': '맑아요'},
+      }),
+      sse('content_block_stop', {'index': 2}),
+      sse('content_block_start', {
+        'index': 3,
+        'content_block': {'type': 'text', 'text': '', 'citations': null},
+      }),
+      sse('content_block_delta', {
+        'index': 3,
+        'delta': {'type': 'text_delta', 'text': ' (예시)'},
+      }),
+      sse('content_block_stop', {'index': 3}),
+      sse('message_delta', {
+        'delta': {'stop_reason': stop},
+        'usage': {
+          'output_tokens': 9,
+          'server_tool_use': {'web_search_requests': 1},
+        },
+      }),
+      sse('message_stop', {}),
+    ].join();
+
+    test('server_tool_use 는 도구 호출이 아니고 검색어를 진행으로 낸다', () async {
+      final events = await run(clientOf([searchStream()]));
+
+      expect(events.whereType<ModelToolCallStarted>(), isEmpty);
+      expect(events.whereType<ModelToolCallReady>(), isEmpty);
+      expect(events.whereType<ModelWebSearch>().toList(), const [
+        ModelEvent.webSearch(id: 'srvtoolu_1'),
+        ModelEvent.webSearch(id: 'srvtoolu_1', query: '오늘 날씨'),
+      ]);
+      expect(
+        events.whereType<ModelTextDelta>().map((e) => e.text).join(),
+        '맑아요 (예시)',
+      );
+
+      final done = events.last as ModelCompleted;
+      expect(done.stop, StopKind.endTurn);
+      expect(done.message.parts, const [
+        AssistantPart.text('맑아요'),
+        AssistantPart.text(' (예시)'),
+      ]);
+      final content = (done.message.vendorState! as AnthropicTurnState).content;
+      expect(content.map((b) => b['type']), [
+        'server_tool_use',
+        'web_search_tool_result',
+        'text',
+        'text',
+      ]);
+      expect(content[0]['input'], {'query': '오늘 날씨'});
+      expect(
+        (content[1]['content'] as List).single,
+        containsPair('url', 'https://example.com'),
+      );
+      // 인용은 모아 두고, 인용이 없던 글 블록엔 citations 키가 없다.
+      expect(content[2]['citations'], [
+        {
+          'type': 'web_search_result_location',
+          'url': 'https://example.com',
+          'title': '예시',
+          'encrypted_index': 'idx==',
+          'cited_text': '맑음',
+        },
+      ]);
+      expect(content[3].containsKey('citations'), isFalse);
+    });
+
+    test('모르는 서버 블록도 vendorState 에 남고 parts · 도구 호출이 되지 않는다', () async {
+      final events = await run(
+        clientOf([
+          sse('message_start', {'type': 'message_start'}),
+          sse('content_block_start', {
+            'index': 0,
+            'content_block': {
+              'type': 'server_tool_use',
+              'id': 'srvtoolu_2',
+              'name': 'code_execution',
+              'input': <String, Object?>{},
+            },
+          }),
+          sse('content_block_delta', {
+            'index': 0,
+            'delta': {
+              'type': 'input_json_delta',
+              'partial_json': '{"code":"1"}',
+            },
+          }),
+          sse('content_block_stop', {'index': 0}),
+          sse('content_block_start', {
+            'index': 1,
+            'content_block': {
+              'type': 'code_execution_tool_result',
+              'tool_use_id': 'srvtoolu_2',
+              'content': {'type': 'code_execution_result', 'stdout': '1'},
+            },
+          }),
+          sse('content_block_stop', {'index': 1}),
+          sse('message_delta', {
+            'delta': {'stop_reason': 'pause_turn'},
+          }),
+          sse('message_stop', {}),
+        ]),
+      );
+
+      expect(events.whereType<ModelToolCallReady>(), isEmpty);
+      expect(events.whereType<ModelWebSearch>(), isEmpty);
+      final done = events.single as ModelCompleted;
+      expect(done.stop, StopKind.pauseTurn);
+      expect(done.message.parts, isEmpty);
+      final content = (done.message.vendorState! as AnthropicTurnState).content;
+      expect(content.map((b) => b['type']), [
+        'server_tool_use',
+        'code_execution_tool_result',
+      ]);
+      expect(content[0]['input'], {'code': '1'});
+    });
+
+    test('같은 모델이면 서버 블록째 돌려보내고, 다른 모델이 다시 만든 빈 턴은 싣지 않는다', () async {
+      final events = await run(clientOf([searchStream(stop: 'pause_turn')]));
+      final paused = (events.last as ModelCompleted).message;
+
+      late Map<String, dynamic> body;
+      await run(
+        capture((b) => body = b),
+        request(messages: [const ChatMessage.user('날씨'), paused]),
+      );
+      final state = paused.vendorState! as AnthropicTurnState;
+      expect(body['messages'], [
+        {'role': 'user', 'content': '날씨'},
+        {'role': 'assistant', 'content': state.content},
+      ]);
+
+      await run(
+        capture((b) => body = b),
+        request(
+          model: 'claude-sonnet-9-9',
+          messages: [
+            const ChatMessage.user('날씨'),
+            ChatMessage.assistant(parts: const [], vendorState: state),
+            const ChatMessage.user('다시'),
+          ],
+        ),
+      );
+      expect(body['messages'], [
+        {'role': 'user', 'content': '날씨'},
+        {'role': 'user', 'content': '다시'},
+      ]);
+    });
+  });
+
   test('stop_reason 을 StopKind 로 바꾼다', () async {
     Future<StopKind> stopFor(String? reason) async {
       final events = await run(
@@ -1109,7 +1360,8 @@ void main() {
     expect(await stopFor('tool_use'), StopKind.toolUse);
     expect(await stopFor('refusal'), StopKind.refusal);
     expect(await stopFor('max_tokens'), StopKind.maxTokens);
-    expect(await stopFor('pause_turn'), StopKind.other);
+    expect(await stopFor('pause_turn'), StopKind.pauseTurn);
+    expect(await stopFor('model_context_window_exceeded'), StopKind.other);
   });
 
   test('usage 를 message_start 와 message_delta 에서 읽는다', () async {

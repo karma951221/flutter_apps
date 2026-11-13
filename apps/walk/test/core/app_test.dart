@@ -41,12 +41,14 @@ import 'package:walk/domain/chat/workspace/workspace.dart';
 import '../support/unused_chat_attachments.dart';
 
 import '../support/fake_device_auth.dart';
+import 'package:walk/domain/chat/chat_history_settings.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/repository/chat_history_repository.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/domain/chat/usecase/open_conversation.dart';
+import '../support/fake_chat_history.dart';
 import '../support/fake_chat_settings.dart';
 import '../support/fake_chat_key_verifier.dart';
 import '../support/fake_chat_model_catalog.dart';
@@ -179,6 +181,7 @@ void main() {
         ..registerSingleton<ChatFilePicker>(const NoopChatFilePicker())
         ..registerSingleton<ChatSession>(_MockChatSession())
         ..registerSingleton<ChatHistoryRepository>(_MockChatHistory())
+        ..registerSingleton<ChatHistorySettings>(FakeChatHistorySettings())
         ..registerSingleton<OpenConversation>(OpenConversation())
         ..registerSingleton<ChatTrace>(const NoopChatTrace())
         ..registerSingleton<PlaceSource>(_MockPlaceSource());

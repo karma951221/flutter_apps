@@ -326,15 +326,32 @@ class AnthropicChatModel implements ChatModel {
     if (supportsFallbacksOf(request.model)) 'fallbacks': 'default',
     if (_promptCache) 'cache_control': {'type': 'ephemeral'},
     'system': request.system,
-    'messages': [for (final m in request.messages) _message(m, request.model)],
-    'tools': [for (final t in request.tools) _tool(t)],
+    'messages': [for (final m in request.messages) ?_message(m, request.model)],
+    if (_tools(request) case final tools when tools.isNotEmpty) 'tools': tools,
   });
+
+  /// 중립 도구 뒤에 서버 웹 검색 도구(켰고 모델이 받을 때). 캐시 접두부가 질문마다 같게
+  /// 늘 끝에 둔다. 서버 도구에는 eager_input_streaming 을 두지 않는다.
+  List<Map<String, Object?>> _tools(ModelRequest request) => [
+    for (final t in request.tools) _tool(t),
+    if (request.webSearch && supportsWebSearchOf(vendor, request.model))
+      {
+        'type': anthropicWebSearchToolOf(request.model),
+        'name': webSearchToolName,
+        'max_uses': webSearchMaxUses,
+      },
+  ];
+
+  /// 서버 웹 검색 도구 이름 · 한 응답의 최대 검색 수.
+  static const webSearchToolName = 'web_search';
+  static const webSearchMaxUses = 5;
 
   // 중립 → Messages API
 
-  /// [model] 은 이번 요청의 모델. 같은 모델이 만든 턴만 원본 블록(thinking 서명
-  /// 포함)을 그대로 돌려보낸다.
-  static Map<String, Object?> _message(ChatMessage message, String model) =>
+  /// [model] 은 이번 요청의 모델. 같은 모델이 만든 턴만 원본 블록(thinking 서명 ·
+  /// 서버 도구 블록 포함)을 그대로 돌려보낸다. parts 로 다시 만든 턴이 비면(서버 도구
+  /// 블록만 있던 턴) null — 빈 content 는 거절되므로 싣지 않는다(이웃 user 턴은 API 가 합친다).
+  static Map<String, Object?>? _message(ChatMessage message, String model) =>
       switch (message) {
         // 첨부가 없으면 문자열 그대로(프롬프트 캐시 접두 보존).
         UserMessage(:final text, :final attachments) => {
@@ -351,6 +368,7 @@ class AnthropicChatModel implements ChatModel {
           {'role': 'assistant', 'content': state.content},
         // 상태가 없거나(멈춘 턴) 다른 벤더 · 다른 모델의 것이면 parts 로 다시
         // 만든다(thinking 없음, A4).
+        AssistantMessage(:final parts) when parts.isEmpty => null,
         AssistantMessage(:final parts) => {
           'role': 'assistant',
           'content': [for (final p in parts) _part(p)],
@@ -443,6 +461,7 @@ class AnthropicChatModel implements ChatModel {
     'tool_use' => StopKind.toolUse,
     'refusal' => StopKind.refusal,
     'max_tokens' => StopKind.maxTokens,
+    'pause_turn' => StopKind.pauseTurn,
     _ => StopKind.other,
   };
 
@@ -470,8 +489,8 @@ class AnthropicChatModel implements ChatModel {
     );
   }
 
-  /// Messages API content → 중립 parts. thinking · redacted_thinking 등은 빼고
-  /// vendorState 에만 둔다.
+  /// Messages API content → 중립 parts. thinking · redacted_thinking · 서버 도구
+  /// 블록(server_tool_use · web_search_tool_result 등)은 빼고 vendorState 에만 둔다.
   static List<AssistantPart> _partsOf(List<Map<String, Object?>> content) => [
     for (final block in content)
       if (block['type'] == 'text')
@@ -548,6 +567,12 @@ class AnthropicChatModel implements ChatModel {
           switch (block) {
             case {'type': 'thinking' || 'redacted_thinking'}:
               yield const ModelEvent.thinking();
+            case {
+              'type': 'server_tool_use',
+              'id': final String id,
+              'name': webSearchToolName,
+            }:
+              yield ModelEvent.webSearch(id: id);
             case {'type': 'tool_use'}:
               jsonBuffers[index] = StringBuffer();
               if (block case {
@@ -570,6 +595,15 @@ class AnthropicChatModel implements ChatModel {
                 _trace.mark(ChatTraceMark.textDelta, {'chars': text.length});
               }
               yield ModelEvent.textDelta(text);
+            case 'citations_delta':
+              // 웹 검색 인용. 화면에는 쓰지 않고, 같은 모델에 돌려보낼 블록에만 모은다.
+              final citation = delta['citation'];
+              if (citation is Map) {
+                block['citations'] = [
+                  ...?(block['citations'] as List?),
+                  Map<String, Object?>.from(citation),
+                ];
+              }
             case 'thinking_delta':
               final thinking =
                   '${block['thinking'] ?? ''}${delta['thinking'] ?? ''}';
@@ -604,6 +638,12 @@ class AnthropicChatModel implements ChatModel {
             final note = _noteOf('${block['thinking'] ?? ''}');
             if (note != null) yield* _note(note);
           }
+          // 인용이 없던 글 블록의 `citations: null` 은 돌려보내지 않는다.
+          if (block != null &&
+              block.containsKey('citations') &&
+              block['citations'] == null) {
+            block.remove('citations');
+          }
           if (buffer != null && block != null) {
             final text = buffer.toString();
             try {
@@ -613,7 +653,18 @@ class AnthropicChatModel implements ChatModel {
             } on FormatException {
               throw const ChatModelException(ChatModelErrorKind.server);
             }
+            // 세션이 실행할 도구는 tool_use 뿐 — server_tool_use(웹 검색)는 벤더가
+            // 이미 실행했다. 검색어만 진행 표시로 낸다.
             if (block case {
+              'type': 'server_tool_use',
+              'id': final String id,
+              'name': webSearchToolName,
+              'input': {'query': final String query},
+            }) {
+              yield ModelEvent.webSearch(id: id, query: query);
+            }
+            if (block case {
+              'type': 'tool_use',
               'id': final String id,
               'name': final String name,
               'input': final Map<Object?, Object?> input,

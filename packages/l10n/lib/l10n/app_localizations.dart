@@ -6038,6 +6038,12 @@ abstract class AppLocalizations {
   /// **'기록 보는 중'**
   String get walkChatToolOther;
 
+  /// 채팅 탭 진행 줄: 벤더 서버 웹 검색 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'웹 검색 중'**
+  String get walkChatToolWebSearch;
+
   /// 채팅 탭 진행 줄: 도구 라벨 + 자세히(기간 · 검색어 · 날 수)
   ///
   /// In ko, this message translates to:
@@ -6761,6 +6767,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'모델 바꾸기'**
   String get walkChatModelChipTooltip;
+
+  /// 물어보기 모델 칩 옆 토글: 내 기록(도구 · 위키)을 참고할지
+  ///
+  /// In ko, this message translates to:
+  /// **'내 기록 참고'**
+  String get walkChatUseRecords;
+
+  /// 물어보기 내 기록 참고 토글 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'켜면 일기 · 걸음 · 알람 기상 · 위키를 찾아보고 답해요'**
+  String get walkChatUseRecordsTooltip;
 
   /// 모델 고르기 시트 — 추천 모델 배지
   ///

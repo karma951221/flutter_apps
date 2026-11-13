@@ -86,4 +86,30 @@ void main() {
       expect(WikiIndexSize.fallback, WikiIndexSize.standard);
     });
   });
+
+  group('useRecords', () {
+    test('처음엔 켬', () async {
+      expect((await _settings()).useRecords, isTrue);
+    });
+
+    test('끈 선택을 새 인스턴스가 읽는다', () async {
+      final writer = await _settings();
+      await writer.setUseRecords(false);
+
+      final reader = PrefsChatHistorySettings(
+        await SharedPreferences.getInstance(),
+      );
+      expect(reader.useRecords, isFalse);
+
+      await reader.setUseRecords(true);
+      expect(writer.useRecords, isTrue);
+    });
+
+    test('bool 이 아니면 켬', () async {
+      final wrong = await _settings({
+        PrefsChatHistorySettings.useRecordsKey: 'false',
+      });
+      expect(wrong.useRecords, isTrue);
+    });
+  });
 }

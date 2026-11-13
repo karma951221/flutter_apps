@@ -133,6 +133,8 @@ typedef ChatTarget = ({ChatVendor vendor, String model});
 /// 모델만 바뀌면 그대로 보내고, 어댑터가 다른 모델의 턴을 다시 만든다.
 /// 사진 못 보는 모델에는 요청에서만 사진을 뺀다(메모리 문맥은 그대로).
 /// 질문마다 WikiContextPolicy 로 위키 색인 · read_wiki 를 붙인다 — 임시 대화는 붙이지 않는다.
+/// [useRecords] 가 꺼진 질문은 기록 도구 · 위키 · 기록 규칙 없이 일반 도우미로 묻는다.
+/// 웹 검색(벤더 서버 도구)은 늘 켠다 — 벤더가 실행하고, 세션은 진행 표시만 낸다.
 @lazySingleton
 class ChatSession {
   ChatSession(
@@ -171,6 +173,13 @@ class ChatSession {
   /// 지난 대화를 이어갈 때 문맥에 싣는 최근 턴 수.
   static const resumeTurns = 20;
 
+  /// 웹 검색 진행 단계의 도구 이름(벤더 어댑터의 서버 도구 이름과 같다).
+  static const webSearchToolName = 'web_search';
+
+  static const _recordsOffJson =
+      '{"error":"records_off",'
+      '"hint":"사용자가 내 기록 참고를 껐다. 기록 없이 답한다"}';
+
   static const _photoLimitJson =
       '{"error":"photo_limit_reached",'
       '"hint":"대화를 다시 열거나 새 대화를 시작하면 다시 사진을 볼 수 있어요"}';
@@ -195,6 +204,11 @@ class ChatSession {
 
   /// 임시 대화인가. 사용량 기록의 temporary 로 간다.
   bool get temporary => _temporary;
+
+  /// 다음 질문에서 내 기록(일기 · 걸음 · 알람 기상 · 사진 · 위키)을 참고할까. [ask] 가
+  /// 질문마다 한 번 읽는다 — 대화 중에 바꾸면 다음 질문부터. 지난 턴의 도구 결과는 문맥에
+  /// 그대로 남는다. 화면(cubit)이 저장된 선택으로 채운다.
+  bool useRecords = true;
 
   /// 이 대화에서 보낸 사진 수(도구 사진 + 사진 첨부). 되돌린 질문의 사진은 세지 않는다.
   int _imagesSent = 0;
@@ -290,7 +304,7 @@ class ChatSession {
     _turnText.clear();
     _turnCited.clear();
     _turnDone = false;
-    return _run(question, _generation, requestTarget);
+    return _run(question, _generation, requestTarget, records: useRecords);
   }
 
   /// 진행 중인 질문을 멈춘다. [reset] 처럼 세대를 올리고 끊지만 대화는 비우지 않는다.
@@ -440,8 +454,9 @@ class ChatSession {
   Stream<ChatEvent> _run(
     String question,
     int generation,
-    ChatTarget? target,
-  ) async* {
+    ChatTarget? target, {
+    required bool records,
+  }) async* {
     bool stale() => generation != _generation;
     final start = _messages.length;
     final imagesAtStart = _imagesSent;
@@ -471,7 +486,10 @@ class ChatSession {
       }
       requestTarget = target;
       // 질문마다 한 번 — 이 질문의 라운드 동안 system · 도구가 고정된다.
-      final wiki = _temporary ? WikiContext.none : await _safeWiki(question);
+      // 내 기록을 참고하지 않는 질문엔 위키도 붙이지 않는다.
+      final wiki = _temporary || !records
+          ? WikiContext.none
+          : await _safeWiki(question);
       if (stale()) return;
       final model = _registry.of(target.vendor);
       // 질문 동안 고정한다 — 그 사이 모델 · 빠른 출력을 바꾸면 다음 질문부터.
@@ -481,6 +499,7 @@ class ChatSession {
       var retriedWithoutImages = false;
       final system = _systemPrompt(
         progressNotes: model.progressNotes,
+        records: records,
         wikiSection: wiki.systemSection,
       );
       // 위키 도구가 실린 질문에서만 read_wiki 를 WikiTools 로 보낸다.
@@ -519,7 +538,10 @@ class ChatSession {
             fastMode: fastMode,
             system: system,
             messages: _requestMessages(images: images),
-            tools: _toolsFor(images: images, wiki: wiki),
+            tools: records
+                ? _toolsFor(images: images, wiki: wiki)
+                : const <ToolSpec>[],
+            webSearch: true,
           );
           if (_trace.enabled) _trace.mark(ChatTraceMark.round, {'n': round});
           StreamSubscription<ModelEvent>? roundSub;
@@ -584,6 +606,18 @@ class ChatSession {
                     name: name,
                     input: _tools.inputSummary(name, input),
                   );
+                case ModelWebSearch(:final id, :final query):
+                  // 벤더 서버가 실행하는 검색 — 실행 · 결과 없이 진행 줄의 도구 단계로만.
+                  phase = null;
+                  yield ChatEvent.toolStarted(
+                    callId: id,
+                    name: webSearchToolName,
+                    input: query == null
+                        ? null
+                        : _tools.inputSummary(webSearchToolName, {
+                            'query': query,
+                          }),
+                  );
               }
             }
           } on ChatModelException catch (e) {
@@ -646,7 +680,20 @@ class ChatSession {
             }
             final futures = [
               for (final c in calls)
-                if (wikiOn && c.name == WikiTools.readWikiName)
+                // 기록을 끈 질문에 도구가 오면(지난 턴을 보고 부른 경우) 실행하지 않는다.
+                if (!records)
+                  Future.value(
+                    ToolResult(
+                      json: _recordsOffJson,
+                      isError: true,
+                      summary: ToolSummary(
+                        kind: chatToolKindOf(c.name),
+                        count: 0,
+                        isError: true,
+                      ),
+                    ),
+                  )
+                else if (wikiOn && c.name == WikiTools.readWikiName)
                   _wikiTools.readWiki(c.input)
                 else
                   _tools.run(c.name, c.input),
@@ -687,6 +734,10 @@ class ChatSession {
               );
             }
             _messages.add(ChatMessage.toolResults(parts));
+          case StopKind.pauseTurn:
+            // 벤더 서버의 도구 루프(웹 검색)가 멈췄다 — 그 턴만 덧붙인 채 사용자 메시지
+            // 없이 다시 보내면 이어서 답한다. 이어 보내기도 라운드 한도([maxRounds])에 든다.
+            continue;
           case StopKind.refusal:
             yield const ChatEvent.failed(ChatFailure.refused);
             return;
@@ -899,21 +950,49 @@ class ChatSession {
   /// 도구 전 한 줄 안내. [ChatModel.progressNotes] 인 모델에만 넣는다(V5 결과로 빼기 쉽게 상수).
   static const _noteHint = '도구를 쓰기 전에 무엇을 볼지 한 줄로 말해.';
 
+  /// 웹 검색 규칙 · 답 모양. 기록을 참고하든 않든 같다.
+  static const _webRule =
+      '최근 소식 · 지금의 정보 · 확실하지 않은 사실은 웹 검색으로 확인하고, '
+      '답에 출처(사이트 이름)를 짧게 밝힌다.\n';
+  static const _answerStyle =
+      '한국어로, 마크다운 없이 평문으로 답한다. 필요한 만큼 쓰되 군더더기 없이 간결하게.\n';
+
   /// 순서: 규약(첨부 줄 포함) → 위키 절(있을 때) → 도구 전 안내 → 날짜 줄. 날짜 줄은 맨 끝 —
-  /// 그 앞까지가 날마다(위키가 그대로면) 같은 캐시 접두부다.
-  String _systemPrompt({required bool progressNotes, String? wikiSection}) {
+  /// 그 앞까지가 날마다(위키 · [records] 가 그대로면) 같은 캐시 접두부다.
+  /// [records] 가 false 면 기록 규칙 · 위키 절 없이 일반 도우미 규약만.
+  String _systemPrompt({
+    required bool progressNotes,
+    required bool records,
+    String? wikiSection,
+  }) {
     final now = _clock.now();
     final today = DateFormat('yyyy-MM-dd (E)', 'ko').format(now);
-    final grounds = wikiSection == null ? '찾은 기록에' : '찾은 기록과 위키에';
-    return '너는 사용자의 개인 기록 앱 Life Tool 안의 도우미다.\n'
-        '사용자의 일기 · 걸음 수 · 알람 기상 기록을 도구로 찾아보고, $grounds 근거해서만 답한다.\n'
-        '기록에서 찾지 못한 것은 추측하지 말고 "기록에서 찾지 못했어요"라고 말한다.\n'
-        '날짜는 사용자의 말("지난주", "어제")을 오늘 기준으로 바꿔 도구에 넘긴다.\n'
-        '사진 보기 도구가 없으면 사진은 볼 수 없다고 짧게 답한다.\n'
-        '한국어로, 마크다운 없이 짧은 평문으로 답한다.\n'
+    final rules = records
+        ? _recordRules(wiki: wikiSection != null)
+        : '너는 Life Tool 앱 안의 도우미다. 지식 · 설명 · 조언 · 잡담 등 무엇이든 '
+              '아는 대로 자유롭게 답한다.\n'
+              '$_webRule'
+              '$_answerStyle';
+    return '$rules'
         '$_attachmentRule\n'
-        '${wikiSection == null ? '' : '\n$wikiSection\n\n'}'
+        '${records && wikiSection != null ? '\n$wikiSection\n\n' : ''}'
         '${progressNotes ? '$_noteHint\n' : ''}'
         '오늘은 $today, 시간대는 ${now.timeZoneName} 이다.';
+  }
+
+  /// 기록을 참고하는 질문의 규약 — 기록 질문은 도구 근거로, 그 밖은 자유롭게.
+  static String _recordRules({required bool wiki}) {
+    final records = wiki ? '일기 · 걸음 수 · 알람 기상 기록 · 위키' : '일기 · 걸음 수 · 알람 기상 기록';
+    final grounds = wiki ? '찾은 기록과 위키에' : '찾은 기록에';
+    return '너는 사용자의 개인 기록 앱 Life Tool 안의 도우미다. 무엇이든 답하는 일반 '
+        '도우미이면서, 사용자의 기록도 찾아볼 수 있다.\n'
+        '사용자의 기록($records)에 관한 질문이면 도구로 찾아보고, $grounds 근거해서 답한다. '
+        '기록에서 찾지 못한 것은 추측하지 말고 "기록에서 찾지 못했어요"라고 말한다.\n'
+        '그 밖의 일반 질문(지식 · 설명 · 조언 · 잡담 등)은 기록 도구를 부르지 말고 아는 대로 '
+        '자유롭게 답한다.\n'
+        '$_webRule'
+        '날짜는 사용자의 말("지난주", "어제")을 오늘 기준으로 바꿔 도구에 넘긴다.\n'
+        '사진 보기 도구가 없으면 사진은 볼 수 없다고 짧게 답한다.\n'
+        '$_answerStyle';
   }
 }

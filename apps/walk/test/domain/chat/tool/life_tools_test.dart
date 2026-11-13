@@ -472,6 +472,12 @@ void main() {
       );
     });
 
+    test('web_search 도 검색어를 20자로 자른다(벤더 서버 검색의 진행 표시)', () {
+      final s = tools.inputSummary('web_search', {'query': ' ${'가' * 25} '});
+      expect(s.kind, ChatToolKind.webSearch);
+      expect(s.query, '${'가' * 20}…');
+    });
+
     test('공백뿐인 query 는 null', () {
       expect(
         tools.inputSummary('search_diary', {'query': '   '}).query,

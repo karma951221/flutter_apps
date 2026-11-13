@@ -25,6 +25,7 @@ import 'package:walk/presentation/chat/cubit/chat_state.dart';
 import 'package:walk/presentation/chat/widget/model_chip.dart';
 
 import '../../../support/diary_fixtures.dart';
+import '../../../support/fake_chat_history.dart';
 import '../../../support/fake_chat_key_verifier.dart';
 import '../../../support/fake_chat_model_catalog.dart';
 import '../../../support/fake_chat_settings.dart';
@@ -298,6 +299,70 @@ void main() {
     await sent;
     expect(cubit.state.busy, isFalse);
     expect(cubit.state.bubbles, hasLength(2));
+  });
+
+  group('내 기록 참고', () {
+    test('저장된 선택으로 시작하고, 바꾸면 저장한 뒤 다음 질문의 세션 값으로 넘긴다', () async {
+      final stored = FakeChatHistorySettings()..useRecords = false;
+      when(() => session.ask(any())).thenAnswer(
+        (_) => Stream.value(const ChatEvent.finished(citedEntryIds: [])),
+      );
+      final c = ChatCubit(
+        session,
+        settings,
+        diary,
+        const NoopChatTrace(),
+        choice,
+        history,
+        open,
+        const Clock(),
+        const UnusedWorkspace(),
+        const UnusedAttachmentLoader(),
+        FakePickedFileCache(),
+        historySettings: stored,
+      );
+      addTearDown(c.close);
+      expect(c.state.useRecords, isFalse);
+      await c.refresh();
+
+      await c.send('양자역학?');
+      await c.setUseRecords(true);
+      expect(c.state.useRecords, isTrue);
+      expect(stored.useRecords, isTrue);
+      await c.send('어제 뭐 했어?');
+
+      // 질문마다 ask 바로 앞에 세션 값을 넣는다.
+      expect(verify(() => session.useRecords = captureAny()).captured, [
+        false,
+        true,
+      ]);
+      verify(() => session.ask(any())).called(2);
+    });
+
+    test('저장이 실패해도 화면 값은 바뀐다', () async {
+      final stored = FakeChatHistorySettings()..failSet = true;
+      final c = ChatCubit(
+        session,
+        settings,
+        diary,
+        const NoopChatTrace(),
+        choice,
+        history,
+        open,
+        const Clock(),
+        const UnusedWorkspace(),
+        const UnusedAttachmentLoader(),
+        FakePickedFileCache(),
+        historySettings: stored,
+      );
+      addTearDown(c.close);
+      expect(c.state.useRecords, isTrue);
+
+      await c.setUseRecords(false);
+
+      expect(c.state.useRecords, isFalse);
+      expect(stored.useRecords, isTrue);
+    });
   });
 
   test('빈 질문이나 답하는 중의 질문은 무시한다', () async {

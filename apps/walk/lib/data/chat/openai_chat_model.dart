@@ -17,7 +17,7 @@ import 'sse_lines.dart';
 import 'vendor_error.dart';
 
 /// 한 OpenAI 턴의 원본 output 항목(reasoning 의 encrypted_content · message ·
-/// function_call). 같은 모델의 다음 요청 `input` 에 그대로 돌려보낸다 — 서버
+/// function_call · web_search_call). 같은 모델의 다음 요청 `input` 에 그대로 돌려보낸다 — 서버
 /// 저장을 끄므로(`store: false`) 추론은 이 암호문으로만 이어진다.
 /// toString 은 항목 개수만.
 final class OpenAiTurnState implements VendorTurnState {
@@ -239,7 +239,7 @@ class OpenAiChatModel implements ChatModel {
     'model': request.model,
     'instructions': request.system,
     'input': [for (final m in request.messages) ..._input(m, request.model)],
-    'tools': [for (final t in request.tools) _tool(t)],
+    if (_tools(request) case final tools when tools.isNotEmpty) 'tools': tools,
     'stream': true,
     'store': false,
     'include': ['reasoning.encrypted_content'],
@@ -247,6 +247,13 @@ class OpenAiChatModel implements ChatModel {
     if (supportsEffortOf(vendor, request.model)) 'reasoning': {'effort': 'low'},
     if (_fast(request)) ...fastModeFields,
   });
+
+  /// 중립 도구 뒤에 호스팅 웹 검색(켰고 모델이 받을 때). 캐시 접두부가 같게 늘 끝에.
+  List<Map<String, Object?>> _tools(ModelRequest request) => [
+    for (final t in request.tools) _tool(t),
+    if (request.webSearch && supportsWebSearchOf(vendor, request.model))
+      const {'type': 'web_search'},
+  ];
 
   // 중립 → Responses input
 
@@ -467,7 +474,8 @@ class OpenAiChatModel implements ChatModel {
               input: Map<String, Object?>.from(input! as Map),
             ),
           );
-        // reasoning 등은 parts 에 넣지 않고 vendorState 에만 둔다.
+        // reasoning · web_search_call 등은 parts 에 넣지 않고 vendorState 에만 둔다
+        // — web_search_call 은 벤더가 이미 실행했다(세션이 실행할 호출이 아니다).
       }
     }
     final details = response['incomplete_details'];
@@ -534,6 +542,16 @@ class OpenAiChatModel implements ChatModel {
     return null;
   }
 
+  /// web_search_call 의 검색어 — `action.query`, 없으면 `action.queries` 첫 항목.
+  /// 페이지 열기 · 찾기 동작이나 모양이 다르면 null.
+  static String? _webQueryOf(Map<Object?, Object?> item) =>
+      switch (item['action']) {
+        {'query': final String query} when query.trim().isNotEmpty => query,
+        {'queries': [final String query, ...]} when query.trim().isNotEmpty =>
+          query,
+        _ => null,
+      };
+
   /// 계측용 항목 종류 이름.
   static Object? _kindOfItem(Object? type) => switch (type) {
     'reasoning' => 'thinking',
@@ -579,6 +597,8 @@ class OpenAiChatModel implements ChatModel {
               'name': final String name,
             }:
               yield ModelEvent.toolCallStarted(id: id, name: name);
+            case {'type': 'web_search_call', 'id': final String id}:
+              yield ModelEvent.webSearch(id: id, query: _webQueryOf(item));
           }
         case 'response.output_item.done':
           final item = json['item'];
@@ -588,6 +608,11 @@ class OpenAiChatModel implements ChatModel {
             });
           }
           if (_readyOf(item) case final ready?) yield ready;
+          if (item case {'type': 'web_search_call', 'id': final String id}) {
+            if (_webQueryOf(item) case final query?) {
+              yield ModelEvent.webSearch(id: id, query: query);
+            }
+          }
         case 'response.completed' || 'response.incomplete':
           completed = true;
           final response = (json['response']! as Map).cast<String, Object?>();

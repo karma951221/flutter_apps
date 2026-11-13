@@ -36,4 +36,9 @@ abstract interface class ChatHistorySettings {
   WikiIndexSize get wikiIndexSize;
 
   Future<void> setWikiIndexSize(WikiIndexSize value);
+
+  /// 물어보기에서 내 기록(도구 · 위키)을 참고할까. 마지막 선택을 기억한다 — 처음엔 켬.
+  bool get useRecords;
+
+  Future<void> setUseRecords(bool value);
 }

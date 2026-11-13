@@ -238,6 +238,44 @@ bool supportsFallbacksOf(String modelId) {
   return major > minMajor || (major == minMajor && minor >= minMinor);
 }
 
+/// 웹 검색을 받지 않는 OpenAI 모델(확인 전 추정 — 보수적으로). 옛 gpt-4 계열(4o · 4.1 은
+/// 받는다) · gpt-3.5 · 4.1-nano · o1 · o3-mini.
+const List<String> _openAiNoWebSearch = [
+  r'^gpt-3\.5',
+  r'^gpt-4(?:-|$)',
+  r'^gpt-4\.1-nano',
+  r'^o1',
+  r'^o3-mini',
+];
+
+/// 벤더가 호스팅하는 웹 검색 도구를 이 모델에 붙일 수 있는가. Anthropic 은 `claude-` 계열
+/// 전부(옛 모델은 기본 버전, [anthropicWebSearchToolOf]), OpenAI 는 미지원 표 밖.
+bool supportsWebSearchOf(ChatVendor vendor, String modelId) => switch (vendor) {
+  ChatVendor.anthropic => _anthropicAllowed.hasMatch(modelId),
+  ChatVendor.openai => !_matchesAny(_openAiNoWebSearch, modelId),
+};
+
+/// 동적 거르기(검색 결과를 코드로 거른다)가 되는 웹 검색 버전.
+const anthropicWebSearchDynamic = 'web_search_20260209';
+
+/// 어디서나 되는 기본 웹 검색 버전.
+const anthropicWebSearchBasic = 'web_search_20250305';
+
+/// Anthropic 웹 검색 도구의 `type`. 동적 거르기 버전은 Fable · Mythos 5 이상과
+/// Opus · Sonnet 4.6 이상만 — Haiku(5.5 포함, 확인 전) · Sonnet 4.5 와 그 이전 · 모르는
+/// 이름은 기본 버전(어느 모델에서나 된다).
+String anthropicWebSearchToolOf(String modelId) {
+  final v = _anthropicVersionOf(modelId);
+  if (v == null) return anthropicWebSearchBasic;
+  final (family, major, minor) = v;
+  final filtering = switch (family) {
+    'fable' || 'mythos' => major >= 5,
+    'opus' || 'sonnet' => major > 4 || (major == 4 && minor >= 6),
+    _ => false,
+  };
+  return filtering ? anthropicWebSearchDynamic : anthropicWebSearchBasic;
+}
+
 (String, int, int)? _anthropicVersionOf(String modelId) {
   final match = _anthropicVersion.firstMatch(modelId);
   if (match == null) return null;

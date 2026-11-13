@@ -222,6 +222,41 @@ void main() {
     );
   }
 
+  testWidgets('[내 기록 참고] 칩이 모델 칩 옆에 켜진 채 보이고, 누르면 꺼지며 저장된다', (tester) async {
+    await pump(tester);
+
+    const key = Key('chat-use-records-chip');
+    expect(find.byKey(key), findsOneWidget);
+    expect(find.text('내 기록 참고'), findsOneWidget);
+    expect(tester.widget<FilterChip>(find.byKey(key)).selected, isTrue);
+
+    await tester.tap(find.byKey(key));
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<FilterChip>(find.byKey(key)).selected, isFalse);
+    expect(
+      (getIt<ChatHistorySettings>() as FakeChatHistorySettings).useRecords,
+      isFalse,
+    );
+
+    await tester.tap(find.byKey(key));
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilterChip>(find.byKey(key)).selected, isTrue);
+  });
+
+  testWidgets('저장된 선택이 꺼짐이면 꺼진 칩으로 시작한다', (tester) async {
+    (getIt<ChatHistorySettings>() as FakeChatHistorySettings).useRecords =
+        false;
+    await pump(tester);
+
+    expect(
+      tester
+          .widget<FilterChip>(find.byKey(const Key('chat-use-records-chip')))
+          .selected,
+      isFalse,
+    );
+  });
+
   testWidgets('예시 질문 칩을 누르면 질문을 보낸다', (tester) async {
     answer('산책을 했어요');
     await pump(tester);

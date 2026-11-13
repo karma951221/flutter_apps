@@ -152,6 +152,10 @@ class ChatState with _$ChatState {
 
   bool get canAttach => attachBlock == null;
 
+  /// [내 기록 참고] — 켜면 질문에 기록 도구 · 위키를 붙인다. 다음 질문부터 적용된다.
+  @override
+  final bool useRecords;
+
   const ChatState({
     required this.access,
     this.bubbles = const [],
@@ -168,6 +172,7 @@ class ChatState with _$ChatState {
     this.attachmentNotice,
     this.attachBlock,
     this.preparing = false,
+    this.useRecords = true,
   });
 
   /// 질문 · 답 글(말풍선 · 되돌린 질문)은 남기지 않는다.
@@ -181,5 +186,6 @@ class ChatState with _$ChatState {
       'selectionReplaced: $selectionReplaced, '
       'pendingAttachments: ${pendingAttachments.length}, '
       'attachmentNotice: ${attachmentNotice?.reason.name}, '
-      'attachBlock: ${attachBlock?.name}, preparing: $preparing)';
+      'attachBlock: ${attachBlock?.name}, preparing: $preparing, '
+      'useRecords: $useRecords)';
 }

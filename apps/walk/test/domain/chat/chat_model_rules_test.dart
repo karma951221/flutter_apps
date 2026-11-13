@@ -255,6 +255,72 @@ void main() {
     });
   });
 
+  group('anthropicWebSearchToolOf', () {
+    test('Fable · Mythos 5 이상 · Opus · Sonnet 4.6 이상만 동적 거르기 버전', () {
+      for (final (id, expected) in const [
+        ('claude-fable-5', anthropicWebSearchDynamic),
+        ('claude-fable-5-1', anthropicWebSearchDynamic),
+        ('claude-fable-5-2', anthropicWebSearchDynamic),
+        ('claude-mythos-5', anthropicWebSearchDynamic),
+        ('claude-mythos-5-2', anthropicWebSearchDynamic),
+        ('claude-opus-5-5', anthropicWebSearchDynamic),
+        ('claude-opus-5', anthropicWebSearchDynamic),
+        ('claude-opus-4-8', anthropicWebSearchDynamic),
+        ('claude-opus-4-7', anthropicWebSearchDynamic),
+        ('claude-opus-4-6', anthropicWebSearchDynamic),
+        ('claude-sonnet-5-5', anthropicWebSearchDynamic),
+        ('claude-sonnet-5', anthropicWebSearchDynamic),
+        ('claude-sonnet-4-6', anthropicWebSearchDynamic),
+        ('claude-haiku-5-5', anthropicWebSearchBasic),
+        ('claude-haiku-4-5-20251001', anthropicWebSearchBasic),
+        ('claude-sonnet-4-5-20250929', anthropicWebSearchBasic),
+        ('claude-opus-4-5-20251101', anthropicWebSearchBasic),
+        ('claude-sonnet-4-20250514', anthropicWebSearchBasic),
+        ('claude-3-5-sonnet-20241022', anthropicWebSearchBasic),
+        ('claude-haiku-x', anthropicWebSearchBasic),
+      ]) {
+        expect(anthropicWebSearchToolOf(id), expected, reason: id);
+      }
+    });
+  });
+
+  group('supportsWebSearchOf', () {
+    test('anthropic 은 claude- 전부', () {
+      expect(
+        supportsWebSearchOf(ChatVendor.anthropic, 'claude-haiku-4-5'),
+        isTrue,
+      );
+      expect(supportsWebSearchOf(ChatVendor.anthropic, 'gpt-5'), isFalse);
+    });
+
+    test('openai 는 미지원 표 밖만', () {
+      for (final (id, expected) in const [
+        ('gpt-5', true),
+        ('gpt-5.5-mini', true),
+        ('gpt-4o', true),
+        ('gpt-4o-mini', true),
+        ('gpt-4.1', true),
+        ('gpt-4.1-mini', true),
+        ('o3', true),
+        ('o4-mini', true),
+        ('gpt-4.1-nano', false),
+        ('gpt-4', false),
+        ('gpt-4-turbo', false),
+        ('gpt-4-0613', false),
+        ('gpt-3.5-turbo', false),
+        ('o1', false),
+        ('o1-mini', false),
+        ('o3-mini', false),
+      ]) {
+        expect(
+          supportsWebSearchOf(ChatVendor.openai, id),
+          expected,
+          reason: id,
+        );
+      }
+    });
+  });
+
   group('fastModeOf', () {
     test('기본 표는 비어 있어 null', () {
       expect(fastModeOf(ChatVendor.anthropic, 'claude-opus-9-9'), isNull);

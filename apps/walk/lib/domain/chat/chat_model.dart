@@ -91,7 +91,9 @@ abstract interface class VendorTurnState {
   String get model;
 }
 
-enum StopKind { endTurn, toolUse, refusal, maxTokens, other }
+/// [pauseTurn] — 벤더 서버 쪽 도구(웹 검색) 루프가 한 응답 안에서 끝나지 않아 멈췄다.
+/// 세션은 그 턴을 덧붙여 사용자 메시지 없이 다시 보낸다 — 벤더가 이어서 답한다.
+enum StopKind { endTurn, toolUse, pauseTurn, refusal, maxTokens, other }
 
 @freezed
 class TokenUsage with _$TokenUsage {
@@ -128,6 +130,10 @@ class TokenUsage with _$TokenUsage {
 /// | `toolCallStarted(id, name)` | 도구 호출 블록이 열리는 순간, 입력 완성 전 | `content_block_start(tool_use)` | 함수 호출 항목 추가 |
 /// | `toolCallReady(id, name, input)` | 그 블록의 입력이 완성된 순간. `completed.message` 의 `ToolCallPart` 와 **중복으로** 낸다 | `content_block_stop`(tool_use) | 함수 인자 완료 |
 /// | `textDelta(text)` | 그대로 | 그대로 | 그대로 |
+/// | `webSearch(id, query)` | 벤더 서버의 웹 검색이 열릴 때(query null) · 검색어를 알게 될 때(같은 id 로 다시) | `server_tool_use(web_search)` 시작 · 끝 | `web_search_call` 항목 추가 · 완료 |
+///
+/// 웹 검색은 벤더 서버가 실행한다 — 세션이 실행할 도구 호출(`toolCall*` · `ToolCallPart`)이
+/// 아니다. 그 블록 · 항목은 `vendorState` 에만 남아 같은 모델에 그대로 돌려보낸다.
 ///
 /// 순서 보장: 한 블록의 `toolCallStarted` 는 같은 id 의 `toolCallReady` 보다
 /// 먼저, 둘 다 `completed` 보다 먼저. 진행 이벤트는 기록(`completed.message` ·
@@ -153,6 +159,11 @@ sealed class ModelEvent with _$ModelEvent {
     required Map<String, Object?> input,
   }) = ModelToolCallReady;
 
+  /// 벤더 서버의 웹 검색 하나(진행 표시만). [query] 는 알게 됐을 때만 — 같은 [id] 로
+  /// 먼저 null, 뒤에 검색어가 올 수 있다(받는 쪽은 바꿔 끼운다).
+  const factory ModelEvent.webSearch({required String id, String? query}) =
+      ModelWebSearch;
+
   /// 한 응답이 끝났다. 사용량은 여기 한 곳(별도 usage 이벤트 없음). 못 읽으면 null.
   const factory ModelEvent.completed({
     required AssistantMessage message,
@@ -173,6 +184,7 @@ final class ModelRequest {
     required this.system,
     required this.messages,
     required this.tools,
+    this.webSearch = false,
   });
 
   final String apiKey;
@@ -182,10 +194,15 @@ final class ModelRequest {
   final List<ChatMessage> messages;
   final List<ToolSpec> tools;
 
+  /// 벤더가 호스팅하는 웹 검색 도구를 붙일까. 붙이는 모양(도구 종류 · 버전)은 어댑터
+  /// 몫이고, 그 모델이 받지 않으면 어댑터가 뺀다(`chat_model_rules.dart`).
+  final bool webSearch;
+
   @override
   String toString() =>
       'ModelRequest(model: $model, fastMode: $fastMode, '
-      'messages: ${messages.length}, tools: ${tools.length})';
+      'messages: ${messages.length}, tools: ${tools.length}, '
+      'webSearch: $webSearch)';
 }
 
 enum ChatModelErrorKind {
