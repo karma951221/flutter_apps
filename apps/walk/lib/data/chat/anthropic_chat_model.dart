@@ -379,6 +379,15 @@ class AnthropicChatModel implements ChatModel {
         },
       };
 
+  static Map<String, Object?> _pdfBlock(Uint8List bytes) => {
+    'type': 'document',
+    'source': {
+      'type': 'base64',
+      'media_type': 'application/pdf',
+      'data': base64Encode(bytes),
+    },
+  };
+
   static Map<String, Object?> _attachment(ChatAttachment attachment) =>
       switch (attachment) {
         ImageAttachment(:final mediaType, :final bytes) => {
@@ -389,14 +398,7 @@ class AnthropicChatModel implements ChatModel {
             'data': base64Encode(bytes),
           },
         },
-        PdfAttachment(:final bytes) => {
-          'type': 'document',
-          'source': {
-            'type': 'base64',
-            'media_type': 'application/pdf',
-            'data': base64Encode(bytes),
-          },
-        },
+        PdfAttachment(:final bytes) => _pdfBlock(bytes),
         TextAttachment() => {
           'type': 'text',
           'text': textAttachmentBlock(attachment),
@@ -428,6 +430,7 @@ class AnthropicChatModel implements ChatModel {
             'data': base64Encode(image.bytes),
           },
         },
+      for (final document in result.documents) _pdfBlock(document.bytes),
     ],
   };
 

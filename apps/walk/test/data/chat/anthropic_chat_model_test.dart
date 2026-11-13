@@ -2576,4 +2576,83 @@ void main() {
       ]);
     });
   });
+
+  group('도구 결과 PDF', () {
+    Future<Map<String, dynamic>> bodyOf(ModelRequest req) async {
+      late Map<String, dynamic> body;
+      await run(capture((b) => body = b), req);
+      return body;
+    }
+
+    test('documents 는 text 블록 뒤 document 블록으로', () async {
+      final body = await bodyOf(
+        request(
+          messages: [
+            ChatMessage.toolResults([
+              ToolResultPart(
+                callId: 'tu_1',
+                json: '{"ok":true}',
+                documents: [
+                  ToolDocument(
+                    name: 'a.pdf',
+                    bytes: Uint8List.fromList([7, 8]),
+                  ),
+                ],
+              ),
+            ]),
+          ],
+        ),
+      );
+      expect(body['messages'], [
+        {
+          'role': 'user',
+          'content': [
+            {
+              'type': 'tool_result',
+              'tool_use_id': 'tu_1',
+              'is_error': false,
+              'content': [
+                {'type': 'text', 'text': '{"ok":true}'},
+                {
+                  'type': 'document',
+                  'source': {
+                    'type': 'base64',
+                    'media_type': 'application/pdf',
+                    'data': base64Encode([7, 8]),
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ]);
+    });
+
+    test('documents 가 없으면 지금 모양 그대로', () async {
+      final body = await bodyOf(
+        request(
+          messages: const [
+            ChatMessage.toolResults([
+              ToolResultPart(callId: 'tu_1', json: '{}'),
+            ]),
+          ],
+        ),
+      );
+      expect(body['messages'], [
+        {
+          'role': 'user',
+          'content': [
+            {
+              'type': 'tool_result',
+              'tool_use_id': 'tu_1',
+              'is_error': false,
+              'content': [
+                {'type': 'text', 'text': '{}'},
+              ],
+            },
+          ],
+        },
+      ]);
+    });
+  });
 }

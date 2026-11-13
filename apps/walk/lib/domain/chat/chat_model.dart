@@ -56,11 +56,16 @@ class ToolResultPart with _$ToolResultPart {
   @override
   final List<ToolImage> images;
 
+  /// tool_result 에 붙는 PDF.
+  @override
+  final List<ToolDocument> documents;
+
   const ToolResultPart({
     required this.callId,
     required this.json,
     this.isError = false,
     this.images = const [],
+    this.documents = const [],
   });
 }
 

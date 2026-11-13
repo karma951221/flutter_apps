@@ -100,6 +100,7 @@ class OpenAiChatModel implements ChatModel {
 
   /// 도구 결과 사진을 뒤따르는 user 입력에 실을 때 앞에 붙는 글.
   static const _toolImagesLabel = '(도구 결과 사진)';
+  static const _toolFilesLabel = '(도구 결과 파일)';
 
   @override
   ChatVendor get vendor => ChatVendor.openai;
@@ -282,17 +283,19 @@ class OpenAiChatModel implements ChatModel {
         ToolResultsMessage(:final results) => _toolResults(results),
       };
 
+  static Map<String, Object?> _fileBlock(String name, Uint8List bytes) => {
+    'type': 'input_file',
+    'filename': name,
+    'file_data': 'data:application/pdf;base64,${base64Encode(bytes)}',
+  };
+
   static Map<String, Object?> _attachment(ChatAttachment attachment) =>
       switch (attachment) {
         ImageAttachment(:final mediaType, :final bytes) => {
           'type': 'input_image',
           'image_url': 'data:$mediaType;base64,${base64Encode(bytes)}',
         },
-        PdfAttachment(:final name, :final bytes) => {
-          'type': 'input_file',
-          'filename': name,
-          'file_data': 'data:application/pdf;base64,${base64Encode(bytes)}',
-        },
+        PdfAttachment(:final name, :final bytes) => _fileBlock(name, bytes),
         TextAttachment() => {
           'type': 'input_text',
           'text': textAttachmentBlock(attachment),
@@ -327,11 +330,12 @@ class OpenAiChatModel implements ChatModel {
           {
             'type': 'function_call_output',
             'call_id': r.callId,
-            'output': r.images.isEmpty
+            'output': r.images.isEmpty && r.documents.isEmpty
                 ? r.json
                 : [
                     {'type': 'input_text', 'text': r.json},
                     for (final i in r.images) image(i),
+                    for (final d in r.documents) _fileBlock(d.name, d.bytes),
                   ],
           },
       ];
@@ -340,15 +344,23 @@ class OpenAiChatModel implements ChatModel {
       for (final r in results)
         for (final i in r.images) image(i),
     ];
+    final files = [
+      for (final r in results)
+        for (final d in r.documents) _fileBlock(d.name, d.bytes),
+    ];
     return [
       for (final r in results)
         {'type': 'function_call_output', 'call_id': r.callId, 'output': r.json},
-      if (images.isNotEmpty)
+      if (images.isNotEmpty || files.isNotEmpty)
         {
           'role': 'user',
           'content': [
-            {'type': 'input_text', 'text': _toolImagesLabel},
+            {
+              'type': 'input_text',
+              'text': files.isEmpty ? _toolImagesLabel : _toolFilesLabel,
+            },
             ...images,
+            ...files,
           ],
         },
     ];

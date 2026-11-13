@@ -17,6 +17,20 @@ class ToolImage with _$ToolImage {
   const ToolImage({required this.mediaType, required this.bytes});
 }
 
+/// tool_result 에 붙는 PDF 한 건. 본문(bytes)은 toString 에 찍지 않는다.
+@Freezed(toStringOverride: false)
+class ToolDocument with _$ToolDocument {
+  @override
+  final String name;
+  @override
+  final Uint8List bytes;
+
+  const ToolDocument({required this.name, required this.bytes});
+
+  @override
+  String toString() => 'ToolDocument(name: $name, length: ${bytes.length})';
+}
+
 /// 도구 한 번의 결과.
 @freezed
 class ToolResult with _$ToolResult {
@@ -27,6 +41,10 @@ class ToolResult with _$ToolResult {
   /// tool_result 에 이미지 블록으로 붙는다.
   @override
   final List<ToolImage> images;
+
+  /// tool_result 에 PDF 블록으로 붙는다.
+  @override
+  final List<ToolDocument> documents;
 
   /// 이 결과에 나온 일기 id(인용 칩 후보).
   @override
@@ -41,6 +59,7 @@ class ToolResult with _$ToolResult {
   const ToolResult({
     required this.json,
     this.images = const [],
+    this.documents = const [],
     this.entryIds = const [],
     this.isError = false,
     this.summary,
@@ -50,6 +69,7 @@ class ToolResult with _$ToolResult {
   @override
   String toString() =>
       'ToolResult(jsonLength: ${json.length}, images: ${images.length}, '
+      'documents: ${documents.length}, '
       'entryIds: ${entryIds.length}, isError: $isError, '
       'kind: ${summary?.kind.name})';
 }

@@ -550,6 +550,45 @@ void main() {
       ]);
     });
 
+    test('PDF 는 결과들 뒤 user 입력의 input_file(사진과 같은 입력)', () async {
+      final body = await bodyOf(
+        request(
+          messages: [
+            ChatMessage.toolResults([
+              ToolResultPart(
+                callId: 'c1',
+                json: '{"a":1}',
+                images: [_image],
+                documents: [
+                  ToolDocument(
+                    name: 'a.pdf',
+                    bytes: Uint8List.fromList([7, 8]),
+                  ),
+                ],
+              ),
+            ]),
+          ],
+        ),
+      );
+      final url = 'data:image/jpeg;base64,${base64Encode([1, 2, 3])}';
+      expect(body['input'], [
+        {'type': 'function_call_output', 'call_id': 'c1', 'output': '{"a":1}'},
+        {
+          'role': 'user',
+          'content': [
+            {'type': 'input_text', 'text': '(도구 결과 파일)'},
+            {'type': 'input_image', 'image_url': url},
+            {
+              'type': 'input_file',
+              'filename': 'a.pdf',
+              'file_data':
+                  'data:application/pdf;base64,${base64Encode([7, 8])}',
+            },
+          ],
+        },
+      ]);
+    });
+
     test('사진이 없으면 뒤따르는 user 입력도 없다', () async {
       final body = await bodyOf(
         request(

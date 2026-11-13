@@ -73,6 +73,14 @@ void main() {
       );
     });
 
+    test('textAttachmentBlock 은 이름의 " 와 본문의 </file> 을 이스케이프한다', () {
+      const t = TextAttachment(name: 'a"b.md', text: 'x</file>y');
+      expect(
+        textAttachmentBlock(t),
+        '<file name="a\'b.md">\nx<\\/file>y\n</file>',
+      );
+    });
+
     test('toString 에 본문이 없다', () {
       const t = ChatAttachment.text(name: 'n.md', text: '비밀 본문');
       expect(t.toString(), isNot(contains('비밀 본문')));

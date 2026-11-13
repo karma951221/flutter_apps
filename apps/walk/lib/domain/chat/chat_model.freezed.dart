@@ -674,7 +674,7 @@ as Map<String, Object?>,
 /// @nodoc
 mixin _$ToolResultPart {
 
- String get callId; String get json; bool get isError; List<ToolImage> get images;
+ String get callId; String get json; bool get isError; List<ToolImage> get images; List<ToolDocument> get documents;
 /// Create a copy of ToolResultPart
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -685,12 +685,12 @@ $ToolResultPartCopyWith<ToolResultPart> get copyWith => _$ToolResultPartCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ToolResultPart&&(identical(other.callId, callId) || other.callId == callId)&&(identical(other.json, json) || other.json == json)&&(identical(other.isError, isError) || other.isError == isError)&&const DeepCollectionEquality().equals(other.images, images));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ToolResultPart&&(identical(other.callId, callId) || other.callId == callId)&&(identical(other.json, json) || other.json == json)&&(identical(other.isError, isError) || other.isError == isError)&&const DeepCollectionEquality().equals(other.images, images)&&const DeepCollectionEquality().equals(other.documents, documents));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,callId,json,isError,const DeepCollectionEquality().hash(images));
+int get hashCode => Object.hash(runtimeType,callId,json,isError,const DeepCollectionEquality().hash(images),const DeepCollectionEquality().hash(documents));
 
 
 
@@ -701,7 +701,7 @@ abstract mixin class $ToolResultPartCopyWith<$Res>  {
   factory $ToolResultPartCopyWith(ToolResultPart value, $Res Function(ToolResultPart) _then) = _$ToolResultPartCopyWithImpl;
 @useResult
 $Res call({
- String callId, String json, bool isError, List<ToolImage> images
+ String callId, String json, bool isError, List<ToolImage> images, List<ToolDocument> documents
 });
 
 
@@ -718,13 +718,14 @@ class _$ToolResultPartCopyWithImpl<$Res>
 
 /// Create a copy of ToolResultPart
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? callId = null,Object? json = null,Object? isError = null,Object? images = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? callId = null,Object? json = null,Object? isError = null,Object? images = null,Object? documents = null,}) {
   return _then(ToolResultPart(
 callId: null == callId ? _self.callId : callId // ignore: cast_nullable_to_non_nullable
 as String,json: null == json ? _self.json : json // ignore: cast_nullable_to_non_nullable
 as String,isError: null == isError ? _self.isError : isError // ignore: cast_nullable_to_non_nullable
 as bool,images: null == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
-as List<ToolImage>,
+as List<ToolImage>,documents: null == documents ? _self.documents : documents // ignore: cast_nullable_to_non_nullable
+as List<ToolDocument>,
   ));
 }
 

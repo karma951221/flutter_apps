@@ -198,9 +198,191 @@ case _:
 }
 
 /// @nodoc
+mixin _$ToolDocument {
+
+ String get name; Uint8List get bytes;
+/// Create a copy of ToolDocument
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ToolDocumentCopyWith<ToolDocument> get copyWith => _$ToolDocumentCopyWithImpl<ToolDocument>(this as ToolDocument, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ToolDocument&&(identical(other.name, name) || other.name == name)&&const DeepCollectionEquality().equals(other.bytes, bytes));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,name,const DeepCollectionEquality().hash(bytes));
+
+
+
+}
+
+/// @nodoc
+abstract mixin class $ToolDocumentCopyWith<$Res>  {
+  factory $ToolDocumentCopyWith(ToolDocument value, $Res Function(ToolDocument) _then) = _$ToolDocumentCopyWithImpl;
+@useResult
+$Res call({
+ String name, Uint8List bytes
+});
+
+
+
+
+}
+/// @nodoc
+class _$ToolDocumentCopyWithImpl<$Res>
+    implements $ToolDocumentCopyWith<$Res> {
+  _$ToolDocumentCopyWithImpl(this._self, this._then);
+
+  final ToolDocument _self;
+  final $Res Function(ToolDocument) _then;
+
+/// Create a copy of ToolDocument
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? bytes = null,}) {
+  return _then(ToolDocument(
+name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,bytes: null == bytes ? _self.bytes : bytes // ignore: cast_nullable_to_non_nullable
+as Uint8List,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [ToolDocument].
+extension ToolDocumentPatterns on ToolDocument {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(){
+final _that = this;
+switch (_that) {
+case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(){
+final _that = this;
+switch (_that) {
+case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>() {final _that = this;
+switch (_that) {
+case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>() {final _that = this;
+switch (_that) {
+case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
 mixin _$ToolResult {
 
- String get json; List<ToolImage> get images; List<String> get entryIds; bool get isError; ToolSummary? get summary;
+ String get json; List<ToolImage> get images; List<ToolDocument> get documents; List<String> get entryIds; bool get isError; ToolSummary? get summary;
 /// Create a copy of ToolResult
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -211,12 +393,12 @@ $ToolResultCopyWith<ToolResult> get copyWith => _$ToolResultCopyWithImpl<ToolRes
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ToolResult&&(identical(other.json, json) || other.json == json)&&const DeepCollectionEquality().equals(other.images, images)&&const DeepCollectionEquality().equals(other.entryIds, entryIds)&&(identical(other.isError, isError) || other.isError == isError)&&(identical(other.summary, summary) || other.summary == summary));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ToolResult&&(identical(other.json, json) || other.json == json)&&const DeepCollectionEquality().equals(other.images, images)&&const DeepCollectionEquality().equals(other.documents, documents)&&const DeepCollectionEquality().equals(other.entryIds, entryIds)&&(identical(other.isError, isError) || other.isError == isError)&&(identical(other.summary, summary) || other.summary == summary));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,json,const DeepCollectionEquality().hash(images),const DeepCollectionEquality().hash(entryIds),isError,summary);
+int get hashCode => Object.hash(runtimeType,json,const DeepCollectionEquality().hash(images),const DeepCollectionEquality().hash(documents),const DeepCollectionEquality().hash(entryIds),isError,summary);
 
 
 
@@ -227,7 +409,7 @@ abstract mixin class $ToolResultCopyWith<$Res>  {
   factory $ToolResultCopyWith(ToolResult value, $Res Function(ToolResult) _then) = _$ToolResultCopyWithImpl;
 @useResult
 $Res call({
- String json, List<ToolImage> images, List<String> entryIds, bool isError, ToolSummary? summary
+ String json, List<ToolImage> images, List<ToolDocument> documents, List<String> entryIds, bool isError, ToolSummary? summary
 });
 
 
@@ -244,11 +426,12 @@ class _$ToolResultCopyWithImpl<$Res>
 
 /// Create a copy of ToolResult
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? json = null,Object? images = null,Object? entryIds = null,Object? isError = null,Object? summary = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? json = null,Object? images = null,Object? documents = null,Object? entryIds = null,Object? isError = null,Object? summary = freezed,}) {
   return _then(ToolResult(
 json: null == json ? _self.json : json // ignore: cast_nullable_to_non_nullable
 as String,images: null == images ? _self.images : images // ignore: cast_nullable_to_non_nullable
-as List<ToolImage>,entryIds: null == entryIds ? _self.entryIds : entryIds // ignore: cast_nullable_to_non_nullable
+as List<ToolImage>,documents: null == documents ? _self.documents : documents // ignore: cast_nullable_to_non_nullable
+as List<ToolDocument>,entryIds: null == entryIds ? _self.entryIds : entryIds // ignore: cast_nullable_to_non_nullable
 as List<String>,isError: null == isError ? _self.isError : isError // ignore: cast_nullable_to_non_nullable
 as bool,summary: freezed == summary ? _self.summary : summary // ignore: cast_nullable_to_non_nullable
 as ToolSummary?,
