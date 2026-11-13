@@ -13,6 +13,12 @@ enum ChatToolKind {
   /// read_wiki
   wiki,
 
+  /// list_files
+  listFiles,
+
+  /// read_file
+  readFile,
+
   /// 벤더 서버의 웹 검색(web_search). 세션이 실행하지 않고 결과 개수도 없다.
   webSearch,
   other,
@@ -25,6 +31,8 @@ ChatToolKind chatToolKindOf(String name) => switch (name) {
   'daily_steps' => ChatToolKind.dailySteps,
   'wake_records' => ChatToolKind.wakeRecords,
   'read_wiki' => ChatToolKind.wiki,
+  'list_files' => ChatToolKind.listFiles,
+  'read_file' => ChatToolKind.readFile,
   'web_search' => ChatToolKind.webSearch,
   _ => ChatToolKind.other,
 };

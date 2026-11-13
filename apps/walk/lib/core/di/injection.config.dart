@@ -98,6 +98,7 @@ import '../../domain/chat/secure_window.dart' as _i555;
 import '../../domain/chat/tool/chat_image_source.dart' as _i858;
 import '../../domain/chat/tool/life_tools.dart' as _i70;
 import '../../domain/chat/tool/wiki_tools.dart' as _i268;
+import '../../domain/chat/tool/workspace_tools.dart' as _i215;
 import '../../domain/chat/usecase/chat_history_pruner.dart' as _i539;
 import '../../domain/chat/usecase/chat_key_verifier.dart' as _i5;
 import '../../domain/chat/usecase/chat_model_choice.dart' as _i317;
@@ -445,6 +446,13 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i91.SettingsRepository>(),
         gh<_i353.RingLogSource>(),
         gh<_i920.NextAlarmWidget>(),
+      ),
+    );
+    gh.lazySingleton<_i215.WorkspaceTools>(
+      () => _i215.WorkspaceTools(
+        gh<_i1060.Workspace>(),
+        gh<_i695.AttachmentLoader>(),
+        gh<_i494.Clock>(),
       ),
     );
     gh.lazySingleton<_i567.DiaryUseCase>(

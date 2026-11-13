@@ -54,6 +54,9 @@ String _toolLabel(AppLocalizations l10n, String locale, StepTool step) {
     ChatToolKind.wakeRecords => l10n.walkChatToolWakeRecords,
     ChatToolKind.wiki => l10n.walkChatToolReadWiki,
     ChatToolKind.webSearch => l10n.walkChatToolWebSearch,
+    // 라벨 문구는 Task 3.
+    ChatToolKind.listFiles ||
+    ChatToolKind.readFile ||
     ChatToolKind.other => l10n.walkChatToolOther,
   };
   final detail = _detail(l10n, locale, step.kind, step.input);
@@ -109,7 +112,10 @@ String? _resultText(AppLocalizations l10n, ToolSummary? result) {
     ChatToolKind.wakeRecords => l10n.walkChatToolFoundWake(count),
     ChatToolKind.wiki => l10n.walkChatToolFoundWiki(count),
     // 웹 검색은 결과를 세지 않는다 · 알 수 없는 도구는 개수 단위를 모른다 — 라벨 그대로.
-    ChatToolKind.webSearch || ChatToolKind.other => null,
+    ChatToolKind.webSearch ||
+    ChatToolKind.listFiles ||
+    ChatToolKind.readFile ||
+    ChatToolKind.other => null,
   };
 }
 
