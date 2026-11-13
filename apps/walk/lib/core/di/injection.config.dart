@@ -190,9 +190,6 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i98.MapOpenRequests(),
       dispose: (i) => i.dispose(),
     );
-    gh.factory<_i211.ChatFilePicker>(
-      () => _i211.ChatFilePicker(gh<_i488.MediaPickGuard>()),
-    );
     gh.lazySingleton<_i494.IdGenerator>(
       () => registerModule.idGenerator(gh<_i706.Uuid>()),
     );
@@ -220,6 +217,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i287.MediaPicker>(
       () => _i287.MediaPicker(gh<_i488.MediaPickGuard>()),
+    );
+    gh.factory<_i211.ChatFilePicker>(
+      () => _i211.ChatFilePicker(gh<_i488.MediaPickGuard>()),
     );
     gh.lazySingleton<_i344.AlarmSoundSource>(
       () => _i793.ChannelAlarmSoundSource(),
