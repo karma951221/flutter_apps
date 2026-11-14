@@ -73,6 +73,7 @@ import '../../data/walk/health/health_gateway.dart' as _i332;
 import '../../data/walk/repository/health_connect_activity_repository.dart'
     as _i1016;
 import '../../data/weather/open_meteo_weather_repository.dart' as _i850;
+import '../../data/weather/prefs_weather_cache.dart' as _i370;
 import '../../data/weather/weather_location_source.dart' as _i1033;
 import '../../domain/alarm/holiday/device_holiday_source.dart' as _i77;
 import '../../domain/alarm/holiday/holiday_calendar.dart' as _i961;
@@ -137,6 +138,7 @@ import '../../domain/settings/repository/settings_repository.dart' as _i91;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
 import '../../domain/weather/repository/weather_repository.dart' as _i903;
+import '../../domain/weather/weather_cache.dart' as _i858;
 import '../../domain/weather/weather_locator.dart' as _i283;
 import '../../presentation/chat/attachment/chat_file_picker.dart' as _i211;
 import '../../presentation/chat/workspace/workspace_share.dart' as _i835;
@@ -297,6 +299,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i645.AnthropicChatModel>(),
         gh<_i442.OpenAiChatModel>(),
       ),
+    );
+    gh.lazySingleton<_i858.WeatherCache>(
+      () => _i370.PrefsWeatherCache(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i43.LockRepository>(
       () => _i691.PrefsLockRepository(gh<_i460.SharedPreferences>()),
