@@ -1285,7 +1285,7 @@
   "walkMapFrequentTitle": "Frequent places",
   "walkMapUnnamedPlace": "Unnamed place",
   "walkMapFrequentRank": "Place #{rank}",
-  "walkMapFrequentVisits": "{count} visits · {duration}",
+  "walkMapFrequentVisits": "{count, plural, =1{1 visit · {duration}} other{{count} visits · {duration}}}",
   "walkMapDurationMinutes": "{minutes} min",
   "walkMapDurationHours": "{hours} h",
   "walkMapDurationHoursMinutes": "{hours} h {minutes} min",

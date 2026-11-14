@@ -85,4 +85,53 @@ void main() {
     expect(identical(drawnPoints(tester), first), isFalse);
     expect(drawnPoints(tester).first, const LatLng(37.6, 127.0));
   });
+
+  group('같은 기간에 점이 늘면', () {
+    MapCamera camera(WidgetTester tester) =>
+        MapCamera.of(tester.element(find.byType(PolylineLayer)));
+
+    bool onScreen(WidgetTester tester, LatLng p) {
+      final o = camera(tester).latLngToScreenOffset(p);
+      final size = camera(tester).nonRotatedSize;
+      return o.dx >= 0 &&
+          o.dy >= 0 &&
+          o.dx <= size.width &&
+          o.dy <= size.height;
+    }
+
+    testWidgets('새 점이 화면 밖이면 카메라를 다시 맞춘다', (tester) async {
+      await pump(tester, _track(37.5));
+      const far = LatLng(37.9, 127.0);
+      expect(onScreen(tester, far), isFalse);
+
+      await pump(tester, _track(37.9));
+      await tester.pumpAndSettle();
+
+      expect(onScreen(tester, far), isTrue);
+    });
+
+    testWidgets('새 점이 화면 안이면 카메라를 그대로 둔다', (tester) async {
+      await pump(tester, _track(37.5));
+      await tester.pumpAndSettle();
+      final before = camera(tester).center;
+
+      // 새로고침으로 같은 점의 새 이동선이 온다 — 모두 화면 안.
+      await pump(tester, _track(37.5));
+      await tester.pumpAndSettle();
+
+      expect(camera(tester).center, before);
+    });
+
+    testWidgets('직접 지도를 옮긴 뒤에는 따라가지 않는다', (tester) async {
+      await pump(tester, _track(37.5));
+      await tester.drag(find.byType(FlutterMap), const Offset(0, 200));
+      await tester.pumpAndSettle();
+      final moved = camera(tester).center;
+
+      await pump(tester, _track(37.9));
+      await tester.pumpAndSettle();
+
+      expect(camera(tester).center, moved);
+    });
+  });
 }

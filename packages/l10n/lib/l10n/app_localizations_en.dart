@@ -4541,7 +4541,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkMapFrequentVisits(int count, String duration) {
-    return '$count visits · $duration';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count visits · $duration',
+      one: '1 visit · $duration',
+    );
+    return '$_temp0';
   }
 
   @override

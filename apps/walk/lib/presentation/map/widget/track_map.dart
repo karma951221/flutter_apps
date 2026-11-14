@@ -21,7 +21,8 @@ import 'entry_pin.dart';
 /// 시트를 끌거나 칩 상태가 바뀌는 다시 그리기마다 만들면 버벅인다.
 ///
 /// [fitKey] 가 바뀌고(다른 기간) 그릴 좌표가 생기면 카메라를 그 좌표들에 맞춘다. 같은 기간을
-/// 다시 읽어도(복귀 · 새로고침) 카메라는 그대로 둔다. [TrackMapState.moveTo] 로 한 점에 간다.
+/// 다시 읽으면(복귀 · 새로고침) 새 좌표가 화면(시트 위) 밖으로 나갈 때만 다시 맞춘다 — 그 기간에
+/// 사용자가 지도를 직접 옮겼거나 [TrackMapState.moveTo] 로 한 점에 갔으면 그대로 둔다.
 class TrackMap extends StatefulWidget {
   const TrackMap({
     required this.track,
@@ -79,6 +80,9 @@ class TrackMapState extends State<TrackMap> {
 
   Object? _fitted;
 
+  /// 마지막 맞춤 뒤 사용자가 지도를 옮겼다(손 · [moveTo]). 그러면 같은 기간에 점이 늘어도 따라가지 않는다.
+  bool _userMoved = false;
+
   /// [_segmentPoints] · [_trackCoordinates] 를 만든 이동선. 같은 인스턴스면 다시 쓴다.
   DayTrack? _memoTrack;
   List<List<LatLng>> _memoSegments = const [];
@@ -116,13 +120,36 @@ class TrackMapState extends State<TrackMap> {
   @override
   void didUpdateWidget(TrackMap oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.fitKey == _fitted) return;
     final coordinates = _coordinates();
     if (coordinates.isEmpty) return;
-    _fitted = widget.fitKey;
-    // 빌드 중에 카메라를 옮기지 않는다.
+    if (widget.fitKey != _fitted) {
+      _fitted = widget.fitKey;
+      // 빌드 중에 카메라를 옮기지 않는다.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _fit(coordinates);
+      });
+      return;
+    }
+    if (_userMoved || !_sourcesChanged(oldWidget)) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _fit(coordinates);
+      if (mounted && !_userMoved && !_allVisible(coordinates)) {
+        _fit(coordinates);
+      }
+    });
+  }
+
+  bool _sourcesChanged(TrackMap old) =>
+      !identical(old.track, widget.track) ||
+      !identical(old.entries, widget.entries);
+
+  /// 모든 좌표가 시트에 가리지 않은 화면 안에 있나.
+  bool _allVisible(List<LatLng> coordinates) {
+    final camera = _controller.camera;
+    final size = camera.nonRotatedSize;
+    final bottom = size.height - widget.bottomInset;
+    return coordinates.every((p) {
+      final o = camera.latLngToScreenOffset(p);
+      return o.dx >= 0 && o.dx <= size.width && o.dy >= 0 && o.dy <= bottom;
     });
   }
 
@@ -133,10 +160,13 @@ class TrackMapState extends State<TrackMap> {
   }
 
   /// 지도를 한 점으로 옮긴다(타임라인 · 자주 간 곳 행).
-  void moveTo(double lat, double lng) => _controller.move(
-    LatLng(lat, lng),
-    math.max(_controller.camera.zoom, _placeZoom),
-  );
+  void moveTo(double lat, double lng) {
+    _userMoved = true;
+    _controller.move(
+      LatLng(lat, lng),
+      math.max(_controller.camera.zoom, _placeZoom),
+    );
+  }
 
   List<LatLng> _coordinates() => [
     ..._trackCoordinates,
@@ -151,6 +181,7 @@ class TrackMapState extends State<TrackMap> {
   ).copyWith(bottom: AppSpacing.xl + widget.bottomInset);
 
   void _fit(List<LatLng> coordinates) {
+    _userMoved = false;
     if (_isSinglePlace(coordinates)) {
       _controller.move(coordinates.first, _placeZoom);
     } else {
@@ -198,6 +229,9 @@ class TrackMapState extends State<TrackMap> {
                 coordinates: coordinates,
                 padding: _fitPadding,
               ),
+        onPositionChanged: (_, hasGesture) {
+          if (hasGesture) _userMoved = true;
+        },
         interactionOptions: const InteractionOptions(
           flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
         ),
