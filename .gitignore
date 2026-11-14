@@ -3,3 +3,7 @@
 .flutter-plugins-dependencies
 build/
 coverage/
+
+# IDE (IntelliJ · Android Studio)
+.idea/
+*.iml
