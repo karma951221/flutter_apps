@@ -7698,10 +7698,10 @@ abstract class AppLocalizations {
   /// **'기록 꺼짐 · 권한 필요'**
   String get walkMapChipBlocked;
 
-  /// 지도 — 지도 모양 버튼 툴팁 · 시트 제목
+  /// 지도 — 지도 종류 버튼 툴팁 · 시트 제목
   ///
   /// In ko, this message translates to:
-  /// **'지도 모양'**
+  /// **'지도 종류'**
   String get walkMapStyle;
 
   /// 지도 모양 — OSM 기본
@@ -7716,7 +7716,7 @@ abstract class AppLocalizations {
   /// **'길 · 건물 · 가게까지 자세히'**
   String get walkMapStyleStandardDetail;
 
-  /// 지도 모양 — 옅은 색 단순 지도
+  /// 지도 모양 — OSM 기본에 색을 빼고 옅게 씌운 지도
   ///
   /// In ko, this message translates to:
   /// **'단순'**
@@ -7725,20 +7725,32 @@ abstract class AppLocalizations {
   /// 지도 모양 — 단순 설명
   ///
   /// In ko, this message translates to:
-  /// **'옅은 색에 큰 길과 지명만'**
+  /// **'색을 빼고 옅게 — 동선이 잘 보여요'**
   String get walkMapStyleSimpleDetail;
 
-  /// 지도 모양 — 라벨 없는 지도
+  /// 지도 종류 — OpenTopoMap 지형도
   ///
   /// In ko, this message translates to:
-  /// **'글자 없이'**
-  String get walkMapStylePlain;
+  /// **'지형'**
+  String get walkMapStyleTerrain;
 
-  /// 지도 모양 — 글자 없이 설명
+  /// 지도 종류 — 지형 설명
   ///
   /// In ko, this message translates to:
-  /// **'글자 없이 길 모양만'**
-  String get walkMapStylePlainDetail;
+  /// **'등고선 · 산 높이까지'**
+  String get walkMapStyleTerrainDetail;
+
+  /// 지도 종류 — Esri 위성 사진
+  ///
+  /// In ko, this message translates to:
+  /// **'위성'**
+  String get walkMapStyleSatellite;
+
+  /// 지도 종류 — 위성 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'위성 사진'**
+  String get walkMapStyleSatelliteDetail;
 
   /// 지도 모양 — 어두운 지도
   ///
@@ -7749,7 +7761,7 @@ abstract class AppLocalizations {
   /// 지도 모양 — 어둡게 설명
   ///
   /// In ko, this message translates to:
-  /// **'어두운 바탕에 큰 길과 지명'**
+  /// **'기본 지도를 어둡게'**
   String get walkMapStyleDarkDetail;
 
   /// 지도 — 하루 · 스토리 보기 시트 제목(머문 곳 시간순)

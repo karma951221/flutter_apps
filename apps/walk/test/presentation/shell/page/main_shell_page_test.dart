@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:walk/domain/location/repository/map_style_preferences.dart';
+import 'package:walk/presentation/map/cubit/map_style_cubit.dart';
 import 'package:walk/domain/chat/attachment/attachment_loader.dart';
 import 'package:walk/domain/chat/attachment/attachment_rules.dart';
 import 'package:walk/domain/chat/workspace/workspace.dart';
@@ -1180,7 +1180,10 @@ void main() {
         ..registerSingleton<LocationPreferences>(prefs)
         ..registerSingleton<LocationRepository>(locations)
         ..registerFactory<TileProvider>(StubTileProvider.new)
-        ..registerSingleton<MapStylePreferences>(FakeMapStylePreferences());
+        ..registerSingleton<MapStyleCubit>(
+          MapStyleCubit(FakeMapStylePreferences()),
+          dispose: (c) => c.close(),
+        );
     });
 
     testWidgets('지도를 보던 중 복귀하면 기록 상태와 지도를 다시 읽는다', (tester) async {

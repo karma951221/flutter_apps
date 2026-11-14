@@ -4,11 +4,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../data/location/background_location_access.dart';
+import 'package:core/core.dart';
+
+import '../../../domain/location/entity/map_style.dart';
 import '../../../domain/location/entity/record_mode.dart';
 import '../../../domain/location/entity/record_retention.dart';
 import '../../../domain/location/recorder/recorder_status.dart';
 import '../../map/cubit/map_record_cubit.dart';
 import '../../map/cubit/map_record_state.dart';
+import '../../map/cubit/map_style_cubit.dart';
+import '../../map/widget/map_style_sheet.dart';
 import '../../map/widget/enable_location_record.dart';
 import '../widget/settings_widgets.dart';
 
@@ -56,6 +61,7 @@ class _MapSettingsPageState extends State<MapSettingsPage>
             _RecordTile(state: state),
             _DenseTile(state: state),
             _RetentionTile(state: state),
+            const _StyleTile(),
             AppListTile(
               key: const Key('map-settings-battery'),
               leading: const Icon(Icons.battery_saver_outlined),
@@ -182,6 +188,31 @@ class _RetentionTile extends StatelessWidget {
         );
         if (result != null) await cubit.setRetention(result);
       },
+    );
+  }
+}
+
+/// 지도 모양 행. 누르면 지도에서 쓰는 것과 같은 시트. 앱 전체 [MapStyleCubit] 을 바꿔
+/// 뒤에 있는 지도도 바로 따라 바뀐다.
+class _StyleTile extends StatelessWidget {
+  const _StyleTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final cubit = getIt<MapStyleCubit>();
+    return BlocBuilder<MapStyleCubit, MapStyle>(
+      bloc: cubit,
+      builder: (context, style) => AppListTile(
+        key: const Key('map-settings-style'),
+        leading: const Icon(Icons.layers_outlined),
+        title: Text(l10n.walkMapStyle),
+        trailing: Text(mapStyleLabel(l10n, style)),
+        onTap: () async {
+          final picked = await showMapStyleSheet(context, current: style);
+          if (picked != null) await cubit.select(picked);
+        },
+      ),
     );
   }
 }

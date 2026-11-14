@@ -21,7 +21,8 @@ import 'entry_pin.dart';
 /// 시트를 끌거나 칩 상태가 바뀌는 다시 그리기마다 만들면 버벅인다.
 ///
 /// [fitKey] 가 바뀌고(다른 기간) 그릴 좌표가 생기면 카메라를 그 좌표들에 맞춘다. 같은 기간을
-/// 다시 읽어도(복귀 · 새로고침) 카메라는 그대로 둔다. [TrackMapState.moveTo] 로 한 점에 간다.
+/// 다시 읽으면(복귀 · 새로고침) 새 좌표가 화면(시트 위) 밖으로 나갈 때만 다시 맞춘다 — 그 기간에
+/// 사용자가 지도를 직접 옮겼거나 [TrackMapState.moveTo] 로 한 점에 갔으면 그대로 둔다.
 class TrackMap extends StatefulWidget {
   const TrackMap({
     required this.track,
@@ -79,6 +80,9 @@ class TrackMapState extends State<TrackMap> {
 
   Object? _fitted;
 
+  /// 마지막 맞춤 뒤 사용자가 지도를 옮겼다(손 · [moveTo]). 그러면 같은 기간에 점이 늘어도 따라가지 않는다.
+  bool _userMoved = false;
+
   /// [_segmentPoints] · [_trackCoordinates] 를 만든 이동선. 같은 인스턴스면 다시 쓴다.
   DayTrack? _memoTrack;
   List<List<LatLng>> _memoSegments = const [];
@@ -116,13 +120,36 @@ class TrackMapState extends State<TrackMap> {
   @override
   void didUpdateWidget(TrackMap oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.fitKey == _fitted) return;
     final coordinates = _coordinates();
     if (coordinates.isEmpty) return;
-    _fitted = widget.fitKey;
-    // 빌드 중에 카메라를 옮기지 않는다.
+    if (widget.fitKey != _fitted) {
+      _fitted = widget.fitKey;
+      // 빌드 중에 카메라를 옮기지 않는다.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _fit(coordinates);
+      });
+      return;
+    }
+    if (_userMoved || !_sourcesChanged(oldWidget)) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _fit(coordinates);
+      if (mounted && !_userMoved && !_allVisible(coordinates)) {
+        _fit(coordinates);
+      }
+    });
+  }
+
+  bool _sourcesChanged(TrackMap old) =>
+      !identical(old.track, widget.track) ||
+      !identical(old.entries, widget.entries);
+
+  /// 모든 좌표가 시트에 가리지 않은 화면 안에 있나.
+  bool _allVisible(List<LatLng> coordinates) {
+    final camera = _controller.camera;
+    final size = camera.nonRotatedSize;
+    final bottom = size.height - widget.bottomInset;
+    return coordinates.every((p) {
+      final o = camera.latLngToScreenOffset(p);
+      return o.dx >= 0 && o.dx <= size.width && o.dy >= 0 && o.dy <= bottom;
     });
   }
 
@@ -133,10 +160,13 @@ class TrackMapState extends State<TrackMap> {
   }
 
   /// 지도를 한 점으로 옮긴다(타임라인 · 자주 간 곳 행).
-  void moveTo(double lat, double lng) => _controller.move(
-    LatLng(lat, lng),
-    math.max(_controller.camera.zoom, _placeZoom),
-  );
+  void moveTo(double lat, double lng) {
+    _userMoved = true;
+    _controller.move(
+      LatLng(lat, lng),
+      math.max(_controller.camera.zoom, _placeZoom),
+    );
+  }
 
   List<LatLng> _coordinates() => [
     ..._trackCoordinates,
@@ -151,6 +181,7 @@ class TrackMapState extends State<TrackMap> {
   ).copyWith(bottom: AppSpacing.xl + widget.bottomInset);
 
   void _fit(List<LatLng> coordinates) {
+    _userMoved = false;
     if (_isSinglePlace(coordinates)) {
       _controller.move(coordinates.first, _placeZoom);
     } else {
@@ -160,24 +191,93 @@ class TrackMapState extends State<TrackMap> {
     }
   }
 
-  /// CARTO basemap 은 OSM 데이터 위에 그린 무료 타일이다(출처 둘 다 표시).
-  static const _cartoSubdomains = ['a', 'b', 'c', 'd'];
+  /// 단순 · 기본 · 어둡게는 OSM 기본 타일 하나 — 차이는 [_tileBuilderOf] 의 색 필터뿐이라 바꿔도
+  /// 타일을 다시 받지 않는다.
+  static const _osmUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+  /// 지형: OpenTopoMap(자원봉사 서버, 최대 줌 17).
+  static const _terrainUrl = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+  static const _terrainSubdomains = ['a', 'b', 'c'];
+
+  /// 위성: Esri World Imagery. 서울은 줌 18까지 선명하다. 주소의 순서가 z/y/x 다.
+  static const _satelliteUrl =
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 
   static String _urlOf(MapStyle style) => switch (style) {
-    MapStyle.standard => 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    MapStyle.simple =>
-      'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-    MapStyle.plain =>
-      'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-    MapStyle.dark =>
-      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+    MapStyle.simple || MapStyle.standard || MapStyle.dark => _osmUrl,
+    MapStyle.terrain => _terrainUrl,
+    MapStyle.satellite => _satelliteUrl,
   };
 
+  /// 타일 서버가 가진 가장 큰 줌. 더 들어가면 이 줌 타일을 키워 그린다(빈 타일 대신).
+  static int _maxNativeZoomOf(MapStyle style) => switch (style) {
+    MapStyle.terrain => 17,
+    MapStyle.satellite => 18,
+    MapStyle.simple || MapStyle.standard || MapStyle.dark => 19,
+  };
+
+  /// 앞에 © 가 붙는다. 좁은 폰에서 한 줄에 들어가게 짧게.
   static String _attributionOf(MapStyle style) => switch (style) {
-    MapStyle.standard => 'OpenStreetMap contributors',
     MapStyle.simple ||
-    MapStyle.plain ||
-    MapStyle.dark => 'OpenStreetMap contributors · CARTO',
+    MapStyle.standard ||
+    MapStyle.dark => 'OpenStreetMap contributors',
+    MapStyle.terrain => 'OpenStreetMap · OpenTopoMap (CC-BY-SA)',
+    MapStyle.satellite => 'Esri · Maxar · Earthstar Geographics',
+  };
+
+  /// 단순: 채도를 30% 로 줄이고 흰색과 35% 섞는다. 지도 위 동선 색이 바탕보다 진해 보이게.
+  static final _simpleFilter = ColorFilter.matrix(_mutedMatrix(0.3, 0.35));
+
+  /// 채도 [s](0 = 회색) 로 줄인 뒤 흰색과 [white] 만큼 섞는 색 행렬.
+  static List<double> _mutedMatrix(double s, double white) {
+    const lr = 0.2126, lg = 0.7152, lb = 0.0722;
+    final k = 1 - white;
+    final offset = 255 * white;
+    List<double> row(double r, double g, double b) => [
+      k * r,
+      k * g,
+      k * b,
+      0,
+      offset,
+    ];
+    return [
+      ...row(lr * (1 - s) + s, lg * (1 - s), lb * (1 - s)),
+      ...row(lr * (1 - s), lg * (1 - s) + s, lb * (1 - s)),
+      ...row(lr * (1 - s), lg * (1 - s), lb * (1 - s) + s),
+      0,
+      0,
+      0,
+      1,
+      0,
+    ];
+  }
+
+  /// 어둡게: 회색으로 바꾼 뒤 밝기를 뒤집고(×0.8) 조금 띄운다. flutter_map 의 반전 + 색상 회전은
+  /// 큰길이 갈색으로 남아 탁했다.
+  static const _darkFilter = ColorFilter.matrix(<double>[
+    -0.8 * 0.2126, -0.8 * 0.7152, -0.8 * 0.0722, 0, 0.8 * 255 + 12, //
+    -0.8 * 0.2126, -0.8 * 0.7152, -0.8 * 0.0722, 0, 0.8 * 255 + 12, //
+    -0.8 * 0.2126, -0.8 * 0.7152, -0.8 * 0.0722, 0, 0.8 * 255 + 12, //
+    0, 0, 0, 1, 0,
+  ]);
+
+  static Widget _darkTileBuilder(
+    BuildContext context,
+    Widget tile,
+    TileImage image,
+  ) => ColorFiltered(colorFilter: _darkFilter, child: tile);
+
+  static Widget _simpleTileBuilder(
+    BuildContext context,
+    Widget tile,
+    TileImage image,
+  ) => ColorFiltered(colorFilter: _simpleFilter, child: tile);
+
+  /// 단순 · 어둡게만 필터를 씌운다.
+  static TileBuilder? _tileBuilderOf(MapStyle style) => switch (style) {
+    MapStyle.simple => _simpleTileBuilder,
+    MapStyle.dark => _darkTileBuilder,
+    MapStyle.standard || MapStyle.terrain || MapStyle.satellite => null,
   };
 
   static bool _isSinglePlace(List<LatLng> c) => c.every((p) => p == c.first);
@@ -198,6 +298,9 @@ class TrackMapState extends State<TrackMap> {
                 coordinates: coordinates,
                 padding: _fitPadding,
               ),
+        onPositionChanged: (_, hasGesture) {
+          if (hasGesture) _userMoved = true;
+        },
         interactionOptions: const InteractionOptions(
           flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
         ),
@@ -207,11 +310,13 @@ class TrackMapState extends State<TrackMap> {
         // URL 이 바뀌면 TileLayer 가 스스로 타일을 다시 읽는다.
         TileLayer(
           urlTemplate: _urlOf(widget.style),
-          subdomains: widget.style == MapStyle.standard
-              ? const []
-              : _cartoSubdomains,
+          subdomains: widget.style == MapStyle.terrain
+              ? _terrainSubdomains
+              : const [],
+          maxNativeZoom: _maxNativeZoomOf(widget.style),
           userAgentPackageName: 'com.karma.walk',
           tileProvider: _tileProvider,
+          tileBuilder: _tileBuilderOf(widget.style),
         ),
         PolylineLayer(
           polylines: [

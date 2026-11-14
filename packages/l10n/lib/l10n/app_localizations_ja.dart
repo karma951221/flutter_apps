@@ -4177,7 +4177,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkMapChipBlocked => '記録オフ・権限が必要';
 
   @override
-  String get walkMapStyle => '地図のスタイル';
+  String get walkMapStyle => '地図の種類';
 
   @override
   String get walkMapStyleStandard => '標準';
@@ -4189,19 +4189,25 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkMapStyleSimple => 'シンプル';
 
   @override
-  String get walkMapStyleSimpleDetail => '淡い色で大きな道と地名だけ';
+  String get walkMapStyleSimpleDetail => '色を抑えて動線を見やすく';
 
   @override
-  String get walkMapStylePlain => '文字なし';
+  String get walkMapStyleTerrain => '地形';
 
   @override
-  String get walkMapStylePlainDetail => '文字なしで道の形だけ';
+  String get walkMapStyleTerrainDetail => '等高線・山の高さまで';
+
+  @override
+  String get walkMapStyleSatellite => '衛星';
+
+  @override
+  String get walkMapStyleSatelliteDetail => '衛星写真';
 
   @override
   String get walkMapStyleDark => 'ダーク';
 
   @override
-  String get walkMapStyleDarkDetail => '暗い背景に大きな道と地名';
+  String get walkMapStyleDarkDetail => '標準の地図を暗く';
 
   @override
   String get walkMapTimelineTitle => 'タイムライン';

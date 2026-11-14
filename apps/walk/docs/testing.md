@@ -335,13 +335,14 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | `domain/location/usecase/location_sync_test.dart` | `LocationSync` | 비워질 때까지 수거 · 마지막 id 로 ack · ack 실패 뒤 다시 돌려도 중복 없음 · 보관 기간으로 정리 · 동시 실행은 한 번 |
 | `data/location/drift_location_repository_test.dart` | `DriftLocationRepository` | `insertAll` 중복 무시 · 기간 읽기 · 장소 이름 캐시 · 정리 · `hasAnyPoint` · 모두 지우기 |
 | `data/location/prefs_location_preferences_test.dart` | 보관 기간 설정 | 기본 지우지 않음 · 깨진 값 |
-| `data/location/prefs_map_style_preferences_test.dart` | 지도 모양 설정 | 기본은 OSM 기본 · 다시 읽기 · 깨진 값 |
+| `data/location/prefs_map_style_preferences_test.dart` | 지도 종류 설정 | 기본은 단순 · 다시 읽기 · 깨진 값 · 없앤 `plain` 은 기본값 |
 | `data/location/channel_location_recorder_test.dart` | `ChannelLocationRecorder` | 채널 호출 모양 · 상태 매핑(off / running / blocked) · 시각 UTC · 모르는 값 폴백 · 배터리 화면 · `clearInbox` |
 | `presentation/map/cubit/map_record_cubit_test.dart` | `MapRecordCubit` | 켜기 순서(권한) · 거부 / 설정 필요 · 항상 허용 회수 → blocked · 실제 권한 읽기 · 촘촘 · 보관 기간 · 모두 지우기(inbox 를 먼저 비움 · 비우기 실패면 저장소 그대로) · 처음 안내 판정(`hasPoints`) |
 | `presentation/map/cubit/map_view_cubit_test.dart` | `MapViewCubit` | 하루 · 한 달 · 스토리 · 일기 핀(`locatedEntriesBetween`, 기간 경계) · 이름 붙이기(오늘은 묻고, 한 달 · 스토리는 캐시만 · 같은 격자 한 번) · 긴 스토리(이틀 넘음 · 진행 중은 지금까지) 단순화 · 짧은 스토리 그대로 · 실패 variant · **처음 show 도 수거 뒤 읽기(로딩 유지)** · sync 실패해도 저장분 · 느린 sync 중 새 기간 우선 |
-| `presentation/map/widget/track_map_test.dart` | `TrackMap` | 같은 이동선이면 선 좌표 재사용 · 바뀌면 다시 만듦 |
-| `presentation/map/page/map_tab_test.dart` | `MapTab` | 잠기면 PIN · 열면 읽기 · 처음 안내 · 켜기 실패 오류 스낵바 · 기록이 켜지면 다시 읽기(첫 load 는 제외) · 기간 전환 · 스토리 고르기 · ‹ › · 칩 · 핀 → 뷰어 · 가까운 핀 묶기 · 빈 · 실패 [다시 시도] · 다시 잠기면 시트 닫기 · 지도 모양 버튼 → 시트 → 타일 · 출처가 바뀌고 저장 · 저장된 모양으로 열림 |
-| `presentation/settings/page/map_settings_page_test.dart` | `MapSettingsPage` | 켜기 · 끄기 · 권한 행 · 배터리 · 보관 기간 · 모두 지우기(inbox → 저장소 순) |
+| `presentation/map/cubit/map_style_cubit_test.dart` | `MapStyleCubit` | 처음 값은 저장값 · 고르면 바로 반영하고 저장 · 같은 모양이면 저장 안 함 |
+| `presentation/map/widget/track_map_test.dart` | `TrackMap` | 같은 이동선이면 선 좌표 재사용 · 바뀌면 다시 만듦 · 같은 기간에 새 점이 화면 밖이면 카메라를 다시 맞춤 · 화면 안이면 그대로 · 손으로 옮긴 뒤엔 따라가지 않음 |
+| `presentation/map/page/map_tab_test.dart` | `MapTab` | 잠기면 PIN · 열면 읽기 · 처음 안내 · 켜기 실패 오류 스낵바 · 기록이 켜지면 다시 읽기(첫 load 는 제외) · 기간 전환 · 스토리 고르기 · ‹ › · 칩 · 핀 → 뷰어 · 가까운 핀 묶기 · 빈 · 실패 [다시 시도] · 다시 잠기면 시트 닫기 · 지도 종류: 기본값 단순은 OSM + 필터 · 시트에 다섯 종류 · 버튼 → 기본으로 바꾸고 저장(필터 없음) · 저장된 종류로 열림 · 설정에서 어둡게로 바꾸면 같은 타일에 다른 필터 · 지형은 OpenTopoMap(줌 17 · 출처) · 위성은 Esri World Imagery(z/y/x · 줌 18 · 출처) · 어느 종류도 키 · CARTO 주소 없음 |
+| `presentation/settings/page/map_settings_page_test.dart` | `MapSettingsPage` | 켜기 · 끄기 · 권한 행 · 배터리 · 보관 기간 · 모두 지우기(inbox → 저장소 순) · 지도 모양 행(지금 모양 · 고르면 저장 · 닫으면 그대로) |
 | `presentation/settings/open_settings_test.dart` | 앱 설정 › 지도 설정 | 잠금 화면을 거쳐 지도 설정이 열린다(지도 기록 cubit 을 다시 건다) |
 | `data/diary/drift_diary_repository_range_search_test.dart` | `locatedEntriesBetween` | 좌표 있는 기록만 · 양 끝 포함 오래된 순 · 휴지통 제외 · limit 은 좌표 있는 기록에 · 기본 1000 |
 | `presentation/shell/page/tools_tab_test.dart` · `main_shell_page_test.dart` | 도구 셋째 탭 · 셸 | 탭 3개 · 지도 ⋮ · 잠긴 ⋮ · 다시 잠길 때 팝업 닫기 · 재개 시 새로 읽기 · 뷰어 › 지도 요청으로 탭 이동 · 셸 위에 얹힌 화면에서 온 요청이면 걷어 내고 지도 |
@@ -456,11 +457,11 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 
 | # | 시나리오 | 기대 | 결과 |
 |---|---|---|---|
-| L-QA1 | 지도 › 위치 기록 켜기 → 앱 사용 중 허용 → 항상 허용(설정 화면으로 이동) → 신체 활동 → 알림 | 이유가 먼저 설명되고 단계마다 넘어간다. 켜면 상시 알림 "위치 기록 중 · 평소"가 뜬다 | 대기 |
+| L-QA1 | 지도 › 위치 기록 켜기 → 앱 사용 중 허용 → 항상 허용(설정 화면으로 이동) → 신체 활동 → 알림 | 이유가 먼저 설명되고 단계마다 넘어간다. 켜면 상시 알림 "위치 기록 중 · 평소"가 뜬다 | **부분 통과**(에뮬레이터 Android 17, 2026-11-14): 단계마다 넘어가고 위치 유형 포그라운드 서비스 · 상시 알림이 뜸. 설정 화면으로 가기 전 이유 설명은 아직 없음(알려진 한계) |
 | L-QA2 | 기록 켠 채 앱을 최근 앱에서 밀어 닫고 30분 걷기 → 앱 다시 열기 | 상시 알림이 그대로고, 지도에 그 동선이 보인다 | 대기 |
 | L-QA3 | 기록 켠 채 재부팅 → 앱을 열지 않고 이동 → 나중에 앱 열기 | 재부팅 직후 알림이 다시 뜨고, 이동한 구간이 기록돼 있다 | 대기 |
 | L-QA4 | 평소 모드로 하루 지낸 뒤 설정 › 배터리 | Life Tool 사용 비율을 기록한다(수치로 간격 · 정지 감지 조정 근거) | 대기 |
-| L-QA5 | 지도 칩 "촘촘 기록" 켜고 걷기 → 끄기 | 선이 길을 따라가고(진하고 굵게) 알림이 "촘촘"으로 바뀐다. 끄면 성긴 점으로 돌아가고 알림이 "평소" | 대기 |
+| L-QA5 | 지도 칩 "촘촘 기록" 켜고 걷기 → 끄기 | 선이 길을 따라가고(진하고 굵게) 알림이 "촘촘"으로 바뀐다. 끄면 성긴 점으로 돌아가고 알림이 "평소" | **부분 통과**(에뮬레이터, 2026-11-14, 가짜 경로 `geo fix`): 칩이 "촘촘 기록 중"으로 바뀌고 진한 선 · 광화문 11분 머문 곳(오늘 타임라인) · 한 달 자주 간 곳이 나옴. **발견 → 고침**: 새 경로가 화면 밖으로 나감(L43) · "1 visits"(L44). 실제 걷기 · 끄기는 기기에서 |
 | L-QA6 | 장소가 태그된 사진 일기를 쓴다 → 지도 하루 보기 → 핀 누르기 → 일기 잠그기 | 핀이 보이고(가까운 핀은 묶여 개수 배지) 누르면 뷰어가 열린다. 잠그면 지도가 가려진다 | 대기 |
 | L-QA7 | 평소 모드에서 책상에 폰을 두고 1시간 → 들고 걷기 | 그 사이 inbox 점이 늘지 않고(디버그 로그) 지도에는 머문 곳 하나로 보인다. 들고 걸으면 몇 분 안에 다시 점이 찍힌다 | 대기 |
 | L8 | 기록 중 프로세스를 죽인다(`adb shell am kill` · STILL 인 채로) | 서비스가 다시 떠서 STILL 에 갇히지 않고 기록을 이어간다 | 대기 |

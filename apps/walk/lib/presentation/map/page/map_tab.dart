@@ -10,15 +10,15 @@ import 'package:latlong2/latlong.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/location/entity/day_track.dart';
 import '../../../domain/location/entity/map_period.dart';
-import '../../../domain/location/entity/map_style.dart';
-import '../../../domain/location/repository/map_style_preferences.dart';
 import '../../../domain/location/recorder/recorder_status.dart';
 import '../../diary/viewer/story_viewer_page.dart';
 import '../../lock/widget/diary_lock_gate.dart';
 import '../cubit/map_record_cubit.dart';
 import '../cubit/map_record_state.dart';
+import '../cubit/map_style_cubit.dart';
 import '../cubit/map_view_cubit.dart';
 import '../cubit/map_view_state.dart';
+import '../../../domain/location/entity/map_style.dart';
 import '../widget/frequent_sheet.dart';
 import '../widget/map_style_sheet.dart';
 import '../widget/period_header.dart';
@@ -69,8 +69,7 @@ class _MapBody extends StatefulWidget {
 
 class _MapBodyState extends State<_MapBody> {
   final _map = GlobalKey<TrackMapState>();
-  final _stylePrefs = getIt<MapStylePreferences>();
-  late MapStyle _style = _stylePrefs.style;
+  final _style = getIt<MapStyleCubit>();
 
   @override
   void initState() {
@@ -125,10 +124,8 @@ class _MapBodyState extends State<_MapBody> {
   }
 
   Future<void> _pickStyle() async {
-    final picked = await showMapStyleSheet(context, current: _style);
-    if (picked == null || picked == _style || !mounted) return;
-    setState(() => _style = picked);
-    await _stylePrefs.setStyle(picked);
+    final picked = await showMapStyleSheet(context, current: _style.state);
+    if (picked != null) await _style.select(picked);
   }
 
   void _openEntry(MapViewData data, DiaryEntry entry) {
@@ -251,18 +248,22 @@ class _MapBodyState extends State<_MapBody> {
     return Stack(
       children: [
         Positioned.fill(
-          child: TrackMap(
-            key: _map,
-            track: data?.track ?? const DayTrack(segments: [], stays: []),
-            spots: spots,
-            entries: data?.entries ?? const [],
-            fitKey: period,
-            faint: month,
-            style: _style,
-            bottomInset: data == null ? 0 : height * MapSheet.initialSize,
-            onOpenEntry: (entry) {
-              if (data != null) _openEntry(data, entry);
-            },
+          // 지도 설정에서 바꿔도 따라오도록 앱 전체 cubit 을 본다.
+          child: BlocBuilder<MapStyleCubit, MapStyle>(
+            bloc: _style,
+            builder: (context, style) => TrackMap(
+              key: _map,
+              track: data?.track ?? const DayTrack(segments: [], stays: []),
+              spots: spots,
+              entries: data?.entries ?? const [],
+              fitKey: period,
+              faint: month,
+              style: style,
+              bottomInset: data == null ? 0 : height * MapSheet.initialSize,
+              onOpenEntry: (entry) {
+                if (data != null) _openEntry(data, entry);
+              },
+            ),
           ),
         ),
         if (view is MapViewLoading)

@@ -4551,7 +4551,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkMapChipBlocked => 'Recording off · permission needed';
 
   @override
-  String get walkMapStyle => 'Map style';
+  String get walkMapStyle => 'Map type';
 
   @override
   String get walkMapStyleStandard => 'Standard';
@@ -4565,20 +4565,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkMapStyleSimpleDetail =>
-      'Light colors, main roads and place names';
+      'Muted colors so your route stands out';
 
   @override
-  String get walkMapStylePlain => 'No labels';
+  String get walkMapStyleTerrain => 'Terrain';
 
   @override
-  String get walkMapStylePlainDetail => 'Just the shape of the roads';
+  String get walkMapStyleTerrainDetail => 'Contour lines and peak heights';
+
+  @override
+  String get walkMapStyleSatellite => 'Satellite';
+
+  @override
+  String get walkMapStyleSatelliteDetail => 'Satellite imagery';
 
   @override
   String get walkMapStyleDark => 'Dark';
 
   @override
-  String get walkMapStyleDarkDetail =>
-      'Dark background, main roads and place names';
+  String get walkMapStyleDarkDetail => 'The standard map, dimmed';
 
   @override
   String get walkMapTimelineTitle => 'Timeline';
@@ -4599,7 +4604,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkMapFrequentVisits(int count, String duration) {
-    return '$count visits · $duration';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count visits · $duration',
+      one: '1 visit · $duration',
+    );
+    return '$_temp0';
   }
 
   @override
