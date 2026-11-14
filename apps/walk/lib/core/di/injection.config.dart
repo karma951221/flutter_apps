@@ -72,6 +72,7 @@ import '../../data/settings/prefs_settings_repository.dart' as _i724;
 import '../../data/walk/health/health_gateway.dart' as _i332;
 import '../../data/walk/repository/health_connect_activity_repository.dart'
     as _i1016;
+import '../../data/weather/open_meteo_weather_repository.dart' as _i850;
 import '../../domain/alarm/holiday/device_holiday_source.dart' as _i77;
 import '../../domain/alarm/holiday/holiday_calendar.dart' as _i961;
 import '../../domain/alarm/holiday/holiday_calendar_access.dart' as _i227;
@@ -134,6 +135,7 @@ import '../../domain/lock/screen_lock_settings.dart' as _i194;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
+import '../../domain/weather/repository/weather_repository.dart' as _i903;
 import '../../presentation/chat/attachment/chat_file_picker.dart' as _i211;
 import '../../presentation/chat/workspace/workspace_share.dart' as _i835;
 import '../../presentation/diary/media_picker.dart' as _i287;
@@ -337,6 +339,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i961.HolidayRefresher>(
       () => holidayModule.holidayRefresher(gh<_i93.CachedHolidayCalendar>()),
+    );
+    gh.lazySingleton<_i903.WeatherRepository>(
+      () => _i850.OpenMeteoWeatherRepository(gh<_i519.Client>()),
     );
     gh.factory<_i673.StayNamer>(
       () => _i673.StayNamer(
