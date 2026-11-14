@@ -105,14 +105,21 @@ class AlarmSummaryCard extends StatelessWidget {
       shape: const RoundedRectangleBorder(borderRadius: AppRadius.lgAll),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: lines),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: lines,
+        ),
       ),
     );
   }
 
   /// 새 숫자는 아래에서 올라오고 옛 숫자는 위로 사라진다(`AnimatedSwitcher` 는 퇴장을 역재생한다).
-  static Widget _slideUp(Widget child, Animation<double> animation) => SlideTransition(
-        position: Tween(begin: const Offset(0, 0.5), end: Offset.zero).animate(animation),
+  static Widget _slideUp(Widget child, Animation<double> animation) =>
+      SlideTransition(
+        position: Tween(
+          begin: const Offset(0, 0.5),
+          end: Offset.zero,
+        ).animate(animation),
         child: FadeTransition(opacity: animation, child: child),
       );
 }

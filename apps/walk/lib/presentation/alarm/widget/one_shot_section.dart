@@ -54,7 +54,9 @@ class OneShotSection extends StatelessWidget {
 
     Widget step(Duration d) => Expanded(
       child: AppButton.secondary(
-        label: d.inHours > 0 ? l10n.walkAlarmAddHour(d.inHours) : l10n.walkAlarmAddMinutes(d.inMinutes),
+        label: d.inHours > 0
+            ? l10n.walkAlarmAddHour(d.inHours)
+            : l10n.walkAlarmAddMinutes(d.inMinutes),
         style: OutlinedButton.styleFrom(
           backgroundColor: colorScheme.surfaceContainerLow,
           side: BorderSide.none,
@@ -74,7 +76,9 @@ class OneShotSection extends StatelessWidget {
           fit: BoxFit.scaleDown,
           child: Text(
             l10n.walkAlarmAfter(duration),
-            style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.displaySmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -89,7 +93,9 @@ class OneShotSection extends StatelessWidget {
                     : AlarmFormat.ringAt(context, ringAt, now),
               ),
             ),
-            labelStyle: theme.textTheme.labelLarge?.copyWith(color: colorScheme.onPrimaryContainer),
+            labelStyle: theme.textTheme.labelLarge?.copyWith(
+              color: colorScheme.onPrimaryContainer,
+            ),
             backgroundColor: colorScheme.primaryContainer,
             side: BorderSide.none,
             shape: const StadiumBorder(),
@@ -97,14 +103,28 @@ class OneShotSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
-        Row(children: [step(oneShotSteps[0]), const SizedBox(width: AppSpacing.sm), step(oneShotSteps[1])]),
+        Row(
+          children: [
+            step(oneShotSteps[0]),
+            const SizedBox(width: AppSpacing.sm),
+            step(oneShotSteps[1]),
+          ],
+        ),
         const SizedBox(height: AppSpacing.sm),
-        Row(children: [step(oneShotSteps[2]), const SizedBox(width: AppSpacing.sm), step(oneShotSteps[3])]),
+        Row(
+          children: [
+            step(oneShotSteps[2]),
+            const SizedBox(width: AppSpacing.sm),
+            step(oneShotSteps[3]),
+          ],
+        ),
         const SizedBox(height: AppSpacing.xs),
         Center(
           child: AppButton.text(
             label: l10n.walkAlarmReset,
-            onPressed: enabled && draft != const OneShotDraft() ? onReset : null,
+            onPressed: enabled && draft != const OneShotDraft()
+                ? onReset
+                : null,
           ),
         ),
       ],
@@ -121,13 +141,15 @@ class OneShotTimeSheet extends StatefulWidget {
   /// 시각 휠 높이 — 다섯 줄 남짓이 보이는 크기. 여백 토큰이 아니라 휠 자체의 크기다.
   static const pickerHeight = 200.0;
 
-  static Future<TimeOfDay?> show(BuildContext context, {required TimeOfDay initial}) =>
-      showModalBottomSheet<TimeOfDay>(
-        context: context,
-        showDragHandle: true,
-        isScrollControlled: true,
-        builder: (_) => OneShotTimeSheet(initial: initial),
-      );
+  static Future<TimeOfDay?> show(
+    BuildContext context, {
+    required TimeOfDay initial,
+  }) => showModalBottomSheet<TimeOfDay>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (_) => OneShotTimeSheet(initial: initial),
+  );
 
   @override
   State<OneShotTimeSheet> createState() => _OneShotTimeSheetState();
@@ -141,7 +163,12 @@ class _OneShotTimeSheetState extends State<OneShotTimeSheet> {
     final l10n = AppLocalizations.of(context);
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.md),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          0,
+          AppSpacing.md,
+          AppSpacing.md,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

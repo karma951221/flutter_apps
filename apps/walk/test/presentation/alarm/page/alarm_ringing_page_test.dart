@@ -19,8 +19,10 @@ class _FixedClock extends Clock {
 }
 
 /// 파문이 영원히 반복하므로 `pumpAndSettle` 이 끝나도록 애니메이션을 끈다.
-Widget _noAnimations(Widget child) =>
-    MediaQuery(data: const MediaQueryData(disableAnimations: true), child: child);
+Widget _noAnimations(Widget child) => MediaQuery(
+  data: const MediaQueryData(disableAnimations: true),
+  child: child,
+);
 
 void main() {
   late _MockUseCase useCase;
@@ -47,7 +49,9 @@ void main() {
           home: Builder(
             builder: (context) => TextButton(
               onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const AlarmRingingPage(packageId: 100)),
+                MaterialPageRoute<void>(
+                  builder: (_) => const AlarmRingingPage(packageId: 100),
+                ),
               ),
               child: const Text('home'),
             ),
@@ -60,8 +64,9 @@ void main() {
   }
 
   testWidgets('현재 시각과 라벨을 보이고, 뒤로가기로 닫히지 않는다', (tester) async {
-    when(() => useCase.findByPackageId(100))
-        .thenAnswer((_) async => const Alarm(id: 1, hour: 7, minute: 0, label: '출근'));
+    when(() => useCase.findByPackageId(100)).thenAnswer(
+      (_) async => const Alarm(id: 1, hour: 7, minute: 0, label: '출근'),
+    );
     await pump(tester);
 
     expect(find.text('오전 7:00'), findsOneWidget);
@@ -76,10 +81,21 @@ void main() {
     when(() => useCase.findByPackageId(100)).thenAnswer((_) async => null);
     await pump(tester);
 
-    final scheme = Theme.of(tester.element(find.byType(AlarmRingingPage))).colorScheme;
-    expect(tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor, scheme.primaryContainer);
-    expect(tester.widget<Text>(find.text('오전 7:00')).style?.color, scheme.onPrimaryContainer);
-    expect(tester.widget<Text>(find.text('알람')).style?.color, scheme.onPrimaryContainer);
+    final scheme = Theme.of(
+      tester.element(find.byType(AlarmRingingPage)),
+    ).colorScheme;
+    expect(
+      tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
+      scheme.primaryContainer,
+    );
+    expect(
+      tester.widget<Text>(find.text('오전 7:00')).style?.color,
+      scheme.onPrimaryContainer,
+    );
+    expect(
+      tester.widget<Text>(find.text('알람')).style?.color,
+      scheme.onPrimaryContainer,
+    );
   });
 
   testWidgets('라벨이 없으면 기본 제목, 끄기는 stop 후 닫힌다', (tester) async {
@@ -106,26 +122,34 @@ void main() {
   });
 
   testWidgets('스누즈 간격이 10분이면 10분 뒤 다시 울림', (tester) async {
-    when(() => useCase.findByPackageId(100))
-        .thenAnswer((_) async => const Alarm(id: 1, hour: 7, minute: 0, snoozeMinutes: 10));
+    when(() => useCase.findByPackageId(100)).thenAnswer(
+      (_) async => const Alarm(id: 1, hour: 7, minute: 0, snoozeMinutes: 10),
+    );
     await pump(tester);
 
     expect(find.text('10분 뒤 다시 울림'), findsOneWidget);
   });
 
   testWidgets('스누즈 한도를 다 썼으면 스누즈 버튼이 없고 끄기가 전체 폭', (tester) async {
-    when(() => useCase.findByPackageId(100))
-        .thenAnswer((_) async => const Alarm(id: 1, hour: 7, minute: 0, snoozeLimit: 3));
+    when(() => useCase.findByPackageId(100)).thenAnswer(
+      (_) async => const Alarm(id: 1, hour: 7, minute: 0, snoozeLimit: 3),
+    );
     when(() => useCase.canSnooze(100)).thenAnswer((_) async => false);
     await pump(tester);
 
     expect(find.byType(OutlinedButton), findsNothing);
     expect(find.textContaining('다시 울림'), findsNothing);
     final width = tester.getSize(find.byType(AlarmRingingPage)).width;
-    expect(tester.getSize(find.byType(FilledButton)).width, width - AppSpacing.lg * 2);
+    expect(
+      tester.getSize(find.byType(FilledButton)).width,
+      width - AppSpacing.lg * 2,
+    );
   });
 
-  for (final (button, action) in [('알람 끄기', 'stop'), ('5분 뒤 다시 울림', 'snooze')]) {
+  for (final (button, action) in [
+    ('알람 끄기', 'stop'),
+    ('5분 뒤 다시 울림', 'snooze'),
+  ]) {
     testWidgets('$button 도중 리스너가 먼저 화면을 걷어도 아래 화면은 남는다', (tester) async {
       final navigator = GlobalKey<NavigatorState>();
       final route = MaterialPageRoute<void>(
@@ -158,7 +182,9 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.byType(AlarmRingingPage), findsNothing);
       expect(find.text('home'), findsOneWidget);
-      verify(() => action == 'stop' ? useCase.stop(100) : useCase.snooze(100)).called(1);
+      verify(
+        () => action == 'stop' ? useCase.stop(100) : useCase.snooze(100),
+      ).called(1);
     });
   }
 
@@ -169,9 +195,9 @@ void main() {
         ..devicePixelRatio = 1;
       addTearDown(tester.view.reset);
       // 스누즈 문구가 가장 긴 15분 간격으로 본다.
-      when(
-        () => useCase.findByPackageId(100),
-      ).thenAnswer((_) async => const Alarm(id: 1, hour: 7, minute: 0, snoozeMinutes: 15));
+      when(() => useCase.findByPackageId(100)).thenAnswer(
+        (_) async => const Alarm(id: 1, hour: 7, minute: 0, snoozeMinutes: 15),
+      );
       final l10n = lookupAppLocalizations(locale);
       await tester.pumpWidget(
         _noAnimations(
@@ -193,14 +219,24 @@ void main() {
       ]) {
         final text = find.text(label);
         final paragraph = tester.renderObject<RenderParagraph>(text);
-        final lineHeight = paragraph.getFullHeightForCaret(const TextPosition(offset: 0));
+        final lineHeight = paragraph.getFullHeightForCaret(
+          const TextPosition(offset: 0),
+        );
         expect(paragraph.didExceedMaxLines, isFalse, reason: label);
-        expect(paragraph.size.height, lessThanOrEqualTo(lineHeight * 2 + 0.5), reason: label);
+        expect(
+          paragraph.size.height,
+          lessThanOrEqualTo(lineHeight * 2 + 0.5),
+          reason: label,
+        );
         // 글자가 버튼 밖으로 나가지 않는다.
         final buttonRect = tester.getRect(button);
         final textRect = tester.getRect(text);
         expect(buttonRect.contains(textRect.topLeft), isTrue, reason: label);
-        expect(buttonRect.contains(textRect.bottomRight - const Offset(1, 1)), isTrue, reason: label);
+        expect(
+          buttonRect.contains(textRect.bottomRight - const Offset(1, 1)),
+          isTrue,
+          reason: label,
+        );
         expect(tester.widget<Text>(text).textAlign, TextAlign.center);
       }
       // 두 버튼 높이가 같다.

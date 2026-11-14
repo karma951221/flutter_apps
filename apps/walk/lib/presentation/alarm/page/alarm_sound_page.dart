@@ -22,7 +22,8 @@ class AlarmSoundPage extends StatefulWidget {
 }
 
 class _AlarmSoundPageState extends State<AlarmSoundPage> {
-  late final _cubit = AlarmSoundCubit(getIt<AlarmSoundSource>(), widget.initial)..load();
+  late final _cubit = AlarmSoundCubit(getIt<AlarmSoundSource>(), widget.initial)
+    ..load();
 
   /// 홈 · 화면 잠금으로 앱이 가려지면 미리 듣기를 멈춘다. 화면은 그대로 두므로 dispose 로는 못 잡는다.
   late final AppLifecycleListener _lifecycle;
@@ -73,9 +74,14 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
               children: [
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.sm,
+                    ),
                     children: [
-                      row(l10n.walkAlarmSoundSystem, const AlarmSoundChoice.system()),
+                      row(
+                        l10n.walkAlarmSoundSystem,
+                        const AlarmSoundChoice.system(),
+                      ),
                       _SectionTitle(l10n.walkAlarmSoundBundledSection),
                       for (final asset in BundledAlarmSounds.all)
                         row(
@@ -90,12 +96,19 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
                             child: Center(child: CircularProgressIndicator()),
                           ),
                         ],
-                        DeviceRingtonesLoaded(:final items) when items.isNotEmpty => [
-                          for (final ringtone in items)
-                            row(ringtone.title, AlarmSoundChoice.device(ringtone)),
-                        ],
+                        DeviceRingtonesLoaded(:final items)
+                            when items.isNotEmpty =>
+                          [
+                            for (final ringtone in items)
+                              row(
+                                ringtone.title,
+                                AlarmSoundChoice.device(ringtone),
+                              ),
+                          ],
                         DeviceRingtonesLoaded() || DeviceRingtonesFailure() => [
-                          AppPlaceholder(message: l10n.walkAlarmSoundDeviceUnavailable),
+                          AppPlaceholder(
+                            message: l10n.walkAlarmSoundDeviceUnavailable,
+                          ),
                         ],
                       },
                     ],
@@ -138,7 +151,9 @@ class _SectionTitle extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary),
+        style: theme.textTheme.titleSmall?.copyWith(
+          color: theme.colorScheme.primary,
+        ),
       ),
     );
   }
@@ -146,7 +161,11 @@ class _SectionTitle extends StatelessWidget {
 
 /// 라디오 모양 표시가 붙은 한 줄. 선택 상태는 화면이 정하므로 `Radio` 대신 아이콘으로 그린다.
 class _SoundRow extends StatelessWidget {
-  const _SoundRow({required this.title, required this.selected, required this.onTap});
+  const _SoundRow({
+    required this.title,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String title;
   final bool selected;

@@ -14,7 +14,12 @@ import '../format/alarm_format.dart';
 /// "정각"으로 읽힌다. 시 열 라벨만 `12시` 로 바꾸고, 휠 전체에는 지금 고른 시각(`오전 12:43`)을
 /// 라벨로 단다.
 class AlarmTimeWheel extends StatefulWidget {
-  const AlarmTimeWheel({required this.initial, required this.onChanged, this.maximum, super.key});
+  const AlarmTimeWheel({
+    required this.initial,
+    required this.onChanged,
+    this.maximum,
+    super.key,
+  });
 
   final TimeOfDay initial;
   final ValueChanged<TimeOfDay> onChanged;
@@ -47,7 +52,13 @@ class _AlarmTimeWheelState extends State<AlarmTimeWheel> {
         child: CupertinoDatePicker(
           mode: CupertinoDatePickerMode.time,
           use24hFormat: MediaQuery.alwaysUse24HourFormatOf(context),
-          initialDateTime: DateTime(2000, 1, 1, widget.initial.hour, widget.initial.minute),
+          initialDateTime: DateTime(
+            2000,
+            1,
+            1,
+            widget.initial.hour,
+            widget.initial.minute,
+          ),
           maximumDate: switch (widget.maximum) {
             final max? => DateTime(2000, 1, 1, max.hour, max.minute),
             null => null,
@@ -63,8 +74,12 @@ class _AlarmTimeWheelState extends State<AlarmTimeWheel> {
   }
 }
 
-class _WheelCupertinoLocalizationsDelegate extends LocalizationsDelegate<CupertinoLocalizations> {
-  const _WheelCupertinoLocalizationsDelegate(this.base, {required this.hourLabel});
+class _WheelCupertinoLocalizationsDelegate
+    extends LocalizationsDelegate<CupertinoLocalizations> {
+  const _WheelCupertinoLocalizationsDelegate(
+    this.base, {
+    required this.hourLabel,
+  });
 
   final CupertinoLocalizations base;
   final String Function(int hour) hourLabel;
@@ -77,7 +92,8 @@ class _WheelCupertinoLocalizationsDelegate extends LocalizationsDelegate<Cuperti
       SynchronousFuture(_WheelCupertinoLocalizations(base, hourLabel));
 
   @override
-  bool shouldReload(_WheelCupertinoLocalizationsDelegate old) => old.base != base;
+  bool shouldReload(_WheelCupertinoLocalizationsDelegate old) =>
+      old.base != base;
 }
 
 /// 시 열 화면 읽기 라벨만 바꾸고 나머지는 [_base] 에 그대로 맡긴다.
@@ -96,21 +112,26 @@ class _WheelCupertinoLocalizations extends CupertinoLocalizations {
   @override
   String datePickerMonth(int monthIndex) => _base.datePickerMonth(monthIndex);
   @override
-  String datePickerStandaloneMonth(int monthIndex) => _base.datePickerStandaloneMonth(monthIndex);
+  String datePickerStandaloneMonth(int monthIndex) =>
+      _base.datePickerStandaloneMonth(monthIndex);
   @override
-  String datePickerDayOfMonth(int dayIndex, [int? weekDay]) => _base.datePickerDayOfMonth(dayIndex, weekDay);
+  String datePickerDayOfMonth(int dayIndex, [int? weekDay]) =>
+      _base.datePickerDayOfMonth(dayIndex, weekDay);
   @override
-  String datePickerMediumDate(DateTime date) => _base.datePickerMediumDate(date);
+  String datePickerMediumDate(DateTime date) =>
+      _base.datePickerMediumDate(date);
   @override
   String datePickerHour(int hour) => _base.datePickerHour(hour);
   @override
   String datePickerMinute(int minute) => _base.datePickerMinute(minute);
   @override
-  String? datePickerMinuteSemanticsLabel(int minute) => _base.datePickerMinuteSemanticsLabel(minute);
+  String? datePickerMinuteSemanticsLabel(int minute) =>
+      _base.datePickerMinuteSemanticsLabel(minute);
   @override
   DatePickerDateOrder get datePickerDateOrder => _base.datePickerDateOrder;
   @override
-  DatePickerDateTimeOrder get datePickerDateTimeOrder => _base.datePickerDateTimeOrder;
+  DatePickerDateTimeOrder get datePickerDateTimeOrder =>
+      _base.datePickerDateTimeOrder;
   @override
   String get anteMeridiemAbbreviation => _base.anteMeridiemAbbreviation;
   @override
@@ -133,11 +154,13 @@ class _WheelCupertinoLocalizations extends CupertinoLocalizations {
   @override
   List<String> get timerPickerHourLabels => _base.timerPickerHourLabels;
   @override
-  String? timerPickerMinuteLabel(int minute) => _base.timerPickerMinuteLabel(minute);
+  String? timerPickerMinuteLabel(int minute) =>
+      _base.timerPickerMinuteLabel(minute);
   @override
   List<String> get timerPickerMinuteLabels => _base.timerPickerMinuteLabels;
   @override
-  String? timerPickerSecondLabel(int second) => _base.timerPickerSecondLabel(second);
+  String? timerPickerSecondLabel(int second) =>
+      _base.timerPickerSecondLabel(second);
   @override
   List<String> get timerPickerSecondLabels => _base.timerPickerSecondLabels;
   @override
@@ -149,7 +172,8 @@ class _WheelCupertinoLocalizations extends CupertinoLocalizations {
   @override
   String get clearButtonLabel => _base.clearButtonLabel;
   @override
-  String get noSpellCheckReplacementsLabel => _base.noSpellCheckReplacementsLabel;
+  String get noSpellCheckReplacementsLabel =>
+      _base.noSpellCheckReplacementsLabel;
   @override
   String get selectAllButtonLabel => _base.selectAllButtonLabel;
   @override
@@ -159,7 +183,8 @@ class _WheelCupertinoLocalizations extends CupertinoLocalizations {
   @override
   String get shareButtonLabel => _base.shareButtonLabel;
   @override
-  String get searchTextFieldPlaceholderLabel => _base.searchTextFieldPlaceholderLabel;
+  String get searchTextFieldPlaceholderLabel =>
+      _base.searchTextFieldPlaceholderLabel;
   @override
   String get modalBarrierDismissLabel => _base.modalBarrierDismissLabel;
   @override
@@ -175,7 +200,8 @@ class _WheelCupertinoLocalizations extends CupertinoLocalizations {
   @override
   String get expansionTileExpandedTapHint => _base.expansionTileExpandedTapHint;
   @override
-  String get expansionTileCollapsedTapHint => _base.expansionTileCollapsedTapHint;
+  String get expansionTileCollapsedTapHint =>
+      _base.expansionTileCollapsedTapHint;
   @override
   String get expandedHint => _base.expandedHint;
   @override

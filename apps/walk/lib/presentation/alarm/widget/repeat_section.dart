@@ -65,7 +65,9 @@ class RepeatSection extends StatelessWidget {
                 showCheckmark: false,
                 selectedColor: colorScheme.primary,
                 labelStyle: TextStyle(
-                  color: preset == current ? colorScheme.onPrimary : colorScheme.onSurface,
+                  color: preset == current
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurface,
                 ),
                 onSelected: (_) => onPreset(preset),
               ),
@@ -75,7 +77,8 @@ class RepeatSection extends StatelessWidget {
         Row(
           children: [
             for (final day in Weekday.values) ...[
-              if (day != Weekday.values.first) const SizedBox(width: AppSpacing.xs),
+              if (day != Weekday.values.first)
+                const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: _WeekdayToggle(
                   label: AlarmFormat.weekday(l10n.localeName, day),
@@ -96,7 +99,9 @@ class RepeatSection extends StatelessWidget {
           child: Text(
             AlarmFormat.repeat(l10n, repeat),
             textAlign: TextAlign.center,
-            style: theme.textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],
@@ -128,7 +133,9 @@ class _WeekdayToggle extends StatelessWidget {
       child: AspectRatio(
         aspectRatio: 1,
         child: Material(
-          color: selected ? colorScheme.primary : colorScheme.surfaceContainerLow,
+          color: selected
+              ? colorScheme.primary
+              : colorScheme.surfaceContainerLow,
           shape: const CircleBorder(),
           child: InkWell(
             customBorder: const CircleBorder(),
@@ -137,7 +144,9 @@ class _WeekdayToggle extends StatelessWidget {
               child: Text(
                 label,
                 style: textTheme.labelLarge?.copyWith(
-                  color: selected ? colorScheme.onPrimary : colorScheme.onSurface,
+                  color: selected
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurface,
                 ),
               ),
             ),

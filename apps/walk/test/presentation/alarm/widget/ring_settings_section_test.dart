@@ -53,8 +53,10 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Finder segment(String group, String label) =>
-      find.descendant(of: find.byKey(Key('ring-$group')), matching: find.text(label));
+  Finder segment(String group, String label) => find.descendant(
+    of: find.byKey(Key('ring-$group')),
+    matching: find.text(label),
+  );
 
   testWidgets('접힌 상태는 제목 · 한 줄 요약만', (tester) async {
     await pump(tester, _alarm);
@@ -68,7 +70,11 @@ void main() {
   testWidgets('요약은 알람 값을 따른다', (tester) async {
     await pump(
       tester,
-      _alarm.copyWith(volumePercent: 50, snoozeMinutes: 15, autoStopMinutes: 10),
+      _alarm.copyWith(
+        volumePercent: 50,
+        snoozeMinutes: 15,
+        autoStopMinutes: 10,
+      ),
     );
 
     expect(find.text('볼륨 50% · 스누즈 15분 · 자동 멈춤 10분'), findsOneWidget);
@@ -86,14 +92,19 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('펼치면 볼륨 · 점점 커지기 · 스누즈 간격 · 횟수 · 자동 멈춤 · 30분 전 알림', (tester) async {
+  testWidgets('펼치면 볼륨 · 점점 커지기 · 스누즈 간격 · 횟수 · 자동 멈춤 · 30분 전 알림', (
+    tester,
+  ) async {
     await pump(tester, _alarm);
     await expand(tester);
 
     expect(find.text('볼륨'), findsOneWidget);
     expect(find.text('80%'), findsOneWidget);
     final slider = tester.widget<Slider>(find.byType(Slider));
-    expect((slider.min, slider.max, slider.divisions, slider.value), (10.0, 100.0, 9, 80.0));
+    expect(
+      (slider.min, slider.max, slider.divisions, slider.value),
+      (10.0, 100.0, 9, 80.0),
+    );
     expect(find.text('점점 커지기'), findsOneWidget);
     for (final label in ['끔', '30초', '60초']) {
       expect(segment('fade', label), findsOneWidget);
