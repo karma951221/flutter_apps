@@ -147,6 +147,7 @@ import '../../presentation/lock/media_pick_guard.dart' as _i488;
 import '../../presentation/map/cubit/map_style_cubit.dart' as _i58;
 import '../../presentation/map/cubit/map_view_cubit.dart' as _i276;
 import '../../presentation/map/map_open_requests.dart' as _i98;
+import '../../presentation/weather/cubit/weather_cubit.dart' as _i931;
 import '../config/commute_api_keys.dart' as _i546;
 import 'register_module.dart' as _i291;
 
@@ -502,6 +503,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i638.LocationSync>(),
         gh<_i673.StayNamer>(),
         gh<_i993.LocationRecorder>(),
+        gh<_i494.Clock>(),
+      ),
+    );
+    gh.factory<_i931.WeatherCubit>(
+      () => _i931.WeatherCubit(
+        gh<_i903.WeatherRepository>(),
+        gh<_i283.WeatherLocator>(),
+        gh<_i858.WeatherCache>(),
         gh<_i494.Clock>(),
       ),
     );
