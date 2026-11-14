@@ -19,6 +19,15 @@ enum ChatToolKind {
   /// read_file
   readFile,
 
+  /// write_file
+  writeFile,
+
+  /// edit_file
+  editFile,
+
+  /// delete_file
+  deleteFile,
+
   /// 벤더 서버의 웹 검색(web_search). 세션이 실행하지 않고 결과 개수도 없다.
   webSearch,
   other,
@@ -33,6 +42,9 @@ ChatToolKind chatToolKindOf(String name) => switch (name) {
   'read_wiki' => ChatToolKind.wiki,
   'list_files' => ChatToolKind.listFiles,
   'read_file' => ChatToolKind.readFile,
+  'write_file' => ChatToolKind.writeFile,
+  'edit_file' => ChatToolKind.editFile,
+  'delete_file' => ChatToolKind.deleteFile,
   'web_search' => ChatToolKind.webSearch,
   _ => ChatToolKind.other,
 };
@@ -69,6 +81,7 @@ class ToolInputSummary with _$ToolInputSummary {
 }
 
 /// 결과 개수(Q6 — 개수만). 오류 결과면 count 0 · isError.
+/// 사용자가 쓰기를 거절했으면 isError 와 함께 [declined].
 @freezed
 class ToolSummary with _$ToolSummary {
   @override
@@ -77,10 +90,13 @@ class ToolSummary with _$ToolSummary {
   final int count;
   @override
   final bool isError;
+  @override
+  final bool declined;
 
   const ToolSummary({
     required this.kind,
     required this.count,
     this.isError = false,
+    this.declined = false,
   });
 }

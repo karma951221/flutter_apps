@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:walk/domain/chat/workspace/workspace.dart';
 import 'package:walk/presentation/chat/workspace/workspace_share.dart';
 
-/// 메모리 위의 작업 폴더. 목록 · 읽기 · 지우기 · 절대 경로만 쓴다.
+/// 메모리 위의 작업 폴더. 목록 · 읽기 · 쓰기 · 지우기 · 절대 경로만 쓴다.
 /// 절대 경로는 `/ws/<상대 경로>`.
 class MemoryWorkspace implements Workspace {
   MemoryWorkspace([Iterable<(WorkspaceFile, Uint8List)> files = const []]) {
@@ -63,6 +63,32 @@ class MemoryWorkspace implements Workspace {
     add(workspaceFile(path, sizeBytes: bytes.length), bytes);
     return path;
   }
+
+  /// 설정하면 writeText 가 던진다.
+  bool failWrite = false;
+
+  /// writeText 로 쓴 경로(순서대로).
+  final written = <String>[];
+
+  @override
+  Future<void> writeText(
+    String path,
+    String content, {
+    required bool overwrite,
+  }) async {
+    if (failWrite) throw StateError('io');
+    if (!overwrite && _files.containsKey(path)) {
+      throw WorkspaceFileExistsException(path);
+    }
+    written.add(path);
+    final bytes = Uint8List.fromList(utf8.encode(content));
+    add(workspaceFile(path, sizeBytes: bytes.length), bytes);
+  }
+
+  /// 지금 들어 있는 (경로 → 바이트) 복사본. 디스크 불변 확인용.
+  Map<String, List<int>> get snapshot => {
+    for (final MapEntry(:key, :value) in _files.entries) key: [...value.$2],
+  };
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

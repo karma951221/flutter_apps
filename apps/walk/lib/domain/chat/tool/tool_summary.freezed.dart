@@ -199,7 +199,7 @@ case _:
 /// @nodoc
 mixin _$ToolSummary {
 
- ChatToolKind get kind; int get count; bool get isError;
+ ChatToolKind get kind; int get count; bool get isError; bool get declined;
 /// Create a copy of ToolSummary
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -210,16 +210,16 @@ $ToolSummaryCopyWith<ToolSummary> get copyWith => _$ToolSummaryCopyWithImpl<Tool
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ToolSummary&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.count, count) || other.count == count)&&(identical(other.isError, isError) || other.isError == isError));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ToolSummary&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.count, count) || other.count == count)&&(identical(other.isError, isError) || other.isError == isError)&&(identical(other.declined, declined) || other.declined == declined));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,kind,count,isError);
+int get hashCode => Object.hash(runtimeType,kind,count,isError,declined);
 
 @override
 String toString() {
-  return 'ToolSummary(kind: $kind, count: $count, isError: $isError)';
+  return 'ToolSummary(kind: $kind, count: $count, isError: $isError, declined: $declined)';
 }
 
 
@@ -230,7 +230,7 @@ abstract mixin class $ToolSummaryCopyWith<$Res>  {
   factory $ToolSummaryCopyWith(ToolSummary value, $Res Function(ToolSummary) _then) = _$ToolSummaryCopyWithImpl;
 @useResult
 $Res call({
- ChatToolKind kind, int count, bool isError
+ ChatToolKind kind, int count, bool isError, bool declined
 });
 
 
@@ -247,11 +247,12 @@ class _$ToolSummaryCopyWithImpl<$Res>
 
 /// Create a copy of ToolSummary
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? kind = null,Object? count = null,Object? isError = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? kind = null,Object? count = null,Object? isError = null,Object? declined = null,}) {
   return _then(ToolSummary(
 kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as ChatToolKind,count: null == count ? _self.count : count // ignore: cast_nullable_to_non_nullable
 as int,isError: null == isError ? _self.isError : isError // ignore: cast_nullable_to_non_nullable
+as bool,declined: null == declined ? _self.declined : declined // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

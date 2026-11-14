@@ -60,6 +60,10 @@ String _toolLabel(AppLocalizations l10n, String locale, StepTool step) {
       final name? => l10n.walkChatToolReadFileNamed(name),
       null => l10n.walkChatToolReadFile,
     },
+    // 쓰기 도구 라벨은 승인 · 진행 줄 작업에서 따로 붙인다 — 그때까지는 알 수 없는 도구처럼.
+    ChatToolKind.writeFile ||
+    ChatToolKind.editFile ||
+    ChatToolKind.deleteFile ||
     ChatToolKind.other => l10n.walkChatToolOther,
   };
   final detail = _detail(l10n, locale, step.kind, step.input);
@@ -123,6 +127,9 @@ String? _resultText(AppLocalizations l10n, ToolSummary? result) {
     // 알 수 없는 도구는 개수 단위를 모른다 — 라벨 그대로.
     ChatToolKind.webSearch ||
     ChatToolKind.readFile ||
+    ChatToolKind.writeFile ||
+    ChatToolKind.editFile ||
+    ChatToolKind.deleteFile ||
     ChatToolKind.other => null,
   };
 }

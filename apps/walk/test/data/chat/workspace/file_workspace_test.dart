@@ -76,6 +76,100 @@ void main() {
     });
   });
 
+  group('writeText', () {
+    Future<List<String>> outNames() async => Directory(
+      p.join(rootDir.path, 'out'),
+    ).listSync().map((e) => p.basename(e.path)).toList();
+
+    test('정확히 그 경로에 UTF-8 로 새로 쓰고, 임시 파일이 남지 않는다', () async {
+      await ws.writeText('out/표.csv', '날짜,금액\n', overwrite: false);
+      expect(utf8.decode((await ws.readBytes('out/표.csv'))!), '날짜,금액\n');
+      expect(await outNames(), ['표.csv']);
+      expect((await ws.list(WorkspaceArea.out)).map((f) => f.path), [
+        'out/표.csv',
+      ]);
+    });
+
+    test('overwrite 면 덮어쓴다', () async {
+      await ws.writeText('out/a.md', '처음', overwrite: false);
+      await ws.writeText('out/a.md', '나중', overwrite: true);
+      expect(utf8.decode((await ws.readBytes('out/a.md'))!), '나중');
+      expect(await outNames(), ['a.md']);
+    });
+
+    test(
+      'overwrite:false 인데 있으면 WorkspaceFileExistsException, 내용 그대로',
+      () async {
+        await ws.writeText('out/a.md', '처음', overwrite: false);
+        await expectLater(
+          ws.writeText('out/a.md', '나중', overwrite: false),
+          throwsA(
+            isA<WorkspaceFileExistsException>().having(
+              (e) => e.path,
+              'path',
+              'out/a.md',
+            ),
+          ),
+        );
+        expect(utf8.decode((await ws.readBytes('out/a.md'))!), '처음');
+        expect(await outNames(), ['a.md']);
+      },
+    );
+
+    test('.. · 절대 경로는 WorkspacePathException', () async {
+      for (final path in ['../x.md', 'out/../../x.md', '/tmp/x.md']) {
+        await expectLater(
+          ws.writeText(path, 'x', overwrite: true),
+          throwsA(isA<WorkspacePathException>()),
+          reason: path,
+        );
+      }
+      expect(File(p.join(tmp.path, 'x.md')).existsSync(), isFalse);
+    });
+
+    test('밖을 가리키는 파일 링크 · 폴더 링크로는 쓰지 않는다', () async {
+      final secret = File(p.join(tmp.path, 'secret.txt'))
+        ..writeAsStringSync('비밀');
+      final elsewhere = Directory(p.join(tmp.path, 'elsewhere'))..createSync();
+      await Directory(p.join(rootDir.path, 'out')).create(recursive: true);
+      Link(p.join(rootDir.path, 'out', 'link.md')).createSync(secret.path);
+      Link(p.join(rootDir.path, 'out', 'dir')).createSync(elsewhere.path);
+
+      await expectLater(
+        ws.writeText('out/link.md', 'x', overwrite: true),
+        throwsA(isA<WorkspacePathException>()),
+      );
+      await expectLater(
+        ws.writeText('out/dir/x.md', 'x', overwrite: true),
+        throwsA(isA<WorkspacePathException>()),
+      );
+      expect(secret.readAsStringSync(), '비밀');
+      expect(elsewhere.listSync(), isEmpty);
+    });
+
+    test('out 이 밖을 가리키는 링크면 예외', () async {
+      final elsewhere = Directory(p.join(tmp.path, 'elsewhere'))..createSync();
+      await rootDir.create(recursive: true);
+      Link(p.join(rootDir.path, 'out')).createSync(elsewhere.path);
+      await expectLater(
+        ws.writeText('out/a.md', 'x', overwrite: false),
+        throwsA(isA<WorkspacePathException>()),
+      );
+      expect(elsewhere.listSync(), isEmpty);
+    });
+
+    test('쓰기에 실패하면(폴더 자리) 임시 파일을 지우고 던진다', () async {
+      await Directory(
+        p.join(rootDir.path, 'out', 'a.md'),
+      ).create(recursive: true);
+      await expectLater(
+        ws.writeText('out/a.md', 'x', overwrite: true),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(await outNames(), ['a.md']);
+    });
+  });
+
   group('list', () {
     test('최신순 · 크기 · 구역 분리 · 숨김 제외', () async {
       final first = await ws.importToInbox('one.txt', bytes('12345'));

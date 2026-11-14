@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:core/core.dart';
@@ -153,6 +154,38 @@ class FileWorkspace implements Workspace {
     await write(File(p.join(dir.path, candidate)));
     return '$area/$candidate';
   }
+
+  @override
+  Future<void> writeText(
+    String path,
+    String content, {
+    required bool overwrite,
+  }) async {
+    final abs = await _safe(path);
+    final dir = Directory(p.dirname(abs));
+    await dir.create(recursive: true);
+    if (!overwrite &&
+        await FileSystemEntity.type(abs, followLinks: false) !=
+            FileSystemEntityType.notFound) {
+      throw WorkspaceFileExistsException(path);
+    }
+    // `.` 로 시작해 list 에 안 보인다. 같은 폴더라 rename 이 한 번에 바꿔 끼운다.
+    final tmp = File(p.join(dir.path, '.tmp-${_randomHex()}'));
+    try {
+      await tmp.writeAsString(content, flush: true);
+      await tmp.rename(abs);
+    } catch (_) {
+      if (await tmp.exists()) await tmp.delete();
+      rethrow;
+    }
+  }
+
+  static final _random = Random.secure();
+
+  static String _randomHex() => [
+    for (var i = 0; i < 8; i++)
+      _random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+  ].join();
 
   @override
   Future<Uint8List?> readBytes(String path) async {

@@ -9,9 +9,12 @@ import '../chat_model.dart';
 import '../workspace/workspace.dart';
 import 'tool_result.dart';
 import 'tool_summary.dart';
+import 'write_plan.dart';
 
-/// 모델이 작업 폴더(inbox · out)의 파일을 찾고 읽는 도구 둘(list_files · read_file).
-/// [run] 은 던지지 않는다 — 실패는 `{"error": 코드}` 결과로 돌려준다.
+/// 모델이 작업 폴더(inbox · out)의 파일을 찾고 읽는 도구 둘(list_files · read_file)과
+/// out 에 글 파일을 만들고 · 고치고 · 지우는 쓰기 도구 셋(write_file · edit_file · delete_file).
+/// 쓰기는 [prepareWrite](검증, 디스크 그대로) → 사용자 승인 → [apply] 두 단계다.
+/// [run] · [prepareWrite] · [apply] 는 던지지 않는다 — 실패는 `{"error": 코드}` 결과로 돌려준다.
 @lazySingleton
 class WorkspaceTools {
   WorkspaceTools(this._workspace, this._loader);
@@ -68,6 +71,292 @@ class WorkspaceTools {
   );
 
   List<ToolSpec> get definitions => const [_listSpec, _readSpec];
+
+  static const writeFileName = 'write_file';
+  static const editFileName = 'edit_file';
+  static const deleteFileName = 'delete_file';
+  static const writeNames = {writeFileName, editFileName, deleteFileName};
+
+  /// 쓰는 내용 · 고친 결과의 최대 글자(코드 포인트) 수.
+  static const maxWriteChars = 100000;
+
+  /// 쓰기 파일 이름의 최대 글자(코드 포인트) 수.
+  static const maxWriteNameChars = 120;
+
+  static const _writableExtensions = {'md', 'txt', 'csv', 'json'};
+
+  /// AnswerFile 과 같은 금지 글자 + DEL.
+  static final _forbiddenName = RegExp(r'[\\/:*?"<>|\x00-\x1f\x7f]');
+
+  static const _pathDescription =
+      'out/<이름> 만(하위 폴더 · . 으로 시작하는 이름 없음, 확장자 md · txt · csv · json)';
+
+  static const _writeSpec = ToolSpec(
+    name: writeFileName,
+    description:
+        '작업 폴더 out 에 글 파일을 만든다(최대 100,000자). 이미 있으면 exists 오류 — '
+        '덮어쓰려면 overwrite 를 true 로. 사용자가 승인해야 저장된다.',
+    parameters: {
+      'type': 'object',
+      'properties': {
+        'path': {'type': 'string', 'description': _pathDescription},
+        'content': {'type': 'string', 'description': '파일 내용 전체'},
+        'overwrite': {
+          'type': 'boolean',
+          'description': '이미 있는 파일을 덮어쓸지. 생략하면 false',
+        },
+      },
+      'required': ['path', 'content'],
+    },
+  );
+
+  static const _editSpec = ToolSpec(
+    name: editFileName,
+    description:
+        'out 의 글 파일에서 old_text 를 new_text 로 바꾼다. old_text 는 파일에 정확히 '
+        '한 번 나와야 한다(없으면 no_match, 여럿이면 not_unique — 앞뒤를 더 넣어 하나로). '
+        '사용자가 승인해야 고쳐진다.',
+    parameters: {
+      'type': 'object',
+      'properties': {
+        'path': {'type': 'string', 'description': _pathDescription},
+        'old_text': {'type': 'string', 'description': '바꿀 부분(비지 않게)'},
+        'new_text': {'type': 'string', 'description': '넣을 부분(비우면 지운다)'},
+      },
+      'required': ['path', 'old_text', 'new_text'],
+    },
+  );
+
+  static const _deleteSpec = ToolSpec(
+    name: deleteFileName,
+    description: 'out 의 글 파일 하나를 지운다. 사용자가 승인해야 지워진다.',
+    parameters: {
+      'type': 'object',
+      'properties': {
+        'path': {'type': 'string', 'description': _pathDescription},
+      },
+      'required': ['path'],
+    },
+  );
+
+  List<ToolSpec> get writeDefinitions => const [
+    _writeSpec,
+    _editSpec,
+    _deleteSpec,
+  ];
+
+  /// 쓰기 호출을 검증해 [WritePlan] 을 주거나, 오류면 [ToolResult](isError)를 준다.
+  /// 디스크를 바꾸지 않는다. 던지지 않는다.
+  Future<Object> prepareWrite(String name, Map<String, Object?> input) async {
+    final kind = chatToolKindOf(name);
+    try {
+      if (!writeNames.contains(name)) return _error(kind, 'tool_failed');
+      final checked = await _checkWritePath(input['path']);
+      if (checked case final String code) return _error(kind, code);
+      final path = checked as _WritePath;
+      return switch (name) {
+        writeFileName => await _prepareWriteFile(path, input),
+        editFileName => await _prepareEdit(path, input),
+        _ => await _prepareDelete(path),
+      };
+    } catch (_) {
+      return _error(kind, 'tool_failed');
+    }
+  }
+
+  /// 승인된 [plan] 을 실행한다. 지금 내용을 다시 읽어 준비 때와 다르면 쓰지 않고
+  /// `changed`(만들기는 그 사이 생겼으면 `exists`). 던지지 않는다.
+  Future<ToolResult> apply(WritePlan plan) async {
+    final kind = switch (plan) {
+      WriteCreate() || WriteOverwrite() => ChatToolKind.writeFile,
+      WriteEdit() => ChatToolKind.editFile,
+      WriteDelete() => ChatToolKind.deleteFile,
+    };
+    try {
+      switch (plan) {
+        case WriteCreate(:final path, :final name, :final content):
+          if (await _workspace.exists(path)) return _error(kind, 'exists');
+          await _workspace.writeText(path, content, overwrite: false);
+          return _writeOk(kind, path, name, content, created: true);
+        case WriteOverwrite(
+          :final path,
+          :final name,
+          :final content,
+          :final previous,
+        ):
+          if (!await _unchanged(path, previous)) {
+            return _error(kind, 'changed');
+          }
+          await _workspace.writeText(path, content, overwrite: true);
+          return _writeOk(kind, path, name, content, created: false);
+        case WriteEdit(
+          :final path,
+          :final name,
+          :final content,
+          :final previous,
+        ):
+          if (!await _unchanged(path, previous)) {
+            return _error(kind, 'changed');
+          }
+          await _workspace.writeText(path, content, overwrite: true);
+          return _writeOk(kind, path, name, content);
+        case WriteDelete(:final path, :final name, :final previous):
+          if (!await _unchanged(path, previous)) {
+            return _error(kind, 'changed');
+          }
+          if (!await _workspace.delete(path)) return _error(kind, 'changed');
+          return ToolResult(
+            json: jsonEncode({'path': path, 'name': name, 'deleted': true}),
+            summary: ToolSummary(kind: kind, count: 1),
+          );
+      }
+    } on WorkspaceFileExistsException {
+      return _error(kind, 'exists');
+    } on WorkspacePathException {
+      return _error(kind, 'outside_workspace');
+    } catch (_) {
+      return _error(kind, 'tool_failed');
+    }
+  }
+
+  /// 사용자가 쓰기 [name] 을 거절했다.
+  ToolResult declined(String name) => ToolResult(
+    json: jsonEncode({'error': 'user_declined'}),
+    isError: true,
+    summary: ToolSummary(
+      kind: chatToolKindOf(name),
+      count: 0,
+      isError: true,
+      declined: true,
+    ),
+  );
+
+  /// 경로 검증. 통과하면 [_WritePath], 아니면 오류 코드. 경계 판정이 먼저 —
+  /// 밖의 경로는 다른 규칙도 알려 주지 않는다.
+  Future<Object> _checkWritePath(Object? raw) async {
+    final path = raw is String ? raw.trim() : '';
+    if (path.isEmpty) return 'invalid_path';
+    try {
+      await _workspace.absolutePath(path);
+    } on WorkspacePathException {
+      return 'outside_workspace';
+    }
+    final segments = path.split('/');
+    if (segments.first == 'inbox') return 'read_only';
+    if (segments.length != 2 || segments.first != 'out') return 'invalid_path';
+    final name = segments[1];
+    final dot = name.lastIndexOf('.');
+    if (name.isEmpty ||
+        name.startsWith('.') ||
+        name.runes.length > maxWriteNameChars ||
+        _forbiddenName.hasMatch(name) ||
+        dot < 0 ||
+        !_writableExtensions.contains(name.substring(dot + 1).toLowerCase())) {
+      return 'invalid_path';
+    }
+    return _WritePath(path, name);
+  }
+
+  Future<Object> _prepareWriteFile(
+    _WritePath at,
+    Map<String, Object?> input,
+  ) async {
+    const kind = ChatToolKind.writeFile;
+    final content = input['content'];
+    if (content is! String) return _error(kind, 'invalid_input');
+    if (content.runes.length > maxWriteChars) return _error(kind, 'too_large');
+    final bytes = await _workspace.readBytes(at.path);
+    if (bytes == null) {
+      return WritePlan.create(path: at.path, name: at.name, content: content);
+    }
+    if (input['overwrite'] != true) return _error(kind, 'exists');
+    final previous = _decode(bytes);
+    if (previous == null) return _error(kind, 'not_text');
+    return WritePlan.overwrite(
+      path: at.path,
+      name: at.name,
+      content: content,
+      previous: previous,
+    );
+  }
+
+  Future<Object> _prepareEdit(_WritePath at, Map<String, Object?> input) async {
+    const kind = ChatToolKind.editFile;
+    final oldText = input['old_text'];
+    final newText = input['new_text'];
+    if (oldText is! String || oldText.isEmpty || newText is! String) {
+      return _error(kind, 'invalid_input');
+    }
+    final bytes = await _workspace.readBytes(at.path);
+    if (bytes == null) return _error(kind, 'not_found');
+    final previous = _decode(bytes);
+    if (previous == null) return _error(kind, 'not_text');
+    final first = previous.indexOf(oldText);
+    if (first < 0) return _error(kind, 'no_match');
+    // 겹쳐 나오는 것도 센다("aa" 는 "aaa" 에 두 번).
+    if (previous.indexOf(oldText, first + 1) >= 0) {
+      return _error(kind, 'not_unique');
+    }
+    final content = previous.replaceRange(
+      first,
+      first + oldText.length,
+      newText,
+    );
+    if (content.runes.length > maxWriteChars) return _error(kind, 'too_large');
+    return WritePlan.edit(
+      path: at.path,
+      name: at.name,
+      oldText: oldText,
+      newText: newText,
+      previous: previous,
+      content: content,
+    );
+  }
+
+  Future<Object> _prepareDelete(_WritePath at) async {
+    const kind = ChatToolKind.deleteFile;
+    final bytes = await _workspace.readBytes(at.path);
+    if (bytes == null) return _error(kind, 'not_found');
+    final previous = _decode(bytes);
+    if (previous == null) return _error(kind, 'not_text');
+    return WritePlan.delete(
+      path: at.path,
+      name: at.name,
+      previous: previous,
+      sizeBytes: bytes.length,
+    );
+  }
+
+  /// 지금 내용이 [previous] 와 같은가. 없어졌거나 글이 아니게 됐으면 false.
+  Future<bool> _unchanged(String path, String previous) async {
+    final bytes = await _workspace.readBytes(path);
+    return bytes != null && _decode(bytes) == previous;
+  }
+
+  /// UTF-8 이 아니면 null.
+  static String? _decode(List<int> bytes) {
+    try {
+      return utf8.decode(bytes);
+    } on FormatException {
+      return null;
+    }
+  }
+
+  static ToolResult _writeOk(
+    ChatToolKind kind,
+    String path,
+    String name,
+    String content, {
+    bool? created,
+  }) => ToolResult(
+    json: jsonEncode({
+      'path': path,
+      'name': name,
+      'chars': content.runes.length,
+      'created': ?created,
+    }),
+    summary: ToolSummary(kind: kind, count: 1),
+  );
 
   Future<ToolResult> run(String name, Map<String, Object?> input) async {
     try {
@@ -217,4 +506,12 @@ class WorkspaceTools {
     return '${d.year.toString().padLeft(4, '0')}-${two(d.month)}-${two(d.day)}'
         'T${two(d.hour)}:${two(d.minute)}';
   }
+}
+
+/// 검증을 지난 쓰기 경로(`out/<이름>`)와 이름.
+class _WritePath {
+  const _WritePath(this.path, this.name);
+
+  final String path;
+  final String name;
 }
