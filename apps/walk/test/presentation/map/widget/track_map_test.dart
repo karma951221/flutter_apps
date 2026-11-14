@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:walk/domain/location/entity/day_track.dart';
 import 'package:walk/domain/location/entity/location_point.dart';
+import 'package:walk/domain/location/entity/map_style.dart';
 import 'package:walk/domain/location/entity/record_mode.dart';
 import 'package:walk/domain/location/entity/track_segment.dart';
 import 'package:walk/presentation/map/widget/track_map.dart';
@@ -38,12 +39,14 @@ void main() {
     WidgetTester tester,
     DayTrack track, {
     double inset = 0,
+    MapStyle style = MapStyle.simple,
+    ThemeData? theme,
   }) async {
     await tester.binding.setSurfaceSize(const Size(800, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(
-        theme: AppTheme.light(),
+        theme: theme ?? AppTheme.light(),
         home: Scaffold(
           body: TrackMap(
             track: track,
@@ -52,6 +55,7 @@ void main() {
             entries: const [],
             fitKey: 'day',
             bottomInset: inset,
+            style: style,
             onOpenEntry: (_) {},
           ),
         ),
@@ -133,5 +137,41 @@ void main() {
 
       expect(camera(tester).center, moved);
     });
+  });
+
+  group('위성에서는 동선을 밝게', () {
+    Polyline line(WidgetTester tester) => tester
+        .widget<PolylineLayer>(find.byType(PolylineLayer))
+        .polylines
+        .single;
+
+    for (final (name, theme) in [
+      ('밝은 테마', AppTheme.light()),
+      ('어두운 테마', AppTheme.dark()),
+    ]) {
+      testWidgets('$name: 다른 종류보다 밝고 어두운 테두리', (tester) async {
+        await pump(tester, _track(37.5), theme: theme);
+        final plain = line(tester);
+        expect(plain.borderStrokeWidth, 0);
+
+        await pump(
+          tester,
+          _track(37.5),
+          style: MapStyle.satellite,
+          theme: theme,
+        );
+        final sat = line(tester);
+
+        expect(
+          sat.color.computeLuminance(),
+          // 어두운 테마는 primary 가 이미 밝은 쪽이라 같을 수 있다.
+          greaterThanOrEqualTo(
+            plain.color.withValues(alpha: 1).computeLuminance(),
+          ),
+        );
+        expect(sat.color.a, greaterThan(plain.color.a));
+        expect(sat.borderStrokeWidth, greaterThan(0));
+      });
+    }
   });
 }

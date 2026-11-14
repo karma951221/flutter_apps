@@ -186,6 +186,35 @@ void main() {
     expect(find.text('위치 권한이 없어 기록을 켜지 못했어요'), findsOneWidget);
   });
 
+  testWidgets('거부 안내에서 설정을 열 수 있다 — 두 번 거부하면 권한 창이 다시 뜨지 않는다', (
+    tester,
+  ) async {
+    when(access.request).thenAnswer((_) async => AlwaysAccess.denied);
+    when(access.openAppSettings).thenAnswer((_) async {});
+    await pump(tester);
+
+    await tester.tap(find.byKey(const Key('map-settings-record-switch')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('설정 열기'));
+    await tester.pumpAndSettle();
+
+    verify(access.openAppSettings).called(1);
+  });
+
+  testWidgets('거부한 뒤 다시 켜면 권한을 다시 묻는다', (tester) async {
+    when(access.request).thenAnswer((_) async => AlwaysAccess.denied);
+    await pump(tester);
+    await tester.tap(find.byKey(const Key('map-settings-record-switch')));
+    await tester.pumpAndSettle();
+
+    when(access.request).thenAnswer((_) async => AlwaysAccess.granted);
+    await tester.tap(find.byKey(const Key('map-settings-record-switch')));
+    await tester.pumpAndSettle();
+
+    verify(access.request).called(2);
+    verify(() => recorder.start(RecordMode.normal)).called(1);
+  });
+
   testWidgets('배터리 행은 배터리 설정을 연다', (tester) async {
     await pump(tester);
 

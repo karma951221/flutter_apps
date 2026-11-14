@@ -72,6 +72,11 @@ class TrackMapState extends State<TrackMap> {
   static const _spotRadius = 7.0;
   static const _spotRing = 2.0;
 
+  /// 위성: 사진이 테마와 상관없이 어둡다 — 평소 구간도 진하게, 밝은 지붕 위를 위해 얇은 어두운 테두리.
+  static const _satelliteNormalAlpha = 0.85;
+  static const _satelliteBorder = 1.5;
+  static const _satelliteBorderAlpha = 0.6;
+
   final _controller = MapController();
 
   /// OSM 타일. getIt 에서 받아 테스트가 stub 으로 바꾼다. TileLayer 가 dispose 할 때까지 같은 것을
@@ -282,9 +287,26 @@ class TrackMapState extends State<TrackMap> {
 
   static bool _isSinglePlace(List<LatLng> c) => c.every((p) => p == c.first);
 
+  /// 동선 · 머문 곳 색. 위성이면 테마 색 중 밝은 쪽(밝은 테마는 inversePrimary, 어두운 테마는 primary).
+  Color _routeColor(ColorScheme scheme) {
+    if (widget.style != MapStyle.satellite) return scheme.primary;
+    final a = scheme.primary, b = scheme.inversePrimary;
+    return a.computeLuminance() >= b.computeLuminance() ? a : b;
+  }
+
+  double _alphaOf(RecordMode mode) {
+    if (widget.faint) return _faintAlpha;
+    if (mode == RecordMode.dense) return 1;
+    return widget.style == MapStyle.satellite
+        ? _satelliteNormalAlpha
+        : _normalAlpha;
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final route = _routeColor(scheme);
+    final satellite = widget.style == MapStyle.satellite;
     final coordinates = _coordinates();
     final single = coordinates.isNotEmpty && _isSinglePlace(coordinates);
     return FlutterMap(
@@ -327,12 +349,10 @@ class TrackMapState extends State<TrackMap> {
                   strokeWidth: !widget.faint && s.mode == RecordMode.dense
                       ? _denseStroke
                       : _normalStroke,
-                  color: scheme.primary.withValues(
-                    alpha: widget.faint
-                        ? _faintAlpha
-                        : s.mode == RecordMode.dense
-                        ? 1
-                        : _normalAlpha,
+                  color: route.withValues(alpha: _alphaOf(s.mode)),
+                  borderStrokeWidth: satellite ? _satelliteBorder : 0,
+                  borderColor: scheme.shadow.withValues(
+                    alpha: _satelliteBorderAlpha,
                   ),
                   strokeCap: StrokeCap.round,
                   strokeJoin: StrokeJoin.round,
@@ -345,7 +365,7 @@ class TrackMapState extends State<TrackMap> {
               CircleMarker(
                 point: spot,
                 radius: _spotRadius,
-                color: scheme.primary,
+                color: route,
                 borderColor: scheme.surface,
                 borderStrokeWidth: _spotRing,
               ),

@@ -7566,7 +7566,7 @@ abstract class AppLocalizations {
   /// **'권한이 필요해 기록이 꺼져 있어요'**
   String get walkMapSettingsBlocked;
 
-  /// 지도 설정 — 항상 허용 안내 스낵바의 설정 열기 버튼
+  /// 지도 — 항상 허용 · 위치 거부 안내 스낵바의 설정 열기 버튼
   ///
   /// In ko, this message translates to:
   /// **'설정 열기'**
