@@ -12,7 +12,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:walk/domain/location/repository/map_style_preferences.dart';
 import 'package:walk/data/location/background_location_access.dart';
 import 'package:walk/data/lock/prefs_lock_repository.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
@@ -38,6 +37,7 @@ import 'package:walk/presentation/lock/media_pick_guard.dart';
 import 'package:walk/presentation/lock/widget/pin_pad.dart';
 import 'package:walk/presentation/map/cubit/map_record_cubit.dart';
 import 'package:walk/presentation/map/cubit/map_record_state.dart';
+import 'package:walk/presentation/map/cubit/map_style_cubit.dart';
 import 'package:walk/presentation/map/cubit/map_view_cubit.dart';
 import 'package:walk/presentation/map/cubit/map_view_state.dart';
 import 'package:walk/presentation/map/page/map_tab.dart';
@@ -188,7 +188,11 @@ void main() {
       ..registerSingleton<DiaryRepository>(repo)
       ..registerSingleton<MediaStore>(store)
       ..registerFactory<TileProvider>(StubTileProvider.new)
-      ..registerSingleton<MapStylePreferences>(mapStyle);
+      // 펌프할 때 만든다 — 테스트가 저장값을 먼저 바꿀 수 있게.
+      ..registerLazySingleton<MapStyleCubit>(
+        () => MapStyleCubit(mapStyle),
+        dispose: (c) => c.close(),
+      );
   });
 
   tearDown(() async {
@@ -554,6 +558,20 @@ void main() {
     expect(
       tester.widget<TileLayer>(find.byType(TileLayer)).urlTemplate,
       contains('light_nolabels'),
+    );
+  });
+
+  testWidgets('style changed elsewhere (settings) updates the map', (
+    tester,
+  ) async {
+    await pump(tester, state: MapViewState.ready(_data()));
+
+    await getIt<MapStyleCubit>().select(MapStyle.dark);
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.widget<TileLayer>(find.byType(TileLayer)).urlTemplate,
+      contains('dark_all'),
     );
   });
 

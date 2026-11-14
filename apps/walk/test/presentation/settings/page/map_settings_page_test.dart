@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/data/location/background_location_access.dart';
+import 'package:core/core.dart';
+import 'package:walk/domain/location/entity/map_style.dart';
 import 'package:walk/domain/location/entity/record_mode.dart';
 import 'package:walk/domain/location/entity/record_retention.dart';
 import 'package:walk/domain/location/recorder/location_recorder.dart';
@@ -10,8 +12,10 @@ import 'package:walk/domain/location/recorder/recorder_status.dart';
 import 'package:walk/domain/location/repository/location_preferences.dart';
 import 'package:walk/domain/location/repository/location_repository.dart';
 import 'package:walk/presentation/map/cubit/map_record_cubit.dart';
+import 'package:walk/presentation/map/cubit/map_style_cubit.dart';
 import 'package:walk/presentation/settings/page/map_settings_page.dart';
 
+import '../../../support/fake_map_style_preferences.dart';
 import '../settings_harness.dart';
 
 class _MockRecorder extends Mock implements LocationRecorder {}
@@ -29,6 +33,7 @@ void main() {
   late _MockPrefs prefs;
   late _MockRepository repository;
   late MapRecordCubit cubit;
+  late FakeMapStylePreferences stylePrefs;
 
   setUpAll(() {
     SettingsHarness.registerFallbacks();
@@ -58,6 +63,7 @@ void main() {
     when(recorder.clearInbox).thenAnswer((_) async {});
     when(repository.hasAnyPoint).thenAnswer((_) async => true);
     cubit = MapRecordCubit(recorder, access, prefs, repository);
+    stylePrefs = h.mapStylePrefs;
   });
 
   tearDown(() async {
@@ -213,5 +219,43 @@ void main() {
     await tester.pumpAndSettle();
 
     verifyNever(repository.deleteAll);
+  });
+
+  testWidgets('지도 모양 행은 지금 모양(기본 단순)을 보인다', (tester) async {
+    await pump(tester);
+
+    final row = find.byKey(const Key('map-settings-style'));
+    expect(row, findsOneWidget);
+    expect(find.descendant(of: row, matching: find.text('단순')), findsOneWidget);
+  });
+
+  testWidgets('지도 모양 행 → 시트에서 고르면 바뀌고 저장된다', (tester) async {
+    await pump(tester);
+
+    await tester.tap(find.byKey(const Key('map-settings-style')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('map-style-dark')));
+    await tester.pumpAndSettle();
+
+    expect(getIt<MapStyleCubit>().state, MapStyle.dark);
+    expect(stylePrefs.style, MapStyle.dark);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('map-settings-style')),
+        matching: find.text('어둡게'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('지도 모양 시트를 그냥 닫으면 그대로', (tester) async {
+    await pump(tester);
+
+    await tester.tap(find.byKey(const Key('map-settings-style')));
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    expect(getIt<MapStyleCubit>().state, MapStyle.simple);
   });
 }

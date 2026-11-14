@@ -7,6 +7,7 @@ import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:walk/presentation/map/cubit/map_style_cubit.dart';
 import 'package:walk/data/diary/prefs_diary_preferences.dart';
 import 'package:walk/data/lock/prefs_lock_repository.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
@@ -46,6 +47,7 @@ import 'package:walk/presentation/settings/cubit/settings_permissions_cubit.dart
 import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
 import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
 
+import '../../support/fake_map_style_preferences.dart';
 import '../../support/diary_fixtures.dart';
 import '../../support/fake_chat_history.dart';
 import '../../support/fake_wiki_repository.dart';
@@ -111,6 +113,7 @@ class SettingsHarness {
   final locations = MockLocationRepository();
   late PrefsLockRepository lockRepo;
   late DiaryPreferences diaryPrefs;
+  late FakeMapStylePreferences mapStylePrefs;
   late SettingsPermissionsCubit permissions;
   late ThemeCubit theme;
   late StepGoalCubit goal;
@@ -165,7 +168,11 @@ class SettingsHarness {
       ..registerSingleton<ChatHistorySettings>(FakeChatHistorySettings())
       ..registerSingleton<ChatHistoryRepository>(FakeChatHistoryCount())
       ..registerSingleton<WikiRepository>(FakeWikiRepository())
-      ..registerSingleton<ChatUsageRepository>(FakeChatUsageRepository());
+      ..registerSingleton<ChatUsageRepository>(FakeChatUsageRepository())
+      ..registerSingleton<MapStyleCubit>(
+        MapStyleCubit(mapStylePrefs = FakeMapStylePreferences()),
+        dispose: (c) => c.close(),
+      );
     diaryLock = DiaryLockCubit(
       lockRepo,
       FakeDeviceAuth(),

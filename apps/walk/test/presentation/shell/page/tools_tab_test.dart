@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:walk/domain/location/repository/map_style_preferences.dart';
 import 'package:walk/domain/alarm/holiday/holiday_calendar.dart';
 import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
@@ -23,7 +22,6 @@ import 'package:walk/presentation/map/page/map_tab.dart';
 import 'package:walk/presentation/shell/page/tools_tab.dart';
 import 'package:walk/presentation/walk/page/walk_home_page.dart';
 
-import '../../../support/fake_map_style_preferences.dart';
 import '../../../support/stub_tile_provider.dart';
 import '../../settings/settings_harness.dart';
 
@@ -62,8 +60,7 @@ void main() {
     getIt
       ..registerSingleton<WalkUseCase>(h.walk)
       ..registerSingleton<SettingsRepository>(h.settings)
-      ..registerFactory<TileProvider>(StubTileProvider.new)
-      ..registerSingleton<MapStylePreferences>(FakeMapStylePreferences());
+      ..registerFactory<TileProvider>(StubTileProvider.new);
     record = _MockRecord();
     view = _MockView();
     whenListen(

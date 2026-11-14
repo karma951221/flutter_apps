@@ -338,9 +338,10 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | `data/location/channel_location_recorder_test.dart` | `ChannelLocationRecorder` | 채널 호출 모양 · 상태 매핑(off / running / blocked) · 시각 UTC · 모르는 값 폴백 · 배터리 화면 · `clearInbox` |
 | `presentation/map/cubit/map_record_cubit_test.dart` | `MapRecordCubit` | 켜기 순서(권한) · 거부 / 설정 필요 · 항상 허용 회수 → blocked · 실제 권한 읽기 · 촘촘 · 보관 기간 · 모두 지우기(inbox 를 먼저 비움 · 비우기 실패면 저장소 그대로) · 처음 안내 판정(`hasPoints`) |
 | `presentation/map/cubit/map_view_cubit_test.dart` | `MapViewCubit` | 하루 · 한 달 · 스토리 · 일기 핀(`locatedEntriesBetween`, 기간 경계) · 이름 붙이기(오늘은 묻고, 한 달 · 스토리는 캐시만 · 같은 격자 한 번) · 긴 스토리(이틀 넘음 · 진행 중은 지금까지) 단순화 · 짧은 스토리 그대로 · 실패 variant · **처음 show 도 수거 뒤 읽기(로딩 유지)** · sync 실패해도 저장분 · 느린 sync 중 새 기간 우선 |
+| `presentation/map/cubit/map_style_cubit_test.dart` | `MapStyleCubit` | 처음 값은 저장값 · 고르면 바로 반영하고 저장 · 같은 모양이면 저장 안 함 |
 | `presentation/map/widget/track_map_test.dart` | `TrackMap` | 같은 이동선이면 선 좌표 재사용 · 바뀌면 다시 만듦 · 같은 기간에 새 점이 화면 밖이면 카메라를 다시 맞춤 · 화면 안이면 그대로 · 손으로 옮긴 뒤엔 따라가지 않음 |
-| `presentation/map/page/map_tab_test.dart` | `MapTab` | 잠기면 PIN · 열면 읽기 · 처음 안내 · 켜기 실패 오류 스낵바 · 기록이 켜지면 다시 읽기(첫 load 는 제외) · 기간 전환 · 스토리 고르기 · ‹ › · 칩 · 핀 → 뷰어 · 가까운 핀 묶기 · 빈 · 실패 [다시 시도] · 다시 잠기면 시트 닫기 · 지도 모양 버튼 → 시트 → 타일 · 출처가 바뀌고 저장 · 저장된 모양으로 열림 |
-| `presentation/settings/page/map_settings_page_test.dart` | `MapSettingsPage` | 켜기 · 끄기 · 권한 행 · 배터리 · 보관 기간 · 모두 지우기(inbox → 저장소 순) |
+| `presentation/map/page/map_tab_test.dart` | `MapTab` | 잠기면 PIN · 열면 읽기 · 처음 안내 · 켜기 실패 오류 스낵바 · 기록이 켜지면 다시 읽기(첫 load 는 제외) · 기간 전환 · 스토리 고르기 · ‹ › · 칩 · 핀 → 뷰어 · 가까운 핀 묶기 · 빈 · 실패 [다시 시도] · 다시 잠기면 시트 닫기 · 지도 모양 버튼 → 시트 → 타일 · 출처가 바뀌고 저장 · 저장된 모양으로 열림 · 설정에서 바꾸면 지도도 바뀜 |
+| `presentation/settings/page/map_settings_page_test.dart` | `MapSettingsPage` | 켜기 · 끄기 · 권한 행 · 배터리 · 보관 기간 · 모두 지우기(inbox → 저장소 순) · 지도 모양 행(지금 모양 · 고르면 저장 · 닫으면 그대로) |
 | `presentation/settings/open_settings_test.dart` | 앱 설정 › 지도 설정 | 잠금 화면을 거쳐 지도 설정이 열린다(지도 기록 cubit 을 다시 건다) |
 | `data/diary/drift_diary_repository_range_search_test.dart` | `locatedEntriesBetween` | 좌표 있는 기록만 · 양 끝 포함 오래된 순 · 휴지통 제외 · limit 은 좌표 있는 기록에 · 기본 1000 |
 | `presentation/shell/page/tools_tab_test.dart` · `main_shell_page_test.dart` | 도구 셋째 탭 · 셸 | 탭 3개 · 지도 ⋮ · 잠긴 ⋮ · 다시 잠길 때 팝업 닫기 · 재개 시 새로 읽기 · 뷰어 › 지도 요청으로 탭 이동 · 셸 위에 얹힌 화면에서 온 요청이면 걷어 내고 지도 |

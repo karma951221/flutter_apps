@@ -137,6 +137,7 @@ import '../../presentation/chat/attachment/chat_file_picker.dart' as _i211;
 import '../../presentation/chat/workspace/workspace_share.dart' as _i835;
 import '../../presentation/diary/media_picker.dart' as _i287;
 import '../../presentation/lock/media_pick_guard.dart' as _i488;
+import '../../presentation/map/cubit/map_style_cubit.dart' as _i58;
 import '../../presentation/map/cubit/map_view_cubit.dart' as _i276;
 import '../../presentation/map/map_open_requests.dart' as _i98;
 import '../config/commute_api_keys.dart' as _i546;
@@ -424,6 +425,10 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i279.LocationPreferences>(),
         gh<_i494.Clock>(),
       ),
+    );
+    gh.lazySingleton<_i58.MapStyleCubit>(
+      () => _i58.MapStyleCubit(gh<_i483.MapStylePreferences>()),
+      dispose: (i) => i.close(),
     );
     gh.lazySingleton<_i122.DiaryRepository>(
       () => _i1049.DriftDiaryRepository(

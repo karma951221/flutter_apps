@@ -898,3 +898,6 @@ OSM 기본 타일이 가게 · 건물 이름까지 다 그려서 동선이 묻�
   dispose 해 지도가 회색이 된다. URL 만 바꾸면 TileLayer 가 스스로 타일을 다시 읽는다.
 - 설정은 위치 기록 설정(`LocationPreferences`)과 따로 `MapStylePreferences` 로 뒀다 — 지도 보기 취향이라
   기록 · 동기화와 무관하다.
+- **지도 설정에서도 바꾼다 — 앱 전체 `MapStyleCubit`** — 설정은 셸 바깥 라우트라 셸 provider 를 못 받는다.
+  `ThemeCubit` 처럼 상태를 들되 getIt lazySingleton 으로 두어 지도 탭과 지도 설정이 같은 것을 본다.
+  그래서 설정에서 바꾸면 뒤에 깔린 지도가 돌아오기 전에 이미 바뀌어 있다.
