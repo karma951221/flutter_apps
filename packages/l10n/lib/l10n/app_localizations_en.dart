@@ -4485,6 +4485,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkMapSettingsOpenSettings => 'Open settings';
 
   @override
+  String get walkMapRationaleTitle => 'Allow location all the time';
+
+  @override
+  String get walkMapRationaleBody =>
+      'To keep your route while the app is closed, location must be set to \"Allow all the time\". When the settings screen opens next, choose \"Allow all the time\".\n\nPhysical activity lets recording pause while you stay still to save battery, and notifications show that recording is on. Recording still works if you deny them.\n\nYour location history stays on this phone.';
+
+  @override
+  String get walkMapRationaleContinue => 'Continue';
+
+  @override
   String get walkMapSettingsDenied =>
       'Could not turn on recording without location permission';
 

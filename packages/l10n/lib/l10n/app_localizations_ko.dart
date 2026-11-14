@@ -4117,6 +4117,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapSettingsOpenSettings => '설정 열기';
 
   @override
+  String get walkMapRationaleTitle => '위치를 항상 허용해 주세요';
+
+  @override
+  String get walkMapRationaleBody =>
+      '앱을 닫아도 다닌 길을 남기려면 위치를 \"항상 허용\"해야 해요. 다음에 설정 화면이 열리면 \"항상 허용\"을 골라 주세요.\n\n신체 활동은 가만히 있을 때 기록을 쉬어 배터리를 아끼는 데, 알림은 기록 중임을 보여 주는 데 써요. 거부해도 기록은 돼요.\n\n위치 기록은 이 폰에만 남아요.';
+
+  @override
+  String get walkMapRationaleContinue => '계속';
+
+  @override
   String get walkMapSettingsDenied => '위치 권한이 없어 기록을 켜지 못했어요';
 
   @override

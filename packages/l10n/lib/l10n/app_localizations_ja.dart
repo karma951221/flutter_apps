@@ -4114,6 +4114,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkMapSettingsOpenSettings => '設定を開く';
 
   @override
+  String get walkMapRationaleTitle => '位置情報を「常に許可」にしてください';
+
+  @override
+  String get walkMapRationaleBody =>
+      'アプリを閉じても歩いた道を残すには、位置情報を「常に許可」にする必要があります。次に設定画面が開いたら「常に許可」を選んでください。\n\n身体活動はじっとしている間の記録を休んで電池を節約するため、通知は記録中であることを示すために使います。拒否しても記録はできます。\n\n位置の記録はこの端末だけに残ります。';
+
+  @override
+  String get walkMapRationaleContinue => '続ける';
+
+  @override
   String get walkMapSettingsDenied => '位置情報の権限がないため記録をオンにできませんでした';
 
   @override

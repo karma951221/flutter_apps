@@ -312,6 +312,9 @@ void main() {
 
     await tester.tap(find.text('위치 기록 켜기'));
     await tester.pumpAndSettle();
+    // 항상 허용이 아직 없으면 이유 설명이 먼저 뜬다.
+    await tester.tap(find.text('계속'));
+    await tester.pumpAndSettle();
 
     verify(record.enable).called(1);
   });
@@ -325,6 +328,9 @@ void main() {
     );
 
     await tester.tap(find.text('위치 기록 켜기'));
+    await tester.pumpAndSettle();
+    // 항상 허용이 아직 없으면 이유 설명이 먼저 뜬다.
+    await tester.tap(find.text('계속'));
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
@@ -458,6 +464,9 @@ void main() {
     expect(find.text('촘촘 기록'), findsNothing);
 
     await tester.tap(find.text('기록 꺼짐 · 권한 필요'));
+    await tester.pumpAndSettle();
+    // 항상 허용이 아직 없으면 이유 설명이 먼저 뜬다.
+    await tester.tap(find.text('계속'));
     await tester.pumpAndSettle();
     verify(record.enable).called(1);
   });

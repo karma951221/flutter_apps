@@ -76,6 +76,16 @@ void main() {
     BlocProvider.value(value: cubit, child: const MapSettingsPage()),
   );
 
+  /// 기록 스위치를 누르고, 권한 이유 설명이 뜨면 [계속]을 누른다.
+  Future<void> tapRecordSwitch(WidgetTester tester) async {
+    await tester.tap(find.byKey(const Key('map-settings-record-switch')));
+    await tester.pumpAndSettle();
+    if (find.text('계속').evaluate().isNotEmpty) {
+      await tester.tap(find.text('계속'));
+      await tester.pumpAndSettle();
+    }
+  }
+
   Switch switchOf(WidgetTester tester, String key) =>
       tester.widget<Switch>(find.byKey(Key(key)));
 
@@ -87,6 +97,53 @@ void main() {
     expect(find.text('지우지 않음'), findsOneWidget);
   });
 
+  group('권한을 묻기 전에 이유를 설명한다', () {
+    testWidgets('항상 허용이 없으면 먼저 설명하고, 취소하면 묻지 않는다', (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.byKey(const Key('map-settings-record-switch')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('위치를 항상 허용해 주세요'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.textContaining('이 폰에만'),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('취소'));
+      await tester.pumpAndSettle();
+
+      verifyNever(access.request);
+      verifyNever(() => recorder.start(any()));
+      expect(switchOf(tester, 'map-settings-record-switch').value, isFalse);
+    });
+
+    testWidgets('계속을 누르면 권한을 묻는다', (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.byKey(const Key('map-settings-record-switch')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('계속'));
+      await tester.pumpAndSettle();
+
+      verify(access.request).called(1);
+      verify(() => recorder.start(RecordMode.normal)).called(1);
+    });
+
+    testWidgets('이미 항상 허용이면 설명 없이 바로 켠다', (tester) async {
+      when(access.check).thenAnswer((_) async => AlwaysAccess.granted);
+      await pump(tester);
+
+      await tester.tap(find.byKey(const Key('map-settings-record-switch')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('위치를 항상 허용해 주세요'), findsNothing);
+      verify(() => recorder.start(RecordMode.normal)).called(1);
+    });
+  });
+
   testWidgets('기록 스위치를 켜면 평소 모드로 시작한다', (tester) async {
     await pump(tester);
     when(recorder.status).thenAnswer(
@@ -94,8 +151,7 @@ void main() {
           const RecorderStatus.running(RecordMode.normal, stillDetection: true),
     );
 
-    await tester.tap(find.byKey(const Key('map-settings-record-switch')));
-    await tester.pumpAndSettle();
+    await tapRecordSwitch(tester);
 
     verify(() => recorder.start(RecordMode.normal)).called(1);
     expect(switchOf(tester, 'map-settings-record-switch').value, isTrue);
@@ -106,8 +162,7 @@ void main() {
     when(access.request).thenAnswer((_) async => AlwaysAccess.needsSettings);
     await pump(tester);
 
-    await tester.tap(find.byKey(const Key('map-settings-record-switch')));
-    await tester.pumpAndSettle();
+    await tapRecordSwitch(tester);
 
     verifyNever(() => recorder.start(any()));
     expect(switchOf(tester, 'map-settings-record-switch').value, isFalse);
@@ -180,21 +235,17 @@ void main() {
     when(access.request).thenAnswer((_) async => AlwaysAccess.denied);
     await pump(tester);
 
-    await tester.tap(find.byKey(const Key('map-settings-record-switch')));
-    await tester.pumpAndSettle();
+    await tapRecordSwitch(tester);
 
     expect(find.text('위치 권한이 없어 기록을 켜지 못했어요'), findsOneWidget);
   });
 
-  testWidgets('거부 안내에서 설정을 열 수 있다 — 두 번 거부하면 권한 창이 다시 뜨지 않는다', (
-    tester,
-  ) async {
+  testWidgets('거부 안내에서 설정을 열 수 있다 — 두 번 거부하면 권한 창이 다시 뜨지 않는다', (tester) async {
     when(access.request).thenAnswer((_) async => AlwaysAccess.denied);
     when(access.openAppSettings).thenAnswer((_) async {});
     await pump(tester);
 
-    await tester.tap(find.byKey(const Key('map-settings-record-switch')));
-    await tester.pumpAndSettle();
+    await tapRecordSwitch(tester);
     await tester.tap(find.text('설정 열기'));
     await tester.pumpAndSettle();
 
@@ -204,12 +255,10 @@ void main() {
   testWidgets('거부한 뒤 다시 켜면 권한을 다시 묻는다', (tester) async {
     when(access.request).thenAnswer((_) async => AlwaysAccess.denied);
     await pump(tester);
-    await tester.tap(find.byKey(const Key('map-settings-record-switch')));
-    await tester.pumpAndSettle();
+    await tapRecordSwitch(tester);
 
     when(access.request).thenAnswer((_) async => AlwaysAccess.granted);
-    await tester.tap(find.byKey(const Key('map-settings-record-switch')));
-    await tester.pumpAndSettle();
+    await tapRecordSwitch(tester);
 
     verify(access.request).called(2);
     verify(() => recorder.start(RecordMode.normal)).called(1);

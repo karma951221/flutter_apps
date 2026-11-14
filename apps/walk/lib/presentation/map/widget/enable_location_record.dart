@@ -5,7 +5,7 @@ import 'package:l10n/l10n.dart';
 import '../../../data/location/background_location_access.dart';
 import '../cubit/map_record_cubit.dart';
 
-/// 권한 흐름을 거쳐 위치 기록을 켠다. "항상 허용"을 대화상자로 못 받았으면 설정으로 보내는
+/// 권한 흐름을 거쳐 위치 기록을 켠다. 항상 허용이 아직 없으면 먼저 이유를 설명하고, 취소하면 묻지 않는다. "항상 허용"을 대화상자로 못 받았으면 설정으로 보내는
 /// 스낵바, 거부했으면 [설정 열기]가 달린 오류 스낵바를 띄운다. 권한 흐름 · 서비스 시작이 던지면(PlatformException 등)
 /// 기록하고 오류 스낵바를 띄운다 — 부르는 쪽은 기다리지 않는다. 지도 탭(칩 · 처음 안내)과 지도
 /// 설정이 함께 쓴다.
@@ -14,6 +14,17 @@ Future<void> enableLocationRecord(
   MapRecordCubit cubit,
 ) async {
   final l10n = AppLocalizations.of(context);
+  // 항상 허용이 아직 없으면 시스템 권한 창 · 설정 화면으로 가기 전에 이유를 먼저 말한다.
+  if (cubit.state.access != AlwaysAccess.granted) {
+    final go = await AppConfirmDialog.show(
+      context,
+      title: l10n.walkMapRationaleTitle,
+      content: l10n.walkMapRationaleBody,
+      confirmLabel: l10n.walkMapRationaleContinue,
+      isDestructive: false,
+    );
+    if (!go || !context.mounted) return;
+  }
   try {
     await cubit.enable();
   } catch (e, s) {
