@@ -108,8 +108,8 @@
 `WeatherPage(active:)` 로 넘기고, 페이지가 false → true 로 바뀔 때 cubit 에 알린다. `TabBarView` 의
 `_KeepAlive` 로 페이지와 cubit 은 앱이 떠 있는 동안 하나다. 앱 복귀는 셸의 기존 `_onResume` 이 이미 셸
 위에 얹힌 화면이 걷힐 때 `active` 를 다시 켜므로, 복귀도 셸에서 지도처럼(`_refreshMap`) 보이는 경우에만
-cubit 의 `resumed()` 를 부른다 — 새 `WidgetsBindingObserver` 를 걸지 않는다. cubit 은 셸이 아니라 날씨
-페이지가 만든다(`BlocProvider.create`); 셸은 지도 cubit 처럼 잡아 두었다가 복귀 때 부른다.
+cubit 의 `resumed()` 를 부른다 — 새 `WidgetsBindingObserver` 를 걸지 않는다. cubit 은 지도 cubit 처럼 셸의 `MultiBlocProvider` 가 처음 읽을 때 만들고(`BlocProvider(create:)`)
+셸이 잡아 두었다가 복귀 때 부른다.
 
 ### 캐시
 
