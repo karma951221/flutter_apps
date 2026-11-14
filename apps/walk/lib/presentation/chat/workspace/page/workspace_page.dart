@@ -9,6 +9,7 @@ import 'package:l10n/l10n.dart';
 
 import '../../../../domain/chat/attachment/attachment_rules.dart';
 import '../../../../domain/chat/workspace/workspace.dart';
+import '../../../../domain/chat/workspace/workspace_changes.dart';
 import '../../../settings/widget/diary_storage_section.dart';
 import '../../../settings/widget/settings_widgets.dart';
 import '../../widget/attachment_chip.dart';
@@ -26,7 +27,9 @@ class WorkspacePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => BlocProvider(
-    create: (_) => WorkspaceCubit(getIt<Workspace>())..load(),
+    create: (_) =>
+        WorkspaceCubit(getIt<Workspace>(), changes: getIt<WorkspaceChanges>())
+          ..load(),
     child: Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context).walkWorkspaceTitle),

@@ -1,3 +1,4 @@
+import 'package:characters/characters.dart';
 import 'package:intl/intl.dart';
 import 'package:l10n/l10n.dart';
 
@@ -13,8 +14,7 @@ String chatProgressStepText(
   StepSending() => l10n.walkChatPhaseSending,
   StepThinking() => l10n.walkChatPhaseThinking,
   StepNote(:final text) => text,
-  StepTool() =>
-    _resultText(l10n, step.result) ?? _toolLabel(l10n, locale, step),
+  StepTool() => _resultText(l10n, step) ?? _toolLabel(l10n, locale, step),
   StepWriting() => l10n.walkChatPhaseWriting,
   StepStopped() => l10n.walkChatStopped,
 };
@@ -25,7 +25,9 @@ String chatProgressTimelineText(
   String locale,
   ChatProgressStep step,
 ) => switch (step) {
-  StepTool() => switch (_resultText(l10n, step.result)) {
+  StepTool() => switch (_resultText(l10n, step)) {
+    // 쓰기는 결과 문구가 이름까지 든다 — "파일 저장 중 · a.md — 저장함 · a.md" 대신 결과만.
+    final result? when _isWrite(step.kind) => result,
     final result? => '${_toolLabel(l10n, locale, step)} — $result',
     null => _toolLabel(l10n, locale, step),
   },
@@ -60,14 +62,49 @@ String _toolLabel(AppLocalizations l10n, String locale, StepTool step) {
       final name? => l10n.walkChatToolReadFileNamed(name),
       null => l10n.walkChatToolReadFile,
     },
-    // 쓰기 도구 라벨은 승인 · 진행 줄 작업에서 따로 붙인다 — 그때까지는 알 수 없는 도구처럼.
+    // 쓰기는 "승인 기다리는 중 · 이름" → "파일 저장 중 · 이름". 자세히(괄호)는 없다.
     ChatToolKind.writeFile ||
     ChatToolKind.editFile ||
-    ChatToolKind.deleteFile ||
+    ChatToolKind.deleteFile => _writeLabel(l10n, step),
     ChatToolKind.other => l10n.walkChatToolOther,
   };
   final detail = _detail(l10n, locale, step.kind, step.input);
   return detail == null ? label : l10n.walkChatToolDetail(label, detail);
+}
+
+bool _isWrite(ChatToolKind kind) =>
+    kind == ChatToolKind.writeFile ||
+    kind == ChatToolKind.editFile ||
+    kind == ChatToolKind.deleteFile;
+
+/// 쓰기 도구의 지금 라벨 — 승인을 기다리면 "승인 기다리는 중", 아니면 실행 라벨. 이름을 모르면 이름 없이.
+String _writeLabel(AppLocalizations l10n, StepTool step) {
+  final name = _shortName(step.input?.name);
+  if (step.awaitingApproval) {
+    return name == null
+        ? l10n.walkChatToolAwaitingApproval
+        : l10n.walkChatToolAwaitingApprovalNamed(name);
+  }
+  return switch ((step.kind, name)) {
+    (ChatToolKind.editFile, final n?) => l10n.walkChatToolEditFileNamed(n),
+    (ChatToolKind.editFile, null) => l10n.walkChatToolEditFile,
+    (ChatToolKind.deleteFile, final n?) => l10n.walkChatToolDeleteFileNamed(n),
+    (ChatToolKind.deleteFile, null) => l10n.walkChatToolDeleteFile,
+    (_, final n?) => l10n.walkChatToolWriteFileNamed(n),
+    (_, null) => l10n.walkChatToolWriteFile,
+  };
+}
+
+/// 진행 줄의 파일 이름 최대 글자 수(grapheme). 넘으면 이만큼 + '…'.
+const _nameMaxChars = 20;
+
+/// 20자 넘으면 20자 + '…'. 이미 줄인 이름은 그대로다. 비면 null.
+String? _shortName(String? name) {
+  if (name == null || name.isEmpty) return null;
+  final chars = name.characters;
+  return chars.length > _nameMaxChars
+      ? '${chars.take(_nameMaxChars).string}…'
+      : name;
 }
 
 /// 기간(걸음은 날 수) · 검색어. 둘 다 없으면 null.
@@ -107,8 +144,20 @@ String? _detail(
 }
 
 /// 결과 문구. 결과가 없거나 오류면 null — 라벨 그대로 둔다(오류 문구 없음).
-String? _resultText(AppLocalizations l10n, ToolSummary? result) {
-  if (result == null || result.isError) return null;
+/// 사용자가 거절한 쓰기는 "거절함", 성공한 쓰기는 "저장함 · 이름" 류.
+String? _resultText(AppLocalizations l10n, StepTool step) {
+  final result = step.result;
+  if (result == null) return null;
+  if (result.declined) return l10n.walkChatToolDeclined;
+  if (result.isError) return null;
+  if (_isWrite(result.kind)) {
+    final name = _shortName(step.input?.name) ?? '';
+    return switch (result.kind) {
+      ChatToolKind.editFile => l10n.walkChatToolEdited(name),
+      ChatToolKind.deleteFile => l10n.walkChatToolDeleted(name),
+      _ => l10n.walkChatToolWrote(name),
+    };
+  }
   final count = result.count;
   // 빈 작업 폴더는 "찾은 기록 없음" 이 아니라 폴더가 비었다고 말한다.
   if (count == 0 && result.kind == ChatToolKind.listFiles) {
@@ -125,6 +174,7 @@ String? _resultText(AppLocalizations l10n, ToolSummary? result) {
     ChatToolKind.listFiles => l10n.walkChatToolFoundFiles(count),
     // 웹 검색은 결과를 세지 않는다 · 파일 읽기는 늘 한 건이라 이름 라벨 그대로 ·
     // 알 수 없는 도구는 개수 단위를 모른다 — 라벨 그대로.
+    // 쓰기 도구는 위에서 다뤘다.
     ChatToolKind.webSearch ||
     ChatToolKind.readFile ||
     ChatToolKind.writeFile ||

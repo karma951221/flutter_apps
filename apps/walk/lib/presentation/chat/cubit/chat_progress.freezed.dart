@@ -127,13 +127,13 @@ return stopped(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  sending,TResult Function()?  thinking,TResult Function( String text)?  note,TResult Function( String callId,  ChatToolKind kind,  ToolInputSummary? input,  ToolSummary? result)?  tool,TResult Function()?  writing,TResult Function()?  stopped,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  sending,TResult Function()?  thinking,TResult Function( String text)?  note,TResult Function( String callId,  ChatToolKind kind,  ToolInputSummary? input,  ToolSummary? result,  bool awaitingApproval)?  tool,TResult Function()?  writing,TResult Function()?  stopped,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case StepSending() when sending != null:
 return sending();case StepThinking() when thinking != null:
 return thinking();case StepNote() when note != null:
 return note(_that.text);case StepTool() when tool != null:
-return tool(_that.callId,_that.kind,_that.input,_that.result);case StepWriting() when writing != null:
+return tool(_that.callId,_that.kind,_that.input,_that.result,_that.awaitingApproval);case StepWriting() when writing != null:
 return writing();case StepStopped() when stopped != null:
 return stopped();case _:
   return orElse();
@@ -153,13 +153,13 @@ return stopped();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  sending,required TResult Function()  thinking,required TResult Function( String text)  note,required TResult Function( String callId,  ChatToolKind kind,  ToolInputSummary? input,  ToolSummary? result)  tool,required TResult Function()  writing,required TResult Function()  stopped,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  sending,required TResult Function()  thinking,required TResult Function( String text)  note,required TResult Function( String callId,  ChatToolKind kind,  ToolInputSummary? input,  ToolSummary? result,  bool awaitingApproval)  tool,required TResult Function()  writing,required TResult Function()  stopped,}) {final _that = this;
 switch (_that) {
 case StepSending():
 return sending();case StepThinking():
 return thinking();case StepNote():
 return note(_that.text);case StepTool():
-return tool(_that.callId,_that.kind,_that.input,_that.result);case StepWriting():
+return tool(_that.callId,_that.kind,_that.input,_that.result,_that.awaitingApproval);case StepWriting():
 return writing();case StepStopped():
 return stopped();}
 }
@@ -175,13 +175,13 @@ return stopped();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  sending,TResult? Function()?  thinking,TResult? Function( String text)?  note,TResult? Function( String callId,  ChatToolKind kind,  ToolInputSummary? input,  ToolSummary? result)?  tool,TResult? Function()?  writing,TResult? Function()?  stopped,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  sending,TResult? Function()?  thinking,TResult? Function( String text)?  note,TResult? Function( String callId,  ChatToolKind kind,  ToolInputSummary? input,  ToolSummary? result,  bool awaitingApproval)?  tool,TResult? Function()?  writing,TResult? Function()?  stopped,}) {final _that = this;
 switch (_that) {
 case StepSending() when sending != null:
 return sending();case StepThinking() when thinking != null:
 return thinking();case StepNote() when note != null:
 return note(_that.text);case StepTool() when tool != null:
-return tool(_that.callId,_that.kind,_that.input,_that.result);case StepWriting() when writing != null:
+return tool(_that.callId,_that.kind,_that.input,_that.result,_that.awaitingApproval);case StepWriting() when writing != null:
 return writing();case StepStopped() when stopped != null:
 return stopped();case _:
   return null;
@@ -313,13 +313,14 @@ as String,
 
 
 class StepTool extends ChatProgressStep {
-  const StepTool({required this.callId, required this.kind, this.input, this.result}): super._();
+  const StepTool({required this.callId, required this.kind, this.input, this.result, this.awaitingApproval = false}): super._();
   
 
  final  String callId;
  final  ChatToolKind kind;
  final  ToolInputSummary? input;
  final  ToolSummary? result;
+@JsonKey() final  bool awaitingApproval;
 
 /// Create a copy of ChatProgressStep
 /// with the given fields replaced by the non-null parameter values.
@@ -331,12 +332,12 @@ $StepToolCopyWith<StepTool> get copyWith => _$StepToolCopyWithImpl<StepTool>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StepTool&&(identical(other.callId, callId) || other.callId == callId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.input, input) || other.input == input)&&(identical(other.result, result) || other.result == result));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is StepTool&&(identical(other.callId, callId) || other.callId == callId)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.input, input) || other.input == input)&&(identical(other.result, result) || other.result == result)&&(identical(other.awaitingApproval, awaitingApproval) || other.awaitingApproval == awaitingApproval));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,callId,kind,input,result);
+int get hashCode => Object.hash(runtimeType,callId,kind,input,result,awaitingApproval);
 
 
 
@@ -347,7 +348,7 @@ abstract mixin class $StepToolCopyWith<$Res> implements $ChatProgressStepCopyWit
   factory $StepToolCopyWith(StepTool value, $Res Function(StepTool) _then) = _$StepToolCopyWithImpl;
 @useResult
 $Res call({
- String callId, ChatToolKind kind, ToolInputSummary? input, ToolSummary? result
+ String callId, ChatToolKind kind, ToolInputSummary? input, ToolSummary? result, bool awaitingApproval
 });
 
 
@@ -364,13 +365,14 @@ class _$StepToolCopyWithImpl<$Res>
 
 /// Create a copy of ChatProgressStep
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? callId = null,Object? kind = null,Object? input = freezed,Object? result = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? callId = null,Object? kind = null,Object? input = freezed,Object? result = freezed,Object? awaitingApproval = null,}) {
   return _then(StepTool(
 callId: null == callId ? _self.callId : callId // ignore: cast_nullable_to_non_nullable
 as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
 as ChatToolKind,input: freezed == input ? _self.input : input // ignore: cast_nullable_to_non_nullable
 as ToolInputSummary?,result: freezed == result ? _self.result : result // ignore: cast_nullable_to_non_nullable
-as ToolSummary?,
+as ToolSummary?,awaitingApproval: null == awaitingApproval ? _self.awaitingApproval : awaitingApproval // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

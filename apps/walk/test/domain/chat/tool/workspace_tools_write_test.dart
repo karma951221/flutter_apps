@@ -10,6 +10,7 @@ import 'package:walk/domain/chat/tool/tool_result.dart';
 import 'package:walk/domain/chat/tool/tool_summary.dart';
 import 'package:walk/domain/chat/tool/workspace_tools.dart';
 import 'package:walk/domain/chat/tool/write_plan.dart';
+import 'package:walk/domain/chat/workspace/workspace_changes.dart';
 
 import '../../../presentation/chat/workspace/workspace_fakes.dart';
 
@@ -644,6 +645,41 @@ void main() {
               as WritePlan;
       expect((await real.apply(delete)).isError, isFalse);
       expect(File('${tmp.path}/workspace/out/new.md').existsSync(), isFalse);
+    });
+  });
+
+  group('작업 폴더 바뀜 알림', () {
+    test('apply 가 쓰거나 지우면 한 번 알린다, 실패 · 거절은 알리지 않는다', () async {
+      final changes = WorkspaceChanges();
+      final notified = <void>[];
+      final sub = changes.stream.listen(notified.add);
+      addTearDown(sub.cancel);
+      final watched = WorkspaceTools(ws, _NoLoader(), changes: changes);
+
+      await watched.apply(
+        const WritePlan.create(path: 'out/a.md', name: 'a.md', content: 'x'),
+      );
+      await pumpEventQueue();
+      expect(notified, hasLength(1));
+
+      // 이미 있는 파일을 만들려 하면 exists — 쓰지 않았으니 알리지 않는다.
+      await watched.apply(
+        const WritePlan.create(path: 'out/a.md', name: 'a.md', content: 'y'),
+      );
+      watched.declined('write_file');
+      await pumpEventQueue();
+      expect(notified, hasLength(1));
+
+      await watched.apply(
+        const WritePlan.delete(
+          path: 'out/a.md',
+          name: 'a.md',
+          previous: 'x',
+          sizeBytes: 1,
+        ),
+      );
+      await pumpEventQueue();
+      expect(notified, hasLength(2));
     });
   });
 }

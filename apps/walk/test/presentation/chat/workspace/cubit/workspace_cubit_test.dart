@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:walk/domain/chat/workspace/workspace_changes.dart';
 import 'package:walk/presentation/chat/workspace/cubit/workspace_cubit.dart';
 import 'package:walk/presentation/chat/workspace/cubit/workspace_state.dart';
 
@@ -83,5 +84,40 @@ void main() {
 
     expect(await cubit.delete(out), isFalse);
     expect(cubit.state, before);
+  });
+
+  test('쓰기 신호가 오면 목록을 다시 읽는다', () async {
+    final ws = MemoryWorkspace([(inboxOld, bytes)]);
+    final changes = WorkspaceChanges();
+    final cubit = WorkspaceCubit(ws, changes: changes);
+    addTearDown(cubit.close);
+    await cubit.load();
+
+    ws.add(out, bytes);
+    changes.notify();
+    await pumpEventQueue();
+
+    expect(
+      cubit.state,
+      WorkspaceState.ready(
+        out: [out],
+        inbox: [inboxOld],
+        totalCount: 2,
+        totalBytes: 2100,
+      ),
+    );
+  });
+
+  test('닫은 뒤의 신호는 무시한다', () async {
+    final ws = MemoryWorkspace([(inboxOld, bytes)]);
+    final changes = WorkspaceChanges();
+    final cubit = WorkspaceCubit(ws, changes: changes);
+    await cubit.load();
+    await cubit.close();
+
+    changes.notify();
+    await pumpEventQueue();
+
+    expect(cubit.isClosed, isTrue);
   });
 }

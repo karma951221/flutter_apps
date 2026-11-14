@@ -16,6 +16,7 @@ import '../../../domain/chat/chat_vendor.dart';
 import '../../../domain/chat/entity/conversation.dart';
 import '../../../domain/chat/repository/chat_history_repository.dart';
 import '../../../domain/chat/tool/tool_summary.dart';
+import '../../../domain/chat/tool/write_plan.dart';
 import '../../../domain/chat/usecase/chat_model_choice.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/chat/usecase/open_conversation.dart';
@@ -148,6 +149,10 @@ class ChatCubit extends Cubit<ChatState> {
 
   /// 지금 질문의 끝(ChatFinished)을 받아 인용을 읽는 중.
   bool _finishing = false;
+
+  /// 지금 질문에서 승인을 물은 쓰기의 계획(callId → 계획). 성공 알림([ChatState.savedFile])에
+  /// 경로 · 이름을 쓴다. 질문 · 대화가 바뀌면 비운다.
+  final _plans = <String, WritePlan>{};
 
   /// [newConversation] · [stop] 마다 올린다. 끊긴 질문의 늦은 결과(이벤트 · 인용 읽기)를 버린다.
   int _generation = 0;
@@ -630,6 +635,7 @@ class ChatCubit extends Cubit<ChatState> {
     final generation = _generation;
     final running = _running = Completer<void>();
     _finishing = false;
+    _plans.clear();
     emit(
       state.copyWith(
         bubbles: [
@@ -803,6 +809,7 @@ class ChatCubit extends Cubit<ChatState> {
   ///
   /// 받은 글이 있으면 그 말풍선을 [ChatBubble.stopped] 로 남기고 그때까지의 인용을 붙인다.
   /// 글이 없으면 질문 · 답 말풍선을 지우고 질문을 [ChatState.restoredDraft] 로 돌려준다.
+  /// 승인을 기다리는 중이었으면 [ChatState.pendingApproval] 도 비운다(세션은 쓰지 않고 끝난다).
   void stop() {
     if (!state.busy || _finishing) return;
     // 남은 글 조각을 먼저 — 멈춤 글과 화면 순서가 어긋나지 않게.
@@ -821,7 +828,9 @@ class ChatCubit extends Cubit<ChatState> {
           _withLast((b) => b.copyWith(text: text, stopped: true)),
           stopped: true,
         );
-        emit(state.copyWith(bubbles: bubbles, busy: false));
+        emit(
+          state.copyWith(bubbles: bubbles, busy: false, pendingApproval: null),
+        );
         if (citedEntryIds.isNotEmpty && bubbles.isNotEmpty) {
           unawaited(
             _attachCited(
@@ -853,6 +862,7 @@ class ChatCubit extends Cubit<ChatState> {
             busy: false,
             restoredDraft: question,
             pendingAttachments: _returnTurnAttachments(),
+            pendingApproval: null,
           ),
         );
       case ChatStopIdle():
@@ -967,7 +977,7 @@ class ChatCubit extends Cubit<ChatState> {
           (p) => _moveTool(
             p,
             callId,
-            update: (t) => t.copyWith(result: summary),
+            update: (t) => t.copyWith(result: summary, awaitingApproval: false),
             create: () => ChatProgressStep.tool(
               callId: callId,
               kind: chatToolKindOf(name),
@@ -975,15 +985,63 @@ class ChatCubit extends Cubit<ChatState> {
             ),
           ),
         );
+        _onWriteFinished(callId, summary);
       case ChatRoundStarted():
         break;
-      // 승인 대기 상태는 다음 작업(큐빗 · 승인 시트)에서 다룬다.
-      case ChatApprovalRequested() || ChatApprovalClosed():
-        break;
+      case ChatApprovalRequested(:final callId, :final plan):
+        _plans[callId] = plan;
+        // 입력이 아직 없거나 이름이 없으면 계획의 이름으로 — 진행 줄이 늘 이름을 보인다.
+        ToolInputSummary named(ChatToolKind kind, ToolInputSummary? input) =>
+            input?.name != null
+            ? input!
+            : (input ?? ToolInputSummary(kind: kind)).copyWith(name: plan.name);
+        final kind = _kindOf(plan);
+        _updateProgress(
+          (p) => _moveTool(
+            p,
+            callId,
+            update: (t) => t.copyWith(
+              awaitingApproval: true,
+              input: named(t.kind, t.input),
+            ),
+            create: () => ChatProgressStep.tool(
+              callId: callId,
+              kind: kind,
+              input: named(kind, null),
+              awaitingApproval: true,
+            ),
+          ),
+        );
+        emit(
+          state.copyWith(
+            pendingApproval: PendingApproval(callId: callId, plan: plan),
+          ),
+        );
+      case ChatApprovalClosed(:final callId):
+        // 승인이면 곧 실행 — 진행 줄은 실행 라벨로. 거절이면 곧 오는 결과가 "거절함".
+        _updateProgress(
+          (p) => _moveTool(
+            p,
+            callId,
+            update: (t) => t.copyWith(awaitingApproval: false),
+            create: () => ChatProgressStep.tool(
+              callId: callId,
+              kind: _kindOf(_plans[callId]),
+            ),
+          ),
+        );
+        if (state.pendingApproval?.callId == callId) {
+          emit(state.copyWith(pendingApproval: null));
+        }
       case ChatFinished(:final citedEntryIds):
         _finishing = true;
         // 경과 초는 답이 끝난 때로 고정한다(인용을 읽는 시간은 넣지 않는다).
-        emit(state.copyWith(bubbles: _settled(state.bubbles)));
+        emit(
+          state.copyWith(
+            bubbles: _settled(state.bubbles),
+            pendingApproval: null,
+          ),
+        );
         final running = _running;
         // 인용을 읽기 전에 지금 대화(thread)로 저장을 줄 세운다 — 읽는 사이 [새 대화] · open 해도
         // 끝난 답은 저장된다(화면에 붙일지는 _write 가 thread 로 가린다).
@@ -998,6 +1056,51 @@ class ChatCubit extends Cubit<ChatState> {
       case ChatFailed(:final failure):
         _fail(failure, generation);
     }
+  }
+
+  /// 승인한 쓰기가 성공했으면 [ChatState.savedFile] 로 한 번 알린다. 거절 · 오류는 알리지 않는다.
+  void _onWriteFinished(String callId, ToolSummary summary) {
+    if (state.pendingApproval?.callId == callId) {
+      emit(state.copyWith(pendingApproval: null));
+    }
+    final plan = _plans.remove(callId);
+    if (plan == null || summary.isError || summary.declined) return;
+    emit(
+      state.copyWith(
+        savedFile: SavedFileNotice(
+          path: plan.path,
+          name: plan.name,
+          deleted: plan is WriteDelete,
+        ),
+      ),
+    );
+  }
+
+  static ChatToolKind _kindOf(WritePlan? plan) => switch (plan) {
+    WriteCreate() || WriteOverwrite() => ChatToolKind.writeFile,
+    WriteEdit() => ChatToolKind.editFile,
+    WriteDelete() => ChatToolKind.deleteFile,
+    null => ChatToolKind.other,
+  };
+
+  /// 승인 시트의 [저장] · [고치기] · [지우기]. 기다리는 쓰기가 없으면(이미 답했거나 끝남) 무시한다
+  /// — 두 번 눌러도 세션에 한 번만 답한다.
+  void approve() => _decide(true);
+
+  /// 승인 시트의 [거절] · 시트 닫기 · 뒤로 가기.
+  void decline() => _decide(false);
+
+  void _decide(bool approved) {
+    final pending = state.pendingApproval;
+    if (pending == null) return;
+    emit(state.copyWith(pendingApproval: null));
+    _session.decide(pending.callId, approved);
+  }
+
+  /// 화면이 [ChatState.savedFile] 을 알렸다.
+  void consumeSavedFile() {
+    if (state.savedFile == null) return;
+    emit(state.copyWith(savedFile: null));
   }
 
   void _fail(ChatFailure failure, int generation) {
@@ -1033,6 +1136,7 @@ class ChatCubit extends Cubit<ChatState> {
         bubbles: _settled(bubbles),
         busy: false,
         pendingAttachments: pendingAttachments ?? state.pendingAttachments,
+        pendingApproval: null,
       ),
     );
     _traceDone();
@@ -1053,6 +1157,8 @@ class ChatCubit extends Cubit<ChatState> {
     _stopTicker();
     _generation++;
     _thread = _Thread(temporary: temporary);
+    _plans.clear();
+    // 구독 취소는 기다리지 않고 곧바로 reset — 승인을 기다리던 세션 루프가 묶이지 않게.
     unawaited(_sub?.cancel());
     _sub = null;
     _session.reset(temporary: temporary);
@@ -1065,6 +1171,7 @@ class ChatCubit extends Cubit<ChatState> {
         busy: false,
         temporary: temporary,
         loading: loading,
+        pendingApproval: null,
       ),
     );
     _setConversation(null);

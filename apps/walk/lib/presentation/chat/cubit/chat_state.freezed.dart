@@ -198,6 +198,375 @@ case _:
 }
 
 /// @nodoc
+mixin _$PendingApproval {
+
+ String get callId; WritePlan get plan;
+/// Create a copy of PendingApproval
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$PendingApprovalCopyWith<PendingApproval> get copyWith => _$PendingApprovalCopyWithImpl<PendingApproval>(this as PendingApproval, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PendingApproval&&(identical(other.callId, callId) || other.callId == callId)&&(identical(other.plan, plan) || other.plan == plan));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,callId,plan);
+
+@override
+String toString() {
+  return 'PendingApproval(callId: $callId, plan: $plan)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $PendingApprovalCopyWith<$Res>  {
+  factory $PendingApprovalCopyWith(PendingApproval value, $Res Function(PendingApproval) _then) = _$PendingApprovalCopyWithImpl;
+@useResult
+$Res call({
+ String callId, WritePlan plan
+});
+
+
+
+
+}
+/// @nodoc
+class _$PendingApprovalCopyWithImpl<$Res>
+    implements $PendingApprovalCopyWith<$Res> {
+  _$PendingApprovalCopyWithImpl(this._self, this._then);
+
+  final PendingApproval _self;
+  final $Res Function(PendingApproval) _then;
+
+/// Create a copy of PendingApproval
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? callId = null,Object? plan = null,}) {
+  return _then(PendingApproval(
+callId: null == callId ? _self.callId : callId // ignore: cast_nullable_to_non_nullable
+as String,plan: null == plan ? _self.plan : plan // ignore: cast_nullable_to_non_nullable
+as WritePlan,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [PendingApproval].
+extension PendingApprovalPatterns on PendingApproval {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(){
+final _that = this;
+switch (_that) {
+case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(){
+final _that = this;
+switch (_that) {
+case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>() {final _that = this;
+switch (_that) {
+case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>() {final _that = this;
+switch (_that) {
+case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+mixin _$SavedFileNotice {
+
+ String get path; String get name; bool get deleted;
+/// Create a copy of SavedFileNotice
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SavedFileNoticeCopyWith<SavedFileNotice> get copyWith => _$SavedFileNoticeCopyWithImpl<SavedFileNotice>(this as SavedFileNotice, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SavedFileNotice&&(identical(other.path, path) || other.path == path)&&(identical(other.name, name) || other.name == name)&&(identical(other.deleted, deleted) || other.deleted == deleted));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,path,name,deleted);
+
+
+
+}
+
+/// @nodoc
+abstract mixin class $SavedFileNoticeCopyWith<$Res>  {
+  factory $SavedFileNoticeCopyWith(SavedFileNotice value, $Res Function(SavedFileNotice) _then) = _$SavedFileNoticeCopyWithImpl;
+@useResult
+$Res call({
+ String path, String name, bool deleted
+});
+
+
+
+
+}
+/// @nodoc
+class _$SavedFileNoticeCopyWithImpl<$Res>
+    implements $SavedFileNoticeCopyWith<$Res> {
+  _$SavedFileNoticeCopyWithImpl(this._self, this._then);
+
+  final SavedFileNotice _self;
+  final $Res Function(SavedFileNotice) _then;
+
+/// Create a copy of SavedFileNotice
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? path = null,Object? name = null,Object? deleted = null,}) {
+  return _then(SavedFileNotice(
+path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,deleted: null == deleted ? _self.deleted : deleted // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [SavedFileNotice].
+extension SavedFileNoticePatterns on SavedFileNotice {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(){
+final _that = this;
+switch (_that) {
+case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(){
+final _that = this;
+switch (_that) {
+case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>() {final _that = this;
+switch (_that) {
+case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>() {final _that = this;
+switch (_that) {
+case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
 mixin _$ChatBubble {
 
  ChatRole get role; String get text; List<DiaryEntry> get cited; ChatFailure? get failure; bool get stopped; int? get seq; ChatProgress? get progress; List<ChatAttachmentRef> get attachments; String? get model;
@@ -389,7 +758,7 @@ case _:
 /// @nodoc
 mixin _$ChatState {
 
- ChatAccess get access; List<ChatBubble> get bubbles; bool get busy; String? get restoredDraft; String? get conversationId; bool get temporary; ChatVendor get vendor; bool get loading; ModelChipData? get model; bool get modelsInvalidKey; bool get selectionReplaced; List<ChatAttachment> get pendingAttachments; AttachmentNotice? get attachmentNotice; AttachBlock? get attachBlock; bool get preparing; bool get useRecords;
+ ChatAccess get access; List<ChatBubble> get bubbles; bool get busy; String? get restoredDraft; String? get conversationId; bool get temporary; ChatVendor get vendor; bool get loading; ModelChipData? get model; bool get modelsInvalidKey; bool get selectionReplaced; List<ChatAttachment> get pendingAttachments; AttachmentNotice? get attachmentNotice; AttachBlock? get attachBlock; bool get preparing; bool get useRecords; PendingApproval? get pendingApproval; SavedFileNotice? get savedFile;
 /// Create a copy of ChatState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -400,12 +769,12 @@ $ChatStateCopyWith<ChatState> get copyWith => _$ChatStateCopyWithImpl<ChatState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatState&&(identical(other.access, access) || other.access == access)&&const DeepCollectionEquality().equals(other.bubbles, bubbles)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.restoredDraft, restoredDraft) || other.restoredDraft == restoredDraft)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.temporary, temporary) || other.temporary == temporary)&&(identical(other.vendor, vendor) || other.vendor == vendor)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.model, model) || other.model == model)&&(identical(other.modelsInvalidKey, modelsInvalidKey) || other.modelsInvalidKey == modelsInvalidKey)&&(identical(other.selectionReplaced, selectionReplaced) || other.selectionReplaced == selectionReplaced)&&const DeepCollectionEquality().equals(other.pendingAttachments, pendingAttachments)&&(identical(other.attachmentNotice, attachmentNotice) || other.attachmentNotice == attachmentNotice)&&(identical(other.attachBlock, attachBlock) || other.attachBlock == attachBlock)&&(identical(other.preparing, preparing) || other.preparing == preparing)&&(identical(other.useRecords, useRecords) || other.useRecords == useRecords));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatState&&(identical(other.access, access) || other.access == access)&&const DeepCollectionEquality().equals(other.bubbles, bubbles)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.restoredDraft, restoredDraft) || other.restoredDraft == restoredDraft)&&(identical(other.conversationId, conversationId) || other.conversationId == conversationId)&&(identical(other.temporary, temporary) || other.temporary == temporary)&&(identical(other.vendor, vendor) || other.vendor == vendor)&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.model, model) || other.model == model)&&(identical(other.modelsInvalidKey, modelsInvalidKey) || other.modelsInvalidKey == modelsInvalidKey)&&(identical(other.selectionReplaced, selectionReplaced) || other.selectionReplaced == selectionReplaced)&&const DeepCollectionEquality().equals(other.pendingAttachments, pendingAttachments)&&(identical(other.attachmentNotice, attachmentNotice) || other.attachmentNotice == attachmentNotice)&&(identical(other.attachBlock, attachBlock) || other.attachBlock == attachBlock)&&(identical(other.preparing, preparing) || other.preparing == preparing)&&(identical(other.useRecords, useRecords) || other.useRecords == useRecords)&&(identical(other.pendingApproval, pendingApproval) || other.pendingApproval == pendingApproval)&&(identical(other.savedFile, savedFile) || other.savedFile == savedFile));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,access,const DeepCollectionEquality().hash(bubbles),busy,restoredDraft,conversationId,temporary,vendor,loading,model,modelsInvalidKey,selectionReplaced,const DeepCollectionEquality().hash(pendingAttachments),attachmentNotice,attachBlock,preparing,useRecords);
+int get hashCode => Object.hash(runtimeType,access,const DeepCollectionEquality().hash(bubbles),busy,restoredDraft,conversationId,temporary,vendor,loading,model,modelsInvalidKey,selectionReplaced,const DeepCollectionEquality().hash(pendingAttachments),attachmentNotice,attachBlock,preparing,useRecords,pendingApproval,savedFile);
 
 
 
@@ -416,7 +785,7 @@ abstract mixin class $ChatStateCopyWith<$Res>  {
   factory $ChatStateCopyWith(ChatState value, $Res Function(ChatState) _then) = _$ChatStateCopyWithImpl;
 @useResult
 $Res call({
- ChatAccess access, List<ChatBubble> bubbles, bool busy, String? restoredDraft, String? conversationId, bool temporary, ChatVendor vendor, bool loading, ModelChipData? model, bool modelsInvalidKey, bool selectionReplaced, List<ChatAttachment> pendingAttachments, AttachmentNotice? attachmentNotice, AttachBlock? attachBlock, bool preparing, bool useRecords
+ ChatAccess access, List<ChatBubble> bubbles, bool busy, String? restoredDraft, String? conversationId, bool temporary, ChatVendor vendor, bool loading, ModelChipData? model, bool modelsInvalidKey, bool selectionReplaced, List<ChatAttachment> pendingAttachments, AttachmentNotice? attachmentNotice, AttachBlock? attachBlock, bool preparing, bool useRecords, PendingApproval? pendingApproval, SavedFileNotice? savedFile
 });
 
 
@@ -433,7 +802,7 @@ class _$ChatStateCopyWithImpl<$Res>
 
 /// Create a copy of ChatState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? access = null,Object? bubbles = null,Object? busy = null,Object? restoredDraft = freezed,Object? conversationId = freezed,Object? temporary = null,Object? vendor = null,Object? loading = null,Object? model = freezed,Object? modelsInvalidKey = null,Object? selectionReplaced = null,Object? pendingAttachments = null,Object? attachmentNotice = freezed,Object? attachBlock = freezed,Object? preparing = null,Object? useRecords = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? access = null,Object? bubbles = null,Object? busy = null,Object? restoredDraft = freezed,Object? conversationId = freezed,Object? temporary = null,Object? vendor = null,Object? loading = null,Object? model = freezed,Object? modelsInvalidKey = null,Object? selectionReplaced = null,Object? pendingAttachments = null,Object? attachmentNotice = freezed,Object? attachBlock = freezed,Object? preparing = null,Object? useRecords = null,Object? pendingApproval = freezed,Object? savedFile = freezed,}) {
   return _then(ChatState(
 access: null == access ? _self.access : access // ignore: cast_nullable_to_non_nullable
 as ChatAccess,bubbles: null == bubbles ? _self.bubbles : bubbles // ignore: cast_nullable_to_non_nullable
@@ -451,7 +820,9 @@ as List<ChatAttachment>,attachmentNotice: freezed == attachmentNotice ? _self.at
 as AttachmentNotice?,attachBlock: freezed == attachBlock ? _self.attachBlock : attachBlock // ignore: cast_nullable_to_non_nullable
 as AttachBlock?,preparing: null == preparing ? _self.preparing : preparing // ignore: cast_nullable_to_non_nullable
 as bool,useRecords: null == useRecords ? _self.useRecords : useRecords // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,pendingApproval: freezed == pendingApproval ? _self.pendingApproval : pendingApproval // ignore: cast_nullable_to_non_nullable
+as PendingApproval?,savedFile: freezed == savedFile ? _self.savedFile : savedFile // ignore: cast_nullable_to_non_nullable
+as SavedFileNotice?,
   ));
 }
 

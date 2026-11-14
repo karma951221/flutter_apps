@@ -3,6 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../../domain/chat/attachment/attachment_rules.dart';
 import '../../../domain/chat/attachment/chat_attachment.dart';
 import '../../../domain/chat/chat_vendor.dart';
+import '../../../domain/chat/tool/write_plan.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../widget/model_chip.dart';
@@ -29,6 +30,40 @@ class AttachmentNotice with _$AttachmentNotice {
   final AttachmentRejection reason;
 
   const AttachmentNotice({required this.name, required this.reason});
+}
+
+/// 승인을 기다리는 쓰기 하나. 화면이 승인 시트를 띄우고 cubit 의 approve · decline
+/// 으로 답한다. toString 은 [WritePlan.toString] 이라 경로 · 내용이 없다.
+@freezed
+class PendingApproval with _$PendingApproval {
+  @override
+  final String callId;
+  @override
+  final WritePlan plan;
+
+  const PendingApproval({required this.callId, required this.plan});
+}
+
+/// 승인한 쓰기가 성공했다 — 화면이 스낵바로 한 번 알리고 consumeSavedFile 로 비운다.
+/// [path] 는 `out/<이름>`, [deleted] 면 지우기.
+@freezed
+class SavedFileNotice with _$SavedFileNotice {
+  @override
+  final String path;
+  @override
+  final String name;
+  @override
+  final bool deleted;
+
+  const SavedFileNotice({
+    required this.path,
+    required this.name,
+    required this.deleted,
+  });
+
+  /// 경로 · 이름은 남기지 않는다.
+  @override
+  String toString() => 'SavedFileNotice(deleted: $deleted)';
 }
 
 /// 말풍선 하나. assistant 말풍선은 답이 흘러나오는 동안 [text] 가 자란다.
@@ -156,6 +191,14 @@ class ChatState with _$ChatState {
   @override
   final bool useRecords;
 
+  /// 사용자 승인을 기다리는 쓰기. 승인 · 거절 · 멈춤 · 대화 전환 · 실패 · 끝에서 비운다.
+  @override
+  final PendingApproval? pendingApproval;
+
+  /// 방금 성공한 쓰기 — 화면이 한 번 알리고 consumeSavedFile 로 비운다.
+  @override
+  final SavedFileNotice? savedFile;
+
   const ChatState({
     required this.access,
     this.bubbles = const [],
@@ -173,6 +216,8 @@ class ChatState with _$ChatState {
     this.attachBlock,
     this.preparing = false,
     this.useRecords = true,
+    this.pendingApproval,
+    this.savedFile,
   });
 
   /// 질문 · 답 글(말풍선 · 되돌린 질문)은 남기지 않는다.
@@ -187,5 +232,6 @@ class ChatState with _$ChatState {
       'pendingAttachments: ${pendingAttachments.length}, '
       'attachmentNotice: ${attachmentNotice?.reason.name}, '
       'attachBlock: ${attachBlock?.name}, preparing: $preparing, '
-      'useRecords: $useRecords)';
+      'useRecords: $useRecords, pendingApproval: $pendingApproval, '
+      'savedFile: $savedFile)';
 }

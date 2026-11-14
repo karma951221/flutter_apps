@@ -3314,6 +3314,56 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatToolNoFiles => '作業フォルダにファイルなし';
 
   @override
+  String get walkChatToolAwaitingApproval => '承認待ち';
+
+  @override
+  String walkChatToolAwaitingApprovalNamed(String name) {
+    return '承認待ち・$name';
+  }
+
+  @override
+  String get walkChatToolWriteFile => 'ファイルを保存中';
+
+  @override
+  String walkChatToolWriteFileNamed(String name) {
+    return 'ファイルを保存中・$name';
+  }
+
+  @override
+  String get walkChatToolEditFile => 'ファイルを編集中';
+
+  @override
+  String walkChatToolEditFileNamed(String name) {
+    return 'ファイルを編集中・$name';
+  }
+
+  @override
+  String get walkChatToolDeleteFile => 'ファイルを削除中';
+
+  @override
+  String walkChatToolDeleteFileNamed(String name) {
+    return 'ファイルを削除中・$name';
+  }
+
+  @override
+  String get walkChatToolDeclined => '拒否';
+
+  @override
+  String walkChatToolWrote(String name) {
+    return '保存済み・$name';
+  }
+
+  @override
+  String walkChatToolEdited(String name) {
+    return '編集済み・$name';
+  }
+
+  @override
+  String walkChatToolDeleted(String name) {
+    return '削除済み・$name';
+  }
+
+  @override
   String walkChatProgressElapsed(int seconds) {
     return '$seconds秒';
   }

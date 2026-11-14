@@ -4512,6 +4512,79 @@
   "@walkChatToolFoundNone": { "description": "채팅 탭 진행 줄: 도구 결과 0개" },
   "walkChatToolNoFiles": "작업 폴더에 파일 없음",
   "@walkChatToolNoFiles": { "description": "채팅 탭 진행 줄: 작업 폴더 목록 결과 0개" },
+  "walkChatToolAwaitingApproval": "승인 기다리는 중",
+  "@walkChatToolAwaitingApproval": { "description": "채팅 탭 진행 줄: 쓰기 도구가 승인을 기다림(파일 이름 없을 때)" },
+  "walkChatToolAwaitingApprovalNamed": "승인 기다리는 중 · {name}",
+  "@walkChatToolAwaitingApprovalNamed": {
+    "description": "채팅 탭 진행 줄: 쓰기 도구가 승인을 기다림. name 은 path 마지막 부분(20자 넘으면 줄임)",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "walkChatToolWriteFile": "파일 저장 중",
+  "@walkChatToolWriteFile": { "description": "채팅 탭 진행 줄: write_file 실행 라벨(파일 이름 없을 때)" },
+  "walkChatToolWriteFileNamed": "파일 저장 중 · {name}",
+  "@walkChatToolWriteFileNamed": {
+    "description": "채팅 탭 진행 줄: write_file 실행 라벨",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "walkChatToolEditFile": "파일 고치는 중",
+  "@walkChatToolEditFile": { "description": "채팅 탭 진행 줄: edit_file 실행 라벨(파일 이름 없을 때)" },
+  "walkChatToolEditFileNamed": "파일 고치는 중 · {name}",
+  "@walkChatToolEditFileNamed": {
+    "description": "채팅 탭 진행 줄: edit_file 실행 라벨",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "walkChatToolDeleteFile": "파일 지우는 중",
+  "@walkChatToolDeleteFile": { "description": "채팅 탭 진행 줄: delete_file 실행 라벨(파일 이름 없을 때)" },
+  "walkChatToolDeleteFileNamed": "파일 지우는 중 · {name}",
+  "@walkChatToolDeleteFileNamed": {
+    "description": "채팅 탭 진행 줄: delete_file 실행 라벨",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "walkChatToolDeclined": "거절함",
+  "@walkChatToolDeclined": { "description": "채팅 탭 진행 줄: 사용자가 쓰기를 거절함" },
+  "walkChatToolWrote": "저장함 · {name}",
+  "@walkChatToolWrote": {
+    "description": "채팅 탭 진행 줄: write_file 성공",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "walkChatToolEdited": "고침 · {name}",
+  "@walkChatToolEdited": {
+    "description": "채팅 탭 진행 줄: edit_file 성공",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "walkChatToolDeleted": "지움 · {name}",
+  "@walkChatToolDeleted": {
+    "description": "채팅 탭 진행 줄: delete_file 성공",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "walkChatProgressElapsed": "{seconds}초",
   "@walkChatProgressElapsed": {
     "description": "채팅 탭 진행 줄: 경과 초",

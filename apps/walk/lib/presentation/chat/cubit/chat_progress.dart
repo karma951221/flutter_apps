@@ -14,11 +14,14 @@ sealed class ChatProgressStep with _$ChatProgressStep {
 
   /// 모델의 진행 노트. toString 에 글 없음.
   const factory ChatProgressStep.note(String text) = StepNote;
+
+  /// [awaitingApproval] — 쓰기 도구가 사용자 승인을 기다리는 중(진행 줄 "승인 기다리는 중").
   const factory ChatProgressStep.tool({
     required String callId,
     required ChatToolKind kind,
     ToolInputSummary? input,
     ToolSummary? result,
+    @Default(false) bool awaitingApproval,
   }) = StepTool;
   const factory ChatProgressStep.writing() = StepWriting;
   const factory ChatProgressStep.stopped() = StepStopped;
@@ -29,8 +32,15 @@ sealed class ChatProgressStep with _$ChatProgressStep {
     StepSending() => 'StepSending()',
     StepThinking() => 'StepThinking()',
     StepNote(:final text) => 'StepNote(${text.length} chars)',
-    StepTool(:final callId, :final kind, :final input, :final result) =>
-      'StepTool(callId: $callId, kind: $kind, input: $input, result: $result)',
+    StepTool(
+      :final callId,
+      :final kind,
+      :final input,
+      :final result,
+      :final awaitingApproval,
+    ) =>
+      'StepTool(callId: $callId, kind: $kind, input: $input, result: $result, '
+          'awaitingApproval: $awaitingApproval)',
     StepWriting() => 'StepWriting()',
     StepStopped() => 'StepStopped()',
   };

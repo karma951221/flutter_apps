@@ -108,6 +108,7 @@ import '../../domain/chat/usecase/open_conversation.dart' as _i306;
 import '../../domain/chat/usecase/wiki_distiller.dart' as _i870;
 import '../../domain/chat/wiki/wiki_context_policy.dart' as _i795;
 import '../../domain/chat/workspace/workspace.dart' as _i1060;
+import '../../domain/chat/workspace/workspace_changes.dart' as _i155;
 import '../../domain/commute/repository/address_search.dart' as _i63;
 import '../../domain/commute/repository/place_repository.dart' as _i142;
 import '../../domain/commute/repository/route_finder.dart' as _i488;
@@ -188,6 +189,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => alarmPermissionModule.alarmPermissions,
     );
     gh.lazySingleton<_i306.OpenConversation>(() => _i306.OpenConversation());
+    gh.lazySingleton<_i155.WorkspaceChanges>(() => _i155.WorkspaceChanges());
     gh.lazySingleton<_i488.MediaPickGuard>(() => _i488.MediaPickGuard());
     gh.lazySingleton<_i98.MapOpenRequests>(
       () => _i98.MapOpenRequests(),
@@ -425,6 +427,13 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.Clock>(),
       ),
     );
+    gh.lazySingleton<_i215.WorkspaceTools>(
+      () => _i215.WorkspaceTools(
+        gh<_i1060.Workspace>(),
+        gh<_i695.AttachmentLoader>(),
+        changes: gh<_i155.WorkspaceChanges>(),
+      ),
+    );
     gh.lazySingleton<_i122.DiaryRepository>(
       () => _i1049.DriftDiaryRepository(
         gh<_i611.DiaryDatabase>(),
@@ -439,12 +448,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i31.ChatHistorySettings>(),
         gh<_i306.OpenConversation>(),
         gh<_i494.Clock>(),
-      ),
-    );
-    gh.lazySingleton<_i215.WorkspaceTools>(
-      () => _i215.WorkspaceTools(
-        gh<_i1060.Workspace>(),
-        gh<_i695.AttachmentLoader>(),
       ),
     );
     gh.lazySingleton<_i873.AlarmUseCase>(

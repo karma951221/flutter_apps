@@ -3616,6 +3616,56 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatToolNoFiles => 'No files in workspace';
 
   @override
+  String get walkChatToolAwaitingApproval => 'Waiting for approval';
+
+  @override
+  String walkChatToolAwaitingApprovalNamed(String name) {
+    return 'Waiting for approval · $name';
+  }
+
+  @override
+  String get walkChatToolWriteFile => 'Saving file';
+
+  @override
+  String walkChatToolWriteFileNamed(String name) {
+    return 'Saving file · $name';
+  }
+
+  @override
+  String get walkChatToolEditFile => 'Editing file';
+
+  @override
+  String walkChatToolEditFileNamed(String name) {
+    return 'Editing file · $name';
+  }
+
+  @override
+  String get walkChatToolDeleteFile => 'Deleting file';
+
+  @override
+  String walkChatToolDeleteFileNamed(String name) {
+    return 'Deleting file · $name';
+  }
+
+  @override
+  String get walkChatToolDeclined => 'Declined';
+
+  @override
+  String walkChatToolWrote(String name) {
+    return 'Saved · $name';
+  }
+
+  @override
+  String walkChatToolEdited(String name) {
+    return 'Edited · $name';
+  }
+
+  @override
+  String walkChatToolDeleted(String name) {
+    return 'Deleted · $name';
+  }
+
+  @override
   String walkChatProgressElapsed(int seconds) {
     return '${seconds}s';
   }

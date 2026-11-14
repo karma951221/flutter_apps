@@ -3316,6 +3316,56 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatToolNoFiles => '작업 폴더에 파일 없음';
 
   @override
+  String get walkChatToolAwaitingApproval => '승인 기다리는 중';
+
+  @override
+  String walkChatToolAwaitingApprovalNamed(String name) {
+    return '승인 기다리는 중 · $name';
+  }
+
+  @override
+  String get walkChatToolWriteFile => '파일 저장 중';
+
+  @override
+  String walkChatToolWriteFileNamed(String name) {
+    return '파일 저장 중 · $name';
+  }
+
+  @override
+  String get walkChatToolEditFile => '파일 고치는 중';
+
+  @override
+  String walkChatToolEditFileNamed(String name) {
+    return '파일 고치는 중 · $name';
+  }
+
+  @override
+  String get walkChatToolDeleteFile => '파일 지우는 중';
+
+  @override
+  String walkChatToolDeleteFileNamed(String name) {
+    return '파일 지우는 중 · $name';
+  }
+
+  @override
+  String get walkChatToolDeclined => '거절함';
+
+  @override
+  String walkChatToolWrote(String name) {
+    return '저장함 · $name';
+  }
+
+  @override
+  String walkChatToolEdited(String name) {
+    return '고침 · $name';
+  }
+
+  @override
+  String walkChatToolDeleted(String name) {
+    return '지움 · $name';
+  }
+
+  @override
   String walkChatProgressElapsed(int seconds) {
     return '$seconds초';
   }

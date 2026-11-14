@@ -7,6 +7,7 @@ import '../attachment/attachment_rules.dart';
 import '../attachment/chat_attachment.dart';
 import '../chat_model.dart';
 import '../workspace/workspace.dart';
+import '../workspace/workspace_changes.dart';
 import 'tool_result.dart';
 import 'tool_summary.dart';
 import 'write_plan.dart';
@@ -15,12 +16,15 @@ import 'write_plan.dart';
 /// out 에 글 파일을 만들고 · 고치고 · 지우는 쓰기 도구 셋(write_file · edit_file · delete_file).
 /// 쓰기는 [prepareWrite](검증, 디스크 그대로) → 사용자 승인 → [apply] 두 단계다.
 /// [run] · [prepareWrite] · [apply] 는 던지지 않는다 — 실패는 `{"error": 코드}` 결과로 돌려준다.
+/// [apply] 가 쓰거나 지우면 [WorkspaceChanges] 로 알린다(열린 작업 폴더 화면이 다시 읽게).
 @lazySingleton
 class WorkspaceTools {
-  WorkspaceTools(this._workspace, this._loader);
+  WorkspaceTools(this._workspace, this._loader, {WorkspaceChanges? changes})
+    : _changes = changes;
 
   final Workspace _workspace;
   final AttachmentLoader _loader;
+  final WorkspaceChanges? _changes;
 
   static const listFilesName = 'list_files';
   static const readFileName = 'read_file';
@@ -165,8 +169,14 @@ class WorkspaceTools {
   }
 
   /// 승인된 [plan] 을 실행한다. 지금 내용을 다시 읽어 준비 때와 다르면 쓰지 않고
-  /// `changed`(만들기는 그 사이 생겼으면 `exists`). 던지지 않는다.
+  /// `changed`(만들기는 그 사이 생겼으면 `exists`). 던지지 않는다. 성공하면 바뀜을 알린다.
   Future<ToolResult> apply(WritePlan plan) async {
+    final result = await _apply(plan);
+    if (!result.isError) _changes?.notify();
+    return result;
+  }
+
+  Future<ToolResult> _apply(WritePlan plan) async {
     final kind = switch (plan) {
       WriteCreate() || WriteOverwrite() => ChatToolKind.writeFile,
       WriteEdit() => ChatToolKind.editFile,

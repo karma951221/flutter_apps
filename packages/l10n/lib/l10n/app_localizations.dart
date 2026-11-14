@@ -6140,6 +6140,78 @@ abstract class AppLocalizations {
   /// **'작업 폴더에 파일 없음'**
   String get walkChatToolNoFiles;
 
+  /// 채팅 탭 진행 줄: 쓰기 도구가 승인을 기다림(파일 이름 없을 때)
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 기다리는 중'**
+  String get walkChatToolAwaitingApproval;
+
+  /// 채팅 탭 진행 줄: 쓰기 도구가 승인을 기다림. name 은 path 마지막 부분(20자 넘으면 줄임)
+  ///
+  /// In ko, this message translates to:
+  /// **'승인 기다리는 중 · {name}'**
+  String walkChatToolAwaitingApprovalNamed(String name);
+
+  /// 채팅 탭 진행 줄: write_file 실행 라벨(파일 이름 없을 때)
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 저장 중'**
+  String get walkChatToolWriteFile;
+
+  /// 채팅 탭 진행 줄: write_file 실행 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 저장 중 · {name}'**
+  String walkChatToolWriteFileNamed(String name);
+
+  /// 채팅 탭 진행 줄: edit_file 실행 라벨(파일 이름 없을 때)
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 고치는 중'**
+  String get walkChatToolEditFile;
+
+  /// 채팅 탭 진행 줄: edit_file 실행 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 고치는 중 · {name}'**
+  String walkChatToolEditFileNamed(String name);
+
+  /// 채팅 탭 진행 줄: delete_file 실행 라벨(파일 이름 없을 때)
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 지우는 중'**
+  String get walkChatToolDeleteFile;
+
+  /// 채팅 탭 진행 줄: delete_file 실행 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 지우는 중 · {name}'**
+  String walkChatToolDeleteFileNamed(String name);
+
+  /// 채팅 탭 진행 줄: 사용자가 쓰기를 거절함
+  ///
+  /// In ko, this message translates to:
+  /// **'거절함'**
+  String get walkChatToolDeclined;
+
+  /// 채팅 탭 진행 줄: write_file 성공
+  ///
+  /// In ko, this message translates to:
+  /// **'저장함 · {name}'**
+  String walkChatToolWrote(String name);
+
+  /// 채팅 탭 진행 줄: edit_file 성공
+  ///
+  /// In ko, this message translates to:
+  /// **'고침 · {name}'**
+  String walkChatToolEdited(String name);
+
+  /// 채팅 탭 진행 줄: delete_file 성공
+  ///
+  /// In ko, this message translates to:
+  /// **'지움 · {name}'**
+  String walkChatToolDeleted(String name);
+
   /// 채팅 탭 진행 줄: 경과 초
   ///
   /// In ko, this message translates to:

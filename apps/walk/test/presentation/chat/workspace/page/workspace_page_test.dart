@@ -10,6 +10,7 @@ import 'package:l10n/l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/data/lock/prefs_lock_repository.dart';
 import 'package:walk/domain/chat/workspace/workspace.dart';
+import 'package:walk/domain/chat/workspace/workspace_changes.dart';
 import 'package:walk/domain/lock/device_auth.dart';
 import 'package:walk/domain/lock/lock_repository.dart';
 import 'package:walk/presentation/chat/workspace/open_workspace.dart';
@@ -61,6 +62,7 @@ void main() {
       ..registerSingleton<LockRepository>(lockRepo)
       ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
       ..registerSingleton<Workspace>(ws)
+      ..registerSingleton<WorkspaceChanges>(WorkspaceChanges())
       ..registerSingleton<WorkspaceShare>(share);
   });
 

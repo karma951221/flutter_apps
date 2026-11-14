@@ -256,6 +256,162 @@ void main() {
     );
   });
 
+  group('쓰기 도구', () {
+    ChatProgressStep write(
+      ChatToolKind kind, {
+      String? name = 'a.md',
+      bool waiting = false,
+      ToolSummary? result,
+    }) => ChatProgressStep.tool(
+      callId: 'w1',
+      kind: kind,
+      input: ToolInputSummary(kind: kind, name: name),
+      awaitingApproval: waiting,
+      result: result,
+    );
+
+    test('승인 기다리는 중 · NAME', () {
+      for (final kind in [
+        ChatToolKind.writeFile,
+        ChatToolKind.editFile,
+        ChatToolKind.deleteFile,
+      ]) {
+        expect(
+          chatProgressStepText(ko, 'ko', write(kind, waiting: true)),
+          '승인 기다리는 중 · a.md',
+        );
+      }
+      expect(
+        chatProgressStepText(
+          en,
+          'en',
+          write(ChatToolKind.writeFile, waiting: true),
+        ),
+        'Waiting for approval · a.md',
+      );
+    });
+
+    test('실행 라벨 — 저장 · 고치기 · 지우기', () {
+      expect(
+        chatProgressStepText(ko, 'ko', write(ChatToolKind.writeFile)),
+        '파일 저장 중 · a.md',
+      );
+      expect(
+        chatProgressStepText(ko, 'ko', write(ChatToolKind.editFile)),
+        '파일 고치는 중 · a.md',
+      );
+      expect(
+        chatProgressStepText(ko, 'ko', write(ChatToolKind.deleteFile)),
+        '파일 지우는 중 · a.md',
+      );
+      expect(
+        chatProgressStepText(en, 'en', write(ChatToolKind.editFile)),
+        'Editing file · a.md',
+      );
+    });
+
+    test('NAME 은 20자 넘으면 20자 + …', () {
+      final long = '가' * 25;
+      expect(
+        chatProgressStepText(
+          ko,
+          'ko',
+          write(ChatToolKind.writeFile, name: long),
+        ),
+        '파일 저장 중 · ${'가' * 20}…',
+      );
+      expect(
+        chatProgressStepText(
+          ko,
+          'ko',
+          write(ChatToolKind.writeFile, name: long, waiting: true),
+        ),
+        '승인 기다리는 중 · ${'가' * 20}…',
+      );
+      // 이미 줄인 이름은 그대로.
+      expect(
+        chatProgressStepText(
+          ko,
+          'ko',
+          write(ChatToolKind.deleteFile, name: '${'가' * 20}…'),
+        ),
+        '파일 지우는 중 · ${'가' * 20}…',
+      );
+    });
+
+    test('이름을 아직 모르면 이름 없는 라벨', () {
+      expect(
+        chatProgressStepText(
+          ko,
+          'ko',
+          write(ChatToolKind.writeFile, name: null),
+        ),
+        '파일 저장 중',
+      );
+      expect(
+        chatProgressStepText(
+          ko,
+          'ko',
+          write(ChatToolKind.editFile, name: null, waiting: true),
+        ),
+        '승인 기다리는 중',
+      );
+    });
+
+    test('거절은 거절함 — 지금 줄 · 펼친 목록', () {
+      final declined = write(
+        ChatToolKind.writeFile,
+        result: const ToolSummary(
+          kind: ChatToolKind.writeFile,
+          count: 0,
+          isError: true,
+          declined: true,
+        ),
+      );
+      expect(chatProgressStepText(ko, 'ko', declined), '거절함');
+      expect(chatProgressTimelineText(ko, 'ko', declined), '거절함');
+      expect(chatProgressStepText(en, 'en', declined), 'Declined');
+    });
+
+    test('성공은 저장함 · 고침 · 지움 + NAME', () {
+      ToolSummary ok(ChatToolKind kind) => ToolSummary(kind: kind, count: 1);
+      final wrote = write(
+        ChatToolKind.writeFile,
+        result: ok(ChatToolKind.writeFile),
+      );
+      expect(chatProgressStepText(ko, 'ko', wrote), '저장함 · a.md');
+      expect(chatProgressTimelineText(ko, 'ko', wrote), '저장함 · a.md');
+      expect(
+        chatProgressStepText(
+          ko,
+          'ko',
+          write(ChatToolKind.editFile, result: ok(ChatToolKind.editFile)),
+        ),
+        '고침 · a.md',
+      );
+      expect(
+        chatProgressStepText(
+          ko,
+          'ko',
+          write(ChatToolKind.deleteFile, result: ok(ChatToolKind.deleteFile)),
+        ),
+        '지움 · a.md',
+      );
+    });
+
+    test('오류 결과는 라벨 그대로', () {
+      final failed = write(
+        ChatToolKind.writeFile,
+        result: const ToolSummary(
+          kind: ChatToolKind.writeFile,
+          count: 0,
+          isError: true,
+        ),
+      );
+      expect(chatProgressStepText(ko, 'ko', failed), '파일 저장 중 · a.md');
+    });
+  });
+
   group('요약', () {
     final start = DateTime(2026, 11, 1);
     ChatProgressStep call(String id) =>

@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:walk/domain/chat/attachment/attachment_loader.dart';
 import 'package:walk/domain/chat/workspace/workspace.dart';
+import 'package:walk/domain/chat/workspace/workspace_changes.dart';
 import '../../../support/unused_chat_attachments.dart';
 
 import 'package:bloc_test/bloc_test.dart';
@@ -1805,6 +1806,7 @@ void main() {
       getIt
         ..unregister<Workspace>()
         ..registerSingleton<Workspace>(ws)
+        ..registerSingleton<WorkspaceChanges>(WorkspaceChanges())
         ..unregister<AttachmentLoader>()
         ..registerSingleton<AttachmentLoader>(loader);
     });
