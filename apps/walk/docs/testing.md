@@ -317,6 +317,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | 첨부 — 기록 | `data/chat/database/drift_chat_history_repository_test`(첨부 ref 왕복 · 깨진 JSON · 잘못된 항목 건너뜀) · `chat_database_migration_test`(v2 → v3) |
 | 첨부 — 읽기 · 입력 | `data/chat/attachment/file_attachment_loader_test`(사진 압축 · 크기 거절 · UTF-8 · BOM · 원본 읽기 · 압축기 오류) · `presentation/chat/cubit/chat_cubit_attachment_test`(한도 · 알림 · inbox 원본 사본 · 임시 대화 사본 없음 · 사본 실패에도 보냄 · 보내지 못한 질문 되돌림 · 실패 · 멈춤 뒤 첨부 되돌림 · 선택기 캐시 정리 · 답 저장과 모델) · `widget/chat_input_test`(칩 · ✕ · 첨부만으로 보내기 · 준비 중 보내기 막힘) · `widget/chat_bubble_view_test`(경로 없는 칩은 표시만 · 지운 파일) · `widget/bubble_actions_sheet_test`([파일로 저장]) |
 | 작업 폴더 읽기 도구(2단계) | `domain/chat/tool/workspace_tools_test`(목록 최신순 · 100개 · `area` · 글 20,000자 · `next_offset` · 서로게이트 경계 · 사진 · PDF · 오류 코드 · 실제 폴더에서 `..` / 절대 경로 / 밖 링크 / 디렉터리 링크 · inbox · out 밖 · 숨김 이름) · `domain/chat/usecase/chat_session_workspace_tools_test`(기록 켜짐에만 도구 · 꺼짐이면 실행 안 함 · PDF 문서 한도 · 18MB · 글 120,000자 · 실패 · 멈춤 · 접기 되돌림 · `images_unsupported` · 프롬프트 줄) · 두 어댑터 테스트(tool_result 안 document · 결과 뒤 `input_file` · `imagesInToolOutput`) · `presentation/chat/widget/chat_progress_text_test`(작업 폴더 라벨 · 빈 폴더) |
+| 작업 폴더 쓰기 도구 · 승인(3단계) | `data/chat/workspace/file_workspace_test`(`writeText` 새로 · 덮어쓰기 · 있음 예외 · 경계 · 임시 파일 안 남음) · `domain/chat/tool/workspace_tools_write_test`(경로 규칙 · 255바이트 · 보이지 않는 글자 · `read_only` · 100,000자 · `exists` · `no_match` · `not_unique` · `changed` · 실제 폴더 경계 · 바뀜 알림) · `domain/chat/usecase/chat_session_write_tools_test`(기록 켜짐에만 · 승인 · 거절 · 멈춤 · 초기화 · 승인과 멈춤 겹침 · 쓰기 둘 + 읽기 순서 · 엉뚱한 callId · 프롬프트 줄) · `presentation/chat/cubit/chat_cubit_approval_test`(pendingApproval · 한 번만 · 실제 세션으로 중단 네 경로) · `presentation/chat/workspace/widget/write_approval_sheet_test` · `format/reveal_invisible_test` · `chat_tab_test`(시트 열고 닫기 · 잠금 · 두 쓰기 · 스낵바) · `chat_progress_text_test`(쓰기 라벨) |
 | 작업 폴더 화면 | `presentation/chat/workspace/cubit/workspace_cubit_test` · `page/workspace_page_test`(구역 순서 · 사용량 줄 · 빈 상태 · 지우기 확인 · [물어보기에 첨부] · [공유] · 보기: 글 · 사진 · 그 밖은 공유) · `chat_tab_test`(⋮ [작업 폴더] · 작업 폴더에서 첨부 · 저장 → [보기]) |
 
 **픽스처**: 벤더 응답은 `test/fixtures/chat/<벤더>/` 에 있고 `chatFixture(path)`(`test/support/chat_fixtures.dart`)로 읽는다. 손으로 만든 것은 SSE 는 첫 줄 주석으로, 나머지는 `handMadeFixtures`(경로 → 확인 번호)로 표시한다. 실제 응답을 녹화하면 키 · 계정 id 를 지우고 표에서 뺀다 — 목록은 [기록](history.md#남은-손-픽스처).
@@ -611,6 +612,21 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | F-QA7 | 저장한 대화를 다시 열어 첨부 칩 누르기 · 그 파일을 지운 뒤 다시 열기 | 칩이 파일을 연다. 지운 뒤에는 회색 "지운 파일" | 대기 |
 | F-QA8 | 10MB PDF 하나를 모바일 데이터로 보내기 | 60초 응답 대기 안에 답이 시작된다. 넘으면 기록하고 대기 시간 · 한도를 다시 정한다 | 대기 |
 | F-QA9 | HEIC 사진 첨부 · 작업 폴더에서 보기 | 보낼 때 JPEG 로 바뀌어 답한다. 보기는 앱 안에서 열리거나(디코딩 가능) 공유 시트로 넘어간다 | 대기 |
+
+### 작업 폴더 쓰기 도구 (3단계)
+
+실제 키(Claude · GPT 각각)와 실기기가 필요하다. 아직 한 번도 돌려 보지 않았다.
+
+| # | 하는 일 | 기대 | 상태 |
+|---|---|---|---|
+| W-QA1 | "오늘 걸음 기록을 표로 정리해서 csv 로 저장해 줘" | "승인 기다리는 중 · NAME" 과 함께 시트(파일 만들기 · `out/….csv` · 내용 그대로), [저장] → 스낵바 [열기] 로 그 파일이 열린다 | 대기 |
+| W-QA2 | 같은 요청을 GPT 로 | 같은 흐름 | 대기 |
+| W-QA3 | 시트에서 [거절] | 디스크 그대로, 진행 줄 "거절함", 모델이 저장하지 않았다고 답한다(다시 시도하지 않음) | 대기 |
+| W-QA4 | "저번 요약 파일 끝에 오늘 내용 덧붙여 줘" | 덮어쓰기 또는 고치기 시트(지울 부분 · 넣을 부분), 승인 뒤 작업 폴더 화면에 바뀐 내용 | 대기 |
+| W-QA5 | 시트가 떠 있는 동안 [멈춤] · 새 대화 | 시트가 닫히고 파일이 생기지 않는다, 다음 질문이 정상 | 대기 |
+| W-QA6 | 시트가 떠 있는 동안 앱을 내렸다 잠금 해제 | 시트가 다시 뜨고, 답할 수 있다 | 대기 |
+| W-QA7 | inbox 의 첨부 파일을 "고쳐 줘" | `read_only` 를 받고 out 에 새 판을 만들자고 하거나 만든다(시트 경로가 out/) | 대기 |
+| W-QA8 | 숨은 지시(보이지 않는 글자 포함)가 든 md 를 첨부하고 "요약해 줘" | 요청하지 않은 쓰기를 하려 하면 시트에 그대로 드러나 거절할 수 있다 | 대기 |
 
 ### 작업 폴더 읽기 도구 (2단계)
 
