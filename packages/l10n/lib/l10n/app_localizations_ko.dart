@@ -4123,7 +4123,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapChipBlocked => '기록 꺼짐 · 권한 필요';
 
   @override
-  String get walkMapStyle => '지도 모양';
+  String get walkMapStyle => '지도 종류';
 
   @override
   String get walkMapStyleStandard => '기본';
@@ -4135,19 +4135,25 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapStyleSimple => '단순';
 
   @override
-  String get walkMapStyleSimpleDetail => '옅은 색에 큰 길과 지명만';
+  String get walkMapStyleSimpleDetail => '색을 빼고 옅게 — 동선이 잘 보여요';
 
   @override
-  String get walkMapStylePlain => '글자 없이';
+  String get walkMapStyleTerrain => '지형';
 
   @override
-  String get walkMapStylePlainDetail => '글자 없이 길 모양만';
+  String get walkMapStyleTerrainDetail => '등고선 · 산 높이까지';
+
+  @override
+  String get walkMapStyleSatellite => '위성';
+
+  @override
+  String get walkMapStyleSatelliteDetail => '위성 사진';
 
   @override
   String get walkMapStyleDark => '어둡게';
 
   @override
-  String get walkMapStyleDarkDetail => '어두운 바탕에 큰 길과 지명';
+  String get walkMapStyleDarkDetail => '기본 지도를 어둡게';
 
   @override
   String get walkMapTimelineTitle => '타임라인';

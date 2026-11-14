@@ -4,7 +4,7 @@ import 'package:l10n/l10n.dart';
 
 import '../../../domain/location/entity/map_style.dart';
 
-/// 지도 모양을 고르는 시트. 고른 모양 또는 null.
+/// 지도 종류를 고르는 시트. 고른 모양 또는 null.
 Future<MapStyle?> showMapStyleSheet(
   BuildContext context, {
   required MapStyle current,
@@ -16,16 +16,18 @@ Future<MapStyle?> showMapStyleSheet(
 );
 
 String mapStyleLabel(AppLocalizations l10n, MapStyle style) => switch (style) {
-  MapStyle.standard => l10n.walkMapStyleStandard,
   MapStyle.simple => l10n.walkMapStyleSimple,
-  MapStyle.plain => l10n.walkMapStylePlain,
+  MapStyle.standard => l10n.walkMapStyleStandard,
+  MapStyle.terrain => l10n.walkMapStyleTerrain,
+  MapStyle.satellite => l10n.walkMapStyleSatellite,
   MapStyle.dark => l10n.walkMapStyleDark,
 };
 
 String _detail(AppLocalizations l10n, MapStyle style) => switch (style) {
-  MapStyle.standard => l10n.walkMapStyleStandardDetail,
   MapStyle.simple => l10n.walkMapStyleSimpleDetail,
-  MapStyle.plain => l10n.walkMapStylePlainDetail,
+  MapStyle.standard => l10n.walkMapStyleStandardDetail,
+  MapStyle.terrain => l10n.walkMapStyleTerrainDetail,
+  MapStyle.satellite => l10n.walkMapStyleSatelliteDetail,
   MapStyle.dark => l10n.walkMapStyleDarkDetail,
 };
 

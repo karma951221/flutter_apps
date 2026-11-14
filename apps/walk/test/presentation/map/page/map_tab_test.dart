@@ -530,89 +530,94 @@ void main() {
     expect(find.text('2'), findsOneWidget);
   });
 
-  /// 지도에 깔린 타일 레이어들의 URL(바탕 먼저, 지명 레이어가 있으면 뒤).
-  List<String> tileUrls(WidgetTester tester) => [
-    for (final layer in tester.widgetList<TileLayer>(find.byType(TileLayer)))
-      layer.urlTemplate!,
-  ];
-
-  /// 바탕 타일에 색 반전(밝은 단순 지도)을 거는지.
-  bool inverted(WidgetTester tester) =>
-      tester.widget<TileLayer>(find.byType(TileLayer).first).tileBuilder !=
-      null;
-
-  testWidgets('default style is simple: inverted Esri gray with labels', (
+  testWidgets('style button switches tiles and saves the choice', (
     tester,
   ) async {
     await pump(tester, state: MapViewState.ready(_data()));
-
-    final urls = tileUrls(tester);
-    expect(urls, hasLength(2));
-    expect(urls[0], contains('World_Dark_Gray_Base'));
-    expect(urls[1], contains('World_Dark_Gray_Reference'));
-    expect(inverted(tester), isTrue);
-    expect(find.textContaining('Esri'), findsOneWidget);
-    // CARTO 는 이제 키가 없으면 워터마크 타일만 준다.
-    expect(urls.any((u) => u.contains('cartocdn')), isFalse);
-  });
-
-  testWidgets('style button switches to standard OSM and saves the choice', (
-    tester,
-  ) async {
-    await pump(tester, state: MapViewState.ready(_data()));
+    TileLayer layer() => tester.widget<TileLayer>(find.byType(TileLayer));
+    // 저장한 적이 없으면 단순 — OSM 타일에 색 필터.
+    expect(layer().urlTemplate, contains('tile.openstreetmap.org'));
+    expect(layer().tileBuilder, isNotNull);
 
     await tester.tap(find.byKey(const Key('map-style-button')));
     await tester.pumpAndSettle();
-    expect(find.text('지도 모양'), findsOneWidget);
+    expect(find.text('지도 종류'), findsOneWidget);
+    // 단순(기본값) · 기본 · 지형 · 위성 · 어둡게
+    for (final style in MapStyle.values) {
+      expect(find.byKey(Key('map-style-${style.name}')), findsOneWidget);
+    }
     await tester.tap(find.byKey(const Key('map-style-standard')));
     await tester.pumpAndSettle();
 
-    final urls = tileUrls(tester);
-    expect(urls, hasLength(1));
-    expect(urls.single, contains('tile.openstreetmap.org'));
-    expect(inverted(tester), isFalse);
+    expect(layer().urlTemplate, contains('tile.openstreetmap.org'));
+    expect(layer().tileBuilder, isNull);
     expect(mapStyle.style, MapStyle.standard);
-    expect(find.textContaining('Esri'), findsNothing);
+    expect(find.textContaining('CARTO'), findsNothing);
   });
 
-  testWidgets('plain style: inverted base only, no labels', (tester) async {
-    mapStyle.style = MapStyle.plain;
+  testWidgets('saved style is used when the map opens', (tester) async {
+    mapStyle.style = MapStyle.standard;
     await pump(tester, state: MapViewState.ready(_data()));
 
-    final urls = tileUrls(tester);
-    expect(urls, hasLength(1));
-    expect(urls.single, contains('World_Dark_Gray_Base'));
-    expect(inverted(tester), isTrue);
+    expect(
+      tester.widget<TileLayer>(find.byType(TileLayer)).tileBuilder,
+      isNull,
+    );
   });
 
-  testWidgets('style changed elsewhere (settings) updates the map: dark', (
+  testWidgets('style changed elsewhere (settings) updates the map', (
     tester,
   ) async {
     await pump(tester, state: MapViewState.ready(_data()));
 
+    final simple = tester.widget<TileLayer>(find.byType(TileLayer)).tileBuilder;
     await getIt<MapStyleCubit>().select(MapStyle.dark);
     await tester.pumpAndSettle();
 
-    final urls = tileUrls(tester);
-    expect(urls, hasLength(2));
-    expect(urls[0], contains('World_Dark_Gray_Base'));
-    expect(urls[1], contains('World_Dark_Gray_Reference'));
-    expect(inverted(tester), isFalse);
+    final layer = tester.widget<TileLayer>(find.byType(TileLayer));
+    // 타일 주소는 그대로, 필터만 바뀐다.
+    expect(layer.urlTemplate, contains('tile.openstreetmap.org'));
+    expect(layer.tileBuilder, isNotNull);
+    expect(layer.tileBuilder, isNot(same(simple)));
   });
 
-  testWidgets('labels come back after plain → simple', (tester) async {
-    mapStyle.style = MapStyle.plain;
+  testWidgets('terrain uses OpenTopoMap with its attribution', (tester) async {
+    mapStyle.style = MapStyle.terrain;
     await pump(tester, state: MapViewState.ready(_data()));
 
-    await getIt<MapStyleCubit>().select(MapStyle.simple);
-    await tester.pumpAndSettle();
-    await getIt<MapStyleCubit>().select(MapStyle.plain);
-    await tester.pumpAndSettle();
-    await getIt<MapStyleCubit>().select(MapStyle.simple);
-    await tester.pumpAndSettle();
+    final layer = tester.widget<TileLayer>(find.byType(TileLayer));
+    expect(layer.urlTemplate, contains('opentopomap.org'));
+    expect(layer.subdomains, isNotEmpty);
+    expect(layer.maxNativeZoom, 17);
+    expect(layer.tileBuilder, isNull);
+    expect(find.textContaining('OpenTopoMap'), findsOneWidget);
+  });
 
-    expect(tileUrls(tester), hasLength(2));
-    expect(tester.takeException(), isNull);
+  testWidgets(
+    'satellite uses Esri World Imagery (z/y/x) with its attribution',
+    (tester) async {
+      mapStyle.style = MapStyle.satellite;
+      await pump(tester, state: MapViewState.ready(_data()));
+
+      final layer = tester.widget<TileLayer>(find.byType(TileLayer));
+      expect(
+        layer.urlTemplate,
+        contains('World_Imagery/MapServer/tile/{z}/{y}/{x}'),
+      );
+      expect(layer.maxNativeZoom, 18);
+      expect(layer.tileBuilder, isNull);
+      expect(find.textContaining('Esri'), findsOneWidget);
+    },
+  );
+
+  testWidgets('no tile server needs a key', (tester) async {
+    for (final style in MapStyle.values) {
+      mapStyle.style = style;
+      await pump(tester, state: MapViewState.ready(_data()));
+      final url = tester.widget<TileLayer>(find.byType(TileLayer)).urlTemplate!;
+      expect(url, isNot(contains('cartocdn')), reason: style.name);
+      expect(url, isNot(contains('key')), reason: style.name);
+    }
   });
 
   testWidgets('empty period shows placeholder over map', (tester) async {

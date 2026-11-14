@@ -1,15 +1,22 @@
-/// 지도 바탕 모양. 동선 · 핀은 그대로고 밑에 깔리는 타일만 바뀐다.
+/// 지도 종류. 동선 · 핀은 그대로고 밑에 깔리는 타일만 바뀐다. 모두 API 키 없이 받는다.
+///
+/// 단순 · 기본 · 어둡게는 OSM 기본 타일 하나에 앱이 색 필터를 씌운다. 지형은 OpenTopoMap,
+/// 위성은 Esri World Imagery. CARTO basemap 은 키 없이는 "API KEY REQUIRED" 타일만 준다(2026-11-14).
+/// 시트에는 이 순서로 보인다.
 enum MapStyle {
+  /// OSM 에 색을 빼고 옅게 — 동선이 바탕보다 눈에 띈다. 기본값.
+  simple,
+
   /// OSM 기본 — 길 · 건물 · 가게까지 자세하다.
   standard,
 
-  /// 옅은 회색에 큰 길과 지명만(Esri 어두운 회색 캔버스를 반전).
-  simple,
+  /// 등고선 · 산 높이(OpenTopoMap). 등산 · 여행용.
+  terrain,
 
-  /// 글자 없이 길 모양만(단순에서 지명 레이어를 뺌).
-  plain,
+  /// 위성 사진(Esri World Imagery).
+  satellite,
 
-  /// 어두운 바탕(Esri 어두운 회색 캔버스 그대로).
+  /// OSM 을 회색으로 뒤집은 어두운 지도.
   dark;
 
   static const fallback = MapStyle.simple;

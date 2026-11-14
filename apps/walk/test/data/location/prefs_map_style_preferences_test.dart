@@ -30,7 +30,12 @@ void main() {
       MapStyle.simple,
     );
     expect(
-      (await _prefs({PrefsMapStylePreferences.styleKey: 'satellite'})).style,
+      (await _prefs({PrefsMapStylePreferences.styleKey: 'hybrid'})).style,
+      MapStyle.simple,
+    );
+    // 없앤 모양(글자 없이)을 저장해 둔 사람도 기본값.
+    expect(
+      (await _prefs({PrefsMapStylePreferences.styleKey: 'plain'})).style,
       MapStyle.simple,
     );
   });

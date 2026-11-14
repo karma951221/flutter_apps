@@ -78,10 +78,6 @@ class TrackMapState extends State<TrackMap> {
   /// 쓴다 — build 마다 새로 받으면 바뀐 provider 는 dispose 되지 않는다.
   late final TileProvider _tileProvider = getIt<TileProvider>();
 
-  /// 지명 레이어의 provider. 지명 레이어가 빠지면(글자 없이) 그 TileLayer 가 이것을 dispose 하므로
-  /// 버리고, 다시 생길 때 새로 받는다.
-  TileProvider? _labelProvider;
-
   Object? _fitted;
 
   /// 마지막 맞춤 뒤 사용자가 지도를 옮겼다(손 · [moveTo]). 그러면 같은 기간에 점이 늘어도 따라가지 않는다.
@@ -124,7 +120,6 @@ class TrackMapState extends State<TrackMap> {
   @override
   void didUpdateWidget(TrackMap oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!_hasLabels(widget.style)) _labelProvider = null;
     final coordinates = _coordinates();
     if (coordinates.isEmpty) return;
     if (widget.fitKey != _fitted) {
@@ -196,43 +191,93 @@ class TrackMapState extends State<TrackMap> {
     }
   }
 
-  /// 단순 · 글자 없이 · 어둡게는 키 없이 받는 Esri Canvas(어두운 회색) 타일이다. CARTO basemap 은
-  /// 이제 키가 없으면 "API KEY REQUIRED" 워터마크만 주고, Esri 연회색은 서울이 줌 13까지만 있다.
-  /// 그래서 어두운 회색(줌 16까지)을 받아 단순 · 글자 없이는 색을 반전해 밝게 쓴다.
-  static const _esri =
-      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas';
-  static const _esriBase =
-      '$_esri/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
-  static const _esriLabels =
-      '$_esri/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}';
-  static const _osm = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  /// 단순 · 기본 · 어둡게는 OSM 기본 타일 하나 — 차이는 [_tileBuilderOf] 의 색 필터뿐이라 바꿔도
+  /// 타일을 다시 받지 않는다.
+  static const _osmUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-  /// Esri Canvas 가 서울에 타일을 가진 가장 큰 줌. 더 들어가면 이 줌 타일을 키워 그린다.
-  static const _esriMaxNativeZoom = 16;
+  /// 지형: OpenTopoMap(자원봉사 서버, 최대 줌 17).
+  static const _terrainUrl = 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png';
+  static const _terrainSubdomains = ['a', 'b', 'c'];
 
-  /// 색 반전 + 밝게: v → 255 − 0.765v (어두운 회색 바탕이 연회색, 밝은 길이 진한 회색이 된다).
-  static const _invert = ColorFilter.matrix([
-    -0.765, 0, 0, 0, 255, //
-    0, -0.765, 0, 0, 255, //
-    0, 0, -0.765, 0, 255, //
+  /// 위성: Esri World Imagery. 서울은 줌 18까지 선명하다. 주소의 순서가 z/y/x 다.
+  static const _satelliteUrl =
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+
+  static String _urlOf(MapStyle style) => switch (style) {
+    MapStyle.simple || MapStyle.standard || MapStyle.dark => _osmUrl,
+    MapStyle.terrain => _terrainUrl,
+    MapStyle.satellite => _satelliteUrl,
+  };
+
+  /// 타일 서버가 가진 가장 큰 줌. 더 들어가면 이 줌 타일을 키워 그린다(빈 타일 대신).
+  static int _maxNativeZoomOf(MapStyle style) => switch (style) {
+    MapStyle.terrain => 17,
+    MapStyle.satellite => 18,
+    MapStyle.simple || MapStyle.standard || MapStyle.dark => 19,
+  };
+
+  /// 앞에 © 가 붙는다. 좁은 폰에서 한 줄에 들어가게 짧게.
+  static String _attributionOf(MapStyle style) => switch (style) {
+    MapStyle.simple ||
+    MapStyle.standard ||
+    MapStyle.dark => 'OpenStreetMap contributors',
+    MapStyle.terrain => 'OpenStreetMap · OpenTopoMap (CC-BY-SA)',
+    MapStyle.satellite => 'Esri · Maxar · Earthstar Geographics',
+  };
+
+  /// 단순: 채도를 30% 로 줄이고 흰색과 35% 섞는다. 지도 위 동선 색이 바탕보다 진해 보이게.
+  static final _simpleFilter = ColorFilter.matrix(_mutedMatrix(0.3, 0.35));
+
+  /// 채도 [s](0 = 회색) 로 줄인 뒤 흰색과 [white] 만큼 섞는 색 행렬.
+  static List<double> _mutedMatrix(double s, double white) {
+    const lr = 0.2126, lg = 0.7152, lb = 0.0722;
+    final k = 1 - white;
+    final offset = 255 * white;
+    List<double> row(double r, double g, double b) => [
+      k * r,
+      k * g,
+      k * b,
+      0,
+      offset,
+    ];
+    return [
+      ...row(lr * (1 - s) + s, lg * (1 - s), lb * (1 - s)),
+      ...row(lr * (1 - s), lg * (1 - s) + s, lb * (1 - s)),
+      ...row(lr * (1 - s), lg * (1 - s), lb * (1 - s) + s),
+      0,
+      0,
+      0,
+      1,
+      0,
+    ];
+  }
+
+  /// 어둡게: 회색으로 바꾼 뒤 밝기를 뒤집고(×0.8) 조금 띄운다. flutter_map 의 반전 + 색상 회전은
+  /// 큰길이 갈색으로 남아 탁했다.
+  static const _darkFilter = ColorFilter.matrix(<double>[
+    -0.8 * 0.2126, -0.8 * 0.7152, -0.8 * 0.0722, 0, 0.8 * 255 + 12, //
+    -0.8 * 0.2126, -0.8 * 0.7152, -0.8 * 0.0722, 0, 0.8 * 255 + 12, //
+    -0.8 * 0.2126, -0.8 * 0.7152, -0.8 * 0.0722, 0, 0.8 * 255 + 12, //
     0, 0, 0, 1, 0,
   ]);
 
-  static Widget _invertTile(BuildContext context, Widget tile, TileImage _) =>
-      ColorFiltered(colorFilter: _invert, child: tile);
+  static Widget _darkTileBuilder(
+    BuildContext context,
+    Widget tile,
+    TileImage image,
+  ) => ColorFiltered(colorFilter: _darkFilter, child: tile);
 
-  static bool _hasLabels(MapStyle style) =>
-      style == MapStyle.simple || style == MapStyle.dark;
+  static Widget _simpleTileBuilder(
+    BuildContext context,
+    Widget tile,
+    TileImage image,
+  ) => ColorFiltered(colorFilter: _simpleFilter, child: tile);
 
-  static bool _isInverted(MapStyle style) =>
-      style == MapStyle.simple || style == MapStyle.plain;
-
-  /// 앞에 ©가 붙는다. 좁은 폰에서 한 줄에 들어가게 짧게.
-  static String _attributionOf(MapStyle style) => switch (style) {
-    MapStyle.standard => 'OpenStreetMap contributors',
-    MapStyle.simple ||
-    MapStyle.plain ||
-    MapStyle.dark => 'OpenStreetMap · Esri',
+  /// 단순 · 어둡게만 필터를 씌운다.
+  static TileBuilder? _tileBuilderOf(MapStyle style) => switch (style) {
+    MapStyle.simple => _simpleTileBuilder,
+    MapStyle.dark => _darkTileBuilder,
+    MapStyle.standard || MapStyle.terrain || MapStyle.satellite => null,
   };
 
   static bool _isSinglePlace(List<LatLng> c) => c.every((p) => p == c.first);
@@ -263,29 +308,16 @@ class TrackMapState extends State<TrackMap> {
       children: [
         // key 를 바꾸지 않는다 — 새 TileLayer 가 되면 옛것이 _tileProvider 를 dispose 한다.
         // URL 이 바뀌면 TileLayer 가 스스로 타일을 다시 읽는다.
-        if (widget.style == MapStyle.standard)
-          TileLayer(
-            urlTemplate: _osm,
-            userAgentPackageName: 'com.karma.walk',
-            tileProvider: _tileProvider,
-          )
-        else
-          TileLayer(
-            urlTemplate: _esriBase,
-            maxNativeZoom: _esriMaxNativeZoom,
-            userAgentPackageName: 'com.karma.walk',
-            tileProvider: _tileProvider,
-            tileBuilder: _isInverted(widget.style) ? _invertTile : null,
-          ),
-        if (_hasLabels(widget.style))
-          TileLayer(
-            key: const ValueKey('map-labels'),
-            urlTemplate: _esriLabels,
-            maxNativeZoom: _esriMaxNativeZoom,
-            userAgentPackageName: 'com.karma.walk',
-            tileProvider: _labelProvider ??= getIt<TileProvider>(),
-            tileBuilder: _isInverted(widget.style) ? _invertTile : null,
-          ),
+        TileLayer(
+          urlTemplate: _urlOf(widget.style),
+          subdomains: widget.style == MapStyle.terrain
+              ? _terrainSubdomains
+              : const [],
+          maxNativeZoom: _maxNativeZoomOf(widget.style),
+          userAgentPackageName: 'com.karma.walk',
+          tileProvider: _tileProvider,
+          tileBuilder: _tileBuilderOf(widget.style),
+        ),
         PolylineLayer(
           polylines: [
             for (final (i, s) in widget.track.segments.indexed)

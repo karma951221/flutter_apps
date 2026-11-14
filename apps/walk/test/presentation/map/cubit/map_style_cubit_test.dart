@@ -17,10 +17,10 @@ void main() {
     final cubit = MapStyleCubit(prefs);
     addTearDown(cubit.close);
 
-    await cubit.select(MapStyle.plain);
+    await cubit.select(MapStyle.dark);
 
-    expect(cubit.state, MapStyle.plain);
-    expect(prefs.style, MapStyle.plain);
+    expect(cubit.state, MapStyle.dark);
+    expect(prefs.style, MapStyle.dark);
   });
 
   test('같은 모양이면 아무것도 하지 않는다', () async {
