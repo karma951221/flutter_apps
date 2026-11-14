@@ -90,6 +90,13 @@ void main() {
       'out/\uFEFFa.md',
       'out/a\u2066b.md',
       'out/${'가' * 118}.md', // 121자
+      'out/${'가' * 100}.md', // 103자지만 UTF-8 303바이트 — 파일 시스템 한도 255바이트를 넘는다
+      'out/a\u{E0041}b.md', // 태그 글자
+      'out/a\u2060b.md', // 단어 잇기
+      'out/a\u00ADb.md', // 보이지 않는 하이픈
+      'inbox/../out/a.md', // . · .. 마디 — inbox 판정보다 먼저 거절
+      'out/./a.md',
+      './out/a.md',
       'out/',
       'out',
       'x.md',
@@ -103,12 +110,22 @@ void main() {
       });
     }
 
-    test('120자 이름 · 대문자 확장자는 된다', () async {
-      final ok = 'out/${'가' * 117}.md';
-      expect(
-        await tools.prepareWrite('write_file', {'path': ok, 'content': 'x'}),
-        isA<WriteCreate>(),
-      );
+    test('120자 · 255바이트 이름 · 대문자 확장자는 된다', () async {
+      for (final ok in [
+        'out/${'a' * 117}.md', // 120자
+        'out/${'가' * 84}.md', // 255바이트
+      ]) {
+        expect(
+          await tools.prepareWrite('write_file', {'path': ok, 'content': 'x'}),
+          isA<WriteCreate>(),
+          reason: ok,
+        );
+      }
+      // 한 바이트 넘으면 invalid_path.
+      await expectError('write_file', {
+        'path': 'out/${'가' * 84}a.md',
+        'content': 'x',
+      }, 'invalid_path');
       expect(
         await tools.prepareWrite('write_file', {
           'path': 'out/A.JSON',

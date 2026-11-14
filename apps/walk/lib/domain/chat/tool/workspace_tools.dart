@@ -88,6 +88,9 @@ class WorkspaceTools {
   /// 쓰기 파일 이름의 최대 글자(코드 포인트) 수.
   static const maxWriteNameChars = 120;
 
+  /// 쓰는 파일 이름의 최대 UTF-8 바이트 수(파일 시스템 한도).
+  static const maxWriteNameBytes = 255;
+
   static const _writableExtensions = {'md', 'txt', 'csv', 'json'};
 
   /// AnswerFile 과 같은 금지 글자 + DEL.
@@ -253,6 +256,8 @@ class WorkspaceTools {
       return 'outside_workspace';
     }
     final segments = path.split('/');
+    // `.` · `..` 마디는 경계 안으로 풀리더라도 받지 않는다(`inbox/../out/a.md` 가 inbox 로 보이지 않게).
+    if (segments.any((s) => s == '.' || s == '..')) return 'invalid_path';
     if (segments.first == 'inbox') return 'read_only';
     if (segments.length != 2 || segments.first != 'out') return 'invalid_path';
     final name = segments[1];
@@ -260,6 +265,8 @@ class WorkspaceTools {
     if (name.isEmpty ||
         name.startsWith('.') ||
         name.runes.length > maxWriteNameChars ||
+        // 파일 시스템 이름 한도(바이트) — 한글 100자면 글자 수 안이어도 넘는다.
+        utf8.encode(name).length > maxWriteNameBytes ||
         _forbiddenName.hasMatch(name) ||
         // 보이지 않는 · 방향 바꾸는 글자 — 승인 시트에서 다른 이름으로 보일 수 있다.
         name.runes.any(isInvisibleRune) ||

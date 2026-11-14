@@ -169,6 +169,7 @@ class FileWorkspace implements Workspace {
             FileSystemEntityType.notFound) {
       throw WorkspaceFileExistsException(path);
     }
+    // 확인과 rename 사이에 같은 이름이 생기면 덮어쓴다 — 앱만 쓰는 폴더라 그 틈은 받아들인다.
     // `.` 로 시작해 list 에 안 보인다. 같은 폴더라 rename 이 한 번에 바꿔 끼운다.
     final tmp = File(p.join(dir.path, '.tmp-${_randomHex()}'));
     try {

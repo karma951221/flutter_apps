@@ -25,8 +25,41 @@ void main() {
     }
   });
 
+  test('넓힌 글자도 드러낸다 — 4자리 넘는 코드 포인트는 글자 하나로', () {
+    expect(revealInvisible('a\u{E0041}b'), 'a⟨U+E0041⟩b');
+    expect(revealInvisible('\u2060'), '⟨U+2060⟩');
+    expect(revealInvisible('\u00AD'), '⟨U+00AD⟩');
+    expect(revealInvisible('\u3164'), '⟨U+3164⟩');
+    for (final code in [
+      0x00AD, 0x061C, 0x115F, 0x1160, 0x180E, //
+      0x2060, 0x2061, 0x2062, 0x2063, 0x2064, 0x3164,
+      0xFFF9, 0xFFFA, 0xFFFB,
+      0xE0000, 0xE0001, 0xE007F, 0xE0100, 0xE01EF,
+    ]) {
+      final hex = code.toRadixString(16).toUpperCase().padLeft(4, '0');
+      expect(revealInvisible(String.fromCharCode(code)), '⟨U+$hex⟩');
+    }
+  });
+
+  test('이모지 변형 선택자 U+FE0E · U+FE0F 는 그대로', () {
+    for (final s in ['\u2764\uFE0F', '\u2764\uFE0E']) {
+      expect(revealInvisible(s), s);
+    }
+  });
+
   test('범위 바로 바깥 글자는 그대로 둔다', () {
-    for (final code in [0x20, 0x200A, 0x2010, 0x2029, 0x202F, 0x2065, 0x206A]) {
+    for (final code in [
+      0x20, 0x200A, 0x2010, 0x2029, 0x202F, 0x2065, 0x206A, //
+      0x00AC,
+      0x00AE,
+      0x2059,
+      0xFFF8,
+      0xFFFC,
+      0xDFFFF,
+      0xE0080,
+      0xE00FF,
+      0xE01F0,
+    ]) {
       final s = String.fromCharCode(code);
       expect(revealInvisible(s), s);
     }
