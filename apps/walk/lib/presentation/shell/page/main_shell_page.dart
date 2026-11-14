@@ -42,9 +42,9 @@ import '../../settings/cubit/settings_permissions_cubit.dart';
 import '../../settings/open_settings.dart';
 import 'tools_tab.dart';
 
-/// 하단 탭 순서. 첫 탭은 [diary] — 이 앱의 중심은 일기 · 물어보기다. 알람 · 걷기 · 지도는 [tools]
-/// 의 상단 탭([ToolsSection])이다.
-enum ShellTab { diary, chat, tools }
+/// 하단 탭 순서. 첫 탭(시작 탭)은 [tools] — 실사용에서 알람 · 걷기 · 지도를 가장 자주 연다.
+/// 그 셋은 [tools] 의 상단 탭([ToolsSection])이다. 물어보기는 덜 써서 맨 끝이다.
+enum ShellTab { tools, diary, chat }
 
 /// 하단 탭 셸. 탭마다 자기 `Scaffold` · `AppBar` 를 둔다. 설정은 탭이 아니라 각 탭 앱바 ⋮ 가
 /// 여는 화면([openSettings])이다.
@@ -103,7 +103,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   /// 그 provider 가 한다. 앱이 앞에 올 때 다시 읽으려고 잡아 둔다.
   MapRecordCubit? _mapRecord;
   MapViewCubit? _mapView;
-  ShellTab _tab = ShellTab.diary;
+  ShellTab _tab = ShellTab.tools;
 
   /// 도구 탭에서 고른 상단 탭. 앱이 떠 있는 동안 기억하고, 새로 켜면 알람이다.
   ToolsSection _toolsSection = ToolsSection.alarm;
@@ -331,13 +331,6 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
             return IndexedStack(
               index: _tab.index,
               children: [
-                DiaryTab(active: _tab == ShellTab.diary),
-                ChatTab(
-                  active: _tab == ShellTab.chat,
-                  onOpenSettings: () => unawaited(
-                    openSettings(context, SettingsTarget.chat, highlight: true),
-                  ),
-                ),
                 ToolsTab(
                   active: _tab == ShellTab.tools && !_covered,
                   selected: _tab == ShellTab.tools,
@@ -350,6 +343,13 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
                       SettingsTarget.alarm,
                       highlight: true,
                     ),
+                  ),
+                ),
+                DiaryTab(active: _tab == ShellTab.diary),
+                ChatTab(
+                  active: _tab == ShellTab.chat,
+                  onOpenSettings: () => unawaited(
+                    openSettings(context, SettingsTarget.chat, highlight: true),
                   ),
                 ),
               ],
@@ -365,6 +365,11 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
           onDestinationSelected: (index) => _select(ShellTab.values[index]),
           destinations: [
             NavigationDestination(
+              icon: const Icon(Icons.handyman_outlined),
+              selectedIcon: const Icon(Icons.handyman),
+              label: l10n.walkShellTabTools,
+            ),
+            NavigationDestination(
               icon: const Icon(Icons.menu_book_outlined),
               selectedIcon: const Icon(Icons.menu_book),
               label: l10n.walkShellTabDiary,
@@ -373,11 +378,6 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
               icon: const Icon(Icons.chat_bubble_outline),
               selectedIcon: const Icon(Icons.chat_bubble),
               label: l10n.walkShellTabChat,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.handyman_outlined),
-              selectedIcon: const Icon(Icons.handyman),
-              label: l10n.walkShellTabTools,
             ),
           ],
         ),

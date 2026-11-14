@@ -367,11 +367,11 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('첫 탭은 일기, 시작할 때 예약을 동기화한다', (tester) async {
+  testWidgets('첫 탭은 도구 › 알람, 시작할 때 예약을 동기화한다', (tester) async {
     await pump(tester);
 
-    expect(onstage(DiaryTab), isTrue);
-    expect(onstage(AlarmListPage), isFalse);
+    expect(onstage(AlarmListPage), isTrue);
+    expect(onstage(DiaryTab), isFalse);
     expect(onstage(WalkHomePage), isFalse);
     verify(alarms.sync).called(1);
   });
@@ -383,15 +383,15 @@ void main() {
         .widgetList<NavigationDestination>(find.byType(NavigationDestination))
         .toList();
     IconData icon(Widget? w) => (w! as Icon).icon!;
-    expect(icon(destinations[0].icon), Icons.menu_book_outlined);
-    expect(icon(destinations[0].selectedIcon), Icons.menu_book);
-    expect(icon(destinations[1].icon), Icons.chat_bubble_outline);
-    expect(icon(destinations[1].selectedIcon), Icons.chat_bubble);
-    expect(icon(destinations[2].icon), Icons.handyman_outlined);
-    expect(icon(destinations[2].selectedIcon), Icons.handyman);
+    expect(icon(destinations[0].icon), Icons.handyman_outlined);
+    expect(icon(destinations[0].selectedIcon), Icons.handyman);
+    expect(icon(destinations[1].icon), Icons.menu_book_outlined);
+    expect(icon(destinations[1].selectedIcon), Icons.menu_book);
+    expect(icon(destinations[2].icon), Icons.chat_bubble_outline);
+    expect(icon(destinations[2].selectedIcon), Icons.chat_bubble);
   });
 
-  testWidgets('하단 탭은 일기 · 물어보기 · 도구 셋이고 통근 · 설정 탭은 없다', (tester) async {
+  testWidgets('하단 탭은 도구 · 일기 · 물어보기 셋이고 통근 · 설정 탭은 없다', (tester) async {
     await pump(tester);
 
     final labels = [
@@ -400,15 +400,19 @@ void main() {
       ))
         d.label,
     ];
-    expect(labels, ['일기', '물어보기', '도구']);
+    expect(labels, ['도구', '일기', '물어보기']);
     expect(find.byType(CommuteTab, skipOffstage: false), findsNothing);
-    expect(ShellTab.values, [ShellTab.diary, ShellTab.chat, ShellTab.tools]);
+    expect(ShellTab.values, [ShellTab.tools, ShellTab.diary, ShellTab.chat]);
+    expect(onstage(ToolsTab), isTrue);
+
+    await tapTab(tester, '일기');
     expect(onstage(DiaryTab), isTrue);
     expect(find.byType(StoryRingRow), findsOneWidget);
   });
 
   testWidgets('일기 탭: 스낵바가 떠도 ＋ 를 가리지 않는다(＋ 가 위로 비킨다)', (tester) async {
     await pump(tester);
+    await tapTab(tester, '일기');
     final fab = find.byTooltip('새 기록');
     final before = tester.getRect(fab);
 
@@ -432,7 +436,7 @@ void main() {
 
     verify(diary.cleanOrphans).called(1);
     expect(tester.takeException(), isNull);
-    expect(onstage(DiaryTab), isTrue);
+    expect(onstage(ToolsTab), isTrue);
   });
 
   Future<void> enableDiaryLock() async {
@@ -443,6 +447,7 @@ void main() {
   testWidgets('일기는 잠긴 채 시작하고, 풀었다가 백그라운드에 오래 있다 돌아오면 다시 잠긴다', (tester) async {
     await enableDiaryLock();
     await pump(tester);
+    await tapTab(tester, '일기');
     expect(find.byType(PinPad), findsOneWidget);
     expect(find.byType(StoryRingRow, skipOffstage: false), findsNothing);
 
@@ -469,6 +474,7 @@ void main() {
   testWidgets('일기가 잠겨 있어도 알람 울림 화면(셸 바깥 라우트)은 보인다', (tester) async {
     await enableDiaryLock();
     await pump(tester);
+    await tapTab(tester, '일기');
     expect(find.byType(PinPad), findsOneWidget);
 
     final navigator = tester.state<NavigatorState>(
@@ -1193,6 +1199,7 @@ void main() {
     Future<void> openMapUnlocked(WidgetTester tester) async {
       await enableDiaryLock();
       await pump(tester);
+      await tapTab(tester, '일기');
       for (final d in '1234'.split('')) {
         await tester.tap(find.widgetWithText(TextButton, d));
         await tester.pump();
