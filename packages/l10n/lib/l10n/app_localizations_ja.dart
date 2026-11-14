@@ -4391,4 +4391,201 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatWriteOpen => '開く';
+
+  @override
+  String get walkToolsTabWeather => '天気';
+
+  @override
+  String get walkWeatherCurrentPlace => '現在地';
+
+  @override
+  String get walkWeatherLastPlace => '前回の位置';
+
+  @override
+  String get walkWeatherConditionClear => '晴れ';
+
+  @override
+  String get walkWeatherConditionPartlyCloudy => '晴れ時々曇り';
+
+  @override
+  String get walkWeatherConditionCloudy => '曇り';
+
+  @override
+  String get walkWeatherConditionFog => '霧';
+
+  @override
+  String get walkWeatherConditionDrizzle => '霧雨';
+
+  @override
+  String get walkWeatherConditionRain => '雨';
+
+  @override
+  String get walkWeatherConditionShowers => 'にわか雨';
+
+  @override
+  String get walkWeatherConditionSnow => '雪';
+
+  @override
+  String get walkWeatherConditionThunderstorm => '雷雨';
+
+  @override
+  String get walkWeatherConditionUnknown => '不明';
+
+  @override
+  String walkWeatherTomorrowTime(String time) {
+    return '明日$time';
+  }
+
+  @override
+  String walkWeatherRainLater(String time) {
+    return '$timeごろから雨が降ります';
+  }
+
+  @override
+  String walkWeatherSnowLater(String time) {
+    return '$timeごろから雪が降ります';
+  }
+
+  @override
+  String walkWeatherRainNowStops(String time) {
+    return '今、雨が降っています・$timeごろ止みます';
+  }
+
+  @override
+  String walkWeatherSnowNowStops(String time) {
+    return '今、雪が降っています・$timeごろ止みます';
+  }
+
+  @override
+  String get walkWeatherRainNowLate => '今、雨が降っています・今夜以降に止みます';
+
+  @override
+  String get walkWeatherSnowNowLate => '今、雪が降っています・今夜以降に止みます';
+
+  @override
+  String get walkWeatherNoRain => '今日は雨の予報はありません';
+
+  @override
+  String walkWeatherRainAmount(int probability, String amount) {
+    return '最大$probability%・${amount}mm';
+  }
+
+  @override
+  String walkWeatherRainChance(int probability) {
+    return '降水確率 最大$probability%';
+  }
+
+  @override
+  String get walkWeatherNow => '今';
+
+  @override
+  String get walkWeatherToday => '今日';
+
+  @override
+  String get walkWeatherTomorrow => '明日';
+
+  @override
+  String walkWeatherFeelsLike(String temperature) {
+    return '体感 $temperature';
+  }
+
+  @override
+  String walkWeatherHighLow(String high, String low) {
+    return '最高 $high 最低 $low';
+  }
+
+  @override
+  String get walkWeatherHourly => '1時間ごと';
+
+  @override
+  String get walkWeatherDaily => '日ごと';
+
+  @override
+  String walkWeatherHumidity(int percent) {
+    return '湿度 $percent%';
+  }
+
+  @override
+  String walkWeatherWind(String speed) {
+    return '風 ${speed}m/s';
+  }
+
+  @override
+  String walkWeatherSunrise(String time) {
+    return '日の出 $time';
+  }
+
+  @override
+  String walkWeatherSunset(String time) {
+    return '日の入り $time';
+  }
+
+  @override
+  String walkWeatherUpdated(String time) {
+    return '$time 更新・Open-Meteo';
+  }
+
+  @override
+  String walkWeatherMinutesAgo(int minutes) {
+    return '$minutes分前';
+  }
+
+  @override
+  String walkWeatherHoursAgo(int hours) {
+    return '$hours時間前';
+  }
+
+  @override
+  String walkWeatherProblemStale(String reason, String age, String place) {
+    return '$reason、$ageの$placeの予報です';
+  }
+
+  @override
+  String walkWeatherProblemLastPlace(String reason, String place) {
+    return '$reason、前回の位置($place)の予報です';
+  }
+
+  @override
+  String walkWeatherProblemLastPlaceUnnamed(String reason) {
+    return '$reason、前回の位置の予報です';
+  }
+
+  @override
+  String get walkWeatherReasonLocationOff => '位置情報がオフのため';
+
+  @override
+  String get walkWeatherReasonLocationDenied => '位置情報の権限がないため';
+
+  @override
+  String get walkWeatherReasonLocationUnavailable => '位置を取得できないため';
+
+  @override
+  String get walkWeatherReasonOffline => 'インターネットに接続されていないため';
+
+  @override
+  String get walkWeatherReasonServer => '天気サーバーに接続できないため';
+
+  @override
+  String get walkWeatherEmptyLocationOff => '位置情報がオフです';
+
+  @override
+  String get walkWeatherEmptyLocationDenied => '位置情報の権限が必要です';
+
+  @override
+  String get walkWeatherEmptyLocationDescription => '現在地の天気を表示するには位置情報が必要です';
+
+  @override
+  String get walkWeatherEmptyLocationUnavailable => '位置を取得できませんでした';
+
+  @override
+  String get walkWeatherEmptyOffline => 'インターネットに接続されていません';
+
+  @override
+  String get walkWeatherEmptyServer => '天気を取得できませんでした';
+
+  @override
+  String get walkWeatherGrantPermission => '許可する';
+
+  @override
+  String get walkWeatherTurnOnLocation => '位置情報をオン';
 }

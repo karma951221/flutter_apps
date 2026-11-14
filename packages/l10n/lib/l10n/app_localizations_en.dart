@@ -4781,4 +4781,204 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkChatWriteOpen => 'Open';
+
+  @override
+  String get walkToolsTabWeather => 'Weather';
+
+  @override
+  String get walkWeatherCurrentPlace => 'Current location';
+
+  @override
+  String get walkWeatherLastPlace => 'last location';
+
+  @override
+  String get walkWeatherConditionClear => 'Clear';
+
+  @override
+  String get walkWeatherConditionPartlyCloudy => 'Partly cloudy';
+
+  @override
+  String get walkWeatherConditionCloudy => 'Cloudy';
+
+  @override
+  String get walkWeatherConditionFog => 'Fog';
+
+  @override
+  String get walkWeatherConditionDrizzle => 'Drizzle';
+
+  @override
+  String get walkWeatherConditionRain => 'Rain';
+
+  @override
+  String get walkWeatherConditionShowers => 'Showers';
+
+  @override
+  String get walkWeatherConditionSnow => 'Snow';
+
+  @override
+  String get walkWeatherConditionThunderstorm => 'Thunderstorm';
+
+  @override
+  String get walkWeatherConditionUnknown => 'Unknown';
+
+  @override
+  String walkWeatherTomorrowTime(String time) {
+    return 'tomorrow $time';
+  }
+
+  @override
+  String walkWeatherRainLater(String time) {
+    return 'Rain from around $time';
+  }
+
+  @override
+  String walkWeatherSnowLater(String time) {
+    return 'Snow from around $time';
+  }
+
+  @override
+  String walkWeatherRainNowStops(String time) {
+    return 'Raining now · stops around $time';
+  }
+
+  @override
+  String walkWeatherSnowNowStops(String time) {
+    return 'Snowing now · stops around $time';
+  }
+
+  @override
+  String get walkWeatherRainNowLate => 'Raining now · stops after tonight';
+
+  @override
+  String get walkWeatherSnowNowLate => 'Snowing now · stops after tonight';
+
+  @override
+  String get walkWeatherNoRain => 'No rain expected today';
+
+  @override
+  String walkWeatherRainAmount(int probability, String amount) {
+    return 'Up to $probability% · $amount mm';
+  }
+
+  @override
+  String walkWeatherRainChance(int probability) {
+    return 'Chance of rain up to $probability%';
+  }
+
+  @override
+  String get walkWeatherNow => 'Now';
+
+  @override
+  String get walkWeatherToday => 'Today';
+
+  @override
+  String get walkWeatherTomorrow => 'Tomorrow';
+
+  @override
+  String walkWeatherFeelsLike(String temperature) {
+    return 'Feels like $temperature';
+  }
+
+  @override
+  String walkWeatherHighLow(String high, String low) {
+    return 'High $high Low $low';
+  }
+
+  @override
+  String get walkWeatherHourly => 'Hourly';
+
+  @override
+  String get walkWeatherDaily => 'Daily';
+
+  @override
+  String walkWeatherHumidity(int percent) {
+    return 'Humidity $percent%';
+  }
+
+  @override
+  String walkWeatherWind(String speed) {
+    return 'Wind $speed m/s';
+  }
+
+  @override
+  String walkWeatherSunrise(String time) {
+    return 'Sunrise $time';
+  }
+
+  @override
+  String walkWeatherSunset(String time) {
+    return 'Sunset $time';
+  }
+
+  @override
+  String walkWeatherUpdated(String time) {
+    return 'Updated $time · Open-Meteo';
+  }
+
+  @override
+  String walkWeatherMinutesAgo(int minutes) {
+    return '$minutes min ago';
+  }
+
+  @override
+  String walkWeatherHoursAgo(int hours) {
+    return '$hours h ago';
+  }
+
+  @override
+  String walkWeatherProblemStale(String reason, String age, String place) {
+    return '$reason — showing the $place forecast from $age';
+  }
+
+  @override
+  String walkWeatherProblemLastPlace(String reason, String place) {
+    return '$reason — showing the forecast for your last location ($place)';
+  }
+
+  @override
+  String walkWeatherProblemLastPlaceUnnamed(String reason) {
+    return '$reason — showing the forecast for your last location';
+  }
+
+  @override
+  String get walkWeatherReasonLocationOff => 'Location is off';
+
+  @override
+  String get walkWeatherReasonLocationDenied => 'No location permission';
+
+  @override
+  String get walkWeatherReasonLocationUnavailable =>
+      'Couldn\'t get your location';
+
+  @override
+  String get walkWeatherReasonOffline => 'No internet connection';
+
+  @override
+  String get walkWeatherReasonServer => 'Weather service unavailable';
+
+  @override
+  String get walkWeatherEmptyLocationOff => 'Location is off';
+
+  @override
+  String get walkWeatherEmptyLocationDenied => 'Location permission needed';
+
+  @override
+  String get walkWeatherEmptyLocationDescription =>
+      'Weather uses your current location';
+
+  @override
+  String get walkWeatherEmptyLocationUnavailable =>
+      'Couldn\'t get your location';
+
+  @override
+  String get walkWeatherEmptyOffline => 'No internet connection';
+
+  @override
+  String get walkWeatherEmptyServer => 'Couldn\'t load the weather';
+
+  @override
+  String get walkWeatherGrantPermission => 'Allow';
+
+  @override
+  String get walkWeatherTurnOnLocation => 'Turn on location';
 }

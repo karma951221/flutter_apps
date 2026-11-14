@@ -33,7 +33,8 @@ const _rainMm = 0.1;
 const _shortDay = Duration(hours: 6);
 const _longWindow = Duration(hours: 12);
 
-bool _isRainy(HourlyWeather h) =>
+/// "비 시간" — 강수확률 50% 이상이거나 강수량 0.1mm 이상. 화면의 시간별 강조도 이 규칙을 쓴다.
+bool isRainyHour(HourlyWeather h) =>
     (h.precipitationProbability ?? 0) >= _rainProbability ||
     h.precipitation >= _rainMm;
 
@@ -55,7 +56,7 @@ RainSummary summarizeRain(Forecast forecast, DateTime now) {
         h,
   ]..sort((a, b) => a.time.compareTo(b.time));
 
-  final rainy = window.where(_isRainy).toList();
+  final rainy = window.where(isRainyHour).toList();
   int maxOf(Iterable<HourlyWeather> hours) => hours.fold(
     0,
     (m, h) =>
@@ -79,7 +80,7 @@ RainSummary summarizeRain(Forecast forecast, DateTime now) {
   }
   DateTime? stopsAt;
   for (final h in window) {
-    if (h.time.isAfter(first.time) && !_isRainy(h)) {
+    if (h.time.isAfter(first.time) && !isRainyHour(h)) {
       stopsAt = h.time;
       break;
     }
