@@ -142,7 +142,12 @@ class LifeTools {
       query = _shortened(input['query']);
     }
     String? fileName;
-    if (kind == ChatToolKind.readFile) {
+    // read_file 과 쓰기 셋은 path 마지막 부분을 진행 줄의 이름으로.
+    if (kind
+        case ChatToolKind.readFile ||
+            ChatToolKind.writeFile ||
+            ChatToolKind.editFile ||
+            ChatToolKind.deleteFile) {
       final path = input['path'];
       if (path is String) {
         fileName = _shortened(path.substring(path.lastIndexOf('/') + 1));

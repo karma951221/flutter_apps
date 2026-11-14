@@ -228,6 +228,7 @@ void main() {
     );
     workspace = _MockWorkspaceTools();
     when(() => workspace.definitions).thenReturn(workspaceDefinitions);
+    when(() => workspace.writeDefinitions).thenReturn(const []);
     when(
       () => workspace.run('read_file', any()),
     ).thenAnswer((_) async => _pdfResult(2));

@@ -204,6 +204,7 @@ void main() {
     wikiTools = _MockWikiTools();
     workspaceTools = _MockWorkspaceTools();
     when(() => workspaceTools.definitions).thenReturn(const []);
+    when(() => workspaceTools.writeDefinitions).thenReturn(const []);
     when(() => tools.definitions).thenReturn(definitions);
     when(() => tools.definitionsFor(images: true)).thenReturn(definitions);
     when(
@@ -1903,6 +1904,9 @@ void main() {
         '작업 폴더(inbox: 사용자가 첨부한 파일, out: 저장한 답)에 있는 파일은 list_files 로 '
         '찾고 read_file 로 읽는다. 사용자가 파일을 말하면 먼저 list_files 로 경로를 확인한다. '
         '이번 질문에 첨부된 파일은 이미 보고 있으니 다시 읽지 않는다.\n'
+        'out 에 파일을 만들거나(write_file) 고치거나(edit_file) 지울(delete_file) 수 있다. '
+        '사용자가 질문에서 요청했을 때만 쓰고, 쓰기마다 사용자가 승인한다. 거절되면 같은 쓰기를 '
+        '다시 시도하지 말고 답에서 알린다. inbox 의 원본은 바꾸지 않고, 고친 판은 out 에 새로 만든다.\n'
         '$dateLine',
       );
       expect(request.tools, definitions);

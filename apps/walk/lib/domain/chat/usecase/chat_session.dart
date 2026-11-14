@@ -20,6 +20,7 @@ import '../tool/tool_result.dart';
 import '../tool/tool_summary.dart';
 import '../tool/wiki_tools.dart';
 import '../tool/workspace_tools.dart';
+import '../tool/write_plan.dart';
 import '../wiki/wiki_context_policy.dart';
 import 'chat_model_choice.dart';
 
@@ -81,6 +82,16 @@ sealed class ChatEvent with _$ChatEvent {
     required ToolSummary summary,
   }) = ChatToolFinished;
 
+  /// 쓰기 도구 [callId] 가 [plan] 대로 쓰려고 사용자 승인을 기다린다. [ChatSession.decide] 로 답한다.
+  const factory ChatEvent.approvalRequested({
+    required String callId,
+    required WritePlan plan,
+  }) = ChatApprovalRequested;
+
+  /// [callId] 의 승인 기다림이 끝났다(승인 · 거절). 멈춤 · 초기화로 끝나면 내지 않는다.
+  const factory ChatEvent.approvalClosed({required String callId}) =
+      ChatApprovalClosed;
+
   /// 2라운드부터. 1라운드는 phase(sending) 가 시작이다.
   const factory ChatEvent.roundStarted(int round) = ChatRoundStarted;
   const factory ChatEvent.text(String delta) = ChatText;
@@ -98,6 +109,11 @@ sealed class ChatEvent with _$ChatEvent {
       'ChatEvent.toolStarted(callId: $callId, name: $name, input: $input)',
     ChatToolFinished(:final callId, :final name, :final summary) =>
       'ChatEvent.toolFinished(callId: $callId, name: $name, summary: $summary)',
+    // 계획의 toString 은 길이만 — 경로 · 내용을 찍지 않는다.
+    ChatApprovalRequested(:final callId, :final plan) =>
+      'ChatEvent.approvalRequested(callId: $callId, plan: $plan)',
+    ChatApprovalClosed(:final callId) =>
+      'ChatEvent.approvalClosed(callId: $callId)',
     ChatRoundStarted(:final round) => 'ChatEvent.roundStarted($round)',
     ChatText(:final delta) => 'ChatEvent.text(${delta.length} chars)',
     ChatFinished(:final citedEntryIds) =>
@@ -191,6 +207,7 @@ class ChatSession {
   static const _documentLimitJson = '{"error":"document_limit_reached"}';
   static const _imagesUnsupportedJson = '{"error":"images_unsupported"}';
   static const _readLimitJson = '{"error":"read_limit_reached"}';
+  static const _toolFailedJson = '{"error":"tool_failed"}';
 
   final _messages = <ChatMessage>[];
   bool _busy = false;
@@ -246,6 +263,27 @@ class ChatSession {
   /// 모델에 닿지 않는다 — 그래서 구독을 직접 쥐고 [reset] 에서 끊는다.
   StreamSubscription<ModelEvent>? _roundSub;
   StreamController<ModelEvent>? _roundRelay;
+
+  /// 승인을 기다리는 쓰기 호출. 한 번에 하나뿐이다(쓰기는 호출 순서대로 하나씩).
+  ({String callId, Completer<bool> answer})? _approval;
+
+  /// 기다리는 쓰기 [callId] 에 답한다. 기다리는 것이 없거나 [callId] 가 다르면 무시.
+  /// 승인이어도 실행 직전에 세대가 바뀌었으면(멈춤 · 초기화) 쓰지 않는다.
+  void decide(String callId, bool approved) {
+    final waiting = _approval;
+    if (waiting == null || waiting.callId != callId) return;
+    if (waiting.answer.isCompleted) return;
+    waiting.answer.complete(approved);
+  }
+
+  /// 기다리는 승인을 거절로 끝낸다. 세대를 올리는 모든 곳([stop] · [reset])이 부른다.
+  void _closeApproval() {
+    final waiting = _approval;
+    _approval = null;
+    if (waiting != null && !waiting.answer.isCompleted) {
+      waiting.answer.complete(false);
+    }
+  }
 
   /// 진행 중인 질문의 시작점 · 질문 · 흘린 글 · 찾은 일기 id. [stop] 이 쓴다.
   /// [ask] 에서 동기로 채운다 — [_run] 본문은 구독한 뒤에야 돈다.
@@ -333,6 +371,8 @@ class ChatSession {
   ChatStopResult stop() {
     if (!_busy || _turnDone) return const ChatStopResult.idle();
     _generation++;
+    // 세대를 올린 뒤 — 깨어난 쓰기는 stale() 을 보고 쓰지 않고 나간다.
+    _closeApproval();
     _cancelRound();
     _busy = false;
     if (_turnStart <= _messages.length) {
@@ -374,6 +414,8 @@ class ChatSession {
     _temporary = temporary;
     _contextTarget = null;
     // 세대를 올린 뒤에 끊는다 — 닫힌 relay 로 루프가 끝나면 stale() 로 조용히 나간다.
+    // 기다리는 승인도 거절로 끝낸다(깨어나도 stale() 이라 쓰지 않는다).
+    _closeApproval();
     _cancelRound();
   }
 
@@ -678,12 +720,16 @@ class ChatSession {
 
         switch (done.stop) {
           case StopKind.toolUse:
-            // 도구는 모두 바로 시작하고(병렬), 끝나는 대로 toolFinished 를 낸다.
+            // 쓰기 아닌 도구는 모두 바로 시작하고(병렬), 끝나는 대로 toolFinished 를 낸다.
+            // 쓰기는 그 뒤 호출 순서대로 하나씩 — 준비 → 승인 기다림 → 실행.
             // 기록 · 사진 한도 · 인용 정리는 호출 순서로 한 번에(R7).
             final calls = [
               for (final p in done.message.parts)
                 if (p case ToolCallPart c) c,
             ];
+            // 기록을 끈 질문의 쓰기는 아래 records_off 로 — 준비도 하지 않는다.
+            bool isWrite(ToolCallPart c) =>
+                records && WorkspaceTools.writeNames.contains(c.name);
             for (final c in calls) {
               if (announced.contains(c.id)) continue;
               yield ChatEvent.toolStarted(
@@ -698,8 +744,13 @@ class ChatSession {
                 _trace.mark(ChatTraceMark.toolStart, {'tool': c.name});
               }
             }
+            // 쓰기 아닌 호출의 자리(calls 의 index).
+            final parallel = [
+              for (final (i, c) in calls.indexed)
+                if (!isWrite(c)) i,
+            ];
             final futures = [
-              for (final c in calls)
+              for (final c in parallel.map((i) => calls[i]))
                 // 기록을 끈 질문에 도구가 오면(지난 턴을 보고 부른 경우) 실행하지 않는다.
                 if (!records)
                   Future.value(
@@ -721,8 +772,9 @@ class ChatSession {
                   _tools.run(c.name, c.input),
             ];
             final results = List<ToolResult?>.filled(calls.length, null);
-            await for (final (i, result) in _inCompletionOrder(futures)) {
+            await for (final (j, result) in _inCompletionOrder(futures)) {
               if (stale()) return;
+              final i = parallel[j];
               results[i] = result;
               final call = calls[i];
               if (_trace.enabled) {
@@ -744,10 +796,65 @@ class ChatSession {
               );
             }
             if (stale()) return;
+            for (final (i, call) in calls.indexed) {
+              if (!isWrite(call)) continue;
+              final prepared = await _prepareWrite(call);
+              if (stale()) return;
+              var approved = false;
+              final ToolResult result;
+              if (prepared is WritePlan) {
+                final waiting = (callId: call.id, answer: Completer<bool>());
+                _approval = waiting;
+                yield ChatEvent.approvalRequested(
+                  callId: call.id,
+                  plan: prepared,
+                );
+                // 사용자를 기다린다 — 시간 제한 없음. 멈춤 · 초기화는 false 로 끝낸다.
+                approved = await waiting.answer.future;
+                if (identical(_approval, waiting)) _approval = null;
+                if (stale()) return;
+                yield ChatEvent.approvalClosed(callId: call.id);
+                // 실행 직전에 다시 — 승인과 멈춤이 겹쳤으면 쓰지 않는다.
+                if (stale()) return;
+                result = approved
+                    ? await _applyWrite(prepared, call.name)
+                    : _workspaceTools.declined(call.name);
+                if (stale()) return;
+              } else {
+                result = prepared as ToolResult;
+              }
+              results[i] = result;
+              if (_trace.enabled) {
+                // 이름과 승인 여부만 — 경로 · 내용은 찍지 않는다.
+                _trace.mark(ChatTraceMark.toolEnd, {
+                  'tool': call.name,
+                  'approved': approved,
+                });
+              }
+              yield ChatEvent.toolFinished(
+                callId: call.id,
+                name: call.name,
+                summary:
+                    result.summary ??
+                    ToolSummary(kind: chatToolKindOf(call.name), count: 0),
+              );
+            }
+            if (stale()) return;
             final parts = <ToolResultPart>[];
             for (var i = 0; i < calls.length; i++) {
               final result = results[i]!;
               _turnCited.addAll(result.entryIds);
+              // 쓰기 결과는 작은 JSON 뿐 — 사진 · 문서 · 글 한도를 거치지 않는다.
+              if (isWrite(calls[i])) {
+                parts.add(
+                  ToolResultPart(
+                    callId: calls[i].id,
+                    json: result.json,
+                    isError: result.isError,
+                  ),
+                );
+                continue;
+              }
               final capped = _cappedText(
                 _cappedDocs(
                   _capped(result, images: images, name: calls[i].name),
@@ -803,6 +910,8 @@ class ChatSession {
       // 세대가 바뀌었으면 기록과 _busy 는 이미 새 세대의 것이다.
       if (!stale()) {
         _busy = false;
+        // approvalRequested 에서 구독이 끊겨 끝났으면 남은 기다림을 치운다.
+        _closeApproval();
         if (!completed && start <= _messages.length) {
           _messages.removeRange(start, _messages.length);
           _imagesSent = imagesAtStart;
@@ -811,6 +920,28 @@ class ChatSession {
           _toolTextChars = toolTextAtStart;
         }
       }
+    }
+  }
+
+  /// [WorkspaceTools.prepareWrite] 를 부른다. 계획([WritePlan]) 또는 오류 [ToolResult].
+  /// 던지지 않는다고 하지만 방어로 tool_failed.
+  Future<Object> _prepareWrite(ToolCallPart call) async {
+    try {
+      final prepared = await _workspaceTools.prepareWrite(
+        call.name,
+        call.input,
+      );
+      if (prepared is WritePlan || prepared is ToolResult) return prepared;
+    } catch (_) {}
+    return _errorResult(_toolFailedJson, chatToolKindOf(call.name));
+  }
+
+  /// 승인된 [plan] 을 실행한다. 던지면 tool_failed(방어).
+  Future<ToolResult> _applyWrite(WritePlan plan, String name) async {
+    try {
+      return await _workspaceTools.apply(plan);
+    } catch (_) {
+      return _errorResult(_toolFailedJson, chatToolKindOf(name));
     }
   }
 
@@ -877,11 +1008,15 @@ class ChatSession {
     );
   }
 
-  /// LifeTools 정의 → 위키 도구(있으면) → 작업 폴더 도구. 덧붙일 것이 없으면
-  /// LifeTools 정의 그대로.
+  /// LifeTools 정의 → 위키 도구(있으면) → 작업 폴더 읽기 둘 → 쓰기 셋. 덧붙일 것이
+  /// 없으면 LifeTools 정의 그대로. 기록을 참고하는 질문에서만 부른다.
   List<ToolSpec> _toolsFor({required bool images, required WikiContext wiki}) {
     final life = _tools.definitionsFor(images: images);
-    final extra = [...wiki.tools, ..._workspaceTools.definitions];
+    final extra = [
+      ...wiki.tools,
+      ..._workspaceTools.definitions,
+      ..._workspaceTools.writeDefinitions,
+    ];
     return extra.isEmpty ? life : [...life, ...extra];
   }
 
@@ -1054,6 +1189,12 @@ class ChatSession {
       '찾고 read_file 로 읽는다. 사용자가 파일을 말하면 먼저 list_files 로 경로를 확인한다. '
       '이번 질문에 첨부된 파일은 이미 보고 있으니 다시 읽지 않는다.';
 
+  /// 작업 폴더 쓰기 도구 안내. [_workspaceRule] 바로 뒤, 같은 질문에만 넣는다.
+  static const _writeRule =
+      'out 에 파일을 만들거나(write_file) 고치거나(edit_file) 지울(delete_file) 수 있다. '
+      '사용자가 질문에서 요청했을 때만 쓰고, 쓰기마다 사용자가 승인한다. 거절되면 같은 쓰기를 '
+      '다시 시도하지 말고 답에서 알린다. inbox 의 원본은 바꾸지 않고, 고친 판은 out 에 새로 만든다.';
+
   /// 도구 전 한 줄 안내. [ChatModel.progressNotes] 인 모델에만 넣는다(V5 결과로 빼기 쉽게 상수).
   static const _noteHint = '도구를 쓰기 전에 무엇을 볼지 한 줄로 말해.';
 
@@ -1064,7 +1205,7 @@ class ChatSession {
   static const _answerStyle =
       '한국어로, 마크다운 없이 평문으로 답한다. 필요한 만큼 쓰되 군더더기 없이 간결하게.\n';
 
-  /// 순서: 규약(첨부 줄 · 작업 폴더 줄 포함) → 위키 절(있을 때) → 도구 전 안내 → 날짜 줄.
+  /// 순서: 규약(첨부 줄 · 작업 폴더 줄 · 쓰기 줄 포함) → 위키 절(있을 때) → 도구 전 안내 → 날짜 줄.
   /// 날짜 줄은 맨 끝 — 그 앞까지가 날마다(위키 · [records] 가 그대로면) 같은 캐시 접두부다.
   /// [records] 가 false 면 기록 규칙 · 작업 폴더 줄 · 위키 절 없이 일반 도우미 규약만.
   String _systemPrompt({
@@ -1082,7 +1223,7 @@ class ChatSession {
               '$_answerStyle';
     return '$rules'
         '$_attachmentRule\n'
-        '${records ? '$_workspaceRule\n' : ''}'
+        '${records ? '$_workspaceRule\n$_writeRule\n' : ''}'
         '${records && wikiSection != null ? '\n$wikiSection\n\n' : ''}'
         '${progressNotes ? '$_noteHint\n' : ''}'
         '오늘은 $today, 시간대는 ${now.timeZoneName} 이다.';

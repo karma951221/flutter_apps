@@ -51,14 +51,16 @@ extension ChatEventPatterns on ChatEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ChatPhaseChanged value)?  phase,TResult Function( ChatProgressNote value)?  progress,TResult Function( ChatToolStarted value)?  toolStarted,TResult Function( ChatToolFinished value)?  toolFinished,TResult Function( ChatRoundStarted value)?  roundStarted,TResult Function( ChatText value)?  text,TResult Function( ChatFinished value)?  finished,TResult Function( ChatFailed value)?  failed,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( ChatPhaseChanged value)?  phase,TResult Function( ChatProgressNote value)?  progress,TResult Function( ChatToolStarted value)?  toolStarted,TResult Function( ChatToolFinished value)?  toolFinished,TResult Function( ChatApprovalRequested value)?  approvalRequested,TResult Function( ChatApprovalClosed value)?  approvalClosed,TResult Function( ChatRoundStarted value)?  roundStarted,TResult Function( ChatText value)?  text,TResult Function( ChatFinished value)?  finished,TResult Function( ChatFailed value)?  failed,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case ChatPhaseChanged() when phase != null:
 return phase(_that);case ChatProgressNote() when progress != null:
 return progress(_that);case ChatToolStarted() when toolStarted != null:
 return toolStarted(_that);case ChatToolFinished() when toolFinished != null:
-return toolFinished(_that);case ChatRoundStarted() when roundStarted != null:
+return toolFinished(_that);case ChatApprovalRequested() when approvalRequested != null:
+return approvalRequested(_that);case ChatApprovalClosed() when approvalClosed != null:
+return approvalClosed(_that);case ChatRoundStarted() when roundStarted != null:
 return roundStarted(_that);case ChatText() when text != null:
 return text(_that);case ChatFinished() when finished != null:
 return finished(_that);case ChatFailed() when failed != null:
@@ -80,14 +82,16 @@ return failed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ChatPhaseChanged value)  phase,required TResult Function( ChatProgressNote value)  progress,required TResult Function( ChatToolStarted value)  toolStarted,required TResult Function( ChatToolFinished value)  toolFinished,required TResult Function( ChatRoundStarted value)  roundStarted,required TResult Function( ChatText value)  text,required TResult Function( ChatFinished value)  finished,required TResult Function( ChatFailed value)  failed,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( ChatPhaseChanged value)  phase,required TResult Function( ChatProgressNote value)  progress,required TResult Function( ChatToolStarted value)  toolStarted,required TResult Function( ChatToolFinished value)  toolFinished,required TResult Function( ChatApprovalRequested value)  approvalRequested,required TResult Function( ChatApprovalClosed value)  approvalClosed,required TResult Function( ChatRoundStarted value)  roundStarted,required TResult Function( ChatText value)  text,required TResult Function( ChatFinished value)  finished,required TResult Function( ChatFailed value)  failed,}){
 final _that = this;
 switch (_that) {
 case ChatPhaseChanged():
 return phase(_that);case ChatProgressNote():
 return progress(_that);case ChatToolStarted():
 return toolStarted(_that);case ChatToolFinished():
-return toolFinished(_that);case ChatRoundStarted():
+return toolFinished(_that);case ChatApprovalRequested():
+return approvalRequested(_that);case ChatApprovalClosed():
+return approvalClosed(_that);case ChatRoundStarted():
 return roundStarted(_that);case ChatText():
 return text(_that);case ChatFinished():
 return finished(_that);case ChatFailed():
@@ -105,14 +109,16 @@ return failed(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ChatPhaseChanged value)?  phase,TResult? Function( ChatProgressNote value)?  progress,TResult? Function( ChatToolStarted value)?  toolStarted,TResult? Function( ChatToolFinished value)?  toolFinished,TResult? Function( ChatRoundStarted value)?  roundStarted,TResult? Function( ChatText value)?  text,TResult? Function( ChatFinished value)?  finished,TResult? Function( ChatFailed value)?  failed,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( ChatPhaseChanged value)?  phase,TResult? Function( ChatProgressNote value)?  progress,TResult? Function( ChatToolStarted value)?  toolStarted,TResult? Function( ChatToolFinished value)?  toolFinished,TResult? Function( ChatApprovalRequested value)?  approvalRequested,TResult? Function( ChatApprovalClosed value)?  approvalClosed,TResult? Function( ChatRoundStarted value)?  roundStarted,TResult? Function( ChatText value)?  text,TResult? Function( ChatFinished value)?  finished,TResult? Function( ChatFailed value)?  failed,}){
 final _that = this;
 switch (_that) {
 case ChatPhaseChanged() when phase != null:
 return phase(_that);case ChatProgressNote() when progress != null:
 return progress(_that);case ChatToolStarted() when toolStarted != null:
 return toolStarted(_that);case ChatToolFinished() when toolFinished != null:
-return toolFinished(_that);case ChatRoundStarted() when roundStarted != null:
+return toolFinished(_that);case ChatApprovalRequested() when approvalRequested != null:
+return approvalRequested(_that);case ChatApprovalClosed() when approvalClosed != null:
+return approvalClosed(_that);case ChatRoundStarted() when roundStarted != null:
 return roundStarted(_that);case ChatText() when text != null:
 return text(_that);case ChatFinished() when finished != null:
 return finished(_that);case ChatFailed() when failed != null:
@@ -133,13 +139,15 @@ return failed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( ChatPhase phase)?  phase,TResult Function( String note)?  progress,TResult Function( String callId,  String name,  ToolInputSummary? input)?  toolStarted,TResult Function( String callId,  String name,  ToolSummary summary)?  toolFinished,TResult Function( int round)?  roundStarted,TResult Function( String delta)?  text,TResult Function( List<String> citedEntryIds)?  finished,TResult Function( ChatFailure failure)?  failed,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( ChatPhase phase)?  phase,TResult Function( String note)?  progress,TResult Function( String callId,  String name,  ToolInputSummary? input)?  toolStarted,TResult Function( String callId,  String name,  ToolSummary summary)?  toolFinished,TResult Function( String callId,  WritePlan plan)?  approvalRequested,TResult Function( String callId)?  approvalClosed,TResult Function( int round)?  roundStarted,TResult Function( String delta)?  text,TResult Function( List<String> citedEntryIds)?  finished,TResult Function( ChatFailure failure)?  failed,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ChatPhaseChanged() when phase != null:
 return phase(_that.phase);case ChatProgressNote() when progress != null:
 return progress(_that.note);case ChatToolStarted() when toolStarted != null:
 return toolStarted(_that.callId,_that.name,_that.input);case ChatToolFinished() when toolFinished != null:
-return toolFinished(_that.callId,_that.name,_that.summary);case ChatRoundStarted() when roundStarted != null:
+return toolFinished(_that.callId,_that.name,_that.summary);case ChatApprovalRequested() when approvalRequested != null:
+return approvalRequested(_that.callId,_that.plan);case ChatApprovalClosed() when approvalClosed != null:
+return approvalClosed(_that.callId);case ChatRoundStarted() when roundStarted != null:
 return roundStarted(_that.round);case ChatText() when text != null:
 return text(_that.delta);case ChatFinished() when finished != null:
 return finished(_that.citedEntryIds);case ChatFailed() when failed != null:
@@ -161,13 +169,15 @@ return failed(_that.failure);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( ChatPhase phase)  phase,required TResult Function( String note)  progress,required TResult Function( String callId,  String name,  ToolInputSummary? input)  toolStarted,required TResult Function( String callId,  String name,  ToolSummary summary)  toolFinished,required TResult Function( int round)  roundStarted,required TResult Function( String delta)  text,required TResult Function( List<String> citedEntryIds)  finished,required TResult Function( ChatFailure failure)  failed,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( ChatPhase phase)  phase,required TResult Function( String note)  progress,required TResult Function( String callId,  String name,  ToolInputSummary? input)  toolStarted,required TResult Function( String callId,  String name,  ToolSummary summary)  toolFinished,required TResult Function( String callId,  WritePlan plan)  approvalRequested,required TResult Function( String callId)  approvalClosed,required TResult Function( int round)  roundStarted,required TResult Function( String delta)  text,required TResult Function( List<String> citedEntryIds)  finished,required TResult Function( ChatFailure failure)  failed,}) {final _that = this;
 switch (_that) {
 case ChatPhaseChanged():
 return phase(_that.phase);case ChatProgressNote():
 return progress(_that.note);case ChatToolStarted():
 return toolStarted(_that.callId,_that.name,_that.input);case ChatToolFinished():
-return toolFinished(_that.callId,_that.name,_that.summary);case ChatRoundStarted():
+return toolFinished(_that.callId,_that.name,_that.summary);case ChatApprovalRequested():
+return approvalRequested(_that.callId,_that.plan);case ChatApprovalClosed():
+return approvalClosed(_that.callId);case ChatRoundStarted():
 return roundStarted(_that.round);case ChatText():
 return text(_that.delta);case ChatFinished():
 return finished(_that.citedEntryIds);case ChatFailed():
@@ -185,13 +195,15 @@ return failed(_that.failure);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( ChatPhase phase)?  phase,TResult? Function( String note)?  progress,TResult? Function( String callId,  String name,  ToolInputSummary? input)?  toolStarted,TResult? Function( String callId,  String name,  ToolSummary summary)?  toolFinished,TResult? Function( int round)?  roundStarted,TResult? Function( String delta)?  text,TResult? Function( List<String> citedEntryIds)?  finished,TResult? Function( ChatFailure failure)?  failed,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( ChatPhase phase)?  phase,TResult? Function( String note)?  progress,TResult? Function( String callId,  String name,  ToolInputSummary? input)?  toolStarted,TResult? Function( String callId,  String name,  ToolSummary summary)?  toolFinished,TResult? Function( String callId,  WritePlan plan)?  approvalRequested,TResult? Function( String callId)?  approvalClosed,TResult? Function( int round)?  roundStarted,TResult? Function( String delta)?  text,TResult? Function( List<String> citedEntryIds)?  finished,TResult? Function( ChatFailure failure)?  failed,}) {final _that = this;
 switch (_that) {
 case ChatPhaseChanged() when phase != null:
 return phase(_that.phase);case ChatProgressNote() when progress != null:
 return progress(_that.note);case ChatToolStarted() when toolStarted != null:
 return toolStarted(_that.callId,_that.name,_that.input);case ChatToolFinished() when toolFinished != null:
-return toolFinished(_that.callId,_that.name,_that.summary);case ChatRoundStarted() when roundStarted != null:
+return toolFinished(_that.callId,_that.name,_that.summary);case ChatApprovalRequested() when approvalRequested != null:
+return approvalRequested(_that.callId,_that.plan);case ChatApprovalClosed() when approvalClosed != null:
+return approvalClosed(_that.callId);case ChatRoundStarted() when roundStarted != null:
 return roundStarted(_that.round);case ChatText() when text != null:
 return text(_that.delta);case ChatFinished() when finished != null:
 return finished(_that.citedEntryIds);case ChatFailed() when failed != null:
@@ -478,6 +490,141 @@ $ToolSummaryCopyWith<$Res> get summary {
     return _then(_self.copyWith(summary: value));
   });
 }
+}
+
+/// @nodoc
+
+
+class ChatApprovalRequested extends ChatEvent {
+  const ChatApprovalRequested({required this.callId, required this.plan}): super._();
+  
+
+ final  String callId;
+ final  WritePlan plan;
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatApprovalRequestedCopyWith<ChatApprovalRequested> get copyWith => _$ChatApprovalRequestedCopyWithImpl<ChatApprovalRequested>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatApprovalRequested&&(identical(other.callId, callId) || other.callId == callId)&&(identical(other.plan, plan) || other.plan == plan));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,callId,plan);
+
+
+
+}
+
+/// @nodoc
+abstract mixin class $ChatApprovalRequestedCopyWith<$Res> implements $ChatEventCopyWith<$Res> {
+  factory $ChatApprovalRequestedCopyWith(ChatApprovalRequested value, $Res Function(ChatApprovalRequested) _then) = _$ChatApprovalRequestedCopyWithImpl;
+@useResult
+$Res call({
+ String callId, WritePlan plan
+});
+
+
+$WritePlanCopyWith<$Res> get plan;
+
+}
+/// @nodoc
+class _$ChatApprovalRequestedCopyWithImpl<$Res>
+    implements $ChatApprovalRequestedCopyWith<$Res> {
+  _$ChatApprovalRequestedCopyWithImpl(this._self, this._then);
+
+  final ChatApprovalRequested _self;
+  final $Res Function(ChatApprovalRequested) _then;
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? callId = null,Object? plan = null,}) {
+  return _then(ChatApprovalRequested(
+callId: null == callId ? _self.callId : callId // ignore: cast_nullable_to_non_nullable
+as String,plan: null == plan ? _self.plan : plan // ignore: cast_nullable_to_non_nullable
+as WritePlan,
+  ));
+}
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$WritePlanCopyWith<$Res> get plan {
+  
+  return $WritePlanCopyWith<$Res>(_self.plan, (value) {
+    return _then(_self.copyWith(plan: value));
+  });
+}
+}
+
+/// @nodoc
+
+
+class ChatApprovalClosed extends ChatEvent {
+  const ChatApprovalClosed({required this.callId}): super._();
+  
+
+ final  String callId;
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ChatApprovalClosedCopyWith<ChatApprovalClosed> get copyWith => _$ChatApprovalClosedCopyWithImpl<ChatApprovalClosed>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ChatApprovalClosed&&(identical(other.callId, callId) || other.callId == callId));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,callId);
+
+
+
+}
+
+/// @nodoc
+abstract mixin class $ChatApprovalClosedCopyWith<$Res> implements $ChatEventCopyWith<$Res> {
+  factory $ChatApprovalClosedCopyWith(ChatApprovalClosed value, $Res Function(ChatApprovalClosed) _then) = _$ChatApprovalClosedCopyWithImpl;
+@useResult
+$Res call({
+ String callId
+});
+
+
+
+
+}
+/// @nodoc
+class _$ChatApprovalClosedCopyWithImpl<$Res>
+    implements $ChatApprovalClosedCopyWith<$Res> {
+  _$ChatApprovalClosedCopyWithImpl(this._self, this._then);
+
+  final ChatApprovalClosed _self;
+  final $Res Function(ChatApprovalClosed) _then;
+
+/// Create a copy of ChatEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? callId = null,}) {
+  return _then(ChatApprovalClosed(
+callId: null == callId ? _self.callId : callId // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
 }
 
 /// @nodoc

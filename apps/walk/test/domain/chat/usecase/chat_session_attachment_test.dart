@@ -192,6 +192,7 @@ void main() {
     tools = _MockLifeTools();
     workspaceTools = _MockWorkspaceTools();
     when(() => workspaceTools.definitions).thenReturn(const []);
+    when(() => workspaceTools.writeDefinitions).thenReturn(const []);
     when(() => tools.definitions).thenReturn(definitions);
     when(
       () => tools.definitionsFor(images: any(named: 'images')),

@@ -64,7 +64,7 @@ class ToolInputSummary with _$ToolInputSummary {
   @override
   final String? query;
 
-  /// read_file 의 파일 이름(path 마지막 부분, 20자 넘으면 20자 + '…').
+  /// read_file · 쓰기 도구의 파일 이름(path 마지막 부분, 20자 넘으면 20자 + '…').
   @override
   final String? name;
 

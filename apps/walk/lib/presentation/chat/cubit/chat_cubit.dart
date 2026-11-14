@@ -977,6 +977,9 @@ class ChatCubit extends Cubit<ChatState> {
         );
       case ChatRoundStarted():
         break;
+      // 승인 대기 상태는 다음 작업(큐빗 · 승인 시트)에서 다룬다.
+      case ChatApprovalRequested() || ChatApprovalClosed():
+        break;
       case ChatFinished(:final citedEntryIds):
         _finishing = true;
         // 경과 초는 답이 끝난 때로 고정한다(인용을 읽는 시간은 넣지 않는다).

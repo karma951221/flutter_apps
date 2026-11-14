@@ -494,6 +494,22 @@ void main() {
       expect(tools.inputSummary('list_files', {'path': 'a.md'}).name, isNull);
     });
 
+    test('쓰기 도구 셋도 path 마지막 부분을 이름으로', () {
+      for (final (name, kind) in [
+        ('write_file', ChatToolKind.writeFile),
+        ('edit_file', ChatToolKind.editFile),
+        ('delete_file', ChatToolKind.deleteFile),
+      ]) {
+        final s = tools.inputSummary(name, {'path': 'out/정리.md'});
+        expect(s.kind, kind);
+        expect(s.name, '정리.md');
+      }
+      expect(
+        tools.inputSummary('write_file', {'path': 'out/${'가' * 22}.md'}).name,
+        '${'가' * 20}…',
+      );
+    });
+
     test('공백뿐인 query 는 null', () {
       expect(
         tools.inputSummary('search_diary', {'query': '   '}).query,
