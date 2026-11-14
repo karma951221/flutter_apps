@@ -30,6 +30,7 @@ import 'package:walk/domain/chat/repository/chat_history_repository.dart';
 import 'package:walk/domain/chat/repository/wiki_repository.dart';
 import 'package:walk/domain/chat/secure_window.dart';
 import 'package:walk/domain/chat/tool/tool_summary.dart';
+import 'package:walk/domain/chat/tool/write_plan.dart';
 import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/domain/chat/usecase/open_conversation.dart';
@@ -1879,6 +1880,158 @@ void main() {
         ),
       );
       expect(text.data, contains('산책을 했어요'));
+    });
+
+    group('쓰기 승인 시트', () {
+      const plan = WritePlan.create(
+        path: 'out/a.md',
+        name: 'a.md',
+        content: '# 메모',
+      );
+
+      /// 답하는 중엔 진행 줄이 계속 그려져 pumpAndSettle 이 끝나지 않는다 — 시트 · 화면 전환만큼만.
+      Future<void> settle(WidgetTester tester) async {
+        for (var i = 0; i < 10; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+      }
+
+      /// 질문을 보내고 [events] 로 답을 흘린다.
+      Future<StreamController<ChatEvent>> asking(WidgetTester tester) async {
+        final events = StreamController<ChatEvent>();
+        when(() => session.ask(any())).thenAnswer((_) => events.stream);
+        await pump(tester);
+        await tester.tap(find.text('어제 뭐 했어?'));
+        await tester.pump();
+        return events;
+      }
+
+      Future<void> requestApproval(
+        WidgetTester tester,
+        StreamController<ChatEvent> events,
+      ) async {
+        events
+          ..add(const ChatEvent.toolStarted(callId: 'w1', name: 'write_file'))
+          ..add(const ChatEvent.approvalRequested(callId: 'w1', plan: plan));
+        await settle(tester);
+      }
+
+      testWidgets('기다리는 쓰기가 생기면 시트가 열리고 [저장] → 승인 한 번', (tester) async {
+        final events = await asking(tester);
+        await requestApproval(tester, events);
+
+        expect(find.text('파일 만들기'), findsOneWidget);
+        expect(find.text('Claude 가 이 파일을 만들려고 해요'), findsOneWidget);
+
+        await tester.tap(find.text('저장'));
+        await settle(tester);
+
+        verify(() => session.decide('w1', true)).called(1);
+        verifyNever(() => session.decide(any(), false));
+        expect(find.text('파일 만들기'), findsNothing);
+        unawaited(events.close());
+      });
+
+      testWidgets('잠기면 시트가 닫히되 거절하지 않고, 풀리면 다시 뜬다', (tester) async {
+        final events = await asking(tester);
+        await requestApproval(tester, events);
+        expect(find.text('파일 만들기'), findsOneWidget);
+
+        lockStates.add(const DiaryLockState.locked(method: LockMethod.pin));
+        await settle(tester);
+        expect(find.text('파일 만들기'), findsNothing);
+        verifyNever(() => session.decide(any(), any()));
+
+        lockStates.add(const DiaryLockState.unlocked());
+        await settle(tester);
+        expect(find.text('파일 만들기'), findsOneWidget);
+        unawaited(events.close());
+      });
+
+      testWidgets('밖을 눌러 닫으면 거절', (tester) async {
+        final events = await asking(tester);
+        await requestApproval(tester, events);
+
+        await tester.tapAt(const Offset(10, 10));
+        await settle(tester);
+
+        verify(() => session.decide('w1', false)).called(1);
+        expect(find.text('파일 만들기'), findsNothing);
+        unawaited(events.close());
+      });
+
+      testWidgets('기다리던 쓰기가 다른 이유로 끝나면(실패) 시트가 닫히고 답하지 않는다', (tester) async {
+        final events = await asking(tester);
+        await requestApproval(tester, events);
+        expect(find.text('파일 만들기'), findsOneWidget);
+
+        events.add(const ChatEvent.failed(ChatFailure.network));
+        await settle(tester);
+
+        expect(find.text('파일 만들기'), findsNothing);
+        verifyNever(() => session.decide(any(), any()));
+        unawaited(events.close());
+      });
+
+      testWidgets('저장이 끝나면 "NAME 에 저장했어요" 스낵바 [열기] 가 그 파일을 연다', (tester) async {
+        ws.add(
+          workspaceFile('out/a.md'),
+          Uint8List.fromList(utf8.encode('# 메모')),
+        );
+        final events = await asking(tester);
+        await requestApproval(tester, events);
+        await tester.tap(find.text('저장'));
+        await settle(tester);
+
+        events.add(
+          const ChatEvent.toolFinished(
+            callId: 'w1',
+            name: 'write_file',
+            summary: ToolSummary(kind: ChatToolKind.writeFile, count: 1),
+          ),
+        );
+        await settle(tester);
+
+        expect(find.text('a.md 에 저장했어요'), findsOneWidget);
+        await tester.tap(find.text('열기'));
+        await settle(tester);
+        expect(find.byType(WorkspaceFileViewPage), findsOneWidget);
+        unawaited(events.close());
+      });
+
+      testWidgets('지우기가 끝나면 "지웠어요"', (tester) async {
+        final events = await asking(tester);
+        events
+          ..add(const ChatEvent.toolStarted(callId: 'd1', name: 'delete_file'))
+          ..add(
+            const ChatEvent.approvalRequested(
+              callId: 'd1',
+              plan: WritePlan.delete(
+                path: 'out/a.md',
+                name: 'a.md',
+                previous: '옛 글',
+                sizeBytes: 7,
+              ),
+            ),
+          );
+        await settle(tester);
+        expect(find.text('파일 지우기'), findsOneWidget);
+        await tester.tap(find.text('지우기'));
+        await settle(tester);
+        verify(() => session.decide('d1', true)).called(1);
+
+        events.add(
+          const ChatEvent.toolFinished(
+            callId: 'd1',
+            name: 'delete_file',
+            summary: ToolSummary(kind: ChatToolKind.deleteFile, count: 1),
+          ),
+        );
+        await settle(tester);
+
+        expect(find.text('지웠어요'), findsOneWidget);
+        unawaited(events.close());
+      });
     });
   });
 }

@@ -4303,4 +4303,78 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkWorkspaceImageUnreadable => 'この写真はアプリで表示できません';
+
+  @override
+  String get walkChatWriteTitleCreate => 'ファイルを作成';
+
+  @override
+  String get walkChatWriteTitleOverwrite => 'ファイルを上書き';
+
+  @override
+  String get walkChatWriteTitleEdit => 'ファイルを編集';
+
+  @override
+  String get walkChatWriteTitleDelete => 'ファイルを削除';
+
+  @override
+  String walkChatWriteIntentCreate(String assistant) {
+    return '$assistantがこのファイルを作成しようとしています';
+  }
+
+  @override
+  String walkChatWriteIntentOverwrite(String assistant) {
+    return '$assistantがこのファイルを上書きしようとしています';
+  }
+
+  @override
+  String walkChatWriteIntentEdit(String assistant) {
+    return '$assistantがこのファイルを編集しようとしています';
+  }
+
+  @override
+  String walkChatWriteIntentDelete(String assistant) {
+    return '$assistantがこのファイルを削除しようとしています';
+  }
+
+  @override
+  String walkChatWriteReplaces(int count) {
+    return '現在の内容$count文字を置き換えます';
+  }
+
+  @override
+  String get walkChatWriteContext => '変更箇所';
+
+  @override
+  String get walkChatWriteOldText => '削除する部分';
+
+  @override
+  String get walkChatWriteNewText => '挿入する部分';
+
+  @override
+  String walkChatWriteMoreLines(int count) {
+    return '… あと$count行';
+  }
+
+  @override
+  String get walkChatWriteDecline => '拒否';
+
+  @override
+  String get walkChatWriteSave => '保存';
+
+  @override
+  String get walkChatWriteEdit => '編集';
+
+  @override
+  String get walkChatWriteDelete => '削除';
+
+  @override
+  String walkChatWriteSaved(String name) {
+    return '$nameに保存しました';
+  }
+
+  @override
+  String get walkChatWriteDeleted => '削除しました';
+
+  @override
+  String get walkChatWriteOpen => '開く';
 }

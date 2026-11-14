@@ -4307,4 +4307,78 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkWorkspaceImageUnreadable => '이 사진은 앱에서 열 수 없어요';
+
+  @override
+  String get walkChatWriteTitleCreate => '파일 만들기';
+
+  @override
+  String get walkChatWriteTitleOverwrite => '파일 덮어쓰기';
+
+  @override
+  String get walkChatWriteTitleEdit => '파일 고치기';
+
+  @override
+  String get walkChatWriteTitleDelete => '파일 지우기';
+
+  @override
+  String walkChatWriteIntentCreate(String assistant) {
+    return '$assistant 가 이 파일을 만들려고 해요';
+  }
+
+  @override
+  String walkChatWriteIntentOverwrite(String assistant) {
+    return '$assistant 가 이 파일을 덮어쓰려고 해요';
+  }
+
+  @override
+  String walkChatWriteIntentEdit(String assistant) {
+    return '$assistant 가 이 파일을 고치려고 해요';
+  }
+
+  @override
+  String walkChatWriteIntentDelete(String assistant) {
+    return '$assistant 가 이 파일을 지우려고 해요';
+  }
+
+  @override
+  String walkChatWriteReplaces(int count) {
+    return '지금 내용 $count자를 바꿔요';
+  }
+
+  @override
+  String get walkChatWriteContext => '바뀌는 곳';
+
+  @override
+  String get walkChatWriteOldText => '지울 부분';
+
+  @override
+  String get walkChatWriteNewText => '넣을 부분';
+
+  @override
+  String walkChatWriteMoreLines(int count) {
+    return '… $count줄 더';
+  }
+
+  @override
+  String get walkChatWriteDecline => '거절';
+
+  @override
+  String get walkChatWriteSave => '저장';
+
+  @override
+  String get walkChatWriteEdit => '고치기';
+
+  @override
+  String get walkChatWriteDelete => '지우기';
+
+  @override
+  String walkChatWriteSaved(String name) {
+    return '$name 에 저장했어요';
+  }
+
+  @override
+  String get walkChatWriteDeleted => '지웠어요';
+
+  @override
+  String get walkChatWriteOpen => '열기';
 }

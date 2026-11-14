@@ -7925,6 +7925,126 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'이 사진은 앱에서 열 수 없어요'**
   String get walkWorkspaceImageUnreadable;
+
+  /// 승인 시트 제목: write_file 새 파일
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 만들기'**
+  String get walkChatWriteTitleCreate;
+
+  /// 승인 시트 제목: write_file 덮어쓰기
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 덮어쓰기'**
+  String get walkChatWriteTitleOverwrite;
+
+  /// 승인 시트 제목: edit_file
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 고치기'**
+  String get walkChatWriteTitleEdit;
+
+  /// 승인 시트 제목: delete_file
+  ///
+  /// In ko, this message translates to:
+  /// **'파일 지우기'**
+  String get walkChatWriteTitleDelete;
+
+  /// 승인 시트: 누가 무엇을 하려는지 — assistant 는 벤더 이름(Claude · GPT)
+  ///
+  /// In ko, this message translates to:
+  /// **'{assistant} 가 이 파일을 만들려고 해요'**
+  String walkChatWriteIntentCreate(String assistant);
+
+  /// 승인 시트: 덮어쓰기
+  ///
+  /// In ko, this message translates to:
+  /// **'{assistant} 가 이 파일을 덮어쓰려고 해요'**
+  String walkChatWriteIntentOverwrite(String assistant);
+
+  /// 승인 시트: 고치기
+  ///
+  /// In ko, this message translates to:
+  /// **'{assistant} 가 이 파일을 고치려고 해요'**
+  String walkChatWriteIntentEdit(String assistant);
+
+  /// 승인 시트: 지우기
+  ///
+  /// In ko, this message translates to:
+  /// **'{assistant} 가 이 파일을 지우려고 해요'**
+  String walkChatWriteIntentDelete(String assistant);
+
+  /// 승인 시트: 덮어쓰기 — 지금 파일의 글자 수
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 내용 {count}자를 바꿔요'**
+  String walkChatWriteReplaces(int count);
+
+  /// 승인 시트: 고치기 — 바뀌는 곳 앞뒤 한 줄 맥락 상자 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'바뀌는 곳'**
+  String get walkChatWriteContext;
+
+  /// 승인 시트: 고치기 — 바뀌기 전 글 상자 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'지울 부분'**
+  String get walkChatWriteOldText;
+
+  /// 승인 시트: 고치기 — 새 글 상자 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'넣을 부분'**
+  String get walkChatWriteNewText;
+
+  /// 승인 시트: 지우기 미리 보기(앞 20줄) 뒤에 남은 줄 수
+  ///
+  /// In ko, this message translates to:
+  /// **'… {count}줄 더'**
+  String walkChatWriteMoreLines(int count);
+
+  /// 승인 시트 버튼: 쓰지 않는다
+  ///
+  /// In ko, this message translates to:
+  /// **'거절'**
+  String get walkChatWriteDecline;
+
+  /// 승인 시트 버튼: 만들기 · 덮어쓰기 승인
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get walkChatWriteSave;
+
+  /// 승인 시트 버튼: 고치기 승인
+  ///
+  /// In ko, this message translates to:
+  /// **'고치기'**
+  String get walkChatWriteEdit;
+
+  /// 승인 시트 버튼: 지우기 승인(파괴적)
+  ///
+  /// In ko, this message translates to:
+  /// **'지우기'**
+  String get walkChatWriteDelete;
+
+  /// 쓰기 승인 뒤 저장 · 고치기 성공 스낵바 — name 은 파일 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'{name} 에 저장했어요'**
+  String walkChatWriteSaved(String name);
+
+  /// 쓰기 승인 뒤 지우기 성공 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'지웠어요'**
+  String get walkChatWriteDeleted;
+
+  /// 저장 스낵바의 [열기] — 작업 폴더 보기 화면으로 연다
+  ///
+  /// In ko, this message translates to:
+  /// **'열기'**
+  String get walkChatWriteOpen;
 }
 
 class _AppLocalizationsDelegate

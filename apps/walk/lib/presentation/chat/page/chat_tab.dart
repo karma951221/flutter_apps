@@ -40,12 +40,14 @@ import '../widget/chat_consent_view.dart';
 import '../widget/chat_examples.dart';
 import '../widget/chat_input.dart';
 import '../widget/chat_jump_to_latest.dart';
+import '../widget/chat_vendor_icon.dart';
 import '../widget/model_chip.dart';
 import '../widget/model_picker_sheet.dart';
 import '../widget/temporary_chat_banner.dart';
 import '../wiki/cubit/wiki_edit_state.dart';
 import '../wiki/open_wiki.dart';
 import '../workspace/open_workspace.dart';
+import '../workspace/widget/write_approval_sheet.dart';
 import '../wiki/widget/wiki_candidates_sheet.dart';
 import 'chat_history_page.dart';
 
@@ -272,7 +274,10 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
           ),
           body: DiaryLockGate(
             dismissPopups: widget.active,
-            child: _ChatBody(onOpenSettings: widget.onOpenSettings),
+            child: _ChatBody(
+              active: widget.active,
+              onOpenSettings: widget.onOpenSettings,
+            ),
           ),
         ),
       ),
@@ -389,8 +394,10 @@ abstract final class ChatTabDebug {
 /// 물어보기 본문. 한 [BlocBuilder] 로 다 그리지 않고 조각마다 필요한 값만 고른다(스펙 §4.1) —
 /// 경과 초가 오를 때는 마지막 답 말풍선만, 글이 자랄 때도 그 말풍선만 다시 그린다.
 class _ChatBody extends StatelessWidget {
-  const _ChatBody({required this.onOpenSettings});
+  const _ChatBody({required this.active, required this.onOpenSettings});
 
+  /// 탭이 보이는지 — 승인 시트는 보이는 탭에서만 띄운다.
+  final bool active;
   final VoidCallback onOpenSettings;
 
   @override
@@ -422,8 +429,132 @@ class _ChatBody extends StatelessWidget {
           context.read<ChatCubit>().consumeAttachmentNotice();
         },
       ),
+      BlocListener<ChatCubit, ChatState>(
+        // 승인한 쓰기가 끝났다 — 저장 · 고치기는 [열기], 지우기는 알리기만.
+        listenWhen: (a, b) => b.savedFile != null && a.savedFile != b.savedFile,
+        listener: (context, state) {
+          final l10n = AppLocalizations.of(context);
+          final saved = state.savedFile!;
+          if (saved.deleted) {
+            AppSnackBar.show(context, message: l10n.walkChatWriteDeleted);
+          } else {
+            final tab = context.findAncestorStateOfType<_ChatTabState>();
+            AppSnackBar.show(
+              context,
+              message: l10n.walkChatWriteSaved(saved.name),
+              actionLabel: l10n.walkChatWriteOpen,
+              onAction: () => tab?._openSaved(saved.path),
+            );
+          }
+          context.read<ChatCubit>().consumeSavedFile();
+        },
+      ),
     ],
-    child: _AccessSwitch(onOpenSettings: onOpenSettings),
+    child: _WriteApprovalHost(
+      active: active,
+      child: _AccessSwitch(onOpenSettings: onOpenSettings),
+    ),
+  );
+}
+
+/// 기다리는 쓰기([ChatState.pendingApproval])가 생기면 승인 시트를 띄우고, 다른 이유(멈춤 ·
+/// 대화 전환 · 실패)로 사라지면 답하지 않고 닫는다. 밖 누름 · 뒤로는 거절.
+///
+/// 잠금 게이트 안쪽이라 잠기면 사라진다 — 게이트가 닫는 시트는 거절로 치지 않고, 풀려서 다시 생길 때
+/// 아직 기다리고 있으면 다시 띄운다. 탭이 가려져 있으면 보이게 될 때 띄운다.
+class _WriteApprovalHost extends StatefulWidget {
+  const _WriteApprovalHost({required this.active, required this.child});
+
+  final bool active;
+  final Widget child;
+
+  @override
+  State<_WriteApprovalHost> createState() => _WriteApprovalHostState();
+}
+
+class _WriteApprovalHostState extends State<_WriteApprovalHost> {
+  /// 띄운 시트의 callId 와 그 시트를 답 없이 닫는 신호.
+  String? _shownCallId;
+  ValueNotifier<bool>? _dismiss;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
+  }
+
+  @override
+  void didUpdateWidget(_WriteApprovalHost oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.active != widget.active) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
+    }
+  }
+
+  @override
+  void dispose() {
+    _closeShown();
+    super.dispose();
+  }
+
+  void _closeShown() {
+    final dismiss = _dismiss;
+    _shownCallId = null;
+    _dismiss = null;
+    if (dismiss == null) return;
+    dismiss.value = true;
+    // 시트가 신호를 받은 뒤에 버린다.
+    WidgetsBinding.instance.addPostFrameCallback((_) => dismiss.dispose());
+  }
+
+  void _sync() {
+    if (!mounted) return;
+    final cubit = context.read<ChatCubit>();
+    final pending = cubit.state.pendingApproval;
+    if (_shownCallId != null && _shownCallId != pending?.callId) _closeShown();
+    if (pending == null || !widget.active || _shownCallId != null) return;
+    final callId = pending.callId;
+    final dismiss = ValueNotifier(false);
+    _shownCallId = callId;
+    _dismiss = dismiss;
+    // 시트가 답한 쓰기가 아직 기다리는 그 쓰기일 때만 큐빗에 넘긴다.
+    void answered(VoidCallback decide) {
+      if (_shownCallId == callId) {
+        _shownCallId = null;
+        _dismiss = null;
+        WidgetsBinding.instance.addPostFrameCallback((_) => dismiss.dispose());
+      }
+      if (cubit.state.pendingApproval?.callId == callId) decide();
+    }
+
+    unawaited(
+      showWriteApprovalSheet(
+        context,
+        plan: pending.plan,
+        assistant: chatVendorName(
+          AppLocalizations.of(context),
+          cubit.state.vendor,
+        ),
+        dismiss: dismiss,
+        onApprove: () => answered(cubit.approve),
+        onDecline: () {
+          // 잠금이 팝업을 닫았다 — 거절이 아니다. 풀리면 아직 기다리는 쓰기를 다시 띄운다.
+          if (!mounted || context.read<DiaryLockCubit>().state is LockLocked) {
+            if (_shownCallId == callId) _closeShown();
+            return;
+          }
+          answered(cubit.decline);
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => BlocListener<ChatCubit, ChatState>(
+    listenWhen: (a, b) =>
+        a.pendingApproval?.callId != b.pendingApproval?.callId,
+    listener: (_, _) => _sync(),
+    child: widget.child,
   );
 }
 
