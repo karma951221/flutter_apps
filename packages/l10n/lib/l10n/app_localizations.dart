@@ -8087,6 +8087,324 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'열기'**
   String get walkChatWriteOpen;
+
+  /// 도구 탭 상단 탭 — 날씨
+  ///
+  /// In ko, this message translates to:
+  /// **'날씨'**
+  String get walkToolsTabWeather;
+
+  /// 날씨 — 장소 이름을 모를 때 머리글
+  ///
+  /// In ko, this message translates to:
+  /// **'현재 위치'**
+  String get walkWeatherCurrentPlace;
+
+  /// 날씨 문제 줄 — 이름 없는 캐시 장소
+  ///
+  /// In ko, this message translates to:
+  /// **'마지막 위치'**
+  String get walkWeatherLastPlace;
+
+  /// 날씨 상태 — 맑음
+  ///
+  /// In ko, this message translates to:
+  /// **'맑음'**
+  String get walkWeatherConditionClear;
+
+  /// 날씨 상태 — 구름 조금
+  ///
+  /// In ko, this message translates to:
+  /// **'구름 조금'**
+  String get walkWeatherConditionPartlyCloudy;
+
+  /// 날씨 상태 — 흐림
+  ///
+  /// In ko, this message translates to:
+  /// **'흐림'**
+  String get walkWeatherConditionCloudy;
+
+  /// 날씨 상태 — 안개
+  ///
+  /// In ko, this message translates to:
+  /// **'안개'**
+  String get walkWeatherConditionFog;
+
+  /// 날씨 상태 — 이슬비
+  ///
+  /// In ko, this message translates to:
+  /// **'이슬비'**
+  String get walkWeatherConditionDrizzle;
+
+  /// 날씨 상태 — 비
+  ///
+  /// In ko, this message translates to:
+  /// **'비'**
+  String get walkWeatherConditionRain;
+
+  /// 날씨 상태 — 소나기
+  ///
+  /// In ko, this message translates to:
+  /// **'소나기'**
+  String get walkWeatherConditionShowers;
+
+  /// 날씨 상태 — 눈
+  ///
+  /// In ko, this message translates to:
+  /// **'눈'**
+  String get walkWeatherConditionSnow;
+
+  /// 날씨 상태 — 뇌우
+  ///
+  /// In ko, this message translates to:
+  /// **'뇌우'**
+  String get walkWeatherConditionThunderstorm;
+
+  /// 날씨 상태 — 모르는 코드
+  ///
+  /// In ko, this message translates to:
+  /// **'알 수 없음'**
+  String get walkWeatherConditionUnknown;
+
+  /// 날씨 시각 — 예보 지역 기준 내일. time 은 "오전 5시"
+  ///
+  /// In ko, this message translates to:
+  /// **'내일 {time}'**
+  String walkWeatherTomorrowTime(String time);
+
+  /// 비 요약 — 창 안에서 비가 시작
+  ///
+  /// In ko, this message translates to:
+  /// **'{time}쯤부터 비가 와요'**
+  String walkWeatherRainLater(String time);
+
+  /// 비 요약 — 창 안에서 눈이 시작
+  ///
+  /// In ko, this message translates to:
+  /// **'{time}쯤부터 눈이 와요'**
+  String walkWeatherSnowLater(String time);
+
+  /// 비 요약 — 지금 비, 창 안에서 그침
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 비가 와요 · {time}쯤 그쳐요'**
+  String walkWeatherRainNowStops(String time);
+
+  /// 비 요약 — 지금 눈, 창 안에서 그침
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 눈이 와요 · {time}쯤 그쳐요'**
+  String walkWeatherSnowNowStops(String time);
+
+  /// 비 요약 — 지금 비, 창 안에서 안 그침
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 비가 와요 · 오늘 밤 이후에 그쳐요'**
+  String get walkWeatherRainNowLate;
+
+  /// 비 요약 — 지금 눈, 창 안에서 안 그침
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 눈이 와요 · 오늘 밤 이후에 그쳐요'**
+  String get walkWeatherSnowNowLate;
+
+  /// 비 요약 — 창 안에 비 없음
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘은 비 소식이 없어요'**
+  String get walkWeatherNoRain;
+
+  /// 비 요약 부제 — 최대 강수확률과 합계 강수량
+  ///
+  /// In ko, this message translates to:
+  /// **'최대 {probability}% · {amount}mm'**
+  String walkWeatherRainAmount(int probability, String amount);
+
+  /// 비 요약 부제 — 최대 강수확률만
+  ///
+  /// In ko, this message translates to:
+  /// **'최대 강수확률 {probability}%'**
+  String walkWeatherRainChance(int probability);
+
+  /// 시간별 첫 칸
+  ///
+  /// In ko, this message translates to:
+  /// **'지금'**
+  String get walkWeatherNow;
+
+  /// 일별 — 오늘
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘'**
+  String get walkWeatherToday;
+
+  /// 일별 — 내일
+  ///
+  /// In ko, this message translates to:
+  /// **'내일'**
+  String get walkWeatherTomorrow;
+
+  /// 지금 날씨 — 체감 온도. temperature 는 "10°"
+  ///
+  /// In ko, this message translates to:
+  /// **'체감 {temperature}'**
+  String walkWeatherFeelsLike(String temperature);
+
+  /// 지금 날씨 — 오늘 최고 · 최저
+  ///
+  /// In ko, this message translates to:
+  /// **'최고 {high} 최저 {low}'**
+  String walkWeatherHighLow(String high, String low);
+
+  /// 날씨 — 시간별 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'시간별'**
+  String get walkWeatherHourly;
+
+  /// 날씨 — 일별(7일) 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'일별'**
+  String get walkWeatherDaily;
+
+  /// 날씨 세부 — 습도
+  ///
+  /// In ko, this message translates to:
+  /// **'습도 {percent}%'**
+  String walkWeatherHumidity(int percent);
+
+  /// 날씨 세부 — 풍속
+  ///
+  /// In ko, this message translates to:
+  /// **'바람 {speed}m/s'**
+  String walkWeatherWind(String speed);
+
+  /// 날씨 세부 — 일출
+  ///
+  /// In ko, this message translates to:
+  /// **'일출 {time}'**
+  String walkWeatherSunrise(String time);
+
+  /// 날씨 세부 — 일몰
+  ///
+  /// In ko, this message translates to:
+  /// **'일몰 {time}'**
+  String walkWeatherSunset(String time);
+
+  /// 날씨 꼬리 — 마지막 성공 시각과 출처(Open-Meteo 는 번역하지 않음)
+  ///
+  /// In ko, this message translates to:
+  /// **'{time} 갱신 · Open-Meteo'**
+  String walkWeatherUpdated(String time);
+
+  /// 날씨 문제 줄 — 예보를 받은 지 n분
+  ///
+  /// In ko, this message translates to:
+  /// **'{minutes}분 전'**
+  String walkWeatherMinutesAgo(int minutes);
+
+  /// 날씨 문제 줄 — 예보를 받은 지 n시간
+  ///
+  /// In ko, this message translates to:
+  /// **'{hours}시간 전'**
+  String walkWeatherHoursAgo(int hours);
+
+  /// 날씨 문제 줄 — 실패해 캐시 예보를 보이는 중. reason 은 walkWeatherReason*
+  ///
+  /// In ko, this message translates to:
+  /// **'{reason} {age} {place} 예보예요'**
+  String walkWeatherProblemStale(String reason, String age, String place);
+
+  /// 날씨 문제 줄 — 위치 실패, 마지막 좌표로 새 예보를 받음
+  ///
+  /// In ko, this message translates to:
+  /// **'{reason} 마지막 위치({place})의 예보예요'**
+  String walkWeatherProblemLastPlace(String reason, String place);
+
+  /// 날씨 문제 줄 — 위치 실패, 이름 없는 마지막 좌표로 새 예보를 받음
+  ///
+  /// In ko, this message translates to:
+  /// **'{reason} 마지막 위치의 예보예요'**
+  String walkWeatherProblemLastPlaceUnnamed(String reason);
+
+  /// 날씨 문제 줄 이유 — 위치 서비스 꺼짐(뒤에 문장이 이어짐)
+  ///
+  /// In ko, this message translates to:
+  /// **'위치가 꺼져 있어'**
+  String get walkWeatherReasonLocationOff;
+
+  /// 날씨 문제 줄 이유 — 위치 권한 없음
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 권한이 없어'**
+  String get walkWeatherReasonLocationDenied;
+
+  /// 날씨 문제 줄 이유 — 위치 못 얻음
+  ///
+  /// In ko, this message translates to:
+  /// **'위치를 못 읽어'**
+  String get walkWeatherReasonLocationUnavailable;
+
+  /// 날씨 문제 줄 이유 — 오프라인
+  ///
+  /// In ko, this message translates to:
+  /// **'인터넷에 연결되지 않아'**
+  String get walkWeatherReasonOffline;
+
+  /// 날씨 문제 줄 이유 — 서버 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'날씨 서버에 닿지 않아'**
+  String get walkWeatherReasonServer;
+
+  /// 날씨 빈 상태 — 위치 서비스 꺼짐
+  ///
+  /// In ko, this message translates to:
+  /// **'위치가 꺼져 있어요'**
+  String get walkWeatherEmptyLocationOff;
+
+  /// 날씨 빈 상태 — 위치 권한 없음
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 권한이 필요해요'**
+  String get walkWeatherEmptyLocationDenied;
+
+  /// 날씨 빈 상태 — 위치 꺼짐 · 권한 없음 보조 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 위치의 날씨를 보려면 위치가 필요해요'**
+  String get walkWeatherEmptyLocationDescription;
+
+  /// 날씨 빈 상태 — 위치 못 얻음
+  ///
+  /// In ko, this message translates to:
+  /// **'위치를 읽지 못했어요'**
+  String get walkWeatherEmptyLocationUnavailable;
+
+  /// 날씨 빈 상태 — 오프라인
+  ///
+  /// In ko, this message translates to:
+  /// **'인터넷에 연결되지 않았어요'**
+  String get walkWeatherEmptyOffline;
+
+  /// 날씨 빈 상태 — 서버 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'날씨를 받아 오지 못했어요'**
+  String get walkWeatherEmptyServer;
+
+  /// 날씨 빈 상태 버튼 — 위치 권한 요청 · 설정 열기
+  ///
+  /// In ko, this message translates to:
+  /// **'권한 허용'**
+  String get walkWeatherGrantPermission;
+
+  /// 날씨 빈 상태 버튼 — 위치 설정 열기
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 켜기'**
+  String get walkWeatherTurnOnLocation;
 }
 
 class _AppLocalizationsDelegate

@@ -4405,4 +4405,201 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatWriteOpen => '열기';
+
+  @override
+  String get walkToolsTabWeather => '날씨';
+
+  @override
+  String get walkWeatherCurrentPlace => '현재 위치';
+
+  @override
+  String get walkWeatherLastPlace => '마지막 위치';
+
+  @override
+  String get walkWeatherConditionClear => '맑음';
+
+  @override
+  String get walkWeatherConditionPartlyCloudy => '구름 조금';
+
+  @override
+  String get walkWeatherConditionCloudy => '흐림';
+
+  @override
+  String get walkWeatherConditionFog => '안개';
+
+  @override
+  String get walkWeatherConditionDrizzle => '이슬비';
+
+  @override
+  String get walkWeatherConditionRain => '비';
+
+  @override
+  String get walkWeatherConditionShowers => '소나기';
+
+  @override
+  String get walkWeatherConditionSnow => '눈';
+
+  @override
+  String get walkWeatherConditionThunderstorm => '뇌우';
+
+  @override
+  String get walkWeatherConditionUnknown => '알 수 없음';
+
+  @override
+  String walkWeatherTomorrowTime(String time) {
+    return '내일 $time';
+  }
+
+  @override
+  String walkWeatherRainLater(String time) {
+    return '$time쯤부터 비가 와요';
+  }
+
+  @override
+  String walkWeatherSnowLater(String time) {
+    return '$time쯤부터 눈이 와요';
+  }
+
+  @override
+  String walkWeatherRainNowStops(String time) {
+    return '지금 비가 와요 · $time쯤 그쳐요';
+  }
+
+  @override
+  String walkWeatherSnowNowStops(String time) {
+    return '지금 눈이 와요 · $time쯤 그쳐요';
+  }
+
+  @override
+  String get walkWeatherRainNowLate => '지금 비가 와요 · 오늘 밤 이후에 그쳐요';
+
+  @override
+  String get walkWeatherSnowNowLate => '지금 눈이 와요 · 오늘 밤 이후에 그쳐요';
+
+  @override
+  String get walkWeatherNoRain => '오늘은 비 소식이 없어요';
+
+  @override
+  String walkWeatherRainAmount(int probability, String amount) {
+    return '최대 $probability% · ${amount}mm';
+  }
+
+  @override
+  String walkWeatherRainChance(int probability) {
+    return '최대 강수확률 $probability%';
+  }
+
+  @override
+  String get walkWeatherNow => '지금';
+
+  @override
+  String get walkWeatherToday => '오늘';
+
+  @override
+  String get walkWeatherTomorrow => '내일';
+
+  @override
+  String walkWeatherFeelsLike(String temperature) {
+    return '체감 $temperature';
+  }
+
+  @override
+  String walkWeatherHighLow(String high, String low) {
+    return '최고 $high 최저 $low';
+  }
+
+  @override
+  String get walkWeatherHourly => '시간별';
+
+  @override
+  String get walkWeatherDaily => '일별';
+
+  @override
+  String walkWeatherHumidity(int percent) {
+    return '습도 $percent%';
+  }
+
+  @override
+  String walkWeatherWind(String speed) {
+    return '바람 ${speed}m/s';
+  }
+
+  @override
+  String walkWeatherSunrise(String time) {
+    return '일출 $time';
+  }
+
+  @override
+  String walkWeatherSunset(String time) {
+    return '일몰 $time';
+  }
+
+  @override
+  String walkWeatherUpdated(String time) {
+    return '$time 갱신 · Open-Meteo';
+  }
+
+  @override
+  String walkWeatherMinutesAgo(int minutes) {
+    return '$minutes분 전';
+  }
+
+  @override
+  String walkWeatherHoursAgo(int hours) {
+    return '$hours시간 전';
+  }
+
+  @override
+  String walkWeatherProblemStale(String reason, String age, String place) {
+    return '$reason $age $place 예보예요';
+  }
+
+  @override
+  String walkWeatherProblemLastPlace(String reason, String place) {
+    return '$reason 마지막 위치($place)의 예보예요';
+  }
+
+  @override
+  String walkWeatherProblemLastPlaceUnnamed(String reason) {
+    return '$reason 마지막 위치의 예보예요';
+  }
+
+  @override
+  String get walkWeatherReasonLocationOff => '위치가 꺼져 있어';
+
+  @override
+  String get walkWeatherReasonLocationDenied => '위치 권한이 없어';
+
+  @override
+  String get walkWeatherReasonLocationUnavailable => '위치를 못 읽어';
+
+  @override
+  String get walkWeatherReasonOffline => '인터넷에 연결되지 않아';
+
+  @override
+  String get walkWeatherReasonServer => '날씨 서버에 닿지 않아';
+
+  @override
+  String get walkWeatherEmptyLocationOff => '위치가 꺼져 있어요';
+
+  @override
+  String get walkWeatherEmptyLocationDenied => '위치 권한이 필요해요';
+
+  @override
+  String get walkWeatherEmptyLocationDescription => '지금 위치의 날씨를 보려면 위치가 필요해요';
+
+  @override
+  String get walkWeatherEmptyLocationUnavailable => '위치를 읽지 못했어요';
+
+  @override
+  String get walkWeatherEmptyOffline => '인터넷에 연결되지 않았어요';
+
+  @override
+  String get walkWeatherEmptyServer => '날씨를 받아 오지 못했어요';
+
+  @override
+  String get walkWeatherGrantPermission => '권한 허용';
+
+  @override
+  String get walkWeatherTurnOnLocation => '위치 켜기';
 }

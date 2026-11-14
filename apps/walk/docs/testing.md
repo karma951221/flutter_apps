@@ -351,6 +351,20 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 
 서비스 자체(`LocationRecordService` · inbox · 전환 리시버 · 부트 리시버 · 채널)는 규칙만 JUnit 이고 나머지는 아래 기기 시나리오 몫이다.
 
+### 날씨
+
+| 파일 | 대상 | 확인 |
+|---|---|---|
+| `domain/weather/entity/weather_condition_test.dart` | WMO 날씨 코드 | 코드 → 상태 · 밤 변형 |
+| `domain/weather/rain_summary_test.dart` | 비 요약 | 지금 비 · 곧 비 · 소식 없음 · 눈 · 창 경계 |
+| `data/weather/open_meteo_weather_repository_test.dart` | 저장소 | 요청 · 응답 파싱 · 오류 변환 |
+| `data/weather/weather_location_source_test.dart` | 날씨용 위치 | 권한 · 서비스 꺼짐 · 장소 이름 |
+| `data/weather/prefs_weather_cache_test.dart` | 캐시 | 마지막 성공 한 벌 저장 · 읽기 |
+| `presentation/weather/cubit/weather_cubit_test.dart` | `WeatherCubit` | 캐시 먼저 · 실패 시 마지막 성공 · 24시간 · 10분 규칙 |
+| `presentation/weather/format/weather_format_test.dart` | 표시 형식 | 기온 · 시각 · 갱신 문구 |
+| `presentation/weather/page/weather_page_test.dart` | `WeatherPage` | loaded · empty · 배너 · 당겨서 새로고침 · `active` 로 shown |
+| `presentation/shell/page/tools_tab_test.dart` · `main_shell_page_test.dart` | 도구 탭 · 셸 | 상단 탭 [알람 · 걷기 · 지도 · 날씨] · 날씨 ⋮ 는 앱 설정만 · 날씨를 보던 중 복귀하면 `resumed` · 다른 탭이면 부르지 않음 |
+
 ## 테스트가 없는 것
 
 물어보기: 실제 Messages API 호출(네트워크 · 키 · 서버 fallback) · 실제 사진을 모델에 보내기 · `RingLog` 네이티브가 채우는 실제 기록은
@@ -401,6 +415,18 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 
 그 밖에 에뮬레이터에서 본 것: 오늘 · 기록 두 탭(`2244dac`) · 목표 달성 축하(링 둘레 점 · 달성 배지 · 초과 문구).
 실제 폰 대기: ⓪ · ①(헬스 앱 숫자와 비교) · 햅틱 체감.
+
+## 날씨 기기 시나리오 — 대기
+
+스펙: [도구 › 날씨](../../../docs/superpowers/specs/2026-11-14-walk-weather-design.md). 위치 권한 · 비행기 모드는 실제 폰에서 본다. (ID 는 물어보기의 W2 와 겹치지 않게 WT- 를 쓴다.)
+
+| # | 시나리오 | 기대 | 결과 |
+|---|---|---|---|
+| WT-1 | 설치 직후 도구 › 날씨를 처음 연다(위치 권한 없음) | 처음 열면 시스템 위치 권한 창이 한 번 뜬다. 허용하면 예보가 보이고, 거부하면 안내와 [권한 허용] 버튼이 나온다. 같은 세션에서 탭을 오가도 창은 다시 뜨지 않는다 | 대기 |
+| WT-2 | 비 오는 날(또는 비 예보가 있는 시간)에 연다 | 비 요약 카드의 시각 · 최대 확률 · 강수량이 기본 날씨 앱 · 시간별 띠와 맞고, 비 시간대만 강조된다 | 대기 |
+| WT-3 | 예보를 본 뒤 비행기 모드로 다른 탭을 갔다 날씨로 돌아오기 · 당겨서 새로고침 | 마지막 예보가 그대로 남고 위에 "○시간 전 예보" 류 한 줄이 뜬다. 인터넷이 돌아오면 다시 읽힌다 | 대기 |
+| WT-4 | 위치 서비스를 끄고 연다 | 캐시가 있으면 그 예보 + 안내 줄, 없으면 [위치 켜기]. 켜고 돌아오면 다시 읽힌다 | 대기 |
+| WT-5 | 위치 정확도 꺼진 기기에서 날씨 열기 → Google 위치 정확도 창 → 'No thanks' | 창이 다시 뜨지 않고 안내(위치를 못 읽음)가 보인다 | 대기 |
 
 ## 알람 기기 시나리오
 

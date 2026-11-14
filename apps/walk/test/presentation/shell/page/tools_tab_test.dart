@@ -20,6 +20,10 @@ import 'package:walk/presentation/map/cubit/map_view_cubit.dart';
 import 'package:walk/presentation/map/cubit/map_view_state.dart';
 import 'package:walk/presentation/map/page/map_tab.dart';
 import 'package:walk/presentation/shell/page/tools_tab.dart';
+import 'package:walk/presentation/weather/cubit/weather_cubit.dart';
+import 'package:walk/domain/weather/weather_problem.dart';
+import 'package:walk/presentation/weather/cubit/weather_state.dart';
+import 'package:walk/presentation/weather/page/weather_page.dart';
 import 'package:walk/presentation/walk/page/walk_home_page.dart';
 
 import '../../../support/stub_tile_provider.dart';
@@ -30,6 +34,8 @@ class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
 class _MockRecord extends MockCubit<MapRecordState> implements MapRecordCubit {}
 
 class _MockView extends MockCubit<MapViewState> implements MapViewCubit {}
+
+class _MockWeather extends MockCubit<WeatherState> implements WeatherCubit {}
 
 class _NoHolidays implements HolidayCalendar {
   @override
@@ -45,6 +51,7 @@ void main() {
   late AlarmListCubit alarms;
   late _MockRecord record;
   late _MockView view;
+  late _MockWeather weather;
 
   setUpAll(() {
     SettingsHarness.registerFallbacks();
@@ -63,6 +70,14 @@ void main() {
       ..registerFactory<TileProvider>(StubTileProvider.new);
     record = _MockRecord();
     view = _MockView();
+    weather = _MockWeather();
+    whenListen(
+      weather,
+      const Stream<WeatherState>.empty(),
+      initialState: const WeatherState.empty(WeatherProblem.offline),
+    );
+    when(weather.shown).thenAnswer((_) async {});
+    when(weather.refresh).thenAnswer((_) async {});
     whenListen(
       record,
       const Stream<MapRecordState>.empty(),
@@ -113,6 +128,7 @@ void main() {
           BlocProvider.value(value: alarms),
           BlocProvider<MapRecordCubit>.value(value: record),
           BlocProvider<MapViewCubit>.value(value: view),
+          BlocProvider<WeatherCubit>.value(value: weather),
         ],
         child: ValueListenableBuilder(
           valueListenable: section,
@@ -220,9 +236,9 @@ void main() {
     expect(walkActive(tester), isFalse);
   });
 
-  testWidgets('상단 탭이 3개이고 지도 탭 ⋮ 에 지도 설정 · 앱 설정', (tester) async {
+  testWidgets('상단 탭이 4개이고 지도 탭 ⋮ 에 지도 설정 · 앱 설정', (tester) async {
     final shell = await pump(tester);
-    expect(find.byType(Tab), findsNWidgets(3));
+    expect(find.byType(Tab), findsNWidgets(4));
 
     await tester.tap(find.text('지도'));
     await tester.pumpAndSettle();
@@ -256,5 +272,37 @@ void main() {
       tester.widget<MapTab>(find.byType(MapTab, skipOffstage: false)).active,
       isFalse,
     );
+  });
+
+  testWidgets('도구 상단 탭은 알람 · 걷기 · 지도 · 날씨', (tester) async {
+    await pump(tester);
+    final labels = tester
+        .widgetList<Tab>(find.byType(Tab))
+        .map((t) => t.text)
+        .toList();
+    expect(labels, ['알람', '걷기', '지도', '날씨']);
+  });
+
+  testWidgets('날씨 상단 탭을 누르면 WeatherPage 가 보이고 shown 이 불린다', (tester) async {
+    final shell = await pump(tester);
+
+    await tester.tap(find.text('날씨'));
+    await tester.pumpAndSettle();
+
+    expect(shell.changes, [ToolsSection.weather]);
+    expect(find.byType(WeatherPage), findsOneWidget);
+    expect(tester.widget<WeatherPage>(find.byType(WeatherPage)).active, isTrue);
+    verify(weather.shown).called(1);
+  });
+
+  testWidgets('날씨 탭 ⋮ 는 앱 설정만', (tester) async {
+    await pump(tester, initial: ToolsSection.weather);
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
+    expect(find.byKey(const Key('menu-settings-alarm')), findsNothing);
+    expect(find.byKey(const Key('menu-settings-walk')), findsNothing);
+    expect(find.byKey(const Key('menu-settings-map')), findsNothing);
   });
 }
