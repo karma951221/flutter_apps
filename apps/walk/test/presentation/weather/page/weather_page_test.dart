@@ -192,6 +192,123 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('위치 문제 + placeName null → 머리말은 "마지막 위치"', (tester) async {
+    await pump(
+      tester,
+      _loaded(placeName: null, problem: WeatherProblem.locationUnavailable),
+    );
+
+    expect(find.text('현재 위치'), findsNothing);
+    expect(
+      find.text(
+        AppLocalizations.of(
+          tester.element(find.byType(WeatherPage)),
+        ).walkWeatherLastPlace,
+      ),
+      findsWidgets,
+    );
+  });
+
+  testWidgets('캐시가 어제 시작이면 일별은 오늘부터, 어제 행 없음', (tester) async {
+    final stale = Forecast(
+      utcOffset: _forecast.utcOffset,
+      current: _forecast.current,
+      hourly: _forecast.hourly,
+      daily: [
+        for (var d = -1; d < 6; d++)
+          DailyWeather(
+            date: at(0, day: d),
+            condition: WeatherCondition.rain,
+            tempMax: 14,
+            tempMin: d == -1 ? -30 : 8,
+            precipitationProbabilityMax: 70,
+            precipitationSum: 4,
+            sunrise: at(7, day: d),
+            sunset: at(17, day: d),
+          ),
+      ],
+    );
+    await pump(
+      tester,
+      WeatherState.loaded(forecast: stale, placeName: '망원동', fetchedAt: at(10)),
+    );
+
+    final rows = tester.widgetList<DailyRow>(find.byType(DailyRow)).toList();
+    expect(rows, hasLength(6));
+    expect(rows.first.label, '오늘');
+    // 어제(-30°)가 주 범위에서 빠진다.
+    expect(rows.first.weekLow, 8);
+  });
+
+  for (final locale in ['ko', 'en']) {
+    testWidgets('폭 360 · 글자 1.5배($locale) · -10° → 넘치지 않고 한 줄', (tester) async {
+      final cold = Forecast(
+        utcOffset: _forecast.utcOffset,
+        current: _forecast.current,
+        hourly: _forecast.hourly,
+        daily: [
+          for (var d = 0; d < 7; d++)
+            DailyWeather(
+              date: at(0, day: d),
+              condition: WeatherCondition.snow,
+              tempMax: -2,
+              tempMin: -10,
+              precipitationProbabilityMax: 100,
+              precipitationSum: 4,
+              sunrise: at(7, day: d),
+              sunset: at(17, day: d),
+            ),
+        ],
+      );
+      when(() => cubit.state).thenReturn(
+        WeatherState.loaded(
+          forecast: cold,
+          placeName: '망원동',
+          fetchedAt: at(10),
+        ),
+      );
+      await tester.binding.setSurfaceSize(const Size(360, 2400));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(
+        MediaQuery(
+          data: const MediaQueryData(
+            disableAnimations: true,
+            textScaler: TextScaler.linear(1.5),
+          ),
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            locale: Locale(locale),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: BlocProvider<WeatherCubit>.value(
+              value: cubit,
+              child: const WeatherPage(active: true),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      final l10n = AppLocalizations.of(
+        tester.element(find.byType(WeatherPage)),
+      );
+      final tomorrow = tester.widget<Text>(
+        find.descendant(
+          of: find.byType(DailyRow),
+          matching: find.text(l10n.walkWeatherTomorrow),
+        ),
+      );
+      expect(tomorrow.maxLines, 1);
+      for (final t in tester.widgetList<Text>(
+        find.descendant(of: find.byType(DailyRow), matching: find.text('-10°')),
+      )) {
+        expect(t.maxLines, 1);
+        expect(t.softWrap, false);
+      }
+    });
+  }
+
   testWidgets('placeName null → 현재 위치', (tester) async {
     await pump(tester, _loaded(placeName: null));
 
@@ -274,7 +391,11 @@ void main() {
   testWidgets('빈 상태에서도 당기면 refresh', (tester) async {
     await pump(tester, const WeatherState.empty(WeatherProblem.server));
 
-    await tester.fling(find.text('날씨를 받아 오지 못했어요'), const Offset(0, 1000), 1000);
+    await tester.fling(
+      find.text('날씨를 받아 오지 못했어요'),
+      const Offset(0, 1000),
+      1000,
+    );
     await tester.pumpAndSettle();
     verify(() => cubit.refresh()).called(1);
   });

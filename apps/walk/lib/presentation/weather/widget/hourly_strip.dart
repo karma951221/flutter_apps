@@ -73,16 +73,26 @@ class HourlyCell extends StatelessWidget {
             color: scheme.onSurfaceVariant,
           ),
           const SizedBox(height: AppSpacing.xs),
-          Text(
-            WeatherFormat.temperature(hour.temperature),
-            style: theme.textTheme.bodyLarge,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              WeatherFormat.temperature(hour.temperature),
+              style: theme.textTheme.bodyLarge,
+              maxLines: 1,
+              softWrap: false,
+            ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          Text(
-            WeatherFormat.probability(hour.precipitationProbability),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: rainy ? scheme.primary : scheme.onSurfaceVariant,
-              fontWeight: rainy ? FontWeight.bold : null,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              WeatherFormat.probability(hour.precipitationProbability),
+              maxLines: 1,
+              softWrap: false,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: rainy ? scheme.primary : scheme.onSurfaceVariant,
+                fontWeight: rainy ? FontWeight.bold : null,
+              ),
             ),
           ),
         ],

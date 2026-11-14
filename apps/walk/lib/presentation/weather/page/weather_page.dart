@@ -174,6 +174,12 @@ class _WeatherPageState extends State<WeatherPage> {
                   current: forecast.current,
                   today: today,
                   placeName: state.placeName,
+                  lastPlace: switch (problem) {
+                    WeatherProblem.locationServiceOff ||
+                    WeatherProblem.locationDenied ||
+                    WeatherProblem.locationUnavailable => true,
+                    _ => false,
+                  },
                 ),
                 const SizedBox(height: AppSpacing.md),
                 RainSummaryCard(

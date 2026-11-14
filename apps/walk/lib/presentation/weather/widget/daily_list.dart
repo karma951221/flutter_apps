@@ -19,7 +19,11 @@ class DailyList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final shown = forecast.daily.take(days).toList();
+    // 오래된 캐시는 어제부터 시작할 수 있다 — 예보 지역의 오늘 이전은 뺀다.
+    final shown = [
+      for (final d in forecast.daily)
+        if (WeatherFormat.daysBetween(forecast, now, d.date) >= 0) d,
+    ].take(days).toList();
     if (shown.isEmpty) return const SizedBox.shrink();
     final low = shown.map((d) => d.tempMin).reduce(math.min);
     final high = shown.map((d) => d.tempMax).reduce(math.max);
@@ -67,7 +71,7 @@ class DailyRow extends StatelessWidget {
         children: [
           SizedBox(
             width: AppSpacing.xl * 2,
-            child: Text(label, style: theme.textTheme.bodyLarge),
+            child: _OneLine(label, style: theme.textTheme.bodyLarge),
           ),
           Icon(
             WeatherFormat.icon(day.condition, isDay: true),
@@ -75,9 +79,9 @@ class DailyRow extends StatelessWidget {
           ),
           SizedBox(
             width: AppSpacing.xl * 1.5,
-            child: Text(
+            child: _OneLine(
               WeatherFormat.probability(probability),
-              textAlign: TextAlign.end,
+              alignment: Alignment.centerRight,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: rainy ? scheme.primary : scheme.onSurfaceVariant,
               ),
@@ -85,9 +89,9 @@ class DailyRow extends StatelessWidget {
           ),
           SizedBox(
             width: AppSpacing.xl * 1.5,
-            child: Text(
+            child: _OneLine(
               WeatherFormat.temperature(day.tempMin),
-              textAlign: TextAlign.end,
+              alignment: Alignment.centerRight,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
               ),
@@ -105,7 +109,7 @@ class DailyRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           SizedBox(
             width: AppSpacing.xl,
-            child: Text(
+            child: _OneLine(
               WeatherFormat.temperature(day.tempMax),
               style: theme.textTheme.bodyMedium,
             ),
@@ -170,4 +174,20 @@ class _RangeBar extends StatelessWidget {
       },
     );
   }
+}
+
+/// 한 줄로 두고, 칸보다 넓으면 줄이 아니라 글자를 줄인다.
+class _OneLine extends StatelessWidget {
+  const _OneLine(this.text, {required this.style, this.alignment});
+
+  final String text;
+  final TextStyle? style;
+  final Alignment? alignment;
+
+  @override
+  Widget build(BuildContext context) => FittedBox(
+    fit: BoxFit.scaleDown,
+    alignment: alignment ?? Alignment.centerLeft,
+    child: Text(text, style: style, maxLines: 1, softWrap: false),
+  );
 }

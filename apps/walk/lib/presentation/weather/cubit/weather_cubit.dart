@@ -76,6 +76,7 @@ class WeatherCubit extends Cubit<WeatherState> {
     if (!force &&
         !_lastFailed &&
         usable != null &&
+        !now.isBefore(usable.fetchedAt) &&
         now.difference(usable.fetchedAt) < freshFor) {
       if (current is! WeatherLoaded) emit(_loadedFrom(usable));
       return;
@@ -127,8 +128,12 @@ class WeatherCubit extends Cubit<WeatherState> {
       if (e is! WeatherFailure) debugPrint('weather fetch failed: $e\n$s');
       if (isClosed) return;
       final fallback = _usable(_clock.now());
-      // 위치 문제가 먼저다 — 풀 수 있는 버튼이 있다.
-      final shownProblem = locationProblem ?? problem;
+      // 풀 수 있는 위치 문제(권한 · 서비스 꺼짐)가 먼저다 — 버튼이 있다.
+      // 일시적인 위치 실패는 실제로 막은 쪽(예: 오프라인)을 알린다.
+      final actionable =
+          locationProblem == WeatherProblem.locationDenied ||
+          locationProblem == WeatherProblem.locationServiceOff;
+      final shownProblem = actionable ? locationProblem! : problem;
       _fail(
         fallback == null
             ? WeatherState.empty(shownProblem)

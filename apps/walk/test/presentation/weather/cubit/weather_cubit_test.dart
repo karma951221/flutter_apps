@@ -337,6 +337,71 @@ void main() {
   );
 
   blocTest<WeatherCubit, WeatherState>(
+    '위치 못 잡음(locationUnavailable) + 오프라인 + 캐시 → problem 은 offline',
+    setUp: () {
+      when(
+        () => cache.read(),
+      ).thenAnswer((_) async => _cache(age: const Duration(hours: 3)));
+      when(() => locator.locate()).thenAnswer(
+        (_) async =>
+            const WeatherFix.failed(WeatherProblem.locationUnavailable),
+      );
+      when(
+        () => repository.fetch(any(), any()),
+      ).thenThrow(const WeatherFailure(WeatherProblem.offline));
+    },
+    build: build,
+    act: (cubit) => cubit.shown(),
+    skip: 1,
+    expect: () => [
+      fresh(
+        forecast: _cachedForecast,
+        placeName: '망원동',
+        fetchedAt: _now.subtract(const Duration(hours: 3)),
+        stale: true,
+        problem: WeatherProblem.offline,
+      ),
+    ],
+  );
+
+  blocTest<WeatherCubit, WeatherState>(
+    '위치 거부 + 오프라인 + 캐시 → problem 은 locationDenied 유지',
+    setUp: () {
+      when(
+        () => cache.read(),
+      ).thenAnswer((_) async => _cache(age: const Duration(hours: 3)));
+      when(() => locator.locate()).thenAnswer(
+        (_) async => const WeatherFix.failed(WeatherProblem.locationDenied),
+      );
+      when(
+        () => repository.fetch(any(), any()),
+      ).thenThrow(const WeatherFailure(WeatherProblem.offline));
+    },
+    build: build,
+    act: (cubit) => cubit.shown(),
+    skip: 1,
+    expect: () => [
+      fresh(
+        forecast: _cachedForecast,
+        placeName: '망원동',
+        fetchedAt: _now.subtract(const Duration(hours: 3)),
+        stale: true,
+        problem: WeatherProblem.locationDenied,
+      ),
+    ],
+  );
+
+  blocTest<WeatherCubit, WeatherState>(
+    '시계가 뒤로 가 fetchedAt 이 미래면 신선하지 않다 → 다시 읽는다',
+    setUp: () => when(
+      () => cache.read(),
+    ).thenAnswer((_) async => _cache(age: const Duration(minutes: -30))),
+    build: build,
+    act: (cubit) => cubit.shown(),
+    verify: (_) => verify(() => repository.fetch(_hereLat, _hereLng)).called(1),
+  );
+
+  blocTest<WeatherCubit, WeatherState>(
     '오프라인 + 캐시 없음 → empty(offline)',
     setUp: () => when(
       () => repository.fetch(any(), any()),

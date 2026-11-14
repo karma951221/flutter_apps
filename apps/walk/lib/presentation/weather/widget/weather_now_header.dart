@@ -11,6 +11,7 @@ class WeatherNowHeader extends StatelessWidget {
     required this.current,
     required this.today,
     required this.placeName,
+    this.lastPlace = false,
     super.key,
   });
 
@@ -19,8 +20,11 @@ class WeatherNowHeader extends StatelessWidget {
   /// 예보 지역의 오늘. 일별이 비어 있으면 null — 최고/최저를 빼고 그린다.
   final DailyWeather? today;
 
-  /// null 이면 "현재 위치".
+  /// null 이면 "현재 위치"([lastPlace] 면 "마지막 위치").
   final String? placeName;
+
+  /// 위치를 못 잡아 마지막 위치의 예보를 보이는 중. 이름이 없을 때 문구를 바꾼다.
+  final bool lastPlace;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +44,10 @@ class WeatherNowHeader extends StatelessWidget {
             const SizedBox(width: AppSpacing.xs),
             Flexible(
               child: Text(
-                placeName ?? l10n.walkWeatherCurrentPlace,
+                placeName ??
+                    (lastPlace
+                        ? l10n.walkWeatherLastPlace
+                        : l10n.walkWeatherCurrentPlace),
                 style: theme.textTheme.titleMedium,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -48,29 +55,33 @@ class WeatherNowHeader extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              WeatherFormat.temperature(current.temperature),
-              style: theme.textTheme.displayLarge,
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Column(
-              children: [
-                Icon(
-                  WeatherFormat.icon(current.condition, isDay: current.isDay),
-                  size: AppSpacing.xl,
-                  color: scheme.primary,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  WeatherFormat.condition(l10n, current.condition),
-                  style: theme.textTheme.titleMedium,
-                ),
-              ],
-            ),
-          ],
+        // 큰 글자 설정에서 좁은 폭을 넘으면 줄여서 맞춘다.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                WeatherFormat.temperature(current.temperature),
+                style: theme.textTheme.displayLarge,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Column(
+                children: [
+                  Icon(
+                    WeatherFormat.icon(current.condition, isDay: current.isDay),
+                    size: AppSpacing.xl,
+                    color: scheme.primary,
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    WeatherFormat.condition(l10n, current.condition),
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(

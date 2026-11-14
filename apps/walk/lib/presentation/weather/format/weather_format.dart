@@ -78,7 +78,7 @@ abstract final class WeatherFormat {
     DateTime now,
   ) {
     final label = hour(l10n, forecast, instant);
-    return switch (_daysBetween(forecast, now, instant)) {
+    return switch (daysBetween(forecast, now, instant)) {
       0 => label,
       1 => l10n.walkWeatherTomorrowTime(label),
       _ =>
@@ -92,14 +92,14 @@ abstract final class WeatherFormat {
     Forecast forecast,
     DateTime date,
     DateTime now,
-  ) => switch (_daysBetween(forecast, now, date)) {
+  ) => switch (daysBetween(forecast, now, date)) {
     0 => l10n.walkWeatherToday,
     1 => l10n.walkWeatherTomorrow,
     _ => DateFormat.E(l10n.localeName).format(forecast.wallClock(date)),
   };
 
   /// [from] 에서 [to] 까지 예보 지역 달력으로 며칠 뒤인지.
-  static int _daysBetween(Forecast forecast, DateTime from, DateTime to) {
+  static int daysBetween(Forecast forecast, DateTime from, DateTime to) {
     final a = forecast.wallClock(from);
     final b = forecast.wallClock(to);
     return DateTime.utc(
