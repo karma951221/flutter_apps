@@ -126,11 +126,17 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   /// 읽는다). 이 탭에서 띄운 시트 · 메뉴도 셸에는 얹힌 화면이다.
   bool _covered = false;
 
+  /// 앱이 정말 백그라운드로 갔다 왔는지(`hidden` 을 거쳤는지). 권한 · 위치 정확도 같은 시스템 창이
+  /// 위에 얹혔다 닫히면 inactive → resumed 만 오는데, 그때까지 복귀로 치면 날씨가 실패 → 재시도 →
+  /// 창 다시 뜸을 반복한다.
+  bool _wentBackground = false;
+
   @override
   void initState() {
     super.initState();
     _lifecycle = AppLifecycleListener(
       onPause: _diaryLock.onPaused,
+      onHide: () => _wentBackground = true,
       onResume: _onResume,
     );
     backgroundChannel.setMethodCallHandler(_onBackgroundCall);
@@ -166,10 +172,14 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     _diaryLock.onResumed();
     _refresh();
     _refreshMap();
-    _refreshWeather();
+    // 시스템 창(권한 · 위치 정확도)이 닫힌 inactive → resumed 는 복귀가 아니다 — 날씨는 다시 읽지 않는다.
+    final backgrounded = _wentBackground;
+    _wentBackground = false;
+    if (backgrounded) _refreshWeather();
   }
 
   /// 날씨 상단 탭이 보이면 복귀를 알린다(10분 규칙은 cubit 이 판단한다).
+  /// 백그라운드를 다녀온 복귀([_onResume])에서만 부른다.
   void _refreshWeather() {
     final visible =
         _tab == ShellTab.tools &&

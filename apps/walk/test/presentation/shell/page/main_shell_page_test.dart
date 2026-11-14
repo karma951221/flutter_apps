@@ -1405,6 +1405,32 @@ void main() {
       verify(weather.resumed).called(1);
     });
 
+    testWidgets('시스템 창이 닫혀 inactive → resumed 만 오면 부르지 않는다', (tester) async {
+      await pump(tester);
+      await tapToolsTab(tester, '날씨');
+      clearInteractions(weather);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+
+      verifyNever(weather.resumed);
+    });
+
+    testWidgets('백그라운드(hidden)를 거쳐 복귀하면 한 번만 부른다', (tester) async {
+      await pump(tester);
+      await tapToolsTab(tester, '날씨');
+
+      resume(tester);
+      await tester.pumpAndSettle();
+      // 이어진 inactive → resumed 는 hidden 을 거치지 않았으니 부르지 않는다.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+
+      verify(weather.resumed).called(1);
+    });
+
     testWidgets('다른 상단 탭을 보던 중 복귀하면 부르지 않는다', (tester) async {
       await pump(tester);
       await tapToolsTab(tester, '날씨');
