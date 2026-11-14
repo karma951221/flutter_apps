@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:walk/domain/location/repository/map_style_preferences.dart';
 import 'package:walk/domain/chat/attachment/attachment_loader.dart';
 import 'package:walk/domain/chat/attachment/attachment_rules.dart';
 import 'package:walk/domain/chat/workspace/workspace.dart';
@@ -77,6 +78,7 @@ import 'package:walk/presentation/walk/page/walk_home_page.dart';
 
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_device_auth.dart';
+import '../../../support/fake_map_style_preferences.dart';
 import '../../../support/stub_tile_provider.dart';
 import 'package:walk/domain/chat/chat_history_settings.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
@@ -1177,7 +1179,8 @@ void main() {
         ..registerSingleton<BackgroundLocationAccess>(access)
         ..registerSingleton<LocationPreferences>(prefs)
         ..registerSingleton<LocationRepository>(locations)
-        ..registerFactory<TileProvider>(StubTileProvider.new);
+        ..registerFactory<TileProvider>(StubTileProvider.new)
+        ..registerSingleton<MapStylePreferences>(FakeMapStylePreferences());
     });
 
     testWidgets('지도를 보던 중 복귀하면 기록 상태와 지도를 다시 읽는다', (tester) async {

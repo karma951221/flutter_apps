@@ -64,6 +64,7 @@ import '../../data/location/channel_location_recorder.dart' as _i620;
 import '../../data/location/database/location_database.dart' as _i121;
 import '../../data/location/drift_location_repository.dart' as _i192;
 import '../../data/location/prefs_location_preferences.dart' as _i630;
+import '../../data/location/prefs_map_style_preferences.dart' as _i478;
 import '../../data/lock/channel_screen_lock_settings.dart' as _i952;
 import '../../data/lock/local_auth_device_auth.dart' as _i982;
 import '../../data/lock/prefs_lock_repository.dart' as _i691;
@@ -123,6 +124,7 @@ import '../../domain/diary/usecase/diary_use_case.dart' as _i567;
 import '../../domain/location/recorder/location_recorder.dart' as _i993;
 import '../../domain/location/repository/location_preferences.dart' as _i279;
 import '../../domain/location/repository/location_repository.dart' as _i379;
+import '../../domain/location/repository/map_style_preferences.dart' as _i483;
 import '../../domain/location/usecase/location_sync.dart' as _i638;
 import '../../domain/location/usecase/stay_namer.dart' as _i673;
 import '../../domain/lock/device_auth.dart' as _i439;
@@ -310,6 +312,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i645.LocationGateway>(),
         gh<_i693.PlaceNamer>(),
       ),
+    );
+    gh.lazySingleton<_i483.MapStylePreferences>(
+      () => _i478.PrefsMapStylePreferences(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i379.LocationRepository>(
       () => _i192.DriftLocationRepository(

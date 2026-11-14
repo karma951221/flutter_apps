@@ -882,3 +882,17 @@ A1~A4 는 최종 리뷰(2026-11-02)에서 Anthropic 문서로 확인했다 — �
 - 기기 QA R-QA1~6 대기 — [시나리오](testing.md#작업-폴더-읽기-도구-2단계). 특히 Anthropic 이 tool_result 안 document 블록을, OpenAI 가 결과 뒤 `input_file` 을 받아 주는지.
 - 받아들인 것: 질문 중간에 이미지 거절을 받으면 이미 받은 `read_file` 사진이 빠지고 모델은 `kind: image` 만 본다(1단계부터의 규칙) · 섞인 결과의 OpenAI 라벨 "(도구 결과 파일)".
 - 3단계 메모: 첨부 · 도구로 읽은 파일 안의 지시를 막는 것은 시스템 프롬프트 한 줄뿐이다. 웹 검색도 함께 켜져 있으므로 쓰기 승인 화면은 이 줄에 기대지 말고 실제 경로 · 내용을 보여 줘야 한다.
+
+## 2026-11-14 — 지도 모양 고르기
+
+OSM 기본 타일이 가게 · 건물 이름까지 다 그려서 동선이 묻힌다는 피드백. 지도 왼쪽 위 레이어 버튼으로
+모양을 고르게 했다.
+
+- **타일은 키 없는 CARTO basemap** — 단순(`light_all`) · 글자 없이(`light_nolabels`) · 어둡게(`dark_all`).
+  API 키 · 가입이 없고 OSM 데이터라 출처는 "OpenStreetMap contributors · CARTO". 비상업 토이 프로젝트
+  사용량 안이다. 위성 사진은 무료 · 키 없는 정식 출처가 마땅치 않아 뺐다.
+- **기본값은 그대로 OSM 기본** — 이미 쓰던 사람에게 지도가 갑자기 바뀌지 않게.
+- **`TileLayer` 의 key 를 바꾸지 않는다** — 새 위젯이 되면 옛 TileLayer 가 공유 `TileProvider` 를
+  dispose 해 지도가 회색이 된다. URL 만 바꾸면 TileLayer 가 스스로 타일을 다시 읽는다.
+- 설정은 위치 기록 설정(`LocationPreferences`)과 따로 `MapStylePreferences` 로 뒀다 — 지도 보기 취향이라
+  기록 · 동기화와 무관하다.

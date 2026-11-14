@@ -8,6 +8,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/location/entity/day_track.dart';
+import '../../../domain/location/entity/map_style.dart';
 import '../../../domain/location/entity/record_mode.dart';
 import 'entry_pin.dart';
 
@@ -30,6 +31,7 @@ class TrackMap extends StatefulWidget {
     required this.onOpenEntry,
     this.faint = false,
     this.bottomInset = 0,
+    this.style = MapStyle.fallback,
     super.key,
   });
 
@@ -47,6 +49,9 @@ class TrackMap extends StatefulWidget {
 
   /// 지도 아래쪽을 덮는 시트 높이. 카메라 맞춤과 출처 표시를 그만큼 위로 올린다.
   final double bottomInset;
+
+  /// 바탕 타일 모양.
+  final MapStyle style;
 
   @override
   State<TrackMap> createState() => TrackMapState();
@@ -155,6 +160,26 @@ class TrackMapState extends State<TrackMap> {
     }
   }
 
+  /// CARTO basemap 은 OSM 데이터 위에 그린 무료 타일이다(출처 둘 다 표시).
+  static const _cartoSubdomains = ['a', 'b', 'c', 'd'];
+
+  static String _urlOf(MapStyle style) => switch (style) {
+    MapStyle.standard => 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    MapStyle.simple =>
+      'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+    MapStyle.plain =>
+      'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+    MapStyle.dark =>
+      'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+  };
+
+  static String _attributionOf(MapStyle style) => switch (style) {
+    MapStyle.standard => 'OpenStreetMap contributors',
+    MapStyle.simple ||
+    MapStyle.plain ||
+    MapStyle.dark => 'OpenStreetMap contributors · CARTO',
+  };
+
   static bool _isSinglePlace(List<LatLng> c) => c.every((p) => p == c.first);
 
   @override
@@ -178,8 +203,13 @@ class TrackMapState extends State<TrackMap> {
         ),
       ),
       children: [
+        // key 를 바꾸지 않는다 — 새 TileLayer 가 되면 옛것이 _tileProvider 를 dispose 한다.
+        // URL 이 바뀌면 TileLayer 가 스스로 타일을 다시 읽는다.
         TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          urlTemplate: _urlOf(widget.style),
+          subdomains: widget.style == MapStyle.standard
+              ? const []
+              : _cartoSubdomains,
           userAgentPackageName: 'com.karma.walk',
           tileProvider: _tileProvider,
         ),
@@ -219,8 +249,8 @@ class TrackMapState extends State<TrackMap> {
         EntryPinLayer(entries: widget.entries, onOpen: widget.onOpenEntry),
         Padding(
           padding: EdgeInsets.only(bottom: widget.bottomInset),
-          child: const SimpleAttributionWidget(
-            source: Text('OpenStreetMap contributors'),
+          child: SimpleAttributionWidget(
+            source: Text(_attributionOf(widget.style)),
           ),
         ),
       ],

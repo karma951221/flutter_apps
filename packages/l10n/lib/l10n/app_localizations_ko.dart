@@ -4123,6 +4123,33 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapChipBlocked => '기록 꺼짐 · 권한 필요';
 
   @override
+  String get walkMapStyle => '지도 모양';
+
+  @override
+  String get walkMapStyleStandard => '기본';
+
+  @override
+  String get walkMapStyleStandardDetail => '길 · 건물 · 가게까지 자세히';
+
+  @override
+  String get walkMapStyleSimple => '단순';
+
+  @override
+  String get walkMapStyleSimpleDetail => '옅은 색에 큰 길과 지명만';
+
+  @override
+  String get walkMapStylePlain => '글자 없이';
+
+  @override
+  String get walkMapStylePlainDetail => '글자 없이 길 모양만';
+
+  @override
+  String get walkMapStyleDark => '어둡게';
+
+  @override
+  String get walkMapStyleDarkDetail => '어두운 바탕에 큰 길과 지명';
+
+  @override
   String get walkMapTimelineTitle => '타임라인';
 
   @override

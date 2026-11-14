@@ -1,0 +1,37 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:walk/data/location/prefs_map_style_preferences.dart';
+import 'package:walk/domain/location/entity/map_style.dart';
+
+Future<PrefsMapStylePreferences> _prefs([
+  Map<String, Object> values = const {},
+]) async {
+  SharedPreferences.setMockInitialValues(values);
+  return PrefsMapStylePreferences(await SharedPreferences.getInstance());
+}
+
+void main() {
+  test('저장한 적이 없으면 기본 지도', () async {
+    expect((await _prefs()).style, MapStyle.standard);
+  });
+
+  test('저장한 값을 새 인스턴스에서 다시 읽는다', () async {
+    await (await _prefs()).setStyle(MapStyle.dark);
+
+    final reader = PrefsMapStylePreferences(
+      await SharedPreferences.getInstance(),
+    );
+    expect(reader.style, MapStyle.dark);
+  });
+
+  test('타입이 다르거나 모르는 이름이면 기본값', () async {
+    expect(
+      (await _prefs({PrefsMapStylePreferences.styleKey: 3})).style,
+      MapStyle.standard,
+    );
+    expect(
+      (await _prefs({PrefsMapStylePreferences.styleKey: 'satellite'})).style,
+      MapStyle.standard,
+    );
+  });
+}

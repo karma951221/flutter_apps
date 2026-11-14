@@ -7614,6 +7614,60 @@ abstract class AppLocalizations {
   /// **'기록 꺼짐 · 권한 필요'**
   String get walkMapChipBlocked;
 
+  /// 지도 — 지도 모양 버튼 툴팁 · 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'지도 모양'**
+  String get walkMapStyle;
+
+  /// 지도 모양 — OSM 기본
+  ///
+  /// In ko, this message translates to:
+  /// **'기본'**
+  String get walkMapStyleStandard;
+
+  /// 지도 모양 — 기본 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'길 · 건물 · 가게까지 자세히'**
+  String get walkMapStyleStandardDetail;
+
+  /// 지도 모양 — 옅은 색 단순 지도
+  ///
+  /// In ko, this message translates to:
+  /// **'단순'**
+  String get walkMapStyleSimple;
+
+  /// 지도 모양 — 단순 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'옅은 색에 큰 길과 지명만'**
+  String get walkMapStyleSimpleDetail;
+
+  /// 지도 모양 — 라벨 없는 지도
+  ///
+  /// In ko, this message translates to:
+  /// **'글자 없이'**
+  String get walkMapStylePlain;
+
+  /// 지도 모양 — 글자 없이 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'글자 없이 길 모양만'**
+  String get walkMapStylePlainDetail;
+
+  /// 지도 모양 — 어두운 지도
+  ///
+  /// In ko, this message translates to:
+  /// **'어둡게'**
+  String get walkMapStyleDark;
+
+  /// 지도 모양 — 어둡게 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'어두운 바탕에 큰 길과 지명'**
+  String get walkMapStyleDarkDetail;
+
   /// 지도 — 하루 · 스토리 보기 시트 제목(머문 곳 시간순)
   ///
   /// In ko, this message translates to:

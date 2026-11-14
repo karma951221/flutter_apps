@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:walk/domain/location/repository/map_style_preferences.dart';
 import 'package:walk/data/location/background_location_access.dart';
 import 'package:walk/data/lock/prefs_lock_repository.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
@@ -23,6 +24,7 @@ import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/location/entity/day_track.dart';
 import 'package:walk/domain/location/entity/location_point.dart';
 import 'package:walk/domain/location/entity/map_period.dart';
+import 'package:walk/domain/location/entity/map_style.dart';
 import 'package:walk/domain/location/entity/record_mode.dart';
 import 'package:walk/domain/location/entity/stay.dart';
 import 'package:walk/domain/location/entity/track_segment.dart';
@@ -45,6 +47,7 @@ import 'package:walk/presentation/map/widget/timeline_sheet.dart';
 
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_device_auth.dart';
+import '../../../support/fake_map_style_preferences.dart';
 import '../../../support/stub_tile_provider.dart';
 
 class _MockRecord extends MockCubit<MapRecordState> implements MapRecordCubit {}
@@ -143,6 +146,7 @@ void main() {
   late _MockRepo repo;
   late StreamController<MapViewState> views;
   late StreamController<MapRecordState> records;
+  late FakeMapStylePreferences mapStyle;
 
   setUpAll(() {
     registerFallbackValue(_today);
@@ -159,6 +163,7 @@ void main() {
     repo = _MockRepo();
     views = StreamController<MapViewState>.broadcast();
     records = StreamController<MapRecordState>.broadcast();
+    mapStyle = FakeMapStylePreferences();
     final store = _MockStore();
     when(() => store.resolve(any())).thenReturn(File('/missing.jpg'));
     when(repo.watchStories).thenAnswer(
@@ -182,7 +187,8 @@ void main() {
       ..registerSingleton<DeviceAuth>(FakeDeviceAuth())
       ..registerSingleton<DiaryRepository>(repo)
       ..registerSingleton<MediaStore>(store)
-      ..registerFactory<TileProvider>(StubTileProvider.new);
+      ..registerFactory<TileProvider>(StubTileProvider.new)
+      ..registerSingleton<MapStylePreferences>(mapStyle);
   });
 
   tearDown(() async {
@@ -518,6 +524,35 @@ void main() {
     expect(find.byKey(const ValueKey('map-pin-a')), findsOneWidget);
     expect(find.byKey(const ValueKey('map-pin-b')), findsNothing);
     expect(find.text('2'), findsOneWidget);
+  });
+
+  testWidgets('style button switches tiles and saves the choice', (
+    tester,
+  ) async {
+    await pump(tester, state: MapViewState.ready(_data()));
+    String url() =>
+        tester.widget<TileLayer>(find.byType(TileLayer)).urlTemplate!;
+    expect(url(), contains('tile.openstreetmap.org'));
+
+    await tester.tap(find.byKey(const Key('map-style-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('지도 모양'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('map-style-simple')));
+    await tester.pumpAndSettle();
+
+    expect(url(), contains('light_all'));
+    expect(mapStyle.style, MapStyle.simple);
+    expect(find.textContaining('CARTO'), findsOneWidget);
+  });
+
+  testWidgets('saved style is used when the map opens', (tester) async {
+    mapStyle.style = MapStyle.plain;
+    await pump(tester, state: MapViewState.ready(_data()));
+
+    expect(
+      tester.widget<TileLayer>(find.byType(TileLayer)).urlTemplate,
+      contains('light_nolabels'),
+    );
   });
 
   testWidgets('empty period shows placeholder over map', (tester) async {

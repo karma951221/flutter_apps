@@ -4493,6 +4493,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkMapChipBlocked => 'Recording off · permission needed';
 
   @override
+  String get walkMapStyle => 'Map style';
+
+  @override
+  String get walkMapStyleStandard => 'Standard';
+
+  @override
+  String get walkMapStyleStandardDetail =>
+      'Roads, buildings and shops in detail';
+
+  @override
+  String get walkMapStyleSimple => 'Simple';
+
+  @override
+  String get walkMapStyleSimpleDetail =>
+      'Light colors, main roads and place names';
+
+  @override
+  String get walkMapStylePlain => 'No labels';
+
+  @override
+  String get walkMapStylePlainDetail => 'Just the shape of the roads';
+
+  @override
+  String get walkMapStyleDark => 'Dark';
+
+  @override
+  String get walkMapStyleDarkDetail =>
+      'Dark background, main roads and place names';
+
+  @override
   String get walkMapTimelineTitle => 'Timeline';
 
   @override

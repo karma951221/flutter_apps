@@ -10,6 +10,8 @@ import 'package:latlong2/latlong.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/location/entity/day_track.dart';
 import '../../../domain/location/entity/map_period.dart';
+import '../../../domain/location/entity/map_style.dart';
+import '../../../domain/location/repository/map_style_preferences.dart';
 import '../../../domain/location/recorder/recorder_status.dart';
 import '../../diary/viewer/story_viewer_page.dart';
 import '../../lock/widget/diary_lock_gate.dart';
@@ -18,6 +20,7 @@ import '../cubit/map_record_state.dart';
 import '../cubit/map_view_cubit.dart';
 import '../cubit/map_view_state.dart';
 import '../widget/frequent_sheet.dart';
+import '../widget/map_style_sheet.dart';
 import '../widget/period_header.dart';
 import '../widget/enable_location_record.dart';
 import '../widget/record_chip.dart';
@@ -66,6 +69,8 @@ class _MapBody extends StatefulWidget {
 
 class _MapBodyState extends State<_MapBody> {
   final _map = GlobalKey<TrackMapState>();
+  final _stylePrefs = getIt<MapStylePreferences>();
+  late MapStyle _style = _stylePrefs.style;
 
   @override
   void initState() {
@@ -117,6 +122,13 @@ class _MapBodyState extends State<_MapBody> {
     final story = await showStoryPicker(context);
     if (story == null || !mounted) return;
     await view.show(MapPeriod.story(story));
+  }
+
+  Future<void> _pickStyle() async {
+    final picked = await showMapStyleSheet(context, current: _style);
+    if (picked == null || picked == _style || !mounted) return;
+    setState(() => _style = picked);
+    await _stylePrefs.setStyle(picked);
   }
 
   void _openEntry(MapViewData data, DiaryEntry entry) {
@@ -246,6 +258,7 @@ class _MapBodyState extends State<_MapBody> {
             entries: data?.entries ?? const [],
             fitKey: period,
             faint: month,
+            style: _style,
             bottomInset: data == null ? 0 : height * MapSheet.initialSize,
             onOpenEntry: (entry) {
               if (data != null) _openEntry(data, entry);
@@ -266,6 +279,16 @@ class _MapBodyState extends State<_MapBody> {
               child: overlay,
             ),
           ),
+        Positioned(
+          top: AppSpacing.sm,
+          left: AppSpacing.sm,
+          child: IconButton.filledTonal(
+            key: const Key('map-style-button'),
+            tooltip: l10n.walkMapStyle,
+            icon: const Icon(Icons.layers_outlined),
+            onPressed: () => unawaited(_pickStyle()),
+          ),
+        ),
         if (record.loaded && !firstRun)
           Positioned(
             top: AppSpacing.sm,
