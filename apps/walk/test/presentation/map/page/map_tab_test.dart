@@ -530,15 +530,36 @@ void main() {
     expect(find.text('2'), findsOneWidget);
   });
 
-  testWidgets('style button switches tiles and saves the choice', (
+  /// 지도에 깔린 타일 레이어들의 URL(바탕 먼저, 지명 레이어가 있으면 뒤).
+  List<String> tileUrls(WidgetTester tester) => [
+    for (final layer in tester.widgetList<TileLayer>(find.byType(TileLayer)))
+      layer.urlTemplate!,
+  ];
+
+  /// 바탕 타일에 색 반전(밝은 단순 지도)을 거는지.
+  bool inverted(WidgetTester tester) =>
+      tester.widget<TileLayer>(find.byType(TileLayer).first).tileBuilder !=
+      null;
+
+  testWidgets('default style is simple: inverted Esri gray with labels', (
     tester,
   ) async {
     await pump(tester, state: MapViewState.ready(_data()));
-    String url() =>
-        tester.widget<TileLayer>(find.byType(TileLayer)).urlTemplate!;
-    // 저장한 적이 없으면 단순(CARTO).
-    expect(url(), contains('light_all'));
-    expect(find.textContaining('CARTO'), findsOneWidget);
+
+    final urls = tileUrls(tester);
+    expect(urls, hasLength(2));
+    expect(urls[0], contains('World_Dark_Gray_Base'));
+    expect(urls[1], contains('World_Dark_Gray_Reference'));
+    expect(inverted(tester), isTrue);
+    expect(find.textContaining('Esri'), findsOneWidget);
+    // CARTO 는 이제 키가 없으면 워터마크 타일만 준다.
+    expect(urls.any((u) => u.contains('cartocdn')), isFalse);
+  });
+
+  testWidgets('style button switches to standard OSM and saves the choice', (
+    tester,
+  ) async {
+    await pump(tester, state: MapViewState.ready(_data()));
 
     await tester.tap(find.byKey(const Key('map-style-button')));
     await tester.pumpAndSettle();
@@ -546,22 +567,25 @@ void main() {
     await tester.tap(find.byKey(const Key('map-style-standard')));
     await tester.pumpAndSettle();
 
-    expect(url(), contains('tile.openstreetmap.org'));
+    final urls = tileUrls(tester);
+    expect(urls, hasLength(1));
+    expect(urls.single, contains('tile.openstreetmap.org'));
+    expect(inverted(tester), isFalse);
     expect(mapStyle.style, MapStyle.standard);
-    expect(find.textContaining('CARTO'), findsNothing);
+    expect(find.textContaining('Esri'), findsNothing);
   });
 
-  testWidgets('saved style is used when the map opens', (tester) async {
+  testWidgets('plain style: inverted base only, no labels', (tester) async {
     mapStyle.style = MapStyle.plain;
     await pump(tester, state: MapViewState.ready(_data()));
 
-    expect(
-      tester.widget<TileLayer>(find.byType(TileLayer)).urlTemplate,
-      contains('light_nolabels'),
-    );
+    final urls = tileUrls(tester);
+    expect(urls, hasLength(1));
+    expect(urls.single, contains('World_Dark_Gray_Base'));
+    expect(inverted(tester), isTrue);
   });
 
-  testWidgets('style changed elsewhere (settings) updates the map', (
+  testWidgets('style changed elsewhere (settings) updates the map: dark', (
     tester,
   ) async {
     await pump(tester, state: MapViewState.ready(_data()));
@@ -569,10 +593,26 @@ void main() {
     await getIt<MapStyleCubit>().select(MapStyle.dark);
     await tester.pumpAndSettle();
 
-    expect(
-      tester.widget<TileLayer>(find.byType(TileLayer)).urlTemplate,
-      contains('dark_all'),
-    );
+    final urls = tileUrls(tester);
+    expect(urls, hasLength(2));
+    expect(urls[0], contains('World_Dark_Gray_Base'));
+    expect(urls[1], contains('World_Dark_Gray_Reference'));
+    expect(inverted(tester), isFalse);
+  });
+
+  testWidgets('labels come back after plain → simple', (tester) async {
+    mapStyle.style = MapStyle.plain;
+    await pump(tester, state: MapViewState.ready(_data()));
+
+    await getIt<MapStyleCubit>().select(MapStyle.simple);
+    await tester.pumpAndSettle();
+    await getIt<MapStyleCubit>().select(MapStyle.plain);
+    await tester.pumpAndSettle();
+    await getIt<MapStyleCubit>().select(MapStyle.simple);
+    await tester.pumpAndSettle();
+
+    expect(tileUrls(tester), hasLength(2));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('empty period shows placeholder over map', (tester) async {

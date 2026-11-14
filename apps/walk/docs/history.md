@@ -890,9 +890,15 @@ A1~A4 는 최종 리뷰(2026-11-02)에서 Anthropic 문서로 확인했다 — �
 OSM 기본 타일이 가게 · 건물 이름까지 다 그려서 동선이 묻힌다는 피드백. 지도 왼쪽 위 레이어 버튼으로
 모양을 고르게 했다.
 
-- **타일은 키 없는 CARTO basemap** — 단순(`light_all`) · 글자 없이(`light_nolabels`) · 어둡게(`dark_all`).
-  API 키 · 가입이 없고 OSM 데이터라 출처는 "OpenStreetMap contributors · CARTO". 비상업 토이 프로젝트
-  사용량 안이다. 위성 사진은 무료 · 키 없는 정식 출처가 마땅치 않아 뺐다.
+- **타일은 키 없는 Esri Canvas(어두운 회색)** — 처음엔 CARTO basemap(`light_all` 등)을 썼는데,
+  에뮬레이터에서 보니 이제 키가 없으면 모든 줌에서 200 응답으로 "API KEY REQUIRED" 워터마크 타일만 준다
+  (테스트는 stub 타일이라 못 잡았다). Esri 연회색 캔버스는 서울이 줌 13까지만 있어("Map data not yet
+  available") 못 쓰고, 어두운 회색은 줌 16까지 있다. 그래서 어두운 회색 바탕 + 지명 레이어를 받아
+  단순 · 글자 없이는 `ColorFilter` 로 반전해(v → 255 − 0.765v) 밝은 회색 지도로, 어둡게는 그대로 쓴다.
+  줌 16 넘게는 `maxNativeZoom` 으로 키워 그린다. 출처는 좁은 폰 한 줄에 들어가게 "© OpenStreetMap · Esri".
+  더 고운 지도(Stadia · MapTiler · CARTO)는 계정과 키가 필요해 이번엔 뺐다. 위성 사진도 같은 이유로 뺐다.
+- **지명 레이어는 provider 를 따로** — 지명 TileLayer 는 글자 없이에서 빠지며 자기 provider 를 dispose
+  하므로, 빠질 때 버리고 다시 생길 때 getIt 에서 새로 받는다.
 - **기본값은 단순** — 처음엔 OSM 기본으로 뒀다가, 복잡하다는 피드백 그대로 단순을 기본으로 바꿨다.
 - **`TileLayer` 의 key 를 바꾸지 않는다** — 새 위젯이 되면 옛 TileLayer 가 공유 `TileProvider` 를
   dispose 해 지도가 회색이 된다. URL 만 바꾸면 TileLayer 가 스스로 타일을 다시 읽는다.
