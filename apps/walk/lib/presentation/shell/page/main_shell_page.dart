@@ -40,10 +40,11 @@ import '../../settings/cubit/diary_settings_cubit.dart';
 import '../../settings/cubit/holiday_settings_cubit.dart';
 import '../../settings/cubit/settings_permissions_cubit.dart';
 import '../../settings/open_settings.dart';
+import '../../weather/cubit/weather_cubit.dart';
 import 'tools_tab.dart';
 
-/// 하단 탭 순서. 첫 탭(시작 탭)은 [tools] — 실사용에서 알람 · 걷기 · 지도를 가장 자주 연다.
-/// 그 셋은 [tools] 의 상단 탭([ToolsSection])이다. 물어보기는 덜 써서 맨 끝이다.
+/// 하단 탭 순서. 첫 탭(시작 탭)은 [tools] — 실사용에서 알람 · 걷기 · 지도 · 날씨를 가장 자주 연다.
+/// 그 넷은 [tools] 의 상단 탭([ToolsSection])이다. 물어보기는 덜 써서 맨 끝이다.
 enum ShellTab { tools, diary, chat }
 
 /// 하단 탭 셸. 탭마다 자기 `Scaffold` · `AppBar` 를 둔다. 설정은 탭이 아니라 각 탭 앱바 ⋮ 가
@@ -103,6 +104,9 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   /// 그 provider 가 한다. 앱이 앞에 올 때 다시 읽으려고 잡아 둔다.
   MapRecordCubit? _mapRecord;
   MapViewCubit? _mapView;
+
+  /// 날씨 cubit. 날씨 탭이 처음 읽을 때 만들어지고 닫는 것도 provider 가 한다. 복귀할 때 알리려고 잡아 둔다.
+  WeatherCubit? _weather;
   ShellTab _tab = ShellTab.tools;
 
   /// 도구 탭에서 고른 상단 탭. 앱이 떠 있는 동안 기억하고, 새로 켜면 알람이다.
@@ -162,6 +166,17 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     _diaryLock.onResumed();
     _refresh();
     _refreshMap();
+    _refreshWeather();
+  }
+
+  /// 날씨 상단 탭이 보이면 복귀를 알린다(10분 규칙은 cubit 이 판단한다).
+  void _refreshWeather() {
+    final visible =
+        _tab == ShellTab.tools &&
+        _toolsSection == ToolsSection.weather &&
+        !_covered;
+    if (!visible) return;
+    unawaited(_weather?.resumed());
   }
 
   /// 지도 상단 탭이 보이면 기록 상태(권한을 뺏겼을 수 있다)를 읽고 inbox 를 수거해 다시 그린다.
@@ -322,6 +337,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
           ),
         ),
         BlocProvider(create: (_) => _mapView = getIt<MapViewCubit>()),
+        BlocProvider(create: (_) => _weather = getIt<WeatherCubit>()),
       ],
       child: Scaffold(
         // 설정 화면은 셸 cubit 을 읽어 다시 건다 — 그 cubit 아래 context 가 필요하다.

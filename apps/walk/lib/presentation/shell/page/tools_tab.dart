@@ -8,21 +8,22 @@ import '../../lock/cubit/diary_lock_state.dart';
 import '../../map/page/map_tab.dart';
 import '../../settings/open_settings.dart';
 import '../../walk/page/walk_home_page.dart';
+import '../../weather/page/weather_page.dart';
 import '../widget/feature_menu.dart';
 
 /// 도구 탭의 상단 탭. 순서가 `TabBar` 순서다.
-enum ToolsSection { alarm, walk, map }
+enum ToolsSection { alarm, walk, map, weather }
 
-/// 도구 탭 — 알람 · 걷기 · 지도를 앱바 아래 상단 탭으로 묶는다.
+/// 도구 탭 — 알람 · 걷기 · 지도 · 날씨를 앱바 아래 상단 탭으로 묶는다.
 ///
 /// 상단 탭은 눌러서만 바꾼다(밀기 없음).
 ///
 /// 앱바는 하나라 actions 와 ⋮ 가 [section] 에 따라 바뀐다 — 알람이면 [AlarmPauseAction] 과
 /// 알람 기록 · 알람 설정, 걷기면 걷기 설정, 지도면 지도 설정(일기 잠금 아래라 잠긴 동안은
-/// 앱 설정만). 고른 상단 탭은 셸이 쥐고([section]) 사용자가
+/// 앱 설정만), 날씨면 앱 설정만. 고른 상단 탭은 셸이 쥐고([section]) 사용자가
 /// 바꾸면 [onSectionChanged] 로 알린다. 셸이 바꾸면(홈 화면 위젯으로 열림) 그쪽으로 넘어간다.
 ///
-/// 셸의 `AlarmListCubit` · 설정 cubit 넷([openSettings]) · `DiaryLockCubit` · 지도 cubit 둘 아래에 둔다.
+/// 셸의 `AlarmListCubit` · 설정 cubit 넷([openSettings]) · `DiaryLockCubit` · 지도 cubit 둘 · 날씨 cubit 아래에 둔다.
 class ToolsTab extends StatefulWidget {
   const ToolsTab({
     required this.active,
@@ -114,6 +115,12 @@ class _ToolsTabState extends State<ToolsTab>
               showFeatureSettings: unlocked,
             ),
           ],
+          ToolsSection.weather => [
+            const FeatureMenu(
+              settings: SettingsTarget.app,
+              showFeatureSettings: false,
+            ),
+          ],
         },
         bottom: TabBar(
           controller: _controller,
@@ -121,6 +128,7 @@ class _ToolsTabState extends State<ToolsTab>
             Tab(text: l10n.walkToolsTabAlarm),
             Tab(text: l10n.walkToolsTabWalk),
             Tab(text: l10n.walkToolsTabMap),
+            Tab(text: l10n.walkToolsTabWeather),
           ],
         ),
       ),
@@ -141,6 +149,11 @@ class _ToolsTabState extends State<ToolsTab>
           _KeepAlive(
             child: MapTab(
               active: widget.selected && widget.section == ToolsSection.map,
+            ),
+          ),
+          _KeepAlive(
+            child: WeatherPage(
+              active: widget.active && widget.section == ToolsSection.weather,
             ),
           ),
         ],

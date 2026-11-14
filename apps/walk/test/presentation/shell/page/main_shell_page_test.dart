@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'package:walk/presentation/weather/cubit/weather_cubit.dart';
+import 'package:walk/domain/weather/weather_problem.dart';
+import 'package:walk/presentation/weather/cubit/weather_state.dart';
+import 'package:walk/presentation/weather/page/weather_page.dart';
 import 'package:walk/presentation/map/cubit/map_style_cubit.dart';
 import 'package:walk/domain/chat/attachment/attachment_loader.dart';
 import 'package:walk/domain/chat/attachment/attachment_rules.dart';
@@ -185,6 +189,7 @@ void main() {
   late _MemorySettings memorySettings;
   late _FakeWidget homeWidget;
   late _MockDiaryUseCase diary;
+  late _MockWeather weather;
   late PrefsLockRepository lockRepo;
   late MutableClock clock;
 
@@ -232,6 +237,15 @@ void main() {
     lockRepo = PrefsLockRepository(prefs);
     clock = MutableClock(DateTime.now());
     diary = _MockDiaryUseCase();
+    weather = _MockWeather();
+    whenListen(
+      weather,
+      const Stream<WeatherState>.empty(),
+      initialState: const WeatherState.empty(WeatherProblem.offline),
+    );
+    when(weather.shown).thenAnswer((_) async {});
+    when(weather.resumed).thenAnswer((_) async {});
+    when(weather.refresh).thenAnswer((_) async {});
     when(diary.maintain).thenAnswer((_) async {});
     when(diary.cleanOrphans).thenAnswer((_) async {});
     final diaryRepo = _MockDiaryRepo();
@@ -274,7 +288,8 @@ void main() {
       ..registerSingleton<WikiRepository>(FakeWikiRepository())
       ..registerSingleton<OpenConversation>(OpenConversation())
       ..registerSingleton<ChatTrace>(const NoopChatTrace())
-      ..registerSingleton<PlaceSource>(_MockPlaceSource());
+      ..registerSingleton<PlaceSource>(_MockPlaceSource())
+      ..registerFactory<WeatherCubit>(() => weather);
     getIt
       ..registerSingleton<AlarmUseCase>(alarms)
       ..registerSingleton<RingArchiver>(archiver)
@@ -1345,9 +1360,67 @@ void main() {
       verifyNever(mapView.refresh);
     });
   });
+
+  group('날씨 상단 탭', () {
+    testWidgets('도구 상단 탭은 알람 · 걷기 · 지도 · 날씨', (tester) async {
+      await pump(tester);
+      final labels = tester
+          .widgetList<Tab>(find.byType(Tab))
+          .map((t) => t.text)
+          .toList();
+      expect(labels, ['알람', '걷기', '지도', '날씨']);
+    });
+
+    testWidgets('날씨 상단 탭을 누르면 WeatherPage 가 보이고 shown 이 불린다', (tester) async {
+      await pump(tester);
+      verifyNever(weather.shown);
+
+      await tapToolsTab(tester, '날씨');
+
+      expect(onstage(WeatherPage), isTrue);
+      expect(toolsSection(tester), ToolsSection.weather);
+      verify(weather.shown).called(1);
+    });
+
+    testWidgets('날씨 탭 ⋮ 는 앱 설정만', (tester) async {
+      await pump(tester);
+      await tapToolsTab(tester, '날씨');
+
+      await tester.tap(find.byIcon(Icons.more_vert).hitTestable());
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
+      expect(find.byKey(const Key('menu-settings-alarm')), findsNothing);
+      expect(find.byKey(const Key('menu-settings-walk')), findsNothing);
+      expect(find.byKey(const Key('menu-settings-map')), findsNothing);
+    });
+
+    testWidgets('날씨를 보던 중 복귀하면 resumed 를 부른다', (tester) async {
+      await pump(tester);
+      await tapToolsTab(tester, '날씨');
+
+      resume(tester);
+      await tester.pumpAndSettle();
+
+      verify(weather.resumed).called(1);
+    });
+
+    testWidgets('다른 상단 탭을 보던 중 복귀하면 부르지 않는다', (tester) async {
+      await pump(tester);
+      await tapToolsTab(tester, '날씨');
+      await tapToolsTab(tester, '알람');
+
+      resume(tester);
+      await tester.pumpAndSettle();
+
+      verifyNever(weather.resumed);
+    });
+  });
 }
 
 class _MockMapView extends MockCubit<MapViewState> implements MapViewCubit {}
+
+class _MockWeather extends MockCubit<WeatherState> implements WeatherCubit {}
 
 class _MockRecorder extends Mock implements LocationRecorder {}
 
