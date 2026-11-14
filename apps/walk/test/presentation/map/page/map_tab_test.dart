@@ -532,17 +532,19 @@ void main() {
     await pump(tester, state: MapViewState.ready(_data()));
     String url() =>
         tester.widget<TileLayer>(find.byType(TileLayer)).urlTemplate!;
-    expect(url(), contains('tile.openstreetmap.org'));
+    // 저장한 적이 없으면 단순(CARTO).
+    expect(url(), contains('light_all'));
+    expect(find.textContaining('CARTO'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('map-style-button')));
     await tester.pumpAndSettle();
     expect(find.text('지도 모양'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('map-style-simple')));
+    await tester.tap(find.byKey(const Key('map-style-standard')));
     await tester.pumpAndSettle();
 
-    expect(url(), contains('light_all'));
-    expect(mapStyle.style, MapStyle.simple);
-    expect(find.textContaining('CARTO'), findsOneWidget);
+    expect(url(), contains('tile.openstreetmap.org'));
+    expect(mapStyle.style, MapStyle.standard);
+    expect(find.textContaining('CARTO'), findsNothing);
   });
 
   testWidgets('saved style is used when the map opens', (tester) async {

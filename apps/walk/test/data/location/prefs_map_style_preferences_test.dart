@@ -11,8 +11,8 @@ Future<PrefsMapStylePreferences> _prefs([
 }
 
 void main() {
-  test('저장한 적이 없으면 기본 지도', () async {
-    expect((await _prefs()).style, MapStyle.standard);
+  test('저장한 적이 없으면 단순 지도', () async {
+    expect((await _prefs()).style, MapStyle.simple);
   });
 
   test('저장한 값을 새 인스턴스에서 다시 읽는다', () async {
@@ -27,11 +27,11 @@ void main() {
   test('타입이 다르거나 모르는 이름이면 기본값', () async {
     expect(
       (await _prefs({PrefsMapStylePreferences.styleKey: 3})).style,
-      MapStyle.standard,
+      MapStyle.simple,
     );
     expect(
       (await _prefs({PrefsMapStylePreferences.styleKey: 'satellite'})).style,
-      MapStyle.standard,
+      MapStyle.simple,
     );
   });
 }

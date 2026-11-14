@@ -12,5 +12,5 @@ enum MapStyle {
   /// 어두운 바탕(CARTO Dark Matter).
   dark;
 
-  static const fallback = MapStyle.standard;
+  static const fallback = MapStyle.simple;
 }

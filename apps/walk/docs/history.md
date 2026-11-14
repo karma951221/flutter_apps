@@ -891,7 +891,7 @@ OSM 기본 타일이 가게 · 건물 이름까지 다 그려서 동선이 묻�
 - **타일은 키 없는 CARTO basemap** — 단순(`light_all`) · 글자 없이(`light_nolabels`) · 어둡게(`dark_all`).
   API 키 · 가입이 없고 OSM 데이터라 출처는 "OpenStreetMap contributors · CARTO". 비상업 토이 프로젝트
   사용량 안이다. 위성 사진은 무료 · 키 없는 정식 출처가 마땅치 않아 뺐다.
-- **기본값은 그대로 OSM 기본** — 이미 쓰던 사람에게 지도가 갑자기 바뀌지 않게.
+- **기본값은 단순** — 처음엔 OSM 기본으로 뒀다가, 복잡하다는 피드백 그대로 단순을 기본으로 바꿨다.
 - **`TileLayer` 의 key 를 바꾸지 않는다** — 새 위젯이 되면 옛 TileLayer 가 공유 `TileProvider` 를
   dispose 해 지도가 회색이 된다. URL 만 바꾸면 TileLayer 가 스스로 타일을 다시 읽는다.
 - 설정은 위치 기록 설정(`LocationPreferences`)과 따로 `MapStylePreferences` 로 뒀다 — 지도 보기 취향이라
