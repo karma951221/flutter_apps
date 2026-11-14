@@ -85,6 +85,10 @@ void main() {
       'out/x',
       'out/a:b.md',
       'out/a\u0001b.md',
+      'out/a\u202Edm.txt', // 방향 바꾸는 글자 — out/atxt.md 로 보인다
+      'out/a\u200Bb.md', // 폭 없는 글자
+      'out/\uFEFFa.md',
+      'out/a\u2066b.md',
       'out/${'가' * 118}.md', // 121자
       'out/',
       'out',

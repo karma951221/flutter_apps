@@ -167,9 +167,9 @@ class _WriteApprovalSheetState extends State<WriteApprovalSheet> {
           children: [
             Text(title, style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.xs),
-            // 실제 상대 경로 그대로 — 줄이지 않는다.
+            // 실제 상대 경로 그대로 — 줄이지 않고, 보이지 않는 글자는 드러낸다.
             Text(
-              '${plan.path} · ${DiaryStorageSection.formatBytes(sizeBytes)}',
+              '${revealInvisible(plan.path)} · ${DiaryStorageSection.formatBytes(sizeBytes)}',
               style: muted,
             ),
             const SizedBox(height: AppSpacing.xs),

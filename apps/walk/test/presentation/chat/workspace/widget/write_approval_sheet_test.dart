@@ -250,6 +250,19 @@ void main() {
     expect(_boxes(tester), contains('a⟨U+202E⟩b⟨U+200B⟩c'));
   });
 
+  testWidgets('경로의 방향 바꾸는 글자도 머리에서 드러난다', (tester) async {
+    await _open(
+      tester,
+      const WritePlan.create(
+        path: 'out/a\u202Edm.txt',
+        name: 'a\u202Edm.txt',
+        content: 'x',
+      ),
+    );
+
+    expect(find.text('out/a⟨U+202E⟩dm.txt · 1B'), findsOneWidget);
+  });
+
   testWidgets('5,000줄 · 아주 긴 줄 → 넘치지 않고 시트 안에서 스크롤된다', (tester) async {
     final long = 'x' * 3000;
     final content = [long, ...List.generate(5000, (i) => '줄 $i')].join('\n');

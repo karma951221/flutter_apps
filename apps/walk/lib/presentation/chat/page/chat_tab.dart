@@ -46,6 +46,7 @@ import '../widget/model_picker_sheet.dart';
 import '../widget/temporary_chat_banner.dart';
 import '../wiki/cubit/wiki_edit_state.dart';
 import '../wiki/open_wiki.dart';
+import '../workspace/format/reveal_invisible.dart';
 import '../workspace/open_workspace.dart';
 import '../workspace/widget/write_approval_sheet.dart';
 import '../wiki/widget/wiki_candidates_sheet.dart';
@@ -441,7 +442,7 @@ class _ChatBody extends StatelessWidget {
             final tab = context.findAncestorStateOfType<_ChatTabState>();
             AppSnackBar.show(
               context,
-              message: l10n.walkChatWriteSaved(saved.name),
+              message: l10n.walkChatWriteSaved(revealInvisible(saved.name)),
               actionLabel: l10n.walkChatWriteOpen,
               onAction: () => tab?._openSaved(saved.path),
             );

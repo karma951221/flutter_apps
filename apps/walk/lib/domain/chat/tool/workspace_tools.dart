@@ -8,6 +8,7 @@ import '../attachment/chat_attachment.dart';
 import '../chat_model.dart';
 import '../workspace/workspace.dart';
 import '../workspace/workspace_changes.dart';
+import 'invisible_chars.dart';
 import 'tool_result.dart';
 import 'tool_summary.dart';
 import 'write_plan.dart';
@@ -260,6 +261,8 @@ class WorkspaceTools {
         name.startsWith('.') ||
         name.runes.length > maxWriteNameChars ||
         _forbiddenName.hasMatch(name) ||
+        // 보이지 않는 · 방향 바꾸는 글자 — 승인 시트에서 다른 이름으로 보일 수 있다.
+        name.runes.any(isInvisibleRune) ||
         dot < 0 ||
         !_writableExtensions.contains(name.substring(dot + 1).toLowerCase())) {
       return 'invalid_path';

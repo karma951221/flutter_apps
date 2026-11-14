@@ -1999,6 +1999,32 @@ void main() {
         unawaited(events.close());
       });
 
+      testWidgets('저장 스낵바의 NAME 도 보이지 않는 글자를 드러낸다', (tester) async {
+        const odd = WritePlan.create(
+          path: 'out/a\u202Edm.txt',
+          name: 'a\u202Edm.txt',
+          content: 'x',
+        );
+        final events = await asking(tester);
+        events
+          ..add(const ChatEvent.toolStarted(callId: 'w2', name: 'write_file'))
+          ..add(const ChatEvent.approvalRequested(callId: 'w2', plan: odd));
+        await settle(tester);
+        await tester.tap(find.text('저장'));
+        await settle(tester);
+        events.add(
+          const ChatEvent.toolFinished(
+            callId: 'w2',
+            name: 'write_file',
+            summary: ToolSummary(kind: ChatToolKind.writeFile, count: 1),
+          ),
+        );
+        await settle(tester);
+
+        expect(find.text('a⟨U+202E⟩dm.txt 에 저장했어요'), findsOneWidget);
+        unawaited(events.close());
+      });
+
       testWidgets('지우기가 끝나면 "지웠어요"', (tester) async {
         final events = await asking(tester);
         events
