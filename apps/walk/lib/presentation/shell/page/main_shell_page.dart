@@ -41,11 +41,13 @@ import '../../settings/cubit/holiday_settings_cubit.dart';
 import '../../settings/cubit/settings_permissions_cubit.dart';
 import '../../settings/open_settings.dart';
 import '../../weather/cubit/weather_cubit.dart';
+import 'log_tab.dart';
 import 'tools_tab.dart';
 
-/// 하단 탭 순서. 첫 탭(시작 탭)은 [tools] — 실사용에서 알람 · 걷기 · 지도 · 날씨를 가장 자주 연다.
-/// 그 넷은 [tools] 의 상단 탭([ToolsSection])이다. 물어보기는 덜 써서 맨 끝이다.
-enum ShellTab { tools, diary, chat }
+/// 하단 탭 순서. 첫 탭(시작 탭)은 [tools] — 실사용에서 알람 · 걷기 · 날씨를 가장 자주 연다.
+/// 그 셋은 [tools] 의 상단 탭([ToolsSection])이다. [log] 는 내 일상(일기)과 다닌 곳(지도)을
+/// 상단 탭([LogSection])으로 묶는다. 물어보기는 덜 써서 맨 끝이다.
+enum ShellTab { tools, log, chat }
 
 /// 하단 탭 셸. 탭마다 자기 `Scaffold` · `AppBar` 를 둔다. 설정은 탭이 아니라 각 탭 앱바 ⋮ 가
 /// 여는 화면([openSettings])이다.
@@ -56,7 +58,7 @@ enum ShellTab { tools, diary, chat }
 /// 알람 목록 · 설정 권한 · 공휴일 설정 cubit 을 소유해, 복귀하거나 위에 얹힌
 /// 화면(편집 · 울림 · 설정)이 걷힐 때 다시 읽는다.
 ///
-/// 일기 잠금([DiaryLockCubit])도 여기 하나를 두고 `BlocProvider` 로 내린다 — 일기 · 물어보기 탭의
+/// 일기 잠금([DiaryLockCubit])도 여기 하나를 두고 `BlocProvider` 로 내린다 — 기록 · 물어보기 탭의
 /// 게이트와 설정 화면(잠금 설정 뒤 `configChanged`)이 같은 것을 본다. 앱 생명주기(pause · resume)를 넘겨
 /// 백그라운드 경과로 다시 잠근다. 알람 울림 화면은 셸 바깥 라우트라 일기 잠금과 무관하다.
 /// 시작할 때 일기 고아 미디어 청소([DiaryUseCase.cleanOrphans])를 한 번, 기다리지 않고 부른다.
@@ -111,6 +113,9 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
 
   /// 도구 탭에서 고른 상단 탭. 앱이 떠 있는 동안 기억하고, 새로 켜면 알람이다.
   ToolsSection _toolsSection = ToolsSection.alarm;
+
+  /// 기록 탭에서 고른 상단 탭. 앱이 떠 있는 동안 기억하고, 새로 켜면 일기다.
+  LogSection _logSection = LogSection.diary;
   ModalRoute<void>? _route;
   StreamSubscription<Story>? _mapRequests;
 
@@ -120,7 +125,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   /// 셸 위에 다른 라우트(설정 · 편집 · 시트 등)가 얹혀 있는지. 걷기 화면은 가려진 동안 달성을
   /// 판정하지 않는다 — 걷기 설정에서 목표를 낮춰도 돌아왔을 때 축하한다.
   ///
-  /// 일기 · 물어보기 탭과 도구 › 지도(`ToolsTab.selected`)의 `active` 에는 섞지 않는다 — 그 탭은
+  /// 기록 탭(`LogTab.selected`) · 물어보기 탭의 `active` 에는 섞지 않는다 — 그 탭은
   /// `active` 로 잠길 때 자기 시트를 닫을지 정하고(`DiaryLockGate.dismissPopups`), 위에 얹힌
   /// 화면이 걷힐 때 앱바를 펼치거나 다시 읽지 않아야 한다(물어보기는 자기 `didPopNext` 로 다시
   /// 읽는다). 이 탭에서 띄운 시트 · 메뉴도 셸에는 얹힌 화면이다.
@@ -160,8 +165,8 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
       Navigator.of(this.context).popUntil((route) => route == shellRoute);
     }
     setState(() {
-      _tab = ShellTab.tools;
-      _toolsSection = ToolsSection.map;
+      _tab = ShellTab.log;
+      _logSection = LogSection.map;
     });
     final context = _providerContext;
     if (context == null) return;
@@ -193,8 +198,8 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   /// 잠긴 동안은 지도가 트리에 없다 — 풀리면 지도 탭이 직접 읽는다.
   void _refreshMap() {
     final visible =
-        _tab == ShellTab.tools &&
-        _toolsSection == ToolsSection.map &&
+        _tab == ShellTab.log &&
+        _logSection == LogSection.map &&
         !_covered &&
         _diaryLock.state is LockUnlocked;
     if (!visible) return;
@@ -359,7 +364,6 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
               children: [
                 ToolsTab(
                   active: _tab == ShellTab.tools && !_covered,
-                  selected: _tab == ShellTab.tools,
                   section: _toolsSection,
                   onSectionChanged: (section) =>
                       setState(() => _toolsSection = section),
@@ -371,7 +375,12 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
                     ),
                   ),
                 ),
-                DiaryTab(active: _tab == ShellTab.diary),
+                LogTab(
+                  selected: _tab == ShellTab.log,
+                  section: _logSection,
+                  onSectionChanged: (section) =>
+                      setState(() => _logSection = section),
+                ),
                 ChatTab(
                   active: _tab == ShellTab.chat,
                   onOpenSettings: () => unawaited(
@@ -383,7 +392,8 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
           },
         ),
         // 일기 ＋ 는 탭이 아니라 여기 둔다 — 스낵바가 뜨는 이 Scaffold 에 있어야 위로 비킨다.
-        floatingActionButton: _tab == ShellTab.diary
+        floatingActionButton:
+            _tab == ShellTab.log && _logSection == LogSection.diary
             ? const DiaryNewEntryButton()
             : null,
         bottomNavigationBar: NavigationBar(
@@ -396,9 +406,9 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
               label: l10n.walkShellTabTools,
             ),
             NavigationDestination(
-              icon: const Icon(Icons.menu_book_outlined),
-              selectedIcon: const Icon(Icons.menu_book),
-              label: l10n.walkShellTabDiary,
+              icon: const Icon(Icons.auto_stories_outlined),
+              selectedIcon: const Icon(Icons.auto_stories),
+              label: l10n.walkShellTabLog,
             ),
             NavigationDestination(
               icon: const Icon(Icons.chat_bubble_outline),

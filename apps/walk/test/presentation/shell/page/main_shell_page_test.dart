@@ -58,7 +58,6 @@ import 'package:walk/presentation/alarm/page/alarm_list_page.dart';
 import 'package:walk/presentation/chat/attachment/chat_file_picker.dart';
 import 'package:walk/presentation/chat/page/chat_tab.dart';
 import 'package:walk/presentation/commute/page/commute_tab.dart';
-import 'package:walk/presentation/diary/page/diary_tab.dart';
 import 'package:walk/presentation/diary/widget/story_ring_row.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
 import 'package:walk/presentation/lock/widget/pin_pad.dart';
@@ -76,6 +75,7 @@ import 'package:walk/presentation/settings/page/map_settings_page.dart';
 import 'package:walk/presentation/settings/page/walk_settings_page.dart';
 import 'package:walk/presentation/settings/widget/row_highlight.dart';
 import 'package:walk/presentation/shell/page/main_shell_page.dart';
+import 'package:walk/presentation/shell/page/log_tab.dart';
 import 'package:walk/presentation/shell/page/tools_tab.dart';
 import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
 import 'package:walk/presentation/walk/page/walk_home_page.dart';
@@ -388,7 +388,7 @@ void main() {
     await pump(tester);
 
     expect(onstage(AlarmListPage), isTrue);
-    expect(onstage(DiaryTab), isFalse);
+    expect(onstage(LogTab), isFalse);
     expect(onstage(WalkHomePage), isFalse);
     verify(alarms.sync).called(1);
   });
@@ -402,13 +402,13 @@ void main() {
     IconData icon(Widget? w) => (w! as Icon).icon!;
     expect(icon(destinations[0].icon), Icons.handyman_outlined);
     expect(icon(destinations[0].selectedIcon), Icons.handyman);
-    expect(icon(destinations[1].icon), Icons.menu_book_outlined);
-    expect(icon(destinations[1].selectedIcon), Icons.menu_book);
+    expect(icon(destinations[1].icon), Icons.auto_stories_outlined);
+    expect(icon(destinations[1].selectedIcon), Icons.auto_stories);
     expect(icon(destinations[2].icon), Icons.chat_bubble_outline);
     expect(icon(destinations[2].selectedIcon), Icons.chat_bubble);
   });
 
-  testWidgets('하단 탭은 도구 · 일기 · 물어보기 셋이고 통근 · 설정 탭은 없다', (tester) async {
+  testWidgets('하단 탭은 도구 · 기록 · 물어보기 셋이고 통근 · 설정 탭은 없다', (tester) async {
     await pump(tester);
 
     final labels = [
@@ -417,19 +417,19 @@ void main() {
       ))
         d.label,
     ];
-    expect(labels, ['도구', '일기', '물어보기']);
+    expect(labels, ['도구', '기록', '물어보기']);
     expect(find.byType(CommuteTab, skipOffstage: false), findsNothing);
-    expect(ShellTab.values, [ShellTab.tools, ShellTab.diary, ShellTab.chat]);
+    expect(ShellTab.values, [ShellTab.tools, ShellTab.log, ShellTab.chat]);
     expect(onstage(ToolsTab), isTrue);
 
-    await tapTab(tester, '일기');
-    expect(onstage(DiaryTab), isTrue);
+    await tapTab(tester, '기록');
+    expect(onstage(LogTab), isTrue);
     expect(find.byType(StoryRingRow), findsOneWidget);
   });
 
-  testWidgets('일기 탭: 스낵바가 떠도 ＋ 를 가리지 않는다(＋ 가 위로 비킨다)', (tester) async {
+  testWidgets('기록 › 일기: 스낵바가 떠도 ＋ 를 가리지 않는다(＋ 가 위로 비킨다)', (tester) async {
     await pump(tester);
-    await tapTab(tester, '일기');
+    await tapTab(tester, '기록');
     final fab = find.byTooltip('새 기록');
     final before = tester.getRect(fab);
 
@@ -464,7 +464,7 @@ void main() {
   testWidgets('일기는 잠긴 채 시작하고, 풀었다가 백그라운드에 오래 있다 돌아오면 다시 잠긴다', (tester) async {
     await enableDiaryLock();
     await pump(tester);
-    await tapTab(tester, '일기');
+    await tapTab(tester, '기록');
     expect(find.byType(PinPad), findsOneWidget);
     expect(find.byType(StoryRingRow, skipOffstage: false), findsNothing);
 
@@ -491,7 +491,7 @@ void main() {
   testWidgets('일기가 잠겨 있어도 알람 울림 화면(셸 바깥 라우트)은 보인다', (tester) async {
     await enableDiaryLock();
     await pump(tester);
-    await tapTab(tester, '일기');
+    await tapTab(tester, '기록');
     expect(find.byType(PinPad), findsOneWidget);
 
     final navigator = tester.state<NavigatorState>(
@@ -516,7 +516,7 @@ void main() {
     await tapTab(tester, '도구');
     expect(onstage(AlarmListPage), isTrue);
     expect(find.text('알람이 없어요'), findsOneWidget);
-    expect(onstage(DiaryTab), isFalse);
+    expect(onstage(LogTab), isFalse);
 
     await tapTab(tester, '물어보기');
     expect(onstage(ChatTab), isTrue);
@@ -691,7 +691,7 @@ void main() {
     await pump(tester);
 
     expect(onstage(AlarmListPage), isTrue);
-    expect(onstage(DiaryTab), isFalse);
+    expect(onstage(LogTab), isFalse);
     expect(toolsSection(tester), ToolsSection.alarm);
   });
 
@@ -700,7 +700,7 @@ void main() {
     await tapTab(tester, '도구');
     await tapToolsTab(tester, '걷기');
     expect(toolsSection(tester), ToolsSection.walk);
-    await tapTab(tester, '일기');
+    await tapTab(tester, '기록');
 
     homeWidget.launches = 1;
     resume(tester);
@@ -724,7 +724,7 @@ void main() {
     await pump(tester);
     await tapTab(tester, '도구');
     await tapToolsTab(tester, '걷기');
-    await tapTab(tester, '일기');
+    await tapTab(tester, '기록');
     await tapTab(tester, '도구');
 
     expect(toolsSection(tester), ToolsSection.walk);
@@ -1203,7 +1203,7 @@ void main() {
 
     testWidgets('지도를 보던 중 복귀하면 기록 상태와 지도를 다시 읽는다', (tester) async {
       await pump(tester);
-      await tapTab(tester, '도구');
+      await tapTab(tester, '기록');
       await tapToolsTab(tester, '지도');
       expect(onstage(MapTab), isTrue);
       clearInteractions(mapView);
@@ -1216,17 +1216,17 @@ void main() {
       verify(() => recorder.status()).called(1);
     });
 
-    /// 일기 탭에서 잠금을 푼 뒤 도구 › 지도로 간다.
+    /// 기록 › 일기에서 잠금을 푼 뒤 기록 › 지도로 간다.
     Future<void> openMapUnlocked(WidgetTester tester) async {
       await enableDiaryLock();
       await pump(tester);
-      await tapTab(tester, '일기');
+      await tapTab(tester, '기록');
       for (final d in '1234'.split('')) {
         await tester.tap(find.widgetWithText(TextButton, d));
         await tester.pump();
       }
       await tester.pumpAndSettle();
-      await tapTab(tester, '도구');
+      await tapTab(tester, '기록');
       await tapToolsTab(tester, '지도');
     }
 
@@ -1276,7 +1276,7 @@ void main() {
 
     testWidgets('지도 설정에서 돌아오면 기록 상태와 지도를 다시 읽는다', (tester) async {
       await pump(tester);
-      await tapTab(tester, '도구');
+      await tapTab(tester, '기록');
       await tapToolsTab(tester, '지도');
       await openMenu(tester, 'menu-settings-map');
       expect(find.byType(MapSettingsPage), findsOneWidget);
@@ -1299,7 +1299,7 @@ void main() {
       createdAt: DateTime(2026, 10, 6),
     );
 
-    testWidgets('스토리 뷰어의 지도 요청이 오면 도구 › 지도로 가서 그 스토리를 읽는다', (tester) async {
+    testWidgets('스토리 뷰어의 지도 요청이 오면 기록 › 지도로 가서 그 스토리를 읽는다', (tester) async {
       await pump(tester);
       expect(onstage(MapTab), isFalse);
 
@@ -1336,7 +1336,7 @@ void main() {
       verify(() => mapView.show(MapPeriod.story(trip))).called(1);
     });
 
-    testWidgets('잠겨 있어도 도구 › 지도로 옮겨 가고 PIN 을 묻는다', (tester) async {
+    testWidgets('잠겨 있어도 기록 › 지도로 옮겨 가고 PIN 을 묻는다', (tester) async {
       await enableDiaryLock();
       await pump(tester);
 
@@ -1347,11 +1347,11 @@ void main() {
       verify(() => mapView.show(MapPeriod.story(trip))).called(1);
     });
 
-    testWidgets('다른 상단 탭을 보던 중 복귀하면 지도는 읽지 않는다', (tester) async {
+    testWidgets('일기 상단 탭을 보던 중 복귀하면 지도는 읽지 않는다', (tester) async {
       await pump(tester);
-      await tapTab(tester, '도구');
+      await tapTab(tester, '기록');
       await tapToolsTab(tester, '지도');
-      await tapToolsTab(tester, '알람');
+      await tapToolsTab(tester, '일기');
       clearInteractions(mapView);
 
       resume(tester);
@@ -1362,13 +1362,13 @@ void main() {
   });
 
   group('날씨 상단 탭', () {
-    testWidgets('도구 상단 탭은 알람 · 걷기 · 지도 · 날씨', (tester) async {
+    testWidgets('도구 상단 탭은 알람 · 걷기 · 날씨', (tester) async {
       await pump(tester);
       final labels = tester
           .widgetList<Tab>(find.byType(Tab))
           .map((t) => t.text)
           .toList();
-      expect(labels, ['알람', '걷기', '지도', '날씨']);
+      expect(labels, ['알람', '걷기', '날씨']);
     });
 
     testWidgets('날씨 상단 탭을 누르면 WeatherPage 가 보이고 shown 이 불린다', (tester) async {

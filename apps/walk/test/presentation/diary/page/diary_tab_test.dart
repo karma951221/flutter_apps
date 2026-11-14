@@ -35,6 +35,7 @@ import 'package:walk/presentation/diary/widget/story_ring.dart';
 import 'package:walk/presentation/diary/widget/story_ring_row.dart';
 import 'package:walk/presentation/diary/media_picker.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
+import 'package:walk/presentation/lock/cubit/diary_lock_state.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
 import 'package:walk/presentation/lock/widget/pin_pad.dart';
 
@@ -127,8 +128,26 @@ void main() {
     supportedLocales: AppLocalizations.supportedLocales,
     home: BlocProvider.value(
       value: lock,
-      // 셸처럼 바깥 Scaffold 가 ＋ 를 든다.
+      // 셸처럼 바깥 Scaffold 가 ＋ 를 들고, 기록 탭(LogTab)처럼 앱바에 🔍 · ⋮ 를 단다.
       child: Scaffold(
+        appBar: AppBar(
+          actions: [
+            Builder(
+              builder: (context) {
+                final unlocked = context.select<DiaryLockCubit, bool>(
+                  (c) => c.state is LockUnlocked,
+                );
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (unlocked) const DiarySearchAction(),
+                    DiaryMenu(unlocked: unlocked),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
         body: DiaryTab(active: active),
         floatingActionButton: const DiaryNewEntryButton(),
       ),
@@ -286,7 +305,7 @@ void main() {
     });
   });
 
-  testWidgets('앱바 · 동그라미 줄 · 모든 스토리 기록 피드(최신순), 보기 모드 토글 없음', (tester) async {
+  testWidgets('동그라미 줄 · 모든 스토리 기록 피드(최신순), 보기 모드 토글 없음', (tester) async {
     stories = [
       _story(Story.dailyId, '', lastPostedAt: diaryT0),
       _story(
@@ -309,10 +328,6 @@ void main() {
     ];
     await pump(tester);
 
-    expect(
-      find.descendant(of: find.byType(AppBar), matching: find.text('일기')),
-      findsOneWidget,
-    );
     expect(find.byIcon(Icons.search), findsOneWidget);
     expect(appBarMenu(), findsOneWidget);
     expect(ringLabels(tester), ['jeju', Story.dailyId, 'busan']);
@@ -713,87 +728,5 @@ void main() {
     );
     expect(ringOf('jeju').cover?.path, '/fake/media/v1.thumb.jpg');
     expect(ringOf(Story.dailyId).cover, isNull);
-  });
-
-  group('앱바는 스크롤에 따라 숨는다', () {
-    Finder title() =>
-        find.descendant(of: find.byType(AppBar), matching: find.text('일기'));
-
-    /// 제목이 화면 위로 밀려났는지(떠 있는 앱바가 접혔는지).
-    bool titleHidden(WidgetTester tester) =>
-        title().hitTestable().evaluate().isEmpty;
-
-    setUp(() {
-      entries[const EntryFilter.all()] = [
-        for (var i = 0; i < 30; i++)
-          _entry('기록 $i', at: diaryT0.subtract(Duration(hours: i))),
-      ];
-    });
-
-    testWidgets('내리면 숨고 조금 올리면 다시 보인다', (tester) async {
-      await pump(tester);
-      expect(titleHidden(tester), isFalse);
-
-      await tester.drag(find.byType(FeedView), const Offset(0, -600));
-      await tester.pumpAndSettle();
-      expect(titleHidden(tester), isTrue);
-
-      await tester.drag(find.byType(FeedView), const Offset(0, 50));
-      await tester.pumpAndSettle();
-      expect(titleHidden(tester), isFalse);
-    });
-
-    testWidgets('탭을 떠났다 돌아오면 앱바를 펼친다', (tester) async {
-      await pump(tester);
-      await tester.drag(find.byType(FeedView), const Offset(0, -600));
-      await tester.pumpAndSettle();
-      expect(titleHidden(tester), isTrue);
-
-      await tester.pumpWidget(app(active: false));
-      await tester.pumpWidget(app());
-      await tester.pumpAndSettle();
-      expect(titleHidden(tester), isFalse);
-    });
-
-    testWidgets('다시 잠기면 앱바를 펼친다', (tester) async {
-      await pump(tester);
-      await tester.drag(find.byType(FeedView), const Offset(0, -600));
-      await tester.pumpAndSettle();
-      expect(titleHidden(tester), isTrue);
-
-      await lockRepo.setSecret(LockMethod.pin, '1234');
-      await lockRepo.saveConfig(const LockConfig(enabled: true));
-      final clock = getIt<Clock>() as MutableClock;
-      lock.onPaused();
-      clock.advance(const Duration(minutes: 5));
-      lock.onResumed();
-      await tester.pumpAndSettle();
-      expect(find.byType(PinPad), findsOneWidget);
-      expect(titleHidden(tester), isFalse);
-    });
-
-    testWidgets('애니메이션 줄이기면 튀어나오지 않고 손가락만 따라온다', (tester) async {
-      lock.start();
-      await tester.pumpWidget(
-        MediaQuery(
-          data: const MediaQueryData(disableAnimations: true),
-          child: app(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final bar = tester.widget<SliverAppBar>(find.byType(SliverAppBar));
-      expect(bar.floating, isTrue);
-      expect(bar.pinned, isFalse);
-      expect(bar.snap, isFalse);
-    });
-
-    testWidgets('보통은 floating · snap', (tester) async {
-      await pump(tester);
-
-      final bar = tester.widget<SliverAppBar>(find.byType(SliverAppBar));
-      expect(bar.floating, isTrue);
-      expect(bar.snap, isTrue);
-    });
   });
 }

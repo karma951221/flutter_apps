@@ -3459,6 +3459,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAppSettingsFeatures => '기능별 설정';
 
   @override
+  String get walkShellTabLog => '기록';
+
+  @override
   String get walkShellTabTools => '도구';
 
   @override
@@ -4133,7 +4136,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapEnableFailed => '위치 기록을 켜지 못했어요. 잠시 뒤 다시 시도해 주세요';
 
   @override
-  String get walkToolsTabMap => '지도';
+  String get walkLogTabMap => '지도';
 
   @override
   String get walkMapSegmentDay => '오늘';

@@ -2241,7 +2241,7 @@
   },
   "walkShellTabDiary": "일기",
   "@walkShellTabDiary": {
-    "description": "하단 탭 — 일기"
+    "description": "기록 탭 상단 탭 — 일기"
   },
   "walkDiaryDailyStoryTitle": "일상",
   "@walkDiaryDailyStoryTitle": {
@@ -4672,6 +4672,8 @@
   "@walkAppSettingsDisplay": { "description": "앱 설정 화면(테마) 섹션 제목" },
   "walkAppSettingsFeatures": "기능별 설정",
   "@walkAppSettingsFeatures": { "description": "앱 설정 기능별 설정 바로가기 섹션 제목" },
+  "walkShellTabLog": "기록",
+  "@walkShellTabLog": { "description": "하단 탭 — 기록(일기 · 지도를 묶는다). 기록 탭 앱바 제목" },
   "walkShellTabTools": "도구",
   "@walkShellTabTools": { "description": "하단 탭 — 도구(알람 · 걷기를 묶는다). 도구 탭 앱바 제목" },
   "walkToolsTabAlarm": "알람",
@@ -5078,8 +5080,8 @@
   "@walkMapSettingsDenied": {"description": "지도 설정 — 위치 권한이 거부돼 기록을 켜지 못했을 때 스낵바"},
   "walkMapEnableFailed": "위치 기록을 켜지 못했어요. 잠시 뒤 다시 시도해 주세요",
   "@walkMapEnableFailed": {"description": "지도 — 권한 흐름 · 서비스 시작이 오류로 실패했을 때 스낵바"},
-  "walkToolsTabMap": "지도",
-  "@walkToolsTabMap": {"description": "도구 탭 상단 탭 — 지도"},
+  "walkLogTabMap": "지도",
+  "@walkLogTabMap": {"description": "기록 탭 상단 탭 — 지도"},
   "walkMapSegmentDay": "오늘",
   "@walkMapSegmentDay": {"description": "지도 — 기간 세그먼트: 하루 보기"},
   "walkMapSegmentMonth": "한 달",

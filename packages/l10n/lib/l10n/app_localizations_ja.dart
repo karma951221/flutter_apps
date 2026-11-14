@@ -3457,6 +3457,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAppSettingsFeatures => '機能別の設定';
 
   @override
+  String get walkShellTabLog => '記録';
+
+  @override
   String get walkShellTabTools => 'ツール';
 
   @override
@@ -4130,7 +4133,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkMapEnableFailed => '位置情報の記録をオンにできませんでした。しばらくしてからもう一度お試しください';
 
   @override
-  String get walkToolsTabMap => '地図';
+  String get walkLogTabMap => '地図';
 
   @override
   String get walkMapSegmentDay => '今日';

@@ -3772,6 +3772,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkAppSettingsFeatures => 'Feature settings';
 
   @override
+  String get walkShellTabLog => 'Log';
+
+  @override
   String get walkShellTabTools => 'Tools';
 
   @override
@@ -4503,7 +4506,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not turn on location recording. Please try again later';
 
   @override
-  String get walkToolsTabMap => 'Map';
+  String get walkLogTabMap => 'Map';
 
   @override
   String get walkMapSegmentDay => 'Today';

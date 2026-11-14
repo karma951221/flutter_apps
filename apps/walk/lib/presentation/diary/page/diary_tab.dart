@@ -34,10 +34,10 @@ import 'filtered_entries_page.dart';
 import 'story_page.dart';
 import 'trash_page.dart';
 
-/// 셸의 일기 탭(스펙 §3.1, 인스타 홈): 앱바(일기 🔍 ⋮) + 스토리 동그라미 줄 + 모든 스토리
-/// 기록 피드. 위에서 `DiaryLockCubit` 를 받는다(셸이 소유). ⋮ 의 설정 항목은 셸의 설정 cubit
-/// 아래에서 연다([openSettings]).
-/// ＋ 는 셸이 이 탭일 때 [DiaryNewEntryButton] 으로 둔다.
+/// 기록 탭 › 일기(스펙 §3.1, 인스타 홈): 스토리 동그라미 줄 + 모든 스토리 기록 피드.
+/// 위에서 `DiaryLockCubit` 를 받는다(셸이 소유). 앱바는 기록 탭(`LogTab`)의 것이고, 일기일 때 그
+/// 앱바에 [DiarySearchAction] · [DiaryMenu] 를 단다. ⋮ 의 설정 항목은 셸의 설정 cubit 아래에서
+/// 연다([openSettings]). ＋ 는 셸이 이 상단 탭일 때 [DiaryNewEntryButton] 으로 둔다.
 ///
 /// 타임라인은 [DiaryLockGate] 안쪽에 있어 잠긴 동안 트리에 없다. 탭이 보이고 잠금이 풀려 있게
 /// 될 때마다(풀린 채 탭이 보이게 되거나, 보이는 탭에서 잠금이 풀릴 때) [DiaryUseCase.maintain] 을
@@ -46,7 +46,7 @@ import 'trash_page.dart';
 class DiaryTab extends StatefulWidget {
   const DiaryTab({required this.active, super.key});
 
-  /// 셸에서 이 탭이 보이는지.
+  /// 하단 탭이 기록이고 상단 탭이 일기인지.
   final bool active;
 
   @override
@@ -58,9 +58,6 @@ class _DiaryTabState extends State<DiaryTab> {
   late final _timeline = DiaryTimelineCubit(getIt<DiaryRepository>())..start();
   late final _covers = StoryCoversCubit(getIt<DiaryRepository>())..start();
 
-  /// 앱바를 다시 펼칠 때 바깥(앱바) 스크롤을 맨 위로 되돌린다.
-  final _scroll = GlobalKey<NestedScrollViewState>();
-
   @override
   void initState() {
     super.initState();
@@ -70,10 +67,7 @@ class _DiaryTabState extends State<DiaryTab> {
   @override
   void didUpdateWidget(DiaryTab oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!oldWidget.active && widget.active) {
-      _expandAppBar();
-      if (_unlocked) _maintain();
-    }
+    if (!oldWidget.active && widget.active && _unlocked) _maintain();
   }
 
   @override
@@ -88,69 +82,25 @@ class _DiaryTabState extends State<DiaryTab> {
   /// 휴지통 기한 · 장소 이름 채우기. 화면을 막지 않는다 — 결과는 저장소 스트림으로 들어온다.
   void _maintain() => unawaited(_useCase.maintain().catchError((Object _) {}));
 
-  /// 스크롤로 숨은 앱바를 펼친다(탭으로 돌아올 때 · 다시 잠길 때). 아직 붙어 있지 않으면 그대로.
-  ///
-  /// 빌드 중(`didUpdateWidget`)에 스크롤을 옮기지 않도록 프레임이 끝난 뒤에 한다.
-  void _expandAppBar() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final outer = _scroll.currentState?.outerController;
-      if (outer != null && outer.hasClients) outer.jumpTo(0);
-    });
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final unlocked = context.select<DiaryLockCubit, bool>(
-      (c) => c.state is LockUnlocked,
-    );
-    return MultiBlocListener(
-      listeners: [
-        BlocListener<DiaryLockCubit, DiaryLockState>(
-          listenWhen: (a, b) => a is! LockUnlocked && b is LockUnlocked,
-          listener: (_, _) {
-            if (widget.active) _maintain();
-          },
-        ),
-        // 잠금 화면에서는 앱바가 숨어 있을 까닭이 없다 — 잠긴 상태로 바뀌면 펼친다.
-        BlocListener<DiaryLockCubit, DiaryLockState>(
-          listenWhen: (a, b) => a is LockUnlocked && b is! LockUnlocked,
-          listener: (_, _) => _expandAppBar(),
-        ),
-      ],
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider.value(value: _timeline),
-          BlocProvider.value(value: _covers),
-        ],
-        child: Scaffold(
-          // 앱바는 내리면 숨고 조금 올리면 다시 나온다(스펙 §5). 애니메이션 줄이기면 튀어나오는
-          // 전환(snap) 없이 손가락만 따라온다.
-          body: NestedScrollView(
-            key: _scroll,
-            floatHeaderSlivers: true,
-            headerSliverBuilder: (context, _) => [
-              SliverAppBar(
-                title: Text(l10n.walkShellTabDiary),
-                floating: true,
-                snap: AppMotion.enabled(context),
-                actions: [
-                  if (unlocked) const _SearchAction(),
-                  _DiaryMenu(unlocked: unlocked),
-                ],
-              ),
-            ],
-            // 다시 잠기면 이 탭에서 띄운 시트(새 스토리 등)를 닫는다 — 가려진 탭이면 위의 팝업은 다른 탭의 것.
-            body: DiaryLockGate(
-              dismissPopups: widget.active,
-              child: const _Timeline(),
-            ),
+  Widget build(BuildContext context) =>
+      BlocListener<DiaryLockCubit, DiaryLockState>(
+        listenWhen: (a, b) => a is! LockUnlocked && b is LockUnlocked,
+        listener: (_, _) {
+          if (widget.active) _maintain();
+        },
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: _timeline),
+            BlocProvider.value(value: _covers),
+          ],
+          // 다시 잠기면 이 탭에서 띄운 시트(새 스토리 등)를 닫는다 — 가려진 탭이면 위의 팝업은 다른 탭의 것.
+          child: DiaryLockGate(
+            dismissPopups: widget.active,
+            child: const _Timeline(),
           ),
         ),
-      ),
-    );
-  }
+      );
 }
 
 /// 일기 탭의 ＋(새 기록 — 고르기 시트 먼저). 잠긴 동안은 두지 않는다.
@@ -185,9 +135,9 @@ class DiaryNewEntryButton extends StatelessWidget {
   }
 }
 
-/// 일기 탭 앱바 🔍(스펙 §6.4). 검색 화면이 결과를 직접 연다.
-class _SearchAction extends StatelessWidget {
-  const _SearchAction();
+/// 기록 탭 앱바 🔍(일기일 때, 스펙 §6.4). 검색 화면이 결과를 직접 연다.
+class DiarySearchAction extends StatelessWidget {
+  const DiarySearchAction({super.key});
 
   @override
   Widget build(BuildContext context) => IconButton(
@@ -197,10 +147,10 @@ class _SearchAction extends StatelessWidget {
   );
 }
 
-/// 일기 탭 앱바 ⋮(스펙 §3.1): 모든 스토리 · 휴지통 · 일기 설정 · 앱 설정.
+/// 기록 탭 앱바 ⋮(일기일 때, 스펙 §3.1): 모든 스토리 · 휴지통 · 일기 설정 · 앱 설정.
 /// 잠긴 동안은 앱 설정만 — 나머지는 잠금 아래다.
-class _DiaryMenu extends StatelessWidget {
-  const _DiaryMenu({required this.unlocked});
+class DiaryMenu extends StatelessWidget {
+  const DiaryMenu({required this.unlocked, super.key});
 
   final bool unlocked;
 

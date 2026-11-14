@@ -134,7 +134,6 @@ void main() {
           valueListenable: section,
           builder: (context, value, _) => ToolsTab(
             active: active,
-            selected: active,
             section: value,
             onSectionChanged: (next) {
               changes.add(next);
@@ -236,51 +235,14 @@ void main() {
     expect(walkActive(tester), isFalse);
   });
 
-  testWidgets('상단 탭이 4개이고 지도 탭 ⋮ 에 지도 설정 · 앱 설정', (tester) async {
-    final shell = await pump(tester);
-    expect(find.byType(Tab), findsNWidgets(4));
-
-    await tester.tap(find.text('지도'));
-    await tester.pumpAndSettle();
-
-    expect(shell.changes, [ToolsSection.map]);
-    expect(find.byType(MapTab), findsOneWidget);
-    expect(find.byIcon(Icons.bedtime_outlined), findsNothing);
-    await tester.tap(find.byIcon(Icons.more_vert));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('menu-settings-map')), findsOneWidget);
-    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
-  });
-
-  testWidgets('잠긴 동안 지도 ⋮ 는 앱 설정만', (tester) async {
-    await h.lockWithPin();
-    await pump(tester, initial: ToolsSection.map);
-
-    await tester.tap(find.byIcon(Icons.more_vert));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('menu-settings-map')), findsNothing);
-    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
-  });
-
-  testWidgets('지도 상단 탭일 때만 MapTab.active', (tester) async {
-    await pump(tester, initial: ToolsSection.map);
-    expect(tester.widget<MapTab>(find.byType(MapTab)).active, isTrue);
-
-    await tester.tap(find.text('알람'));
-    await tester.pumpAndSettle();
-    expect(
-      tester.widget<MapTab>(find.byType(MapTab, skipOffstage: false)).active,
-      isFalse,
-    );
-  });
-
-  testWidgets('도구 상단 탭은 알람 · 걷기 · 지도 · 날씨', (tester) async {
+  testWidgets('도구 상단 탭은 알람 · 걷기 · 날씨 — 지도는 기록 탭에 있다', (tester) async {
     await pump(tester);
     final labels = tester
         .widgetList<Tab>(find.byType(Tab))
         .map((t) => t.text)
         .toList();
-    expect(labels, ['알람', '걷기', '지도', '날씨']);
+    expect(labels, ['알람', '걷기', '날씨']);
+    expect(find.byType(MapTab, skipOffstage: false), findsNothing);
   });
 
   testWidgets('날씨 상단 탭을 누르면 WeatherPage 가 보이고 shown 이 불린다', (tester) async {

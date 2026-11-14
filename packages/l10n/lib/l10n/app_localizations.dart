@@ -3080,7 +3080,7 @@ abstract class AppLocalizations {
   /// **'캘린더 허용 필요 ›'**
   String get walkSettingsCalendarNeedsPermission;
 
-  /// 하단 탭 — 일기
+  /// 기록 탭 상단 탭 — 일기
   ///
   /// In ko, this message translates to:
   /// **'일기'**
@@ -6380,6 +6380,12 @@ abstract class AppLocalizations {
   /// **'기능별 설정'**
   String get walkAppSettingsFeatures;
 
+  /// 하단 탭 — 기록(일기 · 지도를 묶는다). 기록 탭 앱바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'기록'**
+  String get walkShellTabLog;
+
   /// 하단 탭 — 도구(알람 · 걷기를 묶는다). 도구 탭 앱바 제목
   ///
   /// In ko, this message translates to:
@@ -7602,11 +7608,11 @@ abstract class AppLocalizations {
   /// **'위치 기록을 켜지 못했어요. 잠시 뒤 다시 시도해 주세요'**
   String get walkMapEnableFailed;
 
-  /// 도구 탭 상단 탭 — 지도
+  /// 기록 탭 상단 탭 — 지도
   ///
   /// In ko, this message translates to:
   /// **'지도'**
-  String get walkToolsTabMap;
+  String get walkLogTabMap;
 
   /// 지도 — 기간 세그먼트: 하루 보기
   ///
