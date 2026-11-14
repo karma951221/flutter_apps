@@ -79,11 +79,19 @@ class ChatProgress with _$ChatProgress {
   /// 지금 단계.
   ChatProgressStep? get current => steps.lastOrNull;
 
-  /// 기록 도구 호출 수(서로 다른 callId). 웹 검색은 기록을 찾아본 것이 아니라 세지 않는다.
+  /// 기록 도구 호출 수(서로 다른 callId). 웹 검색 · 파일 쓰기는 기록을 찾아본 것이 아니라 세지 않는다.
   int get toolCalls => {
     for (final step in steps)
-      if (step is StepTool && step.kind != ChatToolKind.webSearch) step.callId,
+      if (step is StepTool && !_notLookup.contains(step.kind)) step.callId,
   }.length;
+
+  /// 접힌 요약의 "기록 N번 찾아봄" 에서 빼는 도구.
+  static const _notLookup = {
+    ChatToolKind.webSearch,
+    ChatToolKind.writeFile,
+    ChatToolKind.editFile,
+    ChatToolKind.deleteFile,
+  };
 
   /// [■ 멈춤]으로 끊겼다.
   bool get stopped => steps.lastOrNull is StepStopped;

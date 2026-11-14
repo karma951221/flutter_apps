@@ -3651,6 +3651,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatToolDeclined => 'Declined';
 
   @override
+  String get walkChatToolWriteFailed => 'Not saved';
+
+  @override
+  String walkChatToolWriteFailedNamed(String name) {
+    return 'Not saved · $name';
+  }
+
+  @override
   String walkChatToolWrote(String name) {
     return 'Saved · $name';
   }

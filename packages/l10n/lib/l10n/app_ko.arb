@@ -4558,6 +4558,17 @@
   },
   "walkChatToolDeclined": "거절함",
   "@walkChatToolDeclined": { "description": "채팅 탭 진행 줄: 사용자가 쓰기를 거절함" },
+  "walkChatToolWriteFailed": "저장 못 함",
+  "@walkChatToolWriteFailed": { "description": "채팅 탭 진행 줄: 쓰기 도구가 오류로 끝남(이름 모름)" },
+  "walkChatToolWriteFailedNamed": "저장 못 함 · {name}",
+  "@walkChatToolWriteFailedNamed": {
+    "description": "채팅 탭 진행 줄: 쓰기 도구가 오류로 끝남(이미 있음 · 이름 규칙 · 바뀜 · 실패)",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "walkChatToolWrote": "저장함 · {name}",
   "@walkChatToolWrote": {
     "description": "채팅 탭 진행 줄: write_file 성공",

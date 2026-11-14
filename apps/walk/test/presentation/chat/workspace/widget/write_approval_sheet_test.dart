@@ -226,6 +226,31 @@ void main() {
     expect(log, ['approve']);
   });
 
+  group('지우기: 남은 줄 수 — 끝 줄바꿈은 줄로 세지 않는다', () {
+    String lines(int n) => List.generate(n, (i) => '줄 ${i + 1}').join('\n');
+    WritePlan plan(String previous) => WritePlan.delete(
+      path: 'out/old.txt',
+      name: 'old.txt',
+      previous: previous,
+      sizeBytes: 10,
+    );
+
+    testWidgets('30줄은 10줄 더', (tester) async {
+      await _open(tester, plan(lines(30)));
+      expect(find.text('… 10줄 더'), findsOneWidget);
+    });
+
+    testWidgets('20줄 + 끝 줄바꿈은 더 없음', (tester) async {
+      await _open(tester, plan('${lines(20)}\n'));
+      expect(find.textContaining('줄 더'), findsNothing);
+    });
+
+    testWidgets('21줄 + 끝 줄바꿈은 1줄 더', (tester) async {
+      await _open(tester, plan('${lines(21)}\n'));
+      expect(find.text('… 1줄 더'), findsOneWidget);
+    });
+  });
+
   testWidgets('마크다운 · 링크는 글자 그대로(링크 위젯 없음)', (tester) async {
     const content = '# 제목\n[a](http://x)';
     await _open(

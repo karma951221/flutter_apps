@@ -1932,6 +1932,50 @@ void main() {
         unawaited(events.close());
       });
 
+      testWidgets('쓰기 둘이 잇따르면 A 시트 [저장] 뒤 B 시트가 뜨고 B 도 답할 수 있다', (
+        tester,
+      ) async {
+        final events = await asking(tester);
+        await requestApproval(tester, events);
+        expect(find.textContaining('out/a.md'), findsOneWidget);
+
+        await tester.tap(find.text('저장'));
+        await settle(tester);
+        verify(() => session.decide('w1', true)).called(1);
+        events.add(
+          const ChatEvent.toolFinished(
+            callId: 'w1',
+            name: 'write_file',
+            summary: ToolSummary(kind: ChatToolKind.writeFile, count: 1),
+          ),
+        );
+        await settle(tester);
+
+        events
+          ..add(const ChatEvent.toolStarted(callId: 'w2', name: 'write_file'))
+          ..add(
+            const ChatEvent.approvalRequested(
+              callId: 'w2',
+              plan: WritePlan.create(
+                path: 'out/b.md',
+                name: 'b.md',
+                content: '# 둘째',
+              ),
+            ),
+          );
+        await settle(tester);
+        expect(find.text('파일 만들기'), findsOneWidget);
+        expect(find.textContaining('out/b.md'), findsOneWidget);
+        expect(find.textContaining('out/a.md'), findsNothing);
+
+        await tester.tap(find.text('저장'));
+        await settle(tester);
+        verify(() => session.decide('w2', true)).called(1);
+        verifyNever(() => session.decide(any(), false));
+        expect(find.text('파일 만들기'), findsNothing);
+        unawaited(events.close());
+      });
+
       testWidgets('잠기면 시트가 닫히되 거절하지 않고, 풀리면 다시 뜬다', (tester) async {
         final events = await asking(tester);
         await requestApproval(tester, events);

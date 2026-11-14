@@ -6194,6 +6194,18 @@ abstract class AppLocalizations {
   /// **'거절함'**
   String get walkChatToolDeclined;
 
+  /// 채팅 탭 진행 줄: 쓰기 도구가 오류로 끝남(이름 모름)
+  ///
+  /// In ko, this message translates to:
+  /// **'저장 못 함'**
+  String get walkChatToolWriteFailed;
+
+  /// 채팅 탭 진행 줄: 쓰기 도구가 오류로 끝남(이미 있음 · 이름 규칙 · 바뀜 · 실패)
+  ///
+  /// In ko, this message translates to:
+  /// **'저장 못 함 · {name}'**
+  String walkChatToolWriteFailedNamed(String name);
+
   /// 채팅 탭 진행 줄: write_file 성공
   ///
   /// In ko, this message translates to:

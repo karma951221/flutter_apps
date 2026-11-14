@@ -36,7 +36,7 @@ String chatProgressTimelineText(
 };
 
 /// 접힌 요약 — "기록 3번 찾아봄 · 9초" · "9초" · "멈춤 · 기록 1번 찾아봄 · 4초".
-/// 웹 검색은 기록을 찾아본 수에 넣지 않는다([ChatProgress.toolCalls]).
+/// 웹 검색 · 파일 쓰기는 기록을 찾아본 수에 넣지 않는다([ChatProgress.toolCalls]).
 String chatProgressSummaryText(AppLocalizations l10n, ChatProgress progress) {
   final calls = progress.toolCalls;
   final parts = [
@@ -143,13 +143,20 @@ String? _detail(
   };
 }
 
-/// 결과 문구. 결과가 없거나 오류면 null — 라벨 그대로 둔다(오류 문구 없음).
-/// 사용자가 거절한 쓰기는 "거절함", 성공한 쓰기는 "저장함 · 이름" 류.
+/// 결과 문구. 결과가 없거나 읽기 도구 오류면 null — 라벨 그대로 둔다(오류 문구 없음).
+/// 사용자가 거절한 쓰기는 "거절함", 성공한 쓰기는 "저장함 · 이름" 류, 오류로 끝난 쓰기
+/// (이미 있음 · 이름 규칙 · 바뀜 · 실패)는 "저장 못 함 · 이름" — "파일 저장 중" 에 머물지 않게.
 String? _resultText(AppLocalizations l10n, StepTool step) {
   final result = step.result;
   if (result == null) return null;
   if (result.declined) return l10n.walkChatToolDeclined;
-  if (result.isError) return null;
+  if (result.isError) {
+    if (!_isWrite(result.kind)) return null;
+    return switch (_shortName(step.input?.name)) {
+      final name? => l10n.walkChatToolWriteFailedNamed(name),
+      null => l10n.walkChatToolWriteFailed,
+    };
+  }
   if (_isWrite(result.kind)) {
     final name = _shortName(step.input?.name) ?? '';
     return switch (result.kind) {

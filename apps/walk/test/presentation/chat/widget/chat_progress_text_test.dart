@@ -399,17 +399,44 @@ void main() {
       );
     });
 
-    test('오류 결과는 라벨 그대로', () {
-      final failed = write(
-        ChatToolKind.writeFile,
-        result: const ToolSummary(
-          kind: ChatToolKind.writeFile,
-          count: 0,
-          isError: true,
-        ),
-      );
-      expect(chatProgressStepText(ko, 'ko', failed), '파일 저장 중 · a.md');
-    });
+    test(
+      '오류 결과(exists · invalid_path · changed · tool_failed)는 저장 못 함 · NAME',
+      () {
+        for (final kind in [
+          ChatToolKind.writeFile,
+          ChatToolKind.editFile,
+          ChatToolKind.deleteFile,
+        ]) {
+          final failed = write(
+            kind,
+            result: ToolSummary(kind: kind, count: 0, isError: true),
+          );
+          expect(chatProgressStepText(ko, 'ko', failed), '저장 못 함 · a.md');
+          expect(chatProgressTimelineText(ko, 'ko', failed), '저장 못 함 · a.md');
+        }
+        final failed = write(
+          ChatToolKind.writeFile,
+          result: const ToolSummary(
+            kind: ChatToolKind.writeFile,
+            count: 0,
+            isError: true,
+          ),
+        );
+        expect(chatProgressStepText(en, 'en', failed), 'Not saved · a.md');
+        // 이름을 모르면 이름 없이.
+        final noName = write(
+          ChatToolKind.writeFile,
+          name: null,
+          result: const ToolSummary(
+            kind: ChatToolKind.writeFile,
+            count: 0,
+            isError: true,
+          ),
+        );
+        expect(chatProgressStepText(ko, 'ko', noName), '저장 못 함');
+        expect(chatProgressTimelineText(ko, 'ko', noName), '저장 못 함');
+      },
+    );
   });
 
   group('요약', () {
@@ -444,6 +471,28 @@ void main() {
         running: false,
       );
       expect(chatProgressSummaryText(ko, progress), '9초');
+    });
+
+    test('쓰기 도구는 기록 찾아본 수에 넣지 않는다', () {
+      final progress = ChatProgress(
+        startedAt: start,
+        steps: [
+          call('a'),
+          const ChatProgressStep.tool(
+            callId: 'w',
+            kind: ChatToolKind.writeFile,
+          ),
+          const ChatProgressStep.tool(callId: 'e', kind: ChatToolKind.editFile),
+          const ChatProgressStep.tool(
+            callId: 'd',
+            kind: ChatToolKind.deleteFile,
+          ),
+          const ChatProgressStep.writing(),
+        ],
+        elapsedSeconds: 9,
+        running: false,
+      );
+      expect(chatProgressSummaryText(ko, progress), '기록 1번 찾아봄 · 9초');
     });
 
     test("멈춤 → '멈춤 · 기록 1번 찾아봄 · 4초'", () {

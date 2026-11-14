@@ -265,7 +265,12 @@ const _previewLines = 20;
 
 String _head(String text) => text.split('\n').take(_previewLines).join('\n');
 
-int _moreLines(String text) => '\n'.allMatches(text).length + 1 - _previewLines;
+/// 미리 보기 뒤에 남은 줄 수. 끝 줄바꿈 뒤의 빈 마디는 줄로 세지 않는다.
+int _moreLines(String text) {
+  final breaks = '\n'.allMatches(text).length;
+  final lines = text.endsWith('\n') ? breaks : breaks + 1;
+  return lines - _previewLines;
+}
 
 /// [previous] 에서 [oldText] 가 처음 나오는 곳 앞뒤 한 줄씩의 맥락. 앞은 그 앞 줄과 바뀌는 곳이 든
 /// 줄의 앞부분, 뒤는 그 줄의 뒷부분과 다음 줄. 없으면(준비 때 검증했으니 보통 없다) null.

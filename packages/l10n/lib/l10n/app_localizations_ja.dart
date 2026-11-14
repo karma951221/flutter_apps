@@ -3349,6 +3349,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatToolDeclined => '拒否';
 
   @override
+  String get walkChatToolWriteFailed => '保存できず';
+
+  @override
+  String walkChatToolWriteFailedNamed(String name) {
+    return '保存できず・$name';
+  }
+
+  @override
   String walkChatToolWrote(String name) {
     return '保存済み・$name';
   }

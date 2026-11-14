@@ -3351,6 +3351,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatToolDeclined => '거절함';
 
   @override
+  String get walkChatToolWriteFailed => '저장 못 함';
+
+  @override
+  String walkChatToolWriteFailedNamed(String name) {
+    return '저장 못 함 · $name';
+  }
+
+  @override
   String walkChatToolWrote(String name) {
     return '저장함 · $name';
   }

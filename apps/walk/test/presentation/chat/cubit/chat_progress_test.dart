@@ -33,6 +33,20 @@ void main() {
     expect(progress.toolCalls, 1);
   });
 
+  test('toolCalls 는 쓰기 도구를 세지 않는다', () {
+    final progress = ChatProgress(
+      startedAt: t0,
+      steps: const [
+        ChatProgressStep.tool(callId: 'a', kind: ChatToolKind.listFiles),
+        ChatProgressStep.tool(callId: 'w', kind: ChatToolKind.writeFile),
+        ChatProgressStep.tool(callId: 'e', kind: ChatToolKind.editFile),
+        ChatProgressStep.tool(callId: 'd', kind: ChatToolKind.deleteFile),
+      ],
+    );
+
+    expect(progress.toolCalls, 1);
+  });
+
   test('keepSummary — 2초 끝남 false · 3초 true · 1초 멈춤 true', () {
     ChatProgress done(int seconds, {bool stopped = false}) => ChatProgress(
       startedAt: t0,

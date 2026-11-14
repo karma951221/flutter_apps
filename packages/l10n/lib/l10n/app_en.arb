@@ -1035,6 +1035,8 @@
   "walkChatToolDeleteFile": "Deleting file",
   "walkChatToolDeleteFileNamed": "Deleting file · {name}",
   "walkChatToolDeclined": "Declined",
+  "walkChatToolWriteFailed": "Not saved",
+  "walkChatToolWriteFailedNamed": "Not saved · {name}",
   "walkChatToolWrote": "Saved · {name}",
   "walkChatToolEdited": "Edited · {name}",
   "walkChatToolDeleted": "Deleted · {name}",

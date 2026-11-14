@@ -1035,6 +1035,8 @@
   "walkChatToolDeleteFile": "ファイルを削除中",
   "walkChatToolDeleteFileNamed": "ファイルを削除中・{name}",
   "walkChatToolDeclined": "拒否",
+  "walkChatToolWriteFailed": "保存できず",
+  "walkChatToolWriteFailedNamed": "保存できず・{name}",
   "walkChatToolWrote": "保存済み・{name}",
   "walkChatToolEdited": "編集済み・{name}",
   "walkChatToolDeleted": "削除済み・{name}",
