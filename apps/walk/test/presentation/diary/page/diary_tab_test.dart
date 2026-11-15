@@ -428,6 +428,34 @@ void main() {
       expect(tester.widget<StoryPage>(find.byType(StoryPage)).storyId, 'jeju');
     });
 
+    testWidgets('닫힌 스토리의 기록 카드도 스토리 이름을 보이고, 누르면 그 스토리 페이지', (tester) async {
+      stories = [
+        ...stories,
+        Story(
+          id: 'tokyo',
+          title: '도쿄 여행',
+          status: StoryStatus.closed,
+          startedAt: diaryT0.subtract(const Duration(days: 30)),
+          endedAt: diaryT0.subtract(const Duration(days: 25)),
+          createdAt: diaryT0.subtract(const Duration(days: 30)),
+        ),
+      ];
+      entries[const EntryFilter.all()] = [
+        _entry(
+          '스시',
+          storyId: 'tokyo',
+          at: diaryT0.subtract(const Duration(days: 26)),
+        ),
+      ];
+      await pump(tester);
+
+      expect(inFeed('도쿄 여행'), findsOneWidget);
+      await tester.tap(inFeed('도쿄 여행'));
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<StoryPage>(find.byType(StoryPage)).storyId, 'tokyo');
+    });
+
     testWidgets('피드 영상은 자동재생하지 않는다', (tester) async {
       entries[const EntryFilter.all()] = [
         _entry('바다').copyWith(media: [videoMedia('v1')]),
