@@ -2356,13 +2356,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryEditorPlaceHint => '場所の名前';
 
   @override
-  String get walkDiaryTextOnly => '文章だけ書く';
-
-  @override
   String get walkDiaryEditorPickStory => 'ストーリーを選ぶ';
-
-  @override
-  String get walkDiaryEditorAddMedia => '写真・動画を追加';
 
   @override
   String get walkDiaryEditorRemoveMedia => '外す';

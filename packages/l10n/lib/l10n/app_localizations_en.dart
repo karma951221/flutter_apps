@@ -2504,13 +2504,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryEditorPlaceHint => 'Place name';
 
   @override
-  String get walkDiaryTextOnly => 'Text only';
-
-  @override
   String get walkDiaryEditorPickStory => 'Choose a story';
-
-  @override
-  String get walkDiaryEditorAddMedia => 'Add photos/videos';
 
   @override
   String get walkDiaryEditorRemoveMedia => 'Remove';

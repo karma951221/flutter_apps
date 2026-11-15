@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:walk/domain/diary/entity/media_limits.dart';
 import 'package:walk/presentation/diary/widget/composer_toolbar.dart';
-import 'package:walk/presentation/diary/widget/media_source_sheet.dart';
 
 void main() {
   late List<String> log;

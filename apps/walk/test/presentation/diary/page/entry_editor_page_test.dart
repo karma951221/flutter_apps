@@ -44,7 +44,6 @@ import 'package:walk/presentation/diary/media_picker.dart';
 import 'package:walk/presentation/diary/page/entry_editor_page.dart';
 import 'package:walk/presentation/diary/widget/composer_media_strip.dart';
 import 'package:walk/presentation/diary/widget/composer_toolbar.dart';
-import 'package:walk/presentation/diary/widget/media_source_sheet.dart';
 import 'package:walk/presentation/diary/widget/place_input.dart';
 import 'package:walk/presentation/diary/widget/story_picker_sheet.dart';
 import 'package:walk/presentation/diary/widget/tag_chip_input.dart';
@@ -191,7 +190,7 @@ void main() {
     await getIt.reset();
   });
 
-  Widget app({String? editingId, MediaSource? initialPick}) => MaterialApp(
+  Widget app({String? editingId}) => MaterialApp(
     theme: AppTheme.light(),
     locale: const Locale('ko'),
     localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -202,11 +201,7 @@ void main() {
         builder: (context) => Scaffold(
           body: Center(
             child: TextButton(
-              onPressed: () => openEntryEditor(
-                context,
-                editingId: editingId,
-                initialPick: initialPick,
-              ),
+              onPressed: () => openEntryEditor(context, editingId: editingId),
               child: const Text('home'),
             ),
           ),
@@ -216,20 +211,14 @@ void main() {
   );
 
   /// 첫 화면(셸처럼 일기 잠금을 내려 주는 자리) 위에 작성 화면을 띄운다. 닫히면 'home' 이 보인다.
-  Future<void> pump(
-    WidgetTester tester, {
-    String? editingId,
-    MediaSource? initialPick,
-  }) async {
+  Future<void> pump(WidgetTester tester, {String? editingId}) async {
     // 미리보기 · 스토리 줄 아래의 시각 · 장소 행까지 한 화면에 들어오게 세로로 길게.
     tester.view
       ..physicalSize = const Size(800, 2000)
       ..devicePixelRatio = 1;
     addTearDown(tester.view.reset);
     lock.start();
-    await tester.pumpWidget(
-      app(editingId: editingId, initialPick: initialPick),
-    );
+    await tester.pumpWidget(app(editingId: editingId));
     await tester.tap(find.text('home'));
     await tester.pumpAndSettle();
   }
@@ -413,13 +402,6 @@ void main() {
       ),
     );
     await pump(tester, editingId: 'e1');
-
-    expect(bodyFocused(tester), isFalse);
-  });
-
-  testWidgets('처음 고르기로 열면 자동 포커스하지 않는다', (tester) async {
-    when(picker.takePhoto).thenAnswer((_) async => const []);
-    await pump(tester, initialPick: MediaSource.photo);
 
     expect(bodyFocused(tester), isFalse);
   });
@@ -698,35 +680,6 @@ void main() {
 
     expect(find.text('올렸어요'), findsOneWidget);
     expect(find.textContaining("'"), findsNothing);
-  });
-
-  testWidgets('처음 고르기(initialPick)는 한 번만 — 잠겼다 풀려도 다시 열지 않는다', (tester) async {
-    when(
-      () => picker.pickGallery(limit: any(named: 'limit')),
-    ).thenAnswer((_) async => [(path: '/picked/a.jpg', kind: MediaKind.photo)]);
-    when(
-      () => store.importPhoto('/picked/a.jpg'),
-    ).thenAnswer((_) async => Ok(photoMedia('m1', path: 'tmp/m1.jpg')));
-    await pump(tester, initialPick: MediaSource.gallery);
-
-    verify(() => picker.pickGallery(limit: 10)).called(1);
-    expect(find.byTooltip('빼기'), findsOneWidget);
-
-    await relock(tester);
-    await unlock(tester);
-
-    expect(find.byType(EntryEditorPage), findsOneWidget);
-    verifyNever(() => picker.pickGallery(limit: any(named: 'limit')));
-    expect(find.byTooltip('빼기'), findsOneWidget);
-  });
-
-  testWidgets('처음 고르기를 그만두면 글만 쓰는 작성 화면으로 남는다', (tester) async {
-    when(picker.takePhoto).thenAnswer((_) async => const []);
-    await pump(tester, initialPick: MediaSource.photo);
-
-    verify(picker.takePhoto).called(1);
-    expect(find.byType(EntryEditorPage), findsOneWidget);
-    expect(find.byTooltip('빼기'), findsNothing);
   });
 
   testWidgets('태그 칩 추가 · 삭제 · 추천', (tester) async {
@@ -1035,25 +988,6 @@ void main() {
     expect(storyRowValue(tester), '아주 옛날');
     await openStorySheet(tester);
     expect(sheetTitles(tester), contains('아주 옛날'));
-  });
-
-  testWidgets('스토리 목록이 늦게 와도 처음 고른 미디어가 남는다', (tester) async {
-    when(repo.watchStories).thenAnswer((_) async* {
-      await Future<void>.delayed(const Duration(milliseconds: 300));
-      yield stories;
-    });
-    when(
-      () => picker.pickGallery(limit: any(named: 'limit')),
-    ).thenAnswer((_) async => [(path: '/picked/a.jpg', kind: MediaKind.photo)]);
-    when(
-      () => store.importPhoto('/picked/a.jpg'),
-    ).thenAnswer((_) async => Ok(photoMedia('m1', path: 'tmp/m1.jpg')));
-    await pump(tester, initialPick: MediaSource.gallery);
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pumpAndSettle();
-
-    verify(() => picker.pickGallery(limit: 10)).called(1);
-    expect(find.byTooltip('빼기'), findsOneWidget);
   });
 
   testWidgets('고치기: 기록 내용을 채우고 저장 버튼', (tester) async {

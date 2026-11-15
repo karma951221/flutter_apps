@@ -31,8 +31,6 @@ import 'package:walk/presentation/diary/page/trash_page.dart';
 import 'package:walk/presentation/diary/viewer/story_viewer_page.dart';
 import 'package:walk/presentation/diary/widget/feed_view.dart';
 import 'package:walk/presentation/diary/widget/entry_media_view.dart';
-import 'package:walk/presentation/diary/widget/story_ring.dart';
-import 'package:walk/presentation/diary/widget/story_ring_row.dart';
 import 'package:walk/presentation/diary/media_picker.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_state.dart';
@@ -322,8 +320,6 @@ void main() {
 
     expect(find.byIcon(Icons.search), findsOneWidget);
     expect(appBarMenu(), findsOneWidget);
-    expect(find.byType(StoryRingRow), findsNothing);
-    expect(find.byType(StoryRing), findsNothing);
     expect(find.text('새 스토리'), findsNothing);
     expect(find.text('모두 보기'), findsNothing);
     expect(find.byType(FeedView), findsOneWidget);
@@ -337,7 +333,6 @@ void main() {
   testWidgets('기록이 없으면 빈 상태 안내(동그라미 줄 없음)', (tester) async {
     await pump(tester);
 
-    expect(find.byType(StoryRingRow), findsNothing);
     expect(find.widgetWithText(AppPlaceholder, '아직 기록이 없어요'), findsOneWidget);
     expect(
       find.widgetWithText(AppPlaceholder, '＋ 를 눌러 첫 기록을 남겨 보세요'),

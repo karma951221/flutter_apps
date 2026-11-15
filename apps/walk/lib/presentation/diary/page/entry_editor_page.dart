@@ -25,7 +25,6 @@ import '../format/diary_format.dart';
 import '../media_picker.dart';
 import '../widget/composer_media_strip.dart';
 import '../widget/composer_toolbar.dart';
-import '../widget/media_source_sheet.dart';
 import '../widget/place_input.dart';
 import '../widget/story_avatar.dart';
 import '../widget/story_picker_sheet.dart';
@@ -36,16 +35,8 @@ import 'diary_route.dart';
 
 /// 작성 화면을 연다. [editingId] 가 있으면 그 기록을 고친다. 일기 잠금에 묶인
 /// 화면([pushDiaryRoute])이라 다시 잠기면 가려지고, 쓰던 내용은 [EntryEditorScope] 가 들고 있다.
-///
-/// [initialPick] 이 있으면 열자마자 그 고르기를 **한 번** 실행한다 — 잠겼다 풀려 화면이 다시
-/// 만들어져도 다시 열지 않는다. 고르기를 그만두면 글만 쓰는 작성 화면으로 남는다. 일기 ＋ 는
-/// 넘기지 않는다(새 기록은 글 칸에 자동 포커스로 열린다).
-Future<void> openEntryEditor(
-  BuildContext context, {
-  String? editingId,
-  MediaSource? initialPick,
-}) {
-  final pending = InitialPick(initialPick);
+/// 새 기록은 글 칸에 자동 포커스로 열린다. 사진은 작성 화면 도구줄에서 붙인다.
+Future<void> openEntryEditor(BuildContext context, {String? editingId}) {
   // 초안 시트의 "설정 열기" — 작성 화면 라우트에는 셸 cubit 이 없어 연 자리에서 미리 잡는다.
   final chatSettings = settingsOpener(
     context,
@@ -57,24 +48,10 @@ Future<void> openEntryEditor(
     scope: (context, gated) =>
         EntryEditorScope(editingId: editingId, child: gated),
     page: (_) => EntryEditorPage(
-      initialPick: pending,
-      autofocusBody: editingId == null && initialPick == null,
+      autofocusBody: editingId == null,
       onOpenChatSettings: chatSettings,
     ),
   );
-}
-
-/// 작성 화면을 열 때 한 번만 실행할 고르기. 꺼내면 비워진다.
-class InitialPick {
-  InitialPick(this._source);
-
-  MediaSource? _source;
-
-  MediaSource? take() {
-    final source = _source;
-    _source = null;
-    return source;
-  }
 }
 
 /// [EntryEditorCubit] 의 주인 — 잠금 게이트 **바깥**에 있어 잠겼다 풀려도 쓰던 기록이 남는다.
@@ -143,7 +120,6 @@ class _EntryEditorScopeState extends State<EntryEditorScope> {
 /// 지운다. 잠겼다 풀려 다시 만들어지면 입력칸을 cubit 의 내용으로 채운다.
 class EntryEditorPage extends StatefulWidget {
   const EntryEditorPage({
-    this.initialPick,
     this.autofocusBody = false,
     this.onOpenChatSettings,
     super.key,
@@ -152,10 +128,7 @@ class EntryEditorPage extends StatefulWidget {
   /// 초안 시트의 "설정 열기"(키가 없을 때). null 이면 안내만.
   final VoidCallback? onOpenChatSettings;
 
-  /// 열자마자 한 번 실행할 고르기([openEntryEditor]).
-  final InitialPick? initialPick;
-
-  /// 글 칸에 자동 포커스(새 기록이고 처음 고르기가 없을 때).
+  /// 글 칸에 자동 포커스(새 기록).
   final bool autofocusBody;
 
   @override
@@ -241,12 +214,6 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
   void initState() {
     super.initState();
     _bodyFilledFor = _cubit.state.editingId;
-    final pick = widget.initialPick?.take();
-    if (pick != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) unawaited(_addMedia(pick, waitForDraft: true));
-      });
-    }
   }
 
   @override
@@ -271,16 +238,7 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
     if (mounted) Navigator.of(context).pop();
   }
 
-  /// 새 기록의 `startNew` 가 첫 draft 를 내보냈는지 — 그 전에 넣은 미디어는 그 draft 에 덮인다.
-  /// 그 뒤로는 찾는 중(locating)이거나, 위치를 얻었거나 직접 입력으로 바뀐 상태다.
-  static bool _draftReady(EntryEditorState s) =>
-      s.isEditing || s.locating || s.manualPlace || s.draft.location != null;
-
-  /// [waitForDraft] 면(열자마자 하는 처음 고르기) 고른 뒤 draft 가 준비될 때까지 기다렸다 넣는다.
-  Future<void> _addMedia(
-    MediaSource source, {
-    bool waitForDraft = false,
-  }) async {
+  Future<void> _addMedia(MediaSource source) async {
     if (_picking) return;
     _picking = true;
     try {
@@ -292,9 +250,6 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
         MediaSource.video => _picker.recordVideo(),
       };
       try {
-        if (waitForDraft && picked.isNotEmpty && !_draftReady(_cubit.state)) {
-          await _cubit.stream.firstWhere(_draftReady);
-        }
         await _cubit.addMedia(picked);
       } finally {
         // 압축 사본을 만들었든 못 만들었든, 피커가 캐시에 남긴 원본 복사본(GPS 포함)을 지운다.

@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/diary/entity/media_limits.dart';
-import 'media_source_sheet.dart';
+
+/// 어디서 사진 · 영상을 가져올지.
+enum MediaSource { gallery, photo, video }
 
 /// 작성 화면 도구줄(스펙 2026-11-15 §3): 앨범 · 사진 찍기 · 영상 찍기, 오른쪽 끝에 ✨ 초안.
 ///

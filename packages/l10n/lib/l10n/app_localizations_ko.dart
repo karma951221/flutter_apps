@@ -2358,13 +2358,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryEditorPlaceHint => '장소 이름';
 
   @override
-  String get walkDiaryTextOnly => '글만 쓰기';
-
-  @override
   String get walkDiaryEditorPickStory => '스토리 고르기';
-
-  @override
-  String get walkDiaryEditorAddMedia => '사진·영상 추가';
 
   @override
   String get walkDiaryEditorRemoveMedia => '빼기';

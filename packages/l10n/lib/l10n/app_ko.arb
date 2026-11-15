@@ -3370,17 +3370,9 @@
   "@walkDiaryEditorPlaceHint": {
     "description": "일기 작성 화면 장소 직접 입력칸 힌트"
   },
-  "walkDiaryTextOnly": "글만 쓰기",
-  "@walkDiaryTextOnly": {
-    "description": "일기 ＋ 시트의 미디어 없이 쓰기 항목"
-  },
   "walkDiaryEditorPickStory": "스토리 고르기",
   "@walkDiaryEditorPickStory": {
     "description": "일기 작성 화면 스토리 선택 시트 제목"
-  },
-  "walkDiaryEditorAddMedia": "사진·영상 추가",
-  "@walkDiaryEditorAddMedia": {
-    "description": "일기 작성 화면 미디어 추가 버튼"
   },
   "walkDiaryEditorRemoveMedia": "빼기",
   "@walkDiaryEditorRemoveMedia": {
