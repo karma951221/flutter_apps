@@ -15,6 +15,11 @@ void main() {
     int count = 0,
     bool importing = false,
     VoidCallback? onDraft,
+    bool drafting = false,
+    bool canRewrite = false,
+    bool draftEnabled = true,
+    bool? photosOn,
+    bool photosSupported = true,
   }) => tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light(),
@@ -27,6 +32,13 @@ void main() {
           importing: importing,
           onAdd: (s) => log.add(s.name),
           onDraft: onDraft,
+          drafting: drafting,
+          onStopDraft: () => log.add('stop'),
+          canRewrite: canRewrite,
+          draftEnabled: draftEnabled,
+          photosOn: photosOn,
+          photosSupported: photosSupported,
+          onPhotosChanged: (on) => log.add('photos:$on'),
         ),
       ),
     ),
@@ -83,5 +95,50 @@ void main() {
     await tester.pump();
 
     expect(log, ['draft']);
+  });
+
+  testWidgets('초안을 받은 뒤에는 같은 자리가 다시 쓰기다', (tester) async {
+    await pump(tester, onDraft: () => log.add('draft'), canRewrite: true);
+
+    await tester.tap(find.byTooltip('다시 쓰기'));
+    await tester.pump();
+
+    expect(find.byTooltip('초안 쓰기'), findsNothing);
+    expect(log, ['draft']);
+  });
+
+  testWidgets('쓰는 중에는 ✨ 자리가 멈추기다', (tester) async {
+    await pump(tester, onDraft: () => log.add('draft'), drafting: true);
+
+    expect(find.byTooltip('초안 쓰기'), findsNothing);
+    await tester.tap(find.byTooltip('멈추기'));
+    await tester.pump();
+
+    expect(log, ['stop']);
+  });
+
+  testWidgets('재료가 없으면 ✨ 가 꺼지고 툴팁이 이유를 말한다', (tester) async {
+    await pump(tester, onDraft: () => log.add('draft'), draftEnabled: false);
+
+    expect(button(tester, '한 줄 적거나 사진 보여 주기를 켜세요').onPressed, isNull);
+  });
+
+  testWidgets('사진 보여 주기는 photosOn 이 있을 때만 보이고 누르면 바꾼다', (tester) async {
+    await pump(tester, onDraft: () {});
+    expect(find.text('사진 보여 주기'), findsNothing);
+
+    await pump(tester, onDraft: () {}, photosOn: false);
+    await tester.tap(find.text('사진 보여 주기'));
+    await tester.pump();
+
+    expect(log, ['photos:true']);
+  });
+
+  testWidgets('초안 모델이 사진을 못 보면 사진 보여 주기가 꺼지고 이유를 보인다', (tester) async {
+    await pump(tester, onDraft: () {}, photosOn: false, photosSupported: false);
+
+    final chip = tester.widget<FilterChip>(find.byType(FilterChip));
+    expect(chip.onSelected, isNull);
+    expect(find.byTooltip('이 모델은 사진을 볼 수 없어요'), findsOneWidget);
   });
 }

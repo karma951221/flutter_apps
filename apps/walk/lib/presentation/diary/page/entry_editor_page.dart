@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
@@ -6,20 +7,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../../domain/chat/chat_settings.dart';
+import '../../../domain/diary/draft/draft_writer.dart';
+import '../../../domain/diary/entity/entry_media.dart';
 import '../../../domain/diary/entity/media_limits.dart';
 import '../../../domain/diary/entity/story.dart';
 import '../../../domain/diary/location/place_source.dart';
 import '../../../domain/diary/media/media_store.dart';
 import '../../../domain/diary/media/photo_meta_reader.dart';
+import '../../../domain/diary/repository/diary_preferences.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
 import '../../../domain/diary/usecase/story_order.dart';
+import '../../chat/widget/chat_failure_text.dart';
+import '../../chat/widget/chat_vendor_icon.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/cubit/diary_lock_state.dart';
 import '../../settings/open_settings.dart';
 import '../cubit/entry_editor_cubit.dart';
 import '../cubit/entry_editor_state.dart';
-import '../draft/draft_sheet.dart';
+import '../draft/draft_cubit.dart';
+import '../draft/draft_state.dart';
 import '../format/diary_format.dart';
 import '../media_picker.dart';
 import '../widget/composer_media_strip.dart';
@@ -35,13 +43,17 @@ import 'diary_route.dart';
 /// 작성 화면을 연다. [editingId] 가 있으면 그 기록을 고친다. 일기 잠금에 묶인
 /// 화면([pushDiaryRoute])이라 다시 잠기면 가려지고, 쓰던 내용은 [EntryEditorScope] 가 들고 있다.
 /// 새 기록은 글 칸에 자동 포커스로 열린다. 사진은 작성 화면 도구줄에서 붙인다.
-Future<void> openEntryEditor(BuildContext context, {String? editingId}) {
-  // 초안 시트의 "설정 열기" — 작성 화면 라우트에는 셸 cubit 이 없어 연 자리에서 미리 잡는다.
-  final chatSettings = settingsOpener(
-    context,
-    SettingsTarget.chat,
-    highlight: true,
-  );
+///
+/// [onOpenChatSettings] 를 주지 않으면 셸의 물어보기 설정 열기를 쓴다(테스트가 바꿔 넣는다).
+Future<void> openEntryEditor(
+  BuildContext context, {
+  String? editingId,
+  VoidCallback? onOpenChatSettings,
+}) {
+  // 키 없음 다이얼로그의 "설정 열기" — 작성 화면 라우트에는 셸 cubit 이 없어 연 자리에서 미리 잡는다.
+  final chatSettings =
+      onOpenChatSettings ??
+      settingsOpener(context, SettingsTarget.chat, highlight: true);
   return pushDiaryRoute<void>(
     context,
     scope: (context, gated) =>
@@ -53,9 +65,12 @@ Future<void> openEntryEditor(BuildContext context, {String? editingId}) {
   );
 }
 
-/// [EntryEditorCubit] 의 주인 — 잠금 게이트 **바깥**에 있어 잠겼다 풀려도 쓰던 기록이 남는다.
+/// [EntryEditorCubit] · [DraftCubit] 의 주인 — 잠금 게이트 **바깥**에 있어 잠겼다 풀려도 쓰던 기록이 남는다.
 /// 만들 때 시작(새 기록 · 고치기)하고, 사라질 때 저장하지 않았으면 새로 가져온 임시 사본을
 /// 지운 뒤 닫는다(✕ 없이 화면이 걷혀도 tmp 가 남지 않는다).
+///
+/// 초안을 쓰는 중에 일기가 다시 잠기면 초안을 멈춘다(R-A9) — 그때까지의 글이 쓰던 기록에 남는다.
+/// 초안에 필요한 것([DraftWriter] 등)이 등록돼 있지 않으면 [DraftCubit] 없이 연다(✨ 없음).
 class EntryEditorScope extends StatefulWidget {
   const EntryEditorScope({required this.child, this.editingId, super.key});
 
@@ -78,6 +93,18 @@ class _EntryEditorScopeState extends State<EntryEditorScope> {
         : null,
   );
 
+  late final DraftCubit? _draft =
+      getIt.isRegistered<DraftWriter>() &&
+          getIt.isRegistered<DiaryPreferences>() &&
+          getIt.isRegistered<ChatSettings>()
+      ? DraftCubit(
+          getIt<DraftWriter>(),
+          getIt<DiaryPreferences>(),
+          getIt<ChatSettings>(),
+          onBody: _cubit.setBody,
+        )
+      : null;
+
   @override
   void initState() {
     super.initState();
@@ -87,6 +114,7 @@ class _EntryEditorScopeState extends State<EntryEditorScope> {
 
   @override
   void dispose() {
+    unawaited(_draft?.close());
     final cubit = _cubit;
     if (cubit.state.saved || cubit.state.newMedia.isEmpty) {
       // 가져오는 중이던 것은 닫힌 뒤 끝나면 cubit 이 지운다.
@@ -100,12 +128,25 @@ class _EntryEditorScopeState extends State<EntryEditorScope> {
   /// 잠긴 동안(게이트가 작성 화면 대신 잠금 화면을 보일 때) 뒤로 가기는 무시한다 — 쓰던 글을
   /// 묻지 않고 버리지 않는다. 풀려 있으면 작성 화면이 버릴지 묻는다.
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: context.select<DiaryLockCubit, bool>(
-      (c) => c.state is LockUnlocked,
-    ),
-    child: BlocProvider.value(value: _cubit, child: widget.child),
-  );
+  Widget build(BuildContext context) {
+    final draft = _draft;
+    return PopScope(
+      canPop: context.select<DiaryLockCubit, bool>(
+        (c) => c.state is LockUnlocked,
+      ),
+      child: BlocListener<DiaryLockCubit, DiaryLockState>(
+        listenWhen: (a, b) => a is LockUnlocked && b is! LockUnlocked,
+        listener: (_, _) => unawaited(draft?.stop()),
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: _cubit),
+            if (draft != null) BlocProvider.value(value: draft),
+          ],
+          child: widget.child,
+        ),
+      ),
+    );
+  }
 }
 
 /// 기록 작성 · 수정(스펙 §3.6). 위에서 [EntryEditorCubit] 를 받는다([EntryEditorScope]).
@@ -124,7 +165,7 @@ class EntryEditorPage extends StatefulWidget {
     super.key,
   });
 
-  /// 초안 시트의 "설정 열기"(키가 없을 때). null 이면 안내만.
+  /// 키 없음 다이얼로그의 "설정 열기". null 이면 스낵바로 안내만.
   final VoidCallback? onOpenChatSettings;
 
   /// 글 칸에 자동 포커스(새 기록).
@@ -140,6 +181,12 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
   late final _cubit = context.read<EntryEditorCubit>();
   late final _body = TextEditingController(text: _cubit.state.draft.body);
 
+  /// 자동 초안. 위([EntryEditorScope])에 없으면 null — ✨ 를 두지 않는다.
+  late final DraftCubit? _draftCubit = context.read<DraftCubit?>();
+
+  /// [_onDraftState] 가 마지막으로 본 초안 상태(끝 · 실패 전환을 가린다).
+  late DraftState? _shownDraft = _draftCubit?.state;
+
   /// 본문 입력칸을 채운 기록 id.
   String? _bodyFilledFor;
 
@@ -148,39 +195,104 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
 
   final _tags = GlobalKey<TagChipInputState>();
 
-  /// 초안 시트의 메모로 미리 채울 글 칸의 최대 길이 — 넘으면 이미 쓴 글이라 메모로 보지 않는다.
-  static const _memoMaxLength = 100;
-
-  /// ✨ — 메모 · 메타데이터로 초안을 받아 글 칸을 바꾼다(스펙 §4). 원래 글이 있었으면 되돌리기.
-  Future<void> _draft() async {
-    final current = _body.text.trim();
-    final memo = current.length <= _memoMaxLength ? current : '';
-    final text = await showDraftSheet(
-      context,
-      initialMemo: memo,
-      contextFor: _cubit.draftContext,
-      photos: _cubit.state.draft.media,
-      onOpenChatSettings: widget.onOpenChatSettings,
-    );
-    if (text == null || !mounted) return;
-    final previous = _body.text;
-    _setBody(text);
-    if (previous.trim().isEmpty) return;
+  /// ✨ — 글 칸의 글을 메모로 바로 쓴다(스펙 2026-11-15 §4 R-A1). 다이얼로그는 키 없음 ·
+  /// 첫 사용 동의만. 초안은 글 칸에 흘러 들어온다([_onDraftState]).
+  Future<void> _startDraft() async {
+    final draft = _draftCubit;
+    if (draft == null) return;
     final l10n = AppLocalizations.of(context);
-    AppSnackBar.show(
-      context,
-      message: l10n.walkDiaryComposerDraftApplied,
-      actionLabel: l10n.walkDiaryComposerDraftUndo,
-      onAction: () {
-        if (mounted) _setBody(previous);
-      },
+    switch (await draft.availability()) {
+      case DraftNoKey():
+        if (!mounted) return;
+        final open = widget.onOpenChatSettings;
+        if (open == null) {
+          AppSnackBar.show(context, message: l10n.walkDiaryDraftNoKey);
+          return;
+        }
+        final go = await AppConfirmDialog.show(
+          context,
+          title: l10n.walkDiaryDraftTitle,
+          content: l10n.walkDiaryDraftNoKey,
+          confirmLabel: l10n.walkDiaryDraftOpenSettings,
+          isDestructive: false,
+        );
+        if (go) open();
+        return;
+      case DraftConsentNeeded(:final vendor):
+        if (!mounted) return;
+        final accepted = await AppConfirmDialog.show(
+          context,
+          title: l10n.walkDiaryDraftConsentTitle,
+          content: l10n.walkChatConsentNotice(chatVendorName(l10n, vendor)),
+          confirmLabel: l10n.walkChatConsentAccept,
+          isDestructive: false,
+        );
+        if (!accepted || !mounted) return;
+        await draft.consent(vendor);
+      case DraftReady():
+        break;
+    }
+    if (!mounted) return;
+    final locale = Localizations.localeOf(context).languageCode;
+    draft.generate(
+      body: _body.text,
+      contextFor: (memo) => _cubit.draftContext(memo, locale: locale),
+      photos: _cubit.state.draft.media,
     );
   }
 
-  void _setBody(String text) {
-    _body.text = text;
-    _cubit.setBody(text);
+  /// 사진 보여 주기. 켜는 순간 한 번 묻고(사진 n장까지 ○○로), 끌 때는 묻지 않는다(R-A4).
+  Future<void> _setIncludePhotos(bool on) async {
+    final draft = _draftCubit;
+    if (draft == null) return;
+    if (!on) {
+      await draft.setIncludePhotos(false);
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final count = min(_photoCount(_cubit.state), DraftWriter.maxPhotos);
+    final vendor = draft.vendor;
+    final accepted = await AppConfirmDialog.show(
+      context,
+      title: l10n.walkDiaryDraftIncludePhotos,
+      content: vendor == null
+          ? l10n.walkDiaryDraftPhotosConfirmNoVendor(count)
+          : l10n.walkDiaryDraftPhotosConfirm(
+              count,
+              chatVendorName(l10n, vendor),
+            ),
+      confirmLabel: l10n.walkDiaryDraftPhotosConfirmAccept,
+      isDestructive: false,
+    );
+    if (accepted) await draft.setIncludePhotos(true);
   }
+
+  /// 초안이 글 칸을 바꾸면 입력칸을 맞추고, 끝 · 실패를 알린다.
+  void _onDraftState(DraftState previous, DraftState state) {
+    if (_body.text != state.text) _body.text = state.text;
+    if (!previous.writing) return;
+    final l10n = AppLocalizations.of(context);
+    switch (state.run) {
+      case DraftRunDone():
+        AppSnackBar.show(
+          context,
+          message: l10n.walkDiaryComposerDraftApplied,
+          actionLabel: l10n.walkDiaryComposerDraftUndo,
+          onAction: () => _draftCubit?.undo(),
+        );
+      case DraftRunFailed(:final failure):
+        AppSnackBar.show(
+          context,
+          message: chatFailureText(l10n, failure),
+          type: AppSnackBarType.error,
+        );
+      case DraftRunIdle() || DraftRunWriting():
+        break;
+    }
+  }
+
+  static int _photoCount(EntryEditorState state) =>
+      state.draft.media.where((m) => m.kind == MediaKind.photo).length;
 
   /// 칩으로 만들지 않고 남긴 태그 글자도 함께 저장한다.
   void _save() {
@@ -315,7 +427,6 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     return BlocConsumer<EntryEditorCubit, EntryEditorState>(
       listenWhen: (a, b) =>
           a.editingId != b.editingId ||
@@ -324,121 +435,155 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
           (!a.failed && b.failed),
       listener: _onState,
       builder: (context, state) {
-        return PopScope(
-          canPop: false,
-          onPopInvokedWithResult: (didPop, _) {
-            if (!didPop) unawaited(_close());
+        final draft = _draftCubit;
+        if (draft == null) return _scaffold(context, state, null);
+        return BlocConsumer<DraftCubit, DraftState>(
+          bloc: draft,
+          listenWhen: (a, b) => a.text != b.text || a.run != b.run,
+          listener: (_, d) {
+            final previous = _shownDraft ?? d;
+            _shownDraft = d;
+            _onDraftState(previous, d);
           },
-          child: Scaffold(
-            appBar: AppBar(
-              leading: IconButton(
-                icon: const Icon(Icons.close),
-                tooltip: l10n.walkDiaryEditorClose,
-                onPressed: _close,
-              ),
-              title: Text(
-                state.isEditing
-                    ? l10n.walkDiaryEditorEditTitle
-                    : l10n.walkDiaryEditorNewTitle,
-              ),
-              actions: [
-                AppButton.text(
-                  // 앱 테마 버튼은 폭을 가득 채운다(`Size.fromHeight`) — 폭이 정해지지 않은 자리라 최소 크기만 푼다.
-                  style: const ButtonStyle(
-                    minimumSize: WidgetStatePropertyAll(Size.zero),
-                  ),
-                  label: state.isEditing
-                      ? l10n.walkDiaryEditorSave
-                      : l10n.walkDiaryEditorPost,
-                  onPressed: state.saving || state.importing ? null : _save,
-                ),
-              ],
-            ),
-            // 도구줄은 목록 밖 화면 맨 아래 — Scaffold 가 키보드만큼 body 를 줄이니 키보드 바로 위에 붙는다(R-F2).
-            body: Column(
-              children: [
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.xl),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(AppSpacing.md),
-                        child: TextField(
-                          controller: _body,
-                          autofocus: widget.autofocusBody,
-                          minLines: 4,
-                          maxLines: null,
-                          keyboardType: TextInputType.multiline,
-                          decoration: InputDecoration(
-                            hintText: l10n.walkDiaryEditorBodyHint,
-                          ),
-                          onChanged: _cubit.setBody,
-                        ),
-                      ),
-                      ComposerMediaStrip(
-                        media: state.draft.media,
-                        importing: state.importing,
-                        onRemove: _cubit.removeMedia,
-                        onReorder: _cubit.reorderMedia,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                        ),
-                        child: TagChipInput(
-                          key: _tags,
-                          tags: state.draft.tags,
-                          onAdd: _cubit.addTag,
-                          onRemove: _cubit.removeTag,
-                          suggestionsFor: (q) => _repo.watchTagCounts(query: q),
-                        ),
-                      ),
-                      PlaceInput(
-                        location: state.draft.location,
-                        locating: state.locating,
-                        manualPlace: state.manualPlace,
-                        onClear: _cubit.clearLocation,
-                        onName: _cubit.setPlaceName,
-                        suggestionsFor: (q) => _repo.watchPlaceCounts(query: q),
-                      ),
-                      TimeRow(
-                        occurredAt: state.draft.occurredAt,
-                        edited: state.timeEdited,
-                        isEditing: state.isEditing,
-                        now: getIt<Clock>().now(),
-                        onPick: _cubit.setTime,
-                        onRevert: _cubit.revertTime,
-                      ),
-                      AppListTile(
-                        leading: const Icon(Icons.auto_stories_outlined),
-                        title: Text(l10n.walkDiaryComposerStory),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(_storyTitle(l10n, state)),
-                            const Icon(Icons.chevron_right),
-                          ],
-                        ),
-                        onTap: () => unawaited(_pickStory()),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                SafeArea(
-                  top: false,
-                  child: ComposerToolbar(
-                    count: state.draft.media.length,
-                    importing: state.importing,
-                    onAdd: _addMedia,
-                    onDraft: () => unawaited(_draft()),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          builder: (context, d) => _scaffold(context, state, d),
         );
       },
+    );
+  }
+
+  Widget _scaffold(
+    BuildContext context,
+    EntryEditorState state,
+    DraftState? draft,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final writing = draft?.writing ?? false;
+    final hasPhotos = _photoCount(state) > 0;
+    final canSeePhotos = _draftCubit?.canSeePhotos ?? true;
+    final sendsPhotos =
+        hasPhotos && canSeePhotos && (draft?.includePhotos ?? false);
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) unawaited(_close());
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.close),
+            tooltip: l10n.walkDiaryEditorClose,
+            onPressed: _close,
+          ),
+          title: Text(
+            state.isEditing
+                ? l10n.walkDiaryEditorEditTitle
+                : l10n.walkDiaryEditorNewTitle,
+          ),
+          actions: [
+            AppButton.text(
+              // 앱 테마 버튼은 폭을 가득 채운다(`Size.fromHeight`) — 폭이 정해지지 않은 자리라 최소 크기만 푼다.
+              style: const ButtonStyle(
+                minimumSize: WidgetStatePropertyAll(Size.zero),
+              ),
+              label: state.isEditing
+                  ? l10n.walkDiaryEditorSave
+                  : l10n.walkDiaryEditorPost,
+              onPressed: state.saving || state.importing ? null : _save,
+            ),
+          ],
+        ),
+        // 도구줄은 목록 밖 화면 맨 아래 — Scaffold 가 키보드만큼 body 를 줄이니 키보드 바로 위에 붙는다(R-F2).
+        body: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: TextField(
+                      controller: _body,
+                      readOnly: writing,
+                      autofocus: widget.autofocusBody,
+                      minLines: 4,
+                      maxLines: null,
+                      keyboardType: TextInputType.multiline,
+                      decoration: InputDecoration(
+                        hintText: l10n.walkDiaryEditorBodyHint,
+                      ),
+                      onChanged: _cubit.setBody,
+                    ),
+                  ),
+                  ComposerMediaStrip(
+                    media: state.draft.media,
+                    importing: state.importing,
+                    onRemove: _cubit.removeMedia,
+                    onReorder: _cubit.reorderMedia,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                    ),
+                    child: TagChipInput(
+                      key: _tags,
+                      tags: state.draft.tags,
+                      onAdd: _cubit.addTag,
+                      onRemove: _cubit.removeTag,
+                      suggestionsFor: (q) => _repo.watchTagCounts(query: q),
+                    ),
+                  ),
+                  PlaceInput(
+                    location: state.draft.location,
+                    locating: state.locating,
+                    manualPlace: state.manualPlace,
+                    onClear: _cubit.clearLocation,
+                    onName: _cubit.setPlaceName,
+                    suggestionsFor: (q) => _repo.watchPlaceCounts(query: q),
+                  ),
+                  TimeRow(
+                    photoTakenAt: _cubit.photoTakenAt,
+                    occurredAt: state.draft.occurredAt,
+                    edited: state.timeEdited,
+                    isEditing: state.isEditing,
+                    now: getIt<Clock>().now(),
+                    onPick: _cubit.setTime,
+                    onRevert: _cubit.revertTime,
+                  ),
+                  AppListTile(
+                    leading: const Icon(Icons.auto_stories_outlined),
+                    title: Text(l10n.walkDiaryComposerStory),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(_storyTitle(l10n, state)),
+                        const Icon(Icons.chevron_right),
+                      ],
+                    ),
+                    onTap: () => unawaited(_pickStory()),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            SafeArea(
+              top: false,
+              child: ComposerToolbar(
+                count: state.draft.media.length,
+                importing: state.importing,
+                onAdd: _addMedia,
+                onDraft: draft == null ? null : () => unawaited(_startDraft()),
+                drafting: writing,
+                onStopDraft: () => unawaited(_draftCubit?.stop()),
+                canRewrite: draft?.lastDraft != null,
+                draftEnabled: state.draft.body.trim().isNotEmpty || sendsPhotos,
+                photosOn: hasPhotos ? draft?.includePhotos ?? false : null,
+                photosSupported: canSeePhotos,
+                onPhotosChanged: (on) => unawaited(_setIncludePhotos(on)),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

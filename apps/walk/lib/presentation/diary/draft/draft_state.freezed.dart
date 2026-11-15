@@ -27,6 +27,10 @@ bool operator ==(Object other) {
 @override
 int get hashCode => runtimeType.hashCode;
 
+@override
+String toString() {
+  return 'DraftRun()';
+}
 
 
 }
@@ -121,12 +125,12 @@ return failed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function()?  writing,TResult Function( String text)?  done,TResult Function( ChatFailure failure)?  failed,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function()?  writing,TResult Function()?  done,TResult Function( ChatFailure failure)?  failed,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case DraftRunIdle() when idle != null:
 return idle();case DraftRunWriting() when writing != null:
 return writing();case DraftRunDone() when done != null:
-return done(_that.text);case DraftRunFailed() when failed != null:
+return done();case DraftRunFailed() when failed != null:
 return failed(_that.failure);case _:
   return orElse();
 
@@ -145,12 +149,12 @@ return failed(_that.failure);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function()  writing,required TResult Function( String text)  done,required TResult Function( ChatFailure failure)  failed,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function()  writing,required TResult Function()  done,required TResult Function( ChatFailure failure)  failed,}) {final _that = this;
 switch (_that) {
 case DraftRunIdle():
 return idle();case DraftRunWriting():
 return writing();case DraftRunDone():
-return done(_that.text);case DraftRunFailed():
+return done();case DraftRunFailed():
 return failed(_that.failure);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -165,12 +169,12 @@ return failed(_that.failure);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function()?  writing,TResult? Function( String text)?  done,TResult? Function( ChatFailure failure)?  failed,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function()?  writing,TResult? Function()?  done,TResult? Function( ChatFailure failure)?  failed,}) {final _that = this;
 switch (_that) {
 case DraftRunIdle() when idle != null:
 return idle();case DraftRunWriting() when writing != null:
 return writing();case DraftRunDone() when done != null:
-return done(_that.text);case DraftRunFailed() when failed != null:
+return done();case DraftRunFailed() when failed != null:
 return failed(_that.failure);case _:
   return null;
 
@@ -200,6 +204,10 @@ bool operator ==(Object other) {
 @override
 int get hashCode => runtimeType.hashCode;
 
+@override
+String toString() {
+  return 'DraftRun.idle()';
+}
 
 
 }
@@ -228,6 +236,10 @@ bool operator ==(Object other) {
 @override
 int get hashCode => runtimeType.hashCode;
 
+@override
+String toString() {
+  return 'DraftRun.writing()';
+}
 
 
 }
@@ -239,63 +251,33 @@ int get hashCode => runtimeType.hashCode;
 
 
 class DraftRunDone implements DraftRun {
-  const DraftRunDone(this.text);
+  const DraftRunDone();
   
 
- final  String text;
 
-/// Create a copy of DraftRun
-/// with the given fields replaced by the non-null parameter values.
-@JsonKey(includeFromJson: false, includeToJson: false)
-@pragma('vm:prefer-inline')
-$DraftRunDoneCopyWith<DraftRunDone> get copyWith => _$DraftRunDoneCopyWithImpl<DraftRunDone>(this, _$identity);
+
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftRunDone&&(identical(other.text, text) || other.text == text));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftRunDone);
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,text);
+int get hashCode => runtimeType.hashCode;
 
-
-
-}
-
-/// @nodoc
-abstract mixin class $DraftRunDoneCopyWith<$Res> implements $DraftRunCopyWith<$Res> {
-  factory $DraftRunDoneCopyWith(DraftRunDone value, $Res Function(DraftRunDone) _then) = _$DraftRunDoneCopyWithImpl;
-@useResult
-$Res call({
- String text
-});
-
-
-
-
-}
-/// @nodoc
-class _$DraftRunDoneCopyWithImpl<$Res>
-    implements $DraftRunDoneCopyWith<$Res> {
-  _$DraftRunDoneCopyWithImpl(this._self, this._then);
-
-  final DraftRunDone _self;
-  final $Res Function(DraftRunDone) _then;
-
-/// Create a copy of DraftRun
-/// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? text = null,}) {
-  return _then(DraftRunDone(
-null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
-as String,
-  ));
+@override
+String toString() {
+  return 'DraftRun.done()';
 }
 
 
 }
+
+
+
 
 /// @nodoc
 
@@ -323,6 +305,10 @@ bool operator ==(Object other) {
 @override
 int get hashCode => Object.hash(runtimeType,failure);
 
+@override
+String toString() {
+  return 'DraftRun.failed(failure: $failure)';
+}
 
 
 }
@@ -362,7 +348,7 @@ as ChatFailure,
 /// @nodoc
 mixin _$DraftState {
 
- DraftAvailability? get availability; DraftStyle get style; bool get includePhotos; DraftRun get run;
+ DraftRun get run; String get text; String? get memo; bool get polish; String? get lastDraft; bool get includePhotos;
 /// Create a copy of DraftState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -373,17 +359,13 @@ $DraftStateCopyWith<DraftState> get copyWith => _$DraftStateCopyWithImpl<DraftSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftState&&(identical(other.availability, availability) || other.availability == availability)&&(identical(other.style, style) || other.style == style)&&(identical(other.includePhotos, includePhotos) || other.includePhotos == includePhotos)&&(identical(other.run, run) || other.run == run));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftState&&(identical(other.run, run) || other.run == run)&&(identical(other.text, text) || other.text == text)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.polish, polish) || other.polish == polish)&&(identical(other.lastDraft, lastDraft) || other.lastDraft == lastDraft)&&(identical(other.includePhotos, includePhotos) || other.includePhotos == includePhotos));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,availability,style,includePhotos,run);
+int get hashCode => Object.hash(runtimeType,run,text,memo,polish,lastDraft,includePhotos);
 
-@override
-String toString() {
-  return 'DraftState(availability: $availability, style: $style, includePhotos: $includePhotos, run: $run)';
-}
 
 
 }
@@ -393,7 +375,7 @@ abstract mixin class $DraftStateCopyWith<$Res>  {
   factory $DraftStateCopyWith(DraftState value, $Res Function(DraftState) _then) = _$DraftStateCopyWithImpl;
 @useResult
 $Res call({
- DraftAvailability? availability, DraftStyle style, bool includePhotos, DraftRun run
+ DraftRun run, String text, String? memo, bool polish, String? lastDraft, bool includePhotos
 });
 
 
@@ -410,13 +392,15 @@ class _$DraftStateCopyWithImpl<$Res>
 
 /// Create a copy of DraftState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? availability = freezed,Object? style = null,Object? includePhotos = null,Object? run = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? run = null,Object? text = null,Object? memo = freezed,Object? polish = null,Object? lastDraft = freezed,Object? includePhotos = null,}) {
   return _then(DraftState(
-availability: freezed == availability ? _self.availability : availability // ignore: cast_nullable_to_non_nullable
-as DraftAvailability?,style: null == style ? _self.style : style // ignore: cast_nullable_to_non_nullable
-as DraftStyle,includePhotos: null == includePhotos ? _self.includePhotos : includePhotos // ignore: cast_nullable_to_non_nullable
-as bool,run: null == run ? _self.run : run // ignore: cast_nullable_to_non_nullable
-as DraftRun,
+run: null == run ? _self.run : run // ignore: cast_nullable_to_non_nullable
+as DraftRun,text: null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
+as String,memo: freezed == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable
+as String?,polish: null == polish ? _self.polish : polish // ignore: cast_nullable_to_non_nullable
+as bool,lastDraft: freezed == lastDraft ? _self.lastDraft : lastDraft // ignore: cast_nullable_to_non_nullable
+as String?,includePhotos: null == includePhotos ? _self.includePhotos : includePhotos // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

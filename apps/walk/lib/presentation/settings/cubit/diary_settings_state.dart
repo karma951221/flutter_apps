@@ -25,7 +25,7 @@ class DiarySettingsState with _$DiarySettingsState {
   @override
   final DraftStyle draftStyle;
 
-  /// 초안 시트 "사진도 보여 주기" 기본값.
+  /// 사진 보여 주기(작성 화면 도구줄과 같은 값).
   @override
   final bool draftIncludePhotos;
 

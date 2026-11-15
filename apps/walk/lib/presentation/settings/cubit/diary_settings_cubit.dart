@@ -47,13 +47,13 @@ class DiarySettingsCubit extends Cubit<DiarySettingsState> {
     if (!isClosed) emit(_with(retention: retention));
   }
 
-  /// 자동 초안의 기본 문체. 초안 시트의 칩은 이 값으로 시작한다.
+  /// 자동 초안의 문체 — 초안은 늘 이 문체로 쓴다(작성 화면에는 문체 칩이 없다).
   Future<void> setDraftStyle(DraftStyle style) async {
     await _prefs.setDraftStyle(style);
     if (!isClosed) emit(state.copyWith(draftStyle: style));
   }
 
-  /// 초안 시트 "사진도 보여 주기" 기본값.
+  /// 사진 보여 주기(작성 화면 도구줄과 같은 값).
   Future<void> setDraftIncludePhotos(bool on) async {
     await _prefs.setDraftIncludePhotos(on);
     if (!isClosed) emit(state.copyWith(draftIncludePhotos: on));

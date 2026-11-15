@@ -9,8 +9,8 @@ import '../cubit/diary_settings_cubit.dart';
 import '../cubit/diary_settings_state.dart';
 import 'settings_widgets.dart';
 
-/// 일기 설정 › 자동 초안 — 기본 문체 · "사진도 보여 주기" 기본값(스펙 §4 문체).
-/// 초안 시트는 이 값으로 시작하고, 시트에서 바꾼 것은 그 한 번만이다.
+/// 일기 설정 › 자동 초안 — 문체 · "사진 보여 주기"(스펙 2026-11-15 §4 R-A2 · R-A4).
+/// 문체는 여기서만 고른다. 사진 보여 주기는 작성 화면 도구줄의 토글과 같은 값이다.
 class DiaryDraftSection extends StatelessWidget {
   const DiaryDraftSection({super.key});
 

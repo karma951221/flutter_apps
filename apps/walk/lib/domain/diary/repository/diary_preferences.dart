@@ -11,7 +11,7 @@ abstract interface class DiaryPreferences {
   DraftStyle get draftStyle;
   Future<void> setDraftStyle(DraftStyle v);
 
-  /// 초안 시트의 "사진도 보여 주기" 기본값. 기본 false.
+  /// 사진 보여 주기(작성 화면 도구줄 · 일기 설정이 같이 쓴다). 마지막 선택을 기억한다. 기본 false.
   bool get draftIncludePhotos;
   Future<void> setDraftIncludePhotos(bool v);
 }

@@ -7,12 +7,13 @@ import 'package:injectable/injectable.dart';
 import '../../chat/attachment/chat_attachment.dart';
 import '../../chat/chat_connection.dart';
 import '../../chat/chat_model.dart';
+import '../../chat/chat_model_catalog.dart';
+import '../../chat/chat_model_rules.dart';
 import '../../chat/chat_settings.dart';
 import '../../chat/chat_usage_log.dart';
 import '../../chat/chat_vendor.dart';
 import '../../chat/tool/chat_image_source.dart';
 import '../../chat/tool/tool_result.dart';
-import '../../chat/usecase/chat_model_choice.dart';
 import '../../chat/usecase/chat_session.dart';
 import '../entity/entry_media.dart';
 import 'draft_context.dart';
@@ -22,31 +23,32 @@ import 'draft_style.dart';
 
 part 'draft_writer.freezed.dart';
 
-/// [DraftWriter.write] 의 결과. 글을 담으므로 생성 toString 을 끈다.
+/// [DraftWriter.write] 가 흘리는 이벤트. 글을 담으므로 생성 toString 을 끈다.
+/// 멈추기는 구독을 끊는 것이다 — 따로 이벤트가 없다.
 @Freezed(toStringOverride: false)
-sealed class DraftResult with _$DraftResult {
-  /// 앞뒤 공백을 뺀 초안.
-  const factory DraftResult.text(String text) = DraftText;
+sealed class DraftEvent with _$DraftEvent {
+  /// 글 조각(받은 그대로). 이어 붙이면 지금까지의 글.
+  const factory DraftEvent.delta(String text) = DraftDelta;
 
-  /// 키 없음 · 잘못된 키 · 네트워크 · 거절 등 — 물어보기와 같은 실패 종류.
-  const factory DraftResult.failed(ChatFailure failure) = DraftFailed;
+  /// 앞뒤 공백을 뺀 전체 초안. 마지막 이벤트.
+  const factory DraftEvent.done(String text) = DraftDone;
 
-  /// 연결 벤더로의 전송 동의가 없다 — 요청하지 않았다.
-  const factory DraftResult.needsConsent() = DraftNeedsConsent;
+  /// 키 없음 · 잘못된 키 · 네트워크 · 거절 · 빈 응답 등 — 물어보기와 같은 실패 종류. 마지막 이벤트.
+  const factory DraftEvent.failed(ChatFailure failure) = DraftFailed;
 
-  /// [DraftWriter.cancel] 로 멈췄다.
-  const factory DraftResult.cancelled() = DraftCancelled;
+  /// 연결 벤더로의 전송 동의가 없다 — 요청하지 않았다. 마지막 이벤트.
+  const factory DraftEvent.needsConsent() = DraftNeedsConsent;
 
   @override
   String toString() => switch (this) {
-    DraftText(:final text) => 'DraftResult.text(length: ${text.length})',
-    DraftFailed(:final failure) => 'DraftResult.failed($failure)',
-    DraftNeedsConsent() => 'DraftResult.needsConsent()',
-    DraftCancelled() => 'DraftResult.cancelled()',
+    DraftDelta(:final text) => 'DraftEvent.delta(length: ${text.length})',
+    DraftDone(:final text) => 'DraftEvent.done(length: ${text.length})',
+    DraftFailed(:final failure) => 'DraftEvent.failed($failure)',
+    DraftNeedsConsent() => 'DraftEvent.needsConsent()',
   };
 }
 
-/// 초안 시트가 [초안 쓰기] 를 보일지 — 키 · 동의 상태.
+/// ✨ 를 눌렀을 때 바로 쓸지, 안내 · 동의를 먼저 보일지 — 키 · 동의 상태.
 @freezed
 sealed class DraftAvailability with _$DraftAvailability {
   /// 키가 없다(또는 읽지 못했다) — 물어보기 설정으로 안내한다.
@@ -60,16 +62,17 @@ sealed class DraftAvailability with _$DraftAvailability {
   const factory DraftAvailability.ready(ChatVendor vendor) = DraftReady;
 }
 
-/// 메모 · 맥락(· 사진)으로 일기 초안을 쓰는 한 번의 요청(스펙 §4 A1~A3).
+/// 메모 · 맥락(· 사진)으로 일기 초안을 쓴다(스펙 2026-11-15 §4).
 ///
-/// [WikiDistiller] 처럼 세션과 따로 돈다 — 원문 키를 직접 읽고 연결 벤더 ·
-/// [ChatModelChoice.currentModel] 로 보낸다. 도구 · 웹 검색 없이 한 라운드.
+/// [WikiDistiller] 처럼 세션과 따로 돈다 — 원문 키를 직접 읽고 연결 벤더의 **초안 모델**
+/// ([draftModelOf], 물어보기에서 고른 모델이 아니다)로 보낸다. 도구 · 웹 검색 · 생각 없이 한 라운드,
+/// 출력은 [maxOutputTokens] 까지.
 @lazySingleton
 class DraftWriter {
   DraftWriter(
     this._registry,
     this._settings,
-    this._choice,
+    this._catalog,
     this._images,
     this._usage,
     this._ids,
@@ -78,7 +81,7 @@ class DraftWriter {
 
   final ChatModelRegistry _registry;
   final ChatSettings _settings;
-  final ChatModelChoice _choice;
+  final ChatModelCatalog _catalog;
   final ChatImageSource _images;
   final ChatUsageLog _usage;
   final IdGenerator _ids;
@@ -87,7 +90,8 @@ class DraftWriter {
   /// 켜도 이만큼만 붙인다.
   static const maxPhotos = 4;
 
-  final _runs = <_Run>{};
+  /// 초안 한 번의 출력 토큰 상한(길이 규칙 최대 6문장에 넉넉히).
+  static const maxOutputTokens = 600;
 
   /// 키 · 동의 상태. 던지지 않는다 — 키 저장소를 읽지 못하면 noKey.
   Future<DraftAvailability> availability() async {
@@ -105,78 +109,56 @@ class DraftWriter {
     return DraftAvailability.ready(vendor);
   }
 
-  /// 진행 중인 요청을 모두 멈춘다(초안 시트는 하나뿐이라 고르지 않는다).
-  void cancel() {
-    for (final run in [..._runs]) {
-      run.cancel();
-    }
+  /// 연결 벤더의 초안 모델. 모델 목록이 그 벤더 것이 아니면 상수. 연결이 없으면 null.
+  String? get draftModel {
+    final vendor = _settings.connectedVendor;
+    if (vendor == null) return null;
+    final models = _catalog.vendor == vendor ? _catalog.models : <ModelInfo>[];
+    return draftModelOf(vendor, models);
   }
 
-  /// [includePhotos] 면 [photos] 중 사진 앞 [maxPhotos] 장을 줄인 JPEG 로 붙인다. 끄면 읽지도 않는다.
-  Future<DraftResult> write(
+  /// 초안 모델이 사진을 볼 수 있는가(모델 목록의 이미지 지원). 연결이 없으면 true.
+  bool get canSeePhotos {
+    final model = draftModel;
+    return model == null || _catalog.supportsImages(model);
+  }
+
+  /// 초안을 쓴다. 글 조각([DraftDelta])을 흘리고 [DraftDone] · [DraftFailed] ·
+  /// [DraftNeedsConsent] 중 하나로 끝난다. 던지지 않는다. 구독을 끊으면 요청도 끊는다.
+  ///
+  /// [includePhotos] 이고 초안 모델이 사진을 볼 수 있으면 [photos] 중 사진 앞 [maxPhotos] 장을
+  /// 줄인 JPEG 로 붙인다. 아니면 읽지도 않는다. [polish] 면 메모(= 지금 글)를 새 사실 없이 다듬는다.
+  Stream<DraftEvent> write(
     DraftContext context, {
     required DraftStyle style,
     List<EntryMedia> photos = const [],
     bool includePhotos = false,
-  }) async {
-    final run = _Run();
-    _runs.add(run);
+    bool polish = false,
+  }) async* {
+    final String? apiKey;
     try {
-      return await _write(context, style, photos, includePhotos, run);
-    } on ChatModelException catch (e) {
-      if (run.cancelled) return const DraftResult.cancelled();
-      var failure = chatFailureOf(e.kind);
-      final key = run.apiKey;
-      final model = run.model;
-      if (failure == ChatFailure.invalidKey && key != null) {
-        _recordInvalidKey(key);
-      } else if (failure == ChatFailure.modelUnavailable && model != null) {
-        final replaced = await _recoverFromUnavailable(model);
-        if (run.cancelled) return const DraftResult.cancelled();
-        if (replaced) failure = ChatFailure.modelReplaced;
-      }
-      return DraftResult.failed(failure);
+      apiKey = await _settings.apiKey();
     } catch (_) {
-      if (run.cancelled) return const DraftResult.cancelled();
-      return const DraftResult.failed(ChatFailure.unknown);
-    } finally {
-      _runs.remove(run);
+      yield const DraftEvent.failed(ChatFailure.noKey);
+      return;
     }
-  }
-
-  Future<DraftResult> _write(
-    DraftContext context,
-    DraftStyle style,
-    List<EntryMedia> photos,
-    bool includePhotos,
-    _Run run,
-  ) async {
-    const cancelled = DraftResult.cancelled();
-    final apiKey = await _settings.apiKey();
-    if (run.cancelled) return cancelled;
     final vendor = _settings.connectedVendor;
-    if (apiKey == null || vendor == null) {
-      return const DraftResult.failed(ChatFailure.noKey);
+    final modelId = draftModel;
+    if (apiKey == null || vendor == null || modelId == null) {
+      yield const DraftEvent.failed(ChatFailure.noKey);
+      return;
     }
     if (_settings.consentedVendor != vendor) {
-      return const DraftResult.needsConsent();
+      yield const DraftEvent.needsConsent();
+      return;
     }
-    final modelId = _choice.currentModel;
-    if (modelId == null) return const DraftResult.failed(ChatFailure.noModels);
-    run
-      ..apiKey = apiKey
-      ..model = modelId;
 
-    final attachments = includePhotos
+    final attachments = includePhotos && canSeePhotos
         ? await _attachments(photos)
         : const <ChatAttachment>[];
-    if (run.cancelled) return cancelled;
-
-    final fastMode = _choice.fastModeOn;
     final request = ModelRequest(
       apiKey: apiKey,
       model: modelId,
-      fastMode: fastMode,
       system: DraftPrompt.system(
         style: style,
         length: DraftLength.of(
@@ -184,31 +166,23 @@ class DraftWriter {
           photoCount: context.photoCount,
         ),
         withPhotos: attachments.isNotEmpty,
+        polish: polish,
+        memo: context.memo,
+        locale: context.locale,
       ),
       messages: [
         ChatMessage.user(DraftPrompt.user(context), attachments: attachments),
       ],
       tools: const [],
-      webSearch: false,
+      maxOutputTokens: maxOutputTokens,
+      thinking: false,
     );
-    final questionKey = _ids.newId();
-    final done = await _round(_registry.of(vendor), request, run, (event) {
-      _recordUsage(questionKey, vendor, modelId, fastMode, event);
-    });
-    if (run.cancelled) return cancelled;
-    if (done == null) {
-      throw const ChatModelException(ChatModelErrorKind.network);
-    }
-    if (done.stop == StopKind.refusal) {
-      return const DraftResult.failed(ChatFailure.refused);
-    }
-    final text = done.message.parts
-        .whereType<TextPart>()
-        .map((p) => p.text)
-        .join()
-        .trim();
-    if (text.isEmpty) return const DraftResult.failed(ChatFailure.unknown);
-    return DraftResult.text(text);
+
+    // yield* 라야 구독을 끊을 때 모델 스트림(HTTP)도 바로 끊긴다 — await for 는 다음 yield 까지 기다린다.
+    yield* _registry
+        .of(vendor)
+        .stream(request)
+        .transform(_DraftEvents(this, apiKey, vendor, modelId, _ids.newId()));
   }
 
   Future<List<ChatAttachment>> _attachments(List<EntryMedia> media) async {
@@ -233,39 +207,6 @@ class DraftWriter {
     return result;
   }
 
-  /// 완료 이벤트(없으면 null)를 돌려준다. [run] 을 멈추면 구독을 끊고 null.
-  Future<ModelCompleted?> _round(
-    ChatModel model,
-    ModelRequest request,
-    _Run run,
-    void Function(ModelCompleted event) onCompleted,
-  ) {
-    final completer = Completer<ModelCompleted?>();
-    ModelCompleted? done;
-    final sub = model
-        .stream(request)
-        .listen(
-          (event) {
-            if (event is ModelCompleted) {
-              done = event;
-              onCompleted(event);
-            }
-          },
-          onError: (Object e, StackTrace s) {
-            if (!completer.isCompleted) completer.completeError(e, s);
-          },
-          onDone: () {
-            if (!completer.isCompleted) completer.complete(done);
-          },
-          cancelOnError: true,
-        );
-    run.onCancel = () {
-      sub.cancel().ignore();
-      if (!completer.isCompleted) completer.complete(null);
-    };
-    return completer.future.whenComplete(() => run.onCancel = null);
-  }
-
   void _recordInvalidKey(String usedKey) {
     unawaited(
       Future.sync(
@@ -274,20 +215,11 @@ class DraftWriter {
     );
   }
 
-  Future<bool> _recoverFromUnavailable(String model) async {
-    try {
-      return await _choice.recoverFromUnavailable(model);
-    } catch (_) {
-      return false;
-    }
-  }
-
   /// 기다리지 않고 오류를 삼킨다.
   void _recordUsage(
     String questionKey,
     ChatVendor vendor,
     String model,
-    bool fastMode,
     ModelCompleted event,
   ) {
     final usage = event.usage;
@@ -297,7 +229,7 @@ class DraftWriter {
       questionKey: questionKey,
       vendor: vendor,
       model: model,
-      fastMode: fastMode,
+      fastMode: false,
       purpose: ChatUsagePurpose.diaryDraft,
       round: 1,
       temporary: false,
@@ -313,18 +245,77 @@ class DraftWriter {
   }
 }
 
-/// 진행 중인 [DraftWriter.write] 하나.
-class _Run {
-  bool cancelled = false;
+/// 모델 이벤트 → 초안 이벤트. 끝(완료 · 오류 · 완료 없는 끝)에서 마지막 이벤트 하나를 낸다.
+class _DraftEvents extends StreamTransformerBase<ModelEvent, DraftEvent> {
+  _DraftEvents(
+    this._writer,
+    this._apiKey,
+    this._vendor,
+    this._model,
+    this._questionKey,
+  );
 
-  /// 오류 처리(키 상태 · 모델 복구)만 쓴다. 어디에도 싣지 않는다.
-  String? apiKey;
-  String? model;
+  final DraftWriter _writer;
+  final String _apiKey;
+  final ChatVendor _vendor;
+  final String _model;
+  final String _questionKey;
 
-  void Function()? onCancel;
+  @override
+  Stream<DraftEvent> bind(Stream<ModelEvent> stream) {
+    ModelCompleted? done;
+    var finished = false;
+    return stream.transform(
+      StreamTransformer.fromHandlers(
+        handleData: (event, sink) {
+          if (finished) return;
+          switch (event) {
+            case ModelTextDelta(:final text) when text.isNotEmpty:
+              sink.add(DraftEvent.delta(text));
+            case ModelCompleted():
+              done = event;
+              _writer._recordUsage(_questionKey, _vendor, _model, event);
+            default:
+              break;
+          }
+        },
+        handleError: (error, _, sink) {
+          if (finished) return;
+          finished = true;
+          var failure = ChatFailure.unknown;
+          if (error is ChatModelException) {
+            failure = chatFailureOf(error.kind);
+            if (failure == ChatFailure.invalidKey) {
+              _writer._recordInvalidKey(_apiKey);
+            }
+          }
+          sink
+            ..add(DraftEvent.failed(failure))
+            ..close();
+        },
+        handleDone: (sink) {
+          if (!finished) {
+            finished = true;
+            sink.add(_last(done));
+          }
+          sink.close();
+        },
+      ),
+    );
+  }
 
-  void cancel() {
-    cancelled = true;
-    onCancel?.call();
+  static DraftEvent _last(ModelCompleted? done) {
+    if (done == null) return const DraftEvent.failed(ChatFailure.network);
+    if (done.stop == StopKind.refusal) {
+      return const DraftEvent.failed(ChatFailure.refused);
+    }
+    final text = done.message.parts
+        .whereType<TextPart>()
+        .map((p) => p.text)
+        .join()
+        .trim();
+    return text.isEmpty
+        ? const DraftEvent.failed(ChatFailure.unknown)
+        : DraftEvent.done(text);
   }
 }

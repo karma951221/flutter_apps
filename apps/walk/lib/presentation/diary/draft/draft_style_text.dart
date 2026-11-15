@@ -2,7 +2,7 @@ import 'package:l10n/l10n.dart';
 
 import '../../../domain/diary/draft/draft_style.dart';
 
-/// 문체 이름(칩 · 설정 행).
+/// 문체 이름(일기 설정 행).
 String draftStyleName(AppLocalizations l10n, DraftStyle style) =>
     switch (style) {
       DraftStyle.diary => l10n.walkDiaryDraftStyleDiary,

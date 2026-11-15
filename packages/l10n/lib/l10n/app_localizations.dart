@@ -8436,16 +8436,16 @@ abstract class AppLocalizations {
   /// **'기본 문체'**
   String get walkDiaryDraftSettingsStyle;
 
-  /// 일기 설정: 사진도 보여 주기 기본값 설명
+  /// 일기 설정: 사진 보여 주기 기본값 설명(도구줄 토글과 같은 값)
   ///
   /// In ko, this message translates to:
-  /// **'켜면 초안 시트의 사진 스위치가 켜진 채로 시작해요. 사진(최대 4장)은 켤 때만 AI로 보내져요.'**
+  /// **'작성 화면 도구줄의 사진 보여 주기와 같은 값이에요. 켜 두면 사진(최대 4장)이 초안을 쓸 때 AI로 보내져요.'**
   String get walkDiaryDraftSettingsIncludePhotosDescription;
 
-  /// 초안 시트 · 일기 설정: 사진을 모델로 보낼지 스위치
+  /// 작성 화면 도구줄 · 일기 설정: 사진을 초안 모델로 보낼지(같은 값)
   ///
   /// In ko, this message translates to:
-  /// **'사진도 보여 주기'**
+  /// **'사진 보여 주기'**
   String get walkDiaryDraftIncludePhotos;
 
   /// 초안 문체: 반말 '~했다'
@@ -8502,71 +8502,77 @@ abstract class AppLocalizations {
   /// **'{name} — {example}'**
   String walkDiaryDraftStyleOption(String name, String example);
 
-  /// 초안 시트 제목
+  /// 작성 화면: 키 없음 다이얼로그 제목
   ///
   /// In ko, this message translates to:
   /// **'초안 쓰기'**
   String get walkDiaryDraftTitle;
 
-  /// 초안 시트: 메모 칸 힌트
-  ///
-  /// In ko, this message translates to:
-  /// **'한 줄 메모 (예: 성수동 카페에서 책)'**
-  String get walkDiaryDraftMemoHint;
-
-  /// 초안 시트: 전송 안내(사진 끔)
-  ///
-  /// In ko, this message translates to:
-  /// **'메모 · 시각 · 장소 이름이 {vendor}로 보내져요.'**
-  String walkDiaryDraftNotice(String vendor);
-
-  /// 초안 시트: 전송 안내(사진 켬)
-  ///
-  /// In ko, this message translates to:
-  /// **'메모 · 시각 · 장소 이름과 사진이 {vendor}로 보내져요.'**
-  String walkDiaryDraftNoticeWithPhotos(String vendor);
-
-  /// 초안 시트: 요청 버튼
-  ///
-  /// In ko, this message translates to:
-  /// **'초안 쓰기'**
-  String get walkDiaryDraftWrite;
-
-  /// 초안 시트: 진행 중 안내
-  ///
-  /// In ko, this message translates to:
-  /// **'초안을 쓰는 중이에요…'**
-  String get walkDiaryDraftWriting;
-
-  /// 초안 시트: 진행 중 멈추기 버튼
+  /// 작성 화면 도구줄: 초안을 쓰는 중 ✨ 자리의 멈추기(툴팁)
   ///
   /// In ko, this message translates to:
   /// **'멈추기'**
   String get walkDiaryDraftStop;
 
-  /// 초안 시트: 키가 없을 때 안내
+  /// 작성 화면: 키 없이 ✨ 를 눌렀을 때 안내 다이얼로그
   ///
   /// In ko, this message translates to:
   /// **'물어보기 설정에서 키를 넣으면 쓸 수 있어요.'**
   String get walkDiaryDraftNoKey;
 
-  /// 초안 시트: 물어보기 설정 열기 버튼
+  /// 작성 화면 키 없음 다이얼로그: 물어보기 설정 열기 버튼
   ///
   /// In ko, this message translates to:
   /// **'설정 열기'**
   String get walkDiaryDraftOpenSettings;
 
-  /// 초안 시트: 전송 동의 다이얼로그 제목
+  /// 작성 화면 도구줄: 초안을 받은 뒤 ✨ 자리(툴팁) — 그대로면 원래 메모로 다시, 고쳤으면 다듬기
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 쓰기'**
+  String get walkDiaryComposerDraftRewrite;
+
+  /// 작성 화면 도구줄: 글 칸이 비고 사진 보여 주기가 꺼져 ✨ 가 꺼졌을 때의 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'한 줄 적거나 사진 보여 주기를 켜세요'**
+  String get walkDiaryComposerDraftNeedsInput;
+
+  /// 작성 화면 도구줄: 초안 모델이 이미지를 받지 않아 사진 보여 주기가 꺼졌을 때의 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'이 모델은 사진을 볼 수 없어요'**
+  String get walkDiaryComposerPhotosUnsupported;
+
+  /// 작성 화면: 사진 보여 주기를 켤 때 확인 — 보낼 사진 수(최대 4) · 연결 벤더
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 {count}장까지 {vendor}로 보내져요. 켜 두면 초안을 쓸 때마다 보내요.'**
+  String walkDiaryDraftPhotosConfirm(int count, String vendor);
+
+  /// 작성 화면: 사진 보여 주기를 켤 때 확인(연결한 벤더 없음)
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 {count}장까지 AI로 보내져요. 켜 두면 초안을 쓸 때마다 보내요.'**
+  String walkDiaryDraftPhotosConfirmNoVendor(int count);
+
+  /// 작성 화면: 사진 보여 주기 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'켜기'**
+  String get walkDiaryDraftPhotosConfirmAccept;
+
+  /// 작성 화면 시각 행: 사진 촬영 시각이 지금과 3시간 넘게 다를 때의 칩 — 예: 어제 오후 3:20
+  ///
+  /// In ko, this message translates to:
+  /// **'찍은 시각으로({when})'**
+  String walkDiaryEditorUseTakenTime(String when);
+
+  /// 작성 화면: 첫 사용 전송 동의 다이얼로그 제목
   ///
   /// In ko, this message translates to:
   /// **'AI로 보내기'**
   String get walkDiaryDraftConsentTitle;
-
-  /// 초안 시트: 실패 뒤 손으로 쓰기 안내
-  ///
-  /// In ko, this message translates to:
-  /// **'닫고 직접 써도 돼요.'**
-  String get walkDiaryDraftManualHint;
 
   /// 작성 화면: 초안으로 글 칸을 바꾼 뒤 스낵바
   ///

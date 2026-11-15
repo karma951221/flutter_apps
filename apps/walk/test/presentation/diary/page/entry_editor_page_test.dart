@@ -22,6 +22,7 @@ import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/domain/diary/diary_failure.dart';
 import 'package:walk/domain/diary/draft/draft_context.dart';
+import 'package:walk/domain/diary/draft/draft_prompt.dart';
 import 'package:walk/domain/diary/draft/draft_style.dart';
 import 'package:walk/domain/diary/draft/draft_writer.dart';
 import 'package:walk/domain/diary/draft/photo_meta.dart';
@@ -60,7 +61,40 @@ class _MockStore extends Mock implements MediaStore {}
 
 class _MockPicker extends Mock implements MediaPicker {}
 
-class _Writer extends Mock implements DraftWriter {}
+/// 부를 때마다 새 스트림을 열고 받은 재료를 모은다. 테스트가 [emit] 으로 흘린다.
+class _Writer implements DraftWriter {
+  final calls = <({DraftContext context, bool includePhotos, bool polish})>[];
+  StreamController<DraftEvent>? current;
+  var cancelled = 0;
+  DraftAvailability available = const DraftAvailability.ready(
+    ChatVendor.anthropic,
+  );
+
+  @override
+  bool canSeePhotos = true;
+
+  @override
+  String? get draftModel => 'claude-haiku-5-5';
+
+  @override
+  Future<DraftAvailability> availability() async => available;
+
+  @override
+  Stream<DraftEvent> write(
+    DraftContext context, {
+    required DraftStyle style,
+    List<EntryMedia> photos = const [],
+    bool includePhotos = false,
+    bool polish = false,
+  }) {
+    calls.add((context: context, includePhotos: includePhotos, polish: polish));
+    final c = StreamController<DraftEvent>(onCancel: () => cancelled++);
+    current = c;
+    return c.stream;
+  }
+
+  void emit(DraftEvent event) => current!.add(event);
+}
 
 class _MetaReader implements PhotoMetaReader {
   final byPath = <String, PhotoMeta>{};
@@ -103,6 +137,8 @@ void main() {
   late PrefsLockRepository lockRepo;
   late DiaryLockCubit lock;
   late _Writer writer;
+  late FakeChatSettings chatSettings;
+  late int openedSettings;
   late _MetaReader metas;
 
   setUpAll(() {
@@ -110,8 +146,6 @@ void main() {
     registerFallbackValue(<EntryMedia>[]);
     registerFallbackValue(<PickedMedia>[]);
     registerFallbackValue(const EntryFilter.all());
-    registerFallbackValue(DraftContext(memo: '', occurredAt: DateTime(2026)));
-    registerFallbackValue(DraftStyle.diary);
   });
 
   setUp(() async {
@@ -155,19 +189,16 @@ void main() {
       ..registerSingleton<MediaPicker>(picker)
       ..registerSingleton<Clock>(clock);
     writer = _Writer();
-    when(writer.availability).thenAnswer(
-      (_) async => const DraftAvailability.ready(ChatVendor.anthropic),
-    );
-    when(writer.cancel).thenAnswer((_) {});
+    chatSettings = FakeChatSettings('sk-ant-test')
+      ..consentedVendor = ChatVendor.anthropic;
+    openedSettings = 0;
     metas = _MetaReader();
     getIt
       ..registerSingleton<DraftWriter>(writer)
       ..registerSingleton<DiaryPreferences>(
         PrefsDiaryPreferences(await SharedPreferences.getInstance()),
       )
-      ..registerSingleton<ChatSettings>(
-        FakeChatSettings('sk-ant-test')..consentedVendor = ChatVendor.anthropic,
-      )
+      ..registerSingleton<ChatSettings>(chatSettings)
       ..registerSingleton<PhotoMetaReader>(metas);
     lockRepo = PrefsLockRepository(await SharedPreferences.getInstance());
     lock = DiaryLockCubit(lockRepo, FakeDeviceAuth(), clock, MediaPickGuard());
@@ -193,7 +224,11 @@ void main() {
         builder: (context) => Scaffold(
           body: Center(
             child: TextButton(
-              onPressed: () => openEntryEditor(context, editingId: editingId),
+              onPressed: () => openEntryEditor(
+                context,
+                editingId: editingId,
+                onOpenChatSettings: () => openedSettings++,
+              ),
               child: const Text('home'),
             ),
           ),
@@ -398,121 +433,298 @@ void main() {
     expect(bodyFocused(tester), isFalse);
   });
 
-  /// 초안이 [result] 로 끝나게 하고, 불린 재료를 모아 돌려준다.
-  List<DraftContext> answerDraft(DraftResult result) {
-    final calls = <DraftContext>[];
-    when(
-      () => writer.write(
-        any(),
-        style: any(named: 'style'),
-        photos: any(named: 'photos'),
-        includePhotos: any(named: 'includePhotos'),
-      ),
-    ).thenAnswer((inv) async {
-      calls.add(inv.positionalArguments.first as DraftContext);
-      return result;
-    });
-    return calls;
-  }
-
   String bodyText(WidgetTester tester) =>
       tester.widget<TextField>(bodyField()).controller!.text;
 
-  testWidgets('도구줄 ✨ 는 초안 시트를 열고, 짧은 글은 메모로 채운다', (tester) async {
-    await pump(tester);
-    await tester.enterText(bodyField(), '성수동 카페');
+  bool bodyReadOnly(WidgetTester tester) =>
+      tester.widget<TextField>(bodyField()).readOnly;
 
-    await tester.tap(find.byTooltip('초안 쓰기'));
-    await tester.pumpAndSettle();
-
-    final memo = tester.widget<TextField>(find.byKey(const Key('draft-memo')));
-    expect(memo.controller?.text, '성수동 카페');
-  });
-
-  testWidgets('초안을 받으면 글 칸이 초안으로 바뀌고, 원래 글은 되돌리기로 돌아온다', (tester) async {
-    final calls = answerDraft(const DraftResult.text('카페에서 책을 읽었다.'));
-    await pump(tester);
-    await tester.enterText(bodyField(), '카페');
-
-    await tester.tap(find.byTooltip('초안 쓰기'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('draft-write')));
-    await tester.pumpAndSettle();
-
-    expect(calls.single.memo, '카페');
-    expect(calls.single.placeName, _aewol.placeName);
-    expect(find.text('카페에서 책을 읽었다.'), findsOneWidget);
-    expect(find.text('되돌리기'), findsOneWidget);
-
-    await tester.tap(find.text('되돌리기'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('카페'), findsOneWidget);
-    expect(find.text('카페에서 책을 읽었다.'), findsNothing);
-  });
-
-  testWidgets('글 칸이 비어 있었으면 초안을 넣고 되돌리기는 없다', (tester) async {
-    answerDraft(const DraftResult.text('산책했다.'));
-    await pump(tester);
-
-    await tester.tap(find.byTooltip('초안 쓰기'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('draft-memo')), '산책');
-    await tester.tap(find.byKey(const Key('draft-write')));
-    await tester.pumpAndSettle();
-
-    expect(bodyText(tester), '산책했다.');
-    expect(find.text('되돌리기'), findsNothing);
-  });
-
-  testWidgets('긴 글은 메모로 채우지 않는다', (tester) async {
-    await pump(tester);
-    await tester.enterText(bodyField(), '가' * 101);
-
-    await tester.tap(find.byTooltip('초안 쓰기'));
-    await tester.pumpAndSettle();
-
-    final memo = tester.widget<TextField>(find.byKey(const Key('draft-memo')));
-    expect(memo.controller?.text, isEmpty);
-  });
-
-  testWidgets('초안이 실패해 시트를 닫으면 글 칸은 그대로다', (tester) async {
-    answerDraft(const DraftResult.failed(ChatFailure.network));
-    await pump(tester);
-    await tester.enterText(bodyField(), '카페');
-
-    await tester.tap(find.byTooltip('초안 쓰기'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('draft-write')));
-    await tester.pumpAndSettle();
-    await tester.tapAt(const Offset(10, 10));
-    await tester.pumpAndSettle();
-
-    expect(bodyText(tester), '카페');
-  });
-
-  testWidgets('붙인 사진의 촬영 시각이 초안 재료로 간다', (tester) async {
-    final calls = answerDraft(const DraftResult.text('좋았다.'));
-    metas.byPath['/picked/a.jpg'] = PhotoMeta(
-      takenAt: DateTime(2026, 10, 9, 15),
-    );
+  Future<void> addPhoto(WidgetTester tester, {DateTime? takenAt}) async {
+    if (takenAt != null) {
+      metas.byPath['/picked/a.jpg'] = PhotoMeta(takenAt: takenAt);
+    }
     when(
       () => picker.pickGallery(limit: any(named: 'limit')),
     ).thenAnswer((_) async => [(path: '/picked/a.jpg', kind: MediaKind.photo)]);
     when(
       () => store.importPhoto('/picked/a.jpg'),
     ).thenAnswer((_) async => Ok(photoMedia('m1', path: 'tmp/m1.jpg')));
-    await pump(tester);
     await tester.tap(find.byTooltip('앨범에서 고르기'));
     await tester.pumpAndSettle();
+  }
 
-    await tester.tap(find.byTooltip('초안 쓰기'));
+  Future<void> tapDraft(WidgetTester tester, [String tooltip = '초안 쓰기']) async {
+    await tester.pump();
+    await tester.tap(find.byTooltip(tooltip));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('draft-write')));
-    await tester.pumpAndSettle();
+  }
 
-    expect(calls.single.photoCount, 1);
-    expect(calls.single.photoTakenFrom, DateTime(2026, 10, 9, 15));
+  group('자동 초안(스펙 2026-11-15 §4)', () {
+    testWidgets('✨ 한 번에 글 칸의 글을 메모로 바로 쓰고, 글 칸에 흘려 넣는다', (tester) async {
+      await pump(tester);
+      await tester.enterText(bodyField(), '카페');
+
+      await tapDraft(tester);
+
+      expect(find.byType(BottomSheet), findsNothing);
+      expect(writer.calls.single.context.memo, '카페');
+      expect(writer.calls.single.context.placeName, _aewol.placeName);
+      expect(writer.calls.single.context.locale, 'ko');
+      expect(bodyReadOnly(tester), isTrue);
+      expect(find.byTooltip('멈추기'), findsOneWidget);
+
+      writer.emit(const DraftEvent.delta('카페에서 '));
+      await tester.pump();
+      expect(bodyText(tester), '카페에서 ');
+      writer.emit(const DraftEvent.delta('책을 읽었다.'));
+      await tester.pump();
+      expect(bodyText(tester), '카페에서 책을 읽었다.');
+    });
+
+    testWidgets('끝나면 되돌리기 스낵바 — 누르면 원래 메모, ✨ 는 다시 쓰기', (tester) async {
+      await pump(tester);
+      await tester.enterText(bodyField(), '카페');
+      await tapDraft(tester);
+
+      writer.emit(const DraftEvent.done('카페에서 책을 읽었다.'));
+      await tester.pumpAndSettle();
+
+      expect(bodyText(tester), '카페에서 책을 읽었다.');
+      expect(bodyReadOnly(tester), isFalse);
+      expect(find.byTooltip('다시 쓰기'), findsOneWidget);
+      expect(find.text('되돌리기'), findsOneWidget);
+
+      await tester.tap(find.text('되돌리기'));
+      await tester.pumpAndSettle();
+
+      expect(bodyText(tester), '카페');
+      expect(find.byTooltip('초안 쓰기'), findsOneWidget);
+    });
+
+    testWidgets('올리면 초안 글이 저장된다', (tester) async {
+      when(
+        () => useCase.save(any(), editingId: any(named: 'editingId')),
+      ).thenAnswer((_) async => savedEntry(Story.dailyId));
+      await pump(tester);
+      await tester.enterText(bodyField(), '카페');
+      await tapDraft(tester);
+      writer.emit(const DraftEvent.done('카페에서 책을 읽었다.'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('올리기'));
+      await tester.pumpAndSettle();
+
+      final draft =
+          verify(
+                () => useCase.save(
+                  captureAny(),
+                  editingId: any(named: 'editingId'),
+                ),
+              ).captured.single
+              as EntryDraft;
+      expect(draft.body, '카페에서 책을 읽었다.');
+    });
+
+    testWidgets('실패하면 원래 메모로 되돌리고 이유를 알린다', (tester) async {
+      await pump(tester);
+      await tester.enterText(bodyField(), '카페');
+      await tapDraft(tester);
+
+      writer.emit(const DraftEvent.delta('카페에서'));
+      writer.emit(const DraftEvent.failed(ChatFailure.network));
+      await tester.pumpAndSettle();
+
+      expect(bodyText(tester), '카페');
+      expect(find.text('연결이 끊겼어요. 다시 물어봐 주세요'), findsOneWidget);
+      expect(find.byTooltip('초안 쓰기'), findsOneWidget);
+    });
+
+    testWidgets('멈추면 그때까지의 글이 남는다', (tester) async {
+      await pump(tester);
+      await tester.enterText(bodyField(), '카페');
+      await tapDraft(tester);
+      writer.emit(const DraftEvent.delta('카페에서 책을'));
+      await tester.pump();
+
+      await tester.tap(find.byTooltip('멈추기'));
+      await tester.pumpAndSettle();
+
+      expect(writer.cancelled, 1);
+      expect(bodyText(tester), '카페에서 책을');
+      expect(bodyReadOnly(tester), isFalse);
+    });
+
+    testWidgets('다시 쓰기: 그대로면 원래 메모로, 고쳤으면 고친 글을 다듬는다', (tester) async {
+      await pump(tester);
+      await tester.enterText(bodyField(), '카페');
+      await tapDraft(tester);
+      writer.emit(const DraftEvent.done('카페에서 책을 읽었다.'));
+      await tester.pumpAndSettle();
+
+      await tapDraft(tester, '다시 쓰기');
+      expect(writer.calls.last.context.memo, '카페');
+      expect(writer.calls.last.polish, isFalse);
+      writer.emit(const DraftEvent.done('카페에서 독서했다.'));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(bodyField(), '카페에서 독서했다. 비가 왔다.');
+      await tapDraft(tester, '다시 쓰기');
+      expect(writer.calls.last.context.memo, '카페에서 독서했다. 비가 왔다.');
+      expect(writer.calls.last.polish, isTrue);
+    });
+
+    testWidgets('글 칸이 비고 사진 보여 주기가 꺼져 있으면 ✨ 가 꺼진다', (tester) async {
+      await pump(tester);
+
+      final button = tester.widget<IconButton>(
+        find.ancestor(
+          of: find.byTooltip('한 줄 적거나 사진 보여 주기를 켜세요'),
+          matching: find.byType(IconButton),
+        ),
+      );
+      expect(button.onPressed, isNull);
+
+      await tester.enterText(bodyField(), '카페');
+      await tester.pump();
+      expect(find.byTooltip('초안 쓰기'), findsOneWidget);
+    });
+
+    testWidgets('사진 보여 주기: 사진이 있을 때만 보이고, 켜는 순간 확인 후 기억한다', (tester) async {
+      await pump(tester);
+      expect(find.text('사진 보여 주기'), findsNothing);
+      await addPhoto(tester);
+
+      await tester.tap(find.text('사진 보여 주기'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('사진 1장까지 Claude로 보내져요'), findsOneWidget);
+      await tester.tap(find.text('켜기'));
+      await tester.pumpAndSettle();
+
+      expect(getIt<DiaryPreferences>().draftIncludePhotos, isTrue);
+      // 메모 없이 사진만으로 ✨ 가 켜진다.
+      await tapDraft(tester);
+      expect(writer.calls.single.includePhotos, isTrue);
+      expect(writer.calls.single.context.memo, '');
+    });
+
+    testWidgets('확인에서 그만두면 사진 보여 주기는 꺼진 채다', (tester) async {
+      await pump(tester);
+      await addPhoto(tester);
+
+      await tester.tap(find.text('사진 보여 주기'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('취소'));
+      await tester.pumpAndSettle();
+
+      expect(getIt<DiaryPreferences>().draftIncludePhotos, isFalse);
+    });
+
+    testWidgets('기억된 켬이면 다시 묻지 않고 끌 때도 묻지 않는다', (tester) async {
+      await getIt<DiaryPreferences>().setDraftIncludePhotos(true);
+      await pump(tester);
+      await addPhoto(tester);
+
+      final chip = tester.widget<FilterChip>(find.byType(FilterChip));
+      expect(chip.selected, isTrue);
+      await tester.tap(find.text('사진 보여 주기'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(getIt<DiaryPreferences>().draftIncludePhotos, isFalse);
+    });
+
+    testWidgets('초안 모델이 사진을 못 보면 토글이 꺼진다', (tester) async {
+      writer.canSeePhotos = false;
+      await pump(tester);
+      await addPhoto(tester);
+
+      expect(
+        tester.widget<FilterChip>(find.byType(FilterChip)).onSelected,
+        isNull,
+      );
+      expect(find.byTooltip('이 모델은 사진을 볼 수 없어요'), findsOneWidget);
+    });
+
+    testWidgets('키가 없으면 안내 다이얼로그 → 설정 열기', (tester) async {
+      writer.available = const DraftAvailability.noKey();
+      await pump(tester);
+      await tester.enterText(bodyField(), '카페');
+
+      await tapDraft(tester);
+      expect(find.text('물어보기 설정에서 키를 넣으면 쓸 수 있어요.'), findsOneWidget);
+      await tester.tap(find.text('설정 열기'));
+      await tester.pumpAndSettle();
+
+      expect(openedSettings, 1);
+      expect(writer.calls, isEmpty);
+    });
+
+    testWidgets('첫 사용이면 동의를 받고 기록한 뒤 쓴다', (tester) async {
+      writer.available = const DraftAvailability.needsConsent(
+        ChatVendor.anthropic,
+      );
+      chatSettings.consentedVendor = null;
+      await pump(tester);
+      await tester.enterText(bodyField(), '카페');
+
+      await tapDraft(tester);
+      expect(find.text('AI로 보내기'), findsOneWidget);
+      await tester.tap(find.text('동의하고 시작'));
+      await tester.pumpAndSettle();
+
+      expect(chatSettings.consentedVendor, ChatVendor.anthropic);
+      expect(writer.calls.single.context.memo, '카페');
+    });
+
+    testWidgets('동의하지 않으면 쓰지 않는다', (tester) async {
+      writer.available = const DraftAvailability.needsConsent(
+        ChatVendor.anthropic,
+      );
+      await pump(tester);
+      await tester.enterText(bodyField(), '카페');
+
+      await tapDraft(tester);
+      await tester.tap(find.text('취소'));
+      await tester.pumpAndSettle();
+
+      expect(writer.calls, isEmpty);
+    });
+
+    testWidgets('쓰는 중에 다시 잠기면 취소하고, 풀면 그때까지의 글이 남아 있다', (tester) async {
+      await pump(tester);
+      await tester.enterText(bodyField(), '카페');
+      await tapDraft(tester);
+      writer.emit(const DraftEvent.delta('카페에서 책을'));
+      await tester.pump();
+
+      await relock(tester);
+      expect(writer.cancelled, 1);
+      await unlock(tester);
+
+      expect(bodyText(tester), '카페에서 책을');
+      expect(bodyReadOnly(tester), isFalse);
+      expect(find.byTooltip('다시 쓰기'), findsOneWidget);
+    });
+
+    testWidgets('어제 찍은 사진: 시각 칩 → 그 시각으로, 자동 위치는 재료에서 빠진다', (tester) async {
+      await pump(tester);
+      await tester.enterText(bodyField(), '바다');
+      await addPhoto(tester, takenAt: DateTime(2026, 10, 9, 15, 20));
+
+      await tapDraft(tester);
+      final ctx = writer.calls.single.context;
+      expect(ctx.photoTakenFrom, DateTime(2026, 10, 9, 15, 20));
+      expect(ctx.autoPlace, isTrue);
+      expect(DraftPrompt.user(ctx), isNot(contains('장소:')));
+      writer.emit(const DraftEvent.done('바다를 봤다.'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('찍은 시각으로(어제 오후 3:20)'));
+      await tester.pumpAndSettle();
+
+      expect(timeText(tester), contains('10월 9일 (금) 오후 3:20'));
+      expect(find.textContaining('찍은 시각으로'), findsNothing);
+    });
   });
 
   testWidgets("시각 행은 '지금', 날짜를 바꾸면 날짜 문구 + 되돌리기, 되돌리면 다시 '지금'", (tester) async {

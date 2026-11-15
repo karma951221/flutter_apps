@@ -12,7 +12,7 @@ part of 'draft_writer.dart';
 // dart format off
 T _$identity<T>(T value) => value;
 /// @nodoc
-mixin _$DraftResult {
+mixin _$DraftEvent {
 
 
 
@@ -20,7 +20,7 @@ mixin _$DraftResult {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftResult);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftEvent);
 }
 
 
@@ -32,13 +32,13 @@ int get hashCode => runtimeType.hashCode;
 }
 
 /// @nodoc
-class $DraftResultCopyWith<$Res>  {
-$DraftResultCopyWith(DraftResult _, $Res Function(DraftResult) __);
+class $DraftEventCopyWith<$Res>  {
+$DraftEventCopyWith(DraftEvent _, $Res Function(DraftEvent) __);
 }
 
 
-/// Adds pattern-matching-related methods to [DraftResult].
-extension DraftResultPatterns on DraftResult {
+/// Adds pattern-matching-related methods to [DraftEvent].
+extension DraftEventPatterns on DraftEvent {
 /// A variant of `map` that fallback to returning `orElse`.
 ///
 /// It is equivalent to doing:
@@ -51,14 +51,14 @@ extension DraftResultPatterns on DraftResult {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( DraftText value)?  text,TResult Function( DraftFailed value)?  failed,TResult Function( DraftNeedsConsent value)?  needsConsent,TResult Function( DraftCancelled value)?  cancelled,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( DraftDelta value)?  delta,TResult Function( DraftDone value)?  done,TResult Function( DraftFailed value)?  failed,TResult Function( DraftNeedsConsent value)?  needsConsent,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
-case DraftText() when text != null:
-return text(_that);case DraftFailed() when failed != null:
+case DraftDelta() when delta != null:
+return delta(_that);case DraftDone() when done != null:
+return done(_that);case DraftFailed() when failed != null:
 return failed(_that);case DraftNeedsConsent() when needsConsent != null:
-return needsConsent(_that);case DraftCancelled() when cancelled != null:
-return cancelled(_that);case _:
+return needsConsent(_that);case _:
   return orElse();
 
 }
@@ -76,14 +76,14 @@ return cancelled(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( DraftText value)  text,required TResult Function( DraftFailed value)  failed,required TResult Function( DraftNeedsConsent value)  needsConsent,required TResult Function( DraftCancelled value)  cancelled,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( DraftDelta value)  delta,required TResult Function( DraftDone value)  done,required TResult Function( DraftFailed value)  failed,required TResult Function( DraftNeedsConsent value)  needsConsent,}){
 final _that = this;
 switch (_that) {
-case DraftText():
-return text(_that);case DraftFailed():
+case DraftDelta():
+return delta(_that);case DraftDone():
+return done(_that);case DraftFailed():
 return failed(_that);case DraftNeedsConsent():
-return needsConsent(_that);case DraftCancelled():
-return cancelled(_that);}
+return needsConsent(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -97,14 +97,14 @@ return cancelled(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( DraftText value)?  text,TResult? Function( DraftFailed value)?  failed,TResult? Function( DraftNeedsConsent value)?  needsConsent,TResult? Function( DraftCancelled value)?  cancelled,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( DraftDelta value)?  delta,TResult? Function( DraftDone value)?  done,TResult? Function( DraftFailed value)?  failed,TResult? Function( DraftNeedsConsent value)?  needsConsent,}){
 final _that = this;
 switch (_that) {
-case DraftText() when text != null:
-return text(_that);case DraftFailed() when failed != null:
+case DraftDelta() when delta != null:
+return delta(_that);case DraftDone() when done != null:
+return done(_that);case DraftFailed() when failed != null:
 return failed(_that);case DraftNeedsConsent() when needsConsent != null:
-return needsConsent(_that);case DraftCancelled() when cancelled != null:
-return cancelled(_that);case _:
+return needsConsent(_that);case _:
   return null;
 
 }
@@ -121,13 +121,13 @@ return cancelled(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String text)?  text,TResult Function( ChatFailure failure)?  failed,TResult Function()?  needsConsent,TResult Function()?  cancelled,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String text)?  delta,TResult Function( String text)?  done,TResult Function( ChatFailure failure)?  failed,TResult Function()?  needsConsent,required TResult orElse(),}) {final _that = this;
 switch (_that) {
-case DraftText() when text != null:
-return text(_that.text);case DraftFailed() when failed != null:
+case DraftDelta() when delta != null:
+return delta(_that.text);case DraftDone() when done != null:
+return done(_that.text);case DraftFailed() when failed != null:
 return failed(_that.failure);case DraftNeedsConsent() when needsConsent != null:
-return needsConsent();case DraftCancelled() when cancelled != null:
-return cancelled();case _:
+return needsConsent();case _:
   return orElse();
 
 }
@@ -145,13 +145,13 @@ return cancelled();case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String text)  text,required TResult Function( ChatFailure failure)  failed,required TResult Function()  needsConsent,required TResult Function()  cancelled,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String text)  delta,required TResult Function( String text)  done,required TResult Function( ChatFailure failure)  failed,required TResult Function()  needsConsent,}) {final _that = this;
 switch (_that) {
-case DraftText():
-return text(_that.text);case DraftFailed():
+case DraftDelta():
+return delta(_that.text);case DraftDone():
+return done(_that.text);case DraftFailed():
 return failed(_that.failure);case DraftNeedsConsent():
-return needsConsent();case DraftCancelled():
-return cancelled();}
+return needsConsent();}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -165,13 +165,13 @@ return cancelled();}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String text)?  text,TResult? Function( ChatFailure failure)?  failed,TResult? Function()?  needsConsent,TResult? Function()?  cancelled,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String text)?  delta,TResult? Function( String text)?  done,TResult? Function( ChatFailure failure)?  failed,TResult? Function()?  needsConsent,}) {final _that = this;
 switch (_that) {
-case DraftText() when text != null:
-return text(_that.text);case DraftFailed() when failed != null:
+case DraftDelta() when delta != null:
+return delta(_that.text);case DraftDone() when done != null:
+return done(_that.text);case DraftFailed() when failed != null:
 return failed(_that.failure);case DraftNeedsConsent() when needsConsent != null:
-return needsConsent();case DraftCancelled() when cancelled != null:
-return cancelled();case _:
+return needsConsent();case _:
   return null;
 
 }
@@ -182,23 +182,23 @@ return cancelled();case _:
 /// @nodoc
 
 
-class DraftText implements DraftResult {
-  const DraftText(this.text);
+class DraftDelta implements DraftEvent {
+  const DraftDelta(this.text);
   
 
  final  String text;
 
-/// Create a copy of DraftResult
+/// Create a copy of DraftEvent
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
-$DraftTextCopyWith<DraftText> get copyWith => _$DraftTextCopyWithImpl<DraftText>(this, _$identity);
+$DraftDeltaCopyWith<DraftDelta> get copyWith => _$DraftDeltaCopyWithImpl<DraftDelta>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftText&&(identical(other.text, text) || other.text == text));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftDelta&&(identical(other.text, text) || other.text == text));
 }
 
 
@@ -210,8 +210,8 @@ int get hashCode => Object.hash(runtimeType,text);
 }
 
 /// @nodoc
-abstract mixin class $DraftTextCopyWith<$Res> implements $DraftResultCopyWith<$Res> {
-  factory $DraftTextCopyWith(DraftText value, $Res Function(DraftText) _then) = _$DraftTextCopyWithImpl;
+abstract mixin class $DraftDeltaCopyWith<$Res> implements $DraftEventCopyWith<$Res> {
+  factory $DraftDeltaCopyWith(DraftDelta value, $Res Function(DraftDelta) _then) = _$DraftDeltaCopyWithImpl;
 @useResult
 $Res call({
  String text
@@ -222,17 +222,17 @@ $Res call({
 
 }
 /// @nodoc
-class _$DraftTextCopyWithImpl<$Res>
-    implements $DraftTextCopyWith<$Res> {
-  _$DraftTextCopyWithImpl(this._self, this._then);
+class _$DraftDeltaCopyWithImpl<$Res>
+    implements $DraftDeltaCopyWith<$Res> {
+  _$DraftDeltaCopyWithImpl(this._self, this._then);
 
-  final DraftText _self;
-  final $Res Function(DraftText) _then;
+  final DraftDelta _self;
+  final $Res Function(DraftDelta) _then;
 
-/// Create a copy of DraftResult
+/// Create a copy of DraftEvent
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? text = null,}) {
-  return _then(DraftText(
+  return _then(DraftDelta(
 null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
 as String,
   ));
@@ -244,13 +244,75 @@ as String,
 /// @nodoc
 
 
-class DraftFailed implements DraftResult {
+class DraftDone implements DraftEvent {
+  const DraftDone(this.text);
+  
+
+ final  String text;
+
+/// Create a copy of DraftEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DraftDoneCopyWith<DraftDone> get copyWith => _$DraftDoneCopyWithImpl<DraftDone>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftDone&&(identical(other.text, text) || other.text == text));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,text);
+
+
+
+}
+
+/// @nodoc
+abstract mixin class $DraftDoneCopyWith<$Res> implements $DraftEventCopyWith<$Res> {
+  factory $DraftDoneCopyWith(DraftDone value, $Res Function(DraftDone) _then) = _$DraftDoneCopyWithImpl;
+@useResult
+$Res call({
+ String text
+});
+
+
+
+
+}
+/// @nodoc
+class _$DraftDoneCopyWithImpl<$Res>
+    implements $DraftDoneCopyWith<$Res> {
+  _$DraftDoneCopyWithImpl(this._self, this._then);
+
+  final DraftDone _self;
+  final $Res Function(DraftDone) _then;
+
+/// Create a copy of DraftEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? text = null,}) {
+  return _then(DraftDone(
+null == text ? _self.text : text // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class DraftFailed implements DraftEvent {
   const DraftFailed(this.failure);
   
 
  final  ChatFailure failure;
 
-/// Create a copy of DraftResult
+/// Create a copy of DraftEvent
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
@@ -272,7 +334,7 @@ int get hashCode => Object.hash(runtimeType,failure);
 }
 
 /// @nodoc
-abstract mixin class $DraftFailedCopyWith<$Res> implements $DraftResultCopyWith<$Res> {
+abstract mixin class $DraftFailedCopyWith<$Res> implements $DraftEventCopyWith<$Res> {
   factory $DraftFailedCopyWith(DraftFailed value, $Res Function(DraftFailed) _then) = _$DraftFailedCopyWithImpl;
 @useResult
 $Res call({
@@ -291,7 +353,7 @@ class _$DraftFailedCopyWithImpl<$Res>
   final DraftFailed _self;
   final $Res Function(DraftFailed) _then;
 
-/// Create a copy of DraftResult
+/// Create a copy of DraftEvent
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? failure = null,}) {
   return _then(DraftFailed(
@@ -306,7 +368,7 @@ as ChatFailure,
 /// @nodoc
 
 
-class DraftNeedsConsent implements DraftResult {
+class DraftNeedsConsent implements DraftEvent {
   const DraftNeedsConsent();
   
 
@@ -318,34 +380,6 @@ class DraftNeedsConsent implements DraftResult {
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftNeedsConsent);
-}
-
-
-@override
-int get hashCode => runtimeType.hashCode;
-
-
-
-}
-
-
-
-
-/// @nodoc
-
-
-class DraftCancelled implements DraftResult {
-  const DraftCancelled();
-  
-
-
-
-
-
-
-@override
-bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftCancelled);
 }
 
 

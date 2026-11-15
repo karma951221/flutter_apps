@@ -4620,10 +4620,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkDiaryDraftSettingsIncludePhotosDescription =>
-      '켜면 초안 시트의 사진 스위치가 켜진 채로 시작해요. 사진(최대 4장)은 켤 때만 AI로 보내져요.';
+      '작성 화면 도구줄의 사진 보여 주기와 같은 값이에요. 켜 두면 사진(최대 4장)이 초안을 쓸 때 AI로 보내져요.';
 
   @override
-  String get walkDiaryDraftIncludePhotos => '사진도 보여 주기';
+  String get walkDiaryDraftIncludePhotos => '사진 보여 주기';
 
   @override
   String get walkDiaryDraftStyleDiary => '일기체';
@@ -4659,25 +4659,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryDraftTitle => '초안 쓰기';
 
   @override
-  String get walkDiaryDraftMemoHint => '한 줄 메모 (예: 성수동 카페에서 책)';
-
-  @override
-  String walkDiaryDraftNotice(String vendor) {
-    return '메모 · 시각 · 장소 이름이 $vendor로 보내져요.';
-  }
-
-  @override
-  String walkDiaryDraftNoticeWithPhotos(String vendor) {
-    return '메모 · 시각 · 장소 이름과 사진이 $vendor로 보내져요.';
-  }
-
-  @override
-  String get walkDiaryDraftWrite => '초안 쓰기';
-
-  @override
-  String get walkDiaryDraftWriting => '초안을 쓰는 중이에요…';
-
-  @override
   String get walkDiaryDraftStop => '멈추기';
 
   @override
@@ -4687,10 +4668,34 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryDraftOpenSettings => '설정 열기';
 
   @override
-  String get walkDiaryDraftConsentTitle => 'AI로 보내기';
+  String get walkDiaryComposerDraftRewrite => '다시 쓰기';
 
   @override
-  String get walkDiaryDraftManualHint => '닫고 직접 써도 돼요.';
+  String get walkDiaryComposerDraftNeedsInput => '한 줄 적거나 사진 보여 주기를 켜세요';
+
+  @override
+  String get walkDiaryComposerPhotosUnsupported => '이 모델은 사진을 볼 수 없어요';
+
+  @override
+  String walkDiaryDraftPhotosConfirm(int count, String vendor) {
+    return '사진 $count장까지 $vendor로 보내져요. 켜 두면 초안을 쓸 때마다 보내요.';
+  }
+
+  @override
+  String walkDiaryDraftPhotosConfirmNoVendor(int count) {
+    return '사진 $count장까지 AI로 보내져요. 켜 두면 초안을 쓸 때마다 보내요.';
+  }
+
+  @override
+  String get walkDiaryDraftPhotosConfirmAccept => '켜기';
+
+  @override
+  String walkDiaryEditorUseTakenTime(String when) {
+    return '찍은 시각으로($when)';
+  }
+
+  @override
+  String get walkDiaryDraftConsentTitle => 'AI로 보내기';
 
   @override
   String get walkDiaryComposerDraftApplied => '초안으로 바꿨어요';

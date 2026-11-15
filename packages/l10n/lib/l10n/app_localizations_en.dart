@@ -5009,10 +5009,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkDiaryDraftSettingsIncludePhotosDescription =>
-      'When on, the draft sheet starts with the photo switch on. Photos (up to 4) are sent to the AI only when it\'s on.';
+      'Same as Show photos in the composer toolbar. While on, photos (up to 4) are sent to the AI when writing a draft.';
 
   @override
-  String get walkDiaryDraftIncludePhotos => 'Show photos too';
+  String get walkDiaryDraftIncludePhotos => 'Show photos';
 
   @override
   String get walkDiaryDraftStyleDiary => 'Diary';
@@ -5051,26 +5051,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryDraftTitle => 'Write a draft';
 
   @override
-  String get walkDiaryDraftMemoHint =>
-      'One-line memo (e.g. book at a cafe in Seongsu)';
-
-  @override
-  String walkDiaryDraftNotice(String vendor) {
-    return 'Your memo, time and place names are sent to $vendor.';
-  }
-
-  @override
-  String walkDiaryDraftNoticeWithPhotos(String vendor) {
-    return 'Your memo, time, place names and photos are sent to $vendor.';
-  }
-
-  @override
-  String get walkDiaryDraftWrite => 'Write draft';
-
-  @override
-  String get walkDiaryDraftWriting => 'Writing a draft…';
-
-  @override
   String get walkDiaryDraftStop => 'Stop';
 
   @override
@@ -5080,11 +5060,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryDraftOpenSettings => 'Open settings';
 
   @override
-  String get walkDiaryDraftConsentTitle => 'Send to AI';
+  String get walkDiaryComposerDraftRewrite => 'Rewrite';
 
   @override
-  String get walkDiaryDraftManualHint =>
-      'You can close this and write it yourself.';
+  String get walkDiaryComposerDraftNeedsInput =>
+      'Write a line or turn on Show photos';
+
+  @override
+  String get walkDiaryComposerPhotosUnsupported =>
+      'This model can\'t see photos';
+
+  @override
+  String walkDiaryDraftPhotosConfirm(int count, String vendor) {
+    return 'Up to $count photos will be sent to $vendor. While on, they are sent every time you write a draft.';
+  }
+
+  @override
+  String walkDiaryDraftPhotosConfirmNoVendor(int count) {
+    return 'Up to $count photos will be sent to the AI. While on, they are sent every time you write a draft.';
+  }
+
+  @override
+  String get walkDiaryDraftPhotosConfirmAccept => 'Turn on';
+
+  @override
+  String walkDiaryEditorUseTakenTime(String when) {
+    return 'Use photo time ($when)';
+  }
+
+  @override
+  String get walkDiaryDraftConsentTitle => 'Send to AI';
 
   @override
   String get walkDiaryComposerDraftApplied => 'Replaced with the draft';

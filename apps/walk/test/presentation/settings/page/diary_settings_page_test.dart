@@ -149,7 +149,7 @@ void main() {
       expect(inRow('settings-diary-draft-style', '존댓말'), findsOneWidget);
     });
 
-    testWidgets('사진도 보여 주기: 켜면 기본값으로 저장한다', (tester) async {
+    testWidgets('사진 보여 주기: 켜면 저장한다(작성 화면 토글과 같은 값)', (tester) async {
       await showDraftSection(tester);
 
       await tester.tap(find.byKey(const Key('settings-diary-draft-photos')));

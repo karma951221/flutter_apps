@@ -512,6 +512,17 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.Clock>(),
       ),
     );
+    gh.lazySingleton<_i856.DraftWriter>(
+      () => _i856.DraftWriter(
+        gh<_i1004.ChatModelRegistry>(),
+        gh<_i111.ChatSettings>(),
+        gh<_i880.ChatModelCatalog>(),
+        gh<_i858.ChatImageSource>(),
+        gh<_i520.ChatUsageLog>(),
+        gh<_i494.IdGenerator>(),
+        gh<_i494.Clock>(),
+      ),
+    );
     gh.factory<_i931.WeatherCubit>(
       () => _i931.WeatherCubit(
         gh<_i903.WeatherRepository>(),
@@ -551,17 +562,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i624.WikiRepository>(),
         gh<_i268.WikiTools>(),
         gh<_i122.DiaryRepository>(),
-        gh<_i520.ChatUsageLog>(),
-        gh<_i494.IdGenerator>(),
-        gh<_i494.Clock>(),
-      ),
-    );
-    gh.lazySingleton<_i856.DraftWriter>(
-      () => _i856.DraftWriter(
-        gh<_i1004.ChatModelRegistry>(),
-        gh<_i111.ChatSettings>(),
-        gh<_i317.ChatModelChoice>(),
-        gh<_i858.ChatImageSource>(),
         gh<_i520.ChatUsageLog>(),
         gh<_i494.IdGenerator>(),
         gh<_i494.Clock>(),

@@ -4616,10 +4616,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkDiaryDraftSettingsIncludePhotosDescription =>
-      'オンにすると下書きシートの写真スイッチがオンの状態で始まります。写真(最大4枚)はオンのときだけAIに送られます。';
+      '作成画面ツールバーの「写真を見せる」と同じ値です。オンの間は下書きを書くときに写真(最大4枚)がAIに送られます。';
 
   @override
-  String get walkDiaryDraftIncludePhotos => '写真も見せる';
+  String get walkDiaryDraftIncludePhotos => '写真を見せる';
 
   @override
   String get walkDiaryDraftStyleDiary => '日記体';
@@ -4655,25 +4655,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryDraftTitle => '下書きを書く';
 
   @override
-  String get walkDiaryDraftMemoHint => 'ひとことメモ(例: 聖水洞のカフェで本)';
-
-  @override
-  String walkDiaryDraftNotice(String vendor) {
-    return 'メモ・時刻・場所の名前が$vendorに送られます。';
-  }
-
-  @override
-  String walkDiaryDraftNoticeWithPhotos(String vendor) {
-    return 'メモ・時刻・場所の名前と写真が$vendorに送られます。';
-  }
-
-  @override
-  String get walkDiaryDraftWrite => '下書きを書く';
-
-  @override
-  String get walkDiaryDraftWriting => '下書きを書いています…';
-
-  @override
   String get walkDiaryDraftStop => '止める';
 
   @override
@@ -4683,10 +4664,34 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryDraftOpenSettings => '設定を開く';
 
   @override
-  String get walkDiaryDraftConsentTitle => 'AIに送る';
+  String get walkDiaryComposerDraftRewrite => '書き直す';
 
   @override
-  String get walkDiaryDraftManualHint => '閉じて自分で書いても大丈夫です。';
+  String get walkDiaryComposerDraftNeedsInput => 'ひとこと書くか、写真を見せるをオンにしてください';
+
+  @override
+  String get walkDiaryComposerPhotosUnsupported => 'このモデルは写真を見られません';
+
+  @override
+  String walkDiaryDraftPhotosConfirm(int count, String vendor) {
+    return '写真が最大$count枚$vendorに送られます。オンの間は下書きを書くたびに送ります。';
+  }
+
+  @override
+  String walkDiaryDraftPhotosConfirmNoVendor(int count) {
+    return '写真が最大$count枚AIに送られます。オンの間は下書きを書くたびに送ります。';
+  }
+
+  @override
+  String get walkDiaryDraftPhotosConfirmAccept => 'オンにする';
+
+  @override
+  String walkDiaryEditorUseTakenTime(String when) {
+    return '撮影時刻にする($when)';
+  }
+
+  @override
+  String get walkDiaryDraftConsentTitle => 'AIに送る';
 
   @override
   String get walkDiaryComposerDraftApplied => '下書きに置き換えました';
