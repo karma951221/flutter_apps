@@ -32,10 +32,6 @@ abstract final class DraftPrompt {
   static String user(DraftContext context) {
     final memo = context.memo.trim();
     final place = context.placeName?.trim() ?? '';
-    final photoPlaces = [
-      for (final name in context.photoPlaceNames)
-        if (name.trim().isNotEmpty) name.trim(),
-    ];
     final tags = [
       for (final tag in context.tags)
         if (tag.trim().isNotEmpty) tag.trim(),
@@ -51,7 +47,6 @@ abstract final class DraftPrompt {
       if (place.isNotEmpty) '장소: $place',
       if (counts.isNotEmpty) counts.join(' · '),
       if (taken != null) '사진 촬영 시각: $taken',
-      if (photoPlaces.isNotEmpty) '사진 촬영 장소: ${photoPlaces.join(', ')}',
       if (tags.isNotEmpty) '태그: ${tags.join(', ')}',
     ];
     return '${lines.join('\n')}\n';

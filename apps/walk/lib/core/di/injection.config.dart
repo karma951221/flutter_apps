@@ -121,7 +121,6 @@ import '../../domain/commute/repository/route_preference_repository.dart'
 import '../../domain/commute/repository/subway_arrival_source.dart' as _i960;
 import '../../domain/commute/usecase/commute_use_case.dart' as _i453;
 import '../../domain/diary/draft/draft_writer.dart' as _i856;
-import '../../domain/diary/draft/photo_place_names.dart' as _i229;
 import '../../domain/diary/location/place_source.dart' as _i693;
 import '../../domain/diary/media/media_processor.dart' as _i674;
 import '../../domain/diary/media/media_store.dart' as _i870;
@@ -268,9 +267,6 @@ extension GetItInjectableX on _i174.GetIt {
       ),
     );
     gh.lazySingleton<_i332.HealthGateway>(() => _i332.HealthPluginGateway());
-    gh.lazySingleton<_i229.PhotoPlaceNames>(
-      () => _i229.PhotoPlaceNames(gh<_i693.PlaceNamer>()),
-    );
     gh.lazySingleton<_i159.BackgroundLocationAccess>(
       () => const _i159.PermissionHandlerBackgroundLocationAccess(),
     );

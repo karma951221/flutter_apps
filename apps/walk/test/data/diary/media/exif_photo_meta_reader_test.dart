@@ -107,7 +107,7 @@ void main() {
     return f.path;
   }
 
-  test('촬영 시각과 GPS 를 읽는다(남 · 서는 음수)', () async {
+  test('촬영 시각만 읽고 GPS 는 읽지 않는다', () async {
     final path = await file(
       'full.jpg',
       _exifJpeg(
@@ -123,12 +123,10 @@ void main() {
 
     final meta = await reader.read(path);
 
-    expect(meta?.takenAt, DateTime(2026, 11, 15, 13, 5, 9));
-    expect(meta?.lat, closeTo(-37.54, 1e-6));
-    expect(meta?.lng, closeTo(-127.05, 1e-6));
+    expect(meta, PhotoMeta(takenAt: DateTime(2026, 11, 15, 13, 5, 9)));
   });
 
-  test('시각만 있으면 좌표는 null', () async {
+  test('시각만 있어도 읽는다', () async {
     final path = await file(
       'time.jpg',
       _exifJpeg(dateTimeOriginal: '2026:11:15 13:05:09'),
@@ -139,7 +137,7 @@ void main() {
     expect(meta, PhotoMeta(takenAt: DateTime(2026, 11, 15, 13, 5, 9)));
   });
 
-  test('GPS 만 있으면 시각은 null(북 · 동은 양수)', () async {
+  test('GPS 만 있으면 null', () async {
     final path = await file(
       'gps.jpg',
       _exifJpeg(
@@ -152,11 +150,7 @@ void main() {
       ),
     );
 
-    final meta = await reader.read(path);
-
-    expect(meta?.takenAt, isNull);
-    expect(meta?.lat, closeTo(37.5, 1e-6));
-    expect(meta?.lng, closeTo(127.01, 1e-6));
+    expect(await reader.read(path), isNull);
   });
 
   test('EXIF 가 없으면 null', () async {
@@ -175,7 +169,7 @@ void main() {
     expect(await reader.read('${dir.path}/missing.jpg'), isNull);
   });
 
-  test('모양이 어긋난 시각 글은 시각만 null', () async {
+  test('모양이 어긋난 시각 글이면 null', () async {
     final path = await file(
       'bad-time.jpg',
       _exifJpeg(
@@ -189,9 +183,6 @@ void main() {
       ),
     );
 
-    final meta = await reader.read(path);
-
-    expect(meta?.takenAt, isNull);
-    expect(meta?.lat, closeTo(37.5, 1e-6));
+    expect(await reader.read(path), isNull);
   });
 }

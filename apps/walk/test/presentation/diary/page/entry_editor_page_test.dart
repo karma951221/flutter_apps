@@ -25,7 +25,6 @@ import 'package:walk/domain/diary/draft/draft_context.dart';
 import 'package:walk/domain/diary/draft/draft_style.dart';
 import 'package:walk/domain/diary/draft/draft_writer.dart';
 import 'package:walk/domain/diary/draft/photo_meta.dart';
-import 'package:walk/domain/diary/draft/photo_place_names.dart';
 import 'package:walk/domain/diary/media/photo_meta_reader.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
@@ -68,12 +67,6 @@ class _MetaReader implements PhotoMetaReader {
 
   @override
   Future<PhotoMeta?> read(String path) async => byPath[path];
-}
-
-class _Namer implements PlaceNamer {
-  @override
-  Future<PlaceLookup> nameFor(double lat, double lng) async =>
-      const PlaceLookup.named('성수동');
 }
 
 class _FakePlaces implements PlaceSource {
@@ -175,8 +168,7 @@ void main() {
       ..registerSingleton<ChatSettings>(
         FakeChatSettings('sk-ant-test')..consentedVendor = ChatVendor.anthropic,
       )
-      ..registerSingleton<PhotoMetaReader>(metas)
-      ..registerSingleton<PhotoPlaceNames>(PhotoPlaceNames(_Namer()));
+      ..registerSingleton<PhotoMetaReader>(metas);
     lockRepo = PrefsLockRepository(await SharedPreferences.getInstance());
     lock = DiaryLockCubit(lockRepo, FakeDeviceAuth(), clock, MediaPickGuard());
     getIt
@@ -499,12 +491,10 @@ void main() {
     expect(bodyText(tester), '카페');
   });
 
-  testWidgets('붙인 사진의 촬영 시각 · 장소 이름이 초안 재료로 간다', (tester) async {
+  testWidgets('붙인 사진의 촬영 시각이 초안 재료로 간다', (tester) async {
     final calls = answerDraft(const DraftResult.text('좋았다.'));
     metas.byPath['/picked/a.jpg'] = PhotoMeta(
       takenAt: DateTime(2026, 10, 9, 15),
-      lat: 37.54,
-      lng: 127.05,
     );
     when(
       () => picker.pickGallery(limit: any(named: 'limit')),
@@ -523,7 +513,6 @@ void main() {
 
     expect(calls.single.photoCount, 1);
     expect(calls.single.photoTakenFrom, DateTime(2026, 10, 9, 15));
-    expect(calls.single.photoPlaceNames, ['성수동']);
   });
 
   testWidgets("시각 행은 '지금', 날짜를 바꾸면 날짜 문구 + 되돌리기, 되돌리면 다시 '지금'", (tester) async {

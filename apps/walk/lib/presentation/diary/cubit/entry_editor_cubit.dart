@@ -314,10 +314,7 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
 
   /// 초안 시트에 넘길 재료(스펙 §4). 촬영 범위는 지금 붙어 있는 사진의 메타데이터로,
   /// 장소 이름은 [photoPlaceNames](좌표 → 이름은 부르는 쪽 몫)로 받는다.
-  DraftContext draftContext(
-    String memo, {
-    List<String> photoPlaceNames = const [],
-  }) {
+  DraftContext draftContext(String memo) {
     final draft = state.draft;
     final range = currentPhotoMetas.takenRange;
     return DraftContext(
@@ -328,7 +325,6 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
       videoCount: draft.media.where((m) => m.kind == MediaKind.video).length,
       photoTakenFrom: range?.from,
       photoTakenTo: range?.to,
-      photoPlaceNames: photoPlaceNames,
       tags: draft.tags,
     );
   }

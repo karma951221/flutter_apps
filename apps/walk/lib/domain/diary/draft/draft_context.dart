@@ -29,10 +29,6 @@ class DraftContext with _$DraftContext {
   @override
   final DateTime? photoTakenTo;
 
-  /// 사진 촬영 장소 이름(EXIF GPS → [PlaceNamer]).
-  @override
-  final List<String> photoPlaceNames;
-
   @override
   final List<String> tags;
 
@@ -44,7 +40,6 @@ class DraftContext with _$DraftContext {
     this.videoCount = 0,
     this.photoTakenFrom,
     this.photoTakenTo,
-    this.photoPlaceNames = const [],
     this.tags = const [],
   });
 

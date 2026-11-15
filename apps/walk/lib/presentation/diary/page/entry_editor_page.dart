@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
-import '../../../domain/diary/draft/photo_place_names.dart';
 import '../../../domain/diary/entity/media_limits.dart';
 import '../../../domain/diary/entity/story.dart';
 import '../../../domain/diary/location/place_source.dart';
@@ -152,19 +151,14 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
   /// 초안 시트의 메모로 미리 채울 글 칸의 최대 길이 — 넘으면 이미 쓴 글이라 메모로 보지 않는다.
   static const _memoMaxLength = 100;
 
-  /// 사진 촬영 장소 이름을 기다리는 한도. 넘으면 이름 없이 연다.
-  static const _placeNamesTimeout = Duration(seconds: 2);
-
   /// ✨ — 메모 · 메타데이터로 초안을 받아 글 칸을 바꾼다(스펙 §4). 원래 글이 있었으면 되돌리기.
   Future<void> _draft() async {
     final current = _body.text.trim();
     final memo = current.length <= _memoMaxLength ? current : '';
-    final names = await _photoPlaceNames();
-    if (!mounted) return;
     final text = await showDraftSheet(
       context,
       initialMemo: memo,
-      contextFor: (memo) => _cubit.draftContext(memo, photoPlaceNames: names),
+      contextFor: _cubit.draftContext,
       photos: _cubit.state.draft.media,
       onOpenChatSettings: widget.onOpenChatSettings,
     );
@@ -186,22 +180,6 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
   void _setBody(String text) {
     _body.text = text;
     _cubit.setBody(text);
-  }
-
-  /// 붙인 사진의 촬영 좌표 → 장소 이름. 못 구하면 빈 목록.
-  Future<List<String>> _photoPlaceNames() async {
-    final metas = _cubit.currentPhotoMetas;
-    if (metas.every((m) => m.lat == null) ||
-        !getIt.isRegistered<PhotoPlaceNames>()) {
-      return const [];
-    }
-    try {
-      return await getIt<PhotoPlaceNames>()
-          .namesFor(metas)
-          .timeout(_placeNamesTimeout);
-    } catch (_) {
-      return const [];
-    }
   }
 
   /// 칩으로 만들지 않고 남긴 태그 글자도 함께 저장한다.

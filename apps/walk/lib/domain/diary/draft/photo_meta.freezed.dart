@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PhotoMeta {
 
- DateTime? get takenAt; double? get lat; double? get lng;
+ DateTime? get takenAt;
 /// Create a copy of PhotoMeta
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,13 +25,17 @@ $PhotoMetaCopyWith<PhotoMeta> get copyWith => _$PhotoMetaCopyWithImpl<PhotoMeta>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PhotoMeta&&(identical(other.takenAt, takenAt) || other.takenAt == takenAt)&&(identical(other.lat, lat) || other.lat == lat)&&(identical(other.lng, lng) || other.lng == lng));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PhotoMeta&&(identical(other.takenAt, takenAt) || other.takenAt == takenAt));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,takenAt,lat,lng);
+int get hashCode => Object.hash(runtimeType,takenAt);
 
+@override
+String toString() {
+  return 'PhotoMeta(takenAt: $takenAt)';
+}
 
 
 }
@@ -41,7 +45,7 @@ abstract mixin class $PhotoMetaCopyWith<$Res>  {
   factory $PhotoMetaCopyWith(PhotoMeta value, $Res Function(PhotoMeta) _then) = _$PhotoMetaCopyWithImpl;
 @useResult
 $Res call({
- DateTime? takenAt, double? lat, double? lng
+ DateTime? takenAt
 });
 
 
@@ -58,12 +62,10 @@ class _$PhotoMetaCopyWithImpl<$Res>
 
 /// Create a copy of PhotoMeta
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? takenAt = freezed,Object? lat = freezed,Object? lng = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? takenAt = freezed,}) {
   return _then(PhotoMeta(
 takenAt: freezed == takenAt ? _self.takenAt : takenAt // ignore: cast_nullable_to_non_nullable
-as DateTime?,lat: freezed == lat ? _self.lat : lat // ignore: cast_nullable_to_non_nullable
-as double?,lng: freezed == lng ? _self.lng : lng // ignore: cast_nullable_to_non_nullable
-as double?,
+as DateTime?,
   ));
 }
 

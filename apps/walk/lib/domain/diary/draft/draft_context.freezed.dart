@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$DraftContext {
 
- String get memo; DateTime get occurredAt; String? get placeName; int get photoCount; int get videoCount; DateTime? get photoTakenFrom; DateTime? get photoTakenTo; List<String> get photoPlaceNames; List<String> get tags;
+ String get memo; DateTime get occurredAt; String? get placeName; int get photoCount; int get videoCount; DateTime? get photoTakenFrom; DateTime? get photoTakenTo; List<String> get tags;
 /// Create a copy of DraftContext
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,12 +25,12 @@ $DraftContextCopyWith<DraftContext> get copyWith => _$DraftContextCopyWithImpl<D
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftContext&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.placeName, placeName) || other.placeName == placeName)&&(identical(other.photoCount, photoCount) || other.photoCount == photoCount)&&(identical(other.videoCount, videoCount) || other.videoCount == videoCount)&&(identical(other.photoTakenFrom, photoTakenFrom) || other.photoTakenFrom == photoTakenFrom)&&(identical(other.photoTakenTo, photoTakenTo) || other.photoTakenTo == photoTakenTo)&&const DeepCollectionEquality().equals(other.photoPlaceNames, photoPlaceNames)&&const DeepCollectionEquality().equals(other.tags, tags));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DraftContext&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.occurredAt, occurredAt) || other.occurredAt == occurredAt)&&(identical(other.placeName, placeName) || other.placeName == placeName)&&(identical(other.photoCount, photoCount) || other.photoCount == photoCount)&&(identical(other.videoCount, videoCount) || other.videoCount == videoCount)&&(identical(other.photoTakenFrom, photoTakenFrom) || other.photoTakenFrom == photoTakenFrom)&&(identical(other.photoTakenTo, photoTakenTo) || other.photoTakenTo == photoTakenTo)&&const DeepCollectionEquality().equals(other.tags, tags));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,memo,occurredAt,placeName,photoCount,videoCount,photoTakenFrom,photoTakenTo,const DeepCollectionEquality().hash(photoPlaceNames),const DeepCollectionEquality().hash(tags));
+int get hashCode => Object.hash(runtimeType,memo,occurredAt,placeName,photoCount,videoCount,photoTakenFrom,photoTakenTo,const DeepCollectionEquality().hash(tags));
 
 
 
@@ -41,7 +41,7 @@ abstract mixin class $DraftContextCopyWith<$Res>  {
   factory $DraftContextCopyWith(DraftContext value, $Res Function(DraftContext) _then) = _$DraftContextCopyWithImpl;
 @useResult
 $Res call({
- String memo, DateTime occurredAt, String? placeName, int photoCount, int videoCount, DateTime? photoTakenFrom, DateTime? photoTakenTo, List<String> photoPlaceNames, List<String> tags
+ String memo, DateTime occurredAt, String? placeName, int photoCount, int videoCount, DateTime? photoTakenFrom, DateTime? photoTakenTo, List<String> tags
 });
 
 
@@ -58,7 +58,7 @@ class _$DraftContextCopyWithImpl<$Res>
 
 /// Create a copy of DraftContext
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? memo = null,Object? occurredAt = null,Object? placeName = freezed,Object? photoCount = null,Object? videoCount = null,Object? photoTakenFrom = freezed,Object? photoTakenTo = freezed,Object? photoPlaceNames = null,Object? tags = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? memo = null,Object? occurredAt = null,Object? placeName = freezed,Object? photoCount = null,Object? videoCount = null,Object? photoTakenFrom = freezed,Object? photoTakenTo = freezed,Object? tags = null,}) {
   return _then(DraftContext(
 memo: null == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable
 as String,occurredAt: null == occurredAt ? _self.occurredAt : occurredAt // ignore: cast_nullable_to_non_nullable
@@ -67,8 +67,7 @@ as String?,photoCount: null == photoCount ? _self.photoCount : photoCount // ign
 as int,videoCount: null == videoCount ? _self.videoCount : videoCount // ignore: cast_nullable_to_non_nullable
 as int,photoTakenFrom: freezed == photoTakenFrom ? _self.photoTakenFrom : photoTakenFrom // ignore: cast_nullable_to_non_nullable
 as DateTime?,photoTakenTo: freezed == photoTakenTo ? _self.photoTakenTo : photoTakenTo // ignore: cast_nullable_to_non_nullable
-as DateTime?,photoPlaceNames: null == photoPlaceNames ? _self.photoPlaceNames : photoPlaceNames // ignore: cast_nullable_to_non_nullable
-as List<String>,tags: null == tags ? _self.tags : tags // ignore: cast_nullable_to_non_nullable
+as DateTime?,tags: null == tags ? _self.tags : tags // ignore: cast_nullable_to_non_nullable
 as List<String>,
   ));
 }

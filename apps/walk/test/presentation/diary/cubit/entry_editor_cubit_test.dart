@@ -526,9 +526,7 @@ void main() {
 
     test('사진을 가져올 때 원본의 메타데이터를 그 미디어 id 로 들고 있다', () async {
       final taken = DateTime(2026, 11, 14, 9, 30);
-      final c = withMeta({
-        pickedPhoto.path: PhotoMeta(takenAt: taken, lat: 37.5, lng: 127.0),
-      });
+      final c = withMeta({pickedPhoto.path: PhotoMeta(takenAt: taken)});
       await c.startNew();
 
       await c.addMedia([photo(), video()]);
@@ -573,7 +571,7 @@ void main() {
       await c.addMedia([photo(), video()]);
       c.addTag('주말');
 
-      final ctx = c.draftContext('카페', photoPlaceNames: const ['성수동']);
+      final ctx = c.draftContext('카페');
 
       expect(ctx.memo, '카페');
       expect(ctx.occurredAt, c.state.draft.occurredAt);
@@ -582,7 +580,6 @@ void main() {
       expect(ctx.videoCount, 1);
       expect(ctx.photoTakenFrom, DateTime(2026, 11, 14, 9));
       expect(ctx.photoTakenTo, DateTime(2026, 11, 14, 9));
-      expect(ctx.photoPlaceNames, ['성수동']);
       expect(ctx.tags, ['주말']);
     });
   });

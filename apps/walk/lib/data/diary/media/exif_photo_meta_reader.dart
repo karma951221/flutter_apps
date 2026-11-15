@@ -6,7 +6,7 @@ import 'package:injectable/injectable.dart';
 import '../../../domain/diary/draft/photo_meta.dart';
 import '../../../domain/diary/media/photo_meta_reader.dart';
 
-/// `exif`(순수 Dart)로 원본의 `DateTimeOriginal` · GPS 를 읽는다. 파일을 고치거나 값을 저장하지 않는다.
+/// `exif`(순수 Dart)로 원본의 `DateTimeOriginal` 만 읽는다(GPS 는 읽지 않는다). 파일을 고치거나 값을 저장하지 않는다.
 ///
 /// 촬영 시각은 EXIF 관례대로 기기 시간대의 벽시계 시각으로 읽는다(시간대 태그는 보지 않는다).
 @LazySingleton(as: PhotoMetaReader)
@@ -17,20 +17,8 @@ class ExifPhotoMetaReader implements PhotoMetaReader {
   Future<PhotoMeta?> read(String path) async {
     try {
       final tags = await readExifFromFile(File(path), details: false);
-      if (tags.isEmpty) return null;
       final takenAt = _dateTime(tags['EXIF DateTimeOriginal']?.printable);
-      final lat = _degrees(tags['GPS GPSLatitude'], tags['GPS GPSLatitudeRef']);
-      final lng = _degrees(
-        tags['GPS GPSLongitude'],
-        tags['GPS GPSLongitudeRef'],
-      );
-      final hasLocation = lat != null && lng != null;
-      if (takenAt == null && !hasLocation) return null;
-      return PhotoMeta(
-        takenAt: takenAt,
-        lat: hasLocation ? lat : null,
-        lng: hasLocation ? lng : null,
-      );
+      return takenAt == null ? null : PhotoMeta(takenAt: takenAt);
     } catch (_) {
       return null;
     }
@@ -53,18 +41,5 @@ class ExifPhotoMetaReader implements PhotoMetaReader {
     // 2월 30일처럼 넘어가면 버린다.
     if (value.month != mo || value.day != d) return null;
     return value;
-  }
-
-  /// 도 · 분 · 초 유리수 셋 + 방향(N/S/E/W). 남 · 서는 음수.
-  static double? _degrees(IfdTag? value, IfdTag? ref) {
-    if (value == null) return null;
-    final parts = value.values.toList();
-    if (parts.length != 3 || parts.any((p) => p is! Ratio)) return null;
-    final [d, m, s] = [for (final p in parts) (p as Ratio)];
-    if ([d, m, s].any((r) => r.denominator == 0)) return null;
-    final abs = d.toDouble() + m.toDouble() / 60 + s.toDouble() / 3600;
-    if (!abs.isFinite) return null;
-    final dir = ref?.printable.trim().toUpperCase() ?? '';
-    return dir.startsWith('S') || dir.startsWith('W') ? -abs : abs;
   }
 }

@@ -12,7 +12,6 @@ DraftContext _full() => DraftContext(
   videoCount: 1,
   photoTakenFrom: DateTime(2026, 11, 15, 13, 5),
   photoTakenTo: DateTime(2026, 11, 15, 15, 20),
-  photoPlaceNames: const ['성수동', '뚝섬'],
   tags: const ['카페', '독서'],
 );
 
@@ -29,7 +28,6 @@ void main() {
       expect(text, contains('장소: 성수동'));
       expect(text, contains('사진 3장 · 영상 1개'));
       expect(text, contains('사진 촬영 시각: 2026-11-15 13:05 ~ 15:20'));
-      expect(text, contains('사진 촬영 장소: 성수동, 뚝섬'));
       expect(text, contains('태그: 카페, 독서'));
     });
 
@@ -42,13 +40,12 @@ void main() {
       }
     });
 
-    test('공백뿐인 장소 · 태그 · 촬영 장소도 뺀다', () {
+    test('공백뿐인 장소 · 태그도 뺀다', () {
       final text = DraftPrompt.user(
         DraftContext(
           memo: '   ',
           occurredAt: DateTime(2026, 11, 15, 9),
           placeName: '  ',
-          photoPlaceNames: const [' '],
           tags: const [''],
         ),
       );

@@ -5,7 +5,7 @@ void main() {
   group('takenRange', () {
     test('촬영 시각이 없으면 null', () {
       expect(<PhotoMeta?>[].takenRange, isNull);
-      expect([null, const PhotoMeta(lat: 37.5, lng: 127.0)].takenRange, isNull);
+      expect([null, const PhotoMeta()].takenRange, isNull);
     });
 
     test('가장 이른 · 늦은 촬영 시각(순서 무관, 시각 없는 사진은 건너뛴다)', () {
@@ -30,16 +30,29 @@ void main() {
     });
   });
 
-  test('toString 에 좌표를 찍지 않는다', () {
-    const meta = PhotoMeta(lat: 37.54321, lng: 127.04567);
+  group('takenFarFromNow', () {
+    final now = DateTime(2026, 11, 15, 15);
 
-    expect(meta.toString(), isNot(contains('37.54321')));
-    expect(meta.toString(), isNot(contains('127.04567')));
-  });
+    test('3시간 넘게 다르면 참(앞 · 뒤 모두)', () {
+      expect(
+        takenFarFromNow(
+          now.subtract(const Duration(hours: 3, minutes: 1)),
+          now,
+        ),
+        isTrue,
+      );
+      expect(
+        takenFarFromNow(now.add(const Duration(hours: 3, minutes: 1)), now),
+        isTrue,
+      );
+    });
 
-  test('hasLocation 은 위도 · 경도가 둘 다 있을 때만', () {
-    expect(const PhotoMeta(lat: 1, lng: 2).hasLocation, isTrue);
-    expect(const PhotoMeta(lat: 1).hasLocation, isFalse);
-    expect(const PhotoMeta().hasLocation, isFalse);
+    test('3시간까지는 거짓', () {
+      expect(
+        takenFarFromNow(now.subtract(const Duration(hours: 3)), now),
+        isFalse,
+      );
+      expect(takenFarFromNow(now, now), isFalse);
+    });
   });
 }
