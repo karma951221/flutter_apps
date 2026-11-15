@@ -160,6 +160,67 @@ void main() {
     expect(tester.widget<AppButton>(find.byType(AppButton)).isLoading, isFalse);
   });
 
+  group('내 파일', () {
+    const picked = FileAlarmSound(title: 'wake up', path: '/data/alarm_sounds/f.mp3');
+
+    testWidgets('내 파일 구역과 파일에서 고르기 줄이 보인다', (tester) async {
+      await pump(tester, const AlarmSound.system());
+
+      expect(find.text('내 파일'), findsOneWidget);
+      expect(find.text('파일에서 고르기'), findsOneWidget);
+      expect(find.byIcon(Icons.audio_file), findsOneWidget);
+    });
+
+    testWidgets('현재 소리가 파일이면 그 이름 줄이 선택돼 있다', (tester) async {
+      final results = await pump(tester, picked);
+
+      expect(isChecked(tester, 'wake up'), isTrue);
+      expect(isChecked(tester, '시스템 기본'), isFalse);
+      await tester.tap(find.text('선택'));
+      await tester.pumpAndSettle();
+      expect(results, [picked]);
+    });
+
+    testWidgets('파일을 고르면 그 줄이 생겨 선택되고, 선택하면 그 파일로 닫힌다', (tester) async {
+      when(() => source.pickFile(fallbackTitle: '내 파일')).thenAnswer((_) async => picked);
+      final results = await pump(tester, const AlarmSound.system());
+
+      await tester.tap(find.text('파일에서 고르기'));
+      await tester.pumpAndSettle();
+
+      expect(isChecked(tester, 'wake up'), isTrue);
+      await tester.tap(find.text('선택'));
+      await tester.pumpAndSettle();
+      expect(results, [picked]);
+    });
+
+    testWidgets('고르기에 실패하면 오류 스낵바를 띄우고 선택은 그대로', (tester) async {
+      when(
+        () => source.pickFile(fallbackTitle: any(named: 'fallbackTitle')),
+      ).thenThrow(const AlarmSoundException('too_large'));
+      await pump(tester, const AlarmSound.system());
+
+      await tester.tap(find.text('파일에서 고르기'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('이 파일은 알람음으로 쓸 수 없어요'), findsOneWidget);
+      expect(isChecked(tester, '시스템 기본'), isTrue);
+    });
+
+    testWidgets('취소하면 아무 안내 없이 그대로', (tester) async {
+      when(
+        () => source.pickFile(fallbackTitle: any(named: 'fallbackTitle')),
+      ).thenAnswer((_) async => null);
+      await pump(tester, const AlarmSound.system());
+
+      await tester.tap(find.text('파일에서 고르기'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SnackBar), findsNothing);
+      expect(isChecked(tester, '시스템 기본'), isTrue);
+    });
+  });
+
   testWidgets('뒤로 가면 결과 없이 닫히고 미리 듣기를 멈춘다', (tester) async {
     final results = await pump(tester, const AlarmSound.system());
 

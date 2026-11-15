@@ -1788,6 +1788,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAlarmSoundImportFailed => '이 알람음을 쓸 수 없어요';
 
   @override
+  String get walkAlarmSoundFileSection => '내 파일';
+
+  @override
+  String get walkAlarmSoundPickFile => '파일에서 고르기';
+
+  @override
+  String get walkAlarmSoundFileDefaultTitle => '내 파일';
+
+  @override
+  String get walkAlarmSoundFileFailed => '이 파일은 알람음으로 쓸 수 없어요';
+
+  @override
   String get walkAlarmDeleteTitle => '알람을 삭제할까요?';
 
   @override

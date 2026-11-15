@@ -2544,6 +2544,22 @@
   "@walkAlarmSoundImportFailed": {
     "description": "기기 알람음 복사 · 검증 실패 스낵바"
   },
+  "walkAlarmSoundFileSection": "내 파일",
+  "@walkAlarmSoundFileSection": {
+    "description": "알람음 선택 화면의 내 파일 구역 제목"
+  },
+  "walkAlarmSoundPickFile": "파일에서 고르기",
+  "@walkAlarmSoundPickFile": {
+    "description": "기기의 오디오 파일을 골라 알람음으로 쓰는 줄"
+  },
+  "walkAlarmSoundFileDefaultTitle": "내 파일",
+  "@walkAlarmSoundFileDefaultTitle": {
+    "description": "고른 파일 이름이 비었을 때의 표시 이름"
+  },
+  "walkAlarmSoundFileFailed": "이 파일은 알람음으로 쓸 수 없어요",
+  "@walkAlarmSoundFileFailed": {
+    "description": "고른 파일이 너무 크거나 재생할 수 없을 때 스낵바"
+  },
   "walkAlarmDeleteTitle": "알람을 삭제할까요?",
   "@walkAlarmDeleteTitle": {
     "description": "알람 삭제 확인 다이얼로그 제목"

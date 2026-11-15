@@ -53,6 +53,17 @@ class ChannelAlarmSoundSource implements AlarmSoundSource {
     return AlarmSound.device(title: ringtone.title, path: path);
   }
 
+  @override
+  Future<AlarmSound?> pickFile({required String fallbackTitle}) async {
+    final picked = await _invoke<Object?>('pickFile', {'fallbackTitle': fallbackTitle});
+    return switch (picked) {
+      null => null,
+      {'title': final String title, 'path': final String path} when path.isNotEmpty =>
+        AlarmSound.file(title: title, path: path),
+      _ => throw AlarmSoundException('pickFile: unexpected result $picked'),
+    };
+  }
+
   Future<T?> _invoke<T>(String method, [Object? arguments]) async {
     try {
       return await _channel.invokeMethod<T>(method, arguments);

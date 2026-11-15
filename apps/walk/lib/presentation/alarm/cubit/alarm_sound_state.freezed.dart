@@ -55,13 +55,14 @@ extension AlarmSoundChoicePatterns on AlarmSoundChoice {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SystemSoundChoice value)?  system,TResult Function( BundledSoundChoice value)?  bundled,TResult Function( DeviceSoundChoice value)?  device,TResult Function( CurrentSoundChoice value)?  current,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SystemSoundChoice value)?  system,TResult Function( BundledSoundChoice value)?  bundled,TResult Function( DeviceSoundChoice value)?  device,TResult Function( FileSoundChoice value)?  file,TResult Function( CurrentSoundChoice value)?  current,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case SystemSoundChoice() when system != null:
 return system(_that);case BundledSoundChoice() when bundled != null:
 return bundled(_that);case DeviceSoundChoice() when device != null:
-return device(_that);case CurrentSoundChoice() when current != null:
+return device(_that);case FileSoundChoice() when file != null:
+return file(_that);case CurrentSoundChoice() when current != null:
 return current(_that);case _:
   return orElse();
 
@@ -80,13 +81,14 @@ return current(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SystemSoundChoice value)  system,required TResult Function( BundledSoundChoice value)  bundled,required TResult Function( DeviceSoundChoice value)  device,required TResult Function( CurrentSoundChoice value)  current,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SystemSoundChoice value)  system,required TResult Function( BundledSoundChoice value)  bundled,required TResult Function( DeviceSoundChoice value)  device,required TResult Function( FileSoundChoice value)  file,required TResult Function( CurrentSoundChoice value)  current,}){
 final _that = this;
 switch (_that) {
 case SystemSoundChoice():
 return system(_that);case BundledSoundChoice():
 return bundled(_that);case DeviceSoundChoice():
-return device(_that);case CurrentSoundChoice():
+return device(_that);case FileSoundChoice():
+return file(_that);case CurrentSoundChoice():
 return current(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -101,13 +103,14 @@ return current(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SystemSoundChoice value)?  system,TResult? Function( BundledSoundChoice value)?  bundled,TResult? Function( DeviceSoundChoice value)?  device,TResult? Function( CurrentSoundChoice value)?  current,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SystemSoundChoice value)?  system,TResult? Function( BundledSoundChoice value)?  bundled,TResult? Function( DeviceSoundChoice value)?  device,TResult? Function( FileSoundChoice value)?  file,TResult? Function( CurrentSoundChoice value)?  current,}){
 final _that = this;
 switch (_that) {
 case SystemSoundChoice() when system != null:
 return system(_that);case BundledSoundChoice() when bundled != null:
 return bundled(_that);case DeviceSoundChoice() when device != null:
-return device(_that);case CurrentSoundChoice() when current != null:
+return device(_that);case FileSoundChoice() when file != null:
+return file(_that);case CurrentSoundChoice() when current != null:
 return current(_that);case _:
   return null;
 
@@ -125,12 +128,13 @@ return current(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  system,TResult Function( String asset)?  bundled,TResult Function( DeviceRingtone ringtone)?  device,TResult Function( AlarmSound sound)?  current,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  system,TResult Function( String asset)?  bundled,TResult Function( DeviceRingtone ringtone)?  device,TResult Function( FileAlarmSound sound)?  file,TResult Function( AlarmSound sound)?  current,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case SystemSoundChoice() when system != null:
 return system();case BundledSoundChoice() when bundled != null:
 return bundled(_that.asset);case DeviceSoundChoice() when device != null:
-return device(_that.ringtone);case CurrentSoundChoice() when current != null:
+return device(_that.ringtone);case FileSoundChoice() when file != null:
+return file(_that.sound);case CurrentSoundChoice() when current != null:
 return current(_that.sound);case _:
   return orElse();
 
@@ -149,12 +153,13 @@ return current(_that.sound);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  system,required TResult Function( String asset)  bundled,required TResult Function( DeviceRingtone ringtone)  device,required TResult Function( AlarmSound sound)  current,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  system,required TResult Function( String asset)  bundled,required TResult Function( DeviceRingtone ringtone)  device,required TResult Function( FileAlarmSound sound)  file,required TResult Function( AlarmSound sound)  current,}) {final _that = this;
 switch (_that) {
 case SystemSoundChoice():
 return system();case BundledSoundChoice():
 return bundled(_that.asset);case DeviceSoundChoice():
-return device(_that.ringtone);case CurrentSoundChoice():
+return device(_that.ringtone);case FileSoundChoice():
+return file(_that.sound);case CurrentSoundChoice():
 return current(_that.sound);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -169,12 +174,13 @@ return current(_that.sound);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  system,TResult? Function( String asset)?  bundled,TResult? Function( DeviceRingtone ringtone)?  device,TResult? Function( AlarmSound sound)?  current,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  system,TResult? Function( String asset)?  bundled,TResult? Function( DeviceRingtone ringtone)?  device,TResult? Function( FileAlarmSound sound)?  file,TResult? Function( AlarmSound sound)?  current,}) {final _that = this;
 switch (_that) {
 case SystemSoundChoice() when system != null:
 return system();case BundledSoundChoice() when bundled != null:
 return bundled(_that.asset);case DeviceSoundChoice() when device != null:
-return device(_that.ringtone);case CurrentSoundChoice() when current != null:
+return device(_that.ringtone);case FileSoundChoice() when file != null:
+return file(_that.sound);case CurrentSoundChoice() when current != null:
 return current(_that.sound);case _:
   return null;
 
@@ -341,6 +347,72 @@ class _$DeviceSoundChoiceCopyWithImpl<$Res>
   return _then(DeviceSoundChoice(
 null == ringtone ? _self.ringtone : ringtone // ignore: cast_nullable_to_non_nullable
 as DeviceRingtone,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class FileSoundChoice implements AlarmSoundChoice {
+  const FileSoundChoice(this.sound);
+  
+
+ final  FileAlarmSound sound;
+
+/// Create a copy of AlarmSoundChoice
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$FileSoundChoiceCopyWith<FileSoundChoice> get copyWith => _$FileSoundChoiceCopyWithImpl<FileSoundChoice>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FileSoundChoice&&const DeepCollectionEquality().equals(other.sound, sound));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(sound));
+
+@override
+String toString() {
+  return 'AlarmSoundChoice.file(sound: $sound)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $FileSoundChoiceCopyWith<$Res> implements $AlarmSoundChoiceCopyWith<$Res> {
+  factory $FileSoundChoiceCopyWith(FileSoundChoice value, $Res Function(FileSoundChoice) _then) = _$FileSoundChoiceCopyWithImpl;
+@useResult
+$Res call({
+ FileAlarmSound sound
+});
+
+
+
+
+}
+/// @nodoc
+class _$FileSoundChoiceCopyWithImpl<$Res>
+    implements $FileSoundChoiceCopyWith<$Res> {
+  _$FileSoundChoiceCopyWithImpl(this._self, this._then);
+
+  final FileSoundChoice _self;
+  final $Res Function(FileSoundChoice) _then;
+
+/// Create a copy of AlarmSoundChoice
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? sound = freezed,}) {
+  return _then(FileSoundChoice(
+freezed == sound ? _self.sound : sound // ignore: cast_nullable_to_non_nullable
+as FileAlarmSound,
   ));
 }
 
@@ -727,7 +799,7 @@ String toString() {
 /// @nodoc
 mixin _$AlarmSoundState {
 
- AlarmSoundChoice get selected; DeviceRingtones get ringtones; bool get importing;
+ AlarmSoundChoice get selected; DeviceRingtones get ringtones; bool get importing; AlarmSound? get myFile;
 /// Create a copy of AlarmSoundState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -738,16 +810,16 @@ $AlarmSoundStateCopyWith<AlarmSoundState> get copyWith => _$AlarmSoundStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AlarmSoundState&&(identical(other.selected, selected) || other.selected == selected)&&(identical(other.ringtones, ringtones) || other.ringtones == ringtones)&&(identical(other.importing, importing) || other.importing == importing));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AlarmSoundState&&(identical(other.selected, selected) || other.selected == selected)&&(identical(other.ringtones, ringtones) || other.ringtones == ringtones)&&(identical(other.importing, importing) || other.importing == importing)&&(identical(other.myFile, myFile) || other.myFile == myFile));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,selected,ringtones,importing);
+int get hashCode => Object.hash(runtimeType,selected,ringtones,importing,myFile);
 
 @override
 String toString() {
-  return 'AlarmSoundState(selected: $selected, ringtones: $ringtones, importing: $importing)';
+  return 'AlarmSoundState(selected: $selected, ringtones: $ringtones, importing: $importing, myFile: $myFile)';
 }
 
 
@@ -758,7 +830,7 @@ abstract mixin class $AlarmSoundStateCopyWith<$Res>  {
   factory $AlarmSoundStateCopyWith(AlarmSoundState value, $Res Function(AlarmSoundState) _then) = _$AlarmSoundStateCopyWithImpl;
 @useResult
 $Res call({
- AlarmSoundChoice selected, DeviceRingtones ringtones, bool importing
+ AlarmSoundChoice selected, DeviceRingtones ringtones, bool importing, AlarmSound? myFile
 });
 
 
@@ -775,12 +847,13 @@ class _$AlarmSoundStateCopyWithImpl<$Res>
 
 /// Create a copy of AlarmSoundState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? selected = null,Object? ringtones = null,Object? importing = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? selected = null,Object? ringtones = null,Object? importing = null,Object? myFile = freezed,}) {
   return _then(AlarmSoundState(
 selected: null == selected ? _self.selected : selected // ignore: cast_nullable_to_non_nullable
 as AlarmSoundChoice,ringtones: null == ringtones ? _self.ringtones : ringtones // ignore: cast_nullable_to_non_nullable
 as DeviceRingtones,importing: null == importing ? _self.importing : importing // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,myFile: freezed == myFile ? _self.myFile : myFile // ignore: cast_nullable_to_non_nullable
+as AlarmSound?,
   ));
 }
 

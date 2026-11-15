@@ -3428,6 +3428,30 @@ abstract class AppLocalizations {
   /// **'이 알람음을 쓸 수 없어요'**
   String get walkAlarmSoundImportFailed;
 
+  /// 알람음 선택 화면의 내 파일 구역 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'내 파일'**
+  String get walkAlarmSoundFileSection;
+
+  /// 기기의 오디오 파일을 골라 알람음으로 쓰는 줄
+  ///
+  /// In ko, this message translates to:
+  /// **'파일에서 고르기'**
+  String get walkAlarmSoundPickFile;
+
+  /// 고른 파일 이름이 비었을 때의 표시 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'내 파일'**
+  String get walkAlarmSoundFileDefaultTitle;
+
+  /// 고른 파일이 너무 크거나 재생할 수 없을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'이 파일은 알람음으로 쓸 수 없어요'**
+  String get walkAlarmSoundFileFailed;
+
   /// 알람 삭제 확인 다이얼로그 제목
   ///
   /// In ko, this message translates to:

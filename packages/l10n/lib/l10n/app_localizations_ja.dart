@@ -1787,6 +1787,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAlarmSoundImportFailed => 'このアラーム音は使えません';
 
   @override
+  String get walkAlarmSoundFileSection => 'マイファイル';
+
+  @override
+  String get walkAlarmSoundPickFile => 'ファイルから選ぶ';
+
+  @override
+  String get walkAlarmSoundFileDefaultTitle => 'マイファイル';
+
+  @override
+  String get walkAlarmSoundFileFailed => 'このファイルはアラーム音に使えません';
+
+  @override
   String get walkAlarmDeleteTitle => 'このアラームを削除しますか？';
 
   @override

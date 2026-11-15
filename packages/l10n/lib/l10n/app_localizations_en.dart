@@ -1902,6 +1902,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkAlarmSoundImportFailed => 'Can\'t use this alarm sound';
 
   @override
+  String get walkAlarmSoundFileSection => 'My files';
+
+  @override
+  String get walkAlarmSoundPickFile => 'Choose a file';
+
+  @override
+  String get walkAlarmSoundFileDefaultTitle => 'My file';
+
+  @override
+  String get walkAlarmSoundFileFailed =>
+      'This file can\'t be used as an alarm sound';
+
+  @override
   String get walkAlarmDeleteTitle => 'Delete this alarm?';
 
   @override
