@@ -1618,6 +1618,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryEmpty => 'まだ記録がありません';
 
   @override
+  String get walkDiaryEmptyHint => '＋ をタップして最初の記録を残しましょう';
+
+  @override
   String get walkDiaryToday => '今日';
 
   @override
@@ -2353,21 +2356,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryEditorPlaceHint => '場所の名前';
 
   @override
-  String get walkDiaryWhereToPost => 'どこに投稿しますか？';
-
-  @override
-  String get walkDiaryTextOnly => '文章だけ書く';
-
-  @override
-  String walkDiaryPostedTo(String title) {
-    return '$titleに投稿しました';
-  }
-
-  @override
   String get walkDiaryEditorPickStory => 'ストーリーを選ぶ';
-
-  @override
-  String get walkDiaryEditorAddMedia => '写真・動画を追加';
 
   @override
   String get walkDiaryEditorRemoveMedia => '外す';
@@ -4601,4 +4590,117 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkWeatherTurnOnLocation => '位置情報をオン';
+
+  @override
+  String get walkDiaryComposerDraft => '下書きを作る';
+
+  @override
+  String get walkDiaryComposerPosted => '投稿しました';
+
+  @override
+  String walkDiaryComposerPostedTo(String story) {
+    return '「$story」に投稿しました';
+  }
+
+  @override
+  String get walkDiaryComposerStory => 'ストーリー';
+
+  @override
+  String get walkChatUsageDiaryDraft => '日記の下書き';
+
+  @override
+  String get walkDiaryDraftSettingsSection => '自動下書き';
+
+  @override
+  String get walkDiaryDraftSettingsStyle => '基本の文体';
+
+  @override
+  String get walkDiaryDraftSettingsIncludePhotosDescription =>
+      '作成画面ツールバーの「写真を見せる」と同じ値です。オンの間は下書きを書くときに写真(最大4枚)がAIに送られます。';
+
+  @override
+  String get walkDiaryDraftIncludePhotos => '写真を見せる';
+
+  @override
+  String get walkDiaryDraftStyleDiary => '日記体';
+
+  @override
+  String get walkDiaryDraftStylePolite => '丁寧語';
+
+  @override
+  String get walkDiaryDraftStyleSns => 'SNS投稿風';
+
+  @override
+  String get walkDiaryDraftStyleMemo => 'メモ体';
+
+  @override
+  String get walkDiaryDraftStyleDiaryExample => '聖水洞のカフェで本を読んだ。窓際の席が暖かかった。';
+
+  @override
+  String get walkDiaryDraftStylePoliteExample =>
+      '聖水洞のカフェで本を読みました。窓際の席が暖かかったです。';
+
+  @override
+  String get walkDiaryDraftStyleSnsExample => '聖水洞のカフェで読書タイム ☕ 窓際の席が最高だった';
+
+  @override
+  String get walkDiaryDraftStyleMemoExample => '聖水洞のカフェ、読書。窓際の席、暖かい。';
+
+  @override
+  String walkDiaryDraftStyleOption(String name, String example) {
+    return '$name — $example';
+  }
+
+  @override
+  String get walkDiaryDraftTitle => '下書きを書く';
+
+  @override
+  String get walkDiaryDraftStop => '止める';
+
+  @override
+  String get walkDiaryDraftNoKey => '質問の設定でキーを入れると使えます。';
+
+  @override
+  String get walkDiaryDraftOpenSettings => '設定を開く';
+
+  @override
+  String get walkDiaryComposerDraftRewrite => '書き直す';
+
+  @override
+  String get walkDiaryComposerDraftNeedsInput => 'ひとこと書くか、写真を見せるをオンにしてください';
+
+  @override
+  String get walkDiaryComposerPhotosUnsupported => 'このモデルは写真を見られません';
+
+  @override
+  String walkDiaryDraftPhotosConfirm(int count, String vendor) {
+    return '写真が最大$count枚$vendorに送られます。オンの間は下書きを書くたびに送ります。';
+  }
+
+  @override
+  String walkDiaryDraftPhotosConfirmNoVendor(int count) {
+    return '写真が最大$count枚AIに送られます。オンの間は下書きを書くたびに送ります。';
+  }
+
+  @override
+  String get walkDiaryDraftPhotosConfirmAccept => 'オンにする';
+
+  @override
+  String walkDiaryEditorUseTakenTime(String when) {
+    return '撮影時刻にする($when)';
+  }
+
+  @override
+  String get walkDiaryDraftConsentTitle => 'AIに送る';
+
+  @override
+  String get walkDiaryComposerDraftApplied => '下書きに置き換えました';
+
+  @override
+  String get walkDiaryComposerDraftUndo => '元に戻す';
+
+  @override
+  String walkDiaryDraftConsentNotice(String vendor) {
+    return '下書きを作るとき、本文欄のメモと記録の時刻・場所の名前・タグが$vendorに送信されます。写真は「写真を見せる」をオンにしたときだけ送ります。キーはこの端末の安全な保存領域にだけあります。';
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:walk/domain/diary/draft/draft_style.dart';
 import 'package:walk/domain/diary/entity/diary_usage.dart';
 import 'package:walk/domain/diary/entity/trash_retention.dart';
 import 'package:walk/presentation/settings/page/diary_settings_page.dart';
@@ -102,5 +103,74 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(h.diaryPrefs.trashRetention, TrashRetention.day7);
+  });
+
+  group('자동 초안', () {
+    Future<void> showDraftSection(WidgetTester tester) async {
+      await h.pump(tester, const DiarySettingsPage());
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('settings-diary-draft-photos')),
+        100,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('섹션 제목 · 기본 문체(일기체) · 사진 기본값(꺼짐)', (tester) async {
+      await showDraftSection(tester);
+
+      expect(find.text('자동 초안'), findsOneWidget);
+      expect(inRow('settings-diary-draft-style', '일기체'), findsOneWidget);
+      final toggle = tester.widget<Switch>(
+        find.descendant(
+          of: find.byKey(const Key('settings-diary-draft-photos')),
+          matching: find.byType(Switch),
+        ),
+      );
+      expect(toggle.value, isFalse);
+    });
+
+    testWidgets('기본 문체: 4개(예문과 함께) 중 고르면 저장한다', (tester) async {
+      await showDraftSection(tester);
+
+      await tester.tap(find.byKey(const Key('settings-diary-draft-style')));
+      await tester.pumpAndSettle();
+      for (final example in [
+        '성수동 카페에서 책을 읽었다.',
+        '성수동 카페에서 책을 읽었어요.',
+        '성수동 카페에서 독서 타임',
+        '성수동 카페, 독서.',
+      ]) {
+        expect(find.textContaining(example), findsOneWidget, reason: example);
+      }
+      await tester.tap(find.textContaining('존댓말'));
+      await tester.pumpAndSettle();
+
+      expect(h.diaryPrefs.draftStyle, DraftStyle.polite);
+      expect(inRow('settings-diary-draft-style', '존댓말'), findsOneWidget);
+    });
+
+    testWidgets('사진 보여 주기: 켜면 저장한다(작성 화면 토글과 같은 값)', (tester) async {
+      await showDraftSection(tester);
+
+      await tester.tap(find.byKey(const Key('settings-diary-draft-photos')));
+      await tester.pumpAndSettle();
+
+      expect(h.diaryPrefs.draftIncludePhotos, isTrue);
+    });
+
+    testWidgets('저장된 값으로 시작한다', (tester) async {
+      await h.diaryPrefs.setDraftStyle(DraftStyle.memo);
+      await h.diaryPrefs.setDraftIncludePhotos(true);
+      await showDraftSection(tester);
+
+      expect(inRow('settings-diary-draft-style', '메모체'), findsOneWidget);
+      final toggle = tester.widget<Switch>(
+        find.descendant(
+          of: find.byKey(const Key('settings-diary-draft-photos')),
+          matching: find.byType(Switch),
+        ),
+      );
+      expect(toggle.value, isTrue);
+    });
   });
 }

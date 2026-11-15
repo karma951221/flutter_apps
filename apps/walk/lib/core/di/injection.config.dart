@@ -56,6 +56,7 @@ import '../../data/commute/prefs_route_preference_repository.dart' as _i644;
 import '../../data/commute/seoul_subway_arrival_source.dart' as _i960;
 import '../../data/diary/database/diary_database.dart' as _i611;
 import '../../data/diary/drift_diary_repository.dart' as _i1049;
+import '../../data/diary/media/exif_photo_meta_reader.dart' as _i797;
 import '../../data/diary/media/file_media_store.dart' as _i928;
 import '../../data/diary/media/plugin_media_processor.dart' as _i17;
 import '../../data/diary/prefs_diary_preferences.dart' as _i383;
@@ -119,9 +120,11 @@ import '../../domain/commute/repository/route_preference_repository.dart'
     as _i130;
 import '../../domain/commute/repository/subway_arrival_source.dart' as _i960;
 import '../../domain/commute/usecase/commute_use_case.dart' as _i453;
+import '../../domain/diary/draft/draft_writer.dart' as _i856;
 import '../../domain/diary/location/place_source.dart' as _i693;
 import '../../domain/diary/media/media_processor.dart' as _i674;
 import '../../domain/diary/media/media_store.dart' as _i870;
+import '../../domain/diary/media/photo_meta_reader.dart' as _i733;
 import '../../domain/diary/repository/diary_preferences.dart' as _i300;
 import '../../domain/diary/repository/diary_repository.dart' as _i122;
 import '../../domain/diary/usecase/diary_use_case.dart' as _i567;
@@ -239,6 +242,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i297.ReminderScheduler>(
       () => const _i553.ChannelReminderScheduler(),
+    );
+    gh.lazySingleton<_i733.PhotoMetaReader>(
+      () => const _i797.ExifPhotoMetaReader(),
     );
     gh.lazySingleton<_i695.AttachmentLoader>(
       () => _i255.FileAttachmentLoader(),
@@ -503,6 +509,17 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i638.LocationSync>(),
         gh<_i673.StayNamer>(),
         gh<_i993.LocationRecorder>(),
+        gh<_i494.Clock>(),
+      ),
+    );
+    gh.lazySingleton<_i856.DraftWriter>(
+      () => _i856.DraftWriter(
+        gh<_i1004.ChatModelRegistry>(),
+        gh<_i111.ChatSettings>(),
+        gh<_i880.ChatModelCatalog>(),
+        gh<_i858.ChatImageSource>(),
+        gh<_i520.ChatUsageLog>(),
+        gh<_i494.IdGenerator>(),
         gh<_i494.Clock>(),
       ),
     );

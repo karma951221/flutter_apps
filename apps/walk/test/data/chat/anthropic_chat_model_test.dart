@@ -806,6 +806,42 @@ void main() {
       return (req.headers, body);
     }
 
+    test('출력 상한 · 생각 끄기를 주면 max_tokens 와 생각 끄기 필드를 싣는다', () async {
+      const haiku = 'claude-haiku-5-5';
+      final (_, body) = await sent(
+        ModelRequest(
+          apiKey: 'k',
+          model: haiku,
+          system: 'sys',
+          messages: const [ChatMessage.user('hi')],
+          tools: const [],
+          maxOutputTokens: 600,
+          thinking: false,
+        ),
+      );
+
+      expect(body['max_tokens'], 600);
+      expect(body['thinking'], {'type': 'disabled'});
+      expect(body.containsKey('output_config'), isFalse);
+    });
+
+    test('생각을 끌 수 없는 모델은 effort low 만', () async {
+      final (_, body) = await sent(
+        const ModelRequest(
+          apiKey: 'k',
+          model: 'claude-opus-5-5',
+          system: 'sys',
+          messages: [ChatMessage.user('hi')],
+          tools: [],
+          thinking: false,
+        ),
+      );
+
+      expect(body['output_config'], {'effort': 'low'});
+      expect(body.containsKey('thinking'), isFalse);
+      expect(body['max_tokens'], 16000);
+    });
+
     test('effort 는 supportsEffortOf 가 참일 때만 싣는다', () async {
       const supported = 'claude-sonnet-9-9';
       const unsupported = 'claude-3-haiku-x';

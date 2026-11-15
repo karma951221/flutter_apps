@@ -159,13 +159,20 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | `data/diary/location/current_place_source_test.dart` (7) | `CurrentPlaceSource` | 좌표 + 이름 · 위치 서비스 꺼짐 · 권한 거부 · 예외 · 타임아웃 → null(오류 아님) · 이름 못 얻으면 좌표만 |
 | `data/diary/location/geocoding_place_namer_test.dart` (9) | `composePlaceName` · `GeocodingPlaceNamer` | 앞의 두 필드 · 빈 값 건너뜀 · 호출마다 `locale` · 다음 결과로 넘어감 · 빈 목록 · 조합 불가 → `noName` · 예외 · 타임아웃 → `offline` |
 | `data/diary/prefs_diary_preferences_test.dart` (4) | `PrefsDiaryPreferences` | 기본 7일 · 새 인스턴스로 왕복 · 타입이 다르거나 모르는 값은 기본값(보기 모드 저장은 화면 재기획으로 없어짐) |
+| `domain/chat/chat_model_rules_test.dart` 초안 모델 | `draftModelOf` · 생각 끄기 모양 | 최신 Haiku · `*-mini`(nano 제외) · 목록 없으면 상수 · 모델별 thinking/effort |
+| `domain/diary/draft/draft_length_test.dart` (7) | `DraftLength` | 기본 2~4 · 짧은 메모 1~2 · 경계 20/21자 · 사진 3/4장 · 99/100자 · 앞뒤 공백 |
+| `domain/diary/draft/draft_prompt_test.dart` (19) | 초안 프롬프트 | 맥락 줄 · 빈 값 생략 · 촬영 시각 범위 · **좌표 없음** · 공통 지시 · 문장 수 · 다듬기 · 문체별 지시 · 사진 지시 · 메모 언어 / 비면 앱 언어 · 촬영 시각이 3시간 넘게 다르고 자동 위치면 장소 빼기 · 직접 넣은 장소는 보냄 |
+| `domain/diary/draft/draft_writer_test.dart` (26) | `DraftWriter` | 가능 여부 · 키 없음 · 동의 없음 · 스트림 조각 → 끝 · 초안 모델(Haiku · mini) · 출력 상한 600 · 생각 끔 · fastMode 끔 · 빈 글 · 거절 · 오류 매핑 · invalidKey 기록 · 사용량 `diaryDraft` · 사진 끔 / 켬(4장까지) / 읽기 실패 · `canSeePhotos` · 구독을 끊으면 요청도 끊김 |
+| `domain/diary/draft/photo_meta_test.dart` (5) | `PhotoMeta` | 촬영 범위 · `takenFarFromNow`(3시간 경계) |
+| `data/diary/media/exif_photo_meta_reader_test.dart` (7) | `ExifPhotoMetaReader` | 테스트 안에서 만든 EXIF JPEG: 촬영 시각 · GPS 는 읽지 않음 · GPS 만 있으면 null · EXIF 없음 · 깨진 파일 · 없는 파일 · 0 시각 → null |
+| `data/diary/prefs_diary_preferences_test.dart` 자동 초안 (4) | `PrefsDiaryPreferences` | 기본값(일기체 · 꺼짐) · 왕복 · 키 이름 · 모르는 값 · 다른 타입 |
 
 ### 일기 — 화면
 
 | 파일 | 대상 | 확인 |
 |---|---|---|
 | `presentation/diary/cubit/diary_timeline_cubit_test.dart` (6) | `DiaryTimelineCubit` | 열린 스토리와 보관함을 나눠 둠 · 항상 모든 스토리의 기록을 최신순으로 · 저장 · 삭제 · 복원 즉시 반영 · 전체 필터 하나만 구독 · 기록 · 스토리 스트림 실패 |
-| `presentation/diary/cubit/entry_editor_cubit_test.dart` (24) | `EntryEditorCubit` | 기본 스토리 · 지금 위치 · 위치 실패면 직접 입력 · **같은 분이면 안 바뀐 것** · 과거면 위치 빼기 · 미래 무시 · 스토리 제안 · 되돌리기 · 늦게 온 위치 버림 · 칩 · 위치 빼기 · 11개째 `tooManyMedia` · **한 번에 하나씩 가져오기** · 31초 거절 · **가져오기가 던져도 표시가 풀림** · 순서 바꾸기 · 빈 기록 · 중복 탭 · 취소 정리 · 뺀 미디어는 저장 뒤에만 |
+| `presentation/diary/cubit/entry_editor_cubit_test.dart` (31) | `EntryEditorCubit` | 기본 스토리 · 지금 위치 · 위치 실패면 직접 입력 · **같은 분이면 안 바뀐 것** · 과거면 위치 빼기 · 미래 무시 · 스토리 제안 · 되돌리기 · 늦게 온 위치 버림 · 칩 · 위치 빼기 · 11개째 `tooManyMedia` · **한 번에 하나씩 가져오기** · 31초 거절 · **가져오기가 던져도 표시가 풀림** · 순서 바꾸기 · 빈 기록 · 중복 탭 · 취소 정리 · 뺀 미디어는 저장 뒤에만 · 가져올 때 원본 촬영 시각을 미디어 id 로 · 빼면 함께 뺌 · `draftContext`(자동 위치 · 지금 · 언어) |
 | `presentation/diary/cubit/diary_search_cubit_test.dart` (13) | `DiarySearchCubit` | 탭 4개 · 299ms 조회 없음 / 300ms 한 번 · 마지막 입력만 · 빈 입력(글 · 스토리 조회 없음, 태그 · 장소 상위 추천) · 늦은 응답 버림(입력 · 탭) · 실패 · **메모리 DB 에서 휴지통 · 복원하면 추천 개수 · 결과 갱신** |
 | `presentation/diary/cubit/filtered_entries_cubit_test.dart` (4) | `FilteredEntriesCubit`(태그 · 장소) | 열린 채 추가 +1 · 휴지통 -1 · 복원 +1 · 마지막이 사라지면 빈 상태 · 스토리를 넘나듦 |
 | `presentation/diary/cubit/story_manage_cubit_test.dart` (18) | `StoryManageCubit` | 만들기(열림 · 닫힘 · 종료일 오류) · 지난 기간의 일상 기록만 제안 · 고른 것만 옮김 · 닫기(지금 · 고른 날 · 시작 전 거절) · 다시 열기 · 기본 스토리 닫기 거절 · 이름(기본 스토리 비우면 기본 이름) · 표지 · 후보는 살아 있는 기록 미디어 · 삭제 |
@@ -173,8 +180,8 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | `presentation/diary/cubit/trash_cubit_test.dart` (12) | `TrashCubit` | 최신순 · 살아 있는 기록 안 보임 · 남은 일수(올림 · 0 아래 없음 · 안 함 null · 30일) · 복원 · 영구 삭제 · 비우기 · 실패 표시 |
 | `presentation/diary/format/diary_format_test.dart` (10) | `DiaryFormat` | 오늘 · 어제 · 올해 · 지난해 날짜 머리 · 1월 1일의 어제 · 규칙 위반 문구 · 같은 날 · 1분 안이면 지금 · 스토리 기간 |
 | `presentation/diary/media_picker_test.dart` (2) | `MediaPicker` | 앨범 · 카메라 고르기가 잠금 예외(`MediaPickGuard`) 안에서 · 남은 칸만큼 · 취소면 빈 목록 |
-| `presentation/diary/page/diary_tab_test.dart` (29) | `DiaryTab` | **잠긴 동안 타임라인 · ＋ 가 트리에 없고 풀면 동그라미 줄 · 새 스토리 시트가 닫힘 · 가려진 탭은 다른 탭 팝업을 안 닫음** · 동그라미 줄 · 모든 스토리 피드(보기 모드 토글 없음) · 빈 상태 · 동그라미 탭 → 뷰어(진행 중은 마지막 날) · 순번 시작 · 기록 없는 스토리 → 스토리 페이지 · 길게 누르기 · 모두 보기 · ＋ 새 스토리 · 카드 탭 → 뷰어 그 기록 · 카드 머리 → 스토리 페이지 · 피드 영상 자동재생 안 함 · ＋ 시트 4항목(앨범 · 글만 쓰기) · 앱바 ⋮ 모든 스토리 · 휴지통 · 🔍 · **⋮ 는 잠긴 동안 앱 설정만, 풀리면 모든 스토리 · 휴지통 · 일기 설정 · 앱 설정** · 오류 · 보일 때 정리 한 번 · 잠긴 동안 정리 안 함(가려진 탭에서 풀려도 보일 때) · 정리 실패해도 화면 · 표지 사진 · 🔍 · ⋮ 는 기록 탭 앱바처럼 테스트 껍데기 앱바에 단다(스크롤로 숨는 앱바는 2026-11-14 기록 탭으로 바뀌며 뺐다) |
-| `presentation/diary/page/entry_editor_page_test.dart` (26) | `EntryEditorPage` | 시각 행 · 스토리 시트(열린 것만) · 칩 · 추천 · 위치 ✕ → 직접 입력 · 올리기 · **칩으로 안 만든 태그 글자도 넣음** · 규칙 위반 안내 · 닫기 전 확인 · 앨범에서 남은 칸만큼 · 고치기 · **다시 잠기면 트리에서 빠지고 풀면 쓰던 글 그대로 · 잠금 화면 뒤로 가기 무시 · 스토리 시트 닫힘** · 화면이 사라져도 임시 사본 정리 |
+| `presentation/diary/page/diary_tab_test.dart` (22) | `DiaryTab` | **잠긴 동안 타임라인 · ＋ 가 트리에 없음 · 가려진 탭은 다른 탭 팝업을 안 닫음** · 동그라미 줄 없음 · 모든 스토리 피드 · 빈 상태 ＋ 안내 · 읽는 중 `AppLoading` · ＋ 가 바로 작성 화면 · 사진 탭 → 그 기록만 · 자동 넘김 없이 뷰어 · 카드 머리 스토리 이름 → 스토리 페이지(닫힌 스토리도) · 카드 ⋮ 팝업이 다시 잠기면 닫힘 · 피드 영상 자동재생 안 함 · 앱바 ⋮ · 🔍 · 잠긴 동안 앱 설정만 · 오류 · 정리 한 번 · 잠긴 동안 정리 안 함 · 정리 실패해도 화면 |
+| `presentation/diary/page/entry_editor_page_test.dart` (45) | `EntryEditorPage` | 배치(글 → 사진 줄 → 태그 · 장소 · 시각 → 스토리 행, 도구줄은 맨 아래) · **키보드가 올라와도 도구줄이 그 위에** · 새 기록은 글 칸 자동 포커스 · 앨범 → 썸네일 → ✕ · 한도면 꺼짐 · 스토리 행 → 시트 · ＋ 새 스토리 · 지난 스토리 · 저장 스낵바(일상 "올렸어요" / 다른 스토리면 이름) · ✨ 한 번에 글 칸 스트리밍 · 되돌리기 · 그대로 저장 · 실패면 원래 메모 · 멈추기 · 다시 쓰기 두 갈래 · 재료 없으면 ✨ 꺼짐 · 사진 토글 확인 · 기억 · 못 보는 모델 · 키 없음 · 동의 · **생성 중 다시 잠기면 취소, 풀면 그때까지의 글** · 찍은 시각 칩 · 장소 빼기 · 시각 행 · 태그 · 위치 · 규칙 위반 · 닫기 전 확인 · 고치기 · 잠금 · 임시 사본 정리 |
 | `presentation/diary/page/entry_actions_test.dart` (8) | `entry_actions` | 휴지통(확인 → 되돌리기 스낵바 · 실패 · `confirm: false` 면 바로 · 취소) · 스토리 옮기기(스낵바 · 되돌리기 · 같은 스토리 · 실패) · 고치기 화면 |
 | `presentation/diary/page/story_page_test.dart` (15) | `StoryPage` | 머리 통계 · 처음부터 보기 → 뷰어 · 칸 탭 → 그 기록 · 기록 없는 스토리 · ⋮ 메뉴(일상 · 열린 · 닫힌) · 이름 · 닫기 · 다시 열기 · 삭제 확인 · 규칙 위반 스낵바 · 표지 시트(그 스토리 사진만) · **다시 잠기면 표지 시트 · 삭제 다이얼로그가 닫히고 지우지 않음** |
 | `presentation/diary/page/all_stories_page_test.dart` (4) | `AllStoriesPage` | 진행 중 · 지난 구역 카드 → 스토리 페이지 · 지난 스토리 없으면 구역 없음 · ＋ 만들기 · 지난 기간이면 일상 옮기기 제안 · 오늘 시작이면 제안 없음 |
@@ -183,14 +190,17 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | `presentation/diary/page/filtered_entries_page_test.dart` (6) | `FilteredEntriesPage` | 태그 · 장소 제목과 개수 · 3열 그리드 · 열린 채 늘고 줄어듦 · ▶ 보기 → 모아보기 소스 뷰어 · 칸 탭 → 그 기록부터 · 오류 |
 | `presentation/diary/page/trash_page_test.dart` (10) | `TrashPage` | 남은 일수 · 안 함이면 없음 · 오늘 삭제 · 복원 · 영구 삭제 · 비우기 확인 · 복원 · 삭제 실패 문구 따로 · 빈 상태 |
 | `presentation/diary/viewer/viewer_model_test.dart` (7) | `buildViewerGroup` · `startPos` · `nextPos` · `prevPos` · `dayNumber` | 날짜별 묶음 · 기록 안 미디어마다 조각 · 휴지통 기록 제외 · 진행 중은 마지막 날 · 닫힘은 첫날 · entryId 시작 · 날 · 그룹 넘김 · 끝에서 null · 빈 그룹 건너뜀 · n일차 |
-| `presentation/diary/viewer/story_viewer_page_test.dart` (23) | `StoryViewerPage` | 머리(이름 · n일차 · 날짜) · 5초 자동 넘김(글 6초 · 영상은 끝에서) · 마지막이면 닫힘 · 영상 실패 · 길이 0 · 탭 이전 · 다음 · 길게 눌러 멈춤 · 가로 스와이프로 다음 스토리 · 아래로 끌어 닫기 · ✕ · ⋮ 휴지통(확인 없이 되돌리기 스낵바) · 위에 화면이 얹히면 멈춤 · **다시 잠겼다 풀리면 이어 감** · 일상 · 모아보기 소스 · 머리 이름 → 스토리 페이지 · 기록이 모두 사라지면 닫힘 · 수정으로 날이 바뀌면 새 날에서 찾음 · 읽기 실패 안내 · 처음 영상에서 이전이면 다시 틂 |
-| `presentation/diary/widget/story_ring_row_test.dart` (5) | `StoryRingRow` · `ringOrder` | 진행 중은 최신 기록순 · 빈 것은 뒤 · 닫힘은 종료일 최신순 10개 · ＋ 와 모두 보기 · 탭 · 길게 누르기 · 링 색 · 선택 체크 |
+| `presentation/diary/viewer/story_viewer_page_test.dart` (32) | `StoryViewerPage` | 머리(이름 · n일차 · 날짜) · 5초 자동 넘김(글 6초 · 영상은 끝에서) · 마지막이면 닫힘 · 영상 실패 · 길이 0 · 탭 이전 · 다음 · 길게 눌러 멈춤 · 가로 스와이프로 다음 스토리 · 아래로 끌어 닫기 · ✕ · ⋮ 휴지통 · 위에 화면이 얹히면 멈춤 · **다시 잠겼다 풀리면 이어 감** · 일상 · 모아보기 소스 · 머리 이름 → 스토리 페이지 · 기록이 모두 사라지면 닫힘 · 날이 바뀌면 새 날에서 찾음 · 읽기 실패 · 처음 영상에서 이전이면 다시 틂 · `autoAdvance: false` 면 기다려도 안 넘어가고 진행 막대 없음 · 영상이 끝나도 그대로 · 손으로 넘기기는 됨 |
 | `presentation/diary/widget/entry_grid_test.dart` (2) | `EntryGrid` | 최신 위 3열 · 영상 ▶ · 여러 장 아이콘 · 글 타일 · 탭 · 슬리버로도 사용 |
-| `presentation/diary/widget/feed_view_test.dart` (10) | `FeedView` | 머리(표지 원 · 스토리 · 장소) · 4:5 미디어 · 1/n · 영상은 자동재생 없이 ▶ · 몸통 · 머리 · 태그 탭 · ⋮ · 6줄 대신 3줄 접기 · 더 보기 · 모르는 스토리 |
-| `presentation/diary/widget/media_preview_pager_test.dart` (4) | `MediaPreviewPager` | 비어 있으면 ＋ 칸 · 고르기 시트 · 길게 누르거나 ✕ 로 뺌 · 가져오는 중 진행 표시 · 10개면 ＋ 없음 |
+| `presentation/diary/widget/feed_view_test.dart` (13) | `FeedView` | 머리(날짜 · 시각 + 장소 + 작은 스토리 이름, 일상은 이름 숨김) · 4:5 미디어 · 1/n · 영상은 자동재생 없이 ▶ · 사진 탭만 `onOpen` · 글 · 날짜 · 긴 글 탭은 뷰어 아님 · 태그 탭 · ⋮ · 3줄 접기 · 더 보기 · 모르는 스토리 |
+| `presentation/diary/widget/composer_toolbar_test.dart` (10) | `ComposerToolbar` | 앨범 · 사진 · 영상 · 한도 · 가져오는 중 꺼짐 · ✨ / 다시 쓰기 / ■ 멈추기 툴팁 · 재료 없으면 꺼짐과 안내 툴팁 · 사진 보여 주기 토글(사진 있을 때만) · 못 보는 모델이면 꺼짐과 이유 |
+| `presentation/diary/widget/time_row_test.dart` (3) | `TimeRow` | 찍은 시각 칩이 뜨는 조건 · 누르면 그 시각 |
+| `presentation/diary/widget/composer_media_strip_test.dart` (4) | `ComposerMediaStrip` | 썸네일과 ✕ 빼기 · 순서 바꾸기 인덱스 · 진행 표시 |
+| `presentation/diary/widget/story_picker_sheet_test.dart` (2) | `StoryPickerSheet` | `allowCreate` 면 ＋ 새 스토리 항목 · 누르면 `createNew` |
+| `presentation/diary/draft/draft_cubit_test.dart` (19) | `DraftCubit` | 생성 · 조각 누적 · 끝 · 실패면 원래 메모 · 멈추기는 그때까지의 글 · 다시 쓰기(그대로면 원래 메모 / 고쳤으면 다듬기) · 되돌리기 · 동의 · 키 없음 · 사진 보여 주기 기억 |
 | `presentation/diary/widget/tag_chip_input_test.dart` (5) | `TagChipInput` | 완료 · 띄어쓰기로 칩 · 같은 태그 무시 · ✕ · 추천 |
 | `presentation/diary/widget/highlighted_text_test.dart` (7) | `matchRanges` · `matchSnippet` | 대소문자 무시 · 한글 · 이모지 · `%` · `_` · `\` · 겹치지 않게 · 긴 본문 자르기 · 이모지를 깨지 않음 · 굵게 |
-| `presentation/settings/cubit/diary_settings_cubit_test.dart` (5) | `DiarySettingsCubit` | 잠금 설정 · 보관 기간 · 저장 공간 읽기 · 용량을 못 읽어도 나머지 · 다시 잠기는 시간은 방금 읽은 설정에 얹어 저장 · 보관 기간 |
+| `presentation/settings/cubit/diary_settings_cubit_test.dart` (10) | `DiarySettingsCubit` | 잠금 설정 · 보관 기간 · 저장 공간 읽기 · 용량을 못 읽어도 나머지 · 다시 잠기는 시간은 방금 읽은 설정에 얹어 저장 · 보관 기간 · 자동 초안 기본 문체 · 사진 기본값 읽기 · 저장 |
 
 굵은 항목은 Review Focus(저장 도중 실패 · 같은 태그 · 이모지와 1만 자 · 휴지통 표지 · 잠금 우회)나 리뷰에서 고친 것의 회귀 테스트다
 ([기록](history.md#2026-10-13--일기)).
@@ -477,6 +487,13 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | D13 | 세로로 찍은 영상 첨부 | 압축본이 세로 비율 그대로(눕지 않음) · 뷰어에서 비율 맞게 재생 | **부분 통과**(에뮬레이터, 2026-10-13): 화면 녹화 1080×2400 → 576×1280, 에뮬레이터 카메라 5초 → 720×1280 · 변환 행렬 단위(세로 그대로). 회전 메타데이터가 붙는 실제 폰 세로 영상은 미확인 |
 | D14 | `image_picker` 앨범 여러 장 고르기 · 카메라 사진 · 카메라 영상 | 고르기 화면이 뜨고 남은 칸만큼 들어옴, 카메라에 다녀와도 잠기지 않음 | **부분 통과**(에뮬레이터, 2026-10-13): 앨범 3장 다중 선택 · 카메라 사진 · 카메라 영상(5초) 모두 들어옴. 잠금 예외는 기기 화면 잠금이 없어 미확인(D4~D6 과 함께) |
 | D15 | 태그 · 장소 모아보기를 릴스로 보기 | 모아보기 화면 안에서 릴스가 화면을 채우고 넘기기 · 영상 재생 · 위 화면이 얹히면 멈춤 | **부분 통과**(에뮬레이터, 2026-10-13): 검색 해시태그 탭 `#jeju 기록 2개` → 모아보기 → 릴스, 세로 넘기기 동작. 머리줄 아래에 그려져 꽉 채우지는 않음 · 카메라 영상이 정지 장면이라 재생 여부는 화면 비교로 판정 못 함. **발견(경미)**: 밝은 영상 위 릴스 하단 시각 글자 대비 낮음 → **고침**(`a887c15`): 글 뒤 전체에 그늘 |
+| D19 | ＋ → 글 · 앨범 사진 → 올리기, 키보드가 올라와도 도구줄 | 바로 작성 화면 · 글 칸 포커스 · 도구줄이 키보드 위 · "올렸어요" · 카드 머리 날짜 · 시각 + 장소, 동그라미 줄 없음 | **통과**(에뮬레이터, 2026-11-15, debug) |
+| D20 | 키 없이 ✨ | 키 없음 다이얼로그 + 설정 열기 → 물어보기 설정. 빈 글 · 사진 보여 주기 꺼짐이면 ✨ 꺼짐 | **통과**(에뮬레이터, 2026-11-15) |
+| D21 | 실제 키(Claude · GPT)로 ✨ | 글 칸에 흘러 들어옴 · ■ 멈추기 · 되돌리기 · 다시 쓰기(그대로 / 고친 뒤 다듬기) · 문체가 설정대로 · 2~4문장 기본 | 대기 |
+| D22 | 사진 보여 주기 켜기 확인 → 메모 없이 ✨ | 확인 다이얼로그 한 번 · 사진 내용으로 초안 · 사용량 화면 "일기 초안" · 요청 모델이 Haiku/mini(400 없이) | 확인 다이얼로그 **통과**(에뮬레이터) · 나머지 대기 |
+| D23 | 어제 찍은 사진 → "찍은 시각으로" 칩 | 칩 문구 · 누르면 그 시각 · 자동 위치는 프롬프트에서 빠짐 · 실제 폰 EXIF 촬영 시각 | 칩 **통과**(에뮬레이터, 합성 EXIF) · 실제 폰 대기 |
+| D24 | 생성 중 홈 → 다시 잠김 → 풀기 | 생성 멈춤 · 글 칸에 그때까지의 글(없으면 원래 메모) | 대기 |
+| D25 | 영어 메모로 ✨ · 메모 없이(사진만) ✨ | 영어 초안 · 앱 언어 초안 | 대기 |
 
 ## 지도 · 위치 기록 기기 시나리오 — 대기
 

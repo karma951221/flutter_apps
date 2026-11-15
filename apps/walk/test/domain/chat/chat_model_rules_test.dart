@@ -348,4 +348,88 @@ void main() {
       expect(fastModeOf(ChatVendor.openai, 'gpt-9', specs: specs), isNull);
     });
   });
+
+  group('draftModelOf', () {
+    test('Claude: 목록의 Haiku 중 가장 높은 버전(날짜 없는 별칭 먼저)', () {
+      final models = [
+        _m('claude-opus-5-5', created: 9),
+        _m('claude-haiku-4-5-20251001', created: 8),
+        _m('claude-haiku-5-5-20261001', created: 7),
+        _m('claude-haiku-5-5', created: 6),
+        _m('claude-sonnet-5-5', created: 5),
+      ];
+
+      expect(draftModelOf(ChatVendor.anthropic, models), 'claude-haiku-5-5');
+    });
+
+    test('GPT: 목록의 mini 중 가장 높은 버전 — nano · 본 모델은 고르지 않는다', () {
+      final models = [
+        _m('gpt-5.5', created: 9),
+        _m('gpt-5.5-nano', created: 8),
+        _m('gpt-5-mini', created: 7),
+        _m('gpt-5.1-mini-2026-01-01', created: 6),
+        _m('gpt-5.1-mini', created: 5),
+        _m('o4-mini', created: 4),
+      ];
+
+      expect(draftModelOf(ChatVendor.openai, models), 'gpt-5.1-mini');
+    });
+
+    test('그 계열이 목록에 없으면 상수', () {
+      expect(
+        draftModelOf(ChatVendor.anthropic, [_m('claude-opus-5-5')]),
+        draftModelFallbacks[ChatVendor.anthropic],
+      );
+      expect(
+        draftModelOf(ChatVendor.openai, const []),
+        draftModelFallbacks[ChatVendor.openai],
+      );
+      expect(draftModelFallbacks, {
+        ChatVendor.anthropic: 'claude-haiku-5-5',
+        ChatVendor.openai: 'gpt-5-mini',
+      });
+    });
+  });
+
+  group('생각 끄기', () {
+    test('Anthropic: 옛 모델은 아무것도 싣지 않는다(기본이 꺼짐)', () {
+      expect(anthropicNoThinkingFieldsOf('claude-haiku-4-5'), isEmpty);
+    });
+
+    test('Anthropic: Haiku 5.5 · Opus 5 · Sonnet 5 는 thinking disabled', () {
+      for (final id in [
+        'claude-haiku-5-5',
+        'claude-opus-5',
+        'claude-sonnet-5',
+      ]) {
+        expect(anthropicNoThinkingFieldsOf(id), {
+          'thinking': {'type': 'disabled'},
+        }, reason: id);
+      }
+    });
+
+    test('Anthropic: 끌 수 없는 모델(Opus 5.5 · Fable)은 effort low', () {
+      for (final id in ['claude-opus-5-5', 'claude-fable-5-2']) {
+        expect(anthropicNoThinkingFieldsOf(id), {
+          'output_config': {'effort': 'low'},
+        }, reason: id);
+      }
+    });
+
+    test('Anthropic: Sonnet 5.5 는 between_tools + effort low', () {
+      expect(anthropicNoThinkingFieldsOf('claude-sonnet-5-5'), {
+        'thinking': {'type': 'between_tools'},
+        'output_config': {'effort': 'low'},
+      });
+    });
+
+    test('OpenAI: gpt-5 계열 minimal, 5.x 뒤는 none, o 계열 low, 옛 모델 null', () {
+      expect(openAiNoReasoningEffortOf('gpt-5-mini'), 'minimal');
+      expect(openAiNoReasoningEffortOf('gpt-5'), 'minimal');
+      expect(openAiNoReasoningEffortOf('gpt-5.1-mini'), 'none');
+      expect(openAiNoReasoningEffortOf('gpt-6-mini'), 'none');
+      expect(openAiNoReasoningEffortOf('o4-mini'), 'low');
+      expect(openAiNoReasoningEffortOf('gpt-4.1-mini'), isNull);
+    });
+  });
 }

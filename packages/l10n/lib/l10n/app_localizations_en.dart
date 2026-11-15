@@ -1718,6 +1718,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryEmpty => 'No entries yet';
 
   @override
+  String get walkDiaryEmptyHint => 'Tap ＋ to write your first entry';
+
+  @override
   String get walkDiaryToday => 'Today';
 
   @override
@@ -2501,21 +2504,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryEditorPlaceHint => 'Place name';
 
   @override
-  String get walkDiaryWhereToPost => 'Where to post?';
-
-  @override
-  String get walkDiaryTextOnly => 'Text only';
-
-  @override
-  String walkDiaryPostedTo(String title) {
-    return 'Posted to $title';
-  }
-
-  @override
   String get walkDiaryEditorPickStory => 'Choose a story';
-
-  @override
-  String get walkDiaryEditorAddMedia => 'Add photos/videos';
 
   @override
   String get walkDiaryEditorRemoveMedia => 'Remove';
@@ -4994,4 +4983,134 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkWeatherTurnOnLocation => 'Turn on location';
+
+  @override
+  String get walkDiaryComposerDraft => 'Write a draft';
+
+  @override
+  String get walkDiaryComposerPosted => 'Posted';
+
+  @override
+  String walkDiaryComposerPostedTo(String story) {
+    return 'Posted to \'$story\'';
+  }
+
+  @override
+  String get walkDiaryComposerStory => 'Story';
+
+  @override
+  String get walkChatUsageDiaryDraft => 'Diary draft';
+
+  @override
+  String get walkDiaryDraftSettingsSection => 'Auto draft';
+
+  @override
+  String get walkDiaryDraftSettingsStyle => 'Default style';
+
+  @override
+  String get walkDiaryDraftSettingsIncludePhotosDescription =>
+      'Same as Show photos in the composer toolbar. While on, photos (up to 4) are sent to the AI when writing a draft.';
+
+  @override
+  String get walkDiaryDraftIncludePhotos => 'Show photos';
+
+  @override
+  String get walkDiaryDraftStyleDiary => 'Diary';
+
+  @override
+  String get walkDiaryDraftStylePolite => 'Polite';
+
+  @override
+  String get walkDiaryDraftStyleSns => 'Social post';
+
+  @override
+  String get walkDiaryDraftStyleMemo => 'Notes';
+
+  @override
+  String get walkDiaryDraftStyleDiaryExample =>
+      'Read a book at a cafe in Seongsu. The window seat was warm.';
+
+  @override
+  String get walkDiaryDraftStylePoliteExample =>
+      'I read a book at a cafe in Seongsu. The window seat was warm.';
+
+  @override
+  String get walkDiaryDraftStyleSnsExample =>
+      'Reading time at a Seongsu cafe ☕ window seat was the best';
+
+  @override
+  String get walkDiaryDraftStyleMemoExample =>
+      'Seongsu cafe, reading. Window seat, warm.';
+
+  @override
+  String walkDiaryDraftStyleOption(String name, String example) {
+    return '$name — $example';
+  }
+
+  @override
+  String get walkDiaryDraftTitle => 'Write a draft';
+
+  @override
+  String get walkDiaryDraftStop => 'Stop';
+
+  @override
+  String get walkDiaryDraftNoKey => 'Add a key in Ask settings to use this.';
+
+  @override
+  String get walkDiaryDraftOpenSettings => 'Open settings';
+
+  @override
+  String get walkDiaryComposerDraftRewrite => 'Rewrite';
+
+  @override
+  String get walkDiaryComposerDraftNeedsInput =>
+      'Write a line or turn on Show photos';
+
+  @override
+  String get walkDiaryComposerPhotosUnsupported =>
+      'This model can\'t see photos';
+
+  @override
+  String walkDiaryDraftPhotosConfirm(int count, String vendor) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Up to $count photos',
+      one: '1 photo',
+    );
+    return '$_temp0 will be sent to $vendor. While on, they are sent every time you write a draft.';
+  }
+
+  @override
+  String walkDiaryDraftPhotosConfirmNoVendor(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Up to $count photos',
+      one: '1 photo',
+    );
+    return '$_temp0 will be sent to the AI. While on, they are sent every time you write a draft.';
+  }
+
+  @override
+  String get walkDiaryDraftPhotosConfirmAccept => 'Turn on';
+
+  @override
+  String walkDiaryEditorUseTakenTime(String when) {
+    return 'Use photo time ($when)';
+  }
+
+  @override
+  String get walkDiaryDraftConsentTitle => 'Send to AI';
+
+  @override
+  String get walkDiaryComposerDraftApplied => 'Replaced with the draft';
+
+  @override
+  String get walkDiaryComposerDraftUndo => 'Undo';
+
+  @override
+  String walkDiaryDraftConsentNotice(String vendor) {
+    return 'When writing a draft, the memo in the text box and the entry time, place name and tags are sent to $vendor. Photos are sent only when Show photos is on. Your key stays in this phone\'s secure storage.';
+  }
 }

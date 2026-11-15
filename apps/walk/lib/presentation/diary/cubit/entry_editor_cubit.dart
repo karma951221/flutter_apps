@@ -4,6 +4,8 @@ import 'package:core/core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/diary/diary_failure.dart';
+import '../../../domain/diary/draft/draft_context.dart';
+import '../../../domain/diary/draft/photo_meta.dart';
 import '../../../domain/diary/entity/entry_draft.dart';
 import '../../../domain/diary/entity/entry_location.dart';
 import '../../../domain/diary/entity/entry_media.dart';
@@ -12,6 +14,7 @@ import '../../../domain/diary/entity/story.dart';
 import '../../../domain/diary/entity/tag_name.dart';
 import '../../../domain/diary/location/place_source.dart';
 import '../../../domain/diary/media/media_store.dart';
+import '../../../domain/diary/media/photo_meta_reader.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
 import '../../../domain/diary/usecase/story_order.dart';
@@ -26,14 +29,19 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
     this._repo,
     this._media,
     this._places,
-    this._clock,
-  ) : super(_blank(_clock.now()));
+    this._clock, {
+    PhotoMetaReader? photoMeta,
+  }) : _photoMeta = photoMeta,
+       super(_blank(_clock.now()));
 
   final DiaryUseCase _useCase;
   final DiaryRepository _repo;
   final MediaStore _media;
   final PlaceSource _places;
   final Clock _clock;
+
+  /// 고른 원본의 촬영 시각 · 좌표(초안 재료). null 이면 읽지 않는다.
+  final PhotoMetaReader? _photoMeta;
 
   StreamSubscription<List<Story>>? _stories;
 
@@ -225,6 +233,10 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
           error = DiaryFailure.tooManyMedia;
           break;
         }
+        // 원본은 가져온 뒤 지워지므로(EXIF 도 압축 사본에서 빠진다) 먼저 읽는다.
+        final meta = p.kind == MediaKind.photo
+            ? await _photoMeta?.read(p.path)
+            : null;
         final result = switch (p.kind) {
           MediaKind.photo => await _media.importPhoto(p.path),
           MediaKind.video => await _media.importVideo(p.path),
@@ -241,6 +253,9 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
                   media: [...state.draft.media, value],
                 ),
                 newMedia: [...state.newMedia, value],
+                photoMetas: meta == null
+                    ? state.photoMetas
+                    : {...state.photoMetas, value.id: meta},
               ),
             );
           case Err(:final failure):
@@ -281,6 +296,7 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
           for (final m in state.newMedia)
             if (m.id != mediaId) m,
         ],
+        photoMetas: {...state.photoMetas}..remove(mediaId),
       ),
     );
     if (isNew) unawaited(_useCase.cancelDraft([removed]));
@@ -295,6 +311,38 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
     media.insert(to, media.removeAt(from));
     emit(state.copyWith(draft: state.draft.copyWith(media: media)));
   }
+
+  /// 초안 재료(스펙 2026-11-15 §4). 촬영 범위는 지금 붙어 있는 사진의 메타데이터로.
+  /// 장소가 자동으로 잡힌 현재 위치면 [DraftContext.autoPlace] — 사진이 먼 때 찍혔으면 프롬프트에서 뺀다.
+  /// [locale] 은 앱 언어 코드(메모가 비면 이 언어로 쓴다).
+  DraftContext draftContext(String memo, {String? locale}) {
+    final draft = state.draft;
+    final range = currentPhotoMetas.takenRange;
+    return DraftContext(
+      memo: memo,
+      occurredAt: draft.occurredAt,
+      placeName: draft.location?.placeName,
+      autoPlace:
+          !state.isEditing &&
+          !state.manualPlace &&
+          (draft.location?.hasCoordinates ?? false),
+      now: _clock.now(),
+      locale: locale,
+      photoCount: draft.media.where((m) => m.kind == MediaKind.photo).length,
+      videoCount: draft.media.where((m) => m.kind == MediaKind.video).length,
+      photoTakenFrom: range?.from,
+      photoTakenTo: range?.to,
+      tags: draft.tags,
+    );
+  }
+
+  /// 지금 붙어 있는 미디어 순서대로의 사진 메타데이터.
+  List<PhotoMeta> get currentPhotoMetas => [
+    for (final m in state.draft.media) ?state.photoMetas[m.id],
+  ];
+
+  /// 붙어 있는 사진 중 가장 이른 촬영 시각("찍은 시각으로" 칩). 없으면 null.
+  DateTime? get photoTakenAt => currentPhotoMetas.takenRange?.from;
 
   /// 저장 중 · 가져오는 중 · 저장한 뒤에는 무시한다.
   Future<void> save() async {

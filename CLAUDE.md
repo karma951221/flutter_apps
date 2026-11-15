@@ -85,6 +85,7 @@ patrol develop -t patrol_test/post_test.dart   # Hot Restart 로 짜면서 실�
 - 목록 행: `AppListTile`
 - 아바타: `AppAvatar`
 - 빈 상태·오류 안내: `AppPlaceholder`
+- 화면 가운데 로딩 표시: `AppLoading`
 - 확인 다이얼로그: `AppConfirmDialog.show` (되돌리기 어려운 동작. 로그아웃처럼
   되돌리기 쉬운 것은 `isDestructive: false`)
 - 더보기 메뉴: `AppOverflowMenu` + `AppOverflowMenuItem`

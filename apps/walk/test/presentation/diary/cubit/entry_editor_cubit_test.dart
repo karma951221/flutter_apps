@@ -9,6 +9,8 @@ import 'package:walk/data/diary/drift_diary_repository.dart';
 import 'package:walk/data/diary/media/file_media_store.dart';
 import 'package:walk/data/diary/prefs_diary_preferences.dart';
 import 'package:walk/domain/diary/diary_failure.dart';
+import 'package:walk/domain/diary/draft/photo_meta.dart';
+import 'package:walk/domain/diary/media/photo_meta_reader.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_draft.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
@@ -507,4 +509,117 @@ void main() {
       expect(c.state.error, DiaryFailure.notFound);
     });
   });
+
+  group('사진 메타데이터 · 초안 재료', () {
+    EntryEditorCubit withMeta(Map<String, PhotoMeta?> byPath) {
+      final c = EntryEditorCubit(
+        useCase,
+        repo,
+        media,
+        places,
+        h.clock,
+        photoMeta: _FakeMetaReader(byPath),
+      );
+      cubits.add(c);
+      return c;
+    }
+
+    test('사진을 가져올 때 원본의 메타데이터를 그 미디어 id 로 들고 있다', () async {
+      final taken = DateTime(2026, 11, 14, 9, 30);
+      final c = withMeta({pickedPhoto.path: PhotoMeta(takenAt: taken)});
+      await c.startNew();
+
+      await c.addMedia([photo(), video()]);
+
+      final photoId = c.state.draft.media.first.id;
+      expect(c.state.photoMetas.keys, [photoId]);
+      expect(c.state.photoMetas[photoId]!.takenAt, taken);
+    });
+
+    test('메타데이터가 없으면(null) 들고 있지 않는다', () async {
+      final c = withMeta({pickedPhoto.path: null});
+      await c.startNew();
+      await c.addMedia([photo()]);
+      expect(c.state.photoMetas, isEmpty);
+    });
+
+    test('리더가 없으면 메타데이터 없이 가져온다', () async {
+      final c = await started();
+      await c.addMedia([photo()]);
+      expect(c.state.draft.media, hasLength(1));
+      expect(c.state.photoMetas, isEmpty);
+    });
+
+    test('미디어를 빼면 그 메타데이터도 뺀다', () async {
+      final c = withMeta({
+        pickedPhoto.path: PhotoMeta(takenAt: DateTime(2026, 11, 14)),
+      });
+      await c.startNew();
+      await c.addMedia([photo(), photo()]);
+      final first = c.state.draft.media.first.id;
+
+      c.removeMedia(first);
+
+      expect(c.state.photoMetas.keys, [c.state.draft.media.single.id]);
+    });
+
+    test('draftContext 는 메모 · 시각 · 장소 · 개수 · 촬영 범위 · 태그를 담는다', () async {
+      final c = withMeta({
+        pickedPhoto.path: PhotoMeta(takenAt: DateTime(2026, 11, 14, 9)),
+      });
+      await c.startNew();
+      await c.addMedia([photo(), video()]);
+      c.addTag('주말');
+
+      final ctx = c.draftContext('카페');
+
+      expect(ctx.memo, '카페');
+      expect(ctx.occurredAt, c.state.draft.occurredAt);
+      expect(ctx.placeName, c.state.draft.location?.placeName);
+      expect(ctx.photoCount, 1);
+      expect(ctx.videoCount, 1);
+      expect(ctx.photoTakenFrom, DateTime(2026, 11, 14, 9));
+      expect(ctx.photoTakenTo, DateTime(2026, 11, 14, 9));
+      expect(ctx.tags, ['주말']);
+    });
+
+    test('photoTakenAt 은 붙어 있는 사진 중 가장 이른 촬영 시각', () async {
+      final second = File('${pickedPhoto.parent.path}/second.jpg')
+        ..writeAsBytesSync(pickedPhoto.readAsBytesSync());
+      final c = withMeta({
+        pickedPhoto.path: PhotoMeta(takenAt: DateTime(2026, 11, 14, 9)),
+        second.path: PhotoMeta(takenAt: DateTime(2026, 11, 13, 20)),
+      });
+      await c.startNew();
+      expect(c.photoTakenAt, isNull);
+
+      await c.addMedia([photo(), (path: second.path, kind: MediaKind.photo)]);
+      expect(c.photoTakenAt, DateTime(2026, 11, 13, 20));
+
+      c.removeMedia(c.state.draft.media.last.id);
+      expect(c.photoTakenAt, DateTime(2026, 11, 14, 9));
+    });
+
+    test('draftContext 는 자동 현재 위치 여부 · 지금 · 앱 언어를 담는다', () async {
+      final c = withMeta({});
+      await c.startNew();
+
+      final auto = c.draftContext('카페', locale: 'en');
+      expect(auto.autoPlace, isTrue);
+      expect(auto.now, h.clock.now());
+      expect(auto.locale, 'en');
+
+      c.setPlaceName('성수동');
+      expect(c.draftContext('카페').autoPlace, isFalse);
+    });
+  });
+}
+
+class _FakeMetaReader implements PhotoMetaReader {
+  _FakeMetaReader(this.byPath);
+
+  final Map<String, PhotoMeta?> byPath;
+
+  @override
+  Future<PhotoMeta?> read(String path) async => byPath[path];
 }

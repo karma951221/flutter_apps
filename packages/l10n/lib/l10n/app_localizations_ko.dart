@@ -1619,6 +1619,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryEmpty => '아직 기록이 없어요';
 
   @override
+  String get walkDiaryEmptyHint => '＋ 를 눌러 첫 기록을 남겨 보세요';
+
+  @override
   String get walkDiaryToday => '오늘';
 
   @override
@@ -2355,21 +2358,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryEditorPlaceHint => '장소 이름';
 
   @override
-  String get walkDiaryWhereToPost => '어디에 올릴까요?';
-
-  @override
-  String get walkDiaryTextOnly => '글만 쓰기';
-
-  @override
-  String walkDiaryPostedTo(String title) {
-    return '$title에 올렸어요';
-  }
-
-  @override
   String get walkDiaryEditorPickStory => '스토리 고르기';
-
-  @override
-  String get walkDiaryEditorAddMedia => '사진·영상 추가';
 
   @override
   String get walkDiaryEditorRemoveMedia => '빼기';
@@ -4605,4 +4594,117 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkWeatherTurnOnLocation => '위치 켜기';
+
+  @override
+  String get walkDiaryComposerDraft => '초안 쓰기';
+
+  @override
+  String get walkDiaryComposerPosted => '올렸어요';
+
+  @override
+  String walkDiaryComposerPostedTo(String story) {
+    return '\'$story\'에 올렸어요';
+  }
+
+  @override
+  String get walkDiaryComposerStory => '스토리';
+
+  @override
+  String get walkChatUsageDiaryDraft => '일기 초안';
+
+  @override
+  String get walkDiaryDraftSettingsSection => '자동 초안';
+
+  @override
+  String get walkDiaryDraftSettingsStyle => '기본 문체';
+
+  @override
+  String get walkDiaryDraftSettingsIncludePhotosDescription =>
+      '작성 화면 도구줄의 사진 보여 주기와 같은 값이에요. 켜 두면 사진(최대 4장)이 초안을 쓸 때 AI로 보내져요.';
+
+  @override
+  String get walkDiaryDraftIncludePhotos => '사진 보여 주기';
+
+  @override
+  String get walkDiaryDraftStyleDiary => '일기체';
+
+  @override
+  String get walkDiaryDraftStylePolite => '존댓말';
+
+  @override
+  String get walkDiaryDraftStyleSns => 'SNS 포스트체';
+
+  @override
+  String get walkDiaryDraftStyleMemo => '메모체';
+
+  @override
+  String get walkDiaryDraftStyleDiaryExample => '성수동 카페에서 책을 읽었다. 창가 자리가 따뜻했다.';
+
+  @override
+  String get walkDiaryDraftStylePoliteExample =>
+      '성수동 카페에서 책을 읽었어요. 창가 자리가 따뜻했어요.';
+
+  @override
+  String get walkDiaryDraftStyleSnsExample => '성수동 카페에서 독서 타임 ☕ 창가 자리 최고였다';
+
+  @override
+  String get walkDiaryDraftStyleMemoExample => '성수동 카페, 독서. 창가 자리 따뜻함.';
+
+  @override
+  String walkDiaryDraftStyleOption(String name, String example) {
+    return '$name — $example';
+  }
+
+  @override
+  String get walkDiaryDraftTitle => '초안 쓰기';
+
+  @override
+  String get walkDiaryDraftStop => '멈추기';
+
+  @override
+  String get walkDiaryDraftNoKey => '물어보기 설정에서 키를 넣으면 쓸 수 있어요.';
+
+  @override
+  String get walkDiaryDraftOpenSettings => '설정 열기';
+
+  @override
+  String get walkDiaryComposerDraftRewrite => '다시 쓰기';
+
+  @override
+  String get walkDiaryComposerDraftNeedsInput => '한 줄 적거나 사진 보여 주기를 켜세요';
+
+  @override
+  String get walkDiaryComposerPhotosUnsupported => '이 모델은 사진을 볼 수 없어요';
+
+  @override
+  String walkDiaryDraftPhotosConfirm(int count, String vendor) {
+    return '사진 $count장까지 $vendor로 보내져요. 켜 두면 초안을 쓸 때마다 보내요.';
+  }
+
+  @override
+  String walkDiaryDraftPhotosConfirmNoVendor(int count) {
+    return '사진 $count장까지 AI로 보내져요. 켜 두면 초안을 쓸 때마다 보내요.';
+  }
+
+  @override
+  String get walkDiaryDraftPhotosConfirmAccept => '켜기';
+
+  @override
+  String walkDiaryEditorUseTakenTime(String when) {
+    return '찍은 시각으로($when)';
+  }
+
+  @override
+  String get walkDiaryDraftConsentTitle => 'AI로 보내기';
+
+  @override
+  String get walkDiaryComposerDraftApplied => '초안으로 바꿨어요';
+
+  @override
+  String get walkDiaryComposerDraftUndo => '되돌리기';
+
+  @override
+  String walkDiaryDraftConsentNotice(String vendor) {
+    return '초안을 쓸 때 글 칸의 메모와 기록 시각 · 장소 이름 · 태그가 $vendor로 전송돼요. 사진은 사진 보여 주기를 켰을 때만 보내요. 키는 이 폰의 보안 저장소에만 있어요.';
+  }
 }

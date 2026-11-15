@@ -305,6 +305,39 @@ void main() {
   });
 
   group('모델별 필드', () {
+    test('출력 상한 · 생각 끄기를 주면 max_output_tokens 와 가장 낮은 effort', () async {
+      final body = await bodyOf(
+        const ModelRequest(
+          apiKey: 'k',
+          model: 'gpt-5-mini',
+          system: 'sys',
+          messages: [ChatMessage.user('hi')],
+          tools: [],
+          maxOutputTokens: 600,
+          thinking: false,
+        ),
+      );
+
+      expect(body['max_output_tokens'], 600);
+      expect(body['reasoning'], {'effort': 'minimal'});
+    });
+
+    test('생각 끄기여도 effort 를 받지 않는 모델에는 reasoning 이 없다', () async {
+      final body = await bodyOf(
+        const ModelRequest(
+          apiKey: 'k',
+          model: 'gpt-4.1-mini',
+          system: 'sys',
+          messages: [ChatMessage.user('hi')],
+          tools: [],
+          thinking: false,
+        ),
+      );
+
+      expect(body.containsKey('reasoning'), isFalse);
+      expect(body['max_output_tokens'], chatMaxOutputTokens);
+    });
+
     test('effort 는 supportsEffortOf 가 참일 때만', () async {
       const unsupported = 'gpt-4.1';
       expect(supportsEffortOf(ChatVendor.openai, _model), isTrue);

@@ -236,6 +236,12 @@ class OpenAiChatModel implements ChatModel {
       request.fastMode &&
       fastModeOf(vendor, request.model, specs: fastSpecs) != null;
 
+  /// 생각을 끄면 가장 낮은 effort, 아니면 받는 모델에 low. 받지 않으면 null.
+  String? _effort(ModelRequest request) {
+    if (!request.thinking) return openAiNoReasoningEffortOf(request.model);
+    return supportsEffortOf(vendor, request.model) ? 'low' : null;
+  }
+
   String _body(ModelRequest request) => jsonEncode({
     'model': request.model,
     'instructions': request.system,
@@ -244,8 +250,8 @@ class OpenAiChatModel implements ChatModel {
     'stream': true,
     'store': false,
     'include': ['reasoning.encrypted_content'],
-    'max_output_tokens': chatMaxOutputTokens,
-    if (supportsEffortOf(vendor, request.model)) 'reasoning': {'effort': 'low'},
+    'max_output_tokens': request.maxOutputTokens ?? chatMaxOutputTokens,
+    if (_effort(request) case final effort?) 'reasoning': {'effort': effort},
     if (_fast(request)) ...fastModeFields,
   });
 
