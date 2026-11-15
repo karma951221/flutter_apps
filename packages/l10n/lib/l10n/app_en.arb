@@ -1403,5 +1403,6 @@
   "walkWeatherEmptyOffline": "No internet connection",
   "walkWeatherEmptyServer": "Couldn't load the weather",
   "walkWeatherGrantPermission": "Allow",
-  "walkWeatherTurnOnLocation": "Turn on location"
+  "walkWeatherTurnOnLocation": "Turn on location",
+  "walkChatUsageDiaryDraft": "Diary draft"
 }

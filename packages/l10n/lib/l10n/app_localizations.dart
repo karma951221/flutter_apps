@@ -8411,6 +8411,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'위치 켜기'**
   String get walkWeatherTurnOnLocation;
+
+  /// 사용량 화면: 일기 자동 초안 쓰임 줄 꼬리표
+  ///
+  /// In ko, this message translates to:
+  /// **'일기 초안'**
+  String get walkChatUsageDiaryDraft;
 }
 
 class _AppLocalizationsDelegate

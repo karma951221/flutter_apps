@@ -4605,4 +4605,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkWeatherTurnOnLocation => '위치 켜기';
+
+  @override
+  String get walkChatUsageDiaryDraft => '일기 초안';
 }

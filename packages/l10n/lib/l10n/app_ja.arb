@@ -1403,5 +1403,6 @@
   "walkWeatherEmptyOffline": "インターネットに接続されていません",
   "walkWeatherEmptyServer": "天気を取得できませんでした",
   "walkWeatherGrantPermission": "許可する",
-  "walkWeatherTurnOnLocation": "位置情報をオン"
+  "walkWeatherTurnOnLocation": "位置情報をオン",
+  "walkChatUsageDiaryDraft": "日記の下書き"
 }

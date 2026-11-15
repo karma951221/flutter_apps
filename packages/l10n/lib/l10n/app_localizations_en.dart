@@ -4994,4 +4994,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkWeatherTurnOnLocation => 'Turn on location';
+
+  @override
+  String get walkChatUsageDiaryDraft => 'Diary draft';
 }

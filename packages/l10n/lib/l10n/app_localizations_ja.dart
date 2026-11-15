@@ -4601,4 +4601,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkWeatherTurnOnLocation => '位置情報をオン';
+
+  @override
+  String get walkChatUsageDiaryDraft => '日記の下書き';
 }
