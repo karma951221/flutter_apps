@@ -505,6 +505,7 @@
   "walkDiaryPlay": "▶ 見る",
   "walkDiaryStoryStats": "記録 {entries} · 写真 {photos}",
   "walkDiaryEmpty": "まだ記録がありません",
+  "walkDiaryEmptyHint": "＋ をタップして最初の記録を残しましょう",
   "walkDiaryToday": "今日",
   "walkDiaryYesterday": "昨日",
   "walkDiaryNow": "たった今",

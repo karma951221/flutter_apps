@@ -1618,6 +1618,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryEmpty => 'まだ記録がありません';
 
   @override
+  String get walkDiaryEmptyHint => '＋ をタップして最初の記録を残しましょう';
+
+  @override
   String get walkDiaryToday => '今日';
 
   @override

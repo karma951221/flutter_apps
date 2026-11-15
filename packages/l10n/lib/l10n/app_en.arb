@@ -505,6 +505,7 @@
   "walkDiaryPlay": "▶ Play",
   "walkDiaryStoryStats": "{entries, plural, =1{1 entry} other{{entries} entries}} · {photos, plural, =1{1 photo} other{{photos} photos}}",
   "walkDiaryEmpty": "No entries yet",
+  "walkDiaryEmptyHint": "Tap ＋ to write your first entry",
   "walkDiaryToday": "Today",
   "walkDiaryYesterday": "Yesterday",
   "walkDiaryNow": "Just now",

@@ -1718,6 +1718,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryEmpty => 'No entries yet';
 
   @override
+  String get walkDiaryEmptyHint => 'Tap ＋ to write your first entry';
+
+  @override
   String get walkDiaryToday => 'Today';
 
   @override

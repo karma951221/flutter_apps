@@ -2283,6 +2283,8 @@
   "@walkDiaryEmpty": {
     "description": "일기 타임라인에 보일 기록이 없을 때 안내"
   },
+  "walkDiaryEmptyHint": "＋ 를 눌러 첫 기록을 남겨 보세요",
+  "@walkDiaryEmptyHint": {"description": "일기 탭 빈 상태 보조 안내 — 오른쪽 아래 ＋ 버튼"},
   "walkDiaryToday": "오늘",
   "@walkDiaryToday": {
     "description": "일기 날짜 머리 — 오늘"

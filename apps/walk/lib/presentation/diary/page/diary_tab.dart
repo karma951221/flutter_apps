@@ -196,7 +196,7 @@ class _Timeline extends StatelessWidget {
         },
       );
 
-  /// 피드 대신 보일 안내: 읽지 못했으면 오류, 비었으면 빈 상태. 아직 받는 중이면 빈칸.
+  /// 피드 대신 보일 안내: 읽지 못했으면 오류, 비었으면 빈 상태(＋ 안내). 아직 받는 중이면 로딩 표시.
   /// 피드를 보이면 null.
   Widget? _body(BuildContext context, DiaryTimelineState state) {
     final l10n = AppLocalizations.of(context);
@@ -206,11 +206,12 @@ class _Timeline extends StatelessWidget {
         message: l10n.walkDiaryLoadError,
       );
     }
-    if (state.loading) return const SizedBox.shrink();
+    if (state.loading) return const AppLoading();
     if (state.entries.isEmpty) {
       return AppPlaceholder(
         icon: Icons.menu_book_outlined,
         message: l10n.walkDiaryEmpty,
+        description: l10n.walkDiaryEmptyHint,
       );
     }
     return null;

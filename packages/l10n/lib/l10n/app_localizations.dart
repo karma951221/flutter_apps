@@ -3134,6 +3134,12 @@ abstract class AppLocalizations {
   /// **'아직 기록이 없어요'**
   String get walkDiaryEmpty;
 
+  /// 일기 탭 빈 상태 보조 안내 — 오른쪽 아래 ＋ 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'＋ 를 눌러 첫 기록을 남겨 보세요'**
+  String get walkDiaryEmptyHint;
+
   /// 일기 날짜 머리 — 오늘
   ///
   /// In ko, this message translates to:

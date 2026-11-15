@@ -339,6 +339,22 @@ void main() {
 
     expect(find.byType(StoryRingRow), findsNothing);
     expect(find.widgetWithText(AppPlaceholder, '아직 기록이 없어요'), findsOneWidget);
+    expect(
+      find.widgetWithText(AppPlaceholder, '＋ 를 눌러 첫 기록을 남겨 보세요'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('기록을 읽는 동안 빈칸 대신 공통 로딩 표시', (tester) async {
+    when(
+      () => repo.watchEntries(any()),
+    ).thenAnswer((_) => StreamController<List<DiaryEntry>>().stream);
+    lock.start();
+    await tester.pumpWidget(app());
+    await tester.pump();
+
+    expect(find.byType(AppLoading), findsOneWidget);
+    expect(find.byType(AppPlaceholder), findsNothing);
   });
 
   group('뷰어 · 스토리 페이지', () {

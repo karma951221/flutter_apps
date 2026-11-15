@@ -10,6 +10,7 @@ export 'src/widget/app_count_action.dart';
 export 'src/widget/app_list_footer.dart';
 export 'src/widget/app_list_tile.dart';
 export 'src/widget/app_load_more_listener.dart';
+export 'src/widget/app_loading.dart';
 export 'src/widget/app_overflow_menu.dart';
 export 'src/widget/app_placeholder.dart';
 export 'src/widget/app_snack_bar.dart';

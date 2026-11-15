@@ -1619,6 +1619,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryEmpty => '아직 기록이 없어요';
 
   @override
+  String get walkDiaryEmptyHint => '＋ 를 눌러 첫 기록을 남겨 보세요';
+
+  @override
   String get walkDiaryToday => '오늘';
 
   @override
