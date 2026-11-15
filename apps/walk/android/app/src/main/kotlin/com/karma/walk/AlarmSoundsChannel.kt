@@ -47,7 +47,7 @@ class AlarmSoundsChannel(
     private var player: MediaPlayer? = null
 
     /** 문서 선택기를 띄우고 결과를 기다리는 호출. 한 번에 하나만 받는다. */
-    private var pendingPick: PendingPick? = null
+    private val pendingPick = PendingSlot<PendingPick>()
 
     private class PendingPick(val result: MethodChannel.Result, val fallbackTitle: String)
 
@@ -81,23 +81,19 @@ class AlarmSoundsChannel(
             result.error("bad_args", "fallbackTitle is required", null)
             return
         }
-        if (pendingPick != null) {
-            result.error("busy", "a file pick is already in progress", null)
-            return
-        }
-        pendingPick = PendingPick(result, fallbackTitle)
+        // Dart 큐빗이 동시 고르기를 막으므로 남아 있는 것은 결과를 잃은 옛 호출이다 — 취소로 끝내고 새로 띄운다.
+        pendingPick.replace(PendingPick(result, fallbackTitle))?.result?.success(null)
         try {
             openDocument()
         } catch (e: Exception) {
-            pendingPick = null
+            pendingPick.clear()
             result.error("failed", e.message, null)
         }
     }
 
     /** [MainActivity] 가 문서 선택기 결과를 넘긴다. [uri] 가 null 이면 취소. */
     fun onDocumentPicked(uri: Uri?) {
-        val pending = pendingPick ?: return
-        pendingPick = null
+        val pending = pendingPick.take() ?: return
         if (uri == null) {
             pending.result.success(null)
             return
@@ -128,7 +124,7 @@ class AlarmSoundsChannel(
     fun dispose() {
         stopPreview()
         // 엔진이 내려가면 기다리던 Dart 쪽도 없다 — 늦게 온 결과는 버린다.
-        pendingPick = null
+        pendingPick.clear()
         channel.setMethodCallHandler(null)
         worker.shutdown()
     }
@@ -245,6 +241,7 @@ class AlarmSoundsChannel(
                 val value = work()
                 main.post { result.success(value) }
             } catch (e: AlarmFileTooLargeException) {
+                // Dart 는 오류를 모두 failed 로 다룬다. 코드는 진단 · 로그용이다.
                 main.post { result.error("too_large", e.message, null) }
             } catch (e: Exception) {
                 main.post { result.error("failed", e.message, null) }

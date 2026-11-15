@@ -39,3 +39,21 @@ object AlarmFileRules {
 
 /** 고른 파일이 [AlarmFileRules.MAX_BYTES] 를 넘는다. 채널 오류 코드 `too_large`. */
 class AlarmFileTooLargeException : IOException("file is larger than ${AlarmFileRules.MAX_BYTES} bytes")
+
+/**
+ * 결과를 기다리는 호출 하나를 담는 칸. 새 것이 오면 남아 있던 옛 것을 돌려주고 바꾼다 — 옛 결과가
+ * 사라졌을 때(엔진은 살아 있는데 액티비티가 다시 만들어짐 등) 칸이 영영 막히지 않게 한다.
+ */
+class PendingSlot<T> {
+    private var value: T? = null
+
+    /** [next] 로 바꾸고, 그 전에 있던 것을 돌려준다(없으면 null). */
+    fun replace(next: T): T? = value.also { value = next }
+
+    /** 꺼내고 비운다. */
+    fun take(): T? = value.also { value = null }
+
+    fun clear() {
+        value = null
+    }
+}

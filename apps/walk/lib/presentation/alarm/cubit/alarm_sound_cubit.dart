@@ -115,9 +115,14 @@ class AlarmSoundCubit extends Cubit<AlarmSoundState> {
       return PickFileResult.failed;
     }
     if (isClosed) return PickFileResult.cancelled;
-    if (picked is! FileAlarmSound) {
+    if (picked == null) {
       emit(state.copyWith(importing: false));
       return PickFileResult.cancelled;
+    }
+    if (picked is! FileAlarmSound) {
+      // 소스 계약 위반 — 파일이 아닌 소리는 내 파일로 둘 수 없다.
+      emit(state.copyWith(importing: false));
+      return PickFileResult.failed;
     }
     emit(state.copyWith(selected: AlarmSoundChoice.file(picked), myFile: picked, importing: false));
     try {

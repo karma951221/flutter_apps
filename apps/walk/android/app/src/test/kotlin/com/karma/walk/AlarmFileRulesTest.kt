@@ -58,4 +58,21 @@ class AlarmFileRulesTest {
     fun `상한을 넘으면 복사 중에 멈춘다`() {
         AlarmFileRules.copyBounded(ByteArrayInputStream(ByteArray(10_001)), ByteArrayOutputStream(), maxBytes = 10_000)
     }
+
+    @Test
+    fun `새 선택이 오면 남아 있던 옛 선택을 돌려주고 새 것으로 바꾼다`() {
+        val slot = PendingSlot<String>()
+        assertEquals(null, slot.replace("first"))
+        assertEquals("first", slot.replace("second"))
+        assertEquals("second", slot.take())
+        assertEquals(null, slot.take())
+    }
+
+    @Test
+    fun `비우면 늦게 온 결과는 받을 것이 없다`() {
+        val slot = PendingSlot<String>()
+        slot.replace("first")
+        slot.clear()
+        assertEquals(null, slot.take())
+    }
 }

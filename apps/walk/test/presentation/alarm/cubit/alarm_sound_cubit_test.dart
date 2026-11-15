@@ -299,6 +299,16 @@ void main() {
       expect(cubit.state, before);
     });
 
+    test('파일이 아닌 소리가 오면 상태 그대로 failed', () async {
+      when(
+        () => source.pickFile(fallbackTitle: any(named: 'fallbackTitle')),
+      ).thenAnswer((_) async => const AlarmSound.system());
+      final cubit = build();
+      final before = cubit.state;
+      expect(await cubit.pickFile(fallbackTitle: 'f'), PickFileResult.failed);
+      expect(cubit.state, before);
+    });
+
     test('복사 중에는 다시 고르기를 무시한다', () async {
       final pending = Completer<AlarmSound?>();
       when(
