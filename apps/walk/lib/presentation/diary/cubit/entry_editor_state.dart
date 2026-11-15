@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import '../../../domain/diary/diary_failure.dart';
+import '../../../domain/diary/draft/photo_meta.dart';
 import '../../../domain/diary/entity/entry_draft.dart';
 import '../../../domain/diary/entity/entry_media.dart';
 import '../../../domain/diary/entity/story.dart';
@@ -59,6 +60,10 @@ class EntryEditorState with _$EntryEditorState {
   @override
   final bool saved;
 
+  /// 미디어 id → 고른 원본의 촬영 시각 · 좌표. 초안 재료로만 쓰고 저장하지 않는다.
+  @override
+  final Map<String, PhotoMeta> photoMetas;
+
   const EntryEditorState({
     this.editingId,
     required this.draft,
@@ -73,6 +78,7 @@ class EntryEditorState with _$EntryEditorState {
     this.error,
     this.failed = false,
     this.saved = false,
+    this.photoMetas = const {},
   });
 
   bool get isEditing => editingId != null;

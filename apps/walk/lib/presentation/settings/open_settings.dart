@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -16,6 +18,30 @@ import 'page/walk_settings_page.dart';
 
 /// 열 설정 화면.
 enum SettingsTarget { app, diary, chat, alarm, walk, map }
+
+/// [openSettings] 를 부를 수 있는 자리(셸 cubit 다섯 아래)면 [target] 을 여는 콜백, 아니면 null.
+/// 셸 밖에서 연 화면(예: 작성 화면이 띄운 시트)에 "설정 열기"를 넘길 때 쓴다 — 콜백은 [context] 로 연다.
+VoidCallback? settingsOpener(
+  BuildContext context,
+  SettingsTarget target, {
+  bool highlight = false,
+}) {
+  try {
+    context
+      ..read<SettingsPermissionsCubit>()
+      ..read<HolidaySettingsCubit>()
+      ..read<DiaryLockCubit>()
+      ..read<DiarySettingsCubit>()
+      ..read<MapRecordCubit>();
+  } on ProviderNotFoundException {
+    return null;
+  }
+  return () {
+    if (context.mounted) {
+      unawaited(openSettings(context, target, highlight: highlight));
+    }
+  };
+}
 
 /// [target] 설정 화면을 [context] 의 Navigator 에 push 한다.
 ///

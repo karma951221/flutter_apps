@@ -1429,5 +1429,9 @@
   "walkDiaryDraftNoKey": "質問の設定でキーを入れると使えます。",
   "walkDiaryDraftOpenSettings": "設定を開く",
   "walkDiaryDraftConsentTitle": "AIに送る",
-  "walkDiaryDraftManualHint": "閉じて自分で書いても大丈夫です。"
+  "walkDiaryDraftManualHint": "閉じて自分で書いても大丈夫です。",
+  "walkDiaryComposerDraftApplied": "下書きに置き換えました",
+  "@walkDiaryComposerDraftApplied": {"description": "작성 화면: 초안으로 글 칸을 바꾼 뒤 스낵바"},
+  "walkDiaryComposerDraftUndo": "元に戻す",
+  "@walkDiaryComposerDraftUndo": {"description": "작성 화면: 초안 전 글로 되돌리기 스낵바 동작"}
 }

@@ -1429,5 +1429,9 @@
   "walkDiaryDraftNoKey": "Add a key in Ask settings to use this.",
   "walkDiaryDraftOpenSettings": "Open settings",
   "walkDiaryDraftConsentTitle": "Send to AI",
-  "walkDiaryDraftManualHint": "You can close this and write it yourself."
+  "walkDiaryDraftManualHint": "You can close this and write it yourself.",
+  "walkDiaryComposerDraftApplied": "Replaced with the draft",
+  "@walkDiaryComposerDraftApplied": {"description": "작성 화면: 초안으로 글 칸을 바꾼 뒤 스낵바"},
+  "walkDiaryComposerDraftUndo": "Undo",
+  "@walkDiaryComposerDraftUndo": {"description": "작성 화면: 초안 전 글로 되돌리기 스낵바 동작"}
 }

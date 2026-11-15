@@ -6,17 +6,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../../domain/diary/draft/photo_place_names.dart';
 import '../../../domain/diary/entity/media_limits.dart';
 import '../../../domain/diary/entity/story.dart';
 import '../../../domain/diary/location/place_source.dart';
 import '../../../domain/diary/media/media_store.dart';
+import '../../../domain/diary/media/photo_meta_reader.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
 import '../../../domain/diary/usecase/story_order.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/cubit/diary_lock_state.dart';
+import '../../settings/open_settings.dart';
 import '../cubit/entry_editor_cubit.dart';
 import '../cubit/entry_editor_state.dart';
+import '../draft/draft_sheet.dart';
 import '../format/diary_format.dart';
 import '../media_picker.dart';
 import '../widget/composer_media_strip.dart';
@@ -42,6 +46,12 @@ Future<void> openEntryEditor(
   MediaSource? initialPick,
 }) {
   final pending = InitialPick(initialPick);
+  // 초안 시트의 "설정 열기" — 작성 화면 라우트에는 셸 cubit 이 없어 연 자리에서 미리 잡는다.
+  final chatSettings = settingsOpener(
+    context,
+    SettingsTarget.chat,
+    highlight: true,
+  );
   return pushDiaryRoute<void>(
     context,
     scope: (context, gated) =>
@@ -49,6 +59,7 @@ Future<void> openEntryEditor(
     page: (_) => EntryEditorPage(
       initialPick: pending,
       autofocusBody: editingId == null && initialPick == null,
+      onOpenChatSettings: chatSettings,
     ),
   );
 }
@@ -86,6 +97,9 @@ class _EntryEditorScopeState extends State<EntryEditorScope> {
     getIt<MediaStore>(),
     getIt<PlaceSource>(),
     getIt<Clock>(),
+    photoMeta: getIt.isRegistered<PhotoMetaReader>()
+        ? getIt<PhotoMetaReader>()
+        : null,
   );
 
   @override
@@ -131,8 +145,12 @@ class EntryEditorPage extends StatefulWidget {
   const EntryEditorPage({
     this.initialPick,
     this.autofocusBody = false,
+    this.onOpenChatSettings,
     super.key,
   });
+
+  /// 초안 시트의 "설정 열기"(키가 없을 때). null 이면 안내만.
+  final VoidCallback? onOpenChatSettings;
 
   /// 열자마자 한 번 실행할 고르기([openEntryEditor]).
   final InitialPick? initialPick;
@@ -157,6 +175,61 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
   bool _picking = false;
 
   final _tags = GlobalKey<TagChipInputState>();
+
+  /// 초안 시트의 메모로 미리 채울 글 칸의 최대 길이 — 넘으면 이미 쓴 글이라 메모로 보지 않는다.
+  static const _memoMaxLength = 100;
+
+  /// 사진 촬영 장소 이름을 기다리는 한도. 넘으면 이름 없이 연다.
+  static const _placeNamesTimeout = Duration(seconds: 2);
+
+  /// ✨ — 메모 · 메타데이터로 초안을 받아 글 칸을 바꾼다(스펙 §4). 원래 글이 있었으면 되돌리기.
+  Future<void> _draft() async {
+    final current = _body.text.trim();
+    final memo = current.length <= _memoMaxLength ? current : '';
+    final names = await _photoPlaceNames();
+    if (!mounted) return;
+    final text = await showDraftSheet(
+      context,
+      initialMemo: memo,
+      contextFor: (memo) => _cubit.draftContext(memo, photoPlaceNames: names),
+      photos: _cubit.state.draft.media,
+      onOpenChatSettings: widget.onOpenChatSettings,
+    );
+    if (text == null || !mounted) return;
+    final previous = _body.text;
+    _setBody(text);
+    if (previous.trim().isEmpty) return;
+    final l10n = AppLocalizations.of(context);
+    AppSnackBar.show(
+      context,
+      message: l10n.walkDiaryComposerDraftApplied,
+      actionLabel: l10n.walkDiaryComposerDraftUndo,
+      onAction: () {
+        if (mounted) _setBody(previous);
+      },
+    );
+  }
+
+  void _setBody(String text) {
+    _body.text = text;
+    _cubit.setBody(text);
+  }
+
+  /// 붙인 사진의 촬영 좌표 → 장소 이름. 못 구하면 빈 목록.
+  Future<List<String>> _photoPlaceNames() async {
+    final metas = _cubit.currentPhotoMetas;
+    if (metas.every((m) => m.lat == null) ||
+        !getIt.isRegistered<PhotoPlaceNames>()) {
+      return const [];
+    }
+    try {
+      return await getIt<PhotoPlaceNames>()
+          .namesFor(metas)
+          .timeout(_placeNamesTimeout);
+    } catch (_) {
+      return const [];
+    }
+  }
 
   /// 칩으로 만들지 않고 남긴 태그 글자도 함께 저장한다.
   void _save() {
@@ -373,8 +446,7 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
                   count: state.draft.media.length,
                   importing: state.importing,
                   onAdd: _addMedia,
-                  // ✨ 초안(스펙 §4)은 아직 잇지 않는다 — null 이면 버튼이 없다.
-                  onDraft: null,
+                  onDraft: () => unawaited(_draft()),
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(

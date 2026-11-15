@@ -291,4 +291,40 @@ void main() {
     expect(find.byType(MapSettingsPage), findsOneWidget);
     expect(find.byKey(const Key('map-settings-record-switch')), findsOneWidget);
   });
+
+  group('settingsOpener', () {
+    testWidgets('셸 cubit 아래면 그 설정을 여는 콜백을 준다', (tester) async {
+      VoidCallback? opener;
+      await h.pump(
+        tester,
+        Builder(
+          builder: (context) {
+            opener = settingsOpener(context, SettingsTarget.chat);
+            return const SizedBox.shrink();
+          },
+        ),
+      );
+
+      expect(opener, isNotNull);
+      opener!();
+      await tester.pumpAndSettle();
+      expect(find.byType(ChatSettingsPage), findsOneWidget);
+    });
+
+    testWidgets('셸 cubit 이 없는 자리면 null', (tester) async {
+      VoidCallback? opener = () {};
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (context) {
+              opener = settingsOpener(context, SettingsTarget.chat);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+
+      expect(opener, isNull);
+    });
+  });
 }

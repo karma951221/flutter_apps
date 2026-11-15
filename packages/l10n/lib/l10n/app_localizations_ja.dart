@@ -4685,4 +4685,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkDiaryDraftManualHint => '閉じて自分で書いても大丈夫です。';
+
+  @override
+  String get walkDiaryComposerDraftApplied => '下書きに置き換えました';
+
+  @override
+  String get walkDiaryComposerDraftUndo => '元に戻す';
 }

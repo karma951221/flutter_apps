@@ -5083,4 +5083,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkDiaryDraftManualHint =>
       'You can close this and write it yourself.';
+
+  @override
+  String get walkDiaryComposerDraftApplied => 'Replaced with the draft';
+
+  @override
+  String get walkDiaryComposerDraftUndo => 'Undo';
 }

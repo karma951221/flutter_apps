@@ -5390,5 +5390,9 @@
   "walkDiaryDraftConsentTitle": "AI로 보내기",
   "@walkDiaryDraftConsentTitle": {"description": "초안 시트: 전송 동의 다이얼로그 제목"},
   "walkDiaryDraftManualHint": "닫고 직접 써도 돼요.",
-  "@walkDiaryDraftManualHint": {"description": "초안 시트: 실패 뒤 손으로 쓰기 안내"}
+  "@walkDiaryDraftManualHint": {"description": "초안 시트: 실패 뒤 손으로 쓰기 안내"},
+  "walkDiaryComposerDraftApplied": "초안으로 바꿨어요",
+  "@walkDiaryComposerDraftApplied": {"description": "작성 화면: 초안으로 글 칸을 바꾼 뒤 스낵바"},
+  "walkDiaryComposerDraftUndo": "되돌리기",
+  "@walkDiaryComposerDraftUndo": {"description": "작성 화면: 초안 전 글로 되돌리기 스낵바 동작"}
 }

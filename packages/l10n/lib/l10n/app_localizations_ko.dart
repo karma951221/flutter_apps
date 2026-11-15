@@ -4689,4 +4689,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkDiaryDraftManualHint => '닫고 직접 써도 돼요.';
+
+  @override
+  String get walkDiaryComposerDraftApplied => '초안으로 바꿨어요';
+
+  @override
+  String get walkDiaryComposerDraftUndo => '되돌리기';
 }

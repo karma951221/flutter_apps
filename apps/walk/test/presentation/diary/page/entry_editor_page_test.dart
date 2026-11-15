@@ -16,7 +16,18 @@ import 'package:walk/presentation/lock/media_pick_guard.dart';
 import 'package:walk/presentation/lock/widget/pin_pad.dart';
 import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:walk/data/diary/prefs_diary_preferences.dart';
+import 'package:walk/domain/chat/chat_settings.dart';
+import 'package:walk/domain/chat/chat_vendor.dart';
+import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/domain/diary/diary_failure.dart';
+import 'package:walk/domain/diary/draft/draft_context.dart';
+import 'package:walk/domain/diary/draft/draft_style.dart';
+import 'package:walk/domain/diary/draft/draft_writer.dart';
+import 'package:walk/domain/diary/draft/photo_meta.dart';
+import 'package:walk/domain/diary/draft/photo_place_names.dart';
+import 'package:walk/domain/diary/media/photo_meta_reader.dart';
+import 'package:walk/domain/diary/repository/diary_preferences.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
 import 'package:walk/domain/diary/entity/entry_draft.dart';
 import 'package:walk/domain/diary/entity/entry_filter.dart';
@@ -40,6 +51,7 @@ import 'package:walk/presentation/diary/widget/tag_chip_input.dart';
 import 'package:walk/presentation/diary/widget/time_row.dart';
 
 import '../../../support/diary_fixtures.dart';
+import '../../../support/fake_chat_settings.dart';
 import '../../../support/fake_device_auth.dart';
 
 class _MockRepo extends Mock implements DiaryRepository {}
@@ -49,6 +61,21 @@ class _MockUseCase extends Mock implements DiaryUseCase {}
 class _MockStore extends Mock implements MediaStore {}
 
 class _MockPicker extends Mock implements MediaPicker {}
+
+class _Writer extends Mock implements DraftWriter {}
+
+class _MetaReader implements PhotoMetaReader {
+  final byPath = <String, PhotoMeta>{};
+
+  @override
+  Future<PhotoMeta?> read(String path) async => byPath[path];
+}
+
+class _Namer implements PlaceNamer {
+  @override
+  Future<PlaceLookup> nameFor(double lat, double lng) async =>
+      const PlaceLookup.named('성수동');
+}
 
 class _FakePlaces implements PlaceSource {
   EntryLocation? location;
@@ -83,12 +110,16 @@ void main() {
   late MutableClock clock;
   late PrefsLockRepository lockRepo;
   late DiaryLockCubit lock;
+  late _Writer writer;
+  late _MetaReader metas;
 
   setUpAll(() {
     registerFallbackValue(entryDraft());
     registerFallbackValue(<EntryMedia>[]);
     registerFallbackValue(<PickedMedia>[]);
     registerFallbackValue(const EntryFilter.all());
+    registerFallbackValue(DraftContext(memo: '', occurredAt: DateTime(2026)));
+    registerFallbackValue(DraftStyle.diary);
   });
 
   setUp(() async {
@@ -131,6 +162,22 @@ void main() {
       ..registerSingleton<PlaceSource>(places)
       ..registerSingleton<MediaPicker>(picker)
       ..registerSingleton<Clock>(clock);
+    writer = _Writer();
+    when(writer.availability).thenAnswer(
+      (_) async => const DraftAvailability.ready(ChatVendor.anthropic),
+    );
+    when(writer.cancel).thenAnswer((_) {});
+    metas = _MetaReader();
+    getIt
+      ..registerSingleton<DraftWriter>(writer)
+      ..registerSingleton<DiaryPreferences>(
+        PrefsDiaryPreferences(await SharedPreferences.getInstance()),
+      )
+      ..registerSingleton<ChatSettings>(
+        FakeChatSettings('sk-ant-test')..consentedVendor = ChatVendor.anthropic,
+      )
+      ..registerSingleton<PhotoMetaReader>(metas)
+      ..registerSingleton<PhotoPlaceNames>(PhotoPlaceNames(_Namer()));
     lockRepo = PrefsLockRepository(await SharedPreferences.getInstance());
     lock = DiaryLockCubit(lockRepo, FakeDeviceAuth(), clock, MediaPickGuard());
     getIt
@@ -347,11 +394,124 @@ void main() {
     expect(bodyFocused(tester), isFalse);
   });
 
-  testWidgets('작성 화면엔 아직 초안 버튼이 없다(onDraft 없음)', (tester) async {
+  /// 초안이 [result] 로 끝나게 하고, 불린 재료를 모아 돌려준다.
+  List<DraftContext> answerDraft(DraftResult result) {
+    final calls = <DraftContext>[];
+    when(
+      () => writer.write(
+        any(),
+        style: any(named: 'style'),
+        photos: any(named: 'photos'),
+        includePhotos: any(named: 'includePhotos'),
+      ),
+    ).thenAnswer((inv) async {
+      calls.add(inv.positionalArguments.first as DraftContext);
+      return result;
+    });
+    return calls;
+  }
+
+  String bodyText(WidgetTester tester) =>
+      tester.widget<TextField>(bodyField()).controller!.text;
+
+  testWidgets('도구줄 ✨ 는 초안 시트를 열고, 짧은 글은 메모로 채운다', (tester) async {
+    await pump(tester);
+    await tester.enterText(bodyField(), '성수동 카페');
+
+    await tester.tap(find.byTooltip('초안 쓰기'));
+    await tester.pumpAndSettle();
+
+    final memo = tester.widget<TextField>(find.byKey(const Key('draft-memo')));
+    expect(memo.controller?.text, '성수동 카페');
+  });
+
+  testWidgets('초안을 받으면 글 칸이 초안으로 바뀌고, 원래 글은 되돌리기로 돌아온다', (tester) async {
+    final calls = answerDraft(const DraftResult.text('카페에서 책을 읽었다.'));
+    await pump(tester);
+    await tester.enterText(bodyField(), '카페');
+
+    await tester.tap(find.byTooltip('초안 쓰기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('draft-write')));
+    await tester.pumpAndSettle();
+
+    expect(calls.single.memo, '카페');
+    expect(calls.single.placeName, _aewol.placeName);
+    expect(find.text('카페에서 책을 읽었다.'), findsOneWidget);
+    expect(find.text('되돌리기'), findsOneWidget);
+
+    await tester.tap(find.text('되돌리기'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('카페'), findsOneWidget);
+    expect(find.text('카페에서 책을 읽었다.'), findsNothing);
+  });
+
+  testWidgets('글 칸이 비어 있었으면 초안을 넣고 되돌리기는 없다', (tester) async {
+    answerDraft(const DraftResult.text('산책했다.'));
     await pump(tester);
 
-    expect(find.byType(ComposerToolbar), findsOneWidget);
-    expect(find.byTooltip('초안 쓰기'), findsNothing);
+    await tester.tap(find.byTooltip('초안 쓰기'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('draft-memo')), '산책');
+    await tester.tap(find.byKey(const Key('draft-write')));
+    await tester.pumpAndSettle();
+
+    expect(bodyText(tester), '산책했다.');
+    expect(find.text('되돌리기'), findsNothing);
+  });
+
+  testWidgets('긴 글은 메모로 채우지 않는다', (tester) async {
+    await pump(tester);
+    await tester.enterText(bodyField(), '가' * 101);
+
+    await tester.tap(find.byTooltip('초안 쓰기'));
+    await tester.pumpAndSettle();
+
+    final memo = tester.widget<TextField>(find.byKey(const Key('draft-memo')));
+    expect(memo.controller?.text, isEmpty);
+  });
+
+  testWidgets('초안이 실패해 시트를 닫으면 글 칸은 그대로다', (tester) async {
+    answerDraft(const DraftResult.failed(ChatFailure.network));
+    await pump(tester);
+    await tester.enterText(bodyField(), '카페');
+
+    await tester.tap(find.byTooltip('초안 쓰기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('draft-write')));
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    expect(bodyText(tester), '카페');
+  });
+
+  testWidgets('붙인 사진의 촬영 시각 · 장소 이름이 초안 재료로 간다', (tester) async {
+    final calls = answerDraft(const DraftResult.text('좋았다.'));
+    metas.byPath['/picked/a.jpg'] = PhotoMeta(
+      takenAt: DateTime(2026, 10, 9, 15),
+      lat: 37.54,
+      lng: 127.05,
+    );
+    when(
+      () => picker.pickGallery(limit: any(named: 'limit')),
+    ).thenAnswer((_) async => [(path: '/picked/a.jpg', kind: MediaKind.photo)]);
+    when(
+      () => store.importPhoto('/picked/a.jpg'),
+    ).thenAnswer((_) async => Ok(photoMedia('m1', path: 'tmp/m1.jpg')));
+    await pump(tester);
+    await tester.tap(find.byTooltip('앨범에서 고르기'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('초안 쓰기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('draft-write')));
+    await tester.pumpAndSettle();
+
+    expect(calls.single.photoCount, 1);
+    expect(calls.single.photoTakenFrom, DateTime(2026, 10, 9, 15));
+    expect(calls.single.photoPlaceNames, ['성수동']);
   });
 
   testWidgets("시각 행은 '지금', 날짜를 바꾸면 날짜 문구 + 되돌리기, 되돌리면 다시 '지금'", (tester) async {

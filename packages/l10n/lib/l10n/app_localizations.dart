@@ -8567,6 +8567,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'닫고 직접 써도 돼요.'**
   String get walkDiaryDraftManualHint;
+
+  /// 작성 화면: 초안으로 글 칸을 바꾼 뒤 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'초안으로 바꿨어요'**
+  String get walkDiaryComposerDraftApplied;
+
+  /// 작성 화면: 초안 전 글로 되돌리기 스낵바 동작
+  ///
+  /// In ko, this message translates to:
+  /// **'되돌리기'**
+  String get walkDiaryComposerDraftUndo;
 }
 
 class _AppLocalizationsDelegate
