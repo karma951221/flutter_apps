@@ -242,6 +242,7 @@ void main() {
     int group = 0,
     String? entryId,
     bool fromStart = false,
+    bool autoAdvance = true,
   }) async {
     tester.view
       ..physicalSize = const Size(1080, 2400)
@@ -266,6 +267,7 @@ void main() {
                     group: group,
                     entryId: entryId,
                     fromStart: fromStart,
+                    autoAdvance: autoAdvance,
                     videoBuilder: videos.build,
                   ),
                   child: const Text('home'),
@@ -580,6 +582,59 @@ void main() {
     await wait(tester, const Duration(seconds: 5));
     await settleClose(tester);
     expect(viewerOpen(), isFalse);
+  });
+
+  group('자동 넘김을 끈 뷰어(피드의 한 기록)', () {
+    testWidgets('기다려도 넘어가지 않고 진행 막대가 없다', (tester) async {
+      await open(
+        tester,
+        source: const ViewerSource.entries(['j1'], '제주 여행'),
+        entryId: 'j1',
+        autoAdvance: false,
+      );
+      expect(current(tester), 'j1/p1');
+
+      await wait(tester, const Duration(seconds: 30));
+
+      expect(current(tester), 'j1/p1');
+      expect(viewerOpen(), isTrue);
+      expect(find.byType(StoryProgressBar), findsNothing);
+    });
+
+    testWidgets('손으로 다음 · 이전은 된다', (tester) async {
+      await open(
+        tester,
+        source: const ViewerSource.entries(['j1'], '제주 여행'),
+        entryId: 'j1',
+        autoAdvance: false,
+      );
+
+      await tester.tapAt(const Offset(300, 400));
+      await tester.pump();
+      expect(current(tester), 'j1/p2');
+      await tester.tapAt(const Offset(40, 400));
+      await tester.pump();
+      expect(current(tester), 'j1/p1');
+    });
+
+    testWidgets('영상은 재생되고, 끝나도 넘어가거나 닫히지 않는다', (tester) async {
+      await open(
+        tester,
+        source: const ViewerSource.entries(['j4'], '제주 여행'),
+        entryId: 'j4',
+        autoAdvance: false,
+      );
+      expect(current(tester), 'j4/v1');
+      expect(videos.last!.playing, isTrue);
+
+      videos.last!.onReady(const Duration(seconds: 3));
+      await wait(tester, const Duration(seconds: 3));
+      videos.last!.onEnded();
+      await settleClose(tester);
+
+      expect(viewerOpen(), isTrue);
+      expect(current(tester), 'j4/v1');
+    });
   });
 
   testWidgets('머리의 스토리 이름을 누르면 그 스토리 페이지가 열리고 뷰어는 멈춘다', (tester) async {

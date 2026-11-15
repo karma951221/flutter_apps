@@ -385,6 +385,8 @@ void main() {
 
       expect(viewer(tester).source, const ViewerSource.entries(['출근'], '일상'));
       expect(viewer(tester).entryId, '출근');
+      // 한 기록만 보는 뷰어는 저절로 넘어가지 않는다.
+      expect(viewer(tester).autoAdvance, isFalse);
     });
 
     testWidgets('카드 글 탭은 뷰어를 열지 않는다', (tester) async {

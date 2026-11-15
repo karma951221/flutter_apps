@@ -216,7 +216,7 @@ class _Timeline extends StatelessWidget {
     return null;
   }
 
-  /// 그 기록만 전체 화면 뷰어로. 머리 제목은 그 기록의 스토리 이름('일상' 포함).
+  /// 그 기록만 전체 화면 뷰어로(손으로 넘기기). 머리 제목은 그 기록의 스토리 이름('일상' 포함).
   void _openEntry(
     BuildContext context,
     Map<String, Story> stories,
@@ -231,6 +231,8 @@ class _Timeline extends StatelessWidget {
         context,
         ViewerSource.entries([entry.id], title),
         entryId: entry.id,
+        // 한 기록만 보는 뷰어 — 저절로 넘기지 않고 진행 막대도 두지 않는다(R-F3).
+        autoAdvance: false,
       ),
     );
   }

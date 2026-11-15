@@ -47,6 +47,7 @@ Future<void> openStoryViewer(
   int group = 0,
   String? entryId,
   bool fromStart = false,
+  bool autoAdvance = true,
   ViewerVideoBuilder videoBuilder = viewerVideoSurface,
 }) {
   // 경로가 들고 있어(게이트 바깥) 다시 잠겼다 풀려도 같은 조각에서 이어 간다.
@@ -59,6 +60,7 @@ Future<void> openStoryViewer(
       group: group,
       entryId: entryId,
       fromStart: fromStart,
+      autoAdvance: autoAdvance,
       videoBuilder: videoBuilder,
       resume: resume,
     ),
@@ -77,13 +79,14 @@ typedef _SlideKey = ({String entry, String? media});
 /// 인스타 스토리식 일기 뷰어(스펙 §3.2). 한 페이지 = 한 그룹(스토리)의 하루.
 ///
 /// 조각 길이(사진 5초 · 글 6초 · 영상 자기 길이)만큼 [AnimationController] 를 돌리고 끝나면
-/// 다음 조각이다. 길게 누르기 · 글 펼치기 · 위에 화면이 얹힘 · 백그라운드 · 끌기 동안 멈춘다.
+/// 다음 조각이다([autoAdvance] 가 false 면 돌리지 않고 손으로만 넘긴다). 길게 누르기 · 글 펼치기 · 위에 화면이 얹힘 · 백그라운드 · 끌기 동안 멈춘다.
 class StoryViewerPage extends StatefulWidget {
   const StoryViewerPage({
     required this.source,
     this.group = 0,
     this.entryId,
     this.fromStart = false,
+    this.autoAdvance = true,
     this.videoBuilder = viewerVideoSurface,
     this.resume,
     super.key,
@@ -93,6 +96,9 @@ class StoryViewerPage extends StatefulWidget {
   final int group;
   final String? entryId;
   final bool fromStart;
+
+  /// false 면 조각이 저절로 넘어가지 않고(영상이 끝나도) 진행 막대를 두지 않는다 — 넘기기는 손으로.
+  final bool autoAdvance;
   final ViewerVideoBuilder videoBuilder;
   final ViewerResume? resume;
 
@@ -379,9 +385,9 @@ class _StoryViewerPageState extends State<StoryViewerPage>
     _sync();
   }
 
-  /// 멈춤 조건에 맞춰 막대를 돌리거나 세운다.
+  /// 멈춤 조건에 맞춰 막대를 돌리거나 세운다. 자동 넘김을 껐으면 돌리지 않는다.
   void _sync() {
-    if (_timed && !_paused) {
+    if (_timed && !_paused && widget.autoAdvance) {
       if (!_progress.isAnimating && _progress.value < 1) {
         unawaited(_progress.forward());
       }
@@ -437,7 +443,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
   }
 
   void _onVideoEnded(_SlideKey key) {
-    if (key != _currentKey || _videoFailed) return;
+    if (!widget.autoAdvance || key != _currentKey || _videoFailed) return;
     _next();
   }
 
@@ -709,7 +715,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
                 group: group,
                 day: day,
                 index: pos.slide,
-                progress: _progress,
+                progress: widget.autoAdvance ? _progress : null,
                 icon: switch (widget.source) {
                   FilterSource(filter: PlaceEntries()) => Icons.place_outlined,
                   FilterSource() => Icons.tag,

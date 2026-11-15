@@ -200,9 +200,9 @@ class ViewerHeader extends StatelessWidget {
     required this.group,
     required this.day,
     required this.index,
-    required this.progress,
     required this.onAction,
     required this.onClose,
+    this.progress,
     this.icon,
     this.onTitleTap,
     super.key,
@@ -213,7 +213,9 @@ class ViewerHeader extends StatelessWidget {
 
   /// 그날 안 지금 조각.
   final int index;
-  final Animation<double> progress;
+
+  /// 그날 진행 막대. null 이면 막대를 두지 않는다(자동 넘김을 끈 뷰어).
+  final Animation<double>? progress;
   final ValueChanged<ViewerEntryAction> onAction;
   final VoidCallback onClose;
 
@@ -266,15 +268,17 @@ class ViewerHeader extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(right: AppSpacing.sm),
-                child: StoryProgressBar(
-                  count: day.slides.length,
-                  index: index,
-                  progress: progress,
+              if (progress case final progress?) ...[
+                Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.sm),
+                  child: StoryProgressBar(
+                    count: day.slides.length,
+                    index: index,
+                    progress: progress,
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: AppSpacing.sm),
+              ],
               Row(
                 children: [
                   GestureDetector(
