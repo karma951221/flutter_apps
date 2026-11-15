@@ -728,9 +728,7 @@
   "walkDiaryEditorUnnamedPlace": "名前のない場所",
   "walkDiaryEditorRemoveLocation": "位置を外す",
   "walkDiaryEditorPlaceHint": "場所の名前",
-  "walkDiaryWhereToPost": "どこに投稿しますか？",
   "walkDiaryTextOnly": "文章だけ書く",
-  "walkDiaryPostedTo": "{title}に投稿しました",
   "walkDiaryEditorPickStory": "ストーリーを選ぶ",
   "walkDiaryEditorAddMedia": "写真・動画を追加",
   "walkDiaryEditorRemoveMedia": "外す",
@@ -1403,5 +1401,8 @@
   "walkWeatherEmptyOffline": "インターネットに接続されていません",
   "walkWeatherEmptyServer": "天気を取得できませんでした",
   "walkWeatherGrantPermission": "許可する",
-  "walkWeatherTurnOnLocation": "位置情報をオン"
+  "walkWeatherTurnOnLocation": "位置情報をオン",
+  "walkDiaryComposerDraft": "下書きを作る",
+  "walkDiaryComposerPosted": "投稿しました",
+  "walkDiaryComposerStory": "ストーリー"
 }

@@ -2355,15 +2355,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryEditorPlaceHint => '장소 이름';
 
   @override
-  String get walkDiaryWhereToPost => '어디에 올릴까요?';
-
-  @override
   String get walkDiaryTextOnly => '글만 쓰기';
-
-  @override
-  String walkDiaryPostedTo(String title) {
-    return '$title에 올렸어요';
-  }
 
   @override
   String get walkDiaryEditorPickStory => '스토리 고르기';
@@ -4605,4 +4597,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkWeatherTurnOnLocation => '위치 켜기';
+
+  @override
+  String get walkDiaryComposerDraft => '초안 쓰기';
+
+  @override
+  String get walkDiaryComposerPosted => '올렸어요';
+
+  @override
+  String get walkDiaryComposerStory => '스토리';
 }

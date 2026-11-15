@@ -12,20 +12,19 @@ import '../../../domain/diary/location/place_source.dart';
 import '../../../domain/diary/media/media_store.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
-import '../../../domain/diary/usecase/story_cover.dart';
 import '../../../domain/diary/usecase/story_order.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/cubit/diary_lock_state.dart';
 import '../cubit/entry_editor_cubit.dart';
 import '../cubit/entry_editor_state.dart';
-import '../cubit/story_covers_cubit.dart';
 import '../format/diary_format.dart';
 import '../media_picker.dart';
-import '../widget/media_preview_pager.dart';
+import '../widget/composer_media_strip.dart';
+import '../widget/composer_toolbar.dart';
 import '../widget/media_source_sheet.dart';
 import '../widget/place_input.dart';
 import '../widget/story_avatar.dart';
-import '../widget/story_ring_row.dart';
+import '../widget/story_picker_sheet.dart';
 import '../widget/tag_chip_input.dart';
 import '../widget/time_row.dart';
 import 'all_stories_page.dart';
@@ -34,9 +33,9 @@ import 'diary_route.dart';
 /// 작성 화면을 연다. [editingId] 가 있으면 그 기록을 고친다. 일기 잠금에 묶인
 /// 화면([pushDiaryRoute])이라 다시 잠기면 가려지고, 쓰던 내용은 [EntryEditorScope] 가 들고 있다.
 ///
-/// [initialPick] 이 있으면(일기 ＋ 시트에서 앨범 · 카메라를 고른 경우) 열자마자 그 고르기를
-/// **한 번** 실행한다 — 잠겼다 풀려 화면이 다시 만들어져도 다시 열지 않는다. 고르기를 그만두면
-/// 글만 쓰는 작성 화면으로 남는다.
+/// [initialPick] 이 있으면 열자마자 그 고르기를 **한 번** 실행한다 — 잠겼다 풀려 화면이 다시
+/// 만들어져도 다시 열지 않는다. 고르기를 그만두면 글만 쓰는 작성 화면으로 남는다. 일기 ＋ 는
+/// 넘기지 않는다(새 기록은 글 칸에 자동 포커스로 열린다).
 Future<void> openEntryEditor(
   BuildContext context, {
   String? editingId,
@@ -47,7 +46,10 @@ Future<void> openEntryEditor(
     context,
     scope: (context, gated) =>
         EntryEditorScope(editingId: editingId, child: gated),
-    page: (_) => EntryEditorPage(initialPick: pending),
+    page: (_) => EntryEditorPage(
+      initialPick: pending,
+      autofocusBody: editingId == null && initialPick == null,
+    ),
   );
 }
 
@@ -118,17 +120,25 @@ class _EntryEditorScopeState extends State<EntryEditorScope> {
 
 /// 기록 작성 · 수정(스펙 §3.6). 위에서 [EntryEditorCubit] 를 받는다([EntryEditorScope]).
 ///
-/// 배치: 큰 미디어 미리보기 → '어디에 올릴까요?' 스토리 동그라미 줄 → 글 → 태그 → 장소 → 시각.
-/// 새 기록의 줄은 진행 중 스토리만, 고치기는 지난 스토리도 보인다(옮기기 허용).
+/// 배치(SNS 글쓰기, 스펙 2026-11-15 §3): 글 → 붙인 사진 줄 → 도구줄(앨범 · 사진 · 영상) →
+/// 태그 → 장소 → 시각 → 스토리 행. 스토리 시트는 새 기록이면 진행 중 스토리만, 고치기는 지난
+/// 스토리도 보인다(옮기기 허용).
 ///
-/// 저장하면 닫히고, 새 기록이면 '○○에 올렸어요' 스낵바를 띄운다. 바꾼 것이 있는데 닫으면
+/// 저장하면 닫히고, 새 기록이면 '올렸어요' 스낵바를 띄운다. 바꾼 것이 있는데 닫으면
 /// (✕ · 뒤로) 버릴지 묻고, 버리면 새로 가져온 임시 사본을 지운다. 잠겼다 풀려 다시 만들어지면
 /// 입력칸을 cubit 의 내용으로 채운다.
 class EntryEditorPage extends StatefulWidget {
-  const EntryEditorPage({this.initialPick, super.key});
+  const EntryEditorPage({
+    this.initialPick,
+    this.autofocusBody = false,
+    super.key,
+  });
 
   /// 열자마자 한 번 실행할 고르기([openEntryEditor]).
   final InitialPick? initialPick;
+
+  /// 글 칸에 자동 포커스(새 기록이고 처음 고르기가 없을 때).
+  final bool autofocusBody;
 
   @override
   State<EntryEditorPage> createState() => _EntryEditorPageState();
@@ -139,7 +149,6 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
   final _picker = getIt<MediaPicker>();
   late final _cubit = context.read<EntryEditorCubit>();
   late final _body = TextEditingController(text: _cubit.state.draft.body);
-  late final _covers = StoryCoversCubit(_repo)..start();
 
   /// 본문 입력칸을 채운 기록 id.
   String? _bodyFilledFor;
@@ -170,7 +179,6 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
   @override
   void dispose() {
     _body.dispose();
-    unawaited(_covers.close());
     super.dispose();
   }
 
@@ -233,6 +241,27 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
     }
   }
 
+  /// 스토리 행 — 고르기 시트. 새 기록은 진행 중 스토리만, 고치기는 지난 스토리도
+  /// (옮기기 허용 규칙 그대로 — 고친 기록은 닫힌 스토리로도 옮길 수 있다).
+  Future<void> _pickStory() async {
+    final state = _cubit.state;
+    final picked = await StoryPickerSheet.show(
+      context,
+      stories: [
+        ...state.openStories,
+        if (state.isEditing) ...StoryOrder.split(state.stories).archived,
+      ],
+      selectedId: state.draft.storyId,
+      allowCreate: true,
+    );
+    if (picked == null || !mounted) return;
+    if (picked == StoryPickerSheet.createNew) {
+      await _createStory();
+    } else {
+      _cubit.setStory(picked);
+    }
+  }
+
   /// `＋새` — 만들기 시트로 만들고 그 스토리를 고른다. 새 기록은 진행 중 스토리만 고른다.
   Future<void> _createStory() async {
     final created = await createStory(context, suggestMove: false);
@@ -259,7 +288,7 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
       if (!state.isEditing) {
         AppSnackBar.show(
           context,
-          message: l10n.walkDiaryPostedTo(_storyTitle(l10n, state)),
+          message: l10n.walkDiaryComposerPosted,
           type: AppSnackBarType.success,
         );
       }
@@ -320,37 +349,12 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
             body: ListView(
               padding: const EdgeInsets.only(bottom: AppSpacing.xl),
               children: [
-                const SizedBox(height: AppSpacing.sm),
-                MediaPreviewPager(
-                  media: state.draft.media,
-                  importing: state.importing,
-                  onAdd: _addMedia,
-                  onRemove: _cubit.removeMedia,
-                  onReorder: _cubit.reorderMedia,
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.md,
-                    AppSpacing.md,
-                    AppSpacing.md,
-                    AppSpacing.xs,
-                  ),
-                  child: Text(
-                    l10n.walkDiaryWhereToPost,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ),
-                _StoryChoices(
-                  state: state,
-                  covers: _covers,
-                  onCreate: () => unawaited(_createStory()),
-                  onPick: _cubit.setStory,
-                ),
                 Padding(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   child: TextField(
                     controller: _body,
-                    minLines: 5,
+                    autofocus: widget.autofocusBody,
+                    minLines: 4,
                     maxLines: null,
                     keyboardType: TextInputType.multiline,
                     decoration: InputDecoration(
@@ -358,6 +362,19 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
                     ),
                     onChanged: _cubit.setBody,
                   ),
+                ),
+                ComposerMediaStrip(
+                  media: state.draft.media,
+                  importing: state.importing,
+                  onRemove: _cubit.removeMedia,
+                  onReorder: _cubit.reorderMedia,
+                ),
+                ComposerToolbar(
+                  count: state.draft.media.length,
+                  importing: state.importing,
+                  onAdd: _addMedia,
+                  // ✨ 초안(스펙 §4)은 아직 잇지 않는다 — null 이면 버튼이 없다.
+                  onDraft: null,
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
@@ -387,6 +404,18 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
                   onPick: _cubit.setTime,
                   onRevert: _cubit.revertTime,
                 ),
+                AppListTile(
+                  leading: const Icon(Icons.auto_stories_outlined),
+                  title: Text(l10n.walkDiaryComposerStory),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_storyTitle(l10n, state)),
+                      const Icon(Icons.chevron_right),
+                    ],
+                  ),
+                  onTap: () => unawaited(_pickStory()),
+                ),
               ],
             ),
           ),
@@ -405,44 +434,5 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
               ? l10n.walkDiaryDailyStoryTitle
               : '')
         : storyDisplayTitle(l10n, story);
-  }
-}
-
-/// '어디에 올릴까요?' 동그라미 줄. 새 기록은 진행 중 스토리만, 고치기는 지난 스토리도
-/// (옮기기 허용 규칙 그대로 — 고친 기록은 닫힌 스토리로도 옮길 수 있다).
-class _StoryChoices extends StatelessWidget {
-  const _StoryChoices({
-    required this.state,
-    required this.covers,
-    required this.onCreate,
-    required this.onPick,
-  });
-
-  final EntryEditorState state;
-  final StoryCoversCubit covers;
-  final VoidCallback onCreate;
-  final ValueChanged<String> onPick;
-
-  @override
-  Widget build(BuildContext context) {
-    final archived = state.isEditing
-        ? StoryOrder.split(state.stories).archived
-        : const <Story>[];
-    return BlocBuilder<StoryCoversCubit, Map<String, StoryCover>>(
-      bloc: covers,
-      builder: (context, map) => StoryRingRow(
-        open: state.openStories,
-        archived: archived,
-        covers: coverFiles(map),
-        selectedId: state.draft.storyId,
-        showSeeAll: false,
-        // 고치는 기록이 오래된 닫힌 스토리에 있어도 그 링이 보이고 고를 수 있게 자르지 않는다.
-        maxClosed: archived.length,
-        onCreate: onCreate,
-        onOpen: (story) => onPick(story.id),
-        onLongPress: (story) => onPick(story.id),
-        onSeeAll: () {},
-      ),
-    );
   }
 }

@@ -11,7 +11,6 @@ import '../../../domain/diary/entity/entry_filter.dart';
 import '../../../domain/diary/entity/story.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
-import '../../../domain/diary/usecase/story_cover.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/cubit/diary_lock_state.dart';
 import '../../lock/widget/diary_lock_gate.dart';
@@ -19,13 +18,9 @@ import '../../settings/open_settings.dart';
 import '../../shell/widget/feature_menu.dart';
 import '../cubit/diary_timeline_cubit.dart';
 import '../cubit/diary_timeline_state.dart';
-import '../cubit/story_covers_cubit.dart';
 import '../viewer/story_viewer_page.dart';
 import '../widget/feed_view.dart';
-import '../widget/media_source_sheet.dart';
 import '../widget/story_avatar.dart';
-import '../widget/story_ring.dart';
-import '../widget/story_ring_row.dart';
 import 'all_stories_page.dart';
 import 'diary_search_page.dart';
 import 'entry_actions.dart';
@@ -34,7 +29,8 @@ import 'filtered_entries_page.dart';
 import 'story_page.dart';
 import 'trash_page.dart';
 
-/// 기록 탭 › 일기(스펙 §3.1, 인스타 홈): 스토리 동그라미 줄 + 모든 스토리 기록 피드.
+/// 기록 탭 › 일기(스펙 2026-11-15 F4, 일반 피드): 모든 스토리 기록 피드. 스토리 동그라미 줄은
+/// 두지 않는다 — 스토리는 ⋮ 모든 스토리 · 카드의 스토리 이름으로 간다.
 /// 위에서 `DiaryLockCubit` 를 받는다(셸이 소유). 앱바는 기록 탭(`LogTab`)의 것이고, 일기일 때 그
 /// 앱바에 [DiarySearchAction] · [DiaryMenu] 를 단다. ⋮ 의 설정 항목은 셸의 설정 cubit 아래에서
 /// 연다([openSettings]). ＋ 는 셸이 이 상단 탭일 때 [DiaryNewEntryButton] 으로 둔다.
@@ -56,7 +52,6 @@ class DiaryTab extends StatefulWidget {
 class _DiaryTabState extends State<DiaryTab> {
   final _useCase = getIt<DiaryUseCase>();
   late final _timeline = DiaryTimelineCubit(getIt<DiaryRepository>())..start();
-  late final _covers = StoryCoversCubit(getIt<DiaryRepository>())..start();
 
   @override
   void initState() {
@@ -73,7 +68,6 @@ class _DiaryTabState extends State<DiaryTab> {
   @override
   void dispose() {
     _timeline.close();
-    _covers.close();
     super.dispose();
   }
 
@@ -89,12 +83,9 @@ class _DiaryTabState extends State<DiaryTab> {
         listener: (_, _) {
           if (widget.active) _maintain();
         },
-        child: MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: _timeline),
-            BlocProvider.value(value: _covers),
-          ],
-          // 다시 잠기면 이 탭에서 띄운 시트(새 스토리 등)를 닫는다 — 가려진 탭이면 위의 팝업은 다른 탭의 것.
+        child: BlocProvider.value(
+          value: _timeline,
+          // 다시 잠기면 이 탭에서 띄운 팝업(카드 ⋮ 등)을 닫는다 — 가려진 탭이면 위의 팝업은 다른 탭의 것.
           child: DiaryLockGate(
             dismissPopups: widget.active,
             child: const _Timeline(),
@@ -103,7 +94,7 @@ class _DiaryTabState extends State<DiaryTab> {
       );
 }
 
-/// 일기 탭의 ＋(새 기록 — 고르기 시트 먼저). 잠긴 동안은 두지 않는다.
+/// 일기 탭의 ＋(새 기록 — 작성 화면을 바로 연다). 잠긴 동안은 두지 않는다.
 ///
 /// 탭 `Scaffold` 가 아니라 셸 `Scaffold` 의 `floatingActionButton` 에 둔다 — 스낵바(휴지통으로
 /// 옮기기 · 되살리기처럼 위에 얹힌 화면에서 띄운 것)는 앱 전체 메신저의 바깥 `Scaffold`(셸)에만
@@ -126,13 +117,8 @@ class DiaryNewEntryButton extends StatelessWidget {
     );
   }
 
-  /// 스펙 §3.6: 고르기 시트를 먼저 띄운다. 앨범 · 카메라면 작성 화면이 열리며 그 고르기를
-  /// 실행하고, 글만이면 미디어 없이 연다. 시트를 닫으면 아무것도 열지 않는다.
-  static Future<void> _post(BuildContext context) async {
-    final choice = await showMediaSourceSheet(context, textOnly: true);
-    if (choice == null || !context.mounted) return;
-    await openEntryEditor(context, initialPick: choice.source);
-  }
+  /// 스펙 2026-11-15 F1: 시트 없이 작성 화면을 바로 연다. 사진은 작성 화면 도구줄에서 붙인다.
+  static Future<void> _post(BuildContext context) => openEntryEditor(context);
 }
 
 /// 기록 탭 앱바 🔍(일기일 때, 스펙 §6.4). 검색 화면이 결과를 직접 연다.
@@ -183,63 +169,31 @@ class DiaryMenu extends StatelessWidget {
   }
 }
 
-/// 동그라미 줄 + 피드. 동그라미 · 카드가 여는 뷰어는 줄 순서([ringOrder])로 스토리를 넘긴다.
+/// 피드. 카드의 사진은 그 기록만 전체 화면 뷰어로 연다.
 class _Timeline extends StatelessWidget {
   const _Timeline();
 
   @override
   Widget build(BuildContext context) =>
       BlocBuilder<DiaryTimelineCubit, DiaryTimelineState>(
-        builder: (context, state) =>
-            BlocBuilder<StoryCoversCubit, Map<String, StoryCover>>(
-              builder: (context, covers) {
-                final files = coverFiles(covers);
-                final ring = ringOrder(state.openStories, state.archived);
-                final ids = [for (final s in ring) s.id];
-                final rings = StoryRingRow(
-                  open: state.openStories,
-                  archived: state.archived,
-                  covers: files,
-                  onCreate: () => unawaited(createStory(context)),
-                  onOpen: (story) => _openRing(context, state, ids, story),
-                  onLongPress: (story) =>
-                      unawaited(openStoryPage(context, story.id)),
-                  onSeeAll: () => unawaited(openAllStories(context)),
-                );
-                final body = _body(context, state);
-                if (body != null) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      rings,
-                      const Divider(height: 1),
-                      Expanded(child: body),
-                    ],
-                  );
-                }
-                return FeedView(
-                  entries: state.entries,
-                  now: getIt<Clock>().now(),
-                  stories: {
-                    for (final s in [...state.openStories, ...state.archived])
-                      s.id: s,
-                  },
-                  covers: files,
-                  header: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [rings, const Divider(height: 1)],
-                  ),
-                  onOpen: (entry) => _openEntry(context, ids, entry),
-                  onOpenStory: (story) =>
-                      unawaited(openStoryPage(context, story.id)),
-                  onTag: (tag) => unawaited(
-                    openFilteredEntries(context, EntryFilter.tag(tag)),
-                  ),
-                  onAction: (entry, action) =>
-                      unawaited(_act(context, entry, action)),
-                );
-              },
-            ),
+        builder: (context, state) {
+          final body = _body(context, state);
+          if (body != null) return body;
+          final stories = {
+            for (final s in [...state.openStories, ...state.archived]) s.id: s,
+          };
+          return FeedView(
+            entries: state.entries,
+            now: getIt<Clock>().now(),
+            stories: stories,
+            onOpen: (entry) => _openEntry(context, stories, entry),
+            onOpenStory: (story) => unawaited(openStoryPage(context, story.id)),
+            onTag: (tag) =>
+                unawaited(openFilteredEntries(context, EntryFilter.tag(tag))),
+            onAction: (entry, action) =>
+                unawaited(_act(context, entry, action)),
+          );
+        },
       );
 
   /// 피드 대신 보일 안내: 읽지 못했으면 오류, 비었으면 빈 상태. 아직 받는 중이면 빈칸.
@@ -262,36 +216,20 @@ class _Timeline extends StatelessWidget {
     return null;
   }
 
-  /// 기록이 있는 스토리면 그 순번부터 뷰어(진행 중이면 마지막 날, 지난 스토리면 첫날 —
-  /// 뷰어가 정한다), 없으면 스토리 페이지.
-  void _openRing(
+  /// 그 기록만 전체 화면 뷰어로. 머리 제목은 그 기록의 스토리 이름('일상' 포함).
+  void _openEntry(
     BuildContext context,
-    DiaryTimelineState state,
-    List<String> ids,
-    Story story,
+    Map<String, Story> stories,
+    DiaryEntry entry,
   ) {
-    final posted = state.entries.any((e) => e.storyId == story.id);
-    if (!posted) {
-      unawaited(openStoryPage(context, story.id));
-      return;
-    }
+    final story = stories[entry.storyId];
+    final title = story == null
+        ? ''
+        : storyDisplayTitle(AppLocalizations.of(context), story);
     unawaited(
       openStoryViewer(
         context,
-        ViewerSource.stories(ids),
-        group: ids.indexOf(story.id),
-      ),
-    );
-  }
-
-  /// 그 기록부터 뷰어. 그 스토리가 줄 밖(오래된 닫힌 스토리)이면 그 스토리만 본다.
-  void _openEntry(BuildContext context, List<String> ids, DiaryEntry entry) {
-    final group = ids.indexOf(entry.storyId);
-    unawaited(
-      openStoryViewer(
-        context,
-        ViewerSource.stories(group < 0 ? [entry.storyId] : ids),
-        group: group < 0 ? 0 : group,
+        ViewerSource.entries([entry.id], title),
         entryId: entry.id,
       ),
     );

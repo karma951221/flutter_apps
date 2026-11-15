@@ -5,28 +5,39 @@ import 'package:l10n/l10n.dart';
 import '../../../domain/diary/entity/story.dart';
 import 'story_avatar.dart';
 
-/// 작성 화면의 스토리 고르기. 받은 스토리(열린 것만 — `EntryEditorState.openStories`)를
-/// 보이고, 고르면 그 id 로 닫힌다.
+/// 스토리 고르기. 받은 스토리를 순서대로 보이고, 고르면 그 id 로 닫힌다.
+/// [allowCreate] 면 맨 아래 '＋ 새 스토리' 항목을 두고, 누르면 [createNew] 로 닫힌다
+/// (만들기는 부른 쪽이 한다).
 class StoryPickerSheet extends StatelessWidget {
   const StoryPickerSheet({
     required this.stories,
     required this.selectedId,
+    this.allowCreate = false,
     super.key,
   });
 
-  /// 열린 스토리, 보일 순서대로.
+  /// 보일 스토리, 순서대로.
   final List<Story> stories;
   final String selectedId;
+  final bool allowCreate;
+
+  /// '＋ 새 스토리' 를 골랐을 때의 결과. 스토리 id(uuid · `daily`)와 겹치지 않는다.
+  static const createNew = '+new';
 
   static Future<String?> show(
     BuildContext context, {
     required List<Story> stories,
     required String selectedId,
+    bool allowCreate = false,
   }) => showModalBottomSheet<String>(
     context: context,
     showDragHandle: true,
     isScrollControlled: true,
-    builder: (_) => StoryPickerSheet(stories: stories, selectedId: selectedId),
+    builder: (_) => StoryPickerSheet(
+      stories: stories,
+      selectedId: selectedId,
+      allowCreate: allowCreate,
+    ),
   );
 
   @override
@@ -56,6 +67,12 @@ class StoryPickerSheet extends StatelessWidget {
                         ? const Icon(Icons.check)
                         : null,
                     onTap: () => Navigator.of(context).pop(story.id),
+                  ),
+                if (allowCreate)
+                  AppListTile(
+                    leading: const Icon(Icons.add),
+                    title: Text(l10n.walkDiaryStoryNew),
+                    onTap: () => Navigator.of(context).pop(createNew),
                   ),
               ],
             ),

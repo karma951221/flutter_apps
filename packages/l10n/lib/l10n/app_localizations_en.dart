@@ -2501,15 +2501,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryEditorPlaceHint => 'Place name';
 
   @override
-  String get walkDiaryWhereToPost => 'Where to post?';
-
-  @override
   String get walkDiaryTextOnly => 'Text only';
-
-  @override
-  String walkDiaryPostedTo(String title) {
-    return 'Posted to $title';
-  }
 
   @override
   String get walkDiaryEditorPickStory => 'Choose a story';
@@ -4994,4 +4986,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkWeatherTurnOnLocation => 'Turn on location';
+
+  @override
+  String get walkDiaryComposerDraft => 'Write a draft';
+
+  @override
+  String get walkDiaryComposerPosted => 'Posted';
+
+  @override
+  String get walkDiaryComposerStory => 'Story';
 }

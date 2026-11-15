@@ -2353,15 +2353,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryEditorPlaceHint => '場所の名前';
 
   @override
-  String get walkDiaryWhereToPost => 'どこに投稿しますか？';
-
-  @override
   String get walkDiaryTextOnly => '文章だけ書く';
-
-  @override
-  String walkDiaryPostedTo(String title) {
-    return '$titleに投稿しました';
-  }
 
   @override
   String get walkDiaryEditorPickStory => 'ストーリーを選ぶ';
@@ -4601,4 +4593,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkWeatherTurnOnLocation => '位置情報をオン';
+
+  @override
+  String get walkDiaryComposerDraft => '下書きを作る';
+
+  @override
+  String get walkDiaryComposerPosted => '投稿しました';
+
+  @override
+  String get walkDiaryComposerStory => 'ストーリー';
 }

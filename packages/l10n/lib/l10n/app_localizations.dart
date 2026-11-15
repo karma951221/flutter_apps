@@ -4472,23 +4472,11 @@ abstract class AppLocalizations {
   /// **'장소 이름'**
   String get walkDiaryEditorPlaceHint;
 
-  /// 일기 작성 화면 스토리 동그라미 줄 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'어디에 올릴까요?'**
-  String get walkDiaryWhereToPost;
-
   /// 일기 ＋ 시트의 미디어 없이 쓰기 항목
   ///
   /// In ko, this message translates to:
   /// **'글만 쓰기'**
   String get walkDiaryTextOnly;
-
-  /// 일기 기록을 올린 뒤 스낵바
-  ///
-  /// In ko, this message translates to:
-  /// **'{title}에 올렸어요'**
-  String walkDiaryPostedTo(String title);
 
   /// 일기 작성 화면 스토리 선택 시트 제목
   ///
@@ -8411,6 +8399,24 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'위치 켜기'**
   String get walkWeatherTurnOnLocation;
+
+  /// 작성 화면 도구줄 — 사진 · 메모로 초안 쓰기 버튼(툴팁)
+  ///
+  /// In ko, this message translates to:
+  /// **'초안 쓰기'**
+  String get walkDiaryComposerDraft;
+
+  /// 새 기록을 올린 뒤 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'올렸어요'**
+  String get walkDiaryComposerPosted;
+
+  /// 작성 화면 맨 아래 스토리 행 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'스토리'**
+  String get walkDiaryComposerStory;
 }
 
 class _AppLocalizationsDelegate

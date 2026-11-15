@@ -3368,22 +3368,9 @@
   "@walkDiaryEditorPlaceHint": {
     "description": "일기 작성 화면 장소 직접 입력칸 힌트"
   },
-  "walkDiaryWhereToPost": "어디에 올릴까요?",
-  "@walkDiaryWhereToPost": {
-    "description": "일기 작성 화면 스토리 동그라미 줄 제목"
-  },
   "walkDiaryTextOnly": "글만 쓰기",
   "@walkDiaryTextOnly": {
     "description": "일기 ＋ 시트의 미디어 없이 쓰기 항목"
-  },
-  "walkDiaryPostedTo": "{title}에 올렸어요",
-  "@walkDiaryPostedTo": {
-    "description": "일기 기록을 올린 뒤 스낵바",
-    "placeholders": {
-      "title": {
-        "type": "String"
-      }
-    }
   },
   "walkDiaryEditorPickStory": "스토리 고르기",
   "@walkDiaryEditorPickStory": {
@@ -5347,5 +5334,11 @@
   "walkWeatherGrantPermission": "권한 허용",
   "@walkWeatherGrantPermission": {"description": "날씨 빈 상태 버튼 — 위치 권한 요청 · 설정 열기"},
   "walkWeatherTurnOnLocation": "위치 켜기",
-  "@walkWeatherTurnOnLocation": {"description": "날씨 빈 상태 버튼 — 위치 설정 열기"}
+  "@walkWeatherTurnOnLocation": {"description": "날씨 빈 상태 버튼 — 위치 설정 열기"},
+  "walkDiaryComposerDraft": "초안 쓰기",
+  "@walkDiaryComposerDraft": {"description": "작성 화면 도구줄 — 사진 · 메모로 초안 쓰기 버튼(툴팁)"},
+  "walkDiaryComposerPosted": "올렸어요",
+  "@walkDiaryComposerPosted": {"description": "새 기록을 올린 뒤 스낵바"},
+  "walkDiaryComposerStory": "스토리",
+  "@walkDiaryComposerStory": {"description": "작성 화면 맨 아래 스토리 행 이름"}
 }

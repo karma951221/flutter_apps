@@ -728,9 +728,7 @@
   "walkDiaryEditorUnnamedPlace": "Unnamed location",
   "walkDiaryEditorRemoveLocation": "Remove location",
   "walkDiaryEditorPlaceHint": "Place name",
-  "walkDiaryWhereToPost": "Where to post?",
   "walkDiaryTextOnly": "Text only",
-  "walkDiaryPostedTo": "Posted to {title}",
   "walkDiaryEditorPickStory": "Choose a story",
   "walkDiaryEditorAddMedia": "Add photos/videos",
   "walkDiaryEditorRemoveMedia": "Remove",
@@ -1403,5 +1401,8 @@
   "walkWeatherEmptyOffline": "No internet connection",
   "walkWeatherEmptyServer": "Couldn't load the weather",
   "walkWeatherGrantPermission": "Allow",
-  "walkWeatherTurnOnLocation": "Turn on location"
+  "walkWeatherTurnOnLocation": "Turn on location",
+  "walkDiaryComposerDraft": "Write a draft",
+  "walkDiaryComposerPosted": "Posted",
+  "walkDiaryComposerStory": "Story"
 }

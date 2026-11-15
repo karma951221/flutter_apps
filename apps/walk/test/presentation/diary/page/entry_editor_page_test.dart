@@ -31,9 +31,12 @@ import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/diary/usecase/diary_use_case.dart';
 import 'package:walk/presentation/diary/media_picker.dart';
 import 'package:walk/presentation/diary/page/entry_editor_page.dart';
+import 'package:walk/presentation/diary/widget/composer_media_strip.dart';
+import 'package:walk/presentation/diary/widget/composer_toolbar.dart';
 import 'package:walk/presentation/diary/widget/media_source_sheet.dart';
-import 'package:walk/presentation/diary/widget/story_ring.dart';
-import 'package:walk/presentation/diary/widget/story_ring_row.dart';
+import 'package:walk/presentation/diary/widget/place_input.dart';
+import 'package:walk/presentation/diary/widget/story_picker_sheet.dart';
+import 'package:walk/presentation/diary/widget/tag_chip_input.dart';
 import 'package:walk/presentation/diary/widget/time_row.dart';
 
 import '../../../support/diary_fixtures.dart';
@@ -203,29 +206,67 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Finder ringOf(String id) =>
-      find.byWidgetPredicate((w) => w is StoryRing && w.story.id == id);
+  Finder bodyField() => find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요');
 
-  /// '어디에 올릴까요?' 줄에서 체크된 스토리 id.
-  List<String> selectedRings(WidgetTester tester) => [
-    for (final r in tester.widgetList<StoryRing>(
+  /// 맨 아래 '스토리' 행.
+  Finder storyRow() => find.widgetWithText(AppListTile, '스토리');
+
+  /// 스토리 행에 보이는 지금 스토리 이름.
+  String storyRowValue(WidgetTester tester) => tester
+      .widgetList<Text>(
+        find.descendant(of: storyRow(), matching: find.byType(Text)),
+      )
+      .map((t) => t.data)
+      .where((t) => t != '스토리')
+      .join();
+
+  /// 스토리 고르기 시트에 보이는 이름들.
+  List<String> sheetTitles(WidgetTester tester) => [
+    for (final t in tester.widgetList<Text>(
       find.descendant(
-        of: find.byType(StoryRingRow),
-        matching: find.byType(StoryRing),
+        of: find.byType(StoryPickerSheet),
+        matching: find.byType(Text),
       ),
     ))
-      if (r.selected) r.story.id,
+      ?t.data,
   ];
 
-  List<String> ringIds(WidgetTester tester) => [
-    for (final r in tester.widgetList<StoryRing>(
+  Future<void> openStorySheet(WidgetTester tester) async {
+    await tester.tap(storyRow());
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> pickStory(WidgetTester tester, String title) async {
+    await openStorySheet(tester);
+    await tester.tap(
       find.descendant(
-        of: find.byType(StoryRingRow),
-        matching: find.byType(StoryRing),
+        of: find.byType(StoryPickerSheet),
+        matching: find.text(title),
       ),
-    ))
-      r.story.id,
-  ];
+    );
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> createFromSheet(WidgetTester tester, String title) async {
+    await openStorySheet(tester);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(StoryPickerSheet),
+        matching: find.text('새 스토리'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.byType(TextField),
+      ),
+      title,
+    );
+    await tester.pump();
+    await tester.tap(find.widgetWithText(AppButton, '만들기'));
+    await tester.pumpAndSettle();
+  }
 
   Ok<DiaryEntry> savedEntry(String storyId) => Ok(
     DiaryEntry(
@@ -246,6 +287,72 @@ void main() {
       )
       .map((t) => t.data)
       .join(' | ');
+
+  testWidgets('글 칸이 맨 위 → 사진 줄 · 도구줄 → 태그 · 장소 · 시각 → 스토리 행', (tester) async {
+    await pump(tester);
+
+    double top(Finder f) => tester.getTopLeft(f).dy;
+    final order = [
+      bodyField(),
+      find.byType(ComposerToolbar),
+      find.byType(TagChipInput),
+      find.byType(PlaceInput),
+      timeRow(),
+      storyRow(),
+    ];
+    for (var i = 1; i < order.length; i++) {
+      expect(top(order[i - 1]), lessThan(top(order[i])), reason: '$i');
+    }
+    expect(find.byType(ComposerMediaStrip), findsOneWidget);
+    expect(find.text('어디에 올릴까요?'), findsNothing);
+  });
+
+  bool bodyFocused(WidgetTester tester) => tester
+      .widget<EditableText>(
+        find.descendant(of: bodyField(), matching: find.byType(EditableText)),
+      )
+      .focusNode
+      .hasFocus;
+
+  testWidgets('새 기록은 글 칸에 자동 포커스', (tester) async {
+    await pump(tester);
+
+    expect(bodyFocused(tester), isTrue);
+  });
+
+  testWidgets('고치기는 자동 포커스하지 않는다', (tester) async {
+    when(() => repo.entry('e1')).thenAnswer(
+      (_) async => Ok(
+        DiaryEntry(
+          id: 'e1',
+          storyId: Story.dailyId,
+          body: '옛 글',
+          occurredAt: diaryT0,
+          createdAt: diaryT0,
+          updatedAt: diaryT0,
+          media: const [],
+          tags: const [],
+        ),
+      ),
+    );
+    await pump(tester, editingId: 'e1');
+
+    expect(bodyFocused(tester), isFalse);
+  });
+
+  testWidgets('처음 고르기로 열면 자동 포커스하지 않는다', (tester) async {
+    when(picker.takePhoto).thenAnswer((_) async => const []);
+    await pump(tester, initialPick: MediaSource.photo);
+
+    expect(bodyFocused(tester), isFalse);
+  });
+
+  testWidgets('작성 화면엔 아직 초안 버튼이 없다(onDraft 없음)', (tester) async {
+    await pump(tester);
+
+    expect(find.byType(ComposerToolbar), findsOneWidget);
+    expect(find.byTooltip('초안 쓰기'), findsNothing);
+  });
 
   testWidgets("시각 행은 '지금', 날짜를 바꾸면 날짜 문구 + 되돌리기, 되돌리면 다시 '지금'", (tester) async {
     await pump(tester);
@@ -276,7 +383,7 @@ void main() {
     expect(find.text('올린 시각으로 되돌리기'), findsNothing);
   });
 
-  testWidgets('어디에 올릴까요 줄: 제안 스토리 체크, 탭하면 setStory, 새 기록엔 닫힌 스토리 없음', (
+  testWidgets('스토리 행: 기본은 일상, 누르면 시트(새 기록엔 닫힌 스토리 없음) → 고른 스토리로 올린다', (
     tester,
   ) async {
     when(
@@ -284,22 +391,22 @@ void main() {
     ).thenAnswer((_) async => savedEntry('jeju'));
     await pump(tester);
 
-    expect(find.text('어디에 올릴까요?'), findsOneWidget);
-    expect(ringIds(tester), containsAll([Story.dailyId, 'jeju']));
-    expect(ringIds(tester), isNot(contains('busan')));
-    expect(selectedRings(tester), [Story.dailyId]);
-    // 작성 화면 줄에는 '모두 보기'가 없다.
-    expect(find.text('모두 보기'), findsNothing);
+    expect(storyRowValue(tester), '일상');
 
-    await tester.tap(ringOf('jeju'));
+    await openStorySheet(tester);
+    expect(sheetTitles(tester), containsAll(['일상', '제주 여행', '새 스토리']));
+    expect(sheetTitles(tester), isNot(contains('부산 출장')));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(StoryPickerSheet),
+        matching: find.text('제주 여행'),
+      ),
+    );
     await tester.pumpAndSettle();
 
-    expect(selectedRings(tester), ['jeju']);
+    expect(storyRowValue(tester), '제주 여행');
 
-    await tester.enterText(
-      find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요'),
-      '바다',
-    );
+    await tester.enterText(bodyField(), '바다');
     await tester.tap(find.text('올리기'));
     await tester.pumpAndSettle();
 
@@ -311,7 +418,7 @@ void main() {
     expect(draft.storyId, 'jeju');
   });
 
-  testWidgets('＋새 → 만들기 시트 → 만든 스토리 선택', (tester) async {
+  testWidgets('스토리 시트 ＋새 → 만들기 시트 → 만든 스토리 선택', (tester) async {
     final created = Story(
       id: 'chuseok',
       title: '추석',
@@ -332,23 +439,7 @@ void main() {
     });
     await pump(tester);
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(StoryRingRow),
-        matching: find.text('새 스토리'),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.descendant(
-        of: find.byType(BottomSheet),
-        matching: find.byType(TextField),
-      ),
-      '추석',
-    );
-    await tester.pump();
-    await tester.tap(find.widgetWithText(AppButton, '만들기'));
-    await tester.pumpAndSettle();
+    await createFromSheet(tester, '추석');
 
     verify(
       () => repo.createStory(
@@ -358,8 +449,7 @@ void main() {
       ),
     ).called(1);
     expect(find.byType(EntryEditorPage), findsOneWidget);
-    expect(ringIds(tester), contains('chuseok'));
-    expect(selectedRings(tester), ['chuseok']);
+    expect(storyRowValue(tester), '추석');
   });
 
   testWidgets('＋새 로 끝난 기간의 스토리를 만들면 못 고른다고 알린다', (tester) async {
@@ -384,61 +474,26 @@ void main() {
     });
     await pump(tester);
 
-    await tester.tap(
-      find.descendant(
-        of: find.byType(StoryRingRow),
-        matching: find.text('새 스토리'),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.descendant(
-        of: find.byType(BottomSheet),
-        matching: find.byType(TextField),
-      ),
-      '지난 여행',
-    );
-    await tester.pump();
-    await tester.tap(find.widgetWithText(AppButton, '만들기'));
-    await tester.pumpAndSettle();
+    await createFromSheet(tester, '지난 여행');
 
     expect(find.text('끝난 스토리라 새 기록을 올릴 수 없어요'), findsOneWidget);
-    expect(selectedRings(tester), isNot(contains('past')));
+    expect(storyRowValue(tester), '일상');
   });
 
-  testWidgets('올리면 스낵바 "제주 여행에 올렸어요"', (tester) async {
+  testWidgets('올리면 스낵바 "올렸어요"(스토리 이름 없이)', (tester) async {
     when(
       () => useCase.save(any(), editingId: any(named: 'editingId')),
     ).thenAnswer((_) async => savedEntry('jeju'));
     await pump(tester);
-    await tester.tap(ringOf('jeju'));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요'),
-      '바다',
-    );
+    await pickStory(tester, '제주 여행');
+    await tester.enterText(bodyField(), '바다');
 
     await tester.tap(find.text('올리기'));
     await tester.pumpAndSettle();
 
     expect(find.text('home'), findsOneWidget);
-    expect(find.text('제주 여행에 올렸어요'), findsOneWidget);
-  });
-
-  testWidgets('기본 스토리로 올리면 스낵바에 일상 이름', (tester) async {
-    when(
-      () => useCase.save(any(), editingId: any(named: 'editingId')),
-    ).thenAnswer((_) async => savedEntry(Story.dailyId));
-    await pump(tester);
-    await tester.enterText(
-      find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요'),
-      '바다',
-    );
-
-    await tester.tap(find.text('올리기'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('일상에 올렸어요'), findsOneWidget);
+    expect(find.text('올렸어요'), findsOneWidget);
+    expect(find.text('제주 여행에 올렸어요'), findsNothing);
   });
 
   testWidgets('처음 고르기(initialPick)는 한 번만 — 잠겼다 풀려도 다시 열지 않는다', (tester) async {
@@ -534,10 +589,7 @@ void main() {
     );
     await pump(tester);
 
-    await tester.enterText(
-      find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요'),
-      '바다',
-    );
+    await tester.enterText(bodyField(), '바다');
     await tester.tap(find.text('올리기'));
     await tester.pumpAndSettle();
 
@@ -569,10 +621,7 @@ void main() {
       ),
     );
     await pump(tester);
-    await tester.enterText(
-      find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요'),
-      '바다',
-    );
+    await tester.enterText(bodyField(), '바다');
     await tester.enterText(find.widgetWithText(TextField, '태그 추가'), '#제주');
     await tester.pump();
 
@@ -602,10 +651,7 @@ void main() {
 
   testWidgets('쓴 내용이 있으면 닫기 전에 묻고, 그만두면 임시 사본을 지운다', (tester) async {
     await pump(tester);
-    await tester.enterText(
-      find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요'),
-      '쓰다 만 글',
-    );
+    await tester.enterText(bodyField(), '쓰다 만 글');
 
     await tester.tap(find.byTooltip('닫기'));
     await tester.pumpAndSettle();
@@ -634,7 +680,7 @@ void main() {
     expect(find.text('home'), findsOneWidget);
   });
 
-  testWidgets('사진·영상 추가 → 앨범에서 고른 것을 남은 칸만큼 가져온다', (tester) async {
+  testWidgets('도구줄 앨범 → 남은 칸만큼 가져와 썸네일 줄에, ✕ 로 뺀다', (tester) async {
     when(
       () => picker.pickGallery(limit: any(named: 'limit')),
     ).thenAnswer((_) async => [(path: '/picked/a.jpg', kind: MediaKind.photo)]);
@@ -643,13 +689,53 @@ void main() {
     ).thenAnswer((_) async => Ok(photoMedia('m1', path: 'tmp/m1.jpg')));
     await pump(tester);
 
-    await tester.tap(find.text('사진·영상 추가'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('앨범에서 고르기'));
+    await tester.tap(find.byTooltip('앨범에서 고르기'));
     await tester.pumpAndSettle();
 
     verify(() => picker.pickGallery(limit: 10)).called(1);
-    expect(find.byTooltip('빼기'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(ComposerMediaStrip),
+        matching: find.byTooltip('빼기'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byTooltip('빼기'));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('빼기'), findsNothing);
+  });
+
+  testWidgets('한도만큼 붙이면 도구줄 고르기 버튼이 꺼진다', (tester) async {
+    final picked = [
+      for (var i = 0; i < 10; i++)
+        (path: '/picked/$i.jpg', kind: MediaKind.photo),
+    ];
+    when(
+      () => picker.pickGallery(limit: any(named: 'limit')),
+    ).thenAnswer((_) async => picked);
+    for (var i = 0; i < 10; i++) {
+      when(
+        () => store.importPhoto('/picked/$i.jpg'),
+      ).thenAnswer((_) async => Ok(photoMedia('m$i', path: 'tmp/m$i.jpg')));
+    }
+    await pump(tester);
+
+    await tester.tap(find.byTooltip('앨범에서 고르기'));
+    await tester.pumpAndSettle();
+
+    final toolbar = tester.widget<ComposerToolbar>(
+      find.byType(ComposerToolbar),
+    );
+    expect(toolbar.count, 10);
+    final gallery = tester.widget<IconButton>(
+      find.ancestor(
+        of: find.byTooltip('앨범에서 고르기'),
+        matching: find.byType(IconButton),
+      ),
+    );
+    expect(gallery.onPressed, isNull);
   });
 
   group('고른 원본의 캐시 복사본 정리', () {
@@ -663,9 +749,7 @@ void main() {
         () => picker.pickGallery(limit: any(named: 'limit')),
       ).thenAnswer((_) async => picked);
       await pump(tester);
-      await tester.tap(find.text('사진·영상 추가'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('앨범에서 고르기'));
+      await tester.tap(find.byTooltip('앨범에서 고르기'));
       await tester.pumpAndSettle();
     }
 
@@ -706,7 +790,7 @@ void main() {
     });
   });
 
-  testWidgets('오래된 닫힌 스토리(11번째)의 기록을 고치면 그 링이 줄에 있고 체크된다', (tester) async {
+  testWidgets('오래된 닫힌 스토리(11번째)의 기록을 고치면 스토리 행 · 시트에 그 스토리', (tester) async {
     stories = [
       _story(Story.dailyId, ''),
       // 더 최근에 닫힌 11개 + 가장 오래된 'oldest'.
@@ -744,8 +828,9 @@ void main() {
     );
     await pump(tester, editingId: 'e1');
 
-    expect(ringIds(tester), contains('oldest'));
-    expect(selectedRings(tester), ['oldest']);
+    expect(storyRowValue(tester), '아주 옛날');
+    await openStorySheet(tester);
+    expect(sheetTitles(tester), contains('아주 옛날'));
   });
 
   testWidgets('스토리 목록이 늦게 와도 처음 고른 미디어가 남는다', (tester) async {
@@ -788,13 +873,14 @@ void main() {
     expect(find.text('기록 고치기'), findsOneWidget);
     expect(find.text('저장'), findsOneWidget);
     expect(find.text('옛 글'), findsOneWidget);
-    expect(selectedRings(tester), ['jeju']);
-    // 수정은 지난 스토리로도 옮길 수 있어 닫힌 스토리도 줄에 나온다.
-    expect(ringIds(tester), contains('busan'));
+    expect(storyRowValue(tester), '제주 여행');
     expect(find.widgetWithText(TextField, '협재'), findsOneWidget);
     expect(find.widgetWithText(InputChip, '#바다'), findsOneWidget);
     expect(timeText(tester), contains('10월 8일 (목) 오후 6:00'));
     expect(timeText(tester), isNot(contains('지금')));
+    // 수정은 지난 스토리로도 옮길 수 있어 닫힌 스토리도 시트에 나온다.
+    await openStorySheet(tester);
+    expect(sheetTitles(tester), contains('부산 출장'));
   });
 
   testWidgets('초가 있는 시각에 열고 오늘 같은 분을 그대로 확인하면 지금 · 위치 그대로', (tester) async {
@@ -815,10 +901,7 @@ void main() {
 
   testWidgets('다시 잠기면 작성 화면이 트리에서 빠지고, 풀면 쓰던 글 그대로 돌아온다', (tester) async {
     await pump(tester);
-    await tester.enterText(
-      find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요'),
-      '쓰다 만 글',
-    );
+    await tester.enterText(bodyField(), '쓰다 만 글');
     await lockRepo.setSecret(LockMethod.pin, '1234');
     await lockRepo.saveConfig(const LockConfig(enabled: true));
 
@@ -843,10 +926,7 @@ void main() {
 
   testWidgets('잠금 화면에서 뒤로 가기는 무시한다 — 풀면 쓰던 글 그대로', (tester) async {
     await pump(tester);
-    await tester.enterText(
-      find.widgetWithText(TextField, '오늘 있었던 일을 적어 보세요'),
-      '쓰다 만 글',
-    );
+    await tester.enterText(bodyField(), '쓰다 만 글');
     await relock(tester);
 
     await tester.binding.handlePopRoute();
@@ -860,16 +940,15 @@ void main() {
     expect(find.text('쓰다 만 글'), findsOneWidget);
   });
 
-  testWidgets('다시 잠기면 미디어 고르기 시트가 닫힌다', (tester) async {
+  testWidgets('다시 잠기면 스토리 고르기 시트가 닫힌다', (tester) async {
     await pump(tester);
-    await tester.tap(find.text('사진·영상 추가'));
-    await tester.pumpAndSettle();
-    expect(find.byType(BottomSheet), findsOneWidget);
+    await openStorySheet(tester);
+    expect(find.byType(StoryPickerSheet), findsOneWidget);
 
     await relock(tester);
 
     expect(find.byType(BottomSheet, skipOffstage: false), findsNothing);
-    expect(find.text('앨범에서 고르기', skipOffstage: false), findsNothing);
+    expect(find.byType(StoryPickerSheet, skipOffstage: false), findsNothing);
     expect(find.byType(PinPad), findsOneWidget);
   });
 
@@ -882,9 +961,7 @@ void main() {
       () => store.importPhoto('/picked/a.jpg'),
     ).thenAnswer((_) async => Ok(imported));
     await pump(tester);
-    await tester.tap(find.text('사진·영상 추가'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('앨범에서 고르기'));
+    await tester.tap(find.byTooltip('앨범에서 고르기'));
     await tester.pumpAndSettle();
 
     await tester.pumpWidget(const SizedBox());
