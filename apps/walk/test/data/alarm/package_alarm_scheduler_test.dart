@@ -86,12 +86,12 @@ void main() {
   test('본문 시각은 기기 언어를 따른다', () {
     const alarm = Alarm(id: 3, hour: 21, minute: 45);
 
-    String body(String locale) => PackageAlarmScheduler.settingsFor(
-      312,
-      at,
-      alarm,
-      (locale: locale, defaultTitle: '', stop: '', snooze: (_) => ''),
-    ).notificationSettings.body;
+    String body(String locale) => PackageAlarmScheduler.settingsFor(312, at, alarm, (
+      locale: locale,
+      defaultTitle: '',
+      stop: '',
+      snooze: (_) => '',
+    )).notificationSettings.body;
 
     expect(body('ko'), '오후 9:45');
     expect(body('en'), '9:45\u202fPM');
@@ -161,7 +161,10 @@ void main() {
     });
 
     test('자동 멈춤은 분을 Duration 으로, 안 함이면 null', () {
-      expect(settings(base.copyWith(autoStopMinutes: 10)).androidAutoStopAfter, const Duration(minutes: 10));
+      expect(
+        settings(base.copyWith(autoStopMinutes: 10)).androidAutoStopAfter,
+        const Duration(minutes: 10),
+      );
       expect(settings(base).androidAutoStopAfter, isNull);
     });
 
@@ -170,10 +173,24 @@ void main() {
       final next = at.add(const Duration(minutes: 5));
       for (final count in [1, 2, 3]) {
         final fromFork = settings(alarm, snoozeCount: count - 1).nextAfterSnooze(next);
-        final fromApp = PackageAlarmScheduler.settingsFor(312, next, alarm, texts, snoozeCount: count);
+        final fromApp = PackageAlarmScheduler.settingsFor(
+          312,
+          next,
+          alarm,
+          texts,
+          snoozeCount: count,
+        );
         expect(
-          (fromApp.snoozeCount, fromApp.androidSnoozeDuration, fromApp.notificationSettings.androidSnoozeButton),
-          (fromFork.snoozeCount, fromFork.androidSnoozeDuration, fromFork.notificationSettings.androidSnoozeButton),
+          (
+            fromApp.snoozeCount,
+            fromApp.androidSnoozeDuration,
+            fromApp.notificationSettings.androidSnoozeButton,
+          ),
+          (
+            fromFork.snoozeCount,
+            fromFork.androidSnoozeDuration,
+            fromFork.notificationSettings.androidSnoozeButton,
+          ),
           reason: '$count',
         );
       }
@@ -194,7 +211,16 @@ void main() {
     });
 
     test('내장음은 에셋 경로로 건다', () {
-      expect(audio(const AlarmSound.bundled(BundledAlarmSounds.legacyChime)), BundledAlarmSounds.legacyChime);
+      expect(
+        audio(const AlarmSound.bundled(BundledAlarmSounds.morning)),
+        BundledAlarmSounds.morning,
+      );
+    });
+
+    test('내 파일 알람음도 파일이 있으면 경로로, 없으면 null(대체음)', () {
+      const sound = AlarmSound.file(title: 'Song', path: '/sdcard/Music/song.mp3');
+      expect(audio(sound), '/sdcard/Music/song.mp3');
+      expect(audio(sound, exists: false), isNull);
     });
 
     test('기기 알람음은 복사본이 있으면 그 경로, 없으면 시스템 기본음', () {
@@ -206,8 +232,9 @@ void main() {
     test('대체음은 소리와 상관없이 항상 비프', () {
       for (final sound in [
         const AlarmSound.system(),
-        const AlarmSound.bundled(BundledAlarmSounds.legacyRising),
+        const AlarmSound.bundled(BundledAlarmSounds.classic),
         const AlarmSound.device(title: 'Oxygen', path: '/nope.ogg'),
+        const AlarmSound.file(title: 'Song', path: '/nope.mp3'),
       ]) {
         final settings = PackageAlarmScheduler.settingsFor(
           312,
@@ -233,10 +260,13 @@ void main() {
     test('소리 · 무음 모드 체크 · 라벨이 바뀌면 지문이 바뀐다', () {
       final variants = [
         base,
-        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.legacyChime)),
-        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.legacyRising)),
+        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.morning)),
+        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.classic)),
         base.copyWith(
           sound: const AlarmSound.device(title: 'Oxygen', path: '/a.ogg'),
+        ),
+        base.copyWith(
+          sound: const AlarmSound.file(title: 'Oxygen', path: '/a.ogg'),
         ),
         base.copyWith(silentWhenRingerMuted: true),
         base.copyWith(label: '운동'),
@@ -284,6 +314,7 @@ void main() {
             SystemAlarmSound() => 'system',
             BundledAlarmSound(:final asset) => 'bundled:$asset',
             DeviceAlarmSound(:final path) => 'device:$path',
+            FileAlarmSound(:final path) => 'file:$path',
           },
           BundledAlarmSounds.beep,
           'silentWhenRingerMuted:${alarm.silentWhenRingerMuted}',
@@ -302,7 +333,7 @@ void main() {
       for (final alarm in [
         base,
         base.copyWith(label: '', silentWhenRingerMuted: true),
-        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.legacyChime)),
+        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.morning)),
       ]) {
         expect(sig(alarm), isNot(preIcon(alarm)), reason: '$alarm');
       }
@@ -346,7 +377,11 @@ void main() {
         return hash.toRadixString(16).padLeft(8, '0');
       }
 
-      for (final alarm in [base, base.copyWith(label: ''), base.copyWith(silentWhenRingerMuted: true)]) {
+      for (final alarm in [
+        base,
+        base.copyWith(label: ''),
+        base.copyWith(silentWhenRingerMuted: true),
+      ]) {
         expect(sig(alarm), isNot(preWave3(alarm)), reason: '$alarm');
       }
     });

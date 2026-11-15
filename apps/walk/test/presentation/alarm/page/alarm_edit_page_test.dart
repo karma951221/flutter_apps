@@ -491,14 +491,14 @@ void main() {
         hour: 6,
         minute: 30,
         repeat: {Weekday.mon},
-        sound: AlarmSound.bundled(BundledAlarmSounds.legacyChime),
+        sound: AlarmSound.bundled(BundledAlarmSounds.morning),
       ),
     );
 
     expect(find.text('제목'), findsOneWidget);
     expect(find.text('예: 출근'), findsOneWidget);
     expect(find.text('알람음'), findsOneWidget);
-    expect(find.text('차임'), findsOneWidget);
+    expect(find.text('아침 차임'), findsOneWidget);
     expect(find.text('무음 · 진동 모드에선 진동만'), findsOneWidget);
     expect(find.text('폰이 무음이나 진동 모드면 소리 없이 진동으로 울려요'), findsOneWidget);
     double top(String text) => tester.getTopLeft(find.text(text)).dy;
@@ -616,10 +616,10 @@ void main() {
     expect(find.byType(AlarmEditPage), findsNothing);
   });
 
-  testWidgets('새 알람의 알람음은 시스템 기본', (tester) async {
+  testWidgets('새 알람의 알람음은 아침 차임', (tester) async {
     await pump(tester, Alarm.draft());
 
-    expect(find.text('시스템 기본'), findsOneWidget);
+    expect(find.text('아침 차임'), findsOneWidget);
   });
 
   testWidgets('알람음 줄 → 선택 화면에서 고르면 줄에 반영되고 그 소리로 저장한다', (tester) async {

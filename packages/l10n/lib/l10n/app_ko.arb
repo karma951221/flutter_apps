@@ -2516,13 +2516,21 @@
   "@walkAlarmSoundBeep": {
     "description": "앱 내장음 — 기존 비프음 이름"
   },
-  "walkAlarmSoundChime": "차임",
-  "@walkAlarmSoundChime": {
-    "description": "앱 내장음 — 부드러운 2음 차임 이름"
+  "walkAlarmSoundMorning": "아침 차임",
+  "@walkAlarmSoundMorning": {
+    "description": "앱 내장음 — 아침 차임(새 알람 기본) 이름"
   },
-  "walkAlarmSoundRising": "점점 빠르게",
-  "@walkAlarmSoundRising": {
-    "description": "앱 내장음 — 간격이 점점 짧아지는 비프 이름"
+  "walkAlarmSoundMarimba": "마림바",
+  "@walkAlarmSoundMarimba": {
+    "description": "앱 내장음 — 마림바 이름"
+  },
+  "walkAlarmSoundClassic": "클래식 벨",
+  "@walkAlarmSoundClassic": {
+    "description": "앱 내장음 — 클래식 벨 이름"
+  },
+  "walkAlarmSoundBirds": "새소리",
+  "@walkAlarmSoundBirds": {
+    "description": "앱 내장음 — 새소리 이름"
   },
   "walkAlarmSoundSelect": "선택",
   "@walkAlarmSoundSelect": {

@@ -3386,17 +3386,29 @@ abstract class AppLocalizations {
   /// **'비프'**
   String get walkAlarmSoundBeep;
 
-  /// 앱 내장음 — 부드러운 2음 차임 이름
+  /// 앱 내장음 — 아침 차임(새 알람 기본) 이름
   ///
   /// In ko, this message translates to:
-  /// **'차임'**
-  String get walkAlarmSoundChime;
+  /// **'아침 차임'**
+  String get walkAlarmSoundMorning;
 
-  /// 앱 내장음 — 간격이 점점 짧아지는 비프 이름
+  /// 앱 내장음 — 마림바 이름
   ///
   /// In ko, this message translates to:
-  /// **'점점 빠르게'**
-  String get walkAlarmSoundRising;
+  /// **'마림바'**
+  String get walkAlarmSoundMarimba;
+
+  /// 앱 내장음 — 클래식 벨 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'클래식 벨'**
+  String get walkAlarmSoundClassic;
+
+  /// 앱 내장음 — 새소리 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'새소리'**
+  String get walkAlarmSoundBirds;
 
   /// 알람음 선택 화면 아래 확인 버튼
   ///

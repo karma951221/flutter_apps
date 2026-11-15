@@ -54,17 +54,11 @@ void main() {
 
     test('오류는 AlarmSoundException', () async {
       fail('list');
-      expect(
-        ChannelAlarmSoundSource().deviceRingtones(),
-        throwsA(isA<AlarmSoundException>()),
-      );
+      expect(ChannelAlarmSoundSource().deviceRingtones(), throwsA(isA<AlarmSoundException>()));
     });
 
     test('채널이 없어도 AlarmSoundException', () async {
-      expect(
-        ChannelAlarmSoundSource().deviceRingtones(),
-        throwsA(isA<AlarmSoundException>()),
-      );
+      expect(ChannelAlarmSoundSource().deviceRingtones(), throwsA(isA<AlarmSoundException>()));
     });
   });
 
@@ -78,10 +72,18 @@ void main() {
     });
 
     test('bundled 는 kind asset + 에셋 경로', () async {
+      await ChannelAlarmSoundSource().preview(const AlarmSound.bundled(BundledAlarmSounds.morning));
+      expect(calls.single.arguments, {'kind': 'asset', 'value': 'assets/alarm/morning.ogg'});
+    });
+
+    test('file 은 kind uri + file:// uri', () async {
       await ChannelAlarmSoundSource().preview(
-        const AlarmSound.bundled(BundledAlarmSounds.legacyChime),
+        const AlarmSound.file(title: 'Song', path: '/sdcard/Music/song.mp3'),
       );
-      expect(calls.single.arguments, {'kind': 'asset', 'value': 'assets/alarm/chime.wav'});
+      expect(calls.single.arguments, {
+        'kind': 'uri',
+        'value': Uri.file('/sdcard/Music/song.mp3').toString(),
+      });
     });
 
     test('uri 를 주면 소리와 상관없이 kind uri', () async {

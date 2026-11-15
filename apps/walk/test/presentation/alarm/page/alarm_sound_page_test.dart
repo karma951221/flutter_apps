@@ -15,10 +15,7 @@ class _MockSoundSource extends Mock implements AlarmSoundSource {}
 void main() {
   const bell = (title: 'Bell', uri: 'content://media/1');
   const dawn = (title: 'Dawn', uri: 'content://media/2');
-  const copiedBell = AlarmSound.device(
-    title: 'Bell',
-    path: '/data/alarm_sounds/a.ogg',
-  );
+  const copiedBell = AlarmSound.device(title: 'Bell', path: '/data/alarm_sounds/a.ogg');
   late _MockSoundSource source;
 
   setUpAll(() {
@@ -28,19 +25,14 @@ void main() {
   setUp(() {
     source = _MockSoundSource();
     when(() => source.deviceRingtones()).thenAnswer((_) async => [bell, dawn]);
-    when(
-      () => source.preview(any(), uri: any(named: 'uri')),
-    ).thenAnswer((_) async {});
+    when(() => source.preview(any(), uri: any(named: 'uri'))).thenAnswer((_) async {});
     when(() => source.stopPreview()).thenAnswer((_) async {});
     getIt.registerSingleton<AlarmSoundSource>(source);
   });
   tearDown(getIt.reset);
 
   /// 선택 화면을 띄우고, 닫힐 때의 결과를 모은다.
-  Future<List<AlarmSound?>> pump(
-    WidgetTester tester,
-    AlarmSound initial,
-  ) async {
+  Future<List<AlarmSound?>> pump(WidgetTester tester, AlarmSound initial) async {
     await tester.binding.setSurfaceSize(const Size(800, 1600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final results = <AlarmSound?>[];
@@ -54,9 +46,7 @@ void main() {
           builder: (context) => TextButton(
             onPressed: () async => results.add(
               await Navigator.of(context).push<AlarmSound>(
-                MaterialPageRoute(
-                  builder: (_) => AlarmSoundPage(initial: initial),
-                ),
+                MaterialPageRoute(builder: (_) => AlarmSoundPage(initial: initial)),
               ),
             ),
             child: const Text('open'),
@@ -71,16 +61,8 @@ void main() {
 
   /// [title] 줄에 선택 표시가 있는가.
   bool isChecked(WidgetTester tester, String title) {
-    final row = find.ancestor(
-      of: find.text(title),
-      matching: find.byType(AppListTile),
-    );
-    return tester.any(
-      find.descendant(
-        of: row,
-        matching: find.byIcon(Icons.radio_button_checked),
-      ),
-    );
+    final row = find.ancestor(of: find.text(title), matching: find.byType(AppListTile));
+    return tester.any(find.descendant(of: row, matching: find.byIcon(Icons.radio_button_checked)));
   }
 
   testWidgets('세 구역: 시스템 기본 · 앱 소리 5줄 · 기기 알람음 목록', (tester) async {
@@ -89,7 +71,7 @@ void main() {
     expect(find.text('알람음'), findsOneWidget);
     expect(find.text('시스템 기본'), findsOneWidget);
     expect(find.text('앱 소리'), findsOneWidget);
-    for (final name in ['morning', 'marimba', 'classic', 'birds', '비프']) {
+    for (final name in ['아침 차임', '마림바', '클래식 벨', '새소리', '비프']) {
       expect(find.text(name), findsOneWidget);
     }
     expect(find.text('기기 알람음'), findsOneWidget);
@@ -107,14 +89,12 @@ void main() {
   });
 
   testWidgets('기기 목록 읽기 실패면 그 구역에만 안내, 나머지는 쓸 수 있다', (tester) async {
-    when(
-      () => source.deviceRingtones(),
-    ).thenThrow(const AlarmSoundException('list'));
+    when(() => source.deviceRingtones()).thenThrow(const AlarmSoundException('list'));
     final results = await pump(tester, const AlarmSound.system());
 
     expect(find.text('기기 알람음을 불러오지 못했어요'), findsOneWidget);
     expect(find.byType(AppPlaceholder), findsOneWidget);
-    await tester.tap(find.text('morning'));
+    await tester.tap(find.text('아침 차임'));
     await tester.pump();
     await tester.tap(find.text('선택'));
     await tester.pumpAndSettle();
@@ -132,14 +112,12 @@ void main() {
   testWidgets('줄을 누르면 선택 표시가 옮겨 가고 미리 듣는다 → 선택하면 그 소리로 닫힌다', (tester) async {
     final results = await pump(tester, const AlarmSound.system());
 
-    await tester.tap(find.text('classic'));
+    await tester.tap(find.text('클래식 벨'));
     await tester.pump();
 
-    expect(isChecked(tester, 'classic'), isTrue);
+    expect(isChecked(tester, '클래식 벨'), isTrue);
     expect(isChecked(tester, '시스템 기본'), isFalse);
-    verify(
-      () => source.preview(const AlarmSound.bundled(BundledAlarmSounds.classic)),
-    ).called(1);
+    verify(() => source.preview(const AlarmSound.bundled(BundledAlarmSounds.classic))).called(1);
 
     await tester.tap(find.text('선택'));
     await tester.pumpAndSettle();
@@ -168,9 +146,7 @@ void main() {
   });
 
   testWidgets('복사가 실패하면 오류 스낵바를 띄우고 머문다', (tester) async {
-    when(
-      () => source.import(bell),
-    ).thenThrow(const AlarmSoundException('import'));
+    when(() => source.import(bell)).thenThrow(const AlarmSoundException('import'));
     final results = await pump(tester, const AlarmSound.system());
 
     await tester.tap(find.text('Bell'));
@@ -187,7 +163,7 @@ void main() {
   testWidgets('뒤로 가면 결과 없이 닫히고 미리 듣기를 멈춘다', (tester) async {
     final results = await pump(tester, const AlarmSound.system());
 
-    await tester.tap(find.text('morning'));
+    await tester.tap(find.text('아침 차임'));
     await tester.pump();
     await tester.state<NavigatorState>(find.byType(Navigator)).maybePop();
     await tester.pumpAndSettle();
@@ -198,7 +174,7 @@ void main() {
 
   testWidgets('앱이 화면에서 내려가면(홈 · 화면 잠금) 미리 듣기를 멈추고 화면은 그대로', (tester) async {
     await pump(tester, const AlarmSound.system());
-    await tester.tap(find.text('morning'));
+    await tester.tap(find.text('아침 차임'));
     await tester.pump();
     verifyNever(() => source.stopPreview());
 
@@ -209,7 +185,7 @@ void main() {
 
     verify(() => source.stopPreview()).called(1);
     expect(find.byType(AlarmSoundPage), findsOneWidget);
-    expect(isChecked(tester, 'morning'), isTrue);
+    expect(isChecked(tester, '아침 차임'), isTrue);
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);

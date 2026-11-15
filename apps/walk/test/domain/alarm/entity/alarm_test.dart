@@ -46,16 +46,17 @@ void main() {
     Alarm roundTrip(Alarm alarm) =>
         Alarm.fromJson(jsonDecode(jsonEncode(alarm.toJson())) as Map<String, Object?>);
 
-    test('기본은 시스템 기본 알람음', () {
+    test('생성자 기본은 시스템 기본 알람음 — 새 초안은 아침 차임', () {
       expect(const Alarm(hour: 7, minute: 0).sound, const AlarmSound.system());
-      expect(Alarm.draft().sound, const AlarmSound.system());
+      expect(Alarm.draft().sound, const AlarmSound.bundled(BundledAlarmSounds.morning));
     });
 
-    test('JSON 에 sound 로 저장하고 3종 모두 되살린다', () {
+    test('JSON 에 sound 로 저장하고 4종 모두 되살린다', () {
       const sounds = [
         AlarmSound.system(),
-        AlarmSound.bundled(BundledAlarmSounds.legacyRising),
+        AlarmSound.bundled(BundledAlarmSounds.classic),
         AlarmSound.device(title: 'Morning Glory', path: '/data/app_flutter/alarm_sounds/1a2b.ogg'),
+        AlarmSound.file(title: 'Song', path: '/sdcard/Music/song.mp3'),
       ];
       for (final sound in sounds) {
         final alarm = Alarm(id: 2, hour: 6, minute: 30, sound: sound);
@@ -158,7 +159,10 @@ void main() {
       expect(alarm.autoStopMinutes, isNull);
       expect(alarm.remindBefore, isFalse);
       expect(alarm.skippedAt, isNull);
-      expect(Alarm.draft(), const Alarm(hour: 7, minute: 0));
+      expect(
+        Alarm.draft(),
+        const Alarm(hour: 7, minute: 0, sound: AlarmSound.bundled(BundledAlarmSounds.morning)),
+      );
     });
 
     test('기본값은 선택지 안에 있다', () {
@@ -255,7 +259,7 @@ void main() {
         repeat: const {Weekday.mon, Weekday.fri},
         label: '출근',
         silentWhenRingerMuted: true,
-        sound: const AlarmSound.bundled(BundledAlarmSounds.legacyRising),
+        sound: const AlarmSound.bundled(BundledAlarmSounds.classic),
         enabled: false,
         volumePercent: 50,
         fadeSeconds: 0,

@@ -1767,10 +1767,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAlarmSoundBeep => '비프';
 
   @override
-  String get walkAlarmSoundChime => '차임';
+  String get walkAlarmSoundMorning => '아침 차임';
 
   @override
-  String get walkAlarmSoundRising => '점점 빠르게';
+  String get walkAlarmSoundMarimba => '마림바';
+
+  @override
+  String get walkAlarmSoundClassic => '클래식 벨';
+
+  @override
+  String get walkAlarmSoundBirds => '새소리';
 
   @override
   String get walkAlarmSoundSelect => '선택';

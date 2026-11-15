@@ -18,9 +18,9 @@ void main() {
     });
 
     test('bundled', () {
-      const sound = AlarmSound.bundled(BundledAlarmSounds.legacyChime);
+      const sound = AlarmSound.bundled(BundledAlarmSounds.morning);
 
-      expect(sound.toJson(), {'type': 'bundled', 'asset': 'assets/alarm/chime.wav'});
+      expect(sound.toJson(), {'type': 'bundled', 'asset': 'assets/alarm/morning.ogg'});
       expect(roundTrip(sound), sound);
     });
 
@@ -39,6 +39,40 @@ void main() {
     });
   });
 
+  group('file', () {
+    test('JSON 왕복', () {
+      const sound = AlarmSound.file(title: 'Song', path: '/sdcard/Music/song.mp3');
+
+      expect(sound.toJson(), {'type': 'file', 'title': 'Song', 'path': '/sdcard/Music/song.mp3'});
+      expect(roundTrip(sound), sound);
+    });
+
+    test('path 가 없으면 system', () {
+      expect(AlarmSound.fromJson(const {'type': 'file'}), const AlarmSound.system());
+      expect(AlarmSound.fromJson(const {'type': 'file', 'title': 'A'}), const AlarmSound.system());
+    });
+  });
+
+  group('옛 에셋 경로 옮기기', () {
+    test('chime.wav 는 morning, rising.wav 는 classic', () {
+      expect(
+        AlarmSound.fromJson(const {'type': 'bundled', 'asset': 'assets/alarm/chime.wav'}),
+        const AlarmSound.bundled(BundledAlarmSounds.morning),
+      );
+      expect(
+        AlarmSound.fromJson(const {'type': 'bundled', 'asset': 'assets/alarm/rising.wav'}),
+        const AlarmSound.bundled(BundledAlarmSounds.classic),
+      );
+    });
+
+    test('default.wav 는 beep 그대로', () {
+      expect(
+        AlarmSound.fromJson(const {'type': 'bundled', 'asset': 'assets/alarm/default.wav'}),
+        const AlarmSound.bundled(BundledAlarmSounds.beep),
+      );
+    });
+  });
+
   group('fromJson 은 읽지 못하면 system 으로 읽는다(던지지 않는다)', () {
     const system = AlarmSound.system();
 
@@ -51,7 +85,7 @@ void main() {
     });
 
     test('type 이 없다', () {
-      expect(AlarmSound.fromJson(const {'asset': BundledAlarmSounds.legacyChime}), system);
+      expect(AlarmSound.fromJson(const {'asset': BundledAlarmSounds.morning}), system);
     });
 
     test('맵이 아니다', () {

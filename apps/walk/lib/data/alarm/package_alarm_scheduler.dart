@@ -53,6 +53,7 @@ class PackageAlarmScheduler implements AlarmScheduler {
         SystemAlarmSound() => 'system',
         BundledAlarmSound(:final asset) => 'bundled:$asset',
         DeviceAlarmSound(:final path) => 'device:$path',
+        FileAlarmSound(:final path) => 'file:$path',
       },
       BundledAlarmSounds.beep,
       // 이름을 붙인다 — 웨이브 1 전에는 같은 자리에 vibrate(true/false)가 있었다. 값만 넣으면
@@ -134,7 +135,8 @@ class PackageAlarmScheduler implements AlarmScheduler {
       assetAudioPath: switch (alarm.sound) {
         SystemAlarmSound() => null,
         BundledAlarmSound(:final asset) => asset,
-        DeviceAlarmSound(:final path) => fileExists(path) ? path : null,
+        DeviceAlarmSound(:final path) ||
+        FileAlarmSound(:final path) => fileExists(path) ? path : null,
       },
       // 위 소리로 울리지 못하면(파일 손상 · 기기 기본음 없음) 비프로 울린다.
       androidFallbackAudioPath: BundledAlarmSounds.beep,

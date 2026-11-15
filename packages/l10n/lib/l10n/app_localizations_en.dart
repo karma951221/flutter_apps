@@ -1880,10 +1880,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkAlarmSoundBeep => 'Beep';
 
   @override
-  String get walkAlarmSoundChime => 'Chime';
+  String get walkAlarmSoundMorning => 'Morning chime';
 
   @override
-  String get walkAlarmSoundRising => 'Rising';
+  String get walkAlarmSoundMarimba => 'Marimba';
+
+  @override
+  String get walkAlarmSoundClassic => 'Classic bell';
+
+  @override
+  String get walkAlarmSoundBirds => 'Birdsong';
 
   @override
   String get walkAlarmSoundSelect => 'Select';

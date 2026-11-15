@@ -15,7 +15,8 @@ class ChannelAlarmSoundSource implements AlarmSoundSource {
     final rows = await _invoke<List<Object?>>('list');
     return [
       for (final row in rows ?? const <Object?>[])
-        if (row case {'title': final String title, 'uri': final String uri}) (title: title, uri: uri),
+        if (row case {'title': final String title, 'uri': final String uri})
+          (title: title, uri: uri),
     ];
   }
 
@@ -26,7 +27,8 @@ class ChannelAlarmSoundSource implements AlarmSoundSource {
         : switch (sound) {
             SystemAlarmSound() => ('system', null),
             BundledAlarmSound(:final asset) => ('asset', asset),
-            DeviceAlarmSound(:final path) => ('uri', Uri.file(path).toString()),
+            DeviceAlarmSound(:final path) ||
+            FileAlarmSound(:final path) => ('uri', Uri.file(path).toString()),
           };
     return _invoke<void>('preview', {'kind': kind, 'value': value});
   }

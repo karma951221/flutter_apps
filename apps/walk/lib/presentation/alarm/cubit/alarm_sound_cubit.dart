@@ -21,7 +21,8 @@ class AlarmSoundCubit extends Cubit<AlarmSoundState> {
   static AlarmSoundChoice _choiceOf(AlarmSound sound) => switch (sound) {
     SystemAlarmSound() => const AlarmSoundChoice.system(),
     BundledAlarmSound(:final asset) => AlarmSoundChoice.bundled(asset),
-    DeviceAlarmSound() => AlarmSoundChoice.current(sound),
+    // 임시 — 내 파일 선택은 다음 작업에서 별도 선택지로 바뀐다.
+    DeviceAlarmSound() || FileAlarmSound() => AlarmSoundChoice.current(sound),
   };
 
   /// 기기 알람음 목록을 읽는다. 현재 소리가 복사해 둔 기기 소리면 같은 제목의 줄에 표시를 옮긴다.
