@@ -4698,4 +4698,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkDiaryComposerDraftUndo => '元に戻す';
+
+  @override
+  String walkDiaryDraftConsentNotice(String vendor) {
+    return '下書きを作るとき、本文欄のメモと記録の時刻・場所の名前・タグが$vendorに送信されます。写真は「写真を見せる」をオンにしたときだけ送ります。キーはこの端末の安全な保存領域にだけあります。';
+  }
 }

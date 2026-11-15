@@ -30,8 +30,8 @@ class PrefsDiaryPreferences implements DiaryPreferences {
   Future<void> setTrashRetention(TrashRetention v) =>
       _prefs.setString(trashRetentionKey, v.name);
 
-  static const draftStyleKey = 'diary.draft.style';
-  static const draftIncludePhotosKey = 'diary.draft.includePhotos';
+  static const draftStyleKey = 'walk.diary.draft.style';
+  static const draftIncludePhotosKey = 'walk.diary.draft.includePhotos';
 
   @override
   DraftStyle get draftStyle =>

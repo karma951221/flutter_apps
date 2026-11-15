@@ -4702,4 +4702,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkDiaryComposerDraftUndo => '되돌리기';
+
+  @override
+  String walkDiaryDraftConsentNotice(String vendor) {
+    return '초안을 쓸 때 글 칸의 메모와 기록 시각 · 장소 이름 · 태그가 $vendor로 전송돼요. 사진은 사진 보여 주기를 켰을 때만 보내요. 키는 이 폰의 보안 저장소에만 있어요.';
+  }
 }

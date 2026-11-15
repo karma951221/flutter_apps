@@ -1434,5 +1434,6 @@
   "walkDiaryComposerDraftApplied": "Replaced with the draft",
   "@walkDiaryComposerDraftApplied": {"description": "작성 화면: 초안으로 글 칸을 바꾼 뒤 스낵바"},
   "walkDiaryComposerDraftUndo": "Undo",
-  "@walkDiaryComposerDraftUndo": {"description": "작성 화면: 초안 전 글로 되돌리기 스낵바 동작"}
+  "@walkDiaryComposerDraftUndo": {"description": "작성 화면: 초안 전 글로 되돌리기 스낵바 동작"},
+  "walkDiaryDraftConsentNotice": "When writing a draft, the memo in the text box and the entry time, place name and tags are sent to {vendor}. Photos are sent only when Show photos is on. Your key stays in this phone's secure storage."
 }

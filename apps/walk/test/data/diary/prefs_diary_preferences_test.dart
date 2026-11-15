@@ -62,10 +62,10 @@ void main() {
       expect(reader.draftIncludePhotos, isTrue);
     });
 
-    test('키는 diary.draft.style · diary.draft.includePhotos', () async {
+    test('키는 walk.diary.draft.style · walk.diary.draft.includePhotos', () async {
       final prefs = await _prefs({
-        'diary.draft.style': 'sns',
-        'diary.draft.includePhotos': true,
+        'walk.diary.draft.style': 'sns',
+        'walk.diary.draft.includePhotos': true,
       });
 
       expect(prefs.draftStyle, DraftStyle.sns);

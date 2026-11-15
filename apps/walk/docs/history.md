@@ -1043,8 +1043,8 @@ OpenAI: gpt-5 `minimal`, 5.1 이후 `none`, o 계열 `low`). 초안의 `modelUna
 ### 자잘한 판단
 
 - 작성 화면 라우트에는 셸 cubit 이 없어 `openSettings` 를 바로 부를 수 없다. 연 자리에서 `settingsOpener` 로 콜백을 미리 잡아 넘기고, 셸 밖이면 안내만.
-- 동의 다이얼로그는 물어보기 동의 문구를 그대로 쓴다(걸음 · 위키까지 말하는 문구라 초안에는 조금 넓다).
-- 설정 키는 `diary.draft.style` · `diary.draft.includePhotos` — 기존 일기 키의 `walk.` 접두사와 다르다.
+- 첫 사용 동의는 초안 전용 문구다 — 메모 · 기록 시각 · 장소 이름 · 태그가 어느 벤더로 가는지, 사진은 켰을 때만. 물어보기 문구(걸음 · 위키)는 쓰지 않는다.
+- 설정 키는 기존 일기 키 규칙대로 `walk.diary.draft.style` · `walk.diary.draft.includePhotos`(배포 전이라 옮기기 없음).
 - 쓰지 않게 된 `initialPick` · `MediaPreviewPager` · `StoryRingRow` · `showMediaSourceSheet` 와 l10n 키를 지웠다(R-F5). 다른 앱의 사진 공유로 여는 진입점은 후속.
 
 ### 검증

@@ -5108,4 +5108,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkDiaryComposerDraftUndo => 'Undo';
+
+  @override
+  String walkDiaryDraftConsentNotice(String vendor) {
+    return 'When writing a draft, the memo in the text box and the entry time, place name and tags are sent to $vendor. Photos are sent only when Show photos is on. Your key stays in this phone\'s secure storage.';
+  }
 }

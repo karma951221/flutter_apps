@@ -669,6 +669,15 @@ void main() {
 
       await tapDraft(tester);
       expect(find.text('AI로 보내기'), findsOneWidget);
+      expect(
+        find.text(
+          '초안을 쓸 때 글 칸의 메모와 기록 시각 · 장소 이름 · 태그가 Claude로 전송돼요. '
+          '사진은 사진 보여 주기를 켰을 때만 보내요. 키는 이 폰의 보안 저장소에만 있어요.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('걸음'), findsNothing);
+      expect(find.textContaining('위키'), findsNothing);
       await tester.tap(find.text('동의하고 시작'));
       await tester.pumpAndSettle();
 

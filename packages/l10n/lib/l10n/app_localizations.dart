@@ -8585,6 +8585,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'되돌리기'**
   String get walkDiaryComposerDraftUndo;
+
+  /// 작성 화면: 일기 초안 첫 사용 동의 — 보내는 것(메모 · 시각 · 장소 이름 · 태그, 켰을 때만 사진)과 벤더
+  ///
+  /// In ko, this message translates to:
+  /// **'초안을 쓸 때 글 칸의 메모와 기록 시각 · 장소 이름 · 태그가 {vendor}로 전송돼요. 사진은 사진 보여 주기를 켰을 때만 보내요. 키는 이 폰의 보안 저장소에만 있어요.'**
+  String walkDiaryDraftConsentNotice(String vendor);
 }
 
 class _AppLocalizationsDelegate
