@@ -108,7 +108,7 @@ class Alarm with _$Alarm {
 
   bool get isOneShot => repeat.isEmpty;
 
-  /// 새 알람의 기본값 — 07:00, 반복 없음, 무음 모드 체크 끔, 시스템 기본 알람음.
+  /// 새 알람의 기본값 — 07:00, 반복 없음, 무음 모드 체크 끔, 아침 차임(`BundledAlarmSounds.morning`).
   static Alarm draft() =>
       const Alarm(hour: 7, minute: 0, sound: AlarmSound.bundled(BundledAlarmSounds.morning));
 
