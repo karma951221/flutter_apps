@@ -134,13 +134,13 @@ class _EntryEditorScopeState extends State<EntryEditorScope> {
 
 /// 기록 작성 · 수정(스펙 §3.6). 위에서 [EntryEditorCubit] 를 받는다([EntryEditorScope]).
 ///
-/// 배치(SNS 글쓰기, 스펙 2026-11-15 §3): 글 → 붙인 사진 줄 → 도구줄(앨범 · 사진 · 영상) →
-/// 태그 → 장소 → 시각 → 스토리 행. 스토리 시트는 새 기록이면 진행 중 스토리만, 고치기는 지난
-/// 스토리도 보인다(옮기기 허용).
+/// 배치(SNS 글쓰기, 스펙 2026-11-15 §3): 글 → 붙인 사진 줄 → 태그 → 장소 → 시각 → 스토리 행.
+/// 도구줄(앨범 · 사진 · 영상 · ✨)은 목록 밖 화면 맨 아래, 키보드 바로 위에 고정한다.
+/// 스토리 시트는 새 기록이면 진행 중 스토리만, 고치기는 지난 스토리도 보인다(옮기기 허용).
 ///
-/// 저장하면 닫히고, 새 기록이면 '올렸어요'(일상 밖이면 "'제주 여행'에 올렸어요") 스낵바를 띄운다. 바꾼 것이 있는데 닫으면
-/// (✕ · 뒤로) 버릴지 묻고, 버리면 새로 가져온 임시 사본을 지운다. 잠겼다 풀려 다시 만들어지면
-/// 입력칸을 cubit 의 내용으로 채운다.
+/// 저장하면 닫히고, 새 기록이면 '올렸어요'(일상 밖이면 "'제주 여행'에 올렸어요") 스낵바를
+/// 띄운다. 바꾼 것이 있는데 닫으면(✕ · 뒤로) 버릴지 묻고, 버리면 새로 가져온 임시 사본을
+/// 지운다. 잠겼다 풀려 다시 만들어지면 입력칸을 cubit 의 내용으로 채운다.
 class EntryEditorPage extends StatefulWidget {
   const EntryEditorPage({
     this.initialPick,
@@ -421,74 +421,85 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
                 ),
               ],
             ),
-            body: ListView(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+            // 도구줄은 목록 밖 화면 맨 아래 — Scaffold 가 키보드만큼 body 를 줄이니 키보드 바로 위에 붙는다(R-F2).
+            body: Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: TextField(
-                    controller: _body,
-                    autofocus: widget.autofocusBody,
-                    minLines: 4,
-                    maxLines: null,
-                    keyboardType: TextInputType.multiline,
-                    decoration: InputDecoration(
-                      hintText: l10n.walkDiaryEditorBodyHint,
-                    ),
-                    onChanged: _cubit.setBody,
-                  ),
-                ),
-                ComposerMediaStrip(
-                  media: state.draft.media,
-                  importing: state.importing,
-                  onRemove: _cubit.removeMedia,
-                  onReorder: _cubit.reorderMedia,
-                ),
-                ComposerToolbar(
-                  count: state.draft.media.length,
-                  importing: state.importing,
-                  onAdd: _addMedia,
-                  onDraft: () => unawaited(_draft()),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                  ),
-                  child: TagChipInput(
-                    key: _tags,
-                    tags: state.draft.tags,
-                    onAdd: _cubit.addTag,
-                    onRemove: _cubit.removeTag,
-                    suggestionsFor: (q) => _repo.watchTagCounts(query: q),
-                  ),
-                ),
-                PlaceInput(
-                  location: state.draft.location,
-                  locating: state.locating,
-                  manualPlace: state.manualPlace,
-                  onClear: _cubit.clearLocation,
-                  onName: _cubit.setPlaceName,
-                  suggestionsFor: (q) => _repo.watchPlaceCounts(query: q),
-                ),
-                TimeRow(
-                  occurredAt: state.draft.occurredAt,
-                  edited: state.timeEdited,
-                  isEditing: state.isEditing,
-                  now: getIt<Clock>().now(),
-                  onPick: _cubit.setTime,
-                  onRevert: _cubit.revertTime,
-                ),
-                AppListTile(
-                  leading: const Icon(Icons.auto_stories_outlined),
-                  title: Text(l10n.walkDiaryComposerStory),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xl),
                     children: [
-                      Text(_storyTitle(l10n, state)),
-                      const Icon(Icons.chevron_right),
+                      Padding(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: TextField(
+                          controller: _body,
+                          autofocus: widget.autofocusBody,
+                          minLines: 4,
+                          maxLines: null,
+                          keyboardType: TextInputType.multiline,
+                          decoration: InputDecoration(
+                            hintText: l10n.walkDiaryEditorBodyHint,
+                          ),
+                          onChanged: _cubit.setBody,
+                        ),
+                      ),
+                      ComposerMediaStrip(
+                        media: state.draft.media,
+                        importing: state.importing,
+                        onRemove: _cubit.removeMedia,
+                        onReorder: _cubit.reorderMedia,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
+                        child: TagChipInput(
+                          key: _tags,
+                          tags: state.draft.tags,
+                          onAdd: _cubit.addTag,
+                          onRemove: _cubit.removeTag,
+                          suggestionsFor: (q) => _repo.watchTagCounts(query: q),
+                        ),
+                      ),
+                      PlaceInput(
+                        location: state.draft.location,
+                        locating: state.locating,
+                        manualPlace: state.manualPlace,
+                        onClear: _cubit.clearLocation,
+                        onName: _cubit.setPlaceName,
+                        suggestionsFor: (q) => _repo.watchPlaceCounts(query: q),
+                      ),
+                      TimeRow(
+                        occurredAt: state.draft.occurredAt,
+                        edited: state.timeEdited,
+                        isEditing: state.isEditing,
+                        now: getIt<Clock>().now(),
+                        onPick: _cubit.setTime,
+                        onRevert: _cubit.revertTime,
+                      ),
+                      AppListTile(
+                        leading: const Icon(Icons.auto_stories_outlined),
+                        title: Text(l10n.walkDiaryComposerStory),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(_storyTitle(l10n, state)),
+                            const Icon(Icons.chevron_right),
+                          ],
+                        ),
+                        onTap: () => unawaited(_pickStory()),
+                      ),
                     ],
                   ),
-                  onTap: () => unawaited(_pickStory()),
+                ),
+                const Divider(height: 1),
+                SafeArea(
+                  top: false,
+                  child: ComposerToolbar(
+                    count: state.draft.media.length,
+                    importing: state.importing,
+                    onAdd: _addMedia,
+                    onDraft: () => unawaited(_draft()),
+                  ),
                 ),
               ],
             ),

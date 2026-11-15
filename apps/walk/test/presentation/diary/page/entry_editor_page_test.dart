@@ -335,23 +335,53 @@ void main() {
       .map((t) => t.data)
       .join(' | ');
 
-  testWidgets('글 칸이 맨 위 → 사진 줄 · 도구줄 → 태그 · 장소 · 시각 → 스토리 행', (tester) async {
+  testWidgets('글 칸이 맨 위 → 사진 줄 → 태그 · 장소 · 시각 → 스토리 행, 도구줄은 맨 아래', (
+    tester,
+  ) async {
     await pump(tester);
 
     double top(Finder f) => tester.getTopLeft(f).dy;
     final order = [
       bodyField(),
-      find.byType(ComposerToolbar),
       find.byType(TagChipInput),
       find.byType(PlaceInput),
       timeRow(),
       storyRow(),
+      find.byType(ComposerToolbar),
     ];
     for (var i = 1; i < order.length; i++) {
       expect(top(order[i - 1]), lessThan(top(order[i])), reason: '$i');
     }
     expect(find.byType(ComposerMediaStrip), findsOneWidget);
     expect(find.text('어디에 올릴까요?'), findsNothing);
+  });
+
+  testWidgets('도구줄은 목록과 따로 화면 맨 아래 · 키보드 바로 위에 고정된다', (tester) async {
+    await pump(tester);
+    final screen = tester.view.physicalSize.height;
+
+    // 목록이 짧아도 도구줄은 화면 맨 아래에 붙는다.
+    expect(tester.getBottomLeft(find.byType(ComposerToolbar)).dy, screen);
+
+    // 키보드가 올라오면 도구줄도 키보드 바로 위로 올라오고, 눌린다.
+    const keyboard = 1200.0;
+    tester.view.viewInsets = const FakeViewPadding(bottom: keyboard);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getBottomLeft(find.byType(ComposerToolbar)).dy,
+      screen - keyboard,
+    );
+    expect(
+      find
+          .descendant(
+            of: find.byType(ComposerToolbar),
+            matching: find.byTooltip('앨범에서 고르기'),
+          )
+          .hitTestable(),
+      findsOneWidget,
+    );
   });
 
   bool bodyFocused(WidgetTester tester) => tester
