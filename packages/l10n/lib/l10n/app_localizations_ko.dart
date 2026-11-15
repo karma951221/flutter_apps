@@ -4608,4 +4608,84 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatUsageDiaryDraft => '일기 초안';
+
+  @override
+  String get walkDiaryDraftSettingsSection => '자동 초안';
+
+  @override
+  String get walkDiaryDraftSettingsStyle => '기본 문체';
+
+  @override
+  String get walkDiaryDraftSettingsIncludePhotosDescription =>
+      '켜면 초안 시트의 사진 스위치가 켜진 채로 시작해요. 사진(최대 4장)은 켤 때만 AI로 보내져요.';
+
+  @override
+  String get walkDiaryDraftIncludePhotos => '사진도 보여 주기';
+
+  @override
+  String get walkDiaryDraftStyleDiary => '일기체';
+
+  @override
+  String get walkDiaryDraftStylePolite => '존댓말';
+
+  @override
+  String get walkDiaryDraftStyleSns => 'SNS 포스트체';
+
+  @override
+  String get walkDiaryDraftStyleMemo => '메모체';
+
+  @override
+  String get walkDiaryDraftStyleDiaryExample => '성수동 카페에서 책을 읽었다. 창가 자리가 따뜻했다.';
+
+  @override
+  String get walkDiaryDraftStylePoliteExample =>
+      '성수동 카페에서 책을 읽었어요. 창가 자리가 따뜻했어요.';
+
+  @override
+  String get walkDiaryDraftStyleSnsExample => '성수동 카페에서 독서 타임 ☕ 창가 자리 최고였다';
+
+  @override
+  String get walkDiaryDraftStyleMemoExample => '성수동 카페, 독서. 창가 자리 따뜻함.';
+
+  @override
+  String walkDiaryDraftStyleOption(String name, String example) {
+    return '$name — $example';
+  }
+
+  @override
+  String get walkDiaryDraftTitle => '초안 쓰기';
+
+  @override
+  String get walkDiaryDraftMemoHint => '한 줄 메모 (예: 성수동 카페에서 책)';
+
+  @override
+  String walkDiaryDraftNotice(String vendor) {
+    return '메모 · 시각 · 장소 이름이 $vendor로 보내져요.';
+  }
+
+  @override
+  String walkDiaryDraftNoticeWithPhotos(String vendor) {
+    return '메모 · 시각 · 장소 이름과 사진이 $vendor로 보내져요.';
+  }
+
+  @override
+  String get walkDiaryDraftWrite => '초안 쓰기';
+
+  @override
+  String get walkDiaryDraftWriting => '초안을 쓰는 중이에요…';
+
+  @override
+  String get walkDiaryDraftStop => '멈추기';
+
+  @override
+  String get walkDiaryDraftNoKey => '물어보기 설정에서 키를 넣으면 쓸 수 있어요.';
+
+  @override
+  String get walkDiaryDraftOpenSettings => '설정 열기';
+
+  @override
+  String get walkDiaryDraftConsentTitle => 'AI로 보내기';
+
+  @override
+  String get walkDiaryDraftManualHint => '닫고 직접 써도 돼요.';
 }

@@ -8417,6 +8417,150 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'일기 초안'**
   String get walkChatUsageDiaryDraft;
+
+  /// 일기 설정: 자동 초안 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'자동 초안'**
+  String get walkDiaryDraftSettingsSection;
+
+  /// 일기 설정: 자동 초안 기본 문체 행
+  ///
+  /// In ko, this message translates to:
+  /// **'기본 문체'**
+  String get walkDiaryDraftSettingsStyle;
+
+  /// 일기 설정: 사진도 보여 주기 기본값 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'켜면 초안 시트의 사진 스위치가 켜진 채로 시작해요. 사진(최대 4장)은 켤 때만 AI로 보내져요.'**
+  String get walkDiaryDraftSettingsIncludePhotosDescription;
+
+  /// 초안 시트 · 일기 설정: 사진을 모델로 보낼지 스위치
+  ///
+  /// In ko, this message translates to:
+  /// **'사진도 보여 주기'**
+  String get walkDiaryDraftIncludePhotos;
+
+  /// 초안 문체: 반말 '~했다'
+  ///
+  /// In ko, this message translates to:
+  /// **'일기체'**
+  String get walkDiaryDraftStyleDiary;
+
+  /// 초안 문체: '~했어요'
+  ///
+  /// In ko, this message translates to:
+  /// **'존댓말'**
+  String get walkDiaryDraftStylePolite;
+
+  /// 초안 문체: 가벼운 말투, 이모지 1~2개
+  ///
+  /// In ko, this message translates to:
+  /// **'SNS 포스트체'**
+  String get walkDiaryDraftStyleSns;
+
+  /// 초안 문체: 짧게 끊어 '~함'
+  ///
+  /// In ko, this message translates to:
+  /// **'메모체'**
+  String get walkDiaryDraftStyleMemo;
+
+  /// 초안 문체 예문: 일기체
+  ///
+  /// In ko, this message translates to:
+  /// **'성수동 카페에서 책을 읽었다. 창가 자리가 따뜻했다.'**
+  String get walkDiaryDraftStyleDiaryExample;
+
+  /// 초안 문체 예문: 존댓말
+  ///
+  /// In ko, this message translates to:
+  /// **'성수동 카페에서 책을 읽었어요. 창가 자리가 따뜻했어요.'**
+  String get walkDiaryDraftStylePoliteExample;
+
+  /// 초안 문체 예문: SNS 포스트체
+  ///
+  /// In ko, this message translates to:
+  /// **'성수동 카페에서 독서 타임 ☕ 창가 자리 최고였다'**
+  String get walkDiaryDraftStyleSnsExample;
+
+  /// 초안 문체 예문: 메모체
+  ///
+  /// In ko, this message translates to:
+  /// **'성수동 카페, 독서. 창가 자리 따뜻함.'**
+  String get walkDiaryDraftStyleMemoExample;
+
+  /// 일기 설정 기본 문체 고르기: 이름 — 예문
+  ///
+  /// In ko, this message translates to:
+  /// **'{name} — {example}'**
+  String walkDiaryDraftStyleOption(String name, String example);
+
+  /// 초안 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'초안 쓰기'**
+  String get walkDiaryDraftTitle;
+
+  /// 초안 시트: 메모 칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'한 줄 메모 (예: 성수동 카페에서 책)'**
+  String get walkDiaryDraftMemoHint;
+
+  /// 초안 시트: 전송 안내(사진 끔)
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 · 시각 · 장소 이름이 {vendor}로 보내져요.'**
+  String walkDiaryDraftNotice(String vendor);
+
+  /// 초안 시트: 전송 안내(사진 켬)
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 · 시각 · 장소 이름과 사진이 {vendor}로 보내져요.'**
+  String walkDiaryDraftNoticeWithPhotos(String vendor);
+
+  /// 초안 시트: 요청 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'초안 쓰기'**
+  String get walkDiaryDraftWrite;
+
+  /// 초안 시트: 진행 중 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'초안을 쓰는 중이에요…'**
+  String get walkDiaryDraftWriting;
+
+  /// 초안 시트: 진행 중 멈추기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'멈추기'**
+  String get walkDiaryDraftStop;
+
+  /// 초안 시트: 키가 없을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'물어보기 설정에서 키를 넣으면 쓸 수 있어요.'**
+  String get walkDiaryDraftNoKey;
+
+  /// 초안 시트: 물어보기 설정 열기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'설정 열기'**
+  String get walkDiaryDraftOpenSettings;
+
+  /// 초안 시트: 전송 동의 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'AI로 보내기'**
+  String get walkDiaryDraftConsentTitle;
+
+  /// 초안 시트: 실패 뒤 손으로 쓰기 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'닫고 직접 써도 돼요.'**
+  String get walkDiaryDraftManualHint;
 }
 
 class _AppLocalizationsDelegate
