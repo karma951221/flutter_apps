@@ -312,15 +312,22 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
     emit(state.copyWith(draft: state.draft.copyWith(media: media)));
   }
 
-  /// 초안 시트에 넘길 재료(스펙 §4). 촬영 범위는 지금 붙어 있는 사진의 메타데이터로,
-  /// 장소 이름은 [photoPlaceNames](좌표 → 이름은 부르는 쪽 몫)로 받는다.
-  DraftContext draftContext(String memo) {
+  /// 초안 재료(스펙 2026-11-15 §4). 촬영 범위는 지금 붙어 있는 사진의 메타데이터로.
+  /// 장소가 자동으로 잡힌 현재 위치면 [DraftContext.autoPlace] — 사진이 먼 때 찍혔으면 프롬프트에서 뺀다.
+  /// [locale] 은 앱 언어 코드(메모가 비면 이 언어로 쓴다).
+  DraftContext draftContext(String memo, {String? locale}) {
     final draft = state.draft;
     final range = currentPhotoMetas.takenRange;
     return DraftContext(
       memo: memo,
       occurredAt: draft.occurredAt,
       placeName: draft.location?.placeName,
+      autoPlace:
+          !state.isEditing &&
+          !state.manualPlace &&
+          (draft.location?.hasCoordinates ?? false),
+      now: _clock.now(),
+      locale: locale,
       photoCount: draft.media.where((m) => m.kind == MediaKind.photo).length,
       videoCount: draft.media.where((m) => m.kind == MediaKind.video).length,
       photoTakenFrom: range?.from,
@@ -333,6 +340,9 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
   List<PhotoMeta> get currentPhotoMetas => [
     for (final m in state.draft.media) ?state.photoMetas[m.id],
   ];
+
+  /// 붙어 있는 사진 중 가장 이른 촬영 시각("찍은 시각으로" 칩). 없으면 null.
+  DateTime? get photoTakenAt => currentPhotoMetas.takenRange?.from;
 
   /// 저장 중 · 가져오는 중 · 저장한 뒤에는 무시한다.
   Future<void> save() async {

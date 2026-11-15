@@ -96,6 +96,45 @@ void main() {
       );
     });
 
+    group('장소 빼기(R-A6)', () {
+      final now = DateTime(2026, 11, 15, 15);
+      DraftContext ctx({required bool autoPlace, required DateTime taken}) =>
+          DraftContext(
+            memo: 'a',
+            occurredAt: now,
+            now: now,
+            placeName: '성수동',
+            autoPlace: autoPlace,
+            photoCount: 1,
+            photoTakenFrom: taken,
+            photoTakenTo: taken,
+          );
+
+      test('촬영 시각이 3시간 넘게 다르고 장소가 자동 현재 위치면 뺀다', () {
+        final text = DraftPrompt.user(
+          ctx(autoPlace: true, taken: DateTime(2026, 11, 14, 15)),
+        );
+
+        expect(text, isNot(contains('장소:')));
+      });
+
+      test('직접 넣은 장소는 촬영 시각이 멀어도 싣는다', () {
+        final text = DraftPrompt.user(
+          ctx(autoPlace: false, taken: DateTime(2026, 11, 14, 15)),
+        );
+
+        expect(text, contains('장소: 성수동'));
+      });
+
+      test('촬영 시각이 3시간 안이면 자동 위치도 싣는다', () {
+        final text = DraftPrompt.user(
+          ctx(autoPlace: true, taken: DateTime(2026, 11, 15, 13)),
+        );
+
+        expect(text, contains('장소: 성수동'));
+      });
+    });
+
     test('좌표처럼 보이는 숫자는 없다', () {
       final text = DraftPrompt.user(_full());
 
@@ -115,6 +154,50 @@ void main() {
       expect(text, contains('일기'));
       expect(text, contains('지어내지'));
       expect(text, contains('글만 돌려준다'));
+    });
+
+    group('언어(R-A8)', () {
+      test('메모가 있으면 메모와 같은 언어로', () {
+        final text = DraftPrompt.system(
+          style: DraftStyle.diary,
+          length: DraftLength.normal,
+          memo: 'coffee in Seongsu',
+          locale: 'ko',
+        );
+
+        expect(text, contains('메모와 같은 언어'));
+        expect(text, isNot(contains('한국어')));
+      });
+
+      test('메모가 비면 앱 언어로', () {
+        String langOf(String? locale) => DraftPrompt.system(
+          style: DraftStyle.diary,
+          length: DraftLength.normal,
+          memo: '  ',
+          locale: locale,
+        );
+
+        expect(langOf('en'), contains('영어(English)로 쓴다'));
+        expect(langOf('ja'), contains('일본어(日本語)로 쓴다'));
+        expect(langOf('ko'), contains('한국어로 쓴다'));
+        expect(langOf(null), contains('한국어로 쓴다'));
+        expect(langOf('ko'), isNot(contains('메모와 같은 언어')));
+      });
+    });
+
+    test('다듬기면 새 사실을 더하지 말고 다듬으라고 한다(R-A3)', () {
+      final polish = DraftPrompt.system(
+        style: DraftStyle.diary,
+        length: DraftLength.normal,
+        polish: true,
+      );
+      final plain = DraftPrompt.system(
+        style: DraftStyle.diary,
+        length: DraftLength.normal,
+      );
+
+      expect(polish, contains('새 사실을 더하지 말고'));
+      expect(plain, isNot(contains('새 사실을 더하지 말고')));
     });
 
     test('목표 문장 수를 숫자로 싣는다', () {

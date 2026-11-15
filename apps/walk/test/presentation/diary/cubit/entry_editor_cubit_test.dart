@@ -582,6 +582,36 @@ void main() {
       expect(ctx.photoTakenTo, DateTime(2026, 11, 14, 9));
       expect(ctx.tags, ['주말']);
     });
+
+    test('photoTakenAt 은 붙어 있는 사진 중 가장 이른 촬영 시각', () async {
+      final second = File('${pickedPhoto.parent.path}/second.jpg')
+        ..writeAsBytesSync(pickedPhoto.readAsBytesSync());
+      final c = withMeta({
+        pickedPhoto.path: PhotoMeta(takenAt: DateTime(2026, 11, 14, 9)),
+        second.path: PhotoMeta(takenAt: DateTime(2026, 11, 13, 20)),
+      });
+      await c.startNew();
+      expect(c.photoTakenAt, isNull);
+
+      await c.addMedia([photo(), (path: second.path, kind: MediaKind.photo)]);
+      expect(c.photoTakenAt, DateTime(2026, 11, 13, 20));
+
+      c.removeMedia(c.state.draft.media.last.id);
+      expect(c.photoTakenAt, DateTime(2026, 11, 14, 9));
+    });
+
+    test('draftContext 는 자동 현재 위치 여부 · 지금 · 앱 언어를 담는다', () async {
+      final c = withMeta({});
+      await c.startNew();
+
+      final auto = c.draftContext('카페', locale: 'en');
+      expect(auto.autoPlace, isTrue);
+      expect(auto.now, h.clock.now());
+      expect(auto.locale, 'en');
+
+      c.setPlaceName('성수동');
+      expect(c.draftContext('카페').autoPlace, isFalse);
+    });
   });
 }
 
