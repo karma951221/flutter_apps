@@ -5,7 +5,7 @@ import 'chat_vendor.dart';
 part 'chat_usage_log.freezed.dart';
 
 /// 사용량이 생긴 쓰임. 기록 기획의 위키 정리는 wikiDistill(키 기획 §9 의 `wiki` 를 이 이름으로 맞춤).
-enum ChatUsagePurpose { chat, wikiDistill }
+enum ChatUsagePurpose { chat, wikiDistill, diaryDraft }
 
 /// 요청(도구 라운드) 하나의 토큰 사용량. 질문 · 답 글 · 대화 id 는 담지 않는다.
 @freezed

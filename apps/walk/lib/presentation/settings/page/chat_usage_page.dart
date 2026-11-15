@@ -230,7 +230,7 @@ class _MonthBar extends StatelessWidget {
   }
 }
 
-/// `Anthropic · claude-… (· 위키 정리)` / `질문 n · 입력 n · 출력 n`.
+/// `Anthropic · claude-… (· 위키 정리 | · 일기 초안)` / `질문 n · 입력 n · 출력 n`.
 class _ModelRow extends StatelessWidget {
   const _ModelRow({required this.row, required this.number});
 
@@ -243,8 +243,13 @@ class _ModelRow extends StatelessWidget {
     final title = StringBuffer(
       '${chatVendorName(l10n, row.vendor)} · ${row.model}',
     );
-    if (row.purpose == ChatUsagePurpose.wikiDistill) {
-      title.write(' · ${l10n.walkChatUsageWikiDistill}');
+    switch (row.purpose) {
+      case ChatUsagePurpose.chat:
+        break;
+      case ChatUsagePurpose.wikiDistill:
+        title.write(' · ${l10n.walkChatUsageWikiDistill}');
+      case ChatUsagePurpose.diaryDraft:
+        title.write(' · ${l10n.walkChatUsageDiaryDraft}');
     }
     return AppListTile(
       title: Text(title.toString()),

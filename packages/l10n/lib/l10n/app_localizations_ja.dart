@@ -4602,4 +4602,87 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkDiaryComposerStory => 'ストーリー';
+
+  @override
+  String get walkChatUsageDiaryDraft => '日記の下書き';
+
+  @override
+  String get walkDiaryDraftSettingsSection => '自動下書き';
+
+  @override
+  String get walkDiaryDraftSettingsStyle => '基本の文体';
+
+  @override
+  String get walkDiaryDraftSettingsIncludePhotosDescription =>
+      'オンにすると下書きシートの写真スイッチがオンの状態で始まります。写真(最大4枚)はオンのときだけAIに送られます。';
+
+  @override
+  String get walkDiaryDraftIncludePhotos => '写真も見せる';
+
+  @override
+  String get walkDiaryDraftStyleDiary => '日記体';
+
+  @override
+  String get walkDiaryDraftStylePolite => '丁寧語';
+
+  @override
+  String get walkDiaryDraftStyleSns => 'SNS投稿風';
+
+  @override
+  String get walkDiaryDraftStyleMemo => 'メモ体';
+
+  @override
+  String get walkDiaryDraftStyleDiaryExample => '聖水洞のカフェで本を読んだ。窓際の席が暖かかった。';
+
+  @override
+  String get walkDiaryDraftStylePoliteExample =>
+      '聖水洞のカフェで本を読みました。窓際の席が暖かかったです。';
+
+  @override
+  String get walkDiaryDraftStyleSnsExample => '聖水洞のカフェで読書タイム ☕ 窓際の席が最高だった';
+
+  @override
+  String get walkDiaryDraftStyleMemoExample => '聖水洞のカフェ、読書。窓際の席、暖かい。';
+
+  @override
+  String walkDiaryDraftStyleOption(String name, String example) {
+    return '$name — $example';
+  }
+
+  @override
+  String get walkDiaryDraftTitle => '下書きを書く';
+
+  @override
+  String get walkDiaryDraftMemoHint => 'ひとことメモ(例: 聖水洞のカフェで本)';
+
+  @override
+  String walkDiaryDraftNotice(String vendor) {
+    return 'メモ・時刻・場所の名前が$vendorに送られます。';
+  }
+
+  @override
+  String walkDiaryDraftNoticeWithPhotos(String vendor) {
+    return 'メモ・時刻・場所の名前と写真が$vendorに送られます。';
+  }
+
+  @override
+  String get walkDiaryDraftWrite => '下書きを書く';
+
+  @override
+  String get walkDiaryDraftWriting => '下書きを書いています…';
+
+  @override
+  String get walkDiaryDraftStop => '止める';
+
+  @override
+  String get walkDiaryDraftNoKey => '質問の設定でキーを入れると使えます。';
+
+  @override
+  String get walkDiaryDraftOpenSettings => '設定を開く';
+
+  @override
+  String get walkDiaryDraftConsentTitle => 'AIに送る';
+
+  @override
+  String get walkDiaryDraftManualHint => '閉じて自分で書いても大丈夫です。';
 }

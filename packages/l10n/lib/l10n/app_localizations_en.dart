@@ -4995,4 +4995,92 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkDiaryComposerStory => 'Story';
+
+  @override
+  String get walkChatUsageDiaryDraft => 'Diary draft';
+
+  @override
+  String get walkDiaryDraftSettingsSection => 'Auto draft';
+
+  @override
+  String get walkDiaryDraftSettingsStyle => 'Default style';
+
+  @override
+  String get walkDiaryDraftSettingsIncludePhotosDescription =>
+      'When on, the draft sheet starts with the photo switch on. Photos (up to 4) are sent to the AI only when it\'s on.';
+
+  @override
+  String get walkDiaryDraftIncludePhotos => 'Show photos too';
+
+  @override
+  String get walkDiaryDraftStyleDiary => 'Diary';
+
+  @override
+  String get walkDiaryDraftStylePolite => 'Polite';
+
+  @override
+  String get walkDiaryDraftStyleSns => 'Social post';
+
+  @override
+  String get walkDiaryDraftStyleMemo => 'Notes';
+
+  @override
+  String get walkDiaryDraftStyleDiaryExample =>
+      'Read a book at a cafe in Seongsu. The window seat was warm.';
+
+  @override
+  String get walkDiaryDraftStylePoliteExample =>
+      'I read a book at a cafe in Seongsu. The window seat was warm.';
+
+  @override
+  String get walkDiaryDraftStyleSnsExample =>
+      'Reading time at a Seongsu cafe ☕ window seat was the best';
+
+  @override
+  String get walkDiaryDraftStyleMemoExample =>
+      'Seongsu cafe, reading. Window seat, warm.';
+
+  @override
+  String walkDiaryDraftStyleOption(String name, String example) {
+    return '$name — $example';
+  }
+
+  @override
+  String get walkDiaryDraftTitle => 'Write a draft';
+
+  @override
+  String get walkDiaryDraftMemoHint =>
+      'One-line memo (e.g. book at a cafe in Seongsu)';
+
+  @override
+  String walkDiaryDraftNotice(String vendor) {
+    return 'Your memo, time and place names are sent to $vendor.';
+  }
+
+  @override
+  String walkDiaryDraftNoticeWithPhotos(String vendor) {
+    return 'Your memo, time, place names and photos are sent to $vendor.';
+  }
+
+  @override
+  String get walkDiaryDraftWrite => 'Write draft';
+
+  @override
+  String get walkDiaryDraftWriting => 'Writing a draft…';
+
+  @override
+  String get walkDiaryDraftStop => 'Stop';
+
+  @override
+  String get walkDiaryDraftNoKey => 'Add a key in Ask settings to use this.';
+
+  @override
+  String get walkDiaryDraftOpenSettings => 'Open settings';
+
+  @override
+  String get walkDiaryDraftConsentTitle => 'Send to AI';
+
+  @override
+  String get walkDiaryDraftManualHint =>
+      'You can close this and write it yourself.';
 }

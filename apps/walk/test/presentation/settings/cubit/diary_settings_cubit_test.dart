@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:walk/domain/diary/draft/draft_style.dart';
 import 'package:walk/domain/diary/entity/diary_usage.dart';
 import 'package:walk/domain/diary/entity/trash_retention.dart';
 import 'package:walk/domain/diary/repository/diary_preferences.dart';
@@ -25,6 +26,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(const LockConfig());
     registerFallbackValue(TrashRetention.day7);
+    registerFallbackValue(DraftStyle.diary);
   });
   setUp(() {
     lock = _MockLock();
@@ -34,6 +36,10 @@ void main() {
     when(() => lock.saveConfig(any())).thenAnswer((_) async {});
     when(() => prefs.trashRetention).thenReturn(TrashRetention.day7);
     when(() => prefs.setTrashRetention(any())).thenAnswer((_) async {});
+    when(() => prefs.draftStyle).thenReturn(DraftStyle.diary);
+    when(() => prefs.draftIncludePhotos).thenReturn(false);
+    when(() => prefs.setDraftStyle(any())).thenAnswer((_) async {});
+    when(() => prefs.setDraftIncludePhotos(any())).thenAnswer((_) async {});
     when(repo.usage).thenAnswer((_) async => usage);
     cubit = DiarySettingsCubit(lock, prefs, repo);
   });
@@ -102,5 +108,49 @@ void main() {
     verify(() => prefs.setTrashRetention(TrashRetention.never)).called(1);
     expect(cubit.state.retention, TrashRetention.never);
     expect(cubit.state.usage, usage);
+  });
+
+  test('load: 자동 초안 기본 문체 · 사진 기본값을 읽는다', () async {
+    when(() => prefs.draftStyle).thenReturn(DraftStyle.polite);
+    when(() => prefs.draftIncludePhotos).thenReturn(true);
+
+    await cubit.load();
+
+    expect(cubit.state.draftStyle, DraftStyle.polite);
+    expect(cubit.state.draftIncludePhotos, isTrue);
+  });
+
+  test('처음 상태의 자동 초안은 일기체 · 사진 끔', () {
+    expect(cubit.state.draftStyle, DraftStyle.diary);
+    expect(cubit.state.draftIncludePhotos, isFalse);
+  });
+
+  test('setDraftStyle: 저장하고 상태에 반영한다(다른 값은 그대로)', () async {
+    await cubit.load();
+
+    await cubit.setDraftStyle(DraftStyle.sns);
+
+    verify(() => prefs.setDraftStyle(DraftStyle.sns)).called(1);
+    expect(cubit.state.draftStyle, DraftStyle.sns);
+    expect(cubit.state.usage, usage);
+    expect(cubit.state.retention, TrashRetention.day7);
+  });
+
+  test('setDraftIncludePhotos: 저장하고 상태에 반영한다', () async {
+    await cubit.load();
+
+    await cubit.setDraftIncludePhotos(true);
+
+    verify(() => prefs.setDraftIncludePhotos(true)).called(1);
+    expect(cubit.state.draftIncludePhotos, isTrue);
+  });
+
+  test('setRetention 뒤에도 자동 초안 값은 그대로', () async {
+    when(() => prefs.draftStyle).thenReturn(DraftStyle.memo);
+    await cubit.load();
+
+    await cubit.setRetention(TrashRetention.never);
+
+    expect(cubit.state.draftStyle, DraftStyle.memo);
   });
 }

@@ -38,6 +38,14 @@ final _november = ChatUsageMonth(
       inputTokens: 3456,
       outputTokens: 890,
     ),
+    ChatUsageModelRow(
+      vendor: ChatVendor.values.first,
+      model: 'model-c',
+      purpose: ChatUsagePurpose.diaryDraft,
+      questions: 0,
+      inputTokens: 300,
+      outputTokens: 80,
+    ),
   ],
   wiki: const ChatUsageWikiStats(
     questions: 12,
@@ -122,6 +130,14 @@ void main() {
     expect(wiki, findsOneWidget);
     expect((tester.widget<Text>(wiki).data!).endsWith(' · 위키 정리'), isTrue);
     expect(find.textContaining('model-a · 위키 정리'), findsNothing);
+  });
+
+  testWidgets("diaryDraft 줄은 '일기 초안'이 붙는다", (tester) async {
+    await pump(tester);
+
+    final draft = find.textContaining('model-c');
+    expect(draft, findsOneWidget);
+    expect((tester.widget<Text>(draft).data!).endsWith(' · 일기 초안'), isTrue);
   });
 
   testWidgets('‹ 를 누르면 지난 달 숫자', (tester) async {
