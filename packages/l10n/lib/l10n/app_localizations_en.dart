@@ -4994,6 +4994,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryComposerPosted => 'Posted';
 
   @override
+  String walkDiaryComposerPostedTo(String story) {
+    return 'Posted to \'$story\'';
+  }
+
+  @override
   String get walkDiaryComposerStory => 'Story';
 
   @override

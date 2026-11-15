@@ -640,7 +640,7 @@ void main() {
     expect(storyRowValue(tester), '일상');
   });
 
-  testWidgets('올리면 스낵바 "올렸어요"(스토리 이름 없이)', (tester) async {
+  testWidgets("일상이 아닌 스토리에 올리면 스낵바 \"'제주 여행'에 올렸어요\"", (tester) async {
     when(
       () => useCase.save(any(), editingId: any(named: 'editingId')),
     ).thenAnswer((_) async => savedEntry('jeju'));
@@ -652,8 +652,22 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('home'), findsOneWidget);
+    expect(find.text("'제주 여행'에 올렸어요"), findsOneWidget);
+    expect(find.text('올렸어요'), findsNothing);
+  });
+
+  testWidgets('일상에 올리면 스낵바 "올렸어요"(스토리 이름 없이)', (tester) async {
+    when(
+      () => useCase.save(any(), editingId: any(named: 'editingId')),
+    ).thenAnswer((_) async => savedEntry(Story.dailyId));
+    await pump(tester);
+    await tester.enterText(bodyField(), '바다');
+
+    await tester.tap(find.text('올리기'));
+    await tester.pumpAndSettle();
+
     expect(find.text('올렸어요'), findsOneWidget);
-    expect(find.text('제주 여행에 올렸어요'), findsNothing);
+    expect(find.textContaining("'"), findsNothing);
   });
 
   testWidgets('처음 고르기(initialPick)는 한 번만 — 잠겼다 풀려도 다시 열지 않는다', (tester) async {

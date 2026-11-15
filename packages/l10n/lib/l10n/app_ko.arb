@@ -5339,6 +5339,8 @@
   "@walkDiaryComposerDraft": {"description": "작성 화면 도구줄 — 사진 · 메모로 초안 쓰기 버튼(툴팁)"},
   "walkDiaryComposerPosted": "올렸어요",
   "@walkDiaryComposerPosted": {"description": "새 기록을 올린 뒤 스낵바"},
+  "walkDiaryComposerPostedTo": "'{story}'에 올렸어요",
+  "@walkDiaryComposerPostedTo": {"description": "일상이 아닌 스토리에 새 기록을 올린 뒤 스낵바", "placeholders": {"story": {"type": "String"}}},
   "walkDiaryComposerStory": "스토리",
   "@walkDiaryComposerStory": {"description": "작성 화면 맨 아래 스토리 행 이름"},
   "walkChatUsageDiaryDraft": "일기 초안",

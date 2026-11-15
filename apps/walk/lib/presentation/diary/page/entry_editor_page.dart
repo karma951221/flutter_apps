@@ -138,7 +138,7 @@ class _EntryEditorScopeState extends State<EntryEditorScope> {
 /// 태그 → 장소 → 시각 → 스토리 행. 스토리 시트는 새 기록이면 진행 중 스토리만, 고치기는 지난
 /// 스토리도 보인다(옮기기 허용).
 ///
-/// 저장하면 닫히고, 새 기록이면 '올렸어요' 스낵바를 띄운다. 바꾼 것이 있는데 닫으면
+/// 저장하면 닫히고, 새 기록이면 '올렸어요'(일상 밖이면 "'제주 여행'에 올렸어요") 스낵바를 띄운다. 바꾼 것이 있는데 닫으면
 /// (✕ · 뒤로) 버릴지 묻고, 버리면 새로 가져온 임시 사본을 지운다. 잠겼다 풀려 다시 만들어지면
 /// 입력칸을 cubit 의 내용으로 채운다.
 class EntryEditorPage extends StatefulWidget {
@@ -361,7 +361,9 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
       if (!state.isEditing) {
         AppSnackBar.show(
           context,
-          message: l10n.walkDiaryComposerPosted,
+          message: state.draft.storyId == Story.dailyId
+              ? l10n.walkDiaryComposerPosted
+              : l10n.walkDiaryComposerPostedTo(_storyTitle(l10n, state)),
           type: AppSnackBarType.success,
         );
       }

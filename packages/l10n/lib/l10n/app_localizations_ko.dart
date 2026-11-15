@@ -4605,6 +4605,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryComposerPosted => '올렸어요';
 
   @override
+  String walkDiaryComposerPostedTo(String story) {
+    return '\'$story\'에 올렸어요';
+  }
+
+  @override
   String get walkDiaryComposerStory => '스토리';
 
   @override

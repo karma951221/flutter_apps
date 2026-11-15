@@ -1404,6 +1404,7 @@
   "walkWeatherTurnOnLocation": "Turn on location",
   "walkDiaryComposerDraft": "Write a draft",
   "walkDiaryComposerPosted": "Posted",
+  "walkDiaryComposerPostedTo": "Posted to '{story}'",
   "walkDiaryComposerStory": "Story",
   "walkChatUsageDiaryDraft": "Diary draft",
   "walkDiaryDraftSettingsSection": "Auto draft",

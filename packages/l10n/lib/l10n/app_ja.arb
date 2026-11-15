@@ -1404,6 +1404,7 @@
   "walkWeatherTurnOnLocation": "位置情報をオン",
   "walkDiaryComposerDraft": "下書きを作る",
   "walkDiaryComposerPosted": "投稿しました",
+  "walkDiaryComposerPostedTo": "「{story}」に投稿しました",
   "walkDiaryComposerStory": "ストーリー",
   "walkChatUsageDiaryDraft": "日記の下書き",
   "walkDiaryDraftSettingsSection": "自動下書き",

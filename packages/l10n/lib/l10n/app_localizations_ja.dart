@@ -4601,6 +4601,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryComposerPosted => '投稿しました';
 
   @override
+  String walkDiaryComposerPostedTo(String story) {
+    return '「$story」に投稿しました';
+  }
+
+  @override
   String get walkDiaryComposerStory => 'ストーリー';
 
   @override

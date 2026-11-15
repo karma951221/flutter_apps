@@ -8412,6 +8412,12 @@ abstract class AppLocalizations {
   /// **'올렸어요'**
   String get walkDiaryComposerPosted;
 
+  /// 일상이 아닌 스토리에 새 기록을 올린 뒤 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'\'{story}\'에 올렸어요'**
+  String walkDiaryComposerPostedTo(String story);
+
   /// 작성 화면 맨 아래 스토리 행 이름
   ///
   /// In ko, this message translates to:
