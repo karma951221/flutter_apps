@@ -5072,12 +5072,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkDiaryDraftPhotosConfirm(int count, String vendor) {
-    return 'Up to $count photos will be sent to $vendor. While on, they are sent every time you write a draft.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Up to $count photos',
+      one: '1 photo',
+    );
+    return '$_temp0 will be sent to $vendor. While on, they are sent every time you write a draft.';
   }
 
   @override
   String walkDiaryDraftPhotosConfirmNoVendor(int count) {
-    return 'Up to $count photos will be sent to the AI. While on, they are sent every time you write a draft.';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Up to $count photos',
+      one: '1 photo',
+    );
+    return '$_temp0 will be sent to the AI. While on, they are sent every time you write a draft.';
   }
 
   @override
