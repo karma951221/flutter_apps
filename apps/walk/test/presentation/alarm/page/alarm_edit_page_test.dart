@@ -491,7 +491,7 @@ void main() {
         hour: 6,
         minute: 30,
         repeat: {Weekday.mon},
-        sound: AlarmSound.bundled(BundledAlarmSounds.chime),
+        sound: AlarmSound.bundled(BundledAlarmSounds.legacyChime),
       ),
     );
 

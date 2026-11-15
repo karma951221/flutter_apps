@@ -15,12 +15,12 @@ void main() {
 
   test('내장음은 에셋 경로로 이름을 고른다 — default.wav 는 "비프"', () {
     expect(AlarmSoundFormat.name(ko, const AlarmSound.bundled(BundledAlarmSounds.beep)), '비프');
-    expect(AlarmSoundFormat.name(ko, const AlarmSound.bundled(BundledAlarmSounds.chime)), '차임');
+    expect(AlarmSoundFormat.name(ko, const AlarmSound.bundled(BundledAlarmSounds.legacyChime)), '차임');
     expect(
-      AlarmSoundFormat.name(ko, const AlarmSound.bundled(BundledAlarmSounds.rising)),
+      AlarmSoundFormat.name(ko, const AlarmSound.bundled(BundledAlarmSounds.legacyRising)),
       '점점 빠르게',
     );
-    expect(AlarmSoundFormat.bundled(en, BundledAlarmSounds.chime), 'Chime');
+    expect(AlarmSoundFormat.bundled(en, BundledAlarmSounds.legacyChime), 'Chime');
   });
 
   test('모르는 에셋은 파일 이름', () {

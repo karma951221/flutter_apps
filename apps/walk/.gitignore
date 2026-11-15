@@ -46,3 +46,6 @@ app.*.map.json
 
 # 통근 탭 API 키(config/commute_keys.example.json 을 복사해 채운다)
 /config/commute_keys.json
+
+# 알람 벨소리 합성용 파이썬 가상환경(tool/alarm_sounds/README.md)
+/.venv/

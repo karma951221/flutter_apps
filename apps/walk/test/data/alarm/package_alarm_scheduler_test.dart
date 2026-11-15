@@ -194,7 +194,7 @@ void main() {
     });
 
     test('내장음은 에셋 경로로 건다', () {
-      expect(audio(const AlarmSound.bundled(BundledAlarmSounds.chime)), BundledAlarmSounds.chime);
+      expect(audio(const AlarmSound.bundled(BundledAlarmSounds.legacyChime)), BundledAlarmSounds.legacyChime);
     });
 
     test('기기 알람음은 복사본이 있으면 그 경로, 없으면 시스템 기본음', () {
@@ -206,7 +206,7 @@ void main() {
     test('대체음은 소리와 상관없이 항상 비프', () {
       for (final sound in [
         const AlarmSound.system(),
-        const AlarmSound.bundled(BundledAlarmSounds.rising),
+        const AlarmSound.bundled(BundledAlarmSounds.legacyRising),
         const AlarmSound.device(title: 'Oxygen', path: '/nope.ogg'),
       ]) {
         final settings = PackageAlarmScheduler.settingsFor(
@@ -233,8 +233,8 @@ void main() {
     test('소리 · 무음 모드 체크 · 라벨이 바뀌면 지문이 바뀐다', () {
       final variants = [
         base,
-        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.chime)),
-        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.rising)),
+        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.legacyChime)),
+        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.legacyRising)),
         base.copyWith(
           sound: const AlarmSound.device(title: 'Oxygen', path: '/a.ogg'),
         ),
@@ -302,7 +302,7 @@ void main() {
       for (final alarm in [
         base,
         base.copyWith(label: '', silentWhenRingerMuted: true),
-        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.chime)),
+        base.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.legacyChime)),
       ]) {
         expect(sig(alarm), isNot(preIcon(alarm)), reason: '$alarm');
       }

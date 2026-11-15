@@ -79,7 +79,7 @@ void main() {
 
     test('bundled 는 kind asset + 에셋 경로', () async {
       await ChannelAlarmSoundSource().preview(
-        const AlarmSound.bundled(BundledAlarmSounds.chime),
+        const AlarmSound.bundled(BundledAlarmSounds.legacyChime),
       );
       expect(calls.single.arguments, {'kind': 'asset', 'value': 'assets/alarm/chime.wav'});
     });

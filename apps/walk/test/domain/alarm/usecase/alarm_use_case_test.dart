@@ -472,7 +472,7 @@ void main() {
     });
 
     test('시각이 같아도 지문이 다르면 지금 설정으로 다시 건다', () async {
-      final changed = alarm.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.chime));
+      final changed = alarm.copyWith(sound: const AlarmSound.bundled(BundledAlarmSounds.legacyChime));
       repository.alarms = [changed];
       scheduler.entries[tuesdayId] = tuesdayAt;
       scheduler.signatures[tuesdayId] = scheduler.signatureOf(alarm);

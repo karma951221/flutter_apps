@@ -18,7 +18,7 @@ void main() {
     });
 
     test('bundled', () {
-      const sound = AlarmSound.bundled(BundledAlarmSounds.chime);
+      const sound = AlarmSound.bundled(BundledAlarmSounds.legacyChime);
 
       expect(sound.toJson(), {'type': 'bundled', 'asset': 'assets/alarm/chime.wav'});
       expect(roundTrip(sound), sound);
@@ -51,7 +51,7 @@ void main() {
     });
 
     test('type 이 없다', () {
-      expect(AlarmSound.fromJson(const {'asset': BundledAlarmSounds.chime}), system);
+      expect(AlarmSound.fromJson(const {'asset': BundledAlarmSounds.legacyChime}), system);
     });
 
     test('맵이 아니다', () {
@@ -75,14 +75,21 @@ void main() {
     test('기존 비프는 이미 걸린 회차가 울리도록 default.wav 이름 그대로다', () {
       expect(BundledAlarmSounds.beep, 'assets/alarm/default.wav');
       expect(BundledAlarmSounds.all, [
+        BundledAlarmSounds.morning,
+        BundledAlarmSounds.marimba,
+        BundledAlarmSounds.classic,
+        BundledAlarmSounds.birds,
         BundledAlarmSounds.beep,
-        BundledAlarmSounds.chime,
-        BundledAlarmSounds.rising,
       ]);
     });
 
-    // 패키지가 loopAudio 로 반복하므로 모두 같은 형식의 3초 클립이다.
-    for (final asset in BundledAlarmSounds.all) {
+    // 이전 wav 는 모두 같은 형식의 3초 클립이다(이미 걸린 회차가 울린다).
+    // 새 ogg 는 test/convention/alarm_assets_test.dart 가 본다.
+    for (final asset in [
+      BundledAlarmSounds.beep,
+      BundledAlarmSounds.legacyChime,
+      BundledAlarmSounds.legacyRising,
+    ]) {
       test('$asset 은 번들에 있는 22.05kHz 모노 16bit 3초 WAV 다', () async {
         TestWidgetsFlutterBinding.ensureInitialized();
 

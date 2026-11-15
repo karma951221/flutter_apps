@@ -54,7 +54,7 @@ void main() {
     test('JSON 에 sound 로 저장하고 3종 모두 되살린다', () {
       const sounds = [
         AlarmSound.system(),
-        AlarmSound.bundled(BundledAlarmSounds.rising),
+        AlarmSound.bundled(BundledAlarmSounds.legacyRising),
         AlarmSound.device(title: 'Morning Glory', path: '/data/app_flutter/alarm_sounds/1a2b.ogg'),
       ];
       for (final sound in sounds) {
@@ -255,7 +255,7 @@ void main() {
         repeat: const {Weekday.mon, Weekday.fri},
         label: '출근',
         silentWhenRingerMuted: true,
-        sound: const AlarmSound.bundled(BundledAlarmSounds.rising),
+        sound: const AlarmSound.bundled(BundledAlarmSounds.legacyRising),
         enabled: false,
         volumePercent: 50,
         fadeSeconds: 0,

@@ -83,13 +83,13 @@ void main() {
     );
   }
 
-  testWidgets('세 구역: 시스템 기본 · 앱 소리 3줄 · 기기 알람음 목록', (tester) async {
+  testWidgets('세 구역: 시스템 기본 · 앱 소리 5줄 · 기기 알람음 목록', (tester) async {
     await pump(tester, const AlarmSound.system());
 
     expect(find.text('알람음'), findsOneWidget);
     expect(find.text('시스템 기본'), findsOneWidget);
     expect(find.text('앱 소리'), findsOneWidget);
-    for (final name in ['비프', '차임', '점점 빠르게']) {
+    for (final name in ['morning', 'marimba', 'classic', 'birds', '비프']) {
       expect(find.text(name), findsOneWidget);
     }
     expect(find.text('기기 알람음'), findsOneWidget);
@@ -114,12 +114,12 @@ void main() {
 
     expect(find.text('기기 알람음을 불러오지 못했어요'), findsOneWidget);
     expect(find.byType(AppPlaceholder), findsOneWidget);
-    await tester.tap(find.text('차임'));
+    await tester.tap(find.text('morning'));
     await tester.pump();
     await tester.tap(find.text('선택'));
     await tester.pumpAndSettle();
 
-    expect(results, [const AlarmSound.bundled(BundledAlarmSounds.chime)]);
+    expect(results, [const AlarmSound.bundled(BundledAlarmSounds.morning)]);
   });
 
   testWidgets('기기 목록이 비어도 같은 안내', (tester) async {
@@ -132,19 +132,19 @@ void main() {
   testWidgets('줄을 누르면 선택 표시가 옮겨 가고 미리 듣는다 → 선택하면 그 소리로 닫힌다', (tester) async {
     final results = await pump(tester, const AlarmSound.system());
 
-    await tester.tap(find.text('점점 빠르게'));
+    await tester.tap(find.text('classic'));
     await tester.pump();
 
-    expect(isChecked(tester, '점점 빠르게'), isTrue);
+    expect(isChecked(tester, 'classic'), isTrue);
     expect(isChecked(tester, '시스템 기본'), isFalse);
     verify(
-      () => source.preview(const AlarmSound.bundled(BundledAlarmSounds.rising)),
+      () => source.preview(const AlarmSound.bundled(BundledAlarmSounds.classic)),
     ).called(1);
 
     await tester.tap(find.text('선택'));
     await tester.pumpAndSettle();
 
-    expect(results, [const AlarmSound.bundled(BundledAlarmSounds.rising)]);
+    expect(results, [const AlarmSound.bundled(BundledAlarmSounds.classic)]);
     expect(find.byType(AlarmSoundPage), findsNothing);
     verify(() => source.stopPreview()).called(1);
   });
@@ -187,7 +187,7 @@ void main() {
   testWidgets('뒤로 가면 결과 없이 닫히고 미리 듣기를 멈춘다', (tester) async {
     final results = await pump(tester, const AlarmSound.system());
 
-    await tester.tap(find.text('차임'));
+    await tester.tap(find.text('morning'));
     await tester.pump();
     await tester.state<NavigatorState>(find.byType(Navigator)).maybePop();
     await tester.pumpAndSettle();
@@ -198,7 +198,7 @@ void main() {
 
   testWidgets('앱이 화면에서 내려가면(홈 · 화면 잠금) 미리 듣기를 멈추고 화면은 그대로', (tester) async {
     await pump(tester, const AlarmSound.system());
-    await tester.tap(find.text('차임'));
+    await tester.tap(find.text('morning'));
     await tester.pump();
     verifyNever(() => source.stopPreview());
 
@@ -209,7 +209,7 @@ void main() {
 
     verify(() => source.stopPreview()).called(1);
     expect(find.byType(AlarmSoundPage), findsOneWidget);
-    expect(isChecked(tester, '차임'), isTrue);
+    expect(isChecked(tester, 'morning'), isTrue);
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);

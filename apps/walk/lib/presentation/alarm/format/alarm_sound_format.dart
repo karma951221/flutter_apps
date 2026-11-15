@@ -13,8 +13,8 @@ abstract final class AlarmSoundFormat {
   /// 내장음 이름. 모르는 에셋이면 확장자를 뺀 파일 이름.
   static String bundled(AppLocalizations l10n, String asset) => switch (asset) {
     BundledAlarmSounds.beep => l10n.walkAlarmSoundBeep,
-    BundledAlarmSounds.chime => l10n.walkAlarmSoundChime,
-    BundledAlarmSounds.rising => l10n.walkAlarmSoundRising,
+    BundledAlarmSounds.legacyChime => l10n.walkAlarmSoundChime,
+    BundledAlarmSounds.legacyRising => l10n.walkAlarmSoundRising,
     _ => asset.split('/').last.split('.').first,
   };
 }

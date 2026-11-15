@@ -33,7 +33,7 @@ const _chimeAlarm = Alarm(
   hour: 6,
   minute: 30,
   repeat: {Weekday.mon},
-  sound: AlarmSound.bundled(BundledAlarmSounds.chime),
+  sound: AlarmSound.bundled(BundledAlarmSounds.legacyChime),
 );
 
 const _monday = Alarm(hour: 7, minute: 0, repeat: {Weekday.mon});
@@ -130,7 +130,7 @@ void main() {
       return build(const Alarm(id: 3, hour: 6, minute: 30, repeat: {Weekday.mon}));
     },
     act: (cubit) async {
-      cubit.setSound(const AlarmSound.bundled(BundledAlarmSounds.chime));
+      cubit.setSound(const AlarmSound.bundled(BundledAlarmSounds.legacyChime));
       await cubit.save();
     },
     expect: () => [
