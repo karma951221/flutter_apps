@@ -293,9 +293,10 @@ class AnthropicChatModel implements ChatModel {
       request.fastMode &&
       fastModeOf(vendor, request.model, specs: fastSpecs) != null;
 
-  /// 이 요청에서 노트를 받는가 — 켰고 그 모델이 thinking.display 를 받는다(R4).
+  /// 이 요청에서 노트를 받는가 — 켰고 생각을 끄지 않았고 그 모델이 thinking.display 를 받는다(R4).
   bool _notes(ModelRequest request) =>
       _progressNotes &&
+      request.thinking &&
       _progressNoteModels.any(
         (p) => request.model == p || request.model.startsWith('$p-'),
       );
@@ -317,9 +318,11 @@ class AnthropicChatModel implements ChatModel {
 
   String _body(ModelRequest request) => jsonEncode({
     'model': request.model,
-    'max_tokens': chatMaxOutputTokens,
+    'max_tokens': request.maxOutputTokens ?? chatMaxOutputTokens,
     'stream': true,
-    if (supportsEffortOf(vendor, request.model))
+    if (!request.thinking)
+      ...anthropicNoThinkingFieldsOf(request.model)
+    else if (supportsEffortOf(vendor, request.model))
       'output_config': {'effort': 'low'},
     if (_fast(request)) ...fastModeFields,
     if (_notes(request)) 'thinking': _thinkingParam,

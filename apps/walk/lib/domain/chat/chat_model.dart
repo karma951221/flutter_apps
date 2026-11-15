@@ -190,6 +190,8 @@ final class ModelRequest {
     required this.messages,
     required this.tools,
     this.webSearch = false,
+    this.maxOutputTokens,
+    this.thinking = true,
   });
 
   final String apiKey;
@@ -203,11 +205,19 @@ final class ModelRequest {
   /// 몫이고, 그 모델이 받지 않으면 어댑터가 뺀다(`chat_model_rules.dart`).
   final bool webSearch;
 
+  /// 출력 토큰 상한. null 이면 어댑터의 기본(물어보기 상한).
+  final int? maxOutputTokens;
+
+  /// false 면 생각(추론)을 끄거나 가장 낮게 — 모양은 어댑터 몫(`chat_model_rules.dart`).
+  /// true 면 지금 물어보기와 같다.
+  final bool thinking;
+
   @override
   String toString() =>
       'ModelRequest(model: $model, fastMode: $fastMode, '
       'messages: ${messages.length}, tools: ${tools.length}, '
-      'webSearch: $webSearch)';
+      'webSearch: $webSearch, maxOutputTokens: $maxOutputTokens, '
+      'thinking: $thinking)';
 }
 
 enum ChatModelErrorKind {

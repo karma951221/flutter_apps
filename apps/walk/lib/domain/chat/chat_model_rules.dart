@@ -296,3 +296,93 @@ FastModeSpec? fastModeOf(
   }
   return null;
 }
+
+// --- 일기 초안 모델(스펙 2026-11-15 §4 R-A7) ----------------------------------
+
+/// 목록이 없거나 그 계열이 없을 때 쓰는 초안 모델.
+const Map<ChatVendor, String> draftModelFallbacks = {
+  ChatVendor.anthropic: 'claude-haiku-5-5',
+  ChatVendor.openai: 'gpt-5-mini',
+};
+
+final RegExp _openAiMini = RegExp(
+  r'^gpt-(\d+)(?:\.(\d+))?-mini(-\d{4}-\d{2}-\d{2})?$',
+);
+
+/// 일기 초안에 쓸 빠르고 싼 모델 — 물어보기에서 고른 모델과 따로 정한다.
+/// Claude 는 Haiku 계열, GPT 는 `gpt-N(.M)-mini`(nano 아님) 계열에서 가장 높은 버전,
+/// 같은 버전이면 날짜 없는 별칭 → [models] 순서. 없으면 [draftModelFallbacks].
+String draftModelOf(ChatVendor vendor, List<ModelInfo> models) {
+  (int, int, bool)? keyOf(String id) {
+    switch (vendor) {
+      case ChatVendor.anthropic:
+        final v = _anthropicVersionOf(id);
+        if (v == null || v.$1 != 'haiku') return null;
+        final dated = RegExp(r'-\d{8}$').hasMatch(id);
+        return (v.$2, v.$3, !dated);
+      case ChatVendor.openai:
+        final m = _openAiMini.firstMatch(id);
+        if (m == null) return null;
+        return (
+          int.parse(m.group(1)!),
+          int.tryParse(m.group(2) ?? '0') ?? 0,
+          m.group(3) == null,
+        );
+    }
+  }
+
+  String? best;
+  (int, int, bool)? bestKey;
+  for (final m in models) {
+    final key = keyOf(m.id);
+    if (key == null) continue;
+    final better =
+        bestKey == null ||
+        key.$1 > bestKey.$1 ||
+        (key.$1 == bestKey.$1 && key.$2 > bestKey.$2) ||
+        (key.$1 == bestKey.$1 && key.$2 == bestKey.$2 && key.$3 && !bestKey.$3);
+    if (better) {
+      best = m.id;
+      bestKey = key;
+    }
+  }
+  return best ?? draftModelFallbacks[vendor]!;
+}
+
+/// 생각(thinking)을 끄려고 Anthropic 본문에 더할 필드.
+/// - effort 를 받지 않는 옛 모델: 기본이 꺼짐이라 아무것도 싣지 않는다.
+/// - Fable · Mythos · Opus 5.5 이상: 끌 수 없다 — effort low 로 줄인다.
+/// - Sonnet 5.5 이상: `disabled` 가 400 — `between_tools` + effort low.
+/// - 그 밖(Haiku 5.x · Opus 5 · Sonnet 5 · 4.6 이상): `disabled`.
+Map<String, Object?> anthropicNoThinkingFieldsOf(String modelId) {
+  if (!supportsEffortOf(ChatVendor.anthropic, modelId)) return const {};
+  const low = {'effort': 'low'};
+  final v = _anthropicVersionOf(modelId);
+  if (v != null) {
+    final (family, major, minor) = v;
+    final atLeast55 = major > 5 || (major == 5 && minor >= 5);
+    if (family == 'fable' ||
+        family == 'mythos' ||
+        (family == 'opus' && atLeast55)) {
+      return const {'output_config': low};
+    }
+    if (family == 'sonnet' && atLeast55) {
+      return const {
+        'thinking': {'type': 'between_tools'},
+        'output_config': low,
+      };
+    }
+  }
+  return const {
+    'thinking': {'type': 'disabled'},
+  };
+}
+
+/// 추론을 가장 적게 하는 OpenAI `reasoning.effort`. effort 를 받지 않으면 null.
+/// gpt-5(·mini) 는 `minimal`, gpt-5.1 이후는 `none`, o 계열은 `low`.
+String? openAiNoReasoningEffortOf(String modelId) {
+  if (!supportsEffortOf(ChatVendor.openai, modelId)) return null;
+  if (RegExp(_openAiReasoningPattern).hasMatch(modelId)) return 'low';
+  if (RegExp(r'^gpt-5(?:-|$)').hasMatch(modelId)) return 'minimal';
+  return 'none';
+}
