@@ -23,6 +23,8 @@ import 'crypto/backup_cipher.dart';
 /// - `restore_undo/` — 복원 전 데이터(되돌리기 지점, `undo.json` 이 다 쓴 표시).
 ///   `in_progress.json` 이 있으면 복원 · 되돌리기 도중이다 — 시작 때 되돌리기 지점으로 마저 되돌린다.
 ///   되돌리기 지점은 한 번 쓰면(되돌리기 · 실패 롤백 · 시작 복구) 없어진다.
+/// - `restore_undo.tmp/` — 만드는 중인 되돌리기 지점, `restore_undo.trash/` — 버린 지점.
+///   폴더 지우기는 원자적이지 않으므로 이름 바꾸기를 커밋 지점으로 쓴다.
 ///
 /// 압축 · 해시 · 암호화는 [Isolate.run] 으로, DB 를 만지는 영역 일은 이 isolate 에서 한다.
 class DefaultBackupService implements BackupService {
@@ -35,12 +37,14 @@ class DefaultBackupService implements BackupService {
     BackupCipher? cipher,
     BackupArchive archive = const BackupArchive(),
     Future<int?> Function()? freeBytes,
+    @visibleForTesting Future<void> Function(Directory dir)? deleteTree,
   }) : _areas = {for (final a in areas) a.id: a},
        _appVersion = appVersion,
        _clock = clock,
        _cipher = cipher ?? BackupCipher(),
        _archive = archive,
        _freeBytes = freeBytes,
+       _deleteTree = deleteTree ?? _deleteRecursive,
        _staging = Directory('${appDocs.path}/restore_staging'),
        _undo = Directory('${appDocs.path}/restore_undo'),
        _exportDir = Directory('${cache.path}/backup_export');
@@ -54,9 +58,18 @@ class DefaultBackupService implements BackupService {
   /// 저장 공간의 여유 바이트. null 이거나 null 을 돌려주면 검사를 건너뛴다.
   final Future<int?> Function()? _freeBytes;
 
+  /// 폴더를 통째로 지운다. 테스트가 도중 종료(반쯤 지운 폴더)를 흉내 내려고 바꾼다.
+  final Future<void> Function(Directory dir) _deleteTree;
+
   final Directory _staging;
   final Directory _undo;
   final Directory _exportDir;
+
+  /// 버린 되돌리기 지점(지우는 중). 시작 때 남아 있으면 지운다.
+  Directory get _undoTrash => Directory('${_undo.path}.trash');
+
+  /// 만드는 중인 되돌리기 지점. 다 쓰면 `restore_undo` 로 이름을 바꾼다.
+  Directory get _undoBuilding => Directory('${_undo.path}.tmp');
 
   File get _inProgress => File('${_undo.path}/in_progress.json');
   File get _undoIndex => File('${_undo.path}/undo.json');
@@ -230,7 +243,7 @@ class DefaultBackupService implements BackupService {
   Future<void> _rollBack(List<BackupAreaSource> ordered) async {
     try {
       await _replayUndo(ordered);
-      await _deleteDir(_undo);
+      await _discardUndo();
     } on Object catch (e, s) {
       debugPrint('backup rollback failed, will retry at startup: $e\n$s');
     }
@@ -251,7 +264,7 @@ class DefaultBackupService implements BackupService {
       // 되돌리기 도중 죽어도 시작 때 마저 되돌린다.
       await _writeIds(_inProgress, ordered);
       await _replayUndo(ordered);
-      await _deleteDir(_undo);
+      await _discardUndo();
       return _afterRestore(ordered);
     });
   }
@@ -265,6 +278,9 @@ class DefaultBackupService implements BackupService {
       debugPrint('backup recovery failed, will retry next start: $e\n$s');
     }
     await _deleteDirQuietly(_staging);
+    // 지우다 죽어 남은 버린 지점 · 다 만들지 못한 지점.
+    await _deleteDirQuietly(_undoTrash);
+    await _deleteDirQuietly(_undoBuilding);
   }
 
   @override
@@ -274,36 +290,80 @@ class DefaultBackupService implements BackupService {
   Future<void> _finishInterrupted() async {
     if (!await _inProgress.exists()) return;
     final ids = await _readIdsOrAll(_inProgress);
-    await _replayUndo(_ordered(ids));
-    await _deleteDir(_undo);
+    await _replayUndo(_ordered(ids), skipUnreadable: true);
+    await _discardUndo();
   }
 
-  /// 고른 영역의 지금 데이터를 `restore_undo/` 에 내보낸다(이전 지점은 지운다).
+  /// 되돌리기 지점을 통째로 버린다. `restore_undo` → `restore_undo.trash` 이름 바꾸기가 커밋
+  /// 지점이다 — 지우다 죽어도 표시 파일(`in_progress.json` · `undo.json`)과 반쯤 지운 영역
+  /// 폴더가 함께 남지 않고, 남은 `.trash` 는 다음 시작 때 지운다.
+  Future<void> _discardUndo() async {
+    if (!await _undo.exists()) return;
+    if (await _undoTrash.exists()) await _deleteTree(_undoTrash);
+    await _undo.rename(_undoTrash.path);
+    await _deleteTrash(_undoTrash);
+  }
+
+  /// 이미 버린(이름을 바꾼) 폴더를 지운다. 실패해도 데이터는 끝난 상태이므로 남기고 넘어간다.
+  Future<void> _deleteTrash(Directory trash) async {
+    try {
+      if (await trash.exists()) await _deleteTree(trash);
+    } on Object catch (e, s) {
+      debugPrint('backup trash cleanup failed: ${trash.path}: $e\n$s');
+    }
+  }
+
+  /// 고른 영역의 지금 데이터로 새 되돌리기 지점을 만든다. `restore_undo.tmp` 에 다 쓴 뒤에야
+  /// 이전 지점을 버리고 이름을 바꿔 넣는다 — `undo.json` 은 반쯤 쓴 영역 폴더와 함께 있지 않다.
   Future<void> _makeUndoPoint(List<BackupAreaSource> ordered) async {
-    await _deleteDir(_undo);
-    await _undo.create(recursive: true);
+    if (await _undoBuilding.exists()) await _deleteTree(_undoBuilding);
+    await _undoBuilding.create(recursive: true);
     try {
       for (final area in ordered) {
-        await area.export(_undo);
+        await area.export(_undoBuilding);
       }
-      await _writeIds(_undoIndex, ordered);
+      await _writeIds(File('${_undoBuilding.path}/undo.json'), ordered);
+      await _discardUndo();
+      await _undoBuilding.rename(_undo.path);
     } catch (_) {
-      await _deleteDirQuietly(_undo);
+      await _deleteDirQuietly(_undoBuilding);
       rethrow;
     }
   }
 
   /// [ordered] 를 `restore_undo/` 의 것으로 바꾼다. `replace` 가 영역 폴더의 미디어를 옮겨 가므로
-  /// 바꾼 영역 폴더는 곧바로 지운다 — 다시 돌리면 빈 미디어로 덮어쓰게 된다. 폴더가 없는 영역
-  /// (이미 되돌림)은 건너뛴다.
-  Future<void> _replayUndo(List<BackupAreaSource> ordered) async {
+  /// 바꾼 영역 폴더는 곧바로 버린다 — 다시 돌리면 빈 미디어로 덮어쓰게 된다. 버릴 때는 먼저
+  /// `.trash-<id>` 로 이름을 바꾼다: 지우다 죽어도 반쯤 지운 폴더가 영역 폴더로 남아 다시
+  /// 돌려지지 않는다(설정 `prefs.json` 이 빠진 폴더를 돌리면 설정을 모두 지운다). 폴더가 없는
+  /// 영역(이미 되돌림)은 건너뛴다.
+  ///
+  /// [skipUnreadable] 이면(시작 복구) 읽을 수 없는 영역 폴더를 남기고 버린 뒤 나머지를 계속한다 —
+  /// 그러지 않으면 시작할 때마다 실패해 다음 복원도 막힌다.
+  Future<void> _replayUndo(
+    List<BackupAreaSource> ordered, {
+    bool skipUnreadable = false,
+  }) async {
     for (final area in ordered) {
       final dir = Directory('${_undo.path}/${area.id.name}');
       if (!await dir.exists()) continue;
-      await area.validate(_undo);
+      try {
+        await area.validate(_undo);
+      } on BackupException catch (e, s) {
+        if (!skipUnreadable) rethrow;
+        debugPrint('undo area ${area.id.name} is unreadable, skipped: $e\n$s');
+        await _trashArea(dir, area.id);
+        continue;
+      }
       await area.replace(_undo);
-      await dir.delete(recursive: true);
+      await _trashArea(dir, area.id);
     }
+  }
+
+  Future<void> _trashArea(Directory dir, BackupAreaId id) async {
+    final trash = Directory('${_undo.path}/.trash-${id.name}');
+    if (await trash.exists()) await _deleteTree(trash);
+    await dir.rename(trash.path);
+    await _deleteTrash(trash);
   }
 
   /// 영역마다 복원 후 처리를 하고 안내를 모은다. 데이터는 이미 바뀌었으므로 한 영역의
@@ -387,6 +447,8 @@ Future<Set<BackupAreaId>> _readIdsOrAll(File file) async {
     return BackupAreaId.values.toSet();
   }
 }
+
+Future<void> _deleteRecursive(Directory dir) => dir.delete(recursive: true);
 
 Future<void> _deleteDir(Directory dir) async {
   if (await dir.exists()) await dir.delete(recursive: true);

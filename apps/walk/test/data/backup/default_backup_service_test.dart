@@ -131,6 +131,7 @@ class _Device {
   DefaultBackupService service({
     List<BackupAreaSource>? areas,
     Future<int?> Function()? freeBytes,
+    Future<void> Function(Directory dir)? deleteTree,
   }) => DefaultBackupService(
     areas: areas ?? realAreas,
     appDocs: docs,
@@ -139,6 +140,7 @@ class _Device {
     clock: clock,
     cipher: BackupCipher(iterations: 1000),
     freeBytes: freeBytes,
+    deleteTree: deleteTree,
   );
 
   Future<void> close() async {
@@ -234,6 +236,25 @@ Map<String, List<int>> _files(Directory docs) => {
       ).listSync(recursive: true)..sort((a, b) => a.path.compareTo(b.path)))
         if (f is File) f.path.substring(docs.path.length): f.readAsBytesSync(),
 };
+
+/// 이름이 [match] 에 맞는 폴더를 지우다 [victim] 파일 하나만 지운 채 죽는(던지는) `deleteTree`.
+/// 한 번만 죽고 그다음부터는 그냥 지운다.
+Future<void> Function(Directory) _crashWhileDeleting(
+  bool Function(String name) match,
+  String victim,
+) {
+  var crashed = false;
+  return (dir) async {
+    final name = dir.path.split('/').last;
+    if (!crashed && match(name)) {
+      crashed = true;
+      final f = File('${dir.path}/$victim');
+      if (f.existsSync()) f.deleteSync();
+      throw StateError('process died while deleting $name');
+    }
+    await dir.delete(recursive: true);
+  };
+}
 
 /// 메모리에만 값을 두는 가짜 영역. 파일은 `root/<id>/value.txt` 하나.
 class _FakeArea implements BackupAreaSource {
@@ -699,6 +720,133 @@ void main() {
     expect(staging().existsSync(), isFalse);
     expect(undoDir().existsSync(), isFalse);
     expect(await restarted.hasUndoPoint(), isFalse);
+  });
+
+  group('crash while deleting undo folders', () {
+    /// 설정 · 위치를 백업하고 바꾼 뒤 복원까지 마친 기기. 돌려주는 값은 복원 전 상태.
+    Future<(_Device, Map<String, Object?>)> restored() async {
+      final d = await device(prefs: _areaPrefs);
+      await d.seed();
+      final service = d.service();
+      final file = _ok(
+        await service.export({BackupAreaId.settings, BackupAreaId.location}),
+      );
+      await d.prefs.setString('walk.themeMode', 'light');
+      await d.addPoint(DateTime(2026, 11, 2, 9));
+      final beforeRestore = await d.snapshot();
+      _ok(
+        await service.restore(_ok(await service.inspect(file)), {
+          BackupAreaId.settings,
+          BackupAreaId.location,
+        }),
+      );
+      expect(await d.snapshot(), isNot(beforeRestore));
+      return (d, beforeRestore);
+    }
+
+    for (final (area, victim) in [
+      ('settings', 'prefs.json'),
+      ('location', 'data.json'),
+    ]) {
+      test(
+        'half-deleted replayed $area folder is not replayed again',
+        () async {
+          final (d, beforeRestore) = await restored();
+          final crashing = d.service(
+            deleteTree: _crashWhileDeleting((n) => n.contains(area), victim),
+          );
+          await crashing.undo();
+
+          final restarted = d.service();
+          await restarted.recoverIfInterrupted();
+
+          expect(await restarted.needsRecovery(), isFalse);
+          expect(await d.snapshot(), beforeRestore);
+          expect(undoDir().existsSync(), isFalse);
+        },
+      );
+    }
+
+    test(
+      'half-deleted undo point after undo leaves no stale undo point',
+      () async {
+        final (d, beforeRestore) = await restored();
+        final crashing = d.service(
+          deleteTree: _crashWhileDeleting(
+            (n) => n.startsWith('restore_undo'),
+            'in_progress.json',
+          ),
+        );
+        await crashing.undo();
+
+        final restarted = d.service();
+        await restarted.recoverIfInterrupted();
+
+        expect(await restarted.hasUndoPoint(), isFalse);
+        expect(await restarted.needsRecovery(), isFalse);
+        expect(await d.snapshot(), beforeRestore);
+        expect(
+          docs.listSync().map((e) => e.path.split('/').last),
+          isNot(contains(startsWith('restore_undo'))),
+        );
+      },
+    );
+
+    test('half-deleted previous undo point never wedges a new one', () async {
+      final (d, _) = await restored();
+      final file = _ok(
+        await d.service().export({
+          BackupAreaId.settings,
+          BackupAreaId.location,
+        }),
+      );
+      final crashing = d.service(
+        deleteTree: _crashWhileDeleting(
+          (n) => n.startsWith('restore_undo'),
+          'location/data.json',
+        ),
+      );
+      await crashing.restore(_ok(await crashing.inspect(file)), {
+        BackupAreaId.settings,
+        BackupAreaId.location,
+      });
+
+      final restarted = d.service();
+      await restarted.recoverIfInterrupted();
+      if (await restarted.hasUndoPoint()) _ok(await restarted.undo());
+
+      expect(await restarted.needsRecovery(), isFalse);
+    });
+
+    test(
+      'unreadable undo area is skipped so recovery still finishes',
+      () async {
+        final d = await device(prefs: _areaPrefs);
+        await d.seed();
+        final location = d.realAreas.last;
+        final pointsBefore = (await d.snapshot())['location.location_points'];
+        // 복원 도중 죽은 모양: 위치는 되돌리기 지점이 온전하고, 일기 폴더는 깨졌다.
+        await location.export(undoDir());
+        Directory('${undoDir().path}/diary').createSync(recursive: true);
+        File('${undoDir().path}/in_progress.json').writeAsStringSync(
+          jsonEncode({
+            'areas': ['diary', 'location'],
+          }),
+        );
+        await d.addPoint(DateTime(2026, 11, 2, 9));
+        final diaryBefore = (await d.snapshot())['diary.entries'];
+
+        final service = d.service();
+        await service.recoverIfInterrupted();
+
+        expect(await service.needsRecovery(), isFalse);
+        final after = await d.snapshot();
+        expect(after['location.location_points'], pointsBefore);
+        expect(after['diary.entries'], diaryBefore);
+        expect(logs.join('\n'), contains('diary'));
+        expect(undoDir().existsSync(), isFalse);
+      },
+    );
   });
 
   test('recoverIfInterrupted without a marker only clears staging', () async {
