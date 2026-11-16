@@ -21,7 +21,7 @@ flutter_bloc · freezed · injectable · Kotlin MethodChannel.
 - 영역 id(문자열, manifest 키): `diary` · `chat` · `wiki` · `alarm` · `settings` · `location`. 기본 체크: `location` 만 끔.
 - manifest: `format = "lifelog.backup"`, `formatVersion = 1`. 파일 이름 `lifelog-backup-YYYYMMDD-HHmm.zip` / 암호화 `.lifelog`.
 - 암호 컨테이너: 매직 `LLBK`, 컨테이너 버전 1, PBKDF2-HMAC-SHA256 **600,000회**, salt 16B, nonce 접두 8B, AES-256-GCM, 덩어리 **1 MiB**, nonce = 접두 ‖ 덩어리 번호(4B big-endian), AAD = 헤더 바이트 ‖ 덩어리 번호 ‖ 마지막 여부(1B). 비밀번호 8자 이상.
-- 절대 담지 않는 prefs/저장소: `chat.apiKey` · `anthropic_api_key` · `chat.keyStatus` · `chat.consentedVendor` · `chat.consented` · `walk.lock.*` · 캐시(`walk.holidays.cache` · `weather.cache.v1` · `chat.models*`) · 네이티브 prefs 전부.
+- 절대 담지 않는 prefs/저장소: `chat.apiKey` · `anthropic_api_key` · `chat.keyStatus` · `chat.consentedVendor` · `chat.consented` · `chat.consentScope` · `walk.lock.*` · 캐시(`walk.holidays.cache` · `weather.cache.v1` · `chat.models*`) · 네이티브 prefs 전부.
 - 폴더(문서 폴더 = `app_flutter` 기준): 작업 `restore_staging/`, 되돌리기 `restore_undo/`, 진행 표시 파일 `restore_undo/in_progress.json`.
 - main 머지 · 푸시 금지. 커밋은 이 브랜치에만.
 
