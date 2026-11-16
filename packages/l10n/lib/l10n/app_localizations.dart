@@ -8790,11 +8790,17 @@ abstract class AppLocalizations {
   /// **'{conversations}개 · 파일 {files}'**
   String walkBackupCountChat(int conversations, int files);
 
-  /// 백업 영역 개수: 위키 · 알람
+  /// 백업 영역 개수: LLM 위키 메모
   ///
   /// In ko, this message translates to:
-  /// **'{count}개'**
-  String walkBackupCountItems(int count);
+  /// **'{count, plural, other{메모 {count}개}}'**
+  String walkBackupCountNotes(int count);
+
+  /// 백업 영역 개수: 알람
+  ///
+  /// In ko, this message translates to:
+  /// **'{count, plural, other{알람 {count}개}}'**
+  String walkBackupCountAlarms(int count);
 
   /// 백업 영역 개수: 위치 기록 점
   ///

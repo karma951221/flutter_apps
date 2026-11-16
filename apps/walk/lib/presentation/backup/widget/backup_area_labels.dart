@@ -34,10 +34,10 @@ extension BackupLabels on AppLocalizations {
         n('conversations'),
         n('files'),
       ),
-      BackupAreaId.wiki when counts.isNotEmpty => walkBackupCountItems(
+      BackupAreaId.wiki when counts.isNotEmpty => walkBackupCountNotes(
         n('notes'),
       ),
-      BackupAreaId.alarm when counts.isNotEmpty => walkBackupCountItems(
+      BackupAreaId.alarm when counts.isNotEmpty => walkBackupCountAlarms(
         n('alarms'),
       ),
       BackupAreaId.location when counts.isNotEmpty => walkBackupCountPoints(

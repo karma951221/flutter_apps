@@ -5274,12 +5274,33 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String walkBackupCountItems(int count) {
+  String walkBackupCountNotes(int count) {
     final intl.NumberFormat countNumberFormat =
         intl.NumberFormat.decimalPattern(localeName);
     final String countString = countNumberFormat.format(count);
 
-    return '$countString';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString notes',
+      one: '1 note',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkBackupCountAlarms(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString alarms',
+      one: '1 alarm',
+    );
+    return '$_temp0';
   }
 
   @override

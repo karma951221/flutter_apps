@@ -55,8 +55,8 @@ void main() {
     }
     expect(find.text('기록 120 · 사진·영상 210 (310.0MB)'), findsOneWidget);
     expect(find.text('40개 · 파일 12'), findsOneWidget);
-    expect(find.text('25개'), findsOneWidget);
-    expect(find.text('4개'), findsOneWidget);
+    expect(find.text('메모 25개'), findsOneWidget);
+    expect(find.text('알람 4개'), findsOneWidget);
     expect(find.text('점 50,000'), findsOneWidget);
   });
 

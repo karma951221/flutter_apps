@@ -4841,12 +4841,31 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String walkBackupCountItems(int count) {
+  String walkBackupCountNotes(int count) {
     final intl.NumberFormat countNumberFormat =
         intl.NumberFormat.decimalPattern(localeName);
     final String countString = countNumberFormat.format(count);
 
-    return '$countString件';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'メモ $countString件',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkBackupCountAlarms(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'アラーム $countString件',
+    );
+    return '$_temp0';
   }
 
   @override
