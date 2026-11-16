@@ -1767,10 +1767,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAlarmSoundBeep => '비프';
 
   @override
-  String get walkAlarmSoundChime => '차임';
+  String get walkAlarmSoundMorning => '아침 차임';
 
   @override
-  String get walkAlarmSoundRising => '점점 빠르게';
+  String get walkAlarmSoundMarimba => '마림바';
+
+  @override
+  String get walkAlarmSoundClassic => '클래식 벨';
+
+  @override
+  String get walkAlarmSoundBirds => '새소리';
 
   @override
   String get walkAlarmSoundSelect => '선택';
@@ -1780,6 +1786,18 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkAlarmSoundImportFailed => '이 알람음을 쓸 수 없어요';
+
+  @override
+  String get walkAlarmSoundFileSection => '내 파일';
+
+  @override
+  String get walkAlarmSoundPickFile => '파일에서 고르기';
+
+  @override
+  String get walkAlarmSoundFileDefaultTitle => '내 파일';
+
+  @override
+  String get walkAlarmSoundFileFailed => '이 파일은 알람음으로 쓸 수 없어요';
 
   @override
   String get walkAlarmDeleteTitle => '알람을 삭제할까요?';

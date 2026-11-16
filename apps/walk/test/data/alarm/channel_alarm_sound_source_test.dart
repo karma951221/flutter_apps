@@ -54,17 +54,11 @@ void main() {
 
     test('오류는 AlarmSoundException', () async {
       fail('list');
-      expect(
-        ChannelAlarmSoundSource().deviceRingtones(),
-        throwsA(isA<AlarmSoundException>()),
-      );
+      expect(ChannelAlarmSoundSource().deviceRingtones(), throwsA(isA<AlarmSoundException>()));
     });
 
     test('채널이 없어도 AlarmSoundException', () async {
-      expect(
-        ChannelAlarmSoundSource().deviceRingtones(),
-        throwsA(isA<AlarmSoundException>()),
-      );
+      expect(ChannelAlarmSoundSource().deviceRingtones(), throwsA(isA<AlarmSoundException>()));
     });
   });
 
@@ -78,10 +72,18 @@ void main() {
     });
 
     test('bundled 는 kind asset + 에셋 경로', () async {
+      await ChannelAlarmSoundSource().preview(const AlarmSound.bundled(BundledAlarmSounds.morning));
+      expect(calls.single.arguments, {'kind': 'asset', 'value': 'assets/alarm/morning.ogg'});
+    });
+
+    test('file 은 kind uri + file:// uri', () async {
       await ChannelAlarmSoundSource().preview(
-        const AlarmSound.bundled(BundledAlarmSounds.chime),
+        const AlarmSound.file(title: 'Song', path: '/sdcard/Music/song.mp3'),
       );
-      expect(calls.single.arguments, {'kind': 'asset', 'value': 'assets/alarm/chime.wav'});
+      expect(calls.single.arguments, {
+        'kind': 'uri',
+        'value': Uri.file('/sdcard/Music/song.mp3').toString(),
+      });
     });
 
     test('uri 를 주면 소리와 상관없이 kind uri', () async {
@@ -150,6 +152,38 @@ void main() {
     test('경로가 비면 AlarmSoundException', () async {
       answer((_) => null);
       expect(ChannelAlarmSoundSource().import(ringtone), throwsA(isA<AlarmSoundException>()));
+    });
+  });
+  group('pickFile', () {
+    test('기본 이름을 넘기고 돌려받은 제목 · 경로로 AlarmSound.file', () async {
+      answer((_) => {'title': 't', 'path': '/p'});
+
+      final sound = await ChannelAlarmSoundSource().pickFile(fallbackTitle: '내 파일');
+
+      expect(calls.single.method, 'pickFile');
+      expect(calls.single.arguments, {'fallbackTitle': '내 파일'});
+      expect(sound, const AlarmSound.file(title: 't', path: '/p'));
+    });
+
+    test('취소(null)는 null', () async {
+      answer((_) => null);
+      expect(await ChannelAlarmSoundSource().pickFile(fallbackTitle: 'f'), isNull);
+    });
+
+    test('오류(too_large 등)는 AlarmSoundException', () async {
+      answer((_) => throw PlatformException(code: 'too_large'));
+      expect(
+        ChannelAlarmSoundSource().pickFile(fallbackTitle: 'f'),
+        throwsA(isA<AlarmSoundException>()),
+      );
+    });
+
+    test('형식이 다르면 AlarmSoundException', () async {
+      answer((_) => {'title': 't'});
+      expect(
+        ChannelAlarmSoundSource().pickFile(fallbackTitle: 'f'),
+        throwsA(isA<AlarmSoundException>()),
+      );
     });
   });
 }

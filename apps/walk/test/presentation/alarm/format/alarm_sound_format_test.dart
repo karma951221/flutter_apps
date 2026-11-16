@@ -15,12 +15,11 @@ void main() {
 
   test('내장음은 에셋 경로로 이름을 고른다 — default.wav 는 "비프"', () {
     expect(AlarmSoundFormat.name(ko, const AlarmSound.bundled(BundledAlarmSounds.beep)), '비프');
-    expect(AlarmSoundFormat.name(ko, const AlarmSound.bundled(BundledAlarmSounds.chime)), '차임');
-    expect(
-      AlarmSoundFormat.name(ko, const AlarmSound.bundled(BundledAlarmSounds.rising)),
-      '점점 빠르게',
-    );
-    expect(AlarmSoundFormat.bundled(en, BundledAlarmSounds.chime), 'Chime');
+    expect(AlarmSoundFormat.bundled(ko, BundledAlarmSounds.morning), '아침 차임');
+    expect(AlarmSoundFormat.bundled(ko, BundledAlarmSounds.marimba), '마림바');
+    expect(AlarmSoundFormat.bundled(ko, BundledAlarmSounds.classic), '클래식 벨');
+    expect(AlarmSoundFormat.bundled(ko, BundledAlarmSounds.birds), '새소리');
+    expect(AlarmSoundFormat.bundled(en, BundledAlarmSounds.morning), 'Morning chime');
   });
 
   test('모르는 에셋은 파일 이름', () {
@@ -32,5 +31,9 @@ void main() {
       AlarmSoundFormat.name(ko, const AlarmSound.device(title: 'Bell', path: '/a.ogg')),
       'Bell',
     );
+  });
+
+  test('내 파일은 제목', () {
+    expect(AlarmSoundFormat.name(ko, const AlarmSound.file(title: 'Song', path: '/a.mp3')), 'Song');
   });
 }

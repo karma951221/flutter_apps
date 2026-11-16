@@ -55,13 +55,14 @@ extension AlarmSoundPatterns on AlarmSound {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SystemAlarmSound value)?  system,TResult Function( BundledAlarmSound value)?  bundled,TResult Function( DeviceAlarmSound value)?  device,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( SystemAlarmSound value)?  system,TResult Function( BundledAlarmSound value)?  bundled,TResult Function( DeviceAlarmSound value)?  device,TResult Function( FileAlarmSound value)?  file,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case SystemAlarmSound() when system != null:
 return system(_that);case BundledAlarmSound() when bundled != null:
 return bundled(_that);case DeviceAlarmSound() when device != null:
-return device(_that);case _:
+return device(_that);case FileAlarmSound() when file != null:
+return file(_that);case _:
   return orElse();
 
 }
@@ -79,13 +80,14 @@ return device(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SystemAlarmSound value)  system,required TResult Function( BundledAlarmSound value)  bundled,required TResult Function( DeviceAlarmSound value)  device,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( SystemAlarmSound value)  system,required TResult Function( BundledAlarmSound value)  bundled,required TResult Function( DeviceAlarmSound value)  device,required TResult Function( FileAlarmSound value)  file,}){
 final _that = this;
 switch (_that) {
 case SystemAlarmSound():
 return system(_that);case BundledAlarmSound():
 return bundled(_that);case DeviceAlarmSound():
-return device(_that);}
+return device(_that);case FileAlarmSound():
+return file(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -99,13 +101,14 @@ return device(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SystemAlarmSound value)?  system,TResult? Function( BundledAlarmSound value)?  bundled,TResult? Function( DeviceAlarmSound value)?  device,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( SystemAlarmSound value)?  system,TResult? Function( BundledAlarmSound value)?  bundled,TResult? Function( DeviceAlarmSound value)?  device,TResult? Function( FileAlarmSound value)?  file,}){
 final _that = this;
 switch (_that) {
 case SystemAlarmSound() when system != null:
 return system(_that);case BundledAlarmSound() when bundled != null:
 return bundled(_that);case DeviceAlarmSound() when device != null:
-return device(_that);case _:
+return device(_that);case FileAlarmSound() when file != null:
+return file(_that);case _:
   return null;
 
 }
@@ -122,12 +125,13 @@ return device(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  system,TResult Function( String asset)?  bundled,TResult Function( String title,  String path)?  device,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  system,TResult Function( String asset)?  bundled,TResult Function( String title,  String path)?  device,TResult Function( String title,  String path)?  file,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case SystemAlarmSound() when system != null:
 return system();case BundledAlarmSound() when bundled != null:
 return bundled(_that.asset);case DeviceAlarmSound() when device != null:
-return device(_that.title,_that.path);case _:
+return device(_that.title,_that.path);case FileAlarmSound() when file != null:
+return file(_that.title,_that.path);case _:
   return orElse();
 
 }
@@ -145,12 +149,13 @@ return device(_that.title,_that.path);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  system,required TResult Function( String asset)  bundled,required TResult Function( String title,  String path)  device,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  system,required TResult Function( String asset)  bundled,required TResult Function( String title,  String path)  device,required TResult Function( String title,  String path)  file,}) {final _that = this;
 switch (_that) {
 case SystemAlarmSound():
 return system();case BundledAlarmSound():
 return bundled(_that.asset);case DeviceAlarmSound():
-return device(_that.title,_that.path);}
+return device(_that.title,_that.path);case FileAlarmSound():
+return file(_that.title,_that.path);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -164,12 +169,13 @@ return device(_that.title,_that.path);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  system,TResult? Function( String asset)?  bundled,TResult? Function( String title,  String path)?  device,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  system,TResult? Function( String asset)?  bundled,TResult? Function( String title,  String path)?  device,TResult? Function( String title,  String path)?  file,}) {final _that = this;
 switch (_that) {
 case SystemAlarmSound() when system != null:
 return system();case BundledAlarmSound() when bundled != null:
 return bundled(_that.asset);case DeviceAlarmSound() when device != null:
-return device(_that.title,_that.path);case _:
+return device(_that.title,_that.path);case FileAlarmSound() when file != null:
+return file(_that.title,_that.path);case _:
   return null;
 
 }
@@ -334,6 +340,74 @@ class _$DeviceAlarmSoundCopyWithImpl<$Res>
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') $Res call({Object? title = null,Object? path = null,}) {
   return _then(DeviceAlarmSound(
+title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
+as String,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class FileAlarmSound extends AlarmSound {
+  const FileAlarmSound({required this.title, required this.path}): super._();
+  
+
+ final  String title;
+ final  String path;
+
+/// Create a copy of AlarmSound
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$FileAlarmSoundCopyWith<FileAlarmSound> get copyWith => _$FileAlarmSoundCopyWithImpl<FileAlarmSound>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is FileAlarmSound&&(identical(other.title, title) || other.title == title)&&(identical(other.path, path) || other.path == path));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,title,path);
+
+@override
+String toString() {
+  return 'AlarmSound.file(title: $title, path: $path)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $FileAlarmSoundCopyWith<$Res> implements $AlarmSoundCopyWith<$Res> {
+  factory $FileAlarmSoundCopyWith(FileAlarmSound value, $Res Function(FileAlarmSound) _then) = _$FileAlarmSoundCopyWithImpl;
+@useResult
+$Res call({
+ String title, String path
+});
+
+
+
+
+}
+/// @nodoc
+class _$FileAlarmSoundCopyWithImpl<$Res>
+    implements $FileAlarmSoundCopyWith<$Res> {
+  _$FileAlarmSoundCopyWithImpl(this._self, this._then);
+
+  final FileAlarmSound _self;
+  final $Res Function(FileAlarmSound) _then;
+
+/// Create a copy of AlarmSound
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? title = null,Object? path = null,}) {
+  return _then(FileAlarmSound(
 title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
 as String,path: null == path ? _self.path : path // ignore: cast_nullable_to_non_nullable
 as String,

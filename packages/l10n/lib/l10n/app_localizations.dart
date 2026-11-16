@@ -3386,17 +3386,29 @@ abstract class AppLocalizations {
   /// **'비프'**
   String get walkAlarmSoundBeep;
 
-  /// 앱 내장음 — 부드러운 2음 차임 이름
+  /// 앱 내장음 — 아침 차임(새 알람 기본) 이름
   ///
   /// In ko, this message translates to:
-  /// **'차임'**
-  String get walkAlarmSoundChime;
+  /// **'아침 차임'**
+  String get walkAlarmSoundMorning;
 
-  /// 앱 내장음 — 간격이 점점 짧아지는 비프 이름
+  /// 앱 내장음 — 마림바 이름
   ///
   /// In ko, this message translates to:
-  /// **'점점 빠르게'**
-  String get walkAlarmSoundRising;
+  /// **'마림바'**
+  String get walkAlarmSoundMarimba;
+
+  /// 앱 내장음 — 클래식 벨 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'클래식 벨'**
+  String get walkAlarmSoundClassic;
+
+  /// 앱 내장음 — 새소리 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'새소리'**
+  String get walkAlarmSoundBirds;
 
   /// 알람음 선택 화면 아래 확인 버튼
   ///
@@ -3415,6 +3427,30 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'이 알람음을 쓸 수 없어요'**
   String get walkAlarmSoundImportFailed;
+
+  /// 알람음 선택 화면의 내 파일 구역 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'내 파일'**
+  String get walkAlarmSoundFileSection;
+
+  /// 기기의 오디오 파일을 골라 알람음으로 쓰는 줄
+  ///
+  /// In ko, this message translates to:
+  /// **'파일에서 고르기'**
+  String get walkAlarmSoundPickFile;
+
+  /// 고른 파일 이름이 비었을 때의 표시 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'내 파일'**
+  String get walkAlarmSoundFileDefaultTitle;
+
+  /// 고른 파일이 너무 크거나 재생할 수 없을 때 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'이 파일은 알람음으로 쓸 수 없어요'**
+  String get walkAlarmSoundFileFailed;
 
   /// 알람 삭제 확인 다이얼로그 제목
   ///

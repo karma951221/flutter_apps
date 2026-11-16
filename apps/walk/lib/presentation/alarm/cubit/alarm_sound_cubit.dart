@@ -4,11 +4,19 @@ import '../../../domain/alarm/entity/alarm_sound.dart';
 import '../../../domain/alarm/sound/alarm_sound_source.dart';
 import 'alarm_sound_state.dart';
 
+/// [AlarmSoundCubit.pickFile] 의 결과. 화면은 [failed] 일 때만 안내한다.
+enum PickFileResult { picked, cancelled, failed }
+
 /// 알람음 선택 화면. 줄을 고르면 미리 듣고, [confirm] 으로 결과 소리를 만든다.
 /// 닫으면 미리 듣기를 멈춘다.
 class AlarmSoundCubit extends Cubit<AlarmSoundState> {
   AlarmSoundCubit(this._source, this._initial)
-    : super(AlarmSoundState(selected: _choiceOf(_initial)));
+    : super(
+        AlarmSoundState(
+          selected: _choiceOf(_initial),
+          myFile: _initial is FileAlarmSound ? _initial : null,
+        ),
+      );
 
   final AlarmSoundSource _source;
   final AlarmSound _initial;
@@ -21,6 +29,7 @@ class AlarmSoundCubit extends Cubit<AlarmSoundState> {
   static AlarmSoundChoice _choiceOf(AlarmSound sound) => switch (sound) {
     SystemAlarmSound() => const AlarmSoundChoice.system(),
     BundledAlarmSound(:final asset) => AlarmSoundChoice.bundled(asset),
+    FileAlarmSound() => AlarmSoundChoice.file(sound),
     DeviceAlarmSound() => AlarmSoundChoice.current(sound),
   };
 
@@ -62,6 +71,7 @@ class AlarmSoundCubit extends Cubit<AlarmSoundState> {
           const AlarmSound.system(),
           uri: ringtone.uri,
         ),
+        FileSoundChoice(:final sound) => _source.preview(sound),
         CurrentSoundChoice(:final sound) => _source.preview(sound),
       };
     } on Object {
@@ -76,6 +86,8 @@ class AlarmSoundCubit extends Cubit<AlarmSoundState> {
         return const AlarmSound.system();
       case BundledSoundChoice(:final asset):
         return AlarmSound.bundled(asset);
+      case FileSoundChoice(:final sound):
+        return sound;
       case CurrentSoundChoice(:final sound):
         return sound;
       case DeviceSoundChoice(:final ringtone) when ringtone == _currentRingtone:
@@ -88,6 +100,37 @@ class AlarmSoundCubit extends Cubit<AlarmSoundState> {
           if (!isClosed) emit(state.copyWith(importing: false));
         }
     }
+  }
+
+  /// 기기의 오디오 파일을 골라 앱 저장소로 복사한다. 고르면 내 파일 줄에 두고 선택 · 미리 듣는다.
+  /// 취소 · 실패면 상태를 그대로 둔다. 복사(다른 줄 포함) 중이면 무시하고 [PickFileResult.cancelled].
+  Future<PickFileResult> pickFile({required String fallbackTitle}) async {
+    if (state.importing) return PickFileResult.cancelled;
+    emit(state.copyWith(importing: true));
+    final AlarmSound? picked;
+    try {
+      picked = await _source.pickFile(fallbackTitle: fallbackTitle);
+    } on Object {
+      if (!isClosed) emit(state.copyWith(importing: false));
+      return PickFileResult.failed;
+    }
+    if (isClosed) return PickFileResult.cancelled;
+    if (picked == null) {
+      emit(state.copyWith(importing: false));
+      return PickFileResult.cancelled;
+    }
+    if (picked is! FileAlarmSound) {
+      // 소스 계약 위반 — 파일이 아닌 소리는 내 파일로 둘 수 없다.
+      emit(state.copyWith(importing: false));
+      return PickFileResult.failed;
+    }
+    emit(state.copyWith(selected: AlarmSoundChoice.file(picked), myFile: picked, importing: false));
+    try {
+      await _source.preview(picked);
+    } on Object {
+      // 미리 듣기는 보조 기능이라 실패해도 고르기는 끝났다.
+    }
+    return PickFileResult.picked;
   }
 
   /// 앱이 화면에서 내려갈 때 부른다. 선택은 두고 미리 듣기만 멈춘다 — 알람 볼륨으로

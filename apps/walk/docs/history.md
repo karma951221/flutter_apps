@@ -1053,3 +1053,39 @@ OpenAI: gpt-5 `minimal`, 5.1 이후 `none`, o 계열 `low`). 초안의 `modelUna
 ＋ → 작성 화면 · 키보드 위 도구줄 · 빈 글이면 ✨ 꺼짐 · EXIF 촬영 시각이 어제인 사진 → "Use photo time (Yesterday 3:20 PM)" 칩 ·
 사진 보여 주기 토글 → 확인 다이얼로그 → 켜짐 · ✨ → 키 없음 다이얼로그(설정 열기) · 올리기 → 피드 카드(날짜 · 시각 + 장소). 영어 확인 문구의 "1 photos" 를 고쳤다.
 **실제 API 키로 초안을 받는 흐름(스트리밍 · Haiku/mini 요청 수용 · 사용량 · 언어)은 확인하지 못했다**(키 없음).
+
+## 2026-11-16 — 알람 벨소리 번들 · 내 파일 고르기
+
+[스펙](../../../docs/superpowers/specs/2026-11-16-walk-alarm-ringtone-design.md) ·
+[계획](../../../docs/superpowers/plans/2026-11-16-walk-alarm-ringtone.md).
+
+### 진단 — 버그가 아니라 고를 소리가 없었다
+
+알람음 화면(시스템 기본 · 앱 소리 · 기기 알람음)은 웨이브 0 부터 있었고 에뮬레이터에서 기기 목록도 잘 떴다.
+앱 소리 3개가 약 3초짜리 단순 비프였고, 내 음악 파일 고르기는 웨이브 0 에서 범위 밖이었다.
+
+### 판단
+
+- **벨소리는 직접 합성한다** — `tool/alarm_sounds/generate.py`(numpy · soundfile/libsndfile Vorbis). 외부 음원이 없어
+  라이선스 걱정이 없다. 출처는 `assets/alarm/README.md`. Homebrew(ffmpeg) 설치는 권한에서 막혀 pip `soundfile` 로 인코딩했다.
+  libsndfile 이 Ogg 스트림 일련번호를 무작위로 골라 다시 만들 때마다 바이트는 달라진다(소리는 같다).
+- **새 알람 기본 = 아침 차임, 기존 알람은 그대로** — `Alarm.draft()` 만 바꾸고 생성자 · `fromJson` 기본은 `system` 으로 둔다.
+- **옛 `chime.wav` · `rising.wav` 는 읽을 때 새 소리로 옮기고 파일은 남긴다** — 지문이 바뀌어 다음 sync 에 새 소리로 다시 걸리고,
+  이미 걸린(스누즈 · 지난) 회차는 남긴 wav 로 울린다. 대체음은 검증된 비프 그대로.
+- **내 파일은 고르는 즉시 앱 저장소로 복사** — 포크가 `content://` 를 못 읽고, 원본 삭제 · 권한 회수에도 울리게.
+  기존 `importRingtone`(임시 파일 → `MediaPlayer.prepare` 검증 → 교체)을 쓰고 30MB 상한을 복사 전 · 중에 건다. 영구 URI 권한은 받지 않는다.
+- **`AlarmSound.file` 을 `device` 와 따로 둔다** — 화면 구역이 다르고 기기 목록 제목 매칭(`CurrentSoundChoice`)과 섞이지 않게.
+- 액티비티가 다시 만들어져 선택 결과를 잃은 채 새 선택이 오면 남은 호출을 취소(null)로 끝내고 새로 띄운다(`PendingSlot`).
+- `AlarmSoundState.myFile` 은 `FileAlarmSound?` 가 아니라 `AlarmSound?` — Freezed 가 같은 빌드 단계의 다른 라이브러리 생성 타입을 `copyWith` 에서 풀지 못한다.
+
+### 알려진 한계
+
+- 복사본 정리(GC)가 없고 이름이 uri 해시라, 문서 공급자가 지운 문서의 id 를 다른 파일에 다시 쓰면 그 복사본을 덮는다(검증은 거침).
+- `app_flutter/alarm_sounds/` 가 클라우드 백업에 들어간다(최대 30MB × 개수). 복원 뒤 없으면 기기 기본음으로 울린다.
+- 앞부분이 긴 무음이거나 매우 작은 파일은 `prepare` 검증을 지난다.
+- 같은 화면에서 새 파일을 고르면 이전 내 파일 줄은 사라진다(뒤로 가면 원래 소리 유지).
+
+### 검증
+
+`flutter analyze` 0 · `flutter test` 3901건 통과(1 skip) · 앱 Kotlin 단위 110건 · 디버그 APK.
+에뮬레이터(sdk_gphone16k_arm64, 2026-11-16) A20~A23 — [테스트](testing.md#알람-기기-시나리오). 소리 크기 · 듣기 좋은지는 사람이 들어 보지 않았다.

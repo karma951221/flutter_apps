@@ -10,7 +10,7 @@ import '../cubit/alarm_sound_cubit.dart';
 import '../cubit/alarm_sound_state.dart';
 import '../format/alarm_sound_format.dart';
 
-/// 알람음 선택. 시스템 기본 · 앱 소리 · 기기 알람음 세 구역에서 고르고 미리 듣는다.
+/// 알람음 선택. 시스템 기본 · 앱 소리 · 기기 알람음 · 내 파일 구역에서 고르고 미리 듣는다.
 /// "선택" 하면 고른 [AlarmSound] 를 결과로 돌려주며 닫힌다. 뒤로 가면 결과는 null.
 class AlarmSoundPage extends StatefulWidget {
   const AlarmSoundPage({required this.initial, super.key});
@@ -54,6 +54,20 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
         type: AppSnackBarType.error,
       );
     }
+  }
+
+  /// 기기의 오디오 파일을 고른다. 취소는 조용히, 실패(너무 큼 · 재생 불가)만 안내한다.
+  Future<void> _pickFile() async {
+    final l10n = AppLocalizations.of(context);
+    final result = await _cubit.pickFile(
+      fallbackTitle: l10n.walkAlarmSoundFileDefaultTitle,
+    );
+    if (result != PickFileResult.failed || !mounted) return;
+    AppSnackBar.show(
+      context,
+      message: l10n.walkAlarmSoundFileFailed,
+      type: AppSnackBarType.error,
+    );
   }
 
   @override
@@ -111,6 +125,14 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
                           ),
                         ],
                       },
+                      _SectionTitle(l10n.walkAlarmSoundFileSection),
+                      if (state.myFile case final FileAlarmSound myFile)
+                        row(myFile.title, AlarmSoundChoice.file(myFile)),
+                      AppListTile(
+                        leading: const Icon(Icons.audio_file),
+                        title: Text(l10n.walkAlarmSoundPickFile),
+                        onTap: state.importing ? null : _pickFile,
+                      ),
                     ],
                   ),
                 ),

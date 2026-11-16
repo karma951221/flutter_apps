@@ -9,6 +9,8 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.WindowManager
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import com.karma.walk.location.LocationRecordChannel
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -23,6 +25,12 @@ class MainActivity : FlutterFragmentActivity() {
     }
 
     private var alarmSounds: AlarmSoundsChannel? = null
+
+    /**
+     * 알람음 "파일에서 고르기" 문서 선택기. STARTED 전에 등록해야 해서 `configureFlutterEngine`
+     * (onCreate 안)에서 만들고, 결과는 [alarmSounds] 에 넘긴다.
+     */
+    private var pickAlarmFile: ActivityResultLauncher<Intent>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // 위젯을 눌러 열었다(다시 만들어진 액티비티 · 최근 앱에서 연 옛 인텐트는 빼고).
@@ -102,7 +110,21 @@ class MainActivity : FlutterFragmentActivity() {
                 }
                 result.success(null)
             }
-        alarmSounds = AlarmSoundsChannel(applicationContext, messenger)
+        val launcher =
+            pickAlarmFile
+                ?: registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { picked ->
+                    val uri = if (picked.resultCode == RESULT_OK) picked.data?.data else null
+                    alarmSounds?.onDocumentPicked(uri)
+                }.also { pickAlarmFile = it }
+        alarmSounds =
+            AlarmSoundsChannel(applicationContext, messenger) {
+                // 영구 권한(takePersistableUriPermission)은 받지 않는다 — 고르자마자 복사한다.
+                launcher.launch(
+                    Intent(Intent.ACTION_OPEN_DOCUMENT)
+                        .addCategory(Intent.CATEGORY_OPENABLE)
+                        .setType("audio/*"),
+                )
+            }
         HolidayCalendarChannel.attach(applicationContext, flutterEngine)
         ReminderChannel.attach(applicationContext, messenger)
         RingLogChannel.attach(applicationContext, messenger)

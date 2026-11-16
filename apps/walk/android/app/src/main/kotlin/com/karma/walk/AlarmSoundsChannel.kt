@@ -7,6 +7,7 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
 import io.flutter.FlutterInjector
 import io.flutter.plugin.common.BinaryMessenger
@@ -22,10 +23,15 @@ import java.util.concurrent.Executors
  *
  * `alarm` 패키지는 `content://` 를 못 읽으므로 고른 기기 알람음을 `app_flutter/alarm_sounds/` 에
  * 복사하고 그 절대 경로로 울린다. 목록 읽기와 복사는 메인 스레드를 막지 않게 별도 스레드에서 한다.
+ *
+ * `pickFile` 은 사용자가 고른 오디오 파일을 같은 길로 곧바로 복사한다 — 원본을 지워도 알람이 울리게
+ * 영구 URI 권한은 받지 않는다. 문서 선택기는 액티비티 결과라 [openDocument] 로 [MainActivity] 에
+ * 띄워 달라 하고, 결과는 [onDocumentPicked] 로 받는다.
  */
 class AlarmSoundsChannel(
     private val context: Context,
     messenger: BinaryMessenger,
+    private val openDocument: () -> Unit,
 ) : MethodChannel.MethodCallHandler {
     companion object {
         const val NAME = "walk/alarm_sounds"
@@ -39,6 +45,11 @@ class AlarmSoundsChannel(
 
     /** 미리 듣기 재생기. 하나만 둔다 — 새로 틀면 앞의 것을 해제한다. */
     private var player: MediaPlayer? = null
+
+    /** 문서 선택기를 띄우고 결과를 기다리는 호출. 한 번에 하나만 받는다. */
+    private val pendingPick = PendingSlot<PendingPick>()
+
+    private class PendingPick(val result: MethodChannel.Result, val fallbackTitle: String)
 
     init {
         channel.setMethodCallHandler(this)
@@ -60,13 +71,60 @@ class AlarmSoundsChannel(
                     background(result) { importRingtone(Uri.parse(uri)) }
                 }
             }
+            "pickFile" -> pickFile(call.argument<String>("fallbackTitle"), result)
             else -> result.notImplemented()
         }
+    }
+
+    private fun pickFile(fallbackTitle: String?, result: MethodChannel.Result) {
+        if (fallbackTitle == null) {
+            result.error("bad_args", "fallbackTitle is required", null)
+            return
+        }
+        // Dart 큐빗이 동시 고르기를 막으므로 남아 있는 것은 결과를 잃은 옛 호출이다 — 취소로 끝내고 새로 띄운다.
+        pendingPick.replace(PendingPick(result, fallbackTitle))?.result?.success(null)
+        try {
+            openDocument()
+        } catch (e: Exception) {
+            pendingPick.clear()
+            result.error("failed", e.message, null)
+        }
+    }
+
+    /** [MainActivity] 가 문서 선택기 결과를 넘긴다. [uri] 가 null 이면 취소. */
+    fun onDocumentPicked(uri: Uri?) {
+        val pending = pendingPick.take() ?: return
+        if (uri == null) {
+            pending.result.success(null)
+            return
+        }
+        background(pending.result) { importPicked(uri, pending.fallbackTitle) }
+    }
+
+    /** 이름 · 크기를 읽고, 상한 안이면 앱 저장소로 복사한다. */
+    private fun importPicked(uri: Uri, fallbackTitle: String): Map<String, String> {
+        var displayName: String? = null
+        var size: Long? = null
+        context.contentResolver
+            .query(uri, arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE), null, null, null)
+            ?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val nameColumn = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    val sizeColumn = cursor.getColumnIndex(OpenableColumns.SIZE)
+                    if (nameColumn >= 0 && !cursor.isNull(nameColumn)) displayName = cursor.getString(nameColumn)
+                    if (sizeColumn >= 0 && !cursor.isNull(sizeColumn)) size = cursor.getLong(sizeColumn)
+                }
+            }
+        if (AlarmFileRules.isTooLarge(size)) throw AlarmFileTooLargeException()
+        val path = importRingtone(uri, maxBytes = AlarmFileRules.MAX_BYTES)
+        return mapOf("title" to AlarmFileRules.titleOf(displayName, fallbackTitle), "path" to path)
     }
 
     /** 엔진이 내려갈 때 부른다. 미리 듣기를 해제하고 채널을 뗀다. */
     fun dispose() {
         stopPreview()
+        // 엔진이 내려가면 기다리던 Dart 쪽도 없다 — 늦게 온 결과는 버린다.
+        pendingPick.clear()
         channel.setMethodCallHandler(null)
         worker.shutdown()
     }
@@ -134,8 +192,9 @@ class AlarmSoundsChannel(
     /**
      * 복사 후 재생 가능한지 검증한다. 같은 uri 는 같은 경로라 여러 알람이 한 복사본을 함께 쓴다.
      * 그래서 임시 파일에 복사 · 검증한 뒤에만 바꾸고([replaceVerified]), 실패하면 임시 파일만 지운다.
+     * [maxBytes] 를 주면 복사 중 그보다 커지는 순간 멈춘다([AlarmFileTooLargeException]).
      */
-    private fun importRingtone(uri: Uri): String {
+    private fun importRingtone(uri: Uri, maxBytes: Long? = null): String {
         val folder = File(context.getDir("flutter", Context.MODE_PRIVATE), FOLDER).apply { mkdirs() }
         val extension =
             context.contentResolver.getType(uri)
@@ -147,7 +206,15 @@ class AlarmSoundsChannel(
             write = { temp ->
                 val input = context.contentResolver.openInputStream(uri)
                     ?: throw IllegalStateException("cannot open $uri")
-                input.use { source -> temp.outputStream().use { source.copyTo(it) } }
+                input.use { source ->
+                    temp.outputStream().use { target ->
+                        if (maxBytes == null) {
+                            source.copyTo(target)
+                        } else {
+                            AlarmFileRules.copyBounded(source, target, maxBytes)
+                        }
+                    }
+                }
             },
             verify = { temp ->
                 val check = MediaPlayer()
@@ -173,6 +240,9 @@ class AlarmSoundsChannel(
             try {
                 val value = work()
                 main.post { result.success(value) }
+            } catch (e: AlarmFileTooLargeException) {
+                // Dart 는 오류를 모두 failed 로 다룬다. 코드는 진단 · 로그용이다.
+                main.post { result.error("too_large", e.message, null) }
             } catch (e: Exception) {
                 main.post { result.error("failed", e.message, null) }
             }

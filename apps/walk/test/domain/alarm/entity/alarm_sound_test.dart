@@ -18,9 +18,9 @@ void main() {
     });
 
     test('bundled', () {
-      const sound = AlarmSound.bundled(BundledAlarmSounds.chime);
+      const sound = AlarmSound.bundled(BundledAlarmSounds.morning);
 
-      expect(sound.toJson(), {'type': 'bundled', 'asset': 'assets/alarm/chime.wav'});
+      expect(sound.toJson(), {'type': 'bundled', 'asset': 'assets/alarm/morning.ogg'});
       expect(roundTrip(sound), sound);
     });
 
@@ -39,6 +39,40 @@ void main() {
     });
   });
 
+  group('file', () {
+    test('JSON 왕복', () {
+      const sound = AlarmSound.file(title: 'Song', path: '/sdcard/Music/song.mp3');
+
+      expect(sound.toJson(), {'type': 'file', 'title': 'Song', 'path': '/sdcard/Music/song.mp3'});
+      expect(roundTrip(sound), sound);
+    });
+
+    test('path 가 없으면 system', () {
+      expect(AlarmSound.fromJson(const {'type': 'file'}), const AlarmSound.system());
+      expect(AlarmSound.fromJson(const {'type': 'file', 'title': 'A'}), const AlarmSound.system());
+    });
+  });
+
+  group('옛 에셋 경로 옮기기', () {
+    test('chime.wav 는 morning, rising.wav 는 classic', () {
+      expect(
+        AlarmSound.fromJson(const {'type': 'bundled', 'asset': 'assets/alarm/chime.wav'}),
+        const AlarmSound.bundled(BundledAlarmSounds.morning),
+      );
+      expect(
+        AlarmSound.fromJson(const {'type': 'bundled', 'asset': 'assets/alarm/rising.wav'}),
+        const AlarmSound.bundled(BundledAlarmSounds.classic),
+      );
+    });
+
+    test('default.wav 는 beep 그대로', () {
+      expect(
+        AlarmSound.fromJson(const {'type': 'bundled', 'asset': 'assets/alarm/default.wav'}),
+        const AlarmSound.bundled(BundledAlarmSounds.beep),
+      );
+    });
+  });
+
   group('fromJson 은 읽지 못하면 system 으로 읽는다(던지지 않는다)', () {
     const system = AlarmSound.system();
 
@@ -51,7 +85,7 @@ void main() {
     });
 
     test('type 이 없다', () {
-      expect(AlarmSound.fromJson(const {'asset': BundledAlarmSounds.chime}), system);
+      expect(AlarmSound.fromJson(const {'asset': BundledAlarmSounds.morning}), system);
     });
 
     test('맵이 아니다', () {
@@ -75,14 +109,21 @@ void main() {
     test('기존 비프는 이미 걸린 회차가 울리도록 default.wav 이름 그대로다', () {
       expect(BundledAlarmSounds.beep, 'assets/alarm/default.wav');
       expect(BundledAlarmSounds.all, [
+        BundledAlarmSounds.morning,
+        BundledAlarmSounds.marimba,
+        BundledAlarmSounds.classic,
+        BundledAlarmSounds.birds,
         BundledAlarmSounds.beep,
-        BundledAlarmSounds.chime,
-        BundledAlarmSounds.rising,
       ]);
     });
 
-    // 패키지가 loopAudio 로 반복하므로 모두 같은 형식의 3초 클립이다.
-    for (final asset in BundledAlarmSounds.all) {
+    // 이전 wav 는 모두 같은 형식의 3초 클립이다(이미 걸린 회차가 울린다).
+    // 새 ogg 는 test/convention/alarm_assets_test.dart 가 본다.
+    for (final asset in [
+      BundledAlarmSounds.beep,
+      BundledAlarmSounds.legacyChime,
+      BundledAlarmSounds.legacyRising,
+    ]) {
       test('$asset 은 번들에 있는 22.05kHz 모노 16bit 3초 WAV 다', () async {
         TestWidgetsFlutterBinding.ensureInitialized();
 

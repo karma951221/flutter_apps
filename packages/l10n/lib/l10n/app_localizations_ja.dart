@@ -1766,10 +1766,16 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAlarmSoundBeep => 'ビープ';
 
   @override
-  String get walkAlarmSoundChime => 'チャイム';
+  String get walkAlarmSoundMorning => '朝のチャイム';
 
   @override
-  String get walkAlarmSoundRising => 'だんだん速く';
+  String get walkAlarmSoundMarimba => 'マリンバ';
+
+  @override
+  String get walkAlarmSoundClassic => 'クラシックベル';
+
+  @override
+  String get walkAlarmSoundBirds => '鳥のさえずり';
 
   @override
   String get walkAlarmSoundSelect => '選択';
@@ -1779,6 +1785,18 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkAlarmSoundImportFailed => 'このアラーム音は使えません';
+
+  @override
+  String get walkAlarmSoundFileSection => 'マイファイル';
+
+  @override
+  String get walkAlarmSoundPickFile => 'ファイルから選ぶ';
+
+  @override
+  String get walkAlarmSoundFileDefaultTitle => 'マイファイル';
+
+  @override
+  String get walkAlarmSoundFileFailed => 'このファイルはアラーム音に使えません';
 
   @override
   String get walkAlarmDeleteTitle => 'このアラームを削除しますか？';

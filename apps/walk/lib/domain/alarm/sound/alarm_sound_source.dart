@@ -16,6 +16,11 @@ abstract interface class AlarmSoundSource {
 
   /// 기기 알람음을 앱 저장소에 복사하고 [AlarmSound.device] 를 돌려준다.
   Future<AlarmSound> import(DeviceRingtone ringtone);
+
+  /// 기기의 오디오 파일을 고르게 하고, 고른 파일을 앱 저장소로 곧바로 복사해 [AlarmSound.file] 을
+  /// 돌려준다(원본을 지워도 울린다). 취소면 null. 파일 이름이 비면 [fallbackTitle] 을 제목으로 쓴다.
+  /// 너무 크거나(30MB 초과) 재생할 수 없으면 [AlarmSoundException].
+  Future<AlarmSound?> pickFile({required String fallbackTitle});
 }
 
 /// 알람음 소스가 실패했다(목록 읽기 · 재생 · 복사).

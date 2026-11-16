@@ -15,7 +15,8 @@ class ChannelAlarmSoundSource implements AlarmSoundSource {
     final rows = await _invoke<List<Object?>>('list');
     return [
       for (final row in rows ?? const <Object?>[])
-        if (row case {'title': final String title, 'uri': final String uri}) (title: title, uri: uri),
+        if (row case {'title': final String title, 'uri': final String uri})
+          (title: title, uri: uri),
     ];
   }
 
@@ -26,7 +27,8 @@ class ChannelAlarmSoundSource implements AlarmSoundSource {
         : switch (sound) {
             SystemAlarmSound() => ('system', null),
             BundledAlarmSound(:final asset) => ('asset', asset),
-            DeviceAlarmSound(:final path) => ('uri', Uri.file(path).toString()),
+            DeviceAlarmSound(:final path) ||
+            FileAlarmSound(:final path) => ('uri', Uri.file(path).toString()),
           };
     return _invoke<void>('preview', {'kind': kind, 'value': value});
   }
@@ -49,6 +51,17 @@ class ChannelAlarmSoundSource implements AlarmSoundSource {
       throw const AlarmSoundException('import returned no path');
     }
     return AlarmSound.device(title: ringtone.title, path: path);
+  }
+
+  @override
+  Future<AlarmSound?> pickFile({required String fallbackTitle}) async {
+    final picked = await _invoke<Object?>('pickFile', {'fallbackTitle': fallbackTitle});
+    return switch (picked) {
+      null => null,
+      {'title': final String title, 'path': final String path} when path.isNotEmpty =>
+        AlarmSound.file(title: title, path: path),
+      _ => throw AlarmSoundException('pickFile: unexpected result $picked'),
+    };
   }
 
   Future<T?> _invoke<T>(String method, [Object? arguments]) async {
