@@ -25,6 +25,10 @@ const _saltLen = 16;
 const _noncePrefixLen = 8;
 const _tagLen = 16;
 const _chunkSize = 1024 * 1024;
+
+/// 헤더의 PBKDF2 반복 횟수 상한. 넘으면 KDF 를 돌리지 않고 깨진 파일로 본다 — 조작한 헤더로
+/// 몇 시간씩 붙잡히지 않게.
+const maxBackupIterations = 10000000;
 // 매직 4 + 버전 1 + 반복 횟수 4 + salt 16 + nonce 접두 8
 const _headerLen = 4 + 1 + 4 + _saltLen + _noncePrefixLen;
 
@@ -74,7 +78,14 @@ class BackupCipher {
     final noncePrefix = headerBytes.sublist(_headerLen - _noncePrefixLen);
 
     final input = await plain.open();
-    final output = await out.open(mode: FileMode.write);
+    final RandomAccessFile output;
+    try {
+      output = await out.open(mode: FileMode.write);
+    } catch (_) {
+      await input.close();
+      rethrow;
+    }
+    var completed = false;
     try {
       final total = await input.length();
       var done = 0;
@@ -101,9 +112,12 @@ class BackupCipher {
         current = next;
         index++;
       }
+      completed = true;
     } finally {
       await input.close();
       await output.close();
+      // 실패하면 반쯤 쓴 파일을 남기지 않는다.
+      if (!completed && out.existsSync()) out.deleteSync();
     }
   }
 
@@ -131,7 +145,7 @@ class BackupCipher {
         0,
         Endian.big,
       );
-      if (iter < 1) {
+      if (iter < 1 || iter > maxBackupIterations) {
         throw const BackupCipherException(
           BackupCipherError.wrongPasswordOrCorrupt,
         );
@@ -180,10 +194,13 @@ class BackupCipher {
         index++;
       }
     } catch (_) {
-      // 인증 실패 · 입출력 오류 모두 부분 출력은 남기지 않는다.
-      await output?.close();
-      output = null;
-      if (out.existsSync()) out.deleteSync();
+      // 인증 실패 · 입출력 오류 모두 부분 출력은 남기지 않는다. 열기 전에 실패했으면 [out] 은
+      // 우리 것이 아니므로 그대로 둔다.
+      if (output != null) {
+        await output.close();
+        output = null;
+        if (out.existsSync()) out.deleteSync();
+      }
       rethrow;
     } finally {
       await input.close();

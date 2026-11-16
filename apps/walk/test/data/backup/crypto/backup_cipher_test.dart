@@ -162,6 +162,67 @@ void main() {
     expect(steps, [1.0]);
   });
 
+  group('header checks before the KDF', () {
+    /// 정상 봉인의 헤더를 [edit] 로 고친 파일.
+    Future<File> withHeader(void Function(Uint8List raw) edit) async {
+      final sealed = await seal(_bytes(100));
+      final raw = sealed.readAsBytesSync();
+      edit(raw);
+      sealed.writeAsBytesSync(raw);
+      return sealed;
+    }
+
+    void setIterations(Uint8List raw, int n) =>
+        ByteData.sublistView(raw, 5, 9).setUint32(0, n, Endian.big);
+
+    test('truncated header', () async {
+      final sealed = await seal(_bytes(100));
+      sealed.writeAsBytesSync(sealed.readAsBytesSync().sublist(0, 20));
+      await expectCorrupt(sealed);
+    });
+
+    test('unsupported container version', () async {
+      await expectCorrupt(await withHeader((raw) => raw[4] = 2));
+    });
+
+    test('zero iterations', () async {
+      await expectCorrupt(await withHeader((raw) => setIterations(raw, 0)));
+    });
+
+    test(
+      'more than 10,000,000 iterations is refused without running the KDF',
+      () async {
+        final sealed = await withHeader((raw) => setIterations(raw, 10000001));
+        await expectCorrupt(sealed).timeout(const Duration(seconds: 5));
+      },
+    );
+  });
+
+  test('decrypt leaves an existing out file alone when it fails before '
+      'opening it', () async {
+    final out = file('out.bin', [9, 9, 9]);
+    final zip = file('a.zip', [0x50, 0x4b, 3, 4, 0, 0]);
+    await expectLater(
+      cipher.decrypt(zip, out, 'password-1'),
+      throwsA(isA<BackupCipherException>()),
+    );
+    expect(out.readAsBytesSync(), [9, 9, 9]);
+  });
+
+  test('encrypt deletes its partial out when it fails', () async {
+    final out = file('sealed.bin');
+    await expectLater(
+      cipher.encrypt(
+        file('plain.bin', _bytes(2 * _mib)),
+        out,
+        'password-1',
+        onProgress: (_) => throw StateError('disk gone'),
+      ),
+      throwsStateError,
+    );
+    expect(out.existsSync(), isFalse);
+  });
+
   test('plain zip is notEncrypted', () async {
     final zip = file('a.zip', [0x50, 0x4b, 3, 4, 0, 0, 0, 0, 0, 0]);
     await expectLater(
