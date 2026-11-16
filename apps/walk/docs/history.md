@@ -951,19 +951,18 @@ OSM 기본 타일이 가게 · 건물 이름까지 다 그려서 동선이 묻�
   `ThemeCubit` 처럼 상태를 들되 getIt lazySingleton 으로 두어 지도 탭과 지도 설정이 같은 것을 본다.
   그래서 설정에서 바꾸면 뒤에 깔린 지도가 돌아오기 전에 이미 바뀌어 있다.
 
-## 2026-11-16 — 지도 출처 표기
+## 2026-11-16 — 지도 출처 표기 빼기
 
 "지도 하단에 flutter_map 이라는 거 뜨는데 없앨 수 없어?" 라는 피드백.
 
 - **원인** — `TrackMap` 이 flutter_map 의 `SimpleAttributionWidget` 을 썼는데, 이 위젯은 앞에
   'flutter_map | © ' 를 박아 두고 끌 옵션이 없다.
-- **flutter_map 은 빼고 타일 출처는 남긴다** — 라이브러리 이름은 홍보 문구라 필수가 아니다. 타일 출처는
-  OSM(ODbL) · OpenTopoMap(CC-BY-SA) · Esri 이용 약관이 화면 표기를 요구해서, ⓘ 버튼 뒤에 접지 않고 지금처럼
-  작은 한 줄 "© <출처>" 로 늘 보이게 했다.
-- **앱 전용 `MapAttribution`** (`presentation/map/widget/map_attribution.dart`) — 오른쪽 아래 · 시트 높이
-  (`bottomInset`)만큼 올림 · SafeArea 는 그대로. 바탕은 테마 `surface`, 글자는 `onSurface` · `labelSmall`,
-  여백은 `AppSpacing` 토큰이라 어둡게 지도 · 어두운 테마에서도 읽힌다. 탭 동작은 예전에도 없어 두지 않았다.
-- 검증: `flutter analyze` 0 · `flutter test` 3907건 통과(1 skip).
+- **처음엔 flutter_map 만 빼고 "© <타일 출처>" 한 줄을 남겼다**(앱 전용 위젯, `255bbc25`). 타일 출처는
+  OSM(ODbL) · OpenTopoMap(CC-BY-SA) · Esri 이용 약관이 화면 표기를 요구해서다.
+- **이어서 출처 표기도 모두 뺐다** — 라이선스상 표기 의무를 안내받은 뒤 사용자가 "개인용 앱인데 출처 표기를 할
+  필요 없어"라고 정했다. `SimpleAttributionWidget` · 앱 전용 위젯 · `_attributionOf` 를 지웠다.
+  **개인용 앱이라 사용자 결정으로 지도 출처 표기를 뺐고, 앱을 배포하거나 공개하면 다시 넣어야 한다.**
+- 검증: `flutter analyze` 0 · `flutter test` 3906건 통과(1 skip).
 
 ## 2026-11-14 — 날씨
 
