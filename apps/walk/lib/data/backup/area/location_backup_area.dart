@@ -5,6 +5,8 @@ import 'package:drift/drift.dart';
 import '../../../domain/backup/backup_area_id.dart';
 import '../../../domain/backup/backup_area_source.dart';
 import '../../../domain/backup/restore_notice.dart';
+import '../../../domain/location/recorder/location_recorder.dart';
+import '../../../domain/location/recorder/recorder_status.dart';
 import '../../location/database/location_database.dart';
 import 'area_io.dart';
 import 'drift_rows.dart';
@@ -18,9 +20,12 @@ const _bytesPerPoint = 160;
 ///
 /// 데이터만 바꾼다 — 위치 기록 서비스(네이티브 `location_record`)는 켜지도 끄지도 않는다.
 class LocationBackupArea implements BackupAreaSource {
-  LocationBackupArea(this._db);
+  LocationBackupArea(this._db, this._recorder);
 
   final LocationDatabase _db;
+
+  /// 복원 뒤 기록이 꺼져 있는지만 본다.
+  final LocationRecorder _recorder;
 
   List<TableInfo<Table, dynamic>> get _tables => [
     _db.locationPoints,
@@ -70,11 +75,21 @@ class LocationBackupArea implements BackupAreaSource {
     });
   }
 
-  /// 서비스 상태는 지금 기기의 것 그대로 둔다 — 켜는 것은 사용자 몫이라 알린다.
+  /// 서비스 상태는 지금 기기의 것 그대로 둔다 — 꺼져 있으면 켜는 것은 사용자 몫이라 알린다.
+  /// 상태를 읽지 못하면 켜져 있다고 할 수 없으니 알린다.
   @override
-  Future<Set<RestoreNotice>> afterRestore() async => const {
-    RestoreNotice.locationRecordingOff,
-  };
+  Future<Set<RestoreNotice>> afterRestore() async {
+    final RecorderStatus status;
+    try {
+      status = await _recorder.status();
+    } on Object {
+      return const {RestoreNotice.locationRecordingOff};
+    }
+    return switch (status) {
+      RecorderOff() => const {RestoreNotice.locationRecordingOff},
+      RecorderRunning() || RecorderBlocked() => const {},
+    };
+  }
 
   Future<TableRows> _readData(Directory root) =>
       readTableRows(_areaDir(root), _dataFile, _tables);

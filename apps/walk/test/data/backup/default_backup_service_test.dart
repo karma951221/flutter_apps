@@ -36,6 +36,8 @@ import 'package:walk/domain/backup/backup_service.dart';
 import 'package:walk/domain/backup/restore_notice.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/location/entity/record_mode.dart';
+import 'package:walk/domain/location/recorder/location_recorder.dart';
+import 'package:walk/domain/location/recorder/recorder_status.dart';
 
 import '../../support/chat_db_seed.dart';
 import '../../support/diary_fixtures.dart';
@@ -45,6 +47,8 @@ class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
 class _MockAlarmPermissions extends Mock implements AlarmPermissions {}
 
 class _MockChatSettings extends Mock implements ChatSettings {}
+
+class _MockLocationRecorder extends Mock implements LocationRecorder {}
 
 final _now = DateTime(2026, 11, 16, 21, 30);
 const _password = 'correct horse';
@@ -100,6 +104,9 @@ class _Device {
     when(() => device.alarms.sync()).thenAnswer((_) async {});
     when(() => device.permissions.canRing()).thenAnswer((_) async => true);
     when(() => device.chatSettings.hasApiKey()).thenAnswer((_) async => false);
+    when(
+      device.recorder.status,
+    ).thenAnswer((_) async => const RecorderStatus.off());
     return device;
   }
 
@@ -114,6 +121,7 @@ class _Device {
   final alarms = _MockAlarmUseCase();
   final permissions = _MockAlarmPermissions();
   final chatSettings = _MockChatSettings();
+  final recorder = _MockLocationRecorder();
 
   Directory get diaryRoot => Directory('${docs.path}/diary');
   Directory get workspace => Directory('${docs.path}/workspace');
@@ -125,7 +133,7 @@ class _Device {
     WikiBackupArea(chat, prefs),
     AlarmBackupArea(prefs, rings, sounds, alarms, permissions),
     SettingsBackupArea(prefs),
-    LocationBackupArea(location),
+    LocationBackupArea(location, recorder),
   ];
 
   DefaultBackupService service({

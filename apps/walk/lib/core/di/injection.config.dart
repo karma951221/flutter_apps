@@ -393,9 +393,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i961.HolidayRefresher>(
       () => holidayModule.holidayRefresher(gh<_i93.CachedHolidayCalendar>()),
     );
-    gh.lazySingleton<_i764.LocationBackupArea>(
-      () => registerModule.locationBackupArea(gh<_i121.LocationDatabase>()),
-    );
     gh.lazySingleton<_i903.WeatherRepository>(
       () => _i850.OpenMeteoWeatherRepository(gh<_i519.Client>()),
     );
@@ -476,6 +473,12 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i5.DefaultWalkUseCase(
         gh<_i204.ActivityRepository>(),
         gh<_i494.Clock>(),
+      ),
+    );
+    gh.lazySingleton<_i764.LocationBackupArea>(
+      () => registerModule.locationBackupArea(
+        gh<_i121.LocationDatabase>(),
+        gh<_i993.LocationRecorder>(),
       ),
     );
     gh.lazySingleton<_i453.CommuteUseCase>(

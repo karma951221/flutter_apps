@@ -34,6 +34,7 @@ import '../../domain/alarm/permission/alarm_permissions.dart';
 import '../../domain/alarm/usecase/alarm_use_case.dart';
 import '../../domain/backup/backup_area_source.dart';
 import '../../domain/backup/backup_files.dart';
+import '../../domain/location/recorder/location_recorder.dart';
 import '../../domain/backup/backup_service.dart';
 import '../../domain/chat/chat_settings.dart';
 import '../../domain/chat/chat_trace.dart';
@@ -143,8 +144,10 @@ abstract class RegisterModule {
       SettingsBackupArea(prefs);
 
   @lazySingleton
-  LocationBackupArea locationBackupArea(LocationDatabase db) =>
-      LocationBackupArea(db);
+  LocationBackupArea locationBackupArea(
+    LocationDatabase db,
+    LocationRecorder recorder,
+  ) => LocationBackupArea(db, recorder);
 
   /// 백업 영역 전부, `BackupAreaId` 순서(대화가 위키보다 먼저).
   @lazySingleton
