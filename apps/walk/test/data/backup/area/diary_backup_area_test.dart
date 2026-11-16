@@ -157,10 +157,15 @@ void main() {
     final area = DiaryBackupArea(b.db, rootB, prefs);
 
     await area.validate(staging);
+    // 처음 연 때와 다른 시각이어야 다시 만든 행인지 가려진다.
+    b.clock.advance(const Duration(days: 3));
     await area.replace(staging);
 
     final stories = await b.db.select(b.db.stories).get();
     expect(stories.map((s) => s.id), [Story.dailyId]);
+    // 기본 스토리 시각은 DB 시계를 따른다.
+    expect(stories.single.startedAt, b.clock.now());
+    expect(stories.single.createdAt, b.clock.now());
     expect(Directory('${rootB.path}/media').existsSync(), isTrue);
   });
 

@@ -163,7 +163,8 @@ class DiaryBackupArea implements BackupAreaSource {
         }
         for (final t in _deleteOrder.reversed) {
           await insertRows(_db, t, data[t.actualTableName]!);
-          if (t == _db.stories) await _ensureDailyStory();
+          // 기록을 둘 곳이 없어지지 않게, 백업에 기본 스토리가 없으면 만든다.
+          if (t == _db.stories) await _db.ensureDailyStory();
         }
       });
     });
@@ -182,23 +183,6 @@ class DiaryBackupArea implements BackupAreaSource {
 
   @override
   Future<void> afterRestore() async {}
-
-  /// 기록을 둘 곳이 없어지지 않게, 백업에 기본 스토리가 없으면 만든다.
-  Future<void> _ensureDailyStory() {
-    final now = DateTime.now();
-    return _db
-        .into(_db.stories)
-        .insert(
-          StoriesCompanion.insert(
-            id: Story.dailyId,
-            title: '',
-            status: StoryStatus.open,
-            startedAt: now,
-            createdAt: now,
-          ),
-          mode: InsertMode.insertOrIgnore,
-        );
-  }
 
   /// `data.json` 을 테이블 이름 → 행 목록으로 읽는다. 없거나 모양이 다르면 integrity.
   Future<Map<String, List<Map<String, Object?>>>> _readData(

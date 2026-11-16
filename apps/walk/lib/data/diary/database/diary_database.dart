@@ -31,11 +31,13 @@ class DiaryDatabase extends _$DiaryDatabase {
       await customStatement('PRAGMA foreign_keys = ON');
       // 처음 만들 때뿐 아니라 지워졌을 때도 되살린다. 기본 스토리가 없으면
       // 기록을 둘 곳이 없다.
-      await _ensureDailyStory();
+      await ensureDailyStory();
     },
   );
 
-  Future<void> _ensureDailyStory() {
+  /// 기본 스토리가 없으면 [_now] 시각으로 만든다. 있으면 그대로 둔다.
+  /// 백업 복원도 테이블을 비우고 다시 채운 뒤 부른다.
+  Future<void> ensureDailyStory() {
     final now = _now();
     return into(stories).insert(
       StoriesCompanion.insert(
