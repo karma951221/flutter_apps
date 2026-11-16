@@ -11,7 +11,10 @@ import 'package:walk/domain/alarm/ring_log/ring_archive.dart';
 import 'package:walk/domain/alarm/usecase/ring_archiver.dart';
 import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/tool/chat_image_source.dart';
+import 'package:walk/domain/chat/tool/alarm_tools.dart';
 import 'package:walk/domain/chat/tool/life_tools.dart';
+import 'package:walk/domain/chat/tool/location_tools.dart';
+import 'package:walk/domain/chat/tool/weather_tools.dart';
 import 'package:walk/domain/chat/tool/tool_result.dart';
 import 'package:walk/domain/chat/tool/tool_summary.dart';
 import 'package:walk/domain/diary/entity/diary_entry.dart';
@@ -30,6 +33,12 @@ class _Activity extends Mock implements ActivityRepository {}
 class _Archiver extends Mock implements RingArchiver {}
 
 class _Rings extends Mock implements RingArchive {}
+
+class _Location extends Mock implements LocationTools {}
+
+class _AlarmTools extends Mock implements AlarmTools {}
+
+class _Weather extends Mock implements WeatherTools {}
 
 class _Images implements ChatImageSource {
   @override
@@ -77,6 +86,9 @@ void main() {
   late _Archiver archiver;
   late _Rings rings;
   late LifeTools tools;
+  late _Location location;
+  late _AlarmTools alarmTools;
+  late _Weather weather;
 
   setUpAll(() {
     registerFallbackValue(DateTime(2026));
@@ -96,7 +108,53 @@ void main() {
       ]),
     );
     when(() => archiver.archive()).thenAnswer((_) async {});
-    tools = LifeTools(diary, activity, archiver, rings, _Images());
+    location = _Location();
+    alarmTools = _AlarmTools();
+    weather = _Weather();
+    when(() => location.definitions).thenReturn(const [
+      ToolSpec(
+        name: 'visited_places',
+        description: 'v',
+        parameters: {
+          'type': 'object',
+          'properties': {},
+          'required': ['from', 'to'],
+        },
+      ),
+      ToolSpec(
+        name: 'frequent_places',
+        description: 'f',
+        parameters: {
+          'type': 'object',
+          'properties': {},
+          'required': ['from', 'to'],
+        },
+      ),
+    ]);
+    when(() => alarmTools.definition).thenReturn(
+      const ToolSpec(
+        name: 'list_alarms',
+        description: 'a',
+        parameters: {'type': 'object', 'properties': {}, 'required': []},
+      ),
+    );
+    when(() => weather.definition).thenReturn(
+      const ToolSpec(
+        name: 'weather_forecast',
+        description: 'w',
+        parameters: {'type': 'object', 'properties': {}, 'required': []},
+      ),
+    );
+    tools = LifeTools(
+      diary,
+      activity,
+      archiver,
+      rings,
+      _Images(),
+      location,
+      alarmTools,
+      weather,
+    );
   });
 
   void stubSearch(List<DiaryEntry> entries) {
@@ -116,7 +174,7 @@ void main() {
   Map<String, Object?> decode(ToolResult r) =>
       jsonDecode(r.json) as Map<String, Object?>;
 
-  test('definitions 는 ToolSpec 다섯 개이고 parameters 가 object 다', () {
+  test('definitions 는 ToolSpec 아홉 개이고 parameters 가 object 다', () {
     final List<ToolSpec> defs = tools.definitions;
     expect(defs.map((d) => d.name), [
       'search_diary',
@@ -124,6 +182,10 @@ void main() {
       'list_diary_index',
       'daily_steps',
       'wake_records',
+      'visited_places',
+      'frequent_places',
+      'list_alarms',
+      'weather_forecast',
     ]);
     for (final d in defs) {
       expect(d.parameters['type'], 'object');
@@ -136,10 +198,35 @@ void main() {
       <String>[],
       ['from', 'to'],
       ['from', 'to'],
+      ['from', 'to'],
+      ['from', 'to'],
+      <String>[],
+      <String>[],
     ]);
   });
 
-  test('definitionsFor(images: false) 에 view_entry_photos 가 없고 나머지 넷은 같다', () {
+  test('daily_steps 설명은 걷기 탭의 걸음 수라고 말한다', () {
+    final steps = tools.definitions.firstWhere((d) => d.name == 'daily_steps');
+    expect(steps.description, startsWith('걷기 탭의 하루별 걸음 수'));
+  });
+
+  test('위치 · 알람 · 날씨 도구는 각 도구 클래스로 넘긴다', () async {
+    const visited = ToolResult(json: '{"stays":[]}');
+    const alarms = ToolResult(json: '{"alarms":[]}');
+    const forecast = ToolResult(json: '{"place":null}');
+    final input = {'from': '2026-11-01', 'to': '2026-11-02'};
+    when(
+      () => location.run('visited_places', input),
+    ).thenAnswer((_) async => visited);
+    when(() => alarmTools.run()).thenAnswer((_) async => alarms);
+    when(() => weather.run()).thenAnswer((_) async => forecast);
+
+    expect(await tools.run('visited_places', input), visited);
+    expect(await tools.run('list_alarms', {}), alarms);
+    expect(await tools.run('weather_forecast', {}), forecast);
+  });
+
+  test('definitionsFor(images: false) 에 view_entry_photos 가 없고 나머지는 같다', () {
     final all = tools.definitionsFor(images: true);
     final noImages = tools.definitionsFor(images: false);
 
@@ -149,6 +236,10 @@ void main() {
       'list_diary_index',
       'daily_steps',
       'wake_records',
+      'visited_places',
+      'frequent_places',
+      'list_alarms',
+      'weather_forecast',
     ]);
     expect(noImages, [
       for (final d in all)

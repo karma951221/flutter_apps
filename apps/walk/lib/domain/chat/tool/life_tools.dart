@@ -15,12 +15,16 @@ import '../../diary/repository/diary_repository.dart';
 import '../../walk/entity/health_access.dart';
 import '../../walk/repository/activity_repository.dart';
 import '../chat_model.dart';
+import 'alarm_tools.dart';
 import 'chat_image_source.dart';
+import 'location_tools.dart';
 import 'tool_input.dart';
 import 'tool_result.dart';
 import 'tool_summary.dart';
+import 'weather_tools.dart';
 
-/// Claude 가 사용자의 일기 · 걸음 · 기상 기록을 읽는 도구들.
+/// 모델이 사용자의 일기 · 걸음 · 기상 기록을 읽는 도구들. 위치 · 알람 설정 · 날씨 예보는
+/// [LocationTools] · [AlarmTools] · [WeatherTools] 에 넘기고, 정의는 그 뒤에 붙인다.
 @lazySingleton
 class LifeTools {
   LifeTools(
@@ -29,6 +33,9 @@ class LifeTools {
     this._archiver,
     this._rings,
     this._images,
+    this._location,
+    this._alarms,
+    this._weather,
   );
 
   final DiaryRepository _diary;
@@ -36,6 +43,9 @@ class LifeTools {
   final RingArchiver _archiver;
   final RingArchive _rings;
   final ChatImageSource _images;
+  final LocationTools _location;
+  final AlarmTools _alarms;
+  final WeatherTools _weather;
 
   static const _maxEntries = 50;
   static const _maxPhotos = 4;
@@ -65,7 +75,7 @@ class LifeTools {
   /// 모든 도구 = `definitionsFor(images: true)`.
   List<ToolSpec> get definitions => definitionsFor(images: true);
 
-  /// [images] 가 false 면 사진 보기 도구([viewPhotosTool])를 뺀 넷.
+  /// [images] 가 false 면 사진 보기 도구([viewPhotosTool])를 뺀 나머지.
   List<ToolSpec> definitionsFor({required bool images}) => [
     for (final spec in _all)
       if (images || spec.name != viewPhotosTool) spec,
@@ -102,7 +112,7 @@ class LifeTools {
     ),
     _tool(
       'daily_steps',
-      '기간의 하루별 걸음 수를 본다. 양 끝 날짜를 포함한다.',
+      '걷기 탭의 하루별 걸음 수를 본다. 양 끝 날짜를 포함한다.',
       {'from': _date, 'to': _date},
       ['from', 'to'],
     ),
@@ -112,6 +122,9 @@ class LifeTools {
       {'from': _date, 'to': _date},
       ['from', 'to'],
     ),
+    ..._location.definitions,
+    _alarms.definition,
+    _weather.definition,
   ];
 
   Future<ToolResult> run(String name, Map<String, Object?> input) async {
@@ -123,6 +136,12 @@ class LifeTools {
         'list_diary_index' => await _index(),
         'daily_steps' => await _dailySteps(input),
         'wake_records' => await _wakeRecords(input),
+        _ when LocationTools.names.contains(name) => await _location.run(
+          name,
+          input,
+        ),
+        AlarmTools.name => await _alarms.run(),
+        WeatherTools.name => await _weather.run(),
         _ => _error('unknown_tool', kind),
       };
     } catch (_) {
