@@ -274,6 +274,31 @@ void main() {
       expect(find.text('이제 일기 · 걸음 · 알람 기상 · 위키를 찾아보고 답해요'), findsOneWidget);
     });
 
+    testWidgets('켜짐은 강조 배경 · 색, 꺼짐은 배경 없이 기본색 — 앱바 테마가 덮지 않는다', (tester) async {
+      await pump(tester);
+      final scheme = Theme.of(tester.element(find.byKey(key))).colorScheme;
+
+      Color? iconColor(IconData icon) =>
+          IconTheme.of(tester.element(find.byIcon(icon))).color;
+      Color? background() {
+        final material = tester.widget<Material>(
+          find
+              .descendant(of: find.byKey(key), matching: find.byType(Material))
+              .first,
+        );
+        return material.color;
+      }
+
+      expect(iconColor(Icons.auto_stories), scheme.onPrimaryContainer);
+      expect(background(), scheme.primaryContainer);
+
+      await tester.tap(find.byKey(key));
+      await tester.pumpAndSettle();
+
+      expect(iconColor(Icons.auto_stories_outlined), scheme.onSurfaceVariant);
+      expect(background(), anyOf(isNull, Colors.transparent));
+    });
+
     testWidgets('접근성: 토글 상태와 라벨을 읽는다', (tester) async {
       final handle = tester.ensureSemantics();
       await pump(tester);

@@ -428,7 +428,7 @@ class _ChatTitle extends StatelessWidget {
   }
 }
 
-/// 앱바 [내 기록 참고] 토글. 켜면 채운 아이콘 · 강조색, 끄면 테두리 아이콘 · 기본색.
+/// 앱바 [내 기록 참고] 토글. 켜면 채운 아이콘 · 강조 배경, 끄면 테두리 아이콘 · 기본색.
 /// 끄면 다음 질문부터 기록 도구 · 위키 없이 일반 도우미로 묻는다. 답하는 중엔 꺼진다.
 class _UseRecordsAction extends StatelessWidget {
   const _UseRecordsAction();
@@ -457,11 +457,29 @@ class _UseRecordsAction extends StatelessWidget {
     );
     if (!show) return const SizedBox.shrink();
     final label = on ? l10n.walkChatUseRecordsOn : l10n.walkChatUseRecordsOff;
+    final scheme = Theme.of(context).colorScheme;
     // isSelected 가 '선택됨' 상태를, 툴팁이 켬/끔이 담긴 라벨을 접근성 트리에 싣는다.
+    // 앱바의 아이콘 테마가 선택 색을 덮어서, 켜짐 배경 · 색을 상태별로 직접 준다.
     return IconButton(
       key: const Key('chat-use-records-action'),
       tooltip: label,
       isSelected: on,
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith(
+          (states) =>
+              states.contains(WidgetState.selected) &&
+                  !states.contains(WidgetState.disabled)
+              ? scheme.primaryContainer
+              : null,
+        ),
+        foregroundColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.disabled)
+              ? null
+              : states.contains(WidgetState.selected)
+              ? scheme.onPrimaryContainer
+              : scheme.onSurfaceVariant,
+        ),
+      ),
       icon: const Icon(Icons.auto_stories_outlined),
       selectedIcon: const Icon(Icons.auto_stories),
       onPressed: busy ? null : () => unawaited(_toggle(context, !on)),

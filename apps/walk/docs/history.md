@@ -1098,8 +1098,8 @@ OpenAI: gpt-5 `minimal`, 5.1 이후 `none`, o 계열 `low`). 초안의 `modelUna
 ### 판단
 
 - **칩 줄을 없애고 모두 앱바로** — 본문은 대화 · 임시 대화 띠 · 입력칸만 남는다.
-- **[내 기록 참고]는 `IconButton(isSelected:)`** — 켜짐은 채운 `auto_stories` + M3 선택 색(primary), 꺼짐은 테두리 아이콘 + 기본색이라
-  모양과 색이 둘 다 달라진다. 아이콘만으로는 뜻이 약해 툴팁이 상태를 말하고("내 기록 참고 켜짐/꺼짐"), 누르면 스낵바로
+- **[내 기록 참고]는 `IconButton(isSelected:)`** — 켜짐은 채운 `auto_stories` + `primaryContainer` 배경, 꺼짐은 테두리 아이콘 + 기본색이라
+  모양 · 색 · 배경이 다 달라진다. 앱바 아이콘 테마가 M3 선택 색을 덮어 처음엔 채움 여부만 달랐다 — 그래서 상태별 `ButtonStyle` 을 직접 준다. 아이콘만으로는 뜻이 약해 툴팁이 상태를 말하고("내 기록 참고 켜짐/꺼짐"), 누르면 스낵바로
   무엇이 바뀌었는지 알린다(켤 때는 찾아보는 기록 종류까지). 접근성은 IconButton 이 싣는 선택 상태 + 툴팁 라벨로 충분해
   따로 `Semantics` 를 감싸지 않았다. 저장은 `ChatCubit.setUseRecords` 그대로.
 - **모델은 벤더 아이콘 버튼 + 제목 아래 작은 이름** — 버튼에 이름을 넣으면 actions 가 길어지고, 툴팁만으로는 지금 모델이
@@ -1112,5 +1112,7 @@ OpenAI: gpt-5 `minimal`, 5.1 이후 `none`, o 계열 `low`). 초안의 `modelUna
 
 ### 검증
 
-VERIFY_PLACEHOLDER
+`flutter analyze` 0 · `flutter test` 3904건 통과(1 skip). 에뮬레이터(Medium_Phone)에는 키가 없어 물어보기가 키 안내 화면에서
+멈춰 앱바 버튼을 볼 수 없었다 — 실제 폰트(AppleGothic · MaterialIcons)를 실은 위젯 테스트로 준비 상태 화면을 그려 켜짐 · 꺼짐을
+눈으로 확인했다(임시 골든, 커밋하지 않음). 키를 넣은 기기 확인은 [시나리오](testing.md#물어보기-앱바-정리) AB1~AB5.
 
