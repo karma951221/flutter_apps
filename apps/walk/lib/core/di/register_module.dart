@@ -33,6 +33,7 @@ import '../../data/location/database/location_database.dart';
 import '../../domain/alarm/permission/alarm_permissions.dart';
 import '../../domain/alarm/usecase/alarm_use_case.dart';
 import '../../domain/backup/backup_area_source.dart';
+import '../../domain/backup/backup_files.dart';
 import '../../domain/backup/backup_service.dart';
 import '../../domain/chat/chat_settings.dart';
 import '../../domain/chat/chat_trace.dart';
@@ -156,19 +157,21 @@ abstract class RegisterModule {
     LocationBackupArea location,
   ) => [diary, chat, wiki, alarm, settings, location];
 
-  /// 여유 공간을 읽는 길이 아직 없어 공간 검사는 건너뛴다(쓰다가 모자라면 noSpace).
+  /// 여유 공간은 백업 채널이 앱 캐시 저장소(문서 폴더와 같은 데이터 파티션)에서 읽는다.
   @lazySingleton
   BackupService backupService(
     List<BackupAreaSource> areas,
     @Named('appDocs') Directory docs,
     @Named('appCache') Directory cache,
     Clock clock,
+    BackupFiles files,
   ) => DefaultBackupService(
     areas: areas,
     appDocs: docs,
     cache: cache,
     appVersion: appVersion,
     clock: clock,
+    freeBytes: files.freeBytes,
   );
 
   /// 이 앱은 `CorePackageModule` 을 쓰지 않아 `IdGenerator` 와 그 재료도 직접

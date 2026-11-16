@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.os.StatFs
 import android.provider.DocumentsContract
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
@@ -15,7 +16,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 /**
- * `com.karma.walk/backup_file` — 백업 파일 저장(위치 고르기) · 열기 · 앱 재시작.
+ * `com.karma.walk/backup_file` — 백업 파일 저장(위치 고르기) · 열기 · 앱 재시작 · 여유 공간.
  *
  * `file_picker` 의 `saveFile` 은 바이트 배열 전체를 받아 큰 백업에 쓸 수 없다. Dart 가 앱 캐시에 만든
  * 파일을 `ACTION_CREATE_DOCUMENT` 로 받은 URI 에 스트림으로 복사하고, 열기는 `ACTION_OPEN_DOCUMENT` 로
@@ -82,6 +83,8 @@ class BackupFileChannel(
                         .setType("*/*"),
                 )
             "restart" -> restart(result)
+            // 백업 작업 폴더(문서 폴더)와 앱 캐시는 같은 데이터 파티션에 있다.
+            "freeBytes" -> result.success(StatFs(context.cacheDir.path).availableBytes)
             else -> result.notImplemented()
         }
     }

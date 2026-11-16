@@ -118,4 +118,19 @@ void main() {
       expect(ChannelBackupFiles().restartApp(), failsWith(BackupFailure.io));
     });
   });
+
+  group('freeBytes', () {
+    test('앱 캐시가 있는 저장소의 여유 바이트', () async {
+      answer((_) => 123456789);
+      expect(await ChannelBackupFiles().freeBytes(), 123456789);
+      expect(calls.single.method, 'freeBytes');
+    });
+
+    test('읽지 못하면 null(검사를 건너뛴다)', () async {
+      answer((_) => throw PlatformException(code: 'failed'));
+      expect(await ChannelBackupFiles().freeBytes(), isNull);
+      messenger.setMockMethodCallHandler(channel, null);
+      expect(await ChannelBackupFiles().freeBytes(), isNull);
+    });
+  });
 }

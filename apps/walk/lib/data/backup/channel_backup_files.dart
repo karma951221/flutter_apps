@@ -34,6 +34,15 @@ class ChannelBackupFiles implements BackupFiles {
   @override
   Future<void> restartApp() => _invoke<void>('restart');
 
+  @override
+  Future<int?> freeBytes() async {
+    try {
+      return await _channel.invokeMethod<int>('freeBytes');
+    } on Object {
+      return null;
+    }
+  }
+
   Future<T?> _invoke<T>(String method, [Object? arguments]) async {
     try {
       return await _channel.invokeMethod<T>(method, arguments);

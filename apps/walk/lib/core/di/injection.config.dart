@@ -690,6 +690,15 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i764.LocationBackupArea>(),
       ),
     );
+    gh.lazySingleton<_i1000.BackupService>(
+      () => registerModule.backupService(
+        gh<List<_i355.BackupAreaSource>>(),
+        gh<_i497.Directory>(instanceName: 'appDocs'),
+        gh<_i497.Directory>(instanceName: 'appCache'),
+        gh<_i494.Clock>(),
+        gh<_i1041.BackupFiles>(),
+      ),
+    );
     gh.lazySingleton<_i502.ChatSession>(
       () => _i502.ChatSession(
         gh<_i1004.ChatModelRegistry>(),
@@ -703,14 +712,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i795.WikiContextPolicy>(),
         gh<_i268.WikiTools>(),
         gh<_i215.WorkspaceTools>(),
-      ),
-    );
-    gh.lazySingleton<_i1000.BackupService>(
-      () => registerModule.backupService(
-        gh<List<_i355.BackupAreaSource>>(),
-        gh<_i497.Directory>(instanceName: 'appDocs'),
-        gh<_i497.Directory>(instanceName: 'appCache'),
-        gh<_i494.Clock>(),
       ),
     );
     gh.factory<_i221.BackupCubit>(

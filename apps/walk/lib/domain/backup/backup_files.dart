@@ -11,4 +11,8 @@ abstract interface class BackupFiles {
 
   /// 복원한 데이터로 처음부터 시작하도록 앱을 다시 띄운다.
   Future<void> restartApp();
+
+  /// 앱 데이터가 있는 저장소의 여유 바이트(백업 만들기 · 검사 전 공간 검사). 읽지 못하면 null —
+  /// 검사를 건너뛴다. 던지지 않는다.
+  Future<int?> freeBytes();
 }
