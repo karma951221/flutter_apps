@@ -4756,4 +4756,261 @@ class AppLocalizationsJa extends AppLocalizations {
   String walkDiaryDraftConsentNotice(String vendor) {
     return '下書きを作るとき、本文欄のメモと記録の時刻・場所の名前・タグが$vendorに送信されます。写真は「写真を見せる」をオンにしたときだけ送ります。キーはこの端末の安全な保存領域にだけあります。';
   }
+
+  @override
+  String get walkBackupSettingsTitle => 'バックアップ';
+
+  @override
+  String get walkBackupSettingsCreate => 'バックアップファイルを作成';
+
+  @override
+  String get walkBackupSettingsRestore => 'バックアップから復元';
+
+  @override
+  String get walkBackupSettingsUndo => '復元前に戻す';
+
+  @override
+  String walkBackupSettingsLastAt(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days日前',
+      zero: '今日',
+    );
+    return '最終バックアップ: $_temp0';
+  }
+
+  @override
+  String get walkBackupSettingsNever => 'まだバックアップがありません';
+
+  @override
+  String get walkBackupSettingsStale => '古い';
+
+  @override
+  String get walkBackupSettingsExcluded => 'APIキーとロックは含まれません。復元後にもう一度設定してください。';
+
+  @override
+  String get walkBackupSettingsCloudNote =>
+      '写真・動画・添付ファイルはGoogleの自動バックアップに含まれません。バックアップファイルを作っておいてください。';
+
+  @override
+  String get walkBackupSettingsLocked => '日記のロックを解除するとバックアップ・復元できます';
+
+  @override
+  String get walkBackupAreaDiary => '日記';
+
+  @override
+  String get walkBackupAreaChat => '質問の会話';
+
+  @override
+  String get walkBackupAreaWiki => 'LLMウィキ';
+
+  @override
+  String get walkBackupAreaAlarm => 'アラーム';
+
+  @override
+  String get walkBackupAreaSettings => 'アプリ設定';
+
+  @override
+  String get walkBackupAreaLocation => '位置記録';
+
+  @override
+  String walkBackupCountDiary(int entries, int media) {
+    final intl.NumberFormat entriesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String entriesString = entriesNumberFormat.format(entries);
+    final intl.NumberFormat mediaNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String mediaString = mediaNumberFormat.format(media);
+
+    return '記録 $entriesString・写真/動画 $mediaString';
+  }
+
+  @override
+  String walkBackupCountChat(int conversations, int files) {
+    final intl.NumberFormat conversationsNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String conversationsString = conversationsNumberFormat.format(
+      conversations,
+    );
+    final intl.NumberFormat filesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String filesString = filesNumberFormat.format(files);
+
+    return '$conversationsString件・ファイル $filesString';
+  }
+
+  @override
+  String walkBackupCountItems(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString件';
+  }
+
+  @override
+  String walkBackupCountPoints(int points) {
+    final intl.NumberFormat pointsNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String pointsString = pointsNumberFormat.format(points);
+
+    return '地点 $pointsString';
+  }
+
+  @override
+  String walkBackupSizeSuffix(String counts, String size) {
+    return '$counts（$size）';
+  }
+
+  @override
+  String get walkBackupSheetTitle => '含めるもの';
+
+  @override
+  String get walkBackupSheetEncrypt => 'パスワードでロック';
+
+  @override
+  String get walkBackupSheetUnencrypted => 'このファイルは誰でも開けます';
+
+  @override
+  String get walkBackupSheetLocationUnencrypted => '位置記録が暗号化されずに保存されます';
+
+  @override
+  String get walkBackupSheetPassword => 'パスワード';
+
+  @override
+  String get walkBackupSheetPasswordAgain => 'もう一度入力';
+
+  @override
+  String get walkBackupSheetPasswordHint => '8文字以上';
+
+  @override
+  String get walkBackupSheetPasswordMismatch => 'パスワードが一致しません';
+
+  @override
+  String get walkBackupSheetForgetAck => 'パスワードを忘れると復元できません';
+
+  @override
+  String get walkBackupSheetSave => '保存先を選ぶ';
+
+  @override
+  String walkBackupExported(String size) {
+    return 'バックアップしました（$size）';
+  }
+
+  @override
+  String get walkBackupPasswordTitle => 'バックアップのパスワード';
+
+  @override
+  String get walkBackupPasswordOpen => '開く';
+
+  @override
+  String get walkBackupPasswordShow => 'パスワードを表示';
+
+  @override
+  String get walkBackupPasswordHide => 'パスワードを隠す';
+
+  @override
+  String get walkBackupRestoreSheetTitle => '復元するもの';
+
+  @override
+  String walkBackupRestoreSheetCreated(String date) {
+    return '$date のバックアップ';
+  }
+
+  @override
+  String get walkBackupRestoreSheetReplaces => '今のデータを置き換えます';
+
+  @override
+  String get walkBackupRestoreSheetNewer => 'アプリを更新すると復元できます';
+
+  @override
+  String get walkBackupRestoreAction => '復元';
+
+  @override
+  String get walkBackupRestoreConfirmTitle => '復元しますか？';
+
+  @override
+  String walkBackupRestoreConfirmBody(String date) {
+    return '選んだ項目の今のデータをバックアップ（$date）のものに置き換えます。今のデータは元に戻すためにしばらく保管されます。';
+  }
+
+  @override
+  String get walkBackupUndoConfirmTitle => '復元前に戻しますか？';
+
+  @override
+  String get walkBackupUndoConfirmBody => '最後の復元で変わった項目を復元前のデータに戻します。一度だけできます。';
+
+  @override
+  String get walkBackupUndoConfirmAction => '元に戻す';
+
+  @override
+  String get walkBackupResultTitle => '復元が完了しました';
+
+  @override
+  String get walkBackupResultRestart => 'アプリを再起動します。';
+
+  @override
+  String get walkBackupRestartAction => '再起動';
+
+  @override
+  String get walkBackupNoticeAlarmSound => 'バックアップにないアラーム音は標準の音に変更しました。';
+
+  @override
+  String get walkBackupNoticeAlarmResync =>
+      'アラームを再設定できませんでした。アラーム画面を開くと再設定します。';
+
+  @override
+  String get walkBackupNoticeAlarmPermission => 'アラームの権限をオンにしてください。';
+
+  @override
+  String get walkBackupNoticeLocationOff => '位置記録はオフです。地図設定でオンにしてください。';
+
+  @override
+  String get walkBackupNoticeLocationRetention => '保管期間を過ぎた位置記録は次の整理で削除されます。';
+
+  @override
+  String get walkBackupNoticeApiKey => '質問のAPIキーをもう一度入力してください。';
+
+  @override
+  String get walkBackupRecoveryTitle => 'アプリを再起動してください';
+
+  @override
+  String get walkBackupRecoveryBody => '復元を完了できませんでした。再起動すると復元前のデータに戻します。';
+
+  @override
+  String get walkBackupStepExporting => 'バックアップファイルを作成中…';
+
+  @override
+  String get walkBackupStepSaving => '保存中…';
+
+  @override
+  String get walkBackupStepInspecting => 'バックアップファイルを確認中…';
+
+  @override
+  String get walkBackupStepRestoring => '復元中…';
+
+  @override
+  String get walkBackupStepUndoing => '元に戻しています…';
+
+  @override
+  String get walkBackupFailNotBackup => 'バックアップファイルではありません';
+
+  @override
+  String get walkBackupFailNewer => '新しいバージョンのアプリで作ったバックアップです。アプリを更新してください';
+
+  @override
+  String get walkBackupFailPassword => 'パスワードが違うか、ファイルが壊れています';
+
+  @override
+  String get walkBackupFailIntegrity => 'バックアップファイルが壊れています';
+
+  @override
+  String get walkBackupFailNoSpace => '空き容量が足りません';
+
+  @override
+  String get walkBackupFailCancelled => 'キャンセルしました';
+
+  @override
+  String get walkBackupFailIo => 'バックアップ作業ができませんでした';
 }

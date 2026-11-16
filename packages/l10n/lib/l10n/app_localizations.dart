@@ -8681,6 +8681,420 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'초안을 쓸 때 글 칸의 메모와 기록 시각 · 장소 이름 · 태그가 {vendor}로 전송돼요. 사진은 사진 보여 주기를 켰을 때만 보내요. 키는 이 폰의 보안 저장소에만 있어요.'**
   String walkDiaryDraftConsentNotice(String vendor);
+
+  /// 설정: 백업 화면 제목 · 앱 설정의 바로가기 행
+  ///
+  /// In ko, this message translates to:
+  /// **'백업'**
+  String get walkBackupSettingsTitle;
+
+  /// 백업 화면: 내보내기 행
+  ///
+  /// In ko, this message translates to:
+  /// **'백업 파일 만들기'**
+  String get walkBackupSettingsCreate;
+
+  /// 백업 화면: 복원 행
+  ///
+  /// In ko, this message translates to:
+  /// **'백업에서 복원'**
+  String get walkBackupSettingsRestore;
+
+  /// 백업 화면: 되돌리기 지점이 있을 때만 보이는 행
+  ///
+  /// In ko, this message translates to:
+  /// **'복원 전으로 되돌리기'**
+  String get walkBackupSettingsUndo;
+
+  /// 백업 화면: 내보내기 행 부제 — 마지막으로 백업 파일을 만든 날
+  ///
+  /// In ko, this message translates to:
+  /// **'마지막 백업: {days, plural, =0{오늘} other{{days}일 전}}'**
+  String walkBackupSettingsLastAt(int days);
+
+  /// 백업 화면: 백업한 적이 없을 때 내보내기 행 부제
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 백업 파일이 없어요'**
+  String get walkBackupSettingsNever;
+
+  /// 백업 화면: 마지막 백업이 30일을 넘었다는 표시
+  ///
+  /// In ko, this message translates to:
+  /// **'오래됨'**
+  String get walkBackupSettingsStale;
+
+  /// 백업 화면: 백업에 담지 않는 것 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'API 키와 잠금은 담지 않습니다. 복원 후 다시 입력하세요.'**
+  String get walkBackupSettingsExcluded;
+
+  /// 백업 화면: 안드로이드 자동 백업에서 큰 파일을 뺐다는 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 · 동영상 · 첨부 파일은 구글 자동 백업에 들어가지 않아요. 백업 파일을 만들어 두세요.'**
+  String get walkBackupSettingsCloudNote;
+
+  /// 백업 화면: 일기가 잠겨 행을 막았을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'일기 잠금을 풀면 백업 · 복원할 수 있어요'**
+  String get walkBackupSettingsLocked;
+
+  /// 백업 영역 이름: 일기
+  ///
+  /// In ko, this message translates to:
+  /// **'일기'**
+  String get walkBackupAreaDiary;
+
+  /// 백업 영역 이름: 물어보기 대화
+  ///
+  /// In ko, this message translates to:
+  /// **'물어보기 대화'**
+  String get walkBackupAreaChat;
+
+  /// 백업 영역 이름: LLM 위키
+  ///
+  /// In ko, this message translates to:
+  /// **'LLM 위키'**
+  String get walkBackupAreaWiki;
+
+  /// 백업 영역 이름: 알람
+  ///
+  /// In ko, this message translates to:
+  /// **'알람'**
+  String get walkBackupAreaAlarm;
+
+  /// 백업 영역 이름: 앱 설정
+  ///
+  /// In ko, this message translates to:
+  /// **'앱 설정'**
+  String get walkBackupAreaSettings;
+
+  /// 백업 영역 이름: 위치 기록
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 기록'**
+  String get walkBackupAreaLocation;
+
+  /// 백업 영역 개수: 일기
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 {entries} · 사진·영상 {media}'**
+  String walkBackupCountDiary(int entries, int media);
+
+  /// 백업 영역 개수: 물어보기 대화
+  ///
+  /// In ko, this message translates to:
+  /// **'{conversations}개 · 파일 {files}'**
+  String walkBackupCountChat(int conversations, int files);
+
+  /// 백업 영역 개수: 위키 · 알람
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}개'**
+  String walkBackupCountItems(int count);
+
+  /// 백업 영역 개수: 위치 기록 점
+  ///
+  /// In ko, this message translates to:
+  /// **'점 {points}'**
+  String walkBackupCountPoints(int points);
+
+  /// 백업 영역 개수 뒤에 붙이는 대략의 크기
+  ///
+  /// In ko, this message translates to:
+  /// **'{counts} ({size})'**
+  String walkBackupSizeSuffix(String counts, String size);
+
+  /// 내보내기 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'담을 것'**
+  String get walkBackupSheetTitle;
+
+  /// 내보내기 시트: 암호화 토글
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호로 잠그기'**
+  String get walkBackupSheetEncrypt;
+
+  /// 내보내기 시트: 암호화를 껐을 때 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'이 파일은 누구나 열 수 있어요'**
+  String get walkBackupSheetUnencrypted;
+
+  /// 내보내기 시트: 위치 기록을 체크하고 암호화를 껐을 때 경고
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 기록이 암호화 없이 저장돼요'**
+  String get walkBackupSheetLocationUnencrypted;
+
+  /// 내보내기 시트: 비밀번호 칸
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호'**
+  String get walkBackupSheetPassword;
+
+  /// 내보내기 시트: 비밀번호 확인 칸
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 입력'**
+  String get walkBackupSheetPasswordAgain;
+
+  /// 내보내기 시트: 비밀번호 칸 도움말
+  ///
+  /// In ko, this message translates to:
+  /// **'8자 이상'**
+  String get walkBackupSheetPasswordHint;
+
+  /// 내보내기 시트: 두 비밀번호가 다를 때
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호가 서로 달라요'**
+  String get walkBackupSheetPasswordMismatch;
+
+  /// 내보내기 시트: 체크해야 저장 버튼이 켜지는 확인란
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호를 잊으면 복원할 수 없어요'**
+  String get walkBackupSheetForgetAck;
+
+  /// 내보내기 시트: 저장 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'저장 위치 고르기'**
+  String get walkBackupSheetSave;
+
+  /// 백업 파일 저장 성공 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'백업했어요 ({size})'**
+  String walkBackupExported(String size);
+
+  /// 복원: 암호화된 백업 파일의 비밀번호 대화상자 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'백업 비밀번호'**
+  String get walkBackupPasswordTitle;
+
+  /// 복원: 비밀번호 대화상자 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'열기'**
+  String get walkBackupPasswordOpen;
+
+  /// 비밀번호 칸 보기 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호 보기'**
+  String get walkBackupPasswordShow;
+
+  /// 비밀번호 칸 숨기기 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호 숨기기'**
+  String get walkBackupPasswordHide;
+
+  /// 복원 영역 고르기 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'복원할 것'**
+  String get walkBackupRestoreSheetTitle;
+
+  /// 복원 시트: 백업 만든 날짜
+  ///
+  /// In ko, this message translates to:
+  /// **'{date} 백업'**
+  String walkBackupRestoreSheetCreated(String date);
+
+  /// 복원 시트: 영역마다 지금 데이터를 바꾼다는 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 데이터를 바꿉니다'**
+  String get walkBackupRestoreSheetReplaces;
+
+  /// 복원 시트: 더 새 앱이 만든 영역이라 막혔을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'앱을 업데이트해야 복원할 수 있어요'**
+  String get walkBackupRestoreSheetNewer;
+
+  /// 복원 시트 · 확인 대화상자의 복원 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'복원'**
+  String get walkBackupRestoreAction;
+
+  /// 복원 확인 대화상자 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'복원할까요?'**
+  String get walkBackupRestoreConfirmTitle;
+
+  /// 복원 확인 대화상자 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'고른 영역의 지금 데이터를 백업({date}) 것으로 바꿉니다. 지금 데이터는 되돌리기용으로 잠시 보관됩니다.'**
+  String walkBackupRestoreConfirmBody(String date);
+
+  /// 되돌리기 확인 대화상자 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'복원 전으로 되돌릴까요?'**
+  String get walkBackupUndoConfirmTitle;
+
+  /// 되돌리기 확인 대화상자 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'마지막 복원으로 바뀐 영역을 복원 전 데이터로 되돌립니다. 한 번만 할 수 있어요.'**
+  String get walkBackupUndoConfirmBody;
+
+  /// 되돌리기 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'되돌리기'**
+  String get walkBackupUndoConfirmAction;
+
+  /// 복원 · 되돌리기 결과 대화상자 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'복원을 마쳤어요'**
+  String get walkBackupResultTitle;
+
+  /// 복원 결과 대화상자: 다시 시작 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'앱을 다시 시작합니다.'**
+  String get walkBackupResultRestart;
+
+  /// 복원 결과 · 복구 안내의 다시 시작 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 시작'**
+  String get walkBackupRestartAction;
+
+  /// 복원 결과: 알람음 사본이 없어 기본음으로 바꿈
+  ///
+  /// In ko, this message translates to:
+  /// **'백업에 없는 알람음은 기본 알람음으로 바꿨어요.'**
+  String get walkBackupNoticeAlarmSound;
+
+  /// 복원 결과: 알람 다시 예약 실패
+  ///
+  /// In ko, this message translates to:
+  /// **'알람을 다시 걸지 못했어요. 알람 화면을 열면 다시 걸어요.'**
+  String get walkBackupNoticeAlarmResync;
+
+  /// 복원 결과: 알림 · 정확한 알람 권한 꺼짐
+  ///
+  /// In ko, this message translates to:
+  /// **'알람 권한을 켜 주세요.'**
+  String get walkBackupNoticeAlarmPermission;
+
+  /// 복원 결과: 위치 기록 서비스는 꺼진 채
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 기록은 꺼져 있어요. 지도 설정에서 켜세요.'**
+  String get walkBackupNoticeLocationOff;
+
+  /// 복원 결과: 위치 기록 보관 기간 안내(위치 기록 꺼짐 줄과 함께)
+  ///
+  /// In ko, this message translates to:
+  /// **'보관 기간이 지난 위치 기록은 다음 정리 때 지워져요.'**
+  String get walkBackupNoticeLocationRetention;
+
+  /// 복원 결과: API 키는 백업에 없음
+  ///
+  /// In ko, this message translates to:
+  /// **'물어보기 API 키를 다시 넣어 주세요.'**
+  String get walkBackupNoticeApiKey;
+
+  /// 복원이 끝나지 못해 다시 시작이 필요할 때 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'앱을 다시 시작해 주세요'**
+  String get walkBackupRecoveryTitle;
+
+  /// 복원이 끝나지 못했을 때 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'복원을 끝내지 못했어요. 다시 시작하면 복원 전 데이터로 되돌립니다.'**
+  String get walkBackupRecoveryBody;
+
+  /// 진행 표시: 내보내기
+  ///
+  /// In ko, this message translates to:
+  /// **'백업 파일을 만드는 중…'**
+  String get walkBackupStepExporting;
+
+  /// 진행 표시: 저장 위치로 복사
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하는 중…'**
+  String get walkBackupStepSaving;
+
+  /// 진행 표시: 검사
+  ///
+  /// In ko, this message translates to:
+  /// **'백업 파일을 확인하는 중…'**
+  String get walkBackupStepInspecting;
+
+  /// 진행 표시: 복원
+  ///
+  /// In ko, this message translates to:
+  /// **'복원하는 중…'**
+  String get walkBackupStepRestoring;
+
+  /// 진행 표시: 되돌리기
+  ///
+  /// In ko, this message translates to:
+  /// **'되돌리는 중…'**
+  String get walkBackupStepUndoing;
+
+  /// 백업 실패: 형식 아님
+  ///
+  /// In ko, this message translates to:
+  /// **'백업 파일이 아니에요'**
+  String get walkBackupFailNotBackup;
+
+  /// 백업 실패: 새 형식 · 새 영역 스키마
+  ///
+  /// In ko, this message translates to:
+  /// **'더 새 버전의 앱에서 만든 백업이에요. 앱을 업데이트해 주세요'**
+  String get walkBackupFailNewer;
+
+  /// 백업 실패: 비밀번호 · 손상
+  ///
+  /// In ko, this message translates to:
+  /// **'비밀번호가 틀렸거나 파일이 손상됐어요'**
+  String get walkBackupFailPassword;
+
+  /// 백업 실패: 무결성
+  ///
+  /// In ko, this message translates to:
+  /// **'백업 파일이 손상됐어요'**
+  String get walkBackupFailIntegrity;
+
+  /// 백업 실패: 공간 부족
+  ///
+  /// In ko, this message translates to:
+  /// **'저장 공간이 부족해요'**
+  String get walkBackupFailNoSpace;
+
+  /// 백업 실패: 취소
+  ///
+  /// In ko, this message translates to:
+  /// **'취소했어요'**
+  String get walkBackupFailCancelled;
+
+  /// 백업 실패: 그 밖의 입출력
+  ///
+  /// In ko, this message translates to:
+  /// **'백업 작업을 하지 못했어요'**
+  String get walkBackupFailIo;
 }
 
 class _AppLocalizationsDelegate

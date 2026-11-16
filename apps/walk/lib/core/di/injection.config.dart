@@ -42,6 +42,7 @@ import '../../data/backup/area/location_backup_area.dart' as _i764;
 import '../../data/backup/area/settings_backup_area.dart' as _i830;
 import '../../data/backup/area/wiki_backup_area.dart' as _i905;
 import '../../data/backup/channel_backup_files.dart' as _i515;
+import '../../data/backup/crypto/sniff_backup_file_probe.dart' as _i784;
 import '../../data/backup/prefs_backup_preferences.dart' as _i134;
 import '../../data/chat/anthropic_chat_model.dart' as _i645;
 import '../../data/chat/attachment/file_attachment_loader.dart' as _i255;
@@ -98,6 +99,7 @@ import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
 import '../../domain/alarm/usecase/ring_archiver.dart' as _i626;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
 import '../../domain/backup/backup_area_source.dart' as _i355;
+import '../../domain/backup/backup_file_probe.dart' as _i925;
 import '../../domain/backup/backup_files.dart' as _i1041;
 import '../../domain/backup/backup_preferences.dart' as _i625;
 import '../../domain/backup/backup_service.dart' as _i1000;
@@ -158,6 +160,7 @@ import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
 import '../../domain/weather/repository/weather_repository.dart' as _i903;
 import '../../domain/weather/weather_cache.dart' as _i858;
 import '../../domain/weather/weather_locator.dart' as _i283;
+import '../../presentation/backup/cubit/backup_cubit.dart' as _i221;
 import '../../presentation/chat/attachment/chat_file_picker.dart' as _i211;
 import '../../presentation/chat/workspace/workspace_share.dart' as _i835;
 import '../../presentation/diary/media_picker.dart' as _i287;
@@ -221,6 +224,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i98.MapOpenRequests(),
       dispose: (i) => i.dispose(),
     );
+    gh.lazySingleton<_i925.BackupFileProbe>(() => _i784.SniffBackupFileProbe());
     gh.lazySingleton<_i494.IdGenerator>(
       () => registerModule.idGenerator(gh<_i706.Uuid>()),
     );
@@ -708,6 +712,15 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i497.Directory>(instanceName: 'appCache'),
         gh<_i494.Clock>(),
         gh<_i625.BackupPreferences>(),
+      ),
+    );
+    gh.factory<_i221.BackupCubit>(
+      () => _i221.BackupCubit(
+        gh<_i1000.BackupService>(),
+        gh<_i1041.BackupFiles>(),
+        gh<_i925.BackupFileProbe>(),
+        gh<_i625.BackupPreferences>(),
+        gh<_i494.Clock>(),
       ),
     );
     return this;

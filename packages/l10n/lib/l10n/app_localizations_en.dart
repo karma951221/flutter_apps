@@ -5186,4 +5186,272 @@ class AppLocalizationsEn extends AppLocalizations {
   String walkDiaryDraftConsentNotice(String vendor) {
     return 'When writing a draft, the memo in the text box and the entry time, place name and tags are sent to $vendor. Photos are sent only when Show photos is on. Your key stays in this phone\'s secure storage.';
   }
+
+  @override
+  String get walkBackupSettingsTitle => 'Backup';
+
+  @override
+  String get walkBackupSettingsCreate => 'Create backup file';
+
+  @override
+  String get walkBackupSettingsRestore => 'Restore from backup';
+
+  @override
+  String get walkBackupSettingsUndo => 'Undo last restore';
+
+  @override
+  String walkBackupSettingsLastAt(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days days ago',
+      one: 'yesterday',
+      zero: 'today',
+    );
+    return 'Last backup: $_temp0';
+  }
+
+  @override
+  String get walkBackupSettingsNever => 'No backup yet';
+
+  @override
+  String get walkBackupSettingsStale => 'Outdated';
+
+  @override
+  String get walkBackupSettingsExcluded =>
+      'API keys and the lock aren\'t included. Set them again after restoring.';
+
+  @override
+  String get walkBackupSettingsCloudNote =>
+      'Photos, videos and attachments aren\'t part of Google\'s automatic backup. Keep a backup file.';
+
+  @override
+  String get walkBackupSettingsLocked =>
+      'Unlock the diary to back up or restore';
+
+  @override
+  String get walkBackupAreaDiary => 'Diary';
+
+  @override
+  String get walkBackupAreaChat => 'Ask conversations';
+
+  @override
+  String get walkBackupAreaWiki => 'LLM wiki';
+
+  @override
+  String get walkBackupAreaAlarm => 'Alarms';
+
+  @override
+  String get walkBackupAreaSettings => 'App settings';
+
+  @override
+  String get walkBackupAreaLocation => 'Location history';
+
+  @override
+  String walkBackupCountDiary(int entries, int media) {
+    final intl.NumberFormat entriesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String entriesString = entriesNumberFormat.format(entries);
+    final intl.NumberFormat mediaNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String mediaString = mediaNumberFormat.format(media);
+
+    return '$entriesString entries · $mediaString photos/videos';
+  }
+
+  @override
+  String walkBackupCountChat(int conversations, int files) {
+    final intl.NumberFormat conversationsNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String conversationsString = conversationsNumberFormat.format(
+      conversations,
+    );
+    final intl.NumberFormat filesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String filesString = filesNumberFormat.format(files);
+
+    return '$conversationsString chats · $filesString files';
+  }
+
+  @override
+  String walkBackupCountItems(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    return '$countString';
+  }
+
+  @override
+  String walkBackupCountPoints(int points) {
+    final intl.NumberFormat pointsNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String pointsString = pointsNumberFormat.format(points);
+
+    return '$pointsString points';
+  }
+
+  @override
+  String walkBackupSizeSuffix(String counts, String size) {
+    return '$counts ($size)';
+  }
+
+  @override
+  String get walkBackupSheetTitle => 'Include';
+
+  @override
+  String get walkBackupSheetEncrypt => 'Lock with a password';
+
+  @override
+  String get walkBackupSheetUnencrypted => 'Anyone can open this file';
+
+  @override
+  String get walkBackupSheetLocationUnencrypted =>
+      'Location history will be saved without encryption';
+
+  @override
+  String get walkBackupSheetPassword => 'Password';
+
+  @override
+  String get walkBackupSheetPasswordAgain => 'Enter again';
+
+  @override
+  String get walkBackupSheetPasswordHint => 'At least 8 characters';
+
+  @override
+  String get walkBackupSheetPasswordMismatch => 'Passwords don\'t match';
+
+  @override
+  String get walkBackupSheetForgetAck =>
+      'If I forget the password, I can\'t restore';
+
+  @override
+  String get walkBackupSheetSave => 'Choose where to save';
+
+  @override
+  String walkBackupExported(String size) {
+    return 'Backed up ($size)';
+  }
+
+  @override
+  String get walkBackupPasswordTitle => 'Backup password';
+
+  @override
+  String get walkBackupPasswordOpen => 'Open';
+
+  @override
+  String get walkBackupPasswordShow => 'Show password';
+
+  @override
+  String get walkBackupPasswordHide => 'Hide password';
+
+  @override
+  String get walkBackupRestoreSheetTitle => 'Restore';
+
+  @override
+  String walkBackupRestoreSheetCreated(String date) {
+    return 'Backup from $date';
+  }
+
+  @override
+  String get walkBackupRestoreSheetReplaces => 'Replaces current data';
+
+  @override
+  String get walkBackupRestoreSheetNewer => 'Update the app to restore this';
+
+  @override
+  String get walkBackupRestoreAction => 'Restore';
+
+  @override
+  String get walkBackupRestoreConfirmTitle => 'Restore?';
+
+  @override
+  String walkBackupRestoreConfirmBody(String date) {
+    return 'Current data in the chosen areas will be replaced with the backup ($date). Current data is kept for now so you can undo.';
+  }
+
+  @override
+  String get walkBackupUndoConfirmTitle => 'Undo the last restore?';
+
+  @override
+  String get walkBackupUndoConfirmBody =>
+      'Areas changed by the last restore go back to how they were. You can do this only once.';
+
+  @override
+  String get walkBackupUndoConfirmAction => 'Undo';
+
+  @override
+  String get walkBackupResultTitle => 'Restore finished';
+
+  @override
+  String get walkBackupResultRestart => 'The app will restart.';
+
+  @override
+  String get walkBackupRestartAction => 'Restart';
+
+  @override
+  String get walkBackupNoticeAlarmSound =>
+      'Alarm sounds missing from the backup were set to the default sound.';
+
+  @override
+  String get walkBackupNoticeAlarmResync =>
+      'Couldn\'t reschedule alarms. Open the alarm screen to try again.';
+
+  @override
+  String get walkBackupNoticeAlarmPermission => 'Turn on alarm permissions.';
+
+  @override
+  String get walkBackupNoticeLocationOff =>
+      'Location recording is off. Turn it on in map settings.';
+
+  @override
+  String get walkBackupNoticeLocationRetention =>
+      'Location history older than the retention period is removed at the next cleanup.';
+
+  @override
+  String get walkBackupNoticeApiKey => 'Enter your Ask API key again.';
+
+  @override
+  String get walkBackupRecoveryTitle => 'Please restart the app';
+
+  @override
+  String get walkBackupRecoveryBody =>
+      'The restore didn\'t finish. Restarting returns your data to how it was before.';
+
+  @override
+  String get walkBackupStepExporting => 'Creating backup file…';
+
+  @override
+  String get walkBackupStepSaving => 'Saving…';
+
+  @override
+  String get walkBackupStepInspecting => 'Checking backup file…';
+
+  @override
+  String get walkBackupStepRestoring => 'Restoring…';
+
+  @override
+  String get walkBackupStepUndoing => 'Undoing…';
+
+  @override
+  String get walkBackupFailNotBackup => 'This isn\'t a backup file';
+
+  @override
+  String get walkBackupFailNewer =>
+      'This backup is from a newer app version. Please update the app';
+
+  @override
+  String get walkBackupFailPassword => 'Wrong password or damaged file';
+
+  @override
+  String get walkBackupFailIntegrity => 'The backup file is damaged';
+
+  @override
+  String get walkBackupFailNoSpace => 'Not enough storage';
+
+  @override
+  String get walkBackupFailCancelled => 'Cancelled';
+
+  @override
+  String get walkBackupFailIo => 'Couldn\'t complete the backup task';
 }
