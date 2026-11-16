@@ -1162,7 +1162,7 @@
   "walkChatModelActionTooltip": "Change model · now {model}",
   "walkChatUseRecordsOn": "Use my records: on",
   "walkChatUseRecordsOff": "Use my records: off",
-  "walkChatUseRecordsTurnedOn": "Answers will now look up your diary, steps, wake-ups and wiki",
+  "walkChatUseRecordsTurnedOn": "Answers will now look up your diary, steps, places, alarms, weather and wiki",
   "walkChatUseRecordsTurnedOff": "Answers will now skip your records",
   "walkChatModelRecommended": "Recommended",
   "walkChatModelNew": "NEW",

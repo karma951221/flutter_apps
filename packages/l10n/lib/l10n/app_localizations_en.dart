@@ -4138,7 +4138,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkChatUseRecordsTurnedOn =>
-      'Answers will now look up your diary, steps, wake-ups and wiki';
+      'Answers will now look up your diary, steps, places, alarms, weather and wiki';
 
   @override
   String get walkChatUseRecordsTurnedOff =>

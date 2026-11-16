@@ -3788,7 +3788,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatUseRecordsOff => '내 기록 참고 꺼짐';
 
   @override
-  String get walkChatUseRecordsTurnedOn => '이제 일기 · 걸음 · 알람 기상 · 위키를 찾아보고 답해요';
+  String get walkChatUseRecordsTurnedOn =>
+      '이제 일기 · 걸음 · 위치 · 알람 · 날씨 · 위키를 찾아보고 답해요';
 
   @override
   String get walkChatUseRecordsTurnedOff => '이제 내 기록 없이 답해요';

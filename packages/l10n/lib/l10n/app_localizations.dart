@@ -6963,7 +6963,7 @@ abstract class AppLocalizations {
   /// [내 기록 참고]를 켠 직후 스낵바 — 찾아보는 기록 종류를 알린다
   ///
   /// In ko, this message translates to:
-  /// **'이제 일기 · 걸음 · 알람 기상 · 위키를 찾아보고 답해요'**
+  /// **'이제 일기 · 걸음 · 위치 · 알람 · 날씨 · 위키를 찾아보고 답해요'**
   String get walkChatUseRecordsTurnedOn;
 
   /// [내 기록 참고]를 끈 직후 스낵바
