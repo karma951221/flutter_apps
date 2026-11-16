@@ -230,6 +230,24 @@ void main() {
       );
     });
 
+    for (final (column, path) in [
+      ('path', '/data/user/0/other/secret.jpg'),
+      ('path', 'media/../../shared_prefs/x.xml'),
+      ('thumb_path', '/abs/thumb.jpg'),
+      ('thumb_path', '../thumb.jpg'),
+    ]) {
+      test('rejects media $column "$path"', () async {
+        final data = readData();
+        (data['media'] as List).first[column] = path;
+        writeData(data);
+
+        expect(
+          await _failureOf(() => areaB.validate(staging)),
+          BackupFailure.integrity,
+        );
+      });
+    }
+
     test('rejects entry tag pointing to missing tag', () async {
       final data = readData();
       (data['entry_tags'] as List).first['tag_id'] = 'nope';

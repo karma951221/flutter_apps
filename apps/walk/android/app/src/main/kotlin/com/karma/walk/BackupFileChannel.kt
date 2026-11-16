@@ -113,10 +113,11 @@ class BackupFileChannel(
         }
     }
 
-    /** 실패하면 반쯤 쓴 문서를 지운다(지원하지 않는 제공자면 남는다). */
+    /** 고른 문서를 잘라 내고(`wt`) 덮어쓴다 — 더 큰 기존 파일 위에 써도 꼬리가 남지 않는다.
+     *  실패하면 반쯤 쓴 문서를 지운다(지원하지 않는 제공자면 남는다). */
     private fun save(source: File, target: Uri): Boolean {
         try {
-            val output = context.contentResolver.openOutputStream(target, "w")
+            val output = context.contentResolver.openOutputStream(target, "wt")
                 ?: throw IOException("cannot open $target")
             source.inputStream().use { input -> output.use { BackupFileRules.copyStream(input, it) } }
             return true
@@ -155,6 +156,8 @@ class BackupFileChannel(
             return
         }
         context.startActivity(Intent.makeRestartActivityTask(launcher))
+        // 호출이 응답 없이 끝나지 않게 먼저 답한다.
+        result.success(null)
         Runtime.getRuntime().exit(0)
     }
 

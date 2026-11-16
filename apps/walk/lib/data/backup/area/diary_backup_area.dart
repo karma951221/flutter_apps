@@ -122,6 +122,8 @@ class DiaryBackupArea implements BackupAreaSource {
     }
     for (final m in data[_db.media.actualTableName]!) {
       check(entryIds.contains(m['entry_id']));
+      check(m['path'] != null && isContainedRelativePath(m['path']));
+      check(isContainedRelativePath(m['thumb_path']));
     }
     for (final et in data[_db.entryTags.actualTableName]!) {
       check(entryIds.contains(et['entry_id']));

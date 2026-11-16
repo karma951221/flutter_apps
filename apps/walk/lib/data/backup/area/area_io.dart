@@ -73,3 +73,12 @@ Future<int> countRows(
       .getSingle();
   return row.read<int>('c');
 }
+
+/// 행에 적힌 파일 경로가 영역 폴더 안의 상대 경로인가 — 절대 경로이거나 `..` 조각이 있으면
+/// 아니다(조작한 백업이 앱의 다른 파일을 가리키지 못하게). null 은 경로 없음이라 괜찮다.
+bool isContainedRelativePath(Object? path) {
+  if (path == null) return true;
+  if (path is! String || path.isEmpty) return false;
+  if (path.startsWith('/') || path.startsWith(r'\')) return false;
+  return !path.split(RegExp(r'[/\\]')).contains('..');
+}

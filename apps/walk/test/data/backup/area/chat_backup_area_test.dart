@@ -292,6 +292,23 @@ void main() {
       );
     });
 
+    for (final path in ['/data/user/0/other/secret', 'inbox/../../x']) {
+      test('rejects attachment workspacePath "$path"', () async {
+        final file = File('${staging.path}/chat/conversations.json');
+        final data =
+            jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+        (data['chat_turns'] as List).first['attachments'] = jsonEncode([
+          {'name': 'x', 'kind': 'image', 'workspacePath': path},
+        ]);
+        file.writeAsStringSync(jsonEncode(data));
+
+        expect(
+          await _failureOf(() => areaB.validate(staging)),
+          BackupFailure.integrity,
+        );
+      });
+    }
+
     test('rejects missing or malformed conversations.json', () async {
       final file = File('${staging.path}/chat/conversations.json');
       file.writeAsStringSync('{oops');

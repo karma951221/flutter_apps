@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -115,10 +116,27 @@ class ChatBackupArea implements BackupAreaSource {
       for (final c in data[_db.conversations.actualTableName]!) c['id'],
     };
     for (final t in data[_db.chatTurns.actualTableName]!) {
-      if (!conversationIds.contains(t['conversation_id'])) {
+      if (!conversationIds.contains(t['conversation_id']) ||
+          !_attachmentPathsContained(t['attachments'])) {
         throw const BackupException(BackupFailure.integrity);
       }
     }
+  }
+
+  /// 턴의 첨부 ref JSON 의 작업 폴더 경로가 모두 작업 폴더 안의 상대 경로인가. 읽을 수 없는
+  /// JSON 은 앱이 첨부 없음으로 읽으므로 막지 않는다.
+  static bool _attachmentPathsContained(Object? raw) {
+    if (raw is! String) return true;
+    final Object? refs;
+    try {
+      refs = jsonDecode(raw);
+    } on FormatException {
+      return true;
+    }
+    if (refs is! List) return true;
+    return refs.every(
+      (r) => r is! Map || isContainedRelativePath(r['workspacePath']),
+    );
   }
 
   @override
