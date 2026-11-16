@@ -41,6 +41,7 @@ import '../../data/backup/area/diary_backup_area.dart' as _i16;
 import '../../data/backup/area/location_backup_area.dart' as _i764;
 import '../../data/backup/area/settings_backup_area.dart' as _i830;
 import '../../data/backup/area/wiki_backup_area.dart' as _i905;
+import '../../data/backup/channel_backup_files.dart' as _i515;
 import '../../data/backup/prefs_backup_preferences.dart' as _i134;
 import '../../data/chat/anthropic_chat_model.dart' as _i645;
 import '../../data/chat/attachment/file_attachment_loader.dart' as _i255;
@@ -97,6 +98,7 @@ import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
 import '../../domain/alarm/usecase/ring_archiver.dart' as _i626;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
 import '../../domain/backup/backup_area_source.dart' as _i355;
+import '../../domain/backup/backup_files.dart' as _i1041;
 import '../../domain/backup/backup_preferences.dart' as _i625;
 import '../../domain/backup/backup_service.dart' as _i1000;
 import '../../domain/chat/attachment/attachment_loader.dart' as _i695;
@@ -285,6 +287,7 @@ extension GetItInjectableX on _i174.GetIt {
       ),
     );
     gh.lazySingleton<_i332.HealthGateway>(() => _i332.HealthPluginGateway());
+    gh.lazySingleton<_i1041.BackupFiles>(() => _i515.ChannelBackupFiles());
     gh.lazySingleton<_i159.BackgroundLocationAccess>(
       () => const _i159.PermissionHandlerBackgroundLocationAccess(),
     );

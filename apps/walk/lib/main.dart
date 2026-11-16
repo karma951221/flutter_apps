@@ -8,6 +8,7 @@ import 'core/background/background_task.dart';
 import 'core/di/injection.dart';
 import 'domain/alarm/holiday/holiday_calendar.dart';
 import 'domain/alarm/usecase/alarm_use_case.dart';
+import 'domain/backup/backup_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +17,19 @@ Future<void> main() async {
   // 이전 세션의 예약을 다시 걸고 알림 스누즈 기록을 반영한다. DI 의 스케줄러가 쓰기 전에 끝나야 한다.
   await Alarm.init();
   await configureDependencies();
+  // 복원 · 되돌리기 도중 죽었으면 화면이 DB · 설정을 읽기 전에 되돌리기 지점으로 되돌린다.
+  // 헤드리스 엔진(_initHeadless)은 하지 않는다 — 복원은 앞에 뜬 앱만 한다.
+  await _recoverInterruptedRestore();
   runApp(const WalkApp());
+}
+
+/// [BackupService.recoverIfInterrupted] 는 던지지 않기로 했지만, 실패해도 앱 시작은 막지 않는다.
+Future<void> _recoverInterruptedRestore() async {
+  try {
+    await getIt<BackupService>().recoverIfInterrupted();
+  } catch (e, s) {
+    debugPrint('backup recovery failed: $e\n$s');
+  }
 }
 
 /// 헤드리스 엔진 준비. 새 엔진이라 `Alarm.init` 의 checkAlarm 이 저장된 예약(오프셋 없는 벽시계)을
