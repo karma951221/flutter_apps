@@ -951,6 +951,19 @@ OSM 기본 타일이 가게 · 건물 이름까지 다 그려서 동선이 묻�
   `ThemeCubit` 처럼 상태를 들되 getIt lazySingleton 으로 두어 지도 탭과 지도 설정이 같은 것을 본다.
   그래서 설정에서 바꾸면 뒤에 깔린 지도가 돌아오기 전에 이미 바뀌어 있다.
 
+## 2026-11-16 — 지도 출처 표기 빼기
+
+"지도 하단에 flutter_map 이라는 거 뜨는데 없앨 수 없어?" 라는 피드백.
+
+- **원인** — `TrackMap` 이 flutter_map 의 `SimpleAttributionWidget` 을 썼는데, 이 위젯은 앞에
+  'flutter_map | © ' 를 박아 두고 끌 옵션이 없다.
+- **처음엔 flutter_map 만 빼고 "© <타일 출처>" 한 줄을 남겼다**(앱 전용 위젯, `255bbc25`). 타일 출처는
+  OSM(ODbL) · OpenTopoMap(CC-BY-SA) · Esri 이용 약관이 화면 표기를 요구해서다.
+- **이어서 출처 표기도 모두 뺐다** — 라이선스상 표기 의무를 안내받은 뒤 사용자가 "개인용 앱인데 출처 표기를 할
+  필요 없어"라고 정했다. `SimpleAttributionWidget` · 앱 전용 위젯 · `_attributionOf` 를 지웠다.
+  **개인용 앱이라 사용자 결정으로 지도 출처 표기를 뺐고, 앱을 배포하거나 공개하면 다시 넣어야 한다.**
+- 검증: `flutter analyze` 0 · `flutter test` 3906건 통과(1 skip).
+
 ## 2026-11-14 — 날씨
 
 도구 넷째 상단 탭 날씨. 나가기 직전 "오늘 오후에 비 오나?"를 검색 없이 본다. 설계는 [도구 › 날씨](../../../docs/superpowers/specs/2026-11-14-walk-weather-design.md).
