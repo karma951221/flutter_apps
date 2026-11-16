@@ -90,7 +90,7 @@
 
 **Produces:** `AlarmTools(AlarmUseCase)`, `static const name = 'list_alarms'`, `ToolSpec get definition`, `Future<ToolResult> run()`.
 
-결과: `{"alarms":[{"time":"07:00","repeat":["mon",…](Weekday.name, 비면 []),"label":null|"…","enabled","next":"2026-11-17T07:00"|null(nextRings[id]),"skip_next":skippedAt!=null,"snooze_minutes","snooze_limit"}],"paused":{"from","until"}|null}`. 소리 · 볼륨 · 페이드는 넣지 않는다.
+결과: `{"alarms":[{"time":"07:00","repeat":["mon",…] (Weekday.name, 비면 빈 배열),"label":null|"…","enabled","next":"2026-11-17T07:00"|null(nextRings[id]),"skip_next":skippedAt!=null,"snooze_minutes","snooze_limit"}],"paused":{"from","until"}|null}`. 소리 · 볼륨 · 페이드는 넣지 않는다.
 
 - [ ] **Step 1:** 테스트: 반복 알람(월 · 수, 라벨 '출근', next 있음) → 위 모양 그대로; 빈 라벨 → `label: null`; `sound` 관련 키 없음; `pause()` 있으면 `paused` 날짜; `list()` 예외 → `tool_failed`.
 - [ ] **Step 2 ~ 5:** 실패 확인 → 구현 → 통과 → 커밋 `feat(walk): 물어보기가 알람 설정을 조회한다`
