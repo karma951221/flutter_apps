@@ -13,11 +13,15 @@ import 'package:walk/data/backup/area/drift_rows.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
 import 'package:walk/domain/alarm/entity/alarm_sound.dart';
 import 'package:walk/domain/alarm/entity/ring_log_entry.dart';
+import 'package:walk/domain/alarm/permission/alarm_permissions.dart';
 import 'package:walk/domain/alarm/usecase/alarm_use_case.dart';
 import 'package:walk/domain/backup/backup_area_id.dart';
 import 'package:walk/domain/backup/backup_failure.dart';
+import 'package:walk/domain/backup/restore_notice.dart';
 
 class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
+
+class _MockAlarmPermissions extends Mock implements AlarmPermissions {}
 
 Future<BackupFailure?> _failureOf(Future<void> Function() body) async {
   try {
@@ -46,6 +50,7 @@ void main() {
   late RingArchiveDatabase b;
   late _MockAlarmUseCase alarmsA;
   late _MockAlarmUseCase alarmsB;
+  late _MockAlarmPermissions perms;
 
   setUp(() {
     tmp = Directory.systemTemp.createTempSync('alarm_backup_area_test');
@@ -58,6 +63,8 @@ void main() {
     alarmsA = _MockAlarmUseCase();
     alarmsB = _MockAlarmUseCase();
     when(() => alarmsB.sync()).thenAnswer((_) async {});
+    perms = _MockAlarmPermissions();
+    when(() => perms.canRing()).thenAnswer((_) async => true);
   });
 
   tearDown(() async {
@@ -131,6 +138,7 @@ void main() {
       a,
       soundsA,
       alarmsA,
+      perms,
     );
 
     final counts = await areaA.export(staging);
@@ -145,7 +153,7 @@ void main() {
     await ring(b, DateTime(2026, 11, 16, 7), label: 'B');
     soundsB.createSync(recursive: true);
     File('${soundsB.path}/b-only.ogg').writeAsBytesSync([0]);
-    final areaB = AlarmBackupArea(prefsB, b, soundsB, alarmsB);
+    final areaB = AlarmBackupArea(prefsB, b, soundsB, alarmsB, perms);
     await areaB.validate(staging);
     await areaB.replace(staging);
 
@@ -177,11 +185,12 @@ void main() {
       a,
       soundsA,
       alarmsA,
+      perms,
     ).export(staging);
 
     SharedPreferences.setMockInitialValues({});
     final prefsB = await SharedPreferences.getInstance();
-    await AlarmBackupArea(prefsB, b, soundsB, alarmsB).replace(staging);
+    await AlarmBackupArea(prefsB, b, soundsB, alarmsB, perms).replace(staging);
 
     final restored = await alarmsOf(prefsB);
     expect(
@@ -201,17 +210,68 @@ void main() {
       a,
       soundsA,
       alarmsA,
+      perms,
     ).export(staging);
     File('${staging.path}/alarm/sounds/def456.mp3').deleteSync();
 
     SharedPreferences.setMockInitialValues({});
     final prefsB = await SharedPreferences.getInstance();
-    await AlarmBackupArea(prefsB, b, soundsB, alarmsB).replace(staging);
+    await AlarmBackupArea(prefsB, b, soundsB, alarmsB, perms).replace(staging);
 
     final restored = await alarmsOf(prefsB);
     expect(restored[0].sound, isA<DeviceAlarmSound>());
     expect(restored[1].sound, const AlarmSound.system());
     expect(restored[1].hour, 8);
+  });
+
+  test('afterRestore reports sound fallback once', () async {
+    await seedA();
+    await AlarmBackupArea(
+      await SharedPreferences.getInstance(),
+      a,
+      soundsA,
+      alarmsA,
+      perms,
+    ).export(staging);
+    File('${staging.path}/alarm/sounds/def456.mp3').deleteSync();
+
+    SharedPreferences.setMockInitialValues({});
+    final areaB = AlarmBackupArea(
+      await SharedPreferences.getInstance(),
+      b,
+      soundsB,
+      alarmsB,
+      perms,
+    );
+    await areaB.replace(staging);
+
+    expect(await areaB.afterRestore(), {RestoreNotice.alarmSoundFallback});
+    expect(await areaB.afterRestore(), isEmpty);
+  });
+
+  test('afterRestore asks for permissions only when alarms exist', () async {
+    when(() => perms.canRing()).thenAnswer((_) async => false);
+    SharedPreferences.setMockInitialValues({});
+    final empty = AlarmBackupArea(
+      await SharedPreferences.getInstance(),
+      b,
+      soundsB,
+      alarmsB,
+      perms,
+    );
+    expect(await empty.afterRestore(), isEmpty);
+
+    await seedA();
+    final withAlarms = AlarmBackupArea(
+      await SharedPreferences.getInstance(),
+      b,
+      soundsB,
+      alarmsB,
+      perms,
+    );
+    expect(await withAlarms.afterRestore(), {
+      RestoreNotice.alarmPermissionNeeded,
+    });
   });
 
   test('restore into device without alarm_sounds dir', () async {
@@ -221,13 +281,14 @@ void main() {
       a,
       soundsA,
       alarmsA,
+      perms,
     ).export(staging);
 
     // 새 기기: 문서 폴더조차 아직 없다.
     expect(soundsB.parent.existsSync(), isFalse);
     SharedPreferences.setMockInitialValues({});
     final prefsB = await SharedPreferences.getInstance();
-    await AlarmBackupArea(prefsB, b, soundsB, alarmsB).replace(staging);
+    await AlarmBackupArea(prefsB, b, soundsB, alarmsB, perms).replace(staging);
 
     expect(File('${soundsB.path}/abc123.ogg').existsSync(), isTrue);
     expect((await alarmsOf(prefsB)), hasLength(3));
@@ -240,11 +301,12 @@ void main() {
       a,
       Directory('${tmp.path}/a/none'),
       alarmsA,
+      perms,
     ).export(staging);
 
     await seedA(); // 이번엔 B 쪽으로 쓴다
     final prefsB = await SharedPreferences.getInstance();
-    await AlarmBackupArea(prefsB, a, soundsA, alarmsB).replace(staging);
+    await AlarmBackupArea(prefsB, a, soundsA, alarmsB, perms).replace(staging);
 
     expect(await alarmsOf(prefsB), isEmpty);
     expect(await a.select(a.archivedRings).get(), isEmpty);
@@ -266,11 +328,12 @@ void main() {
       a,
       soundsA,
       alarmsA,
+      perms,
     ).export(staging);
 
     SharedPreferences.setMockInitialValues({});
     final prefsB = await SharedPreferences.getInstance();
-    await AlarmBackupArea(prefsB, b, soundsB, alarmsB).replace(staging);
+    await AlarmBackupArea(prefsB, b, soundsB, alarmsB, perms).replace(staging);
 
     final raw = jsonDecode(prefsB.getString(PrefsAlarmRepository.key)!) as List;
     expect(raw.first, {'broken': true});
@@ -284,6 +347,7 @@ void main() {
       b,
       soundsB,
       alarmsB,
+      perms,
     );
 
     await area.afterRestore();
@@ -294,8 +358,8 @@ void main() {
   test('validate rejects missing or malformed ring_archive.json', () async {
     await seedA();
     final prefs = await SharedPreferences.getInstance();
-    await AlarmBackupArea(prefs, a, soundsA, alarmsA).export(staging);
-    final areaB = AlarmBackupArea(prefs, b, soundsB, alarmsB);
+    await AlarmBackupArea(prefs, a, soundsA, alarmsA, perms).export(staging);
+    final areaB = AlarmBackupArea(prefs, b, soundsB, alarmsB, perms);
     expect(await _failureOf(() => areaB.validate(staging)), isNull);
 
     final file = File('${staging.path}/alarm/ring_archive.json');
@@ -318,6 +382,7 @@ void main() {
       a,
       soundsA,
       alarmsA,
+      perms,
     );
 
     expect(area.id, BackupAreaId.alarm);

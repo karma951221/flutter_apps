@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../domain/backup/backup_area_id.dart';
 import '../../../domain/backup/backup_area_source.dart';
+import '../../../domain/backup/restore_notice.dart';
 import '../../../domain/backup/backup_failure.dart';
 import '../../../domain/diary/entity/story.dart';
 import '../../diary/database/diary_database.dart';
@@ -158,7 +159,7 @@ class DiaryBackupArea implements BackupAreaSource {
   }
 
   @override
-  Future<void> afterRestore() async {}
+  Future<Set<RestoreNotice>> afterRestore() async => const {};
 
   Future<TableRows> _readData(Directory root) =>
       readTableRows(_areaDir(root), _dataFile, _deleteOrder);

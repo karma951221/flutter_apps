@@ -5,7 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../domain/backup/backup_area_id.dart';
 import '../../../domain/backup/backup_area_source.dart';
+import '../../../domain/backup/restore_notice.dart';
 import '../../../domain/backup/backup_failure.dart';
+import '../../../domain/chat/chat_settings.dart';
 import '../../chat/database/chat_database.dart';
 import '../../chat/prefs_chat_history_settings.dart';
 import 'area_io.dart';
@@ -30,11 +32,14 @@ const _prefKeys = {
 /// 대화를 가리키던 위키 출처는 지금 삭제 규칙(set null)대로 null 이 된다.
 class ChatBackupArea implements BackupAreaSource {
   /// [_workspaceRoot] 는 문서 폴더의 `workspace/`.
-  ChatBackupArea(this._db, this._workspaceRoot, this._prefs);
+  ChatBackupArea(this._db, this._workspaceRoot, this._prefs, this._settings);
 
   final ChatDatabase _db;
   final Directory _workspaceRoot;
   final SharedPreferences _prefs;
+
+  /// API 키는 백업에 담지 않으므로 복원 뒤 키가 있는지만 본다.
+  final ChatSettings _settings;
 
   /// 지울 때 순서(자식 → 부모). 넣을 때는 거꾸로.
   List<TableInfo<Table, dynamic>> get _deleteOrder => [
@@ -162,8 +167,11 @@ class ChatBackupArea implements BackupAreaSource {
     return {for (final n in rows) n.id: n.sourceConversationId!};
   }
 
+  /// API 키가 없으면 다시 넣으라고 알린다.
   @override
-  Future<void> afterRestore() async {}
+  Future<Set<RestoreNotice>> afterRestore() async => {
+    if (!await _settings.hasApiKey()) RestoreNotice.apiKeyNeeded,
+  };
 
   Future<TableRows> _readData(Directory root) =>
       readTableRows(_areaDir(root), _dataFile, _deleteOrder);

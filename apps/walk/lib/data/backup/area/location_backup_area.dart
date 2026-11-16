@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 
 import '../../../domain/backup/backup_area_id.dart';
 import '../../../domain/backup/backup_area_source.dart';
+import '../../../domain/backup/restore_notice.dart';
 import '../../location/database/location_database.dart';
 import 'area_io.dart';
 import 'drift_rows.dart';
@@ -69,9 +70,11 @@ class LocationBackupArea implements BackupAreaSource {
     });
   }
 
-  /// 서비스 상태는 지금 기기의 것 그대로 둔다.
+  /// 서비스 상태는 지금 기기의 것 그대로 둔다 — 켜는 것은 사용자 몫이라 알린다.
   @override
-  Future<void> afterRestore() async {}
+  Future<Set<RestoreNotice>> afterRestore() async => const {
+    RestoreNotice.locationRecordingOff,
+  };
 
   Future<TableRows> _readData(Directory root) =>
       readTableRows(_areaDir(root), _dataFile, _tables);

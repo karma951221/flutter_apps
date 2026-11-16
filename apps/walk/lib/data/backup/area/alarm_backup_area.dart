@@ -6,9 +6,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
 import '../../../domain/alarm/entity/alarm_sound.dart';
+import '../../../domain/alarm/permission/alarm_permissions.dart';
 import '../../../domain/alarm/usecase/alarm_use_case.dart';
 import '../../../domain/backup/backup_area_id.dart';
 import '../../../domain/backup/backup_area_source.dart';
+import '../../../domain/backup/restore_notice.dart';
 import '../../alarm/archive/ring_archive_database.dart';
 import '../../alarm/prefs_alarm_repository.dart';
 import '../../settings/prefs_settings_repository.dart';
@@ -36,12 +38,22 @@ const _prefKeys = {
 /// 절대 경로는 기기 · 사용자마다 다르다. 사본이 백업에 없으면 기본 알람음으로 바꾼다.
 class AlarmBackupArea implements BackupAreaSource {
   /// [_soundsDir] 는 `getDir("flutter")/alarm_sounds` = 문서 폴더의 `alarm_sounds/`.
-  AlarmBackupArea(this._prefs, this._archive, this._soundsDir, this._alarms);
+  AlarmBackupArea(
+    this._prefs,
+    this._archive,
+    this._soundsDir,
+    this._alarms,
+    this._permissions,
+  );
 
   final SharedPreferences _prefs;
   final RingArchiveDatabase _archive;
   final Directory _soundsDir;
   final AlarmUseCase _alarms;
+  final AlarmPermissions _permissions;
+
+  /// 마지막 [replace] 가 사본 없는 알람음을 기본 알람음으로 바꿨는가. [afterRestore] 가 알린다.
+  bool _soundFellBack = false;
 
   Directory _areaDir(Directory root) => Directory('${root.path}/${id.name}');
 
@@ -106,6 +118,7 @@ class AlarmBackupArea implements BackupAreaSource {
     final available = {
       for (final f in await _soundFiles(incoming)) p.basename(f.path),
     };
+    _soundFellBack = false;
     final relocated = _relocateSounds(prefs, available);
     await _soundsDir.parent.create(recursive: true);
 
@@ -120,9 +133,20 @@ class AlarmBackupArea implements BackupAreaSource {
     await restorePrefs(_prefs, _prefKeys, relocated);
   }
 
-  /// 알람을 다시 예약하고 다음 알람 위젯 · 미리 알림을 새로 맞춘다.
+  /// 알람을 다시 예약하고 다음 알람 위젯 · 미리 알림을 새로 맞춘다. 알람음을 기본으로
+  /// 바꿨거나, 알람이 있는데 울리는 데 필요한 권한이 꺼져 있으면 알린다.
   @override
-  Future<void> afterRestore() => _alarms.sync();
+  Future<Set<RestoreNotice>> afterRestore() async {
+    await _alarms.sync();
+    final fellBack = _soundFellBack;
+    _soundFellBack = false;
+    await _reload();
+    return {
+      if (fellBack) RestoreNotice.alarmSoundFallback,
+      if (_storedAlarms().isNotEmpty && !await _permissions.canRing())
+        RestoreNotice.alarmPermissionNeeded,
+    };
+  }
 
   /// 다른 isolate(헤드리스 엔진)가 바꾼 알람을 놓치지 않게 디스크에서 다시 읽는다.
   Future<void> _reload() async {
@@ -188,7 +212,9 @@ class AlarmBackupArea implements BackupAreaSource {
     }
     String? local(String path) {
       final name = p.basename(path);
-      return available.contains(name) ? '${_soundsDir.path}/$name' : null;
+      if (available.contains(name)) return '${_soundsDir.path}/$name';
+      _soundFellBack = true;
+      return null;
     }
 
     final sound = switch (alarm.sound) {

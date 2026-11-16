@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'backup_area_id.dart';
+import 'restore_notice.dart';
 
 /// 백업 한 영역(일기 · 대화 · …). 파일은 모두 `root/<id.name>/` 아래에 둔다.
 abstract interface class BackupAreaSource {
@@ -26,6 +27,7 @@ abstract interface class BackupAreaSource {
   /// 실패하면 바꾸기 전 그대로 남는다.
   Future<void> replace(Directory root);
 
-  /// 모든 영역 복원이 끝난 뒤 한 번 부른다(예: 알람 다시 예약). 할 일이 없으면 no-op.
-  Future<void> afterRestore();
+  /// 모든 영역 복원이 끝난 뒤 한 번 부른다(예: 알람 다시 예약). 결과 화면에 띄울 안내를
+  /// 돌려준다. 할 일이 없으면 빈 집합.
+  Future<Set<RestoreNotice>> afterRestore();
 }

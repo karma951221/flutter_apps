@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../domain/backup/backup_area_id.dart';
 import '../../../domain/backup/backup_area_source.dart';
+import '../../../domain/backup/restore_notice.dart';
 import '../../chat/secure_chat_settings.dart';
 import '../../commute/prefs_place_repository.dart';
 import '../../location/prefs_location_preferences.dart';
@@ -75,5 +76,5 @@ class SettingsBackupArea implements BackupAreaSource {
   }
 
   @override
-  Future<void> afterRestore() async {}
+  Future<Set<RestoreNotice>> afterRestore() async => const {};
 }

@@ -4,12 +4,15 @@ import 'dart:io';
 import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/data/backup/area/chat_backup_area.dart';
 import 'package:walk/data/backup/area/drift_rows.dart';
 import 'package:walk/data/chat/database/chat_database.dart';
 import 'package:walk/domain/backup/backup_area_id.dart';
 import 'package:walk/domain/backup/backup_failure.dart';
+import 'package:walk/domain/backup/restore_notice.dart';
+import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/chat_usage_log.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 
@@ -28,6 +31,8 @@ const _excludedPrefs = {
   'chat.consentScope': 'records',
   'walk.chat.wikiIndexSize': 'large',
 };
+
+class _MockChatSettings extends Mock implements ChatSettings {}
 
 void _writeFile(Directory dir, String relative, List<int> bytes) =>
     File('${dir.path}/$relative')
@@ -52,8 +57,10 @@ void main() {
   late Directory staging;
   late ChatDatabase a;
   late ChatDatabase b;
+  late _MockChatSettings settings;
 
   setUp(() {
+    settings = _MockChatSettings();
     tmp = Directory.systemTemp.createTempSync('chat_backup_area_test');
     wsA = Directory('${tmp.path}/a/workspace')..createSync(recursive: true);
     wsB = Directory('${tmp.path}/b/workspace')..createSync(recursive: true);
@@ -66,6 +73,22 @@ void main() {
     await a.close();
     await b.close();
     tmp.deleteSync(recursive: true);
+  });
+
+  test('afterRestore asks for an API key only when none is stored', () async {
+    SharedPreferences.setMockInitialValues({});
+    final area = ChatBackupArea(
+      b,
+      wsB,
+      await SharedPreferences.getInstance(),
+      settings,
+    );
+
+    when(() => settings.hasApiKey()).thenAnswer((_) async => false);
+    expect(await area.afterRestore(), {RestoreNotice.apiKeyNeeded});
+
+    when(() => settings.hasApiKey()).thenAnswer((_) async => true);
+    expect(await area.afterRestore(), isEmpty);
   });
 
   Future<void> seedA() async {
@@ -95,7 +118,7 @@ void main() {
     });
     final prefsA = await SharedPreferences.getInstance();
     await seedA();
-    final areaA = ChatBackupArea(a, wsA, prefsA);
+    final areaA = ChatBackupArea(a, wsA, prefsA, settings);
 
     final counts = await areaA.export(staging);
     expect(counts, {'conversations': 2, 'files': 2});
@@ -107,7 +130,7 @@ void main() {
     await insertTurn(b, 'b-only', 1);
     await insertUsage(b);
     _writeFile(wsB, 'inbox/b-only.txt', [0]);
-    final areaB = ChatBackupArea(b, wsB, prefsB);
+    final areaB = ChatBackupArea(b, wsB, prefsB, settings);
     await areaB.validate(staging);
     await areaB.replace(staging);
 
@@ -150,7 +173,7 @@ void main() {
       'chat.models': '[]',
     });
     final prefs = await SharedPreferences.getInstance();
-    await ChatBackupArea(a, wsA, prefs).export(staging);
+    await ChatBackupArea(a, wsA, prefs, settings).export(staging);
 
     final written =
         jsonDecode(File('${staging.path}/chat/prefs.json').readAsStringSync())
@@ -165,11 +188,11 @@ void main() {
   test('replace removes chat prefs the backup does not have', () async {
     SharedPreferences.setMockInitialValues({});
     final empty = await SharedPreferences.getInstance();
-    await ChatBackupArea(a, wsA, empty).export(staging);
+    await ChatBackupArea(a, wsA, empty, settings).export(staging);
 
     SharedPreferences.setMockInitialValues(_chatPrefs);
     final prefsB = await SharedPreferences.getInstance();
-    await ChatBackupArea(b, wsB, prefsB).replace(staging);
+    await ChatBackupArea(b, wsB, prefsB, settings).replace(staging);
 
     for (final key in _chatPrefs.keys) {
       expect(prefsB.containsKey(key), isFalse, reason: key);
@@ -180,7 +203,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     await seedA();
-    await ChatBackupArea(a, wsA, prefs).export(staging);
+    await ChatBackupArea(a, wsA, prefs, settings).export(staging);
 
     // B 에도 c1 이 있고 위키가 그것을 출처로 가리킨다. 백업에도 c1 이 있으니 출처가 남는다.
     await insertConversation(b, 'c1', title: 'B 의 c1');
@@ -188,7 +211,7 @@ void main() {
     await insertWikiNote(b, 9);
     final before = await dumpTable(b, b.wikiNotes);
 
-    await ChatBackupArea(b, wsB, prefs).replace(staging);
+    await ChatBackupArea(b, wsB, prefs, settings).replace(staging);
 
     expect(await dumpTable(b, b.wikiNotes), before);
   });
@@ -198,13 +221,13 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     await seedA();
-    await ChatBackupArea(a, wsA, prefs).export(staging);
+    await ChatBackupArea(a, wsA, prefs, settings).export(staging);
 
     await insertConversation(b, 'gone');
     await insertWikiNote(b, 1, source: 'gone');
     await insertWikiNote(b, 2, source: null);
 
-    await ChatBackupArea(b, wsB, prefs).replace(staging);
+    await ChatBackupArea(b, wsB, prefs, settings).replace(staging);
 
     final notes = await (b.select(
       b.wikiNotes,
@@ -219,7 +242,7 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       await seedA();
-      await ChatBackupArea(a, wsA, prefs).export(staging);
+      await ChatBackupArea(a, wsA, prefs, settings).export(staging);
       // 같은 (대화, 순번) 턴 두 개 — 넣을 때 기본키 충돌로 트랜잭션이 실패한다.
       final file = File('${staging.path}/chat/conversations.json');
       final data = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
@@ -231,7 +254,7 @@ void main() {
       _writeFile(wsB, 'inbox/b-only.txt', [0]);
 
       await expectLater(
-        ChatBackupArea(b, wsB, prefs).replace(staging),
+        ChatBackupArea(b, wsB, prefs, settings).replace(staging),
         throwsA(anything),
       );
 
@@ -249,8 +272,8 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       await seedA();
-      await ChatBackupArea(a, wsA, prefs).export(staging);
-      areaB = ChatBackupArea(b, wsB, prefs);
+      await ChatBackupArea(a, wsA, prefs, settings).export(staging);
+      areaB = ChatBackupArea(b, wsB, prefs, settings);
     });
 
     test('accepts a fresh export', () async {
@@ -292,7 +315,12 @@ void main() {
     _writeFile(wsA, 'inbox/a.txt', [1]);
     Link('${wsA.path}/inbox/link.txt').createSync(outside.path);
 
-    final counts = await ChatBackupArea(a, wsA, prefs).export(staging);
+    final counts = await ChatBackupArea(
+      a,
+      wsA,
+      prefs,
+      settings,
+    ).export(staging);
 
     expect(counts['files'], 1);
     expect(
@@ -310,14 +338,19 @@ void main() {
   test('id, schema and estimatedBytes', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    final area = ChatBackupArea(a, Directory('${tmp.path}/none'), prefs);
+    final area = ChatBackupArea(
+      a,
+      Directory('${tmp.path}/none'),
+      prefs,
+      settings,
+    );
     expect(area.id, BackupAreaId.chat);
     expect(area.schema, {'chat': 3});
     expect(await area.estimatedBytes(), 0);
 
     _writeFile(wsA, 'inbox/x.bin', List.filled(100, 1));
     expect(
-      await ChatBackupArea(a, wsA, prefs).estimatedBytes(),
+      await ChatBackupArea(a, wsA, prefs, settings).estimatedBytes(),
       greaterThanOrEqualTo(100),
     );
   });
@@ -327,8 +360,8 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     await insertConversation(a, 'c1');
     await insertTurn(a, 'c1', 1, vendor: ChatVendor.openai);
-    await ChatBackupArea(a, wsA, prefs).export(staging);
-    await ChatBackupArea(b, wsB, prefs).replace(staging);
+    await ChatBackupArea(a, wsA, prefs, settings).export(staging);
+    await ChatBackupArea(b, wsB, prefs, settings).replace(staging);
 
     final turn = await b.select(b.chatTurns).getSingle();
     expect(turn.vendor, ChatVendor.openai);

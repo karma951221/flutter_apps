@@ -1,0 +1,412 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:isolate';
+
+import 'package:core/core.dart';
+
+import '../../domain/backup/backup_area_id.dart';
+import '../../domain/backup/backup_area_source.dart';
+import '../../domain/backup/backup_failure.dart';
+import '../../domain/backup/backup_manifest.dart';
+import '../../domain/backup/backup_preferences.dart';
+import '../../domain/backup/backup_service.dart';
+import '../../domain/backup/restore_notice.dart';
+import 'archive/backup_archive.dart';
+import 'crypto/backup_cipher.dart';
+
+/// [BackupService] 구현. 영역([BackupAreaSource])을 [BackupAreaId] 순서로 돌린다 —
+/// 대화가 위키보다 먼저여야 위키 출처가 남는다.
+///
+/// 문서 폴더(`app_flutter`) 아래 폴더:
+/// - `restore_staging/` — 검사한 백업을 푼 작업 폴더. 영역의 `replace` 가 미디어를 옮겨 가므로
+///   복원 한 번에만 쓴다.
+/// - `restore_undo/` — 복원 전 데이터(되돌리기 지점, `undo.json` 이 다 쓴 표시).
+///   `in_progress.json` 이 있으면 복원 · 되돌리기 도중이다 — 시작 때 되돌리기 지점으로 마저 되돌린다.
+///   되돌리기 지점은 한 번 쓰면(되돌리기 · 실패 롤백 · 시작 복구) 없어진다.
+///
+/// 압축 · 해시 · 암호화는 [Isolate.run] 으로, DB 를 만지는 영역 일은 이 isolate 에서 한다.
+class DefaultBackupService implements BackupService {
+  DefaultBackupService({
+    required List<BackupAreaSource> areas,
+    required Directory appDocs,
+    required Directory cache,
+    required String appVersion,
+    required Clock clock,
+    required BackupPreferences preferences,
+    BackupCipher? cipher,
+    BackupArchive archive = const BackupArchive(),
+    Future<int?> Function()? freeBytes,
+  }) : _areas = {for (final a in areas) a.id: a},
+       _appVersion = appVersion,
+       _clock = clock,
+       _preferences = preferences,
+       _cipher = cipher ?? BackupCipher(),
+       _archive = archive,
+       _freeBytes = freeBytes,
+       _staging = Directory('${appDocs.path}/restore_staging'),
+       _undo = Directory('${appDocs.path}/restore_undo'),
+       _exportDir = Directory('${cache.path}/backup_export');
+
+  final Map<BackupAreaId, BackupAreaSource> _areas;
+  final String _appVersion;
+  final Clock _clock;
+  final BackupPreferences _preferences;
+  final BackupCipher _cipher;
+  final BackupArchive _archive;
+
+  /// 저장 공간의 여유 바이트. null 이거나 null 을 돌려주면 검사를 건너뛴다.
+  final Future<int?> Function()? _freeBytes;
+
+  final Directory _staging;
+  final Directory _undo;
+  final Directory _exportDir;
+
+  File get _inProgress => File('${_undo.path}/in_progress.json');
+  File get _undoIndex => File('${_undo.path}/undo.json');
+
+  /// [ids] 중 이 앱에 있는 영역을 [BackupAreaId] 순서로.
+  List<BackupAreaSource> _ordered(Iterable<BackupAreaId> ids) => [
+    for (final id in BackupAreaId.values)
+      if (ids.contains(id) && _areas[id] != null) _areas[id]!,
+  ];
+
+  @override
+  Future<Map<BackupAreaId, AreaPreview>> preview() async => {
+    for (final area in _ordered(_areas.keys))
+      area.id: AreaPreview(
+        counts: await area.counts(),
+        bytes: await area.estimatedBytes(),
+      ),
+  };
+
+  @override
+  Future<Result<File>> export(
+    Set<BackupAreaId> areas, {
+    String? password,
+  }) async {
+    final ordered = _ordered(areas);
+    final result = await _guard(() async {
+      var estimated = 0;
+      for (final area in ordered) {
+        estimated += await area.estimatedBytes();
+      }
+      await _ensureSpace(estimated);
+
+      await _deleteDir(_exportDir);
+      final staging = Directory('${_exportDir.path}/staging');
+      await staging.create(recursive: true);
+
+      final manifestAreas = <BackupAreaId, AreaManifest>{};
+      for (final area in ordered) {
+        final counts = await area.export(staging);
+        manifestAreas[area.id] = AreaManifest(
+          schema: area.schema,
+          counts: counts,
+        );
+      }
+      final now = _clock.now();
+      final manifest = BackupManifest(
+        format: BackupManifest.formatName,
+        formatVersion: BackupManifest.currentFormatVersion,
+        appVersion: _appVersion,
+        createdAt: now,
+        areas: manifestAreas,
+        files: const [],
+      );
+
+      final name = '${_exportDir.path}/${_fileStem(now)}';
+      final zip = File('$name.zip');
+      await _pack(_archive, staging, manifest, zip);
+      await _deleteDir(staging);
+
+      var out = zip;
+      if (password != null) {
+        out = File('$name.lifelog');
+        await _encrypt(_cipher, zip, out, password);
+        await zip.delete();
+      }
+      await _preferences.setLastAt(now);
+      return out;
+    });
+    if (result is Err) await _deleteDirQuietly(_exportDir);
+    return result;
+  }
+
+  @override
+  Future<Result<InspectedBackup>> inspect(File file, {String? password}) async {
+    final result = await _guard(() async {
+      await _ensureSpace(await file.length() * 2);
+      await _deleteDir(_staging);
+      await _staging.create(recursive: true);
+      final root = Directory('${_staging.path}/root');
+
+      final BackupManifest manifest;
+      switch (await sniffBackupFile(file)) {
+        case BackupFileKind.zip:
+          manifest = await _unpack(_archive, file, root);
+        case BackupFileKind.encrypted:
+          if (password == null) {
+            throw const BackupException(BackupFailure.wrongPasswordOrCorrupt);
+          }
+          final zip = File('${_staging.path}/backup.zip');
+          await _decrypt(_cipher, file, zip, password);
+          manifest = await _unpack(_archive, zip, root);
+          await zip.delete();
+        case BackupFileKind.unknown:
+          throw const BackupException(BackupFailure.notBackup);
+      }
+
+      final availability = <BackupAreaId, AreaAvailability>{};
+      for (final MapEntry(key: id, value: entry) in manifest.areas.entries) {
+        final area = _areas[id];
+        // 이 앱에 없는 영역은 복원 목록에 내지 않는다.
+        if (area == null) continue;
+        final newer = entry.schema.entries.any(
+          (s) => s.value > (area.schema[s.key] ?? -1),
+        );
+        availability[id] = newer
+            ? AreaAvailability.newerSchema
+            : AreaAvailability.ok;
+      }
+      for (final area in _ordered(availability.keys)) {
+        if (availability[area.id] == AreaAvailability.ok) {
+          await area.validate(root);
+        }
+      }
+      return InspectedBackup(
+        manifest: manifest,
+        staging: root,
+        areas: availability,
+      );
+    });
+    if (result is Err) await _deleteDirQuietly(_staging);
+    return result;
+  }
+
+  @override
+  Future<Result<Set<RestoreNotice>>> restore(
+    InspectedBackup b,
+    Set<BackupAreaId> areas,
+  ) async {
+    try {
+      return await _guard(() async {
+        for (final id in areas) {
+          switch (b.areas[id]) {
+            case AreaAvailability.ok:
+              break;
+            case AreaAvailability.newerSchema:
+              throw const BackupException(BackupFailure.newerAreaSchema);
+            case null:
+              throw const BackupException(BackupFailure.integrity);
+          }
+        }
+        // 지난번 도중 종료가 남았으면 그 되돌리기 지점을 덮어쓰기 전에 마저 되돌린다.
+        await _finishInterrupted();
+
+        final ordered = _ordered(areas);
+        await _makeUndoPoint(ordered);
+        await _writeIds(_inProgress, ordered);
+
+        final done = <BackupAreaSource>[];
+        try {
+          for (final area in ordered) {
+            await area.validate(b.staging);
+            await area.replace(b.staging);
+            done.add(area);
+          }
+        } catch (_) {
+          // 영역 하나는 스스로 원자적이다. 이미 바꾼 영역만 되돌린다. 되돌리기가 실패하면
+          // 표시 파일이 남아 다음 시작 때 다시 한다.
+          await _replayUndo(done);
+          await _deleteDir(_undo);
+          rethrow;
+        }
+
+        await _inProgress.delete();
+        return _afterRestore(ordered);
+      });
+    } finally {
+      await _deleteDirQuietly(_staging);
+    }
+  }
+
+  @override
+  Future<bool> hasUndoPoint() async =>
+      await _undoIndex.exists() && !await _inProgress.exists();
+
+  @override
+  Future<Result<Set<RestoreNotice>>> undo() async {
+    if (!await hasUndoPoint()) return const Err(Failure.notFound());
+    return _guard(() async {
+      final ordered = _ordered(await _readIds(_undoIndex));
+      // 되돌리기 도중 죽어도 시작 때 마저 되돌린다.
+      await _writeIds(_inProgress, ordered);
+      await _replayUndo(ordered);
+      await _deleteDir(_undo);
+      return _afterRestore(ordered);
+    });
+  }
+
+  @override
+  Future<void> recoverIfInterrupted() async {
+    try {
+      await _finishInterrupted();
+    } on Object {
+      // 표시 파일이 남아 다음 시작 때 다시 한다. 앱 시작은 막지 않는다.
+    }
+    await _deleteDirQuietly(_staging);
+  }
+
+  @override
+  Future<void> discard(InspectedBackup b) => _deleteDirQuietly(_staging);
+
+  /// `in_progress.json` 이 있으면 그 영역들을 되돌리기 지점으로 되돌리고 지점을 지운다.
+  Future<void> _finishInterrupted() async {
+    if (!await _inProgress.exists()) return;
+    final ids = await _readIdsOrAll(_inProgress);
+    await _replayUndo(_ordered(ids));
+    await _deleteDir(_undo);
+  }
+
+  /// 고른 영역의 지금 데이터를 `restore_undo/` 에 내보낸다(이전 지점은 지운다).
+  Future<void> _makeUndoPoint(List<BackupAreaSource> ordered) async {
+    await _deleteDir(_undo);
+    await _undo.create(recursive: true);
+    try {
+      for (final area in ordered) {
+        await area.export(_undo);
+      }
+      await _writeIds(_undoIndex, ordered);
+    } catch (_) {
+      await _deleteDirQuietly(_undo);
+      rethrow;
+    }
+  }
+
+  /// [ordered] 를 `restore_undo/` 의 것으로 바꾼다. `replace` 가 영역 폴더의 미디어를 옮겨 가므로
+  /// 바꾼 영역 폴더는 곧바로 지운다 — 다시 돌리면 빈 미디어로 덮어쓰게 된다. 폴더가 없는 영역
+  /// (이미 되돌림)은 건너뛴다.
+  Future<void> _replayUndo(List<BackupAreaSource> ordered) async {
+    for (final area in ordered) {
+      final dir = Directory('${_undo.path}/${area.id.name}');
+      if (!await dir.exists()) continue;
+      await area.validate(_undo);
+      await area.replace(_undo);
+      await dir.delete(recursive: true);
+    }
+  }
+
+  /// 영역마다 복원 후 처리를 하고 안내를 모은다. 데이터는 이미 바뀌었으므로 한 영역의
+  /// 실패가 결과를 실패로 만들지 않는다.
+  Future<Set<RestoreNotice>> _afterRestore(
+    List<BackupAreaSource> ordered,
+  ) async {
+    final notices = <RestoreNotice>{};
+    for (final area in ordered) {
+      try {
+        notices.addAll(await area.afterRestore());
+      } on Object {
+        // 예: 알람 다시 예약 실패 — 다음 앱 시작 · 하루 한 번 동기화가 다시 건다.
+      }
+    }
+    return notices;
+  }
+
+  Future<void> _ensureSpace(int needed) async {
+    final free = await _freeBytes?.call();
+    if (free != null && free < needed) {
+      throw const BackupException(BackupFailure.noSpace);
+    }
+  }
+}
+
+/// `lifelog-backup-YYYYMMDD-HHmm`.
+String _fileStem(DateTime t) {
+  String two(int v) => v.toString().padLeft(2, '0');
+  return 'lifelog-backup-${t.year}${two(t.month)}${two(t.day)}-'
+      '${two(t.hour)}${two(t.minute)}';
+}
+
+/// 예외를 [BackupFailure] 의 [Err] 로 바꾼다.
+Future<Result<T>> _guard<T>(Future<T> Function() body) async {
+  try {
+    return Ok(await body());
+  } on BackupException catch (e) {
+    return Err(e.failure.toFailure());
+  } on BackupCipherException catch (e) {
+    return Err(switch (e.error) {
+      BackupCipherError.wrongPasswordOrCorrupt =>
+        BackupFailure.wrongPasswordOrCorrupt.toFailure(),
+      BackupCipherError.notEncrypted => BackupFailure.notBackup.toFailure(),
+    });
+  } on FileSystemException catch (e) {
+    // ENOSPC(28) · Windows ERROR_DISK_FULL(112)
+    final code = e.osError?.errorCode;
+    return Err(
+      (code == 28 || code == 112 ? BackupFailure.noSpace : BackupFailure.io)
+          .toFailure(),
+    );
+  } on Object {
+    return Err(BackupFailure.io.toFailure());
+  }
+}
+
+Future<void> _writeIds(File file, List<BackupAreaSource> areas) async {
+  await file.parent.create(recursive: true);
+  await file.writeAsString(
+    jsonEncode({
+      'areas': [for (final a in areas) a.id.name],
+    }),
+    flush: true,
+  );
+}
+
+Future<Set<BackupAreaId>> _readIds(File file) async {
+  final json = jsonDecode(await file.readAsString()) as Map<String, Object?>;
+  final names = (json['areas']! as List<Object?>).cast<String>();
+  final byName = BackupAreaId.values.asNameMap();
+  return {for (final n in names) ?byName[n]};
+}
+
+/// 표시 파일이 깨졌으면 모든 영역으로 본다 — 되돌리기 폴더가 있는 영역만 되돌리므로 안전하다.
+Future<Set<BackupAreaId>> _readIdsOrAll(File file) async {
+  try {
+    return await _readIds(file);
+  } on Object {
+    return BackupAreaId.values.toSet();
+  }
+}
+
+Future<void> _deleteDir(Directory dir) async {
+  if (await dir.exists()) await dir.delete(recursive: true);
+}
+
+Future<void> _deleteDirQuietly(Directory dir) async {
+  try {
+    await _deleteDir(dir);
+  } on FileSystemException {
+    // 정리 실패는 원래 결과를 가리지 않는다.
+  }
+}
+
+// 아래는 순수 파일 · 암호 작업이라 다른 isolate 에서 돈다. 클로저가 이 함수의 인자만 잡도록
+// 최상위 함수로 둔다(서비스 · DB 를 잡으면 보낼 수 없다).
+
+Future<void> _pack(
+  BackupArchive archive,
+  Directory staging,
+  BackupManifest manifest,
+  File out,
+) => Isolate.run(() => archive.pack(staging, manifest, out));
+
+Future<BackupManifest> _unpack(
+  BackupArchive archive,
+  File zip,
+  Directory into,
+) => Isolate.run(() => archive.unpack(zip, into));
+
+Future<void> _encrypt(BackupCipher cipher, File plain, File out, String pw) =>
+    Isolate.run(() => cipher.encrypt(plain, out, pw));
+
+Future<void> _decrypt(BackupCipher cipher, File sealed, File out, String pw) =>
+    Isolate.run(() => cipher.decrypt(sealed, out, pw));

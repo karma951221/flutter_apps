@@ -8,6 +8,7 @@ import 'package:walk/data/backup/area/location_backup_area.dart';
 import 'package:walk/data/location/database/location_database.dart';
 import 'package:walk/domain/backup/backup_area_id.dart';
 import 'package:walk/domain/backup/backup_failure.dart';
+import 'package:walk/domain/backup/restore_notice.dart';
 import 'package:walk/domain/location/entity/record_mode.dart';
 
 Future<BackupFailure?> _failureOf(Future<void> Function() body) async {
@@ -77,7 +78,7 @@ void main() {
     final areaB = LocationBackupArea(b);
     await areaB.validate(staging);
     await areaB.replace(staging);
-    await areaB.afterRestore();
+    expect(await areaB.afterRestore(), {RestoreNotice.locationRecordingOff});
 
     for (final t in a.allTables) {
       expect(

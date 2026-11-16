@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../domain/backup/backup_area_id.dart';
 import '../../../domain/backup/backup_area_source.dart';
+import '../../../domain/backup/restore_notice.dart';
 import '../../../domain/backup/backup_failure.dart';
 import '../../chat/database/chat_database.dart';
 import '../../chat/prefs_chat_history_settings.dart';
@@ -122,7 +123,7 @@ class WikiBackupArea implements BackupAreaSource {
   }
 
   @override
-  Future<void> afterRestore() async {}
+  Future<Set<RestoreNotice>> afterRestore() async => const {};
 
   /// `notes.json` 의 행 목록. 없거나 모양이 다르면 integrity.
   Future<List<Map<String, Object?>>> _readRows(Directory root) async =>
