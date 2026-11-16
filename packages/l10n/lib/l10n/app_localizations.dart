@@ -5831,7 +5831,7 @@ abstract class AppLocalizations {
   /// 물어보기 설정 맨 아래 데이터 전송 안내 — 연결한 벤더 이름
   ///
   /// In ko, this message translates to:
-  /// **'질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI({vendor})로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.'**
+  /// **'질문과, 답에 필요한 일기 · 사진 · 위치 기록(머문 곳 이름 · 시간) · 걸음 · 알람 · 기상 기록이 연결한 AI({vendor})로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.'**
   String walkChatSettingsNotice(String vendor);
 
   /// 하단 탭: 내 기록에 묻는 채팅
@@ -5855,7 +5855,7 @@ abstract class AppLocalizations {
   /// 채팅 탭: 전송 동의 안내 — 연결한 벤더 이름
   ///
   /// In ko, this message translates to:
-  /// **'질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI({vendor})로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요. 정리해 둔 위키의 제목 · 요약도 질문마다 함께 보내져요.'**
+  /// **'질문과, 답에 필요한 일기 · 사진 · 위치 기록(머문 곳 이름 · 시간) · 걸음 · 알람 · 기상 기록이 연결한 AI({vendor})로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요. 정리해 둔 위키의 제목 · 요약도 질문마다 함께 보내져요.'**
   String walkChatConsentNotice(String vendor);
 
   /// 채팅 탭: 전송 안내 동의 버튼
@@ -6044,6 +6044,30 @@ abstract class AppLocalizations {
   /// **'알람 기록 보는 중'**
   String get walkChatToolWakeRecords;
 
+  /// 채팅 탭 진행 줄: visited_places 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'머문 곳 보는 중'**
+  String get walkChatToolVisitedPlaces;
+
+  /// 채팅 탭 진행 줄: frequent_places 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'자주 간 곳 보는 중'**
+  String get walkChatToolFrequentPlaces;
+
+  /// 채팅 탭 진행 줄: list_alarms 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'알람 설정 보는 중'**
+  String get walkChatToolAlarms;
+
+  /// 채팅 탭 진행 줄: weather_forecast 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'날씨 보는 중'**
+  String get walkChatToolWeather;
+
   /// 채팅 탭 진행 줄: read_wiki 도구 라벨
   ///
   /// In ko, this message translates to:
@@ -6127,6 +6151,24 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'기상 기록 {count}회'**
   String walkChatToolFoundWake(int count);
+
+  /// 채팅 탭 진행 줄: 머문 곳 결과 개수
+  ///
+  /// In ko, this message translates to:
+  /// **'머문 곳 {count}곳'**
+  String walkChatToolFoundPlaces(int count);
+
+  /// 채팅 탭 진행 줄: 자주 간 곳 결과 개수
+  ///
+  /// In ko, this message translates to:
+  /// **'자주 간 곳 {count}곳'**
+  String walkChatToolFoundFrequent(int count);
+
+  /// 채팅 탭 진행 줄: 알람 설정 결과 개수
+  ///
+  /// In ko, this message translates to:
+  /// **'알람 {count}개'**
+  String walkChatToolFoundAlarms(int count);
 
   /// 채팅 탭 진행 줄: 사진 결과 장 수
   ///

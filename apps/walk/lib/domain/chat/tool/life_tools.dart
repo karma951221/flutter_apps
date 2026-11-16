@@ -15,11 +15,16 @@ import '../../diary/repository/diary_repository.dart';
 import '../../walk/entity/health_access.dart';
 import '../../walk/repository/activity_repository.dart';
 import '../chat_model.dart';
+import 'alarm_tools.dart';
 import 'chat_image_source.dart';
+import 'location_tools.dart';
+import 'tool_input.dart';
 import 'tool_result.dart';
 import 'tool_summary.dart';
+import 'weather_tools.dart';
 
-/// Claude 가 사용자의 일기 · 걸음 · 기상 기록을 읽는 도구들.
+/// 모델이 사용자의 일기 · 걸음 · 기상 기록을 읽는 도구들. 위치 · 알람 설정 · 날씨 예보는
+/// [LocationTools] · [AlarmTools] · [WeatherTools] 에 넘기고, 정의는 그 뒤에 붙인다.
 @lazySingleton
 class LifeTools {
   LifeTools(
@@ -28,6 +33,9 @@ class LifeTools {
     this._archiver,
     this._rings,
     this._images,
+    this._location,
+    this._alarms,
+    this._weather,
   );
 
   final DiaryRepository _diary;
@@ -35,6 +43,9 @@ class LifeTools {
   final RingArchiver _archiver;
   final RingArchive _rings;
   final ChatImageSource _images;
+  final LocationTools _location;
+  final AlarmTools _alarms;
+  final WeatherTools _weather;
 
   static const _maxEntries = 50;
   static const _maxPhotos = 4;
@@ -64,7 +75,7 @@ class LifeTools {
   /// 모든 도구 = `definitionsFor(images: true)`.
   List<ToolSpec> get definitions => definitionsFor(images: true);
 
-  /// [images] 가 false 면 사진 보기 도구([viewPhotosTool])를 뺀 넷.
+  /// [images] 가 false 면 사진 보기 도구([viewPhotosTool])를 뺀 나머지.
   List<ToolSpec> definitionsFor({required bool images}) => [
     for (final spec in _all)
       if (images || spec.name != viewPhotosTool) spec,
@@ -101,7 +112,7 @@ class LifeTools {
     ),
     _tool(
       'daily_steps',
-      '기간의 하루별 걸음 수를 본다. 양 끝 날짜를 포함한다.',
+      '걷기 탭의 하루별 걸음 수를 본다. 양 끝 날짜를 포함한다.',
       {'from': _date, 'to': _date},
       ['from', 'to'],
     ),
@@ -111,6 +122,9 @@ class LifeTools {
       {'from': _date, 'to': _date},
       ['from', 'to'],
     ),
+    ..._location.definitions,
+    _alarms.definition,
+    _weather.definition,
   ];
 
   Future<ToolResult> run(String name, Map<String, Object?> input) async {
@@ -122,6 +136,12 @@ class LifeTools {
         'list_diary_index' => await _index(),
         'daily_steps' => await _dailySteps(input),
         'wake_records' => await _wakeRecords(input),
+        _ when LocationTools.names.contains(name) => await _location.run(
+          name,
+          input,
+        ),
+        AlarmTools.name => await _alarms.run(),
+        WeatherTools.name => await _weather.run(),
         _ => _error('unknown_tool', kind),
       };
     } catch (_) {
@@ -379,54 +399,19 @@ class LifeTools {
     'videos': e.media.where((m) => m.kind == MediaKind.video).length,
   };
 
-  static ToolResult _error(String code, ChatToolKind kind) => ToolResult(
-    json: jsonEncode({'error': code}),
-    isError: true,
-    summary: ToolSummary(kind: kind, count: 0, isError: true),
-  );
+  static ToolResult _error(String code, ChatToolKind kind) =>
+      toolError(code, kind);
 
-  static Map<String, Object?> _clamp(_Range r) =>
-      r.clamped ? {'clamped': true} : {};
+  static Map<String, Object?> _clamp(ToolRange r) => r.clampJson;
 
-  static final _datePattern = RegExp(r'^(\d{4})-(\d{2})-(\d{2})$');
+  static DateTime? _parse(Object? v) => parseToolDate(v);
 
-  static DateTime? _parse(Object? v) {
-    if (v is! String) return null;
-    final m = _datePattern.firstMatch(v.trim());
-    if (m == null) return null;
-    final y = int.parse(m[1]!), mo = int.parse(m[2]!), d = int.parse(m[3]!);
-    final date = DateTime(y, mo, d);
-    return date.year == y && date.month == mo && date.day == d ? date : null;
-  }
-
-  static _Range? _range(Map<String, Object?> input) {
-    var from = _parse(input['from']);
-    final to = _parse(input['to']);
-    if (from == null || to == null || from.isAfter(to)) return null;
-    final days =
-        DateTime.utc(
-          to.year,
-          to.month,
-          to.day,
-        ).difference(DateTime.utc(from.year, from.month, from.day)).inDays +
-        1;
-    final clamped = days > _maxDays;
-    if (clamped) from = DateTime(to.year, to.month, to.day - (_maxDays - 1));
-    return _Range(from, to, clamped);
-  }
+  static ToolRange? _range(Map<String, Object?> input) =>
+      toolRange(input, maxDays: _maxDays);
 
   static DateTime _endOfDay(DateTime d) =>
       DateTime(d.year, d.month, d.day, 23, 59, 59, 999);
 
-  static String _two(int n) => n.toString().padLeft(2, '0');
-  static String _day(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}-${_two(d.month)}-${_two(d.day)}';
-  static String _time(DateTime d) => '${_two(d.hour)}:${_two(d.minute)}';
-}
-
-class _Range {
-  const _Range(this.from, this.to, this.clamped);
-  final DateTime from;
-  final DateTime to;
-  final bool clamped;
+  static String _day(DateTime d) => toolDay(d);
+  static String _time(DateTime d) => toolTime(d);
 }

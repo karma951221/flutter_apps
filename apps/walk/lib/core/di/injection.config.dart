@@ -100,8 +100,11 @@ import '../../domain/chat/repository/chat_history_repository.dart' as _i752;
 import '../../domain/chat/repository/chat_usage_repository.dart' as _i669;
 import '../../domain/chat/repository/wiki_repository.dart' as _i624;
 import '../../domain/chat/secure_window.dart' as _i555;
+import '../../domain/chat/tool/alarm_tools.dart' as _i553;
 import '../../domain/chat/tool/chat_image_source.dart' as _i858;
 import '../../domain/chat/tool/life_tools.dart' as _i70;
+import '../../domain/chat/tool/location_tools.dart' as _i361;
+import '../../domain/chat/tool/weather_tools.dart' as _i313;
 import '../../domain/chat/tool/wiki_tools.dart' as _i268;
 import '../../domain/chat/tool/workspace_tools.dart' as _i215;
 import '../../domain/chat/usecase/chat_history_pruner.dart' as _i539;
@@ -493,12 +496,24 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i920.NextAlarmWidget>(),
       ),
     );
+    gh.lazySingleton<_i553.AlarmTools>(
+      () => _i553.AlarmTools(gh<_i873.AlarmUseCase>()),
+    );
     gh.lazySingleton<_i567.DiaryUseCase>(
       () => _i567.DiaryUseCase(
         gh<_i122.DiaryRepository>(),
         gh<_i870.MediaStore>(),
         gh<_i693.PlaceSource>(),
         gh<_i300.DiaryPreferences>(),
+        gh<_i494.Clock>(),
+      ),
+    );
+    gh.lazySingleton<_i361.LocationTools>(
+      () => _i361.LocationTools(
+        gh<_i379.LocationRepository>(),
+        gh<_i638.LocationSync>(),
+        gh<_i993.LocationRecorder>(),
+        gh<_i673.StayNamer>(),
         gh<_i494.Clock>(),
       ),
     );
@@ -525,6 +540,14 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.factory<_i931.WeatherCubit>(
       () => _i931.WeatherCubit(
+        gh<_i903.WeatherRepository>(),
+        gh<_i283.WeatherLocator>(),
+        gh<_i858.WeatherCache>(),
+        gh<_i494.Clock>(),
+      ),
+    );
+    gh.lazySingleton<_i313.WeatherTools>(
+      () => _i313.WeatherTools(
         gh<_i903.WeatherRepository>(),
         gh<_i283.WeatherLocator>(),
         gh<_i858.WeatherCache>(),
@@ -574,6 +597,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i626.RingArchiver>(),
         gh<_i361.RingArchive>(),
         gh<_i858.ChatImageSource>(),
+        gh<_i361.LocationTools>(),
+        gh<_i553.AlarmTools>(),
+        gh<_i313.WeatherTools>(),
       ),
     );
     gh.lazySingleton<_i502.ChatSession>(

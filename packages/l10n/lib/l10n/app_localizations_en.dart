@@ -3374,7 +3374,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkChatSettingsNotice(String vendor) {
-    return 'Your questions and the diary entries, photos, steps and wake-up records needed to answer are sent to the AI you connected ($vendor). Your key stays only in this phone\'s secure storage.';
+    return 'Your questions and the diary entries, photos, location history (names and times of places you stayed), steps, alarms and wake-up records needed to answer are sent to the AI you connected ($vendor). Your key stays only in this phone\'s secure storage.';
   }
 
   @override
@@ -3388,7 +3388,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkChatConsentNotice(String vendor) {
-    return 'Your questions and the diary entries, photos, steps and wake-up records needed to answer are sent to the AI you connected ($vendor). Your key stays only in this phone\'s secure storage. Titles and summaries from your wiki are also sent with each question.';
+    return 'Your questions and the diary entries, photos, location history (names and times of places you stayed), steps, alarms and wake-up records needed to answer are sent to the AI you connected ($vendor). Your key stays only in this phone\'s secure storage. Titles and summaries from your wiki are also sent with each question.';
   }
 
   @override
@@ -3495,6 +3495,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatToolWakeRecords => 'Checking alarm log';
 
   @override
+  String get walkChatToolVisitedPlaces => 'Checking places visited';
+
+  @override
+  String get walkChatToolFrequentPlaces => 'Checking frequent places';
+
+  @override
+  String get walkChatToolAlarms => 'Checking alarms';
+
+  @override
+  String get walkChatToolWeather => 'Checking weather';
+
+  @override
   String get walkChatToolReadWiki => 'Reading wiki';
 
   @override
@@ -3580,6 +3592,39 @@ class AppLocalizationsEn extends AppLocalizations {
       locale: localeName,
       other: '$count wake records',
       one: '1 wake record',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkChatToolFoundPlaces(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count places',
+      one: '1 place',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkChatToolFoundFrequent(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count frequent places',
+      one: '1 frequent place',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkChatToolFoundAlarms(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count alarms',
+      one: '1 alarm',
     );
     return '$_temp0';
   }

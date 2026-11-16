@@ -3123,7 +3123,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String walkChatSettingsNotice(String vendor) {
-    return '질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI($vendor)로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.';
+    return '질문과, 답에 필요한 일기 · 사진 · 위치 기록(머문 곳 이름 · 시간) · 걸음 · 알람 · 기상 기록이 연결한 AI($vendor)로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.';
   }
 
   @override
@@ -3137,7 +3137,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String walkChatConsentNotice(String vendor) {
-    return '질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI($vendor)로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요. 정리해 둔 위키의 제목 · 요약도 질문마다 함께 보내져요.';
+    return '질문과, 답에 필요한 일기 · 사진 · 위치 기록(머문 곳 이름 · 시간) · 걸음 · 알람 · 기상 기록이 연결한 AI($vendor)로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요. 정리해 둔 위키의 제목 · 요약도 질문마다 함께 보내져요.';
   }
 
   @override
@@ -3242,6 +3242,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatToolWakeRecords => '알람 기록 보는 중';
 
   @override
+  String get walkChatToolVisitedPlaces => '머문 곳 보는 중';
+
+  @override
+  String get walkChatToolFrequentPlaces => '자주 간 곳 보는 중';
+
+  @override
+  String get walkChatToolAlarms => '알람 설정 보는 중';
+
+  @override
+  String get walkChatToolWeather => '날씨 보는 중';
+
+  @override
   String get walkChatToolReadWiki => '위키 읽는 중';
 
   @override
@@ -3299,6 +3311,21 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String walkChatToolFoundWake(int count) {
     return '기상 기록 $count회';
+  }
+
+  @override
+  String walkChatToolFoundPlaces(int count) {
+    return '머문 곳 $count곳';
+  }
+
+  @override
+  String walkChatToolFoundFrequent(int count) {
+    return '자주 간 곳 $count곳';
+  }
+
+  @override
+  String walkChatToolFoundAlarms(int count) {
+    return '알람 $count개';
   }
 
   @override

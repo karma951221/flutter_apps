@@ -256,6 +256,21 @@ void main() {
     );
   });
 
+  test('위치 · 알람 · 날씨 도구 라벨과 결과', () {
+    String line(ChatToolKind kind, int count) => chatProgressTimelineText(
+      ko,
+      'ko',
+      tool(
+        kind,
+        result: ToolSummary(kind: kind, count: count),
+      ),
+    );
+    expect(line(ChatToolKind.visitedPlaces, 3), '머문 곳 보는 중 — 머문 곳 3곳');
+    expect(line(ChatToolKind.frequentPlaces, 2), '자주 간 곳 보는 중 — 자주 간 곳 2곳');
+    expect(line(ChatToolKind.alarms, 4), '알람 설정 보는 중 — 알람 4개');
+    expect(line(ChatToolKind.weather, 1), '날씨 보는 중');
+  });
+
   group('쓰기 도구', () {
     ChatProgressStep write(
       ChatToolKind kind, {

@@ -44,9 +44,17 @@ abstract interface class ChatSettings {
 
   Future<void> acknowledgeFastMode();
 
-  /// 전송에 동의한 벤더(`chat.consentedVendor`). 연결 벤더와 다르면 needsConsent.
-  /// [disconnect] 해도 남는다 — 같은 벤더로 다시 연결하면 묻지 않는다.
+  /// 물어보기 전송(위치 기록 포함 범위)에 동의한 벤더(`chat.consentedVendor` + 범위 버전).
+  /// 연결 벤더와 다르면 needsConsent. [disconnect] 해도 남는다 — 같은 벤더로 다시 연결하면 묻지 않는다.
   ChatVendor? get consentedVendor;
 
+  /// 물어보기 동의 — 지금 범위(위치 포함)로 기록한다. 초안 동의도 품는다.
   Future<void> setConsented(ChatVendor vendor);
+
+  /// 일기 초안 전송(메모 · 시각 · 장소 이름 · 태그)에 동의한 벤더. 범위 버전과 상관없다 —
+  /// 물어보기 동의도 이 범위를 품는다.
+  ChatVendor? get draftConsentedVendor;
+
+  /// 초안 동의 — 물어보기 범위는 올리지 않는다. 다른 벤더면 물어보기 동의는 다시 받는다.
+  Future<void> setDraftConsented(ChatVendor vendor);
 }

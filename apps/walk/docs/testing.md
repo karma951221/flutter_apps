@@ -328,6 +328,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | 첨부 — 세션 | `domain/chat/usecase/chat_session_attachment_test`(사진 · 문서 · 18MB 세기 · 실패 · 멈춤 되돌림 · 한도 넘으면 `ArgumentError` · 사진 못 보는 모델은 글 줄 · 도구 사진과 12장 공유 · `resume` 첨부 이름 줄 · 시스템 프롬프트 줄 위치 · 접기에서 첨부 유지) |
 | 첨부 — 기록 | `data/chat/database/drift_chat_history_repository_test`(첨부 ref 왕복 · 깨진 JSON · 잘못된 항목 건너뜀) · `chat_database_migration_test`(v2 → v3) |
 | 첨부 — 읽기 · 입력 | `data/chat/attachment/file_attachment_loader_test`(사진 압축 · 크기 거절 · UTF-8 · BOM · 원본 읽기 · 압축기 오류) · `presentation/chat/cubit/chat_cubit_attachment_test`(한도 · 알림 · inbox 원본 사본 · 임시 대화 사본 없음 · 사본 실패에도 보냄 · 보내지 못한 질문 되돌림 · 실패 · 멈춤 뒤 첨부 되돌림 · 선택기 캐시 정리 · 답 저장과 모델) · `widget/chat_input_test`(칩 · ✕ · 첨부만으로 보내기 · 준비 중 보내기 막힘) · `widget/chat_bubble_view_test`(경로 없는 칩은 표시만 · 지운 파일) · `widget/bubble_actions_sheet_test`([파일로 저장]) |
+| 위치 · 알람 · 날씨 조회 | `domain/chat/tool/location_tools_test`(점 없음 · 로컬 시각 · 좌표 없음 · 자정 넘김 `end_date` · 이름 없음 · 캐시 이름 · 새 조회 20곳 · 150곳 자르기 · 31일 · 기록 상태 · 수거 실패 · 자주 간 곳 · 31일 덩어리) · `alarm_tools_test` · `weather_tools_test`(10분 캐시 · 받아 쓰기 · 벽시계 · 캐시 좌표 · `stale` · `weather_unavailable`) · `tool_input_test` · `life_tools_test`(정의 아홉 · 넘기기) · `domain/location/usecase/open_end_test` · `chat_session_test`(기록 규약 줄) · `data/chat/secure_chat_settings_test`(범위 버전 · 다시 동의) · `chat_progress_text_test`(라벨 넷) |
 | 작업 폴더 읽기 도구(2단계) | `domain/chat/tool/workspace_tools_test`(목록 최신순 · 100개 · `area` · 글 20,000자 · `next_offset` · 서로게이트 경계 · 사진 · PDF · 오류 코드 · 실제 폴더에서 `..` / 절대 경로 / 밖 링크 / 디렉터리 링크 · inbox · out 밖 · 숨김 이름) · `domain/chat/usecase/chat_session_workspace_tools_test`(기록 켜짐에만 도구 · 꺼짐이면 실행 안 함 · PDF 문서 한도 · 18MB · 글 120,000자 · 실패 · 멈춤 · 접기 되돌림 · `images_unsupported` · 프롬프트 줄) · 두 어댑터 테스트(tool_result 안 document · 결과 뒤 `input_file` · `imagesInToolOutput`) · `presentation/chat/widget/chat_progress_text_test`(작업 폴더 라벨 · 빈 폴더) |
 | 작업 폴더 쓰기 도구 · 승인(3단계) | `data/chat/workspace/file_workspace_test`(`writeText` 새로 · 덮어쓰기 · 있음 예외 · 경계 · 임시 파일 안 남음) · `domain/chat/tool/workspace_tools_write_test`(경로 규칙 · 255바이트 · 보이지 않는 글자 · `read_only` · 100,000자 · `exists` · `no_match` · `not_unique` · `changed` · 실제 폴더 경계 · 바뀜 알림) · `domain/chat/usecase/chat_session_write_tools_test`(기록 켜짐에만 · 승인 · 거절 · 멈춤 · 초기화 · 승인과 멈춤 겹침 · 쓰기 둘 + 읽기 순서 · 엉뚱한 callId · 프롬프트 줄) · `presentation/chat/cubit/chat_cubit_approval_test`(pendingApproval · 한 번만 · 실제 세션으로 중단 네 경로) · `presentation/chat/workspace/widget/write_approval_sheet_test` · `format/reveal_invisible_test` · `chat_tab_test`(시트 열고 닫기 · 잠금 · 두 쓰기 · 스낵바) · `chat_progress_text_test`(쓰기 라벨) |
 | 작업 폴더 화면 | `presentation/chat/workspace/cubit/workspace_cubit_test` · `page/workspace_page_test`(구역 순서 · 사용량 줄 · 빈 상태 · 지우기 확인 · [물어보기에 첨부] · [공유] · 보기: 글 · 사진 · 그 밖은 공유) · `chat_tab_test`(⋮ [작업 폴더] · 작업 폴더에서 첨부 · 저장 → [보기]) |
@@ -579,6 +580,11 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | Q12 | 백업 복원(K4): `adb shell bmgr backupnow` → 재설치 → 복원 | 연결 행이 미연결이다(키 · `flutter_secure_storage` 설정 prefs 파일이 복원되지 않는다) | 대기 |
 | Q13 | 물어보기에서 크레딧 부족 · 모델 없음 오류를 만났을 때(K2 · K3) | 문구가 맞고 [설정 열기]로 연결 행이 glow 한다. 오류 본문의 `error.type` 이 가정한 값(`billing_error` · `not_found_error`)인지 | 대기 |
 | Q14 | 로고(K1) | 브랜드 가이드 확인 뒤 공식 로고로 교체, 그 전엔 모노그램 | 대기 |
+| R1 | 위치 기록을 켜 둔 폰에서 "지난주에 어디 갔어?" | `visited_places` 가 불리고 머문 곳 이름 · 시간으로 답한다 | 대기 |
+| R2 | 위치 기록을 한 번도 켜지 않은 폰에서 같은 질문 | 위치 기록이 꺼져 있다고 말하고 일기 장소로 답한다 | 대기 |
+| R3 | "요즘 자주 가는 곳은?" · "내 알람 몇 시야?" | `frequent_places` · `list_alarms` 로 답하고 알람 화면과 같다 | 대기 |
+| R4 | "내일 비 와?" · 비행기 모드에서 같은 질문 | 날씨 탭과 같은 예보로 답한다 · 받아 둔 예보면 그렇다고 말한다 | 대기 |
+| R5 | 이 버전으로 올린 뒤 첫 질문(전에 동의한 상태) | 위치가 들어간 동의 화면이 한 번 다시 뜬다 | 대기 |
 
 ### 모델 칩 · GPT (키 기획 ③ · ④)
 
