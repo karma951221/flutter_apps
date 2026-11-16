@@ -6900,23 +6900,35 @@ abstract class AppLocalizations {
   /// **'모델 고르기'**
   String get walkChatModelPickerTitle;
 
-  /// 물어보기 앱바 아래 모델 칩 툴팁
+  /// 물어보기 앱바 모델 버튼 툴팁(지금 모델 이름)
   ///
   /// In ko, this message translates to:
-  /// **'모델 바꾸기'**
-  String get walkChatModelChipTooltip;
+  /// **'모델 바꾸기 · 지금 {model}'**
+  String walkChatModelActionTooltip(String model);
 
-  /// 물어보기 모델 칩 옆 토글: 내 기록(도구 · 위키)을 참고할지
+  /// 물어보기 앱바 [내 기록 참고] 토글이 켜졌을 때 툴팁 · 접근성 라벨
   ///
   /// In ko, this message translates to:
-  /// **'내 기록 참고'**
-  String get walkChatUseRecords;
+  /// **'내 기록 참고 켜짐'**
+  String get walkChatUseRecordsOn;
 
-  /// 물어보기 내 기록 참고 토글 툴팁
+  /// 물어보기 앱바 [내 기록 참고] 토글이 꺼졌을 때 툴팁 · 접근성 라벨
   ///
   /// In ko, this message translates to:
-  /// **'켜면 일기 · 걸음 · 알람 기상 · 위키를 찾아보고 답해요'**
-  String get walkChatUseRecordsTooltip;
+  /// **'내 기록 참고 꺼짐'**
+  String get walkChatUseRecordsOff;
+
+  /// [내 기록 참고]를 켠 직후 스낵바 — 찾아보는 기록 종류를 알린다
+  ///
+  /// In ko, this message translates to:
+  /// **'이제 일기 · 걸음 · 알람 기상 · 위키를 찾아보고 답해요'**
+  String get walkChatUseRecordsTurnedOn;
+
+  /// [내 기록 참고]를 끈 직후 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'이제 내 기록 없이 답해요'**
+  String get walkChatUseRecordsTurnedOff;
 
   /// 모델 고르기 시트 — 추천 모델 배지
   ///

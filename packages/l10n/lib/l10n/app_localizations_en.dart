@@ -4081,14 +4081,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatModelPickerTitle => 'Choose a model';
 
   @override
-  String get walkChatModelChipTooltip => 'Change model';
+  String walkChatModelActionTooltip(String model) {
+    return 'Change model · now $model';
+  }
 
   @override
-  String get walkChatUseRecords => 'Use my records';
+  String get walkChatUseRecordsOn => 'Use my records: on';
 
   @override
-  String get walkChatUseRecordsTooltip =>
-      'When on, answers can look up your diary, steps, wake-ups and wiki';
+  String get walkChatUseRecordsOff => 'Use my records: off';
+
+  @override
+  String get walkChatUseRecordsTurnedOn =>
+      'Answers will now look up your diary, steps, wake-ups and wiki';
+
+  @override
+  String get walkChatUseRecordsTurnedOff =>
+      'Answers will now skip your records';
 
   @override
   String get walkChatModelRecommended => 'Recommended';

@@ -224,39 +224,124 @@ void main() {
     );
   }
 
-  testWidgets('[내 기록 참고] 칩이 모델 칩 옆에 켜진 채 보이고, 누르면 꺼지며 저장된다', (tester) async {
-    await pump(tester);
+  group('[내 기록 참고] 앱바 토글', () {
+    const key = Key('chat-use-records-action');
 
-    const key = Key('chat-use-records-chip');
-    expect(find.byKey(key), findsOneWidget);
-    expect(find.text('내 기록 참고'), findsOneWidget);
-    expect(tester.widget<FilterChip>(find.byKey(key)).selected, isTrue);
-
-    await tester.tap(find.byKey(key));
-    await tester.pumpAndSettle();
-
-    expect(tester.widget<FilterChip>(find.byKey(key)).selected, isFalse);
-    expect(
-      (getIt<ChatHistorySettings>() as FakeChatHistorySettings).useRecords,
-      isFalse,
+    IconButton toggle(WidgetTester tester) => tester.widget<IconButton>(
+      find.descendant(
+        of: find.byKey(key),
+        matching: find.byType(IconButton),
+        matchRoot: true,
+      ),
     );
 
-    await tester.tap(find.byKey(key));
-    await tester.pumpAndSettle();
-    expect(tester.widget<FilterChip>(find.byKey(key)).selected, isTrue);
-  });
+    testWidgets('본문 위 칩 줄 없이 앱바 actions 에 켜진 토글로 있다', (tester) async {
+      await pump(tester);
 
-  testWidgets('저장된 선택이 꺼짐이면 꺼진 칩으로 시작한다', (tester) async {
-    (getIt<ChatHistorySettings>() as FakeChatHistorySettings).useRecords =
-        false;
-    await pump(tester);
+      expect(find.byKey(const Key('chat-use-records-chip')), findsNothing);
+      expect(find.byType(FilterChip), findsNothing);
+      expect(
+        find.descendant(of: find.byType(AppBar), matching: find.byKey(key)),
+        findsOneWidget,
+      );
+      expect(toggle(tester).isSelected, isTrue);
+      expect(find.byTooltip('내 기록 참고 켜짐'), findsOneWidget);
+    });
 
-    expect(
-      tester
-          .widget<FilterChip>(find.byKey(const Key('chat-use-records-chip')))
-          .selected,
-      isFalse,
-    );
+    testWidgets('누르면 꺼지며 저장되고 아이콘 · 툴팁 · 스낵바가 바뀐다', (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.byKey(key));
+      await tester.pumpAndSettle();
+
+      expect(toggle(tester).isSelected, isFalse);
+      expect(find.byTooltip('내 기록 참고 꺼짐'), findsOneWidget);
+      expect(find.text('이제 내 기록 없이 답해요'), findsOneWidget);
+      expect(
+        (getIt<ChatHistorySettings>() as FakeChatHistorySettings).useRecords,
+        isFalse,
+      );
+      // 켜짐 · 꺼짐이 다른 아이콘이다.
+      expect(toggle(tester).icon, isA<Icon>());
+      expect(
+        (toggle(tester).icon as Icon).icon,
+        isNot((toggle(tester).selectedIcon! as Icon).icon),
+      );
+
+      await tester.tap(find.byKey(key));
+      await tester.pumpAndSettle();
+      expect(toggle(tester).isSelected, isTrue);
+      expect(find.text('이제 일기 · 걸음 · 알람 기상 · 위키를 찾아보고 답해요'), findsOneWidget);
+    });
+
+    testWidgets('켜짐은 강조 배경 · 색, 꺼짐은 배경 없이 기본색 — 앱바 테마가 덮지 않는다', (tester) async {
+      await pump(tester);
+      final scheme = Theme.of(tester.element(find.byKey(key))).colorScheme;
+
+      Color? iconColor(IconData icon) =>
+          IconTheme.of(tester.element(find.byIcon(icon))).color;
+      Color? background() {
+        final material = tester.widget<Material>(
+          find
+              .descendant(of: find.byKey(key), matching: find.byType(Material))
+              .first,
+        );
+        return material.color;
+      }
+
+      expect(iconColor(Icons.auto_stories), scheme.onPrimaryContainer);
+      expect(background(), scheme.primaryContainer);
+
+      await tester.tap(find.byKey(key));
+      await tester.pumpAndSettle();
+
+      expect(iconColor(Icons.auto_stories_outlined), scheme.onSurfaceVariant);
+      expect(background(), anyOf(isNull, Colors.transparent));
+    });
+
+    testWidgets('접근성: 토글 상태와 라벨을 읽는다', (tester) async {
+      final handle = tester.ensureSemantics();
+      await pump(tester);
+
+      expect(
+        tester.getSemantics(find.byKey(key)),
+        matchesSemantics(
+          tooltip: '내 기록 참고 켜짐',
+          isButton: true,
+          hasEnabledState: true,
+          isEnabled: true,
+          isFocusable: true,
+          hasTapAction: true,
+          hasFocusAction: true,
+          hasSelectedState: true,
+          isSelected: true,
+        ),
+      );
+      handle.dispose();
+    });
+
+    testWidgets('저장된 선택이 꺼짐이면 꺼진 토글로 시작한다', (tester) async {
+      (getIt<ChatHistorySettings>() as FakeChatHistorySettings).useRecords =
+          false;
+      await pump(tester);
+
+      expect(toggle(tester).isSelected, isFalse);
+    });
+
+    testWidgets('답하는 중엔 비활성', (tester) async {
+      final events = StreamController<ChatEvent>();
+      when(() => session.ask(any())).thenAnswer((_) => events.stream);
+      await pump(tester);
+
+      await tester.tap(find.text('어제 뭐 했어?'));
+      await tester.pump();
+      expect(toggle(tester).onPressed, isNull);
+
+      events.add(const ChatEvent.finished(citedEntryIds: []));
+      await events.close();
+      await tester.pumpAndSettle();
+      expect(toggle(tester).onPressed, isNotNull);
+    });
   });
 
   testWidgets('예시 질문 칩을 누르면 질문을 보낸다', (tester) async {
@@ -1242,52 +1327,57 @@ void main() {
   });
 
   group('모델', () {
-    const chip = Key('chat-model-chip');
+    const action = Key('chat-model-action');
+    const subtitle = Key('chat-model-subtitle');
 
-    testWidgets('ready 면 앱바 아래 모델 칩', (tester) async {
+    IconButton button(WidgetTester tester) => tester.widget<IconButton>(
+      find.descendant(
+        of: find.byKey(action),
+        matching: find.byType(IconButton),
+        matchRoot: true,
+      ),
+    );
+
+    String? shownModel(WidgetTester tester) =>
+        tester.widget<Text>(find.byKey(subtitle)).data;
+
+    testWidgets('ready 면 앱바 actions 에 모델 버튼, 제목 아래 지금 모델 이름', (tester) async {
       await pump(tester);
 
-      expect(find.byKey(chip), findsOneWidget);
+      expect(find.byKey(const Key('chat-model-chip')), findsNothing);
+      expect(
+        find.descendant(of: find.byType(AppBar), matching: find.byKey(action)),
+        findsOneWidget,
+      );
+      expect(find.byTooltip('모델 바꾸기 · 지금 Claude Sonnet 9.5'), findsOneWidget);
       expect(
         find.descendant(
-          of: find.byKey(chip),
-          matching: find.text('Claude Sonnet 9.5'),
+          of: find.byType(AppBar),
+          matching: find.byKey(subtitle),
         ),
         findsOneWidget,
       );
-      // 칩은 앱바 아래, 예시 질문(대화) 위.
-      final appBar = tester.getRect(find.byType(AppBar));
-      final chipRect = tester.getRect(find.byKey(chip));
-      expect(chipRect.top, greaterThanOrEqualTo(appBar.bottom));
-      expect(
-        chipRect.bottom,
-        lessThanOrEqualTo(tester.getRect(find.text('어제 뭐 했어?')).top),
-      );
+      expect(shownModel(tester), 'Claude Sonnet 9.5');
     });
 
-    testWidgets('칩 → 시트 → 다른 모델을 고르면 칩 이름이 바뀐다', (tester) async {
+    testWidgets('버튼 → 시트(지금 모델 체크) → 다른 모델을 고르면 이름이 바뀐다', (tester) async {
       verifier.stored = (
         ChatVendor.anthropic,
         const ModelListResult.ok([_sonnet, _opus]),
       );
       await pump(tester);
 
-      await tester.tap(find.byKey(chip));
+      await tester.tap(find.byKey(action));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(Key('model-row-${_opus.id}')));
       await tester.pumpAndSettle();
 
-      expect(
-        find.descendant(
-          of: find.byKey(chip),
-          matching: find.text('Claude Opus 9.9'),
-        ),
-        findsOneWidget,
-      );
+      expect(shownModel(tester), 'Claude Opus 9.9');
+      expect(find.byTooltip('모델 바꾸기 · 지금 Claude Opus 9.9'), findsOneWidget);
       expect(settings.selectedModel, _opus.id);
     });
 
-    testWidgets('답하는 중엔 칩이 비활성', (tester) async {
+    testWidgets('답하는 중엔 모델 버튼이 비활성', (tester) async {
       final events = StreamController<ChatEvent>();
       when(() => session.ask(any())).thenAnswer((_) => events.stream);
       await pump(tester);
@@ -1295,12 +1385,12 @@ void main() {
       await tester.tap(find.text('어제 뭐 했어?'));
       await tester.pump();
 
-      expect(tester.widget<ActionChip>(find.byKey(chip)).onPressed, isNull);
+      expect(button(tester).onPressed, isNull);
 
       events.add(const ChatEvent.finished(citedEntryIds: []));
       await events.close();
       await tester.pumpAndSettle();
-      expect(tester.widget<ActionChip>(find.byKey(chip)).onPressed, isNotNull);
+      expect(button(tester).onPressed, isNotNull);
     });
 
     testWidgets("noModels 면 '모델 목록을 받지 못했어요' + [다시 시도]", (tester) async {
@@ -1311,14 +1401,15 @@ void main() {
       await pump(tester);
 
       expect(find.text('모델 목록을 받지 못했어요'), findsOneWidget);
-      expect(find.byKey(chip), findsNothing);
+      expect(find.byKey(action), findsNothing);
+      expect(find.byKey(const Key('chat-use-records-action')), findsNothing);
 
       verifier.stored = _storedOk;
       await tester.tap(find.text('다시 시도'));
       await tester.pumpAndSettle();
 
       expect(find.text('모델 목록을 받지 못했어요'), findsNothing);
-      expect(find.byKey(chip), findsOneWidget);
+      expect(find.byKey(action), findsOneWidget);
     });
 
     testWidgets('잘못된 키면 [설정 열기]', (tester) async {
@@ -1370,13 +1461,7 @@ void main() {
       await pump(tester);
 
       expect(find.text(notice), findsOneWidget);
-      expect(
-        find.descendant(
-          of: find.byKey(chip),
-          matching: find.text('Claude Sonnet 9.5'),
-        ),
-        findsOneWidget,
-      );
+      expect(shownModel(tester), 'Claude Sonnet 9.5');
     });
   });
 
