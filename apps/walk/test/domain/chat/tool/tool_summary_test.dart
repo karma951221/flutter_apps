@@ -8,6 +8,10 @@ void main() {
     expect(chatToolKindOf('list_diary_index'), ChatToolKind.diaryIndex);
     expect(chatToolKindOf('daily_steps'), ChatToolKind.dailySteps);
     expect(chatToolKindOf('wake_records'), ChatToolKind.wakeRecords);
+    expect(chatToolKindOf('visited_places'), ChatToolKind.visitedPlaces);
+    expect(chatToolKindOf('frequent_places'), ChatToolKind.frequentPlaces);
+    expect(chatToolKindOf('list_alarms'), ChatToolKind.alarms);
+    expect(chatToolKindOf('weather_forecast'), ChatToolKind.weather);
     expect(chatToolKindOf('read_wiki'), ChatToolKind.wiki);
     expect(chatToolKindOf('web_search'), ChatToolKind.webSearch);
     expect(chatToolKindOf('list_files'), ChatToolKind.listFiles);

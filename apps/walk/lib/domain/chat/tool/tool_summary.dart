@@ -10,6 +10,18 @@ enum ChatToolKind {
   dailySteps,
   wakeRecords,
 
+  /// visited_places
+  visitedPlaces,
+
+  /// frequent_places
+  frequentPlaces,
+
+  /// list_alarms
+  alarms,
+
+  /// weather_forecast
+  weather,
+
   /// read_wiki
   wiki,
 
@@ -39,6 +51,10 @@ ChatToolKind chatToolKindOf(String name) => switch (name) {
   'list_diary_index' => ChatToolKind.diaryIndex,
   'daily_steps' => ChatToolKind.dailySteps,
   'wake_records' => ChatToolKind.wakeRecords,
+  'visited_places' => ChatToolKind.visitedPlaces,
+  'frequent_places' => ChatToolKind.frequentPlaces,
+  'list_alarms' => ChatToolKind.alarms,
+  'weather_forecast' => ChatToolKind.weather,
   'read_wiki' => ChatToolKind.wiki,
   'list_files' => ChatToolKind.listFiles,
   'read_file' => ChatToolKind.readFile,

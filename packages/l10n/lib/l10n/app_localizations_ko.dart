@@ -3242,6 +3242,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatToolWakeRecords => '알람 기록 보는 중';
 
   @override
+  String get walkChatToolVisitedPlaces => '머문 곳 보는 중';
+
+  @override
+  String get walkChatToolFrequentPlaces => '자주 간 곳 보는 중';
+
+  @override
+  String get walkChatToolAlarms => '알람 설정 보는 중';
+
+  @override
+  String get walkChatToolWeather => '날씨 보는 중';
+
+  @override
   String get walkChatToolReadWiki => '위키 읽는 중';
 
   @override
@@ -3299,6 +3311,21 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String walkChatToolFoundWake(int count) {
     return '기상 기록 $count회';
+  }
+
+  @override
+  String walkChatToolFoundPlaces(int count) {
+    return '머문 곳 $count곳';
+  }
+
+  @override
+  String walkChatToolFoundFrequent(int count) {
+    return '자주 간 곳 $count곳';
+  }
+
+  @override
+  String walkChatToolFoundAlarms(int count) {
+    return '알람 $count개';
   }
 
   @override

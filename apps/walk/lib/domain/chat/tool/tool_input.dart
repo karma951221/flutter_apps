@@ -40,9 +40,11 @@ ToolRange? toolRange(Map<String, Object?> input, {required int maxDays}) {
   final to = parseToolDate(input['to']);
   if (from == null || to == null || from.isAfter(to)) return null;
   final days =
-      DateTime.utc(to.year, to.month, to.day)
-          .difference(DateTime.utc(from.year, from.month, from.day))
-          .inDays +
+      DateTime.utc(
+        to.year,
+        to.month,
+        to.day,
+      ).difference(DateTime.utc(from.year, from.month, from.day)).inDays +
       1;
   final clamped = days > maxDays;
   if (clamped) from = DateTime(to.year, to.month, to.day - (maxDays - 1));

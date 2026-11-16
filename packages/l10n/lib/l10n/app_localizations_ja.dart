@@ -3240,6 +3240,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatToolWakeRecords => 'アラーム記録を確認中';
 
   @override
+  String get walkChatToolVisitedPlaces => '滞在した場所を確認中';
+
+  @override
+  String get walkChatToolFrequentPlaces => 'よく行く場所を確認中';
+
+  @override
+  String get walkChatToolAlarms => 'アラーム設定を確認中';
+
+  @override
+  String get walkChatToolWeather => '天気を確認中';
+
+  @override
   String get walkChatToolReadWiki => 'Wikiを確認中';
 
   @override
@@ -3297,6 +3309,21 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String walkChatToolFoundWake(int count) {
     return '起床記録$count回';
+  }
+
+  @override
+  String walkChatToolFoundPlaces(int count) {
+    return '滞在場所$count件';
+  }
+
+  @override
+  String walkChatToolFoundFrequent(int count) {
+    return 'よく行く場所$count件';
+  }
+
+  @override
+  String walkChatToolFoundAlarms(int count) {
+    return 'アラーム$count件';
   }
 
   @override

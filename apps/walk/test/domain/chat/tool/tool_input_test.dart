@@ -7,7 +7,10 @@ import 'package:walk/domain/chat/tool/tool_summary.dart';
 void main() {
   group('toolRange', () {
     test('최대 일수를 넘으면 to 기준으로 자르고 clamped', () {
-      final r = toolRange({'from': '2026-01-01', 'to': '2026-03-01'}, maxDays: 31)!;
+      final r = toolRange({
+        'from': '2026-01-01',
+        'to': '2026-03-01',
+      }, maxDays: 31)!;
       expect(r.from, DateTime(2026, 1, 30));
       expect(r.to, DateTime(2026, 3, 1));
       expect(r.clamped, isTrue);
@@ -15,7 +18,10 @@ void main() {
     });
 
     test('범위 안이면 그대로', () {
-      final r = toolRange({'from': '2026-03-01', 'to': '2026-03-01'}, maxDays: 31)!;
+      final r = toolRange({
+        'from': '2026-03-01',
+        'to': '2026-03-01',
+      }, maxDays: 31)!;
       expect(r.from, DateTime(2026, 3, 1));
       expect(r.clamped, isFalse);
       expect(r.clampJson, isEmpty);
@@ -23,9 +29,18 @@ void main() {
     });
 
     test('from 이 to 뒤 · 없는 날짜 · 형식 틀림은 null', () {
-      expect(toolRange({'from': '2026-03-02', 'to': '2026-03-01'}, maxDays: 31), isNull);
-      expect(toolRange({'from': '2026-02-30', 'to': '2026-03-01'}, maxDays: 31), isNull);
-      expect(toolRange({'from': '2026/03/01', 'to': '2026-03-01'}, maxDays: 31), isNull);
+      expect(
+        toolRange({'from': '2026-03-02', 'to': '2026-03-01'}, maxDays: 31),
+        isNull,
+      );
+      expect(
+        toolRange({'from': '2026-02-30', 'to': '2026-03-01'}, maxDays: 31),
+        isNull,
+      );
+      expect(
+        toolRange({'from': '2026/03/01', 'to': '2026-03-01'}, maxDays: 31),
+        isNull,
+      );
       expect(toolRange({'to': '2026-03-01'}, maxDays: 31), isNull);
     });
   });

@@ -4389,6 +4389,14 @@
   "@walkChatToolDailySteps": { "description": "채팅 탭 진행 줄: daily_steps 도구 라벨" },
   "walkChatToolWakeRecords": "알람 기록 보는 중",
   "@walkChatToolWakeRecords": { "description": "채팅 탭 진행 줄: wake_records 도구 라벨" },
+  "walkChatToolVisitedPlaces": "머문 곳 보는 중",
+  "@walkChatToolVisitedPlaces": { "description": "채팅 탭 진행 줄: visited_places 도구 라벨" },
+  "walkChatToolFrequentPlaces": "자주 간 곳 보는 중",
+  "@walkChatToolFrequentPlaces": { "description": "채팅 탭 진행 줄: frequent_places 도구 라벨" },
+  "walkChatToolAlarms": "알람 설정 보는 중",
+  "@walkChatToolAlarms": { "description": "채팅 탭 진행 줄: list_alarms 도구 라벨" },
+  "walkChatToolWeather": "날씨 보는 중",
+  "@walkChatToolWeather": { "description": "채팅 탭 진행 줄: weather_forecast 도구 라벨" },
   "walkChatToolReadWiki": "위키 읽는 중",
   "@walkChatToolReadWiki": { "description": "채팅 탭 진행 줄: read_wiki 도구 라벨" },
   "walkChatToolOther": "기록 보는 중",
@@ -4486,6 +4494,12 @@
       }
     }
   },
+  "walkChatToolFoundPlaces": "머문 곳 {count}곳",
+  "@walkChatToolFoundPlaces": { "description": "채팅 탭 진행 줄: 머문 곳 결과 개수", "placeholders": { "count": { "type": "int" } } },
+  "walkChatToolFoundFrequent": "자주 간 곳 {count}곳",
+  "@walkChatToolFoundFrequent": { "description": "채팅 탭 진행 줄: 자주 간 곳 결과 개수", "placeholders": { "count": { "type": "int" } } },
+  "walkChatToolFoundAlarms": "알람 {count}개",
+  "@walkChatToolFoundAlarms": { "description": "채팅 탭 진행 줄: 알람 설정 결과 개수", "placeholders": { "count": { "type": "int" } } },
   "walkChatToolFoundPhotos": "사진 {count}장",
   "@walkChatToolFoundPhotos": {
     "description": "채팅 탭 진행 줄: 사진 결과 장 수",

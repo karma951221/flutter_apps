@@ -3495,6 +3495,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatToolWakeRecords => 'Checking alarm log';
 
   @override
+  String get walkChatToolVisitedPlaces => 'Checking places visited';
+
+  @override
+  String get walkChatToolFrequentPlaces => 'Checking frequent places';
+
+  @override
+  String get walkChatToolAlarms => 'Checking alarms';
+
+  @override
+  String get walkChatToolWeather => 'Checking weather';
+
+  @override
   String get walkChatToolReadWiki => 'Reading wiki';
 
   @override
@@ -3580,6 +3592,39 @@ class AppLocalizationsEn extends AppLocalizations {
       locale: localeName,
       other: '$count wake records',
       one: '1 wake record',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkChatToolFoundPlaces(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count places',
+      one: '1 place',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkChatToolFoundFrequent(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count frequent places',
+      one: '1 frequent place',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkChatToolFoundAlarms(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count alarms',
+      one: '1 alarm',
     );
     return '$_temp0';
   }

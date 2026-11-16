@@ -19,7 +19,11 @@ void main() {
   test('기록 중 · 마지막 점이 정지 감지 점 · since 이후면 지금까지 잇는다', () {
     final end = stayOpenEnd(
       [_p(DateTime.utc(2026, 11, 16, 9), still: true)],
-      RecorderStatus.running(RecordMode.normal, stillDetection: true, recordingSince: since),
+      RecorderStatus.running(
+        RecordMode.normal,
+        stillDetection: true,
+        recordingSince: since,
+      ),
       now,
     );
     expect(end, now);
@@ -29,7 +33,11 @@ void main() {
     expect(
       stayOpenEnd(
         [_p(DateTime.utc(2026, 11, 16, 9))],
-        RecorderStatus.running(RecordMode.normal, stillDetection: true, recordingSince: since),
+        RecorderStatus.running(
+          RecordMode.normal,
+          stillDetection: true,
+          recordingSince: since,
+        ),
         now,
       ),
       isNull,
@@ -40,7 +48,11 @@ void main() {
     expect(
       stayOpenEnd(
         [_p(DateTime.utc(2026, 11, 16, 9))],
-        RecorderStatus.running(RecordMode.normal, stillDetection: false, recordingSince: since),
+        RecorderStatus.running(
+          RecordMode.normal,
+          stillDetection: false,
+          recordingSince: since,
+        ),
         now,
       ),
       now,
@@ -51,7 +63,11 @@ void main() {
     expect(
       stayOpenEnd(
         [_p(since.subtract(const Duration(minutes: 6)), still: true)],
-        RecorderStatus.running(RecordMode.normal, stillDetection: true, recordingSince: since),
+        RecorderStatus.running(
+          RecordMode.normal,
+          stillDetection: true,
+          recordingSince: since,
+        ),
         now,
       ),
       isNull,
@@ -62,11 +78,23 @@ void main() {
     final pts = [_p(DateTime.utc(2026, 11, 16, 9), still: true)];
     expect(stayOpenEnd(pts, const RecorderStatus.off(), now), isNull);
     expect(
-      stayOpenEnd(pts, const RecorderStatus.running(RecordMode.normal, stillDetection: true), now),
+      stayOpenEnd(
+        pts,
+        const RecorderStatus.running(RecordMode.normal, stillDetection: true),
+        now,
+      ),
       isNull,
     );
     expect(
-      stayOpenEnd(const [], RecorderStatus.running(RecordMode.normal, stillDetection: true, recordingSince: since), now),
+      stayOpenEnd(
+        const [],
+        RecorderStatus.running(
+          RecordMode.normal,
+          stillDetection: true,
+          recordingSince: since,
+        ),
+        now,
+      ),
       isNull,
     );
   });
