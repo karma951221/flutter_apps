@@ -23,7 +23,9 @@ abstract interface class BackupService {
   Future<Result<InspectedBackup>> inspect(File file, {String? password});
 
   /// 고른 영역의 지금 데이터를 [b] 의 것으로 바꾼다. 바꾸기 전 데이터는 되돌리기 지점으로 남는다.
-  /// 한 영역이라도 실패하면 이미 바꾼 영역까지 되돌린다. 성공 · 실패 모두 [b] 의 작업 폴더를 지운다.
+  /// 한 영역이라도 실패하면 고른 영역 모두를 되돌리고 원래 실패를 돌려준다(되돌리기마저 실패하면
+  /// [needsRecovery] 가 참). 성공 · 실패 모두 [b] 의 작업 폴더를 지운다. [areas] 가 비면 아무것도
+  /// 하지 않는다.
   Future<Result<Set<RestoreNotice>>> restore(
     InspectedBackup b,
     Set<BackupAreaId> areas,
@@ -31,6 +33,10 @@ abstract interface class BackupService {
 
   /// "복원 전으로 되돌리기"를 할 수 있는가.
   Future<bool> hasUndoPoint();
+
+  /// 복원 · 되돌리기가 끝나지 않은 채 남았는가(되돌리기 실패 등). 참이면 앱을 다시 시작하라고
+  /// 안내한다 — 시작 때 [recoverIfInterrupted] 가 마저 되돌린다.
+  Future<bool> needsRecovery();
 
   /// 마지막 복원 전 데이터로 되돌린다. 되돌리기 지점은 한 번 쓰면 없어진다.
   Future<Result<Set<RestoreNotice>>> undo();

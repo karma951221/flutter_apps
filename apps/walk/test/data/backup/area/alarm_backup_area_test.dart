@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart' show Value, driftRuntimeOptions;
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -272,6 +273,57 @@ void main() {
     expect(await withAlarms.afterRestore(), {
       RestoreNotice.alarmPermissionNeeded,
     });
+  });
+
+  test('replace again after the sounds folder was moved keeps sounds and '
+      'paths', () async {
+    await seedA();
+    await AlarmBackupArea(
+      await SharedPreferences.getInstance(),
+      a,
+      soundsA,
+      alarmsA,
+      perms,
+    ).export(staging);
+    SharedPreferences.setMockInitialValues({});
+    final areaB = AlarmBackupArea(
+      await SharedPreferences.getInstance(),
+      b,
+      soundsB,
+      alarmsB,
+      perms,
+    );
+    await areaB.replace(staging);
+    expect(Directory('${staging.path}/alarm/sounds').existsSync(), isFalse);
+
+    await areaB.replace(staging);
+
+    expect(File('${soundsB.path}/abc123.ogg').readAsBytesSync(), [1, 2, 3]);
+    final restored = await alarmsOf(await SharedPreferences.getInstance());
+    expect(
+      restored[0].sound,
+      AlarmSound.device(title: '오프닝', path: '${soundsB.path}/abc123.ogg'),
+    );
+    expect(await areaB.afterRestore(), isEmpty);
+  });
+
+  test('afterRestore reports a failed resync instead of throwing', () async {
+    when(() => alarmsB.sync()).thenThrow(StateError('scheduler down'));
+    final logs = <String?>[];
+    final original = debugPrint;
+    debugPrint = (message, {wrapWidth}) => logs.add(message);
+    addTearDown(() => debugPrint = original);
+    SharedPreferences.setMockInitialValues({});
+    final area = AlarmBackupArea(
+      await SharedPreferences.getInstance(),
+      b,
+      soundsB,
+      alarmsB,
+      perms,
+    );
+
+    expect(await area.afterRestore(), {RestoreNotice.alarmResyncFailed});
+    expect(logs.single, contains('scheduler down'));
   });
 
   test('restore into device without alarm_sounds dir', () async {

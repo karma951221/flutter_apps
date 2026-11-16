@@ -154,6 +154,8 @@ void main() {
         }),
       ),
     );
+    // 내보내기는 미디어가 없어도 폴더를 만든다.
+    Directory('${staging.path}/diary/media').createSync(recursive: true);
     final area = DiaryBackupArea(b.db, rootB, prefs);
 
     await area.validate(staging);
@@ -252,6 +254,23 @@ void main() {
         BackupFailure.integrity,
       );
     });
+  });
+
+  test('replace again after the media folder was moved keeps the media '
+      '(crash after the move, replayed at startup)', () async {
+    SharedPreferences.setMockInitialValues(_diaryPrefs);
+    final prefs = await SharedPreferences.getInstance();
+    await seedA();
+    await DiaryBackupArea(a.db, rootA, prefs).export(staging);
+    final areaB = DiaryBackupArea(b.db, rootB, prefs);
+    await areaB.replace(staging);
+    expect(Directory('${staging.path}/diary/media').existsSync(), isFalse);
+
+    await areaB.replace(staging);
+
+    expect(File('${rootB.path}/media/p1.jpg').readAsBytesSync(), [1, 2, 3]);
+    expect(File('${rootB.path}/media/v1.mp4').existsSync(), isTrue);
+    expect(await _dumpAll(b.db), await _dumpAll(a.db));
   });
 
   test('export skips diary/tmp/', () async {

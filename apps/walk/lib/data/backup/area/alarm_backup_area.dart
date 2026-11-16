@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -86,7 +87,7 @@ class AlarmBackupArea implements BackupAreaSource {
   Future<Map<String, int>> export(Directory root) async {
     final out = _areaDir(root);
     final sounds = Directory('${out.path}/$_sounds');
-    await sounds.create(recursive: true);
+    await createFilesFolder(sounds);
 
     await _reload();
     await writeAreaJson(out, _dataFile, await dumpPrefs(_prefs, _prefKeys));
@@ -113,17 +114,16 @@ class AlarmBackupArea implements BackupAreaSource {
     final rows = await _readArchive(root);
     final prefs = await readPrefsSnapshot(_areaDir(root), _dataFile, _prefKeys);
     final incoming = Directory('${_areaDir(root).path}/$_sounds');
-    // 소리 사본이 하나도 없던 백업이면 빈 폴더로 바꿔 넣는다.
-    await incoming.create(recursive: true);
+    // 폴더가 없으면 이미 옮겨 간 것이다 — 지금 폴더의 사본을 기준으로 경로만 맞춘다.
+    await dropFilesFolderMarker(incoming);
+    final source = await incoming.exists() ? incoming : _soundsDir;
     final available = {
-      for (final f in await _soundFiles(incoming)) p.basename(f.path),
+      for (final f in await _soundFiles(source)) p.basename(f.path),
     };
     _soundFellBack = false;
     final relocated = _relocateSounds(prefs, available);
-    await _soundsDir.parent.create(recursive: true);
-
     final table = _archive.archivedRings;
-    await swapDirectory(_soundsDir, incoming, () async {
+    await replaceFilesFolder(_soundsDir, incoming, () async {
       await _archive.transaction(() async {
         await deleteAllRows(_archive, table);
         await insertRows(_archive, table, rows[table.actualTableName]!);
@@ -134,14 +134,21 @@ class AlarmBackupArea implements BackupAreaSource {
   }
 
   /// 알람을 다시 예약하고 다음 알람 위젯 · 미리 알림을 새로 맞춘다. 알람음을 기본으로
-  /// 바꿨거나, 알람이 있는데 울리는 데 필요한 권한이 꺼져 있으면 알린다.
+  /// 바꿨거나, 알람이 있는데 울리는 데 필요한 권한이 꺼져 있거나, 다시 예약이 실패하면 알린다.
   @override
   Future<Set<RestoreNotice>> afterRestore() async {
-    await _alarms.sync();
+    var resynced = true;
+    try {
+      await _alarms.sync();
+    } on Object catch (e, s) {
+      debugPrint('alarm resync after restore failed: $e\n$s');
+      resynced = false;
+    }
     final fellBack = _soundFellBack;
     _soundFellBack = false;
     await _reload();
     return {
+      if (!resynced) RestoreNotice.alarmResyncFailed,
       if (fellBack) RestoreNotice.alarmSoundFallback,
       if (_storedAlarms().isNotEmpty && !await _permissions.canRing())
         RestoreNotice.alarmPermissionNeeded,

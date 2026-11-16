@@ -87,7 +87,7 @@ class ChatBackupArea implements BackupAreaSource {
   @override
   Future<Map<String, int>> export(Directory root) async {
     final out = _areaDir(root);
-    await Directory('${out.path}/$_workspace').create(recursive: true);
+    await createFilesFolder(Directory('${out.path}/$_workspace'));
 
     final data = await dumpTables(_db, _deleteOrder.reversed);
     await writeAreaJson(out, _dataFile, data);
@@ -130,11 +130,8 @@ class ChatBackupArea implements BackupAreaSource {
       _prefKeys,
     );
     final incoming = Directory('${_areaDir(root).path}/$_workspace');
-    // 작업 폴더가 비어 있던 백업이면 빈 폴더로 바꿔 넣는다.
-    await incoming.create(recursive: true);
-    await _workspaceRoot.parent.create(recursive: true);
-
-    await swapDirectory(_workspaceRoot, incoming, () async {
+    // 폴더가 없으면 이미 옮겨 간 것이다 — 작업 폴더는 그대로 두고 DB 만 바꾼다.
+    await replaceFilesFolder(_workspaceRoot, incoming, () async {
       await _db.transaction(() async {
         // 대화를 지우면 위키 출처가 set null 된다. 백업에도 있는 대화를 가리키던
         // 출처는 다시 넣은 뒤 되돌린다.

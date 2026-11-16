@@ -3,6 +3,9 @@ enum RestoreNotice {
   /// 백업에 사본이 없는 알람음을 기본 알람음으로 바꿨다.
   alarmSoundFallback,
 
+  /// 알람 다시 예약이 실패했다 — 알람 화면을 열거나 앱을 다시 시작하면 다시 건다.
+  alarmResyncFailed,
+
   /// 알람이 제때 울리는 데 필요한 권한(알림 · 정확한 알람)이 꺼져 있다.
   alarmPermissionNeeded,
 

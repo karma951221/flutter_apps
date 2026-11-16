@@ -308,6 +308,25 @@ void main() {
     });
   });
 
+  test('replace again after the workspace was moved keeps the files', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    await seedA();
+    await ChatBackupArea(a, wsA, prefs, settings).export(staging);
+    final areaB = ChatBackupArea(b, wsB, prefs, settings);
+    await areaB.replace(staging);
+    expect(Directory('${staging.path}/chat/workspace').existsSync(), isFalse);
+
+    await areaB.replace(staging);
+
+    expect(File('${wsB.path}/inbox/photo.jpg').readAsBytesSync(), [1, 2, 3]);
+    expect(File('${wsB.path}/out/report.md').existsSync(), isTrue);
+    expect(
+      await dumpTable(b, b.conversations),
+      await dumpTable(a, a.conversations),
+    );
+  });
+
   test('export skips links in the workspace', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();

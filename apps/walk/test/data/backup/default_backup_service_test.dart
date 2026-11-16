@@ -6,6 +6,7 @@ import 'package:archive/archive_io.dart';
 import 'package:core/core.dart';
 import 'package:drift/drift.dart' show Value, driftRuntimeOptions;
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -247,7 +248,14 @@ class _FakeArea implements BackupAreaSource {
 
   final List<String> log;
   String value = 'initial';
+  /// 다음 [replace] 한 번이 아무것도 바꾸기 전에 실패한다.
   bool failReplace = false;
+
+  /// [replace] 가 값을 바꾼 뒤 차례로 던질 오류(반쯤 바꾸고 실패 흉내).
+  final errorsAfterChange = <Object>[];
+
+  /// 있으면 [afterRestore] 가 던진다.
+  Object? afterRestoreError;
   Set<RestoreNotice> notices = const {};
 
   /// 있으면 [replace] 가 들어오자마자 완료하고 [hang] 을 기다린다(도중 종료 흉내).
@@ -284,13 +292,18 @@ class _FakeArea implements BackupAreaSource {
       c.complete();
       await hang.future;
     }
-    if (failReplace) throw StateError('replace failed');
+    if (failReplace) {
+      failReplace = false;
+      throw StateError('replace failed');
+    }
     value = _file(root).readAsStringSync();
+    if (errorsAfterChange.isNotEmpty) throw errorsAfterChange.removeAt(0);
   }
 
   @override
   Future<Set<RestoreNotice>> afterRestore() async {
     log.add('after:${id.name}');
+    if (afterRestoreError case final e?) throw e;
     return notices;
   }
 }
@@ -309,7 +322,14 @@ void main() {
     return d;
   }
 
+  /// 서비스가 [debugPrint] 로 남긴 줄(테스트 출력을 깨끗하게 둔다).
+  final logs = <String?>[];
+  final originalDebugPrint = debugPrint;
+
   setUp(() {
+    logs.clear();
+    debugPrint = (message, {wrapWidth}) => logs.add(message);
+    addTearDown(() => debugPrint = originalDebugPrint);
     tmp = Directory.systemTemp.createTempSync('default_backup_service_test');
     docs = Directory('${tmp.path}/app_flutter');
     cache = Directory('${tmp.path}/cache');
@@ -473,6 +493,179 @@ void main() {
     expect(staging().existsSync(), isFalse);
     expect(undoDir().existsSync(), isFalse);
   });
+
+  test(
+    'area that changed its data and then failed is rolled back too',
+    () async {
+      final d = await device();
+      await d.seed();
+      final log = <String>[];
+      final chat = _FakeArea(BackupAreaId.chat, log);
+      final service = d.service(areas: [d.realAreas.first, chat]);
+      final file = _ok(
+        await service.export({BackupAreaId.diary, BackupAreaId.chat}),
+      );
+      okValue(await d.diary.repository.createEntry(entryDraft(body: '나중 기록')));
+      final beforeRestore = await d.snapshot();
+      chat
+        ..value = 'changed'
+        ..errorsAfterChange.add(StateError('prefs write failed'));
+
+      final inspected = _ok(await service.inspect(file));
+      final result = await service.restore(inspected, {
+        BackupAreaId.diary,
+        BackupAreaId.chat,
+      });
+
+      expect(_failureOf(result), BackupFailure.io);
+      expect(chat.value, 'changed');
+      expect(await d.snapshot(), beforeRestore);
+      expect(await service.needsRecovery(), isFalse);
+      expect(undoDir().existsSync(), isFalse);
+    },
+  );
+
+  test(
+    'failed rollback keeps the original failure and the recovery marker',
+    () async {
+      final d = await device();
+      await d.seed();
+      final log = <String>[];
+      final chat = _FakeArea(BackupAreaId.chat, log);
+      final service = d.service(areas: [d.realAreas.first, chat]);
+      final file = _ok(
+        await service.export({BackupAreaId.diary, BackupAreaId.chat}),
+      );
+      okValue(await d.diary.repository.createEntry(entryDraft(body: '나중 기록')));
+      final beforeRestore = await d.snapshot();
+      chat
+        ..value = 'changed'
+        ..errorsAfterChange.addAll([
+          const BackupException(BackupFailure.integrity),
+          StateError('rollback failed too'),
+        ]);
+
+      final inspected = _ok(await service.inspect(file));
+      final result = await service.restore(inspected, {
+        BackupAreaId.diary,
+        BackupAreaId.chat,
+      });
+
+      expect(_failureOf(result), BackupFailure.integrity);
+      expect(await service.needsRecovery(), isTrue);
+      expect(await service.hasUndoPoint(), isFalse);
+
+      // 다음 시작: 이번에는 되돌리기가 된다.
+      await service.recoverIfInterrupted();
+      expect(await service.needsRecovery(), isFalse);
+      expect(chat.value, 'changed');
+      expect(await d.snapshot(), beforeRestore);
+    },
+  );
+
+  test('restore with no areas is a no-op that keeps the undo point', () async {
+    final d = await device();
+    await d.seed();
+    final service = d.service();
+    final file = _ok(await service.export({BackupAreaId.location}));
+    _ok(
+      await service.restore(_ok(await service.inspect(file)), {
+        BackupAreaId.location,
+      }),
+    );
+    expect(await service.hasUndoPoint(), isTrue);
+
+    final inspected = _ok(await service.inspect(file));
+    expect(_ok(await service.restore(inspected, {})), isEmpty);
+
+    expect(await service.hasUndoPoint(), isTrue);
+    expect(await service.needsRecovery(), isFalse);
+  });
+
+  test('afterRestore failure does not fail the restore', () async {
+    final d = await device();
+    final log = <String>[];
+    final diary = _FakeArea(BackupAreaId.diary, log)
+      ..afterRestoreError = StateError('boom');
+    final chat = _FakeArea(BackupAreaId.chat, log)
+      ..notices = {RestoreNotice.apiKeyNeeded};
+    final service = d.service(areas: [diary, chat]);
+    final file = _ok(
+      await service.export({BackupAreaId.diary, BackupAreaId.chat}),
+    );
+
+    final notices = _ok(
+      await service.restore(_ok(await service.inspect(file)), {
+        BackupAreaId.diary,
+        BackupAreaId.chat,
+      }),
+    );
+
+    expect(notices, {RestoreNotice.apiKeyNeeded});
+    expect(logs.single, contains('afterRestore of diary failed'));
+  });
+
+  test('backup with empty files folders clears them through the zip', () async {
+    final d = await device();
+    final service = d.service();
+    // 미디어 · 작업 폴더 · 알람음이 하나도 없을 때 만든 백업.
+    final file = _ok(
+      await service.export({
+        BackupAreaId.diary,
+        BackupAreaId.chat,
+        BackupAreaId.alarm,
+      }),
+    );
+    _writeFile(d.diaryRoot, 'media/later.jpg', [5]);
+    _writeFile(d.workspace, 'out/later.md', [6]);
+    _writeFile(d.sounds, 'later.ogg', [7]);
+
+    _ok(
+      await service.restore(_ok(await service.inspect(file)), {
+        BackupAreaId.diary,
+        BackupAreaId.chat,
+        BackupAreaId.alarm,
+      }),
+    );
+
+    expect(_files(docs), isEmpty);
+  });
+
+  test(
+    'startup replay after a crash mid-recovery keeps pre-restore media',
+    () async {
+      final d = await device();
+      await d.seed();
+      final log = <String>[];
+      final hanging = _FakeArea(BackupAreaId.chat, log)
+        ..entered = Completer<void>();
+      final service = d.service(areas: [d.realAreas.first, hanging]);
+      final file = _ok(
+        await service.export({BackupAreaId.diary, BackupAreaId.chat}),
+      );
+      okValue(await d.diary.repository.createEntry(entryDraft(body: '나중 기록')));
+      _writeFile(d.diaryRoot, 'media/later.jpg', [5]);
+      final beforeRestore = await d.snapshot();
+
+      final inspected = _ok(await service.inspect(file));
+      unawaited(
+        service.restore(inspected, {BackupAreaId.diary, BackupAreaId.chat}),
+      );
+      await hanging.entered!.future;
+
+      // 첫 시작 복구가 일기 미디어를 옮긴 뒤(되돌리기 폴더를 지우기 전) 죽었다.
+      await d.realAreas.first.replace(undoDir());
+      expect(Directory('${undoDir().path}/diary').existsSync(), isTrue);
+
+      final restarted = d.service(
+        areas: [d.realAreas.first, _FakeArea(BackupAreaId.chat, log)],
+      );
+      await restarted.recoverIfInterrupted();
+
+      expect(await d.snapshot(), beforeRestore);
+      expect(await restarted.needsRecovery(), isFalse);
+    },
+  );
 
   test('recovers interrupted restore on startup', () async {
     final d = await device();

@@ -77,7 +77,7 @@ class DiaryBackupArea implements BackupAreaSource {
   @override
   Future<Map<String, int>> export(Directory root) async {
     final out = _areaDir(root);
-    await Directory('${out.path}/$_media').create(recursive: true);
+    await createFilesFolder(Directory('${out.path}/$_media'));
 
     final data = await dumpTables(_db, _deleteOrder.reversed);
     await writeAreaJson(out, _dataFile, data);
@@ -138,11 +138,8 @@ class DiaryBackupArea implements BackupAreaSource {
       _prefKeys,
     );
     final incomingMedia = Directory('${_areaDir(root).path}/$_media');
-    // 미디어가 하나도 없던 백업이면 빈 폴더로 바꿔 넣는다.
-    await incomingMedia.create(recursive: true);
-    await _diaryRoot.create(recursive: true);
-
-    await swapDirectory(_currentMedia, incomingMedia, () async {
+    // 폴더가 없으면 이미 옮겨 간 것이다 — 미디어는 그대로 두고 DB 만 바꾼다.
+    await replaceFilesFolder(_currentMedia, incomingMedia, () async {
       await _db.transaction(() async {
         for (final t in _deleteOrder) {
           await deleteAllRows(_db, t);

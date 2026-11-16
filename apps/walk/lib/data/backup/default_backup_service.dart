@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:core/core.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../domain/backup/backup_area_id.dart';
 import '../../domain/backup/backup_area_source.dart';
@@ -188,6 +189,8 @@ class DefaultBackupService implements BackupService {
     InspectedBackup b,
     Set<BackupAreaId> areas,
   ) async {
+    // 고른 영역이 없으면 아무것도 바꾸지 않는다 — 되돌리기 지점 · 작업 폴더도 그대로.
+    if (areas.isEmpty) return const Ok({});
     try {
       return await _guard(() async {
         for (final id in areas) {
@@ -207,19 +210,16 @@ class DefaultBackupService implements BackupService {
         await _makeUndoPoint(ordered);
         await _writeIds(_inProgress, ordered);
 
-        final done = <BackupAreaSource>[];
         try {
           for (final area in ordered) {
             await area.validate(b.staging);
             await area.replace(b.staging);
-            done.add(area);
           }
-        } catch (_) {
-          // 영역 하나는 스스로 원자적이다. 이미 바꾼 영역만 되돌린다. 되돌리기가 실패하면
-          // 표시 파일이 남아 다음 시작 때 다시 한다.
-          await _replayUndo(done);
-          await _deleteDir(_undo);
-          rethrow;
+        } catch (e, s) {
+          // 실패한 영역도 폴더 · DB 를 바꾼 뒤(prefs 쓰기 등)에 실패했을 수 있으므로 고른 영역
+          // 모두를 되돌린다. 손대지 않은 영역은 같은 내용으로 다시 쓰일 뿐이다.
+          await _rollBack(ordered);
+          Error.throwWithStackTrace(e, s);
         }
 
         await _inProgress.delete();
@@ -229,6 +229,20 @@ class DefaultBackupService implements BackupService {
       await _deleteDirQuietly(_staging);
     }
   }
+
+  /// 복원 실패 뒤 되돌리기 지점으로 되돌리고 지점을 지운다. 되돌리기마저 실패하면 표시 파일을
+  /// 남겨 다음 시작 때 다시 하게 하고, 결과는 원래 실패로 둔다.
+  Future<void> _rollBack(List<BackupAreaSource> ordered) async {
+    try {
+      await _replayUndo(ordered);
+      await _deleteDir(_undo);
+    } on Object catch (e, s) {
+      debugPrint('backup rollback failed, will retry at startup: $e\n$s');
+    }
+  }
+
+  @override
+  Future<bool> needsRecovery() => _inProgress.exists();
 
   @override
   Future<bool> hasUndoPoint() async =>
@@ -251,8 +265,9 @@ class DefaultBackupService implements BackupService {
   Future<void> recoverIfInterrupted() async {
     try {
       await _finishInterrupted();
-    } on Object {
+    } on Object catch (e, s) {
       // 표시 파일이 남아 다음 시작 때 다시 한다. 앱 시작은 막지 않는다.
+      debugPrint('backup recovery failed, will retry next start: $e\n$s');
     }
     await _deleteDirQuietly(_staging);
   }
@@ -305,8 +320,9 @@ class DefaultBackupService implements BackupService {
     for (final area in ordered) {
       try {
         notices.addAll(await area.afterRestore());
-      } on Object {
-        // 예: 알람 다시 예약 실패 — 다음 앱 시작 · 하루 한 번 동기화가 다시 건다.
+      } on Object catch (e, s) {
+        // 데이터는 이미 바뀌었다. 영역이 알릴 실패(알람 다시 예약)는 안내로 돌려준다.
+        debugPrint('afterRestore of ${area.id.name} failed: $e\n$s');
       }
     }
     return notices;
