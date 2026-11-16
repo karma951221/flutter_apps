@@ -426,7 +426,7 @@
   "commuteSettingsRequiredDescription": "Choose your home and work stations first",
   "commuteOpenSettings": "Open settings",
   "commuteOpenSettingsTooltip": "Commute settings",
-  "walkAppTitle": "Life Tool",
+  "walkAppTitle": "Life Log",
   "walkToday": "Today",
   "walkStepsCount": "{steps} steps",
   "walkGoalOf": "Goal {goal}",

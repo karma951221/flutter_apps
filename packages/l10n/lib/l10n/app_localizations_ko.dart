@@ -1342,7 +1342,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get commuteOpenSettingsTooltip => '통근 설정';
 
   @override
-  String get walkAppTitle => 'Life Tool';
+  String get walkAppTitle => 'Life Log';
 
   @override
   String get walkToday => '오늘';

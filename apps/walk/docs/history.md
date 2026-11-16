@@ -1089,3 +1089,21 @@ OpenAI: gpt-5 `minimal`, 5.1 이후 `none`, o 계열 `low`). 초안의 `modelUna
 
 `flutter analyze` 0 · `flutter test` 3901건 통과(1 skip) · 앱 Kotlin 단위 110건 · 디버그 APK.
 에뮬레이터(sdk_gphone16k_arm64, 2026-11-16) A20~A23 — [테스트](testing.md#알람-기기-시나리오). 소리 크기 · 듣기 좋은지는 사람이 들어 보지 않았다.
+
+## 2026-11-16 — 표시 이름 Life Tool → Life Log
+
+앱이 하루를 기록하는 쪽으로 자라서 "도구"보다 "로그"가 맞다는 사용자 피드백으로 표시 이름을
+**Life Log** 로 바꿨다(사용자 결정, 한국어 · 일본어 기기도 영문 그대로). 트레이더 앱 이름이
+`daylog` 라 "Day Log" · "Daily Log" 류는 후보에서 뺐다.
+
+- 바꾼 곳: 런처 라벨(`AndroidManifest` `android:label`) · l10n `walkAppTitle`(ko · en · ja) ·
+  건강 데이터 안내 문구(`strings.xml` 세 언어) · 물어보기 · 위키 정리 · 일기 초안 시스템 프롬프트의
+  앱 이름 · Kotlin 주석 · 허브 · 계획 문서.
+- 그대로 둔 것: `applicationId`(`com.karma.walk`) · Kotlin 패키지 · 폴더 `apps/walk` · Dart 패키지명 —
+  바꾸면 설치된 앱의 데이터가 이어지지 않거나 파급만 크다. 내부 클래스 `LifeTools` 는 앱 이름이 아니라
+  "생활 기록을 읽는 도구들"이라는 뜻이라 이름이 그대로 맞아서 두었다(동시 작업 중인 물어보기 세션과
+  충돌도 피한다). 날짜가 박힌 지난 기록 · 설계 문서의 "Life Tool" 도 그때의 사실이라 두었다.
+- 검사: `test/convention/app_display_name_test.dart` 가 런처 라벨 · `walkAppTitle`(모든 로케일) ·
+  안내 문구가 같은 이름인지 본다.
+- 검증: `flutter analyze` 0 · `flutter test` 3904건 통과(1 skip) · 문서 링크 검사 · l10n 테스트 통과.
+  에뮬레이터(2026-11-16) 앱 서랍에 "Life Log" 로 보인다.

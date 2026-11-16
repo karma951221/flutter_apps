@@ -1,4 +1,4 @@
-# walk — 계획 (Life Tool: 일기 · 물어보기 · 도구(알람 · 걷기 · 지도 · 날씨))
+# walk — 계획 (Life Log: 일기 · 물어보기 · 도구(알람 · 걷기 · 지도 · 날씨))
 
 > [걷기 허브](README.md) · [아키텍처](../../../docs/architecture.md) · [진행 현황](status.md)
 >
@@ -17,7 +17,7 @@
 
 ## 목적
 
-생활에 필요한 작은 도구를 하나의 앱에 모은다. 표시 이름은 **Life Tool**(폴더 · 패키지는 `walk`).
+생활에 필요한 작은 도구를 하나의 앱에 모은다. 표시 이름은 **Life Log**(폴더 · 패키지는 `walk`).
 지금 도구는 여섯이다.
 
 - **걷기** — 오늘 걸음을 앱을 열자마자 보고, 이번 주 · 이번 달을 막대그래프로 본다. 걸음은 앱이
@@ -173,7 +173,7 @@
 1. **앱 → Claude** — Messages API 요청 하나. 이때 기록은 하나도 실리지 않는다.
    ```json
    { "model": "claude-opus-5-5",
-     "system": "너는 사용자의 개인 기록 앱 Life Tool 안의 도우미다. 오늘은 …",
+     "system": "너는 사용자의 개인 기록 앱 Life Log 안의 도우미다. 오늘은 …",
      "tools": [ { "name": "wake_records", "description": "…", "input_schema": { … } }, …5개 ],
      "messages": [ { "role": "user", "content": "지난주에 몇 시에 일어났어?" } ] }
    ```

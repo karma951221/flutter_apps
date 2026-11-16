@@ -1217,7 +1217,7 @@ class ChatSession {
     final today = DateFormat('yyyy-MM-dd (E)', 'ko').format(now);
     final rules = records
         ? _recordRules(wiki: wikiSection != null)
-        : '너는 Life Tool 앱 안의 도우미다. 지식 · 설명 · 조언 · 잡담 등 무엇이든 '
+        : '너는 Life Log 앱 안의 도우미다. 지식 · 설명 · 조언 · 잡담 등 무엇이든 '
               '아는 대로 자유롭게 답한다.\n'
               '$_webRule'
               '$_answerStyle';
@@ -1233,7 +1233,7 @@ class ChatSession {
   static String _recordRules({required bool wiki}) {
     final records = wiki ? '일기 · 걸음 수 · 알람 기상 기록 · 위키' : '일기 · 걸음 수 · 알람 기상 기록';
     final grounds = wiki ? '찾은 기록과 위키에' : '찾은 기록에';
-    return '너는 사용자의 개인 기록 앱 Life Tool 안의 도우미다. 무엇이든 답하는 일반 '
+    return '너는 사용자의 개인 기록 앱 Life Log 안의 도우미다. 무엇이든 답하는 일반 '
         '도우미이면서, 사용자의 기록도 찾아볼 수 있다.\n'
         '사용자의 기록($records)에 관한 질문이면 도구로 찾아보고, $grounds 근거해서 답한다. '
         '기록에서 찾지 못한 것은 추측하지 말고 "기록에서 찾지 못했어요"라고 말한다.\n'
