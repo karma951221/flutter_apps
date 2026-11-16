@@ -22,6 +22,7 @@ class BackupManifest with _$BackupManifest {
   @override
   final String appVersion;
 
+  /// 만든 시각. JSON 에는 UTC(`…Z`)로 쓰고, 읽을 때는 화면에 보일 현지 시각으로 바꾼다.
   @override
   final DateTime createdAt;
 
@@ -55,7 +56,8 @@ class BackupManifest with _$BackupManifest {
       format: json['format'] as String,
       formatVersion: json['formatVersion'] as int,
       appVersion: json['appVersion'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      // 오프셋이 없는 예전 값은 그 기기의 현지 시각으로 읽힌다.
+      createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
       areas: areas,
       files: [
         for (final f in json['files'] as List<dynamic>? ?? const [])
@@ -70,7 +72,7 @@ extension BackupManifestJson on BackupManifest {
     'format': format,
     'formatVersion': formatVersion,
     'appVersion': appVersion,
-    'createdAt': createdAt.toIso8601String(),
+    'createdAt': createdAt.toUtc().toIso8601String(),
     'areas': {for (final e in areas.entries) e.key.name: e.value.toJson()},
     'files': [for (final f in files) f.toJson()],
   };
