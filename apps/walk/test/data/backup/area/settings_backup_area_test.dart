@@ -13,16 +13,22 @@ const _settings = <String, Object>{
   'walk.stepGoal': 8000,
   'walk.map.style': 'satellite',
   'walk.location.retention': 'days90',
-  'chat.vendor': 'openai',
-  'chat.model': 'gpt-5',
-  'chat.fastMode': true,
-  'chat.fastMode.ack': true,
   'commute.place.home': '{"kind":"home","lat":37.5,"lng":127.0}',
   'commute.place.work': '{"kind":"work","lat":37.4,"lng":127.1}',
 };
 
+/// API 키를 따라가는 물어보기 설정. 키는 담지 않으므로 이것도 담지 않는다 —
+/// 벤더만 바뀌면 지금 기기의 키를 다른 벤더로 보낸다.
+const _keyBound = <String, Object>{
+  'chat.vendor': 'openai',
+  'chat.model': 'gpt-5',
+  'chat.fastMode': true,
+  'chat.fastMode.ack': true,
+};
+
 /// 담으면 안 되는 키 — 비밀 · 동의 · 잠금 · 캐시 · 다른 영역 몫.
 const _excluded = <String, Object>{
+  ..._keyBound,
   'chat.apiKey': 'sk-secret',
   'anthropic_api_key': 'sk-old',
   'chat.keyStatus': 'valid',
@@ -73,6 +79,9 @@ void main() {
             )
             as Map<String, Object?>;
     expect(written.keys.toSet(), _settings.keys.toSet());
+    for (final key in _keyBound.keys) {
+      expect(written.containsKey(key), isFalse, reason: key);
+    }
   });
 
   test('settings round trip keeps types and leaves other keys alone', () async {

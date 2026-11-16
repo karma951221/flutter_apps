@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../domain/backup/backup_area_id.dart';
 import '../../../domain/backup/backup_area_source.dart';
 import '../../../domain/backup/restore_notice.dart';
-import '../../chat/secure_chat_settings.dart';
 import '../../commute/prefs_place_repository.dart';
 import '../../location/prefs_location_preferences.dart';
 import '../../location/prefs_map_style_preferences.dart';
@@ -18,15 +17,13 @@ const _prefsFile = 'prefs.json';
 
 /// 앱 설정 중 백업에 담는 키. 허용 목록만 담는다 — API 키 · 키 상태 · 동의 · 잠금 · 캐시 ·
 /// 일시 상태(`walk.goalCelebratedOn`)는 빼고, 알람 · 일기 · 대화 설정은 각 영역이 담는다.
+/// 물어보기 벤더 · 모델 · 빠른 모드(`chat.vendor` · `chat.model` · `chat.fastMode*`)도 뺀다 —
+/// API 키를 따라가는 값인데 키는 담지 않으므로, 벤더만 바뀌면 지금 기기의 키를 다른 벤더로 보낸다.
 const _prefKeys = {
   PrefsSettingsRepository.themeModeKey,
   PrefsSettingsRepository.stepGoalKey,
   PrefsMapStylePreferences.styleKey,
   PrefsLocationPreferences.retentionKey,
-  SecureChatSettings.vendorKey,
-  SecureChatSettings.modelKey,
-  SecureChatSettings.fastModeKey,
-  SecureChatSettings.fastModeAckKey,
   PrefsPlaceRepository.homeKey,
   PrefsPlaceRepository.workKey,
 };
