@@ -14,14 +14,29 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../config/app_version.dart';
 import '../config/commute_api_keys.dart';
 import '../../data/alarm/archive/ring_archive_database.dart';
+import '../../data/backup/area/alarm_backup_area.dart';
+import '../../data/backup/area/chat_backup_area.dart';
+import '../../data/backup/area/diary_backup_area.dart';
+import '../../data/backup/area/location_backup_area.dart';
+import '../../data/backup/area/settings_backup_area.dart';
+import '../../data/backup/area/wiki_backup_area.dart';
+import '../../data/backup/default_backup_service.dart';
 import '../../data/chat/database/chat_database.dart';
 import '../../data/chat/dev_chat_trace.dart';
 import '../../data/diary/database/diary_database.dart';
 import '../../data/diary/location/current_place_source.dart';
 import '../../data/diary/location/geocoding_place_namer.dart';
 import '../../data/location/database/location_database.dart';
+import '../../domain/alarm/permission/alarm_permissions.dart';
+import '../../domain/alarm/usecase/alarm_use_case.dart';
+import '../../domain/backup/backup_area_source.dart';
+import '../../domain/backup/backup_files.dart';
+import '../../domain/location/recorder/location_recorder.dart';
+import '../../domain/backup/backup_service.dart';
+import '../../domain/chat/chat_settings.dart';
 import '../../domain/chat/chat_trace.dart';
 import '../../domain/diary/location/place_source.dart';
 
@@ -73,6 +88,94 @@ abstract class RegisterModule {
     final docs = await getApplicationDocumentsDirectory();
     return Directory('${docs.path}/diary');
   }
+
+  /// 문서 폴더(`app_flutter`). 백업의 작업 · 되돌리기 폴더가 여기 산다.
+  @preResolve
+  @Named('appDocs')
+  Future<Directory> get appDocs => getApplicationDocumentsDirectory();
+
+  /// 앱 캐시 폴더. 만든 백업 파일을 사용자 위치로 저장하기 전에 둔다.
+  @preResolve
+  @Named('appCache')
+  Future<Directory> get appCache => getTemporaryDirectory();
+
+  /// 물어보기 작업 폴더(`FileWorkspace.standard` 와 같은 경로).
+  @lazySingleton
+  @Named('workspaceRoot')
+  Directory workspaceRoot(@Named('appDocs') Directory docs) =>
+      Directory('${docs.path}/workspace');
+
+  /// 알람음 사본 폴더. 네이티브 `getDir("flutter")/alarm_sounds` 와 같은 곳이다.
+  @lazySingleton
+  @Named('alarmSoundsRoot')
+  Directory alarmSoundsRoot(@Named('appDocs') Directory docs) =>
+      Directory('${docs.path}/alarm_sounds');
+
+  @lazySingleton
+  DiaryBackupArea diaryBackupArea(
+    DiaryDatabase db,
+    @Named('diaryRoot') Directory root,
+    SharedPreferences prefs,
+  ) => DiaryBackupArea(db, root, prefs);
+
+  @lazySingleton
+  ChatBackupArea chatBackupArea(
+    ChatDatabase db,
+    @Named('workspaceRoot') Directory root,
+    SharedPreferences prefs,
+    ChatSettings settings,
+  ) => ChatBackupArea(db, root, prefs, settings);
+
+  @lazySingleton
+  WikiBackupArea wikiBackupArea(ChatDatabase db, SharedPreferences prefs) =>
+      WikiBackupArea(db, prefs);
+
+  @lazySingleton
+  AlarmBackupArea alarmBackupArea(
+    SharedPreferences prefs,
+    RingArchiveDatabase archive,
+    @Named('alarmSoundsRoot') Directory sounds,
+    AlarmUseCase alarms,
+    AlarmPermissions permissions,
+  ) => AlarmBackupArea(prefs, archive, sounds, alarms, permissions);
+
+  @lazySingleton
+  SettingsBackupArea settingsBackupArea(SharedPreferences prefs) =>
+      SettingsBackupArea(prefs);
+
+  @lazySingleton
+  LocationBackupArea locationBackupArea(
+    LocationDatabase db,
+    LocationRecorder recorder,
+  ) => LocationBackupArea(db, recorder);
+
+  /// 백업 영역 전부, `BackupAreaId` 순서(대화가 위키보다 먼저).
+  @lazySingleton
+  List<BackupAreaSource> backupAreas(
+    DiaryBackupArea diary,
+    ChatBackupArea chat,
+    WikiBackupArea wiki,
+    AlarmBackupArea alarm,
+    SettingsBackupArea settings,
+    LocationBackupArea location,
+  ) => [diary, chat, wiki, alarm, settings, location];
+
+  /// 여유 공간은 백업 채널이 앱 캐시 저장소(문서 폴더와 같은 데이터 파티션)에서 읽는다.
+  @lazySingleton
+  BackupService backupService(
+    List<BackupAreaSource> areas,
+    @Named('appDocs') Directory docs,
+    @Named('appCache') Directory cache,
+    Clock clock,
+    BackupFiles files,
+  ) => DefaultBackupService(
+    areas: areas,
+    appDocs: docs,
+    cache: cache,
+    appVersion: appVersion,
+    clock: clock,
+    freeBytes: files.freeBytes,
+  );
 
   /// 이 앱은 `CorePackageModule` 을 쓰지 않아 `IdGenerator` 와 그 재료도 직접
   /// 등록한다.

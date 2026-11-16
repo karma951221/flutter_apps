@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../backup/page/backup_page.dart';
 import '../diary/page/diary_route.dart';
 import '../map/cubit/map_record_cubit.dart';
 import '../lock/cubit/diary_lock_cubit.dart';
@@ -17,7 +18,7 @@ import 'page/map_settings_page.dart';
 import 'page/walk_settings_page.dart';
 
 /// 열 설정 화면.
-enum SettingsTarget { app, diary, chat, alarm, walk, map }
+enum SettingsTarget { app, diary, chat, alarm, walk, map, backup }
 
 /// [openSettings] 를 부를 수 있는 자리(셸 cubit 다섯 아래)면 [target] 을 여는 콜백, 아니면 null.
 /// 셸 밖에서 연 화면(예: 작성 화면이 띄운 시트)에 "설정 열기"를 넘길 때 쓴다 — 콜백은 [context] 로 연다.
@@ -52,6 +53,7 @@ VoidCallback? settingsOpener(
 /// 다시 읽는다.
 ///
 /// 일기 · 물어보기 · 지도 설정은 잠금 아래([pushDiaryRoute]) — 잠겨 있으면 잠금 화면이 먼저 보인다.
+/// 백업은 잠금 밖에서 열고, 잠겨 있으면 화면이 행을 막는다.
 ///
 /// [highlight] 가 true 면 열린 화면이 봐야 할 행을 glow 한다 — chat: 연결 행, alarm: 조치가
 /// 필요한 첫 권한 행. 다른 target 에서는 무시한다.
@@ -97,5 +99,6 @@ Future<void> openSettings(
     SettingsTarget.chat => pushLocked(
       ChatSettingsPage(highlightConnection: highlight),
     ),
+    SettingsTarget.backup => push(const BackupPage()),
   };
 }

@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- API 30 이하 자동 백업. 두 가지를 뺀다.
+<!-- API 30 이하 자동 백업. 네 가지를 뺀다.
      1) 물어보기 API 키를 담는 보안 저장소(flutter_secure_storage)와 그 설정 파일 — 복원하면 키스토어 키가
         없어 읽을 수 없다.
      2) 위치 기록(drift DB · 네이티브 inbox · 네이티브 설정) — 위치 기록은 이 폰에만 남긴다(지도 설계).
         DB 는 -journal · -wal · -shm 짝 파일까지 뺀다.
-     다른 데이터의 백업은 그대로. data_extraction_rules.xml 과 목록을 같게 둔다. -->
+     3) 일기 미디어(diary/) · 작업 폴더(workspace/) — 클라우드 백업은 25MB 한도라 사진 · 동영상이 쌓여
+        넘으면 앱 전체 백업이 실패한다. DB · 설정만 남기고, 사진 없는 기록은 "사진 없음"으로 보인다.
+        미디어는 설정의 백업 파일로 옮긴다.
+     4) 복원 작업 폴더 · 되돌리기 지점(restore_staging/ · restore_undo/) — 그 기기에서만 뜻이 있다.
+     다른 데이터의 백업은 그대로. data_extraction_rules.xml 의 cloud-backup 과 목록을 같게 둔다. -->
 <full-backup-content>
     <exclude domain="sharedpref" path="FlutterSecureStorage.xml" />
     <exclude domain="sharedpref" path="FlutterSecureKeyStorage.xml" />
@@ -22,4 +26,10 @@
     <exclude domain="database" path="location_inbox.db-shm" />
     <!-- 위치 기록: 네이티브 설정 (켜짐 · 모드 · 정지 단계) -->
     <exclude domain="sharedpref" path="location_record.xml" />
+    <!-- 일기 미디어 · 작업 폴더: 25MB 를 넘으면 앱 전체 백업이 실패한다. 백업 파일로 옮긴다(앱 백업 설계 §7) -->
+    <exclude domain="root" path="app_flutter/diary/" />
+    <exclude domain="root" path="app_flutter/workspace/" />
+    <!-- 복원 작업 폴더 · 되돌리기 지점: 한 기기에서만 뜻이 있는 임시 데이터 -->
+    <exclude domain="root" path="app_flutter/restore_staging/" />
+    <exclude domain="root" path="app_flutter/restore_undo/" />
 </full-backup-content>

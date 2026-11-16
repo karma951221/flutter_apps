@@ -379,6 +379,32 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | `presentation/shell/page/tools_tab_test.dart` · `main_shell_page_test.dart` | 도구 탭 · 셸 | 상단 탭 [알람 · 걷기 · 날씨] — 지도는 기록 탭 · 날씨 ⋮ 는 앱 설정만 · 날씨를 보던 중 복귀하면 `resumed` · 다른 탭이면 부르지 않음 |
 | `presentation/shell/page/log_tab_test.dart` | 기록 탭 `LogTab` | 제목 기록 · 상단 탭 [일기 · 지도] · 일기면 🔍 · ⋮(모든 스토리 · 휴지통 · 일기 설정 · 앱 설정), 잠기면 🔍 없이 앱 설정만 · 지도면 ⋮ 지도 설정 · 앱 설정(잠기면 앱 설정만) · 보이는 상단 탭만 `active` · 하단 탭이 기록이 아니면 둘 다 아님 · 셸이 지도로 바꾸면 넘어감 · 밀어도 넘어가지 않음 |
 
+### 백업 · 복원
+
+| 파일 | 대상 | 확인 |
+|---|---|---|
+| `domain/backup/backup_manifest_test.dart` | manifest | 버전 · 영역 목록 · 만든 시각 UTC · 깨진 값 |
+| `data/backup/crypto/backup_cipher_test.dart` | `BackupCipher` | `LLBK` 헤더 · 틀린 비밀번호 · 덩어리 순서 바꾸기 · 잘라내기 · 반복 횟수 제한 · 덩어리마다 진행 비율 · 빈 파일 |
+| `data/backup/archive/backup_archive_test.dart` | `BackupArchive` | zip 묶기 · 풀기 · 해시 · 파일별 진행 비율 |
+| `data/backup/area/diary_backup_area_test.dart` | 일기 영역 | DB · 미디어 내보내기 · 바꿔 넣기 · 기본 스토리(DB 시계) · 영역 밖 경로 차단 |
+| `data/backup/area/chat_backup_area_test.dart` | 대화 영역 | 대화 · 턴 · 사용량 · 작업 폴더 · 위키 출처 연결 · 동의 제외 |
+| `data/backup/area/wiki_backup_area_test.dart` | 위키 영역 | 노트 · 색인 크기 |
+| `data/backup/area/alarm_backup_area_test.dart` | 알람 영역 | 목록 · 내 파일 알람음 경로 다시 맞추기 · 파일 없으면 기본음 · 울림 보관 |
+| `data/backup/area/settings_backup_area_test.dart` | 앱 설정 영역 | 허용 목록만(키 · 잠금 · 동의 · 캐시 · 벤더 · 모델 · 빠른 모드 제외) |
+| `data/backup/area/location_backup_area_test.dart` | 위치 영역 | 점 · 머문 곳 · 서비스는 켜지 않음 · 실제로 꺼져 있을 때만 안내 |
+| `data/backup/area/prefs_snapshot_test.dart` | prefs 스냅샷 | `{type,value}` 모양 · 읽기 · 바꿔 넣기 |
+| `data/backup/area/dir_swap_test.dart` | 폴더 바꿔 넣기 | `.lifelog-folder` 표식 · 빈 폴더 · 이미 쓰인 폴더는 건너뜀 |
+| `data/backup/default_backup_service_test.dart` | `DefaultBackupService` | 내보내기 · 검사 · 영역별 복원 · 되돌리기 한 번 · 실패 영역 되돌림 · 되돌리기 멱등 · 삭제 도중 종료(`.trash-*`) · 시작 복구 · 복원 후 처리 · 여유 공간 · 암호는 호출 isolate · 진행 비율 |
+| `data/backup/channel_backup_files_test.dart` | `ChannelBackupFiles` | 저장 · 열기 · 재시작 · 여유 공간 채널 호출 모양 · 오류 매핑 |
+| `data/backup/prefs_backup_preferences_test.dart` | 마지막 백업 시각 | 기본 없음 · 저장 · 깨진 값 |
+| `presentation/backup/cubit/backup_cubit_test.dart` | `BackupCubit` | 내보내기 · 열기 · 복원 · 되돌리기 · 진행 퍼센트(바뀔 때만) · 마지막 백업은 성공 때만 · 오류 상태 |
+| `presentation/backup/page/backup_page_test.dart` | `BackupPage` | 행 · 진행 오버레이 · 안내 · 되돌리기 행 · 잠금 · 고르는 동안 다시 잠기지 않음 |
+| `presentation/backup/widget/export_sheet_test.dart` | 내보내기 시트 | 영역 선택 · 위치 기본 끔 · 잠그기 기본 켬 · 비밀번호 8자 · 확인란 · 선택 없으면 저장 꺼짐 |
+| `presentation/backup/widget/restore_areas_sheet_test.dart` | 복원 영역 시트 | 영역 개수 단위 · 선택 · 비밀번호 재시도 |
+| `presentation/backup/widget/backup_area_labels_test.dart` | 영역 라벨 | 이름 · 설명 문구 |
+| `presentation/backup/backup_fakes.dart` · `backup_test_app.dart` | 지원 파일 | 가짜 서비스 · 파일 채널 · 테스트 앱 |
+| `android/app/.../BackupFileRulesTest.kt` | `BackupFileRules`(JUnit) | 영역 밖 · 경로 규칙 · 파일 채널 규칙 |
+
 ## 테스트가 없는 것
 
 물어보기: 실제 Messages API 호출(네트워크 · 키 · 서버 fallback) · 실제 사진을 모델에 보내기 · `RingLog` 네이티브가 채우는 실제 기록은
@@ -710,3 +736,16 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | R-QA4 | "내 기록 참고"를 끄고 같은 질문 | 도구를 부르지 않고 파일을 못 본다고 답한다 | 대기 |
 | R-QA5 | 파일을 첨부하면서 "이 파일이랑 저번 요약 비교해 줘" | 첨부 파일은 다시 읽지 않고(진행 줄에 그 이름 없음) out 의 요약만 읽는다 | 대기 |
 | R-QA6 | 작업 폴더가 빈 새 설치에서 "내 파일 뭐 있어?" | 진행 줄 "작업 폴더에 파일 없음", 없다고 답한다 | 대기 |
+
+
+## 백업 기기 시나리오
+
+스펙: [앱 백업 · 복원](../../../docs/superpowers/specs/2026-11-16-walk-diary-backup-design.md). 파일 고르기(SAF) · 앱 재시작 · 자동 백업 규칙은 에뮬레이터 · 실제 폰에서만 본다.
+
+| # | 시나리오 | 기대 | 결과 |
+|---|---|---|---|
+| BK-1 | 설정 › 백업 › 내보내기(암호화) → 앱 데이터 지우기 → 복원 → 재시작 → 사진 · 알람 확인 | 저장한 파일이 열리고 영역 시트가 보인다. 복원 뒤 재시작하면 일기 · 사진 · 알람이 돌아오고 되돌리기 행이 보인다 | **통과**(에뮬레이터, 2026-11-17): 사진 md5 일치 · 알람 3개 · 되돌리기 행. 알림 3종(알람음 대체 · 알람 권한 · API 키) 표시 |
+| BK-2 | 복원에서 틀린 비밀번호 → 다시 입력 | "비밀번호가 틀렸거나 파일이 손상됐어요"를 보이고 다시 입력할 수 있다 | **통과**(에뮬레이터, 2026-11-17) |
+| BK-3 | 복원한 뒤 되돌리기 | 복원 전 상태로 돌아가고 되돌리기 행이 사라진다 | **통과**(에뮬레이터, 2026-11-17): 빈 앱으로 돌아가고 `restore_undo/` 가 지워짐. 최종 빌드(`ba7e30f2`)에서 BK-1 · 암호화 내보내기를 다시 통과 |
+| BK-4 | 큰 백업(동영상 여러 개) 내보내기 · 복원 | 진행 퍼센트가 움직이고 화면이 멈추지 않는다. 암호화 속도가 쓸 만하다 | 대기(실제 폰) |
+| BK-5 | 구글 자동 백업 규칙이 미디어를 빼는지 — `adb shell bmgr backupnow com.karma.walk` 후 올라간 항목 확인 | 일기 미디어 · 작업 폴더가 빠진다 | 대기 |

@@ -35,6 +35,15 @@ import '../../data/alarm/channel_ring_log_source.dart' as _i879;
 import '../../data/alarm/holiday_module.dart' as _i183;
 import '../../data/alarm/package_alarm_scheduler.dart' as _i238;
 import '../../data/alarm/prefs_alarm_repository.dart' as _i1;
+import '../../data/backup/area/alarm_backup_area.dart' as _i713;
+import '../../data/backup/area/chat_backup_area.dart' as _i809;
+import '../../data/backup/area/diary_backup_area.dart' as _i16;
+import '../../data/backup/area/location_backup_area.dart' as _i764;
+import '../../data/backup/area/settings_backup_area.dart' as _i830;
+import '../../data/backup/area/wiki_backup_area.dart' as _i905;
+import '../../data/backup/channel_backup_files.dart' as _i515;
+import '../../data/backup/crypto/sniff_backup_file_probe.dart' as _i784;
+import '../../data/backup/prefs_backup_preferences.dart' as _i134;
 import '../../data/chat/anthropic_chat_model.dart' as _i645;
 import '../../data/chat/attachment/file_attachment_loader.dart' as _i255;
 import '../../data/chat/channel_secure_window.dart' as _i241;
@@ -89,6 +98,11 @@ import '../../domain/alarm/sound/alarm_sound_source.dart' as _i344;
 import '../../domain/alarm/usecase/alarm_use_case.dart' as _i873;
 import '../../domain/alarm/usecase/ring_archiver.dart' as _i626;
 import '../../domain/alarm/widget/next_alarm_widget.dart' as _i920;
+import '../../domain/backup/backup_area_source.dart' as _i355;
+import '../../domain/backup/backup_file_probe.dart' as _i925;
+import '../../domain/backup/backup_files.dart' as _i1041;
+import '../../domain/backup/backup_preferences.dart' as _i625;
+import '../../domain/backup/backup_service.dart' as _i1000;
 import '../../domain/chat/attachment/attachment_loader.dart' as _i695;
 import '../../domain/chat/chat_history_settings.dart' as _i31;
 import '../../domain/chat/chat_model.dart' as _i1004;
@@ -146,6 +160,7 @@ import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
 import '../../domain/weather/repository/weather_repository.dart' as _i903;
 import '../../domain/weather/weather_cache.dart' as _i858;
 import '../../domain/weather/weather_locator.dart' as _i283;
+import '../../presentation/backup/cubit/backup_cubit.dart' as _i221;
 import '../../presentation/chat/attachment/chat_file_picker.dart' as _i211;
 import '../../presentation/chat/workspace/workspace_share.dart' as _i835;
 import '../../presentation/diary/media_picker.dart' as _i287;
@@ -209,6 +224,7 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i98.MapOpenRequests(),
       dispose: (i) => i.dispose(),
     );
+    gh.lazySingleton<_i925.BackupFileProbe>(() => _i784.SniffBackupFileProbe());
     gh.lazySingleton<_i494.IdGenerator>(
       () => registerModule.idGenerator(gh<_i706.Uuid>()),
     );
@@ -252,6 +268,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i695.AttachmentLoader>(
       () => _i255.FileAttachmentLoader(),
     );
+    await gh.factoryAsync<_i497.Directory>(
+      () => registerModule.appDocs,
+      instanceName: 'appDocs',
+      preResolve: true,
+    );
     gh.lazySingleton<_i702.AlarmScheduler>(() => _i238.PackageAlarmScheduler());
     gh.lazySingleton<_i111.ChatSettings>(
       () => _i1030.SecureChatSettings(
@@ -270,6 +291,7 @@ extension GetItInjectableX on _i174.GetIt {
       ),
     );
     gh.lazySingleton<_i332.HealthGateway>(() => _i332.HealthPluginGateway());
+    gh.lazySingleton<_i1041.BackupFiles>(() => _i515.ChannelBackupFiles());
     gh.lazySingleton<_i159.BackgroundLocationAccess>(
       () => const _i159.PermissionHandlerBackgroundLocationAccess(),
     );
@@ -295,6 +317,11 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i353.RingLogSource>(
       () => const _i879.ChannelRingLogSource(),
     );
+    await gh.factoryAsync<_i497.Directory>(
+      () => registerModule.appCache,
+      instanceName: 'appCache',
+      preResolve: true,
+    );
     gh.lazySingleton<_i91.SettingsRepository>(
       () => _i724.PrefsSettingsRepository(gh<_i460.SharedPreferences>()),
     );
@@ -315,6 +342,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i43.LockRepository>(
       () => _i691.PrefsLockRepository(gh<_i460.SharedPreferences>()),
+    );
+    gh.lazySingleton<_i497.Directory>(
+      () => registerModule.alarmSoundsRoot(
+        gh<_i497.Directory>(instanceName: 'appDocs'),
+      ),
+      instanceName: 'alarmSoundsRoot',
     );
     gh.lazySingleton<_i300.DiaryPreferences>(
       () => _i383.PrefsDiaryPreferences(gh<_i460.SharedPreferences>()),
@@ -338,6 +371,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i483.MapStylePreferences>(
       () => _i478.PrefsMapStylePreferences(gh<_i460.SharedPreferences>()),
     );
+    gh.lazySingleton<_i625.BackupPreferences>(
+      () => _i134.PrefsBackupPreferences(gh<_i460.SharedPreferences>()),
+    );
     gh.lazySingleton<_i379.LocationRepository>(
       () => _i192.DriftLocationRepository(
         gh<_i121.LocationDatabase>(),
@@ -359,6 +395,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i903.WeatherRepository>(
       () => _i850.OpenMeteoWeatherRepository(gh<_i519.Client>()),
+    );
+    gh.lazySingleton<_i497.Directory>(
+      () => registerModule.workspaceRoot(
+        gh<_i497.Directory>(instanceName: 'appDocs'),
+      ),
+      instanceName: 'workspaceRoot',
     );
     gh.factory<_i673.StayNamer>(
       () => _i673.StayNamer(
@@ -382,11 +424,27 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i31.ChatHistorySettings>(
       () => _i433.PrefsChatHistorySettings(gh<_i460.SharedPreferences>()),
     );
+    gh.lazySingleton<_i16.DiaryBackupArea>(
+      () => registerModule.diaryBackupArea(
+        gh<_i611.DiaryDatabase>(),
+        gh<_i497.Directory>(instanceName: 'diaryRoot'),
+        gh<_i460.SharedPreferences>(),
+      ),
+    );
     gh.lazySingleton<_i130.RoutePreferenceRepository>(
       () => _i644.PrefsRoutePreferenceRepository(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i279.LocationPreferences>(
       () => _i630.PrefsLocationPreferences(gh<_i460.SharedPreferences>()),
+    );
+    gh.lazySingleton<_i905.WikiBackupArea>(
+      () => registerModule.wikiBackupArea(
+        gh<_i933.ChatDatabase>(),
+        gh<_i460.SharedPreferences>(),
+      ),
+    );
+    gh.lazySingleton<_i830.SettingsBackupArea>(
+      () => registerModule.settingsBackupArea(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i669.ChatUsageRepository>(
       () => _i1028.DriftChatUsageRepository(gh<_i933.ChatDatabase>()),
@@ -417,6 +475,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.Clock>(),
       ),
     );
+    gh.lazySingleton<_i764.LocationBackupArea>(
+      () => registerModule.locationBackupArea(
+        gh<_i121.LocationDatabase>(),
+        gh<_i993.LocationRecorder>(),
+      ),
+    );
     gh.lazySingleton<_i453.CommuteUseCase>(
       () => _i453.CommuteUseCase(
         gh<_i142.PlaceRepository>(),
@@ -441,6 +505,14 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i858.ChatImageSource>(
       () => _i957.CompressedChatImageSource(gh<_i870.MediaStore>()),
+    );
+    gh.lazySingleton<_i809.ChatBackupArea>(
+      () => registerModule.chatBackupArea(
+        gh<_i933.ChatDatabase>(),
+        gh<_i497.Directory>(instanceName: 'workspaceRoot'),
+        gh<_i460.SharedPreferences>(),
+        gh<_i111.ChatSettings>(),
+      ),
     );
     gh.factory<_i638.LocationSync>(
       () => _i638.LocationSync(
@@ -568,6 +640,15 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i122.DiaryRepository>(),
       ),
     );
+    gh.lazySingleton<_i713.AlarmBackupArea>(
+      () => registerModule.alarmBackupArea(
+        gh<_i460.SharedPreferences>(),
+        gh<_i869.RingArchiveDatabase>(),
+        gh<_i497.Directory>(instanceName: 'alarmSoundsRoot'),
+        gh<_i873.AlarmUseCase>(),
+        gh<_i933.AlarmPermissions>(),
+      ),
+    );
     gh.lazySingleton<_i626.RingArchiver>(
       () => _i626.RingArchiver(
         gh<_i353.RingLogSource>(),
@@ -602,6 +683,25 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i313.WeatherTools>(),
       ),
     );
+    gh.lazySingleton<List<_i355.BackupAreaSource>>(
+      () => registerModule.backupAreas(
+        gh<_i16.DiaryBackupArea>(),
+        gh<_i809.ChatBackupArea>(),
+        gh<_i905.WikiBackupArea>(),
+        gh<_i713.AlarmBackupArea>(),
+        gh<_i830.SettingsBackupArea>(),
+        gh<_i764.LocationBackupArea>(),
+      ),
+    );
+    gh.lazySingleton<_i1000.BackupService>(
+      () => registerModule.backupService(
+        gh<List<_i355.BackupAreaSource>>(),
+        gh<_i497.Directory>(instanceName: 'appDocs'),
+        gh<_i497.Directory>(instanceName: 'appCache'),
+        gh<_i494.Clock>(),
+        gh<_i1041.BackupFiles>(),
+      ),
+    );
     gh.lazySingleton<_i502.ChatSession>(
       () => _i502.ChatSession(
         gh<_i1004.ChatModelRegistry>(),
@@ -615,6 +715,16 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i795.WikiContextPolicy>(),
         gh<_i268.WikiTools>(),
         gh<_i215.WorkspaceTools>(),
+      ),
+    );
+    gh.factory<_i221.BackupCubit>(
+      () => _i221.BackupCubit(
+        gh<_i1000.BackupService>(),
+        gh<_i1041.BackupFiles>(),
+        gh<_i925.BackupFileProbe>(),
+        gh<_i625.BackupPreferences>(),
+        gh<_i494.Clock>(),
+        gh<_i488.MediaPickGuard>(),
       ),
     );
     return this;

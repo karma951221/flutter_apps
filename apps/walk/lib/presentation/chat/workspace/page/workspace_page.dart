@@ -10,7 +10,7 @@ import 'package:l10n/l10n.dart';
 import '../../../../domain/chat/attachment/attachment_rules.dart';
 import '../../../../domain/chat/workspace/workspace.dart';
 import '../../../../domain/chat/workspace/workspace_changes.dart';
-import '../../../settings/widget/diary_storage_section.dart';
+import '../../../common/format_bytes.dart';
 import '../../../settings/widget/settings_widgets.dart';
 import '../../widget/attachment_chip.dart';
 import '../cubit/workspace_cubit.dart';
@@ -70,10 +70,7 @@ class WorkspacePage extends StatelessWidget {
                 0,
               ),
               child: Text(
-                l10n.walkWorkspaceUsage(
-                  totalCount,
-                  DiaryStorageSection.formatBytes(totalBytes),
-                ),
+                l10n.walkWorkspaceUsage(totalCount, formatBytes(totalBytes)),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -166,5 +163,5 @@ class _FileRow extends StatelessWidget {
 
 /// 행 부제 — `1.2MB · 11월 13일 14:05`.
 String _detail(WorkspaceFile file, String locale) =>
-    '${DiaryStorageSection.formatBytes(file.sizeBytes)} · '
+    '${formatBytes(file.sizeBytes)} · '
     '${DateFormat.MMMd(locale).add_Hm().format(file.modifiedAt)}';

@@ -32,6 +32,11 @@ class MainActivity : FlutterFragmentActivity() {
      */
     private var pickAlarmFile: ActivityResultLauncher<Intent>? = null
 
+    private var backupFiles: BackupFileChannel? = null
+
+    /** 백업 파일 저장 위치 · 열 파일 고르기. [pickAlarmFile] 과 같은 이유로 엔진 준비 때 등록한다. */
+    private var pickBackupDocument: ActivityResultLauncher<Intent>? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // 위젯을 눌러 열었다(다시 만들어진 액티비티 · 최근 앱에서 연 옛 인텐트는 빼고).
         if (savedInstanceState == null) noteWidgetLaunch(intent)
@@ -125,6 +130,13 @@ class MainActivity : FlutterFragmentActivity() {
                         .setType("audio/*"),
                 )
             }
+        val backupLauncher =
+            pickBackupDocument
+                ?: registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { picked ->
+                    val uri = if (picked.resultCode == RESULT_OK) picked.data?.data else null
+                    backupFiles?.onDocument(uri)
+                }.also { pickBackupDocument = it }
+        backupFiles = BackupFileChannel(applicationContext, messenger) { backupLauncher.launch(it) }
         HolidayCalendarChannel.attach(applicationContext, flutterEngine)
         ReminderChannel.attach(applicationContext, messenger)
         RingLogChannel.attach(applicationContext, messenger)
@@ -154,6 +166,8 @@ class MainActivity : FlutterFragmentActivity() {
         // 알람음 선택 화면의 미리 듣기가 액티비티보다 오래 울리지 않게 한다.
         alarmSounds?.dispose()
         alarmSounds = null
+        backupFiles?.dispose()
+        backupFiles = null
         super.cleanUpFlutterEngine(flutterEngine)
     }
 

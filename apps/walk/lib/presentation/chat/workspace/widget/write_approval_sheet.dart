@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../../domain/chat/tool/write_plan.dart';
-import '../../../settings/widget/diary_storage_section.dart';
+import '../../../common/format_bytes.dart';
 import '../format/reveal_invisible.dart';
 
 /// 쓰기 승인 시트를 띄운다(스펙 §3). [저장] · [고치기] · [지우기] → [onApprove],
@@ -169,7 +169,7 @@ class _WriteApprovalSheetState extends State<WriteApprovalSheet> {
             const SizedBox(height: AppSpacing.xs),
             // 실제 상대 경로 그대로 — 줄이지 않고, 보이지 않는 글자는 드러낸다.
             Text(
-              '${revealInvisible(plan.path)} · ${DiaryStorageSection.formatBytes(sizeBytes)}',
+              '${revealInvisible(plan.path)} · ${formatBytes(sizeBytes)}',
               style: muted,
             ),
             const SizedBox(height: AppSpacing.xs),
