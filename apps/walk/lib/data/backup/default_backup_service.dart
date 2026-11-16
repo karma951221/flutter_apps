@@ -287,11 +287,16 @@ class DefaultBackupService implements BackupService {
   Future<void> discard(InspectedBackup b) => _deleteDirQuietly(_staging);
 
   /// `in_progress.json` 이 있으면 그 영역들을 되돌리기 지점으로 되돌리고 지점을 지운다.
+  /// 되돌린 영역의 복원 후 처리(알람 다시 예약 등)도 한다 — 안내를 띄울 화면이 없으니 남기기만 한다.
   Future<void> _finishInterrupted() async {
     if (!await _inProgress.exists()) return;
     final ids = await _readIdsOrAll(_inProgress);
-    await _replayUndo(_ordered(ids), skipUnreadable: true);
+    final replayed = await _replayUndo(_ordered(ids), skipUnreadable: true);
     await _discardUndo();
+    final notices = await _afterRestore(replayed);
+    if (notices.isNotEmpty) {
+      debugPrint('backup recovery notices: ${notices.map((n) => n.name)}');
+    }
   }
 
   /// 되돌리기 지점을 통째로 버린다. `restore_undo` → `restore_undo.trash` 이름 바꾸기가 커밋
@@ -339,10 +344,13 @@ class DefaultBackupService implements BackupService {
   ///
   /// [skipUnreadable] 이면(시작 복구) 읽을 수 없는 영역 폴더를 남기고 버린 뒤 나머지를 계속한다 —
   /// 그러지 않으면 시작할 때마다 실패해 다음 복원도 막힌다.
-  Future<void> _replayUndo(
+  ///
+  /// 바꾼 영역을 돌려준다.
+  Future<List<BackupAreaSource>> _replayUndo(
     List<BackupAreaSource> ordered, {
     bool skipUnreadable = false,
   }) async {
+    final replayed = <BackupAreaSource>[];
     for (final area in ordered) {
       final dir = Directory('${_undo.path}/${area.id.name}');
       if (!await dir.exists()) continue;
@@ -355,8 +363,10 @@ class DefaultBackupService implements BackupService {
         continue;
       }
       await area.replace(_undo);
+      replayed.add(area);
       await _trashArea(dir, area.id);
     }
+    return replayed;
   }
 
   Future<void> _trashArea(Directory dir, BackupAreaId id) async {

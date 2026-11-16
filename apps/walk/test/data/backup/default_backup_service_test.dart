@@ -849,6 +849,38 @@ void main() {
     );
   });
 
+  test('startup recovery runs afterRestore for the replayed areas', () async {
+    final d = await device();
+    final log = <String>[];
+    final diary = _FakeArea(BackupAreaId.diary, log);
+    final hanging = _FakeArea(BackupAreaId.alarm, log)
+      ..entered = Completer<void>();
+    final service = d.service(areas: [diary, hanging]);
+    final file = _ok(
+      await service.export({BackupAreaId.diary, BackupAreaId.alarm}),
+    );
+    unawaited(
+      service.restore(_ok(await service.inspect(file)), {
+        BackupAreaId.diary,
+        BackupAreaId.alarm,
+      }),
+    );
+    await hanging.entered!.future;
+    log.clear();
+
+    final restarted = d.service(
+      areas: [diary, _FakeArea(BackupAreaId.alarm, log)],
+    );
+    await restarted.recoverIfInterrupted();
+
+    expect(log, [
+      'replace:diary',
+      'replace:alarm',
+      'after:diary',
+      'after:alarm',
+    ]);
+  });
+
   test('recoverIfInterrupted without a marker only clears staging', () async {
     final d = await device();
     await d.seed();
