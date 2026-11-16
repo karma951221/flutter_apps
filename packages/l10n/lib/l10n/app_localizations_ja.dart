@@ -3122,7 +3122,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String walkChatSettingsNotice(String vendor) {
-    return '質問と、回答に必要な日記・写真・歩数・起床記録が接続した AI（$vendor）に送信されます。キーはこの端末の安全な保管領域にだけ保存されます。';
+    return '質問と、回答に必要な日記・写真・位置記録（滞在した場所の名前・時間）・歩数・アラーム・起床記録が接続した AI（$vendor）に送信されます。キーはこの端末の安全な保管領域にだけ保存されます。';
   }
 
   @override
@@ -3136,7 +3136,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String walkChatConsentNotice(String vendor) {
-    return '質問と、回答に必要な日記・写真・歩数・起床記録が接続した AI（$vendor）に送信されます。キーはこの端末の安全な保管領域にだけ保存されます。整理したWikiのタイトル・要約も質問ごとに送信されます。';
+    return '質問と、回答に必要な日記・写真・位置記録（滞在した場所の名前・時間）・歩数・アラーム・起床記録が接続した AI（$vendor）に送信されます。キーはこの端末の安全な保管領域にだけ保存されます。整理したWikiのタイトル・要約も質問ごとに送信されます。';
   }
 
   @override

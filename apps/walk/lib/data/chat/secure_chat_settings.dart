@@ -30,8 +30,14 @@ class SecureChatSettings implements ChatSettings {
   static const keyStatusKey = 'chat.keyStatus';
   static const consentedVendorKey = 'chat.consentedVendor';
 
-  /// 벤더별 동의 이전의 저장 키(bool). 첫 접근 때 [consentedVendorKey] 로 옮기고 지운다.
+  /// 벤더별 동의 이전의 저장 키(bool). 위치 이전 범위라 첫 접근 때 지운다(다시 동의).
   static const legacyConsentedKey = 'chat.consented';
+
+  /// 동의한 전송 범위의 버전(int). 없으면 1(위치 이전).
+  static const consentScopeKey = 'chat.consentScope';
+
+  /// 지금 전송 범위 — 2 = 위치 기록(머문 곳 이름 · 시간) 포함.
+  static const consentScope = 2;
   static const modelKey = 'chat.model';
   static const fastModeKey = 'chat.fastMode';
   static const fastModeAckKey = 'chat.fastMode.ack';
@@ -215,35 +221,26 @@ class SecureChatSettings implements ChatSettings {
   @override
   Future<void> acknowledgeFastMode() => _prefs.setBool(fastModeAckKey, true);
 
-  /// 옛 `chat.consented` 는 Claude 하나뿐이던 때의 동의 — true 면 anthropic 으로 옮긴다.
-  /// prefs 는 메모리 캐시를 곧바로 바꾸므로 쓰기를 기다리지 않아도 다음 읽기는 새 값을 본다.
+  /// 저장된 범위 버전이 [consentScope] 보다 낮으면(옛 `chat.consented` 포함) 동의가 없는 것으로 본다 —
+  /// 보내는 기록에 위치가 더해져 한 번 다시 받는다(2026-11-16). 옛 키는 지운다.
   @override
   ChatVendor? get consentedVendor {
     if (_prefs.containsKey(legacyConsentedKey)) {
-      final legacy = _prefs.get(legacyConsentedKey) == true;
-      if (legacy && !_prefs.containsKey(consentedVendorKey)) {
-        unawaited(
-          _prefs
-              .setString(consentedVendorKey, ChatVendor.anthropic.name)
-              .then<void>(
-                (_) => _prefs.remove(legacyConsentedKey),
-                onError: (Object _) {},
-              ),
-        );
-        return ChatVendor.anthropic;
-      }
       unawaited(
         _prefs
             .remove(legacyConsentedKey)
             .then<void>((_) {}, onError: (Object _) {}),
       );
     }
+    final scope = _prefs.get(consentScopeKey);
+    if (scope is! int || scope < consentScope) return null;
     return ChatVendor.values.asNameMap()[_prefs.get(consentedVendorKey)];
   }
 
   @override
   Future<void> setConsented(ChatVendor vendor) async {
     await _prefs.setString(consentedVendorKey, vendor.name);
+    await _prefs.setInt(consentScopeKey, consentScope);
     await _prefs.remove(legacyConsentedKey);
   }
 }

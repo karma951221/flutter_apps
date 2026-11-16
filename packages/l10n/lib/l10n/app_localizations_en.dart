@@ -3374,7 +3374,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkChatSettingsNotice(String vendor) {
-    return 'Your questions and the diary entries, photos, steps and wake-up records needed to answer are sent to the AI you connected ($vendor). Your key stays only in this phone\'s secure storage.';
+    return 'Your questions and the diary entries, photos, location history (names and times of places you stayed), steps, alarms and wake-up records needed to answer are sent to the AI you connected ($vendor). Your key stays only in this phone\'s secure storage.';
   }
 
   @override
@@ -3388,7 +3388,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkChatConsentNotice(String vendor) {
-    return 'Your questions and the diary entries, photos, steps and wake-up records needed to answer are sent to the AI you connected ($vendor). Your key stays only in this phone\'s secure storage. Titles and summaries from your wiki are also sent with each question.';
+    return 'Your questions and the diary entries, photos, location history (names and times of places you stayed), steps, alarms and wake-up records needed to answer are sent to the AI you connected ($vendor). Your key stays only in this phone\'s secure storage. Titles and summaries from your wiki are also sent with each question.';
   }
 
   @override

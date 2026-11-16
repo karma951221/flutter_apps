@@ -396,15 +396,37 @@ void main() {
       );
     });
 
-    test('옛 chat.consented true 는 consentedVendor anthropic 으로 옮긴다', () async {
+    test('옛 chat.consented true 는 위치가 없던 범위라 다시 동의를 받는다(지운다)', () async {
       SharedPreferences.setMockInitialValues({'chat.consented': true});
       final legacyPrefs = await SharedPreferences.getInstance();
       final legacy = SecureChatSettings(secure, legacyPrefs);
 
-      expect(legacy.consentedVendor, ChatVendor.anthropic);
+      expect(legacy.consentedVendor, isNull);
       await pumpEventQueue();
-      expect(legacyPrefs.getString('chat.consentedVendor'), 'anthropic');
       expect(legacyPrefs.containsKey('chat.consented'), isFalse);
+    });
+
+    test('범위 버전 없이 벤더만 저장된 옛 동의는 다시 받는다', () async {
+      SharedPreferences.setMockInitialValues({
+        'chat.consentedVendor': 'anthropic',
+      });
+      final oldPrefs = await SharedPreferences.getInstance();
+      expect(SecureChatSettings(secure, oldPrefs).consentedVendor, isNull);
+    });
+
+    test('범위 버전 1(위치 이전)도 다시 받는다', () async {
+      SharedPreferences.setMockInitialValues({
+        'chat.consentedVendor': 'openai',
+        'chat.consentScope': 1,
+      });
+      final oldPrefs = await SharedPreferences.getInstance();
+      expect(SecureChatSettings(secure, oldPrefs).consentedVendor, isNull);
+    });
+
+    test('setConsented 는 지금 범위 버전(2)을 함께 쓴다', () async {
+      await settings.setConsented(ChatVendor.anthropic);
+      expect(prefs.getInt('chat.consentScope'), 2);
+      expect(SecureChatSettings.consentScope, 2);
     });
 
     test('옛 chat.consented 가 false 면 동의 없음으로 보고 지운다', () async {
