@@ -3786,7 +3786,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatUseRecordsOff => '自分の記録を参照: オフ';
 
   @override
-  String get walkChatUseRecordsTurnedOn => 'これから日記・歩数・起床・ウィキを調べて答えます';
+  String get walkChatUseRecordsTurnedOn => 'これから日記・歩数・場所・アラーム・天気・ウィキを調べて答えます';
 
   @override
   String get walkChatUseRecordsTurnedOff => 'これから記録を使わずに答えます';

@@ -271,7 +271,7 @@ void main() {
       await tester.tap(find.byKey(key));
       await tester.pumpAndSettle();
       expect(toggle(tester).isSelected, isTrue);
-      expect(find.text('이제 일기 · 걸음 · 알람 기상 · 위키를 찾아보고 답해요'), findsOneWidget);
+      expect(find.text('이제 일기 · 걸음 · 위치 · 알람 · 날씨 · 위키를 찾아보고 답해요'), findsOneWidget);
     });
 
     testWidgets('켜짐은 강조 배경 · 색, 꺼짐은 배경 없이 기본색 — 앱바 테마가 덮지 않는다', (tester) async {

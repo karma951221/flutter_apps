@@ -1162,7 +1162,7 @@
   "walkChatModelActionTooltip": "モデルを変更 · 現在 {model}",
   "walkChatUseRecordsOn": "自分の記録を参照: オン",
   "walkChatUseRecordsOff": "自分の記録を参照: オフ",
-  "walkChatUseRecordsTurnedOn": "これから日記・歩数・起床・ウィキを調べて答えます",
+  "walkChatUseRecordsTurnedOn": "これから日記・歩数・場所・アラーム・天気・ウィキを調べて答えます",
   "walkChatUseRecordsTurnedOff": "これから記録を使わずに答えます",
   "walkChatModelRecommended": "おすすめ",
   "walkChatModelNew": "NEW",
