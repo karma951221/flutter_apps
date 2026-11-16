@@ -1089,3 +1089,28 @@ OpenAI: gpt-5 `minimal`, 5.1 이후 `none`, o 계열 `low`). 초안의 `modelUna
 
 `flutter analyze` 0 · `flutter test` 3901건 통과(1 skip) · 앱 Kotlin 단위 110건 · 디버그 APK.
 에뮬레이터(sdk_gphone16k_arm64, 2026-11-16) A20~A23 — [테스트](testing.md#알람-기기-시나리오). 소리 크기 · 듣기 좋은지는 사람이 들어 보지 않았다.
+
+## 2026-11-16 — 물어보기 앱바 정리
+
+사용자 피드백: 모델(Sonnet) 칩과 "내 기록 참고" 칩이 본문 위에 계속 떠 있어 불편하다 — actions 로 옮기고, 내 기록 참고는
+토글 버튼으로. 세부는 기본안으로 정했다.
+
+### 판단
+
+- **칩 줄을 없애고 모두 앱바로** — 본문은 대화 · 임시 대화 띠 · 입력칸만 남는다.
+- **[내 기록 참고]는 `IconButton(isSelected:)`** — 켜짐은 채운 `auto_stories` + M3 선택 색(primary), 꺼짐은 테두리 아이콘 + 기본색이라
+  모양과 색이 둘 다 달라진다. 아이콘만으로는 뜻이 약해 툴팁이 상태를 말하고("내 기록 참고 켜짐/꺼짐"), 누르면 스낵바로
+  무엇이 바뀌었는지 알린다(켤 때는 찾아보는 기록 종류까지). 접근성은 IconButton 이 싣는 선택 상태 + 툴팁 라벨로 충분해
+  따로 `Semantics` 를 감싸지 않았다. 저장은 `ChatCubit.setUseRecords` 그대로.
+- **모델은 벤더 아이콘 버튼 + 제목 아래 작은 이름** — 버튼에 이름을 넣으면 actions 가 길어지고, 툴팁만으로는 지금 모델이
+  안 보인다. 제목 아래 `labelSmall` 한 줄이면 앱바 높이를 바꾸지 않고 늘 보인다. 고르기는 기존 `ModelPickerSheet`(지금 모델 체크).
+- **⋮ 메뉴와 합치지 않고 나란히** — 둘 다 자주 쓰고 상태를 보여 줘야 해서 메뉴 안에 숨기지 않았다. actions 는 최대 넷
+  ([새 대화]는 대화가 있을 때만)이라 `AppOverflowMenu`(⋮) 하나로 나머지를 그대로 묶는다.
+- `ModelChip` 위젯은 지우고 `ModelAction`(`widget/model_action.dart`)으로 바꿨다. 값 `ModelChipData` 는 설정 연결 행도 써서 이름 · 파일을 그대로 뒀다.
+- 쓰지 않게 된 문구 `walkChatModelChipTooltip` · `walkChatUseRecords` · `walkChatUseRecordsTooltip` 을 지웠다. 기록 종류 나열은
+  켤 때 스낵바 `walkChatUseRecordsTurnedOn` 으로 옮겼다 — 물어보기 도구가 위치 · 알람을 더 조회하게 되면 이 문구를 고친다.
+
+### 검증
+
+VERIFY_PLACEHOLDER
+

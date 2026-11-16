@@ -3750,13 +3750,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatModelPickerTitle => '모델 고르기';
 
   @override
-  String get walkChatModelChipTooltip => '모델 바꾸기';
+  String walkChatModelActionTooltip(String model) {
+    return '모델 바꾸기 · 지금 $model';
+  }
 
   @override
-  String get walkChatUseRecords => '내 기록 참고';
+  String get walkChatUseRecordsOn => '내 기록 참고 켜짐';
 
   @override
-  String get walkChatUseRecordsTooltip => '켜면 일기 · 걸음 · 알람 기상 · 위키를 찾아보고 답해요';
+  String get walkChatUseRecordsOff => '내 기록 참고 꺼짐';
+
+  @override
+  String get walkChatUseRecordsTurnedOn => '이제 일기 · 걸음 · 알람 기상 · 위키를 찾아보고 답해요';
+
+  @override
+  String get walkChatUseRecordsTurnedOff => '이제 내 기록 없이 답해요';
 
   @override
   String get walkChatModelRecommended => '추천';

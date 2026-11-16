@@ -307,7 +307,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | GPT 어댑터 | `data/chat/openai_chat_model_test`(`store: false` · 추론 항목 왕복 · 도구 호출 · 사진(뒤따르는 user 입력 / 배열) · 오류 `code` 매핑 · 취소 · 잘린 응답 정리 · 목록) · `data/chat/vendor_error_test`(오류 본문에서 `type` · `code` 만 읽기 · 크기 · 시간 상한 · abort — 종류 매핑은 두 어댑터 테스트) |
 | Claude 어댑터 추가 | `anthropic_chat_model_test`(목록 페이지 넘기기 · effort · fallbacks · beta 헤더는 받는 모델에만(옛 모델엔 헤더 없음) · 빠른 출력 상수 · 다른 모델 턴을 parts 로 다시 만들기 · 실제 모델 id) |
 | 세션 — 모델 | `chat_session_test`(고른 모델 · 빠른 출력 · 사진 못 보는 모델에서 사진 빼기 · 이미지 거절 → 기록 후 한 번 재전송 · 접기는 벤더가 바뀔 때만 · 모델 바뀜 알림) |
-| 모델 칩 · 시트 | `presentation/chat/widget/model_chip_test` · `model_picker_sheet_test`(NEW · 추천 · 빠른 출력 스위치와 요금 안내) · `presentation/chat/cubit/model_picker_cubit_test` · `chat_tab_test`(목록 없음 · 사라진 모델 알림) · `chat_cubit_test`(보이지 않게 시작한 뒤 처음 받는 동안 checking → ready / noModels · `modelReplaced` 면 칩 알림을 지워 말풍선만) |
+| 앱바 모델 버튼 · 시트 | `presentation/chat/widget/model_action_test`(툴팁에 지금 모델 · 새 모델 점 · 비활성) · `model_picker_sheet_test`(NEW · 추천 · 빠른 출력 스위치와 요금 안내) · `presentation/chat/cubit/model_picker_cubit_test` · `chat_tab_test`(앱바 actions · 제목 아래 모델 이름 · [내 기록 참고] 토글 켬/끔 · 저장 · 스낵바 · 선택 시맨틱 · 답하는 중 비활성 · 목록 없음 · 사라진 모델 알림) · `chat_cubit_test`(보이지 않게 시작한 뒤 처음 받는 동안 checking → ready / noModels · `modelReplaced` 면 칩 알림을 지워 말풍선만) |
 | 벤더 고르기 · 동의 | `presentation/settings/widget/vendor_picker_sheet_test` · `chat_key_dialog_test`(벤더 바꾸기 · 확인 못 하고 바꾸면 `switchedUnverified` · GPT 힌트) · `chat_settings_section_test`(확인 못 한 바꾸기 스낵바) · `presentation/chat/widget/chat_consent_view_test`(벤더별 문구 · 이어가는 대화 한 줄) · `chat_cubit_test`(벤더별 전송 동의) |
 | 대화 기록 — 도메인 · 저장소 | `domain/chat/entity/conversation_test`(제목 만들기 30자 · 공백 접기 · 말줄임 · toString 에 글 없음) · `data/chat/database/chat_database_test`(스키마 v1 · TEXT 날짜 · 외래 키 켜짐) · `drift_chat_history_repository_test`(목록 순서 · 턴 수 · appendTurn 롤백 · 턴 지우기 · 삭제 cascade · `deleteOlderThan` · `watchExists`, `deleteAll` · `deleteOlderThan` 로 지워져도 false) |
 | 사용량 기록 | `data/chat/database/drift_chat_usage_log_test`(요청마다 한 행 · 임시는 숫자만 · 월별 합 · 모델별 · 13개월 정리 · `fast_mode`) · `domain/chat/chat_usage_log_test` |
@@ -608,6 +608,18 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | W4 | [내 기록 참고] 끄고 "지난주 일기 요약해줘" | 기록을 찾지 않고 볼 수 없다고 답한다 | 대기 |
 | W5 | 토글 끈 뒤 앱 재시작 | 꺼진 채로 열린다 | 대기 |
 | W6 | 검색을 여러 번 해야 하는 긴 질문 | `pause_turn` 이 나도 끊기지 않고 답이 이어진다 | 대기 |
+
+### 물어보기 앱바 정리
+
+키가 있는 상태(가짜 키로도 모델 목록을 못 받으면 볼 수 없다)에서 본다.
+
+| # | 하는 일 | 기대 | 상태 |
+|---|---|---|---|
+| AB1 | 물어보기 탭을 연다 | 본문 위 칩 줄이 없고, 앱바에 [내 기록 참고] · 모델 아이콘 · ⋮, 제목 아래 지금 모델 이름 | 대기 |
+| AB2 | [내 기록 참고]를 끄고 켠다 | 아이콘 모양 · 색이 바뀌고 스낵바, 길게 누르면 툴팁 "내 기록 참고 꺼짐/켜짐" | 대기 |
+| AB3 | 앱 재시작 | 토글이 마지막 상태로 열린다 | 대기 |
+| AB4 | 모델 아이콘 → 다른 모델 | 시트에 지금 모델 체크, 고르면 제목 아래 이름이 바뀐다 | 대기 |
+| AB5 | 답하는 중 | 토글 · 모델 버튼이 비활성 | 대기 |
 
 ### 진행 표시 · 지연 줄이기 (5단계 재측정)
 

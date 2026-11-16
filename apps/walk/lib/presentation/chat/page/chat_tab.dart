@@ -41,6 +41,7 @@ import '../widget/chat_examples.dart';
 import '../widget/chat_input.dart';
 import '../widget/chat_jump_to_latest.dart';
 import '../widget/chat_vendor_icon.dart';
+import '../widget/model_action.dart';
 import '../widget/model_chip.dart';
 import '../widget/model_picker_sheet.dart';
 import '../widget/temporary_chat_banner.dart';
@@ -255,10 +256,15 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
         ],
         child: Scaffold(
           appBar: AppBar(
-            title: Text(l10n.walkShellTabChat),
+            title: _ChatTitle(
+              title: l10n.walkShellTabChat,
+              showModel: unlocked,
+            ),
             actions: [
               if (unlocked) ...[
                 const _NewConversationAction(),
+                const _UseRecordsAction(),
+                const _ModelPickAction(),
                 _ChatMenu(
                   onHistory: () => unawaited(_openHistory()),
                   onWiki: () => unawaited(_openWiki()),
@@ -373,6 +379,117 @@ class _NewConversationAction extends StatelessWidget {
       icon: const Icon(Icons.add_comment_outlined),
       tooltip: AppLocalizations.of(context).walkChatNewConversation,
       onPressed: context.read<ChatCubit>().newConversation,
+    );
+  }
+}
+
+/// 앱바 제목. 풀린 동안 모델이 있으면 아래에 지금 모델 이름을 작게(빠른 출력이면 번개).
+class _ChatTitle extends StatelessWidget {
+  const _ChatTitle({required this.title, required this.showModel});
+
+  final String title;
+
+  /// false 면 제목만(잠긴 동안).
+  final bool showModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final model = context.select<ChatCubit, ModelChipData?>(
+      (c) => c.state.access == ChatAccess.ready ? c.state.model : null,
+    );
+    if (!showModel || model == null) return Text(title);
+    final theme = Theme.of(context);
+    final style = theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                model.label,
+                key: const Key('chat-model-subtitle'),
+                style: style,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (model.fastMode)
+              Icon(Icons.bolt, size: style?.fontSize, color: style?.color),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// 앱바 [내 기록 참고] 토글. 켜면 채운 아이콘 · 강조색, 끄면 테두리 아이콘 · 기본색.
+/// 끄면 다음 질문부터 기록 도구 · 위키 없이 일반 도우미로 묻는다. 답하는 중엔 꺼진다.
+class _UseRecordsAction extends StatelessWidget {
+  const _UseRecordsAction();
+
+  Future<void> _toggle(BuildContext context, bool value) async {
+    final l10n = AppLocalizations.of(context);
+    await context.read<ChatCubit>().setUseRecords(value);
+    if (!context.mounted) return;
+    AppSnackBar.show(
+      context,
+      message: value
+          ? l10n.walkChatUseRecordsTurnedOn
+          : l10n.walkChatUseRecordsTurnedOff,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final (show, on, busy) = context.select<ChatCubit, (bool, bool, bool)>(
+      (c) => (
+        c.state.access == ChatAccess.ready && c.state.model != null,
+        c.state.useRecords,
+        c.state.busy,
+      ),
+    );
+    if (!show) return const SizedBox.shrink();
+    final label = on ? l10n.walkChatUseRecordsOn : l10n.walkChatUseRecordsOff;
+    // isSelected 가 '선택됨' 상태를, 툴팁이 켬/끔이 담긴 라벨을 접근성 트리에 싣는다.
+    return IconButton(
+      key: const Key('chat-use-records-action'),
+      tooltip: label,
+      isSelected: on,
+      icon: const Icon(Icons.auto_stories_outlined),
+      selectedIcon: const Icon(Icons.auto_stories),
+      onPressed: busy ? null : () => unawaited(_toggle(context, !on)),
+    );
+  }
+}
+
+/// 앱바 모델 버튼 → 모델 고르기 시트. 바뀐 게 있으면 모델 표시를 다시 읽는다.
+class _ModelPickAction extends StatelessWidget {
+  const _ModelPickAction();
+
+  static Future<void> _pickModel(BuildContext context) async {
+    final cubit = context.read<ChatCubit>();
+    if (await ModelPickerSheet.show(context)) cubit.modelChanged();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final (model, busy) = context.select<ChatCubit, (ModelChipData?, bool)>(
+      (c) => (
+        c.state.access == ChatAccess.ready ? c.state.model : null,
+        c.state.busy,
+      ),
+    );
+    if (model == null) return const SizedBox.shrink();
+    return ModelAction(
+      data: model,
+      onPressed: busy ? null : () => unawaited(_pickModel(context)),
     );
   }
 }
@@ -632,74 +749,11 @@ class _ReadyBody extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const _ModelChipRow(),
       Expanded(child: _Conversation(onOpenSettings: onOpenSettings)),
       const _TemporaryBanner(),
       const _InputArea(),
     ],
   );
-}
-
-/// 본문 맨 위 모델 칩 + [내 기록 참고] 토글. 답하는 중엔 둘 다 꺼진다.
-class _ModelChipRow extends StatelessWidget {
-  const _ModelChipRow();
-
-  /// 칩 → 모델 고르기 시트. 바뀐 게 있으면 칩을 다시 읽는다.
-  static Future<void> _pickModel(BuildContext context) async {
-    final cubit = context.read<ChatCubit>();
-    if (await ModelPickerSheet.show(context)) cubit.modelChanged();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final (model, busy) = context.select<ChatCubit, (ModelChipData?, bool)>(
-      (c) => (c.state.model, c.state.busy),
-    );
-    if (model == null) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
-      ),
-      child: Wrap(
-        spacing: AppSpacing.sm,
-        runSpacing: AppSpacing.xs,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          ModelChip(
-            data: model,
-            onPressed: busy ? null : () => unawaited(_pickModel(context)),
-          ),
-          _UseRecordsChip(enabled: !busy),
-        ],
-      ),
-    );
-  }
-}
-
-/// [내 기록 참고] 토글 칩. 끄면 다음 질문부터 기록 도구 · 위키 없이 일반 도우미로 묻는다.
-/// 같은 줄의 모델 칩(ActionChip)과 모양을 맞춘 Material 칩 — 공통 위젯에 켬/끔 칩이 없다.
-class _UseRecordsChip extends StatelessWidget {
-  const _UseRecordsChip({required this.enabled});
-
-  /// false 면 비활성(답을 받는 중).
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final on = context.select<ChatCubit, bool>((c) => c.state.useRecords);
-    return FilterChip(
-      key: const Key('chat-use-records-chip'),
-      tooltip: l10n.walkChatUseRecordsTooltip,
-      visualDensity: VisualDensity.compact,
-      label: Text(l10n.walkChatUseRecords),
-      selected: on,
-      onSelected: enabled
-          ? (value) => unawaited(context.read<ChatCubit>().setUseRecords(value))
-          : null,
-    );
-  }
 }
 
 class _TemporaryBanner extends StatelessWidget {
