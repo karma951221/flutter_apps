@@ -11,6 +11,7 @@ import '../../../domain/location/entity/day_track.dart';
 import '../../../domain/location/entity/map_style.dart';
 import '../../../domain/location/entity/record_mode.dart';
 import 'entry_pin.dart';
+import 'map_attribution.dart';
 
 /// 한 기간의 동선 지도 — 이동선 · 머문 곳 원 · 일기 핀.
 ///
@@ -372,11 +373,9 @@ class TrackMapState extends State<TrackMap> {
           ],
         ),
         EntryPinLayer(entries: widget.entries, onOpen: widget.onOpenEntry),
-        Padding(
-          padding: EdgeInsets.only(bottom: widget.bottomInset),
-          child: SimpleAttributionWidget(
-            source: Text(_attributionOf(widget.style)),
-          ),
+        MapAttribution(
+          source: _attributionOf(widget.style),
+          bottomInset: widget.bottomInset,
         ),
       ],
     );

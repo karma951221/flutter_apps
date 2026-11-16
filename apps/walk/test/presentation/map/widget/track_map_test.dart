@@ -174,4 +174,32 @@ void main() {
       });
     }
   });
+
+  group('지도 출처 표기', () {
+    for (final (style, source) in [
+      (MapStyle.simple, '© OpenStreetMap contributors'),
+      (MapStyle.standard, '© OpenStreetMap contributors'),
+      (MapStyle.dark, '© OpenStreetMap contributors'),
+      (MapStyle.terrain, '© OpenStreetMap · OpenTopoMap (CC-BY-SA)'),
+      (MapStyle.satellite, '© Esri · Maxar · Earthstar Geographics'),
+    ]) {
+      testWidgets('${style.name}: flutter_map 없이 © 출처만 보인다', (tester) async {
+        await pump(tester, _track(37.5), style: style);
+
+        expect(find.text(source), findsOneWidget);
+        expect(find.textContaining('flutter_map'), findsNothing);
+      });
+    }
+
+    testWidgets('시트 높이만큼 위로 올라간다', (tester) async {
+      await pump(tester, _track(37.5));
+      final rest = tester.getBottomRight(find.textContaining('©'));
+
+      await pump(tester, _track(37.5), inset: 100);
+      final lifted = tester.getBottomRight(find.textContaining('©'));
+
+      expect(rest.dy - lifted.dy, closeTo(100, 0.5));
+      expect(lifted.dx, rest.dx);
+    });
+  });
 }
