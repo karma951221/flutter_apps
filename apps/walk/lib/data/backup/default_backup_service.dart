@@ -548,10 +548,17 @@ Future<T> _runReporting<T>(
 ) async {
   final port = ReceivePort();
   port.listen((m) => onProgress?.call(m as double));
-  final send = port.sendPort;
   try {
-    return await Isolate.run(() => body(send.send));
+    return await _runInIsolate(body, port.sendPort);
   } finally {
     port.close();
   }
 }
+
+/// [Isolate.run] 클로저는 감싼 함수의 Context 를 통째로 복사해 보낸다. 그래서 [body] 와
+/// [progress] 만 받는 별도 함수에서 만든다 — [_runReporting] 안에서 만들면 같은 Context 의
+/// `onProgress`(화면 cubit → 서비스 → drift DB 의 ReceivePort)까지 보내려다 실패한다.
+Future<T> _runInIsolate<T>(
+  Future<T> Function(void Function(double) report) body,
+  SendPort progress,
+) => Isolate.run(() => body(progress.send));

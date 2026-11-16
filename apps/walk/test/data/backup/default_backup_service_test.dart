@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:archive/archive_io.dart';
 import 'package:core/core.dart';
@@ -263,6 +264,12 @@ Future<void> Function(Directory) _crashWhileDeleting(
     }
     await dir.delete(recursive: true);
   };
+}
+
+/// 다른 isolate 로 보낼 수 없는 것(ReceivePort)을 쥔 진행 받이.
+class _UnsendableHolder {
+  final port = ReceivePort();
+  final steps = <double>[];
 }
 
 /// 부른 isolate 에서 무엇을 불렀는지 남기는 암호. 다른 isolate 로 보내면 사본에 남아 비어 있다.
@@ -1074,6 +1081,31 @@ void main() {
       }
     });
   }
+
+  test('progress callback that holds unsendable state still works '
+      '(it never crosses into the zip isolate)', () async {
+    final d = await device();
+    await d.seed();
+    final service = d.service();
+    // 실제 화면의 onProgress 는 cubit → 서비스 → drift DB(ReceivePort)를 잡는다.
+    final holder = _UnsendableHolder();
+    addTearDown(holder.port.close);
+    void onProgress(double f) => holder.steps.add(f);
+
+    for (final password in [null, _password]) {
+      final file = _ok(
+        await service.export(
+          BackupAreaId.values.toSet(),
+          password: password,
+          onProgress: onProgress,
+        ),
+      );
+      _ok(
+        await service.inspect(file, password: password, onProgress: onProgress),
+      );
+    }
+    expect(holder.steps.last, 1.0);
+  });
 
   test('wrong password → wrongPasswordOrCorrupt, data untouched', () async {
     final d = await device(prefs: _areaPrefs);

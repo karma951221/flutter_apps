@@ -362,6 +362,58 @@ void main() {
     expect(find.text('비밀번호가 틀렸거나 파일이 손상됐어요'), findsOneWidget);
   });
 
+  for (final encrypted in [false, true]) {
+    testWidgets('검사 실패(io)는 알림으로 보인다 — ${encrypted ? '암호화' : 'zip'}', (
+      tester,
+    ) async {
+      final picked = File('${tmp.path}/picked')..writeAsBytesSync([1]);
+      when(files.open).thenAnswer((_) async => picked);
+      when(() => probe.isEncrypted(any())).thenAnswer((_) async => encrypted);
+      when(
+        () => service.inspect(
+          any(),
+          password: any(named: 'password'),
+          onProgress: any(named: 'onProgress'),
+        ),
+      ).thenAnswer((_) async => Err(BackupFailure.io.toFailure()));
+      await h.pump(tester, const BackupPage());
+
+      await tester.tap(find.byKey(restoreRow));
+      await settle(tester);
+      if (encrypted) {
+        await tester.enterText(
+          find.byKey(const Key('backup-password-input')),
+          'right-pass',
+        );
+        await tester.pump();
+        await tester.tap(find.byKey(const Key('backup-password-open')));
+        await settle(tester);
+      }
+
+      expect(find.text('백업 작업을 하지 못했어요'), findsOneWidget);
+    });
+  }
+
+  testWidgets('내보내기 실패(io)는 알림으로 보인다', (tester) async {
+    when(
+      () => service.export(
+        any(),
+        password: any(named: 'password'),
+        onProgress: any(named: 'onProgress'),
+      ),
+    ).thenAnswer((_) async => Err(BackupFailure.io.toFailure()));
+    await h.pump(tester, const BackupPage());
+
+    await tester.tap(find.byKey(createRow));
+    await settle(tester);
+    await tester.tap(find.byKey(const Key('backup-export-encrypt')));
+    await settle(tester);
+    await tester.tap(find.byKey(const Key('backup-export-save')));
+    await settle(tester);
+
+    expect(find.text('백업 작업을 하지 못했어요'), findsOneWidget);
+  });
+
   testWidgets('복원이 끝나지 못하면 다시 시작을 안내한다', (tester) async {
     final picked = File('${tmp.path}/picked.zip')..writeAsBytesSync([1]);
     when(files.open).thenAnswer((_) async => picked);
