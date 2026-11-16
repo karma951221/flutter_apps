@@ -72,5 +72,6 @@ flutter build apk --release --dart-define-from-file=config/commute_keys.json
 | [설계 — 시각 · 인터랙션 강화](../../../docs/superpowers/specs/2026-10-03-walk-visual-refresh-design.md) | 초록 테마 · 하루 목표 링 · 달성 축하 · 목표선 그래프 · 알람 톤 · 울림 파동 |
 | [설계 — 일기](../../../docs/superpowers/specs/2026-10-10-walk-diary-design.md) | 일기 결정 기록 · 스토리 · 휴지통 · 잠금 · 테스트 표 · 스파이크 결과 |
 | [설계 — 일기 피드형 작성 · 자동 초안](../../../docs/superpowers/specs/2026-11-15-walk-diary-feed-compose-design.md) | 피드 글쓰기 화면 · 스토리 뒤로 숨기기 · ✨ 초안(문체 · 길이 · 사진 전송 기본 끔 · 저가 모델) · 외부 리뷰 결정 |
+| [설계 — 앱 백업 · 복원](../../../docs/superpowers/specs/2026-11-16-walk-diary-backup-design.md) | 영역 선택 백업 · SAF 로컬 zip · 선택 암호화 · 영역별 바꿔 넣기 복원 · 되돌리기 · 자동 백업 규칙 |
 | [설계 — 날씨](../../../docs/superpowers/specs/2026-11-14-walk-weather-design.md) | 도구 › 날씨 결정 기록 · Open-Meteo · 위치 · 캐시 규칙 |
 | [설계 — 통근 ETA](../../../docs/superpowers/specs/2026-10-21-commute-eta-design.md) | 통근 탭 결정 기록 · 경로 · 실시간 · 판단 · 도착 예상 · 키 |
