@@ -337,7 +337,7 @@ class WikiDistiller {
   }
 
   static const _instruction =
-      '너는 사용자의 개인 기록 앱 Life Tool 의 위키 정리 도우미다.\n'
+      '너는 사용자의 개인 기록 앱 Life Log 의 위키 정리 도우미다.\n'
       '이 대화에서 앞으로도 쓸 사용자에 대한 사실만 후보로 뽑는다. '
       '이미 있는 메모를 고쳐야 하면 read_wiki 로 읽고 update 후보로, '
       '관련된 메모가 있으면 본문에 [[id]] 를, 근거가 된 일기가 있으면 [[일기:id]] 를 넣는다. '

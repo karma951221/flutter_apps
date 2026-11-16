@@ -681,7 +681,9 @@ void main() {
       await tester.tap(find.text('동의하고 시작'));
       await tester.pumpAndSettle();
 
-      expect(chatSettings.consentedVendor, ChatVendor.anthropic);
+      expect(chatSettings.draftConsentedVendor, ChatVendor.anthropic);
+      // 초안 문구에는 위치 기록이 없으니 물어보기 동의는 아니다.
+      expect(chatSettings.consentedVendor, isNull);
       expect(writer.calls.single.context.memo, '카페');
     });
 

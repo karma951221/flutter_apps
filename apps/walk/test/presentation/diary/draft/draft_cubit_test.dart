@@ -143,12 +143,13 @@ void main() {
     expect(prefs.photoWrites, [true]);
   });
 
-  test('consent 는 그 벤더로의 전송 동의를 기록한다', () async {
+  test('consent 는 초안 범위 동의만 기록한다(채팅 동의는 아니다)', () async {
     settings.consentedVendor = null;
 
     await cubitOf().consent(ChatVendor.anthropic);
 
-    expect(settings.consentedVendor, ChatVendor.anthropic);
+    expect(settings.draftConsentedVendor, ChatVendor.anthropic);
+    expect(settings.consentedVendor, isNull);
   });
 
   test('글 칸의 글을 메모로, 설정의 문체로 바로 쓴다(R-A1)', () async {

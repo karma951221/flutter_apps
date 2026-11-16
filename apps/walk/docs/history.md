@@ -951,6 +951,19 @@ OSM 기본 타일이 가게 · 건물 이름까지 다 그려서 동선이 묻�
   `ThemeCubit` 처럼 상태를 들되 getIt lazySingleton 으로 두어 지도 탭과 지도 설정이 같은 것을 본다.
   그래서 설정에서 바꾸면 뒤에 깔린 지도가 돌아오기 전에 이미 바뀌어 있다.
 
+## 2026-11-16 — 지도 출처 표기 빼기
+
+"지도 하단에 flutter_map 이라는 거 뜨는데 없앨 수 없어?" 라는 피드백.
+
+- **원인** — `TrackMap` 이 flutter_map 의 `SimpleAttributionWidget` 을 썼는데, 이 위젯은 앞에
+  'flutter_map | © ' 를 박아 두고 끌 옵션이 없다.
+- **처음엔 flutter_map 만 빼고 "© <타일 출처>" 한 줄을 남겼다**(앱 전용 위젯, `255bbc25`). 타일 출처는
+  OSM(ODbL) · OpenTopoMap(CC-BY-SA) · Esri 이용 약관이 화면 표기를 요구해서다.
+- **이어서 출처 표기도 모두 뺐다** — 라이선스상 표기 의무를 안내받은 뒤 사용자가 "개인용 앱인데 출처 표기를 할
+  필요 없어"라고 정했다. `SimpleAttributionWidget` · 앱 전용 위젯 · `_attributionOf` 를 지웠다.
+  **개인용 앱이라 사용자 결정으로 지도 출처 표기를 뺐고, 앱을 배포하거나 공개하면 다시 넣어야 한다.**
+- 검증: `flutter analyze` 0 · `flutter test` 3906건 통과(1 skip).
+
 ## 2026-11-14 — 날씨
 
 도구 넷째 상단 탭 날씨. 나가기 직전 "오늘 오후에 비 오나?"를 검색 없이 본다. 설계는 [도구 › 날씨](../../../docs/superpowers/specs/2026-11-14-walk-weather-design.md).
@@ -1089,3 +1102,82 @@ OpenAI: gpt-5 `minimal`, 5.1 이후 `none`, o 계열 `low`). 초안의 `modelUna
 
 `flutter analyze` 0 · `flutter test` 3901건 통과(1 skip) · 앱 Kotlin 단위 110건 · 디버그 APK.
 에뮬레이터(sdk_gphone16k_arm64, 2026-11-16) A20~A23 — [테스트](testing.md#알람-기기-시나리오). 소리 크기 · 듣기 좋은지는 사람이 들어 보지 않았다.
+
+## 2026-11-16 — 표시 이름 Life Tool → Life Log
+
+앱이 하루를 기록하는 쪽으로 자라서 "도구"보다 "로그"가 맞다는 사용자 피드백으로 표시 이름을
+**Life Log** 로 바꿨다(사용자 결정, 한국어 · 일본어 기기도 영문 그대로). 트레이더 앱 이름이
+`daylog` 라 "Day Log" · "Daily Log" 류는 후보에서 뺐다.
+
+- 바꾼 곳: 런처 라벨(`AndroidManifest` `android:label`) · l10n `walkAppTitle`(ko · en · ja) ·
+  건강 데이터 안내 문구(`strings.xml` 세 언어) · 물어보기 · 위키 정리 · 일기 초안 시스템 프롬프트의
+  앱 이름 · Kotlin 주석 · 허브 · 계획 문서.
+- 그대로 둔 것: `applicationId`(`com.karma.walk`) · Kotlin 패키지 · 폴더 `apps/walk` · Dart 패키지명 —
+  바꾸면 설치된 앱의 데이터가 이어지지 않거나 파급만 크다. 내부 클래스 `LifeTools` 는 앱 이름이 아니라
+  "생활 기록을 읽는 도구들"이라는 뜻이라 이름이 그대로 맞아서 두었다(동시 작업 중인 물어보기 세션과
+  충돌도 피한다). 날짜가 박힌 지난 기록 · 설계 문서의 "Life Tool" 도 그때의 사실이라 두었다.
+- 검사: `test/convention/app_display_name_test.dart` 가 런처 라벨 · `walkAppTitle`(모든 로케일) ·
+  안내 문구가 같은 이름인지 본다.
+- 검증: `flutter analyze` 0 · `flutter test` 3904건 통과(1 skip) · 문서 링크 검사 · l10n 테스트 통과.
+  에뮬레이터(2026-11-16) 앱 서랍에 "Life Log" 로 보인다.
+
+## 2026-11-16 — 물어보기 앱바 정리
+
+사용자 피드백: 모델(Sonnet) 칩과 "내 기록 참고" 칩이 본문 위에 계속 떠 있어 불편하다 — actions 로 옮기고, 내 기록 참고는
+토글 버튼으로. 세부는 기본안으로 정했다.
+
+### 판단
+
+- **칩 줄을 없애고 모두 앱바로** — 본문은 대화 · 임시 대화 띠 · 입력칸만 남는다.
+- **[내 기록 참고]는 `IconButton(isSelected:)`** — 켜짐은 채운 `auto_stories` + `primaryContainer` 배경, 꺼짐은 테두리 아이콘 + 기본색이라
+  모양 · 색 · 배경이 다 달라진다. 앱바 아이콘 테마가 M3 선택 색을 덮어 처음엔 채움 여부만 달랐다 — 그래서 상태별 `ButtonStyle` 을 직접 준다. 아이콘만으로는 뜻이 약해 툴팁이 상태를 말하고("내 기록 참고 켜짐/꺼짐"), 누르면 스낵바로
+  무엇이 바뀌었는지 알린다(켤 때는 찾아보는 기록 종류까지). 접근성은 IconButton 이 싣는 선택 상태 + 툴팁 라벨로 충분해
+  따로 `Semantics` 를 감싸지 않았다. 저장은 `ChatCubit.setUseRecords` 그대로.
+- **모델은 벤더 아이콘 버튼 + 제목 아래 작은 이름** — 버튼에 이름을 넣으면 actions 가 길어지고, 툴팁만으로는 지금 모델이
+  안 보인다. 제목 아래 `labelSmall` 한 줄이면 앱바 높이를 바꾸지 않고 늘 보인다. 고르기는 기존 `ModelPickerSheet`(지금 모델 체크).
+- **⋮ 메뉴와 합치지 않고 나란히** — 둘 다 자주 쓰고 상태를 보여 줘야 해서 메뉴 안에 숨기지 않았다. actions 는 최대 넷
+  ([새 대화]는 대화가 있을 때만)이라 `AppOverflowMenu`(⋮) 하나로 나머지를 그대로 묶는다.
+- `ModelChip` 위젯은 지우고 `ModelAction`(`widget/model_action.dart`)으로 바꿨다. 값 `ModelChipData` 는 설정 연결 행도 써서 이름 · 파일을 그대로 뒀다.
+- 쓰지 않게 된 문구 `walkChatModelChipTooltip` · `walkChatUseRecords` · `walkChatUseRecordsTooltip` 을 지웠다. 기록 종류 나열은
+  켤 때 스낵바 `walkChatUseRecordsTurnedOn` 으로 옮겼다 — 물어보기 도구가 위치 · 알람을 더 조회하게 되면 이 문구를 고친다.
+
+### 검증
+
+`flutter analyze` 0 · `flutter test` 3904건 통과(1 skip). 에뮬레이터(Medium_Phone)에는 키가 없어 물어보기가 키 안내 화면에서
+멈춰 앱바 버튼을 볼 수 없었다 — 실제 폰트(AppleGothic · MaterialIcons)를 실은 위젯 테스트로 준비 상태 화면을 그려 켜짐 · 꺼짐을
+눈으로 확인했다(임시 골든, 커밋하지 않음). 키를 넣은 기기 확인은 [시나리오](testing.md#물어보기-앱바-정리) AB1~AB5.
+
+## 2026-11-16 — 물어보기 위치 · 알람 · 날씨 조회
+
+사용자 피드백: "최근 어디 갔는지" 물었더니 일기만 보고 답했다. 진단해 보니 채팅은 이미 도구 호출 방식인데
+위치 도구가 없었고(지도 스펙에서 "다음에"로 미룸), 위치 이력은 상시 위치 기록을 켠 폰에 이미 쌓여 있었다.
+새 데이터 수집 없이 도구 넷을 더했다. [설계](../../../docs/superpowers/specs/2026-11-16-walk-chat-record-tools-design.md)
+
+### 사용자 결정
+
+- 이름을 못 얻은 머문 곳은 좌표 없이 시간만(`place: null`) — 위치값은 어떤 형태로도 나가지 않는다.
+- 이미 동의한 사용자도 위치가 새로 포함되므로 한 번 다시 동의를 받는다(`chat.consentScope` = 2).
+- 물어보기에서 위치만 끄는 스위치는 만들지 않는다 — "내 기록 참고하기"를 끄면 된다.
+
+### 판단
+
+- 새 도구는 `LocationTools` · `AlarmTools` · `WeatherTools` 로 나누고 `LifeTools` 가 정의 끝에 붙이고 실행을 넘긴다 —
+  `ChatSession` 은 그대로 `LifeTools` 만 알아서 "내 기록 참고하기" 게이트를 그대로 탄다. 채팅 화면 위젯은 건드리지 않았다.
+- 머문 곳 계산은 지도와 같다(`pointsAround` → `TrackAnalyzer` → 열린 끝). 지도 cubit 의 열린 끝 판정을 `stayOpenEnd` 로 빼서 함께 쓴다.
+- 상한: `visited_places` 31일 · 150곳(최근 것 남김) · 새 이름 조회 20곳(최근부터, 나머지는 캐시만), `frequent_places` 366일을 31일 덩어리로.
+- 날씨는 날씨 탭과 같은 규칙(10분 안 캐시 · 위치 실패면 캐시 좌표로 · 받기 실패면 24시간 캐시 + `stale`). 지난 날씨 이력은 없다.
+- 일기 초안 동의는 범위를 올리지 않는다(`setDraftConsented` · `draftConsentedVendor`) — 초안 문구엔 위치가 없어서, 초안에 동의해도 물어보기는 다시 묻는다(최종 리뷰 Critical). 물어보기 동의는 초안 범위를 품는다. 옛 `chat.consented` 는 초안 동의(anthropic, 범위 1)로 옮긴다.
+- 머문 곳 새 이름 조회는 한 번 부를 때 10초 예산 — Geocoder 가 응답하지 않으면 한 곳에 8초씩 걸려 최대 160초가 될 수 있었다(최종 리뷰 Important).
+- 진행 줄 문구 넷(머문 곳 · 자주 간 곳 · 알람 설정 · 날씨).
+
+### 알려진 한계
+
+- `frequent_places` 는 31일 덩어리 경계에 걸친 머묾을 둘로 셀 수 있다.
+- 위치 결과 칩(지도 열기)은 없다 — 참고한 기록 칩은 일기만.
+- 걷기는 하루 걸음 수뿐이다(운동 세션은 읽지 않는다).
+- 최종 리뷰에서 미룬 것: 날씨 시간별 시작을 UTC 정시로 자름(:30 오프셋 지역) · 받아 둔 예보의 daily 에 지난 날짜 · 날씨 도구가 위치 권한 화면을 띄울 수 있음 · `frequent_places` 의 `last` 가 시작일 · 자정 넘긴 머묾 자르기 테스트 없음.
+
+### 검증
+
+`flutter analyze` 0 · `flutter test` 3954건 통과(1 skip) · 문서 링크 검사 · 디버그 APK. 실제 API 키가 없어 기기 대화 확인(R1~R5)은 대기.
+

@@ -2663,7 +2663,7 @@ abstract class AppLocalizations {
   /// 앱 표시 이름 (걷기 외 생활 기능도 담을 예정이라 특정 기능명을 쓰지 않는다)
   ///
   /// In ko, this message translates to:
-  /// **'Life Tool'**
+  /// **'Life Log'**
   String get walkAppTitle;
 
   /// 오늘 걸음 수 섹션 라벨
@@ -5831,7 +5831,7 @@ abstract class AppLocalizations {
   /// 물어보기 설정 맨 아래 데이터 전송 안내 — 연결한 벤더 이름
   ///
   /// In ko, this message translates to:
-  /// **'질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI({vendor})로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.'**
+  /// **'질문과, 답에 필요한 일기 · 사진 · 위치 기록(머문 곳 이름 · 시간) · 걸음 · 알람 · 기상 기록이 연결한 AI({vendor})로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요.'**
   String walkChatSettingsNotice(String vendor);
 
   /// 하단 탭: 내 기록에 묻는 채팅
@@ -5855,7 +5855,7 @@ abstract class AppLocalizations {
   /// 채팅 탭: 전송 동의 안내 — 연결한 벤더 이름
   ///
   /// In ko, this message translates to:
-  /// **'질문과, 답에 필요한 일기 · 사진 · 걸음 · 기상 기록이 연결한 AI({vendor})로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요. 정리해 둔 위키의 제목 · 요약도 질문마다 함께 보내져요.'**
+  /// **'질문과, 답에 필요한 일기 · 사진 · 위치 기록(머문 곳 이름 · 시간) · 걸음 · 알람 · 기상 기록이 연결한 AI({vendor})로 전송돼요. 키는 이 폰의 보안 저장소에만 있어요. 정리해 둔 위키의 제목 · 요약도 질문마다 함께 보내져요.'**
   String walkChatConsentNotice(String vendor);
 
   /// 채팅 탭: 전송 안내 동의 버튼
@@ -6044,6 +6044,30 @@ abstract class AppLocalizations {
   /// **'알람 기록 보는 중'**
   String get walkChatToolWakeRecords;
 
+  /// 채팅 탭 진행 줄: visited_places 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'머문 곳 보는 중'**
+  String get walkChatToolVisitedPlaces;
+
+  /// 채팅 탭 진행 줄: frequent_places 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'자주 간 곳 보는 중'**
+  String get walkChatToolFrequentPlaces;
+
+  /// 채팅 탭 진행 줄: list_alarms 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'알람 설정 보는 중'**
+  String get walkChatToolAlarms;
+
+  /// 채팅 탭 진행 줄: weather_forecast 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'날씨 보는 중'**
+  String get walkChatToolWeather;
+
   /// 채팅 탭 진행 줄: read_wiki 도구 라벨
   ///
   /// In ko, this message translates to:
@@ -6127,6 +6151,24 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'기상 기록 {count}회'**
   String walkChatToolFoundWake(int count);
+
+  /// 채팅 탭 진행 줄: 머문 곳 결과 개수
+  ///
+  /// In ko, this message translates to:
+  /// **'머문 곳 {count}곳'**
+  String walkChatToolFoundPlaces(int count);
+
+  /// 채팅 탭 진행 줄: 자주 간 곳 결과 개수
+  ///
+  /// In ko, this message translates to:
+  /// **'자주 간 곳 {count}곳'**
+  String walkChatToolFoundFrequent(int count);
+
+  /// 채팅 탭 진행 줄: 알람 설정 결과 개수
+  ///
+  /// In ko, this message translates to:
+  /// **'알람 {count}개'**
+  String walkChatToolFoundAlarms(int count);
 
   /// 채팅 탭 진행 줄: 사진 결과 장 수
   ///
@@ -6900,23 +6942,35 @@ abstract class AppLocalizations {
   /// **'모델 고르기'**
   String get walkChatModelPickerTitle;
 
-  /// 물어보기 앱바 아래 모델 칩 툴팁
+  /// 물어보기 앱바 모델 버튼 툴팁(지금 모델 이름)
   ///
   /// In ko, this message translates to:
-  /// **'모델 바꾸기'**
-  String get walkChatModelChipTooltip;
+  /// **'모델 바꾸기 · 지금 {model}'**
+  String walkChatModelActionTooltip(String model);
 
-  /// 물어보기 모델 칩 옆 토글: 내 기록(도구 · 위키)을 참고할지
+  /// 물어보기 앱바 [내 기록 참고] 토글이 켜졌을 때 툴팁 · 접근성 라벨
   ///
   /// In ko, this message translates to:
-  /// **'내 기록 참고'**
-  String get walkChatUseRecords;
+  /// **'내 기록 참고 켜짐'**
+  String get walkChatUseRecordsOn;
 
-  /// 물어보기 내 기록 참고 토글 툴팁
+  /// 물어보기 앱바 [내 기록 참고] 토글이 꺼졌을 때 툴팁 · 접근성 라벨
   ///
   /// In ko, this message translates to:
-  /// **'켜면 일기 · 걸음 · 알람 기상 · 위키를 찾아보고 답해요'**
-  String get walkChatUseRecordsTooltip;
+  /// **'내 기록 참고 꺼짐'**
+  String get walkChatUseRecordsOff;
+
+  /// [내 기록 참고]를 켠 직후 스낵바 — 찾아보는 기록 종류를 알린다
+  ///
+  /// In ko, this message translates to:
+  /// **'이제 일기 · 걸음 · 알람 기상 · 위키를 찾아보고 답해요'**
+  String get walkChatUseRecordsTurnedOn;
+
+  /// [내 기록 참고]를 끈 직후 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'이제 내 기록 없이 답해요'**
+  String get walkChatUseRecordsTurnedOff;
 
   /// 모델 고르기 시트 — 추천 모델 배지
   ///

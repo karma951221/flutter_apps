@@ -1576,7 +1576,24 @@ void main() {
     expect(system, contains('2026-10-27'));
     expect(system, contains('2026-10-27 (화)'));
     expect(system, contains(clock.value.timeZoneName));
-    expect(system, startsWith('너는 사용자의 개인 기록 앱 Life Tool 안의 도우미다.'));
+    expect(system, startsWith('너는 사용자의 개인 기록 앱 Life Log 안의 도우미다.'));
+  });
+
+  test('기록 규약은 위치 · 알람 · 날씨 도구와 위치 기록이 없을 때의 대안을 말한다', () async {
+    final model = _FakeModel([_answer('네')]);
+
+    await session(model).ask('지난주 어디 갔어?').toList();
+
+    final system = model.requests.single.system;
+    expect(
+      system,
+      contains('일기 · 위치 기록(머문 곳) · 걸음 수 · 알람(설정 · 기상 기록) · 날씨 예보'),
+    );
+    expect(
+      system,
+      contains('어디 갔는지는 위치 기록 도구로 찾고, 위치 기록이 없으면 일기 장소로 답하며 그렇다고 밝힌다.'),
+    );
+    expect(system, contains('지난 날씨는 기록이 없다.'));
   });
 
   test('오늘 날짜 줄은 시스템 프롬프트의 마지막 줄이다', () async {
@@ -1888,15 +1905,18 @@ void main() {
       final request = model.requests.single;
       expect(
         request.system,
-        '너는 사용자의 개인 기록 앱 Life Tool 안의 도우미다. 무엇이든 답하는 일반 '
+        '너는 사용자의 개인 기록 앱 Life Log 안의 도우미다. 무엇이든 답하는 일반 '
         '도우미이면서, 사용자의 기록도 찾아볼 수 있다.\n'
-        '사용자의 기록(일기 · 걸음 수 · 알람 기상 기록)에 관한 질문이면 도구로 찾아보고, '
+        '사용자의 기록(일기 · 위치 기록(머문 곳) · 걸음 수 · 알람(설정 · 기상 기록) · 날씨 예보)에 '
+        '관한 질문이면 도구로 찾아보고, '
         '찾은 기록에 근거해서 답한다. 기록에서 찾지 못한 것은 추측하지 말고 '
         '"기록에서 찾지 못했어요"라고 말한다.\n'
         '그 밖의 일반 질문(지식 · 설명 · 조언 · 잡담 등)은 기록 도구를 부르지 말고 '
         '아는 대로 자유롭게 답한다.\n'
         '최근 소식 · 지금의 정보 · 확실하지 않은 사실은 웹 검색으로 확인하고, '
         '답에 출처(사이트 이름)를 짧게 밝힌다.\n'
+        '어디 갔는지는 위치 기록 도구로 찾고, 위치 기록이 없으면 일기 장소로 답하며 그렇다고 '
+        '밝힌다. 지난 날씨는 기록이 없다.\n'
         '날짜는 사용자의 말("지난주", "어제")을 오늘 기준으로 바꿔 도구에 넘긴다.\n'
         '사진 보기 도구가 없으면 사진은 볼 수 없다고 짧게 답한다.\n'
         '한국어로, 마크다운 없이 평문으로 답한다. 필요한 만큼 쓰되 군더더기 없이 간결하게.\n'
@@ -3292,7 +3312,7 @@ void main() {
             '오늘은 2026-10-27 (화), 시간대는 ${clock.value.timeZoneName} 이다.';
         expect(
           request.system,
-          '너는 Life Tool 앱 안의 도우미다. 지식 · 설명 · 조언 · 잡담 등 무엇이든 '
+          '너는 Life Log 앱 안의 도우미다. 지식 · 설명 · 조언 · 잡담 등 무엇이든 '
           '아는 대로 자유롭게 답한다.\n'
           '최근 소식 · 지금의 정보 · 확실하지 않은 사실은 웹 검색으로 확인하고, '
           '답에 출처(사이트 이름)를 짧게 밝힌다.\n'

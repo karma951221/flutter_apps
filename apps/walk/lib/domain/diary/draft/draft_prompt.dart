@@ -10,7 +10,7 @@ import 'photo_meta.dart';
 /// user 글에는 [DraftContext] 의 값만 — 좌표는 [DraftContext] 에 없어 실릴 수 없다.
 abstract final class DraftPrompt {
   static const _base =
-      '너는 사용자의 개인 기록 앱 Life Tool 의 일기 초안 도우미다.\n'
+      '너는 사용자의 개인 기록 앱 Life Log 의 일기 초안 도우미다.\n'
       '아래 메모와 맥락으로 사용자가 직접 쓴 것 같은 개인 일기 글을 1인칭으로 쓴다. '
       '메모와 맥락에 없는 사실(사람 · 장소 · 음식 · 감정 · 날씨)을 지어내지 않는다. '
       '제목 · 따옴표 · 설명 없이 글만 돌려준다.';

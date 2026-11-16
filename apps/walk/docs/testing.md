@@ -307,7 +307,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | GPT 어댑터 | `data/chat/openai_chat_model_test`(`store: false` · 추론 항목 왕복 · 도구 호출 · 사진(뒤따르는 user 입력 / 배열) · 오류 `code` 매핑 · 취소 · 잘린 응답 정리 · 목록) · `data/chat/vendor_error_test`(오류 본문에서 `type` · `code` 만 읽기 · 크기 · 시간 상한 · abort — 종류 매핑은 두 어댑터 테스트) |
 | Claude 어댑터 추가 | `anthropic_chat_model_test`(목록 페이지 넘기기 · effort · fallbacks · beta 헤더는 받는 모델에만(옛 모델엔 헤더 없음) · 빠른 출력 상수 · 다른 모델 턴을 parts 로 다시 만들기 · 실제 모델 id) |
 | 세션 — 모델 | `chat_session_test`(고른 모델 · 빠른 출력 · 사진 못 보는 모델에서 사진 빼기 · 이미지 거절 → 기록 후 한 번 재전송 · 접기는 벤더가 바뀔 때만 · 모델 바뀜 알림) |
-| 모델 칩 · 시트 | `presentation/chat/widget/model_chip_test` · `model_picker_sheet_test`(NEW · 추천 · 빠른 출력 스위치와 요금 안내) · `presentation/chat/cubit/model_picker_cubit_test` · `chat_tab_test`(목록 없음 · 사라진 모델 알림) · `chat_cubit_test`(보이지 않게 시작한 뒤 처음 받는 동안 checking → ready / noModels · `modelReplaced` 면 칩 알림을 지워 말풍선만) |
+| 앱바 모델 버튼 · 시트 | `presentation/chat/widget/model_action_test`(툴팁에 지금 모델 · 새 모델 점 · 비활성) · `model_picker_sheet_test`(NEW · 추천 · 빠른 출력 스위치와 요금 안내) · `presentation/chat/cubit/model_picker_cubit_test` · `chat_tab_test`(앱바 actions · 제목 아래 모델 이름 · [내 기록 참고] 토글 켬/끔 · 저장 · 스낵바 · 선택 시맨틱 · 답하는 중 비활성 · 목록 없음 · 사라진 모델 알림) · `chat_cubit_test`(보이지 않게 시작한 뒤 처음 받는 동안 checking → ready / noModels · `modelReplaced` 면 칩 알림을 지워 말풍선만) |
 | 벤더 고르기 · 동의 | `presentation/settings/widget/vendor_picker_sheet_test` · `chat_key_dialog_test`(벤더 바꾸기 · 확인 못 하고 바꾸면 `switchedUnverified` · GPT 힌트) · `chat_settings_section_test`(확인 못 한 바꾸기 스낵바) · `presentation/chat/widget/chat_consent_view_test`(벤더별 문구 · 이어가는 대화 한 줄) · `chat_cubit_test`(벤더별 전송 동의) |
 | 대화 기록 — 도메인 · 저장소 | `domain/chat/entity/conversation_test`(제목 만들기 30자 · 공백 접기 · 말줄임 · toString 에 글 없음) · `data/chat/database/chat_database_test`(스키마 v1 · TEXT 날짜 · 외래 키 켜짐) · `drift_chat_history_repository_test`(목록 순서 · 턴 수 · appendTurn 롤백 · 턴 지우기 · 삭제 cascade · `deleteOlderThan` · `watchExists`, `deleteAll` · `deleteOlderThan` 로 지워져도 false) |
 | 사용량 기록 | `data/chat/database/drift_chat_usage_log_test`(요청마다 한 행 · 임시는 숫자만 · 월별 합 · 모델별 · 13개월 정리 · `fast_mode`) · `domain/chat/chat_usage_log_test` |
@@ -328,6 +328,7 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | 첨부 — 세션 | `domain/chat/usecase/chat_session_attachment_test`(사진 · 문서 · 18MB 세기 · 실패 · 멈춤 되돌림 · 한도 넘으면 `ArgumentError` · 사진 못 보는 모델은 글 줄 · 도구 사진과 12장 공유 · `resume` 첨부 이름 줄 · 시스템 프롬프트 줄 위치 · 접기에서 첨부 유지) |
 | 첨부 — 기록 | `data/chat/database/drift_chat_history_repository_test`(첨부 ref 왕복 · 깨진 JSON · 잘못된 항목 건너뜀) · `chat_database_migration_test`(v2 → v3) |
 | 첨부 — 읽기 · 입력 | `data/chat/attachment/file_attachment_loader_test`(사진 압축 · 크기 거절 · UTF-8 · BOM · 원본 읽기 · 압축기 오류) · `presentation/chat/cubit/chat_cubit_attachment_test`(한도 · 알림 · inbox 원본 사본 · 임시 대화 사본 없음 · 사본 실패에도 보냄 · 보내지 못한 질문 되돌림 · 실패 · 멈춤 뒤 첨부 되돌림 · 선택기 캐시 정리 · 답 저장과 모델) · `widget/chat_input_test`(칩 · ✕ · 첨부만으로 보내기 · 준비 중 보내기 막힘) · `widget/chat_bubble_view_test`(경로 없는 칩은 표시만 · 지운 파일) · `widget/bubble_actions_sheet_test`([파일로 저장]) |
+| 위치 · 알람 · 날씨 조회 | `domain/chat/tool/location_tools_test`(점 없음 · 로컬 시각 · 좌표 없음 · 자정 넘김 `end_date` · 이름 없음 · 캐시 이름 · 새 조회 20곳 · 150곳 자르기 · 31일 · 기록 상태 · 수거 실패 · 자주 간 곳 · 31일 덩어리) · `alarm_tools_test` · `weather_tools_test`(10분 캐시 · 받아 쓰기 · 벽시계 · 캐시 좌표 · `stale` · `weather_unavailable`) · `tool_input_test` · `life_tools_test`(정의 아홉 · 넘기기) · `domain/location/usecase/open_end_test` · `chat_session_test`(기록 규약 줄) · `data/chat/secure_chat_settings_test`(범위 버전 · 다시 동의) · `chat_progress_text_test`(라벨 넷) |
 | 작업 폴더 읽기 도구(2단계) | `domain/chat/tool/workspace_tools_test`(목록 최신순 · 100개 · `area` · 글 20,000자 · `next_offset` · 서로게이트 경계 · 사진 · PDF · 오류 코드 · 실제 폴더에서 `..` / 절대 경로 / 밖 링크 / 디렉터리 링크 · inbox · out 밖 · 숨김 이름) · `domain/chat/usecase/chat_session_workspace_tools_test`(기록 켜짐에만 도구 · 꺼짐이면 실행 안 함 · PDF 문서 한도 · 18MB · 글 120,000자 · 실패 · 멈춤 · 접기 되돌림 · `images_unsupported` · 프롬프트 줄) · 두 어댑터 테스트(tool_result 안 document · 결과 뒤 `input_file` · `imagesInToolOutput`) · `presentation/chat/widget/chat_progress_text_test`(작업 폴더 라벨 · 빈 폴더) |
 | 작업 폴더 쓰기 도구 · 승인(3단계) | `data/chat/workspace/file_workspace_test`(`writeText` 새로 · 덮어쓰기 · 있음 예외 · 경계 · 임시 파일 안 남음) · `domain/chat/tool/workspace_tools_write_test`(경로 규칙 · 255바이트 · 보이지 않는 글자 · `read_only` · 100,000자 · `exists` · `no_match` · `not_unique` · `changed` · 실제 폴더 경계 · 바뀜 알림) · `domain/chat/usecase/chat_session_write_tools_test`(기록 켜짐에만 · 승인 · 거절 · 멈춤 · 초기화 · 승인과 멈춤 겹침 · 쓰기 둘 + 읽기 순서 · 엉뚱한 callId · 프롬프트 줄) · `presentation/chat/cubit/chat_cubit_approval_test`(pendingApproval · 한 번만 · 실제 세션으로 중단 네 경로) · `presentation/chat/workspace/widget/write_approval_sheet_test` · `format/reveal_invisible_test` · `chat_tab_test`(시트 열고 닫기 · 잠금 · 두 쓰기 · 스낵바) · `chat_progress_text_test`(쓰기 라벨) |
 | 작업 폴더 화면 | `presentation/chat/workspace/cubit/workspace_cubit_test` · `page/workspace_page_test`(구역 순서 · 사용량 줄 · 빈 상태 · 지우기 확인 · [물어보기에 첨부] · [공유] · 보기: 글 · 사진 · 그 밖은 공유) · `chat_tab_test`(⋮ [작업 폴더] · 작업 폴더에서 첨부 · 저장 → [보기]) |
@@ -352,8 +353,8 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | `presentation/map/cubit/map_record_cubit_test.dart` | `MapRecordCubit` | 켜기 순서(권한) · 거부 / 설정 필요 · 항상 허용 회수 → blocked · 실제 권한 읽기 · 촘촘 · 보관 기간 · 모두 지우기(inbox 를 먼저 비움 · 비우기 실패면 저장소 그대로) · 처음 안내 판정(`hasPoints`) |
 | `presentation/map/cubit/map_view_cubit_test.dart` | `MapViewCubit` | 하루 · 한 달 · 스토리 · 일기 핀(`locatedEntriesBetween`, 기간 경계) · 이름 붙이기(오늘은 묻고, 한 달 · 스토리는 캐시만 · 같은 격자 한 번) · 긴 스토리(이틀 넘음 · 진행 중은 지금까지) 단순화 · 짧은 스토리 그대로 · 실패 variant · **처음 show 도 수거 뒤 읽기(로딩 유지)** · sync 실패해도 저장분 · 느린 sync 중 새 기간 우선 |
 | `presentation/map/cubit/map_style_cubit_test.dart` | `MapStyleCubit` | 처음 값은 저장값 · 고르면 바로 반영하고 저장 · 같은 모양이면 저장 안 함 |
-| `presentation/map/widget/track_map_test.dart` | `TrackMap` | 같은 이동선이면 선 좌표 재사용 · 바뀌면 다시 만듦 · 같은 기간에 새 점이 화면 밖이면 카메라를 다시 맞춤 · 화면 안이면 그대로 · 손으로 옮긴 뒤엔 따라가지 않음 · 위성은 밝은 · 어두운 테마 모두 더 밝고 진한 선 + 테두리 |
-| `presentation/map/page/map_tab_test.dart` | `MapTab` | 잠기면 PIN · 열면 읽기 · 처음 안내 · 켜기 실패 오류 스낵바 · 기록이 켜지면 다시 읽기(첫 load 는 제외) · 기간 전환 · 스토리 고르기 · ‹ › · 칩 · 핀 → 뷰어 · 가까운 핀 묶기 · 빈 · 실패 [다시 시도] · 다시 잠기면 시트 닫기 · 지도 종류: 기본값 단순은 OSM + 필터 · 시트에 다섯 종류 · 버튼 → 기본으로 바꾸고 저장(필터 없음) · 저장된 종류로 열림 · 설정에서 어둡게로 바꾸면 같은 타일에 다른 필터 · 지형은 OpenTopoMap(줌 17 · 출처) · 위성은 Esri World Imagery(z/y/x · 줌 18 · 출처) · 어느 종류도 키 · CARTO 주소 없음 |
+| `presentation/map/widget/track_map_test.dart` | `TrackMap` | 같은 이동선이면 선 좌표 재사용 · 바뀌면 다시 만듦 · 같은 기간에 새 점이 화면 밖이면 카메라를 다시 맞춤 · 화면 안이면 그대로 · 손으로 옮긴 뒤엔 따라가지 않음 · 위성은 밝은 · 어두운 테마 모두 더 밝고 진한 선 + 테두리 · 출처 표기 없음: 다섯 종류 모두 "©" · "flutter_map" · 타일 출처 이름이 없음 |
+| `presentation/map/page/map_tab_test.dart` | `MapTab` | 잠기면 PIN · 열면 읽기 · 처음 안내 · 켜기 실패 오류 스낵바 · 기록이 켜지면 다시 읽기(첫 load 는 제외) · 기간 전환 · 스토리 고르기 · ‹ › · 칩 · 핀 → 뷰어 · 가까운 핀 묶기 · 빈 · 실패 [다시 시도] · 다시 잠기면 시트 닫기 · 지도 종류: 기본값 단순은 OSM + 필터 · 시트에 다섯 종류 · 버튼 → 기본으로 바꾸고 저장(필터 없음) · 저장된 종류로 열림 · 설정에서 어둡게로 바꾸면 같은 타일에 다른 필터 · 지형은 OpenTopoMap(줌 17 · 출처 글자 없음) · 위성은 Esri World Imagery(z/y/x · 줌 18 · 출처 글자 없음) · 어느 종류도 키 · CARTO 주소 없음 |
 | `presentation/settings/page/map_settings_page_test.dart` | `MapSettingsPage` | 켜기 · 끄기 · 권한 행 · 배터리 · 보관 기간 · 모두 지우기(inbox → 저장소 순) · 지도 종류 행(지금 종류 · 고르면 저장 · 닫으면 그대로) · 권한 거부: 안내 · [설정 열기] · 다시 켜면 다시 묻기 · 항상 허용을 못 받으면 켜지 않음 · 묻기 전 이유 설명(취소면 묻지 않음 · 계속이면 묻기 · 이미 항상 허용이면 생략) |
 | `presentation/settings/open_settings_test.dart` | 앱 설정 › 지도 설정 | 잠금 화면을 거쳐 지도 설정이 열린다(지도 기록 cubit 을 다시 건다) |
 | `data/diary/drift_diary_repository_range_search_test.dart` | `locatedEntriesBetween` | 좌표 있는 기록만 · 양 끝 포함 오래된 순 · 휴지통 제외 · limit 은 좌표 있는 기록에 · 기본 1000 |
@@ -511,7 +512,7 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | L-QA1 | 지도 › 위치 기록 켜기 → 앱 사용 중 허용 → 항상 허용(설정 화면으로 이동) → 신체 활동 → 알림 | 이유가 먼저 설명되고 단계마다 넘어간다. 켜면 상시 알림 "위치 기록 중 · 평소"가 뜬다 | **부분 통과**(에뮬레이터 Android 17, 2026-11-14): 단계마다 넘어가고 위치 유형 포그라운드 서비스 · 상시 알림이 뜸. 설정 화면으로 가기 전 이유 설명은 그때 없었고 L47 로 넣음(다시 확인: 에뮬레이터, 2026-11-14) |
 | L-QA2 | 기록 켠 채 앱을 최근 앱에서 밀어 닫고 30분 걷기 → 앱 다시 열기 | 상시 알림이 그대로고, 지도에 그 동선이 보인다 | 대기 |
 | L-QA3 | 기록 켠 채 재부팅 → 앱을 열지 않고 이동 → 나중에 앱 열기 | 재부팅 직후 알림이 다시 뜨고, 이동한 구간이 기록돼 있다 | 대기 |
-| L-QA4 | 평소 모드로 하루 지낸 뒤 설정 › 배터리 | Life Tool 사용 비율을 기록한다(수치로 간격 · 정지 감지 조정 근거) | 대기 |
+| L-QA4 | 평소 모드로 하루 지낸 뒤 설정 › 배터리 | Life Log 사용 비율을 기록한다(수치로 간격 · 정지 감지 조정 근거) | 대기 |
 | L-QA5 | 지도 칩 "촘촘 기록" 켜고 걷기 → 끄기 | 선이 길을 따라가고(진하고 굵게) 알림이 "촘촘"으로 바뀐다. 끄면 성긴 점으로 돌아가고 알림이 "평소" | **부분 통과**(에뮬레이터, 2026-11-14, 가짜 경로 `geo fix`): 칩이 "촘촘 기록 중"으로 바뀌고 진한 선 · 광화문 11분 머문 곳(오늘 타임라인) · 한 달 자주 간 곳이 나옴. **발견 → 고침**: 새 경로가 화면 밖으로 나감(L43) · "1 visits"(L44). 실제 걷기 · 끄기는 기기에서 |
 | L-QA6 | 장소가 태그된 사진 일기를 쓴다 → 지도 하루 보기 → 핀 누르기 → 일기 잠그기 | 핀이 보이고(가까운 핀은 묶여 개수 배지) 누르면 뷰어가 열린다. 잠그면 지도가 가려진다 | 대기 |
 | L-QA7 | 평소 모드에서 책상에 폰을 두고 1시간 → 들고 걷기 | 그 사이 inbox 점이 늘지 않고(디버그 로그) 지도에는 머문 곳 하나로 보인다. 들고 걸으면 몇 분 안에 다시 점이 찍힌다 | 대기 |
@@ -579,6 +580,11 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | Q12 | 백업 복원(K4): `adb shell bmgr backupnow` → 재설치 → 복원 | 연결 행이 미연결이다(키 · `flutter_secure_storage` 설정 prefs 파일이 복원되지 않는다) | 대기 |
 | Q13 | 물어보기에서 크레딧 부족 · 모델 없음 오류를 만났을 때(K2 · K3) | 문구가 맞고 [설정 열기]로 연결 행이 glow 한다. 오류 본문의 `error.type` 이 가정한 값(`billing_error` · `not_found_error`)인지 | 대기 |
 | Q14 | 로고(K1) | 브랜드 가이드 확인 뒤 공식 로고로 교체, 그 전엔 모노그램 | 대기 |
+| R1 | 위치 기록을 켜 둔 폰에서 "지난주에 어디 갔어?" | `visited_places` 가 불리고 머문 곳 이름 · 시간으로 답한다 | 대기 |
+| R2 | 위치 기록을 한 번도 켜지 않은 폰에서 같은 질문 | 위치 기록이 꺼져 있다고 말하고 일기 장소로 답한다 | 대기 |
+| R3 | "요즘 자주 가는 곳은?" · "내 알람 몇 시야?" | `frequent_places` · `list_alarms` 로 답하고 알람 화면과 같다 | 대기 |
+| R4 | "내일 비 와?" · 비행기 모드에서 같은 질문 | 날씨 탭과 같은 예보로 답한다 · 받아 둔 예보면 그렇다고 말한다 | 대기 |
+| R5 | 이 버전으로 올린 뒤 첫 질문(전에 동의한 상태) | 위치가 들어간 동의 화면이 한 번 다시 뜬다 | 대기 |
 
 ### 모델 칩 · GPT (키 기획 ③ · ④)
 
@@ -608,6 +614,18 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | W4 | [내 기록 참고] 끄고 "지난주 일기 요약해줘" | 기록을 찾지 않고 볼 수 없다고 답한다 | 대기 |
 | W5 | 토글 끈 뒤 앱 재시작 | 꺼진 채로 열린다 | 대기 |
 | W6 | 검색을 여러 번 해야 하는 긴 질문 | `pause_turn` 이 나도 끊기지 않고 답이 이어진다 | 대기 |
+
+### 물어보기 앱바 정리
+
+키가 있는 상태(가짜 키로도 모델 목록을 못 받으면 볼 수 없다)에서 본다.
+
+| # | 하는 일 | 기대 | 상태 |
+|---|---|---|---|
+| AB1 | 물어보기 탭을 연다 | 본문 위 칩 줄이 없고, 앱바에 [내 기록 참고] · 모델 아이콘 · ⋮, 제목 아래 지금 모델 이름 | 대기 |
+| AB2 | [내 기록 참고]를 끄고 켠다 | 아이콘 모양 · 색이 바뀌고 스낵바, 길게 누르면 툴팁 "내 기록 참고 꺼짐/켜짐" | 대기 |
+| AB3 | 앱 재시작 | 토글이 마지막 상태로 열린다 | 대기 |
+| AB4 | 모델 아이콘 → 다른 모델 | 시트에 지금 모델 체크, 고르면 제목 아래 이름이 바뀐다 | 대기 |
+| AB5 | 답하는 중 | 토글 · 모델 버튼이 비활성 | 대기 |
 
 ### 진행 표시 · 지연 줄이기 (5단계 재측정)
 

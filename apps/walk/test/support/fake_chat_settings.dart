@@ -126,4 +126,15 @@ class FakeChatSettings implements ChatSettings {
   @override
   Future<void> setConsented(ChatVendor vendor) async =>
       consentedVendor = vendor;
+
+  ChatVendor? _draftConsented;
+
+  /// 따로 정하지 않으면 [consentedVendor] — 채팅 동의는 초안 범위를 품는다.
+  @override
+  ChatVendor? get draftConsentedVendor => _draftConsented ?? consentedVendor;
+  set draftConsentedVendor(ChatVendor? value) => _draftConsented = value;
+
+  @override
+  Future<void> setDraftConsented(ChatVendor vendor) async =>
+      _draftConsented = vendor;
 }

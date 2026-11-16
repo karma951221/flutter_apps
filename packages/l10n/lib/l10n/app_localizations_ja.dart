@@ -1341,7 +1341,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get commuteOpenSettingsTooltip => '通勤設定';
 
   @override
-  String get walkAppTitle => 'Life Tool';
+  String get walkAppTitle => 'Life Log';
 
   @override
   String get walkToday => '今日';
@@ -3122,7 +3122,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String walkChatSettingsNotice(String vendor) {
-    return '質問と、回答に必要な日記・写真・歩数・起床記録が接続した AI（$vendor）に送信されます。キーはこの端末の安全な保管領域にだけ保存されます。';
+    return '質問と、回答に必要な日記・写真・位置記録（滞在した場所の名前・時間）・歩数・アラーム・起床記録が接続した AI（$vendor）に送信されます。キーはこの端末の安全な保管領域にだけ保存されます。';
   }
 
   @override
@@ -3136,7 +3136,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String walkChatConsentNotice(String vendor) {
-    return '質問と、回答に必要な日記・写真・歩数・起床記録が接続した AI（$vendor）に送信されます。キーはこの端末の安全な保管領域にだけ保存されます。整理したWikiのタイトル・要約も質問ごとに送信されます。';
+    return '質問と、回答に必要な日記・写真・位置記録（滞在した場所の名前・時間）・歩数・アラーム・起床記録が接続した AI（$vendor）に送信されます。キーはこの端末の安全な保管領域にだけ保存されます。整理したWikiのタイトル・要約も質問ごとに送信されます。';
   }
 
   @override
@@ -3240,6 +3240,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatToolWakeRecords => 'アラーム記録を確認中';
 
   @override
+  String get walkChatToolVisitedPlaces => '滞在した場所を確認中';
+
+  @override
+  String get walkChatToolFrequentPlaces => 'よく行く場所を確認中';
+
+  @override
+  String get walkChatToolAlarms => 'アラーム設定を確認中';
+
+  @override
+  String get walkChatToolWeather => '天気を確認中';
+
+  @override
   String get walkChatToolReadWiki => 'Wikiを確認中';
 
   @override
@@ -3297,6 +3309,21 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String walkChatToolFoundWake(int count) {
     return '起床記録$count回';
+  }
+
+  @override
+  String walkChatToolFoundPlaces(int count) {
+    return '滞在場所$count件';
+  }
+
+  @override
+  String walkChatToolFoundFrequent(int count) {
+    return 'よく行く場所$count件';
+  }
+
+  @override
+  String walkChatToolFoundAlarms(int count) {
+    return 'アラーム$count件';
   }
 
   @override
@@ -3748,13 +3775,21 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatModelPickerTitle => 'モデルを選ぶ';
 
   @override
-  String get walkChatModelChipTooltip => 'モデルを変更';
+  String walkChatModelActionTooltip(String model) {
+    return 'モデルを変更 · 現在 $model';
+  }
 
   @override
-  String get walkChatUseRecords => '自分の記録を参照';
+  String get walkChatUseRecordsOn => '自分の記録を参照: オン';
 
   @override
-  String get walkChatUseRecordsTooltip => 'オンにすると日記・歩数・起床・ウィキを調べて答えます';
+  String get walkChatUseRecordsOff => '自分の記録を参照: オフ';
+
+  @override
+  String get walkChatUseRecordsTurnedOn => 'これから日記・歩数・起床・ウィキを調べて答えます';
+
+  @override
+  String get walkChatUseRecordsTurnedOff => 'これから記録を使わずに答えます';
 
   @override
   String get walkChatModelRecommended => 'おすすめ';

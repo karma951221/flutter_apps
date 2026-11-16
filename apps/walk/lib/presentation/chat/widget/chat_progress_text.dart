@@ -54,6 +54,10 @@ String _toolLabel(AppLocalizations l10n, String locale, StepTool step) {
     ChatToolKind.diaryIndex => l10n.walkChatToolDiaryIndex,
     ChatToolKind.dailySteps => l10n.walkChatToolDailySteps,
     ChatToolKind.wakeRecords => l10n.walkChatToolWakeRecords,
+    ChatToolKind.visitedPlaces => l10n.walkChatToolVisitedPlaces,
+    ChatToolKind.frequentPlaces => l10n.walkChatToolFrequentPlaces,
+    ChatToolKind.alarms => l10n.walkChatToolAlarms,
+    ChatToolKind.weather => l10n.walkChatToolWeather,
     ChatToolKind.wiki => l10n.walkChatToolReadWiki,
     ChatToolKind.webSearch => l10n.walkChatToolWebSearch,
     ChatToolKind.listFiles => l10n.walkChatToolListFiles,
@@ -177,11 +181,16 @@ String? _resultText(AppLocalizations l10n, StepTool step) {
     ChatToolKind.diaryIndex => l10n.walkChatToolFoundIndex(count),
     ChatToolKind.dailySteps => l10n.walkChatToolFoundSteps(count),
     ChatToolKind.wakeRecords => l10n.walkChatToolFoundWake(count),
+    ChatToolKind.visitedPlaces => l10n.walkChatToolFoundPlaces(count),
+    ChatToolKind.frequentPlaces => l10n.walkChatToolFoundFrequent(count),
+    ChatToolKind.alarms => l10n.walkChatToolFoundAlarms(count),
     ChatToolKind.wiki => l10n.walkChatToolFoundWiki(count),
     ChatToolKind.listFiles => l10n.walkChatToolFoundFiles(count),
     // 웹 검색은 결과를 세지 않는다 · 파일 읽기는 늘 한 건이라 이름 라벨 그대로 ·
     // 알 수 없는 도구는 개수 단위를 모른다 — 라벨 그대로.
     // 쓰기 도구는 위에서 다뤘다.
+    // 날씨는 개수가 없다 — 라벨 그대로.
+    ChatToolKind.weather ||
     ChatToolKind.webSearch ||
     ChatToolKind.readFile ||
     ChatToolKind.writeFile ||

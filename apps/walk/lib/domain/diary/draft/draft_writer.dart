@@ -103,7 +103,7 @@ class DraftWriter {
     }
     final vendor = _settings.connectedVendor;
     if (!hasKey || vendor == null) return const DraftAvailability.noKey();
-    if (_settings.consentedVendor != vendor) {
+    if (_settings.draftConsentedVendor != vendor) {
       return DraftAvailability.needsConsent(vendor);
     }
     return DraftAvailability.ready(vendor);
@@ -148,7 +148,7 @@ class DraftWriter {
       yield const DraftEvent.failed(ChatFailure.noKey);
       return;
     }
-    if (_settings.consentedVendor != vendor) {
+    if (_settings.draftConsentedVendor != vendor) {
       yield const DraftEvent.needsConsent();
       return;
     }

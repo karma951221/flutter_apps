@@ -174,4 +174,23 @@ void main() {
       });
     }
   });
+
+  // 개인용 앱이라 사용자 결정으로 출처 표기를 뺐다(2026-11-16). 배포 · 공개하면 다시 넣는다.
+  group('지도 출처 표기 없음', () {
+    for (final style in MapStyle.values) {
+      testWidgets('${style.name}: 출처 · flutter_map 글자가 없다', (tester) async {
+        await pump(tester, _track(37.5), style: style);
+
+        for (final text in [
+          '©',
+          'flutter_map',
+          'OpenStreetMap',
+          'OpenTopoMap',
+          'Esri',
+        ]) {
+          expect(find.textContaining(text), findsNothing, reason: text);
+        }
+      });
+    }
+  });
 }

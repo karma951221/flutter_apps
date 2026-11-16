@@ -590,7 +590,9 @@ void main() {
     expect(layer.tileBuilder, isNot(same(simple)));
   });
 
-  testWidgets('terrain uses OpenTopoMap with its attribution', (tester) async {
+  testWidgets('terrain uses OpenTopoMap without an attribution label', (
+    tester,
+  ) async {
     mapStyle.style = MapStyle.terrain;
     await pump(tester, state: MapViewState.ready(_data()));
 
@@ -599,11 +601,11 @@ void main() {
     expect(layer.subdomains, isNotEmpty);
     expect(layer.maxNativeZoom, 17);
     expect(layer.tileBuilder, isNull);
-    expect(find.textContaining('OpenTopoMap'), findsOneWidget);
+    expect(find.textContaining('OpenTopoMap'), findsNothing);
   });
 
   testWidgets(
-    'satellite uses Esri World Imagery (z/y/x) with its attribution',
+    'satellite uses Esri World Imagery (z/y/x) without an attribution label',
     (tester) async {
       mapStyle.style = MapStyle.satellite;
       await pump(tester, state: MapViewState.ready(_data()));
@@ -615,7 +617,7 @@ void main() {
       );
       expect(layer.maxNativeZoom, 18);
       expect(layer.tileBuilder, isNull);
-      expect(find.textContaining('Esri'), findsOneWidget);
+      expect(find.textContaining('Esri'), findsNothing);
     },
   );
 

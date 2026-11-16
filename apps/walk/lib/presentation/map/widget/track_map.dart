@@ -48,7 +48,7 @@ class TrackMap extends StatefulWidget {
   final ValueChanged<DiaryEntry> onOpenEntry;
   final bool faint;
 
-  /// 지도 아래쪽을 덮는 시트 높이. 카메라 맞춤과 출처 표시를 그만큼 위로 올린다.
+  /// 지도 아래쪽을 덮는 시트 높이. 카메라 맞춤을 그만큼 위로 올린다.
   final double bottomInset;
 
   /// 바탕 타일 모양.
@@ -221,15 +221,6 @@ class TrackMapState extends State<TrackMap> {
     MapStyle.simple || MapStyle.standard || MapStyle.dark => 19,
   };
 
-  /// 앞에 © 가 붙는다. 좁은 폰에서 한 줄에 들어가게 짧게.
-  static String _attributionOf(MapStyle style) => switch (style) {
-    MapStyle.simple ||
-    MapStyle.standard ||
-    MapStyle.dark => 'OpenStreetMap contributors',
-    MapStyle.terrain => 'OpenStreetMap · OpenTopoMap (CC-BY-SA)',
-    MapStyle.satellite => 'Esri · Maxar · Earthstar Geographics',
-  };
-
   /// 단순: 채도를 30% 로 줄이고 흰색과 35% 섞는다. 지도 위 동선 색이 바탕보다 진해 보이게.
   static final _simpleFilter = ColorFilter.matrix(_mutedMatrix(0.3, 0.35));
 
@@ -372,12 +363,6 @@ class TrackMapState extends State<TrackMap> {
           ],
         ),
         EntryPinLayer(entries: widget.entries, onOpen: widget.onOpenEntry),
-        Padding(
-          padding: EdgeInsets.only(bottom: widget.bottomInset),
-          child: SimpleAttributionWidget(
-            source: Text(_attributionOf(widget.style)),
-          ),
-        ),
       ],
     );
   }
