@@ -47,6 +47,9 @@ class LocationTools {
   static const _chunkDays = 31;
   static const _maxStays = 150;
   static const _maxLookups = 20;
+
+  /// 한 번 부를 때 새 이름 조회에 쓰는 시간. 넘기면 나머지는 캐시에 있는 이름만.
+  static const _lookupBudget = Duration(seconds: 10);
   static const _frequentLimit = 10;
 
   static const _date = {'type': 'string', 'description': 'YYYY-MM-DD (로컬 날짜)'};
@@ -57,7 +60,7 @@ class LocationTools {
       description:
           '위치 기록에서 기간 안에 머문 곳(10분 이상)을 시간순으로 본다. 양 끝 날짜를 포함하고 '
           '최대 31일, 최근 것부터 150곳까지. 장소 이름을 모르면 place 가 null 이다. '
-          'recording 은 지금 위치 기록 상태(on · off · blocked).',
+          'recording 은 지금 위치 기록 상태(on · off · blocked · unknown).',
       parameters: _range,
     ),
     ToolSpec(
@@ -228,13 +231,15 @@ class LocationTools {
   ) async {
     final names = <String, String?>{};
     var lookups = 0;
+    // Geocoder 가 응답하지 않으면 한 번에 8초씩 걸린다 — 새 조회 전체에 시간 예산을 둔다.
+    final deadline = _clock.now().add(_lookupBudget);
     for (final s in spots) {
       final key = gridKey(s.lat, s.lng);
       if (names.containsKey(key)) continue;
       final cached = await _repository.placeName(key);
       if (cached != null) {
         names[key] = cached;
-      } else if (lookups < _maxLookups) {
+      } else if (lookups < _maxLookups && _clock.now().isBefore(deadline)) {
         lookups++;
         names[key] = await _namer.nameFor(s.lat, s.lng);
       } else {

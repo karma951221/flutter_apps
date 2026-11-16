@@ -21,6 +21,15 @@ class _Recorder extends Mock implements LocationRecorder {}
 
 class _Namer extends Mock implements StayNamer {}
 
+/// now() 를 부를 때마다 [step] 씩 흐르는 시계 — 느린 Geocoder 를 흉내 낸다.
+class _SteppingClock extends Clock {
+  _SteppingClock(this.value, this.step);
+  DateTime value;
+  final Duration step;
+  @override
+  DateTime now() => value = value.add(step);
+}
+
 class _FixedClock extends Clock {
   const _FixedClock(this.value);
   final DateTime value;
@@ -181,6 +190,36 @@ void main() {
     expect([
       for (final s in stays.skip(5)) (s as Map)['place'],
     ], everyElement('회사'));
+  });
+
+  test('새 이름 조회는 10초 예산을 넘기면 멈추고 나머지는 null', () async {
+    final slow = LocationTools(
+      repo,
+      sync,
+      recorder,
+      namer,
+      _SteppingClock(DateTime(2026, 11, 16, 12), const Duration(seconds: 4)),
+    );
+    points = [
+      for (var i = 0; i < 6; i++)
+        ..._stay(
+          DateTime(2026, 11, 14, 0, 0).add(Duration(minutes: 30 * i)),
+          10,
+          lat: 37 + i * 0.01,
+        ),
+    ];
+    final r = await slow.run('visited_places', {
+      'from': '2026-11-14',
+      'to': '2026-11-14',
+    });
+    final stays = (jsonDecode(r.json) as Map)['stays'] as List;
+    expect(stays, hasLength(6));
+    final asked = verify(() => namer.nameFor(any(), any())).callCount;
+    expect(asked, inInclusiveRange(1, 3));
+    expect(
+      stays.where((s) => (s as Map)['place'] == null),
+      hasLength(6 - asked),
+    );
   });
 
   test('머문 곳이 150개를 넘으면 최근 150개와 truncated', () async {
