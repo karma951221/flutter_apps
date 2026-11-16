@@ -39,8 +39,9 @@ class DraftCubit extends Cubit<DraftState> {
   /// 초안 모델이 사진을 볼 수 있는가.
   bool get canSeePhotos => _writer.canSeePhotos;
 
-  /// [vendor] 로의 전송 동의를 기록한다(물어보기와 같은 `consentedVendor`).
-  Future<void> consent(ChatVendor vendor) => _settings.setConsented(vendor);
+  /// [vendor] 로의 초안 전송 동의를 기록한다. 초안 문구엔 위치 기록이 없어 물어보기 동의는 아니다.
+  Future<void> consent(ChatVendor vendor) =>
+      _settings.setDraftConsented(vendor);
 
   Future<void> setIncludePhotos(bool on) async {
     emit(state.copyWith(includePhotos: on));

@@ -212,6 +212,16 @@ void main() {
       );
     });
 
+    test('초안 범위 동의만 있어도 쓴다(채팅 동의는 위치까지라 따로)', () async {
+      settings
+        ..consentedVendor = null
+        ..draftConsentedVendor = ChatVendor.anthropic;
+      expect(
+        await writerOf(_FakeModel([])).availability(),
+        isNot(const DraftAvailability.needsConsent(ChatVendor.anthropic)),
+      );
+    });
+
     test('키와 동의가 있으면 ready(연결 벤더)', () async {
       expect(
         await writerOf(_FakeModel([])).availability(),
