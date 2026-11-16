@@ -3,7 +3,7 @@ import 'package:l10n/l10n.dart';
 import '../../../domain/backup/backup_area_id.dart';
 import '../../../domain/backup/backup_failure.dart';
 import '../../../domain/backup/restore_notice.dart';
-import '../../settings/widget/diary_storage_section.dart';
+import '../../common/format_bytes.dart';
 import '../cubit/backup_state.dart';
 
 /// 백업 화면 · 시트가 함께 쓰는 문구.
@@ -46,7 +46,7 @@ extension BackupLabels on AppLocalizations {
       _ => null,
     };
     if (text == null || bytes == null || bytes < 1024 * 1024) return text;
-    return walkBackupSizeSuffix(text, DiaryStorageSection.formatBytes(bytes));
+    return walkBackupSizeSuffix(text, formatBytes(bytes));
   }
 
   String backupFailure(BackupFailure failure) => switch (failure) {

@@ -5,6 +5,7 @@ import 'package:l10n/l10n.dart';
 
 import '../../../domain/diary/entity/diary_usage.dart';
 import '../../../domain/diary/entity/trash_retention.dart';
+import '../../common/format_bytes.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/cubit/diary_lock_state.dart';
 import '../cubit/diary_settings_cubit.dart';
@@ -102,17 +103,6 @@ class DiaryStorageSection extends StatelessWidget {
       ),
     ],
   );
-
-  /// 1024 단위. B · KB 는 정수, MB 부터 소수점 한 자리("1.2GB").
-  static String formatBytes(int bytes) {
-    const kb = 1024;
-    const mb = kb * 1024;
-    const gb = mb * 1024;
-    if (bytes >= gb) return '${(bytes / gb).toStringAsFixed(1)}GB';
-    if (bytes >= mb) return '${(bytes / mb).toStringAsFixed(1)}MB';
-    if (bytes >= kb) return '${(bytes / kb).toStringAsFixed(0)}KB';
-    return '${bytes}B';
-  }
 
   static String _retentionLabel(AppLocalizations l10n, TrashRetention r) =>
       switch (r) {

@@ -33,7 +33,6 @@ import '../../data/location/database/location_database.dart';
 import '../../domain/alarm/permission/alarm_permissions.dart';
 import '../../domain/alarm/usecase/alarm_use_case.dart';
 import '../../domain/backup/backup_area_source.dart';
-import '../../domain/backup/backup_preferences.dart';
 import '../../domain/backup/backup_service.dart';
 import '../../domain/chat/chat_settings.dart';
 import '../../domain/chat/chat_trace.dart';
@@ -164,14 +163,12 @@ abstract class RegisterModule {
     @Named('appDocs') Directory docs,
     @Named('appCache') Directory cache,
     Clock clock,
-    BackupPreferences preferences,
   ) => DefaultBackupService(
     areas: areas,
     appDocs: docs,
     cache: cache,
     appVersion: appVersion,
     clock: clock,
-    preferences: preferences,
   );
 
   /// 이 앱은 `CorePackageModule` 을 쓰지 않아 `IdGenerator` 와 그 재료도 직접

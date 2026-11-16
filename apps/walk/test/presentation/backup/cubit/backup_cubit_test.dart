@@ -11,6 +11,7 @@ import 'package:walk/domain/backup/backup_service.dart';
 import 'package:walk/domain/backup/restore_notice.dart';
 import 'package:walk/presentation/backup/cubit/backup_cubit.dart';
 import 'package:walk/presentation/backup/cubit/backup_state.dart';
+import 'package:walk/presentation/lock/media_pick_guard.dart';
 
 import '../../../support/diary_fixtures.dart';
 import '../backup_fakes.dart';
@@ -22,6 +23,7 @@ void main() {
   late MockBackupFileProbe probe;
   late FakeBackupPreferences prefs;
   late MutableClock clock;
+  late MediaPickGuard guard;
 
   final inspected = InspectedBackup(
     manifest: BackupManifest(
@@ -51,13 +53,15 @@ void main() {
     probe = MockBackupFileProbe();
     prefs = FakeBackupPreferences();
     clock = MutableClock(DateTime(2026, 11, 17, 9));
+    guard = MediaPickGuard();
     when(service.hasUndoPoint).thenAnswer((_) async => false);
     when(service.needsRecovery).thenAnswer((_) async => false);
   });
 
   tearDown(() => tmp.deleteSync(recursive: true));
 
-  BackupCubit build() => BackupCubit(service, files, probe, prefs, clock);
+  BackupCubit build() =>
+      BackupCubit(service, files, probe, prefs, clock, guard);
 
   File exportedFile() =>
       File('${tmp.path}/lifelog-backup-20261117-0900.lifelog')
@@ -112,11 +116,11 @@ void main() {
       setUp: () {
         when(
           () => service.export(any(), password: any(named: 'password')),
-        ).thenAnswer((_) async {
-          prefs.lastAt = clock.now();
-          return Ok(exportedFile());
-        });
-        when(() => files.saveAs(any(), any())).thenAnswer((_) async => true);
+        ).thenAnswer((_) async => Ok(exportedFile()));
+        // 저장 위치 고르기로 앱을 떠나 있는 동안 일기를 다시 잠그지 않는다.
+        when(
+          () => files.saveAs(any(), any()),
+        ).thenAnswer((_) async => guard.active);
       },
       build: build,
       act: (c) => c.export({BackupAreaId.diary}, password: 'password1'),
@@ -153,6 +157,7 @@ void main() {
         const BackupState.working(BackupStep.saving),
         const BackupState.idle(),
       ],
+      verify: (_) => expect(prefs.lastAt, isNull),
     );
 
     blocTest<BackupCubit, BackupState>(
@@ -187,12 +192,41 @@ void main() {
         const BackupState.failed(BackupFailure.io),
         const BackupState.idle(),
       ],
+      verify: (_) => expect(prefs.lastAt, isNull),
     );
   });
 
   group('restore', () {
     File opened() =>
         File('${tmp.path}/picked.zip')..writeAsBytesSync(const [1, 2, 3]);
+
+    blocTest<BackupCubit, BackupState>(
+      '파일 고르기 동안 일기를 다시 잠그지 않는다(가드가 켜져 있다)',
+      setUp: () {
+        when(files.open).thenAnswer((_) async {
+          expect(guard.active, isTrue);
+          return null;
+        });
+      },
+      build: build,
+      act: (c) => c.openBackup(),
+      expect: () => const <BackupState>[],
+      verify: (_) {
+        verify(files.open).called(1);
+        expect(guard.active, isFalse);
+      },
+    );
+
+    blocTest<BackupCubit, BackupState>(
+      '파일 고르기 채널 오류(BackupException 아님)는 io 실패',
+      setUp: () => when(files.open).thenThrow(StateError('channel')),
+      build: build,
+      act: (c) => c.openBackup(),
+      expect: () => [
+        const BackupState.failed(BackupFailure.io),
+        const BackupState.idle(),
+      ],
+    );
 
     blocTest<BackupCubit, BackupState>(
       '파일 고르기 취소 — 아무 일 없음',

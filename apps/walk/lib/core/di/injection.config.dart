@@ -711,7 +711,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i497.Directory>(instanceName: 'appDocs'),
         gh<_i497.Directory>(instanceName: 'appCache'),
         gh<_i494.Clock>(),
-        gh<_i625.BackupPreferences>(),
       ),
     );
     gh.factory<_i221.BackupCubit>(
@@ -721,6 +720,7 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i925.BackupFileProbe>(),
         gh<_i625.BackupPreferences>(),
         gh<_i494.Clock>(),
+        gh<_i488.MediaPickGuard>(),
       ),
     );
     return this;

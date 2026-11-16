@@ -137,7 +137,6 @@ class _Device {
     cache: cache,
     appVersion: '1.0.0+1',
     clock: clock,
-    preferences: PrefsBackupPreferences(prefs),
     cipher: BackupCipher(iterations: 1000),
     freeBytes: freeBytes,
   );
@@ -248,6 +247,7 @@ class _FakeArea implements BackupAreaSource {
 
   final List<String> log;
   String value = 'initial';
+
   /// 다음 [replace] 한 번이 아무것도 바꾸기 전에 실패한다.
   bool failReplace = false;
 
@@ -865,24 +865,18 @@ void main() {
     expect(staging().existsSync(), isFalse);
   });
 
-  test('lastAt written only on successful export', () async {
-    final d = await device();
-    final prefs = PrefsBackupPreferences(d.prefs);
-    final log = <String>[];
-    final areas = [_FakeArea(BackupAreaId.diary, log)];
+  test(
+    'export does not write lastAt — the screen records it after saving',
+    () async {
+      final d = await device();
+      final prefs = PrefsBackupPreferences(d.prefs);
+      final areas = [_FakeArea(BackupAreaId.diary, <String>[])];
 
-    _failureOf(
-      await d.service(areas: areas, freeBytes: () async => 0).export({
-        BackupAreaId.diary,
-      }),
-    );
-    expect(prefs.lastAt, isNull);
-    expect(cache.listSync(recursive: true).whereType<File>(), isEmpty);
+      _ok(await d.service(areas: areas).export({BackupAreaId.diary}));
 
-    d.clock.value = DateTime(2026, 11, 17, 8, 5);
-    _ok(await d.service(areas: areas).export({BackupAreaId.diary}));
-    expect(prefs.lastAt, DateTime(2026, 11, 17, 8, 5));
-  });
+      expect(prefs.lastAt, isNull);
+    },
+  );
 
   test('preview gives counts and bytes per area', () async {
     final d = await device();

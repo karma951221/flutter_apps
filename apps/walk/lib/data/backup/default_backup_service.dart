@@ -9,7 +9,6 @@ import '../../domain/backup/backup_area_id.dart';
 import '../../domain/backup/backup_area_source.dart';
 import '../../domain/backup/backup_failure.dart';
 import '../../domain/backup/backup_manifest.dart';
-import '../../domain/backup/backup_preferences.dart';
 import '../../domain/backup/backup_service.dart';
 import '../../domain/backup/restore_notice.dart';
 import 'archive/backup_archive.dart';
@@ -33,14 +32,12 @@ class DefaultBackupService implements BackupService {
     required Directory cache,
     required String appVersion,
     required Clock clock,
-    required BackupPreferences preferences,
     BackupCipher? cipher,
     BackupArchive archive = const BackupArchive(),
     Future<int?> Function()? freeBytes,
   }) : _areas = {for (final a in areas) a.id: a},
        _appVersion = appVersion,
        _clock = clock,
-       _preferences = preferences,
        _cipher = cipher ?? BackupCipher(),
        _archive = archive,
        _freeBytes = freeBytes,
@@ -51,7 +48,6 @@ class DefaultBackupService implements BackupService {
   final Map<BackupAreaId, BackupAreaSource> _areas;
   final String _appVersion;
   final Clock _clock;
-  final BackupPreferences _preferences;
   final BackupCipher _cipher;
   final BackupArchive _archive;
 
@@ -126,7 +122,6 @@ class DefaultBackupService implements BackupService {
         await _encrypt(_cipher, zip, out, password);
         await zip.delete();
       }
-      await _preferences.setLastAt(now);
       return out;
     });
     if (result is Err) await _deleteDirQuietly(_exportDir);

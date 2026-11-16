@@ -11,6 +11,7 @@ import '../../../domain/backup/backup_files.dart';
 import '../../../domain/backup/backup_preferences.dart';
 import '../../../domain/backup/backup_service.dart';
 import '../../../domain/backup/restore_notice.dart';
+import '../../lock/media_pick_guard.dart';
 import 'backup_state.dart';
 
 /// 백업 화면 — 내보내기(만들기 → 저장 위치) · 복원(고르기 → 비밀번호 → 검사 → 영역 → 복원) ·
@@ -24,6 +25,7 @@ class BackupCubit extends Cubit<BackupState> {
     this._probe,
     this._preferences,
     this._clock,
+    this._pickGuard,
   ) : super(const BackupState.idle());
 
   /// 마지막 백업이 이보다 오래되면 "오래됨".
@@ -34,6 +36,10 @@ class BackupCubit extends Cubit<BackupState> {
   final BackupFileProbe _probe;
   final BackupPreferences _preferences;
   final Clock _clock;
+
+  /// 저장 위치 · 문서 고르기 창으로 앱을 떠나 있는 동안 일기를 다시 잠그지 않게 한다 —
+  /// 잠기면 화면이 고른 것을 버려 내보내기 · 복원을 끝낼 수 없다.
+  final MediaPickGuard _pickGuard;
 
   /// 고른 백업 파일의 앱 캐시 사본. 검사가 끝나거나 그만두면 지운다.
   File? _opened;
@@ -64,6 +70,7 @@ class BackupCubit extends Cubit<BackupState> {
   }
 
   /// 고른 영역으로 백업 파일을 만들고 저장 위치를 고르게 한다. 저장을 취소하면 알리지 않는다.
+  /// 마지막 백업 시각은 저장까지 마쳤을 때만 남긴다.
   Future<void> export(Set<BackupAreaId> areas, {String? password}) async {
     emit(const BackupState.working(BackupStep.exporting));
     final made = await _service.export(areas, password: password);
@@ -75,11 +82,16 @@ class BackupCubit extends Cubit<BackupState> {
         try {
           emit(const BackupState.working(BackupStep.saving));
           final bytes = await file.length();
-          final saved = await _files.saveAs(file, _basename(file));
-          if (saved) emit(BackupState.exported(bytes));
+          final saved = await _pickGuard.run(
+            () => _files.saveAs(file, _basename(file)),
+          );
+          if (saved) {
+            await _preferences.setLastAt(_clock.now());
+            emit(BackupState.exported(bytes));
+          }
         } on BackupException catch (e) {
           emit(BackupState.failed(e.failure));
-        } on FileSystemException {
+        } on Object {
           emit(const BackupState.failed(BackupFailure.io));
         } finally {
           await _deleteQuietly(file);
@@ -92,9 +104,11 @@ class BackupCubit extends Cubit<BackupState> {
   Future<void> openBackup() async {
     final File? file;
     try {
-      file = await _files.open();
-    } on BackupException catch (e) {
-      emit(BackupState.failed(e.failure));
+      file = await _pickGuard.run(_files.open);
+    } on Object catch (e) {
+      emit(
+        BackupState.failed(e is BackupException ? e.failure : BackupFailure.io),
+      );
       await load();
       return;
     }

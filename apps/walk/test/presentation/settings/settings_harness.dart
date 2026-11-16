@@ -111,6 +111,9 @@ class SettingsHarness {
   final locationAccess = MockBackgroundLocationAccess();
   final locationPrefs = MockLocationPreferences();
   final locations = MockLocationRepository();
+
+  /// 셸 잠금 cubit 과 함께 쓰는 고르기 가드 — 시스템 고르기 창 동안 다시 잠그지 않는다.
+  final pickGuard = MediaPickGuard();
   late PrefsLockRepository lockRepo;
   late DiaryPreferences diaryPrefs;
   late FakeMapStylePreferences mapStylePrefs;
@@ -173,12 +176,8 @@ class SettingsHarness {
         MapStyleCubit(mapStylePrefs = FakeMapStylePreferences()),
         dispose: (c) => c.close(),
       );
-    diaryLock = DiaryLockCubit(
-      lockRepo,
-      FakeDeviceAuth(),
-      clock,
-      MediaPickGuard(),
-    )..start();
+    diaryLock = DiaryLockCubit(lockRepo, FakeDeviceAuth(), clock, pickGuard)
+      ..start();
     diarySettings = DiarySettingsCubit(lockRepo, diaryPrefs, diaryRepo);
     when(notification.check).thenAnswer((_) async => PermissionStatus.granted);
     when(exactAlarm.check).thenAnswer((_) async => PermissionStatus.denied);

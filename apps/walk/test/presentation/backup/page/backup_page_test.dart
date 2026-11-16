@@ -10,6 +10,7 @@ import 'package:walk/domain/backup/backup_failure.dart';
 import 'package:walk/domain/backup/backup_manifest.dart';
 import 'package:walk/domain/backup/backup_service.dart';
 import 'package:walk/domain/backup/restore_notice.dart';
+import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/presentation/backup/cubit/backup_cubit.dart';
 import 'package:walk/presentation/backup/page/backup_page.dart';
 
@@ -62,7 +63,14 @@ void main() {
     when(service.preview).thenAnswer((_) async => const {});
     when(files.restartApp).thenAnswer((_) async {});
     getIt.registerFactory<BackupCubit>(
-      () => BackupCubit(service, files, probe, prefs, getIt<Clock>()),
+      () => BackupCubit(
+        service,
+        files,
+        probe,
+        prefs,
+        getIt<Clock>(),
+        h.pickGuard,
+      ),
     );
   });
 
@@ -210,6 +218,39 @@ void main() {
     await tester.tap(find.text('다시 시작'));
     await settle(tester);
     verify(files.restartApp).called(1);
+  });
+
+  testWidgets('파일 고르기 창으로 앱을 떠났다 와도(바로 잠금) 복원을 끝까지 한다', (tester) async {
+    // 잠금은 켜 두고(바로 다시 잠금) 지금은 풀린 채.
+    await h.lockRepo.saveConfig(
+      const LockConfig(enabled: true, relockDelay: RelockDelay.immediate),
+    );
+    final picked = File('${tmp.path}/picked.zip')..writeAsBytesSync([1]);
+    when(files.open).thenAnswer((_) async {
+      // 문서 고르기 창 — 앱이 백그라운드로 갔다 돌아온다.
+      h.diaryLock
+        ..onPaused()
+        ..onResumed();
+      return picked;
+    });
+    when(() => probe.isEncrypted(any())).thenAnswer((_) async => false);
+    when(
+      () => service.inspect(any(), password: any(named: 'password')),
+    ).thenAnswer((_) async => Ok(inspected));
+    when(
+      () => service.restore(any(), any()),
+    ).thenAnswer((_) async => const Ok({}));
+    await h.pump(tester, const BackupPage());
+
+    await tester.tap(find.byKey(restoreRow));
+    await settle(tester);
+    await tester.tap(find.byKey(const Key('backup-restore-areas-confirm')));
+    await settle(tester);
+    await tester.tap(find.text('복원').last);
+    await settle(tester);
+
+    verify(() => service.restore(inspected, {BackupAreaId.diary})).called(1);
+    expect(find.text('복원을 마쳤어요'), findsOneWidget);
   });
 
   testWidgets('복원 확인에서 취소하면 작업 폴더를 지운다', (tester) async {

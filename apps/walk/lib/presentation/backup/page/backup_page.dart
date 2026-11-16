@@ -5,9 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/backup/restore_notice.dart';
+import '../../common/format_bytes.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/cubit/diary_lock_state.dart';
-import '../../settings/widget/diary_storage_section.dart';
 import '../cubit/backup_cubit.dart';
 import '../cubit/backup_state.dart';
 import '../widget/backup_area_labels.dart';
@@ -58,9 +58,7 @@ class _BackupView extends StatelessWidget {
       case BackupExported(:final bytes):
         AppSnackBar.show(
           context,
-          message: l10n.walkBackupExported(
-            DiaryStorageSection.formatBytes(bytes),
-          ),
+          message: l10n.walkBackupExported(formatBytes(bytes)),
           type: AppSnackBarType.success,
         );
       case BackupFailed(:final failure, needsRestart: false):

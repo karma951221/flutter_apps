@@ -15,7 +15,7 @@ abstract interface class BackupService {
   Future<Map<BackupAreaId, AreaPreview>> preview();
 
   /// 고른 영역을 담은 백업 파일을 앱 캐시에 만든다. [password] 가 있으면 암호화(`.lifelog`).
-  /// 성공하면 마지막 백업 시각을 남긴다.
+  /// 마지막 백업 시각은 남기지 않는다 — 저장 위치까지 마친 화면이 남긴다.
   Future<Result<File>> export(Set<BackupAreaId> areas, {String? password});
 
   /// [file] 을 작업 폴더에 풀고 검증한다. 지금 데이터에는 손대지 않는다.
