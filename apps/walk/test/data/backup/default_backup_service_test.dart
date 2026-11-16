@@ -864,6 +864,41 @@ void main() {
     });
 
     test(
+      'an undeletable leftover trash never blocks restore or undo',
+      () async {
+        final d = await device(prefs: _areaPrefs);
+        await d.seed();
+        // 지울 수 없는 버린 폴더가 남아 있다(권한 문제 등).
+        Directory(
+          '${docs.path}/restore_undo.trash/settings',
+        ).createSync(recursive: true);
+        Future<void> stubborn(Directory dir) async {
+          if (dir.path.split('/').last.contains('trash')) {
+            throw const FileSystemException('busy');
+          }
+          await dir.delete(recursive: true);
+        }
+
+        final service = d.service(deleteTree: stubborn);
+        final file = _ok(
+          await service.export({BackupAreaId.settings, BackupAreaId.location}),
+        );
+        await d.prefs.setString('walk.themeMode', 'light');
+        final beforeRestore = await d.snapshot();
+        for (var i = 0; i < 2; i++) {
+          _ok(
+            await service.restore(_ok(await service.inspect(file)), {
+              BackupAreaId.settings,
+              BackupAreaId.location,
+            }),
+          );
+          _ok(await service.undo());
+          expect(await d.snapshot(), beforeRestore);
+        }
+      },
+    );
+
+    test(
       'unreadable undo area is skipped so recovery still finishes',
       () async {
         final d = await device(prefs: _areaPrefs);

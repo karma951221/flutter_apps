@@ -23,7 +23,7 @@ import 'crypto/backup_cipher.dart';
 /// - `restore_undo/` — 복원 전 데이터(되돌리기 지점, `undo.json` 이 다 쓴 표시).
 ///   `in_progress.json` 이 있으면 복원 · 되돌리기 도중이다 — 시작 때 되돌리기 지점으로 마저 되돌린다.
 ///   되돌리기 지점은 한 번 쓰면(되돌리기 · 실패 롤백 · 시작 복구) 없어진다.
-/// - `restore_undo.tmp/` — 만드는 중인 되돌리기 지점, `restore_undo.trash/` — 버린 지점.
+/// - `restore_undo.tmp/` — 만드는 중인 되돌리기 지점, `restore_undo.trash-*/` — 버린 지점.
 ///   폴더 지우기는 원자적이지 않으므로 이름 바꾸기를 커밋 지점으로 쓴다.
 ///
 /// 압축 · 해시는 [Isolate.run] 으로, 암호화와 DB 를 만지는 영역 일은 이 isolate 에서 한다.
@@ -65,8 +65,15 @@ class DefaultBackupService implements BackupService {
   final Directory _undo;
   final Directory _exportDir;
 
-  /// 버린 되돌리기 지점(지우는 중). 시작 때 남아 있으면 지운다.
-  Directory get _undoTrash => Directory('${_undo.path}.trash');
+  /// 버린 폴더 이름에 붙이는 고유 꼬리. 지울 수 없는 지난 찌꺼기와 겹치지 않게 한다 — 겹치면
+  /// 이름 바꾸기가 실패해 버리기 · 되돌리기가 계속 막힌다.
+  var _trashSeq = 0;
+  String _trashSuffix() =>
+      '${DateTime.now().microsecondsSinceEpoch}-${_trashSeq++}';
+
+  /// 버린 되돌리기 지점(지우는 중) 이름의 앞부분. 시작 때 남아 있으면 지운다.
+  String get _undoTrashPrefix =>
+      '${_undo.uri.pathSegments.lastWhere((s) => s.isNotEmpty)}.trash';
 
   /// 만드는 중인 되돌리기 지점. 다 쓰면 `restore_undo` 로 이름을 바꾼다.
   Directory get _undoBuilding => Directory('${_undo.path}.tmp');
@@ -315,7 +322,7 @@ class DefaultBackupService implements BackupService {
     }
     await _deleteDirQuietly(_staging);
     // 지우다 죽어 남은 버린 지점 · 다 만들지 못한 지점.
-    await _deleteDirQuietly(_undoTrash);
+    await _deleteLeftoverTrash();
     await _deleteDirQuietly(_undoBuilding);
   }
 
@@ -335,14 +342,33 @@ class DefaultBackupService implements BackupService {
     }
   }
 
-  /// 되돌리기 지점을 통째로 버린다. `restore_undo` → `restore_undo.trash` 이름 바꾸기가 커밋
+  /// 되돌리기 지점을 통째로 버린다. `restore_undo` → `restore_undo.trash-<고유>` 이름 바꾸기가 커밋
   /// 지점이다 — 지우다 죽어도 표시 파일(`in_progress.json` · `undo.json`)과 반쯤 지운 영역
   /// 폴더가 함께 남지 않고, 남은 `.trash` 는 다음 시작 때 지운다.
   Future<void> _discardUndo() async {
     if (!await _undo.exists()) return;
-    if (await _undoTrash.exists()) await _deleteTree(_undoTrash);
-    await _undo.rename(_undoTrash.path);
-    await _deleteTrash(_undoTrash);
+    final trash = Directory(
+      '${_undo.parent.path}/$_undoTrashPrefix-${_trashSuffix()}',
+    );
+    await _undo.rename(trash.path);
+    await _deleteTrash(trash);
+  }
+
+  /// 문서 폴더의 `restore_undo.trash*` 를 모두 지운다(실패는 넘어간다).
+  Future<void> _deleteLeftoverTrash() async {
+    try {
+      if (!await _undo.parent.exists()) return;
+      await for (final e in _undo.parent.list(followLinks: false)) {
+        if (e is Directory &&
+            e.uri.pathSegments
+                .lastWhere((s) => s.isNotEmpty)
+                .startsWith(_undoTrashPrefix)) {
+          await _deleteDirQuietly(e);
+        }
+      }
+    } on FileSystemException {
+      // 다음 시작 때 다시 한다.
+    }
   }
 
   /// 이미 버린(이름을 바꾼) 폴더를 지운다. 실패해도 데이터는 끝난 상태이므로 남기고 넘어간다.
@@ -406,8 +432,9 @@ class DefaultBackupService implements BackupService {
   }
 
   Future<void> _trashArea(Directory dir, BackupAreaId id) async {
-    final trash = Directory('${_undo.path}/.trash-${id.name}');
-    if (await trash.exists()) await _deleteTree(trash);
+    final trash = Directory(
+      '${_undo.path}/.trash-${id.name}-${_trashSuffix()}',
+    );
     await dir.rename(trash.path);
     await _deleteTrash(trash);
   }
