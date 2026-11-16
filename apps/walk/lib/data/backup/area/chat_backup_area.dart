@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -9,18 +8,20 @@ import '../../../domain/backup/backup_area_source.dart';
 import '../../../domain/backup/backup_failure.dart';
 import '../../chat/database/chat_database.dart';
 import '../../chat/prefs_chat_history_settings.dart';
+import 'area_io.dart';
 import 'dir_swap.dart';
 import 'drift_rows.dart';
+import 'prefs_snapshot.dart';
 
 const _dataFile = 'conversations.json';
 const _prefsFile = 'prefs.json';
 const _workspace = 'workspace';
 
 /// 대화 설정 중 백업에 담는 키. 동의 · 키 상태 · 모델 캐시(`chat.*`)와 위키 설정은 담지 않는다.
-const _prefKeys = [
+const _prefKeys = {
   PrefsChatHistorySettings.retentionKey,
   PrefsChatHistorySettings.useRecordsKey,
-];
+};
 
 /// 물어보기 대화 영역. `chat/conversations.json`(대화 · 턴 · 사용량 행) ·
 /// `chat/workspace/`(첨부 · 작업 폴더 파일) · `chat/prefs.json`(대화 설정)을 쓴다.
@@ -52,19 +53,9 @@ class ChatBackupArea implements BackupAreaSource {
 
   @override
   Future<Map<String, int>> counts() async => {
-    'conversations': await _count(_db.conversations),
+    'conversations': await countRows(_db, _db.conversations),
     'files': (await _workspaceFiles()).length,
   };
-
-  Future<int> _count(TableInfo<Table, dynamic> table) async {
-    final row = await _db
-        .customSelect(
-          'SELECT COUNT(*) AS c FROM "${table.actualTableName}"',
-          readsFrom: {table},
-        )
-        .getSingle();
-    return row.read<int>('c');
-  }
 
   /// 작업 폴더의 파일들. 링크는 따라가지 않는다 — 폴더 밖을 가리킬 수 있다.
   Future<List<File>> _workspaceFiles() async {
@@ -93,13 +84,8 @@ class ChatBackupArea implements BackupAreaSource {
     final out = _areaDir(root);
     await Directory('${out.path}/$_workspace').create(recursive: true);
 
-    final data = await _db.transaction(
-      () async => {
-        for (final t in _deleteOrder.reversed)
-          t.actualTableName: await dumpTable(_db, t),
-      },
-    );
-    await File('${out.path}/$_dataFile').writeAsString(jsonEncode(data));
+    final data = await dumpTables(_db, _deleteOrder.reversed);
+    await writeAreaJson(out, _dataFile, data);
 
     final files = await _workspaceFiles();
     for (final f in files) {
@@ -109,12 +95,7 @@ class ChatBackupArea implements BackupAreaSource {
       await f.copy(target.path);
     }
 
-    await File('${out.path}/$_prefsFile').writeAsString(
-      jsonEncode({
-        for (final key in _prefKeys)
-          if (_prefs.get(key) case final Object value) key: value,
-      }),
-    );
+    await writeAreaJson(out, _prefsFile, await dumpPrefs(_prefs, _prefKeys));
 
     return {
       'conversations': data[_db.conversations.actualTableName]!.length,
@@ -138,7 +119,11 @@ class ChatBackupArea implements BackupAreaSource {
   @override
   Future<void> replace(Directory root) async {
     final data = await _readData(root);
-    final prefs = await _readPrefs(root);
+    final prefs = await readPrefsSnapshot(
+      _areaDir(root),
+      _prefsFile,
+      _prefKeys,
+    );
     final incoming = Directory('${_areaDir(root).path}/$_workspace');
     // 작업 폴더가 비어 있던 백업이면 빈 폴더로 바꿔 넣는다.
     await incoming.create(recursive: true);
@@ -166,16 +151,7 @@ class ChatBackupArea implements BackupAreaSource {
       });
     });
 
-    for (final key in _prefKeys) {
-      switch (prefs[key]) {
-        case final String v:
-          await _prefs.setString(key, v);
-        case final bool v:
-          await _prefs.setBool(key, v);
-        default:
-          await _prefs.remove(key);
-      }
-    }
+    await restorePrefs(_prefs, _prefKeys, prefs);
   }
 
   /// 출처가 있는 위키 메모의 id → 출처 대화 id.
@@ -189,34 +165,6 @@ class ChatBackupArea implements BackupAreaSource {
   @override
   Future<void> afterRestore() async {}
 
-  /// `conversations.json` 을 테이블 이름 → 행 목록으로 읽는다. 없거나 모양이 다르면 integrity.
-  Future<Map<String, List<Map<String, Object?>>>> _readData(
-    Directory root,
-  ) async {
-    try {
-      final file = File('${_areaDir(root).path}/$_dataFile');
-      final json =
-          jsonDecode(await file.readAsString()) as Map<String, Object?>;
-      return {
-        for (final t in _deleteOrder)
-          t.actualTableName: [
-            for (final row in json[t.actualTableName]! as List<Object?>)
-              row! as Map<String, Object?>,
-          ],
-      };
-    } catch (_) {
-      throw const BackupException(BackupFailure.integrity);
-    }
-  }
-
-  /// `prefs.json` 을 읽는다. 없으면 빈 설정으로 본다.
-  Future<Map<String, Object?>> _readPrefs(Directory root) async {
-    final file = File('${_areaDir(root).path}/$_prefsFile');
-    if (!await file.exists()) return const {};
-    try {
-      return jsonDecode(await file.readAsString()) as Map<String, Object?>;
-    } catch (_) {
-      throw const BackupException(BackupFailure.integrity);
-    }
-  }
+  Future<TableRows> _readData(Directory root) =>
+      readTableRows(_areaDir(root), _dataFile, _deleteOrder);
 }

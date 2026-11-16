@@ -155,7 +155,11 @@ void main() {
     final written =
         jsonDecode(File('${staging.path}/chat/prefs.json').readAsStringSync())
             as Map<String, Object?>;
-    expect(written, _chatPrefs);
+    // 값은 prefs_snapshot 의 `{type, value}` 로 적힌다.
+    expect(written, {
+      'walk.chat.retention': {'type': 'string', 'value': 'days30'},
+      'walk.chat.useRecords': {'type': 'bool', 'value': false},
+    });
   });
 
   test('replace removes chat prefs the backup does not have', () async {

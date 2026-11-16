@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -10,19 +9,21 @@ import '../../../domain/backup/backup_failure.dart';
 import '../../../domain/diary/entity/story.dart';
 import '../../diary/database/diary_database.dart';
 import '../../diary/prefs_diary_preferences.dart';
+import 'area_io.dart';
 import 'dir_swap.dart';
 import 'drift_rows.dart';
+import 'prefs_snapshot.dart';
 
 const _dataFile = 'data.json';
 const _prefsFile = 'prefs.json';
 const _media = 'media';
 
 /// 일기 설정 중 백업에 담는 키. 그 밖의 `walk.diary.*` 는 담지 않는다.
-const _prefKeys = [
+const _prefKeys = {
   PrefsDiaryPreferences.trashRetentionKey,
   PrefsDiaryPreferences.draftStyleKey,
   PrefsDiaryPreferences.draftIncludePhotosKey,
-];
+};
 
 /// 일기 영역. `diary/data.json`(여섯 테이블 행) · `diary/media/`(사진 · 동영상 · 썸네일) ·
 /// `diary/prefs.json`(일기 설정)을 쓴다. 저장 전 사본인 `diaryRoot/tmp/` 는 담지 않는다.
@@ -56,19 +57,9 @@ class DiaryBackupArea implements BackupAreaSource {
   /// 휴지통 기록도 백업에 들어가므로 함께 센다.
   @override
   Future<Map<String, int>> counts() async => {
-    'entries': await _count(_db.entries),
-    'media': await _count(_db.media),
+    'entries': await countRows(_db, _db.entries),
+    'media': await countRows(_db, _db.media),
   };
-
-  Future<int> _count(TableInfo<Table, dynamic> table) async {
-    final row = await _db
-        .customSelect(
-          'SELECT COUNT(*) AS c FROM "${table.actualTableName}"',
-          readsFrom: {table},
-        )
-        .getSingle();
-    return row.read<int>('c');
-  }
 
   /// 미디어 파일 크기의 합. DB 행 · 설정은 그에 비해 작아 넣지 않는다.
   @override
@@ -87,13 +78,8 @@ class DiaryBackupArea implements BackupAreaSource {
     final out = _areaDir(root);
     await Directory('${out.path}/$_media').create(recursive: true);
 
-    final data = await _db.transaction(
-      () async => {
-        for (final t in _deleteOrder.reversed)
-          t.actualTableName: await dumpTable(_db, t),
-      },
-    );
-    await File('${out.path}/$_dataFile').writeAsString(jsonEncode(data));
+    final data = await dumpTables(_db, _deleteOrder.reversed);
+    await writeAreaJson(out, _dataFile, data);
 
     final source = _currentMedia;
     if (await source.exists()) {
@@ -106,12 +92,7 @@ class DiaryBackupArea implements BackupAreaSource {
       }
     }
 
-    await File('${out.path}/$_prefsFile').writeAsString(
-      jsonEncode({
-        for (final key in _prefKeys)
-          if (_prefs.get(key) case final Object value) key: value,
-      }),
-    );
+    await writeAreaJson(out, _prefsFile, await dumpPrefs(_prefs, _prefKeys));
 
     final entries = data[_db.entries.actualTableName]!.length;
     final media = data[_db.media.actualTableName]!.length;
@@ -150,7 +131,11 @@ class DiaryBackupArea implements BackupAreaSource {
   @override
   Future<void> replace(Directory root) async {
     final data = await _readData(root);
-    final prefs = await _readPrefs(root);
+    final prefs = await readPrefsSnapshot(
+      _areaDir(root),
+      _prefsFile,
+      _prefKeys,
+    );
     final incomingMedia = Directory('${_areaDir(root).path}/$_media');
     // 미디어가 하나도 없던 백업이면 빈 폴더로 바꿔 넣는다.
     await incomingMedia.create(recursive: true);
@@ -169,51 +154,12 @@ class DiaryBackupArea implements BackupAreaSource {
       });
     });
 
-    for (final key in _prefKeys) {
-      switch (prefs[key]) {
-        case final String v:
-          await _prefs.setString(key, v);
-        case final bool v:
-          await _prefs.setBool(key, v);
-        default:
-          await _prefs.remove(key);
-      }
-    }
+    await restorePrefs(_prefs, _prefKeys, prefs);
   }
 
   @override
   Future<void> afterRestore() async {}
 
-  /// `data.json` 을 테이블 이름 → 행 목록으로 읽는다. 없거나 모양이 다르면 integrity.
-  Future<Map<String, List<Map<String, Object?>>>> _readData(
-    Directory root,
-  ) async {
-    try {
-      final file = File('${_areaDir(root).path}/$_dataFile');
-      final json =
-          jsonDecode(await file.readAsString()) as Map<String, Object?>;
-      return {
-        for (final t in _deleteOrder)
-          t.actualTableName: [
-            for (final row in json[t.actualTableName]! as List<Object?>)
-              row! as Map<String, Object?>,
-          ],
-      };
-    } on BackupException {
-      rethrow;
-    } catch (_) {
-      throw const BackupException(BackupFailure.integrity);
-    }
-  }
-
-  /// `prefs.json` 을 읽는다. 없으면 빈 설정으로 본다.
-  Future<Map<String, Object?>> _readPrefs(Directory root) async {
-    final file = File('${_areaDir(root).path}/$_prefsFile');
-    if (!await file.exists()) return const {};
-    try {
-      return jsonDecode(await file.readAsString()) as Map<String, Object?>;
-    } catch (_) {
-      throw const BackupException(BackupFailure.integrity);
-    }
-  }
+  Future<TableRows> _readData(Directory root) =>
+      readTableRows(_areaDir(root), _dataFile, _deleteOrder);
 }
