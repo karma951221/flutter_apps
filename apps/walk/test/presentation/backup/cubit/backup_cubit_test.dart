@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:bloc_test/bloc_test.dart';
@@ -115,7 +116,11 @@ void main() {
       '성공 — 만들기 → 저장 → 크기 알림 → 새 마지막 백업으로 idle, 캐시 파일은 지운다',
       setUp: () {
         when(
-          () => service.export(any(), password: any(named: 'password')),
+          () => service.export(
+            any(),
+            password: any(named: 'password'),
+            onProgress: any(named: 'onProgress'),
+          ),
         ).thenAnswer((_) async => Ok(exportedFile()));
         // 저장 위치 고르기로 앱을 떠나 있는 동안 일기를 다시 잠그지 않는다.
         when(
@@ -132,7 +137,11 @@ void main() {
       ],
       verify: (_) {
         verify(
-          () => service.export({BackupAreaId.diary}, password: 'password1'),
+          () => service.export(
+            {BackupAreaId.diary},
+            password: 'password1',
+            onProgress: any(named: 'onProgress'),
+          ),
         ).called(1);
         final saved = verify(
           () => files.saveAs(captureAny(), captureAny()),
@@ -143,10 +152,44 @@ void main() {
     );
 
     blocTest<BackupCubit, BackupState>(
+      '만드는 동안 진행 비율을 퍼센트가 바뀔 때만 알린다',
+      setUp: () {
+        when(
+          () => service.export(
+            any(),
+            password: any(named: 'password'),
+            onProgress: any(named: 'onProgress'),
+          ),
+        ).thenAnswer((inv) async {
+          final report =
+              inv.namedArguments[#onProgress] as void Function(double);
+          report(0.25);
+          report(0.251);
+          report(1);
+          return Ok(exportedFile());
+        });
+        when(() => files.saveAs(any(), any())).thenAnswer((_) async => false);
+      },
+      build: build,
+      act: (c) => c.export({BackupAreaId.diary}),
+      expect: () => [
+        const BackupState.working(BackupStep.exporting),
+        const BackupState.working(BackupStep.exporting, progress: 0.25),
+        const BackupState.working(BackupStep.exporting, progress: 1),
+        const BackupState.working(BackupStep.saving),
+        const BackupState.idle(),
+      ],
+    );
+
+    blocTest<BackupCubit, BackupState>(
       '저장 위치 고르기를 취소하면 알림 없이 idle',
       setUp: () {
         when(
-          () => service.export(any(), password: any(named: 'password')),
+          () => service.export(
+            any(),
+            password: any(named: 'password'),
+            onProgress: any(named: 'onProgress'),
+          ),
         ).thenAnswer((_) async => Ok(exportedFile()));
         when(() => files.saveAs(any(), any())).thenAnswer((_) async => false);
       },
@@ -163,7 +206,11 @@ void main() {
     blocTest<BackupCubit, BackupState>(
       '만들기 실패 — 실패를 알리고 idle',
       setUp: () => when(
-        () => service.export(any(), password: any(named: 'password')),
+        () => service.export(
+          any(),
+          password: any(named: 'password'),
+          onProgress: any(named: 'onProgress'),
+        ),
       ).thenAnswer((_) async => Err(BackupFailure.noSpace.toFailure())),
       build: build,
       act: (c) => c.export({BackupAreaId.diary}),
@@ -178,7 +225,11 @@ void main() {
       '저장 실패(채널) — 실패를 알리고 idle',
       setUp: () {
         when(
-          () => service.export(any(), password: any(named: 'password')),
+          () => service.export(
+            any(),
+            password: any(named: 'password'),
+            onProgress: any(named: 'onProgress'),
+          ),
         ).thenAnswer((_) async => Ok(exportedFile()));
         when(
           () => files.saveAs(any(), any()),
@@ -210,11 +261,59 @@ void main() {
       },
       build: build,
       act: (c) => c.openBackup(),
-      expect: () => const <BackupState>[],
+      expect: () => [
+        const BackupState.working(BackupStep.inspecting),
+        const BackupState.idle(),
+      ],
       verify: (_) {
         verify(files.open).called(1);
         expect(guard.active, isFalse);
       },
+    );
+
+    blocTest<BackupCubit, BackupState>(
+      '고른 파일을 가져오는 동안 working 이고, 그 사이 다시 눌러도 한 번만 고른다',
+      setUp: () {
+        final picking = Completer<File?>();
+        when(files.open).thenAnswer((_) => picking.future);
+        Future<void>.delayed(Duration.zero, () => picking.complete(null));
+      },
+      build: build,
+      act: (c) async {
+        final first = c.openBackup();
+        await c.openBackup();
+        await first;
+      },
+      expect: () => [
+        const BackupState.working(BackupStep.inspecting),
+        const BackupState.idle(),
+      ],
+      verify: (_) => verify(files.open).called(1),
+    );
+
+    blocTest<BackupCubit, BackupState>(
+      '검사하는 동안 진행 비율을 알린다',
+      setUp: () {
+        when(files.open).thenAnswer((_) async => opened());
+        when(() => probe.isEncrypted(any())).thenAnswer((_) async => false);
+        when(
+          () => service.inspect(
+            any(),
+            password: any(named: 'password'),
+            onProgress: any(named: 'onProgress'),
+          ),
+        ).thenAnswer((inv) async {
+          (inv.namedArguments[#onProgress] as void Function(double))(0.5);
+          return Ok(inspected);
+        });
+      },
+      build: build,
+      act: (c) => c.openBackup(),
+      expect: () => [
+        const BackupState.working(BackupStep.inspecting),
+        const BackupState.working(BackupStep.inspecting, progress: 0.5),
+        BackupState.inspected(inspected),
+      ],
     );
 
     blocTest<BackupCubit, BackupState>(
@@ -223,17 +322,21 @@ void main() {
       build: build,
       act: (c) => c.openBackup(),
       expect: () => [
+        const BackupState.working(BackupStep.inspecting),
         const BackupState.failed(BackupFailure.io),
         const BackupState.idle(),
       ],
     );
 
     blocTest<BackupCubit, BackupState>(
-      '파일 고르기 취소 — 아무 일 없음',
+      '파일 고르기 취소 — 가져오는 동안 working 뒤 그대로 idle',
       setUp: () => when(files.open).thenAnswer((_) async => null),
       build: build,
       act: (c) => c.openBackup(),
-      expect: () => const <BackupState>[],
+      expect: () => [
+        const BackupState.working(BackupStep.inspecting),
+        const BackupState.idle(),
+      ],
     );
 
     blocTest<BackupCubit, BackupState>(
@@ -242,7 +345,11 @@ void main() {
         when(files.open).thenAnswer((_) async => opened());
         when(() => probe.isEncrypted(any())).thenAnswer((_) async => false);
         when(
-          () => service.inspect(any(), password: any(named: 'password')),
+          () => service.inspect(
+            any(),
+            password: any(named: 'password'),
+            onProgress: any(named: 'onProgress'),
+          ),
         ).thenAnswer((_) async => Ok(inspected));
         when(
           () => service.restore(any(), any()),
@@ -260,7 +367,13 @@ void main() {
         const BackupState.restored({RestoreNotice.apiKeyNeeded}),
       ],
       verify: (_) {
-        verify(() => service.inspect(any(), password: null)).called(1);
+        verify(
+          () => service.inspect(
+            any(),
+            password: null,
+            onProgress: any(named: 'onProgress'),
+          ),
+        ).called(1);
         verify(
           () => service.restore(inspected, {BackupAreaId.diary}),
         ).called(1);
@@ -274,11 +387,21 @@ void main() {
       setUp: () {
         when(files.open).thenAnswer((_) async => opened());
         when(() => probe.isEncrypted(any())).thenAnswer((_) async => true);
-        when(() => service.inspect(any(), password: 'wrong-pass')).thenAnswer(
+        when(
+          () => service.inspect(
+            any(),
+            password: 'wrong-pass',
+            onProgress: any(named: 'onProgress'),
+          ),
+        ).thenAnswer(
           (_) async => Err(BackupFailure.wrongPasswordOrCorrupt.toFailure()),
         );
         when(
-          () => service.inspect(any(), password: 'right-pass'),
+          () => service.inspect(
+            any(),
+            password: 'right-pass',
+            onProgress: any(named: 'onProgress'),
+          ),
         ).thenAnswer((_) async => Ok(inspected));
       },
       build: build,
@@ -288,6 +411,7 @@ void main() {
         await c.submitPassword('right-pass');
       },
       expect: () => [
+        const BackupState.working(BackupStep.inspecting),
         const BackupState.passwordNeeded(),
         const BackupState.working(BackupStep.inspecting),
         const BackupState.passwordNeeded(wrong: true),
@@ -308,6 +432,7 @@ void main() {
         await c.cancelOpen();
       },
       expect: () => [
+        const BackupState.working(BackupStep.inspecting),
         const BackupState.passwordNeeded(),
         const BackupState.idle(),
       ],
@@ -321,7 +446,11 @@ void main() {
         when(files.open).thenAnswer((_) async => opened());
         when(() => probe.isEncrypted(any())).thenAnswer((_) async => false);
         when(
-          () => service.inspect(any(), password: any(named: 'password')),
+          () => service.inspect(
+            any(),
+            password: any(named: 'password'),
+            onProgress: any(named: 'onProgress'),
+          ),
         ).thenAnswer((_) async => Err(BackupFailure.notBackup.toFailure()));
       },
       build: build,
@@ -339,7 +468,11 @@ void main() {
         when(files.open).thenAnswer((_) async => opened());
         when(() => probe.isEncrypted(any())).thenAnswer((_) async => false);
         when(
-          () => service.inspect(any(), password: any(named: 'password')),
+          () => service.inspect(
+            any(),
+            password: any(named: 'password'),
+            onProgress: any(named: 'onProgress'),
+          ),
         ).thenAnswer((_) async => Ok(inspected));
         when(() => service.discard(any())).thenAnswer((_) async {});
       },

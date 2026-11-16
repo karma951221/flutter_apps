@@ -2,6 +2,7 @@ import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/backup/restore_notice.dart';
@@ -41,8 +42,10 @@ class _BackupView extends StatelessWidget {
       child: Stack(
         children: [
           const _BackupScaffold(),
-          if (state case BackupWorking(:final step))
-            Positioned.fill(child: _Progress(step: step)),
+          if (state case BackupWorking(:final step, :final progress))
+            Positioned.fill(
+              child: _Progress(step: step, progress: progress),
+            ),
         ],
       ),
     ),
@@ -259,11 +262,12 @@ class _LastBackup extends StatelessWidget {
   }
 }
 
-/// 전체 화면 진행 표시 — 다른 조작을 막는다.
+/// 전체 화면 진행 표시 — 다른 조작을 막는다. 비율을 아는 단계면 퍼센트를 함께 보인다.
 class _Progress extends StatelessWidget {
-  const _Progress({required this.step});
+  const _Progress({required this.step, this.progress});
 
   final BackupStep step;
+  final double? progress;
 
   @override
   Widget build(BuildContext context) {
@@ -281,6 +285,13 @@ class _Progress extends StatelessWidget {
                 AppLocalizations.of(context).backupStep(step),
                 style: theme.textTheme.bodyLarge,
               ),
+              if (progress case final p?)
+                Text(
+                  NumberFormat.percentPattern(
+                    Localizations.localeOf(context).toLanguageTag(),
+                  ).format(p),
+                  style: theme.textTheme.bodyMedium,
+                ),
             ],
           ),
         ),

@@ -134,11 +134,11 @@ return failed(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( DateTime? lastAt,  int? daysAgo,  bool stale,  bool hasUndo)?  idle,TResult Function( BackupStep step)?  working,TResult Function( int bytes)?  exported,TResult Function( bool wrong)?  passwordNeeded,TResult Function( InspectedBackup backup)?  inspected,TResult Function( Set<RestoreNotice> notices)?  restored,TResult Function( BackupFailure failure,  bool needsRestart)?  failed,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( DateTime? lastAt,  int? daysAgo,  bool stale,  bool hasUndo)?  idle,TResult Function( BackupStep step,  double? progress)?  working,TResult Function( int bytes)?  exported,TResult Function( bool wrong)?  passwordNeeded,TResult Function( InspectedBackup backup)?  inspected,TResult Function( Set<RestoreNotice> notices)?  restored,TResult Function( BackupFailure failure,  bool needsRestart)?  failed,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case BackupIdle() when idle != null:
 return idle(_that.lastAt,_that.daysAgo,_that.stale,_that.hasUndo);case BackupWorking() when working != null:
-return working(_that.step);case BackupExported() when exported != null:
+return working(_that.step,_that.progress);case BackupExported() when exported != null:
 return exported(_that.bytes);case BackupPasswordNeeded() when passwordNeeded != null:
 return passwordNeeded(_that.wrong);case BackupInspected() when inspected != null:
 return inspected(_that.backup);case BackupRestored() when restored != null:
@@ -161,11 +161,11 @@ return failed(_that.failure,_that.needsRestart);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( DateTime? lastAt,  int? daysAgo,  bool stale,  bool hasUndo)  idle,required TResult Function( BackupStep step)  working,required TResult Function( int bytes)  exported,required TResult Function( bool wrong)  passwordNeeded,required TResult Function( InspectedBackup backup)  inspected,required TResult Function( Set<RestoreNotice> notices)  restored,required TResult Function( BackupFailure failure,  bool needsRestart)  failed,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( DateTime? lastAt,  int? daysAgo,  bool stale,  bool hasUndo)  idle,required TResult Function( BackupStep step,  double? progress)  working,required TResult Function( int bytes)  exported,required TResult Function( bool wrong)  passwordNeeded,required TResult Function( InspectedBackup backup)  inspected,required TResult Function( Set<RestoreNotice> notices)  restored,required TResult Function( BackupFailure failure,  bool needsRestart)  failed,}) {final _that = this;
 switch (_that) {
 case BackupIdle():
 return idle(_that.lastAt,_that.daysAgo,_that.stale,_that.hasUndo);case BackupWorking():
-return working(_that.step);case BackupExported():
+return working(_that.step,_that.progress);case BackupExported():
 return exported(_that.bytes);case BackupPasswordNeeded():
 return passwordNeeded(_that.wrong);case BackupInspected():
 return inspected(_that.backup);case BackupRestored():
@@ -184,11 +184,11 @@ return failed(_that.failure,_that.needsRestart);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( DateTime? lastAt,  int? daysAgo,  bool stale,  bool hasUndo)?  idle,TResult? Function( BackupStep step)?  working,TResult? Function( int bytes)?  exported,TResult? Function( bool wrong)?  passwordNeeded,TResult? Function( InspectedBackup backup)?  inspected,TResult? Function( Set<RestoreNotice> notices)?  restored,TResult? Function( BackupFailure failure,  bool needsRestart)?  failed,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( DateTime? lastAt,  int? daysAgo,  bool stale,  bool hasUndo)?  idle,TResult? Function( BackupStep step,  double? progress)?  working,TResult? Function( int bytes)?  exported,TResult? Function( bool wrong)?  passwordNeeded,TResult? Function( InspectedBackup backup)?  inspected,TResult? Function( Set<RestoreNotice> notices)?  restored,TResult? Function( BackupFailure failure,  bool needsRestart)?  failed,}) {final _that = this;
 switch (_that) {
 case BackupIdle() when idle != null:
 return idle(_that.lastAt,_that.daysAgo,_that.stale,_that.hasUndo);case BackupWorking() when working != null:
-return working(_that.step);case BackupExported() when exported != null:
+return working(_that.step,_that.progress);case BackupExported() when exported != null:
 return exported(_that.bytes);case BackupPasswordNeeded() when passwordNeeded != null:
 return passwordNeeded(_that.wrong);case BackupInspected() when inspected != null:
 return inspected(_that.backup);case BackupRestored() when restored != null:
@@ -277,10 +277,11 @@ as bool,
 
 
 class BackupWorking implements BackupState {
-  const BackupWorking(this.step);
+  const BackupWorking(this.step, {this.progress});
   
 
  final  BackupStep step;
+ final  double? progress;
 
 /// Create a copy of BackupState
 /// with the given fields replaced by the non-null parameter values.
@@ -292,16 +293,16 @@ $BackupWorkingCopyWith<BackupWorking> get copyWith => _$BackupWorkingCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BackupWorking&&(identical(other.step, step) || other.step == step));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BackupWorking&&(identical(other.step, step) || other.step == step)&&(identical(other.progress, progress) || other.progress == progress));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,step);
+int get hashCode => Object.hash(runtimeType,step,progress);
 
 @override
 String toString() {
-  return 'BackupState.working(step: $step)';
+  return 'BackupState.working(step: $step, progress: $progress)';
 }
 
 
@@ -312,7 +313,7 @@ abstract mixin class $BackupWorkingCopyWith<$Res> implements $BackupStateCopyWit
   factory $BackupWorkingCopyWith(BackupWorking value, $Res Function(BackupWorking) _then) = _$BackupWorkingCopyWithImpl;
 @useResult
 $Res call({
- BackupStep step
+ BackupStep step, double? progress
 });
 
 
@@ -329,10 +330,11 @@ class _$BackupWorkingCopyWithImpl<$Res>
 
 /// Create a copy of BackupState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? step = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? step = null,Object? progress = freezed,}) {
   return _then(BackupWorking(
 null == step ? _self.step : step // ignore: cast_nullable_to_non_nullable
-as BackupStep,
+as BackupStep,progress: freezed == progress ? _self.progress : progress // ignore: cast_nullable_to_non_nullable
+as double?,
   ));
 }
 

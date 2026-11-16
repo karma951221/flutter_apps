@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:core/core.dart';
@@ -150,7 +151,11 @@ void main() {
     final out = File('${tmp.path}/lifelog-backup-20261010-0900.zip')
       ..writeAsBytesSync(List.filled(2048, 0));
     when(
-      () => service.export(any(), password: any(named: 'password')),
+      () => service.export(
+        any(),
+        password: any(named: 'password'),
+        onProgress: any(named: 'onProgress'),
+      ),
     ).thenAnswer((_) async => Ok(out));
     when(() => files.saveAs(any(), any())).thenAnswer((_) async => true);
     await h.pump(tester, const BackupPage());
@@ -163,15 +168,50 @@ void main() {
     await settle(tester);
 
     verify(
-      () => service.export({
-        BackupAreaId.diary,
-        BackupAreaId.chat,
-        BackupAreaId.wiki,
-        BackupAreaId.alarm,
-        BackupAreaId.settings,
-      }, password: null),
+      () => service.export(
+        {
+          BackupAreaId.diary,
+          BackupAreaId.chat,
+          BackupAreaId.wiki,
+          BackupAreaId.alarm,
+          BackupAreaId.settings,
+        },
+        password: null,
+        onProgress: any(named: 'onProgress'),
+      ),
     ).called(1);
     expect(find.text('백업했어요 (2KB)'), findsOneWidget);
+  });
+
+  testWidgets('진행 중에는 단계와 퍼센트를 보인다', (tester) async {
+    final making = Completer<Result<File>>();
+    late void Function(double) report;
+    when(
+      () => service.export(
+        any(),
+        password: any(named: 'password'),
+        onProgress: any(named: 'onProgress'),
+      ),
+    ).thenAnswer((inv) {
+      report = inv.namedArguments[#onProgress] as void Function(double);
+      return making.future;
+    });
+    await h.pump(tester, const BackupPage());
+
+    await tester.tap(find.byKey(createRow));
+    await settle(tester);
+    await tester.tap(find.byKey(const Key('backup-export-encrypt')));
+    await settle(tester);
+    await tester.tap(find.byKey(const Key('backup-export-save')));
+    await tester.pump();
+    report(0.42);
+    await tester.pump();
+
+    expect(find.text('백업 파일을 만드는 중…'), findsOneWidget);
+    expect(find.text('42%'), findsOneWidget);
+
+    making.complete(Err(BackupFailure.io.toFailure()));
+    await settle(tester);
   });
 
   testWidgets('복원 — 영역 고르기 → 파괴적 확인 → 결과 안내 → 다시 시작', (tester) async {
@@ -179,7 +219,11 @@ void main() {
     when(files.open).thenAnswer((_) async => picked);
     when(() => probe.isEncrypted(any())).thenAnswer((_) async => false);
     when(
-      () => service.inspect(any(), password: any(named: 'password')),
+      () => service.inspect(
+        any(),
+        password: any(named: 'password'),
+        onProgress: any(named: 'onProgress'),
+      ),
     ).thenAnswer((_) async => Ok(inspected));
     when(() => service.restore(any(), any())).thenAnswer(
       (_) async => const Ok({
@@ -235,7 +279,11 @@ void main() {
     });
     when(() => probe.isEncrypted(any())).thenAnswer((_) async => false);
     when(
-      () => service.inspect(any(), password: any(named: 'password')),
+      () => service.inspect(
+        any(),
+        password: any(named: 'password'),
+        onProgress: any(named: 'onProgress'),
+      ),
     ).thenAnswer((_) async => Ok(inspected));
     when(
       () => service.restore(any(), any()),
@@ -258,7 +306,11 @@ void main() {
     when(files.open).thenAnswer((_) async => picked);
     when(() => probe.isEncrypted(any())).thenAnswer((_) async => false);
     when(
-      () => service.inspect(any(), password: any(named: 'password')),
+      () => service.inspect(
+        any(),
+        password: any(named: 'password'),
+        onProgress: any(named: 'onProgress'),
+      ),
     ).thenAnswer((_) async => Ok(inspected));
     when(() => service.discard(any())).thenAnswer((_) async {});
     await h.pump(tester, const BackupPage());
@@ -279,7 +331,11 @@ void main() {
     when(files.open).thenAnswer((_) async => picked);
     when(() => probe.isEncrypted(any())).thenAnswer((_) async => true);
     when(
-      () => service.inspect(any(), password: any(named: 'password')),
+      () => service.inspect(
+        any(),
+        password: any(named: 'password'),
+        onProgress: any(named: 'onProgress'),
+      ),
     ).thenAnswer(
       (_) async => Err(BackupFailure.wrongPasswordOrCorrupt.toFailure()),
     );
@@ -295,7 +351,13 @@ void main() {
     await tester.tap(find.byKey(const Key('backup-password-open')));
     await settle(tester);
 
-    verify(() => service.inspect(any(), password: 'nope-nope')).called(1);
+    verify(
+      () => service.inspect(
+        any(),
+        password: 'nope-nope',
+        onProgress: any(named: 'onProgress'),
+      ),
+    ).called(1);
     expect(find.byKey(const Key('backup-password-input')), findsOneWidget);
     expect(find.text('비밀번호가 틀렸거나 파일이 손상됐어요'), findsOneWidget);
   });
@@ -305,7 +367,11 @@ void main() {
     when(files.open).thenAnswer((_) async => picked);
     when(() => probe.isEncrypted(any())).thenAnswer((_) async => false);
     when(
-      () => service.inspect(any(), password: any(named: 'password')),
+      () => service.inspect(
+        any(),
+        password: any(named: 'password'),
+        onProgress: any(named: 'onProgress'),
+      ),
     ).thenAnswer((_) async => Ok(inspected));
     when(
       () => service.restore(any(), any()),

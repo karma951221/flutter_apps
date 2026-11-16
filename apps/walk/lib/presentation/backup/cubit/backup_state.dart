@@ -21,8 +21,10 @@ sealed class BackupState with _$BackupState {
     @Default(false) bool hasUndo,
   }) = BackupIdle;
 
-  /// 전체 화면 진행 표시로 다른 조작을 막는다.
-  const factory BackupState.working(BackupStep step) = BackupWorking;
+  /// 전체 화면 진행 표시로 다른 조작을 막는다. [progress] 는 0..1(퍼센트로 보인다),
+  /// null 이면 비율을 모르는 단계다.
+  const factory BackupState.working(BackupStep step, {double? progress}) =
+      BackupWorking;
 
   /// 백업 파일을 저장했다([bytes] = 파일 크기).
   const factory BackupState.exported(int bytes) = BackupExported;

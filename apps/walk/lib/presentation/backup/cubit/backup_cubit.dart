@@ -73,7 +73,11 @@ class BackupCubit extends Cubit<BackupState> {
   /// 마지막 백업 시각은 저장까지 마쳤을 때만 남긴다.
   Future<void> export(Set<BackupAreaId> areas, {String? password}) async {
     emit(const BackupState.working(BackupStep.exporting));
-    final made = await _service.export(areas, password: password);
+    final made = await _service.export(
+      areas,
+      password: password,
+      onProgress: _reporter(BackupStep.exporting),
+    );
     switch (made) {
       case Err(:final failure):
         await _fail(failure);
@@ -101,7 +105,11 @@ class BackupCubit extends Cubit<BackupState> {
   }
 
   /// 문서 고르기 창으로 백업 파일을 고른다. 암호화면 비밀번호를 묻고, 아니면 바로 검사한다.
+  /// 고른 파일을 앱 캐시로 복사하는 동안(수백 MB 일 수 있다) working 으로 막고, 그 사이 다시
+  /// 불러도 무시한다 — 두 번째 고르기가 첫 사본을 덮어쓰지 않게.
   Future<void> openBackup() async {
+    if (state is BackupWorking) return;
+    emit(const BackupState.working(BackupStep.inspecting));
     final File? file;
     try {
       file = await _pickGuard.run(_files.open);
@@ -112,7 +120,10 @@ class BackupCubit extends Cubit<BackupState> {
       await load();
       return;
     }
-    if (file == null) return;
+    if (file == null) {
+      await load();
+      return;
+    }
     _opened = file;
     final bool encrypted;
     try {
@@ -143,7 +154,11 @@ class BackupCubit extends Cubit<BackupState> {
     final file = _opened;
     if (file == null) return;
     emit(const BackupState.working(BackupStep.inspecting));
-    final result = await _service.inspect(file, password: password);
+    final result = await _service.inspect(
+      file,
+      password: password,
+      onProgress: _reporter(BackupStep.inspecting),
+    );
     switch (result) {
       case Ok(value: final backup):
         await _closeOpened();
@@ -199,6 +214,17 @@ class BackupCubit extends Cubit<BackupState> {
       BackupState.failed(_backupFailureOf(failure), needsRestart: needsRestart),
     );
     if (!needsRestart) await load();
+  }
+
+  /// [step] 의 진행 비율을 working 으로 알린다. 화면은 퍼센트로 보이므로 퍼센트가 바뀔 때만.
+  void Function(double) _reporter(BackupStep step) {
+    var shown = -1;
+    return (fraction) {
+      final percent = (fraction.clamp(0, 1) * 100).floor();
+      if (percent == shown || isClosed) return;
+      shown = percent;
+      emit(BackupState.working(step, progress: percent / 100));
+    };
   }
 
   Future<void> _closeOpened() async {
