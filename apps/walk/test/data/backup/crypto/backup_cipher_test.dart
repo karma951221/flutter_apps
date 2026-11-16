@@ -131,6 +131,37 @@ void main() {
     expect(out.readAsBytesSync(), _bytes(10));
   });
 
+  test('reports progress per chunk up to 1 for encrypt and decrypt', () async {
+    final plain = file('plain.bin', _bytes(2 * _mib + 10));
+    final sealed = file('sealed.bin');
+    final sealing = <double>[];
+    await cipher.encrypt(plain, sealed, 'password-1', onProgress: sealing.add);
+    final opening = <double>[];
+    await cipher.decrypt(
+      sealed,
+      file('out.bin'),
+      'password-1',
+      onProgress: opening.add,
+    );
+
+    for (final steps in [sealing, opening]) {
+      expect(steps, hasLength(3));
+      expect(steps, orderedEquals([...steps]..sort()));
+      expect(steps.last, 1.0);
+    }
+  });
+
+  test('empty plain file reports 1', () async {
+    final steps = <double>[];
+    await cipher.encrypt(
+      file('plain.bin', const []),
+      file('sealed.bin'),
+      'password-1',
+      onProgress: steps.add,
+    );
+    expect(steps, [1.0]);
+  });
+
   test('plain zip is notEncrypted', () async {
     final zip = file('a.zip', [0x50, 0x4b, 3, 4, 0, 0, 0, 0, 0, 0]);
     await expectLater(
@@ -155,10 +186,7 @@ void main() {
       expect(await sniffBackupFile(f), BackupFileKind.encrypted);
     });
     test('unknown', () async {
-      expect(
-        await sniffBackupFile(file('a', [1, 2, 3])),
-        BackupFileKind.unknown,
-      );
+      expect(await sniffBackupFile(file('a', [1, 2, 3])), BackupFileKind.unknown);
       expect(await sniffBackupFile(file('b', [])), BackupFileKind.unknown);
     });
   });

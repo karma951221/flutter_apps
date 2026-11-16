@@ -16,11 +16,21 @@ abstract interface class BackupService {
 
   /// 고른 영역을 담은 백업 파일을 앱 캐시에 만든다. [password] 가 있으면 암호화(`.lifelog`).
   /// 마지막 백업 시각은 남기지 않는다 — 저장 위치까지 마친 화면이 남긴다.
-  Future<Result<File>> export(Set<BackupAreaId> areas, {String? password});
+  /// [onProgress] 는 진행 비율(0..1, 줄지 않고 끝은 1)을 거칠게 받는다.
+  Future<Result<File>> export(
+    Set<BackupAreaId> areas, {
+    String? password,
+    void Function(double fraction)? onProgress,
+  });
 
   /// [file] 을 작업 폴더에 풀고 검증한다. 지금 데이터에는 손대지 않는다.
   /// 암호화된 파일인데 [password] 가 없거나 틀리면 `wrongPasswordOrCorrupt`.
-  Future<Result<InspectedBackup>> inspect(File file, {String? password});
+  /// [onProgress] 는 [export] 와 같다(풀기 · 압축 풀기).
+  Future<Result<InspectedBackup>> inspect(
+    File file, {
+    String? password,
+    void Function(double fraction)? onProgress,
+  });
 
   /// 고른 영역의 지금 데이터를 [b] 의 것으로 바꾼다. 바꾸기 전 데이터는 되돌리기 지점으로 남는다.
   /// 한 영역이라도 실패하면 고른 영역 모두를 되돌리고 원래 실패를 돌려준다(되돌리기마저 실패하면

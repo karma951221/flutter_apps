@@ -71,6 +71,26 @@ void main() {
 
   List<int> enc(Map<String, dynamic> m) => utf8.encode(jsonEncode(m));
 
+  test('pack and unpack report per-file progress up to 1', () async {
+    put('diary/a.json', [1]);
+    put('diary/b.json', [2]);
+    put('diary/c.json', [3]);
+    final packing = <double>[];
+    await archive.pack(staging, _manifest(), zip, onProgress: packing.add);
+    final unpacking = <double>[];
+    await archive.unpack(
+      zip,
+      Directory('${tmp.path}/out'),
+      onProgress: unpacking.add,
+    );
+
+    for (final steps in [packing, unpacking]) {
+      expect(steps.length, greaterThanOrEqualTo(3));
+      expect(steps, orderedEquals([...steps]..sort()));
+      expect(steps.last, 1.0);
+    }
+  });
+
   test('pack then unpack restores files byte-equal', () async {
     final json = utf8.encode('{"a":"가나다"}');
     final media = List<int>.generate(5000, (i) => i % 251);
@@ -176,11 +196,7 @@ void main() {
     handZip({
       'manifest.json': enc(
         manifestJson([
-          {
-            'path': 'gone.json',
-            'bytes': 1,
-            'sha256': _hex([1]),
-          },
+          {'path': 'gone.json', 'bytes': 1, 'sha256': _hex([1])},
         ]),
       ),
     });

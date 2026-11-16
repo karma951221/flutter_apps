@@ -26,7 +26,7 @@ import 'crypto/backup_cipher.dart';
 /// - `restore_undo.tmp/` — 만드는 중인 되돌리기 지점, `restore_undo.trash/` — 버린 지점.
 ///   폴더 지우기는 원자적이지 않으므로 이름 바꾸기를 커밋 지점으로 쓴다.
 ///
-/// 압축 · 해시 · 암호화는 [Isolate.run] 으로, DB 를 만지는 영역 일은 이 isolate 에서 한다.
+/// 압축 · 해시는 [Isolate.run] 으로, 암호화와 DB 를 만지는 영역 일은 이 isolate 에서 한다.
 class DefaultBackupService implements BackupService {
   DefaultBackupService({
     required List<BackupAreaSource> areas,
@@ -93,8 +93,11 @@ class DefaultBackupService implements BackupService {
   Future<Result<File>> export(
     Set<BackupAreaId> areas, {
     String? password,
+    void Function(double fraction)? onProgress,
   }) async {
     final ordered = _ordered(areas);
+    // 영역 내보내기 0–10%, 압축 ~50%(암호화하면) 또는 ~100%, 암호화 ~100%.
+    final packEnd = password == null ? 1.0 : 0.5;
     final result = await _guard(() async {
       var estimated = 0;
       for (final area in ordered) {
@@ -107,12 +110,13 @@ class DefaultBackupService implements BackupService {
       await staging.create(recursive: true);
 
       final manifestAreas = <BackupAreaId, AreaManifest>{};
-      for (final area in ordered) {
+      for (final (i, area) in ordered.indexed) {
         final counts = await area.export(staging);
         manifestAreas[area.id] = AreaManifest(
           schema: area.schema,
           counts: counts,
         );
+        onProgress?.call(0.1 * (i + 1) / ordered.length);
       }
       final now = _clock.now();
       final manifest = BackupManifest(
@@ -126,15 +130,27 @@ class DefaultBackupService implements BackupService {
 
       final name = '${_exportDir.path}/${_fileStem(now)}';
       final zip = File('$name.zip');
-      await _pack(_archive, staging, manifest, zip);
+      await _pack(
+        _archive,
+        staging,
+        manifest,
+        zip,
+        _span(onProgress, 0.1, packEnd),
+      );
       await _deleteDir(staging);
 
       var out = zip;
       if (password != null) {
         out = File('$name.lifelog');
-        await _encrypt(_cipher, zip, out, password);
+        await _cipher.encrypt(
+          zip,
+          out,
+          password,
+          onProgress: _span(onProgress, packEnd, 1),
+        );
         await zip.delete();
       }
+      onProgress?.call(1);
       return out;
     });
     if (result is Err) await _deleteDirQuietly(_exportDir);
@@ -142,7 +158,11 @@ class DefaultBackupService implements BackupService {
   }
 
   @override
-  Future<Result<InspectedBackup>> inspect(File file, {String? password}) async {
+  Future<Result<InspectedBackup>> inspect(
+    File file, {
+    String? password,
+    void Function(double fraction)? onProgress,
+  }) async {
     final result = await _guard(() async {
       await _ensureSpace(await file.length() * 2);
       await _deleteDir(_staging);
@@ -152,14 +172,29 @@ class DefaultBackupService implements BackupService {
       final BackupManifest manifest;
       switch (await sniffBackupFile(file)) {
         case BackupFileKind.zip:
-          manifest = await _unpack(_archive, file, root);
+          manifest = await _unpack(
+            _archive,
+            file,
+            root,
+            _span(onProgress, 0, 0.9),
+          );
         case BackupFileKind.encrypted:
           if (password == null) {
             throw const BackupException(BackupFailure.wrongPasswordOrCorrupt);
           }
           final zip = File('${_staging.path}/backup.zip');
-          await _decrypt(_cipher, file, zip, password);
-          manifest = await _unpack(_archive, zip, root);
+          await _cipher.decrypt(
+            file,
+            zip,
+            password,
+            onProgress: _span(onProgress, 0, 0.5),
+          );
+          manifest = await _unpack(
+            _archive,
+            zip,
+            root,
+            _span(onProgress, 0.5, 0.9),
+          );
           await zip.delete();
         case BackupFileKind.unknown:
           throw const BackupException(BackupFailure.notBackup);
@@ -182,6 +217,7 @@ class DefaultBackupService implements BackupService {
           await area.validate(root);
         }
       }
+      onProgress?.call(1);
       return InspectedBackup(
         manifest: manifest,
         staging: root,
@@ -472,24 +508,50 @@ Future<void> _deleteDirQuietly(Directory dir) async {
   }
 }
 
-// 아래는 순수 파일 · 암호 작업이라 다른 isolate 에서 돈다. 클로저가 이 함수의 인자만 잡도록
-// 최상위 함수로 둔다(서비스 · DB 를 잡으면 보낼 수 없다).
+/// [onProgress] 의 0..1 을 [from]..[to] 로 옮긴다.
+void Function(double)? _span(
+  void Function(double)? onProgress,
+  double from,
+  double to,
+) => onProgress == null ? null : (f) => onProgress(from + (to - from) * f);
+
+// 압축 · 해시는 순수 파일 작업이라 다른 isolate 에서 돈다. 클로저가 이 함수의 인자만 잡도록
+// 최상위 함수로 둔다(서비스 · DB 를 잡으면 보낼 수 없다). 암호는 이 isolate 에서 한다 —
+// `cryptography_flutter` 가 루트 isolate 에만 등록돼 네이티브(플랫폼 채널)로 돌기 때문이다.
+// 다른 isolate 에서는 순수 Dart 라 PBKDF2 · AES 가 몇 배 느리다.
 
 Future<void> _pack(
   BackupArchive archive,
   Directory staging,
   BackupManifest manifest,
   File out,
-) => Isolate.run(() => archive.pack(staging, manifest, out));
+  void Function(double)? onProgress,
+) => _runReporting(
+  (report) => archive.pack(staging, manifest, out, onProgress: report),
+  onProgress,
+);
 
 Future<BackupManifest> _unpack(
   BackupArchive archive,
   File zip,
   Directory into,
-) => Isolate.run(() => archive.unpack(zip, into));
+  void Function(double)? onProgress,
+) => _runReporting(
+  (report) => archive.unpack(zip, into, onProgress: report),
+  onProgress,
+);
 
-Future<void> _encrypt(BackupCipher cipher, File plain, File out, String pw) =>
-    Isolate.run(() => cipher.encrypt(plain, out, pw));
-
-Future<void> _decrypt(BackupCipher cipher, File sealed, File out, String pw) =>
-    Isolate.run(() => cipher.decrypt(sealed, out, pw));
+/// [body] 를 [Isolate.run] 으로 돌리며 그 진행을 이 isolate 의 [onProgress] 로 넘긴다.
+Future<T> _runReporting<T>(
+  Future<T> Function(void Function(double) report) body,
+  void Function(double)? onProgress,
+) async {
+  final port = ReceivePort();
+  port.listen((m) => onProgress?.call(m as double));
+  final send = port.sendPort;
+  try {
+    return await Isolate.run(() => body(send.send));
+  } finally {
+    port.close();
+  }
+}

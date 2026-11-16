@@ -54,14 +54,18 @@ class BackupCipher {
   static final _aes = AesGcm.with256bits();
   static final _random = Random.secure();
 
-  Future<void> encrypt(File plain, File out, String password) async {
+  /// [onProgress] 는 덩어리마다 지금까지 봉한 비율(0..1, 마지막은 1)을 받는다.
+  Future<void> encrypt(
+    File plain,
+    File out,
+    String password, {
+    void Function(double fraction)? onProgress,
+  }) async {
     final header = BytesBuilder()
       ..add(_magic)
       ..addByte(_containerVersion)
       ..add(
-        (ByteData(
-          4,
-        )..setUint32(0, iterations, Endian.big)).buffer.asUint8List(),
+        (ByteData(4)..setUint32(0, iterations, Endian.big)).buffer.asUint8List(),
       )
       ..add(_randomBytes(_saltLen))
       ..add(_randomBytes(_noncePrefixLen));
@@ -72,6 +76,8 @@ class BackupCipher {
     final input = await plain.open();
     final output = await out.open(mode: FileMode.write);
     try {
+      final total = await input.length();
+      var done = 0;
       await output.writeFrom(headerBytes);
       var index = 0;
       var current = await _readUpTo(input, _chunkSize);
@@ -89,6 +95,8 @@ class BackupCipher {
         );
         await output.writeFrom(box.cipherText);
         await output.writeFrom(box.mac.bytes);
+        done += current.length;
+        onProgress?.call(isLast || total == 0 ? 1 : done / total);
         if (isLast) break;
         current = next;
         index++;
@@ -99,7 +107,13 @@ class BackupCipher {
     }
   }
 
-  Future<void> decrypt(File sealed, File out, String password) async {
+  /// [onProgress] 는 덩어리마다 지금까지 푼 비율(0..1, 마지막은 1)을 받는다.
+  Future<void> decrypt(
+    File sealed,
+    File out,
+    String password, {
+    void Function(double fraction)? onProgress,
+  }) async {
     final input = await sealed.open();
     RandomAccessFile? output;
     try {
@@ -113,11 +127,10 @@ class BackupCipher {
           BackupCipherError.wrongPasswordOrCorrupt,
         );
       }
-      final iter = ByteData.sublistView(
-        headerBytes,
-        5,
-        9,
-      ).getUint32(0, Endian.big);
+      final iter = ByteData.sublistView(headerBytes, 5, 9).getUint32(
+        0,
+        Endian.big,
+      );
       if (iter < 1) {
         throw const BackupCipherException(
           BackupCipherError.wrongPasswordOrCorrupt,
@@ -126,6 +139,7 @@ class BackupCipher {
       final key = await _deriveKey(password, headerBytes, iter);
       final noncePrefix = headerBytes.sublist(_headerLen - _noncePrefixLen);
 
+      final total = await input.length();
       output = await out.open(mode: FileMode.write);
       const sealedChunk = _chunkSize + _tagLen;
       var index = 0;
@@ -158,6 +172,9 @@ class BackupCipher {
           );
         }
         await output.writeFrom(plain);
+        onProgress?.call(
+          isLast ? 1 : (await input.position() - next.length) / total,
+        );
         if (isLast) break;
         current = next;
         index++;
@@ -193,9 +210,7 @@ class BackupCipher {
   static Uint8List _nonce(List<int> prefix, int index) {
     final b = BytesBuilder()
       ..add(prefix)
-      ..add(
-        (ByteData(4)..setUint32(0, index, Endian.big)).buffer.asUint8List(),
-      );
+      ..add((ByteData(4)..setUint32(0, index, Endian.big)).buffer.asUint8List());
     return b.toBytes();
   }
 

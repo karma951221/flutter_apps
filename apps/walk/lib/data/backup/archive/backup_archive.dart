@@ -19,17 +19,23 @@ class BackupArchive {
 
   /// [staging] 아래 모든 파일을 담은 zip 을 [out] 에 쓴다. `manifest.json` 이 맨 앞이고,
   /// 각 파일의 크기 · sha256 은 여기서 채운다([manifestWithoutFiles] 의 `files` 는 무시한다).
+  /// [onProgress] 는 파일마다 지금까지의 비율(0..1, 해시 절반 · 압축 절반, 끝은 1)을 받는다.
   Future<void> pack(
     Directory staging,
     BackupManifest manifestWithoutFiles,
-    File out,
-  ) async {
+    File out, {
+    void Function(double fraction)? onProgress,
+  }) async {
     try {
       final paths = <String>[
         for (final f in staging.listSync(recursive: true).whereType<File>())
           p.posix.joinAll(p.split(p.relative(f.path, from: staging.path))),
       ]..sort();
       paths.remove(_manifestName);
+
+      final steps = paths.length * 2;
+      var done = 0;
+      void step() => onProgress?.call(++done / steps);
 
       final files = <ManifestFile>[];
       for (final rel in paths) {
@@ -41,6 +47,7 @@ class BackupArchive {
             sha256: (await sha256.bind(file.openRead()).first).toString(),
           ),
         );
+        step();
       }
       final manifest = BackupManifest(
         format: manifestWithoutFiles.format,
@@ -68,10 +75,12 @@ class BackupArchive {
             entry.compression = CompressionType.none;
           }
           encoder.addArchiveFile(entry);
+          step();
         }
       } finally {
         await encoder.close();
       }
+      if (paths.isEmpty) onProgress?.call(1);
     } on FileSystemException catch (e) {
       _deleteQuietly(out);
       throw BackupException(_ioFailure(e));
@@ -82,7 +91,12 @@ class BackupArchive {
   }
 
   /// [zip] 을 검사하며 [into] 에 푼다. 실패하면 [into] 를 지우고 [BackupException] 을 던진다.
-  Future<BackupManifest> unpack(File zip, Directory into) async {
+  /// [onProgress] 는 파일마다 지금까지 푼 비율(0..1, 끝은 1)을 받는다.
+  Future<BackupManifest> unpack(
+    File zip,
+    Directory into, {
+    void Function(double fraction)? onProgress,
+  }) async {
     final input = InputFileStream(zip.path);
     try {
       final archive = _decode(input);
@@ -106,6 +120,7 @@ class BackupArchive {
       }
 
       into.createSync(recursive: true);
+      var done = 0;
       for (final f in manifest.files) {
         final entry = archive.find(f.path);
         if (entry == null || !entry.isFile) {
@@ -127,7 +142,9 @@ class BackupArchive {
                 f.sha256) {
           throw const BackupException(BackupFailure.integrity);
         }
+        onProgress?.call(++done / manifest.files.length);
       }
+      if (manifest.files.isEmpty) onProgress?.call(1);
       return manifest;
     } on BackupException {
       _deleteDirQuietly(into);

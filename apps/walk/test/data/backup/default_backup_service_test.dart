@@ -132,13 +132,14 @@ class _Device {
     List<BackupAreaSource>? areas,
     Future<int?> Function()? freeBytes,
     Future<void> Function(Directory dir)? deleteTree,
+    BackupCipher? cipher,
   }) => DefaultBackupService(
     areas: areas ?? realAreas,
     appDocs: docs,
     cache: cache,
     appVersion: '1.0.0+1',
     clock: clock,
-    cipher: BackupCipher(iterations: 1000),
+    cipher: cipher ?? BackupCipher(iterations: 1000),
     freeBytes: freeBytes,
     deleteTree: deleteTree,
   );
@@ -254,6 +255,35 @@ Future<void> Function(Directory) _crashWhileDeleting(
     }
     await dir.delete(recursive: true);
   };
+}
+
+/// 부른 isolate 에서 무엇을 불렀는지 남기는 암호. 다른 isolate 로 보내면 사본에 남아 비어 있다.
+class _RecordingCipher extends BackupCipher {
+  _RecordingCipher() : super(iterations: 1000);
+
+  final calls = <String>[];
+
+  @override
+  Future<void> encrypt(
+    File plain,
+    File out,
+    String password, {
+    void Function(double fraction)? onProgress,
+  }) {
+    calls.add('encrypt');
+    return super.encrypt(plain, out, password, onProgress: onProgress);
+  }
+
+  @override
+  Future<void> decrypt(
+    File sealed,
+    File out,
+    String password, {
+    void Function(double fraction)? onProgress,
+  }) {
+    calls.add('decrypt');
+    return super.decrypt(sealed, out, password, onProgress: onProgress);
+  }
 }
 
 /// 메모리에만 값을 두는 가짜 영역. 파일은 `root/<id>/value.txt` 하나.
@@ -963,6 +993,59 @@ void main() {
       expect(chat.value, 'mine');
     },
   );
+
+  test(
+    'cipher runs on the calling isolate (platform crypto lives there)',
+    () async {
+      final d = await device();
+      await d.seed();
+      final cipher = _RecordingCipher();
+      final service = d.service(cipher: cipher);
+
+      final file = _ok(
+        await service.export({BackupAreaId.diary}, password: _password),
+      );
+      await service.discard(
+        _ok(await service.inspect(file, password: _password)),
+      );
+
+      expect(cipher.calls, ['encrypt', 'decrypt']);
+    },
+  );
+
+  for (final encrypted in [false, true]) {
+    test('export and inspect report progress up to 1 '
+        '(${encrypted ? 'encrypted' : 'plain'})', () async {
+      final d = await device();
+      await d.seed();
+      final service = d.service();
+      final password = encrypted ? _password : null;
+
+      final exporting = <double>[];
+      final file = _ok(
+        await service.export(
+          BackupAreaId.values.toSet(),
+          password: password,
+          onProgress: exporting.add,
+        ),
+      );
+      final inspecting = <double>[];
+      _ok(
+        await service.inspect(
+          file,
+          password: password,
+          onProgress: inspecting.add,
+        ),
+      );
+
+      for (final steps in [exporting, inspecting]) {
+        expect(steps.length, greaterThan(2));
+        expect(steps, orderedEquals([...steps]..sort()));
+        expect(steps.first, greaterThanOrEqualTo(0));
+        expect(steps.last, 1.0);
+      }
+    });
+  }
 
   test('wrong password → wrongPasswordOrCorrupt, data untouched', () async {
     final d = await device(prefs: _areaPrefs);
