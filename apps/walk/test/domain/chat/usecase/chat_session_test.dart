@@ -1576,7 +1576,7 @@ void main() {
     expect(system, contains('2026-10-27'));
     expect(system, contains('2026-10-27 (화)'));
     expect(system, contains(clock.value.timeZoneName));
-    expect(system, startsWith('너는 사용자의 개인 기록 앱 Life Tool 안의 도우미다.'));
+    expect(system, startsWith('너는 사용자의 개인 기록 앱 Life Log 안의 도우미다.'));
   });
 
   test('오늘 날짜 줄은 시스템 프롬프트의 마지막 줄이다', () async {
@@ -1888,7 +1888,7 @@ void main() {
       final request = model.requests.single;
       expect(
         request.system,
-        '너는 사용자의 개인 기록 앱 Life Tool 안의 도우미다. 무엇이든 답하는 일반 '
+        '너는 사용자의 개인 기록 앱 Life Log 안의 도우미다. 무엇이든 답하는 일반 '
         '도우미이면서, 사용자의 기록도 찾아볼 수 있다.\n'
         '사용자의 기록(일기 · 걸음 수 · 알람 기상 기록)에 관한 질문이면 도구로 찾아보고, '
         '찾은 기록에 근거해서 답한다. 기록에서 찾지 못한 것은 추측하지 말고 '
@@ -3292,7 +3292,7 @@ void main() {
             '오늘은 2026-10-27 (화), 시간대는 ${clock.value.timeZoneName} 이다.';
         expect(
           request.system,
-          '너는 Life Tool 앱 안의 도우미다. 지식 · 설명 · 조언 · 잡담 등 무엇이든 '
+          '너는 Life Log 앱 안의 도우미다. 지식 · 설명 · 조언 · 잡담 등 무엇이든 '
           '아는 대로 자유롭게 답한다.\n'
           '최근 소식 · 지금의 정보 · 확실하지 않은 사실은 웹 검색으로 확인하고, '
           '답에 출처(사이트 이름)를 짧게 밝힌다.\n'
