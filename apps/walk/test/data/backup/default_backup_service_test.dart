@@ -934,6 +934,26 @@ void main() {
     expect(await d.snapshot(), before);
   });
 
+  test('undo of a chat-only restore brings wiki provenance back', () async {
+    final d = await device();
+    await d.seed();
+    final service = d.service();
+    final file = _ok(await service.export({BackupAreaId.chat}));
+    await insertConversation(d.chat, 'x');
+    await insertWikiNote(d.chat, 2, source: 'x');
+    final beforeRestore = await d.snapshot();
+
+    _ok(
+      await service.restore(_ok(await service.inspect(file)), {
+        BackupAreaId.chat,
+      }),
+    );
+    expect(await d.snapshot(), isNot(beforeRestore));
+    _ok(await service.undo());
+
+    expect(await d.snapshot(), beforeRestore);
+  });
+
   test('undo returns to pre-restore state', () async {
     final d = await device(prefs: _areaPrefs);
     await d.seed();
