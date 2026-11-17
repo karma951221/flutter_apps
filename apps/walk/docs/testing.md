@@ -300,14 +300,14 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | 계측 | `data/chat/dev_chat_trace_test`(요약 줄 · 허용 키) |
 | 기록 도구 5개 | `domain/chat/tool/life_tools_test` |
 | 세션 · cubit | `domain/chat/usecase/chat_session_test`(사용량 기록 · 멈춤 (a)~(f)) · `presentation/chat/cubit/chat_cubit_test`(멈춤 · 질문 되돌림 · ready 면 확인 전 키 재확인 · `recheck: false` 면 안 함) |
-| 입력 · 말풍선 | `presentation/chat/widget/chat_input_test`([■ 멈춤] 전환) · `chat_bubble_view_test`('멈춤' 표시 · 실패 말풍선 [설정 열기]) · `chat_failure_text_test`(크레딧 부족 · 모델 없음 문구 · 빈 문구 없음) |
+| 입력 · 말풍선 | `presentation/chat/widget/chat_input_test`([■ 멈춤] 전환 · 줄바꿈 키 · 5줄까지 커짐 · 버튼 아래 정렬 · [＋] 입력칸 바깥) · `chat_bubble_view_test`('멈춤' 표시 · 실패 말풍선 [설정 열기]) · `chat_failure_text_test`(크레딧 부족 · 모델 없음 문구 · 빈 문구 없음) |
 | 진행 표시 · 지연 줄이기 | `domain/chat/tool/tool_summary_test`(도구 입력 · 결과 요약 · 검색어 20자 · `toString` 에 값 없음) · `domain/chat/tool/life_tools_test`(검색어는 grapheme 20자 · 21자면 20자 + … · 공백뿐이면 null) · `data/chat/anthropic_chat_model_test`(진행 이벤트 · `display` 파라미터 · beta 헤더 · 목록 밖 모델이면 `thinking` 없음 · `claude-sonnet-50` 은 노트 없음 · 중단 문구 걸러내기 · 누적 노트 · top-level `cache_control`) · `domain/chat/usecase/chat_session_test`(진행 순서 · 안 알린 도구 호출도 `toolStarted` · started 만 오고 ready 가 없으면 입력과 함께 다시 · 도구 병렬 · 결과 호출 순서 · 라운드 경계 줄바꿈 · `phase(sending)` 이 try 안 · `markNoImages` 가 던져도 사진 없이 재전송 · `ChatEvent.text` 의 `toString` 은 길이만) · `presentation/chat/cubit/chat_cubit_test`(단계 · 경과 초 · 글 모으기 · 쓰기 단계는 하나(다시 쓰면 맨 뒤로) · 진행 노트도 `firstVisible`) · `presentation/chat/cubit/chat_progress_test` · `presentation/chat/widget/chat_progress_view_test` · `chat_progress_text_test` · `chat_jump_to_latest_test`(스크린 리더엔 화살표 없이 "새 답" 버튼) · `chat_bubble_view_test`(커서 두 쪽 가드) · `presentation/chat/page/chat_tab_test`(진행 줄 자리 · [↓ 새 답] · 마지막 항목만 다시 그리기 · 펼친 요약은 새 답이 붙어도 제 말풍선에 · 글 뒤 도구 동안 커서 없음 · **읽던 자리**: 위로 올려 둔 채 글 · 진행 줄 · 요약으로 바뀌어도 앞 말풍선 y 그대로(±0.5, 프레임마다) · 맨 아래면 따라 내려감 · 다시 내리면 [↓ 새 답] 숨김) |
 | 화면 · 셸 | `presentation/chat/page/chat_tab_test`(⋮ 는 잠긴 동안 앱 설정만, 풀리면 물어보기 설정 · 앱 설정 · 위에 얹힌 물어보기 설정에서 키를 넣고 돌아오면 `didPopNext` 로 키를 다시 읽음 · 키 확인 중 로딩 · 키 없으면 설정 버튼 · 실패 말풍선 [설정 열기] · 보이지 않는 탭은 돌아와도 다시 읽지 않고 앱 시작에 키 확인도 안 함, 보이게 되면 함) · `presentation/shell/page/main_shell_page_test`(탭 구성 · 잠금 · 물어보기 [설정 열기]로 연 연결 행 glow · ⋮ 로 열면 glow 없음 · 알람 권한 배너 → 거부된 알림 권한 행 glow) |
 | 모델 규칙 · 선택 | `domain/chat/chat_model_rules_test`(채팅용 거르기 · 최신순 · 추천 · 이미지 · effort(5.x · 4.6 이상 · Opus 4.5, 날짜 붙은 id) · fallbacks(Fable 5.1 · Opus 5 / 5.5 · Sonnet 5.5) · 빠른 출력 표 주입) · `domain/chat/usecase/chat_model_choice_test`(추천을 따라감 · 고른 모델 · 사라진 모델 알림 · 하루 1회 갱신 · 확인 전 24시간 무시 · 빈 목록은 `fetchedAt` 안 찍음(refresh · adopt)) · `data/chat/prefs_chat_model_catalog_test`(벤더별 목록 · `chat.models.vendor` · `noImages` 가 갱신에 안 지워짐) · `data/chat/chat_model_registry_test`(벤더 → 어댑터 · 목록 받기) |
 | GPT 어댑터 | `data/chat/openai_chat_model_test`(`store: false` · 추론 항목 왕복 · 도구 호출 · 사진(뒤따르는 user 입력 / 배열) · 오류 `code` 매핑 · 취소 · 잘린 응답 정리 · 목록) · `data/chat/vendor_error_test`(오류 본문에서 `type` · `code` 만 읽기 · 크기 · 시간 상한 · abort — 종류 매핑은 두 어댑터 테스트) |
 | Claude 어댑터 추가 | `anthropic_chat_model_test`(목록 페이지 넘기기 · effort · fallbacks · beta 헤더는 받는 모델에만(옛 모델엔 헤더 없음) · 빠른 출력 상수 · 다른 모델 턴을 parts 로 다시 만들기 · 실제 모델 id) |
 | 세션 — 모델 | `chat_session_test`(고른 모델 · 빠른 출력 · 사진 못 보는 모델에서 사진 빼기 · 이미지 거절 → 기록 후 한 번 재전송 · 접기는 벤더가 바뀔 때만 · 모델 바뀜 알림) |
-| 앱바 모델 버튼 · 시트 | `presentation/chat/widget/model_action_test`(툴팁에 지금 모델 · 새 모델 점 · 비활성) · `model_picker_sheet_test`(NEW · 추천 · 빠른 출력 스위치와 요금 안내) · `presentation/chat/cubit/model_picker_cubit_test` · `chat_tab_test`(앱바 actions · 제목 아래 모델 이름 · [내 기록 참고] 토글 켬/끔 · 저장 · 스낵바 · 선택 시맨틱 · 답하는 중 비활성 · 목록 없음 · 사라진 모델 알림) · `chat_cubit_test`(보이지 않게 시작한 뒤 처음 받는 동안 checking → ready / noModels · `modelReplaced` 면 칩 알림을 지워 말풍선만) |
+| 앱바 대화 설정 · 시트 | `presentation/chat/widget/chat_settings_action_test`(툴팁 · 새 모델 점) · `chat_settings_sheet_test`(모델 행 · 점 · 번개 · 스위치 설명 · 답하는 중 꺼짐) · `model_picker_sheet_test`(NEW · 추천 · 빠른 출력 스위치와 요금 안내) · `presentation/chat/cubit/model_picker_cubit_test` · `chat_tab_test`(앱바엔 설정 버튼 하나 · 제목 아래 모델 이름 · 시트에서 모델 바꾸기 · 내 기록 스위치 켬/끔 · 저장 · 물어보기 설정 열기 · 답하는 중 꺼짐 · 목록 없음 · 사라진 모델 알림) · `chat_cubit_test`(보이지 않게 시작한 뒤 처음 받는 동안 checking → ready / noModels · `modelReplaced` 면 칩 알림을 지워 말풍선만) |
 | 벤더 고르기 · 동의 | `presentation/settings/widget/vendor_picker_sheet_test` · `chat_key_dialog_test`(벤더 바꾸기 · 확인 못 하고 바꾸면 `switchedUnverified` · GPT 힌트) · `chat_settings_section_test`(확인 못 한 바꾸기 스낵바) · `presentation/chat/widget/chat_consent_view_test`(벤더별 문구 · 이어가는 대화 한 줄) · `chat_cubit_test`(벤더별 전송 동의) |
 | 대화 기록 — 도메인 · 저장소 | `domain/chat/entity/conversation_test`(제목 만들기 30자 · 공백 접기 · 말줄임 · toString 에 글 없음) · `data/chat/database/chat_database_test`(스키마 v1 · TEXT 날짜 · 외래 키 켜짐) · `drift_chat_history_repository_test`(목록 순서 · 턴 수 · appendTurn 롤백 · 턴 지우기 · 삭제 cascade · `deleteOlderThan` · `watchExists`, `deleteAll` · `deleteOlderThan` 로 지워져도 false) |
 | 사용량 기록 | `data/chat/database/drift_chat_usage_log_test`(요청마다 한 행 · 임시는 숫자만 · 월별 합 · 모델별 · 13개월 정리 · `fast_mode`) · `domain/chat/chat_usage_log_test` |
@@ -641,7 +641,22 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | W5 | 토글 끈 뒤 앱 재시작 | 꺼진 채로 열린다 | 대기 |
 | W6 | 검색을 여러 번 해야 하는 긴 질문 | `pause_turn` 이 나도 끊기지 않고 답이 이어진다 | 대기 |
 
+### 물어보기 입력칸 · 대화 설정 시트
+
+키가 있는 상태에서 본다. 앱바 정리(AB)를 대신한다.
+
+| # | 하는 일 | 기대 | 상태 |
+|---|---|---|---|
+| CI1 | 입력칸에 글을 쓰다 키보드 오른쪽 아래 키를 누른다 | 줄이 바뀐다(보내지지 않는다). 화면의 [보내기]로만 보낸다 | 대기 |
+| CI2 | 7줄을 쓴다 | 5줄까지 칸이 커지고 그 뒤로는 칸 안에서 스크롤. [＋] · [보내기]는 칸 아래쪽에 붙어 있다 | 대기 |
+| CI3 | 앱바를 본다 | [새 대화] (대화가 있을 때) · [대화 설정] · ⋮, 제목 아래 지금 모델 이름 | 대기 |
+| CI4 | [대화 설정] → 모델 행 → 다른 모델 | 고르기 시트가 위에 열리고, 고르면 설정 시트로 돌아와 행과 제목 아래 이름이 바뀐다 | 대기 |
+| CI5 | 시트에서 내 기록 참고를 끄고 앱 재시작 | 설명이 "내 기록 없이 답해요"로 바뀌고, 재시작해도 꺼져 있다 | 대기 |
+| CI6 | 답하는 중 [대화 설정] | 시트는 열리고 모델 행 · 스위치만 꺼져 있다 | 대기 |
+
 ### 물어보기 앱바 정리
+
+> 2026-11-17 대화 설정 시트로 바뀌어 아래 표는 더 보지 않는다 — [CI1~CI6](#물어보기-입력칸--대화-설정-시트).
 
 키가 있는 상태(가짜 키로도 모델 목록을 못 받으면 볼 수 없다)에서 본다.
 
@@ -699,7 +714,7 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 
 | # | 하는 일 | 기대 | 상태 |
 |---|---|---|---|
-| F-QA1 | 입력칸 [📎] → 사진 · PDF · md 하나씩 골라 "요약해 줘" | 칩 셋이 보이고, 답이 세 파일 내용을 다룬다. 고르는 동안 일기 잠금이 걸리지 않는다 | 대기 |
+| F-QA1 | 입력칸 왼쪽 [＋] → 사진 · PDF · md 하나씩 골라 "요약해 줘" | 칩 셋이 보이고, 답이 세 파일 내용을 다룬다. 고르는 동안 일기 잠금이 걸리지 않는다 | 대기 |
 | F-QA2 | 같은 질문을 GPT 로 | PDF(`input_file`)가 거절되지 않는다. 거절되면 [기록](history.md#2026-11--물어보기-파일-첨부--작업-폴더1단계)에 적고 대체 처리를 정한다 | 대기 |
 | F-QA3 | 일반 대화에서 보낸 뒤 ⋮ [작업 폴더] | "첨부한 파일"에 원본 크기 그대로 셋. 사진은 원본(줄인 JPEG 아님) | 대기 |
 | F-QA4 | 임시 대화에서 첨부해 보낸 뒤 `adb shell run-as <패키지> ls -R files/workspace cache/file_picker` | inbox 에 새 파일 없음 · `cache/file_picker` 에 사본 없음 | 대기 |

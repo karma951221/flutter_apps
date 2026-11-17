@@ -3775,21 +3775,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatModelPickerTitle => 'モデルを選ぶ';
 
   @override
-  String walkChatModelActionTooltip(String model) {
-    return 'モデルを変更 · 現在 $model';
-  }
+  String get walkChatQuickSettings => '会話の設定';
 
   @override
-  String get walkChatUseRecordsOn => '自分の記録を参照: オン';
+  String get walkChatModelRowTitle => 'モデル';
 
   @override
-  String get walkChatUseRecordsOff => '自分の記録を参照: オフ';
+  String get walkChatUseRecordsTitle => '自分の記録を参照';
 
   @override
-  String get walkChatUseRecordsTurnedOn => 'これから日記・歩数・場所・アラーム・天気・ウィキを調べて答えます';
+  String get walkChatUseRecordsOnHint => '日記・歩数・場所・アラーム・天気・ウィキを調べて答えます';
 
   @override
-  String get walkChatUseRecordsTurnedOff => 'これから記録を使わずに答えます';
+  String get walkChatUseRecordsOffHint => '記録を使わずに答えます';
 
   @override
   String get walkChatModelRecommended => 'おすすめ';
