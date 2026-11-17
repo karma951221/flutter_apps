@@ -56,7 +56,12 @@ class AlarmHistoryCubit extends Cubit<AlarmHistoryState> {
             ),
       ];
       if (!isClosed) {
-        emit(AlarmHistoryState.loaded(groups: ringLogGroups(past, alarms), now: now));
+        emit(
+          AlarmHistoryState.loaded(
+            groups: ringLogGroups(past, alarms),
+            now: now,
+          ),
+        );
       }
     } on Object {
       if (!isClosed) emit(const AlarmHistoryState.failure());

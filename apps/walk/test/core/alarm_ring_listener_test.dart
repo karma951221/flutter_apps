@@ -159,13 +159,21 @@ void main() {
     tearDown(() => guarded.dispose());
 
     void goHome(WidgetTester tester) {
-      for (final state in [AppLifecycleState.inactive, AppLifecycleState.hidden, AppLifecycleState.paused]) {
+      for (final state in [
+        AppLifecycleState.inactive,
+        AppLifecycleState.hidden,
+        AppLifecycleState.paused,
+      ]) {
         tester.binding.handleAppLifecycleStateChanged(state);
       }
     }
 
     void comeBack(WidgetTester tester) {
-      for (final state in [AppLifecycleState.hidden, AppLifecycleState.inactive, AppLifecycleState.resumed]) {
+      for (final state in [
+        AppLifecycleState.hidden,
+        AppLifecycleState.inactive,
+        AppLifecycleState.resumed,
+      ]) {
         tester.binding.handleAppLifecycleStateChanged(state);
       }
     }

@@ -40,9 +40,9 @@ void main() {
   });
   setUp(() async {
     await h.setUp();
-    when(h.diaryRepo.watchStories).thenAnswer(
-      (_) => Stream.value(const <Story>[]),
-    );
+    when(
+      h.diaryRepo.watchStories,
+    ).thenAnswer((_) => Stream.value(const <Story>[]));
     when(
       () => h.diaryRepo.watchEntries(any()),
     ).thenAnswer((_) => Stream.value(const []));

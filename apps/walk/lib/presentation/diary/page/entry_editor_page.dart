@@ -206,7 +206,11 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
         if (!mounted) return;
         final open = widget.onOpenChatSettings;
         if (open == null) {
-          AppSnackBar.show(context, message: l10n.walkDiaryDraftNoKey, type: AppSnackBarType.warning);
+          AppSnackBar.show(
+            context,
+            message: l10n.walkDiaryDraftNoKey,
+            type: AppSnackBarType.warning,
+          );
           return;
         }
         final go = await AppConfirmDialog.show(
@@ -223,7 +227,9 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
         final accepted = await AppConfirmDialog.show(
           context,
           title: l10n.walkDiaryDraftConsentTitle,
-          content: l10n.walkDiaryDraftConsentNotice(chatVendorName(l10n, vendor)),
+          content: l10n.walkDiaryDraftConsentNotice(
+            chatVendorName(l10n, vendor),
+          ),
           confirmLabel: l10n.walkChatConsentAccept,
           isDestructive: false,
         );

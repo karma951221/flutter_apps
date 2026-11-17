@@ -92,6 +92,19 @@ class MediaPicker {
     return [if (file != null) (path: file.path, kind: MediaKind.photo)];
   }
 
+  /// 프로필 사진 한 장 — 앨범([camera] false) 또는 카메라. 취소하면 null.
+  /// 줄이기 · EXIF 지우기는 프로필 저장소가 한다. 다 쓰면 [release] 로 캐시 사본을 지운다.
+  Future<String?> pickProfilePhoto({required bool camera}) async {
+    final file = await _guard.run(
+      () => _picker.pickImage(
+        source: camera ? ImageSource.camera : ImageSource.gallery,
+        preferredCameraDevice: CameraDevice.front,
+        requestFullMetadata: false,
+      ),
+    );
+    return file?.path;
+  }
+
   /// 길이 제한을 넘는 녹화는 `MediaStore.importVideo` 가 거절한다.
   Future<List<PickedMedia>> recordVideo() async {
     final file = await _guard.run(

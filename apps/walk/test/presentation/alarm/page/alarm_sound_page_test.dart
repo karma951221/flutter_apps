@@ -15,7 +15,10 @@ class _MockSoundSource extends Mock implements AlarmSoundSource {}
 void main() {
   const bell = (title: 'Bell', uri: 'content://media/1');
   const dawn = (title: 'Dawn', uri: 'content://media/2');
-  const copiedBell = AlarmSound.device(title: 'Bell', path: '/data/alarm_sounds/a.ogg');
+  const copiedBell = AlarmSound.device(
+    title: 'Bell',
+    path: '/data/alarm_sounds/a.ogg',
+  );
   late _MockSoundSource source;
 
   setUpAll(() {
@@ -25,14 +28,19 @@ void main() {
   setUp(() {
     source = _MockSoundSource();
     when(() => source.deviceRingtones()).thenAnswer((_) async => [bell, dawn]);
-    when(() => source.preview(any(), uri: any(named: 'uri'))).thenAnswer((_) async {});
+    when(
+      () => source.preview(any(), uri: any(named: 'uri')),
+    ).thenAnswer((_) async {});
     when(() => source.stopPreview()).thenAnswer((_) async {});
     getIt.registerSingleton<AlarmSoundSource>(source);
   });
   tearDown(getIt.reset);
 
   /// 선택 화면을 띄우고, 닫힐 때의 결과를 모은다.
-  Future<List<AlarmSound?>> pump(WidgetTester tester, AlarmSound initial) async {
+  Future<List<AlarmSound?>> pump(
+    WidgetTester tester,
+    AlarmSound initial,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(800, 1600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final results = <AlarmSound?>[];
@@ -46,7 +54,9 @@ void main() {
           builder: (context) => TextButton(
             onPressed: () async => results.add(
               await Navigator.of(context).push<AlarmSound>(
-                MaterialPageRoute(builder: (_) => AlarmSoundPage(initial: initial)),
+                MaterialPageRoute(
+                  builder: (_) => AlarmSoundPage(initial: initial),
+                ),
               ),
             ),
             child: const Text('open'),
@@ -61,8 +71,16 @@ void main() {
 
   /// [title] 줄에 선택 표시가 있는가.
   bool isChecked(WidgetTester tester, String title) {
-    final row = find.ancestor(of: find.text(title), matching: find.byType(AppListTile));
-    return tester.any(find.descendant(of: row, matching: find.byIcon(Icons.radio_button_checked)));
+    final row = find.ancestor(
+      of: find.text(title),
+      matching: find.byType(AppListTile),
+    );
+    return tester.any(
+      find.descendant(
+        of: row,
+        matching: find.byIcon(Icons.radio_button_checked),
+      ),
+    );
   }
 
   testWidgets('세 구역: 시스템 기본 · 앱 소리 5줄 · 기기 알람음 목록', (tester) async {
@@ -89,7 +107,9 @@ void main() {
   });
 
   testWidgets('기기 목록 읽기 실패면 그 구역에만 안내, 나머지는 쓸 수 있다', (tester) async {
-    when(() => source.deviceRingtones()).thenThrow(const AlarmSoundException('list'));
+    when(
+      () => source.deviceRingtones(),
+    ).thenThrow(const AlarmSoundException('list'));
     final results = await pump(tester, const AlarmSound.system());
 
     expect(find.text('기기 알람음을 불러오지 못했어요'), findsOneWidget);
@@ -117,7 +137,10 @@ void main() {
 
     expect(isChecked(tester, '클래식 벨'), isTrue);
     expect(isChecked(tester, '시스템 기본'), isFalse);
-    verify(() => source.preview(const AlarmSound.bundled(BundledAlarmSounds.classic))).called(1);
+    verify(
+      () =>
+          source.preview(const AlarmSound.bundled(BundledAlarmSounds.classic)),
+    ).called(1);
 
     await tester.tap(find.text('선택'));
     await tester.pumpAndSettle();
@@ -146,7 +169,9 @@ void main() {
   });
 
   testWidgets('복사가 실패하면 오류 스낵바를 띄우고 머문다', (tester) async {
-    when(() => source.import(bell)).thenThrow(const AlarmSoundException('import'));
+    when(
+      () => source.import(bell),
+    ).thenThrow(const AlarmSoundException('import'));
     final results = await pump(tester, const AlarmSound.system());
 
     await tester.tap(find.text('Bell'));
@@ -161,7 +186,10 @@ void main() {
   });
 
   group('내 파일', () {
-    const picked = FileAlarmSound(title: 'wake up', path: '/data/alarm_sounds/f.mp3');
+    const picked = FileAlarmSound(
+      title: 'wake up',
+      path: '/data/alarm_sounds/f.mp3',
+    );
 
     testWidgets('내 파일 구역과 파일에서 고르기 줄이 보인다', (tester) async {
       await pump(tester, const AlarmSound.system());
@@ -182,7 +210,9 @@ void main() {
     });
 
     testWidgets('파일을 고르면 그 줄이 생겨 선택되고, 선택하면 그 파일로 닫힌다', (tester) async {
-      when(() => source.pickFile(fallbackTitle: '내 파일')).thenAnswer((_) async => picked);
+      when(
+        () => source.pickFile(fallbackTitle: '내 파일'),
+      ).thenAnswer((_) async => picked);
       final results = await pump(tester, const AlarmSound.system());
 
       await tester.tap(find.text('파일에서 고르기'));

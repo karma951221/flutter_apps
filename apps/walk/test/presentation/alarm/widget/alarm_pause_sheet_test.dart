@@ -21,7 +21,9 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         home: Builder(
           builder: (context) => TextButton(
-            onPressed: () async => results.add(await AlarmPauseSheet.show(context, now: at ?? now)),
+            onPressed: () async => results.add(
+              await AlarmPauseSheet.show(context, now: at ?? now),
+            ),
             child: const Text('open'),
           ),
         ),
@@ -37,10 +39,15 @@ void main() {
       (tile.title as Text).data!,
   ];
 
-  testWidgets('손잡이 · 제목 · 안내 · [오늘만 · 내일까지 · 이번 주말 · 날짜 고르기]와 각 기간', (tester) async {
+  testWidgets('손잡이 · 제목 · 안내 · [오늘만 · 내일까지 · 이번 주말 · 날짜 고르기]와 각 기간', (
+    tester,
+  ) async {
     await pump(tester);
 
-    expect(tester.widget<BottomSheet>(find.byType(BottomSheet)).showDragHandle, isTrue);
+    expect(
+      tester.widget<BottomSheet>(find.byType(BottomSheet)).showDragHandle,
+      isTrue,
+    );
     expect(find.text('알람 쉬기'), findsOneWidget);
     expect(find.text('고른 기간에는 모든 알람이 울리지 않아요. 스위치는 그대로예요.'), findsOneWidget);
     expect(rows(tester), ['오늘만', '내일까지', '이번 주말', '날짜 고르기']);
@@ -76,7 +83,9 @@ void main() {
     await tester.tap(find.text('저장'));
     await tester.pumpAndSettle();
 
-    expect(results, [AlarmPause(from: DateTime(2026, 10, 12), until: DateTime(2026, 10, 14))]);
+    expect(results, [
+      AlarmPause(from: DateTime(2026, 10, 12), until: DateTime(2026, 10, 14)),
+    ]);
   });
 
   testWidgets('달력을 취소하면 아무것도 돌려주지 않는다', (tester) async {

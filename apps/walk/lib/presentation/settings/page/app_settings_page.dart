@@ -61,11 +61,7 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
               Icons.directions_walk,
               l10n.walkWalkSettingsTitle,
             ),
-            (
-              SettingsTarget.map,
-              Icons.map_outlined,
-              l10n.walkMapSettingsTitle,
-            ),
+            (SettingsTarget.map, Icons.map_outlined, l10n.walkMapSettingsTitle),
             (
               SettingsTarget.backup,
               Icons.backup_outlined,

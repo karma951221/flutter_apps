@@ -116,7 +116,8 @@ void main() {
   });
 
   group('awaitBackgroundIdle', () {
-    final messenger = TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger;
+    final messenger =
+        TestWidgetsFlutterBinding.ensureInitialized().defaultBinaryMessenger;
     late List<String> methods;
 
     void answer(Future<Object?> Function() reply) {

@@ -31,7 +31,9 @@ void main() {
   blocTest<TodayActivityCubit, TodayActivityState>(
     '실패 → failure',
     build: () {
-      when(() => useCase.today()).thenAnswer((_) async => const Err(Failure.unknown()));
+      when(
+        () => useCase.today(),
+      ).thenAnswer((_) async => const Err(Failure.unknown()));
       return TodayActivityCubit(useCase);
     },
     act: (cubit) => cubit.load(),
@@ -47,7 +49,8 @@ void main() {
       when(() => useCase.today()).thenAnswer((_) async => Ok(_today));
       return TodayActivityCubit(useCase);
     },
-    seed: () => TodayActivityState.loaded(DailyActivity.empty(DateTime(2026, 9, 23))),
+    seed: () =>
+        TodayActivityState.loaded(DailyActivity.empty(DateTime(2026, 9, 23))),
     act: (cubit) => cubit.refresh(),
     expect: () => [TodayActivityState.loaded(_today)],
   );

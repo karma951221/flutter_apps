@@ -23,14 +23,23 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   const prefix = 'dev.flutter.pigeon.alarm.AlarmApi.';
-  const methods = ['getPendingAlarmEvents', 'setAlarm', 'stopAlarm', 'isRinging'];
+  const methods = [
+    'getPendingAlarmEvents',
+    'setAlarm',
+    'stopAlarm',
+    'isRinging',
+  ];
   late Set<int> ringing;
 
   void install() {
-    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     for (final name in methods) {
       messenger.setMockDecodedMessageHandler<Object?>(
-        BasicMessageChannel<Object?>('$prefix$name', AlarmApi.pigeonChannelCodec),
+        BasicMessageChannel<Object?>(
+          '$prefix$name',
+          AlarmApi.pigeonChannelCodec,
+        ),
         (message) async {
           final args = message as List<Object?>?;
           return switch (name) {
@@ -49,10 +58,14 @@ void main() {
   }
 
   void remove() {
-    final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
     for (final name in methods) {
       messenger.setMockDecodedMessageHandler<Object?>(
-        BasicMessageChannel<Object?>('$prefix$name', AlarmApi.pigeonChannelCodec),
+        BasicMessageChannel<Object?>(
+          '$prefix$name',
+          AlarmApi.pigeonChannelCodec,
+        ),
         null,
       );
     }
@@ -61,11 +74,12 @@ void main() {
   /// 호스트가 `AlarmTriggerApi` 를 부른 것처럼 보낸다.
   Future<void> fromHost(String method, int id) async {
     final completer = Completer<void>();
-    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
-      'dev.flutter.pigeon.alarm.AlarmTriggerApi.$method',
-      AlarmTriggerApi.pigeonChannelCodec.encodeMessage(<Object?>[id]),
-      (_) => completer.complete(),
-    );
+    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .handlePlatformMessage(
+          'dev.flutter.pigeon.alarm.AlarmTriggerApi.$method',
+          AlarmTriggerApi.pigeonChannelCodec.encodeMessage(<Object?>[id]),
+          (_) => completer.complete(),
+        );
     await completer.future;
   }
 
@@ -105,10 +119,19 @@ void main() {
   });
 
   test('백그라운드에서 울리고 알림으로 끈 알람은 앱으로 돌아와도 다시 울림이 되지 않는다', () async {
-    await Alarm.set(alarmSettings: alarm(42, DateTime.now().add(const Duration(milliseconds: 300))));
+    await Alarm.set(
+      alarmSettings: alarm(
+        42,
+        DateTime.now().add(const Duration(milliseconds: 300)),
+      ),
+    );
 
     // 홈 화면으로 — 대체 타이머는 지워지고 포그라운드 구독만 남는다.
-    lifecycle([AppLifecycleState.inactive, AppLifecycleState.hidden, AppLifecycleState.paused]);
+    lifecycle([
+      AppLifecycleState.inactive,
+      AppLifecycleState.hidden,
+      AppLifecycleState.paused,
+    ]);
     await Future<void>.delayed(const Duration(milliseconds: 400));
 
     ringing.add(42);
@@ -120,7 +143,11 @@ void main() {
     await fromHost('alarmStopped', 42);
     expect(Alarm.ringing.value.containsId(42), isFalse);
 
-    lifecycle([AppLifecycleState.hidden, AppLifecycleState.inactive, AppLifecycleState.resumed]);
+    lifecycle([
+      AppLifecycleState.hidden,
+      AppLifecycleState.inactive,
+      AppLifecycleState.resumed,
+    ]);
     // 대체 타이머 주기(200ms) + 호스트를 기다리는 유예(700ms)보다 넉넉히.
     await Future<void>.delayed(const Duration(milliseconds: 1500));
 
@@ -128,14 +155,27 @@ void main() {
   });
 
   test('울림 소식 없이 끔만 받은 알람도 앱으로 돌아와 다시 울림이 되지 않는다', () async {
-    await Alarm.set(alarmSettings: alarm(42, DateTime.now().add(const Duration(milliseconds: 300))));
-    lifecycle([AppLifecycleState.inactive, AppLifecycleState.hidden, AppLifecycleState.paused]);
+    await Alarm.set(
+      alarmSettings: alarm(
+        42,
+        DateTime.now().add(const Duration(milliseconds: 300)),
+      ),
+    );
+    lifecycle([
+      AppLifecycleState.inactive,
+      AppLifecycleState.hidden,
+      AppLifecycleState.paused,
+    ]);
     await Future<void>.delayed(const Duration(milliseconds: 400));
 
     // 울림 콜백이 이 엔진에 닿지 않았어도(다른 엔진이 받음) 끔은 온다.
     await fromHost('alarmStopped', 42);
 
-    lifecycle([AppLifecycleState.hidden, AppLifecycleState.inactive, AppLifecycleState.resumed]);
+    lifecycle([
+      AppLifecycleState.hidden,
+      AppLifecycleState.inactive,
+      AppLifecycleState.resumed,
+    ]);
     await Future<void>.delayed(const Duration(milliseconds: 1500));
 
     expect(Alarm.ringing.value.containsId(42), isFalse);
@@ -144,13 +184,26 @@ void main() {
   test('백그라운드에서 호스트가 울린 알람은 끄기 전에 돌아와도 한 번만 울림이 된다', () async {
     final emitted = <bool>[];
     final sub = Alarm.ringing.listen((set) => emitted.add(set.containsId(42)));
-    await Alarm.set(alarmSettings: alarm(42, DateTime.now().add(const Duration(milliseconds: 300))));
-    lifecycle([AppLifecycleState.inactive, AppLifecycleState.hidden, AppLifecycleState.paused]);
+    await Alarm.set(
+      alarmSettings: alarm(
+        42,
+        DateTime.now().add(const Duration(milliseconds: 300)),
+      ),
+    );
+    lifecycle([
+      AppLifecycleState.inactive,
+      AppLifecycleState.hidden,
+      AppLifecycleState.paused,
+    ]);
     await Future<void>.delayed(const Duration(milliseconds: 400));
     ringing.add(42);
     await fromHost('alarmRang', 42);
 
-    lifecycle([AppLifecycleState.hidden, AppLifecycleState.inactive, AppLifecycleState.resumed]);
+    lifecycle([
+      AppLifecycleState.hidden,
+      AppLifecycleState.inactive,
+      AppLifecycleState.resumed,
+    ]);
     await Future<void>.delayed(const Duration(milliseconds: 1500));
     await sub.cancel();
 

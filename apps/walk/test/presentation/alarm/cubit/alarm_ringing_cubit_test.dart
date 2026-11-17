@@ -62,7 +62,10 @@ void main() {
     'snooze 는 그 회차를 미룬다',
     build: () => AlarmRingingCubit(useCase, 312),
     act: (cubit) => cubit.snooze(),
-    expect: () => [const AlarmRingingState(busy: true), const AlarmRingingState()],
+    expect: () => [
+      const AlarmRingingState(busy: true),
+      const AlarmRingingState(),
+    ],
     verify: (_) => verify(() => useCase.snooze(312)).called(1),
   );
 

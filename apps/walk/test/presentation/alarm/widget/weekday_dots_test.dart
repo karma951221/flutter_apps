@@ -16,16 +16,27 @@ void main() {
   }
 
   Color? colorOf(WidgetTester tester, Weekday day) =>
-      (tester.widget<DecoratedBox>(find.byKey(ValueKey('weekday-dot-${day.name}'))).decoration
+      (tester
+                  .widget<DecoratedBox>(
+                    find.byKey(ValueKey('weekday-dot-${day.name}')),
+                  )
+                  .decoration
               as BoxDecoration)
           .color;
 
   testWidgets('월~일 7개, 켜진 요일은 primary · 나머지는 outlineVariant', (tester) async {
-    final scheme = await pump(tester, const WeekdayDots(days: {Weekday.mon, Weekday.fri}));
+    final scheme = await pump(
+      tester,
+      const WeekdayDots(days: {Weekday.mon, Weekday.fri}),
+    );
 
     for (final day in Weekday.values) {
       final on = day == Weekday.mon || day == Weekday.fri;
-      expect(colorOf(tester, day), on ? scheme.primary : scheme.outlineVariant, reason: day.name);
+      expect(
+        colorOf(tester, day),
+        on ? scheme.primary : scheme.outlineVariant,
+        reason: day.name,
+      );
     }
     final xs = [
       for (final day in Weekday.values)
@@ -35,7 +46,10 @@ void main() {
   });
 
   testWidgets('흐리게면 켜진 요일도 onSurfaceVariant', (tester) async {
-    final scheme = await pump(tester, const WeekdayDots(days: {Weekday.mon}, dimmed: true));
+    final scheme = await pump(
+      tester,
+      const WeekdayDots(days: {Weekday.mon}, dimmed: true),
+    );
 
     expect(colorOf(tester, Weekday.mon), scheme.onSurfaceVariant);
     expect(colorOf(tester, Weekday.tue), scheme.outlineVariant);

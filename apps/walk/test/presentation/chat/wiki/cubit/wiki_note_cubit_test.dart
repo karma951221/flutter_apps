@@ -21,12 +21,7 @@ void main() {
     wiki = MemoryWikiRepository([source, other, alarm]);
     final e1 = wikiEntry('e1');
     final diary = EntryOnlyDiary([e1, wikiEntry('e2', trashed: true)]);
-    final cubit = WikiNoteCubit(
-      wiki,
-      diary,
-      ExistsOnlyHistory({'c1'}),
-      id: 5,
-    );
+    final cubit = WikiNoteCubit(wiki, diary, ExistsOnlyHistory({'c1'}), id: 5);
     addTearDown(cubit.close);
     expect(cubit.state.loading, isTrue);
 

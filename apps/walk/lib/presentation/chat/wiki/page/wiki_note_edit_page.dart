@@ -49,7 +49,11 @@ class _WikiNoteEditPageState extends State<WikiNoteEditPage> {
     );
     if (!mounted) return;
     if (id != null) {
-      AppSnackBar.show(context, message: l10n.walkChatWikiSaved, type: AppSnackBarType.success);
+      AppSnackBar.show(
+        context,
+        message: l10n.walkChatWikiSaved,
+        type: AppSnackBarType.success,
+      );
       Navigator.of(context).pop(id);
     } else if (_cubit.state.error == WikiEditError.saveFailed) {
       AppSnackBar.show(

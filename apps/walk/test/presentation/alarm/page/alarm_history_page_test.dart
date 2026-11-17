@@ -29,14 +29,29 @@ class _FixedClock extends Clock {
 void main() {
   // 2026-10-07 수요일 정오.
   final now = DateTime(2026, 10, 7, 12);
-  const work = Alarm(id: 1, hour: 7, minute: 0, label: '출근', repeat: {Weekday.wed});
+  const work = Alarm(
+    id: 1,
+    hour: 7,
+    minute: 0,
+    label: '출근',
+    repeat: {Weekday.wed},
+  );
   const plain = Alarm(id: 2, hour: 6, minute: 30, repeat: {Weekday.tue});
   late _MockUseCase useCase;
   late _MockArchiver archiver;
   late _MockArchive ringLog;
 
-  ArchivedRing entry(int alarmId, DateTime at, RingLogKind kind, {String? label}) => ArchivedRing(
-    entry: RingLogEntry(at: at, packageId: packageId(alarmId, triggerIndex(at)), kind: kind),
+  ArchivedRing entry(
+    int alarmId,
+    DateTime at,
+    RingLogKind kind, {
+    String? label,
+  }) => ArchivedRing(
+    entry: RingLogEntry(
+      at: at,
+      packageId: packageId(alarmId, triggerIndex(at)),
+      kind: kind,
+    ),
     label: label,
   );
 
@@ -133,7 +148,11 @@ void main() {
         from: any(named: 'from'),
         to: any(named: 'to'),
       ),
-    ).thenAnswer((_) async => [entry(9, DateTime(2026, 10, 7, 8), RingLogKind.rang, label: '약')]);
+    ).thenAnswer(
+      (_) async => [
+        entry(9, DateTime(2026, 10, 7, 8), RingLogKind.rang, label: '약'),
+      ],
+    );
     await pump(tester);
 
     expect(find.text('오전 8:00 · 약'), findsOneWidget);
