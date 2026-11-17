@@ -65,7 +65,10 @@ class FakeStationSearch implements StationSearch {
   String? lastKey;
 
   @override
-  Future<List<StationHit>> search(String query, {required String apiKey}) async {
+  Future<List<StationHit>> search(
+    String query, {
+    required String apiKey,
+  }) async {
     calls++;
     lastKey = apiKey;
     if (error != null) throw error!;

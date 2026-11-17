@@ -8,11 +8,8 @@ import 'package:walk/domain/transit/usecase/transit_api_key.dart';
 
 import 'fakes.dart';
 
-TransitPath _path(int total, {int transfers = 0}) => TransitPath(
-  totalMinutes: total,
-  transferCount: transfers,
-  legs: const [],
-);
+TransitPath _path(int total, {int transfers = 0}) =>
+    TransitPath(totalMinutes: total, transferCount: transfers, legs: const []);
 
 const _a = TransitPoint(
   lat: 37.5,
