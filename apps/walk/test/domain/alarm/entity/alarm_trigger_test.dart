@@ -9,7 +9,10 @@ void main() {
   });
 
   test('triggerIndex 는 날짜로만 정해지고 14일 안에서 겹치지 않는다', () {
-    expect(triggerIndex(DateTime(2026, 9, 28, 7)), triggerIndex(DateTime(2026, 9, 28, 23, 59)));
+    expect(
+      triggerIndex(DateTime(2026, 9, 28, 7)),
+      triggerIndex(DateTime(2026, 9, 28, 23, 59)),
+    );
     final indexes = {
       for (var n = 0; n <= 14; n++) triggerIndex(DateTime(2026, 12, 25 + n, 7)),
     };

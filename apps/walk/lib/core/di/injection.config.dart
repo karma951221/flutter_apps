@@ -694,6 +694,22 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i313.WeatherTools>(),
       ),
     );
+    gh.lazySingleton<_i502.ChatSession>(
+      () => _i502.ChatSession(
+        gh<_i1004.ChatModelRegistry>(),
+        gh<_i70.LifeTools>(),
+        gh<_i111.ChatSettings>(),
+        gh<_i317.ChatModelChoice>(),
+        gh<_i494.Clock>(),
+        gh<_i520.ChatUsageLog>(),
+        gh<_i494.IdGenerator>(),
+        gh<_i825.ChatTrace>(),
+        gh<_i795.WikiContextPolicy>(),
+        gh<_i268.WikiTools>(),
+        gh<_i215.WorkspaceTools>(),
+        profile: gh<_i716.ProfileRepository>(),
+      ),
+    );
     gh.lazySingleton<List<_i355.BackupAreaSource>>(
       () => registerModule.backupAreas(
         gh<_i16.DiaryBackupArea>(),
@@ -711,21 +727,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i497.Directory>(instanceName: 'appCache'),
         gh<_i494.Clock>(),
         gh<_i1041.BackupFiles>(),
-      ),
-    );
-    gh.lazySingleton<_i502.ChatSession>(
-      () => _i502.ChatSession(
-        gh<_i1004.ChatModelRegistry>(),
-        gh<_i70.LifeTools>(),
-        gh<_i111.ChatSettings>(),
-        gh<_i317.ChatModelChoice>(),
-        gh<_i494.Clock>(),
-        gh<_i520.ChatUsageLog>(),
-        gh<_i494.IdGenerator>(),
-        gh<_i825.ChatTrace>(),
-        gh<_i795.WikiContextPolicy>(),
-        gh<_i268.WikiTools>(),
-        gh<_i215.WorkspaceTools>(),
       ),
     );
     gh.factory<_i221.BackupCubit>(

@@ -304,28 +304,30 @@ void main() {
       expect(prefs.saved[CommuteDirection.toWork], b.signature);
     });
 
-    test('selectRoute different station calls once and saves signature',
-        () async {
-      final a = _route(start: '강남', walkBefore: 6);
-      final b = _route(start: '역삼', walkBefore: 2);
-      routes.routes = [a, b];
-      arrivals.trains = const [TrainArrival(minutes: 4, message: '')];
-      final uc = useCase();
-      final first = await uc.query(CommuteDirection.toWork);
-      expect(first.verdict, const CatchVerdict.missBoth());
-      final later = t0.add(const Duration(minutes: 1));
-      clock.value = later;
+    test(
+      'selectRoute different station calls once and saves signature',
+      () async {
+        final a = _route(start: '강남', walkBefore: 6);
+        final b = _route(start: '역삼', walkBefore: 2);
+        routes.routes = [a, b];
+        arrivals.trains = const [TrainArrival(minutes: 4, message: '')];
+        final uc = useCase();
+        final first = await uc.query(CommuteDirection.toWork);
+        expect(first.verdict, const CatchVerdict.missBoth());
+        final later = t0.add(const Duration(minutes: 1));
+        clock.value = later;
 
-      final next = await uc.selectRoute(first, b);
+        final next = await uc.selectRoute(first, b);
 
-      expect(arrivals.calls, [('강남', 109, 2), ('역삼', 109, 2)]);
-      expect(next.route, b);
-      expect(next.alternatives, [a]);
-      expect(next.queriedAt, later);
-      expect(next.verdict, const CatchVerdict.catchFirst());
-      expect(next.eta, later.add(const Duration(minutes: 4 + 16 + 12)));
-      expect(prefs.saved[CommuteDirection.toWork], b.signature);
-    });
+        expect(arrivals.calls, [('강남', 109, 2), ('역삼', 109, 2)]);
+        expect(next.route, b);
+        expect(next.alternatives, [a]);
+        expect(next.queriedAt, later);
+        expect(next.verdict, const CatchVerdict.catchFirst());
+        expect(next.eta, later.add(const Duration(minutes: 4 + 16 + 12)));
+        expect(prefs.saved[CommuteDirection.toWork], b.signature);
+      },
+    );
 
     test('둘 다 지하철이 없으면 조회 시각을 바꾸지 않는다', () async {
       const a = TransitRoute(

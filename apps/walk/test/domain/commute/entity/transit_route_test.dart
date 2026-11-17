@@ -4,15 +4,15 @@ import 'package:walk/domain/commute/entity/place.dart';
 import 'package:walk/domain/commute/entity/transit_route.dart';
 
 RouteLeg sub(int minutes, int lane, String from, String to) => RouteLeg.subway(
-      minutes: minutes,
-      lineName: 'L',
-      odsayLaneCode: lane,
-      startStation: from,
-      endStation: to,
-      wayCode: 1,
-      wayName: 'w',
-      stationCount: 3,
-    );
+  minutes: minutes,
+  lineName: 'L',
+  odsayLaneCode: lane,
+  startStation: from,
+  endStation: to,
+  wayCode: 1,
+  wayName: 'w',
+  stationCount: 3,
+);
 
 void main() {
   final route = TransitRoute(
@@ -49,8 +49,10 @@ void main() {
     expect(Place.fromJson(p.toJson()), p);
     expect(Place.fromJson('x'), isNull);
     expect(Place.fromJson({'kind': 'home', 'lat': 1.0}), isNull);
-    expect(Place.fromJson({'kind': 'zzz', 'lat': 1.0, 'lng': 2.0, 'label': 'a'}),
-        isNull);
+    expect(
+      Place.fromJson({'kind': 'zzz', 'lat': 1.0, 'lng': 2.0, 'label': 'a'}),
+      isNull,
+    );
   });
 
   test('direction origin/destination', () {

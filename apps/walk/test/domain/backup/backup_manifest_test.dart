@@ -82,9 +82,8 @@ void main() {
   });
 
   test('location is the only area off by default', () {
-    expect(
-      BackupAreaId.values.where((a) => !a.defaultSelected),
-      [BackupAreaId.location],
-    );
+    expect(BackupAreaId.values.where((a) => !a.defaultSelected), [
+      BackupAreaId.location,
+    ]);
   });
 }

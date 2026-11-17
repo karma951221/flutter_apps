@@ -16,11 +16,14 @@ abstract interface class HolidayCalendar {
 @freezed
 sealed class HolidaySource with _$HolidaySource {
   /// 폰 캘린더(`CalendarContract`)의 휴일 캘린더. [calendarName] 은 표시 이름(모르면 빈 문자열).
-  const factory HolidaySource.device({required String calendarName}) = DeviceCalendarHolidays;
+  const factory HolidaySource.device({required String calendarName}) =
+      DeviceCalendarHolidays;
 
   /// 앱에 들어 있는 표(`korean_holidays.dart`). [firstYear]–[lastYear] 만 안다.
-  const factory HolidaySource.bundled({required int firstYear, required int lastYear}) =
-      BundledHolidays;
+  const factory HolidaySource.bundled({
+    required int firstYear,
+    required int lastYear,
+  }) = BundledHolidays;
 }
 
 /// 폰 캘린더 캐시를 새로 읽는다. 앱 시작 · 하루 sync · 권한을 새로 받았을 때 부른다.

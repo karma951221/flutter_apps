@@ -20,7 +20,10 @@ void main() {
     test('bundled', () {
       const sound = AlarmSound.bundled(BundledAlarmSounds.morning);
 
-      expect(sound.toJson(), {'type': 'bundled', 'asset': 'assets/alarm/morning.ogg'});
+      expect(sound.toJson(), {
+        'type': 'bundled',
+        'asset': 'assets/alarm/morning.ogg',
+      });
       expect(roundTrip(sound), sound);
     });
 
@@ -41,33 +44,55 @@ void main() {
 
   group('file', () {
     test('JSON 왕복', () {
-      const sound = AlarmSound.file(title: 'Song', path: '/sdcard/Music/song.mp3');
+      const sound = AlarmSound.file(
+        title: 'Song',
+        path: '/sdcard/Music/song.mp3',
+      );
 
-      expect(sound.toJson(), {'type': 'file', 'title': 'Song', 'path': '/sdcard/Music/song.mp3'});
+      expect(sound.toJson(), {
+        'type': 'file',
+        'title': 'Song',
+        'path': '/sdcard/Music/song.mp3',
+      });
       expect(roundTrip(sound), sound);
     });
 
     test('path 가 없으면 system', () {
-      expect(AlarmSound.fromJson(const {'type': 'file'}), const AlarmSound.system());
-      expect(AlarmSound.fromJson(const {'type': 'file', 'title': 'A'}), const AlarmSound.system());
+      expect(
+        AlarmSound.fromJson(const {'type': 'file'}),
+        const AlarmSound.system(),
+      );
+      expect(
+        AlarmSound.fromJson(const {'type': 'file', 'title': 'A'}),
+        const AlarmSound.system(),
+      );
     });
   });
 
   group('옛 에셋 경로 옮기기', () {
     test('chime.wav 는 morning, rising.wav 는 classic', () {
       expect(
-        AlarmSound.fromJson(const {'type': 'bundled', 'asset': 'assets/alarm/chime.wav'}),
+        AlarmSound.fromJson(const {
+          'type': 'bundled',
+          'asset': 'assets/alarm/chime.wav',
+        }),
         const AlarmSound.bundled(BundledAlarmSounds.morning),
       );
       expect(
-        AlarmSound.fromJson(const {'type': 'bundled', 'asset': 'assets/alarm/rising.wav'}),
+        AlarmSound.fromJson(const {
+          'type': 'bundled',
+          'asset': 'assets/alarm/rising.wav',
+        }),
         const AlarmSound.bundled(BundledAlarmSounds.classic),
       );
     });
 
     test('default.wav 는 beep 그대로', () {
       expect(
-        AlarmSound.fromJson(const {'type': 'bundled', 'asset': 'assets/alarm/default.wav'}),
+        AlarmSound.fromJson(const {
+          'type': 'bundled',
+          'asset': 'assets/alarm/default.wav',
+        }),
         const AlarmSound.bundled(BundledAlarmSounds.beep),
       );
     });
@@ -81,11 +106,17 @@ void main() {
     });
 
     test('모르는 type', () {
-      expect(AlarmSound.fromJson(const {'type': 'music', 'path': '/sdcard/a.mp3'}), system);
+      expect(
+        AlarmSound.fromJson(const {'type': 'music', 'path': '/sdcard/a.mp3'}),
+        system,
+      );
     });
 
     test('type 이 없다', () {
-      expect(AlarmSound.fromJson(const {'asset': BundledAlarmSounds.morning}), system);
+      expect(
+        AlarmSound.fromJson(const {'asset': BundledAlarmSounds.morning}),
+        system,
+      );
     });
 
     test('맵이 아니다', () {
@@ -95,13 +126,29 @@ void main() {
 
     test('bundled 의 asset 이 없거나 문자열이 아니다', () {
       expect(AlarmSound.fromJson(const {'type': 'bundled'}), system);
-      expect(AlarmSound.fromJson(const {'type': 'bundled', 'asset': 3}), system);
+      expect(
+        AlarmSound.fromJson(const {'type': 'bundled', 'asset': 3}),
+        system,
+      );
     });
 
     test('device 의 title · path 가 없거나 문자열이 아니다', () {
-      expect(AlarmSound.fromJson(const {'type': 'device', 'title': 'A'}), system);
-      expect(AlarmSound.fromJson(const {'type': 'device', 'path': '/a.ogg'}), system);
-      expect(AlarmSound.fromJson(const {'type': 'device', 'title': 1, 'path': '/a.ogg'}), system);
+      expect(
+        AlarmSound.fromJson(const {'type': 'device', 'title': 'A'}),
+        system,
+      );
+      expect(
+        AlarmSound.fromJson(const {'type': 'device', 'path': '/a.ogg'}),
+        system,
+      );
+      expect(
+        AlarmSound.fromJson(const {
+          'type': 'device',
+          'title': 1,
+          'path': '/a.ogg',
+        }),
+        system,
+      );
     });
   });
 
@@ -146,11 +193,17 @@ class _WavHeader {
   final int bitsPerSample;
   final double seconds;
 
-  const _WavHeader(this.channels, this.sampleRate, this.bitsPerSample, this.seconds);
+  const _WavHeader(
+    this.channels,
+    this.sampleRate,
+    this.bitsPerSample,
+    this.seconds,
+  );
 
   static _WavHeader parse(ByteData bytes) {
-    String tag(int offset) =>
-        String.fromCharCodes([for (var i = 0; i < 4; i++) bytes.getUint8(offset + i)]);
+    String tag(int offset) => String.fromCharCodes([
+      for (var i = 0; i < 4; i++) bytes.getUint8(offset + i),
+    ]);
 
     expect(tag(0), 'RIFF');
     expect(tag(8), 'WAVE');
@@ -171,6 +224,11 @@ class _WavHeader {
       offset = body + size + size % 2;
     }
     final frameBytes = channels! * bitsPerSample! ~/ 8;
-    return _WavHeader(channels, sampleRate!, bitsPerSample, dataSize! / frameBytes / sampleRate);
+    return _WavHeader(
+      channels,
+      sampleRate!,
+      bitsPerSample,
+      dataSize! / frameBytes / sampleRate,
+    );
   }
 }

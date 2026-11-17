@@ -14,30 +14,44 @@ sealed class AlarmSound with _$AlarmSound {
   const factory AlarmSound.bundled(String asset) = BundledAlarmSound;
 
   /// 기기 알람음을 앱 저장소로 복사한 것. [title] 은 기기 목록의 이름, [path] 는 복사본의 절대 경로.
-  const factory AlarmSound.device({required String title, required String path}) = DeviceAlarmSound;
+  const factory AlarmSound.device({
+    required String title,
+    required String path,
+  }) = DeviceAlarmSound;
 
   /// 사용자가 고른 오디오 파일. [title] 은 파일 이름에서 뺀 표시 이름, [path] 는 앱 저장소로 복사한 복사본의 절대 경로.
-  const factory AlarmSound.file({required String title, required String path}) = FileAlarmSound;
+  const factory AlarmSound.file({required String title, required String path}) =
+      FileAlarmSound;
 
   Map<String, Object?> toJson() => switch (this) {
     SystemAlarmSound() => const {'type': 'system'},
     BundledAlarmSound(:final asset) => {'type': 'bundled', 'asset': asset},
-    DeviceAlarmSound(:final title, :final path) => {'type': 'device', 'title': title, 'path': path},
-    FileAlarmSound(:final title, :final path) => {'type': 'file', 'title': title, 'path': path},
+    DeviceAlarmSound(:final title, :final path) => {
+      'type': 'device',
+      'title': title,
+      'path': path,
+    },
+    FileAlarmSound(:final title, :final path) => {
+      'type': 'file',
+      'title': title,
+      'path': path,
+    },
   };
 
   /// 절대 던지지 않는다 — 값이 없거나 형식을 모르면 [AlarmSound.system].
   /// (Freezed 가 factory 를 union 으로 오해하지 않게 static 으로 둔다.)
   static AlarmSound fromJson(Object? json) => switch (json) {
-    {'type': 'bundled', 'asset': final String asset} => AlarmSound.bundled(_migrated(asset)),
-    {'type': 'device', 'title': final String title, 'path': final String path} => AlarmSound.device(
-      title: title,
-      path: path,
+    {'type': 'bundled', 'asset': final String asset} => AlarmSound.bundled(
+      _migrated(asset),
     ),
-    {'type': 'file', 'title': final String title, 'path': final String path} => AlarmSound.file(
-      title: title,
-      path: path,
-    ),
+    {
+      'type': 'device',
+      'title': final String title,
+      'path': final String path,
+    } =>
+      AlarmSound.device(title: title, path: path),
+    {'type': 'file', 'title': final String title, 'path': final String path} =>
+      AlarmSound.file(title: title, path: path),
     _ => const AlarmSound.system(),
   };
 

@@ -21,7 +21,10 @@ class _MemoryArchive implements RingArchive {
   Future<void> saveAll(List<ArchivedRing> rings) async => saved.addAll(rings);
 
   @override
-  Future<List<ArchivedRing>> read({required DateTime from, required DateTime to}) async => saved;
+  Future<List<ArchivedRing>> read({
+    required DateTime from,
+    required DateTime to,
+  }) async => saved;
 }
 
 void main() {
@@ -37,16 +40,26 @@ void main() {
     alarms = _MockAlarms();
     archive = _MemoryArchive();
     archiver = RingArchiver(ringLog, archive, alarms);
-    when(() => alarms.list()).thenAnswer((_) async => const [Alarm(id: 3, hour: 7, minute: 0, label: '출근')]);
+    when(() => alarms.list()).thenAnswer(
+      (_) async => const [Alarm(id: 3, hour: 7, minute: 0, label: '출근')],
+    );
   });
 
   test('네이티브 기록을 알람 라벨 · 시각과 함께 옮긴다', () async {
-    final entry = RingLogEntry(at: DateTime(2026, 10, 2, 7), packageId: 305, kind: RingLogKind.stopped);
-    when(() => ringLog.read(since: any(named: 'since'))).thenAnswer((_) async => [entry]);
+    final entry = RingLogEntry(
+      at: DateTime(2026, 10, 2, 7),
+      packageId: 305,
+      kind: RingLogKind.stopped,
+    );
+    when(
+      () => ringLog.read(since: any(named: 'since')),
+    ).thenAnswer((_) async => [entry]);
 
     await archiver.archive();
 
-    verify(() => ringLog.read(since: DateTime.fromMillisecondsSinceEpoch(0))).called(1);
+    verify(
+      () => ringLog.read(since: DateTime.fromMillisecondsSinceEpoch(0)),
+    ).called(1);
     expect(archive.saved, hasLength(1));
     expect(archive.saved.single.entry, entry);
     expect(archive.saved.single.label, '출근');
@@ -55,8 +68,14 @@ void main() {
   });
 
   test('알람이 없으면 label · hour · minute 이 null', () async {
-    final entry = RingLogEntry(at: DateTime(2026, 10, 2, 7), packageId: 905, kind: RingLogKind.rang);
-    when(() => ringLog.read(since: any(named: 'since'))).thenAnswer((_) async => [entry]);
+    final entry = RingLogEntry(
+      at: DateTime(2026, 10, 2, 7),
+      packageId: 905,
+      kind: RingLogKind.rang,
+    );
+    when(
+      () => ringLog.read(since: any(named: 'since')),
+    ).thenAnswer((_) async => [entry]);
 
     await archiver.archive();
 
@@ -67,7 +86,9 @@ void main() {
 
   test('동시에 두 번 부르면 차례로 돈다', () async {
     final gate = Completer<List<RingLogEntry>>();
-    when(() => ringLog.read(since: any(named: 'since'))).thenAnswer((_) => gate.future);
+    when(
+      () => ringLog.read(since: any(named: 'since')),
+    ).thenAnswer((_) => gate.future);
 
     final first = archiver.archive();
     final second = archiver.archive();

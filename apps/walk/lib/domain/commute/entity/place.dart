@@ -27,11 +27,11 @@ class Place with _$Place {
   });
 
   Map<String, Object?> toJson() => {
-        'kind': kind.name,
-        'lat': lat,
-        'lng': lng,
-        'label': label,
-      };
+    'kind': kind.name,
+    'lat': lat,
+    'lng': lng,
+    'label': label,
+  };
 
   /// 깨진 값이면 null.
   static Place? fromJson(Object? json) {

@@ -101,10 +101,10 @@ class CommuteUseCase {
   static bool _sameBoarding(SubwayLeg? a, SubwayLeg? b) =>
       (a == null && b == null) ||
       a != null &&
-      b != null &&
-      a.startStation == b.startStation &&
-      a.odsayLaneCode == b.odsayLaneCode &&
-      a.wayCode == b.wayCode;
+          b != null &&
+          a.startStation == b.startStation &&
+          a.odsayLaneCode == b.odsayLaneCode &&
+          a.wayCode == b.wayCode;
 
   Future<(RealtimeStatus, List<TrainArrival>)> _realtime(
     TransitRoute route,

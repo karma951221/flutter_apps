@@ -6,34 +6,36 @@ import 'package:walk/domain/commute/entity/train_arrival.dart';
 import 'package:walk/domain/commute/entity/transit_route.dart';
 
 TrainArrival t(int? minutes, {int? stationsAway}) => TrainArrival(
-      minutes: minutes,
-      estimated: false,
-      stationsAway: stationsAway,
-      message: '',
-    );
+  minutes: minutes,
+  estimated: false,
+  stationsAway: stationsAway,
+  message: '',
+);
 
-SubwayLeg subway(int minutes, int stationCount) => RouteLeg.subway(
-      minutes: minutes,
-      lineName: '9호선',
-      odsayLaneCode: 109,
-      startStation: 'a',
-      endStation: 'b',
-      wayCode: 1,
-      wayName: 'x',
-      stationCount: stationCount,
-    ) as SubwayLeg;
+SubwayLeg subway(int minutes, int stationCount) =>
+    RouteLeg.subway(
+          minutes: minutes,
+          lineName: '9호선',
+          odsayLaneCode: 109,
+          startStation: 'a',
+          endStation: 'b',
+          wayCode: 1,
+          wayName: 'x',
+          stationCount: stationCount,
+        )
+        as SubwayLeg;
 
 TransitRoute sampleRoute() => TransitRoute(
-      totalMinutes: 41,
-      transferCount: 1,
-      legs: [
-        const RouteLeg.walk(minutes: 6),
-        subway(16, 8),
-        const RouteLeg.walk(minutes: 3),
-        subway(2, 1),
-        const RouteLeg.walk(minutes: 7),
-      ],
-    );
+  totalMinutes: 41,
+  transferCount: 1,
+  legs: [
+    const RouteLeg.walk(minutes: 6),
+    subway(16, 8),
+    const RouteLeg.walk(minutes: 3),
+    subway(2, 1),
+    const RouteLeg.walk(minutes: 7),
+  ],
+);
 
 void main() {
   group('judgeCatch', () {
@@ -112,10 +114,14 @@ void main() {
   });
 
   test('defaultAt', () {
-    expect(CommuteDirection.defaultAt(DateTime(2026, 1, 1, 11, 59)),
-        CommuteDirection.toWork);
-    expect(CommuteDirection.defaultAt(DateTime(2026, 1, 1, 12, 0)),
-        CommuteDirection.toHome);
+    expect(
+      CommuteDirection.defaultAt(DateTime(2026, 1, 1, 11, 59)),
+      CommuteDirection.toWork,
+    );
+    expect(
+      CommuteDirection.defaultAt(DateTime(2026, 1, 1, 12, 0)),
+      CommuteDirection.toHome,
+    );
   });
 
   test('isStale', () {

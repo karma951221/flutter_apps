@@ -67,9 +67,12 @@ List<RingLogGroup> ringLogGroups(List<ArchivedRing> rings, List<Alarm> alarms) {
   final byId = {for (final a in alarms) a.id: a};
   final buckets = <List<ArchivedRing>>[];
   final open = <int, List<ArchivedRing>>{};
-  for (final e in [...rings]..sort((a, b) => a.entry.at.compareTo(b.entry.at))) {
+  for (final e in [
+    ...rings,
+  ]..sort((a, b) => a.entry.at.compareTo(b.entry.at))) {
     final bucket = open[e.entry.packageId];
-    if (bucket != null && e.entry.at.difference(bucket.first.entry.at) < occurrenceSpan) {
+    if (bucket != null &&
+        e.entry.at.difference(bucket.first.entry.at) < occurrenceSpan) {
       bucket.add(e);
     } else {
       buckets.add(open[e.entry.packageId] = [e]);
@@ -77,7 +80,11 @@ List<RingLogGroup> ringLogGroups(List<ArchivedRing> rings, List<Alarm> alarms) {
   }
   final groups = [
     for (final events in buckets)
-      _group(events.first.entry.packageId, events, byId[alarmIdOf(events.first.entry.packageId)]),
+      _group(
+        events.first.entry.packageId,
+        events,
+        byId[alarmIdOf(events.first.entry.packageId)],
+      ),
   ];
   return groups..sort((a, b) => b.at.compareTo(a.at));
 }
@@ -87,7 +94,8 @@ const occurrenceSpan = Duration(days: 1);
 
 RingLogGroup _group(int packageId, List<ArchivedRing> rings, Alarm? alarm) {
   final events = [for (final r in rings) r.entry];
-  DateTime? first(RingLogKind kind) => events.where((e) => e.kind == kind).firstOrNull?.at;
+  DateTime? first(RingLogKind kind) =>
+      events.where((e) => e.kind == kind).firstOrNull?.at;
   final ends = events.where(
     (e) => e.kind == RingLogKind.stopped || e.kind == RingLogKind.autoStopped,
   );
@@ -96,7 +104,10 @@ RingLogGroup _group(int packageId, List<ArchivedRing> rings, Alarm? alarm) {
   return RingLogGroup(
     packageId: packageId,
     alarm: alarm,
-    archivedLabel: rings.map((r) => r.label).where((l) => l != null && l.isNotEmpty).lastOrNull,
+    archivedLabel: rings
+        .map((r) => r.label)
+        .where((l) => l != null && l.isNotEmpty)
+        .lastOrNull,
     at: rangAt ?? skippedAt ?? events.first.at,
     rangAt: rangAt,
     snoozes: events.where((e) => e.kind == RingLogKind.snoozed).length,
