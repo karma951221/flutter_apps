@@ -3493,6 +3493,94 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkAppSettingsFeatures => '기능별 설정';
 
   @override
+  String get walkShellTabSettings => '설정';
+
+  @override
+  String get walkSettingsConnections => 'API 키 · 연결';
+
+  @override
+  String get walkSettingsAiConnection => 'AI 연결';
+
+  @override
+  String get walkSettingsAiNotConnected => '연결 안 됨';
+
+  @override
+  String get walkSettingsData => '데이터';
+
+  @override
+  String get walkSettingsLocation => '위치';
+
+  @override
+  String get walkSettingsLocationOff => '꺼짐';
+
+  @override
+  String get walkSettingsLocationOn => '켜짐';
+
+  @override
+  String get walkSettingsLocationDetailed => '켜짐 · 자세히 기록';
+
+  @override
+  String get walkSettingsLocationBlocked => '멈춤 · 권한 필요';
+
+  @override
+  String get walkSettingsAbout => '앱 정보';
+
+  @override
+  String get walkSettingsLicenses => '오픈소스 라이선스';
+
+  @override
+  String get walkProfileTitle => '프로필';
+
+  @override
+  String get walkProfileCreate => '프로필 만들기';
+
+  @override
+  String get walkProfileCreateHint => '사진 · 이름 · 한 줄 소개';
+
+  @override
+  String get walkProfileName => '이름';
+
+  @override
+  String get walkProfileBio => '한 줄 소개';
+
+  @override
+  String get walkProfilePhotoChange => '사진 바꾸기';
+
+  @override
+  String get walkProfilePhotoGallery => '앨범에서 고르기';
+
+  @override
+  String get walkProfilePhotoCamera => '사진 찍기';
+
+  @override
+  String get walkProfilePhotoRemove => '사진 지우기';
+
+  @override
+  String get walkProfilePhotoFailed => '사진을 가져오지 못했어요';
+
+  @override
+  String get walkProfileShareName => '물어보기에 내 이름 알려주기';
+
+  @override
+  String get walkProfileShareNameDescription =>
+      '켜면 대화할 때 이름이 Claude · GPT 로 전송됩니다. 한 줄 소개는 보내지 않습니다.';
+
+  @override
+  String get walkProfileSaved => '프로필을 저장했어요';
+
+  @override
+  String get walkProfileSaveFailed => '프로필을 저장하지 못했어요';
+
+  @override
+  String get walkProfileDiscardTitle => '바꾼 내용을 버릴까요?';
+
+  @override
+  String get walkProfileDiscardBody => '저장하지 않은 변경이 사라집니다.';
+
+  @override
+  String get walkProfileDiscard => '버리기';
+
+  @override
   String get walkShellTabLog => '기록';
 
   @override

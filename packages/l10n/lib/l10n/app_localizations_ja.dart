@@ -3491,6 +3491,94 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAppSettingsFeatures => '機能別の設定';
 
   @override
+  String get walkShellTabSettings => '設定';
+
+  @override
+  String get walkSettingsConnections => 'APIキー・接続';
+
+  @override
+  String get walkSettingsAiConnection => 'AI 接続';
+
+  @override
+  String get walkSettingsAiNotConnected => '未接続';
+
+  @override
+  String get walkSettingsData => 'データ';
+
+  @override
+  String get walkSettingsLocation => '位置';
+
+  @override
+  String get walkSettingsLocationOff => 'オフ';
+
+  @override
+  String get walkSettingsLocationOn => 'オン';
+
+  @override
+  String get walkSettingsLocationDetailed => 'オン・詳しく記録';
+
+  @override
+  String get walkSettingsLocationBlocked => '停止・権限が必要';
+
+  @override
+  String get walkSettingsAbout => 'アプリ情報';
+
+  @override
+  String get walkSettingsLicenses => 'オープンソースライセンス';
+
+  @override
+  String get walkProfileTitle => 'プロフィール';
+
+  @override
+  String get walkProfileCreate => 'プロフィールを作成';
+
+  @override
+  String get walkProfileCreateHint => '写真・名前・ひとこと';
+
+  @override
+  String get walkProfileName => '名前';
+
+  @override
+  String get walkProfileBio => 'ひとこと紹介';
+
+  @override
+  String get walkProfilePhotoChange => '写真を変更';
+
+  @override
+  String get walkProfilePhotoGallery => 'アルバムから選ぶ';
+
+  @override
+  String get walkProfilePhotoCamera => '写真を撮る';
+
+  @override
+  String get walkProfilePhotoRemove => '写真を削除';
+
+  @override
+  String get walkProfilePhotoFailed => '写真を取得できませんでした';
+
+  @override
+  String get walkProfileShareName => '質問に名前を伝える';
+
+  @override
+  String get walkProfileShareNameDescription =>
+      'オンにすると会話のとき名前が Claude・GPT に送信されます。ひとこと紹介は送信しません。';
+
+  @override
+  String get walkProfileSaved => 'プロフィールを保存しました';
+
+  @override
+  String get walkProfileSaveFailed => 'プロフィールを保存できませんでした';
+
+  @override
+  String get walkProfileDiscardTitle => '変更を破棄しますか？';
+
+  @override
+  String get walkProfileDiscardBody => '保存していない変更は失われます。';
+
+  @override
+  String get walkProfileDiscard => '破棄';
+
+  @override
   String get walkShellTabLog => '記録';
 
   @override

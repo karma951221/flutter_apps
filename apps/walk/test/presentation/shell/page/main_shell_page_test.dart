@@ -1,5 +1,7 @@
+import '../../../support/fake_profile_repository.dart';
 import 'dart:async';
 import 'package:walk/domain/chat/suggest/chat_suggester.dart';
+import 'package:walk/domain/profile/profile_repository.dart';
 import 'package:walk/presentation/weather/cubit/weather_cubit.dart';
 import 'package:walk/domain/weather/weather_problem.dart';
 import 'package:walk/presentation/weather/cubit/weather_state.dart';
@@ -70,7 +72,7 @@ import 'package:walk/presentation/settings/cubit/theme_cubit.dart';
 import 'package:walk/presentation/map/map_open_requests.dart';
 import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/presentation/settings/page/alarm_settings_page.dart';
-import 'package:walk/presentation/settings/page/app_settings_page.dart';
+import 'package:walk/presentation/settings/page/settings_tab.dart';
 import 'package:walk/presentation/settings/page/chat_settings_page.dart';
 import 'package:walk/presentation/settings/page/map_settings_page.dart';
 import 'package:walk/presentation/settings/page/walk_settings_page.dart';
@@ -267,6 +269,7 @@ void main() {
     getIt
       ..registerSingleton<DiaryUseCase>(diary)
       ..registerSingleton<ChatSettings>(chatSettings)
+      ..registerSingleton<ProfileRepository>(FakeProfileRepository())
       ..registerSingleton<ChatKeyVerifier>(chatVerifier)
       ..registerSingleton<ChatModelCatalog>(chatCatalog)
       ..registerSingleton<ChatModelChoice>(
@@ -417,7 +420,7 @@ void main() {
     expect(icon(destinations[2].selectedIcon), Icons.chat_bubble);
   });
 
-  testWidgets('하단 탭은 도구 · 기록 · 물어보기 셋이고 통근 · 설정 탭은 없다', (tester) async {
+  testWidgets('하단 탭은 도구 · 기록 · 물어보기 · 설정 넷이고 통근 탭은 없다', (tester) async {
     await pump(tester);
 
     final labels = [
@@ -426,9 +429,14 @@ void main() {
       ))
         d.label,
     ];
-    expect(labels, ['도구', '기록', '물어보기']);
+    expect(labels, ['도구', '기록', '물어보기', '설정']);
     expect(find.byType(CommuteTab, skipOffstage: false), findsNothing);
-    expect(ShellTab.values, [ShellTab.tools, ShellTab.log, ShellTab.chat]);
+    expect(ShellTab.values, [
+      ShellTab.tools,
+      ShellTab.log,
+      ShellTab.chat,
+      ShellTab.settings,
+    ]);
     expect(onstage(ToolsTab), isTrue);
 
     await tapTab(tester, '기록');
@@ -614,17 +622,14 @@ void main() {
     expect(peak, 0);
   });
 
-  testWidgets('일기 ⋮ 는 잠긴 동안 앱 설정만, 앱 설정 화면이 열린다', (tester) async {
+  testWidgets('설정 탭은 잠겨 있어도 열린다', (tester) async {
     await enableDiaryLock();
     await pump(tester);
 
-    await tester.tap(find.byIcon(Icons.more_vert).hitTestable());
+    await tester.tap(find.byType(NavigationDestination).last);
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('menu-settings-diary')), findsNothing);
-    await tester.tap(find.byKey(const Key('menu-settings-app')));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(AppSettingsPage), findsOneWidget);
+    expect(find.byType(SettingsTab), findsOneWidget);
+    expect(find.byKey(const Key('settings-diary-lock')), findsOneWidget);
   });
 
   testWidgets('시작할 때와 앱이 돌아올 때 울림 기록을 옮겨 담는다', (tester) async {
@@ -995,10 +1000,9 @@ void main() {
       ),
     );
     final goal = await pump(tester, settings: settings);
-    // 도구 › 알람 ⋮ › 앱 설정 › 걷기 설정 — 걷기 화면은 가려져 있다.
-    await tapTab(tester, '도구');
-    await openMenu(tester, 'menu-settings-app');
-    await tester.tap(find.byKey(const Key('app-settings-open-walk')));
+    // 설정 탭 › 걷기 설정 — 걷기 화면은 가려져 있다.
+    await tapTab(tester, '설정');
+    await tester.tap(find.byKey(const Key('settings-open-walk')));
     await tester.pumpAndSettle();
     expect(find.byType(WalkSettingsPage), findsOneWidget);
 
@@ -1013,11 +1017,10 @@ void main() {
     final navigator = tester.state<NavigatorState>(
       find.byType(Navigator).first,
     );
-    navigator
-      ..pop()
-      ..pop();
+    navigator.pop();
     await tester.pumpAndSettle();
     expect(celebrations, 0);
+    await tapTab(tester, '도구');
     await tapToolsTab(tester, '걷기');
 
     expect(celebrations, 1);
@@ -1391,17 +1394,11 @@ void main() {
       verify(weather.shown).called(1);
     });
 
-    testWidgets('날씨 탭 ⋮ 는 앱 설정만', (tester) async {
+    testWidgets('날씨 탭은 ⋮ 가 없다', (tester) async {
       await pump(tester);
       await tapToolsTab(tester, '날씨');
 
-      await tester.tap(find.byIcon(Icons.more_vert).hitTestable());
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
-      expect(find.byKey(const Key('menu-settings-alarm')), findsNothing);
-      expect(find.byKey(const Key('menu-settings-walk')), findsNothing);
-      expect(find.byKey(const Key('menu-settings-map')), findsNothing);
+      expect(find.byIcon(Icons.more_vert).hitTestable(), findsNothing);
     });
 
     testWidgets('날씨를 보던 중 복귀하면 resumed 를 부른다', (tester) async {

@@ -6,6 +6,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:injectable/injectable.dart';
 import 'package:intl/intl.dart';
 
+import '../../profile/profile_repository.dart';
 import '../attachment/attachment_rules.dart';
 import '../attachment/chat_attachment.dart';
 import '../chat_connection.dart';
@@ -166,8 +167,9 @@ class ChatSession {
     this._trace,
     this._wiki,
     this._wikiTools,
-    this._workspaceTools,
-  );
+    this._workspaceTools, {
+    ProfileRepository? profile,
+  }) : _profile = profile;
 
   final ChatModelRegistry _registry;
   final LifeTools _tools;
@@ -178,6 +180,9 @@ class ChatSession {
   final IdGenerator _ids;
   final ChatTrace _trace;
   final WikiContextPolicy _wiki;
+
+  /// 프로필 — "물어보기에 이름 알려주기"가 켜졌을 때만 이름을 시스템 프롬프트에 넣는다.
+  final ProfileRepository? _profile;
   final WikiTools _wikiTools;
   final WorkspaceTools _workspaceTools;
 
@@ -1226,7 +1231,14 @@ class ChatSession {
         '${records ? '$_workspaceRule\n$_writeRule\n' : ''}'
         '${records && wikiSection != null ? '\n$wikiSection\n\n' : ''}'
         '${progressNotes ? '$_noteHint\n' : ''}'
+        '${_nameLine()}'
         '오늘은 $today, 시간대는 ${now.timeZoneName} 이다.';
+  }
+
+  /// 이름 줄(줄바꿈 포함). 끄거나 이름이 없으면 빈 문자열. 이름은 날마다 같아 캐시 접두부를 흔들지 않는다.
+  String _nameLine() {
+    final name = _profile?.load().aiName;
+    return name == null ? '' : '사용자의 이름은 "$name" 이다. 필요할 때 이름으로 부른다.\n';
   }
 
   /// 기록을 참고하는 질문의 규약 — 기록 질문은 도구 근거로, 그 밖은 자유롭게.

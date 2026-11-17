@@ -6,6 +6,8 @@ import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:walk/domain/profile/profile.dart';
+import 'package:walk/domain/profile/profile_repository.dart';
 import 'package:walk/domain/chat/chat_connection.dart';
 import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
@@ -245,19 +247,21 @@ void main() {
     workspaceTools,
   );
 
-  ChatSession session(_FakeModel model) => ChatSession(
-    FakeChatModelRegistry({ChatVendor.anthropic: model}),
-    tools,
-    settings,
-    choice,
-    clock,
-    usage,
-    ids,
-    const NoopChatTrace(),
-    wiki,
-    wikiTools,
-    workspaceTools,
-  );
+  ChatSession session(_FakeModel model, {ProfileRepository? profile}) =>
+      ChatSession(
+        FakeChatModelRegistry({ChatVendor.anthropic: model}),
+        tools,
+        settings,
+        choice,
+        clock,
+        usage,
+        ids,
+        const NoopChatTrace(),
+        wiki,
+        wikiTools,
+        workspaceTools,
+        profile: profile,
+      );
 
   group('사용량 기록', () {
     const u1 = TokenUsage(
@@ -1577,6 +1581,46 @@ void main() {
     expect(system, contains('2026-10-27 (화)'));
     expect(system, contains(clock.value.timeZoneName));
     expect(system, startsWith('너는 사용자의 개인 기록 앱 Life Log 안의 도우미다.'));
+  });
+
+  group('프로필 이름', () {
+    const line = '사용자의 이름은 "하늘" 이다. 필요할 때 이름으로 부른다.';
+
+    Future<String> systemWith(Profile profile, {bool records = true}) async {
+      final model = _FakeModel([_answer('네')]);
+      final chat = session(model, profile: _FakeProfile(profile))
+        ..useRecords = records;
+      await chat.ask('안녕').toList();
+      return model.requests.single.system;
+    }
+
+    test('켜고 이름이 있으면 날짜 줄 바로 앞에 이름 줄', () async {
+      final system = await systemWith(
+        const Profile(name: '하늘', bio: '걷는 사람', shareNameWithAi: true),
+      );
+      final lines = system.split('\n');
+      expect(lines[lines.length - 2], line);
+      expect(system, isNot(contains('걷는 사람')));
+    });
+
+    test('기록을 끈 일반 질문에도 붙는다', () async {
+      final system = await systemWith(
+        const Profile(name: '하늘', shareNameWithAi: true),
+        records: false,
+      );
+      expect(system, contains(line));
+    });
+
+    test('끄거나 이름이 비면 없다', () async {
+      expect(
+        await systemWith(const Profile(name: '하늘')),
+        isNot(contains('사용자의 이름은')),
+      );
+      expect(
+        await systemWith(const Profile(shareNameWithAi: true)),
+        isNot(contains('사용자의 이름은')),
+      );
+    });
   });
 
   test('기록 규약은 위치 · 알람 · 날씨 도구와 위치 기록이 없을 때의 대안을 말한다', () async {
@@ -3455,4 +3499,16 @@ class _HangingModel implements ChatModel {
     rounds.add(round);
     return round.stream;
   }
+}
+
+class _FakeProfile implements ProfileRepository {
+  _FakeProfile(this.profile);
+
+  final Profile profile;
+
+  @override
+  Profile load() => profile;
+
+  @override
+  Object? noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

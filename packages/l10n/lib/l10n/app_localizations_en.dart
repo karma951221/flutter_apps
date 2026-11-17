@@ -3825,6 +3825,94 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkAppSettingsFeatures => 'Feature settings';
 
   @override
+  String get walkShellTabSettings => 'Settings';
+
+  @override
+  String get walkSettingsConnections => 'API keys & connections';
+
+  @override
+  String get walkSettingsAiConnection => 'AI connection';
+
+  @override
+  String get walkSettingsAiNotConnected => 'Not connected';
+
+  @override
+  String get walkSettingsData => 'Data';
+
+  @override
+  String get walkSettingsLocation => 'Location';
+
+  @override
+  String get walkSettingsLocationOff => 'Off';
+
+  @override
+  String get walkSettingsLocationOn => 'On';
+
+  @override
+  String get walkSettingsLocationDetailed => 'On · Detailed';
+
+  @override
+  String get walkSettingsLocationBlocked => 'Paused · permission needed';
+
+  @override
+  String get walkSettingsAbout => 'About';
+
+  @override
+  String get walkSettingsLicenses => 'Open source licenses';
+
+  @override
+  String get walkProfileTitle => 'Profile';
+
+  @override
+  String get walkProfileCreate => 'Create profile';
+
+  @override
+  String get walkProfileCreateHint => 'Photo · name · short bio';
+
+  @override
+  String get walkProfileName => 'Name';
+
+  @override
+  String get walkProfileBio => 'Short bio';
+
+  @override
+  String get walkProfilePhotoChange => 'Change photo';
+
+  @override
+  String get walkProfilePhotoGallery => 'Choose from gallery';
+
+  @override
+  String get walkProfilePhotoCamera => 'Take photo';
+
+  @override
+  String get walkProfilePhotoRemove => 'Remove photo';
+
+  @override
+  String get walkProfilePhotoFailed => 'Couldn\'t get the photo';
+
+  @override
+  String get walkProfileShareName => 'Tell Ask my name';
+
+  @override
+  String get walkProfileShareNameDescription =>
+      'When on, your name is sent to Claude · GPT in chats. Your bio is not sent.';
+
+  @override
+  String get walkProfileSaved => 'Profile saved';
+
+  @override
+  String get walkProfileSaveFailed => 'Couldn\'t save the profile';
+
+  @override
+  String get walkProfileDiscardTitle => 'Discard changes?';
+
+  @override
+  String get walkProfileDiscardBody => 'Unsaved changes will be lost.';
+
+  @override
+  String get walkProfileDiscard => 'Discard';
+
+  @override
   String get walkShellTabLog => 'Log';
 
   @override

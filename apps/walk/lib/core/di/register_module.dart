@@ -39,6 +39,7 @@ import '../../domain/backup/backup_service.dart';
 import '../../domain/chat/chat_settings.dart';
 import '../../domain/chat/chat_trace.dart';
 import '../../domain/diary/location/place_source.dart';
+import '../../domain/profile/profile_repository.dart';
 
 /// getIt.reset · 테스트 해제 때 DB 를 닫는다.
 FutureOr<void> disposeDiaryDatabase(DiaryDatabase db) => db.close();
@@ -140,8 +141,10 @@ abstract class RegisterModule {
   ) => AlarmBackupArea(prefs, archive, sounds, alarms, permissions);
 
   @lazySingleton
-  SettingsBackupArea settingsBackupArea(SharedPreferences prefs) =>
-      SettingsBackupArea(prefs);
+  SettingsBackupArea settingsBackupArea(
+    SharedPreferences prefs,
+    ProfileRepository profile,
+  ) => SettingsBackupArea(prefs, profile);
 
   @lazySingleton
   LocationBackupArea locationBackupArea(

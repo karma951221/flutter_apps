@@ -1,9 +1,11 @@
+import '../support/fake_profile_repository.dart';
 import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:walk/domain/profile/profile_repository.dart';
 import 'package:walk/core/app.dart';
 import 'package:walk/core/background/background_task.dart';
 import 'package:walk/data/alarm/channel_next_alarm_widget.dart';
@@ -160,6 +162,7 @@ void main() {
       getIt
         ..registerSingleton<DiaryUseCase>(diary)
         ..registerSingleton<ChatSettings>(chatSettings)
+        ..registerSingleton<ProfileRepository>(FakeProfileRepository())
         ..registerSingleton<ChatKeyVerifier>(chatVerifier)
         ..registerSingleton<ChatModelCatalog>(chatCatalog)
         ..registerSingleton<ChatModelChoice>(
@@ -243,16 +246,14 @@ void main() {
 
       await tester.pumpWidget(const WalkApp());
       await tester.pumpAndSettle();
-      // 앱 설정이 위에 얹혀도 아래 셸까지 같은 테마다.
+      // 설정 탭에서 바꿔도 셸 전체가 같은 테마다.
       Brightness brightness() => Theme.of(
         tester.element(find.byType(MainShellPage, skipOffstage: false)),
       ).brightness;
       expect(brightness(), Brightness.light);
 
-      // 일기 탭 ⋮ → 앱 설정 → 다크.
-      await tester.tap(find.byIcon(Icons.more_vert).hitTestable().first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('menu-settings-app')));
+      // 하단 설정 탭 → 다크.
+      await tester.tap(find.text('설정'));
       await tester.pumpAndSettle();
       await tester.tap(
         find.byWidgetPredicate(

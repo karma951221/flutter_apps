@@ -79,6 +79,7 @@ import '../../data/location/prefs_map_style_preferences.dart' as _i478;
 import '../../data/lock/channel_screen_lock_settings.dart' as _i952;
 import '../../data/lock/local_auth_device_auth.dart' as _i982;
 import '../../data/lock/prefs_lock_repository.dart' as _i691;
+import '../../data/profile/prefs_profile_repository.dart' as _i33;
 import '../../data/settings/prefs_settings_repository.dart' as _i724;
 import '../../data/walk/health/health_gateway.dart' as _i332;
 import '../../data/walk/repository/health_connect_activity_repository.dart'
@@ -157,6 +158,7 @@ import '../../domain/location/usecase/stay_namer.dart' as _i673;
 import '../../domain/lock/device_auth.dart' as _i439;
 import '../../domain/lock/lock_repository.dart' as _i43;
 import '../../domain/lock/screen_lock_settings.dart' as _i194;
+import '../../domain/profile/profile_repository.dart' as _i716;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
@@ -399,6 +401,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i961.HolidayRefresher>(
       () => holidayModule.holidayRefresher(gh<_i93.CachedHolidayCalendar>()),
     );
+    gh.lazySingleton<_i716.ProfileRepository>(
+      () => _i33.PrefsProfileRepository(
+        gh<_i460.SharedPreferences>(),
+        gh<_i497.Directory>(instanceName: 'appDocs'),
+      ),
+    );
     gh.lazySingleton<_i903.WeatherRepository>(
       () => _i850.OpenMeteoWeatherRepository(gh<_i519.Client>()),
     );
@@ -448,9 +456,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i933.ChatDatabase>(),
         gh<_i460.SharedPreferences>(),
       ),
-    );
-    gh.lazySingleton<_i830.SettingsBackupArea>(
-      () => registerModule.settingsBackupArea(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i669.ChatUsageRepository>(
       () => _i1028.DriftChatUsageRepository(gh<_i933.ChatDatabase>()),
@@ -549,6 +554,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1060.Workspace>(),
         gh<_i695.AttachmentLoader>(),
         changes: gh<_i155.WorkspaceChanges>(),
+      ),
+    );
+    gh.lazySingleton<_i830.SettingsBackupArea>(
+      () => registerModule.settingsBackupArea(
+        gh<_i460.SharedPreferences>(),
+        gh<_i716.ProfileRepository>(),
       ),
     );
     gh.lazySingleton<_i122.DiaryRepository>(
@@ -701,6 +712,22 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i313.WeatherTools>(),
       ),
     );
+    gh.lazySingleton<_i502.ChatSession>(
+      () => _i502.ChatSession(
+        gh<_i1004.ChatModelRegistry>(),
+        gh<_i70.LifeTools>(),
+        gh<_i111.ChatSettings>(),
+        gh<_i317.ChatModelChoice>(),
+        gh<_i494.Clock>(),
+        gh<_i520.ChatUsageLog>(),
+        gh<_i494.IdGenerator>(),
+        gh<_i825.ChatTrace>(),
+        gh<_i795.WikiContextPolicy>(),
+        gh<_i268.WikiTools>(),
+        gh<_i215.WorkspaceTools>(),
+        profile: gh<_i716.ProfileRepository>(),
+      ),
+    );
     gh.lazySingleton<List<_i355.BackupAreaSource>>(
       () => registerModule.backupAreas(
         gh<_i16.DiaryBackupArea>(),
@@ -718,21 +745,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i497.Directory>(instanceName: 'appCache'),
         gh<_i494.Clock>(),
         gh<_i1041.BackupFiles>(),
-      ),
-    );
-    gh.lazySingleton<_i502.ChatSession>(
-      () => _i502.ChatSession(
-        gh<_i1004.ChatModelRegistry>(),
-        gh<_i70.LifeTools>(),
-        gh<_i111.ChatSettings>(),
-        gh<_i317.ChatModelChoice>(),
-        gh<_i494.Clock>(),
-        gh<_i520.ChatUsageLog>(),
-        gh<_i494.IdGenerator>(),
-        gh<_i825.ChatTrace>(),
-        gh<_i795.WikiContextPolicy>(),
-        gh<_i268.WikiTools>(),
-        gh<_i215.WorkspaceTools>(),
       ),
     );
     gh.factory<_i221.BackupCubit>(

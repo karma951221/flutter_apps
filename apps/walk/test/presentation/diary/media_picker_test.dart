@@ -15,6 +15,7 @@ class _FakeImagePicker extends ImagePicker {
   int? lastLimit;
   List<XFile> picked = const [];
   XFile? captured;
+  final List<ImageSource> imageSources = [];
 
   @override
   Future<List<XFile>> pickMultipleMedia({
@@ -39,6 +40,7 @@ class _FakeImagePicker extends ImagePicker {
     bool requestFullMetadata = true,
   }) async {
     guardedCalls.add(guard.active);
+    imageSources.add(source);
     return captured;
   }
 
@@ -105,6 +107,15 @@ void main() {
     images.captured = null;
     expect(await picker.takePhoto(), isEmpty);
     expect(images.guardedCalls, [true, true, true]);
+  });
+
+  test('프로필 사진은 앨범 · 카메라에서 한 장, 잠금 예외 안에서, 취소하면 null', () async {
+    images.captured = XFile('/a/me.jpg');
+    expect(await picker.pickProfilePhoto(camera: false), '/a/me.jpg');
+    images.captured = null;
+    expect(await picker.pickProfilePhoto(camera: true), isNull);
+    expect(images.imageSources, [ImageSource.gallery, ImageSource.camera]);
+    expect(images.guardedCalls, [true, true]);
   });
 
   group('release', () {

@@ -41,6 +41,8 @@ import 'package:walk/domain/walk/usecase/walk_use_case.dart';
 import 'package:walk/presentation/lock/cubit/diary_lock_cubit.dart';
 import 'package:walk/presentation/lock/media_pick_guard.dart';
 import 'package:walk/presentation/map/cubit/map_record_cubit.dart';
+import 'package:walk/presentation/profile/cubit/profile_cubit.dart';
+import 'package:walk/presentation/settings/cubit/connection_status_cubit.dart';
 import 'package:walk/presentation/settings/cubit/diary_settings_cubit.dart';
 import 'package:walk/presentation/settings/cubit/holiday_settings_cubit.dart';
 import 'package:walk/presentation/settings/cubit/settings_permissions_cubit.dart';
@@ -55,6 +57,7 @@ import '../../support/fake_chat_key_verifier.dart';
 import '../../support/fake_chat_model_catalog.dart';
 import '../../support/fake_chat_settings.dart';
 import '../../support/fake_device_auth.dart';
+import '../../support/fake_profile_repository.dart';
 
 class MockRequester extends Mock implements PermissionRequester {}
 
@@ -95,7 +98,7 @@ class FakeHolidays implements HolidayCalendar {
   String? nameOf(DateTime date) => null;
 }
 
-/// 설정 화면 테스트 공용 — 셸이 내리는 cubit 다섯(지도 기록 포함)과 앱이 내리는 테마 · 걸음 목표를 만든다.
+/// 설정 화면 테스트 공용 — 셸이 내리는 cubit 다섯(지도 기록 포함) · 프로필 · 연결 상태와 앱이 내리는 테마 · 걸음 목표를 만든다.
 /// [setUp] 은 테스트의 `setUp` 에서, [tearDown] 은 `tearDown` 에서 부른다.
 class SettingsHarness {
   final notification = MockRequester();
@@ -124,6 +127,10 @@ class SettingsHarness {
   late DiaryLockCubit diaryLock;
   late DiarySettingsCubit diarySettings;
   late MapRecordCubit mapRecord;
+  late FakeChatSettings chatSettings;
+  late FakeProfileRepository profileRepo;
+  late ProfileCubit profile;
+  late ConnectionStatusCubit connections;
 
   static void registerFallbacks() => registerFallbackValue(const AppSettings());
 
@@ -155,7 +162,7 @@ class SettingsHarness {
           const DiaryUsage(photos: 1, videos: 0, bytes: 2048, trashBytes: 0),
     );
     final clock = MutableClock(diaryT0);
-    final chatSettings = FakeChatSettings();
+    chatSettings = FakeChatSettings();
     final chatVerifier = FakeChatKeyVerifier();
     final chatCatalog = FakeChatModelCatalog();
     getIt
@@ -213,6 +220,8 @@ class SettingsHarness {
       locationPrefs,
       locations,
     );
+    profile = ProfileCubit(profileRepo = FakeProfileRepository());
+    connections = ConnectionStatusCubit(chatSettings);
   }
 
   Future<void> tearDown() async {
@@ -223,6 +232,8 @@ class SettingsHarness {
     await diaryLock.close();
     await diarySettings.close();
     await mapRecord.close();
+    await profile.close();
+    await connections.close();
     await getIt.reset();
   }
 
@@ -255,6 +266,8 @@ class SettingsHarness {
               BlocProvider.value(value: diaryLock),
               BlocProvider.value(value: diarySettings),
               BlocProvider.value(value: mapRecord),
+              BlocProvider.value(value: profile),
+              BlocProvider.value(value: connections),
             ],
             child: home,
           ),

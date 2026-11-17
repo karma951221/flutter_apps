@@ -6440,6 +6440,180 @@ abstract class AppLocalizations {
   /// **'기능별 설정'**
   String get walkAppSettingsFeatures;
 
+  /// 하단 탭 — 설정. 설정 탭 앱바 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'설정'**
+  String get walkShellTabSettings;
+
+  /// 설정 탭 — 외부 서비스 키 · 연결 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'API 키 · 연결'**
+  String get walkSettingsConnections;
+
+  /// 설정 탭 — 물어보기 설정(AI 연결 · 대화 기록) 바로가기 행
+  ///
+  /// In ko, this message translates to:
+  /// **'AI 연결'**
+  String get walkSettingsAiConnection;
+
+  /// 설정 탭 — AI 연결 행 부제: 키 없음
+  ///
+  /// In ko, this message translates to:
+  /// **'연결 안 됨'**
+  String get walkSettingsAiNotConnected;
+
+  /// 설정 탭 — 백업 · 복원 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'데이터'**
+  String get walkSettingsData;
+
+  /// 설정 탭 — 위치 기록 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'위치'**
+  String get walkSettingsLocation;
+
+  /// 설정 탭 — 위치 기록 행 부제: 꺼짐
+  ///
+  /// In ko, this message translates to:
+  /// **'꺼짐'**
+  String get walkSettingsLocationOff;
+
+  /// 설정 탭 — 위치 기록 행 부제: 켜짐
+  ///
+  /// In ko, this message translates to:
+  /// **'켜짐'**
+  String get walkSettingsLocationOn;
+
+  /// 설정 탭 — 위치 기록 행 부제: 켜짐 + 자세히 기록
+  ///
+  /// In ko, this message translates to:
+  /// **'켜짐 · 자세히 기록'**
+  String get walkSettingsLocationDetailed;
+
+  /// 설정 탭 — 위치 기록 행 부제: 권한을 잃어 멈춤
+  ///
+  /// In ko, this message translates to:
+  /// **'멈춤 · 권한 필요'**
+  String get walkSettingsLocationBlocked;
+
+  /// 설정 탭 — 앱 정보 섹션 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'앱 정보'**
+  String get walkSettingsAbout;
+
+  /// 설정 탭 — 오픈소스 라이선스 행
+  ///
+  /// In ko, this message translates to:
+  /// **'오픈소스 라이선스'**
+  String get walkSettingsLicenses;
+
+  /// 프로필 편집 화면 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필'**
+  String get walkProfileTitle;
+
+  /// 설정 탭 머리 — 이름이 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필 만들기'**
+  String get walkProfileCreate;
+
+  /// 설정 탭 머리 — 이름이 없을 때 부제
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 · 이름 · 한 줄 소개'**
+  String get walkProfileCreateHint;
+
+  /// 프로필 편집 — 이름 입력 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'이름'**
+  String get walkProfileName;
+
+  /// 프로필 편집 — 소개 입력 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'한 줄 소개'**
+  String get walkProfileBio;
+
+  /// 프로필 편집 — 아바타를 누르면 여는 사진 시트의 툴팁 · 접근성 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 바꾸기'**
+  String get walkProfilePhotoChange;
+
+  /// 프로필 사진 시트 — 앨범
+  ///
+  /// In ko, this message translates to:
+  /// **'앨범에서 고르기'**
+  String get walkProfilePhotoGallery;
+
+  /// 프로필 사진 시트 — 카메라
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 찍기'**
+  String get walkProfilePhotoCamera;
+
+  /// 프로필 사진 시트 — 지우기
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 지우기'**
+  String get walkProfilePhotoRemove;
+
+  /// 프로필 사진 고르기 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'사진을 가져오지 못했어요'**
+  String get walkProfilePhotoFailed;
+
+  /// 프로필 편집 — 이름을 AI 에 보내는 스위치
+  ///
+  /// In ko, this message translates to:
+  /// **'물어보기에 내 이름 알려주기'**
+  String get walkProfileShareName;
+
+  /// 프로필 편집 — 이름 알려주기 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'켜면 대화할 때 이름이 Claude · GPT 로 전송됩니다. 한 줄 소개는 보내지 않습니다.'**
+  String get walkProfileShareNameDescription;
+
+  /// 프로필 저장 성공 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필을 저장했어요'**
+  String get walkProfileSaved;
+
+  /// 프로필 저장 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'프로필을 저장하지 못했어요'**
+  String get walkProfileSaveFailed;
+
+  /// 프로필 편집 — 저장 안 하고 나갈 때 확인 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'바꾼 내용을 버릴까요?'**
+  String get walkProfileDiscardTitle;
+
+  /// 프로필 편집 — 버리기 확인 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 않은 변경이 사라집니다.'**
+  String get walkProfileDiscardBody;
+
+  /// 프로필 편집 — 버리기 확인 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'버리기'**
+  String get walkProfileDiscard;
+
   /// 하단 탭 — 기록(일기 · 지도를 묶는다). 기록 탭 앱바 제목
   ///
   /// In ko, this message translates to:

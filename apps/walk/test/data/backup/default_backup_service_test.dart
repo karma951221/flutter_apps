@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:walk/data/profile/prefs_profile_repository.dart';
 import 'package:walk/data/alarm/archive/ring_archive_database.dart';
 import 'package:walk/data/alarm/prefs_alarm_repository.dart';
 import 'package:walk/data/backup/area/alarm_backup_area.dart';
@@ -133,7 +134,14 @@ class _Device {
     ChatBackupArea(chat, workspace, prefs, chatSettings),
     WikiBackupArea(chat, prefs),
     AlarmBackupArea(prefs, rings, sounds, alarms, permissions),
-    SettingsBackupArea(prefs),
+    SettingsBackupArea(
+      prefs,
+      PrefsProfileRepository.withEncoder(
+        prefs,
+        docs,
+        encode: (src, dst) async => File(src).copy(dst),
+      ),
+    ),
     LocationBackupArea(location, recorder),
   ];
 

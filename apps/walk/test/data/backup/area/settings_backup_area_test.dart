@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/data/backup/area/settings_backup_area.dart';
+import 'package:walk/data/profile/prefs_profile_repository.dart';
+import 'package:walk/domain/profile/profile.dart';
 import 'package:walk/domain/backup/backup_area_id.dart';
 import 'package:walk/domain/backup/backup_failure.dart';
 
@@ -60,16 +62,33 @@ Future<BackupFailure?> _failureOf(Future<void> Function() body) async {
 void main() {
   late Directory tmp;
   late Directory staging;
+  late Directory docsA;
+  late Directory docsB;
 
   setUp(() {
     tmp = Directory.systemTemp.createTempSync('settings_backup_area_test');
     staging = Directory('${tmp.path}/staging')..createSync();
+    docsA = Directory('${tmp.path}/docsA')..createSync();
+    docsB = Directory('${tmp.path}/docsB')..createSync();
   });
+
+  var clock = 0;
+  PrefsProfileRepository profileOf(SharedPreferences prefs, Directory docs) =>
+      PrefsProfileRepository.withEncoder(
+        prefs,
+        docs,
+        encode: (src, dst) async => File(src).copy(dst),
+        now: () => ++clock,
+      );
+
+  /// 프로필 저장소를 [docs] 에 둔 영역. 기본은 [docsA].
+  SettingsBackupArea areaOf(SharedPreferences prefs, [Directory? docs]) =>
+      SettingsBackupArea(prefs, profileOf(prefs, docs ?? docsA));
   tearDown(() => tmp.deleteSync(recursive: true));
 
   test('settings export contains exactly the allowlist', () async {
     SharedPreferences.setMockInitialValues({..._settings, ..._excluded});
-    final area = SettingsBackupArea(await SharedPreferences.getInstance());
+    final area = areaOf(await SharedPreferences.getInstance());
 
     expect(await area.export(staging), isEmpty);
 
@@ -86,16 +105,14 @@ void main() {
 
   test('settings round trip keeps types and leaves other keys alone', () async {
     SharedPreferences.setMockInitialValues(_settings);
-    await SettingsBackupArea(
-      await SharedPreferences.getInstance(),
-    ).export(staging);
+    await areaOf(await SharedPreferences.getInstance()).export(staging);
 
     SharedPreferences.setMockInitialValues({
       ..._excluded,
       'walk.themeMode': 'light',
     });
     final prefsB = await SharedPreferences.getInstance();
-    final areaB = SettingsBackupArea(prefsB);
+    final areaB = areaOf(prefsB, docsB);
     await areaB.validate(staging);
     await areaB.replace(staging);
     await areaB.afterRestore();
@@ -110,13 +127,11 @@ void main() {
 
   test('replace removes allowlisted keys absent from backup', () async {
     SharedPreferences.setMockInitialValues({});
-    await SettingsBackupArea(
-      await SharedPreferences.getInstance(),
-    ).export(staging);
+    await areaOf(await SharedPreferences.getInstance()).export(staging);
 
     SharedPreferences.setMockInitialValues(_settings);
     final prefsB = await SharedPreferences.getInstance();
-    await SettingsBackupArea(prefsB).replace(staging);
+    await areaOf(prefsB, docsB).replace(staging);
 
     for (final key in _settings.keys) {
       expect(prefsB.containsKey(key), isFalse, reason: key);
@@ -125,7 +140,7 @@ void main() {
 
   test('validate rejects malformed prefs.json', () async {
     SharedPreferences.setMockInitialValues({});
-    final area = SettingsBackupArea(await SharedPreferences.getInstance());
+    final area = areaOf(await SharedPreferences.getInstance());
     await area.export(staging);
     File(
       '${staging.path}/settings/prefs.json',
@@ -139,11 +154,107 @@ void main() {
 
   test('id, schema and counts', () async {
     SharedPreferences.setMockInitialValues(_settings);
-    final area = SettingsBackupArea(await SharedPreferences.getInstance());
+    final area = areaOf(await SharedPreferences.getInstance());
 
     expect(area.id, BackupAreaId.settings);
-    expect(area.schema, {'prefs': 1});
+    expect(area.schema, {'prefs': 1, 'profile': 1});
     expect(await area.counts(), isEmpty);
     expect(await area.estimatedBytes(), greaterThan(0));
+  });
+
+  group('profile', () {
+    Future<String> photo(Directory dir, String body) async {
+      final f = File('${dir.path}/src-$body.jpg');
+      await f.writeAsString(body);
+      return f.path;
+    }
+
+    test('이름 · 소개 · 사진을 담고, 토글은 담지 않는다', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefsA = await SharedPreferences.getInstance();
+      final repoA = profileOf(prefsA, docsA);
+      await repoA.save(
+        const Profile(name: '하늘', bio: '걷는 사람', shareNameWithAi: true),
+      );
+      await repoA.setPhoto(await photo(tmp, 'face'));
+      await SettingsBackupArea(prefsA, repoA).export(staging);
+
+      final prefsJson = File(
+        '${staging.path}/settings/prefs.json',
+      ).readAsStringSync();
+      expect(prefsJson, isNot(contains('profile.')));
+
+      SharedPreferences.setMockInitialValues({});
+      final prefsB = await SharedPreferences.getInstance();
+      final repoB = profileOf(prefsB, docsB);
+      await repoB.save(const Profile(shareNameWithAi: true));
+      final areaB = SettingsBackupArea(prefsB, repoB);
+      await areaB.validate(staging);
+      await areaB.replace(staging);
+
+      final restored = repoB.load();
+      expect(restored.name, '하늘');
+      expect(restored.bio, '걷는 사람');
+      expect(restored.shareNameWithAi, isFalse);
+      expect(File(repoB.photoPath(restored)!).readAsStringSync(), 'face');
+    });
+
+    test('사진 없는 백업은 지금 사진을 지운다', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefsA = await SharedPreferences.getInstance();
+      await areaOf(prefsA).export(staging);
+
+      SharedPreferences.setMockInitialValues({});
+      final prefsB = await SharedPreferences.getInstance();
+      final repoB = profileOf(prefsB, docsB);
+      final before = await repoB.setPhoto(await photo(tmp, 'old'));
+      await SettingsBackupArea(prefsB, repoB).replace(staging);
+
+      expect(repoB.load().photo, isNull);
+      expect(File(repoB.photoPath(before)!).existsSync(), isFalse);
+    });
+
+    test('프로필이 없는 옛 백업은 지금 프로필을 둔다', () async {
+      SharedPreferences.setMockInitialValues({});
+      await areaOf(await SharedPreferences.getInstance()).export(staging);
+      File('${staging.path}/settings/profile.json').deleteSync();
+
+      SharedPreferences.setMockInitialValues({});
+      final prefsB = await SharedPreferences.getInstance();
+      final repoB = profileOf(prefsB, docsB);
+      await repoB.save(const Profile(name: '지금', shareNameWithAi: true));
+      final kept = await repoB.setPhoto(await photo(tmp, 'now'));
+      final areaB = SettingsBackupArea(prefsB, repoB);
+      await areaB.validate(staging);
+      await areaB.replace(staging);
+
+      expect(repoB.load(), kept);
+      expect(File(repoB.photoPath(kept)!).existsSync(), isTrue);
+    });
+
+    test('사진 경로가 영역 밖이거나 파일이 없으면 integrity', () async {
+      SharedPreferences.setMockInitialValues({});
+      final area = areaOf(await SharedPreferences.getInstance());
+      await area.export(staging);
+      final json = File('${staging.path}/settings/profile.json');
+
+      json.writeAsStringSync('{"name":"a","bio":"","photo":"../../x.jpg"}');
+      expect(
+        await _failureOf(() => area.validate(staging)),
+        BackupFailure.integrity,
+      );
+
+      json.writeAsStringSync('{"name":"a","bio":"","photo":"missing.jpg"}');
+      expect(
+        await _failureOf(() => area.validate(staging)),
+        BackupFailure.integrity,
+      );
+
+      json.writeAsStringSync('{"name":3,"bio":""}');
+      expect(
+        await _failureOf(() => area.validate(staging)),
+        BackupFailure.integrity,
+      );
+    });
   });
 }

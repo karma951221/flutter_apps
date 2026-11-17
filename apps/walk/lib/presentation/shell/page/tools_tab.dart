@@ -96,12 +96,8 @@ class _ToolsTabState extends State<ToolsTab>
           ToolsSection.walk => [
             const FeatureMenu(settings: SettingsTarget.walk),
           ],
-          ToolsSection.weather => [
-            const FeatureMenu(
-              settings: SettingsTarget.app,
-              showFeatureSettings: false,
-            ),
-          ],
+          // 날씨는 설정이 없다 — 앱 전역 설정은 하단 설정 탭이다.
+          ToolsSection.weather => const [],
         },
         bottom: TabBar(
           controller: _controller,

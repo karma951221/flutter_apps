@@ -489,7 +489,7 @@ void main() {
     expect(opened, 1);
   });
 
-  testWidgets('⋮ 는 잠긴 동안 앱 설정만, 풀리면 물어보기 설정 · 앱 설정', (tester) async {
+  testWidgets('⋮ 는 잠긴 동안 없고, 풀리면 물어보기 설정', (tester) async {
     whenListen(
       lock,
       lockStates.stream,
@@ -501,25 +501,15 @@ void main() {
       matching: find.byIcon(Icons.more_vert),
     );
 
-    await tester.tap(menu());
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
-    expect(find.byKey(const Key('menu-settings-chat')), findsNothing);
-    await tester.tapAt(const Offset(10, 10));
-    await tester.pumpAndSettle();
+    expect(menu(), findsNothing);
 
     lockStates.add(const DiaryLockState.unlocked());
     await tester.pumpAndSettle();
     await tester.tap(menu());
     await tester.pumpAndSettle();
 
-    double top(Finder f) => tester.getTopLeft(f).dy;
-    final chat = find.byKey(const Key('menu-settings-chat'));
-    expect(chat, findsOneWidget);
-    expect(
-      top(chat),
-      lessThan(top(find.byKey(const Key('menu-settings-app')))),
-    );
+    expect(find.byKey(const Key('menu-settings-chat')), findsOneWidget);
+    expect(find.byKey(const Key('menu-settings-app')), findsNothing);
   });
 
   testWidgets('동의 전이면 전송 안내와 동의 버튼을 보이고, 동의하면 시작한다', (tester) async {
@@ -764,7 +754,7 @@ void main() {
   }
 
   group('⋮ 항목', () {
-    testWidgets('⋮ 순서는 대화 목록 · 위키 · 작업 폴더 · 임시 대화로 시작 · 물어보기 설정 · 앱 설정', (
+    testWidgets('⋮ 순서는 대화 목록 · 위키 · 작업 폴더 · 임시 대화로 시작 · 물어보기 설정', (
       tester,
     ) async {
       await pump(tester);
@@ -776,33 +766,34 @@ void main() {
         'chat-menu-workspace',
         'chat-menu-temporary',
         'menu-settings-chat',
-        'menu-settings-app',
       ];
       final tops = [
         for (final k in keys) tester.getTopLeft(find.byKey(Key(k))).dy,
       ];
       expect(tops, [...tops]..sort());
-      expect(tops.toSet(), hasLength(6));
+      expect(tops.toSet(), hasLength(5));
+      expect(find.byKey(const Key('menu-settings-app')), findsNothing);
       expect(find.text('작업 폴더'), findsOneWidget);
       expect(find.text('대화 목록'), findsOneWidget);
       expect(find.text('위키'), findsOneWidget);
       expect(find.text('임시 대화로 시작'), findsOneWidget);
     });
 
-    testWidgets('잠긴 동안 ⋮ 에는 앱 설정만', (tester) async {
+    testWidgets('잠긴 동안 ⋮ 가 없다', (tester) async {
       whenListen(
         lock,
         lockStates.stream,
         initialState: const DiaryLockState.locked(method: LockMethod.pin),
       );
       await pump(tester);
-      await openMenu(tester);
 
-      expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
-      expect(find.byKey(const Key('chat-menu-history')), findsNothing);
-      expect(find.byKey(const Key('chat-menu-temporary')), findsNothing);
-      expect(find.byKey(const Key('chat-menu-wiki')), findsNothing);
-      expect(find.byKey(const Key('menu-settings-chat')), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(AppBar),
+          matching: find.byIcon(Icons.more_vert),
+        ),
+        findsNothing,
+      );
     });
 
     testWidgets('키가 없으면 대화 목록 · 임시 대화로 시작이 없다', (tester) async {
