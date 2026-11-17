@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/commute/entity/place.dart';
@@ -82,7 +85,6 @@ void main() {
           if (!p.recordedAt.isBefore(from) && !p.recordedAt.isAfter(to)) p,
       ];
     });
-    when(() => repo.placeName(any())).thenAnswer((_) async => null);
     when(() => namer.nameFor(any(), any())).thenAnswer((inv) async {
       final lat = inv.positionalArguments[0] as double;
       return '곳 ${lat.toStringAsFixed(2)}';
@@ -142,15 +144,21 @@ void main() {
     final r = await suggestions.load();
     expect(r.frequent.length, 5);
     expect(r.frequent.first.label, '곳 37.07');
-    expect(r.frequent.every((p) => p.source == TransitPointSource.frequent),
-        isTrue);
+    expect(
+      r.frequent.every((p) => p.source == TransitPointSource.frequent),
+      isTrue,
+    );
     expect(r.frequent.any((p) => p.label == '곳 36.00'), isFalse);
     expect(askedFrom, _now.subtract(const Duration(days: 30)).toUtc());
   });
 
-  test('recorder off or no points → empty frequent (no throw)', () async {
+  test('no points → empty frequent', () async {
     expect((await suggestions.load()).frequent, isEmpty);
+  });
+
+  test('recorder off with points still gives frequent', () async {
     points = _stay(_now.subtract(const Duration(days: 2)), 37.5);
+    expect((await suggestions.load()).frequent, hasLength(1));
     when(() => recorder.status()).thenThrow(Exception('boom'));
     expect((await suggestions.load()).frequent, hasLength(1));
   });
@@ -169,10 +177,28 @@ void main() {
     expect(r.work?.label, '회사');
   });
 
-  test('unnamed places are skipped', () async {
+  test('offline namer keeps the places with empty label', () async {
     points = _stay(_now.subtract(const Duration(days: 2)), 37.5);
     when(() => namer.nameFor(any(), any())).thenAnswer((_) async => null);
-    expect((await suggestions.load()).frequent, isEmpty);
+    final r = await suggestions.load();
+    expect(r.frequent.single.label, '');
+    expect(r.frequent.single.lat, 37.5);
+  });
+
+  test('never-completing namer gives up after the budget', () {
+    points = _stay(_now.subtract(const Duration(days: 2)), 37.5);
+    when(
+      () => namer.nameFor(any(), any()),
+    ).thenAnswer((_) => Completer<String?>().future);
+    fakeAsync((async) {
+      TransitSuggestions? result;
+      suggestions.load().then((r) => result = r);
+      async.flushMicrotasks();
+      expect(result, isNull);
+      async.elapse(const Duration(seconds: 10));
+      async.flushMicrotasks();
+      expect(result!.frequent.single.label, '');
+    });
   });
 
   test('saveAs home persists via PlaceRepository', () async {
