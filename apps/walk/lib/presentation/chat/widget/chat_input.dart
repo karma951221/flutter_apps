@@ -12,7 +12,10 @@ import 'attachment_chip.dart';
 /// [restoredDraft] 가 새로 오면(글 없이 멈춰 되돌린 질문) 비어 있는 입력칸만 채우고
 /// [onDraftRestored] 를 부른다. 쓰던 글이 있으면 덮어쓰지 않는다.
 ///
-/// [onAttach] 가 있으면 입력칸 왼쪽에 [📎]. [canAttach] 가 false 면 꺼지고 툴팁이
+/// 키보드 동작 키는 줄바꿈이고, 보내기는 화면의 [보내기] 버튼으로만 한다. 입력칸은 5줄까지
+/// 커지고 그 뒤로는 안에서 스크롤된다. 양옆 버튼은 커진 입력칸의 아래쪽에 맞춘다.
+///
+/// [onAttach] 가 있으면 입력칸 바깥 왼쪽에 [＋]. [canAttach] 가 false 면 꺼지고 툴팁이
 /// [attachBlockedReason]. 담긴 [attachments] 는 입력칸 위에 칩(✕ 로 빼기)으로 보이고,
 /// 첨부가 있으면 글이 비어도 보낸다(빈 글 그대로 [onSend]).
 class ChatInput extends StatefulWidget {
@@ -54,12 +57,12 @@ class ChatInput extends StatefulWidget {
   /// 칩의 ✕ — 그 첨부의 index.
   final ValueChanged<int>? onRemoveAttachment;
 
-  /// [📎]. null 이면 버튼이 없다.
+  /// [＋](첨부). null 이면 버튼이 없다.
   final VoidCallback? onAttach;
 
   final bool canAttach;
 
-  /// [canAttach] 가 false 일 때 [📎] 툴팁.
+  /// [canAttach] 가 false 일 때 [＋] 툴팁.
   final String? attachBlockedReason;
 
   @override
@@ -70,7 +73,7 @@ class _ChatInputState extends State<ChatInput> {
   final _controller = TextEditingController();
 
   /// 입력칸이 늘어나는 최대 줄 수.
-  static const _maxLines = 4;
+  static const _maxLines = 5;
 
   @override
   void initState() {
@@ -120,10 +123,11 @@ class _ChatInputState extends State<ChatInput> {
     final onAttach = widget.onAttach;
     final onRemove = widget.onRemoveAttachment;
     final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         if (onAttach != null)
           IconButton(
-            icon: const Icon(Icons.attach_file),
+            icon: const Icon(Icons.add_circle_outline),
             tooltip: widget.canAttach
                 ? l10n.walkChatAttach
                 : widget.attachBlockedReason ?? l10n.walkChatAttach,
@@ -135,9 +139,9 @@ class _ChatInputState extends State<ChatInput> {
             enabled: widget.enabled,
             minLines: 1,
             maxLines: _maxLines,
-            textInputAction: TextInputAction.send,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
             decoration: InputDecoration(hintText: l10n.walkChatInputHint),
-            onSubmitted: (_) => _submit(),
           ),
         ),
         if (widget.busy)

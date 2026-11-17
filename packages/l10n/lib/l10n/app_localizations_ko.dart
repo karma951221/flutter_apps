@@ -3777,22 +3777,20 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatModelPickerTitle => '모델 고르기';
 
   @override
-  String walkChatModelActionTooltip(String model) {
-    return '모델 바꾸기 · 지금 $model';
-  }
+  String get walkChatQuickSettings => '대화 설정';
 
   @override
-  String get walkChatUseRecordsOn => '내 기록 참고 켜짐';
+  String get walkChatModelRowTitle => '모델';
 
   @override
-  String get walkChatUseRecordsOff => '내 기록 참고 꺼짐';
+  String get walkChatUseRecordsTitle => '내 기록 참고';
 
   @override
-  String get walkChatUseRecordsTurnedOn =>
-      '이제 일기 · 걸음 · 위치 · 알람 · 날씨 · 위키를 찾아보고 답해요';
+  String get walkChatUseRecordsOnHint =>
+      '일기 · 걸음 · 위치 · 알람 · 날씨 · 위키를 찾아보고 답해요';
 
   @override
-  String get walkChatUseRecordsTurnedOff => '이제 내 기록 없이 답해요';
+  String get walkChatUseRecordsOffHint => '내 기록 없이 답해요';
 
   @override
   String get walkChatModelRecommended => '추천';
@@ -3923,6 +3921,26 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatWikiSaved => '위키에 저장했어요';
+
+  @override
+  String get walkChatWikiSearch => '메모 찾기';
+
+  @override
+  String get walkChatWikiSearchHint => '제목 · 요약 · 본문에서 찾기';
+
+  @override
+  String get walkChatWikiSearchClose => '검색 닫기';
+
+  @override
+  String walkChatWikiSearchNoResults(String query) {
+    return '\'$query\'에 맞는 메모가 없어요';
+  }
+
+  @override
+  String get walkChatWikiCopy => '본문 복사';
+
+  @override
+  String get walkChatWikiCopied => '본문을 복사했어요';
 
   @override
   String get walkChatWikiAddFromBubble => '위키에 추가';
@@ -4090,7 +4108,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapSettingsRecordDescription => '이 폰에만 쌓이고 서버로 보내지 않아요';
 
   @override
-  String get walkMapSettingsDense => '촘촘하게 기록';
+  String get walkMapSettingsDense => '자세히 기록';
 
   @override
   String get walkMapSettingsDenseDescription => '산책할 때처럼 5초마다 기록해요. 배터리를 더 써요';
@@ -4225,10 +4243,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapViewStoryOnMap => '지도로 보기';
 
   @override
-  String get walkMapChipDense => '촘촘 기록';
+  String get walkMapChipDense => '자세히 기록';
 
   @override
-  String get walkMapChipDenseOn => '촘촘 기록 중';
+  String get walkMapChipDenseHint => '5초마다 · 배터리 더 씀';
 
   @override
   String get walkMapChipOff => '기록 꺼짐';

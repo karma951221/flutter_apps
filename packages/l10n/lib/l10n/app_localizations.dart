@@ -6942,35 +6942,35 @@ abstract class AppLocalizations {
   /// **'모델 고르기'**
   String get walkChatModelPickerTitle;
 
-  /// 물어보기 앱바 모델 버튼 툴팁(지금 모델 이름)
+  /// 물어보기 앱바 설정 버튼 툴팁 · 대화 설정 시트 제목
   ///
   /// In ko, this message translates to:
-  /// **'모델 바꾸기 · 지금 {model}'**
-  String walkChatModelActionTooltip(String model);
+  /// **'대화 설정'**
+  String get walkChatQuickSettings;
 
-  /// 물어보기 앱바 [내 기록 참고] 토글이 켜졌을 때 툴팁 · 접근성 라벨
+  /// 대화 설정 시트 — 모델 행 제목(아래에 지금 모델 이름)
   ///
   /// In ko, this message translates to:
-  /// **'내 기록 참고 켜짐'**
-  String get walkChatUseRecordsOn;
+  /// **'모델'**
+  String get walkChatModelRowTitle;
 
-  /// 물어보기 앱바 [내 기록 참고] 토글이 꺼졌을 때 툴팁 · 접근성 라벨
+  /// 대화 설정 시트 — 내 기록 참고 스위치 제목
   ///
   /// In ko, this message translates to:
-  /// **'내 기록 참고 꺼짐'**
-  String get walkChatUseRecordsOff;
+  /// **'내 기록 참고'**
+  String get walkChatUseRecordsTitle;
 
-  /// [내 기록 참고]를 켠 직후 스낵바 — 찾아보는 기록 종류를 알린다
+  /// 내 기록 참고가 켜졌을 때 스위치 설명 — 찾아보는 기록 종류
   ///
   /// In ko, this message translates to:
-  /// **'이제 일기 · 걸음 · 위치 · 알람 · 날씨 · 위키를 찾아보고 답해요'**
-  String get walkChatUseRecordsTurnedOn;
+  /// **'일기 · 걸음 · 위치 · 알람 · 날씨 · 위키를 찾아보고 답해요'**
+  String get walkChatUseRecordsOnHint;
 
-  /// [내 기록 참고]를 끈 직후 스낵바
+  /// 내 기록 참고가 꺼졌을 때 스위치 설명
   ///
   /// In ko, this message translates to:
-  /// **'이제 내 기록 없이 답해요'**
-  String get walkChatUseRecordsTurnedOff;
+  /// **'내 기록 없이 답해요'**
+  String get walkChatUseRecordsOffHint;
 
   /// 모델 고르기 시트 — 추천 모델 배지
   ///
@@ -7211,6 +7211,42 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'위키에 저장했어요'**
   String get walkChatWikiSaved;
+
+  /// 위키 화면 앱바: 검색 열기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 찾기'**
+  String get walkChatWikiSearch;
+
+  /// 위키 화면: 검색칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'제목 · 요약 · 본문에서 찾기'**
+  String get walkChatWikiSearchHint;
+
+  /// 위키 화면: 검색 닫기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'검색 닫기'**
+  String get walkChatWikiSearchClose;
+
+  /// 위키 화면: 검색 결과 없음
+  ///
+  /// In ko, this message translates to:
+  /// **'\'{query}\'에 맞는 메모가 없어요'**
+  String walkChatWikiSearchNoResults(String query);
+
+  /// 메모 화면 앱바: 본문을 클립보드로 복사
+  ///
+  /// In ko, this message translates to:
+  /// **'본문 복사'**
+  String get walkChatWikiCopy;
+
+  /// 메모 화면: 복사 성공 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'본문을 복사했어요'**
+  String get walkChatWikiCopied;
 
   /// 말풍선 길게 누르기 시트: 이 말풍선으로 위키 메모 만들기
   ///
@@ -7506,13 +7542,13 @@ abstract class AppLocalizations {
   /// **'이 폰에만 쌓이고 서버로 보내지 않아요'**
   String get walkMapSettingsRecordDescription;
 
-  /// 지도 설정 — 촘촘 기록 스위치 행 제목
+  /// 지도 설정 — 자세히 기록(위치를 5초마다 찍는 모드) 스위치 행 제목
   ///
   /// In ko, this message translates to:
-  /// **'촘촘하게 기록'**
+  /// **'자세히 기록'**
   String get walkMapSettingsDense;
 
-  /// 지도 설정 — 촘촘 기록 스위치 설명
+  /// 지도 설정 — 자세히 기록 스위치 설명
   ///
   /// In ko, this message translates to:
   /// **'산책할 때처럼 5초마다 기록해요. 배터리를 더 써요'**
@@ -7770,17 +7806,17 @@ abstract class AppLocalizations {
   /// **'지도로 보기'**
   String get walkMapViewStoryOnMap;
 
-  /// 지도 — 촘촘 기록 칩(꺼짐)
+  /// 지도 — 자세히 기록 토글 제목(위치를 5초마다 찍는 모드)
   ///
   /// In ko, this message translates to:
-  /// **'촘촘 기록'**
+  /// **'자세히 기록'**
   String get walkMapChipDense;
 
-  /// 지도 — 촘촘 기록 칩(켜짐)
+  /// 지도 — 자세히 기록 토글 아래 한 줄 설명
   ///
   /// In ko, this message translates to:
-  /// **'촘촘 기록 중'**
-  String get walkMapChipDenseOn;
+  /// **'5초마다 · 배터리 더 씀'**
+  String get walkMapChipDenseHint;
 
   /// 지도 — 기록이 꺼져 있을 때 칩(누르면 켜기)
   ///

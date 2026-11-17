@@ -50,14 +50,13 @@ void main() {
     );
 
     await tester.enterText(find.byType(TextField), '다음 질문');
-    await tester.testTextInput.receiveAction(TextInputAction.send);
     await tester.pump();
 
     expect(find.text('다음 질문'), findsOneWidget);
     expect(sent, isEmpty);
   });
 
-  testWidgets('preparing 이면 전송 · ✕ 가 꺼지고 글은 남는다(키보드 전송도 무시)', (tester) async {
+  testWidgets('preparing 이면 전송 · ✕ 가 꺼지고 글은 남는다', (tester) async {
     final sent = <String>[];
     await tester.pumpWidget(
       host(
@@ -82,12 +81,83 @@ void main() {
       ),
     );
     expect(send.onPressed, isNull);
-    await tester.testTextInput.receiveAction(TextInputAction.send);
-    await tester.pump();
 
     expect(sent, isEmpty);
     expect(find.text('하나 더'), findsOneWidget);
     expect(find.byTooltip('첨부 빼기'), findsNothing);
+  });
+
+  group('여러 줄', () {
+    String lines(int n) => [for (var i = 1; i <= n; i++) '$i줄'].join('\n');
+
+    double fieldHeight(WidgetTester tester) =>
+        tester.getSize(find.byType(TextField)).height;
+
+    testWidgets('키보드 동작 키는 줄바꿈이다(보내기는 화면의 버튼으로만)', (tester) async {
+      await tester.pumpWidget(
+        host(ChatInput(busy: false, onSend: (_) {}, onStop: () {})),
+      );
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.textInputAction, TextInputAction.newline);
+      expect(field.keyboardType, TextInputType.multiline);
+      expect(field.onSubmitted, isNull);
+    });
+
+    testWidgets('줄바꿈이 든 글을 그대로 보낸다', (tester) async {
+      final sent = <String>[];
+      await tester.pumpWidget(
+        host(ChatInput(busy: false, onSend: sent.add, onStop: () {})),
+      );
+
+      await tester.enterText(find.byType(TextField), '첫 줄\n둘째 줄\n');
+      await tester.tap(find.byTooltip('보내기'));
+
+      expect(sent, ['첫 줄\n둘째 줄']);
+    });
+
+    testWidgets('5줄까지 커지고 그 뒤로는 입력칸 안에서 스크롤된다', (tester) async {
+      await tester.pumpWidget(
+        host(ChatInput(busy: false, onSend: (_) {}, onStop: () {})),
+      );
+      final one = fieldHeight(tester);
+
+      Future<double> heightWith(int n) async {
+        await tester.enterText(find.byType(TextField), lines(n));
+        await tester.pump();
+        return fieldHeight(tester);
+      }
+
+      final four = await heightWith(4);
+      final five = await heightWith(5);
+      final eight = await heightWith(8);
+
+      expect(four, greaterThan(one));
+      expect(five, greaterThan(four));
+      expect(eight, five);
+    });
+
+    testWidgets('입력칸이 커지면 첨부 · 보내기 버튼은 아래쪽에 맞춘다', (tester) async {
+      await tester.pumpWidget(
+        host(
+          ChatInput(
+            busy: false,
+            onSend: (_) {},
+            onStop: () {},
+            onAttach: () {},
+          ),
+        ),
+      );
+
+      await tester.enterText(find.byType(TextField), lines(5));
+      await tester.pump();
+
+      final field = tester.getRect(find.byType(TextField));
+      final attach = tester.getRect(find.byTooltip('파일 첨부'));
+      final send = tester.getRect(find.byTooltip('보내기'));
+      expect(attach.bottom, moreOrLessEquals(field.bottom, epsilon: 4));
+      expect(send.bottom, moreOrLessEquals(field.bottom, epsilon: 4));
+    });
   });
 
   group('restoredDraft', () {
@@ -213,6 +283,30 @@ void main() {
       expect(sent, isEmpty);
     });
 
+    testWidgets('첨부(＋)는 입력칸 바깥 왼쪽에 있다', (tester) async {
+      await tester.pumpWidget(
+        host(
+          ChatInput(
+            busy: false,
+            onSend: (_) {},
+            onStop: () {},
+            onAttach: () {},
+          ),
+        ),
+      );
+
+      final attach = find.widgetWithIcon(IconButton, Icons.add_circle_outline);
+      expect(attach, findsOneWidget);
+      expect(
+        find.descendant(of: find.byType(TextField), matching: attach),
+        findsNothing,
+      );
+      expect(
+        tester.getRect(attach).right,
+        lessThanOrEqualTo(tester.getRect(find.byType(TextField)).left),
+      );
+    });
+
     testWidgets('📎 를 누르면 onAttach', (tester) async {
       var attached = 0;
       await tester.pumpWidget(
@@ -247,7 +341,7 @@ void main() {
       );
 
       final button = tester.widget<IconButton>(
-        find.widgetWithIcon(IconButton, Icons.attach_file),
+        find.widgetWithIcon(IconButton, Icons.add_circle_outline),
       );
       expect(button.onPressed, isNull);
       expect(button.tooltip, '한 번에 3개까지 첨부할 수 있어요');

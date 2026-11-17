@@ -4126,23 +4126,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatModelPickerTitle => 'Choose a model';
 
   @override
-  String walkChatModelActionTooltip(String model) {
-    return 'Change model · now $model';
-  }
+  String get walkChatQuickSettings => 'Chat settings';
 
   @override
-  String get walkChatUseRecordsOn => 'Use my records: on';
+  String get walkChatModelRowTitle => 'Model';
 
   @override
-  String get walkChatUseRecordsOff => 'Use my records: off';
+  String get walkChatUseRecordsTitle => 'Use my records';
 
   @override
-  String get walkChatUseRecordsTurnedOn =>
-      'Answers will now look up your diary, steps, places, alarms, weather and wiki';
+  String get walkChatUseRecordsOnHint =>
+      'Looks up your diary, steps, places, alarms, weather and wiki';
 
   @override
-  String get walkChatUseRecordsTurnedOff =>
-      'Answers will now skip your records';
+  String get walkChatUseRecordsOffHint => 'Answers without your records';
 
   @override
   String get walkChatModelRecommended => 'Recommended';
@@ -4284,6 +4281,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkChatWikiSaved => 'Saved to wiki';
+
+  @override
+  String get walkChatWikiSearch => 'Search notes';
+
+  @override
+  String get walkChatWikiSearchHint => 'Search titles, summaries and text';
+
+  @override
+  String get walkChatWikiSearchClose => 'Close search';
+
+  @override
+  String walkChatWikiSearchNoResults(String query) {
+    return 'No notes contain \'$query\'';
+  }
+
+  @override
+  String get walkChatWikiCopy => 'Copy text';
+
+  @override
+  String get walkChatWikiCopied => 'Copied the text';
 
   @override
   String get walkChatWikiAddFromBubble => 'Add to wiki';
@@ -4614,10 +4631,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkMapViewStoryOnMap => 'View on map';
 
   @override
-  String get walkMapChipDense => 'Detailed';
+  String get walkMapChipDense => 'Detailed recording';
 
   @override
-  String get walkMapChipDenseOn => 'Recording in detail';
+  String get walkMapChipDenseHint => 'Every 5 s · uses more battery';
 
   @override
   String get walkMapChipOff => 'Recording off';

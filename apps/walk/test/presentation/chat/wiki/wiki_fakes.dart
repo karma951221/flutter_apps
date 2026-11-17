@@ -53,6 +53,27 @@ class MemoryWikiRepository implements WikiRepository {
   Stream<List<WikiNote>> notes() =>
       _watch(() => List<WikiNote>.unmodifiable(stored), fail: failList);
 
+  /// watchNotes 에 넘어온 (query, limit) — 순서대로.
+  final List<(String, int)> watchNotesCalls = [];
+
+  @override
+  Stream<List<WikiNote>> watchNotes({String query = '', required int limit}) {
+    watchNotesCalls.add((query, limit));
+    final term = query.trim().toLowerCase();
+    bool hit(WikiNote n) =>
+        term.isEmpty ||
+        n.title.toLowerCase().contains(term) ||
+        n.summary.toLowerCase().contains(term) ||
+        n.body.toLowerCase().contains(term);
+    return _watch(
+      () => List<WikiNote>.unmodifiable(stored.where(hit).take(limit)),
+      fail: failList,
+    );
+  }
+
+  @override
+  Stream<int> watchCount() => _watch(() => stored.length, fail: failList);
+
   WikiNote? _find(int id) {
     for (final n in stored) {
       if (n.id == id) return n;

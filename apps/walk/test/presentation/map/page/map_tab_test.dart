@@ -426,10 +426,19 @@ void main() {
     verify(() => view.show(_today)).called(1);
   });
 
-  testWidgets('record chip toggles dense', (tester) async {
+  Switch denseSwitch(WidgetTester tester) =>
+      tester.widget<Switch>(find.byKey(const Key('map-record-dense-switch')));
+
+  testWidgets('record chip is a detail-record toggle with a hint', (
+    tester,
+  ) async {
     await pump(tester, state: MapViewState.ready(_data()));
 
-    await tester.tap(find.text('촘촘 기록'));
+    expect(find.text('자세히 기록'), findsOneWidget);
+    expect(find.text('5초마다 · 배터리 더 씀'), findsOneWidget);
+    expect(denseSwitch(tester).value, isFalse);
+
+    await tester.tap(find.byKey(const Key('map-record-dense-switch')));
     await tester.pumpAndSettle();
     verify(() => record.setDense(true)).called(1);
 
@@ -442,9 +451,25 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('촘촘 기록 중'));
+    expect(denseSwitch(tester).value, isTrue);
+
+    // 글자를 눌러도 같은 토글이다.
+    await tester.tap(find.text('자세히 기록'));
     await tester.pumpAndSettle();
     verify(() => record.setDense(false)).called(1);
+  });
+
+  testWidgets('detail-record toggle is disabled while busy', (tester) async {
+    await pump(
+      tester,
+      state: MapViewState.ready(_data()),
+      recordState: _running.copyWith(busy: true),
+    );
+
+    expect(denseSwitch(tester).onChanged, isNull);
+    await tester.tap(find.text('자세히 기록'));
+    await tester.pump();
+    verifyNever(() => record.setDense(any()));
   });
 
   testWidgets('blocked shows record-off chip', (tester) async {
@@ -461,7 +486,7 @@ void main() {
     );
 
     expect(find.text('기록 꺼짐 · 권한 필요'), findsOneWidget);
-    expect(find.text('촘촘 기록'), findsNothing);
+    expect(find.text('자세히 기록'), findsNothing);
 
     await tester.tap(find.text('기록 꺼짐 · 권한 필요'));
     await tester.pumpAndSettle();
