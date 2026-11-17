@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:core/core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -147,6 +148,7 @@ void main() {
     WidgetTester tester, {
     bool active = true,
     ToolsSection initial = ToolsSection.alarm,
+    Locale? locale,
   }) async {
     final section = ValueNotifier(initial);
     addTearDown(section.dispose);
@@ -162,15 +164,24 @@ void main() {
         ],
         child: ValueListenableBuilder(
           valueListenable: section,
-          builder: (context, value, _) => ToolsTab(
-            active: active,
-            section: value,
-            onSectionChanged: (next) {
-              changes.add(next);
-              section.value = next;
-            },
-            onOpenAlarmSettings: () {},
-          ),
+          builder: (context, value, _) {
+            final tab = ToolsTab(
+              active: active,
+              section: value,
+              onSectionChanged: (next) {
+                changes.add(next);
+                section.value = next;
+              },
+              onOpenAlarmSettings: () {},
+            );
+            return locale == null
+                ? tab
+                : Localizations.override(
+                    context: context,
+                    locale: locale,
+                    child: tab,
+                  );
+          },
         ),
       ),
     );
@@ -270,7 +281,18 @@ void main() {
   ) async {
     await pump(tester);
     final tabs = tester.widgetList<Tab>(find.byType(Tab)).toList();
-    expect(tabs.map((t) => t.text), ['알람', '걷기', '날씨', '길찾기']);
+    final labels = [
+      for (final t in find.byType(Tab).evaluate())
+        tester
+            .widget<Text>(
+              find.descendant(
+                of: find.byWidget(t.widget),
+                matching: find.byType(Text),
+              ),
+            )
+            .data,
+    ];
+    expect(labels, ['알람', '걷기', '날씨', '길찾기']);
     expect(tabs.every((t) => t.icon != null), isTrue);
     expect(find.byType(MapTab, skipOffstage: false), findsNothing);
   });
@@ -306,6 +328,37 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('길찾기'), findsOneWidget);
   });
+
+  for (final locale in const [Locale('ko'), Locale('en'), Locale('ja')]) {
+    testWidgets('360dp · 글자 1.3배에서 상단 탭 라벨이 잘리지 않는다($locale)', (tester) async {
+      await pump(tester, locale: locale);
+      await tester.binding.setSurfaceSize(const Size(360, 640));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await tester.pumpAndSettle();
+
+      final tabs = find.byType(Tab);
+      expect(tabs, findsNWidgets(4));
+      for (var i = 0; i < 4; i++) {
+        final tab = tabs.at(i);
+        final label = find.descendant(of: tab, matching: find.byType(Text));
+        // 그려진(배율 적용된) 라벨이 탭 칸 안에 들어와야 한다.
+        final labelRect = tester.getRect(label);
+        final tabRect = tester.getRect(tab);
+        expect(labelRect.width, lessThanOrEqualTo(tabRect.width + 0.5));
+        final paragraph = tester.renderObject<RenderParagraph>(label);
+        expect(paragraph.didExceedMaxLines, isFalse);
+        expect(
+          paragraph.size.width,
+          greaterThanOrEqualTo(
+            paragraph.getMaxIntrinsicWidth(double.infinity) - 0.5,
+          ),
+          reason: 'label ${i + 1} is clipped',
+        );
+      }
+    });
+  }
 
   testWidgets('360dp · 글자 1.3배에서 길찾기 본문이 넘치지 않는다', (tester) async {
     await pump(tester, initial: ToolsSection.transit);

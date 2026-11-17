@@ -151,8 +151,14 @@ class _ToolsTabState extends State<ToolsTab>
   }
 
   /// 아이콘 위, 라벨 아래의 상단 탭 하나.
-  Tab _topTab(IconData icon, String label) =>
-      Tab(icon: Icon(icon, size: 20), text: label);
+  /// 탭 넷이 360dp · 큰 글씨에서도 잘리지 않게, 넘칠 때만 라벨을 줄인다.
+  Tab _topTab(IconData icon, String label) => Tab(
+    icon: Icon(icon, size: 20),
+    child: FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(label, maxLines: 1, softWrap: false),
+    ),
+  );
 }
 
 /// 상단 탭을 넘겨도 화면 상태(걷기 cubit · 스크롤 · 지도)를 버리지 않는다 — `TabBarView` 는

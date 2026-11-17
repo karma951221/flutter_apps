@@ -1371,8 +1371,10 @@ void main() {
     testWidgets('도구 상단 탭은 알람 · 걷기 · 날씨 · 길찾기', (tester) async {
       await pump(tester);
       final labels = tester
-          .widgetList<Tab>(find.byType(Tab))
-          .map((t) => t.text)
+          .widgetList<Text>(
+            find.descendant(of: find.byType(Tab), matching: find.byType(Text)),
+          )
+          .map((t) => t.data)
           .toList();
       expect(labels, ['알람', '걷기', '날씨', '길찾기']);
     });
