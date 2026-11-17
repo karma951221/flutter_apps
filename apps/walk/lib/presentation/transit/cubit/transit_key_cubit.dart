@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:injectable/injectable.dart';
 
 import '../../../domain/chat/api_key_mask.dart';
 import '../../../domain/transit/repository/transit_key_store.dart';
@@ -23,7 +22,6 @@ enum TransitKeySave {
 }
 
 /// 길찾기(ODsay) 키 설정. 저장은 [VerifyTransitKey] 를 거친다.
-@injectable
 class TransitKeyCubit extends Cubit<TransitKeyState> {
   TransitKeyCubit(this._store, this._verify) : super(const TransitKeyState());
 

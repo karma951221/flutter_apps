@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
 import 'package:walk/domain/transit/entity/station_hit.dart';
 import 'package:walk/domain/transit/entity/transit_path.dart';
@@ -28,6 +30,11 @@ class FakeKeyStore implements TransitKeyStore {
     key = k;
     savedStatus = status;
   }
+
+  final changeController = StreamController<void>.broadcast();
+
+  @override
+  Stream<void> get changes => changeController.stream;
 
   @override
   Future<void> delete() async => key = null;

@@ -6,6 +6,7 @@ import 'package:walk/domain/diary/entity/entry_location.dart';
 import 'package:walk/domain/diary/location/place_source.dart';
 import 'package:walk/domain/transit/entity/transit_point.dart';
 import 'package:walk/domain/transit/repository/recent_points.dart';
+import 'package:walk/domain/transit/repository/transit_key_store.dart';
 import 'package:walk/domain/transit/transit_failure.dart';
 import 'package:walk/domain/transit/usecase/find_transit_routes.dart';
 import 'package:walk/presentation/transit/cubit/transit_cubit.dart';
@@ -16,6 +17,8 @@ class _MockFind extends Mock implements FindTransitRoutes {}
 class _MockPlaceSource extends Mock implements PlaceSource {}
 
 class _MockRecent extends Mock implements RecentPoints {}
+
+class _MockKeyStore extends Mock implements TransitKeyStore {}
 
 const _a = TransitPoint(
   lat: 37.5,
@@ -46,6 +49,8 @@ void main() {
   late _MockFind find;
   late _MockPlaceSource place;
   late _MockRecent recent;
+  late _MockKeyStore keyStore;
+  late StreamController<void> keyChanges;
   late TransitCubit cubit;
 
   setUp(() {
@@ -53,14 +58,80 @@ void main() {
     find = _MockFind();
     place = _MockPlaceSource();
     recent = _MockRecent();
+    keyStore = _MockKeyStore();
+    keyChanges = StreamController<void>.broadcast();
+    when(() => keyStore.changes).thenAnswer((_) => keyChanges.stream);
     when(() => recent.add(any())).thenAnswer((_) async {});
     when(
       () => find(any(), any(), refresh: any(named: 'refresh')),
     ).thenAnswer((_) async => _result());
-    cubit = TransitCubit(find, place, recent);
+    cubit = TransitCubit(find, place, recent, keyStore);
   });
 
-  tearDown(() => cubit.close());
+  tearDown(() async {
+    await cubit.close();
+    await keyChanges.close();
+  });
+
+  group('key change', () {
+    Future<void> failWith(TransitFailure failure) async {
+      when(
+        () => find(any(), any(), refresh: any(named: 'refresh')),
+      ).thenAnswer((_) async => throw failure);
+      await cubit.setFrom(_a);
+      await cubit.setTo(_b);
+      await pumpEventQueue();
+      expect(cubit.state.status, TransitStatus.failure(failure));
+      when(
+        () => find(any(), any(), refresh: any(named: 'refresh')),
+      ).thenAnswer((_) async => _result());
+    }
+
+    test('re-queries after missingKey failure', () async {
+      await failWith(const TransitFailure.missingKey());
+      keyChanges.add(null);
+      await pumpEventQueue();
+      verify(() => find(_a, _b, refresh: any(named: 'refresh'))).called(2);
+      expect(cubit.state.status, isA<TransitLoaded>());
+    });
+
+    test('re-queries after keyRejected failure', () async {
+      await failWith(const TransitFailure.keyRejected('bad'));
+      keyChanges.add(null);
+      await pumpEventQueue();
+      expect(cubit.state.status, isA<TransitLoaded>());
+    });
+
+    test('ignored after other failures', () async {
+      await failWith(const TransitFailure.network());
+      keyChanges.add(null);
+      await pumpEventQueue();
+      verify(() => find(_a, _b, refresh: any(named: 'refresh'))).called(1);
+      expect(cubit.state.status, isA<TransitFailed>());
+    });
+
+    test('ignored when loaded', () async {
+      await cubit.setFrom(_a);
+      await cubit.setTo(_b);
+      await pumpEventQueue();
+      keyChanges.add(null);
+      await pumpEventQueue();
+      verify(() => find(_a, _b, refresh: any(named: 'refresh'))).called(1);
+    });
+
+    test('ignored when a point is missing', () async {
+      await cubit.setFrom(_a);
+      keyChanges.add(null);
+      await pumpEventQueue();
+      verifyNever(() => find(any(), any(), refresh: any(named: 'refresh')));
+      expect(cubit.state.status, isA<TransitIdle>());
+    });
+
+    test('close cancels the subscription', () async {
+      await cubit.close();
+      expect(keyChanges.hasListener, isFalse);
+    });
+  });
 
   test('both filled triggers find', () async {
     await cubit.setFrom(_a);

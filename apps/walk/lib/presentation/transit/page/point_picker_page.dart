@@ -177,7 +177,7 @@ class _PointPickerViewState extends State<PointPickerView> {
           decoration: InputDecoration.collapsed(
             hintText: l10n.walkTransitSearchHint,
           ),
-          onSubmitted: (_) => unawaited(_cubit.searchAddress()),
+          onSubmitted: _cubit.submitted,
         ),
       ),
       body: BlocBuilder<PointPickerCubit, PointPickerState>(

@@ -54,6 +54,7 @@ void main() {
     result = null;
     when(() => cubit.load()).thenAnswer((_) async {});
     when(() => cubit.searchAddress()).thenAnswer((_) async {});
+    when(() => cubit.submitted(any())).thenReturn(null);
     when(
       () => cubit.queryChanged(any(), composing: any(named: 'composing')),
     ).thenReturn(null);
@@ -189,6 +190,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(result?.source, TransitPointSource.address);
     expect(result?.lat, 37.4);
+  });
+
+  testWidgets('keyboard search action searches stations, not addresses', (
+    tester,
+  ) async {
+    await open(tester, const PointPickerState());
+    await tester.enterText(find.byType(TextField), '강남역');
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pump();
+
+    verify(() => cubit.submitted('강남역')).called(1);
+    verifyNever(() => cubit.searchAddress());
   });
 
   testWidgets('long-press home saves current choice', (tester) async {

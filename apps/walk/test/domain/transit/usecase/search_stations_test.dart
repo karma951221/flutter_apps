@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/domain/transit/entity/station_hit.dart';
+import 'package:walk/domain/transit/repository/transit_key_store.dart';
 import 'package:walk/domain/transit/transit_failure.dart';
 import 'package:walk/domain/transit/usecase/search_stations.dart';
 import 'package:walk/domain/transit/usecase/transit_api_key.dart';
@@ -24,7 +25,12 @@ void main() {
     store = FakeKeyStore(key: 'k');
     remote = FakeStationSearch([_hit]);
     cache = FakeCache(FixedClock(DateTime(2026)));
-    search = SearchStations(remote, cache, TransitApiKey(store, fallback: ''));
+    search = SearchStations(
+      remote,
+      cache,
+      TransitApiKey(store, fallback: ''),
+      store,
+    );
   });
 
   test('1 char → no call', () async {
@@ -43,5 +49,23 @@ void main() {
     store.key = null;
     await expectLater(search('서울역'), throwsA(isA<TransitMissingKey>()));
     expect(remote.calls, 0);
+  });
+
+  test('rejected key records rejected status', () async {
+    remote.error = const TransitFailure.keyRejected('bad');
+    await expectLater(search('서울역'), throwsA(isA<TransitKeyRejected>()));
+    expect(store.savedStatus, TransitKeyStatus.rejected);
+  });
+
+  test('successful call records connected status', () async {
+    await search('서울역');
+    expect(store.savedStatus, TransitKeyStatus.connected);
+  });
+
+  test('cache hit does not touch status', () async {
+    await search('서울역');
+    store.savedStatus = null;
+    await search('서울역');
+    expect(store.savedStatus, isNull);
   });
 }

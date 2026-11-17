@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,6 +18,11 @@ class SecureTransitKeyStore implements TransitKeyStore {
   static const keyName = 'transit.odsayKey';
   static const statusKey = 'transit.keyStatus';
 
+  final _changes = StreamController<void>.broadcast();
+
+  @override
+  Stream<void> get changes => _changes.stream;
+
   @override
   Future<String?> read() async {
     try {
@@ -33,12 +40,14 @@ class SecureTransitKeyStore implements TransitKeyStore {
     if (trimmed.isEmpty) throw ArgumentError.value(key, 'key', 'empty');
     await _secure.write(key: keyName, value: trimmed);
     await _prefs.setString(statusKey, status.name);
+    _changes.add(null);
   }
 
   @override
   Future<void> delete() async {
     await _secure.delete(key: keyName);
     await _prefs.remove(statusKey);
+    _changes.add(null);
   }
 
   @override

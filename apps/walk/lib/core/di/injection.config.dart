@@ -184,7 +184,6 @@ import '../../presentation/map/cubit/map_view_cubit.dart' as _i276;
 import '../../presentation/map/map_open_requests.dart' as _i98;
 import '../../presentation/transit/cubit/point_picker_cubit.dart' as _i77;
 import '../../presentation/transit/cubit/transit_cubit.dart' as _i245;
-import '../../presentation/transit/cubit/transit_key_cubit.dart' as _i116;
 import '../../presentation/weather/cubit/weather_cubit.dart' as _i931;
 import '../config/commute_api_keys.dart' as _i546;
 import 'register_module.dart' as _i291;
@@ -558,13 +557,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i111.ChatSettings>(),
       ),
     );
-    gh.factory<_i341.SearchStations>(
-      () => _i341.SearchStations(
-        gh<_i621.StationSearch>(),
-        gh<_i857.TransitCache>(),
-        gh<_i920.TransitApiKey>(),
-      ),
-    );
     gh.lazySingleton<_i795.WikiContextPolicy>(
       () => _i795.IndexAndReadPolicy(
         gh<_i624.WikiRepository>(),
@@ -573,12 +565,6 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i858.ChatImageSource>(
       () => _i957.CompressedChatImageSource(gh<_i870.MediaStore>()),
-    );
-    gh.factory<_i116.TransitKeyCubit>(
-      () => _i116.TransitKeyCubit(
-        gh<_i910.TransitKeyStore>(),
-        gh<_i1051.VerifyTransitKey>(),
-      ),
     );
     gh.lazySingleton<_i830.SettingsBackupArea>(
       () => registerModule.settingsBackupArea(
@@ -651,13 +637,6 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i553.AlarmTools>(
       () => _i553.AlarmTools(gh<_i873.AlarmUseCase>()),
     );
-    gh.factory<_i77.PointPickerCubit>(
-      () => _i77.PointPickerCubit(
-        gh<_i341.SearchStations>(),
-        gh<_i63.AddressSearch>(),
-        gh<_i221.TransitPointSuggestions>(),
-      ),
-    );
     gh.lazySingleton<_i567.DiaryUseCase>(
       () => _i567.DiaryUseCase(
         gh<_i122.DiaryRepository>(),
@@ -683,6 +662,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i920.TransitApiKey>(),
         gh<_i910.TransitKeyStore>(),
         gh<_i494.Clock>(),
+      ),
+    );
+    gh.factory<_i341.SearchStations>(
+      () => _i341.SearchStations(
+        gh<_i621.StationSearch>(),
+        gh<_i857.TransitCache>(),
+        gh<_i920.TransitApiKey>(),
+        gh<_i910.TransitKeyStore>(),
       ),
     );
     gh.factory<_i276.MapViewCubit>(
@@ -722,6 +709,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.Clock>(),
       ),
     );
+    gh.factory<_i77.PointPickerCubit>(
+      () => _i77.PointPickerCubit(
+        gh<_i341.SearchStations>(),
+        gh<_i63.AddressSearch>(),
+        gh<_i221.TransitPointSuggestions>(),
+        gh<_i910.TransitKeyStore>(),
+      ),
+    );
     gh.lazySingleton<_i317.ChatModelChoice>(
       () => _i317.ChatModelChoice(
         gh<_i111.ChatSettings>(),
@@ -752,13 +747,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i873.AlarmUseCase>(),
       ),
     );
-    gh.factory<_i245.TransitCubit>(
-      () => _i245.TransitCubit(
-        gh<_i510.FindTransitRoutes>(),
-        gh<_i693.PlaceSource>(),
-        gh<_i496.RecentPoints>(),
-      ),
-    );
     gh.lazySingleton<_i870.WikiDistiller>(
       () => _i870.WikiDistiller(
         gh<_i1004.ChatModelRegistry>(),
@@ -772,6 +760,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i520.ChatUsageLog>(),
         gh<_i494.IdGenerator>(),
         gh<_i494.Clock>(),
+      ),
+    );
+    gh.factory<_i245.TransitCubit>(
+      () => _i245.TransitCubit(
+        gh<_i510.FindTransitRoutes>(),
+        gh<_i693.PlaceSource>(),
+        gh<_i496.RecentPoints>(),
+        gh<_i910.TransitKeyStore>(),
       ),
     );
     gh.lazySingleton<_i70.LifeTools>(

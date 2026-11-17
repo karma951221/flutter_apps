@@ -86,4 +86,22 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test('changes fires on save and delete, not on setStatus', () async {
+    var count = 0;
+    final sub = store.changes.listen((_) => count++);
+    addTearDown(sub.cancel);
+
+    await store.save('abc', TransitKeyStatus.connected);
+    await pumpEventQueue();
+    expect(count, 1);
+
+    await store.setStatus(TransitKeyStatus.rejected);
+    await pumpEventQueue();
+    expect(count, 1);
+
+    await store.delete();
+    await pumpEventQueue();
+    expect(count, 2);
+  });
 }

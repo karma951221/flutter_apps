@@ -1,22 +1,33 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../domain/diary/location/place_source.dart';
 import '../../../domain/transit/entity/transit_point.dart';
 import '../../../domain/transit/repository/recent_points.dart';
+import '../../../domain/transit/repository/transit_key_store.dart';
 import '../../../domain/transit/transit_failure.dart';
 import '../../../domain/transit/usecase/find_transit_routes.dart';
 import 'transit_state.dart';
 
 /// 길찾기 탭. 출발 · 도착이 모두 차면 자동으로 조회한다.
+/// 키가 저장 · 삭제되면 키 때문에 실패한 조회를 다시 한다.
 @injectable
 class TransitCubit extends Cubit<TransitState> {
-  TransitCubit(this._find, this._placeSource, this._recent)
-    : super(const TransitState());
+  TransitCubit(
+    this._find,
+    this._placeSource,
+    this._recent,
+    TransitKeyStore keys,
+  ) : super(const TransitState()) {
+    _keySub = keys.changes.listen((_) => _onKeyChanged());
+  }
 
   final FindTransitRoutes _find;
   final PlaceSource _placeSource;
   final RecentPoints _recent;
+  late final StreamSubscription<void> _keySub;
 
   /// 요청 번호. 새 요청이 시작되면 올려서 앞선 요청의 결과를 버린다.
   int _generation = 0;
@@ -79,6 +90,17 @@ class TransitCubit extends Cubit<TransitState> {
   /// 캐시를 건너뛰고 다시 조회한다.
   void refresh() => _queryIfReady(refresh: true);
 
+  void _onKeyChanged() {
+    if (isClosed) return;
+    final retry = switch (state.status) {
+      TransitFailed(failure: TransitMissingKey() || TransitKeyRejected()) =>
+        true,
+      TransitIdle() => state.from != null && state.to != null,
+      _ => false,
+    };
+    if (retry) _queryIfReady();
+  }
+
   Future<void> _remember(TransitPoint point) async {
     if (point.source == TransitPointSource.currentLocation) return;
     try {
@@ -120,5 +142,11 @@ class TransitCubit extends Cubit<TransitState> {
     }
     if (generation != _generation || isClosed) return;
     emit(state.copyWith(status: next));
+  }
+
+  @override
+  Future<void> close() async {
+    await _keySub.cancel();
+    return super.close();
   }
 }

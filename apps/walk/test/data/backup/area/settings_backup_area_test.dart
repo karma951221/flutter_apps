@@ -60,6 +60,9 @@ class _FakeKeyStore implements TransitKeyStore {
   @override
   Future<void> save(String key, TransitKeyStatus status) async {}
   @override
+  Stream<void> get changes => const Stream.empty();
+
+  @override
   Future<void> delete() async {}
   @override
   Future<TransitKeyStatus?> status() async => null;
