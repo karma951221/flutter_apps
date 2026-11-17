@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:walk/domain/chat/suggest/chat_suggester.dart';
 import 'package:walk/presentation/weather/cubit/weather_cubit.dart';
 import 'package:walk/domain/weather/weather_problem.dart';
 import 'package:walk/presentation/weather/cubit/weather_state.dart';
@@ -7,6 +8,7 @@ import 'package:walk/presentation/map/cubit/map_style_cubit.dart';
 import 'package:walk/domain/chat/attachment/attachment_loader.dart';
 import 'package:walk/domain/chat/attachment/attachment_rules.dart';
 import 'package:walk/domain/chat/workspace/workspace.dart';
+import '../../../support/fake_chat_suggester.dart';
 import '../../../support/unused_chat_attachments.dart';
 
 import 'package:bloc_test/bloc_test.dart';
@@ -271,6 +273,7 @@ void main() {
         ChatModelChoice(chatSettings, chatCatalog, chatVerifier, const Clock()),
       )
       ..registerSingleton<ChatHistorySettings>(FakeChatHistorySettings())
+      ..registerSingleton<ChatSuggester>(FakeChatSuggester())
       ..registerSingleton<DiaryRepository>(diaryRepo)
       ..registerSingleton<DiaryPreferences>(PrefsDiaryPreferences(prefs))
       ..registerSingleton<LockRepository>(lockRepo)

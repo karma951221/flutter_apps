@@ -46,6 +46,14 @@ final _november = ChatUsageMonth(
       inputTokens: 300,
       outputTokens: 80,
     ),
+    ChatUsageModelRow(
+      vendor: ChatVendor.values.first,
+      model: 'model-d',
+      purpose: ChatUsagePurpose.chatSuggest,
+      questions: 0,
+      inputTokens: 200,
+      outputTokens: 40,
+    ),
   ],
   wiki: const ChatUsageWikiStats(
     questions: 12,
@@ -138,6 +146,14 @@ void main() {
     final draft = find.textContaining('model-c');
     expect(draft, findsOneWidget);
     expect((tester.widget<Text>(draft).data!).endsWith(' · 일기 초안'), isTrue);
+  });
+
+  testWidgets("chatSuggest 줄은 '추천 질문'이 붙는다", (tester) async {
+    await pump(tester);
+
+    final suggest = find.textContaining('model-d');
+    expect(suggest, findsOneWidget);
+    expect((tester.widget<Text>(suggest).data!).endsWith(' · 추천 질문'), isTrue);
   });
 
   testWidgets('‹ 를 누르면 지난 달 숫자', (tester) async {

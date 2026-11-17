@@ -824,7 +824,7 @@ class _InputArea extends StatelessWidget {
   }
 }
 
-/// 대화가 비었으면 예시 질문, 아니면 말풍선 목록.
+/// 대화가 비었으면 추천 질문, 아니면 말풍선 목록.
 class _Conversation extends StatelessWidget {
   const _Conversation({required this.onOpenSettings});
 
@@ -837,7 +837,7 @@ class _Conversation extends StatelessWidget {
     );
     if (empty) {
       final cubit = context.read<ChatCubit>();
-      return ChatExamples(onAsk: (q) => unawaited(cubit.send(q)));
+      return ChatSuggestionArea(onAsk: (q) => unawaited(cubit.send(q)));
     }
     return _BubbleList(onOpenSettings: onOpenSettings);
   }

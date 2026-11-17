@@ -10,6 +10,9 @@ abstract interface class ChatHistoryRepository {
 
   Future<int> count();
 
+  /// 대화를 가로질러 물은 시각 내림차순 최근 질문 [limit] 개(추천 질문 입력).
+  Future<List<RecentQuestion>> recentQuestions({required int limit});
+
   /// seq 오름차순. 없는 대화면 빈 목록.
   Future<List<ChatTurnRecord>> turns(String conversationId);
 

@@ -8550,6 +8550,30 @@ abstract class AppLocalizations {
   /// **'일기 초안'**
   String get walkChatUsageDiaryDraft;
 
+  /// 사용량 화면: 물어보기 추천 질문 생성 쓰임 줄 꼬리표
+  ///
+  /// In ko, this message translates to:
+  /// **'추천 질문'**
+  String get walkChatUsageChatSuggest;
+
+  /// 채팅 탭: AI 추천 질문 칩 위 작은 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'최근 질문으로 만든 추천'**
+  String get walkChatSuggestCaption;
+
+  /// 채팅 탭: 추천 질문 새로 만들기 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'추천 질문 새로 만들기'**
+  String get walkChatSuggestRefresh;
+
+  /// 채팅 탭: 추천 질문 새로 만들기 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'추천 질문을 만들지 못했어요'**
+  String get walkChatSuggestFailed;
+
   /// 일기 설정: 자동 초안 섹션 제목
   ///
   /// In ko, this message translates to:

@@ -1,3 +1,4 @@
+import 'package:walk/domain/chat/suggest/chat_suggester.dart';
 import 'package:walk/domain/chat/attachment/attachment_rules.dart';
 import 'package:walk/domain/chat/attachment/chat_attachment.dart';
 import 'dart:typed_data';
@@ -6,6 +7,7 @@ import 'dart:async';
 import 'package:walk/domain/chat/attachment/attachment_loader.dart';
 import 'package:walk/domain/chat/workspace/workspace.dart';
 import 'package:walk/domain/chat/workspace/workspace_changes.dart';
+import '../../../support/fake_chat_suggester.dart';
 import '../../../support/unused_chat_attachments.dart';
 
 import 'package:bloc_test/bloc_test.dart';
@@ -163,7 +165,8 @@ void main() {
       ..registerSingleton<WikiRepository>(wiki)
       ..registerSingleton<WikiDistiller>(distiller)
       ..registerSingleton<ChatHistorySettings>(FakeChatHistorySettings())
-      ..registerSingleton<Clock>(MutableClock(diaryT0));
+      ..registerSingleton<Clock>(MutableClock(diaryT0))
+      ..registerSingleton<ChatSuggester>(FakeChatSuggester());
   });
 
   tearDown(() async {

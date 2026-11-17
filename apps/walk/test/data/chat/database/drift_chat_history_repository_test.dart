@@ -390,4 +390,23 @@ void main() {
       ]);
     });
   });
+
+  group('recentQuestions', () {
+    test('대화를 가로질러 물은 시각 내림차순으로 limit 만큼', () async {
+      final a = await repo.appendTurn(turn: _draft('첫 질문'));
+      clock.advance(const Duration(minutes: 1));
+      await repo.appendTurn(turn: _draft('다른 대화'));
+      clock.advance(const Duration(minutes: 1));
+      await repo.appendTurn(conversationId: a.conversationId, turn: _draft('이어서'));
+
+      final recent = await repo.recentQuestions(limit: 2);
+
+      expect(recent.map((q) => q.question), ['이어서', '다른 대화']);
+      expect(recent.first.askedAt, t0.add(const Duration(minutes: 2)));
+    });
+
+    test('저장된 질문이 없으면 빈 목록', () async {
+      expect(await repo.recentQuestions(limit: 20), isEmpty);
+    });
+  });
 }

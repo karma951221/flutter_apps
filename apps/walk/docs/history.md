@@ -1364,3 +1364,26 @@ QA: 스낵바가 아래로 끌어야만 닫히고(되돌리기 같은 액션이 
 design_system `flutter test` 86건 · `flutter analyze` 0, walk `flutter analyze` 0 · `flutter test` +4184건 통과(1 skip),
 trader · pawlog `flutter analyze` 0 · `flutter test` 통과. 에뮬레이터는 다른 세션들이 함께 쓰고 있어 설치하지 않았고,
 실제 폰트를 실은 위젯 렌더로 네 유형 × 라이트/다크 모양(아이콘 · 색 · [메시지 · 되돌리기 · X] 배치)을 확인했다. 기기 확인은 대기.
+
+## 2026-11-17 — 물어보기 AI 추천 질문
+
+QA: 첫 화면의 고정 예시 질문(어제 · 먹은 것 · 기상)을 잘 누르지 않는다 — 최근 질문을 바탕으로 AI 가 추천 질문을
+만들고 내부 저장소에 두면 좋겠다. [설계](../../../docs/superpowers/specs/2026-11-17-walk-chat-suggestions-design.md) ·
+[계획](../../../docs/superpowers/plans/2026-11-17-walk-chat-suggestions.md)
+
+- 시점: 턴 저장마다 세지 않고 **빈 대화 화면이 뜰 때** 판단한다(채팅 전송 흐름 무변경). 처음엔 저장 질문 3개, 그 뒤엔
+  마지막 생성 뒤 새 질문 5개 이상 + 마지막 시도 10분 경과면 뒤에서 만든다. 저장된 추천을 먼저 보이고 끝나면 바꾼다.
+- 입력: 저장 질문 최근 20개(200자 자름)의 글 · 물은 날짜 + 오늘 날짜 · 요일. 답 · 기록 · 첨부는 보내지 않는다.
+  물어보기 동의(`consentedVendor == connectedVendor`) 범위 안으로 보고 새 동의를 받지 않는다. 일기 초안 동의만으로는 부르지 않는다.
+- 모델: 일기 초안과 같은 `draftModelOf`(Haiku · gpt-N-mini), 도구 · 생각 없이 한 라운드, 출력 200 토큰. 사용량 쓰임
+  `chatSuggest`(사용량 화면 꼬리표 "추천 질문"). `textEnum` 이라 DB 마이그레이션은 없다.
+- 출력: 한 줄에 하나, 번호 · 글머리표 · 따옴표를 떼고 40자 초과 · 중복을 뺀 앞 4개. 3개 미만이면 실패로 보고 저장된 추천을 둔다.
+- 저장: SharedPreferences `walk.chat.suggestions`(JSON: questions · generatedAt · basedOnAskedAt) · `walk.chat.suggestionsTriedAt`.
+  백업 대상이 아니다. 모양이 다르면 없는 것으로 본다.
+- 보이기: 저장 질문이 없으면(대화 모두 지움 포함) 기본 예시 3개 — 지운 대화의 추천이 남아 보이지 않게. 추천이 있으면
+  "최근 질문으로 만든 추천" 안내 + 칩 4개. 키 · 동의 · 질문 3개가 갖춰지면 칩 아래 [↻ 추천 질문 새로 만들기] — 조건 무시 —,
+  도는 동안 작은 진행 표시, 실패하면 error 스낵바. 자동 생성 실패는 조용히. "내 기록 참고하기"와는 무관하다.
+- 구조: `domain/chat/suggest/`(`ChatSuggester` · `SuggestPrompt` · `ChatSuggestions` · `ChatSuggestionStore`),
+  `data/chat/prefs_chat_suggestion_store.dart`, `ChatHistoryRepository.recentQuestions`, `ChatSuggestionsCubit` ·
+  `ChatSuggestionArea`(`chat_examples.dart`). `chat_tab.dart` 는 빈 화면 위젯 한 줄만 바꿨다.
+

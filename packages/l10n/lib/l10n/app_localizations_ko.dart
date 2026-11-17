@@ -4685,6 +4685,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatUsageDiaryDraft => '일기 초안';
 
   @override
+  String get walkChatUsageChatSuggest => '추천 질문';
+
+  @override
+  String get walkChatSuggestCaption => '최근 질문으로 만든 추천';
+
+  @override
+  String get walkChatSuggestRefresh => '추천 질문 새로 만들기';
+
+  @override
+  String get walkChatSuggestFailed => '추천 질문을 만들지 못했어요';
+
+  @override
   String get walkDiaryDraftSettingsSection => '자동 초안';
 
   @override

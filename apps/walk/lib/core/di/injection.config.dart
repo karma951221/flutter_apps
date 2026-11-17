@@ -56,6 +56,7 @@ import '../../data/chat/database/drift_wiki_repository.dart' as _i3;
 import '../../data/chat/openai_chat_model.dart' as _i442;
 import '../../data/chat/prefs_chat_history_settings.dart' as _i433;
 import '../../data/chat/prefs_chat_model_catalog.dart' as _i878;
+import '../../data/chat/prefs_chat_suggestion_store.dart' as _i510;
 import '../../data/chat/secure_chat_settings.dart' as _i1030;
 import '../../data/chat/workspace/file_workspace.dart' as _i373;
 import '../../data/commute/geocoding_address_search.dart' as _i667;
@@ -114,6 +115,8 @@ import '../../domain/chat/repository/chat_history_repository.dart' as _i752;
 import '../../domain/chat/repository/chat_usage_repository.dart' as _i669;
 import '../../domain/chat/repository/wiki_repository.dart' as _i624;
 import '../../domain/chat/secure_window.dart' as _i555;
+import '../../domain/chat/suggest/chat_suggester.dart' as _i675;
+import '../../domain/chat/suggest/chat_suggestion_store.dart' as _i440;
 import '../../domain/chat/tool/alarm_tools.dart' as _i553;
 import '../../domain/chat/tool/chat_image_source.dart' as _i858;
 import '../../domain/chat/tool/life_tools.dart' as _i70;
@@ -349,6 +352,9 @@ extension GetItInjectableX on _i174.GetIt {
       ),
       instanceName: 'alarmSoundsRoot',
     );
+    gh.lazySingleton<_i440.ChatSuggestionStore>(
+      () => _i510.PrefsChatSuggestionStore(gh<_i460.SharedPreferences>()),
+    );
     gh.lazySingleton<_i300.DiaryPreferences>(
       () => _i383.PrefsDiaryPreferences(gh<_i460.SharedPreferences>()),
     );
@@ -488,6 +494,18 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i488.RouteFinder>(),
         gh<_i960.SubwayArrivalSource>(),
         gh<_i546.CommuteApiKeys>(),
+        gh<_i494.Clock>(),
+      ),
+    );
+    gh.lazySingleton<_i675.ChatSuggester>(
+      () => _i675.ChatSuggester(
+        gh<_i1004.ChatModelRegistry>(),
+        gh<_i111.ChatSettings>(),
+        gh<_i880.ChatModelCatalog>(),
+        gh<_i752.ChatHistoryRepository>(),
+        gh<_i440.ChatSuggestionStore>(),
+        gh<_i520.ChatUsageLog>(),
+        gh<_i494.IdGenerator>(),
         gh<_i494.Clock>(),
       ),
     );
