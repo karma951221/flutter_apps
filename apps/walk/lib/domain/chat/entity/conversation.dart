@@ -162,6 +162,9 @@ class ChatTurnText with _$ChatTurnText {
 /// appendTurn 이 돌려주는 저장 위치.
 typedef ChatTurnRef = ({String conversationId, int seq});
 
+/// 저장된 질문 하나의 글과 물은 시각.
+typedef RecentQuestion = ({String question, DateTime askedAt});
+
 const conversationTitleMax = 30;
 
 final _whitespace = RegExp(r'\s+');

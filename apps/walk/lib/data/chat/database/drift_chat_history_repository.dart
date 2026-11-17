@@ -61,6 +61,16 @@ class DriftChatHistoryRepository implements ChatHistoryRepository {
   }
 
   @override
+  Future<List<RecentQuestion>> recentQuestions({required int limit}) async {
+    final rows =
+        await (_db.select(_db.chatTurns)
+              ..orderBy([(t) => OrderingTerm.desc(t.askedAt)])
+              ..limit(limit))
+            .get();
+    return [for (final r in rows) (question: r.question, askedAt: r.askedAt)];
+  }
+
+  @override
   Future<List<ChatTurnRecord>> turns(String conversationId) async {
     final rows =
         await (_db.select(_db.chatTurns)
