@@ -197,7 +197,11 @@ class WikiNotePage extends StatelessWidget {
       ),
     );
     if (context.mounted) {
-      AppSnackBar.show(context, message: l10n.walkChatWikiCopied);
+      AppSnackBar.show(
+        context,
+        message: l10n.walkChatWikiCopied,
+        type: AppSnackBarType.success,
+      );
     }
   }
 

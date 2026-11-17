@@ -199,6 +199,13 @@ void main() {
 
       expect(copied, ['출근 알람 출근 알람으로 깬다.\n지운 지워진 메모 도 있다.']);
       expect(find.text('본문을 복사했어요'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.byIcon(Icons.check_circle_outline),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('본문 · 요약은 길게 눌러 고를 수 있다(SelectionArea 안)', (tester) async {
