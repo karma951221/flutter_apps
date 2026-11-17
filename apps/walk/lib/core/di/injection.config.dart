@@ -167,6 +167,7 @@ import '../../domain/transit/repository/transit_route_source.dart' as _i859;
 import '../../domain/transit/usecase/find_transit_routes.dart' as _i510;
 import '../../domain/transit/usecase/search_stations.dart' as _i341;
 import '../../domain/transit/usecase/transit_api_key.dart' as _i920;
+import '../../domain/transit/usecase/transit_point_suggestions.dart' as _i221;
 import '../../domain/transit/usecase/verify_transit_key.dart' as _i1051;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
@@ -535,6 +536,16 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i488.RouteFinder>(),
         gh<_i960.SubwayArrivalSource>(),
         gh<_i546.CommuteApiKeys>(),
+        gh<_i494.Clock>(),
+      ),
+    );
+    gh.factory<_i221.TransitPointSuggestions>(
+      () => _i221.TransitPointSuggestions(
+        gh<_i142.PlaceRepository>(),
+        gh<_i496.RecentPoints>(),
+        gh<_i379.LocationRepository>(),
+        gh<_i673.StayNamer>(),
+        gh<_i993.LocationRecorder>(),
         gh<_i494.Clock>(),
       ),
     );
