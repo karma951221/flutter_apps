@@ -41,7 +41,8 @@ import '../widget/chat_examples.dart';
 import '../widget/chat_input.dart';
 import '../widget/chat_jump_to_latest.dart';
 import '../widget/chat_vendor_icon.dart';
-import '../widget/model_action.dart';
+import '../widget/chat_settings_action.dart';
+import '../widget/chat_settings_sheet.dart';
 import '../widget/model_chip.dart';
 import '../widget/model_picker_sheet.dart';
 import '../widget/temporary_chat_banner.dart';
@@ -263,8 +264,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
             actions: [
               if (unlocked) ...[
                 const _NewConversationAction(),
-                const _UseRecordsAction(),
-                const _ModelPickAction(),
+                _SettingsAction(onOpenSettings: widget.onOpenSettings),
                 _ChatMenu(
                   onHistory: () => unawaited(_openHistory()),
                   onWiki: () => unawaited(_openWiki()),
@@ -428,86 +428,64 @@ class _ChatTitle extends StatelessWidget {
   }
 }
 
-/// 앱바 [내 기록 참고] 토글. 켜면 채운 아이콘 · 강조 배경, 끄면 테두리 아이콘 · 기본색.
-/// 끄면 다음 질문부터 기록 도구 · 위키 없이 일반 도우미로 묻는다. 답하는 중엔 꺼진다.
-class _UseRecordsAction extends StatelessWidget {
-  const _UseRecordsAction();
+/// 앱바 [대화 설정] → 대화 설정 시트(모델 · 내 기록 참고 · 물어보기 설정). 모델이 있을 때만.
+/// 시트는 열려 있는 동안 상태를 따라 그린다 — 답이 끝나면 모델 · 스위치가 다시 켜진다.
+class _SettingsAction extends StatelessWidget {
+  const _SettingsAction({required this.onOpenSettings});
 
-  Future<void> _toggle(BuildContext context, bool value) async {
-    final l10n = AppLocalizations.of(context);
-    await context.read<ChatCubit>().setUseRecords(value);
-    if (!context.mounted) return;
-    AppSnackBar.show(
-      context,
-      message: value
-          ? l10n.walkChatUseRecordsTurnedOn
-          : l10n.walkChatUseRecordsTurnedOff,
-    );
-  }
+  final VoidCallback onOpenSettings;
 
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final (show, on, busy) = context.select<ChatCubit, (bool, bool, bool)>(
-      (c) => (
-        c.state.access == ChatAccess.ready && c.state.model != null,
-        c.state.useRecords,
-        c.state.busy,
-      ),
-    );
-    if (!show) return const SizedBox.shrink();
-    final label = on ? l10n.walkChatUseRecordsOn : l10n.walkChatUseRecordsOff;
-    final scheme = Theme.of(context).colorScheme;
-    // isSelected 가 '선택됨' 상태를, 툴팁이 켬/끔이 담긴 라벨을 접근성 트리에 싣는다.
-    // 앱바의 아이콘 테마가 선택 색을 덮어서, 켜짐 배경 · 색을 상태별로 직접 준다.
-    return IconButton(
-      key: const Key('chat-use-records-action'),
-      tooltip: label,
-      isSelected: on,
-      style: ButtonStyle(
-        backgroundColor: WidgetStateProperty.resolveWith(
-          (states) =>
-              states.contains(WidgetState.selected) &&
-                  !states.contains(WidgetState.disabled)
-              ? scheme.primaryContainer
-              : null,
-        ),
-        foregroundColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.disabled)
-              ? null
-              : states.contains(WidgetState.selected)
-              ? scheme.onPrimaryContainer
-              : scheme.onSurfaceVariant,
-        ),
-      ),
-      icon: const Icon(Icons.auto_stories_outlined),
-      selectedIcon: const Icon(Icons.auto_stories),
-      onPressed: busy ? null : () => unawaited(_toggle(context, !on)),
-    );
-  }
-}
-
-/// 앱바 모델 버튼 → 모델 고르기 시트. 바뀐 게 있으면 모델 표시를 다시 읽는다.
-class _ModelPickAction extends StatelessWidget {
-  const _ModelPickAction();
-
-  static Future<void> _pickModel(BuildContext context) async {
+  static Future<void> _open(
+    BuildContext context,
+    VoidCallback onOpenSettings,
+  ) async {
     final cubit = context.read<ChatCubit>();
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => BlocProvider.value(
+        value: cubit,
+        child: BlocBuilder<ChatCubit, ChatState>(
+          buildWhen: (a, b) =>
+              a.model != b.model ||
+              a.useRecords != b.useRecords ||
+              a.busy != b.busy,
+          builder: (context, state) {
+            final model = state.model;
+            if (model == null) return const SizedBox.shrink();
+            return ChatSettingsSheet(
+              model: model,
+              useRecords: state.useRecords,
+              enabled: !state.busy,
+              onPickModel: () => unawaited(_pickModel(context, cubit)),
+              onUseRecordsChanged: (value) =>
+                  unawaited(cubit.setUseRecords(value)),
+              onOpenSettings: () {
+                Navigator.of(sheetContext).pop();
+                onOpenSettings();
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// 고르기 시트는 설정 시트 위에 열고, 닫으면 설정 시트로 돌아온다.
+  static Future<void> _pickModel(BuildContext context, ChatCubit cubit) async {
     if (await ModelPickerSheet.show(context)) cubit.modelChanged();
   }
 
   @override
   Widget build(BuildContext context) {
-    final (model, busy) = context.select<ChatCubit, (ModelChipData?, bool)>(
-      (c) => (
-        c.state.access == ChatAccess.ready ? c.state.model : null,
-        c.state.busy,
-      ),
+    final model = context.select<ChatCubit, ModelChipData?>(
+      (c) => c.state.access == ChatAccess.ready ? c.state.model : null,
     );
     if (model == null) return const SizedBox.shrink();
-    return ModelAction(
-      data: model,
-      onPressed: busy ? null : () => unawaited(_pickModel(context)),
+    return ChatSettingsAction(
+      hasNewer: model.hasNewer,
+      onPressed: () => unawaited(_open(context, onOpenSettings)),
     );
   }
 }

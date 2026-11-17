@@ -1121,6 +1121,35 @@ OpenAI: gpt-5 `minimal`, 5.1 이후 `none`, o 계열 `low`). 초안의 `modelUna
 - 검증: `flutter analyze` 0 · `flutter test` 3904건 통과(1 skip) · 문서 링크 검사 · l10n 테스트 통과.
   에뮬레이터(2026-11-16) 앱 서랍에 "Life Log" 로 보인다.
 
+## 2026-11-17 — 물어보기 입력칸 · 대화 설정 시트
+
+사용자 QA: ① 키보드에 줄바꿈 대신 보내기 키가 있어 여러 줄을 못 쓴다 — 줄바꿈을 쓰게 하고 5줄까지 커지게.
+② 앱바에 모델 · 내 기록 참고 버튼이 많아 불편하다 — 설정 아이콘 하나와 하단 시트로. ③ 입력칸 왼쪽 첨부 아이콘이
+입력칸 안 prefix 처럼 보여 어색하다. 세부는 기본안으로 정했다.
+
+### 판단
+
+- **줄바꿈 키 · 보내기는 버튼만** — `keyboardType: multiline` · `TextInputAction.newline`, `onSubmitted` 없음.
+  `maxLines` 4 → 5. 5줄이 넘으면 `TextField` 가 칸 안에서 스크롤한다.
+- **[＋] 와 아래 정렬** — 첨부는 이미 `TextField` 바깥 `IconButton` 이었지만 줄 가운데에 서 있어 칸이 커지면 칸 안 아이콘처럼
+  보였다. `Row(crossAxisAlignment: end)` 로 첨부 · 보내기를 칸 아래쪽에 붙이고, 메신저처럼 `add_circle_outline` 으로 바꿨다.
+  툴팁("파일 첨부") · 막힘 이유 툴팁은 그대로.
+- **앱바는 [새 대화] · [대화 설정] · ⋮** — 모델 버튼과 내 기록 토글을 `tune` 아이콘 하나(`ChatSettingsAction`)로 합쳤다.
+  안 본 새 모델 점은 이 버튼으로 옮겼다(시트의 모델 행에도). [새 대화]는 자주 누르고 한 번에 끝나는 동작이라 앱바에 남겼고,
+  ⋮(대화 목록 · 위키 · 작업 폴더 · 위키로 정리 · 임시 대화 · 설정)는 다른 탭과 같은 `FeatureMenu` 라 그대로 뒀다.
+- **제목 아래 모델 이름은 유지** — 버튼에서 모델 아이콘이 빠져 지금 모델을 알 곳이 그 한 줄뿐이다.
+- **대화 설정 시트(`ChatSettingsSheet`)** — 모델 행(누르면 기존 `ModelPickerSheet` 를 시트 위에 열고, 닫으면 바뀐 이름으로
+  돌아온다) · 내 기록 참고 `SwitchListTile`(켬/끔에 따라 설명: 찾아보는 기록 종류 / "내 기록 없이 답해요") · 물어보기 설정
+  바로가기(시트를 닫고 `ChatTab.onOpenSettings`). 시트는 `BlocBuilder` 로 열린 동안 상태를 따른다 — 답하는 중엔 모델 · 스위치만
+  꺼지고, 끝나면 다시 켜진다. 스위치가 바로 바뀌어 보이니 예전 토글의 스낵바는 뺐다(시트에 가려 보이지도 않는다).
+- 지운 것: `ModelAction`(`widget/model_action.dart`) · 문구 `walkChatModelActionTooltip` · `walkChatUseRecordsOn/Off` ·
+  `walkChatUseRecordsTurnedOn/Off`. 더한 문구: `walkChatQuickSettings` · `walkChatModelRowTitle` · `walkChatUseRecordsTitle` ·
+  `walkChatUseRecordsOnHint/OffHint`. **기록 종류 나열은 이제 `walkChatUseRecordsOnHint`** — 도구가 조회하는 기록이 바뀌면 이 문구를 고친다.
+
+### 검증
+
+`flutter analyze` 0 · `flutter test` 4192건 통과(1 skip). 기기 확인은 [시나리오](testing.md#물어보기-입력칸--대화-설정-시트) CI1~CI6.
+
 ## 2026-11-16 — 물어보기 앱바 정리
 
 사용자 피드백: 모델(Sonnet) 칩과 "내 기록 참고" 칩이 본문 위에 계속 떠 있어 불편하다 — actions 로 옮기고, 내 기록 참고는
