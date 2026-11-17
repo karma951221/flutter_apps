@@ -25,6 +25,30 @@ class DriftWikiRepository implements WikiRepository {
       _recentFirst().watch().map((rows) => rows.map(_noteFrom).toList());
 
   @override
+  Stream<List<WikiNote>> watchNotes({String query = '', required int limit}) {
+    final term = query.trim();
+    final select = _recentFirst()..limit(limit);
+    if (term.isNotEmpty) {
+      final pattern = '%${LikePattern.escape(term)}%';
+      select.where(
+        (w) =>
+            w.title.like(pattern, escapeChar: r'\') |
+            w.summary.like(pattern, escapeChar: r'\') |
+            w.body.like(pattern, escapeChar: r'\'),
+      );
+    }
+    return select.watch().map((rows) => rows.map(_noteFrom).toList());
+  }
+
+  @override
+  Stream<int> watchCount() {
+    final n = _db.wikiNotes.id.count();
+    return (_db.selectOnly(
+      _db.wikiNotes,
+    )..addColumns([n])).watchSingle().map((row) => row.read(n) ?? 0);
+  }
+
+  @override
   Future<List<WikiNote>> all() async =>
       (await _recentFirst().get()).map(_noteFrom).toList();
 

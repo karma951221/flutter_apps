@@ -7212,6 +7212,42 @@ abstract class AppLocalizations {
   /// **'위키에 저장했어요'**
   String get walkChatWikiSaved;
 
+  /// 위키 화면 앱바: 검색 열기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 찾기'**
+  String get walkChatWikiSearch;
+
+  /// 위키 화면: 검색칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'제목 · 요약 · 본문에서 찾기'**
+  String get walkChatWikiSearchHint;
+
+  /// 위키 화면: 검색 닫기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'검색 닫기'**
+  String get walkChatWikiSearchClose;
+
+  /// 위키 화면: 검색 결과 없음
+  ///
+  /// In ko, this message translates to:
+  /// **'\'{query}\'에 맞는 메모가 없어요'**
+  String walkChatWikiSearchNoResults(String query);
+
+  /// 메모 화면 앱바: 본문을 클립보드로 복사
+  ///
+  /// In ko, this message translates to:
+  /// **'본문 복사'**
+  String get walkChatWikiCopy;
+
+  /// 메모 화면: 복사 성공 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'본문을 복사했어요'**
+  String get walkChatWikiCopied;
+
   /// 말풍선 길게 누르기 시트: 이 말풍선으로 위키 메모 만들기
   ///
   /// In ko, this message translates to:

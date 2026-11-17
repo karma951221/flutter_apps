@@ -3922,6 +3922,26 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatWikiSaved => 'Wikiに保存しました';
 
   @override
+  String get walkChatWikiSearch => 'メモを検索';
+
+  @override
+  String get walkChatWikiSearchHint => 'タイトル・要約・本文から検索';
+
+  @override
+  String get walkChatWikiSearchClose => '検索を閉じる';
+
+  @override
+  String walkChatWikiSearchNoResults(String query) {
+    return '「$query」を含むメモはありません';
+  }
+
+  @override
+  String get walkChatWikiCopy => '本文をコピー';
+
+  @override
+  String get walkChatWikiCopied => '本文をコピーしました';
+
+  @override
   String get walkChatWikiAddFromBubble => 'Wikiに追加';
 
   @override

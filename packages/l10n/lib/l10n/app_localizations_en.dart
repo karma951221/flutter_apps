@@ -4286,6 +4286,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatWikiSaved => 'Saved to wiki';
 
   @override
+  String get walkChatWikiSearch => 'Search notes';
+
+  @override
+  String get walkChatWikiSearchHint => 'Search titles, summaries and text';
+
+  @override
+  String get walkChatWikiSearchClose => 'Close search';
+
+  @override
+  String walkChatWikiSearchNoResults(String query) {
+    return 'No notes contain \'$query\'';
+  }
+
+  @override
+  String get walkChatWikiCopy => 'Copy text';
+
+  @override
+  String get walkChatWikiCopied => 'Copied the text';
+
+  @override
   String get walkChatWikiAddFromBubble => 'Add to wiki';
 
   @override

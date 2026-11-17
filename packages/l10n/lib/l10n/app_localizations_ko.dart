@@ -3925,6 +3925,26 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatWikiSaved => '위키에 저장했어요';
 
   @override
+  String get walkChatWikiSearch => '메모 찾기';
+
+  @override
+  String get walkChatWikiSearchHint => '제목 · 요약 · 본문에서 찾기';
+
+  @override
+  String get walkChatWikiSearchClose => '검색 닫기';
+
+  @override
+  String walkChatWikiSearchNoResults(String query) {
+    return '\'$query\'에 맞는 메모가 없어요';
+  }
+
+  @override
+  String get walkChatWikiCopy => '본문 복사';
+
+  @override
+  String get walkChatWikiCopied => '본문을 복사했어요';
+
+  @override
   String get walkChatWikiAddFromBubble => '위키에 추가';
 
   @override

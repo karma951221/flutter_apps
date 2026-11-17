@@ -47,11 +47,7 @@ void main() {
   );
 
   testWidgets('[[3]] 은 메모 제목 칩, 누르면 onOpenNote(3)', (tester) async {
-    await pump(
-      tester,
-      '관련: [[3]]',
-      notes: {3: wikiNote(3, title: '출근 알람')},
-    );
+    await pump(tester, '관련: [[3]]', notes: {3: wikiNote(3, title: '출근 알람')});
 
     expect(chip(tester, '출근 알람').onPressed, isNotNull);
     await tester.tap(find.text('출근 알람'));
@@ -85,6 +81,26 @@ void main() {
     await pump(tester, '평일 [[012]] 07:00 [[x]]');
 
     expect(find.byType(ActionChip), findsNothing);
-    expect(find.text('평일 [[012]] 07:00 [[x]]', findRichText: true), findsOneWidget);
+    expect(
+      find.text('평일 [[012]] 07:00 [[x]]', findRichText: true),
+      findsOneWidget,
+    );
+  });
+
+  test('plainText 는 링크를 칩 글자로 — 메모 제목 · 일기 라벨 · 지워진 대상', () async {
+    final l10n = await AppLocalizations.delegate.load(const Locale('ko'));
+    final entry = wikiEntry('e1', body: '한강');
+
+    final text = WikiLinkText.plainText(
+      body: '[[3]] 와 [[일기:e1]], [[일기:gone]] · [[9]]',
+      notes: {3: wikiNote(3, title: '출근 알람')},
+      entries: {'e1': entry},
+      l10n: l10n,
+    );
+
+    expect(
+      text,
+      '출근 알람 와 ${CitedEntryChip.label(entry, 'ko')}, 지워진 일기 · 지워진 메모',
+    );
   });
 }
