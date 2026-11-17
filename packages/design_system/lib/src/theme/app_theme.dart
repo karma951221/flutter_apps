@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
+import 'app_status_colors.dart';
 
 abstract final class AppTheme {
   static ThemeData light({Color seedColor = AppColors.seed}) =>
@@ -16,6 +17,7 @@ abstract final class AppTheme {
     return ThemeData(
       colorScheme: scheme,
       useMaterial3: true,
+      extensions: [AppStatusColors.fromScheme(scheme)],
       appBarTheme: const AppBarTheme(centerTitle: false, elevation: 0),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -55,6 +57,7 @@ abstract final class AppTheme {
         ),
         backgroundColor: scheme.inverseSurface,
         contentTextStyle: TextStyle(color: scheme.onInverseSurface),
+        closeIconColor: scheme.onInverseSurface,
       ),
       listTileTheme: const ListTileThemeData(
         contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
