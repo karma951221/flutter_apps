@@ -4090,7 +4090,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapSettingsRecordDescription => '이 폰에만 쌓이고 서버로 보내지 않아요';
 
   @override
-  String get walkMapSettingsDense => '촘촘하게 기록';
+  String get walkMapSettingsDense => '자세히 기록';
 
   @override
   String get walkMapSettingsDenseDescription => '산책할 때처럼 5초마다 기록해요. 배터리를 더 써요';
@@ -4225,10 +4225,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapViewStoryOnMap => '지도로 보기';
 
   @override
-  String get walkMapChipDense => '촘촘 기록';
+  String get walkMapChipDense => '자세히 기록';
 
   @override
-  String get walkMapChipDenseOn => '촘촘 기록 중';
+  String get walkMapChipDenseHint => '5초마다 · 배터리 더 씀';
 
   @override
   String get walkMapChipOff => '기록 꺼짐';

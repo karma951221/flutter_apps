@@ -4087,7 +4087,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkMapSettingsRecordDescription => 'この端末にだけ保存され、サーバーには送りません';
 
   @override
-  String get walkMapSettingsDense => '細かく記録';
+  String get walkMapSettingsDense => '詳しく記録';
 
   @override
   String get walkMapSettingsDenseDescription => '散歩のように5秒ごとに記録します。電池を多く使います';
@@ -4220,10 +4220,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkMapViewStoryOnMap => '地図で見る';
 
   @override
-  String get walkMapChipDense => '詳細記録';
+  String get walkMapChipDense => '詳しく記録';
 
   @override
-  String get walkMapChipDenseOn => '詳細記録中';
+  String get walkMapChipDenseHint => '5秒ごと・電池を多く使用';
 
   @override
   String get walkMapChipOff => '記録オフ';

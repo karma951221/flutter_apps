@@ -1224,3 +1224,24 @@ OpenAI: gpt-5 `minimal`, 5.1 이후 `none`, o 계열 `low`). 초안의 `modelUna
 
 `flutter analyze` 0 · `flutter test` +4184건 통과(1 skip) · `packages/l10n` 12건 · 앱 JUnit 112건 · 문서 링크 검사. 에뮬레이터(2026-11-17)에서 암호화 내보내기 →
 앱 데이터 지우기 → 복원 → 재시작 뒤 일기 · 사진(md5 일치) · 알람 3개가 돌아왔고, 되돌리기로 복원 전으로 돌아갔다. 최종 빌드에서 복원 · 암호화 내보내기를 다시 확인했다. 실제 폰은 대기([시나리오](testing.md#백업-기기-시나리오)).
+
+## 2026-11-17 — "촘촘 기록"을 "자세히 기록" 토글로
+
+사용자 QA: "촘촘기록"이라는 이름이 어색하고, 버튼 말고 토글이나 설정에서 바꾸고 싶다.
+
+### 판단
+
+- 이름 후보: "정밀 기록" · "자세히 기록" · "이동 경로 자세히". **"자세히 기록"**을 골랐다 — "정밀"은 기술 용어 느낌이고,
+  "이동 경로 자세히"는 칩에 넣기 길다. 지도 설정 행 제목("촘촘하게 기록")도 같은 이름으로 맞췄다. en "Detailed recording", ja "詳しく記録".
+- 무슨 기능인지는 제목 아래 한 줄 "5초마다 · 배터리 더 씀"으로 보인다. 설정 행은 기존의 긴 설명을 그대로 쓴다.
+- 형태: `FilterChip` 의 선택 강조(켜지면 글자가 "촘촘 기록 중")로는 켜짐이 잘 안 읽혀, 지도 위 카드에 아이콘 · 제목 · 한 줄 설명 · `Switch` 를
+  두었다. 카드 어디를 눌러도 바뀐다. 기록이 꺼져 있거나 권한이 없을 때의 칩은 그대로다. 위치가 `Positioned(right:)` 라 폭이 정해지지 않아
+  `AppListTile`(전체 폭 `ListTile`) 대신 `Row(mainAxisSize: min)` 로 짰다.
+- 상태 · 네이티브 연동은 그대로 `MapRecordCubit.setDense` → `LocationRecorder.setMode`. 이 cubit 은 셸이 하나를 소유해
+  지도 탭과 지도 설정(`MapSettingsPage` 의 자세히 기록 스위치)이 같은 것을 본다 — 새 설정 화면도 `context.read<MapRecordCubit>()` 로
+  `state.status`(`RecorderRunning/Blocked(:mode)`) 를 읽고 `setDense(bool)` 을 부르면 된다.
+- l10n 키 `walkMapChipDenseOn`("촘촘 기록 중")은 쓰는 곳이 없어져 `walkMapChipDenseHint` 로 바꿨다.
+
+### 검증
+
+`flutter analyze` 0 · `flutter test` 4185건 통과(1 skip) · `packages/l10n` 12건 · 문서 링크 검사. 지도 탭 위젯 테스트에 토글 켜짐/꺼짐 · busy 비활성을 더했다.
