@@ -182,6 +182,8 @@ import '../../presentation/lock/media_pick_guard.dart' as _i488;
 import '../../presentation/map/cubit/map_style_cubit.dart' as _i58;
 import '../../presentation/map/cubit/map_view_cubit.dart' as _i276;
 import '../../presentation/map/map_open_requests.dart' as _i98;
+import '../../presentation/transit/cubit/point_picker_cubit.dart' as _i77;
+import '../../presentation/transit/cubit/transit_cubit.dart' as _i245;
 import '../../presentation/weather/cubit/weather_cubit.dart' as _i931;
 import '../config/commute_api_keys.dart' as _i546;
 import 'register_module.dart' as _i291;
@@ -642,6 +644,13 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i553.AlarmTools>(
       () => _i553.AlarmTools(gh<_i873.AlarmUseCase>()),
     );
+    gh.factory<_i77.PointPickerCubit>(
+      () => _i77.PointPickerCubit(
+        gh<_i341.SearchStations>(),
+        gh<_i63.AddressSearch>(),
+        gh<_i221.TransitPointSuggestions>(),
+      ),
+    );
     gh.lazySingleton<_i567.DiaryUseCase>(
       () => _i567.DiaryUseCase(
         gh<_i122.DiaryRepository>(),
@@ -734,6 +743,13 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i353.RingLogSource>(),
         gh<_i361.RingArchive>(),
         gh<_i873.AlarmUseCase>(),
+      ),
+    );
+    gh.factory<_i245.TransitCubit>(
+      () => _i245.TransitCubit(
+        gh<_i510.FindTransitRoutes>(),
+        gh<_i693.PlaceSource>(),
+        gh<_i496.RecentPoints>(),
       ),
     );
     gh.lazySingleton<_i870.WikiDistiller>(
