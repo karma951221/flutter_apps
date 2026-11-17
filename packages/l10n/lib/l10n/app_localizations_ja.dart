@@ -4680,6 +4680,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatUsageDiaryDraft => '日記の下書き';
 
   @override
+  String get walkChatUsageChatSuggest => 'おすすめの質問';
+
+  @override
+  String get walkChatSuggestCaption => '最近の質問から作ったおすすめ';
+
+  @override
+  String get walkChatSuggestRefresh => 'おすすめを作り直す';
+
+  @override
+  String get walkChatSuggestFailed => 'おすすめの質問を作れませんでした';
+
+  @override
   String get walkDiaryDraftSettingsSection => '自動下書き';
 
   @override

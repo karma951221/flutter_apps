@@ -5092,6 +5092,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatUsageDiaryDraft => 'Diary draft';
 
   @override
+  String get walkChatUsageChatSuggest => 'Suggested questions';
+
+  @override
+  String get walkChatSuggestCaption => 'Suggested from your recent questions';
+
+  @override
+  String get walkChatSuggestRefresh => 'Refresh suggestions';
+
+  @override
+  String get walkChatSuggestFailed => 'Couldn\'t make suggestions';
+
+  @override
   String get walkDiaryDraftSettingsSection => 'Auto draft';
 
   @override
