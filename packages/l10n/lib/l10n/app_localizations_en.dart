@@ -5496,4 +5496,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkBackupFailIo => 'Couldn\'t complete the backup task';
+
+  @override
+  String get walkTransitSettingsTitle => 'Directions settings';
+
+  @override
+  String get walkTransitKeyTitle => 'ODsay key';
+
+  @override
+  String get walkTransitKeyEmpty => 'No key yet';
+
+  @override
+  String get walkTransitKeyStatusConnected => 'Connected';
+
+  @override
+  String get walkTransitKeyStatusUnverified => 'Not verified';
+
+  @override
+  String get walkTransitKeyInputHint => 'Paste your key';
+
+  @override
+  String get walkTransitKeySave => 'Save';
+
+  @override
+  String get walkTransitKeyDelete => 'Delete key';
+
+  @override
+  String get walkTransitKeyDeleteTitle => 'Delete the directions key?';
+
+  @override
+  String get walkTransitKeyDeleteBody =>
+      'The saved key is removed from this device. You\'ll need to enter a key again to use directions.';
+
+  @override
+  String get walkTransitKeySaved => 'Directions key connected';
+
+  @override
+  String get walkTransitKeySavedUnverified => 'Saved without verifying';
+
+  @override
+  String get walkTransitKeySaveFailed => 'Couldn\'t save the key';
+
+  @override
+  String get walkTransitKeyDeleted => 'Key deleted';
+
+  @override
+  String get walkTransitKeyDeleteFailed => 'Couldn\'t delete the key';
+
+  @override
+  String get walkTransitKeyUnverifiedTitle => 'Couldn\'t verify the key';
+
+  @override
+  String get walkTransitKeyUnverifiedBody => 'Save it anyway?';
+
+  @override
+  String get walkTransitKeyUnverifiedConfirm => 'Save anyway';
+
+  @override
+  String get walkTransitKeyGuide =>
+      'Get a key at lab.odsay.com. Register the platform as Android and the package name as com.karma.walk.';
 }

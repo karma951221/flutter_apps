@@ -9,6 +9,7 @@ import '../cubit/theme_cubit.dart';
 import '../open_settings.dart';
 import '../widget/lock_settings_section.dart';
 import '../widget/settings_widgets.dart';
+import 'transit_settings_page.dart';
 
 /// 앱 설정 — 잠금(일기 · 물어보기 함께), 화면(테마), 기능별 설정 바로가기.
 ///
@@ -61,11 +62,7 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
               Icons.directions_walk,
               l10n.walkWalkSettingsTitle,
             ),
-            (
-              SettingsTarget.map,
-              Icons.map_outlined,
-              l10n.walkMapSettingsTitle,
-            ),
+            (SettingsTarget.map, Icons.map_outlined, l10n.walkMapSettingsTitle),
             (
               SettingsTarget.backup,
               Icons.backup_outlined,
@@ -79,6 +76,15 @@ class _AppSettingsPageState extends State<AppSettingsPage> {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => openSettings(context, target),
             ),
+          AppListTile(
+            key: const Key('app-settings-open-transit'),
+            leading: const Icon(Icons.directions_transit_outlined),
+            title: Text(l10n.walkTransitSettingsTitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push<void>(
+              MaterialPageRoute(builder: (_) => const TransitSettingsPage()),
+            ),
+          ),
         ],
       ),
     );

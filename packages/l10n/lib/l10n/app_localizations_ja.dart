@@ -5053,4 +5053,63 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkBackupFailIo => 'バックアップ作業ができませんでした';
+
+  @override
+  String get walkTransitSettingsTitle => '乗換案内の設定';
+
+  @override
+  String get walkTransitKeyTitle => 'ODsayキー';
+
+  @override
+  String get walkTransitKeyEmpty => 'キーがありません';
+
+  @override
+  String get walkTransitKeyStatusConnected => '接続済み';
+
+  @override
+  String get walkTransitKeyStatusUnverified => '未確認';
+
+  @override
+  String get walkTransitKeyInputHint => 'キーを貼り付け';
+
+  @override
+  String get walkTransitKeySave => '保存';
+
+  @override
+  String get walkTransitKeyDelete => 'キーを削除';
+
+  @override
+  String get walkTransitKeyDeleteTitle => '乗換案内のキーを削除しますか？';
+
+  @override
+  String get walkTransitKeyDeleteBody =>
+      '保存したキーがこの端末から削除されます。再び使うにはキーを入れ直してください。';
+
+  @override
+  String get walkTransitKeySaved => '乗換案内のキーを接続しました';
+
+  @override
+  String get walkTransitKeySavedUnverified => '確認せずに保存しました';
+
+  @override
+  String get walkTransitKeySaveFailed => 'キーを保存できませんでした';
+
+  @override
+  String get walkTransitKeyDeleted => 'キーを削除しました';
+
+  @override
+  String get walkTransitKeyDeleteFailed => 'キーを削除できませんでした';
+
+  @override
+  String get walkTransitKeyUnverifiedTitle => 'キーを確認できませんでした';
+
+  @override
+  String get walkTransitKeyUnverifiedBody => 'それでも保存しますか？';
+
+  @override
+  String get walkTransitKeyUnverifiedConfirm => 'それでも保存';
+
+  @override
+  String get walkTransitKeyGuide =>
+      'lab.odsay.com でキーを発行します。プラットフォームはAndroid、パッケージ名は com.karma.walk で登録してください。';
 }

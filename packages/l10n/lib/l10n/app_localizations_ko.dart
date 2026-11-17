@@ -5059,4 +5059,63 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkBackupFailIo => '백업 작업을 하지 못했어요';
+
+  @override
+  String get walkTransitSettingsTitle => '길찾기 설정';
+
+  @override
+  String get walkTransitKeyTitle => 'ODsay 키';
+
+  @override
+  String get walkTransitKeyEmpty => '키가 없어요';
+
+  @override
+  String get walkTransitKeyStatusConnected => '연결됨';
+
+  @override
+  String get walkTransitKeyStatusUnverified => '확인 전';
+
+  @override
+  String get walkTransitKeyInputHint => '키 붙여넣기';
+
+  @override
+  String get walkTransitKeySave => '저장';
+
+  @override
+  String get walkTransitKeyDelete => '키 삭제';
+
+  @override
+  String get walkTransitKeyDeleteTitle => '길찾기 키를 지울까요?';
+
+  @override
+  String get walkTransitKeyDeleteBody =>
+      '저장한 키가 이 기기에서 지워져요. 다시 쓰려면 키를 새로 넣어야 해요.';
+
+  @override
+  String get walkTransitKeySaved => '길찾기 키를 연결했어요';
+
+  @override
+  String get walkTransitKeySavedUnverified => '확인 없이 저장했어요';
+
+  @override
+  String get walkTransitKeySaveFailed => '키를 저장하지 못했어요';
+
+  @override
+  String get walkTransitKeyDeleted => '키를 지웠어요';
+
+  @override
+  String get walkTransitKeyDeleteFailed => '키를 지우지 못했어요';
+
+  @override
+  String get walkTransitKeyUnverifiedTitle => '확인 못 했어요';
+
+  @override
+  String get walkTransitKeyUnverifiedBody => '그래도 저장할까요?';
+
+  @override
+  String get walkTransitKeyUnverifiedConfirm => '그래도 저장';
+
+  @override
+  String get walkTransitKeyGuide =>
+      'lab.odsay.com 에서 키를 발급받아요. 플랫폼은 Android, 패키지 이름은 com.karma.walk 로 등록해 주세요.';
 }

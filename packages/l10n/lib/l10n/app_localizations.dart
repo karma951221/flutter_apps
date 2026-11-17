@@ -9143,6 +9143,120 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'백업 작업을 하지 못했어요'**
   String get walkBackupFailIo;
+
+  /// 길찾기 설정 화면 제목 · 앱 설정 바로가기
+  ///
+  /// In ko, this message translates to:
+  /// **'길찾기 설정'**
+  String get walkTransitSettingsTitle;
+
+  /// 길찾기 키 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'ODsay 키'**
+  String get walkTransitKeyTitle;
+
+  /// 키를 저장하지 않았을 때 행 부제
+  ///
+  /// In ko, this message translates to:
+  /// **'키가 없어요'**
+  String get walkTransitKeyEmpty;
+
+  /// 키 확인됨
+  ///
+  /// In ko, this message translates to:
+  /// **'연결됨'**
+  String get walkTransitKeyStatusConnected;
+
+  /// 키를 저장만 하고 확인하지 못함
+  ///
+  /// In ko, this message translates to:
+  /// **'확인 전'**
+  String get walkTransitKeyStatusUnverified;
+
+  /// 키 입력칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'키 붙여넣기'**
+  String get walkTransitKeyInputHint;
+
+  /// 키 저장 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get walkTransitKeySave;
+
+  /// 키 삭제 행
+  ///
+  /// In ko, this message translates to:
+  /// **'키 삭제'**
+  String get walkTransitKeyDelete;
+
+  /// 키 삭제 확인 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'길찾기 키를 지울까요?'**
+  String get walkTransitKeyDeleteTitle;
+
+  /// 키 삭제 확인 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'저장한 키가 이 기기에서 지워져요. 다시 쓰려면 키를 새로 넣어야 해요.'**
+  String get walkTransitKeyDeleteBody;
+
+  /// 키 확인 후 저장 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'길찾기 키를 연결했어요'**
+  String get walkTransitKeySaved;
+
+  /// 확인 못 한 채 저장 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'확인 없이 저장했어요'**
+  String get walkTransitKeySavedUnverified;
+
+  /// 키 저장 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'키를 저장하지 못했어요'**
+  String get walkTransitKeySaveFailed;
+
+  /// 키 삭제 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'키를 지웠어요'**
+  String get walkTransitKeyDeleted;
+
+  /// 키 삭제 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'키를 지우지 못했어요'**
+  String get walkTransitKeyDeleteFailed;
+
+  /// 네트워크로 키를 확인 못 했을 때 확인 창 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'확인 못 했어요'**
+  String get walkTransitKeyUnverifiedTitle;
+
+  /// 네트워크로 키를 확인 못 했을 때 확인 창 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'그래도 저장할까요?'**
+  String get walkTransitKeyUnverifiedBody;
+
+  /// 확인 못 한 채 저장 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'그래도 저장'**
+  String get walkTransitKeyUnverifiedConfirm;
+
+  /// 키 발급 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'lab.odsay.com 에서 키를 발급받아요. 플랫폼은 Android, 패키지 이름은 com.karma.walk 로 등록해 주세요.'**
+  String get walkTransitKeyGuide;
 }
 
 class _AppLocalizationsDelegate

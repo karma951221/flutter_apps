@@ -184,6 +184,7 @@ import '../../presentation/map/cubit/map_view_cubit.dart' as _i276;
 import '../../presentation/map/map_open_requests.dart' as _i98;
 import '../../presentation/transit/cubit/point_picker_cubit.dart' as _i77;
 import '../../presentation/transit/cubit/transit_cubit.dart' as _i245;
+import '../../presentation/transit/cubit/transit_key_cubit.dart' as _i116;
 import '../../presentation/weather/cubit/weather_cubit.dart' as _i931;
 import '../config/commute_api_keys.dart' as _i546;
 import 'register_module.dart' as _i291;
@@ -572,6 +573,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i858.ChatImageSource>(
       () => _i957.CompressedChatImageSource(gh<_i870.MediaStore>()),
+    );
+    gh.factory<_i116.TransitKeyCubit>(
+      () => _i116.TransitKeyCubit(
+        gh<_i910.TransitKeyStore>(),
+        gh<_i1051.VerifyTransitKey>(),
+      ),
     );
     gh.lazySingleton<_i830.SettingsBackupArea>(
       () => registerModule.settingsBackupArea(
