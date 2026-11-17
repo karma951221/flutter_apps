@@ -11,12 +11,13 @@ import '../../commute/prefs_place_repository.dart';
 import '../../location/prefs_location_preferences.dart';
 import '../../location/prefs_map_style_preferences.dart';
 import '../../settings/prefs_settings_repository.dart';
+import '../../transit/secure_transit_key_store.dart';
 import 'area_io.dart';
 import 'prefs_snapshot.dart';
 
 const _prefsFile = 'prefs.json';
 
-/// 앱 설정 중 백업에 담는 키. 허용 목록만 담는다 — API 키 · 키 상태 · 동의 · 잠금 · 캐시 ·
+/// 앱 설정 중 백업에 담는 키. 허용 목록만 담는다 — API 키 · 키 상태(길찾기 `transit.keyStatus` 만 예외) · 동의 · 잠금 · 캐시 ·
 /// 일시 상태(`walk.goalCelebratedOn`)는 빼고, 알람 · 일기 · 대화 설정은 각 영역이 담는다.
 /// 물어보기 벤더 · 모델 · 빠른 모드(`chat.vendor` · `chat.model` · `chat.fastMode*`)도 뺀다 —
 /// API 키를 따라가는 값인데 키는 담지 않으므로, 벤더만 바뀌면 지금 기기의 키를 다른 벤더로 보낸다.
@@ -27,6 +28,8 @@ const _prefKeys = {
   PrefsLocationPreferences.retentionKey,
   PrefsPlaceRepository.homeKey,
   PrefsPlaceRepository.workKey,
+  // 길찾기를 쓴 적 있는지만 따라간다(비밀 아님). 키 자체는 담지 않는다.
+  SecureTransitKeyStore.statusKey,
 };
 
 /// 앱 설정 영역. `settings/prefs.json` 하나를 쓴다.
@@ -78,6 +81,8 @@ class SettingsBackupArea implements BackupAreaSource {
 
   @override
   Future<Set<RestoreNotice>> afterRestore() async => {
-    if (await _transitKey.current() == null) RestoreNotice.transitKeyNeeded,
+    if (_prefs.containsKey(SecureTransitKeyStore.statusKey) &&
+        await _transitKey.current() == null)
+      RestoreNotice.transitKeyNeeded,
   };
 }

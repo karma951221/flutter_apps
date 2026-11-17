@@ -18,6 +18,7 @@ const _settings = <String, Object>{
   'walk.location.retention': 'days90',
   'commute.place.home': '{"kind":"home","lat":37.5,"lng":127.0}',
   'commute.place.work': '{"kind":"work","lat":37.4,"lng":127.1}',
+  'transit.keyStatus': 'connected',
 };
 
 /// API 키를 따라가는 물어보기 설정. 키는 담지 않으므로 이것도 담지 않는다 —
@@ -170,7 +171,6 @@ void main() {
   test('transit keys are not in backup allow-list', () async {
     SharedPreferences.setMockInitialValues({
       ..._settings,
-      'transit.keyStatus': 'connected',
       'transit.odsayKey': 'secret',
       'transit.recent': '[]',
       'transit.stationCache': '{}',
@@ -183,19 +183,26 @@ void main() {
               File('${staging.path}/settings/prefs.json').readAsStringSync(),
             )
             as Map<String, Object?>;
-    expect(written.keys.where((k) => k.startsWith('transit.')), isEmpty);
+    expect(written.keys.where((k) => k.startsWith('transit.')), [
+      'transit.keyStatus',
+    ]);
   });
 
   test(
-    'afterRestore asks for a transit key only when none is usable',
+    'afterRestore asks for a transit key only if transit was used',
     () async {
       SharedPreferences.setMockInitialValues({});
-      final prefs = await SharedPreferences.getInstance();
+      final never = await SharedPreferences.getInstance();
+      expect(await _area(never).afterRestore(), isEmpty);
 
-      expect(await _area(prefs).afterRestore(), {
+      SharedPreferences.setMockInitialValues({
+        'transit.keyStatus': 'connected',
+      });
+      final used = await SharedPreferences.getInstance();
+      expect(await _area(used).afterRestore(), {
         RestoreNotice.transitKeyNeeded,
       });
-      expect(await _area(prefs, savedKey: 'k').afterRestore(), isEmpty);
+      expect(await _area(used, savedKey: 'k').afterRestore(), isEmpty);
     },
   );
 }
