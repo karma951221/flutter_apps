@@ -9054,6 +9054,12 @@ abstract class AppLocalizations {
   /// **'물어보기 API 키를 다시 넣어 주세요.'**
   String get walkBackupNoticeApiKey;
 
+  /// 복원 결과: 길찾기(ODsay) 키는 백업에 없음
+  ///
+  /// In ko, this message translates to:
+  /// **'길찾기 ODsay 키를 다시 넣어 주세요.'**
+  String get walkBackupNoticeTransitKey;
+
   /// 복원이 끝나지 못해 다시 시작이 필요할 때 제목
   ///
   /// In ko, this message translates to:

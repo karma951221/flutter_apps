@@ -5561,6 +5561,8 @@
   "@walkBackupNoticeLocationRetention": {"description": "복원 결과: 위치 기록 보관 기간 안내(위치 기록 꺼짐 줄과 함께)"},
   "walkBackupNoticeApiKey": "물어보기 API 키를 다시 넣어 주세요.",
   "@walkBackupNoticeApiKey": {"description": "복원 결과: API 키는 백업에 없음"},
+  "walkBackupNoticeTransitKey": "길찾기 ODsay 키를 다시 넣어 주세요.",
+  "@walkBackupNoticeTransitKey": {"description": "복원 결과: 길찾기(ODsay) 키는 백업에 없음"},
   "walkBackupRecoveryTitle": "앱을 다시 시작해 주세요",
   "@walkBackupRecoveryTitle": {"description": "복원이 끝나지 못해 다시 시작이 필요할 때 제목"},
   "walkBackupRecoveryBody": "복원을 끝내지 못했어요. 다시 시작하면 복원 전 데이터로 되돌립니다.",

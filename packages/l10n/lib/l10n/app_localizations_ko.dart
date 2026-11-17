@@ -5016,6 +5016,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkBackupNoticeApiKey => '물어보기 API 키를 다시 넣어 주세요.';
 
   @override
+  String get walkBackupNoticeTransitKey => '길찾기 ODsay 키를 다시 넣어 주세요.';
+
+  @override
   String get walkBackupRecoveryTitle => '앱을 다시 시작해 주세요';
 
   @override

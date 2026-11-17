@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../domain/backup/backup_area_id.dart';
 import '../../../domain/backup/backup_area_source.dart';
 import '../../../domain/backup/restore_notice.dart';
+import '../../../domain/transit/usecase/transit_api_key.dart';
 import '../../commute/prefs_place_repository.dart';
 import '../../location/prefs_location_preferences.dart';
 import '../../location/prefs_map_style_preferences.dart';
@@ -30,9 +31,12 @@ const _prefKeys = {
 
 /// 앱 설정 영역. `settings/prefs.json` 하나를 쓴다.
 class SettingsBackupArea implements BackupAreaSource {
-  SettingsBackupArea(this._prefs);
+  SettingsBackupArea(this._prefs, this._transitKey);
 
   final SharedPreferences _prefs;
+
+  /// 길찾기 키는 백업에 담지 않으므로 복원 뒤 쓸 수 있는 키가 있는지만 본다.
+  final TransitApiKey _transitKey;
 
   Directory _areaDir(Directory root) => Directory('${root.path}/${id.name}');
 
@@ -73,5 +77,7 @@ class SettingsBackupArea implements BackupAreaSource {
   }
 
   @override
-  Future<Set<RestoreNotice>> afterRestore() async => const {};
+  Future<Set<RestoreNotice>> afterRestore() async => {
+    if (await _transitKey.current() == null) RestoreNotice.transitKeyNeeded,
+  };
 }

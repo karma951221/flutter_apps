@@ -5450,6 +5450,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkBackupNoticeApiKey => 'Enter your Ask API key again.';
 
   @override
+  String get walkBackupNoticeTransitKey =>
+      'Enter your transit directions (ODsay) key again.';
+
+  @override
   String get walkBackupRecoveryTitle => 'Please restart the app';
 
   @override

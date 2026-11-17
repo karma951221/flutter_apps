@@ -5010,6 +5010,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkBackupNoticeApiKey => '質問のAPIキーをもう一度入力してください。';
 
   @override
+  String get walkBackupNoticeTransitKey => '乗換案内のODsayキーをもう一度入力してください。';
+
+  @override
   String get walkBackupRecoveryTitle => 'アプリを再起動してください';
 
   @override

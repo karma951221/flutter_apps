@@ -6,6 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/data/backup/area/settings_backup_area.dart';
 import 'package:walk/domain/backup/backup_area_id.dart';
 import 'package:walk/domain/backup/backup_failure.dart';
+import 'package:walk/domain/backup/restore_notice.dart';
+import 'package:walk/domain/transit/repository/transit_key_store.dart';
+import 'package:walk/domain/transit/usecase/transit_api_key.dart';
 
 /// 앱 설정 영역의 허용 목록 전부(저장소가 쓰는 타입 그대로).
 const _settings = <String, Object>{
@@ -48,6 +51,27 @@ const _excluded = <String, Object>{
   'walk.chat.retention': 'days30',
 };
 
+class _FakeKeyStore implements TransitKeyStore {
+  _FakeKeyStore(this.key);
+  final String? key;
+  @override
+  Future<String?> read() async => key;
+  @override
+  Future<void> save(String key, TransitKeyStatus status) async {}
+  @override
+  Future<void> delete() async {}
+  @override
+  Future<TransitKeyStatus?> status() async => null;
+  @override
+  Future<void> setStatus(TransitKeyStatus s) async {}
+}
+
+SettingsBackupArea _area(SharedPreferences prefs, {String? savedKey}) =>
+    SettingsBackupArea(
+      prefs,
+      TransitApiKey(_FakeKeyStore(savedKey), fallback: ''),
+    );
+
 Future<BackupFailure?> _failureOf(Future<void> Function() body) async {
   try {
     await body();
@@ -69,7 +93,7 @@ void main() {
 
   test('settings export contains exactly the allowlist', () async {
     SharedPreferences.setMockInitialValues({..._settings, ..._excluded});
-    final area = SettingsBackupArea(await SharedPreferences.getInstance());
+    final area = _area(await SharedPreferences.getInstance());
 
     expect(await area.export(staging), isEmpty);
 
@@ -86,16 +110,14 @@ void main() {
 
   test('settings round trip keeps types and leaves other keys alone', () async {
     SharedPreferences.setMockInitialValues(_settings);
-    await SettingsBackupArea(
-      await SharedPreferences.getInstance(),
-    ).export(staging);
+    await _area(await SharedPreferences.getInstance()).export(staging);
 
     SharedPreferences.setMockInitialValues({
       ..._excluded,
       'walk.themeMode': 'light',
     });
     final prefsB = await SharedPreferences.getInstance();
-    final areaB = SettingsBackupArea(prefsB);
+    final areaB = _area(prefsB);
     await areaB.validate(staging);
     await areaB.replace(staging);
     await areaB.afterRestore();
@@ -110,13 +132,11 @@ void main() {
 
   test('replace removes allowlisted keys absent from backup', () async {
     SharedPreferences.setMockInitialValues({});
-    await SettingsBackupArea(
-      await SharedPreferences.getInstance(),
-    ).export(staging);
+    await _area(await SharedPreferences.getInstance()).export(staging);
 
     SharedPreferences.setMockInitialValues(_settings);
     final prefsB = await SharedPreferences.getInstance();
-    await SettingsBackupArea(prefsB).replace(staging);
+    await _area(prefsB).replace(staging);
 
     for (final key in _settings.keys) {
       expect(prefsB.containsKey(key), isFalse, reason: key);
@@ -125,7 +145,7 @@ void main() {
 
   test('validate rejects malformed prefs.json', () async {
     SharedPreferences.setMockInitialValues({});
-    final area = SettingsBackupArea(await SharedPreferences.getInstance());
+    final area = _area(await SharedPreferences.getInstance());
     await area.export(staging);
     File(
       '${staging.path}/settings/prefs.json',
@@ -139,11 +159,43 @@ void main() {
 
   test('id, schema and counts', () async {
     SharedPreferences.setMockInitialValues(_settings);
-    final area = SettingsBackupArea(await SharedPreferences.getInstance());
+    final area = _area(await SharedPreferences.getInstance());
 
     expect(area.id, BackupAreaId.settings);
     expect(area.schema, {'prefs': 1});
     expect(await area.counts(), isEmpty);
     expect(await area.estimatedBytes(), greaterThan(0));
   });
+
+  test('transit keys are not in backup allow-list', () async {
+    SharedPreferences.setMockInitialValues({
+      ..._settings,
+      'transit.keyStatus': 'connected',
+      'transit.odsayKey': 'secret',
+      'transit.recent': '[]',
+      'transit.stationCache': '{}',
+    });
+    final area = _area(await SharedPreferences.getInstance());
+    await area.export(staging);
+
+    final written =
+        jsonDecode(
+              File('${staging.path}/settings/prefs.json').readAsStringSync(),
+            )
+            as Map<String, Object?>;
+    expect(written.keys.where((k) => k.startsWith('transit.')), isEmpty);
+  });
+
+  test(
+    'afterRestore asks for a transit key only when none is usable',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      expect(await _area(prefs).afterRestore(), {
+        RestoreNotice.transitKeyNeeded,
+      });
+      expect(await _area(prefs, savedKey: 'k').afterRestore(), isEmpty);
+    },
+  );
 }

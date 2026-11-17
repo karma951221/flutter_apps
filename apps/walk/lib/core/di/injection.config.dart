@@ -80,6 +80,9 @@ import '../../data/lock/local_auth_device_auth.dart' as _i982;
 import '../../data/lock/prefs_lock_repository.dart' as _i691;
 import '../../data/settings/prefs_settings_repository.dart' as _i724;
 import '../../data/transit/odsay_transit_client.dart' as _i90;
+import '../../data/transit/prefs_recent_points.dart' as _i697;
+import '../../data/transit/prefs_transit_cache.dart' as _i233;
+import '../../data/transit/secure_transit_key_store.dart' as _i258;
 import '../../data/walk/health/health_gateway.dart' as _i332;
 import '../../data/walk/repository/health_connect_activity_repository.dart'
     as _i1016;
@@ -156,8 +159,12 @@ import '../../domain/lock/device_auth.dart' as _i439;
 import '../../domain/lock/lock_repository.dart' as _i43;
 import '../../domain/lock/screen_lock_settings.dart' as _i194;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
+import '../../domain/transit/repository/recent_points.dart' as _i496;
 import '../../domain/transit/repository/station_search.dart' as _i621;
+import '../../domain/transit/repository/transit_cache.dart' as _i857;
+import '../../domain/transit/repository/transit_key_store.dart' as _i910;
 import '../../domain/transit/repository/transit_route_source.dart' as _i859;
+import '../../domain/transit/usecase/transit_api_key.dart' as _i920;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
 import '../../domain/weather/repository/weather_repository.dart' as _i903;
@@ -269,6 +276,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i733.PhotoMetaReader>(
       () => const _i797.ExifPhotoMetaReader(),
     );
+    gh.lazySingleton<_i910.TransitKeyStore>(
+      () => _i258.SecureTransitKeyStore(
+        gh<_i558.FlutterSecureStorage>(),
+        gh<_i460.SharedPreferences>(),
+      ),
+    );
     gh.lazySingleton<_i695.AttachmentLoader>(
       () => _i255.FileAttachmentLoader(),
     );
@@ -286,6 +299,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i835.WorkspaceShare>(
       () => _i835.SharePlusWorkspaceShare(gh<_i488.MediaPickGuard>()),
+    );
+    gh.lazySingleton<_i857.TransitCache>(
+      () => _i233.PrefsTransitCache(
+        gh<_i460.SharedPreferences>(),
+        gh<_i494.Clock>(),
+      ),
     );
     gh.lazySingleton<_i674.MediaProcessor>(() => _i17.PluginMediaProcessor());
     gh.lazySingleton<_i488.RouteFinder>(
@@ -334,6 +353,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i442.OpenAiChatModel>(
       () => _i442.OpenAiChatModel(gh<_i519.Client>(), gh<_i825.ChatTrace>()),
+    );
+    gh.lazySingleton<_i920.TransitApiKey>(
+      () => registerModule.transitApiKey(
+        gh<_i910.TransitKeyStore>(),
+        gh<_i546.CommuteApiKeys>(),
+      ),
     );
     gh.lazySingleton<_i1004.ChatModelRegistry>(
       () => _i1037.VendorChatModelRegistry(
@@ -450,14 +475,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i460.SharedPreferences>(),
       ),
     );
-    gh.lazySingleton<_i830.SettingsBackupArea>(
-      () => registerModule.settingsBackupArea(gh<_i460.SharedPreferences>()),
-    );
     gh.lazySingleton<_i669.ChatUsageRepository>(
       () => _i1028.DriftChatUsageRepository(gh<_i933.ChatDatabase>()),
     );
     gh.lazySingleton<_i296.AlarmRepository>(
       () => _i1.PrefsAlarmRepository(gh<_i460.SharedPreferences>()),
+    );
+    gh.lazySingleton<_i496.RecentPoints>(
+      () => _i697.PrefsRecentPoints(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i520.ChatUsageLog>(
       () => _i1028.DriftChatUsageLog(gh<_i933.ChatDatabase>()),
@@ -518,6 +543,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i858.ChatImageSource>(
       () => _i957.CompressedChatImageSource(gh<_i870.MediaStore>()),
+    );
+    gh.lazySingleton<_i830.SettingsBackupArea>(
+      () => registerModule.settingsBackupArea(
+        gh<_i460.SharedPreferences>(),
+        gh<_i920.TransitApiKey>(),
+      ),
     );
     gh.lazySingleton<_i809.ChatBackupArea>(
       () => registerModule.chatBackupArea(

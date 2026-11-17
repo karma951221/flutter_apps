@@ -1513,6 +1513,7 @@
   "walkBackupNoticeLocationOff": "Location recording is off. Turn it on in map settings.",
   "walkBackupNoticeLocationRetention": "Location history older than the retention period is removed at the next cleanup.",
   "walkBackupNoticeApiKey": "Enter your Ask API key again.",
+  "walkBackupNoticeTransitKey": "Enter your transit directions (ODsay) key again.",
   "walkBackupRecoveryTitle": "Please restart the app",
   "walkBackupRecoveryBody": "The restore didn't finish. Restarting returns your data to how it was before.",
   "walkBackupStepExporting": "Creating backup file…",

@@ -1513,6 +1513,7 @@
   "walkBackupNoticeLocationOff": "位置記録はオフです。地図設定でオンにしてください。",
   "walkBackupNoticeLocationRetention": "保管期間を過ぎた位置記録は次の整理で削除されます。",
   "walkBackupNoticeApiKey": "質問のAPIキーをもう一度入力してください。",
+  "walkBackupNoticeTransitKey": "乗換案内のODsayキーをもう一度入力してください。",
   "walkBackupRecoveryTitle": "アプリを再起動してください",
   "walkBackupRecoveryBody": "復元を完了できませんでした。再起動すると復元前のデータに戻します。",
   "walkBackupStepExporting": "バックアップファイルを作成中…",
