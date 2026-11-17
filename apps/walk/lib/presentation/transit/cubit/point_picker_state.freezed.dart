@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PointPickerState {
 
- String get query; bool get searching; List<StationHit> get stations; List<PlaceCandidate> get addresses; bool get addressSearching; TransitSuggestions? get suggestions;
+ String get query; bool get searching; List<StationHit> get stations; List<PlaceCandidate> get addresses; bool get addressSearching; TransitFailure? get stationFailure; TransitSuggestions? get suggestions;
 /// Create a copy of PointPickerState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $PointPickerStateCopyWith<PointPickerState> get copyWith => _$PointPickerStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PointPickerState&&(identical(other.query, query) || other.query == query)&&(identical(other.searching, searching) || other.searching == searching)&&const DeepCollectionEquality().equals(other.stations, stations)&&const DeepCollectionEquality().equals(other.addresses, addresses)&&(identical(other.addressSearching, addressSearching) || other.addressSearching == addressSearching)&&(identical(other.suggestions, suggestions) || other.suggestions == suggestions));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PointPickerState&&(identical(other.query, query) || other.query == query)&&(identical(other.searching, searching) || other.searching == searching)&&const DeepCollectionEquality().equals(other.stations, stations)&&const DeepCollectionEquality().equals(other.addresses, addresses)&&(identical(other.addressSearching, addressSearching) || other.addressSearching == addressSearching)&&(identical(other.stationFailure, stationFailure) || other.stationFailure == stationFailure)&&(identical(other.suggestions, suggestions) || other.suggestions == suggestions));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,query,searching,const DeepCollectionEquality().hash(stations),const DeepCollectionEquality().hash(addresses),addressSearching,suggestions);
+int get hashCode => Object.hash(runtimeType,query,searching,const DeepCollectionEquality().hash(stations),const DeepCollectionEquality().hash(addresses),addressSearching,stationFailure,suggestions);
 
 @override
 String toString() {
-  return 'PointPickerState(query: $query, searching: $searching, stations: $stations, addresses: $addresses, addressSearching: $addressSearching, suggestions: $suggestions)';
+  return 'PointPickerState(query: $query, searching: $searching, stations: $stations, addresses: $addresses, addressSearching: $addressSearching, stationFailure: $stationFailure, suggestions: $suggestions)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $PointPickerStateCopyWith<$Res>  {
   factory $PointPickerStateCopyWith(PointPickerState value, $Res Function(PointPickerState) _then) = _$PointPickerStateCopyWithImpl;
 @useResult
 $Res call({
- String query, bool searching, List<StationHit> stations, List<PlaceCandidate> addresses, bool addressSearching, TransitSuggestions? suggestions
+ String query, bool searching, List<StationHit> stations, List<PlaceCandidate> addresses, bool addressSearching, TransitFailure? stationFailure, TransitSuggestions? suggestions
 });
 
 
@@ -62,14 +62,15 @@ class _$PointPickerStateCopyWithImpl<$Res>
 
 /// Create a copy of PointPickerState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? query = null,Object? searching = null,Object? stations = null,Object? addresses = null,Object? addressSearching = null,Object? suggestions = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? query = null,Object? searching = null,Object? stations = null,Object? addresses = null,Object? addressSearching = null,Object? stationFailure = freezed,Object? suggestions = freezed,}) {
   return _then(PointPickerState(
 query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
 as String,searching: null == searching ? _self.searching : searching // ignore: cast_nullable_to_non_nullable
 as bool,stations: null == stations ? _self.stations : stations // ignore: cast_nullable_to_non_nullable
 as List<StationHit>,addresses: null == addresses ? _self.addresses : addresses // ignore: cast_nullable_to_non_nullable
 as List<PlaceCandidate>,addressSearching: null == addressSearching ? _self.addressSearching : addressSearching // ignore: cast_nullable_to_non_nullable
-as bool,suggestions: freezed == suggestions ? _self.suggestions : suggestions // ignore: cast_nullable_to_non_nullable
+as bool,stationFailure: freezed == stationFailure ? _self.stationFailure : stationFailure // ignore: cast_nullable_to_non_nullable
+as TransitFailure?,suggestions: freezed == suggestions ? _self.suggestions : suggestions // ignore: cast_nullable_to_non_nullable
 as TransitSuggestions?,
   ));
 }

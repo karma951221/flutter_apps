@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:fake_async/fake_async.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/commute/repository/address_search.dart';
 import 'package:walk/domain/transit/entity/station_hit.dart';
+import 'package:walk/domain/transit/transit_failure.dart';
 import 'package:walk/domain/transit/usecase/search_stations.dart';
 import 'package:walk/domain/transit/usecase/transit_point_suggestions.dart';
 import 'package:walk/presentation/transit/cubit/point_picker_cubit.dart';
@@ -108,6 +111,69 @@ void main() {
       cubit.close();
       async.elapse(const Duration(seconds: 2));
       verifyNever(() => stations(any()));
+    });
+  });
+
+  test('station failure is surfaced and cleared on new query', () {
+    fakeAsync((async) {
+      when(
+        () => stations(any()),
+      ).thenAnswer((_) async => throw const TransitFailure.keyRejected('bad'));
+      final cubit = make();
+      cubit.queryChanged('서울역');
+      async.elapse(const Duration(seconds: 1));
+      async.flushMicrotasks();
+      expect(cubit.state.stationFailure, isA<TransitKeyRejected>());
+      expect(cubit.state.searching, isFalse);
+      cubit.queryChanged('서울');
+      expect(cubit.state.stationFailure, isNull);
+      cubit.close();
+    });
+  });
+
+  test('unknown station exception becomes server failure', () {
+    fakeAsync((async) {
+      when(
+        () => stations(any()),
+      ).thenAnswer((_) async => throw StateError('x'));
+      final cubit = make();
+      cubit.queryChanged('서울역');
+      async.elapse(const Duration(seconds: 1));
+      async.flushMicrotasks();
+      expect(
+        cubit.state.stationFailure,
+        const TransitFailure.server('StateError'),
+      );
+      cubit.close();
+    });
+  });
+
+  test('stale station result dropped when query changes mid-flight', () {
+    fakeAsync((async) {
+      final first = Completer<List<StationHit>>();
+      when(() => stations('서울역')).thenAnswer((_) => first.future);
+      final cubit = make();
+      cubit.queryChanged('서울역');
+      async.elapse(const Duration(seconds: 1));
+      cubit.queryChanged('서');
+      first.complete([_hit]);
+      async.flushMicrotasks();
+      expect(cubit.state.stations, isEmpty);
+      expect(cubit.state.query, '서');
+      cubit.close();
+    });
+  });
+
+  test('addresses cleared on query change', () {
+    fakeAsync((async) {
+      final cubit = make();
+      cubit.queryChanged('서울역');
+      cubit.searchAddress();
+      async.flushMicrotasks();
+      expect(cubit.state.addresses, hasLength(1));
+      cubit.queryChanged('서울역 근처');
+      expect(cubit.state.addresses, isEmpty);
+      cubit.close();
     });
   });
 }

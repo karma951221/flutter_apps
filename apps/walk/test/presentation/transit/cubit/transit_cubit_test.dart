@@ -176,4 +176,24 @@ void main() {
     await cubit.setTo(_b);
     verify(() => recent.add(_b)).called(1);
   });
+
+  test('setFrom resets locationFailed', () async {
+    when(() => place.current()).thenAnswer((_) async => null);
+    await cubit.start();
+    expect(cubit.state.locationFailed, isTrue);
+    await cubit.setFrom(_a);
+    expect(cubit.state.locationFailed, isFalse);
+  });
+
+  test('query starts before slow recent storage finishes', () async {
+    final gate = Completer<void>();
+    await cubit.setFrom(_a);
+    when(() => recent.add(any())).thenAnswer((_) => gate.future);
+    final pending = cubit.setTo(_b);
+    await pumpEventQueue();
+    verify(() => find(_a, _b, refresh: false)).called(1);
+    expect(cubit.state.status, isA<TransitLoaded>());
+    gate.complete();
+    await pending;
+  });
 }

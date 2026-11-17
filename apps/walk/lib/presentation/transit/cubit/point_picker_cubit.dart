@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../domain/commute/repository/address_search.dart';
+import '../../../domain/transit/transit_failure.dart';
 import '../../../domain/transit/usecase/search_stations.dart';
 import '../../../domain/transit/usecase/transit_point_suggestions.dart';
 import 'point_picker_state.dart';
@@ -48,6 +49,7 @@ class PointPickerCubit extends Cubit<PointPickerState> {
         addressSearching: false,
         stations: tooShort ? const [] : state.stations,
         searching: false,
+        stationFailure: null,
       ),
     );
     if (composing || tooShort) return;
@@ -56,15 +58,21 @@ class PointPickerCubit extends Cubit<PointPickerState> {
 
   Future<void> _searchStations(String text, int generation) async {
     if (isClosed) return;
-    emit(state.copyWith(searching: true));
+    emit(state.copyWith(searching: true, stationFailure: null));
     var hits = state.stations;
+    TransitFailure? failure;
     try {
       hits = await _stations(text);
-    } on Object {
+    } on Object catch (e) {
       hits = const [];
+      failure = e is TransitFailure
+          ? e
+          : TransitFailure.server(e.runtimeType.toString());
     }
     if (generation != _generation || isClosed) return;
-    emit(state.copyWith(searching: false, stations: hits));
+    emit(
+      state.copyWith(searching: false, stations: hits, stationFailure: failure),
+    );
   }
 
   /// 주소 · 장소 이름 검색. 사용자가 누를 때만 부른다.

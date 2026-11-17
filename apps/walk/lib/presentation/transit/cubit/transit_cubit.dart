@@ -56,15 +56,15 @@ class TransitCubit extends Cubit<TransitState> {
   }
 
   Future<void> setFrom(TransitPoint point) async {
-    emit(state.copyWith(from: point));
-    await _remember(point);
+    emit(state.copyWith(from: point, locationFailed: false));
     _queryIfReady();
+    await _remember(point);
   }
 
   Future<void> setTo(TransitPoint point) async {
     emit(state.copyWith(to: point));
-    await _remember(point);
     _queryIfReady();
+    await _remember(point);
   }
 
   /// 빈 칸에 채운다. 출발 → 도착 순, 둘 다 차 있으면 도착을 바꾼다.
