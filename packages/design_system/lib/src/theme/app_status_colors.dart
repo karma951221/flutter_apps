@@ -39,8 +39,8 @@ class AppStatusColorPair {
 /// 상태별 색 토큰. [AppTheme] 이 테마 확장으로 넣는다.
 ///
 /// - info: 기존 스낵바와 같은 중립색(inverseSurface)
-/// - success · warning: [AppColors.success] · [AppColors.warning] 시드의 container 짝
-/// - error: colorScheme 의 errorContainer 짝
+/// - success · warning · error: [AppColors.success] · [AppColors.warning] ·
+///   [AppColors.error] 시드의 container 짝(fidelity — 시드 채도를 살려 셋의 세기를 맞춘다)
 ///
 /// container 짝은 Material 3 톤 체계라 라이트 · 다크 모두 글자 대비 AA 를 넘는다
 /// (`app_snack_bar_test.dart` 가 확인한다).
@@ -78,10 +78,7 @@ class AppStatusColors extends ThemeExtension<AppStatusColors> {
       ),
       success: seeded(AppColors.success),
       warning: seeded(AppColors.warning),
-      error: AppStatusColorPair(
-        background: scheme.errorContainer,
-        foreground: scheme.onErrorContainer,
-      ),
+      error: seeded(AppColors.error),
     );
   }
 
