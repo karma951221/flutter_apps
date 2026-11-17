@@ -29,6 +29,27 @@ class WikiLinkText extends StatelessWidget {
   final ValueChanged<int>? onOpenNote;
   final ValueChanged<String>? onOpenEntry;
 
+  /// 복사용 글 — 링크 자리에 칩에 보이는 글자(메모 제목 · 일기 라벨 · '지워진 …')를 넣는다.
+  /// `[[12]]` 같은 표기는 앱 밖에서 뜻이 없어서다.
+  static String plainText({
+    required String body,
+    required Map<int, WikiNote> notes,
+    required Map<String, DiaryEntry> entries,
+    required AppLocalizations l10n,
+  }) => [
+    for (final segment in parseWikiBody(body))
+      switch (segment) {
+        WikiTextSegment(:final text) => text,
+        WikiLinkSegment(link: WikiNoteLink(:final id)) =>
+          notes[id]?.title ?? l10n.walkChatWikiDeletedNote,
+        WikiLinkSegment(link: WikiDiaryLink(:final entryId)) =>
+          switch (entries[entryId]) {
+            final entry? => CitedEntryChip.label(entry, l10n.localeName),
+            null => l10n.walkChatWikiDeletedEntry,
+          },
+      },
+  ].join();
+
   /// 지워진 대상 칩의 흐림 — Material 의 비활성 글자와 같은 값.
   static const missingOpacity = 0.38;
 

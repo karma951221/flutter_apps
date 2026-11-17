@@ -123,4 +123,32 @@ void main() {
     expect(index.omitted, 0);
     expect(index.chars, 0);
   });
+
+  test('wikiIndexWindow 앞의 메모만 보면 색인이 정해진다 — 가장 짧은 줄로 채워도 넘지 않는다', () {
+    for (final size in WikiIndexSize.values) {
+      final window = wikiIndexWindow(size);
+      final shortest = [
+        for (var i = 0; i < window + 50; i++)
+          wikiNote(1, title: 'a', summary: 'b'),
+      ];
+
+      final index = buildWikiIndex(shortest, size);
+
+      expect(
+        index.includedIds.length,
+        lessThanOrEqualTo(window),
+        reason: '$size',
+      );
+    }
+    expect(wikiIndexWindow(WikiIndexSize.small), 50);
+    expect(wikiIndexWindow(WikiIndexSize.all), 2500);
+  });
+
+  test('total 을 주면 omitted 는 전체 수 기준', () {
+    final index = buildWikiIndex(_notes(50), WikiIndexSize.small, total: 70);
+
+    expect(index.includedIds, hasLength(50));
+    expect(index.omitted, 20);
+    expect(index.lines, endsWith('(오래된 메모 20개 생략)'));
+  });
 }
