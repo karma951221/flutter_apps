@@ -9,6 +9,7 @@ import 'package:walk/domain/commute/entity/place.dart';
 import 'package:walk/domain/commute/repository/address_search.dart';
 import 'package:walk/domain/transit/entity/station_hit.dart';
 import 'package:walk/domain/transit/entity/transit_point.dart';
+import 'package:walk/domain/transit/transit_failure.dart';
 import 'package:walk/domain/transit/usecase/transit_point_suggestions.dart';
 import 'package:walk/presentation/transit/cubit/point_picker_cubit.dart';
 import 'package:walk/presentation/transit/cubit/point_picker_state.dart';
@@ -53,6 +54,9 @@ void main() {
     result = null;
     when(() => cubit.load()).thenAnswer((_) async {});
     when(() => cubit.searchAddress()).thenAnswer((_) async {});
+    when(
+      () => cubit.queryChanged(any(), composing: any(named: 'composing')),
+    ).thenReturn(null);
     when(() => suggestions.saveAs(any(), any())).thenAnswer((_) async {});
   });
 
@@ -200,5 +204,49 @@ void main() {
     verify(() => suggestions.saveAs(PlaceKind.home, _chosen)).called(1);
     verify(() => cubit.load()).called(1);
     expect(find.text('지금 고른 곳을 집으로 저장했어요'), findsOneWidget);
+  });
+
+  testWidgets('station failure retry re-runs the query', (tester) async {
+    await open(
+      tester,
+      const PointPickerState(
+        query: '강남',
+        stationFailure: TransitFailure.network(),
+      ),
+    );
+    clearInteractions(cubit);
+
+    await tester.tap(find.text('다시 시도'));
+    verify(() => cubit.queryChanged('강남')).called(1);
+  });
+
+  testWidgets('long-press home saves current location as "현재 위치"', (
+    tester,
+  ) async {
+    await open(
+      tester,
+      const PointPickerState(suggestions: TransitSuggestions(home: _home)),
+      current: const TransitPoint(
+        lat: 37.5,
+        lng: 126.9,
+        label: '',
+        source: TransitPointSource.currentLocation,
+      ),
+    );
+
+    await tester.longPress(find.text('집'));
+    await tester.pumpAndSettle();
+
+    verify(
+      () => suggestions.saveAs(
+        PlaceKind.home,
+        const TransitPoint(
+          lat: 37.5,
+          lng: 126.9,
+          label: '현재 위치',
+          source: TransitPointSource.currentLocation,
+        ),
+      ),
+    ).called(1);
   });
 }

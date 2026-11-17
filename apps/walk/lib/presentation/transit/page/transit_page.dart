@@ -9,7 +9,7 @@ import 'package:l10n/l10n.dart';
 import '../../../domain/transit/transit_failure.dart';
 import '../../../domain/transit/usecase/find_transit_routes.dart';
 import '../../../domain/transit/usecase/transit_point_suggestions.dart';
-import '../../settings/page/transit_settings_page.dart';
+import '../open_transit_key_settings.dart';
 import '../cubit/transit_cubit.dart';
 import '../cubit/transit_state.dart';
 import '../widget/point_fields.dart';
@@ -27,23 +27,32 @@ class TransitPage extends StatelessWidget {
   const TransitPage({super.key});
 
   /// 길찾기 키 설정 화면을 연다 — 도구 앱바 ⋮ "길찾기 키 설정"(`walkTransitMenuKeySettings`)이 부른다.
-  static Future<void> openKeySettings(BuildContext context) => Navigator.of(
-    context,
-  ).push<void>(MaterialPageRoute(builder: (_) => const TransitSettingsPage()));
+  static Future<void> openKeySettings(BuildContext context) =>
+      openTransitKeySettings(context);
 
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (_) => getIt<TransitCubit>()..start(),
-    child: TransitView(suggestions: getIt<TransitPointSuggestions>()),
+    child: TransitView(
+      suggestions: getIt<TransitPointSuggestions>(),
+      clock: getIt<Clock>(),
+    ),
   );
 }
 
 /// [TransitPage] 의 본문. 위쪽 [TransitCubit] 을 읽는다.
 class TransitView extends StatefulWidget {
-  const TransitView({required this.suggestions, super.key});
+  const TransitView({
+    required this.suggestions,
+    required this.clock,
+    super.key,
+  });
 
   /// 빠른 칩(집 · 회사 · 자주 간 곳)을 읽는다.
   final TransitPointSuggestions suggestions;
+
+  /// "n분 전 결과"의 지금.
+  final Clock clock;
 
   @override
   State<TransitView> createState() => _TransitViewState();
@@ -130,20 +139,23 @@ class _TransitViewState extends State<TransitView> {
             ),
             const SizedBox(height: AppSpacing.sm),
             const Divider(height: 1),
-            Expanded(child: _body(state.status)),
+            Expanded(child: _body(state)),
           ],
         ),
       ),
     );
   }
 
-  Widget _body(TransitStatus status) {
+  Widget _body(TransitState state) {
     final l10n = AppLocalizations.of(context);
-    return switch (status) {
+    return switch (state.status) {
       TransitIdle() => Center(
         child: AppPlaceholder(
           icon: Icons.directions_transit_outlined,
-          message: l10n.walkTransitIdle,
+          // 비어 있는 칸을 고르라고 한다. 출발이 먼저다.
+          message: state.from == null
+              ? l10n.walkTransitIdleFrom
+              : l10n.walkTransitIdle,
           description: l10n.walkTransitIdleBody,
         ),
       ),
@@ -169,7 +181,7 @@ class _TransitViewState extends State<TransitView> {
   Widget _results(TransitRoutesResult result) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final minutes = getIt<Clock>().now().difference(result.fetchedAt).inMinutes;
+    final minutes = widget.clock.now().difference(result.fetchedAt).inMinutes;
     final muted = theme.textTheme.bodySmall?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
     );

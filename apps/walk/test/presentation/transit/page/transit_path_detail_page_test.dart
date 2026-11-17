@@ -11,6 +11,8 @@ const _path = TransitPath(
   fare: 1500,
   legs: [
     TransitLeg.walk(minutes: 5, distanceM: 320),
+    // 0분 도보(같은 역 출구 등)는 타임라인에서 뺀다.
+    TransitLeg.walk(minutes: 0, distanceM: 40),
     TransitLeg.subway(
       minutes: 12,
       lineName: '7호선',
@@ -32,17 +34,20 @@ const _path = TransitPath(
   ],
 );
 
-void main() {
-  testWidgets('요약 · 구간 타임라인(도보 · 지하철 · 환승 도보 · 버스)', (tester) async {
-    await tester.pumpWidget(
+Future<void> _pump(WidgetTester tester, {String locale = 'ko'}) =>
+    tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light(),
-        locale: const Locale('ko'),
+        locale: Locale(locale),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: const TransitPathDetailPage(path: _path),
       ),
     );
+
+void main() {
+  testWidgets('요약 · 구간 타임라인(도보 · 지하철 · 환승 도보 · 버스)', (tester) async {
+    await _pump(tester);
 
     expect(find.text('42분'), findsOneWidget);
     expect(find.text('환승 1 · 도보 12분 · 1,500원'), findsOneWidget);
@@ -53,5 +58,16 @@ void main() {
     expect(find.text('740 · 151 강남역 → 시청'), findsOneWidget);
     expect(find.text('9개 정류장 · 18분'), findsOneWidget);
     expect(find.text('도보 4분(250m)'), findsOneWidget);
+    expect(find.text('도보 0분(40m)'), findsNothing);
+    expect(find.byIcon(Icons.directions_walk), findsNWidgets(3));
+  });
+
+  testWidgets('en uses plural counts', (tester) async {
+    await _pump(tester, locale: 'en');
+
+    expect(find.text('Transfers 1'), findsNothing);
+    expect(find.text('1 transfer · Walk 12 min · ₩1,500'), findsOneWidget);
+    expect(find.text('6 stations · 12 min · toward 온수'), findsOneWidget);
+    expect(find.text('9 stops · 18 min'), findsOneWidget);
   });
 }

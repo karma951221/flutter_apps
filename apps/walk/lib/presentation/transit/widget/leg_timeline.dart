@@ -8,7 +8,7 @@ import 'line_chip.dart';
 /// 경로 구간을 위에서 아래로 잇는 세로 타임라인.
 ///
 /// `도보 5분(320m)` → `7호선 장승배기 → 고속터미널` / `6개 역 · 12분 · 온수 방면` →
-/// `환승 도보 3분` → … 탈것 사이 도보는 "환승 도보"로 적는다. 0분 · 0m 도보는 뺀다.
+/// `환승 도보 3분` → … 탈것 사이 도보는 "환승 도보"로 적는다. 0분 도보는 뺀다.
 class LegTimeline extends StatelessWidget {
   const LegTimeline({required this.legs, super.key});
 
@@ -35,7 +35,7 @@ class LegTimeline extends StatelessWidget {
   }
 
   static bool _empty(TransitLeg leg) =>
-      leg is TransitWalkLeg && leg.minutes == 0 && leg.distanceM == 0;
+      leg is TransitWalkLeg && leg.minutes == 0;
 
   bool _isRide(int index) =>
       index >= 0 && index < legs.length && legs[index] is! TransitWalkLeg;

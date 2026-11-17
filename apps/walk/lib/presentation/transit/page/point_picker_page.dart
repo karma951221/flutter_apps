@@ -12,10 +12,10 @@ import '../../../domain/transit/entity/station_hit.dart';
 import '../../../domain/transit/entity/transit_point.dart';
 import '../../../domain/transit/usecase/transit_point_suggestions.dart';
 import '../cubit/point_picker_cubit.dart';
+import '../open_transit_key_settings.dart';
 import '../cubit/point_picker_state.dart';
 import '../widget/point_fields.dart';
 import '../widget/transit_failure_view.dart';
-import 'transit_page.dart';
 
 /// 장소 고르기(전체 화면). 고른 지점을 돌려주며 닫힌다. 그냥 닫으면 null.
 class PointPickerPage extends StatelessWidget {
@@ -49,7 +49,7 @@ class PointPickerPage extends StatelessWidget {
     return TransitPoint(
       lat: lat,
       lng: lng,
-      label: '',
+      label: loc?.placeName ?? '',
       source: TransitPointSource.currentLocation,
     );
   }
@@ -137,13 +137,18 @@ class _PointPickerViewState extends State<PointPickerView> {
   Future<void> _saveAs(PlaceKind kind) async {
     final l10n = AppLocalizations.of(context);
     final current = widget.current;
-    if (current == null ||
-        current.source == TransitPointSource.currentLocation) {
+    if (current == null) {
       AppSnackBar.info(context, message: l10n.walkTransitSaveNothing);
       return;
     }
+    // 현재 위치는 이름이 없을 수 있다 — 얻어 둔 장소 이름, 없으면 "현재 위치"로 저장한다.
+    final toSave =
+        current.source == TransitPointSource.currentLocation &&
+            current.label.trim().isEmpty
+        ? current.copyWith(label: l10n.walkTransitCurrentLocation)
+        : current;
     try {
-      await widget.suggestions.saveAs(kind, current);
+      await widget.suggestions.saveAs(kind, toSave);
     } on Object {
       if (mounted) {
         AppSnackBar.error(context, message: l10n.walkTransitSaveFailed);
@@ -241,8 +246,8 @@ class _PointPickerViewState extends State<PointPickerView> {
       if (failure != null)
         TransitFailureView(
           failure: failure,
-          onOpenKeySettings: () =>
-              unawaited(TransitPage.openKeySettings(context)),
+          onOpenKeySettings: () => unawaited(openTransitKeySettings(context)),
+          onRetry: () => _cubit.queryChanged(state.query),
         ),
       for (final hit in state.stations)
         AppListTile(

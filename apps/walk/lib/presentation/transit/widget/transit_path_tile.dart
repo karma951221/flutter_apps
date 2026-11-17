@@ -13,9 +13,11 @@ class TransitPathTile extends StatelessWidget {
   final TransitPath path;
   final VoidCallback onTap;
 
-  /// `42분` · `1시간 15분`.
+  /// `42분` · `1시간` · `1시간 15분`.
   static String total(AppLocalizations l10n, int minutes) => minutes < 60
       ? l10n.walkTransitTotal(minutes)
+      : minutes % 60 == 0
+      ? l10n.walkTransitTotalHoursOnly(minutes ~/ 60)
       : l10n.walkTransitTotalHours(minutes ~/ 60, minutes % 60);
 
   /// `환승 1 · 도보 9분 · 1,500원` — 요금을 모르면 뺀다.

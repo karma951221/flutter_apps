@@ -8,9 +8,12 @@ import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:walk/domain/transit/entity/transit_path.dart';
 import 'package:walk/domain/transit/entity/transit_point.dart';
+import 'package:walk/domain/transit/repository/transit_key_store.dart';
 import 'package:walk/domain/transit/transit_failure.dart';
 import 'package:walk/domain/transit/usecase/find_transit_routes.dart';
 import 'package:walk/domain/transit/usecase/transit_point_suggestions.dart';
+import 'package:walk/domain/transit/usecase/verify_transit_key.dart';
+import 'package:walk/presentation/settings/page/transit_settings_page.dart';
 import 'package:walk/presentation/transit/cubit/transit_cubit.dart';
 import 'package:walk/presentation/transit/cubit/transit_state.dart';
 import 'package:walk/presentation/transit/page/transit_page.dart';
@@ -20,6 +23,10 @@ import 'package:walk/presentation/transit/widget/transit_path_tile.dart';
 class _MockCubit extends MockCubit<TransitState> implements TransitCubit {}
 
 class _MockSuggestions extends Mock implements TransitPointSuggestions {}
+
+class _MockKeyStore extends Mock implements TransitKeyStore {}
+
+class _MockVerify extends Mock implements VerifyTransitKey {}
 
 class _FixedClock extends Clock {
   const _FixedClock(this.value);
@@ -103,7 +110,6 @@ void main() {
   setUp(() {
     cubit = _MockCubit();
     suggestions = _MockSuggestions();
-    getIt.registerSingleton<Clock>(_FixedClock(_now));
     when(
       () => suggestions.load(),
     ).thenAnswer((_) async => const TransitSuggestions());
@@ -125,7 +131,10 @@ void main() {
           supportedLocales: AppLocalizations.supportedLocales,
           home: BlocProvider<TransitCubit>.value(
             value: cubit,
-            child: TransitView(suggestions: suggestions),
+            child: TransitView(
+              suggestions: suggestions,
+              clock: _FixedClock(_now),
+            ),
           ),
         ),
       ),
@@ -194,7 +203,10 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         home: BlocProvider<TransitCubit>.value(
           value: cubit,
-          child: TransitView(suggestions: suggestions),
+          child: TransitView(
+            suggestions: suggestions,
+            clock: _FixedClock(_now),
+          ),
         ),
       ),
     );
@@ -302,5 +314,35 @@ void main() {
     await pump(tester, const TransitState(locationFailed: true));
 
     expect(find.text('현재 위치를 못 찾았어요 · 눌러서 고르기'), findsOneWidget);
+  });
+
+  testWidgets('idle asks for the empty field — from first', (tester) async {
+    await pump(tester, const TransitState(to: _office));
+    expect(find.text('출발을 골라 주세요'), findsOneWidget);
+
+    await pump(tester, const TransitState(from: _here));
+    expect(find.text('도착을 골라 주세요'), findsOneWidget);
+  });
+
+  testWidgets('키 설정 opens TransitSettingsPage and re-queries on return', (
+    tester,
+  ) async {
+    final store = _MockKeyStore();
+    when(() => store.read()).thenAnswer((_) async => null);
+    getIt
+      ..registerSingleton<TransitKeyStore>(store)
+      ..registerSingleton<VerifyTransitKey>(_MockVerify());
+    when(() => cubit.refresh()).thenReturn(null);
+    await pumpFailure(tester, const TransitFailure.missingKey());
+
+    await tester.tap(find.text('키 설정'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TransitSettingsPage), findsOneWidget);
+    verifyNever(() => cubit.refresh());
+
+    Navigator.of(tester.element(find.byType(TransitSettingsPage))).pop();
+    await tester.pumpAndSettle();
+    expect(find.byType(TransitSettingsPage), findsNothing);
+    verify(() => cubit.refresh()).called(1);
   });
 }

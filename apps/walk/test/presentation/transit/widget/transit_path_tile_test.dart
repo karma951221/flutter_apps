@@ -78,4 +78,17 @@ void main() {
     expect(find.text('환승 0 · 도보 14분'), findsOneWidget);
     expect(find.textContaining('원'), findsNothing);
   });
+
+  testWidgets('exact hours drop the minutes', (tester) async {
+    await _pump(
+      tester,
+      const TransitPath(
+        totalMinutes: 60,
+        transferCount: 0,
+        legs: [TransitLeg.walk(minutes: 60, distanceM: 4000)],
+      ),
+    );
+
+    expect(find.text('1시간'), findsOneWidget);
+  });
 }
