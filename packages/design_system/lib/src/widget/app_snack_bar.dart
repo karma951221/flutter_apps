@@ -1,8 +1,20 @@
 import 'package:flutter/material.dart';
 
-enum AppSnackBarType { info, success, error }
+import '../theme/app_spacing.dart';
+import '../theme/app_status_colors.dart';
+
+/// 스낵바 유형 — [AppStatus] 와 같다(info · success · warning · error).
+typedef AppSnackBarType = AppStatus;
 
 /// 공통 Snackbar 표시 도우미.
+///
+/// 유형마다 아이콘과 색([AppStatusColors])이 다르다. 오른쪽 끝의 X 로 닫거나
+/// 좌우로 밀어서 닫는다. 유형을 안 주면 info 다.
+///
+/// - 실패 · 오류 안내 → [error]
+/// - 완료 · 저장 → [success]
+/// - 되돌릴 수 없거나 조심해야 할 것 → [warning]
+/// - 그 밖 → [info]
 class AppSnackBar {
   const AppSnackBar._();
 
@@ -13,28 +25,94 @@ class AppSnackBar {
     String? actionLabel,
     VoidCallback? onAction,
   }) {
-    final colors = Theme.of(context).colorScheme;
-    final backgroundColor = switch (type) {
-      AppSnackBarType.info => null,
-      AppSnackBarType.success => colors.primaryContainer,
-      AppSnackBarType.error => colors.errorContainer,
-    };
-    final contentColor = switch (type) {
-      AppSnackBarType.info => null,
-      AppSnackBarType.success => colors.onPrimaryContainer,
-      AppSnackBarType.error => colors.onErrorContainer,
-    };
+    final colors = AppStatusColors.of(context).forStatus(type);
 
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          backgroundColor: backgroundColor,
-          content: Text(message, style: TextStyle(color: contentColor)),
+          backgroundColor: colors.background,
+          dismissDirection: DismissDirection.horizontal,
+          showCloseIcon: true,
+          closeIconColor: colors.foreground,
+          content: Row(
+            children: [
+              Icon(_icon(type), color: colors.foreground),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  message,
+                  style: TextStyle(color: colors.foreground),
+                ),
+              ),
+            ],
+          ),
           action: actionLabel == null || onAction == null
               ? null
-              : SnackBarAction(label: actionLabel, onPressed: onAction),
+              : SnackBarAction(
+                  label: actionLabel,
+                  textColor: colors.foreground,
+                  onPressed: onAction,
+                ),
         ),
       );
   }
+
+  static void info(
+    BuildContext context, {
+    required String message,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) => show(
+    context,
+    message: message,
+    actionLabel: actionLabel,
+    onAction: onAction,
+  );
+
+  static void success(
+    BuildContext context, {
+    required String message,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) => show(
+    context,
+    message: message,
+    type: AppSnackBarType.success,
+    actionLabel: actionLabel,
+    onAction: onAction,
+  );
+
+  static void warning(
+    BuildContext context, {
+    required String message,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) => show(
+    context,
+    message: message,
+    type: AppSnackBarType.warning,
+    actionLabel: actionLabel,
+    onAction: onAction,
+  );
+
+  static void error(
+    BuildContext context, {
+    required String message,
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) => show(
+    context,
+    message: message,
+    type: AppSnackBarType.error,
+    actionLabel: actionLabel,
+    onAction: onAction,
+  );
+
+  static IconData _icon(AppSnackBarType type) => switch (type) {
+    AppSnackBarType.info => Icons.info_outline,
+    AppSnackBarType.success => Icons.check_circle_outline,
+    AppSnackBarType.warning => Icons.warning_amber_rounded,
+    AppSnackBarType.error => Icons.error_outline,
+  };
 }

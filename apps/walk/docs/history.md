@@ -1308,3 +1308,59 @@ OpenAI: gpt-5 `minimal`, 5.1 이후 `none`, o 계열 `low`). 초안의 `modelUna
 제목 · 일기 날짜 라벨 · '지워진 …')로 바꿔 넣는다(`WikiLinkText.plainText`). 요약 · 본문 · 수정일은
 `SelectionArea` 로 감싸 길게 눌러 일부만 고를 수 있다. 링크 칩은 눌러도 그대로 열린다.
 
+## 2026-11-17 — 스낵바 유형 · 닫기
+
+QA: 스낵바가 아래로 끌어야만 닫히고(되돌리기 같은 액션이 있으면 Flutter 기본값이 `persist` 라 저절로 사라지지도 않는다),
+회색 한 가지라 성공 · 오류가 구별되지 않았다.
+
+- 공용 `AppSnackBar`(`packages/design_system`)에 유형 `info · success · warning · error` 와 유형별 아이콘 · 색을 더했다.
+  색은 테마 확장 `AppStatusColors` — info 는 예전 중립색(inverseSurface), success · warning · error 는
+  `AppColors.success`(초록) · `AppColors.warning`(호박) · `AppColors.error`(빨강) 시드의 container 짝(fidelity)이다.
+  처음엔 error 를 colorScheme 의 errorContainer 로 뒀는데, 라이트에서 연분홍이라 진한 성공 · 주의보다 약해 보여 같은 방식으로 맞췄다.
+  라이트 · 다크 · walk 시드에서 네 유형 모두 글자 대비 AA(4.5:1)를 위젯 테스트가 확인한다.
+- 오른쪽 끝 X 로 닫고, 좌우로 밀어 닫는다(`DismissDirection.horizontal`). 액션이 있으면 [메시지 · 액션 · X] 차례.
+- `AppSnackBar.show(type:)` 는 그대로 두고 `info/success/warning/error` 편의 메서드를 더했다. 유형을 안 주면 info.
+  트레이더 · pawlog 호출부는 그대로다(유형을 이미 쓴 곳은 새 색으로 보인다).
+
+### walk 호출부 분류
+
+기준 — 실패 · 오류는 error, 완료 · 저장 · 옮김 · 지움은 success, 할 수 없거나 사용자가 조심해야 할 상태는 warning,
+그 밖의 상태 안내는 info. 호출 63곳 중 이번에 바꾼 것:
+
+| 위치 | 문구 | 전 → 후 |
+|---|---|---|
+| `chat_tab` 작업 폴더 저장 실패 | 저장하지 못했어요 | info → error |
+| `chat_tab` 작업 폴더 저장 | 작업 폴더에 저장했어요 [보기] | info → success |
+| `chat_tab` · `open_workspace` 지운 파일 열기 | 지운 파일이에요 | info → warning |
+| `chat_tab` 모델 교체 | 고른 모델이 없어져 추천 모델로 바꿨어요 | info → warning |
+| `chat_tab` 첨부 거절 | 지원하지 않는 형식 · 너무 큼 · 개수 한도 등 | info → warning |
+| `chat_tab` 쓰기 도구 지움 · 저장 | 지웠어요 · {name} 에 저장했어요 [열기] | info → success |
+| `wiki_note_edit_page` | 위키에 저장했어요 | info → success |
+| `wiki_candidates_sheet` | 메모 {count}개를 저장했어요 | info → success |
+| `entry_editor_page` 초안 키 없음 | 물어보기 설정에서 키를 넣으면 쓸 수 있어요 | info → warning |
+| `entry_editor_page` 초안 적용 | 초안으로 바꿨어요 [되돌리기] | info → success |
+| `entry_editor_page` 끝난 스토리 | 끝난 스토리라 새 기록을 올릴 수 없어요 | error → warning |
+| `enable_location_record` | 위치를 "항상 허용"으로 바꿔야 기록할 수 있어요 [설정] | info → warning |
+| `map_settings_page` | 위치 기록을 지웠어요 | info → success |
+| `chat_settings_section` 연결 끊기 | 연결을 끊었어요 | info → success |
+| `alarm_list_page` 저장 · 켜기 | {시간} 뒤에 울려요 / 쉬는 기간이라 울리지 않아요 | info → success / warning |
+
+그대로 둔 것:
+
+- **error** — `…하지 못했어요` 류 실패 전부(알람 저장 · 알람음 · 백업 · 위키 · 작업 폴더 · 일기 옮기기/휴지통/미디어 ·
+  위치 켜기 · 권한 없음 · 설정 저장 · 대화 기록 · 사용량), 초안 실패(`chatFailureText`), 스토리 관리 실패.
+- **success** — 키 연결 · 벤더 바꿈, 일기 잠금 저장, 일기 옮김 · 휴지통(되돌리기), 올렸어요, 스토리 옮김, 휴지통 비우기 · 되살리기, 백업했어요.
+- **info** — 내 기록 참고 켜짐/꺼짐, 멈췄어요, 키 저장 · 벤더 바꿈의 "아직 확인 못 함"(연결되면 다시 확인하므로 주의가 아니다).
+
+호출부는 머지 충돌이 적도록 `type:` 한 줄만 더하거나 바꿨다.
+
+### 알려진 한계
+
+- 액션(되돌리기 등)이 있는 스낵바는 Flutter 기본값(`persist`)대로 저절로 사라지지 않는다. 이제 X · 좌우 스와이프로 닫을 수 있어
+  그대로 뒀다. 실사용에서 거슬리면 `persist: false` 를 검토한다(접근성 탐색 중에는 Flutter 가 어차피 자동으로 닫지 않는다).
+
+### 검증
+
+design_system `flutter test` 86건 · `flutter analyze` 0, walk `flutter analyze` 0 · `flutter test` +4184건 통과(1 skip),
+trader · pawlog `flutter analyze` 0 · `flutter test` 통과. 에뮬레이터는 다른 세션들이 함께 쓰고 있어 설치하지 않았고,
+실제 폰트를 실은 위젯 렌더로 네 유형 × 라이트/다크 모양(아이콘 · 색 · [메시지 · 되돌리기 · X] 배치)을 확인했다. 기기 확인은 대기.
