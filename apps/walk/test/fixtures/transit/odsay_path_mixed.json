@@ -1,0 +1,9 @@
+{"result": {"searchType": 0, "path": [
+ {"pathType": 3, "info": {"totalTime": 52, "payment": 2150}, "subPath": [
+  {"trafficType": 3, "distance": 300, "sectionTime": 4},
+  {"trafficType": 1, "distance": 8000, "sectionTime": 20, "stationCount": 7, "lane": [{"name": "수도권 2호선", "subwayCode": 2}], "way": "신도림", "wayCode": 2, "startName": "강남", "endName": "사당"},
+  {"trafficType": 3, "distance": 150, "sectionTime": 2},
+  {"trafficType": 2, "distance": 5000, "sectionTime": 18, "stationCount": 9, "lane": [{"busNo": "5412", "type": 11}, {"busNo": "6411", "type": 11}], "startName": "사당역", "endName": "봉천동"},
+  {"trafficType": 3, "distance": 250, "sectionTime": 8}
+ ]}
+]}}

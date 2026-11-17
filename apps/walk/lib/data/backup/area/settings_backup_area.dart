@@ -10,11 +10,13 @@ import '../../../domain/backup/backup_failure.dart';
 import '../../../domain/backup/restore_notice.dart';
 import '../../../domain/profile/profile.dart';
 import '../../../domain/profile/profile_repository.dart';
+import '../../../domain/transit/usecase/transit_api_key.dart';
 import '../../commute/prefs_place_repository.dart';
 import '../../location/prefs_location_preferences.dart';
 import '../../location/prefs_map_style_preferences.dart';
 import '../../profile/prefs_profile_repository.dart';
 import '../../settings/prefs_settings_repository.dart';
+import '../../transit/secure_transit_key_store.dart';
 import 'area_io.dart';
 import 'prefs_snapshot.dart';
 
@@ -22,7 +24,7 @@ const _prefsFile = 'prefs.json';
 const _profileFile = 'profile.json';
 const _profileDir = 'profile';
 
-/// 앱 설정 중 백업에 담는 키. 허용 목록만 담는다 — API 키 · 키 상태 · 동의 · 잠금 · 캐시 ·
+/// 앱 설정 중 백업에 담는 키. 허용 목록만 담는다 — API 키 · 키 상태(길찾기 `transit.keyStatus` 만 예외) · 동의 · 잠금 · 캐시 ·
 /// 일시 상태(`walk.goalCelebratedOn`)는 빼고, 알람 · 일기 · 대화 설정은 각 영역이 담는다.
 /// 물어보기 벤더 · 모델 · 빠른 모드(`chat.vendor` · `chat.model` · `chat.fastMode*`)도 뺀다 —
 /// API 키를 따라가는 값인데 키는 담지 않으므로, 벤더만 바뀌면 지금 기기의 키를 다른 벤더로 보낸다.
@@ -33,6 +35,8 @@ const _prefKeys = {
   PrefsLocationPreferences.retentionKey,
   PrefsPlaceRepository.homeKey,
   PrefsPlaceRepository.workKey,
+  // 길찾기를 쓴 적 있는지만 따라간다(비밀 아님). 키 자체는 담지 않는다.
+  SecureTransitKeyStore.statusKey,
 };
 
 /// 앱 설정 영역. `settings/prefs.json` 과 프로필(`settings/profile.json` · `settings/profile/<사진>`)을 쓴다.
@@ -40,10 +44,13 @@ const _prefKeys = {
 /// 프로필은 이름 · 소개 · 사진만 담는다. "물어보기에 이름 알려주기"는 외부 전송 동의 성격이라 담지 않고,
 /// 복원하면 꺼진다. `profile.json` 이 없는 옛 백업은 지금 프로필을 그대로 둔다.
 class SettingsBackupArea implements BackupAreaSource {
-  SettingsBackupArea(this._prefs, this._profile);
+  SettingsBackupArea(this._prefs, this._profile, this._transitKey);
 
   final SharedPreferences _prefs;
   final ProfileRepository _profile;
+
+  /// 길찾기 키는 백업에 담지 않으므로 복원 뒤 쓸 수 있는 키가 있는지만 본다.
+  final TransitApiKey _transitKey;
 
   Directory _areaDir(Directory root) => Directory('${root.path}/${id.name}');
 
@@ -155,5 +162,9 @@ class SettingsBackupArea implements BackupAreaSource {
   }
 
   @override
-  Future<Set<RestoreNotice>> afterRestore() async => const {};
+  Future<Set<RestoreNotice>> afterRestore() async => {
+    if (_prefs.containsKey(SecureTransitKeyStore.statusKey) &&
+        await _transitKey.current() == null)
+      RestoreNotice.transitKeyNeeded,
+  };
 }

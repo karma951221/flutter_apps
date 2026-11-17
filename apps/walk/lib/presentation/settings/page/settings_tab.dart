@@ -14,6 +14,7 @@ import '../../map/cubit/map_record_state.dart';
 import '../../profile/cubit/profile_cubit.dart';
 import '../../profile/page/profile_page.dart';
 import '../../profile/widget/profile_avatar.dart';
+import '../../transit/open_transit_key_settings.dart';
 import '../cubit/connection_status_cubit.dart';
 import '../cubit/diary_settings_cubit.dart';
 import '../cubit/theme_cubit.dart';
@@ -102,12 +103,18 @@ class _SettingsTabState extends State<SettingsTab> {
             l10n.walkBackupSettingsTitle,
           ),
           SettingsSectionHeader(l10n.walkSettingsConnections),
-          // 외부 서비스 키 행이 늘면(길찾기 ODsay 등) 이 아래에 더한다. 상태는 ConnectionStatusCubit.
           shortcut(
             SettingsTarget.chat,
             Icons.key_outlined,
             l10n.walkSettingsAiConnection,
             subtitle: const _AiConnectionLabel(),
+          ),
+          AppListTile(
+            key: const Key('settings-open-transit'),
+            leading: const Icon(Icons.directions_transit_outlined),
+            title: Text(l10n.walkTransitSettingsTitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => unawaited(openTransitKeySettings(context)),
           ),
           SettingsSectionHeader(l10n.walkSettingsLocation),
           shortcut(

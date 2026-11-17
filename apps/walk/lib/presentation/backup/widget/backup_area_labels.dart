@@ -76,5 +76,6 @@ extension BackupLabels on AppLocalizations {
     RestoreNotice.locationRecordingOff =>
       '$walkBackupNoticeLocationOff $walkBackupNoticeLocationRetention',
     RestoreNotice.apiKeyNeeded => walkBackupNoticeApiKey,
+    RestoreNotice.transitKeyNeeded => walkBackupNoticeTransitKey,
   };
 }

@@ -81,6 +81,10 @@ import '../../data/lock/local_auth_device_auth.dart' as _i982;
 import '../../data/lock/prefs_lock_repository.dart' as _i691;
 import '../../data/profile/prefs_profile_repository.dart' as _i33;
 import '../../data/settings/prefs_settings_repository.dart' as _i724;
+import '../../data/transit/odsay_transit_client.dart' as _i90;
+import '../../data/transit/prefs_recent_points.dart' as _i697;
+import '../../data/transit/prefs_transit_cache.dart' as _i233;
+import '../../data/transit/secure_transit_key_store.dart' as _i258;
 import '../../data/walk/health/health_gateway.dart' as _i332;
 import '../../data/walk/repository/health_connect_activity_repository.dart'
     as _i1016;
@@ -160,6 +164,16 @@ import '../../domain/lock/lock_repository.dart' as _i43;
 import '../../domain/lock/screen_lock_settings.dart' as _i194;
 import '../../domain/profile/profile_repository.dart' as _i716;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
+import '../../domain/transit/repository/recent_points.dart' as _i496;
+import '../../domain/transit/repository/station_search.dart' as _i621;
+import '../../domain/transit/repository/transit_cache.dart' as _i857;
+import '../../domain/transit/repository/transit_key_store.dart' as _i910;
+import '../../domain/transit/repository/transit_route_source.dart' as _i859;
+import '../../domain/transit/usecase/find_transit_routes.dart' as _i510;
+import '../../domain/transit/usecase/search_stations.dart' as _i341;
+import '../../domain/transit/usecase/transit_api_key.dart' as _i920;
+import '../../domain/transit/usecase/transit_point_suggestions.dart' as _i221;
+import '../../domain/transit/usecase/verify_transit_key.dart' as _i1051;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
 import '../../domain/weather/repository/weather_repository.dart' as _i903;
@@ -173,6 +187,8 @@ import '../../presentation/lock/media_pick_guard.dart' as _i488;
 import '../../presentation/map/cubit/map_style_cubit.dart' as _i58;
 import '../../presentation/map/cubit/map_view_cubit.dart' as _i276;
 import '../../presentation/map/map_open_requests.dart' as _i98;
+import '../../presentation/transit/cubit/point_picker_cubit.dart' as _i77;
+import '../../presentation/transit/cubit/transit_cubit.dart' as _i245;
 import '../../presentation/weather/cubit/weather_cubit.dart' as _i931;
 import '../config/commute_api_keys.dart' as _i546;
 import 'register_module.dart' as _i291;
@@ -187,6 +203,7 @@ extension GetItInjectableX on _i174.GetIt {
     final registerModule = _$RegisterModule();
     final alarmPermissionModule = _$AlarmPermissionModule();
     final holidayModule = _$HolidayModule();
+    final transitModule = _$TransitModule();
     await gh.factoryAsync<_i460.SharedPreferences>(
       () => registerModule.sharedPreferences,
       preResolve: true,
@@ -270,6 +287,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i733.PhotoMetaReader>(
       () => const _i797.ExifPhotoMetaReader(),
     );
+    gh.lazySingleton<_i910.TransitKeyStore>(
+      () => _i258.SecureTransitKeyStore(
+        gh<_i558.FlutterSecureStorage>(),
+        gh<_i460.SharedPreferences>(),
+      ),
+    );
     gh.lazySingleton<_i695.AttachmentLoader>(
       () => _i255.FileAttachmentLoader(),
     );
@@ -287,6 +310,12 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i835.WorkspaceShare>(
       () => _i835.SharePlusWorkspaceShare(gh<_i488.MediaPickGuard>()),
+    );
+    gh.lazySingleton<_i857.TransitCache>(
+      () => _i233.PrefsTransitCache(
+        gh<_i460.SharedPreferences>(),
+        gh<_i494.Clock>(),
+      ),
     );
     gh.lazySingleton<_i674.MediaProcessor>(() => _i17.PluginMediaProcessor());
     gh.lazySingleton<_i488.RouteFinder>(
@@ -336,6 +365,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i442.OpenAiChatModel>(
       () => _i442.OpenAiChatModel(gh<_i519.Client>(), gh<_i825.ChatTrace>()),
     );
+    gh.lazySingleton<_i920.TransitApiKey>(
+      () => registerModule.transitApiKey(
+        gh<_i910.TransitKeyStore>(),
+        gh<_i546.CommuteApiKeys>(),
+      ),
+    );
     gh.lazySingleton<_i1004.ChatModelRegistry>(
       () => _i1037.VendorChatModelRegistry(
         gh<_i645.AnthropicChatModel>(),
@@ -365,6 +400,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i645.LocationAccess>(
       () => registerModule.locationAccess(gh<_i645.LocationGateway>()),
+    );
+    gh.lazySingleton<_i90.OdsayTransitClient>(
+      () => _i90.OdsayTransitClient(gh<_i519.Client>()),
     );
     gh.lazySingleton<_i880.ChatModelCatalog>(
       () => _i878.PrefsChatModelCatalog(gh<_i460.SharedPreferences>()),
@@ -463,6 +501,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i296.AlarmRepository>(
       () => _i1.PrefsAlarmRepository(gh<_i460.SharedPreferences>()),
     );
+    gh.lazySingleton<_i496.RecentPoints>(
+      () => _i697.PrefsRecentPoints(gh<_i460.SharedPreferences>()),
+    );
     gh.lazySingleton<_i520.ChatUsageLog>(
       () => _i1028.DriftChatUsageLog(gh<_i933.ChatDatabase>()),
     );
@@ -484,6 +525,18 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i5.DefaultWalkUseCase(
         gh<_i204.ActivityRepository>(),
         gh<_i494.Clock>(),
+      ),
+    );
+    gh.lazySingleton<_i859.TransitRouteSource>(
+      () => transitModule.transitRouteSource(gh<_i90.OdsayTransitClient>()),
+    );
+    gh.lazySingleton<_i621.StationSearch>(
+      () => transitModule.stationSearch(gh<_i90.OdsayTransitClient>()),
+    );
+    gh.factory<_i1051.VerifyTransitKey>(
+      () => _i1051.VerifyTransitKey(
+        gh<_i621.StationSearch>(),
+        gh<_i910.TransitKeyStore>(),
       ),
     );
     gh.lazySingleton<_i764.LocationBackupArea>(
@@ -511,6 +564,16 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i440.ChatSuggestionStore>(),
         gh<_i520.ChatUsageLog>(),
         gh<_i494.IdGenerator>(),
+        gh<_i494.Clock>(),
+      ),
+    );
+    gh.factory<_i221.TransitPointSuggestions>(
+      () => _i221.TransitPointSuggestions(
+        gh<_i142.PlaceRepository>(),
+        gh<_i496.RecentPoints>(),
+        gh<_i379.LocationRepository>(),
+        gh<_i673.StayNamer>(),
+        gh<_i993.LocationRecorder>(),
         gh<_i494.Clock>(),
       ),
     );
@@ -545,6 +608,13 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.Clock>(),
       ),
     );
+    gh.lazySingleton<_i830.SettingsBackupArea>(
+      () => registerModule.settingsBackupArea(
+        gh<_i460.SharedPreferences>(),
+        gh<_i716.ProfileRepository>(),
+        gh<_i920.TransitApiKey>(),
+      ),
+    );
     gh.lazySingleton<_i58.MapStyleCubit>(
       () => _i58.MapStyleCubit(gh<_i483.MapStylePreferences>()),
       dispose: (i) => i.close(),
@@ -554,12 +624,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i1060.Workspace>(),
         gh<_i695.AttachmentLoader>(),
         changes: gh<_i155.WorkspaceChanges>(),
-      ),
-    );
-    gh.lazySingleton<_i830.SettingsBackupArea>(
-      () => registerModule.settingsBackupArea(
-        gh<_i460.SharedPreferences>(),
-        gh<_i716.ProfileRepository>(),
       ),
     );
     gh.lazySingleton<_i122.DiaryRepository>(
@@ -618,6 +682,23 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i494.Clock>(),
       ),
     );
+    gh.factory<_i510.FindTransitRoutes>(
+      () => _i510.FindTransitRoutes(
+        gh<_i859.TransitRouteSource>(),
+        gh<_i857.TransitCache>(),
+        gh<_i920.TransitApiKey>(),
+        gh<_i910.TransitKeyStore>(),
+        gh<_i494.Clock>(),
+      ),
+    );
+    gh.factory<_i341.SearchStations>(
+      () => _i341.SearchStations(
+        gh<_i621.StationSearch>(),
+        gh<_i857.TransitCache>(),
+        gh<_i920.TransitApiKey>(),
+        gh<_i910.TransitKeyStore>(),
+      ),
+    );
     gh.factory<_i276.MapViewCubit>(
       () => _i276.MapViewCubit(
         gh<_i379.LocationRepository>(),
@@ -653,6 +734,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i283.WeatherLocator>(),
         gh<_i858.WeatherCache>(),
         gh<_i494.Clock>(),
+      ),
+    );
+    gh.factory<_i77.PointPickerCubit>(
+      () => _i77.PointPickerCubit(
+        gh<_i341.SearchStations>(),
+        gh<_i63.AddressSearch>(),
+        gh<_i221.TransitPointSuggestions>(),
+        gh<_i910.TransitKeyStore>(),
       ),
     );
     gh.lazySingleton<_i317.ChatModelChoice>(
@@ -698,6 +787,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i520.ChatUsageLog>(),
         gh<_i494.IdGenerator>(),
         gh<_i494.Clock>(),
+      ),
+    );
+    gh.factory<_i245.TransitCubit>(
+      () => _i245.TransitCubit(
+        gh<_i510.FindTransitRoutes>(),
+        gh<_i693.PlaceSource>(),
+        gh<_i496.RecentPoints>(),
+        gh<_i910.TransitKeyStore>(),
       ),
     );
     gh.lazySingleton<_i70.LifeTools>(
@@ -766,3 +863,5 @@ class _$RegisterModule extends _i291.RegisterModule {}
 class _$AlarmPermissionModule extends _i343.AlarmPermissionModule {}
 
 class _$HolidayModule extends _i183.HolidayModule {}
+
+class _$TransitModule extends _i90.TransitModule {}

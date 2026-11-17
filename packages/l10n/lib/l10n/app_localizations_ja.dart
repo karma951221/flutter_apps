@@ -4557,6 +4557,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkToolsTabWeather => '天気';
 
   @override
+  String get walkToolsTabTransit => '乗換案内';
+
+  @override
   String get walkWeatherCurrentPlace => '現在地';
 
   @override
@@ -5110,6 +5113,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkBackupNoticeApiKey => '質問のAPIキーをもう一度入力してください。';
 
   @override
+  String get walkBackupNoticeTransitKey => '乗換案内のODsayキーをもう一度入力してください。';
+
+  @override
   String get walkBackupRecoveryTitle => 'アプリを再起動してください';
 
   @override
@@ -5150,4 +5156,256 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkBackupFailIo => 'バックアップ作業ができませんでした';
+
+  @override
+  String get walkTransitSettingsTitle => '乗換案内の設定';
+
+  @override
+  String get walkTransitKeyTitle => 'ODsayキー';
+
+  @override
+  String get walkTransitKeyEmpty => 'キーがありません';
+
+  @override
+  String get walkTransitKeyStatusConnected => '接続済み';
+
+  @override
+  String get walkTransitKeyStatusUnverified => '未確認';
+
+  @override
+  String get walkTransitKeyInputHint => 'キーを貼り付け';
+
+  @override
+  String get walkTransitKeySave => '保存';
+
+  @override
+  String get walkTransitKeyDelete => 'キーを削除';
+
+  @override
+  String get walkTransitKeyDeleteTitle => '乗換案内のキーを削除しますか？';
+
+  @override
+  String get walkTransitKeyDeleteBody =>
+      '保存したキーがこの端末から削除されます。再び使うにはキーを入れ直してください。';
+
+  @override
+  String get walkTransitKeySaved => '乗換案内のキーを接続しました';
+
+  @override
+  String get walkTransitKeySavedUnverified => '確認せずに保存しました';
+
+  @override
+  String get walkTransitKeySaveFailed => 'キーを保存できませんでした';
+
+  @override
+  String get walkTransitKeyDeleted => 'キーを削除しました';
+
+  @override
+  String get walkTransitKeyDeleteFailed => 'キーを削除できませんでした';
+
+  @override
+  String get walkTransitKeyUnverifiedTitle => 'キーを確認できませんでした';
+
+  @override
+  String get walkTransitKeyUnverifiedBody => 'それでも保存しますか？';
+
+  @override
+  String get walkTransitKeyUnverifiedConfirm => 'それでも保存';
+
+  @override
+  String get walkTransitKeyGuide =>
+      'lab.odsay.com でキーを発行します。プラットフォームはAndroid、パッケージ名は com.karma.walk で登録してください。';
+
+  @override
+  String get walkTransitFrom => '出発';
+
+  @override
+  String get walkTransitTo => '到着';
+
+  @override
+  String get walkTransitSwap => '出発・到着を入れ替え';
+
+  @override
+  String get walkTransitPickHint => 'タップして選択';
+
+  @override
+  String get walkTransitLocating => '現在地を取得中…';
+
+  @override
+  String get walkTransitLocationFailed => '現在地を取得できません・タップして選択';
+
+  @override
+  String get walkTransitCurrentLocation => '現在地';
+
+  @override
+  String get walkTransitHome => '自宅';
+
+  @override
+  String get walkTransitWork => '職場';
+
+  @override
+  String get walkTransitFrequent => 'よく行く場所';
+
+  @override
+  String get walkTransitRecent => '最近';
+
+  @override
+  String get walkTransitPlaceFallback => '選んだ場所';
+
+  @override
+  String get walkTransitIdle => '到着地を選んでください';
+
+  @override
+  String get walkTransitIdleFrom => '出発地を選んでください';
+
+  @override
+  String get walkTransitIdleBody => '出発と到着が決まるとすぐに経路を検索します';
+
+  @override
+  String walkTransitFetchedAgo(int minutes) {
+    return '$minutes分前の結果';
+  }
+
+  @override
+  String get walkTransitFetchedJustNow => 'たった今の結果';
+
+  @override
+  String get walkTransitRefresh => '更新';
+
+  @override
+  String get walkTransitNote => '乗換・待ち時間は含まれない場合があります';
+
+  @override
+  String walkTransitTotal(int minutes) {
+    return '$minutes分';
+  }
+
+  @override
+  String walkTransitTotalHours(int hours, int minutes) {
+    return '$hours時間$minutes分';
+  }
+
+  @override
+  String walkTransitTotalHoursOnly(int hours) {
+    return '$hours時間';
+  }
+
+  @override
+  String walkTransitTransfers(int count) {
+    return '乗換 $count';
+  }
+
+  @override
+  String walkTransitWalk(int minutes) {
+    return '徒歩 $minutes分';
+  }
+
+  @override
+  String walkTransitFare(String fare) {
+    return '$fareウォン';
+  }
+
+  @override
+  String get walkTransitMissingKey => '乗換案内のキーが必要です';
+
+  @override
+  String get walkTransitMissingKeyBody => 'ODsayキーを入れると公共交通の経路が見られます';
+
+  @override
+  String get walkTransitOpenKeySettings => 'キー設定';
+
+  @override
+  String get walkTransitKeyRejected => 'ODsayがキーを受け付けませんでした';
+
+  @override
+  String get walkTransitQuota => '今日の無料枠を使い切りました';
+
+  @override
+  String get walkTransitQuotaBody => '明日また検索できます';
+
+  @override
+  String get walkTransitNetwork => 'インターネット接続を確認してください';
+
+  @override
+  String get walkTransitNoRoute => '公共交通の経路がありません';
+
+  @override
+  String get walkTransitTooClose => '歩いて行ける距離です';
+
+  @override
+  String get walkTransitTooCloseBody => '出発地と到着地が近すぎて経路がありません';
+
+  @override
+  String get walkTransitServer => '経路を検索できませんでした';
+
+  @override
+  String get walkTransitMenuKeySettings => '乗換案内のキー設定';
+
+  @override
+  String get walkTransitSearchHint => '駅・停留所・住所を検索';
+
+  @override
+  String get walkTransitSetHome => '自宅を設定';
+
+  @override
+  String get walkTransitSetWork => '職場を設定';
+
+  @override
+  String get walkTransitSaveHint => '長押しで今の場所を保存';
+
+  @override
+  String get walkTransitSavedHome => '自宅として保存しました';
+
+  @override
+  String get walkTransitSavedWork => '職場として保存しました';
+
+  @override
+  String get walkTransitSaveNothing => '先に場所を選んでください';
+
+  @override
+  String get walkTransitSaveFailed => '保存できませんでした';
+
+  @override
+  String get walkTransitResults => '検索結果';
+
+  @override
+  String walkTransitFindAddress(String query) {
+    return '住所で検索:「$query」';
+  }
+
+  @override
+  String get walkTransitLocateFailed => '現在地を取得できませんでした';
+
+  @override
+  String get walkTransitDetailTitle => '経路の詳細';
+
+  @override
+  String walkTransitLegWalk(int minutes, int meters) {
+    return '徒歩 $minutes分(${meters}m)';
+  }
+
+  @override
+  String walkTransitLegTransferWalk(int minutes) {
+    return '乗換徒歩 $minutes分';
+  }
+
+  @override
+  String walkTransitLegStops(String start, String end) {
+    return '$start → $end';
+  }
+
+  @override
+  String walkTransitLegSubwayInfo(int count, int minutes) {
+    return '$count駅・$minutes分';
+  }
+
+  @override
+  String walkTransitLegWay(String way) {
+    return '$way方面';
+  }
+
+  @override
+  String walkTransitLegBusInfo(int count, int minutes) {
+    return '$count停留所・$minutes分';
+  }
 }

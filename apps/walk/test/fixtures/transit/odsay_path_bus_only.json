@@ -1,0 +1,7 @@
+{"result": {"path": [
+ {"pathType": 2, "info": {"totalTime": 30}, "subPath": [
+  {"trafficType": 3, "distance": 100, "sectionTime": 2},
+  {"trafficType": 2, "distance": 4000, "sectionTime": 25, "stationCount": 8, "lane": [{"busNo": "146"}], "startName": "A정류장", "endName": "B정류장"},
+  {"trafficType": 3, "distance": 100, "sectionTime": 3}
+ ]}
+]}}

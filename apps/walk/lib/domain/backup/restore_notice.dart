@@ -14,4 +14,7 @@ enum RestoreNotice {
 
   /// 물어보기 API 키는 백업에 없다 — 다시 넣어야 한다.
   apiKeyNeeded,
+
+  /// 길찾기(ODsay) 키는 백업에 없다 — 쓸 수 있는 키가 없으면 다시 넣어야 한다.
+  transitKeyNeeded,
 }

@@ -121,7 +121,7 @@ skip 1건은 서머타임 테스트다. 기기 시간대에 3월 서머타임 �
 | `presentation/settings/widget/step_goal_sheet_test.dart` | `StepGoalSheet` | 슬라이더 2,000~30,000 · 1,000 단위 · 저장하면 값 반환 |
 | `presentation/settings/page/{app,alarm,walk,diary}_settings_page_test.dart` · `settings/widget/lock_settings_section_test.dart` | 설정 화면 넷 · 잠금 섹션 | 앱 설정(잠금 · 테마 선택 · 기능별 바로가기 → 해당 설정, 일기 · 물어보기는 잠금 게이트) · 알람 설정(공휴일 그룹 · 권한 행 동작 · 확인 중 문구) · 걷기 설정(하루 목표 시트 저장/취소 · Health Connect 권한) · 일기 설정(용량 문구 · 보관 기간 · 열 때마다 다시 읽기 · 잠기면 열리지 않음) · 잠금(재잠금 시간 · 잠금 꺼짐이면 재잠금 행 닫힘 · 패턴 표시). 물어보기 설정 화면은 아래 `open_settings_test` 가 본다 |
 | `presentation/settings/open_settings_test.dart` | `openSettings` · `SettingsTarget` | 기능별 설정 화면 구성: 알람(공휴일 · 알람 권한, 걷기 항목 없음) · 걷기(걸음 목표 · Health Connect, 공휴일 없음) · 일기(풀리면 보관 기간 · 저장 공간, 잠기면 잠금 화면 먼저) · 물어보기(풀리면 키 행, 잠기면 잠금 화면 먼저) · 앱 설정(잠금 · 테마 · 기능별 바로가기 넷) · 앱 설정 › 알람 설정에서 뒤로 가면 앱 설정 · 앱 설정 › 일기 설정은 잠겨 있으면 잠금 화면을 거침 |
-| `presentation/shell/page/tools_tab_test.dart` · `shell/widget/feature_menu_test.dart` | `ToolsTab` · `FeatureMenu` | 도구: 처음 알람 · 걷기 탭 전환 · 가로로 밀어도 안 넘어감 · 선택별 ⋮ · 걷기 화면 active 전달 / ⋮ 메뉴: 항목 순서(기능 항목 → "○○ 설정" → "앱 설정") · 잠기면 앱 설정만 |
+| `presentation/shell/page/tools_tab_test.dart` · `shell/widget/feature_menu_test.dart` | `ToolsTab` · `FeatureMenu` | 도구: 처음 알람 · 걷기 · 길찾기 탭 전환 · 가로로 밀어도 안 넘어감 · 선택별 ⋮ · 걷기 화면 active 전달 / ⋮ 메뉴: 항목 순서(기능 항목 → "○○ 설정" → "앱 설정") · 잠기면 앱 설정만 |
 | `presentation/shell/page/main_shell_page_test.dart` | `MainShellPage` | **탭 구성**: 첫 탭 도구 › 알람 · 시작할 때 sync · 선택 탭 채움 아이콘 · 하단 탭은 도구 · 기록 · 물어보기 셋(통근 · 설정 탭 없음) · 탭 전환(도구는 알람 상단 탭부터) · 도구에서 고른 상단 탭은 다른 탭에 다녀와도 그대로 · 기록 › 일기 스낵바가 ＋ 를 가리지 않음 · **설정 진입**: 물어보기 [설정 열기] → 물어보기 설정 · 일기 ⋮ 는 잠긴 동안 앱 설정만 · 알람 권한 배너 → 알람 설정(돌아오면 권한 다시 읽기) · 알람 설정을 연 채 복귀하면 권한 행 다시 읽기 · 알람 설정의 공휴일 출처 · 캘린더 권한(시스템 설정에서 허용하고 돌아오면 다시 읽기) · **알람 동기화**: 시작 · 복귀 때 울림 기록 옮기기 · 복귀 sync · 울림 화면이 걷히면 sync 뒤 목록 · sync 뒤 목록 · sync 실패해도 목록(시작 때 빈 목록) · 네이티브 `resync` → 재설정 · 목록 · 응답(실패해도) · 사라지면 핸들러 해제 · 시작 · resync 때 공휴일 캐시 갱신 → 예약(갱신 실패해도 예약) · 네이티브 `reminderAction` → 건너뛰고 목록 · true(실패면 false, 알림 남김) · **홈 화면 위젯**: 눌러 열면 도구 › 알람 · 걷기를 보던 앱을 위젯으로 다시 열면 도구 › 알람 · 위젯이 아닌 복귀는 탭 그대로 · **축하**: 앱 설정 › 걷기 설정에서 목표를 낮춰 달성해도 도구 › 걷기를 열 때 한 번 · **도구 › 걷기 ⋮ › 걷기 설정에서 목표를 낮춰 달성하면 설정이 덮는 동안 0번, 돌아오면 한 번** · **헤드리스 기다리기**: 시작 · 복귀 sync 는 네이티브 `awaitIdle` 응답 뒤 · 응답이 없으면 10초 뒤 그냥 sync · 네이티브 `resync` 는 `awaitIdle` 을 묻지 않음 · **일기**: 시작 때 고아 청소 한 번(실패해도 화면) · 잠긴 채 시작, 풀었다 백그라운드에 오래 있으면 다시 잠김 · 일기가 잠겨 있어도 알람 울림 화면 |
 | `core/alarm_ring_listener_test.dart` | `AlarmRingListener` | 한 번만 띄움 · 밖에서 끄면 걷음 · 화면이 먼저 닫힘 · 스누즈 뒤 다시 띄움 · 가려진 화면만 걷음 · 내비게이터 전 값 · 첫 프레임 전 시작→끝이면 안 띄움 · 중복 start · dispose · **앱 복귀 안전망: 플랫폼이 안 울린다는 화면을 걷음 · 아직 울리면 둠 · 걷은 뒤 늦은 같은 울림 값으로 다시 띄우지 않음(끝 값 뒤 다시 울리면 띄움)** |
 | `core/app_test.dart` | `WalkApp` · `themeModeOf` | 테마 매핑 · 저장된 다크로 첫 프레임 · **앱 설정에서 다크를 고르면 바로 어두워짐** |
@@ -281,6 +281,40 @@ DB 는 `NativeDatabase.memory()`(진짜 SQLite — 제약 · 트랜잭션 · FK 
 | `presentation/commute/widget/{arrival_card,verdict_banner,route_options_sheet,place_setup_sheet}_test` | 도착 카드 · 판단 배너 · 경로 고르기 · 장소 설정(검색 상태 정리) · 영어 복수형 |
 
 통근 테스트 중 네트워크 · 위치 · 키는 모두 가짜(`RouteFinder` · `SubwayArrivalSource` · `AddressSearch` · `Clock`)다. 실제 API 호출은 아래 시나리오로 본다.
+
+### 길찾기 — 도메인 · 데이터
+
+ODsay · 위치 · 시계 · 보안 저장소는 모두 가짜다. 픽스처(`test/fixtures/transit/*.json`)는 키가 없어 **문서 기준으로 손으로 만든 것**이다 — 실제 응답 확인 때 교체한다([진행 현황](status.md#길찾기)).
+
+| 파일 | 확인 |
+|---|---|
+| `domain/transit/entity/transit_path_test` · `transit_point_test` | 도보 합(`walkMinutes`) · 장소 · 역 json 왕복 · 깨진 json 거절 · 캐시 키 소수 넷째 자리 반올림 |
+| `domain/transit/transit_sort_test` | 총 시간 → 환승 → 도보 순 정렬 |
+| `domain/transit/usecase/find_transit_routes_test` | 같은 쌍 10분 안 캐시(소스 1회) · 새로고침은 캐시 건너뜀 · 키 없음은 호출 없이 `missingKey` · 거부 → 상태 거부 · 성공 → 연결됨 · 정렬 |
+| `domain/transit/usecase/search_stations_test` | 1글자 호출 없음 · 캐시 적중 호출 없음 · 키 없음 · 거부/성공이 키 상태 기록 · 캐시 적중은 상태 불변 |
+| `domain/transit/usecase/verify_transit_key_test` | 연결되면 저장 · 거부는 저장 안 함 · 네트워크 실패 시 "그래도 저장"일 때만 확인 안 됨으로 저장 |
+| `domain/transit/usecase/transit_api_key_test` | 저장 키 우선 · 없으면 define 기본값 · 빈 기본값은 없음 |
+| `domain/transit/usecase/transit_point_suggestions_test` | 집/회사(통근 `PlaceRepository`) · 최근 · 자주 간 곳 상위(30일, 이름 포함) · 기록 꺼짐 · 위치 저장소 예외 · 오프라인이면 빈 라벨로 유지 · 이름 조회 시간 한도 · 집/회사로 저장 |
+| `data/transit/odsay_transit_client_test` | 경로 파싱(지하철 · 버스 · 혼합 · 여러 번호 · 요금 없음) · 환승 수 · 오류 분류(키 거부 · 가까움 · 경로 없음 · 한도 · 알 수 없음) · 소켓/타임아웃/TLS → 네트워크 · 비 2xx → `HTTP <code>` · 전부 해석 실패 · 키 URL 인코딩 · 역 검색(지하철 먼저 · 20개 · 정류장 설명 빈 칸) |
+| `data/transit/prefs_transit_cache_test` | 경로 10분 · 역 7일 만료 · 새 인스턴스에서도 유지 · 검색어 정규화 · 최대 100개 · 깨진 json 은 미스 |
+| `data/transit/prefs_recent_points_test` | 최근 10개 · 중복 제거 · 깨진 항목 건너뜀 |
+| `data/transit/secure_transit_key_store_test` | 상태 저장 · 삭제 · 읽을 수 없는 키스토어는 키 없음 · 빈 키 거절 · 변경 스트림은 저장 · 삭제에만 |
+| `data/backup/area/settings_backup_area_test` | 길찾기 키 · 캐시 · 최근은 허용 목록에 없음 · 키 상태만 들어가고 복원 뒤 키가 없으면 `transitKeyNeeded` 안내 |
+| `domain/chat/api_key_mask_test` | 앞 4자 + 점 마스킹(벤더 중립 도우미) |
+| `core/di/transit_di_test` | 길찾기 유스케이스 · cubit 이 DI 그래프에서 만들어짐 |
+
+### 길찾기 — 화면
+
+| 파일 | 확인 |
+|---|---|
+| `presentation/transit/cubit/transit_cubit_test` | 둘 다 차면 조회 · 빈 칸 채우기 · 바꾸기 · 새로고침 · 옛 응답 무시 · 위치 실패/예외 · 키 없음/거부 상태에서 키 변경 시 다시 조회(그 밖의 상태는 무시) · close 때 구독 해제 |
+| `presentation/transit/cubit/point_picker_cubit_test` | 후보 채움 · 500ms 디바운스 1회 · **조합 입력은 900ms** · 조합 후 확정은 500ms 다시 · 제출 시 즉시 역 검색 · 1글자 호출 없음 · 주소는 요청할 때만 · 역 검색 실패가 상태에 남고 새 검색에서 지워짐 · 키 변경 후 재검색 |
+| `presentation/transit/cubit/transit_key_cubit_test` | 키 없음 · 저장 키 마스킹 · 저장 → 연결됨 · 거부 원문 유지/지움 · 네트워크 실패 후 그래도 저장 · 삭제 |
+| `presentation/transit/page/transit_page_test` | 출발 · 도착 칸 · 키 없음 안내 · 거부 · 한도 · 가까움 · 경로 없음 · 네트워크 문구 · 로딩 · 경로 목록 순서 · 새로고침 · 상세 열기 · 빠른 칩 · 위치 실패 힌트 · 키 설정에서 돌아오면 다시 조회 |
+| `presentation/transit/page/point_picker_page_test` | 자주 간 곳 없으면 숨김 · 이름 없으면 대체 문구 · 역 탭 선택 · 주소 검색 · 키보드 검색은 역만 · 집으로 길게 눌러 저장 · 실패 다시 시도 |
+| `presentation/transit/page/transit_path_detail_page_test` · `widget/transit_path_tile_test` | 요약 · 구간 타임라인(도보 · 지하철 · 환승 도보 · 버스) · 영어 복수형 · 요금 없음 생략 · 정시 분 생략 |
+| `presentation/settings/page/transit_settings_page_test` | 마스킹 · 저장하면 연결됨 스낵바 · 거부는 원문 · 입력하면 거부 문구 지움 · 네트워크면 묻고 저장 · 취소 · 삭제 확인 · 앱 설정의 길찾기 키 행 |
+| `presentation/shell/page/tools_tab_test` | 상단 탭 알람 · 걷기 · 날씨 · 길찾기 · 길찾기 탭 본문 · 길찾기 ⋮ (키 설정 · 앱 설정) · **360dp · 글자 1.3배에서 상단 탭과 길찾기 본문이 넘치지 않음(탭 디자인 A) · ko/en/ja 탭 라벨이 칸 안에 다 그려짐(잘림 없음)** |
 
 ### 물어보기 — 채팅 · 기상 기록 보관
 
@@ -566,6 +600,26 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 | L29 | (알려진 한계) 정지 중 `adb shell am kill com.karma.walk` 또는 제조사 정리로 서비스를 죽이고 몇 시간 뒤 이동 → 앱 열기 | 끝 표시 점이 없어 머묾이 이동 뒤 첫 점 직전까지 이어진다. 앱을 열면 서비스가 되살아나고 `recordingSince` 가 새로 잡혀, 되살리기 전 시간은 지금까지 잇지 않는다 | 대기 |
 | L30 | 신체 활동 권한 거부(또는 촘촘) 상태로 사무실에 2시간 넘게 가만히 → 지도 › 위치 기록 끄기 → 지도 › 오늘 | 끈 시각에 끝 표시 점이 남고 머묾이 끈 시각까지 보인다(사라지지 않음) | 대기 |
 | L31 | 기록을 끈 채 다른 앱으로 위치를 한 번 받은 뒤 곧바로 지도 › 위치 기록 켜기 → 가만히 몇 분 → 지도 › 오늘 | 첫 점이 켠 시각보다 조금 앞서 찍혀도(캐시, 5분 안) 머묾이 지금까지 이어진다 | 대기 |
+
+## 길찾기 기기 시나리오 — 대기
+
+에뮬레이터 확인(2026-11-18, 키 없음 · 영어): 도구 상단 탭 4개(아이콘 + 라벨) · 길찾기 첫 화면(출발 현재 위치 · 도착 비어 있음 안내) · 장소 고르기(현재 위치 · 집/회사 정하기) · 역 검색에서 키 없음 안내 + [키 설정] · 키 설정 화면. **가짜 키로 저장하면 실제 ODsay 가 `[ApiKeyAuthFailed] ApiKey authentication failed.` 를 돌려주고 화면에 그대로 보이며 저장되지 않음**(키 거부 분류 확인). 360dp · 글자 1.3배에서 영어 탭 라벨(Walking · Weather · Transit)이 잘려 `98344ce3` 에서 넘칠 때만 줄이게 고쳤다 — 고친 APK 는 에뮬레이터 저장 공간 부족(INSTALL_FAILED_INSUFFICIENT_STORAGE)으로 다시 설치하지 못해 위젯 테스트(ko/en/ja 라벨 잘림 검사)로만 확인했다.
+
+사용자 몫. ODsay LAB 키를 앱 안에서 넣는다(빌드 옵션 불필요). 개발용이면 `flutter run --dart-define-from-file=config/commute_keys.json` 도 된다.
+
+| # | 시나리오 | 기대 | 결과 |
+|---|---|---|---|
+| T1 | 도구 › 길찾기 ⋮ › 길찾기 키 설정 → 키 입력 → 저장 | 저장 전 연결 확인 → **연결됨** · 키는 앞 4자만 보임. 거부되면 **화면에 뜬 원문을 그대로 기록** | 대기 |
+| T2 | 거부됐다면 — ODsay 에서 서버(IP) · 웹(URI) 키를 추가 발급해 넣어 보기 | 쿼리 `apiKey` 방식이라 같은 코드로 연결됨. 그래도 안 되면 대안(카카오 `publictraffic` 등) 재기획 | 대기 |
+| T3 | 출발 칸 → 역 검색(한글 조합 중 입력 포함: "강남"을 치다 멈춤) | 멈추고 약 1초 안에 지하철역 먼저, 정류장이 뒤에 나옴. 마지막 음절이 조합 중이어도 검색됨 | 대기 |
+| T4 | 출발 · 도착을 고르고 경로 조회 | 총 시간 순 목록(환승 · 도보 · 요금 · 노선 칩), 위에 "환승 · 배차 대기 시간은 빠질 수 있어요" | 대기 |
+| T5 | 경로를 눌러 상세 | 도보 · 지하철 · 환승 · 버스 구간 타임라인, ODsay 앱 · 네이버지도와 견줘 크게 어긋나지 않음 | 대기 |
+| T6 | 새로고침 | 캐시를 건너뛰고 다시 조회 | 대기 |
+| T7 | 같은 출발 · 도착을 10분 안에 다시 조회 | 캐시에서 바로 나옴("n분 전 결과") | 대기 |
+| T8 | 비행기 모드에서 새 쌍 조회 | 네트워크 오류 안내, 마지막 결과 없이 다시 시도 가능 | 대기 |
+| T9 | 키 삭제(키 설정 › 삭제) 후 길찾기 | 키 없음 안내 + [키 입력] | 대기 |
+| T10 | 키 없음 안내에서 도구 ⋮ 로 키를 넣고 돌아옴 | 자동으로 다시 조회됨 | 대기 |
+| T11 | 360dp 폭 · 큰 글씨 · 상단 탭 4개 | 탭 라벨이 넘치거나 잘리지 않음 | 수정 전 영어에서 잘림 발견 → `98344ce3` 수정, 기기 재확인 대기 |
 
 ## 통근 기기 시나리오 — 대기
 

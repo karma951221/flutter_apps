@@ -4966,6 +4966,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkToolsTabWeather => 'Weather';
 
   @override
+  String get walkToolsTabTransit => 'Transit';
+
+  @override
   String get walkWeatherCurrentPlace => 'Current location';
 
   @override
@@ -5550,6 +5553,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkBackupNoticeApiKey => 'Enter your Ask API key again.';
 
   @override
+  String get walkBackupNoticeTransitKey =>
+      'Enter your transit directions (ODsay) key again.';
+
+  @override
   String get walkBackupRecoveryTitle => 'Please restart the app';
 
   @override
@@ -5592,4 +5599,278 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkBackupFailIo => 'Couldn\'t complete the backup task';
+
+  @override
+  String get walkTransitSettingsTitle => 'Directions settings';
+
+  @override
+  String get walkTransitKeyTitle => 'ODsay key';
+
+  @override
+  String get walkTransitKeyEmpty => 'No key yet';
+
+  @override
+  String get walkTransitKeyStatusConnected => 'Connected';
+
+  @override
+  String get walkTransitKeyStatusUnverified => 'Not verified';
+
+  @override
+  String get walkTransitKeyInputHint => 'Paste your key';
+
+  @override
+  String get walkTransitKeySave => 'Save';
+
+  @override
+  String get walkTransitKeyDelete => 'Delete key';
+
+  @override
+  String get walkTransitKeyDeleteTitle => 'Delete the directions key?';
+
+  @override
+  String get walkTransitKeyDeleteBody =>
+      'The saved key is removed from this device. You\'ll need to enter a key again to use directions.';
+
+  @override
+  String get walkTransitKeySaved => 'Directions key connected';
+
+  @override
+  String get walkTransitKeySavedUnverified => 'Saved without verifying';
+
+  @override
+  String get walkTransitKeySaveFailed => 'Couldn\'t save the key';
+
+  @override
+  String get walkTransitKeyDeleted => 'Key deleted';
+
+  @override
+  String get walkTransitKeyDeleteFailed => 'Couldn\'t delete the key';
+
+  @override
+  String get walkTransitKeyUnverifiedTitle => 'Couldn\'t verify the key';
+
+  @override
+  String get walkTransitKeyUnverifiedBody => 'Save it anyway?';
+
+  @override
+  String get walkTransitKeyUnverifiedConfirm => 'Save anyway';
+
+  @override
+  String get walkTransitKeyGuide =>
+      'Get a key at lab.odsay.com. Register the platform as Android and the package name as com.karma.walk.';
+
+  @override
+  String get walkTransitFrom => 'From';
+
+  @override
+  String get walkTransitTo => 'To';
+
+  @override
+  String get walkTransitSwap => 'Swap start and destination';
+
+  @override
+  String get walkTransitPickHint => 'Tap to choose';
+
+  @override
+  String get walkTransitLocating => 'Finding your location…';
+
+  @override
+  String get walkTransitLocationFailed =>
+      'Couldn\'t find your location · Tap to choose';
+
+  @override
+  String get walkTransitCurrentLocation => 'Current location';
+
+  @override
+  String get walkTransitHome => 'Home';
+
+  @override
+  String get walkTransitWork => 'Work';
+
+  @override
+  String get walkTransitFrequent => 'Frequent places';
+
+  @override
+  String get walkTransitRecent => 'Recent';
+
+  @override
+  String get walkTransitPlaceFallback => 'Chosen place';
+
+  @override
+  String get walkTransitIdle => 'Choose a destination';
+
+  @override
+  String get walkTransitIdleFrom => 'Choose a starting point';
+
+  @override
+  String get walkTransitIdleBody =>
+      'Routes appear as soon as both places are set';
+
+  @override
+  String walkTransitFetchedAgo(int minutes) {
+    return 'Results from $minutes min ago';
+  }
+
+  @override
+  String get walkTransitFetchedJustNow => 'Just updated';
+
+  @override
+  String get walkTransitRefresh => 'Refresh';
+
+  @override
+  String get walkTransitNote => 'Transfer and wait times may not be included';
+
+  @override
+  String walkTransitTotal(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String walkTransitTotalHours(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String walkTransitTotalHoursOnly(int hours) {
+    return '$hours h';
+  }
+
+  @override
+  String walkTransitTransfers(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transfers',
+      one: '1 transfer',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String walkTransitWalk(int minutes) {
+    return 'Walk $minutes min';
+  }
+
+  @override
+  String walkTransitFare(String fare) {
+    return '₩$fare';
+  }
+
+  @override
+  String get walkTransitMissingKey => 'A directions key is needed';
+
+  @override
+  String get walkTransitMissingKeyBody =>
+      'Add an ODsay key to see transit routes';
+
+  @override
+  String get walkTransitOpenKeySettings => 'Key settings';
+
+  @override
+  String get walkTransitKeyRejected => 'ODsay didn\'t accept the key';
+
+  @override
+  String get walkTransitQuota => 'Today\'s free quota is used up';
+
+  @override
+  String get walkTransitQuotaBody => 'You can search again tomorrow';
+
+  @override
+  String get walkTransitNetwork => 'Check your internet connection';
+
+  @override
+  String get walkTransitNoRoute => 'No transit route found';
+
+  @override
+  String get walkTransitTooClose => 'It\'s within walking distance';
+
+  @override
+  String get walkTransitTooCloseBody =>
+      'The places are too close for a transit route';
+
+  @override
+  String get walkTransitServer => 'Couldn\'t find routes';
+
+  @override
+  String get walkTransitMenuKeySettings => 'Directions key settings';
+
+  @override
+  String get walkTransitSearchHint => 'Search stations, stops, addresses';
+
+  @override
+  String get walkTransitSetHome => 'Set home';
+
+  @override
+  String get walkTransitSetWork => 'Set work';
+
+  @override
+  String get walkTransitSaveHint => 'Long-press to save the current choice';
+
+  @override
+  String get walkTransitSavedHome => 'Saved as home';
+
+  @override
+  String get walkTransitSavedWork => 'Saved as work';
+
+  @override
+  String get walkTransitSaveNothing => 'Choose a place first';
+
+  @override
+  String get walkTransitSaveFailed => 'Couldn\'t save';
+
+  @override
+  String get walkTransitResults => 'Results';
+
+  @override
+  String walkTransitFindAddress(String query) {
+    return 'Search address: \"$query\"';
+  }
+
+  @override
+  String get walkTransitLocateFailed => 'Couldn\'t find your location';
+
+  @override
+  String get walkTransitDetailTitle => 'Route details';
+
+  @override
+  String walkTransitLegWalk(int minutes, int meters) {
+    return 'Walk $minutes min ($meters m)';
+  }
+
+  @override
+  String walkTransitLegTransferWalk(int minutes) {
+    return 'Transfer walk $minutes min';
+  }
+
+  @override
+  String walkTransitLegStops(String start, String end) {
+    return '$start → $end';
+  }
+
+  @override
+  String walkTransitLegSubwayInfo(int count, int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count stations',
+      one: '1 station',
+    );
+    return '$_temp0 · $minutes min';
+  }
+
+  @override
+  String walkTransitLegWay(String way) {
+    return 'toward $way';
+  }
+
+  @override
+  String walkTransitLegBusInfo(int count, int minutes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count stops',
+      one: '1 stop',
+    );
+    return '$_temp0 · $minutes min';
+  }
 }

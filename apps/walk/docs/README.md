@@ -2,7 +2,7 @@
 
 > [문서 허브](../../../docs/README.md) · [전체 진행 현황](../../../docs/status.md)
 
-생활 도구를 모은 앱 **Life Log** 이다(폴더 · 패키지는 `walk`). 하단 탭 [도구 · 기록 · 물어보기] — 도구는 상단 탭 [알람 · 걷기 · 날씨], 기록은 [일기 · 지도].
+생활 도구를 모은 앱 **Life Log** 이다(폴더 · 패키지는 `walk`). 하단 탭 [도구 · 기록 · 물어보기] — 도구는 상단 탭 [알람 · 걷기 · 날씨 · 길찾기], 기록은 [일기 · 지도].
 
 - **걷기** — 오늘 탭은 걸음을 **하루 목표** 링으로, 기록 탭은 주간 · 월간 막대그래프(목표선)로 모아 본다. 걸음은
   폰의 헬스 앱이 **Health Connect** 에 기록한 값을 읽기만 한다.
@@ -14,8 +14,9 @@
   피드 카드로 돌아보고 글 · 스토리 · 태그 · 장소로 찾는다.
   지우면 휴지통에 갔다가 기간이 지나면 사라진다. 탭을 PIN · 패턴으로 잠글 수 있다. 데이터는 폰 안(drift + 앱 폴더)에만.
 - **날씨** — 지금 위치의 현재 · 시간별(24시간) · 일별(7일) 예보와 "비 언제 와" 한 줄 요약. Open-Meteo(키 없음)에서 받고 마지막 성공을 캐시해 둔다. 일기와 무관.
-- **통근** — 집 ↔ 회사 지하철 출퇴근. 출근/퇴근 방향을 고르면 ODsay 경로와 서울 실시간 도착을 합쳐
-  걷는 시간만으로 "걸어가면 이번 열차 · 다음 열차 기준 · 두 열차 모두 어려움"과 도착 예상 시각을 보이고, 다른 경로를 고를 수 있다. API 키가 필요하다([아래](#통근-api-키)).
+- **길찾기** — 출발 · 도착을 고르면(현재 위치 · 집/회사 · 자주 간 곳 · 최근 · 역/정류장 검색 · 주소) ODsay 대중교통 경로
+  (지하철 · 버스 · 환승)를 총 시간 순으로 보이고, 구간별 상세를 본다. 같은 출발 · 도착은 10분 캐시. API 키가 필요하다([아래](#길찾기-키)).
+  예전 통근 탭(집 ↔ 회사 지하철)은 탭에서 빠졌고 코드만 남아 있다.
 - **설정** — 걷기(하루 목표) · 일기(잠금 · 다시 잠기는 시간 · 휴지통 기간 · 용량) · 권한 상태 · 테마 · 앱 정보.
 
 로그인 · 백엔드 없음, 안드로이드만. 아이콘과 시작 화면은 초록 바탕 흰 알람시계다
@@ -26,20 +27,22 @@
 `presentation/`. 계층 아래에 기능 폴더(`walk/` · `alarm/` · `diary/` · `commute/` · `lock/` · `settings/` · `shell/`)를 둔다. 테스트도
 `test/` 아래 같은 구조다.
 
-## 통근 API 키
+## 길찾기 키
 
-통근 탭은 두 키가 필요하다 — 서울 열린데이터광장(data.seoul.go.kr)의 **실시간 지하철 인증키**,
-ODsay LAB(lab.odsay.com)의 키(애플리케이션 등록: 플랫폼 Android, 패키지 `com.karma.walk`).
+길찾기는 ODsay LAB(lab.odsay.com)의 키가 필요하다(애플리케이션 등록: 플랫폼 Android, 패키지 `com.karma.walk`).
+키는 **앱 안에서 입력**한다 — 도구 › 길찾기 ⋮ › 길찾기 키 설정(또는 앱 설정의 길찾기 키 행). 저장 전에 연결을 한 번 확인하고,
+키는 보안 저장소(`flutter_secure_storage`)에 두며 마스킹해 보이고 **백업에 넣지 않는다**(복원 뒤 길찾기를 쓴 적이 있고 키가 없으면 다시 넣으라는 안내만 뜬다).
+
+개발용 기본값으로만 빌드 옵션도 쓸 수 있다. 저장된 키가 없을 때 `ODSAY_API_KEY` 를 읽는다. 이때 설정 화면에는 "키 없음"으로 보여도 길찾기는 동작한다.
 키 파일은 저장소에 올리지 않는다.
 
 ```bash
 cd apps/walk
-cp config/commute_keys.example.json config/commute_keys.json   # 두 키를 채운다
+cp config/commute_keys.example.json config/commute_keys.json   # ODSAY_API_KEY 를 채운다(개발용)
 flutter run --dart-define-from-file=config/commute_keys.json
-flutter build apk --release --dart-define-from-file=config/commute_keys.json
 ```
 
-키 없이 실행하면 통근 탭에서 [조회]를 누를 때 네트워크 없이 키 안내를 보인다(탭을 여는 것만으로는 안내가 뜨지 않는다). 진행 상황은 [진행 현황](status.md#통근).
+키가 없으면 길찾기 화면이 키 안내를 보인다. 진행 상황은 [진행 현황](status.md#길찾기).
 
 ## 실제 폰에 설치
 
@@ -74,4 +77,5 @@ flutter build apk --release --dart-define-from-file=config/commute_keys.json
 | [설계 — 일기 피드형 작성 · 자동 초안](../../../docs/superpowers/specs/2026-11-15-walk-diary-feed-compose-design.md) | 피드 글쓰기 화면 · 스토리 뒤로 숨기기 · ✨ 초안(문체 · 길이 · 사진 전송 기본 끔 · 저가 모델) · 외부 리뷰 결정 |
 | [설계 — 앱 백업 · 복원](../../../docs/superpowers/specs/2026-11-16-walk-diary-backup-design.md) | 영역 선택 백업 · SAF 로컬 zip · 선택 암호화 · 영역별 바꿔 넣기 복원 · 되돌리기 · 자동 백업 규칙 |
 | [설계 — 날씨](../../../docs/superpowers/specs/2026-11-14-walk-weather-design.md) | 도구 › 날씨 결정 기록 · Open-Meteo · 위치 · 캐시 규칙 |
+| [설계 — 대중교통 길찾기](../../../docs/superpowers/specs/2026-11-17-walk-transit-route-design.md) | 도구 › 길찾기 결정 기록 · ODsay · 키 설정 · 캐시 · 상단 탭 4개 |
 | [설계 — 통근 ETA](../../../docs/superpowers/specs/2026-10-21-commute-eta-design.md) | 통근 탭 결정 기록 · 경로 · 실시간 · 판단 · 도착 예상 · 키 |

@@ -1,21 +1,25 @@
+import 'dart:async';
+
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../alarm/page/alarm_list_page.dart';
 import '../../settings/open_settings.dart';
+import '../../transit/page/transit_page.dart';
 import '../../walk/page/walk_home_page.dart';
 import '../../weather/page/weather_page.dart';
 import '../widget/feature_menu.dart';
 
 /// 도구 탭의 상단 탭. 순서가 `TabBar` 순서다.
-enum ToolsSection { alarm, walk, weather }
+enum ToolsSection { alarm, walk, weather, transit }
 
-/// 도구 탭 — 알람 · 걷기 · 날씨를 앱바 아래 상단 탭으로 묶는다. 지도는 기록 탭(`LogTab`)에 있다.
+/// 도구 탭 — 알람 · 걷기 · 날씨 · 길찾기를 앱바 아래 상단 탭으로 묶는다. 지도는 기록 탭(`LogTab`)에 있다.
 ///
 /// 상단 탭은 눌러서만 바꾼다(밀기 없음).
 ///
 /// 앱바는 하나라 actions 와 ⋮ 가 [section] 에 따라 바뀐다 — 알람이면 [AlarmPauseAction] 과
-/// 알람 기록 · 알람 설정, 걷기면 걷기 설정, 날씨면 앱 설정만. 고른 상단 탭은 셸이 쥐고([section]) 사용자가
+/// 알람 기록 · 알람 설정, 걷기면 걷기 설정, 날씨면 앱 설정만, 길찾기면 길찾기 키 설정과 앱 설정. 고른 상단 탭은 셸이 쥐고([section]) 사용자가
 /// 바꾸면 [onSectionChanged] 로 알린다. 셸이 바꾸면(홈 화면 위젯으로 열림) 그쪽으로 넘어간다.
 ///
 /// 셸의 `AlarmListCubit` · 설정 cubit 넷([openSettings]) · 날씨 cubit 아래에 둔다.
@@ -98,13 +102,28 @@ class _ToolsTabState extends State<ToolsTab>
           ],
           // 날씨는 설정이 없다 — 앱 전역 설정은 하단 설정 탭이다.
           ToolsSection.weather => const [],
+          // 길찾기는 키 설정만 — 앱 전역 설정은 하단 설정 탭이다.
+          ToolsSection.transit => [
+            AppOverflowMenu<VoidCallback>(
+              items: [
+                AppOverflowMenuItem(
+                  key: const Key('menu-transit-key'),
+                  value: () => unawaited(TransitPage.openKeySettings(context)),
+                  label: l10n.walkTransitMenuKeySettings,
+                  icon: Icons.key_outlined,
+                ),
+              ],
+              onSelected: (action) => action(),
+            ),
+          ],
         },
         bottom: TabBar(
           controller: _controller,
           tabs: [
-            Tab(text: l10n.walkToolsTabAlarm),
-            Tab(text: l10n.walkToolsTabWalk),
-            Tab(text: l10n.walkToolsTabWeather),
+            _topTab(Icons.alarm, l10n.walkToolsTabAlarm),
+            _topTab(Icons.directions_walk, l10n.walkToolsTabWalk),
+            _topTab(Icons.wb_sunny_outlined, l10n.walkToolsTabWeather),
+            _topTab(Icons.directions_transit, l10n.walkToolsTabTransit),
           ],
         ),
       ),
@@ -126,10 +145,21 @@ class _ToolsTabState extends State<ToolsTab>
               active: widget.active && widget.section == ToolsSection.weather,
             ),
           ),
+          const TabKeepAlive(child: TransitPage()),
         ],
       ),
     );
   }
+
+  /// 아이콘 위, 라벨 아래의 상단 탭 하나.
+  /// 탭 넷이 360dp · 큰 글씨에서도 잘리지 않게, 넘칠 때만 라벨을 줄인다.
+  Tab _topTab(IconData icon, String label) => Tab(
+    icon: Icon(icon, size: 20),
+    child: FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(label, maxLines: 1, softWrap: false),
+    ),
+  );
 }
 
 /// 상단 탭을 넘겨도 화면 상태(걷기 cubit · 스크롤 · 지도)를 버리지 않는다 — `TabBarView` 는

@@ -40,6 +40,8 @@ import '../../domain/chat/chat_settings.dart';
 import '../../domain/chat/chat_trace.dart';
 import '../../domain/diary/location/place_source.dart';
 import '../../domain/profile/profile_repository.dart';
+import '../../domain/transit/repository/transit_key_store.dart';
+import '../../domain/transit/usecase/transit_api_key.dart';
 
 /// getIt.reset · 테스트 해제 때 DB 를 닫는다.
 FutureOr<void> disposeDiaryDatabase(DiaryDatabase db) => db.close();
@@ -144,7 +146,13 @@ abstract class RegisterModule {
   SettingsBackupArea settingsBackupArea(
     SharedPreferences prefs,
     ProfileRepository profile,
-  ) => SettingsBackupArea(prefs, profile);
+    TransitApiKey transitKey,
+  ) => SettingsBackupArea(prefs, profile, transitKey);
+
+  /// 길찾기 키 — 보안 저장소 다음에 빌드 주입(`CommuteApiKeys.odsay`)을 쓴다.
+  @lazySingleton
+  TransitApiKey transitApiKey(TransitKeyStore store, CommuteApiKeys keys) =>
+      TransitApiKey(store, fallback: keys.odsay);
 
   @lazySingleton
   LocationBackupArea locationBackupArea(

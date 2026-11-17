@@ -4562,6 +4562,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkToolsTabWeather => '날씨';
 
   @override
+  String get walkToolsTabTransit => '길찾기';
+
+  @override
   String get walkWeatherCurrentPlace => '현재 위치';
 
   @override
@@ -5116,6 +5119,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkBackupNoticeApiKey => '물어보기 API 키를 다시 넣어 주세요.';
 
   @override
+  String get walkBackupNoticeTransitKey => '길찾기 ODsay 키를 다시 넣어 주세요.';
+
+  @override
   String get walkBackupRecoveryTitle => '앱을 다시 시작해 주세요';
 
   @override
@@ -5156,4 +5162,256 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkBackupFailIo => '백업 작업을 하지 못했어요';
+
+  @override
+  String get walkTransitSettingsTitle => '길찾기 설정';
+
+  @override
+  String get walkTransitKeyTitle => 'ODsay 키';
+
+  @override
+  String get walkTransitKeyEmpty => '키가 없어요';
+
+  @override
+  String get walkTransitKeyStatusConnected => '연결됨';
+
+  @override
+  String get walkTransitKeyStatusUnverified => '확인 전';
+
+  @override
+  String get walkTransitKeyInputHint => '키 붙여넣기';
+
+  @override
+  String get walkTransitKeySave => '저장';
+
+  @override
+  String get walkTransitKeyDelete => '키 삭제';
+
+  @override
+  String get walkTransitKeyDeleteTitle => '길찾기 키를 지울까요?';
+
+  @override
+  String get walkTransitKeyDeleteBody =>
+      '저장한 키가 이 기기에서 지워져요. 다시 쓰려면 키를 새로 넣어야 해요.';
+
+  @override
+  String get walkTransitKeySaved => '길찾기 키를 연결했어요';
+
+  @override
+  String get walkTransitKeySavedUnverified => '확인 없이 저장했어요';
+
+  @override
+  String get walkTransitKeySaveFailed => '키를 저장하지 못했어요';
+
+  @override
+  String get walkTransitKeyDeleted => '키를 지웠어요';
+
+  @override
+  String get walkTransitKeyDeleteFailed => '키를 지우지 못했어요';
+
+  @override
+  String get walkTransitKeyUnverifiedTitle => '확인 못 했어요';
+
+  @override
+  String get walkTransitKeyUnverifiedBody => '그래도 저장할까요?';
+
+  @override
+  String get walkTransitKeyUnverifiedConfirm => '그래도 저장';
+
+  @override
+  String get walkTransitKeyGuide =>
+      'lab.odsay.com 에서 키를 발급받아요. 플랫폼은 Android, 패키지 이름은 com.karma.walk 로 등록해 주세요.';
+
+  @override
+  String get walkTransitFrom => '출발';
+
+  @override
+  String get walkTransitTo => '도착';
+
+  @override
+  String get walkTransitSwap => '출발 · 도착 바꾸기';
+
+  @override
+  String get walkTransitPickHint => '눌러서 고르기';
+
+  @override
+  String get walkTransitLocating => '현재 위치 찾는 중…';
+
+  @override
+  String get walkTransitLocationFailed => '현재 위치를 못 찾았어요 · 눌러서 고르기';
+
+  @override
+  String get walkTransitCurrentLocation => '현재 위치';
+
+  @override
+  String get walkTransitHome => '집';
+
+  @override
+  String get walkTransitWork => '회사';
+
+  @override
+  String get walkTransitFrequent => '자주 간 곳';
+
+  @override
+  String get walkTransitRecent => '최근';
+
+  @override
+  String get walkTransitPlaceFallback => '고른 곳';
+
+  @override
+  String get walkTransitIdle => '도착을 골라 주세요';
+
+  @override
+  String get walkTransitIdleFrom => '출발을 골라 주세요';
+
+  @override
+  String get walkTransitIdleBody => '출발과 도착이 정해지면 바로 길을 찾아요';
+
+  @override
+  String walkTransitFetchedAgo(int minutes) {
+    return '$minutes분 전 결과';
+  }
+
+  @override
+  String get walkTransitFetchedJustNow => '방금 받은 결과';
+
+  @override
+  String get walkTransitRefresh => '새로고침';
+
+  @override
+  String get walkTransitNote => '환승 · 배차 대기 시간은 빠질 수 있어요';
+
+  @override
+  String walkTransitTotal(int minutes) {
+    return '$minutes분';
+  }
+
+  @override
+  String walkTransitTotalHours(int hours, int minutes) {
+    return '$hours시간 $minutes분';
+  }
+
+  @override
+  String walkTransitTotalHoursOnly(int hours) {
+    return '$hours시간';
+  }
+
+  @override
+  String walkTransitTransfers(int count) {
+    return '환승 $count';
+  }
+
+  @override
+  String walkTransitWalk(int minutes) {
+    return '도보 $minutes분';
+  }
+
+  @override
+  String walkTransitFare(String fare) {
+    return '$fare원';
+  }
+
+  @override
+  String get walkTransitMissingKey => '길찾기 키가 필요해요';
+
+  @override
+  String get walkTransitMissingKeyBody => 'ODsay 키를 넣으면 대중교통 경로를 볼 수 있어요';
+
+  @override
+  String get walkTransitOpenKeySettings => '키 설정';
+
+  @override
+  String get walkTransitKeyRejected => 'ODsay 가 키를 받지 않았어요';
+
+  @override
+  String get walkTransitQuota => '오늘 무료 한도를 다 썼어요';
+
+  @override
+  String get walkTransitQuotaBody => '내일 다시 찾아볼 수 있어요';
+
+  @override
+  String get walkTransitNetwork => '인터넷 연결을 확인해 주세요';
+
+  @override
+  String get walkTransitNoRoute => '대중교통 경로가 없어요';
+
+  @override
+  String get walkTransitTooClose => '걸어서 가는 거리예요';
+
+  @override
+  String get walkTransitTooCloseBody => '출발과 도착이 가까워 대중교통 경로가 없어요';
+
+  @override
+  String get walkTransitServer => '길을 찾지 못했어요';
+
+  @override
+  String get walkTransitMenuKeySettings => '길찾기 키 설정';
+
+  @override
+  String get walkTransitSearchHint => '역 · 정류장 · 주소 검색';
+
+  @override
+  String get walkTransitSetHome => '집 정하기';
+
+  @override
+  String get walkTransitSetWork => '회사 정하기';
+
+  @override
+  String get walkTransitSaveHint => '길게 눌러 지금 고른 곳으로 저장';
+
+  @override
+  String get walkTransitSavedHome => '지금 고른 곳을 집으로 저장했어요';
+
+  @override
+  String get walkTransitSavedWork => '지금 고른 곳을 회사로 저장했어요';
+
+  @override
+  String get walkTransitSaveNothing => '먼저 장소를 골라 주세요';
+
+  @override
+  String get walkTransitSaveFailed => '저장하지 못했어요';
+
+  @override
+  String get walkTransitResults => '검색 결과';
+
+  @override
+  String walkTransitFindAddress(String query) {
+    return '주소로 찾기: \"$query\"';
+  }
+
+  @override
+  String get walkTransitLocateFailed => '현재 위치를 찾지 못했어요';
+
+  @override
+  String get walkTransitDetailTitle => '경로 상세';
+
+  @override
+  String walkTransitLegWalk(int minutes, int meters) {
+    return '도보 $minutes분(${meters}m)';
+  }
+
+  @override
+  String walkTransitLegTransferWalk(int minutes) {
+    return '환승 도보 $minutes분';
+  }
+
+  @override
+  String walkTransitLegStops(String start, String end) {
+    return '$start → $end';
+  }
+
+  @override
+  String walkTransitLegSubwayInfo(int count, int minutes) {
+    return '$count개 역 · $minutes분';
+  }
+
+  @override
+  String walkTransitLegWay(String way) {
+    return '$way 방면';
+  }
+
+  @override
+  String walkTransitLegBusInfo(int count, int minutes) {
+    return '$count개 정류장 · $minutes분';
+  }
 }

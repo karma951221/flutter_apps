@@ -8382,6 +8382,12 @@ abstract class AppLocalizations {
   /// **'날씨'**
   String get walkToolsTabWeather;
 
+  /// 도구 탭 상단 탭 — 길찾기
+  ///
+  /// In ko, this message translates to:
+  /// **'길찾기'**
+  String get walkToolsTabTransit;
+
   /// 날씨 — 장소 이름을 모를 때 머리글
   ///
   /// In ko, this message translates to:
@@ -9252,6 +9258,12 @@ abstract class AppLocalizations {
   /// **'물어보기 API 키를 다시 넣어 주세요.'**
   String get walkBackupNoticeApiKey;
 
+  /// 복원 결과: 길찾기(ODsay) 키는 백업에 없음
+  ///
+  /// In ko, this message translates to:
+  /// **'길찾기 ODsay 키를 다시 넣어 주세요.'**
+  String get walkBackupNoticeTransitKey;
+
   /// 복원이 끝나지 못해 다시 시작이 필요할 때 제목
   ///
   /// In ko, this message translates to:
@@ -9335,6 +9347,450 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'백업 작업을 하지 못했어요'**
   String get walkBackupFailIo;
+
+  /// 길찾기 설정 화면 제목 · 앱 설정 바로가기
+  ///
+  /// In ko, this message translates to:
+  /// **'길찾기 설정'**
+  String get walkTransitSettingsTitle;
+
+  /// 길찾기 키 행 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'ODsay 키'**
+  String get walkTransitKeyTitle;
+
+  /// 키를 저장하지 않았을 때 행 부제
+  ///
+  /// In ko, this message translates to:
+  /// **'키가 없어요'**
+  String get walkTransitKeyEmpty;
+
+  /// 키 확인됨
+  ///
+  /// In ko, this message translates to:
+  /// **'연결됨'**
+  String get walkTransitKeyStatusConnected;
+
+  /// 키를 저장만 하고 확인하지 못함
+  ///
+  /// In ko, this message translates to:
+  /// **'확인 전'**
+  String get walkTransitKeyStatusUnverified;
+
+  /// 키 입력칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'키 붙여넣기'**
+  String get walkTransitKeyInputHint;
+
+  /// 키 저장 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get walkTransitKeySave;
+
+  /// 키 삭제 행
+  ///
+  /// In ko, this message translates to:
+  /// **'키 삭제'**
+  String get walkTransitKeyDelete;
+
+  /// 키 삭제 확인 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'길찾기 키를 지울까요?'**
+  String get walkTransitKeyDeleteTitle;
+
+  /// 키 삭제 확인 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'저장한 키가 이 기기에서 지워져요. 다시 쓰려면 키를 새로 넣어야 해요.'**
+  String get walkTransitKeyDeleteBody;
+
+  /// 키 확인 후 저장 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'길찾기 키를 연결했어요'**
+  String get walkTransitKeySaved;
+
+  /// 확인 못 한 채 저장 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'확인 없이 저장했어요'**
+  String get walkTransitKeySavedUnverified;
+
+  /// 키 저장 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'키를 저장하지 못했어요'**
+  String get walkTransitKeySaveFailed;
+
+  /// 키 삭제 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'키를 지웠어요'**
+  String get walkTransitKeyDeleted;
+
+  /// 키 삭제 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'키를 지우지 못했어요'**
+  String get walkTransitKeyDeleteFailed;
+
+  /// 네트워크로 키를 확인 못 했을 때 확인 창 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'확인 못 했어요'**
+  String get walkTransitKeyUnverifiedTitle;
+
+  /// 네트워크로 키를 확인 못 했을 때 확인 창 본문
+  ///
+  /// In ko, this message translates to:
+  /// **'그래도 저장할까요?'**
+  String get walkTransitKeyUnverifiedBody;
+
+  /// 확인 못 한 채 저장 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'그래도 저장'**
+  String get walkTransitKeyUnverifiedConfirm;
+
+  /// 키 발급 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'lab.odsay.com 에서 키를 발급받아요. 플랫폼은 Android, 패키지 이름은 com.karma.walk 로 등록해 주세요.'**
+  String get walkTransitKeyGuide;
+
+  /// 출발 칸 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'출발'**
+  String get walkTransitFrom;
+
+  /// 도착 칸 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'도착'**
+  String get walkTransitTo;
+
+  /// 바꾸기 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'출발 · 도착 바꾸기'**
+  String get walkTransitSwap;
+
+  /// 비어 있는 출발 · 도착 칸
+  ///
+  /// In ko, this message translates to:
+  /// **'눌러서 고르기'**
+  String get walkTransitPickHint;
+
+  /// 출발 칸 — 현재 위치를 찾는 중
+  ///
+  /// In ko, this message translates to:
+  /// **'현재 위치 찾는 중…'**
+  String get walkTransitLocating;
+
+  /// 출발 칸 — 현재 위치 실패
+  ///
+  /// In ko, this message translates to:
+  /// **'현재 위치를 못 찾았어요 · 눌러서 고르기'**
+  String get walkTransitLocationFailed;
+
+  /// 현재 위치 지점 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'현재 위치'**
+  String get walkTransitCurrentLocation;
+
+  /// 집 지점 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'집'**
+  String get walkTransitHome;
+
+  /// 회사 지점 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'회사'**
+  String get walkTransitWork;
+
+  /// 자주 간 곳 섹션 · 이름 없는 자주 간 곳
+  ///
+  /// In ko, this message translates to:
+  /// **'자주 간 곳'**
+  String get walkTransitFrequent;
+
+  /// 최근 장소 섹션
+  ///
+  /// In ko, this message translates to:
+  /// **'최근'**
+  String get walkTransitRecent;
+
+  /// 이름 없는 지점
+  ///
+  /// In ko, this message translates to:
+  /// **'고른 곳'**
+  String get walkTransitPlaceFallback;
+
+  /// 출발 · 도착이 다 차지 않았을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'도착을 골라 주세요'**
+  String get walkTransitIdle;
+
+  /// 출발이 비었을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'출발을 골라 주세요'**
+  String get walkTransitIdleFrom;
+
+  /// 출발 · 도착이 다 차지 않았을 때 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'출발과 도착이 정해지면 바로 길을 찾아요'**
+  String get walkTransitIdleBody;
+
+  /// 결과 머리 — 받은 지 n분
+  ///
+  /// In ko, this message translates to:
+  /// **'{minutes}분 전 결과'**
+  String walkTransitFetchedAgo(int minutes);
+
+  /// 결과 머리 — 1분 안
+  ///
+  /// In ko, this message translates to:
+  /// **'방금 받은 결과'**
+  String get walkTransitFetchedJustNow;
+
+  /// 결과 다시 조회
+  ///
+  /// In ko, this message translates to:
+  /// **'새로고침'**
+  String get walkTransitRefresh;
+
+  /// 결과 목록 위 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'환승 · 배차 대기 시간은 빠질 수 있어요'**
+  String get walkTransitNote;
+
+  /// 총 소요 시간(1시간 미만)
+  ///
+  /// In ko, this message translates to:
+  /// **'{minutes}분'**
+  String walkTransitTotal(int minutes);
+
+  /// 총 소요 시간(1시간 이상)
+  ///
+  /// In ko, this message translates to:
+  /// **'{hours}시간 {minutes}분'**
+  String walkTransitTotalHours(int hours, int minutes);
+
+  /// 총 소요 시간(딱 n시간)
+  ///
+  /// In ko, this message translates to:
+  /// **'{hours}시간'**
+  String walkTransitTotalHoursOnly(int hours);
+
+  /// 경로 요약 — 환승 횟수
+  ///
+  /// In ko, this message translates to:
+  /// **'환승 {count}'**
+  String walkTransitTransfers(int count);
+
+  /// 경로 요약 — 도보 시간 합
+  ///
+  /// In ko, this message translates to:
+  /// **'도보 {minutes}분'**
+  String walkTransitWalk(int minutes);
+
+  /// 경로 요약 — 요금(천 단위 쉼표 포함)
+  ///
+  /// In ko, this message translates to:
+  /// **'{fare}원'**
+  String walkTransitFare(String fare);
+
+  /// 키 없음 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'길찾기 키가 필요해요'**
+  String get walkTransitMissingKey;
+
+  /// 키 없음 안내 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'ODsay 키를 넣으면 대중교통 경로를 볼 수 있어요'**
+  String get walkTransitMissingKeyBody;
+
+  /// 키 설정 화면 열기 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'키 설정'**
+  String get walkTransitOpenKeySettings;
+
+  /// 키 거부 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'ODsay 가 키를 받지 않았어요'**
+  String get walkTransitKeyRejected;
+
+  /// 한도 초과 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘 무료 한도를 다 썼어요'**
+  String get walkTransitQuota;
+
+  /// 한도 초과 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'내일 다시 찾아볼 수 있어요'**
+  String get walkTransitQuotaBody;
+
+  /// 네트워크 오류
+  ///
+  /// In ko, this message translates to:
+  /// **'인터넷 연결을 확인해 주세요'**
+  String get walkTransitNetwork;
+
+  /// 경로 없음
+  ///
+  /// In ko, this message translates to:
+  /// **'대중교통 경로가 없어요'**
+  String get walkTransitNoRoute;
+
+  /// 너무 가까움
+  ///
+  /// In ko, this message translates to:
+  /// **'걸어서 가는 거리예요'**
+  String get walkTransitTooClose;
+
+  /// 너무 가까움 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'출발과 도착이 가까워 대중교통 경로가 없어요'**
+  String get walkTransitTooCloseBody;
+
+  /// 서버 오류(설명은 원문)
+  ///
+  /// In ko, this message translates to:
+  /// **'길을 찾지 못했어요'**
+  String get walkTransitServer;
+
+  /// 도구 앱바 ⋮ — 길찾기 키 설정
+  ///
+  /// In ko, this message translates to:
+  /// **'길찾기 키 설정'**
+  String get walkTransitMenuKeySettings;
+
+  /// 장소 고르기 검색칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'역 · 정류장 · 주소 검색'**
+  String get walkTransitSearchHint;
+
+  /// 집이 없을 때 행
+  ///
+  /// In ko, this message translates to:
+  /// **'집 정하기'**
+  String get walkTransitSetHome;
+
+  /// 회사가 없을 때 행
+  ///
+  /// In ko, this message translates to:
+  /// **'회사 정하기'**
+  String get walkTransitSetWork;
+
+  /// 집 · 회사 행 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'길게 눌러 지금 고른 곳으로 저장'**
+  String get walkTransitSaveHint;
+
+  /// 집 저장 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 고른 곳을 집으로 저장했어요'**
+  String get walkTransitSavedHome;
+
+  /// 회사 저장 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'지금 고른 곳을 회사로 저장했어요'**
+  String get walkTransitSavedWork;
+
+  /// 저장할 지금 고른 곳이 없을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'먼저 장소를 골라 주세요'**
+  String get walkTransitSaveNothing;
+
+  /// 집 · 회사 저장 실패
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 못했어요'**
+  String get walkTransitSaveFailed;
+
+  /// 장소 고르기 검색 결과 섹션
+  ///
+  /// In ko, this message translates to:
+  /// **'검색 결과'**
+  String get walkTransitResults;
+
+  /// 주소 검색 행
+  ///
+  /// In ko, this message translates to:
+  /// **'주소로 찾기: \"{query}\"'**
+  String walkTransitFindAddress(String query);
+
+  /// 현재 위치 실패 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'현재 위치를 찾지 못했어요'**
+  String get walkTransitLocateFailed;
+
+  /// 경로 상세 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'경로 상세'**
+  String get walkTransitDetailTitle;
+
+  /// 상세 — 도보 구간
+  ///
+  /// In ko, this message translates to:
+  /// **'도보 {minutes}분({meters}m)'**
+  String walkTransitLegWalk(int minutes, int meters);
+
+  /// 상세 — 탈것 사이 도보 구간
+  ///
+  /// In ko, this message translates to:
+  /// **'환승 도보 {minutes}분'**
+  String walkTransitLegTransferWalk(int minutes);
+
+  /// 상세 — 탄 곳 → 내린 곳
+  ///
+  /// In ko, this message translates to:
+  /// **'{start} → {end}'**
+  String walkTransitLegStops(String start, String end);
+
+  /// 상세 — 지하철 정거장 수 · 시간
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}개 역 · {minutes}분'**
+  String walkTransitLegSubwayInfo(int count, int minutes);
+
+  /// 상세 — 지하철 방면
+  ///
+  /// In ko, this message translates to:
+  /// **'{way} 방면'**
+  String walkTransitLegWay(String way);
+
+  /// 상세 — 버스 정거장 수 · 시간
+  ///
+  /// In ko, this message translates to:
+  /// **'{count}개 정류장 · {minutes}분'**
+  String walkTransitLegBusInfo(int count, int minutes);
 }
 
 class _AppLocalizationsDelegate

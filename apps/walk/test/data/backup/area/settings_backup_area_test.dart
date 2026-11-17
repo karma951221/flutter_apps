@@ -8,6 +8,9 @@ import 'package:walk/data/profile/prefs_profile_repository.dart';
 import 'package:walk/domain/profile/profile.dart';
 import 'package:walk/domain/backup/backup_area_id.dart';
 import 'package:walk/domain/backup/backup_failure.dart';
+import 'package:walk/domain/backup/restore_notice.dart';
+import 'package:walk/domain/transit/repository/transit_key_store.dart';
+import 'package:walk/domain/transit/usecase/transit_api_key.dart';
 
 /// 앱 설정 영역의 허용 목록 전부(저장소가 쓰는 타입 그대로).
 const _settings = <String, Object>{
@@ -17,6 +20,7 @@ const _settings = <String, Object>{
   'walk.location.retention': 'days90',
   'commute.place.home': '{"kind":"home","lat":37.5,"lng":127.0}',
   'commute.place.work': '{"kind":"work","lat":37.4,"lng":127.1}',
+  'transit.keyStatus': 'connected',
 };
 
 /// API 키를 따라가는 물어보기 설정. 키는 담지 않으므로 이것도 담지 않는다 —
@@ -50,6 +54,28 @@ const _excluded = <String, Object>{
   'walk.chat.retention': 'days30',
 };
 
+class _FakeKeyStore implements TransitKeyStore {
+  _FakeKeyStore(this.key);
+  final String? key;
+  @override
+  Future<String?> read() async => key;
+  @override
+  Future<void> save(String key, TransitKeyStatus status) async {}
+  @override
+  Stream<void> get changes => const Stream.empty();
+
+  @override
+  Future<void> delete() async {}
+  @override
+  Future<TransitKeyStatus?> status() async => null;
+  @override
+  Future<void> setStatus(TransitKeyStatus s) async {}
+}
+
+/// 길찾기 키 — [savedKey] 가 null 이면 저장된 키가 없다.
+TransitApiKey _transitKey([String? savedKey]) =>
+    TransitApiKey(_FakeKeyStore(savedKey), fallback: '');
+
 Future<BackupFailure?> _failureOf(Future<void> Function() body) async {
   try {
     await body();
@@ -82,8 +108,15 @@ void main() {
       );
 
   /// 프로필 저장소를 [docs] 에 둔 영역. 기본은 [docsA].
-  SettingsBackupArea areaOf(SharedPreferences prefs, [Directory? docs]) =>
-      SettingsBackupArea(prefs, profileOf(prefs, docs ?? docsA));
+  SettingsBackupArea areaOf(
+    SharedPreferences prefs, [
+    Directory? docs,
+    String? savedKey,
+  ]) => SettingsBackupArea(
+    prefs,
+    profileOf(prefs, docs ?? docsA),
+    _transitKey(savedKey),
+  );
   tearDown(() => tmp.deleteSync(recursive: true));
 
   test('settings export contains exactly the allowlist', () async {
@@ -177,7 +210,7 @@ void main() {
         const Profile(name: '하늘', bio: '걷는 사람', shareNameWithAi: true),
       );
       await repoA.setPhoto(await photo(tmp, 'face'));
-      await SettingsBackupArea(prefsA, repoA).export(staging);
+      await SettingsBackupArea(prefsA, repoA, _transitKey()).export(staging);
 
       final prefsJson = File(
         '${staging.path}/settings/prefs.json',
@@ -188,7 +221,7 @@ void main() {
       final prefsB = await SharedPreferences.getInstance();
       final repoB = profileOf(prefsB, docsB);
       await repoB.save(const Profile(shareNameWithAi: true));
-      final areaB = SettingsBackupArea(prefsB, repoB);
+      final areaB = SettingsBackupArea(prefsB, repoB, _transitKey());
       await areaB.validate(staging);
       await areaB.replace(staging);
 
@@ -208,7 +241,7 @@ void main() {
       final prefsB = await SharedPreferences.getInstance();
       final repoB = profileOf(prefsB, docsB);
       final before = await repoB.setPhoto(await photo(tmp, 'old'));
-      await SettingsBackupArea(prefsB, repoB).replace(staging);
+      await SettingsBackupArea(prefsB, repoB, _transitKey()).replace(staging);
 
       expect(repoB.load().photo, isNull);
       expect(File(repoB.photoPath(before)!).existsSync(), isFalse);
@@ -224,7 +257,7 @@ void main() {
       final repoB = profileOf(prefsB, docsB);
       await repoB.save(const Profile(name: '지금', shareNameWithAi: true));
       final kept = await repoB.setPhoto(await photo(tmp, 'now'));
-      final areaB = SettingsBackupArea(prefsB, repoB);
+      final areaB = SettingsBackupArea(prefsB, repoB, _transitKey());
       await areaB.validate(staging);
       await areaB.replace(staging);
 
@@ -257,4 +290,42 @@ void main() {
       );
     });
   });
+
+  test('transit keys are not in backup allow-list', () async {
+    SharedPreferences.setMockInitialValues({
+      ..._settings,
+      'transit.odsayKey': 'secret',
+      'transit.recent': '[]',
+      'transit.stationCache': '{}',
+    });
+    final area = areaOf(await SharedPreferences.getInstance());
+    await area.export(staging);
+
+    final written =
+        jsonDecode(
+              File('${staging.path}/settings/prefs.json').readAsStringSync(),
+            )
+            as Map<String, Object?>;
+    expect(written.keys.where((k) => k.startsWith('transit.')), [
+      'transit.keyStatus',
+    ]);
+  });
+
+  test(
+    'afterRestore asks for a transit key only if transit was used',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final never = await SharedPreferences.getInstance();
+      expect(await areaOf(never).afterRestore(), isEmpty);
+
+      SharedPreferences.setMockInitialValues({
+        'transit.keyStatus': 'connected',
+      });
+      final used = await SharedPreferences.getInstance();
+      expect(await areaOf(used).afterRestore(), {
+        RestoreNotice.transitKeyNeeded,
+      });
+      expect(await areaOf(used, null, 'k').afterRestore(), isEmpty);
+    },
+  );
 }

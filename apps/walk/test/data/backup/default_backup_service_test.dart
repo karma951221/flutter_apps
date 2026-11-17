@@ -26,6 +26,8 @@ import 'package:walk/data/backup/default_backup_service.dart';
 import 'package:walk/data/backup/prefs_backup_preferences.dart';
 import 'package:walk/data/chat/database/chat_database.dart';
 import 'package:walk/data/location/database/location_database.dart';
+import 'package:walk/domain/transit/repository/transit_key_store.dart';
+import 'package:walk/domain/transit/usecase/transit_api_key.dart';
 import 'package:walk/domain/alarm/entity/alarm.dart';
 import 'package:walk/domain/alarm/entity/alarm_sound.dart';
 import 'package:walk/domain/alarm/entity/ring_log_entry.dart';
@@ -47,6 +49,23 @@ import '../../support/diary_fixtures.dart';
 class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
 
 class _MockAlarmPermissions extends Mock implements AlarmPermissions {}
+
+/// 길찾기 키가 늘 비어 있는 보관소 — 설정 영역의 복원 안내를 조용하게 둔다.
+class _NoTransitKey implements TransitKeyStore {
+  @override
+  Future<String?> read() async => null;
+  @override
+  Future<void> save(String key, TransitKeyStatus status) async {}
+  @override
+  Stream<void> get changes => const Stream.empty();
+
+  @override
+  Future<void> delete() async {}
+  @override
+  Future<TransitKeyStatus?> status() async => null;
+  @override
+  Future<void> setStatus(TransitKeyStatus s) async {}
+}
 
 class _MockChatSettings extends Mock implements ChatSettings {}
 
@@ -141,6 +160,7 @@ class _Device {
         docs,
         encode: (src, dst) async => File(src).copy(dst),
       ),
+      TransitApiKey(_NoTransitKey(), fallback: 'env'),
     ),
     LocationBackupArea(location, recorder),
   ];

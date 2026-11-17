@@ -1374,13 +1374,15 @@ void main() {
   });
 
   group('날씨 상단 탭', () {
-    testWidgets('도구 상단 탭은 알람 · 걷기 · 날씨', (tester) async {
+    testWidgets('도구 상단 탭은 알람 · 걷기 · 날씨 · 길찾기', (tester) async {
       await pump(tester);
       final labels = tester
-          .widgetList<Tab>(find.byType(Tab))
-          .map((t) => t.text)
+          .widgetList<Text>(
+            find.descendant(of: find.byType(Tab), matching: find.byType(Text)),
+          )
+          .map((t) => t.data)
           .toList();
-      expect(labels, ['알람', '걷기', '날씨']);
+      expect(labels, ['알람', '걷기', '날씨', '길찾기']);
     });
 
     testWidgets('날씨 상단 탭을 누르면 WeatherPage 가 보이고 shown 이 불린다', (tester) async {

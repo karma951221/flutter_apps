@@ -2,6 +2,7 @@ import '../support/fake_profile_repository.dart';
 import 'package:core/core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -253,7 +254,11 @@ void main() {
       expect(brightness(), Brightness.light);
 
       // 하단 설정 탭 → 다크.
-      await tester.tap(find.text('설정'));
+      // 테스트 로케일과 상관없이 셸이 쓰는 라벨로 찾는다.
+      final settingsLabel = AppLocalizations.of(
+        tester.element(find.byType(MainShellPage)),
+      ).walkShellTabSettings;
+      await tester.tap(find.text(settingsLabel));
       await tester.pumpAndSettle();
       await tester.tap(
         find.byWidgetPredicate(
