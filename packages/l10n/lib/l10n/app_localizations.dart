@@ -8208,6 +8208,12 @@ abstract class AppLocalizations {
   /// **'날씨'**
   String get walkToolsTabWeather;
 
+  /// 도구 탭 상단 탭 — 길찾기
+  ///
+  /// In ko, this message translates to:
+  /// **'길찾기'**
+  String get walkToolsTabTransit;
+
   /// 날씨 — 장소 이름을 모를 때 머리글
   ///
   /// In ko, this message translates to:
@@ -9336,6 +9342,12 @@ abstract class AppLocalizations {
   /// **'도착을 골라 주세요'**
   String get walkTransitIdle;
 
+  /// 출발이 비었을 때
+  ///
+  /// In ko, this message translates to:
+  /// **'출발을 골라 주세요'**
+  String get walkTransitIdleFrom;
+
   /// 출발 · 도착이 다 차지 않았을 때 설명
   ///
   /// In ko, this message translates to:
@@ -9377,6 +9389,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{hours}시간 {minutes}분'**
   String walkTransitTotalHours(int hours, int minutes);
+
+  /// 총 소요 시간(딱 n시간)
+  ///
+  /// In ko, this message translates to:
+  /// **'{hours}시간'**
+  String walkTransitTotalHoursOnly(int hours);
 
   /// 경로 요약 — 환승 횟수
   ///

@@ -4469,6 +4469,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkToolsTabWeather => '天気';
 
   @override
+  String get walkToolsTabTransit => '乗換案内';
+
+  @override
   String get walkWeatherCurrentPlace => '現在地';
 
   @override
@@ -5153,6 +5156,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkTransitIdle => '到着地を選んでください';
 
   @override
+  String get walkTransitIdleFrom => '出発地を選んでください';
+
+  @override
   String get walkTransitIdleBody => '出発と到着が決まるとすぐに経路を検索します';
 
   @override
@@ -5177,6 +5183,11 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String walkTransitTotalHours(int hours, int minutes) {
     return '$hours時間$minutes分';
+  }
+
+  @override
+  String walkTransitTotalHoursOnly(int hours) {
+    return '$hours時間';
   }
 
   @override

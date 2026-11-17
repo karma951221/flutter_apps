@@ -4878,6 +4878,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkToolsTabWeather => 'Weather';
 
   @override
+  String get walkToolsTabTransit => 'Transit';
+
+  @override
   String get walkWeatherCurrentPlace => 'Current location';
 
   @override
@@ -5597,6 +5600,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkTransitIdle => 'Choose a destination';
 
   @override
+  String get walkTransitIdleFrom => 'Choose a starting point';
+
+  @override
   String get walkTransitIdleBody =>
       'Routes appear as soon as both places are set';
 
@@ -5625,8 +5631,19 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String walkTransitTotalHoursOnly(int hours) {
+    return '$hours h';
+  }
+
+  @override
   String walkTransitTransfers(int count) {
-    return 'Transfers $count';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count transfers',
+      one: '1 transfer',
+    );
+    return '$_temp0';
   }
 
   @override
@@ -5732,7 +5749,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkTransitLegSubwayInfo(int count, int minutes) {
-    return '$count stations · $minutes min';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count stations',
+      one: '1 station',
+    );
+    return '$_temp0 · $minutes min';
   }
 
   @override
@@ -5742,6 +5765,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String walkTransitLegBusInfo(int count, int minutes) {
-    return '$count stops · $minutes min';
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count stops',
+      one: '1 stop',
+    );
+    return '$_temp0 · $minutes min';
   }
 }

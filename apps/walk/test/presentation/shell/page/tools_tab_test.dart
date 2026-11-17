@@ -20,6 +20,11 @@ import 'package:walk/presentation/map/cubit/map_view_cubit.dart';
 import 'package:walk/presentation/map/cubit/map_view_state.dart';
 import 'package:walk/presentation/map/page/map_tab.dart';
 import 'package:walk/presentation/shell/page/tools_tab.dart';
+import 'package:walk/domain/transit/entity/transit_point.dart';
+import 'package:walk/domain/transit/usecase/transit_point_suggestions.dart';
+import 'package:walk/presentation/transit/cubit/transit_cubit.dart';
+import 'package:walk/presentation/transit/cubit/transit_state.dart';
+import 'package:walk/presentation/transit/page/transit_page.dart';
 import 'package:walk/presentation/weather/cubit/weather_cubit.dart';
 import 'package:walk/domain/weather/weather_problem.dart';
 import 'package:walk/presentation/weather/cubit/weather_state.dart';
@@ -34,6 +39,10 @@ class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
 class _MockRecord extends MockCubit<MapRecordState> implements MapRecordCubit {}
 
 class _MockView extends MockCubit<MapViewState> implements MapViewCubit {}
+
+class _MockTransit extends MockCubit<TransitState> implements TransitCubit {}
+
+class _MockSuggestions extends Mock implements TransitPointSuggestions {}
 
 class _MockWeather extends MockCubit<WeatherState> implements WeatherCubit {}
 
@@ -55,6 +64,14 @@ void main() {
 
   setUpAll(() {
     SettingsHarness.registerFallbacks();
+    registerFallbackValue(
+      const TransitPoint(
+        lat: 37.5,
+        lng: 126.9,
+        label: '',
+        source: TransitPointSource.currentLocation,
+      ),
+    );
     registerFallbackValue(MapPeriod.day(DateTime(2026)));
   });
   setUp(() async {
@@ -71,6 +88,19 @@ void main() {
     record = _MockRecord();
     view = _MockView();
     weather = _MockWeather();
+    final transit = _MockTransit();
+    whenListen(
+      transit,
+      const Stream<TransitState>.empty(),
+      initialState: const TransitState(),
+    );
+    when(transit.start).thenAnswer((_) async {});
+    when(() => transit.fillEmpty(any())).thenAnswer((_) async {});
+    final suggestions = _MockSuggestions();
+    when(suggestions.load).thenAnswer((_) async => const TransitSuggestions());
+    getIt
+      ..registerFactory<TransitCubit>(() => transit)
+      ..registerSingleton<TransitPointSuggestions>(suggestions);
     whenListen(
       weather,
       const Stream<WeatherState>.empty(),
@@ -235,14 +265,45 @@ void main() {
     expect(walkActive(tester), isFalse);
   });
 
-  testWidgets('도구 상단 탭은 알람 · 걷기 · 날씨 — 지도는 기록 탭에 있다', (tester) async {
+  testWidgets('도구 상단 탭은 아이콘이 있는 알람 · 걷기 · 날씨 · 길찾기 — 지도는 기록 탭에 있다', (
+    tester,
+  ) async {
     await pump(tester);
-    final labels = tester
-        .widgetList<Tab>(find.byType(Tab))
-        .map((t) => t.text)
-        .toList();
-    expect(labels, ['알람', '걷기', '날씨']);
+    final tabs = tester.widgetList<Tab>(find.byType(Tab)).toList();
+    expect(tabs.map((t) => t.text), ['알람', '걷기', '날씨', '길찾기']);
+    expect(tabs.every((t) => t.icon != null), isTrue);
     expect(find.byType(MapTab, skipOffstage: false), findsNothing);
+  });
+
+  testWidgets('길찾기 상단 탭을 누르면 TransitPage 가 보인다', (tester) async {
+    final shell = await pump(tester);
+
+    await tester.tap(find.text('길찾기'));
+    await tester.pumpAndSettle();
+
+    expect(shell.changes, [ToolsSection.transit]);
+    expect(find.byType(TransitPage), findsOneWidget);
+  });
+
+  testWidgets('길찾기 ⋮ 는 길찾기 키 설정 · 앱 설정', (tester) async {
+    await pump(tester, initial: ToolsSection.transit);
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    expect(find.text('길찾기 키 설정'), findsOneWidget);
+    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
+    expect(find.byKey(const Key('menu-settings-walk')), findsNothing);
+  });
+
+  testWidgets('360dp · 글자 1.3배에서 상단 탭이 넘치지 않는다', (tester) async {
+    await pump(tester);
+    await tester.binding.setSurfaceSize(const Size(360, 640));
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('길찾기'), findsOneWidget);
   });
 
   testWidgets('날씨 상단 탭을 누르면 WeatherPage 가 보이고 shown 이 불린다', (tester) async {

@@ -1370,6 +1370,7 @@
   "walkChatWriteDeleted": "Deleted",
   "walkChatWriteOpen": "Open",
   "walkToolsTabWeather": "Weather",
+  "walkToolsTabTransit": "Transit",
   "walkWeatherCurrentPlace": "Current location",
   "walkWeatherLastPlace": "last location",
   "walkWeatherConditionClear": "Clear",
@@ -1560,6 +1561,7 @@
   "walkTransitRecent": "Recent",
   "walkTransitPlaceFallback": "Chosen place",
   "walkTransitIdle": "Choose a destination",
+  "walkTransitIdleFrom": "Choose a starting point",
   "walkTransitIdleBody": "Routes appear as soon as both places are set",
   "walkTransitFetchedAgo": "Results from {minutes} min ago",
   "walkTransitFetchedJustNow": "Just updated",
@@ -1567,7 +1569,8 @@
   "walkTransitNote": "Transfer and wait times may not be included",
   "walkTransitTotal": "{minutes} min",
   "walkTransitTotalHours": "{hours} h {minutes} min",
-  "walkTransitTransfers": "Transfers {count}",
+  "walkTransitTotalHoursOnly": "{hours} h",
+  "walkTransitTransfers": "{count, plural, =1{1 transfer} other{{count} transfers}}",
   "walkTransitWalk": "Walk {minutes} min",
   "walkTransitFare": "₩{fare}",
   "walkTransitMissingKey": "A directions key is needed",
@@ -1597,7 +1600,7 @@
   "walkTransitLegWalk": "Walk {minutes} min ({meters} m)",
   "walkTransitLegTransferWalk": "Transfer walk {minutes} min",
   "walkTransitLegStops": "{start} → {end}",
-  "walkTransitLegSubwayInfo": "{count} stations · {minutes} min",
+  "walkTransitLegSubwayInfo": "{count, plural, =1{1 station} other{{count} stations}} · {minutes} min",
   "walkTransitLegWay": "toward {way}",
-  "walkTransitLegBusInfo": "{count} stops · {minutes} min"
+  "walkTransitLegBusInfo": "{count, plural, =1{1 stop} other{{count} stops}} · {minutes} min"
 }

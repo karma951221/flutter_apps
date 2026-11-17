@@ -1374,7 +1374,7 @@ void main() {
           .widgetList<Tab>(find.byType(Tab))
           .map((t) => t.text)
           .toList();
-      expect(labels, ['알람', '걷기', '날씨']);
+      expect(labels, ['알람', '걷기', '날씨', '길찾기']);
     });
 
     testWidgets('날씨 상단 탭을 누르면 WeatherPage 가 보이고 shown 이 불린다', (tester) async {

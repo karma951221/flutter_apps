@@ -4474,6 +4474,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkToolsTabWeather => '날씨';
 
   @override
+  String get walkToolsTabTransit => '길찾기';
+
+  @override
   String get walkWeatherCurrentPlace => '현재 위치';
 
   @override
@@ -5159,6 +5162,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkTransitIdle => '도착을 골라 주세요';
 
   @override
+  String get walkTransitIdleFrom => '출발을 골라 주세요';
+
+  @override
   String get walkTransitIdleBody => '출발과 도착이 정해지면 바로 길을 찾아요';
 
   @override
@@ -5183,6 +5189,11 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String walkTransitTotalHours(int hours, int minutes) {
     return '$hours시간 $minutes분';
+  }
+
+  @override
+  String walkTransitTotalHoursOnly(int hours) {
+    return '$hours시간';
   }
 
   @override
