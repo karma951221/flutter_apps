@@ -4614,10 +4614,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkMapViewStoryOnMap => 'View on map';
 
   @override
-  String get walkMapChipDense => 'Detailed';
+  String get walkMapChipDense => 'Detailed recording';
 
   @override
-  String get walkMapChipDenseOn => 'Recording in detail';
+  String get walkMapChipDenseHint => 'Every 5 s · uses more battery';
 
   @override
   String get walkMapChipOff => 'Recording off';

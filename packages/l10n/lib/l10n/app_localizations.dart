@@ -7506,13 +7506,13 @@ abstract class AppLocalizations {
   /// **'이 폰에만 쌓이고 서버로 보내지 않아요'**
   String get walkMapSettingsRecordDescription;
 
-  /// 지도 설정 — 촘촘 기록 스위치 행 제목
+  /// 지도 설정 — 자세히 기록(위치를 5초마다 찍는 모드) 스위치 행 제목
   ///
   /// In ko, this message translates to:
-  /// **'촘촘하게 기록'**
+  /// **'자세히 기록'**
   String get walkMapSettingsDense;
 
-  /// 지도 설정 — 촘촘 기록 스위치 설명
+  /// 지도 설정 — 자세히 기록 스위치 설명
   ///
   /// In ko, this message translates to:
   /// **'산책할 때처럼 5초마다 기록해요. 배터리를 더 써요'**
@@ -7770,17 +7770,17 @@ abstract class AppLocalizations {
   /// **'지도로 보기'**
   String get walkMapViewStoryOnMap;
 
-  /// 지도 — 촘촘 기록 칩(꺼짐)
+  /// 지도 — 자세히 기록 토글 제목(위치를 5초마다 찍는 모드)
   ///
   /// In ko, this message translates to:
-  /// **'촘촘 기록'**
+  /// **'자세히 기록'**
   String get walkMapChipDense;
 
-  /// 지도 — 촘촘 기록 칩(켜짐)
+  /// 지도 — 자세히 기록 토글 아래 한 줄 설명
   ///
   /// In ko, this message translates to:
-  /// **'촘촘 기록 중'**
-  String get walkMapChipDenseOn;
+  /// **'5초마다 · 배터리 더 씀'**
+  String get walkMapChipDenseHint;
 
   /// 지도 — 기록이 꺼져 있을 때 칩(누르면 켜기)
   ///
