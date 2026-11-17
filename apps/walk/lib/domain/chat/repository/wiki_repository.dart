@@ -5,6 +5,14 @@ abstract interface class WikiRepository {
   /// updatedAt 최근 순(같으면 id 큰 순). 바뀔 때마다 다시 낸다.
   Stream<List<WikiNote>> notes();
 
+  /// 위키 화면 목록 한 쪽 — notes() 와 같은 순서로 앞에서 [limit] 개.
+  /// [query] 를 trim 해 비어 있지 않으면 제목 · 요약 · 본문 어디든 그 글자가 든 메모만
+  /// (% · _ 도 글자 그대로, 영문 대소문자 무시). 바뀔 때마다 다시 낸다.
+  Stream<List<WikiNote>> watchNotes({String query = '', required int limit});
+
+  /// 전체 메모 수. 바뀔 때마다 다시 낸다.
+  Stream<int> watchCount();
+
   /// 한 번 읽기 — 색인 · 정리 요청용. notes() 와 같은 순서.
   Future<List<WikiNote>> all();
 

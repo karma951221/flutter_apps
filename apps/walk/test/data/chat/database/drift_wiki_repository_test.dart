@@ -288,4 +288,72 @@ void main() {
     expect(values.first?.title, '가');
     expect(values.last, isNull);
   });
+
+  group('watchNotes', () {
+    test('최근 순 앞에서 limit 개, 바뀌면 다시 낸다', () async {
+      for (final t in ['가', '나', '다']) {
+        await repo.create(_draft(t));
+        clock.advance(const Duration(minutes: 1));
+      }
+      final values = <List<int>>[];
+      final sub = repo
+          .watchNotes(limit: 2)
+          .listen((ns) => values.add([for (final n in ns) n.id]));
+      await pumpEventQueue();
+
+      await repo.create(_draft('라'));
+      await pumpEventQueue();
+      await sub.cancel();
+
+      expect(values.first, [3, 2]);
+      expect(values.last, [4, 3]);
+    });
+
+    test('query 는 제목 · 요약 · 본문 어디든 든 메모만, 앞뒤 공백은 무시', () async {
+      await repo.create(_draft('출근 알람', summary: '아침'));
+      await repo.create(_draft('저녁', summary: '알람 끄기'));
+      await repo.create(_draft('주말', body: '알람 없음'));
+      await repo.create(_draft('수면', body: '잠'));
+
+      final hits = await repo.watchNotes(query: '  알람 ', limit: 10).first;
+
+      expect([for (final n in hits) n.id], [3, 2, 1]);
+    });
+
+    test('query 의 % · _ · \\ 는 글자 그대로 찾는다', () async {
+      await repo.create(_draft('100% 확실', summary: 'a'));
+      await repo.create(_draft('1000 확실', summary: 'a'));
+      await repo.create(_draft('snake_case', summary: 'a'));
+      await repo.create(_draft('snakeXcase', summary: 'a'));
+
+      Future<List<int>> ids(String q) async => [
+        for (final n in await repo.watchNotes(query: q, limit: 10).first) n.id,
+      ];
+
+      expect(await ids('0%'), [1]);
+      expect(await ids('e_c'), [3]);
+    });
+
+    test('영문은 대소문자를 가리지 않는다', () async {
+      await repo.create(_draft('Flutter 팁', summary: 'a'));
+
+      final hits = await repo.watchNotes(query: 'flutter', limit: 10).first;
+
+      expect(hits, hasLength(1));
+    });
+  });
+
+  test('watchCount 는 전체 수를 내고 바뀌면 다시 낸다', () async {
+    await repo.create(_draft('가'));
+    final values = <int>[];
+    final sub = repo.watchCount().listen(values.add);
+    await pumpEventQueue();
+
+    await repo.create(_draft('나'));
+    await pumpEventQueue();
+    await sub.cancel();
+
+    expect(values.first, 1);
+    expect(values.last, 2);
+  });
 }

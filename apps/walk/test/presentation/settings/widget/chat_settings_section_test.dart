@@ -209,7 +209,7 @@ void main() {
     expect(find.text('Claude 에 연결했어요'), findsOneWidget);
     expect(
       tester.widget<SnackBar>(find.byType(SnackBar)).backgroundColor,
-      theme(tester).colorScheme.primaryContainer,
+      theme(tester).extension<AppStatusColors>()!.success.background,
     );
     expect(await peakGlow(tester), greaterThan(0));
     await tester.pumpAndSettle();
@@ -230,7 +230,7 @@ void main() {
     expect(find.text('키를 저장했어요. 연결되면 확인할게요'), findsOneWidget);
     expect(
       tester.widget<SnackBar>(find.byType(SnackBar)).backgroundColor,
-      isNull,
+      theme(tester).extension<AppStatusColors>()!.info.background,
     );
     await tester.pumpAndSettle();
     expect(find.text('확인 전'), findsOneWidget);
@@ -501,7 +501,7 @@ void main() {
         expect(find.text('GPT 로 바꿨어요'), findsOneWidget);
         expect(
           tester.widget<SnackBar>(find.byType(SnackBar)).backgroundColor,
-          theme(tester).colorScheme.primaryContainer,
+          theme(tester).extension<AppStatusColors>()!.success.background,
         );
         expect(await peakGlow(tester), greaterThan(0));
         await tester.pumpAndSettle();
@@ -548,7 +548,7 @@ void main() {
       expect(find.text('키를 저장했어요. 연결되면 확인할게요'), findsNothing);
       expect(
         tester.widget<SnackBar>(find.byType(SnackBar)).backgroundColor,
-        isNull,
+        theme(tester).extension<AppStatusColors>()!.info.background,
       );
       await tester.pumpAndSettle();
       expect(settings.vendor, ChatVendor.openai);

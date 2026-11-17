@@ -236,4 +236,93 @@ void main() {
     expect(row(2), findsOneWidget);
     expect(h.wiki.created.single.sourceConversationId, isNull);
   });
+
+  group('검색', () {
+    final searchField = find.byKey(const Key('wiki-search-field'));
+
+    Future<void> search(WidgetTester tester, String text) async {
+      await tester.enterText(searchField, text);
+      // 디바운스(300ms) 뒤 구독.
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('앱바 검색 아이콘 → 검색칸, 제목 · 본문에 든 메모만', (tester) async {
+      await h.setUp(
+        notes: [
+          wikiNote(3, title: '출근 알람'),
+          wikiNote(2, title: '수면', body: '알람 없이 일어나기'),
+          wikiNote(1, title: '산책'),
+        ],
+      );
+      await h.pump(tester, openWikiPage);
+      expect(searchField, findsNothing);
+
+      await tester.tap(find.byKey(const Key('wiki-search')));
+      await tester.pumpAndSettle();
+      expect(searchField, findsOneWidget);
+      expect(find.text('제목 · 요약 · 본문에서 찾기'), findsOneWidget);
+
+      await search(tester, '알람');
+
+      expect(row(3), findsOneWidget);
+      expect(row(2), findsOneWidget);
+      expect(row(1), findsNothing);
+    });
+
+    testWidgets('맞는 메모가 없으면 안내, 닫으면 전체 목록', (tester) async {
+      await h.setUp(notes: [wikiNote(1, title: '산책')]);
+      await h.pump(tester, openWikiPage);
+      await tester.tap(find.byKey(const Key('wiki-search')));
+      await tester.pumpAndSettle();
+
+      await search(tester, '없는말');
+
+      expect(
+        find.widgetWithText(AppPlaceholder, "'없는말'에 맞는 메모가 없어요"),
+        findsOneWidget,
+      );
+      expect(row(1), findsNothing);
+
+      await tester.tap(find.byKey(const Key('wiki-search-close')));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+      expect(searchField, findsNothing);
+      expect(row(1), findsOneWidget);
+    });
+
+    testWidgets('검색 중 뒤로가기는 검색만 닫는다', (tester) async {
+      await h.setUp(notes: [wikiNote(1, title: '산책')]);
+      await h.pump(tester, openWikiPage);
+      await tester.tap(find.byKey(const Key('wiki-search')));
+      await tester.pumpAndSettle();
+      await search(tester, '없는말');
+
+      final navigator = tester.state<NavigatorState>(find.byType(Navigator));
+      await navigator.maybePop();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WikiPage), findsOneWidget);
+      expect(searchField, findsNothing);
+      expect(row(1), findsOneWidget);
+    });
+  });
+
+  testWidgets('끝까지 스크롤하면 다음 쪽을 읽고, 다 읽으면 끝 표시', (tester) async {
+    await h.setUp(notes: [for (var id = 45; id >= 1; id--) wikiNote(id)]);
+    await h.pump(tester, openWikiPage);
+
+    // 첫 쪽은 30개 — 31번째(id 15)는 아직 없다.
+    expect(h.wiki.watchNotesCalls, contains(('', 31)));
+    expect(find.text('모두 확인했습니다'), findsNothing);
+
+    await tester.scrollUntilVisible(row(1), 300);
+    await tester.pumpAndSettle();
+
+    expect(row(1), findsOneWidget);
+    expect(h.wiki.watchNotesCalls, contains(('', 61)));
+    await tester.scrollUntilVisible(find.text('모두 확인했습니다'), 300);
+    expect(find.text('모두 확인했습니다'), findsOneWidget);
+  });
 }

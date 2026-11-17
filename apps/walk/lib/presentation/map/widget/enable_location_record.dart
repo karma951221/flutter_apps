@@ -43,6 +43,7 @@ Future<void> enableLocationRecord(
       AppSnackBar.show(
         context,
         message: l10n.walkMapSettingsNeedsAlways,
+        type: AppSnackBarType.warning,
         actionLabel: l10n.walkMapSettingsOpenSettings,
         onAction: cubit.openAppSettings,
       );

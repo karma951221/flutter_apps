@@ -3775,21 +3775,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatModelPickerTitle => 'モデルを選ぶ';
 
   @override
-  String walkChatModelActionTooltip(String model) {
-    return 'モデルを変更 · 現在 $model';
-  }
+  String get walkChatQuickSettings => '会話の設定';
 
   @override
-  String get walkChatUseRecordsOn => '自分の記録を参照: オン';
+  String get walkChatModelRowTitle => 'モデル';
 
   @override
-  String get walkChatUseRecordsOff => '自分の記録を参照: オフ';
+  String get walkChatUseRecordsTitle => '自分の記録を参照';
 
   @override
-  String get walkChatUseRecordsTurnedOn => 'これから日記・歩数・場所・アラーム・天気・ウィキを調べて答えます';
+  String get walkChatUseRecordsOnHint => '日記・歩数・場所・アラーム・天気・ウィキを調べて答えます';
 
   @override
-  String get walkChatUseRecordsTurnedOff => 'これから記録を使わずに答えます';
+  String get walkChatUseRecordsOffHint => '記録を使わずに答えます';
 
   @override
   String get walkChatModelRecommended => 'おすすめ';
@@ -3920,6 +3918,26 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatWikiSaved => 'Wikiに保存しました';
+
+  @override
+  String get walkChatWikiSearch => 'メモを検索';
+
+  @override
+  String get walkChatWikiSearchHint => 'タイトル・要約・本文から検索';
+
+  @override
+  String get walkChatWikiSearchClose => '検索を閉じる';
+
+  @override
+  String walkChatWikiSearchNoResults(String query) {
+    return '「$query」を含むメモはありません';
+  }
+
+  @override
+  String get walkChatWikiCopy => '本文をコピー';
+
+  @override
+  String get walkChatWikiCopied => '本文をコピーしました';
 
   @override
   String get walkChatWikiAddFromBubble => 'Wikiに追加';
@@ -4087,7 +4105,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkMapSettingsRecordDescription => 'この端末にだけ保存され、サーバーには送りません';
 
   @override
-  String get walkMapSettingsDense => '細かく記録';
+  String get walkMapSettingsDense => '詳しく記録';
 
   @override
   String get walkMapSettingsDenseDescription => '散歩のように5秒ごとに記録します。電池を多く使います';
@@ -4220,10 +4238,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkMapViewStoryOnMap => '地図で見る';
 
   @override
-  String get walkMapChipDense => '詳細記録';
+  String get walkMapChipDense => '詳しく記録';
 
   @override
-  String get walkMapChipDenseOn => '詳細記録中';
+  String get walkMapChipDenseHint => '5秒ごと・電池を多く使用';
 
   @override
   String get walkMapChipOff => '記録オフ';

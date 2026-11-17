@@ -81,7 +81,9 @@ patrol develop -t patrol_test/post_test.dart   # Hot Restart 로 짜면서 실�
 현재 공통 진입점:
 
 - 버튼: `AppButton.primary`, `AppButton.secondary`, `AppButton.text`
-- Snackbar: `AppSnackBar.show`
+- Snackbar: `AppSnackBar.show(type:)` 또는 `AppSnackBar.info/success/warning/error`. 유형은
+  실패·오류 `error`, 완료·저장 `success`, 조심할 것 `warning`, 그 밖 `info`(기본). 색은
+  `AppStatusColors`(테마 확장), 오른쪽 X 와 좌우 스와이프로 닫힌다
 - 목록 행: `AppListTile`
 - 아바타: `AppAvatar`
 - 빈 상태·오류 안내: `AppPlaceholder`
@@ -95,7 +97,7 @@ patrol develop -t patrol_test/post_test.dart   # Hot Restart 로 짜면서 실�
   `AppPlaceholder(animateIn:)` · `AppListFooter(animate:)` · `AppAvatar(fadeInImage:)`. 시간·곡선은
   `AppMotion` 토큰만 쓰고, `AppMotion.enabled(context)` 가 false('애니메이션 줄이기')면 전환 없이 그린다
 
-시각 토큰은 `design_system/theme/` 의 `AppColors` · `AppSpacing` · `AppRadius` · `AppMotion` 과
+시각 토큰은 `design_system/theme/` 의 `AppColors` · `AppStatusColors` · `AppSpacing` · `AppRadius` · `AppMotion` 과
 `Theme.of(context)` 를 쓴다. `Colors.*` · 숫자 여백 · `BorderRadius.circular(n)` 을
 화면에 직접 적지 않는다.
 

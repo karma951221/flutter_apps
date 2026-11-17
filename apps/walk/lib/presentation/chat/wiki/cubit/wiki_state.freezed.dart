@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$WikiState {
 
- bool get loading; List<WikiNote> get notes; Set<int> get indexedIds; WikiIndexSize get size; bool get failed;
+ bool get loading; List<WikiNote> get notes; bool get hasMore; bool get loadingMore; String get query; String get searched; int get total; Set<int> get indexedIds; int get indexChars; WikiIndexSize get size; bool get failed;
 /// Create a copy of WikiState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,12 +25,12 @@ $WikiStateCopyWith<WikiState> get copyWith => _$WikiStateCopyWithImpl<WikiState>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is WikiState&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other.notes, notes)&&const DeepCollectionEquality().equals(other.indexedIds, indexedIds)&&(identical(other.size, size) || other.size == size)&&(identical(other.failed, failed) || other.failed == failed));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WikiState&&(identical(other.loading, loading) || other.loading == loading)&&const DeepCollectionEquality().equals(other.notes, notes)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore)&&(identical(other.loadingMore, loadingMore) || other.loadingMore == loadingMore)&&(identical(other.query, query) || other.query == query)&&(identical(other.searched, searched) || other.searched == searched)&&(identical(other.total, total) || other.total == total)&&const DeepCollectionEquality().equals(other.indexedIds, indexedIds)&&(identical(other.indexChars, indexChars) || other.indexChars == indexChars)&&(identical(other.size, size) || other.size == size)&&(identical(other.failed, failed) || other.failed == failed));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,loading,const DeepCollectionEquality().hash(notes),const DeepCollectionEquality().hash(indexedIds),size,failed);
+int get hashCode => Object.hash(runtimeType,loading,const DeepCollectionEquality().hash(notes),hasMore,loadingMore,query,searched,total,const DeepCollectionEquality().hash(indexedIds),indexChars,size,failed);
 
 
 
@@ -41,7 +41,7 @@ abstract mixin class $WikiStateCopyWith<$Res>  {
   factory $WikiStateCopyWith(WikiState value, $Res Function(WikiState) _then) = _$WikiStateCopyWithImpl;
 @useResult
 $Res call({
- bool loading, List<WikiNote> notes, Set<int> indexedIds, WikiIndexSize size, bool failed
+ bool loading, List<WikiNote> notes, bool hasMore, bool loadingMore, String query, String searched, int total, Set<int> indexedIds, int indexChars, WikiIndexSize size, bool failed
 });
 
 
@@ -58,12 +58,18 @@ class _$WikiStateCopyWithImpl<$Res>
 
 /// Create a copy of WikiState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? loading = null,Object? notes = null,Object? indexedIds = null,Object? size = null,Object? failed = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? loading = null,Object? notes = null,Object? hasMore = null,Object? loadingMore = null,Object? query = null,Object? searched = null,Object? total = null,Object? indexedIds = null,Object? indexChars = null,Object? size = null,Object? failed = null,}) {
   return _then(WikiState(
 loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
 as bool,notes: null == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
-as List<WikiNote>,indexedIds: null == indexedIds ? _self.indexedIds : indexedIds // ignore: cast_nullable_to_non_nullable
-as Set<int>,size: null == size ? _self.size : size // ignore: cast_nullable_to_non_nullable
+as List<WikiNote>,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullable_to_non_nullable
+as bool,loadingMore: null == loadingMore ? _self.loadingMore : loadingMore // ignore: cast_nullable_to_non_nullable
+as bool,query: null == query ? _self.query : query // ignore: cast_nullable_to_non_nullable
+as String,searched: null == searched ? _self.searched : searched // ignore: cast_nullable_to_non_nullable
+as String,total: null == total ? _self.total : total // ignore: cast_nullable_to_non_nullable
+as int,indexedIds: null == indexedIds ? _self.indexedIds : indexedIds // ignore: cast_nullable_to_non_nullable
+as Set<int>,indexChars: null == indexChars ? _self.indexChars : indexChars // ignore: cast_nullable_to_non_nullable
+as int,size: null == size ? _self.size : size // ignore: cast_nullable_to_non_nullable
 as WikiIndexSize,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
