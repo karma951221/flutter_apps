@@ -1121,6 +1121,35 @@ OpenAI: gpt-5 `minimal`, 5.1 이후 `none`, o 계열 `low`). 초안의 `modelUna
 - 검증: `flutter analyze` 0 · `flutter test` 3904건 통과(1 skip) · 문서 링크 검사 · l10n 테스트 통과.
   에뮬레이터(2026-11-16) 앱 서랍에 "Life Log" 로 보인다.
 
+## 2026-11-17 — 물어보기 입력칸 · 대화 설정 시트
+
+사용자 QA: ① 키보드에 줄바꿈 대신 보내기 키가 있어 여러 줄을 못 쓴다 — 줄바꿈을 쓰게 하고 5줄까지 커지게.
+② 앱바에 모델 · 내 기록 참고 버튼이 많아 불편하다 — 설정 아이콘 하나와 하단 시트로. ③ 입력칸 왼쪽 첨부 아이콘이
+입력칸 안 prefix 처럼 보여 어색하다. 세부는 기본안으로 정했다.
+
+### 판단
+
+- **줄바꿈 키 · 보내기는 버튼만** — `keyboardType: multiline` · `TextInputAction.newline`, `onSubmitted` 없음.
+  `maxLines` 4 → 5. 5줄이 넘으면 `TextField` 가 칸 안에서 스크롤한다.
+- **[＋] 와 아래 정렬** — 첨부는 이미 `TextField` 바깥 `IconButton` 이었지만 줄 가운데에 서 있어 칸이 커지면 칸 안 아이콘처럼
+  보였다. `Row(crossAxisAlignment: end)` 로 첨부 · 보내기를 칸 아래쪽에 붙이고, 메신저처럼 `add_circle_outline` 으로 바꿨다.
+  툴팁("파일 첨부") · 막힘 이유 툴팁은 그대로.
+- **앱바는 [새 대화] · [대화 설정] · ⋮** — 모델 버튼과 내 기록 토글을 `tune` 아이콘 하나(`ChatSettingsAction`)로 합쳤다.
+  안 본 새 모델 점은 이 버튼으로 옮겼다(시트의 모델 행에도). [새 대화]는 자주 누르고 한 번에 끝나는 동작이라 앱바에 남겼고,
+  ⋮(대화 목록 · 위키 · 작업 폴더 · 위키로 정리 · 임시 대화 · 설정)는 다른 탭과 같은 `FeatureMenu` 라 그대로 뒀다.
+- **제목 아래 모델 이름은 유지** — 버튼에서 모델 아이콘이 빠져 지금 모델을 알 곳이 그 한 줄뿐이다.
+- **대화 설정 시트(`ChatSettingsSheet`)** — 모델 행(누르면 기존 `ModelPickerSheet` 를 시트 위에 열고, 닫으면 바뀐 이름으로
+  돌아온다) · 내 기록 참고 `SwitchListTile`(켬/끔에 따라 설명: 찾아보는 기록 종류 / "내 기록 없이 답해요") · 물어보기 설정
+  바로가기(시트를 닫고 `ChatTab.onOpenSettings`). 시트는 `BlocBuilder` 로 열린 동안 상태를 따른다 — 답하는 중엔 모델 · 스위치만
+  꺼지고, 끝나면 다시 켜진다. 스위치가 바로 바뀌어 보이니 예전 토글의 스낵바는 뺐다(시트에 가려 보이지도 않는다).
+- 지운 것: `ModelAction`(`widget/model_action.dart`) · 문구 `walkChatModelActionTooltip` · `walkChatUseRecordsOn/Off` ·
+  `walkChatUseRecordsTurnedOn/Off`. 더한 문구: `walkChatQuickSettings` · `walkChatModelRowTitle` · `walkChatUseRecordsTitle` ·
+  `walkChatUseRecordsOnHint/OffHint`. **기록 종류 나열은 이제 `walkChatUseRecordsOnHint`** — 도구가 조회하는 기록이 바뀌면 이 문구를 고친다.
+
+### 검증
+
+`flutter analyze` 0 · `flutter test` 4192건 통과(1 skip). 기기 확인은 [시나리오](testing.md#물어보기-입력칸--대화-설정-시트) CI1~CI6.
+
 ## 2026-11-16 — 물어보기 앱바 정리
 
 사용자 피드백: 모델(Sonnet) 칩과 "내 기록 참고" 칩이 본문 위에 계속 떠 있어 불편하다 — actions 로 옮기고, 내 기록 참고는
@@ -1224,3 +1253,114 @@ OpenAI: gpt-5 `minimal`, 5.1 이후 `none`, o 계열 `low`). 초안의 `modelUna
 
 `flutter analyze` 0 · `flutter test` +4184건 통과(1 skip) · `packages/l10n` 12건 · 앱 JUnit 112건 · 문서 링크 검사. 에뮬레이터(2026-11-17)에서 암호화 내보내기 →
 앱 데이터 지우기 → 복원 → 재시작 뒤 일기 · 사진(md5 일치) · 알람 3개가 돌아왔고, 되돌리기로 복원 전으로 돌아갔다. 최종 빌드에서 복원 · 암호화 내보내기를 다시 확인했다. 실제 폰은 대기([시나리오](testing.md#백업-기기-시나리오)).
+
+## 2026-11-17 — "촘촘 기록"을 "자세히 기록" 토글로
+
+사용자 QA: "촘촘기록"이라는 이름이 어색하고, 버튼 말고 토글이나 설정에서 바꾸고 싶다.
+
+### 판단
+
+- 이름 후보: "정밀 기록" · "자세히 기록" · "이동 경로 자세히". **"자세히 기록"**을 골랐다 — "정밀"은 기술 용어 느낌이고,
+  "이동 경로 자세히"는 칩에 넣기 길다. 지도 설정 행 제목("촘촘하게 기록")도 같은 이름으로 맞췄다. en "Detailed recording", ja "詳しく記録".
+- 무슨 기능인지는 제목 아래 한 줄 "5초마다 · 배터리 더 씀"으로 보인다. 설정 행은 기존의 긴 설명을 그대로 쓴다.
+- 형태: `FilterChip` 의 선택 강조(켜지면 글자가 "촘촘 기록 중")로는 켜짐이 잘 안 읽혀, 지도 위 카드에 아이콘 · 제목 · 한 줄 설명 · `Switch` 를
+  두었다. 카드 어디를 눌러도 바뀐다. 기록이 꺼져 있거나 권한이 없을 때의 칩은 그대로다. 위치가 `Positioned(right:)` 라 폭이 정해지지 않아
+  `AppListTile`(전체 폭 `ListTile`) 대신 `Row(mainAxisSize: min)` 로 짰다.
+- 상태 · 네이티브 연동은 그대로 `MapRecordCubit.setDense` → `LocationRecorder.setMode`. 이 cubit 은 셸이 하나를 소유해
+  지도 탭과 지도 설정(`MapSettingsPage` 의 자세히 기록 스위치)이 같은 것을 본다 — 새 설정 화면도 `context.read<MapRecordCubit>()` 로
+  `state.status`(`RecorderRunning/Blocked(:mode)`) 를 읽고 `setDense(bool)` 을 부르면 된다.
+- l10n 키 `walkMapChipDenseOn`("촘촘 기록 중")은 쓰는 곳이 없어져 `walkMapChipDenseHint` 로 바꿨다.
+
+### 검증
+
+`flutter analyze` 0 · `flutter test` 4185건 통과(1 skip) · `packages/l10n` 12건 · 문서 링크 검사. 지도 탭 위젯 테스트에 토글 켜짐/꺼짐 · busy 비활성을 더했다.
+
+## 2026-11-17 — 위키 조회 쪽 나누기 · 검색 · 복사
+
+실사용 QA "위키 조회에 페이징 · 검색이 없다", "텍스트 복사가 안 된다"를 고쳤다.
+
+### 목록은 한도를 늘려 다시 구독한다
+
+`WikiRepository.watchNotes(query, limit)` 를 (쪽 수 × 30) + 1 개로 구독하고, 하나 더 오면 다음 쪽이
+있다고 본다. offset 으로 쪽마다 따로 읽지 않은 것은 목록이 drift 스트림이라서다 — 메모를 고치거나
+지우면 앞쪽 순서가 바뀌는데, 한 구독이 앞에서부터 한도까지 다시 내면 쪽 경계가 어긋나지 않는다.
+메모 수 상한이 사실상 수천 개라 한도까지 다시 읽어도 가볍다.
+
+### 색인 표시는 목록과 따로, 최근 `wikiIndexWindow` 개만 읽는다
+
+예전에는 전체 목록으로 `buildWikiIndex` 를 돌려 행마다 "색인 밖" 표시를 했다. 쪽을 나누면 전체가
+없으므로 색인 쪽 구독을 따로 둔다. 색인은 최근 순 앞에서부터 채우므로, 실릴 수 있는 최대 개수
+(`maxNotes`, 없으면 `maxChars ÷ 12` — 가장 짧은 줄 `[[1]] a — b` + 줄바꿈)만 읽으면 결과가 같다.
+`buildWikiIndex(total:)` 로 생략 수를 전체 기준으로 맞추고, 전체 수는 `watchCount()` 로 받는다.
+
+### 검색은 LIKE, FTS5 는 아직 아니다
+
+제목 · 요약 · 본문을 `LIKE '%…%' ESCAPE '\'`(`LikePattern.escape`, 일기 검색과 같은 방식)로 찾는다.
+메모 하나가 최대 4,180자(제목 60 · 요약 120 · 본문 4,000)라 1,000개여도 4MB 남짓 — SQLite 가
+전체를 훑어도 수십 ms 안이다. FTS5 의 기본 토크나이저(unicode61)는 공백으로 끊어 '출근알람으로' 안의
+'알람' 같은 한국어 부분 일치를 못 찾고, trigram 토크나이저는 3자 미만 검색어를 못 쓴다. 그래서
+지금은 LIKE 가 결과도 더 맞다. 메모가 수천 개를 넘어 검색이 100ms 이상 걸리면 FTS5 trigram +
+3자 미만은 LIKE 로 나누는 안을 다시 본다.
+
+### 복사는 링크를 칩 글자로 바꿔 넣는다
+
+본문의 `[[12]]` · `[[일기:…]]` 는 앱 밖에서 뜻이 없어서, [본문 복사]는 화면 칩에 보이는 글자(메모
+제목 · 일기 날짜 라벨 · '지워진 …')로 바꿔 넣는다(`WikiLinkText.plainText`). 요약 · 본문 · 수정일은
+`SelectionArea` 로 감싸 길게 눌러 일부만 고를 수 있다. 링크 칩은 눌러도 그대로 열린다.
+
+## 2026-11-17 — 스낵바 유형 · 닫기
+
+QA: 스낵바가 아래로 끌어야만 닫히고(되돌리기 같은 액션이 있으면 Flutter 기본값이 `persist` 라 저절로 사라지지도 않는다),
+회색 한 가지라 성공 · 오류가 구별되지 않았다.
+
+- 공용 `AppSnackBar`(`packages/design_system`)에 유형 `info · success · warning · error` 와 유형별 아이콘 · 색을 더했다.
+  색은 테마 확장 `AppStatusColors` — info 는 예전 중립색(inverseSurface), success · warning · error 는
+  `AppColors.success`(초록) · `AppColors.warning`(호박) · `AppColors.error`(빨강) 시드의 container 짝(fidelity)이다.
+  처음엔 error 를 colorScheme 의 errorContainer 로 뒀는데, 라이트에서 연분홍이라 진한 성공 · 주의보다 약해 보여 같은 방식으로 맞췄다.
+  라이트 · 다크 · walk 시드에서 네 유형 모두 글자 대비 AA(4.5:1)를 위젯 테스트가 확인한다.
+- 오른쪽 끝 X 로 닫고, 좌우로 밀어 닫는다(`DismissDirection.horizontal`). 액션이 있으면 [메시지 · 액션 · X] 차례.
+- `AppSnackBar.show(type:)` 는 그대로 두고 `info/success/warning/error` 편의 메서드를 더했다. 유형을 안 주면 info.
+  트레이더 · pawlog 호출부는 그대로다(유형을 이미 쓴 곳은 새 색으로 보인다).
+
+### walk 호출부 분류
+
+기준 — 실패 · 오류는 error, 완료 · 저장 · 옮김 · 지움은 success, 할 수 없거나 사용자가 조심해야 할 상태는 warning,
+그 밖의 상태 안내는 info. 호출 63곳 중 이번에 바꾼 것:
+
+| 위치 | 문구 | 전 → 후 |
+|---|---|---|
+| `chat_tab` 작업 폴더 저장 실패 | 저장하지 못했어요 | info → error |
+| `chat_tab` 작업 폴더 저장 | 작업 폴더에 저장했어요 [보기] | info → success |
+| `chat_tab` · `open_workspace` 지운 파일 열기 | 지운 파일이에요 | info → warning |
+| `chat_tab` 모델 교체 | 고른 모델이 없어져 추천 모델로 바꿨어요 | info → warning |
+| `chat_tab` 첨부 거절 | 지원하지 않는 형식 · 너무 큼 · 개수 한도 등 | info → warning |
+| `chat_tab` 쓰기 도구 지움 · 저장 | 지웠어요 · {name} 에 저장했어요 [열기] | info → success |
+| `wiki_note_edit_page` | 위키에 저장했어요 | info → success |
+| `wiki_candidates_sheet` | 메모 {count}개를 저장했어요 | info → success |
+| `entry_editor_page` 초안 키 없음 | 물어보기 설정에서 키를 넣으면 쓸 수 있어요 | info → warning |
+| `entry_editor_page` 초안 적용 | 초안으로 바꿨어요 [되돌리기] | info → success |
+| `entry_editor_page` 끝난 스토리 | 끝난 스토리라 새 기록을 올릴 수 없어요 | error → warning |
+| `enable_location_record` | 위치를 "항상 허용"으로 바꿔야 기록할 수 있어요 [설정] | info → warning |
+| `map_settings_page` | 위치 기록을 지웠어요 | info → success |
+| `chat_settings_section` 연결 끊기 | 연결을 끊었어요 | info → success |
+| `alarm_list_page` 저장 · 켜기 | {시간} 뒤에 울려요 / 쉬는 기간이라 울리지 않아요 | info → success / warning |
+
+그대로 둔 것:
+
+- **error** — `…하지 못했어요` 류 실패 전부(알람 저장 · 알람음 · 백업 · 위키 · 작업 폴더 · 일기 옮기기/휴지통/미디어 ·
+  위치 켜기 · 권한 없음 · 설정 저장 · 대화 기록 · 사용량), 초안 실패(`chatFailureText`), 스토리 관리 실패.
+- **success** — 키 연결 · 벤더 바꿈, 일기 잠금 저장, 일기 옮김 · 휴지통(되돌리기), 올렸어요, 스토리 옮김, 휴지통 비우기 · 되살리기, 백업했어요.
+- **info** — 내 기록 참고 켜짐/꺼짐, 멈췄어요, 키 저장 · 벤더 바꿈의 "아직 확인 못 함"(연결되면 다시 확인하므로 주의가 아니다).
+
+호출부는 머지 충돌이 적도록 `type:` 한 줄만 더하거나 바꿨다.
+
+### 알려진 한계
+
+- 액션(되돌리기 등)이 있는 스낵바는 Flutter 기본값(`persist`)대로 저절로 사라지지 않는다. 이제 X · 좌우 스와이프로 닫을 수 있어
+  그대로 뒀다. 실사용에서 거슬리면 `persist: false` 를 검토한다(접근성 탐색 중에는 Flutter 가 어차피 자동으로 닫지 않는다).
+
+### 검증
+
+design_system `flutter test` 86건 · `flutter analyze` 0, walk `flutter analyze` 0 · `flutter test` +4184건 통과(1 skip),
+trader · pawlog `flutter analyze` 0 · `flutter test` 통과. 에뮬레이터는 다른 세션들이 함께 쓰고 있어 설치하지 않았고,
+실제 폰트를 실은 위젯 렌더로 네 유형 × 라이트/다크 모양(아이콘 · 색 · [메시지 · 되돌리기 · X] 배치)을 확인했다. 기기 확인은 대기.

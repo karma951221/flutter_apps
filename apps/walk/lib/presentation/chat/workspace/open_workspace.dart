@@ -67,6 +67,7 @@ Future<void> shareWorkspaceFile(
 void _showMissing(BuildContext context) => AppSnackBar.show(
   context,
   message: AppLocalizations.of(context).walkWorkspaceFileMissing,
+  type: AppSnackBarType.warning,
 );
 
 /// 경계 밖 경로(WorkspacePathException) · 읽기 실패는 없는 파일로 본다.

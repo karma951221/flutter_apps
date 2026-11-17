@@ -13,7 +13,6 @@ import '../../../../domain/chat/chat_vendor.dart';
 import '../../../../domain/chat/entity/wiki_note.dart';
 import '../../../../domain/chat/repository/wiki_repository.dart';
 import '../../../../domain/chat/usecase/chat_session.dart';
-import '../../../../domain/chat/wiki/wiki_index.dart';
 import '../../../settings/widget/wiki_index_size_sheet.dart';
 import '../../widget/chat_vendor_icon.dart';
 import '../cubit/wiki_cubit.dart';
@@ -25,6 +24,9 @@ enum _PageAction { deleteAll }
 
 /// 위키 메모 목록(스펙 §3 위키 화면). 행을 누르면 메모 화면 — 거기서 [대화 보기]를 고르면
 /// 그 대화 id 로 pop 한다. [openWikiPage] 로 연다(잠금 아래).
+///
+/// 목록은 끝 가까이 스크롤하면 다음 쪽을 읽는다. 앱바 검색 아이콘을 누르면 제목 자리가
+/// 검색칸이 되고(제목 · 요약 · 본문), 뒤로가기 · 닫기는 검색만 닫는다.
 class WikiPage extends StatelessWidget {
   const WikiPage({super.key});
 
@@ -32,55 +34,136 @@ class WikiPage extends StatelessWidget {
   Widget build(BuildContext context) => BlocProvider(
     create: (_) =>
         WikiCubit(getIt<WikiRepository>(), getIt<ChatHistorySettings>()),
-    child: BlocBuilder<WikiCubit, WikiState>(
-      builder: (context, state) {
-        final l10n = AppLocalizations.of(context);
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(l10n.walkChatWikiTitle),
-            actions: [
-              IconButton(
-                key: const Key('wiki-add'),
-                icon: const Icon(Icons.add),
-                tooltip: l10n.walkChatWikiAdd,
-                onPressed: () => unawaited(
-                  openWikiEditor(
-                    context,
-                    const WikiEditSeed(title: '', summary: '', body: ''),
-                  ),
-                ),
-              ),
-              AppOverflowMenu<_PageAction>(
-                items: [
-                  if (state.notes.isNotEmpty)
-                    AppOverflowMenuItem(
-                      value: _PageAction.deleteAll,
-                      label: l10n.walkChatWikiDeleteAll,
-                      icon: Icons.delete_sweep_outlined,
-                      isDestructive: true,
-                    ),
-                ],
-                onSelected: (_) => _deleteAll(context, state.notes.length),
-              ),
-            ],
-          ),
+    child: const _WikiView(),
+  );
+}
+
+class _WikiView extends StatefulWidget {
+  const _WikiView();
+
+  @override
+  State<_WikiView> createState() => _WikiViewState();
+}
+
+class _WikiViewState extends State<_WikiView> {
+  final _searchText = TextEditingController();
+  bool _searching = false;
+
+  @override
+  void dispose() {
+    _searchText.dispose();
+    super.dispose();
+  }
+
+  void _openSearch() => setState(() => _searching = true);
+
+  void _closeSearch() {
+    _searchText.clear();
+    context.read<WikiCubit>().setQuery('');
+    setState(() => _searching = false);
+  }
+
+  @override
+  Widget build(BuildContext context) => BlocBuilder<WikiCubit, WikiState>(
+    builder: (context, state) {
+      final l10n = AppLocalizations.of(context);
+      return PopScope(
+        canPop: !_searching,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _closeSearch();
+        },
+        child: Scaffold(
+          appBar: _searching
+              ? _searchBar(context, l10n)
+              : _titleBar(context, state, l10n),
           body: _body(context, state, l10n),
-        );
-      },
-    ),
+        ),
+      );
+    },
   );
 
+  PreferredSizeWidget _titleBar(
+    BuildContext context,
+    WikiState state,
+    AppLocalizations l10n,
+  ) => AppBar(
+    title: Text(l10n.walkChatWikiTitle),
+    actions: [
+      if (state.total > 0)
+        IconButton(
+          key: const Key('wiki-search'),
+          icon: const Icon(Icons.search),
+          tooltip: l10n.walkChatWikiSearch,
+          onPressed: _openSearch,
+        ),
+      IconButton(
+        key: const Key('wiki-add'),
+        icon: const Icon(Icons.add),
+        tooltip: l10n.walkChatWikiAdd,
+        onPressed: () => unawaited(
+          openWikiEditor(
+            context,
+            const WikiEditSeed(title: '', summary: '', body: ''),
+          ),
+        ),
+      ),
+      AppOverflowMenu<_PageAction>(
+        items: [
+          if (state.total > 0)
+            AppOverflowMenuItem(
+              value: _PageAction.deleteAll,
+              label: l10n.walkChatWikiDeleteAll,
+              icon: Icons.delete_sweep_outlined,
+              isDestructive: true,
+            ),
+        ],
+        onSelected: (_) => _deleteAll(context, state.total),
+      ),
+    ],
+  );
+
+  /// 일기 검색과 같은 모양 — 테두리 없는 칸이 제목 자리에 든다.
+  PreferredSizeWidget _searchBar(BuildContext context, AppLocalizations l10n) =>
+      AppBar(
+        title: TextField(
+          key: const Key('wiki-search-field'),
+          controller: _searchText,
+          autofocus: true,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: l10n.walkChatWikiSearchHint,
+            border: InputBorder.none,
+            enabledBorder: InputBorder.none,
+            focusedBorder: InputBorder.none,
+            filled: false,
+          ),
+          onChanged: context.read<WikiCubit>().setQuery,
+        ),
+        actions: [
+          IconButton(
+            key: const Key('wiki-search-close'),
+            icon: const Icon(Icons.close),
+            tooltip: l10n.walkChatWikiSearchClose,
+            onPressed: _closeSearch,
+          ),
+        ],
+      );
+
   Widget _body(BuildContext context, WikiState state, AppLocalizations l10n) {
-    if (state.loading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (state.loading) return const AppLoading();
     if (state.failed && state.notes.isEmpty) {
       return AppPlaceholder(
         icon: Icons.error_outline,
         message: l10n.walkChatWikiLoadFailed,
       );
     }
-    if (state.notes.isEmpty) {
+    if (state.noResults) {
+      return AppPlaceholder(
+        icon: Icons.search_off,
+        message: l10n.walkChatWikiSearchNoResults(state.searched),
+      );
+    }
+    if (state.notes.isEmpty && state.searched.isEmpty) {
       return Column(
         children: [
           const _Notice(),
@@ -93,19 +176,44 @@ class WikiPage extends StatelessWidget {
         ],
       );
     }
-    final notIndexed = state.notIndexed;
-    return ListView(
-      children: [
-        const _Notice(),
-        if (notIndexed > 0)
-          AppListTile(
-            key: const Key('wiki-not-indexed'),
-            title: Text(l10n.walkChatWikiNotIndexed(notIndexed)),
-            onTap: () => _pickSize(context, state),
-          ),
-        for (final note in state.notes)
-          _NoteRow(note: note, indexed: state.indexedIds.contains(note.id)),
-      ],
+    final cubit = context.read<WikiCubit>();
+    final notIndexed = state.searched.isEmpty ? state.notIndexed : 0;
+    // 한 쪽 안에 다 들어가면 끝 표시는 군더더기 — 더 읽어 본 적이 있을 때만.
+    final footer =
+        state.hasMore ||
+        state.loadingMore ||
+        state.notes.length > cubit.pageSize;
+    final head = [
+      if (state.searched.isEmpty) const _Notice(),
+      if (notIndexed > 0)
+        AppListTile(
+          key: const Key('wiki-not-indexed'),
+          title: Text(l10n.walkChatWikiNotIndexed(notIndexed)),
+          onTap: () => _pickSize(context, state),
+        ),
+    ];
+    final count = head.length + state.notes.length + (footer ? 1 : 0);
+    return AppLoadMoreListener(
+      onLoadMore: cubit.loadMore,
+      child: ListView.builder(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        itemCount: count,
+        itemBuilder: (context, i) {
+          if (i < head.length) return head[i];
+          final n = i - head.length;
+          if (n < state.notes.length) {
+            final note = state.notes[n];
+            return _NoteRow(
+              note: note,
+              indexed: state.indexedIds.contains(note.id),
+            );
+          }
+          return AppListFooter(
+            isLoadingMore: state.loadingMore,
+            canLoadMore: state.hasMore,
+          );
+        },
+      ),
     );
   }
 
@@ -117,8 +225,8 @@ class WikiPage extends StatelessWidget {
     final picked = await showWikiIndexSizeSheet(
       context,
       current: state.size,
-      noteCount: state.notes.length,
-      indexChars: buildWikiIndex(state.notes, state.size).chars,
+      noteCount: state.total,
+      indexChars: state.indexChars,
     );
     if (picked != null) {
       try {

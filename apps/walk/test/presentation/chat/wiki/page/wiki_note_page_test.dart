@@ -1,5 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:walk/presentation/chat/wiki/open_wiki.dart';
 import 'package:walk/presentation/chat/wiki/page/wiki_note_edit_page.dart';
@@ -164,5 +165,63 @@ void main() {
     expect(find.byType(WikiNoteEditPage), findsNothing);
     expect(find.text('주말엔 9시'), findsOneWidget);
     expect(h.wiki.updated.single.$1, 5);
+  });
+
+  group('복사', () {
+    late List<String> copied;
+
+    setUp(() {
+      copied = [];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+            if (call.method == 'Clipboard.setData') {
+              copied.add((call.arguments as Map)['text'] as String);
+            }
+            return null;
+          });
+    });
+    tearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, null),
+    );
+
+    testWidgets('복사 버튼은 본문 전체를 링크 칩 글자로 바꿔 넣고 스낵바로 알린다', (tester) async {
+      final note = wikiNote(
+        5,
+        title: '수면 패턴',
+        body: '[[3]] 출근 알람으로 깬다.\n지운 [[9]] 도 있다.',
+      );
+      await h.setUp(notes: [note, alarm]);
+      await h.pump(tester, (context) => openWikiNote(context, 5));
+
+      await tester.tap(find.byKey(const Key('wiki-note-copy')));
+      await tester.pump();
+
+      expect(copied, ['출근 알람 출근 알람으로 깬다.\n지운 지워진 메모 도 있다.']);
+      expect(find.text('본문을 복사했어요'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.byIcon(Icons.check_circle_outline),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('본문 · 요약은 길게 눌러 고를 수 있다(SelectionArea 안)', (tester) async {
+      await h.setUp(notes: [sleep, alarm]);
+      await h.pump(tester, (context) => openWikiNote(context, 5));
+
+      for (final text in ['평일 7시 전후 기상', '출근 알람으로 깬다.']) {
+        expect(
+          find.ancestor(
+            of: find.textContaining(text, findRichText: true),
+            matching: find.byType(SelectionArea),
+          ),
+          findsWidgets,
+          reason: text,
+        );
+      }
+    });
   });
 }

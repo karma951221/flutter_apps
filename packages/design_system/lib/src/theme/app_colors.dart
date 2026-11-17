@@ -13,4 +13,10 @@ abstract final class AppColors {
   /// 이유는 의미가 다르기 때문(호감/비호감이 아니라 시세의 방향이다).
   static const candleUp = Color(0xFFE03131);
   static const candleDown = Color(0xFF1C7ED6);
+
+  /// 상태 알림 시드 — 성공(초록) · 주의(호박) · 오류(빨강). 그대로 칠하지 않고
+  /// `AppStatusColors` 가 테마 밝기에 맞는 container 짝으로 바꿔 쓴다.
+  static const success = Color(0xFF2F9E44);
+  static const warning = Color(0xFFF59F00);
+  static const error = Color(0xFFE03131);
 }

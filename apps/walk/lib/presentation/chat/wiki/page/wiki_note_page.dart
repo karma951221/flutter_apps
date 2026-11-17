@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:l10n/l10n.dart';
@@ -52,6 +53,13 @@ class WikiNotePage extends StatelessWidget {
             actions: [
               if (note != null)
                 IconButton(
+                  key: const Key('wiki-note-copy'),
+                  icon: const Icon(Icons.content_copy_outlined),
+                  tooltip: l10n.walkChatWikiCopy,
+                  onPressed: () => unawaited(_copy(context, note, state)),
+                ),
+              if (note != null)
+                IconButton(
                   key: const Key('wiki-note-edit'),
                   icon: const Icon(Icons.edit_outlined),
                   tooltip: l10n.walkChatWikiEditTitle,
@@ -99,28 +107,31 @@ class WikiNotePage extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(note.summary, style: theme.textTheme.titleSmall),
-              const SizedBox(height: AppSpacing.md),
-              WikiLinkText(
-                body: note.body,
-                notes: state.linkedNotes,
-                entries: state.linkedEntries,
-                onOpenNote: (id) => _openNote(context, id),
-                onOpenEntry: (id) => _openEntry(context, note, state, id),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                l10n.walkChatWikiUpdated(date),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+        // 길게 눌러 요약 · 본문 일부를 골라 복사한다. 링크 칩은 눌러도 그대로 열린다.
+        SelectionArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(note.summary, style: theme.textTheme.titleSmall),
+                const SizedBox(height: AppSpacing.md),
+                WikiLinkText(
+                  body: note.body,
+                  notes: state.linkedNotes,
+                  entries: state.linkedEntries,
+                  onOpenNote: (id) => _openNote(context, id),
+                  onOpenEntry: (id) => _openEntry(context, note, state, id),
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  l10n.walkChatWikiUpdated(date),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         if (state.sourceExists && note.sourceConversationId != null)
@@ -151,7 +162,11 @@ class WikiNotePage extends StatelessWidget {
           for (final b in state.backlinks)
             AppListTile(
               key: Key('wiki-backlink-${b.id}'),
-              title: Text(b.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+              title: Text(
+                b.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               subtitle: Text(
                 b.summary,
                 maxLines: 1,
@@ -162,6 +177,32 @@ class WikiNotePage extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  /// 본문 전체를 클립보드로 — 링크는 칩에 보이는 글자로 바꾼다.
+  Future<void> _copy(
+    BuildContext context,
+    WikiNote note,
+    WikiNoteState state,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    await Clipboard.setData(
+      ClipboardData(
+        text: WikiLinkText.plainText(
+          body: note.body,
+          notes: state.linkedNotes,
+          entries: state.linkedEntries,
+          l10n: l10n,
+        ),
+      ),
+    );
+    if (context.mounted) {
+      AppSnackBar.show(
+        context,
+        message: l10n.walkChatWikiCopied,
+        type: AppSnackBarType.success,
+      );
+    }
   }
 
   /// 다른 메모를 연다. 거기서 [대화 보기]를 고르면 그 id 를 위로 넘긴다.
