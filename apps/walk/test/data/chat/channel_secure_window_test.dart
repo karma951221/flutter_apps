@@ -13,7 +13,9 @@ void main() {
 
   test('setSecure(true/false) 는 setSecure 를 그 값으로 부른다', () async {
     final calls = <MethodCall>[];
-    messenger.setMockMethodCallHandler(ChannelSecureWindow.channel, (call) async {
+    messenger.setMockMethodCallHandler(ChannelSecureWindow.channel, (
+      call,
+    ) async {
       calls.add(call);
       return null;
     });

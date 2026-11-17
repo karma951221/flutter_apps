@@ -69,7 +69,9 @@ class BackupCipher {
       ..add(_magic)
       ..addByte(_containerVersion)
       ..add(
-        (ByteData(4)..setUint32(0, iterations, Endian.big)).buffer.asUint8List(),
+        (ByteData(
+          4,
+        )..setUint32(0, iterations, Endian.big)).buffer.asUint8List(),
       )
       ..add(_randomBytes(_saltLen))
       ..add(_randomBytes(_noncePrefixLen));
@@ -141,10 +143,11 @@ class BackupCipher {
           BackupCipherError.wrongPasswordOrCorrupt,
         );
       }
-      final iter = ByteData.sublistView(headerBytes, 5, 9).getUint32(
-        0,
-        Endian.big,
-      );
+      final iter = ByteData.sublistView(
+        headerBytes,
+        5,
+        9,
+      ).getUint32(0, Endian.big);
       if (iter < 1 || iter > maxBackupIterations) {
         throw const BackupCipherException(
           BackupCipherError.wrongPasswordOrCorrupt,
@@ -227,7 +230,9 @@ class BackupCipher {
   static Uint8List _nonce(List<int> prefix, int index) {
     final b = BytesBuilder()
       ..add(prefix)
-      ..add((ByteData(4)..setUint32(0, index, Endian.big)).buffer.asUint8List());
+      ..add(
+        (ByteData(4)..setUint32(0, index, Endian.big)).buffer.asUint8List(),
+      );
     return b.toBytes();
   }
 

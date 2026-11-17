@@ -199,51 +199,55 @@ void main() {
     }
   });
 
-  test('undo point re-links wiki notes to conversations the restore removed',
-      () async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    await seedA();
-    await ChatBackupArea(a, wsA, prefs, settings).export(staging);
+  test(
+    'undo point re-links wiki notes to conversations the restore removed',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      await seedA();
+      await ChatBackupArea(a, wsA, prefs, settings).export(staging);
 
-    // B 에는 백업에 없는 대화 x 와 그것을 출처로 둔 위키 메모가 있다.
-    await insertConversation(b, 'x');
-    await insertWikiNote(b, 5, source: 'x');
-    final areaB = ChatBackupArea(b, wsB, prefs, settings);
-    final undo = Directory('${tmp.path}/undo')..createSync();
-    await areaB.export(undo);
+      // B 에는 백업에 없는 대화 x 와 그것을 출처로 둔 위키 메모가 있다.
+      await insertConversation(b, 'x');
+      await insertWikiNote(b, 5, source: 'x');
+      final areaB = ChatBackupArea(b, wsB, prefs, settings);
+      final undo = Directory('${tmp.path}/undo')..createSync();
+      await areaB.export(undo);
 
-    await areaB.replace(staging);
-    Future<String?> sourceOf5() async => (await (b.select(
-      b.wikiNotes,
-    )..where((n) => n.id.equals(5))).getSingle()).sourceConversationId;
-    expect(await sourceOf5(), isNull);
+      await areaB.replace(staging);
+      Future<String?> sourceOf5() async => (await (b.select(
+        b.wikiNotes,
+      )..where((n) => n.id.equals(5))).getSingle()).sourceConversationId;
+      expect(await sourceOf5(), isNull);
 
-    await areaB.replace(undo);
-    expect(await sourceOf5(), 'x');
-  });
+      await areaB.replace(undo);
+      expect(await sourceOf5(), 'x');
+    },
+  );
 
-  test('links from another device do not attach to a different local note',
-      () async {
-    SharedPreferences.setMockInitialValues({});
-    final prefs = await SharedPreferences.getInstance();
-    await seedA();
-    await insertWikiNote(a, 5, source: 'c1');
-    await ChatBackupArea(a, wsA, prefs, settings).export(staging);
+  test(
+    'links from another device do not attach to a different local note',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      await seedA();
+      await insertWikiNote(a, 5, source: 'c1');
+      await ChatBackupArea(a, wsA, prefs, settings).export(staging);
 
-    // B 의 5번 메모는 다른 때 만든 다른 메모다.
-    await insertWikiNote(b, 5);
-    await (b.update(b.wikiNotes)..where((n) => n.id.equals(5))).write(
-      WikiNotesCompanion(createdAt: Value(DateTime(2020))),
-    );
+      // B 의 5번 메모는 다른 때 만든 다른 메모다.
+      await insertWikiNote(b, 5);
+      await (b.update(b.wikiNotes)..where((n) => n.id.equals(5))).write(
+        WikiNotesCompanion(createdAt: Value(DateTime(2020))),
+      );
 
-    await ChatBackupArea(b, wsB, prefs, settings).replace(staging);
+      await ChatBackupArea(b, wsB, prefs, settings).replace(staging);
 
-    final note = await (b.select(
-      b.wikiNotes,
-    )..where((n) => n.id.equals(5))).getSingle();
-    expect(note.sourceConversationId, isNull);
-  });
+      final note = await (b.select(
+        b.wikiNotes,
+      )..where((n) => n.id.equals(5))).getSingle();
+      expect(note.sourceConversationId, isNull);
+    },
+  );
 
   test('chat replace leaves wiki_notes untouched', () async {
     SharedPreferences.setMockInitialValues({});

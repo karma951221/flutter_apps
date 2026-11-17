@@ -67,10 +67,7 @@ void main() {
     for (final (status, notices) in [
       (const RecorderStatus.off(), {RestoreNotice.locationRecordingOff}),
       (
-        RecorderStatus.running(
-          RecordMode.values.first,
-          stillDetection: true,
-        ),
+        RecorderStatus.running(RecordMode.values.first, stillDetection: true),
         <RestoreNotice>{},
       ),
       (RecorderStatus.blocked(RecordMode.values.first), <RestoreNotice>{}),

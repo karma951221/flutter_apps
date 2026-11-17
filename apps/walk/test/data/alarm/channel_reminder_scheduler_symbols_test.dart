@@ -10,7 +10,13 @@ import 'package:walk/domain/alarm/entity/alarm_reminder.dart';
 void main() {
   final ko = lookupAppLocalizations(const Locale('ko'));
   final ringAt = DateTime(2026, 10, 9, 7);
-  const alarm = Alarm(id: 4, hour: 7, minute: 0, repeat: {Weekday.fri}, label: '출근');
+  const alarm = Alarm(
+    id: 4,
+    hour: 7,
+    minute: 0,
+    repeat: {Weekday.fri},
+    label: '출근',
+  );
 
   test('날짜 기호가 없어도 기기 언어 시각 · 날짜로 만든다(대체 문구 07:00 · 10/9 가 아니다)', () async {
     final soon = await ChannelReminderScheduler.prepareArguments(

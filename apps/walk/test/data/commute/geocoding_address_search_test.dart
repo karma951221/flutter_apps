@@ -49,9 +49,8 @@ void main() {
   test('이름이 없거나 오프라인이면 검색어를 라벨로', () async {
     final search = GeocodingAddressSearch(
       _FakeNamer(
-        (lat, lng) => lat == 1
-            ? const PlaceLookup.noName()
-            : const PlaceLookup.offline(),
+        (lat, lng) =>
+            lat == 1 ? const PlaceLookup.noName() : const PlaceLookup.offline(),
       ),
       locations: (query, l) async => [_loc(1, 2), _loc(3, 4)],
     );

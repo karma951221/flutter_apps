@@ -7,7 +7,8 @@ import 'package:walk/domain/alarm/sound/alarm_sound_source.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const channel = MethodChannel(ChannelAlarmSoundSource.channelName);
-  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   late List<MethodCall> calls;
 
   void answer(Object? Function(MethodCall call) reply) {
@@ -19,7 +20,8 @@ void main() {
   }
 
   void fail(String method) => answer((call) {
-    if (call.method == method) throw PlatformException(code: 'failed', message: 'boom');
+    if (call.method == method)
+      throw PlatformException(code: 'failed', message: 'boom');
     return null;
   });
 
@@ -54,11 +56,17 @@ void main() {
 
     test('오류는 AlarmSoundException', () async {
       fail('list');
-      expect(ChannelAlarmSoundSource().deviceRingtones(), throwsA(isA<AlarmSoundException>()));
+      expect(
+        ChannelAlarmSoundSource().deviceRingtones(),
+        throwsA(isA<AlarmSoundException>()),
+      );
     });
 
     test('채널이 없어도 AlarmSoundException', () async {
-      expect(ChannelAlarmSoundSource().deviceRingtones(), throwsA(isA<AlarmSoundException>()));
+      expect(
+        ChannelAlarmSoundSource().deviceRingtones(),
+        throwsA(isA<AlarmSoundException>()),
+      );
     });
   });
 
@@ -72,8 +80,13 @@ void main() {
     });
 
     test('bundled 는 kind asset + 에셋 경로', () async {
-      await ChannelAlarmSoundSource().preview(const AlarmSound.bundled(BundledAlarmSounds.morning));
-      expect(calls.single.arguments, {'kind': 'asset', 'value': 'assets/alarm/morning.ogg'});
+      await ChannelAlarmSoundSource().preview(
+        const AlarmSound.bundled(BundledAlarmSounds.morning),
+      );
+      expect(calls.single.arguments, {
+        'kind': 'asset',
+        'value': 'assets/alarm/morning.ogg',
+      });
     });
 
     test('file 은 kind uri + file:// uri', () async {
@@ -99,7 +112,10 @@ void main() {
 
     test('복사한 기기음은 파일 uri 로 튼다', () async {
       await ChannelAlarmSoundSource().preview(
-        const AlarmSound.device(title: 'Bell', path: '/data/app_flutter/alarm_sounds/a.ogg'),
+        const AlarmSound.device(
+          title: 'Bell',
+          path: '/data/app_flutter/alarm_sounds/a.ogg',
+        ),
       );
       expect(calls.single.arguments, {
         'kind': 'uri',
@@ -129,7 +145,10 @@ void main() {
   });
 
   group('import', () {
-    const ringtone = (title: 'Bell', uri: 'content://media/internal/audio/media/2');
+    const ringtone = (
+      title: 'Bell',
+      uri: 'content://media/internal/audio/media/2',
+    );
 
     test('uri 를 넘기고 돌려받은 경로로 AlarmSound.device', () async {
       answer((_) => '/data/app_flutter/alarm_sounds/abc.ogg');
@@ -137,28 +156,41 @@ void main() {
       final sound = await ChannelAlarmSoundSource().import(ringtone);
 
       expect(calls.single.method, 'import');
-      expect(calls.single.arguments, {'uri': 'content://media/internal/audio/media/2'});
+      expect(calls.single.arguments, {
+        'uri': 'content://media/internal/audio/media/2',
+      });
       expect(
         sound,
-        const AlarmSound.device(title: 'Bell', path: '/data/app_flutter/alarm_sounds/abc.ogg'),
+        const AlarmSound.device(
+          title: 'Bell',
+          path: '/data/app_flutter/alarm_sounds/abc.ogg',
+        ),
       );
     });
 
     test('오류는 AlarmSoundException', () async {
       fail('import');
-      expect(ChannelAlarmSoundSource().import(ringtone), throwsA(isA<AlarmSoundException>()));
+      expect(
+        ChannelAlarmSoundSource().import(ringtone),
+        throwsA(isA<AlarmSoundException>()),
+      );
     });
 
     test('경로가 비면 AlarmSoundException', () async {
       answer((_) => null);
-      expect(ChannelAlarmSoundSource().import(ringtone), throwsA(isA<AlarmSoundException>()));
+      expect(
+        ChannelAlarmSoundSource().import(ringtone),
+        throwsA(isA<AlarmSoundException>()),
+      );
     });
   });
   group('pickFile', () {
     test('기본 이름을 넘기고 돌려받은 제목 · 경로로 AlarmSound.file', () async {
       answer((_) => {'title': 't', 'path': '/p'});
 
-      final sound = await ChannelAlarmSoundSource().pickFile(fallbackTitle: '내 파일');
+      final sound = await ChannelAlarmSoundSource().pickFile(
+        fallbackTitle: '내 파일',
+      );
 
       expect(calls.single.method, 'pickFile');
       expect(calls.single.arguments, {'fallbackTitle': '내 파일'});
@@ -167,7 +199,10 @@ void main() {
 
     test('취소(null)는 null', () async {
       answer((_) => null);
-      expect(await ChannelAlarmSoundSource().pickFile(fallbackTitle: 'f'), isNull);
+      expect(
+        await ChannelAlarmSoundSource().pickFile(fallbackTitle: 'f'),
+        isNull,
+      );
     });
 
     test('오류(too_large 등)는 AlarmSoundException', () async {

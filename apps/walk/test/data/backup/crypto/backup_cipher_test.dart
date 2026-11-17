@@ -247,7 +247,10 @@ void main() {
       expect(await sniffBackupFile(f), BackupFileKind.encrypted);
     });
     test('unknown', () async {
-      expect(await sniffBackupFile(file('a', [1, 2, 3])), BackupFileKind.unknown);
+      expect(
+        await sniffBackupFile(file('a', [1, 2, 3])),
+        BackupFileKind.unknown,
+      );
       expect(await sniffBackupFile(file('b', [])), BackupFileKind.unknown);
     });
   });

@@ -196,7 +196,11 @@ void main() {
     handZip({
       'manifest.json': enc(
         manifestJson([
-          {'path': 'gone.json', 'bytes': 1, 'sha256': _hex([1])},
+          {
+            'path': 'gone.json',
+            'bytes': 1,
+            'sha256': _hex([1]),
+          },
         ]),
       ),
     });

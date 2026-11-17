@@ -62,15 +62,18 @@ void main() {
       expect(reader.draftIncludePhotos, isTrue);
     });
 
-    test('키는 walk.diary.draft.style · walk.diary.draft.includePhotos', () async {
-      final prefs = await _prefs({
-        'walk.diary.draft.style': 'sns',
-        'walk.diary.draft.includePhotos': true,
-      });
+    test(
+      '키는 walk.diary.draft.style · walk.diary.draft.includePhotos',
+      () async {
+        final prefs = await _prefs({
+          'walk.diary.draft.style': 'sns',
+          'walk.diary.draft.includePhotos': true,
+        });
 
-      expect(prefs.draftStyle, DraftStyle.sns);
-      expect(prefs.draftIncludePhotos, isTrue);
-    });
+        expect(prefs.draftStyle, DraftStyle.sns);
+        expect(prefs.draftIncludePhotos, isTrue);
+      },
+    );
 
     test('모르는 문체 · 타입이 다른 값이면 기본값', () async {
       final unknown = await _prefs({

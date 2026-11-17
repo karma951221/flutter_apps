@@ -5,7 +5,8 @@ import 'package:walk/data/alarm/channel_device_holiday_source.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const channel = MethodChannel(ChannelDeviceHolidaySource.channelName);
-  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   late List<MethodCall> calls;
 
   void answer(Object? Function(MethodCall call) reply) {
@@ -37,7 +38,10 @@ void main() {
       );
 
       expect(calls.single.method, 'read');
-      expect(calls.single.arguments, {'from': '2026-10-07', 'to': '2027-11-11'});
+      expect(calls.single.arguments, {
+        'from': '2026-10-07',
+        'to': '2027-11-11',
+      });
       expect(days, [
         (date: DateTime(2026, 10, 9), name: '한글날'),
         (date: DateTime(2026, 12, 25), name: '기독탄신일'),
@@ -61,23 +65,44 @@ void main() {
 
     test('권한 없음 · 휴일 캘린더 없음(null 응답)은 null', () async {
       answer((_) => null);
-      expect(await const ChannelDeviceHolidaySource().read(DateTime(2026), DateTime(2027)), isNull);
+      expect(
+        await const ChannelDeviceHolidaySource().read(
+          DateTime(2026),
+          DateTime(2027),
+        ),
+        isNull,
+      );
     });
 
     test('오류는 null', () async {
       answer((_) => throw PlatformException(code: 'failed'));
-      expect(await const ChannelDeviceHolidaySource().read(DateTime(2026), DateTime(2027)), isNull);
+      expect(
+        await const ChannelDeviceHolidaySource().read(
+          DateTime(2026),
+          DateTime(2027),
+        ),
+        isNull,
+      );
     });
 
     test('채널이 없으면 null', () async {
-      expect(await const ChannelDeviceHolidaySource().read(DateTime(2026), DateTime(2027)), isNull);
+      expect(
+        await const ChannelDeviceHolidaySource().read(
+          DateTime(2026),
+          DateTime(2027),
+        ),
+        isNull,
+      );
     });
   });
 
   group('calendarName', () {
     test('이름을 그대로 돌려준다', () async {
       answer((_) => '대한민국의 휴일');
-      expect(await const ChannelDeviceHolidaySource().calendarName(), '대한민국의 휴일');
+      expect(
+        await const ChannelDeviceHolidaySource().calendarName(),
+        '대한민국의 휴일',
+      );
       expect(calls.single.method, 'calendarName');
     });
 

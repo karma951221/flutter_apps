@@ -15,13 +15,17 @@ void main() {
   });
   tearDown(() => db.close());
 
-  ArchivedRing ring(DateTime at, {String? label = '출근', int packageId = 300, RingLogKind kind = RingLogKind.stopped}) =>
-      ArchivedRing(
-        entry: RingLogEntry(at: at, packageId: packageId, kind: kind),
-        label: label,
-        hour: label == null ? null : 7,
-        minute: label == null ? null : 0,
-      );
+  ArchivedRing ring(
+    DateTime at, {
+    String? label = '출근',
+    int packageId = 300,
+    RingLogKind kind = RingLogKind.stopped,
+  }) => ArchivedRing(
+    entry: RingLogEntry(at: at, packageId: packageId, kind: kind),
+    label: label,
+    hour: label == null ? null : 7,
+    minute: label == null ? null : 0,
+  );
 
   test('saveAll 뒤 read 는 기간 안의 것만 오래된 순으로 돌려준다', () async {
     final d1 = DateTime(2026, 10, 1, 7);
@@ -29,10 +33,16 @@ void main() {
     final d3 = DateTime(2026, 10, 3, 7);
     await archive.saveAll([ring(d3), ring(d1), ring(d2)]);
 
-    final all = await archive.read(from: DateTime(2026, 10, 1), to: DateTime(2026, 10, 4));
+    final all = await archive.read(
+      from: DateTime(2026, 10, 1),
+      to: DateTime(2026, 10, 4),
+    );
     expect(all.map((r) => r.entry.at), [d1, d2, d3]);
 
-    final got = await archive.read(from: DateTime(2026, 10, 2), to: DateTime(2026, 10, 3));
+    final got = await archive.read(
+      from: DateTime(2026, 10, 2),
+      to: DateTime(2026, 10, 3),
+    );
     expect(got, hasLength(1));
     expect(got.single.entry.at, d2);
     expect(got.single.entry.packageId, 300);
@@ -47,7 +57,10 @@ void main() {
     await archive.saveAll([ring(at, label: '출근')]);
     await archive.saveAll([ring(at, label: '바뀜')]);
 
-    final got = await archive.read(from: DateTime(2026, 10, 1), to: DateTime(2026, 10, 3));
+    final got = await archive.read(
+      from: DateTime(2026, 10, 1),
+      to: DateTime(2026, 10, 3),
+    );
     expect(got, hasLength(1));
     expect(got.single.label, '출근');
   });
@@ -56,7 +69,10 @@ void main() {
     final at = DateTime(2026, 10, 2, 7);
     await archive.saveAll([ring(at, label: null)]);
 
-    final got = await archive.read(from: DateTime(2026, 10, 1), to: DateTime(2026, 10, 3));
+    final got = await archive.read(
+      from: DateTime(2026, 10, 1),
+      to: DateTime(2026, 10, 3),
+    );
     expect(got, hasLength(1));
     expect(got.single.label, isNull);
     expect(got.single.hour, isNull);
