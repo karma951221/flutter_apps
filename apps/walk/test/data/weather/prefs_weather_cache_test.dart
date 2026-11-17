@@ -3,9 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/data/weather/prefs_weather_cache.dart';
 import 'package:walk/domain/weather/weather_cache.dart';
 
-Future<PrefsWeatherCache> _cache([
-  Map<String, Object> values = const {},
-]) async {
+Future<PrefsWeatherCache> _cache([Map<String, Object> values = const {}]) async {
   SharedPreferences.setMockInitialValues(values);
   return PrefsWeatherCache(await SharedPreferences.getInstance());
 }

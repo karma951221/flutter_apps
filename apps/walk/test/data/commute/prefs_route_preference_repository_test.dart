@@ -18,12 +18,10 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
 
-    await PrefsRoutePreferenceRepository(
-      prefs,
-    ).save(CommuteDirection.toWork, '2:강남>역삼');
-    await PrefsRoutePreferenceRepository(
-      prefs,
-    ).save(CommuteDirection.toHome, '2:역삼>강남');
+    await PrefsRoutePreferenceRepository(prefs)
+        .save(CommuteDirection.toWork, '2:강남>역삼');
+    await PrefsRoutePreferenceRepository(prefs)
+        .save(CommuteDirection.toHome, '2:역삼>강남');
 
     final repo = PrefsRoutePreferenceRepository(prefs);
     expect(repo.load(CommuteDirection.toWork), '2:강남>역삼');

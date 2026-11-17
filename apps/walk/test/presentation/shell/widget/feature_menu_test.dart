@@ -27,7 +27,7 @@ void main() {
       item.key,
   ];
 
-  testWidgets('항목 순서는 화면별 항목 → 기능 설정 → 앱 설정', (tester) async {
+  testWidgets('항목 순서는 화면별 항목 → 기능 설정, 앱 설정은 없다(설정 탭)', (tester) async {
     await open(
       tester,
       FeatureMenu(
@@ -43,23 +43,30 @@ void main() {
       Key('menu-a'),
       Key('menu-b'),
       Key('menu-settings-diary'),
-      Key('menu-settings-app'),
     ]);
     expect(find.text('일기 설정'), findsOneWidget);
-    expect(find.text('앱 설정'), findsOneWidget);
+    expect(find.text('앱 설정'), findsNothing);
   });
 
-  testWidgets('showFeatureSettings 가 false 면 앱 설정 하나만', (tester) async {
-    await open(
+  testWidgets('showFeatureSettings 가 false 면 항목이 없어 ⋮ 를 그리지 않는다', (
+    tester,
+  ) async {
+    await h.pump(
       tester,
-      FeatureMenu(
-        settings: SettingsTarget.diary,
-        showFeatureSettings: false,
-        entries: [FeatureMenuEntry(label: 'A', onTap: () {})],
+      Scaffold(
+        appBar: AppBar(
+          actions: [
+            FeatureMenu(
+              settings: SettingsTarget.diary,
+              showFeatureSettings: false,
+              entries: [FeatureMenuEntry(label: 'A', onTap: () {})],
+            ),
+          ],
+        ),
       ),
     );
 
-    expect(menuKeys(tester), const [Key('menu-settings-app')]);
+    expect(find.byIcon(Icons.more_vert), findsNothing);
   });
 
   testWidgets('화면별 항목을 누르면 그 onTap', (tester) async {

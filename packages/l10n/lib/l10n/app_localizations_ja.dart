@@ -3491,92 +3491,92 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkAppSettingsFeatures => '機能別の設定';
 
   @override
-  String get walkShellTabSettings => '설정';
+  String get walkShellTabSettings => '設定';
 
   @override
-  String get walkSettingsConnections => 'API 키 · 연결';
+  String get walkSettingsConnections => 'APIキー・接続';
 
   @override
-  String get walkSettingsAiConnection => 'AI 연결';
+  String get walkSettingsAiConnection => 'AI 接続';
 
   @override
-  String get walkSettingsAiNotConnected => '연결 안 됨';
+  String get walkSettingsAiNotConnected => '未接続';
 
   @override
-  String get walkSettingsData => '데이터';
+  String get walkSettingsData => 'データ';
 
   @override
-  String get walkSettingsLocation => '위치';
+  String get walkSettingsLocation => '位置';
 
   @override
-  String get walkSettingsLocationOff => '꺼짐';
+  String get walkSettingsLocationOff => 'オフ';
 
   @override
-  String get walkSettingsLocationOn => '켜짐';
+  String get walkSettingsLocationOn => 'オン';
 
   @override
-  String get walkSettingsLocationDetailed => '켜짐 · 자세히 기록';
+  String get walkSettingsLocationDetailed => 'オン・詳しく記録';
 
   @override
-  String get walkSettingsLocationBlocked => '멈춤 · 권한 필요';
+  String get walkSettingsLocationBlocked => '停止・権限が必要';
 
   @override
-  String get walkSettingsAbout => '앱 정보';
+  String get walkSettingsAbout => 'アプリ情報';
 
   @override
-  String get walkSettingsLicenses => '오픈소스 라이선스';
+  String get walkSettingsLicenses => 'オープンソースライセンス';
 
   @override
-  String get walkProfileTitle => '프로필';
+  String get walkProfileTitle => 'プロフィール';
 
   @override
-  String get walkProfileCreate => '프로필 만들기';
+  String get walkProfileCreate => 'プロフィールを作成';
 
   @override
-  String get walkProfileCreateHint => '사진 · 이름 · 한 줄 소개';
+  String get walkProfileCreateHint => '写真・名前・ひとこと';
 
   @override
-  String get walkProfileName => '이름';
+  String get walkProfileName => '名前';
 
   @override
-  String get walkProfileBio => '한 줄 소개';
+  String get walkProfileBio => 'ひとこと紹介';
 
   @override
-  String get walkProfilePhotoChange => '사진 바꾸기';
+  String get walkProfilePhotoChange => '写真を変更';
 
   @override
-  String get walkProfilePhotoGallery => '앨범에서 고르기';
+  String get walkProfilePhotoGallery => 'アルバムから選ぶ';
 
   @override
-  String get walkProfilePhotoCamera => '사진 찍기';
+  String get walkProfilePhotoCamera => '写真を撮る';
 
   @override
-  String get walkProfilePhotoRemove => '사진 지우기';
+  String get walkProfilePhotoRemove => '写真を削除';
 
   @override
-  String get walkProfilePhotoFailed => '사진을 가져오지 못했어요';
+  String get walkProfilePhotoFailed => '写真を取得できませんでした';
 
   @override
-  String get walkProfileShareName => '물어보기에 내 이름 알려주기';
+  String get walkProfileShareName => '質問に名前を伝える';
 
   @override
   String get walkProfileShareNameDescription =>
-      '켜면 대화할 때 이름이 Claude · GPT 로 전송됩니다. 한 줄 소개는 보내지 않습니다.';
+      'オンにすると会話のとき名前が Claude・GPT に送信されます。ひとこと紹介は送信しません。';
 
   @override
-  String get walkProfileSaved => '프로필을 저장했어요';
+  String get walkProfileSaved => 'プロフィールを保存しました';
 
   @override
-  String get walkProfileSaveFailed => '프로필을 저장하지 못했어요';
+  String get walkProfileSaveFailed => 'プロフィールを保存できませんでした';
 
   @override
-  String get walkProfileDiscardTitle => '바꾼 내용을 버릴까요?';
+  String get walkProfileDiscardTitle => '変更を破棄しますか？';
 
   @override
-  String get walkProfileDiscardBody => '저장하지 않은 변경이 사라집니다.';
+  String get walkProfileDiscardBody => '保存していない変更は失われます。';
 
   @override
-  String get walkProfileDiscard => '버리기';
+  String get walkProfileDiscard => '破棄';
 
   @override
   String get walkShellTabLog => '記録';

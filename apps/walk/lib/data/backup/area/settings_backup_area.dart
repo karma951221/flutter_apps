@@ -115,8 +115,9 @@ class SettingsBackupArea implements BackupAreaSource {
       _ => throw const BackupException(BackupFailure.integrity),
     };
     final photo = profile.photo;
-    if (photo == null)
+    if (photo == null) {
       return (name: profile.name, bio: profile.bio, photo: null);
+    }
     if (photo is! String ||
         !PrefsProfileRepository.isSafeFileName(photo) ||
         !File('${dir.path}/$_profileDir/$photo').existsSync()) {

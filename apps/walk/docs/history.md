@@ -1364,3 +1364,23 @@ QA: 스낵바가 아래로 끌어야만 닫히고(되돌리기 같은 액션이 
 design_system `flutter test` 86건 · `flutter analyze` 0, walk `flutter analyze` 0 · `flutter test` +4184건 통과(1 skip),
 trader · pawlog `flutter analyze` 0 · `flutter test` 통과. 에뮬레이터는 다른 세션들이 함께 쓰고 있어 설치하지 않았고,
 실제 폰트를 실은 위젯 렌더로 네 유형 × 라이트/다크 모양(아이콘 · 색 · [메시지 · 되돌리기 · X] 배치)을 확인했다. 기기 확인은 대기.
+
+## 2026-11-17 — 설정 탭 · 프로필
+
+QA: 기능마다 설정이 각 탭 ⋮ 에 흩어져 있고, 앱 전역 설정("앱 설정")은 ⋮ 맨 아래에만 있어 찾기 어려웠다.
+하단 탭이 셋뿐이라 설정 탭을 하나 더 두고, 내 사진 · 프로필도 넣자는 요청. [설계](../../../docs/superpowers/specs/2026-11-17-walk-settings-tab-design.md) ·
+[실행 계획](../../../docs/superpowers/plans/2026-11-17-walk-settings-tab.md).
+
+- 하단 탭 [도구 · 기록 · 물어보기 · **설정**]. 기존 `AppSettingsPage` 를 `SettingsTab` 으로 옮겼다(잠금 밖).
+  순서는 프로필 → 화면 → 잠금 → 데이터(백업) → API 키 · 연결 → 위치 → 기능별 설정 → 앱 정보.
+- 원본 · 바로가기: 프로필 · 테마 · 잠금 · 백업 · 라이선스는 설정 탭에만. 물어보기 · 지도 · 일기 · 알람 · 걷기 설정의 원본은
+  각 탭 ⋮ 이고 설정 탭은 바로가기다. 위치 기록 행은 상태(꺼짐 · 켜짐 · 자세히 기록 · 멈춤)를 보이고 지도 설정을 연다.
+- ⋮ 에서 "앱 설정"을 뺐다(`SettingsTarget.app` 제거). 항목이 없으면 ⋮ 자체를 그리지 않는다 — 날씨와, 잠긴 동안의 일기 · 지도 · 물어보기.
+- "API 키 · 연결" 절은 `ConnectionStatusCubit` 상태로 행을 그린다. 지금은 AI 연결 하나이고, 길찾기(ODsay) 키 행은
+  `walk-transit-route` 브랜치가 main 에 들어온 뒤 이 절에 더한다(상태 필드 · 행 하나).
+- 프로필(`Profile` · `PrefsProfileRepository`): 이름(20) · 한 줄 소개(60) · 사진. 사진은 `flutter_image_compress` 로
+  짧은 변 512px JPEG · EXIF 없이 `<문서>/profile/avatar-<millis>.jpg` 에 둔다. 바꾸거나 지우면 이전 파일을 지운다.
+- 물어보기에 내 이름 알려주기(기본 끔, 사용자 결정): 켜면 `ChatSession` 시스템 프롬프트의 날짜 줄 바로 앞에 이름 한 줄. 소개는 보내지 않고 위키 정리에도 넣지 않는다.
+- 백업 설정 영역에 `profile.json` · `profile/<사진>` 을 더했다(schema `profile: 1`). 이름 알려주기 토글은 담지 않아 복원하면 꺼진다.
+  `profile.json` 이 없는 옛 백업은 지금 프로필을 그대로 둔다. 빈 이름 · 소개 · 꺼진 토글은 prefs 키를 지워 되돌리기 비교가 흔들리지 않게 했다.
+

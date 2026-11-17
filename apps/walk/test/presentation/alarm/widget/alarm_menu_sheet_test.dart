@@ -7,13 +7,7 @@ import 'package:walk/domain/alarm/entity/alarm_pause.dart';
 import 'package:walk/presentation/alarm/widget/alarm_menu_sheet.dart';
 
 /// 월 · 금 오전 7:00 출근.
-const _alarm = Alarm(
-  id: 1,
-  hour: 7,
-  minute: 0,
-  label: '출근',
-  repeat: {Weekday.mon, Weekday.fri},
-);
+const _alarm = Alarm(id: 1, hour: 7, minute: 0, label: '출근', repeat: {Weekday.mon, Weekday.fri});
 
 void main() {
   // 2026-10-06 화요일 → 다음 회차는 10월 9일 금요일 07:00.
@@ -38,12 +32,7 @@ void main() {
         home: Builder(
           builder: (context) => TextButton(
             onPressed: () async => results.add(
-              await AlarmMenuSheet.show(
-                context,
-                alarm: alarm,
-                now: now,
-                pause: pause,
-              ),
+              await AlarmMenuSheet.show(context, alarm: alarm, now: now, pause: pause),
             ),
             child: const Text('open'),
           ),
@@ -61,15 +50,10 @@ void main() {
       (tile.title as Text).data!,
   ];
 
-  testWidgets('켜진 반복 알람은 손잡이 · 알람 · [복제 · 다음 알람 건너뛰기(다음 회차) · 삭제]', (
-    tester,
-  ) async {
+  testWidgets('켜진 반복 알람은 손잡이 · 알람 · [복제 · 다음 알람 건너뛰기(다음 회차) · 삭제]', (tester) async {
     await pump(tester, _alarm);
 
-    expect(
-      tester.widget<BottomSheet>(find.byType(BottomSheet)).showDragHandle,
-      isTrue,
-    );
+    expect(tester.widget<BottomSheet>(find.byType(BottomSheet)).showDragHandle, isTrue);
     expect(find.text('오전 7:00 출근'), findsOneWidget);
     expect(rows(tester), ['복제', '다음 알람 건너뛰기', '삭제']);
     expect(find.text('10월 9일 (금) 오전 7:00'), findsOneWidget);
@@ -81,10 +65,7 @@ void main() {
     await pump(
       tester,
       _alarm,
-      pause: AlarmPause(
-        from: DateTime(2026, 10, 9),
-        until: DateTime(2026, 10, 9),
-      ),
+      pause: AlarmPause(from: DateTime(2026, 10, 9), until: DateTime(2026, 10, 9)),
     );
 
     expect(find.text('10월 12일 (월) 오전 7:00'), findsOneWidget);
@@ -134,10 +115,7 @@ void main() {
     await pump(tester, _alarm);
 
     final context = tester.element(find.text('삭제'));
-    expect(
-      tester.widget<Text>(find.text('삭제')).style?.color,
-      Theme.of(context).colorScheme.error,
-    );
+    expect(tester.widget<Text>(find.text('삭제')).style?.color, Theme.of(context).colorScheme.error);
   });
 
   testWidgets('라벨이 없으면 시각만', (tester) async {

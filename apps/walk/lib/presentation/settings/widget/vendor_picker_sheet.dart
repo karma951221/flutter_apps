@@ -16,14 +16,12 @@ class VendorPickerSheet extends StatelessWidget {
   final ChatVendor? current;
 
   /// 고른 벤더, 닫으면 null. [current] 는 체크 · 비활성.
-  static Future<ChatVendor?> show(
-    BuildContext context, {
-    ChatVendor? current,
-  }) => showModalBottomSheet<ChatVendor>(
-    context: context,
-    showDragHandle: true,
-    builder: (_) => VendorPickerSheet._(current: current),
-  );
+  static Future<ChatVendor?> show(BuildContext context, {ChatVendor? current}) =>
+      showModalBottomSheet<ChatVendor>(
+        context: context,
+        showDragHandle: true,
+        builder: (_) => VendorPickerSheet._(current: current),
+      );
 
   @override
   Widget build(BuildContext context) {

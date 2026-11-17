@@ -311,11 +311,7 @@ class _DeleteAllTile extends StatelessWidget {
         if (!confirmed || cubit.isClosed) return;
         await cubit.deleteAll();
         if (!context.mounted) return;
-        AppSnackBar.show(
-          context,
-          message: l10n.walkMapSettingsDeleted,
-          type: AppSnackBarType.success,
-        );
+        AppSnackBar.show(context, message: l10n.walkMapSettingsDeleted, type: AppSnackBarType.success);
       },
     );
   }

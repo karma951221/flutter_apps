@@ -18,8 +18,7 @@ abstract final class AlarmFormat {
   /// 남은 시간. 분은 올림한다 — 곧 울릴 알람이 "0분"으로 보이지 않게.
   /// 하루가 넘으면 분은 생략한다.
   static String duration(AppLocalizations l10n, Duration remaining) {
-    final ceiled = (remaining.inMicroseconds / Duration.microsecondsPerMinute)
-        .ceil();
+    final ceiled = (remaining.inMicroseconds / Duration.microsecondsPerMinute).ceil();
     final totalMinutes = ceiled < 1 ? 1 : ceiled;
     final days = totalMinutes ~/ (24 * 60);
     final hours = totalMinutes ~/ 60 % 24;
@@ -57,15 +56,9 @@ abstract final class AlarmFormat {
   }
 
   /// 쉬는 기간 — 하루면 `오늘 (수)`, 여러 날이면 `오늘 (수) ~ 내일 (목)`.
-  static String pauseRange(
-    AppLocalizations l10n,
-    AlarmPause pause,
-    DateTime now,
-  ) {
+  static String pauseRange(AppLocalizations l10n, AlarmPause pause, DateTime now) {
     final from = day(l10n, pause.from, now);
-    return pause.from == pause.until
-        ? from
-        : '$from ~ ${day(l10n, pause.until, now)}';
+    return pause.from == pause.until ? from : '$from ~ ${day(l10n, pause.until, now)}';
   }
 
   /// 울릴 날과 시각 — `내일 (화) 오전 7:00`.

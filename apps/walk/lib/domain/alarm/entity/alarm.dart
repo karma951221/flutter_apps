@@ -109,11 +109,8 @@ class Alarm with _$Alarm {
   bool get isOneShot => repeat.isEmpty;
 
   /// 새 알람의 기본값 — 07:00, 반복 없음, 무음 모드 체크 끔, 아침 차임(`BundledAlarmSounds.morning`).
-  static Alarm draft() => const Alarm(
-    hour: 7,
-    minute: 0,
-    sound: AlarmSound.bundled(BundledAlarmSounds.morning),
-  );
+  static Alarm draft() =>
+      const Alarm(hour: 7, minute: 0, sound: AlarmSound.bundled(BundledAlarmSounds.morning));
 
   /// 같은 설정의 저장 전 알람(복제). 건너뛰기와 1회성의 지난 울릴 시각은 비운다 — 편집 화면이
   /// 새로 정한다. 아직 오지 않은 [oneShotAt] 은 그대로 두어 같은 날짜 · 시각으로 연다.
@@ -167,16 +164,12 @@ class Alarm with _$Alarm {
           _option(json['volumePercent'], AlarmOptions.volumePercents) ??
           AlarmOptions.defaultVolumePercent,
       fadeSeconds:
-          _option(json['fadeSeconds'], AlarmOptions.fadeSeconds) ??
-          AlarmOptions.defaultFadeSeconds,
+          _option(json['fadeSeconds'], AlarmOptions.fadeSeconds) ?? AlarmOptions.defaultFadeSeconds,
       snoozeMinutes:
           _option(json['snoozeMinutes'], AlarmOptions.snoozeMinutes) ??
           AlarmOptions.defaultSnoozeMinutes,
       snoozeLimit: _option(json['snoozeLimit'], AlarmOptions.snoozeLimits),
-      autoStopMinutes: _option(
-        json['autoStopMinutes'],
-        AlarmOptions.autoStopMinutes,
-      ),
+      autoStopMinutes: _option(json['autoStopMinutes'], AlarmOptions.autoStopMinutes),
       remindBefore: json['remindBefore'] == true,
       skippedAt: switch (json['skippedAt']) {
         final String raw => DateTime.tryParse(raw),

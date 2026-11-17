@@ -36,18 +36,15 @@ class AlarmRingListener {
 
   /// `alarm` 패키지의 울리는 알람들(패키지 id). 구독하면 현재 값부터 받는다 —
   /// 전체 화면 알림으로 앱이 막 켜진 경우에도 울림 화면이 뜬다.
-  static Stream<Set<int>> packageRinging() => pkg.Alarm.ringing.map(
-    (set) => {for (final settings in set.alarms) settings.id},
-  );
+  static Stream<Set<int>> packageRinging() =>
+      pkg.Alarm.ringing.map((set) => {for (final settings in set.alarms) settings.id});
 
   /// 플랫폼이 그 알람을 지금 울리고 있는가(`alarm` 패키지).
-  static Future<bool> packageIsRinging(int packageId) =>
-      pkg.Alarm.isRinging(packageId);
+  static Future<bool> packageIsRinging(int packageId) => pkg.Alarm.isRinging(packageId);
 
   void start() {
     _subscription ??= _ringing.listen(_onRinging);
-    if (_isRinging != null)
-      _lifecycle ??= AppLifecycleListener(onResume: _verifyOnResume);
+    if (_isRinging != null) _lifecycle ??= AppLifecycleListener(onResume: _verifyOnResume);
   }
 
   Future<void> dispose() async {
@@ -70,8 +67,7 @@ class AlarmRingListener {
       } on Object {
         continue;
       }
-      if (stillRinging || _subscription == null || _routes[id] != route)
-        continue;
+      if (stillRinging || _subscription == null || _routes[id] != route) continue;
       _close(route);
     }
   }

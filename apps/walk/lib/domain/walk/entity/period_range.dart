@@ -15,10 +15,7 @@ PeriodRange periodRange(PeriodKind kind, int offset, DateTime now) {
         today.month,
         today.day - (today.weekday - DateTime.monday) + 7 * offset,
       );
-      return (
-        start: start,
-        end: DateTime(start.year, start.month, start.day + 6),
-      );
+      return (start: start, end: DateTime(start.year, start.month, start.day + 6));
     case PeriodKind.month:
       final start = DateTime(today.year, today.month + offset);
       return (start: start, end: DateTime(start.year, start.month + 1, 0));

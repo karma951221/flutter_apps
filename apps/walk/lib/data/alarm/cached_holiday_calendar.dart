@@ -56,9 +56,7 @@ class CachedHolidayCalendar implements HolidayCalendar, HolidayRefresher {
   @override
   HolidaySource get source {
     final cache = _validCache();
-    return cache == null
-        ? _bundled.source
-        : HolidaySource.device(calendarName: cache.calendarName);
+    return cache == null ? _bundled.source : HolidaySource.device(calendarName: cache.calendarName);
   }
 
   @override

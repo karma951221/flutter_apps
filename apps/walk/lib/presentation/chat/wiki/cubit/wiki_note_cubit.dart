@@ -54,9 +54,7 @@ class WikiNoteCubit extends Cubit<WikiNoteState> {
       final linked = await _wiki.byIds(noteIds);
       final entries = <String, DiaryEntry>{};
       for (final id in entryIds) {
-        if (await _diary.entry(id) case Ok(
-          :final value,
-        ) when !value.isTrashed) {
+        if (await _diary.entry(id) case Ok(:final value) when !value.isTrashed) {
           entries[id] = value;
         }
       }

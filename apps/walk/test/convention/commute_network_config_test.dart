@@ -14,9 +14,7 @@ void main() {
   });
 
   test('평문 http 는 서울 실시간 API 도메인 하나만 허용한다', () {
-    final xml = File(
-      '$_main/res/xml/network_security_config.xml',
-    ).readAsStringSync();
+    final xml = File('$_main/res/xml/network_security_config.xml').readAsStringSync();
     final block = RegExp(
       r'<domain-config cleartextTrafficPermitted="true">(.*?)</domain-config>',
       dotAll: true,
@@ -24,17 +22,12 @@ void main() {
     expect(block, isNotNull);
     expect(
       block!.group(1),
-      contains(
-        '<domain includeSubdomains="false">swopenapi.seoul.go.kr</domain>',
-      ),
+      contains('<domain includeSubdomains="false">swopenapi.seoul.go.kr</domain>'),
     );
     expect('<domain '.allMatches(xml).length, 1);
   });
 
   test('키 파일은 gitignore 된다', () {
-    expect(
-      File('.gitignore').readAsStringSync(),
-      contains('/config/commute_keys.json'),
-    );
+    expect(File('.gitignore').readAsStringSync(), contains('/config/commute_keys.json'));
   });
 }

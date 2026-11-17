@@ -28,7 +28,11 @@ class TrashCubit extends Cubit<TrashState> {
     unawaited(_trash?.cancel());
     _trash = _repo.watchTrash().listen(
       (entries) => emit(
-        state.copyWith(items: _items(entries), loading: false, failed: false),
+        state.copyWith(
+          items: _items(entries),
+          loading: false,
+          failed: false,
+        ),
       ),
       onError: (Object _) => emit(state.copyWith(loading: false, failed: true)),
     );

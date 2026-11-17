@@ -42,13 +42,7 @@ class _MutableClock extends Clock {
   DateTime now() => _source?.call() ?? value;
 }
 
-const _weekdays = {
-  Weekday.mon,
-  Weekday.tue,
-  Weekday.wed,
-  Weekday.thu,
-  Weekday.fri,
-};
+const _weekdays = {Weekday.mon, Weekday.tue, Weekday.wed, Weekday.thu, Weekday.fri};
 
 /// 새 반복 알람 — 목록이 [반복] 을 고르면 여는 값.
 final _newRepeat = Alarm.draft().copyWith(repeat: _weekdays);
@@ -73,9 +67,7 @@ void main() {
     when(exactAlarm.ensure).thenAnswer((_) async => PermissionStatus.granted);
     soundSource = _MockSoundSource();
     when(soundSource.deviceRingtones).thenAnswer((_) async => []);
-    when(
-      () => soundSource.preview(any(), uri: any(named: 'uri')),
-    ).thenAnswer((_) async {});
+    when(() => soundSource.preview(any(), uri: any(named: 'uri'))).thenAnswer((_) async {});
     when(soundSource.stopPreview).thenAnswer((_) async {});
     calendar = _MockCalendarAccess();
     when(calendar.ensureIfReminding).thenAnswer((_) async {});
@@ -114,9 +106,7 @@ void main() {
           builder: (context) => TextButton(
             onPressed: () async => results.add(
               await Navigator.of(context).push<AlarmSaveResult>(
-                MaterialPageRoute(
-                  builder: (_) => AlarmEditPage(initial: initial),
-                ),
+                MaterialPageRoute(builder: (_) => AlarmEditPage(initial: initial)),
               ),
             ),
             child: const Text('open'),
@@ -129,23 +119,17 @@ void main() {
     return results;
   }
 
-  void answerSaveWithId() => when(() => useCase.save(any())).thenAnswer(
-    (i) async => (i.positionalArguments.single as Alarm).copyWith(id: 1),
-  );
+  void answerSaveWithId() => when(
+    () => useCase.save(any()),
+  ).thenAnswer((i) async => (i.positionalArguments.single as Alarm).copyWith(id: 1));
 
-  Alarm savedAlarm() =>
-      verify(() => useCase.save(captureAny())).captured.single as Alarm;
+  Alarm savedAlarm() => verify(() => useCase.save(captureAny())).captured.single as Alarm;
 
   bool saveEnabled(WidgetTester tester) =>
-      tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, '저장'))
-          .onPressed !=
-      null;
+      tester.widget<FilledButton>(find.widgetWithText(FilledButton, '저장')).onPressed != null;
 
   group('한 번 알람', () {
-    testWidgets('새 한 번 알람은 0분 뒤 · 지금 시각 칩 · 저장 잠김 + 안내, 휠 · 요일은 없다', (
-      tester,
-    ) async {
+    testWidgets('새 한 번 알람은 0분 뒤 · 지금 시각 칩 · 저장 잠김 + 안내, 휠 · 요일은 없다', (tester) async {
       await pump(tester, Alarm.draft());
 
       expect(find.text('한 번 알람'), findsOneWidget);
@@ -179,9 +163,7 @@ void main() {
       expect(saved.oneShotAt, DateTime(2026, 9, 28, 1, 4));
       expect((saved.hour, saved.minute), (1, 4));
       expect(saved.repeat, isEmpty);
-      expect(results, [
-        const AlarmSaveResult.ringsIn(Duration(hours: 1, minutes: 16)),
-      ]);
+      expect(results, [const AlarmSaveResult.ringsIn(Duration(hours: 1, minutes: 16))]);
     });
 
     testWidgets('초기화는 0분 뒤로 돌리고 저장을 다시 잠근다', (tester) async {
@@ -245,13 +227,7 @@ void main() {
       answerSaveWithId();
       await pump(
         tester,
-        Alarm(
-          id: 3,
-          hour: 7,
-          minute: 0,
-          label: '낮잠',
-          oneShotAt: DateTime(2026, 9, 28, 7),
-        ),
+        Alarm(id: 3, hour: 7, minute: 0, label: '낮잠', oneShotAt: DateTime(2026, 9, 28, 7)),
       );
 
       expect(find.text('알람 수정'), findsOneWidget);
@@ -266,10 +242,7 @@ void main() {
 
       final saved = savedAlarm();
       expect(saved.oneShotAt, DateTime(2026, 9, 28, 7));
-      expect(
-        (saved.id, saved.hour, saved.minute, saved.label),
-        (3, 7, 0, '산책'),
-      );
+      expect((saved.id, saved.hour, saved.minute, saved.label), (3, 7, 0, '산책'));
     });
 
     testWidgets('시각 칩으로 고정하면 그 시각으로 저장한다', (tester) async {
@@ -289,9 +262,7 @@ void main() {
       final saved = savedAlarm();
       expect(saved.oneShotAt, DateTime(2026, 9, 28, 7, 30));
       expect((saved.hour, saved.minute), (7, 30));
-      expect(results, [
-        const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 42)),
-      ]);
+      expect(results, [const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 42))]);
     });
 
     testWidgets('화면을 연 초와 상관없이 다음 분 0초에 맞춰 갱신하고, 그 뒤 매분 갱신한다', (tester) async {
@@ -302,9 +273,7 @@ void main() {
       expect(find.text('내일 (월) 오전 12:48에 울림'), findsOneWidget);
 
       // 23:48:59 대 — 아직 같은 분
-      await tester.pump(
-        DateTime(2026, 9, 27, 23, 48, 59).difference(clock.now()),
-      );
+      await tester.pump(DateTime(2026, 9, 27, 23, 48, 59).difference(clock.now()));
       expect(find.text('내일 (월) 오전 12:48에 울림'), findsOneWidget);
 
       // 23:49:00 — 다음 분 0초에 바로 바뀐다
@@ -345,9 +314,7 @@ void main() {
       expect(find.text('내일 (월) 오전 12:08에 울림'), findsOneWidget);
     });
 
-    testWidgets('고정 모드: 분이 지나면 N분 뒤가 줄고, 1분 밑으로 내려가는 순간 저장이 잠기고 안내', (
-      tester,
-    ) async {
+    testWidgets('고정 모드: 분이 지나면 N분 뒤가 줄고, 1분 밑으로 내려가는 순간 저장이 잠기고 안내', (tester) async {
       clock.follow(tester, DateTime(2026, 9, 27, 23, 48));
       await pump(tester, Alarm.draft());
       await tester.tap(find.text('오후 11:48에 울림'));
@@ -372,18 +339,11 @@ void main() {
       expect(saveEnabled(tester), isFalse);
     });
 
-    testWidgets('기준 시각이 늦어 버튼이 켜져 있어도 실제로 1분 미만이면 저장하지 않고 잠금 · 안내로 돌린다', (
-      tester,
-    ) async {
+    testWidgets('기준 시각이 늦어 버튼이 켜져 있어도 실제로 1분 미만이면 저장하지 않고 잠금 · 안내로 돌린다', (tester) async {
       answerSaveWithId();
       await pump(
         tester,
-        Alarm(
-          id: 3,
-          hour: 23,
-          minute: 49,
-          oneShotAt: DateTime(2026, 9, 27, 23, 49, 30),
-        ),
+        Alarm(id: 3, hour: 23, minute: 49, oneShotAt: DateTime(2026, 9, 27, 23, 49, 30)),
       );
       expect(saveEnabled(tester), isTrue);
 
@@ -444,11 +404,7 @@ void main() {
 
       await tester.tap(find.text('토').first);
       await tester.pump();
-      expect([chip('매일'), chip('평일'), chip('주말')].map((c) => c.selected), [
-        false,
-        false,
-        false,
-      ]);
+      expect([chip('매일'), chip('평일'), chip('주말')].map((c) => c.selected), [false, false, false]);
 
       await tester.tap(find.text('일').first);
       await tester.pump();
@@ -460,9 +416,7 @@ void main() {
       expect(chip('매일').selected, isFalse);
       bool daySelected(String label) => tester
           .widget<Semantics>(
-            find.byWidgetPredicate(
-              (w) => w is Semantics && w.properties.label == label,
-            ),
+            find.byWidgetPredicate((w) => w is Semantics && w.properties.label == label),
           )
           .properties
           .selected!;
@@ -485,14 +439,9 @@ void main() {
       expect(find.byType(CupertinoDatePicker), findsOneWidget);
     });
 
-    testWidgets('휠 · 요일 · 제목을 고르고 저장하면 use case → 권한 → 남은 시간으로 닫힌다', (
-      tester,
-    ) async {
+    testWidgets('휠 · 요일 · 제목을 고르고 저장하면 use case → 권한 → 남은 시간으로 닫힌다', (tester) async {
       answerSaveWithId();
-      final results = await pump(
-        tester,
-        Alarm.draft().copyWith(repeat: {Weekday.tue}),
-      );
+      final results = await pump(tester, Alarm.draft().copyWith(repeat: {Weekday.tue}));
 
       tester
           .widget<CupertinoDatePicker>(find.byType(CupertinoDatePicker))
@@ -508,26 +457,14 @@ void main() {
       expect(saved.repeat, {Weekday.mon});
       expect(saved.label, '출근');
       expect((saved.hour, saved.minute), (6, 45));
-      verifyInOrder([
-        notification.ensure,
-        exactAlarm.ensure,
-        calendar.ensureIfReminding,
-      ]);
+      verifyInOrder([notification.ensure, exactAlarm.ensure, calendar.ensureIfReminding]);
       // 일요일 23:48 → 월요일 06:45
-      expect(results, [
-        const AlarmSaveResult.ringsIn(Duration(hours: 6, minutes: 57)),
-      ]);
+      expect(results, [const AlarmSaveResult.ringsIn(Duration(hours: 6, minutes: 57))]);
       expect(find.byType(AlarmEditPage), findsNothing);
     });
 
     testWidgets('기존 알람 저장은 id · 제목 · 반복을 유지한다', (tester) async {
-      const existing = Alarm(
-        id: 3,
-        hour: 6,
-        minute: 30,
-        label: '출근',
-        repeat: {Weekday.mon},
-      );
+      const existing = Alarm(id: 3, hour: 6, minute: 30, label: '출근', repeat: {Weekday.mon});
       when(
         () => useCase.save(any()),
       ).thenAnswer((i) async => i.positionalArguments.single as Alarm);
@@ -573,10 +510,7 @@ void main() {
   });
 
   testWidgets('울림 설정은 체크 줄 아래 · 저장 위에 접혀 있고, 요약은 알람 값', (tester) async {
-    await pump(
-      tester,
-      _newRepeat.copyWith(id: 3, snoozeMinutes: 10, autoStopMinutes: 5),
-    );
+    await pump(tester, _newRepeat.copyWith(id: 3, snoozeMinutes: 10, autoStopMinutes: 5));
 
     expect(find.text('울림 설정'), findsOneWidget);
     expect(find.text('볼륨 80% · 스누즈 10분 · 자동 멈춤 5분'), findsOneWidget);
@@ -592,10 +526,8 @@ void main() {
 
     await tester.tap(find.text('울림 설정'));
     await tester.pumpAndSettle();
-    Finder segment(String group, String label) => find.descendant(
-      of: find.byKey(Key('ring-$group')),
-      matching: find.text(label),
-    );
+    Finder segment(String group, String label) =>
+        find.descendant(of: find.byKey(Key('ring-$group')), matching: find.text(label));
     await tester.tap(segment('fade', '30초'));
     await tester.tap(segment('snooze-interval', '15분'));
     await tester.tap(segment('snooze-limit', '3회'));
@@ -610,12 +542,7 @@ void main() {
 
     final saved = savedAlarm();
     expect(
-      (
-        saved.fadeSeconds,
-        saved.snoozeMinutes,
-        saved.snoozeLimit,
-        saved.autoStopMinutes,
-      ),
+      (saved.fadeSeconds, saved.snoozeMinutes, saved.snoozeLimit, saved.autoStopMinutes),
       (30, 15, 3, 10),
     );
     expect(saved.remindBefore, isTrue);
@@ -662,19 +589,14 @@ void main() {
   testWidgets('권한 확인이 실패해도 편집 화면은 닫히고, 다시 저장해 알람이 둘이 되지 않는다', (tester) async {
     answerSaveWithId();
     when(notification.ensure).thenThrow(StateError('plugin'));
-    final results = await pump(
-      tester,
-      Alarm.draft().copyWith(repeat: {Weekday.mon}),
-    );
+    final results = await pump(tester, Alarm.draft().copyWith(repeat: {Weekday.mon}));
 
     await tester.tap(find.text('저장'));
     await tester.pumpAndSettle();
 
     expect(find.byType(AlarmEditPage), findsNothing);
     expect(find.text('알람을 저장하지 못했어요'), findsNothing);
-    expect(results, [
-      const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12)),
-    ]);
+    expect(results, [const AlarmSaveResult.ringsIn(Duration(hours: 7, minutes: 12))]);
     verify(() => useCase.save(any())).called(1);
   });
 
@@ -687,9 +609,7 @@ void main() {
     await tester.pump();
     await tester.tap(find.byType(FilledButton), warnIfMissed: false);
     await tester.pump();
-    saving.complete(
-      const Alarm(id: 1, hour: 7, minute: 0, repeat: {Weekday.mon}),
-    );
+    saving.complete(const Alarm(id: 1, hour: 7, minute: 0, repeat: {Weekday.mon}));
     await tester.pumpAndSettle();
 
     verify(() => useCase.save(any())).called(1);
@@ -703,13 +623,8 @@ void main() {
   });
 
   testWidgets('알람음 줄 → 선택 화면에서 고르면 줄에 반영되고 그 소리로 저장한다', (tester) async {
-    when(
-      () => useCase.save(any()),
-    ).thenAnswer((i) async => i.positionalArguments.single as Alarm);
-    await pump(
-      tester,
-      const Alarm(id: 3, hour: 6, minute: 30, repeat: {Weekday.mon}),
-    );
+    when(() => useCase.save(any())).thenAnswer((i) async => i.positionalArguments.single as Alarm);
+    await pump(tester, const Alarm(id: 3, hour: 6, minute: 30, repeat: {Weekday.mon}));
 
     await tester.tap(find.text('알람음'));
     await tester.pumpAndSettle();
@@ -724,17 +639,11 @@ void main() {
     await tester.tap(find.text('저장'));
     await tester.pumpAndSettle();
 
-    expect(
-      savedAlarm().sound,
-      const AlarmSound.bundled(BundledAlarmSounds.beep),
-    );
+    expect(savedAlarm().sound, const AlarmSound.bundled(BundledAlarmSounds.beep));
   });
 
   testWidgets('선택 화면에서 그냥 돌아오면 알람음은 그대로', (tester) async {
-    await pump(
-      tester,
-      const Alarm(id: 3, hour: 6, minute: 30, repeat: {Weekday.mon}),
-    );
+    await pump(tester, const Alarm(id: 3, hour: 6, minute: 30, repeat: {Weekday.mon}));
 
     await tester.tap(find.text('알람음'));
     await tester.pumpAndSettle();
@@ -748,13 +657,8 @@ void main() {
   });
 
   testWidgets('제목을 입력하다 알람음 줄을 누르면 포커스를 풀고, 돌아와도 다시 잡지 않는다', (tester) async {
-    await pump(
-      tester,
-      const Alarm(id: 3, hour: 6, minute: 30, repeat: {Weekday.mon}),
-    );
-    final titleFocus = tester
-        .widget<EditableText>(find.byType(EditableText))
-        .focusNode;
+    await pump(tester, const Alarm(id: 3, hour: 6, minute: 30, repeat: {Weekday.mon}));
+    final titleFocus = tester.widget<EditableText>(find.byType(EditableText)).focusNode;
     bool titleFocused() => titleFocus.hasFocus;
 
     await tester.tap(find.byType(TextField));
@@ -805,13 +709,7 @@ void main() {
   });
 
   group('복제', () {
-    const saved = Alarm(
-      id: 3,
-      hour: 6,
-      minute: 30,
-      label: '출근',
-      repeat: {Weekday.mon},
-    );
+    const saved = Alarm(id: 3, hour: 6, minute: 30, label: '출근', repeat: {Weekday.mon});
 
     Future<void> openDuplicate(WidgetTester tester) async {
       await tester.tap(find.byTooltip('더보기'));
@@ -827,10 +725,7 @@ void main() {
     });
 
     testWidgets('편집 앱바 메뉴 [복제] 는 같은 설정의 새 알람 편집을 위에 연다', (tester) async {
-      await pump(
-        tester,
-        saved.copyWith(skippedAt: DateTime(2026, 9, 28, 6, 30)),
-      );
+      await pump(tester, saved.copyWith(skippedAt: DateTime(2026, 9, 28, 6, 30)));
 
       await openDuplicate(tester);
 
@@ -851,9 +746,7 @@ void main() {
       expect(savedAlarm(), saved.copyWith(id: Alarm.unsavedId));
       expect(find.byType(AlarmEditPage, skipOffstage: false), findsNothing);
       // 일요일 23:48 → 월요일 06:30.
-      expect(results, [
-        const AlarmSaveResult.ringsIn(Duration(hours: 6, minutes: 42)),
-      ]);
+      expect(results, [const AlarmSaveResult.ringsIn(Duration(hours: 6, minutes: 42))]);
     });
 
     testWidgets('복제본을 그냥 닫으면 원래 편집 화면으로 돌아온다', (tester) async {
@@ -875,10 +768,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     final positions = Weekday.values
-        .map(
-          (day) =>
-              tester.getTopLeft(find.text(AlarmFormat.weekday('ko', day))).dy,
-        )
+        .map((day) => tester.getTopLeft(find.text(AlarmFormat.weekday('ko', day))).dy)
         .toSet();
     expect(positions, hasLength(1), reason: '요일 토글은 모두 같은 줄(같은 dy)에 있어야 한다');
   });
@@ -887,13 +777,7 @@ void main() {
     testWidgets('320dp 에서 넘치지 않는다 — 한 번 · 시각 시트 ($locale)', (tester) async {
       await pump(
         tester,
-        Alarm(
-          id: 3,
-          hour: 7,
-          minute: 0,
-          label: '낮잠',
-          oneShotAt: DateTime(2026, 9, 28, 7),
-        ),
+        Alarm(id: 3, hour: 7, minute: 0, label: '낮잠', oneShotAt: DateTime(2026, 9, 28, 7)),
         locale: locale,
         size: const Size(320, 640),
       );
@@ -916,9 +800,7 @@ void main() {
         size: const Size(320, 640),
       );
       expect(tester.takeException(), isNull);
-      await tester.tap(
-        find.text(AlarmFormat.weekday(locale.languageCode, Weekday.mon)).first,
-      );
+      await tester.tap(find.text(AlarmFormat.weekday(locale.languageCode, Weekday.mon)).first);
       await tester.pump();
       await tester.drag(find.byType(ListView), const Offset(0, -600));
       await tester.pumpAndSettle();

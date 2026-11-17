@@ -25,8 +25,7 @@ class AlarmRingingPage extends StatefulWidget {
 }
 
 class _AlarmRingingPageState extends State<AlarmRingingPage> {
-  late final _cubit = AlarmRingingCubit(getIt<AlarmUseCase>(), widget.packageId)
-    ..load();
+  late final _cubit = AlarmRingingCubit(getIt<AlarmUseCase>(), widget.packageId)..load();
   final _clock = getIt<Clock>();
   late DateTime _now = _clock.now();
   Timer? _ticker;
@@ -45,8 +44,7 @@ class _AlarmRingingPageState extends State<AlarmRingingPage> {
     super.initState();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       final now = _clock.now();
-      if (now.minute != _now.minute || now.hour != _now.hour)
-        setState(() => _now = now);
+      if (now.minute != _now.minute || now.hour != _now.hour) setState(() => _now = now);
     });
   }
 
@@ -124,13 +122,10 @@ class _AlarmRingingPageState extends State<AlarmRingingPage> {
                             Expanded(
                               child: AppButton.secondary(
                                 label: l10n.walkAlarmSnooze(
-                                  state.alarm?.snoozeMinutes ??
-                                      AlarmOptions.defaultSnoozeMinutes,
+                                  state.alarm?.snoozeMinutes ?? AlarmOptions.defaultSnoozeMinutes,
                                 ),
                                 style: _buttonStyle,
-                                onPressed: state.busy
-                                    ? null
-                                    : () => _finish(_cubit.snooze),
+                                onPressed: state.busy ? null : () => _finish(_cubit.snooze),
                               ),
                             ),
                             const SizedBox(width: AppSpacing.md),
@@ -139,9 +134,7 @@ class _AlarmRingingPageState extends State<AlarmRingingPage> {
                             child: AppButton.primary(
                               label: l10n.walkAlarmStop,
                               style: _buttonStyle,
-                              onPressed: state.busy
-                                  ? null
-                                  : () => _finish(_cubit.stop),
+                              onPressed: state.busy ? null : () => _finish(_cubit.stop),
                             ),
                           ),
                         ],

@@ -125,7 +125,7 @@ void main() {
     expect(find.byType(DiaryTab), findsOneWidget);
   });
 
-  testWidgets('일기 상단 탭: 🔍 와 ⋮(모든 스토리 · 휴지통 · 일기 설정 · 앱 설정)', (tester) async {
+  testWidgets('일기 상단 탭: 🔍 와 ⋮(모든 스토리 · 휴지통 · 일기 설정)', (tester) async {
     await pump(tester);
 
     expect(find.byIcon(Icons.search), findsOneWidget);
@@ -134,21 +134,18 @@ void main() {
     expect(find.text('모든 스토리'), findsOneWidget);
     expect(find.text('휴지통'), findsOneWidget);
     expect(find.byKey(const Key('menu-settings-diary')), findsOneWidget);
-    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
+    expect(find.byKey(const Key('menu-settings-app')), findsNothing);
   });
 
-  testWidgets('잠긴 동안 일기 상단 탭은 🔍 없이 ⋮ 에 앱 설정만', (tester) async {
+  testWidgets('잠긴 동안 일기 상단 탭은 🔍 도 ⋮ 도 없다', (tester) async {
     await h.lockWithPin();
     await pump(tester);
 
     expect(find.byIcon(Icons.search), findsNothing);
-    await tester.tap(appBarMenu());
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('menu-settings-diary')), findsNothing);
-    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
+    expect(appBarMenu(), findsNothing);
   });
 
-  testWidgets('지도를 누르면 MapTab 이 보이고 ⋮ 에 지도 설정 · 앱 설정', (tester) async {
+  testWidgets('지도를 누르면 MapTab 이 보이고 ⋮ 에 지도 설정', (tester) async {
     final shell = await pump(tester);
 
     await tester.tap(find.text('지도'));
@@ -160,17 +157,14 @@ void main() {
     await tester.tap(appBarMenu());
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('menu-settings-map')), findsOneWidget);
-    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
+    expect(find.byKey(const Key('menu-settings-app')), findsNothing);
   });
 
-  testWidgets('잠긴 동안 지도 ⋮ 는 앱 설정만', (tester) async {
+  testWidgets('잠긴 동안 지도는 ⋮ 가 없다', (tester) async {
     await h.lockWithPin();
     await pump(tester, initial: LogSection.map);
 
-    await tester.tap(appBarMenu());
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('menu-settings-map')), findsNothing);
-    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
+    expect(appBarMenu(), findsNothing);
   });
 
   testWidgets('보이는 상단 탭만 active — 일기 ↔ 지도', (tester) async {

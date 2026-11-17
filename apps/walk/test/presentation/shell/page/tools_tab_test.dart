@@ -195,15 +195,13 @@ void main() {
     expect(shell.changes, isEmpty);
   });
 
-  testWidgets('알람 ⋮ 는 알람 기록 · 알람 설정 · 앱 설정, 걷기 ⋮ 는 걷기 설정 · 앱 설정', (
-    tester,
-  ) async {
+  testWidgets('알람 ⋮ 는 알람 기록 · 알람 설정, 걷기 ⋮ 는 걷기 설정(앱 설정은 설정 탭)', (tester) async {
     await pump(tester);
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
     expect(find.text('울림 기록'), findsOneWidget);
     expect(find.byKey(const Key('menu-settings-alarm')), findsOneWidget);
-    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
+    expect(find.byKey(const Key('menu-settings-app')), findsNothing);
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
 
@@ -213,7 +211,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('울림 기록'), findsNothing);
     expect(find.byKey(const Key('menu-settings-walk')), findsOneWidget);
-    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
+    expect(find.byKey(const Key('menu-settings-app')), findsNothing);
   });
 
   testWidgets('도구 탭이 보이고 걷기 상단 탭일 때만 WalkHomePage.active', (tester) async {
@@ -257,14 +255,9 @@ void main() {
     verify(weather.shown).called(1);
   });
 
-  testWidgets('날씨 탭 ⋮ 는 앱 설정만', (tester) async {
+  testWidgets('날씨 탭은 설정이 없어 ⋮ 가 없다', (tester) async {
     await pump(tester, initial: ToolsSection.weather);
 
-    await tester.tap(find.byIcon(Icons.more_vert));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('menu-settings-app')), findsOneWidget);
-    expect(find.byKey(const Key('menu-settings-alarm')), findsNothing);
-    expect(find.byKey(const Key('menu-settings-walk')), findsNothing);
-    expect(find.byKey(const Key('menu-settings-map')), findsNothing);
+    expect(find.byIcon(Icons.more_vert), findsNothing);
   });
 }

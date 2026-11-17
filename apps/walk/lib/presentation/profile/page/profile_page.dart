@@ -71,11 +71,13 @@ class _ProfilePageState extends State<ProfilePage> {
   void dispose() {
     _name.dispose();
     _bio.dispose();
-    unawaited(
-      widget.picker.release([
-        for (final path in _picked) (path: path, kind: MediaKind.photo),
-      ]),
-    );
+    if (_picked.isNotEmpty) {
+      unawaited(
+        widget.picker.release([
+          for (final path in _picked) (path: path, kind: MediaKind.photo),
+        ]),
+      );
+    }
     super.dispose();
   }
 

@@ -33,10 +33,7 @@ void main() {
           .add(const Duration(minutes: 10))
           .add(const Duration(minutes: 5));
 
-      expect(
-        draft,
-        const OneShotDraft(offset: Duration(hours: 1, minutes: 25)),
-      );
+      expect(draft, const OneShotDraft(offset: Duration(hours: 1, minutes: 25)));
       expect(draft.ringAt(now), DateTime(2026, 9, 28, 16, 50));
     });
 
@@ -57,9 +54,7 @@ void main() {
     test('고정 모드면 fixedAt 에 더한다(offset 은 그대로)', () {
       final fixed = OneShotDraft(fixedAt: DateTime(2026, 9, 28, 16, 50));
 
-      final added = fixed
-          .add(const Duration(hours: 1))
-          .add(const Duration(minutes: 5));
+      final added = fixed.add(const Duration(hours: 1)).add(const Duration(minutes: 5));
 
       expect(added.fixedAt, DateTime(2026, 9, 28, 17, 55));
       expect(added.offset, Duration.zero);
@@ -68,22 +63,13 @@ void main() {
     test('고정 모드에서 자정을 넘기면 다음 날 시각', () {
       final fixed = OneShotDraft(fixedAt: DateTime(2026, 9, 28, 23, 30));
 
-      expect(
-        fixed.add(const Duration(hours: 1)).fixedAt,
-        DateTime(2026, 9, 29, 0, 30),
-      );
+      expect(fixed.add(const Duration(hours: 1)).fixedAt, DateTime(2026, 9, 29, 0, 30));
     });
   });
 
   test('reset 은 상대 모드 0 으로', () {
-    expect(
-      const OneShotDraft(offset: Duration(minutes: 10)).reset(),
-      const OneShotDraft(),
-    );
-    expect(
-      OneShotDraft(fixedAt: DateTime(2026, 9, 28, 16)).reset(),
-      const OneShotDraft(),
-    );
+    expect(const OneShotDraft(offset: Duration(minutes: 10)).reset(), const OneShotDraft());
+    expect(OneShotDraft(fixedAt: DateTime(2026, 9, 28, 16)).reset(), const OneShotDraft());
   });
 
   group('fixAt', () {
@@ -95,14 +81,8 @@ void main() {
     });
 
     test('지났거나 지금과 같은 분이면 내일(초는 0)', () {
-      expect(
-        const OneShotDraft().fixAt(9, 0, now).fixedAt,
-        DateTime(2026, 9, 29, 9),
-      );
-      expect(
-        const OneShotDraft().fixAt(15, 25, now).fixedAt,
-        DateTime(2026, 9, 29, 15, 25),
-      );
+      expect(const OneShotDraft().fixAt(9, 0, now).fixedAt, DateTime(2026, 9, 29, 9));
+      expect(const OneShotDraft().fixAt(15, 25, now).fixedAt, DateTime(2026, 9, 29, 15, 25));
     });
   });
 
@@ -132,34 +112,22 @@ void main() {
 
       // 15:25:30 + 1분 → 15:26 은 30초 뒤라 15:27.
       expect(draft.ringAt(now), DateTime(2026, 9, 28, 15, 27));
-      expect(
-        draft.remaining(now),
-        greaterThanOrEqualTo(const Duration(minutes: 1)),
-      );
+      expect(draft.remaining(now), greaterThanOrEqualTo(const Duration(minutes: 1)));
       // 정각이면 그대로 1분 뒤.
-      expect(
-        draft.ringAt(DateTime(2026, 9, 28, 15, 25)),
-        DateTime(2026, 9, 28, 15, 26),
-      );
+      expect(draft.ringAt(DateTime(2026, 9, 28, 15, 25)), DateTime(2026, 9, 28, 15, 26));
     });
 
     test('상대 모드 — 자정을 넘기면 다음 날 시각', () {
       const draft = OneShotDraft(offset: Duration(minutes: 40));
 
-      expect(
-        draft.ringAt(DateTime(2026, 9, 28, 23, 50, 12)),
-        DateTime(2026, 9, 29, 0, 30),
-      );
+      expect(draft.ringAt(DateTime(2026, 9, 28, 23, 50, 12)), DateTime(2026, 9, 29, 0, 30));
     });
 
     test('고정 모드는 fixedAt, 남은 시간은 줄어든다', () {
       final draft = OneShotDraft(fixedAt: DateTime(2026, 9, 28, 16, 50));
 
       expect(draft.ringAt(now), DateTime(2026, 9, 28, 16, 50));
-      expect(
-        draft.remaining(now),
-        const Duration(hours: 1, minutes: 24, seconds: 30),
-      );
+      expect(draft.remaining(now), const Duration(hours: 1, minutes: 24, seconds: 30));
     });
 
     test('지난 fixedAt 이면 남은 시간 0', () {
@@ -171,14 +139,8 @@ void main() {
 
   group('canSave — 1분 경계', () {
     test('상대 모드: 1분이면 되고 그 아래는 안 된다', () {
-      expect(
-        const OneShotDraft(offset: Duration(minutes: 1)).canSave(now),
-        isTrue,
-      );
-      expect(
-        const OneShotDraft(offset: Duration(seconds: 59)).canSave(now),
-        isFalse,
-      );
+      expect(const OneShotDraft(offset: Duration(minutes: 1)).canSave(now), isTrue);
+      expect(const OneShotDraft(offset: Duration(seconds: 59)).canSave(now), isFalse);
       expect(const OneShotDraft().canSave(now), isFalse);
     });
 
@@ -200,17 +162,8 @@ void main() {
 
     test('oneShotAt 이 지났거나 지금이면 상대 모드 0', () {
       for (final at in [DateTime(2026, 9, 28, 7), now]) {
-        final alarm = Alarm(
-          id: 1,
-          hour: at.hour,
-          minute: at.minute,
-          oneShotAt: at,
-        );
-        expect(
-          OneShotDraft.fromAlarm(alarm, now),
-          const OneShotDraft(),
-          reason: '$at',
-        );
+        final alarm = Alarm(id: 1, hour: at.hour, minute: at.minute, oneShotAt: at);
+        expect(OneShotDraft.fromAlarm(alarm, now), const OneShotDraft(), reason: '$at');
       }
     });
 

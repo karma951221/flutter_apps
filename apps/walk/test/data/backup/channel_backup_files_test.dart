@@ -8,8 +8,7 @@ import 'package:walk/domain/backup/backup_failure.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const channel = MethodChannel(ChannelBackupFiles.channelName);
-  final messenger =
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   late List<MethodCall> calls;
 
   void answer(Object? Function(MethodCall call) reply) {
@@ -20,9 +19,8 @@ void main() {
     });
   }
 
-  Matcher failsWith(BackupFailure failure) => throwsA(
-    isA<BackupException>().having((e) => e.failure, 'failure', failure),
-  );
+  Matcher failsWith(BackupFailure failure) =>
+      throwsA(isA<BackupException>().having((e) => e.failure, 'failure', failure));
 
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
@@ -50,50 +48,29 @@ void main() {
 
     test('암호화 파일(.lifelog)은 application/octet-stream', () async {
       answer((_) => true);
-      await ChannelBackupFiles().saveAs(
-        File('/c/a.lifelog'),
-        'lifelog-backup-20261117-0930.lifelog',
-      );
-      expect(
-        (calls.single.arguments as Map)['mime'],
-        'application/octet-stream',
-      );
+      await ChannelBackupFiles().saveAs(File('/c/a.lifelog'), 'lifelog-backup-20261117-0930.lifelog');
+      expect((calls.single.arguments as Map)['mime'], 'application/octet-stream');
     });
 
     test('취소(false · null)는 false', () async {
       answer((_) => false);
-      expect(
-        await ChannelBackupFiles().saveAs(File('/c/a.zip'), 'a.zip'),
-        isFalse,
-      );
+      expect(await ChannelBackupFiles().saveAs(File('/c/a.zip'), 'a.zip'), isFalse);
       answer((_) => null);
-      expect(
-        await ChannelBackupFiles().saveAs(File('/c/a.zip'), 'a.zip'),
-        isFalse,
-      );
+      expect(await ChannelBackupFiles().saveAs(File('/c/a.zip'), 'a.zip'), isFalse);
     });
 
     test('공간 부족은 noSpace', () async {
       answer((_) => throw PlatformException(code: 'no_space'));
-      expect(
-        ChannelBackupFiles().saveAs(File('/c/a.zip'), 'a.zip'),
-        failsWith(BackupFailure.noSpace),
-      );
+      expect(ChannelBackupFiles().saveAs(File('/c/a.zip'), 'a.zip'), failsWith(BackupFailure.noSpace));
     });
 
     test('다른 오류는 io', () async {
       answer((_) => throw PlatformException(code: 'failed', message: 'boom'));
-      expect(
-        ChannelBackupFiles().saveAs(File('/c/a.zip'), 'a.zip'),
-        failsWith(BackupFailure.io),
-      );
+      expect(ChannelBackupFiles().saveAs(File('/c/a.zip'), 'a.zip'), failsWith(BackupFailure.io));
     });
 
     test('채널이 없으면 io', () {
-      expect(
-        ChannelBackupFiles().saveAs(File('/c/a.zip'), 'a.zip'),
-        failsWith(BackupFailure.io),
-      );
+      expect(ChannelBackupFiles().saveAs(File('/c/a.zip'), 'a.zip'), failsWith(BackupFailure.io));
     });
   });
 

@@ -32,15 +32,9 @@ void main() {
     exactAlarm = _MockRequester();
     fullScreen = _MockRequester();
     walk = _MockWalk();
-    when(
-      () => notification.check(),
-    ).thenAnswer((_) async => PermissionStatus.denied);
-    when(
-      () => exactAlarm.check(),
-    ).thenAnswer((_) async => PermissionStatus.granted);
-    when(
-      () => fullScreen.check(),
-    ).thenAnswer((_) async => PermissionStatus.permanentlyDenied);
+    when(() => notification.check()).thenAnswer((_) async => PermissionStatus.denied);
+    when(() => exactAlarm.check()).thenAnswer((_) async => PermissionStatus.granted);
+    when(() => fullScreen.check()).thenAnswer((_) async => PermissionStatus.permanentlyDenied);
     when(() => walk.access()).thenAnswer((_) async => HealthAccess.granted);
     when(() => walk.permissionDeclinedThisSession).thenReturn(false);
     for (final r in [notification, exactAlarm, fullScreen]) {
@@ -80,9 +74,8 @@ void main() {
   blocTest<SettingsPermissionsCubit, SettingsPermissionsState>(
     '알림이 영구 거부면 설정을 연다',
     build: () {
-      when(
-        () => notification.check(),
-      ).thenAnswer((_) async => PermissionStatus.permanentlyDenied);
+      when(() => notification.check())
+          .thenAnswer((_) async => PermissionStatus.permanentlyDenied);
       return build();
     },
     act: (cubit) => cubit.openNotification(),
@@ -108,14 +101,11 @@ void main() {
   blocTest<SettingsPermissionsCubit, SettingsPermissionsState>(
     'Health Connect: 거부면 요청, 이번 세션에 거부했으면 설정',
     build: build,
-    seed: () =>
-        const SettingsPermissionsState(health: HealthAccess.permissionDenied),
+    seed: () => const SettingsPermissionsState(health: HealthAccess.permissionDenied),
     act: (cubit) async {
       await cubit.openHealth();
       when(() => walk.permissionDeclinedThisSession).thenReturn(true);
-      cubit.emit(
-        const SettingsPermissionsState(health: HealthAccess.permissionDenied),
-      );
+      cubit.emit(const SettingsPermissionsState(health: HealthAccess.permissionDenied));
       await cubit.openHealth();
     },
     verify: (_) {
@@ -127,8 +117,7 @@ void main() {
   blocTest<SettingsPermissionsCubit, SettingsPermissionsState>(
     'Health Connect: 설치 안 됨이면 스토어',
     build: build,
-    seed: () =>
-        const SettingsPermissionsState(health: HealthAccess.notInstalled),
+    seed: () => const SettingsPermissionsState(health: HealthAccess.notInstalled),
     act: (cubit) => cubit.openHealth(),
     verify: (_) => verify(walk.openInstall).called(1),
   );

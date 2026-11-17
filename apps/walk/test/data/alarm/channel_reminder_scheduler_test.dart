@@ -10,8 +10,7 @@ import 'package:walk/domain/alarm/entity/alarm_reminder.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const channel = MethodChannel(ChannelReminderScheduler.channelName);
-  final messenger =
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  final messenger = TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   late List<MethodCall> calls;
 
   void answer(Object? Function(MethodCall call) reply) {
@@ -31,13 +30,7 @@ void main() {
   final ko = lookupAppLocalizations(const Locale('ko'));
   final en = lookupAppLocalizations(const Locale('en'));
   final ringAt = DateTime(2026, 10, 9, 7);
-  const alarm = Alarm(
-    id: 4,
-    hour: 7,
-    minute: 0,
-    repeat: {Weekday.fri},
-    label: '출근',
-  );
+  const alarm = Alarm(id: 4, hour: 7, minute: 0, repeat: {Weekday.fri}, label: '출근');
   final soon = AlarmReminder(
     id: reminderId(412, ReminderKind.soon),
     packageId: 412,
@@ -78,11 +71,7 @@ void main() {
     });
 
     test('soon: 라벨이 없으면 기본 제목', () {
-      final args = ChannelReminderScheduler.argumentsFor(
-        soon,
-        alarm.copyWith(label: ''),
-        ko,
-      );
+      final args = ChannelReminderScheduler.argumentsFor(soon, alarm.copyWith(label: ''), ko);
       expect(args['body'], '오전 7:00 알람');
     });
 
@@ -122,15 +111,8 @@ void main() {
             'at': DateTime(2026, 10, 9, 6, 30).millisecondsSinceEpoch,
             'ringAt': ring,
           },
-          {
-            'id': 1000825,
-            'at': DateTime(2026, 10, 8, 7).millisecondsSinceEpoch,
-            'ringAt': ring,
-          },
-          {
-            'id': 1000826,
-            'at': DateTime(2026, 10, 8, 7).millisecondsSinceEpoch,
-          }, // ringAt 없음
+          {'id': 1000825, 'at': DateTime(2026, 10, 8, 7).millisecondsSinceEpoch, 'ringAt': ring},
+          {'id': 1000826, 'at': DateTime(2026, 10, 8, 7).millisecondsSinceEpoch}, // ringAt 없음
           {'id': 'broken'},
         ],
       );

@@ -26,9 +26,7 @@ class RingArchiver {
   }
 
   Future<void> archive() => _serial(() async {
-    final entries = await _ringLog.read(
-      since: DateTime.fromMillisecondsSinceEpoch(0),
-    );
+    final entries = await _ringLog.read(since: DateTime.fromMillisecondsSinceEpoch(0));
     final byId = <int, Alarm>{for (final a in await _alarms.list()) a.id: a};
     await _archive.saveAll([
       for (final e in entries)

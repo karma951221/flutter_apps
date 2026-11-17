@@ -41,11 +41,7 @@ class ChannelReminderScheduler implements ReminderScheduler {
     }
     return {
       for (final row in rows ?? const [])
-        if (row case {
-          'id': final int id,
-          'at': final int at,
-          'ringAt': final int ringAt,
-        })
+        if (row case {'id': final int id, 'at': final int at, 'ringAt': final int ringAt})
           id: (
             at: DateTime.fromMillisecondsSinceEpoch(at),
             ringAt: DateTime.fromMillisecondsSinceEpoch(ringAt),
@@ -91,13 +87,10 @@ class ChannelReminderScheduler implements ReminderScheduler {
     AppLocalizations l10n,
   ) {
     final locale = l10n.localeName;
-    final time = _format(
-      () => DateFormat.jm(locale).format(reminder.ringAt),
-      () {
-        final at = reminder.ringAt;
-        return '${_two(at.hour)}:${_two(at.minute)}';
-      },
-    );
+    final time = _format(() => DateFormat.jm(locale).format(reminder.ringAt), () {
+      final at = reminder.ringAt;
+      return '${_two(at.hour)}:${_two(at.minute)}';
+    });
     final (title, body, actions) = switch (reminder.kind) {
       ReminderKind.soon => (
         l10n.walkReminderSoonTitle,
@@ -110,10 +103,7 @@ class ChannelReminderScheduler implements ReminderScheduler {
       ReminderKind.holiday => (
         l10n.walkReminderHolidayTitle,
         _holidayBody(reminder, l10n, time),
-        [
-          _action('skip', l10n.walkReminderSkip),
-          _action('dismiss', l10n.walkReminderRing),
-        ],
+        [_action('skip', l10n.walkReminderSkip), _action('dismiss', l10n.walkReminderRing)],
       ),
     };
     return {
@@ -129,22 +119,14 @@ class ChannelReminderScheduler implements ReminderScheduler {
     };
   }
 
-  static String _holidayBody(
-    AlarmReminder reminder,
-    AppLocalizations l10n,
-    String time,
-  ) {
+  static String _holidayBody(AlarmReminder reminder, AppLocalizations l10n, String time) {
     final at = reminder.ringAt;
     final date = _format(
       () => DateFormat.MMMd(l10n.localeName).format(at),
       () => '${at.month}/${at.day}',
     );
     return switch (reminder.holidayName) {
-      final name? when name.isNotEmpty => l10n.walkReminderHolidayBody(
-        date,
-        name,
-        time,
-      ),
+      final name? when name.isNotEmpty => l10n.walkReminderHolidayBody(date, name, time),
       _ => l10n.walkReminderHolidayBodyNoName(date, time),
     };
   }

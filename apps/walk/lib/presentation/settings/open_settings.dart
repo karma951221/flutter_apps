@@ -11,14 +11,13 @@ import 'cubit/diary_settings_cubit.dart';
 import 'cubit/holiday_settings_cubit.dart';
 import 'cubit/settings_permissions_cubit.dart';
 import 'page/alarm_settings_page.dart';
-import 'page/app_settings_page.dart';
 import 'page/chat_settings_page.dart';
 import 'page/diary_settings_page.dart';
 import 'page/map_settings_page.dart';
 import 'page/walk_settings_page.dart';
 
 /// 열 설정 화면.
-enum SettingsTarget { app, diary, chat, alarm, walk, map, backup }
+enum SettingsTarget { diary, chat, alarm, walk, map, backup }
 
 /// [openSettings] 를 부를 수 있는 자리(셸 cubit 다섯 아래)면 [target] 을 여는 콜백, 아니면 null.
 /// 셸 밖에서 연 화면(예: 작성 화면이 띄운 시트)에 "설정 열기"를 넘길 때 쓴다 — 콜백은 [context] 로 연다.
@@ -48,7 +47,7 @@ VoidCallback? settingsOpener(
 ///
 /// [context] 위에 셸의 [SettingsPermissionsCubit] · [HolidaySettingsCubit] · [DiaryLockCubit] ·
 /// [DiarySettingsCubit] · [MapRecordCubit] 가 있어야 한다 — 다섯을 새 라우트에 다시 건다
-/// (`ThemeCubit` · `StepGoalCubit` 은 앱 위라 그대로 보인다). 앱 설정에서 다시 여는 지도 설정도
+/// (`ThemeCubit` · `StepGoalCubit` 은 앱 위라 그대로 보인다). 설정 탭에서 여는 지도 설정도
 /// 이 다섯을 읽으므로 모든 화면에 함께 건다. 같은 Navigator 라 셸의 `didPopNext` 가 돌아올 때
 /// 다시 읽는다.
 ///
@@ -89,7 +88,6 @@ Future<void> openSettings(
   );
 
   return switch (target) {
-    SettingsTarget.app => push(const AppSettingsPage()),
     SettingsTarget.alarm => push(
       AlarmSettingsPage(highlightPermissions: highlight),
     ),

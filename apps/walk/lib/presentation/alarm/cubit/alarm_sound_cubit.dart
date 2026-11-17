@@ -39,8 +39,7 @@ class AlarmSoundCubit extends Cubit<AlarmSoundState> {
     try {
       ringtones = DeviceRingtones.loaded(await _source.deviceRingtones());
     } on Object {
-      if (!isClosed)
-        emit(state.copyWith(ringtones: const DeviceRingtones.failure()));
+      if (!isClosed) emit(state.copyWith(ringtones: const DeviceRingtones.failure()));
       return;
     }
     if (isClosed) return;
@@ -67,9 +66,7 @@ class AlarmSoundCubit extends Cubit<AlarmSoundState> {
     try {
       await switch (choice) {
         SystemSoundChoice() => _source.preview(const AlarmSound.system()),
-        BundledSoundChoice(:final asset) => _source.preview(
-          AlarmSound.bundled(asset),
-        ),
+        BundledSoundChoice(:final asset) => _source.preview(AlarmSound.bundled(asset)),
         DeviceSoundChoice(:final ringtone) => _source.preview(
           const AlarmSound.system(),
           uri: ringtone.uri,
@@ -127,13 +124,7 @@ class AlarmSoundCubit extends Cubit<AlarmSoundState> {
       emit(state.copyWith(importing: false));
       return PickFileResult.failed;
     }
-    emit(
-      state.copyWith(
-        selected: AlarmSoundChoice.file(picked),
-        myFile: picked,
-        importing: false,
-      ),
-    );
+    emit(state.copyWith(selected: AlarmSoundChoice.file(picked), myFile: picked, importing: false));
     try {
       await _source.preview(picked);
     } on Object {

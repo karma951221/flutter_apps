@@ -20,9 +20,5 @@ class HolidaySettingsState with _$HolidaySettingsState {
   @override
   final PermissionStatus? calendar;
 
-  const HolidaySettingsState({
-    this.holidayReminder = true,
-    this.source,
-    this.calendar,
-  });
+  const HolidaySettingsState({this.holidayReminder = true, this.source, this.calendar});
 }

@@ -38,8 +38,7 @@ List<DateTime> upcomingTriggers(
   }
   return [
     for (var n = 0; n <= days; n++)
-      if (DateTime(now.year, now.month, now.day + n, alarm.hour, alarm.minute)
-          case final at
+      if (DateTime(now.year, now.month, now.day + n, alarm.hour, alarm.minute) case final at
           when alarm.repeat.contains(Weekday.of(at)) && inWindow(at))
         at,
   ];
@@ -48,18 +47,11 @@ List<DateTime> upcomingTriggers(
 /// `now` 뒤에 처음 오는 `hour:minute`. 1회성 알람을 켤 때 `oneShotAt` 을 정한다.
 DateTime nextOccurrence(int hour, int minute, DateTime now) {
   final today = DateTime(now.year, now.month, now.day, hour, minute);
-  return today.isAfter(now)
-      ? today
-      : DateTime(now.year, now.month, now.day + 1, hour, minute);
+  return today.isAfter(now) ? today : DateTime(now.year, now.month, now.day + 1, hour, minute);
 }
 
 /// [alarm] 의 회차를 패키지 id 와 함께. [pause] 는 [upcomingTriggers] 와 같다.
-List<AlarmTrigger> triggersOf(Alarm alarm, DateTime now, {AlarmPause? pause}) =>
-    [
-      for (final at in upcomingTriggers(alarm, now, pause: pause))
-        AlarmTrigger(
-          packageId: packageId(alarm.id, triggerIndex(at)),
-          alarmId: alarm.id,
-          at: at,
-        ),
-    ];
+List<AlarmTrigger> triggersOf(Alarm alarm, DateTime now, {AlarmPause? pause}) => [
+  for (final at in upcomingTriggers(alarm, now, pause: pause))
+    AlarmTrigger(packageId: packageId(alarm.id, triggerIndex(at)), alarmId: alarm.id, at: at),
+];

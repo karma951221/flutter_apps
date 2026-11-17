@@ -48,8 +48,7 @@ void main() {
   late _FakeDevice device;
   late _MutableClock clock;
 
-  CachedHolidayCalendar calendar() =>
-      CachedHolidayCalendar(prefs, device, clock);
+  CachedHolidayCalendar calendar() => CachedHolidayCalendar(prefs, device, clock);
 
   const bundled = HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
 
@@ -76,10 +75,7 @@ void main() {
     final c = calendar();
     await c.refresh();
 
-    expect(device.reads.single, (
-      DateTime(2026, 10, 7),
-      DateTime(2027, 11, 11),
-    ));
+    expect(device.reads.single, (DateTime(2026, 10, 7), DateTime(2027, 11, 11)));
     expect(c.source, const HolidaySource.device(calendarName: '대한민국의 휴일'));
     expect(c.nameOf(DateTime(2026, 11, 2, 7)), '임시공휴일');
     expect(c.nameOf(DateTime(2026, 12, 25)), '기독탄신일');
@@ -181,11 +177,7 @@ void main() {
     final c = calendar();
     await c.refresh();
 
-    clock.value = DateTime(
-      2026,
-      10,
-      7,
-    ).add(CachedHolidayCalendar.maxAge + const Duration(days: 1));
+    clock.value = DateTime(2026, 10, 7).add(CachedHolidayCalendar.maxAge + const Duration(days: 1));
     expect(c.source, bundled);
     expect(c.nameOf(DateTime(2026, 12, 25)), '성탄절');
   });
@@ -199,9 +191,7 @@ void main() {
   });
 
   test('깨진 캐시는 내장 표', () async {
-    SharedPreferences.setMockInitialValues({
-      CachedHolidayCalendar.cacheKey: '{oops',
-    });
+    SharedPreferences.setMockInitialValues({CachedHolidayCalendar.cacheKey: '{oops'});
     prefs = await SharedPreferences.getInstance();
     final c = calendar();
     expect(c.source, bundled);

@@ -6,8 +6,5 @@ abstract interface class RingArchive {
   Future<void> saveAll(List<ArchivedRing> rings);
 
   /// [from] 이상 [to] 이하를 오래된 것부터.
-  Future<List<ArchivedRing>> read({
-    required DateTime from,
-    required DateTime to,
-  });
+  Future<List<ArchivedRing>> read({required DateTime from, required DateTime to});
 }

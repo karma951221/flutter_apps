@@ -7,10 +7,9 @@ class CommuteApiKeys {
   const CommuteApiKeys({required this.odsay, required this.seoulSubway});
 
   factory CommuteApiKeys.fromEnvironment() => const CommuteApiKeys(
-    odsay: String.fromEnvironment('ODSAY_API_KEY'),
-    seoulSubway: String.fromEnvironment('SEOUL_SUBWAY_API_KEY'),
-  );
+        odsay: String.fromEnvironment('ODSAY_API_KEY'),
+        seoulSubway: String.fromEnvironment('SEOUL_SUBWAY_API_KEY'),
+      );
 
-  bool get isComplete =>
-      odsay.trim().isNotEmpty && seoulSubway.trim().isNotEmpty;
+  bool get isComplete => odsay.trim().isNotEmpty && seoulSubway.trim().isNotEmpty;
 }

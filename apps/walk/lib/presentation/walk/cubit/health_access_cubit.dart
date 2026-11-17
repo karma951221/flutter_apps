@@ -23,11 +23,9 @@ class HealthAccessCubit extends Cubit<HealthAccessState> {
 
   void _emit(HealthAccess access) {
     if (isClosed) return;
-    emit(
-      HealthAccessState(
-        access: access,
-        canOpenSettings: _useCase.permissionDeclinedThisSession,
-      ),
-    );
+    emit(HealthAccessState(
+      access: access,
+      canOpenSettings: _useCase.permissionDeclinedThisSession,
+    ));
   }
 }

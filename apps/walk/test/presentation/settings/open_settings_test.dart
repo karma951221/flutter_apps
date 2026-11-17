@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
-import 'package:walk/domain/settings/entity/app_settings.dart';
 import 'package:walk/presentation/lock/widget/lock_secret_input.dart';
 import 'package:walk/presentation/settings/open_settings.dart';
-import 'package:walk/presentation/settings/page/alarm_settings_page.dart';
-import 'package:walk/presentation/settings/page/app_settings_page.dart';
 import 'package:walk/presentation/settings/page/chat_settings_page.dart';
 import 'package:walk/presentation/settings/page/diary_settings_page.dart';
-import 'package:walk/presentation/settings/page/map_settings_page.dart';
 import 'package:walk/presentation/settings/page/walk_settings_page.dart';
 import 'package:walk/presentation/settings/widget/row_highlight.dart';
 
@@ -141,7 +137,6 @@ void main() {
 
     for (final (target, page) in [
       (SettingsTarget.walk, WalkSettingsPage),
-      (SettingsTarget.app, AppSettingsPage),
       (SettingsTarget.diary, DiarySettingsPage),
     ]) {
       testWidgets('${target.name} 는 highlight 를 무시한다(던지지 않음)', (tester) async {
@@ -224,72 +219,6 @@ void main() {
     expect(find.byType(LockSecretInput), findsOneWidget);
     expect(find.byKey(const Key('settings-chat-key')), findsNothing);
     expect(find.byKey(const Key('chat-history-retention')), findsNothing);
-  });
-
-  testWidgets('앱 설정 — 잠금 · 테마 · 기능별 설정 바로가기 넷', (tester) async {
-    await open(tester, SettingsTarget.app);
-
-    expect(find.text('앱 설정'), findsOneWidget);
-    expect(find.byKey(const Key('settings-diary-lock')), findsOneWidget);
-    expect(find.byKey(const Key('settings-diary-relock')), findsOneWidget);
-    expect(find.text('일기와 물어보기를 함께 잠급니다'), findsOneWidget);
-    expect(find.byType(RadioListTile<AppThemeMode>), findsNWidgets(3));
-    expect(find.text('시스템 설정'), findsOneWidget);
-    expect(find.text('라이트'), findsOneWidget);
-    expect(find.text('다크'), findsOneWidget);
-    for (final target in SettingsTarget.values.where(
-      (t) => t != SettingsTarget.app,
-    )) {
-      expect(
-        find.byKey(Key('app-settings-open-${target.name}')),
-        findsOneWidget,
-        reason: target.name,
-      );
-    }
-  });
-
-  testWidgets('앱 설정 › 알람 설정, 뒤로가면 앱 설정', (tester) async {
-    await open(tester, SettingsTarget.app);
-
-    await tester.tap(find.byKey(const Key('app-settings-open-alarm')));
-    await tester.pumpAndSettle();
-    expect(find.byType(AlarmSettingsPage), findsOneWidget);
-    expect(find.byKey(const Key('settings-holiday-reminder')), findsOneWidget);
-
-    // 한국어 로캘이라 pageBack(툴팁 "Back")을 쓰지 못한다.
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
-    expect(find.byType(AlarmSettingsPage), findsNothing);
-    expect(find.byType(AppSettingsPage), findsOneWidget);
-  });
-
-  testWidgets('앱 설정 › 일기 설정은 잠겨 있으면 잠금 화면을 거친다', (tester) async {
-    await h.lockWithPin();
-    await open(tester, SettingsTarget.app);
-
-    await tester.tap(find.byKey(const Key('app-settings-open-diary')));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(LockSecretInput), findsOneWidget);
-    expect(find.byKey(const Key('settings-diary-retention')), findsNothing);
-  });
-
-  testWidgets('앱 설정 › 지도 설정은 잠금 화면을 거쳐 열린다', (tester) async {
-    await h.lockWithPin();
-    await open(tester, SettingsTarget.app);
-
-    await tester.tap(find.byKey(const Key('app-settings-open-map')));
-    await tester.pumpAndSettle();
-
-    expect(tester.takeException(), isNull);
-    expect(find.byType(LockSecretInput), findsOneWidget);
-    expect(find.byType(MapSettingsPage), findsNothing);
-
-    await h.diaryLock.submit('1234');
-    await tester.pumpAndSettle();
-
-    expect(find.byType(MapSettingsPage), findsOneWidget);
-    expect(find.byKey(const Key('map-settings-record-switch')), findsOneWidget);
   });
 
   group('settingsOpener', () {

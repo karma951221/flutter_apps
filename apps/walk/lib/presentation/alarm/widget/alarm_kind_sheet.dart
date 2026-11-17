@@ -10,13 +10,12 @@ enum AlarmKind { oneShot, repeating }
 class AlarmKindSheet extends StatelessWidget {
   const AlarmKindSheet({super.key});
 
-  static Future<AlarmKind?> show(BuildContext context) =>
-      showModalBottomSheet<AlarmKind>(
-        context: context,
-        showDragHandle: true,
-        isScrollControlled: true,
-        builder: (_) => const AlarmKindSheet(),
-      );
+  static Future<AlarmKind?> show(BuildContext context) => showModalBottomSheet<AlarmKind>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (_) => const AlarmKindSheet(),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -24,22 +23,14 @@ class AlarmKindSheet extends StatelessWidget {
     final theme = Theme.of(context);
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          0,
-          AppSpacing.md,
-          AppSpacing.md,
-        ),
+        padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.md),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              child: Text(
-                l10n.walkAlarmKindTitle,
-                style: theme.textTheme.titleLarge,
-              ),
+              child: Text(l10n.walkAlarmKindTitle, style: theme.textTheme.titleLarge),
             ),
             const SizedBox(height: AppSpacing.md),
             _KindRow(

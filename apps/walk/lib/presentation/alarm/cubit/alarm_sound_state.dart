@@ -13,8 +13,7 @@ sealed class AlarmSoundChoice with _$AlarmSoundChoice {
   const factory AlarmSoundChoice.bundled(String asset) = BundledSoundChoice;
 
   /// 기기 알람음 목록의 한 줄 — 고르면(선택 버튼) 앱 저장소로 복사한다.
-  const factory AlarmSoundChoice.device(DeviceRingtone ringtone) =
-      DeviceSoundChoice;
+  const factory AlarmSoundChoice.device(DeviceRingtone ringtone) = DeviceSoundChoice;
 
   /// 내 파일 구역의 줄 — 이미 앱 저장소로 복사해 둔 파일이라 그대로 선택하면 이 값을 돌려준다.
   const factory AlarmSoundChoice.file(FileAlarmSound sound) = FileSoundChoice;
@@ -29,8 +28,7 @@ sealed class AlarmSoundChoice with _$AlarmSoundChoice {
 sealed class DeviceRingtones with _$DeviceRingtones {
   const factory DeviceRingtones.loading() = DeviceRingtonesLoading;
 
-  const factory DeviceRingtones.loaded(List<DeviceRingtone> items) =
-      DeviceRingtonesLoaded;
+  const factory DeviceRingtones.loaded(List<DeviceRingtone> items) = DeviceRingtonesLoaded;
 
   const factory DeviceRingtones.failure() = DeviceRingtonesFailure;
 }

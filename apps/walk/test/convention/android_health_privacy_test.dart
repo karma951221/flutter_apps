@@ -11,13 +11,12 @@ const _main = 'android/app/src/main';
 final _manifest = File('$_main/AndroidManifest.xml').readAsStringSync();
 
 /// [action] 을 받는 `<activity>` · `<activity-alias>` 블록들.
-List<String> _handlers(String action) =>
-    RegExp(
-      r'<(activity|activity-alias)\b.*?</\1>',
-      dotAll: true,
-    ).allMatches(_manifest).map((m) => m.group(0)!).where((block) {
-      return block.contains('android:name="$action"');
-    }).toList();
+List<String> _handlers(String action) => RegExp(
+  r'<(activity|activity-alias)\b.*?</\1>',
+  dotAll: true,
+).allMatches(_manifest).map((m) => m.group(0)!).where((block) {
+  return block.contains('android:name="$action"');
+}).toList();
 
 String _attr(String block, String name) =>
     RegExp('android:$name="([^"]*)"').firstMatch(block)?.group(1) ?? '';
@@ -34,9 +33,7 @@ void main() {
       for (final block in handlers) {
         expect(_attr(block, 'targetActivity'), isNot('.MainActivity'));
         expect(
-          RegExp(
-            r'<activity\b[^>]*android:name="\.MainActivity"',
-          ).hasMatch(block),
+          RegExp(r'<activity\b[^>]*android:name="\.MainActivity"').hasMatch(block),
           isFalse,
         );
         final target = block.startsWith('<activity-alias')

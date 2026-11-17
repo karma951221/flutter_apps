@@ -40,17 +40,22 @@ import '../../settings/cubit/diary_settings_cubit.dart';
 import '../../settings/cubit/holiday_settings_cubit.dart';
 import '../../settings/cubit/settings_permissions_cubit.dart';
 import '../../settings/open_settings.dart';
+import '../../settings/cubit/connection_status_cubit.dart';
+import '../../settings/page/settings_tab.dart';
+import '../../profile/cubit/profile_cubit.dart';
+import '../../../domain/profile/profile_repository.dart';
+import '../../../domain/chat/chat_settings.dart';
 import '../../weather/cubit/weather_cubit.dart';
 import 'log_tab.dart';
 import 'tools_tab.dart';
 
 /// 하단 탭 순서. 첫 탭(시작 탭)은 [tools] — 실사용에서 알람 · 걷기 · 날씨를 가장 자주 연다.
 /// 그 셋은 [tools] 의 상단 탭([ToolsSection])이다. [log] 는 내 일상(일기)과 다닌 곳(지도)을
-/// 상단 탭([LogSection])으로 묶는다. 물어보기는 덜 써서 맨 끝이다.
-enum ShellTab { tools, log, chat }
+/// 상단 탭([LogSection])으로 묶는다. 물어보기는 덜 써서 그 뒤, 앱 전역 설정([SettingsTab])이 맨 끝이다.
+enum ShellTab { tools, log, chat, settings }
 
-/// 하단 탭 셸. 탭마다 자기 `Scaffold` · `AppBar` 를 둔다. 설정은 탭이 아니라 각 탭 앱바 ⋮ 가
-/// 여는 화면([openSettings])이다.
+/// 하단 탭 셸. 탭마다 자기 `Scaffold` · `AppBar` 를 둔다. 앱 전역 설정은 넷째 탭([SettingsTab])이고,
+/// 기능 설정은 각 탭 앱바 ⋮ 가 여는 화면([openSettings])이다 — 설정 탭에도 바로가기가 있다.
 ///
 /// 알람 예약 동기화(`AlarmUseCase.sync`)는 여기 한 곳에서 한다 — 시작과 복귀(resumed),
 /// 그리고 앱이 떠 있을 때 네이티브 `BackgroundDispatcher`(시간대 변경 · 하루 한 번 작업 ·
@@ -100,6 +105,8 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     getIt<DiaryPreferences>(),
     getIt<DiaryRepository>(),
   );
+  late final _profile = ProfileCubit(getIt<ProfileRepository>());
+  late final _connections = ConnectionStatusCubit(getIt<ChatSettings>());
   late final AppLifecycleListener _lifecycle;
 
   /// 지도 cubit 둘. 지도 탭 · 지도 설정이 처음 읽을 때 만들어지고(`BlocProvider.create`) 닫는 것도
@@ -229,6 +236,8 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     _holidaySettings.close();
     _diaryLock.close();
     _diarySettings.close();
+    _profile.close();
+    _connections.close();
     super.dispose();
   }
 
@@ -342,6 +351,8 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
         BlocProvider.value(value: _holidaySettings),
         BlocProvider.value(value: _diaryLock),
         BlocProvider.value(value: _diarySettings),
+        BlocProvider.value(value: _profile),
+        BlocProvider.value(value: _connections),
         // 지도 탭과 지도 설정이 같은 기록 상태를 본다. 처음 읽을 때 만든다.
         BlocProvider(
           create: (_) => _mapRecord = MapRecordCubit(
@@ -387,6 +398,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
                     openSettings(context, SettingsTarget.chat, highlight: true),
                   ),
                 ),
+                SettingsTab(active: _tab == ShellTab.settings && !_covered),
               ],
             );
           },
@@ -414,6 +426,11 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
               icon: const Icon(Icons.chat_bubble_outline),
               selectedIcon: const Icon(Icons.chat_bubble),
               label: l10n.walkShellTabChat,
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.settings_outlined),
+              selectedIcon: const Icon(Icons.settings),
+              label: l10n.walkShellTabSettings,
             ),
           ],
         ),

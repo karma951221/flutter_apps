@@ -553,11 +553,7 @@ class _ChatBody extends StatelessWidget {
           final l10n = AppLocalizations.of(context);
           final saved = state.savedFile!;
           if (saved.deleted) {
-            AppSnackBar.show(
-              context,
-              message: l10n.walkChatWriteDeleted,
-              type: AppSnackBarType.success,
-            );
+            AppSnackBar.show(context, message: l10n.walkChatWriteDeleted, type: AppSnackBarType.success);
           } else {
             final tab = context.findAncestorStateOfType<_ChatTabState>();
             AppSnackBar.show(
@@ -1187,11 +1183,7 @@ class _BubbleItem extends StatelessWidget {
         final path = await cubit.saveAnswer(index);
         if (!context.mounted) return;
         if (path == null) {
-          AppSnackBar.show(
-            context,
-            message: l10n.walkChatSaveFailed,
-            type: AppSnackBarType.error,
-          );
+          AppSnackBar.show(context, message: l10n.walkChatSaveFailed, type: AppSnackBarType.error);
           return;
         }
         AppSnackBar.show(

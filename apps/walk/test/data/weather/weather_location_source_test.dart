@@ -53,9 +53,7 @@ void main() {
   setUp(() {
     gateway = _MockGateway();
     namer = _FakeNamer();
-    when(
-      () => gateway.isLocationServiceEnabled(),
-    ).thenAnswer((_) async => true);
+    when(() => gateway.isLocationServiceEnabled()).thenAnswer((_) async => true);
     when(
       () => gateway.checkPermission(),
     ).thenAnswer((_) async => LocationPermission.whileInUse);
