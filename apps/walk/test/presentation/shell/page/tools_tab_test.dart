@@ -298,12 +298,27 @@ void main() {
   testWidgets('360dp · 글자 1.3배에서 상단 탭이 넘치지 않는다', (tester) async {
     await pump(tester);
     await tester.binding.setSurfaceSize(const Size(360, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     tester.platformDispatcher.textScaleFactorTestValue = 1.3;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
     expect(find.text('길찾기'), findsOneWidget);
+  });
+
+  testWidgets('360dp · 글자 1.3배에서 길찾기 본문이 넘치지 않는다', (tester) async {
+    await pump(tester, initial: ToolsSection.transit);
+    // 하네스가 800x1800 으로 그리므로 그다음에 좁힌다.
+    await tester.binding.setSurfaceSize(const Size(360, 640));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.byType(TransitPage), findsOneWidget);
+    expect(find.byType(TransitView), findsOneWidget);
   });
 
   testWidgets('날씨 상단 탭을 누르면 WeatherPage 가 보이고 shown 이 불린다', (tester) async {

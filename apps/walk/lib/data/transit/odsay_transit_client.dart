@@ -212,7 +212,10 @@ class OdsayTransitClient implements TransitRouteSource, StationSearch {
       lng: x.toDouble(),
       detail: isSubway
           ? '${raw['laneName'] ?? ''}'
-          : '${raw['arsID'] ?? ''} · ${raw['gu'] ?? ''}',
+          : [
+              '${raw['arsID'] ?? ''}',
+              '${raw['gu'] ?? ''}',
+            ].where((part) => part.isNotEmpty).join(' · '),
     );
   }
 }

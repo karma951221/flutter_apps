@@ -1368,7 +1368,7 @@ void main() {
   });
 
   group('날씨 상단 탭', () {
-    testWidgets('도구 상단 탭은 알람 · 걷기 · 날씨', (tester) async {
+    testWidgets('도구 상단 탭은 알람 · 걷기 · 날씨 · 길찾기', (tester) async {
       await pump(tester);
       final labels = tester
           .widgetList<Tab>(find.byType(Tab))

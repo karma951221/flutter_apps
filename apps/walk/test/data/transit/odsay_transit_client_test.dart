@@ -248,6 +248,49 @@ void main() {
       expect(capped.first.kind, StationKind.subway);
     });
 
+    test('bus detail joins only non-empty arsID and gu', () async {
+      final body = jsonEncode({
+        'result': {
+          'station': [
+            {
+              'stationClass': 1,
+              'stationName': 'a',
+              'x': 127.0,
+              'y': 37.0,
+              'arsID': '22009',
+            },
+            {
+              'stationClass': 1,
+              'stationName': 'b',
+              'x': 127.0,
+              'y': 37.0,
+              'gu': '서초구',
+            },
+            {
+              'stationClass': 1,
+              'stationName': 'c',
+              'x': 127.0,
+              'y': 37.0,
+              'arsID': '',
+              'gu': '',
+            },
+            {
+              'stationClass': 1,
+              'stationName': 'd',
+              'x': 127.0,
+              'y': 37.0,
+              'arsID': '1',
+              'gu': 'g',
+            },
+          ],
+        },
+      });
+      final hits = await build(
+        (_) async => _json(body),
+      ).search('x', apiKey: 'k');
+      expect(hits.map((h) => h.detail), ['22009', '서초구', '', '1 · g']);
+    });
+
     test('no result → empty list, error → failure', () async {
       final empty = await build(
         (_) async => _json(_fixture('odsay_error_no_route.json')),
