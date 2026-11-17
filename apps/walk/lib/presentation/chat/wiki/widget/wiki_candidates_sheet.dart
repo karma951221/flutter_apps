@@ -86,6 +86,7 @@ class _WikiCandidatesSheet extends StatelessWidget {
             message: AppLocalizations.of(
               context,
             ).walkChatWikiDistillDone(cubit.savedCount),
+            type: AppSnackBarType.success,
           );
           _close(context);
         },

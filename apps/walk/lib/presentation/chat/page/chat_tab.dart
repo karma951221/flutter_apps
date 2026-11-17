@@ -141,6 +141,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
         AppSnackBar.show(
           context,
           message: AppLocalizations.of(context).walkWorkspaceFileMissing,
+          type: AppSnackBarType.warning,
         );
       }
       return;
@@ -214,6 +215,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
     AppSnackBar.show(
       context,
       message: AppLocalizations.of(context).walkChatModelReplacedNotice,
+      type: AppSnackBarType.warning,
     );
     _cubit.consumeSelectionReplaced();
   }
@@ -561,6 +563,7 @@ class _ChatBody extends StatelessWidget {
               AppLocalizations.of(context),
               state.attachmentNotice!,
             ),
+            type: AppSnackBarType.warning,
           );
           context.read<ChatCubit>().consumeAttachmentNotice();
         },
@@ -572,12 +575,13 @@ class _ChatBody extends StatelessWidget {
           final l10n = AppLocalizations.of(context);
           final saved = state.savedFile!;
           if (saved.deleted) {
-            AppSnackBar.show(context, message: l10n.walkChatWriteDeleted);
+            AppSnackBar.show(context, message: l10n.walkChatWriteDeleted, type: AppSnackBarType.success);
           } else {
             final tab = context.findAncestorStateOfType<_ChatTabState>();
             AppSnackBar.show(
               context,
               message: l10n.walkChatWriteSaved(revealInvisible(saved.name)),
+              type: AppSnackBarType.success,
               actionLabel: l10n.walkChatWriteOpen,
               onAction: () => tab?._openSaved(saved.path),
             );
@@ -1201,12 +1205,13 @@ class _BubbleItem extends StatelessWidget {
         final path = await cubit.saveAnswer(index);
         if (!context.mounted) return;
         if (path == null) {
-          AppSnackBar.show(context, message: l10n.walkChatSaveFailed);
+          AppSnackBar.show(context, message: l10n.walkChatSaveFailed, type: AppSnackBarType.error);
           return;
         }
         AppSnackBar.show(
           context,
           message: l10n.walkChatSavedToWorkspace,
+          type: AppSnackBarType.success,
           actionLabel: l10n.walkWorkspaceView,
           onAction: () => tab?._openSaved(path),
         );

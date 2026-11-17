@@ -206,7 +206,7 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
         if (!mounted) return;
         final open = widget.onOpenChatSettings;
         if (open == null) {
-          AppSnackBar.show(context, message: l10n.walkDiaryDraftNoKey);
+          AppSnackBar.show(context, message: l10n.walkDiaryDraftNoKey, type: AppSnackBarType.warning);
           return;
         }
         final go = await AppConfirmDialog.show(
@@ -277,6 +277,7 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
         AppSnackBar.show(
           context,
           message: l10n.walkDiaryComposerDraftApplied,
+          type: AppSnackBarType.success,
           actionLabel: l10n.walkDiaryComposerDraftUndo,
           onAction: () => _draftCubit?.undo(),
         );
@@ -391,7 +392,7 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
     AppSnackBar.show(
       context,
       message: AppLocalizations.of(context).walkDiaryStoryEndedNotSelectable,
-      type: AppSnackBarType.error,
+      type: AppSnackBarType.warning,
     );
   }
 

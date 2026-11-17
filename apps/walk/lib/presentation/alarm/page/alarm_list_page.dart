@@ -159,6 +159,9 @@ class _AlarmListPageState extends State<AlarmListPage> {
         ),
         AlarmPausedOut() => l10n.walkAlarmSavedPausedOut,
       },
+      type: result is AlarmPausedOut
+          ? AppSnackBarType.warning
+          : AppSnackBarType.success,
     );
   }
 
