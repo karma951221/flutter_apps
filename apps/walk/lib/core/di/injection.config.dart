@@ -164,7 +164,10 @@ import '../../domain/transit/repository/station_search.dart' as _i621;
 import '../../domain/transit/repository/transit_cache.dart' as _i857;
 import '../../domain/transit/repository/transit_key_store.dart' as _i910;
 import '../../domain/transit/repository/transit_route_source.dart' as _i859;
+import '../../domain/transit/usecase/find_transit_routes.dart' as _i510;
+import '../../domain/transit/usecase/search_stations.dart' as _i341;
 import '../../domain/transit/usecase/transit_api_key.dart' as _i920;
+import '../../domain/transit/usecase/verify_transit_key.dart' as _i1051;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
 import '../../domain/weather/repository/weather_repository.dart' as _i903;
@@ -513,6 +516,12 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i621.StationSearch>(
       () => transitModule.stationSearch(gh<_i90.OdsayTransitClient>()),
     );
+    gh.factory<_i1051.VerifyTransitKey>(
+      () => _i1051.VerifyTransitKey(
+        gh<_i621.StationSearch>(),
+        gh<_i910.TransitKeyStore>(),
+      ),
+    );
     gh.lazySingleton<_i764.LocationBackupArea>(
       () => registerModule.locationBackupArea(
         gh<_i121.LocationDatabase>(),
@@ -533,6 +542,13 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i5.ChatKeyVerifier(
         gh<_i1004.ChatModelRegistry>(),
         gh<_i111.ChatSettings>(),
+      ),
+    );
+    gh.factory<_i341.SearchStations>(
+      () => _i341.SearchStations(
+        gh<_i621.StationSearch>(),
+        gh<_i857.TransitCache>(),
+        gh<_i920.TransitApiKey>(),
       ),
     );
     gh.lazySingleton<_i795.WikiContextPolicy>(
@@ -630,6 +646,15 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i638.LocationSync>(),
         gh<_i993.LocationRecorder>(),
         gh<_i673.StayNamer>(),
+        gh<_i494.Clock>(),
+      ),
+    );
+    gh.factory<_i510.FindTransitRoutes>(
+      () => _i510.FindTransitRoutes(
+        gh<_i859.TransitRouteSource>(),
+        gh<_i857.TransitCache>(),
+        gh<_i920.TransitApiKey>(),
+        gh<_i910.TransitKeyStore>(),
         gh<_i494.Clock>(),
       ),
     );
