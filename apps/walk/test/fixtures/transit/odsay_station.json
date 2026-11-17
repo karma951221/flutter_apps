@@ -1,0 +1,6 @@
+{"result": {"station": [
+ {"stationClass": 1, "stationName": "강남역", "x": 127.0276, "y": 37.4979, "arsID": "22009", "gu": "서초구"},
+ {"stationClass": 2, "stationName": "강남", "x": 127.0276, "y": 37.4979, "laneName": "수도권 2호선"},
+ {"stationClass": 1, "stationName": "강남역.강남역사거리", "x": 127.028, "y": 37.498, "arsID": "22010", "gu": "강남구"},
+ {"stationClass": 2, "stationName": "강남", "x": 127.0282, "y": 37.4984, "laneName": "수도권 신분당선"}
+]}}

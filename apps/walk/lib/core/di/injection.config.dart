@@ -79,6 +79,7 @@ import '../../data/lock/channel_screen_lock_settings.dart' as _i952;
 import '../../data/lock/local_auth_device_auth.dart' as _i982;
 import '../../data/lock/prefs_lock_repository.dart' as _i691;
 import '../../data/settings/prefs_settings_repository.dart' as _i724;
+import '../../data/transit/odsay_transit_client.dart' as _i90;
 import '../../data/walk/health/health_gateway.dart' as _i332;
 import '../../data/walk/repository/health_connect_activity_repository.dart'
     as _i1016;
@@ -155,6 +156,8 @@ import '../../domain/lock/device_auth.dart' as _i439;
 import '../../domain/lock/lock_repository.dart' as _i43;
 import '../../domain/lock/screen_lock_settings.dart' as _i194;
 import '../../domain/settings/repository/settings_repository.dart' as _i91;
+import '../../domain/transit/repository/station_search.dart' as _i621;
+import '../../domain/transit/repository/transit_route_source.dart' as _i859;
 import '../../domain/walk/repository/activity_repository.dart' as _i204;
 import '../../domain/walk/usecase/walk_use_case.dart' as _i5;
 import '../../domain/weather/repository/weather_repository.dart' as _i903;
@@ -182,6 +185,7 @@ extension GetItInjectableX on _i174.GetIt {
     final registerModule = _$RegisterModule();
     final alarmPermissionModule = _$AlarmPermissionModule();
     final holidayModule = _$HolidayModule();
+    final transitModule = _$TransitModule();
     await gh.factoryAsync<_i460.SharedPreferences>(
       () => registerModule.sharedPreferences,
       preResolve: true,
@@ -358,6 +362,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i645.LocationAccess>(
       () => registerModule.locationAccess(gh<_i645.LocationGateway>()),
     );
+    gh.lazySingleton<_i90.OdsayTransitClient>(
+      () => _i90.OdsayTransitClient(gh<_i519.Client>()),
+    );
     gh.lazySingleton<_i880.ChatModelCatalog>(
       () => _i878.PrefsChatModelCatalog(gh<_i460.SharedPreferences>()),
     );
@@ -474,6 +481,12 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i204.ActivityRepository>(),
         gh<_i494.Clock>(),
       ),
+    );
+    gh.lazySingleton<_i859.TransitRouteSource>(
+      () => transitModule.transitRouteSource(gh<_i90.OdsayTransitClient>()),
+    );
+    gh.lazySingleton<_i621.StationSearch>(
+      () => transitModule.stationSearch(gh<_i90.OdsayTransitClient>()),
     );
     gh.lazySingleton<_i764.LocationBackupArea>(
       () => registerModule.locationBackupArea(
@@ -736,3 +749,5 @@ class _$RegisterModule extends _i291.RegisterModule {}
 class _$AlarmPermissionModule extends _i343.AlarmPermissionModule {}
 
 class _$HolidayModule extends _i183.HolidayModule {}
+
+class _$TransitModule extends _i90.TransitModule {}
