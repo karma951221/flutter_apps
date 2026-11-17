@@ -30,16 +30,16 @@ const chatKeyPrefixes = <(ChatVendor?, String)>[
   return best;
 }
 
+/// 접두사를 모르는 키(벤더 없음)의 가린 모양 — 8글자 미만이면 `••••`, 아니면 앞 4글자 + `••••`.
+String maskOpaqueKey(String key) =>
+    key.length < 8 ? apiKeyMaskDots : '${key.substring(0, 4)}$apiKeyMaskDots';
+
 /// 벤더 공개 접두사 + 본문 앞 4글자 + `••••`(Q3). 접두사가 안 맞으면 앞 4글자 + `••••`
 /// (모르는 키는 4글자 넘게 보이지 않는다),
 /// 8글자 미만이면 `••••`. 접두사 뒤 본문이 4글자 미만이면 접두사 + `••••`.
 String maskApiKey(ChatVendor vendor, String key) {
   final prefix = _longestPrefix(key, where: (v) => v == vendor)?.$2;
-  if (prefix == null) {
-    return key.length < 8
-        ? apiKeyMaskDots
-        : '${key.substring(0, 4)}$apiKeyMaskDots';
-  }
+  if (prefix == null) return maskOpaqueKey(key);
   final body = key.substring(prefix.length);
   if (body.length < 4) return '$prefix$apiKeyMaskDots';
   return '$prefix${body.substring(0, 4)}$apiKeyMaskDots';

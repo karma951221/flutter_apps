@@ -69,6 +69,21 @@ void main() {
     expect(store.saveCalls, 0);
   });
 
+  testWidgets('editing the input clears the rejection message', (tester) async {
+    remote.error = const TransitFailure.keyRejected('apiKey 인증 실패');
+    await h.pump(tester, const TransitSettingsPage());
+    await enterAndSave(tester, 'abcd1234efgh5678');
+    expect(find.text('apiKey 인증 실패'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('transit-key-input')),
+      'abcd1234efgh567',
+    );
+    await tester.pump();
+
+    expect(find.text('apiKey 인증 실패'), findsNothing);
+  });
+
   testWidgets('network asks then saves unverified', (tester) async {
     remote.error = const TransitFailure.network();
     await h.pump(tester, const TransitSettingsPage());

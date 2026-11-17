@@ -85,24 +85,16 @@ class _TransitKeyViewState extends State<_TransitKeyView> {
     switch (result) {
       case TransitKeySave.connected:
         _controller.clear();
-        AppSnackBar.show(
-          context,
-          message: l10n.walkTransitKeySaved,
-          type: AppSnackBarType.success,
-        );
+        AppSnackBar.success(context, message: l10n.walkTransitKeySaved);
       case TransitKeySave.unverified:
         _controller.clear();
-        AppSnackBar.show(context, message: l10n.walkTransitKeySavedUnverified);
+        AppSnackBar.info(context, message: l10n.walkTransitKeySavedUnverified);
       case TransitKeySave.rejected:
         // 서버 원문은 입력칸 아래에 이미 보인다.
         break;
       case TransitKeySave.network:
       case TransitKeySave.failed:
-        AppSnackBar.show(
-          context,
-          message: l10n.walkTransitKeySaveFailed,
-          type: AppSnackBarType.error,
-        );
+        AppSnackBar.error(context, message: l10n.walkTransitKeySaveFailed);
     }
   }
 
@@ -118,13 +110,9 @@ class _TransitKeyViewState extends State<_TransitKeyView> {
     if (!ok) return;
     final done = await cubit.delete();
     if (!mounted) return;
-    AppSnackBar.show(
-      context,
-      message: done
-          ? l10n.walkTransitKeyDeleted
-          : l10n.walkTransitKeyDeleteFailed,
-      type: done ? AppSnackBarType.success : AppSnackBarType.error,
-    );
+    done
+        ? AppSnackBar.success(context, message: l10n.walkTransitKeyDeleted)
+        : AppSnackBar.error(context, message: l10n.walkTransitKeyDeleteFailed);
   }
 
   @override

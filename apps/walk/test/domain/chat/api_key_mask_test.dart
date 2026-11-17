@@ -76,4 +76,10 @@ void main() {
   test('chatKeyPrefixHint', () {
     expect(chatKeyPrefixHint(ChatVendor.anthropic), 'sk-ant-');
   });
+
+  test('maskOpaqueKey', () {
+    expect(maskOpaqueKey('abcd1234efgh'), 'abcd••••');
+    expect(maskOpaqueKey('abcdefg'), '••••');
+    expect(maskOpaqueKey(''), '••••');
+  });
 }

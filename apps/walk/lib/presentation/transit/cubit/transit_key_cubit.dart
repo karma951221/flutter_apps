@@ -2,7 +2,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../../domain/chat/api_key_mask.dart';
-import '../../../domain/chat/chat_vendor.dart';
 import '../../../domain/transit/repository/transit_key_store.dart';
 import '../../../domain/transit/transit_failure.dart';
 import '../../../domain/transit/usecase/verify_transit_key.dart';
@@ -50,14 +49,7 @@ class TransitKeyCubit extends Cubit<TransitKeyState> {
     bool saveIfUnverified = false,
   }) async {
     final trimmed = key.trim();
-    emit(
-      TransitKeyState(
-        loading: false,
-        keyPreview: state.keyPreview,
-        status: state.status,
-        busy: true,
-      ),
-    );
+    emit(state.copyWith(busy: true));
     try {
       final status = await _verify(trimmed, saveIfUnverified: saveIfUnverified);
       _emitSettled(preview: _mask(trimmed), status: status);
@@ -78,14 +70,7 @@ class TransitKeyCubit extends Cubit<TransitKeyState> {
 
   /// 저장된 키를 지운다. 지우지 못하면 false.
   Future<bool> delete() async {
-    emit(
-      TransitKeyState(
-        loading: false,
-        keyPreview: state.keyPreview,
-        status: state.status,
-        busy: true,
-      ),
-    );
+    emit(state.copyWith(busy: true));
     try {
       await _store.delete();
     } on Object {
@@ -98,14 +83,7 @@ class TransitKeyCubit extends Cubit<TransitKeyState> {
 
   void clearRejection() {
     if (state.rejectedMessage == null) return;
-    emit(
-      TransitKeyState(
-        loading: state.loading,
-        keyPreview: state.keyPreview,
-        status: state.status,
-        busy: state.busy,
-      ),
-    );
+    emit(state.copyWith(rejectedMessage: null));
   }
 
   /// busy 를 풀며 상태를 정한다. 넘기지 않은 값은 지금 값을 둔다.
@@ -132,5 +110,5 @@ class TransitKeyCubit extends Cubit<TransitKeyState> {
   static const Object _keep = Object();
 
   /// ODsay 키는 모르는 접두사라 앞 4글자 + `••••`(8글자 미만이면 `••••`)만 보인다.
-  String _mask(String key) => maskApiKey(ChatVendor.openai, key);
+  String _mask(String key) => maskOpaqueKey(key);
 }
