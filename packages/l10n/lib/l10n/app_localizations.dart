@@ -9456,6 +9456,36 @@ abstract class AppLocalizations {
   /// **'그래도 저장'**
   String get walkTransitKeyUnverifiedConfirm;
 
+  /// 실패 원인 원문 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'원인'**
+  String get walkTransitFailureCause;
+
+  /// 키 확인 중 네트워크 실패 요약
+  ///
+  /// In ko, this message translates to:
+  /// **'ODsay 에 연결하지 못했어요'**
+  String get walkTransitKeyNetworkFailed;
+
+  /// 키 거절 시 콘솔 확인 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'ODsay 콘솔(lab.odsay.com)에서 이 키의 플랫폼과 등록값을 확인해 주세요. Android 키는 패키지 이름 com.karma.walk, 서버 키는 등록한 IP, 웹 키는 등록한 URI 에서 부를 때만 통해요.'**
+  String get walkTransitKeyRejectedHint;
+
+  /// 네트워크로 키를 확인 못 했을 때 확인 창 본문 — 원인 포함
+  ///
+  /// In ko, this message translates to:
+  /// **'원인: {cause}\n\n그래도 저장할까요?'**
+  String walkTransitKeyUnverifiedBodyWithCause(String cause);
+
+  /// 길찾기 — 분류되지 않은 예외
+  ///
+  /// In ko, this message translates to:
+  /// **'예상하지 못한 오류가 났어요'**
+  String get walkTransitUnexpected;
+
   /// 키 발급 안내
   ///
   /// In ko, this message translates to:

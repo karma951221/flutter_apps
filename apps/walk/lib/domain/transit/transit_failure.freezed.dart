@@ -55,7 +55,7 @@ extension TransitFailurePatterns on TransitFailure {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( TransitMissingKey value)?  missingKey,TResult Function( TransitKeyRejected value)?  keyRejected,TResult Function( TransitQuotaExceeded value)?  quotaExceeded,TResult Function( TransitNetwork value)?  network,TResult Function( TransitNoRoute value)?  noRoute,TResult Function( TransitTooClose value)?  tooClose,TResult Function( TransitServer value)?  server,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( TransitMissingKey value)?  missingKey,TResult Function( TransitKeyRejected value)?  keyRejected,TResult Function( TransitQuotaExceeded value)?  quotaExceeded,TResult Function( TransitNetwork value)?  network,TResult Function( TransitNoRoute value)?  noRoute,TResult Function( TransitTooClose value)?  tooClose,TResult Function( TransitServer value)?  server,TResult Function( TransitUnexpected value)?  unexpected,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case TransitMissingKey() when missingKey != null:
@@ -65,7 +65,8 @@ return quotaExceeded(_that);case TransitNetwork() when network != null:
 return network(_that);case TransitNoRoute() when noRoute != null:
 return noRoute(_that);case TransitTooClose() when tooClose != null:
 return tooClose(_that);case TransitServer() when server != null:
-return server(_that);case _:
+return server(_that);case TransitUnexpected() when unexpected != null:
+return unexpected(_that);case _:
   return orElse();
 
 }
@@ -83,7 +84,7 @@ return server(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( TransitMissingKey value)  missingKey,required TResult Function( TransitKeyRejected value)  keyRejected,required TResult Function( TransitQuotaExceeded value)  quotaExceeded,required TResult Function( TransitNetwork value)  network,required TResult Function( TransitNoRoute value)  noRoute,required TResult Function( TransitTooClose value)  tooClose,required TResult Function( TransitServer value)  server,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( TransitMissingKey value)  missingKey,required TResult Function( TransitKeyRejected value)  keyRejected,required TResult Function( TransitQuotaExceeded value)  quotaExceeded,required TResult Function( TransitNetwork value)  network,required TResult Function( TransitNoRoute value)  noRoute,required TResult Function( TransitTooClose value)  tooClose,required TResult Function( TransitServer value)  server,required TResult Function( TransitUnexpected value)  unexpected,}){
 final _that = this;
 switch (_that) {
 case TransitMissingKey():
@@ -93,7 +94,8 @@ return quotaExceeded(_that);case TransitNetwork():
 return network(_that);case TransitNoRoute():
 return noRoute(_that);case TransitTooClose():
 return tooClose(_that);case TransitServer():
-return server(_that);}
+return server(_that);case TransitUnexpected():
+return unexpected(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -107,7 +109,7 @@ return server(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( TransitMissingKey value)?  missingKey,TResult? Function( TransitKeyRejected value)?  keyRejected,TResult? Function( TransitQuotaExceeded value)?  quotaExceeded,TResult? Function( TransitNetwork value)?  network,TResult? Function( TransitNoRoute value)?  noRoute,TResult? Function( TransitTooClose value)?  tooClose,TResult? Function( TransitServer value)?  server,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( TransitMissingKey value)?  missingKey,TResult? Function( TransitKeyRejected value)?  keyRejected,TResult? Function( TransitQuotaExceeded value)?  quotaExceeded,TResult? Function( TransitNetwork value)?  network,TResult? Function( TransitNoRoute value)?  noRoute,TResult? Function( TransitTooClose value)?  tooClose,TResult? Function( TransitServer value)?  server,TResult? Function( TransitUnexpected value)?  unexpected,}){
 final _that = this;
 switch (_that) {
 case TransitMissingKey() when missingKey != null:
@@ -117,7 +119,8 @@ return quotaExceeded(_that);case TransitNetwork() when network != null:
 return network(_that);case TransitNoRoute() when noRoute != null:
 return noRoute(_that);case TransitTooClose() when tooClose != null:
 return tooClose(_that);case TransitServer() when server != null:
-return server(_that);case _:
+return server(_that);case TransitUnexpected() when unexpected != null:
+return unexpected(_that);case _:
   return null;
 
 }
@@ -134,16 +137,17 @@ return server(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  missingKey,TResult Function( String message)?  keyRejected,TResult Function()?  quotaExceeded,TResult Function()?  network,TResult Function()?  noRoute,TResult Function()?  tooClose,TResult Function( String message)?  server,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  missingKey,TResult Function( String message)?  keyRejected,TResult Function( String detail)?  quotaExceeded,TResult Function( String detail)?  network,TResult Function()?  noRoute,TResult Function()?  tooClose,TResult Function( String message)?  server,TResult Function( String detail)?  unexpected,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case TransitMissingKey() when missingKey != null:
 return missingKey();case TransitKeyRejected() when keyRejected != null:
 return keyRejected(_that.message);case TransitQuotaExceeded() when quotaExceeded != null:
-return quotaExceeded();case TransitNetwork() when network != null:
-return network();case TransitNoRoute() when noRoute != null:
+return quotaExceeded(_that.detail);case TransitNetwork() when network != null:
+return network(_that.detail);case TransitNoRoute() when noRoute != null:
 return noRoute();case TransitTooClose() when tooClose != null:
 return tooClose();case TransitServer() when server != null:
-return server(_that.message);case _:
+return server(_that.message);case TransitUnexpected() when unexpected != null:
+return unexpected(_that.detail);case _:
   return orElse();
 
 }
@@ -161,16 +165,17 @@ return server(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  missingKey,required TResult Function( String message)  keyRejected,required TResult Function()  quotaExceeded,required TResult Function()  network,required TResult Function()  noRoute,required TResult Function()  tooClose,required TResult Function( String message)  server,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  missingKey,required TResult Function( String message)  keyRejected,required TResult Function( String detail)  quotaExceeded,required TResult Function( String detail)  network,required TResult Function()  noRoute,required TResult Function()  tooClose,required TResult Function( String message)  server,required TResult Function( String detail)  unexpected,}) {final _that = this;
 switch (_that) {
 case TransitMissingKey():
 return missingKey();case TransitKeyRejected():
 return keyRejected(_that.message);case TransitQuotaExceeded():
-return quotaExceeded();case TransitNetwork():
-return network();case TransitNoRoute():
+return quotaExceeded(_that.detail);case TransitNetwork():
+return network(_that.detail);case TransitNoRoute():
 return noRoute();case TransitTooClose():
 return tooClose();case TransitServer():
-return server(_that.message);}
+return server(_that.message);case TransitUnexpected():
+return unexpected(_that.detail);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -184,16 +189,17 @@ return server(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  missingKey,TResult? Function( String message)?  keyRejected,TResult? Function()?  quotaExceeded,TResult? Function()?  network,TResult? Function()?  noRoute,TResult? Function()?  tooClose,TResult? Function( String message)?  server,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  missingKey,TResult? Function( String message)?  keyRejected,TResult? Function( String detail)?  quotaExceeded,TResult? Function( String detail)?  network,TResult? Function()?  noRoute,TResult? Function()?  tooClose,TResult? Function( String message)?  server,TResult? Function( String detail)?  unexpected,}) {final _that = this;
 switch (_that) {
 case TransitMissingKey() when missingKey != null:
 return missingKey();case TransitKeyRejected() when keyRejected != null:
 return keyRejected(_that.message);case TransitQuotaExceeded() when quotaExceeded != null:
-return quotaExceeded();case TransitNetwork() when network != null:
-return network();case TransitNoRoute() when noRoute != null:
+return quotaExceeded(_that.detail);case TransitNetwork() when network != null:
+return network(_that.detail);case TransitNoRoute() when noRoute != null:
 return noRoute();case TransitTooClose() when tooClose != null:
 return tooClose();case TransitServer() when server != null:
-return server(_that.message);case _:
+return server(_that.message);case TransitUnexpected() when unexpected != null:
+return unexpected(_that.detail);case _:
   return null;
 
 }
@@ -303,65 +309,133 @@ as String,
 
 
 class TransitQuotaExceeded implements TransitFailure {
-  const TransitQuotaExceeded();
+  const TransitQuotaExceeded([this.detail = '']);
   
 
+@JsonKey() final  String detail;
 
-
+/// Create a copy of TransitFailure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$TransitQuotaExceededCopyWith<TransitQuotaExceeded> get copyWith => _$TransitQuotaExceededCopyWithImpl<TransitQuotaExceeded>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransitQuotaExceeded);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransitQuotaExceeded&&(identical(other.detail, detail) || other.detail == detail));
 }
 
 
 @override
-int get hashCode => runtimeType.hashCode;
+int get hashCode => Object.hash(runtimeType,detail);
 
 @override
 String toString() {
-  return 'TransitFailure.quotaExceeded()';
+  return 'TransitFailure.quotaExceeded(detail: $detail)';
 }
 
 
 }
 
+/// @nodoc
+abstract mixin class $TransitQuotaExceededCopyWith<$Res> implements $TransitFailureCopyWith<$Res> {
+  factory $TransitQuotaExceededCopyWith(TransitQuotaExceeded value, $Res Function(TransitQuotaExceeded) _then) = _$TransitQuotaExceededCopyWithImpl;
+@useResult
+$Res call({
+ String detail
+});
 
 
+
+
+}
+/// @nodoc
+class _$TransitQuotaExceededCopyWithImpl<$Res>
+    implements $TransitQuotaExceededCopyWith<$Res> {
+  _$TransitQuotaExceededCopyWithImpl(this._self, this._then);
+
+  final TransitQuotaExceeded _self;
+  final $Res Function(TransitQuotaExceeded) _then;
+
+/// Create a copy of TransitFailure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? detail = null,}) {
+  return _then(TransitQuotaExceeded(
+null == detail ? _self.detail : detail // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
 
 /// @nodoc
 
 
 class TransitNetwork implements TransitFailure {
-  const TransitNetwork();
+  const TransitNetwork([this.detail = '']);
   
 
+@JsonKey() final  String detail;
 
-
+/// Create a copy of TransitFailure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$TransitNetworkCopyWith<TransitNetwork> get copyWith => _$TransitNetworkCopyWithImpl<TransitNetwork>(this, _$identity);
 
 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransitNetwork);
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransitNetwork&&(identical(other.detail, detail) || other.detail == detail));
 }
 
 
 @override
-int get hashCode => runtimeType.hashCode;
+int get hashCode => Object.hash(runtimeType,detail);
 
 @override
 String toString() {
-  return 'TransitFailure.network()';
+  return 'TransitFailure.network(detail: $detail)';
 }
 
 
 }
 
+/// @nodoc
+abstract mixin class $TransitNetworkCopyWith<$Res> implements $TransitFailureCopyWith<$Res> {
+  factory $TransitNetworkCopyWith(TransitNetwork value, $Res Function(TransitNetwork) _then) = _$TransitNetworkCopyWithImpl;
+@useResult
+$Res call({
+ String detail
+});
 
 
+
+
+}
+/// @nodoc
+class _$TransitNetworkCopyWithImpl<$Res>
+    implements $TransitNetworkCopyWith<$Res> {
+  _$TransitNetworkCopyWithImpl(this._self, this._then);
+
+  final TransitNetwork _self;
+  final $Res Function(TransitNetwork) _then;
+
+/// Create a copy of TransitFailure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? detail = null,}) {
+  return _then(TransitNetwork(
+null == detail ? _self.detail : detail // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
 
 /// @nodoc
 
@@ -486,6 +560,72 @@ class _$TransitServerCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
   return _then(TransitServer(
 null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class TransitUnexpected implements TransitFailure {
+  const TransitUnexpected(this.detail);
+  
+
+ final  String detail;
+
+/// Create a copy of TransitFailure
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$TransitUnexpectedCopyWith<TransitUnexpected> get copyWith => _$TransitUnexpectedCopyWithImpl<TransitUnexpected>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransitUnexpected&&(identical(other.detail, detail) || other.detail == detail));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,detail);
+
+@override
+String toString() {
+  return 'TransitFailure.unexpected(detail: $detail)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $TransitUnexpectedCopyWith<$Res> implements $TransitFailureCopyWith<$Res> {
+  factory $TransitUnexpectedCopyWith(TransitUnexpected value, $Res Function(TransitUnexpected) _then) = _$TransitUnexpectedCopyWithImpl;
+@useResult
+$Res call({
+ String detail
+});
+
+
+
+
+}
+/// @nodoc
+class _$TransitUnexpectedCopyWithImpl<$Res>
+    implements $TransitUnexpectedCopyWith<$Res> {
+  _$TransitUnexpectedCopyWithImpl(this._self, this._then);
+
+  final TransitUnexpected _self;
+  final $Res Function(TransitUnexpected) _then;
+
+/// Create a copy of TransitFailure
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? detail = null,}) {
+  return _then(TransitUnexpected(
+null == detail ? _self.detail : detail // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

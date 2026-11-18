@@ -11,13 +11,14 @@ enum TransitKeySave {
   connected,
   unverified,
 
-  /// 서버가 키를 거절했다 — 저장하지 않았고 문구는 상태의 `rejectedMessage`.
+  /// 서버가 키를 거절했다 — 저장하지 않았다. 원인은 상태의 `failure`.
   rejected,
 
   /// 확인하지 못했다(네트워크) — 저장하지 않았다. 그래도 저장할지는 화면이 묻는다.
   network,
 
   /// 그 밖의 실패(한도 초과 · 서버 오류 · 저장 실패) — 저장하지 않았다.
+  /// 원인은 상태의 `failure`(저장소 예외는 `TransitFailure.unexpected`).
   failed,
 }
 
@@ -55,13 +56,20 @@ class TransitKeyCubit extends Cubit<TransitKeyState> {
           ? TransitKeySave.connected
           : TransitKeySave.unverified;
     } on TransitKeyRejected catch (e) {
-      _emitSettled(rejectedMessage: e.message);
+      _emitSettled(failure: e);
       return TransitKeySave.rejected;
-    } on TransitNetwork {
-      _emitSettled();
+    } on TransitNetwork catch (e) {
+      _emitSettled(failure: e);
       return TransitKeySave.network;
-    } on Object {
-      _emitSettled();
+    } on TransitFailure catch (e) {
+      _emitSettled(failure: e);
+      return TransitKeySave.failed;
+    } on Object catch (e) {
+      _emitSettled(
+        failure: TransitFailure.unexpected(
+          maskTransitKey(describeError(e), key: trimmed),
+        ),
+      );
       return TransitKeySave.failed;
     }
   }
@@ -79,16 +87,17 @@ class TransitKeyCubit extends Cubit<TransitKeyState> {
     return true;
   }
 
-  void clearRejection() {
-    if (state.rejectedMessage == null) return;
-    emit(state.copyWith(rejectedMessage: null));
+  /// 입력을 고쳤을 때 지난 실패 안내를 지운다.
+  void clearFailure() {
+    if (state.failure == null) return;
+    emit(state.copyWith(failure: null));
   }
 
   /// busy 를 풀며 상태를 정한다. 넘기지 않은 값은 지금 값을 둔다.
   void _emitSettled({
     Object? preview = _keep,
     Object? status = _keep,
-    String? rejectedMessage,
+    TransitFailure? failure,
   }) {
     if (isClosed) return;
     emit(
@@ -100,7 +109,7 @@ class TransitKeyCubit extends Cubit<TransitKeyState> {
         status: identical(status, _keep)
             ? state.status
             : status as TransitKeyStatus?,
-        rejectedMessage: rejectedMessage,
+        failure: failure,
       ),
     );
   }

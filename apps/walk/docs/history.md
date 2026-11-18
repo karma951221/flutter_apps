@@ -1451,3 +1451,32 @@ QA: 기능마다 설정이 각 탭 ⋮ 에 흩어져 있고, 앱 전역 설정("
 ### 검증
 
 `flutter analyze` 0 · walk `flutter test` 4361건 통과(1 skip). `backup_page_test` 는 T2 시점에 전체 실행에서 흔들렸으나 최종 전체 실행은 통과했다. 기기 확인은 대기.
+
+## 2026-11-18 — 길찾기 키 저장 실패 원인 보이기
+
+실폰 QA 에서 ODsay 키를 넣고 저장하면 "키를 저장하지 못했어요" 스낵바만 떠 원인을 알 수 없었다.
+원인이 사라지던 곳은 셋 — 클라이언트가 소켓 · 타임아웃 · TLS · `ClientException` 을 내용 없는
+`network()` 로 바꿨고, ODsay 오류 `code` 를 버렸고, 키 설정 cubit 이 그 밖의 예외(한도 · 서버 · 저장소)를
+모두 `failed` 하나로 뭉갰다.
+
+- **실패에 원인 원문을 싣는다** — `network(detail)` 은 `SocketException: …` · `HandshakeException: …` ·
+  `ClientException: …` · `TimeoutException 10s`, `keyRejected` · `quotaExceeded` 는 `code <c> · <msg>`,
+  `server` 는 `HTTP <status> · code <c> · <msg>`(본문이 JSON 이 아니면 본문 앞 200자). 새 변형
+  `unexpected(detail)` 이 저장소 실패 같은 나머지를 `타입: 메시지` 로 받는다(길찾기 · 장소 고르기 cubit 의
+  알 수 없는 예외도 이제 `server('StateError')` 대신 이것). 원문은 `TransitFailure.detail` 로 읽는다.
+- **키는 원문에 남기지 않는다** — `ClientException` 은 toString 에 요청 URL(키 포함)을 붙이므로 `message` 만
+  쓴다. 모든 원문은 `maskTransitKey` 로 `apiKey=` 쿼리 값과 키 원문 · URL 인코딩 모양을 `••••` 로 가린다
+  (6글자 미만 값은 원문 치환하지 않음 — 평범한 글자까지 가려 읽을 수 없게 된다).
+- **키 설정 화면** — 입력칸 `errorText` 대신 입력칸 아래 실패 영역(`transit-key-failure`): 요약(거절 ·
+  연결 못 함 · 한도 · 저장 못 함) + 거절이면 ODsay 콘솔에서 플랫폼 · 등록값(Android 패키지 · 서버 IP · 웹 URI)
+  확인 안내 + 길게 눌러 복사할 수 있는 "원인" 칸(`TransitFailureCause`, `SelectableText`). 네트워크 확인 창
+  본문에도 원인을 넣었다. 실패 영역이 있으니 실패 스낵바는 뺐다. 입력을 고치면 지운다(예전 거절 문구와 같게).
+- **길찾기 · 장소 고르기 실패 화면** — `TransitFailureView` 가 원문이 있으면 `AppPlaceholder` 아래에 같은
+  "원인" 칸을 둔다. 공통 `AppPlaceholder` 는 고치지 않았다(설명이 선택 불가 `Text` 라 아래에 따로 둠).
+- **ODsay Android 키 조사** — 공식 가이드(lab.odsay.com/guide/guide)는 플랫폼 4종(URI · 서버 · Android · iOS)
+  등록만 적고, 요청 때 Android 키를 어떻게 검증하는지 · 필요한 헤더는 적지 않는다. 관리자 포럼 답
+  (boardView seq=628)은 Android · iOS 키를 구분 없이 호출해도 결과가 나오고 서버에서 써도 된다고 한다.
+  서버 키는 등록 IP 와 다르면, 웹 키는 등록 도메인과 다르면 `ApiKeyAuthFailed`(seq=623 · 657). 가이드는 키의
+  특수문자(`+` 등)를 URL 인코딩하라고 하는데 우리는 이미 `Uri.encodeComponent` 로 한다(테스트 있음).
+  문서로 확인되는 코드 수정은 없어 추측으로 바꾸지 않았다 — 실폰 원문을 보고 판단한다.
+

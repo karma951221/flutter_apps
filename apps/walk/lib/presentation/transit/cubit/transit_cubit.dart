@@ -135,9 +135,7 @@ class TransitCubit extends Cubit<TransitState> {
       next = TransitStatus.loaded(await _find(from, to, refresh: refresh));
     } on Object catch (e) {
       next = TransitStatus.failure(
-        e is TransitFailure
-            ? e
-            : TransitFailure.server(e.runtimeType.toString()),
+        e is TransitFailure ? e : TransitFailure.unexpected(describeError(e)),
       );
     }
     if (generation != _generation || isClosed) return;

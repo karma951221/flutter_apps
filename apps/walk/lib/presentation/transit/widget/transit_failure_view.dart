@@ -3,8 +3,10 @@ import 'package:design_system/design_system.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/transit/transit_failure.dart';
+import 'transit_failure_cause.dart';
 
 /// 길찾기 실패 안내. 키 없음 · 키 거부는 [onOpenKeySettings], 네트워크 · 서버 오류는 [onRetry] 버튼.
+/// 원인 원문이 있으면 아래에 [TransitFailureCause] 로 함께 보인다.
 class TransitFailureView extends StatelessWidget {
   const TransitFailureView({
     required this.failure,
@@ -36,10 +38,10 @@ class TransitFailureView extends StatelessWidget {
         l10n.walkTransitMissingKeyBody,
         keyAction,
       ),
-      TransitKeyRejected(:final message) => (
+      TransitKeyRejected() => (
         Icons.key_off_outlined,
         l10n.walkTransitKeyRejected,
-        message.isEmpty ? null : message,
+        l10n.walkTransitKeyRejectedHint,
         keyAction,
       ),
       TransitQuotaExceeded() => (
@@ -66,19 +68,42 @@ class TransitFailureView extends StatelessWidget {
         l10n.walkTransitTooCloseBody,
         null,
       ),
-      TransitServer(:final message) => (
+      TransitServer() => (
         Icons.error_outline,
         l10n.walkTransitServer,
-        message.isEmpty ? null : message,
+        null,
+        retry,
+      ),
+      TransitUnexpected() => (
+        Icons.error_outline,
+        l10n.walkTransitUnexpected,
+        null,
         retry,
       ),
     };
-    return AppPlaceholder(
+    final placeholder = AppPlaceholder(
       icon: icon,
       message: message,
       description: description,
       actionLabel: action?.$1,
       onAction: action?.$2,
+    );
+    final detail = failure.detail;
+    if (detail.isEmpty) return placeholder;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        placeholder,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            0,
+            AppSpacing.lg,
+            AppSpacing.lg,
+          ),
+          child: TransitFailureCause(detail),
+        ),
+      ],
     );
   }
 }

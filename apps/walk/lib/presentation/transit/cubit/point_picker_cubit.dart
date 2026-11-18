@@ -102,7 +102,7 @@ class PointPickerCubit extends Cubit<PointPickerState> {
       hits = const [];
       failure = e is TransitFailure
           ? e
-          : TransitFailure.server(e.runtimeType.toString());
+          : TransitFailure.unexpected(describeError(e));
     }
     if (generation != _generation || isClosed) return;
     emit(

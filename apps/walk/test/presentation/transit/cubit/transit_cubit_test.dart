@@ -227,7 +227,7 @@ void main() {
     expect(status.failure, isA<TransitNoRoute>());
   });
 
-  test('unknown exception becomes server failure', () async {
+  test('unknown exception becomes unexpected failure with cause', () async {
     when(
       () => find(any(), any(), refresh: any(named: 'refresh')),
     ).thenThrow(StateError('x'));
@@ -235,7 +235,10 @@ void main() {
     await cubit.setTo(_b);
     await pumpEventQueue();
     final failure = (cubit.state.status as TransitFailed).failure;
-    expect(failure, const TransitFailure.server('StateError'));
+    expect(
+      failure,
+      const TransitFailure.unexpected('StateError: Bad state: x'),
+    );
   });
 
   test('recent added except currentLocation', () async {

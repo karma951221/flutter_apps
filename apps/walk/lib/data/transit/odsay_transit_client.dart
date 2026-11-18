@@ -42,6 +42,7 @@ class OdsayTransitClient implements TransitRouteSource, StationSearch {
       '${_base}searchPubTransPathT'
       '?SX=${from.lng}&SY=${from.lat}&EX=${to.lng}&EY=${to.lat}'
       '&SearchPathType=0&apiKey=${Uri.encodeComponent(apiKey)}',
+      apiKey: apiKey,
     );
     final result = body['result'];
     final paths = result is Map ? result['path'] : null;
@@ -77,6 +78,7 @@ class OdsayTransitClient implements TransitRouteSource, StationSearch {
         '${_base}searchStation'
         '?stationName=${Uri.encodeQueryComponent(query)}'
         '&stationClass=1,2&apiKey=${Uri.encodeComponent(apiKey)}',
+        apiKey: apiKey,
       );
     } on TransitNoRoute {
       return const [];
@@ -95,53 +97,79 @@ class OdsayTransitClient implements TransitRouteSource, StationSearch {
     return [...subway, ...bus].take(_maxStations).toList();
   }
 
-  Future<Map<dynamic, dynamic>> _get(String url) async {
+  Future<Map<dynamic, dynamic>> _get(
+    String url, {
+    required String apiKey,
+  }) async {
+    String mask(String text) => maskTransitKey(text, key: apiKey);
+
     final http.Response response;
     try {
       response = await _client.get(Uri.parse(url)).timeout(_timeout);
-    } on IOException {
-      // SocketException · HandshakeException · TlsException 등.
-      throw const TransitFailure.network();
     } on TimeoutException {
-      throw const TransitFailure.network();
-    } on http.ClientException {
-      throw const TransitFailure.network();
+      throw TransitFailure.network('TimeoutException ${_timeout.inSeconds}s');
+    } on IOException catch (e) {
+      // SocketException · HandshakeException · TlsException 등.
+      throw TransitFailure.network(mask(describeError(e)));
+    } on http.ClientException catch (e) {
+      // toString 에 요청 URL(키 포함)이 붙을 수 있어 message 만 쓰고 가린다.
+      throw TransitFailure.network(mask('ClientException: ${e.message}'));
     }
 
+    final status = response.statusCode;
     final Object? body;
     try {
       body = jsonDecode(utf8.decode(response.bodyBytes));
     } on FormatException {
-      throw TransitFailure.server('HTTP ${response.statusCode}');
+      throw TransitFailure.server(mask(_withBody(status, response)));
     }
     if (body is! Map) {
-      throw TransitFailure.server('HTTP ${response.statusCode}');
+      throw TransitFailure.server(mask(_withBody(status, response)));
     }
 
-    _throwIfError(body['error']);
-    final status = response.statusCode;
+    _throwIfError(body['error'], status, mask);
     if (status < 200 || status >= 300) {
       throw TransitFailure.server('HTTP $status');
     }
     return body;
   }
 
-  void _throwIfError(Object? error) {
+  /// `HTTP 503 · <본문 앞부분>` — 본문이 JSON 이 아닐 때(HTML 오류 페이지 등).
+  static String _withBody(int status, http.Response response) {
+    final text = utf8
+        .decode(response.bodyBytes, allowMalformed: true)
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (text.isEmpty) return 'HTTP $status';
+    final head = text.length > _bodyPreview
+        ? '${text.substring(0, _bodyPreview)}…'
+        : text;
+    return 'HTTP $status · $head';
+  }
+
+  static const _bodyPreview = 200;
+
+  void _throwIfError(Object? error, int status, String Function(String) mask) {
     if (error == null) return;
     final first = error is List ? (error.isEmpty ? null : error.first) : error;
-    if (first is! Map) throw TransitFailure.server('$error');
+    if (first is! Map) {
+      throw TransitFailure.server(mask('HTTP $status · $error'));
+    }
     final code = '${first['code'] ?? ''}';
     final message = '${first['msg'] ?? first['message'] ?? code}';
+    final detail = mask(
+      [if (code.isNotEmpty) 'code $code', message].join(' · '),
+    );
     if (code == '-98') throw const TransitFailure.tooClose();
     if (_noRouteCodes.contains(code)) throw const TransitFailure.noRoute();
     if (message.contains('ApiKeyAuthFailed') ||
         (code == '500' && message.contains('ApiKey'))) {
-      throw TransitFailure.keyRejected(message);
+      throw TransitFailure.keyRejected(detail);
     }
     if (message.contains('LimitExceeded') || message.contains('초과')) {
-      throw const TransitFailure.quotaExceeded();
+      throw TransitFailure.quotaExceeded(detail);
     }
-    throw TransitFailure.server(message);
+    throw TransitFailure.server('HTTP $status · $detail');
   }
 
   TransitPath _parsePath(Object? path) {

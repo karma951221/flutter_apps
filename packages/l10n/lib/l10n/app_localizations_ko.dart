@@ -5219,6 +5219,24 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkTransitKeyUnverifiedConfirm => '그래도 저장';
 
   @override
+  String get walkTransitFailureCause => '원인';
+
+  @override
+  String get walkTransitKeyNetworkFailed => 'ODsay 에 연결하지 못했어요';
+
+  @override
+  String get walkTransitKeyRejectedHint =>
+      'ODsay 콘솔(lab.odsay.com)에서 이 키의 플랫폼과 등록값을 확인해 주세요. Android 키는 패키지 이름 com.karma.walk, 서버 키는 등록한 IP, 웹 키는 등록한 URI 에서 부를 때만 통해요.';
+
+  @override
+  String walkTransitKeyUnverifiedBodyWithCause(String cause) {
+    return '원인: $cause\n\n그래도 저장할까요?';
+  }
+
+  @override
+  String get walkTransitUnexpected => '예상하지 못한 오류가 났어요';
+
+  @override
   String get walkTransitKeyGuide =>
       'lab.odsay.com 에서 키를 발급받아요. 플랫폼은 Android, 패키지 이름은 com.karma.walk 로 등록해 주세요.';
 

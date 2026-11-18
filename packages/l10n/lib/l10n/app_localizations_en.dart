@@ -5656,6 +5656,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkTransitKeyUnverifiedConfirm => 'Save anyway';
 
   @override
+  String get walkTransitFailureCause => 'Cause';
+
+  @override
+  String get walkTransitKeyNetworkFailed => 'Couldn\'t reach ODsay';
+
+  @override
+  String get walkTransitKeyRejectedHint =>
+      'Check this key\'s platform and registered value in the ODsay console (lab.odsay.com). An Android key works only with package name com.karma.walk, a server key only from its registered IP, and a web key only from its registered URI.';
+
+  @override
+  String walkTransitKeyUnverifiedBodyWithCause(String cause) {
+    return 'Cause: $cause\n\nSave it anyway?';
+  }
+
+  @override
+  String get walkTransitUnexpected => 'Something unexpected went wrong';
+
+  @override
   String get walkTransitKeyGuide =>
       'Get a key at lab.odsay.com. Register the platform as Android and the package name as com.karma.walk.';
 

@@ -106,7 +106,7 @@ void main() {
       isA<TransitKeyRejected>().having(
         (f) => f.message,
         'message',
-        'ApiKeyAuthFailed',
+        'code 500 · ApiKeyAuthFailed',
       ),
     );
   });
@@ -128,45 +128,100 @@ void main() {
   test('quota message is quotaExceeded', () async {
     await expectFind(
       (_) async => _json(_fixture('odsay_error_quota.json')),
-      isA<TransitQuotaExceeded>(),
+      isA<TransitQuotaExceeded>().having(
+        (f) => f.detail,
+        'detail',
+        'code -1 · LimitExceeded: daily quota',
+      ),
     );
   });
 
   test('unknown error is server(msg)', () async {
     await expectFind(
       (_) async => _json('{"error": {"code": "-1", "msg": "boom"}}'),
-      isA<TransitServer>().having((f) => f.message, 'message', 'boom'),
+      isA<TransitServer>().having(
+        (f) => f.message,
+        'message',
+        'HTTP 200 · code -1 · boom',
+      ),
     );
   });
 
-  test('socket/timeout/TLS → network', () async {
-    await expectFind(
-      (_) async => throw const SocketException('x'),
-      isA<TransitNetwork>(),
-    );
-    await expectFind(
-      (_) async => throw const HandshakeException('x'),
-      isA<TransitNetwork>(),
-    );
-    await expectFind(
-      (_) async => throw http.ClientException('x'),
-      isA<TransitNetwork>(),
-    );
-    await expectLater(
-      find(
-        build(
-          (_) => Completer<http.Response>().future,
-          timeout: const Duration(milliseconds: 10),
+  test(
+    'socket/timeout/TLS → network with exception type and message',
+    () async {
+      TypeMatcher<TransitNetwork> detail(String d) =>
+          isA<TransitNetwork>().having((f) => f.detail, 'detail', d);
+      await expectFind(
+        (_) async => throw const SocketException('Failed host lookup'),
+        detail('SocketException: Failed host lookup'),
+      );
+      await expectFind(
+        (_) async => throw const HandshakeException('CERT'),
+        detail('HandshakeException: CERT'),
+      );
+      await expectFind(
+        (_) async => throw http.ClientException('Connection closed'),
+        detail('ClientException: Connection closed'),
+      );
+      await expectLater(
+        find(
+          build(
+            (_) => Completer<http.Response>().future,
+            timeout: const Duration(seconds: 1),
+          ),
+        ),
+        throwsA(detail('TimeoutException 1s')),
+      );
+    },
+  );
+
+  test('network detail never carries the api key', () async {
+    const key = 'sEcR+et/Key=';
+    for (final error in <Object>[
+      http.ClientException(
+        'Failed',
+        Uri.parse(
+          'https://api.odsay.com/v1/api/searchStation'
+          '?apiKey=${Uri.encodeComponent(key)}&x=1',
         ),
       ),
-      throwsA(isA<TransitNetwork>()),
+      SocketException('raw $key and sEcR%2Bet%2FKey%3D'),
+    ]) {
+      final failure =
+          await OdsayTransitClient(MockClient((_) async => throw error))
+              .search('x', apiKey: key)
+              .then<Object?>((_) => null, onError: (Object e) => e);
+      expect(failure, isA<TransitNetwork>());
+      final d = (failure! as TransitNetwork).detail;
+      expect(d, isNot(contains('sEcR')));
+      expect(d, isNot(contains('Key=')));
+    }
+  });
+
+  test('server detail masks api key echoed in body', () async {
+    await expectFind(
+      (_) async => http.Response('bad apiKey=k&x', 502),
+      isA<TransitServer>().having(
+        (f) => f.message,
+        'message',
+        'HTTP 502 · bad apiKey=••••&x',
+      ),
     );
   });
 
-  test('non-2xx without error body → server(HTTP 503)', () async {
+  test('non-2xx without error body → server(HTTP 503 · body)', () async {
     await expectFind(
       (_) async => http.Response('oops', 503),
-      isA<TransitServer>().having((f) => f.message, 'message', 'HTTP 503'),
+      isA<TransitServer>().having(
+        (f) => f.message,
+        'message',
+        'HTTP 503 · oops',
+      ),
+    );
+    await expectFind(
+      (_) async => _json('{"result": {}}', 500),
+      isA<TransitServer>().having((f) => f.message, 'message', 'HTTP 500'),
     );
   });
 

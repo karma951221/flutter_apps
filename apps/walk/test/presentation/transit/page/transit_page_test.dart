@@ -162,15 +162,40 @@ void main() {
     expect(find.text('키 설정'), findsOneWidget);
   });
 
-  testWidgets('keyRejected shows message', (tester) async {
+  testWidgets('keyRejected shows console hint and selectable cause', (
+    tester,
+  ) async {
     await pumpFailure(
       tester,
-      const TransitFailure.keyRejected('ApiKeyAuthFailed'),
+      const TransitFailure.keyRejected('code 500 · ApiKeyAuthFailed'),
     );
 
     expect(find.text('ODsay 가 키를 받지 않았어요'), findsOneWidget);
-    expect(find.text('ApiKeyAuthFailed'), findsOneWidget);
+    expect(find.textContaining('com.karma.walk'), findsOneWidget);
+    expect(
+      find.widgetWithText(SelectableText, 'code 500 · ApiKeyAuthFailed'),
+      findsOneWidget,
+    );
     expect(find.text('키 설정'), findsOneWidget);
+  });
+
+  testWidgets('network and unexpected show selectable cause', (tester) async {
+    await pumpFailure(
+      tester,
+      const TransitFailure.network('HandshakeException: CERT'),
+    );
+    expect(
+      find.widgetWithText(SelectableText, 'HandshakeException: CERT'),
+      findsOneWidget,
+    );
+
+    await pumpFailure(tester, const TransitFailure.unexpected('StateError: x'));
+    expect(find.text('예상하지 못한 오류가 났어요'), findsOneWidget);
+    expect(
+      find.widgetWithText(SelectableText, 'StateError: x'),
+      findsOneWidget,
+    );
+    expect(find.text('다시 시도'), findsOneWidget);
   });
 
   testWidgets('quota/tooClose/noRoute/network copy', (tester) async {
@@ -187,10 +212,11 @@ void main() {
     await pumpFailure(tester, const TransitFailure.network());
     expect(find.text('인터넷 연결을 확인해 주세요'), findsOneWidget);
     expect(find.text('다시 시도'), findsOneWidget);
+    expect(find.byKey(const Key('transit-failure-cause')), findsNothing);
 
     await pumpFailure(tester, const TransitFailure.server('HTTP 500'));
     expect(find.text('길을 찾지 못했어요'), findsOneWidget);
-    expect(find.text('HTTP 500'), findsOneWidget);
+    expect(find.widgetWithText(SelectableText, 'HTTP 500'), findsOneWidget);
   });
 
   testWidgets('loading shows AppLoading', (tester) async {
