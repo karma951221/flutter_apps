@@ -57,19 +57,79 @@ void main() {
     expect(find.text('abcd••••'), findsOneWidget);
   });
 
-  testWidgets('rejected shows server message and does not save', (
+  testWidgets('rejected shows summary, console hint and selectable cause', (
     tester,
   ) async {
-    remote.error = const TransitFailure.keyRejected('apiKey 인증 실패');
+    remote.error = const TransitFailure.keyRejected(
+      'code 500 · [ApiKeyAuthFailed] ApiKey authentication failed.',
+    );
     await h.pump(tester, const TransitSettingsPage());
 
     await enterAndSave(tester, 'abcd1234efgh5678');
 
-    expect(find.text('apiKey 인증 실패'), findsOneWidget);
+    final area = find.byKey(const Key('transit-key-failure'));
+    expect(area, findsOneWidget);
+    expect(
+      find.descendant(of: area, matching: find.text('ODsay 가 키를 받지 않았어요')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: area,
+        matching: find.textContaining('ODsay 콘솔(lab.odsay.com)'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(
+        SelectableText,
+        'code 500 · [ApiKeyAuthFailed] ApiKey authentication failed.',
+      ),
+      findsOneWidget,
+    );
     expect(store.saveCalls, 0);
   });
 
-  testWidgets('editing the input clears the rejection message', (tester) async {
+  testWidgets('quota failure shows its cause instead of a generic snackbar', (
+    tester,
+  ) async {
+    remote.error = const TransitFailure.quotaExceeded(
+      'code -1 · LimitExceeded',
+    );
+    await h.pump(tester, const TransitSettingsPage());
+
+    await enterAndSave(tester, 'abcd1234efgh5678');
+
+    expect(find.text('오늘 무료 한도를 다 썼어요'), findsOneWidget);
+    expect(
+      find.widgetWithText(SelectableText, 'code -1 · LimitExceeded'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('storage failure shows runtime type and message', (tester) async {
+    store.saveError = StateError('keystore locked');
+    await h.pump(tester, const TransitSettingsPage());
+
+    await enterAndSave(tester, 'abcd1234efgh5678');
+
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('transit-key-failure')),
+        matching: find.text('키를 저장하지 못했어요'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithText(
+        SelectableText,
+        'StateError: Bad state: keystore locked',
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('editing the input clears the failure area', (tester) async {
     remote.error = const TransitFailure.keyRejected('apiKey 인증 실패');
     await h.pump(tester, const TransitSettingsPage());
     await enterAndSave(tester, 'abcd1234efgh5678');
@@ -82,6 +142,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('apiKey 인증 실패'), findsNothing);
+    expect(find.byKey(const Key('transit-key-failure')), findsNothing);
   });
 
   testWidgets('network asks then saves unverified', (tester) async {
@@ -99,15 +160,34 @@ void main() {
     expect(find.text('확인 전'), findsOneWidget);
   });
 
-  testWidgets('network then cancel saves nothing', (tester) async {
-    remote.error = const TransitFailure.network();
+  testWidgets('network then cancel saves nothing and keeps the cause', (
+    tester,
+  ) async {
+    remote.error = const TransitFailure.network(
+      'SocketException: Failed host lookup',
+    );
     await h.pump(tester, const TransitSettingsPage());
 
     await enterAndSave(tester, 'abcd1234efgh5678');
+    expect(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.textContaining('SocketException: Failed host lookup'),
+      ),
+      findsOneWidget,
+    );
     await tester.tap(find.text('취소'));
     await tester.pumpAndSettle();
 
     expect(store.saveCalls, 0);
+    expect(find.text('ODsay 에 연결하지 못했어요'), findsOneWidget);
+    expect(
+      find.widgetWithText(
+        SelectableText,
+        'SocketException: Failed host lookup',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('delete asks and clears', (tester) async {

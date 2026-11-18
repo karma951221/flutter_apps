@@ -247,7 +247,7 @@ void main() {
       async.flushMicrotasks();
       expect(
         cubit.state.stationFailure,
-        const TransitFailure.server('StateError'),
+        const TransitFailure.unexpected('StateError: Bad state: x'),
       );
       cubit.close();
     });

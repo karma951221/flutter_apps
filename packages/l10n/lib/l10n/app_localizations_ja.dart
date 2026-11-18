@@ -5213,6 +5213,24 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkTransitKeyUnverifiedConfirm => 'それでも保存';
 
   @override
+  String get walkTransitFailureCause => '原因';
+
+  @override
+  String get walkTransitKeyNetworkFailed => 'ODsayに接続できませんでした';
+
+  @override
+  String get walkTransitKeyRejectedHint =>
+      'ODsayコンソール(lab.odsay.com)でこのキーのプラットフォームと登録値を確認してください。Androidキーはパッケージ名com.karma.walk、サーバーキーは登録したIP、WebキーはURIから呼ぶときだけ使えます。';
+
+  @override
+  String walkTransitKeyUnverifiedBodyWithCause(String cause) {
+    return '原因: $cause\n\nそれでも保存しますか?';
+  }
+
+  @override
+  String get walkTransitUnexpected => '予期しないエラーが発生しました';
+
+  @override
   String get walkTransitKeyGuide =>
       'lab.odsay.com でキーを発行します。プラットフォームはAndroid、パッケージ名は com.karma.walk で登録してください。';
 

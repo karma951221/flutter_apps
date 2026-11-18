@@ -7,9 +7,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/transit/repository/transit_key_store.dart';
+import '../../../domain/transit/transit_failure.dart';
 import '../../../domain/transit/usecase/verify_transit_key.dart';
 import '../../transit/cubit/transit_key_cubit.dart';
 import '../../transit/cubit/transit_key_state.dart';
+import '../../transit/widget/transit_failure_cause.dart';
 
 /// 길찾기 설정 — ODsay 키 입력 · 확인 상태 · 삭제 · 발급 안내. 잠금 밖 화면이다.
 class TransitSettingsPage extends StatelessWidget {
@@ -41,7 +43,7 @@ class _TransitKeyViewState extends State<_TransitKeyView> {
   final _controller = TextEditingController();
   bool _obscure = true;
 
-  /// 마지막으로 본 입력 — 선택 · 커서 이동만으로는 거절 문구를 지우지 않는다.
+  /// 마지막으로 본 입력 — 선택 · 커서 이동만으로는 실패 안내를 지우지 않는다.
   String _lastText = '';
 
   @override
@@ -59,7 +61,7 @@ class _TransitKeyViewState extends State<_TransitKeyView> {
   void _onChanged() {
     if (_controller.text == _lastText) return;
     _lastText = _controller.text;
-    context.read<TransitKeyCubit>().clearRejection();
+    context.read<TransitKeyCubit>().clearFailure();
     setState(() {});
   }
 
@@ -71,10 +73,13 @@ class _TransitKeyViewState extends State<_TransitKeyView> {
     var result = await cubit.save(_key);
     if (!mounted) return;
     if (result == TransitKeySave.network) {
+      final cause = cubit.state.failure?.detail ?? '';
       final ok = await AppConfirmDialog.show(
         context,
         title: l10n.walkTransitKeyUnverifiedTitle,
-        content: l10n.walkTransitKeyUnverifiedBody,
+        content: cause.isEmpty
+            ? l10n.walkTransitKeyUnverifiedBody
+            : l10n.walkTransitKeyUnverifiedBodyWithCause(cause),
         confirmLabel: l10n.walkTransitKeyUnverifiedConfirm,
         isDestructive: false,
       );
@@ -90,11 +95,10 @@ class _TransitKeyViewState extends State<_TransitKeyView> {
         _controller.clear();
         AppSnackBar.info(context, message: l10n.walkTransitKeySavedUnverified);
       case TransitKeySave.rejected:
-        // 서버 원문은 입력칸 아래에 이미 보인다.
-        break;
       case TransitKeySave.network:
       case TransitKeySave.failed:
-        AppSnackBar.error(context, message: l10n.walkTransitKeySaveFailed);
+        // 요약과 원인 원문은 입력칸 아래 실패 영역에 보인다.
+        break;
     }
   }
 
@@ -172,7 +176,6 @@ class _TransitKeyViewState extends State<_TransitKeyView> {
                 enableSuggestions: false,
                 decoration: InputDecoration(
                   hintText: l10n.walkTransitKeyInputHint,
-                  errorText: state.rejectedMessage,
                   suffixIcon: IconButton(
                     key: const Key('transit-key-visibility'),
                     tooltip: _obscure
@@ -188,6 +191,8 @@ class _TransitKeyViewState extends State<_TransitKeyView> {
                 ),
               ),
             ),
+            if (state.failure case final failure?)
+              _KeyFailure(failure: failure),
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.md,
@@ -226,6 +231,68 @@ class _TransitKeyViewState extends State<_TransitKeyView> {
           ],
         );
       },
+    );
+  }
+}
+
+/// 키 저장 실패 영역 — 요약 · (거절이면) 콘솔 확인 안내 · 원인 원문.
+class _KeyFailure extends StatelessWidget {
+  const _KeyFailure({required this.failure});
+
+  final TransitFailure failure;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final (String summary, String? hint) = switch (failure) {
+      TransitKeyRejected() => (
+        l10n.walkTransitKeyRejected,
+        l10n.walkTransitKeyRejectedHint,
+      ),
+      TransitNetwork() => (l10n.walkTransitKeyNetworkFailed, null),
+      TransitQuotaExceeded() => (
+        l10n.walkTransitQuota,
+        l10n.walkTransitQuotaBody,
+      ),
+      TransitMissingKey() ||
+      TransitNoRoute() ||
+      TransitTooClose() ||
+      TransitServer() ||
+      TransitUnexpected() => (l10n.walkTransitKeySaveFailed, null),
+    };
+    final detail = failure.detail;
+    return Padding(
+      key: const Key('transit-key-failure'),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.xs,
+        AppSpacing.md,
+        AppSpacing.xs,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            summary,
+            style: theme.textTheme.titleSmall?.copyWith(color: scheme.error),
+          ),
+          if (hint != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              hint,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+          if (detail.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.sm),
+            TransitFailureCause(detail),
+          ],
+        ],
+      ),
     );
   }
 }

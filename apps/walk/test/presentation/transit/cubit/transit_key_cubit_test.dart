@@ -49,33 +49,65 @@ void main() {
     await cubit.load();
     final r = await cubit.save('abcd1234efgh5678');
     expect(r, TransitKeySave.rejected);
-    expect(cubit.state.rejectedMessage, 'apiKey 오류');
+    expect(cubit.state.failure, const TransitFailure.keyRejected('apiKey 오류'));
     expect(store.saveCalls, 0);
     expect(cubit.state.keyPreview, isNull);
   });
 
-  test('clearRejection drops the message', () async {
+  test('clearFailure drops the failure', () async {
     remote.error = const TransitFailure.keyRejected('bad');
     await cubit.save('abcd1234efgh5678');
-    cubit.clearRejection();
-    expect(cubit.state.rejectedMessage, isNull);
+    cubit.clearFailure();
+    expect(cubit.state.failure, isNull);
   });
 
   test('network is reported without saving, then saved unverified', () async {
-    remote.error = const TransitFailure.network();
+    remote.error = const TransitFailure.network('SocketException: nope');
     expect(await cubit.save('abcd1234efgh5678'), TransitKeySave.network);
     expect(store.saveCalls, 0);
+    expect(
+      cubit.state.failure,
+      const TransitFailure.network('SocketException: nope'),
+    );
 
     final r = await cubit.save('abcd1234efgh5678', saveIfUnverified: true);
     expect(r, TransitKeySave.unverified);
     expect(cubit.state.status, TransitKeyStatus.unverified);
     expect(store.savedStatus, TransitKeyStatus.unverified);
+    expect(cubit.state.failure, isNull);
   });
 
-  test('other failures are failed', () async {
-    remote.error = const TransitFailure.quotaExceeded();
+  test('other failures are failed and keep their cause', () async {
+    remote.error = const TransitFailure.quotaExceeded('code -1 · Limit');
     expect(await cubit.save('abcd1234efgh5678'), TransitKeySave.failed);
     expect(store.saveCalls, 0);
+    expect(
+      cubit.state.failure,
+      const TransitFailure.quotaExceeded('code -1 · Limit'),
+    );
+  });
+
+  test('storage failure becomes unexpected with type and message', () async {
+    store.saveError = StateError('keystore locked');
+    expect(await cubit.save('abcd1234efgh5678'), TransitKeySave.failed);
+    expect(
+      cubit.state.failure,
+      const TransitFailure.unexpected('StateError: Bad state: keystore locked'),
+    );
+  });
+
+  test('unexpected detail never shows the key', () async {
+    store.saveError = StateError('could not write abcd1234efgh5678');
+    await cubit.save('abcd1234efgh5678');
+    expect(cubit.state.failure!.detail, isNot(contains('abcd1234')));
+  });
+
+  test('successful save clears an earlier failure', () async {
+    remote.error = const TransitFailure.keyRejected('bad');
+    await cubit.save('abcd1234efgh5678');
+    remote.error = null;
+    await cubit.save('abcd1234efgh5678');
+    expect(cubit.state.failure, isNull);
   });
 
   test('delete clears the key and preview', () async {

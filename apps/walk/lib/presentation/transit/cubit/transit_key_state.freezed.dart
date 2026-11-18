@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TransitKeyState {
 
- bool get loading; String? get keyPreview; TransitKeyStatus? get status; bool get busy; String? get rejectedMessage;
+ bool get loading; String? get keyPreview; TransitKeyStatus? get status; bool get busy; TransitFailure? get failure;
 /// Create a copy of TransitKeyState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $TransitKeyStateCopyWith<TransitKeyState> get copyWith => _$TransitKeyStateCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransitKeyState&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.keyPreview, keyPreview) || other.keyPreview == keyPreview)&&(identical(other.status, status) || other.status == status)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.rejectedMessage, rejectedMessage) || other.rejectedMessage == rejectedMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TransitKeyState&&(identical(other.loading, loading) || other.loading == loading)&&(identical(other.keyPreview, keyPreview) || other.keyPreview == keyPreview)&&(identical(other.status, status) || other.status == status)&&(identical(other.busy, busy) || other.busy == busy)&&(identical(other.failure, failure) || other.failure == failure));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,loading,keyPreview,status,busy,rejectedMessage);
+int get hashCode => Object.hash(runtimeType,loading,keyPreview,status,busy,failure);
 
 @override
 String toString() {
-  return 'TransitKeyState(loading: $loading, keyPreview: $keyPreview, status: $status, busy: $busy, rejectedMessage: $rejectedMessage)';
+  return 'TransitKeyState(loading: $loading, keyPreview: $keyPreview, status: $status, busy: $busy, failure: $failure)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $TransitKeyStateCopyWith<$Res>  {
   factory $TransitKeyStateCopyWith(TransitKeyState value, $Res Function(TransitKeyState) _then) = _$TransitKeyStateCopyWithImpl;
 @useResult
 $Res call({
- bool loading, String? keyPreview, TransitKeyStatus? status, bool busy, String? rejectedMessage
+ bool loading, String? keyPreview, TransitKeyStatus? status, bool busy, TransitFailure? failure
 });
 
 
@@ -62,14 +62,14 @@ class _$TransitKeyStateCopyWithImpl<$Res>
 
 /// Create a copy of TransitKeyState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? loading = null,Object? keyPreview = freezed,Object? status = freezed,Object? busy = null,Object? rejectedMessage = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? loading = null,Object? keyPreview = freezed,Object? status = freezed,Object? busy = null,Object? failure = freezed,}) {
   return _then(TransitKeyState(
 loading: null == loading ? _self.loading : loading // ignore: cast_nullable_to_non_nullable
 as bool,keyPreview: freezed == keyPreview ? _self.keyPreview : keyPreview // ignore: cast_nullable_to_non_nullable
 as String?,status: freezed == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as TransitKeyStatus?,busy: null == busy ? _self.busy : busy // ignore: cast_nullable_to_non_nullable
-as bool,rejectedMessage: freezed == rejectedMessage ? _self.rejectedMessage : rejectedMessage // ignore: cast_nullable_to_non_nullable
-as String?,
+as bool,failure: freezed == failure ? _self.failure : failure // ignore: cast_nullable_to_non_nullable
+as TransitFailure?,
   ));
 }
 

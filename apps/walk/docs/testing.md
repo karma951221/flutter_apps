@@ -289,13 +289,14 @@ ODsay · 위치 · 시계 · 보안 저장소는 모두 가짜다. 픽스처(`te
 | 파일 | 확인 |
 |---|---|
 | `domain/transit/entity/transit_path_test` · `transit_point_test` | 도보 합(`walkMinutes`) · 장소 · 역 json 왕복 · 깨진 json 거절 · 캐시 키 소수 넷째 자리 반올림 |
+| `domain/transit/transit_failure_test` | `maskTransitKey`(쿼리 값 · 원문 · 인코딩 · 짧은 값은 원문 치환 안 함) · `describeError` 타입 한 번만 · 종류별 `detail` |
 | `domain/transit/transit_sort_test` | 총 시간 → 환승 → 도보 순 정렬 |
 | `domain/transit/usecase/find_transit_routes_test` | 같은 쌍 10분 안 캐시(소스 1회) · 새로고침은 캐시 건너뜀 · 키 없음은 호출 없이 `missingKey` · 거부 → 상태 거부 · 성공 → 연결됨 · 정렬 |
 | `domain/transit/usecase/search_stations_test` | 1글자 호출 없음 · 캐시 적중 호출 없음 · 키 없음 · 거부/성공이 키 상태 기록 · 캐시 적중은 상태 불변 |
 | `domain/transit/usecase/verify_transit_key_test` | 연결되면 저장 · 거부는 저장 안 함 · 네트워크 실패 시 "그래도 저장"일 때만 확인 안 됨으로 저장 |
 | `domain/transit/usecase/transit_api_key_test` | 저장 키 우선 · 없으면 define 기본값 · 빈 기본값은 없음 |
 | `domain/transit/usecase/transit_point_suggestions_test` | 집/회사(통근 `PlaceRepository`) · 최근 · 자주 간 곳 상위(30일, 이름 포함) · 기록 꺼짐 · 위치 저장소 예외 · 오프라인이면 빈 라벨로 유지 · 이름 조회 시간 한도 · 집/회사로 저장 |
-| `data/transit/odsay_transit_client_test` | 경로 파싱(지하철 · 버스 · 혼합 · 여러 번호 · 요금 없음) · 환승 수 · 오류 분류(키 거부 · 가까움 · 경로 없음 · 한도 · 알 수 없음) · 소켓/타임아웃/TLS → 네트워크 · 비 2xx → `HTTP <code>` · 전부 해석 실패 · 키 URL 인코딩 · 역 검색(지하철 먼저 · 20개 · 정류장 설명 빈 칸) |
+| `data/transit/odsay_transit_client_test` | 경로 파싱(지하철 · 버스 · 혼합 · 여러 번호 · 요금 없음) · 환승 수 · 오류 분류(키 거부 · 가까움 · 경로 없음 · 한도 · 알 수 없음)와 원문(`code · msg`, `HTTP · code · msg`) · 소켓/타임아웃/TLS/`ClientException` → 네트워크(예외 타입 · 메시지, `TimeoutException 1s`) · **원문에 키 없음(URL 의 `apiKey=` · 키 원문 · 인코딩 모양 가림)** · 비 2xx → `HTTP <code> · 본문` · 전부 해석 실패 · 키 URL 인코딩 · 역 검색(지하철 먼저 · 20개 · 정류장 설명 빈 칸) |
 | `data/transit/prefs_transit_cache_test` | 경로 10분 · 역 7일 만료 · 새 인스턴스에서도 유지 · 검색어 정규화 · 최대 100개 · 깨진 json 은 미스 |
 | `data/transit/prefs_recent_points_test` | 최근 10개 · 중복 제거 · 깨진 항목 건너뜀 |
 | `data/transit/secure_transit_key_store_test` | 상태 저장 · 삭제 · 읽을 수 없는 키스토어는 키 없음 · 빈 키 거절 · 변경 스트림은 저장 · 삭제에만 |
@@ -309,11 +310,11 @@ ODsay · 위치 · 시계 · 보안 저장소는 모두 가짜다. 픽스처(`te
 |---|---|
 | `presentation/transit/cubit/transit_cubit_test` | 둘 다 차면 조회 · 빈 칸 채우기 · 바꾸기 · 새로고침 · 옛 응답 무시 · 위치 실패/예외 · 키 없음/거부 상태에서 키 변경 시 다시 조회(그 밖의 상태는 무시) · close 때 구독 해제 |
 | `presentation/transit/cubit/point_picker_cubit_test` | 후보 채움 · 500ms 디바운스 1회 · **조합 입력은 900ms** · 조합 후 확정은 500ms 다시 · 제출 시 즉시 역 검색 · 1글자 호출 없음 · 주소는 요청할 때만 · 역 검색 실패가 상태에 남고 새 검색에서 지워짐 · 키 변경 후 재검색 |
-| `presentation/transit/cubit/transit_key_cubit_test` | 키 없음 · 저장 키 마스킹 · 저장 → 연결됨 · 거부 원문 유지/지움 · 네트워크 실패 후 그래도 저장 · 삭제 |
-| `presentation/transit/page/transit_page_test` | 출발 · 도착 칸 · 키 없음 안내 · 거부 · 한도 · 가까움 · 경로 없음 · 네트워크 문구 · 로딩 · 경로 목록 순서 · 새로고침 · 상세 열기 · 빠른 칩 · 위치 실패 힌트 · 키 설정에서 돌아오면 다시 조회 |
+| `presentation/transit/cubit/transit_key_cubit_test` | 키 없음 · 저장 키 마스킹 · 저장 → 연결됨 · 거부 · 네트워크 · 한도 실패를 상태에 원문째 남김/지움 · 저장소 실패 → `unexpected('StateError: …')`(키 가림) · 성공하면 지난 실패 지움 · 네트워크 실패 후 그래도 저장 · 삭제 |
+| `presentation/transit/page/transit_page_test` | 출발 · 도착 칸 · 키 없음 안내 · 거부(콘솔 안내 + 선택 가능한 원인) · 한도 · 가까움 · 경로 없음 · 네트워크 문구 · 네트워크 · 예상 못 한 오류 원인 칸(원문 없으면 칸 없음) · 로딩 · 경로 목록 순서 · 새로고침 · 상세 열기 · 빠른 칩 · 위치 실패 힌트 · 키 설정에서 돌아오면 다시 조회 |
 | `presentation/transit/page/point_picker_page_test` | 자주 간 곳 없으면 숨김 · 이름 없으면 대체 문구 · 역 탭 선택 · 주소 검색 · 키보드 검색은 역만 · 집으로 길게 눌러 저장 · 실패 다시 시도 |
 | `presentation/transit/page/transit_path_detail_page_test` · `widget/transit_path_tile_test` | 요약 · 구간 타임라인(도보 · 지하철 · 환승 도보 · 버스) · 영어 복수형 · 요금 없음 생략 · 정시 분 생략 |
-| `presentation/settings/page/transit_settings_page_test` | 마스킹 · 저장하면 연결됨 스낵바 · 거부는 원문 · 입력하면 거부 문구 지움 · 네트워크면 묻고 저장 · 취소 · 삭제 확인 · 앱 설정의 길찾기 키 행 |
+| `presentation/settings/page/transit_settings_page_test` | 마스킹 · 저장하면 연결됨 스낵바 · 거부는 요약 · 콘솔 안내 · 선택 가능한 원인 · 한도 · 저장소 실패 원인 · 입력하면 실패 영역 지움 · 네트워크면 확인 창에 원인을 넣어 묻고 저장 · 취소하면 원인 칸 남음 · 삭제 확인 · 앱 설정의 길찾기 키 행 |
 | `presentation/shell/page/tools_tab_test` | 상단 탭 알람 · 걷기 · 날씨 · 길찾기 · 길찾기 탭 본문 · 길찾기 ⋮ (키 설정 · 앱 설정) · **360dp · 글자 1.3배에서 상단 탭과 길찾기 본문이 넘치지 않음(탭 디자인 A) · ko/en/ja 탭 라벨이 칸 안에 다 그려짐(잘림 없음)** |
 
 ### 물어보기 — 채팅 · 기상 기록 보관
@@ -609,7 +610,7 @@ sync 까지 위젯에 없다(알고 둔 한계, 웨이브 4 스펙 C5).
 
 | # | 시나리오 | 기대 | 결과 |
 |---|---|---|---|
-| T1 | 도구 › 길찾기 ⋮ › 길찾기 키 설정 → 키 입력 → 저장 | 저장 전 연결 확인 → **연결됨** · 키는 앞 4자만 보임. 거부되면 **화면에 뜬 원문을 그대로 기록** | 대기 |
+| T1 | 도구 › 길찾기 ⋮ › 길찾기 키 설정 → 키 입력 → 저장 | 저장 전 연결 확인 → **연결됨** · 키는 앞 4자만 보임. 실패하면 입력칸 아래 요약 + **"원인" 칸 원문을 길게 눌러 복사해 기록**(원문에 키가 보이면 안 됨) | 실폰에서 실패, 원인 칸 추가(2026-11-18) 후 재확인 대기 |
 | T2 | 거부됐다면 — ODsay 에서 서버(IP) · 웹(URI) 키를 추가 발급해 넣어 보기 | 쿼리 `apiKey` 방식이라 같은 코드로 연결됨. 그래도 안 되면 대안(카카오 `publictraffic` 등) 재기획 | 대기 |
 | T3 | 출발 칸 → 역 검색(한글 조합 중 입력 포함: "강남"을 치다 멈춤) | 멈추고 약 1초 안에 지하철역 먼저, 정류장이 뒤에 나옴. 마지막 음절이 조합 중이어도 검색됨 | 대기 |
 | T4 | 출발 · 도착을 고르고 경로 조회 | 총 시간 순 목록(환승 · 도보 · 요금 · 노선 칩), 위에 "환승 · 배차 대기 시간은 빠질 수 있어요" | 대기 |

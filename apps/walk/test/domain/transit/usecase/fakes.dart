@@ -22,11 +22,15 @@ class FakeKeyStore implements TransitKeyStore {
   TransitKeyStatus? savedStatus;
   int saveCalls = 0;
 
+  /// 있으면 save 가 이걸 던진다(저장소 실패 흉내).
+  Object? saveError;
+
   @override
   Future<String?> read() async => key;
   @override
   Future<void> save(String k, TransitKeyStatus status) async {
     saveCalls++;
+    if (saveError != null) throw saveError!;
     key = k;
     savedStatus = status;
   }
