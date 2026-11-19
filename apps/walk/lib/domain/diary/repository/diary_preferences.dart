@@ -1,3 +1,4 @@
+import '../../chat/chat_vendor.dart';
 import '../draft/draft_style.dart';
 import '../entity/trash_retention.dart';
 
@@ -14,4 +15,12 @@ abstract interface class DiaryPreferences {
   /// 사진 보여 주기(작성 화면 도구줄 · 일기 설정이 같이 쓴다). 마지막 선택을 기억한다. 기본 false.
   bool get draftIncludePhotos;
   Future<void> setDraftIncludePhotos(bool v);
+
+  /// 저장할 때 AI 스토리 고르기를 껐는가(일기 설정 · 첫 동의에서 '안 함'). 기본 false.
+  bool get storyAiOff;
+  Future<void> setStoryAiOff(bool v);
+
+  /// AI 스토리 고르기의 전송에 동의한 벤더. 없으면 null.
+  ChatVendor? get storyAiVendor;
+  Future<void> setStoryAiVendor(ChatVendor v);
 }

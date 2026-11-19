@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$EntryEditorState {
 
- String? get editingId; EntryDraft get draft; DateTime get createdAt; List<Story> get openStories; List<Story> get stories; bool get locating; bool get manualPlace; bool get saving; bool get importing; List<EntryMedia> get newMedia; DiaryFailure? get error; bool get failed; bool get saved; Map<String, PhotoMeta> get photoMetas;
+ String? get editingId; EntryDraft get draft; DateTime get createdAt; List<Story> get openStories; List<Story> get stories; bool get locating; bool get manualPlace; bool get saving; bool get importing; List<EntryMedia> get newMedia; DiaryFailure? get error; bool get failed; bool get saved; Map<String, PhotoMeta> get photoMetas; bool get storyChosen; bool get classifying;
 /// Create a copy of EntryEditorState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $EntryEditorStateCopyWith<EntryEditorState> get copyWith => _$EntryEditorStateCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is EntryEditorState&&(identical(other.editingId, editingId) || other.editingId == editingId)&&(identical(other.draft, draft) || other.draft == draft)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other.openStories, openStories)&&const DeepCollectionEquality().equals(other.stories, stories)&&(identical(other.locating, locating) || other.locating == locating)&&(identical(other.manualPlace, manualPlace) || other.manualPlace == manualPlace)&&(identical(other.saving, saving) || other.saving == saving)&&(identical(other.importing, importing) || other.importing == importing)&&const DeepCollectionEquality().equals(other.newMedia, newMedia)&&(identical(other.error, error) || other.error == error)&&(identical(other.failed, failed) || other.failed == failed)&&(identical(other.saved, saved) || other.saved == saved)&&const DeepCollectionEquality().equals(other.photoMetas, photoMetas));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is EntryEditorState&&(identical(other.editingId, editingId) || other.editingId == editingId)&&(identical(other.draft, draft) || other.draft == draft)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&const DeepCollectionEquality().equals(other.openStories, openStories)&&const DeepCollectionEquality().equals(other.stories, stories)&&(identical(other.locating, locating) || other.locating == locating)&&(identical(other.manualPlace, manualPlace) || other.manualPlace == manualPlace)&&(identical(other.saving, saving) || other.saving == saving)&&(identical(other.importing, importing) || other.importing == importing)&&const DeepCollectionEquality().equals(other.newMedia, newMedia)&&(identical(other.error, error) || other.error == error)&&(identical(other.failed, failed) || other.failed == failed)&&(identical(other.saved, saved) || other.saved == saved)&&const DeepCollectionEquality().equals(other.photoMetas, photoMetas)&&(identical(other.storyChosen, storyChosen) || other.storyChosen == storyChosen)&&(identical(other.classifying, classifying) || other.classifying == classifying));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,editingId,draft,createdAt,const DeepCollectionEquality().hash(openStories),const DeepCollectionEquality().hash(stories),locating,manualPlace,saving,importing,const DeepCollectionEquality().hash(newMedia),error,failed,saved,const DeepCollectionEquality().hash(photoMetas));
+int get hashCode => Object.hash(runtimeType,editingId,draft,createdAt,const DeepCollectionEquality().hash(openStories),const DeepCollectionEquality().hash(stories),locating,manualPlace,saving,importing,const DeepCollectionEquality().hash(newMedia),error,failed,saved,const DeepCollectionEquality().hash(photoMetas),storyChosen,classifying);
 
 @override
 String toString() {
-  return 'EntryEditorState(editingId: $editingId, draft: $draft, createdAt: $createdAt, openStories: $openStories, stories: $stories, locating: $locating, manualPlace: $manualPlace, saving: $saving, importing: $importing, newMedia: $newMedia, error: $error, failed: $failed, saved: $saved, photoMetas: $photoMetas)';
+  return 'EntryEditorState(editingId: $editingId, draft: $draft, createdAt: $createdAt, openStories: $openStories, stories: $stories, locating: $locating, manualPlace: $manualPlace, saving: $saving, importing: $importing, newMedia: $newMedia, error: $error, failed: $failed, saved: $saved, photoMetas: $photoMetas, storyChosen: $storyChosen, classifying: $classifying)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $EntryEditorStateCopyWith<$Res>  {
   factory $EntryEditorStateCopyWith(EntryEditorState value, $Res Function(EntryEditorState) _then) = _$EntryEditorStateCopyWithImpl;
 @useResult
 $Res call({
- String? editingId, EntryDraft draft, DateTime createdAt, List<Story> openStories, List<Story> stories, bool locating, bool manualPlace, bool saving, bool importing, List<EntryMedia> newMedia, DiaryFailure? error, bool failed, bool saved, Map<String, PhotoMeta> photoMetas
+ String? editingId, EntryDraft draft, DateTime createdAt, List<Story> openStories, List<Story> stories, bool locating, bool manualPlace, bool saving, bool importing, List<EntryMedia> newMedia, DiaryFailure? error, bool failed, bool saved, Map<String, PhotoMeta> photoMetas, bool storyChosen, bool classifying
 });
 
 
@@ -62,7 +62,7 @@ class _$EntryEditorStateCopyWithImpl<$Res>
 
 /// Create a copy of EntryEditorState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? editingId = freezed,Object? draft = null,Object? createdAt = null,Object? openStories = null,Object? stories = null,Object? locating = null,Object? manualPlace = null,Object? saving = null,Object? importing = null,Object? newMedia = null,Object? error = freezed,Object? failed = null,Object? saved = null,Object? photoMetas = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? editingId = freezed,Object? draft = null,Object? createdAt = null,Object? openStories = null,Object? stories = null,Object? locating = null,Object? manualPlace = null,Object? saving = null,Object? importing = null,Object? newMedia = null,Object? error = freezed,Object? failed = null,Object? saved = null,Object? photoMetas = null,Object? storyChosen = null,Object? classifying = null,}) {
   return _then(EntryEditorState(
 editingId: freezed == editingId ? _self.editingId : editingId // ignore: cast_nullable_to_non_nullable
 as String?,draft: null == draft ? _self.draft : draft // ignore: cast_nullable_to_non_nullable
@@ -78,7 +78,9 @@ as List<EntryMedia>,error: freezed == error ? _self.error : error // ignore: cas
 as DiaryFailure?,failed: null == failed ? _self.failed : failed // ignore: cast_nullable_to_non_nullable
 as bool,saved: null == saved ? _self.saved : saved // ignore: cast_nullable_to_non_nullable
 as bool,photoMetas: null == photoMetas ? _self.photoMetas : photoMetas // ignore: cast_nullable_to_non_nullable
-as Map<String, PhotoMeta>,
+as Map<String, PhotoMeta>,storyChosen: null == storyChosen ? _self.storyChosen : storyChosen // ignore: cast_nullable_to_non_nullable
+as bool,classifying: null == classifying ? _self.classifying : classifying // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

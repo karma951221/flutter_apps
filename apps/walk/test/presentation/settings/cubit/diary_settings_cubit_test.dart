@@ -40,6 +40,8 @@ void main() {
     when(() => prefs.draftIncludePhotos).thenReturn(false);
     when(() => prefs.setDraftStyle(any())).thenAnswer((_) async {});
     when(() => prefs.setDraftIncludePhotos(any())).thenAnswer((_) async {});
+    when(() => prefs.storyAiOff).thenReturn(false);
+    when(() => prefs.setStoryAiOff(any())).thenAnswer((_) async {});
     when(repo.usage).thenAnswer((_) async => usage);
     cubit = DiarySettingsCubit(lock, prefs, repo);
   });
@@ -143,6 +145,17 @@ void main() {
 
     verify(() => prefs.setDraftIncludePhotos(true)).called(1);
     expect(cubit.state.draftIncludePhotos, isTrue);
+  });
+
+  test('AI 스토리 고르기: 꺼 둔 값을 읽고, setStoryAi 는 반대로 저장한다', () async {
+    when(() => prefs.storyAiOff).thenReturn(true);
+    await cubit.load();
+    expect(cubit.state.storyAi, isFalse);
+
+    await cubit.setStoryAi(true);
+
+    verify(() => prefs.setStoryAiOff(false)).called(1);
+    expect(cubit.state.storyAi, isTrue);
   });
 
   test('setRetention 뒤에도 자동 초안 값은 그대로', () async {

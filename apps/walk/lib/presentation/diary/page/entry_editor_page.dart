@@ -8,6 +8,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/chat/chat_settings.dart';
+import '../../../domain/diary/classify/story_classifier.dart';
+import '../../../domain/diary/classify/story_pick.dart';
 import '../../../domain/diary/draft/draft_writer.dart';
 import '../../../domain/diary/entity/entry_media.dart';
 import '../../../domain/diary/entity/media_limits.dart';
@@ -35,6 +37,7 @@ import '../widget/composer_toolbar.dart';
 import '../widget/place_input.dart';
 import '../widget/story_avatar.dart';
 import '../widget/story_picker_sheet.dart';
+import '../widget/story_suggestion_sheet.dart';
 import '../widget/tag_chip_input.dart';
 import '../widget/time_row.dart';
 import 'all_stories_page.dart';
@@ -90,6 +93,9 @@ class _EntryEditorScopeState extends State<EntryEditorScope> {
     getIt<Clock>(),
     photoMeta: getIt.isRegistered<PhotoMetaReader>()
         ? getIt<PhotoMetaReader>()
+        : null,
+    classifier: getIt.isRegistered<StoryClassifier>()
+        ? getIt<StoryClassifier>()
         : null,
   );
 
@@ -206,7 +212,11 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
         if (!mounted) return;
         final open = widget.onOpenChatSettings;
         if (open == null) {
-          AppSnackBar.show(context, message: l10n.walkDiaryDraftNoKey, type: AppSnackBarType.warning);
+          AppSnackBar.show(
+            context,
+            message: l10n.walkDiaryDraftNoKey,
+            type: AppSnackBarType.warning,
+          );
           return;
         }
         final go = await AppConfirmDialog.show(
@@ -223,7 +233,9 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
         final accepted = await AppConfirmDialog.show(
           context,
           title: l10n.walkDiaryDraftConsentTitle,
-          content: l10n.walkDiaryDraftConsentNotice(chatVendorName(l10n, vendor)),
+          content: l10n.walkDiaryDraftConsentNotice(
+            chatVendorName(l10n, vendor),
+          ),
           confirmLabel: l10n.walkChatConsentAccept,
           isDestructive: false,
         );
@@ -296,9 +308,71 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
       state.draft.media.where((m) => m.kind == MediaKind.photo).length;
 
   /// 칩으로 만들지 않고 남긴 태그 글자도 함께 저장한다.
+  ///
+  /// 새 기록이고 스토리를 직접 고르지 않았으면 먼저 AI 가 스토리를 고른다(스펙 2026-11-19):
+  /// 키가 없거나 · 꺼졌거나 · 실패하면 지금 스토리로 바로 저장하고, 고르면 시트로 보여 준다.
+  /// 시트를 내리면 저장하지 않고 작성 화면에 머문다.
   void _save() {
     _tags.currentState?.commitPending();
-    unawaited(_cubit.save());
+    unawaited(_saveWithStoryAi());
+  }
+
+  Future<void> _saveWithStoryAi() async {
+    final cubit = _cubit;
+    if (cubit.state.classifying) return;
+    final l10n = AppLocalizations.of(context);
+    switch (await cubit.storyAiAvailability()) {
+      case StoryAiUnavailable():
+        await cubit.save();
+        return;
+      case StoryAiConsentNeeded(:final vendor):
+        if (!mounted) return;
+        final accepted = await AppConfirmDialog.show(
+          context,
+          title: l10n.walkDiaryStoryAiConsentTitle,
+          content: l10n.walkDiaryStoryAiConsentNotice(
+            chatVendorName(l10n, vendor),
+          ),
+          confirmLabel: l10n.walkDiaryStoryAiConsentAccept,
+          cancelLabel: l10n.walkDiaryStoryAiConsentDecline,
+          isDestructive: false,
+        );
+        if (!accepted) {
+          await cubit.declineStoryAi();
+          await cubit.save();
+          return;
+        }
+        await cubit.consentStoryAi(vendor);
+      case StoryAiReady():
+        break;
+    }
+    if (!mounted) return;
+    final pick = await cubit.classifyStory(
+      dailyTitle: l10n.walkDiaryDailyStoryTitle,
+      locale: Localizations.localeOf(context).languageCode,
+    );
+    if (pick == null || !mounted) return;
+    if (pick is StoryPickFallback) {
+      await cubit.save();
+      return;
+    }
+    final choice = await StorySuggestionSheet.show(
+      context,
+      pick: pick,
+      stories: cubit.state.stories,
+    );
+    if (!mounted) return;
+    switch (choice) {
+      case null:
+        return;
+      case StorySuggestionAccept(:final storyId):
+        cubit.setStory(storyId);
+        await cubit.save();
+      case StorySuggestionCreate(:final title):
+        await cubit.saveToNewStory(title);
+      case StorySuggestionOther():
+        if (await _pickStory() && mounted) await cubit.save();
+    }
   }
 
   @override
@@ -362,7 +436,8 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
 
   /// 스토리 행 — 고르기 시트. 새 기록은 진행 중 스토리만, 고치기는 지난 스토리도
   /// (옮기기 허용 규칙 그대로 — 고친 기록은 닫힌 스토리로도 옮길 수 있다).
-  Future<void> _pickStory() async {
+  /// 스토리를 골랐거나 만들어 골랐으면 true.
+  Future<bool> _pickStory() async {
     final state = _cubit.state;
     final picked = await StoryPickerSheet.show(
       context,
@@ -373,27 +448,28 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
       selectedId: state.draft.storyId,
       allowCreate: true,
     );
-    if (picked == null || !mounted) return;
+    if (picked == null || !mounted) return false;
     if (picked == StoryPickerSheet.createNew) {
-      await _createStory();
-    } else {
-      _cubit.setStory(picked);
+      return _createStory();
     }
+    _cubit.setStory(picked);
+    return true;
   }
 
   /// `＋새` — 만들기 시트로 만들고 그 스토리를 고른다. 새 기록은 진행 중 스토리만 고른다.
-  Future<void> _createStory() async {
+  Future<bool> _createStory() async {
     final created = await createStory(context, suggestMove: false);
-    if (created == null || !mounted) return;
+    if (created == null || !mounted) return false;
     if (created.isOpen || _cubit.state.isEditing) {
       _cubit.setStory(created.id);
-      return;
+      return true;
     }
     AppSnackBar.show(
       context,
       message: AppLocalizations.of(context).walkDiaryStoryEndedNotSelectable,
       type: AppSnackBarType.warning,
     );
+    return false;
   }
 
   void _onState(BuildContext context, EntryEditorState state) {
@@ -489,9 +565,20 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
               label: state.isEditing
                   ? l10n.walkDiaryEditorSave
                   : l10n.walkDiaryEditorPost,
-              onPressed: state.saving || state.importing ? null : _save,
+              onPressed: state.saving || state.importing || state.classifying
+                  ? null
+                  : _save,
             ),
           ],
+          // AI 가 스토리를 고르는 동안(최대 10초) 저장을 붙잡고 있음을 보인다.
+          bottom: state.classifying
+              ? const PreferredSize(
+                  preferredSize: Size.fromHeight(AppSpacing.xs),
+                  child: LinearProgressIndicator(
+                    key: Key('story-ai-classifying'),
+                  ),
+                )
+              : null,
         ),
         // 도구줄은 목록 밖 화면 맨 아래 — Scaffold 가 키보드만큼 body 를 줄이니 키보드 바로 위에 붙는다(R-F2).
         body: Column(

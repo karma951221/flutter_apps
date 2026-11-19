@@ -9821,6 +9821,84 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{count}개 정류장 · {minutes}분'**
   String walkTransitLegBusInfo(int count, int minutes);
+
+  /// 사용량 화면: 일기 저장 시 AI 스토리 고르기 쓰임 줄 꼬리표
+  ///
+  /// In ko, this message translates to:
+  /// **'스토리 고르기'**
+  String get walkChatUsageStoryClassify;
+
+  /// 작성 화면: 올리기를 누른 뒤 AI 가 고른 스토리를 보이는 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'이 스토리에 올릴까요?'**
+  String get walkDiaryStoryAiTitle;
+
+  /// AI 스토리 시트: 새 스토리를 제안할 때 이름 칸 위 작은 꼬리표
+  ///
+  /// In ko, this message translates to:
+  /// **'새 스토리'**
+  String get walkDiaryStoryAiNewLabel;
+
+  /// AI 스토리 시트: 새 스토리 이름 칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'스토리 이름'**
+  String get walkDiaryStoryAiNewHint;
+
+  /// AI 스토리 시트: 추천을 받아 바로 저장하는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'여기에 올리기'**
+  String get walkDiaryStoryAiAccept;
+
+  /// AI 스토리 시트: 제안한 새 스토리를 만들고 저장하는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'만들고 올리기'**
+  String get walkDiaryStoryAiCreateAccept;
+
+  /// AI 스토리 시트: 스토리 고르기 시트를 여는 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'다른 스토리 고르기'**
+  String get walkDiaryStoryAiOther;
+
+  /// 작성 화면: AI 스토리 고르기 첫 사용 동의 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'AI가 스토리 고르기'**
+  String get walkDiaryStoryAiConsentTitle;
+
+  /// 작성 화면: AI 스토리 고르기 동의 — 보내는 것과 벤더
+  ///
+  /// In ko, this message translates to:
+  /// **'올릴 때 글 · 시각 · 장소 이름 · 태그와 진행 중인 스토리 이름, 스토리마다 최근 기록 몇 개의 앞부분이 {vendor}로 전송돼 어울리는 스토리를 골라요. 일기 설정에서 끌 수 있어요.'**
+  String walkDiaryStoryAiConsentNotice(String vendor);
+
+  /// AI 스토리 동의: 수락 버튼
+  ///
+  /// In ko, this message translates to:
+  /// **'켜기'**
+  String get walkDiaryStoryAiConsentAccept;
+
+  /// AI 스토리 동의: 거절 버튼 — 기능을 끄고 그대로 저장
+  ///
+  /// In ko, this message translates to:
+  /// **'안 함'**
+  String get walkDiaryStoryAiConsentDecline;
+
+  /// 일기 설정: 저장할 때 AI 스토리 고르기 스위치
+  ///
+  /// In ko, this message translates to:
+  /// **'AI가 스토리 고르기'**
+  String get walkDiaryStoryAiSetting;
+
+  /// 일기 설정: AI 스토리 고르기 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'올릴 때 어울리는 스토리를 추천하거나 새 스토리를 제안해요. 물어보기에 연결한 키를 써요.'**
+  String get walkDiaryStoryAiSettingDescription;
 }
 
 class _AppLocalizationsDelegate

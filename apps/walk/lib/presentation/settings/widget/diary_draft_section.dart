@@ -9,7 +9,8 @@ import '../cubit/diary_settings_cubit.dart';
 import '../cubit/diary_settings_state.dart';
 import 'settings_widgets.dart';
 
-/// 일기 설정 › 자동 초안 — 문체 · "사진 보여 주기"(스펙 2026-11-15 §4 R-A2 · R-A4).
+/// 일기 설정 › 자동 초안 — 문체 · "사진 보여 주기"(스펙 2026-11-15 §4 R-A2 · R-A4) ·
+/// 저장할 때 AI 스토리 고르기(2026-11-19).
 /// 문체는 여기서만 고른다. 사진 보여 주기는 작성 화면 도구줄의 토글과 같은 값이다.
 class DiaryDraftSection extends StatelessWidget {
   const DiaryDraftSection({super.key});
@@ -42,7 +43,8 @@ class DiaryDraftSection extends StatelessWidget {
     return BlocBuilder<DiarySettingsCubit, DiarySettingsState>(
       buildWhen: (a, b) =>
           a.draftStyle != b.draftStyle ||
-          a.draftIncludePhotos != b.draftIncludePhotos,
+          a.draftIncludePhotos != b.draftIncludePhotos ||
+          a.storyAi != b.storyAi,
       builder: (context, state) {
         final cubit = context.read<DiarySettingsCubit>();
         return Column(
@@ -69,6 +71,17 @@ class DiaryDraftSection extends StatelessWidget {
               ),
               onTap: () =>
                   cubit.setDraftIncludePhotos(!state.draftIncludePhotos),
+            ),
+            AppListTile(
+              key: const Key('settings-diary-story-ai'),
+              leading: const Icon(Icons.auto_stories_outlined),
+              title: Text(l10n.walkDiaryStoryAiSetting),
+              subtitle: Text(l10n.walkDiaryStoryAiSettingDescription),
+              trailing: Switch(
+                value: state.storyAi,
+                onChanged: cubit.setStoryAi,
+              ),
+              onTap: () => cubit.setStoryAi(!state.storyAi),
             ),
           ],
         );

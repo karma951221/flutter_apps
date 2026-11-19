@@ -5891,4 +5891,46 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return '$_temp0 · $minutes min';
   }
+
+  @override
+  String get walkChatUsageStoryClassify => 'Story pick';
+
+  @override
+  String get walkDiaryStoryAiTitle => 'Post to this story?';
+
+  @override
+  String get walkDiaryStoryAiNewLabel => 'New story';
+
+  @override
+  String get walkDiaryStoryAiNewHint => 'Story name';
+
+  @override
+  String get walkDiaryStoryAiAccept => 'Post here';
+
+  @override
+  String get walkDiaryStoryAiCreateAccept => 'Create and post';
+
+  @override
+  String get walkDiaryStoryAiOther => 'Pick another story';
+
+  @override
+  String get walkDiaryStoryAiConsentTitle => 'Let AI pick the story';
+
+  @override
+  String walkDiaryStoryAiConsentNotice(String vendor) {
+    return 'When you post, the text, time, place name and tags, plus your ongoing story names and the start of a few recent entries in each, are sent to $vendor to pick a matching story. You can turn this off in Diary settings.';
+  }
+
+  @override
+  String get walkDiaryStoryAiConsentAccept => 'Turn on';
+
+  @override
+  String get walkDiaryStoryAiConsentDecline => 'Not now';
+
+  @override
+  String get walkDiaryStoryAiSetting => 'Let AI pick the story';
+
+  @override
+  String get walkDiaryStoryAiSettingDescription =>
+      'Suggests a matching story, or a new one, when you post. Uses the key connected in Ask.';
 }

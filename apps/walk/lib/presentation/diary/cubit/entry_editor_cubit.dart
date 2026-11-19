@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:core/core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../domain/diary/classify/story_classifier.dart';
+import '../../../domain/diary/classify/story_pick.dart';
 import '../../../domain/diary/diary_failure.dart';
+import '../../../domain/chat/chat_vendor.dart';
 import '../../../domain/diary/draft/draft_context.dart';
 import '../../../domain/diary/draft/photo_meta.dart';
 import '../../../domain/diary/entity/entry_draft.dart';
@@ -31,7 +34,9 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
     this._places,
     this._clock, {
     PhotoMetaReader? photoMeta,
+    StoryClassifier? classifier,
   }) : _photoMeta = photoMeta,
+       _classifier = classifier,
        super(_blank(_clock.now()));
 
   final DiaryUseCase _useCase;
@@ -42,6 +47,9 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
 
   /// 고른 원본의 촬영 시각 · 좌표(초안 재료). null 이면 읽지 않는다.
   final PhotoMetaReader? _photoMeta;
+
+  /// 저장할 때 스토리를 고르는 AI. null 이면 고르지 않는다(지금 스토리 그대로).
+  final StoryClassifier? _classifier;
 
   StreamSubscription<List<Story>>? _stories;
 
@@ -169,8 +177,93 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
     state.copyWith(draft: state.draft.copyWith(occurredAt: state.createdAt)),
   );
 
-  void setStory(String storyId) =>
-      emit(state.copyWith(draft: state.draft.copyWith(storyId: storyId)));
+  /// 사용자가 고른 스토리 — 저장할 때 AI 가 다시 고르지 않는다([EntryEditorState.storyChosen]).
+  void setStory(String storyId) => emit(
+    state.copyWith(
+      draft: state.draft.copyWith(storyId: storyId),
+      storyChosen: true,
+    ),
+  );
+
+  /// 저장할 때 AI 에게 스토리를 물을까 — 새 기록이고, 스토리를 직접 고르지 않았고, 글이 있다.
+  bool get wantsStoryAi =>
+      _classifier != null &&
+      !state.isEditing &&
+      !state.storyChosen &&
+      state.draft.body.trim().isNotEmpty;
+
+  /// AI 스토리 고르기의 키 · 설정 · 동의. 고르지 않을 때([wantsStoryAi] 가 아니면) unavailable.
+  Future<StoryAiAvailability> storyAiAvailability() async {
+    final classifier = _classifier;
+    if (classifier == null || !wantsStoryAi) {
+      return const StoryAiAvailability.unavailable();
+    }
+    return classifier.availability();
+  }
+
+  /// 첫 사용 동의. 던지지 않는다.
+  Future<void> consentStoryAi(ChatVendor vendor) async {
+    try {
+      await _classifier?.consent(vendor);
+    } catch (_) {}
+  }
+
+  /// 첫 사용 동의에서 '안 함' — 일기 설정에서 다시 켤 때까지 묻지 않는다. 던지지 않는다.
+  Future<void> declineStoryAi() async {
+    try {
+      await _classifier?.decline();
+    } catch (_) {}
+  }
+
+  /// 저장 전에 AI 가 스토리를 고른다. 실패하면 지금 스토리의 [StoryPick.fallback].
+  /// 고르는 동안 [EntryEditorState.classifying]. 이미 고르는 중 · 저장 중이면 null.
+  Future<StoryPick?> classifyStory({
+    required String dailyTitle,
+    String? locale,
+  }) async {
+    final classifier = _classifier;
+    if (state.classifying || state.saving || state.saved) return null;
+    final fallback = StoryPick.fallback(state.draft.storyId);
+    if (classifier == null || !wantsStoryAi) return fallback;
+    emit(state.copyWith(classifying: true));
+    final pick = await classifier.classify(
+      state.draft,
+      state.stories,
+      dailyTitle: dailyTitle,
+      fallbackId: state.draft.storyId,
+      locale: locale,
+    );
+    if (isClosed) return null;
+    emit(state.copyWith(classifying: false));
+    return pick;
+  }
+
+  /// 이름이 [title] 인 열린 스토리를 만들고(시작 = 기록 시각) 그 스토리로 저장한다.
+  /// 만들지 못하면 알리고 저장하지 않는다.
+  Future<void> saveToNewStory(String title) async {
+    final name = title.trim();
+    if (name.isEmpty || state.saving || state.importing || state.saved) return;
+    emit(state.copyWith(saving: true));
+    final created = await _repo.createStory(
+      title: name,
+      startedAt: state.draft.occurredAt,
+    );
+    if (isClosed) return;
+    switch (created) {
+      case Err(:final failure):
+        emit(state.copyWith(saving: false));
+        _reportFailure(failure);
+      case Ok(:final value):
+        emit(
+          state.copyWith(
+            saving: false,
+            draft: state.draft.copyWith(storyId: value.id),
+            storyChosen: true,
+          ),
+        );
+        await save();
+    }
+  }
 
   void setBody(String body) =>
       emit(state.copyWith(draft: state.draft.copyWith(body: body)));
@@ -346,7 +439,9 @@ class EntryEditorCubit extends Cubit<EntryEditorState> {
 
   /// 저장 중 · 가져오는 중 · 저장한 뒤에는 무시한다.
   Future<void> save() async {
-    if (state.saving || state.importing || state.saved) return;
+    if (state.saving || state.importing || state.saved || state.classifying) {
+      return;
+    }
     emit(state.copyWith(saving: true));
     final result = await _useCase.save(state.draft, editingId: state.editingId);
     if (isClosed) return;

@@ -5432,4 +5432,46 @@ class AppLocalizationsKo extends AppLocalizations {
   String walkTransitLegBusInfo(int count, int minutes) {
     return '$count개 정류장 · $minutes분';
   }
+
+  @override
+  String get walkChatUsageStoryClassify => '스토리 고르기';
+
+  @override
+  String get walkDiaryStoryAiTitle => '이 스토리에 올릴까요?';
+
+  @override
+  String get walkDiaryStoryAiNewLabel => '새 스토리';
+
+  @override
+  String get walkDiaryStoryAiNewHint => '스토리 이름';
+
+  @override
+  String get walkDiaryStoryAiAccept => '여기에 올리기';
+
+  @override
+  String get walkDiaryStoryAiCreateAccept => '만들고 올리기';
+
+  @override
+  String get walkDiaryStoryAiOther => '다른 스토리 고르기';
+
+  @override
+  String get walkDiaryStoryAiConsentTitle => 'AI가 스토리 고르기';
+
+  @override
+  String walkDiaryStoryAiConsentNotice(String vendor) {
+    return '올릴 때 글 · 시각 · 장소 이름 · 태그와 진행 중인 스토리 이름, 스토리마다 최근 기록 몇 개의 앞부분이 $vendor로 전송돼 어울리는 스토리를 골라요. 일기 설정에서 끌 수 있어요.';
+  }
+
+  @override
+  String get walkDiaryStoryAiConsentAccept => '켜기';
+
+  @override
+  String get walkDiaryStoryAiConsentDecline => '안 함';
+
+  @override
+  String get walkDiaryStoryAiSetting => 'AI가 스토리 고르기';
+
+  @override
+  String get walkDiaryStoryAiSettingDescription =>
+      '올릴 때 어울리는 스토리를 추천하거나 새 스토리를 제안해요. 물어보기에 연결한 키를 써요.';
 }

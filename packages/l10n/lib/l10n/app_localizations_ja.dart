@@ -5426,4 +5426,46 @@ class AppLocalizationsJa extends AppLocalizations {
   String walkTransitLegBusInfo(int count, int minutes) {
     return '$count停留所・$minutes分';
   }
+
+  @override
+  String get walkChatUsageStoryClassify => 'ストーリー選び';
+
+  @override
+  String get walkDiaryStoryAiTitle => 'このストーリーに投稿しますか？';
+
+  @override
+  String get walkDiaryStoryAiNewLabel => '新しいストーリー';
+
+  @override
+  String get walkDiaryStoryAiNewHint => 'ストーリー名';
+
+  @override
+  String get walkDiaryStoryAiAccept => 'ここに投稿';
+
+  @override
+  String get walkDiaryStoryAiCreateAccept => '作って投稿';
+
+  @override
+  String get walkDiaryStoryAiOther => '別のストーリーを選ぶ';
+
+  @override
+  String get walkDiaryStoryAiConsentTitle => 'AIがストーリーを選ぶ';
+
+  @override
+  String walkDiaryStoryAiConsentNotice(String vendor) {
+    return '投稿するとき、本文・時刻・場所の名前・タグと、進行中のストーリー名・各ストーリーの最近の記録数件の冒頭が$vendorに送信され、合うストーリーを選びます。日記の設定でオフにできます。';
+  }
+
+  @override
+  String get walkDiaryStoryAiConsentAccept => 'オンにする';
+
+  @override
+  String get walkDiaryStoryAiConsentDecline => '使わない';
+
+  @override
+  String get walkDiaryStoryAiSetting => 'AIがストーリーを選ぶ';
+
+  @override
+  String get walkDiaryStoryAiSettingDescription =>
+      '投稿するときに合うストーリーをおすすめしたり、新しいストーリーを提案します。「質問」で接続したキーを使います。';
 }

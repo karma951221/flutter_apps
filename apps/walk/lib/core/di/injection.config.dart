@@ -145,6 +145,7 @@ import '../../domain/commute/repository/route_preference_repository.dart'
     as _i130;
 import '../../domain/commute/repository/subway_arrival_source.dart' as _i960;
 import '../../domain/commute/usecase/commute_use_case.dart' as _i453;
+import '../../domain/diary/classify/story_classifier.dart' as _i470;
 import '../../domain/diary/draft/draft_writer.dart' as _i856;
 import '../../domain/diary/location/place_source.dart' as _i693;
 import '../../domain/diary/media/media_processor.dart' as _i674;
@@ -756,6 +757,18 @@ extension GetItInjectableX on _i174.GetIt {
       () => _i268.WikiTools(
         gh<_i624.WikiRepository>(),
         gh<_i122.DiaryRepository>(),
+      ),
+    );
+    gh.lazySingleton<_i470.StoryClassifier>(
+      () => _i470.StoryClassifier(
+        gh<_i1004.ChatModelRegistry>(),
+        gh<_i111.ChatSettings>(),
+        gh<_i880.ChatModelCatalog>(),
+        gh<_i122.DiaryRepository>(),
+        gh<_i300.DiaryPreferences>(),
+        gh<_i520.ChatUsageLog>(),
+        gh<_i494.IdGenerator>(),
+        gh<_i494.Clock>(),
       ),
     );
     gh.lazySingleton<_i713.AlarmBackupArea>(
