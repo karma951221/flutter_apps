@@ -1650,5 +1650,18 @@
   "walkTransitLegStops": "{start} → {end}",
   "walkTransitLegSubwayInfo": "{count, plural, =1{1 station} other{{count} stations}} · {minutes} min",
   "walkTransitLegWay": "toward {way}",
-  "walkTransitLegBusInfo": "{count, plural, =1{1 stop} other{{count} stops}} · {minutes} min"
+  "walkTransitLegBusInfo": "{count, plural, =1{1 stop} other{{count} stops}} · {minutes} min",
+  "walkChatUsageStoryClassify": "Story pick",
+  "walkDiaryStoryAiTitle": "Post to this story?",
+  "walkDiaryStoryAiNewLabel": "New story",
+  "walkDiaryStoryAiNewHint": "Story name",
+  "walkDiaryStoryAiAccept": "Post here",
+  "walkDiaryStoryAiCreateAccept": "Create and post",
+  "walkDiaryStoryAiOther": "Pick another story",
+  "walkDiaryStoryAiConsentTitle": "Let AI pick the story",
+  "walkDiaryStoryAiConsentNotice": "When you post, the text, time, place name and tags, plus your ongoing story names and the start of a few recent entries in each, are sent to {vendor} to pick a matching story. You can turn this off in Diary settings.",
+  "walkDiaryStoryAiConsentAccept": "Turn on",
+  "walkDiaryStoryAiConsentDecline": "Not now",
+  "walkDiaryStoryAiSetting": "Let AI pick the story",
+  "walkDiaryStoryAiSettingDescription": "Suggests a matching story, or a new one, when you post. Uses the key connected in Ask."
 }

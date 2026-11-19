@@ -97,6 +97,18 @@ class _Prefs implements DiaryPreferences {
 
   @override
   Future<void> setTrashRetention(TrashRetention v) async {}
+
+  @override
+  bool storyAiOff = false;
+
+  @override
+  Future<void> setStoryAiOff(bool v) async => storyAiOff = v;
+
+  @override
+  ChatVendor? storyAiVendor;
+
+  @override
+  Future<void> setStoryAiVendor(ChatVendor v) async => storyAiVendor = v;
 }
 
 void main() {

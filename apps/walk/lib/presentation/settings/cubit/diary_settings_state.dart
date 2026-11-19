@@ -29,11 +29,16 @@ class DiarySettingsState with _$DiarySettingsState {
   @override
   final bool draftIncludePhotos;
 
+  /// 저장할 때 AI 가 스토리를 고른다(기본 켬).
+  @override
+  final bool storyAi;
+
   const DiarySettingsState({
     this.lock,
     this.retention = TrashRetention.fallback,
     this.usage,
     this.draftStyle = DraftStyle.fallback,
     this.draftIncludePhotos = false,
+    this.storyAi = true,
   });
 }

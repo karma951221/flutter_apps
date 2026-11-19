@@ -64,6 +64,15 @@ class EntryEditorState with _$EntryEditorState {
   @override
   final Map<String, PhotoMeta> photoMetas;
 
+  /// 사용자가 스토리 시트에서 스토리를 직접 골랐다 — 저장할 때 AI 가 고르지 않는다.
+  /// 시각을 바꿔 자동으로 바뀐 것은 고른 것으로 치지 않는다.
+  @override
+  final bool storyChosen;
+
+  /// 저장 전에 AI 가 스토리를 고르는 중. 그동안 저장하지 않는다.
+  @override
+  final bool classifying;
+
   const EntryEditorState({
     this.editingId,
     required this.draft,
@@ -79,6 +88,8 @@ class EntryEditorState with _$EntryEditorState {
     this.failed = false,
     this.saved = false,
     this.photoMetas = const {},
+    this.storyChosen = false,
+    this.classifying = false,
   });
 
   bool get isEditing => editingId != null;

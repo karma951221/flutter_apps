@@ -1,6 +1,7 @@
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../domain/chat/chat_vendor.dart';
 import '../../domain/diary/draft/draft_style.dart';
 import '../../domain/diary/entity/trash_retention.dart';
 import '../../domain/diary/repository/diary_preferences.dart';
@@ -51,4 +52,24 @@ class PrefsDiaryPreferences implements DiaryPreferences {
   @override
   Future<void> setDraftIncludePhotos(bool v) =>
       _prefs.setBool(draftIncludePhotosKey, v);
+
+  static const storyAiOffKey = 'walk.diary.storyAi.off';
+  static const storyAiVendorKey = 'walk.diary.storyAi.vendor';
+
+  @override
+  bool get storyAiOff => switch (_prefs.get(storyAiOffKey)) {
+    final bool value => value,
+    _ => false,
+  };
+
+  @override
+  Future<void> setStoryAiOff(bool v) => _prefs.setBool(storyAiOffKey, v);
+
+  @override
+  ChatVendor? get storyAiVendor =>
+      ChatVendor.values.asNameMap()[_string(storyAiVendorKey)];
+
+  @override
+  Future<void> setStoryAiVendor(ChatVendor v) =>
+      _prefs.setString(storyAiVendorKey, v.name);
 }

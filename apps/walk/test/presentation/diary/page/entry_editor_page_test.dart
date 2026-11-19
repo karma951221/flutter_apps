@@ -20,6 +20,8 @@ import 'package:walk/data/diary/prefs_diary_preferences.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/chat/usecase/chat_session.dart';
+import 'package:walk/domain/diary/classify/story_classifier.dart';
+import 'package:walk/domain/diary/classify/story_pick.dart';
 import 'package:walk/domain/diary/diary_failure.dart';
 import 'package:walk/domain/diary/draft/draft_context.dart';
 import 'package:walk/domain/diary/draft/draft_prompt.dart';
@@ -46,6 +48,7 @@ import 'package:walk/presentation/diary/widget/composer_media_strip.dart';
 import 'package:walk/presentation/diary/widget/composer_toolbar.dart';
 import 'package:walk/presentation/diary/widget/place_input.dart';
 import 'package:walk/presentation/diary/widget/story_picker_sheet.dart';
+import 'package:walk/presentation/diary/widget/story_suggestion_sheet.dart';
 import 'package:walk/presentation/diary/widget/tag_chip_input.dart';
 import 'package:walk/presentation/diary/widget/time_row.dart';
 
@@ -94,6 +97,44 @@ class _Writer implements DraftWriter {
   }
 
   void emit(DraftEvent event) => current!.add(event);
+}
+
+/// 정해 둔 결과를 돌려주고 받은 것을 모은다.
+class _Classifier implements StoryClassifier {
+  StoryAiAvailability available = const StoryAiAvailability.ready(
+    ChatVendor.anthropic,
+  );
+  StoryPick? pick;
+  final drafts = <EntryDraft>[];
+  final consents = <ChatVendor>[];
+  var declined = 0;
+
+  @override
+  Duration timeout = StoryClassifier.defaultTimeout;
+
+  @override
+  Future<StoryAiAvailability> availability() async => available;
+
+  @override
+  Future<void> consent(ChatVendor vendor) async {
+    consents.add(vendor);
+    available = StoryAiAvailability.ready(vendor);
+  }
+
+  @override
+  Future<void> decline() async => declined++;
+
+  @override
+  Future<StoryPick> classify(
+    EntryDraft draft,
+    List<Story> stories, {
+    required String dailyTitle,
+    String? fallbackId,
+    String? locale,
+  }) async {
+    drafts.add(draft);
+    return pick ?? StoryPick.fallback(fallbackId ?? Story.dailyId);
+  }
 }
 
 class _MetaReader implements PhotoMetaReader {
@@ -1321,5 +1362,204 @@ void main() {
         verify(() => useCase.cancelDraft(captureAny())).captured.single
             as List<EntryMedia>;
     expect(discarded, [imported]);
+  });
+
+  group('AI 스토리 고르기(스펙 2026-11-19)', () {
+    late _Classifier classifier;
+
+    setUp(() {
+      classifier = _Classifier();
+      getIt.registerSingleton<StoryClassifier>(classifier);
+      when(
+        () => useCase.save(any(), editingId: any(named: 'editingId')),
+      ).thenAnswer((_) async => savedEntry('x'));
+    });
+
+    EntryDraft savedDraft() =>
+        verify(
+              () => useCase.save(captureAny(), editingId: null),
+            ).captured.single
+            as EntryDraft;
+
+    Future<void> post(WidgetTester tester, {String body = '성산일출봉'}) async {
+      await tester.enterText(bodyField(), body);
+      await tester.tap(find.text('올리기'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('기존 스토리 추천 → 이유와 함께 시트 → 여기에 올리기 한 번이면 그 스토리로 저장', (
+      tester,
+    ) async {
+      classifier.pick = const StoryPick.existing(
+        storyId: 'jeju',
+        reason: '제주 여행 중이라서',
+      );
+      await pump(tester);
+      await post(tester);
+
+      expect(find.byType(StorySuggestionSheet), findsOneWidget);
+      expect(find.text('이 스토리에 올릴까요?'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(StorySuggestionSheet),
+          matching: find.text('제주 여행'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('제주 여행 중이라서'), findsOneWidget);
+      expect(classifier.drafts.single.body, '성산일출봉');
+      verifyNever(
+        () => useCase.save(any(), editingId: any(named: 'editingId')),
+      );
+
+      await tester.tap(find.text('여기에 올리기'));
+      await tester.pumpAndSettle();
+
+      expect(savedDraft().storyId, 'jeju');
+      expect(find.text('home'), findsOneWidget);
+    });
+
+    testWidgets('새 스토리 제안 → 이름을 고쳐 만들고 올리기 → 그 이름으로 만들어 저장', (tester) async {
+      final created = Story(
+        id: 'tokyo',
+        title: '도쿄 여행',
+        status: StoryStatus.open,
+        startedAt: diaryT0,
+        createdAt: diaryT0,
+      );
+      when(
+        () => repo.createStory(
+          title: any(named: 'title'),
+          startedAt: any(named: 'startedAt'),
+          endedAt: any(named: 'endedAt'),
+        ),
+      ).thenAnswer((_) async => Ok(created));
+      classifier.pick = const StoryPick.create(
+        title: '도쿄 출장',
+        reason: '새 여행의 시작',
+      );
+      await pump(tester);
+      await post(tester);
+
+      expect(find.text('새 스토리'), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const Key('story-ai-new-title')),
+        '  도쿄 여행 ',
+      );
+      await tester.pump();
+      await tester.tap(find.text('만들고 올리기'));
+      await tester.pumpAndSettle();
+
+      verify(
+        () => repo.createStory(title: '도쿄 여행', startedAt: diaryT0),
+      ).called(1);
+      expect(savedDraft().storyId, 'tokyo');
+    });
+
+    testWidgets('새 스토리 이름을 비우면 만들고 올리기를 누를 수 없다', (tester) async {
+      classifier.pick = const StoryPick.create(title: '도쿄', reason: '');
+      await pump(tester);
+      await post(tester);
+
+      await tester.enterText(find.byKey(const Key('story-ai-new-title')), ' ');
+      await tester.pump();
+
+      final button = tester.widget<AppButton>(
+        find.byKey(const Key('story-ai-accept')),
+      );
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets('다른 스토리 고르기 → 스토리 시트에서 고르면 그 스토리로 저장', (tester) async {
+      classifier.pick = const StoryPick.existing(storyId: 'jeju', reason: '');
+      await pump(tester);
+      await post(tester);
+
+      await tester.tap(find.text('다른 스토리 고르기'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(StoryPickerSheet),
+          matching: find.text('일상'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(savedDraft().storyId, Story.dailyId);
+    });
+
+    testWidgets('시트를 내리면 저장하지 않고 작성 화면에 머문다', (tester) async {
+      classifier.pick = const StoryPick.existing(storyId: 'jeju', reason: '');
+      await pump(tester);
+      await post(tester);
+
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(StorySuggestionSheet), findsNothing);
+      expect(bodyField(), findsOneWidget);
+      verifyNever(
+        () => useCase.save(any(), editingId: any(named: 'editingId')),
+      );
+    });
+
+    testWidgets('AI 가 고르지 못하면(fallback) 시트 없이 지금 스토리로 바로 저장', (tester) async {
+      await pump(tester);
+      await post(tester);
+
+      expect(find.byType(StorySuggestionSheet), findsNothing);
+      expect(savedDraft().storyId, Story.dailyId);
+    });
+
+    testWidgets('키가 없거나 꺼져 있으면(unavailable) 부르지 않고 바로 저장', (tester) async {
+      classifier.available = const StoryAiAvailability.unavailable();
+      await pump(tester);
+      await post(tester);
+
+      expect(classifier.drafts, isEmpty);
+      expect(savedDraft().storyId, Story.dailyId);
+    });
+
+    testWidgets('스토리를 직접 골랐으면 AI 에게 묻지 않는다', (tester) async {
+      classifier.pick = const StoryPick.existing(storyId: 'daily', reason: '');
+      await pump(tester);
+      await pickStory(tester, '제주 여행');
+      await post(tester);
+
+      expect(classifier.drafts, isEmpty);
+      expect(savedDraft().storyId, 'jeju');
+    });
+
+    testWidgets('첫 사용 동의: 안 함이면 끄고 그대로 저장', (tester) async {
+      classifier.available = const StoryAiAvailability.needsConsent(
+        ChatVendor.anthropic,
+      );
+      await pump(tester);
+      await post(tester);
+
+      expect(find.text('AI가 스토리 고르기'), findsOneWidget);
+      await tester.tap(find.text('안 함'));
+      await tester.pumpAndSettle();
+
+      expect(classifier.declined, 1);
+      expect(classifier.drafts, isEmpty);
+      expect(savedDraft().storyId, Story.dailyId);
+    });
+
+    testWidgets('첫 사용 동의: 켜기면 동의를 남기고 고른다', (tester) async {
+      classifier
+        ..available = const StoryAiAvailability.needsConsent(
+          ChatVendor.anthropic,
+        )
+        ..pick = const StoryPick.existing(storyId: 'jeju', reason: '');
+      await pump(tester);
+      await post(tester);
+
+      await tester.tap(find.text('켜기'));
+      await tester.pumpAndSettle();
+
+      expect(classifier.consents, [ChatVendor.anthropic]);
+      expect(find.byType(StorySuggestionSheet), findsOneWidget);
+    });
   });
 }

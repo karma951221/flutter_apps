@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$DiarySettingsState {
 
- LockConfig? get lock; TrashRetention get retention; DiaryUsage? get usage; DraftStyle get draftStyle; bool get draftIncludePhotos;
+ LockConfig? get lock; TrashRetention get retention; DiaryUsage? get usage; DraftStyle get draftStyle; bool get draftIncludePhotos; bool get storyAi;
 /// Create a copy of DiarySettingsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $DiarySettingsStateCopyWith<DiarySettingsState> get copyWith => _$DiarySettingsS
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiarySettingsState&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.retention, retention) || other.retention == retention)&&(identical(other.usage, usage) || other.usage == usage)&&(identical(other.draftStyle, draftStyle) || other.draftStyle == draftStyle)&&(identical(other.draftIncludePhotos, draftIncludePhotos) || other.draftIncludePhotos == draftIncludePhotos));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DiarySettingsState&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.retention, retention) || other.retention == retention)&&(identical(other.usage, usage) || other.usage == usage)&&(identical(other.draftStyle, draftStyle) || other.draftStyle == draftStyle)&&(identical(other.draftIncludePhotos, draftIncludePhotos) || other.draftIncludePhotos == draftIncludePhotos)&&(identical(other.storyAi, storyAi) || other.storyAi == storyAi));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,lock,retention,usage,draftStyle,draftIncludePhotos);
+int get hashCode => Object.hash(runtimeType,lock,retention,usage,draftStyle,draftIncludePhotos,storyAi);
 
 @override
 String toString() {
-  return 'DiarySettingsState(lock: $lock, retention: $retention, usage: $usage, draftStyle: $draftStyle, draftIncludePhotos: $draftIncludePhotos)';
+  return 'DiarySettingsState(lock: $lock, retention: $retention, usage: $usage, draftStyle: $draftStyle, draftIncludePhotos: $draftIncludePhotos, storyAi: $storyAi)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $DiarySettingsStateCopyWith<$Res>  {
   factory $DiarySettingsStateCopyWith(DiarySettingsState value, $Res Function(DiarySettingsState) _then) = _$DiarySettingsStateCopyWithImpl;
 @useResult
 $Res call({
- LockConfig? lock, TrashRetention retention, DiaryUsage? usage, DraftStyle draftStyle, bool draftIncludePhotos
+ LockConfig? lock, TrashRetention retention, DiaryUsage? usage, DraftStyle draftStyle, bool draftIncludePhotos, bool storyAi
 });
 
 
@@ -62,13 +62,14 @@ class _$DiarySettingsStateCopyWithImpl<$Res>
 
 /// Create a copy of DiarySettingsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? lock = freezed,Object? retention = null,Object? usage = freezed,Object? draftStyle = null,Object? draftIncludePhotos = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? lock = freezed,Object? retention = null,Object? usage = freezed,Object? draftStyle = null,Object? draftIncludePhotos = null,Object? storyAi = null,}) {
   return _then(DiarySettingsState(
 lock: freezed == lock ? _self.lock : lock // ignore: cast_nullable_to_non_nullable
 as LockConfig?,retention: null == retention ? _self.retention : retention // ignore: cast_nullable_to_non_nullable
 as TrashRetention,usage: freezed == usage ? _self.usage : usage // ignore: cast_nullable_to_non_nullable
 as DiaryUsage?,draftStyle: null == draftStyle ? _self.draftStyle : draftStyle // ignore: cast_nullable_to_non_nullable
 as DraftStyle,draftIncludePhotos: null == draftIncludePhotos ? _self.draftIncludePhotos : draftIncludePhotos // ignore: cast_nullable_to_non_nullable
+as bool,storyAi: null == storyAi ? _self.storyAi : storyAi // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }

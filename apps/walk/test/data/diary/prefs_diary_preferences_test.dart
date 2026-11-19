@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/data/diary/prefs_diary_preferences.dart';
+import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/domain/diary/draft/draft_style.dart';
 import 'package:walk/domain/diary/entity/trash_retention.dart';
 
@@ -82,6 +83,31 @@ void main() {
 
       final wrongType = await _prefs({PrefsDiaryPreferences.draftStyleKey: 3});
       expect(wrongType.draftStyle, DraftStyle.diary);
+    });
+  });
+
+  group('AI 스토리 고르기', () {
+    test('기본은 켬 · 동의 없음', () async {
+      final prefs = await _prefs();
+      expect(prefs.storyAiOff, isFalse);
+      expect(prefs.storyAiVendor, isNull);
+    });
+
+    test('저장한 값을 다시 읽는다', () async {
+      final prefs = await _prefs();
+      await prefs.setStoryAiOff(true);
+      await prefs.setStoryAiVendor(ChatVendor.openai);
+      expect(prefs.storyAiOff, isTrue);
+      expect(prefs.storyAiVendor, ChatVendor.openai);
+    });
+
+    test('타입이 다르거나 모르는 벤더면 기본값', () async {
+      final prefs = await _prefs({
+        PrefsDiaryPreferences.storyAiOffKey: 'yes',
+        PrefsDiaryPreferences.storyAiVendorKey: 'gemini',
+      });
+      expect(prefs.storyAiOff, isFalse);
+      expect(prefs.storyAiVendor, isNull);
     });
   });
 }

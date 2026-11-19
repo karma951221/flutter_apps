@@ -59,12 +59,19 @@ class DiarySettingsCubit extends Cubit<DiarySettingsState> {
     if (!isClosed) emit(state.copyWith(draftIncludePhotos: on));
   }
 
+  /// 저장할 때 AI 스토리 고르기. 켜도 동의는 다음 저장 때 묻는다(이미 했으면 묻지 않는다).
+  Future<void> setStoryAi(bool on) async {
+    await _prefs.setStoryAiOff(!on);
+    if (!isClosed) emit(state.copyWith(storyAi: on));
+  }
+
   DiarySettingsState _read(DiaryUsage? usage) => DiarySettingsState(
     lock: _lock.loadConfig(),
     retention: _prefs.trashRetention,
     usage: usage,
     draftStyle: _prefs.draftStyle,
     draftIncludePhotos: _prefs.draftIncludePhotos,
+    storyAi: !_prefs.storyAiOff,
   );
 
   DiarySettingsState _with({LockConfig? lock, TrashRetention? retention}) =>

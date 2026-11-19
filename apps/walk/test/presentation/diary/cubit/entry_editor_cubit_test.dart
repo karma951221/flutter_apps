@@ -8,6 +8,10 @@ import 'package:uuid/uuid.dart';
 import 'package:walk/data/diary/drift_diary_repository.dart';
 import 'package:walk/data/diary/media/file_media_store.dart';
 import 'package:walk/data/diary/prefs_diary_preferences.dart';
+import 'package:walk/domain/chat/chat_model.dart';
+import 'package:walk/domain/chat/chat_vendor.dart';
+import 'package:walk/domain/diary/classify/story_classifier.dart';
+import 'package:walk/domain/diary/classify/story_pick.dart';
 import 'package:walk/domain/diary/diary_failure.dart';
 import 'package:walk/domain/diary/draft/photo_meta.dart';
 import 'package:walk/domain/diary/media/photo_meta_reader.dart';
@@ -23,6 +27,11 @@ import 'package:walk/domain/diary/usecase/diary_use_case.dart';
 import 'package:walk/presentation/diary/cubit/entry_editor_cubit.dart';
 
 import '../../../support/diary_fixtures.dart';
+import '../../../support/fake_chat_model_catalog.dart';
+import '../../../support/fake_chat_model_registry.dart';
+import '../../../support/fake_chat_settings.dart';
+import '../../../support/fake_chat_usage_log.dart';
+import '../../../support/fake_diary_preferences.dart';
 import '../../../support/fake_media_processor.dart';
 
 /// 지금 위치를 [location] 으로 돌려준다. [gate] 를 주면 그것이 끝날 때까지 붙잡아 둔다.
@@ -82,6 +91,34 @@ class _CountingRepository extends DriftDiaryRepository {
   Future<Result<DiaryEntry>> createEntry(EntryDraft draft) {
     creates++;
     return super.createEntry(draft);
+  }
+}
+
+/// [answer] 를 한 번에 돌려주는 모델.
+class _AnswerModel implements ChatModel {
+  _AnswerModel(this.answer);
+
+  final String answer;
+  var calls = 0;
+
+  @override
+  bool get progressNotes => false;
+
+  @override
+  ChatVendor get vendor => ChatVendor.anthropic;
+
+  @override
+  Future<ModelListResult> listModels(String apiKey) async =>
+      const ModelListResult.ok([]);
+
+  @override
+  Stream<ModelEvent> stream(ModelRequest request) async* {
+    calls++;
+    yield ModelEvent.completed(
+      message: AssistantMessage(parts: [AssistantPart.text(answer)]),
+      stop: StopKind.endTurn,
+      usage: null,
+    );
   }
 }
 
@@ -611,6 +648,111 @@ void main() {
 
       c.setPlaceName('성수동');
       expect(c.draftContext('카페').autoPlace, isFalse);
+    });
+  });
+
+  group('AI 스토리 고르기(스펙 2026-11-19)', () {
+    late _AnswerModel model;
+
+    EntryEditorCubit withClassifier(String answer) {
+      model = _AnswerModel(answer);
+      final classifier = StoryClassifier(
+        FakeChatModelRegistry({ChatVendor.anthropic: model}),
+        FakeChatSettings('sk-ant-test')..consentedVendor = ChatVendor.anthropic,
+        FakeChatModelCatalog(),
+        repo,
+        FakeDiaryPreferences(),
+        FakeChatUsageLog(),
+        const IdGenerator(Uuid()),
+        h.clock,
+      );
+      final c = EntryEditorCubit(
+        useCase,
+        repo,
+        media,
+        places,
+        h.clock,
+        classifier: classifier,
+      );
+      cubits.add(c);
+      return c;
+    }
+
+    test('새 기록 · 글 있음 · 직접 고르지 않음일 때만 묻는다', () async {
+      final c = withClassifier('{"story_id": "daily"}');
+      await c.startNew();
+      expect(c.wantsStoryAi, isFalse, reason: '글이 비었다');
+
+      c.setBody('바다');
+      expect(c.wantsStoryAi, isTrue);
+
+      c.setTime(h.clock.now().subtract(const Duration(days: 1)));
+      expect(c.state.storyChosen, isFalse, reason: '시각으로 바뀐 스토리는 고른 것이 아니다');
+      expect(c.wantsStoryAi, isTrue);
+
+      c.setStory(Story.dailyId);
+      expect(c.state.storyChosen, isTrue);
+      expect(c.wantsStoryAi, isFalse);
+      expect(
+        await c.storyAiAvailability(),
+        const StoryAiAvailability.unavailable(),
+      );
+    });
+
+    test('고치기 · 분류기 없음이면 묻지 않는다', () async {
+      final entry = okValue(await repo.createEntry(entryDraft()));
+      final editing = withClassifier('{"story_id": "daily"}');
+      await editing.startEdit(entry.id);
+      expect(editing.wantsStoryAi, isFalse);
+
+      final plain = await started();
+      plain.setBody('바다');
+      expect(plain.wantsStoryAi, isFalse);
+      expect(
+        await plain.classifyStory(dailyTitle: '일상'),
+        StoryPick.fallback(plain.state.draft.storyId),
+      );
+    });
+
+    test('classifyStory: 고르는 동안 classifying, 그동안 save 는 무시된다', () async {
+      final jeju = await jejuTrip();
+      final c = withClassifier('{"story_id": "${jeju.id}", "reason": "제주"}');
+      await c.startNew();
+      c.setBody('성산일출봉');
+
+      final pending = c.classifyStory(dailyTitle: '일상');
+      expect(c.state.classifying, isTrue);
+      await c.save();
+      expect(repo.creates, 0);
+
+      expect(await pending, StoryPick.existing(storyId: jeju.id, reason: '제주'));
+      expect(c.state.classifying, isFalse);
+      expect(model.calls, 1);
+    });
+
+    test('saveToNewStory: 기록 시각에 시작하는 열린 스토리를 만들고 그리로 저장', () async {
+      final c = withClassifier('{}');
+      await c.startNew();
+      c.setBody('도쿄 첫날');
+
+      await c.saveToNewStory('  도쿄 여행 ');
+
+      expect(c.state.saved, isTrue);
+      final stories = await repo.watchStories().first;
+      final tokyo = stories.singleWhere((s) => s.title == '도쿄 여행');
+      expect(tokyo.isOpen, isTrue);
+      expect(tokyo.startedAt, c.state.draft.occurredAt);
+      expect(c.state.draft.storyId, tokyo.id);
+      final saved = await repo.watchEntries(EntryFilter.story(tokyo.id)).first;
+      expect(saved.single.body, '도쿄 첫날');
+    });
+
+    test('saveToNewStory: 빈 이름은 무시한다', () async {
+      final c = withClassifier('{}');
+      await c.startNew();
+      await c.saveToNewStory('   ');
+      expect(c.state.saved, isFalse);
+      expect(repo.creates, 0);
     });
   });
 }

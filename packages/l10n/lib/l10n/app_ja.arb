@@ -1650,5 +1650,18 @@
   "walkTransitLegStops": "{start} → {end}",
   "walkTransitLegSubwayInfo": "{count}駅・{minutes}分",
   "walkTransitLegWay": "{way}方面",
-  "walkTransitLegBusInfo": "{count}停留所・{minutes}分"
+  "walkTransitLegBusInfo": "{count}停留所・{minutes}分",
+  "walkChatUsageStoryClassify": "ストーリー選び",
+  "walkDiaryStoryAiTitle": "このストーリーに投稿しますか？",
+  "walkDiaryStoryAiNewLabel": "新しいストーリー",
+  "walkDiaryStoryAiNewHint": "ストーリー名",
+  "walkDiaryStoryAiAccept": "ここに投稿",
+  "walkDiaryStoryAiCreateAccept": "作って投稿",
+  "walkDiaryStoryAiOther": "別のストーリーを選ぶ",
+  "walkDiaryStoryAiConsentTitle": "AIがストーリーを選ぶ",
+  "walkDiaryStoryAiConsentNotice": "投稿するとき、本文・時刻・場所の名前・タグと、進行中のストーリー名・各ストーリーの最近の記録数件の冒頭が{vendor}に送信され、合うストーリーを選びます。日記の設定でオフにできます。",
+  "walkDiaryStoryAiConsentAccept": "オンにする",
+  "walkDiaryStoryAiConsentDecline": "使わない",
+  "walkDiaryStoryAiSetting": "AIがストーリーを選ぶ",
+  "walkDiaryStoryAiSettingDescription": "投稿するときに合うストーリーをおすすめしたり、新しいストーリーを提案します。「質問」で接続したキーを使います。"
 }

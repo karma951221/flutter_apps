@@ -252,6 +252,8 @@ class _ModelRow extends StatelessWidget {
         title.write(' · ${l10n.walkChatUsageDiaryDraft}');
       case ChatUsagePurpose.chatSuggest:
         title.write(' · ${l10n.walkChatUsageChatSuggest}');
+      case ChatUsagePurpose.storyClassify:
+        title.write(' · ${l10n.walkChatUsageStoryClassify}');
     }
     return AppListTile(
       title: Text(title.toString()),
