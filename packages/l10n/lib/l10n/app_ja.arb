@@ -1369,6 +1369,7 @@
   "walkMapStoryPickerEmpty": "選べるストーリーがありません",
   "walkMapStoryOpen": "進行中",
   "walkMapPinCount": "記録{count}件",
+  "walkMapPinPreviewOpen": "記録を見る",
   "walkWorkspaceTitle": "作業フォルダ",
   "walkWorkspaceOutSection": "保存した結果",
   "walkWorkspaceInboxSection": "添付したファイル",

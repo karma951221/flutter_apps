@@ -92,6 +92,9 @@ class TrackMapState extends State<TrackMap> {
 
   Object? _fitted;
 
+  /// 미리보기를 띄운 핀 묶음의 기록 id. 지도 빈 곳을 누르거나 기간이 바뀌면 닫는다.
+  String? _selectedPin;
+
   /// 마지막 맞춤 뒤 사용자가 지도를 옮겼다(손 · [moveTo]). 그러면 같은 기간에 점이 늘어도 따라가지 않는다.
   bool _userMoved = false;
 
@@ -156,6 +159,7 @@ class TrackMapState extends State<TrackMap> {
   @override
   void didUpdateWidget(TrackMap oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.fitKey != oldWidget.fitKey) _selectedPin = null;
     final coordinates = _coordinates();
     if (coordinates.isEmpty) return;
     if (widget.fitKey != _fitted) {
@@ -345,6 +349,9 @@ class TrackMapState extends State<TrackMap> {
                 coordinates: coordinates,
                 padding: _fitPadding,
               ),
+        onTap: (_, _) {
+          if (_selectedPin != null) setState(() => _selectedPin = null);
+        },
         onPositionChanged: (_, hasGesture) {
           if (hasGesture) _userMoved = true;
         },
@@ -396,7 +403,12 @@ class TrackMapState extends State<TrackMap> {
               ),
           ],
         ),
-        EntryPinLayer(entries: widget.entries, onOpen: widget.onOpenEntry),
+        EntryPinLayer(
+          entries: widget.entries,
+          selected: _selectedPin,
+          onSelect: (id) => setState(() => _selectedPin = id),
+          onOpen: widget.onOpenEntry,
+        ),
       ],
     );
   }

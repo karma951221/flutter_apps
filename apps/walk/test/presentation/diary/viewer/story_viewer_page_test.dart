@@ -434,6 +434,87 @@ void main() {
     expect(current(tester), 'd1/p8');
   });
 
+  group('스와이프로 앞뒤 기록(지도 · 모아보기처럼 그룹이 하나)', () {
+    const mapSource = ViewerSource.entries(['b1', 'j1', 'j2', 'j3'], '오늘');
+
+    testWidgets('왼쪽으로 넘기면 다음 기록, 오른쪽이면 이전 기록', (tester) async {
+      await open(tester, source: mapSource, entryId: 'j1');
+      expect(current(tester), 'j1/p1');
+
+      await tester.drag(find.byType(PageView), const Offset(-300, 0));
+      await wait(tester, const Duration(milliseconds: 500));
+      // j1 의 둘째 사진(p2)은 건너뛰고 다음 기록으로.
+      expect(current(tester), 'j2/text');
+
+      await tester.drag(find.byType(PageView), const Offset(300, 0));
+      await wait(tester, const Duration(milliseconds: 500));
+      expect(current(tester), 'j1/p1');
+
+      await tester.drag(find.byType(PageView), const Offset(300, 0));
+      await wait(tester, const Duration(milliseconds: 500));
+      expect(current(tester), 'b1/p9');
+
+      // 맨 앞에서 더 넘기면 그대로.
+      await tester.drag(find.byType(PageView), const Offset(300, 0));
+      await wait(tester, const Duration(milliseconds: 500));
+      expect(current(tester), 'b1/p9');
+      expect(viewerOpen(), isTrue);
+    });
+
+    testWidgets('위로 넘기면 다음 기록(릴스), 마지막 기록이면 그대로', (tester) async {
+      await open(tester, source: mapSource, entryId: 'j2');
+      expect(current(tester), 'j2/text');
+
+      await tester.drag(find.byType(PageView), const Offset(0, -300));
+      await wait(tester, const Duration(milliseconds: 500));
+      expect(current(tester), 'j3/p3');
+
+      await tester.drag(find.byType(PageView), const Offset(0, -300));
+      await wait(tester, const Duration(milliseconds: 500));
+      expect(current(tester), 'j3/p3');
+      expect(viewerOpen(), isTrue);
+    });
+  });
+
+  testWidgets('스토리 소스에서도 위로 넘기면 다음 기록', (tester) async {
+    await open(tester);
+    expect(current(tester), 'j3/p3');
+
+    await tester.drag(find.byType(PageView), const Offset(0, -300));
+    await wait(tester, const Duration(milliseconds: 500));
+    expect(current(tester), 'j4/v1');
+  });
+
+  group('머리 오른쪽 ⋮ · ✕ 자리', () {
+    /// ✕ 그림의 오른쪽 끝은 화면 폭 − [AppSpacing.sm](진행 막대 끝과 같다), ⋮ 는 바로 왼쪽 · 같은 높이.
+    void expectRightAligned(WidgetTester tester) {
+      final width =
+          tester.view.physicalSize.width / tester.view.devicePixelRatio;
+      final close = tester.getRect(find.byIcon(Icons.close));
+      final more = tester.getRect(find.byIcon(Icons.more_vert));
+      final bar = tester.getRect(find.byType(StoryProgressBar));
+      expect(close.right, width - AppSpacing.sm);
+      expect(close.right, bar.right);
+      expect(more.right, lessThan(close.left));
+      expect(close.left - more.right, lessThanOrEqualTo(AppSpacing.md));
+      expect(more.center.dy, close.center.dy);
+    }
+
+    testWidgets('오른쪽 끝에 붙는다', (tester) async {
+      await open(tester);
+      expectRightAligned(tester);
+    });
+
+    testWidgets('글자가 커서 이름 · 날짜가 길어도 넘치지 않고 그 자리다', (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 1.6;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      await open(tester, fromStart: true);
+
+      expect(tester.takeException(), isNull);
+      expectRightAligned(tester);
+    });
+  });
+
   testWidgets('아래로 끌면 닫힌다', (tester) async {
     await open(tester);
 
@@ -544,7 +625,7 @@ void main() {
     expect(find.textContaining('일차'), findsNothing);
   });
 
-  testWidgets('모아보기 소스는 #이름 머리, 가로로 넘길 그룹 없음', (tester) async {
+  testWidgets('모아보기 소스는 #이름 머리, 가로로 넘기면 다음 기록', (tester) async {
     await open(
       tester,
       source: const ViewerSource.filter(EntryFilter.tag('제주'), '#제주'),
@@ -557,13 +638,14 @@ void main() {
     expect(find.text('9월 20일 (일)'), findsOneWidget);
     expect(find.textContaining('일차'), findsNothing);
 
-    await tester.drag(find.byType(PageView), const Offset(-300, 0));
-    await wait(tester, const Duration(milliseconds: 500));
-    expect(current(tester), 'b1/p9');
-
     await wait(tester, const Duration(seconds: 5));
     expect(current(tester), 'j3/p3');
     expect(find.text('10월 7일 (수)'), findsOneWidget);
+
+    // 그룹이 하나라 옆으로 넘기기는 앞뒤 기록이다.
+    await tester.drag(find.byType(PageView), const Offset(300, 0));
+    await wait(tester, const Duration(milliseconds: 500));
+    expect(current(tester), 'b1/p9');
   });
   testWidgets('고른 기록 소스는 그 기록들만, 연 기록에서 시작한다', (tester) async {
     await open(

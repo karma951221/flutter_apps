@@ -4458,6 +4458,9 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get walkMapPinPreviewOpen => '記録を見る';
+
+  @override
   String get walkWorkspaceTitle => '作業フォルダ';
 
   @override

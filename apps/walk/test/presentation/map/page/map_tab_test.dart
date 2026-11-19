@@ -623,7 +623,11 @@ void main() {
       state: MapViewState.ready(_data(entries: [_entry('a')])),
     );
 
+    // 핀을 누르면 미리보기만, 미리보기를 누르면 뷰어.
     await tester.tap(find.byKey(const ValueKey('map-pin-a')));
+    await tester.pump();
+    expect(find.byType(StoryViewerPage), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('map-pin-preview-a')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
@@ -646,6 +650,30 @@ void main() {
     expect(find.byKey(const ValueKey('map-pin-a')), findsOneWidget);
     expect(find.byKey(const ValueKey('map-pin-b')), findsNothing);
     expect(find.text('2'), findsOneWidget);
+  });
+
+  testWidgets('a grouped pin lists its entries; the picked one opens first', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      state: MapViewState.ready(
+        _data(entries: [_entry('a'), _entry('b', photo: false)]),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('map-pin-a')));
+    await tester.pump();
+    expect(find.byKey(const ValueKey('map-pin-preview-a')), findsOneWidget);
+    expect(find.byKey(const ValueKey('map-pin-preview-b')), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('map-pin-preview-b')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    final viewer = tester.widget<StoryViewerPage>(find.byType(StoryViewerPage));
+    expect(viewer.entryId, 'b');
+    expect((viewer.source as EntriesSource).entryIds, ['a', 'b']);
   });
 
   testWidgets('style button switches tiles and saves the choice', (

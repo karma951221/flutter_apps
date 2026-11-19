@@ -8202,6 +8202,12 @@ abstract class AppLocalizations {
   /// **'기록 {count}개'**
   String walkMapPinCount(int count);
 
+  /// 지도 — 핀 미리보기의 사진 · 글 칸 접근성 라벨(누르면 그 기록부터 뷰어)
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 보기'**
+  String get walkMapPinPreviewOpen;
+
   /// 물어보기: ⋮ 메뉴 · 작업 폴더 화면 제목
   ///
   /// In ko, this message translates to:

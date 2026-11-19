@@ -148,3 +148,35 @@ int? dayNumber(ViewerGroup g, ViewerDay d) {
   final b = DateTime.utc(d.date.year, d.date.month, d.date.day);
   return b.difference(a).inDays + 1;
 }
+
+ViewerSlide _slideOf(List<ViewerGroup> g, ViewerPos p) =>
+    g[p.group].days[p.day].slides[p.slide];
+
+/// 지금 기록이 아닌 첫 다음 조각(같은 기록의 다른 미디어는 건너뛴다). 끝이면 null.
+ViewerPos? nextEntryPos(List<ViewerGroup> g, ViewerPos p) {
+  final id = _slideOf(g, p).entry.id;
+  ViewerPos? q = p;
+  while (q != null) {
+    q = nextPos(g, q);
+    if (q != null && _slideOf(g, q).entry.id != id) return q;
+  }
+  return null;
+}
+
+/// 바로 앞 기록의 첫 조각. 지금이 첫 기록이면 null.
+ViewerPos? prevEntryPos(List<ViewerGroup> g, ViewerPos p) {
+  final id = _slideOf(g, p).entry.id;
+  var q = p;
+  while (true) {
+    final r = prevPos(g, q);
+    if (r == q) return null;
+    q = r;
+    if (_slideOf(g, q).entry.id != id) break;
+  }
+  final target = _slideOf(g, q).entry.id;
+  while (true) {
+    final r = prevPos(g, q);
+    if (r == q || _slideOf(g, r).entry.id != target) return q;
+    q = r;
+  }
+}
