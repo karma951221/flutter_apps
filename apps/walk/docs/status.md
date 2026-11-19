@@ -262,6 +262,16 @@
 - [ ] **실제 키로 W1~W6 확인** — 서버 이벤트 모양(`server_tool_use` · `web_search_tool_result` · `citations_delta` · GPT `web_search_call`)은 문서 기준 가정이다
 - 검증(2026-11-13): `flutter analyze` 0 · `flutter test` 3236건 통과(1 skip, 서브에이전트 전체 실행) · 채팅 테스트 1012건 재실행 통과.
 
+### 키보드 inset 이 남아 입력 줄이 뜨는 현상 (2026-11-20)
+
+[기록](history.md#2026-11-20--키보드-inset-이-남아-입력-줄이-뜨는-현상) · [시나리오](testing.md#키보드-inset-남음-기기-시나리오)
+
+- [x] 재현 시도 — 에뮬레이터(Medium_Phone, Android 15, Gboard, 3버튼 내비)에서 키보드 연 채 홈 · 화면 끄기 · 알림 셰이드: **재현 안 됨**. 임시 대화(FLAG_SECURE) · 잠금 복귀는 실제 키가 없어 물어보기 입력칸을 못 띄워 못 해 봄
+- [x] 방어 — 백그라운드(`hidden`)로 갈 때 · 일기 잠금이 다시 걸릴 때 입력 포커스를 놓는다. 창이 포커스를 다시 받으면 네이티브가 insets 를 다시 요청한다(`ViewCompat.requestApplyInsets`)
+- [x] 탭바 보호 — 셸 하단 바의 아래 여백을 `viewPadding` 기준으로(`SystemBarBottomPadding`). inset 이 남아도 시스템 내비와 겹치지 않는다
+- [ ] **실기기(Samsung)에서 KI1~KI5** — 원인 확정은 실기기 몫이다
+- 검증(2026-11-20): `flutter analyze` 0 · `flutter test` 4541건 통과(1 skip) · JUnit 115건 통과.
+
 ### 물어보기 입력칸 · 대화 설정 시트 (2026-11-17)
 
 [기록](history.md#2026-11-17--물어보기-입력칸--대화-설정-시트) · [시나리오](testing.md#물어보기-입력칸--대화-설정-시트)

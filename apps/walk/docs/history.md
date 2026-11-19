@@ -1643,3 +1643,41 @@ busy 비활성 · 다시 잠기면 시트 닫힘 · 권한 필요 칩 툴팁.
   다시 켜기는 일기 설정 › 자동 초안 › "AI가 스토리 고르기". 사용량은 새 쓰임 `storyClassify`("스토리 고르기")로 남는다(`textEnum` 이라 마이그레이션 없음).
 - **뺀 것** — 이미 쓴 일기의 소급 재분류는 범위 밖, [진행 현황](status.md#일기)에 후속 후보로 적었다. 실제 키 확인은 D26~D28.
 
+## 2026-11-20 — 키보드 inset 이 남아 입력 줄이 뜨는 현상
+
+실기기 QA(Samsung, Flutter 3.41.7, `adjustResize`, edge-to-edge): 물어보기 탭에서 키보드가 닫혔는데 입력 줄이
+키보드 높이만큼 떠 있고, 아래는 빈 공간, 하단 탭바는 시스템 내비 버튼과 겹쳐 그려졌다.
+
+### 증상이 가리키는 것
+
+두 증상이 한 값으로 설명된다. 엔진이 받은 `viewInsets.bottom`(IME) 이 키보드 높이로 남으면(stale)
+
+- 셸 · 물어보기 `Scaffold`(`resizeToAvoidBottomInset`) 가 몸통을 그만큼 줄인다 → 입력 줄이 뜬다
+- Flutter 는 `padding = viewPadding - viewInsets` 로 만들어 `padding.bottom` 이 0 이 된다 → `NavigationBar` 의
+  SafeArea 가 아래 여백을 0 으로 잡고 시스템 내비 밑까지 내려간다. 키보드가 정말 열려 있으면 탭바는 키보드 뒤라
+  안 보이지만, 키보드가 없으니 드러난다
+
+### 재현 — 에뮬레이터에서는 안 됨
+
+Medium_Phone(Android 15, Gboard)을 3버튼 내비로 바꾸고 수정 전 빌드로 시도했다. 키보드를 연 채
+홈 → 복귀, 화면 끄기 → 켜기, 알림 셰이드 내렸다 올리기 — 셋 다 키보드가 닫히고 셸 탭바는 정상이었다
+(포커스는 남고 키보드만 닫힘). 물어보기 입력칸은 키 확인(실제 연결)을 통과해야 보여서, 임시 대화의
+`FLAG_SECURE` 토글 · 잠금 복귀 경로는 해 보지 못했다. 지도 전체화면(`immersiveSticky`) 은 키보드와 같이
+있을 수 없어 후보에서 낮게 본다.
+
+남은 가설: 삼성 키보드 · One UI 가 백그라운드 전환 중 IME 숨김 insets 를 Flutter 뷰에 보내지 않는 경우,
+또는 `FLAG_SECURE` 변경으로 창이 다시 붙는 중 inset 디스패치가 빠지는 경우.
+
+### 방어 — 세 겹
+
+- **포커스 놓기**: 셸 `AppLifecycleListener.onHide` 에서 `primaryFocus?.unfocus()`. `inactive`(권한 창 · 셰이드)
+  에서는 놓지 않는다 — 시스템 창이 잠깐 덮을 때마다 키보드가 닫히면 불편하다. 일기 잠금 게이트도 다시 잠기는
+  순간 놓는다(게이트 밖 입력도). 돌아와서 다시 누르면 키보드가 열린다
+- **insets 다시 요청**: `MainActivity.onWindowFocusChanged(true)` 에서 `ViewCompat.requestApplyInsets(decorView)`.
+  창이 다시 포커스를 받을 때(복귀 · 셰이드 · 시스템 창) 지금 창의 insets 로 엔진 값을 다시 맞춘다. 같은 값이면 할 일이 없다
+- **탭바 보호**: `SystemBarBottomPadding` 이 하단 바의 `padding.bottom` 을 `max(padding, viewPadding)` 로 고친다.
+  inset 이 남아도 탭바는 시스템 내비 위에 그린다. 키보드가 정말 열렸을 때는 탭바가 조금 커지지만 키보드 뒤라
+  보이지 않고, 몸통 높이(`max(하단 바 높이, inset)`)도 키보드가 더 높아 같다 — 위젯 테스트로 고정했다
+
+입력 줄이 뜨는 쪽(몸통 축소)은 inset 값을 그대로 믿을 수밖에 없어 위 두 방어(포커스 · 다시 요청)에 맡긴다.
+

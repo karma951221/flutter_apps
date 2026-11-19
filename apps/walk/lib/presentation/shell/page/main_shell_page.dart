@@ -46,6 +46,7 @@ import '../../profile/cubit/profile_cubit.dart';
 import '../../../domain/profile/profile_repository.dart';
 import '../../../domain/chat/chat_settings.dart';
 import '../../weather/cubit/weather_cubit.dart';
+import '../widget/system_bar_bottom_padding.dart';
 import 'log_tab.dart';
 import 'tools_tab.dart';
 
@@ -148,7 +149,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     super.initState();
     _lifecycle = AppLifecycleListener(
       onPause: _diaryLock.onPaused,
-      onHide: () => _wentBackground = true,
+      onHide: _onHide,
       onResume: _onResume,
     );
     backgroundChannel.setMethodCallHandler(_onBackgroundCall);
@@ -178,6 +179,14 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     final context = _providerContext;
     if (context == null) return;
     unawaited(context.read<MapViewCubit>().show(MapPeriod.story(story)));
+  }
+
+  /// 백그라운드로 간다. 입력 포커스를 놓아 키보드를 닫는다 — 키보드가 열린 채 나갔다 오면
+  /// 엔진이 받은 IME inset 이 키보드 높이로 남아(stale), 물어보기 입력 줄이 화면 중간에 뜨는
+  /// 일이 있었다(실기기 QA). 돌아와서 다시 누르면 키보드가 열린다.
+  void _onHide() {
+    _wentBackground = true;
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   void _onResume() {
@@ -408,31 +417,34 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
             _tab == ShellTab.log && _logSection == LogSection.diary
             ? const DiaryNewEntryButton()
             : null,
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _tab.index,
-          onDestinationSelected: (index) => _select(ShellTab.values[index]),
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.handyman_outlined),
-              selectedIcon: const Icon(Icons.handyman),
-              label: l10n.walkShellTabTools,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.auto_stories_outlined),
-              selectedIcon: const Icon(Icons.auto_stories),
-              label: l10n.walkShellTabLog,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.chat_bubble_outline),
-              selectedIcon: const Icon(Icons.chat_bubble),
-              label: l10n.walkShellTabChat,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.settings_outlined),
-              selectedIcon: const Icon(Icons.settings),
-              label: l10n.walkShellTabSettings,
-            ),
-          ],
+        // 아래 여백은 viewPadding(시스템 내비 높이) 기준 — IME inset 이 남아도 시스템 바와 겹치지 않는다.
+        bottomNavigationBar: SystemBarBottomPadding(
+          child: NavigationBar(
+            selectedIndex: _tab.index,
+            onDestinationSelected: (index) => _select(ShellTab.values[index]),
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.handyman_outlined),
+                selectedIcon: const Icon(Icons.handyman),
+                label: l10n.walkShellTabTools,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.auto_stories_outlined),
+                selectedIcon: const Icon(Icons.auto_stories),
+                label: l10n.walkShellTabLog,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.chat_bubble_outline),
+                selectedIcon: const Icon(Icons.chat_bubble),
+                label: l10n.walkShellTabChat,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.settings_outlined),
+                selectedIcon: const Icon(Icons.settings),
+                label: l10n.walkShellTabSettings,
+              ),
+            ],
+          ),
         ),
       ),
     );

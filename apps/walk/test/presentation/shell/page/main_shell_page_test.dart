@@ -78,6 +78,7 @@ import 'package:walk/presentation/settings/page/map_settings_page.dart';
 import 'package:walk/presentation/settings/page/walk_settings_page.dart';
 import 'package:walk/presentation/settings/widget/row_highlight.dart';
 import 'package:walk/presentation/shell/page/main_shell_page.dart';
+import 'package:walk/presentation/shell/widget/system_bar_bottom_padding.dart';
 import 'package:walk/presentation/shell/page/log_tab.dart';
 import 'package:walk/presentation/shell/page/tools_tab.dart';
 import 'package:walk/presentation/walk/cubit/step_goal_cubit.dart';
@@ -503,6 +504,54 @@ void main() {
 
     expect(diaryTimeline(skipOffstage: false), findsNothing);
     expect(find.byType(PinPad), findsOneWidget);
+  });
+
+  testWidgets('백그라운드로 가면(hidden) 입력 포커스를 놓아 키보드를 닫는다', (tester) async {
+    await pump(tester);
+    final field = FocusNode();
+    addTearDown(field.dispose);
+    final navigator = tester.state<NavigatorState>(
+      find.byType(Navigator).first,
+    );
+    unawaited(
+      navigator.push(
+        MaterialPageRoute<void>(
+          builder: (_) => Scaffold(body: TextField(focusNode: field)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    field.requestFocus();
+    await tester.pump();
+    expect(field.hasFocus, isTrue);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+    expect(field.hasFocus, isTrue, reason: '시스템 창(inactive)만으로는 놓지 않는다');
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    await tester.pump();
+    expect(field.hasFocus, isFalse);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('하단 탭바는 시스템 내비 높이(viewPadding)를 아래 여백으로 쓴다', (tester) async {
+    await pump(tester);
+
+    final media = tester.widget<MediaQuery>(
+      find
+          .ancestor(
+            of: find.byType(NavigationBar),
+            matching: find.byType(MediaQuery),
+          )
+          .first,
+    );
+    // 테스트 뷰는 inset 이 없다 — 감싸기만 하고 값은 그대로다.
+    expect(find.byType(SystemBarBottomPadding), findsOneWidget);
+    expect(media.data.padding.bottom, media.data.viewPadding.bottom);
   });
 
   testWidgets('일기가 잠겨 있어도 알람 울림 화면(셸 바깥 라우트)은 보인다', (tester) async {

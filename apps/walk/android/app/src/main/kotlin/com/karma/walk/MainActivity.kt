@@ -11,6 +11,7 @@ import android.provider.Settings
 import android.view.WindowManager
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.ViewCompat
 import com.karma.walk.location.LocationRecordChannel
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -43,6 +44,16 @@ class MainActivity : FlutterFragmentActivity() {
         super.onCreate(savedInstanceState)
         // 하루 한 번 예약 채우기. 이미 걸려 있으면 그대로 둔다(KEEP).
         DailyAlarmSyncWorker.enqueue(applicationContext)
+    }
+
+    /**
+     * 창이 다시 포커스를 받으면(복귀 · 알림 셰이드 · 시스템 창 닫힘) insets 를 다시 보내게 한다.
+     * 키보드가 열린 채 나갔다 오면 엔진의 IME inset 이 키보드 높이로 남는(stale) 일이 있었다 —
+     * 지금 창의 insets 로 다시 맞춘다.
+     */
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) ViewCompat.requestApplyInsets(window.decorView)
     }
 
     override fun onNewIntent(intent: Intent) {
