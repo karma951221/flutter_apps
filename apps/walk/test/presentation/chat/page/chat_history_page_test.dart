@@ -176,10 +176,9 @@ void main() {
 
   Finder row(String id) => find.byKey(Key('chat-history-$id'));
 
+  /// 행 ⋮ 대신 길게 누르기 → 동작 시트.
   Future<void> openRowMenu(WidgetTester tester, String id) async {
-    await tester.tap(
-      find.descendant(of: row(id), matching: find.byIcon(Icons.more_vert)),
-    );
+    await tester.longPress(row(id));
     await tester.pumpAndSettle();
   }
 
@@ -299,6 +298,47 @@ void main() {
     expect(row('today'), findsNothing);
     expect(row('older'), findsNothing);
     expect(appBarMenu, findsNothing);
+  });
+
+  testWidgets('행에는 ⋮ 가 없고, 길게 누르면 제목 시트(이름 바꾸기 · 빨간 삭제) · 아래 안내 한 줄', (
+    tester,
+  ) async {
+    await setUpWith([today, older]);
+    await pump(tester);
+
+    expect(
+      find.descendant(of: row('today'), matching: find.byIcon(Icons.more_vert)),
+      findsNothing,
+    );
+    expect(find.text('대화를 길게 누르면 이름 바꾸기 · 지우기'), findsOneWidget);
+
+    await openRowMenu(tester, 'today');
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.text('이번 주에 몇 번 걸었지?'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('chat-history-action-rename')), findsOneWidget);
+    final delete = find.byKey(const Key('chat-history-action-delete'));
+    final error = Theme.of(tester.element(delete)).colorScheme.error;
+    expect(
+      tester
+          .widget<Icon>(
+            find.descendant(of: delete, matching: find.byType(Icon)),
+          )
+          .color,
+      error,
+    );
+    expect(
+      tester
+          .widget<Text>(find.descendant(of: delete, matching: find.text('삭제')))
+          .style
+          ?.color,
+      error,
+    );
   });
 
   testWidgets("빈 목록이면 '저장된 대화가 없어요'", (tester) async {

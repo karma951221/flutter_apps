@@ -32,7 +32,10 @@ class _MemorySettings implements SettingsRepository {
 
 class _FakeHolidays implements HolidayCalendar {
   @override
-  HolidaySource source = const HolidaySource.bundled(firstYear: 2026, lastYear: 2027);
+  HolidaySource source = const HolidaySource.bundled(
+    firstYear: 2026,
+    lastYear: 2027,
+  );
 
   @override
   String? nameOf(DateTime date) => null;
@@ -49,7 +52,8 @@ void main() {
   late _MockUseCase alarms;
   late StreamController<void> refreshed;
 
-  HolidaySettingsCubit build() => HolidaySettingsCubit(settings, holidays, access, alarms);
+  HolidaySettingsCubit build() =>
+      HolidaySettingsCubit(settings, holidays, access, alarms);
 
   setUp(() {
     settings = _MemorySettings();
@@ -65,7 +69,9 @@ void main() {
     when(access.check).thenAnswer((_) async => PermissionStatus.denied);
     when(access.ensure).thenAnswer((_) async => PermissionStatus.denied);
     when(requester.openSettings).thenAnswer((_) async {});
-    when(() => refresher.refresh(force: any(named: 'force'))).thenAnswer((_) async {});
+    when(
+      () => refresher.refresh(force: any(named: 'force')),
+    ).thenAnswer((_) async {});
     when(alarms.sync).thenAnswer((_) async {});
   });
 
@@ -86,7 +92,10 @@ void main() {
   blocTest<HolidaySettingsCubit, HolidaySettingsState>(
     '공휴일 캐시가 새로 쓰이면(앱 시작 · 하루 sync) 확인을 기다리지 않고 출처를 다시 읽는다',
     build: build,
-    seed: () => const HolidaySettingsState(source: bundled, calendar: PermissionStatus.granted),
+    seed: () => const HolidaySettingsState(
+      source: bundled,
+      calendar: PermissionStatus.granted,
+    ),
     act: (cubit) async {
       holidays.source = device;
       refreshed.add(null);
@@ -117,16 +126,22 @@ void main() {
   blocTest<HolidaySettingsCubit, HolidaySettingsState>(
     '시스템 설정에서 허용하고 돌아오면(check) 캘린더를 다시 읽고 알람을 맞춘다',
     build: build,
-    seed: () => const HolidaySettingsState(source: bundled, calendar: PermissionStatus.denied),
+    seed: () => const HolidaySettingsState(
+      source: bundled,
+      calendar: PermissionStatus.denied,
+    ),
     act: (cubit) {
       when(access.check).thenAnswer((_) async => PermissionStatus.granted);
-      when(() => refresher.refresh(force: true)).thenAnswer((_) async => holidays.source = device);
+      when(
+        () => refresher.refresh(force: true),
+      ).thenAnswer((_) async => holidays.source = device);
       return cubit.check();
     },
     expect: () => const [
       HolidaySettingsState(source: device, calendar: PermissionStatus.granted),
     ],
-    verify: (_) => verifyInOrder([() => refresher.refresh(force: true), alarms.sync]),
+    verify: (_) =>
+        verifyInOrder([() => refresher.refresh(force: true), alarms.sync]),
   );
 
   blocTest<HolidaySettingsCubit, HolidaySettingsState>(
@@ -145,7 +160,10 @@ void main() {
   blocTest<HolidaySettingsCubit, HolidaySettingsState>(
     '끄면 저장하고(다른 설정은 그대로) 알람을 맞추며 권한은 묻지 않는다',
     build: build,
-    seed: () => const HolidaySettingsState(source: bundled, calendar: PermissionStatus.denied),
+    seed: () => const HolidaySettingsState(
+      source: bundled,
+      calendar: PermissionStatus.denied,
+    ),
     act: (cubit) => cubit.setHolidayReminder(false),
     expect: () => const [
       HolidaySettingsState(
@@ -155,7 +173,10 @@ void main() {
       ),
     ],
     verify: (_) {
-      expect(settings.value, const AppSettings(stepGoal: 8000, holidayReminder: false));
+      expect(
+        settings.value,
+        const AppSettings(stepGoal: 8000, holidayReminder: false),
+      );
       verify(alarms.sync).called(1);
       verifyNever(access.ensure);
     },
@@ -218,11 +239,20 @@ void main() {
         });
         return build();
       },
-      seed: () => const HolidaySettingsState(source: bundled, calendar: PermissionStatus.denied),
+      seed: () => const HolidaySettingsState(
+        source: bundled,
+        calendar: PermissionStatus.denied,
+      ),
       act: (cubit) => cubit.openCalendar(),
       expect: () => const [
-        HolidaySettingsState(source: bundled, calendar: PermissionStatus.granted),
-        HolidaySettingsState(source: device, calendar: PermissionStatus.granted),
+        HolidaySettingsState(
+          source: bundled,
+          calendar: PermissionStatus.granted,
+        ),
+        HolidaySettingsState(
+          source: device,
+          calendar: PermissionStatus.granted,
+        ),
       ],
       verify: (_) {
         verify(alarms.sync).called(1);
@@ -235,7 +265,9 @@ void main() {
     blocTest<HolidaySettingsCubit, HolidaySettingsState>(
       '영구 거부 · 허용이면 앱 설정을 연다(돌아오면 check 가 읽는다)',
       build: () {
-        when(access.check).thenAnswer((_) async => PermissionStatus.permanentlyDenied);
+        when(
+          access.check,
+        ).thenAnswer((_) async => PermissionStatus.permanentlyDenied);
         return build();
       },
       act: (cubit) => cubit.openCalendar(),

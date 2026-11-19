@@ -171,9 +171,8 @@ void main() {
     expect(find.text('답이 더 빨리 나오지만 요금이 더 들어요(약 2배)'), findsOneWidget);
   });
 
-  bool switchValue(WidgetTester tester) => tester
-      .widget<SwitchListTile>(find.byKey(const Key('model-fast-mode')))
-      .value;
+  bool switchValue(WidgetTester tester) =>
+      tester.widget<Switch>(find.byKey(const Key('model-fast-mode'))).value;
 
   testWidgets('처음 켜면 요금 확인 창, [취소]면 꺼진 채', (tester) async {
     await setUpWith(specs: _specs);

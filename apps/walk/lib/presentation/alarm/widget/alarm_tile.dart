@@ -60,9 +60,9 @@ class AlarmTile extends StatelessWidget {
     final untilRing = alarm.enabled ? this.untilRing : null;
     final pausedOut = alarm.enabled && this.pausedOut;
 
-    return Material(
-      color: colorScheme.surfaceContainerLow,
-      borderRadius: AppRadius.lgAll,
+    // 모양 · 바탕은 walk 카드 테마가 정한다.
+    return Card(
+      margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
@@ -104,13 +104,16 @@ class AlarmTile extends StatelessWidget {
                         children: [
                           WeekdayDots(days: alarm.repeat, dimmed: !alarm.enabled),
                           if (pausedOut)
-                            _TileChip(label: l10n.walkAlarmPausedOutRow, icon: Icons.bedtime),
+                            _TileChip(
+                              label: l10n.walkAlarmPausedOutRow,
+                              icon: Icons.bedtime_outlined,
+                            ),
                           if (alarm.enabled && alarm.skippedAt != null)
-                            _TileChip(label: l10n.walkAlarmSkipped, icon: Icons.skip_next),
+                            _TileChip(label: l10n.walkAlarmSkipped, icon: Icons.skip_next_outlined),
                           if (alarm.enabled && holidayName != null)
                             _TileChip(
                               label: l10n.walkAlarmHolidayChip,
-                              icon: Icons.event,
+                              icon: Icons.event_outlined,
                               tooltip: holidayName,
                               onPressed: onHolidayTap,
                             ),

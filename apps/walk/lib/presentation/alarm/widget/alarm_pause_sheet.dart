@@ -20,10 +20,8 @@ class AlarmPauseSheet extends StatelessWidget {
   static Future<AlarmPause?> show(
     BuildContext context, {
     required DateTime now,
-  }) => showModalBottomSheet<AlarmPause>(
+  }) => showAppSheet<AlarmPause>(
     context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
     builder: (_) => AlarmPauseSheet(now: now),
   );
 
@@ -60,8 +58,6 @@ class AlarmPauseSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     Widget row(
       IconData icon,
@@ -69,11 +65,7 @@ class AlarmPauseSheet extends StatelessWidget {
       AlarmPause? pause,
       VoidCallback? onTap,
     }) => AppListTile(
-      leading: CircleAvatar(
-        backgroundColor: colorScheme.primaryContainer,
-        foregroundColor: colorScheme.onPrimaryContainer,
-        child: Icon(icon),
-      ),
+      leading: Icon(icon),
       title: Text(title),
       subtitle: pause == null
           ? null
@@ -81,68 +73,31 @@ class AlarmPauseSheet extends StatelessWidget {
       onTap: onTap ?? () => Navigator.of(context).pop(pause),
     );
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          0,
-          AppSpacing.md,
-          AppSpacing.md,
+    return AppSheetScaffold(
+      title: l10n.walkAlarmPause,
+      description: l10n.walkAlarmPauseDescription,
+      children: [
+        row(
+          Icons.today_outlined,
+          l10n.walkAlarmPauseToday,
+          pause: AlarmPause.today(now),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.walkAlarmPause, style: theme.textTheme.titleLarge),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    l10n.walkAlarmPauseDescription,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Material(
-              color: colorScheme.surfaceContainerLow,
-              borderRadius: AppRadius.lgAll,
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  row(
-                    Icons.today,
-                    l10n.walkAlarmPauseToday,
-                    pause: AlarmPause.today(now),
-                  ),
-                  row(
-                    Icons.event,
-                    l10n.walkAlarmPauseUntilTomorrow,
-                    pause: AlarmPause.untilTomorrow(now),
-                  ),
-                  row(
-                    Icons.weekend,
-                    l10n.walkAlarmPauseWeekend,
-                    pause: AlarmPause.weekend(now),
-                  ),
-                  row(
-                    Icons.date_range,
-                    l10n.walkAlarmPausePickDates,
-                    onTap: () => _pick(context),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        row(
+          Icons.event_outlined,
+          l10n.walkAlarmPauseUntilTomorrow,
+          pause: AlarmPause.untilTomorrow(now),
         ),
-      ),
+        row(
+          Icons.weekend_outlined,
+          l10n.walkAlarmPauseWeekend,
+          pause: AlarmPause.weekend(now),
+        ),
+        row(
+          Icons.date_range_outlined,
+          l10n.walkAlarmPausePickDates,
+          onTap: () => _pick(context),
+        ),
+      ],
     );
   }
 }

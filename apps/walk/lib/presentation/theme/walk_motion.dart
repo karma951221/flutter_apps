@@ -1,14 +1,12 @@
-import 'package:flutter/widgets.dart';
-
-/// 걷기 앱 연출 시간 · 곡선. design_system 에 모션 토큰이 없어 앱 안에 둔다.
+/// 걷기 앱만의 긴 연출 시간.
+///
+/// 짧은 전환 · 곡선 · '애니메이션 줄이기' 판단은 design_system 의 `AppMotion` 을 쓴다
+/// (`AppMotion.medium` · `AppMotion.long` · `AppMotion.standard` · `AppMotion.enabled`).
+/// 여기에는 `AppMotion` 에 없는, 목표 링 · 축하처럼 느리게 보여야 하는 값만 남긴다.
 abstract final class WalkMotion {
-  static const short = Duration(milliseconds: 200);
-  static const medium = Duration(milliseconds: 400);
+  /// 목표 링이 차오르는 시간.
   static const long = Duration(milliseconds: 900);
-  static const celebrate = Duration(milliseconds: 1200);
-  static const emphasized = Curves.easeOutCubic;
 
-  /// 시스템 "애니메이션 제거" — 참이면 연출은 끝 상태로 바로 그리고 반복은 돌리지 않는다.
-  static bool off(BuildContext context) =>
-      MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+  /// 목표 달성 축하.
+  static const celebrate = Duration(milliseconds: 1200);
 }

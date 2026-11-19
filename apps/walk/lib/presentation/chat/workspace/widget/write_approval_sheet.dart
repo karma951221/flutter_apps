@@ -51,9 +51,8 @@ Future<void> showWriteApprovalSheet(
   if (dismiss?.value ?? false) return;
   dismiss?.addListener(onSignal);
   try {
-    await showModalBottomSheet<void>(
+    await showAppSheet<void>(
       context: context,
-      showDragHandle: true,
       builder: (sheetContext) {
         sheet = sheetContext;
         // 처음 그리기 전에 dismiss 가 왔다 — 그리자마자 닫는다.
@@ -153,72 +152,32 @@ class _WriteApprovalSheetState extends State<WriteApprovalSheet> {
     );
     final destructive = plan is WriteDelete;
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          0,
-          AppSpacing.md,
-          AppSpacing.md,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(title, style: theme.textTheme.titleMedium),
-            const SizedBox(height: AppSpacing.xs),
-            // 실제 상대 경로 그대로 — 줄이지 않고, 보이지 않는 글자는 드러낸다.
-            Text(
-              '${revealInvisible(plan.path)} · ${formatBytes(sizeBytes)}',
-              style: muted,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(intent, style: theme.textTheme.bodyMedium),
-            if (plan case WriteOverwrite(:final previous))
-              Text(
-                l10n.walkChatWriteReplaces(previous.runes.length),
-                style: muted,
-              ),
-            const SizedBox(height: AppSpacing.sm),
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: _body(context, l10n, plan),
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton.secondary(
-                    label: l10n.walkChatWriteDecline,
-                    onPressed: _decided
-                        ? null
-                        : () => _decide(widget.onDecline),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(
-                  child: AppButton.primary(
-                    label: approveLabel,
-                    style: destructive
-                        ? FilledButton.styleFrom(
-                            backgroundColor: theme.colorScheme.error,
-                            foregroundColor: theme.colorScheme.onError,
-                          )
-                        : null,
-                    onPressed: _decided
-                        ? null
-                        : () => _decide(widget.onApprove),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+    return AppSheetScaffold(
+      title: title,
+      // 실제 상대 경로 그대로 — 줄이지 않고, 보이지 않는 글자는 드러낸다.
+      description: '${revealInvisible(plan.path)} · ${formatBytes(sizeBytes)}',
+      bodyPadding: AppSheetScaffold.contentPadding,
+      secondaryAction: AppButton.secondary(
+        label: l10n.walkChatWriteDecline,
+        onPressed: _decided ? null : () => _decide(widget.onDecline),
       ),
+      primaryAction: AppButton.primary(
+        label: approveLabel,
+        style: destructive
+            ? FilledButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onError,
+              )
+            : null,
+        onPressed: _decided ? null : () => _decide(widget.onApprove),
+      ),
+      children: [
+        Text(intent, style: theme.textTheme.bodyMedium),
+        if (plan case WriteOverwrite(:final previous))
+          Text(l10n.walkChatWriteReplaces(previous.runes.length), style: muted),
+        const SizedBox(height: AppSpacing.sm),
+        ..._body(context, l10n, plan),
+      ],
     );
   }
 

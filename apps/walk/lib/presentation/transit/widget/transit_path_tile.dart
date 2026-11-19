@@ -33,6 +33,9 @@ class TransitPathTile extends StatelessWidget {
     ].join(' · ');
   }
 
+  /// 총 시간 글자 — 목록 행과 상세 화면이 같이 쓴다.
+  static TextStyle? totalStyle(ThemeData theme) => theme.textTheme.titleLarge;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -47,10 +50,7 @@ class TransitPathTile extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.end,
         spacing: AppSpacing.sm,
         children: [
-          Text(
-            total(l10n, path.totalMinutes),
-            style: theme.textTheme.titleLarge,
-          ),
+          Text(total(l10n, path.totalMinutes), style: totalStyle(theme)),
           Text(
             summary(l10n, path),
             style: theme.textTheme.bodyMedium?.copyWith(

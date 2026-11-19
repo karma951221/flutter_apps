@@ -55,10 +55,12 @@ class _BackupPasswordDialogState extends State<BackupPasswordDialog> {
       ),
       actions: [
         AppButton.text(
+          compact: true,
           label: l10n.commonCancel,
           onPressed: () => Navigator.of(context).pop(),
         ),
         AppButton.primary(
+          compact: true,
           key: const Key('backup-password-open'),
           label: l10n.walkBackupPasswordOpen,
           onPressed: canOpen ? _open : null,
@@ -68,8 +70,8 @@ class _BackupPasswordDialogState extends State<BackupPasswordDialog> {
   }
 }
 
-/// 가린 비밀번호 칸 + 보기/숨기기 버튼. 모양은 앱 `InputDecorationTheme` 을 따른다.
-class BackupPasswordField extends StatefulWidget {
+/// 가린 비밀번호 칸 + 보기/숨기기 버튼([ObscuredKeyField]). 모양은 앱 `InputDecorationTheme` 을 따른다.
+class BackupPasswordField extends StatelessWidget {
   const BackupPasswordField({
     required this.controller,
     required this.label,
@@ -88,39 +90,18 @@ class BackupPasswordField extends StatefulWidget {
   final ValueChanged<String>? onSubmitted;
 
   @override
-  State<BackupPasswordField> createState() => _BackupPasswordFieldState();
-}
-
-class _BackupPasswordFieldState extends State<BackupPasswordField> {
-  bool _obscure = true;
-
-  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return TextField(
-      controller: widget.controller,
-      obscureText: _obscure,
-      autofocus: widget.autofocus,
-      autocorrect: false,
-      enableSuggestions: false,
+    return ObscuredKeyField(
+      controller: controller,
+      labelText: label,
+      helperText: helperText,
+      errorText: errorText,
+      autofocus: autofocus,
       keyboardType: TextInputType.visiblePassword,
-      onSubmitted: widget.onSubmitted,
-      decoration: InputDecoration(
-        labelText: widget.label,
-        helperText: widget.helperText,
-        errorText: widget.errorText,
-        suffixIcon: IconButton(
-          tooltip: _obscure
-              ? l10n.walkBackupPasswordShow
-              : l10n.walkBackupPasswordHide,
-          icon: Icon(
-            _obscure
-                ? Icons.visibility_outlined
-                : Icons.visibility_off_outlined,
-          ),
-          onPressed: () => setState(() => _obscure = !_obscure),
-        ),
-      ),
+      onSubmitted: onSubmitted,
+      showTooltip: l10n.walkBackupPasswordShow,
+      hideTooltip: l10n.walkBackupPasswordHide,
     );
   }
 }

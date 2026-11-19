@@ -23,7 +23,8 @@ class TransitPathDetailPage extends StatelessWidget {
         children: [
           Text(
             TransitPathTile.total(l10n, path.totalMinutes),
-            style: theme.textTheme.headlineSmall,
+            // 목록 행(TransitPathTile)의 총 시간과 같은 크기.
+            style: TransitPathTile.totalStyle(theme),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(

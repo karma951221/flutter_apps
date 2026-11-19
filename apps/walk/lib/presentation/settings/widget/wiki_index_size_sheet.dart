@@ -12,10 +12,8 @@ Future<WikiIndexSize?> showWikiIndexSizeSheet(
   required WikiIndexSize current,
   required int noteCount,
   required int indexChars,
-}) => showModalBottomSheet<WikiIndexSize>(
+}) => showAppSheet<WikiIndexSize>(
   context: context,
-  showDragHandle: true,
-  isScrollControlled: true,
   builder: (_) => _WikiIndexSizeSheet(
     current: current,
     noteCount: noteCount,
@@ -66,56 +64,23 @@ class _WikiIndexSizeSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final number = NumberFormat.decimalPattern(l10n.localeName);
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.sm,
-                AppSpacing.md,
-                AppSpacing.xs,
-              ),
-              child: Text(
-                l10n.walkChatWikiIndexSize,
-                style: theme.textTheme.titleMedium,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                0,
-                AppSpacing.md,
-                AppSpacing.xs,
-              ),
-              child: Text(
-                l10n.walkChatWikiIndexSizeCurrent(
-                  noteCount,
-                  number.format(indexChars),
-                ),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-            for (final size in WikiIndexSize.values)
-              AppListTile(
-                key: Key('wiki-size-${size.name}'),
-                title: Text(wikiIndexSizeLabel(l10n, size)),
-                subtitle: Text(_detail(l10n, number, size)),
-                trailing: size == current
-                    ? Icon(Icons.check, color: theme.colorScheme.primary)
-                    : null,
-                onTap: () => Navigator.pop(context, size),
-              ),
-          ],
-        ),
+    return AppSheetScaffold(
+      title: l10n.walkChatWikiIndexSize,
+      description: l10n.walkChatWikiIndexSizeCurrent(
+        noteCount,
+        number.format(indexChars),
       ),
+      children: [
+        for (final size in WikiIndexSize.values)
+          AppSelectTile(
+            key: Key('wiki-size-${size.name}'),
+            title: Text(wikiIndexSizeLabel(l10n, size)),
+            subtitle: Text(_detail(l10n, number, size)),
+            selected: size == current,
+            onTap: () => Navigator.pop(context, size),
+          ),
+      ],
     );
   }
 }

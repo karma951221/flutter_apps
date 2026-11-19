@@ -22,22 +22,16 @@ Widget _app(DateTime now) => MaterialApp(
 );
 
 void main() {
-  testWidgets('초록 컨테이너 색 카드, 남은 시간은 onPrimaryContainer', (tester) async {
+  testWidgets('카드 모양 · 바탕은 테마에 맡기고, 남은 시간은 primary', (tester) async {
     await tester.pumpWidget(_app(DateTime(2026, 10, 3, 22, 0)));
     final scheme = Theme.of(tester.element(find.byType(Card))).colorScheme;
 
-    expect(
-      tester.widget<Card>(find.byType(Card)).color,
-      scheme.primaryContainer,
-    );
-    expect(
-      tester.widget<Card>(find.byType(Card)).shape,
-      const RoundedRectangleBorder(borderRadius: AppRadius.lgAll),
-    );
+    expect(tester.widget<Card>(find.byType(Card)).color, isNull);
+    expect(tester.widget<Card>(find.byType(Card)).shape, isNull);
     final remaining = tester.widget<Text>(
       find.byKey(const Key('alarm-summary-remaining')),
     );
-    expect(remaining.style?.color, scheme.onPrimaryContainer);
+    expect(remaining.style?.color, scheme.primary);
   });
 
   testWidgets('시간이 바뀌면 AnimatedSwitcher 로 새 남은 시간으로 바뀐다', (tester) async {

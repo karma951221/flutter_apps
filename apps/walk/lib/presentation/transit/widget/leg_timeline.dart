@@ -83,9 +83,9 @@ class _LegRow extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final (icon, color) = switch (leg) {
-      TransitWalkLeg() => (Icons.directions_walk, scheme.onSurfaceVariant),
-      TransitSubwayLeg() => (Icons.subway, scheme.primary),
-      TransitBusLeg() => (Icons.directions_bus, scheme.secondary),
+      TransitWalkLeg() => (Icons.directions_walk_outlined, scheme.onSurfaceVariant),
+      TransitSubwayLeg() => (Icons.subway_outlined, scheme.primary),
+      TransitBusLeg() => (Icons.directions_bus_outlined, scheme.secondary),
     };
     final (title, subtitle) = lines;
     return IntrinsicHeight(

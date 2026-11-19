@@ -57,7 +57,7 @@ void main() {
     }
     expect(find.text('25,000 걸음'), findsOneWidget);
     expect(find.text('8,333 걸음'), findsOneWidget);
-    for (final icon in [Icons.directions_walk, Icons.calendar_today]) {
+    for (final icon in [Icons.directions_walk_outlined, Icons.calendar_today_outlined]) {
       expect(find.byIcon(icon), findsOneWidget);
     }
     expect(find.text('거리'), findsNothing);

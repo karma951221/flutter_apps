@@ -407,9 +407,11 @@ class _NewConversationAction extends StatelessWidget {
           (c.state.bubbles.isNotEmpty || c.state.temporary),
     );
     if (!show) return const SizedBox.shrink();
-    return IconButton(
-      icon: const Icon(Icons.add_comment_outlined),
-      tooltip: AppLocalizations.of(context).walkChatNewConversation,
+    // 아이콘만으로는 뜻이 흐려(말풍선+더하기) 자주 쓰는 동작이라 글자 버튼으로 둔다.
+    return AppButton.text(
+      key: const Key('chat-new-conversation'),
+      label: AppLocalizations.of(context).walkChatNewConversation,
+      compact: true,
       onPressed: context.read<ChatCubit>().newConversation,
     );
   }
@@ -472,10 +474,8 @@ class _SettingsAction extends StatelessWidget {
     VoidCallback onOpenSettings,
   ) async {
     final cubit = context.read<ChatCubit>();
-    await showModalBottomSheet<void>(
+    await showAppSheet<void>(
       context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
       builder: (sheetContext) => BlocProvider.value(
         value: cubit,
         child: BlocBuilder<ChatCubit, ChatState>(
@@ -516,6 +516,7 @@ class _SettingsAction extends StatelessWidget {
     );
     if (model == null) return const SizedBox.shrink();
     return ChatSettingsAction(
+      vendor: model.vendor,
       hasNewer: model.hasNewer,
       onPressed: () => unawaited(_open(context, onOpenSettings)),
     );
@@ -721,7 +722,7 @@ class _AccessSwitch extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final access = context.select<ChatCubit, ChatAccess>((c) => c.state.access);
     return switch (access) {
-      ChatAccess.checking => const Center(child: CircularProgressIndicator()),
+      ChatAccess.checking => const AppLoading(),
       ChatAccess.noKey => AppPlaceholder(
         icon: Icons.key_outlined,
         message: l10n.walkChatNoKey,

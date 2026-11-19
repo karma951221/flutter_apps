@@ -98,39 +98,38 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _choosePhoto() async {
     final l10n = AppLocalizations.of(context);
     final hasPhoto = _photoPath != null;
-    final choice = await showModalBottomSheet<_PhotoChoice>(
+    final choice = await showAppSheet<_PhotoChoice>(
       context: context,
-      showDragHandle: true,
-      builder: (sheet) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+      builder: (sheet) {
+        final error = Theme.of(sheet).colorScheme.error;
+        return AppSheetScaffold(
+          title: l10n.walkProfilePhotoChange,
           children: [
-            for (final (value, icon, label) in [
-              (
-                _PhotoChoice.gallery,
-                Icons.photo_library_outlined,
-                l10n.walkProfilePhotoGallery,
-              ),
-              (
-                _PhotoChoice.camera,
-                Icons.photo_camera_outlined,
-                l10n.walkProfilePhotoCamera,
-              ),
-              if (hasPhoto)
-                (
-                  _PhotoChoice.remove,
-                  Icons.delete_outline,
-                  l10n.walkProfilePhotoRemove,
-                ),
-            ])
+            AppListTile(
+              key: const Key('profile-photo-gallery'),
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(l10n.walkProfilePhotoGallery),
+              onTap: () => Navigator.pop(sheet, _PhotoChoice.gallery),
+            ),
+            AppListTile(
+              key: const Key('profile-photo-camera'),
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: Text(l10n.walkProfilePhotoCamera),
+              onTap: () => Navigator.pop(sheet, _PhotoChoice.camera),
+            ),
+            if (hasPhoto)
               AppListTile(
-                leading: Icon(icon),
-                title: Text(label),
-                onTap: () => Navigator.pop(sheet, value),
+                key: const Key('profile-photo-remove'),
+                leading: Icon(Icons.delete_outline, color: error),
+                title: Text(
+                  l10n.walkProfilePhotoRemove,
+                  style: TextStyle(color: error),
+                ),
+                onTap: () => Navigator.pop(sheet, _PhotoChoice.remove),
               ),
           ],
-        ),
-      ),
+        );
+      },
     );
     if (choice == null || !mounted) return;
     if (choice == _PhotoChoice.remove) {
@@ -197,10 +196,7 @@ class _ProfilePageState extends State<ProfilePage> {
           actions: [
             AppButton.text(
               key: const Key('profile-save'),
-              // 앱 테마 버튼은 폭을 가득 채운다(`Size.fromHeight`) — 앱바 자리라 최소 크기만 푼다.
-              style: const ButtonStyle(
-                minimumSize: WidgetStatePropertyAll(Size.zero),
-              ),
+              compact: true,
               label: l10n.commonSave,
               onPressed: _saving ? null : _save,
             ),
@@ -267,16 +263,13 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            AppListTile(
+            AppSwitchTile(
               key: const Key('profile-share-name'),
               leading: const Icon(Icons.chat_bubble_outline),
               title: Text(l10n.walkProfileShareName),
               subtitle: Text(l10n.walkProfileShareNameDescription),
-              trailing: Switch(
-                value: _shareName,
-                onChanged: (on) => setState(() => _shareName = on),
-              ),
-              onTap: () => setState(() => _shareName = !_shareName),
+              value: _shareName,
+              onChanged: (on) => setState(() => _shareName = on),
             ),
           ],
         ),

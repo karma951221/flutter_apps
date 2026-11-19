@@ -8,11 +8,8 @@ import '../../../../domain/chat/repository/wiki_repository.dart';
 
 /// 메모 고르기(제목 · 요약 포함 검색, 대소문자 무시). 고른 id 또는 null. [exclude] 는 지금 메모.
 Future<int?> showWikiNotePicker(BuildContext context, {int? exclude}) =>
-    showModalBottomSheet<int>(
+    showAppSheet<int>(
       context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
-      showDragHandle: true,
       builder: (_) => _WikiNotePicker(exclude: exclude),
     );
 
@@ -39,23 +36,21 @@ class _WikiNotePickerState extends State<_WikiNotePicker> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: FractionallySizedBox(
-        heightFactor: 0.75,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return FutureBuilder<List<WikiNote>>(
+      future: _notes,
+      builder: (context, snapshot) {
+        final notes = snapshot.data;
+        return AppSheetScaffold.draggable(
+          title: l10n.walkChatWikiPickNoteTitle,
+          initialSize: 0.75,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: Text(
-                l10n.walkChatWikiPickNoteTitle,
-                style: theme.textTheme.titleMedium,
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.sm,
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
               child: TextField(
                 key: const Key('wiki-pick-note-search'),
                 decoration: InputDecoration(
@@ -65,49 +60,36 @@ class _WikiNotePickerState extends State<_WikiNotePicker> {
                 onChanged: (v) => setState(() => _query = v),
               ),
             ),
-            Expanded(
-              child: FutureBuilder<List<WikiNote>>(
-                future: _notes,
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return AppPlaceholder(
-                      icon: Icons.error_outline,
-                      message: l10n.walkChatWikiLoadFailed,
-                    );
-                  }
-                  final notes = snapshot.data;
-                  if (notes == null) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  final shown = [
-                    for (final n in notes)
-                      if (n.id != widget.exclude && _matches(n)) n,
-                  ];
-                  return ListView(
-                    children: [
-                      for (final note in shown)
-                        AppListTile(
-                          key: Key('wiki-pick-note-${note.id}'),
-                          title: Text(
-                            note.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: Text(
-                            note.summary,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          onTap: () => Navigator.pop(context, note.id),
-                        ),
-                    ],
-                  );
-                },
-              ),
-            ),
+            if (snapshot.hasError)
+              AppPlaceholder(
+                icon: Icons.error_outline,
+                message: l10n.walkChatWikiLoadFailed,
+              )
+            else if (notes == null)
+              const Padding(
+                padding: EdgeInsets.all(AppSpacing.md),
+                child: AppLoading(),
+              )
+            else
+              for (final note in notes)
+                if (note.id != widget.exclude && _matches(note))
+                  AppListTile(
+                    key: Key('wiki-pick-note-${note.id}'),
+                    title: Text(
+                      note.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      note.summary,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    onTap: () => Navigator.pop(context, note.id),
+                  ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 }

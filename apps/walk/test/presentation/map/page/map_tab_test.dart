@@ -397,7 +397,11 @@ void main() {
     final jeju = tester.getTopLeft(find.text('제주 여행'));
     final old = tester.getTopLeft(find.text('지난 여행'));
     expect(jeju.dy, lessThan(old.dy));
-    expect(find.text('진행 중'), findsOneWidget);
+    // 진행 중은 기간 끝으로 보인다(StoryRow 부제).
+    expect(
+      find.descendant(of: sheet, matching: find.textContaining('진행 중')),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('지난 여행'));
     await tester.pumpAndSettle();
@@ -453,6 +457,21 @@ void main() {
       .evaluate()
       .isNotEmpty;
 
+  testWidgets('map overlay buttons all carry tooltips', (tester) async {
+    await pump(tester, state: MapViewState.ready(_data()));
+
+    for (final key in [
+      'map-fullscreen-button',
+      'map-style-button',
+      'map-record-chip',
+    ]) {
+      final button = tester.widget<IconButton>(find.byKey(Key(key)));
+      expect(button.tooltip, isNotEmpty, reason: key);
+    }
+    expect(find.byTooltip('전체화면으로 보기'), findsOneWidget);
+    expect(find.byTooltip('지도 종류'), findsOneWidget);
+  });
+
   testWidgets('running record is a compact round button, not a card', (
     tester,
   ) async {
@@ -462,7 +481,10 @@ void main() {
     expect(chip, findsOneWidget);
     expect(tester.widget(chip), isA<IconButton>());
     expect(tester.widget<IconButton>(chip).tooltip, '위치 기록 중 · 평소');
-    expect(find.widgetWithIcon(IconButton, Icons.my_location), findsOneWidget);
+    expect(
+      find.widgetWithIcon(IconButton, Icons.radio_button_checked),
+      findsOneWidget,
+    );
     // 접힌 상태 — 주기 목록은 시트를 열어야 보인다.
     expect(find.text('기록 주기'), findsNothing);
     expect(intervalTile(RecordInterval.s5), findsNothing);
@@ -483,8 +505,14 @@ void main() {
     );
 
     final chip = find.byKey(const Key('map-record-chip'));
-    expect(find.widgetWithIcon(IconButton, Icons.route), findsOneWidget);
-    expect(find.widgetWithIcon(IconButton, Icons.my_location), findsNothing);
+    expect(
+      find.widgetWithIcon(IconButton, Icons.timer_outlined),
+      findsOneWidget,
+    );
+    expect(
+      find.widgetWithIcon(IconButton, Icons.radio_button_checked),
+      findsNothing,
+    );
     expect(tester.widget<IconButton>(chip).tooltip, '위치 기록 중 · 10초마다');
   });
 

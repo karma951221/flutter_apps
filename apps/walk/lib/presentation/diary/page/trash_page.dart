@@ -15,6 +15,7 @@ import '../cubit/trash_state.dart';
 import '../format/diary_format.dart';
 import '../widget/entry_media_view.dart';
 import 'diary_route.dart';
+import '../../common/row_actions_sheet.dart';
 
 /// 휴지통을 연다. 일기 잠금에 묶인 화면([pushDiaryRoute])이라 다시 잠기면 가려진다.
 Future<void> openTrash(BuildContext context) =>
@@ -23,6 +24,9 @@ Future<void> openTrash(BuildContext context) =>
 enum _TrashAction { restore, purge }
 
 /// 휴지통(스펙 §5.1 · §6.5): 지운 기록과 영구 삭제까지 남은 일수, 복원 · 영구 삭제 · 비우기.
+///
+/// 앱바는 화면 전체 동작(비우기)만 둔다. 행 동작(복원 · 영구 삭제)은 행을 누르거나 길게
+/// 누르면 뜨는 시트에 있다 — 앱바와 행에 ⋮ 가 겹치지 않게.
 class TrashPage extends StatefulWidget {
   const TrashPage({super.key});
 
@@ -85,6 +89,45 @@ class _TrashPageState extends State<TrashPage> {
     }
   }
 
+  /// 행 동작 시트 — 제목은 그 기록의 첫 줄, 영구 삭제는 error 색.
+  Future<void> _openActions(TrashItem item) async {
+    final l10n = AppLocalizations.of(context);
+    final action = await showRowActions<_TrashAction>(
+      context,
+      title: _rowTitle(l10n, item.entry),
+      actions: [
+        RowAction(
+          key: const Key('trash-action-restore'),
+          value: _TrashAction.restore,
+          label: l10n.walkDiaryTrashRestore,
+          icon: Icons.restore_from_trash_outlined,
+        ),
+        RowAction(
+          key: const Key('trash-action-purge'),
+          value: _TrashAction.purge,
+          label: l10n.walkDiaryTrashDeleteForever,
+          icon: Icons.delete_forever_outlined,
+          isDestructive: true,
+        ),
+      ],
+    );
+    if (action == null || !mounted) return;
+    await _onAction(item.entry.id, action);
+  }
+
+  /// 시트 제목 — 본문 첫 줄(길면 줄임). 본문이 없으면 '글 없음' 안내.
+  static String _rowTitle(AppLocalizations l10n, DiaryEntry entry) {
+    final body = entry.body.trim();
+    if (body.isEmpty) return l10n.walkDiaryTrashNoBody;
+    final line = body.split('\n').first.trim();
+    return line.characters.length <= _titleMax
+        ? line
+        : '${line.characters.take(_titleMax)}…';
+  }
+
+  /// 시트 제목 최대 글자 수.
+  static const _titleMax = 40;
+
   Future<void> _emptyAll() async {
     final l10n = AppLocalizations.of(context);
     final confirmed = await AppConfirmDialog.show(
@@ -130,7 +173,7 @@ class _TrashPageState extends State<TrashPage> {
         message: l10n.walkDiaryLoadError,
       );
     }
-    if (state.loading) return const SizedBox.shrink();
+    if (state.loading) return const AppLoading(delayed: true);
     if (state.items.isEmpty) {
       return AppPlaceholder(
         icon: Icons.delete_outline,
@@ -143,6 +186,7 @@ class _TrashPageState extends State<TrashPage> {
         for (final item in state.items)
           AppListTile(
             key: ValueKey(item.entry.id),
+            onLongPress: () => unawaited(_openActions(item)),
             leading: _TrashThumb(entry: item.entry),
             title: Text(
               item.entry.body.trim().isEmpty
@@ -152,22 +196,7 @@ class _TrashPageState extends State<TrashPage> {
               overflow: TextOverflow.ellipsis,
             ),
             subtitle: Text(_subtitle(l10n, item, now)),
-            trailing: AppOverflowMenu<_TrashAction>(
-              items: [
-                AppOverflowMenuItem(
-                  value: _TrashAction.restore,
-                  label: l10n.walkDiaryTrashRestore,
-                  icon: Icons.restore_from_trash_outlined,
-                ),
-                AppOverflowMenuItem(
-                  value: _TrashAction.purge,
-                  label: l10n.walkDiaryTrashDeleteForever,
-                  icon: Icons.delete_forever_outlined,
-                  isDestructive: true,
-                ),
-              ],
-              onSelected: (a) => unawaited(_onAction(item.entry.id, a)),
-            ),
+            onTap: () => unawaited(_openActions(item)),
           ),
       ],
     );

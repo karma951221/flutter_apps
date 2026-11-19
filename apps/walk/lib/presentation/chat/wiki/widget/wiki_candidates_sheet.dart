@@ -31,11 +31,8 @@ Future<void> showWikiCandidatesSheet(
   required ChatTarget? target,
 }) {
   final lock = context.read<DiaryLockCubit>();
-  return showModalBottomSheet<void>(
+  return showAppSheet<void>(
     context: context,
-    useSafeArea: true,
-    isScrollControlled: true,
-    showDragHandle: true,
     builder: (_) => MultiBlocProvider(
       providers: [
         BlocProvider.value(value: lock),
@@ -92,109 +89,97 @@ class _WikiCandidatesSheet extends StatelessWidget {
         },
       ),
     ],
-    child: DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.75,
-      minChildSize: 0.4,
-      maxChildSize: 1,
-      builder: (context, scroll) =>
-          BlocBuilder<WikiDistillCubit, WikiDistillState>(
-            builder: (context, state) => switch (state) {
-              WikiDistillLoading() => _Loading(scroll: scroll),
-              WikiDistillReady(:final items) when items.isEmpty => _Message(
-                scroll: scroll,
+    child: BlocBuilder<WikiDistillCubit, WikiDistillState>(
+      builder: (context, state) {
+        final l10n = AppLocalizations.of(context);
+        return AppSheetScaffold.draggable(
+          title: l10n.walkChatWikiDistill,
+          initialSize: 0.75,
+          minSize: 0.4,
+          maxSize: 1,
+          children: switch (state) {
+            WikiDistillLoading() => const [_Loading()],
+            WikiDistillReady(:final items) when items.isEmpty => [
+              _Message(
                 icon: Icons.menu_book_outlined,
-                message: AppLocalizations.of(context).walkChatWikiDistillNone,
+                message: l10n.walkChatWikiDistillNone,
               ),
-              WikiDistillReady() => _Candidates(scroll: scroll, state: state),
-              WikiDistillFailedState(:final failure) => _Message(
-                scroll: scroll,
+            ],
+            WikiDistillReady() => [
+              for (var i = 0; i < state.items.length; i++)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    0,
+                    AppSpacing.lg,
+                    AppSpacing.sm,
+                  ),
+                  child: _CandidateCard(index: i, state: state),
+                ),
+            ],
+            WikiDistillFailedState(:final failure) => [
+              _Message(
                 icon: Icons.error_outline,
-                message: chatFailureText(AppLocalizations.of(context), failure),
+                message: chatFailureText(l10n, failure),
               ),
-              WikiDistillUnparsableState() => _Message(
-                scroll: scroll,
+            ],
+            WikiDistillUnparsableState() => [
+              _Message(
                 icon: Icons.error_outline,
-                message: AppLocalizations.of(
-                  context,
-                ).walkChatWikiDistillUnparsable,
+                message: l10n.walkChatWikiDistillUnparsable,
               ),
-            },
-          ),
+            ],
+          },
+        );
+      },
     ),
   );
 }
 
 /// 정리하는 동안. [취소]로 닫으면 cubit 이 닫히며 요청을 끊는다.
 class _Loading extends StatelessWidget {
-  const _Loading({required this.scroll});
-
-  final ScrollController scroll;
+  const _Loading();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return ListView(
-      controller: scroll,
+    return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
-      children: [
-        const Center(child: CircularProgressIndicator()),
-        const SizedBox(height: AppSpacing.md),
-        Text(
-          l10n.walkChatWikiDistilling,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        const SizedBox(height: AppSpacing.md),
-        AppButton.text(
-          key: const Key('wiki-distill-cancel'),
-          label: l10n.commonCancel,
-          onPressed: () => _WikiCandidatesSheet._close(context),
-        ),
-      ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const AppLoading(),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            l10n.walkChatWikiDistilling,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          AppButton.text(
+            key: const Key('wiki-distill-cancel'),
+            label: l10n.commonCancel,
+            onPressed: () => _WikiCandidatesSheet._close(context),
+          ),
+        ],
+      ),
     );
   }
 }
 
 /// 빈 결과 · 실패 안내와 [닫기].
 class _Message extends StatelessWidget {
-  const _Message({
-    required this.scroll,
-    required this.icon,
-    required this.message,
-  });
+  const _Message({required this.icon, required this.message});
 
-  final ScrollController scroll;
   final IconData icon;
   final String message;
 
   @override
-  Widget build(BuildContext context) => ListView(
-    controller: scroll,
-    children: [
-      AppPlaceholder(
-        icon: icon,
-        message: message,
-        actionLabel: AppLocalizations.of(context).walkChatWikiDistillClose,
-        onAction: () => _WikiCandidatesSheet._close(context),
-      ),
-    ],
-  );
-}
-
-class _Candidates extends StatelessWidget {
-  const _Candidates({required this.scroll, required this.state});
-
-  final ScrollController scroll;
-  final WikiDistillReady state;
-
-  @override
-  Widget build(BuildContext context) => ListView.separated(
-    controller: scroll,
-    padding: const EdgeInsets.all(AppSpacing.md),
-    itemCount: state.items.length,
-    separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-    itemBuilder: (context, i) => _CandidateCard(index: i, state: state),
+  Widget build(BuildContext context) => AppPlaceholder(
+    icon: icon,
+    message: message,
+    actionLabel: AppLocalizations.of(context).walkChatWikiDistillClose,
+    onAction: () => _WikiCandidatesSheet._close(context),
   );
 }
 

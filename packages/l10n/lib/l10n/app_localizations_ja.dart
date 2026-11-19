@@ -18,6 +18,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get commonRetry => '再試行';
 
   @override
+  String get commonShowValue => '表示';
+
+  @override
+  String get commonHideValue => '隠す';
+
+  @override
   String get commonMoreActions => 'その他';
 
   @override
@@ -1391,6 +1397,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkSettingsStepGoal => '1日の目標';
 
   @override
+  String get walkSettingsStepGoalSection => '目標';
+
+  @override
   String get walkSettingsStepGoalSave => '保存';
 
   @override
@@ -1563,6 +1572,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkSettingsHolidayReminder => '祝日のお知らせ';
 
   @override
+  String get walkSettingsHolidaySection => '祝日';
+
+  @override
   String get walkSettingsHolidayReminderDescription =>
       '繰り返しアラームが祝日に鳴るとき前日にお知らせします';
 
@@ -1663,6 +1675,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkAlarmEmptyDescription => '＋をタップして目覚ましを追加しましょう';
+
+  @override
+  String get walkAlarmLongPressHint => 'アラームを長押しすると複製・スキップ・削除ができます';
+
+  @override
+  String get walkAlarmSoundDefaultSection => 'デフォルト';
 
   @override
   String get walkAlarmAdd => 'アラームを追加';
@@ -2555,6 +2573,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkDiaryEntryMove => 'ストーリーを移動';
 
   @override
+  String get walkDiaryEntryActionsHint => '長押しで編集・ストーリー移動・ゴミ箱';
+
+  @override
   String walkDiaryEntryMoved(String story) {
     return '$storyに移動しました';
   }
@@ -2706,6 +2727,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkDiarySettingsStorage => '保存容量';
+
+  @override
+  String get walkDiarySettingsStorageSection => '保管';
 
   @override
   String walkDiarySettingsStorageUsage(String size) {
@@ -3723,6 +3747,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkChatHistoryRename => '名前を変更';
 
   @override
+  String get walkChatHistoryLongPressHint => '会話を長押しすると名前の変更・削除';
+
+  @override
   String get walkChatHistoryRenameHint => '会話の名前';
 
   @override
@@ -3784,6 +3811,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkChatUsageCacheRead => 'キャッシュ読み取りトークン';
+
+  @override
+  String get walkChatUsageTotals => '合計';
 
   @override
   String get walkChatUsageByModel => 'モデル別';
@@ -4488,6 +4518,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkWorkspaceAttach => '質問に添付';
+
+  @override
+  String get walkWorkspaceLongPressHint => 'ファイルを長押しすると添付・共有・削除';
 
   @override
   String get walkWorkspaceShare => '共有';
@@ -5302,6 +5335,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get walkTransitWork => '職場';
+
+  @override
+  String get walkTransitMyPlaces => 'マイプレイス';
 
   @override
   String get walkTransitFrequent => 'よく行く場所';

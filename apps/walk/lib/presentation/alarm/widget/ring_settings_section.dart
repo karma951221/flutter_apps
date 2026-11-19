@@ -131,14 +131,11 @@ class RingSettingsSection extends StatelessWidget {
           onChanged: enabled ? onAutoStopMinutes : null,
         ),
         const SizedBox(height: AppSpacing.sm),
-        AppListTile(
+        AppSwitchTile(
           title: Text(l10n.walkAlarmRemindBefore),
           subtitle: Text(l10n.walkAlarmRemindBeforeHint),
-          trailing: Switch(
-            value: alarm.remindBefore,
-            onChanged: enabled ? onRemindBefore : null,
-          ),
-          onTap: enabled ? () => onRemindBefore(!alarm.remindBefore) : null,
+          value: alarm.remindBefore,
+          onChanged: enabled ? onRemindBefore : null,
         ),
       ],
     );

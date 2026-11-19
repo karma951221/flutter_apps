@@ -51,7 +51,7 @@ class _GoalCelebrationState extends State<GoalCelebration>
 
   void _play() {
     HapticFeedback.mediumImpact();
-    if (!WalkMotion.off(context)) _controller.forward(from: 0);
+    if (AppMotion.enabled(context)) _controller.forward(from: 0);
     widget.onPlayed?.call();
   }
 
@@ -87,7 +87,7 @@ class _ParticlePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final t = animation.value;
     if (t <= 0 || t >= 1) return;
-    final eased = WalkMotion.emphasized.transform(t);
+    final eased = AppMotion.standard.transform(t);
     final center = size.center(Offset.zero);
     final distance = size.shortestSide / 2 + AppSpacing.xl * eased;
     final paint = Paint();

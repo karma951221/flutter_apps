@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/presentation/diary/widget/story_picker_sheet.dart';
+import 'package:walk/presentation/diary/widget/story_row.dart';
 
 import '../../../support/diary_fixtures.dart';
 
@@ -43,6 +44,7 @@ void main() {
                 context,
                 stories: _stories,
                 selectedId: Story.dailyId,
+                now: diaryT0,
                 allowCreate: allowCreate,
               ),
               child: const Text('open'),
@@ -69,5 +71,27 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(picked, StoryPickerSheet.createNew);
+  });
+
+  testWidgets('행은 StoryRow 이고 고른 스토리에만 primary 체크', (tester) async {
+    await open(tester);
+
+    expect(find.byType(StoryRow), findsNWidgets(2));
+    final check = find.byIcon(Icons.check);
+    expect(check, findsOneWidget);
+    expect(
+      find.ancestor(of: check, matching: find.byType(StoryRow)),
+      findsOneWidget,
+    );
+    final theme = Theme.of(tester.element(check));
+    expect(tester.widget<Icon>(check).color, theme.colorScheme.primary);
+    // 일상(selectedId) 행에 체크.
+    expect(
+      find.descendant(
+        of: find.ancestor(of: find.text('일상'), matching: find.byType(StoryRow)),
+        matching: find.byIcon(Icons.check),
+      ),
+      findsOneWidget,
+    );
   });
 }

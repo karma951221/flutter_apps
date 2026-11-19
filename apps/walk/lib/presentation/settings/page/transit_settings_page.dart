@@ -9,6 +9,7 @@ import 'package:l10n/l10n.dart';
 import '../../../domain/transit/repository/transit_key_store.dart';
 import '../../../domain/transit/transit_failure.dart';
 import '../../../domain/transit/usecase/verify_transit_key.dart';
+import '../../common/status_label.dart';
 import '../../transit/cubit/transit_key_cubit.dart';
 import '../../transit/cubit/transit_key_state.dart';
 import '../../transit/widget/transit_failure_cause.dart';
@@ -41,7 +42,6 @@ class _TransitKeyView extends StatefulWidget {
 
 class _TransitKeyViewState extends State<_TransitKeyView> {
   final _controller = TextEditingController();
-  bool _obscure = true;
 
   /// 마지막으로 본 입력 — 선택 · 커서 이동만으로는 실패 안내를 지우지 않는다.
   String _lastText = '';
@@ -122,25 +122,24 @@ class _TransitKeyViewState extends State<_TransitKeyView> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final error = Theme.of(context).colorScheme.error;
     return BlocBuilder<TransitKeyCubit, TransitKeyState>(
       builder: (context, state) {
         final status = state.status;
-        final (statusLabel, statusColor) = switch (status) {
+        final (statusLabel, statusTone) = switch (status) {
           TransitKeyStatus.connected => (
             l10n.walkTransitKeyStatusConnected,
-            scheme.primary,
+            StatusTone.ok,
           ),
           TransitKeyStatus.unverified => (
             l10n.walkTransitKeyStatusUnverified,
-            scheme.onSurfaceVariant,
+            StatusTone.neutral,
           ),
           TransitKeyStatus.rejected => (
             l10n.walkChatKeyStatusInvalid,
-            scheme.error,
+            StatusTone.attention,
           ),
-          null => (null, scheme.onSurfaceVariant),
+          null => (null, StatusTone.neutral),
         };
         return ListView(
           children: [
@@ -153,12 +152,7 @@ class _TransitKeyViewState extends State<_TransitKeyView> {
                   : Text(state.keyPreview ?? l10n.walkTransitKeyEmpty),
               trailing: statusLabel == null
                   ? null
-                  : Text(
-                      statusLabel,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: statusColor,
-                      ),
-                    ),
+                  : StatusLabel(statusLabel, tone: statusTone),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -167,28 +161,14 @@ class _TransitKeyViewState extends State<_TransitKeyView> {
                 AppSpacing.md,
                 AppSpacing.xs,
               ),
-              child: TextField(
+              child: ObscuredKeyField(
                 key: const Key('transit-key-input'),
+                toggleKey: const Key('transit-key-visibility'),
                 controller: _controller,
                 enabled: !state.busy,
-                obscureText: _obscure,
-                autocorrect: false,
-                enableSuggestions: false,
-                decoration: InputDecoration(
-                  hintText: l10n.walkTransitKeyInputHint,
-                  suffixIcon: IconButton(
-                    key: const Key('transit-key-visibility'),
-                    tooltip: _obscure
-                        ? l10n.walkChatKeyShow
-                        : l10n.walkChatKeyHide,
-                    icon: Icon(
-                      _obscure
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                    ),
-                    onPressed: () => setState(() => _obscure = !_obscure),
-                  ),
-                ),
+                hintText: l10n.walkTransitKeyInputHint,
+                showTooltip: l10n.walkChatKeyShow,
+                hideTooltip: l10n.walkChatKeyHide,
               ),
             ),
             if (state.failure case final failure?)
@@ -210,22 +190,20 @@ class _TransitKeyViewState extends State<_TransitKeyView> {
             if (state.keyPreview != null)
               AppListTile(
                 key: const Key('transit-key-delete'),
-                leading: const Icon(Icons.link_off_outlined),
-                title: Text(l10n.walkTransitKeyDelete),
+                leading: Icon(Icons.link_off_outlined, color: error),
+                title: Text(
+                  l10n.walkTransitKeyDelete,
+                  style: TextStyle(color: error),
+                ),
                 onTap: state.busy ? null : _delete,
               ),
-            Padding(
+            AppFootnote(
+              l10n.walkTransitKeyGuide,
               padding: const EdgeInsets.fromLTRB(
                 AppSpacing.md,
                 AppSpacing.md,
                 AppSpacing.md,
-                AppSpacing.xs,
-              ),
-              child: Text(
-                l10n.walkTransitKeyGuide,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
+                AppSpacing.md,
               ),
             ),
           ],
@@ -278,15 +256,11 @@ class _KeyFailure extends StatelessWidget {
             summary,
             style: theme.textTheme.titleSmall?.copyWith(color: scheme.error),
           ),
-          if (hint != null) ...[
-            const SizedBox(height: AppSpacing.xs),
-            Text(
+          if (hint != null)
+            AppFootnote(
               hint,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
             ),
-          ],
           if (detail.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.sm),
             TransitFailureCause(detail),

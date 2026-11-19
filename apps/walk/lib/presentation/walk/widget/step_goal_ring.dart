@@ -26,13 +26,13 @@ class StepGoalRing extends StatelessWidget {
     // begin 0 은 첫 진입에만 쓰인다.
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: ratio.clamp(0, 1).toDouble()),
-      duration: WalkMotion.off(context) ? Duration.zero : WalkMotion.long,
-      curve: WalkMotion.emphasized,
+      duration: !AppMotion.enabled(context) ? Duration.zero : WalkMotion.long,
+      curve: AppMotion.standard,
       builder: (context, progress, child) => CustomPaint(
         painter: StepGoalRingPainter(
           progress: progress,
-          // 카드(primaryContainer) 위에서 라이트 · 다크 모두 옅게 보이도록 카드 글자색을 낮춘 알파로.
-          track: scheme.onPrimaryContainer.withValues(alpha: 0.12),
+          // 카드(surfaceContainerLow) 위에서 라이트 · 다크 모두 옅게 보이도록 카드 글자색을 낮춘 알파로.
+          track: scheme.onSurface.withValues(alpha: 0.12),
           color: scheme.primary,
           strokeWidth: AppSpacing.md,
         ),

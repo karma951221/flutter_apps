@@ -79,8 +79,11 @@ void main() {
     await pump(tester);
     expect(
       tester
-          .widget<SwitchListTile>(
-            find.byKey(const Key('backup-export-encrypt')),
+          .widget<Switch>(
+            find.descendant(
+              of: find.byKey(const Key('backup-export-encrypt')),
+              matching: find.byType(Switch),
+            ),
           )
           .value,
       isTrue,
@@ -88,6 +91,8 @@ void main() {
     expect(saveEnabled(tester), isFalse);
 
     final pw = find.byKey(const Key('backup-export-password'));
+    // 두 칸 모두 눈 버튼(가림 · 보기)이 있다.
+    expect(find.byTooltip('비밀번호 보기'), findsNWidgets(2));
     final again = find.byKey(const Key('backup-export-password-again'));
     final ack = find.byKey(const Key('backup-export-forget-ack'));
 

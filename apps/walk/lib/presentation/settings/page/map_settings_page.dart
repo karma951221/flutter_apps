@@ -61,6 +61,7 @@ class _MapSettingsPageState extends State<MapSettingsPage>
       body: BlocBuilder<MapRecordCubit, MapRecordState>(
         builder: (context, state) => ListView(
           children: [
+            AppSectionHeader(l10n.walkMapSettingsRecord),
             _RecordTile(state: state),
             _IntervalTile(state: state),
             _RetentionTile(state: state),
@@ -73,9 +74,9 @@ class _MapSettingsPageState extends State<MapSettingsPage>
               trailing: const Icon(Icons.chevron_right),
               onTap: context.read<MapRecordCubit>().openBatterySettings,
             ),
-            SettingsSectionHeader(l10n.walkMapSettingsPermissions),
+            AppSectionHeader(l10n.walkMapSettingsPermissions),
             _PermissionRows(state: state),
-            const Divider(),
+            AppSectionHeader(l10n.walkSettingsData),
             _DeleteAllTile(state: state),
           ],
         ),
@@ -95,8 +96,12 @@ class _RecordTile extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final cubit = context.read<MapRecordCubit>();
     final blocked = state.status is RecorderBlocked;
-    return AppListTile(
+    final onChanged = state.busy
+        ? null
+        : (bool on) => unawaited(_toggle(context, cubit, on));
+    return AppSwitchTile(
       key: const Key('map-settings-record'),
+      switchKey: const Key('map-settings-record-switch'),
       leading: const Icon(Icons.my_location_outlined),
       title: Text(l10n.walkMapSettingsRecord),
       subtitle: Text(
@@ -104,14 +109,8 @@ class _RecordTile extends StatelessWidget {
             ? l10n.walkMapSettingsBlocked
             : l10n.walkMapSettingsRecordDescription,
       ),
-      trailing: Switch(
-        key: const Key('map-settings-record-switch'),
-        value: state.status is! RecorderOff,
-        onChanged: state.busy ? null : (on) => _toggle(context, cubit, on),
-      ),
-      onTap: state.busy
-          ? null
-          : () => _toggle(context, cubit, state.status is RecorderOff),
+      value: state.status is! RecorderOff,
+      onChanged: onChanged,
     );
   }
 

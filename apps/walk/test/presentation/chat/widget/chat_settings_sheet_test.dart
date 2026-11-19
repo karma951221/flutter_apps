@@ -78,9 +78,7 @@ void main() {
     expect(find.text('내 기록 없이 답해요'), findsOneWidget);
     expect(
       tester
-          .widget<SwitchListTile>(
-            find.byKey(const Key('chat-settings-use-records')),
-          )
+          .widget<Switch>(find.byKey(const Key('chat-settings-use-records')))
           .value,
       isFalse,
     );

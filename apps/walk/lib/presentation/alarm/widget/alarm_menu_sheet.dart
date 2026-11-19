@@ -35,31 +35,23 @@ class AlarmMenuSheet extends StatelessWidget {
     required Alarm alarm,
     required DateTime now,
     AlarmPause? pause,
-  }) => showModalBottomSheet<AlarmMenuAction>(
+  }) => showAppSheet<AlarmMenuAction>(
     context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
     builder: (_) => AlarmMenuSheet(alarm: alarm, now: now, pause: pause),
   );
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     final time = AlarmFormat.time(context, alarm.hour, alarm.minute);
 
     Widget row(IconData icon, String title, AlarmMenuAction action, {Widget? subtitle}) {
-      final destructive = action == AlarmMenuAction.delete;
+      // 파괴적 행은 아이콘 · 제목 모두 error 색(⋮ 메뉴 isDestructive 와 같다).
+      final color = action == AlarmMenuAction.delete ? colorScheme.error : null;
       return AppListTile(
-        leading: CircleAvatar(
-          backgroundColor: destructive ? colorScheme.errorContainer : colorScheme.primaryContainer,
-          foregroundColor: destructive
-              ? colorScheme.onErrorContainer
-              : colorScheme.onPrimaryContainer,
-          child: Icon(icon),
-        ),
-        title: Text(title, style: destructive ? TextStyle(color: colorScheme.error) : null),
+        leading: Icon(icon, color: color),
+        title: Text(title, style: color == null ? null : TextStyle(color: color)),
         subtitle: subtitle,
         onTap: () => Navigator.of(context).pop(action),
       );
@@ -71,8 +63,8 @@ class AlarmMenuSheet extends StatelessWidget {
       // use case 의 skipNext 와 같은 회차 — 건너뛰기 · 쉬는 기간을 뺀 규칙의 다음 회차.
       final at = skippedAt ?? upcomingTriggers(alarm, now, pause: pause).firstOrNull;
       final (title, icon, action) = skippedAt == null
-          ? (l10n.walkAlarmSkipNext, Icons.skip_next, AlarmMenuAction.skip)
-          : (l10n.walkAlarmUnskip, Icons.undo, AlarmMenuAction.unskip);
+          ? (l10n.walkAlarmSkipNext, Icons.skip_next_outlined, AlarmMenuAction.skip)
+          : (l10n.walkAlarmUnskip, Icons.undo_outlined, AlarmMenuAction.unskip);
       return row(
         icon,
         title,
@@ -81,39 +73,13 @@ class AlarmMenuSheet extends StatelessWidget {
       );
     }
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.md),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              child: Text(
-                alarm.label.isEmpty ? time : '$time ${alarm.label}',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleLarge,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Material(
-              color: colorScheme.surfaceContainerLow,
-              borderRadius: AppRadius.lgAll,
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  row(Icons.content_copy, l10n.walkAlarmDuplicate, AlarmMenuAction.duplicate),
-                  ?skipRow(),
-                  row(Icons.delete_outline, l10n.commonDelete, AlarmMenuAction.delete),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+    return AppSheetScaffold(
+      title: alarm.label.isEmpty ? time : '$time ${alarm.label}',
+      children: [
+        row(Icons.content_copy_outlined, l10n.walkAlarmDuplicate, AlarmMenuAction.duplicate),
+        ?skipRow(),
+        row(Icons.delete_outline, l10n.commonDelete, AlarmMenuAction.delete),
+      ],
     );
   }
 }

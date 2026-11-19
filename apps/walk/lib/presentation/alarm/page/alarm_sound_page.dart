@@ -76,8 +76,8 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
     return BlocBuilder<AlarmSoundCubit, AlarmSoundState>(
       bloc: _cubit,
       builder: (context, state) {
-        Widget row(String title, AlarmSoundChoice choice) => _SoundRow(
-          title: title,
+        Widget row(String title, AlarmSoundChoice choice) => AppSelectTile(
+          title: Text(title),
           selected: state.selected == choice,
           onTap: state.importing ? null : () => _cubit.select(choice),
         );
@@ -92,22 +92,23 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
                       vertical: AppSpacing.sm,
                     ),
                     children: [
+                      AppSectionHeader(l10n.walkAlarmSoundDefaultSection),
                       row(
                         l10n.walkAlarmSoundSystem,
                         const AlarmSoundChoice.system(),
                       ),
-                      _SectionTitle(l10n.walkAlarmSoundBundledSection),
+                      AppSectionHeader(l10n.walkAlarmSoundBundledSection),
                       for (final asset in BundledAlarmSounds.all)
                         row(
                           AlarmSoundFormat.bundled(l10n, asset),
                           AlarmSoundChoice.bundled(asset),
                         ),
-                      _SectionTitle(l10n.walkAlarmSoundDeviceSection),
+                      AppSectionHeader(l10n.walkAlarmSoundDeviceSection),
                       ...switch (state.ringtones) {
                         DeviceRingtonesLoading() => const [
-                          Padding(
-                            padding: EdgeInsets.all(AppSpacing.lg),
-                            child: Center(child: CircularProgressIndicator()),
+                          SizedBox(
+                            height: AppSpacing.xl * 3,
+                            child: AppLoading(),
                           ),
                         ],
                         DeviceRingtonesLoaded(:final items)
@@ -121,15 +122,16 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
                           ],
                         DeviceRingtonesLoaded() || DeviceRingtonesFailure() => [
                           AppPlaceholder(
+                            icon: Icons.music_off_outlined,
                             message: l10n.walkAlarmSoundDeviceUnavailable,
                           ),
                         ],
                       },
-                      _SectionTitle(l10n.walkAlarmSoundFileSection),
+                      AppSectionHeader(l10n.walkAlarmSoundFileSection),
                       if (state.myFile case final FileAlarmSound myFile)
                         row(myFile.title, AlarmSoundChoice.file(myFile)),
                       AppListTile(
-                        leading: const Icon(Icons.audio_file),
+                        leading: const Icon(Icons.audio_file_outlined),
                         title: Text(l10n.walkAlarmSoundPickFile),
                         onTap: state.importing ? null : _pickFile,
                       ),
@@ -152,60 +154,6 @@ class _AlarmSoundPageState extends State<AlarmSoundPage> {
           ),
         );
       },
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.xs,
-      ),
-      child: Text(
-        text,
-        style: theme.textTheme.titleSmall?.copyWith(
-          color: theme.colorScheme.primary,
-        ),
-      ),
-    );
-  }
-}
-
-/// 라디오 모양 표시가 붙은 한 줄. 선택 상태는 화면이 정하므로 `Radio` 대신 아이콘으로 그린다.
-class _SoundRow extends StatelessWidget {
-  const _SoundRow({
-    required this.title,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String title;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Semantics(
-      selected: selected,
-      child: AppListTile(
-        title: Text(title),
-        trailing: Icon(
-          selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-          color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant,
-        ),
-        onTap: onTap,
-      ),
     );
   }
 }

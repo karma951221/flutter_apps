@@ -8,6 +8,7 @@ class AppListTile extends StatelessWidget {
     this.leading,
     this.trailing,
     this.onTap,
+    this.onLongPress,
     this.enabled = true,
     super.key,
   });
@@ -17,6 +18,9 @@ class AppListTile extends StatelessWidget {
   final Widget? leading;
   final Widget? trailing;
   final VoidCallback? onTap;
+
+  /// 행 단위 동작 시트를 여는 길게 누르기. 행 trailing 에 ⋮ 를 두지 않고 여기로 받는다.
+  final VoidCallback? onLongPress;
   final bool enabled;
 
   @override
@@ -27,5 +31,6 @@ class AppListTile extends StatelessWidget {
     trailing: trailing,
     enabled: enabled,
     onTap: onTap,
+    onLongPress: onLongPress,
   );
 }

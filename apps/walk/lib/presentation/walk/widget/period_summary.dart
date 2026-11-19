@@ -21,12 +21,12 @@ class PeriodSummary extends StatelessWidget {
     final reached = elapsed.where((day) => day.steps >= goal).length;
 
     final total = _MetricTile(
-      icon: Icons.directions_walk,
+      icon: Icons.directions_walk_outlined,
       value: l10n.walkStepsCount(WalkFormat.steps(locale, period.totalSteps)),
       label: l10n.walkTotalSteps,
     );
     final average = _MetricTile(
-      icon: Icons.calendar_today,
+      icon: Icons.calendar_today_outlined,
       value: l10n.walkStepsCount(WalkFormat.steps(locale, period.averageSteps)),
       label: l10n.walkAverageSteps,
     );
@@ -72,11 +72,9 @@ class _MetricTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerLow,
-        borderRadius: AppRadius.smAll,
-      ),
+    // 모양 · 바탕은 walk 카드 테마가 정한다.
+    return Card(
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.sm),
         child: Row(

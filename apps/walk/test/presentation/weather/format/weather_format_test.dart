@@ -141,15 +141,15 @@ void main() {
     test('밤 clear → 달 아이콘', () {
       expect(
         WeatherFormat.icon(WeatherCondition.clear, isDay: false),
-        Icons.nightlight_round,
+        Icons.nightlight_outlined,
       );
       expect(
         WeatherFormat.icon(WeatherCondition.partlyCloudy, isDay: false),
-        Icons.nights_stay,
+        Icons.nights_stay_outlined,
       );
       expect(
         WeatherFormat.icon(WeatherCondition.clear, isDay: true),
-        isNot(Icons.nightlight_round),
+        isNot(Icons.nightlight_outlined),
       );
       // 비는 밤에도 같은 아이콘.
       expect(

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
-import '../../theme/walk_motion.dart';
 import '../format/alarm_format.dart';
 
 /// 알람 목록 맨 위 요약 — 가장 먼저 울릴 알람까지 남은 시간과 그 날 · 시각 · 라벨.
@@ -35,7 +34,7 @@ class AlarmSummaryCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final id = AlarmFormat.earliest(nextAt);
-    final onCard = theme.colorScheme.onPrimaryContainer;
+    final onCard = theme.colorScheme.onSurface;
 
     final List<Widget> lines;
     if (id == null && alarms.any((a) => a.enabled)) {
@@ -72,7 +71,7 @@ class AlarmSummaryCard extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xs),
         AnimatedSwitcher(
-          duration: WalkMotion.off(context) ? Duration.zero : WalkMotion.short,
+          duration: !AppMotion.enabled(context) ? Duration.zero : AppMotion.medium,
           transitionBuilder: _slideUp,
           layoutBuilder: (current, previous) => Stack(
             alignment: Alignment.centerLeft,
@@ -84,7 +83,7 @@ class AlarmSummaryCard extends StatelessWidget {
               remaining,
               key: const Key('alarm-summary-remaining'),
               style: theme.textTheme.headlineMedium?.copyWith(
-                color: onCard,
+                color: theme.colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -99,10 +98,9 @@ class AlarmSummaryCard extends StatelessWidget {
       ];
     }
 
+    // 모양 · 바탕은 walk 카드 테마가 정한다.
     return Card(
-      color: theme.colorScheme.primaryContainer,
       margin: EdgeInsets.zero,
-      shape: const RoundedRectangleBorder(borderRadius: AppRadius.lgAll),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(

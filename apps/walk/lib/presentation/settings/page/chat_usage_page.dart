@@ -11,7 +11,6 @@ import '../../../domain/chat/repository/chat_usage_repository.dart';
 import '../../chat/widget/chat_vendor_icon.dart';
 import '../cubit/chat_usage_cubit.dart';
 import '../cubit/chat_usage_state.dart';
-import '../widget/settings_widgets.dart';
 
 enum _PageAction { clear }
 
@@ -85,7 +84,15 @@ class _ChatUsageView extends StatelessWidget {
                 onNext: cubit.canGoForward ? cubit.nextMonth : null,
               ),
               ..._content(context, state, l10n),
-              _CostNote(text: l10n.walkChatUsageCostNote),
+              AppFootnote(
+                l10n.walkChatUsageCostNote,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.lg,
+                ),
+              ),
             ],
           ),
         );
@@ -101,10 +108,7 @@ class _ChatUsageView extends StatelessWidget {
     final usage = state.usage;
     if (state.loading && usage == null) {
       return const [
-        Padding(
-          padding: EdgeInsets.all(AppSpacing.lg),
-          child: Center(child: CircularProgressIndicator()),
-        ),
+        Padding(padding: EdgeInsets.all(AppSpacing.lg), child: AppLoading()),
       ];
     }
     if (usage == null) {
@@ -126,6 +130,7 @@ class _ChatUsageView extends StatelessWidget {
     final number = NumberFormat.decimalPattern(l10n.localeName);
     final totals = usage.totals;
     return [
+      AppSectionHeader(l10n.walkChatUsageTotals),
       for (final (key, label, value) in [
         ('questions', l10n.walkChatUsageQuestions, totals.questions),
         ('input', l10n.walkChatUsageInput, totals.inputTokens),
@@ -137,7 +142,7 @@ class _ChatUsageView extends StatelessWidget {
           title: Text(label),
           trailing: Text(number.format(value)),
         ),
-      SettingsSectionHeader(l10n.walkChatUsageByModel),
+      AppSectionHeader(l10n.walkChatUsageByModel),
       for (final row in usage.rows) _ModelRow(row: row, number: number),
       ..._wiki(usage.wiki, l10n, number),
     ];
@@ -154,7 +159,7 @@ class _ChatUsageView extends StatelessWidget {
     final notes = NumberFormat.decimalPattern(l10n.localeName)
       ..maximumFractionDigits = 1;
     return [
-      SettingsSectionHeader(l10n.walkChatUsageWiki),
+      AppSectionHeader(l10n.walkChatUsageWiki),
       AppListTile(
         key: const Key('chat-usage-wiki-index'),
         title: Text(l10n.walkChatUsageWikiIndexAvg),
@@ -262,31 +267,6 @@ class _ModelRow extends StatelessWidget {
           number.format(row.questions),
           number.format(row.inputTokens),
           number.format(row.outputTokens),
-        ),
-      ),
-    );
-  }
-}
-
-class _CostNote extends StatelessWidget {
-  const _CostNote({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.lg,
-      ),
-      child: Text(
-        text,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
     );

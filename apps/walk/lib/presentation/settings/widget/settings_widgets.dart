@@ -4,8 +4,9 @@ import 'package:l10n/l10n.dart';
 import 'package:permission/permission.dart';
 
 import '../../../domain/walk/entity/health_access.dart';
+import '../../common/status_label.dart';
 
-// 설정 화면들이 함께 쓰는 조각 — 섹션 머리, 권한 행, 보기 고르기 시트.
+// 설정 화면들이 함께 쓰는 조각 — 권한 행, 보기 고르기 시트.
 
 /// (표시 문구, 조치가 필요한가)
 typedef SettingsStatus = (String, bool);
@@ -35,32 +36,6 @@ SettingsStatus? settingsHealthLabel(
   HealthAccess.updateRequired => (l10n.walkSettingsNeedsUpdate, true),
 };
 
-/// 설정 섹션 제목.
-class SettingsSectionHeader extends StatelessWidget {
-  const SettingsSectionHeader(this.title, {super.key});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.xs,
-      ),
-      child: Text(
-        title,
-        style: theme.textTheme.labelLarge?.copyWith(
-          color: theme.colorScheme.primary,
-        ),
-      ),
-    );
-  }
-}
-
 /// 권한 한 줄 — 제목 · 설명 · 오른쪽 상태(조치가 필요하면 오류색).
 class SettingsPermissionTile extends StatelessWidget {
   const SettingsPermissionTile({
@@ -80,18 +55,15 @@ class SettingsPermissionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     final status = this.status;
     return AppListTile(
       title: Text(title),
       subtitle: Text(description),
       trailing: status == null
           ? null
-          : Text(
+          : StatusLabel(
               status.$1,
-              style: TextStyle(
-                color: status.$2 ? scheme.error : scheme.onSurfaceVariant,
-              ),
+              tone: status.$2 ? StatusTone.attention : StatusTone.neutral,
             ),
       onTap: onTap,
     );
@@ -116,9 +88,8 @@ class SettingsChoiceSheet<T> extends StatelessWidget {
     required String title,
     required T current,
     required List<(T, String)> options,
-  }) => showModalBottomSheet<T>(
+  }) => showAppSheet<T>(
     context: context,
-    showDragHandle: true,
     builder: (_) => SettingsChoiceSheet<T>(
       title: title,
       current: current,
@@ -127,32 +98,15 @@ class SettingsChoiceSheet<T> extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.sm,
-              AppSpacing.md,
-              AppSpacing.xs,
-            ),
-            child: Text(title, style: theme.textTheme.titleMedium),
-          ),
-          for (final (value, label) in options)
-            AppListTile(
-              title: Text(label),
-              trailing: value == current
-                  ? Icon(Icons.check, color: theme.colorScheme.primary)
-                  : null,
-              onTap: () => Navigator.pop(context, value),
-            ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => AppSheetScaffold(
+    title: title,
+    children: [
+      for (final (value, label) in options)
+        AppSelectTile(
+          title: Text(label),
+          selected: value == current,
+          onTap: () => Navigator.pop(context, value),
+        ),
+    ],
+  );
 }

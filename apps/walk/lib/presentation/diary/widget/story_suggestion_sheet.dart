@@ -5,7 +5,7 @@ import 'package:l10n/l10n.dart';
 
 import '../../../domain/diary/classify/story_pick.dart';
 import '../../../domain/diary/entity/story.dart';
-import 'story_avatar.dart';
+import 'story_row.dart';
 
 part 'story_suggestion_sheet.freezed.dart';
 
@@ -30,6 +30,7 @@ class StorySuggestionSheet extends StatefulWidget {
   const StorySuggestionSheet({
     required this.pick,
     required this.stories,
+    required this.now,
     super.key,
   });
 
@@ -39,15 +40,18 @@ class StorySuggestionSheet extends StatefulWidget {
   /// 이름을 찾을 스토리 목록.
   final List<Story> stories;
 
+  /// 스토리 행 기간 표기의 기준 시각.
+  final DateTime now;
+
   static Future<StorySuggestionChoice?> show(
     BuildContext context, {
     required StoryPick pick,
     required List<Story> stories,
-  }) => showModalBottomSheet<StorySuggestionChoice>(
+    required DateTime now,
+  }) => showAppSheet<StorySuggestionChoice>(
     context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    builder: (_) => StorySuggestionSheet(pick: pick, stories: stories),
+    builder: (_) =>
+        StorySuggestionSheet(pick: pick, stories: stories, now: now),
   );
 
   @override
@@ -102,27 +106,28 @@ class _StorySuggestionSheetState extends State<StorySuggestionSheet> {
       });
     }
 
-    return Padding(
-      // 새 스토리 이름을 고칠 때 키보드에 가리지 않게.
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            0,
-            AppSpacing.lg,
-            AppSpacing.lg,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                l10n.walkDiaryStoryAiTitle,
-                style: theme.textTheme.titleLarge,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              if (isNew) ...[
+    return AppSheetScaffold(
+      title: l10n.walkDiaryStoryAiTitle,
+      primaryAction: AppButton.primary(
+        key: const Key('story-ai-accept'),
+        label: isNew
+            ? l10n.walkDiaryStoryAiCreateAccept
+            : l10n.walkDiaryStoryAiAccept,
+        onPressed: canAccept ? accept : null,
+      ),
+      secondaryAction: AppButton.secondary(
+        key: const Key('story-ai-other'),
+        label: l10n.walkDiaryStoryAiOther,
+        onPressed: () =>
+            Navigator.of(context).pop(const StorySuggestionChoice.other()),
+      ),
+      children: [
+        if (isNew)
+          Padding(
+            padding: AppSheetScaffold.contentPadding,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 Text(
                   l10n.walkDiaryStoryAiNewLabel,
                   style: theme.textTheme.labelMedium,
@@ -138,56 +143,40 @@ class _StorySuggestionSheetState extends State<StorySuggestionSheet> {
                   ),
                   onSubmitted: (_) => accept(),
                 ),
-              ] else
-                AppListTile(
-                  leading: const Icon(Icons.auto_stories_outlined),
-                  title: Text(
-                    story == null ? '' : storyDisplayTitle(l10n, story),
-                    style: theme.textTheme.titleMedium,
+              ],
+            ),
+          )
+        else if (story != null)
+          StoryRow(story: story, now: widget.now),
+        if (reason.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              0,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.auto_awesome_outlined,
+                  size: AppSpacing.md,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    reason,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
-              if (reason.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.sm),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.auto_awesome,
-                      size: AppSpacing.md,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: AppSpacing.xs),
-                    Expanded(
-                      child: Text(
-                        reason,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ],
-              const SizedBox(height: AppSpacing.lg),
-              AppButton.primary(
-                key: const Key('story-ai-accept'),
-                label: isNew
-                    ? l10n.walkDiaryStoryAiCreateAccept
-                    : l10n.walkDiaryStoryAiAccept,
-                onPressed: canAccept ? accept : null,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              AppButton.secondary(
-                key: const Key('story-ai-other'),
-                label: l10n.walkDiaryStoryAiOther,
-                onPressed: () => Navigator.of(
-                  context,
-                ).pop(const StorySuggestionChoice.other()),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+      ],
     );
   }
 }

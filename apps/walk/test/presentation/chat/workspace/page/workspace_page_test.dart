@@ -121,11 +121,12 @@ void main() {
     WorkspaceFile f,
     String label,
   ) async {
-    await tester.tap(
-      find.descendant(of: row(f), matching: find.byIcon(Icons.more_vert)),
-    );
+    // 행 ⋮ 대신 길게 누르기 → 동작 시트.
+    await tester.longPress(row(f));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(label));
+    await tester.tap(
+      find.descendant(of: find.byType(BottomSheet), matching: find.text(label)),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -180,6 +181,28 @@ void main() {
       find.descendant(of: row(pdf), matching: find.text('2KB · 11월 12일 09:00')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('행에는 ⋮ 가 없고, 길게 누르면 파일 이름 시트 · 아래 안내 한 줄', (tester) async {
+    ws.add(pdf, Uint8List(1));
+    await pump(tester);
+
+    expect(
+      find.descendant(of: row(pdf), matching: find.byIcon(Icons.more_vert)),
+      findsNothing,
+    );
+    expect(find.text('파일을 길게 누르면 첨부 · 공유 · 지우기'), findsOneWidget);
+
+    await tester.longPress(row(pdf));
+    await tester.pumpAndSettle();
+    final sheet = find.byType(BottomSheet);
+    expect(
+      find.descendant(of: sheet, matching: find.text('20261112-090000-b.pdf')),
+      findsOneWidget,
+    );
+    for (final k in ['attach', 'share', 'delete']) {
+      expect(find.byKey(Key('workspace-action-$k')), findsOneWidget);
+    }
   });
 
   testWidgets('[지우기] 는 확인 뒤에만 — 취소면 그대로, 확인이면 지우고 사라진다', (tester) async {

@@ -14,7 +14,8 @@ import 'record_interval_sheet.dart';
 /// 지도 위 기록 표시 — 지도 종류 버튼 아래에 쌓인다.
 ///
 /// 기록 중이면 지도를 덜 가리도록 원형 아이콘 버튼 하나로 접는다. 평소 기록은 옅은 버튼 +
-/// 위치 아이콘, 고정 주기 기록(5초 · 10초 · 30초 · 1분)은 진한 버튼 + 경로 아이콘이다.
+/// 기록 중 점 아이콘, 고정 주기 기록(5초 · 10초 · 30초 · 1분)은 진한 버튼 + 타이머 아이콘이다.
+/// (위치 조준 아이콘은 지도에서 '내 위치로'로 읽혀 쓰지 않는다.)
 /// 누르면 기록 주기 시트([showRecordIntervalSheet])를 연다.
 ///
 /// 꺼져 있으면 "기록 꺼짐", 권한을 잃었으면 "권한 필요" 칩 — 사용자가 켜야 하는 상태라 글자를
@@ -37,7 +38,7 @@ class RecordChip extends StatelessWidget {
         RecordInterval.normal => IconButton.filledTonal(
           key: const Key('map-record-chip'),
           tooltip: l10n.walkMapRecordOnInterval(l10n.walkRecordIntervalNormal),
-          icon: const Icon(Icons.my_location),
+          icon: const Icon(Icons.radio_button_checked),
           onPressed: open,
         ),
         final interval => IconButton.filled(
@@ -45,7 +46,7 @@ class RecordChip extends StatelessWidget {
           tooltip: l10n.walkMapRecordOnInterval(
             recordIntervalLabel(l10n, interval),
           ),
-          icon: const Icon(Icons.route),
+          icon: const Icon(Icons.timer_outlined),
           onPressed: open,
         ),
       },

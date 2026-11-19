@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
@@ -18,8 +17,9 @@ enum ToolsSection { alarm, walk, weather, transit }
 ///
 /// 상단 탭은 눌러서만 바꾼다(밀기 없음).
 ///
-/// 앱바는 하나라 actions 와 ⋮ 가 [section] 에 따라 바뀐다 — 알람이면 [AlarmPauseAction] 과
-/// 알람 기록 · 알람 설정, 걷기면 걷기 설정, 날씨면 앱 설정만, 길찾기면 길찾기 키 설정과 앱 설정. 고른 상단 탭은 셸이 쥐고([section]) 사용자가
+/// 앱바는 하나라 actions 와 ⋮ 가 [section] 에 따라 바뀐다 — 모두 [FeatureMenu] 한 모양으로,
+/// 알람이면 [AlarmPauseAction] 과 알람 기록 · 알람 설정, 걷기면 걷기 설정, 날씨는 ⋮ 없음,
+/// 길찾기면 길찾기 설정(키). 고른 상단 탭은 셸이 쥐고([section]) 사용자가
 /// 바꾸면 [onSectionChanged] 로 알린다. 셸이 바꾸면(홈 화면 위젯으로 열림) 그쪽으로 넘어간다.
 ///
 /// 셸의 `AlarmListCubit` · 설정 cubit 넷([openSettings]) · 날씨 cubit 아래에 둔다.
@@ -91,7 +91,7 @@ class _ToolsTabState extends State<ToolsTab>
                 FeatureMenuEntry(
                   key: const Key('menu-alarm-history'),
                   label: l10n.walkAlarmHistory,
-                  icon: Icons.history,
+                  icon: Icons.history_outlined,
                   onTap: () => openAlarmHistory(context),
                 ),
               ],
@@ -100,34 +100,33 @@ class _ToolsTabState extends State<ToolsTab>
           ToolsSection.walk => [
             const FeatureMenu(settings: SettingsTarget.walk),
           ],
-          // 날씨는 설정이 없다 — 앱 전역 설정은 하단 설정 탭이다.
-          ToolsSection.weather => const [],
-          // 길찾기는 키 설정만 — 앱 전역 설정은 하단 설정 탭이다.
+          // 날씨는 설정할 것이 없다 — 항목이 없는 FeatureMenu 는 ⋮ 를 그리지 않는다.
+          ToolsSection.weather => const [FeatureMenu()],
+          // 길찾기 설정(키)은 설정 탭에 없어 같은 자리에 직접 단다.
           ToolsSection.transit => [
-            AppOverflowMenu<VoidCallback>(
-              items: [
-                AppOverflowMenuItem(
-                  key: const Key('menu-transit-key'),
-                  value: () => unawaited(TransitPage.openKeySettings(context)),
-                  label: l10n.walkTransitMenuKeySettings,
-                  icon: Icons.key_outlined,
-                ),
-              ],
-              onSelected: (action) => action(),
+            FeatureMenu(
+              customSettings: FeatureMenuEntry(
+                key: const Key('menu-transit-key'),
+                label: l10n.walkTransitSettingsTitle,
+                onTap: () => unawaited(TransitPage.openKeySettings(context)),
+              ),
             ),
           ],
         },
         bottom: TabBar(
           controller: _controller,
           tabs: [
-            _topTab(Icons.alarm, l10n.walkToolsTabAlarm),
-            _topTab(Icons.directions_walk, l10n.walkToolsTabWalk),
+            _topTab(Icons.alarm_outlined, l10n.walkToolsTabAlarm),
+            _topTab(Icons.directions_walk_outlined, l10n.walkToolsTabWalk),
             _topTab(Icons.wb_sunny_outlined, l10n.walkToolsTabWeather),
-            _topTab(Icons.directions_transit, l10n.walkToolsTabTransit),
+            _topTab(
+              Icons.directions_transit_outlined,
+              l10n.walkToolsTabTransit,
+            ),
           ],
         ),
       ),
-      // 밀기로는 넘기지 않는다 — 걷기 화면 안에 자기 상단 탭(오늘 | 기록)이 있어 가로 밀기가 겹친다.
+      // 밀기로는 넘기지 않는다 — 걷기 화면 안 오늘 | 기록 · 지도 끌기처럼 가로 동작이 겹친다.
       body: TabBarView(
         controller: _controller,
         physics: const NeverScrollableScrollPhysics(),
@@ -154,7 +153,7 @@ class _ToolsTabState extends State<ToolsTab>
   /// 아이콘 위, 라벨 아래의 상단 탭 하나.
   /// 탭 넷이 360dp · 큰 글씨에서도 잘리지 않게, 넘칠 때만 라벨을 줄인다.
   Tab _topTab(IconData icon, String label) => Tab(
-    icon: Icon(icon, size: 20),
+    icon: Icon(icon),
     child: FittedBox(
       fit: BoxFit.scaleDown,
       child: Text(label, maxLines: 1, softWrap: false),

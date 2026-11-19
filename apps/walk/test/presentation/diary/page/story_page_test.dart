@@ -140,7 +140,11 @@ void main() {
   });
 
   /// 셸처럼 잠금을 내려 주는 첫 화면 위에 스토리 페이지를 띄운다.
-  Future<void> open(WidgetTester tester, String storyId) async {
+  Future<void> open(
+    WidgetTester tester,
+    String storyId, {
+    bool settle = true,
+  }) async {
     tester.view
       ..physicalSize = const Size(1080, 2400)
       ..devicePixelRatio = 3;
@@ -168,7 +172,13 @@ void main() {
       ),
     );
     await tester.tap(find.text('home'));
-    await tester.pumpAndSettle();
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      // 읽는 중 로딩 표시가 계속 돌아 끝까지 흘리지 않는다.
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+    }
   }
 
   Finder menu() => find.descendant(
@@ -253,9 +263,11 @@ void main() {
     when(
       () => repo.watchEntries(any()),
     ).thenAnswer((_) => StreamController<List<DiaryEntry>>().stream);
-    await open(tester, 'jeju');
+    await open(tester, 'jeju', settle: false);
 
     expect(find.textContaining('10월 6일 ~ 진행 중'), findsOneWidget);
+    // 빈칸이 아니라 (조금 뒤) 공통 로딩 표시.
+    expect(find.byType(AppLoading), findsOneWidget);
     expect(find.textContaining('기록 0'), findsNothing);
     expect(find.textContaining('사진 0'), findsNothing);
   });

@@ -5,6 +5,7 @@ import 'package:l10n/l10n.dart';
 
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/entity/story.dart';
+import '../../../domain/diary/entity/entry_filter.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
 import '../../../domain/diary/usecase/story_order.dart';
@@ -36,6 +37,8 @@ Future<bool> moveEntry(BuildContext context, DiaryEntry entry) async {
     context,
     stories: stories,
     selectedId: entry.storyId,
+    now: getIt<Clock>().now(),
+    entries: repo.watchEntries(const EntryFilter.all()),
   );
   if (picked == null || picked == entry.storyId || !context.mounted) {
     return false;

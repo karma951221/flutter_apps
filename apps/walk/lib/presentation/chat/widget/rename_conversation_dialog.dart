@@ -55,9 +55,14 @@ class _RenameConversationDialogState extends State<_RenameConversationDialog> {
       actions: [
         AppButton.text(
           label: l10n.commonCancel,
+          compact: true,
           onPressed: () => Navigator.of(context).pop(),
         ),
-        AppButton.text(label: l10n.commonSave, onPressed: _save),
+        AppButton.primary(
+          label: l10n.commonSave,
+          compact: true,
+          onPressed: _save,
+        ),
       ],
     );
   }

@@ -26,39 +26,22 @@ class AlarmPauseBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
     final until = AlarmFormat.day(l10n, pause.until, now);
     final started = !DateTime(
       pause.from.year,
       pause.from.month,
       pause.from.day,
     ).isAfter(DateTime(now.year, now.month, now.day));
-    return Material(
-      color: scheme.secondaryContainer,
-      borderRadius: AppRadius.smAll,
-      clipBehavior: Clip.antiAlias,
-      child: ListTileTheme.merge(
-        textColor: scheme.onSecondaryContainer,
-        iconColor: scheme.onSecondaryContainer,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AppListTile(
-              leading: const Icon(Icons.bedtime_outlined),
-              title: Text(
-                started
-                    ? l10n.walkAlarmPausedUntil(until)
-                    : l10n.walkAlarmPausedRange(
-                        AlarmFormat.day(l10n, pause.from, now),
-                        until,
-                      ),
-              ),
+    return AppBanner(
+      icon: Icons.bedtime_outlined,
+      message: started
+          ? l10n.walkAlarmPausedUntil(until)
+          : l10n.walkAlarmPausedRange(
+              AlarmFormat.day(l10n, pause.from, now),
+              until,
             ),
-            AppButton.text(label: l10n.walkAlarmPauseStop, onPressed: onStop),
-          ],
-        ),
-      ),
+      actionLabel: l10n.walkAlarmPauseStop,
+      onAction: onStop,
     );
   }
 }

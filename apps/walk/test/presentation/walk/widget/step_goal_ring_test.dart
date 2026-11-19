@@ -63,10 +63,7 @@ void main() {
       tester.element(find.byType(StepGoalRing)),
     ).colorScheme;
 
-    expect(
-      _painter(tester).track,
-      scheme.onPrimaryContainer.withValues(alpha: 0.12),
-    );
+    expect(_painter(tester).track, scheme.onSurface.withValues(alpha: 0.12));
     expect(_painter(tester).color, scheme.primary);
   });
 }

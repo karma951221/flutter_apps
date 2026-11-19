@@ -210,26 +210,53 @@ void main() {
     expect(tester.widget<Text>(find.text(long)).maxLines, isNull);
   });
 
-  testWidgets('⋮ 수정 · 스토리 옮기기 · 휴지통', (tester) async {
+  testWidgets('카드에 ⋮ 는 없고, 길게 누르면 수정 · 스토리 옮기기 · 휴지통 시트', (tester) async {
     await pump(tester, [trip]);
 
+    expect(find.byIcon(Icons.more_vert), findsNothing);
     for (final (label, action) in [
       ('수정', 'edit'),
       ('스토리 옮기기', 'move'),
       ('휴지통으로', 'trash'),
     ]) {
-      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.longPress(find.byType(Card));
       await tester.pumpAndSettle();
+      expect(find.byType(AppSheetScaffold), findsOneWidget);
       await tester.tap(find.text(label));
       await tester.pumpAndSettle();
       expect(log.last, '$action a');
     }
   });
 
-  testWidgets('onAction 이 없으면 ⋮ 를 두지 않는다', (tester) async {
+  testWidgets('휴지통 행은 error 색', (tester) async {
+    await pump(tester, [trip]);
+
+    await tester.longPress(find.byType(Card));
+    await tester.pumpAndSettle();
+    final trash = find.descendant(
+      of: find.byKey(const Key('feed-action-trash')),
+      matching: find.byType(Text),
+    );
+    final theme = Theme.of(tester.element(trash));
+    expect(tester.widget<Text>(trash).style?.color, theme.colorScheme.error);
+  });
+
+  testWidgets('머리의 고치기 아이콘(툴팁 수정)은 바로 수정', (tester) async {
+    await pump(tester, [trip]);
+
+    expect(find.byTooltip('수정'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('feed-edit')));
+    await tester.pumpAndSettle();
+    expect(log.last, 'edit a');
+  });
+
+  testWidgets('onAction 이 없으면 고치기 아이콘 · 길게 누르기 시트를 두지 않는다', (tester) async {
     await pump(tester, [trip], actions: false);
 
-    expect(find.byIcon(Icons.more_vert), findsNothing);
+    expect(find.byKey(const Key('feed-edit')), findsNothing);
+    await tester.longPress(find.byType(Card));
+    await tester.pumpAndSettle();
+    expect(find.byType(AppSheetScaffold), findsNothing);
   });
 
   testWidgets('header 를 첫 칸으로 함께 스크롤한다', (tester) async {

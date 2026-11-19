@@ -197,9 +197,12 @@ class _PointPickerViewState extends State<PointPickerView> {
     final work = suggestions?.work;
     final frequent = suggestions?.frequent ?? const <TransitPoint>[];
     final recent = suggestions?.recent ?? const <TransitPoint>[];
+    // 아래 묶음(자주 간 곳 · 최근)이 있으면 위 묶음에도 머리를 단다.
+    final grouped = frequent.isNotEmpty || recent.isNotEmpty;
     return [
+      if (grouped) AppSectionHeader(l10n.walkTransitMyPlaces),
       AppListTile(
-        leading: const Icon(Icons.my_location),
+        leading: const Icon(Icons.my_location_outlined),
         title: Text(l10n.walkTransitCurrentLocation),
         trailing: _locating ? const _SmallProgress() : null,
         onTap: () => unawaited(_pickCurrentLocation()),
@@ -221,12 +224,12 @@ class _PointPickerViewState extends State<PointPickerView> {
         onSave: () => unawaited(_saveAs(PlaceKind.work)),
       ),
       if (frequent.isNotEmpty) ...[
-        _SectionHeader(l10n.walkTransitFrequent),
+        AppSectionHeader(l10n.walkTransitFrequent),
         for (final p in frequent) _pointTile(Icons.star_outline, p),
       ],
       if (recent.isNotEmpty) ...[
-        _SectionHeader(l10n.walkTransitRecent),
-        for (final p in recent) _pointTile(Icons.history, p),
+        AppSectionHeader(l10n.walkTransitRecent),
+        for (final p in recent) _pointTile(Icons.history_outlined, p),
       ],
     ];
   }
@@ -241,7 +244,7 @@ class _PointPickerViewState extends State<PointPickerView> {
     final l10n = AppLocalizations.of(context);
     final failure = state.stationFailure;
     return [
-      _SectionHeader(l10n.walkTransitResults),
+      AppSectionHeader(l10n.walkTransitResults),
       if (state.searching) const LinearProgressIndicator(),
       if (failure != null)
         TransitFailureView(
@@ -327,31 +330,6 @@ class _SavedPlaceTile extends StatelessWidget {
           point == null || label.isEmpty ? l10n.walkTransitSaveHint : label,
         ),
         onTap: point == null ? onSave : () => onPick(point),
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.md,
-        AppSpacing.xs,
-      ),
-      child: Text(
-        text,
-        style: theme.textTheme.titleSmall?.copyWith(
-          color: theme.colorScheme.primary,
-        ),
       ),
     );
   }

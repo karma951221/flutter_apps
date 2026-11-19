@@ -62,7 +62,7 @@ void main() {
   /// [title] 줄에 선택 표시가 있는가.
   bool isChecked(WidgetTester tester, String title) {
     final row = find.ancestor(of: find.text(title), matching: find.byType(AppListTile));
-    return tester.any(find.descendant(of: row, matching: find.byIcon(Icons.radio_button_checked)));
+    return tester.any(find.descendant(of: row, matching: find.byIcon(Icons.check)));
   }
 
   testWidgets('세 구역: 시스템 기본 · 앱 소리 5줄 · 기기 알람음 목록', (tester) async {
@@ -78,7 +78,7 @@ void main() {
     expect(find.text('Bell'), findsOneWidget);
     expect(find.text('Dawn'), findsOneWidget);
     expect(isChecked(tester, '시스템 기본'), isTrue);
-    expect(find.byIcon(Icons.radio_button_checked), findsOneWidget);
+    expect(find.byIcon(Icons.check), findsOneWidget);
   });
 
   testWidgets('처음 선택 표시: 복사해 둔 기기 소리는 같은 제목의 줄', (tester) async {
@@ -168,7 +168,7 @@ void main() {
 
       expect(find.text('내 파일'), findsOneWidget);
       expect(find.text('파일에서 고르기'), findsOneWidget);
-      expect(find.byIcon(Icons.audio_file), findsOneWidget);
+      expect(find.byIcon(Icons.audio_file_outlined), findsOneWidget);
     });
 
     testWidgets('현재 소리가 파일이면 그 이름 줄이 선택돼 있다', (tester) async {

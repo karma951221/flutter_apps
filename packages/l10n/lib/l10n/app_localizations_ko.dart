@@ -18,6 +18,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get commonRetry => '다시 시도';
 
   @override
+  String get commonShowValue => '보기';
+
+  @override
+  String get commonHideValue => '숨기기';
+
+  @override
   String get commonMoreActions => '더보기';
 
   @override
@@ -1392,6 +1398,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkSettingsStepGoal => '하루 목표';
 
   @override
+  String get walkSettingsStepGoalSection => '목표';
+
+  @override
   String get walkSettingsStepGoalSave => '저장';
 
   @override
@@ -1564,6 +1573,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkSettingsHolidayReminder => '공휴일 미리 알림';
 
   @override
+  String get walkSettingsHolidaySection => '공휴일';
+
+  @override
   String get walkSettingsHolidayReminderDescription =>
       '반복 알람이 공휴일에 울리면 하루 전에 알려요';
 
@@ -1664,6 +1676,12 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkAlarmEmptyDescription => '+ 를 눌러 기상 알람을 추가하세요';
+
+  @override
+  String get walkAlarmLongPressHint => '알람을 길게 누르면 복제 · 건너뛰기 · 삭제할 수 있어요';
+
+  @override
+  String get walkAlarmSoundDefaultSection => '기본';
 
   @override
   String get walkAlarmAdd => '알람 추가';
@@ -2557,6 +2575,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkDiaryEntryMove => '스토리 옮기기';
 
   @override
+  String get walkDiaryEntryActionsHint => '길게 누르면 수정 · 스토리 옮기기 · 휴지통';
+
+  @override
   String walkDiaryEntryMoved(String story) {
     return '$story 스토리로 옮겼어요';
   }
@@ -2708,6 +2729,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkDiarySettingsStorage => '저장 공간';
+
+  @override
+  String get walkDiarySettingsStorageSection => '보관';
 
   @override
   String walkDiarySettingsStorageUsage(String size) {
@@ -3726,6 +3750,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkChatHistoryRename => '이름 바꾸기';
 
   @override
+  String get walkChatHistoryLongPressHint => '대화를 길게 누르면 이름 바꾸기 · 지우기';
+
+  @override
   String get walkChatHistoryRenameHint => '대화 이름';
 
   @override
@@ -3787,6 +3814,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkChatUsageCacheRead => '캐시 읽기 토큰';
+
+  @override
+  String get walkChatUsageTotals => '합계';
 
   @override
   String get walkChatUsageByModel => '모델별';
@@ -4494,6 +4524,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkWorkspaceAttach => '물어보기에 첨부';
+
+  @override
+  String get walkWorkspaceLongPressHint => '파일을 길게 누르면 첨부 · 공유 · 지우기';
 
   @override
   String get walkWorkspaceShare => '공유';
@@ -5309,6 +5342,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get walkTransitWork => '회사';
+
+  @override
+  String get walkTransitMyPlaces => '내 장소';
 
   @override
   String get walkTransitFrequent => '자주 간 곳';

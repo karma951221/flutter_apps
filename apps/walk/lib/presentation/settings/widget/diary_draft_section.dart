@@ -50,7 +50,7 @@ class DiaryDraftSection extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SettingsSectionHeader(l10n.walkDiaryDraftSettingsSection),
+            AppSectionHeader(l10n.walkDiaryDraftSettingsSection),
             AppListTile(
               key: const Key('settings-diary-draft-style'),
               leading: const Icon(Icons.auto_awesome_outlined),
@@ -58,30 +58,23 @@ class DiaryDraftSection extends StatelessWidget {
               trailing: Text(draftStyleName(l10n, state.draftStyle)),
               onTap: () => _pickStyle(context, state.draftStyle),
             ),
-            AppListTile(
+            AppSwitchTile(
               key: const Key('settings-diary-draft-photos'),
               leading: const Icon(Icons.photo_outlined),
               title: Text(l10n.walkDiaryDraftIncludePhotos),
               subtitle: Text(
                 l10n.walkDiaryDraftSettingsIncludePhotosDescription,
               ),
-              trailing: Switch(
-                value: state.draftIncludePhotos,
-                onChanged: cubit.setDraftIncludePhotos,
-              ),
-              onTap: () =>
-                  cubit.setDraftIncludePhotos(!state.draftIncludePhotos),
+              value: state.draftIncludePhotos,
+              onChanged: cubit.setDraftIncludePhotos,
             ),
-            AppListTile(
+            AppSwitchTile(
               key: const Key('settings-diary-story-ai'),
               leading: const Icon(Icons.auto_stories_outlined),
               title: Text(l10n.walkDiaryStoryAiSetting),
               subtitle: Text(l10n.walkDiaryStoryAiSettingDescription),
-              trailing: Switch(
-                value: state.storyAi,
-                onChanged: cubit.setStoryAi,
-              ),
-              onTap: () => cubit.setStoryAi(!state.storyAi),
+              value: state.storyAi,
+              onChanged: cubit.setStoryAi,
             ),
           ],
         );

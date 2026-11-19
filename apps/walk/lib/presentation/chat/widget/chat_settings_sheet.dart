@@ -31,72 +31,59 @@ class ChatSettingsSheet extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final vendorIcon = ChatVendorIcon(model.vendor);
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Text(
-              l10n.walkChatQuickSettings,
-              style: theme.textTheme.titleMedium,
-            ),
+    return AppSheetScaffold(
+      title: l10n.walkChatQuickSettings,
+      children: [
+        AppListTile(
+          key: const Key('chat-settings-model'),
+          enabled: enabled,
+          leading: Badge(
+            key: model.hasNewer ? const Key('chat-settings-model-dot') : null,
+            isLabelVisible: model.hasNewer,
+            child: model.hasNewer
+                ? Semantics(
+                    label: l10n.walkChatModelNewerAvailable,
+                    child: vendorIcon,
+                  )
+                : vendorIcon,
           ),
-          AppListTile(
-            key: const Key('chat-settings-model'),
-            enabled: enabled,
-            leading: Badge(
-              key: model.hasNewer ? const Key('chat-settings-model-dot') : null,
-              isLabelVisible: model.hasNewer,
-              child: model.hasNewer
-                  ? Semantics(
-                      label: l10n.walkChatModelNewerAvailable,
-                      child: vendorIcon,
-                    )
-                  : vendorIcon,
-            ),
-            title: Text(l10n.walkChatModelRowTitle),
-            subtitle: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    model.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+          title: Text(l10n.walkChatModelRowTitle),
+          subtitle: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  model.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                if (model.fastMode)
-                  Icon(Icons.bolt, size: theme.textTheme.bodyMedium?.fontSize),
-              ],
-            ),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: onPickModel,
+              ),
+              if (model.fastMode)
+                Icon(Icons.bolt, size: theme.textTheme.bodyMedium?.fontSize),
+            ],
           ),
-          SwitchListTile(
-            key: const Key('chat-settings-use-records'),
-            secondary: Icon(
-              useRecords ? Icons.auto_stories : Icons.auto_stories_outlined,
-            ),
-            title: Text(l10n.walkChatUseRecordsTitle),
-            subtitle: Text(
-              useRecords
-                  ? l10n.walkChatUseRecordsOnHint
-                  : l10n.walkChatUseRecordsOffHint,
-            ),
-            value: useRecords,
-            onChanged: enabled ? onUseRecordsChanged : null,
+          trailing: const Icon(Icons.chevron_right),
+          onTap: onPickModel,
+        ),
+        AppSwitchTile(
+          switchKey: const Key('chat-settings-use-records'),
+          leading: const Icon(Icons.auto_stories_outlined),
+          title: Text(l10n.walkChatUseRecordsTitle),
+          subtitle: Text(
+            useRecords
+                ? l10n.walkChatUseRecordsOnHint
+                : l10n.walkChatUseRecordsOffHint,
           ),
-          AppListTile(
-            key: const Key('chat-settings-open'),
-            leading: const Icon(Icons.settings_outlined),
-            title: Text(l10n.walkChatSettingsTitle),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: onOpenSettings,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-        ],
-      ),
+          value: useRecords,
+          onChanged: enabled ? onUseRecordsChanged : null,
+        ),
+        AppListTile(
+          key: const Key('chat-settings-open'),
+          leading: const Icon(Icons.settings_outlined),
+          title: Text(l10n.walkChatSettingsTitle),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: onOpenSettings,
+        ),
+      ],
     );
   }
 }

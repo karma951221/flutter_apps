@@ -18,6 +18,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get commonRetry => 'Try again';
 
   @override
+  String get commonShowValue => 'Show';
+
+  @override
+  String get commonHideValue => 'Hide';
+
+  @override
   String get commonMoreActions => 'More';
 
   @override
@@ -1477,6 +1483,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkSettingsStepGoal => 'Daily goal';
 
   @override
+  String get walkSettingsStepGoalSection => 'Goal';
+
+  @override
   String get walkSettingsStepGoalSave => 'Save';
 
   @override
@@ -1651,6 +1660,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkSettingsHolidayReminder => 'Holiday reminder';
 
   @override
+  String get walkSettingsHolidaySection => 'Holidays';
+
+  @override
   String get walkSettingsHolidayReminderDescription =>
       'Notifies you a day before a repeating alarm rings on a holiday';
 
@@ -1763,6 +1775,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkAlarmEmptyDescription => 'Tap + to add a wake-up alarm';
+
+  @override
+  String get walkAlarmLongPressHint =>
+      'Long-press an alarm to duplicate, skip or delete it';
+
+  @override
+  String get walkAlarmSoundDefaultSection => 'Default';
 
   @override
   String get walkAlarmAdd => 'Add alarm';
@@ -2710,6 +2729,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkDiaryEntryMove => 'Move to story';
 
   @override
+  String get walkDiaryEntryActionsHint =>
+      'Long-press to edit, move to a story, or move to trash';
+
+  @override
   String walkDiaryEntryMoved(String story) {
     return 'Moved to $story';
   }
@@ -2881,6 +2904,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkDiarySettingsStorage => 'Storage';
+
+  @override
+  String get walkDiarySettingsStorageSection => 'Retention & storage';
 
   @override
   String walkDiarySettingsStorageUsage(String size) {
@@ -4064,6 +4090,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkChatHistoryRename => 'Rename';
 
   @override
+  String get walkChatHistoryLongPressHint =>
+      'Long-press a chat to rename or delete it';
+
+  @override
   String get walkChatHistoryRenameHint => 'Conversation name';
 
   @override
@@ -4132,6 +4162,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkChatUsageCacheRead => 'Cached input tokens';
+
+  @override
+  String get walkChatUsageTotals => 'Totals';
 
   @override
   String get walkChatUsageByModel => 'By model';
@@ -4899,6 +4932,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkWorkspaceAttach => 'Attach to Ask';
+
+  @override
+  String get walkWorkspaceLongPressHint =>
+      'Long-press a file to attach, share or delete it';
 
   @override
   String get walkWorkspaceShare => 'Share';
@@ -5749,6 +5786,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get walkTransitWork => 'Work';
+
+  @override
+  String get walkTransitMyPlaces => 'My places';
 
   @override
   String get walkTransitFrequent => 'Frequent places';

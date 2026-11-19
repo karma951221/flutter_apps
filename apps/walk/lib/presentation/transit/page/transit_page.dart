@@ -26,7 +26,7 @@ import 'transit_path_detail_page.dart';
 class TransitPage extends StatelessWidget {
   const TransitPage({super.key});
 
-  /// 길찾기 키 설정 화면을 연다 — 도구 앱바 ⋮ "길찾기 키 설정"(`walkTransitMenuKeySettings`)이 부른다.
+  /// 길찾기 설정(키) 화면을 연다 — 도구 앱바 ⋮ "길찾기 설정"(`walkTransitSettingsTitle`)이 부른다.
   static Future<void> openKeySettings(BuildContext context) =>
       openTransitKeySettings(context);
 
@@ -138,7 +138,6 @@ class _TransitViewState extends State<TransitView> {
               onSelected: (point) => unawaited(_cubit.fillEmpty(point)),
             ),
             const SizedBox(height: AppSpacing.sm),
-            const Divider(height: 1),
             Expanded(child: _body(state)),
           ],
         ),
@@ -182,9 +181,6 @@ class _TransitViewState extends State<TransitView> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final minutes = widget.clock.now().difference(result.fetchedAt).inMinutes;
-    final muted = theme.textTheme.bodySmall?.copyWith(
-      color: theme.colorScheme.onSurfaceVariant,
-    );
     return ListView(
       children: [
         Padding(
@@ -200,21 +196,22 @@ class _TransitViewState extends State<TransitView> {
                 ),
               ),
               AppButton.text(
-                // 앱 테마 버튼은 폭을 가득 채운다(`Size.fromHeight`) — 줄 끝이라 최소 크기만 푼다.
-                style: const ButtonStyle(
-                  minimumSize: WidgetStatePropertyAll(Size.zero),
-                ),
+                compact: true,
                 label: l10n.walkTransitRefresh,
                 onPressed: _cubit.refresh,
               ),
             ],
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-          child: Text(l10n.walkTransitNote, style: muted),
+        AppFootnote(
+          l10n.walkTransitNote,
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            0,
+            AppSpacing.md,
+            AppSpacing.xs,
+          ),
         ),
-        const SizedBox(height: AppSpacing.xs),
         for (var i = 0; i < result.paths.length; i++)
           TransitPathTile(
             path: result.paths[i],

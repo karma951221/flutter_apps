@@ -51,7 +51,6 @@ class ChatKeyDialog extends StatefulWidget {
 
 class _ChatKeyDialogState extends State<ChatKeyDialog> {
   final _controller = TextEditingController();
-  bool _obscure = true;
 
   /// 확인 호출 중인가 — [저장] 로딩.
   bool _checking = false;
@@ -202,35 +201,25 @@ class _ChatKeyDialogState extends State<ChatKeyDialog> {
             chatVendorName(l10n, widget.vendor),
           ),
         ),
-        content: TextField(
+        content: ObscuredKeyField(
           key: const Key('chat-key-input'),
+          toggleKey: const Key('chat-key-visibility'),
           controller: _controller,
           enabled: !_busy,
-          obscureText: _obscure,
           autofocus: true,
-          autocorrect: false,
-          enableSuggestions: false,
-          decoration: InputDecoration(
-            hintText: '${chatKeyPrefixHint(widget.vendor)}…',
-            errorText: _saveError ?? problem,
-            suffixIcon: IconButton(
-              key: const Key('chat-key-visibility'),
-              tooltip: _obscure ? l10n.walkChatKeyShow : l10n.walkChatKeyHide,
-              icon: Icon(
-                _obscure
-                    ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined,
-              ),
-              onPressed: () => setState(() => _obscure = !_obscure),
-            ),
-          ),
+          hintText: '${chatKeyPrefixHint(widget.vendor)}…',
+          errorText: _saveError ?? problem,
+          showTooltip: l10n.walkChatKeyShow,
+          hideTooltip: l10n.walkChatKeyHide,
         ),
         actions: [
           AppButton.text(
+            compact: true,
             label: l10n.commonCancel,
             onPressed: _busy ? null : () => Navigator.of(context).pop(),
           ),
           AppButton.primary(
+            compact: true,
             key: const Key('chat-key-save'),
             label: l10n.walkChatSettingsSave,
             isLoading: _checking,

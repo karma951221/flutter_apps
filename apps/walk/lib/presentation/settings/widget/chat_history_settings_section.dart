@@ -134,7 +134,7 @@ class _ChatHistorySettingsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
+    final error = Theme.of(context).colorScheme.error;
     return BlocBuilder<ChatHistorySettingsCubit, ChatHistorySettingsState>(
       builder: (context, state) {
         final count = state.conversationCount;
@@ -142,7 +142,7 @@ class _ChatHistorySettingsView extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SettingsSectionHeader(l10n.walkChatHistorySettingsHeader),
+            AppSectionHeader(l10n.walkChatHistorySettingsHeader),
             AppListTile(
               key: const Key('chat-history-retention'),
               leading: const Icon(Icons.auto_delete_outlined),
@@ -150,20 +150,7 @@ class _ChatHistorySettingsView extends StatelessWidget {
               trailing: Text(retentionLabel(l10n, state.retention)),
               onTap: () => _pickRetention(context, state.retention),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.xs,
-                AppSpacing.md,
-                AppSpacing.xs,
-              ),
-              child: Text(
-                l10n.walkChatHistoryRetentionNote,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
+            AppFootnote(l10n.walkChatHistoryRetentionNote),
             AppListTile(
               key: const Key('chat-history-usage'),
               leading: const Icon(Icons.bar_chart_outlined),
@@ -175,8 +162,14 @@ class _ChatHistorySettingsView extends StatelessWidget {
             ),
             AppListTile(
               key: const Key('chat-history-delete-all'),
-              leading: const Icon(Icons.delete_sweep_outlined),
-              title: Text(l10n.walkChatHistoryDeleteAll),
+              leading: Icon(
+                Icons.delete_sweep_outlined,
+                color: count > 0 ? error : null,
+              ),
+              title: Text(
+                l10n.walkChatHistoryDeleteAll,
+                style: count > 0 ? TextStyle(color: error) : null,
+              ),
               enabled: count > 0,
               onTap: count > 0 ? () => _deleteAll(context, count) : null,
             ),
@@ -189,8 +182,14 @@ class _ChatHistorySettingsView extends StatelessWidget {
             ),
             AppListTile(
               key: const Key('chat-history-wiki-delete-all'),
-              leading: const Icon(Icons.delete_sweep_outlined),
-              title: Text(l10n.walkChatWikiDeleteAll),
+              leading: Icon(
+                Icons.delete_sweep_outlined,
+                color: wikiCount > 0 ? error : null,
+              ),
+              title: Text(
+                l10n.walkChatWikiDeleteAll,
+                style: wikiCount > 0 ? TextStyle(color: error) : null,
+              ),
               enabled: wikiCount > 0,
               onTap: wikiCount > 0
                   ? () => _deleteAllWiki(context, wikiCount)

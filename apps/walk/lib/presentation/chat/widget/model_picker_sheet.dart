@@ -26,10 +26,8 @@ class ModelPickerSheet extends StatelessWidget {
     try {
       await cubit.load();
       if (!context.mounted) return cubit.state.changed;
-      final picked = await showModalBottomSheet<bool>(
+      final picked = await showAppSheet<bool>(
         context: context,
-        useSafeArea: true,
-        isScrollControlled: true,
         builder: (_) =>
             BlocProvider.value(value: cubit, child: const ModelPickerSheet._()),
       );
@@ -48,34 +46,18 @@ class ModelPickerSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     return BlocBuilder<ModelPickerCubit, ModelPickerState>(
       builder: (context, state) {
         final factor = state.fastModeFactor;
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        return AppSheetScaffold(
+          title: l10n.walkChatModelPickerTitle,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Text(
-                l10n.walkChatModelPickerTitle,
-                style: theme.textTheme.titleMedium,
-              ),
-            ),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  for (final row in state.rows)
-                    _ModelRow(row: row, onTap: () => _select(context, row.id)),
-                ],
-              ),
-            ),
+            for (final row in state.rows)
+              _ModelRow(row: row, onTap: () => _select(context, row.id)),
             if (state.fastModeAvailable && factor != null)
-              SwitchListTile(
-                key: const Key('model-fast-mode'),
-                secondary: const Icon(Icons.bolt),
+              AppSwitchTile(
+                switchKey: const Key('model-fast-mode'),
+                leading: const Icon(Icons.bolt),
                 title: Text(l10n.walkChatFastMode),
                 subtitle: Text(
                   l10n.walkChatFastModeSubtitle(
@@ -135,20 +117,18 @@ class _ModelRow extends StatelessWidget {
       if (created != null) DateFormat.yMMMd(l10n.localeName).format(created),
       if (row.noImages) l10n.walkChatModelNoImages,
     ].join(' · ');
-    return AppListTile(
+    return AppSelectTile(
       key: Key('model-row-${row.id}'),
-      title: Text(row.label),
-      subtitle: subtitle.isEmpty ? null : Text(subtitle),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+      selected: row.inUse,
+      title: Row(
         spacing: AppSpacing.xs,
         children: [
+          Flexible(child: Text(row.label)),
           if (row.recommended) _Badge(l10n.walkChatModelRecommended),
           if (row.isNew) _Badge(l10n.walkChatModelNew),
-          if (row.inUse)
-            Icon(Icons.check, semanticLabel: l10n.walkChatModelInUse),
         ],
       ),
+      subtitle: subtitle.isEmpty ? null : Text(subtitle),
       onTap: onTap,
     );
   }

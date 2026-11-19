@@ -86,10 +86,8 @@ Future<void> _suggestMove(
     story.endedAt ?? now,
   );
   if (candidates.isEmpty || !context.mounted) return;
-  final ids = await showModalBottomSheet<List<String>>(
+  final ids = await showAppSheet<List<String>>(
     context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
     builder: (_) => _MoveSheet(entries: candidates, now: now),
   );
   if (ids == null || ids.isEmpty || !context.mounted) return;
@@ -177,17 +175,12 @@ class _AllStoriesPageState extends State<AllStoriesPage> {
                 message: l10n.walkDiaryLoadError,
               );
             }
-            if (state.loading) return const SizedBox.shrink();
+            if (state.loading) return const AppLoading(delayed: true);
             return BlocBuilder<StoryCoversCubit, Map<String, StoryCover>>(
               builder: (context, covers) {
                 final files = coverFiles(covers);
                 return ListView(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.md,
-                    0,
-                    AppSpacing.md,
-                    AppSpacing.xl,
-                  ),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.xl),
                   children: [
                     ..._section(
                       context,
@@ -212,14 +205,13 @@ class _AllStoriesPageState extends State<AllStoriesPage> {
     );
   }
 
-  /// 구역 제목 + 2열 카드 줄들.
+  /// 구역 머리 + 2열 카드 줄들.
   List<Widget> _section(
     BuildContext context,
     String title,
     List<Story> stories,
     Map<String, File> files,
   ) {
-    final theme = Theme.of(context);
     Widget card(Story s) => _StoryCard(
       key: ValueKey('story-card-${s.id}'),
       story: s,
@@ -229,21 +221,15 @@ class _AllStoriesPageState extends State<AllStoriesPage> {
       onTap: () => openStoryPage(context, s.id),
     );
     return [
-      Padding(
-        padding: const EdgeInsets.only(
-          top: AppSpacing.lg,
-          bottom: AppSpacing.sm,
-        ),
-        child: Text(
-          title,
-          style: theme.textTheme.titleSmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ),
+      AppSectionHeader(title),
       for (var i = 0; i < stories.length; i += 2)
         Padding(
-          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.xs,
+            AppSpacing.md,
+            AppSpacing.sm,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -363,73 +349,38 @@ class _MoveSheetState extends State<_MoveSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Text(
-              l10n.walkDiaryStoryMoveTitle,
-              style: theme.textTheme.titleLarge,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Flexible(
-            child: ListView(
-              shrinkWrap: true,
-              children: [
+    return AppSheetScaffold.draggable(
+      title: l10n.walkDiaryStoryMoveTitle,
+      primaryAction: AppButton.primary(
+        label: l10n.walkDiaryStoryMoveConfirm(_selected.length),
+        onPressed: _selected.isEmpty
+            ? null
+            : () => Navigator.of(context).pop([
                 for (final e in widget.entries)
-                  AppListTile(
-                    leading: Checkbox(
-                      value: _selected.contains(e.id),
-                      onChanged: (_) => _toggle(e.id),
-                    ),
-                    title: Text(
-                      e.body,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: Text(
-                      l10n.walkDiaryEntryDateTime(
-                        DiaryFormat.dateWithWeekday(
-                          l10n,
-                          e.occurredAt,
-                          widget.now,
-                        ),
-                        DiaryFormat.time(context, e.occurredAt),
-                      ),
-                    ),
-                    onTap: () => _toggle(e.id),
-                  ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.sm,
-              AppSpacing.md,
-              0,
-            ),
-            child: AppButton.primary(
-              label: l10n.walkDiaryStoryMoveConfirm(_selected.length),
-              onPressed: _selected.isEmpty
-                  ? null
-                  : () => Navigator.of(context).pop([
-                      for (final e in widget.entries)
-                        if (_selected.contains(e.id)) e.id,
-                    ]),
-            ),
-          ),
-          AppButton.text(
-            label: l10n.walkDiaryStoryMoveSkip,
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
+                  if (_selected.contains(e.id)) e.id,
+              ]),
       ),
+      secondaryAction: AppButton.text(
+        label: l10n.walkDiaryStoryMoveSkip,
+        onPressed: () => Navigator.of(context).pop(),
+      ),
+      children: [
+        for (final e in widget.entries)
+          AppListTile(
+            leading: Checkbox(
+              value: _selected.contains(e.id),
+              onChanged: (_) => _toggle(e.id),
+            ),
+            title: Text(e.body, maxLines: 1, overflow: TextOverflow.ellipsis),
+            subtitle: Text(
+              l10n.walkDiaryEntryDateTime(
+                DiaryFormat.dateWithWeekday(l10n, e.occurredAt, widget.now),
+                DiaryFormat.time(context, e.occurredAt),
+              ),
+            ),
+            onTap: () => _toggle(e.id),
+          ),
+      ],
     );
   }
 }

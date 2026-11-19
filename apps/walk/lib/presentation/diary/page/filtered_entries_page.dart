@@ -77,7 +77,7 @@ class _FilteredEntriesPageState extends State<FilteredEntriesPage> {
         message: l10n.walkDiaryLoadError,
       );
     }
-    if (state.loading) return const SizedBox.shrink();
+    if (state.loading) return const AppLoading(delayed: true);
     if (state.entries.isEmpty) {
       return AppPlaceholder(
         icon: Icons.menu_book_outlined,

@@ -105,12 +105,7 @@ void main() {
   }
 
   Future<void> choose(WidgetTester tester, String row, String item) async {
-    await tester.tap(
-      find.descendant(
-        of: find.widgetWithText(AppListTile, row),
-        matching: find.byIcon(Icons.more_vert),
-      ),
-    );
+    await tester.longPress(find.widgetWithText(AppListTile, row));
     await tester.pumpAndSettle();
     await tester.tap(find.text(item).last);
     await tester.pumpAndSettle();
@@ -180,6 +175,36 @@ void main() {
     await pump(tester);
 
     expect(find.textContaining('오늘 삭제돼요'), findsOneWidget);
+  });
+
+  testWidgets('행에 ⋮ 가 없고, 누르거나 길게 누르면 그 기록 제목의 동작 시트', (tester) async {
+    await pump(tester);
+
+    expect(find.byIcon(Icons.more_vert), findsNothing);
+
+    await tester.tap(find.widgetWithText(AppListTile, '어제 글'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AppSheetScaffold), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AppSheetScaffold),
+        matching: find.text('어제 글'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('trash-action-restore')), findsOneWidget);
+    final purge = find.descendant(
+      of: find.byKey(const Key('trash-action-purge')),
+      matching: find.byType(Text),
+    );
+    final theme = Theme.of(tester.element(purge));
+    expect(tester.widget<Text>(purge).style?.color, theme.colorScheme.error);
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
+
+    await tester.longPress(find.widgetWithText(AppListTile, '어제 글'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AppSheetScaffold), findsOneWidget);
   });
 
   testWidgets('복원은 확인 없이 하고 알린다', (tester) async {

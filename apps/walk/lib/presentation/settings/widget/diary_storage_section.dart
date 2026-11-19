@@ -42,7 +42,6 @@ class DiaryStorageSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     // 일기가 잠긴 동안 PIN 없이 휴지통 기한을 바꾸지 못한다(보관 기간을 줄이면 다음 정리에서
     // 영구 삭제된다).
     final diaryUnlocked = context.select<DiaryLockCubit, bool>(
@@ -54,9 +53,10 @@ class DiaryStorageSection extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            AppSectionHeader(l10n.walkDiarySettingsStorageSection),
             AppListTile(
               key: const Key('settings-diary-retention'),
-              leading: const Icon(Icons.delete_outline),
+              leading: const Icon(Icons.auto_delete_outlined),
               title: Text(l10n.walkDiarySettingsRetention),
               trailing: Text(_retentionLabel(l10n, state.retention)),
               enabled: diaryUnlocked,
@@ -70,20 +70,7 @@ class DiaryStorageSection extends StatelessWidget {
               title: Text(l10n.walkDiarySettingsStorage),
               subtitle: usage == null ? null : _usageText(l10n, usage),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.xs,
-                AppSpacing.md,
-                AppSpacing.xs,
-              ),
-              child: Text(
-                l10n.walkDiarySettingsLocalOnly,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
+            AppFootnote(l10n.walkDiarySettingsLocalOnly),
           ],
         );
       },

@@ -49,12 +49,7 @@ class StoryFormSheet extends StatefulWidget {
   );
 
   static Future<T?> _show<T>(BuildContext context, Widget sheet) =>
-      showModalBottomSheet<T>(
-        context: context,
-        showDragHandle: true,
-        isScrollControlled: true,
-        builder: (_) => sheet,
-      );
+      showAppSheet<T>(context: context, builder: (_) => sheet);
 
   /// [day] 의 끝(23:59:59.999). 지금보다 늦으면 지금 — 앞으로의 종료일은 두지 않는다.
   static DateTime endOfDay(DateTime day, DateTime now) {
@@ -129,78 +124,62 @@ class _StoryFormSheetState extends State<StoryFormSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final now = widget.now;
     final end = _end;
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.viewInsetsOf(context).bottom + AppSpacing.md,
+    return AppSheetScaffold(
+      title: widget.withDates
+          ? l10n.walkDiaryStoryNew
+          : l10n.walkDiaryStoryRename,
+      primaryAction: AppButton.primary(
+        label: widget.withDates
+            ? l10n.walkDiaryStoryCreate
+            : l10n.walkDiaryStorySave,
+        onPressed: _valid ? _submit : null,
       ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Text(
-                widget.withDates
-                    ? l10n.walkDiaryStoryNew
-                    : l10n.walkDiaryStoryRename,
-                style: theme.textTheme.titleLarge,
-              ),
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            AppSpacing.sm,
+          ),
+          child: TextField(
+            controller: _title,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              labelText: l10n.walkDiaryStoryTitleLabel,
             ),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: TextField(
-                controller: _title,
-                autofocus: true,
-                textInputAction: TextInputAction.done,
-                decoration: InputDecoration(
-                  labelText: l10n.walkDiaryStoryTitleLabel,
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-            ),
-            if (widget.withDates && now != null) ...[
-              AppListTile(
-                leading: const Icon(Icons.event_outlined),
-                title: Text(
-                  l10n.walkDiaryStoryStart(DiaryFormat.date(l10n, _start, now)),
-                ),
-                onTap: _pickStart,
-              ),
-              AppListTile(
-                leading: const Icon(Icons.event_available_outlined),
-                title: Text(
-                  end == null
-                      ? l10n.walkDiaryStoryNoEnd
-                      : l10n.walkDiaryStoryEnd(
-                          DiaryFormat.date(l10n, end, now),
-                        ),
-                ),
-                trailing: end == null
-                    ? null
-                    : IconButton(
-                        icon: const Icon(Icons.close),
-                        tooltip: l10n.walkDiaryStoryClearEnd,
-                        onPressed: () => setState(() => _end = null),
-                      ),
-                onTap: _pickEnd,
-              ),
-            ],
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: AppButton.primary(
-                label: widget.withDates
-                    ? l10n.walkDiaryStoryCreate
-                    : l10n.walkDiaryStorySave,
-                onPressed: _valid ? _submit : null,
-              ),
-            ),
-          ],
+            onChanged: (_) => setState(() {}),
+          ),
         ),
-      ),
+        if (widget.withDates && now != null) ...[
+          AppListTile(
+            leading: const Icon(Icons.event_outlined),
+            title: Text(
+              l10n.walkDiaryStoryStart(DiaryFormat.date(l10n, _start, now)),
+            ),
+            onTap: _pickStart,
+          ),
+          AppListTile(
+            leading: const Icon(Icons.event_available_outlined),
+            title: Text(
+              end == null
+                  ? l10n.walkDiaryStoryNoEnd
+                  : l10n.walkDiaryStoryEnd(DiaryFormat.date(l10n, end, now)),
+            ),
+            trailing: end == null
+                ? null
+                : IconButton(
+                    icon: const Icon(Icons.close),
+                    tooltip: l10n.walkDiaryStoryClearEnd,
+                    onPressed: () => setState(() => _end = null),
+                  ),
+            onTap: _pickEnd,
+          ),
+        ],
+      ],
     );
   }
 }

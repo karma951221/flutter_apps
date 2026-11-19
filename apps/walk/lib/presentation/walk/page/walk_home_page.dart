@@ -12,7 +12,6 @@ import '../../../domain/walk/entity/goal_progress.dart';
 import '../../../domain/walk/entity/health_access.dart';
 import '../../../domain/walk/entity/period_kind.dart';
 import '../../../domain/walk/usecase/walk_use_case.dart';
-import '../../theme/walk_motion.dart';
 import '../cubit/health_access_cubit.dart';
 import '../cubit/health_access_state.dart';
 import '../cubit/period_activity_cubit.dart';
@@ -47,6 +46,7 @@ class _WalkHomePageState extends State<WalkHomePage> {
   late final _month = PeriodActivityCubit(_useCase, PeriodKind.month);
   late final AppLifecycleListener _lifecycle;
   PeriodKind _kind = PeriodKind.week;
+  _WalkView _view = _WalkView.today;
 
   /// 아직 연출하지 않은 축하의 날짜(자정). 판정이 참이면 그날로 두고, 카드가 연출하면 비운다 —
   /// 카드가 다시 만들어져도(재시도 · 스크롤) 되풀이하지 않고, 날이 바뀌면 다시 켤 수 있다.
@@ -150,7 +150,7 @@ class _WalkHomePageState extends State<WalkHomePage> {
               current.access == HealthAccess.granted,
           listener: (_, _) => _load(),
           builder: (context, state) => switch (state.access) {
-            null => const Center(child: CircularProgressIndicator()),
+            null => const AppLoading(),
             HealthAccess.notInstalled => Center(
               child: AppPlaceholder(
                 icon: Icons.health_and_safety_outlined,
@@ -173,7 +173,7 @@ class _WalkHomePageState extends State<WalkHomePage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   AppPlaceholder(
-                    icon: Icons.directions_walk,
+                    icon: Icons.directions_walk_outlined,
                     message: l10n.walkPermissionNeeded,
                     description: l10n.walkPermissionDescription,
                     actionLabel: l10n.walkGrantPermission,
@@ -204,21 +204,44 @@ class _WalkHomePageState extends State<WalkHomePage> {
         _judgeCelebration(activity, goal);
       }
     },
-    child: DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          TabBar(
-            tabs: [
-              Tab(text: l10n.walkToday),
-              Tab(text: l10n.walkTabHistory),
-            ],
+    child: Column(
+      children: [
+        // 도구 탭이 이미 상단 탭바를 그려 두 줄로 겹치지 않게 안쪽 전환은 세그먼트로 한다.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.md,
+            AppSpacing.md,
+            0,
           ),
-          Expanded(
-            child: TabBarView(children: [_todayTab(l10n), _historyTab(l10n)]),
+          child: SizedBox(
+            width: double.infinity,
+            child: SegmentedButton<_WalkView>(
+              key: const Key('walk-view-switch'),
+              segments: [
+                ButtonSegment(
+                  value: _WalkView.today,
+                  label: Text(l10n.walkToday),
+                ),
+                ButtonSegment(
+                  value: _WalkView.history,
+                  label: Text(l10n.walkTabHistory),
+                ),
+              ],
+              selected: {_view},
+              showSelectedIcon: false,
+              onSelectionChanged: (selected) =>
+                  setState(() => _view = selected.first),
+            ),
           ),
-        ],
-      ),
+        ),
+        Expanded(
+          child: IndexedStack(
+            index: _view.index,
+            children: [_todayTab(l10n), _historyTab(l10n)],
+          ),
+        ),
+      ],
     ),
   );
 
@@ -234,6 +257,7 @@ class _WalkHomePageState extends State<WalkHomePage> {
               height: AppSpacing.xl * 9,
             ),
             TodayActivityFailure() => AppPlaceholder(
+              icon: Icons.error_outline,
               message: l10n.walkLoadFailed,
               actionLabel: l10n.commonRetry,
               onAction: _today.load,
@@ -276,7 +300,7 @@ class _WalkHomePageState extends State<WalkHomePage> {
         ),
         const SizedBox(height: AppSpacing.sm),
         AnimatedSwitcher(
-          duration: WalkMotion.off(context) ? Duration.zero : WalkMotion.medium,
+          duration: !AppMotion.enabled(context) ? Duration.zero : AppMotion.long,
           transitionBuilder: (child, animation) => FadeTransition(
             opacity: animation,
             child: SlideTransition(
@@ -299,3 +323,6 @@ class _WalkHomePageState extends State<WalkHomePage> {
     ),
   );
 }
+
+/// 걷기 화면 안쪽 전환 — 오늘(목표 링) · 기록(주간 · 월간 그래프).
+enum _WalkView { today, history }

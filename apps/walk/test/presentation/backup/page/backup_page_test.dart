@@ -135,6 +135,13 @@ void main() {
     expect(enabled(tester, restoreRow), isFalse);
     expect(enabled(tester, undoRow), isFalse);
     expect(find.text('일기 잠금을 풀면 백업 · 복원할 수 있어요'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('backup-locked')),
+        matching: find.text('일기 잠금을 풀면 백업 · 복원할 수 있어요'),
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byKey(restoreRow));
     await settle(tester);

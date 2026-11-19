@@ -107,13 +107,21 @@ void main() {
       ),
     );
     await tester.tap(find.text('home'));
-    await tester.pumpAndSettle();
+    // 기록이 오기 전엔 로딩 표시가 돌아 끝까지 흘리지 않는다 — 화면 전환만 마친다.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
   }
 
   Future<void> emit(WidgetTester tester, List<DiaryEntry> entries) async {
     feed.add(entries);
     await tester.pumpAndSettle();
   }
+
+  testWidgets('기록이 오기 전엔 빈칸 대신 공통 로딩 표시', (tester) async {
+    await pump(tester, const EntryFilter.tag('제주'));
+
+    expect(find.byType(AppLoading), findsOneWidget);
+  });
 
   testWidgets('태그: 제목 · 개수 · 그리드', (tester) async {
     await pump(tester, const EntryFilter.tag('제주'));

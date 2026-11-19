@@ -34,12 +34,12 @@ class TodayGoalCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final locale = l10n.localeName;
     final theme = Theme.of(context);
-    final onCard = theme.colorScheme.onPrimaryContainer;
+    final onCard = theme.colorScheme.onSurface;
     final progress = GoalProgress(steps: activity.steps, goal: goal);
     String steps(int n) => l10n.walkStepsCount(WalkFormat.steps(locale, n));
 
+    // 카드 모양 · 바탕은 walk 테마가 정한다.
     return Card(
-      color: theme.colorScheme.primaryContainer,
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -110,8 +110,8 @@ class _CountUp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => TweenAnimationBuilder<int>(
     tween: IntTween(begin: 0, end: steps),
-    duration: WalkMotion.off(context) ? Duration.zero : WalkMotion.long,
-    curve: WalkMotion.emphasized,
+    duration: !AppMotion.enabled(context) ? Duration.zero : WalkMotion.long,
+    curve: AppMotion.standard,
     builder: (context, value, _) =>
         Text(format(value), key: const Key('walk-today-steps'), style: style),
   );
@@ -123,17 +123,17 @@ class _ReachedBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = theme.colorScheme.onPrimaryContainer;
+    final color = theme.colorScheme.primary;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration: WalkMotion.off(context) ? Duration.zero : WalkMotion.medium,
+      duration: !AppMotion.enabled(context) ? Duration.zero : AppMotion.long,
       curve: Curves.easeOutBack,
       builder: (context, scale, child) =>
           Transform.scale(scale: scale, child: child),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.check_circle, color: color),
+          Icon(Icons.check_circle_outline, color: color),
           const SizedBox(width: AppSpacing.xs),
           Text(
             AppLocalizations.of(context).walkGoalReached,

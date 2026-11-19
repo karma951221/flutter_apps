@@ -24,6 +24,7 @@ class AppSnackBar {
     AppSnackBarType type = AppSnackBarType.info,
     String? actionLabel,
     VoidCallback? onAction,
+    Duration? duration,
   }) {
     final colors = AppStatusColors.of(context).forStatus(type);
 
@@ -31,6 +32,8 @@ class AppSnackBar {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
+          // 안내가 유효한 시간이 정해져 있으면(예: '한 번 더 누르면 종료') 그만큼만 보인다.
+          duration: duration ?? const Duration(milliseconds: 4000),
           backgroundColor: colors.background,
           dismissDirection: DismissDirection.horizontal,
           showCloseIcon: true,
@@ -63,11 +66,13 @@ class AppSnackBar {
     required String message,
     String? actionLabel,
     VoidCallback? onAction,
+    Duration? duration,
   }) => show(
     context,
     message: message,
     actionLabel: actionLabel,
     onAction: onAction,
+    duration: duration,
   );
 
   static void success(

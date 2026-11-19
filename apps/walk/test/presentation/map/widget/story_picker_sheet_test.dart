@@ -12,6 +12,7 @@ import 'package:walk/domain/diary/entity/story.dart';
 import 'package:walk/domain/diary/media/media_store.dart';
 import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/presentation/diary/widget/story_avatar.dart';
+import 'package:walk/presentation/diary/widget/story_row.dart';
 import 'package:walk/presentation/map/widget/story_picker_sheet.dart';
 
 import '../../../support/diary_fixtures.dart';
@@ -65,7 +66,8 @@ void main() {
     ).thenAnswer((inv) => File('/fake/${inv.positionalArguments.single}'));
     getIt
       ..registerSingleton<DiaryRepository>(repo)
-      ..registerSingleton<MediaStore>(store);
+      ..registerSingleton<MediaStore>(store)
+      ..registerSingleton<Clock>(MutableClock(DateTime(2026, 11, 1)));
   });
   tearDown(() => getIt.reset());
 
@@ -95,12 +97,39 @@ void main() {
       of: jeju,
       matching: find.byType(StoryCoverCircle),
     );
-    expect(tester.widget<StoryCoverCircle>(covers).image?.path, '/fake/media/m-a.jpg');
+    expect(
+      tester.widget<StoryCoverCircle>(covers).image?.path,
+      '/fake/media/m-a.jpg',
+    );
     expect(find.textContaining('기록 2개'), findsOneWidget);
     expect(find.textContaining('기록 1개'), findsOneWidget);
 
     await tester.tap(find.text('지난 여행'));
     await tester.pumpAndSettle();
     expect(picked?.id, 'old');
+  });
+
+  testWidgets('행은 StoryRow — 기간 끝이 진행 중 · 날짜로 보인다', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => showStoryPicker(context),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(StoryRow), findsNWidgets(2));
+    expect(find.textContaining('진행 중'), findsOneWidget);
   });
 }

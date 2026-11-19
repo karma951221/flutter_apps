@@ -506,7 +506,8 @@ void main() {
     expect(top('알람음'), lessThan(top('무음 · 진동 모드에선 진동만')));
     expect(top('무음 · 진동 모드에선 진동만'), lessThan(top('저장')));
     expect(find.text('진동'), findsNothing);
-    expect(find.byType(Switch), findsNothing);
+    // 스위치는 무음 · 진동 줄 하나뿐 — 진동 켜기 줄은 없다.
+    expect(find.byType(Switch), findsOneWidget);
   });
 
   testWidgets('울림 설정은 체크 줄 아래 · 저장 위에 접혀 있고, 요약은 알람 값', (tester) async {
@@ -565,10 +566,11 @@ void main() {
     answerSaveWithId();
     await pump(tester, _newRepeat);
 
-    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
+    Switch silent() => tester.widget<Switch>(find.byKey(const Key('alarm-silent-when-muted')));
+    expect(silent().value, isFalse);
     await tester.tap(find.text('무음 · 진동 모드에선 진동만'));
     await tester.pump();
-    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
+    expect(silent().value, isTrue);
 
     await tester.tap(find.text('저장'));
     await tester.pumpAndSettle();

@@ -99,21 +99,13 @@ class _LockSetupViewState extends State<LockSetupView> {
     return BlocBuilder<LockSetupCubit, LockSetupState>(
       bloc: cubit,
       builder: (context, state) => switch (state) {
-        SetupLoading() ||
-        SetupDone() => const Center(child: CircularProgressIndicator()),
+        SetupLoading() || SetupDone() => const AppLoading(),
         SetupNeedsScreenLock() => Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AppPlaceholder(
-                icon: Icons.lock_outline,
-                message: l10n.walkLockNeedsScreenLock,
-              ),
-              AppButton.primary(
-                label: l10n.walkLockOpenScreenLockSettings,
-                onPressed: () => getIt<ScreenLockSettings>().open(),
-              ),
-            ],
+          child: AppPlaceholder(
+            icon: Icons.lock_outline,
+            message: l10n.walkLockNeedsScreenLock,
+            actionLabel: l10n.walkLockOpenScreenLockSettings,
+            onAction: () => getIt<ScreenLockSettings>().open(),
           ),
         ),
         SetupVerifying(
@@ -140,15 +132,21 @@ class _LockSetupViewState extends State<LockSetupView> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              for (final method in LockMethod.values) ...[
-                AppButton.secondary(
-                  label: method == current
-                      ? l10n.walkLockSetupInUse(_methodLabel(l10n, method))
-                      : _methodLabel(l10n, method),
-                  onPressed: () => cubit.choose(method),
+              for (final method in LockMethod.values)
+                AppSelectTile(
+                  key: Key('lock-method-${method.name}'),
+                  leading: Icon(switch (method) {
+                    LockMethod.pin => Icons.pin_outlined,
+                    LockMethod.pattern => Icons.pattern,
+                  }),
+                  title: Text(
+                    method == current
+                        ? l10n.walkLockSetupInUse(_methodLabel(l10n, method))
+                        : _methodLabel(l10n, method),
+                  ),
+                  selected: method == current,
+                  onTap: () => cubit.choose(method),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-              ],
             ],
           ),
           footer: canTurnOff

@@ -14,11 +14,8 @@ import '../../../../domain/diary/repository/diary_repository.dart';
 Future<String?> showDiaryEntryPicker(
   BuildContext context, {
   required List<String> suggested,
-}) => showModalBottomSheet<String>(
+}) => showAppSheet<String>(
   context: context,
-  useSafeArea: true,
-  isScrollControlled: true,
-  showDragHandle: true,
   builder: (_) => _DiaryEntryPicker(suggested: suggested),
 );
 
@@ -103,72 +100,54 @@ class _DiaryEntryPickerState extends State<_DiaryEntryPicker> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final locale = l10n.localeName;
-    final header = theme.textTheme.titleSmall;
     final dayEntries = _dayEntries;
-    return FractionallySizedBox(
-      heightFactor: 0.75,
-      child: ListView(
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: Text(
-              l10n.walkChatWikiPickEntryTitle,
-              style: theme.textTheme.titleMedium,
-            ),
+    return AppSheetScaffold.draggable(
+      title: l10n.walkChatWikiPickEntryTitle,
+      initialSize: 0.75,
+      children: [
+        FutureBuilder<List<DiaryEntry>>(
+          future: _suggested,
+          builder: (context, snapshot) {
+            final entries = snapshot.data ?? const <DiaryEntry>[];
+            if (entries.isEmpty) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AppSectionHeader(l10n.walkChatWikiPickEntrySuggested),
+                for (final e in entries) _row(e, locale),
+              ],
+            );
+          },
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
           ),
-          FutureBuilder<List<DiaryEntry>>(
-            future: _suggested,
-            builder: (context, snapshot) {
-              final entries = snapshot.data ?? const <DiaryEntry>[];
-              if (entries.isEmpty) return const SizedBox.shrink();
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.md,
-                      AppSpacing.md,
-                      AppSpacing.md,
-                      AppSpacing.xs,
-                    ),
-                    child: Text(
-                      l10n.walkChatWikiPickEntrySuggested,
-                      style: header,
-                    ),
-                  ),
-                  for (final e in entries) _row(e, locale),
-                ],
-              );
+          child: AppButton.secondary(
+            key: const Key('wiki-pick-entry-date'),
+            label: switch (_day) {
+              final day? => DateFormat.yMMMd(locale).format(day),
+              null => l10n.walkChatWikiPickEntryByDate,
             },
+            onPressed: () => unawaited(_pickDay()),
           ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: AppButton.secondary(
-              key: const Key('wiki-pick-entry-date'),
-              label: switch (_day) {
-                final day? => DateFormat.yMMMd(locale).format(day),
-                null => l10n.walkChatWikiPickEntryByDate,
-              },
-              onPressed: () => unawaited(_pickDay()),
-            ),
-          ),
-          if (_day != null)
-            if (dayEntries == null)
-              const Padding(
-                padding: EdgeInsets.all(AppSpacing.md),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (dayEntries.isEmpty)
-              AppPlaceholder(
-                icon: Icons.event_busy_outlined,
-                message: l10n.walkChatWikiPickEntryNone,
-              )
-            else
-              for (final e in dayEntries) _row(e, locale),
-        ],
-      ),
+        ),
+        if (_day != null)
+          if (dayEntries == null)
+            const Padding(
+              padding: EdgeInsets.all(AppSpacing.md),
+              child: AppLoading(),
+            )
+          else if (dayEntries.isEmpty)
+            AppPlaceholder(
+              icon: Icons.event_busy_outlined,
+              message: l10n.walkChatWikiPickEntryNone,
+            )
+          else
+            for (final e in dayEntries) _row(e, locale),
+      ],
     );
   }
 }

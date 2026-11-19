@@ -24,18 +24,27 @@ class FeatureMenuEntry {
 /// 탭 앱바 오른쪽 끝의 ⋮ — 화면별 항목, 그 아래 "○○ 설정".
 ///
 /// 설정 화면은 [openSettings] 로 연다. 그래서 셸의 설정 cubit 다섯 아래에 있어야 한다.
+/// 설정 탭에 없는 기능 전용 설정(길찾기 키)은 [customSettings] 가 같은 자리(맨 아래)에 놓는다.
+/// 설정할 것이 없는 기능(날씨)은 [settings] · [customSettings] 를 모두 비운다.
 /// 앱 전역 설정은 하단 설정 탭이라 여기 없다. 잠긴 동안(일기 · 지도 · 물어보기)에는
 /// [showFeatureSettings] 를 꺼 항목을 모두 숨기고, 항목이 없으면 ⋮ 자체를 그리지 않는다.
 class FeatureMenu extends StatelessWidget {
   const FeatureMenu({
-    required this.settings,
+    this.settings,
+    this.customSettings,
     this.entries = const [],
     this.showFeatureSettings = true,
     super.key,
-  });
+  }) : assert(
+         settings == null || customSettings == null,
+         'settings 와 customSettings 중 하나만',
+       );
 
-  /// "○○ 설정"이 여는 곳.
-  final SettingsTarget settings;
+  /// "○○ 설정"이 여는 곳. null 이면 설정 탭 항목이 없다.
+  final SettingsTarget? settings;
+
+  /// 설정 탭에 없는 "○○ 설정" — 맨 아래 자리에 [settings] 대신 놓인다(예: 길찾기 키 설정).
+  final FeatureMenuEntry? customSettings;
 
   /// 위쪽 화면별 항목.
   final List<FeatureMenuEntry> entries;
@@ -46,20 +55,25 @@ class FeatureMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final settings = this.settings;
+    final custom = customSettings;
+    AppOverflowMenuItem<VoidCallback> item(FeatureMenuEntry entry) =>
+        AppOverflowMenuItem(
+          key: entry.key,
+          value: entry.onTap,
+          label: entry.label,
+          icon: entry.icon,
+        );
     final items = <AppOverflowMenuItem<VoidCallback>>[
       if (showFeatureSettings) ...[
-        for (final entry in entries)
+        for (final entry in entries) item(entry),
+        if (custom != null) item(custom),
+        if (settings != null)
           AppOverflowMenuItem(
-            key: entry.key,
-            value: entry.onTap,
-            label: entry.label,
-            icon: entry.icon,
+            key: Key('menu-settings-${settings.name}'),
+            value: () => openSettings(context, settings),
+            label: _settingsLabel(l10n, settings),
           ),
-        AppOverflowMenuItem(
-          key: Key('menu-settings-${settings.name}'),
-          value: () => openSettings(context, settings),
-          label: _settingsLabel(l10n, settings),
-        ),
       ],
     ];
     if (items.isEmpty) return const SizedBox.shrink();

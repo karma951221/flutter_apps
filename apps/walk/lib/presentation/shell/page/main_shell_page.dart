@@ -395,6 +395,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     AppSnackBar.info(
       context,
       message: AppLocalizations.of(context).walkShellExitHint,
+      duration: _exitWindow,
     );
   }
 

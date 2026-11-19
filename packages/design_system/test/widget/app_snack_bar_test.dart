@@ -218,4 +218,30 @@ void main() {
       expect(find.byType(SnackBar), findsNothing);
     });
   });
+
+  testWidgets('duration 을 주면 그만큼만 보인다', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => AppSnackBar.info(
+                context,
+                message: '한 번 더',
+                duration: const Duration(seconds: 2),
+              ),
+              child: const Text('열기'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('열기'));
+    await tester.pump();
+    expect(
+      tester.widget<SnackBar>(find.byType(SnackBar)).duration,
+      const Duration(seconds: 2),
+    );
+  });
 }

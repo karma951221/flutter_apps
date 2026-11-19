@@ -144,10 +144,8 @@ class OneShotTimeSheet extends StatefulWidget {
   static Future<TimeOfDay?> show(
     BuildContext context, {
     required TimeOfDay initial,
-  }) => showModalBottomSheet<TimeOfDay>(
+  }) => showAppSheet<TimeOfDay>(
     context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
     builder: (_) => OneShotTimeSheet(initial: initial),
   );
 
@@ -161,34 +159,24 @@ class _OneShotTimeSheetState extends State<OneShotTimeSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          0,
-          AppSpacing.md,
-          AppSpacing.md,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              height: OneShotTimeSheet.pickerHeight,
-              // 편집 화면의 반복 휠과 같은 휠.
-              child: AlarmTimeWheel(
-                initial: widget.initial,
-                onChanged: (time) => _value = time,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppButton.primary(
-              label: l10n.walkAlarmPickTimeConfirm,
-              onPressed: () => Navigator.of(context).pop(_value),
-            ),
-          ],
-        ),
+    // 휠이 곧 제목이라 머리는 두지 않는다.
+    return AppSheetScaffold(
+      title: null,
+      bodyPadding: AppSheetScaffold.contentPadding,
+      primaryAction: AppButton.primary(
+        label: l10n.walkAlarmPickTimeConfirm,
+        onPressed: () => Navigator.of(context).pop(_value),
       ),
+      children: [
+        SizedBox(
+          height: OneShotTimeSheet.pickerHeight,
+          // 편집 화면의 반복 휠과 같은 휠.
+          child: AlarmTimeWheel(
+            initial: widget.initial,
+            onChanged: (time) => _value = time,
+          ),
+        ),
+      ],
     );
   }
 }

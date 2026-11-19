@@ -27,9 +27,9 @@ class LineChip extends StatelessWidget {
       TransitBusLeg() => (
         scheme.secondaryContainer,
         scheme.onSecondaryContainer,
-        Icons.directions_bus,
+        Icons.directions_bus_outlined,
       ),
-      _ => (scheme.primaryContainer, scheme.onPrimaryContainer, Icons.subway),
+      _ => (scheme.primaryContainer, scheme.onPrimaryContainer, Icons.subway_outlined),
     };
     final style = theme.textTheme.labelMedium?.copyWith(color: foreground);
     return DecoratedBox(

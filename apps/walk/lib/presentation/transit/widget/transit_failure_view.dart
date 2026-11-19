@@ -45,7 +45,7 @@ class TransitFailureView extends StatelessWidget {
         keyAction,
       ),
       TransitQuotaExceeded() => (
-        Icons.hourglass_empty,
+        Icons.hourglass_empty_outlined,
         l10n.walkTransitQuota,
         l10n.walkTransitQuotaBody,
         null,
@@ -63,7 +63,7 @@ class TransitFailureView extends StatelessWidget {
         null,
       ),
       TransitTooClose() => (
-        Icons.directions_walk,
+        Icons.directions_walk_outlined,
         l10n.walkTransitTooClose,
         l10n.walkTransitTooCloseBody,
         null,

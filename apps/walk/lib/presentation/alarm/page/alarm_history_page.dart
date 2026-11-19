@@ -44,7 +44,7 @@ class _AlarmHistoryPageState extends State<AlarmHistoryPage> {
       body: BlocBuilder<AlarmHistoryCubit, AlarmHistoryState>(
         bloc: _cubit,
         builder: (context, state) => switch (state) {
-          AlarmHistoryLoading() => const Center(child: CircularProgressIndicator()),
+          AlarmHistoryLoading() => const AppLoading(delayed: true),
           AlarmHistoryFailure() => Center(
             child: AppPlaceholder(
               icon: Icons.error_outline,
@@ -55,7 +55,7 @@ class _AlarmHistoryPageState extends State<AlarmHistoryPage> {
           ),
           AlarmHistoryLoaded(:final groups) when groups.isEmpty => Center(
             child: AppPlaceholder(
-              icon: Icons.history,
+              icon: Icons.history_outlined,
               message: l10n.walkAlarmHistoryEmpty,
               description: l10n.walkAlarmHistoryEmptyHint,
             ),
@@ -65,7 +65,7 @@ class _AlarmHistoryPageState extends State<AlarmHistoryPage> {
             children: [
               for (final (index, group) in groups.indexed) ...[
                 if (index == 0 || !_sameDay(groups[index - 1].at, group.at))
-                  _DayHeader(AlarmFormat.day(l10n, group.at, now)),
+                  AppSectionHeader(AlarmFormat.day(l10n, group.at, now)),
                 _GroupRow(group),
               ],
             ],
@@ -77,29 +77,6 @@ class _AlarmHistoryPageState extends State<AlarmHistoryPage> {
 
   static bool _sameDay(DateTime a, DateTime b) =>
       a.year == b.year && a.month == b.month && a.day == b.day;
-}
-
-class _DayHeader extends StatelessWidget {
-  const _DayHeader(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.xs,
-      ),
-      child: Text(
-        text,
-        style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary),
-      ),
-    );
-  }
 }
 
 /// 회차 한 줄 — 제목 "시각 · 라벨"(지운 알람이면 "지운 알람"), 부제 울림 요약.
@@ -128,7 +105,7 @@ class _GroupRow extends StatelessWidget {
               },
           ].join(' · ');
     return AppListTile(
-      leading: Icon(group.skipped ? Icons.event_busy_outlined : Icons.alarm),
+      leading: Icon(group.skipped ? Icons.event_busy_outlined : Icons.alarm_outlined),
       title: Text(title),
       subtitle: Text(summary),
     );

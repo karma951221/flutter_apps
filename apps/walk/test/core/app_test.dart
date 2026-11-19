@@ -260,12 +260,7 @@ void main() {
       ).walkShellTabSettings;
       await tester.tap(find.text(settingsLabel));
       await tester.pumpAndSettle();
-      await tester.tap(
-        find.byWidgetPredicate(
-          (w) =>
-              w is RadioListTile<AppThemeMode> && w.value == AppThemeMode.dark,
-        ),
-      );
+      await tester.tap(find.byKey(const Key('settings-theme-dark')));
       await tester.pumpAndSettle();
 
       expect(brightness(), Brightness.dark);

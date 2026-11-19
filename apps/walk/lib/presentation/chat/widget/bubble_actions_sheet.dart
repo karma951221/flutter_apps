@@ -1,6 +1,7 @@
-import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
+
+import '../../common/row_actions_sheet.dart';
 
 /// 말풍선 길게 누르기 시트에서 고를 수 있는 일.
 enum BubbleAction { addToWiki, saveToFile, deleteTurn }
@@ -12,37 +13,34 @@ Future<BubbleAction?> showBubbleActions(
   BuildContext context, {
   bool canAddToWiki = false,
   bool canSaveToFile = false,
-}) => showModalBottomSheet<BubbleAction>(
-  context: context,
-  showDragHandle: true,
-  builder: (context) {
-    final l10n = AppLocalizations.of(context);
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (canAddToWiki)
-            AppListTile(
-              key: const Key('chat-bubble-action-wiki'),
-              leading: const Icon(Icons.menu_book_outlined),
-              title: Text(l10n.walkChatWikiAddFromBubble),
-              onTap: () => Navigator.pop(context, BubbleAction.addToWiki),
-            ),
-          if (canSaveToFile)
-            AppListTile(
-              key: const Key('chat-bubble-action-save'),
-              leading: const Icon(Icons.save_alt_outlined),
-              title: Text(l10n.walkChatSaveToFile),
-              onTap: () => Navigator.pop(context, BubbleAction.saveToFile),
-            ),
-          AppListTile(
-            key: const Key('chat-bubble-action-delete'),
-            leading: const Icon(Icons.delete_outline),
-            title: Text(l10n.walkChatTurnDelete),
-            onTap: () => Navigator.pop(context, BubbleAction.deleteTurn),
-          ),
-        ],
+}) {
+  final l10n = AppLocalizations.of(context);
+  return showRowActions<BubbleAction>(
+    context,
+    // 말풍선에는 이름이 없다 — 머리 없이 동작만.
+    title: null,
+    actions: [
+      if (canAddToWiki)
+        RowAction(
+          key: const Key('chat-bubble-action-wiki'),
+          value: BubbleAction.addToWiki,
+          label: l10n.walkChatWikiAddFromBubble,
+          icon: Icons.menu_book_outlined,
+        ),
+      if (canSaveToFile)
+        RowAction(
+          key: const Key('chat-bubble-action-save'),
+          value: BubbleAction.saveToFile,
+          label: l10n.walkChatSaveToFile,
+          icon: Icons.save_alt_outlined,
+        ),
+      RowAction(
+        key: const Key('chat-bubble-action-delete'),
+        value: BubbleAction.deleteTurn,
+        label: l10n.walkChatTurnDelete,
+        icon: Icons.delete_outline,
+        isDestructive: true,
       ),
-    );
-  },
-);
+    ],
+  );
+}

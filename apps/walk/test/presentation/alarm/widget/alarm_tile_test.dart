@@ -48,21 +48,16 @@ void main() {
   ColorScheme schemeOf(WidgetTester tester) =>
       Theme.of(tester.element(find.byType(AlarmTile))).colorScheme;
 
-  testWidgets('둥근 카드 행(surfaceContainerLow · AppRadius.lg)', (tester) async {
+  testWidgets('카드 행 — 모양 · 바탕은 테마의 Card 가 정한다', (tester) async {
     await tester.pumpWidget(
       _app(const Alarm(id: 1, hour: 7, minute: 0, repeat: _weekdays)),
     );
 
-    final card = tester.widget<Material>(
-      find
-          .descendant(
-            of: find.byType(AlarmTile),
-            matching: find.byType(Material),
-          )
-          .first,
+    final card = tester.widget<Card>(
+      find.descendant(of: find.byType(AlarmTile), matching: find.byType(Card)),
     );
-    expect(card.color, schemeOf(tester).surfaceContainerLow);
-    expect(card.borderRadius, AppRadius.lgAll);
+    expect(card.color, isNull);
+    expect(card.shape, isNull);
   });
 
   testWidgets('반복 알람: 큰 시각(오전/오후는 작게) · 제목 · 반복 요약 · 요일 점, 남은 시간 줄은 없다', (

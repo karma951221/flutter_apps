@@ -124,4 +124,29 @@ void main() {
     expect(find.text('저장'), findsNothing);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
+
+  testWidgets('compact 는 Row · 상단 바 안에서도 폭을 꽉 채우지 않는다', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          appBar: AppBar(
+            actions: [
+              AppButton.text(label: '저장', compact: true, onPressed: () {}),
+            ],
+          ),
+          body: Row(
+            children: [
+              AppButton.primary(label: '확인', compact: true, onPressed: () {}),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    final size = tester.getSize(find.byType(FilledButton));
+    expect(size.width, lessThan(200));
+    expect(size.height, 40);
+  });
 }

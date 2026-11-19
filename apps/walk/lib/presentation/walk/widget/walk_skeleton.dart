@@ -1,7 +1,6 @@
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
-import '../../theme/walk_motion.dart';
 
 /// 불러오는 동안 자리를 지키는 둥근 사각형. 왼쪽에서 오른쪽으로 옅은 띠가 지나간다.
 /// 애니메이션 끄기면 멈춘 채로 그린다.
@@ -24,7 +23,7 @@ class _WalkSkeletonState extends State<WalkSkeleton>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (WalkMotion.off(context)) {
+    if (!AppMotion.enabled(context)) {
       _controller.stop();
     } else if (!_controller.isAnimating) {
       _controller.repeat();
