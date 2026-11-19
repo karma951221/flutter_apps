@@ -12,7 +12,6 @@ import '../../../domain/walk/entity/goal_progress.dart';
 import '../../../domain/walk/entity/health_access.dart';
 import '../../../domain/walk/entity/period_kind.dart';
 import '../../../domain/walk/usecase/walk_use_case.dart';
-import '../../theme/walk_motion.dart';
 import '../cubit/health_access_cubit.dart';
 import '../cubit/health_access_state.dart';
 import '../cubit/period_activity_cubit.dart';
@@ -301,7 +300,7 @@ class _WalkHomePageState extends State<WalkHomePage> {
         ),
         const SizedBox(height: AppSpacing.sm),
         AnimatedSwitcher(
-          duration: WalkMotion.off(context) ? Duration.zero : WalkMotion.medium,
+          duration: !AppMotion.enabled(context) ? Duration.zero : AppMotion.long,
           transitionBuilder: (child, animation) => FadeTransition(
             opacity: animation,
             child: SlideTransition(

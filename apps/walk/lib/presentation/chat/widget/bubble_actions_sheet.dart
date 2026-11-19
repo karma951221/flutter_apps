@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
-import 'row_actions_sheet.dart';
+import '../../common/row_actions_sheet.dart';
 
 /// 말풍선 길게 누르기 시트에서 고를 수 있는 일.
 enum BubbleAction { addToWiki, saveToFile, deleteTurn }

@@ -26,8 +26,8 @@ class StepGoalRing extends StatelessWidget {
     // begin 0 은 첫 진입에만 쓰인다.
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: ratio.clamp(0, 1).toDouble()),
-      duration: WalkMotion.off(context) ? Duration.zero : WalkMotion.long,
-      curve: WalkMotion.emphasized,
+      duration: !AppMotion.enabled(context) ? Duration.zero : WalkMotion.long,
+      curve: AppMotion.standard,
       builder: (context, progress, child) => CustomPaint(
         painter: StepGoalRingPainter(
           progress: progress,

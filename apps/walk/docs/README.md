@@ -68,6 +68,7 @@ flutter run --dart-define-from-file=config/commute_keys.json
 | [계획](plan.md) | 화면 · 상태 · 완료 조건 · 범위 밖 |
 | [기록](history.md) | 설계 판단 · 최종 리뷰에서 고친 것 · 알려진 한계 |
 | [테스트](testing.md) | 파일별 확인 범위 · 기기 시나리오 |
+| [UI 가이드](ui-guide.md) | 화면 조립 기준 — 시트 · 섹션 머리 · 행 · 안내 띠 · 카드 · 로딩 · 버튼 · 아이콘 |
 | [설계 — 걷기](../../../docs/superpowers/specs/2026-09-27-walk-app-design.md) | 걷기 결정 기록 · 도메인 · 데이터 · 테스트 |
 | [설계 — 알람 · 설정](../../../docs/superpowers/specs/2026-09-27-walk-alarm-design.md) | 알람 결정 · 14일 선예약 sync · 화면 · 권한 |
 | [설계 — 남은 시간](../../../docs/superpowers/specs/2026-09-29-walk-alarm-remaining-time-design.md) | 요약 카드 · 남은 시간 · 울림 버튼 |

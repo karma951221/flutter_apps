@@ -8,6 +8,7 @@ import '../format/diary_format.dart';
 import 'entry_media_view.dart';
 import 'entry_meta.dart';
 import 'story_avatar.dart';
+import '../../common/row_actions_sheet.dart';
 
 /// 피드 카드 동작(머리의 고치기 아이콘 · 길게 누르기 시트). 화면이 `entry_actions` 로 잇는다.
 enum FeedEntryAction { edit, move, trash }
@@ -171,37 +172,30 @@ class _FeedCard extends StatelessWidget {
     ValueChanged<FeedEntryAction> onAction,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final action = await showAppSheet<FeedEntryAction>(
-      context: context,
-      builder: (context) {
-        final error = Theme.of(context).colorScheme.error;
-        return AppSheetScaffold(
-          title: _when(context, entry, now),
-          children: [
-            AppListTile(
-              key: const Key('feed-action-edit'),
-              leading: const Icon(Icons.edit_outlined),
-              title: Text(l10n.walkDiaryEntryEdit),
-              onTap: () => Navigator.pop(context, FeedEntryAction.edit),
-            ),
-            AppListTile(
-              key: const Key('feed-action-move'),
-              leading: const Icon(Icons.drive_file_move_outline),
-              title: Text(l10n.walkDiaryEntryMove),
-              onTap: () => Navigator.pop(context, FeedEntryAction.move),
-            ),
-            AppListTile(
-              key: const Key('feed-action-trash'),
-              leading: Icon(Icons.delete_outline, color: error),
-              title: Text(
-                l10n.walkDiaryEntryTrash,
-                style: TextStyle(color: error),
-              ),
-              onTap: () => Navigator.pop(context, FeedEntryAction.trash),
-            ),
-          ],
-        );
-      },
+    final action = await showRowActions<FeedEntryAction>(
+      context,
+      title: _when(context, entry, now),
+      actions: [
+        RowAction(
+          key: const Key('feed-action-edit'),
+          value: FeedEntryAction.edit,
+          label: l10n.walkDiaryEntryEdit,
+          icon: Icons.edit_outlined,
+        ),
+        RowAction(
+          key: const Key('feed-action-move'),
+          value: FeedEntryAction.move,
+          label: l10n.walkDiaryEntryMove,
+          icon: Icons.drive_file_move_outline,
+        ),
+        RowAction(
+          key: const Key('feed-action-trash'),
+          value: FeedEntryAction.trash,
+          label: l10n.walkDiaryEntryTrash,
+          icon: Icons.delete_outline,
+          isDestructive: true,
+        ),
+      ],
     );
     if (action != null) onAction(action);
   }

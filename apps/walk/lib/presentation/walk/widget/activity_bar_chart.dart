@@ -9,7 +9,6 @@ import 'package:l10n/l10n.dart';
 import '../../../domain/walk/entity/activity_period.dart';
 import '../../../domain/walk/entity/daily_activity.dart';
 import '../../../domain/walk/entity/period_kind.dart';
-import '../../theme/walk_motion.dart';
 import '../format/walk_format.dart';
 import 'goal_line_overlay.dart';
 
@@ -52,7 +51,7 @@ class _ActivityBarChartState extends State<ActivityBarChart>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (WalkMotion.off(context)) {
+    if (!AppMotion.enabled(context)) {
       _growth.value = 1;
     } else if (!_started) {
       _grow();
@@ -66,7 +65,7 @@ class _ActivityBarChartState extends State<ActivityBarChart>
     if (oldWidget.period.start != widget.period.start ||
         oldWidget.period.kind != widget.period.kind) {
       _selectedDate = null;
-      if (WalkMotion.off(context)) {
+      if (!AppMotion.enabled(context)) {
         _growth.value = 1;
       } else {
         _grow();
@@ -84,7 +83,7 @@ class _ActivityBarChartState extends State<ActivityBarChart>
 
   int get _totalMs =>
       _delayMs(widget.period.days.length - 1) +
-      WalkMotion.medium.inMilliseconds;
+      AppMotion.long.inMilliseconds;
 
   void _grow() {
     _growth
@@ -95,11 +94,11 @@ class _ActivityBarChartState extends State<ActivityBarChart>
   double _progress(int index) {
     final total = _totalMs;
     final start = _delayMs(index) / total;
-    final end = (_delayMs(index) + WalkMotion.medium.inMilliseconds) / total;
+    final end = (_delayMs(index) + AppMotion.long.inMilliseconds) / total;
     return Interval(
       start,
       math.min(end, 1),
-      curve: WalkMotion.emphasized,
+      curve: AppMotion.standard,
     ).transform(_growth.value);
   }
 
@@ -240,7 +239,7 @@ class _ActivityBarChartState extends State<ActivityBarChart>
         child: AnimatedScale(
           scale: isSelected ? 1.06 : 1,
           alignment: Alignment.bottomCenter,
-          duration: WalkMotion.off(context) ? Duration.zero : WalkMotion.short,
+          duration: !AppMotion.enabled(context) ? Duration.zero : AppMotion.medium,
           child: ratio <= 1
               ? bar
               : Stack(

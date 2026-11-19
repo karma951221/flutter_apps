@@ -110,8 +110,8 @@ class _CountUp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => TweenAnimationBuilder<int>(
     tween: IntTween(begin: 0, end: steps),
-    duration: WalkMotion.off(context) ? Duration.zero : WalkMotion.long,
-    curve: WalkMotion.emphasized,
+    duration: !AppMotion.enabled(context) ? Duration.zero : WalkMotion.long,
+    curve: AppMotion.standard,
     builder: (context, value, _) =>
         Text(format(value), key: const Key('walk-today-steps'), style: style),
   );
@@ -126,7 +126,7 @@ class _ReachedBadge extends StatelessWidget {
     final color = theme.colorScheme.primary;
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration: WalkMotion.off(context) ? Duration.zero : WalkMotion.medium,
+      duration: !AppMotion.enabled(context) ? Duration.zero : AppMotion.long,
       curve: Curves.easeOutBack,
       builder: (context, scale, child) =>
           Transform.scale(scale: scale, child: child),

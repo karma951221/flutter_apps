@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 
-import '../../theme/walk_motion.dart';
 
 /// 울림 화면 아이콘 둘레로 퍼지는 파문 세 겹. 2.4초 주기로 반복한다.
 /// 시스템 "애니메이션 제거"면 돌리지 않고 [child] 만 그린다.
@@ -27,7 +26,7 @@ class _RingingRippleState extends State<RingingRipple>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final off = WalkMotion.off(context);
+    final off = !AppMotion.enabled(context);
     if (off == _off) return;
     _off = off;
     if (off) {

@@ -110,9 +110,3 @@ class SettingsChoiceSheet<T> extends StatelessWidget {
     ],
   );
 }
-
-/// 옛 설정 섹션 머리 — [AppSectionHeader] 로 옮겼다.
-///
-/// 설정 밖(`chat/workspace`)이 아직 쓰고 있어 이름만 남긴다. 그쪽이
-/// [AppSectionHeader] 로 옮기면 지운다.
-typedef SettingsSectionHeader = AppSectionHeader;

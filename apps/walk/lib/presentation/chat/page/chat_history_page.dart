@@ -12,7 +12,7 @@ import '../../../domain/chat/repository/chat_history_repository.dart';
 import '../cubit/chat_history_cubit.dart';
 import '../cubit/chat_history_state.dart';
 import '../widget/rename_conversation_dialog.dart';
-import '../widget/row_actions_sheet.dart';
+import '../../common/row_actions_sheet.dart';
 
 enum _RowAction { rename, delete }
 
@@ -124,22 +124,19 @@ class _ConversationRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return LongPressRow(
-      hint: l10n.walkChatHistoryLongPressHint,
+    return AppListTile(
       onLongPress: () => unawaited(_actions(context)),
-      child: AppListTile(
-        key: Key('chat-history-${conversation.id}'),
-        title: Text(
-          conversation.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          '${_time(l10n.localeName)} · '
-          '${l10n.walkChatHistoryTurns(conversation.turnCount)}',
-        ),
-        onTap: () => Navigator.of(context).pop(conversation.id),
+      key: Key('chat-history-${conversation.id}'),
+      title: Text(
+        conversation.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
+      subtitle: Text(
+        '${_time(l10n.localeName)} · '
+        '${l10n.walkChatHistoryTurns(conversation.turnCount)}',
+      ),
+      onTap: () => Navigator.of(context).pop(conversation.id),
     );
   }
 

@@ -15,6 +15,7 @@ import '../cubit/trash_state.dart';
 import '../format/diary_format.dart';
 import '../widget/entry_media_view.dart';
 import 'diary_route.dart';
+import '../../common/row_actions_sheet.dart';
 
 /// 휴지통을 연다. 일기 잠금에 묶인 화면([pushDiaryRoute])이라 다시 잠기면 가려진다.
 Future<void> openTrash(BuildContext context) =>
@@ -91,31 +92,24 @@ class _TrashPageState extends State<TrashPage> {
   /// 행 동작 시트 — 제목은 그 기록의 첫 줄, 영구 삭제는 error 색.
   Future<void> _openActions(TrashItem item) async {
     final l10n = AppLocalizations.of(context);
-    final action = await showAppSheet<_TrashAction>(
-      context: context,
-      builder: (context) {
-        final error = Theme.of(context).colorScheme.error;
-        return AppSheetScaffold(
-          title: _rowTitle(l10n, item.entry),
-          children: [
-            AppListTile(
-              key: const Key('trash-action-restore'),
-              leading: const Icon(Icons.restore_from_trash_outlined),
-              title: Text(l10n.walkDiaryTrashRestore),
-              onTap: () => Navigator.pop(context, _TrashAction.restore),
-            ),
-            AppListTile(
-              key: const Key('trash-action-purge'),
-              leading: Icon(Icons.delete_forever_outlined, color: error),
-              title: Text(
-                l10n.walkDiaryTrashDeleteForever,
-                style: TextStyle(color: error),
-              ),
-              onTap: () => Navigator.pop(context, _TrashAction.purge),
-            ),
-          ],
-        );
-      },
+    final action = await showRowActions<_TrashAction>(
+      context,
+      title: _rowTitle(l10n, item.entry),
+      actions: [
+        RowAction(
+          key: const Key('trash-action-restore'),
+          value: _TrashAction.restore,
+          label: l10n.walkDiaryTrashRestore,
+          icon: Icons.restore_from_trash_outlined,
+        ),
+        RowAction(
+          key: const Key('trash-action-purge'),
+          value: _TrashAction.purge,
+          label: l10n.walkDiaryTrashDeleteForever,
+          icon: Icons.delete_forever_outlined,
+          isDestructive: true,
+        ),
+      ],
     );
     if (action == null || !mounted) return;
     await _onAction(item.entry.id, action);
@@ -190,21 +184,19 @@ class _TrashPageState extends State<TrashPage> {
     return ListView(
       children: [
         for (final item in state.items)
-          GestureDetector(
+          AppListTile(
             key: ValueKey(item.entry.id),
             onLongPress: () => unawaited(_openActions(item)),
-            child: AppListTile(
-              leading: _TrashThumb(entry: item.entry),
-              title: Text(
-                item.entry.body.trim().isEmpty
-                    ? l10n.walkDiaryTrashNoBody
-                    : item.entry.body.trim(),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: Text(_subtitle(l10n, item, now)),
-              onTap: () => unawaited(_openActions(item)),
+            leading: _TrashThumb(entry: item.entry),
+            title: Text(
+              item.entry.body.trim().isEmpty
+                  ? l10n.walkDiaryTrashNoBody
+                  : item.entry.body.trim(),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
+            subtitle: Text(_subtitle(l10n, item, now)),
+            onTap: () => unawaited(_openActions(item)),
           ),
       ],
     );

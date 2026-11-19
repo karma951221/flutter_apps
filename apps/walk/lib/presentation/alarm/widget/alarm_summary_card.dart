@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/alarm/entity/alarm.dart';
-import '../../theme/walk_motion.dart';
 import '../format/alarm_format.dart';
 
 /// 알람 목록 맨 위 요약 — 가장 먼저 울릴 알람까지 남은 시간과 그 날 · 시각 · 라벨.
@@ -72,7 +71,7 @@ class AlarmSummaryCard extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xs),
         AnimatedSwitcher(
-          duration: WalkMotion.off(context) ? Duration.zero : WalkMotion.short,
+          duration: !AppMotion.enabled(context) ? Duration.zero : AppMotion.medium,
           transitionBuilder: _slideUp,
           layoutBuilder: (current, previous) => Stack(
             alignment: Alignment.centerLeft,

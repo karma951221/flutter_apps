@@ -12,7 +12,7 @@ import '../../../../domain/chat/workspace/workspace.dart';
 import '../../../../domain/chat/workspace/workspace_changes.dart';
 import '../../../common/format_bytes.dart';
 import '../../widget/attachment_chip.dart';
-import '../../widget/row_actions_sheet.dart';
+import '../../../common/row_actions_sheet.dart';
 import '../cubit/workspace_cubit.dart';
 import '../cubit/workspace_state.dart';
 import '../open_workspace.dart';
@@ -110,20 +110,17 @@ class _FileRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final kind = AttachmentRules.kindOf(file.name);
-    return LongPressRow(
-      hint: l10n.walkWorkspaceLongPressHint,
+    return AppListTile(
       onLongPress: () => unawaited(_actions(context)),
-      child: AppListTile(
-        key: Key('workspace-file-${file.path}'),
-        leading: Icon(
-          kind == null
-              ? Icons.insert_drive_file_outlined
-              : AttachmentChip.iconOf(kind),
-        ),
-        title: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-        subtitle: Text(_detail(file, l10n.localeName)),
-        onTap: () => unawaited(openWorkspaceFile(context, file.path)),
+      key: Key('workspace-file-${file.path}'),
+      leading: Icon(
+        kind == null
+            ? Icons.insert_drive_file_outlined
+            : AttachmentChip.iconOf(kind),
       ),
+      title: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(_detail(file, l10n.localeName)),
+      onTap: () => unawaited(openWorkspaceFile(context, file.path)),
     );
   }
 

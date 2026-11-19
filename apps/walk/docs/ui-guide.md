@@ -37,5 +37,9 @@
 | 상단 바 글자 버튼 | `AppButton.text(compact: true)` | `minimumSize: Size.zero` 같은 우회는 쓰지 않는다 |
 | 파괴적 행 | `AppListTile` | 아이콘 · 제목 모두 `colorScheme.error` (⋮ 메뉴 `isDestructive` 와 같은 색) |
 | 아이콘 | — | 테두리형(`_outlined`) 우선. 같은 역할에 꽉 찬 아이콘과 섞지 않는다 |
+| 행 단위 동작 | `AppListTile(onLongPress:)` + `showRowActions`(walk) | 행 trailing 에 ⋮ 를 두지 않는다 — 앱바 ⋮ 는 화면 전체 동작만. 시트 제목은 그 행 이름, 파괴적 동작은 error 색. 발견할 수 있게 목록 아래 `AppFootnote` 한 줄('길게 누르면 …') 또는 눈에 보이는 대표 동작 아이콘 하나(+ tooltip) |
+| 아이콘 전용 버튼 | `IconButton` | 모두 `tooltip`. 아이콘만으로 뜻이 흐리면 더 직관적인 아이콘으로, 자주 쓰는 주요 동작이면 글자 버튼(`AppButton.text(compact: true)`)으로 |
+| 스토리 행 | `StoryRow`(walk) | 표지 원 + 이름 + '기간 · 기록 n개', 고른 행 primary 체크 |
 | 기능 탭 ⋮ | `FeatureMenu` | 도구 탭의 기능도 화면별 항목 + "○○ 설정" 한 모양 |
 | 탭 안 전환 | `SegmentedButton` | 탭바를 두 줄로 겹치지 않는다 |
+| 모션 | `AppMotion` | 시간 · 곡선 · '애니메이션 줄이기' 판단은 `AppMotion`. `WalkMotion` 에는 목표 링 · 축하 같은 긴 연출 값만 |

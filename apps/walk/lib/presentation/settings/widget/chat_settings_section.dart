@@ -227,7 +227,7 @@ class _ModelRow extends StatelessWidget {
     };
     return AppListTile(
       key: const Key('settings-chat-model'),
-      leading: const Icon(Icons.tune),
+      leading: const Icon(Icons.psychology_outlined),
       title: Text(l10n.walkChatSettingsModel),
       subtitle: subtitle == null ? null : Text(subtitle),
       onTap: onTap,

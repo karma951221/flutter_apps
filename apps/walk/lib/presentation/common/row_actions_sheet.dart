@@ -20,7 +20,9 @@ class RowAction<T> {
   final Key? key;
 }
 
-/// 목록 행 길게 누르기 → 그 행의 동작 시트(대화 목록 · 작업 폴더).
+/// 목록 행 길게 누르기 → 그 행의 동작 시트(대화 목록 · 작업 폴더 · 일기 피드 · 휴지통 · 말풍선).
+///
+/// 행은 `AppListTile(onLongPress:)` 로 받는다.
 ///
 /// 앱바 ⋮(화면 전체 동작)와 행 ⋮ 가 한 화면에 겹치지 않게, 행 동작은 여기로 옮긴다.
 /// 제목은 그 행 이름(말풍선처럼 이름이 없으면 null). 고른 값을, 닫으면 null 을 돌려준다.
@@ -49,26 +51,3 @@ Future<T?> showRowActions<T>(
     );
   },
 );
-
-/// 길게 누르기를 받는 행. [AppListTile] 에 길게 누르기 인자가 없어 바깥에서 받는다 —
-/// 탭은 안쪽 [AppListTile] 이, 길게 누르기는 이 감지기가 이긴다.
-class LongPressRow extends StatelessWidget {
-  const LongPressRow({
-    required this.onLongPress,
-    required this.child,
-    this.hint,
-    super.key,
-  });
-
-  final VoidCallback onLongPress;
-
-  /// 스크린 리더가 읽는 길게 누르기 설명(예: '이름 바꾸기 · 지우기').
-  final String? hint;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    onLongPressHint: hint,
-    child: GestureDetector(onLongPress: onLongPress, child: child),
-  );
-}
