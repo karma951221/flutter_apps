@@ -29,10 +29,6 @@ class MapSheet extends StatelessWidget {
   static const initialSize = 0.3;
   static const maxSize = 0.8;
 
-  /// 손잡이 크기. 시각 토큰이 아니라 이 위젯의 모양이다.
-  static const _handleWidth = 32.0;
-  static const _handleHeight = 4.0;
-
   final String title;
   final List<Widget> children;
   final String emptyMessage;
@@ -40,60 +36,50 @@ class MapSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
     return DraggableScrollableSheet(
       minChildSize: minSize,
       initialChildSize: initialSize,
       maxChildSize: maxSize,
       snap: true,
       builder: (context, controller) => Material(
-        color: scheme.surfaceContainerLow,
+        color: theme.colorScheme.surfaceContainerLow,
         elevation: 3,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadius.lg),
-          ),
-        ),
+        shape: appSheetShape,
         clipBehavior: Clip.antiAlias,
-        child: ListView(
-          controller: controller,
-          padding: const EdgeInsets.only(bottom: AppSpacing.md),
-          children: [
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: scheme.onSurfaceVariant,
-                    borderRadius: AppRadius.smAll,
-                  ),
-                  child: const SizedBox(
-                    width: _handleWidth,
-                    height: _handleHeight,
-                  ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.xs,
-              ),
-              child: Text(title, style: theme.textTheme.titleMedium),
-            ),
-            if (children.isEmpty)
+        child: ListTileTheme.merge(
+          // 모달 시트(AppSheetScaffold)와 같은 좌우 여백 — 행 글자가 제목과 나란하다.
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.xs,
+          ),
+          child: ListView(
+            controller: controller,
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            children: [
+              const AppSheetHandle(),
               Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Text(
-                  emptyMessage,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  0,
+                  AppSpacing.lg,
+                  AppSpacing.sm,
                 ),
-              )
-            else
-              ...children,
-          ],
+                child: Text(title, style: theme.textTheme.titleLarge),
+              ),
+              if (children.isEmpty)
+                AppFootnote(
+                  emptyMessage,
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.xs,
+                    AppSpacing.lg,
+                    AppSpacing.md,
+                  ),
+                )
+              else
+                ...children,
+            ],
+          ),
         ),
       ),
     );

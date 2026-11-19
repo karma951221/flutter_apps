@@ -248,16 +248,11 @@ void main() {
       ];
     });
 
-    testWidgets('카드 ⋮ 메뉴가 닫혀 스토리 이름이 남지 않는다', (tester) async {
+    testWidgets('카드 동작 시트가 닫혀 스토리 이름이 남지 않는다', (tester) async {
       entries[const EntryFilter.all()] = [_entry('비밀', storyId: 'busan')];
       await pump(tester);
       expect(find.text('부산 비밀 여행'), findsOneWidget);
-      await tester.tap(
-        find.descendant(
-          of: find.byType(Card),
-          matching: find.byIcon(Icons.more_vert),
-        ),
-      );
+      await tester.longPress(find.byType(Card));
       await tester.pumpAndSettle();
       expect(find.text('휴지통으로'), findsOneWidget);
 

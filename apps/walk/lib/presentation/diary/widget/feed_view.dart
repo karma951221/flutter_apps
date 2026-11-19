@@ -9,11 +9,13 @@ import 'entry_media_view.dart';
 import 'entry_meta.dart';
 import 'story_avatar.dart';
 
-/// 피드 카드 ⋮ 의 동작. 화면이 `entry_actions` 로 잇는다.
+/// 피드 카드 동작(머리의 고치기 아이콘 · 길게 누르기 시트). 화면이 `entry_actions` 로 잇는다.
 enum FeedEntryAction { edit, move, trash }
 
 /// 피드(스펙 2026-11-15 §F5, 일반 피드식): 기록마다 카드. 머리는 날짜 · 시각 + 장소, 스토리 이름은
-/// '일상'이 아닐 때만 작은 글씨로(누르면 [onOpenStory]) · ⋮. 미디어는 4:5 칸에서 좌우로 넘기고
+/// '일상'이 아닐 때만 작은 글씨로(누르면 [onOpenStory]) · 고치기 아이콘. 카드를 길게 누르면
+/// 고치기 · 스토리 옮기기 · 휴지통 시트다 — 앱바 ⋮(화면 전체 동작)와 카드 ⋮ 가 겹치지 않게
+/// 카드에는 ⋮ 를 두지 않는다. 미디어는 4:5 칸에서 좌우로 넘기고
 /// (`1/n`), 영상은 썸네일 + ▶ 로만 둔다. **미디어를 누르면** [onOpen](그 기록을 전체 화면으로).
 /// 글은 눌러도 열리지 않고, 긴 글은 [FeedView.foldedLines] 줄로 접어 "더 보기"로 펼친다.
 /// [header] 는 첫 칸으로 함께 스크롤한다.
@@ -49,7 +51,7 @@ class FeedView extends StatelessWidget {
   /// 태그 칩을 눌렀다. null 이면 칩을 누를 수 없다.
   final ValueChanged<String>? onTag;
 
-  /// 카드 ⋮ 를 골랐다. null 이면 ⋮ 를 두지 않는다.
+  /// 카드 동작을 골랐다. null 이면 고치기 아이콘 · 길게 누르기 시트를 두지 않는다.
   final void Function(DiaryEntry entry, FeedEntryAction action)? onAction;
 
   final Widget? header;
@@ -110,7 +112,8 @@ class _FeedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final media = entry.media;
-    return Card(
+    final onAction = this.onAction;
+    final card = Card(
       margin: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.sm,
@@ -151,10 +154,67 @@ class _FeedCard extends StatelessWidget {
         ],
       ),
     );
+    if (onAction == null) return card;
+    final l10n = AppLocalizations.of(context);
+    return Semantics(
+      onLongPressHint: l10n.walkDiaryEntryActionsHint,
+      child: GestureDetector(
+        onLongPress: () => _openActions(context, onAction),
+        child: card,
+      ),
+    );
+  }
+
+  /// 길게 누르기 시트 — 제목은 카드 머리의 날짜 · 시각, 휴지통은 error 색.
+  Future<void> _openActions(
+    BuildContext context,
+    ValueChanged<FeedEntryAction> onAction,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final action = await showAppSheet<FeedEntryAction>(
+      context: context,
+      builder: (context) {
+        final error = Theme.of(context).colorScheme.error;
+        return AppSheetScaffold(
+          title: _when(context, entry, now),
+          children: [
+            AppListTile(
+              key: const Key('feed-action-edit'),
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(l10n.walkDiaryEntryEdit),
+              onTap: () => Navigator.pop(context, FeedEntryAction.edit),
+            ),
+            AppListTile(
+              key: const Key('feed-action-move'),
+              leading: const Icon(Icons.drive_file_move_outline),
+              title: Text(l10n.walkDiaryEntryMove),
+              onTap: () => Navigator.pop(context, FeedEntryAction.move),
+            ),
+            AppListTile(
+              key: const Key('feed-action-trash'),
+              leading: Icon(Icons.delete_outline, color: error),
+              title: Text(
+                l10n.walkDiaryEntryTrash,
+                style: TextStyle(color: error),
+              ),
+              onTap: () => Navigator.pop(context, FeedEntryAction.trash),
+            ),
+          ],
+        );
+      },
+    );
+    if (action != null) onAction(action);
   }
 }
 
-/// 카드 머리: 날짜 · 시각, 아래 장소 · 스토리 이름('일상'이 아닐 때, 누르면 [onStory]) + ⋮.
+/// 카드 머리 · 동작 시트 제목의 '오늘 · 오후 3:00'.
+String _when(BuildContext context, DiaryEntry entry, DateTime now) {
+  final l10n = AppLocalizations.of(context);
+  final at = entry.occurredAt;
+  return '${DiaryFormat.dayHeader(l10n, at, now)} · ${DiaryFormat.time(context, at)}';
+}
+
+/// 카드 머리: 날짜 · 시각, 아래 장소 · 스토리 이름('일상'이 아닐 때, 누르면 [onStory]) + 고치기.
 class _CardHead extends StatelessWidget {
   const _CardHead({
     required this.entry,
@@ -179,9 +239,7 @@ class _CardHead extends StatelessWidget {
         ? null
         : storyDisplayTitle(l10n, story);
     final place = entry.location?.placeName;
-    final at = entry.occurredAt;
-    final when =
-        '${DiaryFormat.dayHeader(l10n, at, now)} · ${DiaryFormat.time(context, at)}';
+    final when = _when(context, entry, now);
     final small = theme.textTheme.labelSmall;
     final onAction = this.onAction;
     return Row(
@@ -243,26 +301,11 @@ class _CardHead extends StatelessWidget {
           ),
         ),
         if (onAction != null)
-          AppOverflowMenu<FeedEntryAction>(
-            items: [
-              AppOverflowMenuItem(
-                value: FeedEntryAction.edit,
-                label: l10n.walkDiaryEntryEdit,
-                icon: Icons.edit_outlined,
-              ),
-              AppOverflowMenuItem(
-                value: FeedEntryAction.move,
-                label: l10n.walkDiaryEntryMove,
-                icon: Icons.drive_file_move_outline,
-              ),
-              AppOverflowMenuItem(
-                value: FeedEntryAction.trash,
-                label: l10n.walkDiaryEntryTrash,
-                icon: Icons.delete_outline,
-                isDestructive: true,
-              ),
-            ],
-            onSelected: onAction,
+          IconButton(
+            key: const Key('feed-edit'),
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: l10n.walkDiaryEntryEdit,
+            onPressed: () => onAction(FeedEntryAction.edit),
           ),
       ],
     );

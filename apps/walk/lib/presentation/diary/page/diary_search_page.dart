@@ -15,7 +15,7 @@ import '../cubit/diary_search_state.dart';
 import '../format/diary_format.dart';
 import '../widget/highlighted_text.dart';
 import '../viewer/story_viewer_page.dart';
-import '../widget/story_avatar.dart';
+import '../widget/story_row.dart';
 import 'diary_route.dart';
 import 'filtered_entries_page.dart';
 import 'story_page.dart';
@@ -130,9 +130,10 @@ class _Results extends StatelessWidget {
       SearchScope.tag || SearchScope.place => state.suggestions.length,
     };
     if (count == 0) {
-      // 아직 지금 입력의 결과가 오지 않았으면(디바운스 · 조회 중) 비워 둔다.
+      // 아직 지금 입력의 결과가 오지 않았으면(디바운스 · 조회 중) 잠깐 비워 두고,
+      // 길어지면 읽는 중을 보인다.
       if (state.loading || state.searched != term) {
-        return const SizedBox.shrink();
+        return const AppLoading(delayed: true);
       }
       return AppPlaceholder(
         icon: Icons.search_off,
@@ -147,10 +148,10 @@ class _Results extends StatelessWidget {
           entry: state.bodyResults[i],
           query: state.searched,
         ),
-        SearchScope.story => AppListTile(
-          leading: const Icon(Icons.auto_stories_outlined),
-          title: Text(storyDisplayTitle(l10n, state.stories[i].story)),
-          trailing: Text(l10n.walkDiaryEntryCount(state.stories[i].count)),
+        SearchScope.story => StoryRow(
+          story: state.stories[i].story,
+          now: getIt<Clock>().now(),
+          count: state.stories[i].count,
           onTap: () =>
               unawaited(openStoryPage(context, state.stories[i].story.id)),
         ),

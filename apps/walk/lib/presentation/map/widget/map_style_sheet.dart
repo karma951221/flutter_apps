@@ -8,10 +8,8 @@ import '../../../domain/location/entity/map_style.dart';
 Future<MapStyle?> showMapStyleSheet(
   BuildContext context, {
   required MapStyle current,
-}) => showModalBottomSheet<MapStyle>(
+}) => showAppSheet<MapStyle>(
   context: context,
-  showDragHandle: true,
-  isScrollControlled: true,
   builder: (_) => _MapStyleSheet(current: current),
 );
 
@@ -39,38 +37,18 @@ class _MapStyleSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.sm,
-                AppSpacing.md,
-                AppSpacing.xs,
-              ),
-              child: Text(
-                l10n.walkMapStyle,
-                style: theme.textTheme.titleMedium,
-              ),
-            ),
-            for (final style in MapStyle.values)
-              AppListTile(
-                key: Key('map-style-${style.name}'),
-                title: Text(mapStyleLabel(l10n, style)),
-                subtitle: Text(_detail(l10n, style)),
-                trailing: style == current
-                    ? Icon(Icons.check, color: theme.colorScheme.primary)
-                    : null,
-                onTap: () => Navigator.pop(context, style),
-              ),
-          ],
-        ),
-      ),
+    return AppSheetScaffold(
+      title: l10n.walkMapStyle,
+      children: [
+        for (final style in MapStyle.values)
+          AppSelectTile(
+            key: Key('map-style-${style.name}'),
+            title: Text(mapStyleLabel(l10n, style)),
+            subtitle: Text(_detail(l10n, style)),
+            selected: style == current,
+            onTap: () => Navigator.pop(context, style),
+          ),
+      ],
     );
   }
 }

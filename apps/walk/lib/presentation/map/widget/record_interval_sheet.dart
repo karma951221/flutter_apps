@@ -30,10 +30,8 @@ String _detail(AppLocalizations l10n, RecordInterval interval) =>
 /// 있거나 바꾸는 중이면 고를 수 없다.
 Future<void> showRecordIntervalSheet(BuildContext context) {
   final cubit = context.read<MapRecordCubit>();
-  return showModalBottomSheet<void>(
+  return showAppSheet<void>(
     context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
     builder: (_) =>
         BlocProvider.value(value: cubit, child: const _RecordIntervalSheet()),
   );
@@ -45,65 +43,31 @@ class _RecordIntervalSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final cubit = context.read<MapRecordCubit>();
     final state = context.watch<MapRecordCubit>().state;
     final current = recordIntervalOf(state.status);
     final enabled = current != null && !state.busy;
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                0,
-                AppSpacing.md,
-                AppSpacing.xs,
-              ),
-              child: Text(
-                l10n.walkRecordInterval,
-                style: theme.textTheme.titleMedium,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                0,
-                AppSpacing.md,
-                AppSpacing.sm,
-              ),
-              child: Text(
-                l10n.walkRecordIntervalHint,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-            for (final interval in RecordInterval.values)
-              AppListTile(
-                key: Key('record-interval-${interval.name}'),
-                title: Text(recordIntervalLabel(l10n, interval)),
-                subtitle: Text(_detail(l10n, interval)),
-                enabled: enabled,
-                trailing: interval == current
-                    ? Icon(Icons.check, color: theme.colorScheme.primary)
-                    : null,
-                onTap: enabled
-                    ? () {
-                        if (interval != current) {
-                          unawaited(cubit.setInterval(interval));
-                        }
-                        Navigator.pop(context);
-                      }
-                    : null,
-              ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
-        ),
-      ),
+    return AppSheetScaffold(
+      title: l10n.walkRecordInterval,
+      description: l10n.walkRecordIntervalHint,
+      children: [
+        for (final interval in RecordInterval.values)
+          AppSelectTile(
+            key: Key('record-interval-${interval.name}'),
+            title: Text(recordIntervalLabel(l10n, interval)),
+            subtitle: Text(_detail(l10n, interval)),
+            enabled: enabled,
+            selected: interval == current,
+            onTap: enabled
+                ? () {
+                    if (interval != current) {
+                      unawaited(cubit.setInterval(interval));
+                    }
+                    Navigator.pop(context);
+                  }
+                : null,
+          ),
+      ],
     );
   }
 }

@@ -238,7 +238,7 @@ void main() {
 
     await tab(tester, '스토리');
     await type(tester, '제주');
-    expect(find.text('기록 4개'), findsOneWidget);
+    expect(find.textContaining('기록 4개'), findsOneWidget);
     await tester.tap(find.widgetWithText(AppListTile, '제주 여행'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));

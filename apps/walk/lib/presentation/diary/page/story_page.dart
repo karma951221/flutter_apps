@@ -130,25 +130,22 @@ class _StoryPageState extends State<StoryPage> {
   /// 지금 닫거나, 날짜를 골라 그날 끝으로 닫는다.
   Future<void> _close(Story story) async {
     final l10n = AppLocalizations.of(context);
-    final onDate = await showModalBottomSheet<bool>(
+    final onDate = await showAppSheet<bool>(
       context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppListTile(
-              leading: const Icon(Icons.inventory_2_outlined),
-              title: Text(l10n.walkDiaryStoryCloseNow),
-              onTap: () => Navigator.of(context).pop(false),
-            ),
-            AppListTile(
-              leading: const Icon(Icons.event_outlined),
-              title: Text(l10n.walkDiaryStoryCloseOnDate),
-              onTap: () => Navigator.of(context).pop(true),
-            ),
-          ],
-        ),
+      builder: (context) => AppSheetScaffold(
+        title: l10n.walkDiaryStoryClose,
+        children: [
+          AppListTile(
+            leading: const Icon(Icons.inventory_2_outlined),
+            title: Text(l10n.walkDiaryStoryCloseNow),
+            onTap: () => Navigator.of(context).pop(false),
+          ),
+          AppListTile(
+            leading: const Icon(Icons.event_outlined),
+            title: Text(l10n.walkDiaryStoryCloseOnDate),
+            onTap: () => Navigator.of(context).pop(true),
+          ),
+        ],
       ),
     );
     if (onDate == null || !mounted) return;
@@ -173,10 +170,8 @@ class _StoryPageState extends State<StoryPage> {
   Future<void> _pickCover(Story story) async {
     final candidates = await _cubit.coverCandidates(story.id);
     if (!mounted) return;
-    final choice = await showModalBottomSheet<({String? mediaId})>(
+    final choice = await showAppSheet<({String? mediaId})>(
       context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
       builder: (_) =>
           _CoverSheet(media: candidates, selectedId: story.coverMediaId),
     );
@@ -205,7 +200,7 @@ class _StoryPageState extends State<StoryPage> {
         builder: (context, state) {
           final story = _story(state);
           if (story == null) {
-            // 읽는 중 · 지워짐: 앱바만 둔다.
+            // 읽는 중 · 지워짐: 앱바만 둔다(오래 읽으면 로딩 표시).
             return Scaffold(
               appBar: AppBar(),
               body: state.failed || _entriesFailed
@@ -213,6 +208,8 @@ class _StoryPageState extends State<StoryPage> {
                       icon: Icons.error_outline,
                       message: l10n.walkDiaryLoadError,
                     )
+                  : state.loading
+                  ? const AppLoading(delayed: true)
                   : null,
             );
           }
@@ -264,7 +261,10 @@ class _StoryPageState extends State<StoryPage> {
             ),
           )
         else if (_entries == null)
-          const SliverToBoxAdapter(child: SizedBox.shrink())
+          const SliverFillRemaining(
+            hasScrollBody: false,
+            child: AppLoading(delayed: true),
+          )
         else if (entries.isEmpty)
           SliverFillRemaining(
             hasScrollBody: false,
@@ -415,69 +415,60 @@ class _CoverSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: Text(
-              l10n.walkDiaryStoryCover,
-              style: theme.textTheme.titleLarge,
+    return AppSheetScaffold.draggable(
+      title: l10n.walkDiaryStoryCover,
+      children: [
+        AppSelectTile(
+          leading: const Icon(Icons.auto_awesome_outlined),
+          title: Text(l10n.walkDiaryStoryCoverAuto),
+          selected: selectedId == null,
+          onTap: () => Navigator.of(context).pop((mediaId: null)),
+        ),
+        if (media.isEmpty)
+          AppPlaceholder(
+            icon: Icons.photo_outlined,
+            message: l10n.walkDiaryStoryCoverEmpty,
+          )
+        else
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: _columns,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.sm,
             ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          AppListTile(
-            leading: const Icon(Icons.auto_awesome_outlined),
-            title: Text(l10n.walkDiaryStoryCoverAuto),
-            trailing: selectedId == null ? const Icon(Icons.check) : null,
-            onTap: () => Navigator.of(context).pop((mediaId: null)),
-          ),
-          if (media.isEmpty)
-            AppPlaceholder(
-              icon: Icons.photo_outlined,
-              message: l10n.walkDiaryStoryCoverEmpty,
-            )
-          else
-            Flexible(
-              child: GridView.count(
-                shrinkWrap: true,
-                crossAxisCount: _columns,
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                mainAxisSpacing: AppSpacing.xs,
-                crossAxisSpacing: AppSpacing.xs,
-                children: [
-                  for (final m in media)
-                    InkWell(
-                      key: ValueKey('cover-${m.id}'),
-                      onTap: () => Navigator.of(context).pop((mediaId: m.id)),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          ClipRRect(
-                            borderRadius: AppRadius.smAll,
-                            child: EntryMediaView(media: m),
-                          ),
-                          if (m.id == selectedId)
-                            Align(
-                              alignment: Alignment.topRight,
-                              child: Padding(
-                                padding: const EdgeInsets.all(AppSpacing.xs),
-                                child: Icon(
-                                  Icons.check_circle,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ),
-                            ),
-                        ],
+            mainAxisSpacing: AppSpacing.xs,
+            crossAxisSpacing: AppSpacing.xs,
+            children: [
+              for (final m in media)
+                InkWell(
+                  key: ValueKey('cover-${m.id}'),
+                  onTap: () => Navigator.of(context).pop((mediaId: m.id)),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      ClipRRect(
+                        borderRadius: AppRadius.smAll,
+                        child: EntryMediaView(media: m),
                       ),
-                    ),
-                ],
-              ),
-            ),
-        ],
-      ),
+                      if (m.id == selectedId)
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppSpacing.xs),
+                            child: Icon(
+                              Icons.check_circle,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+      ],
     );
   }
 }

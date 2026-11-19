@@ -84,6 +84,8 @@ void main() {
     auth.screenLock = false;
     await open(tester);
 
+    // 행동은 안내(AppPlaceholder)의 버튼으로만.
+    expect(find.widgetWithText(AppPlaceholder, '화면 잠금 설정 열기'), findsOneWidget);
     await tester.tap(find.text('화면 잠금 설정 열기'));
     await tester.pump();
 
@@ -171,6 +173,22 @@ void main() {
 
     await typePin(tester, '1234');
     expect(find.text('PIN 4자리 (사용 중)'), findsOneWidget);
+    // 방식 고르기는 선택 행 — 쓰는 방식에만 체크.
+    expect(find.byType(AppSelectTile), findsNWidgets(2));
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('lock-method-pin')),
+        matching: find.byIcon(Icons.check),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('lock-method-pattern')),
+        matching: find.byIcon(Icons.check),
+      ),
+      findsNothing,
+    );
     await tester.tap(find.text('잠금 끄기'));
     await tester.pumpAndSettle();
 

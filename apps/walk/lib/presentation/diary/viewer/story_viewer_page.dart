@@ -609,7 +609,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
           body: _loadFailed
               ? _failure(context)
               : pos == null || _groups.isEmpty
-              ? const SizedBox.expand()
+              ? const AppLoading(delayed: true)
               : GestureDetector(
                   onVerticalDragStart: (_) => _update(() => _dragging = true),
                   onVerticalDragUpdate: (d) => setState(() {

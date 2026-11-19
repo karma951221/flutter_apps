@@ -240,6 +240,7 @@ class _MapBodyState extends State<_MapBody> {
               ),
       ),
       MapViewEmpty(:final period) => AppPlaceholder(
+        icon: Icons.map_outlined,
         message: switch (period) {
           DayPeriod() => l10n.walkMapEmptyDay,
           MonthPeriod() => l10n.walkMapEmptyMonth,

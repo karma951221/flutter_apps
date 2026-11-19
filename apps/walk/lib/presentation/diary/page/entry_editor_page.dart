@@ -17,6 +17,7 @@ import '../../../domain/diary/entity/story.dart';
 import '../../../domain/diary/location/place_source.dart';
 import '../../../domain/diary/media/media_store.dart';
 import '../../../domain/diary/media/photo_meta_reader.dart';
+import '../../../domain/diary/entity/entry_filter.dart';
 import '../../../domain/diary/repository/diary_preferences.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
 import '../../../domain/diary/usecase/diary_use_case.dart';
@@ -360,6 +361,7 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
       context,
       pick: pick,
       stories: cubit.state.stories,
+      now: getIt<Clock>().now(),
     );
     if (!mounted) return;
     switch (choice) {
@@ -446,6 +448,8 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
         if (state.isEditing) ...StoryOrder.split(state.stories).archived,
       ],
       selectedId: state.draft.storyId,
+      now: getIt<Clock>().now(),
+      entries: getIt<DiaryRepository>().watchEntries(const EntryFilter.all()),
       allowCreate: true,
     );
     if (picked == null || !mounted) return false;
@@ -558,10 +562,7 @@ class _EntryEditorPageState extends State<EntryEditorPage> {
           ),
           actions: [
             AppButton.text(
-              // 앱 테마 버튼은 폭을 가득 채운다(`Size.fromHeight`) — 폭이 정해지지 않은 자리라 최소 크기만 푼다.
-              style: const ButtonStyle(
-                minimumSize: WidgetStatePropertyAll(Size.zero),
-              ),
+              compact: true,
               label: state.isEditing
                   ? l10n.walkDiaryEditorSave
                   : l10n.walkDiaryEditorPost,

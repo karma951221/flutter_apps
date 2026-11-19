@@ -136,10 +136,8 @@ class EntryTimeSheet extends StatefulWidget {
     BuildContext context, {
     required TimeOfDay initial,
     TimeOfDay? maximum,
-  }) => showModalBottomSheet<TimeOfDay>(
+  }) => showAppSheet<TimeOfDay>(
     context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
     builder: (_) => EntryTimeSheet(initial: initial, maximum: maximum),
   );
 
@@ -153,34 +151,24 @@ class _EntryTimeSheetState extends State<EntryTimeSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          0,
-          AppSpacing.md,
-          AppSpacing.md,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              height: EntryTimeSheet.pickerHeight,
-              child: AlarmTimeWheel(
-                initial: widget.initial,
-                maximum: widget.maximum,
-                onChanged: (time) => _value = time,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AppButton.primary(
-              label: l10n.walkDiaryEditorPickTimeConfirm,
-              onPressed: () => Navigator.of(context).pop(_value),
-            ),
-          ],
-        ),
+    // 휠이 곧 제목이라 제목을 두지 않는다.
+    return AppSheetScaffold(
+      title: null,
+      bodyPadding: AppSheetScaffold.contentPadding,
+      primaryAction: AppButton.primary(
+        label: l10n.walkDiaryEditorPickTimeConfirm,
+        onPressed: () => Navigator.of(context).pop(_value),
       ),
+      children: [
+        SizedBox(
+          height: EntryTimeSheet.pickerHeight,
+          child: AlarmTimeWheel(
+            initial: widget.initial,
+            maximum: widget.maximum,
+            onChanged: (time) => _value = time,
+          ),
+        ),
+      ],
     );
   }
 }
