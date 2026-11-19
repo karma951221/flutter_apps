@@ -160,6 +160,25 @@ void main() {
     expect(find.text('확인 전'), findsOneWidget);
   });
 
+  testWidgets('non-key server error (code -8) asks with cause, not rejected', (
+    tester,
+  ) async {
+    remote.error = const TransitFailure.server(
+      'HTTP 200 · code -8 · stationClass의 형식이 잘못되었습니다.',
+    );
+    await h.pump(tester, const TransitSettingsPage());
+
+    await enterAndSave(tester, 'abcd1234efgh5678');
+    expect(find.text('확인 못 했어요'), findsOneWidget);
+    expect(find.textContaining('code -8'), findsWidgets);
+    expect(store.saveCalls, 0);
+
+    await tester.tap(find.text('그래도 저장'));
+    await tester.pumpAndSettle();
+
+    expect(store.savedStatus, TransitKeyStatus.unverified);
+  });
+
   testWidgets('network then cancel saves nothing and keeps the cause', (
     tester,
   ) async {

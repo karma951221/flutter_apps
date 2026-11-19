@@ -14,10 +14,11 @@ enum TransitKeySave {
   /// 서버가 키를 거절했다 — 저장하지 않았다. 원인은 상태의 `failure`.
   rejected,
 
-  /// 확인하지 못했다(네트워크) — 저장하지 않았다. 그래도 저장할지는 화면이 묻는다.
+  /// 키를 판정하지 못했다(네트워크 · 키와 무관한 서버 오류) — 저장하지 않았다.
+  /// 그래도 저장할지는 화면이 묻는다. 원인은 상태의 `failure`.
   network,
 
-  /// 그 밖의 실패(한도 초과 · 서버 오류 · 저장 실패) — 저장하지 않았다.
+  /// 그 밖의 실패(한도 초과 · 저장 실패) — 저장하지 않았다.
   /// 원인은 상태의 `failure`(저장소 예외는 `TransitFailure.unexpected`).
   failed,
 }
@@ -58,12 +59,9 @@ class TransitKeyCubit extends Cubit<TransitKeyState> {
     } on TransitKeyRejected catch (e) {
       _emitSettled(failure: e);
       return TransitKeySave.rejected;
-    } on TransitNetwork catch (e) {
-      _emitSettled(failure: e);
-      return TransitKeySave.network;
     } on TransitFailure catch (e) {
       _emitSettled(failure: e);
-      return TransitKeySave.failed;
+      return isUnverifiable(e) ? TransitKeySave.network : TransitKeySave.failed;
     } on Object catch (e) {
       _emitSettled(
         failure: TransitFailure.unexpected(
