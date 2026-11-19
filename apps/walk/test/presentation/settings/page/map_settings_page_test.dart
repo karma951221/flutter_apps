@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:walk/domain/location/entity/record_interval.dart';
 import 'package:walk/data/location/background_location_access.dart';
 import 'package:core/core.dart';
 import 'package:walk/domain/location/entity/map_style.dart';
@@ -38,6 +39,7 @@ void main() {
   setUpAll(() {
     SettingsHarness.registerFallbacks();
     registerFallbackValue(RecordMode.normal);
+    registerFallbackValue(RecordInterval.normal);
     registerFallbackValue(RecordRetention.never);
   });
 
@@ -52,7 +54,7 @@ void main() {
     when(recorder.status).thenAnswer((_) async => const RecorderStatus.off());
     when(() => recorder.start(any())).thenAnswer((_) async {});
     when(recorder.stop).thenAnswer((_) async {});
-    when(() => recorder.setMode(any())).thenAnswer((_) async {});
+    when(() => recorder.setInterval(any())).thenAnswer((_) async {});
     when(access.check).thenAnswer((_) async => AlwaysAccess.denied);
     when(recorder.openBatterySettings).thenAnswer((_) async {});
     when(access.request).thenAnswer((_) async => AlwaysAccess.granted);
@@ -89,11 +91,20 @@ void main() {
   Switch switchOf(WidgetTester tester, String key) =>
       tester.widget<Switch>(find.byKey(Key(key)));
 
-  testWidgets('기본 상태: 기록 꺼짐, 촘촘 비활성, 보관 기간 지우지 않음', (tester) async {
+  bool intervalEnabled(WidgetTester tester) => tester
+      .widget<ListTile>(
+        find.descendant(
+          of: find.byKey(const Key('map-settings-interval')),
+          matching: find.byType(ListTile),
+        ),
+      )
+      .enabled;
+
+  testWidgets('기본 상태: 기록 꺼짐, 기록 주기 비활성, 보관 기간 지우지 않음', (tester) async {
     await pump(tester);
 
     expect(switchOf(tester, 'map-settings-record-switch').value, isFalse);
-    expect(switchOf(tester, 'map-settings-dense-switch').onChanged, isNull);
+    expect(intervalEnabled(tester), isFalse);
     expect(find.text('지우지 않음'), findsOneWidget);
   });
 
@@ -155,7 +166,7 @@ void main() {
 
     verify(() => recorder.start(RecordMode.normal)).called(1);
     expect(switchOf(tester, 'map-settings-record-switch').value, isTrue);
-    expect(switchOf(tester, 'map-settings-dense-switch').onChanged, isNotNull);
+    expect(intervalEnabled(tester), isTrue);
   });
 
   testWidgets('항상 허용을 대화상자로 못 받으면 켜지 않고 안내한다', (tester) async {
@@ -169,17 +180,42 @@ void main() {
     expect(find.textContaining('항상 허용'), findsWidgets);
   });
 
-  testWidgets('촘촘 스위치는 setMode(dense) 를 부른다', (tester) async {
+  testWidgets('기록 주기 행은 지금 주기를 보이고 시트에서 고르면 setInterval', (tester) async {
     when(recorder.status).thenAnswer(
       (_) async =>
           const RecorderStatus.running(RecordMode.normal, stillDetection: true),
     );
     await pump(tester);
 
-    await tester.tap(find.byKey(const Key('map-settings-dense-switch')));
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('map-settings-interval')),
+        matching: find.text('평소'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('map-settings-interval')));
+    await tester.pumpAndSettle();
+    expect(find.text('기록 주기'), findsWidgets);
+    for (final interval in RecordInterval.values) {
+      expect(
+        find.byKey(Key('record-interval-${interval.name}')),
+        findsOneWidget,
+      );
+    }
+    await tester.tap(find.byKey(const Key('record-interval-s30')));
     await tester.pumpAndSettle();
 
-    verify(() => recorder.setMode(RecordMode.dense)).called(1);
+    verify(() => recorder.setInterval(RecordInterval.s30)).called(1);
+  });
+
+  testWidgets('기록이 꺼져 있으면 기록 주기 행은 비활성', (tester) async {
+    await pump(tester);
+
+    await tester.tap(find.byKey(const Key('map-settings-interval')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('record-interval-s5')), findsNothing);
   });
 
   testWidgets('보관 기간 시트에서 1년을 고르면 저장한다', (tester) async {

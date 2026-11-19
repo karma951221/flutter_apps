@@ -16,6 +16,6 @@
     <!-- 상시 위치 기록(LocationRecordService) 알림. 채널 이름은 시스템 알림 설정에 보인다. -->
     <string name="location_record_channel_name">Location recording</string>
     <string name="location_record_notification_normal">Recording location · Normal</string>
-    <string name="location_record_notification_dense">Recording location · Detailed</string>
+    <string name="location_record_notification_interval">Recording location · every %1$d s</string>
     <string name="location_record_stop">Turn off</string>
 </resources>

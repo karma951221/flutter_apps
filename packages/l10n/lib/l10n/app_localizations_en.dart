@@ -3849,9 +3849,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkSettingsLocationOn => 'On';
 
   @override
-  String get walkSettingsLocationDetailed => 'On · Detailed';
-
-  @override
   String get walkSettingsLocationBlocked => 'Paused · permission needed';
 
   @override
@@ -4575,13 +4572,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Stays on this phone and is never sent to a server';
 
   @override
-  String get walkMapSettingsDense => 'Detailed recording';
-
-  @override
-  String get walkMapSettingsDenseDescription =>
-      'Records every 5 seconds, like on a walk. Uses more battery';
-
-  @override
   String get walkMapSettingsRetention => 'Keep records for';
 
   @override
@@ -4719,17 +4709,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkMapViewStoryOnMap => 'View on map';
 
   @override
-  String get walkMapChipDense => 'Detailed recording';
+  String get walkRecordInterval => 'Recording interval';
+
+  @override
+  String get walkRecordIntervalHint =>
+      'Shorter intervals follow your path more closely but use more battery. A point is saved only after moving more than 10 m';
+
+  @override
+  String get walkRecordIntervalNormal => 'Normal';
+
+  @override
+  String get walkRecordIntervalNormalDetail =>
+      'Every few minutes · pauses while you stay still. Uses the least battery';
+
+  @override
+  String walkRecordIntervalSeconds(int seconds) {
+    return 'Every $seconds s';
+  }
+
+  @override
+  String walkRecordIntervalMinutes(int minutes) {
+    return 'Every $minutes min';
+  }
+
+  @override
+  String get walkRecordIntervalShortDetail =>
+      'Follows your path closely · uses a lot of battery';
+
+  @override
+  String get walkRecordIntervalLongDetail =>
+      'Occasional points · uses a bit more battery';
+
+  @override
+  String walkMapRecordOnInterval(String interval) {
+    return 'Recording location · $interval';
+  }
+
+  @override
+  String walkSettingsLocationInterval(String interval) {
+    return 'On · $interval';
+  }
 
   @override
   String get walkMapRecordOn => 'Recording location';
-
-  @override
-  String get walkMapRecordOnDense => 'Detailed recording on';
-
-  @override
-  String get walkMapRecordDenseHint =>
-      'Records every 5 seconds. Uses more battery';
 
   @override
   String get walkMapChipOff => 'Recording off';

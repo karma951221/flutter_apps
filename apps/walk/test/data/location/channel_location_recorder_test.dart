@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:walk/domain/location/entity/record_interval.dart';
 import 'package:walk/data/location/channel_location_recorder.dart';
 import 'package:walk/domain/location/entity/record_mode.dart';
 import 'package:walk/domain/location/recorder/recorder_status.dart';
@@ -45,6 +46,32 @@ void main() {
         await recorder.status(),
         const RecorderStatus.running(RecordMode.dense, stillDetection: true),
       );
+    });
+
+    test('intervalSec 을 싣고, 없으면(예전 네이티브) 5초', () async {
+      answer(
+        (_) => {
+          'state': 'running',
+          'mode': 'dense',
+          'intervalSec': 10,
+          'stillDetection': false,
+        },
+      );
+      expect(
+        await recorder.status(),
+        const RecorderStatus.running(
+          RecordMode.dense,
+          stillDetection: false,
+          intervalSec: 10,
+        ),
+      );
+      answer((_) => {'state': 'blocked', 'mode': 'dense', 'intervalSec': 60});
+      expect(
+        await recorder.status(),
+        const RecorderStatus.blocked(RecordMode.dense, intervalSec: 60),
+      );
+      answer((_) => {'state': 'blocked', 'mode': 'dense'});
+      expect(recordIntervalOf(await recorder.status()), RecordInterval.s5);
     });
 
     test('running 은 recordingSince(epoch millis)를 싣는다', () async {
@@ -101,12 +128,20 @@ void main() {
       expect(calls.single.arguments, {'mode': 'dense'});
     });
 
-    test('stop 과 setMode', () async {
+    test('stop 과 setInterval(평소) 는 주기 없이 mode 만', () async {
       answer((_) => null);
       await recorder.stop();
-      await recorder.setMode(RecordMode.normal);
+      await recorder.setInterval(RecordInterval.normal);
       expect(calls.map((c) => c.method), ['stop', 'setMode']);
       expect(calls.last.arguments, {'mode': 'normal'});
+    });
+
+    test('setInterval(고정 주기) 는 dense + intervalSec 를 보낸다', () async {
+      answer((_) => null);
+      await recorder.setInterval(RecordInterval.s30);
+      expect(calls.single.arguments, {'mode': 'dense', 'intervalSec': 30});
+      await recorder.setInterval(RecordInterval.m1);
+      expect(calls.last.arguments, {'mode': 'dense', 'intervalSec': 60});
     });
   });
 

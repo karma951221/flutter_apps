@@ -1,5 +1,6 @@
 import 'package:core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:walk/domain/location/entity/record_interval.dart';
 import 'package:walk/domain/location/entity/location_point.dart';
 import 'package:walk/domain/location/entity/record_mode.dart';
 import 'package:walk/domain/location/entity/record_retention.dart';
@@ -71,7 +72,7 @@ class _Recorder implements LocationRecorder {
   @override
   Future<void> stop() async {}
   @override
-  Future<void> setMode(RecordMode mode) async {}
+  Future<void> setInterval(RecordInterval interval) async {}
   @override
   Future<void> openBatterySettings() async {}
 }

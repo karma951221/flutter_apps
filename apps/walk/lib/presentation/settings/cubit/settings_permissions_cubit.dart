@@ -22,12 +22,14 @@ class SettingsPermissionsCubit extends Cubit<SettingsPermissionsState> {
     ]);
     final health = await _walk.access();
     if (isClosed) return;
-    emit(SettingsPermissionsState(
-      notification: results[0],
-      exactAlarm: results[1],
-      fullScreenIntent: results[2],
-      health: health,
-    ));
+    emit(
+      SettingsPermissionsState(
+        notification: results[0],
+        exactAlarm: results[1],
+        fullScreenIntent: results[2],
+        health: health,
+      ),
+    );
   }
 
   /// 아직 다이얼로그를 띄울 수 있으면(denied) 바로 묻고, 아니면 앱 설정을 연다.
@@ -44,7 +46,8 @@ class SettingsPermissionsCubit extends Cubit<SettingsPermissionsState> {
   /// 런타임 다이얼로그가 없는 권한 — 해당 설정 화면이 열리고, 결과는 복귀 때 읽는다.
   Future<void> openExactAlarm() => _permissions.exactAlarm.openSettings();
 
-  Future<void> openFullScreenIntent() => _permissions.fullScreenIntent.openSettings();
+  Future<void> openFullScreenIntent() =>
+      _permissions.fullScreenIntent.openSettings();
 
   /// 설치 · 업데이트가 필요하면 스토어, 거부면 권한 요청(두 번 거부해 다이얼로그가
   /// 생략되면 Health Connect 설정), 허용이면 철회할 수 있게 Health Connect 설정.
@@ -52,7 +55,8 @@ class SettingsPermissionsCubit extends Cubit<SettingsPermissionsState> {
     switch (state.health ?? await _walk.access()) {
       case HealthAccess.notInstalled || HealthAccess.updateRequired:
         await _walk.openInstall();
-      case HealthAccess.permissionDenied when !_walk.permissionDeclinedThisSession:
+      case HealthAccess.permissionDenied
+          when !_walk.permissionDeclinedThisSession:
         await _walk.requestAccess();
         await check();
       case HealthAccess.permissionDenied || HealthAccess.granted:

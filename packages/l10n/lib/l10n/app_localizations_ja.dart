@@ -3515,9 +3515,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkSettingsLocationOn => 'オン';
 
   @override
-  String get walkSettingsLocationDetailed => 'オン・詳しく記録';
-
-  @override
   String get walkSettingsLocationBlocked => '停止・権限が必要';
 
   @override
@@ -4193,12 +4190,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkMapSettingsRecordDescription => 'この端末にだけ保存され、サーバーには送りません';
 
   @override
-  String get walkMapSettingsDense => '詳しく記録';
-
-  @override
-  String get walkMapSettingsDenseDescription => '散歩のように5秒ごとに記録します。電池を多く使います';
-
-  @override
   String get walkMapSettingsRetention => '保管期間';
 
   @override
@@ -4326,16 +4317,46 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkMapViewStoryOnMap => '地図で見る';
 
   @override
-  String get walkMapChipDense => '詳しく記録';
+  String get walkRecordInterval => '記録の間隔';
+
+  @override
+  String get walkRecordIntervalHint =>
+      '短いほど道を細かく追えますが、電池を多く使います。10m以上動いたときだけ記録します';
+
+  @override
+  String get walkRecordIntervalNormal => '通常';
+
+  @override
+  String get walkRecordIntervalNormalDetail => '数分ごと・止まっている間は休みます。電池の消費が最も少ない';
+
+  @override
+  String walkRecordIntervalSeconds(int seconds) {
+    return '$seconds秒ごと';
+  }
+
+  @override
+  String walkRecordIntervalMinutes(int minutes) {
+    return '$minutes分ごと';
+  }
+
+  @override
+  String get walkRecordIntervalShortDetail => '道を細かく追います・電池を多く使います';
+
+  @override
+  String get walkRecordIntervalLongDetail => 'ときどき記録・電池を少し多く使います';
+
+  @override
+  String walkMapRecordOnInterval(String interval) {
+    return '位置を記録中・$interval';
+  }
+
+  @override
+  String walkSettingsLocationInterval(String interval) {
+    return 'オン・$interval';
+  }
 
   @override
   String get walkMapRecordOn => '位置を記録中';
-
-  @override
-  String get walkMapRecordOnDense => '詳しく記録中';
-
-  @override
-  String get walkMapRecordDenseHint => '5秒ごとに位置を記録します。電池を多く使います';
 
   @override
   String get walkMapChipOff => '記録オフ';

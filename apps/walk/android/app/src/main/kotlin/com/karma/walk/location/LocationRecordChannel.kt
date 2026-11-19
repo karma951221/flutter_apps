@@ -20,8 +20,9 @@ import java.util.concurrent.Executors
  * - `start` ← `{mode: "normal"|"dense"}`: 켜짐 · 모드를 저장하고 서비스를 띄운다(권한이 없으면
  *   저장만 — `status` 가 `blocked`).
  * - `stop`: 켜짐을 끄고 서비스를 끝낸다.
- * - `setMode` ← `{mode}`: 저장하고, 서비스가 떠 있으면 모드를 바꾼다.
- * - `status` → `{state: "off"|"running"|"blocked", mode, stillDetection}`. `stillDetection` 은 평소
+ * - `setMode` ← `{mode, intervalSec?}`: 저장하고, 서비스가 떠 있으면 모드 · 주기를 바꾼다.
+ *   `intervalSec` 은 자세히 기록 주기(초, 5~600). 없으면 저장된 값을 그대로 둔다.
+ * - `status` → `{state: "off"|"running"|"blocked", mode, intervalSec, stillDetection}`. `stillDetection` 은 평소
  *   모드이고 활동 인식 권한이 있어 정지 감지가 도는지. 부를 때 죽은 서비스를 되살리고, 정지가
  *   6시간을 넘었으면 위치 요청을 다시 걸게 한다([LocationRecordRules.stillTooLong]).
  * - `drain` ← `{limit}` → `[{id, t, lat, lng, acc?, mode, still}]` (id 오름차순, 지우지 않음)
@@ -65,7 +66,7 @@ internal class LocationRecordChannel private constructor(private val context: Co
                     if (mode == null) {
                         result.error("bad_args", "setMode needs mode", null)
                     } else {
-                        setMode(mode)
+                        setMode(mode, call.argument<Number>("intervalSec")?.toInt())
                         result.success(null)
                     }
                 }
@@ -156,8 +157,9 @@ internal class LocationRecordChannel private constructor(private val context: Co
         }
     }
 
-    private fun setMode(mode: String) {
+    private fun setMode(mode: String, intervalSec: Int?) {
         LocationRecordPrefs.setMode(context, mode)
+        if (intervalSec != null) LocationRecordPrefs.setIntervalSec(context, intervalSec)
         if (LocationRecordService.running) {
             LocationRecordService.send(context, LocationRecordService.ACTION_SET_MODE)
         }
@@ -179,6 +181,7 @@ internal class LocationRecordChannel private constructor(private val context: Co
                 locationOn = LocationRecordService.isLocationOn(context),
             ),
             "mode" to mode,
+            "intervalSec" to LocationRecordPrefs.intervalSec(context),
             "stillDetection" to (
                 mode == LocationRecordRules.MODE_NORMAL &&
                     LocationRecordService.hasActivityRecognition(context)

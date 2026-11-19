@@ -25,6 +25,7 @@ import 'package:walk/domain/location/entity/day_track.dart';
 import 'package:walk/domain/location/entity/location_point.dart';
 import 'package:walk/domain/location/entity/map_period.dart';
 import 'package:walk/domain/location/entity/map_style.dart';
+import 'package:walk/domain/location/entity/record_interval.dart';
 import 'package:walk/domain/location/entity/record_mode.dart';
 import 'package:walk/domain/location/entity/stay.dart';
 import 'package:walk/domain/location/entity/track_segment.dart';
@@ -154,6 +155,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(_today);
     registerFallbackValue(const EntryFilter.all());
+    registerFallbackValue(RecordInterval.normal);
   });
 
   setUp(() async {
@@ -181,7 +183,7 @@ void main() {
     ).thenAnswer((_) => Stream.value([_entry('a')]));
     when(record.load).thenAnswer((_) async {});
     when(record.enable).thenAnswer((_) async {});
-    when(() => record.setDense(any())).thenAnswer((_) async {});
+    when(() => record.setInterval(any())).thenAnswer((_) async {});
     when(() => view.show(any())).thenAnswer((_) async {});
     when(view.refresh).thenAnswer((_) async {});
     getIt
@@ -429,15 +431,27 @@ void main() {
     verify(() => view.show(_today)).called(1);
   });
 
-  Switch denseSwitch(WidgetTester tester) =>
-      tester.widget<Switch>(find.byKey(const Key('map-record-dense-switch')));
-
   const denseRunning = MapRecordState(
-    status: RecorderStatus.running(RecordMode.dense, stillDetection: true),
+    status: RecorderStatus.running(
+      RecordMode.dense,
+      stillDetection: false,
+      intervalSec: 10,
+    ),
     busy: false,
     hasPoints: true,
     loaded: true,
   );
+
+  Finder intervalTile(RecordInterval interval) =>
+      find.byKey(Key('record-interval-${interval.name}'));
+
+  bool checked(WidgetTester tester, RecordInterval interval) => find
+      .descendant(
+        of: intervalTile(interval),
+        matching: find.byIcon(Icons.check),
+      )
+      .evaluate()
+      .isNotEmpty;
 
   testWidgets('running record is a compact round button, not a card', (
     tester,
@@ -447,57 +461,69 @@ void main() {
     final chip = find.byKey(const Key('map-record-chip'));
     expect(chip, findsOneWidget);
     expect(tester.widget(chip), isA<IconButton>());
+    expect(tester.widget<IconButton>(chip).tooltip, '위치 기록 중 · 평소');
     expect(find.widgetWithIcon(IconButton, Icons.my_location), findsOneWidget);
-    // 접힌 상태 — 스위치 · 설명은 시트를 열어야 보인다.
-    expect(find.text('자세히 기록'), findsNothing);
-    expect(find.byKey(const Key('map-record-dense-switch')), findsNothing);
-    // 지도 종류 버튼과 같은 왼쪽 열, 그 아래에 쌓인다.
+    // 접힌 상태 — 주기 목록은 시트를 열어야 보인다.
+    expect(find.text('기록 주기'), findsNothing);
+    expect(intervalTile(RecordInterval.s5), findsNothing);
+    // 전체화면 · 지도 종류 버튼과 같은 왼쪽 열, 그 아래에 쌓인다.
     final style = tester.getRect(find.byKey(const Key('map-style-button')));
     final record = tester.getRect(chip);
     expect(record.left, style.left);
     expect(record.top, greaterThan(style.bottom - 1));
   });
 
-  testWidgets('dense record shows a different icon', (tester) async {
+  testWidgets('fixed interval shows a different icon and the interval', (
+    tester,
+  ) async {
     await pump(
       tester,
       state: MapViewState.ready(_data()),
       recordState: denseRunning,
     );
 
+    final chip = find.byKey(const Key('map-record-chip'));
     expect(find.widgetWithIcon(IconButton, Icons.route), findsOneWidget);
     expect(find.widgetWithIcon(IconButton, Icons.my_location), findsNothing);
+    expect(tester.widget<IconButton>(chip).tooltip, '위치 기록 중 · 10초마다');
   });
 
-  testWidgets('tapping record button opens the detail-record sheet', (
-    tester,
-  ) async {
+  testWidgets('tapping record button opens the interval sheet', (tester) async {
     await pump(tester, state: MapViewState.ready(_data()));
 
     await tester.tap(find.byKey(const Key('map-record-chip')));
     await tester.pumpAndSettle();
 
-    expect(find.text('위치 기록 중'), findsOneWidget);
-    expect(find.text('자세히 기록'), findsOneWidget);
-    expect(find.text('5초마다 위치를 찍어요. 배터리를 더 써요'), findsOneWidget);
-    expect(denseSwitch(tester).value, isFalse);
+    expect(find.text('기록 주기'), findsOneWidget);
+    expect(find.textContaining('배터리를 더 써요'), findsOneWidget);
+    expect(find.text('평소'), findsOneWidget);
+    expect(find.text('5초마다'), findsOneWidget);
+    expect(find.text('10초마다'), findsOneWidget);
+    expect(find.text('30초마다'), findsOneWidget);
+    expect(find.text('1분마다'), findsOneWidget);
+    expect(checked(tester, RecordInterval.normal), isTrue);
+    expect(checked(tester, RecordInterval.s5), isFalse);
 
-    await tester.tap(find.byKey(const Key('map-record-dense-switch')));
+    await tester.tap(intervalTile(RecordInterval.s10));
     await tester.pumpAndSettle();
-    verify(() => record.setDense(true)).called(1);
+    verify(() => record.setInterval(RecordInterval.s10)).called(1);
+    // 고르면 닫힌다.
+    expect(find.text('기록 주기'), findsNothing);
 
-    // 시트가 떠 있는 동안 바뀐 상태를 따른다.
     records.add(denseRunning);
     await tester.pumpAndSettle();
-    expect(denseSwitch(tester).value, isTrue);
-
-    // 글자를 눌러도 같은 토글이다.
-    await tester.tap(find.text('자세히 기록'));
+    await tester.tap(find.byKey(const Key('map-record-chip')));
     await tester.pumpAndSettle();
-    verify(() => record.setDense(false)).called(1);
+    expect(checked(tester, RecordInterval.s10), isTrue);
+    expect(checked(tester, RecordInterval.normal), isFalse);
+
+    // 이미 고른 주기는 다시 보내지 않는다.
+    await tester.tap(intervalTile(RecordInterval.s10));
+    await tester.pumpAndSettle();
+    verifyNever(() => record.setInterval(any()));
   });
 
-  testWidgets('detail-record toggle is disabled while busy', (tester) async {
+  testWidgets('interval sheet is disabled while busy', (tester) async {
     await pump(
       tester,
       state: MapViewState.ready(_data()),
@@ -507,21 +533,21 @@ void main() {
     await tester.tap(find.byKey(const Key('map-record-chip')));
     await tester.pumpAndSettle();
 
-    expect(denseSwitch(tester).onChanged, isNull);
-    await tester.tap(find.text('자세히 기록'));
+    await tester.tap(intervalTile(RecordInterval.s5));
     await tester.pump();
-    verifyNever(() => record.setDense(any()));
+    verifyNever(() => record.setInterval(any()));
+    expect(find.text('기록 주기'), findsOneWidget);
   });
 
   testWidgets('relocking closes the record sheet', (tester) async {
     await pump(tester, state: MapViewState.ready(_data()));
     await tester.tap(find.byKey(const Key('map-record-chip')));
     await tester.pumpAndSettle();
-    expect(find.text('위치 기록 중'), findsOneWidget);
+    expect(find.text('기록 주기'), findsOneWidget);
 
     await relock(tester);
 
-    expect(find.text('위치 기록 중', skipOffstage: false), findsNothing);
+    expect(find.text('기록 주기', skipOffstage: false), findsNothing);
   });
 
   testWidgets('blocked shows record-off chip', (tester) async {
@@ -538,7 +564,7 @@ void main() {
     );
 
     expect(find.text('권한 필요'), findsOneWidget);
-    expect(find.text('자세히 기록'), findsNothing);
+    expect(find.byKey(const Key('map-record-chip')), findsOneWidget);
     expect(
       tester
           .widget<ActionChip>(find.byKey(const Key('map-record-chip')))

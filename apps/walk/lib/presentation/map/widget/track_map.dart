@@ -9,12 +9,12 @@ import 'package:latlong2/latlong.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/location/entity/day_track.dart';
 import '../../../domain/location/entity/map_style.dart';
-import '../../../domain/location/entity/record_mode.dart';
+import '../../../domain/location/entity/track_segment.dart';
 import 'entry_pin.dart';
 
 /// 한 기간의 동선 지도 — 이동선 · 머문 곳 원 · 일기 핀.
 ///
-/// 선: 촘촘 구간은 굵고 진하게, 평소 구간은 얇고 옅게(같은 색). [faint] 면(한 달) 모든 선을
+/// 선: 자세히 구간([isDetailedSegment], 30초 이하 고정 주기)은 굵고 진하게, 평소 구간은 얇고 옅게(같은 색). [faint] 면(한 달) 모든 선을
 /// 옅게 겹쳐 그려 자주 다닌 길이 진해진다.
 ///
 /// 이동선의 좌표 목록은 [track] 인스턴스가 바뀔 때만 다시 만든다 — 한 달 · 긴 스토리는 점이 많고,
@@ -98,6 +98,7 @@ class TrackMapState extends State<TrackMap> {
   /// [_segmentPoints] · [_trackCoordinates] 를 만든 이동선. 같은 인스턴스면 다시 쓴다.
   DayTrack? _memoTrack;
   List<List<LatLng>> _memoSegments = const [];
+  List<bool> _memoDetailed = const [];
   List<LatLng> _memoCoordinates = const [];
 
   void _memoize() {
@@ -109,12 +110,21 @@ class TrackMapState extends State<TrackMap> {
         List.unmodifiable([for (final p in s.points) LatLng(p.lat, p.lng)]),
     ];
     _memoCoordinates = List.unmodifiable([for (final s in _memoSegments) ...s]);
+    _memoDetailed = List.unmodifiable([
+      for (final s in track.segments) isDetailedSegment(s),
+    ]);
   }
 
   /// 구간별 선 좌표([DayTrack.segments] 와 같은 순서).
   List<List<LatLng>> get _segmentPoints {
     _memoize();
     return _memoSegments;
+  }
+
+  /// 구간별 굵게 그릴지([isDetailedSegment], [DayTrack.segments] 와 같은 순서).
+  List<bool> get _segmentDetailed {
+    _memoize();
+    return _memoDetailed;
   }
 
   /// 이동선의 모든 좌표.
@@ -306,9 +316,9 @@ class TrackMapState extends State<TrackMap> {
     return a.computeLuminance() >= b.computeLuminance() ? a : b;
   }
 
-  double _alphaOf(RecordMode mode) {
+  double _alphaOf(bool detailed) {
     if (widget.faint) return _faintAlpha;
-    if (mode == RecordMode.dense) return 1;
+    if (detailed) return 1;
     return widget.style == MapStyle.satellite
         ? _satelliteNormalAlpha
         : _normalAlpha;
@@ -361,10 +371,10 @@ class TrackMapState extends State<TrackMap> {
               if (s.points.length > 1)
                 Polyline(
                   points: _segmentPoints[i],
-                  strokeWidth: !widget.faint && s.mode == RecordMode.dense
+                  strokeWidth: !widget.faint && _segmentDetailed[i]
                       ? _denseStroke
                       : _normalStroke,
-                  color: route.withValues(alpha: _alphaOf(s.mode)),
+                  color: route.withValues(alpha: _alphaOf(_segmentDetailed[i])),
                   borderStrokeWidth: satellite ? _satelliteBorder : 0,
                   borderColor: scheme.shadow.withValues(
                     alpha: _satelliteBorderAlpha,

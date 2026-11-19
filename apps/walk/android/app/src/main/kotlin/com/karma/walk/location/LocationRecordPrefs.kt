@@ -11,6 +11,7 @@ internal object LocationRecordPrefs {
     private const val FILE = "location_record"
     private const val KEY_ENABLED = "enabled"
     private const val KEY_MODE = "mode"
+    private const val KEY_INTERVAL_SEC = "intervalSec"
     private const val KEY_PHASE = "phase"
     private const val KEY_STILL_SINCE = "stillSince"
     private const val KEY_LAST_T = "lastT"
@@ -33,6 +34,18 @@ internal object LocationRecordPrefs {
 
     fun setMode(context: Context, mode: String) {
         prefs(context).edit().putString(KEY_MODE, LocationRecordRules.normalizeMode(mode)).apply()
+    }
+
+    /** 자세히 기록 주기(초). 저장한 적 없으면(이 설정 전부터 쓰던 사람) 예전처럼 5초. */
+    fun intervalSec(context: Context): Int {
+        val p = prefs(context)
+        return LocationRecordRules.normalizeIntervalSec(
+            if (p.contains(KEY_INTERVAL_SEC)) p.getInt(KEY_INTERVAL_SEC, 0) else null,
+        )
+    }
+
+    fun setIntervalSec(context: Context, sec: Int) {
+        prefs(context).edit().putInt(KEY_INTERVAL_SEC, LocationRecordRules.normalizeIntervalSec(sec)).apply()
     }
 
     /** 서비스가 다시 떠도 정지 중이었는지 이어 간다. 모르는 값은 움직이는 중. */

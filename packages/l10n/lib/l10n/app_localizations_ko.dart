@@ -3517,9 +3517,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkSettingsLocationOn => '켜짐';
 
   @override
-  String get walkSettingsLocationDetailed => '켜짐 · 자세히 기록';
-
-  @override
   String get walkSettingsLocationBlocked => '멈춤 · 권한 필요';
 
   @override
@@ -4196,12 +4193,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapSettingsRecordDescription => '이 폰에만 쌓이고 서버로 보내지 않아요';
 
   @override
-  String get walkMapSettingsDense => '자세히 기록';
-
-  @override
-  String get walkMapSettingsDenseDescription => '산책할 때처럼 5초마다 기록해요. 배터리를 더 써요';
-
-  @override
   String get walkMapSettingsRetention => '보관 기간';
 
   @override
@@ -4331,16 +4322,47 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapViewStoryOnMap => '지도로 보기';
 
   @override
-  String get walkMapChipDense => '자세히 기록';
+  String get walkRecordInterval => '기록 주기';
+
+  @override
+  String get walkRecordIntervalHint =>
+      '짧을수록 다닌 길을 자세히 따라가지만 배터리를 더 써요. 10m 넘게 움직일 때만 점을 남겨요';
+
+  @override
+  String get walkRecordIntervalNormal => '평소';
+
+  @override
+  String get walkRecordIntervalNormalDetail =>
+      '몇 분마다 · 멈춰 있으면 쉬어요. 배터리를 가장 적게 써요';
+
+  @override
+  String walkRecordIntervalSeconds(int seconds) {
+    return '$seconds초마다';
+  }
+
+  @override
+  String walkRecordIntervalMinutes(int minutes) {
+    return '$minutes분마다';
+  }
+
+  @override
+  String get walkRecordIntervalShortDetail => '길을 자세히 따라가요 · 배터리를 많이 써요';
+
+  @override
+  String get walkRecordIntervalLongDetail => '가끔 찍어요 · 배터리를 조금 더 써요';
+
+  @override
+  String walkMapRecordOnInterval(String interval) {
+    return '위치 기록 중 · $interval';
+  }
+
+  @override
+  String walkSettingsLocationInterval(String interval) {
+    return '켜짐 · $interval';
+  }
 
   @override
   String get walkMapRecordOn => '위치 기록 중';
-
-  @override
-  String get walkMapRecordOnDense => '자세히 기록 중';
-
-  @override
-  String get walkMapRecordDenseHint => '5초마다 위치를 찍어요. 배터리를 더 써요';
 
   @override
   String get walkMapChipOff => '기록 꺼짐';

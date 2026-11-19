@@ -1527,3 +1527,38 @@ busy 비활성 · 다시 잠기면 시트 닫힘 · 권한 필요 칩 툴팁.
 
 `flutter analyze` 0 · `flutter test` 4449건 통과(1 skip). 지도 탭 위젯 테스트: 버튼 → 시트 · 기간 머리 · 기록 표시 · 지도 종류가 사라지고
 몰입 모드 호출 → 나가기 버튼으로 돌아오면 다시 보이고 `edgeToEdge` · 뒤로가기로 돌아오고 전체화면에서 옮긴 카메라가 지도 탭에 남음.
+
+## 2026-11-19 — 기록 주기 설정
+
+사용자 QA(실기기): "촘촘기록이 5초마다 기록하는 걸로 보여. 꼭 5초가 필요한가 싶다. 몇 초마다 기록할지를 사용자가 지정할 수 있으면 좋겠다."
+
+### 판단
+
+- 이진 모드(평소/자세히)를 **기록 주기** 값 `RecordInterval { normal, s5, s10, s30, m1 }` 로 일반화했다. 직접 입력은 두지 않았다 —
+  프리셋 다섯 개로 쓰임새(산책 · 자전거 · 이동 · 가끔)가 덮이고, 입력칸 검증 · 키보드 UX 를 덜었다. 네이티브는 5초~10분으로 잘라
+  나중에 프리셋을 늘려도 된다.
+- 네이티브 계약은 넓히기만 했다: 모드 문자열(`normal`/`dense`)은 그대로 두고 prefs `intervalSec` · 채널 `setMode {mode, intervalSec?}` ·
+  `status.intervalSec` 를 더했다. `dense` 요청은 정확도 우선 · 묶음 없음 · 10m 에 간격만 `intervalSec`. 알림은 "위치 기록 중 · N초마다".
+  inbox 점의 `mode` · drift 테이블은 바꾸지 않았다(스키마 변경 없음).
+- 설정 이전: `intervalSec` 이 없으면 5초로 읽는다(Kotlin `LocationRecordPrefs.intervalSec` · Dart 채널 해석 모두). 그래서 예전 `dense` 는
+  5초, `normal` 은 평소 — 업데이트해도 동작이 그대로다. 평소 모드에서 정지 감지 · 3분 · 50m 는 그대로.
+- 엔진 확인: `LocationRequest.Builder(HIGH_ACCURACY, intervalSec*1000).setMinUpdateDistanceMeters(10).setMaxUpdateDelayMillis(0)` —
+  `SET_MODE` 가 들어오면 서비스가 요청을 내리고 다시 건다. 포그라운드 서비스(위치 유형)라 백그라운드 위치 간격 제한(시간당 몇 번)은
+  받지 않는다. 다만 10m 거리 필터 때문에 가만히 있으면 주기가 짧아도 점이 늘지 않는다 — 시트 설명에 적었다. 고정 주기는 정지
+  감지를 쓰지 않는다(예전 자세히와 같다).
+- 지도 굵은 선: 점에 주기가 없으니 토막의 실제 점 간격 중앙값으로 본다(`isDetailedSegment`: dense 이고 중앙값 30초 이하면 굵게).
+  예전 5초 기록은 그대로 굵고, 1분 주기는 평소처럼 얇다. 멈춘 동안의 긴 틈 하나에 흔들리지 않게 중앙값을 쓴다.
+- UI: 지도 기록 버튼 시트를 스위치에서 주기 목록(`AppListTile` + 체크, 지도 종류 시트와 같은 모양)으로 바꾸고 고르면 닫는다.
+  지도 설정의 자세히 기록 스위치 행은 "기록 주기" 행(지금 값 부제 · 누르면 같은 시트)으로. 설정 탭 위치 행은 "켜짐 · 10초마다".
+  지도 버튼 툴팁은 "위치 기록 중 · 평소/N초마다". 30초 이하 설명은 "배터리를 많이 써요", 1분은 "조금 더 써요".
+- l10n: `walkMapChipDense` · `walkMapRecordOnDense` · `walkMapRecordDenseHint` · `walkMapSettingsDense(Description)` ·
+  `walkSettingsLocationDetailed` 를 지우고 `walkRecordInterval*` · `walkMapRecordOnInterval` · `walkSettingsLocationInterval` 을 더했다.
+  안드로이드 문자열 `location_record_notification_dense` → `location_record_notification_interval`(%d).
+
+### 검증
+
+`flutter analyze` 0 · `flutter test` 4460건 통과(1 skip) · `packages/l10n` 12건 · JUnit `:app:testDebugUnitTest` 115건(위치 규칙 36건: 주기 → 요청 간격 ·
+평소는 주기 무시 · 5~600초 자르기 · 기본 5초). Dart: `RecordInterval`(모드 · 이전 · 가까운 프리셋) · `isDetailedSegment`(평소 · 5/10/30초 굵게 ·
+1분 얇게 · 중앙값 · 점 둘 이하) · 채널(`setMode {dense, intervalSec}` · `status.intervalSec` · 없으면 5초) · cubit `setInterval` · 지도 시트
+(목록 · 체크 · 고르면 `setInterval` 후 닫힘 · 같은 값은 안 보냄 · busy 비활성 · 다시 잠기면 닫힘) · 지도 설정 행(부제 · 시트 · 꺼짐이면 비활성) ·
+설정 탭 "켜짐 · 10초마다". 실기기는 대기(L-QA10).

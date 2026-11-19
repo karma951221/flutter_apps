@@ -32,6 +32,29 @@ class LocationRecordRulesTest {
     }
 
     @Test
+    fun `dense request uses the chosen interval`() {
+        assertEquals(10_000L, LocationRecordRules.requestFor("dense", 10).intervalMs)
+        assertEquals(30_000L, LocationRecordRules.requestFor("dense", 30).intervalMs)
+        assertEquals(60_000L, LocationRecordRules.requestFor("dense", 60).intervalMs)
+        assertEquals(10f, LocationRecordRules.requestFor("dense", 60).minDistanceM)
+        assertEquals(100, LocationRecordRules.requestFor("dense", 60).priority)
+    }
+
+    @Test
+    fun `normal request ignores the interval`() {
+        assertEquals(LocationRecordRules.requestFor("normal"), LocationRecordRules.requestFor("normal", 10))
+    }
+
+    @Test
+    fun `interval is clamped to 5 seconds to 10 minutes and defaults to 5 seconds`() {
+        assertEquals(5, LocationRecordRules.normalizeIntervalSec(null))
+        assertEquals(5, LocationRecordRules.normalizeIntervalSec(1))
+        assertEquals(600, LocationRecordRules.normalizeIntervalSec(3_600))
+        assertEquals(30, LocationRecordRules.normalizeIntervalSec(30))
+        assertEquals(5_000L, LocationRecordRules.requestFor("dense", 0).intervalMs)
+    }
+
+    @Test
     fun `unknown mode falls back to normal`() {
         assertEquals(LocationRecordRules.requestFor("normal"), LocationRecordRules.requestFor("walking"))
     }
