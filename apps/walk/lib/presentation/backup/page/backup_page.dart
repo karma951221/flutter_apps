@@ -7,6 +7,7 @@ import 'package:l10n/l10n.dart';
 
 import '../../../domain/backup/restore_notice.dart';
 import '../../common/format_bytes.dart';
+import '../../common/status_label.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
 import '../../lock/cubit/diary_lock_state.dart';
 import '../cubit/backup_cubit.dart';
@@ -162,10 +163,6 @@ class _BackupScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final note = theme.textTheme.bodySmall?.copyWith(
-      color: theme.colorScheme.onSurfaceVariant,
-    );
     final unlocked = context.select<DiaryLockCubit, bool>(
       (c) => c.state is LockUnlocked,
     );
@@ -177,6 +174,13 @@ class _BackupScaffold extends StatelessWidget {
           final idle = state is BackupIdle ? state : const BackupIdle();
           return ListView(
             children: [
+              if (!unlocked)
+                AppBanner(
+                  key: const Key('backup-locked'),
+                  tone: AppBannerTone.warning,
+                  icon: Icons.lock_outline,
+                  message: l10n.walkBackupSettingsLocked,
+                ),
               AppListTile(
                 key: const Key('backup-create'),
                 leading: const Icon(Icons.upload_outlined),
@@ -197,36 +201,21 @@ class _BackupScaffold extends StatelessWidget {
               if (idle.hasUndo)
                 AppListTile(
                   key: const Key('backup-undo'),
-                  leading: const Icon(Icons.restore),
+                  leading: const Icon(Icons.restore_outlined),
                   title: Text(l10n.walkBackupSettingsUndo),
                   enabled: unlocked,
                   onTap: unlocked ? () => _undo(context) : null,
                 ),
-              Padding(
+              AppFootnote(
+                l10n.walkBackupSettingsExcluded,
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.md,
                   AppSpacing.sm,
                   AppSpacing.md,
-                  AppSpacing.xs,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (!unlocked) ...[
-                      Text(
-                        l10n.walkBackupSettingsLocked,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.error,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-                    ],
-                    Text(l10n.walkBackupSettingsExcluded, style: note),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(l10n.walkBackupSettingsCloudNote, style: note),
-                  ],
+                  0,
                 ),
               ),
+              AppFootnote(l10n.walkBackupSettingsCloudNote),
             ],
           );
         },
@@ -248,15 +237,12 @@ class _LastBackup extends StatelessWidget {
     if (days == null) return Text(l10n.walkBackupSettingsNever);
     final last = Text(l10n.walkBackupSettingsLastAt(days));
     if (!idle.stale) return last;
-    final theme = Theme.of(context);
     return Wrap(
       spacing: AppSpacing.sm,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         last,
-        Text(
-          l10n.walkBackupSettingsStale,
-          style: TextStyle(color: theme.colorScheme.error),
-        ),
+        StatusLabel(l10n.walkBackupSettingsStale, tone: StatusTone.attention),
       ],
     );
   }
@@ -336,6 +322,7 @@ class _RestartDialog extends StatelessWidget {
       ),
       actions: [
         AppButton.primary(
+          compact: true,
           label: AppLocalizations.of(context).walkBackupRestartAction,
           onPressed: () => Navigator.of(context).pop(),
         ),

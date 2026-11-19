@@ -19,48 +19,29 @@ class VendorPickerSheet extends StatelessWidget {
   static Future<ChatVendor?> show(
     BuildContext context, {
     ChatVendor? current,
-  }) => showModalBottomSheet<ChatVendor>(
+  }) => showAppSheet<ChatVendor>(
     context: context,
-    showDragHandle: true,
     builder: (_) => VendorPickerSheet._(current: current),
   );
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.sm,
-              AppSpacing.md,
-              AppSpacing.xs,
-            ),
-            child: Text(
-              l10n.walkChatVendorSheetTitle,
-              style: theme.textTheme.titleMedium,
-            ),
+    return AppSheetScaffold(
+      title: l10n.walkChatVendorSheetTitle,
+      children: [
+        for (final vendor in chatVendorChoices)
+          AppSelectTile(
+            key: Key('vendor-row-${vendor.name}'),
+            leading: ChatVendorIcon(vendor),
+            title: Text(chatVendorName(l10n, vendor)),
+            subtitle: Text(chatVendorCompany(l10n, vendor)),
+            selected: vendor == current,
+            onTap: vendor == current
+                ? null
+                : () => Navigator.pop(context, vendor),
           ),
-          for (final vendor in chatVendorChoices)
-            AppListTile(
-              key: Key('vendor-row-${vendor.name}'),
-              leading: ChatVendorIcon(vendor),
-              title: Text(chatVendorName(l10n, vendor)),
-              subtitle: Text(chatVendorCompany(l10n, vendor)),
-              trailing: vendor == current
-                  ? Icon(Icons.check, color: theme.colorScheme.primary)
-                  : null,
-              onTap: vendor == current
-                  ? null
-                  : () => Navigator.pop(context, vendor),
-            ),
-        ],
-      ),
+      ],
     );
   }
 }

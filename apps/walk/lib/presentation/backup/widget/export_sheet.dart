@@ -23,10 +23,8 @@ class ExportSheet extends StatefulWidget {
   static Future<ExportRequest?> show(
     BuildContext context, {
     required Future<Map<BackupAreaId, AreaPreview>> previews,
-  }) => showModalBottomSheet<ExportRequest>(
+  }) => showAppSheet<ExportRequest>(
     context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
     builder: (_) => ExportSheet(previews: previews),
   );
 
@@ -75,136 +73,107 @@ class _ExportSheetState extends State<ExportSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final note = theme.textTheme.bodySmall?.copyWith(
-      color: theme.colorScheme.onSurfaceVariant,
-    );
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(context).bottom,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                child: Text(
-                  l10n.walkBackupSheetTitle,
-                  style: theme.textTheme.titleMedium,
-                ),
-              ),
-              FutureBuilder<Map<BackupAreaId, AreaPreview>>(
-                future: widget.previews,
-                builder: (context, snapshot) {
-                  final previews = snapshot.data ?? const {};
-                  return Column(
-                    children: [
-                      // 체크 행은 AppListTile 로 그릴 수 없다(선택 표시 · 접근성 역할이 체크박스).
-                      for (final id in BackupAreaId.values)
-                        CheckboxListTile(
-                          key: Key('backup-export-area-${id.name}'),
-                          value: _areas.contains(id),
-                          title: Text(l10n.backupAreaName(id)),
-                          subtitle: switch (previews[id]) {
-                            final p? => switch (l10n.backupAreaCounts(
-                              id,
-                              p.counts,
-                              bytes: p.bytes,
-                            )) {
-                              final text? => Text(text),
-                              null => null,
-                            },
-                            null => null,
-                          },
-                          onChanged: (on) => setState(
-                            () =>
-                                on == true ? _areas.add(id) : _areas.remove(id),
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-              const Divider(),
-              SwitchListTile(
-                key: const Key('backup-export-encrypt'),
-                value: _encrypt,
-                title: Text(l10n.walkBackupSheetEncrypt),
-                onChanged: (on) => setState(() => _encrypt = on),
-              ),
-              if (_encrypt) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                  ),
-                  child: Column(
-                    children: [
-                      BackupPasswordField(
-                        key: const Key('backup-export-password'),
-                        controller: _password,
-                        label: l10n.walkBackupSheetPassword,
-                        helperText: l10n.walkBackupSheetPasswordHint,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      BackupPasswordField(
-                        key: const Key('backup-export-password-again'),
-                        controller: _again,
-                        label: l10n.walkBackupSheetPasswordAgain,
-                        errorText:
-                            _again.text.isNotEmpty &&
-                                _again.text != _password.text
-                            ? l10n.walkBackupSheetPasswordMismatch
-                            : null,
-                      ),
-                    ],
-                  ),
-                ),
-                CheckboxListTile(
-                  key: const Key('backup-export-forget-ack'),
-                  value: _forgetAck,
-                  controlAffinity: ListTileControlAffinity.leading,
-                  title: Text(l10n.walkBackupSheetForgetAck),
-                  onChanged: (on) => setState(() => _forgetAck = on == true),
-                ),
-              ] else ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                  ),
-                  child: Text(l10n.walkBackupSheetUnencrypted, style: note),
-                ),
-                if (_areas.contains(BackupAreaId.location))
-                  Padding(
-                    key: const Key('backup-export-location-warning'),
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.md,
-                      AppSpacing.xs,
-                      AppSpacing.md,
-                      0,
-                    ),
-                    child: Text(
-                      l10n.walkBackupSheetLocationUnencrypted,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.error,
-                      ),
+    return AppSheetScaffold(
+      title: l10n.walkBackupSheetTitle,
+      primaryAction: AppButton.primary(
+        key: const Key('backup-export-save'),
+        label: l10n.walkBackupSheetSave,
+        onPressed: _canSave ? _save : null,
+      ),
+      children: [
+        FutureBuilder<Map<BackupAreaId, AreaPreview>>(
+          future: widget.previews,
+          builder: (context, snapshot) {
+            final previews = snapshot.data ?? const {};
+            return Column(
+              children: [
+                // 체크 행은 AppListTile 로 그릴 수 없다(선택 표시 · 접근성 역할이 체크박스).
+                for (final id in BackupAreaId.values)
+                  CheckboxListTile(
+                    key: Key('backup-export-area-${id.name}'),
+                    value: _areas.contains(id),
+                    title: Text(l10n.backupAreaName(id)),
+                    subtitle: switch (previews[id]) {
+                      final p? => switch (l10n.backupAreaCounts(
+                        id,
+                        p.counts,
+                        bytes: p.bytes,
+                      )) {
+                        final text? => Text(text),
+                        null => null,
+                      },
+                      null => null,
+                    },
+                    onChanged: (on) => setState(
+                      () => on == true ? _areas.add(id) : _areas.remove(id),
                     ),
                   ),
               ],
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: AppButton.primary(
-                  key: const Key('backup-export-save'),
-                  label: l10n.walkBackupSheetSave,
-                  onPressed: _canSave ? _save : null,
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
-      ),
+        const SizedBox(height: AppSpacing.sm),
+        AppSwitchTile(
+          key: const Key('backup-export-encrypt'),
+          value: _encrypt,
+          title: Text(l10n.walkBackupSheetEncrypt),
+          onChanged: (on) => setState(() => _encrypt = on),
+        ),
+        if (_encrypt) ...[
+          Padding(
+            padding: AppSheetScaffold.contentPadding,
+            child: Column(
+              children: [
+                BackupPasswordField(
+                  key: const Key('backup-export-password'),
+                  controller: _password,
+                  label: l10n.walkBackupSheetPassword,
+                  helperText: l10n.walkBackupSheetPasswordHint,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                BackupPasswordField(
+                  key: const Key('backup-export-password-again'),
+                  controller: _again,
+                  label: l10n.walkBackupSheetPasswordAgain,
+                  errorText:
+                      _again.text.isNotEmpty && _again.text != _password.text
+                      ? l10n.walkBackupSheetPasswordMismatch
+                      : null,
+                ),
+              ],
+            ),
+          ),
+          CheckboxListTile(
+            key: const Key('backup-export-forget-ack'),
+            value: _forgetAck,
+            controlAffinity: ListTileControlAffinity.leading,
+            title: Text(l10n.walkBackupSheetForgetAck),
+            onChanged: (on) => setState(() => _forgetAck = on == true),
+          ),
+        ] else ...[
+          AppFootnote(
+            l10n.walkBackupSheetUnencrypted,
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.xs,
+              AppSpacing.lg,
+              0,
+            ),
+          ),
+          if (_areas.contains(BackupAreaId.location))
+            AppBanner(
+              key: const Key('backup-export-location-warning'),
+              tone: AppBannerTone.warning,
+              message: l10n.walkBackupSheetLocationUnencrypted,
+              margin: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                0,
+              ),
+            ),
+        ],
+      ],
     );
   }
 }

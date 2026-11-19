@@ -13,10 +13,8 @@ class StepGoalSheet extends StatefulWidget {
   final int initial;
 
   static Future<int?> show(BuildContext context, {required int initial}) =>
-      showModalBottomSheet<int>(
+      showAppSheet<int>(
         context: context,
-        showDragHandle: true,
-        isScrollControlled: true,
         builder: (_) => StepGoalSheet(initial: initial),
       );
 
@@ -32,50 +30,36 @@ class _StepGoalSheetState extends State<StepGoalSheet> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final locale = Localizations.localeOf(context).toString();
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          AppSpacing.sm,
-          AppSpacing.md,
-          AppSpacing.md,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(l10n.walkSettingsStepGoal, style: theme.textTheme.titleMedium),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              l10n.walkStepsCount(WalkFormat.steps(locale, _value)),
-              style: theme.textTheme.displaySmall?.copyWith(
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            Slider(
-              key: const Key('step-goal-slider'),
-              min: StepGoal.min.toDouble(),
-              max: StepGoal.max.toDouble(),
-              divisions: (StepGoal.max - StepGoal.min) ~/ StepGoal.step,
-              value: _value.toDouble(),
-              onChanged: (v) {
-                final next = StepGoal.clamp(v.round());
-                if (next == _value) return;
-                HapticFeedback.selectionClick();
-                setState(() => _value = next);
-              },
-            ),
-            const SizedBox(height: AppSpacing.md),
-            SizedBox(
-              width: double.infinity,
-              child: AppButton.primary(
-                key: const Key('step-goal-save'),
-                label: l10n.walkSettingsStepGoalSave,
-                onPressed: () => Navigator.pop(context, _value),
-              ),
-            ),
-          ],
-        ),
+    return AppSheetScaffold(
+      title: l10n.walkSettingsStepGoal,
+      bodyPadding: AppSheetScaffold.contentPadding,
+      primaryAction: AppButton.primary(
+        key: const Key('step-goal-save'),
+        label: l10n.walkSettingsStepGoalSave,
+        onPressed: () => Navigator.pop(context, _value),
       ),
+      children: [
+        Text(
+          l10n.walkStepsCount(WalkFormat.steps(locale, _value)),
+          style: theme.textTheme.displaySmall?.copyWith(
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Slider(
+          key: const Key('step-goal-slider'),
+          min: StepGoal.min.toDouble(),
+          max: StepGoal.max.toDouble(),
+          divisions: (StepGoal.max - StepGoal.min) ~/ StepGoal.step,
+          value: _value.toDouble(),
+          onChanged: (v) {
+            final next = StepGoal.clamp(v.round());
+            if (next == _value) return;
+            HapticFeedback.selectionClick();
+            setState(() => _value = next);
+          },
+        ),
+      ],
     );
   }
 }

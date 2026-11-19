@@ -12,6 +12,7 @@ import '../../../domain/chat/chat_vendor.dart';
 import '../../../domain/chat/usecase/chat_key_verifier.dart';
 import '../../../domain/chat/usecase/chat_model_choice.dart';
 import '../../chat/widget/chat_vendor_icon.dart';
+import '../../common/status_label.dart';
 import '../../chat/widget/model_chip.dart';
 import '../../chat/widget/model_picker_sheet.dart';
 import '../cubit/chat_settings_cubit.dart';
@@ -22,8 +23,7 @@ import 'vendor_picker_sheet.dart';
 
 /// 물어보기 설정의 섹션 — AI 연결 행(스펙 §6.1)과 데이터 전송 안내.
 ///
-/// 섹션 머리글은 두지 않는다 — 화면 제목(물어보기 설정)과 연결 행 제목(AI 연결)이
-/// 이미 같은 말을 한다.
+/// 섹션 머리([AppSectionHeader])는 이 섹션을 놓는 화면이 단다.
 class ChatSettingsSection extends StatelessWidget {
   const ChatSettingsSection({this.highlightConnection = false, super.key});
 
@@ -136,7 +136,7 @@ class _ChatSettingsViewState extends State<_ChatSettingsView> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
+    final error = Theme.of(context).colorScheme.error;
     return BlocBuilder<ChatSettingsCubit, ChatSettingsState>(
       builder: (context, state) {
         final connection = state.connection;
@@ -174,30 +174,22 @@ class _ChatSettingsViewState extends State<_ChatSettingsView> {
               ),
               AppListTile(
                 key: const Key('settings-chat-switch-vendor'),
-                leading: const Icon(Icons.swap_horiz),
+                leading: const Icon(Icons.swap_horiz_outlined),
                 title: Text(l10n.walkChatSettingsSwitchVendor),
                 onTap: () => _switchVendor(c.vendor),
               ),
               AppListTile(
                 key: const Key('settings-chat-delete'),
-                leading: const Icon(Icons.link_off_outlined),
-                title: Text(l10n.walkChatSettingsDelete),
+                leading: Icon(Icons.link_off_outlined, color: error),
+                title: Text(
+                  l10n.walkChatSettingsDelete,
+                  style: TextStyle(color: error),
+                ),
                 onTap: _disconnect,
               ),
               // 보낼 곳(연결한 벤더)이 정해진 뒤에만 안내한다.
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.md,
-                  AppSpacing.xs,
-                  AppSpacing.md,
-                  AppSpacing.xs,
-                ),
-                child: Text(
-                  l10n.walkChatSettingsNotice(chatVendorName(l10n, c.vendor)),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
+              AppFootnote(
+                l10n.walkChatSettingsNotice(chatVendorName(l10n, c.vendor)),
               ),
             ],
           ],
@@ -266,18 +258,12 @@ class _ConnectRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     return AppListTile(
       key: const Key('settings-chat-key'),
       leading: const Icon(Icons.power_outlined),
       title: Text(l10n.walkChatConnectTitle),
       subtitle: Text(l10n.walkChatConnectDescription),
-      trailing: Text(
-        l10n.walkChatConnectAction,
-        style: theme.textTheme.labelLarge?.copyWith(
-          color: theme.colorScheme.primary,
-        ),
-      ),
+      trailing: StatusLabel(l10n.walkChatConnectAction, tone: StatusTone.ok),
       onTap: onTap,
     );
   }
@@ -295,24 +281,28 @@ class _ConnectedRow extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final (icon, label, color) = switch (connection.status) {
+    final (icon, label, tone) = switch (connection.status) {
       ChatKeyStatus.valid => (
         Icons.check_circle_outline,
         l10n.walkChatKeyStatusValid,
-        scheme.primary,
+        StatusTone.ok,
       ),
       ChatKeyStatus.unverified => (
         null,
         l10n.walkChatKeyStatusUnverified,
-        scheme.onSurfaceVariant,
+        StatusTone.neutral,
       ),
       ChatKeyStatus.invalid => (
         Icons.error_outline,
         l10n.walkChatKeyStatusInvalid,
-        scheme.error,
+        StatusTone.attention,
       ),
     };
-    final labelStyle = theme.textTheme.labelLarge?.copyWith(color: color);
+    final color = switch (tone) {
+      StatusTone.ok => scheme.primary,
+      StatusTone.neutral => scheme.onSurfaceVariant,
+      StatusTone.attention => scheme.error,
+    };
     return AppListTile(
       key: const Key('settings-chat-key'),
       leading: ChatVendorIcon(connection.vendor),
@@ -328,10 +318,14 @@ class _ConnectedRow extends StatelessWidget {
         children: [
           if (icon != null) ...[
             // 상태 글자와 같은 높이 — 아이콘 크기 토큰이 없어 글자 토큰을 따른다.
-            Icon(icon, size: labelStyle?.fontSize, color: color),
+            Icon(
+              icon,
+              size: theme.textTheme.labelLarge?.fontSize,
+              color: color,
+            ),
             const SizedBox(width: AppSpacing.xs),
           ],
-          Text(label, style: labelStyle),
+          StatusLabel(label, tone: tone),
         ],
       ),
       onTap: onTap,

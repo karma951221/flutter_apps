@@ -247,7 +247,12 @@ void main() {
     expect(find.text('Claude API 키 넣기'), findsOneWidget);
     expect(
       tester
-          .widget<TextField>(find.byKey(const Key('chat-key-input')))
+          .widget<TextField>(
+            find.descendant(
+              of: find.byKey(const Key('chat-key-input')),
+              matching: find.byType(TextField),
+            ),
+          )
           .controller!
           .text,
       isEmpty,

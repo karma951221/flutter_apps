@@ -12,6 +12,12 @@ import '../../../domain/transit/usecase/fakes.dart';
 import '../settings_harness.dart';
 
 void main() {
+  // 원인 원문 — 실패 영역(transit-failure-cause) 안의 글자. 골라 복사할 수 있게 그린다.
+  Finder cause(String text) => find.descendant(
+    of: find.byKey(const Key('transit-failure-cause')),
+    matching: find.text(text, findRichText: true),
+  );
+
   final h = SettingsHarness();
   late FakeKeyStore store;
   late FakeStationSearch remote;
@@ -81,10 +87,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.widgetWithText(
-        SelectableText,
-        'code 500 · [ApiKeyAuthFailed] ApiKey authentication failed.',
-      ),
+      cause('code 500 · [ApiKeyAuthFailed] ApiKey authentication failed.'),
       findsOneWidget,
     );
     expect(store.saveCalls, 0);
@@ -101,10 +104,7 @@ void main() {
     await enterAndSave(tester, 'abcd1234efgh5678');
 
     expect(find.text('오늘 무료 한도를 다 썼어요'), findsOneWidget);
-    expect(
-      find.widgetWithText(SelectableText, 'code -1 · LimitExceeded'),
-      findsOneWidget,
-    );
+    expect(cause('code -1 · LimitExceeded'), findsOneWidget);
   });
 
   testWidgets('storage failure shows runtime type and message', (tester) async {
@@ -120,13 +120,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(
-      find.widgetWithText(
-        SelectableText,
-        'StateError: Bad state: keystore locked',
-      ),
-      findsOneWidget,
-    );
+    expect(cause('StateError: Bad state: keystore locked'), findsOneWidget);
   });
 
   testWidgets('editing the input clears the failure area', (tester) async {
@@ -200,13 +194,7 @@ void main() {
 
     expect(store.saveCalls, 0);
     expect(find.text('ODsay 에 연결하지 못했어요'), findsOneWidget);
-    expect(
-      find.widgetWithText(
-        SelectableText,
-        'SocketException: Failed host lookup',
-      ),
-      findsOneWidget,
-    );
+    expect(cause('SocketException: Failed host lookup'), findsOneWidget);
   });
 
   testWidgets('delete asks and clears', (tester) async {

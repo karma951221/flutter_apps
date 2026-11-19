@@ -35,8 +35,9 @@ class _WalkSettingsPageState extends State<WalkSettingsPage> {
       appBar: AppBar(title: Text(l10n.walkWalkSettingsTitle)),
       body: ListView(
         children: [
+          AppSectionHeader(l10n.walkSettingsStepGoalSection),
           const _StepGoalTile(),
-          SettingsSectionHeader(l10n.walkSettingsPermissions),
+          AppSectionHeader(l10n.walkSettingsPermissions),
           const _HealthPermissionTile(),
         ],
       ),

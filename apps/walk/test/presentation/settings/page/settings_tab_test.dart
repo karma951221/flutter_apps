@@ -128,6 +128,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(h.theme.state, AppThemeMode.dark);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('settings-theme-dark')),
+        matching: find.byIcon(Icons.check),
+      ),
+      findsOneWidget,
+    );
     verify(
       () => h.settings.save(const AppSettings(themeMode: AppThemeMode.dark)),
     ).called(1);

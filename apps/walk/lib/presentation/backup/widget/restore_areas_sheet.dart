@@ -17,10 +17,8 @@ class RestoreAreasSheet extends StatefulWidget {
   static Future<Set<BackupAreaId>?> show(
     BuildContext context, {
     required InspectedBackup backup,
-  }) => showModalBottomSheet<Set<BackupAreaId>>(
+  }) => showAppSheet<Set<BackupAreaId>>(
     context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
     builder: (_) => RestoreAreasSheet(backup: backup),
   );
 
@@ -42,51 +40,25 @@ class _RestoreAreasSheetState extends State<RestoreAreasSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final backup = widget.backup;
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.walkBackupRestoreSheetTitle,
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  Text(
-                    l10n.walkBackupRestoreSheetCreated(
-                      backupCreatedLabel(l10n, backup.manifest.createdAt),
-                    ),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // 체크 행은 AppListTile 로 그릴 수 없다(선택 표시 · 접근성 역할이 체크박스).
-            for (final id in BackupAreaId.values)
-              if (backup.areas[id] case final availability?)
-                _areaTile(context, id, availability),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: AppButton.primary(
-                key: const Key('backup-restore-areas-confirm'),
-                label: l10n.walkBackupRestoreAction,
-                onPressed: _selected.isEmpty
-                    ? null
-                    : () => Navigator.of(context).pop({..._selected}),
-              ),
-            ),
-          ],
-        ),
+    return AppSheetScaffold(
+      title: l10n.walkBackupRestoreSheetTitle,
+      description: l10n.walkBackupRestoreSheetCreated(
+        backupCreatedLabel(l10n, backup.manifest.createdAt),
       ),
+      primaryAction: AppButton.primary(
+        key: const Key('backup-restore-areas-confirm'),
+        label: l10n.walkBackupRestoreAction,
+        onPressed: _selected.isEmpty
+            ? null
+            : () => Navigator.of(context).pop({..._selected}),
+      ),
+      children: [
+        // 체크 행은 AppListTile 로 그릴 수 없다(선택 표시 · 접근성 역할이 체크박스).
+        for (final id in BackupAreaId.values)
+          if (backup.areas[id] case final availability?)
+            _areaTile(context, id, availability),
+      ],
     );
   }
 

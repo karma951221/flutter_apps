@@ -5,6 +5,7 @@ import 'package:l10n/l10n.dart';
 import 'package:permission/permission.dart';
 
 import '../../../domain/alarm/holiday/holiday_calendar.dart';
+import '../../common/status_label.dart';
 import '../cubit/holiday_settings_cubit.dart';
 import '../cubit/holiday_settings_state.dart';
 import '../cubit/settings_permissions_cubit.dart';
@@ -41,8 +42,9 @@ class _AlarmSettingsPageState extends State<AlarmSettingsPage> {
       appBar: AppBar(title: Text(l10n.walkAlarmSettingsTitle)),
       body: ListView(
         children: [
+          AppSectionHeader(l10n.walkSettingsHolidaySection),
           const _HolidaySettingsTiles(),
-          SettingsSectionHeader(l10n.walkSettingsPermissions),
+          AppSectionHeader(l10n.walkSettingsPermissions),
           AlarmPermissionTiles(highlight: widget.highlightPermissions),
         ],
       ),
@@ -60,21 +62,17 @@ class _HolidaySettingsTiles extends StatelessWidget {
     return BlocBuilder<HolidaySettingsCubit, HolidaySettingsState>(
       builder: (context, state) {
         final cubit = context.read<HolidaySettingsCubit>();
-        final scheme = Theme.of(context).colorScheme;
         final source = state.source;
         final calendar = state.calendar;
         return Column(
           children: [
-            AppListTile(
+            AppSwitchTile(
               key: const Key('settings-holiday-reminder'),
               leading: const Icon(Icons.event_outlined),
               title: Text(l10n.walkSettingsHolidayReminder),
               subtitle: Text(l10n.walkSettingsHolidayReminderDescription),
-              trailing: Switch(
-                value: state.holidayReminder,
-                onChanged: cubit.setHolidayReminder,
-              ),
-              onTap: () => cubit.setHolidayReminder(!state.holidayReminder),
+              value: state.holidayReminder,
+              onChanged: cubit.setHolidayReminder,
             ),
             AppListTile(
               key: const Key('settings-holiday-source'),
@@ -85,15 +83,11 @@ class _HolidaySettingsTiles extends StatelessWidget {
                   : Text(_sourceLabel(l10n, source)),
               trailing: calendar == null
                   ? null
-                  : Text(
-                      calendar == PermissionStatus.granted
-                          ? l10n.walkSettingsCalendarGranted
-                          : l10n.walkSettingsCalendarNeedsPermission,
-                      style: TextStyle(
-                        color: calendar == PermissionStatus.granted
-                            ? scheme.onSurfaceVariant
-                            : scheme.error,
-                      ),
+                  : calendar == PermissionStatus.granted
+                  ? StatusLabel(l10n.walkSettingsCalendarGranted)
+                  : StatusLabel(
+                      l10n.walkSettingsCalendarNeedsPermission,
+                      tone: StatusTone.attention,
                     ),
               onTap: cubit.openCalendar,
             ),

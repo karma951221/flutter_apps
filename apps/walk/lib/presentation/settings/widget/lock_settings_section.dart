@@ -49,7 +49,6 @@ class LockSettingsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     // 잠긴 동안 PIN 없이 다시 잠기는 시간을 바꾸지 못한다. 잠금 행은 스스로 비밀을 확인하므로
     // 그대로 둔다.
     final diaryUnlocked = context.select<DiaryLockCubit, bool>(
@@ -82,20 +81,7 @@ class LockSettingsSection extends StatelessWidget {
               ? () => _pickRelock(context, lock.relockDelay)
               : null,
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.xs,
-            AppSpacing.md,
-            AppSpacing.xs,
-          ),
-          child: Text(
-            l10n.walkAppSettingsLockDescription,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
+        AppFootnote(l10n.walkAppSettingsLockDescription),
       ],
     );
   }

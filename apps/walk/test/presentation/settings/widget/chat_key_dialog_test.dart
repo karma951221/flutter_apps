@@ -98,8 +98,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  TextField field(WidgetTester tester) =>
-      tester.widget<TextField>(find.byKey(_input));
+  TextField field(WidgetTester tester) => tester.widget<TextField>(
+    find.descendant(of: find.byKey(_input), matching: find.byType(TextField)),
+  );
 
   bool saveEnabled(WidgetTester tester) =>
       tester

@@ -85,7 +85,10 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(tester.widget<AppListTile>(row(ChatVendor.anthropic)).onTap, isNull);
+    expect(
+      tester.widget<AppSelectTile>(row(ChatVendor.anthropic)).onTap,
+      isNull,
+    );
 
     await tester.tap(row(ChatVendor.anthropic), warnIfMissed: false);
     await tester.pumpAndSettle();

@@ -21,7 +21,6 @@ import '../cubit/diary_settings_cubit.dart';
 import '../cubit/theme_cubit.dart';
 import '../open_settings.dart';
 import '../widget/lock_settings_section.dart';
-import '../widget/settings_widgets.dart';
 
 /// 하단 넷째 탭 — 앱 전역 설정. 잠금 밖이다(잠겨 있어도 열린다).
 ///
@@ -92,18 +91,17 @@ class _SettingsTabState extends State<SettingsTab> {
       body: ListView(
         children: [
           _ProfileHeader(onTap: () => unawaited(_openProfile())),
-          const Divider(),
-          SettingsSectionHeader(l10n.walkAppSettingsDisplay),
-          const _ThemeSettingsRadios(),
-          SettingsSectionHeader(l10n.walkAppSettingsLock),
+          AppSectionHeader(l10n.walkAppSettingsDisplay),
+          const _ThemeSettingsChoices(),
+          AppSectionHeader(l10n.walkAppSettingsLock),
           const LockSettingsSection(),
-          SettingsSectionHeader(l10n.walkSettingsData),
+          AppSectionHeader(l10n.walkSettingsData),
           shortcut(
             SettingsTarget.backup,
             Icons.backup_outlined,
             l10n.walkBackupSettingsTitle,
           ),
-          SettingsSectionHeader(l10n.walkSettingsConnections),
+          AppSectionHeader(l10n.walkSettingsConnections),
           shortcut(
             SettingsTarget.chat,
             Icons.key_outlined,
@@ -117,14 +115,14 @@ class _SettingsTabState extends State<SettingsTab> {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => unawaited(openTransitKeySettings(context)),
           ),
-          SettingsSectionHeader(l10n.walkSettingsLocation),
+          AppSectionHeader(l10n.walkSettingsLocation),
           shortcut(
             SettingsTarget.map,
             Icons.my_location_outlined,
             l10n.walkMapSettingsRecord,
             subtitle: const _LocationRecordLabel(),
           ),
-          SettingsSectionHeader(l10n.walkAppSettingsFeatures),
+          AppSectionHeader(l10n.walkAppSettingsFeatures),
           shortcut(
             SettingsTarget.diary,
             Icons.book_outlined,
@@ -137,10 +135,10 @@ class _SettingsTabState extends State<SettingsTab> {
           ),
           shortcut(
             SettingsTarget.walk,
-            Icons.directions_walk,
+            Icons.directions_walk_outlined,
             l10n.walkWalkSettingsTitle,
           ),
-          SettingsSectionHeader(l10n.walkSettingsAbout),
+          AppSectionHeader(l10n.walkSettingsAbout),
           AppListTile(
             key: const Key('settings-licenses'),
             leading: const Icon(Icons.description_outlined),
@@ -232,30 +230,28 @@ class _LocationRecordLabel extends StatelessWidget {
   }
 }
 
-/// 테마 라디오 — 시스템 · 라이트 · 다크.
-class _ThemeSettingsRadios extends StatelessWidget {
-  const _ThemeSettingsRadios();
+/// 테마 고르기 — 시스템 · 라이트 · 다크.
+class _ThemeSettingsChoices extends StatelessWidget {
+  const _ThemeSettingsChoices();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return BlocBuilder<ThemeCubit, AppThemeMode>(
-      builder: (context, mode) => RadioGroup<AppThemeMode>(
-        groupValue: mode,
-        onChanged: (value) {
-          if (value != null) context.read<ThemeCubit>().select(value);
-        },
-        // 라디오 행은 AppListTile 로 그릴 수 없다(선택 표시 · 접근성 역할이 라디오).
-        child: Column(
-          children: [
-            for (final (value, label) in [
-              (AppThemeMode.system, l10n.walkSettingsThemeSystem),
-              (AppThemeMode.light, l10n.walkSettingsThemeLight),
-              (AppThemeMode.dark, l10n.walkSettingsThemeDark),
-            ])
-              RadioListTile<AppThemeMode>(value: value, title: Text(label)),
-          ],
-        ),
+      builder: (context, mode) => Column(
+        children: [
+          for (final (value, label) in [
+            (AppThemeMode.system, l10n.walkSettingsThemeSystem),
+            (AppThemeMode.light, l10n.walkSettingsThemeLight),
+            (AppThemeMode.dark, l10n.walkSettingsThemeDark),
+          ])
+            AppSelectTile(
+              key: Key('settings-theme-${value.name}'),
+              title: Text(label),
+              selected: value == mode,
+              onTap: () => context.read<ThemeCubit>().select(value),
+            ),
+        ],
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
@@ -18,6 +19,7 @@ class ChatSettingsPage extends StatelessWidget {
       appBar: AppBar(title: Text(l10n.walkChatSettingsTitle)),
       body: ListView(
         children: [
+          AppSectionHeader(l10n.walkSettingsAiConnection),
           ChatSettingsSection(highlightConnection: highlightConnection),
           const ChatHistorySettingsSection(),
         ],
