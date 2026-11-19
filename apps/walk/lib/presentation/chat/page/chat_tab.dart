@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
 import '../../../domain/chat/attachment/attachment_loader.dart';
+import '../chat_back_controller.dart';
 import '../../../domain/chat/attachment/chat_attachment.dart';
 import '../../../domain/chat/chat_history_settings.dart';
 import '../../../domain/chat/chat_settings.dart';
@@ -71,11 +72,15 @@ class ChatTab extends StatefulWidget {
   const ChatTab({
     required this.active,
     required this.onOpenSettings,
+    this.back,
     super.key,
   });
 
   /// 셸에서 이 탭이 보이는지. 보이게 될 때 키 · 동의를 다시 읽는다.
   final bool active;
+
+  /// 셸의 뒤로가기를 먼저 받는다([_ChatTabState._handleBack]).
+  final ChatBackController? back;
 
   /// 키가 없을 때 · 키 문제로 답이 실패했을 때 [설정 열기] — 셸이 물어보기 설정 화면을 연다.
   final VoidCallback onOpenSettings;
@@ -177,6 +182,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
   @override
   void initState() {
     super.initState();
+    widget.back?.attach(_handleBack);
     // 보이지 않는 탭은 상태만 읽는다 — 키 확인(네트워크)은 탭이 보일 때.
     unawaited(_cubit.refresh(recheck: widget.active));
   }
@@ -194,9 +200,32 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
     }
   }
 
+  /// 셸의 뒤로가기. 저장되는 대화를 보고 있으면 그 대화를 닫고 첫 화면(추천 질문)으로 간다 —
+  /// 대화는 저장돼 있어 대화 목록에서 다시 연다. 입력칸의 글 · 첨부는 [새 대화]처럼 그대로 남는다.
+  ///
+  /// 셸에 넘기는 경우(false): 잠겨 있음 · 첫 화면 · 읽는 중 · 답하는 중(끊지 않는다) · 임시 대화
+  /// (저장되지 않아 닫으면 사라진다).
+  bool _handleBack() {
+    if (!widget.active) return false;
+    if (context.read<DiaryLockCubit>().state is! LockUnlocked) return false;
+    final state = _cubit.state;
+    if (state.bubbles.isEmpty ||
+        state.loading ||
+        state.busy ||
+        state.temporary) {
+      return false;
+    }
+    _cubit.newConversation();
+    return true;
+  }
+
   @override
   void didUpdateWidget(ChatTab oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.back, widget.back)) {
+      oldWidget.back?.detach(_handleBack);
+      widget.back?.attach(_handleBack);
+    }
     if (!oldWidget.active && widget.active) {
       unawaited(_cubit.refresh());
       // 보이지 않는 동안 세워진 "고른 모델이 없어져…" 알림은 보이게 될 때 한 번.
@@ -230,6 +259,7 @@ class _ChatTabState extends State<ChatTab> with RouteAware {
 
   @override
   void dispose() {
+    widget.back?.detach(_handleBack);
     appRouteObserver.unsubscribe(this);
     if (_secureOn) unawaited(_secure.setSecure(false));
     unawaited(_cubit.close());
@@ -553,7 +583,11 @@ class _ChatBody extends StatelessWidget {
           final l10n = AppLocalizations.of(context);
           final saved = state.savedFile!;
           if (saved.deleted) {
-            AppSnackBar.show(context, message: l10n.walkChatWriteDeleted, type: AppSnackBarType.success);
+            AppSnackBar.show(
+              context,
+              message: l10n.walkChatWriteDeleted,
+              type: AppSnackBarType.success,
+            );
           } else {
             final tab = context.findAncestorStateOfType<_ChatTabState>();
             AppSnackBar.show(
@@ -1183,7 +1217,11 @@ class _BubbleItem extends StatelessWidget {
         final path = await cubit.saveAnswer(index);
         if (!context.mounted) return;
         if (path == null) {
-          AppSnackBar.show(context, message: l10n.walkChatSaveFailed, type: AppSnackBarType.error);
+          AppSnackBar.show(
+            context,
+            message: l10n.walkChatSaveFailed,
+            type: AppSnackBarType.error,
+          );
           return;
         }
         AppSnackBar.show(

@@ -3496,6 +3496,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkShellTabSettings => '설정';
 
   @override
+  String get walkShellExitHint => '한 번 더 누르면 종료돼요';
+
+  @override
   String get walkSettingsConnections => 'API 키 · 연결';
 
   @override

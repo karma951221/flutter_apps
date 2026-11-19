@@ -89,6 +89,7 @@ import '../../../support/fake_device_auth.dart';
 import '../../../support/fake_map_style_preferences.dart';
 import '../../../support/stub_tile_provider.dart';
 import 'package:walk/domain/chat/chat_history_settings.dart';
+import 'package:walk/domain/chat/chat_model.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
 import 'package:walk/domain/chat/chat_trace.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
@@ -552,6 +553,97 @@ void main() {
     // 테스트 뷰는 inset 이 없다 — 감싸기만 하고 값은 그대로다.
     expect(find.byType(SystemBarBottomPadding), findsOneWidget);
     expect(media.data.padding.bottom, media.data.viewPadding.bottom);
+  });
+
+  /// 안드로이드 뒤로가기. 아무도 받지 않으면 바인딩이 `SystemNavigator.pop`(앱 종료)을 부른다.
+  Future<List<String>> recordSystemPops(WidgetTester tester) async {
+    final pops = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'SystemNavigator.pop') pops.add(call.method);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    return pops;
+  }
+
+  Future<void> pressBack(WidgetTester tester) async {
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('뒤로가기: 다른 탭이면 기본 탭(도구)으로, 앱은 닫지 않는다', (tester) async {
+    await pump(tester);
+    final pops = await recordSystemPops(tester);
+    await tapTab(tester, '물어보기');
+    expect(onstage(ChatTab), isTrue);
+
+    await pressBack(tester);
+
+    expect(onstage(AlarmListPage), isTrue);
+    expect(pops, isEmpty);
+  });
+
+  testWidgets('뒤로가기: 기본 탭에서는 안내를 보이고 2초 안에 다시 누르면 닫는다', (tester) async {
+    await pump(tester);
+    final pops = await recordSystemPops(tester);
+
+    await pressBack(tester);
+    expect(find.text('한 번 더 누르면 종료돼요'), findsOneWidget);
+    expect(pops, isEmpty);
+
+    // 2초가 지나면 처음부터 — 다시 안내만 한다.
+    clock.advance(const Duration(seconds: 3));
+    await pressBack(tester);
+    expect(pops, isEmpty);
+
+    clock.advance(const Duration(seconds: 1));
+    await pressBack(tester);
+    expect(pops, hasLength(1));
+  });
+
+  testWidgets('뒤로가기: 키보드가 열려 있으면 입력 포커스만 놓고 탭은 그대로다', (tester) async {
+    final settings = getIt<ChatSettings>() as FakeChatSettings;
+    settings
+      ..key = 'sk-ant-test'
+      ..consentedVendor = ChatVendor.anthropic;
+    (getIt<ChatKeyVerifier>() as FakeChatKeyVerifier).stored = (
+      ChatVendor.anthropic,
+      const ModelListResult.ok([
+        ModelInfo(id: 'claude-test', displayName: 'Claude Test'),
+      ]),
+    );
+    await pump(tester);
+    final pops = await recordSystemPops(tester);
+    await tapTab(tester, '물어보기');
+    final input = find.byType(TextField).hitTestable();
+    expect(input, findsOneWidget);
+    await tester.showKeyboard(input);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 900);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pump();
+    expect(
+      FocusManager.instance.primaryFocus?.context
+          ?.findAncestorStateOfType<EditableTextState>(),
+      isA<EditableTextState>(),
+    );
+
+    await pressBack(tester);
+
+    expect(
+      FocusManager.instance.primaryFocus?.context
+          ?.findAncestorStateOfType<EditableTextState>(),
+      isNot(isA<EditableTextState>()),
+    );
+    expect(onstage(ChatTab), isTrue);
+    expect(pops, isEmpty);
   });
 
   testWidgets('일기가 잠겨 있어도 알람 울림 화면(셸 바깥 라우트)은 보인다', (tester) async {
