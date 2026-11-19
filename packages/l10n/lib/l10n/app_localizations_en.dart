@@ -4823,6 +4823,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get walkMapPinPreviewOpen => 'View entry';
+
+  @override
   String get walkWorkspaceTitle => 'Workspace';
 
   @override

@@ -4427,6 +4427,9 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get walkMapPinPreviewOpen => '기록 보기';
+
+  @override
   String get walkWorkspaceTitle => '작업 폴더';
 
   @override

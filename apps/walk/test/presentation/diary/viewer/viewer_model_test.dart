@@ -135,4 +135,42 @@ void main() {
     );
     expect(dayNumber(filter, filter.days[0]), isNull);
   });
+
+  group('기록 단위 이동(스와이프)', () {
+    // 0일: a/p1 · a/p2, 1일: b · c/v. 다음 그룹: 빈 것 · 또 trip.
+    final groups = [trip(), empty('e'), trip()];
+
+    test('다음 기록은 같은 기록의 다른 미디어를 건너뛰고 그룹도 넘는다', () {
+      expect(
+        nextEntryPos(groups, const ViewerPos(0, 0, 0)),
+        const ViewerPos(0, 1, 0),
+      );
+      expect(
+        nextEntryPos(groups, const ViewerPos(0, 0, 1)),
+        const ViewerPos(0, 1, 0),
+      );
+      expect(
+        nextEntryPos(groups, const ViewerPos(0, 1, 1)),
+        const ViewerPos(2, 0, 0),
+      );
+      expect(nextEntryPos(groups, const ViewerPos(2, 1, 1)), isNull);
+    });
+
+    test('이전 기록은 그 기록의 첫 조각, 맨 앞이면 null', () {
+      expect(
+        prevEntryPos(groups, const ViewerPos(0, 1, 0)),
+        const ViewerPos(0, 0, 0),
+      );
+      expect(
+        prevEntryPos(groups, const ViewerPos(0, 1, 1)),
+        const ViewerPos(0, 1, 0),
+      );
+      expect(
+        prevEntryPos(groups, const ViewerPos(2, 0, 1)),
+        const ViewerPos(0, 1, 1),
+      );
+      expect(prevEntryPos(groups, const ViewerPos(0, 0, 1)), isNull);
+      expect(prevEntryPos(groups, const ViewerPos(0, 0, 0)), isNull);
+    });
+  });
 }

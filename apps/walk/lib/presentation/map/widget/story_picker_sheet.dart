@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../../domain/diary/entity/diary_entry.dart';
+import '../../../domain/diary/entity/entry_filter.dart';
 import '../../../domain/diary/entity/story.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
+import '../../../domain/diary/usecase/story_cover.dart';
 import '../../diary/widget/story_avatar.dart';
 
 /// 스토리 고르기 시트를 띄운다. 고르지 않고 닫으면 null.
@@ -28,6 +31,9 @@ List<Story> pickableStories(List<Story> stories) =>
     });
 
 /// 지도 › 스토리 — 어떤 스토리 기간을 볼지 고른다. 고른 스토리로 `pop` 한다.
+///
+/// 행마다 표지(사진 · 이니셜) · 기간 · 기록 수를 보여 이름만으로 찾지 않게 한다. 기록을 읽지
+/// 못하면 표지는 이니셜, 수는 뺀다.
 class StoryPickerSheet extends StatefulWidget {
   const StoryPickerSheet({super.key});
 
@@ -36,7 +42,12 @@ class StoryPickerSheet extends StatefulWidget {
 }
 
 class _StoryPickerSheetState extends State<StoryPickerSheet> {
-  late final _stories = getIt<DiaryRepository>().watchStories();
+  late final _repo = getIt<DiaryRepository>();
+  late final _stories = _repo.watchStories();
+  late final _entries = _repo.watchEntries(const EntryFilter.all());
+
+  /// 표지 원 반지름. 시각 토큰이 아니라 이 행의 크기다.
+  static const _coverRadius = 24.0;
 
   @override
   Widget build(BuildContext context) {
@@ -45,44 +56,68 @@ class _StoryPickerSheetState extends State<StoryPickerSheet> {
     final date = DateFormat.yMMMd(l10n.localeName);
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.5,
+      initialChildSize: 0.6,
       maxChildSize: 0.9,
-      builder: (context, controller) => StreamBuilder<List<Story>>(
-        stream: _stories,
-        builder: (context, snapshot) {
-          final stories = pickableStories(snapshot.data ?? const []);
-          return ListView(
-            controller: controller,
-            padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.xs,
-                ),
-                child: Text(
-                  l10n.walkMapStoryPickerTitle,
-                  style: theme.textTheme.titleMedium,
-                ),
-              ),
-              if (snapshot.hasData && stories.isEmpty)
-                AppPlaceholder(message: l10n.walkMapStoryPickerEmpty),
-              for (final story in stories)
-                AppListTile(
-                  title: Text(storyDisplayTitle(l10n, story)),
-                  subtitle: Text(
-                    [
-                      date.format(story.startedAt.toLocal()),
-                      if (story.endedAt case final end?)
-                        date.format(end.toLocal()),
-                    ].join(' – '),
+      builder: (context, controller) => StreamBuilder<List<DiaryEntry>>(
+        stream: _entries,
+        builder: (context, entrySnap) => StreamBuilder<List<Story>>(
+          stream: _stories,
+          builder: (context, snapshot) {
+            final stories = pickableStories(snapshot.data ?? const []);
+            final byStory = <String, List<DiaryEntry>>{};
+            for (final e in entrySnap.data ?? const <DiaryEntry>[]) {
+              if (!e.isTrashed) (byStory[e.storyId] ??= []).add(e);
+            }
+            final known = entrySnap.hasData;
+            final covers = coverFiles({
+              for (final s in stories)
+                s.id: StoryCoverRule.pick(s, byStory[s.id] ?? const []),
+            });
+            return ListView(
+              controller: controller,
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.xs,
                   ),
-                  trailing: story.isOpen ? Text(l10n.walkMapStoryOpen) : null,
-                  onTap: () => Navigator.of(context).pop(story),
+                  child: Text(
+                    l10n.walkMapStoryPickerTitle,
+                    style: theme.textTheme.titleMedium,
+                  ),
                 ),
-            ],
-          );
-        },
+                if (snapshot.hasData && stories.isEmpty)
+                  AppPlaceholder(message: l10n.walkMapStoryPickerEmpty),
+                for (final story in stories)
+                  AppListTile(
+                    key: ValueKey('story-pick-${story.id}'),
+                    leading: StoryCoverCircle(
+                      label: storyDisplayTitle(l10n, story),
+                      image: covers[story.id],
+                      radius: _coverRadius,
+                    ),
+                    title: Text(storyDisplayTitle(l10n, story)),
+                    subtitle: Text(
+                      [
+                        [
+                          date.format(story.startedAt.toLocal()),
+                          if (story.endedAt case final end?)
+                            date.format(end.toLocal()),
+                        ].join(' – '),
+                        if (known)
+                          l10n.walkDiaryEntryCount(
+                            byStory[story.id]?.length ?? 0,
+                          ),
+                      ].join(' · '),
+                    ),
+                    trailing: story.isOpen ? Text(l10n.walkMapStoryOpen) : null,
+                    onTap: () => Navigator.of(context).pop(story),
+                  ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

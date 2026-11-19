@@ -5259,6 +5259,8 @@
   "@walkMapStoryOpen": {"description": "지도 — 스토리 고르기에서 진행 중인 스토리 표시"},
   "walkMapPinCount": "기록 {count}개",
   "@walkMapPinCount": {"description": "지도 — 일기 핀 접근성 라벨(같은 자리 묶음 수)", "placeholders": {"count": {"type": "int"}}},
+  "walkMapPinPreviewOpen": "기록 보기",
+  "@walkMapPinPreviewOpen": {"description": "지도 — 핀 미리보기의 사진 · 글 칸 접근성 라벨(누르면 그 기록부터 뷰어)"},
   "walkWorkspaceTitle": "작업 폴더",
   "@walkWorkspaceTitle": {"description": "물어보기: ⋮ 메뉴 · 작업 폴더 화면 제목"},
   "walkWorkspaceOutSection": "저장한 결과",

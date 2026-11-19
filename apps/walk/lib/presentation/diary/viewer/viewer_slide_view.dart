@@ -279,37 +279,47 @@ class ViewerHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.sm),
               ],
+              // 이름 · 날짜는 남는 폭 안에서 말줄임 — 길어도 ⋮ · ✕ 는 오른쪽 끝에 그대로 있다.
               Row(
                 children: [
-                  GestureDetector(
-                    onTap: onTitleTap,
-                    child: StoryCoverCircle(
-                      label: title,
-                      icon: icon,
-                      image: story == null ? null : _cover(group, story),
-                      radius: _avatarRadius,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: onTitleTap,
+                          child: StoryCoverCircle(
+                            label: title,
+                            icon: icon,
+                            image: story == null ? null : _cover(group, story),
+                            radius: _avatarRadius,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Flexible(
+                          child: GestureDetector(
+                            onTap: onTitleTap,
+                            child: Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.titleSmall,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Flexible(
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Flexible(
-                    child: GestureDetector(
-                      onTap: onTitleTap,
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    label,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                  const Spacer(),
                   AppOverflowMenu<ViewerEntryAction>(
                     items: [
                       AppOverflowMenuItem(
@@ -337,9 +347,13 @@ class ViewerHeader extends StatelessWidget {
                     ],
                     onSelected: onAction,
                   ),
+                  // ⋮ 와 같은 compact — 두 칸 크기가 같고, ✕ 그림 오른쪽 끝이 진행 막대 끝(오른쪽
+                  // [AppSpacing.sm])과 맞는다.
                   IconButton(
+                    key: const Key('viewer-close'),
                     icon: const Icon(Icons.close),
                     tooltip: l10n.walkDiaryViewerClose,
+                    visualDensity: VisualDensity.compact,
                     onPressed: onClose,
                   ),
                 ],

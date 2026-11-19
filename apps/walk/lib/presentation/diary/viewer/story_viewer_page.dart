@@ -115,6 +115,10 @@ class _StoryViewerPageState extends State<StoryViewerPage>
   static const _closeDistance = 120.0;
   static const _closeVelocity = 700.0;
 
+  /// 옆 · 위로 이만큼 끌거나 이 속도로 놓으면 앞뒤 기록으로 넘긴다.
+  static const _swipeDistance = 60.0;
+  static const _swipeVelocity = 300.0;
+
   final _repo = getIt<DiaryRepository>();
   late final _progress = AnimationController(vsync: this)
     ..addStatusListener(_onStatus);
@@ -144,6 +148,12 @@ class _StoryViewerPageState extends State<StoryViewerPage>
   /// 같은 조각을 처음부터 다시 볼 때마다 늘려 영상 자리를 새로 만든다.
   var _restarts = 0;
   double _dragDy = 0;
+
+  /// 이번 끌기의 위(음수) · 아래 누적 — 위로 넘기기는 [_dragDy] 처럼 0 에서 막지 않는다.
+  double _dragRawDy = 0;
+
+  /// 그룹이 하나인 뷰어에서 옆으로 끈 누적.
+  double _swipeDx = 0;
 
   /// 지금 조각 길이를 안다(영상은 준비 전엔 모른다).
   var _timed = false;
@@ -531,15 +541,22 @@ class _StoryViewerPageState extends State<StoryViewerPage>
     }
   }
 
-  /// 지금 기록이 아닌 첫 다음 조각(같은 기록의 다른 미디어는 건너뛴다).
-  ViewerPos? _nextOutside(String entryId) {
-    var p = _pos;
-    while (p != null) {
-      p = nextPos(_groups, p);
-      if (p != null && _slideAt(_groups, p).entry.id != entryId) return p;
-    }
-    return null;
+  /// 앞뒤 기록으로(스와이프). 더 갈 기록이 없으면 그대로 둔다 — 탭과 달리 닫지 않는다.
+  void _swipeEntry({required bool forward}) {
+    final pos = _pos;
+    if (pos == null || _closing) return;
+    final target = forward
+        ? nextEntryPos(_groups, pos)
+        : prevEntryPos(_groups, pos);
+    if (target != null) _goTo(target);
   }
+
+  void _endDrag() => _update(() {
+    _dragging = false;
+    _dragDy = 0;
+    _dragRawDy = 0;
+    _swipeDx = 0;
+  });
 
   Future<void> _onAction(ViewerEntryAction action) async {
     final pos = _pos;
@@ -553,7 +570,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
       return;
     }
     final entry = _slideAt(_groups, pos).entry;
-    final next = _nextOutside(entry.id);
+    final next = nextEntryPos(_groups, pos);
     _fallback = next == null ? null : _keyAt(_groups, next);
     switch (action) {
       case ViewerEntryAction.edit:
@@ -586,6 +603,7 @@ class _StoryViewerPageState extends State<StoryViewerPage>
       builder: (context) {
         final colors = Theme.of(context).colorScheme;
         final pos = _pos;
+        final single = _groups.length == 1;
         return Scaffold(
           backgroundColor: colors.surfaceContainerLowest,
           body: _loadFailed
@@ -594,30 +612,57 @@ class _StoryViewerPageState extends State<StoryViewerPage>
               ? const SizedBox.expand()
               : GestureDetector(
                   onVerticalDragStart: (_) => _update(() => _dragging = true),
-                  onVerticalDragUpdate: (d) => setState(
-                    () => _dragDy = math.max(0, _dragDy + d.delta.dy),
-                  ),
+                  onVerticalDragUpdate: (d) => setState(() {
+                    _dragRawDy += d.delta.dy;
+                    _dragDy = math.max(0, _dragDy + d.delta.dy);
+                  }),
                   onVerticalDragEnd: (d) {
                     final velocity = d.primaryVelocity ?? 0;
                     if (_dragDy > _closeDistance || velocity > _closeVelocity) {
                       _close();
-                    } else {
-                      _update(() {
-                        _dragging = false;
-                        _dragDy = 0;
-                      });
+                      return;
                     }
+                    // 위로 넘기면 다음 기록(릴스).
+                    final up =
+                        _dragRawDy < -_swipeDistance ||
+                        velocity < -_swipeVelocity;
+                    _endDrag();
+                    if (up) _swipeEntry(forward: true);
                   },
-                  onVerticalDragCancel: () => _update(() {
-                    _dragging = false;
-                    _dragDy = 0;
-                  }),
+                  onVerticalDragCancel: _endDrag,
+                  // 그룹이 하나면(지도 · 모아보기 · 고른 기록) 넘길 스토리가 없다 — 옆으로 넘기기는
+                  // 앞뒤 기록이다. 여럿이면 [PageView] 가 스토리를 넘긴다.
+                  onHorizontalDragStart: single
+                      ? (_) => _update(() => _dragging = true)
+                      : null,
+                  onHorizontalDragUpdate: single
+                      ? (d) => _swipeDx += d.delta.dx
+                      : null,
+                  onHorizontalDragEnd: single
+                      ? (d) {
+                          final velocity = d.primaryVelocity ?? 0;
+                          final dx = _swipeDx;
+                          _endDrag();
+                          if (dx < -_swipeDistance ||
+                              velocity < -_swipeVelocity) {
+                            _swipeEntry(forward: true);
+                          } else if (dx > _swipeDistance ||
+                              velocity > _swipeVelocity) {
+                            _swipeEntry(forward: false);
+                          }
+                        }
+                      : null,
+                  onHorizontalDragCancel: single ? _endDrag : null,
                   child: Transform.translate(
                     offset: Offset(0, _dragDy),
                     child: NotificationListener<ScrollNotification>(
                       onNotification: _onScroll,
                       child: PageView.builder(
                         controller: _pages,
+                        // 하나뿐이면 PageView 가 옆 끌기를 가져가지 않게(위 감지기가 받는다).
+                        physics: single
+                            ? const NeverScrollableScrollPhysics()
+                            : null,
                         itemCount: _groups.length,
                         onPageChanged: _onPageChanged,
                         itemBuilder: (context, i) => i == pos.group
