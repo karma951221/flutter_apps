@@ -100,7 +100,7 @@ class WikiNotePage extends StatelessWidget {
           message: l10n.walkChatWikiLoadFailed,
         );
       }
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoading(delayed: true);
     }
     final theme = Theme.of(context);
     final date = DateFormat.yMMMd(l10n.localeName).format(note.updatedAt);
@@ -147,18 +147,7 @@ class WikiNotePage extends StatelessWidget {
             ),
           ),
         if (state.backlinks.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.md,
-              AppSpacing.lg,
-              AppSpacing.md,
-              AppSpacing.sm,
-            ),
-            child: Text(
-              l10n.walkChatWikiBacklinks,
-              style: theme.textTheme.titleSmall,
-            ),
-          ),
+          AppSectionHeader(l10n.walkChatWikiBacklinks),
           for (final b in state.backlinks)
             AppListTile(
               key: Key('wiki-backlink-${b.id}'),

@@ -242,7 +242,7 @@ void main() {
     );
 
     bool switchOn(WidgetTester tester) =>
-        tester.widget<SwitchListTile>(find.byKey(recordsSwitch)).value;
+        tester.widget<Switch>(find.byKey(recordsSwitch)).value;
 
     Future<void> openSheet(WidgetTester tester) async {
       await tester.tap(find.byKey(action));
@@ -340,7 +340,7 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
 
       expect(
-        tester.widget<SwitchListTile>(find.byKey(recordsSwitch)).onChanged,
+        tester.widget<Switch>(find.byKey(recordsSwitch)).onChanged,
         isNull,
       );
       expect(
@@ -360,7 +360,7 @@ void main() {
       await events.close();
       await tester.pumpAndSettle();
       expect(
-        tester.widget<SwitchListTile>(find.byKey(recordsSwitch)).onChanged,
+        tester.widget<Switch>(find.byKey(recordsSwitch)).onChanged,
         isNotNull,
       );
     });
@@ -680,7 +680,15 @@ void main() {
     await tester.tap(find.text('어제 뭐 했어?'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('새 대화'));
+    // 뜻이 흐린 아이콘 대신 글자 버튼.
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('chat-new-conversation')),
+        matching: find.text('새 대화'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('chat-new-conversation')));
     await tester.pumpAndSettle();
 
     verify(() => session.reset()).called(1);
@@ -877,18 +885,18 @@ void main() {
   testWidgets('임시 대화로 시작하면 배너가 보이고 [새 대화]를 누르면 배너가 사라진다', (tester) async {
     await pump(tester);
     expect(find.byKey(banner), findsNothing);
-    expect(find.byTooltip('새 대화'), findsNothing);
+    expect(find.byKey(const Key('chat-new-conversation')), findsNothing);
 
     await tapMenu(tester, 'chat-menu-temporary');
 
     expect(find.byKey(banner), findsOneWidget);
     expect(find.textContaining('Anthropic에 전송되고'), findsOneWidget);
     // 말풍선이 없어도 임시 대화면 [새 대화]로 나갈 수 있다.
-    await tester.tap(find.byTooltip('새 대화'));
+    await tester.tap(find.byKey(const Key('chat-new-conversation')));
     await tester.pumpAndSettle();
 
     expect(find.byKey(banner), findsNothing);
-    expect(find.byTooltip('새 대화'), findsNothing);
+    expect(find.byKey(const Key('chat-new-conversation')), findsNothing);
   });
 
   testWidgets('저장된 대화를 읽는 동안 입력칸이 꺼진다', (tester) async {
@@ -932,7 +940,7 @@ void main() {
       await pump(tester);
       expect(secure.calls, [true, false, true]);
 
-      await tester.tap(find.byTooltip('새 대화'));
+      await tester.tap(find.byKey(const Key('chat-new-conversation')));
       await tester.pumpAndSettle();
       expect(secure.calls, [true, false, true, false]);
 
@@ -1565,7 +1573,7 @@ void main() {
       expect(inProgress(find.text('3초')), findsOneWidget);
       expect(inProgress(find.text('▸')), findsOneWidget);
 
-      await tester.tap(find.byTooltip('새 대화'));
+      await tester.tap(find.byKey(const Key('chat-new-conversation')));
       await tester.pumpAndSettle();
       events = StreamController<ChatEvent>();
       await ask(tester);
@@ -1897,12 +1905,8 @@ void main() {
 
       await tapMenu(tester, 'chat-menu-workspace');
       expect(find.byType(WorkspacePage), findsOneWidget);
-      await tester.tap(
-        find.descendant(
-          of: find.byKey(Key('workspace-file-${file.path}')),
-          matching: find.byIcon(Icons.more_vert),
-        ),
-      );
+      // 행 길게 누르기 → 동작 시트.
+      await tester.longPress(find.byKey(Key('workspace-file-${file.path}')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('물어보기에 첨부'));
       await tester.pumpAndSettle();
@@ -1923,12 +1927,8 @@ void main() {
       await pump(tester);
 
       await tapMenu(tester, 'chat-menu-workspace');
-      await tester.tap(
-        find.descendant(
-          of: find.byKey(Key('workspace-file-${file.path}')),
-          matching: find.byIcon(Icons.more_vert),
-        ),
-      );
+      // 행 길게 누르기 → 동작 시트.
+      await tester.longPress(find.byKey(Key('workspace-file-${file.path}')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('물어보기에 첨부'));
       await tester.pumpAndSettle();

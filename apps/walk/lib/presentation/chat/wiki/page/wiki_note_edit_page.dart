@@ -49,7 +49,11 @@ class _WikiNoteEditPageState extends State<WikiNoteEditPage> {
     );
     if (!mounted) return;
     if (id != null) {
-      AppSnackBar.show(context, message: l10n.walkChatWikiSaved, type: AppSnackBarType.success);
+      AppSnackBar.show(
+        context,
+        message: l10n.walkChatWikiSaved,
+        type: AppSnackBarType.success,
+      );
       Navigator.of(context).pop(id);
     } else if (_cubit.state.error == WikiEditError.saveFailed) {
       AppSnackBar.show(
@@ -132,10 +136,7 @@ class _WikiNoteEditPageState extends State<WikiNoteEditPage> {
           actions: [
             AppButton.text(
               key: const Key('wiki-edit-save'),
-              // 앱 테마 버튼은 폭을 가득 채운다(`Size.fromHeight`) — 앱바 자리라 최소 크기만 푼다.
-              style: const ButtonStyle(
-                minimumSize: WidgetStatePropertyAll(Size.zero),
-              ),
+              compact: true,
               label: l10n.commonSave,
               onPressed: state.saving ? null : () => unawaited(_save()),
             ),

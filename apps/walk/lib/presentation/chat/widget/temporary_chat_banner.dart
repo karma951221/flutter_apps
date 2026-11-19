@@ -14,34 +14,11 @@ class TemporaryChatBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final style = theme.textTheme.bodySmall?.copyWith(
-      color: theme.colorScheme.onSurfaceVariant,
-    );
-    return Container(
+    return AppBanner(
       key: const Key('chat-temporary-banner'),
-      color: theme.colorScheme.surfaceContainerHighest,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.visibility_off_outlined,
-            size: style?.fontSize,
-            color: style?.color,
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          Expanded(
-            child: Text(
-              // 보관 정책을 정하는 쪽 — 제품 이름이 아니라 회사 이름.
-              l10n.walkChatTemporaryBanner(chatVendorCompany(l10n, vendor)),
-              style: style,
-            ),
-          ),
-        ],
-      ),
+      icon: Icons.visibility_off_outlined,
+      // 보관 정책을 정하는 쪽 — 제품 이름이 아니라 회사 이름.
+      message: l10n.walkChatTemporaryBanner(chatVendorCompany(l10n, vendor)),
     );
   }
 }

@@ -11,8 +11,8 @@ import '../../../../domain/chat/attachment/attachment_rules.dart';
 import '../../../../domain/chat/workspace/workspace.dart';
 import '../../../../domain/chat/workspace/workspace_changes.dart';
 import '../../../common/format_bytes.dart';
-import '../../../settings/widget/settings_widgets.dart';
 import '../../widget/attachment_chip.dart';
+import '../../widget/row_actions_sheet.dart';
 import '../cubit/workspace_cubit.dart';
 import '../cubit/workspace_state.dart';
 import '../open_workspace.dart';
@@ -20,7 +20,7 @@ import '../open_workspace.dart';
 enum _RowAction { attach, share, delete }
 
 /// 작업 폴더 — 맨 위 전체 사용량, 아래 "저장한 결과(out)" · "첨부한 파일(inbox)" 두 구역(각 최신순).
-/// 행을 누르면 보기(`openWorkspaceFile`), 행 ⋮ 는 [물어보기에 첨부] · [공유] · [지우기].
+/// 행을 누르면 보기(`openWorkspaceFile`), 길게 누르면 [물어보기에 첨부] · [공유] · [지우기] 시트.
 /// [물어보기에 첨부]는 그 파일로 pop 한다 — `openWorkspace` 로 연다(잠금 아래).
 class WorkspacePage extends StatelessWidget {
   const WorkspacePage({super.key});
@@ -44,7 +44,7 @@ class WorkspacePage extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return switch (state) {
-      WorkspaceLoading() => const Center(child: CircularProgressIndicator()),
+      WorkspaceLoading() => const AppLoading(delayed: true),
       WorkspaceFailure() => AppPlaceholder(
         icon: Icons.error_outline,
         message: l10n.walkWorkspaceLoadFailed,
@@ -77,20 +77,30 @@ class WorkspacePage extends StatelessWidget {
               ),
             ),
             if (out.isNotEmpty) ...[
-              SettingsSectionHeader(l10n.walkWorkspaceOutSection),
+              AppSectionHeader(l10n.walkWorkspaceOutSection),
               for (final f in out) _FileRow(file: f),
             ],
             if (inbox.isNotEmpty) ...[
-              SettingsSectionHeader(l10n.walkWorkspaceInboxSection),
+              AppSectionHeader(l10n.walkWorkspaceInboxSection),
               for (final f in inbox) _FileRow(file: f),
             ],
+            // 행 ⋮ 를 없앴으니 길게 누르기를 알 방법을 남긴다.
+            AppFootnote(
+              l10n.walkWorkspaceLongPressHint,
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.md,
+                AppSpacing.md,
+              ),
+            ),
           ],
         ),
     };
   }
 }
 
-/// 파일 한 행 — 종류 아이콘 · 이름 · `1.2MB · 11월 13일 14:05` · 행 메뉴.
+/// 파일 한 행 — 종류 아이콘 · 이름 · `1.2MB · 11월 13일 14:05`. 길게 누르면 동작 시트.
 class _FileRow extends StatelessWidget {
   const _FileRow({required this.file});
 
@@ -100,44 +110,59 @@ class _FileRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final kind = AttachmentRules.kindOf(file.name);
-    return AppListTile(
-      key: Key('workspace-file-${file.path}'),
-      leading: Icon(
-        kind == null
-            ? Icons.insert_drive_file_outlined
-            : AttachmentChip.iconOf(kind),
+    return LongPressRow(
+      hint: l10n.walkWorkspaceLongPressHint,
+      onLongPress: () => unawaited(_actions(context)),
+      child: AppListTile(
+        key: Key('workspace-file-${file.path}'),
+        leading: Icon(
+          kind == null
+              ? Icons.insert_drive_file_outlined
+              : AttachmentChip.iconOf(kind),
+        ),
+        title: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(_detail(file, l10n.localeName)),
+        onTap: () => unawaited(openWorkspaceFile(context, file.path)),
       ),
-      title: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(_detail(file, l10n.localeName)),
-      trailing: AppOverflowMenu<_RowAction>(
-        items: [
-          AppOverflowMenuItem(
-            value: _RowAction.attach,
-            label: l10n.walkWorkspaceAttach,
-            icon: Icons.attach_file,
-          ),
-          AppOverflowMenuItem(
-            value: _RowAction.share,
-            label: l10n.walkWorkspaceShare,
-            icon: Icons.share_outlined,
-          ),
-          AppOverflowMenuItem(
-            value: _RowAction.delete,
-            label: l10n.walkWorkspaceDelete,
-            icon: Icons.delete_outline,
-            isDestructive: true,
-          ),
-        ],
-        onSelected: (action) => switch (action) {
-          _RowAction.attach => Navigator.of(context).pop(file),
-          _RowAction.share => unawaited(
-            shareWorkspaceFile(context, file.path, file.name),
-          ),
-          _RowAction.delete => unawaited(_delete(context)),
-        },
-      ),
-      onTap: () => unawaited(openWorkspaceFile(context, file.path)),
     );
+  }
+
+  Future<void> _actions(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final action = await showRowActions<_RowAction>(
+      context,
+      title: file.name,
+      actions: [
+        RowAction(
+          key: const Key('workspace-action-attach'),
+          value: _RowAction.attach,
+          label: l10n.walkWorkspaceAttach,
+          icon: Icons.attach_file,
+        ),
+        RowAction(
+          key: const Key('workspace-action-share'),
+          value: _RowAction.share,
+          label: l10n.walkWorkspaceShare,
+          icon: Icons.share_outlined,
+        ),
+        RowAction(
+          key: const Key('workspace-action-delete'),
+          value: _RowAction.delete,
+          label: l10n.walkWorkspaceDelete,
+          icon: Icons.delete_outline,
+          isDestructive: true,
+        ),
+      ],
+    );
+    if (action == null || !context.mounted) return;
+    switch (action) {
+      case _RowAction.attach:
+        Navigator.of(context).pop(file);
+      case _RowAction.share:
+        await shareWorkspaceFile(context, file.path, file.name);
+      case _RowAction.delete:
+        await _delete(context);
+    }
   }
 
   Future<void> _delete(BuildContext context) async {

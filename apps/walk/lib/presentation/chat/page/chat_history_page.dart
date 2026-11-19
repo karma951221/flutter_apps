@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +12,7 @@ import '../../../domain/chat/repository/chat_history_repository.dart';
 import '../cubit/chat_history_cubit.dart';
 import '../cubit/chat_history_state.dart';
 import '../widget/rename_conversation_dialog.dart';
+import '../widget/row_actions_sheet.dart';
 
 enum _RowAction { rename, delete }
 
@@ -57,7 +60,7 @@ class ChatHistoryPage extends StatelessWidget {
     AppLocalizations l10n,
   ) {
     if (state.loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoading(delayed: true);
     }
     if (state.failed && state.conversations.isEmpty) {
       return AppPlaceholder(
@@ -72,10 +75,13 @@ class ChatHistoryPage extends StatelessWidget {
       );
     }
     final now = getIt<Clock>().now();
+    final count = state.conversations.length;
     return ListView.builder(
-      itemCount: state.conversations.length,
-      itemBuilder: (context, i) =>
-          _ConversationRow(conversation: state.conversations[i], now: now),
+      // 맨 끝에 길게 누르기 안내 한 줄 — 행 ⋮ 를 없앴으니 알 방법을 남긴다.
+      itemCount: count + 1,
+      itemBuilder: (context, i) => i < count
+          ? _ConversationRow(conversation: state.conversations[i], now: now)
+          : AppFootnote(l10n.walkChatHistoryLongPressHint),
     );
   }
 
@@ -96,7 +102,7 @@ class ChatHistoryPage extends StatelessWidget {
   }
 }
 
-/// 대화 한 행 — 제목 · `시각 · 질문 n개` · 이름 바꾸기 / 삭제 메뉴.
+/// 대화 한 행 — 제목 · `시각 · 질문 n개`. 길게 누르면 이름 바꾸기 · 지우기 시트.
 class _ConversationRow extends StatelessWidget {
   const _ConversationRow({required this.conversation, required this.now});
 
@@ -118,38 +124,53 @@ class _ConversationRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return AppListTile(
-      key: Key('chat-history-${conversation.id}'),
-      title: Text(
-        conversation.title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+    return LongPressRow(
+      hint: l10n.walkChatHistoryLongPressHint,
+      onLongPress: () => unawaited(_actions(context)),
+      child: AppListTile(
+        key: Key('chat-history-${conversation.id}'),
+        title: Text(
+          conversation.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Text(
+          '${_time(l10n.localeName)} · '
+          '${l10n.walkChatHistoryTurns(conversation.turnCount)}',
+        ),
+        onTap: () => Navigator.of(context).pop(conversation.id),
       ),
-      subtitle: Text(
-        '${_time(l10n.localeName)} · '
-        '${l10n.walkChatHistoryTurns(conversation.turnCount)}',
-      ),
-      trailing: AppOverflowMenu<_RowAction>(
-        items: [
-          AppOverflowMenuItem(
-            value: _RowAction.rename,
-            label: l10n.walkChatHistoryRename,
-            icon: Icons.edit_outlined,
-          ),
-          AppOverflowMenuItem(
-            value: _RowAction.delete,
-            label: l10n.commonDelete,
-            icon: Icons.delete_outline,
-            isDestructive: true,
-          ),
-        ],
-        onSelected: (action) => switch (action) {
-          _RowAction.rename => _rename(context),
-          _RowAction.delete => _delete(context),
-        },
-      ),
-      onTap: () => Navigator.of(context).pop(conversation.id),
     );
+  }
+
+  Future<void> _actions(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    final action = await showRowActions<_RowAction>(
+      context,
+      title: conversation.title,
+      actions: [
+        RowAction(
+          key: const Key('chat-history-action-rename'),
+          value: _RowAction.rename,
+          label: l10n.walkChatHistoryRename,
+          icon: Icons.edit_outlined,
+        ),
+        RowAction(
+          key: const Key('chat-history-action-delete'),
+          value: _RowAction.delete,
+          label: l10n.commonDelete,
+          icon: Icons.delete_outline,
+          isDestructive: true,
+        ),
+      ],
+    );
+    if (action == null || !context.mounted) return;
+    switch (action) {
+      case _RowAction.rename:
+        await _rename(context);
+      case _RowAction.delete:
+        await _delete(context);
+    }
   }
 
   Future<void> _rename(BuildContext context) async {
