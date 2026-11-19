@@ -42,4 +42,22 @@ void main() {
     await expectLater(verify('abc'), throwsA(isA<TransitNetwork>()));
     expect(store.saveCalls, 0);
   });
+
+  test('server error (e.g. code -8) is not a key rejection', () async {
+    remote.error = const TransitFailure.server('HTTP 200 · code -8 · 형식 오류');
+    await expectLater(verify('abc'), throwsA(isA<TransitServer>()));
+    expect(store.saveCalls, 0);
+
+    final s = await verify('abc', saveIfUnverified: true);
+    expect(s, TransitKeyStatus.unverified);
+    expect(store.savedStatus, TransitKeyStatus.unverified);
+  });
+
+  test('quota exceeded is not saved', () async {
+    remote.error = const TransitFailure.quotaExceeded(
+      'code -1 · LimitExceeded',
+    );
+    await expectLater(verify('abc'), throwsA(isA<TransitQuotaExceeded>()));
+    expect(store.saveCalls, 0);
+  });
 }

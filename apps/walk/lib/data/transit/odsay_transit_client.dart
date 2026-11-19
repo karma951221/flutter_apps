@@ -29,6 +29,11 @@ class OdsayTransitClient implements TransitRouteSource, StationSearch {
   static const _base = 'https://api.odsay.com/v1/api/';
   static const _maxStations = 20;
 
+  /// 버스정류장(1) · 지하철역(2). ODsay 는 여러 값을 `:` 로 잇는다 — 쉼표(`1,2`)는
+  /// `code -8 · stationClass의 형식이 잘못되었습니다` 로 거절한다.
+  /// https://lab.odsay.com/guide/releaseReference#searchStation
+  static const _stationClasses = '1:2';
+
   /// 출발 · 도착 정류장 없음, 검색 결과 없음.
   static const _noRouteCodes = {'-99', '3', '4', '5', '6'};
 
@@ -77,7 +82,7 @@ class OdsayTransitClient implements TransitRouteSource, StationSearch {
       body = await _get(
         '${_base}searchStation'
         '?stationName=${Uri.encodeQueryComponent(query)}'
-        '&stationClass=1,2&apiKey=${Uri.encodeComponent(apiKey)}',
+        '&stationClass=$_stationClasses&apiKey=${Uri.encodeComponent(apiKey)}',
         apiKey: apiKey,
       );
     } on TransitNoRoute {
@@ -162,8 +167,7 @@ class OdsayTransitClient implements TransitRouteSource, StationSearch {
     );
     if (code == '-98') throw const TransitFailure.tooClose();
     if (_noRouteCodes.contains(code)) throw const TransitFailure.noRoute();
-    if (message.contains('ApiKeyAuthFailed') ||
-        (code == '500' && message.contains('ApiKey'))) {
+    if (isOdsayKeyError(code: code, message: message)) {
       throw TransitFailure.keyRejected(detail);
     }
     if (message.contains('LimitExceeded') || message.contains('초과')) {
@@ -247,6 +251,13 @@ class OdsayTransitClient implements TransitRouteSource, StationSearch {
     );
   }
 }
+
+/// ODsay 오류가 키 인증 실패인가. 키 · 플랫폼(패키지 이름 · 서버 IP) 불일치는
+/// `code 500 · [ApiKeyAuthFailed] ...` 로 온다. 문서의 일반 code(`500` 서버 내부 오류,
+/// `-8` 입력값 형식, `-9` 입력값 누락)는 키와 무관하다 — 키 문제로 보지 않는다.
+bool isOdsayKeyError({required String code, required String message}) =>
+    message.contains('ApiKeyAuthFailed') ||
+    (code == '500' && message.contains('ApiKey'));
 
 /// [OdsayTransitClient] 하나를 경로 · 역 검색 두 얼굴로 등록한다.
 @module

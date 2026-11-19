@@ -77,7 +77,21 @@ void main() {
     expect(cubit.state.failure, isNull);
   });
 
-  test('other failures are failed and keep their cause', () async {
+  test('server error (code -8) asks like network, not rejected', () async {
+    const failure = TransitFailure.server(
+      'HTTP 200 · code -8 · stationClass의 형식이 잘못되었습니다.',
+    );
+    remote.error = failure;
+    expect(await cubit.save('abcd1234efgh5678'), TransitKeySave.network);
+    expect(store.saveCalls, 0);
+    expect(cubit.state.failure, failure);
+
+    final r = await cubit.save('abcd1234efgh5678', saveIfUnverified: true);
+    expect(r, TransitKeySave.unverified);
+    expect(store.savedStatus, TransitKeyStatus.unverified);
+  });
+
+  test('quota is failed and keeps its cause', () async {
     remote.error = const TransitFailure.quotaExceeded('code -1 · Limit');
     expect(await cubit.save('abcd1234efgh5678'), TransitKeySave.failed);
     expect(store.saveCalls, 0);

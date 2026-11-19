@@ -136,6 +136,50 @@ void main() {
     );
   });
 
+  test('-8 parameter format error is server, not keyRejected', () async {
+    await expectFind(
+      (_) async => _json(
+        '{"error": [{"code": "-8", "message": "stationClass의 형식이 잘못되었습니다."}]}',
+      ),
+      isA<TransitServer>().having(
+        (f) => f.message,
+        'message',
+        'HTTP 200 · code -8 · stationClass의 형식이 잘못되었습니다.',
+      ),
+    );
+  });
+
+  test('ApiKeyAuthFailed in message list is keyRejected', () async {
+    await expectFind(
+      (_) async => _json(
+        '{"error": [{"code": "500", "message": "[ApiKeyAuthFailed] ApiKey authentication failed."}]}',
+      ),
+      isA<TransitKeyRejected>(),
+    );
+  });
+
+  group('isOdsayKeyError', () {
+    test('auth failures are key errors', () {
+      expect(
+        isOdsayKeyError(
+          code: '500',
+          message: '[ApiKeyAuthFailed] ApiKey authentication failed.',
+        ),
+        isTrue,
+      );
+      expect(isOdsayKeyError(code: '', message: 'ApiKeyAuthFailed'), isTrue);
+    });
+
+    test('documented generic codes are not key errors', () {
+      expect(
+        isOdsayKeyError(code: '-8', message: 'stationClass의 형식이 잘못되었습니다.'),
+        isFalse,
+      );
+      expect(isOdsayKeyError(code: '-9', message: '필수 입력값 누락'), isFalse);
+      expect(isOdsayKeyError(code: '500', message: '서버 내부 오류'), isFalse);
+    });
+  });
+
   test('unknown error is server(msg)', () async {
     await expectFind(
       (_) async => _json('{"error": {"code": "-1", "msg": "boom"}}'),
@@ -260,7 +304,9 @@ void main() {
       final hits = await client.search('강남', apiKey: 'a+b');
       expect(uri.path, '/v1/api/searchStation');
       expect(uri.queryParameters['stationName'], '강남');
-      expect(uri.queryParameters['stationClass'], '1,2');
+      // ODsay 는 여러 종류를 `:` 로 잇는다. 쉼표는 code -8 로 거절된다.
+      expect(uri.queryParameters['stationClass'], '1:2');
+      expect(uri.query, contains('stationClass=1:2'));
       expect(uri.toString(), contains('apiKey=a%2Bb'));
       expect(hits.map((h) => h.kind), [
         StationKind.subway,
