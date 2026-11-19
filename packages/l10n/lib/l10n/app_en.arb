@@ -3,6 +3,8 @@
   "commonCancel": "Cancel",
   "commonDelete": "Delete",
   "commonRetry": "Try again",
+  "commonShowValue": "Show",
+  "commonHideValue": "Hide",
   "commonMoreActions": "More",
   "authSignInDescription": "Record your day and share it with your neighbors.",
   "authEmailLabel": "Email",

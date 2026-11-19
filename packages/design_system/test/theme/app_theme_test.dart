@@ -10,8 +10,13 @@ void main() {
 
   test('넘긴 시드가 scheme 에 반영된다', () {
     const seed = Color(0xFF1D9E75);
-    final expected =
-        ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark);
-    expect(AppTheme.dark(seedColor: seed).colorScheme.primary, expected.primary);
+    final expected = ColorScheme.fromSeed(
+      seedColor: seed,
+      brightness: Brightness.dark,
+    );
+    expect(
+      AppTheme.dark(seedColor: seed).colorScheme.primary,
+      expected.primary,
+    );
   });
 }

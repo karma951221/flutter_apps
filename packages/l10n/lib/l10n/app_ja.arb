@@ -3,6 +3,8 @@
   "commonCancel": "キャンセル",
   "commonDelete": "削除",
   "commonRetry": "再試行",
+  "commonShowValue": "表示",
+  "commonHideValue": "隠す",
   "commonMoreActions": "その他",
   "authSignInDescription": "今日一日を記録して、ご近所と分かち合いましょう。",
   "authEmailLabel": "メールアドレス",

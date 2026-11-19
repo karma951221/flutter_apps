@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_motion.dart';
+import '../theme/app_spacing.dart';
 
 /// 앱 전체에서 사용하는 버튼의 공통 진입점.
 ///
@@ -15,6 +16,7 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.animateLoading = false,
     this.style,
+    this.compact = false,
     super.key,
   }) : _variant = _AppButtonVariant.primary;
 
@@ -24,6 +26,7 @@ class AppButton extends StatelessWidget {
     this.isLoading = false,
     this.animateLoading = false,
     this.style,
+    this.compact = false,
     super.key,
   }) : _variant = _AppButtonVariant.secondary;
 
@@ -31,6 +34,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.style,
+    this.compact = false,
     super.key,
   }) : isLoading = false,
        animateLoading = false,
@@ -45,11 +49,31 @@ class AppButton extends StatelessWidget {
   /// 켜도 시스템 '애니메이션 줄이기'면 전환 없이 바로 바꾼다.
   final bool animateLoading;
   final ButtonStyle? style;
+
+  /// 상단 바 액션 · 다이얼로그 버튼처럼 좁은 자리용 작은 크기.
+  ///
+  /// 기본 버튼은 테마가 폭을 꽉 채우고(`Size.fromHeight(48)`) 높이를 48 로 잡는다.
+  /// `Row` · `AppBar.actions` 안에서는 그 폭이 무한대라 터지므로, 화면마다
+  /// `minimumSize: Size.zero` 같은 우회를 적지 말고 이 값을 켠다. [style] 이
+  /// 같은 속성을 주면 [style] 이 이긴다.
+  final bool compact;
   final _AppButtonVariant _variant;
+
+  static final _compactStyle = ButtonStyle(
+    minimumSize: const WidgetStatePropertyAll(Size(_compactMinWidth, 40)),
+    padding: const WidgetStatePropertyAll(
+      EdgeInsets.symmetric(horizontal: AppSpacing.md),
+    ),
+    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    visualDensity: VisualDensity.standard,
+  );
 
   @override
   Widget build(BuildContext context) {
     final effectiveOnPressed = isLoading ? null : onPressed;
+    final style = compact
+        ? this.style?.merge(_compactStyle) ?? _compactStyle
+        : this.style;
     final content = isLoading
         ? const SizedBox(
             key: ValueKey('loading'),
@@ -107,5 +131,8 @@ class AppButton extends StatelessWidget {
 
 /// 들어오는 라벨·스피너가 출발하는 배율. 0 에서 시작하면 점처럼 튀어나와 거칠다.
 const _enterScale = 0.8;
+
+/// compact 버튼의 최소 폭 — Material 3 버튼 최소 폭.
+const _compactMinWidth = 64.0;
 
 enum _AppButtonVariant { primary, secondary, text }

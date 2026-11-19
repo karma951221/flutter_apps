@@ -118,6 +118,18 @@ abstract class AppLocalizations {
   /// **'다시 시도'**
   String get commonRetry;
 
+  /// ObscuredKeyField 의 가린 값 보기 툴팁 기본값
+  ///
+  /// In ko, this message translates to:
+  /// **'보기'**
+  String get commonShowValue;
+
+  /// ObscuredKeyField 의 값 가리기 툴팁 기본값
+  ///
+  /// In ko, this message translates to:
+  /// **'숨기기'**
+  String get commonHideValue;
+
   /// AppOverflowMenu 의 기본 툴팁
   ///
   /// In ko, this message translates to:

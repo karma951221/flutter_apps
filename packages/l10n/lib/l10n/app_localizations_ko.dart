@@ -18,6 +18,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get commonRetry => '다시 시도';
 
   @override
+  String get commonShowValue => '보기';
+
+  @override
+  String get commonHideValue => '숨기기';
+
+  @override
   String get commonMoreActions => '더보기';
 
   @override

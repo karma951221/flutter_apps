@@ -16,4 +16,14 @@ void main() {
     expect(spinner, findsOneWidget);
     expect(tester.getCenter(spinner), const Offset(200, 400));
   });
+
+  testWidgets('delayed 면 잠깐은 빈칸이다가 그 뒤에 진행 표시를 그린다', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: AppLoading(delayed: true))),
+    );
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+
+    await tester.pump(AppLoading.delay);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
 }

@@ -93,6 +93,15 @@ patrol develop -t patrol_test/post_test.dart   # Hot Restart 로 짜면서 실�
 - 더보기 메뉴: `AppOverflowMenu` + `AppOverflowMenuItem`
 - 아이콘 + 개수 버튼: `AppCountAction`
 - 인증 입력: `AuthTextField` 및 `InputDecorationTheme`
+- 바텀시트: `showAppSheet` + `AppSheetScaffold`(내용만큼) / `AppSheetScaffold.draggable`(긴 목록).
+  모달이 아닌 시트는 `AppSheetHandle` · `appSheetShape`
+- 섹션 머리: `AppSectionHeader` (묶음이 둘 이상이면 모든 묶음에, 사이 `Divider` 없이)
+- 고르기 행: `AppSelectTile` · 스위치 행: `AppSwitchTile` (행 전체를 눌러 바꾼다)
+- 안내 띠: `AppBanner(tone: info/warning/error)` · 보조 설명 문단: `AppFootnote`
+- 가린 키 · 비밀번호 입력: `ObscuredKeyField`
+- 작은 버튼(상단 바 · 다이얼로그): `AppButton.*(compact: true)` — `minimumSize: Size.zero` 우회 금지
+- 짧은 로딩 깜빡임 방지: `AppLoading(delayed: true)`
+- walk 화면 조립 기준(시트 · 카드 · 다이얼로그 테마 포함): [apps/walk/docs/ui-guide.md](apps/walk/docs/ui-guide.md)
 - 애니메이션(선택, 기본 끔): `AppCountAction(animate:)` · `AppButton.primary/secondary(animateLoading:)` ·
   `AppPlaceholder(animateIn:)` · `AppListFooter(animate:)` · `AppAvatar(fadeInImage:)`. 시간·곡선은
   `AppMotion` 토큰만 쓰고, `AppMotion.enabled(context)` 가 false('애니메이션 줄이기')면 전환 없이 그린다

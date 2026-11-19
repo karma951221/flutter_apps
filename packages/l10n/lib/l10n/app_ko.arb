@@ -12,6 +12,14 @@
   "@commonRetry": {
     "description": "오류 화면의 재시도 버튼"
   },
+  "commonShowValue": "보기",
+  "@commonShowValue": {
+    "description": "ObscuredKeyField 의 가린 값 보기 툴팁 기본값"
+  },
+  "commonHideValue": "숨기기",
+  "@commonHideValue": {
+    "description": "ObscuredKeyField 의 값 가리기 툴팁 기본값"
+  },
   "commonMoreActions": "더보기",
   "@commonMoreActions": {
     "description": "AppOverflowMenu 의 기본 툴팁"

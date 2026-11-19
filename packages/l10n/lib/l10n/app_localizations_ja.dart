@@ -18,6 +18,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get commonRetry => '再試行';
 
   @override
+  String get commonShowValue => '表示';
+
+  @override
+  String get commonHideValue => '隠す';
+
+  @override
   String get commonMoreActions => 'その他';
 
   @override
