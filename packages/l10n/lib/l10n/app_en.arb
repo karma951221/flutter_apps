@@ -1077,6 +1077,7 @@
   "walkAppSettingsDisplay": "Display",
   "walkAppSettingsFeatures": "Feature settings",
   "walkShellTabSettings": "Settings",
+  "walkShellExitHint": "Press back again to exit",
   "walkSettingsConnections": "API keys & connections",
   "walkSettingsAiConnection": "AI connection",
   "walkSettingsAiNotConnected": "Not connected",

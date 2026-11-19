@@ -4693,6 +4693,8 @@
   "@walkAppSettingsFeatures": { "description": "앱 설정 기능별 설정 바로가기 섹션 제목" },
   "walkShellTabSettings": "설정",
   "@walkShellTabSettings": { "description": "하단 탭 — 설정. 설정 탭 앱바 제목" },
+  "walkShellExitHint": "한 번 더 누르면 종료돼요",
+  "@walkShellExitHint": { "description": "기본 탭에서 뒤로가기 — 2초 안에 다시 누르면 앱을 닫는다는 안내(스낵바)" },
   "walkSettingsConnections": "API 키 · 연결",
   "@walkSettingsConnections": { "description": "설정 탭 — 외부 서비스 키 · 연결 섹션 제목" },
   "walkSettingsAiConnection": "AI 연결",

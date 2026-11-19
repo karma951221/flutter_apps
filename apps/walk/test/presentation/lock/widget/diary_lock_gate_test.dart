@@ -113,6 +113,48 @@ void main() {
     expect(find.byKey(childKey), findsOneWidget);
   });
 
+  testWidgets('다시 잠길 때 게이트 밖 입력 포커스도 놓는다(키보드를 닫는다)', (tester) async {
+    await enableLock();
+    cubit.start();
+    final field = FocusNode();
+    addTearDown(field.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        locale: const Locale('ko'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: BlocProvider.value(
+            value: cubit,
+            child: Column(
+              children: [
+                TextField(focusNode: field),
+                const Expanded(
+                  child: DiaryLockGate(child: Text('기록', key: childKey)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await typePin(tester, '1234');
+    expect(find.byKey(childKey), findsOneWidget);
+
+    field.requestFocus();
+    await tester.pump();
+    expect(field.hasFocus, isTrue);
+
+    cubit.onPaused();
+    clock.advance(const Duration(minutes: 5));
+    cubit.onResumed();
+    await tester.pump();
+
+    expect(find.byType(PinPad), findsOneWidget);
+    expect(field.hasFocus, isFalse);
+  });
+
   testWidgets('틀리면 안내하고 잠긴 채', (tester) async {
     await enableLock();
     await pump(tester);

@@ -43,6 +43,7 @@ import 'package:walk/domain/diary/repository/diary_repository.dart';
 import 'package:walk/domain/lock/lock_config.dart';
 import 'package:walk/presentation/chat/attachment/chat_file_picker.dart';
 import 'package:walk/presentation/chat/page/chat_history_page.dart';
+import 'package:walk/presentation/chat/chat_back_controller.dart';
 import 'package:walk/presentation/chat/page/chat_tab.dart';
 import 'package:walk/presentation/chat/widget/chat_bubble_view.dart';
 import 'package:walk/presentation/chat/widget/chat_input.dart';
@@ -180,6 +181,7 @@ void main() {
     VoidCallback? onOpenSettings,
     bool active = true,
     bool reduceMotion = false,
+    ChatBackController? back,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -198,6 +200,7 @@ void main() {
           value: lock,
           child: ChatTab(
             active: active,
+            back: back,
             onOpenSettings: onOpenSettings ?? () {},
           ),
         ),
@@ -686,6 +689,37 @@ void main() {
     verify(() => session.reset()).called(1);
     expect(find.text('산책을 했어요'), findsNothing);
     expect(find.text('지난주에 뭐 먹었지?'), findsOneWidget);
+  });
+
+  testWidgets('뒤로가기: 대화 중이면 첫 화면으로, 입력 중인 글은 남는다', (tester) async {
+    answer('산책을 했어요');
+    final back = ChatBackController();
+    await pump(tester, back: back);
+    await tester.tap(find.text('어제 뭐 했어?'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '쓰던 질문');
+    await tester.pump();
+
+    expect(back.handleBack(), isTrue);
+    await tester.pumpAndSettle();
+
+    verify(() => session.reset()).called(1);
+    expect(find.text('산책을 했어요'), findsNothing);
+    expect(find.text('지난주에 뭐 먹었지?'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '쓰던 질문'), findsOneWidget);
+  });
+
+  testWidgets('뒤로가기: 첫 화면 · 가려진 탭이면 쓰지 않고 셸에 넘긴다', (tester) async {
+    final back = ChatBackController();
+    await pump(tester, back: back);
+    expect(back.handleBack(), isFalse);
+
+    answer('산책을 했어요');
+    await tester.tap(find.text('어제 뭐 했어?'));
+    await tester.pumpAndSettle();
+    await pump(tester, back: back, active: false);
+    expect(back.handleBack(), isFalse);
+    expect(find.text('산책을 했어요', skipOffstage: false), findsOneWidget);
   });
 
   testWidgets('인용 칩은 날짜와 본문 앞부분을 보이고, 누르면 그 기록부터 뷰어를 연다', (tester) async {
