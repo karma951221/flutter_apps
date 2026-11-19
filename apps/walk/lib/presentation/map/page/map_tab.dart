@@ -19,6 +19,7 @@ import '../cubit/map_style_cubit.dart';
 import '../cubit/map_view_cubit.dart';
 import '../cubit/map_view_state.dart';
 import '../../../domain/location/entity/map_style.dart';
+import 'fullscreen_map_page.dart';
 import '../widget/frequent_sheet.dart';
 import '../widget/map_style_sheet.dart';
 import '../widget/period_header.dart';
@@ -128,6 +129,19 @@ class _MapBodyState extends State<_MapBody> {
     if (picked != null) await _style.select(picked);
   }
 
+  /// 전체화면으로 지금 카메라를 넘기고, 돌아오면 그 자리로 옮긴다.
+  Future<void> _openFullscreen() async {
+    final map = _map.currentState;
+    if (map == null) return;
+    final back = await openFullscreenMap(
+      context,
+      camera: map.camera,
+      style: _style,
+      onOpenEntry: _openEntry,
+    );
+    if (back != null && mounted) _map.currentState?.jumpTo(back);
+  }
+
   void _openEntry(MapViewData data, DiaryEntry entry) {
     final ids = [
       for (final e in [
@@ -212,11 +226,7 @@ class _MapBodyState extends State<_MapBody> {
         record.status is RecorderOff &&
         view is MapViewEmpty;
     final month = period is MonthPeriod;
-    final spots = switch (data) {
-      null => const <LatLng>[],
-      _ when month => [for (final f in data.frequent) LatLng(f.lat, f.lng)],
-      _ => [for (final s in data.track.stays) LatLng(s.lat, s.lng)],
-    };
+    final spots = data == null ? const <LatLng>[] : mapSpotsOf(data);
     final overlay = switch (view) {
       _ when firstRun => AppPlaceholder(
         icon: Icons.map_outlined,
@@ -280,22 +290,33 @@ class _MapBodyState extends State<_MapBody> {
               child: overlay,
             ),
           ),
+        // 지도 위 컨트롤은 왼쪽 위 한 열에 쌓는다 — 전체화면 · 지도 종류, 그 아래 기록 표시.
         Positioned(
           top: AppSpacing.sm,
           left: AppSpacing.sm,
-          child: IconButton.filledTonal(
-            key: const Key('map-style-button'),
-            tooltip: l10n.walkMapStyle,
-            icon: const Icon(Icons.layers_outlined),
-            onPressed: () => unawaited(_pickStyle()),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              IconButton.filledTonal(
+                key: const Key('map-fullscreen-button'),
+                tooltip: l10n.walkMapFullscreen,
+                icon: const Icon(Icons.fullscreen),
+                onPressed: () => unawaited(_openFullscreen()),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              IconButton.filledTonal(
+                key: const Key('map-style-button'),
+                tooltip: l10n.walkMapStyle,
+                icon: const Icon(Icons.layers_outlined),
+                onPressed: () => unawaited(_pickStyle()),
+              ),
+              if (record.loaded && !firstRun) ...[
+                const SizedBox(height: AppSpacing.xs),
+                RecordChip(state: record),
+              ],
+            ],
           ),
         ),
-        if (record.loaded && !firstRun)
-          Positioned(
-            top: AppSpacing.sm,
-            right: AppSpacing.sm,
-            child: RecordChip(state: record),
-          ),
         if (data != null)
           Positioned.fill(
             child: switch (data.period) {

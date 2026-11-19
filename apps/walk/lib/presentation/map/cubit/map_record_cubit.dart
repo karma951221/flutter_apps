@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../data/location/background_location_access.dart';
+import '../../../domain/location/entity/record_interval.dart';
 import '../../../domain/location/entity/record_mode.dart';
 import '../../../domain/location/entity/record_retention.dart';
 import '../../../domain/location/recorder/location_recorder.dart';
@@ -100,12 +101,12 @@ class MapRecordCubit extends Cubit<MapRecordState> {
     }
   }
 
-  /// 촘촘(true) · 평소(false). 기록 중이 아니면 아무것도 하지 않는다.
-  Future<void> setDense(bool dense) async {
+  /// 기록 주기를 바꾼다. 기록이 꺼져 있으면 아무것도 하지 않는다.
+  Future<void> setInterval(RecordInterval interval) async {
     if (state.busy || state.status is RecorderOff) return;
     emit(state.copyWith(busy: true));
     try {
-      await _recorder.setMode(dense ? RecordMode.dense : RecordMode.normal);
+      await _recorder.setInterval(interval);
       final status = await _recorder.status();
       if (isClosed) return;
       emit(state.copyWith(status: status));

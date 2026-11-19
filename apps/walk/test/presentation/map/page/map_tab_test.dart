@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/data/location/background_location_access.dart';
@@ -24,6 +25,7 @@ import 'package:walk/domain/location/entity/day_track.dart';
 import 'package:walk/domain/location/entity/location_point.dart';
 import 'package:walk/domain/location/entity/map_period.dart';
 import 'package:walk/domain/location/entity/map_style.dart';
+import 'package:walk/domain/location/entity/record_interval.dart';
 import 'package:walk/domain/location/entity/record_mode.dart';
 import 'package:walk/domain/location/entity/stay.dart';
 import 'package:walk/domain/location/entity/track_segment.dart';
@@ -40,10 +42,12 @@ import 'package:walk/presentation/map/cubit/map_record_state.dart';
 import 'package:walk/presentation/map/cubit/map_style_cubit.dart';
 import 'package:walk/presentation/map/cubit/map_view_cubit.dart';
 import 'package:walk/presentation/map/cubit/map_view_state.dart';
+import 'package:walk/presentation/map/page/fullscreen_map_page.dart';
 import 'package:walk/presentation/map/page/map_tab.dart';
 import 'package:walk/presentation/map/widget/record_chip.dart';
 import 'package:walk/presentation/map/widget/story_picker_sheet.dart';
 import 'package:walk/presentation/map/widget/timeline_sheet.dart';
+import 'package:walk/presentation/map/widget/track_map.dart';
 
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_device_auth.dart';
@@ -151,6 +155,7 @@ void main() {
   setUpAll(() {
     registerFallbackValue(_today);
     registerFallbackValue(const EntryFilter.all());
+    registerFallbackValue(RecordInterval.normal);
   });
 
   setUp(() async {
@@ -178,7 +183,7 @@ void main() {
     ).thenAnswer((_) => Stream.value([_entry('a')]));
     when(record.load).thenAnswer((_) async {});
     when(record.enable).thenAnswer((_) async {});
-    when(() => record.setDense(any())).thenAnswer((_) async {});
+    when(() => record.setInterval(any())).thenAnswer((_) async {});
     when(() => view.show(any())).thenAnswer((_) async {});
     when(view.refresh).thenAnswer((_) async {});
     getIt
@@ -426,50 +431,123 @@ void main() {
     verify(() => view.show(_today)).called(1);
   });
 
-  Switch denseSwitch(WidgetTester tester) =>
-      tester.widget<Switch>(find.byKey(const Key('map-record-dense-switch')));
+  const denseRunning = MapRecordState(
+    status: RecorderStatus.running(
+      RecordMode.dense,
+      stillDetection: false,
+      intervalSec: 10,
+    ),
+    busy: false,
+    hasPoints: true,
+    loaded: true,
+  );
 
-  testWidgets('record chip is a detail-record toggle with a hint', (
+  Finder intervalTile(RecordInterval interval) =>
+      find.byKey(Key('record-interval-${interval.name}'));
+
+  bool checked(WidgetTester tester, RecordInterval interval) => find
+      .descendant(
+        of: intervalTile(interval),
+        matching: find.byIcon(Icons.check),
+      )
+      .evaluate()
+      .isNotEmpty;
+
+  testWidgets('running record is a compact round button, not a card', (
     tester,
   ) async {
     await pump(tester, state: MapViewState.ready(_data()));
 
-    expect(find.text('자세히 기록'), findsOneWidget);
-    expect(find.text('5초마다 · 배터리 더 씀'), findsOneWidget);
-    expect(denseSwitch(tester).value, isFalse);
-
-    await tester.tap(find.byKey(const Key('map-record-dense-switch')));
-    await tester.pumpAndSettle();
-    verify(() => record.setDense(true)).called(1);
-
-    records.add(
-      const MapRecordState(
-        status: RecorderStatus.running(RecordMode.dense, stillDetection: true),
-        busy: false,
-        hasPoints: true,
-        loaded: true,
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(denseSwitch(tester).value, isTrue);
-
-    // 글자를 눌러도 같은 토글이다.
-    await tester.tap(find.text('자세히 기록'));
-    await tester.pumpAndSettle();
-    verify(() => record.setDense(false)).called(1);
+    final chip = find.byKey(const Key('map-record-chip'));
+    expect(chip, findsOneWidget);
+    expect(tester.widget(chip), isA<IconButton>());
+    expect(tester.widget<IconButton>(chip).tooltip, '위치 기록 중 · 평소');
+    expect(find.widgetWithIcon(IconButton, Icons.my_location), findsOneWidget);
+    // 접힌 상태 — 주기 목록은 시트를 열어야 보인다.
+    expect(find.text('기록 주기'), findsNothing);
+    expect(intervalTile(RecordInterval.s5), findsNothing);
+    // 전체화면 · 지도 종류 버튼과 같은 왼쪽 열, 그 아래에 쌓인다.
+    final style = tester.getRect(find.byKey(const Key('map-style-button')));
+    final record = tester.getRect(chip);
+    expect(record.left, style.left);
+    expect(record.top, greaterThan(style.bottom - 1));
   });
 
-  testWidgets('detail-record toggle is disabled while busy', (tester) async {
+  testWidgets('fixed interval shows a different icon and the interval', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      state: MapViewState.ready(_data()),
+      recordState: denseRunning,
+    );
+
+    final chip = find.byKey(const Key('map-record-chip'));
+    expect(find.widgetWithIcon(IconButton, Icons.route), findsOneWidget);
+    expect(find.widgetWithIcon(IconButton, Icons.my_location), findsNothing);
+    expect(tester.widget<IconButton>(chip).tooltip, '위치 기록 중 · 10초마다');
+  });
+
+  testWidgets('tapping record button opens the interval sheet', (tester) async {
+    await pump(tester, state: MapViewState.ready(_data()));
+
+    await tester.tap(find.byKey(const Key('map-record-chip')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('기록 주기'), findsOneWidget);
+    expect(find.textContaining('배터리를 더 써요'), findsOneWidget);
+    expect(find.text('평소'), findsOneWidget);
+    expect(find.text('5초마다'), findsOneWidget);
+    expect(find.text('10초마다'), findsOneWidget);
+    expect(find.text('30초마다'), findsOneWidget);
+    expect(find.text('1분마다'), findsOneWidget);
+    expect(checked(tester, RecordInterval.normal), isTrue);
+    expect(checked(tester, RecordInterval.s5), isFalse);
+
+    await tester.tap(intervalTile(RecordInterval.s10));
+    await tester.pumpAndSettle();
+    verify(() => record.setInterval(RecordInterval.s10)).called(1);
+    // 고르면 닫힌다.
+    expect(find.text('기록 주기'), findsNothing);
+
+    records.add(denseRunning);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('map-record-chip')));
+    await tester.pumpAndSettle();
+    expect(checked(tester, RecordInterval.s10), isTrue);
+    expect(checked(tester, RecordInterval.normal), isFalse);
+
+    // 이미 고른 주기는 다시 보내지 않는다.
+    await tester.tap(intervalTile(RecordInterval.s10));
+    await tester.pumpAndSettle();
+    verifyNever(() => record.setInterval(any()));
+  });
+
+  testWidgets('interval sheet is disabled while busy', (tester) async {
     await pump(
       tester,
       state: MapViewState.ready(_data()),
       recordState: _running.copyWith(busy: true),
     );
 
-    expect(denseSwitch(tester).onChanged, isNull);
-    await tester.tap(find.text('자세히 기록'));
+    await tester.tap(find.byKey(const Key('map-record-chip')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(intervalTile(RecordInterval.s5));
     await tester.pump();
-    verifyNever(() => record.setDense(any()));
+    verifyNever(() => record.setInterval(any()));
+    expect(find.text('기록 주기'), findsOneWidget);
+  });
+
+  testWidgets('relocking closes the record sheet', (tester) async {
+    await pump(tester, state: MapViewState.ready(_data()));
+    await tester.tap(find.byKey(const Key('map-record-chip')));
+    await tester.pumpAndSettle();
+    expect(find.text('기록 주기'), findsOneWidget);
+
+    await relock(tester);
+
+    expect(find.text('기록 주기', skipOffstage: false), findsNothing);
   });
 
   testWidgets('blocked shows record-off chip', (tester) async {
@@ -485,10 +563,16 @@ void main() {
       ),
     );
 
-    expect(find.text('기록 꺼짐 · 권한 필요'), findsOneWidget);
-    expect(find.text('자세히 기록'), findsNothing);
+    expect(find.text('권한 필요'), findsOneWidget);
+    expect(find.byKey(const Key('map-record-chip')), findsOneWidget);
+    expect(
+      tester
+          .widget<ActionChip>(find.byKey(const Key('map-record-chip')))
+          .tooltip,
+      '기록 꺼짐 · 위치 권한 필요',
+    );
 
-    await tester.tap(find.text('기록 꺼짐 · 권한 필요'));
+    await tester.tap(find.text('권한 필요'));
     await tester.pumpAndSettle();
     // 항상 허용이 아직 없으면 이유 설명이 먼저 뜬다.
     await tester.tap(find.text('계속'));
@@ -587,6 +671,84 @@ void main() {
     expect(layer().tileBuilder, isNull);
     expect(mapStyle.style, MapStyle.standard);
     expect(find.textContaining('CARTO'), findsNothing);
+  });
+
+  group('fullscreen', () {
+    late List<String> uiModes;
+
+    setUp(() => uiModes = []);
+
+    Future<void> pumpFull(WidgetTester tester) async {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'SystemChrome.setEnabledSystemUIMode') {
+            uiModes.add(call.arguments as String);
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await pump(tester, state: MapViewState.ready(_data()));
+    }
+
+    TrackMapState mapState(WidgetTester tester) =>
+        tester.state<TrackMapState>(find.byType(TrackMap));
+
+    testWidgets('button hides chrome, exit brings it back', (tester) async {
+      await pumpFull(tester);
+      expect(find.byType(TimelineSheet), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('map-fullscreen-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FullscreenMapPage), findsOneWidget);
+      // 기간 머리 · 시트 · 기록 표시 · 지도 종류는 없고 지도와 나가기 버튼만.
+      expect(find.byType(TimelineSheet), findsNothing);
+      expect(find.text('스토리'), findsNothing);
+      expect(find.byKey(const Key('map-record-chip')), findsNothing);
+      expect(find.byKey(const Key('map-style-button')), findsNothing);
+      expect(find.byType(TrackMap), findsOneWidget);
+      expect(uiModes, ['SystemUiMode.immersiveSticky']);
+
+      await tester.tap(find.byKey(const Key('map-fullscreen-exit')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FullscreenMapPage), findsNothing);
+      expect(find.byType(TimelineSheet), findsOneWidget);
+      expect(find.byKey(const Key('map-record-chip')), findsOneWidget);
+      expect(uiModes.last, 'SystemUiMode.edgeToEdge');
+    });
+
+    testWidgets('back returns and keeps the camera', (tester) async {
+      await pumpFull(tester);
+      final before = mapState(tester).camera;
+
+      await tester.tap(find.byKey(const Key('map-fullscreen-button')));
+      await tester.pumpAndSettle();
+      // 전체화면은 지도 탭 카메라 자리에서 열린다.
+      expect(mapState(tester).camera.center, before.center);
+      expect(mapState(tester).camera.zoom, before.zoom);
+
+      // 전체화면에서 다른 곳으로 옮긴다.
+      mapState(tester).jumpTo((center: const LatLng(35.1, 129.0), zoom: 13));
+      await tester.pump();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FullscreenMapPage), findsNothing);
+      expect(find.byType(TimelineSheet), findsOneWidget);
+      final after = mapState(tester).camera;
+      expect(after.center.latitude, closeTo(35.1, 1e-6));
+      expect(after.center.longitude, closeTo(129.0, 1e-6));
+      expect(after.zoom, 13);
+    });
   });
 
   testWidgets('saved style is used when the map opens', (tester) async {

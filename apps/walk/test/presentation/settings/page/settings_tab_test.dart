@@ -99,7 +99,7 @@ void main() {
     );
   });
 
-  testWidgets('위치 기록 부제는 기록 상태(자세히 기록 포함)', (tester) async {
+  testWidgets('위치 기록 부제는 기록 상태(기록 주기 포함)', (tester) async {
     await pump(tester);
     expect(
       find.descendant(of: row('open-map'), matching: find.text('꺼짐')),
@@ -107,13 +107,16 @@ void main() {
     );
 
     when(h.locationRecorder.status).thenAnswer(
-      (_) async =>
-          const RecorderStatus.running(RecordMode.dense, stillDetection: true),
+      (_) async => const RecorderStatus.running(
+        RecordMode.dense,
+        stillDetection: false,
+        intervalSec: 10,
+      ),
     );
     await h.mapRecord.load();
     await tester.pumpAndSettle();
     expect(
-      find.descendant(of: row('open-map'), matching: find.text('켜짐 · 자세히 기록')),
+      find.descendant(of: row('open-map'), matching: find.text('켜짐 · 10초마다')),
       findsOneWidget,
     );
   });

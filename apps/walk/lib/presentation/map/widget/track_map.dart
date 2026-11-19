@@ -9,12 +9,12 @@ import 'package:latlong2/latlong.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/location/entity/day_track.dart';
 import '../../../domain/location/entity/map_style.dart';
-import '../../../domain/location/entity/record_mode.dart';
+import '../../../domain/location/entity/track_segment.dart';
 import 'entry_pin.dart';
 
 /// 한 기간의 동선 지도 — 이동선 · 머문 곳 원 · 일기 핀.
 ///
-/// 선: 촘촘 구간은 굵고 진하게, 평소 구간은 얇고 옅게(같은 색). [faint] 면(한 달) 모든 선을
+/// 선: 자세히 구간([isDetailedSegment], 30초 이하 고정 주기)은 굵고 진하게, 평소 구간은 얇고 옅게(같은 색). [faint] 면(한 달) 모든 선을
 /// 옅게 겹쳐 그려 자주 다닌 길이 진해진다.
 ///
 /// 이동선의 좌표 목록은 [track] 인스턴스가 바뀔 때만 다시 만든다 — 한 달 · 긴 스토리는 점이 많고,
@@ -32,6 +32,7 @@ class TrackMap extends StatefulWidget {
     required this.onOpenEntry,
     this.faint = false,
     this.bottomInset = 0,
+    this.initialCamera,
     this.style = MapStyle.fallback,
     super.key,
   });
@@ -54,9 +55,15 @@ class TrackMap extends StatefulWidget {
   /// 바탕 타일 모양.
   final MapStyle style;
 
+  /// 처음 카메라. 주면 좌표에 맞추지 않고 그 자리에서 연다(전체화면 ↔ 지도 탭 사이 카메라 유지).
+  final MapCameraSpot? initialCamera;
+
   @override
   State<TrackMap> createState() => TrackMapState();
 }
+
+/// 지도 카메라의 가운데와 줌.
+typedef MapCameraSpot = ({LatLng center, double zoom});
 
 class TrackMapState extends State<TrackMap> {
   /// 좌표가 없을 때 보이는 곳(서울시청)과 줌.
@@ -91,6 +98,7 @@ class TrackMapState extends State<TrackMap> {
   /// [_segmentPoints] · [_trackCoordinates] 를 만든 이동선. 같은 인스턴스면 다시 쓴다.
   DayTrack? _memoTrack;
   List<List<LatLng>> _memoSegments = const [];
+  List<bool> _memoDetailed = const [];
   List<LatLng> _memoCoordinates = const [];
 
   void _memoize() {
@@ -102,12 +110,21 @@ class TrackMapState extends State<TrackMap> {
         List.unmodifiable([for (final p in s.points) LatLng(p.lat, p.lng)]),
     ];
     _memoCoordinates = List.unmodifiable([for (final s in _memoSegments) ...s]);
+    _memoDetailed = List.unmodifiable([
+      for (final s in track.segments) isDetailedSegment(s),
+    ]);
   }
 
   /// 구간별 선 좌표([DayTrack.segments] 와 같은 순서).
   List<List<LatLng>> get _segmentPoints {
     _memoize();
     return _memoSegments;
+  }
+
+  /// 구간별 굵게 그릴지([isDetailedSegment], [DayTrack.segments] 와 같은 순서).
+  List<bool> get _segmentDetailed {
+    _memoize();
+    return _memoDetailed;
   }
 
   /// 이동선의 모든 좌표.
@@ -119,7 +136,21 @@ class TrackMapState extends State<TrackMap> {
   @override
   void initState() {
     super.initState();
-    if (_coordinates().isNotEmpty) _fitted = widget.fitKey;
+    if (_coordinates().isNotEmpty || widget.initialCamera != null) {
+      _fitted = widget.fitKey;
+    }
+    // 이어받은 카메라는 사용자가 옮겨 둔 자리다 — 점이 늘어도 따라가지 않는다.
+    if (widget.initialCamera != null) _userMoved = true;
+  }
+
+  /// 지금 카메라.
+  MapCameraSpot get camera =>
+      (center: _controller.camera.center, zoom: _controller.camera.zoom);
+
+  /// 카메라를 그 자리로 옮긴다(전체화면에서 돌아올 때).
+  void jumpTo(MapCameraSpot spot) {
+    _userMoved = true;
+    _controller.move(spot.center, spot.zoom);
   }
 
   @override
@@ -285,9 +316,9 @@ class TrackMapState extends State<TrackMap> {
     return a.computeLuminance() >= b.computeLuminance() ? a : b;
   }
 
-  double _alphaOf(RecordMode mode) {
+  double _alphaOf(bool detailed) {
     if (widget.faint) return _faintAlpha;
-    if (mode == RecordMode.dense) return 1;
+    if (detailed) return 1;
     return widget.style == MapStyle.satellite
         ? _satelliteNormalAlpha
         : _normalAlpha;
@@ -300,12 +331,15 @@ class TrackMapState extends State<TrackMap> {
     final satellite = widget.style == MapStyle.satellite;
     final coordinates = _coordinates();
     final single = coordinates.isNotEmpty && _isSinglePlace(coordinates);
+    final initial = widget.initialCamera;
     return FlutterMap(
       mapController: _controller,
       options: MapOptions(
-        initialCenter: coordinates.firstOrNull ?? _fallbackCenter,
-        initialZoom: coordinates.isEmpty ? _fallbackZoom : _placeZoom,
-        initialCameraFit: coordinates.isEmpty || single
+        initialCenter:
+            initial?.center ?? coordinates.firstOrNull ?? _fallbackCenter,
+        initialZoom:
+            initial?.zoom ?? (coordinates.isEmpty ? _fallbackZoom : _placeZoom),
+        initialCameraFit: initial != null || coordinates.isEmpty || single
             ? null
             : CameraFit.coordinates(
                 coordinates: coordinates,
@@ -337,10 +371,10 @@ class TrackMapState extends State<TrackMap> {
               if (s.points.length > 1)
                 Polyline(
                   points: _segmentPoints[i],
-                  strokeWidth: !widget.faint && s.mode == RecordMode.dense
+                  strokeWidth: !widget.faint && _segmentDetailed[i]
                       ? _denseStroke
                       : _normalStroke,
-                  color: route.withValues(alpha: _alphaOf(s.mode)),
+                  color: route.withValues(alpha: _alphaOf(_segmentDetailed[i])),
                   borderStrokeWidth: satellite ? _satelliteBorder : 0,
                   borderColor: scheme.shadow.withValues(
                     alpha: _satelliteBorderAlpha,

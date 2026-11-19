@@ -29,7 +29,18 @@ object LocationRecordRules {
     )
 
     private val normal = Request(PRIORITY_BALANCED_POWER_ACCURACY, 180_000L, 50f, 600_000L)
-    private val dense = Request(PRIORITY_HIGH_ACCURACY, 5_000L, 10f, 0L)
+
+    /** 자세히(`dense`) 기록 주기(초). 저장된 값이 없으면 예전 동작 그대로 5초. */
+    const val DEFAULT_INTERVAL_SEC = 5
+    const val MIN_INTERVAL_SEC = 5
+    const val MAX_INTERVAL_SEC = 600
+
+    /** 자세히 기록은 이만큼 움직여야 다음 점을 남긴다(가만히 있으면 주기가 짧아도 점이 늘지 않는다). */
+    const val DENSE_MIN_DISTANCE_M = 10f
+
+    /** 없거나 범위 밖이면 기본값 · 범위 끝으로. */
+    fun normalizeIntervalSec(sec: Int?): Int =
+        (sec ?: DEFAULT_INTERVAL_SEC).coerceIn(MIN_INTERVAL_SEC, MAX_INTERVAL_SEC)
 
     /** 모르는 모드는 평소로 본다. */
     fun normalizeMode(mode: String?): String = if (mode == MODE_DENSE) MODE_DENSE else MODE_NORMAL
@@ -109,7 +120,21 @@ object LocationRecordRules {
     fun shouldRetryUpdates(gen: Int, currentGen: Int, destroyed: Boolean): Boolean =
         !destroyed && gen == currentGen
 
-    fun requestFor(mode: String): Request = if (normalizeMode(mode) == MODE_DENSE) dense else normal
+    /**
+     * 평소는 고정(3분 · 50m · 10분 묶음). 자세히는 정확도 우선 · 묶음 없음 · 10m, 간격은 사용자가 고른
+     * [intervalSec](5초~10분, [normalizeIntervalSec]).
+     */
+    fun requestFor(mode: String, intervalSec: Int = DEFAULT_INTERVAL_SEC): Request =
+        if (normalizeMode(mode) == MODE_DENSE) {
+            Request(
+                PRIORITY_HIGH_ACCURACY,
+                normalizeIntervalSec(intervalSec) * 1_000L,
+                DENSE_MIN_DISTANCE_M,
+                0L,
+            )
+        } else {
+            normal
+        }
 
     /** 백그라운드 위치 권한이 없으면 부팅 직후 서비스를 띄워도 점을 못 받는다. */
     fun shouldRestartOnBoot(enabled: Boolean, hasBackgroundPermission: Boolean): Boolean =

@@ -10,6 +10,6 @@
     <string name="health_privacy_body">Life Log 은 Health Connect 에서 걸음 수만 읽어 이 폰 화면에 보여 줘요. 저장하거나 어디에도 보내지 않아요.</string>
     <string name="location_record_channel_name">위치 기록</string>
     <string name="location_record_notification_normal">위치 기록 중 · 평소</string>
-    <string name="location_record_notification_dense">위치 기록 중 · 촘촘</string>
+    <string name="location_record_notification_interval">위치 기록 중 · %1$d초마다</string>
     <string name="location_record_stop">끄기</string>
 </resources>

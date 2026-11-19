@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:walk/domain/location/entity/record_interval.dart';
 import 'package:walk/data/location/background_location_access.dart';
 import 'package:walk/domain/location/entity/record_mode.dart';
 import 'package:walk/domain/location/entity/record_retention.dart';
@@ -26,6 +27,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(RecordMode.normal);
+    registerFallbackValue(RecordInterval.normal);
     registerFallbackValue(RecordRetention.never);
   });
 
@@ -41,7 +43,7 @@ void main() {
     ).thenAnswer((_) async => const RecorderStatus.off());
     when(() => recorder.start(any())).thenAnswer((_) async {});
     when(() => recorder.stop()).thenAnswer((_) async {});
-    when(() => recorder.setMode(any())).thenAnswer((_) async {});
+    when(() => recorder.setInterval(any())).thenAnswer((_) async {});
     when(() => access.check()).thenAnswer((_) async => AlwaysAccess.denied);
     when(() => access.request()).thenAnswer((_) async => AlwaysAccess.granted);
     when(() => access.hasActivityRecognition()).thenAnswer((_) async => true);
@@ -102,26 +104,26 @@ void main() {
     expect(cubit.state.activityRecognition, isFalse);
   });
 
-  test('setDense switches mode', () async {
+  test('setInterval switches interval', () async {
     when(() => recorder.status()).thenAnswer(
       (_) async =>
           const RecorderStatus.running(RecordMode.dense, stillDetection: true),
     );
     await cubit.load();
 
-    await cubit.setDense(true);
+    await cubit.setInterval(RecordInterval.s10);
 
-    verify(() => recorder.setMode(RecordMode.dense)).called(1);
+    verify(() => recorder.setInterval(RecordInterval.s10)).called(1);
     expect(
       cubit.state.status,
       const RecorderStatus.running(RecordMode.dense, stillDetection: true),
     );
   });
 
-  test('setDense does nothing while off', () async {
-    await cubit.setDense(true);
+  test('setInterval does nothing while off', () async {
+    await cubit.setInterval(RecordInterval.s5);
 
-    verifyNever(() => recorder.setMode(any()));
+    verifyNever(() => recorder.setInterval(any()));
   });
 
   test('disable stops and goes off', () async {

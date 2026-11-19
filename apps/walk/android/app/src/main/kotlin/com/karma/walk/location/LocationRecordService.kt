@@ -160,6 +160,7 @@ class LocationRecordService : Service() {
     // 읽는 값에 @Volatile 을 붙인다.
     @Volatile
     private var mode: String = LocationRecordRules.MODE_NORMAL
+    private var intervalSec: Int = LocationRecordRules.DEFAULT_INTERVAL_SEC
 
     @Volatile
     private var updating = false
@@ -272,6 +273,7 @@ class LocationRecordService : Service() {
      */
     private fun ensureForeground(): Boolean {
         mode = LocationRecordPrefs.mode(this)
+        intervalSec = LocationRecordPrefs.intervalSec(this)
         val allowed = LocationRecordPrefs.enabled(this) && hasBackgroundPermission(this)
         if (allowed) {
             try {
@@ -441,7 +443,7 @@ class LocationRecordService : Service() {
     @SuppressLint("MissingPermission")
     private fun startUpdates() {
         if (updating) return
-        val rules = LocationRecordRules.requestFor(mode)
+        val rules = LocationRecordRules.requestFor(mode, intervalSec)
         val request = LocationRequest.Builder(rules.priority, rules.intervalMs)
             .setMinUpdateDistanceMeters(rules.minDistanceM)
             .setMaxUpdateDelayMillis(rules.maxDelayMs)
@@ -676,13 +678,11 @@ class LocationRecordService : Service() {
             Intent(this, LocationRecordService::class.java).setAction(ACTION_STOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val title = getString(
-            if (mode == LocationRecordRules.MODE_DENSE) {
-                R.string.location_record_notification_dense
-            } else {
-                R.string.location_record_notification_normal
-            },
-        )
+        val title = if (mode == LocationRecordRules.MODE_DENSE) {
+            getString(R.string.location_record_notification_interval, intervalSec)
+        } else {
+            getString(R.string.location_record_notification_normal)
+        }
         return Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_location)
             .setContentTitle(title)

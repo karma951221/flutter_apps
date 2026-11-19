@@ -6488,12 +6488,6 @@ abstract class AppLocalizations {
   /// **'켜짐'**
   String get walkSettingsLocationOn;
 
-  /// 설정 탭 — 위치 기록 행 부제: 켜짐 + 자세히 기록
-  ///
-  /// In ko, this message translates to:
-  /// **'켜짐 · 자세히 기록'**
-  String get walkSettingsLocationDetailed;
-
   /// 설정 탭 — 위치 기록 행 부제: 권한을 잃어 멈춤
   ///
   /// In ko, this message translates to:
@@ -7716,18 +7710,6 @@ abstract class AppLocalizations {
   /// **'이 폰에만 쌓이고 서버로 보내지 않아요'**
   String get walkMapSettingsRecordDescription;
 
-  /// 지도 설정 — 자세히 기록(위치를 5초마다 찍는 모드) 스위치 행 제목
-  ///
-  /// In ko, this message translates to:
-  /// **'자세히 기록'**
-  String get walkMapSettingsDense;
-
-  /// 지도 설정 — 자세히 기록 스위치 설명
-  ///
-  /// In ko, this message translates to:
-  /// **'산책할 때처럼 5초마다 기록해요. 배터리를 더 써요'**
-  String get walkMapSettingsDenseDescription;
-
   /// 지도 설정 — 보관 기간 행 제목 · 시트 제목
   ///
   /// In ko, this message translates to:
@@ -7980,17 +7962,71 @@ abstract class AppLocalizations {
   /// **'지도로 보기'**
   String get walkMapViewStoryOnMap;
 
-  /// 지도 — 자세히 기록 토글 제목(위치를 5초마다 찍는 모드)
+  /// 위치 기록 주기 — 지도 기록 시트 제목 · 지도 설정 행 제목
   ///
   /// In ko, this message translates to:
-  /// **'자세히 기록'**
-  String get walkMapChipDense;
+  /// **'기록 주기'**
+  String get walkRecordInterval;
 
-  /// 지도 — 자세히 기록 토글 아래 한 줄 설명
+  /// 기록 주기 시트 — 설명(짧을수록 배터리 · 거리 기준)
   ///
   /// In ko, this message translates to:
-  /// **'5초마다 · 배터리 더 씀'**
-  String get walkMapChipDenseHint;
+  /// **'짧을수록 다닌 길을 자세히 따라가지만 배터리를 더 써요. 10m 넘게 움직일 때만 점을 남겨요'**
+  String get walkRecordIntervalHint;
+
+  /// 기록 주기 — 평소(배터리 아낌) 이름
+  ///
+  /// In ko, this message translates to:
+  /// **'평소'**
+  String get walkRecordIntervalNormal;
+
+  /// 기록 주기 — 평소 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'몇 분마다 · 멈춰 있으면 쉬어요. 배터리를 가장 적게 써요'**
+  String get walkRecordIntervalNormalDetail;
+
+  /// 기록 주기 — N초마다
+  ///
+  /// In ko, this message translates to:
+  /// **'{seconds}초마다'**
+  String walkRecordIntervalSeconds(int seconds);
+
+  /// 기록 주기 — N분마다
+  ///
+  /// In ko, this message translates to:
+  /// **'{minutes}분마다'**
+  String walkRecordIntervalMinutes(int minutes);
+
+  /// 기록 주기 — 30초 이하 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'길을 자세히 따라가요 · 배터리를 많이 써요'**
+  String get walkRecordIntervalShortDetail;
+
+  /// 기록 주기 — 30초 넘는 고정 주기 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'가끔 찍어요 · 배터리를 조금 더 써요'**
+  String get walkRecordIntervalLongDetail;
+
+  /// 지도 — 기록 중 원형 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 기록 중 · {interval}'**
+  String walkMapRecordOnInterval(String interval);
+
+  /// 설정 탭 — 위치 기록 행 상태(고정 주기)
+  ///
+  /// In ko, this message translates to:
+  /// **'켜짐 · {interval}'**
+  String walkSettingsLocationInterval(String interval);
+
+  /// 지도 — 기록 중(평소) 원형 버튼 툴팁 · 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'위치 기록 중'**
+  String get walkMapRecordOn;
 
   /// 지도 — 기록이 꺼져 있을 때 칩(누르면 켜기)
   ///
@@ -7998,17 +8034,35 @@ abstract class AppLocalizations {
   /// **'기록 꺼짐'**
   String get walkMapChipOff;
 
-  /// 지도 — 권한을 잃어 기록하지 못할 때 칩(누르면 켜기)
+  /// 지도 — 권한을 잃어 기록하지 못할 때 칩(누르면 켜기). 아이콘이 꺼짐을 보이니 짧게
   ///
   /// In ko, this message translates to:
-  /// **'기록 꺼짐 · 권한 필요'**
+  /// **'권한 필요'**
   String get walkMapChipBlocked;
+
+  /// 지도 — 권한 필요 칩 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 꺼짐 · 위치 권한 필요'**
+  String get walkMapChipBlockedTooltip;
 
   /// 지도 — 지도 종류 버튼 툴팁 · 시트 제목
   ///
   /// In ko, this message translates to:
   /// **'지도 종류'**
   String get walkMapStyle;
+
+  /// 지도 — 전체화면 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'전체화면으로 보기'**
+  String get walkMapFullscreen;
+
+  /// 지도 전체화면 — 나가기 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'전체화면 나가기'**
+  String get walkMapFullscreenExit;
 
   /// 지도 모양 — OSM 기본
   ///

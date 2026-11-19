@@ -1,4 +1,5 @@
 import '../entity/location_point.dart';
+import '../entity/record_interval.dart';
 import '../entity/record_mode.dart';
 import 'recorder_status.dart';
 
@@ -8,7 +9,9 @@ abstract interface class LocationRecorder {
   Future<RecorderStatus> status();
   Future<void> start(RecordMode mode);
   Future<void> stop();
-  Future<void> setMode(RecordMode mode);
+
+  /// 기록 주기를 바꾼다(평소 ↔ 고정 주기 · 주기 초). 떠 있는 서비스는 곧바로 새 요청을 건다.
+  Future<void> setInterval(RecordInterval interval);
 
   /// 시스템 배터리 최적화 화면을 연다. 앱은 아무것도 바꾸지 않는다.
   Future<void> openBatterySettings();

@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'package:injectable/injectable.dart';
 
 import '../../domain/location/entity/location_point.dart';
+import '../../domain/location/entity/record_interval.dart';
 import '../../domain/location/entity/record_mode.dart';
 import '../../domain/location/recorder/location_recorder.dart';
 import '../../domain/location/recorder/recorder_status.dart';
@@ -10,8 +11,9 @@ import '../../domain/location/recorder/recorder_status.dart';
 /// 서비스를 다룬다.
 ///
 /// 채널 약속:
-/// - `start`/`setMode` ← `{mode: "normal"|"dense"}`, `stop` → null
-/// - `status` → `{state: "off"|"running"|"blocked", mode, stillDetection: bool,
+/// - `start` ← `{mode: "normal"|"dense"}`, `stop` → null
+/// - `setMode` ← `{mode, intervalSec?: int}` — 고정 주기(`dense`)면 주기(초, 5~600)를 함께 보낸다
+/// - `status` → `{state: "off"|"running"|"blocked", mode, intervalSec: int, stillDetection: bool,
 ///   recordingSince: epoch millis UTC?}` (지금 서비스 인스턴스가 기록을 시작한 시각, 되살렸으면 null)
 /// - `drain` ← `{limit}` → `[{id, t: epoch millis UTC, lat, lng, acc: double?, mode, still}]` (id 오름차순)
 /// - `ack` ← `{upToId}`
@@ -28,6 +30,11 @@ class ChannelLocationRecorder implements LocationRecorder {
   Future<RecorderStatus> status() async {
     final map = await _channel.invokeMapMethod<String, Object?>('status');
     final mode = _mode(map?['mode']);
+    // 이 값이 없던 예전 네이티브는 5초 고정이었다.
+    final intervalSec = switch (map?['intervalSec']) {
+      final num n => n.toInt(),
+      _ => RecordInterval.minSeconds,
+    };
     return switch (map?['state']) {
       'running' => RecorderStatus.running(
         mode,
@@ -39,8 +46,9 @@ class ChannelLocationRecorder implements LocationRecorder {
           ),
           _ => null,
         },
+        intervalSec: intervalSec,
       ),
-      'blocked' => RecorderStatus.blocked(mode),
+      'blocked' => RecorderStatus.blocked(mode, intervalSec: intervalSec),
       _ => const RecorderStatus.off(),
     };
   }
@@ -53,8 +61,11 @@ class ChannelLocationRecorder implements LocationRecorder {
   Future<void> stop() => _channel.invokeMethod<void>('stop');
 
   @override
-  Future<void> setMode(RecordMode mode) =>
-      _channel.invokeMethod<void>('setMode', {'mode': mode.name});
+  Future<void> setInterval(RecordInterval interval) =>
+      _channel.invokeMethod<void>('setMode', {
+        'mode': interval.mode.name,
+        'intervalSec': ?interval.seconds,
+      });
 
   @override
   Future<void> openBatterySettings() =>

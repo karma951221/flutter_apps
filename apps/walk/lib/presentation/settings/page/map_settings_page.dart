@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,7 +9,7 @@ import '../../../data/location/background_location_access.dart';
 import 'package:core/core.dart';
 
 import '../../../domain/location/entity/map_style.dart';
-import '../../../domain/location/entity/record_mode.dart';
+import '../../../domain/location/entity/record_interval.dart';
 import '../../../domain/location/entity/record_retention.dart';
 import '../../../domain/location/recorder/recorder_status.dart';
 import '../../map/cubit/map_record_cubit.dart';
@@ -15,6 +17,7 @@ import '../../map/cubit/map_record_state.dart';
 import '../../map/cubit/map_style_cubit.dart';
 import '../../map/widget/map_style_sheet.dart';
 import '../../map/widget/enable_location_record.dart';
+import '../../map/widget/record_interval_sheet.dart';
 import '../widget/settings_widgets.dart';
 
 /// 지도 설정 — 위치 기록 켜기 · 촘촘 기록 · 보관 기간 · 권한 · 모두 지우기.
@@ -59,7 +62,7 @@ class _MapSettingsPageState extends State<MapSettingsPage>
         builder: (context, state) => ListView(
           children: [
             _RecordTile(state: state),
-            _DenseTile(state: state),
+            _IntervalTile(state: state),
             _RetentionTile(state: state),
             const _StyleTile(),
             AppListTile(
@@ -122,34 +125,28 @@ class _RecordTile extends StatelessWidget {
   }
 }
 
-/// 촘촘 기록 스위치. 기록이 꺼져 있으면 비활성.
-class _DenseTile extends StatelessWidget {
-  const _DenseTile({required this.state});
+/// 기록 주기 행 — 지금 주기를 보이고, 누르면 고르는 시트(지도의 기록 버튼과 같은 것).
+/// 기록이 꺼져 있으면 비활성.
+class _IntervalTile extends StatelessWidget {
+  const _IntervalTile({required this.state});
 
   final MapRecordState state;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final cubit = context.read<MapRecordCubit>();
-    final dense = switch (state.status) {
-      RecorderRunning(:final mode) ||
-      RecorderBlocked(:final mode) => mode == RecordMode.dense,
-      RecorderOff() => false,
-    };
-    final enabled = state.status is! RecorderOff && !state.busy;
+    final interval = recordIntervalOf(state.status);
+    final enabled = interval != null && !state.busy;
     return AppListTile(
-      key: const Key('map-settings-dense'),
+      key: const Key('map-settings-interval'),
       leading: const Icon(Icons.timeline),
-      title: Text(l10n.walkMapSettingsDense),
-      subtitle: Text(l10n.walkMapSettingsDenseDescription),
-      enabled: enabled,
-      trailing: Switch(
-        key: const Key('map-settings-dense-switch'),
-        value: dense,
-        onChanged: enabled ? cubit.setDense : null,
+      title: Text(l10n.walkRecordInterval),
+      subtitle: Text(
+        recordIntervalLabel(l10n, interval ?? RecordInterval.normal),
       ),
-      onTap: enabled ? () => cubit.setDense(!dense) : null,
+      enabled: enabled,
+      trailing: const Icon(Icons.chevron_right),
+      onTap: enabled ? () => unawaited(showRecordIntervalSheet(context)) : null,
     );
   }
 }
@@ -311,7 +308,11 @@ class _DeleteAllTile extends StatelessWidget {
         if (!confirmed || cubit.isClosed) return;
         await cubit.deleteAll();
         if (!context.mounted) return;
-        AppSnackBar.show(context, message: l10n.walkMapSettingsDeleted, type: AppSnackBarType.success);
+        AppSnackBar.show(
+          context,
+          message: l10n.walkMapSettingsDeleted,
+          type: AppSnackBarType.success,
+        );
       },
     );
   }

@@ -1502,3 +1502,85 @@ QA: 기능마다 설정이 각 탭 ⋮ 에 흩어져 있고, 앱 전역 설정("
   "확인 못 했어요 · 그래도 저장" 창을 띄운다(이전엔 `failed` 로 막혔다). 한도 초과는 그대로 저장하지 않고
   원인을 보인다(기존 의도 유지). 검증 호출은 여전히 역 검색 한 번이며, 결과 없음(`-99` 등)은 이미 성공이다.
 
+## 2026-11-19 — 지도 기록 표시 접기
+
+사용자 QA(실기기): 지도 오른쪽 위 자세히 기록 카드(제목 · 한 줄 설명 · 스위치)가 기록 중이면 늘 떠 있어 지도를 가린다.
+
+### 판단
+
+- 기록 중(`RecorderRunning`)이면 원형 `IconButton` 하나로 접는다. 평소는 `filledTonal` + `Icons.my_location`, 자세히 기록은
+  `filled`(진한 primary) + `Icons.route` — 색과 아이콘이 둘 다 달라 한눈에 구분된다. 툴팁은 "위치 기록 중" · "자세히 기록 중".
+- 누르면 바텀시트("위치 기록 중" 제목 + `AppListTile` 자세히 기록 행: 설명 "5초마다 위치를 찍어요. 배터리를 더 써요" · `Switch`).
+  시트는 `BlocProvider.value` 로 셸의 `MapRecordCubit` 을 보아 떠 있는 동안 바뀐 상태를 따른다. busy 면 비활성. 다시 잠기면
+  일기 잠금이 다른 팝업처럼 닫는다.
+- 꺼짐 · 권한 필요 칩은 사용자가 행동해야 하는 상태라 글자를 남기되 `VisualDensity.compact` 로 줄였다. "기록 꺼짐 · 권한 필요"는
+  꺼짐 아이콘(`location_disabled`)이 이미 말하므로 "권한 필요"로 줄이고 전체 문구는 툴팁(`walkMapChipBlockedTooltip`)에 둔다.
+- 자리: 오른쪽 위 따로 떠 있던 것을 지도 종류 버튼 아래 같은 왼쪽 열(`Column`)에 쌓았다. 기간 머리 · 아래 시트 · 가운데 안내 카드와
+  겹치지 않는다. 키 `map-record-chip` 은 버튼 · 칩에 그대로, 스위치 키 `map-record-dense-switch` 는 시트 안으로 옮겼다.
+  E2E 에서 이 키를 쓰는 곳은 없었다.
+- l10n: `walkMapChipDenseHint`(카드 한 줄 설명)는 쓰는 곳이 없어져 지우고 `walkMapRecordOn` · `walkMapRecordOnDense` ·
+  `walkMapRecordDenseHint` · `walkMapChipBlockedTooltip` 을 더했다(ko · en · ja).
+
+### 검증
+
+`flutter analyze` 0 · `flutter test` 4447건 통과(1 skip) · `packages/l10n` 12건. 지도 탭 위젯 테스트: 접힌 버튼(아이콘 · 스위치 숨김 ·
+지도 종류 버튼 아래 같은 열) · 자세히일 때 다른 아이콘 · 탭 → 시트 → 스위치 · 글자로 `setDense` · 떠 있는 동안 상태 따라가기 ·
+busy 비활성 · 다시 잠기면 시트 닫힘 · 권한 필요 칩 툴팁.
+
+## 2026-11-19 — 지도 전체화면
+
+사용자 QA(실기기): "지도를 조금 더 넓게 보고 싶다. 전체화면으로 본다든가." 같은 날 기록 표시 접기와 함께 했다.
+
+### 판단
+
+- 지도 탭 안에서 크롬을 숨기는 대신 **전체화면 화면을 따로 띄운다**(`openFullscreenMap`, `pushDiaryRoute(fade: true)`).
+  하단 탭바 · 기록 탭의 [일기 · 지도] 상단 탭은 셸 것이라 지도 탭이 숨기려면 셸까지 얽혀야 하는데, 위에 띄운 화면은 그것들을
+  그냥 덮고 뒤로가기도 기본 동작으로 처리된다. 일기 잠금 아래 경로라 다시 잠기면 함께 가려진다.
+- 남기는 것: 지도와 왼쪽 위 나가기 버튼만. 기간 머리 · 아래 시트 · 기록 표시 · 지도 종류 버튼은 없다. 시스템 바는
+  `SystemUiMode.immersiveSticky`(가장자리에서 밀면 잠깐 보임), 나가면 `edgeToEdge` 로 돌린다.
+- 카메라 유지: `TrackMap` 에 `initialCamera`(이어받은 자리면 좌표 맞춤 · 따라가기 안 함) · `camera` · `jumpTo` 를 더했다.
+  지도 탭의 카메라로 열고, 나가기 버튼과 뒤로가기(`PopScope` 가 막고 카메라를 들고 pop) 모두 마지막 카메라를 돌려주면
+  지도 탭이 그 자리로 옮긴다.
+- 전체화면도 지도 탭의 `MapViewCubit` · `MapStyleCubit` 을 그대로 보아 기록이 늘면 따라 그린다. 핀을 누르면 뷰어가 그 위에 뜬다.
+  머문 곳 · 자주 간 곳 원 좌표는 `mapSpotsOf` 로 지도 탭과 함께 쓴다.
+- 일반 모드: 전체화면 · 지도 종류 · 기록 표시를 왼쪽 위 한 열에 쌓아 오른쪽 위를 비웠다(앞의 기록 표시 접기). 따로 더 줄일 여백은 없었다.
+
+### 검증
+
+`flutter analyze` 0 · `flutter test` 4449건 통과(1 skip). 지도 탭 위젯 테스트: 버튼 → 시트 · 기간 머리 · 기록 표시 · 지도 종류가 사라지고
+몰입 모드 호출 → 나가기 버튼으로 돌아오면 다시 보이고 `edgeToEdge` · 뒤로가기로 돌아오고 전체화면에서 옮긴 카메라가 지도 탭에 남음.
+
+## 2026-11-19 — 기록 주기 설정
+
+사용자 QA(실기기): "촘촘기록이 5초마다 기록하는 걸로 보여. 꼭 5초가 필요한가 싶다. 몇 초마다 기록할지를 사용자가 지정할 수 있으면 좋겠다."
+
+### 판단
+
+- 이진 모드(평소/자세히)를 **기록 주기** 값 `RecordInterval { normal, s5, s10, s30, m1 }` 로 일반화했다. 직접 입력은 두지 않았다 —
+  프리셋 다섯 개로 쓰임새(산책 · 자전거 · 이동 · 가끔)가 덮이고, 입력칸 검증 · 키보드 UX 를 덜었다. 네이티브는 5초~10분으로 잘라
+  나중에 프리셋을 늘려도 된다.
+- 네이티브 계약은 넓히기만 했다: 모드 문자열(`normal`/`dense`)은 그대로 두고 prefs `intervalSec` · 채널 `setMode {mode, intervalSec?}` ·
+  `status.intervalSec` 를 더했다. `dense` 요청은 정확도 우선 · 묶음 없음 · 10m 에 간격만 `intervalSec`. 알림은 "위치 기록 중 · N초마다".
+  inbox 점의 `mode` · drift 테이블은 바꾸지 않았다(스키마 변경 없음).
+- 설정 이전: `intervalSec` 이 없으면 5초로 읽는다(Kotlin `LocationRecordPrefs.intervalSec` · Dart 채널 해석 모두). 그래서 예전 `dense` 는
+  5초, `normal` 은 평소 — 업데이트해도 동작이 그대로다. 평소 모드에서 정지 감지 · 3분 · 50m 는 그대로.
+- 엔진 확인: `LocationRequest.Builder(HIGH_ACCURACY, intervalSec*1000).setMinUpdateDistanceMeters(10).setMaxUpdateDelayMillis(0)` —
+  `SET_MODE` 가 들어오면 서비스가 요청을 내리고 다시 건다. 포그라운드 서비스(위치 유형)라 백그라운드 위치 간격 제한(시간당 몇 번)은
+  받지 않는다. 다만 10m 거리 필터 때문에 가만히 있으면 주기가 짧아도 점이 늘지 않는다 — 시트 설명에 적었다. 고정 주기는 정지
+  감지를 쓰지 않는다(예전 자세히와 같다).
+- 지도 굵은 선: 점에 주기가 없으니 토막의 실제 점 간격 중앙값으로 본다(`isDetailedSegment`: dense 이고 중앙값 30초 이하면 굵게).
+  예전 5초 기록은 그대로 굵고, 1분 주기는 평소처럼 얇다. 멈춘 동안의 긴 틈 하나에 흔들리지 않게 중앙값을 쓴다.
+- UI: 지도 기록 버튼 시트를 스위치에서 주기 목록(`AppListTile` + 체크, 지도 종류 시트와 같은 모양)으로 바꾸고 고르면 닫는다.
+  지도 설정의 자세히 기록 스위치 행은 "기록 주기" 행(지금 값 부제 · 누르면 같은 시트)으로. 설정 탭 위치 행은 "켜짐 · 10초마다".
+  지도 버튼 툴팁은 "위치 기록 중 · 평소/N초마다". 30초 이하 설명은 "배터리를 많이 써요", 1분은 "조금 더 써요".
+- l10n: `walkMapChipDense` · `walkMapRecordOnDense` · `walkMapRecordDenseHint` · `walkMapSettingsDense(Description)` ·
+  `walkSettingsLocationDetailed` 를 지우고 `walkRecordInterval*` · `walkMapRecordOnInterval` · `walkSettingsLocationInterval` 을 더했다.
+  안드로이드 문자열 `location_record_notification_dense` → `location_record_notification_interval`(%d).
+
+### 검증
+
+`flutter analyze` 0 · `flutter test` 4460건 통과(1 skip) · `packages/l10n` 12건 · JUnit `:app:testDebugUnitTest` 115건(위치 규칙 36건: 주기 → 요청 간격 ·
+평소는 주기 무시 · 5~600초 자르기 · 기본 5초). Dart: `RecordInterval`(모드 · 이전 · 가까운 프리셋) · `isDetailedSegment`(평소 · 5/10/30초 굵게 ·
+1분 얇게 · 중앙값 · 점 둘 이하) · 채널(`setMode {dense, intervalSec}` · `status.intervalSec` · 없으면 5초) · cubit `setInterval` · 지도 시트
+(목록 · 체크 · 고르면 `setInterval` 후 닫힘 · 같은 값은 안 보냄 · busy 비활성 · 다시 잠기면 닫힘) · 지도 설정 행(부제 · 시트 · 꺼짐이면 비활성) ·
+설정 탭 "켜짐 · 10초마다". 실기기는 대기(L-QA10).

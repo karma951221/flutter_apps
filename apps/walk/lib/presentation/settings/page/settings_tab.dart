@@ -5,12 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:l10n/l10n.dart';
 
-import '../../../domain/location/entity/record_mode.dart';
+import '../../../domain/location/entity/record_interval.dart';
 import '../../../domain/location/recorder/recorder_status.dart';
 import '../../../domain/settings/entity/app_settings.dart';
 import '../../chat/widget/chat_vendor_icon.dart';
 import '../../map/cubit/map_record_cubit.dart';
 import '../../map/cubit/map_record_state.dart';
+import '../../map/widget/record_interval_sheet.dart';
 import '../../profile/cubit/profile_cubit.dart';
 import '../../profile/page/profile_page.dart';
 import '../../profile/widget/profile_avatar.dart';
@@ -219,10 +220,12 @@ class _LocationRecordLabel extends StatelessWidget {
         return Text(switch (state.status) {
           RecorderOff() => l10n.walkSettingsLocationOff,
           RecorderBlocked() => l10n.walkSettingsLocationBlocked,
-          RecorderRunning(:final mode) =>
-            mode == RecordMode.dense
-                ? l10n.walkSettingsLocationDetailed
-                : l10n.walkSettingsLocationOn,
+          final RecorderRunning status => switch (recordIntervalOf(status)!) {
+            RecordInterval.normal => l10n.walkSettingsLocationOn,
+            final interval => l10n.walkSettingsLocationInterval(
+              recordIntervalLabel(l10n, interval),
+            ),
+          },
         });
       },
     );
