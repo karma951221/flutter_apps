@@ -280,22 +280,26 @@ class _MapBodyState extends State<_MapBody> {
               child: overlay,
             ),
           ),
+        // 지도 위 컨트롤은 왼쪽 위 한 열에 쌓는다 — 지도 종류, 그 아래 기록 표시.
         Positioned(
           top: AppSpacing.sm,
           left: AppSpacing.sm,
-          child: IconButton.filledTonal(
-            key: const Key('map-style-button'),
-            tooltip: l10n.walkMapStyle,
-            icon: const Icon(Icons.layers_outlined),
-            onPressed: () => unawaited(_pickStyle()),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              IconButton.filledTonal(
+                key: const Key('map-style-button'),
+                tooltip: l10n.walkMapStyle,
+                icon: const Icon(Icons.layers_outlined),
+                onPressed: () => unawaited(_pickStyle()),
+              ),
+              if (record.loaded && !firstRun) ...[
+                const SizedBox(height: AppSpacing.xs),
+                RecordChip(state: record),
+              ],
+            ],
           ),
         ),
-        if (record.loaded && !firstRun)
-          Positioned(
-            top: AppSpacing.sm,
-            right: AppSpacing.sm,
-            child: RecordChip(state: record),
-          ),
         if (data != null)
           Positioned.fill(
             child: switch (data.period) {

@@ -4329,13 +4329,22 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkMapChipDense => '詳しく記録';
 
   @override
-  String get walkMapChipDenseHint => '5秒ごと・電池を多く使用';
+  String get walkMapRecordOn => '位置を記録中';
+
+  @override
+  String get walkMapRecordOnDense => '詳しく記録中';
+
+  @override
+  String get walkMapRecordDenseHint => '5秒ごとに位置を記録します。電池を多く使います';
 
   @override
   String get walkMapChipOff => '記録オフ';
 
   @override
-  String get walkMapChipBlocked => '記録オフ・権限が必要';
+  String get walkMapChipBlocked => '権限が必要';
+
+  @override
+  String get walkMapChipBlockedTooltip => '記録オフ・位置の権限が必要';
 
   @override
   String get walkMapStyle => '地図の種類';

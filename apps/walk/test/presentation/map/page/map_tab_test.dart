@@ -429,27 +429,62 @@ void main() {
   Switch denseSwitch(WidgetTester tester) =>
       tester.widget<Switch>(find.byKey(const Key('map-record-dense-switch')));
 
-  testWidgets('record chip is a detail-record toggle with a hint', (
+  const denseRunning = MapRecordState(
+    status: RecorderStatus.running(RecordMode.dense, stillDetection: true),
+    busy: false,
+    hasPoints: true,
+    loaded: true,
+  );
+
+  testWidgets('running record is a compact round button, not a card', (
     tester,
   ) async {
     await pump(tester, state: MapViewState.ready(_data()));
 
+    final chip = find.byKey(const Key('map-record-chip'));
+    expect(chip, findsOneWidget);
+    expect(tester.widget(chip), isA<IconButton>());
+    expect(find.widgetWithIcon(IconButton, Icons.my_location), findsOneWidget);
+    // 접힌 상태 — 스위치 · 설명은 시트를 열어야 보인다.
+    expect(find.text('자세히 기록'), findsNothing);
+    expect(find.byKey(const Key('map-record-dense-switch')), findsNothing);
+    // 지도 종류 버튼과 같은 왼쪽 열, 그 아래에 쌓인다.
+    final style = tester.getRect(find.byKey(const Key('map-style-button')));
+    final record = tester.getRect(chip);
+    expect(record.left, style.left);
+    expect(record.top, greaterThan(style.bottom - 1));
+  });
+
+  testWidgets('dense record shows a different icon', (tester) async {
+    await pump(
+      tester,
+      state: MapViewState.ready(_data()),
+      recordState: denseRunning,
+    );
+
+    expect(find.widgetWithIcon(IconButton, Icons.route), findsOneWidget);
+    expect(find.widgetWithIcon(IconButton, Icons.my_location), findsNothing);
+  });
+
+  testWidgets('tapping record button opens the detail-record sheet', (
+    tester,
+  ) async {
+    await pump(tester, state: MapViewState.ready(_data()));
+
+    await tester.tap(find.byKey(const Key('map-record-chip')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('위치 기록 중'), findsOneWidget);
     expect(find.text('자세히 기록'), findsOneWidget);
-    expect(find.text('5초마다 · 배터리 더 씀'), findsOneWidget);
+    expect(find.text('5초마다 위치를 찍어요. 배터리를 더 써요'), findsOneWidget);
     expect(denseSwitch(tester).value, isFalse);
 
     await tester.tap(find.byKey(const Key('map-record-dense-switch')));
     await tester.pumpAndSettle();
     verify(() => record.setDense(true)).called(1);
 
-    records.add(
-      const MapRecordState(
-        status: RecorderStatus.running(RecordMode.dense, stillDetection: true),
-        busy: false,
-        hasPoints: true,
-        loaded: true,
-      ),
-    );
+    // 시트가 떠 있는 동안 바뀐 상태를 따른다.
+    records.add(denseRunning);
     await tester.pumpAndSettle();
     expect(denseSwitch(tester).value, isTrue);
 
@@ -466,10 +501,24 @@ void main() {
       recordState: _running.copyWith(busy: true),
     );
 
+    await tester.tap(find.byKey(const Key('map-record-chip')));
+    await tester.pumpAndSettle();
+
     expect(denseSwitch(tester).onChanged, isNull);
     await tester.tap(find.text('자세히 기록'));
     await tester.pump();
     verifyNever(() => record.setDense(any()));
+  });
+
+  testWidgets('relocking closes the record sheet', (tester) async {
+    await pump(tester, state: MapViewState.ready(_data()));
+    await tester.tap(find.byKey(const Key('map-record-chip')));
+    await tester.pumpAndSettle();
+    expect(find.text('위치 기록 중'), findsOneWidget);
+
+    await relock(tester);
+
+    expect(find.text('위치 기록 중', skipOffstage: false), findsNothing);
   });
 
   testWidgets('blocked shows record-off chip', (tester) async {
@@ -485,10 +534,16 @@ void main() {
       ),
     );
 
-    expect(find.text('기록 꺼짐 · 권한 필요'), findsOneWidget);
+    expect(find.text('권한 필요'), findsOneWidget);
     expect(find.text('자세히 기록'), findsNothing);
+    expect(
+      tester
+          .widget<ActionChip>(find.byKey(const Key('map-record-chip')))
+          .tooltip,
+      '기록 꺼짐 · 위치 권한 필요',
+    );
 
-    await tester.tap(find.text('기록 꺼짐 · 권한 필요'));
+    await tester.tap(find.text('권한 필요'));
     await tester.pumpAndSettle();
     // 항상 허용이 아직 없으면 이유 설명이 먼저 뜬다.
     await tester.tap(find.text('계속'));

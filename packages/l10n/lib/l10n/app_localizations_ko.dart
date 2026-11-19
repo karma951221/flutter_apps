@@ -4334,13 +4334,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapChipDense => '자세히 기록';
 
   @override
-  String get walkMapChipDenseHint => '5초마다 · 배터리 더 씀';
+  String get walkMapRecordOn => '위치 기록 중';
+
+  @override
+  String get walkMapRecordOnDense => '자세히 기록 중';
+
+  @override
+  String get walkMapRecordDenseHint => '5초마다 위치를 찍어요. 배터리를 더 써요';
 
   @override
   String get walkMapChipOff => '기록 꺼짐';
 
   @override
-  String get walkMapChipBlocked => '기록 꺼짐 · 권한 필요';
+  String get walkMapChipBlocked => '권한 필요';
+
+  @override
+  String get walkMapChipBlockedTooltip => '기록 꺼짐 · 위치 권한 필요';
 
   @override
   String get walkMapStyle => '지도 종류';

@@ -4722,13 +4722,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkMapChipDense => 'Detailed recording';
 
   @override
-  String get walkMapChipDenseHint => 'Every 5 s · uses more battery';
+  String get walkMapRecordOn => 'Recording location';
+
+  @override
+  String get walkMapRecordOnDense => 'Detailed recording on';
+
+  @override
+  String get walkMapRecordDenseHint =>
+      'Records every 5 seconds. Uses more battery';
 
   @override
   String get walkMapChipOff => 'Recording off';
 
   @override
-  String get walkMapChipBlocked => 'Recording off · permission needed';
+  String get walkMapChipBlocked => 'Permission needed';
+
+  @override
+  String get walkMapChipBlockedTooltip =>
+      'Recording off · location permission needed';
 
   @override
   String get walkMapStyle => 'Map type';

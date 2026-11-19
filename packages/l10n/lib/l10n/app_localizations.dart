@@ -7986,11 +7986,23 @@ abstract class AppLocalizations {
   /// **'자세히 기록'**
   String get walkMapChipDense;
 
-  /// 지도 — 자세히 기록 토글 아래 한 줄 설명
+  /// 지도 — 기록 중(평소) 원형 버튼 툴팁 · 시트 제목
   ///
   /// In ko, this message translates to:
-  /// **'5초마다 · 배터리 더 씀'**
-  String get walkMapChipDenseHint;
+  /// **'위치 기록 중'**
+  String get walkMapRecordOn;
+
+  /// 지도 — 자세히 기록 중 원형 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'자세히 기록 중'**
+  String get walkMapRecordOnDense;
+
+  /// 지도 — 기록 시트의 자세히 기록 스위치 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'5초마다 위치를 찍어요. 배터리를 더 써요'**
+  String get walkMapRecordDenseHint;
 
   /// 지도 — 기록이 꺼져 있을 때 칩(누르면 켜기)
   ///
@@ -7998,11 +8010,17 @@ abstract class AppLocalizations {
   /// **'기록 꺼짐'**
   String get walkMapChipOff;
 
-  /// 지도 — 권한을 잃어 기록하지 못할 때 칩(누르면 켜기)
+  /// 지도 — 권한을 잃어 기록하지 못할 때 칩(누르면 켜기). 아이콘이 꺼짐을 보이니 짧게
   ///
   /// In ko, this message translates to:
-  /// **'기록 꺼짐 · 권한 필요'**
+  /// **'권한 필요'**
   String get walkMapChipBlocked;
+
+  /// 지도 — 권한 필요 칩 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'기록 꺼짐 · 위치 권한 필요'**
+  String get walkMapChipBlockedTooltip;
 
   /// 지도 — 지도 종류 버튼 툴팁 · 시트 제목
   ///

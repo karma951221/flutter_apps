@@ -1480,3 +1480,27 @@ QA: 기능마다 설정이 각 탭 ⋮ 에 흩어져 있고, 앱 전역 설정("
   특수문자(`+` 등)를 URL 인코딩하라고 하는데 우리는 이미 `Uri.encodeComponent` 로 한다(테스트 있음).
   문서로 확인되는 코드 수정은 없어 추측으로 바꾸지 않았다 — 실폰 원문을 보고 판단한다.
 
+## 2026-11-19 — 지도 기록 표시 접기
+
+사용자 QA(실기기): 지도 오른쪽 위 자세히 기록 카드(제목 · 한 줄 설명 · 스위치)가 기록 중이면 늘 떠 있어 지도를 가린다.
+
+### 판단
+
+- 기록 중(`RecorderRunning`)이면 원형 `IconButton` 하나로 접는다. 평소는 `filledTonal` + `Icons.my_location`, 자세히 기록은
+  `filled`(진한 primary) + `Icons.route` — 색과 아이콘이 둘 다 달라 한눈에 구분된다. 툴팁은 "위치 기록 중" · "자세히 기록 중".
+- 누르면 바텀시트("위치 기록 중" 제목 + `AppListTile` 자세히 기록 행: 설명 "5초마다 위치를 찍어요. 배터리를 더 써요" · `Switch`).
+  시트는 `BlocProvider.value` 로 셸의 `MapRecordCubit` 을 보아 떠 있는 동안 바뀐 상태를 따른다. busy 면 비활성. 다시 잠기면
+  일기 잠금이 다른 팝업처럼 닫는다.
+- 꺼짐 · 권한 필요 칩은 사용자가 행동해야 하는 상태라 글자를 남기되 `VisualDensity.compact` 로 줄였다. "기록 꺼짐 · 권한 필요"는
+  꺼짐 아이콘(`location_disabled`)이 이미 말하므로 "권한 필요"로 줄이고 전체 문구는 툴팁(`walkMapChipBlockedTooltip`)에 둔다.
+- 자리: 오른쪽 위 따로 떠 있던 것을 지도 종류 버튼 아래 같은 왼쪽 열(`Column`)에 쌓았다. 기간 머리 · 아래 시트 · 가운데 안내 카드와
+  겹치지 않는다. 키 `map-record-chip` 은 버튼 · 칩에 그대로, 스위치 키 `map-record-dense-switch` 는 시트 안으로 옮겼다.
+  E2E 에서 이 키를 쓰는 곳은 없었다.
+- l10n: `walkMapChipDenseHint`(카드 한 줄 설명)는 쓰는 곳이 없어져 지우고 `walkMapRecordOn` · `walkMapRecordOnDense` ·
+  `walkMapRecordDenseHint` · `walkMapChipBlockedTooltip` 을 더했다(ko · en · ja).
+
+### 검증
+
+`flutter analyze` 0 · `flutter test` 4447건 통과(1 skip) · `packages/l10n` 12건. 지도 탭 위젯 테스트: 접힌 버튼(아이콘 · 스위치 숨김 ·
+지도 종류 버튼 아래 같은 열) · 자세히일 때 다른 아이콘 · 탭 → 시트 → 스위치 · 글자로 `setDense` · 떠 있는 동안 상태 따라가기 ·
+busy 비활성 · 다시 잠기면 시트 닫힘 · 권한 필요 칩 툴팁.
