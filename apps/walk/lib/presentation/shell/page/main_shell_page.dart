@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:core/core.dart';
+import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,6 +27,7 @@ import '../../../domain/lock/lock_repository.dart';
 import '../../../domain/settings/repository/settings_repository.dart';
 import '../../../domain/walk/usecase/walk_use_case.dart';
 import '../../alarm/cubit/alarm_list_cubit.dart';
+import '../../chat/chat_back_controller.dart';
 import '../../chat/page/chat_tab.dart';
 import '../../diary/page/diary_tab.dart';
 import '../../lock/cubit/diary_lock_cubit.dart';
@@ -46,6 +48,7 @@ import '../../profile/cubit/profile_cubit.dart';
 import '../../../domain/profile/profile_repository.dart';
 import '../../../domain/chat/chat_settings.dart';
 import '../../weather/cubit/weather_cubit.dart';
+import '../widget/system_bar_bottom_padding.dart';
 import 'log_tab.dart';
 import 'tools_tab.dart';
 
@@ -108,6 +111,14 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
   late final _profile = ProfileCubit(getIt<ProfileRepository>());
   late final _connections = ConnectionStatusCubit(getIt<ChatSettings>());
   late final AppLifecycleListener _lifecycle;
+  final _clock = getIt<Clock>();
+
+  /// 물어보기 탭이 뒤로가기를 먼저 받는다(대화 → 첫 화면).
+  final _chatBack = ChatBackController();
+
+  /// 기본 탭에서 뒤로가기를 처음 누른 시각. [_exitWindow] 안에 다시 누르면 앱을 닫는다.
+  DateTime? _exitArmedAt;
+  static const _exitWindow = Duration(seconds: 2);
 
   /// 지도 cubit 둘. 지도 탭 · 지도 설정이 처음 읽을 때 만들어지고(`BlocProvider.create`) 닫는 것도
   /// 그 provider 가 한다. 앱이 앞에 올 때 다시 읽으려고 잡아 둔다.
@@ -148,7 +159,7 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     super.initState();
     _lifecycle = AppLifecycleListener(
       onPause: _diaryLock.onPaused,
-      onHide: () => _wentBackground = true,
+      onHide: _onHide,
       onResume: _onResume,
     );
     backgroundChannel.setMethodCallHandler(_onBackgroundCall);
@@ -178,6 +189,14 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
     final context = _providerContext;
     if (context == null) return;
     unawaited(context.read<MapViewCubit>().show(MapPeriod.story(story)));
+  }
+
+  /// 백그라운드로 간다. 입력 포커스를 놓아 키보드를 닫는다 — 키보드가 열린 채 나갔다 오면
+  /// 엔진이 받은 IME inset 이 키보드 높이로 남아(stale), 물어보기 입력 줄이 화면 중간에 뜨는
+  /// 일이 있었다(실기기 QA). 돌아와서 다시 누르면 키보드가 열린다.
+  void _onHide() {
+    _wentBackground = true;
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   void _onResume() {
@@ -341,98 +360,151 @@ class _MainShellPageState extends State<MainShellPage> with RouteAware {
 
   void _select(ShellTab tab) => setState(() => _tab = tab);
 
+  /// 셸(루트 라우트)의 뒤로가기. 루트라 그냥 두면 앱이 바로 닫힌다 — 차례로
+  ///
+  /// 1. 키보드가 열려 있으면(inset 이 있고 입력에 포커스) 포커스만 놓는다. 보통은 IME 가 먼저 받아
+  ///    여기까지 오지 않지만, 오면 키보드만 닫는다.
+  /// 2. 물어보기 탭이 쓰면 거기서 끝([ChatBackController] — 대화를 닫고 첫 화면으로).
+  /// 3. 기본 탭([ShellTab.tools])이 아니면 기본 탭으로.
+  /// 4. 기본 탭이면 "한 번 더 누르면 종료" 안내, [_exitWindow] 안에 다시 누르면 닫는다.
+  void _onBack() {
+    final focus = FocusManager.instance.primaryFocus;
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    if (keyboardOpen &&
+        focus?.context?.findAncestorStateOfType<EditableTextState>() != null) {
+      focus!.unfocus();
+      return;
+    }
+    if (_tab == ShellTab.chat && _chatBack.handleBack()) {
+      _exitArmedAt = null;
+      return;
+    }
+    if (_tab != ShellTab.tools) {
+      _exitArmedAt = null;
+      _select(ShellTab.tools);
+      return;
+    }
+    final now = _clock.now();
+    final armed = _exitArmedAt;
+    if (armed != null && now.difference(armed) < _exitWindow) {
+      _exitArmedAt = null;
+      unawaited(SystemNavigator.pop());
+      return;
+    }
+    _exitArmedAt = now;
+    AppSnackBar.info(
+      context,
+      message: AppLocalizations.of(context).walkShellExitHint,
+      duration: _exitWindow,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider.value(value: _alarms),
-        BlocProvider.value(value: _permissions),
-        BlocProvider.value(value: _holidaySettings),
-        BlocProvider.value(value: _diaryLock),
-        BlocProvider.value(value: _diarySettings),
-        BlocProvider.value(value: _profile),
-        BlocProvider.value(value: _connections),
-        // 지도 탭과 지도 설정이 같은 기록 상태를 본다. 처음 읽을 때 만든다.
-        BlocProvider(
-          create: (_) => _mapRecord = MapRecordCubit(
-            getIt<LocationRecorder>(),
-            getIt<BackgroundLocationAccess>(),
-            getIt<LocationPreferences>(),
-            getIt<LocationRepository>(),
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _onBack();
+      },
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: _alarms),
+          BlocProvider.value(value: _permissions),
+          BlocProvider.value(value: _holidaySettings),
+          BlocProvider.value(value: _diaryLock),
+          BlocProvider.value(value: _diarySettings),
+          BlocProvider.value(value: _profile),
+          BlocProvider.value(value: _connections),
+          // 지도 탭과 지도 설정이 같은 기록 상태를 본다. 처음 읽을 때 만든다.
+          BlocProvider(
+            create: (_) => _mapRecord = MapRecordCubit(
+              getIt<LocationRecorder>(),
+              getIt<BackgroundLocationAccess>(),
+              getIt<LocationPreferences>(),
+              getIt<LocationRepository>(),
+            ),
           ),
-        ),
-        BlocProvider(create: (_) => _mapView = getIt<MapViewCubit>()),
-        BlocProvider(create: (_) => _weather = getIt<WeatherCubit>()),
-      ],
-      child: Scaffold(
-        // 설정 화면은 셸 cubit 을 읽어 다시 건다 — 그 cubit 아래 context 가 필요하다.
-        body: Builder(
-          builder: (context) {
-            _providerContext = context;
-            return IndexedStack(
-              index: _tab.index,
-              children: [
-                ToolsTab(
-                  active: _tab == ShellTab.tools && !_covered,
-                  section: _toolsSection,
-                  onSectionChanged: (section) =>
-                      setState(() => _toolsSection = section),
-                  onOpenAlarmSettings: () => unawaited(
-                    openSettings(
-                      context,
-                      SettingsTarget.alarm,
-                      highlight: true,
+          BlocProvider(create: (_) => _mapView = getIt<MapViewCubit>()),
+          BlocProvider(create: (_) => _weather = getIt<WeatherCubit>()),
+        ],
+        child: Scaffold(
+          // 설정 화면은 셸 cubit 을 읽어 다시 건다 — 그 cubit 아래 context 가 필요하다.
+          body: Builder(
+            builder: (context) {
+              _providerContext = context;
+              return IndexedStack(
+                index: _tab.index,
+                children: [
+                  ToolsTab(
+                    active: _tab == ShellTab.tools && !_covered,
+                    section: _toolsSection,
+                    onSectionChanged: (section) =>
+                        setState(() => _toolsSection = section),
+                    onOpenAlarmSettings: () => unawaited(
+                      openSettings(
+                        context,
+                        SettingsTarget.alarm,
+                        highlight: true,
+                      ),
                     ),
                   ),
-                ),
-                LogTab(
-                  selected: _tab == ShellTab.log,
-                  section: _logSection,
-                  onSectionChanged: (section) =>
-                      setState(() => _logSection = section),
-                ),
-                ChatTab(
-                  active: _tab == ShellTab.chat,
-                  onOpenSettings: () => unawaited(
-                    openSettings(context, SettingsTarget.chat, highlight: true),
+                  LogTab(
+                    selected: _tab == ShellTab.log,
+                    section: _logSection,
+                    onSectionChanged: (section) =>
+                        setState(() => _logSection = section),
                   ),
+                  ChatTab(
+                    active: _tab == ShellTab.chat,
+                    back: _chatBack,
+                    onOpenSettings: () => unawaited(
+                      openSettings(
+                        context,
+                        SettingsTarget.chat,
+                        highlight: true,
+                      ),
+                    ),
+                  ),
+                  SettingsTab(active: _tab == ShellTab.settings && !_covered),
+                ],
+              );
+            },
+          ),
+          // 일기 ＋ 는 탭이 아니라 여기 둔다 — 스낵바가 뜨는 이 Scaffold 에 있어야 위로 비킨다.
+          floatingActionButton:
+              _tab == ShellTab.log && _logSection == LogSection.diary
+              ? const DiaryNewEntryButton()
+              : null,
+          // 아래 여백은 viewPadding(시스템 내비 높이) 기준 — IME inset 이 남아도 시스템 바와 겹치지 않는다.
+          bottomNavigationBar: SystemBarBottomPadding(
+            child: NavigationBar(
+              selectedIndex: _tab.index,
+              onDestinationSelected: (index) => _select(ShellTab.values[index]),
+              destinations: [
+                NavigationDestination(
+                  icon: const Icon(Icons.handyman_outlined),
+                  selectedIcon: const Icon(Icons.handyman),
+                  label: l10n.walkShellTabTools,
                 ),
-                SettingsTab(active: _tab == ShellTab.settings && !_covered),
+                NavigationDestination(
+                  icon: const Icon(Icons.auto_stories_outlined),
+                  selectedIcon: const Icon(Icons.auto_stories),
+                  label: l10n.walkShellTabLog,
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  selectedIcon: const Icon(Icons.chat_bubble),
+                  label: l10n.walkShellTabChat,
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.settings_outlined),
+                  selectedIcon: const Icon(Icons.settings),
+                  label: l10n.walkShellTabSettings,
+                ),
               ],
-            );
-          },
-        ),
-        // 일기 ＋ 는 탭이 아니라 여기 둔다 — 스낵바가 뜨는 이 Scaffold 에 있어야 위로 비킨다.
-        floatingActionButton:
-            _tab == ShellTab.log && _logSection == LogSection.diary
-            ? const DiaryNewEntryButton()
-            : null,
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _tab.index,
-          onDestinationSelected: (index) => _select(ShellTab.values[index]),
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.handyman_outlined),
-              selectedIcon: const Icon(Icons.handyman),
-              label: l10n.walkShellTabTools,
             ),
-            NavigationDestination(
-              icon: const Icon(Icons.auto_stories_outlined),
-              selectedIcon: const Icon(Icons.auto_stories),
-              label: l10n.walkShellTabLog,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.chat_bubble_outline),
-              selectedIcon: const Icon(Icons.chat_bubble),
-              label: l10n.walkShellTabChat,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.settings_outlined),
-              selectedIcon: const Icon(Icons.settings),
-              label: l10n.walkShellTabSettings,
-            ),
-          ],
+          ),
         ),
       ),
     );

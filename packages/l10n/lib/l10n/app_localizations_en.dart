@@ -3854,6 +3854,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkShellTabSettings => 'Settings';
 
   @override
+  String get walkShellExitHint => 'Press back again to exit';
+
+  @override
   String get walkSettingsConnections => 'API keys & connections';
 
   @override

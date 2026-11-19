@@ -39,6 +39,9 @@ class DiaryLockGate extends StatelessWidget {
       BlocListener<DiaryLockCubit, DiaryLockState>(
         listenWhen: (a, b) => a is! LockLocked && b is LockLocked,
         listener: (context, _) {
+          // 잠금 화면을 올리기 전에 입력 포커스를 놓는다 — 키보드가 열린 채 잠기면 IME inset 이
+          // 남아 풀린 뒤 입력 줄이 떠 보일 수 있다.
+          FocusManager.instance.primaryFocus?.unfocus();
           if (!dismissPopups) return;
           Navigator.of(context).popUntil((route) => route is! PopupRoute);
         },

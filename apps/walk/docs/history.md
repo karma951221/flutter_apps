@@ -1643,6 +1643,79 @@ busy 비활성 · 다시 잠기면 시트 닫힘 · 권한 필요 칩 툴팁.
   다시 켜기는 일기 설정 › 자동 초안 › "AI가 스토리 고르기". 사용량은 새 쓰임 `storyClassify`("스토리 고르기")로 남는다(`textEnum` 이라 마이그레이션 없음).
 - **뺀 것** — 이미 쓴 일기의 소급 재분류는 범위 밖, [진행 현황](status.md#일기)에 후속 후보로 적었다. 실제 키 확인은 D26~D28.
 
+## 2026-11-20 — 키보드 inset 이 남아 입력 줄이 뜨는 현상
+
+실기기 QA(Samsung, Flutter 3.41.7, `adjustResize`, edge-to-edge): 물어보기 탭에서 키보드가 닫혔는데 입력 줄이
+키보드 높이만큼 떠 있고, 아래는 빈 공간, 하단 탭바는 시스템 내비 버튼과 겹쳐 그려졌다.
+
+### 증상이 가리키는 것
+
+두 증상이 한 값으로 설명된다. 엔진이 받은 `viewInsets.bottom`(IME) 이 키보드 높이로 남으면(stale)
+
+- 셸 · 물어보기 `Scaffold`(`resizeToAvoidBottomInset`) 가 몸통을 그만큼 줄인다 → 입력 줄이 뜬다
+- Flutter 는 `padding = viewPadding - viewInsets` 로 만들어 `padding.bottom` 이 0 이 된다 → `NavigationBar` 의
+  SafeArea 가 아래 여백을 0 으로 잡고 시스템 내비 밑까지 내려간다. 키보드가 정말 열려 있으면 탭바는 키보드 뒤라
+  안 보이지만, 키보드가 없으니 드러난다
+
+### 재현 — 에뮬레이터에서는 안 됨
+
+Medium_Phone(Android 15, Gboard)을 3버튼 내비로 바꾸고 수정 전 빌드로 시도했다. 키보드를 연 채
+홈 → 복귀, 화면 끄기 → 켜기, 알림 셰이드 내렸다 올리기 — 셋 다 키보드가 닫히고 셸 탭바는 정상이었다
+(포커스는 남고 키보드만 닫힘). 물어보기 입력칸은 키 확인(실제 연결)을 통과해야 보여서, 임시 대화의
+`FLAG_SECURE` 토글 · 잠금 복귀 경로는 해 보지 못했다. 지도 전체화면(`immersiveSticky`) 은 키보드와 같이
+있을 수 없어 후보에서 낮게 본다.
+
+남은 가설: 삼성 키보드 · One UI 가 백그라운드 전환 중 IME 숨김 insets 를 Flutter 뷰에 보내지 않는 경우,
+또는 `FLAG_SECURE` 변경으로 창이 다시 붙는 중 inset 디스패치가 빠지는 경우.
+
+### 방어 — 세 겹
+
+- **포커스 놓기**: 셸 `AppLifecycleListener.onHide` 에서 `primaryFocus?.unfocus()`. `inactive`(권한 창 · 셰이드)
+  에서는 놓지 않는다 — 시스템 창이 잠깐 덮을 때마다 키보드가 닫히면 불편하다. 일기 잠금 게이트도 다시 잠기는
+  순간 놓는다(게이트 밖 입력도). 돌아와서 다시 누르면 키보드가 열린다
+- **insets 다시 요청**: `MainActivity.onWindowFocusChanged(true)` 에서 `ViewCompat.requestApplyInsets(decorView)`.
+  창이 다시 포커스를 받을 때(복귀 · 셰이드 · 시스템 창) 지금 창의 insets 로 엔진 값을 다시 맞춘다. 같은 값이면 할 일이 없다
+- **탭바 보호**: `SystemBarBottomPadding` 이 하단 바의 `padding.bottom` 을 `max(padding, viewPadding)` 로 고친다.
+  inset 이 남아도 탭바는 시스템 내비 위에 그린다. 키보드가 정말 열렸을 때는 탭바가 조금 커지지만 키보드 뒤라
+  보이지 않고, 몸통 높이(`max(하단 바 높이, inset)`)도 키보드가 더 높아 같다 — 위젯 테스트로 고정했다
+
+입력 줄이 뜨는 쪽(몸통 축소)은 inset 값을 그대로 믿을 수밖에 없어 위 두 방어(포커스 · 다시 요청)에 맡긴다.
+
+## 2026-11-20 — 뒤로가기로 앱이 바로 닫히는 문제
+
+사용자 제보: 채팅을 입력하다 뒤로가기를 누르면 앱이 바로 닫힌다.
+
+### 원인
+
+셸(`MainShellPage`)은 앱의 루트 라우트인데 `PopScope` 가 없었다. 뒤로가기를 아무도 받지 않으면
+`WidgetsBinding.handlePopRoute` 가 `SystemNavigator.pop` 을 불러 액티비티가 끝난다. 탭이 넷인데 어느 탭에서든
+한 번에 닫혔다. targetSdk 는 Flutter 기본 36 이라 predictive back 이 기본으로 켜져 있지만(manifest 에
+`enableOnBackInvokedCallback` 없음) 원인은 아니다 — 루트에서 받을 곳이 없었던 게 원인이다.
+
+키보드가 열린 채 누른 경우: 에뮬레이터(Gboard)에서는 IME 가 먼저 받아 키보드만 닫히고 화면은 그대로였다.
+제보의 "입력하다가"는 키보드가 이미 닫혔는데 입력칸에 커서(포커스)가 남은 상태였을 가능성이 크다. 삼성
+키보드가 뒤로가기를 앱으로 흘리는 경우를 대비해 셸이 키보드 열림(inset > 0 · 입력에 포커스)을 보면 포커스만 놓는다.
+
+### 정한 흐름
+
+1. 키보드 열림 → 포커스만 놓는다
+2. 물어보기 탭에서 저장되는 대화를 보고 있으면 → 그 대화를 닫고 첫 화면(추천 질문). 대화 목록 페이지로 보내는
+   안도 있었지만, 목록은 ⋮ 안쪽 화면이라 뒤로가기가 "앞으로 가기"가 되고 거기서 다시 뒤로가면 직전 대화가 아니라
+   첫 화면이라 어색하다. 첫 화면은 [새 대화] 버튼과 같은 결과라 익숙하다
+   - 입력칸의 글 · 첨부는 남는다 — 입력칸은 `ChatInput` 이 들고 있고 `newConversation` 은 건드리지 않는다
+     ([새 대화]와 같은 동작)
+   - 넘기는 경우: 답하는 중(뒤로가기로 답을 끊지 않는다 — 탭을 옮겨도 답은 이어서 받는다) · 임시 대화(저장되지
+     않아 닫으면 사라진다) · 읽는 중 · 잠김
+3. 기본 탭(도구)이 아니면 도구 탭으로
+4. 도구 탭이면 `AppSnackBar.info` 로 "한 번 더 누르면 종료돼요", 2초(`Clock` 기준) 안에 다시 누르면 `SystemNavigator.pop`
+
+물어보기의 판단은 탭이 갖고(`ChatTab` 이 cubit 소유), 셸은 `ChatBackController` 로 먼저 묻는다.
+
+### 같이 고친 것
+
+키보드 판정을 처음에 `primaryFocus.context.widget is EditableText` 로 썼는데, 포커스 노드의 context 는
+`EditableText` 안쪽 `Focus` 라 늘 거짓이었다. 위젯 테스트가 잡았고 `findAncestorStateOfType<EditableTextState>()` 로 바꿨다.
+
 
 ## 2026-11-20 — UI 조립 통일
 
@@ -1703,7 +1776,8 @@ busy 비활성 · 다시 잠기면 시트 닫힘 · 권한 필요 칩 툴팁.
 ### 검증
 
 2026-11-20 기준 결과:
-- `apps/walk`: `flutter analyze` 0건, `flutter test` 4555건 통과(1 skip)
-- `packages/design_system`: `flutter analyze` 0건, `flutter test` 104건 통과
+- `apps/walk`: `flutter analyze` 0건, `flutter test` 4567건 통과(1 skip). main(297234ab, 키보드 inset · 뒤로가기)을 머지한 뒤 기준
+- '한 번 더 누르면 종료' 스낵바: `AppSnackBar.info` · 해요체는 이미 기준에 맞았다. 다만 기본 4초 동안 떠 있어서 실제로 유효한 2초 창이 지난 뒤에도 안내가 남았다. `AppSnackBar` 에 `duration` 인자를 더하고(선택, 기본값 그대로) 종료 창 길이만큼만 보이게 했다
+- `packages/design_system`: `flutter analyze` 0건, `flutter test` 104건 통과(스낵바 duration 포함)
 - `apps/trader`: `flutter analyze` 0건, `flutter test` 통과(문서 링크 검사 포함)
 - `apps/pawlog`: `flutter analyze` 0건, `flutter test` 767건 통과

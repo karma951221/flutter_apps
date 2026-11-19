@@ -1085,6 +1085,7 @@
   "walkAppSettingsDisplay": "表示",
   "walkAppSettingsFeatures": "機能別の設定",
   "walkShellTabSettings": "設定",
+  "walkShellExitHint": "もう一度押すと終了します",
   "walkSettingsConnections": "APIキー・接続",
   "walkSettingsAiConnection": "AI 接続",
   "walkSettingsAiNotConnected": "未接続",

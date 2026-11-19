@@ -3518,6 +3518,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkShellTabSettings => '設定';
 
   @override
+  String get walkShellExitHint => 'もう一度押すと終了します';
+
+  @override
   String get walkSettingsConnections => 'APIキー・接続';
 
   @override

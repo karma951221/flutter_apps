@@ -6494,6 +6494,12 @@ abstract class AppLocalizations {
   /// **'설정'**
   String get walkShellTabSettings;
 
+  /// 기본 탭에서 뒤로가기 — 2초 안에 다시 누르면 앱을 닫는다는 안내(스낵바)
+  ///
+  /// In ko, this message translates to:
+  /// **'한 번 더 누르면 종료돼요'**
+  String get walkShellExitHint;
+
   /// 설정 탭 — 외부 서비스 키 · 연결 섹션 제목
   ///
   /// In ko, this message translates to:
