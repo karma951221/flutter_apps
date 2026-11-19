@@ -10,81 +10,28 @@ enum AlarmKind { oneShot, repeating }
 class AlarmKindSheet extends StatelessWidget {
   const AlarmKindSheet({super.key});
 
-  static Future<AlarmKind?> show(BuildContext context) => showModalBottomSheet<AlarmKind>(
-    context: context,
-    showDragHandle: true,
-    isScrollControlled: true,
-    builder: (_) => const AlarmKindSheet(),
-  );
+  static Future<AlarmKind?> show(BuildContext context) =>
+      showAppSheet<AlarmKind>(context: context, builder: (_) => const AlarmKindSheet());
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.md),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-              child: Text(l10n.walkAlarmKindTitle, style: theme.textTheme.titleLarge),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            _KindRow(
-              icon: Icons.hourglass_bottom,
-              title: l10n.walkAlarmKindOneShot,
-              description: l10n.walkAlarmKindOneShotHint,
-              onTap: () => Navigator.of(context).pop(AlarmKind.oneShot),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _KindRow(
-              icon: Icons.repeat,
-              title: l10n.walkAlarmKindRepeat,
-              description: l10n.walkAlarmKindRepeatHint,
-              onTap: () => Navigator.of(context).pop(AlarmKind.repeating),
-            ),
-          ],
+    return AppSheetScaffold(
+      title: l10n.walkAlarmKindTitle,
+      children: [
+        AppListTile(
+          leading: const Icon(Icons.hourglass_bottom),
+          title: Text(l10n.walkAlarmKindOneShot),
+          subtitle: Text(l10n.walkAlarmKindOneShotHint),
+          onTap: () => Navigator.of(context).pop(AlarmKind.oneShot),
         ),
-      ),
-    );
-  }
-}
-
-/// 둥근 카드 안의 한 행 — 아이콘 원 · 제목 · 한 줄 설명. 목록 행과 같은 둥근 카드 모양이라
-/// `AppListTile` 을 그 안에 둔다.
-class _KindRow extends StatelessWidget {
-  const _KindRow({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String description;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Material(
-      color: colorScheme.surfaceContainerLow,
-      borderRadius: AppRadius.lgAll,
-      clipBehavior: Clip.antiAlias,
-      child: AppListTile(
-        leading: CircleAvatar(
-          backgroundColor: colorScheme.primaryContainer,
-          foregroundColor: colorScheme.onPrimaryContainer,
-          child: Icon(icon),
+        AppListTile(
+          leading: const Icon(Icons.repeat),
+          title: Text(l10n.walkAlarmKindRepeat),
+          subtitle: Text(l10n.walkAlarmKindRepeatHint),
+          onTap: () => Navigator.of(context).pop(AlarmKind.repeating),
         ),
-        title: Text(title),
-        subtitle: Text(description),
-        onTap: onTap,
-      ),
+      ],
     );
   }
 }

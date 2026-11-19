@@ -29,7 +29,7 @@ class TodayGoalFooter extends StatelessWidget {
           : l10n.walkGoalRemaining(steps(progress.remainingSteps)),
       textAlign: TextAlign.center,
       style: theme.textTheme.titleMedium?.copyWith(
-        color: theme.colorScheme.onPrimaryContainer,
+        color: theme.colorScheme.onSurface,
       ),
     );
   }

@@ -26,11 +26,13 @@ class RainSummaryCard extends StatelessWidget {
     final copy = WeatherFormat.rain(l10n, forecast, summary, now);
     final (icon, color) = switch (summary) {
       RainNow(snow: true) ||
-      RainLater(snow: true) => (Icons.ac_unit, scheme.primary),
+      RainLater(snow: true) => (Icons.ac_unit_outlined, scheme.primary),
       RainNow() || RainLater() => (Icons.umbrella_outlined, scheme.primary),
       NoRain() => (Icons.wb_sunny_outlined, scheme.onSurfaceVariant),
     };
+    // 모양 · 바탕은 walk 카드 테마가 정한다.
     return Card(
+      margin: EdgeInsets.zero,
       child: AppListTile(
         leading: Icon(icon, color: color),
         title: Text(copy.title),

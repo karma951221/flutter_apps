@@ -2744,6 +2744,12 @@ abstract class AppLocalizations {
   /// **'하루 목표'**
   String get walkSettingsStepGoal;
 
+  /// 걷기 설정 — 하루 걸음 목표 묶음의 섹션 머리
+  ///
+  /// In ko, this message translates to:
+  /// **'목표'**
+  String get walkSettingsStepGoalSection;
+
   /// 하루 목표 저장 버튼
   ///
   /// In ko, this message translates to:
@@ -3050,6 +3056,12 @@ abstract class AppLocalizations {
   /// **'공휴일 미리 알림'**
   String get walkSettingsHolidayReminder;
 
+  /// 알람 설정 — 공휴일 미리 알림 · 공휴일 출처 묶음의 섹션 머리
+  ///
+  /// In ko, this message translates to:
+  /// **'공휴일'**
+  String get walkSettingsHolidaySection;
+
   /// 공휴일 미리 알림 스위치 설명
   ///
   /// In ko, this message translates to:
@@ -3223,6 +3235,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'+ 를 눌러 기상 알람을 추가하세요'**
   String get walkAlarmEmptyDescription;
+
+  /// 알람 목록 아래 보조 설명 — 행 길게 누르기 메뉴 안내
+  ///
+  /// In ko, this message translates to:
+  /// **'알람을 길게 누르면 복제 · 건너뛰기 · 삭제할 수 있어요'**
+  String get walkAlarmLongPressHint;
+
+  /// 알람음 선택 화면 — 시스템 기본음 구역 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'기본'**
+  String get walkAlarmSoundDefaultSection;
 
   /// 새 알람 버튼(FAB) 툴팁
   ///
@@ -4850,6 +4874,12 @@ abstract class AppLocalizations {
   /// **'스토리 옮기기'**
   String get walkDiaryEntryMove;
 
+  /// 일기 피드 카드 길게 누르기의 스크린 리더 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'길게 누르면 수정 · 스토리 옮기기 · 휴지통'**
+  String get walkDiaryEntryActionsHint;
+
   /// 일기 기록을 다른 스토리로 옮긴 뒤 알림
   ///
   /// In ko, this message translates to:
@@ -5131,6 +5161,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'저장 공간'**
   String get walkDiarySettingsStorage;
+
+  /// 일기 설정 — 휴지통 보관 기간 · 저장 공간 묶음의 섹션 머리
+  ///
+  /// In ko, this message translates to:
+  /// **'보관'**
+  String get walkDiarySettingsStorageSection;
 
   /// 저장 공간 행 본문. size 는 1.2GB 같은 크기
   ///
@@ -6858,6 +6894,12 @@ abstract class AppLocalizations {
   /// **'이름 바꾸기'**
   String get walkChatHistoryRename;
 
+  /// 대화 목록: 목록 아래 안내 한 줄 · 행 길게 누르기 스크린 리더 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'대화를 길게 누르면 이름 바꾸기 · 지우기'**
+  String get walkChatHistoryLongPressHint;
+
   /// 대화 목록: 이름 바꾸기 입력칸 힌트
   ///
   /// In ko, this message translates to:
@@ -6977,6 +7019,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'캐시 읽기 토큰'**
   String get walkChatUsageCacheRead;
+
+  /// 사용량 화면 — 달 합계(질문 · 토큰) 묶음의 섹션 머리
+  ///
+  /// In ko, this message translates to:
+  /// **'합계'**
+  String get walkChatUsageTotals;
 
   /// 사용량 화면: 모델별 섹션 머리글
   ///
@@ -8267,6 +8315,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'물어보기에 첨부'**
   String get walkWorkspaceAttach;
+
+  /// 작업 폴더: 목록 아래 안내 한 줄 · 행 길게 누르기 스크린 리더 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'파일을 길게 누르면 첨부 · 공유 · 지우기'**
+  String get walkWorkspaceLongPressHint;
 
   /// 작업 폴더: 행 메뉴 · 보기 화면 — 공유 시트
   ///
@@ -9617,6 +9671,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'회사'**
   String get walkTransitWork;
+
+  /// 장소 고르기 — 현재 위치 · 집 · 회사 묶음 머리
+  ///
+  /// In ko, this message translates to:
+  /// **'내 장소'**
+  String get walkTransitMyPlaces;
 
   /// 자주 간 곳 섹션 · 이름 없는 자주 간 곳
   ///

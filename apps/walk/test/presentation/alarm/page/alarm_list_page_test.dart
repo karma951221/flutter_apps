@@ -151,6 +151,27 @@ void main() {
     expect(find.text('알람이 울리지 않을 수 있어요'), findsNothing);
   });
 
+  testWidgets('행에 ⋮ 없이 길게 누르기 메뉴를 목록 아래 한 줄로 알리고, 길게 누르면 그 알람의 시트', (tester) async {
+    when(() => useCase.list()).thenAnswer((_) async => [weekday]);
+    await pump(tester);
+
+    expect(find.byIcon(Icons.more_vert), findsNothing);
+    expect(find.byKey(const Key('alarm-long-press-hint')), findsOneWidget);
+
+    await tester.longPress(find.text('오전 7:00'));
+    await tester.pumpAndSettle();
+    final sheet = find.byType(BottomSheet);
+    expect(find.descendant(of: sheet, matching: find.text('복제')), findsOneWidget);
+    expect(find.descendant(of: sheet, matching: find.text('삭제')), findsOneWidget);
+  });
+
+  testWidgets('알람이 없으면 길게 누르기 안내도 없다', (tester) async {
+    when(() => useCase.list()).thenAnswer((_) async => []);
+    await pump(tester);
+
+    expect(find.byKey(const Key('alarm-long-press-hint')), findsNothing);
+  });
+
   testWidgets('요약 카드는 가장 먼저 울릴 알람의 남은 시간 · 날 · 시각 · 라벨', (tester) async {
     when(() => useCase.list()).thenAnswer((_) async => [weekday, off]);
     when(() => useCase.nextRings()).thenAnswer((_) async => {1: DateTime(2026, 9, 28, 7)});

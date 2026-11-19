@@ -35,7 +35,7 @@ class AlarmSummaryCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final id = AlarmFormat.earliest(nextAt);
-    final onCard = theme.colorScheme.onPrimaryContainer;
+    final onCard = theme.colorScheme.onSurface;
 
     final List<Widget> lines;
     if (id == null && alarms.any((a) => a.enabled)) {
@@ -84,7 +84,7 @@ class AlarmSummaryCard extends StatelessWidget {
               remaining,
               key: const Key('alarm-summary-remaining'),
               style: theme.textTheme.headlineMedium?.copyWith(
-                color: onCard,
+                color: theme.colorScheme.primary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -99,10 +99,9 @@ class AlarmSummaryCard extends StatelessWidget {
       ];
     }
 
+    // 모양 · 바탕은 walk 카드 테마가 정한다.
     return Card(
-      color: theme.colorScheme.primaryContainer,
       margin: EdgeInsets.zero,
-      shape: const RoundedRectangleBorder(borderRadius: AppRadius.lgAll),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(

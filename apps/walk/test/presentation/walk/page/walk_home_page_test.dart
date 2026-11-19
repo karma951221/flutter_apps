@@ -131,7 +131,7 @@ void main() {
     when(() => useCase.access()).thenAnswer((_) async => HealthAccess.granted);
     await pump(tester);
 
-    expect(find.byType(TabBar), findsOneWidget);
+    expect(find.byKey(const Key('walk-view-switch')), findsOneWidget);
     expect(
       find.byKey(const Key('walk-today-steps')).hitTestable(),
       findsOneWidget,
@@ -155,7 +155,7 @@ void main() {
     ).thenAnswer((_) async => HealthAccess.permissionDenied);
     await pump(tester);
 
-    expect(find.byType(TabBar), findsNothing);
+    expect(find.byKey(const Key('walk-view-switch')), findsNothing);
   });
 
   testWidgets('현재 기간이면 다음 버튼이 꺼져 있다', (tester) async {

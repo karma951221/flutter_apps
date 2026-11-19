@@ -32,6 +32,7 @@ class PeriodSection extends StatelessWidget {
       builder: (context, state) => switch (state) {
         PeriodActivityLoading() => const WalkSkeleton(height: loadingHeight),
         PeriodActivityFailure() => AppPlaceholder(
+          icon: Icons.error_outline,
           message: l10n.walkLoadFailed,
           actionLabel: l10n.commonRetry,
           onAction: cubit.load,

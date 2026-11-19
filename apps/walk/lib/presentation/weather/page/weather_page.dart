@@ -68,7 +68,7 @@ class _WeatherPageState extends State<WeatherPage> {
     return Scaffold(
       body: BlocBuilder<WeatherCubit, WeatherState>(
         builder: (context, state) => switch (state) {
-          WeatherLoading() => const Center(child: CircularProgressIndicator()),
+          WeatherLoading() => const AppLoading(),
           WeatherEmpty(:final problem) => _empty(problem),
           final WeatherLoaded loaded => _loaded(loaded),
         },
@@ -135,12 +135,15 @@ class _WeatherPageState extends State<WeatherPage> {
 
   Widget _loaded(WeatherLoaded state) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
     final now = _clock.now();
     final forecast = state.forecast;
     final today = _today(forecast, now);
     final problem = state.problem;
-    final sectionStyle = theme.textTheme.titleSmall;
+    // 섹션 머리([AppSectionHeader])는 자기 좌우 여백을 가져 목록 여백 밖에 두고, 나머지만 감싼다.
+    Widget pad(Widget child) => Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      child: child,
+    );
     return Column(
       children: [
         // 뒤에서 다시 읽는 중(탭 전환 · 복귀). 높이를 늘 잡아 두어 화면이 출렁이지 않게 한다.
@@ -155,9 +158,9 @@ class _WeatherPageState extends State<WeatherPage> {
             onRefresh: _refresh,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
               children: [
-                if (problem != null) ...[
+                if (problem != null)
                   WeatherProblemBanner(
                     message: WeatherFormat.problem(
                       l10n,
@@ -168,37 +171,37 @@ class _WeatherPageState extends State<WeatherPage> {
                       now: now,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
-                ],
-                WeatherNowHeader(
-                  current: forecast.current,
-                  today: today,
-                  placeName: state.placeName,
-                  lastPlace: switch (problem) {
-                    WeatherProblem.locationServiceOff ||
-                    WeatherProblem.locationDenied ||
-                    WeatherProblem.locationUnavailable => true,
-                    _ => false,
-                  },
+                pad(
+                  WeatherNowHeader(
+                    current: forecast.current,
+                    today: today,
+                    placeName: state.placeName,
+                    lastPlace: switch (problem) {
+                      WeatherProblem.locationServiceOff ||
+                      WeatherProblem.locationDenied ||
+                      WeatherProblem.locationUnavailable => true,
+                      _ => false,
+                    },
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                RainSummaryCard(
-                  forecast: forecast,
-                  summary: summarizeRain(forecast, now),
-                  now: now,
+                pad(
+                  RainSummaryCard(
+                    forecast: forecast,
+                    summary: summarizeRain(forecast, now),
+                    now: now,
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                Text(l10n.walkWeatherHourly, style: sectionStyle),
-                const SizedBox(height: AppSpacing.sm),
-                HourlyStrip(forecast: forecast, now: now),
-                const SizedBox(height: AppSpacing.lg),
-                Text(l10n.walkWeatherDaily, style: sectionStyle),
-                const SizedBox(height: AppSpacing.xs),
-                DailyList(forecast: forecast, now: now),
+                AppSectionHeader(l10n.walkWeatherHourly),
+                pad(HourlyStrip(forecast: forecast, now: now)),
+                AppSectionHeader(l10n.walkWeatherDaily),
+                pad(DailyList(forecast: forecast, now: now)),
                 const SizedBox(height: AppSpacing.md),
-                WeatherDetailsRow(forecast: forecast, today: today),
+                pad(WeatherDetailsRow(forecast: forecast, today: today)),
                 const SizedBox(height: AppSpacing.sm),
-                WeatherFooter(forecast: forecast, fetchedAt: state.fetchedAt),
+                pad(
+                  WeatherFooter(forecast: forecast, fetchedAt: state.fetchedAt),
+                ),
               ],
             ),
           ),

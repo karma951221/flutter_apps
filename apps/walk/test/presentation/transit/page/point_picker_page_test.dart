@@ -117,6 +117,32 @@ void main() {
     expect(find.text('서울역'), findsOneWidget);
   });
 
+  testWidgets('아래 묶음이 있으면 모든 묶음에 AppSectionHeader, 없으면 머리 없이', (tester) async {
+    await open(
+      tester,
+      const PointPickerState(
+        suggestions: TransitSuggestions(home: _home, recent: [_recent]),
+      ),
+    );
+    expect(
+      [
+        for (final h in tester.widgetList<AppSectionHeader>(
+          find.byType(AppSectionHeader),
+        ))
+          h.title,
+      ],
+      ['내 장소', '최근'],
+    );
+  });
+
+  testWidgets('묶음이 하나뿐이면 머리를 달지 않는다', (tester) async {
+    await open(
+      tester,
+      const PointPickerState(suggestions: TransitSuggestions(home: _home)),
+    );
+    expect(find.byType(AppSectionHeader), findsNothing);
+  });
+
   testWidgets('frequent without a name shows fallback', (tester) async {
     await open(
       tester,

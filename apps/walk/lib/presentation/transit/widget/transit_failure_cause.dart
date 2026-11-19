@@ -12,29 +12,14 @@ class TransitFailureCause extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-    return Container(
+    // 안내 띠 모양은 AppBanner, 글자는 SelectionArea 로 골라 복사한다.
+    return SelectionArea(
       key: const Key('transit-failure-cause'),
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest,
-        borderRadius: AppRadius.smAll,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            l10n.walkTransitFailureCause,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          SelectableText(detail, style: theme.textTheme.bodySmall),
-        ],
+      child: AppBanner(
+        title: l10n.walkTransitFailureCause,
+        message: detail,
+        icon: Icons.bug_report_outlined,
+        margin: EdgeInsets.zero,
       ),
     );
   }

@@ -16,15 +16,15 @@ abstract final class WeatherFormat {
   static IconData icon(WeatherCondition condition, {required bool isDay}) =>
       switch (condition) {
         WeatherCondition.clear =>
-          isDay ? Icons.wb_sunny_outlined : Icons.nightlight_round,
+          isDay ? Icons.wb_sunny_outlined : Icons.nightlight_outlined,
         WeatherCondition.partlyCloudy =>
-          isDay ? Icons.wb_cloudy_outlined : Icons.nights_stay,
+          isDay ? Icons.wb_cloudy_outlined : Icons.nights_stay_outlined,
         WeatherCondition.cloudy => Icons.cloud_outlined,
         WeatherCondition.fog => Icons.foggy,
         WeatherCondition.drizzle => Icons.grain,
         WeatherCondition.rain => Icons.umbrella_outlined,
         WeatherCondition.showers => Icons.water_drop_outlined,
-        WeatherCondition.snow => Icons.ac_unit,
+        WeatherCondition.snow => Icons.ac_unit_outlined,
         WeatherCondition.thunderstorm => Icons.thunderstorm_outlined,
         WeatherCondition.unknown => Icons.help_outline,
       };

@@ -93,4 +93,37 @@ void main() {
 
     expect(find.byType(AlarmSettingsPage), findsOneWidget);
   });
+
+  testWidgets('customSettings 는 화면별 항목 아래 설정 자리에 놓이고 누르면 그 onTap', (
+    tester,
+  ) async {
+    var tapped = 0;
+    await open(
+      tester,
+      FeatureMenu(
+        customSettings: FeatureMenuEntry(
+          key: const Key('menu-custom'),
+          label: 'C',
+          onTap: () => tapped++,
+        ),
+        entries: [
+          FeatureMenuEntry(key: const Key('menu-a'), label: 'A', onTap: () {}),
+        ],
+      ),
+    );
+
+    expect(menuKeys(tester), const [Key('menu-a'), Key('menu-custom')]);
+    await tester.tap(find.text('C'));
+    await tester.pumpAndSettle();
+    expect(tapped, 1);
+  });
+
+  testWidgets('설정도 항목도 없으면 ⋮ 를 그리지 않는다', (tester) async {
+    await h.pump(
+      tester,
+      Scaffold(appBar: AppBar(actions: const [FeatureMenu()])),
+    );
+
+    expect(find.byIcon(Icons.more_vert), findsNothing);
+  });
 }

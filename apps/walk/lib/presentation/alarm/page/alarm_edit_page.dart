@@ -147,7 +147,9 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
   Future<void> _duplicate() async {
     FocusManager.instance.primaryFocus?.unfocus();
     final result = await Navigator.of(context).push<AlarmSaveResult>(
-      MaterialPageRoute(builder: (_) => AlarmEditPage(initial: widget.initial.duplicate(_clock.now()))),
+      MaterialPageRoute(
+        builder: (_) => AlarmEditPage(initial: widget.initial.duplicate(_clock.now())),
+      ),
     );
     if (result != null && mounted) Navigator.of(context).pop(result);
   }
@@ -177,7 +179,7 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
                     AppOverflowMenuItem(
                       value: _EditMenuAction.duplicate,
                       label: l10n.walkAlarmDuplicate,
-                      icon: Icons.content_copy,
+                      icon: Icons.content_copy_outlined,
                     ),
                   ],
                   onSelected: (action) => switch (action) {
@@ -225,18 +227,12 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
                   trailing: const Icon(Icons.chevron_right),
                   onTap: state.busy ? null : _pickSound,
                 ),
-                AppListTile(
-                  leading: Checkbox(
-                    value: state.alarm.silentWhenRingerMuted,
-                    onChanged: state.busy
-                        ? null
-                        : (value) => _cubit.setSilentWhenRingerMuted(value ?? false),
-                  ),
+                AppSwitchTile(
+                  switchKey: const Key('alarm-silent-when-muted'),
                   title: Text(l10n.walkAlarmSilentWhenMuted),
                   subtitle: Text(l10n.walkAlarmSilentWhenMutedHint),
-                  onTap: state.busy
-                      ? null
-                      : () => _cubit.setSilentWhenRingerMuted(!state.alarm.silentWhenRingerMuted),
+                  value: state.alarm.silentWhenRingerMuted,
+                  onChanged: state.busy ? null : _cubit.setSilentWhenRingerMuted,
                 ),
                 RingSettingsSection(
                   alarm: state.alarm,
@@ -250,14 +246,10 @@ class _AlarmEditPageState extends State<AlarmEditPage> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 if (!canSave) ...[
-                  Text(
+                  AppFootnote(
                     _oneShot ? l10n.walkAlarmNeedTime : l10n.walkAlarmNeedDays,
                     textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
                 ],
                 AppButton.primary(
                   label: l10n.commonSave,

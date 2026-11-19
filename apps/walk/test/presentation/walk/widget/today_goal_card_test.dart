@@ -76,7 +76,7 @@ void main() {
     );
 
     expect(find.text('달성'), findsOneWidget);
-    expect(find.byIcon(Icons.check_circle), findsOneWidget);
+    expect(find.byIcon(Icons.check_circle_outline), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('125%')), findsOneWidget);
     expect(find.text('목표보다 2,500 걸음 더 걸었어요'), findsOneWidget);
   });

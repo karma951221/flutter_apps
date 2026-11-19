@@ -159,9 +159,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
         ),
         AlarmPausedOut() => l10n.walkAlarmSavedPausedOut,
       },
-      type: result is AlarmPausedOut
-          ? AppSnackBarType.warning
-          : AppSnackBarType.success,
+      type: result is AlarmPausedOut ? AppSnackBarType.warning : AppSnackBarType.success,
     );
   }
 
@@ -178,7 +176,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
           ),
           body: BlocBuilder<AlarmListCubit, AlarmListState>(
             builder: (context, state) => switch (state) {
-              AlarmListLoading() => const Center(child: CircularProgressIndicator()),
+              AlarmListLoading() => const AppLoading(),
               AlarmListFailure() => Center(
                 child: AppPlaceholder(
                   icon: Icons.error_outline,
@@ -200,31 +198,14 @@ class _AlarmListPageState extends State<AlarmListPage> {
                   // FAB 가 마지막 행의 스위치를 가리지 않게.
                   padding: const EdgeInsets.only(bottom: AppSpacing.xl * 2.5),
                   children: [
-                    if (!canRing)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.md,
-                          AppSpacing.sm,
-                          AppSpacing.md,
-                          0,
-                        ),
-                        child: AlarmPermissionBanner(onTap: widget.onOpenSettings),
-                      ),
+                    if (!canRing) AlarmPermissionBanner(onTap: widget.onOpenSettings),
                     if (pause != null)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.md,
-                          AppSpacing.sm,
-                          AppSpacing.md,
-                          0,
-                        ),
-                        child: AlarmPauseBanner(
-                          pause: pause,
-                          now: now,
-                          onStop: () => _savePause(
-                            context,
-                            () => context.read<AlarmListCubit>().setPause(null),
-                          ),
+                      AlarmPauseBanner(
+                        pause: pause,
+                        now: now,
+                        onStop: () => _savePause(
+                          context,
+                          () => context.read<AlarmListCubit>().setPause(null),
                         ),
                       ),
                     // 알람이 하나도 없으면 카드 대신 아래 빈 상태만.
@@ -247,7 +228,7 @@ class _AlarmListPageState extends State<AlarmListPage> {
                       Padding(
                         padding: const EdgeInsets.only(top: AppSpacing.xl),
                         child: AppPlaceholder(
-                          icon: Icons.alarm_add,
+                          icon: Icons.alarm_add_outlined,
                           message: l10n.walkAlarmEmpty,
                           description: l10n.walkAlarmEmptyDescription,
                         ),
@@ -273,6 +254,13 @@ class _AlarmListPageState extends State<AlarmListPage> {
                             onHolidayTap: () => _menu(context, alarm),
                           ),
                         ),
+                    // 행에 ⋮ 를 두지 않는다 — 길게 누르기 메뉴를 여기서 알린다.
+                    if (alarms.isNotEmpty)
+                      AppFootnote(
+                        l10n.walkAlarmLongPressHint,
+                        key: const Key('alarm-long-press-hint'),
+                        textAlign: TextAlign.center,
+                      ),
                   ],
                 ),
             },
@@ -303,9 +291,8 @@ class AlarmPauseAction extends StatelessWidget {
 }
 
 /// 알람 울림 기록 화면을 연다.
-Future<void> openAlarmHistory(BuildContext context) => Navigator.of(
-  context,
-).push<void>(MaterialPageRoute(builder: (_) => const AlarmHistoryPage()));
+Future<void> openAlarmHistory(BuildContext context) =>
+    Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => const AlarmHistoryPage()));
 
 /// 쉬기 저장 · 그만 쉬기. 실패하면 오류 스낵바.
 Future<void> _savePause(BuildContext context, Future<void> Function() change) async {

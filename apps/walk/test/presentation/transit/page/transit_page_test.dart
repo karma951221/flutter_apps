@@ -172,10 +172,7 @@ void main() {
 
     expect(find.text('ODsay 가 키를 받지 않았어요'), findsOneWidget);
     expect(find.textContaining('com.karma.walk'), findsOneWidget);
-    expect(
-      find.widgetWithText(SelectableText, 'code 500 · ApiKeyAuthFailed'),
-      findsOneWidget,
-    );
+    expect(_selectable('code 500 · ApiKeyAuthFailed'), findsOneWidget);
     expect(find.text('키 설정'), findsOneWidget);
   });
 
@@ -184,17 +181,11 @@ void main() {
       tester,
       const TransitFailure.network('HandshakeException: CERT'),
     );
-    expect(
-      find.widgetWithText(SelectableText, 'HandshakeException: CERT'),
-      findsOneWidget,
-    );
+    expect(_selectable('HandshakeException: CERT'), findsOneWidget);
 
     await pumpFailure(tester, const TransitFailure.unexpected('StateError: x'));
     expect(find.text('예상하지 못한 오류가 났어요'), findsOneWidget);
-    expect(
-      find.widgetWithText(SelectableText, 'StateError: x'),
-      findsOneWidget,
-    );
+    expect(_selectable('StateError: x'), findsOneWidget);
     expect(find.text('다시 시도'), findsOneWidget);
   });
 
@@ -216,7 +207,7 @@ void main() {
 
     await pumpFailure(tester, const TransitFailure.server('HTTP 500'));
     expect(find.text('길을 찾지 못했어요'), findsOneWidget);
-    expect(find.widgetWithText(SelectableText, 'HTTP 500'), findsOneWidget);
+    expect(_selectable('HTTP 500'), findsOneWidget);
   });
 
   testWidgets('loading shows AppLoading', (tester) async {
@@ -372,3 +363,11 @@ void main() {
     verify(() => cubit.refresh()).called(1);
   });
 }
+
+/// 실패 원인 띠 안에서 골라 복사할 수 있는 [text].
+Finder _selectable(String text) => find.descendant(
+  of: find.byWidgetPredicate(
+    (w) => w is SelectionArea && w.key == const Key('transit-failure-cause'),
+  ),
+  matching: find.text(text),
+);

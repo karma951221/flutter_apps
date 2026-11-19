@@ -21,6 +21,7 @@ import 'package:walk/presentation/map/cubit/map_view_cubit.dart';
 import 'package:walk/presentation/map/cubit/map_view_state.dart';
 import 'package:walk/presentation/map/page/map_tab.dart';
 import 'package:walk/presentation/shell/page/tools_tab.dart';
+import 'package:walk/presentation/shell/widget/feature_menu.dart';
 import 'package:walk/domain/transit/entity/transit_point.dart';
 import 'package:walk/domain/transit/usecase/transit_point_suggestions.dart';
 import 'package:walk/presentation/transit/cubit/transit_cubit.dart';
@@ -292,6 +293,18 @@ void main() {
     ];
     expect(labels, ['알람', '걷기', '날씨', '길찾기']);
     expect(tabs.every((t) => t.icon != null), isTrue);
+    // 넷 모두 테두리형, 크기는 탭 테마가 정한다.
+    final icons = [for (final t in tabs) t.icon! as Icon];
+    expect(
+      [for (final i in icons) i.icon],
+      [
+        Icons.alarm_outlined,
+        Icons.directions_walk_outlined,
+        Icons.wb_sunny_outlined,
+        Icons.directions_transit_outlined,
+      ],
+    );
+    expect(icons.every((i) => i.size == null), isTrue);
     expect(find.byType(MapTab, skipOffstage: false), findsNothing);
   });
 
@@ -305,12 +318,16 @@ void main() {
     expect(find.byType(TransitPage), findsOneWidget);
   });
 
-  testWidgets('길찾기 ⋮ 는 길찾기 키 설정만 — 앱 설정은 하단 설정 탭', (tester) async {
+  testWidgets('길찾기 ⋮ 는 FeatureMenu 의 "길찾기 설정"(키)만 — 앱 설정은 하단 설정 탭', (
+    tester,
+  ) async {
     await pump(tester, initial: ToolsSection.transit);
 
+    expect(find.byType(FeatureMenu), findsOneWidget);
     await tester.tap(find.byIcon(Icons.more_vert));
     await tester.pumpAndSettle();
-    expect(find.text('길찾기 키 설정'), findsOneWidget);
+    expect(find.byKey(const Key('menu-transit-key')), findsOneWidget);
+    expect(find.text('길찾기 설정'), findsOneWidget);
     expect(find.byKey(const Key('menu-settings-app')), findsNothing);
     expect(find.byKey(const Key('menu-settings-walk')), findsNothing);
   });
