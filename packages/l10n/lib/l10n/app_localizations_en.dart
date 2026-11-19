@@ -4745,6 +4745,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get walkMapStyle => 'Map type';
 
   @override
+  String get walkMapFullscreen => 'Full screen';
+
+  @override
+  String get walkMapFullscreenExit => 'Exit full screen';
+
+  @override
   String get walkMapStyleStandard => 'Standard';
 
   @override

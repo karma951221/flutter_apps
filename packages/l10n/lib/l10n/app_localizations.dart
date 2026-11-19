@@ -8028,6 +8028,18 @@ abstract class AppLocalizations {
   /// **'지도 종류'**
   String get walkMapStyle;
 
+  /// 지도 — 전체화면 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'전체화면으로 보기'**
+  String get walkMapFullscreen;
+
+  /// 지도 전체화면 — 나가기 버튼 툴팁
+  ///
+  /// In ko, this message translates to:
+  /// **'전체화면 나가기'**
+  String get walkMapFullscreenExit;
+
   /// 지도 모양 — OSM 기본
   ///
   /// In ko, this message translates to:

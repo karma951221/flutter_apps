@@ -4355,6 +4355,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get walkMapStyle => '지도 종류';
 
   @override
+  String get walkMapFullscreen => '전체화면으로 보기';
+
+  @override
+  String get walkMapFullscreenExit => '전체화면 나가기';
+
+  @override
   String get walkMapStyleStandard => '기본';
 
   @override

@@ -4350,6 +4350,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get walkMapStyle => '地図の種類';
 
   @override
+  String get walkMapFullscreen => '全画面で表示';
+
+  @override
+  String get walkMapFullscreenExit => '全画面を終了';
+
+  @override
   String get walkMapStyleStandard => '標準';
 
   @override

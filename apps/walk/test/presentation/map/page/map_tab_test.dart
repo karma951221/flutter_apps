@@ -10,6 +10,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walk/data/location/background_location_access.dart';
@@ -40,10 +41,12 @@ import 'package:walk/presentation/map/cubit/map_record_state.dart';
 import 'package:walk/presentation/map/cubit/map_style_cubit.dart';
 import 'package:walk/presentation/map/cubit/map_view_cubit.dart';
 import 'package:walk/presentation/map/cubit/map_view_state.dart';
+import 'package:walk/presentation/map/page/fullscreen_map_page.dart';
 import 'package:walk/presentation/map/page/map_tab.dart';
 import 'package:walk/presentation/map/widget/record_chip.dart';
 import 'package:walk/presentation/map/widget/story_picker_sheet.dart';
 import 'package:walk/presentation/map/widget/timeline_sheet.dart';
+import 'package:walk/presentation/map/widget/track_map.dart';
 
 import '../../../support/diary_fixtures.dart';
 import '../../../support/fake_device_auth.dart';
@@ -642,6 +645,84 @@ void main() {
     expect(layer().tileBuilder, isNull);
     expect(mapStyle.style, MapStyle.standard);
     expect(find.textContaining('CARTO'), findsNothing);
+  });
+
+  group('fullscreen', () {
+    late List<String> uiModes;
+
+    setUp(() => uiModes = []);
+
+    Future<void> pumpFull(WidgetTester tester) async {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'SystemChrome.setEnabledSystemUIMode') {
+            uiModes.add(call.arguments as String);
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      await pump(tester, state: MapViewState.ready(_data()));
+    }
+
+    TrackMapState mapState(WidgetTester tester) =>
+        tester.state<TrackMapState>(find.byType(TrackMap));
+
+    testWidgets('button hides chrome, exit brings it back', (tester) async {
+      await pumpFull(tester);
+      expect(find.byType(TimelineSheet), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('map-fullscreen-button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FullscreenMapPage), findsOneWidget);
+      // 기간 머리 · 시트 · 기록 표시 · 지도 종류는 없고 지도와 나가기 버튼만.
+      expect(find.byType(TimelineSheet), findsNothing);
+      expect(find.text('스토리'), findsNothing);
+      expect(find.byKey(const Key('map-record-chip')), findsNothing);
+      expect(find.byKey(const Key('map-style-button')), findsNothing);
+      expect(find.byType(TrackMap), findsOneWidget);
+      expect(uiModes, ['SystemUiMode.immersiveSticky']);
+
+      await tester.tap(find.byKey(const Key('map-fullscreen-exit')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FullscreenMapPage), findsNothing);
+      expect(find.byType(TimelineSheet), findsOneWidget);
+      expect(find.byKey(const Key('map-record-chip')), findsOneWidget);
+      expect(uiModes.last, 'SystemUiMode.edgeToEdge');
+    });
+
+    testWidgets('back returns and keeps the camera', (tester) async {
+      await pumpFull(tester);
+      final before = mapState(tester).camera;
+
+      await tester.tap(find.byKey(const Key('map-fullscreen-button')));
+      await tester.pumpAndSettle();
+      // 전체화면은 지도 탭 카메라 자리에서 열린다.
+      expect(mapState(tester).camera.center, before.center);
+      expect(mapState(tester).camera.zoom, before.zoom);
+
+      // 전체화면에서 다른 곳으로 옮긴다.
+      mapState(tester).jumpTo((center: const LatLng(35.1, 129.0), zoom: 13));
+      await tester.pump();
+
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FullscreenMapPage), findsNothing);
+      expect(find.byType(TimelineSheet), findsOneWidget);
+      final after = mapState(tester).camera;
+      expect(after.center.latitude, closeTo(35.1, 1e-6));
+      expect(after.center.longitude, closeTo(129.0, 1e-6));
+      expect(after.zoom, 13);
+    });
   });
 
   testWidgets('saved style is used when the map opens', (tester) async {

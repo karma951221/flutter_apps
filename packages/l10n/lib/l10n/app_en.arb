@@ -1340,6 +1340,8 @@
   "walkMapChipBlocked": "Permission needed",
   "walkMapChipBlockedTooltip": "Recording off · location permission needed",
   "walkMapStyle": "Map type",
+  "walkMapFullscreen": "Full screen",
+  "walkMapFullscreenExit": "Exit full screen",
   "walkMapStyleStandard": "Standard",
   "walkMapStyleStandardDetail": "Roads, buildings and shops in detail",
   "walkMapStyleSimple": "Simple",

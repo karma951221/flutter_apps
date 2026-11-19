@@ -32,6 +32,7 @@ class TrackMap extends StatefulWidget {
     required this.onOpenEntry,
     this.faint = false,
     this.bottomInset = 0,
+    this.initialCamera,
     this.style = MapStyle.fallback,
     super.key,
   });
@@ -54,9 +55,15 @@ class TrackMap extends StatefulWidget {
   /// 바탕 타일 모양.
   final MapStyle style;
 
+  /// 처음 카메라. 주면 좌표에 맞추지 않고 그 자리에서 연다(전체화면 ↔ 지도 탭 사이 카메라 유지).
+  final MapCameraSpot? initialCamera;
+
   @override
   State<TrackMap> createState() => TrackMapState();
 }
+
+/// 지도 카메라의 가운데와 줌.
+typedef MapCameraSpot = ({LatLng center, double zoom});
 
 class TrackMapState extends State<TrackMap> {
   /// 좌표가 없을 때 보이는 곳(서울시청)과 줌.
@@ -119,7 +126,21 @@ class TrackMapState extends State<TrackMap> {
   @override
   void initState() {
     super.initState();
-    if (_coordinates().isNotEmpty) _fitted = widget.fitKey;
+    if (_coordinates().isNotEmpty || widget.initialCamera != null) {
+      _fitted = widget.fitKey;
+    }
+    // 이어받은 카메라는 사용자가 옮겨 둔 자리다 — 점이 늘어도 따라가지 않는다.
+    if (widget.initialCamera != null) _userMoved = true;
+  }
+
+  /// 지금 카메라.
+  MapCameraSpot get camera =>
+      (center: _controller.camera.center, zoom: _controller.camera.zoom);
+
+  /// 카메라를 그 자리로 옮긴다(전체화면에서 돌아올 때).
+  void jumpTo(MapCameraSpot spot) {
+    _userMoved = true;
+    _controller.move(spot.center, spot.zoom);
   }
 
   @override
@@ -300,12 +321,15 @@ class TrackMapState extends State<TrackMap> {
     final satellite = widget.style == MapStyle.satellite;
     final coordinates = _coordinates();
     final single = coordinates.isNotEmpty && _isSinglePlace(coordinates);
+    final initial = widget.initialCamera;
     return FlutterMap(
       mapController: _controller,
       options: MapOptions(
-        initialCenter: coordinates.firstOrNull ?? _fallbackCenter,
-        initialZoom: coordinates.isEmpty ? _fallbackZoom : _placeZoom,
-        initialCameraFit: coordinates.isEmpty || single
+        initialCenter:
+            initial?.center ?? coordinates.firstOrNull ?? _fallbackCenter,
+        initialZoom:
+            initial?.zoom ?? (coordinates.isEmpty ? _fallbackZoom : _placeZoom),
+        initialCameraFit: initial != null || coordinates.isEmpty || single
             ? null
             : CameraFit.coordinates(
                 coordinates: coordinates,

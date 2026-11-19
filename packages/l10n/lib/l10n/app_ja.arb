@@ -1340,6 +1340,8 @@
   "walkMapChipBlocked": "権限が必要",
   "walkMapChipBlockedTooltip": "記録オフ・位置の権限が必要",
   "walkMapStyle": "地図の種類",
+  "walkMapFullscreen": "全画面で表示",
+  "walkMapFullscreenExit": "全画面を終了",
   "walkMapStyleStandard": "標準",
   "walkMapStyleStandardDetail": "道・建物・お店まで詳しく",
   "walkMapStyleSimple": "シンプル",
