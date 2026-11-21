@@ -40,6 +40,9 @@ enum ChatToolKind {
   /// delete_file
   deleteFile,
 
+  /// generate_image — 그림 만들기(OpenAI).
+  generateImage,
+
   /// 벤더 서버의 웹 검색(web_search). 세션이 실행하지 않고 결과 개수도 없다.
   webSearch,
   other,
@@ -61,6 +64,7 @@ ChatToolKind chatToolKindOf(String name) => switch (name) {
   'write_file' => ChatToolKind.writeFile,
   'edit_file' => ChatToolKind.editFile,
   'delete_file' => ChatToolKind.deleteFile,
+  'generate_image' => ChatToolKind.generateImage,
   'web_search' => ChatToolKind.webSearch,
   _ => ChatToolKind.other,
 };

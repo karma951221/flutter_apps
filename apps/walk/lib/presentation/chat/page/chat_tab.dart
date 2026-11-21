@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:core/core.dart';
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -20,6 +21,7 @@ import '../../../domain/chat/secure_window.dart';
 import '../../../domain/chat/usecase/chat_model_choice.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/chat/usecase/open_conversation.dart';
+import '../../../domain/chat/chat_style_settings.dart';
 import '../../../domain/chat/workspace/workspace.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../../../domain/diary/repository/diary_repository.dart';
@@ -497,6 +499,7 @@ class _SettingsAction extends StatelessWidget {
                 Navigator.of(sheetContext).pop();
                 onOpenSettings();
               },
+              style: getIt<ChatStyleSettings>(),
             );
           },
         ),
@@ -1207,11 +1210,21 @@ class _BubbleItem extends StatelessWidget {
         bubble.text.trim().isNotEmpty;
     final action = await showBubbleActions(
       context,
+      canCopy: bubble.text.trim().isNotEmpty,
       canAddToWiki: canAddToWiki,
       canSaveToFile: canSaveToFile,
     );
     if (action == null || !context.mounted) return;
     switch (action) {
+      case BubbleAction.copyText:
+        final l10n = AppLocalizations.of(context);
+        await Clipboard.setData(ClipboardData(text: bubble.text));
+        if (!context.mounted) return;
+        AppSnackBar.show(
+          context,
+          message: l10n.walkChatCopied,
+          type: AppSnackBarType.success,
+        );
       case BubbleAction.saveToFile:
         final l10n = AppLocalizations.of(context);
         final tab = context.findAncestorStateOfType<_ChatTabState>();
@@ -1288,6 +1301,7 @@ class _BubbleItem extends StatelessWidget {
       onOpenCited: (cited, entry) => _open(context, cited, entry),
       onOpenSettings: onOpenSettings,
       attachmentExists: getIt<Workspace>().exists,
+      readImage: getIt<Workspace>().readBytes,
       onOpenAttachment: (path) => unawaited(openWorkspaceFile(context, path)),
       // 답하는 중엔 턴을 지우지 않는다.
       onLongPress: busy ? null : () => unawaited(_actions(context, bubble)),

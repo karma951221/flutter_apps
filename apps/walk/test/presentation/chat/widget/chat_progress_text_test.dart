@@ -85,7 +85,28 @@ void main() {
       expect(chatProgressTimelineText(ko, 'ko', searched), "웹 검색 중('오늘 날씨')");
     });
 
-    test('걸음은 날 수', () {
+    test("그림 만들기는 '그림 그리는 중' → '그림 만듦' · 실패면 '그림 못 만듦'", () {
+      expect(
+        chatProgressStepText(ko, 'ko', tool(ChatToolKind.generateImage)),
+        '그림 그리는 중',
+      );
+      final made = tool(
+        ChatToolKind.generateImage,
+        result: const ToolSummary(kind: ChatToolKind.generateImage, count: 1),
+      );
+      expect(chatProgressTimelineText(ko, 'ko', made), contains('그림 만듦'));
+      final failed = tool(
+        ChatToolKind.generateImage,
+        result: const ToolSummary(
+          kind: ChatToolKind.generateImage,
+          count: 0,
+          isError: true,
+        ),
+      );
+      expect(chatProgressTimelineText(ko, 'ko', failed), contains('그림 못 만듦'));
+    });
+
+        test('걸음은 날 수', () {
       final step = tool(
         ChatToolKind.dailySteps,
         from: DateTime(2026, 10, 25),

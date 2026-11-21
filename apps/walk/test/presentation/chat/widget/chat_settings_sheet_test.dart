@@ -2,9 +2,12 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
+import 'package:walk/domain/chat/chat_style_settings.dart';
 import 'package:walk/domain/chat/chat_vendor.dart';
 import 'package:walk/presentation/chat/widget/chat_settings_sheet.dart';
 import 'package:walk/presentation/chat/widget/model_chip.dart';
+
+import '../../../support/fake_chat_style_settings.dart';
 
 void main() {
   const sonnet = ModelChipData(
@@ -20,6 +23,7 @@ void main() {
     VoidCallback? onPickModel,
     ValueChanged<bool>? onUseRecordsChanged,
     VoidCallback? onOpenSettings,
+    ChatStyleSettings? style,
   }) => tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light(),
@@ -34,6 +38,7 @@ void main() {
           onPickModel: onPickModel ?? () {},
           onUseRecordsChanged: onUseRecordsChanged ?? (_) {},
           onOpenSettings: onOpenSettings ?? () {},
+          style: style,
         ),
       ),
     ),
@@ -118,5 +123,53 @@ void main() {
     expect(picked, 0);
     expect(changed, isEmpty);
     expect(opened, 1);
+  });
+
+  testWidgets('style 이 없으면 말투 행이 없다', (tester) async {
+    await pump(tester);
+    expect(find.byKey(const Key('chat-tone-tile')), findsNothing);
+  });
+
+  testWidgets('말투 행은 지금 말투를 보이고, 고르면 저장하고 이름이 바뀐다', (tester) async {
+    final style = FakeChatStyleSettings();
+    await pump(tester, style: style);
+
+    expect(find.text('말투'), findsOneWidget);
+    expect(find.text('기본'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('chat-tone-tile')));
+    await tester.pumpAndSettle();
+    expect(find.text('다음 질문부터 이 말투로 답해요'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('chat-tone-casual')));
+    await tester.pumpAndSettle();
+
+    expect(style.tone, ChatTone.casual);
+    expect(find.text('친구처럼 반말'), findsOneWidget);
+  });
+
+  testWidgets('직접 입력은 한 줄을 받아 저장하고, 취소하면 그대로', (tester) async {
+    final style = FakeChatStyleSettings();
+    await pump(tester, style: style);
+
+    await tester.tap(find.byKey(const Key('chat-tone-tile')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('chat-tone-custom')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+    expect(style.tone, ChatTone.standard);
+
+    await tester.tap(find.byKey(const Key('chat-tone-custom')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('chat-tone-custom-field')),
+      '사투리로',
+    );
+    await tester.tap(find.byKey(const Key('chat-tone-custom-save')));
+    await tester.pumpAndSettle();
+
+    expect(style.tone, ChatTone.custom);
+    expect(style.customTone, '사투리로');
+    // 행 설명은 적은 한 줄.
+    expect(find.text('사투리로'), findsOneWidget);
   });
 }

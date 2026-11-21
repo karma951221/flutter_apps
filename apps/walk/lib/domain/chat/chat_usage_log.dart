@@ -13,6 +13,9 @@ enum ChatUsagePurpose {
 
   /// 일기 저장 시 스토리 고르기(2026-11-19).
   storyClassify,
+
+  /// 물어보기의 그림 만들기 도구(generate_image, 2026-11-21). 그림 한 장이 한 행.
+  imageGenerate,
 }
 
 /// 요청(도구 라운드) 하나의 토큰 사용량. 질문 · 답 글 · 대화 id 는 담지 않는다.

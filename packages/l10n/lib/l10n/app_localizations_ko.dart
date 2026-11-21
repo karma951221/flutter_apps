@@ -5553,4 +5553,62 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get walkDiaryStoryAiSettingDescription =>
       '올릴 때 어울리는 스토리를 추천하거나 새 스토리를 제안해요. 물어보기에 연결한 키를 써요.';
+
+  @override
+  String get walkChatToolGenerateImage => '그림 그리는 중';
+
+  @override
+  String get walkChatToolMadeImage => '그림 만듦';
+
+  @override
+  String get walkChatToolImageFailed => '그림 못 만듦';
+
+  @override
+  String get walkChatUsageImageGenerate => '그림 만들기';
+
+  @override
+  String get walkChatToneTitle => '말투';
+
+  @override
+  String get walkChatToneStandard => '기본';
+
+  @override
+  String get walkChatToneWarm => '다정한 존댓말';
+
+  @override
+  String get walkChatToneCasual => '친구처럼 반말';
+
+  @override
+  String get walkChatToneTerse => '짧고 건조하게';
+
+  @override
+  String get walkChatToneCustom => '직접 입력';
+
+  @override
+  String get walkChatToneCustomTitle => '말투 직접 입력';
+
+  @override
+  String get walkChatToneCustomHint => '예: 존댓말로, 이모지는 조금만';
+
+  @override
+  String get walkChatToneSheetHint => '다음 질문부터 이 말투로 답해요';
+
+  @override
+  String get walkChatImageGenTitle => '그림 만들기';
+
+  @override
+  String get walkChatImageGenHint =>
+      'OpenAI 에 연결했을 때 요청하면 그림을 만들어 답에 붙여요. 한 장마다 요금이 들어요';
+
+  @override
+  String get walkChatAnswerSection => '답';
+
+  @override
+  String get walkChatImageMissing => '그림을 찾을 수 없어요';
+
+  @override
+  String get walkChatCopyText => '글 복사';
+
+  @override
+  String get walkChatCopied => '복사했어요';
 }

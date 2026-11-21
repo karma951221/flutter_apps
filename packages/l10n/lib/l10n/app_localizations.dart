@@ -10037,6 +10037,120 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'올릴 때 어울리는 스토리를 추천하거나 새 스토리를 제안해요. 물어보기에 연결한 키를 써요.'**
   String get walkDiaryStoryAiSettingDescription;
+
+  /// 채팅 탭 진행 줄: generate_image 도구 라벨
+  ///
+  /// In ko, this message translates to:
+  /// **'그림 그리는 중'**
+  String get walkChatToolGenerateImage;
+
+  /// 채팅 탭 진행 줄: 그림 만들기 성공 결과
+  ///
+  /// In ko, this message translates to:
+  /// **'그림 만듦'**
+  String get walkChatToolMadeImage;
+
+  /// 채팅 탭 진행 줄: 그림 만들기 실패 결과
+  ///
+  /// In ko, this message translates to:
+  /// **'그림 못 만듦'**
+  String get walkChatToolImageFailed;
+
+  /// 사용량 화면: 그림 만들기 쓰임 줄 꼬리표
+  ///
+  /// In ko, this message translates to:
+  /// **'그림 만들기'**
+  String get walkChatUsageImageGenerate;
+
+  /// 대화 설정 시트 · 물어보기 설정: 말투 행 제목 · 고르기 시트 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'말투'**
+  String get walkChatToneTitle;
+
+  /// 말투 선택지: 기본
+  ///
+  /// In ko, this message translates to:
+  /// **'기본'**
+  String get walkChatToneStandard;
+
+  /// 말투 선택지: 다정한 존댓말
+  ///
+  /// In ko, this message translates to:
+  /// **'다정한 존댓말'**
+  String get walkChatToneWarm;
+
+  /// 말투 선택지: 친구처럼 반말
+  ///
+  /// In ko, this message translates to:
+  /// **'친구처럼 반말'**
+  String get walkChatToneCasual;
+
+  /// 말투 선택지: 짧고 건조하게
+  ///
+  /// In ko, this message translates to:
+  /// **'짧고 건조하게'**
+  String get walkChatToneTerse;
+
+  /// 말투 선택지: 직접 입력(한 줄)
+  ///
+  /// In ko, this message translates to:
+  /// **'직접 입력'**
+  String get walkChatToneCustom;
+
+  /// 말투 직접 입력 다이얼로그 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'말투 직접 입력'**
+  String get walkChatToneCustomTitle;
+
+  /// 말투 직접 입력 칸 힌트
+  ///
+  /// In ko, this message translates to:
+  /// **'예: 존댓말로, 이모지는 조금만'**
+  String get walkChatToneCustomHint;
+
+  /// 말투 고르기 시트 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'다음 질문부터 이 말투로 답해요'**
+  String get walkChatToneSheetHint;
+
+  /// 물어보기 설정: 그림 만들기 스위치 제목
+  ///
+  /// In ko, this message translates to:
+  /// **'그림 만들기'**
+  String get walkChatImageGenTitle;
+
+  /// 물어보기 설정: 그림 만들기 스위치 설명
+  ///
+  /// In ko, this message translates to:
+  /// **'OpenAI 에 연결했을 때 요청하면 그림을 만들어 답에 붙여요. 한 장마다 요금이 들어요'**
+  String get walkChatImageGenHint;
+
+  /// 물어보기 설정: 말투 · 그림 만들기 섹션 머리
+  ///
+  /// In ko, this message translates to:
+  /// **'답'**
+  String get walkChatAnswerSection;
+
+  /// 답 말풍선: 작업 폴더에서 지워진 그림 자리
+  ///
+  /// In ko, this message translates to:
+  /// **'그림을 찾을 수 없어요'**
+  String get walkChatImageMissing;
+
+  /// 말풍선 길게 누르기 시트: 원문 그대로(마크다운 기호 포함) 복사
+  ///
+  /// In ko, this message translates to:
+  /// **'글 복사'**
+  String get walkChatCopyText;
+
+  /// 말풍선 글을 복사한 뒤 스낵바
+  ///
+  /// In ko, this message translates to:
+  /// **'복사했어요'**
+  String get walkChatCopied;
 }
 
 class _AppLocalizationsDelegate

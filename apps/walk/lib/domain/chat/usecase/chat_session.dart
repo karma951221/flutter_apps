@@ -12,10 +12,12 @@ import '../attachment/chat_attachment.dart';
 import '../chat_connection.dart';
 import '../chat_model.dart';
 import '../chat_settings.dart';
+import '../chat_style_settings.dart';
 import '../chat_trace.dart';
 import '../chat_usage_log.dart';
 import '../chat_vendor.dart';
 import '../entity/conversation.dart';
+import '../tool/image_tools.dart';
 import '../tool/life_tools.dart';
 import '../tool/tool_result.dart';
 import '../tool/tool_summary.dart';
@@ -169,7 +171,11 @@ class ChatSession {
     this._wikiTools,
     this._workspaceTools, {
     ProfileRepository? profile,
-  }) : _profile = profile;
+    ChatStyleSettings? style,
+    ImageTools? imageTools,
+  }) : _profile = profile,
+       _style = style,
+       _imageTools = imageTools;
 
   final ChatModelRegistry _registry;
   final LifeTools _tools;
@@ -185,6 +191,12 @@ class ChatSession {
   final ProfileRepository? _profile;
   final WikiTools _wikiTools;
   final WorkspaceTools _workspaceTools;
+
+  /// 말투 · 그림 만들기 스위치. null(테스트)이면 기본 말투, 그림 만들기 꺼짐.
+  final ChatStyleSettings? _style;
+
+  /// 그림 만들기 도구. null 이면 싣지 않는다.
+  final ImageTools? _imageTools;
 
   static const maxRounds = 8;
 
@@ -564,10 +576,13 @@ class ChatSession {
       // 이미지 거절(imagesUnsupported)을 받으면 이 질문의 남은 요청은 사진 없이.
       var images = _choice.supportsImages;
       var retriedWithoutImages = false;
+      // 그림 만들기는 OpenAI 연결 · 스위치 켬일 때만 — 기록 참고와 상관없이 싣는다.
+      final imageOn = _imageToolOn(target.vendor);
       final system = _systemPrompt(
         progressNotes: model.progressNotes,
         records: records,
         wikiSection: wiki.systemSection,
+        imageTool: imageOn,
       );
       // 위키 도구가 실린 질문에서만 read_wiki 를 WikiTools 로 보낸다.
       final wikiOn = wiki.tools.isNotEmpty;
@@ -605,7 +620,12 @@ class ChatSession {
             fastMode: fastMode,
             system: system,
             messages: _requestMessages(images: images),
-            tools: records
+            tools: imageOn
+                ? [
+                    if (records) ..._toolsFor(images: images, wiki: wiki),
+                    ImageTools.spec,
+                  ]
+                : records
                 ? _toolsFor(images: images, wiki: wiki)
                 : const <ToolSpec>[],
             webSearch: true,
@@ -754,10 +774,22 @@ class ChatSession {
               for (final (i, c) in calls.indexed)
                 if (!isWrite(c)) i,
             ];
+            // 그림 만들기 성공 → 답에 붙일 그림 줄(callId 별).
+            final pictures = <String, String>{};
             final futures = [
               for (final c in parallel.map((i) => calls[i]))
+                // 그림 만들기는 기록 참고와 상관없다 — 실린 질문이면 실행한다.
+                if (imageOn && c.name == ImageTools.generateImageName)
+                  _runImage(
+                    c,
+                    apiKey: apiKey,
+                    questionKey: questionKey,
+                    round: round,
+                    target: target,
+                    pictures: pictures,
+                  )
                 // 기록을 끈 질문에 도구가 오면(지난 턴을 보고 부른 경우) 실행하지 않는다.
-                if (!records)
+                else if (!records)
                   Future.value(
                     ToolResult(
                       json: _recordsOffJson,
@@ -877,6 +909,15 @@ class ChatSession {
               );
             }
             _messages.add(ChatMessage.toolResults(parts));
+            // 만든 그림은 답 글에 마크다운 그림 줄로 붙인다 — 말풍선이 그림으로 보이고,
+            // 저장 · 복원 · 멈춤은 글 그대로 따라간다. 호출 순서대로.
+            for (final call in calls) {
+              final picture = pictures[call.id];
+              if (picture == null) continue;
+              final delta = _turnText.isEmpty ? '$picture\n' : '\n\n$picture\n';
+              _turnText.write(delta);
+              yield ChatEvent.text(delta);
+            }
           case StopKind.pauseTurn:
             // 벤더 서버의 도구 루프(웹 검색)가 멈췄다 — 그 턴만 덧붙인 채 사용자 메시지
             // 없이 다시 보내면 이어서 답한다. 이어 보내기도 라운드 한도([maxRounds])에 든다.
@@ -1011,6 +1052,47 @@ class ChatSession {
     unawaited(
       Future.sync(() => _usage.record(record)).catchError((Object _) {}),
     );
+  }
+
+  /// 그림 만들기 도구를 실을까 — 도구가 있고, OpenAI 연결이며, 스위치가 켜졌을 때.
+  bool _imageToolOn(ChatVendor vendor) =>
+      _imageTools != null &&
+      vendor == ChatVendor.openai &&
+      (_style?.imageGeneration ?? false);
+
+  /// generate_image 를 실행하고, 성공하면 [pictures] 에 그림 줄을 남기고 사용량을 기록한다.
+  /// 던지지 않는다(ImageTools.run 이 잡는다).
+  Future<ToolResult> _runImage(
+    ToolCallPart call, {
+    required String apiKey,
+    required String questionKey,
+    required int round,
+    required ChatTarget target,
+    required Map<String, String> pictures,
+  }) async {
+    final outcome = await _imageTools!.run(call.input, apiKey: apiKey);
+    if (outcome.markdown case final markdown?) pictures[call.id] = markdown;
+    final usage = outcome.usage;
+    if (usage != null) {
+      final record = ChatUsageRecord(
+        at: _clock.now(),
+        questionKey: questionKey,
+        vendor: target.vendor,
+        model: outcome.model ?? ImageTools.generateImageName,
+        fastMode: false,
+        purpose: ChatUsagePurpose.imageGenerate,
+        round: round,
+        temporary: _temporary,
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        cacheReadTokens: 0,
+        cacheWriteTokens: 0,
+      );
+      unawaited(
+        Future.sync(() => _usage.record(record)).catchError((Object _) {}),
+      );
+    }
+    return outcome.result;
   }
 
   /// LifeTools 정의 → 위키 도구(있으면) → 작업 폴더 읽기 둘 → 쓰기 셋. 덧붙일 것이
@@ -1207,16 +1289,29 @@ class ChatSession {
   static const _webRule =
       '최근 소식 · 지금의 정보 · 확실하지 않은 사실은 웹 검색으로 확인하고, '
       '답에 출처(사이트 이름)를 짧게 밝힌다.\n';
-  static const _answerStyle =
-      '한국어로, 마크다운 없이 평문으로 답한다. 필요한 만큼 쓰되 군더더기 없이 간결하게.\n';
 
-  /// 순서: 규약(첨부 줄 · 작업 폴더 줄 · 쓰기 줄 포함) → 위키 절(있을 때) → 도구 전 안내 → 날짜 줄.
-  /// 날짜 줄은 맨 끝 — 그 앞까지가 날마다(위키 · [records] 가 그대로면) 같은 캐시 접두부다.
+  /// 답 모양. 마크다운은 필요할 때만 — 말풍선이 마크다운과 ```svg 블록을 그린다.
+  static const _answerStyle =
+      '한국어로 답한다. 목록 · 굵게 · 표 · 코드 블록 같은 마크다운은 읽기 쉬워질 때만 쓰고, '
+      '짧은 답은 평문으로. 필요한 만큼 쓰되 군더더기 없이 간결하게.\n'
+      '도식 · 흐름 · 간단한 차트처럼 그림이 설명에 도움 되면 ```svg 코드 블록에 SVG 하나를 '
+      '그린다(viewBox 포함, 흰 배경 rect, 글자는 한국어, 스크립트 · 외부 링크 없이).\n';
+
+  /// 그림 만들기 안내. 도구가 실린 질문에만 넣는다(작업 폴더 줄 뒤, 위키 절 앞).
+  static const _imageRule =
+      'generate_image 로 그림(사진풍 · 일러스트)을 만들 수 있다. 비용이 드니 사용자가 그림을 '
+      '만들어 달라고 할 때만 쓰고, 도식 · 차트는 svg 블록으로 그린다. 만든 그림은 답에 자동으로 '
+      '붙으니 경로나 그림 마크다운을 다시 쓰지 않는다.';
+
+  /// 순서: 규약(첨부 줄 · 작업 폴더 줄 · 쓰기 줄 포함) → 그림 만들기 줄(있을 때) → 위키 절(있을 때)
+  /// → 도구 전 안내 → 말투 줄 → 이름 줄 → 날짜 줄.
+  /// 날짜 줄은 맨 끝 — 그 앞까지가 날마다(위키 · [records] · 말투가 그대로면) 같은 캐시 접두부다.
   /// [records] 가 false 면 기록 규칙 · 작업 폴더 줄 · 위키 절 없이 일반 도우미 규약만.
   String _systemPrompt({
     required bool progressNotes,
     required bool records,
     String? wikiSection,
+    bool imageTool = false,
   }) {
     final now = _clock.now();
     final today = DateFormat('yyyy-MM-dd (E)', 'ko').format(now);
@@ -1229,10 +1324,20 @@ class ChatSession {
     return '$rules'
         '$_attachmentRule\n'
         '${records ? '$_workspaceRule\n$_writeRule\n' : ''}'
+        '${imageTool ? '$_imageRule\n' : ''}'
         '${records && wikiSection != null ? '\n$wikiSection\n\n' : ''}'
         '${progressNotes ? '$_noteHint\n' : ''}'
+        '${_toneLine()}'
         '${_nameLine()}'
         '오늘은 $today, 시간대는 ${now.timeZoneName} 이다.';
+  }
+
+  /// 말투 줄(줄바꿈 포함). 기본 말투 · 빈 직접 입력이면 빈 문자열. 설정을 바꿀 때만 달라진다.
+  String _toneLine() {
+    final style = _style;
+    if (style == null) return '';
+    final line = style.tone.instruction(style.customTone);
+    return line == null ? '' : '$line\n';
   }
 
   /// 이름 줄(줄바꿈 포함). 끄거나 이름이 없으면 빈 문자열. 이름은 날마다 같아 캐시 접두부를 흔들지 않는다.

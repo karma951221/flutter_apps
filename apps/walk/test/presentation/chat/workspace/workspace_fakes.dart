@@ -64,6 +64,13 @@ class MemoryWorkspace implements Workspace {
     return path;
   }
 
+  @override
+  Future<String> writeOutBytes(String fileName, Uint8List bytes) async {
+    final path = 'out/$fileName';
+    add(workspaceFile(path, sizeBytes: bytes.length), bytes);
+    return path;
+  }
+
   /// 설정하면 writeText 가 던진다.
   bool failWrite = false;
 

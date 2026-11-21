@@ -5546,4 +5546,62 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get walkDiaryStoryAiSettingDescription =>
       '投稿するときに合うストーリーをおすすめしたり、新しいストーリーを提案します。「質問」で接続したキーを使います。';
+
+  @override
+  String get walkChatToolGenerateImage => '画像を作成中';
+
+  @override
+  String get walkChatToolMadeImage => '画像を作成しました';
+
+  @override
+  String get walkChatToolImageFailed => '画像を作れませんでした';
+
+  @override
+  String get walkChatUsageImageGenerate => '画像作成';
+
+  @override
+  String get walkChatToneTitle => '口調';
+
+  @override
+  String get walkChatToneStandard => '標準';
+
+  @override
+  String get walkChatToneWarm => 'やさしい丁寧語';
+
+  @override
+  String get walkChatToneCasual => '友達みたいにタメ口';
+
+  @override
+  String get walkChatToneTerse => '短くそっけなく';
+
+  @override
+  String get walkChatToneCustom => '自分で入力';
+
+  @override
+  String get walkChatToneCustomTitle => '口調を入力';
+
+  @override
+  String get walkChatToneCustomHint => '例: 丁寧語で、絵文字は少しだけ';
+
+  @override
+  String get walkChatToneSheetHint => '次の質問からこの口調で答えます';
+
+  @override
+  String get walkChatImageGenTitle => '画像を作る';
+
+  @override
+  String get walkChatImageGenHint =>
+      'OpenAIに接続しているとき、頼むと画像を作って回答に添えます。1枚ごとに料金がかかります';
+
+  @override
+  String get walkChatAnswerSection => '回答';
+
+  @override
+  String get walkChatImageMissing => '画像が見つかりません';
+
+  @override
+  String get walkChatCopyText => 'テキストをコピー';
+
+  @override
+  String get walkChatCopied => 'コピーしました';
 }

@@ -1,5 +1,6 @@
 import '../../../support/fake_profile_repository.dart';
 import 'dart:async';
+import 'package:walk/domain/chat/chat_style_settings.dart';
 import 'package:walk/domain/chat/suggest/chat_suggester.dart';
 import 'package:walk/domain/profile/profile_repository.dart';
 import 'package:walk/presentation/weather/cubit/weather_cubit.dart';
@@ -104,6 +105,7 @@ import '../../../support/fake_chat_model_catalog.dart';
 import '../../../support/fake_wiki_repository.dart';
 import 'package:walk/domain/chat/usecase/chat_key_verifier.dart';
 import 'package:walk/domain/chat/usecase/chat_model_choice.dart';
+import '../../../support/fake_chat_style_settings.dart';
 
 class _MockAlarmUseCase extends Mock implements AlarmUseCase {}
 
@@ -278,6 +280,7 @@ void main() {
         ChatModelChoice(chatSettings, chatCatalog, chatVerifier, const Clock()),
       )
       ..registerSingleton<ChatHistorySettings>(FakeChatHistorySettings())
+      ..registerSingleton<ChatStyleSettings>(FakeChatStyleSettings())
       ..registerSingleton<ChatSuggester>(FakeChatSuggester())
       ..registerSingleton<DiaryRepository>(diaryRepo)
       ..registerSingleton<DiaryPreferences>(PrefsDiaryPreferences(prefs))

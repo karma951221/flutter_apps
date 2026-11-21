@@ -62,6 +62,9 @@ abstract interface class Workspace {
   /// out 에 UTF-8 로 저장하고 상대 경로를 돌려준다. 이름이 겹치면 `-2` 를 붙인다.
   Future<String> writeOut(String fileName, String content);
 
+  /// out 에 바이트 그대로 저장하고 상대 경로를 돌려준다(만든 그림 등). 이름이 겹치면 `-2` 를 붙인다.
+  Future<String> writeOutBytes(String fileName, Uint8List bytes);
+
   /// 정확히 [path] 에 UTF-8 로 쓴다(이름을 바꾸지 않는다). 같은 폴더의 임시 파일
   /// (`.tmp-…`, 목록에 안 보인다)에 쓴 뒤 바꿔 끼워 반쯤 쓴 파일이 남지 않는다.
   /// [overwrite] 가 false 인데 이미 있으면 [WorkspaceFileExistsException].

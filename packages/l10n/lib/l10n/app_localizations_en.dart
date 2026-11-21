@@ -6018,4 +6018,62 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get walkDiaryStoryAiSettingDescription =>
       'Suggests a matching story, or a new one, when you post. Uses the key connected in Ask.';
+
+  @override
+  String get walkChatToolGenerateImage => 'Drawing a picture';
+
+  @override
+  String get walkChatToolMadeImage => 'Picture made';
+
+  @override
+  String get walkChatToolImageFailed => 'Couldn\'t make the picture';
+
+  @override
+  String get walkChatUsageImageGenerate => 'Picture';
+
+  @override
+  String get walkChatToneTitle => 'Tone';
+
+  @override
+  String get walkChatToneStandard => 'Default';
+
+  @override
+  String get walkChatToneWarm => 'Warm and polite';
+
+  @override
+  String get walkChatToneCasual => 'Casual, like a friend';
+
+  @override
+  String get walkChatToneTerse => 'Short and dry';
+
+  @override
+  String get walkChatToneCustom => 'Custom';
+
+  @override
+  String get walkChatToneCustomTitle => 'Custom tone';
+
+  @override
+  String get walkChatToneCustomHint => 'e.g. Polite, with a few emoji';
+
+  @override
+  String get walkChatToneSheetHint => 'Applies from your next question';
+
+  @override
+  String get walkChatImageGenTitle => 'Make pictures';
+
+  @override
+  String get walkChatImageGenHint =>
+      'When connected to OpenAI, makes a picture on request and adds it to the answer. Each picture is billed';
+
+  @override
+  String get walkChatAnswerSection => 'Answers';
+
+  @override
+  String get walkChatImageMissing => 'Picture not found';
+
+  @override
+  String get walkChatCopyText => 'Copy text';
+
+  @override
+  String get walkChatCopied => 'Copied';
 }

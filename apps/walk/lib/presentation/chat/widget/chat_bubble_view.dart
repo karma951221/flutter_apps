@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
@@ -6,16 +8,18 @@ import '../../../domain/chat/attachment/chat_attachment.dart';
 import '../../../domain/chat/usecase/chat_session.dart';
 import '../../../domain/diary/entity/diary_entry.dart';
 import '../cubit/chat_state.dart';
+import 'answer_markdown.dart';
 import 'chat_failure_text.dart';
 import 'attachment_chip.dart';
 import 'chat_progress_view.dart';
 import 'cited_entry_chip.dart';
 
-/// 말풍선 하나. 내 질문은 오른쪽, 답은 왼쪽. 글은 마크다운 없이 고를 수 있는 평문으로 보인다.
+/// 말풍선 하나. 내 질문은 오른쪽, 답은 왼쪽. 질문은 고를 수 있는 평문, 답은 마크다운
+/// ([AnswerMarkdown] — 표 · 코드 · ```svg 그림 · 작업 폴더 그림)으로 보이고 [SelectionArea] 로 고른다.
 ///
 /// 답이 실패했으면 이미 받은 글 아래에 실패 문구, 멈췄으면 같은 자리에 '멈춤' 표시,
 /// 인용 기록이 있으면 그 아래에 칩을 둔다. 키 · 크레딧 문제로 실패했고 [onOpenSettings] 가 있으면
-/// 실패 문구 아래에 [설정 열기]를 둔다. [streaming] 이면 글 끝에 커서 `▍` 가 깜빡인다.
+/// 실패 문구 아래에 [설정 열기]를 둔다. [streaming] 이면 답 글 끝에 커서 `▍` 를 그린다.
 /// 답에 진행([ChatBubble.progress])이 있으면 말풍선 위에 진행 줄 · 접힌 요약을 둔다(스펙 §3.2).
 class ChatBubbleView extends StatelessWidget {
   const ChatBubbleView({
@@ -27,6 +31,7 @@ class ChatBubbleView extends StatelessWidget {
     this.streaming = false,
     this.attachmentExists,
     this.onOpenAttachment,
+    this.readImage,
     super.key,
   });
 
@@ -52,8 +57,11 @@ class ChatBubbleView extends StatelessWidget {
   /// 경로가 없는 첨부(임시 대화 · 사본 실패)는 늘 표시만.
   final Future<bool> Function(String path)? attachmentExists;
 
-  /// 있는 첨부 칩을 눌렀다 — 작업 폴더 상대 경로.
+  /// 있는 첨부 칩 · 답의 그림을 눌렀다 — 작업 폴더 상대 경로.
   final ValueChanged<String>? onOpenAttachment;
+
+  /// 답 글의 작업 폴더 그림(`![…](out/…)`)을 읽는다. null 이면 그림 대신 설명 글.
+  final Future<Uint8List?> Function(String path)? readImage;
 
   /// 설정에서 고칠 수 있는 실패 — 키 없음 · 잘못된 키 · 크레딧 부족.
   static const _settingsFailures = {
@@ -143,19 +151,38 @@ class ChatBubbleView extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (text.isNotEmpty)
-                          _withCursor(
-                            text: text,
+                        if (text.isNotEmpty && (mine || bubble.text.isEmpty))
+                          SelectableText(
+                            text,
                             style: bodyStyle,
-                            child: SelectableText(
-                              text,
+                            contextMenuBuilder: onLongPress == null
+                                ? _defaultMenu
+                                : (context, state) => _menuWithMore(
+                                    state.contextMenuAnchors,
+                                    state.contextMenuButtonItems,
+                                    state.hideToolbar,
+                                    l10n.commonMoreActions,
+                                  ),
+                          )
+                        else if (text.isNotEmpty)
+                          SelectionArea(
+                            contextMenuBuilder: (context, state) =>
+                                onLongPress == null
+                                ? AdaptiveTextSelectionToolbar.selectableRegion(
+                                    selectableRegionState: state,
+                                  )
+                                : _menuWithMore(
+                                    state.contextMenuAnchors,
+                                    state.contextMenuButtonItems,
+                                    state.hideToolbar,
+                                    l10n.commonMoreActions,
+                                  ),
+                            child: AnswerMarkdown(
+                              text: text,
                               style: bodyStyle,
-                              contextMenuBuilder: onLongPress == null
-                                  ? _defaultMenu
-                                  : (context, state) => _menuWithMore(
-                                      state,
-                                      l10n.commonMoreActions,
-                                    ),
+                              streaming: streaming,
+                              readImage: readImage,
+                              onOpenImage: onOpenAttachment,
                             ),
                           ),
                         if (text.isNotEmpty && failure != null)
@@ -219,122 +246,29 @@ class ChatBubbleView extends StatelessWidget {
     );
   }
 
-  /// 흐르는 중이고 받은 글이 있으면(자리 표시 `…` 가 아니면) 글 위에 커서를 겹친다.
-  Widget _withCursor({
-    required String text,
-    required TextStyle? style,
-    required Widget child,
-  }) {
-    if (!streaming || bubble.text.isEmpty) return child;
-    return Stack(
-      children: [
-        child,
-        IgnorePointer(
-          child: ExcludeSemantics(
-            child: _StreamingCursor(text: text, style: style),
-          ),
-        ),
-      ],
-    );
-  }
-
   static Widget _defaultMenu(BuildContext context, EditableTextState state) =>
       AdaptiveTextSelectionToolbar.editableText(editableTextState: state);
 
   /// 글을 길게 누르면 글 고르기가 이긴다 — 고르기 메뉴 끝의 [더보기]가 [onLongPress] 를 대신한다.
-  Widget _menuWithMore(EditableTextState state, String label) =>
-      AdaptiveTextSelectionToolbar.buttonItems(
-        anchors: state.contextMenuAnchors,
-        buttonItems: [
-          ...state.contextMenuButtonItems,
-          ContextMenuButtonItem(
-            label: label,
-            onPressed: () {
-              state.hideToolbar();
-              onLongPress?.call();
-            },
-          ),
-        ],
-      );
-}
-
-/// 글 끝 커서. 커서는 [SelectableText] 의 글에 넣지 않는다 — 복사하면 딸려 오지 않게,
-/// 같은 글을 투명하게 깐 [Text.rich] 의 별도 span 으로 글 끝 자리에 그린다.
-/// 깜빡임은 [AppMotion.long] 주기, '애니메이션 줄이기'면 고정.
-class _StreamingCursor extends StatefulWidget {
-  const _StreamingCursor({required this.text, required this.style});
-
-  final String text;
-  final TextStyle? style;
-
-  @override
-  State<_StreamingCursor> createState() => _StreamingCursorState();
-}
-
-class _StreamingCursorState extends State<_StreamingCursor>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _blink = AnimationController(
-    vsync: this,
-    duration: AppMotion.long,
-    value: 1,
-  );
-
-  /// 커서 글자. 앞의 폭 없는 빈칸은 마지막 낱말과 커서 사이 줄바꿈을 허락해
-  /// 투명 글의 줄바꿈이 [SelectableText] 와 같게 한다.
-  static const _cursor = '\u200B▍';
-
-  /// [SelectableText] 가 오른쪽에 비워 두는 캐럿 자리. Flutter 의
-  /// `RenderEditable._caretMargin`(= `_kCaretGap` 1 + `cursorWidth`, [SelectableText] 기본 2)과
-  /// 같아야 한다 — 같은 너비로 줄을 나눠야 커서가 글 끝에 붙는다. 테스트가 양쪽(더 작음 · 더 큼)을 잡는다.
-  static const _caretMargin = 3.0;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (AppMotion.enabled(context)) {
-      if (!_blink.isAnimating) _blink.repeat(reverse: true);
-    } else {
-      _blink
-        ..stop()
-        ..value = 1;
-    }
-  }
-
-  @override
-  void dispose() {
-    _blink.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color = widget.style?.color;
-    return FadeTransition(
-      opacity: _blink,
-      child: Padding(
-        padding: const EdgeInsetsDirectional.only(end: _caretMargin),
-        child: Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: widget.text,
-                style: TextStyle(color: color?.withAlpha(0)),
-              ),
-              TextSpan(
-                text: _cursor,
-                style: TextStyle(color: color),
-              ),
-            ],
-          ),
-          style: widget.style,
-          // EditableText 처럼 글꼴 strut 을 둬 줄 높이를 [SelectableText] 와 맞춘다.
-          strutStyle: widget.style == null
-              ? null
-              : StrutStyle.fromTextStyle(widget.style!),
-        ),
+  /// 질문([SelectableText]) · 답([SelectionArea]) 이 같이 쓴다.
+  Widget _menuWithMore(
+    TextSelectionToolbarAnchors anchors,
+    List<ContextMenuButtonItem> items,
+    void Function() hideToolbar,
+    String label,
+  ) => AdaptiveTextSelectionToolbar.buttonItems(
+    anchors: anchors,
+    buttonItems: [
+      ...items,
+      ContextMenuButtonItem(
+        label: label,
+        onPressed: () {
+          hideToolbar();
+          onLongPress?.call();
+        },
       ),
-    );
-  }
+    ],
+  );
 }
 
 /// 말풍선의 첨부 칩 — 작업 폴더에 있는지 한 번 묻고, 없으면 회색 '지운 파일'.

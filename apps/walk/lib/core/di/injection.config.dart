@@ -54,8 +54,10 @@ import '../../data/chat/database/drift_chat_history_repository.dart' as _i991;
 import '../../data/chat/database/drift_chat_usage_log.dart' as _i1028;
 import '../../data/chat/database/drift_wiki_repository.dart' as _i3;
 import '../../data/chat/openai_chat_model.dart' as _i442;
+import '../../data/chat/openai_image_generator.dart' as _i857;
 import '../../data/chat/prefs_chat_history_settings.dart' as _i433;
 import '../../data/chat/prefs_chat_model_catalog.dart' as _i878;
+import '../../data/chat/prefs_chat_style_settings.dart' as _i452;
 import '../../data/chat/prefs_chat_suggestion_store.dart' as _i510;
 import '../../data/chat/secure_chat_settings.dart' as _i1030;
 import '../../data/chat/workspace/file_workspace.dart' as _i373;
@@ -114,6 +116,7 @@ import '../../domain/chat/chat_history_settings.dart' as _i31;
 import '../../domain/chat/chat_model.dart' as _i1004;
 import '../../domain/chat/chat_model_catalog.dart' as _i880;
 import '../../domain/chat/chat_settings.dart' as _i111;
+import '../../domain/chat/chat_style_settings.dart' as _i367;
 import '../../domain/chat/chat_trace.dart' as _i825;
 import '../../domain/chat/chat_usage_log.dart' as _i520;
 import '../../domain/chat/repository/chat_history_repository.dart' as _i752;
@@ -124,6 +127,7 @@ import '../../domain/chat/suggest/chat_suggester.dart' as _i675;
 import '../../domain/chat/suggest/chat_suggestion_store.dart' as _i440;
 import '../../domain/chat/tool/alarm_tools.dart' as _i553;
 import '../../domain/chat/tool/chat_image_source.dart' as _i858;
+import '../../domain/chat/tool/image_tools.dart' as _i935;
 import '../../domain/chat/tool/life_tools.dart' as _i70;
 import '../../domain/chat/tool/location_tools.dart' as _i361;
 import '../../domain/chat/tool/weather_tools.dart' as _i313;
@@ -366,6 +370,9 @@ extension GetItInjectableX on _i174.GetIt {
     gh.lazySingleton<_i442.OpenAiChatModel>(
       () => _i442.OpenAiChatModel(gh<_i519.Client>(), gh<_i825.ChatTrace>()),
     );
+    gh.lazySingleton<_i935.ImageGenerator>(
+      () => _i857.OpenAiImageGenerator(gh<_i519.Client>()),
+    );
     gh.lazySingleton<_i920.TransitApiKey>(
       () => registerModule.transitApiKey(
         gh<_i910.TransitKeyStore>(),
@@ -476,6 +483,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.lazySingleton<_i31.ChatHistorySettings>(
       () => _i433.PrefsChatHistorySettings(gh<_i460.SharedPreferences>()),
+    );
+    gh.lazySingleton<_i367.ChatStyleSettings>(
+      () => _i452.PrefsChatStyleSettings(gh<_i460.SharedPreferences>()),
     );
     gh.lazySingleton<_i16.DiaryBackupArea>(
       () => registerModule.diaryBackupArea(
@@ -662,6 +672,14 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i920.NextAlarmWidget>(),
       ),
     );
+    gh.lazySingleton<_i935.ImageTools>(
+      () => _i935.ImageTools(
+        gh<_i935.ImageGenerator>(),
+        gh<_i1060.Workspace>(),
+        gh<_i494.Clock>(),
+        changes: gh<_i155.WorkspaceChanges>(),
+      ),
+    );
     gh.lazySingleton<_i553.AlarmTools>(
       () => _i553.AlarmTools(gh<_i873.AlarmUseCase>()),
     );
@@ -822,22 +840,6 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i313.WeatherTools>(),
       ),
     );
-    gh.lazySingleton<_i502.ChatSession>(
-      () => _i502.ChatSession(
-        gh<_i1004.ChatModelRegistry>(),
-        gh<_i70.LifeTools>(),
-        gh<_i111.ChatSettings>(),
-        gh<_i317.ChatModelChoice>(),
-        gh<_i494.Clock>(),
-        gh<_i520.ChatUsageLog>(),
-        gh<_i494.IdGenerator>(),
-        gh<_i825.ChatTrace>(),
-        gh<_i795.WikiContextPolicy>(),
-        gh<_i268.WikiTools>(),
-        gh<_i215.WorkspaceTools>(),
-        profile: gh<_i716.ProfileRepository>(),
-      ),
-    );
     gh.lazySingleton<List<_i355.BackupAreaSource>>(
       () => registerModule.backupAreas(
         gh<_i16.DiaryBackupArea>(),
@@ -855,6 +857,24 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i497.Directory>(instanceName: 'appCache'),
         gh<_i494.Clock>(),
         gh<_i1041.BackupFiles>(),
+      ),
+    );
+    gh.lazySingleton<_i502.ChatSession>(
+      () => _i502.ChatSession(
+        gh<_i1004.ChatModelRegistry>(),
+        gh<_i70.LifeTools>(),
+        gh<_i111.ChatSettings>(),
+        gh<_i317.ChatModelChoice>(),
+        gh<_i494.Clock>(),
+        gh<_i520.ChatUsageLog>(),
+        gh<_i494.IdGenerator>(),
+        gh<_i825.ChatTrace>(),
+        gh<_i795.WikiContextPolicy>(),
+        gh<_i268.WikiTools>(),
+        gh<_i215.WorkspaceTools>(),
+        profile: gh<_i716.ProfileRepository>(),
+        style: gh<_i367.ChatStyleSettings>(),
+        imageTools: gh<_i935.ImageTools>(),
       ),
     );
     gh.factory<_i221.BackupCubit>(
