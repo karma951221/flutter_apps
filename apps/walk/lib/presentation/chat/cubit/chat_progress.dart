@@ -88,6 +88,7 @@ class ChatProgress with _$ChatProgress {
   /// 접힌 요약의 "기록 N번 찾아봄" 에서 빼는 도구.
   static const _notLookup = {
     ChatToolKind.webSearch,
+    ChatToolKind.generateImage,
     ChatToolKind.writeFile,
     ChatToolKind.editFile,
     ChatToolKind.deleteFile,

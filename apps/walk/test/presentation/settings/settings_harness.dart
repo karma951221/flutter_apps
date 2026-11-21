@@ -7,6 +7,7 @@ import 'package:l10n/l10n.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:permission/permission.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:walk/domain/chat/chat_style_settings.dart';
 import 'package:walk/presentation/map/cubit/map_style_cubit.dart';
 import 'package:walk/data/diary/prefs_diary_preferences.dart';
 import 'package:walk/data/lock/prefs_lock_repository.dart';
@@ -58,6 +59,7 @@ import '../../support/fake_chat_model_catalog.dart';
 import '../../support/fake_chat_settings.dart';
 import '../../support/fake_device_auth.dart';
 import '../../support/fake_profile_repository.dart';
+import '../../support/fake_chat_style_settings.dart';
 
 class MockRequester extends Mock implements PermissionRequester {}
 
@@ -176,6 +178,7 @@ class SettingsHarness {
         ChatModelChoice(chatSettings, chatCatalog, chatVerifier, clock),
       )
       ..registerSingleton<ChatHistorySettings>(FakeChatHistorySettings())
+      ..registerSingleton<ChatStyleSettings>(FakeChatStyleSettings())
       ..registerSingleton<ChatHistoryRepository>(FakeChatHistoryCount())
       ..registerSingleton<WikiRepository>(FakeWikiRepository())
       ..registerSingleton<ChatUsageRepository>(FakeChatUsageRepository())

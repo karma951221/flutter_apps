@@ -7,6 +7,7 @@ import 'package:walk/presentation/chat/widget/bubble_actions_sheet.dart';
 Future<void> _showSheet(
   WidgetTester tester, {
   required bool canSaveToFile,
+  bool canCopy = false,
   ValueChanged<BubbleAction?>? onPicked,
 }) async {
   await tester.pumpWidget(
@@ -17,7 +18,11 @@ Future<void> _showSheet(
       home: Builder(
         builder: (context) => TextButton(
           onPressed: () async => onPicked?.call(
-            await showBubbleActions(context, canSaveToFile: canSaveToFile),
+            await showBubbleActions(
+              context,
+              canCopy: canCopy,
+              canSaveToFile: canSaveToFile,
+            ),
           ),
           child: const Text('open'),
         ),
@@ -48,5 +53,34 @@ void main() {
 
     expect(find.byKey(const Key('chat-bubble-action-save')), findsNothing);
     expect(find.text('파일로 저장'), findsNothing);
+  });
+
+  testWidgets('canCopy 면 맨 위 [글 복사], 누르면 copyText', (tester) async {
+    BubbleAction? picked;
+    await _showSheet(
+      tester,
+      canSaveToFile: true,
+      canCopy: true,
+      onPicked: (action) => picked = action,
+    );
+
+    final copy = find.byKey(const Key('chat-bubble-action-copy'));
+    expect(find.text('글 복사'), findsOneWidget);
+    expect(
+      tester.getTopLeft(copy).dy,
+      lessThan(
+        tester
+            .getTopLeft(find.byKey(const Key('chat-bubble-action-save')))
+            .dy,
+      ),
+    );
+    await tester.tap(copy);
+    await tester.pumpAndSettle();
+    expect(picked, BubbleAction.copyText);
+  });
+
+  testWidgets('canCopy 가 아니면 [글 복사]가 없다', (tester) async {
+    await _showSheet(tester, canSaveToFile: true);
+    expect(find.byKey(const Key('chat-bubble-action-copy')), findsNothing);
   });
 }

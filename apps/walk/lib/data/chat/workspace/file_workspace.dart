@@ -126,6 +126,10 @@ class FileWorkspace implements Workspace {
   Future<String> writeOut(String fileName, String content) =>
       _save(_out, sanitizeName(fileName), (f) => f.writeAsString(content));
 
+  @override
+  Future<String> writeOutBytes(String fileName, Uint8List bytes) =>
+      _save(_out, sanitizeName(fileName), (f) => f.writeAsBytes(bytes));
+
   /// 겹치지 않는 이름(`a.md` → `a-2.md`)으로 만들어 쓴다.
   Future<String> _save(
     String area,

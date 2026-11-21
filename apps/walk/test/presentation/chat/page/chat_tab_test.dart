@@ -1,3 +1,4 @@
+import 'package:walk/domain/chat/chat_style_settings.dart';
 import 'package:walk/domain/chat/suggest/chat_suggester.dart';
 import 'package:walk/domain/chat/attachment/attachment_rules.dart';
 import 'package:walk/domain/chat/attachment/chat_attachment.dart';
@@ -66,6 +67,7 @@ import '../../../support/fake_secure_window.dart';
 import '../../../support/fake_wiki_repository.dart';
 import '../wiki/wiki_fakes.dart';
 import '../workspace/workspace_fakes.dart';
+import '../../../support/fake_chat_style_settings.dart';
 
 class _MockSession extends Mock implements ChatSession {}
 
@@ -166,6 +168,7 @@ void main() {
       ..registerSingleton<WikiRepository>(wiki)
       ..registerSingleton<WikiDistiller>(distiller)
       ..registerSingleton<ChatHistorySettings>(FakeChatHistorySettings())
+      ..registerSingleton<ChatStyleSettings>(FakeChatStyleSettings())
       ..registerSingleton<Clock>(MutableClock(diaryT0))
       ..registerSingleton<ChatSuggester>(FakeChatSuggester());
   });
@@ -638,7 +641,8 @@ void main() {
     await tester.pumpAndSettle();
 
     verify(() => session.stop()).called(1);
-    expect(find.text('산책을 '), findsOneWidget);
+    // 답은 마크다운으로 그린다 — 끝 빈칸은 문단에서 접힌다.
+    expect(find.text('산책을'), findsOneWidget);
     expect(find.text('멈춤'), findsOneWidget);
     expect(find.byTooltip('보내기'), findsOneWidget);
     expect(find.byTooltip('답 멈추기'), findsNothing);

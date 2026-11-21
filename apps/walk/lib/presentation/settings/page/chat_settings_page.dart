@@ -4,8 +4,9 @@ import 'package:l10n/l10n.dart';
 
 import '../widget/chat_history_settings_section.dart';
 import '../widget/chat_settings_section.dart';
+import '../widget/chat_style_settings_section.dart';
 
-/// 물어보기 설정 — AI 연결 · 대화 기록. 잠금 아래 화면이다(`openSettings` 가 `pushDiaryRoute` 로 연다).
+/// 물어보기 설정 — AI 연결 · 답(말투 · 그림 만들기) · 대화 기록. 잠금 아래 화면이다(`openSettings` 가 `pushDiaryRoute` 로 연다).
 class ChatSettingsPage extends StatelessWidget {
   const ChatSettingsPage({this.highlightConnection = false, super.key});
 
@@ -21,6 +22,7 @@ class ChatSettingsPage extends StatelessWidget {
         children: [
           AppSectionHeader(l10n.walkSettingsAiConnection),
           ChatSettingsSection(highlightConnection: highlightConnection),
+          const ChatStyleSettingsSection(),
           const ChatHistorySettingsSection(),
         ],
       ),

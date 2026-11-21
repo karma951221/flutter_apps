@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
 import 'package:walk/domain/chat/attachment/chat_attachment.dart';
@@ -10,6 +13,11 @@ import 'package:walk/domain/chat/usecase/chat_session.dart';
 import 'package:walk/presentation/chat/cubit/chat_state.dart';
 import 'package:walk/presentation/chat/widget/attachment_chip.dart';
 import 'package:walk/presentation/chat/widget/chat_bubble_view.dart';
+
+/// 1×1 투명 PNG.
+final _png = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+);
 
 void main() {
   Future<void> pump(
@@ -21,6 +29,8 @@ void main() {
     bool reduceMotion = false,
     Future<bool> Function(String path)? attachmentExists,
     ValueChanged<String>? onOpenAttachment,
+    Future<Uint8List?> Function(String path)? readImage,
+    bool pending = false,
   }) => tester.pumpWidget(
     MaterialApp(
       theme: AppTheme.light(),
@@ -40,126 +50,148 @@ void main() {
           streaming: streaming,
           attachmentExists: attachmentExists,
           onOpenAttachment: onOpenAttachment,
+          readImage: readImage,
+          pending: pending,
         ),
       ),
     ),
   );
 
-  group('흐르는 중 커서', () {
-    const answer = ChatBubble(role: ChatRole.assistant, text: '지난주에는');
+  group('답 말풍선 마크다운', () {
     final cursor = find.textContaining('▍', findRichText: true);
 
-    double opacity(WidgetTester tester) => tester
-        .widget<FadeTransition>(
-          find
-              .ancestor(of: cursor, matching: find.byType(FadeTransition))
-              .first,
-        )
-        .opacity
-        .value;
-
-    testWidgets('streaming 이면 커서가 보이고 SelectableText 글에는 없다', (tester) async {
-      await pump(tester, answer, streaming: true);
-
-      expect(cursor, findsOneWidget);
-      final selectable = tester.widget<SelectableText>(
-        find.byType(SelectableText),
+    testWidgets('답은 마크다운으로 — 굵게 기호 없이 그리고 SelectionArea 로 고른다', (tester) async {
+      await pump(
+        tester,
+        const ChatBubble(role: ChatRole.assistant, text: '**굵게** 와 `코드`'),
       );
-      expect(selectable.data, '지난주에는');
-      expect(selectable.data, isNot(contains('▍')));
-      // 커서는 글 끝에 붙는다 — 글과 같은 줄에서 시작한다.
-      expect(
-        tester.getTopLeft(cursor).dy,
-        tester.getTopLeft(find.byType(SelectableText)).dy,
-      );
+
+      expect(find.byType(MarkdownBody), findsOneWidget);
+      expect(find.byType(SelectionArea), findsOneWidget);
+      expect(find.textContaining('**', findRichText: true), findsNothing);
+      expect(find.textContaining('굵게', findRichText: true), findsOneWidget);
     });
 
-    // 캐럿 자리 몇 픽셀 차이로 한 줄 글자 수가 갈리는 너비들. 글 너비 = 0.85 × 화면 − 좌우 여백 32,
-    // 테스트 글꼴 한 글자 16.5.
-    //  - 1010 → 826.5 = 16.5 × 50 + 1.5: 캐럿 자리가 3 보다 작으면(예: 0) 한 줄 글자 수가 늘어난다.
-    //  - 1012 → 828.2 = 16.5 × 50 + 3.2: 캐럿 자리가 3 보다 크면(예: 4) 한 줄 글자 수가 줄어든다.
-    const testGlyph = 16.5;
-    // RenderEditable._caretMargin = _kCaretGap(1) + cursorWidth(기본 2).
-    const caretMargin = 3.0;
-    for (final width in [1010.0, 1012.0]) {
-      testWidgets('여러 줄이어도 투명 글이 같은 자리에서 줄을 나눈다(너비 $width)', (tester) async {
-        tester.view
-          ..physicalSize = Size(width, 800)
-          ..devicePixelRatio = 1;
-        addTearDown(tester.view.reset);
-        for (var n = 1; n <= 60; n++) {
-          final text = '바다가' * n;
-          await pump(
-            tester,
-            ChatBubble(role: ChatRole.assistant, text: text),
-            streaming: true,
-          );
-          final whole = TextSelection(baseOffset: 0, extentOffset: text.length);
-          final editable = tester
-              .state<EditableTextState>(find.byType(EditableText))
-              .renderEditable;
-          final paragraph = tester.renderObject<RenderParagraph>(cursor);
-          final expected = editable.getBoxesForSelection(whole).last;
-          final actual = paragraph
-              .getBoxesForSelection(
-                whole,
-                boxHeightStyle: editable.selectionHeightStyle,
-                boxWidthStyle: editable.selectionWidthStyle,
-              )
-              .last;
-          // 글이 줄 끝을 꽉 채운 경우는 뺀다 — 테스트 글꼴은 폭 없는 빈칸(U+200B)에도 글자
-          // 폭을 줘서 마지막 글자까지 커서와 함께 넘긴다(실제 글꼴에서는 폭 0).
-          if (expected.right + testGlyph > editable.size.width - caretMargin) {
-            continue;
-          }
-          // 투명 글의 끝(= 커서 자리)이 보이는 글의 끝과 같다 — 같은 줄(한 줄 높이 차이가 아님),
-          // 같은 가로 자리. 글이 줄 끝을 꽉 채워 커서만 다음 줄로 넘기면 줄 간격 몫으로
-          // 아래 끝이 몇 픽셀 달라질 수 있다.
-          expect(actual.right, expected.right, reason: 'n=$n');
-          expect(
-            actual.bottom,
-            closeTo(expected.bottom, (expected.bottom - expected.top) / 2),
-            reason: 'n=$n',
-          );
-          expect(
-            tester.getTopLeft(cursor),
-            tester.getTopLeft(find.byType(SelectableText)),
-          );
-        }
-      });
-    }
+    testWidgets('질문은 마크다운으로 그리지 않는다(평문 SelectableText)', (tester) async {
+      await pump(tester, const ChatBubble(role: ChatRole.user, text: '**별**'));
 
-    testWidgets('깜빡인다 — AppMotion.long 뒤 불투명도가 바뀐다', (tester) async {
+      expect(find.byType(MarkdownBody), findsNothing);
+      expect(find.text('**별**'), findsOneWidget);
+    });
+
+    testWidgets('streaming 이면 글 끝에 커서, 아니면 없다', (tester) async {
+      const answer = ChatBubble(role: ChatRole.assistant, text: '지난주에는');
       await pump(tester, answer, streaming: true);
-      final before = opacity(tester);
-      await tester.pump(AppMotion.long);
-      expect(opacity(tester), isNot(before));
-    });
-
-    testWidgets('줄이기 모드면 커서가 깜빡이지 않는다', (tester) async {
-      await pump(tester, answer, streaming: true, reduceMotion: true);
-
       expect(cursor, findsOneWidget);
-      final before = opacity(tester);
-      await tester.pump(AppMotion.long);
-      expect(opacity(tester), before);
-      expect(before, 1);
-    });
 
-    testWidgets('streaming 이 아니면 커서 없음', (tester) async {
       await pump(tester, answer);
-
       expect(cursor, findsNothing);
     });
 
-    testWidgets('streaming 이어도 글이 없으면 커서 없음', (tester) async {
+    testWidgets('streaming 이어도 글이 없으면(자리 표시) 커서 없음', (tester) async {
       await pump(
         tester,
         const ChatBubble(role: ChatRole.assistant, text: ''),
+        pending: true,
         streaming: true,
       );
-
+      expect(find.text('…'), findsOneWidget);
       expect(cursor, findsNothing);
+    });
+
+    testWidgets('닫힌 svg 블록은 그림으로 그린다', (tester) async {
+      await pump(
+        tester,
+        const ChatBubble(
+          role: ChatRole.assistant,
+          text:
+              '도식:\n```svg\n<svg viewBox="0 0 10 10"><rect width="10" height="10"/></svg>\n```',
+        ),
+      );
+      expect(find.byType(SvgPicture), findsOneWidget);
+    });
+
+    testWidgets('작업 폴더 그림은 readImage 로 읽어 보이고 누르면 그 경로를 연다', (tester) async {
+      final opened = <String>[];
+      final read = <String>[];
+      await pump(
+        tester,
+        const ChatBubble(
+          role: ChatRole.assistant,
+          text: '다 됐어요.\n\n![노을](out/%EA%B7%B8%EB%A6%BC-1.png)',
+        ),
+        readImage: (path) async {
+          read.add(path);
+          return _png;
+        },
+        onOpenAttachment: opened.add,
+      );
+      await tester.pumpAndSettle();
+
+      expect(read, ['out/그림-1.png']);
+      expect(find.byType(Image), findsOneWidget);
+      // 테스트에선 그림이 풀리지 않아 크기가 0 — 누르기 대신 탭 콜백을 부른다.
+      final tap = tester.widget<GestureDetector>(
+        find.ancestor(
+          of: find.byType(Image),
+          matching: find.byType(GestureDetector),
+        ).first,
+      );
+      tap.onTap!();
+      expect(opened, ['out/그림-1.png']);
+    });
+
+    testWidgets('없는 그림은 "그림을 찾을 수 없어요"', (tester) async {
+      await pump(
+        tester,
+        const ChatBubble(
+          role: ChatRole.assistant,
+          text: '![노을](out/gone.png)',
+        ),
+        readImage: (_) async => null,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('그림을 찾을 수 없어요'), findsOneWidget);
+    });
+
+    testWidgets('작업 폴더 밖(웹 주소) 그림은 불러오지 않고 설명 글만', (tester) async {
+      final read = <String>[];
+      await pump(
+        tester,
+        const ChatBubble(
+          role: ChatRole.assistant,
+          text: '![고양이](https://example.com/cat.png)',
+        ),
+        readImage: (path) async {
+          read.add(path);
+          return null;
+        },
+      );
+      await tester.pumpAndSettle();
+
+      expect(read, isEmpty);
+      expect(find.textContaining('고양이', findRichText: true), findsOneWidget);
+    });
+
+    testWidgets('답 글을 길게 누르면 고르기 메뉴 끝의 [더보기]가 onLongPress 를 부른다', (
+      tester,
+    ) async {
+      var pressed = 0;
+      await pump(
+        tester,
+        const ChatBubble(role: ChatRole.assistant, text: '지난주에는 걸었어요'),
+        onLongPress: () => pressed++,
+      );
+
+      await tester.longPress(
+        find.textContaining('지난주에는', findRichText: true).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('더보기'));
+      await tester.pumpAndSettle();
+
+      expect(pressed, 1);
     });
   });
 

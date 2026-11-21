@@ -60,6 +60,7 @@ String _toolLabel(AppLocalizations l10n, String locale, StepTool step) {
     ChatToolKind.weather => l10n.walkChatToolWeather,
     ChatToolKind.wiki => l10n.walkChatToolReadWiki,
     ChatToolKind.webSearch => l10n.walkChatToolWebSearch,
+    ChatToolKind.generateImage => l10n.walkChatToolGenerateImage,
     ChatToolKind.listFiles => l10n.walkChatToolListFiles,
     // "파일 읽는 중 · 이름" — 이름이 라벨에 붙으므로 자세히(괄호)는 없다.
     ChatToolKind.readFile => switch (step.input?.name) {
@@ -154,6 +155,11 @@ String? _resultText(AppLocalizations l10n, StepTool step) {
   final result = step.result;
   if (result == null) return null;
   if (result.declined) return l10n.walkChatToolDeclined;
+  if (result.kind == ChatToolKind.generateImage) {
+    return result.isError
+        ? l10n.walkChatToolImageFailed
+        : l10n.walkChatToolMadeImage;
+  }
   if (result.isError) {
     if (!_isWrite(result.kind)) return null;
     return switch (_shortName(step.input?.name)) {
@@ -192,6 +198,7 @@ String? _resultText(AppLocalizations l10n, StepTool step) {
     // 날씨는 개수가 없다 — 라벨 그대로.
     ChatToolKind.weather ||
     ChatToolKind.webSearch ||
+    ChatToolKind.generateImage ||
     ChatToolKind.readFile ||
     ChatToolKind.writeFile ||
     ChatToolKind.editFile ||

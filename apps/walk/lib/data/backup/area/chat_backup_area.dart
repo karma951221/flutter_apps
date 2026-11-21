@@ -11,6 +11,7 @@ import '../../../domain/backup/backup_failure.dart';
 import '../../../domain/chat/chat_settings.dart';
 import '../../chat/database/chat_database.dart';
 import '../../chat/prefs_chat_history_settings.dart';
+import '../../chat/prefs_chat_style_settings.dart';
 import 'area_io.dart';
 import 'dir_swap.dart';
 import 'drift_rows.dart';
@@ -22,9 +23,13 @@ const _wikiLinksFile = 'wiki_links.json';
 const _workspace = 'workspace';
 
 /// 대화 설정 중 백업에 담는 키. 동의 · 키 상태 · 모델 캐시(`chat.*`)와 위키 설정은 담지 않는다.
+/// 말투 · 그림 만들기 스위치는 담는다(2026-11-21).
 const _prefKeys = {
   PrefsChatHistorySettings.retentionKey,
   PrefsChatHistorySettings.useRecordsKey,
+  PrefsChatStyleSettings.toneKey,
+  PrefsChatStyleSettings.customToneKey,
+  PrefsChatStyleSettings.imageGenerationKey,
 };
 
 /// 물어보기 대화 영역. `chat/conversations.json`(대화 · 턴 · 사용량 행) ·

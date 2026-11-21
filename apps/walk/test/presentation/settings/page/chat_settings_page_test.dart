@@ -3,6 +3,7 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:l10n/l10n.dart';
+import 'package:walk/domain/chat/chat_style_settings.dart';
 import 'package:walk/domain/chat/chat_history_settings.dart';
 import 'package:walk/domain/chat/chat_model_catalog.dart';
 import 'package:walk/domain/chat/chat_settings.dart';
@@ -18,6 +19,7 @@ import '../../../support/fake_wiki_repository.dart';
 import '../../../support/fake_chat_key_verifier.dart';
 import '../../../support/fake_chat_model_catalog.dart';
 import '../../../support/fake_chat_settings.dart';
+import '../../../support/fake_chat_style_settings.dart';
 
 void main() {
   setUp(() {
@@ -32,6 +34,7 @@ void main() {
         ChatModelChoice(settings, catalog, verifier, const Clock()),
       )
       ..registerSingleton<ChatHistorySettings>(FakeChatHistorySettings())
+      ..registerSingleton<ChatStyleSettings>(FakeChatStyleSettings())
       ..registerSingleton<ChatHistoryRepository>(FakeChatHistoryCount())
       ..registerSingleton<WikiRepository>(FakeWikiRepository());
   });

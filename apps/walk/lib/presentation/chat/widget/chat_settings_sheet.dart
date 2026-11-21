@@ -2,10 +2,13 @@ import 'package:design_system/design_system.dart';
 import 'package:flutter/material.dart';
 import 'package:l10n/l10n.dart';
 
+import '../../../domain/chat/chat_style_settings.dart';
+import 'chat_tone_tile.dart';
 import 'chat_vendor_icon.dart';
 import 'model_chip.dart';
 
-/// 대화 설정 시트 본문: 모델(누르면 고르기 시트) · 내 기록 참고 스위치 · 물어보기 설정 바로가기.
+/// 대화 설정 시트 본문: 모델(누르면 고르기 시트) · 내 기록 참고 스위치 · 말투([style] 이 있을 때)
+/// · 물어보기 설정 바로가기.
 ///
 /// [enabled] 가 false 면(답하는 중) 모델 · 스위치가 꺼진다. 물어보기 설정은 늘 열 수 있다.
 class ChatSettingsSheet extends StatelessWidget {
@@ -16,6 +19,7 @@ class ChatSettingsSheet extends StatelessWidget {
     required this.onPickModel,
     required this.onUseRecordsChanged,
     required this.onOpenSettings,
+    this.style,
     super.key,
   });
 
@@ -25,6 +29,9 @@ class ChatSettingsSheet extends StatelessWidget {
   final VoidCallback onPickModel;
   final ValueChanged<bool> onUseRecordsChanged;
   final VoidCallback onOpenSettings;
+
+  /// 말투 설정. null 이면 말투 행이 없다.
+  final ChatStyleSettings? style;
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +83,7 @@ class ChatSettingsSheet extends StatelessWidget {
           value: useRecords,
           onChanged: enabled ? onUseRecordsChanged : null,
         ),
+        if (style case final style?) ChatToneTile(style: style),
         AppListTile(
           key: const Key('chat-settings-open'),
           leading: const Icon(Icons.settings_outlined),
